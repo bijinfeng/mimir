@@ -1,0 +1,54 @@
+# 开发：只起数据库，前后端在本机跑（热更新快）
+# 生产：用 profiles 打开 app 服务，见下方注释
+services:
+  postgres:
+    # pgvector 官方镜像：自带 vector + pg_trgm。
+    # 备选 paradedb/paradedb:v0.22.6-pg17 内置 BM25 + Lindera 中文分词，
+    # 中文检索更强，但 Community 版是 AGPL-3.0。见 docs/RESEARCH.md §5.4。
+    image: pgvector/pgvector:pg17
+    container_name: mimir-postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-mimir}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-mimir}
+      POSTGRES_DB: ${DB_NAME:-mimir}
+    # 只绑本机：数据库不应该被外部直接访问
+    ports:
+      - '127.0.0.1:${DB_PORT:-5544}:5432'
+    volumes:
+      - mimir-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-mimir} -d ${DB_NAME:-mimir}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  app:
+    # 生产专用：docker compose --profile prod up -d --build
+    # 开发时不启动它，前端跑 vite，后端跑 tsx watch。
+    profiles: ['prod']
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mimir-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      # 容器内走服务名，不是 127.0.0.1
+      DATABASE_URL: postgres://${DB_USER:-mimir}:${DB_PASSWORD:-mimir}@postgres:5432/${DB_NAME:-mimir}
+      AUTH_SECRET: ${AUTH_SECRET:?生产部署必须设置 AUTH_SECRET，用 openssl rand -base64 32 生成}
+      DATA_DIR: /data
+      VAULT_DIR: /data/vault
+      RAW_DIR: /data/raw
+    ports:
+      - '${APP_PORT:-3000}:3000'
+    volumes:
+      # vault 与 raw 是真相，必须持久化到宿主机
+      - ./data:/data
+    restart: unless-stopped
+
+volumes:
+  mimir-pgdata:

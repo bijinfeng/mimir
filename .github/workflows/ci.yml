@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# 新提交进来时取消上一次未跑完的任务，避免排队
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # CI 里不需要真的连数据库跑业务，但 env.ts 在启动时会校验，
+  # 所以给一组可直接用的占位值
+  DATABASE_URL: postgres://mimir:mimir@127.0.0.1:5544/mimir_test
+  AUTH_SECRET: ci-only-secret-not-for-production
+  DATA_DIR: ./data
+  VAULT_DIR: ./data/vault
+  RAW_DIR: ./data/raw
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        # 必须用带 pgvector 的镜像：迁移会建 vector 扩展和 GIN 索引，
+        # 用官方 postgres 镜像会在迁移阶段就失败
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: mimir
+          POSTGRES_PASSWORD: mimir
+          POSTGRES_DB: mimir_test
+        ports:
+          - 5544:5432
+        options: >-
+          --health-cmd "pg_isready -U mimir -d mimir_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # 路径类环境变量相对仓库根解析，测试也需要这两个目录存在
+      - run: mkdir -p data/vault data/raw data/.test/vault data/.test/raw
+
+      - run: pnpm lint
+      - run: pnpm format:check
+      - run: pnpm -r typecheck
+      - run: pnpm -r test
