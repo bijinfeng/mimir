@@ -8,6 +8,7 @@ import { env } from '../env.js'
 import { toSearchText } from '../lib/segment.js'
 import { contentHash, toExcerpt } from '../lib/text.js'
 import { readNote, toVaultRelative, writeNote } from '../lib/vault.js'
+import { syncTags } from './documents.js'
 
 /**
  * 重建索引：扫描 vault 下的所有 Markdown，把文件状态同步进数据库。
@@ -109,6 +110,11 @@ export async function reindexVault(): Promise<ReindexResult> {
         target: documents.id,
         set: { ...values, deletedAt: null },
       })
+
+    // 标签存在文件 frontmatter 里，所以重建索引必须把它们一起还原。
+    // 只 upsert documents 行而不同步 document_tags 的话，内容回来了但标签没了——
+    // 这个 bug 由 vault-roundtrip.test.ts 抓到过。
+    await syncTags(id, note.tags)
 
     if (existingIds.has(id)) {
       result.updated += 1

@@ -70,8 +70,11 @@ async function loadTags(documentIds: string[]): Promise<Map<string, string[]>> {
  * 同步文档的标签集合。
  * 采用「先删后插」而不是 diff：标签数量是个位数，简单胜过聪明。
  * 不清理无人引用的 tag 行——留着可以让下次输入自动补全得更准。
+ *
+ * 导出给重建索引用：标签存在文件 frontmatter 里，所以「数据库丢了」
+ * 之后重建索引也必须把它们一起还原，否则内容回来了但标签没了。
  */
-async function syncTags(documentId: string, tagNames: string[]): Promise<void> {
+export async function syncTags(documentId: string, tagNames: string[]): Promise<void> {
   const unique = [...new Set(tagNames.map((name) => name.trim()).filter(Boolean))]
   await db.delete(documentTags).where(eq(documentTags.documentId, documentId))
   if (unique.length === 0) return

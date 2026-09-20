@@ -8,8 +8,13 @@
 
 ## 文档
 
+**如果你是 AI agent，先读 [`AGENTS.md`](AGENTS.md)** —— 那里有铁律与完成定义。
+
 | 文档 | 内容 | 什么时候看 |
 |---|---|---|
+| [`AGENTS.md`](AGENTS.md) | agent 入口：铁律、完成定义、会静默出错的地方 | 动手之前 |
+| [`docs/INDEX.md`](docs/INDEX.md) | 文档索引，按问题找 | 不知道看哪份时 |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md) | 决策日志，含被否决的选项与原因 | 想问「为什么这样选」 |
 | [`docs/PRD.md`](docs/PRD.md) | 产品需求：非目标、核心洞见、内容来源方案、功能范围、关键交互决策 | 想知道「为什么长这样」 |
 | [`docs/TECH.md`](docs/TECH.md) | 技术方案：选型、架构、数据模型、检索设计、插件接缝、部署 | 要动手改代码 |
 | [`docs/RESEARCH.md`](docs/RESEARCH.md) | 调研记录：竞品分析、实测数据、被否决的方案及理由 | 想问「为什么不用 X」 |
@@ -134,7 +139,8 @@ mimir/
 ├── packages/
 │   └── shared/           前后端共享契约
 ├── output/               交互原型（静态单文件）
-├── docs/                 PRD / TECH / RESEARCH
+├── docs/                 产品需求 / 技术方案 / 调研记录 / 决策日志
+├── AGENTS.md             agent 入口：铁律与完成定义
 └── data/                 运行时数据，不进 git
     ├── vault/            笔记（真相）
     ├── raw/              原始快照

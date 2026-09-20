@@ -1,17 +1,63 @@
 import { execSync } from 'node:child_process'
+import { existsSync } from 'node:fs'
+import { mkdir, rm } from 'node:fs/promises'
+import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import postgres from 'postgres'
-import { TEST_DATABASE_URL } from './config.js'
+import { TEST_DATABASE_URL, TEST_ENV } from './config.js'
 
 /**
- * 集成测试只跑一次的前置：清库 + 建表。
- * 用独立的 mimir_test 库，避免测试把开发数据洗掉。
+ * 集成测试只跑一次的前置：清库、清测试目录、建表。
+ *
+ * **测试的隔离必须覆盖它写入的每一个地方。** 这个文件曾经只清数据库，
+ * 不清测试 vault——后果是上一次运行残留的 md 文件会累积（实测攒到 144 个），
+ * 而重建索引会把它们重新导入数据库，污染后续断言。
+ *
+ * 症状很隐蔽：单跑某个文件通过，全量跑就挂，而且挂的是看起来毫不相关的断言。
  */
+
+/**
+ * 定位仓库根。TEST_ENV 里的路径都是相对仓库根的（与 src/env.ts 的约定一致），
+ * 所以必须找到真正的仓库根，不能按 apps/server 解析。
+ */
+function findRepoRoot(start: string): string {
+  let current = start
+  while (true) {
+    if (existsSync(resolve(current, 'pnpm-workspace.yaml'))) return current
+    const parent = dirname(current)
+    if (parent === current) throw new Error(`找不到仓库根目录（从 ${start} 向上）`)
+    current = parent
+  }
+}
+
+const repoRoot = findRepoRoot(dirname(fileURLToPath(import.meta.url)))
+/** server 包根：drizzle.config.ts 在这里，不是在仓库根 */
+const serverRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
+
+/** TEST_ENV 里的路径统一相对仓库根 */
+function testPath(relative: string | undefined): string | null {
+  return relative ? resolve(repoRoot, relative.replace('./', '')) : null
+}
+
 export async function setup() {
   if (!TEST_DATABASE_URL.includes('mimir_test')) {
     throw new Error(`拒绝在非测试库上运行：${TEST_DATABASE_URL}。库名必须包含 mimir_test。`)
   }
 
+  // 1. 清文件（先做，避免下面建表失败时留下半清理状态）
+  // 数据库和文件系统是两处状态，只清一处等于没隔离。
+  for (const dir of [TEST_ENV.VAULT_DIR, TEST_ENV.RAW_DIR, TEST_ENV.DATA_DIR]) {
+    const abs = testPath(dir)
+    if (abs) await rm(abs, { recursive: true, force: true })
+  }
+
+  // 2. 重建目录。env.ts 启动时会校验 DATA_DIR 存在，缺了会直接抛错。
+  for (const dir of [TEST_ENV.DATA_DIR, TEST_ENV.VAULT_DIR, TEST_ENV.RAW_DIR]) {
+    const abs = testPath(dir)
+    if (abs) await mkdir(abs, { recursive: true })
+  }
+
+  // 3. 清库
   const sql = postgres(TEST_DATABASE_URL, { max: 1 })
   await sql`drop schema public cascade`
   await sql`create schema public`
@@ -19,11 +65,10 @@ export async function setup() {
   await sql`create extension if not exists vector`
   await sql.end()
 
-  // 直接用 drizzle-kit push 建表，避免测试依赖已提交的迁移文件顺序
+  // 4. 建表。用 drizzle-kit push 而不是跑迁移，避免测试依赖迁移文件的顺序。
   execSync('npx drizzle-kit push --force --config drizzle.config.ts', {
     stdio: 'pipe',
     env: { ...process.env, DATABASE_URL: TEST_DATABASE_URL },
-    // fileURLToPath 而非 URL.pathname：项目路径含中文会被百分号编码
-    cwd: fileURLToPath(new URL('../../', import.meta.url)),
+    cwd: serverRoot,
   })
 }
