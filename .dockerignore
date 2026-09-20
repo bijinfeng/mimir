@@ -1,0 +1,11 @@
+**/node_modules
+**/dist
+**/routeTree.gen.ts
+.git
+.env
+.env.local
+data
+output
+docs
+*.log
+.DS_Store

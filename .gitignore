@@ -1,0 +1,15 @@
+node_modules/
+dist/
+build/
+*.log
+
+# 运行时数据：vault（自己的 md 笔记）、raw（抓取的原文件）、数据库
+# 这些是真相数据，不进 git；由备份流程负责
+data/
+
+.env
+.env.local
+*.tsbuildinfo
+.DS_Store
+.vite/
+coverage/

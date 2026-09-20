@@ -1,0 +1,53 @@
+{
+  // oxlint 的配置文件支持注释（内部按 JSONC 解析）。
+  // 每条被关闭的规则都必须写明理由，否则下次有人会以为是漏配。
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "import", "react", "vitest"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "perf": "warn"
+  },
+  "env": {
+    "browser": true,
+    "es2024": true,
+    "node": true
+  },
+  "rules": {
+    // 用 typescript 版本，它认得类型位置与 _ 前缀的约定
+    "no-unused-vars": "off",
+    "typescript/no-unused-vars": [
+      "error",
+      { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_" }
+    ],
+
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "warn",
+    // React 17+ 的自动 JSX 运行时不需要 React 在作用域内，这条是历史遗留规则
+    "react/react-in-jsx-scope": "off",
+
+    // 服务端有几处刻意的顺序写入（重建索引、逐条 upsert）。
+    // 改成并行会引入并发控制，对个人规模的数据不值得；而且顺序执行便于定位
+    // 「卡在哪一条」——重建索引失败时这一点很重要。
+    "no-await-in-loop": "off",
+
+    // Tiptap 的包同时提供 default 和 named 导出，这条规则会误报。
+    // 我们统一用 named 导入（与官方文档一致）。
+    "import/no-named-as-default": "off",
+    // 样式是副作用导入，本来就不需要绑定名字
+    "import/no-unassigned-import": "off",
+
+    // 开发环境的热重载单例用 __ 前缀标记（见 db/client.ts）
+    "no-underscore-dangle": ["error", { "allow": ["__mimirSql"] }],
+
+    "unicorn/prefer-node-protocol": "error",
+    "no-console": "off"
+  },
+  "ignorePatterns": [
+    "**/dist/**",
+    "**/node_modules/**",
+    "**/routeTree.gen.ts",
+    "**/drizzle/**",
+    "output/**"
+  ]
+}

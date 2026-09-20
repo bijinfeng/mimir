@@ -1,0 +1,32 @@
+{
+  "name": "mimir",
+  "version": "0.1.0",
+  "private": true,
+  "description": "个人知识库：Markdown 笔记 + 资料收集 + 带引用的 AI 问答",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm -r --parallel --stream dev",
+    "build": "pnpm --filter @mimir/shared build && pnpm -r --filter !@mimir/shared build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "check": "pnpm lint && pnpm format:check && pnpm -r typecheck && pnpm -r test",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:generate": "pnpm --filter @mimir/server db:generate",
+    "db:migrate": "pnpm --filter @mimir/server db:migrate",
+    "db:studio": "pnpm --filter @mimir/server db:studio",
+    "docker:prod": "docker compose --profile prod up -d --build"
+  },
+  "devDependencies": {
+    "oxfmt": "0.68.0",
+    "oxlint": "1.83.0"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@12.4.2"
+}

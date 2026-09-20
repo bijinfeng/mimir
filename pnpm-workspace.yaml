@@ -1,0 +1,60 @@
+packages:
+  - apps/*
+  - packages/*
+
+# ── 依赖版本集中管理 ──
+#
+# 进 catalog 的两类东西：
+#   1. 被两个以上包使用的依赖（改版本只需改一处）
+#   2. 必须保持版本一致的依赖家族（结构上保证，而不是靠人记得）
+#
+# 第二类才是 catalog 的主要价值：@tiptap/* 有 10 个包，
+# 版本错开会让 ProseMirror 的 schema 冲突，而这类错误报得很晚、很难查。
+catalog:
+  # ── 工具链（多包共用）──
+  typescript: 7.0.2
+  vitest: ^5.0.1
+  '@types/node': ^26.6.2
+
+  # ── 共享运行库（前后端都要用同一份 schema）──
+  zod: ^4.6.5
+
+  # ── 必须版本一致的家族 ──
+  # React 与 react-dom 的版本必须完全一致，否则 hooks 的调度器会错配
+  react: ^19.3.0
+  react-dom: ^19.3.0
+
+  # Tiptap 全家必须同级：它的包共享 ProseMirror 的 schema 与插件协议
+  '@tiptap/core': ^3.31.3
+  '@tiptap/pm': ^3.31.3
+  '@tiptap/markdown': ^3.31.3
+  '@tiptap/starter-kit': ^3.31.3
+  '@tiptap/extension-code-block-lowlight': ^3.31.3
+  '@tiptap/extension-image': ^3.31.3
+  '@tiptap/extension-placeholder': ^3.31.3
+  '@tiptap/extension-table': ^3.31.3
+  '@tiptap/extension-task-item': ^3.31.3
+  '@tiptap/extension-task-list': ^3.31.3
+
+# 关于 node_modules 里出现的未声明包
+#
+# @vitejs/plugin-react 把三个包列为 optional peer：
+#   oxc-transform-react / @rolldown/plugin-babel / babel-plugin-react-compiler
+# 但 react({ compiler: true }) 只动态导入 oxc-transform-react，另外两个属于
+# 另一条路径（单独导出的 reactCompilerPreset，走 Babel）。
+#
+# 所以 package.json 里只声明 oxc-transform-react。另外两个仍然出现在
+# node_modules 里，是 pnpm 的 autoInstallPeers 默认行为装的，不是我们的依赖。
+# 已验证：删掉声明前后，构建产物逐字节一致。
+
+# 构建依赖：pnpm 12 默认阻止依赖执行安装脚本，需要显式放行。
+# esbuild 被 vite / drizzle-kit 使用，必须允许执行。
+allowBuilds:
+  esbuild: true
+  '@prisma/client': false
+  better-sqlite3: false
+  # TypeScript 7 是 Go 重写版，各平台的原生二进制；不需要构建脚本
+  '@typescript/typescript-linux-x64': false
+
+# 新版本发布满一天后才允许安装。防止误装当天发布、可能被投毒的版本。
+minimumReleaseAge: 1440
