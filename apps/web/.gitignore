@@ -1,0 +1,5 @@
+dist/
+node_modules/
+
+# 路由树由 @tanstack/router-plugin 生成，不进版本库
+src/routeTree.gen.ts

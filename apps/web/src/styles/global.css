@@ -1,0 +1,107 @@
+/* 全局样式只做三件事：重置、字体、让应用占满视口。
+   组件样式一律走 antd 的 token，不在这里堆砌。 */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 编辑器正文的排版。antd 不管内容区，所以这里自己定。 */
+.note-body {
+  line-height: 1.75;
+  color: #2b3038;
+}
+
+.note-body h1 {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0 0 16px;
+}
+
+.note-body h2 {
+  font-size: 19px;
+  font-weight: 650;
+  margin: 26px 0 10px;
+}
+
+.note-body p {
+  margin: 12px 0;
+}
+
+.note-body code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.875em;
+  background: #f0f1f3;
+  color: #c7254e;
+  padding: 1.5px 5px;
+  border-radius: 4px;
+}
+
+.note-body pre {
+  background: #f7f8fa;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  font-size: 12.5px;
+  line-height: 1.65;
+}
+
+.note-body pre code {
+  background: none;
+  color: #24292f;
+  padding: 0;
+}
+
+.note-body blockquote {
+  border-left: 3px solid #d7dae0;
+  padding: 2px 0 2px 14px;
+  margin: 14px 0;
+  color: #5c6570;
+}
+
+.note-body ul,
+.note-body ol {
+  padding-left: 22px;
+}
+
+.note-body table {
+  border-collapse: collapse;
+  margin: 14px 0;
+  width: 100%;
+}
+
+.note-body th,
+.note-body td {
+  border: 1px solid #e5e7eb;
+  padding: 7px 11px;
+  text-align: left;
+}
+
+.note-body th {
+  background: #fafbfc;
+  font-weight: 600;
+}
+
+/* Tiptap 的占位符 */
+.note-body p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: #8b939c;
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
