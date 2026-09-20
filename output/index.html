@@ -1,0 +1,2686 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>mimir · 交互原型</title>
+<style>
+:root{
+  --bg:#f5f6f8; --panel:#fff; --border:#e5e7eb; --border-strong:#d7dae0;
+  --text:#1f2329; --text-2:#5c6570; --text-3:#8b939c;
+  --primary:#1677ff; --primary-soft:#e8f1ff;
+  --hover:#f2f3f5; --active:#e9eaec;
+  --radius:8px; --radius-sm:6px;
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 2px 8px rgba(0,0,0,.04);
+  --shadow-lg:0 8px 32px rgba(0,0,0,.12),0 2px 8px rgba(0,0,0,.06);
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--sans); background:var(--bg); color:var(--text);
+  font-size:14px; line-height:1.6; -webkit-font-smoothing:antialiased;
+  display:flex; flex-direction:column; overflow:hidden;
+}
+button{font-family:inherit;font-size:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input{font-family:inherit;font-size:inherit;color:inherit}
+svg{display:block}
+
+/* ───────── 原型控制条（非产品 UI，仅供方案对比） ───────── */
+.proto{
+  flex:none; background:#1f2329; color:#e8eaed; padding:10px 16px;
+  display:flex; align-items:center; gap:20px; flex-wrap:wrap;
+  font-size:12.5px; z-index:100;
+}
+.proto-label{color:#9aa0a6;font-weight:500;letter-spacing:.02em}
+.proto-seg{display:flex;background:#2c3138;border-radius:6px;padding:2px;gap:2px}
+.proto-seg button{
+  padding:5px 12px;border-radius:4px;color:#b6bcc3;font-size:12.5px;
+  transition:background .12s,color .12s;white-space:nowrap;
+}
+.proto-seg button:hover{color:#fff}
+.proto-seg button[aria-pressed="true"]{background:#fff;color:#1f2329;font-weight:500}
+.proto-hint{margin-left:auto;color:#7c848c;display:flex;align-items:center;gap:6px}
+kbd{
+  font-family:var(--mono);font-size:11px;background:#2c3138;color:#c9ced4;
+  border:1px solid #3a4048;border-bottom-width:2px;border-radius:4px;
+  padding:1px 5px;line-height:1.4;
+}
+
+/* ───────── 应用外壳 ───────── */
+.app{
+  flex:1;display:grid;min-height:0;background:var(--panel);
+  grid-template-columns:200px 300px 1fr;
+}
+
+/* 导航栏（仅方案 A） */
+.nav{
+  border-right:1px solid var(--border);padding:12px 8px;
+  display:flex;flex-direction:column;gap:2px;background:#fbfbfc;overflow-y:auto;
+}
+.nav-title{
+  font-size:11px;font-weight:600;color:var(--text-3);letter-spacing:.05em;
+  padding:14px 10px 6px;text-transform:uppercase;
+}
+.nav-item{
+  display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:var(--radius-sm);
+  color:var(--text-2);width:100%;text-align:left;font-size:13.5px;
+}
+.nav-item:hover{background:var(--hover)}
+.nav-item[aria-current="true"]{background:var(--primary-soft);color:var(--primary);font-weight:500}
+.nav-count{
+  margin-left:auto;font-size:11.5px;color:var(--text-3);
+  background:var(--active);border-radius:9px;padding:0 6px;min-width:18px;text-align:center;
+}
+.nav-item[aria-current="true"] .nav-count{background:#fff;color:var(--primary)}
+
+/* 导航：会话优先 */
+.nav-brand{
+  display:flex;align-items:center;gap:7px;padding:4px 8px 10px;
+}
+.nav-brand b{font-size:14px;letter-spacing:.06em;font-weight:700}
+.nav-brand .sp{margin-left:auto;display:flex;gap:2px;color:var(--text-3)}
+.nav-brand .sp button{padding:3px;border-radius:4px}
+.nav-brand .sp button:hover{background:var(--hover);color:var(--text)}
+
+.new-chat{
+  display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--radius-sm);
+  border:1px solid var(--border-strong);background:var(--panel);font-weight:550;
+  width:100%;text-align:left;font-size:13.5px;margin-bottom:6px;
+}
+.new-chat:hover{border-color:var(--primary);color:var(--primary);background:#fafbff}
+
+.nav-cta{display:flex;gap:6px;margin-bottom:6px}
+.nav-cta .new-chat{margin-bottom:0;flex:1}
+.collect{
+  width:34px;flex:none;border:1px solid var(--border-strong);border-radius:var(--radius-sm);
+  display:flex;align-items:center;justify-content:center;color:var(--text-2);background:var(--panel);
+}
+.collect:hover{border-color:var(--primary);color:var(--primary);background:#fafbff}
+
+.nav-sec{display:flex;flex-direction:column;gap:1px}
+.nav-sec-head{
+  display:flex;align-items:center;gap:5px;width:100%;text-align:left;
+  padding:5px 8px;color:var(--text-3);font-size:11px;font-weight:600;
+  letter-spacing:.05em;text-transform:uppercase;border-radius:4px;
+}
+.nav-sec-head:hover{background:var(--hover);color:var(--text-2)}
+.nav-sec-head .chev{margin-left:auto;transition:transform .12s}
+.nav-sec[data-open="false"] .nav-sec-body{display:none}
+.nav-sec[data-open="false"] .chev{transform:rotate(-90deg)}
+.nav-sec-body{display:flex;flex-direction:column;gap:1px}
+
+.conv-item{
+  display:flex;align-items:center;gap:7px;padding:6px 10px;border-radius:var(--radius-sm);
+  color:var(--text-2);width:100%;text-align:left;font-size:13px;
+}
+.conv-item:hover{background:var(--hover)}
+.conv-item[aria-current="true"]{background:var(--primary-soft);color:var(--primary);font-weight:500}
+.conv-item span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* 目录树 */
+.tree-item{
+  display:flex;align-items:center;gap:5px;padding:4px 8px;border-radius:4px;
+  color:var(--text-2);width:100%;text-align:left;font-size:13px;
+}
+.tree-item:hover{background:var(--hover)}
+.tree-item[aria-current="true"]{background:var(--primary-soft);color:var(--primary);font-weight:500}
+.tree-item .tw{width:11px;flex:none;color:var(--text-3);transition:transform .12s}
+.tree-item[data-open="false"] .tw{transform:rotate(-90deg)}
+.tree-item .cnt{margin-left:auto;font-size:11px;color:var(--text-3)}
+.tree-kids{display:flex;flex-direction:column;gap:1px}
+.tree-kids[hidden]{display:none}
+
+.nav-sep{border-top:1px solid var(--border);margin:7px 4px}
+
+/* 中间栏：上下文标题 */
+.ctx-tabs{display:flex;gap:2px;background:var(--active);border-radius:6px;padding:2px}
+.ctx-tabs button{
+  flex:1;padding:4px 8px;border-radius:4px;font-size:12.5px;color:var(--text-2);
+}
+.ctx-tabs button[aria-pressed="true"]{background:var(--panel);color:var(--text);font-weight:550;box-shadow:var(--shadow)}
+
+/* 来源卡片（对话模式下的中间栏） */
+.list-hint{
+  font-size:12px;color:var(--text-3);padding:4px 11px 10px;line-height:1.6;
+}
+
+.src-item{
+  display:block;width:100%;text-align:left;padding:10px 11px;border-radius:var(--radius-sm);
+  margin-bottom:3px;border:1px solid transparent;
+}
+.src-item:hover{background:var(--hover)}
+.src-item[aria-selected="true"]{background:var(--primary-soft);border-color:#cfe0ff}
+.src-item-top{display:flex;align-items:center;gap:7px;margin-bottom:4px}
+.src-item-title{font-weight:550;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.src-item-quote{
+  font-size:12.5px;color:var(--text-2);line-height:1.55;padding-left:9px;
+  border-left:2px solid var(--border-strong);
+}
+.src-item-step{font-size:11.5px;color:var(--text-3);margin-top:5px}
+
+/* 列表栏 */
+.list-col{
+  border-right:1px solid var(--border);display:flex;flex-direction:column;
+  min-height:0;background:#fcfcfd;
+}
+.list-head{
+  padding:12px 12px 8px;border-bottom:1px solid var(--border);
+  display:flex;flex-direction:column;gap:10px;flex:none;
+}
+.list-head-row{display:flex;align-items:center;gap:8px}
+.list-title{font-weight:600;font-size:14px}
+.list-sub{font-size:12px;color:var(--text-3)}
+.searchbox{
+  display:flex;align-items:center;gap:7px;background:var(--panel);
+  border:1px solid var(--border-strong);border-radius:var(--radius-sm);
+  padding:5px 9px;color:var(--text-3);
+}
+.searchbox input{border:none;outline:none;flex:1;background:none;font-size:13px}
+.searchbox input::placeholder{color:var(--text-3)}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap}
+.chip{
+  font-size:12px;padding:2px 9px;border-radius:11px;border:1px solid var(--border-strong);
+  color:var(--text-2);background:var(--panel);
+}
+.chip:hover{border-color:var(--primary);color:var(--primary)}
+.chip[aria-pressed="true"]{background:var(--primary);border-color:var(--primary);color:#fff}
+.list-body{flex:1;overflow-y:auto;padding:6px}
+.doc-item{
+  display:block;width:100%;text-align:left;padding:10px 11px;border-radius:var(--radius-sm);
+  border:1px solid transparent;margin-bottom:2px;
+}
+.doc-item:hover{background:var(--hover)}
+.doc-item[aria-selected="true"]{background:var(--primary-soft);border-color:#cfe0ff}
+.doc-item-top{display:flex;align-items:center;gap:7px;margin-bottom:3px}
+.doc-item-title{
+  font-weight:550;font-size:13.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.doc-item-ex{font-size:12.5px;color:var(--text-2);line-height:1.5;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.doc-item-meta{display:flex;align-items:center;gap:7px;margin-top:6px;font-size:11.5px;color:var(--text-3)}
+.badge{
+  font-size:10.5px;font-weight:600;padding:1px 6px;border-radius:4px;
+  letter-spacing:.02em;flex:none;line-height:1.6;
+}
+.badge.note{background:#e6f4ea;color:#137333}
+.badge.web{background:#e8f0fe;color:#1a56c4}
+.badge.wechat{background:#e8f7ec;color:#0f7b3f}
+.badge.github{background:#f0ebfa;color:#5b32b8}
+.badge.inbox{background:#fff3e0;color:#b45309}
+mark{background:#fff3b0;color:inherit;border-radius:2px;padding:0 1px}
+
+/* 文档区 */
+.doc-col{display:flex;flex-direction:column;min-height:0;background:var(--panel);position:relative}
+.doc-toolbar{
+  flex:none;display:flex;align-items:center;gap:10px;padding:9px 16px;
+  border-bottom:1px solid var(--border);min-height:48px;
+}
+.doc-toolbar .path{font-size:12px;color:var(--text-3);font-family:var(--mono);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.tb-btn{
+  display:flex;align-items:center;gap:5px;padding:4px 9px;border-radius:var(--radius-sm);
+  color:var(--text-2);font-size:12.5px;border:1px solid transparent;white-space:nowrap;
+}
+.tb-btn:hover{background:var(--hover);color:var(--text)}
+.tb-btn[aria-pressed="true"]{background:var(--primary-soft);color:var(--primary);border-color:#cfe0ff}
+.doc-scroll{flex:1;overflow-y:auto;min-height:0}
+.doc-inner{max-width:760px;margin:0 auto;padding:36px 40px 160px}
+
+/* 文档内容排版 */
+.doc-h1{font-size:28px;font-weight:700;letter-spacing:-.01em;line-height:1.3;margin-bottom:6px}
+.doc-meta{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--text-3);
+  padding-bottom:16px;border-bottom:1px solid var(--border);margin-bottom:22px;flex-wrap:wrap}
+.doc-inner h2{font-size:19px;font-weight:650;margin:26px 0 10px;letter-spacing:-.005em}
+.doc-inner p{margin:12px 0;color:#2b3038;line-height:1.75}
+.doc-inner ul{margin:12px 0 12px 4px;padding-left:20px}
+.doc-inner li{margin:5px 0;line-height:1.7}
+.doc-inner code{
+  font-family:var(--mono);font-size:12.5px;background:#f0f1f3;color:#c7254e;
+  padding:1.5px 5px;border-radius:4px;
+}
+.doc-inner pre{
+  background:#f7f8fa;border:1px solid var(--border);border-radius:var(--radius);
+  padding:14px 16px;margin:14px 0;overflow-x:auto;font-size:12.5px;line-height:1.65;
+}
+.doc-inner pre code{background:none;color:#24292f;padding:0;font-size:12.5px}
+.tok-key{color:#cf222e}.tok-str{color:#0a7f64}.tok-com{color:#6e7781;font-style:italic}
+.tok-fn{color:#8250df}.tok-num{color:#0550ae}
+.doc-inner blockquote{
+  border-left:3px solid var(--border-strong);padding:2px 0 2px 14px;margin:14px 0;
+  color:var(--text-2);
+}
+.doc-inner table{border-collapse:collapse;margin:14px 0;font-size:13px;width:100%}
+.doc-inner th,.doc-inner td{border:1px solid var(--border);padding:7px 11px;text-align:left}
+.doc-inner th{background:#fafbfc;font-weight:600}
+.doc-inner hr{border:none;border-top:1px solid var(--border);margin:26px 0}
+
+/* 命令面板 */
+.scrim{position:fixed;inset:0;background:rgba(15,18,22,.32);z-index:200;
+  display:flex;align-items:flex-start;justify-content:center;padding-top:13vh;
+  backdrop-filter:blur(2px);animation:fade .12s ease-out}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes pop{from{opacity:0;transform:translateY(-6px) scale(.985)}to{opacity:1;transform:none}}
+.cmdk{
+  width:min(640px,92vw);background:var(--panel);border-radius:12px;
+  box-shadow:var(--shadow-lg);overflow:hidden;animation:pop .15s cubic-bezier(.2,.8,.3,1);
+  display:flex;flex-direction:column;max-height:62vh;
+}
+.cmdk-input{
+  display:flex;align-items:center;gap:10px;padding:14px 16px;
+  border-bottom:1px solid var(--border);flex:none;
+}
+.cmdk-input input{border:none;outline:none;flex:1;font-size:15.5px;background:none}
+.cmdk-input input::placeholder{color:var(--text-3)}
+.cmdk-body{overflow-y:auto;padding:6px}
+.cmdk-sec{font-size:11px;font-weight:600;color:var(--text-3);letter-spacing:.05em;
+  padding:10px 10px 5px;text-transform:uppercase}
+.cmdk-item{
+  display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--radius-sm);
+  width:100%;text-align:left;
+}
+.cmdk-item[data-active="true"]{background:var(--primary-soft)}
+.cmdk-item:hover{background:var(--hover)}
+.cmdk-item[data-active="true"]:hover{background:var(--primary-soft)}
+.cmdk-item-main{flex:1;min-width:0}
+.cmdk-item-title{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cmdk-item-sub{font-size:12px;color:var(--text-3);overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+.cmdk-item kbd{background:#f0f1f3;border-color:var(--border-strong);color:var(--text-3)}
+.cmdk-foot{
+  border-top:1px solid var(--border);padding:8px 14px;display:flex;gap:16px;
+  font-size:11.5px;color:var(--text-3);flex:none;background:#fbfbfc;
+}
+.cmdk-foot span{display:flex;align-items:center;gap:5px}
+.cmdk-ai{
+  border-top:1px solid var(--border);padding:12px 16px;background:#fafbff;flex:none;
+  display:flex;align-items:flex-start;gap:10px;
+}
+.cmdk-ai .ai-ico{
+  width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,#4d8dff,#1677ff);
+  display:flex;align-items:center;justify-content:center;flex:none;margin-top:1px;
+}
+.cmdk-ai-text{flex:1;font-size:13px;line-height:1.65;color:#2b3038}
+.cmdk-ai-text .cite{
+  display:inline-flex;align-items:center;font-size:11px;background:var(--primary-soft);
+  color:var(--primary);border-radius:4px;padding:0 5px;font-weight:600;
+  vertical-align:1px;margin:0 1px;cursor:pointer;
+}
+
+/* 内联工具条 */
+.inline-tb{
+  position:absolute;background:#1f2329;color:#fff;border-radius:8px;padding:4px;
+  display:flex;gap:2px;box-shadow:var(--shadow-lg);z-index:80;
+  animation:pop .12s ease-out;
+}
+.inline-tb button{
+  padding:5px 10px;border-radius:5px;font-size:12.5px;color:#d7dae0;white-space:nowrap;
+}
+.inline-tb button:hover{background:#3a4048;color:#fff}
+
+/* 对话主视图（会话优先：与文档视图平级） */
+.chat-main{flex:1;display:flex;flex-direction:column;min-height:0}
+.chat-main-body{
+  flex:1;overflow-y:auto;padding:28px 32px 24px;
+  display:flex;flex-direction:column;gap:20px;
+  max-width:860px;width:100%;margin:0 auto;
+}
+.chat-main-body .msg-bubble{max-width:min(92%,720px)}
+.chat-main-body .msg.ai{max-width:100%}
+.chat-main-body .msg.ai .msg-bubble{background:none;padding:0;max-width:100%}
+.chat-main-body .msg.ai .msg-bubble p{
+  font-size:14px;line-height:1.8;color:#2b3038;margin:0 0 10px;
+}
+.chat-main-body .msg.user .msg-bubble{font-size:14px;padding:10px 14px;border-radius:12px}
+.chat-main-body .trace{max-width:640px}
+.chat-main-body .cite-card{max-width:640px;background:#fafbfc}
+.chat-main-body .cite-card:hover{background:#fafbff}
+
+.chat-composer{flex:none;padding:0 32px 26px;max-width:860px;width:100%;margin:0 auto}
+.composer-box{
+  border:1px solid var(--border-strong);border-radius:14px;background:var(--panel);
+  padding:14px 16px 10px;box-shadow:0 1px 2px rgba(0,0,0,.03),0 4px 16px rgba(0,0,0,.04);
+}
+.composer-box:focus-within{border-color:#b9d2ff;box-shadow:0 0 0 3px rgba(22,119,255,.08)}
+.composer-box textarea{
+  border:none;outline:none;width:100%;resize:none;font-family:inherit;
+  font-size:14.5px;line-height:1.7;background:none;max-height:140px;
+}
+.composer-box textarea::placeholder{color:var(--text-3)}
+.composer-bar{display:flex;align-items:center;gap:7px;margin-top:8px}
+.pill{
+  display:flex;align-items:center;gap:5px;padding:3px 10px;border-radius:14px;
+  border:1px solid var(--border-strong);font-size:12.5px;color:var(--text-2);background:var(--panel);
+}
+.pill:hover{border-color:#b9d2ff;color:var(--primary)}
+.pill[aria-pressed="true"]{background:var(--primary-soft);border-color:#cfe0ff;color:var(--primary)}
+.icon-btn{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text-3)}
+.icon-btn:hover{background:var(--hover);color:var(--text)}
+.model-pick{
+  font-size:12.5px;color:var(--text-2);padding:3px 9px;border-radius:6px;
+  border:1px solid var(--border);background:#fafbfc;
+}
+.model-pick:hover{border-color:var(--border-strong)}
+.send-btn{
+  width:28px;height:28px;border-radius:7px;background:var(--primary);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+}
+.send-btn:hover{background:#0e5fd8}
+
+/* 检索过程（借鉴 WeKnora：把 RAG 每一步显式摊开） */
+.trace{border:1px solid var(--border);border-radius:var(--radius);background:#fafbfc;margin-bottom:10px;overflow:hidden}
+.trace-head{
+  display:flex;align-items:center;gap:7px;width:100%;text-align:left;
+  padding:8px 11px;font-size:12.5px;color:var(--text-2);
+}
+.trace-head:hover{background:var(--hover)}
+.trace-head strong{color:var(--text);font-weight:600}
+.trace-chev{margin-left:auto;transition:transform .15s;color:var(--text-3)}
+.trace[data-open="false"] .trace-chev{transform:rotate(-90deg)}
+.trace-body{padding:2px 11px 10px 11px;border-top:1px solid var(--border)}
+.trace[data-open="false"] .trace-body{display:none}
+.trace-step{display:flex;gap:8px;padding:6px 0;font-size:12.5px;line-height:1.6;position:relative}
+.trace-step:not(:last-child)::before{
+  content:'';position:absolute;left:7px;top:22px;bottom:-4px;width:1px;background:var(--border-strong);
+}
+.step-ico{
+  width:15px;height:15px;flex:none;margin-top:3px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;background:#e8eaed;color:#5c6570;
+  font-size:9px;z-index:1;
+}
+.step-ico.done{background:#e6f4ea;color:#137333}
+.step-text{flex:1;min-width:0}
+.step-meta{display:block;color:var(--text-3);font-size:11.5px;margin-top:1px}
+.step-kw{
+  font-family:var(--mono);font-size:11.5px;background:#eef0f3;border-radius:4px;
+  padding:0 4px;margin-right:3px;color:#3d4450;
+}
+
+/* 文档大纲 */
+.doc-cols{display:flex;flex:1;min-height:0}
+.doc-cols > .doc-scroll{flex:1;min-width:0}
+.outline{
+  width:196px;flex:none;border-left:1px solid var(--border);overflow-y:auto;
+  padding:28px 14px 40px 16px;background:#fcfcfd;
+}
+.outline[hidden]{display:none}
+.outline-title{
+  font-size:11px;font-weight:600;color:var(--text-3);letter-spacing:.05em;
+  text-transform:uppercase;margin-bottom:9px;
+}
+.ol-item{
+  display:block;width:100%;text-align:left;font-size:12.5px;line-height:1.5;
+  padding:4px 8px;border-radius:5px;color:var(--text-2);
+  border-left:2px solid transparent;margin-bottom:1px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.ol-item:hover{background:var(--hover);color:var(--text)}
+.ol-item[data-lvl="3"]{padding-left:20px;font-size:12px;color:var(--text-3)}
+.ol-item[aria-current="true"]{
+  color:var(--primary);border-left-color:var(--primary);background:var(--primary-soft);font-weight:550;
+}
+.outline-empty{font-size:12px;color:var(--text-3);line-height:1.7}
+
+/* 保存状态 */
+.save-ind{
+  display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--text-3);
+  padding:3px 8px;border-radius:6px;transition:color .15s;
+}
+.save-ind[data-s="saving"]{color:var(--text-2)}
+.save-ind[data-s="saved"]{color:#137333}
+.save-ind[data-s="error"]{color:#c5221f;background:#fef7f6;font-weight:550}
+.save-ind[data-s="error"]:hover{background:#fdecea}
+.save-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+.save-ind[data-s="saving"] .save-dot{animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
+
+/* 文档页脚的来源与反链（借鉴 WeKnora） */
+.doc-foot{
+  margin-top:40px;padding-top:16px;border-top:1px solid var(--border);
+  display:flex;flex-direction:column;gap:9px;font-size:12.5px;
+}
+.foot-row{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.foot-label{color:var(--text-3);flex:none;width:56px}
+.foot-link{
+  color:var(--primary);border-bottom:1px dashed #a8c7fa;padding-bottom:1px;
+  font-size:12.5px;cursor:pointer;
+}
+.foot-link:hover{border-bottom-style:solid}
+.origin{
+  display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:1px 7px;
+  border-radius:4px;font-weight:500;
+}
+.origin.auto{background:#f0f1f3;color:#5c6570}
+.origin.manual{background:#e8f1ff;color:#1a56c4}
+
+/* 回答下方的动作条 */
+.msg-actions{display:flex;align-items:center;gap:6px;margin-top:10px;flex-wrap:wrap}
+.ma-btn{
+  display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--text-2);
+  padding:3px 9px;border-radius:6px;border:1px solid var(--border);
+}
+.ma-btn:hover{border-color:var(--primary);color:var(--primary);background:#fafbff}
+.saved-tag{
+  font-size:11.5px;color:#137333;background:#e6f4ea;border-radius:5px;padding:2px 8px;font-weight:500;
+}
+
+/* 设置页 */
+.nav-foot{margin-top:auto;border-top:1px solid var(--border);padding-top:8px}
+.set-sec{
+  display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--radius-sm);
+  color:var(--text-2);width:100%;text-align:left;font-size:13.5px;
+}
+.set-sec:hover{background:var(--hover)}
+.set-sec[aria-current="true"]{background:var(--primary-soft);color:var(--primary);font-weight:550}
+.set-sec .cnt{margin-left:auto;font-size:11px;color:var(--text-3)}
+
+.set-body{flex:1;overflow-y:auto;min-height:0}
+.set-inner{max-width:720px;padding:28px 40px 120px}
+.set-h1{font-size:20px;font-weight:650;margin-bottom:4px}
+.set-desc{font-size:13px;color:var(--text-2);line-height:1.7;margin-bottom:22px}
+
+.card{
+  border:1px solid var(--border);border-radius:10px;padding:15px 17px;margin-bottom:12px;
+  background:var(--panel);
+}
+.card-head{display:flex;align-items:center;gap:9px;margin-bottom:3px}
+.card-title{font-weight:600;font-size:14px}
+.card-sub{font-size:12.5px;color:var(--text-3);line-height:1.65}
+.card-body{margin-top:13px;display:flex;flex-direction:column;gap:11px}
+.field{display:flex;align-items:center;gap:12px}
+.field-label{width:118px;flex:none;font-size:13px;color:var(--text-2)}
+.field-ctl{flex:1;min-width:0}
+.inp{
+  width:100%;border:1px solid var(--border-strong);border-radius:6px;padding:6px 10px;
+  font-size:13px;font-family:inherit;background:var(--panel);color:var(--text);
+}
+.inp:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(22,119,255,.1)}
+.inp.mono{font-family:var(--mono);font-size:12px}
+select.inp{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--text-3) 50%),linear-gradient(135deg,var(--text-3) 50%,transparent 50%);
+  background-position:calc(100% - 14px) 12px,calc(100% - 9px) 12px;background-size:5px 5px;background-repeat:no-repeat;padding-right:30px}
+
+.sw{width:36px;height:20px;border-radius:11px;background:#d7dae0;position:relative;transition:background .15s;flex:none;cursor:pointer}
+.sw::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .15s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.sw[aria-pressed="true"]{background:var(--primary)}
+.sw[aria-pressed="true"]::after{transform:translateX(16px)}
+.field-row-right{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-2)}
+
+.slider{-webkit-appearance:none;width:100%;height:3px;border-radius:2px;background:var(--border-strong);outline:none}
+.slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--primary);cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+
+/* 插件列表 */
+.plugin{
+  display:flex;align-items:flex-start;gap:11px;padding:11px 0;
+  border-bottom:1px solid var(--border);
+}
+.plugin:last-child{border-bottom:none;padding-bottom:0}
+.plugin:first-child{padding-top:0}
+.plugin-ico{
+  width:30px;height:30px;border-radius:7px;background:#f0f1f3;flex:none;
+  display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--text-2);
+}
+.plugin-main{flex:1;min-width:0}
+.plugin-name{font-weight:550;font-size:13.5px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.plugin-desc{font-size:12.5px;color:var(--text-3);margin-top:2px;line-height:1.6}
+.plugin-src{font-family:var(--mono);font-size:11px;color:var(--text-3);margin-top:4px}
+.tag-builtin{font-size:10.5px;background:#eef0f3;color:#5c6570;border-radius:3px;padding:0 5px;font-weight:500}
+.tag-soon{font-size:10.5px;background:#fff3e0;color:#b45309;border-radius:3px;padding:0 5px;font-weight:500}
+.seam-head{
+  display:flex;align-items:center;gap:8px;margin:22px 0 2px;
+  font-size:12px;font-weight:600;color:var(--text-2);letter-spacing:.03em;
+}
+.seam-head:first-child{margin-top:0}
+.seam-head .seam-key{font-family:var(--mono);font-size:11px;color:var(--text-3);font-weight:400}
+.seam-note{font-size:12px;color:var(--text-3);line-height:1.6;margin-bottom:6px}
+
+/* 抓取对话框 */
+.cap{width:min(620px,92vw);background:var(--panel);border-radius:12px;box-shadow:var(--shadow-lg);
+  overflow:hidden;display:flex;flex-direction:column;max-height:74vh}
+.cap-head{padding:15px 18px 0;flex:none}
+.cap-title{font-size:15px;font-weight:600;margin-bottom:3px}
+.cap-sub{font-size:12.5px;color:var(--text-3);line-height:1.6}
+.cap-body{padding:15px 18px;overflow-y:auto;flex:1}
+.cap-url{display:flex;gap:8px}
+.cap-url input{flex:1}
+.cap-kind{
+  display:flex;align-items:center;gap:7px;margin-top:10px;font-size:12.5px;
+  color:var(--text-2);background:#f7f8fa;border-radius:7px;padding:7px 11px;
+}
+.cap-kind b{color:var(--text);font-weight:600}
+.cap-stages{margin-top:14px;display:flex;flex-direction:column;gap:2px}
+.cap-stage{display:flex;align-items:center;gap:9px;font-size:13px;padding:5px 0;color:var(--text-3)}
+.cap-stage[data-s="done"]{color:var(--text-2)}
+.cap-stage[data-s="run"]{color:var(--text);font-weight:550}
+.cap-dot{
+  width:16px;height:16px;border-radius:50%;flex:none;background:#eef0f3;
+  display:flex;align-items:center;justify-content:center;font-size:9px;color:#8b939c;
+}
+.cap-stage[data-s="done"] .cap-dot{background:#e6f4ea;color:#137333}
+.cap-stage[data-s="run"] .cap-dot{background:var(--primary);color:#fff}
+.cap-stage[data-s="fail"] .cap-dot{background:#fdecea;color:#c5221f}
+.cap-stage[data-s="fail"]{color:#c5221f}
+.cap-stage em{font-style:normal;color:var(--text-3);font-size:12px;margin-left:auto}
+.cap-preview{border:1px solid var(--border);border-radius:9px;padding:13px 15px;margin-top:6px;background:#fcfcfd}
+.cap-preview-title{font-weight:600;font-size:14px;margin-bottom:7px}
+.cap-preview-text{font-size:12.5px;color:var(--text-2);line-height:1.7;white-space:pre-wrap}
+.cap-preview-meta{font-size:11.5px;color:var(--text-3);margin-top:9px;display:flex;gap:12px;flex-wrap:wrap}
+.cap-fail{
+  background:#fef7f6;border:1px solid #f6d5d1;border-radius:9px;padding:13px 15px;
+  font-size:12.5px;color:#8a2b23;line-height:1.75;
+}
+.cap-fail b{display:block;margin-bottom:4px;font-size:13px;color:#c5221f}
+.cap-foot{
+  flex:none;padding:12px 18px;border-top:1px solid var(--border);background:#fbfbfc;
+  display:flex;align-items:center;gap:9px;
+}
+.cap-hint{font-size:12px;color:var(--text-3);flex:1}
+
+/* 对话空态 */
+.chat-empty{
+  margin:auto;text-align:center;padding:40px 20px;max-width:520px;
+}
+.chat-empty-title{font-size:16px;font-weight:600;margin-bottom:6px}
+.chat-empty-sub{font-size:13px;color:var(--text-3);line-height:1.7;margin-bottom:18px}
+.chat-empty-asks{display:flex;flex-direction:column;gap:7px;align-items:center}
+.chat-empty-asks .chip{font-size:13px;padding:6px 14px;border-radius:16px}
+.chat-empty-asks .chip:hover{border-color:var(--primary);color:var(--primary);background:#fafbff}
+
+/* 从对话跳转回来 */
+.back-chat{
+  display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:var(--primary);
+  background:var(--primary-soft);border-radius:7px;padding:5px 11px;margin-bottom:16px;
+}
+.back-chat:hover{background:#dbe9ff}
+
+/* 整理条 */
+.triage{
+  display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+  border:1px solid #ffe0b2;background:#fffaf2;border-radius:9px;padding:11px 14px;margin-bottom:20px;
+}
+.triage-label{font-size:12.5px;color:#b45309;font-weight:600;flex:none}
+.triage .chip{border-color:#f0d9b5;background:#fff}
+.triage .chip:hover{border-color:var(--primary);color:var(--primary)}
+.triage .ma-btn{border-color:#f0d9b5;background:#fff}
+.triage-sep{width:1px;height:18px;background:#f0d9b5}
+
+/* 未保存确认 */
+.confirm{width:min(420px,92vw);background:var(--panel);border-radius:12px;box-shadow:var(--shadow-lg);
+  padding:20px 22px;display:flex;flex-direction:column;gap:6px}
+.confirm-title{font-size:15px;font-weight:600}
+.confirm-text{font-size:13px;color:var(--text-2);line-height:1.7;margin-bottom:12px}
+.confirm-actions{display:flex;justify-content:flex-end;gap:8px}
+
+/* 正文可编辑态 */
+.doc-inner[contenteditable="true"]:focus{outline:none}
+.doc-inner[contenteditable="true"]{cursor:text}
+.doc-inner[contenteditable="true"] h2:hover,
+.doc-inner[contenteditable="true"] p:hover{background:#fbfcfd;border-radius:4px}
+
+/* 失败状态：每类给不同的出路 */
+.err-box{
+  border:1px solid #f6d5d1;background:#fef7f6;border-radius:10px;padding:13px 15px;
+  max-width:640px;
+}
+.err-head{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;color:#c5221f;margin-bottom:5px}
+.err-detail{font-size:12.5px;color:#8a2b23;line-height:1.7}
+.err-actions{display:flex;gap:7px;margin-top:11px;flex-wrap:wrap}
+.err-actions .ma-btn{border-color:#f0c9c4;background:#fff;color:#8a2b23}
+.err-actions .ma-btn:hover{border-color:#c5221f;color:#c5221f;background:#fff}
+.err-actions .ma-btn[data-primary]{background:#c5221f;color:#fff;border-color:#c5221f}
+.err-actions .ma-btn[data-primary]:hover{background:#a91b17;color:#fff}
+.err-note{font-size:11.5px;color:var(--text-3);margin-top:9px}
+
+/* 浮动提示 */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:#1f2329;color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;
+  box-shadow:var(--shadow-lg);z-index:300;animation:pop .15s ease-out;
+}
+.hidden{display:none !important}
+/* 窄屏适配 */
+@media(max-width:1100px){
+  .app{grid-template-columns:180px 260px 1fr}
+}
+@media(max-width:880px){
+  .app{grid-template-columns:1fr}
+  .nav,.list-col{display:none}
+}
+</style>
+</head>
+<body>
+<!-- ══════════ 原型控制条 ══════════ -->
+<div class="proto">
+  <span class="proto-label">已定方案</span>
+  <div class="proto-seg" id="segFixed">
+    <button aria-pressed="true" disabled>三栏布局</button>
+    <button aria-pressed="true" disabled>所见即所得</button>
+  </div>
+  <span class="proto-label">故障演示</span>
+  <div class="proto-seg" id="segDemo">
+    <button data-d="none" aria-pressed="true">正常</button>
+    <button data-d="savfail">保存失败</button>
+    <button data-d="quota">额度用尽</button>
+    <button data-d="timeout">超时</button>
+    <button data-d="truncated">被截断</button>
+    <button data-d="offline">离线</button>
+  </div>
+  <span class="proto-hint">
+    <kbd>Ctrl</kbd><kbd>K</kbd> 命令面板 · 选中正文看内联工具条
+  </span>
+</div>
+
+<!-- ══════════ 应用 ══════════ -->
+<div class="app">
+
+  <!-- 导航：会话优先 -->
+  <nav class="nav">
+    <div class="nav-brand">
+      <b>mimir</b>
+      <span class="sp">
+        <button title="搜索"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 L14 14"/></svg></button>
+        <button title="折叠"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M6.5 3v10"/></svg></button>
+      </span>
+    </div>
+
+    <div class="nav-cta">
+      <button class="new-chat">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3v10M3 8h10"/></svg>
+        新对话
+      </button>
+      <button class="collect" id="btnCollect" title="收集网页 / 公众号 / GitHub">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7">
+          <path d="M8 10.5V2.5M5 5l3-3 3 3M2.5 10v3.5h11V10"/>
+        </svg>
+      </button>
+    </div>
+
+    <div id="convSec"></div>
+
+    <div class="nav-sep"></div>
+
+    <div class="nav-sec" data-open="true">
+      <button class="nav-sec-head">知识库
+        <svg class="chev" width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>
+      </button>
+      <div class="nav-sec-body">
+        <button class="nav-item" data-scope="inbox" aria-current="true"><span>收件箱</span><span class="nav-count">3</span></button>
+        <button class="nav-item" data-scope="all"><span>全部文档</span><span class="nav-count">42</span></button>
+        <button class="nav-item" data-scope="note"><span>我的笔记</span><span class="nav-count">17</span></button>
+        <button class="nav-item" data-scope="clip"><span>收集的资料</span><span class="nav-count">25</span></button>
+      </div>
+    </div>
+
+    <div class="nav-sec" data-open="true">
+      <button class="nav-sec-head">目录
+        <svg class="chev" width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>
+      </button>
+      <div class="nav-sec-body" id="treeSec"></div>
+    </div>
+
+    <div class="nav-sec" data-open="true">
+      <button class="nav-sec-head">标签
+        <svg class="chev" width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>
+      </button>
+      <div class="nav-sec-body">
+        <button class="nav-item" data-tag="react"><span>#react</span><span class="nav-count">8</span></button>
+        <button class="nav-item" data-tag="数据库"><span>#数据库</span><span class="nav-count">6</span></button>
+        <button class="nav-item" data-tag="RAG"><span>#RAG</span><span class="nav-count">5</span></button>
+        <button class="nav-item" data-tag="纪录片"><span>#纪录片</span><span class="nav-count">2</span></button>
+      </div>
+    </div>
+
+    <div class="nav-foot">
+      <button class="nav-item" data-view="settings">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v1.6M8 12.6v1.6M1.8 8h1.6M12.6 8h1.6M3.6 3.6l1.1 1.1M11.3 11.3l1.1 1.1M12.4 3.6l-1.1 1.1M4.7 11.3l-1.1 1.1"/>
+        </svg>
+        <span>设置</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- 列表 -->
+  <section class="list-col">
+    <div class="list-head">
+      <div class="ctx-tabs" id="ctxTabs">
+        <button data-mode="chat" aria-pressed="false">对话</button>
+        <button data-mode="docs" aria-pressed="true">文档</button>
+      </div>
+      <div class="list-head-row">
+        <span class="list-title" id="listTitle">收件箱</span>
+        <span class="list-sub" id="listSub">3 条待整理</span>
+      </div>
+      <label class="searchbox">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7">
+          <circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 L14 14"/>
+        </svg>
+        <input id="searchInput" placeholder="搜索标题与正文…" />
+        <kbd style="font-size:10.5px">Ctrl K</kbd>
+      </label>
+      <div class="filter-row">
+        <button class="chip" aria-pressed="true">全部</button>
+        <button class="chip">笔记</button>
+        <button class="chip">网页</button>
+        <button class="chip">公众号</button>
+        <button class="chip">GitHub</button>
+      </div>
+    </div>
+    <div class="list-body" id="docList"></div>
+  </section>
+
+  <!-- 文档 -->
+  <main class="doc-col">
+    <div class="doc-toolbar" id="docToolbar">
+      <span class="path" id="docPath">2026/09/react-组件性能优化-a1b2c3d4.md</span>
+      <span class="save-ind" id="saveInd" data-s="saved"><span class="save-dot"></span><span id="saveText">已保存</span></span>
+      <button class="tb-btn" id="btnAi">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.5l1.6 4.1 4.1 1.6-4.1 1.6L8 12.9 6.4 8.8 2.3 7.2l4.1-1.6L8 1.5z"/></svg>
+        问 AI
+      </button>
+      <button class="tb-btn" id="btnInlineDemo">演示内联</button>
+    </div>
+    <div class="doc-cols" id="docCols">
+      <div class="doc-scroll" id="docScroll">
+        <div class="doc-inner" id="docInner"></div>
+      </div>
+      <!-- 右侧大纲。长文技术资料动辄几千字，没有锚点导航就只能靠滚 -->
+      <aside class="outline" id="docOutline" hidden></aside>
+    </div>
+
+    <!-- 设置视图 -->
+    <div class="doc-scroll hidden" id="docSettings"></div>
+
+    <!-- 对话主视图。会话优先：它和文档视图平级，不是侧边面板 -->
+    <div class="chat-main hidden" id="chatMain">
+      <div class="chat-main-body" id="chatMainBody"></div>
+      <div class="chat-composer">
+        <div class="composer-box">
+          <textarea id="mainTextarea" rows="1" placeholder="直接向知识库提问…"></textarea>
+          <div class="composer-bar">
+            <button class="pill" id="pillReason" aria-pressed="true">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.5l1.6 4.1 4.1 1.6-4.1 1.6L8 12.9 6.4 8.8 2.3 7.2l4.1-1.6L8 1.5z"/></svg>
+              深度思考
+            </button>
+            <button class="pill" id="pillScope">范围：整个知识库</button>
+            <button class="icon-btn" title="附件"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 5v5.5a2.5 2.5 0 01-5 0V4.8a1.8 1.8 0 013.6 0V10"/></svg></button>
+            <span style="flex:1"></span>
+            <span class="model-pick">deepseek-chat</span>
+            <button class="send-btn" id="mainSend">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M2 13.5l12-5.5L2 2.5v4.3l8 1.2-8 1.2v4.3z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+
+<div id="layer"></div>
+<script>
+/* ══════════════════════════════════════════════════════════
+   演示数据。刻意混入三种来源 + 一条自己的笔记，
+   因为「资料 vs 笔记」的视觉区分是这个产品要验证的重点之一。
+   ══════════════════════════════════════════════════════════ */
+const DOCS = [
+  {
+    id:'n1', kind:'note', title:'React 组件性能优化', status:'ready',
+    path:'2026/09/react-组件性能优化-a1b2c3d4.md', tags:['react','性能'], updated:'2 小时前',
+    origin:'manual', backlinks:['用 pgvector 做混合检索：BM25 + 向量 + RRF'],
+    sources:[],
+    excerpt:'用 memo 包一层即可避免重渲染。重点是先量再优化，别凭直觉加 useMemo。',
+    body:`用 \`memo\` 包一层即可避免重渲染。但**先量再优化**——React DevTools 的 Profiler 会告诉你哪个组件真的慢，凭直觉加 \`useMemo\` 往往只是让代码更难读。
+
+## 三个真正有效的动作
+
+- 把频繁变化的 state 往下挪，缩小重渲染范围
+- 列表项必须有稳定的 \`key\`，用下标当 key 等于放弃复用
+- 大对象用 \`useMemo\` 缓存，但只在 Profiler 指到它时才做
+
+## 反例
+
+下面这种写法看起来很"优化"，实际上每次渲染都会新建函数，memo 完全失效：
+
+\`\`\`tsx
+const Row = memo(({ item, onPick }) => (
+  <div onClick={() => onPick(item.id)}>{item.name}</div>
+))
+
+// 父组件里
+<Row item={item} onPick={(id) => setSelected(id)} />  // ← 每次都新建，memo 白写
+\`\`\`
+
+正确做法是把回调用 \`useCallback\` 固定住，或者干脆把 \`item.id\` 传下去、让子组件自己调。
+
+> 结论：memo 的收益取决于 props 是否稳定。不稳定的 props 会让 memo 变成纯粹的额外开销。`
+  },
+  {
+    id:'w1', kind:'web', title:'用 pgvector 做混合检索：BM25 + 向量 + RRF', status:'inbox',
+    path:null, url:'https://example.dev/pgvector-hybrid-search', tags:['数据库','RAG'], updated:'昨天',
+    origin:'auto', backlinks:[], sources:['React 组件性能优化'],
+    excerpt:'纯向量检索会漏掉专有名词，纯关键词又漏语义。RRF 用名次而不是分数做融合，避开了两个通道分数不可比的问题。',
+    body:`纯向量检索会漏掉专有名词，纯关键词又漏语义。混合检索的常见做法是把两路结果用 RRF 融合。
+
+## 为什么用 RRF 而不是加权求和
+
+\`ts_rank_cd\` 落在 0~1 但分布诡异，BM25 经常大于 10。直接加权求和会让分数尺度大的通道单方面主导。RRF 只看名次：
+
+\`\`\`sql
+select coalesce(k.id, v.id) as chunk_id,
+       coalesce(1.0/(60+k.rk), 0) + coalesce(1.0/(60+v.rk), 0) as rrf
+from keyword_hits k
+full outer join vector_hits v on k.id = v.id
+order by rrf desc
+limit 10;
+\`\`\`
+
+k 取 60 是原论文的取值，作用是压低头部名次的绝对优势。
+
+## 中文的坑
+
+Postgres 的 \`simple\` 分词器没有中文词边界概念，「组件性能优化」会被当成一个 token，用户搜「组件」永远搜不到。要么在写入时预分词，要么换带中文分词的检索扩展。`
+  },
+  {
+    id:'c1', kind:'wechat', title:'公众号：从零实现一个 RAG 系统', status:'inbox',
+    path:null, url:'https://mp.weixin.qq.com/s/xxxx', tags:['RAG'], updated:'昨天',
+    origin:'auto', backlinks:[], sources:[],
+    excerpt:'分块策略决定了检索质量的上限。按标题层级切、保留父标题路径，比按固定字符数切效果好得多。',
+    body:`分块策略决定了检索质量的上限。按标题层级切、并且**保留父标题路径**作为上下文，比按固定字符数切效果好得多。
+
+原因很直接：一个 500 字的段落单独看可能完全不知所云，但加上「React / 性能优化 / 列表渲染」这条路径，它的语义就完整了。
+
+## 代码块要整体保留
+
+技术文章里的代码块如果在中间被切断，检索到半截代码等于没检索到。
+
+> 注意：微信公众号的代码经常是截图，正文里根本没有代码文本。这类文章只能靠 OCR 或者接受这个缺陷。`
+  },
+  {
+    id:'g1', kind:'github', title:'TanStack/ai — 类型安全的 AI SDK', status:'inbox',
+    path:null, url:'https://github.com/TanStack/ai', tags:['react','AI'], updated:'2 天前',
+    origin:'auto', backlinks:[], sources:[],
+    excerpt:'provider 无关的 TypeScript AI SDK，包含 chat / embed / rerank / summarize 四类活动，有 React hooks。',
+    body:`provider 无关的 TypeScript AI SDK。关键在于它把能力拆成了可 tree-shake 的 activities：chat、embed、rerank、summarize。
+
+## 为什么值得看
+
+它有一个 \`openaiCompatible\` 工厂，可以直接指向任何 OpenAI 兼容端点：
+
+\`\`\`ts
+const deepseek = openaiCompatible({
+  name: 'deepseek',
+  baseURL: 'https://api.deepseek.com/v1',
+  apiKey: process.env.DEEPSEEK_KEY!,
+  models: ['deepseek-chat', 'deepseek-reasoner'],
+})
+\`\`\`
+
+这意味着一套适配器就能覆盖国产模型，不需要为每家写一份。
+
+## 风险
+
+版本号还在 0.x，基本周更，API 有变动可能。适配器层很薄，真出问题换掉成本可控。`
+  },
+  {
+    id:'n2', kind:'note', title:'纪录片拍摄技巧', status:'ready',
+    path:'2026/08/纪录片拍摄技巧-9f8e7d6c.md', tags:['纪录片'], updated:'3 天前',
+    origin:'manual', backlinks:[], sources:[],
+    excerpt:'手持运镜要稳，采访尽量双机位。真实感来自不完美的构图，而不是炫技的运镜。',
+    body:`手持运镜要稳，采访尽量双机位。
+
+## 采访
+
+- 双机位：一个中景保持不动，一个特写跟着情绪走
+- 别打断被访者，沉默三秒往往能等到最真实的一句
+- 环境音一定要单独收一条，后期补不回来
+
+## 运镜
+
+真实感来自不完美的构图，而不是炫技的运镜。`
+  }
+];
+
+/* 会话历史。会话优先意味着它和文档一样是一等公民，不是附属面板 */
+const CONVERSATIONS = [
+  { id:'v1', title:'React 性能优化相关笔记', when:'今天', time:'14:02', refs:['n1','w1'] },
+  { id:'v2', title:'pgvector 混合检索怎么做的', when:'今天', time:'11:35', refs:['w1','n1'] },
+  { id:'v3', title:'公众号那篇 RAG 的分块策略', when:'昨天', time:'20:11', refs:['c1'] },
+  { id:'v4', title:'TanStack AI 值不值得用', when:'昨天', time:'09:48', refs:['g1','n1'] },
+  { id:'v5', title:'纪录片采访机位怎么摆', when:'更早', time:'3 天前', refs:['n2'] },
+];
+
+/* 目录树。与标签分工：树管归属（唯一位置），标签管横切（可多个） */
+const TREE = [
+  { id:'t-tech', name:'技术', count:12, kids:[
+    { id:'t-fe', name:'前端', count:8, kids:[
+      { id:'t-react', name:'React', count:5, kids:[] },
+      { id:'t-build', name:'构建工具', count:3, kids:[] },
+    ]},
+    { id:'t-db', name:'数据库', count:4, kids:[] },
+  ]},
+  { id:'t-doc', name:'纪录片', count:2, kids:[] },
+];
+
+/* ══════════════════════════════════════════════════════════
+   插件注册表。
+   设置页不是一堆散落的表单，而是这份注册表的人类可读视图：
+   每一行「可配置的东西」都对应一个注册进接缝的实现。
+   ══════════════════════════════════════════════════════════ */
+const SEAMS = [
+  {
+    key:'capturer', name:'抓取器', note:'把一份外部来源变成统一的 Markdown + 元数据',
+    plugins:[
+      { id:'manual-url', name:'粘贴链接', desc:'通用网页，服务端抓取 + Readability 提取正文', file:'src/plugins/capturer/manual-url.ts', on:true },
+      { id:'rss', name:'RSS / Atom 订阅', desc:'定时轮询，新文章自动进收件箱。技术博客的首选路径', file:'src/plugins/capturer/rss.ts', on:true },
+      { id:'wechat', name:'公众号文章', desc:'正文在 #js_content，图片需带 Referer 下载。反爬严，高频会撞墙', file:'src/plugins/capturer/wechat.ts', on:true },
+      { id:'github', name:'GitHub 仓库', desc:'API 取 README + topics + release，AI 生成「解决什么问题」', file:'src/plugins/capturer/github.ts', on:true },
+      { id:'gh-star', name:'GitHub Star 同步', desc:'每天拉一次自己 star 的仓库，新的自动入收件箱', file:'src/plugins/capturer/gh-star.ts', on:false },
+      { id:'browser-ext', name:'浏览器扩展', desc:'在你的会话里抓取，绕开反爬与付费墙', file:'apps/extension/', on:false, soon:true },
+    ]
+  },
+  {
+    key:'parser', name:'解析器', note:'把抓到的原文转成结构化文本，并保留页码/偏移以便回溯',
+    plugins:[
+      { id:'markdown', name:'Markdown', desc:'原生支持，无需转换，文件本身就是真相', file:'src/plugins/parser/markdown.ts', on:true },
+      { id:'readability', name:'HTML 正文提取', desc:'去掉导航与广告，保留代码块与表格', file:'src/plugins/parser/readability.ts', on:true },
+      { id:'pdf', name:'PDF', desc:'保留页码；扫描版需要 OCR，否则正文为空', file:'src/plugins/parser/pdf.ts', on:false, soon:true },
+      { id:'docx', name:'Word / docx', desc:'mammoth 转 Markdown', file:'src/plugins/parser/docx.ts', on:false, soon:true },
+    ]
+  },
+  {
+    key:'leg', name:'检索通道', note:'每个通道独立召回一批结果，再由融合层合并（M0 已有两条）',
+    plugins:[
+      { id:'keyword', name:'关键词（jieba 分词）', desc:'词级召回，带词边界语义，权重 1.0', file:'src/search/legs.ts', on:true },
+      { id:'substring', name:'子串兜底（pg_trgm）', desc:'分词切错时仍能命中，权重 0.6', file:'src/search/legs.ts', on:true },
+      { id:'vector', name:'向量（pgvector）', desc:'语义召回，M1 上线', file:'src/search/legs.ts', on:false, soon:true },
+      { id:'rerank', name:'重排序', desc:'对融合后的候选重新打分，M1 上线', file:'src/search/rerank.ts', on:false, soon:true },
+    ]
+  },
+  {
+    key:'provider', name:'模型提供方', note:'一套 OpenAI 兼容适配器即可接住绝大多数国产模型',
+    plugins:[
+      { id:'deepseek', name:'DeepSeek', desc:'对话主力，便宜且中文好', file:'src/plugins/provider/deepseek.ts', on:true },
+      { id:'qwen', name:'通义千问', desc:'embedding 与长文本摘要', file:'src/plugins/provider/qwen.ts', on:true },
+      { id:'zhipu', name:'智谱 GLM', desc:'备选', file:'src/plugins/provider/zhipu.ts', on:false },
+      { id:'ollama', name:'Ollama（本地）', desc:'不联网的兜底，速度慢但数据不出机器', file:'src/plugins/provider/ollama.ts', on:false },
+    ]
+  },
+];
+
+const SET_SECTIONS = [
+  { id:'models',   name:'模型',   desc:'给不同任务分配不同的模型，便宜模型做摘要、强模型做推理' },
+  { id:'retrieval',name:'检索',   desc:'这些参数现在写死在代码常量里，暴露出来才能按自己的语料调' },
+  { id:'capture',  name:'抓取',   desc:'各来源的开关与凭据' },
+  { id:'plugins',  name:'插件',   desc:'按接缝分组，查看注册了哪些实现' },
+  { id:'data',     name:'数据与备份', desc:'导出、重建索引、回收站' },
+  { id:'account',  name:'账号',   desc:'单用户自托管，这里只有改密码' },
+];
+
+/* ══════════ 状态 ══════════ */
+const state = {
+  currentId:'n1',
+  view:'app',
+  demo:'none',
+  dirty:false,
+  askFrom:null,
+  askMode:false,
+  setSection:'models',
+  mode:'docs',
+  convId:null,
+  scope:'inbox',
+  query:'',
+  cmdkOpen:false,
+  cmdkQuery:'',
+  cmdkIndex:0,
+  aiMessages:[],
+};
+
+/* ══════════ 工具 ══════════ */
+const $ = (sel, root=document) => root.querySelector(sel);
+const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+function esc(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function hl(text, q){
+  if(!q) return esc(text);
+  const i = text.toLowerCase().indexOf(q.toLowerCase());
+  if(i < 0) return esc(text);
+  return esc(text.slice(0,i)) + '<mark>' + esc(text.slice(i, i+q.length)) + '</mark>' + esc(text.slice(i+q.length));
+}
+function snippet(text, q, len=88){
+  if(!q) return text.slice(0, len) + (text.length>len ? '…' : '');
+  const i = text.toLowerCase().indexOf(q.toLowerCase());
+  if(i < 0) return text.slice(0, len) + (text.length>len ? '…' : '');
+  const start = Math.max(0, i - 24);
+  const out = text.slice(start, start + len);
+  return (start>0?'…':'') + out + (start+len < text.length ? '…' : '');
+}
+const KIND_LABEL = {note:'笔记', web:'网页', wechat:'公众号', github:'GitHub'};
+
+let toastTimer = null;
+function toast(msg){
+  const old = $('.toast'); if(old) old.remove();
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.remove(), 2000);
+}
+
+/* ══════════ 导航渲染 ══════════ */
+
+function renderNav(){
+  // 会话历史：按时间分组。会话优先意味着它排在文档入口之前
+  const groups = {};
+  for(const c of CONVERSATIONS){
+    (groups[c.when] = groups[c.when] || []).push(c);
+  }
+  $('#convSec').innerHTML = Object.entries(groups).map(([when, items]) => `
+    <div class="nav-sec" data-open="true">
+      <button class="nav-sec-head">${esc(when)}</button>
+      <div class="nav-sec-body">
+        ${items.map(c => `
+          <button class="conv-item" data-conv="${c.id}"
+            aria-current="${state.mode==='chat' && state.convId===c.id}">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" style="flex:none;opacity:.6">
+              <path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2z"/>
+            </svg>
+            <span>${esc(c.title)}</span>
+          </button>`).join('')}
+      </div>
+    </div>`).join('');
+
+  // 目录树
+  const renderNodes = (nodes, depth) => nodes.map(n => `
+    <button class="tree-item" data-folder="${n.id}" aria-current="false"
+      style="padding-left:${8 + depth*12}px" data-open="true">
+      ${n.kids.length
+        ? `<svg class="tw" width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 6l4 4 4-4"/></svg>`
+        : `<span class="tw"></span>`}
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="flex:none;opacity:.55">
+        <path d="M1.8 4.2h4.4l1.3 1.6h6.7v6.4H1.8z"/>
+      </svg>
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(n.name)}</span>
+      <span class="cnt">${n.count}</span>
+    </button>
+    ${n.kids.length ? `<div class="tree-kids" data-parent="${n.id}">${renderNodes(n.kids, depth+1)}</div>` : ''}
+  `).join('');
+  $('#treeSec').innerHTML = renderNodes(TREE, 0);
+
+  // 会话项
+  $$('.conv-item').forEach(el => el.onclick = () => confirmLeave(() => openConversation(el.dataset.conv)));
+  // 目录折叠 + 选中
+  $$('.tree-item').forEach(el => {
+    el.onclick = (e) => {
+      if(e.target.closest('.tw') && el.dataset.open !== undefined && el.querySelector('.tw')){
+        const kids = document.querySelector(`.tree-kids[data-parent="${el.dataset.folder}"]`);
+        if(kids){ kids.hidden = !kids.hidden; el.dataset.open = String(kids.hidden ? 'false' : 'true'); return; }
+      }
+      confirmLeave(() => {
+        $$('.tree-item').forEach(x => x.setAttribute('aria-current','false'));
+        el.setAttribute('aria-current','true');
+        state.mode = 'docs';
+        state.view = 'app';
+        state.scope = 'folder:' + el.dataset.folder;
+        syncMode();
+        renderList();
+        renderMain();
+        toast('目录：' + el.textContent.trim());
+      });
+    };
+  });
+  // 分区折叠
+  $$('.nav-sec-head').forEach(el => el.onclick = () => {
+    const sec = el.parentElement;
+    sec.dataset.open = sec.dataset.open === 'true' ? 'false' : 'true';
+  });
+}
+
+function openConversation(id){
+  state.view = 'app';
+  // 从会话历史进来是「翻旧账」，不是「就某篇提问」
+  if(id) state.askMode = false;
+  state.mode = 'chat';
+  state.convId = id || null;
+  syncMode();
+  renderNav();
+  renderList();
+  renderMain();
+}
+
+function openDocs(scope){
+  state.view = 'app';
+  state.mode = 'docs';
+  state.scope = scope || 'all';
+  syncMode();
+  renderNav();
+  renderList();
+  renderMain();
+}
+
+function syncMode(){
+  $$('#ctxTabs button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === state.mode)));
+  $$('.nav-item').forEach(el => {
+    const active = state.mode === 'docs' &&
+      ((el.dataset.scope && state.scope === el.dataset.scope) ||
+       (el.dataset.tag && state.scope === 'tag:' + el.dataset.tag));
+    el.setAttribute('aria-current', String(active));
+  });
+}
+
+/* ══════════ 列表渲染 ══════════ */
+function visibleDocs(){
+  const q = state.query.trim();
+  return DOCS.filter(d => {
+    // scope 过滤：收件箱 / 笔记 / 资料 / 目录 / 标签
+    if(state.scope === 'inbox' && d.status !== 'inbox') return false;
+    if(state.scope === 'note' && d.kind !== 'note') return false;
+    if(state.scope === 'clip' && d.kind === 'note') return false;
+    if(state.scope.startsWith('tag:')) {
+      const tag = state.scope.slice(4);
+      if(!d.tags.includes(tag)) return false;
+    }
+    if(!q) return true;
+    return (d.title + ' ' + d.body + ' ' + d.tags.join(' ')).toLowerCase().includes(q.toLowerCase());
+  });
+}
+
+function renderList(){
+  const list = $('#docList');
+  if(state.view === 'settings') return;
+
+  // 对话模式：中间栏显示这次对话读过的文档，把「引用来源」提成一等公民
+  if(state.mode === 'chat'){
+    const conv = CONVERSATIONS.find(c => c.id === state.convId);
+    $('#listTitle').textContent = conv ? '本次引用' : '新对话';
+    $('#listSub').textContent = conv ? `${conv.refs.length} 个来源` : '还没有引用';
+    $('#searchInput').closest('.searchbox').style.display = 'none';
+    $('.filter-row').style.display = 'none';
+
+    // 新对话的中间栏不给空态：显示待整理的内容。
+    // 理由：启动新对话最典型的动机就是「我刚收了几篇东西，想问问」，
+    // 把这个动机需要的东西直接摆在眼前，比一句提示语有用。
+    if(!conv){
+      const pending = DOCS.filter(d => d.status === 'inbox');
+      if(!pending.length){
+        list.innerHTML = '<div style="padding:36px 16px;text-align:center;color:var(--text-3);font-size:12.5px;line-height:1.9">收件箱是空的<br>抓取或新建内容后会出现在这里</div>';
+        return;
+      }
+      list.innerHTML = '<div class="list-hint">收件箱还有 ' + pending.length + ' 条没整理，可以从它们开始问</div>'
+        + pending.map(d => `
+        <button class="src-item" data-id="${d.id}">
+          <div class="src-item-top">
+            <span class="badge ${d.kind}">${KIND_LABEL[d.kind]}</span>
+            <span class="src-item-title">${esc(d.title)}</span>
+          </div>
+          <div class="src-item-quote">${esc(d.excerpt.slice(0, 66))}…</div>
+          <div class="src-item-step">尚未整理 · ${esc(d.updated)}</div>
+        </button>`).join('');
+      $$('.src-item', list).forEach(el => el.onclick = () => {
+        state.currentId = el.dataset.id;
+        openDocs('inbox');
+      });
+      return;
+    }
+    list.innerHTML = conv.refs.map(id => {
+      const d = DOCS.find(x => x.id === id);
+      if(!d) return '';
+      const step = d.kind === 'note' ? '词级召回' : '子串兜底';
+      return `<button class="src-item" data-id="${d.id}" aria-selected="${d.id===state.currentId}">
+        <div class="src-item-top">
+          <span class="badge ${d.kind}">${KIND_LABEL[d.kind]}</span>
+          <span class="src-item-title">${esc(d.title)}</span>
+        </div>
+        <div class="src-item-quote">${esc(d.excerpt.slice(0, 70))}…</div>
+        <div class="src-item-step">${step} · 命中分块 2 / ${d.body.length > 400 ? 7 : 3}</div>
+      </button>`;
+    }).join('');
+    $$('.src-item', list).forEach(el => el.onclick = () => {
+      state.currentId = el.dataset.id; renderList(); renderMain();
+    });
+    return;
+  }
+
+  $('#searchInput').closest('.searchbox').style.display = '';
+  $('.filter-row').style.display = '';
+  const docs = visibleDocs();
+  const q = state.query.trim();
+
+  const SCOPE_LABEL = {inbox:'收件箱', all:'全部文档', note:'我的笔记', clip:'收集的资料'};
+  $('#listTitle').textContent = q ? '搜索结果'
+    : state.scope.startsWith('folder:') ? '目录'
+    : state.scope.startsWith('tag:') ? '#' + state.scope.slice(4)
+    : (SCOPE_LABEL[state.scope] || '全部文档');
+  $('#listSub').textContent = q ? `${docs.length} 条命中` : `${docs.length} 条`;
+
+  if(!docs.length){
+    list.innerHTML = `<div style="padding:40px 20px;text-align:center;color:var(--text-3);font-size:13px;line-height:2">
+      ${q ? '没有匹配的内容<br><span style="font-size:12px">换个说法试试，分词可能切得不一样</span>'
+          : '这里还是空的<br><span style="font-size:12px">粘贴一个链接，或新建一条笔记</span><br><button class="ma-btn" id="emptyCollect" style="margin-top:12px">收集内容</button>'}
+    </div>`;
+    const b = $('#emptyCollect');
+    if(b) b.onclick = () => openCapture();
+    return;
+  }
+
+  list.innerHTML = docs.map(d => `
+    <button class="doc-item" data-id="${d.id}" aria-selected="${d.id===state.currentId}">
+      <div class="doc-item-top">
+        <span class="badge ${d.kind}">${KIND_LABEL[d.kind]}</span>
+        <span class="doc-item-title">${hl(d.title, q)}</span>
+      </div>
+      <div class="doc-item-ex">${hl(snippet(d.excerpt || d.body, q), q)}</div>
+      <div class="doc-item-meta">
+        ${d.status==='inbox' ? '<span class="badge inbox">待整理</span>' : ''}
+        ${d.tags.slice(0,2).map(t => `<span>#${esc(t)}</span>`).join('')}
+        <span style="margin-left:auto">${esc(d.updated)}</span>
+      </div>
+    </button>
+  `).join('');
+
+  $$('.doc-item', list).forEach(el => {
+    el.onclick = () => {
+      const go = () => { state.currentId = el.dataset.id; renderList(); renderMain(); };
+      if(el.dataset.id === state.currentId){ return; }
+      confirmLeave(go);
+    };
+  });
+}
+
+/* ══════════ 文档渲染 ══════════ */
+function currentDoc(){
+  return DOCS.find(d => d.id === state.currentId) || DOCS[0];
+}
+
+/**
+ * 抽取标题，用于右侧大纲。
+ * 序号规则必须与 mdToHtml 里的 hIdx 完全一致，否则点击大纲会跳错位置。
+ */
+function extractHeadings(md){
+  const out = [];
+  const re = /^(#{1,6}) (.+)$/gm;
+  let m;
+  while((m = re.exec(md)) !== null){
+    out.push({ level: m[1].length <= 2 ? 2 : 3, text: m[2].trim() });
+  }
+  return out.map((h, i) => ({ ...h, id: 'h-' + i }));
+}
+
+/* 极简 markdown 渲染，只覆盖演示需要的语法 */
+function mdToHtml(md){
+  const blocks = [];
+  let s = md.replace(/\`\`\`(\w*)\n([\s\S]*?)\`\`\`/g, (_, lang, code) => {
+    blocks.push(code.replace(/&/g,'&amp;').replace(/</g,'&lt;'));
+    return `\u0000BLOCK${blocks.length-1}\u0000`;
+  });
+
+  s = esc(s);
+  // 标题带锚点 id，顺序与 extractHeadings 一致，大纲才能跳准
+  let hIdx = 0;
+  s = s.replace(/^(#{1,6}) (.+)$/gm, (_, hashes, text) => {
+    const lvl = hashes.length <= 2 ? 2 : 3;
+    return `<h${lvl} id="h-${hIdx++}">${text}</h${lvl}>`;
+  });
+  s = s.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+  s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/\`([^\`]+)\`/g, '<code>$1</code>');
+  s = s.replace(/^- (.+)$/gm, '<li>$1</li>');
+  s = s.replace(/(<li>[\s\S]*?<\/li>)(?!\s*<li>)/g, '<ul>$1</ul>');
+  s = s.split(/\n{2,}/).map(p => {
+    const t = p.trim();
+    if(!t) return '';
+    if(/^<(h2|ul|blockquote|li)/.test(t)) return t;
+    if(/^\u0000BLOCK/.test(t)) return t;
+    return `<p>${t.replace(/\n/g,'<br>')}</p>`;
+  }).join('\n');
+
+  s = s.replace(/\u0000BLOCK(\d+)\u0000/g, (_, i) => `<pre><code>${blocks[+i]}</code></pre>`);
+  return s;
+}
+
+/**
+ * 主区渲染。会话优先意味着对话是主视图，不是侧边面板。
+ * 文档模式和对话模式共用右栏，切换时整块替换。
+ */
+/* ══════════════════════════════════════════════════════════
+   抓取流程。
+   这是原型的最大空洞：插件列表里列了六个抓取器，但界面上
+   根本没有地方粘贴链接。收集不到东西，后面整条链都没有意义。
+   ══════════════════════════════════════════════════════════ */
+
+const CAP_STAGES = [
+  { id:'fetch',  name:'获取页面' },
+  { id:'extract',name:'提取正文' },
+  { id:'assets', name:'下载图片并改写链接' },
+  { id:'convert',name:'统一转 Markdown' },
+];
+
+function detectKind(url){
+  if(/mp\.weixin\.qq\.com/.test(url)) return { kind:'wechat', label:'微信公众号', note:'图片需要带 Referer 才能下载' };
+  if(/github\.com/.test(url)) return { kind:'github', label:'GitHub 仓库', note:'走 API 取 README 与 release' };
+  if(/^https?:\/\//.test(url)) return { kind:'web', label:'网页', note:'Readability 提取正文' };
+  return null;
+}
+
+function openCapture(prefill){
+  const el = document.createElement('div');
+  el.className = 'scrim'; el.id = 'capScrim';
+  el.innerHTML = `
+    <div class="cap">
+      <div class="cap-head">
+        <div class="cap-title">收集内容</div>
+        <div class="cap-sub">粘贴链接。抓到的内容先进收件箱，之后再整理。</div>
+      </div>
+      <div class="cap-body" id="capBody"></div>
+      <div class="cap-foot">
+        <span class="cap-hint" id="capHint">支持网页、公众号文章、GitHub 仓库</span>
+        <button class="ma-btn" id="capCancel">取消</button>
+        <button class="ma-btn" id="capGo" style="background:var(--primary);color:#fff;border-color:var(--primary)">抓取</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+
+  const body = $('#capBody');
+  body.innerHTML = `
+    <div class="cap-url">
+      <input class="inp" id="capUrl" placeholder="https://…" value="${prefill ? esc(prefill) : ''}" />
+    </div>
+    <div id="capKind"></div>`;
+
+  const input = $('#capUrl');
+  const renderKind = () => {
+    const info = detectKind(input.value.trim());
+    $('#capKind').innerHTML = info
+      ? `<div class="cap-kind">识别为 <b>${esc(info.label)}</b><span style="color:var(--text-3)">· ${esc(info.note)}</span></div>`
+      : (input.value.trim() ? '<div class="cap-kind" style="color:#b45309">无法识别的链接，将按普通网页处理</div>' : '');
+  };
+  input.oninput = renderKind;
+  renderKind();
+  input.focus();
+
+  el.onclick = (e) => { if(e.target === el) closeCapture(); };
+  $('#capCancel').onclick = closeCapture;
+  $('#capGo').onclick = () => runCapture(input.value.trim(), input.value.trim());
+  input.onkeydown = (e) => { if(e.key === 'Enter'){ e.preventDefault(); runCapture(input.value.trim()); } };
+  input.oninput = () => renderKind();
+}
+
+function closeCapture(){
+  const el = $('#capScrim'); if(el) el.remove();
+}
+
+/**
+ * 抓取过程分阶段推进。
+ *
+ * 分阶段而不是一个转圈：抓取失败时能直接指认是哪一步挂的——
+ * 「获取页面」失败是反爬，「提取正文」失败是页面结构不认识，
+ * 「下载图片」失败是防盗链。三者对用户的下一步动作完全不同。
+ */
+function runCapture(url){
+  if(!url){ toast('先填一个链接'); return; }
+  const stages = CAP_STAGES;
+  $('#capGo').style.display = 'none';
+  $('#capHint').textContent = '抓取中…';
+
+  const render = (states, extra) => {
+    $('#capBody').innerHTML = states.map((st, i) => `
+      <div class="cap-stage" data-s="${st.s}">
+        <span class="cap-dot">${st.s==='done' ? '✓' : st.s==='fail' ? '!' : st.s==='run' ? '·' : ''}</span>
+        <span>${esc(stages[i].name)}</span>
+        ${st.meta ? `<em>${esc(st.meta)}</em>` : ''}
+      </div>`).join('') + (extra || '');
+  };
+
+  const states = stages.map(() => ({ s:'idle', meta:'' }));
+  let i = 0;
+  const tick = () => {
+    if(i > 0) states[i-1] = { ...states[i-1], s:'done' };
+    if(i >= stages.length){
+      finish();
+      return;
+    }
+    states[i] = { s:'run' };
+    render(states);
+    setTimeout(() => {
+      const metas = ['320 KB · 1.2s', '2,140 字', '4 张', '已切分 6 块'];
+      states[i] = { s:'done', meta: metas[i] };
+      i += 1;
+      render(states);
+      tick();
+    }, 520 + i*130);
+  };
+
+  function finish(){
+    const info = detectKind(url);
+    // 刻意演示一条失败路径：公众号的反爬是真实存在的，不设计它等于把它留给用户猜
+    if(info && info.kind === 'wechat' && url.includes('fail')){
+      render(states.map(s => ({ ...s, s:'done' })), `
+        <div class="cap-fail" style="margin-top:12px">
+          <b>图片下载失败：3 张返回 403</b>
+          公众号图片有防盗链，需要带 <span class="mono">Referer: https://mp.weixin.qq.com/</span> 才能取到。
+          正文已抓到，可以先入库，图片之后补。
+        </div>`);
+      $('#capHint').innerHTML = '';
+      const foot = $('#capGo').parentElement;
+      $('#capGo').style.display = '';
+      $('#capGo').textContent = '仍然入库（无图）';
+      $('#capGo').onclick = () => commitCapture(url, true);
+      $('#capCancel').textContent = '改用浏览器扩展';
+      $('#capCancel').onclick = () => { closeCapture(); toast('浏览器扩展在你的会话里抓取，绕开防盗链'); };
+      return;
+    }
+
+    render(states.map(s => ({ ...s, s:'done' })), `
+      <div class="cap-preview">
+        <div class="cap-preview-title">${esc(guessTitle(url))}</div>
+        <div class="cap-preview-text">${esc(guessBody(url))}</div>
+        <div class="cap-preview-meta">
+          <span>2,140 字</span><span>4 张图片已本地化</span><span>预计切分 6 块</span>
+        </div>
+      </div>`);
+    $('#capHint').textContent = '确认后进收件箱';
+
+    const btn = $('#capGo');
+    btn.style.display = '';
+    btn.textContent = '确认入库';
+    btn.onclick = () => commitCapture(url);
+  }
+
+  tick();
+}
+
+function guessTitle(url){
+  const info = detectKind(url);
+  if(info && info.kind === 'github') return 'TanStack/ai — 类型安全的 AI SDK';
+  if(info && info.kind === 'wechat') return '公众号：从零实现一个 RAG 系统';
+  return '用 pgvector 做混合检索：BM25 + 向量 + RRF';
+}
+function guessBody(url){
+  return '纯向量检索会漏掉专有名词，纯关键词又漏语义。混合检索的常见做法是把两路结果用 RRF 融合……';
+}
+
+function commitCapture(url, degraded){
+  closeCapture();
+  const info = detectKind(url);
+  const id = 'cap' + Date.now();
+  DOCS.unshift({
+    id, kind: info ? info.kind : 'web', title: guessTitle(url),
+    status:'inbox', path:null, url, tags:[], updated:'刚刚',
+    excerpt: guessBody(url),
+    body: guessBody(url) + '\n\n（这是原型，正文为演示数据。）',
+    origin:'auto', backlinks:[], sources:[],
+    warn: degraded ? '3 张图片未取到' : null
+  });
+  state.view = 'app';
+  openDocs('inbox');
+  toast(degraded ? '已入库，但图片缺失（可在文档里看到提示）' : '已入收件箱，记得之后整理');
+}
+
+/* ══════════ 整理 ══════════ */
+
+/**
+ * 整理条。
+ *
+ * 收件箱原来是个死胡同：有「待整理」徽标，但没有任何整理动作。
+ * 这里把整理变成一组显式操作，并把 AI 已经算好的标签建议直接摆出来——
+ * 后端早就在算 topTerms 了，界面上没地方显示等于白算。
+ */
+function renderTriage(d){
+  if(d.status !== 'inbox') return '';
+  const suggestions = (d.tags && d.tags.length) ? d.tags : suggestTags(d);
+  return `<div class="triage">
+    <span class="triage-label">待整理</span>
+    <span style="font-size:12.5px;color:var(--text-2)">建议标签</span>
+    ${suggestions.map(t => `<button class="chip tri-tag" data-tag="${esc(t)}">＋ ${esc(t)}</button>`).join('')}
+    <span class="triage-sep"></span>
+    <button class="ma-btn" data-tri="folder">归入目录…</button>
+    <button class="ma-btn" data-tri="done">完成整理</button>
+    <button class="ma-btn" data-tri="archive">归档</button>
+  </div>`;
+}
+
+function suggestTags(d){
+  const stop = new Set(['这个','的','和','是','在','了','与','用','不']);
+  const counts = new Map();
+  const text = (d.title + ' ' + d.body).toLowerCase();
+  for(const w of text.match(/[\u4e00-\u9fa5]{2,4}|[a-z][a-z0-9+#.-]{2,}/g) || []){
+    if(stop.has(w)) continue;
+    counts.set(w, (counts.get(w) || 0) + 1);
+  }
+  return [...counts.entries()].filter(([,n]) => n > 1).sort((a,b) => b[1]-a[1]).slice(0,3).map(([w]) => w);
+}
+
+function bindTriage(){
+  const d = currentDoc();
+  $$('.tri-tag').forEach(el => el.onclick = () => {
+    if(!d.tags.includes(el.dataset.tag)) d.tags.push(el.dataset.tag);
+    renderMain();
+    toast('已加标签 #' + el.dataset.tag);
+  });
+  $$('[data-tri]').forEach(el => el.onclick = () => {
+    const act = el.dataset.tri;
+    if(act === 'done'){
+      d.status = 'ready';
+      renderList(); renderMain();
+      toast('已整理，移出收件箱');
+    } else if(act === 'folder'){
+      toast('打开目录选择器（原型未接线）');
+    } else {
+      d.status = 'archived';
+      renderList(); renderMain();
+      toast('已归档');
+    }
+  });
+}
+
+/* ══════════════════════════════════════════════════════════
+   保存状态。
+   文字类产品最让人失去信任的是丢内容。用户第一次丢东西之后，
+   每次输入都会分神——所以「正在保存 / 已保存 / 保存失败」必须始终可见，
+   并且离开未保存的内容时要有拦截。
+   ══════════════════════════════════════════════════════════ */
+
+let saveTimer = null;
+
+function setSaveState(st, text){
+  const ind = $('#saveInd');
+  if(!ind) return;
+  ind.dataset.s = st;
+  $('#saveText').textContent = text || ({ saved:'已保存', saving:'正在保存…', error:'保存失败' }[st] || '');
+}
+
+/**
+ * 模拟一次保存。真实实现里这里是 PATCH /api/documents/:id，
+ * 失败时要区分「网络断了」和「服务端拒绝」——前者的正确动作是重试，
+ * 后者是提示用户内容有问题。
+ */
+function scheduleSave(){
+  state.dirty = true;
+  setSaveState('saving');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    if(state.demo === 'savfail' || state.demo === 'offline'){
+      setSaveState('error', state.demo === 'offline' ? '离线，改动暂存在本地' : '保存失败 · 点此重试');
+      return;
+    }
+    state.dirty = false;
+    setSaveState('saved');
+  }, 900);
+}
+
+function retrySave(){
+  if(state.demo === 'savfail'){ toast('还是失败——原型里「保存失败」开关没关'); return; }
+  scheduleSave();
+}
+
+/** 离开未保存内容前的拦截。三个选项而不是两个：丢弃 / 继续编辑 / 先保存再走 */
+function confirmLeave(onLeave){
+  if(!state.dirty){ onLeave(); return; }
+
+  const el = document.createElement('div');
+  el.className = 'scrim'; el.id = 'cfmScrim';
+  el.innerHTML = `<div class="confirm">
+    <div class="confirm-title">有改动还没保存</div>
+    <div class="confirm-text">离开会丢失这次的修改。可以先把内容存下来再走。</div>
+    <div class="confirm-actions">
+      <button class="ma-btn" data-c="cancel">继续编辑</button>
+      <button class="ma-btn" data-c="discard">丢弃改动</button>
+      <button class="ma-btn" data-c="save" style="background:var(--primary);color:#fff;border-color:var(--primary)">保存并离开</button>
+    </div>
+  </div>`;
+  document.body.appendChild(el);
+
+  const close = () => el.remove();
+  $$('[data-c]', el).forEach(b => b.onclick = () => {
+    const act = b.dataset.c;
+    close();
+    if(act === 'cancel') return;
+    if(act === 'discard'){
+      state.dirty = false;
+      setSaveState('saved', '已放弃改动');
+      setTimeout(() => setSaveState('saved'), 900);
+      onLeave();
+      return;
+    }
+    // 先保存再走：保存失败就不走，避免用户以为存上了
+    clearTimeout(saveTimer);
+    if(state.demo === 'savfail'){
+      setSaveState('error', '保存失败 · 点此重试');
+      toast('保存失败，没有离开，避免丢内容');
+      return;
+    }
+    state.dirty = false;
+    setSaveState('saved');
+    onLeave();
+  });
+}
+
+function attachEditing(){
+  const inner = $('#docInner');
+  if(!inner) return;
+  inner.setAttribute('contenteditable', 'true');
+  inner.setAttribute('spellcheck', 'false');
+  inner.oninput = () => scheduleSave();
+}
+
+/* ══════════════════════════════════════════════════════════
+   模型侧失败路径。
+   抓取失败只涉及「这篇没进来」，模型失败的代价更高：用户不知道
+   这次要不要花钱、内容有没有丢、换个说法会不会有用。
+   所以每类失败都要回答这三个问题，并给出不同的出路——
+   统一一个「重试」按钮等于把判断推回给用户。
+   ══════════════════════════════════════════════════════════ */
+
+const FAILURES = {
+  quota: {
+    title:'模型额度用尽',
+    detail:'DeepSeek 返回 402：账户余额不足。本次请求未产生费用，检索结果仍然有效。',
+    note:'检索是本地完成的，不受影响',
+    actions:[
+      { label:'改用通义千问', primary:true, act:'switch' },
+      { label:'去充值', act:'billing' },
+      { label:'只看检索结果，不调模型', act:'searchonly' },
+    ],
+  },
+  timeout: {
+    title:'请求超时',
+    detail:'等待 30 秒未响应。这个问题涉及 5 个分块、约 6,800 字上下文，可能超出单次处理时间。',
+    note:'已命中的分块仍然保留，重试不会重新检索',
+    actions:[
+      { label:'重试', primary:true, act:'retry' },
+      { label:'缩小到当前文档', act:'narrow' },
+      { label:'拆成几个小问题', act:'split' },
+    ],
+  },
+  truncated: {
+    title:'回答被截断',
+    detail:'已达到单次输出上限。回答在第 3 点中途停止，前面 2 点完整。',
+    note:'分块没有被丢弃，可以接着生成',
+    actions:[
+      { label:'继续生成', primary:true, act:'continue' },
+      { label:'只要结论', act:'summary' },
+      { label:'输出到笔记里继续写', act:'tonote' },
+    ],
+  },
+  offline: {
+    title:'网络不可达',
+    detail:'无法连接 api.deepseek.com。关键词检索与子串兜底都在本地数据库完成，仍然可用。',
+    note:'离线时仍可：全文搜索、阅读与编辑笔记、整理收件箱',
+    actions:[
+      { label:'只用检索，不调模型', primary:true, act:'searchonly' },
+      { label:'重试', act:'retry' },
+      { label:'改用本地模型', act:'local' },
+    ],
+  },
+};
+
+function renderFailure(m){
+  if(!m.failure) return '';
+  const f = FAILURES[m.failure];
+  if(!f) return '';
+  return `<div class="err-box">
+    <div class="err-head">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7">
+        <circle cx="8" cy="8" r="6.2"/><path d="M8 4.8v3.6M8 11h.01"/>
+      </svg>
+      ${esc(f.title)}
+    </div>
+    <div class="err-detail">${esc(f.detail)}</div>
+    <div class="err-actions">
+      ${f.actions.map(a => `<button class="ma-btn" data-fail-act="${a.act}" data-msg="${m.id}" ${a.primary?'data-primary':''}>${esc(a.label)}</button>`).join('')}
+    </div>
+    ${f.note ? `<div class="err-note">${esc(f.note)}</div>` : ''}
+  </div>`;
+}
+
+/** 把一次失败注入当前对话，用于演示 */
+function injectFailure(kind){
+  const f = FAILURES[kind];
+  if(!f) return;
+  if(state.mode !== 'chat'){ openConversation(state.convId || 'v1'); }
+  state.aiMessages.push({
+    id:'e' + Date.now(),
+    role:'ai',
+    text:'',
+    failure:kind,
+  });
+  if(state.view !== 'settings'){ renderMain(); }
+  toast('已注入失败状态：' + f.title);
+}
+
+function bindFailureActions(root){
+  $$('[data-fail-act]', root).forEach(el => {
+    el.onclick = () => {
+      const act = el.dataset.failAct;
+      const id = el.dataset.msg;
+      const idx = state.aiMessages.findIndex(x => x.id === id);
+      const settle = (text) => {
+        if(idx >= 0){
+          state.aiMessages[idx] = {
+            id, role:'ai', text,
+            trace:{ rounds:1, tools:2, ms:820, steps:[
+              { ico:'search', text:'沿用已命中的分块，未重新检索', meta:'4 个分块，来自 2 个文档' },
+              { ico:'check', text:'完成' },
+            ]},
+            cites:[{ doc:'n1', snip:'引用保留，可以点回原文。' }],
+          };
+        }
+        renderMain();
+      };
+      const HINTS = {
+        switch:'已切到通义千问重试。下面是用它重新生成的回答。',
+        billing:'已复制充值链接到剪贴板。',
+        searchonly:'不调模型，只列出命中的分块。',
+        retry:'重试成功。',
+        narrow:'已把范围缩到当前文档重试。',
+        split:'已把问题拆成三个小问题，逐个回答。',
+        continue:'接着上文继续生成。',
+        summary:'改成只要结论，重新生成。',
+        tonote:'已把已生成的部分写入新笔记，可以继续在那里写。',
+        local:'已切到本地 Ollama，速度会慢一些，但数据不出机器。',
+      };
+      if(act === 'billing'){ navigator.clipboard?.writeText('https://example.dev/billing').catch(()=>{}); toast(HINTS[act]); return; }
+      settle(HINTS[act] || '已处理。');
+    };
+  });
+}
+
+/* ══════════════════════════════════════════════════════════
+   问 AI 只留一个入口：主视图对话。
+   侧栏删掉之后，这里要把「不离开阅读位置」这个诉求接住，
+   否则问当前文档这件事会比以前更难。
+   ══════════════════════════════════════════════════════════ */
+
+/**
+ * 带着一段上下文进入对话。
+ *
+ * passage 为空表示问整篇（从文档工具条进入）；
+ * 有 passage 表示问选中片段（从内联工具条进入），会带引用前缀。
+ */
+function askAi(passage){
+  const doc = currentDoc();
+  const from = state.view === 'app' && state.mode === 'docs' ? state.currentId : null;
+
+  state.view = 'app';
+  state.mode = 'chat';
+  state.convId = null;
+  state.askFrom = from;
+  state.askMode = true;
+  state.aiMessages = [];
+
+  const quoted = passage ? passage.trim() : '';
+  const scope = '当前文档';
+  syncMode(); renderNav(); renderList(); renderMain();
+
+  // 把范围锁到当前文档，并把选中的话作为引用放进输入框
+  const pill = $('#pillScope');
+  if(pill) pill.textContent = '范围：' + scope;
+
+  const ta = $('#mainTextarea');
+  if(ta){
+    ta.value = quoted
+      ? '关于《' + doc.title + '》里这段：\n> ' + quoted.replace(/\n+/g, ' ').slice(0, 120) + '\n\n'
+      : '';
+    ta.focus();
+    ta.setSelectionRange(ta.value.length, ta.value.length);
+    ta.style.height = 'auto';
+    ta.style.height = Math.min(140, ta.scrollHeight) + 'px';
+  }
+
+  // 中间栏提示这次的上下文来源
+  const list = $('#docList');
+  list.innerHTML = `<div class="list-hint" style="padding:8px 11px 4px">正在就这一篇提问</div>
+    <button class="src-item" data-id="${doc.id}">
+      <div class="src-item-top">
+        <span class="badge ${doc.kind}">${KIND_LABEL[doc.kind]}</span>
+        <span class="src-item-title">${esc(doc.title)}</span>
+      </div>
+      ${quoted ? `<div class="src-item-quote">${esc(quoted.slice(0, 70))}${quoted.length > 70 ? '…' : ''}</div>` : ''}
+      <div class="src-item-step">范围限定在这一篇，不会检索其他文档</div>
+    </button>`;
+  $$('.src-item', list).forEach(el => el.onclick = () => {
+    state.mode = 'docs'; syncMode(); renderNav(); renderList(); renderMain();
+  });
+  $('#listTitle').textContent = '正在提问';
+  $('#listSub').textContent = '限当前文档';
+}
+
+/** 从对话跳去看引用之后，需要一个明确的返回入口——否则用户会以为对话没了 */
+function renderBackToChat(){
+  if(!state.askFrom || state.mode !== 'docs') return '';
+  return `<button class="back-chat" id="backChat">
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 3L5 8l5 5"/></svg>
+    返回对话
+  </button>`;
+}
+
+/* ══════════ 设置页 ══════════ */
+
+function renderSettingsNav(){
+  $('#listTitle').textContent = '设置';
+  $('#listSub').textContent = '';
+  $('#searchInput').closest('.searchbox').style.display = 'none';
+  $('.filter-row').style.display = 'none';
+  $('#ctxTabs').style.display = 'none';
+
+  $('#docList').innerHTML = SET_SECTIONS.map(sec => `
+    <button class="set-sec" data-sec="${sec.id}" aria-current="${sec.id===state.setSection}">
+      <span>${esc(sec.name)}</span>
+      ${sec.id === 'plugins' ? `<span class="cnt">${SEAMS.reduce((n,s)=>n+s.plugins.length,0)}</span>` : ''}
+    </button>`).join('');
+
+  $$('.set-sec').forEach(el => el.onclick = () => {
+    state.setSection = el.dataset.sec;
+    renderSettingsNav();
+    renderSettings();
+  });
+}
+
+function renderSettings(){
+  const sec = state.setSection;
+  const meta = SET_SECTIONS.find(x => x.id === sec);
+  const d = currentDoc();
+  let body = '';
+
+  if(sec === 'models'){
+    body = `
+      <div class="set-h1">模型</div>
+      <div class="set-desc">${esc(meta.desc)}</div>
+      ${card('任务分配','把四类调用分开配。摘要和向量化量大但要求低，用便宜模型能省一个数量级。', `
+        ${field('对话与推理','<select class="inp"><option>deepseek-chat</option><option>deepseek-reasoner</option></select>')}
+        ${field('自动摘要','<select class="inp"><option>qwen-turbo</option><option>deepseek-chat</option></select>')}
+        ${field('向量化','<select class="inp"><option>text-embedding-v3（1024 维）</option><option>text-embedding-3-small（1536 维）</option></select>')}
+        ${field('重排序','<select class="inp"><option>暂不启用</option><option>bge-reranker-v2-m3</option></select>')}
+      `)}
+      ${card('提供方凭据','密钥只存在服务端并加密落库，绝不下发到浏览器。', `
+        ${field('DeepSeek','<input class="inp mono" type="password" value="sk-································" />')}
+        ${field('通义千问','<input class="inp mono" type="password" value="sk-································" />')}
+        ${field('','<span style="font-size:12px;color:var(--text-3)">上次校验：2 小时前 · 通义千问返回 200</span>')}
+      `)}
+      ${card('成本','按内容哈希缓存摘要，文档没变就不重复调用。', `
+        ${field('本月用量','<span style="font-size:13px">¥ 3.42 · 对话 118 次 · 向量化 2,410 次</span>')}
+        ${field('单次上限','<input class="inp" style="max-width:110px" value="¥ 0.5" /><span style="font-size:12px;color:var(--text-3)">超过则中断并提示</span>')}
+      `)}`;
+  }
+
+  if(sec === 'retrieval'){
+    body = `
+      <div class="set-h1">检索</div>
+      <div class="set-desc">${esc(meta.desc)}</div>
+      ${card('融合参数','RRF 只看名次、不看分数，所以两路分数尺度不同也不会互相压过。', `
+        ${field('RRF k','<input class="slider" type="range" min="10" max="100" value="60" /><span style="font-size:12px;color:var(--text-3);width:30px;text-align:right">60</span>')}
+        ${field('关键词权重','<input class="slider" type="range" min="0" max="200" value="100" /><span style="font-size:12px;color:var(--text-3);width:30px;text-align:right">1.0</span>')}
+        ${field('子串权重','<input class="slider" type="range" min="0" max="200" value="60" /><span style="font-size:12px;color:var(--text-3);width:30px;text-align:right">0.6</span>')}
+        ${field('每通道候选数','<input class="inp" style="max-width:80px" value="50" />')}
+      `)}
+      ${card('分词器','中文必须预分词：Postgres 的 simple 配置会把连续汉字当成一个词，搜「组件」永远搜不到。', `
+        ${field('实现','<select class="inp"><option>jieba（@node-rs/jieba）</option><option>zhparser（需自建镜像）</option></select>')}
+        ${field('自定义词典','<input class="inp" placeholder="每行一个词，比如技术专有名词" />')}
+        ${field('','<span style="font-size:12px;color:var(--text-3)">词典改动需要重建索引才生效</span>')}
+      `)}
+      ${card('相关性自检','改完参数直接在这里试，不用回主界面。', `
+        <div class="field"><span class="field-label">试一句</span>
+          <div class="field-ctl"><input class="inp" id="probeQ" placeholder="比如：向量检索" /></div>
+          <button class="ma-btn" id="probeRun">试一下</button>
+        </div>
+        <div id="probeOut" style="font-size:12.5px;color:var(--text-2);line-height:1.8"></div>
+      `)}`;
+  }
+
+  if(sec === 'capture'){
+    body = `
+      <div class="set-h1">抓取</div>
+      <div class="set-desc">${esc(meta.desc)}</div>
+      ${card('公众号','这是最难的一类。服务端抓取反爬严、高频会撞墙，图片还要带 Referer 才下得动。', `
+        ${field('抓取方式','<select class="inp"><option>服务端抓取（低频）</option><option>仅用浏览器扩展</option></select>')}
+        ${field('图片本地化','<span style="display:flex;align-items:center;gap:9px"><span class="sw" aria-pressed="true"></span><span style="font-size:12.5px;color:var(--text-2)">自动下载，避免原文删除后变空壳</span></span>')}
+        ${field('限速','<input class="inp" style="max-width:110px" value="1 篇 / 5 秒" />')}
+        ${field('','<span style="font-size:12px;color:#b45309">注意：公众号技术文章的代码常是截图，正文里没有代码文本</span>')}
+      `)}
+      ${card('GitHub','用 PAT 可以把接口限额从 60 次/小时提到 5000 次。', `
+        ${field('访问令牌','<input class="inp mono" type="password" value="ghp_··················" />')}
+        ${field('Star 同步','<span style="display:flex;align-items:center;gap:9px"><span class="sw" aria-pressed="false"></span><span style="font-size:12.5px;color:var(--text-2)">每天拉一次，新 star 自动入收件箱</span></span>')}
+      `)}
+      ${card('RSS 轮询','只订阅、不爬首页。技术博客基本都有 feed，稳得多。', `
+        ${field('轮询间隔','<select class="inp"><option>每小时</option><option>每 6 小时</option><option>每天</option></select>')}
+        ${field('已订阅','<span style="font-size:12.5px;color:var(--text-2)">7 个源 · 最近一次增量 3 篇</span>')}
+      `)}`;
+  }
+
+  if(sec === 'plugins'){
+    body = `
+      <div class="set-h1">插件</div>
+      <div class="set-desc">按接缝分组。每一行是一个独立文件，注册进注册表即可生效——
+      加一个新来源不需要改动检索、存储或界面代码。设置页里其它表单，本质上是这份注册表的筛选视图。</div>
+      ${SEAMS.map(seam => `
+        <div class="seam-head">${esc(seam.name)}<span class="seam-key">seam: ${esc(seam.key)}</span></div>
+        <div class="seam-note">${esc(seam.note)}</div>
+        <div class="card">
+          ${seam.plugins.map(p => `
+            <div class="plugin">
+              <span class="plugin-ico">${esc(p.name.slice(0,1))}</span>
+              <span class="plugin-main">
+                <span class="plugin-name">${esc(p.name)}
+                  ${p.soon ? '<span class="tag-soon">待开发</span>' : '<span class="tag-builtin">内置</span>'}
+                </span>
+                <span class="plugin-desc">${esc(p.desc)}</span>
+                <span class="plugin-src">${esc(p.file)}</span>
+              </span>
+              <span class="sw" aria-pressed="${p.on}"></span>
+            </div>`).join('')}
+        </div>`).join('')}`;
+  }
+
+  if(sec === 'data'){
+    body = `
+      <div class="set-h1">数据与备份</div>
+      <div class="set-desc">${esc(meta.desc)}</div>
+      ${card('真相在哪','这个项目的规则是：Markdown 文件是真相，数据库只是可重建的索引。', `
+        ${field('笔记目录','<span class="mono" style="font-size:12px">data/vault/</span>')}
+        ${field('原始快照','<span class="mono" style="font-size:12px">data/raw/</span>')}
+        ${field('数据库','<span style="font-size:12.5px;color:var(--text-2)">Postgres · 可以从前两者完整重建</span>')}
+      `)}
+      ${card('维护','', `
+        ${field('重建索引','<button class="ma-btn">立即重建</button><span style="font-size:12px;color:var(--text-3)">扫描 vault 并同步数据库</span>')}
+        ${field('未入库文件','<span style="font-size:12.5px">0 个</span>')}
+        ${field('回收站','<span style="font-size:12.5px">3 项 · 30 天后自动清理</span><button class="ma-btn">查看</button>')}
+      `)}
+      ${card('导出','任何时候都能把全部内容拿走，不依赖这个应用。', `
+        ${field('全量导出','<button class="ma-btn">Markdown + 附件</button><button class="ma-btn">JSON（含元数据与对话）</button>')}
+      `)}`;
+  }
+
+  if(sec === 'account'){
+    body = `
+      <div class="set-h1">账号</div>
+      <div class="set-desc">单用户自托管。第一个注册的人是唯一用户，之后注册自动关闭。</div>
+      ${card('登录','', `
+        ${field('邮箱','<input class="inp" value="me@example.com" />')}
+        ${field('当前密码','<input class="inp" type="password" />')}
+        ${field('新密码','<input class="inp" type="password" />')}
+        ${field('','<button class="ma-btn">更新密码</button>')}
+      `)}
+      ${card('会话','', `
+        ${field('已登录设备','<span style="font-size:12.5px">2 个 · 最近一次 14:02</span>')}
+        ${field('','<button class="ma-btn">登出其他设备</button>')}
+      `)}`;
+  }
+
+  document.getElementById('docPath').textContent = '设置 / ' + meta.name;
+  $('#docSettings').innerHTML = `<div class="set-inner">${body}</div>`;
+  bindSettings();
+}
+
+function card(title, sub, inner){
+  return `<div class="card">
+    ${title ? `<div class="card-head"><span class="card-title">${esc(title)}</span></div>` : ''}
+    ${sub ? `<div class="card-sub">${esc(sub)}</div>` : ''}
+    <div class="card-body">${inner}</div>
+  </div>`;
+}
+
+function field(label, ctl){
+  return `<div class="field">
+    <span class="field-label">${label ? esc(label) : '&nbsp;'}</span>
+    <div class="field-ctl" style="display:flex;align-items:center;gap:10px">${ctl}</div>
+  </div>`;
+}
+
+function renderSettingsNavRestore(){
+  $('#searchInput').closest('.searchbox').style.display = state.mode === 'chat' ? 'none' : '';
+  $('.filter-row').style.display = state.mode === 'chat' ? 'none' : '';
+  $('#ctxTabs').style.display = '';
+}
+
+function bindSettings(){
+  $$('#docSettings .sw').forEach(el => el.onclick = () => {
+    el.setAttribute('aria-pressed', el.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+  });
+  $$('#docSettings .ma-btn').forEach(el => el.onclick = () => toast(el.textContent.trim() + '（原型未接线）'));
+  const run = $('#probeRun');
+  if(run) run.onclick = () => {
+    const q = ($('#probeQ').value || '').trim();
+    if(!q){ toast('先输入一句话'); return; }
+    const hits = DOCS.filter(x => (x.title + x.body).toLowerCase().includes(q.toLowerCase()));
+    $('#probeOut').innerHTML = hits.length
+      ? `命中 <b>${hits.length}</b> 段 · 关键词通道 ${hits.length} · 子串兜底 ${Math.max(0, hits.length-1)}<br>`
+        + hits.slice(0,3).map(h => `<span style="color:var(--text-3)">· ${esc(h.title)}</span>`).join('<br>')
+      : '<span style="color:var(--text-3)">没有命中。若确认内容存在，多半是分词没切对——试试加自定义词典。</span>';
+  };
+}
+
+function renderMain(){
+  const chatWrap = $('#chatMain');
+  const docScroll = $('#docScroll');
+  const settings = $('#docSettings');
+  const toolbar = $('#docToolbar');
+  const ctxTabs = $('#ctxTabs');
+
+  // 设置视图：整块接管中间栏与右栏，但左导航留着，不丢上下文
+  if(state.view === 'settings'){
+    chatWrap.classList.add('hidden');
+    docScroll.classList.add('hidden');
+    settings.classList.remove('hidden');
+    toolbar.classList.add('hidden');
+    ctxTabs.style.display = 'none';
+    $('#docOutline').hidden = true;
+    renderSettingsNav();
+    renderSettings();
+    return;
+  }
+
+  settings.classList.add('hidden');
+  ctxTabs.style.display = '';
+  renderSettingsNavRestore();
+
+  if(state.mode === 'chat'){
+    chatWrap.classList.remove('hidden');
+    docScroll.classList.add('hidden');
+    toolbar.classList.add('hidden');
+    $('#docOutline').hidden = true;
+    $('#docPath').textContent = state.convId
+      ? (CONVERSATIONS.find(c => c.id === state.convId)?.title || '对话')
+      : '新对话';
+    if(!state.aiMessages.length && !state.askMode) seedMessages();
+    renderChatMain();
+    return;
+  }
+
+  chatWrap.classList.add('hidden');
+  docScroll.classList.remove('hidden');
+  toolbar.classList.remove('hidden');
+  renderDoc();
+}
+
+function renderChatMain(){
+  const body = $('#chatMainBody');
+  if(state.askMode && !state.aiMessages.length){
+    // 带上下文进来但还没提问：给一个明确的起点，而不是把上一段对话翻出来
+    body.innerHTML = `<div class="chat-empty">
+      <div class="chat-empty-title">就这一篇提问</div>
+      <div class="chat-empty-sub">上下文已经准备好了。你可以直接问，或者选一个下面常见的。</div>
+      <div class="chat-empty-asks">
+        <button class="chip">这篇的核心结论是什么？</button>
+        <button class="chip">有哪些地方是我不懂的？</button>
+        <button class="chip">和我之前的笔记有什么冲突？</button>
+      </div>
+    </div>`;
+    $$('.chat-empty-asks .chip', body).forEach(c => c.onclick = () => {
+      const ta = $('#mainTextarea');
+      if(ta){ ta.value = c.textContent; ta.focus(); }
+    });
+    return;
+  }
+  body.innerHTML = messagesHtml(state.aiMessages);
+  bindMessageEvents(body);
+  body.scrollTop = body.scrollHeight;
+}
+
+function renderDoc(){
+  const d = currentDoc();
+  $('#docPath').textContent = d.path || d.url || '（尚无快照）';
+
+  const inner = $('#docInner');
+  const scroll = $('#docScroll');
+
+    scroll.innerHTML = `<div class="doc-inner" id="docInner">${docBodyHtml(d)}</div>`;
+
+  renderOutline();
+  attachEditing();
+  attachSelectionToolbar();
+  bindTriage();
+  const bc = $('#backChat');
+  if(bc) bc.onclick = () => { state.mode = 'chat'; syncMode(); renderNav(); renderList(); renderMain(); };
+
+  $$('.foot-link').forEach(el => {
+    el.onclick = () => {
+      const title = decodeURIComponent(el.dataset.jump);
+      const target = DOCS.find(x => x.title === title);
+      if(target){
+        state.currentId = target.id;
+        renderList(); renderDoc();
+        toast('已跳转到：' + title);
+      } else {
+        toast('指向的文档不在演示数据里：' + title);
+      }
+    };
+  });
+}
+
+function docBodyHtml(d){
+  return `
+    ${renderBackToChat()}
+    ${renderTriage(d)}
+    <h1 class="doc-h1">${esc(d.title)}</h1>
+    <div class="doc-meta">
+      <span class="badge ${d.kind}">${KIND_LABEL[d.kind]}</span>
+      ${d.origin === 'manual'
+        ? '<span class="origin manual">手动编辑</span>'
+        : '<span class="origin auto">AI 整理</span>'}
+      ${d.url ? `<span style="color:var(--primary)">${esc(d.url.replace(/^https?:\/\//,'').slice(0,42))}</span>` : `<span style="font-family:var(--mono)">${esc(d.path||'')}</span>`}
+      ${d.tags.map(t => `<span class="chip" style="font-size:11.5px;padding:1px 8px">#${esc(t)}</span>`).join('')}
+      <span style="margin-left:auto">${esc(d.updated)}</span>
+    </div>
+    ${mdToHtml(d.body)}
+    ${d.warn ? `<div class="cap-fail" style="margin-top:20px"><b>抓取不完整</b>${esc(d.warn)}。可以重新抓取，或用浏览器扩展补齐。</div>` : ''}
+    ${renderDocFoot(d)}
+  `;
+}
+
+/* 文档页脚：来源与反链。借鉴 WeKnora —— 让「这段内容从哪来、被谁引用」可见 */
+function renderDocFoot(d){
+  const rows = [];
+  if(d.sources && d.sources.length){
+    rows.push(`<div class="foot-row"><span class="foot-label">来源</span>${
+      d.sources.map(t => `<span class="foot-link" data-jump="${encodeURIComponent(t)}">${esc(t)}</span>`).join('')
+    }</div>`);
+  }
+  if(d.backlinks && d.backlinks.length){
+    rows.push(`<div class="foot-row"><span class="foot-label">被引用</span>${
+      d.backlinks.map(t => `<span class="foot-link" data-jump="${encodeURIComponent(t)}">${esc(t)}</span>`).join('')
+    }</div>`);
+  }
+  if(!rows.length) return '';
+  return `<div class="doc-foot">${rows.join('')}</div>`;
+}
+
+/* 源码视图：把 markdown 原样显示，语法元素上色 */
+
+/**
+ * 右侧大纲。
+ *
+ * 只在标题数 ≥ 2 时出现——一篇两段话的笔记不需要目录，
+ * 常驻一个空的大纲栏只是多占 200px。
+ */
+function renderOutline(){
+  const box = $('#docOutline');
+  const scroll = $('#docScroll');
+  const d = currentDoc();
+  const heads = extractHeadings(d.body);
+
+  if(heads.length < 2 || state.mode !== 'docs' || state.view !== 'app'){
+    box.hidden = true;
+    return;
+  }
+  box.hidden = false;
+  box.innerHTML = `<div class="outline-title">大纲</div>` + heads.map(h => `
+    <button class="ol-item" data-lvl="${h.level}" data-target="${h.id}">${esc(h.text)}</button>
+  `).join('');
+
+  $$('.ol-item', box).forEach(el => el.onclick = () => {
+    const target = scroll.querySelector('#' + el.dataset.target);
+    if(target){
+      const top = target.getBoundingClientRect().top - scroll.getBoundingClientRect().top + scroll.scrollTop - 20;
+      scroll.scrollTo({ top, behavior:'smooth' });
+    }
+  });
+
+  // 滚动联动：高亮当前所在章节
+  const spy = () => {
+    const items = heads.map(h => ({ h, el: scroll.querySelector('#' + h.id) })).filter(x => x.el);
+    const top = scroll.getBoundingClientRect().top;
+    let active = items[0]?.h.id;
+    for(const { h, el } of items){
+      if(el.getBoundingClientRect().top - top <= 60) active = h.id;
+    }
+    $$('.ol-item', box).forEach(btn =>
+      btn.setAttribute('aria-current', String(btn.dataset.target === active)));
+  };
+  scroll.onscroll = spy;
+  spy();
+}
+
+/* ══════════ 内联工具条（选中正文出现） ══════════ */
+function attachSelectionToolbar(){
+  const scroll = $('#docScroll');
+  document.addEventListener('mouseup', (e) => {
+    const old = $('.inline-tb'); if(old) old.remove();
+    if(e.target.closest('.inline-tb')) return;
+
+    const sel = window.getSelection();
+    const text = (sel && sel.toString().trim()) || '';
+    if(!text || text.length < 2) return;
+    if(!sel.anchorNode || !scroll.contains(sel.anchorNode)) return;
+
+    const rect = sel.getRangeAt(0).getBoundingClientRect();
+    const host = scroll.getBoundingClientRect();
+    const tb = document.createElement('div');
+    tb.className = 'inline-tb';
+    tb.style.top = (rect.top - host.top + scroll.scrollTop - 42) + 'px';
+    tb.style.left = Math.max(8, Math.min(rect.left - host.left, host.width - 330)) + 'px';
+    tb.innerHTML = `
+      <button data-a="改写">改写</button>
+      <button data-a="翻译">翻译</button>
+      <button data-a="精简">精简</button>
+      <button data-a="扩写">扩写</button>
+      <button data-a="提问">就这段提问</button>`;
+    scroll.parentElement.appendChild(tb);
+    $$('button', tb).forEach(b => b.onclick = () => {
+      tb.remove();
+      if(b.dataset.a === '提问'){ askAi(text); }
+      else { toast(`已对选中内容执行「${b.dataset.a}」，结果会以差异预览呈现`); }
+    });
+  });
+}
+
+function showInlineDemo(){
+  const scroll = $('#docScroll');
+  const target = $('#docInner p');
+  if(!target) return;
+  const old = $('.inline-tb'); if(old) old.remove();
+  const rect = target.getBoundingClientRect();
+  const host = scroll.getBoundingClientRect();
+  const tb = document.createElement('div');
+  tb.className = 'inline-tb';
+  tb.style.top = (rect.top - host.top + scroll.scrollTop - 42) + 'px';
+  tb.style.left = Math.max(8, Math.min(rect.left - host.left + 60, host.width - 330)) + 'px';
+  tb.innerHTML = `<button data-a="改写">改写</button><button data-a="翻译">翻译</button>
+    <button data-a="精简">精简</button><button data-a="扩写">扩写</button>
+    <button data-a="提问">就这段提问</button>`;
+  scroll.parentElement.appendChild(tb);
+  $$('button', tb).forEach(b => b.onclick = () => { tb.remove(); toast(`已执行「${b.dataset.a}」`); });
+  setTimeout(() => { const t = $('.inline-tb'); if(t) t.remove(); }, 3600);
+}
+
+/* ══════════ 命令面板 ══════════ */
+const COMMANDS = [
+  {icon:'＋', title:'新建笔记', sub:'Ctrl N', act:() => toast('新建笔记（原型未接线）')},
+  {icon:'⇥', title:'收集网页 / 公众号 / GitHub', sub:'粘贴 URL 抓取，进收件箱', act:() => openCapture()},
+  {icon:'⤓', title:'上传文件', sub:'PDF / Word / Markdown', act:() => toast('打开文件选择（原型未接线）')},
+  {icon:'↻', title:'重建索引', sub:'同步外部编辑器改动的文件', act:() => toast('重建索引（原型未接线）')},
+];
+
+function cmdkItems(){
+  const q = state.cmdkQuery.trim().toLowerCase();
+  const docs = DOCS.filter(d =>
+    !q || (d.title + ' ' + d.body + ' ' + d.tags.join(' ')).toLowerCase().includes(q)
+  ).slice(0, 5);
+  const cmds = COMMANDS.filter(c => !q || (c.title + ' ' + c.sub).toLowerCase().includes(q));
+  const items = [];
+  cmds.forEach(c => items.push({type:'cmd', ...c}));
+  docs.forEach(d => items.push({type:'doc', doc:d}));
+  return items;
+}
+
+function renderCmdk(){
+  const items = cmdkItems();
+  if(state.cmdkIndex >= items.length) state.cmdkIndex = Math.max(0, items.length-1);
+
+  const cmds = items.filter(i => i.type==='cmd');
+  const docs = items.filter(i => i.type==='doc');
+  const q = state.cmdkQuery.trim();
+
+  let html = '';
+  if(cmds.length){
+    html += '<div class="cmdk-sec">操作</div>';
+    html += cmds.map(i => {
+      const idx = items.indexOf(i);
+      return `<button class="cmdk-item" data-i="${idx}" data-active="${idx===state.cmdkIndex}">
+        <span style="width:18px;text-align:center;color:var(--text-2)">${i.icon}</span>
+        <span class="cmdk-item-main">
+          <span class="cmdk-item-title">${esc(i.title)}</span>
+          <span class="cmdk-item-sub">${esc(i.sub)}</span>
+        </span></button>`;
+    }).join('');
+  }
+  if(docs.length){
+    html += `<div class="cmdk-sec">${q ? '匹配的文档' : '最近打开'}</div>`;
+    html += docs.map(i => {
+      const idx = items.indexOf(i);
+      const d = i.doc;
+      return `<button class="cmdk-item" data-i="${idx}" data-doc="${d.id}" data-active="${idx===state.cmdkIndex}">
+        <span class="badge ${d.kind}" style="width:auto">${KIND_LABEL[d.kind]}</span>
+        <span class="cmdk-item-main">
+          <span class="cmdk-item-title">${hl(d.title, q)}</span>
+          <span class="cmdk-item-sub">${hl(snippet(d.excerpt, q, 60), q)}</span>
+        </span></button>`;
+    }).join('');
+  }
+  if(!items.length){
+    html = '<div style="padding:34px 16px;text-align:center;color:var(--text-3);font-size:13px">没有匹配项</div>';
+  }
+
+  $('#cmdkBody').innerHTML = html;
+  $$('#cmdkBody .cmdk-item').forEach(el => {
+    el.onmouseenter = () => { state.cmdkIndex = +el.dataset.i; renderCmdk(); };
+    el.onclick = () => runCmdk(+el.dataset.i);
+  });
+
+  // 有输入时，底部预览 AI 回答（体现「搜索和问答同一个入口」）
+  const aiRow = $('#cmdkAi');
+  if(q.length >= 2){
+    aiRow.classList.remove('hidden');
+    $('#cmdkAiText').innerHTML =
+      `关于「${esc(q)}」你记过 ${docs.length} 处相关内容。` +
+      (docs.length ? '最相关的是上面的条目，点引用可跳回原文。' : '知识库里暂时没有相关记录。');
+  } else {
+    aiRow.classList.add('hidden');
+  }
+}
+
+function runCmdk(i){
+  const items = cmdkItems();
+  const item = items[i];
+  if(!item) return;
+  closeCmdk();
+  if(item.type === 'doc'){
+    state.currentId = item.doc.id;
+    renderList(); renderDoc();
+    toast(`已打开：${item.doc.title}`);
+  } else {
+    item.act();
+  }
+}
+
+function openCmdk(){
+  state.cmdkOpen = true;
+  state.cmdkQuery = '';
+  state.cmdkIndex = 0;
+  const el = document.createElement('div');
+  el.className = 'scrim';
+  el.id = 'cmdkScrim';
+  el.innerHTML = `
+    <div class="cmdk" role="dialog">
+      <div class="cmdk-input">
+        <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="#8b939c" stroke-width="1.7">
+          <circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 L14 14"/>
+        </svg>
+        <input id="cmdkInput" placeholder="搜索文档、执行操作，或直接提问…" autocomplete="off" />
+      </div>
+      <div class="cmdk-body" id="cmdkBody"></div>
+      <div class="cmdk-ai hidden" id="cmdkAi">
+        <span class="ai-ico">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="#fff"><path d="M8 1.5l1.6 4.1 4.1 1.6-4.1 1.6L8 12.9 6.4 8.8 2.3 7.2l4.1-1.6L8 1.5z"/></svg>
+        </span>
+        <span class="cmdk-ai-text" id="cmdkAiText"></span>
+      </div>
+      <div class="cmdk-foot">
+        <span><kbd>↑</kbd><kbd>↓</kbd> 选择</span>
+        <span><kbd>Enter</kbd> 打开</span>
+        <span><kbd>Esc</kbd> 关闭</span>
+        <span style="margin-left:auto">输入两个字以上会同时给 AI 答案</span>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+
+  const input = $('#cmdkInput');
+  input.focus();
+  input.oninput = () => { state.cmdkQuery = input.value; state.cmdkIndex = 0; renderCmdk(); };
+  input.onkeydown = (e) => {
+    const items = cmdkItems();
+    if(e.key === 'ArrowDown'){ e.preventDefault(); state.cmdkIndex = Math.min(items.length-1, state.cmdkIndex+1); renderCmdk(); }
+    else if(e.key === 'ArrowUp'){ e.preventDefault(); state.cmdkIndex = Math.max(0, state.cmdkIndex-1); renderCmdk(); }
+    else if(e.key === 'Enter'){ e.preventDefault(); runCmdk(state.cmdkIndex); }
+    else if(e.key === 'Escape'){ e.preventDefault(); closeCmdk(); }
+  };
+  el.onclick = (e) => { if(e.target === el) closeCmdk(); };
+  renderCmdk();
+}
+
+function closeCmdk(){
+  state.cmdkOpen = false;
+  const el = $('#cmdkScrim'); if(el) el.remove();
+}
+
+function seedMessages(){
+  const q = state.query.trim();
+  if(q){
+    state.aiMessages = [
+      {role:'user', id:'u1', text:q},
+      {role:'ai', id:'a1', text:`关于「${q}」，你的知识库里有两处相关记录：`,
+       trace:{rounds:2, tools:3, ms:1240, steps:[
+         {ico:'think', text:`我先在知识库里找与「${q}」相关的内容`},
+         {ico:'search', text:'用 jieba 切分查询词', kw:['组件','性能'], meta:'词级召回 3 段 · 子串兜底 1 段'},
+         {ico:'read', text:'读取命中的文档并合并相邻分块', meta:'来自 2 个文档，共 4 个分块'},
+         {ico:'check', text:'确认没有遗漏，生成回答'}
+       ]},
+       cites:[
+         {doc:'n1', snip:'用 memo 包一层即可避免重渲染，但先量再优化。'},
+         {doc:'w1', snip:'纯向量检索会漏掉专有名词，纯关键词又漏语义。'}
+       ]}
+    ];
+  } else {
+    state.aiMessages = [
+      {role:'user', id:'u1', text:'我之前记过 React 性能优化相关的东西吗？'},
+      {role:'ai', id:'a1', text:'记过两处。一处是你自己写的笔记，记录了 memo 的三个有效动作；另一处是收集的文章，讲混合检索。',
+       trace:{rounds:2, tools:3, ms:980, steps:[
+         {ico:'think', text:'先把问题拆成「React」「性能优化」两组关键词'},
+         {ico:'search', text:'用 jieba 切分查询词', kw:['React','性能','优化'], meta:'词级召回 3 段 · 子串兜底 0 段'},
+         {ico:'read', text:'读取命中的文档并合并相邻分块', meta:'来自 2 个文档，共 5 个分块'},
+         {ico:'check', text:'确认没有遗漏，生成回答'}
+       ]},
+       cites:[
+         {doc:'n1', snip:'把频繁变化的 state 往下挪，缩小重渲染范围。'},
+         {doc:'w1', snip:'RRF 只看名次，天然免疫分数尺度问题。'}
+       ]}
+    ];
+  }
+}
+
+const STEP_ICON = {
+  think:'✻', search:'⌕', read:'▤', check:'✓'
+};
+
+/**
+ * 检索过程。借鉴自 WeKnora —— 把 RAG 的每一步显式摊开，默认折叠。
+ *
+ * 这条对个人知识库比对企业的更重要：当 AI 说「没找到」时，
+ * 你能立刻分辨是「确实没存过」还是「存了但分词没匹配上」，
+ * 而不是只能怀疑是不是自己记错了。
+ */
+function renderTrace(t){
+  if(!t) return '';
+  const steps = t.steps.map(st => `
+    <div class="trace-step">
+      <span class="step-ico${st.ico==='check'?' done':''}">${STEP_ICON[st.ico] || '·'}</span>
+      <span class="step-text">
+        ${esc(st.text)}${st.kw ? '<br>' + st.kw.map(k => `<span class="step-kw">${esc(k)}</span>`).join('') : ''}
+        ${st.meta ? `<span class="step-meta">${esc(st.meta)}</span>` : ''}
+      </span>
+    </div>`).join('');
+
+  return `<div class="trace" data-open="false">
+    <button class="trace-head">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="8" cy="8" r="6"/><path d="M8 5v3.5l2.2 1.4"/>
+      </svg>
+      思考 <strong>${t.rounds}</strong> 轮 · 调用 <strong>${t.tools}</strong> 次工具 · 耗时 <strong>${(t.ms/1000).toFixed(1)}s</strong>
+      <svg class="trace-chev" width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M4 6l4 4 4-4"/>
+      </svg>
+    </button>
+    <div class="trace-body">${steps}</div>
+  </div>`;
+}
+
+function messagesHtml(messages){
+  return messages.map(m => {
+    if(m.failure){
+      return `<div class="msg ai"><div class="msg-bubble">${renderFailure(m)}</div></div>`;
+    }
+    if(m.role === 'user'){
+      return `<div class="msg user"><div class="msg-bubble">${esc(m.text)}</div></div>`;
+    }
+    const cites = (m.cites || []).map(c => {
+      const d = DOCS.find(x => x.id === c.doc);
+      if(!d) return '';
+      return `<div class="cite-card" data-doc="${d.id}">
+        <div class="cite-card-top">
+          <span class="badge ${d.kind}">${KIND_LABEL[d.kind]}</span>
+          <span class="cite-card-title">${esc(d.title)}</span>
+        </div>
+        <div class="cite-card-snip">${esc(c.snip)}</div>
+      </div>`;
+    }).join('');
+    return `<div class="msg ai">
+      <div class="msg-bubble">
+        ${renderTrace(m.trace)}
+        <p>${esc(m.text)}</p>${cites}
+        ${renderActions(m)}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/**
+ * 回答下方的动作条。
+ *
+ * 「存成笔记」是补上的闭环：会话优先之后，右栏不断产出结论，
+ * 但这些结论原本只能留在会话流水里。没有这个按钮，
+ * 知识库就只是「能问」，不会「越用越厚」。
+ */
+function renderActions(m){
+  if(m.role !== 'ai') return '';
+  const saved = m.saved ? '<span class="saved-tag">已存为笔记</span>' : '';
+  return `<div class="msg-actions">
+    <button class="ma-btn" data-act="save" data-id="${m.id}">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3.5 2.5h9v11l-4.5-3-4.5 3z"/></svg>
+      存成笔记
+    </button>
+    <button class="ma-btn" data-act="copy" data-id="${m.id}">复制</button>
+    ${saved}
+  </div>`;
+}
+
+function bindMessageEvents(root){
+  $$('.trace-head', root).forEach(el => {
+    el.onclick = () => {
+      const t = el.parentElement;
+      t.dataset.open = t.dataset.open === 'true' ? 'false' : 'true';
+    };
+  });
+
+  bindFailureActions(root);
+
+  $$('.ma-btn', root).forEach(el => {
+    el.onclick = () => {
+      const m = state.aiMessages.find(x => x.id === el.dataset.id);
+      if(!m) return;
+      if(el.dataset.act === 'save'){
+        const title = m.text.replace(/[，。：？]/g, ' ').trim().slice(0, 24) || '对话结论';
+        const d = {
+          id:'s' + Date.now(), kind:'note', title, status:'ready',
+          path:`2026/09/${title}-new.md`, tags:['对话沉淀'], updated:'刚刚',
+          excerpt: m.text.slice(0, 70) + '…',
+          body: m.text + '\n\n> 来源：' + (m.cites || []).map(c => DOCS.find(x => x.id === c.doc)?.title).filter(Boolean).join('、'),
+          origin:'manual', backlinks:[], sources:(m.cites || []).map(c => DOCS.find(x => x.id === c.doc)?.title).filter(Boolean)
+        };
+        DOCS.unshift(d);
+        m.saved = true;
+        renderList(); renderMain();
+        toast('已存成笔记，并保留了引用来源');
+      } else {
+        toast('已复制到剪贴板');
+      }
+    };
+  });
+
+  $$('.cite-card', root).forEach(el => {
+    el.onclick = () => {
+      state.currentId = el.dataset.doc;
+      // 从对话里点引用 → 切到文档模式并定位，这是「溯源」的落点
+      state.mode = 'docs';
+      state.scope = 'all';
+      syncMode(); renderNav(); renderList(); renderMain();
+      toast('已跳回引用对应的文档');
+    };
+  });
+}
+
+
+
+/* ══════════ 方案切换 ══════════ */
+
+
+/* ══════════ 事件绑定 ══════════ */
+function init(){
+
+  const si = $('#searchInput');
+  si.oninput = () => { state.query = si.value; renderList(); };
+
+  $('#saveInd').onclick = () => { if($('#saveInd').dataset.s === 'error') retrySave(); };
+  $$('#segDemo button').forEach(b => b.onclick = () => {
+    state.demo = b.dataset.d;
+    $$('#segDemo button').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.d === state.demo)));
+    const d = state.demo;
+    if(d === 'none'){ toast('恢复正常'); }
+    else if(d === 'savfail'){ toast('下次保存会失败——在正文里敲个字试试'); }
+    else { injectFailure(d); }
+  });
+  $('#btnInlineDemo').onclick = showInlineDemo;
+
+  document.addEventListener('keydown', (e) => {
+    const mod = e.ctrlKey || e.metaKey;
+    if(mod && e.key.toLowerCase() === 'k'){ e.preventDefault(); state.cmdkOpen ? closeCmdk() : openCmdk(); }
+    else if(e.key === 'Escape' && state.cmdkOpen){ closeCmdk(); }
+  });
+
+  // 文档入口
+  $$('.nav-item[data-scope]').forEach(el => el.onclick = () => confirmLeave(() => openDocs(el.dataset.scope)));
+  $$('.nav-item[data-tag]').forEach(el => el.onclick = () => confirmLeave(() => openDocs('tag:' + el.dataset.tag)));
+  $('.nav-item[data-view="settings"]').onclick = () => confirmLeave(() => {
+    state.view = 'settings';
+    $$('.nav-item').forEach(x => x.setAttribute('aria-current','false'));
+    $('.nav-item[data-view="settings"]').setAttribute('aria-current','true');
+    renderList(); renderMain();
+  });
+  $('.new-chat').onclick = () => confirmLeave(() => {
+    state.view='app'; state.askMode=false; state.askFrom=null; state.aiMessages = [];
+    openConversation(null);
+  });
+  $('#btnCollect').onclick = () => openCapture();
+  $$('#ctxTabs button').forEach(b => b.onclick = () => {
+    if(b.dataset.mode === 'chat') openConversation(state.convId);
+    else openDocs(state.scope.startsWith('folder:') || state.scope.startsWith('tag:') ? state.scope : 'all');
+  });
+
+  const mta = $('#mainTextarea');
+  const sendMain = () => {
+    const text = mta.value.trim();
+    if(!text) return;
+    state.aiMessages.push({role:'user', text});
+    state.aiMessages.push({
+      role:'ai',
+      text:'这是原型，还没有接后端。真实实现里这里会流式返回，并且上面那条检索过程会显示实际命中的分块数。',
+      trace:{rounds:1, tools:2, ms:640, steps:[
+        {ico:'search', text:'用 jieba 切分查询词', meta:'词级召回 2 段'},
+        {ico:'check', text:'生成回答'}
+      ]},
+      cites:[{doc:'n1', snip:'引用会带字符偏移，点击直接跳到正文里的那一句。'}]
+    });
+    mta.value = ''; mta.style.height = 'auto';
+    renderChatMain();
+    renderList();
+  };
+  $('#mainSend').onclick = sendMain;
+  mta.onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendMain(); } };
+  mta.oninput = () => { mta.style.height = 'auto'; mta.style.height = Math.min(140, mta.scrollHeight) + 'px'; };
+  $('#pillReason').onclick = (e) => {
+    const b = e.currentTarget;
+    b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+  };
+  $('#pillScope').onclick = () => {
+    const cur = $('#pillScope').textContent.includes('整个') ? '当前文档' : '整个知识库';
+    $('#pillScope').textContent = '范围：' + cur;
+  };
+
+  $$('.list-head .chip').forEach(c => c.onclick = () => {
+    $$('.list-head .chip').forEach(x => x.setAttribute('aria-pressed','false'));
+    c.setAttribute('aria-pressed','true');
+    toast(`筛选：${c.textContent}`);
+  });
+
+  renderNav();
+  renderList();
+  renderMain();
+
+  // 首屏自动演示一次命令面板，让人立刻看到它长什么样
+  setTimeout(() => toast('按 Ctrl+K 打开命令面板；底部切换布局方案'), 500);
+}
+
+init();
+</script>
+</body>
+</html>
