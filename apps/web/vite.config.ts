@@ -30,7 +30,7 @@ export default defineConfig({
     // 开发时前端在 5173、后端在 3000，代理掉跨源与 cookie 的麻烦
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: process.env.VITE_API_TARGET ?? 'http://localhost:3000',
         changeOrigin: false,
       },
     },

@@ -9,6 +9,7 @@ import { toSearchText } from '../lib/segment.js'
 import { contentHash, toExcerpt } from '../lib/text.js'
 import { readNote, toVaultRelative, writeNote } from '../lib/vault.js'
 import { syncTags } from './documents.js'
+import { syncDocumentLinks } from './links.js'
 
 /**
  * 重建索引：扫描 vault 下的所有 Markdown，把文件状态同步进数据库。
@@ -100,6 +101,9 @@ export async function reindexVault(): Promise<ReindexResult> {
       searchText: toSearchText(note.title, note.body),
       contentHash: contentHash(note.body),
       path: relPath,
+      // 目录存在 frontmatter 里，所以重建索引必须把它一起还原——
+      // 否则「数据库丢了、从文件重建」之后目录树会整棵消失
+      folder: note.folder,
       updatedAt: new Date(note.updatedAt),
     }
 
@@ -115,6 +119,10 @@ export async function reindexVault(): Promise<ReindexResult> {
     // 只 upsert documents 行而不同步 document_tags 的话，内容回来了但标签没了——
     // 这个 bug 由 vault-roundtrip.test.ts 抓到过。
     await syncTags(id, note.tags)
+
+    // 双链同样是派生数据，也要能从正文重建。不同步的话，
+    // 「删库重建」之后所有反链会指向空
+    await syncDocumentLinks(id, note.body)
 
     if (existingIds.has(id)) {
       result.updated += 1

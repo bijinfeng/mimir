@@ -1,5 +1,13 @@
 import { sql } from 'drizzle-orm'
-import { index, pgTable, primaryKey, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core'
+import {
+  index,
+  jsonb,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  uniqueIndex,
+} from 'drizzle-orm/pg-core'
 
 /**
  * 文档主表。一条贯穿全局的规则：无论来源是手写笔记、网页、公众号还是 GitHub，
@@ -29,6 +37,14 @@ export const documents = pgTable(
 
     /** vault 相对路径，仅 note 有 */
     path: text('path'),
+    /**
+     * 所属目录，如 `技术/前端/React`。null 表示未归档。
+     *
+     * 目录树由这一列派生，**不单独建 folders 表**：目录是文件系统的形状，
+     * 而「文件是真相」。单独建表会立刻产生两个真相源——表里有目录、
+     * vault 里没有对应文件夹，或者反过来。
+     */
+    folder: text('folder'),
     url: text('url'),
     /** 归一化 URL，用于去重（同一篇文章抓两次只留一条） */
     canonicalUrl: text('canonical_url'),
@@ -46,6 +62,7 @@ export const documents = pgTable(
   (t) => [
     index('documents_kind_status_idx').on(t.kind, t.status),
     index('documents_updated_at_idx').on(t.updatedAt.desc()),
+    index('documents_folder_idx').on(t.folder),
     // 同一来源只收一次
     uniqueIndex('documents_canonical_url_idx').on(t.canonicalUrl),
     // 词级召回：走 jieba 预分词后的 search_text
@@ -79,6 +96,95 @@ export const documentTags = pgTable(
     primaryKey({ columns: [t.documentId, t.tagId] }),
     index('document_tags_tag_idx').on(t.tagId),
   ],
+)
+
+/**
+ * 对话。
+ *
+ * 会话优先的导航（`docs/PRD.md` §5.2）意味着会话是一等公民：它出现在左导航、
+ * 占据中栏的「本次引用」、在右栏展开检索过程。所以必须落库——
+ * 只存在内存里的话，刷新一次「会话历史」就空了，那这个导航结构就是假的。
+ */
+export const conversations = pgTable(
+  'conversations',
+  {
+    id: text('id').primaryKey(),
+    /** 由第一个问题生成，之后不再变。空会话显示为「新对话」 */
+    title: text('title').notNull().default(''),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('conversations_updated_at_idx').on(t.updatedAt.desc())],
+)
+
+export const messages = pgTable(
+  'messages',
+  {
+    id: text('id').primaryKey(),
+    conversationId: text('conversation_id')
+      .notNull()
+      .references(() => conversations.id, { onDelete: 'cascade' }),
+    /** user | assistant */
+    role: text('role').notNull(),
+    text: text('text').notNull().default(''),
+
+    /**
+     * 检索过程。存 jsonb 而不是拆成表：它是**一次生成的快照**，
+     * 只随消息整体读写，从不单独查询。拆表会引入一个只为可读性服务的连接。
+     */
+    trace: jsonb('trace'),
+    /** 引用卡片数组，同上 */
+    citations: jsonb('citations')
+      .notNull()
+      .default(sql`'[]'::jsonb`),
+    /** quota | timeout | truncated | offline；非空表示这是一条失败消息 */
+    failure: text('failure'),
+    /** 「存成笔记」之后指向生成的笔记，界面据此显示「已存为笔记」 */
+    savedNoteId: text('saved_note_id'),
+
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('messages_conversation_idx').on(t.conversationId, t.createdAt)],
+)
+
+/**
+ * 本次引用了哪些文档 —— 中栏在对话模式下显示的那一列。
+ *
+ * 之所以单独一张表而不是从 messages.citations 里现算：
+ * 中栏要在**打开会话的瞬间**渲染出来，而 citations 是嵌在每条消息的 jsonb 里的，
+ * 现算意味着把整个会话的消息全捞出来解 JSON。单独一张小表让这件事变成一次连接。
+ */
+export const conversationRefs = pgTable(
+  'conversation_refs',
+  {
+    conversationId: text('conversation_id')
+      .notNull()
+      .references(() => conversations.id, { onDelete: 'cascade' }),
+    documentId: text('document_id')
+      .notNull()
+      .references(() => documents.id, { onDelete: 'cascade' }),
+  },
+  (t) => [primaryKey({ columns: [t.conversationId, t.documentId] })],
+)
+
+/**
+ * 文档间的链接 —— 让双链是双向的（`docs/PRD.md` §5.10）。
+ *
+ * 链接从 Markdown 正文里的站内链接解析出来（`[标题](/doc/<id>)`），
+ * 在每次保存正文时重建该文档的出链。反链不存，靠反向查询得到：
+ * 存一份反链等于把同一个事实写两遍，必然有一天对不上。
+ */
+export const documentLinks = pgTable(
+  'document_links',
+  {
+    fromId: text('from_id')
+      .notNull()
+      .references(() => documents.id, { onDelete: 'cascade' }),
+    toId: text('to_id')
+      .notNull()
+      .references(() => documents.id, { onDelete: 'cascade' }),
+  },
+  (t) => [primaryKey({ columns: [t.fromId, t.toId] }), index('document_links_to_idx').on(t.toId)],
 )
 
 // Better Auth 的表结构单独一个文件，但必须并入同一个 schema 对象，

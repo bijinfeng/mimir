@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { documentListQuerySchema, noteCreateSchema, noteUpdateSchema } from '@mimir/shared'
 import { HttpError, parseInput } from '../lib/http.js'
 import {
+  countDocuments,
   createNote,
   deleteDocument,
   getDocument,
@@ -9,6 +10,8 @@ import {
   listDocuments,
   updateNote,
 } from '../services/documents.js'
+import { listFolderTree } from '../services/folders.js'
+import { suggestTags } from '../services/suggestions.js'
 import { countOrphanFiles, reindexVault } from '../services/vault-index.js'
 import type { AppEnv } from '../types.js'
 
@@ -18,6 +21,13 @@ documentsRoute.get('/', async (c) => {
   const query = await parseInput(c, 'query', documentListQuerySchema)
   return c.json({ items: await listDocuments(query) })
 })
+
+/**
+ * 各视图的计数，供左导航显示。
+ *
+ * 必须注册在 `/:id` **之前**，否则 `/counts` 会被当成一个文档 id。
+ */
+documentsRoute.get('/counts', async (c) => c.json(await countDocuments()))
 
 /** 新建笔记。走这条路径创建的一定是 note：其余类型都由抓取流程产生。 */
 documentsRoute.post('/notes', async (c) => {
@@ -47,6 +57,33 @@ documentsRoute.delete('/:id', async (c) => {
 export const tagsRoute = new Hono<AppEnv>()
 
 tagsRoute.get('/', async (c) => c.json({ items: await listAllTags() }))
+
+/**
+ * 建议标签。
+ *
+ * 整理条把它直接摆成按钮（`docs/PRD.md` §5.10）——后端早就该算它，
+ * 界面上没地方显示等于白算。放在文档路由下（`/:id/suggested-tags`）而不是
+ * 单独端点，是因为它需要正文，而正文只有服务端能读到最新的
+ * （文件可能被外部编辑器改过，见 services/documents.ts 的 getDocument）。
+ */
+documentsRoute.get('/:id/suggested-tags', async (c) => {
+  const doc = await getDocument(c.req.param('id'))
+  if (!doc) throw new HttpError(404, 'NOT_FOUND', '文档不存在')
+
+  const items = await suggestTags(doc.title, doc.body, { exclude: doc.tags })
+  return c.json({ items })
+})
+
+/**
+ * 目录树。
+ *
+ * 挂在 `/api/folders` 而不是 `/api/documents/folders`：它是**派生的聚合**，
+ * 不是文档资源的一部分。放在文档下会让 `/documents/:id` 有歧义
+ * （`folders` 会被当成一个 id）。
+ */
+export const foldersRoute = new Hono<AppEnv>()
+
+foldersRoute.get('/', async (c) => c.json({ items: await listFolderTree() }))
 
 /**
  * 重建索引。用于「用外部编辑器改了文件」「从别处拷来一批 md」之后同步。

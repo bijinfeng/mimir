@@ -31,6 +31,8 @@ catalog:
   '@tiptap/starter-kit': ^3.31.3
   '@tiptap/extension-code-block-lowlight': ^3.31.3
   '@tiptap/extension-image': ^3.31.3
+  '@tiptap/extension-bubble-menu': ^3.31.3
+  '@tiptap/react': ^3.31.3
   '@tiptap/extension-placeholder': ^3.31.3
   '@tiptap/extension-table': ^3.31.3
   '@tiptap/extension-task-item': ^3.31.3

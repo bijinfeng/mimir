@@ -1,12 +1,24 @@
 import type {
   ApiError,
+  AskInput,
+  AskResponse,
+  CaptureResponse,
+  ConversationDetail,
+  ConversationSummary,
+  DetectedSource,
+  DocumentCounts,
   DocumentDetail,
   DocumentListQuery,
   DocumentSummary,
+  ExportStats,
+  FolderListResponse,
   NoteCreate,
   NoteUpdate,
-  SearchQuery,
+  SaveNoteInput,
+  SearchQueryInput,
   SearchResponse,
+  SuggestedTagsResponse,
+  TagListResponse,
 } from '@mimir/shared'
 
 /**
@@ -96,15 +108,93 @@ export const api = {
         method: 'DELETE',
       })
     },
+    /**
+     * 建议标签。整理条把它直接摆成按钮，用户点一下就能挂上——
+     * 这是把收件箱从「死胡同」变成能整理的关键一步（`docs/PRD.md` §2.2）。
+     */
+    suggestedTags(id: string) {
+      return request<SuggestedTagsResponse>(
+        `/api/documents/${encodeURIComponent(id)}/suggested-tags`,
+      )
+    },
+    counts() {
+      return request<DocumentCounts>('/api/documents/counts')
+    },
+  },
+
+  folders: {
+    list() {
+      return request<FolderListResponse>('/api/folders')
+    },
   },
 
   tags: {
     list() {
-      return request<{ items: { name: string; count: number }[] }>('/api/tags')
+      return request<TagListResponse>('/api/tags')
     },
   },
 
-  search(query: SearchQuery) {
+  conversations: {
+    list() {
+      return request<{ items: ConversationSummary[] }>('/api/conversations')
+    },
+    get(id: string) {
+      return request<ConversationDetail>(`/api/conversations/${encodeURIComponent(id)}`)
+    },
+    create() {
+      return request<ConversationSummary>('/api/conversations', { method: 'POST' })
+    },
+    remove(id: string) {
+      return request<{ ok: boolean }>(`/api/conversations/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      })
+    },
+    /** 在已有会话里提问 */
+    ask(id: string, input: AskInput) {
+      return request<AskResponse>(`/api/conversations/${encodeURIComponent(id)}/ask`, {
+        method: 'POST',
+        body: JSON.stringify(input),
+      })
+    },
+    /** 不指定会话时自动开一个新的。命令面板里直接提问走这条。 */
+    askNew(input: AskInput) {
+      return request<AskResponse>('/api/conversations/ask', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      })
+    },
+    /** 存成笔记。保留引用来源，见 docs/PRD.md §5.7。 */
+    saveAsNote(input: SaveNoteInput) {
+      return request<{ noteId: string; conversationId: string }>(
+        '/api/conversations/messages/note',
+        {
+          method: 'POST',
+          body: JSON.stringify(input),
+        },
+      )
+    },
+  },
+
+  capture: {
+    /** 输入框里边打边识别来源。规则与服务端抓取共用同一套。 */
+    detect(url: string) {
+      return request<{ source: DetectedSource | null }>(`/api/capture/detect${toQuery({ url })}`)
+    },
+    run(url: string) {
+      return request<CaptureResponse>('/api/capture', {
+        method: 'POST',
+        body: JSON.stringify({ url }),
+      })
+    },
+  },
+
+  export: {
+    stats() {
+      return request<ExportStats>('/api/export/stats')
+    },
+  },
+
+  search(query: SearchQueryInput) {
     return request<SearchResponse>(
       `/api/search${toQuery(query as unknown as Record<string, string | number | undefined>)}`,
     )

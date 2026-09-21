@@ -115,3 +115,52 @@ describe('中文全文检索', () => {
     }
   })
 })
+
+/**
+ * 自然语言的提问式查询。
+ *
+ * 这一组是**实测发现的回归**：原先关键词通道用 `plainto_tsquery`，
+ * 它把所有词用 AND 连起来，要求每个词都出现在同一篇文档里。
+ * 于是「React 重渲染范围怎么缩小？」这类提问会命中 0 条——
+ * 四个词里只要有一个没出现就全盘落空，而用户想要的是「最相关的几篇」。
+ *
+ * 修法是把逐词的 plainto_tsquery 用 OR 连起来，再靠 ts_rank_cd 排序
+ * （它天然给命中词更多、挨得更近的文档更高分）。
+ */
+describe('提问式查询的召回', () => {
+  beforeAll(async () => {
+    await client.post('/api/documents/notes', {
+      title: '重渲染范围的控制',
+      body: '把频繁变化的 state 往下挪，就能缩小重渲染范围。这是最直接的手段。',
+      tags: ['react'],
+    })
+  })
+
+  it('自然语言提问能命中部分词匹配的文档', async () => {
+    const res = await client.get<SearchResponseShape>(
+      `/api/search?q=${encodeURIComponent('React 重渲染范围怎么缩小？')}`,
+    )
+
+    // 这条文档不同时包含「react 重渲染 范围 缩小」四个词的全部组合语义，
+    // 但它显然是最相关的——AND 语义下会一条都搜不到
+    expect(res.body.total).toBeGreaterThan(0)
+    expect(res.body.hits.some((hit) => hit.title.includes('重渲染范围'))).toBe(true)
+  })
+
+  it('命中多个查询词的文档排在只命中一个的前面', async () => {
+    const res = await client.get<SearchResponseShape>(
+      `/api/search?q=${encodeURIComponent('重渲染 范围')}`,
+    )
+
+    const titles = res.body.hits.map((hit) => hit.title)
+    // ts_rank_cd 的 cover density 语义：两个词都出现且挨得近的文档应当靠前
+    expect(titles[0]).toContain('重渲染范围')
+  })
+
+  it('查询词里的 tsquery 语法字符不会让查询失败', async () => {
+    const res = await client.get<SearchResponseShape>(
+      `/api/search?q=${encodeURIComponent('a & b | c ! d : e')}`,
+    )
+    expect(res.status).toBe(200)
+  })
+})

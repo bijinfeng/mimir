@@ -21,6 +21,12 @@ export interface VaultNote {
   tags: string[]
   body: string
   status: string
+  /**
+   * 所属目录，如 `技术/前端`。null 表示未归档。
+   *
+   * 存在 frontmatter 里，不靠物理目录结构表达——理由见下方 writeNote 的注释。
+   */
+  folder: string | null
   createdAt: string
   updatedAt: string
   /** 相对 vault 根目录的路径，如 2026/09/hello-world-a1b2c3d4.md */
@@ -32,6 +38,7 @@ export interface NoteFrontmatter {
   title: string
   tags: string[]
   status: string
+  folder?: string | null
   createdAt: string
   updatedAt: string
 }
@@ -56,7 +63,17 @@ function idSuffix(id: string): string {
   return id.replace(/[^A-Za-z0-9]/g, '').slice(-8) || 'notid'
 }
 
-/** 新笔记落盘位置：<年>/<月>/<slug>-<短id>.md */
+/**
+ * 新笔记落盘位置：<年>/<月>/<slug>-<短id>.md
+ *
+ * **物理路径不表达目录归属。** 目录（「技术 / 前端 / React」）存在 frontmatter 的
+ * `folder` 字段里，落盘位置始终按年月分。
+ *
+ * 为什么不用物理目录：那样「归入目录」就变成一次文件移动，而移动会让路径失效——
+ * 用户正在编辑时移动文件、外部工具按旧路径打开、git 里出现大量 rename diff。
+ * 更要紧的是年月分组本身有价值（按时间找一个东西是检索之外的常用路径），
+ * 物理目录只能表达一种分组，两种需求会互相挤掉。
+ */
 export function buildNotePath(title: string, id: string, date = new Date()): string {
   const year = String(date.getFullYear())
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -72,6 +89,9 @@ export async function writeNote(note: VaultNote): Promise<void> {
     title: note.title,
     tags: note.tags,
     status: note.status,
+    // 空的 folder 不写进文件：frontmatter 里出现 `folder: null` 是噪音，
+    // 而「没有这个字段」本身就表示未归档
+    ...(note.folder ? { folder: note.folder } : {}),
     createdAt: note.createdAt,
     updatedAt: note.updatedAt,
   }
@@ -92,6 +112,7 @@ export async function readNote(relPath: string): Promise<VaultNote> {
     tags: Array.isArray(data.tags) ? data.tags : [],
     body: parsed.content.trim(),
     status: data.status ?? 'inbox',
+    folder: typeof data.folder === 'string' && data.folder.trim() ? data.folder.trim() : null,
     createdAt: data.createdAt ?? new Date().toISOString(),
     updatedAt: data.updatedAt ?? new Date().toISOString(),
     path: relPath,

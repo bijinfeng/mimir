@@ -26,6 +26,13 @@
     // React 17+ 的自动 JSX 运行时不需要 React 在作用域内，这条是历史遗留规则
     "react/react-in-jsx-scope": "off",
 
+    // 这条建议手写 useMemo 包裹 context value，但本项目开了 React Compiler，
+    // 它**已经**在编译期给 context value 插入记忆化（见 docs/DECISIONS.md D-009
+    // 与 apps/web/AGENTS.md：不要手写 useMemo / useCallback / memo）。
+    // 手写一份会让「哪些记忆化是编译器做的」变得含混，而且编译器不会因为
+    // 存在手写记忆化就停止工作——两套机制叠在一起只会让人误判优化来源。
+    "react/jsx-no-constructed-context-values": "off",
+
     // 服务端有几处刻意的顺序写入（重建索引、逐条 upsert）。
     // 改成并行会引入并发控制，对个人规模的数据不值得；而且顺序执行便于定位
     // 「卡在哪一条」——重建索引失败时这一点很重要。

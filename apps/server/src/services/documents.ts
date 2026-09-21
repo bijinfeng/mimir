@@ -19,6 +19,8 @@ import {
   writeNote,
   type VaultNote,
 } from '../lib/vault.js'
+import { normalizeFolder } from './folders.js'
+import { getDocumentLinks, syncDocumentLinks } from './links.js'
 
 /**
  * 文档服务。
@@ -41,6 +43,7 @@ function toSummary(row: Row, tagNames: string[]): DocumentSummary {
     tags: tagNames,
     path: row.path,
     url: row.url,
+    folder: row.folder,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   }
@@ -112,6 +115,8 @@ export async function createNote(input: NoteCreate): Promise<DocumentDetail> {
     tags: input.tags,
     body: input.body,
     status: 'inbox',
+    // 新建的笔记未归档；目录由用户在整理条里指定
+    folder: null,
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
     path,
@@ -138,8 +143,16 @@ export async function createNote(input: NoteCreate): Promise<DocumentDetail> {
   if (!row) throw new Error('创建笔记失败：数据库未返回记录')
 
   await syncTags(id, input.tags)
+  // 新建的笔记正文里也可能有站内链接——「存成笔记」保留引用来源走的就是这条路。
+  // 漏掉这一步的后果是：笔记正文里写着的链接不产生反链，
+  // 对方文档底部的「被引用」里看不到它
+  await syncDocumentLinks(id, note.body)
 
-  return { ...toSummary(row, [...input.tags].toSorted()), body: row.body }
+  return {
+    ...toSummary(row, [...input.tags].toSorted()),
+    body: row.body,
+    links: await getDocumentLinks(id),
+  }
 }
 
 export async function updateNote(id: string, input: NoteUpdate): Promise<DocumentDetail | null> {
@@ -150,6 +163,10 @@ export async function updateNote(id: string, input: NoteUpdate): Promise<Documen
   const body = input.body ?? existing.body
   const status = input.status ?? existing.status
   const tagNames = input.tags ?? [...((await loadTags([id])).get(id) ?? [])]
+  // folder 用 `=== undefined` 判断而不是 `??`：空串是合法值（移出目录），
+  // 用 ?? 会把「移出目录」当成「不修改」
+  const folder =
+    input.folder === undefined ? existing.folder : normalizeFolder(input.folder) || null
 
   // 标题变了就跟随改名，保证文件名和内容一致；
   // 自动生成的 id 后缀保证不会和已有文件冲突
@@ -168,6 +185,7 @@ export async function updateNote(id: string, input: NoteUpdate): Promise<Documen
       tags: tagNames,
       body,
       status,
+      folder,
       createdAt: existing.createdAt.toISOString(),
       updatedAt: now.toISOString(),
       path,
@@ -181,6 +199,7 @@ export async function updateNote(id: string, input: NoteUpdate): Promise<Documen
       body,
       status,
       path,
+      folder,
       ...buildIndexFields(title, body),
       updatedAt: now,
     })
@@ -190,8 +209,15 @@ export async function updateNote(id: string, input: NoteUpdate): Promise<Documen
   if (!row) return null
 
   await syncTags(id, tagNames)
+  // 正文变了，出链跟着重建。放在数据库写入之后：链接表是索引，
+  // 而正文是真相——先写完真相再更新索引，顺序与全局规则一致
+  await syncDocumentLinks(id, body)
 
-  return { ...toSummary(row, [...tagNames].toSorted()), body: row.body }
+  return {
+    ...toSummary(row, [...tagNames].toSorted()),
+    body: row.body,
+    links: await getDocumentLinks(id),
+  }
 }
 
 async function getDocumentRow(id: string): Promise<Row | null> {
@@ -225,7 +251,7 @@ export async function getDocument(id: string): Promise<DocumentDetail | null> {
   }
 
   const tagNames = (await loadTags([id])).get(id) ?? []
-  return { ...toSummary(row, tagNames), body }
+  return { ...toSummary(row, tagNames), body, links: await getDocumentLinks(id) }
 }
 
 export async function listDocuments(query: DocumentListQuery): Promise<DocumentSummary[]> {
@@ -239,6 +265,14 @@ export async function listDocuments(query: DocumentListQuery): Promise<DocumentS
         join ${tags} t on t.id = dt.tag_id
         where dt.document_id = ${documents.id} and t.name = ${query.tag}
       )`,
+    )
+  }
+  if (query.folder !== undefined && query.folder !== '') {
+    const folder = normalizeFolder(query.folder)
+    // 含子目录：选中「技术」要能看见「技术/前端/React」下的东西，
+    // 否则用户得把每个子目录都点一遍才能翻完
+    conditions.push(
+      sql`(${documents.folder} = ${folder} or ${documents.folder} like ${`${folder}/%`})`,
     )
   }
 
@@ -283,4 +317,33 @@ export async function listAllTags(): Promise<{ name: string; count: number }[]> 
     .orderBy(desc(sql`count(${documentTags.documentId})`), tags.name)
 
   return rows.map((row) => ({ name: row.name, count: Number(row.count) }))
+}
+
+/**
+ * 各视图的文档数，供左导航显示。
+ *
+ * 单独一次聚合查询，而不是让前端拉全量列表自己算：
+ * 导航里的计数必须**准确且便宜**——为它拉 500 条文档摘要只为了 count，
+ * 在知识库长大之后会成为每次页面切换的开销。
+ */
+export interface DocumentCounts {
+  inbox: number
+  all: number
+  note: number
+  clip: number
+}
+
+export async function countDocuments(): Promise<DocumentCounts> {
+  const rows = await db
+    .select({ kind: documents.kind, status: documents.status })
+    .from(documents)
+    .where(isNull(documents.deletedAt))
+
+  return {
+    inbox: rows.filter((row) => row.status === 'inbox').length,
+    all: rows.length,
+    note: rows.filter((row) => row.kind === 'note').length,
+    // 「收集的资料」= 所有非笔记。与前端 clip 视图的过滤条件保持一致
+    clip: rows.filter((row) => row.kind !== 'note').length,
+  }
 }

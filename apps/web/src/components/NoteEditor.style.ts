@@ -18,22 +18,18 @@ export const useStyles = createStyles(({ css, token }) => {
   return {
     shell: css`
       max-width: ${CONTENT_WIDTH}px;
-      margin: 0 auto;
-      padding: 32px 40px 160px;
     `,
-    meta: css`
-      margin-bottom: 10px;
+    /* 保存状态紧贴标题下方。常驻可见是硬要求：
+       文字类产品最让人失去信任的是丢内容（docs/PRD.md §5.9） */
+    saveRow: css`
+      min-height: 20px;
+      margin-bottom: 12px;
     `,
     title: css`
       font-size: 28px;
       font-weight: 700;
       padding: 0;
-      margin-bottom: 8px;
-    `,
-    path: css`
-      display: block;
-      font-size: 12px;
-      margin-bottom: 20px;
+      margin-bottom: 2px;
     `,
 
     /* ── 正文排版 ────────────────────────────────────────────
@@ -52,9 +48,10 @@ export const useStyles = createStyles(({ css, token }) => {
       }
 
       h2 {
-        font-size: 20px;
-        font-weight: 600;
+        font-size: 19px;
+        font-weight: 650;
         line-height: 1.4;
+        letter-spacing: -0.005em;
         margin: 26px 0 10px;
       }
 
@@ -77,22 +74,22 @@ export const useStyles = createStyles(({ css, token }) => {
 
       code {
         font-family: ${token.fontFamilyCode};
-        font-size: 13px;
-        background: ${token.colorFillSecondary};
+        font-size: 12.5px;
+        background: #f0f1f3;
         color: ${token.inlineCodeFg};
         padding: 1.5px 5px;
-        border-radius: ${token.borderRadiusSM}px;
+        border-radius: 4px;
       }
 
       pre {
-        background: ${token.colorFillTertiary};
+        background: ${token.tintNav};
         border: 1px solid ${token.colorBorderSecondary};
         border-radius: ${token.borderRadius}px;
         padding: 14px 16px;
         margin: 14px 0;
         overflow-x: auto;
-        font-size: 13px;
-        line-height: 1.6;
+        font-size: 12.5px;
+        line-height: 1.65;
 
         code {
           background: none;
@@ -110,12 +107,13 @@ export const useStyles = createStyles(({ css, token }) => {
 
       ul,
       ol {
-        margin: 12px 0;
-        padding-left: 22px;
+        margin: 12px 0 12px 4px;
+        padding-left: 20px;
       }
 
       li {
         margin: 5px 0;
+        line-height: 1.7;
       }
 
       table {

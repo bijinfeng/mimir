@@ -5,7 +5,10 @@ import { auth } from './auth.js'
 import { env } from './env.js'
 import { errorBody, HttpError } from './lib/http.js'
 import { requireAuth } from './middleware/auth.js'
-import { documentsRoute, maintenanceRoute, tagsRoute } from './routes/documents.js'
+import { captureRoute } from './routes/capture.js'
+import { chatRoute, conversationsRoute } from './routes/conversations.js'
+import { documentsRoute, foldersRoute, maintenanceRoute, tagsRoute } from './routes/documents.js'
+import { exportRoute } from './routes/export.js'
 import { mountStatic } from './lib/static.js'
 import { searchRoute } from './routes/search.js'
 import type { AppEnv } from './types.js'
@@ -37,8 +40,13 @@ export function createApp() {
   const api = new Hono<AppEnv>()
   api.use('*', requireAuth)
   api.route('/documents', documentsRoute)
+  api.route('/folders', foldersRoute)
   api.route('/tags', tagsRoute)
   api.route('/search', searchRoute)
+  api.route('/conversations', conversationsRoute)
+  api.route('/chat', chatRoute)
+  api.route('/capture', captureRoute)
+  api.route('/export', exportRoute)
   api.route('/maintenance', maintenanceRoute)
 
   app.route('/api', api)

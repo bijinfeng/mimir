@@ -21,6 +21,15 @@ export const searchQuerySchema = z.object({
 })
 export type SearchQuery = z.infer<typeof searchQuerySchema>
 
+/**
+ * 调用方传进来的形状（默认值可省略）。
+ *
+ * 服务端要的是 `SearchQuery`（默认值已填好），而前端调用时不该被迫重复
+ * 写 `mode: 'keyword'`——那是契约里的默认值，不是调用方的责任。
+ * 所以两个类型都暴露：服务端用前者，客户端用后者。
+ */
+export type SearchQueryInput = z.input<typeof searchQuerySchema>
+
 /** 命中片段，带高亮用的字符区间，供前端精确标红 */
 export const searchSnippetSchema = z.object({
   text: z.string(),
@@ -37,16 +46,28 @@ export const searchHitSchema = z.object({
   path: z.string().nullable(),
   url: z.string().nullable(),
   snippet: searchSnippetSchema,
-  /** 该命中来源：关键词还是向量。前端据此显示来源标签 */
-  matchedBy: z.array(z.enum(['keyword', 'vector'])),
+  /**
+   * 该命中来自哪些通道。
+   *
+   * 是 `string[]` 而不是字面量联合：通道名来自 `plugins/leg/` 的注册表，
+   * 接口约定里 `RetrievalLeg.name` 就是「写进 matchedBy 的那个名字」
+   * （见 `docs/TECH.md` §7.3）。写死枚举会让「加一个通道」变成
+   * 「改契约 + 改前端 + 改测试」——而加通道按设计应该只是加一个文件。
+   *
+   * 前端把技术名翻成人话（词级召回 / 子串兜底），未知的通道名原样显示。
+   */
+  matchedBy: z.array(z.string()),
   score: z.number(),
 })
 export type SearchHit = z.infer<typeof searchHitSchema>
 
 export const searchResponseSchema = z.object({
   mode: searchModeSchema,
-  /** 实际生效的检索通道，便于排查「为什么没走向量」 */
-  channels: z.array(z.enum(['keyword', 'vector'])),
+  /**
+   * 实际生效的检索通道，便于排查「为什么没走向量」。
+   * 同 matchedBy，它反映的是注册表里的实现，不写死枚举。
+   */
+  channels: z.array(z.string()),
   tookMs: z.number(),
   total: z.number().int(),
   hits: z.array(searchHitSchema),

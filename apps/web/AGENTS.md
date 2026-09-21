@@ -10,13 +10,18 @@
 src/
 ├── main.tsx         挂载点。只组装 provider，不放具体配置
 ├── router.tsx       路由实例（routeTree.gen.ts 是生成物，不要手改）
-├── routes/          页面。根路由承担鉴权守卫
-├── components/      可复用组件
+├── routes/          页面。根路由承担鉴权守卫，_app.tsx 是三栏骨架
+├── components/      可复用组件；chat/ 与 document/ 是各自的子组件
 ├── editor/          Tiptap 扩展配置与保真测试
 ├── theme/           设计 token、自定义 token、provider 与守门测试
 ├── styles/          全局样式（唯一的全局出口）
-└── lib/             API 客户端 / Query 配置 / 路由 context
+└── lib/             API 客户端 / Query 配置 / 路由 context / 对话状态
 ```
+
+**文件别太长。** 一个组件文件超过约 300 行就说明它该拆了。
+`components/chat/` 就是 `ChatPanel` 拆出来的（消息、引用卡、检索过程、
+失败卡片、输入区各一个文件）。拆的依据是「它是不是一个独立的关注点」，
+不是行数本身——行数只是信号。
 
 `routes/` 下的非路由文件要用 `-` 前缀（`-foo.ts`），否则 TanStack Router
 的生成器会警告「这个文件没有导出 Route」，`pnpm dev` 时一直刷屏。
@@ -65,6 +70,33 @@ useEffect(() => {
 
 ---
 
+## 对话：不要手搓状态，也不要手搓 UI
+
+对话是这类应用里最容易写错的一块：流式 token 的拼接顺序、并发发送的排队、
+中断后的清理、半截 markdown 的渲染与转义。这些**都别自己写**。
+
+| 层 | 用什么 |
+|---|---|
+| 消息状态与流式接收 | `@tanstack/ai-react` 的 `useChat` |
+| 消息渲染 | `createChatUI`（`@tanstack/ai-react/ui`）+ 官方 `TextPart` |
+
+`lib/use-mimir-chat.ts` 是对话状态的唯一入口，**组件不直接碰 `useChat`**。
+它只做四件 SDK 不该知道的事：会话 id 维护、自定义事件收进 state、
+让 TanStack Query 失效、把引用回传给中栏。
+
+两条硬约束（都踩过）：
+
+1. **`initialMessages` 只在挂载那一刻生效。** 打开历史会话时必须等数据取回
+   再挂载对话体（`ChatPanel` 里那个 `messagesLoading` 分支就是干这个的）。
+   先挂载再补数据的症状是：右栏一直空白，而中栏的「本次引用」正常显示
+2. **会话 id 走请求体（`forwardedProps`），不进 URL。** `useChat` 在
+   connection 变化时会重建客户端并**切断正在进行的流**
+
+`TextPart` 自带流式 markdown 解析与 HTML 转义，所以回答是 Markdown 渲染的；
+样式覆写集中在 `ChatPanel` 的 `thread` 里，用 `${prefixCls}` 与 token。
+
+---
+
 ## 编辑器
 
 Tiptap 的 markdown 往返**不是无损的，但是幂等的**——首次保存会把内容整理成
@@ -74,6 +106,16 @@ Tiptap 的 markdown 往返**不是无损的，但是幂等的**——首次保�
 **扩展不要重复引入**：`StarterKit` 已经内置 `codeBlock` 与 `link`。
 重复引入会触发 `Duplicate extension names` 警告，且配置会被其中一份覆盖——
 不报错，只是行为不对。
+
+**实例管理交给 `@tiptap/react` 的 `useEditor`，不要 `new Editor()`。**
+它把每个回调都包一层、从 `options.current` 读，所以回调里直接用最新的
+props/state 就行；手写版需要三个「靠注释提醒自己」的约束（ref 承接回调、
+ref 声明顺序、初始值用 state 而非 ref），用它之后全部消失。
+`deps` 传 `[]` 时它只 `setOptions` 不重建实例，所以保存回写不会丢光标。
+
+**内联工具条用官方的 `BubbleMenu`**（`@tiptap/react/menus`）：
+跟随选区、滚动重算、边缘翻转、点工具条不取消选区都是它处理的。
+里面放 antd 控件即可——它只管浮层位置与显隐。
 
 ---
 

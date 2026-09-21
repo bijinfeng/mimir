@@ -53,3 +53,84 @@ export function toQueryText(input: string): string {
 export function hasCjk(input: string): boolean {
   return /[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/.test(input)
 }
+
+/**
+ * 查询侧的无信息词。
+ *
+ * **只用于查询，不用于索引。** 索引侧必须保留全部词元——正文里的
+ * 「的」「怎么」也是内容的一部分，删掉会让短语子串匹配失效。
+ *
+ * 查询侧则必须过滤：用户问「React 重渲染范围怎么缩小？」时，
+ * 「怎么」「？」不承载任何检索意图。把它们计入分母会抬高命中门槛，
+ * 于是「重渲染范围」匹配上了却被判为「命中不足」而丢掉。
+ *
+ * 这份表刻意只收**疑问词与结构助词**，不试图覆盖所有虚词——
+ * 完整的停用词表永远不完整，而漏收的代价只是一点噪声，
+ * 错收（比如把「性能」当虚词）的代价是搜不到。
+ */
+const QUERY_STOP_WORDS = new Set([
+  '的',
+  '了',
+  '和',
+  '与',
+  '是',
+  '在',
+  '有',
+  '不',
+  '就',
+  '都',
+  '也',
+  '还',
+  '这个',
+  '那个',
+  '这些',
+  '那些',
+  '什么',
+  '怎么',
+  '怎样',
+  '如何',
+  '为什么',
+  '哪个',
+  '哪些',
+  '哪里',
+  '多少',
+  '是否',
+  '可以',
+  '能不能',
+  '以及',
+  '还有',
+  '我们',
+  '你们',
+  '他们',
+  '自己',
+  '一下',
+  '一些',
+  '一个',
+  '关于',
+  '对于',
+])
+
+/**
+ * 把查询切成有检索意义的词。
+ *
+ * 三道过滤，每一道都对应一类会让召回失败的噪声：
+ *  1. **纯符号/标点** —— 「？」「，」在 tsvector 里根本不存在
+ *  2. **单个汉字** —— 「的」「了」几乎出现在每一篇里，毫无区分度
+ *  3. **疑问词与结构助词** —— 见 QUERY_STOP_WORDS
+ *
+ * 去重也是必需的：重复的词会让覆盖率的分母虚高，
+ * 「React React 性能」要求命中 2 个词，而实际只有 2 个不同的词。
+ */
+export function queryTokens(input: string): string[] {
+  const tokens = tokenize(input.toLowerCase())
+    .map((token) => token.trim())
+    .filter((token) => token.length > 0)
+    // 纯符号（含全角标点）
+    .filter((token) => /[\p{L}\p{N}]/u.test(token))
+    // 单个汉字无区分度；单个拉丁字母同理
+    .filter((token) => !/^[\u4e00-\u9fff]$/.test(token))
+    .filter((token) => !(token.length === 1 && /[a-z]/i.test(token)))
+    .filter((token) => !QUERY_STOP_WORDS.has(token))
+
+  return [...new Set(tokens)]
+}

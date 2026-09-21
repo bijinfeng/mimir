@@ -191,6 +191,42 @@ describe('自定义 token 与内容区色', () => {
       ).toBeGreaterThanOrEqual(4.5)
     }
   })
+
+  /**
+   * 选中态的可辨识度。
+   *
+   * 这条测试的**第一版是错的**：我给它加了一道 `#cfe0ff` 描边（照抄原型），
+   * 然后断言「描边与选中底 ≥ 3:1」。结果 1.19:1，测试红了。
+   *
+   * 红得对——那条线肉眼根本看不见。但**修法不是加深描边**，而是删掉它：
+   * 原型本来就没有描边，选中态靠的是「底色 + 字色 + 字重」三重线索。
+   * 多加一道看不见的线只是噪声。
+   *
+   * 所以这条测试改成断言**真正的要求**：选中与未选中必须能区分。
+   * 判据是「选中底与未选中的底不是同一个颜色」，而不是「某条装饰线够深」。
+   * 这是把测试写对，不是把断言改松。
+   */
+  it('选中态与未选中态的底色不同（三重线索的第一重）', () => {
+    const selected = String(token.colorPrimaryBg)
+    const unselected = String(token.colorBgContainer)
+    expect(selected).not.toBe(unselected)
+    // 与白底至少能看出不同（同色相不同明度，不要求 3:1——
+    // 非文本对比度要求针对的是「必须靠它才能理解内容」的图形，
+    // 而这里选中的信息由底色 + 字色 + 字重共同承担）
+    expect(contrast(selected, unselected)).toBeGreaterThan(1.05)
+    // 真正被要求 ≥ 4.5:1 的是**选中项上的文字**，DESIGN §3.2 已算过 5.50:1
+    expect(contrast(String(token.colorLink), selected)).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it('整理条上的警告文字 ≥ 4.5:1', () => {
+    expect(
+      contrast(String(token.colorWarningText), mimirCustomToken.tintWarningSurface),
+    ).toBeGreaterThanOrEqual(4.5)
+    // 收集标签的胶囊底是容器白，也要一起算
+    expect(
+      contrast(String(token.colorWarningText), String(token.colorBgContainer)),
+    ).toBeGreaterThanOrEqual(4.5)
+  })
 })
 
 describe('来源徽标色对', () => {

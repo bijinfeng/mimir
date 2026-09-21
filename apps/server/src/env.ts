@@ -71,6 +71,19 @@ export const env = {
   dataDir,
   vaultDir: resolvePath(process.env.VAULT_DIR ?? './data/vault'),
   rawDir: resolvePath(process.env.RAW_DIR ?? './data/raw'),
+
+  /**
+   * 模型配置。**全部可选**——没有它们时问答走「只用检索」路径，
+   * 应用依然完整可用（见 docs/PRD.md §5.8：离线不是全盘瘫痪）。
+   *
+   * 所以这里不用 required()：缺模型不等于配置错误，只等于少一个功能。
+   * 这与 DATABASE_URL / AUTH_SECRET 不同——那两个缺了应用根本起不来。
+   */
+  modelApiKey: process.env.MODEL_API_KEY ?? '',
+  modelBaseUrl: process.env.MODEL_BASE_URL ?? 'https://api.deepseek.com/v1',
+  modelProviderName: process.env.MODEL_PROVIDER_NAME ?? 'deepseek',
+  modelChatModel: process.env.MODEL_CHAT_MODEL ?? 'deepseek-chat',
+  modelReasoningModel: process.env.MODEL_REASONING_MODEL ?? 'deepseek-reasoner',
 } as const
 
 if (env.nodeEnv === 'production' && env.authSecret === 'dev-only-insecure-secret-change-me') {

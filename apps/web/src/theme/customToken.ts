@@ -20,6 +20,17 @@ export interface MimirCustomToken {
   inlineCodeFg: string
   /** 正文 `<mark>` 的高亮底。字色继承正文，实测 11.82:1 */
   highlightBg: string
+
+  /**
+   * 整理条的表面与描边。
+   *
+   * `colorWarningBg` (#fff3e0) 是给**提示条**用的，饱和度偏高；整理条在
+   * 文档顶部占一整行且长期存在，用它会变成页面上最吵的东西。
+   * 原型实测的 #fffaf2 + #ffe0b2 是同色相但淡两档，既认得出是「待办」
+   * 又不抢标题。文字色仍用 `colorWarningText`（在这两个底上对比度只增不减）。
+   */
+  tintWarningSurface: string
+  borderWarningSurface: string
 }
 
 /**
@@ -37,4 +48,6 @@ export const mimirCustomToken: MimirCustomToken = {
   tintNav: '#fbfbfc',
   inlineCodeFg: '#c7254e',
   highlightBg: '#fff3b0',
+  tintWarningSurface: '#fffaf2',
+  borderWarningSurface: '#ffe0b2',
 }

@@ -1,30 +1,39 @@
 import type { DocumentDetail } from '@mimir/shared'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Editor } from '@tiptap/core'
-import { App, Input, Space, Tag, Typography } from 'antd'
+import { EditorContent, useEditor } from '@tiptap/react'
+import { App, Typography } from 'antd'
 import { useEffect, useRef, useState } from 'react'
-import { KindBadge, StatusBadge } from '@/components/DocumentBadges'
 import { useIndicatorStyles, useStyles } from '@/components/NoteEditor.style'
+import { InlineToolbar } from '@/components/document/InlineToolbar'
 import { createExtensions } from '@/editor/extensions'
 import { api } from '@/lib/api'
 
 /**
- * 笔记编辑器。
+ * 笔记的正文编辑器。
  *
- * 三条设计来自原型阶段定下的规则（见 docs/PRD.md §5.9）：
- *  1. 保存状态必须始终可见。文字类产品最让人失去信任的是丢内容。
- *  2. 保存是防抖的，但不能让用户猜「存上了没有」。
- *  3. 有未保存内容时切换文档要拦截。
+ * **只负责正文，不负责标题。** 标题是文档级元数据（它决定文件名，见
+ * `lib/vault.ts` 的 `buildNotePath`），由 `DocumentPanel` 用 antd 的
+ * `Typography.Title editable` 就地编辑。曾经两处都渲染标题，结果页面上
+ * 出现两个一模一样的标题——一个来自面板的 h1，一个来自这里的输入框。
  *
- * 用命令式的 Editor 而不是 @tiptap/react 的 useEditor：需要精确控制
- * 「内容变更 → 防抖 → 保存 → 状态回写」这条链。外层用 key={document.id}
- * 保证切换文档时整个组件重建。
+ * ## 为什么用 `@tiptap/react` 而不是 `new Editor()`
  *
- * **关于 React Compiler**：本组件不抑制任何 React 规则。
- * 编译器会跳过「抑制了 React 规则」的组件——而抑制规则通常意味着代码
- * 违反了 Rules of React，编译器无法保证优化后行为一致。所以下面用 ref
- * 承接「每次渲染都会变、但只在挂载时用一次」的值，而不是靠 eslint-disable
- * 关掉依赖检查。这样既符合规则，也避免保存回写导致编辑器实例重建（会丢光标）。
+ * 手写实例意味着要自己管：创建的时机、销毁的时机、回调闭包读到过期值、
+ * 卸载时的清理。这些 `useEditor` 都处理了——
+ *
+ *  - 它把传入的**每个回调都包一层**，从 `options.current` 读取，所以回调里
+ *    放心用最新的 props/state，不需要再用 ref 承接
+ *  - `deps` 传空数组时它只 `setOptions` 而不重建实例（保住光标位置）
+ *  - `EditorContent` 负责把 DOM 挂进 React 树，卸载时自动清理
+ *
+ * 用它之后这个组件比手写版短了一截，而且少了两处「必须靠注释提醒自己」
+ * 的坑（ref 声明顺序、依赖数组该放什么）。
+ *
+ * ## 三条设计来自原型阶段（`docs/PRD.md` §5.9）
+ *
+ *  1. 保存状态必须始终可见。文字类产品最让人失去信任的是丢内容
+ *  2. 保存是防抖的，但不能让用户猜「存上了没有」
+ *  3. 有未保存内容时切换文档要拦截（拦截在 `lib/unsaved.tsx`）
  */
 
 const SAVE_DEBOUNCE_MS = 900
@@ -33,51 +42,50 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 
 interface Props {
   document: DocumentDetail
-  /** 必须传稳定的引用（useCallback 或模块级函数），否则会导致编辑器实例重建 */
-  onSaved?: () => void
+  /** 脏标记上报。提到外层是因为「离开」的触发点在导航、列表、命令面板 */
+  onDirtyChange?: (dirty: boolean) => void
+  /** 注册「立即保存」的入口，供「保存并离开」调用 */
+  registerSave?: (save: (() => Promise<boolean>) | null) => void
+  /** 标题由面板编辑，保存正文时要带上它 */
+  title: string
+  /** 「就这段提问」：把选中的话带进对话 */
+  onAskAboutSelection?: (passage: string) => void
 }
 
-export function NoteEditor({ document: doc, onSaved }: Props) {
+export function NoteEditor({
+  document: doc,
+  onDirtyChange,
+  registerSave,
+  title,
+  onAskAboutSelection,
+}: Props) {
   const { styles } = useStyles()
   const { message } = App.useApp()
   const queryClient = useQueryClient()
 
-  const mountRef = useRef<HTMLDivElement>(null)
-  const editorRef = useRef<Editor | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const dirtyRef = useRef(false)
-
-  /**
-   * 初始值的快照，只在挂载时取一次。
-   *
-   * 编辑器实例自己维护内容，之后 doc.body 的变化都是保存回写造成的，
-   * 不该重建实例。把它放进 effect 依赖会每次保存都重建并丢掉光标位置；
-   * 靠 eslint-disable 排除它又会让 React Compiler 跳过整个组件。
-   * 用 ref 快照是同时满足两者的做法。
-   */
-  const initialBodyRef = useRef(doc.body)
-
-  const [title, setTitle] = useState(doc.title)
   const [saveState, setSaveState] = useState<SaveState>('idle')
 
   /**
-   * 让编辑器的 onUpdate 闭包读到最新标题，而不必重建实例。
+   * 初始正文，**只取挂载时的那一份**。
    *
-   * 必须声明在使用它的 effect **之前**：React Compiler 会做不可变性校验，
-   * 声明在后面的 ref 会被判成「先使用后定义」而跳过整个组件的优化。
-   * 这不报错，只是静默不优化——很难发现。
+   * 编辑器实例自己维护内容，之后 `doc.body` 的变化都是保存回写的回声，
+   * 不该灌回编辑器（会丢光标位置）。
+   *
+   * 用 `useState` 的惰性初始化而不是 `useRef`：这个值要在**渲染期**传给
+   * `useEditor`，而渲染期读 ref 会让 React Compiler 拒绝优化这个组件
+   * （`react(refs): Cannot access refs during render`，实测报过）。
+   * 用 state 表达「这是初始快照」既准确，又避开那个限制。
    */
-  const titleRef = useRef(title)
-  useEffect(() => {
-    titleRef.current = title
-  })
+  const [initialBody] = useState(doc.body)
 
   const save = useMutation({
-    mutationFn: (input: { title: string; body: string }) => api.documents.update(doc.id, input),
+    mutationFn: (body: string) => api.documents.update(doc.id, { title, body }),
     onSuccess: (updated) => {
       dirtyRef.current = false
       setSaveState('saved')
-      onSaved?.()
+      onDirtyChange?.(false)
       void queryClient.invalidateQueries({ queryKey: ['documents'] })
       void queryClient.setQueryData(['document', updated.id], updated)
     },
@@ -88,48 +96,70 @@ export function NoteEditor({ document: doc, onSaved }: Props) {
   })
 
   /**
-   * 把「保存」这条链放进 ref，让建立编辑器的 effect 不必依赖它。
+   * 编辑器实例。
    *
-   * 每次渲染后同步一次，effect 里通过 ref 调用，读到的永远是最新的实现。
-   * 这是 React 官方认可的「脱离依赖数组」写法：ref 同步本身不产生副作用。
+   * `deps` 传空数组：正文变化（保存回写、查询刷新）**不重建**实例，
+   * 否则每次自动保存都会丢光标。切换文档由外层 `key={doc.id}` 处理。
+   *
+   * 回调里直接用 `save` 与 `title` 就行——`useEditor` 内部把回调包了一层、
+   * 从 `options.current` 读，所以它们永远是最新的，不需要 ref 承接。
    */
-  const persistRef = useRef<(input: { title: string; body: string }) => void>(() => {})
-
-  useEffect(() => {
-    persistRef.current = (input) => {
-      setSaveState('saving')
-      save.mutate(input)
-    }
-  })
-
-  useEffect(() => {
-    const mount = mountRef.current
-    if (!mount) return
-
-    const editor = new Editor({
-      element: mount,
+  const editor = useEditor(
+    {
       extensions: createExtensions(),
-      content: initialBodyRef.current,
+      content: initialBody,
       contentType: 'markdown',
       onUpdate: ({ editor: instance }) => {
         dirtyRef.current = true
+        onDirtyChange?.(true)
         setSaveState('saving')
+
         if (timerRef.current) clearTimeout(timerRef.current)
         timerRef.current = setTimeout(() => {
-          persistRef.current({ title: titleRef.current, body: instance.getMarkdown() })
+          save.mutate(instance.getMarkdown())
         }, SAVE_DEBOUNCE_MS)
       },
+    },
+    [],
+  )
+
+  /**
+   * 把「立即保存」注册到外层，供「保存并离开」使用。
+   *
+   * 返回的 promise 要反映**真实结果**：外层靠它决定放不放行。
+   * 保存失败返回 false，用户留在原地——放行的话他会以为存上了，
+   * 实际丢了，比不拦截更糟（`docs/PRD.md` §5.9）。
+   */
+  useEffect(() => {
+    if (!registerSave || !editor) return
+
+    registerSave(async () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+      try {
+        await api.documents.update(doc.id, { title, body: editor.getMarkdown() })
+        dirtyRef.current = false
+        setSaveState('saved')
+        onDirtyChange?.(false)
+        void queryClient.invalidateQueries({ queryKey: ['documents'] })
+        return true
+      } catch (error) {
+        setSaveState('error')
+        message.error(error instanceof Error ? error.message : '保存失败')
+        return false
+      }
     })
 
-    editorRef.current = editor
+    return () => registerSave(null)
+  }, [registerSave, editor, doc.id, title, queryClient, message, onDirtyChange])
+
+  /** 卸载时清掉待触发的防抖定时器，免得在已销毁的实例上保存 */
+  useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
-      editor.destroy()
-      editorRef.current = null
     }
   }, [])
 
-  /** 离开页面时的兜底提示。有未保存内容才触发浏览器的原生确认框。 */
+  /** 离开页面时的兜底提示。有未保存内容才触发浏览器的原生确认框 */
   useEffect(() => {
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
       if (!dirtyRef.current) return
@@ -139,48 +169,27 @@ export function NoteEditor({ document: doc, onSaved }: Props) {
     return () => window.removeEventListener('beforeunload', onBeforeUnload)
   }, [])
 
-  const handleTitleChange = (next: string) => {
-    setTitle(next)
-    dirtyRef.current = true
-    setSaveState('saving')
-    persistRef.current({ title: next, body: editorRef.current?.getMarkdown() ?? doc.body })
-  }
-
-  const handleRetry = () => {
-    persistRef.current({ title, body: editorRef.current?.getMarkdown() ?? doc.body })
-  }
-
   return (
     <div className={styles.shell}>
-      <Space size={8} wrap className={styles.meta}>
-        <KindBadge kind={doc.kind} />
-        <StatusBadge status={doc.status} />
-        {doc.tags.map((tag) => (
-          <Tag key={tag} variant="filled">
-            {tag}
-          </Tag>
-        ))}
-        <SaveIndicator state={saveState} onRetry={handleRetry} />
-      </Space>
+      <div className={styles.saveRow}>
+        <SaveIndicator
+          state={saveState}
+          onRetry={() => save.mutate(editor?.getMarkdown() ?? initialBody)}
+        />
+      </div>
 
-      <Input
-        variant="borderless"
-        value={title}
-        onChange={(event) => handleTitleChange(event.target.value)}
-        className={styles.title}
-        placeholder="标题"
+      <InlineToolbar
+        editor={editor}
+        onAskAboutSelection={(passage) => onAskAboutSelection?.(passage)}
       />
 
-      <Typography.Text type="secondary" className={styles.path}>
-        {doc.path ?? doc.url ?? '（尚无快照）'}
-      </Typography.Text>
-
-      <div className={styles.body} ref={mountRef} />
+      {/* EditorContent 负责把编辑器挂进 React 树，并在卸载时清理 */}
+      <EditorContent editor={editor} className={styles.body} />
     </div>
   )
 }
 
-/** 保存状态指示器。失败时点击可重试——不能只把失败画出来却不给动作。 */
+/** 保存状态指示器。失败时点击可重试——不能只把失败画出来却不给动作 */
 function SaveIndicator({ state, onRetry }: { state: SaveState; onRetry: () => void }) {
   const { styles } = useIndicatorStyles(state)
   const label: Record<SaveState, string> = {
