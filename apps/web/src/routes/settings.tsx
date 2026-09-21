@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Card, Tabs, Typography } from 'antd'
+import { createStyles } from 'antd-style'
 import { CONTENT_WIDTH } from '@/theme/tokens'
 
 /**
@@ -22,10 +23,29 @@ const SECTIONS = [
   { key: 'account', label: '账号', desc: '改密码、登出其他设备' },
 ]
 
+/**
+ * 内容列宽度与文档正文共用同一个 measure（`CONTENT_WIDTH`）——
+ * 同一份规范里不该有两个「内容列宽度」。见 docs/DESIGN.md §5.4。
+ */
+const useStyles = createStyles(({ css }) => ({
+  page: css`
+    max-width: ${CONTENT_WIDTH}px;
+    margin: 0 auto;
+    padding: 28px 40px 120px;
+  `,
+  title: css`
+    margin-top: 0;
+  `,
+  pending: css`
+    font-size: 12px;
+  `,
+}))
+
 function SettingsPage() {
+  const { styles } = useStyles()
   return (
-    <div style={{ maxWidth: CONTENT_WIDTH, margin: '0 auto', padding: '28px 40px 120px' }}>
-      <Typography.Title level={4} style={{ marginTop: 0 }}>
+    <div className={styles.page}>
+      <Typography.Title level={4} className={styles.title}>
         设置
       </Typography.Title>
       <Tabs
@@ -36,7 +56,7 @@ function SettingsPage() {
           children: (
             <Card title={section.label}>
               <Typography.Paragraph type="secondary">{section.desc}</Typography.Paragraph>
-              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              <Typography.Text type="secondary" className={styles.pending}>
                 待实现
               </Typography.Text>
             </Card>

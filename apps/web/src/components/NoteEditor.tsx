@@ -4,9 +4,9 @@ import { Editor } from '@tiptap/core'
 import { App, Input, Space, Tag, Typography } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { KindBadge, StatusBadge } from '@/components/DocumentBadges'
+import { useIndicatorStyles, useStyles } from '@/components/NoteEditor.style'
 import { createExtensions } from '@/editor/extensions'
 import { api } from '@/lib/api'
-import { CONTENT_WIDTH } from '@/theme/tokens'
 
 /**
  * 笔记编辑器。
@@ -38,6 +38,7 @@ interface Props {
 }
 
 export function NoteEditor({ document: doc, onSaved }: Props) {
+  const { styles } = useStyles()
   const { message } = App.useApp()
   const queryClient = useQueryClient()
 
@@ -150,8 +151,8 @@ export function NoteEditor({ document: doc, onSaved }: Props) {
   }
 
   return (
-    <div style={{ maxWidth: CONTENT_WIDTH, margin: '0 auto', padding: '32px 40px 160px' }}>
-      <Space size={8} wrap style={{ marginBottom: 10 }}>
+    <div className={styles.shell}>
+      <Space size={8} wrap className={styles.meta}>
         <KindBadge kind={doc.kind} />
         <StatusBadge status={doc.status} />
         {doc.tags.map((tag) => (
@@ -166,37 +167,27 @@ export function NoteEditor({ document: doc, onSaved }: Props) {
         variant="borderless"
         value={title}
         onChange={(event) => handleTitleChange(event.target.value)}
-        style={{ fontSize: 28, fontWeight: 700, padding: 0, marginBottom: 8 }}
+        className={styles.title}
         placeholder="标题"
       />
 
-      <Typography.Text
-        type="secondary"
-        style={{ fontSize: 12, display: 'block', marginBottom: 20 }}
-      >
+      <Typography.Text type="secondary" className={styles.path}>
         {doc.path ?? doc.url ?? '（尚无快照）'}
       </Typography.Text>
 
-      <div className="note-body" ref={mountRef} />
+      <div className={styles.body} ref={mountRef} />
     </div>
   )
 }
 
 /** 保存状态指示器。失败时点击可重试——不能只把失败画出来却不给动作。 */
 function SaveIndicator({ state, onRetry }: { state: SaveState; onRetry: () => void }) {
+  const { styles } = useIndicatorStyles(state)
   const label: Record<SaveState, string> = {
     idle: '',
     saving: '正在保存…',
     saved: '已保存',
     error: '保存失败 · 点此重试',
-  }
-  // 用 antd 变量而不是字面量：保存状态是信息，它的对比度由规范统一保证
-  // （见 docs/DESIGN.md §3.3 / §3.4）
-  const color: Record<SaveState, string | undefined> = {
-    idle: undefined,
-    saving: 'var(--ant-color-text-quaternary)',
-    saved: 'var(--ant-color-success-text)',
-    error: 'var(--ant-color-error-text)',
   }
 
   if (state === 'idle') return null
@@ -204,11 +195,7 @@ function SaveIndicator({ state, onRetry }: { state: SaveState; onRetry: () => vo
   return (
     <Typography.Text
       type={state === 'error' ? 'danger' : 'secondary'}
-      style={{
-        fontSize: 12,
-        color: color[state],
-        cursor: state === 'error' ? 'pointer' : 'default',
-      }}
+      className={styles.indicator}
       onClick={state === 'error' ? onRetry : undefined}
     >
       {label[state]}

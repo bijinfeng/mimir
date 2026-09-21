@@ -19,8 +19,24 @@ import type { ThemeConfig } from 'antd'
  *    successBg 只有 2.21:1，warning 1.83:1，error 2.99:1。下面覆盖的值
  *    全部 ≥ 4.5:1，`theme/design.test.ts` 会守住这条线。
  */
+
+/**
+ * 字体栈 —— 全项目唯一的定义处。
+ *
+ * antd 默认栈到 `Roboto` 就结束了，在 Linux 服务器上的浏览器里会一路落到
+ * `sans-serif`，中文可能渲染成点阵字体。这里在系统 UI 字体后补中文兜底。
+ *
+ * 它同时是 antd token（`fontFamily`）和文档级样式（`styles/global.ts` 的 body）
+ * 的值来源——两处写两份字体栈，必然有一天不一致。
+ */
+export const FONT_SANS =
+  "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif"
+
+/** 等宽只用于行内代码、代码块、文件路径、插件 seam 标识 */
+export const FONT_MONO = "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace"
+
 export const mimirTheme: ThemeConfig = {
-  // key 固定成 mimir：生成的类名稳定，global.css 里可以直接引用 --ant-* 变量
+  // key 固定成 mimir：注入的变量类名稳定（.mimir），换主题时不会整页重算变量名
   cssVar: { key: 'mimir' },
 
   token: {
@@ -53,9 +69,8 @@ export const mimirTheme: ThemeConfig = {
     fontSize: 14,
 
     // ── 字体 ──────────────────────────────────────────────
-    // 字体栈定义在 global.css（那是文档级排版），这里引用它而不是再写一份
-    fontFamily: 'var(--mimir-font-sans)',
-    fontFamilyCode: 'var(--mimir-font-mono)',
+    fontFamily: FONT_SANS,
+    fontFamilyCode: FONT_MONO,
   },
 }
 

@@ -8,13 +8,18 @@
 
 ```
 src/
-├── main.tsx         挂载点。ConfigProvider / AntApp / QueryClient 都在这里
+├── main.tsx         挂载点。只组装 provider，不放具体配置
 ├── router.tsx       路由实例（routeTree.gen.ts 是生成物，不要手改）
 ├── routes/          页面。根路由承担鉴权守卫
 ├── components/      可复用组件
 ├── editor/          Tiptap 扩展配置与保真测试
+├── theme/           设计 token、自定义 token、provider 与守门测试
+├── styles/          全局样式（唯一的全局出口）
 └── lib/             API 客户端 / Query 配置 / 路由 context
 ```
+
+`routes/` 下的非路由文件要用 `-` 前缀（`-foo.ts`），否则 TanStack Router
+的生成器会警告「这个文件没有导出 Route」，`pnpm dev` 时一直刷屏。
 
 ---
 
@@ -87,27 +92,40 @@ API 客户端在 `lib/api.ts`。三条约定：
 
 ## 样式
 
-组件样式走 antd 的 token（`theme/tokens.ts` → `main.tsx` 的 `ConfigProvider`），
-不新引入 CSS 方案。**规范是 `docs/DESIGN.md`，动手前先读它。**
+**样式方案是 antd-style（css-in-js）。** 它把「消费 token」和「写样式」合成一件事：
+`createStyles` 里能直接读 antd token，产出的还是带作用域的类名。
+规范是 `docs/DESIGN.md`，动手前先读它。
 
 ```
-src/theme/tokens.ts        token 的唯一真相来源
-src/theme/design.test.ts   对比度底线守卫（49 项，改 token 会跑）
-src/styles/global.css      重置、字体栈、内容区排版、动效退化
+src/theme/tokens.ts         antd token 的真相来源（含字体栈常量）
+src/theme/customToken.ts    mimir 自己的 token（antd 没有的语义）
+src/theme/MimirProvider.tsx provider 与全局样式的唯一组装处
+src/theme/design.test.ts    对比度底线守卫（改 token 会跑）
+src/styles/global.ts        全局样式：重置、高度链、文档字体、动效退化
+src/**/*.style.ts           组件/页面样式（createStyles）
 ```
 
-五条容易踩的：
+八条容易踩的：
 
 1. **不要替换 antd 的种子色**（`colorSuccess` 这类），只覆盖叶子 token。
    改种子会让 antd 派生出一套跑偏的浅底色，实测得到 `#a8b3aa` 这种脏色
 2. **不要把 `colorPrimary` 当文字色**——选中态浅底上只有 3.61:1。文字用
-   `colorLink` / `--ant-color-link`
-3. **页面里不写字面量颜色**，用 `var(--ant-*)` 或 `theme.useToken()`。
-   例外只有 `global.css` 里的 `--mimir-*`（列底色、行内代码色，antd 没有这两个语义）
-4. **`--ant-*` 变量注入在 antd 组件子树，不是 `:root`**。所以字体栈和列底色
-   定义在 `global.css` 的 `:root`，内容排版则在 `.note-body` 里引用 antd 变量
-5. **antd v6 的 `Tag` 用 `variant="filled"`，不要用 `bordered={false}`**——
+   `token.colorLink`
+3. **页面里不写字面量颜色**，用 `token.*`。例外只有 `theme/customToken.ts`
+   里的四个值（列底色、行内代码色、高亮底，antd 没有这些语义）
+4. **不新增 `.css` 文件，不新增全局类名**。全局样式只有一个出口
+   （`styles/global.ts`）。编辑器正文那种「渲染裸 DOM、拿不到 className」的
+   场景，用祖先类名 + `createStyles` 的嵌套选择器（见 `NoteEditor.style.ts`）
+5. **`ConfigProvider` 不能重复传 `theme`**。antd 会按传入的 theme 重算
+   `cssVar` 的 key，`--ant-*` 变量名跟着变，所有引用变量的地方静默失效。
+   `MimirProvider` 里它只负责 locale，主题归 `ThemeProvider`
+6. **`createGlobalStyle` 里拿不到 `--ant-*`**——变量注入在 antd 组件的 DOM
+   子树上。要主题值就用 `${(p) => p.theme.xxx}`，别写变量名
+7. **覆写 antd 组件内部结构时用 `${prefixCls}`**，不要写死 `.ant-` 前缀——
+   antd-style 会把当前前缀给你，换前缀时规则自动跟着换
+8. **antd v6 的 `Tag` 用 `variant="filled"`，不要用 `bordered={false}`**——
    后者已废弃且会打警告。同理，**来源徽标不要用 `<Tag color="green">` 预设色**，
    预设走 antd 自己的调色板，对比度不由我们控制；用 `components/DocumentBadges.tsx`
 
-`design.test.ts` 会真算对比度。它红了不要改断言，先改设计。
+`design.test.ts` 会真算对比度，也会真的挂载 provider 栈验证 cssVar 注入与
+局部样式生成。它红了不要改断言，先改设计。

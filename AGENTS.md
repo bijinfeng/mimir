@@ -116,6 +116,7 @@ Postgres 的 `simple` 配置没有词边界概念，「组件性能优化」会�
 | 生产启动报错 | workspace 包以源码发布 —— Node 拒绝从 node_modules 剥离 TS 类型 |
 | 路径算错 | `src/` 与 `dist/` 的目录层级不同，不要写死相对偏移量 |
 | 状态色看不清 | 换了 antd 的**种子色**，派生色跑偏；或用了 `Tag color="green"` 预设色（对比度不由我们控制） |
+| 界面颜色不对但不报错 | 内层 `ConfigProvider` 又传了一次 `theme` —— `cssVar` 的 key 被重算，`--ant-*` 变量名换了，引用处静默失效 |
 
 完整清单见 `docs/TECH.md` §10。
 

@@ -1,4 +1,5 @@
 import type { DocumentKind, DocumentStatus } from '@mimir/shared'
+import { createStyles } from 'antd-style'
 import type { CSSProperties, ReactNode } from 'react'
 
 /**
@@ -10,6 +11,10 @@ import type { CSSProperties, ReactNode } from 'react'
  *
  * **不要用 `<Tag color="green">` 这种预设色。** 预设走的是 antd 自己的调色板，
  * 对比度不由我们控制，改了也不会同步到这份规范里。
+ *
+ * 色对留在本文件而不进 `customToken`：它们是「哪种来源配哪个色」的映射表，
+ * 主题层不该知道 `kind` 有几种。规范要求色对集中在一处并由 `design.test.ts`
+ * 守住——这里就是那一处。
  */
 
 const KIND_STYLE: Record<DocumentKind, { label: string; fg: string; bg: string }> = {
@@ -30,6 +35,23 @@ const STATUS_STYLE: Partial<Record<DocumentStatus, { label: string; fg: string; 
 /** 供守门测试使用：规范里的表必须和这里的值一致 */
 export const BADGE_COLORS = { ...KIND_STYLE, ...STATUS_STYLE }
 
+/** 色对随 props 变化，所以走 createStyles 的第二个入参而不是内联 style */
+const useStyles = createStyles(({ css }, props: { fg: string; bg: string }) => ({
+  badge: css`
+    display: inline-flex;
+    align-items: center;
+    flex: none;
+    font-size: 10.5px;
+    font-weight: 600;
+    line-height: 1.6;
+    letter-spacing: 0.02em;
+    color: ${props.fg};
+    background: ${props.bg};
+    padding: 1px 6px;
+    border-radius: 4px;
+  `,
+}))
+
 interface BadgeProps {
   fg: string
   bg: string
@@ -38,23 +60,9 @@ interface BadgeProps {
 }
 
 function Badge({ fg, bg, children, style }: BadgeProps) {
+  const { styles } = useStyles({ fg, bg })
   return (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        flex: 'none',
-        fontSize: 10.5,
-        fontWeight: 600,
-        lineHeight: 1.6,
-        letterSpacing: '0.02em',
-        color: fg,
-        background: bg,
-        padding: '1px 6px',
-        borderRadius: 4,
-        ...style,
-      }}
-    >
+    <span className={styles.badge} style={style}>
       {children}
     </span>
   )

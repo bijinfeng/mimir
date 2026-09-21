@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { App, Button, Card, Form, Input, Typography } from 'antd'
+import { createStyles } from 'antd-style'
 import { api, ApiRequestError } from '@/lib/api'
 
 export const Route = createFileRoute('/login')({
@@ -16,7 +17,28 @@ interface FormValues {
   name?: string
 }
 
+const useStyles = createStyles(({ css, token }) => ({
+  page: css`
+    height: 100%;
+    display: grid;
+    place-items: center;
+    background: ${token.colorBgLayout};
+    padding: 24px;
+  `,
+  card: css`
+    width: 380px;
+  `,
+  title: css`
+    margin-top: 0;
+    margin-bottom: 4px;
+  `,
+  hint: css`
+    margin-bottom: 20px;
+  `,
+}))
+
 function LoginPage() {
+  const { styles } = useStyles()
   const { message } = App.useApp()
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -59,20 +81,12 @@ function LoginPage() {
   })
 
   return (
-    <div
-      style={{
-        height: '100%',
-        display: 'grid',
-        placeItems: 'center',
-        background: 'var(--ant-color-bg-layout)',
-        padding: 24,
-      }}
-    >
-      <Card style={{ width: 380 }}>
-        <Typography.Title level={4} style={{ marginTop: 0, marginBottom: 4 }}>
+    <div className={styles.page}>
+      <Card className={styles.card}>
+        <Typography.Title level={4} className={styles.title}>
           mimir
         </Typography.Title>
-        <Typography.Paragraph type="secondary" style={{ marginBottom: 20 }}>
+        <Typography.Paragraph type="secondary" className={styles.hint}>
           首次登录会自动创建唯一账号，之后注册入口自动关闭。
         </Typography.Paragraph>
 

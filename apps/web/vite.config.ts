@@ -1,7 +1,7 @@
-import { fileURLToPath } from 'node:url'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
+import { alias } from './alias.ts'
 
 export default defineConfig({
   plugins: [
@@ -24,11 +24,7 @@ export default defineConfig({
       compiler: { logDiagnostics: true },
     }),
   ],
-  resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
-    },
-  },
+  resolve: { alias },
   server: {
     port: 5173,
     // 开发时前端在 5173、后端在 3000，代理掉跨源与 cookie 的麻烦

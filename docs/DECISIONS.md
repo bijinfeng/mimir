@@ -274,3 +274,75 @@ skill（由 `skills-lock.json` 锁定哈希），`.claude/skills`、`.zcode/skil
 **未做的部分**：深色模式。antd 有 `darkAlgorithm`，但列底色、内容区排版、
 来源徽标都需要在深色下重新校准。半成品的深色模式比没有更糟，仍列在
 `PRD.md` §6 待决项。
+
+**后续（D-012）**：本条的**视觉决定全部不变**（不换种子色、文字走 `colorLink`、
+语义色成对、来源徽标不用预设色）。变的是落地方式——样式从手写 `global.css`
+改为 antd-style 的 `createStyles` / `createGlobalStyle`，因此文中「字体栈定义在
+`global.css` 的 `--mimir-font-sans`」与「列底色是 `--mimir-*` 变量」两处已过时：
+值相同，位置改到 `theme/tokens.ts` 与 `theme/customToken.ts`。
+
+---
+
+## D-012 样式方案采用 antd-style，取代手写 CSS 文件
+
+**背景**：D-011 定下「以 antd token 为底」，但落地方式是一份手写的
+`styles/global.css` 加页面里的内联 `style`。这套做法在页面只有两三张时看不出
+问题，往后会分叉出三类麻烦：
+
+1. **内联 style 越来越多**。`routes/docs.tsx` 一个文件里就有九处内联样式，
+   条件态（选中项）只能写成三元表达式，颜色和布局混在 JSX 里
+2. **`:root` 与组件之间要来回倒变量**。字体栈、列底色定义在 `:root`（因为
+   `--ant-*` 注入在 antd 的 DOM 子树上，`:root` 拿不到），组件再 `var()` 引用。
+   一个值在两处出现，改一处忘一处就漂了
+3. **没有类型**。`var(--ant-color-text-tertiary)` 拼错是运行时静默失效——
+   颜色不对但不报错
+
+**决定**：引入 antd-style（`createStyles` / `createGlobalStyle`），把样式写进
+组件旁边的 `.style.ts`，token 从 `createStyles` 的入参直接取。
+
+四件事随之调整：
+
+1. **字体栈从 CSS 变量变成 TS 常量**（`tokens.ts` 的 `FONT_SANS` / `FONT_MONO`）。
+   原先用 `var(--mimir-font-sans)` 是为了让 `:root` 与 antd token 共用一份值；
+   现在 `createGlobalStyle` 能直接读 theme，间接层没有存在意义了
+2. **列底色、行内代码色、高亮底改走 `customToken`**，不再有 `--mimir-*` 变量
+3. **内容区排版（`.note-body`）搬进 `NoteEditor.style.ts`**。它管的是编辑器渲染
+   出的裸 DOM，是一个组件的样式，就该有作用域
+4. **provider 栈抽成 `MimirProvider`**，让守门测试能渲染和线上完全一样的结构
+
+**否决**：
+
+| 方案 | 为什么不用 |
+|---|---|
+| 保持现状（global.css + 内联 style） | 见背景三条。现在改的成本是 6 个文件，等页面铺开之后再改成本是全部文件 |
+| Tailwind | 与 antd token 体系是两套心智：Tailwind 的 `bg-blue-500` 不认识 `colorPrimaryBg`，要用就得把 token 映射成配置，从此主题值有两处真相。且 D-011 已定「不引入第二套方案」 |
+| CSS Modules | 能用 token，但要靠 `var()` 字符串，回到「拼错不报错」。而且它解决的是「作用域」这一个问题，antd-style 同时给了类型、token 访问和动态主题 |
+| styled-components | 多 10KB+ 体积（antd-style 官方对比数据）；且它把样式绑在组件上用，而 mimir 大量场景是「给已有 antd 组件加类名」，`createStyles` 更贴 |
+| 只迁移页面、不动 `global.css` | 字体栈与列底色会留在 `:root`，`--mimir-*` 与 `customToken` 并存——正是要消掉的那种两处真相 |
+
+**关键实测**（`design.test.ts` 里会真跑）：
+
+- **`ConfigProvider` 内层不能再传 `theme`**。antd 的 `useTheme` 会在传入 theme 时
+  用新的 `useId` 重算 `cssVar.key`，`--ant-*` 的变量名随之改变（实测类名从
+  `.mimir` 变成 `.css-var-r1`）。不传时 antd 直接继承外层 theme 的 key。
+  **这是静默的**：不报错，只是所有引用变量的地方颜色不对
+- **`colorFillSecondary` 是半透明的 `rgba(31,35,41,0.06)`**，算行内代码对比度时
+  必须先合成到底色上。不合成直接算会得到 2.86:1 这种把黑色当底色的假结果；
+  合成到白底实际是 4.93:1
+- **`createStyles` 的嵌套选择器能穿透 Tiptap 渲染的裸 DOM**。实测 `.tiptap` 的
+  `h1` / `pre` / `th` / `code` 全部命中且带作用域，`createGlobalStyle` 里的
+  `#root > .${prefixCls}-app` 高度链也正常注入
+
+**影响**：
+
+- **组件样式一律走 `createStyles`**，不新增 `.css` 文件，全局样式只有
+  `styles/global.ts` 一个出口
+- **`ConfigProvider` 只负责 locale**，主题归 `ThemeProvider`——重复传 theme 会
+  静默换掉变量名
+- **`createGlobalStyle` 里拿不到 `--ant-*`**，要用 `${(p) => p.theme.xxx}` 取主题值
+- **覆写 antd 组件内部结构时用 `${prefixCls}`**，不写死 `.ant-`
+- 字体栈的唯一真相来源改为 `tokens.ts` 的 `FONT_SANS` / `FONT_MONO`
+- 列底色等四个值的唯一真相来源改为 `theme/customToken.ts`
+
+**顺带修的**：`vitest.config.ts` 原先没有 `@` 别名（只有 `vite.config.ts` 有），
+一旦测试要 import 用 `@/` 的模块就会失败。现在两个配置从 `alias.ts` 取同一份定义。

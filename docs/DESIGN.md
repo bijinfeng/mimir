@@ -66,7 +66,7 @@ antd 6 的设计价值观（Natural / Certain / Meaningful / Growing）与 mimir
 | 三层表面模型（布局底 / 容器底 / 浮层底） | 用阴影而非颜色区分层级，换主题时不塌 |
 
 **技术上也一并通过**：开 `cssVar`，antd 把自己解析后的值以 `--ant-*` 变量注入。
-这样 `global.css` 里的内容排版（编辑器正文）和 antd 组件共用同一套灰阶，
+这样内容排版（编辑器正文）和 antd 组件共用同一套灰阶，
 不会出现「界面是 0.88 黑、正文是另一个黑」。
 
 ---
@@ -80,14 +80,15 @@ antd 6 的设计价值观（Natural / Certain / Meaningful / Growing）与 mimir
 antd 默认：`-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, ...`
 
 在 Linux 服务器上的浏览器里会一路落到 `sans-serif`，中文可能渲染成点阵字体。
-mimir 的字体栈（`global.css` 的 `--mimir-font-sans`）在系统 UI 字体后补：
+mimir 的字体栈（`tokens.ts` 的 `FONT_SANS`）在系统 UI 字体后补：
 
 ```
 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif
 ```
 
-**字体栈只有一处定义**：`global.css`。`tokens.ts` 里用 `var(--mimir-font-sans)`
-引用它，不重复写第二份。两处字体栈必然有一天不一致。
+**字体栈只有一处定义**：`tokens.ts` 里的 `FONT_SANS` / `FONT_MONO` 常量。
+antd token（`fontFamily`）与文档级样式（`styles/global.ts` 的 `body`）都从它取值，
+不重复写第二份。两处字体栈必然有一天不一致。
 
 ### 2.2 正文行高 1.5 对中文偏紧
 
@@ -216,11 +217,13 @@ mimir 加第四层：**列底**。三栏布局里「中栏列表」和「左栏�
 |---|---|---|
 | 布局底 | `colorBgLayout` `#f5f6f8` | 应用背景、登录页 |
 | 容器底 | `colorBgContainer` `#ffffff` | 内容区、卡片、浮层 |
-| 列底-列表 | `#fcfcfd` | 中栏列表、文档大纲 |
-| 列底-导航 | `#fbfbfc` | 左导航、浮层页脚 |
+| 列底-列表 | `customToken.tintList` `#fcfcfd` | 中栏列表、文档大纲 |
+| 列底-导航 | `customToken.tintNav` `#fbfbfc` | 左导航、浮层页脚 |
 
-列底色定义在 `global.css`（`--mimir-tint-list` / `--mimir-tint-nav`）——
-antd 没有这个语义，且它们只用于文档级布局容器。
+列底色是 antd 没有的语义，走 mimir 的 `customToken`——定义在
+`theme/customToken.ts`，由 `MimirProvider` 注入，代码里用 `token.tintList`
+消费。这样它有类型（拼错报错）、有作用域（跟着 ThemeProvider 走），
+而且只有一处定义。
 
 ### 3.7 来源徽标
 
@@ -257,10 +260,11 @@ antd 没有这个语义，且它们只用于文档级布局容器。
 
 ### 4.1 字体栈
 
-```css
---mimir-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI',
-                   'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
---mimir-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+```ts
+// apps/web/src/theme/tokens.ts
+FONT_SANS = "-apple-system, BlinkMacSystemFont, 'Segoe UI',
+             'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif"
+FONT_MONO = "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace"
 ```
 
 界面与内容共用同一套 sans。正文里的等宽只用于：行内代码、代码块、文件路径、
@@ -287,7 +291,10 @@ antd 没有这个语义，且它们只用于文档级布局容器。
 
 ### 4.3 内容区（Markdown 渲染）
 
-编辑器正文用 `.note-body` 类，样式在 `global.css`。这是 antd 不管的部分。
+编辑器正文的样式挂在 `NoteEditor` 的样式模块上（`components/NoteEditor.style.ts`）。
+Tiptap 渲染出的 `<h1>` `<pre>` `<table>` 是裸 DOM，不是 React 组件、拿不到
+className，所以从挂载点的祖先类名往下写嵌套选择器——这正是 `createStyles`
+里嵌套选择器的用途，而且这里的规则有作用域，不会泄漏到页面其它地方。
 
 | 元素 | 规则 |
 |---|---|
@@ -295,11 +302,10 @@ antd 没有这个语义，且它们只用于文档级布局容器。
 | H1 | 28px/700，下间距 16px |
 | H2 | 20px/600，上 26px 下 10px |
 | H3 | 16px/600，上 20px 下 8px |
-| 行内代码 | 13px 等宽，`--mimir-inline-code-fg` 色，`fill-secondary` 底（4.85:1） |
-| 代码块 | 13px/1.6，`fill-tertiary` 底 + `border-secondary` 边框，圆角 8px |
+| 行内代码 | 13px 等宽，`customToken.inlineCodeFg` 色，`fill-secondary` 底（4.93:1） || 代码块 | 13px/1.6，`fill-tertiary` 底 + `border-secondary` 边框，圆角 8px |
 | 引用 | 左侧 3px 边框，文字用文字-2，不做背景色 |
-| 表格 | 13px，单元格边框 `border-secondary`，表头 `#fbfbfc` 底 |
-| 高亮 `mark` | `#fff3b0` 底，字色继承（11.82:1） |
+| 表格 | 13px，单元格边框 `border-secondary`，表头 `tintNav` 底 |
+| 高亮 `mark` | `customToken.highlightBg` 底，字色继承（11.82:1） |
 | 链接 | `colorLink`，下划线 + `text-underline-offset: 2px` |
 
 **内容区的颜色一律引用 `--ant-*` 变量**，不写字面量。这样界面灰阶调整时
@@ -404,8 +410,8 @@ antd 没有这个语义，且它们只用于文档级布局容器。
 
 ### 6.4 必须尊重 `prefers-reduced-motion`
 
-`global.css` 里有全局降级规则。这不是可选项：前庭功能敏感的用户会因为
-0.15s 的位移而眩晕。
+`styles/global.ts` 里由 `createGlobalStyle` 注入全局降级规则。
+这不是可选项：前庭功能敏感的用户会因为 0.15s 的位移而眩晕。
 
 ---
 
@@ -465,23 +471,39 @@ emoji 是字体依赖的，在 Linux 容器里可能渲染成黑白字形或豆�
 `html → body → #root` 的高度链断在那里。症状是登录卡片不垂直居中、
 `Layout style={{height:'100%'}}` 只撑到内容高度——**不报错，只是布局不对**。
 
-`global.css` 里有一条 `#root > .ant-app { height: 100% }` 修它。
+`styles/global.ts` 里有一条 `#root > .ant-app { height: 100% }` 修它
+（`${prefixCls}` 取自主题，antd 换前缀时这条规则跟着换）。
 新增顶层容器时如果发现高度不对，先量这一层。
 
 ---
 
 ## 8. 落地方式
 
-### 8.1 三个文件的分工
+### 8.1 样式的组织方式
+
+**样式方案是 antd-style（css-in-js）。** 它不是新的颜色体系，而是把
+「token 消费」和「样式书写」合到一处：`createStyles` 里能直接读 antd token，
+产出的又是带作用域的类名，不需要在 `:root` 和组件之间来回倒变量。
+
+职责分工：
 
 ```
-apps/web/src/theme/tokens.ts        ← token 的真相来源（ThemeConfig）
-apps/web/src/theme/design.test.ts   ← 对比度底线与关键值守卫
-apps/web/src/styles/global.css      ← 重置、字体栈、内容区排版、动效退化
+apps/web/src/theme/tokens.ts         ← antd token 的真相来源（ThemeConfig）
+apps/web/src/theme/customToken.ts    ← mimir 自己的 token（antd 没有的语义）
+apps/web/src/theme/MimirProvider.tsx ← provider 与全局样式的唯一组装处
+apps/web/src/styles/global.ts        ← 全局样式：重置、高度链、文档字体、动效退化
+apps/web/src/**/*.style.ts           ← 组件/页面样式（createStyles）
 ```
 
-`main.tsx` 把 `mimirTheme` 传给 `ConfigProvider`，并开 `cssVar`，
-之后 antd 会把解析后的值以 `--ant-*` 注入。
+三条约定：
+
+1. **组件样式不写 `:root`，也不写全局类名**。编辑器正文那种「Tiptap 渲染裸 DOM」
+   的场景用祖先类名 + 嵌套选择器（`NoteEditor.style.ts` 的 `body`），作用域仍然
+   在组件内。只有真正作用于 `html` / `body` / `#root` 的规则才进 `global.ts`。
+2. **样式文件独立成 `.style.ts` 时放在组件旁边**，`useStyles` 从那里导出。
+   组件简单就合并进组件文件——不必为了「规范」拆出一个只放三行样式的文件。
+3. **不要新增 CSS 文件**。全局样式已经有一个出口（`styles/global.ts`），
+   再开一个 `.css` 就绕开了 token 体系，也绕开了类型检查。
 
 ### 8.2 用 token，不要写字面量
 
@@ -489,27 +511,44 @@ apps/web/src/styles/global.css      ← 重置、字体栈、内容区排版、�
 // ✗ 页面里散落的字面量：改一次主题要全文搜索替换
 <div style={{ background: '#e8f1ff', color: '#1677ff' }} />
 
-// ✓ 内容区引用 antd 变量
-<div style={{ background: 'var(--ant-color-primary-bg)', color: 'var(--ant-color-link)' }} />
-
-// ✓ 或者用 antd 的 token 钩子
-const { token } = theme.useToken()
+// ✓ 优先：createStyles 里用 token
+const useStyles = createStyles(({ css, token }) => ({
+  row: css`
+    background: ${token.colorPrimaryBg};
+    color: ${token.colorLink};
+  `,
+}))
 ```
 
-**列底色与行内代码色是唯一的例外**，它们在 `global.css` 里以
-`--mimir-*` 定义（antd 没有这两个语义）。页面里不要再用这两个字面量。
+**列底色、行内代码色、`<mark>` 高亮底是唯一的例外**——antd 没有这些语义，
+它们定义在 `theme/customToken.ts`，代码里用 `token.tintList` 这样消费。
+页面里不要出现这些字面量。
 
-### 8.3 `cssVar` 的作用域限制
+antd 组件自身的样式覆写用 `ConfigProvider` 的 `theme.components`，
+不要用选择器硬压——权重问题会一直跟着你。
 
-`--ant-*` 变量注入在 **antd 组件的 DOM 子树**上，不是 `:root`。
-所以：
+### 8.3 主题的注入链路
 
-- `global.css` 里 `.note-body` 的规则能拿到变量——它在 `ConfigProvider` 内部
-- `:root` 层拿不到，这就是字体栈和列底要在 `:root` 定义的原因
-- 任何**在 antd 组件树之外**渲染的元素都拿不到变量
+```
+ThemeProvider(theme=mimirTheme, customToken=…)
+  └─ ConfigProvider(locale=zhCN)     ← 只负责 locale，不传 theme
+       └─ AntApp                      ← message/notification/modal 的 context 版本
+            └─ GlobalStyles           ← createGlobalStyle 注入的全局规则
+```
 
-新增页面时不需要关心这点（`main.tsx` 已经包好了），但如果你要挂一个
-React 之外的 portal 或裸 DOM 节点，要记得它不在作用域内。
+**内层 `ConfigProvider` 不能传 `theme`。** antd 会按传入的 theme 重算
+`cssVar` 的 key，`--ant-*` 的变量名随之改变，所有引用变量的地方静默失效
+（不报错，只是颜色不对）。不传时 antd 直接继承外层的 theme。
+
+`cssVar: { key: 'mimir' }` 固定住了变量类名，所以规则里可以直接写 `--ant-*`。
+但变量注入在 **antd 组件的 DOM 子树**上，不是 `:root`——所以：
+
+- `styles/global.ts` 的 `body` 规则拿不到 `--ant-*`，这就是它用
+  `${(p) => p.theme.fontFamily}` 取主题值的原因
+- 任何**在 antd 组件树之外**渲染的元素（React 之外的 portal、裸 DOM 节点）
+  都拿不到变量
+
+新增页面时不需要关心这点（`MimirProvider` 已经包好了）。
 
 ### 8.4 守门测试
 
@@ -530,7 +569,7 @@ React 之外的 portal 或裸 DOM 节点，要记得它不在作用域内。
 | 不做 | 原因 |
 |---|---|
 | **深色模式** | 未设计。antd 有 `darkAlgorithm`，但 mimir 的列底色、内容区排版、来源徽标全部需要在深色下重新校准。**半成品的深色模式比没有更糟**——用户在夜间打开发现对比度崩了，会认为整个产品不可靠。列为待决项（`PRD.md` §6） |
-| **自建 CSS 方案**（Tailwind / CSS Modules / styled-components） | 组件样式走 antd token 是既有决定（`apps/web/AGENTS.md`）。引入第二套方案会让「同一个圆角有几个值」变成需要查两处的问题 |
+| **第二套 CSS 方案**（Tailwind / CSS Modules / styled-components） | 样式走 antd-style 是既有决定（`apps/web/AGENTS.md`）。两套方案并存会让「同一个圆角有几个值」变成需要查两处的问题 |
 | **替换 antd 种子色** | 见 §3.2，派生色会跑偏 |
 | **自造字体阶 / 间距阶** | antd 那套够用。自造的第二套迟早和它对不上 |
 | **超过两档的阴影** | 见 §5.3 |
@@ -551,7 +590,12 @@ React 之外的 portal 或裸 DOM 节点，要记得它不在作用域内。
 **内容**
 - [ ] 中文长文行高 ≥ 1.75
 - [ ] 内容列宽度是 760px（对话 860px）
-- [ ] 内容区颜色引用 `--ant-*`，没有新字面量
+- [ ] 内容区颜色走 `token.*`，没有新字面量
+
+**样式写法**
+- [ ] 组件样式在 `createStyles` 里，没有新增全局类名或 `.css` 文件
+- [ ] 覆写 antd 内部结构时用 `${prefixCls}`，没有写死 `ant-`
+- [ ] 没有往 `ConfigProvider` 重复传 `theme`（会换掉 cssVar key）
 
 **交互**
 - [ ] 焦点环可见，没有被 `outline: none` 干掉
