@@ -64,7 +64,7 @@ function LoginPage() {
         height: '100%',
         display: 'grid',
         placeItems: 'center',
-        background: '#f5f6f8',
+        background: 'var(--ant-color-bg-layout)',
         padding: 24,
       }}
     >

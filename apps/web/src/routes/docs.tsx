@@ -2,6 +2,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { App, Empty, Layout, List, Spin, Tag, Typography } from 'antd'
 import { api } from '@/lib/api'
+import { KindBadge } from '@/components/DocumentBadges'
 import { NoteEditor } from '@/components/NoteEditor'
 import { useMemo } from 'react'
 
@@ -68,7 +69,16 @@ function DocsPage() {
 
   return (
     <Layout style={{ height: '100%' }}>
-      <Layout.Sider width={200} theme="light" style={{ borderRight: '1px solid #e5e7eb' }}>
+      {/* 列底色比容器底稍冷，用来分开三栏而不靠边框——
+          层级模型见 docs/DESIGN.md §3.6。变量定义在 global.css 的 :root。 */}
+      <Layout.Sider
+        width={200}
+        theme="light"
+        style={{
+          borderRight: '1px solid var(--ant-color-border-secondary)',
+          background: 'var(--mimir-tint-nav)',
+        }}
+      >
         <div style={{ padding: 16 }}>
           <Typography.Text strong style={{ letterSpacing: '0.06em' }}>
             mimir
@@ -90,9 +100,9 @@ function DocsPage() {
                   padding: '7px 16px',
                   width: '100%',
                   cursor: 'pointer',
-                  fontWeight: scope === item.key ? 550 : 400,
-                  color: scope === item.key ? '#1677ff' : undefined,
-                  background: scope === item.key ? '#e8f1ff' : undefined,
+                  fontWeight: scope === item.key ? 600 : 400,
+                  color: scope === item.key ? 'var(--ant-color-link)' : undefined,
+                  background: scope === item.key ? 'var(--ant-color-primary-bg)' : undefined,
                 }}
               >
                 {item.label}
@@ -102,8 +112,20 @@ function DocsPage() {
         />
       </Layout.Sider>
 
-      <Layout.Sider width={300} theme="light" style={{ borderRight: '1px solid #e5e7eb' }}>
-        <div style={{ padding: '14px 16px', borderBottom: '1px solid #e5e7eb' }}>
+      <Layout.Sider
+        width={300}
+        theme="light"
+        style={{
+          borderRight: '1px solid var(--ant-color-border-secondary)',
+          background: 'var(--mimir-tint-list)',
+        }}
+      >
+        <div
+          style={{
+            padding: '14px 16px',
+            borderBottom: '1px solid var(--ant-color-border-secondary)',
+          }}
+        >
           <Typography.Text strong>{SCOPE_LABEL[scope]}</Typography.Text>
           <Typography.Text type="secondary" style={{ marginLeft: 8, fontSize: 12 }}>
             {items.length} 条
@@ -128,13 +150,16 @@ function DocsPage() {
                 style={{
                   padding: '10px 16px',
                   cursor: 'pointer',
-                  borderBottom: '1px solid #f0f1f3',
-                  background: item.id === selectedId ? '#e8f1ff' : undefined,
+                  borderBottom: '1px solid var(--ant-color-border-secondary)',
+                  background: item.id === selectedId ? 'var(--ant-color-primary-bg)' : undefined,
                 }}
               >
-                <Typography.Text strong ellipsis style={{ display: 'block' }}>
-                  {item.title}
-                </Typography.Text>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                  <KindBadge kind={item.kind} />
+                  <Typography.Text strong ellipsis style={{ flex: 1, minWidth: 0 }}>
+                    {item.title}
+                  </Typography.Text>
+                </div>
                 <Typography.Paragraph
                   type="secondary"
                   ellipsis={{ rows: 2 }}
@@ -142,20 +167,22 @@ function DocsPage() {
                 >
                   {item.excerpt}
                 </Typography.Paragraph>
-                <div style={{ marginTop: 4 }}>
-                  {item.tags.map((tag) => (
-                    <Tag key={tag} bordered={false} style={{ fontSize: 11 }}>
-                      {tag}
-                    </Tag>
-                  ))}
-                </div>
+                {item.tags.length > 0 && (
+                  <div style={{ marginTop: 4 }}>
+                    {item.tags.map((tag) => (
+                      <Tag key={tag} variant="filled" style={{ fontSize: 11 }}>
+                        {tag}
+                      </Tag>
+                    ))}
+                  </div>
+                )}
               </div>
             ))
           )}
         </div>
       </Layout.Sider>
 
-      <Layout.Content style={{ overflow: 'auto', background: '#fff' }}>
+      <Layout.Content style={{ overflow: 'auto', background: 'var(--ant-color-bg-container)' }}>
         {!selectedId ? (
           <Empty description="选一条开始看" style={{ marginTop: 120 }} />
         ) : detailQuery.isLoading ? (

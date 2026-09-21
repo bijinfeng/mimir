@@ -1,5 +1,26 @@
-/* 全局样式只做三件事：重置、字体、让应用占满视口。
-   组件样式一律走 antd 的 token，不在这里堆砌。 */
+/* 全局样式只做四件事：重置、字体、内容区排版、动效退化。
+   界面组件一律走 antd token（tokens.ts → ConfigProvider），不在这里堆砌。
+   规范与实测对比度见 docs/DESIGN.md。 */
+
+/* ── 文档级变量 ──────────────────────────────────────────────
+   这里是 :root，不在 antd 组件树内，所以拿不到 --ant-* 变量。
+   只放「文档本身」的东西：字体栈、三栏的列底、内容区专用色。
+   字体栈是唯一真相来源——tokens.ts 的 fontFamily 引用它，不重复定义。 */
+:root {
+  --mimir-font-sans:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', sans-serif;
+  --mimir-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* 第四层表面：给三栏的列底，比容器底稍冷，用来分隔而不加边框。
+     层级模型见 docs/DESIGN.md §3 —— 布局底 / 容器底 / 列底 / 浮层底。 */
+  --mimir-tint-list: #fcfcfd; /* 中栏列表、大纲列 */
+  --mimir-tint-nav: #fbfbfc; /* 左导航、浮层页脚 */
+
+  /* 行内代码的字色。antd 没有「代码」这个语义，定义在这里。
+     配 --ant-color-fill-secondary 实测 4.85:1 */
+  --mimir-inline-code-fg: #c7254e;
+}
 
 * {
   box-sizing: border-box;
@@ -12,17 +33,28 @@ body,
   margin: 0;
 }
 
+/* antd 的 App 包装层默认没有高度，会把 height:100% 的链条断在这里——
+   表现是登录卡片不垂直居中、Layout 的 height:100% 只撑到内容高度。
+   补上这一层，链条才完整：html → body → #root → .ant-app → 页面。 */
+#root > .ant-app {
+  height: 100%;
+}
+
 body {
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
-    'Microsoft YaHei', sans-serif;
+  font-family: var(--mimir-font-sans);
   -webkit-font-smoothing: antialiased;
 }
 
-/* 编辑器正文的排版。antd 不管内容区，所以这里自己定。 */
+/* ── 内容区排版 ──────────────────────────────────────────────
+   编辑器的正文不归 antd 管（它不是组件），所以在这里定义。
+   字色与分类色引用 antd 变量，保证内容与界面同一套灰阶。
+   字号阶梯：28 / 20 / 16 / 14 / 13，见 docs/DESIGN.md §4。 */
+
 .note-body {
+  font-size: 14px;
+  /* 中文正文比拉丁文需要更多行距：界面 1.57，正文 1.75 */
   line-height: 1.75;
-  color: #2b3038;
+  color: var(--ant-color-text);
 }
 
 .note-body h1 {
@@ -33,75 +65,123 @@ body {
 }
 
 .note-body h2 {
-  font-size: 19px;
-  font-weight: 650;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
   margin: 26px 0 10px;
+}
+
+.note-body h3 {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+  margin: 20px 0 8px;
 }
 
 .note-body p {
   margin: 12px 0;
 }
 
+.note-body a {
+  color: var(--ant-color-link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .note-body code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.875em;
-  background: #f0f1f3;
-  color: #c7254e;
+  font-family: var(--mimir-font-mono);
+  font-size: 13px;
+  background: var(--ant-color-fill-secondary);
+  color: var(--mimir-inline-code-fg);
   padding: 1.5px 5px;
-  border-radius: 4px;
+  border-radius: var(--ant-border-radius-sm);
 }
 
 .note-body pre {
-  background: #f7f8fa;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  background: var(--ant-color-fill-tertiary);
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: var(--ant-border-radius);
   padding: 14px 16px;
+  margin: 14px 0;
   overflow-x: auto;
-  font-size: 12.5px;
-  line-height: 1.65;
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 .note-body pre code {
   background: none;
-  color: #24292f;
+  color: var(--ant-color-text);
   padding: 0;
 }
 
 .note-body blockquote {
-  border-left: 3px solid #d7dae0;
+  border-left: 3px solid var(--ant-color-border);
   padding: 2px 0 2px 14px;
   margin: 14px 0;
-  color: #5c6570;
+  color: var(--ant-color-text-secondary);
 }
 
 .note-body ul,
 .note-body ol {
+  margin: 12px 0;
   padding-left: 22px;
+}
+
+.note-body li {
+  margin: 5px 0;
 }
 
 .note-body table {
   border-collapse: collapse;
   margin: 14px 0;
   width: 100%;
+  font-size: 13px;
 }
 
 .note-body th,
 .note-body td {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--ant-color-border-secondary);
   padding: 7px 11px;
   text-align: left;
 }
 
 .note-body th {
-  background: #fafbfc;
+  background: var(--mimir-tint-nav);
   font-weight: 600;
 }
 
-/* Tiptap 的占位符 */
+.note-body hr {
+  border: none;
+  border-top: 1px solid var(--ant-color-border-secondary);
+  margin: 26px 0;
+}
+
+.note-body mark {
+  background: #fff3b0;
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+/* Tiptap 的占位符。3.1:1 —— 占位符不承载信息，允许低于 4.5 */
 .note-body p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
-  color: #8b939c;
+  color: var(--ant-color-text-quaternary);
   float: left;
   height: 0;
   pointer-events: none;
+}
+
+/* ── 动效退化 ────────────────────────────────────────────────
+   antd 组件的动效由 token 控制，这里是给自定义过渡兜底。
+   前庭功能敏感的用户会因为 0.15s 的位移而眩晕，这不是可选项。 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

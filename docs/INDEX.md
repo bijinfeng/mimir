@@ -11,10 +11,12 @@
 | 某个技术选型为什么 | [`TECH.md`](TECH.md) §1 与被否决的方案 |
 | 为什么不用某个方案 | [`RESEARCH.md`](RESEARCH.md) —— 有星数、版本号、许可证、实测数据 |
 | 数据模型怎么设计的 | [`TECH.md`](TECH.md) §4 检索设计 |
+| 界面该用什么颜色/字号/间距 | [`DESIGN.md`](DESIGN.md) —— 有实测对比度 |
+| 某个视觉决定为什么 | [`DESIGN.md`](DESIGN.md) §2 不采纳的部分、§9 明确不做的事 |
 | 插件接缝怎么加实现 | [`TECH.md`](TECH.md) §7、`apps/server/src/plugins/README.md` |
 | 怎么部署、有什么坑 | [`TECH.md`](TECH.md) §8、§10 |
 | 历史上做过哪些决定 | [`DECISIONS.md`](DECISIONS.md) |
-| 界面长什么样 | [`../output/index.html`](../output/index.html)（双击打开） |
+| 界面长什么样 | [`../output/index.html`](../output/index.html)（双击打开，交互原型） |
 | 现在做到哪了、下一步 | [`TECH.md`](TECH.md) §11、根目录 `AGENTS.md` |
 
 ## 文档之间的关系
@@ -25,8 +27,14 @@ PRD.md          做什么、不做什么         ← 产品判断
   ├─→ TECH.md   怎么做                   ← 工程实现
   │     └─→ DECISIONS.md  为什么这样选    ← 决策日志，按时间追加
   │
+  ├─→ DESIGN.md 长什么样                 ← 视觉与交互规范
+  │
   └─→ RESEARCH.md  为什么不用别的         ← 调研证据
 ```
+
+`DESIGN.md` 与 `PRD.md` §5 的分工：`PRD` 决定**交互怎么走**（点这里会发生什么），
+`DESIGN` 决定**它长什么样、用什么值**（颜色、字号、间距、动效）。两者都可能
+否决同一个方案，但理由不同——`PRD` 是产品判断，`DESIGN` 是可读性与一致性。
 
 `RESEARCH.md` 单独存在的理由：**证据最容易被丢掉**。半年后有人问
 「为什么不用 RAGFlow」，如果答案只写在结论里，就得重新调研一遍。

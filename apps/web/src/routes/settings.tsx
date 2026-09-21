@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Card, Tabs, Typography } from 'antd'
+import { CONTENT_WIDTH } from '@/theme/tokens'
 
 /**
  * 设置页骨架。
@@ -23,7 +24,7 @@ const SECTIONS = [
 
 function SettingsPage() {
   return (
-    <div style={{ maxWidth: 760, margin: '0 auto', padding: '28px 40px 120px' }}>
+    <div style={{ maxWidth: CONTENT_WIDTH, margin: '0 auto', padding: '28px 40px 120px' }}>
       <Typography.Title level={4} style={{ marginTop: 0 }}>
         设置
       </Typography.Title>

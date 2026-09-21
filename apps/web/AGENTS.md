@@ -87,5 +87,27 @@ API 客户端在 `lib/api.ts`。三条约定：
 
 ## 样式
 
-组件样式走 antd 的 token（`ConfigProvider` 里配），不新引入 CSS 方案。
-`styles/global.css` 只放三件事：重置、字体、编辑器正文排版。
+组件样式走 antd 的 token（`theme/tokens.ts` → `main.tsx` 的 `ConfigProvider`），
+不新引入 CSS 方案。**规范是 `docs/DESIGN.md`，动手前先读它。**
+
+```
+src/theme/tokens.ts        token 的唯一真相来源
+src/theme/design.test.ts   对比度底线守卫（49 项，改 token 会跑）
+src/styles/global.css      重置、字体栈、内容区排版、动效退化
+```
+
+五条容易踩的：
+
+1. **不要替换 antd 的种子色**（`colorSuccess` 这类），只覆盖叶子 token。
+   改种子会让 antd 派生出一套跑偏的浅底色，实测得到 `#a8b3aa` 这种脏色
+2. **不要把 `colorPrimary` 当文字色**——选中态浅底上只有 3.61:1。文字用
+   `colorLink` / `--ant-color-link`
+3. **页面里不写字面量颜色**，用 `var(--ant-*)` 或 `theme.useToken()`。
+   例外只有 `global.css` 里的 `--mimir-*`（列底色、行内代码色，antd 没有这两个语义）
+4. **`--ant-*` 变量注入在 antd 组件子树，不是 `:root`**。所以字体栈和列底色
+   定义在 `global.css` 的 `:root`，内容排版则在 `.note-body` 里引用 antd 变量
+5. **antd v6 的 `Tag` 用 `variant="filled"`，不要用 `bordered={false}`**——
+   后者已废弃且会打警告。同理，**来源徽标不要用 `<Tag color="green">` 预设色**，
+   预设走 antd 自己的调色板，对比度不由我们控制；用 `components/DocumentBadges.tsx`
+
+`design.test.ts` 会真算对比度。它红了不要改断言，先改设计。

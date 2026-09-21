@@ -3,8 +3,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Editor } from '@tiptap/core'
 import { App, Input, Space, Tag, Typography } from 'antd'
 import { useEffect, useRef, useState } from 'react'
+import { KindBadge, StatusBadge } from '@/components/DocumentBadges'
 import { createExtensions } from '@/editor/extensions'
 import { api } from '@/lib/api'
+import { CONTENT_WIDTH } from '@/theme/tokens'
 
 /**
  * 笔记编辑器。
@@ -148,18 +150,12 @@ export function NoteEditor({ document: doc, onSaved }: Props) {
   }
 
   return (
-    <div style={{ maxWidth: 760, margin: '0 auto', padding: '32px 40px 160px' }}>
+    <div style={{ maxWidth: CONTENT_WIDTH, margin: '0 auto', padding: '32px 40px 160px' }}>
       <Space size={8} wrap style={{ marginBottom: 10 }}>
-        <Tag bordered={false} color={doc.kind === 'note' ? 'green' : 'blue'}>
-          {doc.kind === 'note' ? '笔记' : '资料'}
-        </Tag>
-        {doc.status === 'inbox' && (
-          <Tag bordered={false} color="orange">
-            待整理
-          </Tag>
-        )}
+        <KindBadge kind={doc.kind} />
+        <StatusBadge status={doc.status} />
         {doc.tags.map((tag) => (
-          <Tag key={tag} bordered={false}>
+          <Tag key={tag} variant="filled">
             {tag}
           </Tag>
         ))}
@@ -194,11 +190,13 @@ function SaveIndicator({ state, onRetry }: { state: SaveState; onRetry: () => vo
     saved: '已保存',
     error: '保存失败 · 点此重试',
   }
+  // 用 antd 变量而不是字面量：保存状态是信息，它的对比度由规范统一保证
+  // （见 docs/DESIGN.md §3.3 / §3.4）
   const color: Record<SaveState, string | undefined> = {
     idle: undefined,
-    saving: '#8b939c',
-    saved: '#137333',
-    error: '#c5221f',
+    saving: 'var(--ant-color-text-quaternary)',
+    saved: 'var(--ant-color-success-text)',
+    error: 'var(--ant-color-error-text)',
   }
 
   if (state === 'idle') return null
