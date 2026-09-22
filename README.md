@@ -53,7 +53,7 @@ apps/web/src/
   ├── editor/             Tiptap 扩展配置 + 往返保真与幂等性测试
   └── lib/                API 客户端 / Query 配置 / 路由 context
 
-packages/shared/          前后端共享的 zod schema
+packages/shared/          前后端共享的 zod schema（源码发布，由使用方编译）
 ```
 
 ---
@@ -81,13 +81,16 @@ pnpm db:migrate
 pnpm dev
 ```
 
-`pnpm dev` 一条命令并行起三个包，改代码即生效：
+`pnpm dev` 一条命令并行起两个包，改代码即生效：
 
 | 包 | 命令 | 说明 |
 |---|---|---|
 | `apps/server` | `tsx watch src/index.ts` | API 在 **3000**，改动自动重启 |
 | `apps/web` | `vite` | 前端在 **5173**，HMR |
-| `packages/shared` | `tsc --watch` | 契约包，改动自动重编译 |
+
+`packages/shared` 没有独立的构建进程：它以源码发布，前端由 Vite 直接编译，
+服务端由 `tsx` 直接执行（生产构建时由 tsdown 打进 `dist`）。
+改 shared 的 schema，两边都会立即生效。
 
 **开发时访问 `http://localhost:5173`**（Vite）。它把 `/api` 代理到 3000，
 所以前端不需要跨源配置，cookie 也正常。3000 上的 API 单独也能访问，
@@ -168,6 +171,7 @@ OWNER_PASSWORD=a-long-random-password
 | Lint | **oxlint** 1.83 | 单命令跑全仓，48 文件约 100ms |
 | Format | **oxfmt** 0.68 | 见下方说明 |
 | 测试 | Vitest 5 | 服务端集成 + 前端编辑器 |
+| 服务端构建 | **tsdown** | Rolldown + Oxc。把 shared 的源码一并编译进 `dist` |
 | 依赖版本 | **pnpm catalog** | 版本写在 `pnpm-workspace.yaml`，包内用 `catalog:` |
 
 一条命令做完整校验：

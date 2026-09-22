@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "vite",
     "routes:generate": "tsr generate",
-    "typecheck": "pnpm --filter @mimir/shared build && pnpm routes:generate && tsc --noEmit",
-    "build": "pnpm --filter @mimir/shared build && pnpm routes:generate && tsc --noEmit && vite build",
+    "typecheck": "pnpm routes:generate && tsc --noEmit",
+    "build": "pnpm routes:generate && tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run --passWithNoTests"
   },

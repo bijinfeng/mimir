@@ -117,7 +117,7 @@ mimir/
 │           ├── editor/          # Tiptap 扩展与保真测试
 │           └── lib/             # API 客户端 / Query / 路由 context
 ├── packages/
-│   └── shared/                  # zod schema + 推导类型
+│   └── shared/                  # zod schema + 推导类型（源码发布，无构建步骤）
 ├── output/                      # 交互原型（单文件静态页）
 ├── docs/
 └── data/                        # 运行时数据，不进 git
@@ -547,19 +547,32 @@ services:
 
 ### 8.3 构建顺序
 
-镜像构建有三处顺序要求，反了都会失败：
+**包与包之间已经没有顺序要求**，因为 `@mimir/shared` 以源码发布
+（`exports` 直接指向 `src/index.ts`），编译责任跟着使用方走：
+
+| 使用方 | 谁编译 shared 的源码 |
+|---|---|
+| `apps/web`（开发与生产）| Vite |
+| `apps/server`（开发）| tsx |
+| `apps/server`（生产）| tsdown，把 shared 打进 `dist` |
 
 ```
-1. pnpm --filter @mimir/shared build     ← 必须先于 web/server
-2. pnpm --filter @mimir/web build        ← 内含 tsr generate（路由树）
-3. pnpm --filter @mimir/server build
+pnpm --filter @mimir/web build      ← 内含 tsr generate（路由树）
+pnpm --filter @mimir/server build
 ```
 
-第 1 条的约束来自 `@mimir/shared` 以**产物**形式发布：以源码发布会让 Node
-在生产环境拒绝类型剥离。第 2 条是因为路由树是生成物，而 `tsc` 需要它存在。
+这两条互不依赖，先后随意。剩下的顺序约束都在**包的内部**：路由树是生成物，
+必须先 `tsr generate` 再类型检查——这一步写在 web 自己的 build/typecheck 脚本里，
+不需要在镜像构建时手动排。决定与取舍见 D-023。
 
 镜像里有两个 Node 进程吗？没有，只有一个：`node dist/index.js` 同时提供 API
 与前端静态资源。单用户自托管不值得拆成三个容器加一个反代。
+
+服务端为什么要打包而不是 `tsc` 直出：shared 的源码是 TS，Node 在生产环境不能
+执行 `node_modules` 里的 `.ts`（`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`），
+所以必须由使用方编译进产物。tsdown 用 `unbundle: true` 保持一文件对一文件，
+因为 `lib/static.ts` 按「所在目录往上两级」推导前端产物位置——打包成 chunk 后
+`import.meta.url` 指向重命名后的 chunk，会静默算错路径。
 
 ### 8.4 验证方式
 
@@ -641,7 +654,9 @@ CI 与本地 pre-push 跑的是同一条，避免两处逻辑漂移。
 | 未声明的包出现在 node_modules | 以为依赖没删干净 | `@vitejs/plugin-react` 的 optional peer，pnpm autoInstallPeers 自动装的 |
 | 静态资源的隐藏依赖 | 测试行为取决于本地是否跑过构建 | 挂载静态资源显式判断 `NODE_ENV`，不看 dist 是否存在 |
 | 路由树是生成物 | 干净检出直接跑 `typecheck` 找不到 `routeTree.gen.ts` | 用 `tsr generate` 显式生成，写进 typecheck/build 脚本 |
-| workspace 包以源码发布 | 生产容器启动报 `ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`——Node 拒绝剥离 node_modules 里的 TS | `@mimir/shared` 编译到 `dist` 并以产物发布；build 顺序：shared → web/server |
+| workspace 包以源码发布 | 生产容器启动报 `ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`——Node 拒绝执行 node_modules 里的 TS | `@mimir/shared` 以源码发布，但**由使用方编译**：web 交给 Vite，server 交给 tsdown 打进 dist。见 D-023 |
+| 打包时把源码目录结构拍平 | `resolveWebDist()` 少算一级目录，静态资源静默 404 | tsdown 开 `unbundle: true`，保持一文件对一文件 |
+| tsdown 默认输出 `.mjs` | 镜像里 `node dist/index.js` 找不到文件 | `outExtensions: () => ({ js: '.js' })`（package.json 是 `"type": "module"`）|
 | 仓库根靠标志文件查找 | 生产镜像里没有 `pnpm-workspace.yaml`，启动即抛错 | 找不到时退回 `cwd` 而不是抛错；容器里全部传绝对路径 |
 | `src/` 与 `dist/` 层级不一致 | 静态资源路径在仓库内正确、在镜像里算到 `/web/dist` | 按候选路径探测 + `WEB_DIST` 显式指定，不用写死的相对偏移 |
 | 内层 `ConfigProvider` 传 `theme` | `cssVar` 的 key 被重算，`--ant-*` 变量名改变，引用变量的地方颜色静默不对 | 主题只由 `ThemeProvider` 传；内层 `ConfigProvider` 只放 locale（`theme/MimirProvider.tsx`） |

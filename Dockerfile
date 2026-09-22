@@ -23,11 +23,12 @@ RUN pnpm install --frozen-lockfile
 
 COPY . .
 
-# 顺序不能反：web 与 server 都从 @mimir/shared 的 dist 消费类型与 schema，
-# 而 shared 以产物形式发布（不是源码）——以源码发布会让 Node 在生产环境下
-# 拒绝类型剥离（ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING）。
-RUN pnpm --filter @mimir/shared build \
- && pnpm --filter @mimir/web build \
+# 两个包互相独立，都各自编译 @mimir/shared 的源码。
+#
+# shared 以源码形式发布（exports 直接指向 src/*.ts），编译责任在使用方：
+# 前端是 Vite，服务端是 tsdown（把 shared 的源码一起编译进 dist）。
+# 所以镜像里没有「先构建 shared」这一步。
+RUN pnpm --filter @mimir/web build \
  && pnpm --filter @mimir/server build
 
 # 只保留生产依赖，显著减小最终镜像

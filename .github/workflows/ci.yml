@@ -58,4 +58,7 @@ jobs:
       - run: pnpm lint
       - run: pnpm format:check
       - run: pnpm -r typecheck
+      # 构建也要在 CI 里跑：@mimir/shared 以源码发布，编译责任在使用方
+      # （web 是 Vite，server 是 tsdown）。这一段不跑，打包坏了要到部署时才发现
+      - run: pnpm -r build
       - run: pnpm -r test

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsdown",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -36,6 +36,7 @@
     "@types/node": "catalog:",
     "@types/turndown": "^5.0.6",
     "drizzle-kit": "^0.31.10",
+    "tsdown": "^0.23.0",
     "tsx": "4.23.13",
     "typescript": "catalog:",
     "vitest": "catalog:"

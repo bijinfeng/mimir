@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "pnpm -r --parallel --stream dev",
-    "build": "pnpm --filter @mimir/shared build && pnpm -r --filter !@mimir/shared build",
+    "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "lint": "oxlint",

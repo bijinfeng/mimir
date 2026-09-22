@@ -804,3 +804,54 @@ apps/web/src/components/BrandMark.tsx  <BrandMark />（标记）/ <BrandLockup /
 **实现代价**：`AppShellContext` 里的 `citations` / `setCitations` /
 `conversationLoading` 三个字段随之删除（它们的存在理由就是喂中栏）。
 一次对话少一次 `GET /api/conversations/:id`。
+
+---
+
+## D-023 `@mimir/shared` 以源码发布，编译交给使用方
+
+**背景**：契约包原先 `tsc` 到 `dist`，以产物发布（`main`/`types` 指向 `dist`）。
+代价是每个消费它的脚本都要先跑一次 `pnpm --filter @mimir/shared build`：
+`build` / `typecheck` / Dockerfile / 前端脚本里各写了一遍，多出一条
+「顺序不能反」的隐性约束。改一行 schema 要等一次独立编译，忘了先构建
+就会拿到过期的类型。
+
+**决定**：`@mimir/shared` 不再构建，`exports` 直接指向 `src/index.ts`。
+「谁来编译 TS」这个问题按使用方各自的构建链回答：
+
+| 使用方 | 谁编译 shared 的源码 |
+|---|---|
+| `apps/web`（开发与生产）| Vite |
+| `apps/server`（开发）| tsx |
+| `apps/server`（生产）| tsdown，把 shared 打进 `dist` |
+
+服务端构建从 `tsc -p tsconfig.build.json` 换成 tsdown。这不是可选的：
+Node 拒绝执行 `node_modules` 里的 TS（`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`），
+而且源码一旦落在 `node_modules` 下连类型剥离都不允许——所以必须编译进产物，
+不能靠运行时加载。
+
+tsdown 的两个配置都是必需的，不是调风格：
+
+- `unbundle: true`：`lib/static.ts` 用「本文件所在目录往上两级」推导前端产物
+  位置。打包成 chunk 后文件被重命名成 `dist/static-xxxx.js`，`import.meta.url`
+  跟着变，推导出的根少一级——**不报错，只是静态资源 404**
+- `outExtensions: () => ({ js: '.js' })`：默认输出 `.mjs`，而镜像与 `start`
+  脚本跑的是 `node dist/index.js`
+
+**否决**：
+
+| 方案 | 为什么不用 |
+|---|---|
+| 保持产物发布（`tsc` 到 `dist`）| 每个使用方多一条前置构建与顺序约束。这份重复的构建逻辑在 4 处各写了一遍，是这个决定要解决的问题本身 |
+| 源码发布 + 运行时直接加载 TS | 实测报 `ERR_MODULE_NOT_FOUND`：Node 不做 `.js` → `.ts` 的路径改写，`src/index.ts` 里 `export * from './auth.js'` 解析到不存在的 `auth.js`。即使改成无扩展名，生产环境仍会拒绝剥离 `node_modules` 里的类型 |
+| 用 `tsc` 直出 + 只给 shared 加一个编译步骤到 dist | 回到第一行的形态，且 shared 会同时存在 `src` 与 `dist` 两份真相 |
+| 不用打包器，把 shared 的源码复制进 apps/server 后一起 `tsc` | 复制出来的副本会与 `packages/shared` 漂移，且 Drizzle/前端拿到的仍是另一份 |
+
+**影响**：
+
+- `pnpm build` 不再有 `shared` 这一步（根脚本从「先 shared 再其余」简化成 `pnpm -r build`）
+- Dockerfile 少一个构建阶段，也不再需要「顺序不能反」的注释
+- CI 增加 `pnpm -r build`——打包坏了必须在 CI 就被发现，而不是部署时
+- 服务端 `dist` 里多出 `dist/packages/shared/src/*.js`（编译后的 shared），
+  这些是产物，不进 git
+- 前端 bundle 里 shared 仍被 Vite 按需 tree-shake，体积不变
+- `packages/shared/tsconfig.build.json` 与 `dist/` 目录删除；该包只剩 `typecheck` 脚本
