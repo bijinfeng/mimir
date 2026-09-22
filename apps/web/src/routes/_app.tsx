@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query'
 import {
   Outlet,
   createFileRoute,
@@ -10,7 +9,7 @@ import {
 import { App as AntApp } from 'antd'
 import { createStyles } from 'antd-style'
 import { useEffect, useState } from 'react'
-import type { Citation, ConversationDetail } from '@mimir/shared'
+import type { Citation } from '@mimir/shared'
 import { CaptureDialog } from '@/components/CaptureDialog'
 import { CommandPalette } from '@/components/CommandPalette'
 import { ListColumn } from '@/components/ListColumn'
@@ -18,7 +17,6 @@ import { NavSidebar } from '@/components/NavSidebar'
 import { UnsavedGuard } from '@/components/UnsavedGuard'
 import { api } from '@/lib/api'
 import { AppShellContext, type AskDraft } from '@/lib/app-shell-context'
-import { useUnsaved } from '@/lib/unsaved'
 
 /**
  * 三栏骨架（pathless layout）。
@@ -69,6 +67,7 @@ const useStyles = createStyles(({ css, token }) => ({
    * `overflow: hidden` 是配套的：万一某个子元素仍然溢出，让它被裁掉
    * 而不是把页面撑长。
    */
+  /* 文档模式：左导航 / 中列表 / 右内容 */
   app: css`
     display: grid;
     grid-template-columns: 200px 300px minmax(0, 1fr);
@@ -79,6 +78,30 @@ const useStyles = createStyles(({ css, token }) => ({
 
     @media (max-width: 1100px) {
       grid-template-columns: 180px 260px minmax(0, 1fr);
+    }
+  `,
+  /**
+   * 两栏模式：**对话与设置都没有中栏**。
+   *
+   * 两者共用一套布局，因为理由是同一个：**中栏在那两种场景下只能显示
+   * 文档列表，而那与用户正在做的事无关**。
+   *
+   *  - 对话：中栏想显示「本次引用」，但它与回答下方的引用块重复（§5.2）
+   *  - 设置：中栏显示文档列表，而用户在改配置，那个列表看起来却像设置的一部分
+   *
+   * 右栏因此拿到整块剩余宽度。问答是主场景，值得更多横向空间；
+   * 设置页的表单也不再被挤在四分之一的宽度里（见 §5.2 与 §5.5）。
+   */
+  appWide: css`
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr);
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    background: ${token.colorBgLayout};
+
+    @media (max-width: 1100px) {
+      grid-template-columns: 180px minmax(0, 1fr);
     }
   `,
   nav: css`
@@ -99,40 +122,11 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
 }))
 
-/**
- * 引用去重。
- *
- * 同一篇文档在一次对话里被引用多次是正常的（命中了不同分块），
- * 但中栏的「本次引用」要的是**文档列表**，所以按 documentId 合并。
- */
-function dedupeCitations(items: Citation[]): Citation[] {
-  const byDocument = new Map<string, Citation>()
-  for (const citation of items) {
-    if (!byDocument.has(citation.documentId)) byDocument.set(citation.documentId, citation)
-  }
-  return [...byDocument.values()]
-}
-
-/**
- * 历史会话的引用补位。
- *
- * 打开一个旧会话时，实时流早已结束（没有 liveCitations），此时中栏的
- * 「本次引用」要来自落库的记录。用消息里的 citations 而不是 refs 表的 id
- * 列表——refs 只有 id，而引用卡要显示标题与片段。
- *
- * 只补实时列表里没有的，所以对话进行中不会被它覆盖。
- */
-function persistedCitations(conversation: ConversationDetail | undefined): Citation[] {
-  if (!conversation) return []
-  return conversation.messages.flatMap((item) => item.citations)
-}
-
 function AppShell() {
   const { styles } = useStyles()
   const navigate = useNavigate()
   const location = useLocation()
   const { message } = AntApp.useApp()
-  const { runGuarded } = useUnsaved()
   const search = useSearch({ from: '/_app' })
 
   const [paletteOpen, setPaletteOpen] = useState(false)
@@ -144,12 +138,6 @@ function AppShell() {
   /** 「问 AI」带进对话的上下文，见 AskDraft 的说明 */
   const [askDraft, setAskDraft] = useState<AskDraft | null>(null)
 
-  /**
-   * 对话进行中的实时引用。由右栏回传——只有它知道刚发出去、还没落库的那一轮
-   * 引用了什么（`docs/PRD.md` §5.2 要求中栏显示的就是「它读了什么」）。
-   */
-  const [liveCitations, setLiveCitations] = useState<Citation[]>([])
-
   /** 被点击的引用：文档打开后据此高亮对应区间 */
   const [highlight, setHighlight] = useState<Citation | null>(null)
 
@@ -159,31 +147,19 @@ function AppShell() {
   const [lastConversationId, setLastConversationId] = useState<string>()
 
   const isChat = location.pathname.startsWith('/chat')
-  const mode: 'docs' | 'chat' = isChat ? 'chat' : 'docs'
+  const isSettings = location.pathname.startsWith('/settings')
 
   /**
-   * 会话的引用列表。
+   * 当前所在页。**三值**，不是「chat 或 docs」。
    *
-   * 两个来源合起来：
-   *  - 实时：右栏对流式回答收到的 citations（含刚发出去、还没落库的那一轮）
-   *  - 落库：打开历史会话时，从 conversationRefs 读到的文档 id
-   *
-   * 之所以需要后者：历史会话的 messages.citations 是嵌套的 jsonb，
-   * 而中栏只需要「读过哪些文档」。单独一张 conversation_refs 表让这件事
-   * 变成一次连接而不是解 JSON（见 db/schema.ts 里该表的注释）。
+   * 设置页曾经被归并进 'docs'，于是「设置」这一项在侧边栏里永远不高亮——
+   * 它的判据是 `scope === 'settings'`，而 scope 的取值范围里根本没有这个值
+   * （它来自 URL 的 scope 参数）。表现是点进设置后侧边栏没有任何位置反馈。
    */
-  const conversationQuery = useQuery({
-    queryKey: ['conversation', search.id],
-    queryFn: () => api.conversations.get(search.id!),
-    // 只在对话模式且有 id 时请求。文档模式下多拉一次会话是白花的查询
-    enabled: isChat && Boolean(search.id),
-  })
+  const page: 'docs' | 'chat' | 'settings' = isChat ? 'chat' : isSettings ? 'settings' : 'docs'
 
-  const citations = dedupeCitations([
-    // 实时引用优先：它们带完整的片段信息（历史 refs 只有 id）
-    ...liveCitations,
-    ...persistedCitations(conversationQuery.data),
-  ])
+  /** 只有文档模式有中栏；对话与设置都是两栏（docs/PRD.md §5.2） */
+  const hasMiddleColumn = page === 'docs'
 
   const openDocument = (id: string, scope = search.scope) => {
     setCameFromChat(false)
@@ -223,9 +199,6 @@ function AppShell() {
       value={{
         askDraft,
         setAskDraft,
-        citations,
-        setCitations: setLiveCitations,
-        conversationLoading: Boolean(search.id) && conversationQuery.isLoading,
         highlight,
         clearHighlight: () => setHighlight(null),
         openDocument,
@@ -235,43 +208,47 @@ function AppShell() {
           void navigate({ to: '/chat', search: { scope: search.scope, id: lastConversationId } }),
       }}
     >
-      <div className={styles.app}>
+      <div className={hasMiddleColumn ? styles.app : styles.appWide}>
         <div className={styles.nav}>
           <NavSidebar
-            selection={{ mode, scope: search.scope, ...(search.id ? { id: search.id } : {}) }}
+            selection={{
+              page,
+              scope: search.scope,
+              ...(search.id ? { id: search.id } : {}),
+            }}
             onOpenPalette={() => setPaletteOpen(true)}
             onOpenCapture={() => setCaptureOpen(true)}
           />
         </div>
 
-        <div className={styles.list}>
-          <ListColumn
-            mode={mode}
-            scope={search.scope}
-            {...(search.kind ? { kind: search.kind } : {})}
-            {...(search.id ? { selectedId: search.id } : {})}
-            query={query}
-            onQueryChange={setQuery}
-            onKindChange={(kind) =>
-              void navigate({
-                to: '/docs',
-                search: { scope: search.scope, ...(kind ? { kind } : {}) },
-              })
-            }
-            citations={citations}
-            isNewConversation={!search.id}
-            onModeChange={(next) => {
-              if (next === 'chat') void navigate({ to: '/chat', search: { scope: search.scope } })
-              else runGuarded(() => void navigate({ to: '/docs', search: { scope: search.scope } }))
-            }}
-            onOpenDocument={(id) => openDocument(id, 'all')}
-            onStartFromDocument={(id) => {
-              // 「新对话」的中栏引导：带着这篇的上下文开始问（PRD §5.10）
-              setAskDraft({ text: '', documentId: id })
-              void navigate({ to: '/chat', search: { scope: search.scope } })
-            }}
-          />
-        </div>
+        {/*
+          只有文档模式渲染中栏（docs/PRD.md §5.2）。
+          用条件渲染而不是「渲染但隐藏」：隐藏的话 ListColumn 仍会跑它那两个
+          查询（文档列表 + 检索），而它们的返回值在另两种模式下没人看
+        */}
+        {hasMiddleColumn && (
+          <div className={styles.list}>
+            <ListColumn
+              scope={search.scope}
+              {...(search.kind ? { kind: search.kind } : {})}
+              {...(search.id ? { selectedId: search.id } : {})}
+              query={query}
+              onQueryChange={setQuery}
+              onKindChange={(kind) =>
+                void navigate({
+                  to: '/docs',
+                  search: { scope: search.scope, ...(kind ? { kind } : {}) },
+                })
+              }
+              onOpenDocument={(id) => {
+                // 纯文档浏览时点开不留「从对话来」的标记——
+                // 那会让用户以为自己错过了一段对话
+                setCameFromChat(false)
+                openDocument(id, 'all')
+              }}
+            />
+          </div>
+        )}
 
         <div className={styles.main}>
           <Outlet />

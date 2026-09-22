@@ -9,6 +9,7 @@ import { captureRoute } from './routes/capture.js'
 import { chatRoute, conversationsRoute } from './routes/conversations.js'
 import { documentsRoute, foldersRoute, maintenanceRoute, tagsRoute } from './routes/documents.js'
 import { exportRoute } from './routes/export.js'
+import { setupRoute } from './routes/setup.js'
 import { mountStatic } from './lib/static.js'
 import { searchRoute } from './routes/search.js'
 import type { AppEnv } from './types.js'
@@ -34,6 +35,20 @@ export function createApp() {
   /** 不需要登录：健康检查 + 认证端点本身 */
   app.get('/healthz', (c) => c.json({ ok: true }))
 
+  /**
+   * 登录页的公开状态（库里有没有账号）。
+   *
+   * **必须注册在下面那条 `auth.handler` 的通配之前。** Hono 按注册顺序匹配，
+   * 而 `/api/auth/*` 会吞掉它后面所有同前缀的路径——反过来写的话这个端点
+   * 会被 Better Auth 的 handler 接走并返回 404（实测踩过）。
+   *
+   * 同时它也必须在鉴权中间件之前——登录页在登录前就要调它。
+   * 路径挂在 /api/auth 下而不是 /api/setup：它讲的是「认证如何初始化」，
+   * 与认证端点归在一起比单开一个顶层名字更自然。
+   */
+  app.route('/api/auth/setup', setupRoute)
+
+  // 通配放最后：它会接走 /api/auth/ 下的其余一切
   app.on(['GET', 'POST'], '/api/auth/*', (c) => auth.handler(c.req.raw))
 
   /** 以下全部需要登录 */

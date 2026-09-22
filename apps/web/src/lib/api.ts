@@ -1,5 +1,6 @@
 import type {
   ApiError,
+  AuthSetupState,
   AskInput,
   AskResponse,
   CaptureResponse,
@@ -210,6 +211,15 @@ export const api = {
   },
 
   auth: {
+    /**
+     * 登录页的公开状态：库里有没有账号、要不要显示首次注册。
+     *
+     * 它免鉴权，所以登录页在登录前就能调。**不要**用「先试登录、失败再试
+     * 注册」去猜这个状态——那会把「密码错误」显示成「邮箱已被使用」。
+     */
+    setupState() {
+      return request<AuthSetupState>('/api/auth/setup/state')
+    },
     /** 单用户规则：只有系统里一个用户都没有时注册才会成功 */
     signUp(input: { email: string; password: string; name: string }) {
       return request<{ user: unknown }>('/api/auth/sign-up/email', {

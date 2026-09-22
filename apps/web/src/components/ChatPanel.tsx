@@ -1,12 +1,15 @@
 import type { Citation, Message } from '@mimir/shared'
 import type { UIMessage } from '@tanstack/ai-react'
+import { useQuery } from '@tanstack/react-query'
 import { Skeleton } from 'antd'
 import { createStyles } from 'antd-style'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { CitationCards } from '@/components/chat/CitationCards'
 import { Composer } from '@/components/chat/Composer'
 import { FailureCard } from '@/components/chat/FailureCard'
 import { TraceDisclosure } from '@/components/chat/TraceDisclosure'
+import { KindBadge } from '@/components/DocumentBadges'
+import { api } from '@/lib/api'
 import type { AskDraft } from '@/lib/app-shell-context'
 import { mimirChatUI } from '@/lib/chat-ui'
 import { useMimirChat } from '@/lib/use-mimir-chat'
@@ -35,8 +38,6 @@ export interface ChatPanelProps {
   onOpenCitation: (documentId: string, citation: Citation) => void
   /** 新会话建出来后换 URL */
   onConversationCreated: (conversationId: string) => void
-  /** 引用变化时回传，供中栏显示「本次引用」 */
-  onCitationsChange: (citations: Citation[]) => void
 }
 
 const useStyles = createStyles(({ css, token }) => ({
@@ -150,6 +151,46 @@ const useStyles = createStyles(({ css, token }) => ({
     margin-bottom: 8px;
     color: ${token.colorText};
   `,
+  /* 待整理建议（新对话空态里）。点一下把范围锁到那一篇——
+     比「一句提示语」有用，因为启动新对话最典型的动机就是「我刚收了几篇东西」 */
+  suggestions: css`
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 22px;
+    text-align: left;
+  `,
+  suggestionsLabel: css`
+    padding: 0 0 6px;
+    font-size: ${FONT_SIZE.note}px;
+    color: ${token.colorTextTertiary};
+  `,
+  suggestion: css`
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border: none;
+    border-radius: 6px;
+    background: ${token.tintList};
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.12s ease-out;
+
+    &:hover {
+      background: #fafbff;
+    }
+  `,
+  suggestionTitle: css`
+    flex: 1;
+    min-width: 0;
+    font-size: ${FONT_SIZE.item}px;
+    color: ${token.colorText};
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  `,
   emptySub: css`
     font-size: ${FONT_SIZE.note}px;
     color: ${token.colorTextTertiary};
@@ -164,7 +205,6 @@ export function ChatPanel({
   messagesLoading,
   onOpenCitation,
   onConversationCreated,
-  onCitationsChange,
 }: ChatPanelProps) {
   const { styles } = useStyles()
 
@@ -199,7 +239,6 @@ export function ChatPanel({
       initialMessages={initialMessages}
       onOpenCitation={onOpenCitation}
       onConversationCreated={onConversationCreated}
-      onCitationsChange={onCitationsChange}
     />
   )
 }
@@ -210,17 +249,27 @@ function ChatPanelBody({
   initialMessages,
   onOpenCitation,
   onConversationCreated,
-  onCitationsChange,
 }: ChatPanelProps) {
   const { styles } = useStyles()
   const scrollRef = useRef<HTMLDivElement>(null)
 
+  /**
+   * 从空态里挑中的文档。
+   *
+   * 它必须住在这里而不是 Composer 里：点选发生在空态（Composer 之外），
+   * 而「范围锁到这一篇」由 Composer 的输入框体现。两个组件是兄弟，
+   * 所以选择落在共同祖先上。
+   *
+   * `draft?.documentId` 优先于它——那是从文档工具条带进来的，
+   * 比在空态里点的更明确。
+   */
+  const [pickedDocumentId, setPickedDocumentId] = useState<string | undefined>()
+
   const chat = useMimirChat({
     conversationId,
     initialMessages,
-    documentId: draft?.documentId,
+    documentId: draft?.documentId ?? pickedDocumentId,
     onConversationCreated,
-    onCitationsChange,
   })
 
   const isEmpty = chat.messages.length === 0
@@ -264,14 +313,7 @@ function ChatPanelBody({
       <div className={styles.scroll} ref={scrollRef}>
         <div className={styles.inner}>
           {isEmpty ? (
-            <div className={styles.empty}>
-              <div className={styles.emptyTitle}>{draft ? '就这一篇提问' : '问点什么'}</div>
-              <div className={styles.emptySub}>
-                {draft
-                  ? '上下文已经准备好，范围锁定在这篇文档'
-                  : '它会先在你的知识库里检索，再基于命中的原文回答，并给出引用'}
-              </div>
-            </div>
+            <ChatEmptyState draft={draft} onStartFromDocument={setPickedDocumentId} />
           ) : (
             <>
               {/* 检索过程渲染在回答**上方**。默认折叠，展开后是逐步记录
@@ -311,10 +353,76 @@ function ChatPanelBody({
       <Composer
         key={draft?.documentId ?? 'global'}
         initialText={draft?.text ?? ''}
-        scopedDocumentId={draft?.documentId}
+        scopedDocumentId={draft?.documentId ?? pickedDocumentId}
         disabled={chat.isLoading}
         onSend={(text, deepReasoning) => void chat.send(text, deepReasoning)}
       />
+    </div>
+  )
+}
+
+/**
+ * 对话空态。
+ *
+ * 除了「问点什么」这句提示，它还要承担一件事：**新对话时列出待整理的内容**
+ * （`docs/PRD.md` §5.10）。
+ *
+ * 那条要求原本落在中栏（「新对话的中栏不空着」），动机是：启动新对话最典型的
+ * 动机就是「我刚收了几篇东西，想问问」，把这个动机需要的东西直接摆在眼前，
+ * 比一句提示语有用。
+ *
+ * 中栏在对话模式下删掉之后（§5.2），这个动机没有丢，只是搬到了空态里——
+ * 而且**比原来更贴切**：原来那些条目在中栏，与输入框隔着一栏；现在它们就在
+ * 输入框上方，点一下就把范围锁到那一篇。
+ */
+function ChatEmptyState({
+  draft,
+  onStartFromDocument,
+}: {
+  draft: AskDraft | null
+  onStartFromDocument: (id: string) => void
+}) {
+  const { styles } = useStyles()
+
+  /**
+   * 待整理内容。**只在新对话时请求**——带着上下文进来的（`draft` 有值）
+   * 不需要它，那时用户心里已经有问题了。
+   */
+  const pendingQuery = useQuery({
+    queryKey: ['documents', 'inbox-pending'],
+    queryFn: () => api.documents.list({ status: 'inbox', limit: 4 }),
+    enabled: !draft,
+  })
+
+  const pending = pendingQuery.data?.items ?? []
+
+  return (
+    <div className={styles.empty}>
+      <div className={styles.emptyTitle}>{draft ? '就这一篇提问' : '问点什么'}</div>
+      <div className={styles.emptySub}>
+        {draft
+          ? '上下文已经准备好，范围锁定在这篇文档'
+          : '它会先在你的知识库里检索，再基于命中的原文回答，并给出引用'}
+      </div>
+
+      {!draft && pending.length > 0 && (
+        <div className={styles.suggestions}>
+          <div className={styles.suggestionsLabel}>
+            收件箱还有 {pendingQuery.data?.items.length} 条没整理，可以从它们开始问
+          </div>
+          {pending.map((doc) => (
+            <button
+              key={doc.id}
+              type="button"
+              className={styles.suggestion}
+              onClick={() => onStartFromDocument(doc.id)}
+            >
+              <KindBadge kind={doc.kind} />
+              <span className={styles.suggestionTitle}>{doc.title}</span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

@@ -46,8 +46,6 @@ export interface UseMimirChatOptions {
   documentId?: string | undefined
   /** 新会话建出来后通知外层换 URL */
   onConversationCreated: (conversationId: string) => void
-  /** 引用变化时通知外层（中栏显示「本次引用」用） */
-  onCitationsChange: (citations: Citation[]) => void
 }
 
 /**
@@ -71,7 +69,6 @@ export function useMimirChat({
   initialMessages,
   documentId,
   onConversationCreated,
-  onCitationsChange,
 }: UseMimirChatOptions) {
   const queryClient = useQueryClient()
   const events = useMimirChatEvents()
@@ -97,9 +94,7 @@ export function useMimirChat({
       if (name === EVENT_TRACE) {
         events.setTrace((data as { trace: Trace }).trace)
       } else if (name === EVENT_CITATIONS) {
-        const citations = (data as { citations: Citation[] }).citations
-        events.setCitations(citations)
-        onCitationsChange(citations)
+        events.setCitations((data as { citations: Citation[] }).citations)
       } else if (name === EVENT_FAILURE) {
         // 分类来自服务端，见 packages/shared 里 FailureEventPayload 的说明
         const payload = data as { failure: FailureKind; message: string }
@@ -127,7 +122,6 @@ export function useMimirChat({
   const send = async (text: string, deepReasoning: boolean) => {
     // 新一轮提问：清掉上一轮的检索过程与引用
     events.reset()
-    onCitationsChange([])
 
     // 新会话：先把会话建出来。空会话只在这一瞬间存在，紧接着就发第一条消息。
     // 之所以在前端建而不是让服务端建：建完能让 URL 立刻对上，

@@ -84,7 +84,52 @@ export const env = {
   modelProviderName: process.env.MODEL_PROVIDER_NAME ?? 'deepseek',
   modelChatModel: process.env.MODEL_CHAT_MODEL ?? 'deepseek-chat',
   modelReasoningModel: process.env.MODEL_REASONING_MODEL ?? 'deepseek-reasoner',
+
+  /**
+   * 所有者账号。**配了它就能跳过首次注册**——服务端启动时自动建号。
+   *
+   * 这是 self-hosted 单用户产品的标准做法（Grafana / Gitea 等都类似），
+   * 而且它比「先注册先得」**更安全**：部署完到你自己注册之间有一个时间窗，
+   * 服务如果已经暴露在公网，谁先访问谁就成为了那个唯一用户。
+   * 用环境变量把账号定下来，这个窗口不存在。
+   *
+   * 三个环境（production / development）都生效，语义一致：
+   * **它是所有者账号的真相来源**。库里有账号但密码与这里不一致时会被同步，
+   * 所以「忘记密码」的找回方式就是改这里再重启。
+   *
+   * 两个都为空 = 不启用，走「首次注册」路径（默认）。
+   * 只配一个视为配置错误，启动时明确报错而不是静默忽略一半。
+   */
+  ownerEmail: process.env.OWNER_EMAIL ?? '',
+  ownerPassword: process.env.OWNER_PASSWORD ?? '',
 } as const
+
+/** 两个所有者变量都配了才算启用 */
+export function isOwnerConfigured(): boolean {
+  return Boolean(env.ownerEmail && env.ownerPassword)
+}
+
+/**
+ * 只配了一半是配置错误，不是「没配」——静默忽略会让人查半天。
+ *
+ * 单独一个函数而不是写在 env 字面量里：这里要抛错，而 env.ts 的其余部分
+ * 只做读取。启动早期抛错比运行到一半才发现好。
+ */
+export function assertOwnerConfigComplete(): void {
+  const hasEmail = Boolean(env.ownerEmail)
+  const hasPassword = Boolean(env.ownerPassword)
+  if (hasEmail === hasPassword) return
+
+  const missing = hasEmail ? 'OWNER_PASSWORD' : 'OWNER_EMAIL'
+  throw new Error(
+    `所有者账号配置不完整：设了 ${hasEmail ? 'OWNER_EMAIL' : 'OWNER_PASSWORD'} 但缺少 ${missing}。` +
+      '两个都要设，或者都不设（都不设时走「首次注册」路径）。',
+  )
+}
+
+if (env.ownerPassword && env.ownerPassword.length < 8) {
+  throw new Error('OWNER_PASSWORD 至少 8 位（与登录页的校验一致）')
+}
 
 if (env.nodeEnv === 'production' && env.authSecret === 'dev-only-insecure-secret-change-me') {
   throw new Error('生产环境必须设置 AUTH_SECRET（openssl rand -base64 32）')

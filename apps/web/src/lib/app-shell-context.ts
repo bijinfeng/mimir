@@ -31,22 +31,6 @@ export interface AppShellContextValue {
   setAskDraft: (draft: AskDraft | null) => void
 
   /**
-   * 当前会话的「本次引用」。
-   *
-   * 住在这里而不是右栏，因为**中栏也要消费它**——它显示的就是
-   * 「这次对话读了哪些文档」（`docs/PRD.md` §5.2）。同一份数据有两个
-   * 消费者，放在共同祖先才不需要同步。
-   *
-   * 数据来自落库的会话记录（`conversationRefs`），而对话进行中的临时引用
-   * 由右栏自己维护并回传给这里。
-   */
-  citations: Citation[]
-  setCitations: (citations: Citation[]) => void
-
-  /** 会话是否还在加载（中栏据此显示骨架） */
-  conversationLoading: boolean
-
-  /**
    * 被点击的引用。
    *
    * 文档打开后据此高亮对应区间——「点击跳回原文位置」的下半句。

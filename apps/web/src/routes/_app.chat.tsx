@@ -40,7 +40,7 @@ export const Route = createFileRoute('/_app/chat')({
 })
 
 function ChatRoute() {
-  const { askDraft, setAskDraft, openCitation, setCitations } = useAppShell()
+  const { askDraft, setAskDraft, openCitation } = useAppShell()
   const navigate = useNavigate()
   const search = useSearch({ from: '/_app/chat' })
 
@@ -77,7 +77,6 @@ function ChatRoute() {
       messagesLoading={messagesLoading}
       onOpenCitation={(documentId, citation) => openCitation(documentId, citation)}
       // 中栏的「本次引用」用的就是它（docs/PRD.md §5.2）
-      onCitationsChange={setCitations}
       onConversationCreated={(conversationId) => {
         // 记下这是我们自己建的：URL 变化不触发重挂载，流式状态得以保留
         setOwnedId(conversationId)

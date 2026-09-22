@@ -36,10 +36,14 @@ export const Route = createFileRoute('/_app/settings')({
 })
 
 const useStyles = createStyles(({ css, token }) => ({
+  /*
+   * 设置页现在独占右栏（没有中栏了），但内容仍然限宽 ——
+   * 表单行太长会让人读串行。CONTENT_WIDTH 与文档正文共用同一个 measure。
+   */
   page: css`
     height: 100%;
     overflow-y: auto;
-    padding: 24px 40px 120px;
+    padding: 28px 40px 120px;
   `,
   inner: css`
     max-width: ${CONTENT_WIDTH}px;
