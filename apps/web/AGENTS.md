@@ -132,6 +132,27 @@ API 客户端在 `lib/api.ts`。三条约定：
 
 ---
 
+## 字号：走阶梯，不要写字面量
+
+`theme/tokens.ts` 的 `FONT_SIZE` 是**唯一**的字号来源，九档、每档对应一个
+角色（`body` / `item` / `excerpt` / `note` / `meta` / `badge` …）。
+
+```ts
+// ✗ 随手写一个值 —— 全仓曾散落过 11 个不同的 font-size
+font-size: 13px;
+
+// ✓ 先找角色
+font-size: ${FONT_SIZE.excerpt}px;
+```
+
+`design.test.ts` 会扫源码拦下字面量。唯一的例外是**图标字形**，
+必须在行内标注 `非文本` 才放行（`font-size: 9px; /* 图标字形，非文本 */`）。
+
+理由见 `docs/DECISIONS.md` D-017：字号最容易被随手改，而同一个角色在不同
+页面用不同值不会报错，只会让整页看起来不整齐。
+
+---
+
 ## 样式
 
 **样式方案是 antd-style（css-in-js）。** 它把「消费 token」和「写样式」合成一件事：

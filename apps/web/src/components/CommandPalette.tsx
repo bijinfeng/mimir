@@ -47,7 +47,7 @@ const useStyles = createStyles(({ css, token }) => ({
 
   sectionLabel: css`
     padding: 8px 24px 5px;
-    font-size: ${FONT_SIZE.badge}}px;
+    font-size: ${FONT_SIZE.badge}px;
     font-weight: 600;
     color: ${token.colorTextTertiary};
     letter-spacing: 0.03em;
@@ -85,7 +85,7 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
   itemTitle: css`
     display: block;
-    font-size: ${FONT_SIZE.item}}px;
+    font-size: ${FONT_SIZE.item}px;
     color: ${token.colorText};
     overflow: hidden;
     text-overflow: ellipsis;
@@ -94,7 +94,7 @@ const useStyles = createStyles(({ css, token }) => ({
   itemSub: css`
     display: block;
     margin-top: 1px;
-    font-size: ${FONT_SIZE.meta}}px;
+    font-size: ${FONT_SIZE.meta}px;
     color: ${token.colorTextTertiary};
     overflow: hidden;
     text-overflow: ellipsis;
@@ -110,7 +110,7 @@ const useStyles = createStyles(({ css, token }) => ({
     padding: 10px 24px;
     border-top: 1px solid ${token.colorBorderSecondary};
     background: ${token.colorPrimaryBg};
-    font-size: ${FONT_SIZE.note}}px;
+    font-size: ${FONT_SIZE.note}px;
     line-height: 1.7;
     color: ${token.colorTextSecondary};
   `,
@@ -127,12 +127,12 @@ const useStyles = createStyles(({ css, token }) => ({
     margin: 0 -24px -20px;
     padding: 8px 24px;
     border-top: 1px solid ${token.colorBorderSecondary};
-    font-size: ${FONT_SIZE.badge}}px;
+    font-size: ${FONT_SIZE.badge}px;
     color: ${token.colorTextTertiary};
   `,
   kbd: css`
     font-family: ${token.fontFamilyCode};
-    font-size: ${FONT_SIZE.badge}}px;
+    font-size: ${FONT_SIZE.badge}px;
     padding: 1px 5px;
     border: 1px solid ${token.colorBorderSecondary};
     border-radius: 4px;

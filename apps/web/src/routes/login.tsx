@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { App, Button, Card, Form, Input, Typography } from 'antd'
 import { createStyles } from 'antd-style'
+import { BrandMark } from '@/components/BrandMark'
 import { api, ApiRequestError } from '@/lib/api'
 
 export const Route = createFileRoute('/login')({
@@ -17,7 +18,7 @@ interface FormValues {
   name?: string
 }
 
-const useStyles = createStyles(({ css, token }) => ({
+const useStyles = createStyles(({ css, token, prefixCls }) => ({
   page: css`
     height: 100%;
     display: grid;
@@ -27,6 +28,20 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
   card: css`
     width: 380px;
+  `,
+  /* 标记与标题同排。标题自己带 antd 的 h4 上下边距，这里要清掉，
+     否则标记会被顶到偏下 */
+  brand: css`
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 4px;
+    color: ${token.colorPrimary};
+
+    .${prefixCls}-typography {
+      margin: 0;
+      letter-spacing: 0.02em;
+    }
   `,
   title: css`
     margin-top: 0;
@@ -83,9 +98,12 @@ function LoginPage() {
   return (
     <div className={styles.page}>
       <Card className={styles.card}>
-        <Typography.Title level={4} className={styles.title}>
-          mimir
-        </Typography.Title>
+        <div className={styles.brand}>
+          <BrandMark size={28} title={null} />
+          <Typography.Title level={4} className={styles.title}>
+            mimir
+          </Typography.Title>
+        </div>
         <Typography.Paragraph type="secondary" className={styles.hint}>
           首次登录会自动创建唯一账号，之后注册入口自动关闭。
         </Typography.Paragraph>

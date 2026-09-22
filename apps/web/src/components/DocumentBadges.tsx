@@ -1,6 +1,7 @@
 import type { DocumentKind, DocumentStatus } from '@mimir/shared'
 import { createStyles } from 'antd-style'
 import type { CSSProperties, ReactNode } from 'react'
+import { FONT_SIZE } from '@/theme/tokens'
 
 /**
  * 文档类型徽标。
@@ -41,7 +42,7 @@ const useStyles = createStyles(({ css }, props: { fg: string; bg: string }) => (
     display: inline-flex;
     align-items: center;
     flex: none;
-    font-size: 10.5px;
+    font-size: ${FONT_SIZE.badge}px;
     font-weight: 600;
     line-height: 1.6;
     letter-spacing: 0.02em;

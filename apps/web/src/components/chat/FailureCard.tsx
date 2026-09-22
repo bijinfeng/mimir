@@ -29,13 +29,13 @@ const useStyles = createStyles(({ css, token }) => ({
     display: flex;
     align-items: center;
     gap: 7px;
-    font-size: ${FONT_SIZE.item}}px;
+    font-size: ${FONT_SIZE.item}px;
     font-weight: 600;
     color: ${token.colorErrorText};
     margin-bottom: 7px;
   `,
   detail: css`
-    font-size: ${FONT_SIZE.note}}px;
+    font-size: ${FONT_SIZE.note}px;
     line-height: 1.75;
     color: ${token.colorTextSecondary};
     word-break: break-word;
@@ -48,7 +48,7 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
   note: css`
     margin-top: 9px;
-    font-size: ${FONT_SIZE.badge}}px;
+    font-size: ${FONT_SIZE.badge}px;
     color: ${token.colorTextTertiary};
     line-height: 1.7;
   `,

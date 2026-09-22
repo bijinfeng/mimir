@@ -58,7 +58,7 @@ const useStyles = createStyles(({ css, token }) => ({
   title: css`
     flex: 1;
     min-width: 0;
-    font-size: ${FONT_SIZE.excerpt}}px;
+    font-size: ${FONT_SIZE.excerpt}px;
     font-weight: 500;
     color: ${token.colorText};
     overflow: hidden;
@@ -66,7 +66,7 @@ const useStyles = createStyles(({ css, token }) => ({
     white-space: nowrap;
   `,
   snippet: css`
-    font-size: ${FONT_SIZE.note}}px;
+    font-size: ${FONT_SIZE.note}px;
     line-height: 1.55;
     color: ${token.colorTextSecondary};
     display: -webkit-box;

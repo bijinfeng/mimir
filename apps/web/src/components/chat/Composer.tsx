@@ -58,7 +58,7 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
   model: css`
     font-family: ${token.fontFamilyCode};
-    font-size: ${FONT_SIZE.badge}}px;
+    font-size: ${FONT_SIZE.badge}px;
     color: ${token.colorTextTertiary};
     padding: 2px 7px;
     border-radius: 5px;

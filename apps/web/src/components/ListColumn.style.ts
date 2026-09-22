@@ -25,13 +25,13 @@ export const useStyles = createStyles(({ css, token }) => ({
     gap: 8px;
   `,
   title: css`
-    font-size: ${FONT_SIZE.body}}px;
+    font-size: ${FONT_SIZE.body}px;
     font-weight: 600;
     margin: 0;
     color: ${token.colorText};
   `,
   sub: css`
-    font-size: ${FONT_SIZE.meta}}px;
+    font-size: ${FONT_SIZE.meta}px;
     color: ${token.colorTextTertiary};
   `,
 
@@ -85,7 +85,7 @@ export const useStyles = createStyles(({ css, token }) => ({
   itemTitle: css`
     flex: 1;
     min-width: 0;
-    font-size: ${FONT_SIZE.item}}px;
+    font-size: ${FONT_SIZE.item}px;
     font-weight: 500;
     color: ${token.colorText};
     overflow: hidden;
@@ -94,7 +94,7 @@ export const useStyles = createStyles(({ css, token }) => ({
   `,
   itemExcerpt: css`
     margin: 3px 0 0;
-    font-size: ${FONT_SIZE.note}}px;
+    font-size: ${FONT_SIZE.note}px;
     line-height: 1.5;
     color: ${token.colorTextSecondary};
     display: -webkit-box;
@@ -107,7 +107,7 @@ export const useStyles = createStyles(({ css, token }) => ({
     align-items: center;
     gap: 7px;
     margin-top: 6px;
-    font-size: ${FONT_SIZE.badge}}px;
+    font-size: ${FONT_SIZE.badge}px;
     color: ${token.colorTextTertiary};
   `,
   spacer: css`
@@ -118,7 +118,7 @@ export const useStyles = createStyles(({ css, token }) => ({
      这一行让「为什么是这篇」有据可查（PRD §5.2） */
   citeStep: css`
     margin-top: 5px;
-    font-size: ${FONT_SIZE.badge}}px;
+    font-size: ${FONT_SIZE.badge}px;
     color: ${token.colorTextTertiary};
   `,
 
@@ -129,7 +129,7 @@ export const useStyles = createStyles(({ css, token }) => ({
   emptyHint: css`
     display: block;
     margin-top: 6px;
-    font-size: ${FONT_SIZE.meta}}px;
+    font-size: ${FONT_SIZE.meta}px;
     color: ${token.colorTextTertiary};
     line-height: 1.9;
   `,
@@ -140,7 +140,7 @@ export const useStyles = createStyles(({ css, token }) => ({
 
   hint: css`
     padding: 8px 14px 4px;
-    font-size: ${FONT_SIZE.meta}}px;
+    font-size: ${FONT_SIZE.meta}px;
     color: ${token.colorTextTertiary};
     line-height: 1.7;
   `,

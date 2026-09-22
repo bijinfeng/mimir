@@ -155,6 +155,126 @@ describe('关键值真的覆盖了 antd 默认', () => {
   })
 })
 
+/**
+ * 扫描组件源码，找出违反字号阶梯的行。
+ *
+ * 抽成模块级函数是因为有两条规则要查（字面量、多余括号），
+ * 而测试文件里嵌套的辅助函数拿不到外层 describe 的局部变量
+ * （第一版就踩了这个：`roots is not defined`）。
+ */
+async function scanFontSizeViolations(): Promise<{
+  literals: string[]
+  extraBraces: string[]
+}> {
+  const { readdir, readFile } = await import('node:fs/promises')
+  const { join } = await import('node:path')
+
+  const literals: string[] = []
+  const extraBraces: string[] = []
+
+  async function walk(dir: string) {
+    for (const entry of await readdir(join(process.cwd(), dir), { withFileTypes: true })) {
+      const rel = join(dir, entry.name)
+      if (entry.isDirectory()) {
+        await walk(rel)
+      } else if (/\.tsx?$/.test(entry.name) && !entry.name.includes('.test.')) {
+        const text = await readFile(join(process.cwd(), rel), 'utf8')
+        for (const line of text.split('\n')) {
+          // 唯一的例外：图标字形的大小。阶梯管的是**可读文本**，
+          // 图标的大小由它所在的容器决定。必须显式标注 `非文本` 才放行。
+          if (/font-size:\s*[0-9.]+px/.test(line) && !line.includes('非文本')) {
+            literals.push(`${rel}: ${line.trim()}`)
+          }
+          if (/FONT_SIZE\.[a-zA-Z]+\}\}px/.test(line)) {
+            extraBraces.push(`${rel}: ${line.trim()}`)
+          }
+        }
+      }
+    }
+  }
+
+  for (const root of ['src/components', 'src/routes']) await walk(root)
+  return { literals, extraBraces }
+}
+
+describe('字号阶梯', () => {
+  /**
+   * 字号是**最容易被随手改**的样式——它看起来无害。
+   * 之前全仓散落过 11 个不同的 px 值（10/10.5/11/11.5/12/12.5/13/13.5/14/15/16），
+   * 而同一个角色在不同页面用了不同值（元信息在文档页 12.5、列表页 11.5）。
+   * 这不会报错，只会让整页看起来「不整齐」——用户说不清哪里不对，但觉得粗糙。
+   */
+  it('组件里没有字面的 font-size（一律走 FONT_SIZE）', async () => {
+    const { literals } = await scanFontSizeViolations()
+    expect(literals, `这些地方的字号没走阶梯：\n${literals.join('\n')}`).toEqual([])
+  })
+
+  /**
+   * 插值括号写错也要拦。
+   *
+   * 这条是**补救**：我用脚本把字面量批量换成 `FONT_SIZE` 时多留了一个右花括号，
+   * 写成 `${FONT_SIZE.note}}px`。CSS 模板字符串里的语法错误**不会让 typecheck
+   * 报错**（它就是一段字符串），结果是 61 处样式静默失效——界面上字号退回
+   * 浏览器默认的 13.3333px、颜色退回黑色。
+   *
+   * 发现它靠的是在浏览器里逐个量计算样式。所以现在把它写成测试。
+   */
+  it('FONT_SIZE 插值没有多余的括号', async () => {
+    const { extraBraces } = await scanFontSizeViolations()
+    expect(extraBraces, `这些插值多写了括号：\n${extraBraces.join('\n')}`).toEqual([])
+  })
+})
+
+/**
+ * 取出品牌标记的 path 数据，并规范化空白。
+ *
+ * 规范化是必需的：`z` 与 `M` 之间空格可有可无，两种写法渲染完全相同，
+ * 但逐字比对会把它们当成差异。抹平这一处，其余任何不同都算真分叉。
+ */
+function brandPathOf(text: string): string | undefined {
+  const m = text.match(/d="([^"]*M11 7\.4[^"]*)"/)
+  return m?.[1]
+    ?.replace(/\s+/g, ' ')
+    .replace(/z(?=M)/g, 'z ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+describe('品牌标记', () => {
+  /**
+   * 标记的两条实现约束，都是**踩过才知道**的：
+   *
+   * 1. 井口必须用 `fill-rule="evenodd"` 挖空，不能拿白色圆形盖上去。
+   *    白圆在白底上看着没问题，但标记放到主色按钮或深色浮层上就会露出白点。
+   * 2. 颜色必须走 `currentColor`。写死 hex 的话，主题换色时 logo 不跟着走，
+   *    于是它成为全站唯一一个「不服从主题」的元素。
+   */
+  it('品牌标记是镂空的，且颜色跟随 currentColor', async () => {
+    const { readFile } = await import('node:fs/promises')
+    const src = await readFile('src/components/BrandMark.tsx', 'utf8')
+
+    expect(src, '井口要用 evenodd 挖空，而不是白色圆形覆盖').toContain('evenodd')
+    expect(src, '颜色要走 currentColor，否则主题换色时 logo 不跟随').toContain(
+      'fill="currentColor"',
+    )
+    // 标记自己的 path 里不该出现字面色值
+    expect(src, '标记内部不该出现字面色值').not.toMatch(/fill="#[0-9a-f]{3,6}"/i)
+  })
+
+  it('favicon 与组件用的是同一个形状', async () => {
+    const { readFile } = await import('node:fs/promises')
+    const favicon = await readFile('public/favicon.svg', 'utf8')
+    const component = await readFile('src/components/BrandMark.tsx', 'utf8')
+
+    // 取 path 的 d 属性，逐字比对——两处画不一样的形状会让品牌分叉
+    const fromFavicon = brandPathOf(favicon)
+    const fromComponent = brandPathOf(component)
+
+    expect(fromFavicon).toBeDefined()
+    expect(fromComponent).toBe(fromFavicon)
+  })
+})
+
 describe('字体栈只有一处定义', () => {
   it('token 里的字体栈来自 tokens.ts 的常量', () => {
     // 字体栈曾经定义在 global.css、由 tokens.ts 用 var(--mimir-font-sans) 引用。

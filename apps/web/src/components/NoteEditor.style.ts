@@ -1,5 +1,5 @@
 import { createStyles } from 'antd-style'
-import { CONTENT_WIDTH } from '@/theme/tokens'
+import { CONTENT_WIDTH, FONT_SIZE } from '@/theme/tokens'
 
 /**
  * 笔记编辑器的样式。
@@ -26,7 +26,7 @@ export const useStyles = createStyles(({ css, token }) => {
       margin-bottom: 12px;
     `,
     title: css`
-      font-size: 28px;
+      font-size: ${FONT_SIZE.display}px;
       font-weight: 700;
       padding: 0;
       margin-bottom: 2px;
@@ -35,20 +35,20 @@ export const useStyles = createStyles(({ css, token }) => {
     /* ── 正文排版 ────────────────────────────────────────────
        字号阶梯 28 / 20 / 16 / 14 / 13 见 docs/DESIGN.md §4.2。 */
     body: css`
-      font-size: 14px;
+      font-size: ${FONT_SIZE.body}px;
       /* 中文正文比拉丁文需要更多行距：界面 1.57，正文 1.75 */
       line-height: 1.75;
       color: ${token.colorText};
 
       h1 {
-        font-size: 28px;
+        font-size: ${FONT_SIZE.display}px;
         font-weight: 700;
         line-height: 1.3;
         margin: 0 0 16px;
       }
 
       h2 {
-        font-size: 19px;
+        font-size: ${FONT_SIZE.pageTitle}px;
         font-weight: 650;
         line-height: 1.4;
         letter-spacing: -0.005em;
@@ -56,7 +56,7 @@ export const useStyles = createStyles(({ css, token }) => {
       }
 
       h3 {
-        font-size: 16px;
+        font-size: ${FONT_SIZE.section}px;
         font-weight: 600;
         line-height: 1.5;
         margin: 20px 0 8px;
@@ -74,7 +74,7 @@ export const useStyles = createStyles(({ css, token }) => {
 
       code {
         font-family: ${token.fontFamilyCode};
-        font-size: 12.5px;
+        font-size: ${FONT_SIZE.note}px;
         background: #f0f1f3;
         color: ${token.inlineCodeFg};
         padding: 1.5px 5px;
@@ -88,7 +88,7 @@ export const useStyles = createStyles(({ css, token }) => {
         padding: 14px 16px;
         margin: 14px 0;
         overflow-x: auto;
-        font-size: 12.5px;
+        font-size: ${FONT_SIZE.note}px;
         line-height: 1.65;
 
         code {
@@ -120,7 +120,7 @@ export const useStyles = createStyles(({ css, token }) => {
         border-collapse: collapse;
         margin: 14px 0;
         width: 100%;
-        font-size: 13px;
+        font-size: ${FONT_SIZE.excerpt}px;
       }
 
       th,
@@ -180,7 +180,7 @@ export const useIndicatorStyles = createStyles(
 
     return {
       indicator: css`
-        font-size: 12px;
+        font-size: ${FONT_SIZE.meta}px;
         color: ${color};
         cursor: ${state === 'error' ? 'pointer' : 'default'};
       `,

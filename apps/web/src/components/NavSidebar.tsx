@@ -14,6 +14,7 @@ import { Button, Collapse, Tooltip, Tree } from 'antd'
 import { createStyles } from 'antd-style'
 import type { ReactNode } from 'react'
 import type { ConversationSummary } from '@mimir/shared'
+import { BrandMark } from '@/components/BrandMark'
 import { api } from '@/lib/api'
 import { useUnsaved } from '@/lib/unsaved'
 import { FONT_SIZE } from '@/theme/tokens'
@@ -57,10 +58,22 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
     align-items: center;
     justify-content: space-between;
     padding: 14px 12px 10px 16px;
+  `,
+  /* 标记与文字的组合。gap 7px、标记 20px —— 与原型 nav-brand 的比例一致 */
+  brandLockup: css`
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    color: ${token.colorPrimary};
 
     b {
-      font-size: ${FONT_SIZE.section}}px;
+      font-size: ${FONT_SIZE.section}px;
+      font-weight: 700;
       letter-spacing: 0.06em;
+      /* 文字用正文色而不是主色：主色只给标记。
+         主色 #1677ff 作文字在白底上只有 4.10:1（docs/DESIGN.md §3.5），
+         导航顶部的品牌名不该是全页唯一不达标的文字 */
+      color: ${token.colorText};
     }
   `,
   brandActions: css`
@@ -88,7 +101,7 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
 
     .${prefixCls}-collapse-header {
       padding: 4px 12px 4px 16px !important;
-      font-size: ${FONT_SIZE.meta}}px;
+      font-size: ${FONT_SIZE.meta}px;
       font-weight: 600;
       color: ${token.colorTextTertiary};
       letter-spacing: 0.02em;
@@ -113,7 +126,7 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
     border: 1px solid transparent;
     border-radius: 6px;
     background: transparent;
-    font-size: ${FONT_SIZE.item}}px;
+    font-size: ${FONT_SIZE.item}px;
     font-family: inherit;
     color: ${token.colorTextSecondary};
     text-align: left;
@@ -163,7 +176,7 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
     padding: 0 6px;
     border-radius: 9px;
     background: ${token.colorFillSecondary};
-    font-size: ${FONT_SIZE.badge}}px;
+    font-size: ${FONT_SIZE.badge}px;
     line-height: 1.6;
     color: ${token.colorTextTertiary};
     text-align: center;
@@ -172,12 +185,12 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
 
   convItem: css`
     padding-left: 10px;
-    font-size: ${FONT_SIZE.excerpt}}px;
+    font-size: ${FONT_SIZE.excerpt}px;
   `,
 
   hint: css`
     padding: 6px 16px 2px;
-    font-size: ${FONT_SIZE.badge}}px;
+    font-size: ${FONT_SIZE.badge}px;
     color: ${token.colorTextTertiary};
     line-height: 1.7;
   `,
@@ -194,7 +207,7 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
 
     .${prefixCls}-tree {
       background: transparent;
-      font-size: ${FONT_SIZE.excerpt}}px;
+      font-size: ${FONT_SIZE.excerpt}px;
     }
 
     .${prefixCls}-tree-node-content-wrapper {
@@ -211,13 +224,13 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
   `,
   treeCount: css`
     margin-left: 6px;
-    font-size: ${FONT_SIZE.badge}}px;
+    font-size: ${FONT_SIZE.badge}px;
     color: ${token.colorTextTertiary};
     font-variant-numeric: tabular-nums;
   `,
   treeEmpty: css`
     padding: 4px 16px 8px;
-    font-size: ${FONT_SIZE.meta}}px;
+    font-size: ${FONT_SIZE.meta}px;
     color: ${token.colorTextTertiary};
     line-height: 1.7;
   `,
@@ -280,7 +293,10 @@ export function NavSidebar({ selection, onOpenPalette, onOpenCapture }: NavSideb
   return (
     <nav className={styles.nav}>
       <div className={styles.brand}>
-        <b>mimir</b>
+        <span className={styles.brandLockup}>
+          <BrandMark size={20} title={null} />
+          <b>mimir</b>
+        </span>
         <span className={styles.brandActions}>
           <Tooltip title="搜索与命令（Ctrl K）">
             <Button type="text" size="small" icon={<SearchOutlined />} onClick={onOpenPalette} />

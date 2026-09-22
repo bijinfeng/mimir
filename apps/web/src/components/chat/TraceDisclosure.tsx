@@ -47,7 +47,7 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
 
     .${prefixCls}-collapse-header {
       padding: 8px 11px !important;
-      font-size: ${FONT_SIZE.note}}px;
+      font-size: ${FONT_SIZE.note}px;
       color: ${token.colorTextSecondary};
     }
     .${prefixCls}-collapse-content-box {
@@ -63,7 +63,7 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    font-size: ${FONT_SIZE.note}}px;
+    font-size: ${FONT_SIZE.note}px;
     color: ${token.colorTextSecondary};
 
     strong {
@@ -82,22 +82,24 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
       padding-bottom: 4px;
     }
     .${prefixCls}-steps-item-title {
-      font-size: ${FONT_SIZE.note}}px !important;
+      font-size: ${FONT_SIZE.note}px !important;
       line-height: 1.6 !important;
       color: ${token.colorTextSecondary} !important;
     }
     .${prefixCls}-steps-item-description {
-      font-size: ${FONT_SIZE.badge}}px !important;
+      font-size: ${FONT_SIZE.badge}px !important;
       line-height: 1.6 !important;
       color: ${token.colorTextTertiary} !important;
       margin-top: 1px !important;
     }
-    /* 圆点缩小到与 12.5px 文字同高，否则它比一行字还大 */
+    /* 圆点缩小到与 12.5px 文字同高，否则它比一行字还大。
+       里面的 9px 是**图标字形的大小**，不是文字——它不参与字号阶梯
+       （阶梯管的是可读文本；图标的大小由它所在的圆点决定）。 */
     .${prefixCls}-steps-item-icon {
       width: 16px !important;
       height: 16px !important;
       margin-top: 3px !important;
-      font-size: 9px !important;
+      font-size: 9px !important; /* 图标字形，非文本 */
     }
     .${prefixCls}-steps-item-tail {
       inset-inline-start: 8px !important;
@@ -115,7 +117,7 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
   keyword: css`
     margin-inline-end: 0 !important;
     font-family: ${token.fontFamilyCode};
-    font-size: ${FONT_SIZE.badge}}px;
+    font-size: ${FONT_SIZE.badge}px;
     line-height: 1.6;
   `,
 }))

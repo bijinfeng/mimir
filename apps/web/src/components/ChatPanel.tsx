@@ -75,14 +75,14 @@ const useStyles = createStyles(({ css, token }) => ({
       padding: 9px 14px;
       border-radius: 12px 12px 2px 12px;
       background: ${token.colorPrimaryBg};
-      font-size: ${FONT_SIZE.body}}px;
+      font-size: ${FONT_SIZE.body}px;
       line-height: 1.7;
       white-space: pre-wrap;
       word-break: break-word;
     }
 
     [data-role='assistant'] {
-      font-size: ${FONT_SIZE.body}}px;
+      font-size: ${FONT_SIZE.body}px;
       line-height: 1.75;
       color: ${token.colorText};
     }
@@ -100,10 +100,10 @@ const useStyles = createStyles(({ css, token }) => ({
         line-height: 1.5;
       }
       h1 {
-        font-size: 20px;
+        font-size: ${FONT_SIZE.pageTitle}px;
       }
       h2 {
-        font-size: ${FONT_SIZE.section}}px;
+        font-size: ${FONT_SIZE.section}px;
       }
       ul,
       ol {
@@ -112,7 +112,7 @@ const useStyles = createStyles(({ css, token }) => ({
       }
       code {
         font-family: ${token.fontFamilyCode};
-        font-size: ${FONT_SIZE.excerpt}}px;
+        font-size: ${FONT_SIZE.excerpt}px;
         background: ${token.colorFillSecondary};
         color: ${token.inlineCodeFg};
         padding: 1.5px 5px;
@@ -124,7 +124,7 @@ const useStyles = createStyles(({ css, token }) => ({
         border-radius: ${token.borderRadius}px;
         padding: 14px 16px;
         overflow-x: auto;
-        font-size: ${FONT_SIZE.excerpt}}px;
+        font-size: ${FONT_SIZE.excerpt}px;
 
         code {
           background: none;
@@ -145,13 +145,13 @@ const useStyles = createStyles(({ css, token }) => ({
     text-align: center;
   `,
   emptyTitle: css`
-    font-size: ${FONT_SIZE.section}}px;
+    font-size: ${FONT_SIZE.section}px;
     font-weight: 600;
     margin-bottom: 8px;
     color: ${token.colorText};
   `,
   emptySub: css`
-    font-size: ${FONT_SIZE.note}}px;
+    font-size: ${FONT_SIZE.note}px;
     color: ${token.colorTextTertiary};
     line-height: 1.9;
   `,

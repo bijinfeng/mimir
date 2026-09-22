@@ -29,7 +29,7 @@ export const useStyles = createStyles(({ css, token }) => ({
     flex: 1;
     min-width: 0;
     font-family: ${token.fontFamilyCode};
-    font-size: ${FONT_SIZE.meta}}px;
+    font-size: ${FONT_SIZE.meta}px;
     color: ${token.colorTextTertiary};
     overflow: hidden;
     text-overflow: ellipsis;
@@ -41,7 +41,7 @@ export const useStyles = createStyles(({ css, token }) => ({
      用 antd Button 的 type="text" 做底，这里只补文字尺寸与间距。 */
   tbBtn: css`
     flex: none;
-    font-size: ${FONT_SIZE.note}}px;
+    font-size: ${FONT_SIZE.note}px;
     color: ${token.colorTextSecondary};
 
     &:hover {
@@ -80,7 +80,7 @@ export const useStyles = createStyles(({ css, token }) => ({
     overflow-y: auto;
   `,
   outlineTitle: css`
-    font-size: ${FONT_SIZE.badge}}px;
+    font-size: ${FONT_SIZE.badge}px;
     font-weight: 600;
     color: ${token.colorTextTertiary};
     letter-spacing: 0.04em;
@@ -96,7 +96,7 @@ export const useStyles = createStyles(({ css, token }) => ({
     border-radius: 0 6px 6px 0;
     background: transparent;
     font-family: inherit;
-    font-size: ${FONT_SIZE.note}}px;
+    font-size: ${FONT_SIZE.note}px;
     line-height: 1.5;
     color: ${token.colorTextSecondary};
     text-align: left;
@@ -142,12 +142,12 @@ export const useStyles = createStyles(({ css, token }) => ({
     align-items: center;
     gap: 5px;
     flex: none;
-    font-size: ${FONT_SIZE.note}}px;
+    font-size: ${FONT_SIZE.note}px;
     font-weight: 600;
     color: ${token.colorWarningText};
   `,
   triageHint: css`
-    font-size: ${FONT_SIZE.note}}px;
+    font-size: ${FONT_SIZE.note}px;
     color: ${token.colorTextSecondary};
     margin-right: 1px;
   `,
@@ -169,7 +169,7 @@ export const useStyles = createStyles(({ css, token }) => ({
     padding-bottom: 16px;
     margin-bottom: 22px;
     border-bottom: 1px solid ${token.colorBorderSecondary};
-    font-size: ${FONT_SIZE.note}}px;
+    font-size: ${FONT_SIZE.note}px;
     color: ${token.colorTextTertiary};
   `,
   metaSpacer: css`
@@ -178,7 +178,7 @@ export const useStyles = createStyles(({ css, token }) => ({
   /* 来源标注：手动编辑 / AI 整理。
      借自 WeKnora —— 标出内容是人写的还是机器生成的（PRD 5.10） */
   originManual: css`
-    font-size: ${FONT_SIZE.badge}}px;
+    font-size: ${FONT_SIZE.badge}px;
     font-weight: 500;
     padding: 1px 7px;
     border-radius: 4px;
@@ -186,7 +186,7 @@ export const useStyles = createStyles(({ css, token }) => ({
     background: #e8f1ff;
   `,
   originAuto: css`
-    font-size: ${FONT_SIZE.badge}}px;
+    font-size: ${FONT_SIZE.badge}px;
     font-weight: 500;
     padding: 1px 7px;
     border-radius: 4px;
@@ -197,7 +197,7 @@ export const useStyles = createStyles(({ css, token }) => ({
   /* 标题。原型用 letter-spacing:-.01em 收紧——28px 的中文标题不收紧
      会显得松散。字号阶梯见 docs/DESIGN.md §4.2。 */
   title: css`
-    font-size: ${FONT_SIZE.display}}px;
+    font-size: ${FONT_SIZE.display}px;
     font-weight: 700;
     line-height: 1.3;
     letter-spacing: -0.01em;
@@ -220,7 +220,7 @@ export const useStyles = createStyles(({ css, token }) => ({
   footLabel: css`
     flex: none;
     width: 46px;
-    font-size: ${FONT_SIZE.badge}}px;
+    font-size: ${FONT_SIZE.badge}px;
     color: ${token.colorTextTertiary};
   `,
   footLinks: css`
@@ -229,7 +229,7 @@ export const useStyles = createStyles(({ css, token }) => ({
     gap: 6px;
   `,
   footLink: css`
-    font-size: ${FONT_SIZE.note}}px;
+    font-size: ${FONT_SIZE.note}px;
     color: ${token.colorLink};
     cursor: pointer;
     text-decoration: underline;
@@ -244,7 +244,7 @@ export const useStyles = createStyles(({ css, token }) => ({
     margin-top: 20px;
     padding: 11px 14px;
     border-radius: 8px;
-    font-size: ${FONT_SIZE.note}}px;
+    font-size: ${FONT_SIZE.note}px;
     line-height: 1.75;
     color: ${token.colorWarningText};
     background: ${token.colorWarningBg};
@@ -256,25 +256,25 @@ export const useStyles = createStyles(({ css, token }) => ({
   `,
 
   readOnly: css`
-    font-size: ${FONT_SIZE.body}}px;
+    font-size: ${FONT_SIZE.body}px;
     line-height: 1.75;
     color: ${token.colorText};
 
     h1 {
-      font-size: ${FONT_SIZE.display}}px;
+      font-size: ${FONT_SIZE.display}px;
       font-weight: 700;
       line-height: 1.3;
       margin: 0 0 16px;
     }
     h2 {
-      font-size: ${FONT_SIZE.pageTitle}}px;
+      font-size: ${FONT_SIZE.pageTitle}px;
       font-weight: 650;
       line-height: 1.4;
       letter-spacing: -0.005em;
       margin: 26px 0 10px;
     }
     h3 {
-      font-size: ${FONT_SIZE.section}}px;
+      font-size: ${FONT_SIZE.section}px;
       font-weight: 600;
       line-height: 1.5;
       margin: 20px 0 8px;
@@ -290,7 +290,7 @@ export const useStyles = createStyles(({ css, token }) => ({
     }
     code {
       font-family: ${token.fontFamilyCode};
-      font-size: ${FONT_SIZE.excerpt}}px;
+      font-size: ${FONT_SIZE.excerpt}px;
       background: ${token.colorFillSecondary};
       color: ${token.inlineCodeFg};
       padding: 1.5px 5px;
@@ -303,7 +303,7 @@ export const useStyles = createStyles(({ css, token }) => ({
       padding: 14px 16px;
       margin: 14px 0;
       overflow-x: auto;
-      font-size: ${FONT_SIZE.note}}px;
+      font-size: ${FONT_SIZE.note}px;
       line-height: 1.65;
 
       code {
@@ -331,7 +331,7 @@ export const useStyles = createStyles(({ css, token }) => ({
       border-collapse: collapse;
       margin: 14px 0;
       width: 100%;
-      font-size: ${FONT_SIZE.excerpt}}px;
+      font-size: ${FONT_SIZE.excerpt}px;
     }
     th,
     td {
@@ -359,7 +359,7 @@ export const useStyles = createStyles(({ css, token }) => ({
     border-radius: 999px;
     background: transparent;
     font-family: inherit;
-    font-size: ${FONT_SIZE.note}}px;
+    font-size: ${FONT_SIZE.note}px;
     color: ${token.colorLink};
     cursor: pointer;
     transition: background 0.12s ease-out;
