@@ -1,189 +1,67 @@
 import { createStyles } from 'antd-style'
-import { CONTENT_WIDTH, FONT_SIZE } from '@/theme/tokens'
+import { CONTENT_WIDTH } from '@/theme/tokens'
 
 /**
  * 笔记编辑器的样式。
  *
- * 分两层看：
+ * **正文排版与保存状态都不在这里**：
  *
- * 1. **外壳**（`shell` / `path` / `title`）—— 组件自己的布局。
- * 2. **正文排版**（`body`）—— 编辑器挂载点的内容。Tiptap 渲染出的
- *    `<h1>` `<pre>` `<table>` 是裸 DOM，不是 React 组件，拿不到 className，
- *    所以只能从一个祖先类名往下选。这正是 `createStyles` 里嵌套选择器的用途。
+ *  - 正文排版与只读视图共用 `components/ContentTypography.style.ts`
+ *    （两个视图都让 Tiptap 渲染同一份 Markdown，排版必须同源）
+ *  - 保存状态显示在 `DocumentPanel` 的工具条上——它原先渲染在正文上方
+ *    标题与元信息之间，一块只有三个字的独立行，两侧都空且位置会跳
  *
- * 正文的颜色引用 antd 变量（`token.*`），不写字面量——这样界面灰阶调整时
- * 正文不会掉队。规范与实测对比度见 `docs/DESIGN.md` §4.3。
+ * 这个文件只管编辑器自己的两件事：内容列宽度，以及让「正文下方那片空白」
+ * 也能落笔的书写区高度。
  */
-export const useStyles = createStyles(({ css, token }) => {
+export const useStyles = createStyles(({ css }) => {
   return {
     shell: css`
       max-width: ${CONTENT_WIDTH}px;
     `,
-    /* 保存状态紧贴标题下方。常驻可见是硬要求：
-       文字类产品最让人失去信任的是丢内容（docs/PRD.md §5.9） */
-    saveRow: css`
-      min-height: 20px;
-      margin-bottom: 12px;
-    `,
-    title: css`
-      font-size: ${FONT_SIZE.display}px;
-      font-weight: 700;
-      padding: 0;
-      margin-bottom: 2px;
-    `,
-
-    /* ── 正文排版 ────────────────────────────────────────────
-       字号阶梯 28 / 20 / 16 / 14 / 13 见 docs/DESIGN.md §4.2。 */
+    /**
+     * 书写区（EditorContent 的挂载点）。
+     *
+     * **`min-height` 不是装饰，它决定「点空白处也能继续写」**。
+     * ProseMirror 的高度默认等于内容高度，所以一篇三行笔记的编辑区只有
+     * 约 98px，而可见的正文列高约 900px——下面 800px 是**死区**，
+     * 点上去什么都不发生（实测：点击后 `activeElement` 是 `body`）。
+     * 记笔记最常见的一步就是「打开 → 在末尾接着写」，那一击落空很败好感。
+     *
+     * 给到 46vh 之后，这一片空白的点击会落在编辑区里，Tiptap 把光标放到
+     * 最近的文字位置——即末尾，这是所有编辑器的一致行为。
+     *
+     * 只给编辑态、不给只读态：只读视图里撑出这么一片空白没有意义。
+     */
     body: css`
-      font-size: ${FONT_SIZE.body}px;
-      /* 中文正文比拉丁文需要更多行距：界面 1.57，正文 1.75 */
-      line-height: 1.75;
-      color: ${token.colorText};
+      .ProseMirror {
+        min-height: 46vh;
 
-      h1 {
-        font-size: ${FONT_SIZE.display}px;
-        font-weight: 700;
-        line-height: 1.3;
-        margin: 0 0 16px;
-      }
-
-      h2 {
-        font-size: ${FONT_SIZE.pageTitle}px;
-        font-weight: 650;
-        line-height: 1.4;
-        letter-spacing: -0.005em;
-        margin: 26px 0 10px;
-      }
-
-      h3 {
-        font-size: ${FONT_SIZE.section}px;
-        font-weight: 600;
-        line-height: 1.5;
-        margin: 20px 0 8px;
-      }
-
-      p {
-        margin: 12px 0;
-      }
-
-      a {
-        color: ${token.colorLink};
-        text-decoration: underline;
-        text-underline-offset: 2px;
-      }
-
-      code {
-        font-family: ${token.fontFamilyCode};
-        font-size: ${FONT_SIZE.note}px;
-        background: #f0f1f3;
-        color: ${token.inlineCodeFg};
-        padding: 1.5px 5px;
+        /*
+         * 焦点环。**:focus-visible 在这里不够用**：正文是 contenteditable，
+         * 而规范规定文本输入类元素的 :focus-visible **永远匹配**（浏览器
+         * 无法假定用户接下来用键盘还是鼠标）。实测鼠标点进正文也会拿到一圈
+         * 原生环 outline: auto 1px rgb(16,16,16)，围着整个编辑区——
+         * 而点进正文是几乎每次编辑都会做的事，这圈环成了常驻噪声。
+         *
+         * --mimir-focus-ring-style 由 lib/input-modality.ts 按**最近一次
+         * 输入方式**切换：鼠标是 none、键盘是 solid。于是「键盘用户看得见焦点」
+         * （DESIGN §7.2，不移除焦点可见性）与「鼠标用户看不到一圈黑框」同时成立。
+         *
+         * **颜色必须在这里写、不能塞进那个变量**：自定义属性里的 var() 在
+         * 声明它的元素（html）上求值，而 --ant-* 注入在 antd 组件子树上，
+         * html 上取不到 → 整个值无效 → outline 退回 none，键盘焦点环静默消失
+         * （实测过）。写在这里就能拿到，因为 ProseMirror 在 .mimir 子树里。
+         *
+         * 颜色用浅蓝（colorPrimaryBorder #91caff）而不是主色：正文区很大，
+         * 主色的环会比内容本身更抢眼。
+         */
+        outline-style: var(--mimir-focus-ring-style, none);
+        outline-width: 2px;
+        outline-color: var(--ant-color-primary-border);
+        outline-offset: 3px;
         border-radius: 4px;
-      }
-
-      pre {
-        background: ${token.tintNav};
-        border: 1px solid ${token.colorBorderSecondary};
-        border-radius: ${token.borderRadius}px;
-        padding: 14px 16px;
-        margin: 14px 0;
-        overflow-x: auto;
-        font-size: ${FONT_SIZE.note}px;
-        line-height: 1.65;
-
-        code {
-          background: none;
-          color: ${token.colorText};
-          padding: 0;
-        }
-      }
-
-      blockquote {
-        border-left: 3px solid ${token.colorBorder};
-        padding: 2px 0 2px 14px;
-        margin: 14px 0;
-        color: ${token.colorTextSecondary};
-      }
-
-      ul,
-      ol {
-        margin: 12px 0 12px 4px;
-        padding-left: 20px;
-      }
-
-      li {
-        margin: 5px 0;
-        line-height: 1.7;
-      }
-
-      table {
-        border-collapse: collapse;
-        margin: 14px 0;
-        width: 100%;
-        font-size: ${FONT_SIZE.excerpt}px;
-      }
-
-      th,
-      td {
-        border: 1px solid ${token.colorBorderSecondary};
-        padding: 7px 11px;
-        text-align: left;
-      }
-
-      th {
-        background: ${token.tintNav};
-        font-weight: 600;
-      }
-
-      hr {
-        border: none;
-        border-top: 1px solid ${token.colorBorderSecondary};
-        margin: 26px 0;
-      }
-
-      mark {
-        background: ${token.highlightBg};
-        color: inherit;
-        border-radius: 2px;
-        padding: 0 1px;
-      }
-
-      /* Tiptap 在空段落上挂的类，位置由 float 撑住不占高度。
-         3.1:1 —— 占位符不承载信息，允许低于 4.5 */
-      p.is-editor-empty:first-child::before {
-        content: attr(data-placeholder);
-        color: ${token.colorTextQuaternary};
-        float: left;
-        height: 0;
-        pointer-events: none;
       }
     `,
   }
 })
-
-/**
- * 保存状态指示器的样式。
- *
- * 颜色随 `state` 变化，所以走 `createStyles` 的第二个入参（props）而不是内联
- * `style`——这样颜色仍然来自 token，而且对比度由 `design.test.ts` 统一守。
- * 失败时点击可重试：不能只把失败画出来却不给动作（见 docs/PRD.md §5.9）。
- */
-export const useIndicatorStyles = createStyles(
-  ({ css, token }, state: 'idle' | 'saving' | 'saved' | 'error') => {
-    // 状态是信息，它的对比度由规范统一保证（docs/DESIGN.md §3.3 / §3.4）
-    const color = {
-      idle: undefined,
-      saving: token.colorTextQuaternary,
-      saved: token.colorSuccessText,
-      error: token.colorErrorText,
-    }[state]
-
-    return {
-      indicator: css`
-        font-size: ${FONT_SIZE.meta}px;
-        color: ${color};
-        cursor: ${state === 'error' ? 'pointer' : 'default'};
-      `,
-    }
-  },
-)

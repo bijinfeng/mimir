@@ -8,7 +8,7 @@ import { FONT_SIZE } from '@/theme/tokens'
  * 样式覆写加起来三百多行，混在组件文件里会把逻辑挤到看不见。
  * 规范见 `docs/DESIGN.md` §4.3 / §5。
  */
-export const useStyles = createStyles(({ css, token }) => ({
+export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   wrap: css`
     height: 100%;
     display: flex;
@@ -46,6 +46,44 @@ export const useStyles = createStyles(({ css, token }) => ({
 
     &:hover {
       color: ${token.colorText} !important;
+    }
+  `,
+  /**
+   * 工具条上的保存状态。
+   *
+   * 它是个 button 只为了让**失败态能点**（重试），所以要把按钮的外观全部
+   * 去掉、只留文字。非失败态 `disabled`，于是没有 hover 反馈——一个可点
+   * 却无事发生的状态显示是最坏的一种（`docs/DESIGN.md` §8.9 同一条理由）。
+   *
+   * 它原先渲染在正文上方、标题与元信息之间：一块只有「已保存」三个字的
+   * 独立行，两侧都空，看起来像没画完；而且**位置会跳**——状态出现与消失时
+   * 整块正文上下移动。移到常驻且不占额外高度的工具条上，与路径、问 AI 同级，
+   * 也正是 `docs/PRD.md` §5.9 写的「工具条常驻」。
+   */
+  save: css`
+    flex: none;
+    padding: 0;
+    border: none;
+    background: none;
+    font-family: inherit;
+    font-size: ${FONT_SIZE.badge}px;
+    color: ${token.colorTextQuaternary};
+    cursor: default;
+
+    /* 非失败态一律 disabled，用它的文字色代表「已完成/进行中」 */
+    &:disabled {
+      color: ${token.colorSuccessText};
+    }
+  `,
+  /* 失败态：可点、有下划线、用错误色。加上 :disabled 是为了盖过上面那条 */
+  saveError: css`
+    text-decoration: underline;
+    text-underline-offset: 2px;
+
+    &,
+    &:disabled {
+      color: ${token.colorErrorText};
+      cursor: pointer;
     }
   `,
 
@@ -130,12 +168,19 @@ export const useStyles = createStyles(({ css, token }) => ({
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 9px;
-    padding: 11px 14px;
-    margin-bottom: 20px;
+    gap: 8px;
+    /* 收紧一档：原先 11px 14px 在收件箱的每一篇上都占一整行，
+       而它只是**辅助动作**，不该和正文抢纵向空间 */
+    padding: 9px 12px;
+    margin: 0 0 22px;
     border: 1px solid ${token.borderWarningSurface};
     border-radius: 9px;
     background: ${token.tintWarningSurface};
+
+    /* 建议标签与分隔线在窄列下一起换行时，让按钮组整体留在同一行 */
+    > button {
+      flex: none;
+    }
   `,
   triageLabel: css`
     display: inline-flex;
@@ -195,14 +240,24 @@ export const useStyles = createStyles(({ css, token }) => ({
   `,
 
   /* 标题。原型用 letter-spacing:-.01em 收紧——28px 的中文标题不收紧
-     会显得松散。字号阶梯见 docs/DESIGN.md §4.2。 */
+     会显得松散。字号阶梯见 docs/DESIGN.md §4.2。
+
+     **必须用 `&.${prefixCls}-typography` 抬特异性。** 标题是 antd 的
+     `Typography.Title`，它自带一条
+     `h1:where(...).ant-typography { font-size: var(--ant-font-size-heading-1) }`
+     ——`h1` 元素贡献 (0,0,1)、`.ant-typography` 贡献 (0,1,0)，合计 (0,1,1)，
+     而单类选择器只有 (0,1,0)，把它盖不住。实测标题因此渲染成 **38px**
+     （antd 的 h1 档），而规范写的是 28px，且不报错、看起来只是「标题偏大」。
+     叠上 `&.ant-typography` 后 (0,2,0) 胜出。 */
   title: css`
-    font-size: ${FONT_SIZE.display}px;
-    font-weight: 700;
-    line-height: 1.3;
-    letter-spacing: -0.01em;
-    margin: 0 0 8px;
-    color: ${token.colorText};
+    &.${prefixCls}-typography {
+      font-size: ${FONT_SIZE.display}px;
+      font-weight: 700;
+      line-height: 1.3;
+      letter-spacing: -0.01em;
+      margin: 0 0 8px;
+      color: ${token.colorText};
+    }
   `,
 
   /* ── 页脚：来源 / 被引用 ────────────────────────────── */
@@ -252,100 +307,6 @@ export const useStyles = createStyles(({ css, token }) => ({
     b {
       display: block;
       margin-bottom: 3px;
-    }
-  `,
-
-  readOnly: css`
-    font-size: ${FONT_SIZE.body}px;
-    line-height: 1.75;
-    color: ${token.colorText};
-
-    h1 {
-      font-size: ${FONT_SIZE.display}px;
-      font-weight: 700;
-      line-height: 1.3;
-      margin: 0 0 16px;
-    }
-    h2 {
-      font-size: ${FONT_SIZE.pageTitle}px;
-      font-weight: 650;
-      line-height: 1.4;
-      letter-spacing: -0.005em;
-      margin: 26px 0 10px;
-    }
-    h3 {
-      font-size: ${FONT_SIZE.section}px;
-      font-weight: 600;
-      line-height: 1.5;
-      margin: 20px 0 8px;
-    }
-    p {
-      margin: 12px 0;
-      line-height: 1.75;
-    }
-    a {
-      color: ${token.colorLink};
-      text-decoration: underline;
-      text-underline-offset: 2px;
-    }
-    code {
-      font-family: ${token.fontFamilyCode};
-      font-size: ${FONT_SIZE.excerpt}px;
-      background: ${token.colorFillSecondary};
-      color: ${token.inlineCodeFg};
-      padding: 1.5px 5px;
-      border-radius: ${token.borderRadiusSM}px;
-    }
-    pre {
-      background: ${token.tintNav};
-      border: 1px solid ${token.colorBorderSecondary};
-      border-radius: ${token.borderRadius}px;
-      padding: 14px 16px;
-      margin: 14px 0;
-      overflow-x: auto;
-      font-size: ${FONT_SIZE.note}px;
-      line-height: 1.65;
-
-      code {
-        background: none;
-        color: ${token.colorText};
-        padding: 0;
-      }
-    }
-    blockquote {
-      border-left: 3px solid ${token.colorBorder};
-      padding: 2px 0 2px 14px;
-      margin: 14px 0;
-      color: ${token.colorTextSecondary};
-    }
-    ul,
-    ol {
-      margin: 12px 0 12px 4px;
-      padding-left: 20px;
-    }
-    li {
-      margin: 5px 0;
-      line-height: 1.7;
-    }
-    table {
-      border-collapse: collapse;
-      margin: 14px 0;
-      width: 100%;
-      font-size: ${FONT_SIZE.excerpt}px;
-    }
-    th,
-    td {
-      border: 1px solid ${token.colorBorderSecondary};
-      padding: 7px 11px;
-      text-align: left;
-    }
-    th {
-      background: ${token.tintNav};
-      font-weight: 600;
-    }
-    img {
-      max-width: 100%;
-      border-radius: 6px;
     }
   `,
 

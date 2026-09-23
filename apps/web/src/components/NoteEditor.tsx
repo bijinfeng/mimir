@@ -1,12 +1,14 @@
 import type { DocumentDetail } from '@mimir/shared'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { EditorContent, useEditor } from '@tiptap/react'
-import { App, Typography } from 'antd'
+import { App } from 'antd'
 import { useEffect, useRef, useState } from 'react'
-import { useIndicatorStyles, useStyles } from '@/components/NoteEditor.style'
+import { useStyles } from '@/components/NoteEditor.style'
+import { useContentStyles } from '@/components/ContentTypography.style'
 import { InlineToolbar } from '@/components/document/InlineToolbar'
 import { createExtensions } from '@/editor/extensions'
 import { api } from '@/lib/api'
+import { useUnsaved } from '@/lib/unsaved'
 
 /**
  * 笔记的正文编辑器。
@@ -42,30 +44,46 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 
 interface Props {
   document: DocumentDetail
-  /** 脏标记上报。提到外层是因为「离开」的触发点在导航、列表、命令面板 */
-  onDirtyChange?: (dirty: boolean) => void
-  /** 注册「立即保存」的入口，供「保存并离开」调用 */
-  registerSave?: (save: (() => Promise<boolean>) | null) => void
   /** 标题由面板编辑，保存正文时要带上它 */
   title: string
   /** 「就这段提问」：把选中的话带进对话 */
   onAskAboutSelection?: (passage: string) => void
+  /**
+   * 保存状态上报，供面板顶部的工具条显示。
+   *
+   * 工具条在 `DocumentPanel` 里，而保存逻辑在这里——所以状态必须上去。
+   * `retry` 一起交出去，是因为「保存失败 · 点此重试」这个动作要用它。
+   */
+  onSaveStateChange?: (snapshot: { state: SaveState; retry: () => void }) => void
 }
 
 export function NoteEditor({
   document: doc,
-  onDirtyChange,
-  registerSave,
   title,
   onAskAboutSelection,
+  onSaveStateChange,
 }: Props) {
   const { styles } = useStyles()
+  const { styles: contentStyles } = useContentStyles()
   const { message } = App.useApp()
   const queryClient = useQueryClient()
 
+  /**
+   * 未保存状态交给**共同祖先**，而不是靠 props 往下传。
+   *
+   * 这里曾经声明了 `onDirtyChange` / `registerSave` 两个 props，而全仓
+   * **没有任何调用方传它们**——于是 `UnsavedGuard` 从来没被武装过。
+   * 后果是数据丢失（实测）：输入之后在 900ms 防抖窗口内切换文档，
+   * 卸载时定时器被清掉、待保存的那一次写请求再也不会发出，而「有改动
+   * 还没保存」的拦截框也不出现——用户以为存上了，实际丢了。
+   *
+   * 直接从 context 取，与 `lib/unsaved.tsx` 的设计一致（它开头就写着
+   * 「脏标记必须提到一个共同祖先，而不是靠编辑器往下传回调」）。
+   */
+  const { setDirty, setSave } = useUnsaved()
+
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const dirtyRef = useRef(false)
-  const [saveState, setSaveState] = useState<SaveState>('idle')
 
   /**
    * 初始正文，**只取挂载时的那一份**。
@@ -80,77 +98,109 @@ export function NoteEditor({
    */
   const [initialBody] = useState(doc.body)
 
-  const save = useMutation({
-    mutationFn: (body: string) => api.documents.update(doc.id, { title, body }),
-    onSuccess: (updated) => {
-      dirtyRef.current = false
-      setSaveState('saved')
-      onDirtyChange?.(false)
-      void queryClient.invalidateQueries({ queryKey: ['documents'] })
-      void queryClient.setQueryData(['document', updated.id], updated)
-    },
-    onError: (error: unknown) => {
-      setSaveState('error')
-      message.error(error instanceof Error ? error.message : '保存失败')
-    },
-  })
-
   /**
    * 编辑器实例。
    *
    * `deps` 传空数组：正文变化（保存回写、查询刷新）**不重建**实例，
    * 否则每次自动保存都会丢光标。切换文档由外层 `key={doc.id}` 处理。
    *
-   * 回调里直接用 `save` 与 `title` 就行——`useEditor` 内部把回调包了一层、
-   * 从 `options.current` 读，所以它们永远是最新的，不需要 ref 承接。
+   * 回调里直接用最新的 `saveNow` 与 `title` 就行——`useEditor` 内部把回调
+   * 包了一层、从 `options.current` 读，所以它们永远是最新的，不需要 ref 承接。
    */
   const editor = useEditor(
     {
       extensions: createExtensions(),
       content: initialBody,
       contentType: 'markdown',
-      onUpdate: ({ editor: instance }) => {
+      onUpdate: () => {
         dirtyRef.current = true
-        onDirtyChange?.(true)
-        setSaveState('saving')
+        setDirty(true)
+        report('saving')
 
+        // 防抖：连续敲字期间不发请求。到点后走与「重试」同一条保存路径，
+        // 于是状态上报与脏标记的处理只有一处，不会两边不一致
         if (timerRef.current) clearTimeout(timerRef.current)
-        timerRef.current = setTimeout(() => {
-          save.mutate(instance.getMarkdown())
-        }, SAVE_DEBOUNCE_MS)
+        timerRef.current = setTimeout(() => void saveNow(), SAVE_DEBOUNCE_MS)
       },
     },
     [],
   )
 
+  /** 一次上报 = 状态 + 当时的重试入口。不使用 effect，避免每次渲染都推一次 */
+  const report = (state: SaveState) => {
+    onSaveStateChange?.({ state, retry: () => void saveNow() })
+  }
+
   /**
-   * 把「立即保存」注册到外层，供「保存并离开」使用。
+   * 立即保存并返回真实结果。
    *
-   * 返回的 promise 要反映**真实结果**：外层靠它决定放不放行。
-   * 保存失败返回 false，用户留在原地——放行的话他会以为存上了，
-   * 实际丢了，比不拦截更糟（`docs/PRD.md` §5.9）。
+   * 三处要用它：防抖到点后的自动保存、工具条上的「点此重试」、
+   * 以及离开时的「保存并离开」。返回的 promise 必须反映**真实结果**——
+   * 拦截框靠它决定放不放行：放行了而实际没存上，比不拦截更糟
+   * （`docs/PRD.md` §5.9）。
+   *
+   * 用普通函数而不是 useCallback：React Compiler 会处理记忆化，
+   * 手写反而让人以为有必要（`apps/web/AGENTS.md`）。
+   */
+  const saveNow = async (): Promise<boolean> => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+
+    try {
+      const updated = await api.documents.update(doc.id, {
+        title,
+        body: editor?.getMarkdown() ?? initialBody,
+      })
+      dirtyRef.current = false
+      setDirty(false)
+      report('saved')
+      void queryClient.invalidateQueries({ queryKey: ['documents'] })
+      void queryClient.setQueryData(['document', updated.id], updated)
+      return true
+    } catch (error) {
+      report('error')
+      message.error(error instanceof Error ? error.message : '保存失败')
+      return false
+    }
+  }
+
+  /**
+   * `saveNow` 的「最新值 ref」。
+   *
+   * `saveNow` 每次渲染都是一个新闭包（它读 `title`、`editor`），所以不能直接
+   * 进注册 effect 的依赖数组——那会让 effect 每次渲染都拆装一遍，而且
+   * `react-hooks/exhaustive-deps` 会（正确地）报出来。把最新的闭包放进 ref，
+   * 注册的却是一个**稳定**的转发函数，于是注册只在挂载与卸载时发生。
+   *
+   * 这正是 `useEditor` 内部对回调做的同一件事（从 `options.current` 读）。
+   * 更新 ref 的 effect 声明在注册 effect **之前**——`apps/web/AGENTS.md`
+   * 要求 ref 的声明顺序在使用它的 effect 之前，否则 React Compiler 会静默
+   * 跳过这个组件。
+   */
+  const saveNowRef = useRef(saveNow)
+  useEffect(() => {
+    saveNowRef.current = saveNow
+  })
+
+  /**
+   * 把「立即保存」交给共同祖先，供「保存并离开」调用。
+   *
+   * **这是数据丢失的修复点。** 这里原先声明了 `onDirtyChange` /
+   * `registerSave` 两个 props 并在此注册，但全仓没有任何调用方传它们——
+   * 于是 `UnsavedGuard` 从来没被武装。实测：输入后在 900ms 防抖窗口内
+   * 切换文档，卸载时定时器被清掉、待发的写请求再也不会发出，拦截框也不出现，
+   * 用户以为存上了、实际丢了。
    */
   useEffect(() => {
-    if (!registerSave || !editor) return
-
-    registerSave(async () => {
-      if (timerRef.current) clearTimeout(timerRef.current)
-      try {
-        await api.documents.update(doc.id, { title, body: editor.getMarkdown() })
-        dirtyRef.current = false
-        setSaveState('saved')
-        onDirtyChange?.(false)
-        void queryClient.invalidateQueries({ queryKey: ['documents'] })
-        return true
-      } catch (error) {
-        setSaveState('error')
-        message.error(error instanceof Error ? error.message : '保存失败')
-        return false
-      }
-    })
-
-    return () => registerSave(null)
-  }, [registerSave, editor, doc.id, title, queryClient, message, onDirtyChange])
+    setSave(() => saveNowRef.current())
+    return () => {
+      setSave(null)
+      // 卸载时清掉脏标记：留着它会让下一次导航被一个已经不存在的编辑拦截
+      setDirty(false)
+    }
+  }, [setSave, setDirty])
 
   /** 卸载时清掉待触发的防抖定时器，免得在已销毁的实例上保存 */
   useEffect(() => {
@@ -171,43 +221,15 @@ export function NoteEditor({
 
   return (
     <div className={styles.shell}>
-      <div className={styles.saveRow}>
-        <SaveIndicator
-          state={saveState}
-          onRetry={() => save.mutate(editor?.getMarkdown() ?? initialBody)}
-        />
-      </div>
-
       <InlineToolbar
         editor={editor}
         onAskAboutSelection={(passage) => onAskAboutSelection?.(passage)}
       />
 
-      {/* EditorContent 负责把编辑器挂进 React 树，并在卸载时清理 */}
-      <EditorContent editor={editor} className={styles.body} />
+      {/* EditorContent 负责把编辑器挂进 React 树，并在卸载时清理。
+          正文排版与只读视图共用同一个类（ContentTypography.style.ts）——
+          两边各写一份已经漂移过 */}
+      <EditorContent editor={editor} className={`${styles.body} ${contentStyles.content}`} />
     </div>
-  )
-}
-
-/** 保存状态指示器。失败时点击可重试——不能只把失败画出来却不给动作 */
-function SaveIndicator({ state, onRetry }: { state: SaveState; onRetry: () => void }) {
-  const { styles } = useIndicatorStyles(state)
-  const label: Record<SaveState, string> = {
-    idle: '',
-    saving: '正在保存…',
-    saved: '已保存',
-    error: '保存失败 · 点此重试',
-  }
-
-  if (state === 'idle') return null
-
-  return (
-    <Typography.Text
-      type={state === 'error' ? 'danger' : 'secondary'}
-      className={styles.indicator}
-      onClick={state === 'error' ? onRetry : undefined}
-    >
-      {label[state]}
-    </Typography.Text>
   )
 }

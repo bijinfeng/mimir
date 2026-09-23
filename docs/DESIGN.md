@@ -329,10 +329,21 @@ FONT_MONO = "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace
 
 ### 4.3 内容区（Markdown 渲染）
 
-编辑器正文的样式挂在 `NoteEditor` 的样式模块上（`components/NoteEditor.style.ts`）。
-Tiptap 渲染出的 `<h1>` `<pre>` `<table>` 是裸 DOM，不是 React 组件、拿不到
+正文排版只有**一份**：`components/ContentTypography.style.ts` 的 `content`。
+Tiptap 渲染出的 `<h1>` `<pre>` `<table>` 是裸 DOM、不是 React 组件、拿不到
 className，所以从挂载点的祖先类名往下写嵌套选择器——这正是 `createStyles`
-里嵌套选择器的用途，而且这里的规则有作用域，不会泄漏到页面其它地方。
+里嵌套选择器的用途，而且规则有作用域，不会泄漏到别处。
+
+**编辑器与只读视图共用这一个类。** 两个视图都让 Tiptap 渲染同一份
+Markdown（`MarkdownBody` 的注释解释了为什么不用第二个渲染库），所以排版
+必须同源。这一条曾经各自手抄一份，漂移出四处且都不报错：
+
+| 元素 | 曾经（编辑态 / 只读态）| 现在 |
+|---|---|---|
+| `img` | **无规则** / `max-width:100%` | 共用（大图不再撑破内容列）|
+| 行内代码底 | 字面量 `#f0f1f3` / `fill-secondary` | `fill-secondary` |
+| 行内代码字号 | 12.5 / 13 | 13（`excerpt`）|
+| 任务列表 | 都没处理 | 共用 |
 
 | 元素 | 规则 |
 |---|---|
@@ -340,14 +351,31 @@ className，所以从挂载点的祖先类名往下写嵌套选择器——这�
 | H1 | 28px/700，下间距 16px |
 | H2 | 20px/600，上 26px 下 10px |
 | H3 | 16px/600，上 20px 下 8px |
-| 行内代码 | 13px 等宽，`customToken.inlineCodeFg` 色，`fill-secondary` 底（4.93:1） || 代码块 | 13px/1.6，`fill-tertiary` 底 + `border-secondary` 边框，圆角 8px |
+| 行内代码 | 13px 等宽，`customToken.inlineCodeFg` 色，`fill-secondary` 底（4.93:1） |
+| 代码块 | 13px/1.6，`tintNav` 底 + `border-secondary` 边框，圆角 8px |
+| 语法高亮 | 注释 `text-3` 斜体、关键字 `colorLink`、字符串 `colorSuccessText`、数字 `colorWarningText`、函数名正文色 + 600（全部实测 ≥ 4.5:1，`design.test.ts` 守）|
 | 引用 | 左侧 3px 边框，文字用文字-2，不做背景色 |
 | 表格 | 13px，单元格边框 `border-secondary`，表头 `tintNav` 底 |
+| 任务列表 | `list-style: none` + flex 一行（复选框与文字同排），已完成项划掉并转 `text-3` |
+| 图片 | `max-width: 100%`，圆角 6px |
 | 高亮 `mark` | `customToken.highlightBg` 底，字色继承（11.82:1） |
 | 链接 | `colorLink`，下划线 + `text-underline-offset: 2px` |
 
 **内容区的颜色一律引用 `--ant-*` 变量**，不写字面量。这样界面灰阶调整时
 正文不会掉队。
+
+**语法高亮曾经静默失效**：`CodeBlockLowlight` 挂着 lowlight 与 common 语法包，
+解析出的 span 确实带 `hljs-keyword` 之类的类（实测一个五行代码块产出 12 个
+span、6 种 token），而全仓没有一条 `hljs` 规则——所有 token 渲染成同一个颜色。
+看起来像「编辑器不支持高亮」，实际只是少了 CSS。着色只用既有语义 token，
+不新造色值。
+
+**书写区高度**（编辑器专有，只读视图不需要）：`NoteEditor` 给
+`.ProseMirror` 一个 `min-height: 46vh`。它是**「点空白处也能接着写」的前提**——
+ProseMirror 的高度默认等于内容高度，所以一篇三行笔记的编辑区只有约 98px，
+而可见正文列高约 900px，下面 800px 是**死区**；点上去 `activeElement`
+仍是 `body`（实测）。给足高度后那一击落进编辑区，Tiptap 把光标放到最近的
+文字位置（末行）。
 
 ---
 
@@ -494,6 +522,30 @@ emoji 是字体依赖的，在 Linux 容器里可能渲染成黑白字形或豆�
 键盘用户必须能看见自己在哪。这是 `ui-ux-pro-max` 检查表里优先级最高的一条，
 也是最常被「设计洁癖」牺牲掉的一条。
 
+**例外：文本输入类元素要自己区分输入方式。** 规范规定 `contenteditable`
+与 `<input>` 的 `:focus-visible` **永远匹配**（浏览器无法假定用户接下来用
+键盘还是鼠标，而文本输入需要焦点提示）。于是笔记正文那个 contenteditable
+每次鼠标点进去都会画出一圈原生环 `outline: auto 1px rgb(16,16,16)`，
+围着整个编辑区——而点进正文是几乎每次编辑都会做的事。
+
+`lib/input-modality.ts` 记录最近一次输入方式，写到 `html` 的
+`--mimir-focus-ring-style` 上（鼠标 `none` / 键盘 `solid`）：
+
+```css
+outline-style: var(--mimir-focus-ring-style, none);
+outline-width: 2px;
+outline-color: var(--ant-color-primary-border);
+```
+
+**变量里只存样式关键字，不存完整 ring 值。** 自定义属性里的 `var()` 在
+**声明它的元素**上求值，而 `--ant-*` 注入在 antd 组件子树上（§3.4 与
+AGENTS.md 样式第 6 条）——声明在 `html` 上的 `var(--ant-color-primary-border)`
+取不到值，整个自定义属性在 computed-value 阶段无效，`outline` 退回 `none`，
+**键盘用户的焦点环静默消失**（实测过）。
+
+这个模式只用在文本输入类元素上。其余控件继续用标准的 `:focus-visible`
+——它们的行为是对的，加一层输入方式追踪只是多余的复杂度。
+
 ### 7.3 可点击元素
 
 - 必须有 `cursor: pointer`
@@ -597,7 +649,19 @@ emoji 是字体依赖的，在 Linux 容器里可能渲染成黑白字形或豆�
 
 那条下边框是关键——没有它时标题直接撞上正文，读者分不出「这篇的开头」在哪。
 
+**文档标题（`h1`）的字号必须抬特异性。** 它是 antd 的 `Typography.Title`，
+自带一条 `h1:where(...).ant-typography { font-size: var(--ant-font-size-heading-1) }`
+——`h1` 元素贡献 (0,0,1)、`.ant-typography` 贡献 (0,1,0)，合计 **(0,1,1)**，
+而单类选择器只有 (0,1,0)，盖不住。实测标题因此渲染成 **38px**（antd 的 h1 档），
+而规范写的是 `display` 档 28px，且不报错、看起来只是「标题偏大」。
+写法是 `&.${prefixCls}-typography { … }`，叠成 (0,2,0) 才胜出。
+
 ### 8.4 整理条
+
+**位置：标题与元信息之后、正文之前。** 顺序是「是什么 → 从哪来 → 怎么办 → 正文」。
+它原先排在最前面，于是打开一篇收件箱文档时第一眼是一整块待办动作，
+而「这是哪一篇」的标题被压在下面；顺序也说不通——你没法在还没看清是什么之前
+决定怎么归类它。放在元信息之后，动作仍在首屏，没有变难找。
 
 ```
 ┌────────────────────────────────────────────────────┐
@@ -698,6 +762,31 @@ antd v6 的 `focusOutline` 会画出一圈蓝色胶囊，三处（`input` / `aff
 
 **圆角 12px，不用 `borderRadiusLG`。** 规范 §5.2 把「对话框、命令面板」定为
 12–14px，而 antd 的 `borderRadiusLG` 是 base(8) + 2 = 10px，够不到那个区间。
+
+### 8.11 保存状态（工具条）
+
+```
+┌──────────────────────────────────────────────────────┐
+│ 2026/09/rag-….md                 已保存     💬 问 AI │  ← 工具条 min-height 48px
+└──────────────────────────────────────────────────────┘
+```
+
+**常驻在文档工具条上，与路径、问 AI 同级。** 字号 `badge` 档（11.5px），
+状态色取自语义 token（保存中用 `colorTextQuaternary`、已保存用
+`colorSuccessText`、失败用 `colorErrorText`）。失败态可点重试并带下划线。
+
+三条形态约束：
+
+1. **只在笔记上显示**（`kind === 'note'`）。资料是只读的，给它显示「已保存」
+   会让人以为可以编辑（§2.3）
+2. **非失败态 `disabled`。** 状态显示被做成按钮只为让失败态可点；其余时候
+   若可点却无事发生，那正是 §7.4 说的最坏的一种
+3. **不占额外纵向空间。** 工具条本来就在，状态落在它已有的高度里
+
+它原先渲染在正文上方、标题与元信息之间：一块只有「已保存」三个字的独立行，
+两侧都空，看起来像没画完；而且**位置会跳**——状态出现与消失时整块正文
+上下移动。`docs/PRD.md` §5.9 原话就是「工具条常驻」，之前那个实现与文档
+写的位置并不一致。
 
 ---
 

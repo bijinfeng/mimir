@@ -313,6 +313,36 @@ describe('自定义 token 与内容区色', () => {
   })
 
   /**
+   * 代码块的语法高亮底色。
+   *
+   * 这组着色的**第一版完全没有 CSS**：`CodeBlockLowlight` 解析出带
+   * `hljs-keyword` 之类的 span，但全仓没有一条 `hljs` 规则，于是所有 token
+   * 渲染成同一个颜色——看起来像「编辑器不支持高亮」，实际只是少了样式，
+   * 而且不报错。现在把取色也纳入守卫：它们落在 `tintNav` 底的代码块里，
+   * 属于「小字号 + 非正文色」这种最容易掉到 4.5 以下的组合。
+   *
+   * 色值直接取自 antd 语义 token（`tokens.ts` 已覆盖的值），这里按最终
+   * 生效的颜色再算一遍——多一层校验不亏，因为这四个值同时被两个视图使用。
+   */
+  it('代码块语法高亮配色在 tintNav 底上 ≥ 4.5:1', () => {
+    const surfaces = [mimirCustomToken.tintNav, '#ffffff']
+    const highlightColors = {
+      注释: String(token.colorTextTertiary),
+      关键字: String(token.colorLink),
+      字符串: String(token.colorSuccessText),
+      数字: String(token.colorWarningText),
+    }
+    for (const [name, color] of Object.entries(highlightColors)) {
+      for (const surface of surfaces) {
+        expect(
+          contrast(color, surface),
+          `语法高亮「${name}」在 ${surface} 上对比度不足`,
+        ).toBeGreaterThanOrEqual(4.5)
+      }
+    }
+  })
+
+  /**
    * 选中态的可辨识度。
    *
    * 这条测试的**第一版是错的**：我给它加了一道 `#cfe0ff` 描边（照抄原型），

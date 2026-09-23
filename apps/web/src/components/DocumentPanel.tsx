@@ -5,6 +5,7 @@ import { App, Button, Empty, Skeleton, Tag, Tooltip, Typography } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { KindBadge, StatusBadge } from '@/components/DocumentBadges'
 import { NoteEditor } from '@/components/NoteEditor'
+import { useContentStyles } from '@/components/ContentTypography.style'
 import { DocumentFooter } from '@/components/document/DocumentFooter'
 import { useStyles } from '@/components/document/DocumentPanel.style'
 import { MarkdownBody } from '@/components/document/MarkdownBody'
@@ -54,8 +55,22 @@ export function DocumentPanel({
   onOpenDocument,
 }: DocumentPanelProps) {
   const { styles } = useStyles()
+  const { styles: contentStyles } = useContentStyles()
   const queryClient = useQueryClient()
   const { message } = App.useApp()
+
+  /**
+   * 保存状态由编辑器上报，在工具条右侧显示。
+   *
+   * 它原先渲染在正文上方、标题与元信息之间——一块只有「已保存」三个字的
+   * 独立行，两侧都是空的，看起来像没画完的东西；而且**位置会跳**：
+   * 状态出现与消失时整块正文上下移动（`saveRow` 有 min-height 但仍在流里）。
+   *
+   * 移到工具条后它落在**常驻且不占额外高度**的位置，与其他界面状态
+   * （路径、问 AI）同一层——这也符合 `docs/PRD.md` §5.9「工具条常驻」
+   * 的原话，之前那个实现和文档写的位置并不一致。
+   */
+  const [save, setSave] = useState<SaveSnapshot>({ state: 'idle', retry: () => {} })
 
   const docQuery = useQuery({
     queryKey: ['document', documentId],
@@ -172,6 +187,11 @@ export function DocumentPanel({
     <div className={styles.wrap}>
       <div className={styles.toolbar}>
         <span className={styles.path}>{doc.path ?? doc.url ?? '（尚无快照）'}</span>
+
+        {/* 保存状态常驻工具条。**只在笔记上显示**：资料是只读的，
+            给它显示「已保存」会让人以为可以编辑（PRD §2.3） */}
+        {doc.kind === 'note' && <SaveIndicator state={save.state} retry={save.retry} />}
+
         <Tooltip title="带这篇的上下文去主视图对话，范围自动锁到这一篇">
           <Button
             type="text"
@@ -196,8 +216,6 @@ export function DocumentPanel({
                 返回对话
               </button>
             )}
-
-            {doc.status === 'inbox' && <TriageBar doc={doc} />}
 
             {/*
               标题：笔记可改，资料只读。改名会让服务端同步移动 vault 里的
@@ -227,6 +245,19 @@ export function DocumentPanel({
             <DocumentMeta doc={doc} />
 
             {/*
+              整理条在**标题与元信息之后**。
+              
+              它原先排在最前面，于是打开一篇收件箱文档时，第一眼是一整块
+              待办动作，而「这是哪一篇」的标题被压在下面（用户原话：
+              「标题上面一大片待整理，我觉得不太好看」）。顺序也说不通——
+              你没法在还没看清是什么之前决定怎么归类它。
+              
+              放到这里之后：标题（是什么）→ 元信息（从哪来）→ 整理（怎么办）
+              → 正文。整理动作仍在首屏，没有变难找。
+            */}
+            {doc.status === 'inbox' && <TriageBar doc={doc} />}
+
+            {/*
               笔记用编辑器（可写），资料只渲染（只读）。
               抓来的资料不可编辑——它的真相是原始快照 + 派生正文，
               就地改写会让「原文是什么」变得不可考。
@@ -236,10 +267,13 @@ export function DocumentPanel({
                 key={doc.id}
                 document={doc}
                 title={doc.title}
+                onSaveStateChange={setSave}
                 onAskAboutSelection={(passage) => onAskAboutSelection(doc.id, passage)}
               />
             ) : (
-              <div className={styles.readOnly}>
+              /* 正文排版与编辑器共用同一个类——两个视图都让 Tiptap 渲染同一份
+                 Markdown，排版必须同源。这里曾经各自手抄一份，漂移出四处 */
+              <div className={contentStyles.content}>
                 <MarkdownBody body={doc.body} headings={headings} />
               </div>
             )}
@@ -269,6 +303,44 @@ export function DocumentPanel({
         </div>
       </div>
     </div>
+  )
+}
+
+/**
+ * 保存状态。只在工具条上出现——正文里不放它，见组件顶部的说明。
+ *
+ * 失败时点击重试：不能只把失败画出来却不给动作（`docs/PRD.md` §5.9）。
+ */
+type SaveState = 'idle' | 'saving' | 'saved' | 'error'
+
+interface SaveSnapshot {
+  state: SaveState
+  retry: () => void
+}
+
+const SAVE_LABEL: Record<SaveState, string> = {
+  idle: '',
+  saving: '正在保存…',
+  saved: '已保存',
+  error: '保存失败 · 点此重试',
+}
+
+function SaveIndicator({ state, retry }: SaveSnapshot) {
+  const { styles } = useStyles()
+  // 空状态不占位也不留空白：没在保存时工具条上不该有它的痕迹
+  if (state === 'idle') return null
+
+  return (
+    <button
+      type="button"
+      className={`${styles.save} ${state === 'error' ? styles.saveError : ''}`}
+      onClick={state === 'error' ? retry : undefined}
+      /* 非失败态不可点：它只是状态显示，做成按钮但禁掉点击比让它可点更
+         诚实——可点而无事发生是最坏的一种 */
+      disabled={state !== 'error'}
+    >
+      {SAVE_LABEL[state]}
+    </button>
   )
 }
 
