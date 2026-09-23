@@ -25,13 +25,25 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     border-right: 1px solid ${token.colorBorderSecondary};
   `,
 
-  /* ── 顶栏：品牌 + 前进/后退 ─────────────────────────── */
+  /* ── 顶栏：品牌 + 折叠开关 ─────────────────────────── */
   topBar: css`
     flex: none;
     display: flex;
     align-items: center;
     gap: 2px;
     padding: 12px 10px 10px 14px;
+  `,
+  /**
+   * 折叠后的顶栏：**竖排成一列**。
+   *
+   * 48px 的宽度放不下「标记 + 按钮」并排。改成竖排后两者都居中，
+   * 且不需要在展开态与折叠态之间调换 DOM 顺序——顺序稳定，
+   * 读屏软件听到的始终是「品牌 → 开关」。
+   */
+  topBarCollapsed: css`
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 0 10px;
   `,
   brandLockup: css`
     display: flex;
@@ -48,6 +60,10 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
          （docs/DESIGN.md §3.5），品牌名不该是全页唯一不达标的文字 */
       color: ${token.colorText};
     }
+  `,
+  /** 折叠后只留标记，且不再撑开（`margin-right: auto` 会把它推向一侧） */
+  brandLockupCollapsed: css`
+    margin-right: 0;
   `,
 
   /* ── 主体：一个可滚动的 Menu + 一个 Tree ─────────────── */
@@ -79,7 +95,6 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       border-radius: 6px;
       color: ${token.colorTextSecondary};
     }
-
     .${prefixCls}-menu-item:hover {
       background: ${token.colorFillTertiary};
     }
@@ -130,6 +145,76 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     .${prefixCls}-menu-item-divider {
       margin: 8px 12px 8px 10px;
       border-color: ${token.colorBorderSecondary};
+    }
+  `,
+
+  /**
+   * 折叠态对 Menu 的收敛。
+   *
+   * antd 的 `inlineCollapsed` 把菜单**硬定成 80px 宽**（实测计算样式
+   * `width: 80px`），而这一栏只留 48px。不覆写的话整块菜单横向溢出，
+   * 栏内出现横向滚动条，右侧内容也被压过去——实测确认过。
+   *
+   * 四处都要处理，缺一处就还是溢出：
+   *
+   *  1. **宽度本身**。这是溢出的大头
+   *  2. **分组标签**（`对话` / `知识库`）。48px 下它们会被裁成「还」这种残字，
+   *     看起来像渲染坏了。折叠态里图标本身已经说明了分组，整块隐藏
+   *  3. **图标居中**。antd 靠 `padding-inline: calc(50% - 16px/2)` 把图标
+   *     推到中间，而那假设了图标恰好 16px 宽；一旦有多宽的图标就会偏。
+   *     改成 flex 居中，与图标实际宽度无关
+   *  4. **计数与相对时间**（`-item-extra`）。撑不住 48px，挤进来只会溢出
+   *
+   * 分隔线的左右边距也一并收窄，否则它比菜单还宽。
+   */
+  menuCollapsed: css`
+    /* 用 100% 而不是写死 48px：栏本身有 1px 右边框，内容盒只有 47px，
+       写死 48px 会多出 1px（实测 scrollWidth 48 > clientWidth 47）。
+       跟随容器宽度也更耐用——栏宽若在别处调整，这里不用跟着改。 */
+    width: 100% !important;
+
+    .${prefixCls}-menu-item-group-title {
+      display: none;
+    }
+
+    .${prefixCls}-menu-item,
+    .${prefixCls}-menu-submenu-title {
+      display: flex;
+      /* 必须 !important：antd 的规则是
+         .ant-menu-inline-collapsed > … > .ant-menu-item（四个类），
+         特异性 (0,4,0) 高于这里的 (0,2,0)，普通声明会被它盖掉。
+         它给的是 justify-content: flex-start 配一个
+         padding-inline: calc(50% - 图标宽/2 - …)——那套算法假定图标
+         恰好是 --ant-menu-collapsed-icon-size，换个尺寸就偏。 */
+      justify-content: center !important;
+      margin-inline: 4px;
+      padding-inline: 0 !important;
+    }
+
+    .${prefixCls}-menu-item-icon {
+      margin-inline-end: 0;
+      /* 图标是唯一内容，让它拿到全部对比度 */
+      opacity: 0.8;
+    }
+
+    .${prefixCls}-menu-item-extra {
+      display: none;
+    }
+
+    /*
+     * 标签是图标的**兄弟节点**，且折叠时它并没有消失——antd 只是把它压成
+     * 0 宽。flex 居中因此按「图标 + 标签」两个子项来分配空间，图标实测
+     * 落在 12px 处（应为 24px 正中）。display: none 让它真正退出布局。
+     *
+     * 不能改成 inline 之类——antd 的过渡依赖它存在，
+     * 而这里要的正是「折叠态下它不存在」。
+     */
+    .${prefixCls}-menu-item-label {
+      display: none;
+    }
+
+    .${prefixCls}-menu-item-divider {
+      margin-inline: 10px;
     }
   `,
 

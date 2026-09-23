@@ -6,6 +6,7 @@ import { env } from './env.js'
 import { errorBody, HttpError } from './lib/http.js'
 import { requireAuth } from './middleware/auth.js'
 import { captureRoute } from './routes/capture.js'
+import { configRoute } from './routes/config.js'
 import { chatRoute, conversationsRoute } from './routes/conversations.js'
 import { documentsRoute, foldersRoute, maintenanceRoute, tagsRoute } from './routes/documents.js'
 import { exportRoute } from './routes/export.js'
@@ -63,6 +64,7 @@ export function createApp() {
   api.route('/capture', captureRoute)
   api.route('/export', exportRoute)
   api.route('/maintenance', maintenanceRoute)
+  api.route('/config', configRoute)
 
   app.route('/api', api)
 

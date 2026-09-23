@@ -17,7 +17,7 @@ import { fuse, type FusionChannel } from './fuse.js'
  */
 
 /** 每个通道先各取这么多候选再融合。取得比最终结果多，融合才有意义。 */
-const PER_LEG_LIMIT = 50
+export const PER_LEG_LIMIT = 50
 
 /** 片段窗口：命中的正文字符区间，前方留 SNIPPET_LEAD 个字符做上下文 */
 const SNIPPET_LEAD = 80

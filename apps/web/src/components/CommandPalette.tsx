@@ -29,24 +29,85 @@ export interface CommandPaletteProps {
   onNewNote: () => void | Promise<void>
 }
 
-const useStyles = createStyles(({ css, token }) => ({
-  /* 面板贴着屏幕上方而不是垂直居中：命令面板是「从顶部拉出来」的东西，
-     居中会让人以为是个对话框，期待它挡住并取代后面的一切 */
-  body: css`
+const useStyles = createStyles(({ css, token, prefixCls }) => ({
+  /**
+   * 面板内容。**竖排三段：搜索行 / 列表 / 页脚**，每段自己管内边距。
+   *
+   * ## 为什么不再用负外边距
+   *
+   * 早期这里给列表和页脚写 `margin: 0 -24px`，用来「抵消 body 的 24px 内边距」，
+   * 好让 hover 底色通栏。但 body 的实际内边距是 **20px**（Modal 的
+   * `styles={{ body: { padding: 20 } }}`），两边对不上：列表因此比正文区
+   * 宽出 8px，hover 底色与输入框左右不齐。
+   *
+   * 更糟的是那个 `margin-top: -12vh`——它本意是让面板更靠上，而 Modal 已经用
+   * `top: 14vh` 定位了。实测（视口 940px）内容顶部落在 **y=59**，而 Modal 面板
+   * 从 **y=132** 才开始：整个搜索框被拉到了白色面板**外面**，浮在页面内容上，
+   * 「操作」分组标题也被裁掉半个。
+   *
+   * 现在 body 内边距归零，三段各自声明左右内边距（统一 18px）——通栏底色
+   * 不再需要负数抵消，也就不会再有对不齐或溢出面板的可能。
+   */
+  panel: css`
     display: flex;
     flex-direction: column;
-    margin-top: -12vh;
   `,
 
+  /* ── 搜索行 ────────────────────────────────────────── */
+  searchRow: css`
+    display: flex;
+    align-items: center;
+    padding: 13px 18px;
+    border-bottom: 1px solid ${token.colorSplit};
+    transition: border-color 0.2s;
+
+    /*
+     * 搜索框不画自己的边框与焦点环（浮层本身就是容器），但**焦点仍要可见**
+     * （DESIGN §7.2）——面板一打开输入框就是焦点所在，用一道常驻的蓝环会变成
+     * 噪声。改成让分隔线在聚焦时提亮，安静但看得见。
+     *
+     * 三处都要关掉：antd v6 给输入类控件加了 focusOutline（实测计算样式
+     * outline: rgb(22,119,255) solid 1px），它会画出那个蓝色胶囊。
+     *
+     * 前缀走 prefixCls 变量而不是写死 .ant-（AGENTS.md 样式第 7 条）。
+     */
+    .${prefixCls}-input-affix-wrapper,
+    .${prefixCls}-input {
+      padding: 0;
+      background: transparent;
+      border: none;
+      outline: none;
+      box-shadow: none;
+      font-size: ${FONT_SIZE.body}px;
+
+      &:focus,
+      &:focus-within,
+      &:hover {
+        outline: none;
+        box-shadow: none;
+      }
+    }
+
+    &:focus-within {
+      border-bottom-color: ${token.colorPrimaryBorder};
+    }
+
+    /* 放大镜与元信息同色阶即可，不需要单独降透明度 */
+    .${prefixCls}-input-prefix {
+      color: ${token.colorTextTertiary};
+      margin-inline-end: 9px;
+    }
+  `,
+
+  /* ── 列表 ──────────────────────────────────────────── */
   list: css`
     max-height: 46vh;
     overflow-y: auto;
-    margin: 0 -24px;
     padding: 6px 0;
   `,
 
   sectionLabel: css`
-    padding: 8px 24px 5px;
+    padding: 9px 18px 5px;
     font-size: ${FONT_SIZE.badge}px;
     font-weight: 600;
     color: ${token.colorTextTertiary};
@@ -56,9 +117,9 @@ const useStyles = createStyles(({ css, token }) => ({
   item: css`
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 11px;
     width: 100%;
-    padding: 8px 24px;
+    padding: 9px 18px;
     border: none;
     background: transparent;
     font-family: inherit;
@@ -70,13 +131,26 @@ const useStyles = createStyles(({ css, token }) => ({
       background: ${token.colorFillQuaternary};
     }
   `,
+  /**
+   * 高亮项用**三重线索**（DESIGN §8.1 的导航项同款）：底色 + 字色 + 字重。
+   *
+   * 只给底色的话，键盘上下移动时视线要去找「哪一行变色了」；把标题同时
+   * 提成链接色并加粗，扫读时一眼就能落下。用 `colorLink` 而不是 `colorPrimary`：
+   * 主色作文字在浅蓝底上只有 3.61:1（DESIGN §3.2）。
+   */
   itemActive: css`
     background: ${token.colorPrimaryBg};
+
+    & [data-role='title'] {
+      color: ${token.colorLink};
+      font-weight: 500;
+    }
   `,
   itemIcon: css`
     flex: none;
-    width: 18px;
+    width: 20px;
     text-align: center;
+    font-size: ${FONT_SIZE.item}px;
     color: ${token.colorTextSecondary};
   `,
   itemMain: css`
@@ -101,15 +175,29 @@ const useStyles = createStyles(({ css, token }) => ({
     white-space: nowrap;
   `,
 
-  /* 有输入时底部预览 AI 回答：体现「搜索和问答是同一个入口」 */
+  /** 空态 / 加载态也要有左右内边距，否则文字会顶到面板边缘 */
+  emptyBox: css`
+    padding: 26px 18px;
+  `,
+
+  /* ── 底部两段 ──────────────────────────────────────── */
+  /**
+   * 有输入时预览 AI 回答：体现「搜索和问答是同一个入口」。
+   *
+   * 底色用 `tintNav`（中性极浅灰）而**不是** `colorPrimaryBg`：高亮项用的
+   * 就是那个浅蓝，两者相邻时同一片蓝会连成一块，看起来像一个跨行的选中态。
+   * 而且 §0.1 说语义色只出现在真的有状态的地方——这条是**提示**，不是状态。
+   *
+   * AI 的暗示由 `✦` 图标的 `colorLink` 承担，不靠底色。
+   * 与 `DESIGN.md` §8.6 检索过程用同一种表面处理，二者是同类东西。
+   */
   aiRow: css`
     display: flex;
     align-items: flex-start;
     gap: 8px;
-    margin: 0 -24px -20px;
-    padding: 10px 24px;
-    border-top: 1px solid ${token.colorBorderSecondary};
-    background: ${token.colorPrimaryBg};
+    padding: 10px 18px;
+    border-top: 1px solid ${token.colorSplit};
+    background: ${token.tintNav};
     font-size: ${FONT_SIZE.note}px;
     line-height: 1.7;
     color: ${token.colorTextSecondary};
@@ -124,9 +212,8 @@ const useStyles = createStyles(({ css, token }) => ({
     display: flex;
     align-items: center;
     gap: 12px;
-    margin: 0 -24px -20px;
-    padding: 8px 24px;
-    border-top: 1px solid ${token.colorBorderSecondary};
+    padding: 9px 18px;
+    border-top: 1px solid ${token.colorSplit};
     font-size: ${FONT_SIZE.badge}px;
     color: ${token.colorTextTertiary};
   `,
@@ -292,20 +379,44 @@ function PaletteBody({
       width={620}
       centered={false}
       destroyOnHidden
-      styles={{ body: { padding: 20 } }}
+      /*
+       * body 与 container 的内边距都归零，三段各自管自己的左右内边距
+       * （见 useStyles.searchRow / list / foot）。
+       *
+       * **两处都要归零**：antd v6 的 `.ant-modal-container` 自带
+       * `padding: 20px 24px`（实测），只清 body 的话每一行仍会内缩 24px，
+       * hover 底色到不了面板边缘——命令面板的行应该是通栏的。
+       *
+       * `overflow: hidden` 是必需的：内容首尾两段要通栏，不裁掉的话
+       * 容器圆角会被子元素的直角盖住。
+       *
+       * 圆角用 12px 而不是 `token.borderRadiusLG`（现值 10px）：
+       * `docs/DESIGN.md` §5.2 把「对话框、命令面板」定为 **12–14px**，
+       * 而 antd 的 LG 是按 base + 2 派生的，够不到那个区间。
+       */
+      styles={{
+        body: { padding: 0 },
+        container: { padding: 0, borderRadius: 12, overflow: 'hidden' },
+      }}
+      /* 贴着屏幕上方而不是垂直居中：命令面板是「从顶部拉出来」的东西，
+         居中会让人以为是个对话框，期待它挡住并取代后面的一切。
+         **定位只靠这一处**——早期另给内容加了 `margin-top: -12vh`，
+         结果把搜索框拉到了面板外面。 */
       style={{ top: '14vh' }}
     >
-      <div className={styles.body}>
-        <Input
-          autoFocus
-          size="large"
-          variant="borderless"
-          prefix={<SearchOutlined style={{ opacity: 0.5 }} />}
-          placeholder="搜索文档、执行操作，或直接提问…"
-          value={value}
-          onChange={(event) => handleChange(event.target.value)}
-          onKeyDown={handleKeyDown}
-        />
+      <div className={styles.panel}>
+        <div className={styles.searchRow}>
+          <Input
+            autoFocus
+            size="large"
+            variant="borderless"
+            prefix={<SearchOutlined />}
+            placeholder="搜索文档、执行操作，或直接提问…"
+            value={value}
+            onChange={(event) => handleChange(event.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+        </div>
 
         <div className={styles.list} ref={listRef}>
           {commands.length > 0 && (
@@ -341,7 +452,7 @@ function PaletteBody({
           )}
 
           {items.length === 0 && (
-            <div style={{ padding: '26px 0' }}>
+            <div className={styles.emptyBox}>
               {searchQuery.isFetching ? (
                 <div style={{ textAlign: 'center' }}>
                   <Spin />
@@ -420,7 +531,11 @@ function PaletteRow({
         <span className={styles.itemIcon}>{item.icon}</span>
       )}
       <span className={styles.itemMain}>
-        <span className={styles.itemTitle}>{item.title}</span>
+        {/* data-role 供高亮态选中：antd-style 的作用域类名不好做子选择器匹配，
+            而这个属性把「这是标题」表达得比 nth-child 明确 */}
+        <span className={styles.itemTitle} data-role="title">
+          {item.title}
+        </span>
         <span className={styles.itemSub}>{item.sub}</span>
       </span>
     </button>

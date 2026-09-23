@@ -358,6 +358,42 @@ describe('来源徽标色对', () => {
   })
 })
 
+describe('设置页的色对', () => {
+  /**
+   * 设置页引入了三组上面的通用矩阵**没有覆盖**的组合：
+   *
+   *  1. 插件条目的状态徽标：`colorSuccessText` on **容器白**（不是 on 自己的浅绿底——
+   *     徽标直接落在面板里）；以及「待开发」用 `colorFillTertiary` 这个半透明底
+   *  2. 自检结果里的警告文字：`colorWarningText` on 容器白
+   *
+   * 它们都属于「状态必须能被看见」（DESIGN §0.2），所以照样要有底线。
+   * 加这条测试的理由与 `来源徽标色对` 一样——不测就会在下次换色时静默失效。
+   */
+  it('状态徽标「已注册」：successText on 容器白 ≥ 4.5:1', () => {
+    expect(
+      contrast(String(token.colorSuccessText), String(token.colorBgContainer)),
+    ).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it('状态徽标「待开发」：secondary on fill-tertiary（合成后）≥ 4.5:1', () => {
+    // colorFillTertiary 是半透明的，必须先合成到容器白上再算——
+    // 直接拿 alpha 值算会得到把黑色当底色的假数字
+    expect(
+      contrastOver(
+        String(token.colorTextSecondary),
+        String(token.colorFillTertiary),
+        String(token.colorBgContainer),
+      ),
+    ).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it('检索自检的警告文字 on 容器白 ≥ 4.5:1', () => {
+    expect(
+      contrast(String(token.colorWarningText), String(token.colorBgContainer)),
+    ).toBeGreaterThanOrEqual(4.5)
+  })
+})
+
 describe('布局常量', () => {
   it('内容列只有一个宽度值', () => {
     // docs/DESIGN.md §5.4：同一条内容在列表里和详情里不该有两种宽度。

@@ -36,6 +36,33 @@ export interface AppSearch {
   id?: string
 }
 
+/**
+ * 侧边栏折叠偏好的持久化。
+ *
+ * 用 `localStorage` 而不是 cookie / 服务端：它是**纯客户端的一次性渲染偏好**，
+ * 服务端不关心，也没必要为它多一次请求。
+ *
+ * 读取时用 try/catch 包住：`localStorage` 在隐私模式或存储被禁用时会**抛错**
+ * 而不是返回 null，不兜住的话整个应用壳都渲染不出来——一个偏好不该有这种能力。
+ */
+const NAV_COLLAPSED_KEY = 'mimir.nav-collapsed'
+
+function readNavCollapsed(): boolean {
+  try {
+    return localStorage.getItem(NAV_COLLAPSED_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function writeNavCollapsed(collapsed: boolean): void {
+  try {
+    localStorage.setItem(NAV_COLLAPSED_KEY, collapsed ? '1' : '0')
+  } catch {
+    // 写不进去只影响「下次打开还记不记得」，不该影响这次点击
+  }
+}
+
 export const Route = createFileRoute('/_app')({
   validateSearch: (search: Record<string, unknown>): AppSearch => ({
     // scope 用一个字符串编码筛选条件，而不是拆成三个字段：
@@ -104,6 +131,39 @@ const useStyles = createStyles(({ css, token }) => ({
       grid-template-columns: 180px minmax(0, 1fr);
     }
   `,
+  /**
+   * 侧边栏折叠：左列收成 48px 的图标条。
+   *
+   * 宽度的真相在这里而不在 `NavSidebar` 里——三栏/两栏的差别只影响
+   * **后面几列**，第一列两种模式都一样，所以四条规则都要各自声明一次
+   * （grid 的 `grid-template-columns` 是一整条声明，没法只覆盖一列）。
+   *
+   * 48px 的来由：图标 20px + 左右各 14px，与展开态的 200px 是同一套
+   * 内边距节奏，折叠时图标落在与展开态文字相同的视觉竖线上。
+   *
+   * **折叠不跨断点切换**——窄屏（≤1100px）下折叠宽度同样是 48px，
+   * 不跟着 180/260 那套走，否则「折叠」在不同屏幕宽度下会折叠出两种宽度。
+   */
+  appCollapsed: css`
+    display: grid;
+    grid-template-columns: 48px 300px minmax(0, 1fr);
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    background: ${token.colorBgLayout};
+
+    @media (max-width: 1100px) {
+      grid-template-columns: 48px 260px minmax(0, 1fr);
+    }
+  `,
+  appWideCollapsed: css`
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    background: ${token.colorBgLayout};
+  `,
   nav: css`
     min-width: 0;
     min-height: 0;
@@ -161,6 +221,27 @@ function AppShell() {
   /** 只有文档模式有中栏；对话与设置都是两栏（docs/PRD.md §5.2） */
   const hasMiddleColumn = page === 'docs'
 
+  /**
+   * 侧边栏折叠。
+   *
+   * **状态放在这里而不是 `NavSidebar` 内部**：折叠要改的是外层的
+   * `grid-template-columns`（左列 200px → 48px），而网格属于这一层。
+   * 放在栏内的话，栏自己收窄了、网格没变，只会留下一片空的 200px。
+   *
+   * 持久化到 `localStorage`：折叠是**长期偏好**，不是临时动作。
+   * 每次刷新都弹回去会让人反复去点它——而这个按钮的价值就在于点一次
+   * 之后不用再管。用惰性初始化读取，只在挂载时读一次。
+   */
+  const [navCollapsed, setNavCollapsed] = useState(() => readNavCollapsed())
+
+  const gridClass = hasMiddleColumn
+    ? navCollapsed
+      ? styles.appCollapsed
+      : styles.app
+    : navCollapsed
+      ? styles.appWideCollapsed
+      : styles.appWide
+
   const openDocument = (id: string, scope = search.scope) => {
     setCameFromChat(false)
     void navigate({ to: '/docs', search: { scope, id } })
@@ -208,7 +289,7 @@ function AppShell() {
           void navigate({ to: '/chat', search: { scope: search.scope, id: lastConversationId } }),
       }}
     >
-      <div className={hasMiddleColumn ? styles.app : styles.appWide}>
+      <div className={gridClass}>
         <div className={styles.nav}>
           <NavSidebar
             selection={{
@@ -218,6 +299,14 @@ function AppShell() {
             }}
             onOpenPalette={() => setPaletteOpen(true)}
             onOpenCapture={() => setCaptureOpen(true)}
+            collapsed={navCollapsed}
+            onToggleCollapsed={() => {
+              setNavCollapsed((collapsed) => {
+                const next = !collapsed
+                writeNavCollapsed(next)
+                return next
+              })
+            }}
           />
         </div>
 

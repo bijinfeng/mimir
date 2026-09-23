@@ -1,6 +1,6 @@
-import { ArrowLeftOutlined, FolderOpenOutlined } from '@ant-design/icons'
+import { FolderOpenOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
-import { useNavigate, useRouter } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { Button, Menu, Tree, Tooltip } from 'antd'
 import type { MenuProps } from 'antd'
 import { BrandMark } from '@/components/BrandMark'
@@ -22,7 +22,7 @@ import { useUnsaved } from '@/lib/unsaved'
  *
  * ```
  * ┌────────────────────────────┐
- * │ [标记] mimir       ← →     │  顶栏：品牌 + 历史
+ * │ [标记] mimir         ⇤     │  顶栏：品牌 + 折叠开关
  * ├────────────────────────────┤
  * │ ＋ 新建对话                 │  动作列表（图标 + 文字 + 右侧快捷键）
  * │ ⌕ 搜索              Ctrl K │
@@ -43,6 +43,11 @@ import { useUnsaved } from '@/lib/unsaved'
  * │ ⚙ 设置                      │
  * └────────────────────────────┘
  * ```
+ *
+ * 折叠后（48px，`DESIGN.md` §5.4）只剩图标列：目录树与分组标签不渲染，
+ * 顶栏的标记与开关改成竖排。状态的持有者是 `_app.tsx`——折叠要改的是
+ * 外层的 `grid-template-columns`，网格在哪一层，状态就在哪一层。
+ * 详见 `docs/DECISIONS.md` D-026。
  *
  * ## 会话优先（`docs/PRD.md` §5.2）
  *
@@ -71,15 +76,23 @@ export interface NavSidebarProps {
   selection: NavSelection
   onOpenPalette: () => void
   onOpenCapture: () => void
+  /** 折叠状态由 `_app.tsx` 持有——它要据此改三栏宽度，见那里的注释 */
+  collapsed: boolean
+  onToggleCollapsed: () => void
 }
 
 /** 会话历史最多显示多少条。再多侧边栏就要长时间滚动，而它们极少被翻到 */
 const CONVERSATION_LIMIT = 12
 
-export function NavSidebar({ selection, onOpenPalette, onOpenCapture }: NavSidebarProps) {
+export function NavSidebar({
+  selection,
+  onOpenPalette,
+  onOpenCapture,
+  collapsed,
+  onToggleCollapsed,
+}: NavSidebarProps) {
   const { styles } = useStyles()
   const navigate = useNavigate()
-  const router = useRouter()
   const { runGuarded } = useUnsaved()
 
   const countsQuery = useQuery({ queryKey: ['counts'], queryFn: api.documents.counts })
@@ -114,28 +127,61 @@ export function NavSidebar({ selection, onOpenPalette, onOpenCapture }: NavSideb
 
   const folders = foldersQuery.data?.items ?? []
   const selectedKey = currentKey(selection)
+  const conversations = conversationsQuery.data?.items ?? []
+
+  /**
+   * 会话那一段。
+   *
+   * **空态的「还没有对话」在折叠时整块不渲染。** antd 折叠后会给没有图标的
+   * 菜单项一个兜底：取标签的**第一个字**当图标（它假定无图标项是纯文字入口）。
+   * 实测那个禁用占位项因此渲染成一个孤立的「还」字，看起来像乱码。
+   *
+   * 补一个图标是错的做法——那会让人以为「还没有对话」是个能点的入口。
+   * 折叠态里它没有信息量（会话列表本身也收成了图标），直接不渲染。
+   */
+  const conversationItems =
+    conversations.length === 0
+      ? collapsed
+        ? []
+        : [
+            {
+              key: 'conv-group:all',
+              type: 'group' as const,
+              label: '对话',
+              children: [{ key: 'conv-empty', label: '还没有对话', disabled: true }],
+            },
+          ]
+      : buildConversations(conversations, CONVERSATION_LIMIT)
 
   return (
     <nav className={styles.nav}>
-      <div className={styles.topBar}>
-        <span className={styles.brandLockup}>
+      <div className={`${styles.topBar} ${collapsed ? styles.topBarCollapsed : ''}`}>
+        <span className={`${styles.brandLockup} ${collapsed ? styles.brandLockupCollapsed : ''}`}>
           <BrandMark size={20} title={null} />
-          <b>mimir</b>
+          {/* 折叠后只剩标记：品牌名是这一列里唯一「不折叠也能猜到」的东西，
+              而它是 48px 宽放不下的那部分 */}
+          {collapsed ? null : <b>mimir</b>}
         </span>
 
         {/*
-          前进/后退。**后退按钮只在真的能退时可用**——`router.history.canGoBack`
-          是路由器自己的判断，不是猜的。
-          没有「前进」：@tanstack/history 不暴露 canGoForward，
-          画一个永远禁用的按钮比不画更让人困惑（DESIGN §7.4）。
+          侧边栏折叠开关。
+          
+          **它替代了原先的「返回上一处」按钮。** 那个按钮的问题不是没用，
+          而是位置错了：它是**全局**的历史导航，却挂在侧边栏顶栏上——
+          用户找它时会去看内容区，而想收侧边栏时会来看这个角落。
+          折叠开关是这一栏唯一的自解释动作，所以这里是它的位置。
+          
+          历史返回没有消失：浏览器的后退键仍然可用，`DocumentPanel` 也从
+          「从对话来」的标记给出了明确的返回入口。
         */}
-        <Tooltip title="返回上一处">
+        <Tooltip title={collapsed ? '展开侧边栏' : '折叠侧边栏'} placement="right">
           <Button
             type="text"
             size="small"
-            icon={<ArrowLeftOutlined />}
-            disabled={!router.history.canGoBack}
-            onClick={() => router.history.back()}
+            aria-label={collapsed ? '展开侧边栏' : '折叠侧边栏'}
+            aria-expanded={!collapsed}
+            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+            onClick={onToggleCollapsed}
           />
         </Tooltip>
       </div>
@@ -143,22 +189,14 @@ export function NavSidebar({ selection, onOpenPalette, onOpenCapture }: NavSideb
       <div className={styles.body}>
         <Menu
           mode="inline"
-          className={styles.menu}
+          className={`${styles.menu} ${collapsed ? styles.menuCollapsed : ''}`}
+          inlineCollapsed={collapsed}
           selectedKeys={[selectedKey]}
           onClick={onMenuClick}
           items={[
             ...buildActions(),
             { type: 'divider' },
-            ...((conversationsQuery.data?.items.length ?? 0) === 0
-              ? [
-                  {
-                    key: 'conv-group:all',
-                    type: 'group' as const,
-                    label: '对话',
-                    children: [{ key: 'conv-empty', label: '还没有对话', disabled: true }],
-                  },
-                ]
-              : buildConversations(conversationsQuery.data?.items ?? [], CONVERSATION_LIMIT)),
+            ...conversationItems,
             { type: 'divider' },
             {
               type: 'group',
@@ -168,40 +206,51 @@ export function NavSidebar({ selection, onOpenPalette, onOpenCapture }: NavSideb
           ]}
         />
 
-        {/* 目录不在 Menu 里：Menu 是扁平的，而目录是层级结构。
-            两处的行高与选中态必须看起来是同一套东西（见 .style.ts） */}
-        <div className={styles.treeGroup}>
-          <div
-            className={styles.emptyHint}
-            style={{ paddingTop: 14, fontWeight: 600, color: 'inherit' }}
-          >
-            目录
+        {/*
+          目录树在折叠态下**整块隐藏**。
+          
+          一个层级树没有「只剩图标」的形态：留着它会变成一列缩进错乱、
+          认不出是什么的文件夹图标。而它本来就是低频入口（`PRD.md` §5.2
+          的左栏清单里它排在最后），折叠时让位是合理的代价。
+          
+          同理，会话历史在折叠态下由 `inlineCollapsed` 收成图标 + tooltip——
+          相对时间那一栏会消失，那是 rail 的固有代价。
+        */}
+        {collapsed ? null : (
+          <div className={styles.treeGroup}>
+            <div
+              className={styles.emptyHint}
+              style={{ paddingTop: 14, fontWeight: 600, color: 'inherit' }}
+            >
+              目录
+            </div>
+            {folders.length === 0 ? (
+              <div className={styles.emptyHint}>还没归入任何目录</div>
+            ) : (
+              <Tree
+                blockNode
+                showIcon
+                defaultExpandAll
+                className={styles.treeWrap}
+                selectedKeys={
+                  selection.page === 'docs' && selection.scope.startsWith('folder:')
+                    ? [selection.scope.slice('folder:'.length)]
+                    : []
+                }
+                icon={<FolderOpenOutlined />}
+                treeData={toTreeData(folders, styles.treeCount)}
+                onSelect={(_keys, info) => goDocs(`folder:${String(info.node.key)}`)}
+              />
+            )}
           </div>
-          {folders.length === 0 ? (
-            <div className={styles.emptyHint}>还没归入任何目录</div>
-          ) : (
-            <Tree
-              blockNode
-              showIcon
-              defaultExpandAll
-              className={styles.treeWrap}
-              selectedKeys={
-                selection.page === 'docs' && selection.scope.startsWith('folder:')
-                  ? [selection.scope.slice('folder:'.length)]
-                  : []
-              }
-              icon={<FolderOpenOutlined />}
-              treeData={toTreeData(folders, styles.treeCount)}
-              onSelect={(_keys, info) => goDocs(`folder:${String(info.node.key)}`)}
-            />
-          )}
-        </div>
+        )}
       </div>
 
       <div className={styles.foot}>
         <Menu
           mode="inline"
-          className={styles.menu}
+          className={`${styles.menu} ${collapsed ? styles.menuCollapsed : ''}`}
+          inlineCollapsed={collapsed}
           selectedKeys={[selectedKey]}
           onClick={onMenuClick}
           items={buildFooter()}

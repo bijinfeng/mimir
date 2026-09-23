@@ -15,6 +15,7 @@ import type {
   FolderListResponse,
   NoteCreate,
   NoteUpdate,
+  RuntimeConfig,
   SaveNoteInput,
   SearchQueryInput,
   SearchResponse,
@@ -208,6 +209,16 @@ export const api = {
         { method: 'POST' },
       )
     },
+  },
+
+  /**
+   * 生效中的运行时配置，只读。
+   *
+   * 设置页显示它而不是在组件里硬编码一份——配置的真相在服务端
+   * （环境变量与代码常量），前端各写一份必然会漂移。
+   */
+  config() {
+    return request<RuntimeConfig>('/api/config')
   },
 
   auth: {
