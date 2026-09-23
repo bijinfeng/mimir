@@ -1,0 +1,21 @@
+{
+  "name": "@mimir/plugin-provider",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@mimir/shared": "workspace:*",
+    "@tanstack/ai": "0.55.0",
+    "@tanstack/ai-openai": "0.22.8"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
+  }
+}

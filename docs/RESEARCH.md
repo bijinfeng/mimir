@@ -129,6 +129,128 @@ v1             自动生成   17:03
 | Wiki 全自动生成 | 让 agent 把笔记改写成互链页面，对个人是风险而非收益。笔记是有主张的，不是待蒸馏的语料 |
 | 树形层级作为**唯一**组织方式 | 树适合归档（唯一位置），标签适合横切（可多个）。两者分工不同，应当并存 |
 | Cordis 插件树 | 为插件生态设计的架构，本项目只需要内部接缝 |
+| 可写的「设置」与 `.env` 双真相 | 见 §1.5 第 2 条——分层解析是它的解法，但前提是键集闭集与写入校验都做齐 |
+
+### 1.5 插件与配置机制（二次调研，2026-09）
+
+第一轮调研（§1.1–1.4）看的是它的能力与交互。这一轮专门读它的**插件与配置
+机制**，因为用户提出「配置项都插件化，值得借鉴」。结论与证据如下。
+
+**（一）「万物皆插件」是误读，它没有插件框架。**
+
+`grep -ri "everything is a plugin|万物皆插件"` 在 `*.md` 里 0 命中。`Cordis`
+只出现在 `packages/dsh-weknora/`——那是一个给 **DeepSeek Harness** 写的客户端
+插件包（`cordis.patch.yml` + `inject = ['tools']` + `apply(ctx, config)`），
+不是 WeKnora 自己的架构。
+
+Go 主干里真正存在的是一套更窄的东西：`internal/application/service/chat_pipeline/chat_pipeline.go:11-21`
+
+```go
+type Plugin interface {
+	OnEvent(ctx context.Context, eventType types.EventType,
+		chatManage *types.ChatManage, next func() *PluginError) *PluginError
+	ActivationEvents() []types.EventType
+}
+```
+
+15 个「插件」在 `internal/container/container.go:489-503` 手工装配成一条
+中间件链。没有依赖声明、没有外部清单、没有生命周期——**是管道阶段，不是插件系统**。
+
+**教训**：它值得学的不是「插件化」这个词，而是几处**具体的机制**。
+
+**（二）配置三层解析：DB 行 > 环境变量 > 内置默认。**
+
+截图里那句「此处设置优先于服务端环境变量，留空则使用环境变量默认值」是真的，
+实现在 `internal/application/service/system_setting.go:633-656`：
+
+```go
+func (s *systemSettingService) GetInt(ctx context.Context, key string, envName string, def int64) int64 {
+	if raw, ok := s.resolveRaw(ctx, key); ok { /* 解码并返回 */ }
+	if envName != "" {
+		if v := os.Getenv(envName); v != "" {
+			if n, err := strconv.ParseInt(v, 10, 64); err == nil { return n }
+		}
+	}
+	return def
+}
+```
+
+四个配套细节，每一个都解决了「可写设置」的一个真问题：
+
+| 细节 | 做法 | 解决的问题 |
+|---|---|---|
+| **键集是闭集** | `settingSpec` 在代码里注册合法键（`system_setting.go:66-96`），`Update` 拒绝未知键（`:922-926`） | 界面无法写入任意键，也就不可能有「界面里有、代码里没人读」的设置 |
+| **迁移不 seed** | `000053_...up.sql:16-22` 刻意不插默认行 | 否则部署方在 `.env` 里配的值会被空默认值**静默覆盖**。未设置的行以「虚拟行」形式从环境变量回填 |
+| **写入即校验** | 类型检查 + 每键的语法钩子，400 返回（`:928-964`） | 坏值在保存时就失败，而不是等到第一次调用 |
+| **热更新** | 预加载 + Redis pub/sub 按 key 失效 + `dispatchSideEffects`（`:374-383`、`:557-571`、`:495-514`） | 改设置不用重启。它需要 Redis 是因为多副本；单进程一个内存表即可 |
+
+**（三）密钥：AES-GCM 落库 + DTO 白名单剔除。**
+
+`internal/types/model.go:255-269` 在 GORM 的 serde 边界加密（`enc:v1:` 前缀），
+密钥来自 32 字节的 `SYSTEM_AES_KEY`（未设时 `GetAESKey()` 返回 nil，
+**退化成明文落库**——`internal/utils/crypto.go:19-25`，这是一个明确的坑）。
+下发前走 `ModelParametersDTO`，注释写明「除两个密文字段外全部字段」
+（`internal/handler/dto/model.go:200-217`）。
+
+**（四）解析引擎注册表 + 可用性探测——本轮最值得抄的一处。**
+
+`internal/infrastructure/docparser/engines.go:34-41` 注册八个引擎；
+注册表把 Go 本地引擎与 Python docreader 通过 RPC 声明的引擎**合并**
+（`engine_registry.go:96-142`），远端同名引擎的描述与文件类型优先。
+可用性不是静态检查，是接口的第二个方法：
+
+```go
+// engine_registry.go:15-29
+CheckAvailable(docreaderConnected bool, overrides map[string]string) (available bool, reason string)
+
+// engines.go:144-149 / 172-177
+func (e *anydocEngine) CheckAvailable(_ bool, _ map[string]string) (bool, string) { return backendAvailable(), ... }
+func (e *mineruCloudEngine) CheckAvailable(_ bool, overrides map[string]string) (bool, string) {
+	apiKey := strings.TrimSpace(overrides["mineru_api_key"])
+	if apiKey == "" { return false, "MinerU API Key not configured" }
+	return PingMinerUCloud(apiKey)   // 真的发请求
+}
+```
+
+`GET /system/parser-engines` 回 `{data, docreader_addr, connected}`，
+每项含 `Available` 与 `UnavailableReason`；界面用绿/红徽标 + tooltip
+（`frontend/src/views/settings/ParserEngineSettings.vue:70-88`）。
+`POST /system/parser-engines/check` 用**未保存的表单值**试一次——保存前就能验证。
+
+**（五）「可用」是探测出来的，不是算出来的。** 模型侧同理：
+`internal/handler/initialization.go:2072-2100` 建一个实例、发一条
+`"test"` 且 `MaxTokens: 1` 的请求，**把 HTTP 400 当成功**
+（端点可达且鉴权通过，只是参数不匹配）。密钥已落库时，测试请求可以传空密钥，
+服务端用 `fillSecretsFromStoredModel` 补齐（`:1801-1834`）。
+
+**（六）界面：多数是手写的，两处是 schema 驱动。**
+
+`frontend/src/config/settingsAccess.ts` 做角色门禁、
+`deploymentCapabilities.ts` × `GET /system/capabilities` 做**能力探测型隐藏**
+（不支持的功能整个分区不出现，而不是显示一个点不动的开关）。
+真正 schema 驱动的只有两处：向量库（`api/vector-store.ts` 的
+`connection_fields[]/index_fields[]`，`VectorStoreSettings.vue` 按
+`field.type` 渲染）与网络搜索（`web_search_provider.go:152-166`
+的 `ConfigFields []WebSearchProviderConfigField`）。
+`ParserEngineSettings.vue` 反过来——按引擎名硬编码抽屉
+（`v-if="currentEngine.Name === 'mineru'"`），**八个引擎就是八段重复模板**。
+
+**（七）模型配置的形态：平铺的模型卡片，角色绑定在消费方。**
+
+`ModelSettings.vue` 是一份按 `chat|embedding|rerank|vllm|asr` 分 tab 的卡片列表；
+「哪个角色用哪个模型」不在设置页，而在消费方各挂一个
+`ModelSelector.vue`（知识库、智能体各一处）。
+对本项目这意味着：不需要为「角色 → 模型」造一套新概念，
+在设置页给每个角色一行下拉即可，比它的界面更直接。
+
+**（八）存储/图/搜索的位置。**
+
+向量库 10 种、对象存储 8 种、图库只有 Neo4j 且 `NEO4J_ENABLE=true` 才启用
+（`internal/container/container.go:1721-1725`）、网络搜索 14 家
+（`internal/types/web_search_provider.go:16-30`）。
+这些是「多后端」而不是「插件」——**它自己也只在真正多实现的地方做了抽象**
+（对象存储有 allow-list 与按 KB 绑定）。本项目只有 Postgres，
+把它做成可切换的存储引擎是纯负担，见 `DECISIONS.md` D-031。
 
 ---
 

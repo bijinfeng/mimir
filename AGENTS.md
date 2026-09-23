@@ -113,8 +113,9 @@ Postgres 的 `simple` 配置没有词边界概念，「组件性能优化」会�
 | 组件没变快 | React Compiler 静默跳过了（抑制了 React 规则，或 ref 声明晚于使用它的 effect） |
 | 建索引失败 | pgvector 的 HNSW 上限 2000 维，超过要用 `halfvec` |
 | 类型对不上 | `^0.145.0` 这类 peer 范围对 0.x 版本意味着 `>=0.145.0 <0.146.0`，装最新版会失败 |
-| 生产启动报错 | workspace 包（`@mimir/shared`）以源码发布，Node 不执行 node_modules 里的 TS —— 必须由使用方编译进产物（web 走 Vite，server 走 tsdown）|
-| 静态资源 404 | 服务端打包拍平了源码目录，`resolveWebDist()` 算错层级 —— tsdown 要开 `unbundle: true` |
+| 生产启动报错 | workspace 包（`@mimir/shared`）以源码发布，Node 不执行 node_modules 里的 TS —— 必须由使用方编译进产物（web 与 server 都走 Vite，server 是 SSR 构建）|
+| 静态资源 404 | 服务端产物被打包成 chunk，`resolveWebDist()` 算错层级 —— Vite 的 SSR 构建要开 `preserveModules` |
+| 服务端 dev 起不来 | dev 入口自己调了 `serve()`，与 Vite 的 dev server 抢端口 —— 监听只由生产入口 `src/index.ts` 做 |
 | 路径算错 | `src/` 与 `dist/` 的目录层级不同，不要写死相对偏移量 |
 | 状态色看不清 | 换了 antd 的**种子色**，派生色跑偏；或用了 `Tag color="green"` 预设色（对比度不由我们控制） |
 | 界面颜色不对但不报错 | 内层 `ConfigProvider` 又传了一次 `theme` —— `cssVar` 的 key 被重算，`--ant-*` 变量名换了，引用处静默失效 |

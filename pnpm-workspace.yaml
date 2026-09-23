@@ -1,6 +1,10 @@
 packages:
   - apps/*
   - packages/*
+  # 插件包。它们是独立 workspace 包，而不是 apps/server 的子目录——
+  # 「插件不 import 宿主内部」这条边界由此在**模块解析层面**成立：
+  # 想 import apps/server 的东西会直接解析失败，而不是靠人记得别这么做。
+  - plugins/*
 
 # ── 依赖版本集中管理 ──
 #
@@ -15,6 +19,10 @@ catalog:
   typescript: 7.0.2
   vitest: ^5.0.1
   '@types/node': ^26.6.2
+  # 前后端共用同一个 Vite：服务端的 dev 服务器与 SSR 构建也走它。
+  # 两边版本一致是结构性的要求——web 的 dev 代理与 server 的 dev 端口
+  # 是一对配置，错开会得到「代理指到没人监听的端口」这类难查的症状
+  vite: ^8.3.0
 
   # ── 共享运行库（前后端都要用同一份 schema）──
   zod: ^4.6.5

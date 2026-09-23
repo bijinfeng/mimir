@@ -1,46 +1,140 @@
 import { Hono } from 'hono'
-import type { RuntimeConfig } from '@mimir/shared'
-import { env } from '../env.js'
-import { retrievalLegs } from '../plugins/leg/index.js'
-import { PER_LEG_LIMIT } from '../search/index.js'
-import { RRF_K } from '../search/fuse.js'
+import {
+  MODEL_ROLE_LABELS,
+  probeRequestSchema,
+  updateSettingsInputSchema,
+  type ModelRoleStatus,
+  type PluginDescriptor,
+  type ProbeResult,
+  type RuntimeConfig,
+  type SettingEntry,
+} from '@mimir/shared'
+import { HttpError, parseInput } from '../lib/http.js'
+import { assemble } from '../plugins/host.js'
 import type { AppEnv } from '../types.js'
 
 /**
- * 生效中的运行时配置，**只读**。
+ * 运行时配置：设置、插件、模型就绪状态。**这是设置页唯一的数据来源。**
  *
- * 存在的理由：设置页要显示「哪些模型在干活、融合参数是多少」，
- * 而这些值的真相都在服务端（环境变量与代码常量）。前端硬编码一份副本
- * 就会漂移——改了 `MODEL_CHAT_MODEL` 之后设置页仍显示默认值，
- * 界面看起来很好，只是说的不是真的。
+ * ## 为什么它可写了（M0 时是只读的）
  *
- * 四个与设置页无关的性质，都是刻意的：
+ * M0 的判断是「配置的真相是 `.env` 与代码常量，做成可写的等于让界面成为
+ * 第二个真相来源」（D-025）。那是对的——当时只有 5 个模型键，没有要调的参数。
  *
- *  1. **只读。** 没有写入端点，因为配置的真相在 `.env` 与代码里。
- *     做成可写的就等于让界面成为第二个真相来源，那是另一半麻烦
- *  2. **不含密钥。** 只回 baseURL 与模型名（见 shared 的注释）
- *  3. **与 `/maintenance` 分开。** 那条是「会改数据」的动作，这条只是读
- *  4. **值取自运行时对象本身**（`env` / `retrievalLegs` / `RRF_K`），
- *     不是重新写一遍常量——否则又制造了一份会漂移的副本
+ * M1 起有十几个要反复试的参数（分块大小、各通道权重、RRF k），把「调权重」
+ * 变成「改 `.env` 再重启」会直接劝退调参这件事本身。所以加一层 DB 覆盖，
+ * **但不放弃 `.env` 作为部署真相**：解析顺序是 `覆盖 > 环境变量 > 默认`，
+ * 且每个键都在界面上显示它当前的来源（`docs/TECH.md` §7.5）。
+ *
+ * 键集是**闭集**：只有注册过的键能被写入，所以不存在「界面上存了但没代码读」。
  */
 export const configRoute = new Hono<AppEnv>()
 
-configRoute.get('/', (c) => {
-  const config: RuntimeConfig = {
-    models: {
-      // 与 assistant-stream.ts 的判断保持一致：缺 key 或缺 baseURL 都算没配
-      configured: Boolean(env.modelApiKey && env.modelBaseUrl),
-      provider: env.modelProviderName,
-      baseUrl: env.modelBaseUrl,
-      chat: env.modelChatModel,
-      reasoning: env.modelReasoningModel,
-    },
-    retrieval: {
-      rrfK: RRF_K,
-      perLegLimit: PER_LEG_LIMIT,
-      legs: retrievalLegs.map((leg) => ({ name: leg.name, weight: leg.weight })),
-    },
+/** 探测结果的内存缓存。**不进数据库**：它是「刚才通不通」的观测，不是配置 */
+const probes = new Map<string, ProbeResult>()
+
+configRoute.get('/', async (c) => {
+  const { settings, descriptors } = assemble()
+
+  const entries = (await settings.entries()) as SettingEntry[]
+  const plugins = (await descriptors()) as PluginDescriptor[]
+  const models = await modelStatuses()
+
+  return c.json({
+    settings: entries,
+    plugins,
+    models,
+    probes: [...probes.values()],
+  } satisfies RuntimeConfig)
+})
+
+/**
+ * 写入设置。**整批校验，任一键不合法则整批拒绝。**
+ *
+ * `null` 表示删除覆盖、回落到环境变量或默认值——那是一个真实的动作，
+ * 不是「清空输入框」的副作用（`docs/TECH.md` §7.5）。
+ */
+configRoute.patch('/settings', async (c) => {
+  const { settings } = assemble()
+  const input = await parseInput(c, 'json', updateSettingsInputSchema)
+  const result = await settings.update(input.values)
+
+  if (!result.ok) {
+    throw new HttpError(400, 'INVALID_SETTING', '有配置项不合法，整批未保存', result.issues)
   }
 
-  return c.json(config)
+  return c.json(result)
 })
+
+/**
+ * 真实探测一个模型角色：发一次最小请求。
+ *
+ * **显式动作，不自动触发**——每次进设置页都发一次真实调用，慢且花钱
+ * （`docs/TECH.md` §7.8）。结果只存在内存：重启即回到「未测试」，
+ * 比留一个可能过期的「可用」诚实。
+ */
+configRoute.post('/probe', async (c) => {
+  const { seams } = assemble()
+  const input = await parseInput(c, 'json', probeRequestSchema)
+
+  const providers = seams.provider.implementations()
+  const provider = providers[0]
+  if (!provider) {
+    throw new HttpError(500, 'NO_PROVIDER', '没有注册任何模型提供方')
+  }
+
+  const outcome = await provider.impl.probe(input.role as never)
+  const result: ProbeResult = {
+    role: input.role,
+    ok: outcome.ok,
+    message: outcome.message,
+    at: new Date().toISOString(),
+  }
+
+  probes.set(input.role, result)
+  return c.json(result)
+})
+
+/**
+ * 模型角色的就绪状态。**派生值，不存**。
+ *
+ * 「就绪」的判据是「有可用的 provider 且它声明支持这个角色」，
+ * 而不是「键有值」——键有值但地址写错、模型名下架都属于不能干活，
+ * 而那只在真实调用时才知道（所以有上面那条探测端点）。
+ */
+async function modelStatuses(): Promise<ModelRoleStatus[]> {
+  const { seams, settings } = assemble()
+  const provider = seams.provider.implementations()[0]
+
+  const modelKeys: Record<string, string> = {
+    chat: 'model.chat.model',
+    reasoning: 'model.reasoning.model',
+    summarize: 'model.summarize.model',
+    embed: 'model.embed.model',
+  }
+
+  return Promise.all(
+    Object.entries(modelKeys).map(async ([role, key]) => {
+      const model = await settings.getString(key)
+      const supported = provider ? await provider.impl.supports(role as never) : false
+
+      // 摘要的回落规则要在状态里如实反映：它可以用对话模型干活
+      const effective =
+        role === 'summarize' && model.trim() === ''
+          ? await settings.getString(modelKeys.chat!)
+          : model
+
+      return {
+        role,
+        label: MODEL_ROLE_LABELS[role as keyof typeof MODEL_ROLE_LABELS] ?? role,
+        model: effective,
+        ready: supported,
+        reason: supported
+          ? null
+          : model.trim() === '' && role === 'embed'
+            ? '未配置。配了它才会有向量通道（语义检索）'
+            : '需要配置 API 密钥与服务商地址',
+      }
+    }),
+  )
+}

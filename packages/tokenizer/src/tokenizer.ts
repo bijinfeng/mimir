@@ -2,18 +2,26 @@ import { Jieba } from '@node-rs/jieba'
 import { dict } from '@node-rs/jieba/dict.js'
 
 /**
- * 中文分词。
+ * 中文分词（`docs/TECH.md` §4.4）。
  *
  * 为什么必须做这件事：Postgres 的 `simple` / `unicode61` 分词器没有中文词边界概念，
- * 「组件性能优化」会被当成**一个** token。结果是用户搜「组件」永远搜不到。
- * 所以写入时用 jieba 切好、以空格连接存进 search_text 列，
- * 查询时用同一套分词切查询串，两边才能对上。
+ * 「组件性能优化」会被当成**一个** token。所以写入时用 jieba 切好、以空格连接
+ * 存进 `search_text` 列，查询时用同一套分词切查询串——两边才能对上。
  *
- * 注意两点，都踩过坑：
+ * **两个踩过的坑**：
  *  1. `new Jieba()` 不带词典会退化成逐字切分（「组件」→「组」「件」），
  *     必须用 `Jieba.withDict(dict)` 显式加载词典。
  *  2. `withDict` 只接收词典；idf 是 TfIdf 关键词提取用的，分词不需要。
+ *
+ * `@node-rs/jieba` 是 Rust 实现，有 linux-x64-gnu/musl 预编译包，
+ * Node 22 直接可用，无编译步骤。
+ *
+ * **单独成一个包的理由**：分词是「检索」与「写入」两侧共用的同一份规则，
+ * 而这两侧分别属于检索通道插件与宿主的写入路径。放在任何一侧，另一侧就要
+ * 反向依赖它——那正是「插件不依赖宿主内部」要避免的。它也不属于接缝
+ * （没有第二个实现可替代：换分词器等于换检索质量，是产品级决定）。
  */
+
 let jieba: Jieba | null = null
 
 function getJieba(): Jieba {
@@ -47,11 +55,6 @@ export function toSearchText(...parts: string[]): string {
  */
 export function toQueryText(input: string): string {
   return tokenize(input.toLowerCase()).join(' ')
-}
-
-/** 是否包含中日韩字符。用于决定要不要启用子串兜底检索。 */
-export function hasCjk(input: string): boolean {
-  return /[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/.test(input)
 }
 
 /**

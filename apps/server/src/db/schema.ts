@@ -187,6 +187,30 @@ export const documentLinks = pgTable(
   (t) => [primaryKey({ columns: [t.fromId, t.toId] }), index('document_links_to_idx').on(t.toId)],
 )
 
+/**
+ * 配置覆盖层。**只存「界面显式设置过」的行**，不 seed 默认值。
+ *
+ * 解析顺序是 `本表 > 环境变量 > 代码默认`（`docs/TECH.md` §7.5）。
+ * 不 seed 是关键：插一批默认行会让部署方在 `.env` 里配的值被空默认值
+ * **静默覆盖**，而那是最难查的一类问题（配置明明写了，行为却是默认的）。
+ *
+ * 按 key 一行而不是一个 JSON 列：单行 JSON 的并发写法是「读-改-写」，
+ * 两个设置同时改会丢一个；按 key 一行可以用 `ON CONFLICT DO UPDATE`。
+ *
+ * 哪些键可写是**闭集**（`@mimir/core` 的键表 + 插件声明的 params），
+ * 写入端点在写之前会校验——这个表只负责承载值，不负责解释它。
+ */
+export const settings = pgTable(
+  'settings',
+  {
+    key: text('key').primaryKey(),
+    /** 字符串 / 数字 / 布尔由键表解释；密钥类是密文串（`enc:v1:` 前缀） */
+    value: text('value').notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('settings_updated_at_idx').on(t.updatedAt.desc())],
+)
+
 // Better Auth 的表结构单独一个文件，但必须并入同一个 schema 对象，
 // 这样 drizzle(sql, { schema }) 才能让适配器解析到表名。
 export * from './auth-schema.js'

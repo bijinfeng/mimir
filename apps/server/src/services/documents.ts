@@ -9,7 +9,7 @@ import type {
 } from '@mimir/shared'
 import { db } from '../db/client.js'
 import { documentTags, documents, tags } from '../db/schema.js'
-import { toSearchText } from '../lib/segment.js'
+import { toSearchText } from '@mimir/tokenizer'
 import { contentHash, toExcerpt } from '../lib/text.js'
 import {
   buildNotePath,

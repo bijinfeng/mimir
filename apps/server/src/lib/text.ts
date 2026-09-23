@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { tokenize } from './segment.js'
+import { tokenize } from '@mimir/tokenizer'
 
 /** 正文哈希。用于判断内容是否变化，决定要不要重新解析/重新嵌入。 */
 export function contentHash(text: string): string {

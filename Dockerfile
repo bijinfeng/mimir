@@ -26,7 +26,7 @@ COPY . .
 # 两个包互相独立，都各自编译 @mimir/shared 的源码。
 #
 # shared 以源码形式发布（exports 直接指向 src/*.ts），编译责任在使用方：
-# 前端是 Vite，服务端是 tsdown（把 shared 的源码一起编译进 dist）。
+# 前端是 Vite，服务端也是 Vite（SSR 构建，把 shared 的源码一起编译进 dist）。
 # 所以镜像里没有「先构建 shared」这一步。
 RUN pnpm --filter @mimir/web build \
  && pnpm --filter @mimir/server build

@@ -211,6 +211,24 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     font-variant-numeric: tabular-nums;
   `,
 
+  /**
+   * 来源徽标：界面 / 环境变量 / 默认。
+   *
+   * 刻意**不用颜色**：这三种来源不是好坏之分（环境变量并不比界面值差），
+   * 用语义色会暗示「红色 = 有问题」。弱一档的底色 + 等宽字足够读出来。
+   */
+  sourceBadge: css`
+    display: inline-flex;
+    align-items: center;
+    flex: none;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: ${token.colorFillTertiary};
+    font-size: ${FONT_SIZE.badge}px;
+    line-height: 1.7;
+    color: ${token.colorTextSecondary};
+  `,
+
   /* ── 工具类 ─────────────────────────────────────────── */
   mono: css`
     font-family: ${token.fontFamilyCode};

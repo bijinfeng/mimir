@@ -1,15 +1,8 @@
-/**
- * `openaiCompatible` 不在包根，而在 `@tanstack/ai-openai/compatible` 子路径下。
- * 根入口导出的是各家专用适配器（openaiText / openaiEmbedding …），
- * 通用兼容工厂单独一个入口——按子路径导也让 tree-shaking 只带上真正用到的那部分。
- */
-import { openaiCompatible } from '@tanstack/ai-openai/compatible'
-import { chat } from '@tanstack/ai'
 import type { AskInput, AskResponse, Citation, FailureKind, Trace, TraceStep } from '@mimir/shared'
-import { env } from '../env.js'
-import { toQueryText } from '../lib/segment.js'
+import { toQueryText } from '@mimir/tokenizer'
 import { search } from '../search/index.js'
 import { appendMessage, getConversation } from './conversations.js'
+import { callChat, modelReady } from './model.js'
 import { getDocument } from './documents.js'
 
 /**
@@ -58,7 +51,7 @@ export async function ask(params: AskParams): Promise<AskResponse> {
 
   const retrieval = await retrieve(params)
 
-  const wantsSearchOnly = params.scope === 'search' || !isModelConfigured()
+  const wantsSearchOnly = params.scope === 'search' || !(await modelReady('chat'))
   if (wantsSearchOnly) {
     const assistant = await appendMessage({
       conversationId: params.conversationId,
@@ -275,33 +268,15 @@ function searchOnlyAnswer(question: string, citations: Citation[]): string {
   ].join('\n')
 }
 
-function isModelConfigured(): boolean {
-  return Boolean(env.modelApiKey && env.modelBaseUrl)
-}
-
-/** 建一个 OpenAI 兼容适配器。一套覆盖 DeepSeek / 通义 / 智谱 / Kimi。 */
-function modelAdapter() {
-  const provider = openaiCompatible({
-    name: env.modelProviderName,
-    baseURL: env.modelBaseUrl,
-    apiKey: env.modelApiKey,
-    // 对话用强模型；深度思考时切到推理模型。两者是同一家的不同 model 名，
-    // 所以不需要第二个适配器
-    models: [env.modelChatModel, env.modelReasoningModel],
-  })
-  return provider
-}
-
 async function callModel(params: AskParams, retrieval: Retrieval): Promise<string> {
-  const provider = modelAdapter()
-  const model = params.deepReasoning ? env.modelReasoningModel : env.modelChatModel
-
   // 对话历史作为上下文带上，让追问能接住上文。
   // 截断到最近若干轮：更早的内容对当前问题帮助有限，却会挤掉检索到的原文。
   const history = await loadHistory(params.conversationId, 6)
 
-  const answer = await chat({
-    adapter: provider(model),
+  // 适配器不再在这里构造——它在 provider 接缝里（plugins/provider/）。
+  // 宿主只知道「要哪个角色」，不知道用的是哪个工厂、模型名怎么断言
+  return callChat({
+    role: params.deepReasoning ? 'reasoning' : 'chat',
     stream: false,
     systemPrompts: [SYSTEM_PROMPT],
     messages: [
@@ -312,8 +287,6 @@ async function callModel(params: AskParams, retrieval: Retrieval): Promise<strin
       },
     ],
   })
-
-  return answer
 }
 
 async function loadHistory(

@@ -15,12 +15,14 @@ import type {
   FolderListResponse,
   NoteCreate,
   NoteUpdate,
+  ProbeResult,
   RuntimeConfig,
   SaveNoteInput,
   SearchQueryInput,
   SearchResponse,
   SuggestedTagsResponse,
   TagListResponse,
+  UpdateSettingsResponse,
 } from '@mimir/shared'
 
 /**
@@ -219,6 +221,32 @@ export const api = {
    */
   config() {
     return request<RuntimeConfig>('/api/config')
+  },
+
+  /**
+   * 写设置。`null` 表示**删除覆盖**，回落到环境变量或默认值——
+   * 那是一个真实的动作，不是「清空输入框」的副作用（docs/TECH.md §7.5）。
+   *
+   * 服务端整批校验，任一键不合法则整批拒绝（400 + issues）。
+   */
+  updateSettings(values: Record<string, string | number | boolean | null>) {
+    return request<UpdateSettingsResponse>('/api/config/settings', {
+      method: 'PATCH',
+      body: JSON.stringify({ values }),
+    })
+  },
+
+  /**
+   * 真实探测一个模型角色：发一次最小请求。
+   *
+   * 只由用户显式点击触发——每次进设置页都发一次真实调用，慢且花钱
+   * （docs/TECH.md §7.8）。
+   */
+  probeModel(role: string) {
+    return request<ProbeResult>('/api/config/probe', {
+      method: 'POST',
+      body: JSON.stringify({ role }),
+    })
   },
 
   auth: {

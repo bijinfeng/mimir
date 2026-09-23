@@ -1,12 +1,11 @@
 import type { StreamChunk } from '@tanstack/ai'
-import { chat, chatParamsFromRequestBody, toServerSentEventsResponse } from '@tanstack/ai'
-import { openaiCompatible } from '@tanstack/ai-openai/compatible'
+import { chatParamsFromRequestBody, toServerSentEventsResponse } from '@tanstack/ai'
 import type { Citation, FailureKind, Trace, TraceStep } from '@mimir/shared'
 import { EVENT_CITATIONS, EVENT_CONVERSATION, EVENT_FAILURE, EVENT_TRACE } from '@mimir/shared'
-import { env } from '../env.js'
-import { toQueryText } from '../lib/segment.js'
+import { toQueryText } from '@mimir/tokenizer'
 import { search } from '../search/index.js'
 import { appendMessage, createConversation, ensureTitle, getConversation } from './conversations.js'
+import { streamChat as streamModelChat, modelReady } from './model.js'
 import { getDocument } from './documents.js'
 
 /**
@@ -172,16 +171,6 @@ function formatContext(citations: Citation[]): string {
     .join('\n\n---\n\n')
 }
 
-function modelAdapter() {
-  const provider = openaiCompatible({
-    name: env.modelProviderName,
-    baseURL: env.modelBaseUrl,
-    apiKey: env.modelApiKey,
-    models: [env.modelChatModel, env.modelReasoningModel],
-  })
-  return provider
-}
-
 /**
  * 没有配模型时的回答。
  *
@@ -338,14 +327,12 @@ async function* createStream(params: StreamParams): AsyncGenerator<StreamChunk> 
   } as StreamChunk
 
   // 没配模型 → 只把命中的原文发出去，并说明没有花钱
-  if (!env.modelApiKey || !env.modelBaseUrl) {
+  if (!(await modelReady('chat'))) {
     const text = searchOnlyAnswer(question, retrieval.citations)
     for await (const chunk of textOnlyStream(text)) yield chunk
     await persistAssistant(conversationId, text, retrieval, null, turnStartedAt)
     return
   }
-
-  const model = props.deepReasoning ? env.modelReasoningModel : env.modelChatModel
 
   // 历史消息由客户端带过来（useChat 维护整段对话），服务端不重复维护一份。
   // 最后一条是本次提问，已经单独带上下文传了，所以去掉避免重复
@@ -353,8 +340,9 @@ async function* createStream(params: StreamParams): AsyncGenerator<StreamChunk> 
   const history = (parsed?.messages ?? []).slice(0, -1)
 
   try {
-    const stream = chat({
-      adapter: modelAdapter()(model),
+    // 适配器由 provider 接缝提供——这里只说「要哪个角色」
+    const stream = await streamModelChat({
+      role: props.deepReasoning ? 'reasoning' : 'chat',
       stream: true,
       systemPrompts: [SYSTEM_PROMPT],
       messages: [

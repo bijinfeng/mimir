@@ -1,7 +1,7 @@
 import { inArray } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { tags } from '../db/schema.js'
-import { tokenize } from '../lib/segment.js'
+import { tokenize } from '@mimir/tokenizer'
 
 /**
  * 建议标签。

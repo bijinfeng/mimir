@@ -8,6 +8,9 @@
 
 ```
 src/
+├── index.ts        生产入口。起 @hono/node-server，监听端口
+├── dev.ts          开发入口（Vite 的 dev server 调它）。只导出 app，不监听
+├── boot.ts         启动准备 + 装配，两个入口共用
 ├── app.ts          路由装配。鉴权中间件在最外层，新增路由默认受保护
 ├── env.ts          环境变量集中校验。不要在其他地方直接读 process.env
 ├── db/             schema + 迁移
@@ -19,6 +22,22 @@ src/
 ```
 
 分层的判断标准：**route 层不应该知道数据库的存在，service 层不应该知道 HTTP 的存在。**
+
+---
+
+## 开发与构建都是 Vite
+
+`pnpm dev` 是 `vite`，`pnpm build` 是 `vite build`（SSR 构建）。
+配置在 `apps/server/vite.config.ts`，那里的注释写明了三条不能改的契约
+（`preserveModules`、external、workspace 包内联）。
+
+- **不要在入口里调 `serve()` 两次**：dev 入口只导出 app（`dev.ts`），
+  监听由 Vite 的 dev server 做；生产入口才自己起服务（`index.ts`）
+- **加新入口**（比如一个维护脚本）要在 `vite.config.ts` 的
+  `rolldownOptions.input` 里加一行。产物必须保持与源码同深度——
+  `lib/static.ts` 与 `db/migrate.ts` 的路径推导依赖它
+- **改了这三条契约**：`src/test/plugins.test.ts` 的「构建配置」那组断言会拦下来。
+  它们守的是「部署能不能起来」，不是「配置好不好看」
 
 ---
 

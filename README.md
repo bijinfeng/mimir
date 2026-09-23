@@ -85,19 +85,24 @@ pnpm dev
 
 | 包 | 命令 | 说明 |
 |---|---|---|
-| `apps/server` | `tsx watch src/index.ts` | API 在 **3000**，改动自动重启 |
+| `apps/server` | `vite` | API 在 **3000**，改动即时生效（不重启进程）|
 | `apps/web` | `vite` | 前端在 **5173**，HMR |
 
-`packages/shared` 没有独立的构建进程：它以源码发布，前端由 Vite 直接编译，
-服务端由 `tsx` 直接执行（生产构建时由 tsdown 打进 `dist`）。
+两个包用的是同一套工具（Vite 8，版本由 catalog 统一）。服务端由
+`@hono/vite-dev-server` 把请求交给 `src/dev.ts` 导出的 Hono 应用，
+改一个文件只失效相关模块，不再像 `tsx watch` 那样整进程重启。
+
+`packages/shared` 没有独立的构建进程：它以源码发布，两个包都由 Vite 直接编译
+（服务端**生产**构建也走 Vite 的 SSR 构建，见 D-033）。
 改 shared 的 schema，两边都会立即生效。
 
 **开发时访问 `http://localhost:5173`**（Vite）。它把 `/api` 代理到 3000，
 所以前端不需要跨源配置，cookie 也正常。3000 上的 API 单独也能访问，
 但前端页面在 5173。
 
-> 如果 3000 已被占用，`pnpm dev` 会报 `EADDRINUSE` 而不是换端口——
-> 先 `pkill -f "tsx watch"` 再重试。
+> 如果 3000 已被占用，`pnpm dev` 会直接报错而不是换端口（`strictPort`）：
+> 换了端口，前端代理就指向一个没人监听的地址。先结束占用它的进程再重试——
+> `fuser -k 3000/tcp`，或 `ss -ltnp | grep :3000` 找到 pid 再 kill。
 >
 > 需要指向别的后端时用 `VITE_API_TARGET=http://localhost:3100 pnpm dev`
 > （改动 `vite.config.ts` 里的代理目标，默认 3000）。
@@ -171,7 +176,7 @@ OWNER_PASSWORD=a-long-random-password
 | Lint | **oxlint** 1.83 | 单命令跑全仓，48 文件约 100ms |
 | Format | **oxfmt** 0.68 | 见下方说明 |
 | 测试 | Vitest 5 | 服务端集成 + 前端编辑器 |
-| 服务端构建 | **tsdown** | Rolldown + Oxc。把 shared 的源码一并编译进 `dist` |
+| 构建（前后端） | **Vite 8** | 同一套工具干两边的活：前端是浏览器构建，服务端是 SSR 构建（Rolldown + Oxc）。把 shared 的源码一并编译进 `dist` |
 | 依赖版本 | **pnpm catalog** | 版本写在 `pnpm-workspace.yaml`，包内用 `catalog:` |
 
 一条命令做完整校验：

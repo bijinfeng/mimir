@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import type { SettingSource } from '@mimir/shared'
 import { useStatusStyles, useStyles } from './settings.style'
 
 /**
@@ -110,4 +111,32 @@ export function Stats({ items }: { items: { label: string; value: string }[] }) 
       ))}
     </div>
   )
+}
+
+/**
+ * 值的来源徽标：界面 / 环境变量 / 默认。
+ *
+ * **这是可写设置页上最有信息量的一处**（`docs/TECH.md` §7.5）。
+ * 解析顺序是「界面覆盖 > 环境变量 > 默认」，所以用户必须能一眼看出
+ * 「我现在看到的是我改过的，还是别人（部署配置）定的」——
+ * 否则改了不生效时他没法判断是自己没保存，还是被环境变量压住了。
+ *
+ * 三种来源用三种**文字**而不是三种颜色：颜色需要对比度守卫，
+ * 而这三者不是状态的好坏之分（环境变量并不比界面值「更好」或「更差」）。
+ */
+export function SourceBadge({ source }: { source: SettingSource }) {
+  const { styles } = useStyles()
+  const label = source === 'settings' ? '界面' : source === 'env' ? '环境变量' : '默认'
+
+  return (
+    <span className={styles.sourceBadge} title={SOURCE_HINT[source]}>
+      {label}
+    </span>
+  )
+}
+
+const SOURCE_HINT: Record<SettingSource, string> = {
+  settings: '这个值是在本页设置的，优先于环境变量',
+  env: '来自部署时的环境变量。在本页填写会覆盖它',
+  default: '没人配过，用的是代码里的默认值',
 }
