@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm'
 import { beforeAll, describe, expect, it } from 'vitest'
+import { USAGE_HISTORY_DAYS } from '@mimir/shared'
 import { db } from '../db/client.js'
 import { usageLog } from '../db/schema.js'
 import {
@@ -274,7 +275,7 @@ describe('统计端点', () => {
     expect(res.status).toBe(401)
   })
 
-  it('登录后返回契约形状', async () => {
+  it('登录后返回契约形状，且覆盖固定一年', async () => {
     const cookie = await getAuthCookie()
     const client = makeClient(cookie)
 
@@ -285,11 +286,17 @@ describe('统计端点', () => {
       days: unknown[]
       totals: { calls: number; unknownCount: number; probeCalls: number }
       thresholds: number[]
-    }>('/api/stats?days=30')
+    }>('/api/stats')
 
     expect(status).toBe(200)
     expect(typeof body.timezone).toBe('string')
-    expect(body.days).toHaveLength(30)
+    /**
+     * **覆盖范围是固定的**（`USAGE_HISTORY_DAYS`），不吃查询参数。
+     *
+     * 这条断言同时守住「参数被去掉了」这件事：如果哪天有人把
+     * `?days=` 加回来，这里的长度就不会等于常量。
+     */
+    expect(body.days).toHaveLength(USAGE_HISTORY_DAYS)
     // 三个合计必须都在——缺一个时页脚的说明会静默少一句
     expect(body.totals.calls).toBeTypeOf('number')
     expect(body.totals.unknownCount).toBeTypeOf('number')
@@ -297,12 +304,20 @@ describe('统计端点', () => {
     expect(Array.isArray(body.thresholds)).toBe(true)
   })
 
-  it('days 越界时整批拒绝（而不是静默截断）', async () => {
+  it('查询参数被忽略（范围不由客户端决定）', async () => {
+    /**
+     * 传一个 `days` 不该改变结果——参数在路由里已经不存在了，
+     * 所以它只是一个被忽略的多余 query。
+     *
+     * 这条比「返回 400」更准确地表达了意图：**不是「这个值不合法」，
+     * 而是「这个维度不归你管」**。
+     */
     const cookie = await getAuthCookie()
     const client = makeClient(cookie)
 
-    const { status } = await client.get('/api/stats?days=99999')
-    expect(status).toBe(400)
+    const { status, body } = await client.get<{ days: unknown[] }>('/api/stats?days=30')
+    expect(status).toBe(200)
+    expect(body.days).toHaveLength(USAGE_HISTORY_DAYS)
   })
 })
 

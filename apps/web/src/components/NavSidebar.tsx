@@ -305,8 +305,15 @@ function AccountRow({ collapsed, onOpen }: { collapsed: boolean; onOpen: () => v
 
   return (
     <Tooltip title={collapsed ? user.name : undefined} placement="right">
-      <button
-        type="button"
+      {/*
+        用 antd 的 `Button type="text" block` 而不是裸 `<button>`：
+        hover / active 的底色由 token 给（深浅两套主题自动跟着走），
+        而这正是原生按钮拿不到的那部分。形状仍由 `styles.account` 定——
+        它是一条通栏的、有自己形态的行，不是标准按钮。
+      */}
+      <Button
+        type="text"
+        block
         className={`${styles.account} ${collapsed ? styles.accountCollapsed : ''}`}
         onClick={onOpen}
         aria-label={`账号：${user.name}`}
@@ -319,7 +326,7 @@ function AccountRow({ collapsed, onOpen }: { collapsed: boolean; onOpen: () => v
           {user.name.slice(0, 1).toUpperCase()}
         </Avatar>
         {collapsed ? null : <span className={styles.accountName}>{user.name}</span>}
-      </button>
+      </Button>
     </Tooltip>
   )
 }

@@ -127,14 +127,6 @@ configRoute.post('/probe', async (c) => {
 
   const provider = requireProvider(providers)
   const startedAt = performance.now()
-  const outcome = await provider.probeProvider(input.providerId, input.modelId)
-  const result: ProbeResult = {
-    target: input.providerId,
-    ok: outcome.ok,
-    message: outcome.message,
-    at: new Date().toISOString(),
-    tookMs: outcome.tookMs,
-  }
 
   /**
    * 探测也记账，但 token 三列留空（`docs/TECH.md` §12.2）。
@@ -146,8 +138,30 @@ configRoute.post('/probe', async (c) => {
    * **token 是 null 而不是 0**：这条路径确实拿不到用量（`probe()` 的契约
    * 只回 ok 与原因）。null 是诚实的「没观测到」；填 0 会让它看起来像一次
    * 真实的零消耗调用——那正是 §12.3 要防的同一个错误。
+   *
+   * ## 为什么这里没有 try/catch
+   *
+   * 第一版加了 catch，想兜住「连不上、超时、模型名下架」那几类失败——
+   * 它们也真实发出过请求。但读了 `provider.ts` 才发现 `probeProvider` / `probe`
+   * 都经 `runProbe`，而它**自己吞掉所有异常**并折成 `{ ok: false, message }`
+   * （`describeError` 负责把 errno 说成人话）。
+   *
+   * 所以「失败」在这条路径上**不是异常，是 ok:false**——下面那一行就已经
+   * 覆盖了全部情形。加 catch 会是一段永不执行的代码，而它更坏的地方在于
+   * **读的人会以为存在一个会抛的路径**，从而在别处再写一遍防御。
+   *
+   * 这个性质由 `probe-accounting.test.ts` 的断言守着：探测失败也必须落账。
    */
+  const outcome = await provider.probeProvider(input.providerId, input.modelId)
   await recordProbe(input.providerId, startedAt, outcome.ok)
+
+  const result: ProbeResult = {
+    target: input.providerId,
+    ok: outcome.ok,
+    message: outcome.message,
+    at: new Date().toISOString(),
+    tookMs: outcome.tookMs,
+  }
 
   probes.set(input.providerId, result)
   void seams
@@ -169,7 +183,16 @@ configRoute.post('/probe-role', async (c) => {
   if (role === '') throw new HttpError(400, 'INVALID_INPUT', 'role 不能为空')
 
   const startedAt = performance.now()
+
+  /**
+   * 真实调用，也要记账（单列 'probe'，不混进「我的用量」）。
+   *
+   * 与供应商级同理：失败是 `ok: false` 而**不是异常**（`runProbe` 全兜），
+   * 所以这一行覆盖了成功与失败两种情形，不需要 try/catch。
+   */
   const outcome = await provider.probe(role as never)
+  await recordProbe(`role:${role}`, startedAt, outcome.ok)
+
   const result: ProbeResult = {
     target: `role:${role}`,
     ok: outcome.ok,
@@ -177,9 +200,6 @@ configRoute.post('/probe-role', async (c) => {
     at: new Date().toISOString(),
     tookMs: outcome.tookMs,
   }
-
-  // 与供应商级探测同理：真实调用，也要记账（单列 'probe'，不混进「我的用量」）
-  await recordProbe(`role:${role}`, startedAt, outcome.ok)
 
   probes.set(result.target, result)
   return c.json(result)

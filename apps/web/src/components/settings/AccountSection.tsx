@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { App, Avatar, Button, Input, Typography } from 'antd'
+import { App, Avatar, Button, Input, Typography, Upload } from 'antd'
 import { useEffect, useState } from 'react'
 import { api, type AuthSession } from '@/lib/api'
 import { cropAvatar } from '@/lib/avatar'
@@ -60,7 +60,8 @@ export function AccountSection() {
               </div>
               <BlockDesc>
                 邮箱是账号的锚点，不在这里改——它是所有者账号的真相来源，
-                改它等于换账号。需要换就改服务端的 <code>OWNER_EMAIL</code> 再重启。
+                改它等于换账号。需要换就改服务端的{' '}
+                <Typography.Text code>OWNER_EMAIL</Typography.Text> 再重启。
               </BlockDesc>
             </div>
           </div>
@@ -68,7 +69,7 @@ export function AccountSection() {
       </Panel>
 
       <Note>
-        头像存在服务端的 <code>data/avatars/</code>，
+        头像存在服务端的 <Typography.Text code>data/avatars/</Typography.Text>，
         <span className={styles.strong}>不在笔记目录里</span>
         ——它不是内容：不参与检索分词，也不进导出包。导出回答的是「我的知识」， 不是「我的账户」。
       </Note>
@@ -155,32 +156,48 @@ function AvatarColumn({ session }: { session: AuthSession | null }) {
       </Avatar>
 
       <div className={accountStyles.avatarActions}>
-        <label className={accountStyles.fileLabel}>
-          <input
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            className={accountStyles.fileInput}
-            disabled={upload.isPending}
-            onChange={(event) => {
-              const file = event.target.files?.[0]
-              // 先清空 value 再传：不清空的话「同一个文件选两次」不触发 onChange，
-              // 而用户在失败后重试的正是同一个文件
-              event.target.value = ''
-              if (file) upload.mutate(file)
-            }}
-          />
-          {upload.isPending ? '上传中…' : '更换'}
-        </label>
+        {/*
+          用 antd 的 `Upload` 而不是 `<label>` + 隐藏的原生 `<input type="file">`。
+
+          原来的写法是无脚本也能工作的经典做法，但它有一个这里很致命的
+          缺点：**原生控件不服从 token 体系**——各浏览器给它的默认样式不同，
+          深浅两套主题也管不到它。而这个项目已经因为「原生控件看起来
+          不属于这套设计」改过一次（统计页的范围选择器）。
+
+          `beforeUpload` 返回 `false` 是**刻意的**：它阻止 antd 自己发请求，
+          因为我们要先本地裁剪再上传（`cropAvatar`）。返回 `false` 之后
+          `onChange` 不会带出可用的文件列表，所以直接在这里 `mutate`。
+        */}
+        <Upload
+          accept="image/png,image/jpeg,image/webp"
+          showUploadList={false}
+          maxCount={1}
+          disabled={upload.isPending}
+          beforeUpload={(file) => {
+            upload.mutate(file)
+            return false
+          }}
+        >
+          <Button
+            type="link"
+            size="small"
+            loading={upload.isPending}
+            className={accountStyles.actionBtn}
+          >
+            {upload.isPending ? '上传中…' : '更换'}
+          </Button>
+        </Upload>
 
         {image ? (
-          <button
-            type="button"
-            className={accountStyles.linkButton}
+          <Button
+            type="link"
+            size="small"
+            className={accountStyles.actionBtn}
+            loading={remove.isPending}
             onClick={() => remove.mutate()}
-            disabled={remove.isPending}
           >
             移除
-          </button>
+          </Button>
         ) : null}
       </div>
 

@@ -3,6 +3,7 @@ import type { HeatMapValue } from '@uiw/react-heat-map'
 import type { UsageDay } from '@mimir/shared'
 import { Tooltip } from 'antd'
 import type React from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useHeatmapStyles } from './StatsSection.style'
 
 /**
@@ -225,6 +226,55 @@ function renderCell(
   )
 }
 
+/**
+ * 容器有真实尺寸之后才渲染 `children`。
+ *
+ * ## 为什么必须这么写（实测踩到）
+ *
+ * `@uiw/react-heat-map` 的列数是**量出来的**：
+ *
+ * ```
+ * gridNum = floor((svg.clientWidth - leftPad) / (rectSize + space))
+ * ```
+ *
+ * 而设置页的分区是 antd `Tabs`——**切走的那个面板是 `display: none`**，
+ * 此时 `clientWidth` 是 0，算出的列数就是 0，于是整张网格一格都不渲染
+ * （只剩星期标签与月份标签，图看起来「加载了但是空的」）。
+ *
+ * 更麻烦的是它只在挂载时量一次（effect 的依赖里没有宽度），所以
+ * **是否恢复正常全靠之后有没有一次凑巧的重渲染**。实测就是这个现象：
+ * 同一个页面来回切分区，有时 376 格、有时 0 格。
+ *
+ * 这里用一个 `ResizeObserver` 把它变成确定的：宽度为 0 时**根本不挂载**
+ * 那个库，等它真的有位置了再挂——那时库量到的就是真实宽度，
+ * 不需要赌任何时序。
+ */
+function WhenVisible({ children }: { children: React.ReactNode }) {
+  const [ready, setReady] = useState(false)
+  const holderRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const node = holderRef.current
+    if (!node) return
+
+    /**
+     * 先量一次当前值：`ResizeObserver` 只在**尺寸变化**时回调，
+     * 而「挂载时就已经可见」这种情况不会有变化事件，只在 observer 里等
+     * 就永远等不到。
+     */
+    const measure = () => {
+      if (node.clientWidth > 0) setReady(true)
+    }
+    measure()
+
+    const observer = new ResizeObserver(measure)
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [])
+
+  return <div ref={holderRef}>{ready ? children : null}</div>
+}
+
 export function UsageHeatmap({ days, thresholds, timezone }: HeatmapProps) {
   const { styles } = useHeatmapStyles()
 
@@ -272,23 +322,26 @@ export function UsageHeatmap({ days, thresholds, timezone }: HeatmapProps) {
   return (
     <div className={styles.wrap}>
       <div className={styles.chartScroll}>
-        <HeatMap
-          className={styles.chart}
-          style={{ width: chartWidth }}
-          value={value}
-          startDate={new Date(`${from}T00:00:00`)}
-          endDate={new Date(`${to}T00:00:00`)}
-          rectSize={CELL}
-          space={GAP}
-          weekLabels={WEEK_LABELS}
-          monthLabels={MONTH_LABELS}
-          monthPlacement="top"
-          /* 0 关掉库自带的图例——下面画自己的，它会标出真实阈值 */
-          legendCellSize={0}
-          panelColors={panelColorsFor(thresholds, maxTokens)}
-          rectProps={{ rx: 2 }}
-          rectRender={renderCell}
-        />
+        {/* 容器有尺寸之后才挂载——见 WhenVisible 的注释 */}
+        <WhenVisible>
+          <HeatMap
+            className={styles.chart}
+            style={{ width: chartWidth }}
+            value={value}
+            startDate={new Date(`${from}T00:00:00`)}
+            endDate={new Date(`${to}T00:00:00`)}
+            rectSize={CELL}
+            space={GAP}
+            weekLabels={WEEK_LABELS}
+            monthLabels={MONTH_LABELS}
+            monthPlacement="top"
+            /* 0 关掉库自带的图例——下面画自己的，它会标出真实阈值 */
+            legendCellSize={0}
+            panelColors={panelColorsFor(thresholds, maxTokens)}
+            rectProps={{ rx: 2 }}
+            rectRender={renderCell}
+          />
+        </WhenVisible>
       </div>
 
       <div className={styles.legend}>
@@ -308,14 +361,20 @@ export function UsageHeatmap({ days, thresholds, timezone }: HeatmapProps) {
         <span className={styles.legendLabel}>用量未上报</span>
 
         {/*
-          分档按当前范围的分位数算，所以**必须**说明这一点并给出真实区间。
-          不写的话，对比两张不同范围的截图会看不懂——为什么同样深浅的格子
-          代表的数字差了三倍（`docs/TECH.md` §12.4）。
+          图例给出**真实区间**，而不是只说「少 / 多」。
+
+          分档取的是这一年里的分位数（`docs/TECH.md` §12.4），所以一格颜色
+          对应的是一个确定的数量级——不写出来，用户只能猜「深蓝是多少」。
+          tooltip 给的是单日精确值，这里给的是档位边界，两者分工不同。
+
+          范围固定一年之后，「按当前范围分档」那句解释也就不需要了：
+          一档就是一个确定的区间（第一版有范围切换，所以必须声明这一点，
+          否则对比两张截图会看不懂为什么同样的颜色代表不同的数字）。
         */}
         <span className={styles.legendNote}>
           {thresholds.length > 0
-            ? `按当前范围分档 · 最深 ≥ ${formatTokens(thresholds.at(-1) ?? 0)}`
-            : '范围内还没有用量'}
+            ? `最深一档 ≥ ${formatTokens(thresholds.at(-1) ?? 0)}`
+            : '这一年还没有用量'}
         </span>
 
         <span className={styles.legendNote}>· 按 {timezone} 聚合</span>

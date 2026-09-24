@@ -136,65 +136,78 @@ export const useHeatmapStyles = createStyles(({ css, token }) => ({
   `,
 }))
 
-/** 统计分区的通用样式：范围切换那一行、按角色的表、页脚 */
-export const useStatsStyles = createStyles(({ css, token }) => ({
-  rangeRow: css`
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 16px;
-    font-size: ${FONT_SIZE.note}px;
-    color: ${token.colorTextSecondary};
-  `,
-
+/** 统计分区的通用样式：按角色的表与页脚 */
+export const useStatsStyles = createStyles(({ css, token, prefixCls }) => ({
   /* ── 按角色的表 ──────────────────────────────────── */
+  /**
+   * antd `Table` 的外层容器。
+   *
+   * ## 为什么只改这几处，而不是把表格样式重写一遍
+   *
+   * 表头底色、单元格内边距、行 hover、边框在深浅两套主题下都已经由
+   * antd 的 token 校准过——自己写一遍等于抄一份会漂移的副本，而
+   * 「两份样式各自演化」正是这个项目反复记录的那类问题。
+   * 所以这里只做三件 antd 不知道的事：
+   *
+   *  1. **列宽与对齐**：数值列右对齐（在 `columns` 里给 `align: 'right'`），
+   *     数字用等宽字形（`tabular-nums`），扫读时不跳
+   *  2. **字号**：表格用 `excerpt` 档，与设置页其它密集内容一致
+   *  3. **单元格里的语义色**：`.stats-*` 那几条——列定义是模块级常量
+   *     （`StatsSection.tsx` 的 `ROLE_COLUMNS`），拿不到 `createStyles`
+   *     返回的类名，所以用嵌套选择器在这里一次性定义
+   *
+   * 顶部那条外边框去掉：面板标题已经有一条分隔线，再来一条会变成双线。
+   */
   table: css`
-    width: 100%;
-    border-collapse: collapse;
     font-size: ${FONT_SIZE.excerpt}px;
     font-variant-numeric: tabular-nums;
 
-    th {
-      padding: 9px 16px;
+    /* 面板标题下面已经有一条线，表格自己不再画一条 */
+    .${prefixCls}-table-container {
+      border-start-start-radius: 0;
+      border-start-end-radius: 0;
+    }
+    /**
+     * **只留行分隔线，去掉列之间的竖线。**
+     *
+     * antd 的默认表格画竖线（border-inline-end），那是给宽表用的——
+     * 列一多、一行很长时，竖线帮视线横向对齐。这里只有六列、内容很短，
+     * 竖线只是把已经很干净的一行切成格子，而且面板本身已经是一层容器，
+     * 再来一层网格是双重的分隔（与设置页「面板不套 Card」是同一条判断）。
+     *
+     * 行分隔线保留：它是**行**的分隔，扫读一行到下一行时需要它。
+     */
+    .${prefixCls}-table-thead > tr > th {
       font-size: ${FONT_SIZE.badge}px;
       font-weight: 600;
       color: ${token.colorTextSecondary};
-      text-align: right;
-      border-bottom: 1px solid ${token.colorBorderSecondary};
+      background: ${token.tintList};
+
+      &::before {
+        display: none;
+      }
     }
-    th:first-child,
-    th:nth-child(2) {
-      text-align: left;
+    .${prefixCls}-table-tbody > tr > td {
+      border-inline-end: none;
     }
 
-    td {
-      padding: 10px 16px;
+    /* 单元格内的语义色。列定义是模块级常量，拿不到类名，所以在这里定义 */
+    .stats-role {
+      font-weight: 500;
       color: ${token.colorText};
-      text-align: right;
-      border-bottom: 1px solid ${token.colorBorderSecondary};
     }
-    td:first-child,
-    td:nth-child(2) {
-      text-align: left;
+    .stats-model {
+      font-family: ${token.fontFamilyCode};
+      font-size: ${FONT_SIZE.meta}px;
+      color: ${token.colorTextSecondary};
     }
-    tr:last-child td {
-      border-bottom: none;
+    /** 0 与「—」比真实数字弱一档：它们是「没有」而不是「有个小数字」 */
+    .stats-zero {
+      color: ${token.colorTextTertiary};
     }
-  `,
-  roleName: css`
-    font-weight: 500;
-  `,
-  modelName: css`
-    font-family: ${token.fontFamilyCode};
-    font-size: ${FONT_SIZE.meta}px;
-    color: ${token.colorTextSecondary};
-  `,
-  /** 0 与「—」比真实数字弱一档：它们是「没有」而不是「有个小数字」 */
-  zero: css`
-    color: ${token.colorTextTertiary};
-  `,
-  failed: css`
-    color: ${token.colorErrorText};
+    .stats-failed {
+      color: ${token.colorErrorText};
+    }
   `,
   empty: css`
     padding: 18px 16px;

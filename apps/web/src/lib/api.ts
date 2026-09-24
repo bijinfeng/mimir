@@ -305,9 +305,11 @@ export const api = {
    * 时区不由前端传——它是部署配置（`stats.timezone`），跟着服务端走。
    * 让前端传会让「同一份数据在两个浏览器上分档不同」，而那种差异
    * 看起来像数据错了。
+   *
+   * 覆盖范围同样不由前端定：固定一年（`USAGE_HISTORY_DAYS`）。
    */
-  stats(days: number) {
-    return request<UsageStats>(`/api/stats${toQuery({ days })}`)
+  stats() {
+    return request<UsageStats>('/api/stats')
   },
 
   /**

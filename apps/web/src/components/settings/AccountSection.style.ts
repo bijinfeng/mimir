@@ -37,39 +37,21 @@ export const useAccountStyles = createStyles(({ css, token }) => ({
   `,
 
   /**
-   * 用 label 包 input 做上传按钮。
+   * 两个动作（更换 / 移除）共用同一档字号。
    *
-   * 原生 `<input type="file">` 的样子由浏览器决定、且各浏览器不一致，
-   * 所以隐藏它、用 label 当按钮——这是无脚本也能工作的做法
-   * （比 JS 里 `inputRef.current.click()` 少一层状态）。
+   * 用的是 antd `Button type="link"`，所以颜色 / hover / 禁用态都走 token
+   * （链接色是 `colorLink`——主色作文字在浅底上不达标，见
+   * `docs/DESIGN.md` §3.5）。这里只压掉它默认的内边距，
+   * 让两个按钮贴着头像排得紧一些。
+   *
+   * 第一版是 `<label>` + 隐藏的原生 `<input type="file">` 加一个裸
+   * `<button>`：它们**不服从 token 体系**，深浅主题都管不到，
+   * 于是成为这一块里唯一不属于这套设计的东西。
    */
-  fileLabel: css`
-    cursor: pointer;
-    color: ${token.colorLink};
-    font-size: ${FONT_SIZE.note}px;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  `,
-  fileInput: css`
-    display: none;
-  `,
-  linkButton: css`
+  actionBtn: css`
+    height: auto;
     padding: 0;
-    border: none;
-    background: none;
-    cursor: pointer;
-    color: ${token.colorTextSecondary};
     font-size: ${FONT_SIZE.note}px;
-
-    &:hover:not(:disabled) {
-      color: ${token.colorErrorText};
-    }
-    &:disabled {
-      cursor: default;
-      opacity: 0.6;
-    }
   `,
   avatarHint: css`
     font-size: ${FONT_SIZE.badge}px;

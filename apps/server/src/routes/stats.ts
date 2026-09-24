@@ -1,6 +1,5 @@
 import { Hono } from 'hono'
-import { usageStatsQuerySchema } from '@mimir/shared'
-import { parseInput } from '../lib/http.js'
+import { USAGE_HISTORY_DAYS } from '@mimir/shared'
 import { stats } from '../services/usage.js'
 import type { AppEnv } from '../types.js'
 
@@ -11,13 +10,16 @@ import type { AppEnv } from '../types.js'
  * 今日/本周/本月与热力图如果各自在两端算，迟早会出现「上面写 12 万、
  * 图上加起来 9 万」这种无法解释的差异。
  *
- * 时区不由客户端传：它是部署配置（`stats.timezone`），跟着服务端走。
- * 让客户端传会让「同一份数据在两个浏览器上分档不同」，而那种差异
- * 看起来像数据错了。
+ * ## 没有查询参数，两处都不该由客户端决定
+ *
+ * | 值 | 为什么服务端定 |
+ * |---|---|
+ * | 时区 | 它是部署配置（`stats.timezone`）。客户端传会让「同一份数据在两个浏览器上分档不同」，而那种差异看起来像数据错了 |
+ * | 天数 | 固定一年（`USAGE_HISTORY_DAYS`）。热力图回答的是「这一年我在持续用吗」，切范围只会让分档口径跟着变 |
+ *
+ * 去掉参数比留着好：留着会有一个永远不会被传的字段，而下一个人会以为
+ * 它支持范围切换（与「先加后忘的字段会变成没人读的列」是同一条）。
  */
 export const statsRoute = new Hono<AppEnv>()
 
-statsRoute.get('/', async (c) => {
-  const query = await parseInput(c, 'query', usageStatsQuerySchema)
-  return c.json(await stats(query.days))
-})
+statsRoute.get('/', async (c) => c.json(await stats(USAGE_HISTORY_DAYS)))

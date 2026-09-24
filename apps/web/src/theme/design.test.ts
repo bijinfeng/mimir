@@ -515,6 +515,84 @@ describe('字号阶梯', () => {
 })
 
 /**
+ * CSS 模板字符串里的反引号。
+ *
+ * ## 为什么值得一条测试
+ *
+ * `createStyles` / `createGlobalStyle` 的样式体是**模板字符串**，而反引号
+ * 会提前把它结束掉——于是整段样式变成非法 TS，React Compiler 插件报
+ * `Expected a semicolon`，而报错位置指向一句看起来毫无问题的中文注释。
+ *
+ * 这个坑**咬过三次**，每次都是往注释里加了一对用于强调的反引号
+ * （写成 \`colorPrimaryBg\` 这种 Markdown 习惯）：
+ *
+ *  1. `StatsSection.style.ts` 的「不设 overflow: hidden」那条注释
+ *  2. `styles/global.ts` 的底色注释（并行改动引入）
+ *  3. `StatsSection.style.ts` 的表格竖线注释（我修第 1 条时又写的）
+ *
+ * 前两次都写进了 `TECH.md` §10 的坑表——**但文档拦不住手**。
+ * 所以补这条机器守：它扫的就是那对多余的引号。
+ */
+async function scanTemplateBackticks(): Promise<string[]> {
+  const { readdir, readFile } = await import('node:fs/promises')
+  const { join } = await import('node:path')
+
+  const offenders: string[] = []
+
+  /**
+   * **不用正则**：`/(?:css|createGlobalStyle)`([\s\S]*?)`/` 这类写法在这里
+   * 是错的——非贪婪匹配会停在**第一个杂散反引号**处，于是捕获到的「模板体」
+   * 里永远不含反引号，测试永远绿。第一版就是这么写的，注入一个违规验证时
+   * 才发现它抓不到（**加断言后要验它能红**，否则等于没加）。
+   *
+   * 改成按行配对：这个代码库的约定是**收尾反引号独占一行**
+   * （缩进 + 反引号，后面可跟一个逗号），所以「开标签行」到
+   * 「独占反引号行」之间出现的任何反引号都必然是杂散的。
+   */
+  const OPENER = /(?:^|\s)(?:css|createGlobalStyle)`/
+  const TERMINATOR = /^\s*`\s*,?\s*$/
+
+  async function walk(dir: string) {
+    for (const entry of await readdir(join(process.cwd(), dir), { withFileTypes: true })) {
+      const rel = join(dir, entry.name)
+      if (entry.isDirectory()) {
+        await walk(rel)
+      } else if (/\.tsx?$/.test(entry.name) && !entry.name.includes('.test.')) {
+        const text = await readFile(join(process.cwd(), rel), 'utf8')
+        let inside = false
+
+        text.split('\n').forEach((line, index) => {
+          if (!inside && OPENER.test(line)) {
+            inside = true
+            return
+          }
+          if (inside) {
+            if (TERMINATOR.test(line)) {
+              inside = false
+            } else if (line.includes('`')) {
+              offenders.push(`${rel}:${index + 1}`)
+            }
+          }
+        })
+      }
+    }
+  }
+
+  for (const root of ['src/components', 'src/routes', 'src/styles']) await walk(root)
+  return offenders
+}
+
+describe('样式模板里没有多余的反引号', () => {
+  it('createStyles / createGlobalStyle 的模板体内不出现反引号', async () => {
+    const offenders = await scanTemplateBackticks()
+    expect(
+      offenders,
+      `这些样式模板体内有反引号，会提前结束模板字符串：\n${offenders.join('\n')}`,
+    ).toEqual([])
+  })
+})
+
+/**
  * 取出品牌标记的 path 数据，并规范化空白。
  *
  * 规范化是必需的：`z` 与 `M` 之间空格可有可无，两种写法渲染完全相同，

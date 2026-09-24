@@ -88,14 +88,23 @@ export const usageByRoleSchema = z.object({
 })
 export type UsageByRole = z.infer<typeof usageByRoleSchema>
 
-export const usageStatsQuerySchema = z.object({
-  /**
-   * 热力图覆盖的天数。默认一年——贡献图的肌肉记忆来自 GitHub，
-   * 那里就是一年。
-   */
-  days: z.coerce.number().int().min(7).max(730).default(370),
-})
-export type UsageStatsQuery = z.infer<typeof usageStatsQuerySchema>
+/**
+ * 热力图覆盖的天数。**固定值，不是查询参数。**
+ *
+ * 第一版让客户端传 `?days=`，界面上给了 30 / 90 / 一年三个范围。
+ * 去掉了，两条理由：
+ *
+ *  1. 概览那排（今日 / 本周 / 本月）已经回答了「最近怎么样」，
+ *     而热力图回答的是「这一年我在持续用吗」——它需要的正是一整年的
+ *     形状，切短反而看不出疏密变化
+ *  2. **分档是按当前范围的分位数算的**，所以切范围会让同一个颜色
+ *     代表的数字变，得在图例里额外解释一句。固定下来之后一档就是一个
+ *     确定的区间
+ *
+ * 370 而不是 365：一年的日历网格对齐到整周要占 53 列，
+ * 而 365 天在跨闰年时可能落成 54 列——多留 5 天让网格稳定是 53 列。
+ */
+export const USAGE_HISTORY_DAYS = 370
 
 export const usageStatsSchema = z.object({
   /** 实际聚合用的时区。界面上必须显示它——否则「为什么这格是昨天」无解 */

@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
-import { Skeleton, Typography } from 'antd'
-import { useState } from 'react'
+import { Skeleton, Table, Typography } from 'antd'
+import type { ColumnsType } from 'antd/es/table'
 import { api } from '@/lib/api'
 import { Panel, Stats } from '@/components/settings/parts'
 import { useStyles } from '@/components/settings/settings.style'
 import { useStatsStyles } from '@/components/settings/StatsSection.style'
 import { formatTokens, UsageHeatmap } from '@/components/settings/UsageHeatmap'
-import { MODEL_ROLE_LABELS } from '@mimir/shared'
+import { MODEL_ROLE_LABELS, type UsageByRole } from '@mimir/shared'
 
 /**
  * 用量统计（`docs/TECH.md` §12、`docs/PRD.md` §5.11）。
@@ -20,27 +20,83 @@ import { MODEL_ROLE_LABELS } from '@mimir/shared'
  * 补偿很便宜：tooltip 里同时给调用次数，所以两个问题一次答完，
  * 不需要第二张图。
  *
- * ## 范围切换只影响热力图，不影响右边的概览
+ * ## 热力图固定一年，**不做范围切换**
  *
- * 概览的今日 / 本周 / 本月是**固定口径**（它们的定义不该跟着视图变），
- * 而热力图的时间范围是一个查看动作。把两者绑在一起会让「本月」
- * 在你切到「最近 30 天」时含义改变——那种改变没有任何提示，只会让人
- * 纳闷数字怎么不一样了。
+ * 第一版有三个范围（30 天 / 90 天 / 一年），是一个 `Segmented`。
+ * 去掉了，两条理由：
+ *
+ *  1. **概览那一排已经回答了「最近怎么样」**（今日 / 本周 / 本月）。
+ *     热力图回答的是另一个问题：「这一年我在持续用吗」——它需要的正是
+ *     一整年的形状，切短反而看不出疏密变化
+ *  2. **切范围会让分档口径跟着变**。分位数是按当前范围算的，所以
+ *     换范围时同一个颜色代表的数字会变，得在图例里额外解释一句
+ *     「按当前范围分档」。固定一年之后这句话不需要了：
+ *     一档就是一个确定的区间，图例可以直接写死
+ *
+ * 少一个控件，也少一个要解释的地方。
  */
-const RANGES = [
-  { key: 30, label: '最近 30 天' },
-  { key: 90, label: '最近 90 天' },
-  { key: 370, label: '最近一年' },
-] as const
+
+/**
+ * 按角色的列定义。
+ *
+ * 提到模块作用域而不是内联在 JSX 里：`columns` 是一个**数据**参数，
+ * 内联数组每次渲染都是新对象，会让 antd Table 重算列宽；
+ * 而提到外面之后它也更容易读——六个列挤在一个 JSX 属性里很挤。
+ *
+ * 三处 `render` 都对应同一条判断：**「没有」和「有个小数字」要能分开**。
+ * 0 与「—」用弱一档的文字色，失败数才用错误色——把 0 也染红会让
+ * 「这一列有问题」变成噪音。
+ */
+const ROLE_COLUMNS: ColumnsType<UsageByRole> = [
+  {
+    title: '角色',
+    dataIndex: 'role',
+    render: (_value, row) => (
+      <span className="stats-role">
+        {MODEL_ROLE_LABELS[row.role as keyof typeof MODEL_ROLE_LABELS] ?? row.role}
+      </span>
+    ),
+  },
+  {
+    title: '模型',
+    dataIndex: 'model',
+    render: (value: string) => <span className="stats-model">{value || '—'}</span>,
+  },
+  { title: '调用', dataIndex: 'calls', align: 'right' },
+  {
+    title: '输入',
+    dataIndex: 'promptTokens',
+    align: 'right',
+    render: (value: number) =>
+      value > 0 ? formatTokens(value) : <span className="stats-zero">—</span>,
+  },
+  {
+    title: '输出',
+    dataIndex: 'completionTokens',
+    align: 'right',
+    render: (value: number) =>
+      value > 0 ? formatTokens(value) : <span className="stats-zero">—</span>,
+  },
+  {
+    title: '失败',
+    dataIndex: 'failed',
+    align: 'right',
+    render: (value: number) =>
+      value > 0 ? (
+        <span className="stats-failed">{value}</span>
+      ) : (
+        <span className="stats-zero">0</span>
+      ),
+  },
+]
 
 export function StatsSection() {
   const { styles } = useStyles()
   const { styles: statsStyles } = useStatsStyles()
-  const [days, setDays] = useState<number>(370)
 
   const statsQuery = useQuery({
-    queryKey: ['usage-stats', days],
-    queryFn: () => api.stats(days),
+    queryKey: ['usage-stats'],
+    queryFn: () => api.stats(),
   })
 
   const data = statsQuery.data
@@ -72,23 +128,6 @@ export function StatsSection() {
       </Panel>
 
       <Panel title="消耗热力图">
-        <div className={statsStyles.rangeRow}>
-          <span>范围</span>
-          {/* 用原生 select 而不是 antd Radio：三个选项不值得一行按钮的宽度 */}
-          <select
-            value={days}
-            onChange={(event) => setDays(Number(event.target.value))}
-            style={{ font: 'inherit' }}
-            aria-label="热力图时间范围"
-          >
-            {RANGES.map((range) => (
-              <option key={range.key} value={range.key}>
-                {range.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
         <UsageHeatmap days={data.days} thresholds={data.thresholds} timezone={data.timezone} />
       </Panel>
 
@@ -98,50 +137,21 @@ export function StatsSection() {
             还没有调用记录。配置模型后问一次问题就会出现在这里。
           </div>
         ) : (
-          <table className={statsStyles.table}>
-            <thead>
-              <tr>
-                <th>角色</th>
-                <th>模型</th>
-                <th>调用</th>
-                <th>输入</th>
-                <th>输出</th>
-                <th>失败</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.byRole.map((row) => (
-                <tr key={`${row.role}:${row.model}`}>
-                  <td className={statsStyles.roleName}>
-                    {MODEL_ROLE_LABELS[row.role as keyof typeof MODEL_ROLE_LABELS] ?? row.role}
-                  </td>
-                  <td className={statsStyles.modelName}>{row.model || '—'}</td>
-                  <td>{row.calls}</td>
-                  <td>
-                    {row.promptTokens > 0 ? (
-                      formatTokens(row.promptTokens)
-                    ) : (
-                      <span className={statsStyles.zero}>—</span>
-                    )}
-                  </td>
-                  <td>
-                    {row.completionTokens > 0 ? (
-                      formatTokens(row.completionTokens)
-                    ) : (
-                      <span className={statsStyles.zero}>—</span>
-                    )}
-                  </td>
-                  <td>
-                    {row.failed > 0 ? (
-                      <span className={statsStyles.failed}>{row.failed}</span>
-                    ) : (
-                      <span className={statsStyles.zero}>0</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          /*
+            用 antd Table 而不是手写 `<table>`：表头底色、单元格内边距、
+            边框与 hover 在深浅两套主题下都已经由 token 校准过，
+            自己写一遍等于抄一份会漂移的副本（这正是这个项目反复
+            记录的那类问题——`docs/DESIGN.md` §8 的形态缺位）。
+            关掉分页：这里最多五六行。
+          */
+          <Table<UsageByRole>
+            className={statsStyles.table}
+            columns={ROLE_COLUMNS}
+            dataSource={data.byRole}
+            rowKey={(row) => `${row.role}:${row.model}`}
+            pagination={false}
+            size="small"
+          />
         )}
 
         {/*
