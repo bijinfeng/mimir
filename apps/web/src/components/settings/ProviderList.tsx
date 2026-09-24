@@ -299,26 +299,37 @@ function PresetPicker({
   })
 
   if (!picked) {
+    /*
+      预设卡片是 antd `Button`（`default` 变体），不是手写的 `<button>`：
+      描边、hover 底色、按下态、焦点环都由 token 给，深浅两套外观都管得到。
+      卡片自己的排版（三行、左对齐、随内容高度）由 `presetCard` / `presetBody`
+      覆盖——那只改 antd 不知道的部分（docs/DECISIONS.md D-045）。
+    */
     return (
       <div className={styles.presetGrid}>
         {sorted.map((preset) => (
-          <button
+          <Button
             key={preset.id}
-            type="button"
             className={styles.presetCard}
             onClick={() => {
               setPicked(preset)
               setCustomUrl(preset.baseUrl)
             }}
           >
-            <span className={styles.presetName}>{preset.name}</span>
-            {preset.popular ? <span className={styles.presetDot} /> : null}
-            <span className={styles.presetUrl}>{preset.baseUrl || '需要自己填地址'}</span>
-          </button>
+            <span className={styles.presetBody}>
+              <span className={styles.presetName}>
+                {preset.name}
+                {preset.popular ? <span className={styles.presetDot} /> : null}
+              </span>
+              <span className={styles.presetUrl}>{preset.baseUrl || '需要自己填地址'}</span>
+            </span>
+          </Button>
         ))}
-        <button type="button" className={styles.presetCard} onClick={onCancel}>
-          <span className={styles.presetName}>取消</span>
-        </button>
+        <Button className={styles.presetCard} onClick={onCancel}>
+          <span className={styles.presetBody}>
+            <span className={styles.presetName}>取消</span>
+          </span>
+        </Button>
       </div>
     )
   }

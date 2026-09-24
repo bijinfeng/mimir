@@ -269,57 +269,39 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     font-size: ${FONT_SIZE.meta}px;
   `,
 
-  /**
-   * 用原生 `<select>` 而不是 antd 的 `Select`。
-   *
-   * 理由是这个控件要出现在**很多行里**（每个角色两个），而 antd 的
-   * `Select` 每实例挂一层浮层与虚拟列表——五行的设置页用不上那些，
-   * 而且它的宽度会随内容跳动。原生控件的键盘行为与可访问性也已经是
-   * 平台标准，不需要再造一遍。
-   *
-   * 样式只调外观：宽度、字号、边框跟随主题 token。
-   */
-  select: css`
-    max-width: 220px;
-    padding: 3px 8px;
-    background: ${token.colorBgContainer};
-    border: 1px solid ${token.colorBorder};
-    border-radius: 6px;
-    font-size: ${FONT_SIZE.excerpt}px;
-    color: ${token.colorText};
-    cursor: pointer;
-
-    &:focus-visible {
-      outline: 2px solid ${token.colorPrimaryBorder};
-      outline-offset: 1px;
-    }
-
-    &:disabled {
-      cursor: not-allowed;
-      color: ${token.colorTextTertiary};
-    }
-  `,
-
   /* ── 预设选择器 ─────────────────────────────────────── */
   presetGrid: css`
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 8px;
   `,
+  /**
+   * 预设卡片。
+   *
+   * 壳是 antd 的 `Button`（`default` 变体）：描边、hover 底色、按下态、
+   * 焦点环都走 token，深浅两套外观都管得到。这里只改它不知道的三件事——
+   * 卡片是**多行、左对齐、随内容变高**的，而按钮默认单行居中。
+   *
+   * `&.${prefixCls}-btn` 而不是裸类名：antd 的 `.${prefixCls}-btn` 与
+   * 这一条同为单类选择器，谁后注入谁赢——那种胜负不该被依赖
+   * （AGENTS.md 的样式规则第 7 条：覆写内部结构用 `${prefixCls}`）。
+   */
   presetCard: css`
+    &.${prefixCls}-btn {
+      height: auto;
+      padding: 10px 12px;
+      align-items: stretch;
+      justify-content: flex-start;
+    }
+  `,
+  /** 卡片内容：三行竖排，整块撑满按钮宽度 */
+  presetBody: css`
     display: flex;
     flex-direction: column;
     gap: 3px;
-    padding: 10px 12px;
+    width: 100%;
+    min-width: 0;
     text-align: left;
-    background: ${token.colorBgContainer};
-    border: 1px solid ${token.colorBorderSecondary};
-    border-radius: 8px;
-    cursor: pointer;
-
-    &:hover {
-      border-color: ${token.colorPrimaryBorder};
-    }
   `,
   presetName: css`
     display: flex;

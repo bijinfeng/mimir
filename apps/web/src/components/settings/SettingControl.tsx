@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Button, Input, InputNumber, Tooltip, message } from 'antd'
+import { Button, Input, InputNumber, Switch, Tooltip, message } from 'antd'
 import { useState } from 'react'
 import type { SettingEntry } from '@mimir/shared'
 import { ApiRequestError, api } from '@/lib/api'
@@ -142,14 +142,18 @@ export function SettingControl({
           onChange={(value) => setDraft(value)}
         />
       ) : entry.type === 'boolean' ? (
-        <input
-          type="checkbox"
+        /*
+          开关用 antd 的 `Switch` 而不是原生 checkbox：原生控件不服从 token
+          体系——深色下是浏览器默认的白框，而勾选态的颜色（各浏览器不同）
+          也不由我们校准（docs/DECISIONS.md D-042、D-045）。
+        */
+        <Switch
           checked={draft === true}
           disabled={save.isPending}
-          onChange={(event) => {
-            setDraft(event.target.checked)
+          onChange={(checked) => {
+            setDraft(checked)
             // 开关只有两态，用户点它就是这个意思——不需要再点一次保存
-            save.mutate(event.target.checked)
+            save.mutate(checked)
           }}
         />
       ) : secret ? (

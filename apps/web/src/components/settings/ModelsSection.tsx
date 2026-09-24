@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { App, Button, Skeleton, Tooltip } from 'antd'
+import { App, Button, Select, Skeleton, Tooltip } from 'antd'
 import type { ModelRoleStatus, ProviderInstance, RuntimeConfig } from '@mimir/shared'
 import { api, ApiRequestError } from '@/lib/api'
 import { ProviderList } from '@/components/settings/ProviderList'
@@ -156,15 +156,43 @@ function RoleRow({
   const choices = current ? modelsForRole(current, role.role) : []
   const hint = roleHint(role)
 
+  /**
+   * 模型下拉的选项。
+   *
+   * 当前绑定的模型**不在列表里时也要显示出来**，否则用户看不到自己选了什么
+   * （它可能是刚被「拉取模型」刷掉的名字，或是手改配置写进来的）。
+   */
+  const modelOptions = [
+    ...(role.model !== '' && !choices.some((model) => model.id === role.model)
+      ? [{ value: role.model, label: `${role.model}（不在列表里）` }]
+      : []),
+    ...choices.map((model) => ({ value: model.id, label: model.id })),
+  ]
+
   return (
     <Row label={role.label}>
+      {/*
+        两个下拉都用 antd 的 `Select`，宽度写死。
+        宽度不写死的话它会**随选中项的文字长度变宽**，而这两列在五行之间
+        要能上下对齐（扫读时视线不用来回跳，DESIGN §8.1）。宽度取
+        「够放常见供应商名 + 缺密钥后缀」——再长的名字截断，下拉里读全。
+
+        早期这里是原生 `<select>`（理由是「五行设置页用不上浮层与虚拟列表」），
+        但它不服从 token 体系：深色下是浏览器默认的白框，是整页唯一不属于
+        这套设计的东西——与统计分区、账号分区被改掉的是同一个问题
+        （docs/DECISIONS.md D-042、D-045）。
+      */}
       <div className={styles.actions}>
-        <select
-          className={styles.select}
-          value={role.providerId ?? ''}
-          onChange={(event) => {
-            const providerId = event.target.value
-            if (providerId === '') {
+        <Select<string | undefined>
+          style={{ width: 200 }}
+          value={role.providerId ?? undefined}
+          placeholder="选择供应商"
+          allowClear
+          /* 下拉按内容宽：选项里会缀「· 缺密钥」，不必压进 200px 的框 */
+          popupMatchSelectWidth={false}
+          aria-label={`${role.label}的供应商`}
+          onChange={(providerId) => {
+            if (!providerId) {
               onBind(null)
               return
             }
@@ -174,43 +202,31 @@ function RoleRow({
             const first = next ? modelsForRole(next, role.role)[0]?.id : undefined
             onBind(first ? { providerId, model: first } : null)
           }}
-        >
-          <option value="">（未选择）</option>
-          {providers.map((provider) => (
-            <option key={provider.id} value={provider.id}>
-              {provider.name}
-              {provider.hasKey ? '' : ' · 缺密钥'}
-            </option>
-          ))}
-        </select>
+          options={providers.map((provider) => ({
+            value: provider.id,
+            label: provider.hasKey ? provider.name : `${provider.name} · 缺密钥`,
+          }))}
+        />
 
-        <select
-          className={styles.select}
-          value={role.model}
+        <Select<string | undefined>
+          style={{ width: 220 }}
+          value={role.model === '' ? undefined : role.model}
           disabled={!current || choices.length === 0}
-          onChange={(event) => {
-            if (!current) return
-            onBind({ providerId: current.id, model: event.target.value })
-          }}
-        >
-          {/*
+          /*
             两种情况要分开说：
             - 没选供应商 → 「先选供应商」（用户知道下一步做什么）
             - 选了但没有模型 → 「这家没有模型」（用户知道要去拉取或手加）
             两者都显示同一句话会让用户以为是后一种而出错方向
-          */}
-          {!current ? <option value="">先选供应商</option> : null}
-          {current && choices.length === 0 ? <option value="">这家没有模型</option> : null}
-          {/* 当前绑定的模型不在列表里时也要显示出来，否则用户看不到自己选了什么 */}
-          {role.model !== '' && !choices.some((model) => model.id === role.model) ? (
-            <option value={role.model}>{role.model}（不在列表里）</option>
-          ) : null}
-          {choices.map((model) => (
-            <option key={model.id} value={model.id}>
-              {model.id}
-            </option>
-          ))}
-        </select>
+          */
+          placeholder={current ? '这家没有模型' : '先选供应商'}
+          popupMatchSelectWidth={false}
+          aria-label={`${role.label}的模型`}
+          onChange={(model) => {
+            if (!current || !model) return
+            onBind({ providerId: current.id, model })
+          }}
+          options={modelOptions}
+        />
 
         <StatusDot role={role} />
 
