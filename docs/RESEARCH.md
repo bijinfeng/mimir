@@ -1103,3 +1103,95 @@ private readonly presignClient: S3Client;
 `aws4fetch` 不删掉，降为备选：**76 KB 对 17 MB 在服务端没意义，但它的
 「不多发一个头」在自建端点上确实更省心**。若实现时发现某个自建 S3
 不认 `WHEN_REQUIRED` 这个参数（旧版本 SDK 或非官方实现），它就是退路。
+
+---
+
+## 11. 双数据库后端：SQLite（本地开发 / 桌面端）+ Postgres（服务器）
+
+> 2026-09 调研。背景：本地开发被「必须先起 Docker 里的 Postgres」卡住
+>（实测新克隆环境在数据目录与数据库双双缺席时，服务端对每个请求返回 HTML
+> 错误页，前端表现为 `Unexpected token '<' … is not valid JSON`）；
+> 桌面端（PRD 未承诺、但方向已明确）更需要一个无服务的本地库。
+> 用户决策：**云端生产继续用 Postgres**。决策记录见 `DECISIONS.md` D-045。
+
+### 11.1 驱动选型
+
+| 候选 | 结论 | 理由 |
+|---|---|---|
+| `better-sqlite3` | **采纳** | Node 生态最成熟的 SQLite 绑定；预编译二进制覆盖 darwin / linux / win32，正常安装不触发 node-gyp；**FTS5、JSON1、窗口函数默认编进分发的 SQLite**；drizzle-orm 一等支持（`drizzle-orm/better-sqlite3`）；桌面端有成熟的 `@electron/rebuild` 重编译路径。同步 API 在单用户服务端不是问题：个人库的查询都在毫秒级 |
+| `@libsql/client`（libsql） | 备选 | Turso 维护的 SQLite fork，**自带向量函数**（`vector_distance_cos` / `vector_top_k`），可省掉 sqlite-vec 的扩展加载。不采纳的原因：整库绑在一个公司维护的 fork 上，FTS5 行为与主线 SQLite 存在分叉风险；本地文件模式虽好，better-sqlite3 已覆盖。若 M1-B 实现时想省掉扩展加载，再评估 |
+| `node:sqlite`（Node 内置） | 不采纳（现阶段） | Node 22.x 里仍是实验性（flag / 警告），API 面窄，加载第三方扩展（FTS 之外、以及将来的 sqlite-vec）的路径不成熟。等稳定后可降掉一个原生依赖 |
+
+### 11.2 FTS5 与中文：原否决理由的回应
+
+`TECH.md` §1 否决 SQLite 的第一个理由是「FTS5 没有中文分词」。**成立，但不再是障碍**：
+mimir 的中文分词从来不在数据库里做——jieba 在**应用侧**切词、空格连接后写入
+`search_text`（§5、TECH §4.4），这条设计当初就是为了绕开 Postgres `simple` 配置
+没有词边界的缺陷（§5.3 的反证实测）。FTS5 的 `unicode61` 分词器按空白与标点切词，
+对「已经切好词」的文本恰好正确：
+
+```
+search_text = "组件 性能 优化 react"     ← jieba 写入侧已切好
+FTS5 unicode61 切出的词元 = {组件, 性能, 优化, react}   ← 与 jieba 词元一一对应
+```
+
+查询侧同样先过 `queryTokens()` 再逐词构造 MATCH，中文质量由 jieba 决定，
+**与 PG 路径完全同源**——两条路径共享同一份分词包与同一列数据。
+
+排序函数的差异：PG 用 `ts_rank_cd`（cover density），SQLite 用 `bm25()`。
+混合模式走 RRF 融合（§4.2），**RRF 只看名次不看分数**，分布差异被天然吸收；
+keyword 单通道模式下分数含义有差异（一个 0~1、一个负对数似然），可接受，
+不为此做分数归一化。
+
+FTS5 表的设计取舍：**standalone 虚拟表 + 触发器**，不用 external content——
+external content 要求 FTS5 的整数 rowid 与业务表主键对齐，而 mimir 的主键是
+应用生成的 nanoid（text），做映射是多余的间接层。触发器挂在 `documents` 的
+INSERT / UPDATE(OF search_text) / DELETE 上，所有写入路径（笔记保存、抓取、
+上传、重建索引）自动被覆盖，没有「某个写入点忘了同步索引」的静默缺口；
+`pnpm db:reindex` 做全量重建兜底。
+
+### 11.3 向量检索：sqlite-vec vs pgvector（M1-B 蓝图，本轮不实现）
+
+第二个否决理由「sqlite-vec 是纯暴力检索」**属实**，量化对比：
+
+| 项 | pgvector HNSW（§6.2 实测） | sqlite-vec 暴力扫描 |
+|---|---|---|
+| 5000 向量 top-10 | 0.084 ms | 同量级（扫描 5000×1024 维 ≈ 5×10⁶ 乘加，亚毫秒） |
+| 10 万 chunk × 1024 维 | ~0.1 ms | ≈ 10⁸ 乘加，C 实现 SIMD 下 **毫秒~几十毫秒级** |
+| 100 万 chunk | ~1 ms | 数百毫秒，开始影响交互 |
+
+个人知识库的 chunk 量级是 1–10 万（≈ 1000–10000 篇文档），暴力扫描的绝对
+延迟完全可接受；百万级才需要重新评估——那时触发的是 D-024/D-031 既有逃生舱
+（把 Postgres 请回来做向量库），而不是现在为一个不存在的规模付钱。
+
+M1-B 的双后端蓝图（写在 §4.5/§4.8，本轮只做设计）：
+
+- **PG 侧**：维持 §4.8 的 `halfvec` HNSW + 按维度分区的 partial index 设计，不变
+- **SQLite 侧**：`vec0` 虚拟表（`embedding float[1024]` + 维度元数据列），
+  KNN 查询 `WHERE embedding MATCH :query AND k = :n`；sqlite-vec 是 MIT 许可，
+  npm 分发平台预编译的 loadable extension，`better-sqlite3.loadExtension()` 加载
+- 两条侧实现为**同一个 vector leg 的两个方言模块**——与 keyword/substring
+  通道同一组织方式
+
+### 11.4 并发、可靠性与运维
+
+- **WAL 模式**：单写多读。mimir 是单 Node 进程 + 单用户，better-sqlite3 的
+  同步 API 让写天然串行，不存在写竞争；drizzle-studio 之类的旁路读者不阻塞写。
+- **必须显式打开的 PRAGMA**：`foreign_keys=ON`（**SQLite 默认关闭**——不开的话
+  所有 `onDelete: 'cascade'` 静默失效，删会话留下孤儿消息）、`busy_timeout=5000`、
+  `synchronous=NORMAL`（WAL 下安全且快）。与 PG 的差异记入 TECH §10。
+- **原生模块与 pnpm**：pnpm 12 默认阻止依赖执行安装脚本，`allowBuilds` 需要显式
+  放行 `better-sqlite3`（此前记录为 `false`，正是为了这一天的显式决策）。
+- **备份**：`data/mimir.db` 随 `data/` 一起拷贝（或 `VACUUM INTO` 热备），
+  与「数据库是可重建的索引」的定位一致——丢了也能从文件全量重建。
+
+### 11.5 结论
+
+- **服务器**：Postgres 17 + pgvector 不变。D-031 的 SQL 方言论证在服务器路径上
+  全部继续成立，pgvector 的 HNSW 与表达式索引仍是最优解。
+- **本地开发 / 桌面端**：SQLite。`DATABASE_URL` 协议头判定驱动
+  （`postgres://` → PG，`file:`/路径 → SQLite），**未设置时默认 SQLite**——
+  新克隆环境 `pnpm install && pnpm dev` 即跑，零 Docker。
+- **方言分支收敛在五处**（keyword、substring 两个通道按方言分支；
+  摘要切片与用量聚合统一成 JS；时间默认值参数化），其余代码双端共用。
+  这是有意控制的代价，不是通用存储引擎接口——见 D-045。

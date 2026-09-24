@@ -13,14 +13,14 @@
 | 编辑器 | Tiptap 3 + `@tiptap/markdown` | 官方 markdown 序列化，往返幂等（见 PRD 5.4） |
 | 构建期优化 | **React Compiler** | 自动记忆化，替代手写 useMemo / useCallback / memo |
 | 后端 | Hono 4 + `@hono/node-server` | 浏览器扩展、脚本、CLI 都要调同一套 HTTP 接口，比 server function 更合适 |
-| ORM | Drizzle 0.45 + postgres.js | 类型安全的 SQL，不引入第二套查询语言 |
-| 数据库 | PostgreSQL 17 + pgvector 0.8 | 混合检索、任务状态、事务都在一个组件里 |
+| ORM | Drizzle 0.45（PG：postgres.js / 本地：better-sqlite3） | 类型安全的 SQL，不引入第二套查询语言 |
+| 数据库 | **服务器**：PostgreSQL 17 + pgvector 0.8；**本地开发 / 桌面端**：SQLite + FTS5 | 同一套服务层。按 `DATABASE_URL` 协议头判定驱动，未设置默认 SQLite（免 Docker）。方言分支只在列明的 5 处，见 D-045 与 RESEARCH §11 |
 | 认证 | Better Auth 1.7 + drizzle adapter | 自托管单用户，邮箱密码足够 |
 | AI | TanStack AI 0.55 | 见 §5 |
 | 包管理 | pnpm workspace + **catalog** | 前后端共享类型包；依赖版本集中声明 |
 | 类型检查 | **TypeScript 7.0** | Go 重写版。见下方说明 |
 | Lint / Format | **oxlint + oxfmt** | 单命令跑全仓，比 ESLint + Prettier 快一个数量级 |
-| 部署 | Docker Compose | 自托管，一个 Postgres 容器起步 |
+| 部署 | Docker Compose | 自托管服务器：Postgres 容器 + 应用容器；本地开发免 Docker（SQLite） |
 
 ### TypeScript 7 的说明
 
@@ -38,7 +38,7 @@ TS 7 是 Go 重写的编译器（`tsc` 是平台原生二进制，通过 `@types
 |---|---|
 | TanStack Start | worker 与浏览器扩展都需要真实 HTTP 接口，server function 覆盖不了；SSR 无收益 |
 | Next.js | 同上的 SSR 无收益，且 App Router 的复杂度换不来任何东西 |
-| SQLite | 混合检索需要 FTS + 向量 + 事务在同一个查询里。SQLite 的 FTS5 没有中文分词，sqlite-vec 是纯暴力检索 |
+| SQLite 作为**唯一**后端 | 云端明确继续用 Postgres（D-045）：pgvector 的 HNSW 与表达式索引在服务器路径仍是最优解。SQLite 采纳为**本地开发与桌面端**后端——原否决的两条理由在本地路径上都有回应：中文分词本就在应用侧完成（jieba → `search_text`，FTS5 对预分词文本恰好正确）；sqlite-vec 的暴力扫描在个人库规模是毫秒级，可接受。见 RESEARCH §11 |
 | ParadeDB | 中文检索更强（内置 Lindera），但 Community 版是 **AGPL-3.0**。作为独立容器使用对个人无约束，但会成为一个需要解释的依赖。见 §4.4 的替代方案 |
 | 现成 RAG 框架（Mastra RAG / LlamaIndex.TS / LangChain.js） | 它们都想接管文档与分块的数据模型，而本项目必须要 chunk 级引用指回自己的表。见 §6 |
 | 一站式 RAG 平台（RAGFlow / Dify / FastGPT / AnythingLLM / Khoj） | 企业向、资源占用大（RAGFlow 最低 4 核 16G）、引用是黑盒。调研细节见 RESEARCH.md |
@@ -70,7 +70,7 @@ TS 7 是 Go 重写的编译器（`tsc` 是平台原生二进制，通过 `@types
 └─────────┼────────────────┼───────────────────┼───────────┘
           │                │                   │
 ┌─────────▼────────────────▼───────────────────▼───────────┐
-│  PostgreSQL              │  文件系统                       │
+│  PostgreSQL / SQLite     │  文件系统                       │
 │  documents / chunks      │  data/vault/    笔记（真相）    │
 │  jobs / usage_log        │  data/uploads/  上传的原件      │
 │  FTS + pgvector 索引      │  data/raw/      抓取快照        │
@@ -173,12 +173,14 @@ mimir/
 
 ```
 查询
- ├─ 通道 1：关键词（jieba 分词 + GIN）  ─┐
- ├─ 通道 2：子串兜底（pg_trgm）        ─┤→ 加权 RRF → 取前 N →（M1）rerank → 组装上下文
- └─ 通道 3：向量（pgvector HNSW，M1）  ─┘
+ ├─ 通道 1：关键词（jieba 分词 + 全文索引）  ─┐
+ ├─ 通道 2：子串兜底（正文子串匹配）        ─┤→ 加权 RRF → 取前 N →（M1）rerank → 组装上下文
+ └─ 通道 3：向量（M1）                     ─┘
 ```
 
 通道是**接缝**：每个通道独立召回一批已排序的 id，融合层只认这个形状。M1 加向量通道时，融合层一行不用改。
+
+**索引与 SQL 按后端各有实现**：PG 用 GIN + `ts_rank_cd`、`pg_trgm` + ILIKE、pgvector HNSW；SQLite 用 FTS5 + `bm25()`、`instr`/`LIKE`、（M1）sqlite-vec。方言分支只存在于各通道与迁移内部，融合层、服务层与前端契约不感知后端（D-045）。
 
 ### 4.2 为什么用 RRF 而不是加权求和
 
@@ -208,6 +210,7 @@ AND：要求三个词同时出现 → 命中 0 条
 
 **采用「命中词数 ≥ 查询词数的一半」（向上取整，至少 1 个）**，排序仍交给
 `ts_rank_cd`：命中的词越多、越集中，排得越前。两个通道用同一个门槛。
+（SQLite 路径：门槛语义相同，排序换成 `bm25()`——RRF 只看名次，分布差异被吸收。）
 
 查询侧先过一遍 `queryTokens()`（`lib/segment.ts`）：去掉纯标点、单个汉字、
 疑问词与结构助词。它们不承载检索意图，却会抬高门槛。
@@ -229,7 +232,9 @@ jieba 切查询：react / 重渲染范围 / 缩小
 ```
 
 「重渲染范围」作为一个词在词级通道上永远命中不了，而正文里明明有这四个
-连续的汉字。子串通道用 `pg_trgm` 索引做 `ILIKE`，不受分词结果影响。
+连续的汉字。子串通道做正文的**子串匹配**，不受分词结果影响：
+PG 用 `pg_trgm` 索引加速 `ILIKE`；SQLite 用 `instr(lower(…), lower(…))`
+（注意 SQLite 的 `LIKE` 只对 ASCII 不区分大小写，中文路径一律显式 `lower()`）。
 
 **逐词匹配，不是整串**。原实现拿整条查询串去 `ILIKE '%...%'`，对「向量检索」
 成立，但对一句话提问永远不可能命中——没有任何正文包含那整句话。
@@ -357,6 +362,9 @@ CREATE INDEX chunk_embeddings_1024_idx ON chunk_embeddings
 **索引建在 `embedding::halfvec(1024)` 这个表达式上**，所以向量通道的查询
 必须写成同一个表达式（`embedding::halfvec(1024) <=> $1`）并带上
 `WHERE dimension = 1024`，否则索引静默不命中——这是本期最容易踩的一处。
+
+**以上向量设计是 PG 侧的**。SQLite 侧（M1-B）用 `vec0` 虚拟表 + 暴力 KNN，
+`chunks` 索引同构（FTS5 版），蓝图与量级论证见 `RESEARCH.md` §11.3。
 
 ### 4.9 分块器：确定性、可逆、按结构切
 
@@ -770,17 +778,20 @@ key 是**相对 `DATA_DIR` 的 POSIX 路径**（`vault/…`、`uploads/…`、`r
 `raw/` 是抓取快照，`avatars/` 延续 D-036 的边界——
 头像不在 `vault/` 下，因此不进分词、不进导出、不进重建索引的扫描范围。
 
-**明确不做成接缝的**（`DECISIONS.md` D-031，**已由 D-038 收窄**）：
-向量库、图数据库。本项目只有 Postgres 一个后端，把它抽象成可切换的存储引擎，
-代价是所有查询要过一层接口，收益是零——WeKnora 支持 10 种向量库是因为它要卖给
-什么栈都有的企业。**Postgres 同时是关系库、全文索引与向量库**，
-这是本项目的简化前提，不是待替换的组件。
+**明确不做成接缝的**（`DECISIONS.md` D-031，**已由 D-038、D-045 两次收窄**）：
+向量库、图数据库。数据库现在是**受控的双实现**（D-045）：服务器=Postgres、
+本地开发与桌面=SQLite，由 `DATABASE_URL` 协议头判定——但**没有**「可切换存储引擎」
+的通用接口：方言分支收敛在列明的五处（两个检索通道、迁移与 schema、
+摘要切片与用量聚合统一成 JS），其余代码不感知后端。
+WeKnora 支持 10 种向量库是因为它要卖给什么栈都有的企业；本项目加第二个后端
+是因为「本地与桌面需要一个无服务的库」这个真实需求，不是「兼容各种栈」。
 
 > **注意这里原先还列着「对象存储」**，D-038 已把它移出并做了接缝。
 > 理由不是「用户想要」，而是 D-031 自己给的判据：
-> **有多实现的地方抽接缝**。数据库没有第二个实现，文件存储**有**（本地与 S3），
+> **有多实现的地方抽接缝**。文件存储**有**两个实现（本地与 S3），
 > 而且第二个不是「兼容已有栈」——VPS 部署的人本来就没有本地文件可以开。
-> D-031 的三条理由全部关于 **SQL 方言**，而文件读写没有方言。
+> 数据库的第二个实现（SQLite）同理是真实需求驱动，但方言税真实存在，
+> 所以分支点是**点名收敛**的，不做通用抽象——见 D-045。
 
 
 同理不做的：外部插件市场（PRD §1）、Cordis 式依赖注入（7.3）。
@@ -796,9 +807,9 @@ key 是**相对 `DATA_DIR` 的 POSIX 路径**（`vault/…`、`uploads/…`、`r
 
 ```
 plugins/leg/src/
-├── keyword.ts     jieba 预分词 + GIN + ts_rank_cd；export install()
-├── substring.ts   pg_trgm + ILIKE，逐词匹配
-└── index.ts       install(host)：把两个实现注册进 host.leg
+├── keyword/       jieba 预分词 + 全文索引；PG=ts_rank_cd / SQLite=FTS5+bm25
+├── substring/     正文子串逐词匹配；PG=ILIKE+trgm / SQLite=instr+LIKE
+└── index.ts       install(host)：按 host.db.dialect 选方言实现并注册进 host.leg
 ```
 
 接口本身只有三个成员：`id`（写进 matchedBy）、`defaultWeight`（融合权重的
@@ -1147,8 +1158,9 @@ docker run -d --network host \
 
 ### 8.5 备份
 
-默认（本地后端）：`data/` 目录 + `pg_dump` 定时打包。因为「文件是真相」，
-最坏情况可以从 `data/vault`（笔记）、`data/uploads`（上传的原件）与
+默认（本地文件后端）：`data/` 目录 + 数据库转储定时打包（Postgres 用 `pg_dump`；
+SQLite 直接拷 `data/mimir.db`，或运行中的热备用 `VACUUM INTO`）。
+因为「文件是真相」，最坏情况可以从 `data/vault`（笔记）、`data/uploads`（上传的原件）与
 `data/raw`（抓取快照）**完整重建数据库**。
 
 `uploads/` 必须一起备份——它是文件的真相，丢了就真的丢了（正文只是它的
@@ -1156,12 +1168,28 @@ docker run -d --network host \
 
 选 S3 后端之后，真相在桶里，备份变成两件事：**桶本身的持久化**
 （对象存储通常自带冗余，但版本控制与生命周期策略要自己开）
-加 **`pg_dump`**。注意列表类操作在 S3 上是按请求计费的，
+加**数据库转储**。注意列表类操作在 S3 上是按请求计费的，
 所以「定期全量拉回本地」这类做法要先算成本——而重建索引只 LIST 一次
 （§13.2 的 `listUploads()`），不按目录逐个列举。
 
 两种后端都成立的一条没有变：**数据库始终是可重建的**，
-所以 `pg_dump` 丢了不致命，桶或 `data/` 丢了才致命。
+所以数据库转储丢了不致命，桶或 `data/` 丢了才致命。
+
+### 8.6 本地开发与桌面端（SQLite）
+
+`DATABASE_URL` 未设置（或以 `file:` 开头 / 是一个路径）时，服务端使用 SQLite：
+
+- 库文件默认在 `data/mimir.db`（WAL 模式，旁边有 `-wal` / `-shm` 两个伴生文件，
+  都不进 git——`data/` 本来就被忽略）
+- **启动时自动应用迁移**：SQLite 路径下迁移是幂等的（journal 表记账），
+  首次运行 `pnpm dev` 即自动建库建表，桌面端将来也依赖这一行为；
+  Postgres 路径保持手动 `pnpm db:migrate`（生产习惯不变，见 §8.4）
+- **FTS5 全文索引**由 `documents` 上的触发器维护，`pnpm db:reindex` 可全量重建
+- 数据目录不存在时**自动创建**（Postgres 路径同样受益）——原先「目录不存在就抛错」
+  是新环境 500 的来源之一；目录写错路径的代价是新建一个空库，可接受（D-045）
+
+与生产路径的关系：compose / Dockerfile **始终显式**传 `postgres://` 的
+`DATABASE_URL`，不受默认值影响；两条路径共用同一套 schema、迁移体系与服务层。
 
 ---
 
@@ -1200,9 +1228,18 @@ docker run -d --network host \
 
 ### 9.2 测试库隔离
 
-集成测试用**独立的 `mimir_test` 库**和**独立的 vault 目录**（`data/.test/`）。
+集成测试默认跑在 **SQLite 临时库**上（`globalSetup` 建临时文件库并应用迁移）——
+不需要 Docker，`pnpm check` 在任何机器上都能跑。
 
-这一条踩过坑：测试一开始写进了真实 vault，跑几次之后用户的笔记目录里多了 18 个测试垃圾文件。现在 `globalSetup` 会校验库名必须包含 `mimir_test`，否则拒绝运行。
+检索相关的测试**两种方言都要过**（方言对齐门）：设置
+`TEST_DATABASE_URL=postgres://…mimir_test` 时，`globalSetup` 改走 Postgres 路径
+（清库、建扩展、推 schema），同一套断言在 PG 上复跑——两个通道的 SQL 是
+按方言分开写的，只在一种方言上绿的测试不算绿。
+
+集成测试用**独立的测试库**（Postgres 路径下库名必须包含 `mimir_test`，
+否则拒绝运行）和**独立的 vault 目录**（`data/.test/`）。
+
+这一条踩过坑：测试一开始写进了真实 vault，跑几次之后用户的笔记目录里多了 18 个测试垃圾文件。
 
 ### 9.3 一条命令
 
@@ -1315,6 +1352,11 @@ M1 的新代码大多是「纯函数 + SQL」，两类都能用能说明用户�
 | 非 UTF-8 的文本文件 | `new TextDecoder()` 默认**不抛错**，非法字节被换成 U+FFFD——一份 GBK 的中文 txt 变成满屏 `��`，而库照常入库、检索照常建索引，搜什么都搜不到 | `decodeUtf8` 用 `fatal: true`，失败就抛错并由上传路径记进 `parse_error`。与「中文必须预分词」同一条规矩：静默降级比报错更糟。不做编码自动探测（猜错就是乱码入库） |
 | S3 上传的字节流被当成字符串 | `Blob`/`Uint8Array` 的 buffer 可能是 `SharedArrayBuffer`（`ArrayBufferLike`），直接交给 `new Blob([bytes])` 在某些环境类型不过、或复制出错误内容 | 复制成独立 `ArrayBuffer` 再传（测试里这么做；上传路径用 `file.arrayBuffer()` 天然是 `ArrayBuffer`）。**不是类型洁癖**：`SharedArrayBuffer` 被当作 `ArrayBuffer` 时读出来是垃圾 |
 | 把一个格式的「没有实现」说成「解析失败」 | 用户看到「失败」会去查自己的文件，而那个格式我们还没做——这是**静默说谎**（与热力图把「用量未上报」画成空底同类） | `parseSupport()` 三态（`now` / `planned` / `none`）在 `@mimir/shared`，界面的措辞由它派生；`parse_error` 只记**真的试过并失败**的原因。`upload.test.ts` 断言损坏的 docx 有 `parseError` 而未知格式是 `null` |
+| **SQLite 默认关闭外键** | `onDelete: 'cascade'` 全部**静默失效**——删会话留下孤儿消息、删文档留下孤儿标签关联，不报错 | 连接建立时显式 `PRAGMA foreign_keys = ON`（`db/client.ts`），与 PG 默认开启的行为对齐 |
+| **FTS5 索引靠触发器维护** | 触发器漏建或被绕过时「写入正常、中文搜不到」——索引悄悄落后于表 | 触发器建在 `documents` 的 INSERT / UPDATE(OF search_text) / DELETE 上（覆盖全部写入路径）；`pnpm db:reindex` 全量重建兜底。见 RESEARCH §11.2 |
+| SQLite 的 `LIKE` 只对 ASCII 不区分大小写 | 同一条 `like` 在 PG（区分）与 SQLite（不区分）行为不同——「测试在 PG 上绿、SQLite 上行为不同」这类方言分歧 | 需要精确语义的地方**两侧都显式 `lower()`**（子串通道已经这么做）；目录前缀等 ASCII 场景接受差异 |
+| `DATABASE_URL` 缺失时默认 SQLite | 原先连 Postgres 的环境漏配它，会**静默换到空库**——症状是「数据全丢了」 | 部署环境始终显式设置（compose / Dockerfile 已如此）；启动日志打印当前驱动与库位置 |
+| better-sqlite3 是同步 I/O | 大查询会阻塞事件循环，所有并发请求排队 | 单用户 + 个人库规模（查询毫秒级）可接受；PG 路径（服务器部署）不受影响。见 RESEARCH §11.1 |
 
 ---
 
@@ -1337,13 +1379,13 @@ M1 的新代码大多是「纯函数 + SQL」，两类都能用能说明用户�
    - 设置页：模型分区可编辑、来源徽标、四态状态 + 「测试连接」探测；
      插件分区改为从注册表渲染（原先是一份会漂移的手写数组）
 5. **M1-B 分块与向量化**
-   - `chunks` / `chunk_embeddings` 表 + 迁移
+   - `chunks` / `chunk_embeddings` 表 + 迁移（**PG 与 SQLite 各一份**，与主 schema 同一个守卫测试对齐）
    - `lib/chunk.ts`（确定性、偏移可逆、按结构切）+ 四类断言（§9.5）
    - 分块接入写入路径（笔记保存、抓取入库）与重建索引
    - `POST /maintenance/embed` 分批补嵌入
 6. **M1-C 混合检索**
    - 两条现有通道改成返回分块 id（各自一个文件，`plugins/leg/src/`）
-   - `plugins/leg/src/vector.ts` + 在 `install()` 里注册一行
+   - `plugins/leg/src/vector/`（PG=halfvec HNSW / SQLite=sqlite-vec，同一接缝两个方言模块）+ 在 `install()` 里注册一行
    - `mode` 落成通道筛选，默认模式由注册表推导
    - 引用组装：相邻分块合并 + 每篇上限
 7. **M1-D 带引用的问答与 AI 摘要、标签建议、内联改写**

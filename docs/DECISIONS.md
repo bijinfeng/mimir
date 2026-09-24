@@ -1367,7 +1367,12 @@ id 集合与 `retrievalLegs` 的 `name` 集合一致。**这条断言防止的�
 > 修订理由见 D-038。简言之：本条的三条理由全部是关于 **SQL 方言**的，
 > 而文件读写没有方言。
 >
-> 仍然成立的部分：**数据库与向量库只有 Postgres**，不抽接口。
+> **又被 D-045 进一步收窄（2026-09）**：「数据库与向量库只有 Postgres」收窄为
+> 「**服务器**只有 Postgres；本地开发与桌面端用 SQLite（受控双后端）」。
+> 「不抽通用接口」仍然成立——方言分支收敛在五个点名处，没有存储引擎抽象层。
+> 详见 D-045。
+>
+> 仍然成立的部分：**不抽接口**。
 > 下面正文里凡说「存储引擎」处，语义收窄为「数据库 / 向量引擎」。
 
 **背景**：WeKnora 的「数据与扩展」分区里有向量数据库引擎、存储引擎、沙箱配置、
@@ -2400,3 +2405,69 @@ URL 查询参数、筛选胶囊与 `matchedBy` 的公开值，每加一种格式
 **加断言之后验证它会红**：把 `scopeParams('clip')` 改回 `return {}`
 （那个曾经的错误实现），`list-helpers.test.ts` 里对应的那条立刻转红，
 还原后重新变绿。
+
+---
+
+## D-045 数据库双后端：服务器 Postgres，本地开发与桌面 SQLite
+
+**背景**：两个独立的事实撞在一起。其一，本地开发的启动链路是「克隆 → 装 Docker →
+起 Postgres 容器 → 配 .env → 建表」，任何一环缺席都起不来——实测新环境里
+`data/` 目录不存在时，服务端对每个请求返回 HTML 错误页，前端表现为
+`Unexpected token '<' … is not valid JSON`，而两个终端都看不出原因。
+其二，桌面端（PRD 未承诺、但方向已明确）根本不可能要求用户先装 Docker。
+
+用户决策：**云端生产继续用 Postgres**。由此形成受控双后端：
+**服务器部署 = PostgreSQL 17 + pgvector（现状不动）；本地开发与桌面端 = SQLite**。
+
+**决定**：
+
+1. 驱动由 `DATABASE_URL` 协议头判定（`postgres://` → PG；`file:` / 路径 → SQLite），
+   **未设置时默认 SQLite**（`data/mimir.db`）。它仍是部署事实（TECH §7.5），
+   不进设置页；compose 与 Dockerfile 始终显式传 `postgres://`，生产不受默认值影响。
+2. 方言分支**点名收敛在五处**，其余代码双端共用：
+   - `plugins/leg` 关键词通道：PG 保留 `tsquery`/`ts_rank_cd`；SQLite 用 FTS5 + `bm25()`
+     （jieba 预分词的 `search_text` 直接喂 unicode61 分词器，分词质量与 PG 同源）
+   - `plugins/leg` 子串通道：`instr`/`LIKE`/`min`/`iif` 直译
+   - 搜索摘要切片：统一成 JS（消掉 `strpos`/`substring(... from ... for ...)`)
+   - 用量统计聚合：统一成 JS（消掉 `AT TIME ZONE`/`::int`/`GROUP BY 1` 占位符坑）
+   - 时间默认值：`sql\`now()\`` 改参数化 `new Date()`
+3. `PluginDatabase` 契约增加 `dialect` 字段——插件由此知道自己该说哪种 SQL。
+4. SQLite 侧：WAL + `foreign_keys=ON` + `busy_timeout`；FTS5 standalone 表 +
+   documents 三触发器 + `pnpm db:reindex`；**启动时自动应用迁移**（幂等；
+   Postgres 路径保持手动 `pnpm db:migrate`）。
+5. 数据目录缺失时**自动创建**（原先抛错是本次 500 的来源之一）。
+   接受的代价：`DATA_DIR` 写错路径会静默新建一个空库——症状明确（界面全空）、
+   可从日志的「当前驱动与库位置」一行定位，好过「任何新环境都必须先读报错才能启动」。
+
+**对 D-031 的修订**：D-031 说「数据库与向量库只有 Postgres，不抽接口」，其中
+「不抽接口」**继续成立**（本项目仍然没有可切换存储引擎的抽象层），「只有 Postgres」
+**收窄为「服务器只有 Postgres」**。D-031 的方言税论证恰恰是本次设计遵守的约束：
+正因为每条 SQL 都要在两个方言下正确工作是真实成本，分支才被压缩到五个点名处、
+而不是散进全部代码；schema 双份也配了一条对齐守卫测试（两边迁移后 introspect
+断言表/列/索引逻辑等价）。
+
+**原 §1 否决理由的逐条回应**（证据见 `RESEARCH.md` §11）：
+
+| 当时的理由 | 现状 |
+|---|---|
+| FTS5 没有中文分词 | 分词本就在应用侧（jieba → `search_text`），FTS5 对预分词文本恰好正确 |
+| sqlite-vec 是纯暴力检索 | 属实；10 万 chunk × 1024 维是毫秒~几十毫秒级，个人库可接受；百万级触发 D-024 逃生舱（届时给服务器把 Postgres 请回来做向量） |
+
+**否决**：
+
+| 方案 | 为什么不用 |
+|---|---|
+| SQLite 全切（含生产） | 云端明确继续用 Postgres：pgvector 的 HNSW 与表达式索引在服务器路径仍是最优解，且生产链路（compose、备份、验证）已在运转 |
+| 无差别的 `Database` 抽象接口 | 为两个实现造通用接口会把方言差异推给每个调用点；接缝只在五个点名处，与 D-031 的「有多实现的地方抽接缝」一致——只是这里的「接缝」是方言模块，不是运行时接口 |
+| 把数据库做成设置页条目 | 部署事实不进设置页（§7.5、D-029）；换了库要迁移数据，不是「点一下」的事 |
+
+**影响**：
+
+- `TECH.md` §1/§4/§7.2/§8/§9.2/§10/§11 同步修订；`PRD.md` §1 非目标行重述
+- `packages/shared` 的 `PluginDatabase` 加 `dialect`；`plugins/leg` 目录按方言分模块
+- `pnpm-workspace.yaml` 放开 `better-sqlite3` 的构建许可；新增 `db:reindex`、
+  `db:generate:pg` / `db:generate:sqlite` 脚本
+- 测试默认跑 SQLite 临时库（CI 不再需要 Docker）；检索断言在两种方言下都要过
+  （`TEST_DATABASE_URL=postgres://…` 时切 PG 复跑）
+- 桌面端的技术前提就位（Electron + better-sqlite3 有成熟重编译路径），但桌面端
+  本身仍不在任何里程碑里

@@ -65,6 +65,8 @@ React Compiler 会跳过「抑制了 React 规则」的组件——抑制 hook �
 
 Postgres 的 `simple` 配置没有词边界概念，「组件性能优化」会被当成**一个** token，
 用户搜「组件」永远搜不到。所以写入时用 jieba 切好存进 `search_text` 列。
+SQLite 路径同理：FTS5 的 `unicode61` 分词器也不认中文词边界，索引的正是
+这份预分词文本。
 
 新建任何全文索引前，先确认文本已经过分词。
 
@@ -115,7 +117,9 @@ Postgres 的 `simple` 配置没有词边界概念，「组件性能优化」会�
 
 | 症状 | 原因 |
 |---|---|
-| 中文搜不到 | 缺了 jieba 预分词，或 `new Jieba()` 没带词典（会退化成逐字切分） |
+| 中文搜不到 | 缺了 jieba 预分词，或 `new Jieba()` 没带词典（会退化成逐字切分）；SQLite 下还可能是 FTS5 触发器被绕过、索引落后于表（`pnpm db:reindex` 重建） |
+| 删了会话/文档但关联记录还在 | SQLite 默认**关闭**外键，CASCADE 静默失效——连接时必须显式 `PRAGMA foreign_keys = ON`（`db/client.ts` 已做，别在新连接里漏） |
+| 原先连 Postgres 的环境「数据全空」 | `DATABASE_URL` 没设，默认换到了 SQLite 空库（`data/mimir.db`）——部署环境要显式设置；启动日志打印当前驱动与库位置 |
 | 组件没变快 | React Compiler 静默跳过了（抑制了 React 规则，或 ref 声明晚于使用它的 effect） |
 | 建索引失败 | pgvector 的 HNSW 上限 2000 维，超过要用 `halfvec` |
 | 类型对不上 | `^0.145.0` 这类 peer 范围对 0.x 版本意味着 `>=0.145.0 <0.146.0`，装最新版会失败 |
@@ -161,6 +165,7 @@ Postgres 的 `simple` 配置没有词边界概念，「组件性能优化」会�
 | | 状态 |
 |---|---|
 | 设计 | 定稿 |
+| 数据库 | **双后端**（D-045）：服务器 = Postgres 17 + pgvector（Docker）；本地开发 / 桌面端 = SQLite（免 Docker，`DATABASE_URL` 未设置时默认） |
 | 后端 | M0 完成：文档 CRUD、目录、标签、双链、检索、会话、抓取、问答（流式）、导出 |
 | 前端 | M0 完成：三栏界面、会话优先导航、文档视图、对话视图、命令面板、抓取对话框、设置页 |
 | 文件 | **多格式上传已落地**（`docs/TECH.md` §13、D-044）：任意格式的原件入库、列表、按格式预览、下载、替换、随导出打包；文本 / HTML / Office 的正文可搜。**PDF 的正文提取**与 RSS 未做 |

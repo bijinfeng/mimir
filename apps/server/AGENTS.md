@@ -124,8 +124,11 @@ src/
 ## 测试
 
 - 集成测试用 `app.request()` 内存调用，不占端口
-- **必须用 `mimir_test` 库和 `data/.test/` 目录**。`global-setup.ts` 会校验库名，
-  但目录不会——写错会污染真实 vault
+- **默认跑 SQLite 临时库**（`data/.test/mimir.db`，免 Docker）；设
+  `TEST_DATABASE_URL=postgres://…mimir_test` 时切 PG 复跑——两个检索通道的
+  SQL 按方言分开写，检索断言**两种方言都要过**（方言对齐门，TECH §9.2）。
+  Postgres 路径下库名必须含 `mimir_test`，`global-setup.ts` 会校验
+- 测试文件与库都在 `data/.test/` 下。目录名写错会污染真实 vault
 - 新增检索相关的行为时，加一条能说明「用户会看到什么」的断言，
   而不是只断言函数返回值
 
@@ -133,7 +136,12 @@ src/
 
 ## 数据库
 
-- 改 schema 后跑 `pnpm db:generate`，**迁移文件要一起提交**
+- **双后端**（D-045）：`schema.pg.ts`（服务器）与 `schema.sqlite.ts`（本地 / 桌面）
+  两份手写文件必须逐表逐列对齐——`schema-parity.test.ts` 在守，改任何一边先跑它
+- 改 schema 后跑 `pnpm db:generate:pg` 与 `pnpm db:generate:sqlite`，
+  **两边的迁移文件要一起提交**（SQLite 侧还有手写的 FTS 迁移 `0001_fts.sql`）
 - 迁移里需要扩展（`pg_trgm` / `vector`）时，在 `src/db/migrate.ts` 里建，
   不要写进迁移 SQL——顺序反了会建索引失败
-- `documents` 表上的两个 GIN 索引是检索的基础，改 schema 时不要漏掉
+- `documents` 表上的两个 GIN 索引是 PG 检索的基础，改 schema 时不要漏掉；
+  SQLite 侧对应物是 FTS5 表 + 触发器（`drizzle-sqlite/0001_fts.sql`），
+  写入路径改了表结构要一起核对触发器

@@ -60,26 +60,41 @@ packages/shared/          前后端共享的 zod schema（源码发布，由使�
 
 ## 快速开始
 
-```bash
-# 1. 起数据库（Postgres 17 + pgvector，端口 5544）
-docker compose up -d postgres
+**默认路径用 SQLite，不需要 Docker。** 克隆下来三条命令就能跑：
 
-# 2. 装依赖
+```bash
+# 1. 装依赖
 pnpm install
 
-# 3. 配置环境变量
+# 2. （可选）配置环境变量
 cp .env.example .env
 openssl rand -base64 32   # 把输出填进 AUTH_SECRET
 
 #    强烈建议同时设 OWNER_EMAIL / OWNER_PASSWORD（见「账号」一节）
 #    设了之后启动时会自动建号，跳过首次注册
 
-# 4. 建表
-pnpm db:migrate
-
-# 5. 起开发服务（这一步才是「启动项目」）
+# 3. 起开发服务（首次启动自动建库建表，数据落在 data/mimir.db）
 pnpm dev
 ```
+
+**要与生产一致的 Postgres 路径**（服务器部署就是它）：
+
+```bash
+# 1. 配置环境变量（compose 读取 .env 做插值，必须先就位）
+cp .env.example .env
+openssl rand -base64 32   # 把输出填进 AUTH_SECRET
+
+# 2. 起数据库（Postgres 17 + pgvector，端口 5544）
+docker compose up -d postgres
+
+# 3. 建表（Postgres 路径是手动迁移，与生产习惯一致）
+pnpm db:migrate
+
+# 4. pnpm dev
+```
+
+两条路径共用同一套 schema、服务层与界面，`DATABASE_URL` 决定用哪个
+（未设置 = SQLite；详见 `docs/TECH.md` §8.6 与 D-045）。
 
 `pnpm dev` 一条命令并行起两个包，改代码即生效：
 
@@ -226,6 +241,8 @@ mimir/
 └── data/                 运行时数据，不进 git
     ├── vault/            笔记（真相）
     ├── raw/              原始快照
+    ├── avatars/          头像（非内容）
+    ├── mimir.db          SQLite 库（本地开发/桌面端；服务器用 Postgres）
     └── .test/            测试专用，与真实数据隔离
 ```
 
@@ -235,7 +252,7 @@ mimir/
 
 按 `docs/TECH.md` §11，M0 已完成，接下来是 M1：
 
-1. 分块与向量化（pgvector）
+1. 分块与向量化（Postgres 用 pgvector HNSW；SQLite 用 sqlite-vec，两套方言同一接缝）
 2. 混合检索：关键词 + 子串 + 向量，加权 RRF 融合
 3. 带引用的知识库问答，引用可点回原文位置
 4. PDF / Word 上传与解析、RSS 订阅
@@ -244,8 +261,10 @@ mimir/
 
 ## 已知坑
 
-踩过的都记在 `docs/TECH.md` §10，改动相关代码前建议扫一眼。最容易踩的三个：
+踩过的都记在 `docs/TECH.md` §10，改动相关代码前建议扫一眼。最容易踩的五个：
 
 - **jieba 不加载词典会退化成逐字切分**，必须 `Jieba.withDict(dict)`
 - **Postgres 对中文没有词边界**，posts 里的「组件性能优化」是一个 token，搜「组件」搜不到
+- **SQLite 的 FTS5 索引靠触发器维护**，触发器被绕过时写入正常、中文搜不到——`pnpm db:reindex` 可重建
+- **SQLite 默认关闭外键**，必须连接时显式 `PRAGMA foreign_keys = ON`（client.ts 已做），否则 CASCADE 静默失效
 - **pgvector 的 HNSW 索引上限 2000 维**，超过要用 `halfvec`
