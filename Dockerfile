@@ -54,17 +54,19 @@ COPY --from=builder /repo/apps/server/drizzle ./drizzle
 # 与 static.ts 里 resolveWebDist() 的推导保持一致。
 COPY --from=builder /repo/apps/web/dist ./web/dist
 
-# 数据目录挂载点。vault 与 raw 是真相，必须落在卷上。
-RUN mkdir -p /data/vault /data/raw && chown -R mimir:mimir /data /app
+# 数据目录挂载点。三类文件（vault / raw / avatars）都是它的前缀，
+# 全部落在卷上——**按目录逐个传环境变量会漏，而漏了不报错**
+# （头像就这么丢过一次，见 docs/RESEARCH.md §10.10）。
+RUN mkdir -p /data/vault /data/raw /data/avatars && chown -R mimir:mimir /data /app
 VOLUME ["/data"]
 
 USER mimir
 
+# 只有 DATA_DIR 一个数据根：vault/ · raw/ · avatars/ 由它派生。
+# 不要再加 VAULT_DIR / RAW_DIR / AVATARS_DIR——见上面的注释与 D-038。
 ENV NODE_ENV=production \
     PORT=3000 \
     DATA_DIR=/data \
-    VAULT_DIR=/data/vault \
-    RAW_DIR=/data/raw \
     WEB_DIST=/app/web/dist
 
 EXPOSE 3000

@@ -46,14 +46,19 @@ export async function setup() {
 
   // 1. 清文件（先做，避免下面建表失败时留下半清理状态）
   // 数据库和文件系统是两处状态，只清一处等于没隔离。
-  for (const dir of [TEST_ENV.VAULT_DIR, TEST_ENV.RAW_DIR, TEST_ENV.DATA_DIR]) {
-    const abs = testPath(dir)
+  //
+  // 只清一个根就够：vault / raw / avatars 都是它下面的前缀（D-038），
+  // 删父目录自然把它们一起带走。原先逐个清是因为它们各有独立的环境变量，
+  // 那种写法**漏一个就留下残留**，而残留会让下一次测试的断言莫名其妙地失败
+  // （这个文件的历史注释记过：测试文件曾攒到 144 个）。
+  {
+    const abs = testPath(TEST_ENV.DATA_DIR)
     if (abs) await rm(abs, { recursive: true, force: true })
   }
 
   // 2. 重建目录。env.ts 启动时会校验 DATA_DIR 存在，缺了会直接抛错。
-  for (const dir of [TEST_ENV.DATA_DIR, TEST_ENV.VAULT_DIR, TEST_ENV.RAW_DIR]) {
-    const abs = testPath(dir)
+  {
+    const abs = testPath(TEST_ENV.DATA_DIR)
     if (abs) await mkdir(abs, { recursive: true })
   }
 

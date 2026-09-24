@@ -13,11 +13,14 @@ export const TEST_ENV: Record<string, string> = {
   DATABASE_URL: TEST_DATABASE_URL,
   AUTH_SECRET: 'test-secret-only-for-tests-0123456789',
   // 一律相对仓库根目录，与 src/env.ts 的规则保持一致。
-  // 必须指向测试专用目录：集成测试会真的写 md 文件，
+  // 必须指向测试专用目录：集成测试会真的写文件，
   // 用真实 vault 会把用户的笔记目录变成一堆测试垃圾。
+  //
+  // **只有一个数据根**（D-038）：vault / raw / avatars 是它下面的前缀。
+  // 测试仍然断言磁盘上的 `data/.test/vault` 等具体位置——那是本地后端的
+  // 行为，也正是「文件可以直接用 Typora 打开」这条主张的落点——
+  // 但配置只从这里来，不再有按目录拆分的环境变量。
   DATA_DIR: './data/.test',
-  VAULT_DIR: './data/.test/vault',
-  RAW_DIR: './data/.test/raw',
   WEB_ORIGIN: 'http://localhost:5173',
   SERVER_URL: 'http://localhost:3000',
 }

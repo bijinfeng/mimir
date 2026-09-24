@@ -141,7 +141,15 @@ export function StorageSection() {
         </Row>
       </Panel>
 
-      <StorageProbe />
+      {/**
+       * `key` 让切换后端时**丢掉上一次的探测结果**。
+       *
+       * 那个结果是「某一个后端刚才通不通」的观测，切到另一个后端之后它就不成立了——
+       * 实测踩到过：从 S3 切回本地，面板上仍然挂着「不可用：还没配齐」（那是 S3
+       * 的结论），而本地明明是好的。留着过期结论比没有结论更糟，它会让用户以为
+       * 当前后端坏了。
+       */}
+      <StorageProbe key={selected} />
 
       {selected === 'local' ? (
         <Note>
