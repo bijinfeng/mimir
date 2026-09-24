@@ -53,9 +53,22 @@ export function computeStatus(
 
   const missing = (declaration.requires ?? []).filter((key) => !isProvided(key))
   if (missing.length > 0) {
+    /**
+     * **点名缺哪几项，但说标签而不是键名。**
+     *
+     * 必须点名：只说「需要配置」的话，用户不知道该填哪个框
+     * （`plugins.test.ts` 有一条断言守着这条）。
+     *
+     * 但不能说键名：`storage.s3.bucket` 与界面上的「桶名」对不上，
+     * 用户得自己猜是哪一个。`params` 里有每个键的 label，把键名映射过去，
+     * 界面上说什么这里就说什么。查不到 label 的（插件没在 params 里声明它）
+     * 退回键名——那种情况下键名是唯一能给的线索。
+     */
+    const labels = new Map((declaration.params ?? []).map((spec) => [spec.key, spec.label]))
+    const names = missing.map((key) => labels.get(key) ?? key)
     return {
       kind: 'needs-config',
-      reason: `需要先配置 ${missing.join('、')}`,
+      reason: `还差：${names.join('、')}`,
     }
   }
 

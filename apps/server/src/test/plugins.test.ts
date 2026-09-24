@@ -104,8 +104,17 @@ describe('插件注册表', () => {
       '未选中的后端只能是 needs-config 或 unavailable（不能也是 active）',
     ).toEqual(['needs-config'])
 
-    // 缺配置时必须点名缺哪个键，而不是只说「需要配置」
-    expect(shape[0]?.reason, '缺配置的理由要点出具体的键').toContain('storage.s3.')
+    /**
+     * 缺配置时必须**点名是哪一个**，而不是只说「需要配置」。
+     *
+     * 但断言的是**界面上的标签**（「桶名」），不是键名（`storage.s3.bucket`）：
+     * 用户看到的表单里写的是前者。说键名等于让他自己去做一次映射——
+     * 而这条断言的意图本来就是「用户能不能照着去填」。
+     */
+    const reason = shape[0]?.reason ?? ''
+    expect(reason, '缺配置的理由要说清缺几项').toContain('还差')
+    expect(reason, '要点出用户能对上的字段名').toContain('桶名')
+    expect(reason, '不该把内部键名念给用户听').not.toContain('storage.s3.')
   })
 
   it('默认选中本地后端（新部署与测试环境都是它）', async () => {
@@ -166,8 +175,16 @@ describe('插件注册表', () => {
        * 于是这条测试在最该失败的时候反而是绿的。
        */
       const reason = s3?.status.kind === 'unavailable' ? s3.status.reason : ''
-      expect(reason, '理由要说清「未选中」，而不是只说「不可用」').toContain('当前未选中')
-      expect(reason, '理由要点名正在用哪个后端').toContain('local')
+      /**
+       * 理由是**「正在用谁」这个新信息**。
+       *
+       * 第一版写的是「当前未选中（正在用 local）」，而那一行的徽标
+       * 已经写着「未选中」——前半句是在复述旁边看得见的东西。
+       * 所以现在只说后半句，而断言守的是它必须说出来：
+       * 不知道「现在用的是谁」，用户就无法判断该不该切。
+       */
+      expect(reason, '要说出当前实际在用哪个后端').toContain('local')
+      expect(reason, '不该复述旁边徽标已写的「未选中」').not.toContain('未选中')
 
       // 而 local 仍然可用（它就是被选中的那个）
       const local = plugins.find((plugin) => plugin.seam === 'storage' && plugin.id === 'local')

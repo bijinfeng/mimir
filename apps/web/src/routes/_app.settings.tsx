@@ -98,9 +98,6 @@ function SettingsPage() {
     <div className={styles.page}>
       <div className={styles.inner}>
         <h1 className={styles.title}>设置</h1>
-        <p className={styles.lead}>
-          这一页是各条接缝当前状态的如实反映：能改的在这里改，不能改的说清为什么。
-        </p>
 
         <Tabs
           className={styles.tabs}

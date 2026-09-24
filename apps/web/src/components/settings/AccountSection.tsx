@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { App, Avatar, Button, Input, Typography, Upload } from 'antd'
+import { App, Avatar, Button, Input, Popconfirm, Typography, Upload } from 'antd'
 import { useEffect, useState } from 'react'
 import { api, type AuthSession } from '@/lib/api'
 import { cropAvatar } from '@/lib/avatar'
-import { Block, BlockDesc, Note, Panel } from '@/components/settings/parts'
+import { Block, BlockDesc, Panel } from '@/components/settings/parts'
 import { useStyles } from '@/components/settings/settings.style'
 import { useAccountStyles } from './AccountSection.style'
 
@@ -36,17 +36,12 @@ import { useAccountStyles } from './AccountSection.style'
 export function AccountSection() {
   const { styles } = useStyles()
   const { styles: accountStyles } = useAccountStyles()
-  const { message } = App.useApp()
 
   const sessionQuery = useQuery({ queryKey: ['session'], queryFn: api.auth.session })
   const session = sessionQuery.data
 
   return (
     <>
-      <Typography.Paragraph className={styles.sectionDesc}>
-        单用户自托管。第一个注册的人是唯一用户，之后注册自动关闭。
-      </Typography.Paragraph>
-
       <Panel title="资料">
         <Block>
           <div className={accountStyles.profile}>
@@ -59,31 +54,15 @@ export function AccountSection() {
                 <span className={accountStyles.emailValue}>{session?.user.email ?? '—'}</span>
               </div>
               <BlockDesc>
-                邮箱是账号的锚点，不在这里改——它是所有者账号的真相来源，
-                改它等于换账号。需要换就改服务端的{' '}
-                <Typography.Text code>OWNER_EMAIL</Typography.Text> 再重启。
+                要换邮箱，改服务端的 <Typography.Text code>OWNER_EMAIL</Typography.Text> 再重启。
               </BlockDesc>
             </div>
           </div>
         </Block>
       </Panel>
 
-      <Note>
-        头像存在服务端的 <Typography.Text code>data/avatars/</Typography.Text>，
-        <span className={styles.strong}>不在笔记目录里</span>
-        ——它不是内容：不参与检索分词，也不进导出包。导出回答的是「我的知识」， 不是「我的账户」。
-      </Note>
-
       <div className={styles.actions} style={{ marginTop: 14 }}>
-        <Button
-          danger
-          onClick={() => {
-            void api.auth.signOut().then(() => {
-              message.success('已登出')
-              window.location.href = '/login'
-            })
-          }}
-        >
+        <Button danger onClick={() => void api.auth.signOutAndLeave()}>
           登出
         </Button>
       </div>
@@ -178,30 +157,34 @@ function AvatarColumn({ session }: { session: AuthSession | null }) {
             return false
           }}
         >
-          <Button
-            type="link"
-            size="small"
-            loading={upload.isPending}
-            className={accountStyles.actionBtn}
-          >
-            {upload.isPending ? '上传中…' : '更换'}
+          <Button size="small" loading={upload.isPending}>
+            {image ? '更换' : '上传头像'}
           </Button>
         </Upload>
 
+        {/*
+          「移除」要确认。
+
+          头像是一次点击就没了，而它没有撤销——`type="link"` 时它与
+          「更换」长得一样显眼，误触的代价却不对称。这里两处都改：
+          按钮形态回到 `default`（它们是动作，不是链接文字），
+          删除加一层 `Popconfirm`（与供应商删除同一个做法）。
+        */}
         {image ? (
-          <Button
-            type="link"
-            size="small"
-            className={accountStyles.actionBtn}
-            loading={remove.isPending}
-            onClick={() => remove.mutate()}
+          <Popconfirm
+            title="移除头像？"
+            description="会回到名称首字的字母头像"
+            onConfirm={() => remove.mutate()}
           >
-            移除
-          </Button>
+            <Button size="small" loading={remove.isPending}>
+              移除
+            </Button>
+          </Popconfirm>
         ) : null}
       </div>
 
-      <div className={accountStyles.avatarHint}>裁成方形 · 256×256</div>
+      {/* 上传会自动裁剪，所以这不是「你必须先裁好」的要求，而是告知 */}
+      <div className={accountStyles.avatarHint}>自动裁成方形</div>
     </div>
   )
 }

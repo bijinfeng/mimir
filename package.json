@@ -13,13 +13,14 @@
     "lint:fix": "oxlint --fix",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
-    "check": "pnpm lint && pnpm format:check && pnpm -r typecheck && pnpm -r test",
+    "check": "pnpm lint && pnpm lint:styles && pnpm format:check && pnpm -r typecheck && pnpm -r test",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
     "db:generate": "pnpm --filter @mimir/server db:generate",
     "db:migrate": "pnpm --filter @mimir/server db:migrate",
     "db:studio": "pnpm --filter @mimir/server db:studio",
-    "docker:prod": "docker compose --profile prod up -d --build"
+    "docker:prod": "docker compose --profile prod up -d --build",
+    "lint:styles": "node scripts/check-style-backticks.mjs"
   },
   "devDependencies": {
     "oxfmt": "0.68.0",

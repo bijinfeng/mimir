@@ -112,8 +112,7 @@ export function StatsSection() {
   return (
     <>
       <Typography.Paragraph className={styles.sectionDesc}>
-        每次模型调用都会记账——包括失败的、以及设置页「测试连接」发出的那些。 记录的是供应商回传的
-        token 数，它不是从文档或对话数推导出来的。
+        每次模型调用都记账，含失败与「测试连接」——所以调用次数不等于你提问的次数。
       </Typography.Paragraph>
 
       <Panel>

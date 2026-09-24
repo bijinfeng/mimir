@@ -371,6 +371,24 @@ export const api = {
     signOut() {
       return request<{ success: boolean }>('/api/auth/sign-out', { method: 'POST' })
     },
+    /**
+     * 登出并回到登录页。
+     *
+     * **两处调用**（左导航账号菜单、设置 › 账号），所以抽在这里而不是
+     * 各写一遍：两处要做的三件事完全一样——请求登出、清掉会话相关的
+     * 查询缓存、整页跳到登录页。分开写的版本已经在细节上漂移了
+     * （一处 `window.location.href`，另一处漏了缓存失效）。
+     *
+     * 用 `location.href` 而不是路由跳转：登出要丢掉**内存里的整个会话状态**
+     * （查询缓存、编辑器草稿、上一条会话的历史），整页重载是最省事、
+     * 也最不会漏的做法。
+     */
+    async signOutAndLeave(): Promise<void> {
+      // 直接发请求，不走 `this`——对象字面量内部自引用能跑但读起来绕
+      await request<{ success: boolean }>('/api/auth/sign-out', { method: 'POST' })
+      // 整页重载会清掉内存里的一切（查询缓存、草稿、历史）
+      window.location.href = '/login'
+    },
     /** 未登录时返回 null，而不是抛错——它用于路由守卫判断 */
     async session() {
       try {

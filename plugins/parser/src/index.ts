@@ -26,7 +26,7 @@ export function install(host: PluginHost): void {
       seam: 'parser',
       id: 'markdown',
       name: 'Markdown 直通',
-      description: '内容本来就是 Markdown 时原样保留。GitHub 的 README 走这条',
+      description: '内容本来就是 Markdown 时原样保留',
       file: 'plugins/parser/src/markdown.ts',
       configKeys: [],
     },

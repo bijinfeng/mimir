@@ -61,9 +61,7 @@ export function ProviderList({
             <Empty
               image={Empty.PRESENTED_IMAGE_SIMPLE}
               description={
-                <span className={styles.blockDesc}>
-                  还没有供应商。加一个之后，下面的角色就能选它的模型了。
-                </span>
+                <span className={styles.blockDesc}>加一个供应商，下面的角色就能选它的模型</span>
               }
             />
           </div>

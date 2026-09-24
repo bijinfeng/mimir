@@ -1,8 +1,8 @@
 import { DownloadOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { App, Button, Skeleton, Tag, Typography } from 'antd'
+import { App, Button, Skeleton, Tag } from 'antd'
 import { api } from '@/lib/api'
-import { Block, BlockDesc, Note, Panel, Row, Stats } from '@/components/settings/parts'
+import { Block, BlockDesc, Panel, Row, Stats } from '@/components/settings/parts'
 import { useStyles } from '@/components/settings/settings.style'
 
 /**
@@ -34,10 +34,6 @@ export function DataSection() {
 
   return (
     <>
-      <Typography.Paragraph className={styles.sectionDesc}>
-        任何时候都能把全部内容拿走，不依赖这个应用——一个只能在自己的界面里读的知识库，和一个上锁的柜子没有区别。
-      </Typography.Paragraph>
-
       <Panel title="真相在哪">
         <Row label="笔记目录">
           <span className={styles.mono}>data/vault/</span>
@@ -124,10 +120,6 @@ export function DataSection() {
           )}
         </Block>
       </Panel>
-
-      <Note>
-        导出与重建索引都在服务端完成，不经过浏览器内存——库大到一定程度时这是唯一可行的做法，也是它们没有被做成前端动作的原因。
-      </Note>
     </>
   )
 }

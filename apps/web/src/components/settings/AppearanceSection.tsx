@@ -1,7 +1,7 @@
-import { Segmented, Typography } from 'antd'
+import { Segmented } from 'antd'
 import { Note, Panel, Row } from '@/components/settings/parts'
 import { useStyles } from '@/components/settings/settings.style'
-import { useAppearance, useThemeMode, type ThemeMode } from '@/theme/appearance'
+import { THEME_MODE_LABELS, THEME_MODES, useThemeMode, type ThemeMode } from '@/theme/appearance'
 
 /**
  * 外观分区：浅色 / 深色 / 跟随系统。
@@ -34,38 +34,27 @@ import { useAppearance, useThemeMode, type ThemeMode } from '@/theme/appearance'
 export function AppearanceSection() {
   const { styles } = useStyles()
   const { mode, setMode } = useThemeMode()
-  const appearance = useAppearance()
 
   return (
     <>
-      <Typography.Paragraph className={styles.sectionDesc}>
-        深色下的每一处配色都单独校准过对比度，不是把浅色反过来用。
-      </Typography.Paragraph>
-
       <Panel title="外观">
         <Row label="颜色模式">
           <div className={styles.actions}>
             <Segmented<ThemeMode>
               value={mode}
               onChange={(next) => setMode(next)}
-              options={[
-                { value: 'auto', label: '跟随系统' },
-                { value: 'light', label: '浅色' },
-                { value: 'dark', label: '深色' },
-              ]}
+              options={THEME_MODES.map((value) => ({
+                value,
+                label: THEME_MODE_LABELS[value],
+              }))}
               aria-label="界面外观"
             />
-            <span className={styles.hint}>
-              当前{appearance === 'dark' ? '深色' : '浅色'}
-              {mode === 'auto' ? '（跟随系统）' : ''}
-            </span>
           </div>
         </Row>
       </Panel>
 
       <Note>
-        这个选择存在<span className={styles.strong}>当前浏览器</span>里，不上传服务端——
-        所以换一台设备要重选一次。「跟随系统」会跟着操作系统的深浅色实时切换， 不需要回来改。
+        存在<span className={styles.strong}>当前浏览器</span>里，换设备要重选。
       </Note>
     </>
   )

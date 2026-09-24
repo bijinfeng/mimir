@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { App, Button, Skeleton, Tooltip, Typography } from 'antd'
+import { App, Button, Skeleton, Tooltip } from 'antd'
 import type { ModelRoleStatus, ProviderInstance, RuntimeConfig } from '@mimir/shared'
 import { api, ApiRequestError } from '@/lib/api'
 import { ProviderList } from '@/components/settings/ProviderList'
@@ -74,14 +74,8 @@ export function ModelsSection() {
 
   return (
     <>
-      <Typography.Paragraph className={styles.sectionDesc}>
-        给不同任务分配不同的模型：便宜模型做摘要、强模型做推理。这是最直接的成本控制手段。
-      </Typography.Paragraph>
-
       <Note>
-        密钥<span className={styles.strong}>加密后存库，绝不会下发到浏览器</span>
-        ——所以这里只显示「有没有配」，不显示值本身。改完点保存立即生效，不需要重启。
-        可以配多个供应商，不同角色各用各家（比如对话用 DeepSeek、向量化用硅基流动）。
+        密钥只存服务端，<span className={styles.strong}>不下发浏览器</span>。
       </Note>
 
       <ProviderList
@@ -108,11 +102,6 @@ export function ModelsSection() {
           />
         ))}
       </Panel>
-
-      <Typography.Paragraph className={styles.muted} style={{ marginTop: 14 }}>
-        摘要留空时会回落到对话模型——用强模型做摘要只是浪费钱，不是错误。
-        向量化没有回落：它必须是一个 embedding 模型，配错了会在探测时告诉你实际维度。
-      </Typography.Paragraph>
     </>
   )
 }

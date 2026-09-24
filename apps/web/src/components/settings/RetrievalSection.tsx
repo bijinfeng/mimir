@@ -60,10 +60,6 @@ export function RetrievalSection() {
 
   return (
     <>
-      <Typography.Paragraph className={styles.sectionDesc}>
-        检索是核心功能，不是附属特性——搜不到等于没存。下面是当前生效的参数，以及一个用来验证分词的入口。
-      </Typography.Paragraph>
-
       <Panel title="融合参数">
         {retrievalParams.map((entry) => (
           <Row key={entry.key} label={entry.label}>
@@ -98,8 +94,7 @@ export function RetrievalSection() {
       <Panel title="相关性自检">
         <div className={styles.block}>
           <Typography.Paragraph className={styles.blockDesc} style={{ marginBottom: 10 }}>
-            改完分词词典或权重后，直接在这里试一句，不用回主界面。
-            它只用当前库里的真实内容，所以同时能验证分词是否正确。
+            改完分词词典或权重后，在这里试一句——用的是库里的真实内容。
           </Typography.Paragraph>
 
           <Input.Search
@@ -151,9 +146,8 @@ export function RetrievalSection() {
       </Panel>
 
       <Note>
-        自检只用当前库里的真实内容，所以它同时能验证
-        <span className={styles.strong}>分词</span>是否切对。若它报告 0
-        命中而你确认存过，问题多半在写入时的分词，或者索引没建——先去「数据与备份」里重建一次。
+        若自检报告 0 命中而你确认存过，问题多半在写入时的分词，或索引没建——
+        先去「数据与备份」里重建一次。
       </Note>
     </>
   )

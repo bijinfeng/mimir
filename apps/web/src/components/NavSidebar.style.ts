@@ -1,5 +1,5 @@
 import { createStyles } from 'antd-style'
-import { FONT_SIZE } from '@/theme/tokens'
+import { FONT_SIZE, NAV_ITEM_HEIGHT, NAV_ITEM_MARGIN } from '@/theme/tokens'
 
 /**
  * 左导航的样式。
@@ -88,9 +88,9 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     /* 行高与内边距：比 antd 默认紧，但仍留出可点击的余量 */
     .${prefixCls}-menu-item,
     .${prefixCls}-menu-submenu-title {
-      height: 30px;
-      line-height: 30px;
-      margin: 1px 6px;
+      height: ${NAV_ITEM_HEIGHT}px;
+      line-height: ${NAV_ITEM_HEIGHT}px;
+      margin: 1px ${NAV_ITEM_MARGIN}px;
       padding-inline: 8px !important;
       border-radius: 6px;
       color: ${token.colorTextSecondary};
@@ -267,16 +267,88 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   /**
    * 底部账号行（`docs/DESIGN.md` §8.13）。
    *
-   * 左右各留 4px，与菜单项的内边距相加后让头像落在与菜单图标相近的
-   * 竖线上——不对齐的话它看起来凸出去了一格。
+   * ## 尺寸与对齐**照抄上面的菜单项**（实测值）
+   *
+   * 第一版按「看上去差不多」写的，实测差了三处，叠在一起就是
+   * 「这一行不像同一套东西」：
+   *
+   * | | 菜单项（实测） | 第一版账号行 |
+   * |---|---|---|
+   * | 外边距 | `1px 6px` | `2px 4px 4px` |
+   * | 内边距 | `0 8px` | `5px 8px` |
+   * | 高 | `30px` | `32px` |
+   * | 行宽 | 191px | 199px（**右边缘溢出容器 3px**）|
+   * | 内容 | 左对齐（图标 x=14）| **居中**（头像 x=77）|
+   *
+   * 最后两行是会被一眼看出来的：账号行比上面宽出一截，而头像又飘在
+   * 中间——两行的左边缘差了 63px，读起来像两个不相关的块。
+   *
+   * 现在三处尺寸全部对齐菜单项，`justify-content` 去掉（默认左对齐），
+   * 头像与菜单图标落在同一条竖线上。
+   *
+   * ## 选中态与菜单项同一套
+   *
+   * 账号行也是「设置」的一个入口（进的是设置 › 账号），所以它在
+   * 账号分区时应当和菜单项一样点亮：`colorPrimaryBg` 底 + `colorLink` 字。
+   * 这三重线索（底色 + 字色 + 字重）是 `DESIGN.md` §8.1 定的导航项形态，
+   * 直接沿用，不另创一种「选中」的样子。
+   *
+   * 底色用 `colorPrimaryBg` 而不是 `colorFillQuaternary`（第一版）：
+   * 后者是 hover 用的，选中与 hover 用同一个色等于没有选中态。
    */
-  account: css`
+  /**
+   * 底部那一行：账号在左、设置图标贴右。
+   *
+   * `padding` 与菜单项对齐（4px 5px 是 `.ant-menu` 的默认内边距，
+   * 而这里自行给一份，让图标与上面各行的右边缘落在同一条竖线上）。
+   */
+  accountRow: css`
     display: flex;
     align-items: center;
+    gap: 2px;
+    padding: 2px 5px 3px;
+  `,
+  accountRowCollapsed: css`
+    flex-direction: column;
+    gap: 4px;
+    padding: 4px 0 5px;
+  `,
+
+  account: css`
+    display: flex;
+    /*
+     * 账号侧占满剩余宽度，把设置图标挤到最右——这是「贴最右」的实现，
+     * 不靠 margin-left: auto（那个在折叠态（竖排）会失效）。
+     */
+    flex: 1;
+    align-items: center;
     gap: 8px;
-    width: calc(100% - 8px);
-    margin: 2px 4px 4px;
-    padding: 5px 8px;
+    /*
+     * width: auto 配两侧 margin，**与菜单项同一种盒子**。
+     *
+     * 第一版写的是 width: calc(100% - 12px)，算出来比菜单项窄 4px——
+     * 差别在于百分比的参照是父容器的**内容盒**，而 antd 菜单项
+     * 是按 flex 子项（width: auto 加 margin）撑出来的。
+     * 两种算法在有 padding 的容器里不相等，于是两行的右边缘差 4px。
+     *
+     * 用同一种布局方式就没有这个换算问题：flex 的块级子项默认
+     * width: auto 就会占满剩余宽度。
+     *
+     * 注：这段注释里**不能出现反引号**——它所在的模板字符串会被提前结束
+     * （见 TECH.md 第 10 节的坑表，这个坑咬过五次）。
+     */
+    /*
+     * flex: 1 让它撑满，而不是被内容收缩。
+     *
+     * 上一版试图用 width: auto 达成「与菜单项一样的盒子」，但那只在
+     * 块级布局里成立——antd 的菜单项在 ul 的 flex 上下文里是**被拉伸**的
+     * （实测 191 = 容器 199 减两侧 margin 6+6，正好占满）。
+     * 这里显式写 flex: 1，得到同一个结果，不依赖父容器的布局巧合。
+     */
+    flex: 1;
+    margin: 1px ${NAV_ITEM_MARGIN}px 4px;
+    height: ${NAV_ITEM_HEIGHT}px;
+    padding: 0 8px;
     border: none;
     border-radius: 6px;
     background: none;
@@ -288,10 +360,8 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     }
   `,
   accountCollapsed: css`
-    width: auto;
     justify-content: center;
-    margin: 2px 0 4px;
-    padding: 5px 0;
+    padding: 0;
   `,
   accountAvatar: css`
     flex: none;
@@ -301,12 +371,54 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     font-size: ${FONT_SIZE.badge}px;
     font-weight: 600;
   `,
+  /**
+   * 设置图标。
+   *
+   * 尺寸与账号行的头像同高（26px），让右端那个图标与左端的头像
+   * 看起来是同一层级的两个元素；热区比图标本身大（`size="small"`
+   * 的 antd 按钮是 24×24），点得到。
+   */
+  accountSettings: css`
+    flex: none;
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+    padding: 0;
+    color: ${token.colorTextTertiary};
+  `,
+  accountSettingsActive: css`
+    color: ${token.colorLink};
+    background: ${token.colorPrimaryBg};
+  `,
+  /**
+   * 外观菜单里的一项：文字在左、选中勾在右。
+   *
+   * `width: 100%` + `justify-content: space-between` 让它撑满菜单项，
+   * 勾才会贴在右端而不是紧跟着文字。`min-width` 保证三项的勾在同一竖线上
+   * （「跟随系统」比「浅色」宽，不定宽的话勾会左右浮动）。
+   *
+   * 注：这几条样式作用在 `Dropdown` 的 portal 里，而 antd-style 注入的
+   * 类名是全局的，所以照常生效。
+   */
+  themeOption: css`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 72px;
+  `,
+  themeCheck: css`
+    flex: none;
+    font-size: ${FONT_SIZE.badge}px;
+    color: ${token.colorLink};
+  `,
   accountName: css`
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     font-size: ${FONT_SIZE.item}px;
+    font-weight: 500;
     color: ${token.colorText};
   `,
 }))

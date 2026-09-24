@@ -210,7 +210,7 @@ export function install(host: PluginHost): void {
       seam: 'provider',
       id: 'openai-compatible',
       name: 'OpenAI 兼容端点',
-      description: `一套适配器接住 ${PROVIDER_PRESETS.length - 1} 家预设供应商（DeepSeek / 通义 / 智谱 / 硅基流动 / Ollama …）。加一家是往预设目录里加一行`,
+      description: `一套适配器接住 ${PROVIDER_PRESETS.length - 1} 家预设供应商（DeepSeek / 通义 / 智谱 / 硅基流动 / Ollama …）`,
       file: 'plugins/provider/src/provider.ts',
       configKeys: [CONFIG_KEY, 'model.embed.dimensions'],
       // **不声明 `requires`**：供应商是运行期数据（列表可能为空），

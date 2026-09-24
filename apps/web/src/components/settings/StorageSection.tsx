@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { Button, Radio, Skeleton, Typography } from 'antd'
+import { Button, Radio, Skeleton } from 'antd'
 import { ApiRequestError, api } from '@/lib/api'
 import {
   Block,
@@ -64,12 +64,6 @@ export function StorageSection() {
 
   return (
     <>
-      <Typography.Paragraph className={styles.sectionDesc}>
-        笔记、原始快照与头像存到哪里。
-        <strong className={styles.strong}>文件是真相，数据库只是可重建的索引</strong>
-        ——换后端换的是「真相放在哪」，不改变这个前提。
-      </Typography.Paragraph>
-
       <Panel title="用哪个后端">
         <Block>
           <Radio.Group
@@ -153,18 +147,16 @@ export function StorageSection() {
 
       {selected === 'local' ? (
         <Note>
-          本地后端下 data/ 里是<strong className={styles.strong}>普通文件</strong>
-          ：可以直接用 Typora / Obsidian 打开刚才写的笔记，也可以交给 git 版本管理。换成 S3
-          之后这两点会失去（数据在对象存储里，本地没有文件可开），
-          但「文件是真相、数据库可重建」这个前提不变——真相只是换到了桶里。
+          <strong className={styles.strong}>本地 data/ 里是普通文件</strong>
+          ，可以直接用 Typora / Obsidian 打开，也可以交给 git 管理。换成 S3
+          之后本地就没有文件可开了。
         </Note>
       ) : (
         <Note>
-          切换后端
+          切换
           <strong className={styles.strong}>不会搬运已有数据</strong>
-          。已经写在本地 data/ 里的笔记不会自动上传到桶里，反之亦然。
-          换之前请自己迁移（迁移方式见文档），否则界面上看到的还是数据库里的索引，
-          而文件在新的位置找不到。
+          ：本地 data/ 里的笔记不会自动上传到桶里，反之亦然。换之前请先自己迁移，
+          否则界面上的索引会指向找不到的文件。
         </Note>
       )}
     </>
@@ -207,9 +199,8 @@ function StorageProbe() {
         </div>
         {result ? <BlockDesc>{result.message}</BlockDesc> : null}
         <BlockDesc>
-          写一个探针文件、读回、再删掉。只测
-          <strong className={styles.strong}>当前选中的后端</strong>
-          ——想验证 S3 就先切过去再点，那时它写的是真实位置。
+          只测<strong className={styles.strong}>当前选中的后端</strong>
+          ——想验证 S3 就先切过去再点。
         </BlockDesc>
       </Block>
     </Panel>

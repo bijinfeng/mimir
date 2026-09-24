@@ -242,6 +242,19 @@ export function effectiveTokens(appearance: Appearance) {
 export const CONTENT_WIDTH = 760
 
 /**
+ * 左导航里一行的高度，以及它与容器左右的距离。
+ *
+ * **为什么值得提到这里**：底部账号行要与上面的菜单项看起来是同一套东西，
+ * 而那依赖三处尺寸完全一致。第一版账号行按「看上去差不多」自己写了一组，
+ * 实测三处都不同（高 32 vs 30、外边距 4 vs 6、内容还居中）——
+ * 叠在一起就是「这一行不像同一套东西」，而且账号行右边缘溢出了容器 3px。
+ *
+ * 数字放在这里之后，菜单项与账号行引用同一个常量，不会各自漂移。
+ */
+export const NAV_ITEM_HEIGHT = 30
+export const NAV_ITEM_MARGIN = 6
+
+/**
  * 字号阶梯 —— **唯一的一份**。
  *
  * ## 为什么需要它

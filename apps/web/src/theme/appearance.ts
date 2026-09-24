@@ -50,6 +50,20 @@ const DARK_QUERY = '(prefers-color-scheme: dark)'
  */
 export const THEME_MODES = ['auto', 'light', 'dark'] as const
 
+/**
+ * 每个取值的界面文案。**两处消费**：设置页「外观」分区的 `Segmented`，
+ * 与左导航底部账号菜单里的快捷切换。
+ *
+ * 放在这里而不是各写一份：两处说的是同一件事，「跟随系统」在一处被写成
+ * 「跟随」另一处写「自动」都是可接受的文案，但**不同步**就会让用户以为
+ * 是两个不同的选项。
+ */
+export const THEME_MODE_LABELS: Record<ThemeMode, string> = {
+  auto: '跟随系统',
+  light: '浅色',
+  dark: '深色',
+}
+
 const MODE_SET: ReadonlySet<string> = new Set(THEME_MODES)
 
 /**

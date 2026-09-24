@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Skeleton, Typography } from 'antd'
+import { Skeleton } from 'antd'
 import type { PluginSeam, PluginStatus } from '@mimir/shared'
 import { api } from '@/lib/api'
 import {
@@ -7,7 +7,6 @@ import {
   BlockDesc,
   BlockTitle,
   FilePath,
-  Note,
   Panel,
   SeamTag,
   StatusBadge,
@@ -72,11 +71,6 @@ export function PluginsSection() {
 
   return (
     <>
-      <Typography.Paragraph className={styles.sectionDesc}>
-        按接缝分组。每一行是一个独立实现，注册进注册表即可生效——加一个新来源或新通道不需要改动检索、存储或界面代码。
-        设置页的其它分区，本质上是这份注册表的筛选视图。
-      </Typography.Paragraph>
-
       {SEAM_ORDER.map((seam) => {
         const items = plugins.filter((plugin) => plugin.seam === seam)
         if (items.length === 0) return null
@@ -108,11 +102,6 @@ export function PluginsSection() {
           </Panel>
         )
       })}
-
-      <Note>
-        面板标题里的 seam 标识是代码里的接缝名。它出现在界面上是有用的——报问题时说「leg
-        这条接缝」比说「检索那个」准确得多。要停掉某个实现，改注册表再重新部署。
-      </Note>
     </>
   )
 }

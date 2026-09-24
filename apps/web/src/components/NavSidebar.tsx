@@ -1,14 +1,23 @@
-import { FolderOpenOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons'
+import {
+  BgColorsOutlined,
+  CheckOutlined,
+  FolderOpenOutlined,
+  LogoutOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  SettingOutlined,
+  UserOutlined,
+} from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { Avatar, Button, Menu, Tree, Tooltip } from 'antd'
+import { Avatar, Button, Dropdown, Menu, Tree, Tooltip } from 'antd'
 import type { MenuProps } from 'antd'
+import { THEME_MODE_LABELS, THEME_MODES, useThemeMode, type ThemeMode } from '@/theme/appearance'
 import { BrandMark } from '@/components/BrandMark'
 import { useStyles } from '@/components/NavSidebar.style'
 import {
   buildActions,
   buildConversations,
-  buildFooter,
   buildScopes,
   currentKey,
 } from '@/components/nav/menu-items'
@@ -261,17 +270,20 @@ export function NavSidebar({
         )}
       </div>
 
-      <div className={styles.foot}>
-        <Menu
-          mode="inline"
-          className={`${styles.menu} ${collapsed ? styles.menuCollapsed : ''}`}
-          inlineCollapsed={collapsed}
-          selectedKeys={[selectedKey]}
-          onClick={onMenuClick}
-          items={buildFooter()}
-        />
+      {/*
+        底部**只有一行**：账号资料在左、设置图标贴最右。
 
-        <AccountRow collapsed={collapsed} onOpen={() => goSettings()} />
+        第一版是两行——上面一行「⚙ 设置」（一个只有一项的 Menu），
+        下面一行账号。那一项菜单完全是多余的：设置是个**图标就能表达**的
+        目的地，不值得占一整行的高度，而两行叠在一起还把底部撑得很高。
+      */}
+      <div className={styles.foot}>
+        <AccountRow
+          collapsed={collapsed}
+          settingsActive={selection.page === 'settings'}
+          onOpenAccount={() => goSettings()}
+          onOpenSettings={() => goSettings()}
+        />
       </div>
     </nav>
   )
@@ -280,20 +292,50 @@ export function NavSidebar({
 /**
  * 底部账号行（`docs/DESIGN.md` §8.13）。
  *
- * **放在设置下方、最底部**，不是顶部：它是「关于我自己」的信息，
- * 不是导航目标——而点它进的是设置 › 账号，与上面那行同一个去处。
- * 顶部已经有品牌标记，再放一个头像会把「这是什么产品」与
- * 「这是谁的账号」两个语义挤在一起。
+ * ## 一行，两个目标（形态参照一份桌面应用的左下角）
  *
- * ## 为什么不用 Menu 的 item
+ * ```
+ * ┌──────────────────────────────────┐
+ * │ (头像) Kebai                  ⚙  │
+ * └──────────────────────────────────┘
+ * ```
  *
- * 菜单项的形状是「图标 + 文字 + 右侧元信息」，而这里要放一个圆形头像——
- * 塞进 12px 图标的位置会把它压变形。它是一条**有自己形态**的行。
+ * - **头像 + 名字**：点开菜单（账号资料 / 外观 / 登出）
+ * - **⚙ 图标贴最右**：直接进设置
+ *
+ * ## 为什么不是「两行」或「点哪都进设置」
+ *
+ * 第一版是两行：上面一个只有一项的 `Menu`（「⚙ 设置」），下面账号行，
+ * 而账号行点下去**也**跳设置页。两个问题：
+ *
+ *  1. 两行都指向设置页，用户看不出差别，区别只是落在哪个分区
+ *  2. 「设置」占了一整行的高度，而它是个**图标就能表达**的目的地
+ *
+ * 改成一行之后：设置回到一个图标（贴最右，与参考形态一致），
+ * 账号行则是一组动作的入口——这消掉了那个歧义。
+ *
+ * ## 为什么 ⚙ 不做成下拉触发器的一部分
+ *
+ * 它必须能**单独点击**。外面套着 `Dropdown` 的话，点它会被当作打开菜单，
+ * 而用户想要的是「去设置页」——那是两个不同的意图，不能共用一个热区。
+ * 所以它是 `Dropdown` 的**兄弟节点**，靠 `stopPropagation` 不必要——
+ * 事件冒泡到 Dropdown 只发生在包裹层内，而它不在里面。
  */
-function AccountRow({ collapsed, onOpen }: { collapsed: boolean; onOpen: () => void }) {
+function AccountRow({
+  collapsed,
+  settingsActive,
+  onOpenAccount,
+  onOpenSettings,
+}: {
+  collapsed: boolean
+  settingsActive: boolean
+  onOpenAccount: () => void
+  onOpenSettings: () => void
+}) {
   const { styles } = useStyles()
   const sessionQuery = useQuery({ queryKey: ['session'], queryFn: api.auth.session })
   const user = sessionQuery.data?.user
+  const { mode, setMode } = useThemeMode()
 
   /**
    * 会话还没取回时**不渲染**，而不是渲染一个占位的空行。
@@ -303,31 +345,76 @@ function AccountRow({ collapsed, onOpen }: { collapsed: boolean; onOpen: () => v
    */
   if (!user) return null
 
+  const items: MenuProps['items'] = [
+    { key: 'account', icon: <UserOutlined />, label: '账号资料' },
+    {
+      key: 'appearance',
+      icon: <BgColorsOutlined />,
+      label: '外观',
+      children: THEME_MODES.map((value) => ({
+        key: `theme:${value}`,
+        /*
+         * 打勾放在**文字后面**，不是 `icon`。
+         *
+         * antd 的 `icon` 是固定的**前置**位置（图标 + 文字），而这个勾是
+         * 「选中标记」而不是「这一项是什么」——它贴在右端才读作单选组的
+         * 选中态。所以放进 `label` 自己排：文字靠左、勾靠右。
+         *
+         * `minWidth` 让三个选项的宽度一致，否则勾会随着文字长短左右浮动，
+         * 上下三行看起来不在一条竖线上。
+         */
+        label: (
+          <span className={styles.themeOption}>
+            {THEME_MODE_LABELS[value]}
+            {mode === value ? <CheckOutlined className={styles.themeCheck} /> : null}
+          </span>
+        ),
+      })),
+    },
+    { type: 'divider' },
+    { key: 'signout', icon: <LogoutOutlined />, label: '登出', danger: true },
+  ]
+
   return (
-    <Tooltip title={collapsed ? user.name : undefined} placement="right">
-      {/*
-        用 antd 的 `Button type="text" block` 而不是裸 `<button>`：
-        hover / active 的底色由 token 给（深浅两套主题自动跟着走），
-        而这正是原生按钮拿不到的那部分。形状仍由 `styles.account` 定——
-        它是一条通栏的、有自己形态的行，不是标准按钮。
-      */}
-      <Button
-        type="text"
-        block
-        className={`${styles.account} ${collapsed ? styles.accountCollapsed : ''}`}
-        onClick={onOpen}
-        aria-label={`账号：${user.name}`}
+    <div className={`${styles.accountRow} ${collapsed ? styles.accountRowCollapsed : ''}`}>
+      <Dropdown
+        trigger={['click']}
+        placement="topRight"
+        menu={{
+          items,
+          onClick: ({ key }) => {
+            if (key === 'account') return onOpenAccount()
+            if (key === 'signout') return void api.auth.signOutAndLeave()
+            if (key.startsWith('theme:')) {
+              setMode(key.slice('theme:'.length) as ThemeMode)
+            }
+          },
+        }}
       >
-        <Avatar
-          size={collapsed ? 24 : 26}
-          src={user.image ?? undefined}
-          className={styles.accountAvatar}
-        >
-          {user.name.slice(0, 1).toUpperCase()}
-        </Avatar>
-        {collapsed ? null : <span className={styles.accountName}>{user.name}</span>}
-      </Button>
-    </Tooltip>
+        <div className={`${styles.account} ${collapsed ? styles.accountCollapsed : ''}`}>
+          <Avatar size={26} src={user.image ?? undefined} className={styles.accountAvatar}>
+            {user.name.slice(0, 1).toUpperCase()}
+          </Avatar>
+          {collapsed ? null : <span className={styles.accountName}>{user.name}</span>}
+        </div>
+      </Dropdown>
+
+      {/*
+        `Tooltip` 不能省：折叠态下它只剩一个图标，而设置是个**只有图标
+        没有文字**的目的地。悬停给名字是廉价的可发现性补偿。
+      */}
+      <Tooltip title="设置" placement="top">
+        <Button
+          type="text"
+          size="small"
+          icon={<SettingOutlined />}
+          className={`${styles.accountSettings} ${settingsActive ? styles.accountSettingsActive : ''}`}
+          onClick={onOpenSettings}
+          aria-label="设置"
+          aria-current={settingsActive ? 'page' : undefined}
+        />
+      </Tooltip>
+    </div>
   )
 }
 
