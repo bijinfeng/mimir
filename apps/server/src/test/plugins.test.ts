@@ -1,9 +1,10 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { sql } from 'drizzle-orm'
+import { like } from 'drizzle-orm'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { detectSource } from '@mimir/shared'
 import { db } from '../db/client.js'
+import { settings } from '../db/schema.js'
 import { assemble, resetAssembly } from '../plugins/host.js'
 import { env } from '../env.js'
 import { getAuthCookie, makeClient } from './helpers.js'
@@ -191,7 +192,7 @@ describe('插件注册表', () => {
       expect(local?.status.kind).toBe('active')
     } finally {
       // 清理：删掉覆盖行，回落到默认（不这么做会污染后面的测试）
-      await db.execute(sql`delete from settings where key like 'storage.s3.%'`)
+      await db.delete(settings).where(like(settings.key, 'storage.s3.%'))
       resetAssembly()
     }
   })

@@ -56,9 +56,21 @@ import { SettingsTableStore } from './settings-store.js'
  *
  * 收窄成 `execute` 是有意的（契约里 `PluginDatabase` 只有这一个方法）：
  * 插件不该碰宿主的 schema 与事务编排。类型适配只在这里做一次。
+ *
+ * `dialect`（D-045）告诉插件该说哪种 SQL：服务器部署说 Postgres，
+ * 本地开发与桌面端说 SQLite。两个检索通道按它选择方言实现——方言分支
+ * 必须收在通道内部，不要散落到宿主（TECH §7.2）。
+ * sqlite 驱动的行查询走 `db.all`（drizzle 的 sqlite 侧没有 `execute`）。
  */
 const pluginDatabase = {
+  dialect: env.dbDriver,
   async execute<T = unknown>(query: unknown): Promise<T[]> {
+    if (env.dbDriver === 'sqlite') {
+      const rows = await (db as never as { all(query: never): Promise<unknown[]> }).all(
+        query as never,
+      )
+      return rows as T[]
+    }
     const rows = await db.execute(query as never)
     return rows as T[]
   },

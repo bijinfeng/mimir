@@ -1,4 +1,4 @@
-import { and, gte, sql } from 'drizzle-orm'
+import { eq, gte, sql } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import type { UsageByRole, UsageDay, UsageRecord, UsageSource, UsageStats } from '@mimir/shared'
 import { db } from '../db/client.js'
@@ -227,29 +227,113 @@ export function quantileThresholds(values: number[]): number[] {
   return [...new Set([at(0.5), at(0.75), at(0.9)])]
 }
 
-interface DayRow {
-  date: string
-  tokens: number
-  calls: number
-  unknown_count: number
-}
-
 interface RoleRow {
   role: string
   model: string
-  calls: number
-  prompt_tokens: number
-  completion_tokens: number
-  failed: number
-  unknown_count: number
-  avg_ms: number
+  calls: number | string
+  prompt_tokens: number | string
+  completion_tokens: number | string
+  failed: number | string
+  unknown_count: number | string
+  avg_ms: number | string
+}
+
+/**
+ * 某时区下，日期字符串（YYYY-MM-DD）的**当地零点**对应的 UTC 时刻。
+ *
+ * 做法：先拿该日期正午附近的 UTC 猜值，用 `Intl` 读出那个时刻在目标时区的
+ * 墙上时间，墙上时间与 UTC 的差就是偏移量；用偏移量反推当地零点，再校正
+ * 一次（DST 切换日两次迭代足够）。
+ *
+ * 为什么不用 SQL：`AT TIME ZONE` 是 Postgres 方言，SQLite 只有 `strftime`
+ * 的固定偏移、不认时区名。切天本来就需要时区语义，放到 **JS 的 Intl** 里，
+ * 双后端共用同一份实现（D-045），历史数据也照旧随设置重算。
+ */
+function tzOffsetMs(instant: number, timezone: string): number {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date(instant))
+  const get = (type: string): number =>
+    Number(parts.find((part) => part.type === type)?.value ?? '0')
+  const wallAsUtc = Date.UTC(
+    get('year'),
+    get('month') - 1,
+    get('day'),
+    get('hour'),
+    get('minute'),
+    get('second'),
+  )
+  return wallAsUtc - instant
+}
+
+function localMidnightUtc(date: string, timezone: string): number {
+  const [year, month, day] = date.split('-').map(Number)
+  const guess = Date.UTC(year!, month! - 1, day!)
+  let instant = guess - tzOffsetMs(guess, timezone)
+  instant = guess - tzOffsetMs(instant, timezone)
+  return instant
+}
+
+/** 时刻落在范围内的哪一天。starts 升序；早于范围首日返回 null（调用方丢弃） */
+function dateOfInstant(ms: number, dates: string[], starts: number[]): string | null {
+  let low = 0
+  let high = starts.length - 1
+  let found = -1
+  while (low <= high) {
+    const mid = (low + high) >> 1
+    if (starts[mid]! <= ms) {
+      found = mid
+      low = mid + 1
+    } else {
+      high = mid - 1
+    }
+  }
+  return found === -1 ? null : dates[found]!
+}
+
+/** 一条记录折算后的 token 数；三列全空返回 null（=「未知」，≠ 0） */
+function rowTokens(row: {
+  totalTokens: number | null
+  promptTokens: number | null
+  completionTokens: number | null
+}): number | null {
+  return effectiveTokens(row)
+}
+
+/** 可移植的 token 合计表达式：sum 在 PG 返回 bigint（字符串）、SQLite 返回 number，统一 Number() 收敛 */
+const tokensSumExpr = sql<number>`coalesce(sum(coalesce(${usageLog.totalTokens}, coalesce(${usageLog.promptTokens}, 0) + coalesce(${usageLog.completionTokens}, 0))), 0)`
+
+/** 统计「三列全 null」（供应商没回传）的可移植表达式 */
+const unknownCountExpr = sql<number>`coalesce(sum(case when ${usageLog.totalTokens} is null and ${usageLog.promptTokens} is null and ${usageLog.completionTokens} is null then 1 else 0 end), 0)`
+
+async function sumTokensSince(instant: Date | null): Promise<number> {
+  const query = db.select({ tokens: tokensSumExpr }).from(usageLog)
+  const rows = instant ? await query.where(gte(usageLog.at, instant)) : await query
+  return Number(rows[0]?.tokens ?? 0)
 }
 
 /**
  * 聚合出统计页需要的全部数字。
  *
- * 三条查询合成一次调用：它们共享同一个时区与范围，分开查会让界面上的
- * 「今日」与热力图的最后一格有机会用不同的口径。
+ * 按**天**的部分（热力图与填充）把范围内的记录取回后在 JS 里分桶——
+ * 「某时刻属于哪个当地日期」是时区语义，`Intl` 是唯一双方言都正确的实现；
+ * 按**合计/角色**的部分是纯标量聚合（sum / count / avg / filter），
+ * drizzle 构建器在两个方言下生成同义 SQL，留在 SQL 里。
+ *
+ * 原先按天分组的那条 SQL（`AT TIME ZONE` + `GROUP BY 1`）是全仓最脆的一段：
+ * drizzle 把重复表达式渲染成不同占位符，两个「相同」的表达式不相等，
+ * 只能按序号分组绕开（当时的注释记录过这个坑）。JS 分桶把整个问题连根移走。
+ *
+ * 「今日 / 本周 / 本月」各发一条小聚合而不是取回全量再算：行粒度是
+ * 一次模型调用，全年可能数万行，按需聚合比全量拉回便宜；
+ * 数字之间的自洽性由「同一次调用内完成」保证（与原先一致）。
  */
 export async function stats(days: number): Promise<UsageStats> {
   const timezone = await statsTimezone()
@@ -257,96 +341,23 @@ export async function stats(days: number): Promise<UsageStats> {
   const today = localDateOf(new Date(), timezone)
   const from = shiftDays(today, -(days - 1))
 
-  /**
-   * 范围下界，用**参数化**的表达式而不是把 `from` 插进字符串。
-   *
-   * `(($1::date)::timestamp AT TIME ZONE $2)`：`::timestamp` 给的是该日期的
-   * 当地零点，再 `AT TIME ZONE` 转成 UTC 时刻。这是「按当地日期切天」的标准
-   * 写法，反过来的 `at AT TIME ZONE tz` 是把时刻转成当地的墙上时间。
-   */
-  const lowerBound = sql`((${from}::date)::timestamp AT TIME ZONE ${timezone})`
+  const dates: string[] = []
+  const starts: number[] = []
+  for (let offset = 0; offset < days; offset += 1) {
+    const date = shiftDays(from, offset)
+    dates.push(date)
+    starts.push(localMidnightUtc(date, timezone))
+  }
 
-  /**
-   * 每条记录折算后的 token 数。三列都可空，所以这条表达式同时承担两件事：
-   * 折算（`coalesce`）与「是否未知」（`is null`）的判据。
-   *
-   * `greatest` 包一层是为了让「三列都 null」与「有值」在比较里都得到一致结果，
-   * 而真正的未知判据由下面的 `unknown_count` 单独算——**不靠 tokens = 0 推断**。
-   */
-  const tokensExpr = sql<number>`coalesce(${usageLog.totalTokens}, coalesce(${usageLog.promptTokens}, 0) + coalesce(${usageLog.completionTokens}, 0))`
-  const unknownExpr = sql<number>`case when ${usageLog.totalTokens} is null and ${usageLog.promptTokens} is null and ${usageLog.completionTokens} is null then 1 else 0 end`
-  const dayExpr = sql<string>`((${usageLog.at} AT TIME ZONE ${timezone})::date)::text`
-
-  /**
-   * **按序号分组（`GROUP BY 1`），不重复那个表达式。**
-   *
-   * 重写一遍表达式看起来更明确，但 Postgres 匹配分组表达式是**按语法树**
-   * 来的：drizzle 会把每个插值渲染成独立的占位符（`AT TIME ZONE $1`
-   * 在 SELECT 里、`$4` 在 GROUP BY 里），于是两个「相同」的表达式不相等，
-   * 报 `column "usage_log.at" must appear in the GROUP BY clause`。
-   * 按序号分组绕开整个问题，而且少一次重复。
-   */
-  const dayRows = (await db
+  const rangeRows = await db
     .select({
-      date: dayExpr.as('date'),
-      tokens: sql<number>`coalesce(sum(${tokensExpr}), 0)::int`.as('tokens'),
-      calls: sql<number>`count(*)::int`.as('calls'),
-      unknown_count: sql<number>`coalesce(sum(${unknownExpr}), 0)::int`.as('unknown_count'),
+      at: usageLog.at,
+      totalTokens: usageLog.totalTokens,
+      promptTokens: usageLog.promptTokens,
+      completionTokens: usageLog.completionTokens,
     })
     .from(usageLog)
-    .where(gte(usageLog.at, lowerBound))
-    .groupBy(sql`1`)
-    .orderBy(sql`1`)) as DayRow[]
-
-  const roleRows = (await db
-    .select({
-      role: usageLog.role,
-      model: sql<string>`max(${usageLog.model})`.as('model'),
-      calls: sql<number>`count(*)::int`.as('calls'),
-      prompt_tokens: sql<number>`coalesce(sum(${usageLog.promptTokens}), 0)::int`.as(
-        'prompt_tokens',
-      ),
-      completion_tokens: sql<number>`coalesce(sum(${usageLog.completionTokens}), 0)::int`.as(
-        'completion_tokens',
-      ),
-      failed: sql<number>`count(*) filter (where not ${usageLog.ok})::int`.as('failed'),
-      unknown_count: sql<number>`coalesce(sum(${unknownExpr}), 0)::int`.as('unknown_count'),
-      avg_ms: sql<number>`coalesce(avg(${usageLog.durationMs}), 0)::int`.as('avg_ms'),
-    })
-    .from(usageLog)
-    .groupBy(usageLog.role, usageLog.model)
-    .orderBy(sql`count(*) desc`)) as RoleRow[]
-
-  /**
-   * 四个范围的合计。
-   *
-   * **一次查询取回全部**再在内存里按日期分桶，而不是发四条 SQL：
-   * 行的粒度是天，一年最多 365 行，客户端的算术比四次往返便宜。
-   * 而分开查会引入「四条查询之间数据变了」的可能——统计页的数字
-   * 互相之间必须自洽。
-   */
-  const scopeRows = (await db
-    .select({
-      date: dayExpr.as('date'),
-      tokens: sql<number>`coalesce(sum(${tokensExpr}), 0)::int`.as('tokens'),
-      calls: sql<number>`count(*)::int`.as('calls'),
-    })
-    .from(usageLog)
-    .groupBy(sql`1`)) as {
-    date: string
-    tokens: number
-    calls: number
-  }[]
-
-  const sumRange = (since: string): number =>
-    scopeRows.filter((row) => row.date >= since).reduce((total, row) => total + row.tokens, 0)
-
-  const probeRow = await db
-    .select({ calls: sql<number>`count(*)::int` })
-    .from(usageLog)
-    .where(and(sql`${usageLog.source} = 'probe'`))
-
-  const byDay = new Map(dayRows.map((row) => [row.date, row]))
+    .where(gte(usageLog.at, new Date(starts[0]!)))
 
   /**
    * 补齐没有调用的那一天。
@@ -355,17 +366,49 @@ export async function stats(days: number): Promise<UsageStats> {
    * 由两边各自计算，就会出现某天的数据落在网格之外、静默不显示。
    * 补齐后格子数与 `from`/`to` 严格对应。
    */
-  const filled: UsageDay[] = []
-  for (let offset = 0; offset < days; offset += 1) {
-    const date = shiftDays(from, offset)
-    const row = byDay.get(date)
-    filled.push({
-      date,
-      tokens: row?.tokens ?? 0,
-      calls: row?.calls ?? 0,
-      unknownCount: row?.unknown_count ?? 0,
-    })
+  const byDay = new Map(dates.map((date) => [date, { tokens: 0, calls: 0, unknown: 0 }]))
+  for (const row of rangeRows) {
+    const date = dateOfInstant(row.at.getTime(), dates, starts)
+    const bucket = date ? byDay.get(date) : undefined
+    if (!bucket) continue
+    bucket.calls += 1
+    const tokens = rowTokens(row)
+    if (tokens === null) bucket.unknown += 1
+    else bucket.tokens += tokens
   }
+
+  const filled: UsageDay[] = dates.map((date) => {
+    const bucket = byDay.get(date)!
+    return { date, tokens: bucket.tokens, calls: bucket.calls, unknownCount: bucket.unknown }
+  })
+
+  const roleRows = (await db
+    .select({
+      role: usageLog.role,
+      model: sql<string>`max(${usageLog.model})`,
+      calls: sql<number>`count(*)`,
+      prompt_tokens: sql<number>`coalesce(sum(${usageLog.promptTokens}), 0)`,
+      completion_tokens: sql<number>`coalesce(sum(${usageLog.completionTokens}), 0)`,
+      failed: sql<number>`count(*) filter (where not ${usageLog.ok})`,
+      unknown_count: unknownCountExpr,
+      avg_ms: sql<number>`coalesce(avg(${usageLog.durationMs}), 0)`,
+    })
+    .from(usageLog)
+    .groupBy(usageLog.role, usageLog.model)
+    .orderBy(sql`count(*) desc`)) as RoleRow[]
+
+  const [allRow] = await db
+    .select({ tokens: tokensSumExpr, calls: sql<number>`count(*)` })
+    .from(usageLog)
+  const [probeRow] = await db
+    .select({ calls: sql<number>`count(*)` })
+    .from(usageLog)
+    .where(eq(usageLog.source, 'probe'))
+  const [todayTokens, weekTokens, monthTokens] = await Promise.all([
+    sumTokensSince(new Date(localMidnightUtc(today, timezone))),
+    sumTokensSince(new Date(localMidnightUtc(startOfWeek(today), timezone))),
+    sumTokensSince(new Date(localMidnightUtc(startOfMonth(today), timezone))),
+  ])
 
   return {
     timezone,
@@ -375,21 +418,21 @@ export async function stats(days: number): Promise<UsageStats> {
     byRole: roleRows.map((row): UsageByRole => ({
       role: row.role,
       model: row.model,
-      calls: row.calls,
-      promptTokens: row.prompt_tokens,
-      completionTokens: row.completion_tokens,
-      failed: row.failed,
-      unknownCount: row.unknown_count,
-      avgMs: row.avg_ms,
+      calls: Number(row.calls),
+      promptTokens: Number(row.prompt_tokens),
+      completionTokens: Number(row.completion_tokens),
+      failed: Number(row.failed),
+      unknownCount: Number(row.unknown_count),
+      avgMs: Number(row.avg_ms),
     })),
     totals: {
-      today: sumRange(today),
-      week: sumRange(startOfWeek(today)),
-      month: sumRange(startOfMonth(today)),
-      all: scopeRows.reduce((total, row) => total + row.tokens, 0),
-      calls: scopeRows.reduce((total, row) => total + row.calls, 0),
-      unknownCount: dayRows.reduce((total, row) => total + row.unknown_count, 0),
-      probeCalls: probeRow[0]?.calls ?? 0,
+      today: todayTokens,
+      week: weekTokens,
+      month: monthTokens,
+      all: Number(allRow?.tokens ?? 0),
+      calls: Number(allRow?.calls ?? 0),
+      unknownCount: filled.reduce((total, day) => total + day.unknownCount, 0),
+      probeCalls: Number(probeRow?.calls ?? 0),
     },
     thresholds: quantileThresholds(filled.map((day) => day.tokens)),
   }

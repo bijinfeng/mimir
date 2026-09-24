@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs'
+import { existsSync, mkdirSync } from 'node:fs'
 import { dirname, isAbsolute, resolve } from 'node:path'
 
 /**
@@ -16,7 +16,13 @@ import { dirname, isAbsolute, resolve } from 'node:path'
  *  2. 找不到就退回 cwd。生产镜像里没有 pnpm-workspace.yaml，但这没关系：
  *     容器里的路径都是绝对路径（/data、/data/vault），根本不走相对解析。
  *     这里不抛错是刻意的——抛错会让一个本身没问题的绝对路径配置无法启动。
+ *
+ * `import.meta.dirname` 可能是 undefined：drizzle-kit 这类工具会以 CJS 方式
+ * 转换本模块（esbuild 下 import.meta 是空对象），此时退回 cwd——
+ * drizzle-kit 的约定就是从 apps/server 目录跑，向上查找依然成立。
  */
+const moduleDirname: string | undefined = import.meta.dirname
+
 function findRepoRoot(start: string): string {
   let current = start
 
@@ -28,7 +34,7 @@ function findRepoRoot(start: string): string {
   }
 }
 
-const repoRoot = findRepoRoot(import.meta.dirname)
+const repoRoot = findRepoRoot(moduleDirname ?? process.cwd())
 
 // 显式加载 .env。Node 22 自带 loadEnvFile，不需要 dotenv 依赖。
 // 文件不存在时静默跳过——部署环境通常直接注入环境变量。
@@ -56,14 +62,42 @@ function resolvePath(value: string): string {
 
 const dataDir = resolvePath(process.env.DATA_DIR ?? './data')
 
-if (!existsSync(dataDir)) {
-  throw new Error(`数据目录不存在：${dataDir}。请执行 mkdir -p data/vault data/raw`)
-}
+// 数据目录不存在时**自动创建**而不是抛错（D-045）。
+// 原先的抛错是「新环境启动即 500」的来源之一；存储层的写入本来就会
+// mkdir 父目录（`plugins/storage/src/local.ts`），启动期把这个行为提前而已。
+// 接受的代价：DATA_DIR 写错路径会静默新建一个空目录——症状明确（界面全空）、
+// 启动日志里打印了绝对路径，好过「任何新环境都必须先读报错才能启动」。
+mkdirSync(dataDir, { recursive: true })
+
+/**
+ * 数据库驱动：**协议头判定**（D-045）。
+ *
+ *   postgres://… / postgresql://…  → Postgres（服务器部署路径）
+ *   file:路径 / 其余                → SQLite 文件（本地开发、桌面端）
+ *
+ * 未设置时默认 SQLite——新克隆环境 `pnpm dev` 即跑，零 Docker（TECH §8.6）。
+ * 部署环境（compose / Dockerfile）始终显式传 postgres://，不受默认值影响。
+ * 这是部署事实（TECH §7.5），不进设置页。
+ */
+const rawDatabaseUrl = process.env.DATABASE_URL ?? 'file:./data/mimir.db'
+export const dbDriver: 'postgres' | 'sqlite' = /^postgres(ql)?:\/\//.test(rawDatabaseUrl)
+  ? 'postgres'
+  : 'sqlite'
+
+/** SQLite 的库文件路径。相对路径相对仓库根（与 DATA_DIR 同一条解析规则） */
+const databaseFile = dbDriver === 'sqlite' ? resolvePath(rawDatabaseUrl.replace(/^file:/, '')) : ''
 
 export const env = {
   nodeEnv: process.env.NODE_ENV ?? 'development',
   port: Number(process.env.PORT ?? 3000),
-  databaseUrl: required('DATABASE_URL', 'postgres://mimir:mimir@127.0.0.1:5544/mimir'),
+  /**
+   * 数据库连接。`dbDriver` 决定 `db/client.ts` 用哪个驱动：
+   * postgres 时它是 postgres.js 的连接串；sqlite 时真正的文件路径在
+   * `databaseFile`（`databaseUrl` 保留原始值，仅供诊断显示）。
+   */
+  databaseUrl: rawDatabaseUrl,
+  dbDriver,
+  databaseFile,
   authSecret: required('AUTH_SECRET', 'dev-only-insecure-secret-change-me'),
   webOrigin: process.env.WEB_ORIGIN ?? 'http://localhost:5173',
   serverUrl: process.env.SERVER_URL ?? 'http://localhost:3000',

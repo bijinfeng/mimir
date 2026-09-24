@@ -1,4 +1,4 @@
-import { inArray, sql } from 'drizzle-orm'
+import { inArray } from 'drizzle-orm'
 import type { SearchHit, SearchResponse } from '@mimir/shared'
 import { channelsForMode, createPipeline, defaultMode, type SnippetPort } from '@mimir/core'
 import { db } from '../db/client.js'
@@ -35,8 +35,12 @@ export interface SearchParams {
 /**
  * 取正文的端口实现。
  *
- * **只在最终入选的 N 条上取正文**，并在 SQL 里直接截出片段窗口——
- * 不为候选集取正文，那会是几十倍的浪费。
+ * **只在最终入选的 N 条上取正文**，不为候选集取正文——那会是几十倍的浪费。
+ *
+ * 片段的切分在 **JS 里做**而不是 SQL：`strpos` / `substring(... from ... for ...)`
+ * 是 Postgres 方言，SQLite 是 `instr` / `substr`——双后端（D-045）下这段逻辑
+ * 统一成一份 JS 实现，两个方言的切片行为天然一致。代价是取回完整正文再截，
+ * 但 N 是最终入选条数（个位数到几十），不是候选集，成本可忽略。
  *
  * 片段偏移基于**完整正文**，前端可以用它做「跳回原文并高亮」。
  * M0 用查询词的首次出现位置当窗口；M1 有分块表之后这里换成
@@ -45,9 +49,6 @@ export interface SearchParams {
 const snippetPort: SnippetPort = {
   async load(ids, query) {
     if (ids.length === 0) return []
-
-    const needle = query.trim()
-    const hitPos = sql<number>`strpos(lower(${documents.body}), lower(${needle}))`
 
     const rows = await db
       .select({
@@ -59,36 +60,33 @@ const snippetPort: SnippetPort = {
         // 上传件的格式与大小随命中返回，让列表项在搜索与浏览两种入口下同一形态
         mime: documents.mime,
         size: documents.size,
-        text: sql<string>`
-          case
-            when ${hitPos} > 0
-              then substring(${documents.body} from greatest(1, ${hitPos} - ${SNIPPET_LEAD}) for ${SNIPPET_LENGTH})
-            else substring(${documents.body} from 1 for ${SNIPPET_LENGTH})
-          end
-        `.as('snippet_text'),
-        start: sql<number>`
-          case
-            when ${hitPos} > 0 then greatest(0, ${hitPos} - ${SNIPPET_LEAD + 1})
-            else 0
-          end
-        `.as('snippet_start'),
+        body: documents.body,
       })
       .from(documents)
       .where(inArray(documents.id, ids))
 
-    return rows.map((row) => ({
-      id: row.id,
-      documentId: row.id,
-      kind: row.kind,
-      title: row.title,
-      path: row.path,
-      url: row.url,
-      mime: row.mime,
-      size: row.size,
-      text: row.text,
-      start: Number(row.start),
-      end: Number(row.start) + row.text.length,
-    }))
+    const needle = query.trim().toLowerCase()
+
+    return rows.map((row) => {
+      const pos = needle === '' ? -1 : row.body.toLowerCase().indexOf(needle)
+      // 命中时窗口前方留 SNIPPET_LEAD 个字符做上下文；没命中（子串通道
+      // 会给出正文没有整串查询词的命中）退回正文开头
+      const start = pos >= 0 ? Math.max(0, pos - SNIPPET_LEAD) : 0
+      const text = row.body.slice(start, start + SNIPPET_LENGTH)
+      return {
+        id: row.id,
+        documentId: row.id,
+        kind: row.kind,
+        title: row.title,
+        path: row.path,
+        url: row.url,
+        mime: row.mime,
+        size: row.size,
+        text,
+        start,
+        end: start + text.length,
+      }
+    })
   },
 }
 

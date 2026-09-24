@@ -62,7 +62,9 @@ catalog:
 allowBuilds:
   esbuild: true
   '@prisma/client': false
-  better-sqlite3: false
+  # SQLite 驱动（本地开发 / 桌面端后端，D-045）。预编译二进制覆盖主流平台，
+  # 放行构建脚本是为了在没有预编译包的平台上能回落到 node-gyp。
+  better-sqlite3: true
   # TypeScript 7 是 Go 重写版，各平台的原生二进制；不需要构建脚本
   '@typescript/typescript-linux-x64': false
 

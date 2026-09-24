@@ -1,9 +1,9 @@
 import { APIError, betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { sql } from 'drizzle-orm'
+import { count } from 'drizzle-orm'
 import { db } from './db/client.js'
 import * as schema from './db/schema.js'
-import { env } from './env.js'
+import { dbDriver, env } from './env.js'
 
 /**
  * 认证配置。
@@ -14,11 +14,13 @@ import { env } from './env.js'
  * 忘记关开关就等于把自家知识库的注册口敞开。把「首次运行」和「之后」分开，
  * 就不存在需要记得关的开关。想再加用户，直接改数据库。
  *
- * 表结构见 db/auth-schema.ts；schema 必须显式传进去，否则适配器解析不到表名。
+ * 表结构见 db/auth-schema.ts（PG）与 db/auth-schema.sqlite.ts（SQLite，
+ * D-045）；`schema` 是按驱动分发的模块（db/schema.ts），所以适配器拿到的
+ * 表对象总与当前连接的方言一致，只有 provider 名字要跟着切换。
  */
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
-    provider: 'pg',
+    provider: dbDriver === 'sqlite' ? 'sqlite' : 'pg',
     schema,
   }),
 
@@ -80,7 +82,7 @@ export const auth = betterAuth({
     user: {
       create: {
         before: async () => {
-          const [row] = await db.select({ count: sql<number>`count(*)::int` }).from(schema.user)
+          const [row] = await db.select({ count: count() }).from(schema.user)
 
           if ((row?.count ?? 0) > 0) {
             throw new APIError('FORBIDDEN', {

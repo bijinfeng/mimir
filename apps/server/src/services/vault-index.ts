@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, notInArray, sql } from 'drizzle-orm'
+import { and, eq, inArray, isNull, notInArray } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { db } from '../db/client.js'
 import { documents } from '../db/schema.js'
@@ -315,7 +315,7 @@ export async function reindexVault(): Promise<ReindexResult> {
 
   const stale = await db
     .update(documents)
-    .set({ deletedAt: sql`now()` })
+    .set({ deletedAt: new Date() })
     .where(staleWhere)
     .returning({ id: documents.id })
 

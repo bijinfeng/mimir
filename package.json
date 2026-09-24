@@ -16,8 +16,10 @@
     "check": "pnpm lint && pnpm lint:styles && pnpm format:check && pnpm -r typecheck && pnpm -r test",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
-    "db:generate": "pnpm --filter @mimir/server db:generate",
+    "db:generate:pg": "pnpm --filter @mimir/server db:generate:pg",
+    "db:generate:sqlite": "pnpm --filter @mimir/server db:generate:sqlite",
     "db:migrate": "pnpm --filter @mimir/server db:migrate",
+    "db:reindex": "pnpm --filter @mimir/server db:reindex",
     "db:studio": "pnpm --filter @mimir/server db:studio",
     "docker:prod": "docker compose --profile prod up -d --build",
     "lint:styles": "node scripts/check-style-backticks.mjs"

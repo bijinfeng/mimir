@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm'
+import { count, eq } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { auth } from '../auth.js'
 import { db } from '../db/client.js'
@@ -167,7 +167,7 @@ export async function ensureOwnerAccount(): Promise<OwnerBootstrapResult> {
     if (credentialId) {
       await db
         .update(account)
-        .set({ password: hash, updatedAt: sql`now()` })
+        .set({ password: hash, updatedAt: new Date() })
         .where(eq(account.id, credentialId))
     } else if (existing) {
       // 账号存在但没有凭据记录（异常状态，比如手工插过 user 行）
@@ -194,7 +194,7 @@ export async function ensureOwnerAccount(): Promise<OwnerBootstrapResult> {
 
 /** 库里是否已有账号。登录页据此在「首次注册」与「登录」之间切换 */
 export async function hasAnyUser(): Promise<boolean> {
-  const [row] = await db.select({ count: sql<number>`count(*)::int` }).from(user)
+  const [row] = await db.select({ count: count() }).from(user)
   return (row?.count ?? 0) > 0
 }
 

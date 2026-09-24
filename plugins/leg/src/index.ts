@@ -56,7 +56,7 @@ export function install(host: PluginHost): void {
     {
       seam: 'leg',
       id: 'substring',
-      name: '子串兜底（pg_trgm）',
+      name: '子串兜底',
       description: '不受分词结果影响。词级通道切错了它还能捞回来，代价是精度低',
       file: 'plugins/leg/src/substring.ts',
       configKeys: ['retrieval.substring.weight'],

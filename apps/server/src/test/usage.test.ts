@@ -1,8 +1,8 @@
-import { sql } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { USAGE_HISTORY_DAYS } from '@mimir/shared'
 import { db } from '../db/client.js'
-import { usageLog } from '../db/schema.js'
+import { settings, usageLog } from '../db/schema.js'
 import {
   effectiveTokens,
   quantileThresholds,
@@ -345,6 +345,6 @@ describe('统计时区配置项', () => {
     expect(good.status).toBe(200)
 
     // 清理：删掉覆盖，回落到默认值（默认也是 Asia/Shanghai，但保持表干净）
-    await db.execute(sql`delete from settings where key = 'stats.timezone'`)
+    await db.delete(settings).where(eq(settings.key, 'stats.timezone'))
   })
 })

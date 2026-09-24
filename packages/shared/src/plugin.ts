@@ -121,8 +121,15 @@ export interface SecretCodec {
  *
  * 参数与返回值都是 `unknown`：drizzle 的 `sql` 模板对插件是透明的，
  * 宿主在装配处把真实的 db 传进来（那里做一次类型断言）。
+ *
+ * `dialect` 告诉插件该说哪种 SQL（D-045）：服务器部署是 Postgres，
+ * 本地开发与桌面端是 SQLite。两条文本检索通道按它选择方言实现；
+ * 方言分支必须**点名收敛**（TECH §7.2），不要在插件里散落 if。
  */
+export type DbDialect = 'postgres' | 'sqlite'
+
 export interface PluginDatabase {
+  readonly dialect: DbDialect
   execute<T = unknown>(query: unknown): Promise<T[]>
 }
 

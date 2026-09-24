@@ -1,4 +1,4 @@
-import { and, isNull, sql } from 'drizzle-orm'
+import { and, count, isNull, sql } from 'drizzle-orm'
 import type { FolderNode } from '@mimir/shared'
 import { db } from '../db/client.js'
 import { documents } from '../db/schema.js'
@@ -30,7 +30,7 @@ interface MutableNode {
 
 export async function listFolderTree(): Promise<FolderNode[]> {
   const rows = await db
-    .select({ folder: documents.folder, count: sql<number>`count(*)::int` })
+    .select({ folder: documents.folder, count: count() })
     .from(documents)
     .where(and(isNull(documents.deletedAt), sql`${documents.folder} is not null`))
     .groupBy(documents.folder)

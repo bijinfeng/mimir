@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { and, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { CLIP_KINDS } from '@mimir/shared'
 import type {
@@ -384,7 +384,7 @@ export async function listAllTags(): Promise<{ name: string; count: number }[]> 
   const rows = await db
     .select({
       name: tags.name,
-      count: sql<number>`count(${documentTags.documentId})::int`,
+      count: count(documentTags.documentId),
     })
     .from(tags)
     .leftJoin(documentTags, eq(documentTags.tagId, tags.id))
