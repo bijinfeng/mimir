@@ -5,6 +5,16 @@ import type { SettingEntry } from '@mimir/shared'
 import { ApiRequestError, api } from '@/lib/api'
 import { useStyles } from './settings.style'
 
+/** 把契约里的 unknown 值收窄成这个控件能处理的标量。结构化值一律当空 */
+function toScalar(value: unknown): string | number | boolean | null {
+  if (value === null || value === undefined) return null
+  const type = typeof value
+  if (type === 'string' || type === 'number' || type === 'boolean') {
+    return value as string | number | boolean
+  }
+  return null
+}
+
 /**
  * 一行可编辑的配置项。
  *
@@ -45,8 +55,15 @@ export function SettingControl({
   const queryClient = useQueryClient()
   const [messageApi, contextHolder] = message.useMessage()
 
-  /** 草稿。初始值来自服务端（秘密类为空——值根本就不下发） */
-  const [draft, setDraft] = useState<string | number | boolean | null>(secret ? '' : entry.value)
+  /**
+   * 草稿。初值来自服务端。
+   *
+   * `entry.value` 的类型是 `unknown`（契约里 json 类的值是任意结构，
+   * 而这个控件只处理标量）。这里收窄一次：非标量一律当空——
+   * 结构化值由专门的界面渲染（如供应商列表），不走这个控件。
+   */
+  const scalar = toScalar(entry.value)
+  const [draft, setDraft] = useState<string | number | boolean | null>(secret ? '' : scalar)
 
   /**
    * 服务端值变了（保存成功后重新拉取、或另一个标签页改过）
@@ -59,7 +76,7 @@ export function SettingControl({
    * 在同一次渲染中根据上一次的 props 调整 state，React 会立刻重渲染
    * 且不提交中间状态，用户看不到闪烁。
    */
-  const serverValue = secret ? '' : entry.value
+  const serverValue = secret ? '' : scalar
   const [lastServerValue, setLastServerValue] = useState(serverValue)
   if (serverValue !== lastServerValue) {
     setLastServerValue(serverValue)
@@ -84,7 +101,7 @@ export function SettingControl({
   })
 
   /** 编辑后是否还没保存。空串视作「清除覆盖」，所以它也算改动 */
-  const dirty = String(draft ?? '') !== String(secret ? '' : (entry.value ?? ''))
+  const dirty = String(draft ?? '') !== String(secret ? '' : (scalar ?? ''))
 
   /**
    * 保存。`clear` 为真时显式写入 `null`（删除覆盖）。

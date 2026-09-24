@@ -74,7 +74,13 @@ Postgres 的 `simple` 配置没有词边界概念，「组件性能优化」会�
 但**不要引入 RAG 框架**（Mastra、LlamaIndex、LangChain 等）——它们都想接管
 文档与分块的数据模型，而我们必须让引用能指回自己的表。
 
-理由与实测数据见 `docs/RESEARCH.md` §3。
+**适配器的构造只在 `plugins/provider/` 里。** 不要在 `apps/server` 里直接
+`openaiCompatible(...)`：三个角色的工厂函数各不相同（chat 走
+`openaiCompatible`，summarize 与 embed 各有自己的 `create*`），
+散着写就会各抄一份——重构前 `assistant.ts` 与 `assistant-stream.ts`
+就是两份拷贝。宿主只问「要哪个角色」（`services/model.ts`）。
+
+理由与实测数据见 `docs/RESEARCH.md` §3，协议见 `docs/TECH.md` §7.4。
 
 ### 6. 不碰非目标清单
 
@@ -113,12 +119,20 @@ Postgres 的 `simple` 配置没有词边界概念，「组件性能优化」会�
 | 组件没变快 | React Compiler 静默跳过了（抑制了 React 规则，或 ref 声明晚于使用它的 effect） |
 | 建索引失败 | pgvector 的 HNSW 上限 2000 维，超过要用 `halfvec` |
 | 类型对不上 | `^0.145.0` 这类 peer 范围对 0.x 版本意味着 `>=0.145.0 <0.146.0`，装最新版会失败 |
-| 生产启动报错 | workspace 包（`@mimir/shared`）以源码发布，Node 不执行 node_modules 里的 TS —— 必须由使用方编译进产物（web 与 server 都走 Vite，server 是 SSR 构建）|
+| 生产启动报错 | workspace 包（`@mimir/shared` / `core` / `tokenizer` / `plugins/*`）以源码发布，Node 不执行 node_modules 里的 TS —— 必须由使用方编译进产物。把任何一个标成 external 就是这个症状，而**本地开发完全正常** |
+| 改设置看起来没生效 | 值被环境变量压住了，或保存请求没发出去。设置页必须如实显示**来源**（界面/环境变量/默认），且保存是显式动作而非 `onBlur`——绑定在 blur 上的保存实测不触发，而界面上值看着是改了的 |
+| 设置项在界面上有、代码里没人读 | 键没有注册进键表（`packages/core` 的 `CORE_SETTING_SPECS` 或插件的 `params`）。写入端点会拒绝未注册的键，但只读代码看不出来 |
+| 插件在设置页显示的状态不对 | 状态由 core 从 `requires` / `unavailable()` 算出来（`docs/TECH.md` §7.4）。实现自己编状态字符串就会与真实原因脱节 |
+| 描述符指向的文件不存在 | `plugins.test.ts` 有一条断言在守（描述符的 `file` 路径必须真实存在）。它防的是「设置页显示的文件路径是手写的」——那正是重构要消掉的东西 |
 | 静态资源 404 | 服务端产物被打包成 chunk，`resolveWebDist()` 算错层级 —— Vite 的 SSR 构建要开 `preserveModules` |
 | 服务端 dev 起不来 | dev 入口自己调了 `serve()`，与 Vite 的 dev server 抢端口 —— 监听只由生产入口 `src/index.ts` 做 |
 | 路径算错 | `src/` 与 `dist/` 的目录层级不同，不要写死相对偏移量 |
 | 状态色看不清 | 换了 antd 的**种子色**，派生色跑偏；或用了 `Tag color="green"` 预设色（对比度不由我们控制） |
 | 界面颜色不对但不报错 | 内层 `ConfigProvider` 又传了一次 `theme` —— `cssVar` 的 key 被重算，`--ant-*` 变量名换了，引用处静默失效 |
+| 改了深色的链接色但没生效 | 与 seed **同名**的 token（`colorLink`、`colorPrimary`）会被 antd 的 `formatToken` 丢掉，值由算法重新派生 —— 浅色下看着像生效了（浅色阶把输入色放在第 6 阶），深色下不达标注。要用 `tokens.ts` 的校准层（`MappingAlgorithm`） |
+| 深色下焦点环看不见 | antd 深色把 `colorPrimaryBg` 与 `colorPrimaryBorder` 设成**同一个值**，而后者是焦点环。深色单独校准了描边 |
+| 深色下露出白色 | `html` 上没画底色，或没写 `color-scheme` —— 滚动条与原生下拉不受 CSS 管辖 |
+| 深色用户看到一下白闪 | 外观状态没在首帧前算出来。`theme/appearance.ts` 与 `index.html` 的内联脚本必须同源 |
 
 完整清单见 `docs/TECH.md` §10。
 
@@ -134,6 +148,8 @@ Postgres 的 `simple` 配置没有词边界概念，「组件性能优化」会�
 | 某个视觉决定为什么、该用什么值 | `docs/DESIGN.md`（有实测对比度） |
 | 为什么不用某个方案 | `docs/RESEARCH.md` —— 有星数、版本号、许可证、实测数据 |
 | 数据模型 / 检索设计 | `docs/TECH.md` §4、§7 |
+| 想加一个插件（新来源 / 新通道 / 新模型）| `docs/TECH.md` §7.4 + 对应包的 `install()` |
+| 某个配置项能不能改、改了什么时候生效 | `docs/TECH.md` §7.5（配置分层）|
 | 部署与已知坑 | `docs/TECH.md` §8、§10 |
 | 历史上做过哪些决定 | `docs/DECISIONS.md` |
 | 原型长什么样 | `output/index.html`（双击打开） |

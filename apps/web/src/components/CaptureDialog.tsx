@@ -92,16 +92,27 @@ const useStyles = createStyles(({ css, token }) => ({
     color: ${token.colorTextQuaternary};
     background: ${token.colorFillQuaternary};
   `,
+  /**
+   * 阶段标记的三种终态。
+   *
+   * **成对使用语义色**（浅底 + 同语义文字），与设置页的状态徽标同一个形态。
+   * 原先这里是「语义实色底 + 白字」，两套外观下都不达标：白字压 `colorSuccess`
+   * 浅色下只有 1.94:1，深色 2.98:1——而图标本身是「这一步成没成」的唯一线索。
+   * 深色的语义实色比浅色亮（antd 的深色色阶如此），所以「白字压实色」
+   * 在深色里只会更糟。成对使用则两边都过（`design.test.ts` 守着这三组）。
+   */
   stageDotDone: css`
-    color: #fff;
-    background: ${token.colorSuccess};
+    color: ${token.colorSuccessText};
+    background: ${token.colorSuccessBg};
   `,
   stageDotFail: css`
-    color: #fff;
-    background: ${token.colorError};
+    color: ${token.colorErrorText};
+    background: ${token.colorErrorBg};
   `,
   stageDotRun: css`
-    color: ${token.colorPrimary};
+    /* 文字角色用 colorLink 而不是 colorPrimary——主色作文字在浅底上只有
+       3.66:1，深色下更是 2.47:1（DESIGN §3.5 的同一条） */
+    color: ${token.colorLink};
     background: ${token.colorPrimaryBg};
   `,
   stageMeta: css`

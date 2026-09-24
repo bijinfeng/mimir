@@ -6,6 +6,7 @@ import { env } from './env.js'
 import { errorBody, HttpError } from './lib/http.js'
 import { requireAuth } from './middleware/auth.js'
 import { captureRoute } from './routes/capture.js'
+import { avatarRoute } from './routes/avatar.js'
 import { configRoute } from './routes/config.js'
 import { chatRoute, conversationsRoute } from './routes/conversations.js'
 import { documentsRoute, foldersRoute, maintenanceRoute, tagsRoute } from './routes/documents.js'
@@ -13,6 +14,7 @@ import { exportRoute } from './routes/export.js'
 import { setupRoute } from './routes/setup.js'
 import { mountStatic } from './lib/static.js'
 import { searchRoute } from './routes/search.js'
+import { statsRoute } from './routes/stats.js'
 import type { AppEnv } from './types.js'
 
 export function createApp() {
@@ -65,6 +67,8 @@ export function createApp() {
   api.route('/export', exportRoute)
   api.route('/maintenance', maintenanceRoute)
   api.route('/config', configRoute)
+  api.route('/stats', statsRoute)
+  api.route('/avatar', avatarRoute)
 
   app.route('/api', api)
 

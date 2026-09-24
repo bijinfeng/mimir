@@ -1,32 +1,30 @@
 import { Hono } from 'hono'
 import {
-  MODEL_ROLE_LABELS,
   probeRequestSchema,
   updateSettingsInputSchema,
-  type ModelRoleStatus,
-  type PluginDescriptor,
+  type ModelConfig,
   type ProbeResult,
   type RuntimeConfig,
-  type SettingEntry,
 } from '@mimir/shared'
 import { HttpError, parseInput } from '../lib/http.js'
-import { assemble } from '../plugins/host.js'
+import { activeStorage, assemble } from '../plugins/host.js'
+import { describeModel, record } from '../services/usage.js'
 import type { AppEnv } from '../types.js'
 
 /**
- * 运行时配置：设置、插件、模型就绪状态。**这是设置页唯一的数据来源。**
+ * 运行时配置：设置、插件、模型配置。
  *
- * ## 为什么它可写了（M0 时是只读的）
+ * ## 三块的读法与写法
  *
- * M0 的判断是「配置的真相是 `.env` 与代码常量，做成可写的等于让界面成为
- * 第二个真相来源」（D-025）。那是对的——当时只有 5 个模型键，没有要调的参数。
+ * | 块 | 读 | 写 |
+ * |---|---|---|
+ * | `settings` | 标量键 + 来源 | `PATCH /config/settings`（单个或整批）|
+ * | `plugins` | 各接缝的实现清单与状态 | 无（注册是代码事实）|
+ * | `modelConfig` | 供应商列表 + 角色绑定 + 预设目录 | `PATCH /config/settings` 的 `model.config` 键 |
  *
- * M1 起有十几个要反复试的参数（分块大小、各通道权重、RRF k），把「调权重」
- * 变成「改 `.env` 再重启」会直接劝退调参这件事本身。所以加一层 DB 覆盖，
- * **但不放弃 `.env` 作为部署真相**：解析顺序是 `覆盖 > 环境变量 > 默认`，
- * 且每个键都在界面上显示它当前的来源（`docs/TECH.md` §7.5）。
- *
- * 键集是**闭集**：只有注册过的键能被写入，所以不存在「界面上存了但没代码读」。
+ * 模型配置与标量设置**走同一个写入端点**：它本来就是设置层的一个 json 键
+ * （`docs/TECH.md` §7.5 的键集闭集）。为它单开一个端点会造出第二条
+ * 写入路径，而两条路径的校验早晚会漂移。
  */
 export const configRoute = new Hono<AppEnv>()
 
@@ -34,16 +32,27 @@ export const configRoute = new Hono<AppEnv>()
 const probes = new Map<string, ProbeResult>()
 
 configRoute.get('/', async (c) => {
-  const { settings, descriptors } = assemble()
+  const { settings, descriptors, providers } = assemble()
 
-  const entries = (await settings.entries()) as SettingEntry[]
-  const plugins = (await descriptors()) as PluginDescriptor[]
-  const models = await modelStatuses()
+  /**
+   * 老的单供应商配置在新形状里的迁移**不在这里触发**。
+   *
+   * 它在 `provider` 插件的 `loadConfig()` 里懒执行——第一次有人读模型配置时，
+   * 拿到的已经是迁移后的形状（见 `plugins/provider/src/migrate-runner.ts`）。
+   * 放那里的理由是迁移要加密旧密钥，而加密口只有插件拿得到。
+   */
+
+  const entries = await settings.entries()
+  const provider = activeProvider(providers)
+  const [plugins, modelConfig] = await Promise.all([
+    descriptors(),
+    provider ? provider.overview() : Promise.resolve(emptyModelConfig()),
+  ])
 
   return c.json({
     settings: entries,
     plugins,
-    models,
+    modelConfig,
     probes: [...probes.values()],
   } satisfies RuntimeConfig)
 })
@@ -67,74 +76,186 @@ configRoute.patch('/settings', async (c) => {
 })
 
 /**
- * 真实探测一个模型角色：发一次最小请求。
+ * 存储后端的真实探测：写一个探针对象 → 读回 → 删掉。
  *
- * **显式动作，不自动触发**——每次进设置页都发一次真实调用，慢且花钱
- * （`docs/TECH.md` §7.8）。结果只存在内存：重启即回到「未测试」，
- * 比留一个可能过期的「可用」诚实。
+ * ## 为什么只探「当前选中的那个」
+ *
+ * 探测要**写真实数据**。给未选中的后端也探一遍，等于往一个没在用的位置
+ * 写东西——而用户的意图明明是「我要不要切过去」，不是「那个地方现在通不通」。
+ * 想验证 S3 的配置，就把后端切过去再点探测；那时它写的就是真路径，
+ * 探通即代表真的能用。
+ *
+ * ## 与模型探测同一条规则：显式动作，不自动触发
+ *
+ * 每次进设置页都写一个对象是明显的浪费，而且 S3 的写是按请求计费的
+ * （`docs/TECH.md` §7.8）。
+ *
+ * **不记账**：与模型探测不同，这里没有 token 消耗，也没有「我没怎么用怎么
+ * 有记录」的问题——写一个几字节的探针对象不构成用户可感知的用量。
+ */
+configRoute.post('/storage-probe', async (c) => {
+  const backend = activeStorage()
+
+  const outcome = backend.probe
+    ? await backend.probe()
+    : { ok: true, message: `后端 ${backend.id} 没有实现探测，跳过` }
+
+  return c.json({
+    target: backend.id,
+    ok: outcome.ok,
+    message: outcome.message,
+  })
+})
+
+/**
+ * 真实探测。
+ *
+ * 两种粒度，因为它们的**可用时机不同**：
+ *
+ * | 传什么 | 探什么 | 什么时候用 |
+ * |---|---|---|
+ * | 空 | 全部角色各探一次 | 全部配好之后做一次总检 |
+ * | `role` | 那一个角色 | 改完某个角色的模型 |
+ * | `providerId` | 那一个供应商 | **刚新建、还没绑定角色**——这是它存在的理由 |
+ *
+ * 供应商级探测不能靠角色级替代：新建供应商时它不属于任何角色，
+ * 而用户此刻最想知道的恰恰是「这个地址和密钥通不通」。
  */
 configRoute.post('/probe', async (c) => {
-  const { seams } = assemble()
+  const { seams, providers } = assemble()
   const input = await parseInput(c, 'json', probeRequestSchema)
 
-  const providers = seams.provider.implementations()
-  const provider = providers[0]
-  if (!provider) {
-    throw new HttpError(500, 'NO_PROVIDER', '没有注册任何模型提供方')
-  }
-
-  const outcome = await provider.impl.probe(input.role as never)
+  const provider = requireProvider(providers)
+  const startedAt = performance.now()
+  const outcome = await provider.probeProvider(input.providerId, input.modelId)
   const result: ProbeResult = {
-    role: input.role,
+    target: input.providerId,
     ok: outcome.ok,
     message: outcome.message,
     at: new Date().toISOString(),
+    tookMs: outcome.tookMs,
   }
 
-  probes.set(input.role, result)
+  /**
+   * 探测也记账，但 token 三列留空（`docs/TECH.md` §12.2）。
+   *
+   * 它是**真实调用**（发 `"ping"`、`max_tokens: 1`），不记的话用户会发现
+   * 「我没怎么用，怎么有调用记录」。但它也不该混进「我的用量」——
+   * 所以 `source = 'probe'` 单列一类，统计页上写「其中测试连接 N 次」。
+   *
+   * **token 是 null 而不是 0**：这条路径确实拿不到用量（`probe()` 的契约
+   * 只回 ok 与原因）。null 是诚实的「没观测到」；填 0 会让它看起来像一次
+   * 真实的零消耗调用——那正是 §12.3 要防的同一个错误。
+   */
+  await recordProbe(input.providerId, startedAt, outcome.ok)
+
+  probes.set(input.providerId, result)
+  void seams
   return c.json(result)
 })
 
 /**
- * 模型角色的就绪状态。**派生值，不存**。
+ * 角色级探测：探一个角色绑定的模型。
  *
- * 「就绪」的判据是「有可用的 provider 且它声明支持这个角色」，
- * 而不是「键有值」——键有值但地址写错、模型名下架都属于不能干活，
- * 而那只在真实调用时才知道（所以有上面那条探测端点）。
+ * 与供应商级分开是因为**它们的失败含义不同**：
+ * 角色探测失败可能是「绑错了模型」，供应商探测失败是「这家连不上」。
  */
-async function modelStatuses(): Promise<ModelRoleStatus[]> {
-  const { seams, settings } = assemble()
-  const provider = seams.provider.implementations()[0]
+configRoute.post('/probe-role', async (c) => {
+  const { providers } = assemble()
+  const body = (await c.req.json().catch(() => ({}))) as { role?: unknown }
+  const role = typeof body.role === 'string' ? body.role : ''
 
-  const modelKeys: Record<string, string> = {
-    chat: 'model.chat.model',
-    reasoning: 'model.reasoning.model',
-    summarize: 'model.summarize.model',
-    embed: 'model.embed.model',
+  const provider = requireProvider(providers)
+  if (role === '') throw new HttpError(400, 'INVALID_INPUT', 'role 不能为空')
+
+  const startedAt = performance.now()
+  const outcome = await provider.probe(role as never)
+  const result: ProbeResult = {
+    target: `role:${role}`,
+    ok: outcome.ok,
+    message: outcome.message,
+    at: new Date().toISOString(),
+    tookMs: outcome.tookMs,
   }
 
-  return Promise.all(
-    Object.entries(modelKeys).map(async ([role, key]) => {
-      const model = await settings.getString(key)
-      const supported = provider ? await provider.impl.supports(role as never) : false
+  // 与供应商级探测同理：真实调用，也要记账（单列 'probe'，不混进「我的用量」）
+  await recordProbe(`role:${role}`, startedAt, outcome.ok)
 
-      // 摘要的回落规则要在状态里如实反映：它可以用对话模型干活
-      const effective =
-        role === 'summarize' && model.trim() === ''
-          ? await settings.getString(modelKeys.chat!)
-          : model
+  probes.set(result.target, result)
+  return c.json(result)
+})
 
-      return {
-        role,
-        label: MODEL_ROLE_LABELS[role as keyof typeof MODEL_ROLE_LABELS] ?? role,
-        model: effective,
-        ready: supported,
-        reason: supported
-          ? null
-          : model.trim() === '' && role === 'embed'
-            ? '未配置。配了它才会有向量通道（语义检索）'
-            : '需要配置 API 密钥与服务商地址',
-      }
-    }),
-  )
+/**
+ * 两条探测端点共用的记账。
+ *
+ * **抽出来是因为三处字段的取法必须一致**：`source` 恒为 `'probe'`、
+ * token 三列恒为 `null`、耗时由调用方量。分开写两遍早晚会有一处漏掉
+ * `source` 而被算进「我的用量」——那是个安静的错误。
+ *
+ * `model` 取不到（探测是按 providerId / role 走的，没有解析出模型名），
+ * 记空串让统计表显示「—」，比记一个猜的模型名好。
+ */
+async function recordProbe(target: string, startedAt: number, ok: boolean): Promise<void> {
+  const described = await describeModel('chat')
+
+  await record({
+    role: 'chat',
+    source: 'probe',
+    model: described.model,
+    providerId: target,
+    baseUrlHost: described.baseUrlHost,
+    promptTokens: null,
+    completionTokens: null,
+    totalTokens: null,
+    durationMs: Math.round(performance.now() - startedAt),
+    ok,
+    failureKind: ok ? null : 'probe',
+    refId: null,
+  })
+}
+
+/**
+ * 拉取一个供应商的模型列表。
+ *
+ * 这是个**写操作**（拉到的结果写回配置），所以用 POST。
+ * 它也是一次真实网络请求——由用户显式点按钮触发，不自动跑。
+ */
+configRoute.post('/providers/:id/refresh', async (c) => {
+  const { providers } = assemble()
+  const provider = requireProvider(providers)
+
+  try {
+    const instance = await provider.refreshModels(c.req.param('id'))
+    return c.json({ ok: true, instance })
+  } catch (error) {
+    // 拉取失败要说清原因（密钥不对 / 没有 /models / 连不上），
+    // 那些话由插件产生——它才知道这个端点的脾气
+    throw new HttpError(
+      400,
+      'REFRESH_FAILED',
+      error instanceof Error ? error.message : '拉取模型列表失败',
+    )
+  }
+})
+
+function emptyModelConfig(): ModelConfig {
+  return { providers: [], roles: [], presets: [] }
+}
+
+/**
+ * 当前生效的模型提供方。
+ *
+ * **取第一个**而不是按名字找：模型域的设计是「一个实现管一族协议」，
+ * 将来加 Ollama 原生支持时会有第二个实现，那时需要一个「用哪个」的规则
+ * （按供应商的 family 字段找）。现在只有一个实现，
+ * 按 `family` 找的代码会是一条没有测试覆盖的分支——等真有第二个再加。
+ */
+function activeProvider(registry: ReturnType<typeof assemble>['providers']) {
+  return registry.implementations()[0]?.impl ?? null
+}
+
+function requireProvider(registry: ReturnType<typeof assemble>['providers']) {
+  const provider = activeProvider(registry)
+  if (!provider) throw new HttpError(500, 'NO_PROVIDER', '没有注册任何模型提供方')
+  return provider
 }

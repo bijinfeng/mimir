@@ -11,10 +11,12 @@
 | 某个技术选型为什么 | [`TECH.md`](TECH.md) §1 与被否决的方案 |
 | 为什么不用某个方案 | [`RESEARCH.md`](RESEARCH.md) —— 有星数、版本号、许可证、实测数据 |
 | 数据模型怎么设计的 | [`TECH.md`](TECH.md) §4 检索设计 |
-| 界面该用什么颜色/字号/间距 | [`DESIGN.md`](DESIGN.md) —— 有实测对比度 |
-| 某个视觉决定为什么 | [`DESIGN.md`](DESIGN.md) §2 不采纳的部分、§9 明确不做的事 |
-| 插件接缝怎么加实现 | [`TECH.md`](TECH.md) §7、`apps/server/src/plugins/README.md` |
+| 界面该用什么颜色/字号/间距 | [`DESIGN.md`](DESIGN.md) —— 有实测对比度，浅色与深色各一套 |
+| 某个视觉决定为什么 | [`DESIGN.md`](DESIGN.md) §2 不采纳的部分、§11 明确不做的事 |
+| 深色模式为什么这么实现 | [`DESIGN.md`](DESIGN.md) §3.8、[`DECISIONS.md`](DECISIONS.md) D-040 |
+| 插件接缝怎么加实现 | [`TECH.md`](TECH.md) §7 |
 | 怎么部署、有什么坑 | [`TECH.md`](TECH.md) §8、§10 |
+| 用量统计怎么记账、账号资料怎么存 | [`TECH.md`](TECH.md) §12 |
 | 历史上做过哪些决定 | [`DECISIONS.md`](DECISIONS.md) |
 | 界面长什么样 | [`../output/index.html`](../output/index.html)（双击打开，交互原型） |
 | 现在做到哪了、下一步 | [`TECH.md`](TECH.md) §11、根目录 `AGENTS.md` |
@@ -37,9 +39,13 @@ PRD.md          做什么、不做什么         ← 产品判断
 | 层 | 谁 | 说明 |
 |---|---|---|
 | 交互怎么走（点什么会发生什么） | `PRD.md` §5 | 产品判断 |
-| 值（颜色 / 字号 / 间距 / 动效） | `DESIGN.md` §3–§6 | **实测**出来的，`design.test.ts` 守着 |
+| 值（颜色 / 字号 / 间距 / 动效） | `DESIGN.md` §3–§6 | **实测**出来的，`design.test.ts` 守着；颜色分浅 / 深两套 |
 | 形态（每个组件长什么样） | `DESIGN.md` §8 | 数值取自原型的计算样式 |
 | 以上三者的可运行验证 | `output/index.html` | 交互原型，双击打开 |
+
+**原型只有浅色。** 深色那套（`DESIGN.md` §3.8）没有原型可依——它的每个值
+是按 antd 深色的实际派生值重新校准的，判据是对比度而不是「与原型一致」。
+这是这份规范里唯一一处「原型不是参照物」的地方。
 
 **原型在「形态」上更成熟，`DESIGN.md` 在「值」上更成熟。** 冲突时按上表判断，
 而不是一律以某一方为准。

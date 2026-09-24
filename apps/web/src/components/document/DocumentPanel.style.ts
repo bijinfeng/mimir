@@ -221,14 +221,19 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     margin-left: auto;
   `,
   /* 来源标注：手动编辑 / AI 整理。
-     借自 WeKnora —— 标出内容是人写的还是机器生成的（PRD 5.10） */
+     借自 WeKnora —— 标出内容是人写的还是机器生成的（PRD 5.10）。
+
+     两处色对原先写死在浅色上（`#1a56c4` on `#e8f1ff`、`#5c6570` on `#f0f1f3`），
+     深色下它们是「深蓝字压在浅蓝底上」，在本该变暗的面板上会亮得刺眼。
+     改成走语义 token 的成对值：手动编辑 = 信息色对，AI 整理 = 中性色对。
+     两者都在 design.test.ts 的通用矩阵里（语义文字 on 同语义底 ≥ 4.5）。 */
   originManual: css`
     font-size: ${FONT_SIZE.badge}px;
     font-weight: 500;
     padding: 1px 7px;
     border-radius: 4px;
-    color: #1a56c4;
-    background: #e8f1ff;
+    color: ${token.colorInfoText};
+    background: ${token.colorInfoBg};
   `,
   originAuto: css`
     font-size: ${FONT_SIZE.badge}px;
@@ -236,7 +241,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     padding: 1px 7px;
     border-radius: 4px;
     color: ${token.colorTextSecondary};
-    background: #f0f1f3;
+    background: ${token.colorFillTertiary};
   `,
 
   /* 标题。原型用 letter-spacing:-.01em 收紧——28px 的中文标题不收紧

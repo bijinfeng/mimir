@@ -1,40 +1,76 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Button, Skeleton, Tooltip, Typography, message } from 'antd'
-import type { ModelRoleStatus, ProbeResult, SettingEntry } from '@mimir/shared'
-import { api } from '@/lib/api'
-import { SettingControl } from '@/components/settings/SettingControl'
-import { SourceBadge } from '@/components/settings/parts'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { App, Button, Skeleton, Tooltip, Typography } from 'antd'
+import type { ModelRoleStatus, ProviderInstance, RuntimeConfig } from '@mimir/shared'
+import { api, ApiRequestError } from '@/lib/api'
+import { ProviderList } from '@/components/settings/ProviderList'
+import {
+  modelsForRole,
+  roleHint,
+  useSaveModelConfig,
+  withRoleBound,
+  type ModelConfigDraft,
+} from '@/components/settings/model-config'
 import { Note, Panel, Row } from '@/components/settings/parts'
 import { useStyles } from '@/components/settings/settings.style'
 
 /**
- * 模型分区：按角色配置模型 + 测试连接。
+ * 模型分区：**供应商在上，任务分配在下，同一屏**。
  *
- * ## 这一页从「只读快照」变成了**可编辑**
+ * ## 为什么放同一屏（而多数同类产品是两屏）
  *
- * M0 时这些值只能改 `.env` 再重启，所以这里只显示（D-025 的判断是对的：
- * 当时只有 5 个模型键，没有要调的参数）。M1 起它们可以就地改。
+ * 那些产品分屏是因为它们要装下 60-90 个预设供应商与十几个角色。
+ * mimir 的规模是个位数供应商 + 五个角色——一屏装得下，而**装得下就放一起**：
+ * 「我的模型从哪来」与「哪件事用哪个模型」是同一个决定的两半，
+ * 分开两屏会让人来回对照。
  *
- * 代价是必须**如实显示来源**——用户需要知道「我现在看到的是我改过的，
- * 还是环境变量里的，还是没人配过的默认值」。否则改了不生效时，
- * 他没法判断是自己没保存，还是被环境变量压住了。
+ * ## 两块的分工（这是之前别扭的地方）
+ *
+ * | 块 | 是什么 |
+ * |---|---|
+ * | 供应商 | 连接：地址 + 密钥 + 这个端点有哪些模型 |
+ * | 任务分配 | 绑定：每个角色用**哪个供应商的哪个模型** |
+ *
+ * 之前是「一份全局连接 + 一堆裸模型名」，所以改供应商要来回看两处、
+ * 而且无法表达「对话用 A 家、向量化用 B 家」。现在下边那一栏的选择器
+ * 自带供应商——「模型和提供商分开」这个问题在下拉里就消失了。
  */
 export function ModelsSection() {
   const { styles } = useStyles()
   const configQuery = useQuery({ queryKey: ['config'], queryFn: api.config })
-  const models = configQuery.data?.models
-  const settings = configQuery.data?.settings ?? []
-  const probes = configQuery.data?.probes ?? []
+  const save = useSaveModelConfig()
+  const { message } = App.useApp()
 
-  if (!models) {
+  const modelConfig = configQuery.data?.modelConfig
+
+  if (!modelConfig) {
     return (
       <div className={styles.block}>
-        <Skeleton active paragraph={{ rows: 3 }} title={false} />
+        <Skeleton active paragraph={{ rows: 4 }} title={false} />
       </div>
     )
   }
 
-  const entry = (key: string): SettingEntry | undefined => settings.find((item) => item.key === key)
+  /**
+   * 提交改动。
+   *
+   * 每次都提交**整份配置**——它是一个 json 键，服务端按 `fromWire` 合并密钥。
+   * 所以这里不需要「只提交改动的字段」那种局部更新，也就没有
+   * 「漏传一个 id 导致密钥被清掉」的风险（那个风险由 `keyDrafts` 的语义管）。
+   */
+  const commit = (draft: ModelConfigDraft, options?: { silent?: boolean }) => {
+    save.mutate(draft, {
+      onSuccess: () => {
+        if (!options?.silent) message.success('已保存')
+      },
+      onError: (error) => {
+        const detail =
+          error instanceof ApiRequestError && Array.isArray(error.details)
+            ? (error.details as { message?: string }[]).map((item) => item.message).join('；')
+            : String(error)
+        message.error(`保存失败：${detail}`)
+      },
+    })
+  }
 
   return (
     <>
@@ -43,84 +79,165 @@ export function ModelsSection() {
       </Typography.Paragraph>
 
       <Note>
-        密钥<span className={styles.strong}>加密后存库，绝不下发浏览器</span>
-        ——所以这一页只显示「有没有配」，不显示值本身。改完点保存立即生效，
-        不需要重启。清除某一项表示回落到环境变量或默认值。
+        密钥<span className={styles.strong}>加密后存库，绝不会下发到浏览器</span>
+        ——所以这里只显示「有没有配」，不显示值本身。改完点保存立即生效，不需要重启。
+        可以配多个供应商，不同角色各用各家（比如对话用 DeepSeek、向量化用硅基流动）。
       </Note>
 
-      <Panel title="连接">
-        <ConfigRow entry={entry('model.baseUrl')} />
-        <ConfigRow entry={entry('model.apiKey')} secret />
-        <ConfigRow entry={entry('model.providerName')} />
-      </Panel>
+      <ProviderList
+        providers={modelConfig.providers}
+        presets={modelConfig.presets}
+        onDraft={commit}
+      />
 
       <Panel title="任务分配">
-        {models.map((model) => (
+        {modelConfig.roles.map((role) => (
           <RoleRow
-            key={model.role}
-            model={model}
-            entry={entry(`model.${model.role}.model`)}
-            probe={probes.find((item) => item.role === model.role)}
+            key={role.role}
+            role={role}
+            providers={modelConfig.providers}
+            onBind={(binding) =>
+              commit(
+                withRoleBound(
+                  { providers: modelConfig.providers, roles: rolesToRecord(modelConfig.roles) },
+                  role.role,
+                  binding,
+                ),
+              )
+            }
           />
         ))}
       </Panel>
 
-      <Panel title="向量化">
-        <ConfigRow entry={entry('model.embed.dimensions')} />
-      </Panel>
+      <Typography.Paragraph className={styles.muted} style={{ marginTop: 14 }}>
+        摘要留空时会回落到对话模型——用强模型做摘要只是浪费钱，不是错误。
+        向量化没有回落：它必须是一个 embedding 模型，配错了会在探测时告诉你实际维度。
+      </Typography.Paragraph>
     </>
   )
 }
 
-/** 普通的「标签 + 输入框 + 来源」一行 */
-function ConfigRow({
-  entry,
-  secret = false,
-}: {
-  entry: SettingEntry | undefined
-  secret?: boolean
-}) {
-  const { styles } = useStyles()
-  if (!entry) return null
-
-  return (
-    <Row label={entry.label}>
-      <SettingControl entry={entry} width={300} secret={secret} />
-      <div className={styles.blockDesc} style={{ marginTop: 6 }}>
-        <SourceBadge source={entry.source} />
-        <span style={{ marginLeft: 8 }}>{entry.description}</span>
-      </div>
-    </Row>
-  )
+function rolesToRecord(roles: ModelRoleStatus[]): Record<string, unknown> {
+  const result: Record<string, unknown> = {}
+  for (const role of roles) {
+    result[role.role] =
+      role.providerId && role.model ? { providerId: role.providerId, model: role.model } : null
+  }
+  return result
 }
 
 /**
- * 一个模型角色：模型名 + 就绪状态 + 探测按钮。
+ * 一个角色：供应商 + 模型两个下拉，外加状态与探测。
  *
- * 状态与原因都来自服务端（`ready` / `reason`），前端不自己判断——
- * 「缺 key」与「模型名没配」这类条件写在前端就会与服务端漂移。
+ * ## 为什么是两个下拉而不是一个「供应商/模型」组合下拉
+ *
+ * 组合下拉（一个 listbox 里分组）在选项多时更好，但 mimir 的规模下
+ * 两个下拉更直接：**先选家再选型号**是用户心里的顺序，而且改供应商时
+ * 不用重新在一长串里找位置。
+ *
+ * ## 就绪状态与原因都来自服务端
+ *
+ * 前端不自己判断「这个角色能不能用」——那需要知道供应商有没有密钥、
+ * 密钥能不能解开、模型名是否为空。那些条件写在服务端一处
+ * （`plugins/provider/src/provider.ts` 的 `overview()`），
+ * 前端复刻一遍必然漂移。
  */
 function RoleRow({
-  model,
-  entry,
-  probe,
+  role,
+  providers,
+  onBind,
 }: {
-  model: ModelRoleStatus
-  entry: SettingEntry | undefined
-  probe: ProbeResult | undefined
+  role: ModelRoleStatus
+  providers: ProviderInstance[]
+  onBind: (binding: { providerId: string; model: string } | null) => void
 }) {
   const { styles } = useStyles()
+  const { message: messageApi } = App.useApp()
+
+  const probe = useMutation({
+    mutationFn: () => api.probeRole(role.role),
+    onSuccess: (result) => {
+      if (result.ok) messageApi.success(result.message)
+      else messageApi.error(result.message)
+    },
+    onError: (error) => messageApi.error(String(error)),
+  })
+
+  const current = providers.find((provider) => provider.id === role.providerId)
+  const choices = current ? modelsForRole(current, role.role) : []
+  const hint = roleHint(role)
 
   return (
-    <Row label={model.label}>
+    <Row label={role.label}>
       <div className={styles.actions}>
-        {entry ? <SettingControl entry={entry} width={220} /> : null}
-        <StatusDot model={model} probe={probe} />
-        <ProbeButton role={model.role} />
+        <select
+          className={styles.select}
+          value={role.providerId ?? ''}
+          onChange={(event) => {
+            const providerId = event.target.value
+            if (providerId === '') {
+              onBind(null)
+              return
+            }
+            // 换供应商时模型要跟着重置——旧模型名在另一家多半不存在，
+            // 留着它会让这个角色处于「绑定了一个不存在的模型」的状态
+            const next = providers.find((provider) => provider.id === providerId)
+            const first = next ? modelsForRole(next, role.role)[0]?.id : undefined
+            onBind(first ? { providerId, model: first } : null)
+          }}
+        >
+          <option value="">（未选择）</option>
+          {providers.map((provider) => (
+            <option key={provider.id} value={provider.id}>
+              {provider.name}
+              {provider.hasKey ? '' : ' · 缺密钥'}
+            </option>
+          ))}
+        </select>
+
+        <select
+          className={styles.select}
+          value={role.model}
+          disabled={!current || choices.length === 0}
+          onChange={(event) => {
+            if (!current) return
+            onBind({ providerId: current.id, model: event.target.value })
+          }}
+        >
+          {/*
+            两种情况要分开说：
+            - 没选供应商 → 「先选供应商」（用户知道下一步做什么）
+            - 选了但没有模型 → 「这家没有模型」（用户知道要去拉取或手加）
+            两者都显示同一句话会让用户以为是后一种而出错方向
+          */}
+          {!current ? <option value="">先选供应商</option> : null}
+          {current && choices.length === 0 ? <option value="">这家没有模型</option> : null}
+          {/* 当前绑定的模型不在列表里时也要显示出来，否则用户看不到自己选了什么 */}
+          {role.model !== '' && !choices.some((model) => model.id === role.model) ? (
+            <option value={role.model}>{role.model}（不在列表里）</option>
+          ) : null}
+          {choices.map((model) => (
+            <option key={model.id} value={model.id}>
+              {model.id}
+            </option>
+          ))}
+        </select>
+
+        <StatusDot role={role} />
+
+        <Button
+          size="small"
+          loading={probe.isPending}
+          disabled={!role.ready}
+          onClick={() => probe.mutate()}
+        >
+          测试
+        </Button>
       </div>
-      {model.reason ? (
+
+      {hint ? (
         <div className={styles.blockDesc} style={{ marginTop: 5 }}>
-          {model.reason}
+          {hint}
         </div>
       ) : null}
     </Row>
@@ -128,26 +245,28 @@ function RoleRow({
 }
 
 /**
- * 就绪状态。**四态**，不是「可用 / 不可用」两态。
+ * 就绪状态。**四态**（未配置 / 未测试 / 可用 / 不可用）。
  *
- * `docs/TECH.md` §7.8 的判据：探测是显式动作，所以「配好了但没试过」
- * 与「试过不行」必须分开显示。把「没测过」显示成绿色，用户会以为
- * 已经验证过——而地址写错、模型名下架都只有真发一次才知道。
+ * 「没试过」与「试过不行」必须分开显示：把未测试显示成绿色，
+ * 用户会以为已经验证过——而地址写错、模型名下架都只有真发一次才知道
+ * （`docs/TECH.md` §7.8）。
  */
-function StatusDot({ model, probe }: { model: ModelRoleStatus; probe: ProbeResult | undefined }) {
+function StatusDot({ role }: { role: ModelRoleStatus }) {
   const { styles } = useStyles()
+  const configQuery = useQuery({ queryKey: ['config'], queryFn: api.config })
+  const probe = configQuery.data?.probes.find((item) => item.target === `role:${role.role}`)
 
-  if (!model.ready) {
+  if (!role.ready) {
     return (
-      <Tooltip title={model.reason ?? '需要先配置'}>
-        <span className={styles.pending}>未配置</span>
+      <Tooltip title={role.reason ?? '需要先配置'}>
+        <span className={styles.pending}>未就绪</span>
       </Tooltip>
     )
   }
 
   if (!probe) {
     return (
-      <Tooltip title="配置看起来齐了，但还没实际调用过。点「测试连接」发一次真实请求">
+      <Tooltip title="配置看起来齐了，但还没实际调用过。点「测试」发一次真实请求">
         <span className={styles.muted}>未测试</span>
       </Tooltip>
     )
@@ -164,7 +283,7 @@ function StatusDot({ model, probe }: { model: ModelRoleStatus; probe: ProbeResul
   )
 }
 
-/** 「刚刚 / 3 分钟前」比一串 ISO 时间可读——它表达的是「这个结论有多新」 */
+/** 「刚刚 / 3 分钟前」比 ISO 时间可读——它表达的是「这个结论有多新」 */
 function formatTime(iso: string): string {
   const seconds = Math.round((Date.now() - new Date(iso).getTime()) / 1000)
   if (seconds < 60) return '刚刚测过'
@@ -172,35 +291,4 @@ function formatTime(iso: string): string {
   return `${Math.round(seconds / 3600)} 小时前测过`
 }
 
-/**
- * 测试连接：让服务端**真的调一次**。
- *
- * 密钥不出浏览器（请求体里只有角色名），服务端从库里取密钥去试——
- * 所以这个按钮在密钥没配的情况下也能给出「还没有配置 API 密钥」这种
- * 准确的提示，而不是一个笼统的失败。
- */
-function ProbeButton({ role }: { role: string }) {
-  const { styles } = useStyles()
-  const [messageApi, contextHolder] = message.useMessage()
-  const queryClient = useQueryClient()
-
-  const probe = useMutation({
-    mutationFn: () => api.probeModel(role),
-    onSuccess: (result) => {
-      // 失效查询：让上面的状态徽标拿到这次的结果
-      void queryClient.invalidateQueries({ queryKey: ['config'] })
-      if (result.ok) messageApi.success(result.message)
-      else messageApi.error(result.message)
-    },
-    onError: (error) => messageApi.error(`探测失败：${String(error)}`),
-  })
-
-  return (
-    <div className={styles.actions}>
-      {contextHolder}
-      <Button size="small" loading={probe.isPending} onClick={() => probe.mutate()}>
-        测试连接
-      </Button>
-    </div>
-  )
-}
+export type { RuntimeConfig }

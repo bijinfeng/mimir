@@ -1,7 +1,7 @@
 import { FolderOpenOutlined, MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { Button, Menu, Tree, Tooltip } from 'antd'
+import { Avatar, Button, Menu, Tree, Tooltip } from 'antd'
 import type { MenuProps } from 'antd'
 import { BrandMark } from '@/components/BrandMark'
 import { useStyles } from '@/components/NavSidebar.style'
@@ -108,6 +108,21 @@ export function NavSidebar({
     runGuarded(
       () =>
         void navigate({ to: '/chat', search: id ? { scope: 'inbox', id } : { scope: 'inbox' } }),
+    )
+
+  /**
+   * 去设置 › 账号。
+   *
+   * `scope` 必须显式带上：搜索参数沿路由树合并，而父路由把它声明成必填。
+   * `section` 也必须带——不带会落在默认的「模型」分区，而用户点的是头像。
+   */
+  const goSettings = () =>
+    runGuarded(
+      () =>
+        void navigate({
+          to: '/settings',
+          search: { scope: 'inbox', section: 'account' as const },
+        }),
     )
 
   /** 点击分发。key 的约定见 components/nav/menu-items.tsx */
@@ -255,8 +270,57 @@ export function NavSidebar({
           onClick={onMenuClick}
           items={buildFooter()}
         />
+
+        <AccountRow collapsed={collapsed} onOpen={() => goSettings()} />
       </div>
     </nav>
+  )
+}
+
+/**
+ * 底部账号行（`docs/DESIGN.md` §8.13）。
+ *
+ * **放在设置下方、最底部**，不是顶部：它是「关于我自己」的信息，
+ * 不是导航目标——而点它进的是设置 › 账号，与上面那行同一个去处。
+ * 顶部已经有品牌标记，再放一个头像会把「这是什么产品」与
+ * 「这是谁的账号」两个语义挤在一起。
+ *
+ * ## 为什么不用 Menu 的 item
+ *
+ * 菜单项的形状是「图标 + 文字 + 右侧元信息」，而这里要放一个圆形头像——
+ * 塞进 12px 图标的位置会把它压变形。它是一条**有自己形态**的行。
+ */
+function AccountRow({ collapsed, onOpen }: { collapsed: boolean; onOpen: () => void }) {
+  const { styles } = useStyles()
+  const sessionQuery = useQuery({ queryKey: ['session'], queryFn: api.auth.session })
+  const user = sessionQuery.data?.user
+
+  /**
+   * 会话还没取回时**不渲染**，而不是渲染一个占位的空行。
+   *
+   * 占位行会在数据到达时让侧栏底部跳一下，而那个跳动恰好发生在用户
+   * 刚开始看界面的时候。少一行比跳一下好。
+   */
+  if (!user) return null
+
+  return (
+    <Tooltip title={collapsed ? user.name : undefined} placement="right">
+      <button
+        type="button"
+        className={`${styles.account} ${collapsed ? styles.accountCollapsed : ''}`}
+        onClick={onOpen}
+        aria-label={`账号：${user.name}`}
+      >
+        <Avatar
+          size={collapsed ? 24 : 26}
+          src={user.image ?? undefined}
+          className={styles.accountAvatar}
+        >
+          {user.name.slice(0, 1).toUpperCase()}
+        </Avatar>
+        {collapsed ? null : <span className={styles.accountName}>{user.name}</span>}
+      </button>
+    </Tooltip>
   )
 }
 

@@ -1,7 +1,5 @@
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
-import { dirname, join, relative, resolve, sep } from 'node:path'
 import matter from 'gray-matter'
-import { env } from '../env.js'
+import { activeStorage } from '../plugins/host.js'
 import { slugify } from './text.js'
 
 /**
@@ -13,7 +11,31 @@ import { slugify } from './text.js'
  *
  * 代价是写入要同时落文件和数据库，两边可能不一致；这是刻意的取舍：
  * 换 embedding 模型、改分块策略、甚至整个重建数据库，都可以从文件重来。
+ *
+ * ## 这一层现在只做「笔记的形状」，不碰文件系统
+ *
+ * 实际的读写走 `storage` 接缝（`docs/TECH.md` §7.2）。本文件负责的是
+ * **笔记特有的知识**：frontmatter 怎么序列化、路径怎么按年月分、
+ * 文件名里的 id 后缀怎么取。这些在两个后端上完全一样。
+ *
+ * 拆开的理由与 capturer / parser 那次拆分相同：把「存到哪」和「存什么形状」
+ * 混在一起时，换一个后端要改三个服务；拆开之后换后端是加一个实现。
+ *
+ * ## key 的三个前缀
+ *
+ * `vault/` 是内容，`raw/` 是抓取快照，`avatars/` 是账户资料
+ * （D-036：头像刻意不在 vault 下——不进分词、不进导出、不进重建索引的扫描范围）。
+ * 本文件只管第一类。
  */
+
+/**
+ * 笔记相关的 key 前缀。
+ *
+ * 导出成常量而不是散在各处的字符串：`vault-index` 要按它遍历、
+ * 导出要按它排除头像，两处必须指同一个东西。
+ */
+export const VAULT_PREFIX = 'vault'
+export const TRASH_PREFIX = `${VAULT_PREFIX}/.trash`
 
 export interface VaultNote {
   id: string
@@ -43,14 +65,21 @@ export interface NoteFrontmatter {
   updatedAt: string
 }
 
-/** 相对路径 → 绝对路径，并拒绝任何越出 vault 的路径（防目录穿越） */
-export function resolveInVault(relPath: string): string {
-  const abs = resolve(env.vaultDir, relPath)
-  const root = resolve(env.vaultDir)
-  if (abs !== root && !abs.startsWith(root + sep)) {
-    throw new Error(`路径越界：${relPath}`)
-  }
-  return abs
+/**
+ * vault 相对路径 → 存储 key。
+ *
+ * 数据库里 `path` 存的一直是 **vault 相对路径**（历史如此，且对用户更有意义：
+ * 它回答「在 vault 里的哪个位置」）。存储层要的是全局 key，
+ * 所以差一个 `vault/` 前缀——转换只在这一对函数里发生。
+ */
+export function toStorageKey(vaultPath: string): string {
+  return `${VAULT_PREFIX}/${vaultPath}`
+}
+
+/** 存储 key → vault 相对路径。`list` 的结果要过它才能与数据库里的 path 对上 */
+export function toVaultPath(storageKey: string): string {
+  const prefix = `${VAULT_PREFIX}/`
+  return storageKey.startsWith(prefix) ? storageKey.slice(prefix.length) : storageKey
 }
 
 /**
@@ -64,7 +93,7 @@ function idSuffix(id: string): string {
 }
 
 /**
- * 新笔记落盘位置：<年>/<月>/<slug>-<短id>.md
+ * 新笔记的落盘位置：`<年>/<月>/<slug>-<短id>.md`
  *
  * **物理路径不表达目录归属。** 目录（「技术 / 前端 / React」）存在 frontmatter 的
  * `folder` 字段里，落盘位置始终按年月分。
@@ -73,17 +102,21 @@ function idSuffix(id: string): string {
  * 用户正在编辑时移动文件、外部工具按旧路径打开、git 里出现大量 rename diff。
  * 更要紧的是年月分组本身有价值（按时间找一个东西是检索之外的常用路径），
  * 物理目录只能表达一种分组，两种需求会互相挤掉。
+ *
+ * ## 为什么这里用 `/` 而不是 `path.join`
+ *
+ * key 是契约（`StorageBackend` 的注释），不是平台路径：同一条 key 在 S3 后端上
+ * 就是对象名，那里只有 `/`。`path.join` 在 Windows 上会产出 `\`，
+ * 于是同一份数据在两个平台上得到不同的 key——那是「数据库里的路径指向
+ * 不存在的文件」这类问题的源头。分隔符的转换由本地后端在自己的边界上做。
  */
 export function buildNotePath(title: string, id: string, date = new Date()): string {
   const year = String(date.getFullYear())
   const month = String(date.getMonth() + 1).padStart(2, '0')
-  return join(year, month, `${slugify(title)}-${idSuffix(id)}.md`)
+  return `${year}/${month}/${slugify(title)}-${idSuffix(id)}.md`
 }
 
 export async function writeNote(note: VaultNote): Promise<void> {
-  const abs = resolveInVault(note.path)
-  await mkdir(dirname(abs), { recursive: true })
-
   const frontmatter: NoteFrontmatter = {
     id: note.id,
     title: note.title,
@@ -97,17 +130,16 @@ export async function writeNote(note: VaultNote): Promise<void> {
   }
 
   const file = matter.stringify(`\n${note.body.trim()}\n`, frontmatter)
-  await writeFile(abs, file, 'utf8')
+  await activeStorage().write(toStorageKey(note.path), file)
 }
 
-export async function readNote(relPath: string): Promise<VaultNote> {
-  const abs = resolveInVault(relPath)
-  const raw = await readFile(abs, 'utf8')
+export async function readNote(vaultPath: string): Promise<VaultNote> {
+  const raw = Buffer.from(await activeStorage().read(toStorageKey(vaultPath))).toString('utf8')
   const parsed = matter(raw)
   const data = parsed.data as Partial<NoteFrontmatter>
 
   return {
-    id: data.id ?? relPath,
+    id: data.id ?? vaultPath,
     title: data.title ?? '未命名',
     tags: Array.isArray(data.tags) ? data.tags : [],
     body: parsed.content.trim(),
@@ -115,33 +147,38 @@ export async function readNote(relPath: string): Promise<VaultNote> {
     folder: typeof data.folder === 'string' && data.folder.trim() ? data.folder.trim() : null,
     createdAt: data.createdAt ?? new Date().toISOString(),
     updatedAt: data.updatedAt ?? new Date().toISOString(),
-    path: relPath,
+    path: vaultPath,
   }
 }
 
 /**
  * 笔记改名会移动文件。先确认新路径可写再改数据库，避免出现
  * 「文件已移走但记录还指向旧路径」的悬空状态。
+ *
+ * ## 「要么成功，要么没动过」在两个后端上靠的东西不同
+ *
+ * 本地是 `rename(2)`，文件系统保证原子；S3 是复制 + 删除，**没有这个保证**
+ * （`docs/RESEARCH.md` §10.3a）。后者最坏的失败是留下一个重复文件，
+ * 而那是可修复的——`reindexVault` 会检测「同一个 id 出现在多个路径」
+ * 并跳过其中一个，同时留下日志。
+ *
+ * 顺序不能改：先复制后删除，最坏是多一个文件；先删后复制，
+ * 复制失败就是数据丢失。
  */
-export async function moveNote(fromRel: string, toRel: string): Promise<void> {
-  const from = resolveInVault(fromRel)
-  const to = resolveInVault(toRel)
-  if (from === to) return
-  await mkdir(dirname(to), { recursive: true })
-  await rename(from, to)
+export async function moveNote(fromPath: string, toPath: string): Promise<void> {
+  if (fromPath === toPath) return
+  await activeStorage().move(toStorageKey(fromPath), toStorageKey(toPath))
 }
 
-/** 删除＝移到 vault 内的 .trash，保留可恢复性，不做物理删除 */
-export async function trashNote(relPath: string): Promise<void> {
-  const abs = resolveInVault(relPath)
-  const trashDir = resolve(env.vaultDir, '.trash')
-  await mkdir(trashDir, { recursive: true })
+/**
+ * 删除＝移到 vault 内的 `.trash`，保留可恢复性，不做物理删除。
+ *
+ * 目标 key 用时间戳前缀，所以同一篇笔记被反复删除不会互相覆盖
+ * （`move` 在 S3 上是复制 + 删除，同名会静默盖掉上一条回收站记录）。
+ */
+export async function trashNote(vaultPath: string): Promise<void> {
   const stamp = new Date().toISOString().replace(/[:.]/g, '-')
-  const base = relPath.split(sep).pop() ?? 'note.md'
-  await rename(abs, join(trashDir, `${stamp}-${base}`))
-}
+  const base = vaultPath.split('/').pop() ?? 'note.md'
 
-/** vault 相对路径，用于落库 */
-export function toVaultRelative(absPath: string): string {
-  return relative(env.vaultDir, absPath)
+  await activeStorage().move(toStorageKey(vaultPath), `${TRASH_PREFIX}/${stamp}-${base}`)
 }

@@ -68,9 +68,24 @@ export const env = {
   webOrigin: process.env.WEB_ORIGIN ?? 'http://localhost:5173',
   serverUrl: process.env.SERVER_URL ?? 'http://localhost:3000',
   repoRoot,
+  /**
+   * 数据根：本地存储后端的根，也是三类文件的共同父目录。
+   *
+   * ## 为什么只剩这一个（原先有 vault / raw / avatars 三个）
+   *
+   * 三个目录各自独立默认时，「新增一个存储位置」要在每个部署文件里各加一行，
+   * 而**漏掉哪一行不报错**——数据静静地落到容器可写层。这正是
+   * `docs/RESEARCH.md` §10.10 记的那个现存缺陷：Dockerfile 与 compose 都设了
+   * `VAULT_DIR` / `RAW_DIR` 却漏了 `AVATARS_DIR`，于是生产环境的头像
+   * 落在 `/app/data/avatars`（不在挂载的卷上），重新部署就丢。
+   *
+   * 收成一个根之后这类不一致在结构上不可能发生：三类文件是它的三个**前缀**
+   * （`vault/` / `raw/` / `avatars/`），见 `StorageBackend` 的契约注释。
+   *
+   * 仍然保留 `DATA_DIR` 这个环境变量名——它本来就是部署事实
+   * （`docs/TECH.md` §7.5 的配置分层），不进设置页。
+   */
   dataDir,
-  vaultDir: resolvePath(process.env.VAULT_DIR ?? './data/vault'),
-  rawDir: resolvePath(process.env.RAW_DIR ?? './data/raw'),
 
   /**
    * 模型配置。**全部可选**——没有它们时问答走「只用检索」路径，

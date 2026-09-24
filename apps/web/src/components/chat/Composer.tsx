@@ -45,9 +45,17 @@ const useStyles = createStyles(({ css, token }) => ({
       border-color 0.12s ease-out,
       box-shadow 0.12s ease-out;
 
+    /*
+     聚焦时不换边框色，改用一圈柔光 + 边框提亮（DESIGN §8.8）。
+     柔光用 token.controlOutline 而不是字面量 rgba：
+     它是 antd 按当前主色与底色算好的半透明主色，换外观时会跟着变
+     （浅色 rgba(5,145,255,.1)、深色 rgba(23,117,249,.31)——
+     深色的不透明度更高，因为它在深底上要更亮才看得出来）。
+     原先写死的 rgba(22,119,255,.1) 在深色下几乎不可见。
+    */
     &:focus-within {
-      border-color: ${token.colorPrimary};
-      box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.1);
+      border-color: ${token.colorPrimaryBorder};
+      box-shadow: 0 0 0 3px ${token.controlOutline};
     }
   `,
   bar: css`

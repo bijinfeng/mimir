@@ -1,4 +1,4 @@
-import type { SettingSpec } from '@mimir/shared'
+import type { SettingSpec, SettingValue } from '@mimir/shared'
 
 export type { SettingSpec }
 
@@ -27,7 +27,12 @@ export type { SettingSpec }
 
 /** 数值范围的通用校验：越界值往往是「少打一个 0」这类错误，静默接受很难查 */
 export function range(min: number, max: number) {
-  return (value: string | number | boolean): string | null => {
+  return (value: SettingValue): string | null => {
+    // 数字型的键收到 null / 对象都算不合法——它们是「有人写错了」，
+    // 不是「没配」，所以要说出来而不是当默认
+    if (typeof value === 'boolean' || value === null || typeof value === 'object') {
+      return '必须是数字'
+    }
     const n = Number(value)
     if (!Number.isFinite(n)) return '必须是数字'
     if (n < min || n > max) return `必须在 ${min} 到 ${max} 之间`
@@ -110,6 +115,69 @@ export const CORE_SETTING_SPECS: readonly SettingSpec[] = [
     defaultValue: 80,
     rebuild: 'chunks',
     validate: range(0, 1000),
+  },
+
+  /* ── 存储 ─────────────────────────────────────────────── */
+  {
+    key: 'storage.backend',
+    label: '存储后端',
+    description:
+      '笔记、原始快照与头像存在哪里。本地 = 磁盘上的 data/，S3 = 对象存储。换后端不会搬运已有数据，切换前请自行迁移',
+    group: 'storage',
+    type: 'string',
+    envName: 'STORAGE_BACKEND',
+    defaultValue: 'local',
+    rebuild: 'none',
+    /**
+     * 只挡空值——**这里挡不了「不存在的后端名」**。
+     *
+     * 校验发生在 core 的键表里，而可用后端名由插件注册，core 不认识插件
+     * （包依赖方向决定的，见 `docs/TECH.md` §7.4）。所以未知名字由
+     * **装配层在解析时抛错**，错误信息里带上当前已注册的全部后端 id。
+     *
+     * 为什么选择抛错而不是静默回落到 local：静默回落会让用户的笔记写到
+     * 一个他以为已经换掉的地方——数据落在哪儿必须是可以确定回答的问题。
+     */
+    validate: (value) => (String(value).trim() === '' ? '不能为空' : null),
+  },
+
+  /* ── 统计 ─────────────────────────────────────────────── */
+  {
+    key: 'stats.timezone',
+    label: '统计时区',
+    description:
+      '用量按哪个时区切天。容器默认跑 UTC——不设它的话，凌晨 0 点到 8 点的消耗会算到前一天，热力图整体左移一格且不报错',
+    group: 'stats',
+    type: 'string',
+    envName: 'TZ',
+    defaultValue: 'Asia/Shanghai',
+    rebuild: 'none',
+    /**
+     * 校验 IANA 时区名能不能被运行时认出来。
+     *
+     * 这一步不能省：写错一个时区名（`Asia/Shangai` 少个 h）时
+     * `Intl.DateTimeFormat` 会**抛异常**，而抛在聚合查询里就是统计页整页 500。
+     * 在这里挡住，用户看到的是「这个时区名无效」。
+     *
+     * 用 `Intl.supportedValuesOf` 而不是 try/catch 构造：前者顺便挡掉了
+     * 语法合法但没人认识的别名，而且它的返回值可以直接提示几个正确的。
+     */
+    validate: (value) => {
+      const text = String(value).trim()
+      if (text === '') return '不能为空——留空会让统计退回 UTC'
+
+      try {
+        /**
+         * 只是借用它的构造函数来校验时区名（构造失败即名字无效）。
+         * 结果必须赋给变量：`new` 单独作语句会被 lint 拦下。
+         */
+        const probe = new Intl.DateTimeFormat('en-CA', { timeZone: text })
+        void probe
+        return null
+      } catch {
+        return `不是有效的 IANA 时区名（如 Asia/Shanghai、UTC）`
+      }
+    },
   },
 ]
 

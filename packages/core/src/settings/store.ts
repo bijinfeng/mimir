@@ -1,4 +1,11 @@
-import type { PluginSettings, SettingEntry, SettingSource, SettingSpec } from '@mimir/shared'
+import type {
+  JsonValue,
+  PluginSettings,
+  SettingEntry,
+  SettingSource,
+  SettingSpec,
+  SettingValue,
+} from '@mimir/shared'
 import type { SecretCipher } from './crypto.js'
 import type { SettingRegistry } from './specs.js'
 
@@ -34,7 +41,33 @@ export interface SettingsHost {
 
 /* ── 值的强制转换 ─────────────────────────────────────── */
 
-type Coerced = { ok: true; value: string | number | boolean } | { ok: false; message: string }
+type Coerced = { ok: true; value: CoercedValue } | { ok: false; message: string }
+
+/** 落库的值永远是字符串；这是「从字符串还原出来」能得到的形状 */
+type CoercedValue = string | number | boolean | JsonValue
+
+/**
+ * json 值的下发转换。
+ *
+ * **这是「密钥不外泄」的执行点之一。** `toWire` 由拥有那个形状的插件提供
+ * （只有它知道密钥藏在数组的哪一项里），设置层只负责调用它。
+ *
+ * 钩子抛错时不让整个 `/api/config` 挂掉——但也不静默：回空值并记日志。
+ * 配置页 500 会让用户连别的键都看不见，那比缺一块更糟。
+ */
+function toWireValue(spec: SettingSpec, value: unknown): unknown {
+  if (spec.type !== 'json' || !spec.json) return value
+
+  try {
+    return spec.json.toWire(value)
+  } catch (error) {
+    console.warn(
+      `[settings] ${spec.key} 的下发转换失败，本次回空值：`,
+      error instanceof Error ? error.message : error,
+    )
+    return null
+  }
+}
 
 function coerce(spec: SettingSpec, raw: string): Coerced {
   if (spec.type === 'number') {
@@ -49,6 +82,17 @@ function coerce(spec: SettingSpec, raw: string): Coerced {
     return { ok: false, message: '必须是 true 或 false' }
   }
 
+  if (spec.type === 'json') {
+    // 环境变量只可能是字符串，所以 json 键的值在环境变量里是一条 JSON 文本。
+    // 这条路径很少用（结构化配置更适合在界面上改），但保留它意味着
+    // 「部署时预置一份供应商配置」是可行的
+    try {
+      return { ok: true, value: JSON.parse(raw) as JsonValue }
+    } catch {
+      return { ok: false, message: '必须是合法的 JSON' }
+    }
+  }
+
   return { ok: true, value: raw }
 }
 
@@ -56,8 +100,8 @@ function coerce(spec: SettingSpec, raw: string): Coerced {
 
 export interface ResolvedSetting {
   spec: SettingSpec
-  /** 秘密类恒为 null（不下发）。其余为生效值 */
-  value: string | number | boolean | null
+  /** 秘密类恒为 null（不下发）。json 类是已解析的结构化值。其余为标量 */
+  value: string | number | boolean | JsonValue | null
   source: SettingSource
   /** 秘密类：是否已有一个能解开的值 */
   configured: boolean
@@ -124,7 +168,12 @@ export function resolveSetting(
       value: spec.defaultValue,
       source: 'default',
       configured: false,
-      problem: coerced.message,
+      // json 类解析失败要把原因说清：结构化的值坏掉之后，
+      // 「以为什么都没配」与「知道它坏了」对用户的下一步动作完全不同
+      problem:
+        spec.type === 'json'
+          ? `已存的值无法解析（${coerced.message}）。请重新配置`
+          : coerced.message,
     }
   }
 
@@ -183,15 +232,24 @@ export function isProvided(resolved: ResolvedSetting): boolean {
 /* ── 对外的高阶接口 ───────────────────────────────────── */
 
 export interface SettingsApi extends PluginSettings {
+  /**
+   * 下发给浏览器的条目。
+   *
+   * **json 类键在这里过一次 `toWire`**：结构化值里可能藏着密钥
+   * （供应商列表每家一把），而密钥一个字都不该下发。这一步是那条规则的
+   * 唯一执行点——漏掉它的症状是密钥随配置一起发出去了，而界面看不出异常。
+   */
   entries(): Promise<SettingEntry[]>
-  /** 生效值（非密钥） */
-  get(key: string): Promise<string | number | boolean | null>
+  /** 生效值（非密钥）。json 类可能返回结构化值 */
+  get(key: string): Promise<SettingValue>
+  /** 写回结构化值（插件保存自己的域配置用）*/
+  setJson(key: string, value: unknown): Promise<void>
   /** 秘密类的明文。只在即将发请求的那一刻调用 */
   getSecret(key: string): Promise<{ ok: true; value: string } | { ok: false; reason: string }>
   /** 缓存快照，供同步的状态计算使用 */
   snapshot(): Map<string, ResolvedSetting>
   invalidate(): void
-  update(values: Record<string, string | number | boolean | null>): Promise<{
+  update(values: Record<string, unknown>): Promise<{
     ok: boolean
     issues: { key: string; message: string }[]
   }>
@@ -232,25 +290,31 @@ export function createSettingsApi(host: SettingsHost): SettingsApi {
   return {
     async entries() {
       const resolved = await load()
-      return host.registry.all().map((spec) => {
-        const item = resolved.get(spec.key) ?? resolveSetting(host, spec, new Map())
-        return {
-          key: spec.key,
-          label: spec.label,
-          description: spec.description,
-          group: spec.group,
-          type: spec.type,
-          // 秘密类不给值，只给「有没有」——连密文都不给
-          value: spec.type === 'secret' ? null : item.value,
-          configured: item.configured,
-          source: item.source,
-          envName: spec.envName,
-          defaultValue: spec.defaultValue,
-          writable: spec.writable !== false,
-          rebuild: spec.rebuild,
-          problem: item.problem,
-        }
-      })
+      return (
+        host.registry
+          .all()
+          // hidden 的键（旧配置迁移用）不出现在设置列表里，但仍可被读取
+          .filter((spec) => spec.hidden !== true)
+          .map((spec) => {
+            const item = resolved.get(spec.key) ?? resolveSetting(host, spec, new Map())
+            return {
+              key: spec.key,
+              label: spec.label,
+              description: spec.description,
+              group: spec.group,
+              type: spec.type,
+              // 秘密类不给值，只给「有没有」——连密文都不给
+              value: spec.type === 'secret' ? null : toWireValue(spec, item.value),
+              configured: item.configured,
+              source: item.source,
+              envName: spec.envName,
+              defaultValue: spec.defaultValue,
+              writable: spec.writable !== false,
+              rebuild: spec.rebuild,
+              problem: item.problem,
+            }
+          })
+      )
     },
 
     async get(key) {
@@ -272,6 +336,31 @@ export function createSettingsApi(host: SettingsHost): SettingsApi {
 
     async getBoolean(key) {
       return (await this.get(key)) === true
+    },
+
+    async setJson(key: string, value: unknown): Promise<void> {
+      const spec = specOrThrow(key)
+      if (spec.type !== 'json') {
+        throw new Error(`配置键 ${key} 不是 json 类型（是 ${spec.type}）`)
+      }
+
+      await host.store.upsert([{ key, value: JSON.stringify(value) }])
+      cache = null
+    },
+
+    async getJson<T = unknown>(key: string): Promise<T | undefined> {
+      const spec = specOrThrow(key)
+      if (spec.type !== 'json') {
+        // 类型对了才可能拿到结构化值。搞错类型是代码错误，不是配置错误——
+        // 静默返回 undefined 会让「取不到供应商列表」看起来像「用户没配」
+        throw new Error(`配置键 ${key} 不是 json 类型（是 ${spec.type}）`)
+      }
+
+      const resolved = await load()
+      const value = resolved.get(spec.key)?.value
+      // 生效值来自默认值或环境变量时也要走一遍校验，
+      // 否则「默认形状」与「库里那份」可能不同构
+      return value === null || value === undefined ? undefined : (value as T)
     },
 
     async getSecret(key) {
@@ -323,6 +412,24 @@ export function createSettingsApi(host: SettingsHost): SettingsApi {
       const writes: { key: string; value: string }[] = []
       const deletes: string[] = []
 
+      /**
+       * 已存的原始覆盖层。**json 键的密钥合并要用它**。
+       *
+       * 刻意读原始行而不是 `resolveSetting` 的结果：后者给的是**生效值**
+       * （可能来自环境变量或默认值），而合并要的是「库里那一行」。
+       */
+      const rawOverrides = await host.store.loadAll()
+      const existingOf = (spec: SettingSpec): unknown => {
+        const stored = rawOverrides.get(spec.key)
+        if (stored === undefined) return undefined
+        try {
+          return JSON.parse(stored) as unknown
+        } catch {
+          // 已存的值坏了：当作「没有已存值」，让这一次写入把它修好
+          return undefined
+        }
+      }
+
       for (const [key, raw] of Object.entries(values)) {
         const spec = host.registry.find(key)
         if (!spec) {
@@ -346,6 +453,36 @@ export function createSettingsApi(host: SettingsHost): SettingsApi {
           // 却报告 configured: true，界面上显示「已配置」而实际没有密钥
           if (text === '') deletes.push(key)
           else writes.push({ key, value: host.cipher.encrypt(text) })
+          continue
+        }
+
+        if (spec.type === 'json') {
+          /**
+           * json 值走 `fromWire`：**密钥的合并发生在这里**。
+           *
+           * 界面拿不到密钥（`toWire` 摘掉了），所以它提交的值里密钥位是缺失的。
+           * 如果直接覆盖，用户改一下供应商的名字就会把密钥清掉——
+           * 而界面上完全看不出发生了什么。`fromWire` 收下已存的值，
+           * 由拥有那个形状的插件决定怎么合（它知道密钥在哪一层）。
+           */
+          const existing = existingOf(spec)
+
+          try {
+            const merged = spec.json ? spec.json.fromWire(raw, existing) : raw
+
+            const invalid = spec.validate?.(merged as SettingValue)
+            if (invalid) {
+              issues.push({ key, message: invalid })
+              continue
+            }
+
+            writes.push({ key, value: JSON.stringify(merged) })
+          } catch (error) {
+            issues.push({
+              key,
+              message: error instanceof Error ? error.message : '值不合法',
+            })
+          }
           continue
         }
 

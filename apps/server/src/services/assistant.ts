@@ -279,6 +279,10 @@ async function callModel(params: AskParams, retrieval: Retrieval): Promise<strin
     role: params.deepReasoning ? 'reasoning' : 'chat',
     stream: false,
     systemPrompts: [SYSTEM_PROMPT],
+    // 非流式那条问答路径。与流式的 'chat' 分开记：
+    // 「命令面板里随手问的一句」与「认真聊了一轮」在账上不是同一件事
+    source: 'ask',
+    refId: params.conversationId,
     messages: [
       ...history,
       {

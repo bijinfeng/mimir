@@ -1,136 +1,227 @@
 import type { PluginHost, SettingSpec } from '@mimir/shared'
+import { coerceExisting, fromWire, toWire } from './instances.js'
+import { PROVIDER_PRESETS } from './presets.js'
 import { createOpenAiCompatibleProvider } from './provider.js'
 
 /**
  * 模型提供方插件。
  *
- * 目前只有一个实现（OpenAI 兼容），但它值得是一条**接缝**而不是一段代码：
- * Ollama 的原生 API 与 OpenAI 兼容层在**流式形状**上不同
- * （NDJSON vs SSE），要正确支持得写第二个适配器。留出接缝，
- * 那天到了就是「加一个文件」而不是「改问答链路」。
+ * ## 一条接缝 = 一个「适配器族」，不是一家服务商
  *
- * ## 角色是固定的，模型是可配的
+ * 这个实现管的是 **OpenAI 兼容这套协议**：怎么调 chat、怎么拉 `/models`、
+ * 错误怎么翻译成人话。**具体是哪一家是数据**（`presets.ts` 的目录），
+ * 所以加一家服务商是加一行数据，不是加代码。
  *
- * 五个角色（chat / reasoning / summarize / embed，以及未实现的 rerank）
- * 是**产品结构**：它对应「哪些任务值得用不同的模型」这个成本问题。
- * 每个角色对应一个模型名键，所以「摘要换一个便宜模型」不需要改代码。
+ * 什么时候才需要第二个实现：当某家的协议与 OpenAI 兼容层**实质不同**时。
+ * 已知的两处（`docs/TECH.md` §5.2 提过）：Ollama 的原生 API 在流式形状上
+ * 不同（NDJSON vs SSE），rerank 的路径各家不一（`/v1/rerank` vs `/v2/rerank`）。
+ * 那时加一个文件即可，宿主与设置页都不用改。
  *
- * 不做「多套命名的 provider 配置」（WeKnora 的卡片列表 + 各消费者各自绑定）：
- * 那需要一层间接（先建卡片再去别处选），而本项目的角色是固定的几个，
- * 每个角色一行就地改更直接（`docs/DECISIONS.md` D-029 的否决栏）。
+ * ## 模型域只有一个配置键
+ *
+ * `model.config` 装下：供应商列表 + 角色绑定 + 迁移标记。
+ *
+ * 为什么不是一堆 `model.provider.<id>.baseUrl` 这样的标量键：
+ * 供应商是**集合**，标量键表达不了集合。摊平的后果有实例为证——
+ * 某个成熟产品用「按位置对齐的三个数组」存多家供应商，删除时要手工重排下标
+ * （`docs/RESEARCH.md`）。
+ *
+ * 形状与密钥处理都在 `instances.ts`，这个文件只负责把它声明出来。
  */
 
-/** 模型键都属于这条接缝：它们描述的是「用哪个模型」，与具体实现无关 */
-const MODEL_PARAMS: SettingSpec[] = [
+const CONFIG_KEY = 'model.config'
+
+/** 供应商列表 + 角色绑定。密钥的摘除与合并由 `toWire` / `fromWire` 负责 */
+const MODEL_CONFIG_PARAM: SettingSpec = {
+  key: CONFIG_KEY,
+  label: '模型配置',
+  description: '供应商列表与各角色绑定的模型',
+  group: 'models',
+  type: 'json',
+  envName: null,
+  // 空配置：没有供应商、没有绑定。界面据此渲染「还没有配置供应商」
+  defaultValue: { providers: [], roles: {} },
+  rebuild: 'none',
+  json: {
+    /**
+     * 下发时摘掉每家的密钥。
+     *
+     * **这是密钥不外泄的执行点。** 漏掉它的症状是密钥随 `/api/config`
+     * 一起发到浏览器，而界面上看不出任何异常。
+     */
+    toWire: (internal) => toWire(coerceExisting(internal)),
+    /**
+     * 写入时把已存的密钥合回来。
+     *
+     * 界面拿不到密钥，所以它提交的每个供应商都不带 `apiKey`。
+     * 直接覆盖的话，用户改一下供应商的名字就会把密钥清掉——
+     * 而界面上完全看不出发生了什么。
+     */
+    fromWire: (incoming, existing) => {
+      if (!currentCipher) {
+        // 只可能发生在「install() 还没跑」时——说明装配顺序错了，
+        // 而不是用户做了什么。直接报错比静默丢掉密钥好
+        throw new Error('模型配置插件尚未装配，无法写入（这是代码错误）')
+      }
+      return fromWire(incoming, existing, currentCipher).config
+    },
+  },
+}
+
+/** 向量维度：与 embedding 模型绑定，所以归模型域而不是检索域 */
+const DIMENSIONS_PARAM: SettingSpec = {
+  key: 'model.embed.dimensions',
+  label: '向量维度',
+  description:
+    '必须与 embedding 模型实际的输出维度一致。可以用「测试连接」核对——不一致时它会告诉你实际维度',
+  group: 'models',
+  type: 'number',
+  envName: 'MODEL_EMBED_DIMENSIONS',
+  defaultValue: 1024,
+  rebuild: 'embeddings',
+  validate: (value) => {
+    if (value === null || typeof value === 'object' || typeof value === 'boolean') {
+      return '必须是数字'
+    }
+    const n = Number(value)
+    if (!Number.isFinite(n)) return '必须是数字'
+    if (n < 64 || n > 4000) return '必须在 64 到 4000 之间（超过 2000 需要 halfvec）'
+    return null
+  },
+}
+
+/**
+ * **历史键**：M1-A 的单供应商形状留下的七个标量键。
+ *
+ * 它们仍然注册着，只为一件事：**迁移要读它们**。标成 `hidden` 之后
+ * 不出现在设置页（用户不该再看到「接口地址」这种全局字段），
+ * 但 `getString` / `getSecret` 仍能取到值。
+ *
+ * ## 为什么不用「读不到就跳过」
+ *
+ * 未注册的键在读取路径上会**抛错**（`store.ts` 的 `specOrThrow`）——
+ * 那是刻意的：一个拼错的键名不该静默变成「值永远是默认」。
+ * 所以迁移要读的键必须注册，哪怕它们只是历史残留。
+ *
+ * ## 什么时候能删
+ *
+ * 等确认所有部署都升过一次之后。但那时也没有收益——
+ * 七个 hidden 键的成本是几十行声明，而删早了会让老部署升级时
+ * 丢掉密钥。
+ */
+const LEGACY_PARAMS: SettingSpec[] = [
   {
     key: 'model.baseUrl',
-    label: '接口地址',
-    description:
-      'OpenAI 兼容端点。DeepSeek / 通义 / 智谱 / Kimi 都提供兼容端点，所以换服务商只需要改这一行',
+    label: '接口地址（旧）',
+    description: '历史配置',
     group: 'models',
     type: 'string',
     envName: 'MODEL_BASE_URL',
-    defaultValue: 'https://api.deepseek.com/v1',
+    defaultValue: '',
     rebuild: 'none',
-    validate: (value) => {
-      const text = String(value).trim()
-      if (!/^https?:\/\//i.test(text)) return '必须以 http:// 或 https:// 开头'
-      return null
-    },
+    hidden: true,
   },
   {
     key: 'model.apiKey',
-    label: 'API 密钥',
-    description: '加密后存库，绝不下发浏览器。留空的含义是「没配模型」，问答走只检索路径',
+    label: 'API 密钥（旧）',
+    description: '历史配置',
     group: 'models',
     type: 'secret',
     envName: 'MODEL_API_KEY',
     defaultValue: '',
     rebuild: 'none',
+    hidden: true,
+  },
+  {
+    key: 'model.providerName',
+    label: '服务商标识（旧）',
+    description: '历史配置',
+    group: 'models',
+    type: 'string',
+    envName: 'MODEL_PROVIDER_NAME',
+    defaultValue: '',
+    rebuild: 'none',
+    hidden: true,
   },
   {
     key: 'model.chat.model',
-    label: '对话模型',
-    description: '回答提问用的模型。这是唯一必填的角色',
+    label: '对话模型（旧）',
+    description: '历史配置',
     group: 'models',
     type: 'string',
     envName: 'MODEL_CHAT_MODEL',
-    defaultValue: 'deepseek-chat',
+    defaultValue: '',
     rebuild: 'none',
-    validate: (value) => (String(value).trim() === '' ? '不能为空' : null),
+    hidden: true,
   },
   {
     key: 'model.reasoning.model',
-    label: '深度思考模型',
-    description:
-      '提问时打开「深度思考」会切到它。与对话模型是同一家的不同模型名，不需要第二个适配器',
+    label: '深度思考模型（旧）',
+    description: '历史配置',
     group: 'models',
     type: 'string',
     envName: 'MODEL_REASONING_MODEL',
-    defaultValue: 'deepseek-reasoner',
+    defaultValue: '',
     rebuild: 'none',
+    hidden: true,
   },
   {
     key: 'model.summarize.model',
-    label: '摘要模型',
-    description: '自动摘要是量大要求低的任务，值得配一个便宜模型。留空时回落到对话模型',
+    label: '摘要模型（旧）',
+    description: '历史配置',
     group: 'models',
     type: 'string',
     envName: 'MODEL_SUMMARIZE_MODEL',
     defaultValue: '',
     rebuild: 'none',
+    hidden: true,
   },
   {
     key: 'model.embed.model',
-    label: '向量化模型',
-    description: '配了它才会有向量通道（语义检索）。1024 维最省事——超过 2000 维必须走 halfvec',
+    label: '向量化模型（旧）',
+    description: '历史配置',
     group: 'models',
     type: 'string',
     envName: 'MODEL_EMBED_MODEL',
     defaultValue: '',
-    rebuild: 'embeddings',
-  },
-  {
-    key: 'model.embed.dimensions',
-    label: '向量维度',
-    description: '必须与模型实际的输出维度一致，否则写入时报错。可以用「测试连接」核对',
-    group: 'models',
-    type: 'number',
-    envName: 'MODEL_EMBED_DIMENSIONS',
-    defaultValue: 1024,
-    rebuild: 'embeddings',
-    validate: (value) => {
-      const n = Number(value)
-      if (!Number.isFinite(n)) return '必须是数字'
-      if (n < 64 || n > 4000) return '必须在 64 到 4000 之间（超过 2000 需要 halfvec）'
-      return null
-    },
+    rebuild: 'none',
+    hidden: true,
   },
 ]
 
+/**
+ * `fromWire` 需要加解密口，而 `SettingSpec` 是**声明**（在 `install()` 时构造），
+ * 那时的 `host.secrets` 已经可用了——但 `fromWire` 是之后才被调用的。
+ *
+ * 用模块级变量承接：`install()` 在装配期只跑一次，之后这个引用一直有效。
+ * 不用闭包是因为 `fromWire` 的签名被设置层定死了（只有两个参数）——
+ * 让设置层多传一个 cipher 会把「谁是插件、谁是宿主」的边界搞混。
+ */
+let currentCipher: Parameters<typeof fromWire>[2] | null = null
+
 export function install(host: PluginHost): void {
+  currentCipher = host.secrets
+
+  // 这个包里的键都属于模型域，包级声明一次
+  host.params([MODEL_CONFIG_PARAM, DIMENSIONS_PARAM, ...LEGACY_PARAMS])
+
   host.provider(
     {
       seam: 'provider',
       id: 'openai-compatible',
       name: 'OpenAI 兼容端点',
-      description:
-        '一套适配器接住 DeepSeek / 通义 / 智谱 / Kimi。chat 走 openaiCompatible，summarize 与 embed 走各自的工厂',
+      description: `一套适配器接住 ${PROVIDER_PRESETS.length - 1} 家预设供应商（DeepSeek / 通义 / 智谱 / 硅基流动 / Ollama …）。加一家是往预设目录里加一行`,
       file: 'plugins/provider/src/provider.ts',
-      configKeys: [
-        'model.baseUrl',
-        'model.apiKey',
-        'model.chat.model',
-        'model.reasoning.model',
-        'model.summarize.model',
-        'model.embed.model',
-        'model.embed.dimensions',
-      ],
-      params: MODEL_PARAMS,
-      // 没有 key 就没有任何角色可用。这一条让设置页直接显示「需要先配置 model.apiKey」，
-      // 而不是让用户去点「测试连接」才发现
-      requires: ['model.apiKey'],
+      configKeys: [CONFIG_KEY, 'model.embed.dimensions'],
+      // **不声明 `requires`**：供应商是运行期数据（列表可能为空），
+      // 而 `requires` 判的是「标量键有没有配过」。
+      // 「有没有可用的供应商」由 `overview()` 的 roles[].ready 如实回答——
+      // 那才是知道这个形状的地方
     },
-    createOpenAiCompatibleProvider(host.settings),
+    createOpenAiCompatibleProvider(host.settings, host.secrets),
   )
 }
+
+export { migrateLegacySettings, shouldMigrate } from './migrate.js'
+export { fromWire, toWire, coerceExisting } from './instances.js'
+export { PROVIDER_PRESETS, inferPresetId } from './presets.js'

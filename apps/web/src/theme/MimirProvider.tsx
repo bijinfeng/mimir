@@ -3,8 +3,9 @@ import zhCN from 'antd/locale/zh_CN'
 import { ThemeProvider } from 'antd-style'
 import type { ReactNode } from 'react'
 import { GlobalStyles } from '@/styles/global'
-import { mimirCustomToken } from '@/theme/customToken'
-import { mimirTheme } from '@/theme/tokens'
+import { useAppearance } from '@/theme/appearance'
+import { customTokenFor } from '@/theme/customToken'
+import { themeConfigFor } from '@/theme/tokens'
 
 /**
  * 应用的主题与样式基建 —— 全应用只有这一处组装。
@@ -22,10 +23,30 @@ import { mimirTheme } from '@/theme/tokens'
  *   AntApp         提供 message/notification/modal 的 context 版本，
  *                  并给原生标签（`<a>` 等）补上 antd 的样式重置。
  *   GlobalStyles   文档级样式，见 `styles/global.ts`。
+ *
+ * ## 外观是受控的，不由 antd-style 自己管
+ *
+ * `ThemeProvider` 自带 `themeMode` / `appearance` 两套状态，但它们不持久化；
+ * 而且 `themeMode="auto"` 的首次匹配走 `setTimeout(…, 1)`，**首帧先按浅色
+ * 渲染再翻成深色**——深色用户每次打开都会先看到一下白闪。
+ *
+ * 所以这里把算好的 `appearance` 作为**受控值**传进去（受控时它不再自己判断），
+ * 状态的持有者是 `theme/appearance.ts`：它同步地从 localStorage 与
+ * `prefers-color-scheme` 算出第一帧该用哪套色。
+ *
+ * `theme` 也随外观换成对应的 ThemeConfig。注意深色的 `algorithm` 里
+ * **只有校准层**——`darkAlgorithm` 由 antd-style 按 appearance 自动串在前面，
+ * 自己再传一遍会让它跑两次（见 `tokens.ts` 的 `algorithmFor`）。
  */
 export function MimirProvider({ children }: { children: ReactNode }) {
+  const appearance = useAppearance()
+
   return (
-    <ThemeProvider theme={mimirTheme} customToken={mimirCustomToken}>
+    <ThemeProvider
+      appearance={appearance}
+      theme={themeConfigFor(appearance)}
+      customToken={customTokenFor(appearance)}
+    >
       <ConfigProvider locale={zhCN}>
         <AntApp>
           <GlobalStyles />

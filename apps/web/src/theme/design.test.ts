@@ -1,13 +1,22 @@
-import { Empty, theme } from 'antd'
+import { theme } from 'antd'
 import { createGlobalStyle, createStyles } from 'antd-style'
 import { act, createElement } from 'react'
 import type { ReactElement } from 'react'
 import { createRoot } from 'react-dom/client'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { BADGE_COLORS } from '../components/DocumentBadges'
-import { mimirCustomToken } from './customToken'
+import { setThemeMode } from './appearance'
+import type { Appearance } from './appearance'
+import { mimirCustomToken, mimirDarkCustomToken, customTokenFor } from './customToken'
 import { MimirProvider } from './MimirProvider'
-import { CONTENT_WIDTH, FONT_MONO, FONT_SANS, mimirTheme } from './tokens'
+import {
+  algorithmFor,
+  CONTENT_WIDTH,
+  FONT_MONO,
+  FONT_SANS,
+  effectiveTokens,
+  mimirDarkTheme,
+} from './tokens'
 
 /**
  * 设计 token 的守卫测试。
@@ -17,6 +26,13 @@ import { CONTENT_WIDTH, FONT_MONO, FONT_SANS, mimirTheme } from './tokens'
  * 某次「我换个颜色试试」之后静默失效。
  *
  * 改 token 导致这里红了，不要改断言，先改设计。
+ *
+ * ## 两套外观跑同一组断言
+ *
+ * 深色不是「附加项」，它和浅色受**同一组阈值**约束。这里没有
+ * 「深色稍差一点也可以」的分支——那种分支一旦存在，深色就会在几次
+ * 迭代后变成「看起来还行」而不是「测得过的」。所以断言全部走
+ * `it.each(APPEARANCES)`，新增一条浅色规则就等于同时约束深色。
  */
 
 // ── WCAG 相对亮度对比度 ──────────────────────────────────────
@@ -82,76 +98,349 @@ function contrastOver(foreground: string, translucentBackground: string, surface
   return contrast(foreground, composite(translucentBackground, surface))
 }
 
-const token = theme.getDesignToken(mimirTheme)
+const APPEARANCES: readonly Appearance[] = ['light', 'dark']
+
+const NAMES: Record<Appearance, string> = { light: '浅色', dark: '深色' }
 
 /**
- * 内容出现的四种底。文字阶在每一种上都要达标——
- * 只测白底会漏掉「元信息落在导航列上」这类真实组合。
+ * 热力色阶的四档。
+ *
+ * 提到模块级是 lint 的要求（`unicorn/consistent-function-scoping`）：
+ * 它不捕获任何外层变量，写在 `describe` 里只会每次调用重建一个函数。
  */
-const SURFACES = {
-  容器底: '#ffffff',
-  列表底: mimirCustomToken.tintList,
-  导航底: mimirCustomToken.tintNav,
-  布局底: '#f5f6f8',
-} as const
+function scaleOf(appearance: Appearance): string[] {
+  const custom = customTokenFor(appearance)
+  return [custom.heatL1, custom.heatL2, custom.heatL3, custom.heatL4]
+}
+
+/**
+ * 每套外观的生效 token。
+ *
+ * 走 `effectiveTokens` 而不是在这里写 `getDesignToken(mimirDarkTheme)`：
+ * 后者会漏掉 `darkAlgorithm`（它由 antd-style 在运行时补），算出来的
+ * 是一份**不存在于任何界面上的** token 集——那种错误不报错，只会让
+ * 守门测试守着一个假的界面。
+ *
+ * `lightToken` 是**浅色的**生效 token，供少量「深色必须比浅色更亮/更暗」
+ * 这类跨外观断言使用。
+ */
+const lightToken = effectiveTokens('light')
+const darkToken = effectiveTokens('dark')
+
+function tokenOf(appearance: Appearance) {
+  return appearance === 'light' ? lightToken : darkToken
+}
+
+/**
+ * 内容出现的底。文字阶在每一种上都要达标——
+ * 只测容器底会漏掉「元信息落在导航列上」这类真实组合。
+ */
+function surfacesOf(appearance: Appearance): Record<string, string> {
+  const token = tokenOf(appearance)
+  const custom = customTokenFor(appearance)
+  return {
+    容器底: String(token.colorBgContainer),
+    列表底: custom.tintList,
+    导航底: custom.tintNav,
+    布局底: String(token.colorBgLayout),
+  }
+}
 
 describe('对比度底线', () => {
-  it.each([
-    ['成功', token.colorSuccessText, token.colorSuccessBg],
-    ['警告', token.colorWarningText, token.colorWarningBg],
-    ['错误', token.colorErrorText, token.colorErrorBg],
-    ['信息', token.colorInfoText, token.colorInfoBg],
-  ])('语义色对「%s」文字 on 同语义浅底 ≥ 4.5:1', (_name, foreground, background) => {
-    expect(contrast(String(foreground), String(background))).toBeGreaterThanOrEqual(4.5)
+  it.each(APPEARANCES)('语义色对「文字 on 同语义底」%s下 ≥ 4.5:1', (appearance) => {
+    const token = tokenOf(appearance)
+    const pairs = [
+      ['成功', token.colorSuccessText, token.colorSuccessBg],
+      ['警告', token.colorWarningText, token.colorWarningBg],
+      ['错误', token.colorErrorText, token.colorErrorBg],
+      ['信息', token.colorInfoText, token.colorInfoBg],
+    ] as const
+
+    for (const [name, foreground, background] of pairs) {
+      expect(
+        contrast(String(foreground), String(background)),
+        `${NAMES[appearance]}：${name}色对不达标`,
+      ).toBeGreaterThanOrEqual(4.5)
+    }
   })
 
-  it.each(Object.entries(SURFACES))('文字-2（次要正文）在%s ≥ 4.5:1', (_surface, background) => {
-    expect(contrastOn(String(token.colorTextSecondary), background)).toBeGreaterThanOrEqual(4.5)
+  it.each(APPEARANCES)('语义文字落在容器底上 %s下 ≥ 4.5:1', (appearance) => {
+    // 徽标与状态文字经常直接躺在面板里（不总是躺在自己的浅底上），
+    // 所以「文字 on 自己的底」达标还不够
+    const token = tokenOf(appearance)
+    const container = String(token.colorBgContainer)
+    for (const key of ['colorSuccessText', 'colorWarningText', 'colorErrorText', 'colorInfoText']) {
+      expect(
+        contrastOn(String(token[key as keyof typeof token]), container),
+        `${NAMES[appearance]}：${key} 在容器底上不达标`,
+      ).toBeGreaterThanOrEqual(4.5)
+    }
   })
 
-  it.each(Object.entries(SURFACES))('文字-3（元信息）在%s ≥ 4.5:1', (_surface, background) => {
-    expect(contrastOn(String(token.colorTextTertiary), background)).toBeGreaterThanOrEqual(4.5)
+  it.each(APPEARANCES)('文字-2 / 文字-3 在四种底上 %s下 ≥ 4.5:1', (appearance) => {
+    const token = tokenOf(appearance)
+    for (const [surface, background] of Object.entries(surfacesOf(appearance))) {
+      expect(
+        contrastOn(String(token.colorTextSecondary), background),
+        `${NAMES[appearance]}：文字-2 在${surface}上不达标`,
+      ).toBeGreaterThanOrEqual(4.5)
+      expect(
+        contrastOn(String(token.colorTextTertiary), background),
+        `${NAMES[appearance]}：文字-3 在${surface}上不达标`,
+      ).toBeGreaterThanOrEqual(4.5)
+    }
   })
 
-  it.each(Object.entries(SURFACES))('文字-1（正文）在%s ≥ 7:1（AAA）', (_surface, background) => {
-    expect(contrastOn(String(token.colorText), background)).toBeGreaterThanOrEqual(7)
+  it.each(APPEARANCES)('文字-1（正文）在四种底上 %s下 ≥ 7:1（AAA）', (appearance) => {
+    const token = tokenOf(appearance)
+    for (const [surface, background] of Object.entries(surfacesOf(appearance))) {
+      expect(
+        contrastOn(String(token.colorText), background),
+        `${NAMES[appearance]}：正文在${surface}上不达 AAA`,
+      ).toBeGreaterThanOrEqual(7)
+    }
   })
 
-  it.each([
-    ['容器底', '#ffffff'],
-    ['选中项底色', '#e8f1ff'],
-    ['antd 浅蓝底', '#e6f4ff'],
-  ])('链接色（文字角色）在%s ≥ 4.5:1', (_surface, background) => {
-    expect(contrastOn(String(token.colorLink), background)).toBeGreaterThanOrEqual(4.5)
+  it.each(APPEARANCES)('链接色（文字角色）在容器底与选中底上 %s下 ≥ 4.5:1', (appearance) => {
+    const token = tokenOf(appearance)
+    expect(
+      contrastOn(String(token.colorLink), String(token.colorBgContainer)),
+      `${NAMES[appearance]}：链接色在容器底上不达标`,
+    ).toBeGreaterThanOrEqual(4.5)
+    // 选中态导航项就是「链接色 on colorPrimaryBg」——最常见的那个组合
+    expect(
+      contrastOn(String(token.colorLink), String(token.colorPrimaryBg)),
+      `${NAMES[appearance]}：链接色在选中底上不达标`,
+    ).toBeGreaterThanOrEqual(4.5)
   })
 
-  it('占位符允许低于 4.5，但仍要看得见（≥ 3:1）', () => {
+  it.each(APPEARANCES)('占位符允许低于 4.5，但仍要看得见（%s下 ≥ 3:1）', (appearance) => {
     // 占位符 / 禁用态不承载信息，WCAG 不要求 4.5；
     // 但低到 2:1 以下就等于没画，这里守一个下限。
-    expect(contrastOn(String(token.colorTextQuaternary), '#ffffff')).toBeGreaterThanOrEqual(3)
+    const token = tokenOf(appearance)
+    expect(
+      contrastOn(String(token.colorTextQuaternary), String(token.colorBgContainer)),
+    ).toBeGreaterThanOrEqual(3)
+  })
+
+  it.each(APPEARANCES)('主按钮上的白字 %s下不低于浅色的既有基线', (appearance) => {
+    /**
+     * 4.10:1 是**浅色既有的、已被记录的取值**（DESIGN §3.5 那行
+     * 「白字 on 主色填充 4.10:1」），它按「大字号/非文本」那一档被接受。
+     *
+     * 这里不把门槛提到 4.5——那等于顺手改掉一个已评审过的决定，而深色
+     * 并不需要它。要守的是**不回归**：深色不得低于这个基线（实测 5.19）。
+     */
+    const token = tokenOf(appearance)
+    const value = contrast('#ffffff', String(token.colorPrimary))
+    expect(value, `${NAMES[appearance]}：主按钮白字的对比度低于既有基线`).toBeGreaterThanOrEqual(
+      contrast('#ffffff', '#1677ff'),
+    )
+  })
+})
+
+describe('非文本对比度：焦点环与描边', () => {
+  /**
+   * 焦点环是「键盘用户能不能看见自己在哪」的线索（DESIGN §7.2），
+   * 所以它按**非文本**标准衡量。
+   *
+   * ## 为什么这里用「不得弱于浅色」而不是绝对的 3:1
+   *
+   * antd 画的焦点环是 `3px solid colorPrimaryBorder`（它的 `genFocusOutline`），
+   * 而浅色的 `colorPrimaryBorder` 是 antd 派生的 `#91caff`——它在白底上
+   * 只有 **1.74:1**。这是既有的、规范里认过的基线（§7.2 只要求「焦点可见」，
+   * 没有承诺非文本的 3:1）。
+   *
+   * 临时把门槛提到 3:1 会让浅色也红，而修法只能是顺手改掉一个已评审的
+   * 决定——那超出了这次改动的范围。所以守**不回归**：深色不得弱于浅色，
+   * 同时两套外观下环都必须与底**可分辨**（>1.5，防「环与底同值」这种
+   * 彻底看不见的情况）。
+   *
+   * 深色确实踩过那个坑：antd 的深色算法把 `colorPrimaryBg` 与
+   * `colorPrimaryBorder` 设成**同一个值**（`#15325b`），同值意味着焦点环
+   * 落在选中项上完全看不见（实测 1.00:1）。深色因此单独校准了描边这一半。
+   */
+  const LIGHT_RING_ON_CONTAINER = contrast('#91caff', '#ffffff')
+  const LIGHT_RING_ON_PRIMARY_BG = contrast('#91caff', '#e6f4ff')
+
+  it.each(APPEARANCES)('焦点环与它所在的底可分辨 %s下', (appearance) => {
+    const token = tokenOf(appearance)
+    const ring = String(token.colorPrimaryBorder)
+    for (const [surface, background] of Object.entries({
+      容器底: String(token.colorBgContainer),
+      浮层底: String(token.colorBgElevated),
+      选中底: String(token.colorPrimaryBg),
+    })) {
+      expect(
+        contrast(ring, background),
+        `${NAMES[appearance]}：焦点环在${surface}上几乎看不见`,
+      ).toBeGreaterThan(1.5)
+    }
+  })
+
+  it('深色的焦点环不比浅色弱', () => {
+    /**
+     * 跨外观的不回归规则。
+     *
+     * 浅色的环是 antd 派生的淡蓝（`#91caff`），压在深色底上会是「深蓝环
+     * 压深蓝底」——照搬浅色的取值就会掉进这个坑，而它看起来只是「焦点
+     * 不太明显」，不会有人去查。所以显式拿浅色的两处基线比。
+     */
+    const darkRing = String(darkToken.colorPrimaryBorder)
+    expect(
+      contrast(darkRing, String(darkToken.colorBgContainer)),
+      '深色焦点环比浅色还弱',
+    ).toBeGreaterThanOrEqual(LIGHT_RING_ON_CONTAINER)
+    expect(
+      contrast(darkRing, String(darkToken.colorPrimaryBg)),
+      '深色焦点环在选中底上比浅色还弱',
+    ).toBeGreaterThanOrEqual(LIGHT_RING_ON_PRIMARY_BG)
+  })
+
+  it('深色的全部文字阶与语义色文字都不弱于浅色（跨外观不回归）', () => {
+    // 深色最常见的退化是「看着还行就用」：某些组合悄悄比浅色更弱，
+    // 而单看深色的截图判断不出来。这条逐项比一遍
+    const container = {
+      light: String(lightToken.colorBgContainer),
+      dark: String(darkToken.colorBgContainer),
+    }
+    const pairs = [
+      ['文字-2', 'colorTextSecondary'],
+      ['文字-3', 'colorTextTertiary'],
+      ['链接色', 'colorLink'],
+      ['成功文字', 'colorSuccessText'],
+      ['警告文字', 'colorWarningText'],
+      ['错误文字', 'colorErrorText'],
+      ['信息文字', 'colorInfoText'],
+    ] as const
+
+    for (const [name, key] of pairs) {
+      expect(
+        contrastOn(String(darkToken[key]), container.dark),
+        `深色的${name}在容器底上比浅色弱`,
+      ).toBeGreaterThanOrEqual(contrastOn(String(lightToken[key]), container.light))
+    }
+  })
+
+  it.each(APPEARANCES)('选中项的描边与它的底能分开 %s下 ≥ 1.5:1', (appearance) => {
+    // 列表项的选中态是「浅底 + 一道描边」，两者同色时描边就是白画的
+    const token = tokenOf(appearance)
+    expect(
+      contrast(String(token.colorPrimaryBorder), String(token.colorPrimaryBg)),
+    ).toBeGreaterThanOrEqual(1.5)
+  })
+
+  it.each(APPEARANCES)('分隔线与边框在容器底上看得见 %s下', (appearance) => {
+    const token = tokenOf(appearance)
+    const container = String(token.colorBgContainer)
+    expect(contrast(String(token.colorBorderSecondary), container)).toBeGreaterThanOrEqual(1.1)
+    expect(contrast(String(token.colorBorder), container)).toBeGreaterThanOrEqual(1.3)
+  })
+
+  it.each(APPEARANCES)('列底与容器底、布局底能分开 %s下', (appearance) => {
+    /**
+     * 三层表面模型（DESIGN §3.6）：列底靠**明度差**与内容区分开，
+     * 而不是靠边框。
+     *
+     * 阈值刻意低（1.02 / 1.04）：这个差本来就是「几乎看不见的一层冷色」，
+     * 规范明说它「用来分隔而不加边框」。要拦的是**同值**（那时两栏会糊成
+     * 一整片，而看起来只是「有点闷」），不是要求它像边框一样清楚。
+     * 实测：浅色 1.025 / 1.055，深色 1.027 / 1.051。
+     */
+    const token = tokenOf(appearance)
+    const custom = customTokenFor(appearance)
+    expect(
+      contrast(custom.tintList, String(token.colorBgContainer)),
+      `${NAMES[appearance]}：列表底与容器底几乎同色`,
+    ).toBeGreaterThan(1.02)
+    expect(
+      contrast(custom.tintList, String(token.colorBgLayout)),
+      `${NAMES[appearance]}：列表底与布局底几乎同色`,
+    ).toBeGreaterThan(1.04)
+    // 两个列底也要能区分：它们相邻（左栏导航 / 中栏列表），同值会让两栏连成一片
+    expect(custom.tintList, `${NAMES[appearance]}：两个列底完全相同`).not.toBe(custom.tintNav)
   })
 })
 
 describe('关键值真的覆盖了 antd 默认', () => {
-  const fallback = theme.getDesignToken()
-
-  it('语义色文字不用 antd 默认值', () => {
+  it('浅色的语义文字不用 antd 默认值', () => {
     // antd 默认那套文字色在自家浅底上只有 1.83–3.66:1，见 docs/DESIGN.md §3
-    expect(token.colorSuccessText).not.toBe(fallback.colorSuccessText)
-    expect(token.colorWarningText).not.toBe(fallback.colorWarningText)
-    expect(token.colorErrorText).not.toBe(fallback.colorErrorText)
-    expect(token.colorInfoText).not.toBe(fallback.colorInfoText)
+    const fallback = theme.getDesignToken()
+    expect(lightToken.colorSuccessText).not.toBe(fallback.colorSuccessText)
+    expect(lightToken.colorWarningText).not.toBe(fallback.colorWarningText)
+    expect(lightToken.colorErrorText).not.toBe(fallback.colorErrorText)
+    expect(lightToken.colorInfoText).not.toBe(fallback.colorInfoText)
+    expect(lightToken.colorTextTertiary).not.toBe(fallback.colorTextTertiary)
+    expect(lightToken.colorTextQuaternary).not.toBe(fallback.colorTextQuaternary)
   })
 
-  it('文字阶被覆盖', () => {
-    expect(token.colorTextTertiary).not.toBe(fallback.colorTextTertiary)
-    expect(token.colorTextQuaternary).not.toBe(fallback.colorTextQuaternary)
+  it('深色的语义文字与文字阶也不用 antd 深色默认值', () => {
+    const fallback = theme.getDesignToken({ algorithm: theme.darkAlgorithm })
+    expect(darkToken.colorSuccessText).not.toBe(fallback.colorSuccessText)
+    expect(darkToken.colorWarningText).not.toBe(fallback.colorWarningText)
+    expect(darkToken.colorErrorText).not.toBe(fallback.colorErrorText)
+    expect(darkToken.colorInfoText).not.toBe(fallback.colorInfoText)
+    expect(darkToken.colorTextTertiary).not.toBe(fallback.colorTextTertiary)
+    expect(darkToken.colorTextQuaternary).not.toBe(fallback.colorTextQuaternary)
+  })
+
+  it('深色的链接色来自校准层，且确实不同于 antd 深色默认', () => {
+    /**
+     * 这条守的是最容易静默失效的一处：与**种子同名**的覆盖值会被 antd
+     * 的 `formatToken` 从最终结果里删掉，最终值由算法重新派生
+     * （见 `tokens.ts` 的 `darkCalibration`）。
+     *
+     * 所以「在 token 里写了 colorLink」不等于「生效」——必须断言**生效值**
+     * 等于我们要的那个色，而且它不等于 antd 自己派生出来的那个。
+     */
+    const antdDarkDefault = theme.getDesignToken({ algorithm: theme.darkAlgorithm })
+    const ours = String(darkToken.colorLink)
+    expect(ours).not.toBe(String(antdDarkDefault.colorLink))
+    // 校准层里写死的那个值，逐字比对——改了取值而忘了改这里会红，
+    // 那正是「文档与代码各说各话」的入口（DESIGN §3.8 有同一张表）
+    expect(ours).toBe('#79b8ff')
+  })
+
+  it('深色主题把校准层挂在 algorithm 上（不是定义了一个没人用的函数）', () => {
+    /**
+     * `darkCalibration` 定义了却忘了挂进 `mimirDarkTheme.algorithm` 时，
+     * 深色会静默用回 antd 深色默认的链接色（3.50:1，不达 AA）——
+     * 单看截图只是「链接有点暗」，不会有人去查。
+     */
+    expect(mimirDarkTheme.algorithm, '深色主题缺少校准层').toBeDefined()
+    // 校准层只放自己的那一步：基础算法由 antd-style 按 appearance 补，
+    // 这里再写一遍 darkAlgorithm 会让它跑两次
+    expect(mimirDarkTheme.algorithm).not.toBe(theme.darkAlgorithm)
+    expect(algorithmFor('dark')[0]).toBe(theme.darkAlgorithm)
+  })
+
+  it('深色的底来自 darkAlgorithm（而不是浅色那套）', () => {
+    // 「忘了把 darkAlgorithm 接进算法链」的症状是深色下底色仍是白的，
+    // 而那时文字阶的对比度看起来「还挺好」——所以必须单独断言底色
+    expect(String(darkToken.colorBgContainer)).not.toBe(String(lightToken.colorBgContainer))
+    expect(luminance(String(darkToken.colorBgContainer))).toBeLessThan(
+      luminance(String(lightToken.colorBgContainer)),
+    )
+    expect(luminance(String(darkToken.colorText))).toBeGreaterThan(
+      luminance(String(lightToken.colorText)),
+    )
   })
 
   it('品牌与形状保持既有决定', () => {
-    expect(token.colorPrimary).toBe('#1677ff')
-    expect(token.borderRadius).toBe(8)
-    expect(token.fontSize).toBe(14)
+    expect(lightToken.colorPrimary).toBe('#1677ff')
+    expect(lightToken.borderRadius).toBe(8)
+    expect(lightToken.fontSize).toBe(14)
+  })
+
+  it('两套外观共用同一份形状与字体', () => {
+    /**
+     * 半径、字号、字体栈只有一份定义（`tokens.ts` 的 `BASE_TOKEN`）。
+     * 分成两份 ThemeConfig 时最容易发生的漂移就是「深色忘了带这些」——
+     * 而症状只是「深色下圆角好像小一点」，没人会去查。
+     */
+    for (const key of ['borderRadius', 'fontSize', 'fontFamily', 'fontFamilyCode'] as const) {
+      expect(String(darkToken[key]), `${key} 在两套外观下不一致`).toBe(String(lightToken[key]))
+    }
   })
 })
 
@@ -247,7 +536,8 @@ describe('品牌标记', () => {
    * 1. 井口必须用 `fill-rule="evenodd"` 挖空，不能拿白色圆形盖上去。
    *    白圆在白底上看着没问题，但标记放到主色按钮或深色浮层上就会露出白点。
    * 2. 颜色必须走 `currentColor`。写死 hex 的话，主题换色时 logo 不跟着走，
-   *    于是它成为全站唯一一个「不服从主题」的元素。
+   *    于是它成为全站唯一一个「不服从主题」的元素——**深色模式下尤其明显**，
+   *    那口井会在深色导航上留下一个白色的洞。
    */
   it('品牌标记是镂空的，且颜色跟随 currentColor', async () => {
     const { readFile } = await import('node:fs/promises')
@@ -280,8 +570,8 @@ describe('字体栈只有一处定义', () => {
     // 字体栈曾经定义在 global.css、由 tokens.ts 用 var(--mimir-font-sans) 引用。
     // 改用 antd-style 后 customToken 能直接承载它，于是改成真常量：
     // 引用方拿到的是字体栈本身，不是一次变量间接。
-    expect(token.fontFamily).toBe(FONT_SANS)
-    expect(token.fontFamilyCode).toBe(FONT_MONO)
+    expect(lightToken.fontFamily).toBe(FONT_SANS)
+    expect(lightToken.fontFamilyCode).toBe(FONT_MONO)
   })
 
   it('字体栈含中文兜底', () => {
@@ -293,21 +583,39 @@ describe('字体栈只有一处定义', () => {
   })
 })
 
-describe('自定义 token 与内容区色', () => {
-  it('列底色与行内代码色有值且是 hex', () => {
-    expect(mimirCustomToken.tintList).toMatch(/^#[0-9a-f]{6}$/i)
-    expect(mimirCustomToken.tintNav).toMatch(/^#[0-9a-f]{6}$/i)
-    expect(mimirCustomToken.inlineCodeFg).toMatch(/^#[0-9a-f]{6}$/i)
-    expect(mimirCustomToken.highlightBg).toMatch(/^#[0-9a-f]{6}$/i)
+describe('自定义 token', () => {
+  it.each(APPEARANCES)('四个表面色与热力色阶都有值且是 hex（%s）', (appearance) => {
+    const custom = customTokenFor(appearance)
+    for (const key of [
+      'tintList',
+      'tintNav',
+      'tintHover',
+      'inlineCodeFg',
+      'highlightBg',
+      'tintWarningSurface',
+      'borderWarningSurface',
+    ] as const) {
+      expect(custom[key], `${key} 不是 hex`).toMatch(/^#[0-9a-f]{6}$/i)
+    }
   })
 
-  it('行内代码字色配 fill-secondary 底 ≥ 4.5:1', () => {
+  it('两套外观的自定义 token 确实不同（不是复制过来的）', () => {
+    // 最常见的失误：加了深色分支却把浅色的值原样复制一份。
+    // 那种情况下界面「能用」，只是深色看着不对劲——没有任何报错
+    for (const key of Object.keys(mimirCustomToken) as (keyof typeof mimirCustomToken)[]) {
+      expect(mimirDarkCustomToken[key], `深色的 ${key} 与浅色相同`).not.toBe(mimirCustomToken[key])
+    }
+  })
+
+  it.each(APPEARANCES)('行内代码字色配 fill-secondary 底 %s下 ≥ 4.5:1', (appearance) => {
     // fill-secondary 是半透明的，要合成到内容实际所在的底上再算。
-    // 白底 4.93:1、列表底 4.80:1——两种都要达标。
-    for (const surface of ['#ffffff', mimirCustomToken.tintList]) {
+    // 内容区与列表底两种都要达标。
+    const token = tokenOf(appearance)
+    const custom = customTokenFor(appearance)
+    for (const surface of [String(token.colorBgContainer), custom.tintList]) {
       expect(
-        contrastOver(mimirCustomToken.inlineCodeFg, String(token.colorFillSecondary), surface),
-        `行内代码在 ${surface} 上对比度不足`,
+        contrastOver(custom.inlineCodeFg, String(token.colorFillSecondary), surface),
+        `${NAMES[appearance]}：行内代码在 ${surface} 上对比度不足`,
       ).toBeGreaterThanOrEqual(4.5)
     }
   })
@@ -324,8 +632,10 @@ describe('自定义 token 与内容区色', () => {
    * 色值直接取自 antd 语义 token（`tokens.ts` 已覆盖的值），这里按最终
    * 生效的颜色再算一遍——多一层校验不亏，因为这四个值同时被两个视图使用。
    */
-  it('代码块语法高亮配色在 tintNav 底上 ≥ 4.5:1', () => {
-    const surfaces = [mimirCustomToken.tintNav, '#ffffff']
+  it.each(APPEARANCES)('代码块语法高亮配色在代码块底上 %s下 ≥ 4.5:1', (appearance) => {
+    const token = tokenOf(appearance)
+    const custom = customTokenFor(appearance)
+    const surfaces = [custom.tintNav, String(token.colorBgContainer)]
     const highlightColors = {
       注释: String(token.colorTextTertiary),
       关键字: String(token.colorLink),
@@ -336,7 +646,7 @@ describe('自定义 token 与内容区色', () => {
       for (const surface of surfaces) {
         expect(
           contrast(color, surface),
-          `语法高亮「${name}」在 ${surface} 上对比度不足`,
+          `${NAMES[appearance]}：语法高亮「${name}」在 ${surface} 上对比度不足`,
         ).toBeGreaterThanOrEqual(4.5)
       }
     }
@@ -356,58 +666,186 @@ describe('自定义 token 与内容区色', () => {
    * 判据是「选中底与未选中的底不是同一个颜色」，而不是「某条装饰线够深」。
    * 这是把测试写对，不是把断言改松。
    */
-  it('选中态与未选中态的底色不同（三重线索的第一重）', () => {
+  it.each(APPEARANCES)('选中态与未选中态的底色不同 %s下', (appearance) => {
+    const token = tokenOf(appearance)
     const selected = String(token.colorPrimaryBg)
     const unselected = String(token.colorBgContainer)
     expect(selected).not.toBe(unselected)
-    // 与白底至少能看出不同（同色相不同明度，不要求 3:1——
+    // 与容器底至少能看出不同（同色相不同明度，不要求 3:1——
     // 非文本对比度要求针对的是「必须靠它才能理解内容」的图形，
     // 而这里选中的信息由底色 + 字色 + 字重共同承担）
     expect(contrast(selected, unselected)).toBeGreaterThan(1.05)
-    // 真正被要求 ≥ 4.5:1 的是**选中项上的文字**，DESIGN §3.2 已算过 5.50:1
-    expect(contrast(String(token.colorLink), selected)).toBeGreaterThanOrEqual(4.5)
+    // 真正被要求 ≥ 4.5:1 的是**选中项上的文字**（DESIGN §3.2 已算过）
+    expect(contrastOn(String(token.colorLink), selected)).toBeGreaterThanOrEqual(4.5)
   })
 
-  it('整理条上的警告文字 ≥ 4.5:1', () => {
+  it.each(APPEARANCES)('整理条上的警告文字 %s下 ≥ 4.5:1', (appearance) => {
+    const token = tokenOf(appearance)
+    const custom = customTokenFor(appearance)
     expect(
-      contrast(String(token.colorWarningText), mimirCustomToken.tintWarningSurface),
+      contrast(String(token.colorWarningText), custom.tintWarningSurface),
     ).toBeGreaterThanOrEqual(4.5)
-    // 收集标签的胶囊底是容器白，也要一起算
+    // 收集标签的胶囊底是容器色，也要一起算
     expect(
       contrast(String(token.colorWarningText), String(token.colorBgContainer)),
     ).toBeGreaterThanOrEqual(4.5)
   })
 })
 
-describe('来源徽标色对', () => {
-  // docs/DESIGN.md §3.7 的表：PRD 要求「资料与笔记一眼可分」，
-  // 但分得清的前提是看得清。改徽标配色时这里会拦下来。
-  it.each(Object.entries(BADGE_COLORS))('徽标「%s」文字 on 自身浅底 ≥ 4.5:1', (name, color) => {
-    if (!color?.fg || !color?.bg) return
-    expect(contrast(color.fg, color.bg), `${name} 徽标对比度不足`).toBeGreaterThanOrEqual(4.5)
+describe('用量热力图色阶', () => {
+  /**
+   * 这里测的不是「配色好不好看」，而是那个**最容易做错的判断**：
+   * 空格子（无调用）与最浅档（有一点活动）必须能分开。
+   *
+   * 浅色下用 `colorPrimaryBg`（#e6f4ff）当最浅档时，它与白底只差 1.05:1，
+   * 「有一点活动」和「完全没活动」在屏幕上几乎一样——这是贡献图
+   * 最常见的失败（docs/DESIGN.md §3.6.1）。
+   *
+   * 深色下同一个判断仍在，但方向相反：空格子是**更暗**的一方，
+   * 所以色阶往亮走。
+   */
+
+  it.each(APPEARANCES)('四档都有值且是 hex（%s）', (appearance) => {
+    for (const color of scaleOf(appearance)) expect(color).toMatch(/^#[0-9a-f]{6}$/i)
+  })
+
+  it.each(APPEARANCES)('最浅档与空格子、布局底都能分开 %s下', (appearance) => {
+    const token = tokenOf(appearance)
+    // 空格子的底是 colorFillQuaternary（半透明），先合成到容器底上再比
+    const empty = composite(String(token.colorFillQuaternary), String(token.colorBgContainer))
+    expect(contrast(scaleOf(appearance)[0]!, empty)).toBeGreaterThan(1.1)
+    // 也明显区别于布局底——否则在没铺底色时同样分不出来
+    expect(contrast(scaleOf(appearance)[0]!, String(token.colorBgLayout))).toBeGreaterThan(1.1)
+  })
+
+  it.each(APPEARANCES)('相邻两档能分开，否则四档等于两档（%s）', (appearance) => {
+    const levels = [
+      composite(
+        String(tokenOf(appearance).colorFillQuaternary),
+        String(tokenOf(appearance).colorBgContainer),
+      ),
+      ...scaleOf(appearance),
+    ]
+    for (let i = 1; i < levels.length; i += 1) {
+      expect(
+        contrast(levels[i]!, levels[i - 1]!),
+        `${NAMES[appearance]}：第 ${i} 档与第 ${i - 1} 档几乎一样`,
+      ).toBeGreaterThan(1.15)
+    }
+  })
+
+  it.each(APPEARANCES)('色阶单调加深（%s）', (appearance) => {
+    /**
+     * 分档写反会「越忙越浅」，而那种错误看起来只是「配色有点怪」。
+     *
+     * 两边共用同一条规则、但**方向相反**：
+     *  - 浅色：底是亮的，越忙越深 → 明度递减
+     *  - 深色：底是暗的，越忙越亮 → 明度递增
+     *
+     * 所以在状态里带上期望方向，而不是写死「递减」——后者会让深色那套
+     * 只能靠人眼判断「差不多对」。
+     */
+    const luminances = scaleOf(appearance).map((color) => luminance(color))
+    /**
+     * 方向用符号表达，而不是在循环里 if/else。
+     *
+     * 两份等价的写法（差值乘方向后必须为正），但 if/else 版本里
+     * 两个 `expect` 都是有条件的——`vitest/no-conditional-expect` 会拦下它，
+     * 而那条规则的理由在此成立：条件分支里的断言在条件恒假时**静默不跑**，
+     * 看起来是「通过了」。
+     */
+    const direction = appearance === 'dark' ? 1 : -1
+    for (let i = 1; i < luminances.length; i += 1) {
+      expect(
+        (luminances[i]! - luminances[i - 1]!) * direction,
+        `${NAMES[appearance]}：第 ${i} 档的明度方向反了`,
+      ).toBeGreaterThan(0)
+    }
   })
 })
 
-describe('设置页的色对', () => {
+describe('来源徽标色对', () => {
+  // docs/DESIGN.md §3.7 的表：PRD 要求「资料与笔记一眼可分」，
+  // 但分得清的前提是看得清。改徽标配色时这里会拦下来。
+  it.each(APPEARANCES)('徽标文字 on 自身底 %s下 ≥ 4.5:1', (appearance) => {
+    for (const [name, pair] of Object.entries(BADGE_COLORS[appearance])) {
+      expect(
+        contrast(pair.fg, pair.bg),
+        `${NAMES[appearance]}：「${name}」徽标对比度不足`,
+      ).toBeGreaterThanOrEqual(4.5)
+    }
+  })
+
+  it.each(APPEARANCES)('徽标的底与容器底能分开 %s下', (appearance) => {
+    // 徽标的底如果和面板底色同值，它就退化成一个纯文字标签，
+    // 而「一眼可分」靠的正是那块底色
+    const container = String(tokenOf(appearance).colorBgContainer)
+    for (const [name, pair] of Object.entries(BADGE_COLORS[appearance])) {
+      expect(
+        contrast(pair.bg, container),
+        `${NAMES[appearance]}：「${name}」徽标的底与容器底几乎同色`,
+      ).toBeGreaterThan(1.03)
+    }
+  })
+})
+
+describe('设置页与对话区的色对', () => {
   /**
-   * 设置页引入了三组上面的通用矩阵**没有覆盖**的组合：
+   * 这几组是上面的通用矩阵**没有覆盖**的组合：
    *
-   *  1. 插件条目的状态徽标：`colorSuccessText` on **容器白**（不是 on 自己的浅绿底——
+   *  1. 插件条目的状态徽标：`colorSuccessText` on **容器底**（不是 on 自己的浅绿底——
    *     徽标直接落在面板里）；以及「待开发」用 `colorFillTertiary` 这个半透明底
-   *  2. 自检结果里的警告文字：`colorWarningText` on 容器白
+   *  2. 自检结果里的警告文字：`colorWarningText` on 容器底
+   *  3. 抓取进度里那三个阶段圆点：图标 on 同语义浅底（成对使用）
    *
    * 它们都属于「状态必须能被看见」（DESIGN §0.2），所以照样要有底线。
-   * 加这条测试的理由与 `来源徽标色对` 一样——不测就会在下次换色时静默失效。
    */
-  it('状态徽标「已注册」：successText on 容器白 ≥ 4.5:1', () => {
+  it.each(APPEARANCES)('状态徽标：successText on 容器底 %s下 ≥ 4.5:1', (appearance) => {
+    const token = tokenOf(appearance)
     expect(
       contrast(String(token.colorSuccessText), String(token.colorBgContainer)),
     ).toBeGreaterThanOrEqual(4.5)
   })
 
-  it('状态徽标「待开发」：secondary on fill-tertiary（合成后）≥ 4.5:1', () => {
-    // colorFillTertiary 是半透明的，必须先合成到容器白上再算——
-    // 直接拿 alpha 值算会得到把黑色当底色的假数字
+  it.each(APPEARANCES)(
+    '状态徽标「待开发」：secondary on fill-tertiary %s下 ≥ 4.5:1',
+    (appearance) => {
+      // colorFillTertiary 是半透明的，必须先合成到容器底上再算——
+      // 直接拿 alpha 值算会得到把黑色当底色的假数字
+      const token = tokenOf(appearance)
+      expect(
+        contrastOver(
+          String(token.colorTextSecondary),
+          String(token.colorFillTertiary),
+          String(token.colorBgContainer),
+        ),
+      ).toBeGreaterThanOrEqual(4.5)
+    },
+  )
+
+  it.each(APPEARANCES)('抓取阶段的三个圆点：图标 on 语义底 %s下 ≥ 4.5:1', (appearance) => {
+    const token = tokenOf(appearance)
+    const pairs = [
+      ['完成', token.colorSuccessText, token.colorSuccessBg],
+      ['失败', token.colorErrorText, token.colorErrorBg],
+      // 正在跑的那一步用的是链接色（文字角色）而不是主色
+      ['进行中', token.colorLink, token.colorPrimaryBg],
+    ] as const
+    for (const [name, foreground, background] of pairs) {
+      expect(
+        contrast(String(foreground), String(background)),
+        `${NAMES[appearance]}：抓取阶段「${name}」的圆点不达标`,
+      ).toBeGreaterThanOrEqual(4.5)
+    }
+  })
+
+  it.each(APPEARANCES)('来源标注（手动 / AI）成对使用语义色 %s下 ≥ 4.5:1', (appearance) => {
+    const token = tokenOf(appearance)
+    // 手动编辑走信息色对
+    expect(contrast(String(token.colorInfoText), String(token.colorInfoBg))).toBeGreaterThanOrEqual(
+      4.5,
+    )
+    // AI 整理走中性色对
     expect(
       contrastOver(
         String(token.colorTextSecondary),
@@ -415,9 +853,6 @@ describe('设置页的色对', () => {
         String(token.colorBgContainer),
       ),
     ).toBeGreaterThanOrEqual(4.5)
-  })
-
-  it('检索自检的警告文字 on 容器白 ≥ 4.5:1', () => {
     expect(
       contrast(String(token.colorWarningText), String(token.colorBgContainer)),
     ).toBeGreaterThanOrEqual(4.5)
@@ -482,6 +917,9 @@ async function renderApp(child: ReactElement = createElement(Probe)) {
   return {
     host,
     css,
+    /** 重读一次注入的 CSS（切换外观后用） */
+    readCss: () =>
+      [...document.querySelectorAll('style')].map((style) => style.textContent ?? '').join('\n'),
     unmount: async () => {
       await act(async () => root.unmount())
       host.remove()
@@ -489,8 +927,20 @@ async function renderApp(child: ReactElement = createElement(Probe)) {
   }
 }
 
+/** 把外观切到指定值（沿用真实的状态存储，不绕过它） */
+async function switchAppearance(appearance: Appearance): Promise<void> {
+  await act(async () => {
+    setThemeMode(appearance)
+  })
+}
+
+afterEach(async () => {
+  // 状态是模块级的，跑完一轮要还原成跟随系统，避免污染下一条测试
+  await switchAppearance('light')
+})
+
 describe('cssVar 运行时确实注入了变量', () => {
-  it('--ant-* 变量带着 mimir 的覆盖值出现', async () => {
+  it('浅色下 --ant-* 变量带着 mimir 的覆盖值出现', async () => {
     const { host, css, unmount } = await renderApp()
 
     // 这些变量是内容排版与列底色的依赖：它们必须真的存在
@@ -546,6 +996,21 @@ describe('cssVar 运行时确实注入了变量', () => {
     await unmount()
   })
 
+  it('html 的底色带 !important（否则压不过首帧脚本的内联兜底）', async () => {
+    /**
+     * `index.html` 的首帧脚本给 `html` 写了一个**内联**兜底背景，
+     * 只为覆盖「脚本执行到样式注入」那一段空白。内联样式优先于样式表，
+     * 所以这里的全局规则不加 `!important` 就会一直输——**运行时切换外观时
+     * html 的底不会跟着变**（刷新后才对），表现是切换后 overscroll
+     * 露出上一层外观的颜色。这条守的就是那个 `!important`。
+     */
+    const { css, unmount } = await renderApp()
+
+    expect(css).toMatch(/html\s*\{[^}]*background:[^;}]*!important/i)
+
+    await unmount()
+  })
+
   it('嵌套 ConfigProvider 不会把 cssVar 的 key 改掉', async () => {
     // MimirProvider 里 ConfigProvider 只传 locale、不传 theme。
     // 如果哪天有人补上 theme，antd 会重算 cssVar key，--ant-* 变量名就变了，
@@ -576,10 +1041,82 @@ describe('主题真的接通了', () => {
   it('locale 仍然是中文', async () => {
     // MimirProvider 里 ConfigProvider 只负责 locale。重构 provider 时
     // 很容易把它连着 theme 一起搬走，表现是组件文案静默变回英文。
-    // Empty 不给 description 时会渲染 locale 里的默认文案，用它当探针。
+    // 直接用 antd 的 Empty 当探针：不给 description 时它渲染 locale 的默认文案。
+    const { Empty } = await import('antd')
     const { host, unmount } = await renderApp(createElement(Empty))
 
     expect(host.textContent).toContain('暂无数据')
+    await unmount()
+  })
+})
+
+describe('外观切换真的生效', () => {
+  /**
+   * 这一组是本文件里**最重要**的运行时断言。
+   *
+   * 静态 token 测过不等于装配对了：变量块可能还是旧的、可能变成两块
+   * （后一块覆盖前一块）、也可能只换了 `--ant-*` 而自定义 token 没跟着走。
+   * 三种都静默。
+   */
+  it('切到深色后变量块被替换成深色的值，且只有一块', async () => {
+    const { css, unmount } = await renderApp()
+    expect(css).toContain('--ant-color-bg-container:#ffffff')
+
+    await switchAppearance('dark')
+    const after = document.querySelectorAll('style[data-token-hash="mimir"]')
+
+    // 只有一个变量块：两块共存时后一块会盖住前一块，
+    // 表面上「看着对」，但只要渲染顺序变一次就会翻车
+    //
+    // 选择器用 `data-token-hash`（cssinjs 的 ATTR_TOKEN），值是 cssVar 的
+    // key（'mimir'）。写错的话 count 是 0，而 0 也会让「不该有两份」通过——
+    // 所以下面还要断言真正拿到了深色的值
+    expect(after.length, '变量块不该有第二份').toBe(1)
+
+    const darkVars = [...after].map((style) => style.textContent ?? '').join('\n')
+    expect(darkVars).toMatch(/--ant-color-bg-container:\s*#141618/i)
+    expect(darkVars).toMatch(/--ant-color-link:\s*#79b8ff/i)
+    expect(darkVars).toMatch(/--ant-color-text-tertiary:\s*rgba\(255,\s*255,\s*255,\s*0?\.52\)/i)
+    // 浅色那套值必须已经不在了——否则就是「两套色混在一起」，最难查的一种
+    expect(darkVars).not.toContain('--ant-color-bg-container:#ffffff')
+
+    await unmount()
+  })
+
+  it('切到深色后自定义 token 也换了（createStyles 重新生成）', async () => {
+    const { css: before, readCss, unmount } = await renderApp()
+    expect(before).toContain(mimirCustomToken.tintList)
+
+    await switchAppearance('dark')
+    const after = readCss()
+
+    expect(after).toContain(mimirDarkCustomToken.tintList)
+    expect(after).toContain(mimirDarkCustomToken.inlineCodeFg)
+
+    await unmount()
+  })
+
+  it('切换到深色会把 html 的 data-theme 与 color-scheme 一起换掉', async () => {
+    const { unmount } = await renderApp()
+
+    await switchAppearance('dark')
+    // 原生控件（滚动条、select 下拉）只认 color-scheme，
+    // 不设它深色页面上就会挂着一根亮色滚动条
+    expect(document.documentElement.dataset.theme).toBe('dark')
+    expect(document.documentElement.style.colorScheme).toBe('dark')
+
+    await unmount()
+  })
+
+  it('切回浅色能还原（不是单向的）', async () => {
+    const { unmount } = await renderApp()
+
+    await switchAppearance('dark')
+    await switchAppearance('light')
+    const block = document.querySelector('style[data-token-hash="mimir"]')?.textContent ?? ''
+
+    expect(block).toMatch(/--ant-color-bg-container:\s*#ffffff/i)
+    expect(block).not.toContain('--ant-color-bg-container:#141618')
 
     await unmount()
   })

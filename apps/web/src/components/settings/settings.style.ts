@@ -229,6 +229,122 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     color: ${token.colorTextSecondary};
   `,
 
+  /* ── 供应商卡片 ─────────────────────────────────────── */
+  /** 一行里的字段并排：显示名 + 地址 + 密钥状态 */
+  providerHead: css`
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  `,
+  /**
+   * 密钥状态徽标。
+   *
+   * 与 `pending` 一样刻意**不用颜色**区分好坏：语义色会暗示
+   * 「红色 = 出问题了」，而「还没填密钥」是一个中性的中间状态，
+   * 不是错误（用户可能正要填）。
+   */
+  okBadge: css`
+    display: inline-flex;
+    align-items: center;
+    flex: none;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: ${token.colorSuccessBg};
+    font-size: ${FONT_SIZE.badge}px;
+    font-weight: 600;
+    line-height: 1.7;
+    color: ${token.colorSuccessText};
+  `,
+  /** 模型名列表。等宽 + 可换行，扫读时像看一份清单 */
+  modelChips: css`
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 8px;
+  `,
+  modelChip: css`
+    margin: 0;
+    font-family: ${token.fontFamilyCode};
+    font-size: ${FONT_SIZE.meta}px;
+  `,
+
+  /**
+   * 用原生 `<select>` 而不是 antd 的 `Select`。
+   *
+   * 理由是这个控件要出现在**很多行里**（每个角色两个），而 antd 的
+   * `Select` 每实例挂一层浮层与虚拟列表——五行的设置页用不上那些，
+   * 而且它的宽度会随内容跳动。原生控件的键盘行为与可访问性也已经是
+   * 平台标准，不需要再造一遍。
+   *
+   * 样式只调外观：宽度、字号、边框跟随主题 token。
+   */
+  select: css`
+    max-width: 220px;
+    padding: 3px 8px;
+    background: ${token.colorBgContainer};
+    border: 1px solid ${token.colorBorder};
+    border-radius: 6px;
+    font-size: ${FONT_SIZE.excerpt}px;
+    color: ${token.colorText};
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 2px solid ${token.colorPrimaryBorder};
+      outline-offset: 1px;
+    }
+
+    &:disabled {
+      cursor: not-allowed;
+      color: ${token.colorTextTertiary};
+    }
+  `,
+
+  /* ── 预设选择器 ─────────────────────────────────────── */
+  presetGrid: css`
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 8px;
+  `,
+  presetCard: css`
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 10px 12px;
+    text-align: left;
+    background: ${token.colorBgContainer};
+    border: 1px solid ${token.colorBorderSecondary};
+    border-radius: 8px;
+    cursor: pointer;
+
+    &:hover {
+      border-color: ${token.colorPrimaryBorder};
+    }
+  `,
+  presetName: css`
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: ${FONT_SIZE.excerpt}px;
+    font-weight: 600;
+    color: ${token.colorText};
+  `,
+  /** 常用标记：一个小圆点，比「常用」两个字轻 */
+  presetDot: css`
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: ${token.colorPrimary};
+  `,
+  presetUrl: css`
+    font-family: ${token.fontFamilyCode};
+    font-size: ${FONT_SIZE.meta}px;
+    color: ${token.colorTextTertiary};
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  `,
+
   /* ── 工具类 ─────────────────────────────────────────── */
   mono: css`
     font-family: ${token.fontFamilyCode};

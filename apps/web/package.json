@@ -30,6 +30,7 @@
     "@tiptap/pm": "catalog:",
     "@tiptap/react": "catalog:",
     "@tiptap/starter-kit": "catalog:",
+    "@uiw/react-heat-map": "2.3.4",
     "antd": "^6.6.4",
     "antd-style": "^4.1.0",
     "dayjs": "^1.11.23",

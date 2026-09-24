@@ -1,11 +1,14 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Tabs } from 'antd'
 import { AccountSection } from '@/components/settings/AccountSection'
+import { AppearanceSection } from '@/components/settings/AppearanceSection'
 import { CaptureSection } from '@/components/settings/CaptureSection'
 import { DataSection } from '@/components/settings/DataSection'
 import { ModelsSection } from '@/components/settings/ModelsSection'
 import { PluginsSection } from '@/components/settings/PluginsSection'
 import { RetrievalSection } from '@/components/settings/RetrievalSection'
+import { StatsSection } from '@/components/settings/StatsSection'
+import { StorageSection } from '@/components/settings/StorageSection'
 import { useStyles } from '@/components/settings/settings.style'
 
 /**
@@ -42,8 +45,11 @@ const SECTIONS = [
   { key: 'models', label: '模型' },
   { key: 'retrieval', label: '检索' },
   { key: 'capture', label: '抓取' },
+  { key: 'storage', label: '存储' },
   { key: 'plugins', label: '插件' },
+  { key: 'stats', label: '统计' },
   { key: 'data', label: '数据与备份' },
+  { key: 'appearance', label: '外观' },
   { key: 'account', label: '账号' },
 ] as const
 
@@ -128,6 +134,9 @@ function SectionBody({ section }: { section: SectionKey }) {
   if (section === 'plugins') return <PluginsSection />
   if (section === 'models') return <ModelsSection />
   if (section === 'capture') return <CaptureSection />
+  if (section === 'storage') return <StorageSection />
+  if (section === 'stats') return <StatsSection />
+  if (section === 'appearance') return <AppearanceSection />
   if (section === 'account') return <AccountSection />
   return <RetrievalSection />
 }

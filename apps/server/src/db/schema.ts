@@ -1,6 +1,8 @@
 import { sql } from 'drizzle-orm'
 import {
+  boolean,
   index,
+  integer,
   jsonb,
   pgTable,
   primaryKey,
@@ -209,6 +211,67 @@ export const settings = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index('settings_updated_at_idx').on(t.updatedAt.desc())],
+)
+
+/**
+ * 用量记账。**一行 = 一次模型调用**（含失败），append-only。
+ *
+ * ## 为什么不是从现有表现算
+ *
+ * `messages` / `documents` 都有 `created_at`，看起来「问了多少次、写了多少篇」
+ * 可以直接聚合。但**现有表里没有 token 数**，而 token 只有调用那一刻才知道、
+ * 事后无可挽回；`updated_at` 又是可变的（只反映最后一次编辑）。
+ *
+ * ## 四个刻意的设计（`docs/TECH.md` §12、D-034）
+ *
+ * 1. **不加外键**到 conversations / documents，只存 `refId` 字符串。
+ *    `messages.conversation_id` 是 `onDelete: 'cascade'`——加外键的话，
+ *    删一个会话，「我这个月花了多少钱」会**静默变少**。账本不该被业务删除改写
+ * 2. **token 三列可为 null，且 null ≠ 0**。兼容端点不一定回传 usage；
+ *    填 0 会让界面显示「今天 0 token」而那天明明调了 8 次——确定的谎言
+ *    比诚实的未知糟得多
+ * 3. **失败也记**（`ok = false`）。失败的调用可能已经计费（流式中断、超时），
+ *    而且失败率本身解释了「为什么这个月体验差」
+ * 4. **只记数字，不记 prompt 内容**。存了内容它就成了第二个消息存储，
+ *    检索、导出、删除都要跟着处理它
+ */
+export const usageLog = pgTable(
+  'usage_log',
+  {
+    id: text('id').primaryKey(),
+    /** 调用时刻。**不可变**——它与业务表的 `updated_at` 是两种东西 */
+    at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
+
+    /** chat | reasoning | summarize | embed */
+    role: text('role').notNull(),
+    /**
+     * 这次调用属于哪个功能：chat | ask | summary | embed | probe。
+     *
+     * 它是「这笔钱花在哪个功能上」的唯一答案。`probe`（设置页的测试连接）
+     * 必须单列一类：它是真实调用，混进「我的用量」是另一种说谎。
+     */
+    source: text('source').notNull(),
+
+    model: text('model').notNull(),
+    /** provider 插件的 id */
+    providerId: text('provider_id').notNull().default(''),
+    /** 端点主机名。同一 provider 换了地址后历史数据仍能分辨 */
+    baseUrlHost: text('base_url_host').notNull().default(''),
+
+    /** 三列都可空——null 是「供应商没回传」，0 是「确实没花」，两者不能合并 */
+    promptTokens: integer('prompt_tokens'),
+    completionTokens: integer('completion_tokens'),
+    totalTokens: integer('total_tokens'),
+
+    durationMs: integer('duration_ms').notNull().default(0),
+    ok: boolean('ok').notNull().default(true),
+    /** quota | timeout | truncated | offline，与消息的 failure 同一套分类 */
+    failureKind: text('failure_kind'),
+
+    /** 会话 id 或文档 id。**无外键**，见上 */
+    refId: text('ref_id'),
+  },
+  (t) => [index('usage_log_at_idx').on(t.at.desc())],
 )
 
 // Better Auth 的表结构单独一个文件，但必须并入同一个 schema 对象，

@@ -115,6 +115,7 @@ mimir/
 │           ├── routes/          # 路由（根路由承担鉴权守卫）
 │           ├── components/      # 含 settings/（各分区）
 │           ├── editor/          # Tiptap 扩展与保真测试
+│           ├── theme/           # 设计 token、外观状态、provider、守门测试
 │           └── lib/             # API 客户端 / Query / 路由 context
 ├── packages/
 │   ├── shared/                  # 契约：zod schema + 类型 + 插件接口（源码发布）
@@ -124,7 +125,8 @@ mimir/
 │   ├── capturer/                # URL → 原始内容（网页 / 公众号 / GitHub）
 │   ├── parser/                  # 原始内容 → Markdown（直通 / Readability）
 │   ├── leg/                     # 查询 → 排序好的检索单元 id（关键词 / 子串）
-│   └── provider/                # 角色 → 模型适配器（OpenAI 兼容）
+│   ├── provider/                # 角色 → 模型适配器（OpenAI 兼容）
+│   └── storage/                 # key → 字节（本地磁盘 / S3）——见 §7.2
 ├── output/                      # 交互原型（单文件静态页）
 ├── docs/
 └── data/                        # 运行时数据，不进 git
@@ -608,29 +610,88 @@ BubbleMenu 只管浮层位置与显隐。
 M0 **保留但禁用**并在 tooltip 里说明——直接删掉用户会找不到入口，
 做得像能点却没反应是最坏的一种。
 
-### 5.7 任务分配
+### 5.7 供应商、模型与角色
 
-不同任务用不同模型，这是最直接的成本控制手段。**每个任务是一个「角色」**，
-角色在 `plugins/provider/` 注册（§7.4），模型通过 `model.<角色>.*` 键配置
-（§7.5），所以「摘要换一个便宜模型」不需要改代码：
+模型配置有两层，**它们是不同的东西**：
 
-| 角色 | 特点 | 默认 | 键 |
+```
+供应商（连接）        角色（用途）
+┌──────────────────┐   ┌─────────────────────┐
+│ DeepSeek          │   │ 对话   → DeepSeek / deepseek-chat
+│  ├ 地址           │   │ 深度思考 → DeepSeek / deepseek-reasoner
+│  ├ 密钥（加密）    │   │ 摘要   → （留空，回落对话）
+│  └ 模型列表        │   │ 向量化 → 硅基流动 / BAAI/bge-m3
+├──────────────────┤   └─────────────────────┘
+│ 硅基流动          │            ↑
+│  └ …             │      绑定是 (供应商, 模型) 一对
+└──────────────────┘
+```
+
+**一次配置 = 一个供应商实例**，所以同一家可以配两次（两个账号、
+或一个云端一个本地推理）。要一个云端做对话 + 一个本地做向量化，
+建两条即可——不需要任何「多实例」的特殊机制，因为列表本身就是形状。
+
+**加一家服务商是加一行数据**（`plugins/provider/src/presets.ts`），
+不是加代码：预设里只说「用哪个适配器族、baseURL 是什么、建议哪些模型」。
+适配器族（`openai-compatible`）管的是**协议**，预设管的是**哪一家**。
+
+| 角色 | 特点 | 回落规则 |
+|---|---|---|
+| `chat` | 量小、要求高 | 必填 |
+| `reasoning` | 深度思考时切换 | 未绑定时用 `chat` |
+| `summarize` | 量大、要求低 | **留空即回落到 `chat`** |
+| `embed` | 量最大 | **没有回落**——它必须是 embedding 模型 |
+| `rerank` | 未实现 | — |
+
+**绑定为什么是一对而不是一个模型名**：多供应商下裸模型名会歧义
+（两家都有 `glm-4`），于是要么禁止重名、要么给模型名加前缀。
+`docs/RESEARCH.md` 记了一个因裸 id 寻址而不得不发明前缀的实例——
+那是把耦合写进了用户可见的名字里。
+
+**摘要留空回落 `chat`**：用强模型做摘要只是浪费钱，不是错误。
+而 `embed` 没有回落：**向量通道的「不可用」是一个明确状态**，
+不能悄悄用对话模型去算向量。
+
+#### 密钥的三态（界面上必须能区分）
+
+| 用户做什么 | 提交什么 | 结果 |
+|---|---|---|
+| 不改密钥，只改名字 | 不传那个供应商的草稿 | 保留已存的密钥 |
+| 新填一把 | 传新值 | 加密后替换 |
+| 点「清除」 | 传空串 | 删掉 |
+
+中间那一列是整块配置里**唯一需要理解的部分**：不传与传空串的含义完全不同，
+而搞错的后果是密钥被静默清掉（`plugins/provider/src/instances.ts` 的
+`fromWire` 负责合并，`instances.test.ts` 有三条断言守着这三个状态）。
+
+#### 校验分三层
+
+| 层 | 何时 | 做什么 | 成本 |
 |---|---|---|---|
-| `chat` | 量小、要求高 | `deepseek-chat` | `model.chat.model` |
-| `reasoning` | 同上，深度思考时切换 | `deepseek-reasoner` | `model.reasoning.model` |
-| `summarize` | 量大、要求低 | 缺省时回落 chat | `model.summarize.model` |
-| `embed` | 量最大 | 未配置 → 向量通道不启用 | `model.embed.model` |
-| `rerank` | 未实现 | — | — |
+| 格式 | 写入时 | 地址是 http(s)、id 唯一、新增的必须有密钥 | 零 |
+| 连通性 | 点「测试连接」 | 真的发一次请求（有模型时发最小对话；没有则拉一次 `/models`） | 一次调用 |
+| 角色适配 | 选角色时 | 向量化角色只列 embedding 模型 | 零 |
 
-**可选的 `model.<角色>.baseUrl` / `.apiKey` 覆盖全局值**：一套主力端点
-（DeepSeek）加一个便宜的 embedding 服务（如硅基流动的 bge-m3）是常见组合，
-没有这层覆盖就只能整库切到一个服务商。
+第三层**必须有**：不做的话用户会把对话模型选进向量化角色，
+然后到第一次写入向量时才失败。判据用模型名里的 `embed` / `bge` 这类词
+（不精确，但失败方向是安全的——误判只让用户多看到一个选项）。
 
-**未配置 `model.summarize.model` 时回落到 chat**，而不是「摘要功能不可用」：
-摘要用强模型只是浪费钱，不是错误。而 `embed` 没有回落——**向量通道的
-「不可用」是一个明确状态**，不能悄悄用 chat 模型去算向量。
+供应商级探测**不依赖角色绑定**，这是它存在的理由：新建供应商时它不属于
+任何角色，而用户此刻最想知道的就是「这个地址和密钥通不通」。
+`tookMs` 一起返回，用来区分「慢」与「不通」。
 
-另外：按**内容哈希缓存摘要**，文档没变就不重复调用。`usage_log` 记录每次调用的 token 与花费。
+#### 从供应商拉模型列表
+
+四个同类产品都有这个动作（`docs/RESEARCH.md`）。它**不花 token**
+（`GET /models`），所以可以放心点。拉取成功后写回该供应商的模型列表，
+并把来源标成 `fetched`；**用户手加的模型（`manual`）不会被冲掉**。
+
+预设里也给几个建议模型：刚填完密钥时可能连不上（容器里、被墙、
+本地服务还没加载模型），那时预设列表让用户仍然能建起一个能用的配置。
+
+另外：按**内容哈希缓存摘要**，文档没变就不重复调用。`usage_log` 记录每次调用的
+token、耗时与成败——**金额暂不记**：token 是供应商回传的事实，金额是我们按单价
+换算出来的推导值。理由见 §12.5 与 D-035。
 
 ---
 
@@ -674,17 +735,47 @@ M0 **保留但禁用**并在 tooltip 里说明——直接删掉用户会找不�
 
 ### 7.2 接缝清单
 
-| 接缝 | 输入 → 输出 | 已有实现 | 规划 |
+| 接缝 | 输入 → 输出 | 已有实现（`plugins/`） | 规划 |
 |---|---|---|---|
-| `capturer` | URL / 文件 → 统一 Markdown + 元数据 | 网页、公众号、GitHub | RSS、Star 同步、扩展 |
-| `parser` | 原始内容 → 结构化文本（保留页码/偏移） | Markdown（原生） | PDF、Word |
+| `capturer` | URL → **原始内容** + 元数据（不转换格式） | 网页、公众号、GitHub | RSS、Star 同步、扩展 |
+| `parser` | 原始内容 → 统一 Markdown（不抓取、不写库） | Markdown 直通、HTML 正文提取 | PDF、Word |
 | `leg` | 查询 → 已排序的**检索单元** id 列表 | 关键词、子串兜底 | 向量、重排序 |
-| `provider` | 角色 → 模型适配器 | openai-compatible（chat / summarize / embed） | 原生 Ollama、rerank |
+| `provider` | 角色 → 模型适配器 | openai-compatible（chat / reasoning / summarize / embed） | 原生 Ollama、rerank |
+| `storage` | 相对路径（key）→ 字节 | **本地磁盘**（默认）、S3 / 对象存储 | WebDAV、其他兼容端点 |
 
-**明确不做成接缝的**（`DECISIONS.md` D-031）：向量库、对象存储、图数据库。
-本项目只有 Postgres 一个后端，把它抽象成可切换的存储引擎，代价是所有查询
-要过一层接口，收益是零——WeKnora 支持 10 种向量库是因为它要卖给什么栈都有的企业。
-**Postgres 同时是关系库、全文索引与向量库**，这是本项目的简化前提，不是待替换的组件。
+抓取与解析**拆成两条接缝**是这次重构的一处实质改动：原先
+「网页怎么变成 Markdown」写在抓取器里，于是换 HTML 转换策略要改三个抓取器。
+现在抓取器只负责「把内容拿下来」（站点特有的知识：公众号的 `#js_content`、
+GitHub 的 API 与限额），解析器只负责「HTML → Markdown」。
+`CaptureRaw` 里的 `content` 是 `{type: 'html'} | {type: 'markdown'}`，
+解析器用 `accepts` 声明自己能处理哪些类型——**宿主按声明选实现，
+不用 try 一遍看谁不报错**（GitHub 的 README 本来就是 md，再走 HTML 转换是倒退）。
+
+#### `storage`：与其他四条有一处本质不同
+
+前四条都是**复数**的：多个 leg 一起跑（融合），其余三条按 URL / 输入类型 /
+角色**各选一个**，但同一时刻可能不止一个在干活。存储是**单数**的——
+任何时刻只有一个后端在用，其余是**备选**。所以未选中的那个不能显示成「可用」，
+否则设置页会说「两个存储后端都可用」而实际只有一个是真相
+（`RESEARCH.md` §10.6）。这带来契约上的一处放宽，见 §7.4 的 `unavailable(read)`。
+
+key 是**相对 `DATA_DIR` 的 POSIX 路径**（`vault/…`、`raw/…`、`avatars/…`）：
+本地后端下它与磁盘路径一一对应（所以 Typora / Obsidian / git 照旧可用），
+换 S3 时同一批 key 直接是桶内对象名。三个前缀也延续了 D-036 的边界——
+头像不在 `vault/` 下，因此不进分词、不进导出、不进重建索引的扫描范围。
+
+**明确不做成接缝的**（`DECISIONS.md` D-031，**已由 D-038 收窄**）：
+向量库、图数据库。本项目只有 Postgres 一个后端，把它抽象成可切换的存储引擎，
+代价是所有查询要过一层接口，收益是零——WeKnora 支持 10 种向量库是因为它要卖给
+什么栈都有的企业。**Postgres 同时是关系库、全文索引与向量库**，
+这是本项目的简化前提，不是待替换的组件。
+
+> **注意这里原先还列着「对象存储」**，D-038 已把它移出并做了接缝。
+> 理由不是「用户想要」，而是 D-031 自己给的判据：
+> **有多实现的地方抽接缝**。数据库没有第二个实现，文件存储**有**（本地与 S3），
+> 而且第二个不是「兼容已有栈」——VPS 部署的人本来就没有本地文件可以开。
+> D-031 的三条理由全部关于 **SQL 方言**，而文件读写没有方言。
+
 
 同理不做的：外部插件市场（PRD §1）、Cordis 式依赖注入（7.3）。
 
@@ -695,18 +786,22 @@ M0 **保留但禁用**并在 tooltip 里说明——直接删掉用户会找不�
 理由：`capturer` / `parser` / `provider` 三条接缝的实现都还很少。凭想象设计接口，
 八成会把参数集设计错，然后每加一个实现都要改接口——比不抽还累。
 
-**`leg` 已经走完了这个流程**，可以当作其余三条的样板：
+**四条接缝现在都有了实现**，形状也定型了（`packages/shared/src/seams.ts`）：
 
 ```
-plugins/leg/
-├── types.ts      RetrievalLeg 接口（从两个实现的共同点反推）
-├── keyword.ts    jieba 预分词 + GIN + ts_rank_cd
-├── substring.ts  pg_trgm + ILIKE
-└── index.ts      注册表：retrievalLegs = [keywordLeg, substringLeg]
+plugins/leg/src/
+├── keyword.ts     jieba 预分词 + GIN + ts_rank_cd；export install()
+├── substring.ts   pg_trgm + ILIKE，逐词匹配
+└── index.ts       install(host)：把两个实现注册进 host.leg
 ```
 
-接口本身只有三个成员：`name`（写进 matchedBy）、`weight`（融合权重）、
-`run(ctx)`（召回并返回排序好的 id 列表）。通道不负责融合、不负责重排、不取正文。
+接口本身只有三个成员：`id`（写进 matchedBy）、`defaultWeight`（融合权重的
+初始猜测，可被设置覆盖）、`run(ctx)`（召回并返回排序好的 id 列表）。
+通道不负责融合、不负责重排、不取正文——那三件事在 core 的 `pipeline.ts` 与
+宿主的 `search/index.ts` 里。
+
+**运行接口放在 `shared` 而不是各插件包里**：它是宿主与插件之间的唯一约定形状，
+放在某个插件包里就会出现「谁的版本算数」的问题。
 
 推进顺序：
 
@@ -761,21 +856,47 @@ export function install(host: PluginHost): void {
 | `configKeys` | 这个实现读哪些键。反查「改了 X 会影响谁」 |
 | `params` | 它自带的键**定义**（会被并进全局键表，见 §7.5）|
 | `requires` | 缺这些键就不能干活 |
-| `unavailable()` | 代码在、配置也可能齐，但就是干不了（如探测失败）|
+| `unavailable(read)` | 代码在、配置也可能齐，但就是干不了（如探测失败、**或没被选中**）|
+
+#### `unavailable` 为什么收一个 `read`
+
+原先的判据只有 `isProvided(key)`（「这个键有没有人**显式**配过」）。
+它回答不了「**当前选中了哪个后端**」——而 `storage` 是单数的接缝：
+本地与 S3 都配好之后，两个实现都会显示 `active`，设置页于是说
+「两个存储后端都可用」，实际只有一个在承接写入（`RESEARCH.md` §10.6）。
+
+`read` 给的是**当前生效值**的同步读取口，于是未选中的那个可以如实报
+「当前未选中（正在用 local）」——那正是 `unavailable` 的语义：
+代码在、配置齐、就是干不了活。
+
+代价是多了一条约束，值得写下来：
+
+> **`unavailable` 必须同步。** 值由装配层预先解析好传进来
+> （`host.ts` 的 `descriptors()` 用 `settings.entries()` 的结果构造 reader），
+> 不能在这里 await 读配置。理由见下：`computeStatus` 每次 `/api/config`
+> 都要对每条接缝跑一遍。
+
+另一个边界：reader 拿到的是**已经过 `toWire`** 的值，密钥类是 `null`。
+对「选中了哪个后端」这类标量键完全够用，但**不要在 `unavailable` 里读密钥**
+——那要走 `getSecret`，而它是异步的。
 
 #### 状态由 core 算，不由实现编
 
 ```ts
 // packages/core/src/registry.ts
-export function computeStatus(declaration, impl, isProvided): PluginStatus {
+export function computeStatus(declaration, impl, isProvided, read): PluginStatus {
   if (impl === null) return { kind: 'planned', note: declaration.description }
   const missing = (declaration.requires ?? []).filter((key) => !isProvided(key))
   if (missing.length > 0) return { kind: 'needs-config', reason: `需要先配置 ${missing.join('、')}` }
-  const blocked = declaration.unavailable?.()
+  const blocked = declaration.unavailable?.(read)
   if (blocked) return { kind: 'unavailable', reason: blocked }
   return { kind: 'active' }
 }
 ```
+
+**判定顺序有意义**：`requires` 先于 `unavailable`。所以一个「没配齐且未选中」
+的后端报的是 `needs-config`（用户此刻该做的是填配置），只有配齐之后
+`unavailable` 那层才有机会说话。`plugins.test.ts` 里有一条断言守着这个形状。
 
 四态，不是布尔：**`planned`（代码还没有）与 `unavailable`（代码在但干不了活）
 对用户的含义完全不同**——前者是「将来会有」，后者是「现在缺个东西，补上就能用」。
@@ -785,7 +906,8 @@ export function computeStatus(declaration, impl, isProvided): PluginStatus {
 `CheckAvailable(connected, overrides)` 不同的一点）：每个实现自己写
 `get status()` 会让「缺配置」这个**最常见**的情况被八个实现各写一遍，
 理由各不相同、格式也各不相同。收敛成 `requires` 之后，缺配置的文案只有一处；
-真正需要自定义判断的（如「这个后端二进制没编进来」）才用 `unavailable()`。
+真正需要自定义判断的（如「这个后端二进制没编进来」、「这个后端没被选中」）
+才用 `unavailable()`。
 
 #### 「规划中」是独立的一条路径
 
@@ -827,10 +949,38 @@ M0 的配置全在 `.env`，改一个模型名要改文件 + 重启。M1 起有�
 
 | 约束 | 做法 | 不做会怎样 |
 |---|---|---|
-| **键集闭集** | 键在 `settings/specs.ts` 里注册，写入时拒绝未知键 | 界面上能存进一个没有任何代码读的值，用户以为改了行为 |
+| **键集闭集** | 键在 core 的键表或插件的 `params` 里注册，写入时拒绝未知键 | 界面上能存进一个没有任何代码读的值，用户以为改了行为 |
 | **迁移不 seed** | 建表只建表，不插默认行 | `.env` 里的值会被空默认值静默覆盖（WeKnora 的迁移注释专门写了这条） |
 | **写入即校验** | 类型 + 每键的校验钩子，400 返回 | 坏值等到第一次调用才炸，或者更糟——静默用默认值跑 |
-| **不写进程级配置** | 只允许注册在 spec 里的键；`DATA_DIR`、`DATABASE_URL` 这类不在 spec 里 | 端口、数据目录这类改了就重启不了的键出现在界面里，是假表单 |
+| **不写进程级配置** | 只允许注册过的键；`DATA_DIR`、`DATABASE_URL` 这类不在表里 | 端口、数据目录这类改了就重启不了的键出现在界面里，是假表单 |
+
+#### 五种值类型，第五种是给结构化配置的
+
+| 类型 | 界面控件 | 密钥处理 |
+|---|---|---|
+| `string` / `number` / `boolean` | 输入框 / 数字框 / 开关 | — |
+| `secret` | 密码框（值不下发）| 整值加密，协议里只留 `configured` |
+| **`json`** | 插件自己的界面 | **两个钩子**，见下 |
+
+`json` 是为**集合**准备的：供应商是一个列表（每家一个地址与一把密钥），
+标量键表达不了集合。摊平的后果有实例为证——某个成熟产品用「按位置对齐的
+三个数组」存多家供应商，删除时要手工重排下标（`docs/RESEARCH.md`）。
+
+结构化值里的密钥由**拥有那个形状的插件**处理，走 `SettingSpec.json` 的
+两个纯函数：
+
+```
+toWire(internal)              → 摘掉密钥（下发浏览器）
+fromWire(incoming, existing)  → 把已存的密钥合回来（写入时）
+```
+
+为什么不让设置层自己猜哪一层是密钥：只有插件知道密钥藏在数组的哪一项里。
+设置层保持通用，插件提供语义。两个钩子各是一个**执行点**，
+漏掉 `toWire` 的症状是密钥随 `/api/config` 发出去了而界面看不出异常；
+漏掉 `fromWire` 的症状是用户改一下名字就把密钥清掉了——同样看不出异常。
+
+`hidden: true` 的键仍可读但不出现在设置列表里。它的唯一用途是**迁移**
+（读旧的标量键一次），而迁移完成后不该有人再看到那些字段。
 
 **环境变量仍然优先于「默认」，但不优先于「界面显式设置」**——这是刻意的：
 `.env` 表达的是部署事实（连哪个库、哪个地址），界面表达的是「我现在想调一下」。
@@ -867,7 +1017,8 @@ M0 的配置全在 `.env`，改一个模型名要改文件 + 重启。M1 起有�
 | 检索 | `leg` 接缝的描述符 + `retrieval.*` 键，外加一个相关性自检入口 |
 | 抓取 | `capturer` 接缝的描述符 + `capture.*` 键 |
 | 解析 | `parser` 接缝的描述符（M1 起有内容） |
-| 插件 | 四条接缝的**全部**描述符（其余分区的超集） |
+| 存储 | `storage` 接缝的描述符 + `storage.backend`；被选中的那个后端自己的键（`storage.s3.*`） |
+| 插件 | **五条**接缝的全部描述符（其余分区的超集） |
 | 数据与备份 | 动作（导出、重建索引），不是配置 |
 | 账号 | 环境变量（`OWNER_EMAIL`），不可写 |
 
@@ -990,7 +1141,16 @@ docker run -d --network host \
 
 ### 8.5 备份
 
-`data/` 目录 + `pg_dump` 定时打包。因为「文件是真相」，最坏情况可以从 `data/vault` 和 `data/raw` 完整重建数据库。
+默认（本地后端）：`data/` 目录 + `pg_dump` 定时打包。因为「文件是真相」，
+最坏情况可以从 `data/vault` 和 `data/raw` 完整重建数据库。
+
+选 S3 后端之后，真相在桶里，备份变成两件事：**桶本身的持久化**
+（对象存储通常自带冗余，但版本控制与生命周期策略要自己开）
+加 **`pg_dump`**。注意列表类操作在 S3 上是按请求计费的，
+所以「定期全量拉回本地」这类做法要先算成本。
+
+两种后端都成立的一条没有变：**数据库始终是可重建的**，
+所以 `pg_dump` 丢了不致命，桶或 `data/` 丢了才致命。
 
 ---
 
@@ -1000,13 +1160,32 @@ docker run -d --network host \
 
 | 范围 | 数量 | 方式 |
 |---|---|---|
-| 服务端集成 | 41 | Hono 的 `app.request()` 内存调用，不占端口 |
-| 编辑器往返 | 15 | happy-dom 环境下的真实 Tiptap 实例 |
-| 设计守门（对比度等） | 44 | 真实渲染 + 色彩计算 |
+| 服务端集成 | 71 | Hono 的 `app.request()` 内存调用，不占端口 |
+| 前端组件与编辑器 | 117 | happy-dom + 真实 Tiptap 实例 + 真实渲染算对比度 |
 
-服务端那 41 个里，18 个覆盖 M0 新增的目录 / 双链 / 会话 / 导出 / 抓取，
-3 个是**检索召回的回归**（自然语言提问、部分词匹配排序、tsquery 语法安全）
-——见 `docs/DECISIONS.md` D-014。
+前端那批里，与外观切换直接相关的两组：
+
+| 文件 | 守什么 |
+|---|---|
+| `theme/design.test.ts`（81） | 两套外观跑**同一组**对比度断言（浅色与深色各一遍，`it.each(APPEARANCES)`）、跨外观不回归、切换后 cssVar 变量块真的被替换且只有一块 |
+| `theme/appearance.test.ts`（8） | 偏好持久化、跟随系统、坏值回落、`localStorage` 抛错不炸、`color-scheme` 被写对 |
+
+`design.test.ts` 里最有价值的两条不是对比度，而是**装配**：
+「切到深色后变量块只有一块」防的是「两套色混在一起」——
+那种情况看起来只是「有点怪」，但只要渲染顺序变一次就会整块翻车；
+「深色的每个文字色不弱于浅色」防的是深色在几次迭代后悄悄退化。
+
+服务端那些里，与 M1 骨架直接相关的三组：
+
+| 文件 | 守什么 |
+|---|---|
+| `settings.test.ts`（13） | 配置的三条回落路径、整批拒绝、密钥加密落库与「解不开 ≠ 没配」 |
+| `plugins.test.ts`（11） | 描述符的 `file` 路径真实存在、`leg` 描述符与注册表 id 一致、`configKeys` 都注册过、抓取来源识别两处不漂移、构建配置没把 workspace 包 external 化 |
+| `search.test.ts`（11） | 检索召回回归（自然语言提问、部分词匹配排序、tsquery 语法安全）——见 D-014 |
+
+`plugins.test.ts` 那一条防的正是这次重构的起因：设置页的清单与代码里的注册表
+**各说各话**（D-030）。同理 `SettingControl.test.tsx` 守的是「改了值但没保存」
+——那个缺陷人工点一下很容易漏（点完看起来是对的，值也在框里）。
 
 ### 9.2 测试库隔离
 
@@ -1078,6 +1257,15 @@ M1 的新代码大多是「纯函数 + SQL」，两类都能用能说明用户�
 | 内层 `ConfigProvider` 传 `theme` | `cssVar` 的 key 被重算，`--ant-*` 变量名改变，引用变量的地方颜色静默不对 | 主题只由 `ThemeProvider` 传；内层 `ConfigProvider` 只放 locale（`theme/MimirProvider.tsx`） |
 | 半透明 token 直接算对比度 | 得到把黑色当底色的假数字（`colorFillSecondary` 算出 2.86:1，实际 4.93:1） | 先用 `composite()` 合成到所在底色再算，见 `design.test.ts` |
 | `createGlobalStyle` 里用 `--ant-*` | 变量注入在 antd 组件 DOM 子树上，全局规则里取不到 | 用 `${(p) => p.theme.xxx}` 读主题值 |
+| **与 seed 同名的 token 覆盖会被丢弃** | 在 `token` 里写 `colorLink` / `colorPrimary` **不生效**——`formatToken` 把这些键从最终结果里删掉，值由算法重新派生。浅色下看不出来（浅色阶把输入色放在第 6 阶，而 `colorLink` 恰好取第 6 阶），深色下就露出来了：`#0958d9` 派生出的颜色在选中底上只有 3.97:1 | 需要精确控制时用**校准层**：一个 `MappingAlgorithm` 挂在 `algorithm` 数组最后，它写进去的值不会被改写（`tokens.ts` 的 `darkCalibration`） |
+| antd 深色自带的 `colorLink` 不达 AA | `#1668dc` 在深色容器底上只有 **3.50:1**；`colorInfoText` 同源 | 深色显式校准链接色（`#79b8ff`，容器底 8.74:1），不依赖算法的派生值 |
+| 深色算法把 `colorPrimaryBg` 与 `colorPrimaryBorder` 设成同一个值 | 前者是选中项的底、后者是焦点环——同值意味着焦点环落在选中项上完全看不见（实测 **1.00:1**），而那是键盘用户唯一的线索 | 深色单独校准 `colorPrimaryBorder`；`design.test.ts` 断言「环与选中底 ≥ 1.5:1」 |
+| 深色下照搬浅色的字面量颜色 | `#fafbff`（悬停底）、`#e8f1ff` / `#f0f1f3`（来源标注）、`#68707c`（说明文字）压在深底上不是刺眼就是看不见，且**不报错** | 一律走 token：悬停用 `tintHover`，来源标注成对使用语义 token |
+| 深色页面露出浏览器默认的白 | 滚动到顶端之外、overscroll 回弹、页面比视口短这三种情况露出的是 `html` 的底；滚动条与原生下拉也不受 CSS 管辖 | `html` 上画 `colorBgLayout`，并把外观写到 `html` 的 `color-scheme` 上（后者决定滚动条与原生控件的明暗） |
+| 首帧脚本的内联背景压住全局规则 | 内联样式优先于样式表，于是**运行时切换外观后 `html` 的底不变**（刷新后才对），表现是切换后 overscroll 露出上一层外观的颜色 | `styles/global.ts` 里那条 `html { background }` 带 `!important`——它针对的是那一个内联声明，`design.test.ts` 守着它 |
+| antd-style 的 `themeMode='auto'` 首帧闪白 | 它的首次系统匹配走 `setTimeout(…, 1)`，第一帧按浅色渲染再翻成深色 | 自己持有外观状态（`theme/appearance.ts`），把 `appearance` 作为**受控 prop** 传进去；`index.html` 内联一段等价脚本覆盖样式注入前的那段空白 |
+| `localStorage` 在隐私模式下读取会**抛错** | 不兜住的话整个应用壳渲染不出来——一个渲染偏好不该有这种能力 | `try/catch` 包住读写（`appearance.ts` 与 `routes/_app.tsx` 同一条） |
+| 存了不认识的外观值 | 控件匹配不上任何一项，界面显示空白且**没有任何报错** | 读回来时收敛到 `auto`（`MODE_SET.has()`），不当合法值传下去 |
 | vitest 与 vite 各有一份配置 | 别名只在一边配了，测试报「找不到模块」而构建正常 | 别名定义在 `alias.ts`，两个配置都从它取 |
 | `plainto_tsquery` 的 AND 语义 | 自然语言提问全部 0 命中（四词要求全部出现） | 改成「命中词数 ≥ 一半」+ `ts_rank_cd` 排序，见 D-014 |
 | 子串通道拿整串去 ILIKE | 「兜底」在一句话提问上永远不命中 | 逐词匹配，门槛与词级通道一致 |
@@ -1094,6 +1282,19 @@ M1 的新代码大多是「纯函数 + SQL」，两类都能用能说明用户�
 | 未 seed 的默认值覆盖 `.env` | 部署方在环境变量里配的值被空默认值静默吃掉 | settings 表只存**显式写入**的行；解析时「没有行」才看环境变量。见 §7.5 |
 | 密钥解密失败被当成空值 | `AUTH_SECRET` 轮换后所有 key 静默失效，用户以为是自己没配 | 捕获解密失败并在界面上明说「请重新填写」，不静默兜底。见 §7.6 |
 | 探测端点自动触发 | 每次进设置页都发一次真实模型调用，慢且花钱 | 可用性是四态（未配置/未测试/可用/不可用），探测只在用户点「测试连接」时发生。见 §7.8 |
+| 用量按会话时区聚合 | `(at AT TIME ZONE $tz)::date` 缺了时区就按 UTC 切天——容器默认 UTC，**凌晨 0 点到 8 点的消耗全算到前一天，图整体左移一格且不报错** | 时区取 `stats.timezone`（默认 `Asia/Shanghai`）并在图旁标出；`at` 是 `timestamptz`，换时区只是换聚合方式，历史数据自动重算。见 §12.4 |
+| 未上报的用量被当成 0 | 兼容端点不回传 usage，那天有调用却渲染成空白格子，等于图在说「我那天没用」 | `usage_log` 的 token 三列**可为 null 且 null ≠ 0**；聚合时把「有调用但用量未知」单独计数并画成斜纹，不画成空。见 §12.3 |
+| 流式调用的 usage 只在末尾到达 | 只在 `for await` 正文时拿不到用量；若把 `RUN_FINISHED` 提前消费掉更会漏 | 记账放在**包住整条流**的透传生成器里（`finally` 落账），不放在正文累加处。见 §12.2 |
+| 头像 URL 固定导致换图不生效 | 文件名是 `<userId>.webp` 不变的，浏览器拿缓存里的旧图一直显示，界面上看起来「上传没反应」 | 指针里带版本：`user.image = /api/avatar?v=<时间戳>`，响应 `Cache-Control: private, immutable`。见 §12.6 |
+| 会话 cookie 缓存住用户资料的旧值 | **与上一行是两个独立的陈旧源，只修一个不够。** 实测：先修了 `?v=`，界面上的头像依然不动——因为 `get-session` 在 `session.cookieCache` 的 `maxAge` 内直接读 cookie 里那份 `{session, user}` 快照，而头像是绕开 Better Auth 直接写库的，缓存不会刷新 | `cookieCache: { enabled: false }`。`cookieCache.version` **不能**用来做资料指纹：它读的时候也拿 cookie 里那份 user 重算，与写入时是同一个对象，必然自洽。见 §12.6 与 D-037 |
+| 图表库的日期键格式不对齐 | 库内部用 `YYYY/M/D`（**不补零**），API 给 `2026-09-18`（补零）。直接 `replaceAll('-','/')` 得到的键永远查不到，于是 `rectRender` 里的自定义规则**全部静默失效**，而图照常渲染、看起来正常 | 只在一个 `dateKey()` 里统一转换。与「月份标签跳过整月」同一类：日期格式不一致，不报错只是不对。见 §12.8 |
+| 热力图少渲染最后几天 | 库的 `gridNum` 从**容器宽度**推（`floor((clientWidth - leftPad)/(rectSize+space))`），不是从日期范围推。CSS 自适应会安静丢掉放不下的天——370 天在 680px 容器里只画 53 列，最后 4 天（含「今天」）消失 | 自己按日期范围算宽度传给 SVG。见 §12.8 |
+| **CSS 模板字符串的注释里写了反引号** | 反引号提前结束模板，整段样式变成非法 TS。报错位置指向一句看起来毫无问题中文注释（React Compiler 插件报 `Expected a semicolon`），而**改的人不知道自己动了样式**——只是往注释里加了一对用于强调的反引号。这个坑咬过两次（一次在 `StatsSection.style.ts`，一次在 `styles/global.ts`） | `createStyles` / `createGlobalStyle` 的模板里**一律不写反引号**，注释里强调用「」或 `**`。样式文件改完在浏览器里看一眼，别只看 typecheck 通过 |
+| 三个存储目录各有独立默认值 | 容器里头像**不落盘在挂载卷上**：Dockerfile 与 compose 只设了 `VAULT_DIR` / `RAW_DIR`，漏了 `AVATARS_DIR`，于是它回落到 `cwd + /data/avatars` = `/app/data/avatars`。上传与显示都正常，**`--build` 重部署后头像消失** | 收成单个 `DATA_DIR`，三类文件是它的三个前缀（`vault/` / `raw/` / `avatars/`）。漏配在结构上不可能发生。见 D-038 与 `RESEARCH.md` §10.10 |
+| S3 改名不是原子的 | 对象存储没有 `rename(2)`，只能「复制 + 删除」。复制成功、删除失败时同一个笔记有**两个文件**，而重建索引按 id upsert 会让它们互相覆盖——**哪一份胜出取决于扫描顺序**，不报错 | 顺序固定为先复制后删除（任何时刻不丢数据）；`reindexVault` 检测「同一 id 多个路径」并跳过 + 打日志，`ReindexResult.duplicates` 把这件事变成可观测的。见 `RESEARCH.md` §10.3a |
+| S3 列举漏掉第 1000 个之后的文件 | LIST 每次最多回 1000 个 key，必须靠 `ContinuationToken` 翻页。漏掉的表现是「库里超过 1000 篇之后，重建索引静默漏掉一部分」 | `plugins/storage/src/s3.ts` 的 `list` 循环处理 `IsTruncated`；不用 `delimiter`（那要把请求数翻倍）。见 `RESEARCH.md` §10.3b |
+| `@aws-sdk/client-s3` 的默认校验和 | 3.729.0 起上传默认加 `x-amz-checksum-crc32`，而 Cloudflare R2 等兼容实现不认这个头，直接拒收（LobeHub 为它提过 PR 5479） | `requestChecksumCalculation: 'WHEN_REQUIRED'` 与 `responseChecksumValidation: 'WHEN_REQUIRED'`。**一行配置，不是选 SDK 的代价**。见 `RESEARCH.md` §10.11 |
+| 中文对象名在复制时找不到源 | `slugify` 保留汉字，而 `CopySource` 不编码时 S3 按字面量找对象，结果是「复制失败」或复制出一个空对象 | `CopySource` 按**段**编码：`key.split('/').map(encodeURIComponent).join('/')`（保留 `/` 作分隔） |
 
 ---
 
@@ -1102,23 +1303,300 @@ M1 的新代码大多是「纯函数 + SQL」，两类都能用能说明用户�
 1. ~~定 `src/plugins/` 的目录形状与注册表接口~~ —— 已完成（`plugins/leg/` 定型）
 2. ~~M0 前端：登录 → 笔记列表与编辑器 → 检索 → 收件箱与整理~~
 3. ~~M0 抓取器：粘贴 URL（三来源）~~
-4. **M1-A 插件的骨架**（先做，因为后面每一步都要用它读写配置）
-   - `plugins/types.ts` 的描述符与四态 `PluginStatus`
-   - `settings/specs.ts` 的键注册表 + `settings/store.ts` 的三层解析
-   - `plugins/provider/` 的角色化适配器（chat / summarize / embed），
-     替换 `assistant.ts` 与 `assistant-stream.ts` 两处重复的 `openaiCompatible`
-   - `plugins/registry.ts` + `GET /api/config` 换成新形状 + `PATCH /api/config/settings`
-   - 设置页：模型分区可编辑、来源可见、「测试连接」探测
+4. ~~**M1-A 插件的骨架**~~ —— 已完成
+   - 契约：`packages/shared/src/{plugin,seams,config}.ts`
+     （声明 + 运行接口 + 传输契约；放 shared 是为了不形成包级循环，见 §3）
+   - 骨架：`packages/core/src/{registry,settings/*,fuse,pipeline}.ts`
+   - 实现：`plugins/{capturer,parser,leg,provider}/`（四个独立 workspace 包）
+   - 分词：`packages/tokenizer/`（写入与检索两侧共用同一份规则）
+   - 装配：`apps/server/src/plugins/host.ts`（唯一同时知道宿主与插件的文件）
+   - 适配器收口：`services/model.ts`，`assistant.ts` 与 `assistant-stream.ts`
+     两处重复的 `openaiCompatible` 已删除
+   - `/api/config` 换成三块（settings / plugins / models）+ `PATCH /config/settings`
+     + `POST /config/probe`
+   - 设置页：模型分区可编辑、来源徽标、四态状态 + 「测试连接」探测；
+     插件分区改为从注册表渲染（原先是一份会漂移的手写数组）
 5. **M1-B 分块与向量化**
    - `chunks` / `chunk_embeddings` 表 + 迁移
    - `lib/chunk.ts`（确定性、偏移可逆、按结构切）+ 四类断言（§9.5）
    - 分块接入写入路径（笔记保存、抓取入库）与重建索引
    - `POST /maintenance/embed` 分批补嵌入
 6. **M1-C 混合检索**
-   - 两条现有通道改成返回分块 id
-   - `plugins/leg/vector.ts` + 注册表补一行
+   - 两条现有通道改成返回分块 id（各自一个文件，`plugins/leg/src/`）
+   - `plugins/leg/src/vector.ts` + 在 `install()` 里注册一行
    - `mode` 落成通道筛选，默认模式由注册表推导
    - 引用组装：相邻分块合并 + 每篇上限
 7. **M1-D 带引用的问答与 AI 摘要、标签建议、内联改写**
 8. **M1-E PDF / Word 上传（`parser` 接缝的第一个真实现）与 RSS**
 9. 之后再回到 PRD 第 6 节的待决项
+
+**横向的一步（与上面五段都不冲突）**：`usage_log` 的表与采集点。
+**它排在 M1-A 之后、M1-B 之前**——M1-A 做的正是「provider 角色化 + `model.ts`
+收口」，做完那里采集点就定形了。表与界面可以分开做：
+
+> 记账表的价值随时间增长。界面上线晚半年没有关系，**采集晚上线就永远缺那段历史**。
+
+---
+
+## 12. 用量记账与账号资料
+
+### 12.1 为什么不复用现成的表
+
+`documents` / `messages` 里都有时间戳，看起来「问了多少次、写了多少篇」
+可以现算。但**用量不是从业务表推导出来的**，它是**观测数据**：
+
+| | 业务表 | 用量记账 |
+|---|---|---|
+| 时间 | 可变（`updated_at` 随编辑变） | 不可变（调用发生的那一刻） |
+| 生命周期 | 随文档/会话删除而级联 | 必须活过业务删除 |
+| 完整性 | 允许中间状态 | 每次调用都要有一行，包括失败的 |
+
+第二条最关键：`messages` 上有 `onDelete: 'cascade'`。删一个会话，
+「我这个月花了多少钱」就会**静默变少**——账本不该被业务操作改写。
+
+所以 `usage_log` **不加外键到 `conversations` / `documents`**，只存 `refId` 字符串。
+这是刻意的：一个被删掉的会话，它花过的钱仍然花过了。
+
+> 有了 token 口径，「热力图量什么」就不需要再选一次——它和 §12.4 的表
+> **同源**，两处数字对不上会立刻看出来。
+
+### 12.2 表结构
+
+```
+usage_log
+  id                 text pk
+  at                 timestamptz default now()   ← 索引在此列
+  role               text      -- chat | reasoning | summarize | embed
+  source             text      -- 见下
+  model              text
+  provider_id        text      -- 插件声明的 id
+  base_url_host      text      -- 换服务商后历史数据仍能分辨
+  prompt_tokens      int NULL  -- null ≠ 0，见 12.3
+  completion_tokens  int NULL
+  total_tokens       int NULL
+  duration_ms        int
+  ok                 boolean
+  failure_kind       text NULL
+  ref_id             text NULL
+```
+
+`source` 是**这一列最有信息量**：它回答「这笔钱花在哪个功能上」。
+
+| source | 触发点 |
+|---|---|
+| `chat` | 流式问答（`assistant-stream.ts`） |
+| `ask` | 非流式问答（`assistant.ts`，命令面板与测试走它） |
+| `summary` | 自动摘要 |
+| `embed` | 向量化 |
+| `probe` | 设置页的「测试连接」 |
+
+**`probe` 必须记账。** 它是真实调用（发 `"ping"`、`max_tokens: 1`）。不记的话
+用户会发现「我没怎么用，怎么有调用记录」——反过来，记了却混进「我的用量」
+同样是说谎。所以单列一类，统计页上写「其中测试连接 N 次」。
+
+**失败也记账。** 失败的调用可能已经计费（流式中断、超时），而且失败率本身
+解释了「为什么这个月体验差」。只记成功会得到一个过于乐观的账。
+
+### 12.3 token 三列可为空，且 **null ≠ 0**
+
+**这是这张表最容易做错的一处。**
+
+```
+兼容端点不一定回传 usage
+   ↓
+如果写入时把「没回传」填成 0
+   ↓
+统计页显示「今天 0 token」，而那天明明调用了 8 次
+   ↓
+用户看到的是一个确定的谎言，不是一个诚实的未知
+```
+
+所以三列都可空，取值用 `total ?? (prompt + completion)`——`total` 缺失但
+分项在是常见情况，不该白扔。两边都缺才算「未知」，聚合时单独计数。
+
+界面上的对应：热力图把「有调用但用量未知」画成**斜纹**，不是空底（B 状态的
+存在就是为了不静默说谎）；表格里给一列「未上报 N 次」，页脚写清
+「这 N 次消耗未知」。
+
+### 12.4 聚合：时区与分档
+
+**时区**（§10 的坑表里有它）：
+
+```sql
+date_trunc('day', at AT TIME ZONE $tz)::date
+```
+
+容器默认 UTC，而用户在 UTC+8。**不显式转时区的话，凌晨 0 点到 8 点的消耗
+全算到前一天，热力图整体左移一格，且不报错。** 时区取 `stats.timezone`
+（env 名 `TZ`，默认 `Asia/Shanghai`），界面上图旁标出当前值。
+
+`at` 是 `timestamptz`，所以**换时区只是换聚合方式**，历史数据自动跟着重算，
+不需要数据迁移——这与「数据库是可重建的索引」是同一个性质，可以放心调。
+
+**分档用当前范围的分位数**，不用固定阈值：
+
+```
+固定阈值：忙的月份全是最深色、闲的月份全是浅色 → 图没有信息
+分位数  ：形状始终可读，但「换范围颜色会变」
+```
+
+代价必须补偿：图例写「按当前范围分档」并标出每档真实区间
+（如「最深 ≥ 12.3 万」）。**真实数字在 tooltip 里**（`12.3 万 token · 8 次调用`），
+颜色只负责给出形状——这也是能同时回答「花了多少」与「用得多不多」的地方。
+
+**补嵌入的尖峰不剔除**：剔除会让图表与表格对不上，而这个项目最不能忍的
+就是两处各说各话。靠 tooltip 拆解来源解释它。
+
+### 12.5 金额：**不做**（至少在 M1）
+
+三条理由，任一条都足够：
+
+1. **价格要可配，而键集是闭集**（§7.5）。模型名是自由文本，没法静态枚举
+   单价表——为金额破一次闭集规则的例不值得
+2. **合规端点不回传价格**。`usage_log` 里存的是 token，金额是我们算的
+3. **单价会变**。用今天的单价乘历史用量，会让**过去的金额自己变**——
+   这是记账的大忌。真要做，必须每次调用时把单价快照进那一行
+
+所以：**token 是事实，先做；金额是换算，等真要看时再加一张单价表 + 行内快照。**
+SDK 的类型里有 `TokenUsage.billed`，哪个 provider 真报了成本就存下来并标
+`costSource = 'provider'`——那时它是事实，不是换算。
+
+### 12.6 头像：文件 + 指针，两条不对称的删除顺序
+
+**名称**走 Better Auth 自带的 `POST /api/auth/update-user`，不在 `/api/` 下
+再包一层——包一层等于把校验规则复制到两处，而会话校验与字段白名单都在
+Better Auth 里。
+
+**头像**是服务端上传，四条约定：
+
+| 约定 | 理由 |
+|---|---|
+| **客户端裁剪**：canvas 裁方、缩到 256×256、编码 webp；服务端只验 MIME + 大小（512KB） | 服务端裁剪要引入 sharp，换来的只是省一点带宽——对单用户自托管不成立 |
+| **固定文件名 `<userId>.webp`，覆盖写** | 换头像永远不会攒孤儿文件，也就不需要「删旧文件」这个会失败的动作 |
+| **先文件后库**（铁律 2） | 反过来的失败是「库里指着不存在的文件」＝裂图；正序最坏只是多一个孤儿文件 |
+| **先库后文件**（删除时） | 见下 |
+
+后两条看起来矛盾，其实是一条规则的两种情形：
+
+> **永远不要让指针存在的时候指向一个不存在的东西。**
+
+创建时文件先于指针（指针晚一点出现无害），删除时指针先于文件（指针早一点
+消失无害）。写成两句话容易记反，写成一条规则就只有一个判断依据。
+
+**存储位置 `data/avatars/`**，不在 `data/vault/`：头像不是内容，
+不该被 jieba 分词进 `search_text`，也不该进导出包（导出回答的是「我的知识」，
+不是「我的账户」）。这一点在 PRD §1 的非目标里也点了名。
+
+**读取**走 `GET /api/avatar`（要鉴权，头像是私人资源不是公开静态文件）。
+**缓存陷阱**：文件名固定，浏览器会一直显示旧图。解法是把版本放进 URL——
+`user.image` 存 `/api/avatar?v=<时间戳>`，DB 那一行同时充当缓存键，
+响应带 `Cache-Control: private, immutable`。
+
+#### 两个独立的陈旧源，只修一个不够（实测踩过）
+
+「上传没反应」这个症状有**两层**缓存都会造成，而且它们看起来完全一样：
+
+| 层 | 机制 | 症状 | 解法 |
+|---|---|---|---|
+| 浏览器 | 文件名固定 → 缓存命中旧图 | 界面显示旧头像 | URL 带 `?v=` 版本 |
+| 会话 | `session.cookieCache` 里存着 `{session, user}` 的整份快照，`maxAge` 内不查库 | **同样**显示旧头像 | `cookieCache: { enabled: false }` |
+
+第二层之所以会中招：**头像是绕开 Better Auth 直接写库的**（`routes/avatar.ts`
+要配合「先文件后指针」的顺序，所以用 drizzle 更新 `user.image`），
+而会话缓存不知道这件事。
+
+实测顺序值得记下来：先按设计修好了 `?v=`，重新加载界面**头像依然不动**，
+才定位到第二层。如果只验一次就收工，会误以为修好了——
+**「看起来一样」的两种原因叠在一起时，修完一个必须重新验一遍。**
+
+`cookieCache.version` 是个诱人的假解法：它的签名 `(session, user) => string`
+看起来正好能当资料指纹。但它**读的时候也拿 cookie 里那份 user 重算**，
+与写入时算的是同一个对象，必然自洽——它只用于「cookie 结构升级，作废旧缓存」，
+不能发现用户资料变了。实测加了指纹仍然陈旧。
+
+详细理由与取舍见 D-037。
+
+### 12.7 采集点：`services/model.ts` 是唯一入口
+
+这个文件本来就是收口点（它自己的注释写着「重构前这段逻辑在两处各抄了一份」）。
+记账放在这里，就**不可能出现「新加一条调用路径忘了记账」**。
+
+| 调用 | 取 usage 的方式 | 为什么 |
+|---|---|---|
+| `callChat`（非流式） | `middleware.onFinish(info.usage)` | middleware 是 `TextActivityOptions` 的合法字段 |
+| `streamChat` | 包一层**透传生成器**，在 `finally` 里落账 | 用量的 chunk 在末尾才到；且必须**原样透传**每个 chunk，不能提前消费 `RUN_FINISHED` |
+| `callEmbed` | `result.usage` | 返回值里本来就有，之前被丢掉了 |
+
+流式那条为什么要包一层而不是在调用处记账：**记账逻辑不出 `model.ts`**，
+调用方（`assistant-stream.ts`）一行都不用改。而且 `finally` 保证
+「流被中断」也落账——那正是最需要记下来的一类。
+
+**改动范围只有 `model.ts` 一个文件**，这是当初把适配器收口到这里换来的收益。
+
+### 12.8 热力图的网格交给 `@uiw/react-heat-map`
+
+**背景**：第一版是手搓的（371 个 div + 自己算周对齐与月份标签），实测踩了
+一个 bug：月份标签的判定写成「这一周的第一天所在月与上一周不同就打标签」，
+而月份变化常常落在**周的中间**，于是整个月被跳过——370 天只打出 3 个
+标签（应有 13 个）。同类的边界还有首周补空、容器宽度与列数对齐等。
+
+**决定**：日历网格与星期/月份标签交给 `@uiw/react-heat-map@2.3.4`，
+产品规则留在我们这边。
+
+**选它的三条依据**（都实际核对过，不是看 README）：
+
+| 依据 | 核对结果 |
+|---|---|
+| 零运行时依赖 | `dependencies` 是 `undefined`；peer 只有 react / react-dom / `@babel/runtime`——而 `@babel/runtime` 本来就在依赖树里（`@vitejs/plugin-react` 带来的） |
+| 能单格自定义 | `rectRender(props, item)` 返回自定义元素；`item` 带我们传进去的自定义字段（`formatData` 用展开合并） |
+| 能接我们的分档 | `panelColors` 接受 `Record<number, string>`，语义是「第一个严格大于 count 的阈值」——正好能吃分位数阈值 |
+| 包体与样式 | ESM 76KB，只 import `style/index.css`（不是 `.less`，Vite 原生处理，不引入额外依赖） |
+| 维护状态 | 2.3.4 发布于 2026-05-28，前几版 2.3.x / 2.3.2 / 2.3.3 逐年有更新，不是弃坑项目。且远早于今天，符合本项目的供应链策略 |
+
+> **这不是「引入图表库」的反转。** echarts / recharts / `@ant-design/plots`
+> 那种通用图表引擎仍然不引——它们解决「任意数据 → 任意图形」，
+> 而这里只要一个日历网格（`Tech §6` 的取向不变）。选的是一个 76KB、
+> 零依赖的专用组件，不是一个绘图框架。
+
+#### 两个静默陷阱（都实测踩到）
+
+**一、日期键的格式必须统一。** 库内部用 `YYYY/M/D`（**不补零**），
+而 API 给的是 `2026-09-18`（补零）。直接 `replaceAll('-', '/')` 会得到
+`2026/09/18`，与库的 `2026/9/18` **永远不相等**，于是：
+
+```
+rectRender 里查表全部落空 → 提前 return → 三个覆盖状态全部失效
+（空格子、斜线、今日描边）
+```
+
+而图**看起来完全正常**——库的默认渲染把格子照常画出来了，只是我们的
+规则一条没生效。与月份标签那个 bug 同一类：**日期格式不一致，不报错，
+只是不对**。所以只在一个 `dateKey()` 里转换，不各写一遍。
+
+**二、列数是从容器宽度推的，不是从日期范围推的。** 库的 `gridNum` 是
+`floor((clientWidth - leftPad) / (rectSize + space))`，于是 **CSS 自适应会
+安静地丢掉放不下的那几天**：
+
+```
+370 天在 680px 的容器里 → 只渲染 53 列 → 最后 4 天（含「今天」）消失
+```
+
+而图看起来依然正常（就是「最近一年」少了一截，没人会数格子）。
+所以要**自己按日期范围算好宽度**传给 SVG（`width = 28 + 列数 × 13`），
+左右内边距也就不对称了（左 8 右 16），让一年的 730px 刚好落在 758px
+的面板里、不出横向滚动条。
+
+#### 只有一条退化，已接受
+
+SVG 里画重复条纹要先在 `<defs>` 定义 `<pattern>`，而这个库的 SVG 子元素是
+固定的、插不进去。所以「有调用但用量未上报」从**斜纹**退化成**一条对角线**：
+
+```
+斜纹（原设计）          对角线（现在）
+▨▨▨▨                ◤
+▨▨▨▨         →      ◢
+▨▨▨▨
+```
+
+11px 的格子里两者辨识度没有实质差别，而且它仍然是**非颜色线索**——
+色盲用户也能分辨，这条要求没丢。`DESIGN.md` §3.6.1 与 §8.12 已同步。

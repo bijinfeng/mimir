@@ -1,5 +1,11 @@
-import type { PluginDescriptor, PluginSeam, PluginStatus, SettingSpec } from './config.js'
-import type { Capturer, ModelProvider, Parser, RetrievalLeg } from './seams.js'
+import type {
+  PluginDescriptor,
+  PluginSeam,
+  PluginStatus,
+  SettingSpec,
+  SettingValue,
+} from './config.js'
+import type { Capturer, ModelProvider, Parser, RetrievalLeg, StorageBackend } from './seams.js'
 
 /**
  * 插件契约：**宿主交给插件的东西**，以及插件对宿主的声明。
@@ -31,12 +37,26 @@ export type { PluginSeam, PluginStatus }
  * | 字段 | 含义 | 算出来的状态 |
  * |---|---|---|
  * | `requires` | 缺这些设置键就不能干活 | `needs-config`（reason 列出缺的键） |
- * | `unavailable()` | 代码在、配置也可能齐，但就是干不了（如探测失败） | `unavailable` |
+ * | `unavailable(read)` | 代码在、配置也可能齐，但就是干不了 | `unavailable` |
  *
  * **为什么状态由 core 算而不是各实现自己写**：把「缺配置」这个最常见的情况
  * 收敛成一条规则，就不会出现八个实现各自编八种理由。实现只需要声明
  * 它依赖什么，而 `unavailable()` 留给真正需要自定义判断的那几个
  * （见 `docs/TECH.md` §7.4）。
+ *
+ * ## `unavailable` 拿到的是**已解析的值**，不只是「有没有配」
+ *
+ * 这是存储接缝带出来的一处契约放宽。原先的判据只有 `isProvided(key)`
+ * ——「这个键有没有人显式配过」——它回答不了「**当前选中了哪个后端**」：
+ * 本地与 S3 都配好之后，两个后端在设置页上都会显示「可用」，
+ * 而实际上只有一个是真相（`docs/RESEARCH.md` §10.6）。
+ *
+ * 收下 `read` 之后，未选中的后端可以如实报告
+ * 「当前未选中（正在用 local）」——那正是 `unavailable` 的语义：
+ * 代码在、配置齐、就是干不了活。代价是这个函数多了一条约束：
+ *
+ * > **必须同步。** 值由装配层预先解析好传进来，不能在这里 await 读配置。
+ * > 理由见 `computeStatus`：它在 `/api/config` 每次请求时对每条接缝跑一遍。
  */
 export interface PluginDeclaration {
   seam: PluginSeam
@@ -58,11 +78,39 @@ export interface PluginDeclaration {
   params?: readonly SettingSpec[]
   /** 缺任一个就不能干活。core 据此算出 `needs-config` */
   requires?: readonly string[]
-  /** 代码在但不能干活的其它原因。返回 null 表示没有额外阻塞 */
-  unavailable?: () => string | null
+  /**
+   * 代码在但不能干活的其它原因。返回 null 表示没有额外阻塞。
+   * 参数是「当前生效值」的只读读取口，**同步、不抛错、未知键给 null**。
+   */
+  unavailable?: (read: DeclarationReader) => string | null
+}
+
+/**
+ * `unavailable` 的读取口。**同步**且只读——见 `PluginDeclaration` 的注释。
+ *
+ * 未知键返回 `null` 而不是抛错：它读的是「当前生效值」，
+ * 而一个没注册的键在这里等价于「没有值」，不值得让整页配置挂掉。
+ */
+export interface DeclarationReader {
+  /** 当前生效值（已按类型转换）。未注册、未配置或密钥类都可能是 null */
+  get(key: string): SettingValue
 }
 
 /* ── 宿主交给插件的东西 ───────────────────────────────── */
+
+/**
+ * 密钥的加解密口。**插件存结构化配置时用它保护其中的密钥字段。**
+ *
+ * 为什么给插件这个（而不是让设置层猜哪一层是密钥）：供应商列表是
+ * **插件自己的形状**，只有它知道 `apiKey` 在数组的哪一项里。
+ * 设置层提供通用的 `secret` 类型给标量键，结构化值里的密钥则由
+ * 拥有那个形状的插件用这个编解码器处理——两处用的是同一套算法与密钥，
+ * 所以 `AUTH_SECRET` 换掉时它们一起失效，不会出现一半能解一半不能。
+ */
+export interface SecretCodec {
+  encrypt(plain: string): string
+  decrypt(stored: string): { ok: true; value: string } | { ok: false; reason: string }
+}
 
 /**
  * 宿主交给插件的数据库句柄。
@@ -83,6 +131,21 @@ export interface PluginSettings {
   getNumber(key: string): Promise<number>
   getString(key: string): Promise<string>
   getBoolean(key: string): Promise<boolean>
+  /**
+   * 结构化值（`json` 类键）。**拿到的可能是 `undefined`**——
+   * 没人配过、值坏了、或钩子抛错都会是它，调用方必须准备好默认形状。
+   *
+   * 返回的是**服务端内部值**（没过 `toWire`）：供应商列表里因此带着密钥密文。
+   * 这是刻意的——插件要拿它去解密、去合并。它绝不能出现在任何 HTTP 响应里。
+   */
+  getJson<T = unknown>(key: string): Promise<T | undefined>
+  /**
+   * 写回结构化值。**插件用它保存自己的域配置**（供应商列表）。
+   *
+   * 写的是**内部形状**（`getJson` 拿到的那个），不经 `fromWire`——
+   * 插件自己已经处理过密钥了。设置层只负责存。
+   */
+  setJson(key: string, value: unknown): Promise<void>
   /** 密钥类：拿明文。只在**即将发请求**的那一刻调用，不要缓存 */
   getSecret(key: string): Promise<{ ok: true; value: string } | { ok: false; reason: string }>
 }
@@ -104,7 +167,7 @@ export interface Registry<TImpl> {
   /** 按 id 取。找不到返回 undefined，由调用方决定是降级还是报错 */
   find(id: string): RegisteredPlugin<TImpl> | undefined
   /** 给设置页与 `/api/config`：活的 + 规划中的，都带上算好的状态 */
-  descriptors(isProvided: (key: string) => boolean): PluginDescriptor[]
+  descriptors(isProvided: (key: string) => boolean, read: DeclarationReader): PluginDescriptor[]
 }
 
 export interface RegisteredPlugin<TImpl> {
@@ -137,6 +200,8 @@ export interface RegisteredPlugin<TImpl> {
 export interface PluginHost {
   readonly db: PluginDatabase
   readonly settings: PluginSettings
+  /** 存取结构化配置里的密钥字段（见 `SecretCodec`）*/
+  readonly secrets: SecretCodec
   /**
    * 声明**包级**配置键：一个插件包里多个实现共用同一组键时用它。
    *
@@ -156,6 +221,15 @@ export interface PluginHost {
   capturer(declaration: PluginDeclaration, impl: Capturer): void
   /** 注册一个模型提供方 */
   provider(declaration: PluginDeclaration, impl: ModelProvider): void
+  /**
+   * 注册一个存储后端。
+   *
+   * 与另外四条接缝有一处本质不同：**它是单数的**。多个 leg 一起跑、
+   * 按 URL 或角色各选一个 capture / parser / provider，而存储任何时刻
+   * 只有一个在用（`storage.backend` 指向的那个），其余是备选。
+   * 这个差异由各自的 `unavailable(read)` 如实体现，见 `PluginDeclaration`。
+   */
+  storage(declaration: PluginDeclaration, impl: StorageBackend): void
 }
 
 /** 一个插件包的入口。`install` 收到宿主，把自己注册进去 */

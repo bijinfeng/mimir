@@ -1,8 +1,10 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
+import { sql } from 'drizzle-orm'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { detectSource } from '@mimir/shared'
-import { assemble } from '../plugins/host.js'
+import { db } from '../db/client.js'
+import { assemble, resetAssembly } from '../plugins/host.js'
 import { env } from '../env.js'
 import { getAuthCookie, makeClient } from './helpers.js'
 
@@ -34,13 +36,147 @@ beforeAll(async () => {
 const repoRoot = resolve(env.repoRoot)
 
 describe('插件注册表', () => {
-  it('四条接缝都有实现，且 id 不重复（重复会在注册时抛错）', () => {
+  it('五条接缝都有实现，且 id 不重复（重复会在注册时抛错）', () => {
     const { seams } = assemble()
 
     expect(seams.leg.implementations().length).toBeGreaterThanOrEqual(2)
     expect(seams.parser.implementations().length).toBeGreaterThanOrEqual(1)
     expect(seams.capturer.implementations().length).toBeGreaterThanOrEqual(3)
     expect(seams.provider.implementations().length).toBeGreaterThanOrEqual(1)
+    // 存储一注册就有两个：本地与 S3。**「复数实现」正是这条接缝存在的理由**，
+    // 只有本地一个时它本来就不该被抽出来（D-031 的判据）
+    expect(seams.storage.implementations().length).toBeGreaterThanOrEqual(2)
+  })
+
+  /**
+   * 存储接缝与另外四条有一处本质不同：**它是单数的**。
+   *
+   * 未被选中的那个后端不能显示成「可用」——那会让设置页说
+   * 「两个存储后端都可用」，而实际只有一个是真相（`docs/RESEARCH.md` §10.6）。
+   * 这条断言守的是 `unavailable(read)` 真的读到了 `storage.backend`：
+   * 如果哪天有人把 read 参数去掉、退回只用 `isProvided`，这里会红。
+   *
+   * ## 断言里体现了 `computeStatus` 的判定顺序
+   *
+   * `requires` 先于 `unavailable`。所以测试环境里没配 S3 时它报
+   * `needs-config`（缺桶名与凭据），而不是 `unavailable`（未选中）——
+   * **这是对的**：用户此刻要做的事是「填配置」，不是「切换后端」。
+   * 只有配齐之后，`unavailable` 那层才有机会说话。
+   */
+  it('只有一个存储后端是「可用」，其余如实报告原因', async () => {
+    const { descriptors } = assemble()
+    const plugins = await descriptors()
+
+    const storage = plugins.filter((plugin) => plugin.seam === 'storage')
+    expect(storage.length).toBeGreaterThanOrEqual(2)
+
+    const active = storage.filter((plugin) => plugin.status.kind === 'active')
+    expect(
+      active.map((plugin) => plugin.id),
+      '存储后端必须恰好有一个处于可用状态（当前选中的那个）',
+    ).toHaveLength(1)
+
+    /**
+     * 未选中的那些必须给出**一个说得通的原因**，且不能也是 active。
+     *
+     * 两种合法原因：
+     *  - `needs-config`：缺配置（`requires` 先判定，见上）
+     *  - `unavailable`：配齐了但没选中，理由里会说「当前未选中（正在用 X）」
+     *
+     * 不合法的是 `active`（上面已断言）与 `planned`（两个实现都在代码里）。
+     *
+     * 理由**非空**也要断言：一个空字符串的 reason 在界面上会渲染成
+     * 一条没有内容的提示，看起来像渲染坏了。
+     */
+    const others = storage.filter((plugin) => plugin.id !== active[0]?.id)
+    const shape = others.map((plugin) => ({
+      id: plugin.id,
+      kind: plugin.status.kind,
+      // 两种状态都带 reason，其余没有。统一取出来比较，避免条件断言
+      reason:
+        plugin.status.kind === 'needs-config' || plugin.status.kind === 'unavailable'
+          ? plugin.status.reason
+          : '',
+    }))
+
+    expect(
+      shape.map((item) => item.kind),
+      '未选中的后端只能是 needs-config 或 unavailable（不能也是 active）',
+    ).toEqual(['needs-config'])
+
+    // 缺配置时必须点名缺哪个键，而不是只说「需要配置」
+    expect(shape[0]?.reason, '缺配置的理由要点出具体的键').toContain('storage.s3.')
+  })
+
+  it('默认选中本地后端（新部署与测试环境都是它）', async () => {
+    const { descriptors } = assemble()
+    const plugins = await descriptors()
+
+    const active = plugins.find(
+      (plugin) => plugin.seam === 'storage' && plugin.status.kind === 'active',
+    )
+    expect(active?.id).toBe('local')
+  })
+
+  /**
+   * **这条是「未选中」那个新状态的直接断言**，也是这次改动给契约
+   * 加 `read` 参数的全部理由（`docs/RESEARCH.md` §10.6）。
+   *
+   * 把 S3 配齐（但 `storage.backend` 仍是 local），它必须显示
+   * 「当前未选中（正在用 local）」而不是「可用」——否则设置页会同时
+   * 显示两个可用后端，而其中只有一个在真正承接写入。
+   *
+   * 为什么要写这个测试：`isProvided` 判据在这里会给出**错误答案**
+   * （三个键都配了 → 认为它可用）。回退到只用 `isProvided` 的实现
+   * 会让这条红，而那正是要拦住的退化。
+   */
+  it('配齐但未选中的后端报「当前未选中」，不是「可用」', async () => {
+    // 用一个新的 client 而不是外层的那个：这条测试会改设置并重置装配，
+    // 复用同一个 client 会让两者纠缠
+    const storageClient = makeClient(await getAuthCookie())
+
+    const configured = await storageClient.patch('/api/config/settings', {
+      values: {
+        'storage.s3.bucket': 'test-bucket',
+        'storage.s3.accessKeyId': 'AKIATEST',
+        'storage.s3.secretAccessKey': 'secret-for-test-only',
+      },
+    })
+    expect(configured.status).toBe(200)
+
+    // 设置改了要丢掉装配缓存，否则 descriptors 读的还是上一次的快照
+    resetAssembly()
+
+    try {
+      const { descriptors } = assemble()
+      const plugins = await descriptors()
+
+      const s3 = plugins.find((plugin) => plugin.seam === 'storage' && plugin.id === 's3')
+      expect(s3, 's3 描述符必须存在').toBeDefined()
+
+      // 三个键都配齐了，所以这里**不该**出现 needs-config
+      expect(s3?.status.kind, '三个键都配齐了，所以不该是 needs-config；它必须报「未选中」').toBe(
+        'unavailable',
+      )
+
+      /**
+       * 理由从状态里取出来单独断言，而不是写成 `if (kind === 'unavailable')`。
+       * 那个写法会被 vitest 的 `no-conditional-expect` 拦下——而它拦得对：
+       * 条件断言在 kind 不是 unavailable 时会**静默跳过**，
+       * 于是这条测试在最该失败的时候反而是绿的。
+       */
+      const reason = s3?.status.kind === 'unavailable' ? s3.status.reason : ''
+      expect(reason, '理由要说清「未选中」，而不是只说「不可用」').toContain('当前未选中')
+      expect(reason, '理由要点名正在用哪个后端').toContain('local')
+
+      // 而 local 仍然可用（它就是被选中的那个）
+      const local = plugins.find((plugin) => plugin.seam === 'storage' && plugin.id === 'local')
+      expect(local?.status.kind).toBe('active')
+    } finally {
+      // 清理：删掉覆盖行，回落到默认（不这么做会污染后面的测试）
+      await db.execute(sql`delete from settings where key like 'storage.s3.%'`)
+      resetAssembly()
+    }
   })
 
   it('描述符里的 file 路径在仓库里真实存在', async () => {
@@ -134,14 +270,14 @@ describe('/api/config 的形状', () => {
     const res = await client.get<{
       settings: { key: string; type: string; value: unknown }[]
       plugins: unknown[]
-      models: unknown[]
+      modelConfig: { roles: unknown[] }
       probes: unknown[]
     }>('/api/config')
 
     expect(res.status).toBe(200)
     expect(Array.isArray(res.body.settings)).toBe(true)
     expect(Array.isArray(res.body.plugins)).toBe(true)
-    expect(Array.isArray(res.body.models)).toBe(true)
+    expect(Array.isArray(res.body.modelConfig.roles)).toBe(true)
 
     // 密钥类键的值必须是 null——绝不下发浏览器
     const secrets = res.body.settings.filter((entry) => entry.type === 'secret')
@@ -151,23 +287,43 @@ describe('/api/config 的形状', () => {
     }
   })
 
-  it('模型角色状态永远齐全，且不可用时给出原因', async () => {
+  /**
+   * S3 的 Secret Access Key 是**结构化配置之外的密钥**，容易漏掉。
+   *
+   * 它走的是 `secret` 类型（不是 json 里的字段），所以上面那条通用断言
+   * 已经覆盖它。这里再点名一次是因为它是这次改动新增的密钥，
+   * 而「新增一个密钥」正是最容易忘掉下半句（下沉前剔除）的时刻。
+   */
+  it('存储密钥不下发浏览器', async () => {
     const res = await client.get<{
-      models: {
-        role: string
-        label: string
-        model: string
-        ready: boolean
-        reason: string | null
-      }[]
+      settings: { key: string; type: string; value: unknown }[]
     }>('/api/config')
 
-    const roles = res.body.models.map((item) => item.role)
+    const secret = res.body.settings.find((entry) => entry.key === 'storage.s3.secretAccessKey')
+    expect(secret, 'storage.s3.secretAccessKey 必须注册进键表').toBeDefined()
+    expect(secret?.type).toBe('secret')
+    expect(secret?.value).toBeNull()
+  })
+
+  it('模型角色状态永远齐全，且不可用时给出原因', async () => {
+    const res = await client.get<{
+      modelConfig: {
+        roles: {
+          role: string
+          label: string
+          model: string
+          ready: boolean
+          reason: string | null
+        }[]
+      }
+    }>('/api/config')
+
+    const roles = res.body.modelConfig.roles.map((item) => item.role)
     // 测试环境没有配模型密钥，所以这四个角色都应当存在且带原因
     expect(roles).toEqual(expect.arrayContaining(['chat', 'reasoning', 'summarize', 'embed']))
 
     // 不写成 if/else + expect（vitest 的条件断言规则会拦）：把不变量直接写出来
-    const inconsistent = res.body.models.filter(
+    const inconsistent = res.body.modelConfig.roles.filter(
       (item) => (item.ready && item.reason !== null) || (!item.ready && !item.reason),
     )
     expect(

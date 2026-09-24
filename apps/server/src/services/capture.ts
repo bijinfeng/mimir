@@ -1,5 +1,3 @@
-import { mkdir, writeFile } from 'node:fs/promises'
-import { join } from 'node:path'
 import { eq } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import type {
@@ -11,10 +9,9 @@ import type {
 } from '@mimir/shared'
 import { db } from '../db/client.js'
 import { documents } from '../db/schema.js'
-import { env } from '../env.js'
 import { toSearchText } from '@mimir/tokenizer'
 import { contentHash, toExcerpt } from '../lib/text.js'
-import { assemble } from '../plugins/host.js'
+import { assemble, activeStorage } from '../plugins/host.js'
 
 /**
  * 抓取编排（宿主的适配层）。
@@ -145,13 +142,14 @@ export async function capture(params: CaptureParams): Promise<CaptureResponse> {
 
   // 先落原始快照，再写数据库——顺序遵循全局规则（文件是真相）。
   // 抓来的资料没有 vault 文件，但 raw 快照是它的真相
-  const rawDir = join(env.rawDir, contentHash(markdown).slice(0, 16))
   if (raw.rawHtml) {
-    await mkdir(rawDir, { recursive: true }).catch(() => {})
-    await writeFile(join(rawDir, 'index.html'), raw.rawHtml, 'utf8').catch((error) => {
-      // 快照写失败不该让整个抓取失败——正文才是用户要的
-      console.warn(`原始快照写入失败：${rawDir}`, error)
-    })
+    const snapshotKey = `raw/${contentHash(markdown).slice(0, 16)}/index.html`
+    await activeStorage()
+      .write(snapshotKey, raw.rawHtml)
+      .catch((error: unknown) => {
+        // 快照写失败不该让整个抓取失败——正文才是用户要的
+        console.warn(`原始快照写入失败：${snapshotKey}`, error)
+      })
   }
 
   const id = nanoid(16)

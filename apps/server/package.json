@@ -20,6 +20,7 @@
     "@mimir/plugin-leg": "workspace:*",
     "@mimir/plugin-parser": "workspace:*",
     "@mimir/plugin-provider": "workspace:*",
+    "@mimir/plugin-storage": "workspace:*",
     "@mimir/shared": "workspace:*",
     "@mimir/tokenizer": "workspace:*",
     "@mozilla/readability": "0.6.0",

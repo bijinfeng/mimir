@@ -340,11 +340,14 @@ async function* createStream(params: StreamParams): AsyncGenerator<StreamChunk> 
   const history = (parsed?.messages ?? []).slice(0, -1)
 
   try {
-    // 适配器由 provider 接缝提供——这里只说「要哪个角色」
+    // 适配器由 provider 接缝提供——这里只说「要哪个角色」。
+    // 记账在 model.ts 里完成（它包住了整条流），这里只声明这次是哪个功能的调用
     const stream = await streamModelChat({
       role: props.deepReasoning ? 'reasoning' : 'chat',
       stream: true,
       systemPrompts: [SYSTEM_PROMPT],
+      source: 'chat',
+      refId: conversationId,
       messages: [
         ...history,
         { role: 'user', content: `【资料】\n${retrieval.context}\n\n【问题】\n${question}` },

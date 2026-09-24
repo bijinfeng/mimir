@@ -43,6 +43,10 @@ services:
       DATA_DIR: /data
       VAULT_DIR: /data/vault
       RAW_DIR: /data/raw
+      # 用量统计按哪个时区切天。容器默认 UTC——不设它的话「今天」按 UTC 算，
+      # 凌晨 0 点到 8 点的消耗会落到前一天（热力图整体左移一格，且不报错）。
+      # 也可以在设置页「统计」分区改，界面覆盖优先于这里。
+      TZ: ${TZ:-Asia/Shanghai}
     ports:
       - '${APP_PORT:-3000}:3000'
     volumes:

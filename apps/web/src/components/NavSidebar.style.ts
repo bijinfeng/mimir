@@ -263,4 +263,50 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     border-top: 1px solid ${token.colorBorderSecondary};
     padding: 4px 0;
   `,
+
+  /**
+   * 底部账号行（`docs/DESIGN.md` §8.13）。
+   *
+   * 左右各留 4px，与菜单项的内边距相加后让头像落在与菜单图标相近的
+   * 竖线上——不对齐的话它看起来凸出去了一格。
+   */
+  account: css`
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: calc(100% - 8px);
+    margin: 2px 4px 4px;
+    padding: 5px 8px;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    cursor: pointer;
+    text-align: left;
+
+    &:hover {
+      background: ${token.colorFillQuaternary};
+    }
+  `,
+  accountCollapsed: css`
+    width: auto;
+    justify-content: center;
+    margin: 2px 0 4px;
+    padding: 5px 0;
+  `,
+  accountAvatar: css`
+    flex: none;
+    /* 无头像时的字母底：主色浅底 + 链接色文字，与设置页的预览一致 */
+    background: ${token.colorPrimaryBg};
+    color: ${token.colorLink};
+    font-size: ${FONT_SIZE.badge}px;
+    font-weight: 600;
+  `,
+  accountName: css`
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: ${FONT_SIZE.item}px;
+    color: ${token.colorText};
+  `,
 }))

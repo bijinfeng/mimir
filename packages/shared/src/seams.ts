@@ -1,5 +1,13 @@
+import type {
+  ModelRole,
+  ProviderInstance,
+  ProviderPreset,
+  ProviderModel,
+  ModelRoleStatus,
+} from './config.js'
+
 /**
- * 四条接缝的**运行接口**（与 `plugin.ts` 的声明相对）。
+ * 五条接缝的**运行接口**（与 `plugin.ts` 的声明相对）。
  *
  * 放在 shared 而不是各插件包里：运行时接口是宿主与插件之间的**唯一约定的形状**，
  * 它必须只有一个真相来源。放在某个插件包里，就会出现「谁的版本算数」的问题。
@@ -12,6 +20,7 @@
  * | `parser` | 原始内容 → 统一 Markdown | 不抓取、不写库 |
  * | `leg` | 查询 → 已排序的检索单元 id | 不融合、不取正文 |
  * | `provider` | 角色 → 模型适配器 | 不组装上下文、不调检索 |
+ * | `storage` | 相对路径 → 字节 | 不管业务语义（笔记/头像/快照） |
  */
 
 /* ── capturer：URL → 原始内容 ─────────────────────────── */
@@ -113,14 +122,6 @@ export interface RetrievalLeg {
 /* ── provider：角色 → 模型适配器 ──────────────────────── */
 
 /**
- * 模型角色。**按任务分角色，而不是按服务商分**——
- * 「摘要换一个便宜模型」是最直接的成本控制手段（`docs/TECH.md` §5.7）。
- */
-export type ModelRole = 'chat' | 'reasoning' | 'summarize' | 'embed'
-
-export const MODEL_ROLES: readonly ModelRole[] = ['chat', 'reasoning', 'summarize', 'embed']
-
-/**
  * 一个角色的适配器实例。
  *
  * `instance` 是 `unknown`：适配器来自 TanStack AI（`@tanstack/ai` 的各种
@@ -138,14 +139,170 @@ export interface ProviderProbe {
   ok: boolean
   /** 给用户看的原因。失败时必须说清是「连不上」还是「鉴权失败」 */
   message: string
+  /** 耗时。用它区分「慢」与「不通」——两者对用户的下一步动作不同 */
+  tookMs: number | null
 }
 
+/**
+ * 拉取模型列表的结果。它是**观测**（这个端点现在有哪些模型），
+ * 所以带着时刻——界面上要显示「N 分钟前」。
+ */
+export interface ModelListResult {
+  models: string[]
+  fetchedAt: string
+}
+
+/**
+ * 模型提供方（一条接缝，不是一家服务商）。
+ *
+ * ## 为什么是「族」而不是「一家」
+ *
+ * 实现只管**协议**：OpenAI 兼容端点怎么调、`/models` 怎么拉、错误怎么读。
+ * 「DeepSeek 的 baseURL 是什么」是**数据**（预设目录里一行），
+ * 所以加一家服务商不需要写代码，加一个协议才需要。
+ *
+ * ## 谁解析角色绑定
+ *
+ * **实现自己解析**，宿主只问「给我对话角色的适配器」。
+ * 角色绑定、供应商查找、密钥解密都是模型域的内部形状——
+ * 让宿主来解析就是把形状知识漏到宿主里（`docs/TECH.md` §7.4
+ * 的「宿主不认识具体实现」）。
+ */
 export interface ModelProvider {
   readonly id: string
+  /** 配置全貌：供应商列表 + 角色状态 + 预设目录。设置页与 `/api/config` 用它 */
+  overview(): Promise<ProviderOverview>
   /** 这个角色当前是否可用（看配置，不发请求） */
   supports(role: ModelRole): Promise<boolean>
   /** 造适配器。角色不可用时抛错——调用方应当先问 supports */
   adapter(role: ModelRole): Promise<ModelAdapter>
-  /** 真实调一次。只由用户显式点「测试连接」触发（`docs/TECH.md` §7.8） */
+  /** 角色级真实调用。只由用户显式触发（`docs/TECH.md` §7.8） */
   probe(role: ModelRole): Promise<ProviderProbe>
+  /**
+   * 向端点拉模型列表。**显式动作**（用户点「拉取模型」），
+   * 一次真实请求；成功时把结果写进该供应商的模型列表并返回更新后的实例。
+   */
+  refreshModels(providerId: string): Promise<ProviderInstance>
+  /**
+   * 供应商级探测：真的发一次最小请求。
+   *
+   * 与角色级探测的区别是**它不依赖角色绑定**——新建供应商、还没绑定角色时
+   * 就要能验证它通不通，否则用户得先绑一个可能不对的角色才能测。
+   */
+  probeProvider(providerId: string, modelId?: string): Promise<ProviderProbe>
+}
+
+/**
+ * 模型配置全貌。它是 `overview()` 的返回，也是设置页「模型」分区的全部数据。
+ *
+ * `roles` 里的 `ready`/`reason` 由实现算——「哪个供应商缺密钥」「哪个角色
+ * 绑到了不存在的供应商」这类判断属于模型域，不该让宿主或前端复刻一遍。
+ */
+export interface ProviderOverview {
+  providers: ProviderInstance[]
+  roles: ModelRoleStatus[]
+  presets: ProviderPreset[]
+}
+
+export type { ModelRole, ProviderInstance, ProviderPreset, ProviderModel }
+
+/* ── storage：相对路径 → 字节 ─────────────────────────── */
+
+/**
+ * 存储接缝。
+ *
+ * ## key 的形状：相对 `DATA_DIR` 的 POSIX 路径
+ *
+ * ```
+ * vault/2026/09/组件性能优化-a1b2c3d4.md     笔记（真相）
+ * vault/.trash/<时间戳>-名字.md              回收站
+ * raw/<hash>/index.html                      抓取原始快照
+ * avatars/<userId>.webp                      头像（不属于内容，见 D-036）
+ * ```
+ *
+ * 三个前缀对应原来的三个目录，于是有两件好处：
+ *
+ *  1. **本地后端下 key 与磁盘路径一一对应**——`data/` 仍然是备份、git 与
+ *     外部编辑器（Typora / Obsidian）的单位，换成这个接缝没有搬动任何文件
+ *  2. 换 S3 时同一批 key 直接变成桶内对象名，**没有任何调用方需要改**
+ *
+ * ## 为什么是「一个根 + 前缀」而不是「三个独立的根」
+ *
+ * 三个目录各自独立配置时，「新增第四个存储位置」要在每个部署文件里各加一行，
+ * 而漏掉哪一行**不报错**——只是数据静静地落到容器可写层（TECH §10 记的
+ * 「生产环境头像不落盘」就是它的真实症状）。收成一个根之后，
+ * 这类不一致在结构上不可能发生。
+ *
+ * ## 明确不做的事
+ *
+ * | 不做 | 原因 |
+ * |---|---|
+ * | `stat` / mtime | 笔记时间来自 frontmatter，不用文件时间。S3 的 `LastModified` 因此不必暴露 |
+ * | 预签名 URL | 它是**吞吐**手段，不是访问控制。头像的「私人资源」性质要求服务端转发（D-036） |
+ * | 分块 / 流式上传 | 单用户笔记在 KB 量级，一次写完 |
+ * | 目录概念 | 对象存储没有目录。`list` 直接给文件 key，不返回中间层 |
+ */
+export interface StorageBackend {
+  readonly id: string
+
+  /**
+   * 读一个 key。**不存在时抛错**，由调用方决定这意味着什么——
+   * 对「读笔记」是异常，对「探测三种头像扩展名」是正常分支。
+   */
+  read(key: string): Promise<Uint8Array>
+
+  /** 写。父前缀不存在时自动创建（本地是 mkdir，S3 本来就不需要） */
+  write(key: string, data: string | Uint8Array): Promise<void>
+
+  /**
+   * 删。**幂等**：key 不存在也算成功。
+   *
+   * 它的语义是「让这个 key 不存在」，而一个本来就不存在的 key 已经满足它了。
+   * 头像删除要依次清掉三种扩展名、笔记删除要容忍文件已被手工删掉，
+   * 两处都需要这个性质——否则调用方各自写一遍「忽略不存在的错误」。
+   */
+  remove(key: string): Promise<void>
+
+  /**
+   * 移动。**要么成功，要么没动过。**
+   *
+   * 这条保证在两个后端上的实现完全不同，也是这个接缝最值得注意的地方：
+   *
+   * | 后端 | 做法 | 原子性 |
+   * |---|---|---|
+   * | 本地 | `rename(2)` | 有（文件系统保证） |
+   * | S3 | 复制 + 删除 | **无**（对象存储没有跨 key 的原子操作） |
+   *
+   * S3 上的失败模式是「复制成功、删除失败」→ 同一个笔记有两个文件。
+   * 顺序必须是**先复制后删除**（任何时刻都不丢数据），
+   * 而重复文件由 `reindexVault` 的「同一 id 多个路径」检测兜住
+   * （`docs/RESEARCH.md` §10.3a）。
+   */
+  move(from: string, to: string): Promise<void>
+
+  /**
+   * 递归列出前缀下的**文件** key。顺序不保证。
+   *
+   * 不返回「目录」——对象存储里没有目录，返回中间层会让两个后端的语义分叉。
+   * 跳过隐藏项（`.trash`、`.` 开头的路径段）是**调用方**的策略，
+   * 不是存储层的事实：存储层只管存取，不知道什么叫回收站。
+   */
+  list(prefix: string): Promise<string[]>
+
+  /**
+   * 真实探测一次：写一个探针 key → 读回 → 删掉。
+   *
+   * **只由用户显式触发的「测试连接」调用**，理由与模型探测完全相同
+   * （`docs/TECH.md` §7.8）：存储配错会在最坏的时刻才暴露，而自动探测
+   * 是每次进设置页都发一次真实写入。
+   *
+   * 可选——不是每个后端都值得做（本地后端配错的唯一可能是磁盘没了）。
+   */
+  probe?(): Promise<StorageProbe>
+}
+
+export interface StorageProbe {
+  ok: boolean
+  /** 给用户看的原因。失败时必须说清是「连不上」「鉴权失败」还是「桶不存在」 */
+  message: string
 }

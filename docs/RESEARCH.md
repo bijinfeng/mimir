@@ -670,3 +670,436 @@ chat length, number of sources」）——**没有一条说是检索慢**。
 所以将来若真要拆，正当理由是**组织与情境隔离**（Obsidian 的 vault、思源的笔记本），
 并且应当保住**跨库检索**。NotebookLM 的现状正好说明：拆库而失去全库检索，
 换来的是一句「我想不起当时存在哪个库了」——恰好是 mimir 最不能失去的东西。
+
+---
+
+## 10. 文件存储：本地默认 + S3 可选（2026-09 调研）
+
+**需求**：存储默认落本地，但要支持 S3；并且这个也要做成插件。
+
+这条需求与两处既有决策正面相撞，必须先把它们拆开：
+
+| 既有决策 | 它写的是什么 |
+|---|---|
+| `DECISIONS.md` D-031 | 「不做可切换的存储引擎」，并把**对象存储**列进「明确不做成接缝」的清单（`TECH.md` §7.2 同） |
+| `PRD.md` §1 非目标 | 「可切换的存储 / 向量引擎」——理由是「多后端支持是企业产品要兼容各种栈的产物」 |
+
+**结论：D-031 的判断在这里不适用，需要一次修订。** 理由不是「用户想要」，而是
+D-031 自己的理由是**关于 SQL 的**，而这次要换的是**文件**。见 10.1。
+
+### 10.1 D-031 反对的是「数据库多后端」，不是「文件多后端」
+
+D-031 给出的三条理由逐条看：
+
+1. 「每个查询要过一层适配（`<=>` 运算符、`halfvec` 的表达式索引、RRF 的 SQL
+   都是 PG 特有的）」——这条成本全部产生在**查询方言**上。文件读写没有方言。
+2. 「Postgres 同时是关系库、全文索引与向量库，这是本项目的简化前提」——主语是
+   Postgres。它说的是**不要把数据库抽象掉**，而文件从来不在 Postgres 里。
+3. 「有多实现（或明确将有多实现）的地方抽接缝，只有一个实现且不会变的地方不抽」
+   ——这是 D-031 自己给出的**判据**。文件存储现在正落在它定义的条件上：
+
+| | 数据库 / 向量库（D-031 的对象） | 文件存储（本次的对象） |
+|---|---|---|
+| 有没有第二个实现 | 没有，且方向都没有 | **有**：本地与 S3-as-plugin |
+| 第二次实现是「兼容已有栈」吗 | 是（企业要接各自的库） | **不是**：VPS/远程部署的人本来就没有本地文件可开 |
+| 抽接口的代价 | 每条 SQL 要过适配层 | 5 个方法，且不含查询方言 |
+| 不抽的代价 | 零（没有第二实现） | 远程部署时无法把数据放到对象存储 |
+
+所以修订的方向是**把两条决策各自收窄**，而不是推翻它们：
+
+- D-031 保留一半：**数据库与向量库仍然只有 Postgres**，不抽。
+- 「对象存储不做成接缝」这一句删掉，并说明为什么它当初被误归进同一类。
+- `PRD.md` §1 的非目标「可切换的存储 / 向量引擎」改成「可切换的**数据库 / 向量引擎**」，
+  文件存储从该条移出。
+
+### 10.2 要被覆盖的操作面（从真实调用点反推，不是设想）
+
+| 目录 | 唯一知道它的模块 | 读写模式 | 需要的操作 |
+|---|---|---|---|
+| `data/vault/` | `lib/vault.ts` | 读 + 写 + 改名 + 回收站 + 递归遍历 | 5 |
+| `data/raw/` | `services/capture.ts` | **只写不读**（无路由伺服它，已验证） | 1 |
+| `data/avatars/` | `services/avatar.ts` | 读 + 写 + 删，**二进制** | 3 |
+
+调用方只有四处：模块本身是 `lib/vault.ts`（vault）、`services/capture.ts`（raw）、
+`services/avatar.ts`（头像），使用者是 `services/documents.ts` 与
+`services/vault-index.ts`。而 `services/export.ts` 从数据库导出、不读文件，
+`lib/static.ts` 读的是前端构建产物——两者**都不属于**内容存储，不进接缝。
+
+反推出的接缝只有 5 个方法：
+
+```ts
+interface StorageBackend {
+  readonly id: string
+  read(key: string): Promise<Uint8Array>       // 文本由调用方 decode
+  write(key: string, data: string | Uint8Array): Promise<void>
+  remove(key: string): Promise<void>
+  move(from: string, to: string): Promise<void>
+  list(prefix: string): Promise<string[]>      // 递归，返回全部 key
+}
+```
+
+三件被这份清单**排除**的事，值得记下来免得日后被「顺手加上」：
+
+- **不进 `stat` / mtime**：`readNote` 的时间来自 frontmatter，不用文件时间。
+  S3 的 `LastModified` 因此不需要暴露。
+- **不做预签名 URL**：见 10.5。
+- **不做分块上传 / 流式**：单用户笔记在 KB 量级，PutObject 一次就够。
+
+### 10.3 实测：三个会改变实现的差异
+
+用一个自写的 S3 mock（校验 SigV4 结构 + 对预签名 URL **真算一遍签名**）实测，
+脚本与结论如下。**注意 mock 不是真 S3**——见 10.7 的未验证清单。
+
+#### （a）没有 `rename(2)`
+
+本地 `moveNote` 是一次原子的 `rename(2)`；对象存储里改名 = **复制 + 删除**。
+
+实测：`PUT` + `x-amz-copy-source` → 200，**请求体 0 字节**（正文不出服务端），
+随后 `DELETE` → 204，原 key 再读 → 404。中文 key 也通过
+（`copy-source` 要按段 URI 编码：`/bucket/notes/2026/09/%E7%BB%84%E4%BB%B6...md`）。
+
+| | 本地 | S3 |
+|---|---|---|
+| 请求数 | 1 | 2 |
+| 原子性 | 有 | **无** |
+| 失败模式 | 要么成功要么没动 | 复制成功、删除失败 → **同一个 `id` 有两个文件** |
+
+后者不是理论问题：`reindexVault` 用 `onConflictDoUpdate target: documents.id`，
+两个同 id 的文件会互相覆盖，**哪一份胜出取决于扫描顺序**——一个不报错的静默错误。
+缓解方向：复制在前删除在后（任何时刻都不会丢数据），并在重建索引时检测
+「同一 id 多个路径」并报出来（现在不检测）。
+
+#### （b）没有目录
+
+`walkMarkdown` 现在用 `readdir` 递归。S3 只能用 LIST，且**每次最多 1000 个 key**。
+两种列举策略实测（7 个文件、`max-keys=3` 强制翻页）：
+
+| 策略 | 请求数 | 说明 |
+|---|---|---|
+| 递归列举（不带 `delimiter`，靠 `continuation-token` 翻页） | **3** | 一次前缀拿全部，必须翻页 |
+| 逐层列举（`delimiter=/`） | 7 | 每个「目录层级」一次请求 |
+
+**结论：用递归列举 + 翻页**，逐层在深层 vault 上会线性放大请求数。
+两个后果：`list()` 必须处理 `IsTruncated` / `NextContinuationToken`；
+`.trash` 的跳过逻辑要按**路径段**判断，不能只看末段。
+
+#### （c）一致性**没问题**（唯一的好消息）
+
+AWS 文档明确：PUT/DELETE 是强 read-after-write，单 key 覆盖是原子的
+（「you will get either the old data or the new data, but never partial or corrupt data」）。
+所以**铁律 2「先文件后数据库」仍然成立**，不需要为 S3 改写入顺序。
+
+同一条文档也确认了跨 key 没有原子性（「There is no way to make atomic updates
+across keys」）——这正是（a）的根因。
+
+#### （d）中文 key 必须靠 `encoding-type=url`
+
+`slugify` 保留汉字（`\p{L}`），所以 key 里真的有中文。实测 PUT / LIST 往返正常，
+但 LIST 的响应是 XML，而 **XML 1.0 装不下某些字符**。AWS 文档给的解法就是
+请求时带 `encoding-type=url`：非 ASCII 按 UTF-8 百分号编码。
+
+附带好处：key 被百分号编码后，`<Key>` 里不再有需要反转义的实体，
+提取响应的实现因此简单很多（见 10.4）。
+
+### 10.4 客户端库：三个候选的实测对比
+
+| | `aws4fetch` | `@aws-sdk/client-s3` | `minio` |
+|---|---|---|---|
+| 版本 | 1.0.20 | 3.1138.0 | 8.0.7 |
+| 许可证 | MIT | Apache-2.0 | Apache-2.0 |
+| 实测磁盘 | **76 KB** | 17 MB | 15 MB |
+| 实测依赖目录数 | **1** | 26 | 34 |
+| 传递依赖 | 无 | 26 个 `@smithy/*`、`@aws-sdk/*` | lodash、xml2js、async、through2… |
+| 签名 | 自实现 SigV4 | SDK | SDK |
+| XML 解析 | 无，要自己做 | 有 | 有 |
+| 兼容性风险 | 无额外请求头 | ≥3.729.0 自动加 `x-amz-checksum-crc32`，**可用一行配置关掉**（§10.11） | 无 |
+| 维护状态 | 884★，未归档，末次推送 2024-12 | 活跃 | 活跃 |
+
+两条原本被认为决定性的：
+
+- **SDK 的自动校验和是自建端点的已知雷。** AWS 文档确认 3.729.0 起「the SDK
+  provides default integrity protections by automatically calculating a `CRC32`
+  checksum for uploads」，而这个头不少 S3 兼容实现不认。实测 `aws4fetch`
+  只发 4 个头，**没有任何 checksum 类头**。
+  **但查了 LobeHub 的实现之后这一条不再是扣分项**：把
+  `requestChecksumCalculation` 设成 `'WHEN_REQUIRED'` 即可关闭，是一行配置
+  （§10.11 有源码与 PR 编号）。
+- **SDK 的好处（凭证链、重试、分页器）在这里基本用不上**：单用户、一把静态密钥、
+  没有 STS / IMDS / SSO。这一条仍然成立——但它是「收益有限」，不是「成本」。
+
+**结论（已按 §10.11 的修正改写）：选 `@aws-sdk/client-s3`**，加上那一行配置。
+
+17 MB 在服务端镜像里是零边际成本：它不会下发浏览器，容器镜像本来就有几百 MB，
+而换来的是不用自己写 XML 解析与分页器，以及**将来要加预签名时不用换库**
+（M2 的浏览器扩展如果要直传大文件，那一步是加方法而不是迁移）。
+
+代价如实记：多 26 个传递依赖要跟着升级，以及 `pnpm minimumReleaseAge: 1440`
+对 `@aws-sdk/*` 这种高频发版的家族会更常触发「锁到上一个版本」。
+
+`aws4fetch` 的风险如实记下：**末次推送 2024-12，24 个 open issue，不是活跃维护**。
+SigV4 本身是冻结的规范，对这个用途休眠可接受；但真出签名 bug 要我们自己修。
+
+**修正（同一轮调研中查到 LobeHub 的用法后推翻）：**
+原先这一节的结论偏向 `aws4fetch`，主要权重压在「SDK 自动加 `x-amz-checksum-crc32`，
+自建端点不认」上。LobeHub 的证据表明**那个代价可以用一行配置关掉**，
+所以结论改为 **`@aws-sdk/client-s3` 更合适**。理由与代价见 §10.11，
+`aws4fetch` 保留为「只想省 17 MB 且不需要 presign」的备选。
+
+### 10.5 与 D-036（头像）的冲突点：**不要**预签名
+
+`aws4fetch` 支持预签名 URL，实测有效（GET 与 PUT 都能签，签名经 mock 重算验证），
+所以「头像让浏览器直连，省掉服务端转发」是个很自然的想法。
+
+**不做。** D-036 给头像定的性质是**私人资源**，并专门写了「为什么读取也要鉴权」：
+
+> 头像是私人资源，不是公开静态文件。放到 `public/` 下由静态中间件伺服会让任何人
+> 凭一个 id 就能看到——而这是个应该只有你一个人用的服务。
+
+预签名 URL 在有效期内是**任何持 URL 者可用**的，且会落进浏览器历史、日志、Referer。
+那等于把 D-036 专门否决的「凭 URL 可读」又请回来。**头像继续由服务端转发**。
+
+但要区分清楚：这一条只否决「拿预签名当访问控制」。LobeHub 用预签名做的是
+**上传路径**（浏览器直传、服务端不过手）与**下载/预览**（见 §10.11），
+那是**吞吐与内存**问题，与「谁能看」无关。mimir 现在的上传量级用不到它，
+所以 §10.11 的结论是「选 SDK 以便将来能加」，而不是「现在就加」。
+
+### 10.6 它与另外四条接缝有一处本质不同
+
+四条既有接缝都是**复数**的：多个 leg **一起**跑（融合），capturer / parser /
+provider 按 URL / 输入类型 / 角色**各选一个**——但同一时刻可能不止一个在干活。
+
+存储是**单数**的：任何时刻只有**一个**后端在用，其余是**备选**。
+这个差异会漏进状态显示——`computeStatus` 会把两个后端都算成 `active`
+（local 的 `requires` 是空的；S3 配好了也是空的），设置页于是显示
+「两个存储后端都可用」，而实际只有一个是真相。
+
+三个处理方式：
+
+| 方案 | 评价 |
+|---|---|
+| 扩展 `PluginDeclaration.unavailable`，让它能读到**值**（不只「有没有配」）而不仅是 `isProvided` | **推荐**。`descriptors()` 已经把所有条目读出来了，把只读快照传进 `computeStatus` 是一个小改动；未选中的后端返回「当前未选中（正在用 local）」——正好是 `unavailable()` 的语义（代码在、配置齐、但干不了活）。需要守住它「同步且廉价」的现有约束 |
+| 让未选中的也显示 `active`，把「用哪个」只交给 `storage.backend` 那一行 | 最小改动，可接受。插件页显示「都可用」在字面上不算错 |
+| 不为存储用接缝机制，另写一套选择逻辑 | 不推荐。会丢掉「加一个后端＝加一个文件」与设置页的文件路径/状态展示，而那正是这次重构的成果（D-030） |
+
+### 10.7 配置与落位
+
+键（归新插件包声明，与 `plugins/provider/` 声明 `model.*` 是同一条归属规则），
+新增设置页分区「存储」：
+
+| 键 | 类型 | 默认 | 说明 |
+|---|---|---|---|
+| `storage.backend` | string | `local` | `local` / `s3`。**唯一的选择点** |
+| `storage.s3.endpoint` | string | `''` | MinIO 等自建端点。留空 = AWS 官方端点 |
+| `storage.s3.region` | string | `us-east-1` | MinIO 也要一个非空值 |
+| `storage.s3.bucket` | string | `''` | |
+| `storage.s3.accessKeyId` | string | `''` | |
+| `storage.s3.secretAccessKey` | **secret** | `''` | 走既有加密落库路径，绝不下发 |
+| `storage.s3.pathStyle` | boolean | `true` | 自建端点必须路径风格；虚拟主机风格在 MinIO 上常解析不到 |
+| `storage.s3.prefix` | string | `mimir` | 桶内前缀，便于与别人共用桶 |
+
+桶内布局（**用命名空间前缀，不是三个桶**）：
+
+```
+<prefix>/vault/2026/09/标题-a1b2c3d4.md
+<prefix>/vault/.trash/<时间戳>-标题-a1b2c3d4.md
+<prefix>/raw/<hash>/index.html
+<prefix>/avatars/<userId>.webp
+```
+
+三个前缀对应现有的三个目录，于是「头像不进 vault 的扫描与导出范围」
+（D-036 的第 3 条约定）在 S3 上**由前缀继续保证**，不需要新机制。
+
+`VAULT_DIR` / `RAW_DIR` / `AVATARS_DIR` **保留为环境变量**，含义收窄为
+「local 后端的参数」——它们本来就是部署事实（TECH §7.5 的配置分层），
+不因为多了一个后端而变成界面可写的键。
+
+**推荐加一个显式「测试连接」**（写一个 key → 读回 → 删掉），理由与
+TECH §7.8 拒绝自动探测完全相同：存储配错会在最坏的时刻才暴露，而探测必须是
+用户点的那一下。它放在 `storage` 接缝上是可选的 `probe?()`。
+
+### 10.8 未被推翻的那条代价：S3 上不再是「可以直接用 Typora 打开的文件」
+
+这是本次调研里**最该被单独记下**的一条，因为它损失的是一个头条性质。
+
+`lib/vault.ts` 的注释写着 vault 文件「可以直接用 Typora / Obsidian / VS Code 打开，
+也可以直接 git 版本管理」，而 TECH §8.5 的备份方案是「`data/` 目录 + `pg_dump`」。
+
+选 S3 之后，对一个具体部署而言：
+
+| 性质 | 本地 | S3 |
+|---|---|---|
+| 用本地编辑器打开 vault | 可以 | **不可以** |
+| 对 vault 做 git 版本管理 | 可以 | **不可以**（除非同步到本地） |
+| `data/` 直接打包备份 | 可以 | 需要从桶里拉 |
+| 「文件是真相、数据库可重建」 | 成立 | **仍然成立**（真相在桶里，不在库里） |
+
+前两行是真实损失，第三行是操作方式变化，第四行**不变**——这是关键：
+铁律 2 与「重建索引」的价值没有减少，减少的是「用别的工具直接看这些文件」的便利。
+
+所以这不是「S3 更差」，而是**两种部署各有各的合理**：本地部署保住编辑器和 git；
+远程部署（VPS / NAS）本来就没有这些，换来的是数据落在有冗余的对象存储上。
+要如实写进文档的是：**它是一次取舍，不是一个纯增益**。
+
+### 10.9 未验证 / 实现时必须确认的
+
+按 INDEX「区分「确定的」和「未验证的」」这条规则列出：
+
+1. **未对真实 S3 或真实 MinIO 跑过一次。** 本次全部实测都在自写 mock 上；
+   mock 对头部签名只做结构校验（scope / SignedHeaders / body 哈希），对预签名
+   URL 才完整重算。真机验证待实现时补，重点核对：`x-amz-copy-source` 的编码、
+   `encoding-type=url` 的返回、MinIO 对 `x-amz-content-sha256` 的接受度。
+2. **未测大桶**：翻页在 >1000 个对象时的行为、`list()` 的内存占用
+   （一次性收起全部 key）未验证。若 vault 到万级，需要流式或分批。
+3. **未测量网络延迟**。每次读文档都会多一次往返；本地约 0.1 ms，MinIO 同机
+   约 1–10 ms，跨区 AWS 可能 50–200 ms。自托管单用户下可接受，但
+   `reindexVault` 会变成 N 次 GET（1000 篇 = 1000 请求），**需要并发上限**。
+4. **测试隔离未设计**。`test/global-setup.ts` 现在清 `TEST_ENV` 里的三个目录；
+   加了 S3 之后必须防止测试写进真实桶——需要与
+   `if (!TEST_DATABASE_URL.includes('mimir_test')) throw` 同性质的守卫。
+   LobeHub 的做法是 `s3rver`（假 S3 服务，在它 `devDependencies` 里，实测 3.7.1），
+   方向可参考：**测试打一个本地假端点，而不是打真桶再想办法清理**。
+5. **`buildNotePath` 现在用 `path.join`**，在 Windows 上会产生 `\`。key 必须是
+   POSIX 的 `/`，路径构造要改成显式 `/`，由 local 实现在自己的边界上转换。
+
+### 10.10 顺带发现的一处现存缺陷：生产环境头像不落盘
+
+调研「三个目录分别由谁负责」时发现的，与 S3 无关，**在当前代码上就成立**：
+
+`env.ts` 用同一套规则解析三个目录：
+
+```ts
+vaultDir:   resolvePath(process.env.VAULT_DIR   ?? './data/vault'),
+rawDir:     resolvePath(process.env.RAW_DIR     ?? './data/raw'),
+avatarsDir: resolvePath(process.env.AVATARS_DIR ?? './data/avatars'),
+```
+
+而部署配置里只有两个被显式指定：
+
+| 位置 | `VAULT_DIR` | `RAW_DIR` | `AVATARS_DIR` |
+|---|---|---|---|
+| `.env.example` | ✓ | ✓ | ✓（本地开发，相对仓库根解析，正确） |
+| `Dockerfile` ENV | ✓ `/data/vault` | ✓ `/data/raw` | **缺** |
+| `docker-compose.yml` | ✓ | ✓ | **缺** |
+
+于是在容器里 `avatarsDir` 走默认值，解析成 `cwd + /data/avatars`。
+容器的 `WORKDIR` 是 `/app`，而 `findRepoRoot` 在镜像里找不到 `pnpm-workspace.yaml`、
+按设计回落到 `process.cwd()`（这条回落在 `env.ts` 里有注释，本身是对的），
+所以最终是 **`/app/data/avatars`——不在挂载的 `/data` 卷上**。
+
+后果：上传与显示都正常（`RUN chown -R mimir:mimir /data /app` 让它可写，
+`mkdir recursive` 也能建出来），但文件落在容器可写层，
+**`docker compose --profile prod up -d --build` 之后头像消失**。不报错，
+与 D-037 记的那类「看界面以为没问题」是同一族。
+
+它同时与两处既有说法矛盾：Dockerfile 注释写着「vault 与 raw 是真相，必须持久化到
+宿主机」，而头像是用户数据；`docs/TECH.md` §12.6 说的是 `data/avatars/`。
+
+**修法有两个，需要选一个**（本条目只记录，不动手）：
+
+1. 部署配置补齐（Dockerfile ENV 与 compose 各加一行 `AVATARS_DIR=/data/avatars`，
+   `RUN mkdir` 一起建）——最小改动，与另两个目录对称。
+2. 让 `avatarsDir` 从 `DATA_DIR` 派生而不是各自独立默认——三个目录本来就都在
+   `DATA_DIR` 下，独立默认是这次不一致的来源。
+
+推荐第 2 种并保留环境变量覆盖：它消掉的是「新增第四个存储目录时又要记得在
+两个部署文件里各加一行」这个**会复发**的问题，而不只是修掉这一次。
+
+---
+
+### 10.11 参照实现：LobeHub 的 S3 集成（它推翻了 §10.4 的一个结论）
+
+调研方法：读 `lobehub/lobehub`（canary 分支）的 `package.json`、
+`apps/server/src/modules/S3/index.ts`、`apps/server/src/services/file/impls/s3.ts`
+与 `docs/self-hosting/environment-variables/s3.mdx`。证据都在文件里，可复核。
+
+#### 它的规模与它选了什么
+
+LobeHub 不只是「用了 AWS SDK」，它围绕 S3 建了**四个互相独立的配置命名空间**
+（`.env.example.development` 里各自一组键）：
+
+| 命名空间 | 用途 |
+|---|---|
+| `S3_*` | 文件上传与预览的**运行时**路径（服务端读写、预签名 URL） |
+| `S3_INTERNAL_ENDPOINT` | **同一份桶的第二个地址**：容器内走服务名，浏览器走公网域名 |
+| `DOC_S3_*` | 文档解析用的独立桶 |
+| `ASSET_S3_*` / `MOBILE_S3_*` | 静态资源 CDN（Cloudflare R2），构建期用 |
+
+依赖上是 `@aws-sdk/client-s3` + `@aws-sdk/s3-request-presigner`（canary 锁定 `~3.932.0`），
+测试用 `s3rver` 起假服务。
+
+#### 它怎么处理 checksum 这个雷：`requestChecksumCalculation: 'WHEN_REQUIRED'`
+
+这是我原先漏掉的关键一行。`apps/server/src/modules/S3/index.ts` 里：
+
+```ts
+new S3Client({
+  credentials: { accessKeyId, secretAccessKey },
+  endpoint: clientEndpoint,
+  forcePathStyle: options?.forcePathStyle,
+  region: options?.region || DEFAULT_S3_REGION,
+  // refs: https://github.com/lobehub/lobe-chat/pull/5479
+  requestChecksumCalculation: 'WHEN_REQUIRED',
+  responseChecksumValidation: 'WHEN_REQUIRED',
+});
+```
+
+顺着那个注释查 PR 5479（2025-01-17 合入），标题就是结论：
+
+> 🐛 fix: **temporarily disable S3 client integrity check for Cloudflare R2**
+>
+> The latest version of `@aws-sdk/client-s3` introduced a default integrity check
+> for all requests, which is incompatible with **Cloudflare R2**.
+
+它引用的上游 issue **`aws/aws-sdk-js-v3#6810`「Announcement: S3 default integrity
+change」至今仍是 open**（2025-01 创建，15 条评论，无关闭时间）——说明 AWS 没有回退
+这个行为，这一行配置是长期方案而不是临时补丁。
+
+**所以 §10.4 的加权是错的**：我把「17 MB + 一个已知兼容性坑」当成 SDK 的两项扣分，
+但第二项其实是**一行配置**。LobeHub 这样规模的项目带着这个坑用了很久，
+说明它是可控成本，不是否决理由。
+
+#### 它用预签名 URL 做的两件事（都不是访问控制）
+
+| 方法 | 用途 |
+|---|---|
+| `createPreSignedUpload` / `createPreSignedUploadPartUrl` | **浏览器直传**，服务端不过手文件字节 |
+| `createPreSignedUrlForPreview` / `ForDownload` | 预览与下载（带 `ResponseContentDisposition` 设文件名） |
+
+值得注意它为此把客户端拆成两个：
+
+```ts
+/** Sends requests from this server, through the internal endpoint when one is set. */
+private readonly client: S3Client;
+/** Signs URLs that browsers and model providers open, so it keeps the public endpoint. */
+private readonly presignClient: S3Client;
+```
+
+**这解释了为什么 §10.7 的键表里没有 `internalEndpoint`**（LobeHub 有这个键）：
+预签名 URL 的签名绑定 Host，所以「服务端走内网地址、浏览器走公网地址」
+必须两套客户端、两个端点键。mimir 不做预签名，只需要一个 `endpoint`。
+
+#### 对照：哪些适用、哪些不适用
+
+| LobeHub 的做法 | mimir 是否采用 | 原因 |
+|---|---|---|
+| `requestChecksumCalculation: 'WHEN_REQUIRED'` | **采用** | 零成本消掉一个已知坑，见上 |
+| `forcePathStyle` 选项 | **采用** | 自建端点必需，与我实测一致 |
+| 用官方 SDK 而非自写签名 | **采用（改判）** | 见 §10.4 的修正 |
+| `S3_INTERNAL_ENDPOINT` 双端点 | 不做 | 它需要它是因为浏览器直传要走公网地址；mimir 全部服务端操作，一个地址够 |
+| 预签名上传（浏览器直传） | 不做（保留可能） | mimir 的上传量级：512 KB 头像 + M2 的 PDF/Word 上传，走服务端足够。**但接缝上要留出这个可能** |
+| 多套配置命名空间 | 不做 | 它的四套是因为四类文件（用户文件/文档/CDN/移动端资源）生命周期完全不同。mimir 的三个命名空间前缀（§10.7）已经够 |
+| 用 `s3rver` 做测试 | 待定 | 见 §10.9 第 4 条：mimir 的测试隔离还没设计 |
+
+#### 结论：`@aws-sdk/client-s3` + `presigner`
+
+改动三处文档结论：
+
+1. **§10.4 的客户端推荐反转**为官方 SDK。17 MB 在服务端镜像里是零边际成本，
+   换来不用自己维护 XML 解析、分页器与将来的预签名。
+2. **§10.5 收窄**为「预签名不作访问控制」，而不是「不做预签名」。
+3. **§10.2 的接缝保持 5 个方法**——但这是「现在不做」，不是「永远不做」：
+   若 M2 的浏览器扩展要直传大文件，切到预签名是**加一个方法**，不是重写。
+
+`aws4fetch` 不删掉，降为备选：**76 KB 对 17 MB 在服务端没意义，但它的
+「不多发一个头」在自建端点上确实更省心**。若实现时发现某个自建 S3
+不认 `WHEN_REQUIRED` 这个参数（旧版本 SDK 或非官方实现），它就是退路。

@@ -160,11 +160,12 @@ font-size: ${FONT_SIZE.excerpt}px;
 规范是 `docs/DESIGN.md`，动手前先读它。
 
 ```
-src/theme/tokens.ts         antd token 的真相来源（含字体栈常量）
-src/theme/customToken.ts    mimir 自己的 token（antd 没有的语义）
+src/theme/tokens.ts         antd token 的真相来源（含字体栈常量、浅/深两套色）
+src/theme/customToken.ts    mimir 自己的 token（antd 没有的语义），浅/深各一套
+src/theme/appearance.ts     外观状态（auto / light / dark）与持久化
 src/theme/MimirProvider.tsx provider 与全局样式的唯一组装处
-src/theme/design.test.ts    对比度底线守卫（改 token 会跑）
-src/styles/global.ts        全局样式：重置、高度链、文档字体、动效退化
+src/theme/design.test.ts    对比度底线守卫（两套外观跑同一组断言）
+src/styles/global.ts        全局样式：重置、高度链、文档字体、底色、动效退化
 src/**/*.style.ts           组件/页面样式（createStyles）
 ```
 
@@ -175,7 +176,9 @@ src/**/*.style.ts           组件/页面样式（createStyles）
 2. **不要把 `colorPrimary` 当文字色**——选中态浅底上只有 3.61:1。文字用
    `token.colorLink`
 3. **页面里不写字面量颜色**，用 `token.*`。例外只有 `theme/customToken.ts`
-   里的四个值（列底色、行内代码色、高亮底，antd 没有这些语义）
+   里的那几组值（列底色、行内代码色、高亮底、整理条、热力色阶，antd 没有
+   这些语义）。**深色那一套也要走 token**，不要在页面里写
+   `appearance === 'dark' ? … : …`
 4. **不新增 `.css` 文件，不新增全局类名**。全局样式只有一个出口
    （`styles/global.ts`）。编辑器正文那种「渲染裸 DOM、拿不到 className」的
    场景，用祖先类名 + `createStyles` 的嵌套选择器（见 `NoteEditor.style.ts`）
@@ -190,5 +193,28 @@ src/**/*.style.ts           组件/页面样式（createStyles）
    后者已废弃且会打警告。同理，**来源徽标不要用 `<Tag color="green">` 预设色**，
    预设走 antd 自己的调色板，对比度不由我们控制；用 `components/DocumentBadges.tsx`
 
-`design.test.ts` 会真算对比度，也会真的挂载 provider 栈验证 cssVar 注入与
-局部样式生成。它红了不要改断言，先改设计。
+`design.test.ts` 会真算对比度，也会真的挂载 provider 栈验证 cssVar 注入、
+局部样式生成、以及**切换外观后变量块被替换**。它红了不要改断言，先改设计。
+
+---
+
+## 外观（浅色 / 深色）
+
+两套外观是**并列**的，不是「浅色 + 一个滤镜」。加任何颜色前先读
+`docs/DESIGN.md` §3.8。
+
+三条硬约束：
+
+1. **需要两套值的东西用 `useAppearance()` 分支**（如徽标色对），
+   而不是在样式里散落 `appearance === 'dark' ? … : …` 判断。
+   样式层拿 token 就够，`customTokenFor(appearance)` 已经按外观选好了
+2. **深色不得弱于浅色。** 深色最常见的退化是「看着还行就用」，
+   而单看深色的截图判断不出来——`design.test.ts` 有一条跨外观逐项比较
+3. **与 seed 同名的 token 覆盖会被 antd 丢掉**（`colorLink`、`colorPrimary`
+   这些）。需要精确控制时用 `tokens.ts` 的校准层，那是一个
+   `MappingAlgorithm`，跑在算法链最后。**浅色下这条看不出来**，
+   所以别用「浅色生效了」推断深色也生效
+
+外观状态在 `theme/appearance.ts`，它把结果写到 `html` 的 `data-theme` 与
+`color-scheme` 上。`index.html` 里有一段**等价的内联脚本**先跑一遍，
+覆盖「脚本执行到样式注入」那段空白——改判断逻辑时两处必须一起改。

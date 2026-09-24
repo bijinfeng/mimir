@@ -43,10 +43,19 @@ const SEAM_LABELS: Record<PluginSeam, { name: string; note: string }> = {
   parser: { name: '解析器', note: '把原始内容转成统一 Markdown，不抓取、不写库' },
   leg: { name: '检索通道', note: '每个通道独立召回一批结果，再由融合层合并' },
   provider: { name: '模型提供方', note: '按角色提供模型适配器：对话、摘要、向量化' },
+  storage: {
+    name: '存储后端',
+    note: '笔记、原始快照与头像存到哪里。任何时刻只有一个在用，其余是备选',
+  },
 }
 
-/** 接缝的展示顺序。与装配顺序无关，纯粹是阅读顺序（输入 → 处理 → 输出） */
-const SEAM_ORDER: PluginSeam[] = ['capturer', 'parser', 'leg', 'provider']
+/**
+ * 接缝的展示顺序。与装配顺序无关，纯粹是阅读顺序（输入 → 处理 → 输出）。
+ *
+ * `storage` 放最后：它不参与数据处理链路，而是所有链路的结果落点。
+ * 放在中间会让人以为它是流水线上的一环。
+ */
+const SEAM_ORDER: PluginSeam[] = ['capturer', 'parser', 'leg', 'provider', 'storage']
 
 export function PluginsSection() {
   const { styles } = useStyles()

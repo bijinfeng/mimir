@@ -16,6 +16,7 @@ import type {
   NoteCreate,
   NoteUpdate,
   ProbeResult,
+  ProviderInstance,
   RuntimeConfig,
   SaveNoteInput,
   SearchQueryInput,
@@ -23,7 +24,16 @@ import type {
   SuggestedTagsResponse,
   TagListResponse,
   UpdateSettingsResponse,
+  UsageStats,
 } from '@mimir/shared'
+
+/**
+ * 会话。`image` 是**带版本号的头像 URL**（`/api/avatar?v=...`）——
+ * 文件名固定，不带版本就会一直显示缓存里的旧图（`docs/TECH.md` §12.6）。
+ */
+export interface AuthSession {
+  user: { id: string; email: string; name: string; image?: string | null }
+}
 
 /**
  * 类型安全的 API 客户端。
@@ -229,7 +239,7 @@ export const api = {
    *
    * 服务端整批校验，任一键不合法则整批拒绝（400 + issues）。
    */
-  updateSettings(values: Record<string, string | number | boolean | null>) {
+  updateSettings(values: Record<string, unknown>) {
     return request<UpdateSettingsResponse>('/api/config/settings', {
       method: 'PATCH',
       body: JSON.stringify({ values }),
@@ -237,16 +247,100 @@ export const api = {
   },
 
   /**
-   * 真实探测一个模型角色：发一次最小请求。
+   * 存储后端探测：真的写一个探针对象、读回、再删掉。
+   *
+   * **只探当前选中的那个后端**——它写的是真实位置。想验证 S3 的配置，
+   * 先把「存储后端」切到 s3 再点，那时探通即代表真的能用
+   * （见服务端 routes/config.ts 的注释）。
+   *
+   * 显式动作，不自动触发：每次进设置页都写一个对象是浪费，
+   * 而且 S3 的写是按请求计费的（同 docs/TECH.md §7.8 对模型探测的判断）。
+   */
+  probeStorage() {
+    return request<{ target: string; ok: boolean; message: string }>('/api/config/storage-probe', {
+      method: 'POST',
+    })
+  },
+
+  /**
+   * 角色级探测：探这个角色绑定的模型。
    *
    * 只由用户显式点击触发——每次进设置页都发一次真实调用，慢且花钱
    * （docs/TECH.md §7.8）。
    */
-  probeModel(role: string) {
-    return request<ProbeResult>('/api/config/probe', {
+  probeRole(role: string) {
+    return request<ProbeResult>('/api/config/probe-role', {
       method: 'POST',
       body: JSON.stringify({ role }),
     })
+  },
+
+  /**
+   * 供应商级探测：真的发一次最小请求。
+   *
+   * **不依赖角色绑定**，所以新建供应商、还没绑任何角色时就能验证它通不通
+   * ——那正是用户此刻最想知道的事。
+   */
+  probeProvider(providerId: string, modelId?: string) {
+    return request<ProbeResult>('/api/config/probe', {
+      method: 'POST',
+      body: JSON.stringify(modelId ? { providerId, modelId } : { providerId }),
+    })
+  },
+
+  /**
+   * 拉取一个供应商的模型列表。**这是一次真实网络请求，也是个写操作**
+   * （结果会写回配置），所以用 POST 且由用户显式触发。
+   */
+  refreshProviderModels(providerId: string) {
+    return request<{ ok: boolean; instance: ProviderInstance }>(
+      `/api/config/providers/${encodeURIComponent(providerId)}/refresh`,
+      { method: 'POST' },
+    )
+  },
+
+  /**
+   * 用量统计（`docs/TECH.md` §12）。
+   *
+   * 时区不由前端传——它是部署配置（`stats.timezone`），跟着服务端走。
+   * 让前端传会让「同一份数据在两个浏览器上分档不同」，而那种差异
+   * 看起来像数据错了。
+   */
+  stats(days: number) {
+    return request<UsageStats>(`/api/stats${toQuery({ days })}`)
+  },
+
+  /**
+   * 头像。
+   *
+   * 上传走 multipart，**不走 `request()`**——那个函数会强制加上
+   * `Content-Type: application/json`，而 multipart 的 boundary 必须由
+   * 浏览器自己生成（手写一个 boundary 会让服务端解析不出来）。
+   */
+  avatar: {
+    async upload(file: Blob) {
+      const body = new FormData()
+      body.append('file', file)
+
+      const res = await fetch('/api/avatar', { method: 'POST', credentials: 'include', body })
+
+      const text = await res.text()
+      const parsed: unknown = text ? JSON.parse(text) : null
+
+      if (!res.ok) {
+        const err = parsed as ApiError | null
+        throw new ApiRequestError(
+          res.status,
+          err?.error?.code ?? 'UNKNOWN',
+          err?.error?.message ?? `上传失败（HTTP ${res.status}）`,
+        )
+      }
+
+      return parsed as { image: string; mime: string; bytes: number }
+    },
+    remove() {
+      return request<{ ok: boolean }>('/api/avatar', { method: 'DELETE' })
+    },
   },
 
   auth: {
@@ -278,13 +372,22 @@ export const api = {
     /** 未登录时返回 null，而不是抛错——它用于路由守卫判断 */
     async session() {
       try {
-        return await request<{ user: { id: string; email: string; name: string } } | null>(
-          '/api/auth/get-session',
-        )
+        return await request<AuthSession>('/api/auth/get-session')
       } catch (error) {
         if (error instanceof ApiRequestError && error.status === 401) return null
         throw error
       }
+    },
+    /**
+     * 改名称。**走 Better Auth 自带的端点**，不在 `/api/` 下再包一层——
+     * 包一层等于把校验规则复制到两处，而会话校验、字段白名单都在
+     * Better Auth 里（`docs/TECH.md` §12.6）。
+     */
+    updateUser(input: { name: string }) {
+      return request<{ status: boolean }>('/api/auth/update-user', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      })
     },
   },
 }

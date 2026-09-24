@@ -46,7 +46,7 @@ const useStyles = createStyles(({ css, token }) => ({
     transition: background 0.12s ease-out;
 
     &:hover {
-      background: #fafbff;
+      background: ${token.tintHover};
     }
   `,
   top: css`
