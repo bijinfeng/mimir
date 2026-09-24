@@ -20,7 +20,7 @@ export const documents = pgTable(
   'documents',
   {
     id: text('id').primaryKey(),
-    /** note | web | wechat | github | pdf | file */
+    /** note | web | wechat | github | file（kind 是**来源**，格式是 mime 属性） */
     kind: text('kind').notNull(),
     /** inbox | ready | failed | archived */
     status: text('status').notNull().default('inbox'),
@@ -56,6 +56,35 @@ export const documents = pgTable(
     author: text('author'),
     publishedAt: timestamp('published_at', { withTimezone: true }),
     capturedAt: timestamp('captured_at', { withTimezone: true }),
+
+    /**
+     * 上传原件的存储 key（相对 `DATA_DIR`），仅 `kind === 'file'` 有。
+     *
+     * 抓取的资料没有这一列的值——它们的原件是 `raw/<hash>/index.html`，
+     * 而那个 key 是**派生值**（重算正文 hash 即可得到，见 `services/capture.ts`），
+     * 不需要存。上传的原件不同：文件名里有用户给的扩展名、目录里有 id，
+     * 无法从正文反推，所以必须显式记住。
+     *
+     * 这也是下载端点与重建索引的入口——两处都靠它、而不是靠猜路径。
+     */
+    sourceKey: text('source_key'),
+    /** 原件的 MIME。格式是**属性**，不是 kind（见 packages/shared/src/documents.ts） */
+    mime: text('mime'),
+    /** 原件字节数，用于元信息行显示；也用于「这个文件还在不在」的快速核对 */
+    size: integer('size'),
+
+    /**
+     * 正文为空的原因，仅上传件可能非 null。
+     *
+     * 为什么不留到界面里现推：**空正文有三个完全不同的原因**，而它们给用户的
+     * 下一步动作不同——
+     *   1. 这个格式还没有提取实现（`NULL`，由 `parseSupport()` 在界面层判断）
+     *   2. 提取试过、失败了（这一列存原因，如「不是 UTF-8 编码的文本」）
+     *   3. 文件本身就是空的（`NULL` 且 `size = 0`）
+     * 把它们压成一句「暂无正文」是静默说谎；而失败原因只在「当时那一次」
+     * 才知道（比如换了提取实现后重跑会变），所以必须当场记下来。
+     */
+    parseError: text('parse_error'),
 
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

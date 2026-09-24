@@ -19,8 +19,16 @@ export type ExportQuery = z.infer<typeof exportQuerySchema>
 export const exportStatsSchema = z.object({
   documents: z.number().int(),
   notes: z.number().int(),
+  /** 上传的文件数（原件会一并打包进 `原件/` 目录） */
+  files: z.number().int(),
   conversations: z.number().int(),
-  /** 导出体积（字节），用于界面提示「大概多大」 */
+  /**
+   * 导出体积（字节），用于界面提示「大概多大」。
+   *
+   * **含原件大小**——不含的话，一个塞满 PDF 的库会显示「约 2 MB」，
+   * 而实际导出是 800 MB。这个数字的用途就是让用户对时间与空间有预期，
+   * 少算原件等于给一个错得离谱的预期。
+   */
   bytes: z.number().int(),
 })
 export type ExportStats = z.infer<typeof exportStatsSchema>

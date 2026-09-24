@@ -33,6 +33,68 @@ export function toExcerpt(markdown: string, maxLength = 200): string {
 }
 
 /**
+ * 上传的文本文件 → 字符串。**解不开就抛错，不静默替换。**
+ *
+ * `new TextDecoder()` 默认不抛错——遇到非法字节会插入 U+FFFD 替换字符。
+ * 一份 GBK 编码的中文 txt 于是变成满屏 `��`，而库照常入库、检索照常建索引，
+ * 用户搜什么都搜不到、看到的是一片乱码。这与「中文必须预分词」是同一类问题：
+ * **静默降级比报错更糟**，所以用 `fatal: true`。
+ *
+ * 顺带做两件配套的小事：
+ *  - **去 BOM**：Windows 记事本存的 txt 前面有个 U+FEFF，留着它会出现在正文首字
+ *  - **CRLF → LF**：不换掉的话，渲染与检索里会多出一堆多余空行
+ *
+ * 不做编码自动探测（GBK/GB18030 等）：那要引入 iconv 加一套猜测逻辑，
+ * 而**猜错就是乱码入库**——比明确失败更差。中文 txt 请先转成 UTF-8。
+ *
+ * 这个函数在**宿主**而不是 `@mimir/shared`：它依赖 `TextDecoder`，
+ * 而 shared 的 tsconfig 只有 `lib: ["ES2023"]`（不引 DOM 全局，也不引
+ * `@types/node`），刻意保持环境中性——它是前后端共用的契约包。
+ * 解码是服务端上传路径的事，放在这里与它的使用位置一致。
+ */
+export function decodeUtf8(data: Uint8Array): string {
+  let text: string
+  try {
+    text = new TextDecoder('utf-8', { fatal: true }).decode(data)
+  } catch {
+    throw new Error('文件不是 UTF-8 编码的文本（中文 txt 常见 GBK 编码，需先转成 UTF-8）')
+  }
+
+  if (text.charCodeAt(0) === 0xfeff) text = text.slice(1)
+  return text.replace(/\r\n?/g, '\n')
+}
+
+/**
+ * 二进制探测：前 8KB 里出现 NUL 或控制字符就当作非文本。
+ *
+ * 与 `file(1)` 的启发式一致。用途是**在解码之前**先挡一道：一份改名为 `.txt`
+ * 的 jpg 多半会解码失败（好），但一份恰好全是合法 UTF-8 字节的二进制有可能
+ * 解出一堆控制字符——那时正文毫无意义，还会把无意义的字节串进检索索引。
+ */
+export function looksBinary(data: Uint8Array): boolean {
+  const limit = Math.min(data.byteLength, 8192)
+  for (let i = 0; i < limit; i += 1) {
+    const byte = data[i]
+    if (byte === undefined) continue
+    if (byte === 0) return true
+    // 允许 tab / LF / FF / CR，其余 C0 控制字符视为二进制信号
+    if (byte < 0x09 || (byte > 0x0d && byte < 0x20)) return true
+  }
+  return false
+}
+
+/**
+ * 上传路径的文本解码：先判二进制，再严格解码。
+ *
+ * 两步收在一起，因为服务端要用它产出 `parse_error` 的文案，而测试要用
+ * **同一份规则**验证「GBK 的 txt 不会被静默入库」。
+ */
+export function decodeUploadedText(data: Uint8Array): string {
+  if (looksBinary(data)) throw new Error('这个文件看起来是二进制内容，不是文本')
+  return decodeUtf8(data)
+}
+
+/**
  * 把用户输入变成安全的文件名片段。
  * 保留中文——文件系统支持，而且可读性远好于音译。
  */

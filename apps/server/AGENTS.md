@@ -70,6 +70,40 @@ src/
 **权重怎么定**：`defaultWeight` 是初始猜测，用户在设置页能覆盖
 （关键词 1.0、子串 0.6、向量 0.8）。别把它当成最优值写死。
 
+### parser 的输入是两类，不是一类
+
+`ParseInput` 是判别联合（`packages/shared/src/seams.ts`）：
+
+```ts
+| { type: 'html' | 'markdown' | 'text'; content: string }
+| { type: 'docx' | 'xlsx' | 'pptx'; data: Uint8Array; filename?: string }
+```
+
+文本类拿到的是**已经解码好的字符串**——字节→字符串的解码在宿主
+（`lib/text.ts` 的 `decodeUploadedText`），因为解码会失败（GBK 编码的 txt），
+而那个失败要变成一句人话。**不要在 parser 里做解码**。
+
+字节类（Office）是 ZIP 容器，自己读里面的 XML。`plugins/parser/src/ooxml.ts`
+是共用的底座（zip 读取 + XML 抽文字）。
+
+**新增一种可提取的格式要动两处**：这里的 `accepts`，以及
+`@mimir/shared/src/files.ts` 的 `parseTargetFor` / `parseSupport`——
+后者决定「界面说这个格式有没有正文」。只改一处会出现「服务端提取出了正文、
+而前端以为没有正文因而不显示」，那种 bug 看起来像数据丢了。
+
+## 上传的原件（`lib/uploads.ts` + `services/upload.ts`）
+
+上传件是**第二类有文件真相的文档**（笔记是第一类）。三条不能忘的：
+
+1. **`meta.json` 是上传件的 frontmatter**。改了标题 / 标签 / 目录后要**写回**
+   它（`services/documents.ts` 的 `updateNote` 已经在做），否则重建索引会读回
+   旧值——用户加的标签静默消失
+2. **提取这一步只有一份实现**（`services/extract.ts`）。上传与重建索引都要它，
+   而两处对失败的处理不同（一个存 `parse_error`、一个打日志）。别抄第二份：
+   抄了就会出现「上传时提取成功、重建后失败」这种取决于路径的行为差异
+3. **`parse_error` 只记「真的试过并失败」的原因**。「这个格式还没有实现」
+   由 `parseSupport()` 在界面层表达（`NULL` + `planned`）。混成一句是在说谎
+
 ---
 
 ## 改 vault 或写入路径时必须做的事
@@ -77,8 +111,13 @@ src/
 `src/lib/vault.ts` 与 `src/services/documents.ts` 有一处容易搞错的地方：
 **文件写入必须先于数据库写入**，理由见根 `AGENTS.md` 铁律 2。
 
+**上传件是第二条写入路径**，同样要遵守，且多两条（`lib/uploads.ts`）：
+`原件 → meta.json → 数据库`，删除时反过来（**先库后文件**——
+永远不要让指针存在的时候指向一个不存在的东西）。
+
 新增任何写入路径后，跑一次「文件 → 数据库」的往返测试
-（`src/test/vault-roundtrip.test.ts`），它验证的是「删掉数据库能从文件重建」。
+（`src/test/vault-roundtrip.test.ts` 与 `upload.test.ts` 的「重建索引能把
+上传件找回来」），它们验证的是「删掉数据库能从文件重建」。
 
 ---
 

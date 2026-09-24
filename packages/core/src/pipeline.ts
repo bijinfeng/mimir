@@ -41,6 +41,16 @@ export interface SnippetRow {
   title: string
   path: string | null
   url: string | null
+  /**
+   * 上传件的格式与大小。
+   *
+   * 透传给前端的理由：中栏的列表项只有一种形态（`docs/DESIGN.md` §8.2），
+   * 搜索命中与列表命中都要能渲染「PDF · 2.4 MB」。core 不认识这两个字段的
+   * 语义（它只做检索），但**必须原样传递**——否则前端要按 id 再查一次，
+   * 而那次查询会引入「列表里与搜索结果里显示不一致」的可能。
+   */
+  mime: string | null
+  size: number | null
   text: string
   /** 相对**完整正文**的字符偏移，供界面高亮与跳转 */
   start: number
@@ -62,6 +72,9 @@ export interface SearchHitResult {
   title: string
   path: string | null
   url: string | null
+  /** 见 `SnippetRow.mime` 的说明：core 只透传，不解释 */
+  mime: string | null
+  size: number | null
   snippet: { text: string; start: number; end: number }
   matchedBy: string[]
   score: number
@@ -159,6 +172,8 @@ export function createPipeline(deps: PipelineDeps): Pipeline {
             title: row.title,
             path: row.path,
             url: row.url,
+            mime: row.mime,
+            size: row.size,
             snippet: { text: row.text, start: row.start, end: row.end },
             matchedBy: item.matchedBy,
             score: item.score,

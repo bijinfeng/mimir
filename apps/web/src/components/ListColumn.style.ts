@@ -114,6 +114,14 @@ export const useStyles = createStyles(({ css, token }) => ({
     margin-left: auto;
   `,
 
+  /* 格式与大小（「PDF · 2.4 MB」）。**中性文字色**——
+     它是一条属性而非状态：彩色徽标只给「来源」用（DESIGN §0.1、§3.7），
+     而格式是文件的属性，不该每加一种就多占一个色位 */
+  format: css`
+    color: ${token.colorTextQuaternary};
+    white-space: nowrap;
+  `,
+
   /* 引用卡多一行：它是被哪个通道命中的。
      这一行让「为什么是这篇」有据可查（PRD §5.2） */
   citeStep: css`

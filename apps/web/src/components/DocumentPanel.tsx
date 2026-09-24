@@ -1,4 +1,9 @@
-import { ApartmentOutlined, ArrowLeftOutlined, MessageOutlined } from '@ant-design/icons'
+import {
+  ApartmentOutlined,
+  ArrowLeftOutlined,
+  DownloadOutlined,
+  MessageOutlined,
+} from '@ant-design/icons'
 import type { DocumentDetail } from '@mimir/shared'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { App, Button, Empty, Skeleton, Tag, Tooltip, Typography } from 'antd'
@@ -8,9 +13,11 @@ import { NoteEditor } from '@/components/NoteEditor'
 import { useContentStyles } from '@/components/ContentTypography.style'
 import { DocumentFooter } from '@/components/document/DocumentFooter'
 import { useStyles } from '@/components/document/DocumentPanel.style'
+import { FilePreview } from '@/components/document/FilePreview'
 import { MarkdownBody } from '@/components/document/MarkdownBody'
 import { TriageBar } from '@/components/document/TriageBar'
 import { extractHeadings } from '@/components/document/headings'
+import { formatMeta } from '@/components/list-helpers'
 import { api } from '@/lib/api'
 
 /**
@@ -186,19 +193,52 @@ export function DocumentPanel({
   return (
     <div className={styles.wrap}>
       <div className={styles.toolbar}>
-        <span className={styles.path}>{doc.path ?? doc.url ?? '（尚无快照）'}</span>
+        {/*
+          工具条左侧显示「这个东西在哪」：
+          笔记给 vault 路径（能拿它去 Obsidian 里找），上传件给原文件名，
+          抓取的资料给 URL。上传件不显示 vault 路径——它没有 vault 文件，
+          显示「（尚无快照）」会让人以为记录坏了。
+        */}
+        <span className={styles.path}>
+          {doc.kind === 'file'
+            ? (doc.sourceKey?.split('/').pop() ?? doc.title)
+            : (doc.path ?? doc.url ?? '（尚无快照）')}
+        </span>
 
-        {/* 保存状态常驻工具条。**只在笔记上显示**：资料是只读的，
-            给它显示「已保存」会让人以为可以编辑（PRD §2.3） */}
+        {/* 保存状态常驻工具条。**只在笔记上显示**：资料与文件都是只读的，
+            给它们显示「已保存」会让人以为可以编辑（PRD §2.3、DESIGN §8.11） */}
         {doc.kind === 'note' && <SaveIndicator state={save.state} retry={save.retry} />}
 
-        <Tooltip title="带这篇的上下文去主视图对话，范围自动锁到这一篇">
+        {/* 上传件的下载入口。它在工具条常驻而不是只出现在「原件」层里——
+            下载是最常用的动作，让它要求先切到原件层是多一步 */}
+        {doc.kind === 'file' && doc.sourceKey && (
+          <Button
+            type="text"
+            size="small"
+            icon={<DownloadOutlined />}
+            className={styles.tbBtn}
+            href={api.documents.sourceUrl(doc.id, { download: true })}
+          >
+            下载
+          </Button>
+        )}
+
+        <Tooltip
+          title={
+            doc.body.trim() === ''
+              ? '这篇还没有可检索的正文，问答里引用不到它'
+              : '带这篇的上下文去主视图对话，范围自动锁到这一篇'
+          }
+        >
           <Button
             type="text"
             size="small"
             icon={<MessageOutlined />}
             className={styles.tbBtn}
             onClick={() => onAskAi(doc.id)}
+            /* 没有正文时禁用并说明原因（tooltip 里）——留一个点了没反应的按钮
+               是最坏的一种（DESIGN §7.4） */
+            disabled={doc.body.trim() === ''}
           >
             问 AI
           </Button>
@@ -258,9 +298,16 @@ export function DocumentPanel({
             {doc.status === 'inbox' && <TriageBar doc={doc} />}
 
             {/*
-              笔记用编辑器（可写），资料只渲染（只读）。
+              三种正文区，按 kind 分派：
+
+              | kind | 用什么 | 为什么 |
+              |---|---|---|
+              | note | NoteEditor | 它是唯一可编辑的东西 |
+              | file | FilePreview | 上传件有原件这一层（PDF 在线看、Word 下文本…） |
+              | 其余 | MarkdownBody | 抓取的资料只有派生正文，只读渲染 |
+
               抓来的资料不可编辑——它的真相是原始快照 + 派生正文，
-              就地改写会让「原文是什么」变得不可考。
+              就地改写会让「原文是什么」变得不可考。上传件同理。
             */}
             {doc.kind === 'note' ? (
               <NoteEditor
@@ -270,6 +317,8 @@ export function DocumentPanel({
                 onSaveStateChange={setSave}
                 onAskAboutSelection={(passage) => onAskAboutSelection(doc.id, passage)}
               />
+            ) : doc.kind === 'file' ? (
+              <FilePreview key={doc.id} doc={doc} />
             ) : (
               /* 正文排版与编辑器共用同一个类——两个视图都让 Tiptap 渲染同一份
                  Markdown，排版必须同源。这里曾经各自手抄一份，漂移出四处 */
@@ -353,6 +402,7 @@ function SaveIndicator({ state, retry }: SaveSnapshot) {
  */
 function DocumentMeta({ doc }: { doc: DocumentDetail }) {
   const { styles } = useStyles()
+  const format = formatMeta(doc)
 
   return (
     <div className={styles.meta}>
@@ -360,9 +410,16 @@ function DocumentMeta({ doc }: { doc: DocumentDetail }) {
       {doc.status === 'inbox' && <StatusBadge status="inbox" />}
       {doc.kind === 'note' ? (
         <span className={styles.originManual}>手动编辑</span>
+      ) : doc.kind === 'file' ? (
+        /* 上传件说「本机导入」，不说「AI 整理」——后者是在说一个没发生的事，
+           而元信息行里的每一条都该是真的 */
+        <span className={styles.originManual}>本机导入</span>
       ) : (
         <span className={styles.originAuto}>AI 整理</span>
       )}
+      {/* 格式与大小：中性文字，不是彩色徽标（DESIGN §8.3）。
+          它们与来源徽标并排但语义不同——徽标是「从哪来」，这是「是什么」 */}
+      {format && <span className={styles.formatMeta}>{format}</span>}
       {doc.folder && (
         <span>
           <ApartmentOutlined /> {doc.folder}

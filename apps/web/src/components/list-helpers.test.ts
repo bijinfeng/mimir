@@ -1,0 +1,116 @@
+import { describe, expect, it } from 'vitest'
+import { CLIP_KINDS, type DocumentSummary } from '@mimir/shared'
+import { excerptText, formatMeta, scopeParams } from '@/components/list-helpers'
+
+/**
+ * 列表项的渲染规则（`docs/DESIGN.md` §8.2、§8.3，`docs/TECH.md` §13）。
+ *
+ * 这些是纯函数，但它们守的是**界面上说不说实话**：
+ * 一份还没解析出正文的文件，列表里那第二行写什么。
+ * 写成空白等于说「这篇没有内容」，而它其实有内容、只是还没提取——
+ * 与热力图把「用量未上报」画成空底是同一类错误（PRD §5.11 的规矩）。
+ */
+
+function doc(overrides: Partial<DocumentSummary> = {}): DocumentSummary {
+  return {
+    id: 'doc1',
+    kind: 'file',
+    status: 'inbox',
+    title: '报告.pdf',
+    excerpt: '',
+    tags: [],
+    path: null,
+    url: null,
+    mime: 'application/pdf',
+    size: 1024 * 1024 * 2.4,
+    folder: null,
+    createdAt: '2026-09-24T00:00:00.000Z',
+    updatedAt: '2026-09-24T00:00:00.000Z',
+    ...overrides,
+  }
+}
+
+describe('列表项的第二行（摘要）', () => {
+  it('有正文时用正文摘要', () => {
+    expect(excerptText(doc({ excerpt: '本报告回顾了 2025 财年…' }))).toBe('本报告回顾了 2025 财年…')
+  })
+
+  it('PDF 还没提取正文时，如实说是「将在后续支持」而不是留空', () => {
+    const text = excerptText(doc({ mime: 'application/pdf' }))
+    expect(text).not.toBe('')
+    expect(text).toContain('后续版本支持')
+  })
+
+  it('未知格式说「可下载查看」，不假装它有正文', () => {
+    const text = excerptText(doc({ mime: 'application/zip', title: '归档.zip' }))
+    expect(text).toContain('下载')
+  })
+
+  it('空文件单独说「空文件」——它与「还没解析」是两回事', () => {
+    expect(excerptText(doc({ mime: 'text/plain', size: 0, title: '空.txt' }))).toBe('空文件')
+  })
+
+  it('提取得出正文但内容为空时，说清楚是文件里没有文字', () => {
+    const text = excerptText(doc({ mime: 'text/plain', title: '只有空格.txt', size: 12 }))
+    expect(text).toContain('没有可提取的文字')
+  })
+
+  it('笔记与抓取的资料为空时如实说「还没有内容」——那是真的出了问题', () => {
+    expect(excerptText(doc({ kind: 'note', mime: null, size: null }))).toBe('（还没有内容）')
+    expect(excerptText(doc({ kind: 'web', mime: null, size: null }))).toBe('（还没有内容）')
+  })
+})
+
+describe('元信息行的格式与大小', () => {
+  it('上传件显示「格式 · 大小」', () => {
+    expect(formatMeta(doc())).toBe('PDF · 2.4 MB')
+  })
+
+  it('Word / Excel / PPT 用能念的名字，不显示 MIME 原文', () => {
+    expect(
+      formatMeta(
+        doc({ mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }),
+      ),
+    ).toBe('Word · 2.4 MB')
+    expect(
+      formatMeta(
+        doc({ mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+      ),
+    ).toBe('Excel · 2.4 MB')
+  })
+
+  it('笔记与抓取的资料没有这一项（返回 null，不显示空括号）', () => {
+    expect(formatMeta(doc({ kind: 'note', mime: null, size: null }))).toBeNull()
+    expect(formatMeta(doc({ kind: 'web', mime: null, size: null }))).toBeNull()
+  })
+
+  it('认不出的类型回落到扩展名大写', () => {
+    expect(formatMeta(doc({ mime: 'application/octet-stream', title: '数据.dat' }))).toBe(
+      'DAT · 2.4 MB',
+    )
+  })
+})
+
+describe('scope 与筛选条件', () => {
+  it('「收集的资料」用多值 kinds，而不是「不传条件」', () => {
+    /*
+     * 这一条守的是一个**曾经真的错了**的地方：clip 视图原先返回空对象，
+     * 于是点进去看到的是全部文档，而计数按「非笔记」算——两个数字对不上。
+     */
+    expect(scopeParams('clip')).toEqual({ kinds: [...CLIP_KINDS] })
+  })
+
+  it('「我的笔记」按 kind=note 过滤', () => {
+    expect(scopeParams('note')).toEqual({ kind: 'note' })
+  })
+
+  it('收件箱按状态过滤，目录与标签各是一条独立条件', () => {
+    expect(scopeParams('inbox')).toEqual({ status: 'inbox' })
+    expect(scopeParams('folder:技术/前端')).toEqual({ folder: '技术/前端' })
+    expect(scopeParams('tag:react')).toEqual({ tag: 'react' })
+  })
+
+  it('全部文档不带任何条件', () => {
+    expect(scopeParams('all')).toEqual({})
+  })
+})

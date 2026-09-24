@@ -16,6 +16,7 @@
 | 深色模式为什么这么实现 | [`DESIGN.md`](DESIGN.md) §3.8、[`DECISIONS.md`](DECISIONS.md) D-040 |
 | 插件接缝怎么加实现 | [`TECH.md`](TECH.md) §7 |
 | 文件存在哪、怎么换成 S3 | [`TECH.md`](TECH.md) §7.2、[`DECISIONS.md`](DECISIONS.md) D-038 |
+| 上传的文件（原件 / 预览 / 提取正文） | [`TECH.md`](TECH.md) §13、[`DESIGN.md`](DESIGN.md) §8.16、[`DECISIONS.md`](DECISIONS.md) D-044 |
 | 怎么部署、有什么坑 | [`TECH.md`](TECH.md) §8、§10 |
 | 用量统计怎么记账、账号资料怎么存 | [`TECH.md`](TECH.md) §12 |
 | 历史上做过哪些决定 | [`DECISIONS.md`](DECISIONS.md) |

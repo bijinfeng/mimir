@@ -57,15 +57,54 @@ export interface Capturer {
 
 /* ── parser：原始内容 → Markdown ──────────────────────── */
 
-/** parser 能接受的输入类型。抓取器声明自己产出什么，宿主据此选实现 */
-export type ParseInputType = 'html' | 'markdown' | 'text'
+/**
+ * 文本类输入。内容本身就是字符串——抓取器产出的都是这一类。
+ */
+export type TextParseType = 'html' | 'markdown' | 'text'
 
-export interface ParseInput {
-  type: ParseInputType
+/**
+ * 字节类输入。Office 文档是 ZIP 容器，必须先拿到**字节**才能取出里面的 XML。
+ *
+ * 命名按**容器格式**而不是扩展名：`.docx` / `.xlsx` / `.pptx` 是三种不同的
+ * OOXML 包（`word/document.xml` / `xl/sharedStrings.xml` / `ppt/slides/*.xml`），
+ * 提取逻辑各不相同，所以它们是三种输入类型，而不是一个「office」加一个提示字段。
+ *
+ * 旧版二进制格式（`.doc` / `.xls` / `.ppt`）**不在这里**：它们不是 ZIP，
+ * 需要另一套解析（OLE 复合文档），收益远小于代价。
+ */
+export type BinaryParseType = 'docx' | 'xlsx' | 'pptx'
+
+/** parser 能接受的输入类型。抓取器声明自己产出什么，宿主据此选实现 */
+export type ParseInputType = TextParseType | BinaryParseType
+
+export interface TextParseInput {
+  type: TextParseType
   /** 与 type 对应的内容 */
   content: string
   /** 来源地址，用于解析相对链接 */
   baseUrl?: string
+}
+
+export interface BinaryParseInput {
+  type: BinaryParseType
+  /** 原件字节。**不是 base64 字符串**——那会把体积撑大 33% 再解回来 */
+  data: Uint8Array
+  /** 原文件名。用在失败信息里（「这份 docx 里没有可提取的文字」） */
+  filename?: string
+}
+
+/**
+ * 判别联合而不是「一个接口带两个可选字段」。
+ *
+ * 后者会让每个实现都写 `input.content!` 或 `input.data!`，而 TypeScript 帮不上忙
+ * ——正是这个项目里那些「静默出错」的形态。判别联合让「你是哪种输入」
+ * 在类型层面成立，实现只需过一道 `isTextParseInput`。
+ */
+export type ParseInput = TextParseInput | BinaryParseInput
+
+/** 文本实现的入口断言。字节实现（docx 等）对称地判 `!isTextParseInput` */
+export function isTextParseInput(input: ParseInput): input is TextParseInput {
+  return input.type === 'html' || input.type === 'markdown' || input.type === 'text'
 }
 
 export interface ParseResult {

@@ -244,6 +244,14 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     background: ${token.colorFillTertiary};
   `,
 
+  /* 上传件的格式与大小（「PDF · 2.4 MB」）。
+     **不是徽标**——它没有底色，只是一条中性文字：格式是文件的属性，
+     而彩色徽标在这个界面里专指「来源」（DESIGN §3.7、§8.3） */
+  formatMeta: css`
+    color: ${token.colorTextTertiary};
+    white-space: nowrap;
+  `,
+
   /* 标题。原型用 letter-spacing:-.01em 收紧——28px 的中文标题不收紧
      会显得松散。字号阶梯见 docs/DESIGN.md §4.2。
 

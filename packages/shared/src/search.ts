@@ -45,6 +45,16 @@ export const searchHitSchema = z.object({
   title: z.string(),
   path: z.string().nullable(),
   url: z.string().nullable(),
+  /**
+   * 上传件的格式与大小，随命中一起返回。
+   *
+   * 为什么检索结果也要带这两个字段：中栏的列表项**只有一种渲染形态**
+   * （`docs/DESIGN.md` §8.2），搜索结果与浏览结果长得一模一样。少了它们，
+   * 搜到一个 PDF 时那一行会缺掉「PDF · 2.4 MB」——同一份文档在两种入口下
+   * 显示不同，会让人以为搜到的是另一条东西。
+   */
+  mime: z.string().nullable(),
+  size: z.number().int().nullable(),
   snippet: searchSnippetSchema,
   /**
    * 该命中来自哪些通道。

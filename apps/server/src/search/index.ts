@@ -56,6 +56,9 @@ const snippetPort: SnippetPort = {
         title: documents.title,
         path: documents.path,
         url: documents.url,
+        // 上传件的格式与大小随命中返回，让列表项在搜索与浏览两种入口下同一形态
+        mime: documents.mime,
+        size: documents.size,
         text: sql<string>`
           case
             when ${hitPos} > 0
@@ -80,6 +83,8 @@ const snippetPort: SnippetPort = {
       title: row.title,
       path: row.path,
       url: row.url,
+      mime: row.mime,
+      size: row.size,
       text: row.text,
       start: Number(row.start),
       end: Number(row.start) + row.text.length,
@@ -128,6 +133,8 @@ export async function search(params: SearchParams): Promise<SearchResponse> {
     title: hit.title,
     path: hit.path,
     url: hit.url,
+    mime: hit.mime,
+    size: hit.size,
     snippet: hit.snippet,
     matchedBy: hit.matchedBy,
     score: hit.score,

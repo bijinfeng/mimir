@@ -130,6 +130,38 @@ API 客户端在 `lib/api.ts`。三条约定：
 
 改了 API 契约要先改 `packages/shared`，那是前后端唯一的真相来源。
 
+**multipart 走 `sendMultipart`，不要用 `request()`**——后者会强制
+`Content-Type: application/json`，而 multipart 的 boundary 必须由 fetch
+自己生成（手写它会与实际的 body 不一致）。上传与替换原件都是这么发的。
+
+---
+
+## 文件类文档的界面（`docs/DESIGN.md` §8.16、`docs/TECH.md` §13）
+
+上传件与笔记 / 抓取的资料**共用列表形态与整理动作**，只有正文区多一个分支：
+
+| `kind` | 正文区 |
+|---|---|
+| `note` | `NoteEditor`（唯一可编辑的） |
+| `file` | `FilePreview`（两层：正文 / 原件） |
+| 其余 | `MarkdownBody`（只读渲染） |
+
+四条容易做错的地方：
+
+1. **正文为空时那第二行必须说明原因**，不能留白。四种原因的措辞由
+   `@mimir/shared` 的 `parseSupport()` 派生，列表项与详情面板共用
+   `list-helpers.ts` 的 `excerptText()`——**不要在组件里现编一句话**
+2. **格式与大小是中性文字，不是徽标**。彩色徽标只给「来源」（`KindBadge`）；
+   格式是开放集合，按「一格式一色」走下去每加一种就要多一组色对
+3. **查看器加载失败要降级成下载卡片**（HEIC 能通过 MIME 判断但浏览器未必
+   渲染得了）。空白在那里等于说「这个文件是空的」
+4. **文本类文件的正文用等宽只读，不走 Markdown**。csv / json 里的换行与 `#`
+   会被 Markdown 渲染折叠或当成标题——那是主动把内容显示错
+
+查看器只用浏览器自带能力（`<iframe>` / `<img>` / `<audio>` / `<video>`）：
+pdf.js 那 1MB 换来的是一致外观，而「PDF 批注」这个需求还没出现
+（`docs/PRD.md` §1 明确不做非 Markdown 原件的在线编辑）。
+
 ---
 
 ## 字号：走阶梯，不要写字面量

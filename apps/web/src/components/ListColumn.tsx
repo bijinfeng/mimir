@@ -4,7 +4,14 @@ import { Empty, Input, Skeleton, Tag } from 'antd'
 import type { DocumentListQuery, DocumentSummary } from '@mimir/shared'
 import { KindBadge, StatusBadge } from '@/components/DocumentBadges'
 import { useStyles } from '@/components/ListColumn.style'
-import { KIND_FILTERS, formatRelative, scopeParams, scopeTitle } from '@/components/list-helpers'
+import {
+  KIND_FILTERS,
+  excerptText,
+  formatMeta,
+  formatRelative,
+  scopeParams,
+  scopeTitle,
+} from '@/components/list-helpers'
 import { api } from '@/lib/api'
 import { useUnsaved } from '@/lib/unsaved'
 
@@ -84,6 +91,10 @@ export function ListColumn({
                   tags: [],
                   path: hit.path,
                   url: hit.url,
+                  // 检索命中带格式与大小（见 @mimir/shared 的 searchHitSchema），
+                  // 所以搜索结果的列表项与浏览结果长得一样
+                  mime: hit.mime,
+                  size: hit.size,
                   folder: null,
                   createdAt: '',
                   updatedAt: '',
@@ -161,7 +172,7 @@ export function ListColumn({
                 <KindBadge kind={doc.kind} />
                 <span className={styles.itemTitle}>{doc.title}</span>
               </div>
-              <p className={styles.itemExcerpt}>{doc.excerpt}</p>
+              <p className={styles.itemExcerpt}>{excerptText(doc)}</p>
               <div className={styles.itemMeta}>
                 {doc.status === 'inbox' && <StatusBadge status="inbox" />}
                 {doc.tags.slice(0, 2).map((tag) => (
@@ -169,6 +180,13 @@ export function ListColumn({
                     #{tag}
                   </Tag>
                 ))}
+                {/*
+                  格式与大小：**中性文字，不是彩色徽标**。
+                  彩色徽标是「来源」的语义（笔记 / 网页 / 文件…），
+                  而格式（PDF / Word / 图片）是文件的属性——按 DESIGN §0.1
+                  的判断，属性不该占一个色位，否则每加一种格式就要多一个色。
+                */}
+                {formatMeta(doc) && <span className={styles.format}>{formatMeta(doc)}</span>}
                 <span className={styles.spacer}>
                   {doc.updatedAt ? formatRelative(doc.updatedAt) : ''}
                 </span>

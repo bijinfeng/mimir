@@ -53,11 +53,16 @@ const KIND_STYLE: Record<DocumentKind, BadgeSpec> = {
     light: { fg: '#5b32b8', bg: '#f0ebfa' },
     dark: { fg: '#bda6ff', bg: '#231f3a' },
   },
-  pdf: {
-    label: 'PDF',
-    light: { fg: '#b45309', bg: '#fff3e0' },
-    dark: { fg: '#e5b45f', bg: '#2a2213' },
-  },
+  /**
+   * `file` = 上传的文件。**不按格式分组**：PDF、Word、图片、压缩包
+   * 都是这一种来源，格式写在元信息行里（正文色文字，不是彩色徽标）。
+   *
+   * 这里原先还有一个 `pdf` 分组，与 `file` 并排。删掉它的理由：
+   * `kind` 回答「从哪来」而不是「是什么格式」（见 `@mimir/shared`
+   * 的 `documentKindSchema`），而**给 PDF 一个专属色、给 docx 没有**
+   * 是一种说不通的不一致——按那个路子走下去，每加一种格式就要多一组
+   * 徽标色对，而 `docs/DESIGN.md` §0.1 明确反对「给每个类型配一个色」。
+   */
   file: {
     label: '文件',
     light: { fg: '#5c6570', bg: '#f0f1f3' },

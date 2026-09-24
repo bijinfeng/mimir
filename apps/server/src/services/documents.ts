@@ -1,5 +1,6 @@
 import { and, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
+import { CLIP_KINDS } from '@mimir/shared'
 import type {
   DocumentDetail,
   DocumentListQuery,
@@ -19,6 +20,7 @@ import {
   writeNote,
   type VaultNote,
 } from '../lib/vault.js'
+import { readUploadMeta, removeUpload, writeUploadMeta } from '../lib/uploads.js'
 import { normalizeFolder } from './folders.js'
 import { getDocumentLinks, syncDocumentLinks } from './links.js'
 
@@ -43,14 +45,22 @@ function toSummary(row: Row, tagNames: string[]): DocumentSummary {
     tags: tagNames,
     path: row.path,
     url: row.url,
+    // 格式与大小只在文件类上有值（见 shared/documents.ts 的「格式是属性」）
+    mime: row.mime,
+    size: row.size,
     folder: row.folder,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   }
 }
 
-/** 取出若干文档的标签，避免 N+1 查询 */
-async function loadTags(documentIds: string[]): Promise<Map<string, string[]>> {
+/**
+ * 取出若干文档的标签，避免 N+1 查询。
+ *
+ * 导出给 `services/upload.ts`：上传件写库后要把标签一起返回给前端，
+ * 而在那边重写一份查询会让「标签怎么读」出现两处实现。
+ */
+export async function loadTags(documentIds: string[]): Promise<Map<string, string[]>> {
   const result = new Map<string, string[]>()
   if (documentIds.length === 0) return result
 
@@ -151,6 +161,8 @@ export async function createNote(input: NoteCreate): Promise<DocumentDetail> {
   return {
     ...toSummary(row, [...input.tags].toSorted()),
     body: row.body,
+    sourceKey: row.sourceKey,
+    parseError: row.parseError,
     links: await getDocumentLinks(id),
   }
 }
@@ -192,6 +204,47 @@ export async function updateNote(id: string, input: NoteUpdate): Promise<Documen
     })
   }
 
+  /**
+   * 上传件的元数据写回 `meta.json`。
+   *
+   * **这一条是「文件是真相」对上传件的落点。** 笔记的标签与目录存在
+   * frontmatter 里（上面的 `writeNote`），上传件没有 vault 文件——它的
+   * 对应物就是 `meta.json`。不写回的话，整理出来的标签与目录只活在数据库里，
+   * 而重建索引会从 meta.json 读回**旧的**元数据：用户加的标签静默消失。
+   *
+   * 正文**不写进 meta.json**：它是派生数据（由原件重新提取），
+   * 而 meta.json 只记「只能来自用户」的那些信息。
+   */
+  if (existing.kind === 'file' && existing.sourceKey) {
+    const meta = await readUploadMeta(id)
+    if (meta) {
+      await writeUploadMeta(id, {
+        ...meta,
+        title,
+        tags: tagNames,
+        folder,
+        status,
+        updatedAt: now.toISOString(),
+      }).catch((error: unknown) => {
+        // 写失败不阻止这次的修改：数据库已经更新，而重建索引时
+        // 会以 meta.json 为准——所以这里必须留下日志（否则会静默回退）
+        console.warn(`写回 meta.json 失败（${id}），重建索引后可能丢失这次改动：`, error)
+      })
+    } else {
+      /**
+       * 记录有原件、却读不到 meta.json。
+       *
+       * **这一条不能静默**：它就是「整理结果只活在数据库里」的状态——
+       * 重建索引时标签与目录会回到旧值，而用户完全看不出发生了什么。
+       * 两种起因都值得知道：`meta.json` 被手工删了，或者存储后端读不到。
+       */
+      console.warn(
+        `读不到 uploads/${id}/meta.json，本次改动（标签/目录/标题）只写进了数据库。` +
+          '重建索引会以 meta.json 为准，那些改动可能丢失。',
+      )
+    }
+  }
+
   const [row] = await db
     .update(documents)
     .set({
@@ -216,6 +269,8 @@ export async function updateNote(id: string, input: NoteUpdate): Promise<Documen
   return {
     ...toSummary(row, [...tagNames].toSorted()),
     body: row.body,
+    sourceKey: row.sourceKey,
+    parseError: row.parseError,
     links: await getDocumentLinks(id),
   }
 }
@@ -251,12 +306,23 @@ export async function getDocument(id: string): Promise<DocumentDetail | null> {
   }
 
   const tagNames = (await loadTags([id])).get(id) ?? []
-  return { ...toSummary(row, tagNames), body, links: await getDocumentLinks(id) }
+  return {
+    ...toSummary(row, tagNames),
+    body,
+    sourceKey: row.sourceKey,
+    parseError: row.parseError,
+    links: await getDocumentLinks(id),
+  }
 }
 
 export async function listDocuments(query: DocumentListQuery): Promise<DocumentSummary[]> {
   const conditions = [isNull(documents.deletedAt)]
   if (query.kind) conditions.push(eq(documents.kind, query.kind))
+  // 多选 kind（「收集的资料」这个视图用它）。与 `kind` 同时给出时两个条件都生效，
+  // 但界面只会给一个——两个都传是调用方的错，让它安静地 AND 起来即可
+  if (query.kinds && query.kinds.length > 0) {
+    conditions.push(inArray(documents.kind, [...query.kinds]))
+  }
   if (query.status) conditions.push(eq(documents.status, query.status))
   if (query.tag) {
     conditions.push(
@@ -300,7 +366,16 @@ export async function deleteDocument(id: string): Promise<boolean> {
     })
   }
 
+  // 上传件没有 vault 文件，它的真相在 `uploads/<id>/`。**先库后文件**：
+  // 与头像删除同一条规则（「永远不要让指针存在的时候指向一个不存在的东西」）——
+  // 记录先消失，剩下一个孤儿目录无害；反过来是一段时间里「库里有、点开是 404」
   await db.update(documents).set({ deletedAt: new Date() }).where(eq(documents.id, id))
+
+  if (row.kind === 'file' && row.sourceKey) {
+    await removeUpload(id).catch((error: unknown) => {
+      console.warn(`删除原件目录失败（记录已删）：uploads/${id}`, error)
+    })
+  }
 
   return true
 }
@@ -339,11 +414,24 @@ export async function countDocuments(): Promise<DocumentCounts> {
     .from(documents)
     .where(isNull(documents.deletedAt))
 
+  const clipKinds = new Set<string>(CLIP_KINDS)
+
   return {
     inbox: rows.filter((row) => row.status === 'inbox').length,
     all: rows.length,
     note: rows.filter((row) => row.kind === 'note').length,
-    // 「收集的资料」= 所有非笔记。与前端 clip 视图的过滤条件保持一致
-    clip: rows.filter((row) => row.kind !== 'note').length,
+    /**
+     * 「收集的资料」= `CLIP_KINDS`。**判定必须与前端那个视图的筛选条件同源**。
+     *
+     * 这一处原先有个静默不一致：计数按 `kind !== 'note'` 算，而列表的
+     * `clip` 视图**不带任何过滤条件**（`list-helpers.ts` 的 scopeParams
+     * 返回空对象）——于是「收集的资料」显示 5 条、点进去看到全部 24 条。
+     * 当时库里全是笔记，两个数字恰好都是 0/全部，看不出来。
+     *
+     * 修法不是「把两边都写成 `!== 'note'`」，而是**抽出一份共同的清单**
+     * （`CLIP_KINDS`，在 `@mimir/shared`），两处都引用它。这样加一种来源时
+     * 只有一处要改，且不存在「另一个地方忘了」的可能。
+     */
+    clip: rows.filter((row) => clipKinds.has(row.kind)).length,
   }
 }

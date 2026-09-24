@@ -12,6 +12,7 @@ import type {
   DocumentListQuery,
   DocumentSummary,
   ExportStats,
+  FileUploadResponse,
   FolderListResponse,
   NoteCreate,
   NoteUpdate,
@@ -86,10 +87,48 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return body as T
 }
 
-function toQuery(params: Record<string, string | number | undefined>): string {
+/**
+ * multipart 请求。与 `request()` 分开的理由见 `documents.upload` 的注释。
+ *
+ * 错误外壳仍与 `request()` 一致（`{ error: { code, message } }`），
+ * 所以调用方只需要 catch 一种形状——这是 `lib/api.ts` 的约定之一。
+ */
+async function sendMultipart<T>(path: string, method: 'POST' | 'PUT', body: FormData): Promise<T> {
+  const res = await fetch(path, { method, credentials: 'include', body })
+
+  const text = await res.text()
+  const parsed: unknown = text ? JSON.parse(text) : null
+
+  if (!res.ok) {
+    const err = parsed as ApiError | null
+    throw new ApiRequestError(
+      res.status,
+      err?.error?.code ?? 'UNKNOWN',
+      err?.error?.message ?? `上传失败（HTTP ${res.status}）`,
+      err?.error?.details,
+    )
+  }
+
+  return parsed as T
+}
+
+/**
+ * 查询参数序列化。
+ *
+ * **数组值用逗号连接**（`kinds=web,file`），与 `documentListQuerySchema`
+ * 的 `kinds` 参数形状一一对应。用重复参数（`kinds=web&kinds=file`）也可以，
+ * 但那样 `kinds=a` 与 `kinds=a,b` 在服务端要走两条解析分支——而这一处
+ * 只有一种形状要维护。
+ */
+function toQuery(params: Record<string, string | number | boolean | string[] | undefined>): string {
   const search = new URLSearchParams()
   for (const [key, value] of Object.entries(params)) {
-    if (value !== undefined && value !== '') search.set(key, String(value))
+    if (value === undefined || value === '') continue
+    if (Array.isArray(value)) {
+      if (value.length > 0) search.set(key, value.join(','))
+      continue
+    }
+    search.set(key, String(value))
   }
   const qs = search.toString()
   return qs ? `?${qs}` : ''
@@ -99,7 +138,7 @@ export const api = {
   documents: {
     list(query: Partial<DocumentListQuery> = {}) {
       return request<{ items: DocumentSummary[] }>(
-        `/api/documents${toQuery(query as Record<string, string | number | undefined>)}`,
+        `/api/documents${toQuery(query as Record<string, string | string[] | undefined>)}`,
       )
     },
     get(id: string) {
@@ -133,6 +172,41 @@ export const api = {
     },
     counts() {
       return request<DocumentCounts>('/api/documents/counts')
+    },
+    /**
+     * 上传一个文件。**走 multipart，不复用 `request()`**——那个函数会
+     * 强制 `Content-Type: application/json`，而 multipart 的 boundary
+     * 必须由 fetch 自己生成（手写它会与实际的 body 不一致）。
+     * 与 `avatar.upload` 同一条做法（那里是仓库里第一个 multipart 端点）。
+     */
+    async upload(file: File) {
+      const body = new FormData()
+      body.append('file', file)
+
+      return sendMultipart<FileUploadResponse>('/api/documents/files', 'POST', body)
+    },
+    /** 替换某个上传件的原件（下载 → 改 → 传回）。标签与目录保持不变 */
+    async replaceSource(id: string, file: File) {
+      const body = new FormData()
+      body.append('file', file)
+
+      return sendMultipart<FileUploadResponse>(
+        `/api/documents/${encodeURIComponent(id)}/file`,
+        'PUT',
+        body,
+      )
+    },
+    /**
+     * 原件的 URL。
+     *
+     * 前端各处（`<img>` / `<iframe>` / `<video>` / 下载链接）都直接用它，
+     * **不走 fetch**——这些元素需要浏览器自己去发请求、去处理 Range 与缓存，
+     * 而把 50MB 读进内存再转 blob URL 是白白多一份拷贝。
+     * 鉴权靠 cookie，而浏览器发同源请求时会带上它。
+     */
+    sourceUrl(id: string, options: { download?: boolean } = {}) {
+      const base = `/api/documents/${encodeURIComponent(id)}/file`
+      return options.download ? `${base}?download=1` : base
     },
   },
 

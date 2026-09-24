@@ -2,6 +2,7 @@ import { Readability } from '@mozilla/readability'
 import { parseHTML } from 'linkedom'
 import TurndownService from 'turndown'
 import type { ParseInput, ParseResult, Parser, PluginSettings } from '@mimir/shared'
+import { isTextParseInput } from '@mimir/shared'
 
 /**
  * HTML → Markdown 解析器。
@@ -55,11 +56,29 @@ export function createHtmlParser(_settings: PluginSettings): Parser {
     accepts: ['html'],
 
     async parse(input: ParseInput): Promise<ParseResult> {
+      if (!isTextParseInput(input)) throw new Error('html 解析器只处理文本输入')
+
       const { document } = parseHTML(input.content)
 
       // Readability 会**改写**传入的 document，所以要先取一份标题
       const fallbackTitle = document.title?.trim() ?? ''
-      const article = new Readability(document as unknown as DomDocument).parse()
+
+      /**
+       * Readability 在遇到**结构不完整**的 HTML 时会抛内部错误
+       * （实测：一段只有 `<script>` 的片段会让 linkedom 报
+       * `Cannot destructure property 'firstElementChild'`）。
+       *
+       * 那句技术错误不该出现在界面上——上传件的 `parse_error` 是**给用户看的**。
+       * 所以这里把它包成一句人话：这个文件不是一份完整的网页。
+       */
+      let article: { content?: string | null } | null = null
+      try {
+        article = new Readability(document as unknown as DomDocument).parse() as {
+          content?: string | null
+        } | null
+      } catch {
+        throw new Error('这个文件不是一份完整的网页（缺少 html / body 结构）')
+      }
 
       if (!article?.content) {
         // 提取失败不是「返回空字符串」——那会让一篇没有正文的文档静默入库，

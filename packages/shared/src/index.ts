@@ -1,5 +1,6 @@
 export * from './auth.js'
 export * from './documents.js'
+export * from './files.js'
 export * from './search.js'
 export * from './structure.js'
 export * from './conversations.js'

@@ -1,12 +1,34 @@
 import { z } from 'zod'
 
 /**
- * 文档类型。一条规则贯穿全局：不管来源是什么，入库后统一成为 Markdown。
- * note 是自己写的（可编辑、文件是真相）；
- * 其余是抓取的资料（只读快照 + 派生正文），检索时对自己的笔记加权。
+ * 文档的来源类型。
+ *
+ * **`kind` 回答「它从哪来」，不回答「它是什么格式」。** 格式（PDF / Word /
+ * 图片…）是 `file` 的**属性**，存在 `mime` 列里、显示在元信息行——不新增
+ * `pdf` / `docx` 这类 kind。理由：`kind` 是写进 URL、筛选器与 `matchedBy`
+ * 的公开值，每加一种格式就要多一组徽标色对，而「给每个类型配一个色」正是
+ * `docs/DESIGN.md` §0.1 明确反对的设计（见 `docs/DECISIONS.md` D-044）。
+ *
+ * note 是自己写的（可编辑、文件是真相）；其余都是资料（原件 + 派生正文），
+ * 检索时对自己的笔记加权。`file` 是上传的原件——与抓取的资料同样只读，
+ * 区别只在「原件来自本机」而不是某个 URL。
  */
-export const documentKindSchema = z.enum(['note', 'web', 'wechat', 'github', 'pdf', 'file'])
+export const documentKindSchema = z.enum(['note', 'web', 'wechat', 'github', 'file'])
 export type DocumentKind = z.infer<typeof documentKindSchema>
+
+/**
+ * 「收集的资料」= 所有非笔记。计数与列表筛选**共用这一份**。
+ *
+ * 这两处曾经各写各的：计数按 `kind !== 'note'` 算，而列表的 `clip` 视图
+ * 不带任何过滤条件——数字与点进去看到的条数对不上。当时全是笔记所以看不出来，
+ * 而 `documentCountsSchema` 的注释早就承诺过「数字必须与点进去看到的条数一致」。
+ */
+export const CLIP_KINDS = [
+  'web',
+  'wechat',
+  'github',
+  'file',
+] as const satisfies readonly DocumentKind[]
 
 /**
  * 处理状态。inbox 是默认落点——先收进来，之后再整理。
@@ -56,6 +78,15 @@ export const documentSummarySchema = z.object({
   path: z.string().nullable(),
   url: z.string().nullable(),
   /**
+   * 原件的 MIME 类型，仅 `kind === 'file'`（上传的文件）有。
+   *
+   * 与 `size` 一起构成「格式是属性」那条规则的落点：列表的元信息行显示
+   * 「PDF · 2.4 MB」，而**筛选与徽标仍按 kind**，不按格式。
+   */
+  mime: z.string().nullable(),
+  /** 原件字节数，用于元信息行。null 表示这条文档没有原件（笔记与抓取的资料） */
+  size: z.number().int().nullable(),
+  /**
    * 所属目录，如 `技术/前端/React`。目录树由它派生，不另建表——
    * 见 `packages/shared/src/structure.ts` 的说明。
    */
@@ -76,6 +107,16 @@ export type DocumentLink = z.infer<typeof documentLinkSchema>
 export const documentDetailSchema = documentSummarySchema.extend({
   body: z.string(),
   /**
+   * 原件的存储 key，仅上传件有。界面需要它判断「原件这一层存不存在」
+   * （只有正文时不该出现「原件」页签），以及能不能显示下载按钮。
+   */
+  sourceKey: z.string().nullable(),
+  /**
+   * 正文为空的原因。`null` 有两种含义，由 `parseSupport()` 在界面层区分：
+   * 「这个格式还没有提取实现」与「本来就没有可提取的文字」。
+   */
+  parseError: z.string().nullable(),
+  /**
    * 双链。`sources` 是这篇链接出去的，`backlinks` 是链接到这篇的
    * （`docs/PRD.md` §5.10）。由服务端解析正文里的站内链接得到，
    * 前端不重复实现一套解析——两处实现必然有一天不一致。
@@ -87,8 +128,26 @@ export const documentDetailSchema = documentSummarySchema.extend({
 })
 export type DocumentDetail = z.infer<typeof documentDetailSchema>
 
+/**
+ * 列表的 kind 过滤。**逗号分隔**而不是重复参数：`?kinds=web,file`。
+ *
+ * 「收集的资料」这个视图要的是「除笔记之外的全部」，那是**一组** kind——
+ * 而 `kind=` 只收一个值，正是它让那个视图的过滤条件长期是空的
+ * （见 `CLIP_KINDS` 的注释）。既然要多值，就一次做成多值。
+ */
+const kindsParamSchema = z
+  .string()
+  .optional()
+  .transform((value) => {
+    if (value === undefined || value.trim() === '') return undefined
+    return value.split(',').map((item) => item.trim())
+  })
+  .pipe(z.array(documentKindSchema).min(1).optional())
+
 export const documentListQuerySchema = z.object({
   kind: documentKindSchema.optional(),
+  /** 多选。与 `kind` 同时给出时两个条件都生效（AND） */
+  kinds: kindsParamSchema,
   status: documentStatusSchema.optional(),
   tag: z.string().optional(),
   /** 按目录过滤，含子目录 */
@@ -97,6 +156,24 @@ export const documentListQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).default(0),
 })
 export type DocumentListQuery = z.infer<typeof documentListQuerySchema>
+
+/**
+ * 上传一个文件的结果。
+ *
+ * **上传与解析是两件事，一次请求里做、但分别报告。** 解析失败不构成失败：
+ * 原件已经存下、列表里看得见、能下载，只是暂时搜不到内容——
+ * 这正是「嵌入失败绝不让写入失败」的同一条判断（`docs/TECH.md` §4.10），
+ * 只不过换成了解析。所以用 `charCount` 与 `parseError` 两个字段如实报告，
+ * 而不是用一个 `ok` 把两种结果混成一个。
+ */
+export const fileUploadResponseSchema = z.object({
+  document: documentSummarySchema,
+  /** 解析出的正文字符数。0 表示原件已存但正文为空 */
+  charCount: z.number().int().nonnegative(),
+  /** 解析失败的原因；成功时为 null。**未持久化**——它只回答「刚才那一次」 */
+  parseError: z.string().nullable(),
+})
+export type FileUploadResponse = z.infer<typeof fileUploadResponseSchema>
 
 /**
  * 各视图的文档数，供左导航显示。

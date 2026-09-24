@@ -10,6 +10,7 @@ import { avatarRoute } from './routes/avatar.js'
 import { configRoute } from './routes/config.js'
 import { chatRoute, conversationsRoute } from './routes/conversations.js'
 import { documentsRoute, foldersRoute, maintenanceRoute, tagsRoute } from './routes/documents.js'
+import { filesRoute } from './routes/files.js'
 import { exportRoute } from './routes/export.js'
 import { setupRoute } from './routes/setup.js'
 import { mountStatic } from './lib/static.js'
@@ -30,8 +31,10 @@ export function createApp() {
     cors({
       origin: env.webOrigin,
       credentials: true,
-      allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+      allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowHeaders: ['Content-Type'],
+      // 原件的 Range 请求要能读到这几个响应头，否则前端拿不到长度与类型
+      exposeHeaders: ['Content-Length', 'Content-Range', 'Accept-Ranges', 'Content-Disposition'],
     }),
   )
 
@@ -58,6 +61,8 @@ export function createApp() {
   const api = new Hono<AppEnv>()
   api.use('*', requireAuth)
   api.route('/documents', documentsRoute)
+  // 与原件的路由同一前缀：原件是文档的一部分，不是另一类资源
+  api.route('/documents', filesRoute)
   api.route('/folders', foldersRoute)
   api.route('/tags', tagsRoute)
   api.route('/search', searchRoute)

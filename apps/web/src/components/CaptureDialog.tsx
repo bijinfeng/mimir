@@ -1,20 +1,25 @@
 import { CheckOutlined, CloseOutlined, InboxOutlined, LoadingOutlined } from '@ant-design/icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Input, Modal, Typography } from 'antd'
+import { Alert, Button, Input, Modal, Segmented, Typography } from 'antd'
 import { createStyles } from 'antd-style'
 import { useState } from 'react'
 import type { CaptureStage, CaptureStageResult, DetectedSource } from '@mimir/shared'
 import { detectSource } from '@mimir/shared'
+import { UploadPanel } from '@/components/UploadPanel'
 import { api } from '@/lib/api'
 import { FONT_SIZE } from '@/theme/tokens'
 
 /**
- * 抓取对话框。
+ * 收集内容对话框：**粘贴链接与上传文件两个页签**（`docs/TECH.md` §13）。
  *
  * 这是原型阶段补的第一个洞（`docs/PRD.md` §2.2）：插件列表里列了六个抓取器，
  * 但界面上根本没有地方粘贴链接。收集不到东西，后面整条链都没有意义。
  *
- * 过程**分阶段推进**，不是一个转圈：抓取失败时能直接指认是哪一步挂的。
+ * 上传文件与粘贴链接是**同一件事**——把外部的东西收进库，都先进收件箱。
+ * 合成一个对话框而不是两个入口：用户不该先判断「我这次算哪种」，
+ * 而那个判断对结果没有任何影响。
+ *
+ * 抓取过程**分阶段推进**，不是一个转圈：抓取失败时能直接指认是哪一步挂的。
  *「获取页面」失败是反爬，「提取正文」失败是页面结构不认识，「下载图片」
  * 失败是防盗链——三者对用户的下一步动作完全不同。
  */
@@ -39,6 +44,11 @@ const useStyles = createStyles(({ css, token }) => ({
     display: flex;
     flex-direction: column;
     gap: 12px;
+  `,
+  /* 两个页签的切换条。放在弹窗内容区顶部、通栏等宽——
+     「粘贴链接 / 上传文件」是同一个动作的两种方式，没有主次 */
+  tabs: css`
+    margin-bottom: 16px;
   `,
   hint: css`
     font-size: ${FONT_SIZE.meta}px;
@@ -170,6 +180,7 @@ export function CaptureDialog({ open, onClose, onCaptured }: CaptureDialogProps)
   const queryClient = useQueryClient()
 
   const [url, setUrl] = useState('')
+  const [tab, setTab] = useState<'url' | 'upload'>('url')
   const [stages, setStages] = useState<CaptureStageResult[]>([])
   const [failure, setFailure] = useState<{ message: string; stage?: string } | null>(null)
 
@@ -243,117 +254,144 @@ export function CaptureDialog({ open, onClose, onCaptured }: CaptureDialogProps)
       footer={
         <div className={styles.footer}>
           <span className={styles.footerHint}>
-            {failure
-              ? '这次没成功。可以先试试别的链接，或改用浏览器扩展。'
-              : '抓到的内容先进收件箱，之后再整理'}
+            {tab === 'upload'
+              ? '上传的文件也先进收件箱，之后按标签与目录整理'
+              : failure
+                ? '这次没成功。可以先试试别的链接，或改用浏览器扩展。'
+                : '抓到的内容先进收件箱，之后再整理'}
           </span>
-          <Button onClick={close}>取消</Button>
-          <Button
-            type="primary"
-            loading={running}
-            disabled={!detected || running}
-            onClick={() => capture.mutate(url.trim())}
-          >
-            抓取
-          </Button>
+          <Button onClick={close}>{tab === 'upload' ? '关闭' : '取消'}</Button>
+          {/* 上传页签的「行动按钮」在面板里（每行一个结果，按钮要说清打开哪一个），
+              所以这里不重复放一个「上传」——它也不知道该上传什么 */}
+          {tab === 'url' && (
+            <Button
+              type="primary"
+              loading={running}
+              disabled={!detected || running}
+              onClick={() => capture.mutate(url.trim())}
+            >
+              抓取
+            </Button>
+          )}
         </div>
       }
     >
-      <div className={styles.body}>
-        <Input
-          autoFocus
-          placeholder="https://…"
-          value={url}
-          onChange={(event) => setUrl(event.target.value)}
-          onPressEnter={() => {
-            if (detected && !running) capture.mutate(url.trim())
-          }}
-          disabled={running}
-          allowClear
+      <div className={styles.tabs}>
+        <Segmented
+          block
+          value={tab}
+          onChange={(value) => setTab(value as 'url' | 'upload')}
+          options={[
+            { label: '粘贴链接', value: 'url' },
+            { label: '上传文件', value: 'upload' },
+          ]}
         />
-
-        {/* 边打边识别来源：让用户在点「抓取」之前就知道会走哪条路 */}
-        {detected ? (
-          <div className={styles.kind}>
-            识别为 <b>{detected.label}</b>
-            <span>· {detected.note}</span>
-          </div>
-        ) : url.trim() ? (
-          <div className={cx(styles.kind, styles.kindWarn)}>
-            无法识别的链接，需要以 http:// 或 https:// 开头
-          </div>
-        ) : (
-          <div className={styles.hint}>支持网页、公众号文章、GitHub 仓库</div>
-        )}
-
-        {(running || stages.length > 0) && (
-          <div className={styles.stages}>
-            {stageStates.map(({ stage, result }) => {
-              // 已完成的阶段之后的第一个阶段就是正在跑的那个
-              const doneCount = stages.length
-              const index = STAGE_ORDER.indexOf(stage)
-              const isRunning = running && index === doneCount
-              const failed = failure && index === doneCount
-
-              return (
-                <div key={stage} className={cx(styles.stage, isRunning && styles.stageActive)}>
-                  <span
-                    className={cx(
-                      styles.stageDot,
-                      result && styles.stageDotDone,
-                      failed && styles.stageDotFail,
-                      isRunning && styles.stageDotRun,
-                    )}
-                  >
-                    {result ? (
-                      <CheckOutlined />
-                    ) : failed ? (
-                      <CloseOutlined />
-                    ) : isRunning ? (
-                      <LoadingOutlined />
-                    ) : null}
-                  </span>
-                  <span>{STAGE_LABEL[stage]}</span>
-                  {result?.meta && <span className={styles.stageMeta}>{result.meta}</span>}
-                </div>
-              )
-            })}
-          </div>
-        )}
-
-        {/* 失败时把原因原样带出来，并给出针对这一类的出路 */}
-        {failure && (
-          <Alert
-            type="warning"
-            showIcon
-            message={failure.message}
-            description={
-              detected?.kind === 'wechat' ? (
-                <span className={styles.hint}>
-                  公众号反爬严格，高频访问会撞墙，图片还需要 Referer 才下得动。
-                  可以稍后重试，或改用浏览器扩展在你的会话里抓取。
-                </span>
-              ) : undefined
-            }
-          />
-        )}
-
-        {!running && stages.length === STAGE_ORDER.length && !failure && (
-          <div className={styles.preview}>
-            <div className={styles.previewTitle}>抓取完成</div>
-            <div className={styles.previewMeta}>
-              <span>{stages[1]?.meta ?? ''}</span>
-              <span>{stages[2]?.meta ?? ''}</span>
-            </div>
-          </div>
-        )}
-
-        {running && (
-          <Typography.Text type="secondary" className={styles.hint}>
-            <InboxOutlined /> 抓完会直接进收件箱
-          </Typography.Text>
-        )}
       </div>
+
+      {tab === 'upload' ? (
+        <UploadPanel
+          onUploaded={(documentId) => {
+            close()
+            onCaptured(documentId)
+          }}
+        />
+      ) : (
+        <div className={styles.body}>
+          <Input
+            autoFocus
+            placeholder="https://…"
+            value={url}
+            onChange={(event) => setUrl(event.target.value)}
+            onPressEnter={() => {
+              if (detected && !running) capture.mutate(url.trim())
+            }}
+            disabled={running}
+            allowClear
+          />
+
+          {/* 边打边识别来源：让用户在点「抓取」之前就知道会走哪条路 */}
+          {detected ? (
+            <div className={styles.kind}>
+              识别为 <b>{detected.label}</b>
+              <span>· {detected.note}</span>
+            </div>
+          ) : url.trim() ? (
+            <div className={cx(styles.kind, styles.kindWarn)}>
+              无法识别的链接，需要以 http:// 或 https:// 开头
+            </div>
+          ) : (
+            <div className={styles.hint}>支持网页、公众号文章、GitHub 仓库</div>
+          )}
+
+          {(running || stages.length > 0) && (
+            <div className={styles.stages}>
+              {stageStates.map(({ stage, result }) => {
+                // 已完成的阶段之后的第一个阶段就是正在跑的那个
+                const doneCount = stages.length
+                const index = STAGE_ORDER.indexOf(stage)
+                const isRunning = running && index === doneCount
+                const failed = failure && index === doneCount
+
+                return (
+                  <div key={stage} className={cx(styles.stage, isRunning && styles.stageActive)}>
+                    <span
+                      className={cx(
+                        styles.stageDot,
+                        result && styles.stageDotDone,
+                        failed && styles.stageDotFail,
+                        isRunning && styles.stageDotRun,
+                      )}
+                    >
+                      {result ? (
+                        <CheckOutlined />
+                      ) : failed ? (
+                        <CloseOutlined />
+                      ) : isRunning ? (
+                        <LoadingOutlined />
+                      ) : null}
+                    </span>
+                    <span>{STAGE_LABEL[stage]}</span>
+                    {result?.meta && <span className={styles.stageMeta}>{result.meta}</span>}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* 失败时把原因原样带出来，并给出针对这一类的出路 */}
+          {failure && (
+            <Alert
+              type="warning"
+              showIcon
+              message={failure.message}
+              description={
+                detected?.kind === 'wechat' ? (
+                  <span className={styles.hint}>
+                    公众号反爬严格，高频访问会撞墙，图片还需要 Referer 才下得动。
+                    可以稍后重试，或改用浏览器扩展在你的会话里抓取。
+                  </span>
+                ) : undefined
+              }
+            />
+          )}
+
+          {!running && stages.length === STAGE_ORDER.length && !failure && (
+            <div className={styles.preview}>
+              <div className={styles.previewTitle}>抓取完成</div>
+              <div className={styles.previewMeta}>
+                <span>{stages[1]?.meta ?? ''}</span>
+                <span>{stages[2]?.meta ?? ''}</span>
+              </div>
+            </div>
+          )}
+
+          {running && (
+            <Typography.Text type="secondary" className={styles.hint}>
+              <InboxOutlined /> 抓完会直接进收件箱
+            </Typography.Text>
+          )}
+        </div>
+      )}
     </Modal>
   )
 }

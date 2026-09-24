@@ -1,4 +1,4 @@
-import type { ParseInput, ParseResult, Parser } from '@mimir/shared'
+import { isTextParseInput, type ParseInput, type ParseResult, type Parser } from '@mimir/shared'
 
 /**
  * Markdown 直通解析器。
@@ -16,6 +16,8 @@ export function createMarkdownParser(): Parser {
     accepts: ['markdown'],
 
     async parse(input: ParseInput): Promise<ParseResult> {
+      if (!isTextParseInput(input)) throw new Error('markdown 解析器只处理文本输入')
+
       const markdown = input.content
 
       return {
