@@ -1,12 +1,17 @@
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router'
 import { DocumentPanel } from '@/components/DocumentPanel'
+import { LibraryView } from '@/components/library/LibraryView'
 import { useAppShell } from '@/lib/app-shell-context'
 
 /**
- * 文档模式（右栏）。
+ * 文档模式（主区）。
  *
- * `id` 为空时右栏显示「选一条开始看」——这是初始状态：
- * 用户从收件箱进来，中栏已经列出内容，右栏等他点。
+ * 两态由 URL 的 `id` 有无驱动（D-047）：
+ *   - 无 `id` → 库视图（浏览）：搜索 + 卡片网格
+ *   - 有 `id` → 阅读态：详情占满主区，顶部返回库
+ *
+ * 「选一条开始看」的空态不再存在——浏览态本身就是可看的内容，
+ * 主区不会出现一块等用户点击的空白。
  */
 export const Route = createFileRoute('/_app/docs')({
   component: DocsRoute,
@@ -39,9 +44,14 @@ function DocsRoute() {
     void navigate({ to: '/chat', search: { scope: search.scope } })
   }
 
+  if (!search.id) {
+    return <LibraryView scope={search.scope} />
+  }
+
   return (
     <DocumentPanel
       documentId={search.id}
+      onBack={() => void navigate({ to: '/docs', search: { scope: search.scope } })}
       onBackToChat={cameFromChat ? backToChat : undefined}
       onAskAi={(documentId) => goAsk(documentId)}
       onAskAboutSelection={(documentId, passage) => goAsk(documentId, passage)}

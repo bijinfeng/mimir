@@ -33,8 +33,7 @@ export const Route = createFileRoute('/_app/chat')({
    */
   validateSearch: (search: Record<string, unknown>) => ({
     scope: typeof search.scope === 'string' && search.scope ? search.scope : 'inbox',
-    ...(typeof search.kind === 'string' ? { kind: search.kind } : {}),
-    ...(typeof search.id === 'string' ? { id: search.id } : {}),
+    ...(typeof search.id === 'string' && search.id ? { id: search.id } : {}),
   }),
   component: ChatRoute,
 })
@@ -75,8 +74,7 @@ function ChatRoute() {
       draft={askDraft}
       initialMessages={conversationQuery.data?.messages}
       messagesLoading={messagesLoading}
-      onOpenCitation={(documentId, citation) => openCitation(documentId, citation)}
-      // 中栏的「本次引用」用的就是它（docs/PRD.md §5.2）
+      onOpenCitation={openCitation}
       onConversationCreated={(conversationId) => {
         // 记下这是我们自己建的：URL 变化不触发重挂载，流式状态得以保留
         setOwnedId(conversationId)

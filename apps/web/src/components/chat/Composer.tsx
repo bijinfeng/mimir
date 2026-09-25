@@ -1,16 +1,22 @@
 import { SendOutlined } from '@ant-design/icons'
+import { useQuery } from '@tanstack/react-query'
 import { Button, Input, Switch, Tag, Tooltip } from 'antd'
 import { createStyles } from 'antd-style'
 import { useState } from 'react'
 import { FONT_SIZE } from '@/theme/tokens'
+import { api } from '@/lib/api'
 
 /**
  * 输入区。
  *
- * 三样东西常驻可见：
- *  - 范围 pill —— 从文档工具条进来时自动锁到「当前文档」（`docs/PRD.md` §5.5）
+ * 两样东西常驻可见：
  *  - 深度思考开关 —— 决定用推理模型还是对话模型
- *  - 当前模型名 —— 用户有权知道自己这句话会发给哪个模型
+ *  - 当前模型名 —— 用户有权知道自己这句话会发给哪个模型。
+ *    **从运行时配置读**（`/api/config` 的角色绑定），不硬编码供应商的模型名：
+ *    配置换了模型而界面还报旧名字，是在说谎（D-047 清理项）
+ *
+ * 范围 pill 只在锁定到某一篇时出现（从文档工具条进来，`docs/PRD.md` §5.5）；
+ * 「范围：整个知识库」是永久默认值，常驻显示不携带信息（D-047 清理项）。
  */
 
 export interface ComposerProps {
@@ -18,8 +24,6 @@ export interface ComposerProps {
   initialText?: string
   /** 锁定到某一篇时显示范围 pill */
   scopedDocumentId?: string | undefined
-  /** 清除范围锁定。不传时范围 pill 不可关闭 */
-  onClearScope?: () => void
   disabled: boolean
   onSend: (text: string, deepReasoning: boolean) => void
 }
@@ -75,16 +79,21 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
 }))
 
-export function Composer({
-  initialText = '',
-  scopedDocumentId,
-  onClearScope,
-  disabled,
-  onSend,
-}: ComposerProps) {
+export function Composer({ initialText = '', scopedDocumentId, disabled, onSend }: ComposerProps) {
   const { styles } = useStyles()
   const [text, setText] = useState(initialText)
   const [deepReasoning, setDeepReasoning] = useState(false)
+
+  /**
+   * 角色绑定的模型名。从设置读而不是硬编码：用户在设置页换过模型后，
+   * 这里显示的必须是**这一次提问真的会发给**的那个。
+   * 配置未就绪/角色未绑定时显示占位——比显示一个可能错误的模型名诚实。
+   */
+  const configQuery = useQuery({ queryKey: ['config'], queryFn: api.config })
+  const roleName = deepReasoning ? 'reasoning' : 'chat'
+  const modelName = configQuery.data?.modelConfig.roles.find(
+    (role) => role.role === roleName,
+  )?.model
 
   const submit = () => {
     const value = text.trim()
@@ -124,20 +133,14 @@ export function Composer({
               />
             </Tooltip>
 
-            {scopedDocumentId ? (
-              <Tag closable variant="filled" onClose={onClearScope} style={{ marginInlineEnd: 0 }}>
-                范围：当前文档
-              </Tag>
-            ) : (
+            {scopedDocumentId && (
               <Tag variant="filled" style={{ marginInlineEnd: 0 }}>
-                范围：整个知识库
+                范围：当前文档
               </Tag>
             )}
 
             <span style={{ flex: 1 }} />
-            <span className={styles.model}>
-              {deepReasoning ? 'deepseek-reasoner' : 'deepseek-chat'}
-            </span>
+            <span className={styles.model}>{modelName ?? '…'}</span>
 
             <Button
               type="primary"

@@ -842,9 +842,9 @@ describe('用量热力图色阶', () => {
   })
 })
 
-describe('来源徽标色对', () => {
-  // docs/DESIGN.md §3.7 的表：PRD 要求「资料与笔记一眼可分」，
-  // 但分得清的前提是看得清。改徽标配色时这里会拦下来。
+describe('状态徽标色对', () => {
+  // docs/DESIGN.md §3.7 的表：「待整理」徽标的底色要看得清。
+  // 来源徽标已随 D-047 移除，这张表只剩状态。改配色时这里会拦下来。
   it.each(APPEARANCES)('徽标文字 on 自身底 %s下 ≥ 4.5:1', (appearance) => {
     for (const [name, pair] of Object.entries(BADGE_COLORS[appearance])) {
       expect(
@@ -856,7 +856,7 @@ describe('来源徽标色对', () => {
 
   it.each(APPEARANCES)('徽标的底与容器底能分开 %s下', (appearance) => {
     // 徽标的底如果和面板底色同值，它就退化成一个纯文字标签，
-    // 而「一眼可分」靠的正是那块底色
+    // 而「状态可辨」靠的正是那块底色
     const container = String(tokenOf(appearance).colorBgContainer)
     for (const [name, pair] of Object.entries(BADGE_COLORS[appearance])) {
       expect(

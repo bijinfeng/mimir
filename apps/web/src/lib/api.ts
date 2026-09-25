@@ -1,12 +1,9 @@
 import type {
   ApiError,
   AuthSetupState,
-  AskInput,
-  AskResponse,
   CaptureResponse,
   ConversationDetail,
   ConversationSummary,
-  DetectedSource,
   DocumentCounts,
   DocumentDetail,
   DocumentListQuery,
@@ -19,7 +16,6 @@ import type {
   ProbeResult,
   ProviderInstance,
   RuntimeConfig,
-  SaveNoteInput,
   SearchQueryInput,
   SearchResponse,
   SuggestedTagsResponse,
@@ -198,11 +194,6 @@ export const api = {
         body: JSON.stringify(input),
       })
     },
-    remove(id: string) {
-      return request<{ ok: boolean }>(`/api/documents/${encodeURIComponent(id)}`, {
-        method: 'DELETE',
-      })
-    },
     /**
      * 建议标签。整理条把它直接摆成按钮，用户点一下就能挂上——
      * 这是把收件箱从「死胡同」变成能整理的关键一步（`docs/PRD.md` §2.2）。
@@ -226,17 +217,6 @@ export const api = {
       body.append('file', file)
 
       return sendMultipart<FileUploadResponse>('/api/documents/files', 'POST', body)
-    },
-    /** 替换某个上传件的原件（下载 → 改 → 传回）。标签与目录保持不变 */
-    async replaceSource(id: string, file: File) {
-      const body = new FormData()
-      body.append('file', file)
-
-      return sendMultipart<FileUploadResponse>(
-        `/api/documents/${encodeURIComponent(id)}/file`,
-        'PUT',
-        body,
-      )
     },
     /**
      * 原件的 URL。
@@ -274,42 +254,9 @@ export const api = {
     create() {
       return request<ConversationSummary>('/api/conversations', { method: 'POST' })
     },
-    remove(id: string) {
-      return request<{ ok: boolean }>(`/api/conversations/${encodeURIComponent(id)}`, {
-        method: 'DELETE',
-      })
-    },
-    /** 在已有会话里提问 */
-    ask(id: string, input: AskInput) {
-      return request<AskResponse>(`/api/conversations/${encodeURIComponent(id)}/ask`, {
-        method: 'POST',
-        body: JSON.stringify(input),
-      })
-    },
-    /** 不指定会话时自动开一个新的。命令面板里直接提问走这条。 */
-    askNew(input: AskInput) {
-      return request<AskResponse>('/api/conversations/ask', {
-        method: 'POST',
-        body: JSON.stringify(input),
-      })
-    },
-    /** 存成笔记。保留引用来源，见 docs/PRD.md §5.7。 */
-    saveAsNote(input: SaveNoteInput) {
-      return request<{ noteId: string; conversationId: string }>(
-        '/api/conversations/messages/note',
-        {
-          method: 'POST',
-          body: JSON.stringify(input),
-        },
-      )
-    },
   },
 
   capture: {
-    /** 输入框里边打边识别来源。规则与服务端抓取共用同一套。 */
-    detect(url: string) {
-      return request<{ source: DetectedSource | null }>(`/api/capture/detect${toQuery({ url })}`)
-    },
     run(url: string) {
       return request<CaptureResponse>('/api/capture', {
         method: 'POST',

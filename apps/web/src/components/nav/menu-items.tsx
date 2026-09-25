@@ -1,12 +1,9 @@
 import {
   AppstoreOutlined,
-  ContainerOutlined,
-  FileTextOutlined,
   InboxOutlined,
   MessageOutlined,
   PlusOutlined,
   SearchOutlined,
-  SettingOutlined,
   UploadOutlined,
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
@@ -83,13 +80,14 @@ export function buildActions(): MenuItem[] {
   ]
 }
 
-/** 知识库的四个视图 */
+/**
+ * 知识库的两个视图。来源（笔记 / 资料）不再是浏览维度（D-047）——
+ * 库靠目录、标签与搜索组织，入口只剩状态（收件箱）与全集（全部文档）。
+ */
 export function buildScopes(counts: DocumentCounts | undefined): MenuItem[] {
   const rows = [
     { key: 'inbox', icon: <InboxOutlined />, label: '收件箱', count: counts?.inbox },
     { key: 'all', icon: <AppstoreOutlined />, label: '全部文档', count: counts?.all },
-    { key: 'note', icon: <FileTextOutlined />, label: '我的笔记', count: counts?.note },
-    { key: 'clip', icon: <ContainerOutlined />, label: '收集的资料', count: counts?.clip },
   ]
 
   return rows.map((row) => ({
@@ -133,9 +131,4 @@ export function buildConversations(
       })),
     },
   ]
-}
-
-/** 底部：设置 */
-export function buildFooter(): MenuItem[] {
-  return [{ key: 'action:settings', icon: <SettingOutlined />, label: '设置' }]
 }

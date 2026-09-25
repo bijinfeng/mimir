@@ -1,11 +1,9 @@
-import { FileAddOutlined, ReloadOutlined, SearchOutlined, UploadOutlined } from '@ant-design/icons'
+import { FileAddOutlined, SearchOutlined, UploadOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Empty, Input, Modal, Spin, Typography } from 'antd'
 import { createStyles } from 'antd-style'
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import type { DocumentKind } from '@mimir/shared'
-import { KindBadge } from '@/components/DocumentBadges'
 import { api } from '@/lib/api'
 import { FONT_SIZE } from '@/theme/tokens'
 
@@ -232,8 +230,6 @@ interface PaletteItem {
   type: 'command' | 'document'
   key: string
   icon?: ReactNode
-  /** 文档项用它显示来源徽标；命令项没有 */
-  kind?: DocumentKind
   title: string
   sub: string
   run: () => void
@@ -297,26 +293,12 @@ function PaletteBody({
         sub: '粘贴 URL 抓取，进收件箱',
         run: onOpenCapture,
       },
-      {
-        type: 'command',
-        key: 'reindex',
-        icon: <ReloadOutlined />,
-        title: '重建索引',
-        sub: '同步外部编辑器改动的文件',
-        run: () => {
-          void api.maintenance.reindex().then((result) => {
-            console.info('重建索引完成', result)
-          })
-          onClose()
-        },
-      },
     ] satisfies PaletteItem[]
   ).filter((item) => !value.trim() || matches(item, value))
 
   const documents: PaletteItem[] = (searchQuery.data?.hits ?? []).map((hit) => ({
     type: 'document',
     key: hit.documentId,
-    kind: hit.kind,
     title: hit.title,
     sub: hit.snippet.text,
     run: () => onOpenDocument(hit.documentId),
@@ -525,11 +507,7 @@ function PaletteRow({
       onMouseEnter={() => onHover(index)}
       onClick={item.run}
     >
-      {item.kind ? (
-        <KindBadge kind={item.kind} />
-      ) : (
-        <span className={styles.itemIcon}>{item.icon}</span>
-      )}
+      <span className={styles.itemIcon}>{item.icon}</span>
       <span className={styles.itemMain}>
         {/* data-role 供高亮态选中：antd-style 的作用域类名不好做子选择器匹配，
             而这个属性把「这是标题」表达得比 nth-child 明确 */}

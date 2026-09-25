@@ -1,5 +1,4 @@
 import type { Citation } from '@mimir/shared'
-import { KindBadge } from '@/components/DocumentBadges'
 import { createStyles } from 'antd-style'
 import { FONT_SIZE } from '@/theme/tokens'
 
@@ -97,7 +96,6 @@ export function CitationCards({
           onClick={() => onOpen(citation.documentId, citation)}
         >
           <div className={styles.top}>
-            <KindBadge kind={citation.kind} />
             <span className={styles.title}>{citation.title}</span>
           </div>
           <div className={styles.snippet}>{citation.snippet}</div>

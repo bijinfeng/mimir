@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { CLIP_KINDS, type DocumentSummary } from '@mimir/shared'
+import type { DocumentSummary } from '@mimir/shared'
 import { excerptText, formatMeta, scopeParams } from '@/components/list-helpers'
 
 /**
- * 列表项的渲染规则（`docs/DESIGN.md` §8.2、§8.3，`docs/TECH.md` §13）。
+ * 库卡片的渲染规则（`docs/DESIGN.md` §8.2、§8.3，`docs/TECH.md` §13）。
  *
  * 这些是纯函数，但它们守的是**界面上说不说实话**：
  * 一份还没解析出正文的文件，列表里那第二行写什么。
@@ -92,18 +92,6 @@ describe('元信息行的格式与大小', () => {
 })
 
 describe('scope 与筛选条件', () => {
-  it('「收集的资料」用多值 kinds，而不是「不传条件」', () => {
-    /*
-     * 这一条守的是一个**曾经真的错了**的地方：clip 视图原先返回空对象，
-     * 于是点进去看到的是全部文档，而计数按「非笔记」算——两个数字对不上。
-     */
-    expect(scopeParams('clip')).toEqual({ kinds: [...CLIP_KINDS] })
-  })
-
-  it('「我的笔记」按 kind=note 过滤', () => {
-    expect(scopeParams('note')).toEqual({ kind: 'note' })
-  })
-
   it('收件箱按状态过滤，目录与标签各是一条独立条件', () => {
     expect(scopeParams('inbox')).toEqual({ status: 'inbox' })
     expect(scopeParams('folder:技术/前端')).toEqual({ folder: '技术/前端' })

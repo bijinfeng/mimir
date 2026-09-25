@@ -323,6 +323,11 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     }
   `,
 
+  backRow: css`
+    display: flex;
+    gap: 8px;
+  `,
+
   backChat: css`
     display: inline-flex;
     align-items: center;

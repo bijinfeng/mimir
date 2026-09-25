@@ -8,7 +8,7 @@ import type { DocumentDetail } from '@mimir/shared'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { App, Button, Empty, Skeleton, Tag, Tooltip, Typography } from 'antd'
 import { useEffect, useRef, useState } from 'react'
-import { KindBadge, StatusBadge } from '@/components/DocumentBadges'
+import { StatusBadge } from '@/components/DocumentBadges'
 import { NoteEditor } from '@/components/NoteEditor'
 import { useContentStyles } from '@/components/ContentTypography.style'
 import { DocumentFooter } from '@/components/document/DocumentFooter'
@@ -39,6 +39,8 @@ import { api } from '@/lib/api'
 
 export interface DocumentPanelProps {
   documentId: string | undefined
+  /** 阅读态返回库（浏览态）。两栏布局（D-047）里它是离开详情的主路径 */
+  onBack?: (() => void) | undefined
   /** 从对话点引用跳过来时，显示「返回对话」 */
   onBackToChat?: (() => void) | undefined
   /** 工具条「问 AI」：带着这篇的上下文进主视图对话 */
@@ -56,6 +58,7 @@ export interface DocumentPanelProps {
 
 export function DocumentPanel({
   documentId,
+  onBack,
   onBackToChat,
   onAskAi,
   onAskAboutSelection,
@@ -248,13 +251,26 @@ export function DocumentPanel({
       <div className={styles.scroll} ref={scrollRef}>
         <div className={styles.cols}>
           <div className={styles.inner}>
-            {/* 从对话点引用跳过来时给一个明确的返回入口。
-                没有它，用户会以为对话没了（docs/PRD.md §5.5） */}
-            {onBackToChat && (
-              <button type="button" className={styles.backChat} onClick={onBackToChat}>
-                <ArrowLeftOutlined style={{ fontSize: 11 }} />
-                返回对话
-              </button>
+            {/*
+              返回入口（docs/PRD.md §5.5、D-047）：两栏布局里详情占满主区，
+              「回去」必须是一个显式动作。两个返回并存——从对话点引用跳来的
+              场景里「返回对话」优先出现，「返回库」永远可用。
+            */}
+            {(onBackToChat || onBack) && (
+              <div className={styles.backRow}>
+                {onBackToChat && (
+                  <button type="button" className={styles.backChat} onClick={onBackToChat}>
+                    <ArrowLeftOutlined style={{ fontSize: 11 }} />
+                    返回对话
+                  </button>
+                )}
+                {onBack && (
+                  <button type="button" className={styles.backChat} onClick={onBack}>
+                    <ArrowLeftOutlined style={{ fontSize: 11 }} />
+                    返回库
+                  </button>
+                )}
+              </div>
             )}
 
             {/*
@@ -406,7 +422,6 @@ function DocumentMeta({ doc }: { doc: DocumentDetail }) {
 
   return (
     <div className={styles.meta}>
-      <KindBadge kind={doc.kind} />
       {doc.status === 'inbox' && <StatusBadge status="inbox" />}
       {doc.kind === 'note' ? (
         <span className={styles.originManual}>手动编辑</span>

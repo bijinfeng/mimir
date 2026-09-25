@@ -1,4 +1,4 @@
-import type { Citation, Message } from '@mimir/shared'
+import type { Message } from '@mimir/shared'
 import type { UIMessage } from '@tanstack/ai-react'
 import { useQuery } from '@tanstack/react-query'
 import { Skeleton } from 'antd'
@@ -8,7 +8,6 @@ import { CitationCards } from '@/components/chat/CitationCards'
 import { Composer } from '@/components/chat/Composer'
 import { FailureCard } from '@/components/chat/FailureCard'
 import { TraceDisclosure } from '@/components/chat/TraceDisclosure'
-import { KindBadge } from '@/components/DocumentBadges'
 import { api } from '@/lib/api'
 import type { AskDraft } from '@/lib/app-shell-context'
 import { mimirChatUI } from '@/lib/chat-ui'
@@ -35,7 +34,7 @@ export interface ChatPanelProps {
   /** 历史消息是否还在加载 */
   messagesLoading?: boolean | undefined
   /** 引用卡片被点击 → 跳回原文 */
-  onOpenCitation: (documentId: string, citation: Citation) => void
+  onOpenCitation: (documentId: string) => void
   /** 新会话建出来后换 URL */
   onConversationCreated: (conversationId: string) => void
 }
@@ -342,7 +341,7 @@ function ChatPanelBody({
                 />
               ) : (
                 lastRole !== 'user' && (
-                  <CitationCards citations={activeCitations} onOpen={onOpenCitation} />
+                  <CitationCards citations={activeCitations} onOpen={(id) => onOpenCitation(id)} />
                 )
               )}
             </>
@@ -417,7 +416,6 @@ function ChatEmptyState({
               className={styles.suggestion}
               onClick={() => onStartFromDocument(doc.id)}
             >
-              <KindBadge kind={doc.kind} />
               <span className={styles.suggestionTitle}>{doc.title}</span>
             </button>
           ))}

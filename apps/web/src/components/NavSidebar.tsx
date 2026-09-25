@@ -138,7 +138,6 @@ export function NavSidebar({
   const onMenuClick: MenuProps['onClick'] = ({ key }) => {
     if (key.startsWith('scope:')) return goDocs(key.slice('scope:'.length))
     if (key.startsWith('conv:')) return goChat(key.slice('conv:'.length))
-    if (key.startsWith('tag:')) return goDocs(key)
     if (key === 'action:new-chat') return goChat()
     if (key === 'action:search') return onOpenPalette()
     if (key === 'action:capture') return onOpenCapture()

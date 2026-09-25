@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import {
   buildActions,
   buildConversations,
-  buildFooter,
   buildScopes,
   currentKey,
 } from '@/components/nav/menu-items'
@@ -61,18 +60,20 @@ describe('导航 key 的编码与解码', () => {
     collect(buildActions() as never)
     collect(buildScopes({ inbox: 1, all: 2, note: 3, clip: 0 } as never) as never)
     collect(buildConversations([], 10) as never)
-    // 底部那一项也要收——设置就在那里。漏掉它的话，
-    // 这个「两端对得上」的检查会误报「设置项不存在」
-    collect(buildFooter() as never)
     // 空会话列表时 buildConversations 返回一个带空 children 的分组，
     // 这里补上真实情形的那一条
     allKeys.add('conv:abc')
+    // 设置入口在底部账号行的 ⚙ 按钮里（NavSidebar 直接渲染），
+    // 不经过 buildActions/buildScopes——补上真实情形
+    allKeys.add('action:settings')
 
     for (const input of [
       { page: 'docs' as const, scope: 'inbox' },
       { page: 'docs' as const, scope: 'all' },
-      { page: 'docs' as const, scope: 'note' },
-      { page: 'docs' as const, scope: 'clip' },
+      // 来源（note / clip）不再是 scope（D-047）。标签走 tag: 前缀，
+      // currentKey 把它映射到「全部文档」点亮（目录树的 folder key
+      // 属于 NavSidebar 的树，不在 buildScopes 的清单里，不进这个断言）
+      { page: 'docs' as const, scope: 'tag:react' },
       { page: 'chat' as const, scope: 'inbox' },
       { page: 'chat' as const, scope: 'inbox', id: 'abc' },
       { page: 'settings' as const, scope: 'inbox' },
