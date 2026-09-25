@@ -1195,3 +1195,65 @@ M1-B 的双后端蓝图（写在 §4.5/§4.8，本轮只做设计）：
 - **方言分支收敛在五处**（keyword、substring 两个通道按方言分支；
   摘要切片与用量聚合统一成 JS；时间默认值参数化），其余代码双端共用。
   这是有意控制的代价，不是通用存储引擎接口——见 D-045。
+
+---
+
+## 12. 桌面端调研：Electron 载体 + 私有宿主（2026-09）
+
+> 决策见 `DECISIONS.md` D-046；分层依据是 deepseek-harness 的架构文档
+> （私有 Desktop Host + carrier + 本地端口 19387）。本节记录工具链选型
+> 与实测踩到的坑。
+
+### 12.1 工具链版本快照
+
+| 包 | 版本 | 说明 |
+|---|---|---|
+| electron | 44.4.5 | 主进程 Node 模式；ESM/CJS 双支持，本项目产物取 CJS（preload 沙箱只认 CJS） |
+| electron-builder | 26.15.3 | dmg 打包；`identity: null` 时完全跳过签名（见 §12.3 的后果） |
+| @electron/rebuild | 4.2.0 | **最终没用上**——better-sqlite3 v13 起自带 N-API 预编译（见 §12.2） |
+
+### 12.2 原生模块
+
+| 模块 | 结论 |
+|---|---|
+| better-sqlite3 | **v13 起在 npm 包内自带 N-API 预编译**（`prebuilds/darwin-x64.node` 等，跨 Node/Electron 通用），安装脚本的 `node-gyp rebuild` 只是无预编译平台的兜底。实测同一份 v13.0.3 在 Node 24 与 Electron 44 中直接加载成功，无需 electron-rebuild。注意 npmmirror 镜像上 v12.12.0 缺失（ERR_PNPM_NO_MATCHING_VERSION），v13 起正常 |
+| @node-rs/jieba | 标准 N-API 预编译（linux-x64-gnu/musl、darwin 等），Electron 直接可用 |
+
+### 12.3 实测踩到的三个坑（全部「静默」类）
+
+1. **`process.env` 被构建器替换**：桌面主进程若用普通（浏览器向）vite
+   构建，`process.env.X = ...` 会被静态替换成 `({}).X = ...`——宿主注入的
+   端口/数据目录/密钥全部静默失效，回落到 `.env` 的值。症状与「配置没生效」
+   一模一样。解法：`build.ssr: true`（与服务端同一形态），产物保留 process.env
+2. **extraResources 丢点目录**：electron-builder 拷贝资源时跳过点开头的
+   目录，`dist/node_modules/.pnpm`（vite SSR 构建把部分传递依赖按 pnpm
+   结构放在这里）静默丢失，运行时报 `Cannot find module …/.pnpm/fflate/…`。
+   解法：afterPack 钩子用 `fs.cp`（保留符号链接布局）自行拷贝
+3. **未签名二进制被 SIGKILL**：`identity: null` 时 builder 完全跳过签名，
+   macOS（Sequoia 起，含 Intel）把未签名二进制直接杀掉——秒退、零输出、
+   无崩溃报告（比前两条更难查）。解法：afterPack 里
+   `codesign --force --deep -s -`（ad-hoc，仅本机执行合法，不能分发）
+
+另有一条**类型层**的：TypeScript 7（Go 重写版）对「泛型函数作为工厂参数、
+返回大对象字面量」的写法会丢失方法返回类型推理（调用方全部退化成
+unknown）——api 客户端因此采用「单例 + 模块级传输配置」而不是工厂
+（D-046）。
+
+### 12.4 安全结论
+
+- 宿主只绑 `127.0.0.1` + 每次启动的随机端口
+- 鉴权沿用 better-auth 的 `SameSite=Lax` cookie：外部网站的跨站 POST
+  拿不到 cookie；DNS rebinding 后的请求同样过不了 `requireAuth`
+  （绑定到 127.0.0.1 的 Host 才有对应 cookie）
+- Electron `contextIsolation + sandbox`，preload 只暴露只读 boot 信息与退出
+- 单实例锁避免双窗口并发写同一个 SQLite
+
+### 12.5 验证记录（2026-09-25）
+
+- `pnpm desktop:start`（进程内宿主 + 构建产物）：注册 → 建笔记 →
+  搜「组件」双通道命中 → 杀进程重启 → 登录态与数据保留
+  （数据在 `~/Library/Application Support/mimir/data`，含
+  `auth-secret`/`mimir.db`/WAL）
+- `pnpm desktop:build` 产出 dmg（460MB，x64，ad-hoc 签名）；安装到
+  `~/Applications` 后启动：宿主起、登录、搜索「组件」命中——与
+  desktop:start 行为一致

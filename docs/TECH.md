@@ -49,11 +49,14 @@ TS 7 是 Go 重写的编译器（`tsc` 是平台原生二进制，通过 `@types
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│  浏览器                                                   │
+│  浏览器 / 桌面载体                                        │
 │  ┌──────────────────┐   ┌─────────────────────────────┐ │
 │  │ React SPA        │   │ 浏览器扩展（M2）             │ │
 │  │ TanStack Router  │   │ 在用户会话里抓取             │ │
 │  └────────┬─────────┘   └──────────────┬──────────────┘ │
+│  ┌────────┴────────────────┐  Electron 载体（D-046）：   │
+│  │ 桌面端 apps/desktop：   │  主进程进程内起私有宿主，  │
+│  │ 同一 SPA，宿主在本地    │  页面加载宿主自己的地址    │
 └───────────┼────────────────────────────┼────────────────┘
             │ HTTP/JSON                  │ POST 渲染后的 DOM
 ┌───────────▼────────────────────────────▼────────────────┐
@@ -1874,3 +1877,92 @@ GET /api/documents/:id/file?download=1 强制附件
 
 前端先挡一道大小（省掉必然失败的往返、反馈立刻），**服务端仍然校验**
 ——前端校验是体验，不是边界。
+
+---
+
+## 14. 桌面端：Electron 载体 + 进程内私有宿主
+
+> 决策记录见 `docs/DECISIONS.md` D-046；调研与版本快照见 `docs/RESEARCH.md` §12。
+> 分层借鉴 [deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) 的
+> host/carrier 拓扑（"Electron starts the private Desktop Host in Electron Node
+> mode … Web owns RPC and streams; the desktop carrier connects the local page
+> to the authenticated Host"），不引入其框架（Cordis 式注入已被 §7.3 否决）。
+
+### 14.1 结构
+
+```
+┌─ Electron 载体（apps/desktop）────────────────────────────┐
+│  主进程（Node 模式）                                        │
+│   └─ 私有宿主 = apps/server/dist 的 startServer()          │
+│       SQLite @ userData/data · 127.0.0.1 随机端口           │
+│  BrowserWindow → 加载 http://127.0.0.1:<port>（宿主自己）   │
+│  IPC 只承载：boot 信息（shared 的 DesktopBootInfo）与退出    │
+└────────────────────────────────────────────────────────────┘
+```
+
+**页面与宿主之间不走 IPC**。窗口加载的就是宿主地址：cookie 会话、
+SSE 聊天流、文件 Range、multipart 上传、zip 导出全部是同源 HTTP 的
+原生行为。为它们各写一套 IPC 桥（JSON 走 invoke、流走 MessagePort、
+二进制走自定义协议）等于把 HTTP 重造一遍，且绕开 TanStack AI 的
+传输层——dsh 自己也保留了本地端口做页面↔宿主通道。
+
+### 14.2 启动顺序（不可换）
+
+1. `pickFreePort()`：OS 分配空闲端口。随机端口避免与用户自部署的
+   mimir 服务冲突，也压小本机误触面
+2. **先注入环境变量，再动态 import 服务端**：`env.ts` 与 better-auth 都在
+   模块加载时读取（`trustedOrigins`/`baseURL`/端口），导入选早了配置就定死。
+   注入项：`PORT`、`SERVER_URL`/`WEB_ORIGIN`（= 宿主源）、`DATA_DIR`、
+   `DATABASE_URL=file:<dataDir>/mimir.db`、`WEB_DIST`、`AUTH_SECRET`
+3. `startServer({ hostname: '127.0.0.1' })`——只绑回环地址
+4. 轮询 `/healthz` 就绪后开窗（超时明确报错，不静默等待）
+
+其中 `AUTH_SECRET` 由宿主**持久化**在数据目录（`auth-secret`，0600）：
+会话 cookie 用它签名，每次启动随机的话「重启就要重新登录」。
+生产形态下 `env.ts` 会拒绝默认密钥，桌面宿主用这一步替代部署方配置。
+
+### 14.3 通信契约与传输注入
+
+前端的 `api.ts` 是**唯一的服务端访问口**，传输配置可注入
+（`configureApiTransport({ baseUrl?, headers?, fetchImpl? })`）：
+浏览器与桌面壳的默认形态完全相同（同源相对路径 + cookie），
+这个接缝是给将来的 CLI、浏览器扩展与跨源认证宿主用的
+（TECH §1 选型 Hono 的理由原文就是「浏览器扩展、脚本、CLI 都要调
+同一套 HTTP 接口」）。宿主↔载体的握手契约是 `@mimir/shared` 的
+`DesktopBootInfo`（origin、数据目录、版本），preload 只读暴露。
+
+### 14.4 开发与打包
+
+| 命令 | 做什么 |
+|---|---|
+| `pnpm desktop:dev` | web vite（5173）+ server dev + Electron 加载 5173（`MIMIR_DESKTOP_URL` 模式：壳不进程内起宿主，宿主走 dev 进程） |
+| `pnpm desktop:start` | 构建 web/server/desktop 产物后，Electron 进程内起宿主（与打包一致的形态，连同一份 userData 数据） |
+| `pnpm desktop:build` | 上述构建 + `pnpm deploy --prod` 收集 server 生产依赖 + electron-builder 打 dmg |
+
+打包要点（坑都在这里踩过）：
+
+- **桌面主进程必须用 Node 目标构建**（`build.ssr: true`，与服务端同一形态）：
+  普通构建会把 `process.env` 静态替换成 `{}`，宿主的环境注入**静默全部失效**，
+  症状是宿主回落到 `.env` 的端口与数据目录
+- **宿主资源不用 extraResources**：electron-builder 拷贝时会跳过点开头的
+  目录，`server/dist/node_modules/.pnpm`（vite SSR 构建把部分传递依赖按
+  pnpm 结构放这里）会被静默丢掉，运行时报模块找不到。afterPack 钩子用
+  `fs.cp`（保留符号链接的 pnpm 布局）自行拷贝
+- **必须 ad-hoc 签名**：identity: null 时 builder 完全跳过签名，macOS
+  （Sequoia 起，含 Intel）把未签名二进制直接 SIGKILL——秒退、零输出。
+  afterPack 里 `codesign --force --deep -s -`。正式分发需要开发者证书 + 公证
+- better-sqlite3 v13 自带 N-API 预编译（prebuilds/ 跨 Node/Electron 通用），
+  无需 electron-rebuild；`@node-rs/jieba` 是 N-API，同理
+- 桌面包**不设 `dev` 脚本**：`pnpm dev` 是 `-r --parallel dev`，
+  叫 `dev` 会被卷进去
+- 数据目录与浏览器部署的 `data/` 完全独立（userData 下），
+  「安装版删掉重装 = 数据还在」由 userData 承担
+
+### 14.5 安全
+
+- 宿主只绑 `127.0.0.1` + 随机端口；鉴权仍是 better-auth 的
+  `SameSite=Lax` cookie——外部网站对宿主的跨站 POST 拿不到 cookie，
+  DNS rebinding 后的请求同样过不了 `requireAuth`
+- Electron 侧 `contextIsolation: true` + `sandbox: true`，preload 只暴露
+  只读的 boot 信息与退出（最小边界）
+- 单实例锁：两个窗口同时写一个 SQLite 会撞锁

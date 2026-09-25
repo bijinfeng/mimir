@@ -2471,3 +2471,62 @@ URL 查询参数、筛选胶囊与 `matchedBy` 的公开值，每加一种格式
   （`TEST_DATABASE_URL=postgres://…` 时切 PG 复跑）
 - 桌面端的技术前提就位（Electron + better-sqlite3 有成熟重编译路径），但桌面端
   本身仍不在任何里程碑里
+
+---
+
+## D-046 桌面端：Electron 载体 + 进程内私有宿主；通信层可注入
+
+**背景**：桌面端的方向已被 D-045 铺路（SQLite 后端、userData 数据目录、
+启动自动迁移都是为它准备的），本次落地。同时用户提出把前后端通信改成
+RPC，并点名借鉴 [deepseek-harness](https://github.com/deepseek-ai/deepseek-harness)
+的架构——其架构文档的关键三句：
+
+> "Electron starts the private Desktop Host in Electron Node mode. The Host
+> invokes the shared CLI profile runner and complete Web application."
+> "Web owns RPC and streams; the desktop carrier connects the local page to
+> the authenticated Host."
+> "Node IPC carries boot injections, readiness, fatal errors, and shutdown."
+
+**决定**：
+
+1. **分层照搬 dsh**：Electron 主进程以 Node 模式跑「私有宿主」
+   （= apps/server 的构建产物 + SQLite + 127.0.0.1 随机端口）；
+   BrowserWindow 加载宿主自己的地址；IPC 只承载 boot 信息与退出。
+2. **页面↔宿主通信保持本地 HTTP，不走 Electron IPC**。流式聊天（SSE）、
+   文件 Range/ETag、multipart、zip 导出、`<img>/<iframe>` 直连 URL 都是
+   HTTP 原生能力；为它们各写一套 IPC 桥等于把 HTTP 重造一遍，还要绕开
+   TanStack AI 的传输层。dsh 的桌面端同样保留本地端口（默认 19387）。
+3. **通信层显式化**：`api.ts` 增加传输注入（`configureApiTransport`），
+   契约即 api 对象的形状；宿主↔载体握手契约是 shared 的 `DesktopBootInfo`。
+   浏览器部署与桌面壳的默认配置逐字节一致，业务代码零改动。
+4. 打包：electron-builder + `pnpm deploy --prod` 收集 server 生产依赖；
+   ad-hoc 签名；宿主资源由 afterPack 钩子拷贝（原因见 TECH §14.4）。
+
+**否决**：
+
+| 方案 | 为什么不用 |
+|---|---|
+| 全部走 Electron IPC（JSON 走 invoke、流走 MessagePort、二进制走自定义协议） | 三套桥重造 HTTP 的已有能力，SSE→MessagePort 还要改 TanStack AI 的接入；dsh 自己没这么做 |
+| 桌面端另起一套 API/后端 | 桌面宿主就是同一个服务端（同一套路由、检索、插件），差异只在数据目录与端口——另起一套必然漂移 |
+| 写死端口（如 dsh 的 19387） | 用户可能同时跑自部署的 mimir；随机端口 + 启动注入成本为零 |
+| 引入 Cordis / 插件框架 | §7.3 已否决同类；只借 dsh 的**拓扑**，不借它的框架 |
+
+**实测踩过的坑**（细节在 TECH §14.4）：
+
+1. 桌面主进程用普通（浏览器向）vite 构建 → `process.env` 被静态替换成
+   `({})`，宿主环境注入**静默失效**（回落到 .env 的 3000/仓库 data/）——
+   必须 `build.ssr: true`
+2. electron-builder 的 extraResources 跳过点开头目录 →
+   `dist/node_modules/.pnpm` 静默丢失 → 运行时报模块找不到——afterPack
+   用 `fs.cp` 自行拷贝（保留 pnpm 符号链接布局）
+3. 未签名二进制被 macOS（Sequoia 起，含 Intel）直接 SIGKILL（秒退、
+   零输出、无崩溃报告）——ad-hoc 签名解决
+4. TypeScript 7 对「泛型函数经工厂参数传入返回大字面量」的 api 工厂模式
+   **丢失返回类型推理**（调用方退化成 unknown）——改用「单例 + 模块级
+   传输配置」的形态，类型与接缝兼得
+
+**影响**：`apps/desktop` 新包；`apps/server` 的 `index.ts` 拆出可导入的
+`startServer()`（直跑行为不变）；`apps/web/src/lib/api.ts` 传输可注入；
+`pnpm-workspace.yaml` 放行 electron 构建；新增根脚本 `desktop:dev/start/build`。
+桌面端不在 D-024/D-031 的逃生舱条款内——它是同一个宿主的另一种载体，
+不是第二个后端。

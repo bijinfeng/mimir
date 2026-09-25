@@ -96,6 +96,19 @@ pnpm db:migrate
 两条路径共用同一套 schema、服务层与界面，`DATABASE_URL` 决定用哪个
 （未设置 = SQLite；详见 `docs/TECH.md` §8.6 与 D-045）。
 
+### 桌面端（Electron）
+
+桌面端 = Electron 壳里跑**同一个服务端**（SQLite，数据在用户目录）+
+同一个 web 界面，无需部署（D-046、TECH §14）：
+
+```bash
+pnpm desktop:dev     # 开发：Electron 窗口加载 Vite 页面
+pnpm desktop:start   # 进程内私有宿主（与打包一致的形态）
+pnpm desktop:build   # 打 macOS dmg（输出 apps/desktop/release/，ad-hoc 签名仅本机可用）
+```
+
+窗口加载的是本地宿主的地址，登录、搜索、流式问答与浏览器完全同源。
+
 `pnpm dev` 一条命令并行起两个包，改代码即生效：
 
 | 包 | 命令 | 说明 |
@@ -232,7 +245,8 @@ CI 与本地跑的是同一条命令，避免「本地过了 CI 挂」。
 mimir/
 ├── apps/
 │   ├── server/           Hono API + worker
-│   └── web/              React SPA
+│   ├── web/              React SPA
+│   └── desktop/          Electron 载体（进程内私有宿主，D-046）
 ├── packages/
 │   └── shared/           前后端共享契约
 ├── output/               交互原型（静态单文件）
