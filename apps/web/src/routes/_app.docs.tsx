@@ -18,7 +18,7 @@ export const Route = createFileRoute('/_app/docs')({
 })
 
 function DocsRoute() {
-  const { setAskDraft, openDocument, cameFromChat, backToChat } = useAppShell()
+  const { setAskDraft, openDocument, citation, cameFromChat, backToChat } = useAppShell()
   const navigate = useNavigate()
   const search = useSearch({ from: '/_app' })
 
@@ -51,6 +51,7 @@ function DocsRoute() {
   return (
     <DocumentPanel
       documentId={search.id}
+      citation={citation}
       onBack={() => void navigate({ to: '/docs', search: { scope: search.scope } })}
       onBackToChat={cameFromChat ? backToChat : undefined}
       onAskAi={(documentId) => goAsk(documentId)}

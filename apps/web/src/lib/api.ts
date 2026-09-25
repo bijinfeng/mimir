@@ -16,6 +16,7 @@ import type {
   ProbeResult,
   ProviderInstance,
   RuntimeConfig,
+  SaveNoteInput,
   SearchQueryInput,
   SearchResponse,
   SuggestedTagsResponse,
@@ -253,6 +254,19 @@ export const api = {
     },
     create() {
       return request<ConversationSummary>('/api/conversations', { method: 'POST' })
+    },
+    /**
+     * 存成笔记（PRD §5.7）。服务端把回答与引用写成站内链接（进双链），
+     * 且按 messageId 幂等——重复调用返回同一篇笔记。
+     */
+    saveAsNote(input: SaveNoteInput) {
+      return request<{ noteId: string; conversationId: string }>(
+        '/api/conversations/messages/note',
+        {
+          method: 'POST',
+          body: JSON.stringify(input),
+        },
+      )
     },
   },
 

@@ -507,21 +507,19 @@ function readZip(buffer: Buffer): { name: string; data: Buffer }[] {
 }
 
 describe('列表与筛选', () => {
-  it('「收集的资料」的计数与列表条数一致（多值 kind 筛选）', async () => {
+  it('多值 kinds 筛选仍然有效（契约保留，来源计数已退役 D-047）', async () => {
     const cookie = await getAuthCookie()
     await upload(cookie, 'clip-验证.txt', '筛选验证', 'text/plain')
 
-    const counts = await client.get<{ clip: number }>('/api/documents/counts')
     const list = await client.get<{ items: unknown[] }>(
       '/api/documents?kinds=web,wechat,github,file&limit=100',
     )
+    const all = await client.get<{ items: unknown[] }>('/api/documents?limit=100')
 
-    /*
-     * 这一条守的是一个**曾经真的错了**的地方：计数按「非笔记」算，
-     * 而列表的 clip 视图不过滤任何东西——数字与点进去看到的不一致。
-     * 当时库里全是笔记所以看不出来，一有上传件立刻暴露。
-     */
-    expect(list.body.items.length).toBe(counts.body.clip)
+    // 上传件属于 clip 集合：kinds 筛选命中的每一条都在全部列表里，
+    // 且全部列表至少包含它
+    expect(all.body.items.length).toBeGreaterThanOrEqual(list.body.items.length)
+    expect(list.body.items.length).toBeGreaterThan(0)
   })
 
   it('按 file 筛选只返回上传件', async () => {

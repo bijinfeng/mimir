@@ -147,6 +147,8 @@ export function useMimirChat({
     messages: chat.messages,
     isLoading: chat.isLoading,
     error: chat.error,
+    /** 当前会话 id（新会话建出来后与 prop 不同）。落库消息按它去取 */
+    activeId,
     trace: events.trace,
     citations: events.citations,
     failure: events.failure,

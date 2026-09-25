@@ -1,15 +1,17 @@
-import type { Message } from '@mimir/shared'
+import type { Citation, Message } from '@mimir/shared'
 import type { UIMessage } from '@tanstack/ai-react'
-import { useQuery } from '@tanstack/react-query'
-import { Skeleton } from 'antd'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { App as AntApp, Button, Skeleton } from 'antd'
 import { createStyles } from 'antd-style'
 import { useRef, useState } from 'react'
+import { SaveOutlined, ExportOutlined } from '@ant-design/icons'
 import { CitationCards } from '@/components/chat/CitationCards'
 import { Composer } from '@/components/chat/Composer'
 import { FailureCard } from '@/components/chat/FailureCard'
 import { TraceDisclosure } from '@/components/chat/TraceDisclosure'
 import { api } from '@/lib/api'
 import type { AskDraft } from '@/lib/app-shell-context'
+import { useAppShell } from '@/lib/app-shell-context'
 import { mimirChatUI } from '@/lib/chat-ui'
 import { useMimirChat } from '@/lib/use-mimir-chat'
 import { FONT_SIZE } from '@/theme/tokens'
@@ -21,7 +23,7 @@ import { FONT_SIZE } from '@/theme/tokens'
  *
  * 消息列表的渲染交给官方的 `createChatUI`（见 lib/chat-ui.tsx），
  * 流式状态交给 `useChat`（见 lib/use-mimir-chat.ts）。这里只负责：
- *  - 三栏里的布局与滚动
+ *  - 主区里的布局与滚动
  *  - 检索过程与引用卡片的位置（它们是「本轮的结果」，不是消息里的片段）
  *  - 输入区
  */
@@ -34,12 +36,18 @@ export interface ChatPanelProps {
   /** 历史消息是否还在加载 */
   messagesLoading?: boolean | undefined
   /** 引用卡片被点击 → 跳回原文 */
-  onOpenCitation: (documentId: string) => void
+  onOpenCitation: (documentId: string, citation: Citation) => void
   /** 新会话建出来后换 URL */
   onConversationCreated: (conversationId: string) => void
 }
 
 const useStyles = createStyles(({ css, token }) => ({
+  /* 存成笔记 / 打开笔记的行：跟在引用卡之后，弱化成一条次级动作 */
+  saveRow: css`
+    display: flex;
+    justify-content: flex-end;
+    margin-top: -6px;
+  `,
   wrap: css`
     height: 100%;
     display: flex;
@@ -250,6 +258,7 @@ function ChatPanelBody({
   onConversationCreated,
 }: ChatPanelProps) {
   const { styles } = useStyles()
+  const { openDocument } = useAppShell()
   const scrollRef = useRef<HTMLDivElement>(null)
 
   /**
@@ -307,6 +316,13 @@ function ChatPanelBody({
   const activeCitations =
     chat.citations.length > 0 ? chat.citations : (storedAssistant?.citations ?? [])
 
+  /** 最后一条助手回答的纯文本（复制动作用）。流式中间态由 UI parts 累积 */
+  const lastAnswerText =
+    chat.messages
+      .findLast((item) => item.role === 'assistant')
+      ?.parts.map((part) => (part.type === 'text' ? part.content : ''))
+      .join('') ?? ''
+
   return (
     <div className={styles.wrap}>
       <div className={styles.scroll} ref={scrollRef}>
@@ -341,7 +357,14 @@ function ChatPanelBody({
                 />
               ) : (
                 lastRole !== 'user' && (
-                  <CitationCards citations={activeCitations} onOpen={(id) => onOpenCitation(id)} />
+                  <>
+                    <CitationCards citations={activeCitations} onOpen={onOpenCitation} />
+                    <AnswerActionsRow
+                      activeId={chat.activeId}
+                      answerText={lastAnswerText}
+                      onOpenNote={(noteId) => openDocument(noteId, 'all')}
+                    />
+                  </>
                 )
               )}
             </>
@@ -439,4 +462,97 @@ function lastQuestionOf(messages: UIMessage[]): string | undefined {
     .filter((part) => part.type === 'text')
     .map((part) => (typeof part.content === 'string' ? part.content : ''))
     .join('')
+}
+
+/**
+ * 「存成笔记」——闭环的最后一环（`docs/PRD.md` §5.7）：对话产出结论，
+ * 界面上必须有地方把它沉淀下来。服务端把回答与引用写成站内链接，
+ * 存出来的笔记自动进双链系统（services/conversations.ts）。
+ *
+ * 作用对象是**最后一条助手回答**（读完整篇想存下的就是它）。
+ * 落库消息的 id 与界面消息的 id 不同（useChat 会重新生成 id），
+ * 所以点击时按会话现取落库记录、按「最后一条助手消息」对齐——
+ * 与 storedAssistant 的取用是同一个模式。服务端按 messageId 幂等：
+ * 重复点击返回同一篇笔记，按钮转成「打开笔记」。
+ */
+function AnswerActionsRow({
+  activeId,
+  answerText,
+  onOpenNote,
+}: {
+  activeId: string | undefined
+  answerText: string
+  onOpenNote: (noteId: string) => void
+}) {
+  const { styles } = useStyles()
+  const { message: antdMessage } = AntApp.useApp()
+  const queryClient = useQueryClient()
+  const [savedNoteId, setSavedNoteId] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  if (!activeId) return null
+
+  const save = async () => {
+    setSaving(true)
+    try {
+      // 现取落库消息：流式完成后 onFinish 已让缓存失效，这里拿到的是
+      // 含最新回答 id 的一份
+      const conversation = await queryClient.fetchQuery({
+        queryKey: ['conversation', activeId],
+        queryFn: () => api.conversations.get(activeId),
+      })
+      const lastAssistant = conversation.messages
+        .toReversed()
+        .find((item) => item.role === 'assistant')
+      if (!lastAssistant) {
+        antdMessage.warning('没有可保存的回答')
+        return
+      }
+      const result = await api.conversations.saveAsNote({ messageId: lastAssistant.id })
+      setSavedNoteId(result.noteId)
+      void queryClient.invalidateQueries({ queryKey: ['conversation', activeId] })
+      antdMessage.success('已存为笔记')
+    } catch (error) {
+      antdMessage.error(error instanceof Error ? error.message : '存为笔记失败')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(answerText)
+      antdMessage.success('已复制')
+    } catch {
+      antdMessage.error('复制失败')
+    }
+  }
+
+  return (
+    <div className={styles.saveRow}>
+      {savedNoteId ? (
+        <Button
+          type="text"
+          size="small"
+          icon={<ExportOutlined />}
+          onClick={() => onOpenNote(savedNoteId)}
+        >
+          打开笔记
+        </Button>
+      ) : (
+        <Button
+          type="text"
+          size="small"
+          icon={<SaveOutlined />}
+          loading={saving}
+          onClick={() => void save()}
+        >
+          存成笔记
+        </Button>
+      )}
+      <Button type="text" size="small" onClick={() => void copy()}>
+        复制
+      </Button>
+    </div>
+  )
 }

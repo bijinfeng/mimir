@@ -1,7 +1,7 @@
 import { and, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
-import { CLIP_KINDS } from '@mimir/shared'
 import type {
+  DocumentCounts,
   DocumentDetail,
   DocumentListQuery,
   DocumentSummary,
@@ -401,37 +401,17 @@ export async function listAllTags(): Promise<{ name: string; count: number }[]> 
  * 导航里的计数必须**准确且便宜**——为它拉 500 条文档摘要只为了 count，
  * 在知识库长大之后会成为每次页面切换的开销。
  */
-export interface DocumentCounts {
-  inbox: number
-  all: number
-  note: number
-  clip: number
-}
-
 export async function countDocuments(): Promise<DocumentCounts> {
   const rows = await db
     .select({ kind: documents.kind, status: documents.status })
     .from(documents)
     .where(isNull(documents.deletedAt))
 
-  const clipKinds = new Set<string>(CLIP_KINDS)
-
+  // 来源计数（note / clip）随浏览维度退役（D-047），换成归档计数——
+  // 导航上的每个数字都必须与点进去看到的条数一致（`documentCountsSchema` 的承诺）
   return {
     inbox: rows.filter((row) => row.status === 'inbox').length,
     all: rows.length,
-    note: rows.filter((row) => row.kind === 'note').length,
-    /**
-     * 「收集的资料」= `CLIP_KINDS`。**判定必须与前端那个视图的筛选条件同源**。
-     *
-     * 这一处原先有个静默不一致：计数按 `kind !== 'note'` 算，而列表的
-     * `clip` 视图**不带任何过滤条件**（`list-helpers.ts` 的 scopeParams
-     * 返回空对象）——于是「收集的资料」显示 5 条、点进去看到全部 24 条。
-     * 当时库里全是笔记，两个数字恰好都是 0/全部，看不出来。
-     *
-     * 修法不是「把两边都写成 `!== 'note'`」，而是**抽出一份共同的清单**
-     * （`CLIP_KINDS`，在 `@mimir/shared`），两处都引用它。这样加一种来源时
-     * 只有一处要改，且不存在「另一个地方忘了」的可能。
-     */
-    clip: rows.filter((row) => clipKinds.has(row.kind)).length,
+    archived: rows.filter((row) => row.status === 'archived').length,
   }
 }

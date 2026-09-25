@@ -4,7 +4,7 @@ import {
   DownloadOutlined,
   MessageOutlined,
 } from '@ant-design/icons'
-import type { DocumentDetail } from '@mimir/shared'
+import type { Citation, DocumentDetail } from '@mimir/shared'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { App, Button, Empty, Skeleton, Tag, Tooltip, Typography } from 'antd'
 import { useEffect, useRef, useState } from 'react'
@@ -19,6 +19,7 @@ import { TriageBar } from '@/components/document/TriageBar'
 import { extractHeadings } from '@/components/document/headings'
 import { formatMeta } from '@/components/list-helpers'
 import { api } from '@/lib/api'
+import { useAppShell } from '@/lib/app-shell-context'
 
 /**
  * 右栏：文档视图。
@@ -41,6 +42,8 @@ export interface DocumentPanelProps {
   documentId: string | undefined
   /** 阅读态返回库（浏览态）。两栏布局（D-047）里它是离开详情的主路径 */
   onBack?: (() => void) | undefined
+  /** 从对话引用跳来时携带的原文区间：滚动到它并高亮（消费一次后清掉） */
+  citation?: Citation | null | undefined
   /** 从对话点引用跳过来时，显示「返回对话」 */
   onBackToChat?: (() => void) | undefined
   /** 工具条「问 AI」：带着这篇的上下文进主视图对话 */
@@ -59,6 +62,7 @@ export interface DocumentPanelProps {
 export function DocumentPanel({
   documentId,
   onBack,
+  citation,
   onBackToChat,
   onAskAi,
   onAskAboutSelection,
@@ -66,6 +70,7 @@ export function DocumentPanel({
 }: DocumentPanelProps) {
   const { styles } = useStyles()
   const { styles: contentStyles } = useContentStyles()
+  const { clearHighlight } = useAppShell()
   const queryClient = useQueryClient()
   const { message } = App.useApp()
 
@@ -160,6 +165,80 @@ export function DocumentPanel({
       behavior: 'smooth',
     })
   }
+
+  /**
+   * 引用跳转的下半句：滚动到原文区间并高亮（D-047 待办收尾）。
+   *
+   * 定位用**归一化文本匹配**而不是 citation.start/end 的字符偏移——
+   * 偏移指向原始 Markdown 正文，而渲染后的 DOM 里没有 `**` 这类记号，
+   * 直接按偏移找必然错位。匹配先试全文，再试前缀（长引用被截断时仍能命中）；
+   * 都找不到就只跳转不高亮——不做「看起来高亮了其实是别处」的假动作。
+   *
+   * 高亮用 CSS Custom Highlight API：Range 注册到 `CSS.highlights`，
+   * 不改 DOM（只读正文与 Tiptap 编辑器的文本节点都适用），样式在
+   * `styles/global.ts` 的 `::highlight(mimir-citation)`。
+   * 消费一次即清除 context（高亮不跟着用户去下一篇文档）。
+   */
+  useEffect(() => {
+    const root = scrollRef.current
+    if (!root || !doc || !citation) return
+    const snippet = citation.snippet
+
+    /**
+     * **要重试**：effect 首次跑时正文可能还没挂载完（笔记的 Tiptap 与
+     * 只读渲染都是异步的），此时注册的 Range 会在内容重渲染后塌缩成空
+     * ——实测症状是 `highlights.size` 为 1 但 `collapsed: true`，看过去
+     * 就是「没有高亮」。这里每 150ms 重试一次，直到 Range 在下一帧
+     * 仍然有效（或超时放弃，只跳转不高亮）。
+     */
+    let cancelled = false
+    let attempts = 0
+
+    /**
+     * **要重试**：effect 首次跑时正文可能还没挂载完（Tiptap 是异步渲染的），
+     * 那时注册的 Range 会在内容重渲染后塌缩成空——`highlights.size` 是 1
+     * 但 `collapsed: true`，看过去就是「没有高亮」。
+     *
+     * **清除必须等结束之后**：`clearHighlight` 会改 context，触发本 effect
+     * 以 citation=null 重跑，cleanup 把 cancelled 置真——放在开头调用等于
+     * 第一次 tick 就被掐断（实测踩过：重试循环从未跑第二轮）。
+     */
+    const finish = () => {
+      clearHighlight()
+    }
+
+    const tick = () => {
+      if (cancelled) return
+      attempts += 1
+
+      const registered = window.CSS?.highlights?.get('mimir-citation')
+      const alive = registered
+        ? [...registered].find(
+            (range): range is Range => !range.collapsed && range.startContainer.isConnected,
+          )
+        : undefined
+
+      if (alive) {
+        // 上一次注册的还活着 → 内容已稳定：滚过去，收工
+        const rect = alive.getBoundingClientRect()
+        root.scrollTo({
+          top: rect.top - root.getBoundingClientRect().top + root.scrollTop - 140,
+          behavior: 'smooth',
+        })
+        finish()
+        return
+      }
+
+      highlightSnippet(root, snippet)
+      if (attempts < 20) window.setTimeout(tick, 150)
+      else finish()
+    }
+    tick()
+
+    return () => {
+      cancelled = true
+    }
+  }, [doc, citation, clearHighlight])
 
   if (!documentId) {
     return (
@@ -450,4 +529,93 @@ function DocumentMeta({ doc }: { doc: DocumentDetail }) {
       </span>
     </div>
   )
+}
+
+/** 归一化：小写、去空白、去 Markdown 记号——原始正文与渲染 DOM 的公共子串 */
+const MARKDOWN_NOISE = new Set('#>*`~[]()!')
+
+function normalizeForMatch(text: string): { norm: string; map: number[] } {
+  const norm: string[] = []
+  const map: number[] = []
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i]!
+    if (/\s/.test(ch) || MARKDOWN_NOISE.has(ch)) continue
+    norm.push(ch.toLowerCase())
+    map.push(i)
+  }
+  return { norm: norm.join(''), map }
+}
+
+/**
+ * 在滚动容器里找 snippet 对应的文本区间。
+ *
+ * 把所有文本节点各自归一化后拼接成全文（记录每个节点在全文里的位置），
+ * 对全文做 indexOf，再把命中位置映射回「哪个节点的第几个字符」。
+ * 返回的 Range 直接可用于 Highlight 与 scroll 定位。
+ */
+function highlightSnippet(root: HTMLElement, snippet: string): Range | null {
+  // 检索摘要可能以「…」结尾（片段被截断的标记），它不在原文里，必须剥掉
+  const raw = snippet
+    .trim()
+    .replace(/(\.{3}|…)$/, '')
+    .trim()
+  if (raw.length < 4) return null
+
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+  const chunks: { node: Text; norm: string; map: number[] }[] = []
+  let full = ''
+  for (let node = walker.nextNode() as Text | null; node; node = walker.nextNode() as Text | null) {
+    const { norm, map } = normalizeForMatch(node.data)
+    if (norm.length === 0) continue
+    chunks.push({ node, norm, map })
+    full += norm
+  }
+
+  const needleFull = normalizeForMatch(raw).norm
+  // 全文命中优先；正文可能被编辑过或引用被截断，逐级退化为更短的前缀
+  const candidates = [needleFull, needleFull.slice(0, 40), needleFull.slice(0, 20)].filter(
+    (candidate) => candidate.length >= 4,
+  )
+  let at = -1
+  let needle = ''
+  for (const candidate of candidates) {
+    at = full.indexOf(candidate)
+    if (at !== -1) {
+      needle = candidate
+      break
+    }
+  }
+  if (at === -1) return null
+
+  if (typeof Highlight === 'undefined') return null
+
+  /**
+   * 全文区间 [at, at + needle.length) 与各块的区间求交集——
+   * 纯算术，不依赖「逐块消耗」的游标循环（那个写法在跨块时容易错一位，
+   * 实测把散列算成 0 长度）。snippet 本身可能跨块（标题 + 段落），
+   * 交集法天然支持。
+   */
+  const range = document.createRange()
+  let chunkStart = 0
+  let started = false
+  for (const chunk of chunks) {
+    const chunkEnd = chunkStart + chunk.norm.length
+    const overlapStart = Math.max(at, chunkStart)
+    const overlapEnd = Math.min(at + needle.length, chunkEnd)
+    if (overlapStart < overlapEnd) {
+      const first = chunk.map[overlapStart - chunkStart]!
+      const last = chunk.map[overlapEnd - chunkStart - 1]!
+      if (!started) {
+        range.setStart(chunk.node, first)
+        started = true
+      }
+      range.setEnd(chunk.node, Math.min(last + 1, chunk.node.data.length))
+    }
+    chunkStart = chunkEnd
+  }
+  if (!started) return null
+
+  if (range.collapsed) return null
+  window.CSS?.highlights?.set('mimir-citation', new Highlight(range))
+  return range
 }

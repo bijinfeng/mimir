@@ -1,4 +1,5 @@
 import { createContext, useContext } from 'react'
+import type { Citation } from '@mimir/shared'
 
 /**
  * 三栏之间共享的状态。
@@ -28,6 +29,16 @@ export interface AppShellContextValue {
   askDraft: AskDraft | null
   setAskDraft: (draft: AskDraft | null) => void
 
+  /**
+   * 被点击的引用。
+   *
+   * 文档打开后据此滚动到原文区间并高亮——「点击跳回原文位置」的下半句，
+   * 只跳到文档而不指出位置，在长文里等于没跳（`docs/PRD.md` §5.1）。
+   * 消费一次后由消费方清掉，否则它会跟着用户去下一篇文档。
+   */
+  citation: Citation | null
+  clearHighlight: () => void
+
   /** 打开某篇文档。scope 决定返回库时回到哪个视图 */
   openDocument: (id: string, scope?: string) => void
 
@@ -36,10 +47,8 @@ export interface AppShellContextValue {
    *
    * 与 openDocument 的区别是它记住「从哪来」，这样文档顶部能显示
    * 「返回对话」（§5.5）——没有它用户会以为对话没了。
-   * （原设计还带 citation 做原文区间高亮，那个功能尚未实现、
-   * 死状态已随 D-047 移除；实现时把它加回签名。）
    */
-  openCitation: (documentId: string) => void
+  openCitation: (documentId: string, citation: Citation) => void
 
   /** 是否从对话跳过来，文档顶部据此决定要不要显示返回入口 */
   cameFromChat: boolean

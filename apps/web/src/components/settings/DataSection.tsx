@@ -1,6 +1,6 @@
 import { DownloadOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { App, Button, Skeleton, Tag } from 'antd'
+import { App, Button, Skeleton } from 'antd'
 import { api } from '@/lib/api'
 import { Block, BlockDesc, Panel, Row, Stats } from '@/components/settings/parts'
 import { useStyles } from '@/components/settings/settings.style'
@@ -17,7 +17,6 @@ export function DataSection() {
   const { message } = App.useApp()
 
   const statsQuery = useQuery({ queryKey: ['export-stats'], queryFn: api.export.stats })
-  const tagsQuery = useQuery({ queryKey: ['tags'], queryFn: api.tags.list })
 
   const reindex = useMutation({
     mutationFn: api.maintenance.reindex,
@@ -102,22 +101,6 @@ export function DataSection() {
               JSON（含元数据与对话）
             </Button>
           </div>
-        </Block>
-      </Panel>
-
-      <Panel title="标签">
-        <Block>
-          {tagsQuery.data?.items.length ? (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-              {tagsQuery.data.items.map((tag) => (
-                <Tag key={tag.name} variant="filled">
-                  #{tag.name} · {tag.count}
-                </Tag>
-              ))}
-            </div>
-          ) : (
-            <BlockDesc>还没有标签。整理收件箱时会自动建议。</BlockDesc>
-          )}
         </Block>
       </Panel>
     </>

@@ -1,5 +1,6 @@
 import {
   AppstoreOutlined,
+  HddOutlined,
   InboxOutlined,
   MessageOutlined,
   PlusOutlined,
@@ -88,6 +89,7 @@ export function buildScopes(counts: DocumentCounts | undefined): MenuItem[] {
   const rows = [
     { key: 'inbox', icon: <InboxOutlined />, label: '收件箱', count: counts?.inbox },
     { key: 'all', icon: <AppstoreOutlined />, label: '全部文档', count: counts?.all },
+    { key: 'archived', icon: <HddOutlined />, label: '已归档', count: counts?.archived },
   ]
 
   return rows.map((row) => ({

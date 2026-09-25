@@ -1,6 +1,4 @@
 import {
-  BgColorsOutlined,
-  CheckOutlined,
   FolderOpenOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
@@ -12,7 +10,6 @@ import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { Avatar, Button, Dropdown, Menu, Tree, Tooltip } from 'antd'
 import type { MenuProps } from 'antd'
-import { THEME_MODE_LABELS, THEME_MODES, useThemeMode, type ThemeMode } from '@/theme/appearance'
 import { BrandMark } from '@/components/BrandMark'
 import { useStyles } from '@/components/NavSidebar.style'
 import {
@@ -334,7 +331,6 @@ function AccountRow({
   const { styles } = useStyles()
   const sessionQuery = useQuery({ queryKey: ['session'], queryFn: api.auth.session })
   const user = sessionQuery.data?.user
-  const { mode, setMode } = useThemeMode()
 
   /**
    * 会话还没取回时**不渲染**，而不是渲染一个占位的空行。
@@ -346,30 +342,11 @@ function AccountRow({
 
   const items: MenuProps['items'] = [
     { key: 'account', icon: <UserOutlined />, label: '账号资料' },
-    {
-      key: 'appearance',
-      icon: <BgColorsOutlined />,
-      label: '外观',
-      children: THEME_MODES.map((value) => ({
-        key: `theme:${value}`,
-        /*
-         * 打勾放在**文字后面**，不是 `icon`。
-         *
-         * antd 的 `icon` 是固定的**前置**位置（图标 + 文字），而这个勾是
-         * 「选中标记」而不是「这一项是什么」——它贴在右端才读作单选组的
-         * 选中态。所以放进 `label` 自己排：文字靠左、勾靠右。
-         *
-         * `minWidth` 让三个选项的宽度一致，否则勾会随着文字长短左右浮动，
-         * 上下三行看起来不在一条竖线上。
-         */
-        label: (
-          <span className={styles.themeOption}>
-            {THEME_MODE_LABELS[value]}
-            {mode === value ? <CheckOutlined className={styles.themeCheck} /> : null}
-          </span>
-        ),
-      })),
-    },
+    /*
+     * 外观（主题）不在这里：它是设置页「外观」分区的职责（带完整的
+     * 说明与取舍记录）。同一个设置出现两个家，必然有一天只改一处。
+     * 见 D-047 待办收尾。
+     */
     { type: 'divider' },
     { key: 'signout', icon: <LogoutOutlined />, label: '登出', danger: true },
   ]
@@ -384,9 +361,6 @@ function AccountRow({
           onClick: ({ key }) => {
             if (key === 'account') return onOpenAccount()
             if (key === 'signout') return void api.auth.signOutAndLeave()
-            if (key.startsWith('theme:')) {
-              setMode(key.slice('theme:'.length) as ThemeMode)
-            }
           },
         }}
       >

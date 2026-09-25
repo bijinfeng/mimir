@@ -26,6 +26,13 @@ export const GlobalStyles = createGlobalStyle`
      表现是登录卡片不垂直居中、Layout 的 height:100% 只撑到内容高度。
      补上这一层，链条才完整：html → body → #root → .ant-app → 页面。
      prefixCls 从主题取，antd 换个前缀这条规则跟着换。 */
+  /* 引用跳转的原文高亮（CSS Custom Highlight API，D-047 待办收尾）。
+     Range 注册在 CSS.highlights 上，不改 DOM——只读正文与编辑器的
+     文本节点都适用。用主色的浅阶（colorPrimaryBg），与选中态同源 */
+  ::highlight(mimir-citation) {
+    background-color: ${(p) => p.theme.colorPrimaryBg};
+  }
+
   #root > .${(p) => p.theme.prefixCls}-app {
     height: 100%;
   }

@@ -400,18 +400,6 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
    * 注：这几条样式作用在 `Dropdown` 的 portal 里，而 antd-style 注入的
    * 类名是全局的，所以照常生效。
    */
-  themeOption: css`
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    min-width: 72px;
-  `,
-  themeCheck: css`
-    flex: none;
-    font-size: ${FONT_SIZE.badge}px;
-    color: ${token.colorLink};
-  `,
   accountName: css`
     min-width: 0;
     overflow: hidden;

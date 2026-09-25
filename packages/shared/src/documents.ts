@@ -183,8 +183,8 @@ export type FileUploadResponse = z.infer<typeof fileUploadResponseSchema>
 export const documentCountsSchema = z.object({
   inbox: z.number().int(),
   all: z.number().int(),
-  note: z.number().int(),
-  clip: z.number().int(),
+  /** 已归档：归档不是黑洞，导航里有它的入口（D-047 待办收尾） */
+  archived: z.number().int(),
 })
 export type DocumentCounts = z.infer<typeof documentCountsSchema>
 

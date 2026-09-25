@@ -58,7 +58,7 @@ describe('导航 key 的编码与解码', () => {
       }
     }
     collect(buildActions() as never)
-    collect(buildScopes({ inbox: 1, all: 2, note: 3, clip: 0 } as never) as never)
+    collect(buildScopes({ inbox: 1, all: 2, archived: 0 } as never) as never)
     collect(buildConversations([], 10) as never)
     // 空会话列表时 buildConversations 返回一个带空 children 的分组，
     // 这里补上真实情形的那一条
@@ -88,7 +88,7 @@ describe('导航 key 的编码与解码', () => {
 describe('菜单项构造', () => {
   it('计数为 0 时不显示计数', () => {
     // 「0」比空白更占注意力，而它不携带信息
-    const items = buildScopes({ inbox: 0, all: 5, note: 0, clip: 0 }) as {
+    const items = buildScopes({ inbox: 0, all: 5, archived: 2 }) as {
       key: string
       extra?: unknown
     }[]

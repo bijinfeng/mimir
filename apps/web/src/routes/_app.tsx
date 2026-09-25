@@ -5,6 +5,7 @@ import {
   useNavigate,
   useSearch,
 } from '@tanstack/react-router'
+import type { Citation } from '@mimir/shared'
 import { App as AntApp } from 'antd'
 import { createStyles } from 'antd-style'
 import { useEffect, useState } from 'react'
@@ -95,6 +96,12 @@ const useStyles = createStyles(({ css, token }) => ({
     @media (max-width: 1100px) {
       grid-template-columns: 180px minmax(0, 1fr);
     }
+
+    /* ≤880px：导航强制折叠成图标条，而不是隐藏——隐藏等于断了所有导航。
+       这里写死 48px（与折叠态同宽），展开偏好在此宽度下被压过 */
+    @media (max-width: 880px) {
+      grid-template-columns: 48px minmax(0, 1fr);
+    }
   `,
   /**
    * 侧边栏折叠：左列收成 48px 的图标条。
@@ -147,6 +154,8 @@ function AppShell() {
   const [cameFromChat, setCameFromChat] = useState(false)
   /** 返回对话时要跳回的会话 id */
   const [lastConversationId, setLastConversationId] = useState<string>()
+  /** 被点击的引用：文档打开后据此滚动到原文区间并高亮 */
+  const [citation, setCitation] = useState<Citation | null>(null)
 
   const isChat = location.pathname.startsWith('/chat')
   const isSettings = location.pathname.startsWith('/settings')
@@ -180,9 +189,10 @@ function AppShell() {
     void navigate({ to: '/docs', search: { scope, id } })
   }
 
-  const openCitation = (documentId: string) => {
+  const openCitation = (documentId: string, cited: Citation) => {
     setLastConversationId(search.id)
     setCameFromChat(true)
+    setCitation(cited)
     void navigate({ to: '/docs', search: { scope: 'all', id: documentId } })
   }
 
@@ -209,6 +219,8 @@ function AppShell() {
       value={{
         askDraft,
         setAskDraft,
+        citation,
+        clearHighlight: () => setCitation(null),
         openDocument,
         openCitation,
         cameFromChat,

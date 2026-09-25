@@ -16,6 +16,7 @@ import {
 export const SCOPE_LABEL: Record<string, string> = {
   inbox: '收件箱',
   all: '全部文档',
+  archived: '已归档',
 }
 
 /**
@@ -29,6 +30,7 @@ export function scopeParams(scope: string): Pick<DocumentListQuery, 'folder' | '
   if (scope.startsWith('folder:')) return { folder: scope.slice('folder:'.length) }
   if (scope.startsWith('tag:')) return { tag: scope.slice('tag:'.length) }
   if (scope === 'inbox') return { status: 'inbox' }
+  if (scope === 'archived') return { status: 'archived' }
   return {}
 }
 
