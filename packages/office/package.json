@@ -1,0 +1,38 @@
+{
+  "name": "@mimir/office",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Office 文档的浏览器内预览与编辑。引擎与编辑器 vendored 自 GenOffice（Apache-2.0），见 vendor/UPSTREAM.json",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./vendor/extensions": "./vendor/apps/docs/src/renderer/editor/extensions.ts",
+    "./vendor/styles.css": "./vendor/apps/docs/src/renderer/styles.css",
+    "./vendor/fonts.css": "./vendor/apps/docs/src/renderer/fonts/fonts.css",
+    "./editor.css": "./src/generated/editor.css"
+  },
+  "scripts": {
+    "sync": "node scripts/sync-upstream.mjs",
+    "verify": "node scripts/verify-vendor.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@tiptap/core": "catalog:",
+    "@tiptap/extensions": "catalog:",
+    "@tiptap/pm": "catalog:",
+    "fast-xml-parser": "^5.3.4",
+    "jszip": "^3.10.1",
+    "utif2": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@types/react": "^19.2.14",
+    "react": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "react": "catalog:"
+  }
+}

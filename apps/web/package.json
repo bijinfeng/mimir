@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
+    "@mimir/office": "workspace:*",
     "@mimir/shared": "workspace:*",
     "@tanstack/ai": "0.55.0",
     "@tanstack/ai-react": "0.26.0",
@@ -26,6 +27,7 @@
     "@tiptap/extension-table": "catalog:",
     "@tiptap/extension-task-item": "catalog:",
     "@tiptap/extension-task-list": "catalog:",
+    "@tiptap/extensions": "catalog:",
     "@tiptap/markdown": "catalog:",
     "@tiptap/pm": "catalog:",
     "@tiptap/react": "catalog:",

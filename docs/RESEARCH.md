@@ -1257,3 +1257,63 @@ unknown）——api 客户端因此采用「单例 + 模块级传输配置」而
 - `pnpm desktop:build` 产出 dmg（460MB，x64，ad-hoc 签名）；安装到
   `~/Applications` 后启动：宿主起、登录、搜索「组件」命中——与
   desktop:start 行为一致
+
+---
+
+## 13. Office 预览与编辑：方案调研（2026-09）
+
+> 决策见 `DECISIONS.md` D-049；落地设计见 `TECH.md` §15。
+> 结论先行：**没有第二个同时满足「真编辑 + 无独立服务 + 许可宽松」的方案**。
+
+### 13.1 自托管项目实际怎么做（20 个项目的普查）
+
+| 做法 | 项目 | 代价 |
+|---|---|---|
+| **连接器 + 外部文档服务器** | Nextcloud、ownCloud、Seafile、HumHub、Mattermost、Alfresco、Nuxeo、GroupOffice | 独立服务，ONLYOFFICE/Euro-Office 要 **4 GB RAM + 10–40 GB 磁盘** |
+| 内置 AppImage 版 Collabora（仅 Nextcloud） | `richdocumentscode` | 免独立容器，但 2 核 + **1 GB + 100 MB/用户** + 300 MB 磁盘 |
+| **LibreOffice 装进自己容器、只转 PDF** | Stirling-PDF、Mayan EDMS、Docspell、Paperless-ngx（Gotenberg） | 只解决「看」，不解决「改」；吃内存，要管 UNO 进程池 |
+| 什么都不做 | Outline（docx 只用 mammoth **导入**）、BookStack、Wiki.js、Docmost、GitLab、Gitea/Forgejo | 附件只有上传下载 |
+| **客户端编辑器 + WASM 转换，无服务** | CryptPad（唯一） | ~580 MB 静态资源、`x2t.wasm` 堆下限 283 MB、AGPL §7 要求界面署名 |
+
+**读法**：主流那条路（挂文档服务器）买的主要是**多人协同**——Nextcloud 之
+所以要 4 GB RAM，是为实时协同 + 锁 + 版本。**单用户应用付这笔钱买到的核心
+能力是零**，这是本项目不走那条路的根本原因（不是「装不下」，是「买错了东西」）。
+
+### 13.2 纯前端库的能力边界
+
+| 库 | 能力 | 许可 | 谁在用 |
+|---|---|---|---|
+| `docx-preview` | 只读渲染（无实时分页、不支持 TOC 域） | Apache-2.0 | Open WebUI、LobeChat、Onyx、Teable |
+| `mammoth` | docx→HTML（语义化，**不保版式**） | BSD-2 | Outline、AFFiNE（都是**导入**用） |
+| `dolanmiu/docx` | 生成 + **按占位符打补丁**（`patchDocument`），不能任意编辑 | MIT | 3.99M 下载/周 |
+| `exceljs` | xlsx 读写（数据+样式，不是版式） | MIT | — |
+| **Univer** | 自绘编辑，但 **import/export 是付费项**（要 conversion backend） | Apache-2.0 核心 | TriliumNext |
+| **SuperDoc** | **OOXML 原生编辑、无需服务器** | AGPL-3.0 或 $499 | Harbour |
+| eigenpal/docx-editor | 核心 Apache-2.0，但**有用部分（修订/批注/API）是仅评估许可** | 混合 | — |
+| **GenOffice `docx-engine`** | 补丁式保真编辑（未改动的 zip 条目逐字节保留） | **Apache-2.0** | 自有桌面应用 |
+
+两条重要观察：
+
+1. **SuperDoc 的演进本身就是证据**：它的 V2 从 ProseMirror 换成 OOXML 原生
+   模型，官方理由是「编辑直接写回 XML，不经 HTML 转换」。ProseMirror/HTML
+   这一路撑不住 docx 往返。
+2. **Univer 划出了市场的真实边界**：连拿了融资的它都把「浏览器里画出来」
+   （画布，开源）和「文件读写得回来」（import/export，付费+后端）分成两笔生意。
+
+### 13.3 WASM LibreOffice
+
+- **ZetaOffice / ZetaJS**（allotropia，非 Collabora）：完整 LibreOffice 编译到
+  WASM + Qt 画布，UNO API 驱动。**实测下载量 52 MB**（wasm 36.3 + data 15.9 + js 0.86）。
+  包装层 MIT、LibreOffice 本体 MPL-2.0，但**维护的构建与 CDN 是商业产品**
+  （官网 FAQ：付费包含 CDN 与支持，服务处于 open beta）。嵌入方为 CIB、EPC 等。
+- 上游 **LOWA**（`LibreOffice/core:static/README.wasm.md`）：Writer-only 构建，
+  自述「有未实现的位、可能漏内存，改进空间很大」——**是条自己构建的路，不是产品**。
+- **没有官方 WASM ONLYOFFICE**（`org:ONLYOFFICE` 下零个 wasm 仓库）。但社区
+  把它的转换器 `x2t` 编成了 WASM（`cryptpad/onlyoffice-x2t-wasm`，release 15.79 MB），
+  被 `ranuts/document`、`baotlake/office-website` 等复用。
+
+### 13.4 结论
+
+对**单用户自托管**而言：编辑只有两条现实路径——挂一个 4 GB 级的文档服务器
+（买不到对应价值），或者用 Apache-2.0 的补丁式引擎自己接（本项目选的）。
+预览则可以轻量得多（`docx-preview` 74 KB，或 LibreOffice 转 PDF 保真但重）。

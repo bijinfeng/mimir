@@ -120,14 +120,22 @@ export function isInlineSafe(mime: string): boolean {
  * **格式族在这里分派，不在组件里判断。** 列表与详情面板都要回答
  * 「这东西能不能看图」，写两处必然有一天不一致（一处说能、一处说不）。
  */
-export type ViewerKind = 'pdf' | 'image' | 'audio' | 'video' | 'none'
+export type ViewerKind = 'pdf' | 'image' | 'audio' | 'video' | 'office' | 'none'
 
+/**
+ * office 是**编辑器**不是只读查看器（`packages/office`）：docx 可在网页里
+ * 直接改并保存回原件。xlsx / pptx 目前只做了「能打开」的验证，编辑要等
+ * 各自那条路走通（见 `docs/TECH.md` §15）。
+ */
 export function viewerFor(mime: string | null | undefined): ViewerKind {
   const lower = (mime ?? '').toLowerCase()
   if (lower === 'application/pdf') return 'pdf'
   if (lower.startsWith('image/')) return 'image'
   if (lower.startsWith('audio/')) return 'audio'
   if (lower.startsWith('video/')) return 'video'
+  if (lower === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+    return 'office'
+  }
   return 'none'
 }
 

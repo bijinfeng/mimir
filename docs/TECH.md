@@ -1966,3 +1966,84 @@ SSE 聊天流、文件 Range、multipart 上传、zip 导出全部是同源 HTTP
 - Electron 侧 `contextIsolation: true` + `sandbox: true`，preload 只暴露
   只读的 boot 信息与退出（最小边界）
 - 单实例锁：两个窗口同时写一个 SQLite 会撞锁
+
+---
+
+## 15. Office 文档的浏览器内编辑（`packages/office`）
+
+> 决策与选型依据见 `docs/DECISIONS.md` D-049、调研见 `docs/RESEARCH.md` §13。
+> 包内约定见 `packages/office/AGENTS.md`。
+
+### 15.1 它解决什么
+
+§13 定下的边界是「PDF 能看原件但正文搜不到；Office 三件套能搜但看不见」。
+这一节补上后半：**docx 可以在网页里直接读、直接改、直接存回原件**，
+且改完之后服务端重算正文与哈希（§13.9），所以编辑的结果立刻可检索。
+
+### 15.2 为什么是「vendored GenOffice」而不是依赖或自建
+
+`RESEARCH.md` §13 把候选逐个排除了：
+
+| 方案 | 否决点 |
+|---|---|
+| ONLYOFFICE Document Server | 1.9 GB 镜像 + **4 GB RAM** 的独立服务；它的核心价值（多人同时编辑）对单用户是零 |
+| Collabora CODE | 开发版官方明说**不适合生产**，生产版收费 |
+| CryptPad 路线（客户端 ONLYOFFICE + x2t WASM） | ~580 MB 静态资源、`x2t.wasm` 堆内存下限 283 MB、AGPL §7 附加条款要求界面署名 |
+| 纯前端库（docx-preview / mammoth / SheetJS） | **只能预览，不能编辑**——市场把「画得出来」和「文件读写得回来」分成了两笔生意（Univer 的 import/export 是付费项） |
+| 自建 OOXML 编辑器 | 那正是 PRD §1 原非目标所说的「自建一个兼容 Word 的编辑器」 |
+
+GenOffice 是唯一同时满足**真编辑 + 无独立服务 + 许可宽松（Apache-2.0）**的。
+它的做法是**补丁式保存**：只把改动的块拼回 `document.xml`，其余 zip 条目
+逐字节原样复制。实测（`packages/office/src/docx.test.ts`）：
+
+| 场景 | 结果 |
+|---|---|
+| 原样保存 | zip **每个条目逐字节相同**，文件长度不变 |
+| 改一段文字 | **只有 `word/document.xml` 变化**（2724 → 2739 字节，正好是新增 5 个汉字的 UTF-8 长度） |
+
+这条性质是能安全编辑别人的 docx 的前提——Word 的 XML 里有大量本项目没建模
+的东西（域代码、修订标记、OLE 对象、自定义样式），整体重建会静默丢掉它们。
+
+### 15.3 集成形态：vendor 目录 + 薄适配层
+
+它是**应用**不是库（所有包 `private: true`、不发 npm、无嵌入 API），
+所以做法是「按闭包抽取 + 保持原目录形状 + 可重复同步」：
+
+```
+packages/office/
+├── vendor/            vendored 的上游代码（134 个文件 + 字体），**不改**
+├── src/
+│   ├── docx.ts        适配层：openDocx → 编辑 → save
+│   ├── shims/i18n.ts  上游 i18n 的等价替代
+│   └── generated/     样式裁剪产物（不进 git）
+└── scripts/
+    ├── sync-upstream.mjs   同步（闭包计算 + 改写 + 自检 + 裁剪）
+    └── trim-editor-css.mjs 从 264 KB 办公壳样式里裁出编辑器需要的 38 KB
+```
+
+**为什么不 fork 全仓**：上游仓库 972 MB、`apps/docs` 的渲染层有 238 个文件
+105K 行，其中大部分是 mimir 不需要的 ribbon / AI 面板 / Zotero / 多标签。
+闭包算下来是 **134 个文件**（编辑器 40 + docx 引擎 35 + 排版度量若干 + 13 MB 字体）。
+
+**为什么这样更好维护**：`entries` 是人工选的入口，`files` 由脚本从 import 图
+算出——上游新增依赖会自动进来，新功能要改 `entries`。同步幂等（连续跑两次
+第二次零差异），且带**闭包自检**（见包内 AGENTS 记的两次静默漏文件）。
+
+### 15.4 界面接入
+
+`viewerFor()`（`@mimir/shared`）多了一个 `office` 类型，命中 docx 时
+`FilePreview` 的「原件」层渲染 `OfficeEditor` 而不是下载卡片。
+保存走**已有的** `PUT /api/documents/:id/file`（§13.9 的替换原件端点）——
+不需要新端点，那正是它的用途。
+
+### 15.5 现在的边界
+
+| 缺什么 | 后果 |
+|---|---|
+| 分页视图 | 分页引擎在闭包里，但没接容器与滚动逻辑；现在是连续流，看不到「纸张」 |
+| 工具栏 | 上游 ribbon 未 vendored；加粗/斜体等靠快捷键，没有按钮 |
+| worker 解析 | `parseDocx` 同步重活，大文档会卡主线程（上游有现成 worker 可接） |
+| 保存冲突 | `PUT` 不校验 `If-Match`；单客户端可接受 |
+| xlsx / pptx | 只做了 docx。xlsx 是另一条路（Rust 侧车 + Univer），pptx 未评估 |
+
+**这三条缺项的排序就是产品化的排序**：分页（观感）→ 工具栏（可用）→ worker（大文档）。

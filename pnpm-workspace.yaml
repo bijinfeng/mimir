@@ -45,6 +45,7 @@ catalog:
   '@tiptap/extension-table': ^3.31.3
   '@tiptap/extension-task-item': ^3.31.3
   '@tiptap/extension-task-list': ^3.31.3
+  '@tiptap/extensions': ^3.31.3
 
 # 关于 node_modules 里出现的未声明包
 #

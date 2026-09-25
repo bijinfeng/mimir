@@ -220,6 +220,23 @@ export const api = {
       return sendMultipart<FileUploadResponse>('/api/documents/files', 'POST', body)
     },
     /**
+     * 替换某个上传件的原件（下载 → 改 → 传回）。标签与目录保持不变。
+     *
+     * Office 在线编辑保存走的就是它：编辑器产出新字节 → multipart 传回。
+     * 服务端会重算正文、哈希与 parse_error（`docs/TECH.md` §13.9），
+     * 所以改完的文档立刻能被检索到。
+     */
+    async replaceSource(id: string, file: File) {
+      const body = new FormData()
+      body.append('file', file)
+
+      return sendMultipart<FileUploadResponse>(
+        `/api/documents/${encodeURIComponent(id)}/file`,
+        'PUT',
+        body,
+      )
+    },
+    /**
      * 原件的 URL。
      *
      * 前端各处（`<img>` / `<iframe>` / `<video>` / 下载链接）都直接用它，

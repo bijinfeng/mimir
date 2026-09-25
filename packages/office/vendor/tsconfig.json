@@ -1,0 +1,20 @@
+{
+  // vendored 代码**单独一份宽松配置**。
+  //
+  // 上游按自己的严格度写（tsconfig.base.json 里没有 noUncheckedIndexedAccess），
+  // 而 mimir 的基座开了它——用 mimir 的配置去检查 vendor 会报几十处
+  // 「string | undefined 不能赋给 string」，而那些在运行期是安全的
+  // （上游自己的测试覆盖着）。
+  //
+  // **不要去改 vendor 里的代码来迁就我们的严格度**：同步会覆盖掉，
+  // 而且改动面会随着每次同步越滚越大。要收紧的话在 src/ 的适配层收紧。
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "noUncheckedIndexedAccess": false,
+    "types": ["node"],
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx"
+  },
+  "include": ["**/*.ts", "**/*.tsx"]
+}

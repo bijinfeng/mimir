@@ -2618,3 +2618,52 @@ master-detail 心智：库被压在 300px 的配角位上。两栏库视图让�
 `DocumentCounts` 接口（改为引用 shared 类型，删除重复声明）；web 的
 ChatPanel / DocumentPanel / NavSidebar / 设置页；全局样式新增
 `::highlight(mimir-citation)`。
+
+---
+
+## D-049 推翻「Office 在线编辑不做」：vendored GenOffice 做浏览器内编辑
+
+**背景**：PRD §1 有一条明确的非目标——
+
+> **非 Markdown 原件的在线编辑** | …**Office 的在线编辑不做**——那等于自建一个
+> 兼容 Word 的编辑器，而本项目的定位是知识库不是办公套件。
+
+那条判断的依据是「等于**自建**」。现在是**借一个**：`genspark-ai/genoffice`
+（Apache-2.0）已经把 OOXML 保真编辑做完了，我们 vendored 它的引擎与编辑器，
+代价从「自建」降到「集成 + 跟进同步」。**理由变了，判断就该改**——这条按
+铁律 #7 先改文档再改代码。
+
+**决定**：
+
+1. **非目标收窄**：从「Office 在线编辑不做」改为「**不自建**兼容 Word 的
+   编辑器」。借外部实现（vendored）是允许的路径。PDF 批注仍在 M2。
+2. **vendored 而非 fork 全仓**：按 import 闭包抽取（134 个文件 + 13 MB 字体），
+   放进 `packages/office/vendor/`，保持上游目录形状，用可重复的同步脚本
+   （`sync-upstream.mjs`，含闭包自检）跟进上游。
+3. **改写在同步时机械应用**：i18n 用 `src/shims/i18n.ts` 等价替代（60 个语言
+   文件 → 1 个），自家包名改相对路径（vendor 自封闭），vendored 文件加
+   `@ts-nocheck` 横幅（保留上游原样，把类型检查边界收在 `src/`）。
+   **vendor/ 里的文件一律不改**——手改的代价是每次同步都要重新解决同一处冲突。
+4. **保存只走补丁路径**：`saveDocx` 的逐块补丁模式。整体重建会静默丢掉我们
+   没建模的东西（域代码、修订标记、OLE 对象）。有测试守着「改动只允许
+   `word/document.xml` 变化」。
+5. **保存复用已有端点**：`PUT /api/documents/:id/file`（D-044 的替换原件），
+   不新增 API。服务端重算正文与哈希，所以编辑完立刻可检索。
+
+**否决**：
+
+| 方案 | 为什么不用 |
+|---|---|
+| ONLYOFFICE / Collabora / Euro-Office 容器 | 4 GB RAM 级独立服务，买的核心能力是**多人协同**——单用户价值为零。见 RESEARCH §13.1 |
+| CryptPad 路线（客户端 ONLYOFFICE + x2t WASM） | ~580 MB 静态资源、x2t 堆下限 283 MB（有 OOM 案例）、AGPL §7 要求界面署名 |
+| ZetaOffice / WASM LibreOffice | 52 MB 下载，维护的构建与 CDN 是商业产品（open beta）；上游 LOWA 自述有未实现与漏内存 |
+| 纯前端预览库（docx-preview / mammoth） | 只读，不能编辑。可作为**预览**的轻量选项，与编辑路线不冲突 |
+| 自建 OOXML 编辑器 | PRD §1 原本就在防这个；SuperDoc 从 ProseMirror 转向 OOXML 原生模型也说明这条路不好走 |
+
+**影响**：新增 `packages/office`（含 134 个 vendored 文件 + 13 MB 字体）；
+`@mimir/shared` 的 `viewerFor` 加 `office` 类型；`FilePreview` 的原件层接入编辑器；
+`api.documents.replaceSource` 恢复（D-048 删过，当时无 UI 调用）。
+`docs/PRD.md` §1 与 §5.12 的非目标行改为「不自建」。
+
+**已知边界**（产品化要补）：分页视图、工具栏、大文档 worker 解析、保存冲突检测
+（PUT 不校验 If-Match）、xlsx/pptx 未评估。清单见 `TECH.md` §15.5。

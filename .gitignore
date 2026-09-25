@@ -3,6 +3,12 @@ dist/
 build/
 *.log
 
+# TanStack Router 的生成产物缓存
+.tanstack/
+
+# Office 包的 CSS 裁剪产物（从 vendor 重现，见 packages/office/scripts/trim-editor-css.mjs）
+packages/office/src/generated/
+
 # 桌面端打包产物与 deploy 中转目录（D-046）
 apps/desktop/release/
 apps/desktop/server-deploy/
