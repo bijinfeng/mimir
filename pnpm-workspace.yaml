@@ -62,9 +62,16 @@ catalog:
 allowBuilds:
   esbuild: true
   '@prisma/client': false
-  # SQLite 驱动（本地开发 / 桌面端后端，D-045）。预编译二进制覆盖主流平台，
-  # 放行构建脚本是为了在没有预编译包的平台上能回落到 node-gyp。
-  better-sqlite3: true
+  # SQLite 驱动（本地开发 / 桌面端后端，D-045）。v13 起在包内自带 N-API
+  # 预编译（prebuilds/<platform>.node，跨 Node/Electron 通用），安装脚本
+  # （node-gyp）只是无预编译平台的兜底——本机没有 node-gyp，显式拒绝。
+  # 若换成无预编译的平台，再把它改回 true 并装好 node-gyp。
+  better-sqlite3: false
+  # Electron 的 postinstall 下载平台二进制（桌面端载体，D-046）
+  electron: true
+  # electron-builder 的传递依赖（做 Windows Squirrel 安装包用）。我们只打
+  # macOS dmg，用不到它的脚本，显式拒绝而不是留着让 install 报错
+  electron-winstaller: false
   # TypeScript 7 是 Go 重写版，各平台的原生二进制；不需要构建脚本
   '@typescript/typescript-linux-x64': false
 

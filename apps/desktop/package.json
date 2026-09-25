@@ -1,0 +1,23 @@
+{
+  "name": "@mimir/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "mimir 桌面端：Electron 载体 + 进程内私有宿主（D-046）",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "vite build",
+    "start": "electron .",
+    "package": "electron-builder",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@mimir/shared": "workspace:*",
+    "@types/node": "catalog:",
+    "electron": "^44.4.5",
+    "electron-builder": "^26.15.3",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  }
+}

@@ -37,15 +37,32 @@ export interface AuthSession {
 }
 
 /**
- * 类型安全的 API 客户端。
+ * 类型安全的 API 客户端——**前端唯一的服务端访问口**（`docs/TECH.md` §14）。
  *
- * 三点约定：
- *  1. 开发时经 Vite 代理打到后端（见 vite.config.ts），所以 baseUrl 是空的；
- *     生产时前端由同一个服务提供，同样不需要跨源。
+ * 四点约定：
+ *  1. 开发时经 Vite 代理打到后端（见 vite.config.ts），生产由同一个服务提供，
+ *     所以默认 baseUrl 是空的、全部同源。
  *  2. 一律 credentials: 'include'——鉴权走 cookie，不是 header。
  *  3. 服务端的错误外壳是 { error: { code, message } }，这里统一抛 ApiRequestError，
  *     调用方只需要 catch 一种形状。
+ *  4. 传输可注入（D-046）：「前端怎么连上服务端」是载体（浏览器 / 桌面壳 /
+ *     将来的 CLI 与扩展）的事——configureApiTransport() 注入，业务代码
+ *     只认这个 api 对象的形状。桌面端窗口加载的就是宿主自己的地址，
+ *     因此与浏览器部署走同一条默认配置。
  */
+
+/** 载体注入的传输配置。全部可选——默认值就是浏览器部署的现状 */
+export interface RpcConfig {
+  /**
+   * 请求前缀。空串 = 同源相对路径（浏览器与桌面壳都是这种形态）。
+   * 指向别的宿主时给绝对地址（如 `http://127.0.0.1:19387`）。
+   */
+  baseUrl?: string
+  /** 附加到每个 JSON 请求上的头。用于载体注入的认证（dsh 的 authenticated Host） */
+  headers?: Record<string, string>
+  /** 传输实现。默认 globalThis.fetch——测试与非浏览器载体可注入 */
+  fetchImpl?: typeof fetch
+}
 
 export class ApiRequestError extends Error {
   constructor(
@@ -59,12 +76,31 @@ export class ApiRequestError extends Error {
   }
 }
 
+/**
+ * 当前生效的传输配置。默认同源——与浏览器部署、桌面壳（窗口加载宿主地址）
+ * 的形态一致；需要指向别的宿主时在应用启动最前面 configureApiTransport()。
+ *
+ * 为什么是「单例 + 模块级配置」而不是 createApi() 工厂：实测 TypeScript 7
+ * （本项目的编译器）对「泛型函数作为参数传入、返回大对象字面量」的工厂模式
+ * 会**丢失方法返回类型的推理**（调用方全部退化成 unknown，且不报错地通过
+ * 编译器内部的宽松路径）——这是静默的类型塌陷，比重复代码危险得多。
+ * api 字面量保持直接形态（类型完整），传输配置显式注入，两者兼得（D-046）。
+ */
+let transport: RpcConfig = {}
+
+/** 指向别的宿主时调用（CLI / 扩展 / 跨源载体）。必须在第一次请求前完成 */
+export function configureApiTransport(config: RpcConfig): void {
+  transport = { ...transport, ...config }
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const res = await fetch(path, {
+  const doFetch = transport.fetchImpl ?? fetch
+  const res = await doFetch(`${transport.baseUrl ?? ''}${path}`, {
     ...init,
     credentials: 'include',
     headers: {
       ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+      ...transport.headers,
       ...init.headers,
     },
   })
@@ -94,7 +130,13 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
  * 所以调用方只需要 catch 一种形状——这是 `lib/api.ts` 的约定之一。
  */
 async function sendMultipart<T>(path: string, method: 'POST' | 'PUT', body: FormData): Promise<T> {
-  const res = await fetch(path, { method, credentials: 'include', body })
+  const doFetch = transport.fetchImpl ?? fetch
+  const res = await doFetch(`${transport.baseUrl ?? ''}${path}`, {
+    method,
+    credentials: 'include',
+    body,
+    headers: { ...transport.headers },
+  })
 
   const text = await res.text()
   const parsed: unknown = text ? JSON.parse(text) : null
@@ -485,3 +527,5 @@ export const api = {
     },
   },
 }
+
+export type Api = typeof api

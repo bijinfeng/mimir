@@ -31,6 +31,7 @@
     "@tanstack/ai-openai": "0.22.8",
     "archiver": "^8.0.0",
     "better-auth": "^1.7.5",
+    "better-sqlite3": "^13.0.3",
     "drizzle-orm": "^0.45.2",
     "gray-matter": "^4.0.3",
     "hono": "^4.13.8",

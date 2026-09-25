@@ -3,6 +3,10 @@ dist/
 build/
 *.log
 
+# 桌面端打包产物与 deploy 中转目录（D-046）
+apps/desktop/release/
+apps/desktop/server-deploy/
+
 # 运行时数据：vault（自己的 md 笔记）、raw（抓取的原文件）、数据库
 # 这些是真相数据，不进 git；由备份流程负责
 data/

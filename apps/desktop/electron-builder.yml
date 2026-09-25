@@ -1,0 +1,28 @@
+# 桌面端打包配置（D-046）。
+#
+# 结构：dist/**（主进程与 preload，进 asar）。宿主运行所需的三件套
+# （web dist、server dist + drizzle-sqlite、server 生产 node_modules）
+# 由 afterPack 钩子（scripts/after-pack.mjs）拷进 Resources——
+# 不用 extraResources 是因为它会跳过点开头的目录（dist/node_modules/.pnpm
+# 会被静默丢掉，运行时报模块找不到，见钩子内的说明）。
+#
+# server 的 node_modules 来自 `pnpm --filter @mimir/server deploy --prod`
+# 的产物（apps/desktop/server-deploy，由根的 desktop:build 先生成）。
+# better-sqlite3 v13 自带 N-API 预编译（跨 Node/Electron 通用），无需重编。
+appId: app.mimir.desktop
+productName: mimir
+directories:
+  output: release
+files:
+  - dist/**
+asarUnpack:
+  - '**/*.node'
+npmRebuild: false
+afterPack: scripts/after-pack.mjs
+mac:
+  category: public.app-category.productivity
+  # 不签不公证：ad-hoc 签名在 afterPack 里做（否则 macOS 直接 SIGKILL 秒退）。
+  # 正式分发需要开发者证书 + 公证（identity + notarize），本机构建仅自用。
+  identity: null
+  target:
+    - dmg
