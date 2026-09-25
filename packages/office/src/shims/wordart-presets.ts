@@ -1,16 +1,23 @@
-// @ts-nocheck -- vendored from GenOffice（Apache-2.0）；不要手改，见 vendor/UPSTREAM.json
-/* eslint-disable -- vendored，风格由上游决定 */
 /**
- * Shared WordArt gallery presets consumed by the docs and slides ribbons, so the
- * Insert → WordArt gallery is identical across apps (same recipes, same order,
- * same 4-column unlabeled letter grid — style names live in per-cell tooltips).
+ * WordArt 预设（`@genoffice/ui` 的等价 shim）。
+ *
+ * ## 为什么在这里而不 vendor 整个 ui 包
+ *
+ * 上游把这个文件放在 UI kit（`packages/ui`）里，因为对它而言这是「插入 →
+ * WordArt 画廊」的界面素材。但 mimir 只用到**数据与两个纯函数**：渲染 docx 里
+ * 已有的 WordArt 时要拿预设的配色与描边宽度，**不需要画廊 UI**。
+ *
+ * 把整个 ui 包拉进来（26 个文件、13 个 React 组件）只为这两个符号，代价是
+ * 无谓的依赖面与 React Compiler 告警。所以整个文件复制过来当 shim——
+ * 它是纯数据 + 纯计算，没有 DOM、没有 React，等价替换是安全的。
+ *
+ * 同步时的 `REWRITES` 把 `@genoffice/ui` 的导入指到这里。
+ *
+ * ## 原文件说明（上游）
  *
  * 12 presets modeled on the PowerPoint WordArt gallery: solid bold / white text
  * with colored stroke / colored text with dark stroke / black-gold, metallic
  * silver, etc. (stroke widths in EMU: 12700 = 1pt, 19050 = 1.5pt).
- *
- * `nameKey` is the tooltip i18n key; both apps define the same keys in their
- * ribbon strings.
  */
 export interface WordArtPreset {
   id: string

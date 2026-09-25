@@ -73,10 +73,23 @@ function splitRules(css) {
   return out
 }
 
+/**
+ * 取规则的选择器。
+ *
+ * **必须剥掉前置注释**：上游大量写成
+ * ```css
+ * /* 说明这段干什么 *\/
+ * :root { … }
+ * ```
+ * 不剥的话 `startsWith(':root')` 判 false，整块变量被丢掉——症状是
+ * 「分页算得好好的，但纸上什么都看不见」（`--canvas` 没了，灰带透明）。
+ * 实测踩过。
+ */
 function selectorOf(rule) {
   const brace = rule.indexOf('{')
   if (brace === -1) return null
-  return rule.slice(0, brace).trim()
+  const head = rule.slice(0, brace).replace(/\/\*[\s\S]*?\*\//g, '')
+  return head.trim()
 }
 
 function keep(rule) {
@@ -86,9 +99,29 @@ function keep(rule) {
 
   if (DROP_PREFIXES.some((p) => first.startsWith(p))) return false
 
-  // 变量块：只留编辑器自用的前缀
-  if (first === ':root' || first === ':root,\n:root' || first.startsWith(':root')) {
-    return selector.includes('--docs-') || selector.includes('--word-')
+  /**
+   * 变量块：只留编辑器自用的前缀。
+   *
+   * `--canvas` 必须一起留——它是**页间隙灰带的底色**（`.page-gap::before`
+   * 的 `background`）。漏了它的症状是：分页功能完全正常（页数对、间隙高度对），
+   * 但**纸上什么都看不见**——因为灰带画成了透明。实测踩过。
+   */
+  if (first.startsWith(':root')) {
+    return /--(docs|word|doc|page|cell|hf)-|--canvas\b/.test(selector)
+  }
+  /**
+   * 只含变量的主题覆写块（`.workspace-dark`、`.page-dark`）也保留：
+   * 它们定义深色下的 `--canvas` / `--docs-paper`，而编辑器规则读这些变量。
+   * 判据是「块里只有自定义属性，没有实际声明」——纯变量容器值得留，
+   * 带任何真实声明的（那是壳的样式）丢弃。
+   */
+  if (/^\.(workspace-dark|page-dark)\b/.test(first)) {
+    const body = rule.slice(rule.indexOf('{') + 1)
+    const declarations = body
+      .split(';')
+      .map((d) => d.trim())
+      .filter(Boolean)
+    return declarations.length > 0 && declarations.every((d) => d.startsWith('--'))
   }
   // 全局元素选择器一律丢弃（会改 mimir 的整页排版）
   if (/^(html|body|\*)/.test(first)) return false

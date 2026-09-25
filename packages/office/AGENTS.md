@@ -67,8 +67,25 @@ node packages/office/scripts/sync-upstream.mjs --from /tmp/genoffice --check  # 
 
 `--check` 用于定期看上游是否动了我们 vendored 的文件（输出非零退出码表示有差异）。
 
-同步脚本会：重新计算闭包 → 应用改写与横幅 → 写入 vendor/ → 裁剪样式 →
-更新 `UPSTREAM.json`。**它是幂等的**：连续跑两次，第二次「内容有差异 0 个文件」。
+同步脚本会：重新计算闭包 → 应用改写与横幅 → 写入 vendor/ → **按闭包清理
+多余文件** → 裁剪样式 → 更新 `UPSTREAM.json`。**它是幂等的**：连续跑两次，
+第二次「内容有差异 0 个文件」。
+
+### 闭包自检拦的是哪三类错
+
+解析不完整时脚本会**静默跳过**文件，所以产物不对而脚本不报错。三次教训：
+
+| 症状 | 原因 |
+|---|---|
+| docx-engine 的 35 个文件全丢（93 → 56） | `.js` 后缀没映射回 `.ts`（改写产出 NodeNext 写法） |
+| 9 个文件漏掉（watermark / protection / blank…） | 抓 import 的正则不允许跨行，而上游大量用多行 `export { … } from` |
+| vendor 里多了 26 个 UI kit 文件、应用起不来 | 改写规则把 `@genoffice/ui` 变成了相对路径，**绕过了 skipPackages** |
+
+现在两种断链都会报错退出：相对导入落在闭包外、以及**未被改写**的
+`@genoffice/*` 导入（后者正是「依赖了被跳过的包」的判据）。
+
+顺带一条：抓 import 的正则**不能跨越语句边界**（见 `computeClosure` 的注释）
+——否则注释里提到 `@genoffice/ui` 也会被当成真导入。
 
 ### 闭包是算出来的，不是列出来的
 
@@ -93,11 +110,13 @@ node packages/office/scripts/sync-upstream.mjs --from /tmp/genoffice --check  # 
 
 | 缺什么 | 说明 |
 |---|---|
-| **分页视图** | 分页引擎在闭包里，但接成「纸张一样的页面」还要容器与滚动逻辑。现在是连续流 |
+| ~~分页视图~~ | **已实现**：`src/pagination.ts` 的 `usePagination` 把连续流切成纸张（块级分页）。仍缺块内断行、拆表、页眉脚、分栏——见下 |
 | **工具栏** | 上游的 ribbon 没 vendored（那是它自己的办公壳）。要哪些能力是 mimir 的界面决策 |
 | **大文档解析** | `parseDocx` 是同步重活，上游为它做了 worker（`parse-off-thread.ts`）。现在直接 await，大文档会卡主线程 |
 | **保存冲突** | `PUT /api/documents/:id/file` 不校验 `If-Match`。单客户端可接受，多客户端会互相覆盖 |
 | **xlsx / pptx** | 只验证了 docx。xlsx 走的是另一条路（还有 Rust 侧车与 Univer），pptx 未评估 |
+| **块内断行** | 段落比一页还长时是**整块下移**，不是像 Word 那样在行边界切开 |
+| **拆表 / 页眉脚 / 脚注 / 分栏** | 这四类页边界特例未做（上游有）。带页眉脚或脚注的文档在页面边界上看不到它们 |
 
 样式裁剪（`trim-editor-css.mjs`）只保留 `.doc-*` / `.ProseMirror` / `.page-*` /
 `.hf-*` 前缀的规则。**加新的编辑器 UI 时如果样式不生效，先看它是不是被裁掉了**——

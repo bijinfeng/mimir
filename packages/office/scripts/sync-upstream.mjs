@@ -38,7 +38,7 @@
  * 3. **锁版本。** `UPSTREAM.json` 记 commit + 抽取时间，`--check` 靠它对比。
  */
 import { execFileSync } from 'node:child_process'
-import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -79,6 +79,22 @@ const REWRITES = [
   },
   {
     /**
+     * `@genoffice/ui` 里的 WordArt 预设 → `src/shims/wordart-presets.ts`。
+     *
+     * 这是**唯一**真正被 vendored 代码用到的 ui 导出（`protected-render.ts`
+     * 拿它渲染 docx 里已有的 WordArt）。其余 ui 导出都是办公壳的界面组件，
+     * mimir 不用——为两个纯数据符号拉进 26 个文件（含 13 个 React 组件）
+     * 不划算，也会触发 React Compiler 告警。
+     *
+     * 只替这一个子路径，不代表 ui 包整体可用：其它 `@genoffice/ui` 导入
+     * 仍然是断链（那种文件不该在闭包里，见 self-check）。
+     */
+    match: /from\s+['"]@genoffice\/ui(?:\/wordart-presets)?['"]/g,
+    to: '../src/shims/wordart-presets.js',
+    reason: '只需要 WordArt 预设（纯数据），不为两个符号 vendor 整个 UI kit',
+  },
+  {
+    /**
      * 自家包的裸导入 → vendor 内的相对路径。
      *
      * 上游用 npm workspace 名（`@genoffice/docx-engine`）互相引用，而这个包在
@@ -92,6 +108,15 @@ const REWRITES = [
      */
     match: /from\s+['"]@genoffice\/([a-z0-9-]+)(?:\/([a-z0-9/-]+))?['"]/g,
     byPkg: true,
+    /**
+     * **必须跳过 skipPackages 里的包。** 这条规则把包名改写成相对路径，
+     * 而闭包计算的「按包名跳过」是在**改写之后**做的——改写一发生，
+     * skipPackages 就再也拦不住它（`@genoffice/ui` 被改成
+     * `../../../../packages/ui/src/index.js`，26 个 UI kit 文件连带 13 个
+     * React 组件进了 vendor，还会触发 React Compiler 告警）。
+     * 实测踩过：症状是「bundle 里莫名其妙多了 React 组件」。
+     */
+    skipPackages: true,
     reason: '上游用 workspace 包名互相引用，vendor 里必须改成相对路径才自封闭',
   },
 ]
@@ -122,6 +147,23 @@ const BANNER = [
   '',
 ].join('\n')
 
+/** 这些包一律不进 vendor（改写规则也要绕开它们，否则改写会把它们拉进来） */
+const SKIP_PACKAGES = [
+  '@genoffice/ui',
+  '@genoffice/i18n',
+  '@genoffice/ai-provider',
+  '@genoffice/ai-search',
+  '@genoffice/agent-core',
+  '@genoffice/project-store',
+  '@genoffice/electron-utils',
+  '@genoffice/cli',
+  '@genoffice/pipelines',
+  '@genoffice/pdf2docx',
+  '@genoffice/html2docx',
+  '@genoffice/font-metrics',
+  '@genoffice/xlsx-gateway',
+]
+
 /**
  * 应用改写。`vendorRel` 是被改写文件在 vendor 下的相对路径——用它算出
  * 指向 shim 的正确相对路径。
@@ -137,6 +179,7 @@ function applyRewrites(text, vendorRel) {
     if (!rule.reason) throw new Error('REWRITES 里每一条都必须写理由')
     // replace 的回调签名是 (match, p1, p2, …, offset, string)
     out = out.replace(rule.match, (match, p1, p2) => {
+      if (rule.byPkg && SKIP_PACKAGES.some((p) => p === `@genoffice/${p1}`)) return match
       const fromDir = resolve(fakeRoot, dirname(vendorRel))
       if (rule.byPkg) {
         const target = resolve(fakeRoot, 'packages', p1, 'src', p2 ? `${p2}.ts` : 'index.ts')
@@ -200,19 +243,21 @@ function computeClosure(repo, entries, skipPackages) {
     const src = applyRewrites(readFileSync(file, 'utf8'), rel)
     const specs = new Set()
     /**
-     * 抓导入必须**允许跨行**：上游大量使用多行形式
-     * ```ts
-     * export {
-     *   TABLE_HEADER_FILL,
-     *   applyImageWrap,
-     * } from './watermark'
-     * ```
-     * 用 `[^'"\n]*` 那种「同一行」写法会**静默漏掉整组文件**——实测踩过：
-     * docx-engine 的 watermark / protection / blank 等 9 个文件没进闭包，
-     * 而脚本一声不响（解析不到就跳过）。所以下面用 [\s\S] 并配合自检。
+     * 抓 import 有两处必须同时满足，各是一次实测教训：
+     *
+     * 1. **允许跨行**：上游大量用多行 `export { … } from './x'`。用「同一行」
+     *    写法会静默漏掉整组文件——docx-engine 的 watermark / protection /
+     *    blank 等 9 个文件没进闭包，而脚本一声不响（解析不到就跳过）。
+     * 2. **不跨越语句边界**：见到 `;` 或另一个 import/export 就停。否则
+     *    **注释里**提到 `@genoffice/ui` 也会被当成导入——实测把整个 26 文件的
+     *    UI kit 拉进了闭包（`generate.ts` 的注释里写着「Presets live in the
+     *    UI layer (@genoffice/ui)」），它带着 React 组件进 bundle。
+     *
+     * 三条正则各管一种写法：带 `from` 的单行、多行花括号形式、裸导入。
      */
     for (const re of [
-      /(?:^|\n)\s*(?:import|export)[\s\S]{0,2000}?from\s+['"]([^'"]+)['"]/g,
+      /(?:^|\n)\s*(?:import|export)\s+(?![^'"\n]*(?:;|\bimport\b|\bexport\b))[^'"\n]{0,400}?from\s+['"]([^'"]+)['"]/g,
+      /(?:^|\n)\s*(?:import|export)\s*\{[^}]{0,2000}?\}\s*from\s+['"]([^'"]+)['"]/g,
       /(?:^|\n)\s*import\s+['"]([^'"]+)['"]/g,
     ]) {
       for (const m of src.matchAll(re)) specs.add(m[1])
@@ -237,11 +282,18 @@ function computeClosure(repo, entries, skipPackages) {
    * **自检：闭包必须自封闭。** 每个被抽出来的文件，它的每个相对导入都要能
    * 在闭包内解析到。
    *
-   * 这一条是必须的，因为上面解析不到导入时会**静默跳过**——实测两次踩到：
+   * 这一条是必须的，因为上面解析不到导入时会**静默跳过**——实测三次踩到：
    * ① `.js` 后缀没映射回 `.ts`，docx-engine 的 35 个文件全丢；
-   * ② 多行 `export { … } from` 没被正则抓到，9 个文件漏掉。
-   * 两次都是「脚本成功退出、文件少了一批」，靠事后人工数文件才发现。
-   * 有这条之后同样的失误会在同步时直接报错。
+   * ② 多行 `export { … } from` 没被正则抓到，9 个文件漏掉；
+   * ③ **依赖被跳过包的模块留在闭包里**（`protected-render.ts` 真 import
+   *    `@genoffice/ui`），而改写规则又把包名变成了相对路径，于是 Vite 报
+   *    「Failed to resolve import」、整个应用起不来——前两次是「文件少了」，
+   *    这次是「文件多了但链是断的」。
+   * 三次都是「脚本成功退出而产物不对」。有这条之后同类失误会直接报错。
+   *
+   * 检查两种断链：
+   *   - 相对导入落在闭包外
+   *   - **未被改写**的 `@genoffice/*` 导入（说明它依赖被跳过的包，或清单漏了包）
    */
   const fileSet = new Set([...visited].map((rel) => rel))
   const orphans = []
@@ -254,10 +306,14 @@ function computeClosure(repo, entries, skipPackages) {
       if (resolved === null) continue
       if (!fileSet.has(relative(repo, resolved))) orphans.push(`${rel} → ${m[1]}`)
     }
+    // 改写后仍留在文件里的 @genoffice/* 就是断链：vendor 里没有那些包
+    for (const m of src.matchAll(/from\s+['"](@genoffice\/[^'"]+)['"]/g)) {
+      orphans.push(`${rel} → ${m[1]}（未被改写，vendor 里没有这个包）`)
+    }
   }
   if (orphans.length > 0) {
-    console.error(`\n✗ 闭包不自封闭：${orphans.length} 处相对导入指向闭包外的文件。`)
-    console.error('  这说明上面的导入抓取或后缀映射漏了东西——不要忽略，先修脚本。')
+    console.error(`\n✗ 闭包不自封闭：${orphans.length} 处导入指向闭包外。`)
+    console.error('  常见修法：把该包加进 skipPackages 的 shim 改写，或换掉这个入口。')
     for (const o of orphans.slice(0, 15)) console.error(`    ${o}`)
     process.exit(1)
   }
@@ -350,10 +406,56 @@ async function main() {
     await mkdir(dirname(dst), { recursive: true })
     await writeFile(dst, applyRewrites(await readFile(src, 'utf8'), rel))
   }
-  // 清理已不在闭包里的旧文件
-  for (const rel of removed) {
-    await rm(join(pkgRoot, 'vendor', rel), { force: true })
+  /**
+   * 清理 vendor 里**不在当前闭包**的文件。
+   *
+   * 不能只删 `removed`（那只是「清单里有、闭包不含」的差集）：上一次同步
+   * 误纳的文件从未进过清单，就会永久残留在 vendor 里——实测踩过：注释里
+   * 的 `@genoffice/ui` 被当成导入，26 个 UI kit 文件写进了 vendor，
+   * 修好正则后它们仍在（清单不含、但也没人删），React Compiler 照旧报错。
+   * 所以这里以「闭包」为准做全量对齐。
+   */
+  const keep = new Set(files.map((rel) => join(pkgRoot, 'vendor', rel)))
+  for (const asset of [...MANIFEST.assets, ...(MANIFEST.fixtures ?? [])]) {
+    void asset // 资源目录整体拷贝，不参与逐文件清理
   }
+  async function pruneVendor(dir) {
+    let entries
+    try {
+      entries = await readdir(dir, { withFileTypes: true })
+    } catch {
+      return
+    }
+    for (const entry of entries) {
+      const full = join(dir, entry.name)
+      if (entry.isDirectory()) {
+        // 资源目录（字体等）由 assets 管理，跳过
+        const relFromVendor = relative(join(pkgRoot, 'vendor'), full)
+        if (
+          MANIFEST.assets.some(
+            (a) => a.to === relFromVendor || a.to.startsWith(`${relFromVendor}/`),
+          )
+        )
+          continue
+        if (
+          MANIFEST.fixtures?.some(
+            (a) => a.to === relFromVendor || a.to.startsWith(`${relFromVendor}/`),
+          )
+        )
+          continue
+        await pruneVendor(full)
+        // 空目录也清掉
+        if ((await readdir(full)).length === 0) await rm(full, { recursive: true, force: true })
+      } else if (
+        entry.name.endsWith('.ts') ||
+        entry.name.endsWith('.tsx') ||
+        entry.name.endsWith('.mjs')
+      ) {
+        if (!keep.has(full)) await rm(full, { force: true })
+      }
+    }
+  }
+  await pruneVendor(join(pkgRoot, 'vendor'))
   // 静态资源（字体等）整个目录拷贝
   for (const asset of [...MANIFEST.assets, ...(MANIFEST.fixtures ?? [])]) {
     const src = join(from, asset.from)

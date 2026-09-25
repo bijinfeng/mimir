@@ -45,7 +45,10 @@
     "import/no-unassigned-import": "off",
 
     // 开发环境的热重载单例用 __ 前缀标记（见 db/client.ts）
-    "no-underscore-dangle": ["error", { "allow": ["__mimirSql", "__mimirSqlite"] }],
+    "no-underscore-dangle": [
+      "error",
+      { "allow": ["__mimirSql", "__mimirSqlite", "__mimirPagination", "__mimirPagError"] }
+    ],
 
     "unicorn/prefer-node-protocol": "error",
     "no-console": "off"

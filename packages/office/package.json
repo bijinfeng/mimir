@@ -9,7 +9,8 @@
     "./vendor/extensions": "./vendor/apps/docs/src/renderer/editor/extensions.ts",
     "./vendor/styles.css": "./vendor/apps/docs/src/renderer/styles.css",
     "./vendor/fonts.css": "./vendor/apps/docs/src/renderer/fonts/fonts.css",
-    "./editor.css": "./src/generated/editor.css"
+    "./editor.css": "./src/generated/editor.css",
+    "./vendor/types": "./vendor/packages/docx-engine/src/types.ts"
   },
   "scripts": {
     "sync": "node scripts/sync-upstream.mjs",

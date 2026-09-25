@@ -1,13 +1,15 @@
 import { EditorContent, useEditor } from '@tiptap/react'
 import { App, Button, Space } from 'antd'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { editorExtensions } from '@mimir/office/vendor/extensions'
-import { openDocx, type DocxSession } from '@mimir/office'
+import { openDocx, usePagination, type DocxSession } from '@mimir/office'
+import type { SectionInfo } from '@mimir/office/vendor/types'
 // 编辑器样式：从 vendored 的整份办公壳样式里裁出的「编辑器 + 纸张排版」部分
 // （见 packages/office/scripts/trim-editor-css.mjs）。字体是分页保真的前提
 // ——缺了 metric-compatible 字体，浏览器会静默回退，换行与分页整体错位
 import '@mimir/office/editor.css'
 import '@mimir/office/vendor/fonts.css'
+import { useStyles } from '@/components/document/OfficeEditor.style'
 import { api } from '@/lib/api'
 
 /**
@@ -34,11 +36,21 @@ import { api } from '@/lib/api'
  * - **大文档解析**：`parseDocx` 是同步重活，上游为它做了 worker；产品化要接。
  * - **保存冲突**：`PUT` 不校验 `If-Match`，多客户端同时改会互相覆盖。
  */
+/** 文档未加载时的空分段（模块级常量：保证 hook 的依赖引用稳定） */
+const NO_SECTIONS: SectionInfo[] = []
+
 export function OfficeEditor({ documentId }: { documentId: string }) {
+  const { styles } = useStyles()
   const { message } = App.useApp()
   const [session, setSession] = useState<DocxSession | null>(null)
   const [status, setStatus] = useState('读取原件…')
   const [saving, setSaving] = useState(false)
+  const [pageCount, setPageCount] = useState(1)
+  /** 分页要的两个元素：滚动容器与 ProseMirror 根 */
+  const scrollRef = useRef<HTMLDivElement>(null)
+  /** 包住编辑器的容器（分页从它里面找 .ProseMirror，见 hook 的说明） */
+  const containerRef = useRef<HTMLDivElement>(null)
+  const handlePaged = useCallback((count: number) => setPageCount(count), [])
 
   const editor = useEditor(
     {
@@ -48,6 +60,23 @@ export function OfficeEditor({ documentId }: { documentId: string }) {
     },
     [session],
   )
+
+  /**
+   * 分页：把连续流切成纸张（`packages/office/src/pagination.ts`）。
+   * 它插的是**装饰器**，不改文档内容——所以保存路径完全不受影响。
+   */
+  usePagination({
+    editor,
+    scrollRef,
+    containerRef,
+    /**
+     * 必须是**稳定引用**：`session?.sections ?? []` 每次都新建数组，
+     * 会让 hook 的 effect 每次渲染都重跑并互相取消（见 hook 里 sections 的
+     * 说明）。文档未加载时用同一个空数组常量。
+     */
+    sections: session?.sections ?? NO_SECTIONS,
+    onPaged: handlePaged,
+  })
 
   useEffect(() => {
     let cancelled = false
@@ -91,7 +120,9 @@ export function OfficeEditor({ documentId }: { documentId: string }) {
   return (
     <div style={{ padding: 16 }}>
       <Space style={{ marginBottom: 12 }}>
-        <span style={{ fontFamily: 'monospace', fontSize: 12 }}>{status}</span>
+        <span style={{ fontFamily: 'monospace', fontSize: 12 }}>
+          {status} · 第 1 / 共 {pageCount} 页
+        </span>
         <Button
           size="small"
           type="primary"
@@ -102,11 +133,19 @@ export function OfficeEditor({ documentId }: { documentId: string }) {
           保存到库
         </Button>
       </Space>
-      <div
-        className="doc-page"
-        style={{ border: '1px solid #ddd', background: '#fff', minHeight: 400, padding: 24 }}
-      >
-        <EditorContent editor={editor} />
+      {/* 滚动容器：分页要量它的顶部作原点，所以它必须是真正滚动的那一层 */}
+      {/*
+        容器上挂 `mimir-office` 类：页间隙的灰带底色（`--canvas`）与纸张底色
+        （`--docs-paper`）由我们自己的样式定义——上游那两个变量由它的 App 壳在
+        运行时注入，而我们没有 vendored 那个壳。用 mimir 的主题 token 反而更对：
+        纸与工作台的颜色该跟界面一致。
+      */}
+      <div ref={scrollRef} className={styles.scroll}>
+        <div ref={containerRef} className="editor-scroll mimir-office">
+          <div className="doc-page">
+            <EditorContent editor={editor} />
+          </div>
+        </div>
       </div>
     </div>
   )

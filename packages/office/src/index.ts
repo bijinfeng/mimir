@@ -37,4 +37,5 @@
  */
 
 export { openDocx, type DocxSession } from './docx.js'
+export { usePagination } from './pagination.js'
 export type { Block } from '../vendor/packages/docx-engine/src/types.js'

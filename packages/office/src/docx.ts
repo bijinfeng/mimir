@@ -1,6 +1,15 @@
-import { parseDocx, saveDocx, type ParseExtras } from '../vendor/packages/docx-engine/src/index.js'
-import type { Block } from '../vendor/packages/docx-engine/src/types.js'
-import { blocksToPmDoc, pmDocToSavePlan } from '../vendor/apps/docs/src/renderer/editor/convert.js'
+import {
+  parseDocx,
+  readSections,
+  saveDocx,
+  type ParseExtras,
+} from '../vendor/packages/docx-engine/src/index.js'
+import type { Block, SectionInfo } from '../vendor/packages/docx-engine/src/types.js'
+import {
+  blocksToPmDoc,
+  pmDocOptions,
+  pmDocToSavePlan,
+} from '../vendor/apps/docs/src/renderer/editor/convert.js'
 
 /**
  * 编辑器文档的类型。
@@ -48,6 +57,14 @@ export interface DocxSession {
   readonly blocks: readonly Block[]
   /** 解析出的附加信息（样式表、编号、页眉页脚…保存时要用） */
   readonly extras: ParseExtras
+  /**
+   * 分段信息：纸张尺寸与页边距（**分页的前提**）。
+   *
+   * 上游把它从 `sectPrXml` 现解析（`readSections`），不放进 ParsedDoc——
+   * 因为编辑器改动分段后要能重建。不传它的后果是静默的：文档照常渲染，
+   * 但用的是浏览器默认页边距，分页位置全是错的。
+   */
+  readonly sections: SectionInfo[]
   /** 交给 Tiptap 的文档模型 */
   readonly content: PmDocJson
   /** 文档里的批注与脚注（界面可选展示） */
@@ -72,13 +89,24 @@ export async function openDocx(bytes: Uint8Array): Promise<DocxSession> {
    * 但保存时要原样保留——`pmDocToSavePlan` 会按 docxIndex 对照，
    * 所以这里只把它们排除出 `content`，不动 `blocks`。
    */
+  const sections = readSections(parsed)
   const visibleBlocks = parsed.blocks.filter((block) => !block.hidden)
-  const content = blocksToPmDoc(visibleBlocks, undefined, {}) as unknown as PmDocJson
+  /**
+   * 三个参数缺一不可：
+   *   sections      → 纸张与页边距（分页的几何依据）
+   *   pmDocOptions  → 兼容模式（legacyTableIndent：Word 2013 前后的表缩进算法不同）
+   */
+  const content = blocksToPmDoc(
+    visibleBlocks,
+    sections,
+    pmDocOptions(parsed),
+  ) as unknown as PmDocJson
 
   return {
     originalBytes: bytes,
     blocks: parsed.blocks,
     extras: parsed.extras,
+    sections,
     content,
     comments: parsed.comments,
     footnotes: parsed.footnotes,
