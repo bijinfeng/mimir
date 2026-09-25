@@ -2581,3 +2581,40 @@ master-detail 心智：库被压在 300px 的配角位上。两栏库视图让�
 
 **影响**：`PRD.md` §2.3/§5.1/§5.2/§5.10、`DESIGN.md` §5.4/§5.5、
 `apps/web` 布局与列表组件（ListColumn 退役为 LibraryView）。
+
+---
+
+## D-048 D-047 待办五项收尾
+
+**背景**：D-047 记录的五项待办一次做完。逐项的决定与实现：
+
+1. **「存成笔记」按钮补 UI（PRD §5.7 闭环）**：按钮在最后一条助手回答的
+   引用卡之后。落库消息 id 与界面消息 id 不同（useChat 重新生成 id），
+   点击时按会话现取落库记录、按「最后一条助手消息」对齐——与
+   storedAssistant 的取用同一个模式。服务端本就幂等（`savedNoteId`），
+   重复点击转成「打开笔记」。
+2. **引用点击 → 滚动 + 高亮**：跳转的下半句补上。定位用**归一化文本匹配**
+   （小写、去空白、去 Markdown 记号后 indexOf，长引用退化为前缀匹配），
+   而不是 `citation.start/end` 的字符偏移——偏移指向原始正文，渲染后的 DOM
+   里没有 `**` 记号，按偏移找必然错位。高亮用 CSS Custom Highlight API
+   （Range 注册到 `CSS.highlights`，不改 DOM，只读正文与 Tiptap 编辑器
+   文本节点都适用）。找不到就不高亮，不做假动作。
+3. **归档可见**：导航加「已归档」（`counts.archived`），
+   `scopeParams('archived')` 走 status 过滤。来源计数（note/clip）随
+   D-047 的来源退役一并删除——counts 的承诺是「数字与点进去看到的一致」，
+   没有视图的计数不该存在。
+4. **设置页合并**：删「抓取」分区（与插件分区的 capturer 描述重复）；
+   头像菜单的「外观」子菜单删除（canonical 位置是设置页外观分区）；
+   数据分区删「标签」面板（主界面无入口的死面板，标签浏览在库视图）。
+   **统计面判断修正**：统计分区（用量热力图）与数据分区的库存数字是
+   两个不同的问题（用了多少 vs 存了多少），盘点时标为重复是看错了，
+   不合并。
+5. **≤880px 断点**：导航**强制折叠**为 48px 图标条，而不是原计划的
+   「隐藏导航」——隐藏等于断了所有导航，折叠保住可用性且只是一条
+   媒体查询。DESIGN §5.5 同步。
+
+**影响**：`packages/shared` 的 counts 契约（note/clip → archived，破坏性
+变更，消费方仅本仓库 UI）；`apps/server` 的 `countDocuments` 与其本地
+`DocumentCounts` 接口（改为引用 shared 类型，删除重复声明）；web 的
+ChatPanel / DocumentPanel / NavSidebar / 设置页；全局样式新增
+`::highlight(mimir-citation)`。
