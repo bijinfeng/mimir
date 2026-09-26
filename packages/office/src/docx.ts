@@ -4,6 +4,7 @@ import {
   saveDocx,
   type ParseExtras,
 } from '../vendor/packages/docx-engine/src/index.js'
+import type { HfPartInfo, ParsedDoc } from '../vendor/packages/docx-engine/src/types.js'
 import type { Block, SectionInfo } from '../vendor/packages/docx-engine/src/types.js'
 import {
   blocksToPmDoc,
@@ -65,6 +66,27 @@ export interface DocxSession {
    * 但用的是浏览器默认页边距，分页位置全是错的。
    */
   readonly sections: SectionInfo[]
+
+  /**
+   * 页眉页脚：默认变体与 first/even 变体（分页时按 `titlePg` /
+   * `evenAndOddHeaders` 选）。
+   *
+   * 上游把这套放在 App 状态里（它的页眉脚可编辑），mimir 只读展示，
+   * 所以直接从解析结果给。**默认变体要单独拼**——它不在 `headerFirst` /
+   * `headerEven` 里（那两个是 `w:type="first"` / `"even"` 的专用部件）。
+   */
+  readonly headerFooter: {
+    header: HfPartInfo | null
+    footer: HfPartInfo | null
+    headerFirst: HfPartInfo | null
+    footerFirst: HfPartInfo | null
+    headerEven: HfPartInfo | null
+    footerEven: HfPartInfo | null
+    /** 首页不同（w:titlePg） */
+    titlePg: boolean
+    /** 奇偶页不同（settings.xml w:evenAndOddHeaders） */
+    evenAndOdd: boolean
+  }
   /** 交给 Tiptap 的文档模型 */
   readonly content: PmDocJson
   /** 文档里的批注与脚注（界面可选展示） */
@@ -107,6 +129,16 @@ export async function openDocx(bytes: Uint8Array): Promise<DocxSession> {
     blocks: parsed.blocks,
     extras: parsed.extras,
     sections,
+    headerFooter: {
+      header: defaultHfPart(parsed, 'header'),
+      footer: defaultHfPart(parsed, 'footer'),
+      headerFirst: parsed.headerFirst ?? null,
+      footerFirst: parsed.footerFirst ?? null,
+      headerEven: parsed.headerEven ?? null,
+      footerEven: parsed.footerEven ?? null,
+      titlePg: parsed.titlePg ?? false,
+      evenAndOdd: parsed.evenAndOddHeaders ?? false,
+    },
     content,
     comments: parsed.comments,
     footnotes: parsed.footnotes,
@@ -119,5 +151,31 @@ export async function openDocx(bytes: Uint8Array): Promise<DocxSession> {
         {},
       )
     },
+  }
+}
+
+/**
+ * 默认页眉/页脚部件。
+ *
+ * **它不在 `headerFirst` / `headerEven` 里**——那两个是 `w:type="first"` /
+ * `"even"` 的专用部件，而默认页眉脚在 `document.xml` 的常规 sectPr 引用里，
+ * 解析结果落在 `headerParas` / `headerText`（与 `hfParts` 的对应 rId）。
+ * 这里按同一个形状（`HfPartInfo`）拼出来，让分页侧不必区分来源。
+ */
+function defaultHfPart(parsed: ParsedDoc, kind: 'header' | 'footer'): HfPartInfo | null {
+  const text = kind === 'header' ? parsed.headerText : parsed.footerText
+  const paras = kind === 'header' ? parsed.headerParas : parsed.footerParas
+  const images = kind === 'header' ? parsed.headerImages : parsed.footerImages
+  const hasPageNumber =
+    kind === 'header'
+      ? (parsed.headerHasPageNumber ?? false)
+      : (parsed.footerHasPageNumber ?? false)
+  // 与上游 hfFromPart 同一判据：文字、页码域、段落、图片全空才算「没有」
+  if (!text && !hasPageNumber && (!paras || paras.length === 0) && !images?.length) return null
+  return {
+    text: text ?? '',
+    hasPageNumber,
+    paras: paras ?? [],
+    ...(images?.length ? { images } : {}),
   }
 }

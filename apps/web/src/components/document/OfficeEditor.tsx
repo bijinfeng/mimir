@@ -10,6 +10,7 @@ import type { SectionInfo } from '@mimir/office/vendor/types'
 import '@mimir/office/editor.css'
 import '@mimir/office/vendor/fonts.css'
 import { useStyles } from '@/components/document/OfficeEditor.style'
+import { OfficeToolbar } from '@/components/document/OfficeToolbar'
 import { api } from '@/lib/api'
 
 /**
@@ -75,6 +76,7 @@ export function OfficeEditor({ documentId }: { documentId: string }) {
      * 说明）。文档未加载时用同一个空数组常量。
      */
     sections: session?.sections ?? NO_SECTIONS,
+    headerFooter: session?.headerFooter ?? null,
     onPaged: handlePaged,
   })
 
@@ -140,6 +142,9 @@ export function OfficeEditor({ documentId }: { documentId: string }) {
         运行时注入，而我们没有 vendored 那个壳。用 mimir 的主题 token 反而更对：
         纸与工作台的颜色该跟界面一致。
       */}
+      {/* 顶栏工具栏：Word 的格式操作是边写边调的，常驻比气泡菜单合适 */}
+      <OfficeToolbar editor={editor} disabled={!session} />
+
       <div ref={scrollRef} className={styles.scroll}>
         <div ref={containerRef} className="editor-scroll mimir-office">
           <div className="doc-page">

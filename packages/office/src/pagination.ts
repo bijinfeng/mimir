@@ -7,6 +7,20 @@ import {
 } from '../vendor/apps/docs/src/renderer/pagination-sections.js'
 import { measureBlocks } from '../vendor/apps/docs/src/renderer/pagination-measure.js'
 import { computeSectionedSlices } from '../vendor/apps/docs/src/renderer/pagination-slices.js'
+import {
+  anchorElement,
+  fillLineBoxes,
+  lineStartAnchor,
+  nextLineAnchor,
+  type LineAnchor,
+} from '../vendor/apps/docs/src/renderer/pagination-lines.js'
+import {
+  hfHasVisibleContent,
+  hfStripGeom,
+  makeGapHfEl,
+} from '../vendor/apps/docs/src/renderer/editor/hf-dom.js'
+import { pageNumbers } from '../vendor/apps/docs/src/renderer/pagination-hf.js'
+import type { HeaderFooter } from '../vendor/packages/docx-engine/src/types.js'
 import { BlockIndex } from '../vendor/apps/docs/src/renderer/pagination-index.js'
 import {
   setPageGaps,
@@ -14,6 +28,7 @@ import {
 } from '../vendor/apps/docs/src/renderer/editor/pagination-gaps.js'
 import type { BlockBox, PageSlice } from '../vendor/apps/docs/src/renderer/pagination-types.js'
 import type { SectionInfo } from '../vendor/packages/docx-engine/src/types.js'
+import type { DocxSession } from './docx.js'
 
 /**
  * 把连续流切成「纸张页面」（分页视图）。
@@ -74,8 +89,77 @@ export interface PaginationOptions {
    * 且不报任何错（实测踩过：诊断出口一直是 null）。
    */
   sections: SectionInfo[]
+  /**
+   * 页眉页脚数据（来自 `DocxSession.headerFooter`）。
+   *
+   * 传 null / 不传表示这份文档没有页眉脚——那就不生成条带。有的话按
+   * `titlePg` / `evenAndOdd` 逐页选变体；页码由 `pageNumbers()` 算，
+   * 它处理分节的重新编号与格式（如罗马数字）。
+   */
+  headerFooter?: DocxSession['headerFooter'] | null | undefined
   /** 总页数回传（界面可以显示「第 x / 共 y 页」） */
   onPaged?: (pageCount: number) => void
+}
+
+/**
+ * 条带的文字内容（做 `hfKey` 的内容签名用）。
+ *
+ * 页码变了而元素没重建的话，第二页会显示第一页的页码——所以 key 必须
+ * 覆盖条带里的全部文字，这个函数就是取那份文字。
+ */
+function hfText(v: HeaderFooter | null): string {
+  return v?.text ?? ''
+}
+
+/**
+ * `HfPartInfo` → 渲染用的 `HeaderFooter`。
+ *
+ * 判据与上游 `hfFromPart` 一致：文字、页码域、段落、图片全空才算「没有」。
+ */
+function toHeaderFooter(part: {
+  text: string
+  hasPageNumber: boolean
+  paras: unknown[]
+}): HeaderFooter {
+  return {
+    text: part.text,
+    pageNumber: part.hasPageNumber,
+    ...(part.paras.length > 0 ? { paras: part.paras as HeaderFooter['paras'] } : {}),
+  }
+}
+
+/**
+ * 行锚点 → 文档位置。
+ *
+ * **这个函数原本在 GenOffice 的 App 壳里**（`App.tsx:375`），没随编辑器一起
+ * vendored——因为它是「锚点怎么落到文档坐标」的接线，属于宿主职责。
+ * 逻辑很短但有两个要点，抄在这里并保留原注释：
+ *
+ *  - 文本行用 `posAtDOM(textNode, charOffset)`
+ *  - **纯图片行不能用文本偏移**（原子叶子里没有偏移语义），改走父节点的
+ *    子索引——上游注释原话：「offset semantics inside an atom leaf's own DOM
+ *    are undefined」
+ */
+function posFromAnchor(
+  // 签名与 `EditorView.posAtDOM` 一致（offset 必填）；这里只用到这一个方法，
+  // 所以按结构收窄，不 import 整个 EditorView 类型
+  view: { posAtDOM: (node: Node, offset: number) => number },
+  anchor: LineAnchor,
+): number | undefined {
+  try {
+    const pos =
+      anchor.node instanceof Element
+        ? anchor.node.parentNode
+          ? view.posAtDOM(
+              anchor.node.parentNode,
+              Array.prototype.indexOf.call(anchor.node.parentNode.childNodes, anchor.node),
+            )
+          : -1
+        : view.posAtDOM(anchor.node, anchor.charOffset)
+    return pos >= 0 ? pos : undefined
+  } catch {
+    return undefined
+  }
 }
 
 export function usePagination({
@@ -83,6 +167,7 @@ export function usePagination({
   scrollRef,
   containerRef,
   sections,
+  headerFooter,
   onPaged,
 }: PaginationOptions): void {
   useEffect(() => {
@@ -148,35 +233,327 @@ export function usePagination({
         return
       }
 
-      const slices: PageSlice[] = computeSectionedSlices(
-        blocks,
-        [{ contentHeight, forceBreak: false, cols: 1 }],
-        measured.totalHeight,
-      )
+      const geoms = [{ contentHeight, forceBreak: false, cols: 1 }]
+
+      /**
+       * **切页之前先填行信息。** `fillLineBoxes` 回填每个块的行边界
+       * （`lineOffsets` / `lineBoxes`），而切页引擎靠它做**块内断行**——
+       * 段落比一页长时在行边界切开，而不是整块推到下一页。
+       *
+       * 顺序不能反：先切再填的话，切片里没有行级信息，切表与长段落都只能
+       * 整块处理（症状是长文档里出现大片空白）。
+       */
+      const firstSlices = computeSectionedSlices(blocks, geoms, measured.totalHeight)
+      fillLineBoxes(blocks, geoms, 1, firstSlices)
+
+      /**
+       * **收敛迭代：切 → 填 → 再切，直到切片稳定。**
+       *
+       * 一轮不够。`fillLineBoxes` 的判据里有「这个块跨越了分页点吗」
+       * （`breakYs.hasBetween(block.top, bottom)`）——它是**用上一轮的切片**
+       * 判断的。第一轮切片不知道行信息，把长段落/长表格当成整体，跨越判据就
+       * 失真；此时填出来的行数据是「按整块算」的，第二趟切出来的结果与它
+       * 不完全自洽。
+       *
+       * 实测症状：拆表的**重复表头**不出现（引擎要求表头行已经在上一页上，
+       * `placedHeader` 才为真，而这依赖切点稳定）。多迭代一轮即收敛。
+       *
+       * 上限 3 轮：改动是单调收敛的（切点只会更细），跑满就是稳定；加保险
+       * 防止病态文档下打转。
+       */
+      let slices: PageSlice[] = firstSlices
+      for (let round = 0; round < 3; round += 1) {
+        const next = computeSectionedSlices(blocks, geoms, measured.totalHeight)
+        const stable =
+          next.length === slices.length &&
+          next.every((sl, i) => Math.abs(sl.start - slices[i]!.start) < 0.5)
+        slices = next
+        if (stable) break
+        fillLineBoxes(blocks, geoms, 1, slices)
+      }
 
       // 按 slice 起点找锚定块，为每个分页点插一个页间隙
       const blockIndex = new BlockIndex(blocks)
+      const pmRect = pm.getBoundingClientRect()
+      const pageLeft = 0 // 单列：纸左边缘就是内容坐标系的原点
+      /**
+       * 每页的页码（1 起）与页眉脚变体选择。
+       *
+       * `pageNumbers()` 处理分节的重新编号与格式（罗马数字等），所以**不要
+       * 用下标 +1 代替**——多节文档的第二节可能从 1 重新开始。
+       */
+      const pageNos = pageNumbers(slices, sections)
+      const hf = headerFooter ?? null
+      const hfFor = (pageIdx: number, kind: 'header' | 'footer'): HeaderFooter | null => {
+        if (!hf) return null
+        // 首页不同（w:titlePg）优先；其次奇偶页（w:evenAndOddHeaders）
+        if (hf.titlePg && pageIdx === 0) {
+          const first = kind === 'header' ? hf.headerFirst : hf.footerFirst
+          // titlePg 下首页没有该部件时**空白**（Word 语义），不回落到默认
+          return first ? toHeaderFooter(first) : null
+        }
+        if (hf.evenAndOdd && (pageNos[pageIdx] ?? 1) % 2 === 0) {
+          const even = kind === 'header' ? hf.headerEven : hf.footerEven
+          if (even) return toHeaderFooter(even)
+        }
+        const def = kind === 'header' ? hf.header : hf.footer
+        return def ? toHeaderFooter(def) : null
+      }
+      /**
+       * 生成某个分页点的页眉脚条带元素。
+       *
+       * 一个分页点要画**两条**：上一页的页脚（间隙上沿）与下一页的页眉
+       * （间隙下沿）——这正是纸与纸之间那两条边的来源。
+       *
+       * `hfKey` 覆盖条带里嵌进去的全部内容（两页的页码文字与总页数）：
+       * 页码变了而元素没重建的话，第二页会显示第一页的页码（上游同样
+       * 用内容签名做 key，注释里记着这个坑）。
+       */
+      function hfPropsFor(page: number): {
+        hfEls?: HTMLElement[]
+        hfKey?: string
+      } {
+        const geom = hfStripGeom(settings)
+        const els: HTMLElement[] = []
+        const total = slices.length
+
+        const prevFooter = hfFor(page - 1, 'footer')
+        if (prevFooter && hfHasVisibleContent(prevFooter)) {
+          els.push(
+            makeGapHfEl({
+              kind: 'footer',
+              value: prevFooter,
+              pageNo: pageNos[page - 1] ?? page,
+              pageTotal: total,
+              geom,
+            }),
+          )
+        }
+        const nextHeader = hfFor(page, 'header')
+        if (nextHeader && hfHasVisibleContent(nextHeader)) {
+          els.push(
+            makeGapHfEl({
+              kind: 'header',
+              value: nextHeader,
+              pageNo: pageNos[page] ?? page + 1,
+              pageTotal: total,
+              geom,
+            }),
+          )
+        }
+        if (els.length === 0) return {}
+        const key = [
+          pageNos[page - 1] ?? page,
+          pageNos[page] ?? page + 1,
+          total,
+          hfText(prevFooter),
+          hfText(nextHeader),
+        ].join('·')
+        return { hfEls: els, hfKey: key }
+      }
+
       const gaps: PageGapSpec[] = []
       for (let page = 1; page < slices.length; page += 1) {
         const slice = slices[page]!
-        const i = blockIndex.firstAtTop(slice.start)
-        const anchor = i >= 0 ? blocks[i] : blockIndex.containing(slice.start)
-        if (!anchor?.el) continue
-
-        // 上一页没用完的空间 + 下一页的上边距 = 间隙高度
         const prev = slices[page - 1]!
+        // 上一页没用完的空间 + 下一页的上边距 = 间隙高度
         const remaining = Math.max(0, contentHeight - (prev.end - prev.start))
+        const metrics = {
+          marginTop: contentTop + remaining,
+          marginBottom: effectiveBottomPx(settings, 0),
+          // 左右边距从 section 读（Word 文档各不相同）。
+          // twips → px 与上游一致：1440 twips = 1 英寸 = 96 px
+          marginLeft: (settings.marginLeft / 1440) * 96,
+          marginRight: (settings.marginRight / 1440) * 96,
+        }
+
+        /**
+         * 先看这个分页点是不是**块内**的（长段落在中间被切开）。
+         *
+         * 判据：切片起点落在某个块内部，而不是某个块的上边缘。
+         * 是的话要在**行边界**插一个行内间隙（`kind: 'inline'`），
+         * 这样段落会像 Word 那样从中间断开，而不是整块推到下一页
+         * ——后者会在长文档里留下大片空白。
+         */
+        const atBlockTop = blockIndex.firstAtTop(slice.start)
+
+        /**
+         * **表格内部的分页点**：走 `kind: 'table'`——它会渲染成一个
+         * `display: table-row` 的间隙行，于是表格的列网格不断（用行内
+         * 间隙会把表格撑坏）。同时把表头行克隆下来重复到下一页顶部。
+         *
+         * 判据：切片起点所在的块里有 `<tr>`。
+         */
+        if (atBlockTop < 0) {
+          const ownerForTable = blockIndex.containing(slice.start)
+          const tableEl = ownerForTable?.el?.querySelector('tr')
+            ? (ownerForTable.el.closest('table') ?? null)
+            : null
+          if (ownerForTable?.el && tableEl) {
+            const cutOff = slice.start - ownerForTable.top - (ownerForTable.spaceBeforePx ?? 0)
+            const elTop = ownerForTable.el.getBoundingClientRect().top
+            // 已插入的间隙行会让后续行的 DOM 偏移整体下移，比较前要扣掉
+            const gapRects = Array.from(ownerForTable.el.querySelectorAll('.page-gap-inline')).map(
+              (g) => g.getBoundingClientRect(),
+            )
+            let cutRow: Element | null = null
+            for (const tr of Array.from(tableEl.querySelectorAll('tr')).filter(
+              (r) => !r.classList.contains('page-repeat-header'),
+            )) {
+              if (tr.classList.contains('page-gap')) continue
+              const trTop = tr.getBoundingClientRect().top
+              const gapsAbove = gapRects.reduce(
+                (acc, g) => (g.top <= trTop ? acc + g.height : acc),
+                0,
+              )
+              const off = trTop - elTop - gapsAbove
+              if (off <= cutOff + 0.5) cutRow = tr
+            }
+            if (cutRow) {
+              let pos: number | undefined
+              try {
+                const $pos = ctx.editor.view.state.doc.resolve(ctx.editor.view.posAtDOM(cutRow, 0))
+                for (let depth = $pos.depth; depth > 0; depth -= 1) {
+                  if ($pos.node(depth).type.name === 'docTableRow') {
+                    pos = $pos.before(depth)
+                    break
+                  }
+                }
+              } catch {
+                pos = undefined
+              }
+              if (pos !== undefined) {
+                /**
+                 * 表头重复：克隆源表头行到下一页顶部。
+                 *
+                 * **优先用引擎给的 `slice.repeatHeader`**（它算准了预留高度），
+                 * 引擎没给时**从块数据自己补**：`tableRows[i].isHeader` 就是
+                 * `w:tblHeader` 的标记，而「有表头标记 + 表格跨页」按 Word 的
+                 * 语义就该重复。
+                 *
+                 * 为什么需要这个兜底：引擎只在 `turnBeforeRow` 真正换页时把
+                 * `repeatH` 传给新页，而分页点落在**行内**（长表格的常见形态）
+                 * 时它走的是 `placeSegments` 分支——那一轮 `placedHeader` 还是
+                 * false，于是 `repeatHeader` 为空。实测症状：46 行的表格跨页了，
+                 * 第二页却从第 24 行直接开始，表头不见了。
+                 */
+                const headerRowsInBlock = (ownerForTable.tableRows ?? []).filter(
+                  (r) => r.isHeader && !r.vMergeContinue,
+                )
+                const headerHeightFromBlock = headerRowsInBlock.reduce(
+                  (acc, r) => acc + r.height,
+                  0,
+                )
+                const repeatSpec =
+                  slice.repeatHeader ??
+                  (headerRowsInBlock.length > 0 && headerHeightFromBlock < contentHeight
+                    ? { top: ownerForTable.top, height: headerHeightFromBlock }
+                    : null)
+
+                let repeatHeaderEls: HTMLElement[] | undefined
+                let repeatHeaderKey: string | undefined
+                if (repeatSpec) {
+                  const srcRows = Array.from(
+                    tableEl.querySelectorAll<HTMLTableRowElement>(':scope > tbody > tr'),
+                  ).filter(
+                    (r) =>
+                      !r.classList.contains('page-gap') &&
+                      !r.classList.contains('page-repeat-header'),
+                  )
+                  const clones: HTMLElement[] = []
+                  let acc = 0
+                  for (const row of srcRows) {
+                    if (acc >= repeatSpec.height - 1.5) break
+                    const clone = row.cloneNode(true) as HTMLElement
+                    clone.classList.add('page-gap-inline', 'page-repeat-header')
+                    clone.setAttribute('contenteditable', 'false')
+                    clones.push(clone)
+                    acc += row.getBoundingClientRect().height
+                  }
+                  if (clones.length > 0) {
+                    repeatHeaderEls = clones
+                    // key 要覆盖克隆的内容：表头文字改了但高度没变时也得重建
+                    repeatHeaderKey = `${clones.length}-${Math.round(repeatSpec.height)}-${clones.map((e) => e.innerHTML).join('§').length}`
+                  }
+                }
+                // 表格列数：跨页间隙行的 colSpan 必须正好覆盖列网格，
+                // 多一列会把无 colgroup 的固定布局表格压成 1px 宽（上游注释）
+                const gridCols = Math.max(
+                  1,
+                  ...Array.from(
+                    tableEl.querySelectorAll<HTMLTableRowElement>(':scope > tbody > tr'),
+                  )
+                    .filter(
+                      (r) =>
+                        !r.classList.contains('page-gap') &&
+                        !r.classList.contains('page-repeat-header'),
+                    )
+                    .map((r) => Array.from(r.cells).reduce((acc, c) => acc + c.colSpan, 0)),
+                )
+                gaps.push({
+                  pos,
+                  kind: 'table',
+                  cols: gridCols,
+                  boundaryY: slice.start,
+                  ...hfPropsFor(page),
+                  metrics: {
+                    ...metrics,
+                    marginBottom: metrics.marginBottom + Math.round(remaining),
+                  },
+                  ...(repeatHeaderEls ? { repeatHeaderEls, repeatHeaderKey } : {}),
+                })
+                continue
+              }
+            }
+          }
+        }
+
+        if (atBlockTop < 0) {
+          const owner = blockIndex.containing(slice.start)
+          if (owner?.el) {
+            // 块内相对 Y（要减掉块自身的 space-before，否则锚点会偏一行）
+            const cutOff = slice.start - owner.top - (owner.spaceBeforePx ?? 0)
+            // 先试精确命中的行，再退到「切口之后的第一行」——
+            // 字体加载导致的重排会让精确匹配差一点点（上游同样有这个回退）
+            const exact = lineStartAnchor(owner.el, cutOff, 1)
+            const anchor: LineAnchor | null = exact ?? nextLineAnchor(owner.el, cutOff, 1)
+            const pos: number | undefined =
+              anchor === null ? undefined : posFromAnchor(ctx.editor.view, anchor)
+            if (pos !== undefined && anchor !== null) {
+              /**
+               * 行内间隙的左右边距要「出血到纸边」：段落有自己的缩进，
+               * 靠 `rect.left - pmRect.left - pageLeft` 折算出它相对纸边的
+               * 偏移，再作为负外边距补上——这样灰带横跨整张纸，而不是
+               * 只盖住段落那一段。
+               */
+              const elRect = anchorElement(anchor)?.getBoundingClientRect()
+              gaps.push({
+                pos,
+                kind: 'inline',
+                boundaryY: slice.start,
+                ...hfPropsFor(page),
+                metrics:
+                  elRect && pmRect
+                    ? {
+                        ...metrics,
+                        marginLeft: elRect.left - pmRect.left - pageLeft,
+                        marginRight: pmRect.right - elRect.right - pageLeft,
+                      }
+                    : metrics,
+              })
+              continue
+            }
+          }
+        }
+
+        // 块边界上的分页点：整块推到下一页
+        const anchor = atBlockTop >= 0 ? blocks[atBlockTop] : blockIndex.containing(slice.start)
+        if (!anchor?.el) continue
         gaps.push({
           el: anchor.el,
           boundaryY: slice.start,
-          metrics: {
-            marginTop: contentTop + remaining,
-            marginBottom: effectiveBottomPx(settings, 0),
-            // 左右边距从 section 读（Word 文档各不相同）。
-            // twips → px 与上游一致：1440 twips = 1 英寸 = 96 px
-            marginLeft: (settings.marginLeft / 1440) * 96,
-            marginRight: (settings.marginRight / 1440) * 96,
-          },
+          metrics,
+          ...hfPropsFor(page),
         })
       }
 
@@ -187,6 +564,17 @@ export function usePagination({
        */
       ;(globalThis as unknown as { __mimirPagination?: unknown }).__mimirPagination = {
         pageCount: slices.length,
+        repeatHeaders: slices.slice(1).map((sl) => sl.repeatHeader ?? null),
+        tableRowCounts: blocks.map((b) => b.tableRows?.length ?? 0).filter((n) => n > 0),
+        // 表头行标记：拆表时引擎靠它决定「下一页要不要重复表头」。
+        // 为 0 说明 measure/fill 阶段没识别出 w:tblHeader
+        headerRowFlags: blocks.flatMap((b) => b.tableRows ?? []).filter((r) => r.isHeader).length,
+        // 表头高度与首行高度：引擎在「表头比整页还高」时会放弃重复
+        headerHeights: blocks
+          .filter((b) => b.tableRows?.length)
+          .map((b) =>
+            (b.tableRows ?? []).filter((r) => r.isHeader).reduce((a, r) => a + r.height, 0),
+          ),
         contentHeight: Math.round(contentHeight),
         totalHeight: Math.round(measured.totalHeight),
         blockCount: blocks.length,
@@ -273,5 +661,5 @@ export function usePagination({
       if (editor) editor.off('update', onUpdate)
       if (!editor?.isDestroyed && editor?.view?.dom) setPageGaps(editor.view, [])
     }
-  }, [editor, scrollRef, containerRef, sections, onPaged])
+  }, [editor, scrollRef, containerRef, sections, headerFooter, onPaged])
 }
