@@ -21,6 +21,14 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@codemirror/autocomplete": "catalog:",
+    "@codemirror/commands": "catalog:",
+    "@codemirror/lang-html": "catalog:",
+    "@codemirror/language": "catalog:",
+    "@codemirror/search": "catalog:",
+    "@codemirror/state": "catalog:",
+    "@codemirror/view": "catalog:",
+    "@lezer/highlight": "catalog:",
     "@tiptap/core": "catalog:",
     "@tiptap/extensions": "catalog:",
     "@tiptap/markdown": "catalog:",
@@ -29,6 +37,9 @@
     "bidi-js": "catalog:",
     "fast-xml-parser": "^5.3.4",
     "jszip": "^3.10.1",
+    "parse5": "catalog:",
+    "pdf-lib": "catalog:",
+    "pdfjs-dist": "catalog:",
     "utif2": "^4.1.0"
   },
   "devDependencies": {

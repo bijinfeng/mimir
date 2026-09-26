@@ -58,6 +58,31 @@ catalog:
   '@tiptap/extension-task-list': ^3.31.3
   '@tiptap/extensions': ^3.31.3
 
+  # ── html 编辑器（D-055，vendored 自 GenOffice 的 apps/html）──
+  # CodeMirror 6 家族必须**同级**：它们共享 @codemirror/state 的单例，
+  # 版本错开会让两个包各自带一份 state，症状是「插件不生效」且不报错
+  '@codemirror/state': ^6.5.2
+  '@codemirror/view': ^6.38.6
+  '@codemirror/commands': ^6.9.0
+  '@codemirror/language': ^6.11.3
+  '@codemirror/search': ^6.5.11
+  '@codemirror/autocomplete': ^6.19.0
+  '@codemirror/lang-html': ^6.4.9
+  '@lezer/highlight': ^1.2.1
+  # HTML 解析（parse-map 用它建「元素 ↔ 源码偏移」的映射）。
+  # 选它是因为上游用同一份——两处解析器不同会让偏移对不上
+  parse5: ^7.3.0
+
+  # ── PDF（D-056）──
+  # 渲染：pdfjs-dist（Apache-2.0）。用它而不是浏览器内置阅读器，是因为
+  # `<iframe>` 里那个阅读器我们控制不了——没法加自己的工具条，也没法与
+  # 编辑功能共存。上游用同一版本族（6.x）。
+  # 体积：legacy build 的 pdf.mjs + worker 约 1MB gzip，只在打开 PDF 时加载。
+  pdfjs-dist: ^6.3.289
+  # 结构写入：pdf-lib（MIT）。页面级操作（旋转/删除/重排/插入）用它，
+  # 纯 JS、浏览器里能跑，不需要 WASM。
+  pdf-lib: ^1.17.1
+
 # 关于 node_modules 里出现的未声明包
 #
 # @vitejs/plugin-react 把三个包列为 optional peer：

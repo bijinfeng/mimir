@@ -58,6 +58,12 @@
     "**/node_modules/**",
     "**/routeTree.gen.ts",
     "**/drizzle/**",
-    "output/**"
+    "output/**",
+    // pdf.js 的运行时资产（D-056）。它们是第三方**构建产物**：cmaps 是
+    // Adobe 的字符集映射表、standard_fonts 是字体、wasm 目录里还有 pdf.js
+    // 自带的 minified JS（quickjs-eval.js）。它们不是一个字的源代码，
+    // 而是「按原始文件名被运行时取用」的数据文件——所以放 public/ 让打包器
+    // 原样复制，也不该被 lint 读一遍
+    "apps/web/public/pdfjs/**"
   ]
 }

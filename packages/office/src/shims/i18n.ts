@@ -51,6 +51,8 @@ const STRINGS: Record<string, string> = {
   'image.resize': '调整大小',
   'image.delete': '删除图片',
   'image.crop': '裁剪',
+  // html 预览（D-055）：预览窗的按钮提示
+  viewPreview: '预览',
 }
 
 /**
@@ -83,6 +85,19 @@ export function t(key: string, params?: Record<string, string | number>): string
 }
 
 /** 与上游 `createI18n` 同签名：给一个字符串表，返回取词函数 */
+/**
+ * React 侧的语言 hook（上游 `i18n/locale.tsx` 的 `useI18n`）。
+ *
+ * **不需要 Provider 也不需要 context**：mimir 只有一种语言（中文），
+ * 上游的 `LocaleProvider` 是为了在 20 种语言之间切。这里直接返回当前模块语言
+ * 与全局 `t`——签名与上游一致（`{ lang, t }`），所以 vendored 代码拿到的形状
+ * 不变，而少一层 context 就少一处「Provider 忘了包」的静默失效
+ * （那种失效的表现是文案永远显示英文默认值）。
+ */
+export function useI18n(): { lang: Lang; t: typeof t } {
+  return { lang: moduleLang, t }
+}
+
 export function createI18n(strings: Record<string, Record<string, string>>) {
   return (key: string, params?: Record<string, string | number>): string => {
     const table = strings[moduleLang] ?? strings.zh ?? {}

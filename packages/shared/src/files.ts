@@ -120,7 +120,17 @@ export function isInlineSafe(mime: string): boolean {
  * **格式族在这里分派，不在组件里判断。** 列表与详情面板都要回答
  * 「这东西能不能看图」，写两处必然有一天不一致（一处说能、一处说不）。
  */
-export type ViewerKind = 'pdf' | 'image' | 'audio' | 'video' | 'office' | 'sheet' | 'deck' | 'none'
+export type ViewerKind =
+  | 'pdf'
+  | 'image'
+  | 'audio'
+  | 'video'
+  | 'office'
+  | 'sheet'
+  | 'deck'
+  /** html：源码 + 预览双栏，可编辑（D-055） */
+  | 'html'
+  | 'none'
 
 /**
  * `office` 是**编辑器**不是只读查看器（`packages/office`）：docx 可在网页里
@@ -133,6 +143,13 @@ export type ViewerKind = 'pdf' | 'image' | 'audio' | 'video' | 'office' | 'sheet
  */
 export function viewerFor(mime: string | null | undefined): ViewerKind {
   const lower = (mime ?? '').toLowerCase()
+  /**
+   * PDF 有自己的渲染器（pdf.js → canvas，D-056）。
+   *
+   * 改之前它靠 `<iframe>` 指向下载端点、用浏览器内置阅读器——那在「只能看」
+   * 的时候是对的（零依赖），但内置阅读器**我们控制不了**：没工具条、拿不到
+   * 页号、没法在页上叠层，而 PDF 的页面操作（旋转/删除/重排）要能指着某一页。
+   */
   if (lower === 'application/pdf') return 'pdf'
   if (lower.startsWith('image/')) return 'image'
   if (lower.startsWith('audio/')) return 'audio'
@@ -149,6 +166,14 @@ export function viewerFor(mime: string | null | undefined): ViewerKind {
   if (lower === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') {
     return 'deck'
   }
+  /*
+    html 有源码 + 预览双栏编辑器（D-055）。
+
+    **注意 `.md` 与 `.txt` 不在这里**：它们没有专用查看器，而按 §5.12 的
+    分派规则「没有查看器但提取出了正文 → 显示正文」——markdown 的正文就是
+    它的原样（甚至更好看），txt 同理。给它们各做一个编辑器是重复的。
+  */
+  if (lower === 'text/html') return 'html'
   return 'none'
 }
 

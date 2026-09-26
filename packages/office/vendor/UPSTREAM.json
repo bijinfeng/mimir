@@ -4,14 +4,16 @@
     "files 是闭包计算结果（从 entries 出发、跳过 skipPackages）——同步时会重新计算并更新。",
     "entries 是人工选的入口：① docx 编辑器（convert/extensions/pagination + 排版度量 + 文档状态）；",
     "② pptx 解析与渲染（parse/placeholder/theme 供解析，build-slide 供渲染）；",
-    "③ pptx 编辑的模型映射（pptx-ops 的 edit-text：编辑器回传的段落 → 模型的 applyEditParagraphs）。",
+    "③ pptx 编辑的模型映射（pptx-ops 的 edit-text）；",
+    "④ html 编辑器：CodeMirror 源码编辑（source/）+ 注入式预览（preview/）+ parse-map（D-055）。",
+    "   界面壳（ribbon/AI/StylePanel）不 vendor —— mimir 用自己的统一外壳。",
     "pptx 的 zip/rels 读写与「一张幻灯片怎么装配出上下文」在 src/pptx-archive.ts、src/pptx.ts、src/pptx-save.ts",
     "（浏览器安全，不含 node: 内建）——上游那几段在 index.ts/zip.ts 里，与写路径耦合。"
   ],
   "upstream": "https://github.com/genspark-ai/genoffice",
   "license": "Apache-2.0",
   "commit": "480548fd55f1be3593ee0d8e316a734751d58309",
-  "syncedAt": "2026-09-26T03:38:27.939Z",
+  "syncedAt": "2026-09-26T11:07:58.865Z",
   "entries": [
     "apps/docs/src/renderer/editor/extensions.ts",
     "apps/docs/src/renderer/editor/convert.ts",
@@ -26,7 +28,11 @@
     "packages/pptx-render/src/build-slide.ts",
     "packages/pptx-render/src/pattern-fills.ts",
     "packages/pptx-ops/src/edit-text.ts",
-    "packages/pptx-ops/src/types.ts"
+    "packages/pptx-ops/src/types.ts",
+    "apps/html/src/renderer/source/SourceEditor.tsx",
+    "apps/html/src/renderer/preview/PreviewFrame.tsx",
+    "apps/html/src/renderer/preview/instrument.ts",
+    "apps/html/src/renderer/preview/inspector-protocol.ts"
   ],
   "skipPackages": [
     "@genoffice/ui",
@@ -116,6 +122,17 @@
     "apps/docs/src/renderer/pagination-types.ts",
     "apps/docs/src/renderer/pagination.ts",
     "apps/docs/src/renderer/phased-content.ts",
+    "apps/html/src/renderer/document/parse-map.ts",
+    "apps/html/src/renderer/document/patch.ts",
+    "apps/html/src/renderer/preview/DraftPreview.tsx",
+    "apps/html/src/renderer/preview/PreviewFrame.tsx",
+    "apps/html/src/renderer/preview/inspector-protocol.ts",
+    "apps/html/src/renderer/preview/instrument.ts",
+    "apps/html/src/renderer/source/SourceEditor.tsx",
+    "apps/html/src/renderer/source/cm-find.ts",
+    "apps/html/src/renderer/source/cm-highlight.ts",
+    "apps/html/src/renderer/source/cm-setup.ts",
+    "apps/html/src/renderer/source/find-target.ts",
     "packages/docx-engine/src/alt-chunk.ts",
     "packages/docx-engine/src/blank.ts",
     "packages/docx-engine/src/byte-stream.ts",
@@ -193,7 +210,8 @@
     "packages/pptx-render/src/preset-geometry.ts",
     "packages/pptx-render/src/render-tree.ts",
     "packages/pptx-render/src/scene3d.ts",
-    "packages/pptx-render/src/text-layout.ts"
+    "packages/pptx-render/src/text-layout.ts",
+    "apps/html/src/renderer/preview/inspector.js"
   ],
   "fixtures": [
     {
@@ -201,5 +219,6 @@
       "to": "apps/docs/tests/pagination-corpus/docx",
       "why": "测试夹具：真实文档（标题/列表/表格/图片/公式/分节符）。保真这件事只有在「有一堆我们没建模的东西」的文档上才测得出来，构造的最小样例测不出"
     }
-  ]
+  ],
+  "extraFiles": ["apps/html/src/renderer/preview/inspector.js"]
 }

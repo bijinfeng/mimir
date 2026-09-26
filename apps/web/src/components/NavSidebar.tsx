@@ -84,6 +84,14 @@ export interface NavSidebarProps {
   onOpenCapture: () => void
   /** 折叠状态由 `_app.tsx` 持有——它要据此改三栏宽度，见那里的注释 */
   collapsed: boolean
+  /**
+   * 是否显示折叠开关。
+   *
+   * 窄屏（≤880px）下为 `false`：那个宽度下折叠是**视口强制的**，点了也不会
+   * 展开（左列宽度由 `@media` 压着）。留一个按不动的开关比没有开关更糟——
+   * 它看起来是坏的。
+   */
+  showToggle?: boolean
   onToggleCollapsed: () => void
 }
 
@@ -95,6 +103,7 @@ export function NavSidebar({
   onOpenPalette,
   onOpenCapture,
   collapsed,
+  showToggle = true,
   onToggleCollapsed,
 }: NavSidebarProps) {
   const { styles } = useStyles()
@@ -192,17 +201,22 @@ export function NavSidebar({
           
           历史返回没有消失：浏览器的后退键仍然可用，`DocumentPanel` 也从
           「从对话来」的标记给出了明确的返回入口。
+
+          **窄屏下整块不渲染**（`showToggle === false`）：那时折叠由视口决定，
+          开关按下去不会有任何变化。顶栏因此只剩品牌标记一项。
         */}
-        <Tooltip title={collapsed ? '展开侧边栏' : '折叠侧边栏'} placement="right">
-          <Button
-            type="text"
-            size="small"
-            aria-label={collapsed ? '展开侧边栏' : '折叠侧边栏'}
-            aria-expanded={!collapsed}
-            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-            onClick={onToggleCollapsed}
-          />
-        </Tooltip>
+        {showToggle ? (
+          <Tooltip title={collapsed ? '展开侧边栏' : '折叠侧边栏'} placement="right">
+            <Button
+              type="text"
+              size="small"
+              aria-label={collapsed ? '展开侧边栏' : '折叠侧边栏'}
+              aria-expanded={!collapsed}
+              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+              onClick={onToggleCollapsed}
+            />
+          </Tooltip>
+        ) : null}
       </div>
 
       <div className={styles.body}>

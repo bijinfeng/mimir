@@ -15,6 +15,8 @@ import { NavSidebar } from '@/components/NavSidebar'
 import { UnsavedGuard } from '@/components/UnsavedGuard'
 import { api } from '@/lib/api'
 import { AppShellContext, type AskDraft } from '@/lib/app-shell-context'
+import { useForcedNavCollapse } from '@/lib/nav-collapse'
+import { NAV_NARROW_QUERY } from '@/theme/tokens'
 
 /**
  * 两栏骨架（pathless layout，D-047）。
@@ -98,8 +100,13 @@ const useStyles = createStyles(({ css, token }) => ({
     }
 
     /* ≤880px：导航强制折叠成图标条，而不是隐藏——隐藏等于断了所有导航。
-       这里写死 48px（与折叠态同宽），展开偏好在此宽度下被压过 */
-    @media (max-width: 880px) {
+       这里写死 48px（与折叠态同宽），展开偏好在此宽度下被压过。
+
+       **查询串来自 tokens.ts**，不在这里写字面量：同一个断点还要在
+       lib/nav-collapse.ts 里用 matchMedia 问一次（栏内的内容怎么渲染由
+       它决定）。两处各写一份的话，改一处漏一处是静默的——网格收窄了而内容
+       还是展开态的形状，症状就是栏里那一堆字被挤成一列竖排。 */
+    @media ${NAV_NARROW_QUERY} {
       grid-template-columns: 48px minmax(0, 1fr);
     }
   `,
@@ -180,7 +187,22 @@ function AppShell() {
    * 每次刷新都弹回去会让人反复去点它——而这个按钮的价值就在于点一次
    * 之后不用再管。用惰性初始化读取，只在挂载时读一次。
    */
-  const [navCollapsed, setNavCollapsed] = useState(() => readNavCollapsed())
+  const [navCollapsedPref, setNavCollapsedPref] = useState(() => readNavCollapsed())
+
+  /**
+   * 窄屏（≤880px）下**强制折叠**，与用户偏好取或。
+   *
+   * 关键在于它不只是改网格宽度（那是 `@media` 已经在做的），而是让
+   * `NavSidebar` **真的按折叠态渲染**。原先两者脱节：CSS 把左列压到 48px，
+   * 而栏内的标签、目录树、品牌名仍按展开态渲染——实测窄屏下「知识库」
+   * 竖成一列、品牌名与折叠开关叠在一起、目录树歪掉。
+   *
+   * 偏好不被覆盖（`navCollapsedPref` 原样保留）：窗口变宽后回到用户选的形态。
+   * 窄屏下那个开关也一并收起——这个宽度下折叠不是可选状态，点了也不会展开，
+   * 留着它只会让人以为按钮坏了。
+   */
+  const narrowViewport = useForcedNavCollapse()
+  const navCollapsed = navCollapsedPref || narrowViewport
 
   const gridClass = navCollapsed ? styles.appCollapsed : styles.app
 
@@ -239,8 +261,12 @@ function AppShell() {
             onOpenPalette={() => setPaletteOpen(true)}
             onOpenCapture={() => setCaptureOpen(true)}
             collapsed={navCollapsed}
+            /* 窄屏下折叠是**视口强制的**，开关跟着收起来：这个宽度里它点了
+               也不会展开（`@media` 与它无关地压着左列宽度），留着只会让人
+               以为按钮坏了 */
+            showToggle={!narrowViewport}
             onToggleCollapsed={() => {
-              setNavCollapsed((collapsed) => {
+              setNavCollapsedPref((collapsed) => {
                 const next = !collapsed
                 writeNavCollapsed(next)
                 return next

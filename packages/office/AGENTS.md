@@ -32,10 +32,14 @@ src/
     shell.css         外壳样式；主题值走 --me-* 自定义属性
     icons.tsx         工具条图标（自绘 SVG，不依赖图标库）
     editor-commands.ts 方言能力检测与调用
-  editors/         **四种编辑器**（docx / xlsx / pptx / markdown）
-    DocxEditor.tsx / XlsxEditor.tsx / PptxEditor.tsx / MarkdownEditor.tsx
-    InlineToolbar.tsx  选区工具条（要编辑器实例，所以在包里）
+  editors/         **六种编辑器**（docx / xlsx / pptx / html / markdown / pdf）
+    DocxEditor.tsx / XlsxEditor.tsx / PptxEditor.tsx
+    HtmlEditor.tsx     源码 + 预览双栏（借 vendored 的 CodeMirror 与点选映射）
+    PdfEditor.tsx      页面级操作（pdf-lib）+ 逐页渲染（pdf.js）
+    MarkdownEditor.tsx / InlineToolbar.tsx
     use-source.ts      取字节 → 解析 → 写回（含「解析结果绑在哪个字节上」）
+    pdf-render.ts      pdf.js → canvas（**代次防并发**，见文件注释）
+    pdfjs-assets.ts    cmaps / 标准字体 / wasm 的路径（宿主 public/ 提供）
     types.ts           EditorIo：宿主提供取与存
   index.ts         对外出口
   shims/i18n.ts          上游 i18n 的等价替代
@@ -46,13 +50,16 @@ scripts/
   trim-editor-css.mjs 从上游整份样式里裁出编辑器需要的部分
 ```
 
-**三种格式三条路**（`docs/TECH.md` §15.7–15.8，D-050 / D-051）：
+**六种格式六条路**（`docs/TECH.md` §15.7–15.12）：
 
-| 格式 | 做法 | 为什么 |
-|---|---|---|
-| docx | vendored 引擎 + 编辑器，**可编辑** | 编辑要求文件能读写回来 |
-| xlsx | 自写网格解析（约 300 行），只读 | 「把表画出来」用不到上游的 Rust 侧车 + Univer |
-| pptx | vendored **解析 / 布局 / 编辑映射**三层，自写 SVG 适配器与保存原语，**可改文字** | 四级继承 + 文字度量 + 160 种预设几何，自己写会错得看不出 |
+| 格式 | 做法 | 保存 | 为什么 |
+|---|---|---|---|
+| docx | vendored 引擎 + 编辑器，**可编辑** | 补丁式 | 编辑要求文件能读写回来 |
+| xlsx | 自写网格解析与补丁写回（约 550 行） | 补丁式 | 「把表画出来、改几个格子」用不到上游的 Rust 侧车 + Univer |
+| pptx | vendored **解析 / 布局 / 编辑映射**，自写 SVG 适配器与保存原语 | 补丁式 | 四级继承 + 文字度量 + 160 种预设几何，自己写会错得看不出 |
+| html | vendored **编辑器本体**（CodeMirror + 点选映射，12 个文件），界面用自己的外壳 | 整体重写（保留 BOM/换行） | 上游那个 app 25924 行，其中 2.6K 与编辑 HTML 有关，其余是办公壳 |
+| markdown | **就是笔记编辑器**（上传 `.md` 即导入为笔记） | 写回正文列 | 正文格式是 mimir 的产品决定 |
+| pdf | pdf.js 渲染 + pdf-lib 页面级操作 | 整体重写 | PDF 是一叠页面指令而非结构化文档；改文字要 PDFium 的 7MB WASM |
 
 ### pptx 保存：`src/pptx-save.ts` 为什么是照搬
 
@@ -211,6 +218,9 @@ node packages/office/scripts/sync-upstream.mjs --from /tmp/genoffice --check  # 
 | **xlsx 行/列增删与公式重算** | 这一版只改**现有格的内容**（不改行列结构、不重算公式）。改了被别的公式引用的格子，那边的显示值要等 Excel 打开才更新 |
 | **pptx 编辑** | **改文字已做**（`src/pptx-save.ts`，补丁式保存）。**run 级格式**（加粗/字号/颜色）与元素位置未做——上游那条路走 `pptx-ops` 的 ops 层 + `setElementFont`，依赖 `index.ts` 的整条写路径。见 TECH §15.9 |
 | **pptx 字体度量** | 用启发式（按字符类别估宽度）——**换行位置**可能与原件略有差别。要精确得接 opentype.js + vendored 字体（docx 那边有） |
+| **pdf 的文字编辑** | 只做页面级（旋转/删除/调序）。改文字要拆内容流 —— 上游那 7062 行在 Electron 主进程里、依赖 `node:fs`/`node:path`，还要 PDFium 的 7MB WASM（TECH §15.12） |
+| **html 的增量预览** | 每敲一个字预览整页重载（滚动位置回顶）。上游也这样，但要做好的话得把改动 patch 进 frame 的 DOM |
+| **html 的点选改样式** | 点选能定位到源码，但**不能改样式**（上游 StylePanel 调 `ops.ts` 的 514 行操作编译器，未接） |
 | **页内分栏** | 多栏文档按单栏排（上游有 `columns` 支持，未接） |
 | **工具栏面窄** | 现有 6 项（加粗/斜体/下划线/删除线/两种列表）。对齐、字号、颜色、表格操作为空 |
 | **列表编号分配** | 新列表沿用文档里已有的 `numId`；新建编号定义要写 `numbering.xml`（上游的 `allocateListNumId` 在 host 侧，未 vendored） |

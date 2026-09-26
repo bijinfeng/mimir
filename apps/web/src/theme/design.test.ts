@@ -16,6 +16,8 @@ import {
   FONT_SANS,
   effectiveTokens,
   mimirDarkTheme,
+  NAV_NARROW_BREAKPOINT,
+  NAV_NARROW_QUERY,
 } from './tokens'
 
 /**
@@ -943,6 +945,42 @@ describe('布局常量', () => {
     // docs/DESIGN.md §5.4：同一条内容在列表里和详情里不该有两种宽度。
     // 页面里出现新的 maxWidth 字面量时，先问它是不是第三种「内容列」。
     expect(CONTENT_WIDTH).toBe(760)
+  })
+
+  /**
+   * 窄屏断点只有一处。
+   *
+   * 它同时决定两件事：外壳的**网格宽度**（`_app.tsx` 的 `@media`）与栏内
+   * **内容怎么渲染**（`lib/nav-collapse.ts` 的 `matchMedia`）。第一版就是
+   * 两处各写各的——网格收到 48px 而栏里仍按展开态渲染，于是中文标签逐字竖排、
+   * 品牌名与折叠开关叠在一起。**不报错，只是全变形了**，而且改的人只会去看
+   * 自己改的那一半。
+   *
+   * 所以查询串从 `tokens.ts` 派生，`_app.tsx` 里不许再出现这个字面量。
+   */
+  it('窄屏断点在 tokens.ts 定义一次（外壳不与它各写一份）', async () => {
+    const { readFile } = await import('node:fs/promises')
+    const { join } = await import('node:path')
+
+    expect(NAV_NARROW_QUERY).toBe(`(max-width: ${NAV_NARROW_BREAKPOINT}px)`)
+
+    const shell = await readFile(join(process.cwd(), 'src/routes/_app.tsx'), 'utf8')
+    // 注释里写「≤880px」是说明，不算重复定义——只查代码里还留着的数字
+    const code = shell
+      .replace(/\/\*[\s\S]*?\*\//g, (block) => block.replace(/[^\n]/g, ' '))
+      .replace(/\/\/.*/g, '')
+    const offenders = code
+      .split('\n')
+      .map((line, index) => [index + 1, line] as const)
+      .filter(([, line]) => line.includes(String(NAV_NARROW_BREAKPOINT)))
+
+    expect(
+      offenders,
+      `断点值又写进了外壳（用 NAV_NARROW_QUERY，否则栏内内容会与网格脱节）：\n${offenders
+        .map(([line, text]) => `_app.tsx:${line}: ${text.trim()}`)
+        .join('\n')}`,
+    ).toEqual([])
+    expect(shell).toContain('NAV_NARROW_QUERY')
   })
 })
 

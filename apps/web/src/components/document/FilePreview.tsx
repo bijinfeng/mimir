@@ -192,31 +192,27 @@ export function FilePreview({
       改动保存回原件后，服务端会重算正文与哈希（TECH §13.9），所以编辑完
       立刻可检索。
     */
-    if (viewer === 'office' || viewer === 'sheet' || viewer === 'deck') {
-      const kind = viewer === 'office' ? 'docx' : viewer === 'sheet' ? 'xlsx' : 'pptx'
+    if (viewer === 'office' || viewer === 'sheet' || viewer === 'deck' || viewer === 'html') {
+      const kind =
+        viewer === 'office'
+          ? 'docx'
+          : viewer === 'sheet'
+            ? 'xlsx'
+            : viewer === 'deck'
+              ? 'pptx'
+              : 'html'
       return <OfficeSourceEditor key={doc.id} doc={doc} kind={kind} onDirtyChange={onDirtyChange} />
     }
 
+    /*
+      PDF 现在也走编辑器（`packages/office` 的 PdfEditor，D-056）：pdf.js 渲染
+      每页到 canvas，pdf-lib 做页面级操作（旋转、删除、重排）。
+
+      它不再用 `<iframe>` 指向下载端点——浏览器内置阅读器我们控制不了，
+      也就没法在它上面做编辑。
+    */
     if (viewer === 'pdf') {
-      return (
-        /*
-         * **不加 `sandbox`，这是有意的。** Chrome 与 Edge 的内置 PDF 阅读器
-         * 在 sandbox 化的 frame 里**根本不渲染**（Firefox 对本地 PDF 的处理也不
-         * 一致）——加上它等于把这一层唯一的功能去掉。而它换来的防护是空的：
-         * 内容是 PDF（由 MIME 判定），服务端发的是 `application/pdf` +
-         * `X-Content-Type-Options: nosniff`，跨源脚本进不来（同源是真的，
-         * 但同源不等于能执行任意脚本——PDF 阅读器是浏览器自己的沙箱）。
-         *
-         * 参考：`<img>` / `<video>` 那两个也一样，它们本来就没有脚本执行环境。
-         */
-        // oxlint-disable-next-line react/iframe-missing-sandbox -- 见上：sandbox 会让 PDF 阅读器整块失效
-        <iframe
-          className={styles.frame}
-          src={url}
-          title={doc.title}
-          onError={() => setFailedFor(doc.id)}
-        />
-      )
+      return <OfficeSourceEditor key={doc.id} doc={doc} kind="pdf" onDirtyChange={onDirtyChange} />
     }
 
     if (viewer === 'image') {

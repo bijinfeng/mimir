@@ -262,3 +262,99 @@
   outline: 2px solid var(--me-accent, #1677ff);
   outline-offset: 1px;
 }
+
+/* ── html：源码 + 预览分栏 ─────────────────────────────────────── */
+
+/*
+ * 左右分栏。**两边都要能滚**，且都占满高度——HTML 的源码与渲染结果长度通常
+ * 不同，让容器统一滚动会让其中一边的工具栏滑出视野。
+ */
+.mimir-html-split {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.mimir-html-source {
+  flex: 1 1 50%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-right: 1px solid var(--me-border, #d9d9d9);
+}
+
+/* CodeMirror 自己的滚动容器。高度由宿主给，它只管铺满 */
+.mimir-html-cm {
+  height: 100%;
+}
+
+.mimir-html-cm .cm-editor {
+  height: 100%;
+  font-family: var(--me-font-mono, monospace);
+  font-size: var(--me-font-size-sm, 12px);
+}
+
+.mimir-html-cm .cm-scroller {
+  overflow: auto;
+  font-family: inherit;
+}
+
+/* 查找高亮（`source/cm-find.ts` 里的两个类名，配色由我们给） */
+.mimir-html-cm .search-hit {
+  background: var(--me-accent-bg, #e6f4ff);
+}
+
+.mimir-html-cm .search-hit-active {
+  background: var(--me-accent, #1677ff);
+  color: #fff;
+}
+
+/*
+ * 预览。白底（页面默认就是白的，跟着深色主题走会让「这个页面长什么样」
+ * 失真——浏览器里看网页也不会因为系统是深色就把白底换成黑的）。
+ */
+.mimir-html-preview {
+  flex: 1 1 50%;
+  min-width: 0;
+  border: none;
+  background: #fff;
+}
+
+/* 窄屏：上下叠放。左右分栏在 700px 左右时两边都只剩一条，谁都看不清 */
+@media (max-width: 1100px) {
+  .mimir-html-split {
+    flex-direction: column;
+  }
+
+  .mimir-html-source {
+    border-right: none;
+    border-bottom: 1px solid var(--me-border, #d9d9d9);
+  }
+}
+
+/* ── pdf：页面画布 ─────────────────────────────────────────────── */
+
+/*
+ * 工作台：页面居中、底色比内容底暗一档（与 pptx 的舞台同一个判断——
+ * 纸是白的，工作台要能区分出来）。
+ */
+.mimir-pdf-stage {
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+  background: var(--me-stage-bg, #f5f5f5);
+}
+
+/*
+ * 页面本身。**白底固定**（与 html 预览同一条理由）：PDF 的页面就是白纸，
+ * 跟着深色主题走会让「这份 PDF 长什么样」失真——而 PDF 常常是要打印的。
+ *
+ * `box-shadow` 而不是描边：描边是结构线，而这里要的是「一张纸浮在工作台上」。
+ */
+.mimir-pdf-page {
+  max-width: 100%;
+  box-shadow: var(--me-shadow, 0 2px 10px rgb(0 0 0 / 12%));
+  background: #fff;
+  /* 页面上的文字是画进 canvas 的，选不中——那与 pptx 的 SVG 不同，
+     这里如实接受（要可选文字得再叠一层文本层，本版没做） */
+}

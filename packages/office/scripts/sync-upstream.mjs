@@ -54,6 +54,20 @@ const manifestPath = join(pkgRoot, 'vendor/UPSTREAM.json')
 const MANIFEST = JSON.parse(await readFile(manifestPath, 'utf8'))
 
 /**
+ * 闭包**之外**还要抽取的文件（`UPSTREAM.json` 的 `extraFiles`）。
+ *
+ * 闭包是顺着 import 图算出来的，而有一类文件不在那张图上：被 `?raw` 注入的
+ * 脚本——html 预览的 `inspector.js`（上游在 App.tsx 里
+ * `import inspectorSource from './preview/inspector.js?raw'`，而 `?raw` 不是
+ * 模块解析，闭包抓不到）。
+ *
+ * 它们是**资产**不是模块：照样复制、照样加横幅，只是不作为入口参与闭包计算。
+ * 清单放 `UPSTREAM.json` 而不是写死在这里——它是「我们 vendored 了什么」的
+ * 一部分，后人看清单就该知道，不必读脚本。
+ */
+const EXTRA_FILES = MANIFEST.extraFiles ?? []
+
+/**
  * 同步时机械应用的 import 改写。
  *
  * 这些是**可重复的**，所以不属于「手工修改」：vendored 代码原本引用
@@ -79,19 +93,21 @@ const REWRITES = [
   },
   {
     /**
-     * `@genoffice/ui` 里的 WordArt 预设 → `src/shims/wordart-presets.ts`。
+     * `@genoffice/ui` → `src/shims/ui.ts`（WordArt 预设 + `Find*` 类型）。
      *
-     * 这是**唯一**真正被 vendored 代码用到的 ui 导出（`protected-render.ts`
-     * 拿它渲染 docx 里已有的 WordArt）。其余 ui 导出都是办公壳的界面组件，
-     * mimir 不用——为两个纯数据符号拉进 26 个文件（含 13 个 React 组件）
-     * 不划算，也会触发 React Compiler 告警。
+     * vendored 代码对 ui 包的引用**全部是数据或类型**，没有一处要它的组件：
+     * `protected-render.ts` 拿 WordArt 预设渲染 docx 里已有的艺术字；html 的
+     * 源码编辑器要 `FindTarget` / `FindOptions` 两个类型（运行时被擦除，见
+     * 那个 shim 的说明）。而整个 ui 包是 26 个文件、13 个 React 组件——
+     * 为这几个符号拉进来不划算，也会触发 React Compiler 告警。
      *
-     * 只替这一个子路径，不代表 ui 包整体可用：其它 `@genoffice/ui` 导入
-     * 仍然是断链（那种文件不该在闭包里，见 self-check）。
+     * 其它 `@genoffice/ui` 导出仍然是断链（self-check 会拦下：那种文件不该
+     * 在闭包里）。
      */
     match: /from\s+['"]@genoffice\/ui(?:\/wordart-presets)?['"]/g,
-    to: '../src/shims/wordart-presets.js',
-    reason: '只需要 WordArt 预设（纯数据），不为两个符号 vendor 整个 UI kit',
+    to: '../src/shims/ui.js',
+    reason:
+      '只借了 ui 包的两样东西（WordArt 预设有数据、Find* 是纯类型），由 shims/ui.ts 承接；不为它们 vendor 整个 UI kit',
   },
   {
     /**
@@ -384,6 +400,12 @@ async function main() {
     console.log(
       `跳过 ${skipping.length} 处对 ${MANIFEST.skipPackages.join('/')} 的引用（由 shims 承接）`,
     )
+  }
+
+  // 资产文件并进清单：它们同样要复制、要参与差异检测（少了这一步，
+  // inspector.js 改了不会被发现，而 html 预览会静默用旧脚本）
+  for (const extra of EXTRA_FILES) {
+    if (!files.includes(extra)) files.push(extra)
   }
 
   const declared = new Set(MANIFEST.files)

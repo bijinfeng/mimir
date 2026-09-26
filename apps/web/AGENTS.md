@@ -161,6 +161,11 @@ API 客户端在 `lib/api.ts`。三条约定：
 （txt / csv / 旧版 doc）→ 正文；两个都没有 → 说明卡片 + 下载。
 用 `viewerFor` 分派，不要自己判 MIME——两处各判一次必然有一天不一致。
 
+**六种格式的编辑器都走 `OfficeSourceEditor`**（docx / xlsx / pptx / html /
+pdf；markdown 是笔记，走 `NoteEditor`）。它是宿主的适配层，只做两件事：
+包 `EditorIo`（取字节 / 写回）、铺主题变量。**加第七种格式时不要新建组件**
+——在 `viewerFor` 加一个 kind、在 `OfficeSourceEditor` 加一个分支就是全部改动。
+
 **提取结果没有消失**：它仍然可搜、可被 AI 引用。那是它真正的用途，
 不需要在详情里再占一层。
 
@@ -175,10 +180,14 @@ API 客户端在 `lib/api.ts`。三条约定：
    渲染得了）。空白在那里等于说「这个文件是空的」
 4. **文本类文件的正文用等宽只读，不走 Markdown**。csv / json 里的换行与 `#`
    会被 Markdown 渲染折叠或当成标题——那是主动把内容显示错
-5. **Office 三种格式走同一个组件**（`OfficeSourceEditor`）：差别在
+5. **所有能编辑的格式走同一个组件**（`OfficeSourceEditor`）：差别在
    `packages/office` 内部（解析与保存路径），宿主只负责取字节与写回。
-   分三个分支的话，每个分支都要各自记得传 `onDirtyChange`——漏一个就是
+   分多个分支的话，每个分支都要各自记得传 `onDirtyChange`——漏一个就是
    丢改动的路径
+6. **PDF 的资产在 `public/pdfjs/`，不要在别处引**：pdf.js 按**原始文件名**
+   取 cmap（`cmaps/Adobe-GB1-0.bcmap`），所以那些文件必须被原样复制、不改名。
+   `public/` 是唯一这样的位置。挪走或改成打包器哈希 URL 的症状是**中文 PDF
+   整段文字空白**（不是乱码），而它不报错（TECH §15.12）
 
 查看器只用浏览器自带能力（`<iframe>` / `<img>` / `<audio>` / `<video>`）：
 pdf.js 那 1MB 换来的是一致外观，而「PDF 批注」这个需求还没出现

@@ -16,3 +16,29 @@ declare module '*.css' {
   const css: unknown
   export default css
 }
+
+/**
+ * `?raw` 导入：把文件读成字符串。
+ *
+ * 这不是 Vite 专有的——Rollup / webpack / esbuild 都有同样的约定，而我们
+ * 只用它引一类东西：**要原样塞进别处的脚本**（html 预览的检视脚本
+ * `inspector.js`，它必须作为字符串注入 `<iframe>` 的文档里，不能作为模块
+ * 被求值）。
+ *
+ * 类型是 `string` 而不是 `unknown`：那种用法里就是要拼字符串。
+ */
+declare module '*?raw' {
+  const content: string
+  export default content
+}
+
+/**
+ * `?url` 导入：拿到这个文件的**产物 URL**（不是内容）。
+ *
+ * 用于必须交给运行时按 URL 取的东西——pdf.js 的 worker（浏览器按 URL 启动它）
+ * 与它的资产目录。打包器负责把文件复制进产物并给出可访问的路径。
+ */
+declare module '*?url' {
+  const url: string
+  export default url
+}

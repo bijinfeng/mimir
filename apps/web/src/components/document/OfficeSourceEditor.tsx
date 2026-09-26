@@ -1,7 +1,7 @@
 import type { DocumentDetail } from '@mimir/shared'
 import { useCallback, useMemo } from 'react'
 import type { EditorIo } from '@mimir/office'
-import { DocxEditor, PptxEditor, XlsxEditor } from '@mimir/office'
+import { DocxEditor, HtmlEditor, PdfEditor, PptxEditor, XlsxEditor } from '@mimir/office'
 import { useEditorThemeVars } from '@/theme/editor-theme-bridge'
 import { api } from '@/lib/api'
 
@@ -29,7 +29,7 @@ export function OfficeSourceEditor({
   onDirtyChange,
 }: {
   doc: DocumentDetail
-  kind: 'docx' | 'xlsx' | 'pptx'
+  kind: 'docx' | 'xlsx' | 'pptx' | 'html' | 'pdf'
   onDirtyChange?: (dirty: boolean) => void
 }) {
   const { styles: themeVars } = useEditorThemeVars()
@@ -75,6 +75,10 @@ export function OfficeSourceEditor({
       <DocxEditor key={doc.id} flush {...props} />
     ) : kind === 'xlsx' ? (
       <XlsxEditor key={doc.id} flush {...props} />
+    ) : kind === 'html' ? (
+      <HtmlEditor key={doc.id} flush {...props} />
+    ) : kind === 'pdf' ? (
+      <PdfEditor key={doc.id} flush {...props} />
     ) : (
       <PptxEditor key={doc.id} flush {...props} />
     )

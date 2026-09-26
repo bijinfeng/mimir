@@ -99,6 +99,8 @@ export { DocxEditor } from './editors/DocxEditor.js'
 export { XlsxEditor } from './editors/XlsxEditor.js'
 export { PptxEditor } from './editors/PptxEditor.js'
 export { MarkdownEditor, type MarkdownEditorProps } from './editors/MarkdownEditor.js'
+export { HtmlEditor } from './editors/HtmlEditor.js'
+export { PdfEditor } from './editors/PdfEditor.js'
 export {
   hasCommand,
   hasMark,

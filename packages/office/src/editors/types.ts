@@ -33,6 +33,8 @@ export const OFFICE_MIME = {
   docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  html: 'text/html',
+  pdf: 'application/pdf',
 } as const
 
 export interface EditorProps {

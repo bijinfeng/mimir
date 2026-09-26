@@ -255,6 +255,28 @@ export const NAV_ITEM_HEIGHT = 30
 export const NAV_ITEM_MARGIN = 6
 
 /**
+ * 窄屏断点：≤880px 时左导航**强制折叠**成 48px 图标条（`docs/DESIGN.md` §5.5）。
+ *
+ * ## 为什么它必须是一个共享的查询串，而不是各写各的
+ *
+ * 这个断点要在两处生效：
+ *
+ *  1. **外壳的网格**（`routes/_app.tsx` 的 `@media`）——决定左列多宽
+ *  2. **`matchMedia`**（`lib/nav-collapse.ts`）——决定栏内**内容**怎么渲染
+ *
+ * 第二处容易被漏掉，因为只改网格「看起来也能跑」：容器确实收成了 48px，
+ * 而栏里的标签、目录树、品牌名是 React 渲染的，它们挤在一个图标条的宽度里
+ * 逐字换行——实测「知识库」竖成一列、品牌名与折叠开关叠在一起、目录树整块
+ * 歪掉。**不报错，只是全变形了**。
+ *
+ * 分成两份（CSS 写 880px、JS 写 880）也能跑，改一处漏一处同样是静默的：
+ * 界面只是「挤」而不是「崩」。所以两边共用这一个查询串——它们在物理上
+ * 无法分开，`design.test.ts` 有一条守着 `_app.tsx` 里不再出现 880 字面量。
+ */
+export const NAV_NARROW_BREAKPOINT = 880
+export const NAV_NARROW_QUERY = `(max-width: ${NAV_NARROW_BREAKPOINT}px)`
+
+/**
  * 字号阶梯 —— **唯一的一份**。
  *
  * ## 为什么需要它

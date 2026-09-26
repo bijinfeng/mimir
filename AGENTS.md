@@ -120,8 +120,12 @@ SQLite 路径同理：FTS5 的 `unicode61` 分词器也不认中文词边界，�
 | 中文搜不到 | 缺了 jieba 预分词，或 `new Jieba()` 没带词典（会退化成逐字切分）；SQLite 下还可能是 FTS5 触发器被绕过、索引落后于表（`pnpm db:reindex` 重建） |
 | 编辑器只有内容高、下面一大片空白 | 高度链缺了一环。整条链是 `scroll(min-height:0)` → `cols(min-height:100%)` → `innerWide(align-self:stretch)` → 主题变量层(`flex:1;min-height:0`) → `.mimir-editor(flex:1)`。实测断过两次：`cols` 的 `align-items: flex-start`、主题变量那一层是默认 `block` |
 | 工具条不粘（滚走了） | `.mimir-editor` 用了 `overflow: hidden`——它会让元素成为滚动容器，里面的 `sticky` 相对它定位而它与内容同高。要用 `overflow: clip` |
+| **小屏幕下侧边栏被压缩变形** | 同一个断点（880px）被写了两份：外壳的 `@media` 把左列压到 48px，而栏内内容仍按折叠偏好渲染成展开态——中文标签逐字竖排、品牌名与开关叠在一起（实测 `scrollWidth` 129 对 `clientWidth` 47）。断点只在 `theme/tokens.ts` 定义（`NAV_NARROW_QUERY`），CSS 与 `lib/nav-collapse.ts` 的 `matchMedia` 共用它（DESIGN §5.5 / D-055） |
 | 改了单元格、保存也成功，界面上还是旧值 | `setCell` 只改了 XML 没改内存模型，而界面读模型（`view()`）。文件是对的，所以只有对着界面看才发现（TECH §15.7） |
 | 编辑器标题字号不对（38px 或 28px） | 前者是 antd `Typography.Title` 的自带规则特异性更高；后者是抬了特异性之后纯 `<h1>` 又匹配不上、回落到浏览器默认 2em。两个分支都要用 `Typography.Title` |
+| 中文 PDF 整段文字空白（不是乱码） | pdf.js 的 cmaps 没加载到。它按**原始文件名**取（`cmaps/Adobe-GB1-0.bcmap`），所以资产必须放 `apps/web/public/pdfjs/`（原样复制、不改名）——带哈希的产物目录里没有那些名字，404 之后内容就是空白（TECH §15.12） |
+| PDF 界面全白且无报错 | 并发渲染。第一版用「取消上一次」防并发，而 StrictMode 挂载两次会让两次都没画。要用**代次**（`pdf-render.ts`） |
+| 预览过一次之后保存的 PDF 是 0 字节 | `getDocument` 把字节 transfer 给 worker 了。要传 `bytes.slice()` |
 | 删了会话/文档但关联记录还在 | SQLite 默认**关闭**外键，CASCADE 静默失效——连接时必须显式 `PRAGMA foreign_keys = ON`（`db/client.ts` 已做，别在新连接里漏） |
 | 原先连 Postgres 的环境「数据全空」 | `DATABASE_URL` 没设，默认换到了 SQLite 空库（`data/mimir.db`）——部署环境要显式设置；启动日志打印当前驱动与库位置 |
 | 组件没变快 | React Compiler 静默跳过了（抑制了 React 规则，或 ref 声明晚于使用它的 effect） |
@@ -180,6 +184,7 @@ SQLite 路径同理：FTS5 的 `unicode61` 分词器也不认中文词边界，�
 | 前端 | 两栏界面（D-047）：导航 + 主区（库视图 / 详情两态）、会话导航、对话视图、命令面板、抓取对话框、设置页。**四种编辑器共用一套外壳**（D-054：上工具条 / 中编辑区 / 下状态行，铺满容器，头部单行） |
 | 桌面端 | **Electron 载体**（D-046）：窗口加载宿主的地址（cookie / SSE / Range 原生可用），可切远程地址 |
 | 文件 | **多格式上传已落地**（`docs/TECH.md` §13、D-044）：任意格式的原件入库、列表、按格式预览、下载、替换、随导出打包；文本 / HTML / Office 的正文可搜。**PDF 的正文提取**与 RSS 未做 |
+| 六种格式 | **GenOffice 支持的六种都能预览与编辑**（D-056 / D-057）：docx 全文、xlsx 单元格、pptx 文字、html 源码、markdown（即笔记）、pdf 页面级（旋转/删除/调序）。PDF 的**改文字**未做——那要 PDFium 的 WASM，见 TECH §15.12 |
 | Office | 三种格式的原件层都能看、**都能改**：**docx 全文编辑**（分页视图 + 工具栏；D-049）、**pptx 改文字**（渲成 SVG；D-051/D-052）、**xlsx 改单元格**（D-050/D-053）。三者保存都是**补丁式**（改一处不重排整篇 XML）。**界面在包里**（`packages/office/src/shell` + `src/editors`），markdown 笔记与它们同壳（D-054） |
 | 下一步 | 见 `docs/TECH.md` §11（M1：分块与向量化 → 混合检索 → 带引用的问答） |
 

@@ -27,6 +27,14 @@ const MIME: Record<string, string> = {
   '.ico': 'image/x-icon',
   '.woff2': 'font/woff2',
   '.map': 'application/json; charset=utf-8',
+  /*
+    pdf.js 的资产（D-056）。三个都在它按**原始文件名**取的目录里，
+    所以扩展名不能漏——漏了会被当成没有 MIME 的文件，而 pdf.js 那边
+    表现为「cmap 加载失败」（中文 PDF 变空白，不报错）。
+  */
+  '.bcmap': 'application/octet-stream',
+  '.pfb': 'application/octet-stream',
+  '.wasm': 'application/wasm',
 }
 
 /**
