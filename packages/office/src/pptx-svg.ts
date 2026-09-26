@@ -485,8 +485,28 @@ function shapeNode(node: ShapeRenderNode): { defs: string; body: string } {
 
   // 形状自带的文字画在几何之上（PowerPoint 的 z 序就是这样）
   const text = textLayout(node.text, 0, 0)
-  const body = `<g transform="translate(${n(x)} ${n(y)})">${shape}${text}</g>`
+  const body = `<g ${elementTag(node)} transform="translate(${n(x)} ${n(y)})">${shape}${text}</g>`
   return { defs, body }
+}
+
+/**
+ * 元素的身份标签：`data-element-id` + `data-element-kind`。
+ *
+ * ## 为什么渲染器要输出它
+ *
+ * 编辑器要回答「用户点的是哪个元素」，而 SVG 是字符串注入的——React 那边
+ * 拿不到节点引用。所以把身份写进 DOM，界面用事件代理
+ * （`closest('[data-element-id]')`）取回来。
+ *
+ * 这个属性是**给交互层用的契约**，不是装饰：改名会让点选静默失效
+ * （点上去没反应，像是「这个元素不能编辑」）。`pptx-save.test.ts` 有一条
+ * 断言守它。
+ *
+ * `sourceId` 是上游给渲染节点的**源元素 id**，与 `Slide.elements[].id` 同一个
+ * 命名空间——保存时的脏标记与 `setText` 都是按它找元素的。
+ */
+function elementTag(node: RenderNode): string {
+  return `data-element-id="${attr(node.sourceId)}" data-element-kind="${attr(node.type)}"`
 }
 
 /** 旋转/翻转变换。OOXML 的 rot 绕**框中心**顺时针（与 CSS 一致） */
@@ -598,7 +618,7 @@ function pictureNode(node: PictureRenderNode): { defs: string; body: string } {
   const wrap = t ? ` transform="${t}"` : ''
   return {
     defs,
-    body: `<g${wrap}><g transform="translate(${n(x)} ${n(y)})">${parts.join('')}</g></g>`,
+    body: `<g ${elementTag(node)}${wrap}><g transform="translate(${n(x)} ${n(y)})">${parts.join('')}</g></g>`,
   }
 }
 
@@ -607,7 +627,7 @@ function groupNode(node: GroupRenderNode): { defs: string; body: string } {
   const inner = renderNodes(node.children)
   return {
     defs: inner.defs,
-    body: `<g transform="translate(${n(node.box.x)} ${n(node.box.y)})">${inner.body}</g>`,
+    body: `<g ${elementTag(node)} transform="translate(${n(node.box.x)} ${n(node.box.y)})">${inner.body}</g>`,
   }
 }
 
@@ -662,7 +682,7 @@ function tableNode(node: TableRenderNode): { defs: string; body: string } {
 
   return {
     defs,
-    body: `<g transform="translate(${n(node.box.x)} ${n(node.box.y)})">${parts.join('')}</g>`,
+    body: `<g ${elementTag(node)} transform="translate(${n(node.box.x)} ${n(node.box.y)})">${parts.join('')}</g>`,
   }
 }
 
@@ -798,7 +818,7 @@ function chartNode(node: ChartRenderNode): { defs: string; body: string } {
 
   return {
     defs,
-    body: `<g transform="translate(${n(node.box.x)} ${n(node.box.y)})">${parts.join('')}</g>`,
+    body: `<g ${elementTag(node)} transform="translate(${n(node.box.x)} ${n(node.box.y)})">${parts.join('')}</g>`,
   }
 }
 
@@ -806,7 +826,7 @@ function chartNode(node: ChartRenderNode): { defs: string; body: string } {
 function chipNode(node: ChipRenderNode): string {
   const { x, y, w, h } = node.box
   return (
-    `<g transform="translate(${n(x)} ${n(y)})">` +
+    `<g ${elementTag(node)} transform="translate(${n(x)} ${n(y)})">` +
     `<rect width="${n(w)}" height="${n(h)}" fill="rgba(128,128,128,0.10)" ` +
     `stroke="rgba(128,128,128,0.30)" stroke-dasharray="4 4" rx="4"/>` +
     `<text x="${n(w / 2)}" y="${n(h / 2)}" text-anchor="middle" dominant-baseline="middle" ` +

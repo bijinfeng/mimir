@@ -2094,13 +2094,13 @@ measureBlocks（量每个块的几何）
 「看着像没分页」，排查时只能靠诊断出口（`window.__mimirPagination` /
 `window.__mimirPagError`，专门为此留在代码里）。
 
-### 15.7 能力边界与未做项（2026-09 审计，xlsx 与 pptx 预览已补）
+### 15.7 能力边界与未做项（2026-09 审计）
 
 | 格式 | 预览 | 编辑 | 说明 |
 |---|---|---|---|
-| **docx** | ✓ **完整分页视图**（块内断行、拆表、页眉脚、脚注） | ✓ 浏览器内 | |
+| **docx** | ✓ **完整分页视图**（块内断行、拆表、页眉脚、脚注） | ✓ 浏览器内（`packages/office/src/docx.ts`） | |
 | **xlsx** | ✓ **只读网格**（`packages/office/src/xlsx.ts`），多表页签、合并单元格、行号栏 | ✗ | 见下 |
-| **pptx** | ✓ **只读幻灯片**（渲染成 SVG），页签翻页、版式继承、图片、图表、SmartArt 预渲染 | ✗ | 见下 |
+| **pptx** | ✓ **幻灯片**（渲染成 SVG），页签翻页、版式继承、图片、图表、SmartArt 预渲染 | ✓ **改文字**（`packages/office/src/pptx-save.ts`，补丁式保存） | 见 §15.8 |
 | **pdf** | ✓ 浏览器自带阅读器 | ✗（M2 批注） | 正文提取未做 |
 
 **xlsx 预览是怎么做出来的（以及为什么不需要 Rust 侧车）**：上游的 xlsx 路线
@@ -2153,8 +2153,10 @@ pptx 却 vendored 了上游 136 个文件（含 31 个新文件 / 约 23.5K 行�
 ```
 vendor/packages/pptx-engine/   解析：zip → Slide 元素树（继承已解析成最终值）
 vendor/packages/pptx-render/   布局：Slide → RenderSlide（纯数据的绘制列表）
-src/pptx-archive.ts            读 zip / rels / 媒体（浏览器安全，无 node: 内建）
-src/pptx.ts                    装配每张幻灯片的解析上下文（版式/母版/主题上溯）
+vendor/packages/pptx-ops/      编辑映射：编辑器回传的段落 → 模型（applyEditParagraphs）
+src/pptx-archive.ts            读写 zip / rels / 媒体（浏览器安全，无 node: 内建）
+src/pptx.ts                    装配解析上下文 + 编辑会话（openPptxForEdit）
+src/pptx-save.ts               保存：元素补丁回字节（patchSlideXml / buildPptxBytes）
 src/pptx-svg.ts                RenderSlide → SVG（**我们写的**，替换上游的 Konva 适配器）
 ```
 
@@ -2183,13 +2185,54 @@ MIT/171KB）。上游的另一个依赖 `opentype.js` **没有被拉进来**—�
 （**内阴影不画**——SVG 做不出 OOXML 的内阴影语义，少画一层比画一层错的好）、
 动画不播、SmartArt / OLE 有预渲染图形的画出来没有的显示占位块。
 
+### 15.9 pptx 编辑：补丁式保存，改文字不动格式
+
+**能编辑什么**：幻灯片的**文字**（改内容、增删段落）。元素的颜色、字号、
+位置、动画仍要在原件里改（下载 → 改 → 传回，§5.12 的替换原件）。
+
+**怎么做到「改一行字不重排整篇 XML」**：与 docx 同一条思路（§15.2），
+但机制不同——pptx 是**按元素锚点**：
+
+```
+解析时：每个元素记下 anchor.originalXml（它在 slideN.xml 里的原始字节切片）
+编辑时：只标脏被改的元素（el.dirty = true）
+保存时：patchSlideXml = bodyPrefix + Σ(脏元素→重新生成 | 干净元素→原字节) + bodySuffix
+```
+
+实测（`src/pptx-save.test.ts`，13 条）：
+
+| 场景 | 结果 |
+|---|---|
+| 打开后直接保存（上游 5 页 / 47 条目的夹具） | **每个条目逐字节相同** |
+| 改第 1 页一段文字 | **只有 `ppt/slides/slide1.xml` 变化**，其余 46 个条目字节相同（含媒体——重压缩会让每个字节都变） |
+| 改带格式的文字 | 两个 `<a:rPr>` 块**逐字比对完全相同**（加粗/字号/颜色/字体都还在），只有 `<a:t>` 的内容变了 |
+
+**改格式为什么能保住**：`applyEditParagraphs`（vendored 的
+`pptx-ops/src/edit-text.ts`）按 `srcPara` / `srcRun` 把编辑器回传的段落
+回溯到**原始 run**，用 `...oldRun` 展开继承未被编辑的属性；而
+`patchTextElementXml` 在 run 数对齐时**逐个 run 原地改** `rPr` 上的属性，
+不重建节点。
+
+**四条实测踩过的坑**：
+
+| 症状 | 原因 |
+|---|---|
+| 包里凭空多出十几个目录条目 | JSZip 默认给每个条目的父目录补目录条目（`ppt/slides/` 这种），而 PowerPoint 与 python-pptx 写的包里没有。`createFolders: false` 是保真要求 |
+| 第二次保存把第一次的改动**悄悄回滚** | 保存后没把新 XML 烧回元素锚点，下次 `patchedElementXml` 拿旧锚点拼字节——没改的元素回填的是**旧**字节。所以 `save()` 成功后必须 `commit()`（`commitSaved`） |
+| 编辑后画布不更新 | 编辑是**就地**改模型的（`slides()` 返回同一个数组），React 的 `useMemo` 依赖它不会重算。解法是 `view()` 返回**不可变快照**（没改动时同一对象、改动后新对象），让依赖是诚实的 |
+| 点画布没反应 | 渲染出的 SVG 必须带 `data-element-id`（事件代理靠它把点击映射回模型元素）。改名或漏掉是静默的——看起来像「这个元素不能编辑」 |
+
+**会话的 `version()`→`view()` 与 `commit()` 是契约不是细节**：跳过
+`commit()` 的调用方会在第二次保存时丢数据，而两次保存都「成功」。
+
 **docx 编辑器仍未做的三项**（都在 `packages/office/AGENTS.md` 里）：页内分栏（多栏文档按单栏排）、工具栏的面窄（只有 6 项格式）、列表编号的新建分配（沿用已有 numId）。
 
-**仍未做的**：三种格式的**编辑**（xlsx 要公式引擎与表格模型，pptx 要写回
-路径）。xlsx 另有条件格式、图表、数据透视、日期还原；pptx 另有动画播放
-与精确字体度量。
+**仍未做的**：**xlsx 的编辑**（要公式引擎与电子表格模型，成本另算）；
+pptx 的 run 级格式编辑（加粗/字号/颜色——上游那条路走 `pptx-ops` 的 ops
+层 + `setElementFont`，需要 `index.ts` 的整条写路径）、动画播放、精确字体度量；
+docx 的三项见上。xlsx 另有条件格式、图表、数据透视、日期还原。
 
 **一条容易误解的地方**：三种格式的**正文层都是可读的**（提取成 Markdown
-表格/分页文本，能搜、能被 AI 引用），而**原件层**现在也都能看了——两层
-回答的是不同问题（正文层「它讲了什么」，原件层「它原样长什么样」）。这个
-区分见 §13.1。
+表格/分页文本，能搜、能被 AI 引用），而**原件层**现在也都能看、docx 与
+pptx 还能改——两层回答的是不同问题（正文层「它讲了什么」，原件层「它原样
+长什么样」）。这个区分见 §13.1。

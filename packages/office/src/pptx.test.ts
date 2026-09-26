@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { openPptx } from './pptx.js'
+import type { Slide } from '../vendor/packages/pptx-engine/src/types.js'
 import { buildRenderSlide } from '../vendor/packages/pptx-render/src/build-slide.js'
 import { HeuristicMetrics } from '../vendor/packages/pptx-render/src/metrics.js'
 import { XMLValidator } from 'fast-xml-parser'
@@ -34,8 +35,8 @@ describe('openPptx', () => {
     // 默认 10 × 7.5 英寸
     expect(deck.size.cx).toBe(9144000)
     expect(deck.size.cy).toBe(6858000)
-    expect(deck.slides).toHaveLength(1)
-    expect(deck.slides[0]?.path).toBe('ppt/slides/slide1.xml')
+    expect(deck.slides()).toHaveLength(1)
+    expect(deck.slides()[0]?.path).toBe('ppt/slides/slide1.xml')
   })
 
   it('损坏的文件给出可读的错误（不是渲染一张空画布）', async () => {
@@ -48,7 +49,7 @@ describe('openPptx', () => {
 describe('版式与母版上溯', () => {
   it('占位符的位置从**母版**取（幻灯片与版式里都没有）', async () => {
     const deck = await openPptx(load(TITLE_LAYOUT))
-    const slide = deck.slides[0]!
+    const slide = deck.slides()[0]!
 
     /**
      * 这个夹具刻意选了一条**两级**上溯链：`slide1.xml` 里占位符的
@@ -81,7 +82,7 @@ describe('版式与母版上溯', () => {
 
   it('幻灯片自己的文字被解析出来（含多段落）', async () => {
     const deck = await openPptx(load(TITLE_LAYOUT))
-    const tree = buildRenderSlide(deck.slides[0]!, deck.size, {
+    const tree = buildRenderSlide(deck.slides()[0]!, deck.size, {
       fitWidthPx: 960,
       metrics: new HeuristicMetrics(),
     })
@@ -111,7 +112,7 @@ describe('版式与母版上溯', () => {
 
   it('文字定位到版式给的框里（x 有值，不是都堆在 0）', async () => {
     const deck = await openPptx(load(TITLE_LAYOUT))
-    const tree = buildRenderSlide(deck.slides[0]!, deck.size, {
+    const tree = buildRenderSlide(deck.slides()[0]!, deck.size, {
       fitWidthPx: 960,
       metrics: new HeuristicMetrics(),
     })
@@ -138,7 +139,7 @@ describe('空演示文稿', () => {
 describe('SVG 渲染', () => {
   it('产出合法的 SVG，且文字是**可选中的文本节点**（不是位图）', async () => {
     const deck = await openPptx(load(TITLE_LAYOUT))
-    const tree = buildRenderSlide(deck.slides[0]!, deck.size, {
+    const tree = buildRenderSlide(deck.slides()[0]!, deck.size, {
       fitWidthPx: 960,
       metrics: new HeuristicMetrics(),
     })
@@ -185,7 +186,7 @@ describe('SVG 渲染', () => {
      * 所以这里断言：每个 `<text>` 的 x 只有一个值。
      */
     const deck = await openPptx(load(TITLE_LAYOUT))
-    const tree = buildRenderSlide(deck.slides[0]!, deck.size, {
+    const tree = buildRenderSlide(deck.slides()[0]!, deck.size, {
       fitWidthPx: 960,
       metrics: new HeuristicMetrics(),
     })
@@ -200,7 +201,7 @@ describe('SVG 渲染', () => {
 
   it('相邻同格式且位置接得上的 run 合成一个 text', async () => {
     const deck = await openPptx(load(TITLE_LAYOUT))
-    const slide = structuredClone(deck.slides[0]!) as (typeof deck.slides)[number]
+    const slide = structuredClone(deck.slides()[0]!) as Slide
     const el = slide.elements.find((e) => (e as { text?: unknown }).text != null)
     const body = (el as { text: { paragraphs: Array<{ runs: Array<{ text: string }> }> } }).text
     body.paragraphs.push({ runs: [{ text: '甲乙' }, { text: '丙丁' }] } as never)
@@ -216,7 +217,7 @@ describe('SVG 渲染', () => {
 
   it('XML 转义：文字里的尖括号与 & 不会破坏文档结构', async () => {
     const deck = await openPptx(load(TITLE_LAYOUT))
-    const slide = structuredClone(deck.slides[0]!) as (typeof deck.slides)[number]
+    const slide = structuredClone(deck.slides()[0]!) as Slide
     // 塞一句带特殊字符的话（模拟文件里本来就有这类文字）
     const el = slide.elements.find((e) => (e as { text?: unknown }).text != null)
     const body = (el as { text: { paragraphs: Array<{ runs: Array<{ text: string }> }> } }).text
@@ -240,7 +241,7 @@ describe('SVG 渲染', () => {
 
   it('图片数据缺失时画占位块，不留空白', async () => {
     const deck = await openPptx(load(TITLE_LAYOUT))
-    const slide = structuredClone(deck.slides[0]!) as (typeof deck.slides)[number]
+    const slide = structuredClone(deck.slides()[0]!) as Slide
     slide.elements.push({
       id: 'test-pic',
       type: 'picture',

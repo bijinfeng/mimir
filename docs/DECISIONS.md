@@ -2791,3 +2791,70 @@ MIT/171KB）。上游的 `opentype.js` **没进来**——它在 `MetricsProvide
 
 **仍未做**：pptx 编辑、动画播放、精确字体度量（要 opentype.js + vendored
 字体）、pptx 的备注页与演讲者视图。清单见 `TECH.md` §15.8。
+
+---
+
+## D-052 pptx 文字编辑：补丁式保存，把 vendored 的写路径接进浏览器
+
+**背景**：D-051 让 pptx 能看（渲染成 SVG），但改不了。目标说的是「Office
+的预览**与编辑**」——三种格式里只剩 xlsx 的编辑没做，而 pptx 的写路径是
+可达的：上游的补丁式保存（`savePptx` / `patchSlideXml` / `commitSaved`）
+随闭包已经 vendored 进树（`generate.ts` 1703 行、`animation.ts` 1249 行），
+只是被 `pptx-engine-types.ts` 挡在闭包外。
+
+**决定**：pptx 支持**改文字**（改内容、增删段落），保存走补丁式路径并复用
+已有的 `PUT /api/documents/:id/file`。**不做** run 级格式编辑（加粗/字号/
+颜色）与元素位置调整。
+
+**为什么补丁式保存是前提，不是优化**：pptx 的 `slideN.xml` 里有大量我们没
+建模的东西（动画时间线、SmartArt 数据、自定义扩展、OLE、演讲者备注的引用）。
+整体重建会**静默丢掉**它们——文件还能打开、还能看，只是那些东西没了。
+
+机制（与 docx 同思路、不同实现，docx 是按块比对，pptx 是按元素锚点）：
+
+```
+解析时：每个元素记下 anchor.originalXml（它在 slideN.xml 里的原始字节切片）
+编辑时：只标脏被改的元素（el.dirty = true）
+保存时：patchSlideXml = bodyPrefix + Σ(脏→重新生成 | 干净→原字节) + bodySuffix
+```
+
+**实测**（`src/pptx-save.test.ts`，13 条）：
+
+| 场景 | 结果 |
+|---|---|
+| 上游 5 页 / 47 条目的夹具，打开后直接保存 | **每个条目逐字节相同** |
+| 改一段文字 | **只有那一张 slideN.xml 变化**，其余 46 个条目（含媒体）字节相同 |
+| 改带格式的文字 | 两个 `<a:rPr>` 块逐字比对**完全相同**，只有 `<a:t>` 内容变了 |
+| 保存后再改再保存 | 两次改动都在（见下） |
+
+**四条实测踩过的坑**（写进 `src/pptx-save.ts` 与 `PptxEditor.tsx` 的注释）：
+
+| 症状 | 原因 |
+|---|---|
+| 包里凭空多出十几个目录条目 | JSZip 默认给每个条目的父目录补目录条目，而 PowerPoint / python-pptx 写的包里没有。`createFolders: false` |
+| 第二次保存把第一次的改动**悄悄回滚** | 保存后没把新 XML 烧回元素锚点，下次拼字节时干净元素回填的是旧字节。`save()` 成功后必须 `commit()` |
+| 编辑后画布不更新 | 编辑是就地改模型的，`slides()` 返回同一数组，React 的 `useMemo` 依赖它不重算。改成 `view()` 返回**不可变快照**（没改动同一对象、改动后新对象） |
+| 点画布没反应 | SVG 必须带 `data-element-id`（事件代理靠它把点击映射回模型元素）。这是**给交互层的契约**，有测试守着 |
+
+**改格式为什么能保住**：`applyEditParagraphs`（vendored 的
+`pptx-ops/src/edit-text.ts`）按 `srcPara` / `srcRun` 把编辑器回传的段落回溯
+到原始 run、`...oldRun` 继承未被编辑的属性；`patchTextElementXml` 在 run
+数对齐时**逐个 run 原地改**，不重建节点。
+
+**为什么不做 run 级格式**：上游那条路走 `pptx-ops` 的 ops 层 +
+`setElementFont` / `applyParagraphFormat`，而它们在 `index.ts` 里、依赖
+`insert` / `media-insert` / `slide-transfer` 等整条写路径（含 `node:zlib`）。
+那是另一期工程量，而「改文字」是最常用的编辑。界面底部如实写明这一点。
+
+**影响**：`PptxArchive` 从「按需解压」改为**预加载全部条目 + 同步读**
+（补丁式保存要求每个条目的原始字节都在手里；预览与编辑共用同一个 archive，
+两套读取语义只会让调用方到处判断）。按实际解压字节数设上限挡解压炸弹。
+新增 `src/pptx-save.ts`、`src/shims/pptx-paragraph-format.ts`；类型桶
+`pptx-engine-types.ts` 从「纯类型」扩成「类型 + 两个值的等价实现」
+（`encodeRunLink` / `decodeRunLink`）；vendor 加 `pptx-ops` 的
+`edit-text.ts` / `types.ts`；`viewerFor` 的 `deck` 类型现在接编辑器；
+`PptxPreview.tsx` 被 `PptxEditor.tsx` 取代删除（同一份渲染，分开两个组件
+会变成「预览看一遍、想改要切模式」）。
+
+**仍未做**：xlsx 的编辑（要公式引擎与表格模型）、pptx 的 run 级格式与
+元素位置、动画播放、精确字体度量。清单见 `TECH.md` §15.9。

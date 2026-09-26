@@ -136,7 +136,10 @@ SQLite 路径同理：FTS5 的 `unicode61` 分词器也不认中文词边界，�
 | 改了深色的链接色但没生效 | 与 seed **同名**的 token（`colorLink`、`colorPrimary`）会被 antd 的 `formatToken` 丢掉，值由算法重新派生 —— 浅色下看着像生效了（浅色阶把输入色放在第 6 阶），深色下不达标注。要用 `tokens.ts` 的校准层（`MappingAlgorithm`） |
 | 深色下焦点环看不见 | antd 深色把 `colorPrimaryBg` 与 `colorPrimaryBorder` 设成**同一个值**，而后者是焦点环。深色单独校准了描边 |
 | 深色下露出白色 | `html` 上没画底色，或没写 `color-scheme` —— 滚动条与原生下拉不受 CSS 管辖 |
-| 深色用户看到一下白闪 | 外观状态没在首帧前算出来。`theme/appearance.ts` 与 `index.html` 的内联脚本必须同源 |
+| 深色用户看到一下白闪 | 外观状态没在首帧前算出来。`theme/appearance.ts` 与 `index.html` 的内联脚本必须同源 || 改了字但格式没了（或文件里别的东西被重排） | 补丁式保存退化成整体重建。pptx 靠**元素锚点**（未改动的元素用 `anchor.originalXml` 原样回填，见 `packages/office/src/pptx-save.ts`），docx 靠**块比对**。`pptx-save.test.ts` / `docx.test.ts` 各有断言守着「只有该变的条目变」 |
+| 第二次保存把第一次的改动回滚 | pptx 的 `save()` 成功后必须 `commit()`——否则下次拼字节时干净元素回填的是**旧**字节，而两次保存都报成功 |
+| pptx 编辑后画布不更新 | 编辑是就地改模型的，`slides()` 返回同一个数组，React 的 `useMemo` 依赖它不会重算。要用 `view()` 的**不可变快照**当依赖 |
+| pptx 点画布没反应 | 渲染的 SVG 少了 `data-element-id`（事件代理靠它把点击映射回模型元素）。漏掉是静默的——看着像「这个元素不能编辑」 |
 
 完整清单见 `docs/TECH.md` §10。
 
@@ -170,7 +173,7 @@ SQLite 路径同理：FTS5 的 `unicode61` 分词器也不认中文词边界，�
 | 前端 | 两栏界面（D-047）：导航 + 主区（库视图 / 详情两态）、会话导航、对话视图、命令面板、抓取对话框、设置页 |
 | 桌面端 | **Electron 载体**（D-046）：窗口加载宿主的地址（cookie / SSE / Range 原生可用），可切远程地址 |
 | 文件 | **多格式上传已落地**（`docs/TECH.md` §13、D-044）：任意格式的原件入库、列表、按格式预览、下载、替换、随导出打包；文本 / HTML / Office 的正文可搜。**PDF 的正文提取**与 RSS 未做 |
-| Office | **docx 可编辑**（分页视图：块内断行、拆表+重复表头、页眉脚、脚注；D-049）；**xlsx 只读网格**（D-050）与 **pptx 只读幻灯片**（D-051、渲成 SVG）——三种格式的原件层现在都能看 |
+| Office | 三种格式的原件层都能看：**docx 可编辑**（分页视图 + 工具栏；D-049）、**pptx 可改文字**（渲成 SVG + 补丁式保存；D-051/D-052）、**xlsx 只读网格**（D-050）。xlsx 的编辑未评估 |
 | 下一步 | 见 `docs/TECH.md` §11（M1：分块与向量化 → 混合检索 → 带引用的问答） |
 
 不确定从哪开始就问，不要猜。

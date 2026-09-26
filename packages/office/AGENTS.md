@@ -21,9 +21,10 @@ src/
   docx.ts          适配层：openDocx → 编辑 → save
   pagination.ts    docx 分页视图；footnotes.ts 脚注
   xlsx.ts          xlsx 网格解析（**自己写的**，未 vendored）
-  pptx-archive.ts  pptx 的 zip / rels / 媒体读取（浏览器安全）
-  pptx.ts          pptx 打开：装配每张片子的版式/母版/主题上下文
-  pptx-render.ts   pptx 渲染入口：openPptx + renderDeck → SVG 字符串
+  pptx-archive.ts  pptx 的 zip / rels / 媒体读写（浏览器安全，预加载 entries）
+  pptx.ts          pptx 打开：装配解析上下文 + 编辑会话（openPptxForEdit）
+  pptx-save.ts     pptx 保存：元素补丁回字节（**移植自上游 index.ts**）
+  pptx-render.ts   pptx 渲染入口：renderSlide / renderDeck → SVG 字符串
   pptx-svg.ts      RenderSlide → SVG（**我们写的**，替上游的 Konva 适配器）
   index.ts         对外出口
   shims/i18n.ts          上游 i18n 的等价替代
@@ -40,7 +41,28 @@ scripts/
 |---|---|---|
 | docx | vendored 引擎 + 编辑器，**可编辑** | 编辑要求文件能读写回来 |
 | xlsx | 自写网格解析（约 300 行），只读 | 「把表画出来」用不到上游的 Rust 侧车 + Univer |
-| pptx | vendored **解析与布局**两层，自写 SVG 适配器，只读 | 四级继承 + 文字度量 + 160 种预设几何，自己写会错得看不出 |
+| pptx | vendored **解析 / 布局 / 编辑映射**三层，自写 SVG 适配器与保存原语，**可改文字** | 四级继承 + 文字度量 + 160 种预设几何，自己写会错得看不出 |
+
+### pptx 保存：`src/pptx-save.ts` 为什么是照搬
+
+`buildZip` / `patchSlideXml` / `patchedElementXml` / `patchAnchorXml` /
+`slideIsDirty` / `modelStrokeToPatch` 六个函数在上游 `index.ts` 里，而那个
+文件**不能 vendored**（import `zip.ts` 的 `node:crypto` 与 `media-insert.ts`
+的 `node:zlib`）。但那段保存逻辑本身是纯的——只用已 vendored 的
+`generate.ts`（全部 patch 原语）与 `identity.ts`。
+
+所以 `src/pptx-save.ts` 逐条照搬了它们。**上游改这几个函数时要跟着改**
+（`UPSTREAM.json` 记了 commit）。改动只有两处：不用 `createHash`，
+以及 `buildPptxBytes` 直接产出字节（浏览器里没有「写到文件」这一步）。
+
+**两条不能违反的性质**（有测试守着，红了不要放宽断言）：
+
+1. **没动过的条目逐字节相同** —— 整个前提是未改动的元素用
+   `anchor.originalXml` 原样回填
+2. **改一段文字只动那一张 slideN.xml** —— 主题/版式/母版/媒体都不该动
+
+还有一条隐含契约：**`save()` 成功后必须 `commit()`**。不 commit 的话
+第二次编辑会拿旧锚点拼字节、把上一次的改动静默回滚（两次保存都「成功」）。
 
 ---
 
@@ -151,7 +173,8 @@ node packages/office/scripts/sync-upstream.mjs --from /tmp/genoffice --check  # 
 | **大文档解析** | `parseDocx` 是同步重活，上游为它做了 worker（`parse-off-thread.ts`）。现在直接 await，大文档会卡主线程 |
 | **保存冲突** | `PUT /api/documents/:id/file` 不校验 `If-Match`。单客户端可接受，多客户端会互相覆盖 |
 | **xlsx** | **只读网格预览已做**（`src/xlsx.ts`，约 300 行，零新增依赖）。它与 docx 是**两条技术路线**：上游走 13.7K 行 Rust 侧车 + Univer，而「把表画出来」用不到那一层——所以这里没 vendored 任何东西，自己读 `sheetData`。**编辑**未做（要公式引擎与表格模型）。见 TECH §15.7 |
-| **pptx** | 未评估。**正文层**仍可读（提取为分页文本） |
+| **pptx 编辑** | **改文字已做**（`src/pptx-save.ts`，补丁式保存）。**run 级格式**（加粗/字号/颜色）与元素位置未做——上游那条路走 `pptx-ops` 的 ops 层 + `setElementFont`，依赖 `index.ts` 的整条写路径。见 TECH §15.9 |
+| **pptx 字体度量** | 用启发式（按字符类别估宽度）——**换行位置**可能与原件略有差别。要精确得接 opentype.js + vendored 字体（docx 那边有） |
 | **页内分栏** | 多栏文档按单栏排（上游有 `columns` 支持，未接） |
 | **工具栏面窄** | 现有 6 项（加粗/斜体/下划线/删除线/两种列表）。对齐、字号、颜色、表格操作为空 |
 | **列表编号分配** | 新列表沿用文档里已有的 `numId`；新建编号定义要写 `numbering.xml`（上游的 `allocateListNumId` 在 host 侧，未 vendored） |

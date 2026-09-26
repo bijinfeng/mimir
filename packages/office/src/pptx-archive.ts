@@ -3,27 +3,35 @@ import { XMLParser } from 'fast-xml-parser'
 import type { SlideSize } from '../vendor/packages/pptx-engine/src/types.js'
 
 /**
- * pptx 的**压缩包读取层**（浏览器安全）。
+ * pptx 的**压缩包读写层**（浏览器安全）。
  *
  * ## 为什么不用上游的 `PackageArchive`
  *
- * 上游那个类在一个文件里同时做了两件事：读（开 zip、读 rels、列幻灯片）与
- * **写**（`entries` 保留每个条目的原始字节，保存时逐字节写回；`originalHash`
- * 是保存前的 sha256）。写那一半依赖 `node:crypto` 与 `Buffer`，在浏览器里
- * 跑不了——而 mimir 的 pptx 预览是**只读**的，不需要那半。
+ * 上游那个类依赖 `node:crypto`（保存前的 sha256）与 `Buffer`，在浏览器里
+ * 跑不了。所以这里是它的等价实现，**逐条对着上游
+ * `packages/pptx-engine/src/zip.ts` 写**（`readRels` / `readPresentation` /
+ * `resolveSlideChain` / `fallbackLayoutPath` / `entries`），
+ * 行为上的差异是刻意的，写在这里：
  *
- * 所以这里是读的那半的等价实现，**逐条对着上游 `packages/pptx-engine/src/zip.ts`
- * 写**（`readRels` / `readPresentation` / `resolveSlideChain` /
- * `fallbackLayoutPath`），行为上的差异只有两处，都写在下面。
+ *   1. **不做 sha256**。上游用它防止「保存前文件被外部改了」。单客户端下
+ *      没有消费者；用便宜的 FNV-1a 占位，避免为一个没人读的字段引入
+ *      `node:crypto`。字段名仍是 `fingerprint`，**不要**当密码学哈希用
+ *   2. **`entries` 是公开可变的**（不是私有）。保存路径的整个前提就是
+ *      「没动过的条目原样写回」，而「原样」只有拿着原始字节才做得到
+ *      （见 `src/pptx-save.ts`）
  *
- * ## 与上游的两处差异（刻意的）
+ * ## 为什么把全部条目读进内存
  *
- *   1. **不做 sha256**。上游用它防止「保存前文件被外部改了」。我们不保存，
- *      所以这个值没有消费者；用便宜的 FNV-1a 占位，避免为一个没人读的字段
- *      引入 `node:crypto`。字段名仍是 `originalHash`（类型来自上游），
- *      但**不要**把它当密码学哈希用
- *   2. **不缓存每个条目的原始字节**。上游缓存是为了保存时原样写回；只读预览
- *      按需解压更省内存（一个 50MB 的 pptx 展开后可能几百 MB）
+ * 上游就是这么做的，而这不是随意选择：**补丁式保存要求每个条目的原始字节
+ * 都在手里**——保存时要逐字节写回没动过的条目。
+ *
+ * 代价是内存。所以 `open` 时按**实际解压出的总字节数**记账并设上限
+ * （`MAX_TOTAL_UNCOMPRESSED_BYTES`）。用 zip 头部声明的大小是不成立的：
+ * 那是文件自己写的，一个恶意文件可以声明 1KB 实际炸 1GB。
+ *
+ * 这里**不是**「顺带把预览也改成预加载」——预览与编辑共用同一个 archive，
+ * 两套读取语义（一套异步按需、一套同步预加载）只会让调用方到处判断。
+ * 统一成预加载 + 同步读，代价由那个上限兜住。
  */
 
 const NS_RELS = 'http://schemas.openxmlformats.org/package/2006/relationships'
@@ -59,12 +67,19 @@ function asArray<T>(value: T | T[] | undefined): T[] {
   return Array.isArray(value) ? value : [value]
 }
 
-export class PptxArchive {
-  /** 已读出的字节总数（用来挡住「解压炸弹」，见 `readEntry`） */
-  private bytesRead = 0
+/** UTF-8 编解码（替代上游的 `Buffer.from(x, 'utf8')` / `Buffer.toString('utf8')`） */
+const encoder = new TextEncoder()
+const decoder = new TextDecoder('utf-8')
 
+export class PptxArchive {
   private constructor(
-    private readonly zip: JSZip,
+    /**
+     * 每个条目的**原始字节**，键是 zip 内的路径。
+     *
+     * 公开可变：保存路径要原样写回它们，新增关系/媒体时也要往里塞
+     * （上游的 `appendRel` 就是这么做的）。
+     */
+    readonly entries: Map<string, Uint8Array>,
     /** 便宜的内容指纹（**不是**上游的 sha256，见文件头） */
     readonly fingerprint: string,
   ) {}
@@ -72,59 +87,88 @@ export class PptxArchive {
   static async open(bytes: Uint8Array): Promise<PptxArchive> {
     const zip = await JSZip.loadAsync(bytes)
     assertWithinLimits(zip)
-    return new PptxArchive(zip, fnv1a(bytes))
+
+    const entries = new Map<string, Uint8Array>()
+    let total = 0
+    for (const name of Object.keys(zip.files)) {
+      const file = zip.files[name]
+      if (!file || file.dir) continue
+      const data = await file.async('uint8array')
+      total += data.byteLength
+      if (total > MAX_TOTAL_UNCOMPRESSED_BYTES) {
+        throw new Error(
+          `这份 pptx 解压后过大（累计超过 ${Math.round(MAX_TOTAL_UNCOMPRESSED_BYTES / 1024 / 1024)}MB），已停止解析`,
+        )
+      }
+      entries.set(name, data)
+    }
+
+    return new PptxArchive(entries, fnv1a(bytes))
   }
 
   has(path: string): boolean {
-    return this.zip.file(path) !== null
+    return this.entries.has(path)
   }
 
   /** 读一个部件为 UTF-8 字符串。不存在时返回 null（而不是抛错） */
-  async readText(path: string): Promise<string | null> {
-    const bytes = await this.readEntry(path)
-    if (!bytes) return null
-    return new TextDecoder('utf-8').decode(bytes)
+  readText(path: string): string | null {
+    const bytes = this.entries.get(path)
+    return bytes ? decoder.decode(bytes) : null
   }
 
   /** 读一个部件为原始字节（图片等） */
-  async readBytes(path: string): Promise<Uint8Array | null> {
-    return this.readEntry(path)
+  readBytes(path: string): Uint8Array | null {
+    return this.entries.get(path) ?? null
+  }
+
+  /** 写入/替换一个条目（保存路径用：新增关系、改幻灯片 XML） */
+  setEntry(path: string, data: Uint8Array | string): void {
+    this.entries.set(path, typeof data === 'string' ? encoder.encode(data) : data)
+  }
+
+  /** 删除一个条目（保存路径用：清理不再被引用的媒体/字体） */
+  deleteEntry(path: string): void {
+    this.entries.delete(path)
+  }
+
+  /** 一个部件的全部条目路径 */
+  entryNames(): string[] {
+    return [...this.entries.keys()]
   }
 
   /**
-   * 解压一个条目，并在**真的解出来之后**按实际长度记账。
+   * 把这份演示文稿里**所有图片**取出来，做成 `zip 路径 → data URL` 的表。
    *
-   * ## 为什么不用 zip 头部声明的 `uncompressedSize`
+   * ## 为什么要预先全取，而不是按需
    *
-   * 那个值写在中央目录里，是**文件自己声明的**——一个恶意文件可以声明 1KB
-   * 而实际展开 1GB（这就是解压炸弹的做法）。基于声明的检查根本不成立，
-   * 而要读 JSZip 的私有字段才能拿到它，改版就静默失效。
+   * 渲染层的 `MediaResolver` 是**同步**的（`mediaRef → dataUrl`）——它的调用点
+   * 埋在 `resolveFill` / `buildNode` 里，那些函数都是纯同步的。所以只有两条路：
+   * 把整条渲染路径改成异步，或者先把图片读出来。这里是后者——图片总量本来就
+   * 不大（一份演示文稿通常几 MB），一次读完换来渲染层的纯同步（可测试）。
    *
-   * 所以这里按**实际解压出来的长度**记账：累计超过上限就抛错。
-   * 单次解压仍然会分配那一块内存（JSZip 的 `async()` 没有流式接口），
-   * 但单个条目不可能超过它自己声明的压缩后大小乘以一个小倍数——
-   * 而我们要挡的是「几十个小条目各炸成几百 MB」那种累积放大。
+   * ## 只取图片，不取视频/音频
    *
-   * 真正的第一道闸门仍然在上传端点（`FILE_MAX_BYTES`，50MB）。
+   * `<a:videoFile>` / `<a:audioFile>` 可能是几十 MB 的视频，而预览只需要
+   * 那张**海报帧**（本身就是一张图片，会以 blipFill 出现）。所以这里按
+   * 扩展名过滤到图片格式，不把视频整段转成 base64。
    */
-  private async readEntry(path: string): Promise<Uint8Array | null> {
-    const file = this.zip.file(path)
-    if (!file) return null
-    const bytes = await file.async('uint8array')
+  readMediaDataUrls(): Map<string, string> {
+    const out = new Map<string, string>()
+    const imageExt = /\.(png|jpe?g|gif|bmp|webp|svg|tiff?|emf|wmf)$/i
 
-    this.bytesRead += bytes.byteLength
-    if (this.bytesRead > MAX_TOTAL_UNCOMPRESSED_BYTES) {
-      throw new Error(
-        `这份 pptx 解压后过大（累计超过 ${Math.round(MAX_TOTAL_UNCOMPRESSED_BYTES / 1024 / 1024)}MB），已停止解析`,
-      )
+    for (const [name, bytes] of this.entries) {
+      if (!name.startsWith('ppt/media/')) continue
+      if (/\.(mp4|m4v|mov|avi|wmv|mp3|m4a|wav|wma)$/i.test(name)) continue
+      if (!imageExt.test(name)) continue
+      out.set(name, toDataUrl(name, bytes))
     }
-    return bytes
+    return out
   }
 
   /** 一个部件的 .rels 表。没有 rels 时返回空表 */
-  async readRels(partPath: string): Promise<Map<string, Relationship>> {
+  readRels(partPath: string): Map<string, Relationship> {
     const rels = new Map<string, Relationship>()
-    const xml = await this.readText(relsPathFor(partPath))
+    const xml = this.readText(relsPathFor(partPath))
     if (!xml) return rels
 
     const doc = asNode(relsParser.parse(xml))
@@ -144,8 +188,8 @@ export class PptxArchive {
   }
 
   /** 演示文稿的画布尺寸与**按顺序**的幻灯片部件路径 */
-  async readPresentation(): Promise<{ size: SlideSize; slidePaths: string[] }> {
-    const presXml = await this.readText('ppt/presentation.xml')
+  readPresentation(): { size: SlideSize; slidePaths: string[] } {
+    const presXml = this.readText('ppt/presentation.xml')
     if (!presXml) throw new Error('这不是一份有效的 pptx（缺少 ppt/presentation.xml）')
 
     const pres = asNode(presentationParser.parse(presXml))
@@ -161,7 +205,7 @@ export class PptxArchive {
     }
 
     // 幻灯片顺序由 presentation.xml.rels 的 r:id → 部件路径决定
-    const rels = await this.readRels('ppt/presentation.xml')
+    const rels = this.readRels('ppt/presentation.xml')
     const sldIdLst = asNode(root['p:sldIdLst'] ?? root.sldIdLst)
     const slidePaths: string[] = []
     for (const raw of asArray(sldIdLst['p:sldId'])) {
@@ -176,12 +220,12 @@ export class PptxArchive {
   }
 
   /** 一张幻灯片的版式 / 母版 / 主题部件路径（沿 rels 链上溯） */
-  async resolveSlideChain(slidePath: string): Promise<{
+  resolveSlideChain(slidePath: string): {
     layoutPath?: string
     masterPath?: string
     themePath?: string
-  }> {
-    const slideRels = await this.readRels(slidePath)
+  } {
+    const slideRels = this.readRels(slidePath)
     let layoutPath: string | undefined
     for (const rel of slideRels.values()) {
       if (rel.type.endsWith('/slideLayout')) {
@@ -194,12 +238,12 @@ export class PptxArchive {
      * PowerPoint 拒绝这种文件；LibreOffice 拿第一个母版的第一个版式渲染，
      * 于是保住了背景与装饰——这里照做，否则用户看到的是「幻灯片是空的」。
      */
-    layoutPath ??= await this.fallbackLayoutPath(slidePath)
+    layoutPath ??= this.fallbackLayoutPath(slidePath)
 
     let masterPath: string | undefined
     let themePath: string | undefined
     if (layoutPath) {
-      for (const rel of (await this.readRels(layoutPath)).values()) {
+      for (const rel of this.readRels(layoutPath).values()) {
         if (rel.type.endsWith('/slideMaster')) {
           masterPath = resolveTarget(layoutPath, rel.target)
           break
@@ -207,7 +251,7 @@ export class PptxArchive {
       }
     }
     if (masterPath) {
-      for (const rel of (await this.readRels(masterPath)).values()) {
+      for (const rel of this.readRels(masterPath).values()) {
         if (rel.type.endsWith('/theme')) {
           themePath = resolveTarget(masterPath, rel.target)
           break
@@ -221,11 +265,11 @@ export class PptxArchive {
    * 丢了 slideLayout 关系的幻灯片用哪个版式：母版 `sldLayoutIdLst` 顺序里的第一个，
    * 若这张幻灯片带 `ctrTitle` 占位符则优先那个标题版式（即它本来多半会引用的那个）。
    */
-  private async fallbackLayoutPath(slidePath: string): Promise<string | undefined> {
-    const presXml = await this.readText('ppt/presentation.xml')
+  private fallbackLayoutPath(slidePath: string): string | undefined {
+    const presXml = this.readText('ppt/presentation.xml')
     if (!presXml) return undefined
 
-    const presRels = await this.readRels('ppt/presentation.xml')
+    const presRels = this.readRels('ppt/presentation.xml')
     const masterRid = /<p:sldMasterId\b[^>]*\br:id="([^"]+)"/.exec(presXml)?.[1]
     const masterRel = masterRid
       ? presRels.get(masterRid)
@@ -233,10 +277,10 @@ export class PptxArchive {
     if (!masterRel) return undefined
 
     const masterPath = resolveTarget('ppt/presentation.xml', masterRel.target)
-    const masterXml = await this.readText(masterPath)
+    const masterXml = this.readText(masterPath)
     if (!masterXml) return undefined
 
-    const masterRels = await this.readRels(masterPath)
+    const masterRels = this.readRels(masterPath)
     const layouts: string[] = []
     for (const m of masterXml.matchAll(/<p:sldLayoutId\b[^>]*\br:id="([^"]+)"/g)) {
       const rel = m[1] ? masterRels.get(m[1]) : undefined
@@ -249,52 +293,13 @@ export class PptxArchive {
     }
     if (layouts.length === 0) return undefined
 
-    const wantsTitle = /<p:ph\b[^>]*\btype="ctrTitle"/.test((await this.readText(slidePath)) ?? '')
+    const wantsTitle = /<p:ph\b[^>]*\btype="ctrTitle"/.test(this.readText(slidePath) ?? '')
     if (wantsTitle) {
       for (const p of layouts) {
-        if (/<p:sldLayout\b[^>]*\btype="title"/.test((await this.readText(p)) ?? '')) return p
+        if (/<p:sldLayout\b[^>]*\btype="title"/.test(this.readText(p) ?? '')) return p
       }
     }
     return layouts[0]
-  }
-
-  /** 一个部件的全部条目路径（图片、媒体等按需取用） */
-  entryNames(): string[] {
-    return Object.keys(this.zip.files)
-  }
-
-  /**
-   * 把这份演示文稿里**所有图片**取出来，做成 `zip 路径 → data URL` 的表。
-   *
-   * ## 为什么要预先全取，而不是按需
-   *
-   * 渲染层的 `MediaResolver` 是**同步**的（`mediaRef → dataUrl`）——它的调用点
-   * 埋在 `resolveFill` / `buildNode` 里，那些函数都是纯同步的。而 JSZip 读条目
-   * 是异步的。所以只有两条路：把整条渲染路径改成异步，或者先把图片读出来。
-   * 这里是后者——图片总量本来就不大（一份演示文稿通常几 MB），一次读完
-   * 换来渲染层的纯同步（可测试、无 await 传染）。
-   *
-   * ## 只取图片，不取视频/音频
-   *
-   * `<a:videoFile>` / `<a:audioFile>` 可能是几十 MB 的视频，而预览只需要
-   * 那张**海报帧**（本身就是一张图片，会以 blipFill 出现）。所以这里按
-   * 扩展名过滤到图片格式，不把视频整段读进内存。
-   */
-  async readMediaDataUrls(): Promise<Map<string, string>> {
-    const out = new Map<string, string>()
-    const imageExt = /\.(png|jpe?g|gif|bmp|webp|svg|tiff?|emf|wmf)$/i
-
-    for (const name of Object.keys(this.zip.files)) {
-      if (!name.startsWith('ppt/media/')) continue
-      // 视频/音频不读（几十 MB，而预览只用它的海报帧）
-      if (/\.(mp4|m4v|mov|avi|wmv|mp3|m4a|wav|wma)$/i.test(name)) continue
-      if (!imageExt.test(name)) continue
-
-      const bytes = await this.readBytes(name)
-      if (!bytes) continue
-      out.set(name, toDataUrl(name, bytes))
-    }
-    return out
   }
 }
 

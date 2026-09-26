@@ -11,7 +11,7 @@ import {
 } from '@mimir/shared'
 import { MarkdownBody } from '@/components/document/MarkdownBody'
 import { OfficeEditor } from '@/components/document/OfficeEditor'
-import { PptxPreview } from '@/components/document/PptxPreview'
+import { PptxEditor } from '@/components/document/PptxEditor'
 import { XlsxPreview } from '@/components/document/XlsxPreview'
 import { useContentStyles } from '@/components/ContentTypography.style'
 import { api } from '@/lib/api'
@@ -215,8 +215,8 @@ export function FilePreview({ doc }: { doc: DocumentDetail }) {
     }
 
     if (viewer === 'deck') {
-      // 幻灯片预览（只读）：读原件字节、在浏览器里画成 SVG
-      return <PptxPreview key={doc.id} documentId={doc.id} />
+      // 幻灯片：渲染成 SVG + 文字可编辑（`packages/office/src/pptx-save.ts`）
+      return <PptxEditor key={doc.id} documentId={doc.id} />
     }
 
     if (viewer === 'image') {

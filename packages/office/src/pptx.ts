@@ -12,6 +12,11 @@ import {
 } from '../vendor/packages/pptx-engine/src/placeholder.js'
 import { parseTheme, parseClrMap } from '../vendor/packages/pptx-engine/src/theme.js'
 import { PptxArchive, resolveTarget } from './pptx-archive.js'
+import { buildPptxBytes, commitSaved, slideIsDirty } from './pptx-save.js'
+import type { PptxRenderable } from './pptx-render.js'
+import { applyEditParagraphs } from '../vendor/packages/pptx-ops/src/edit-text.js'
+import type { EditParagraph } from '../vendor/packages/pptx-ops/src/types.js'
+import type { Paragraph, TextElement } from '../vendor/packages/pptx-engine/src/types.js'
 
 /**
  * pptx 的**打开**：压缩包 → 幻灯片模型（`packages/office/src/pptx-archive.ts`
@@ -28,21 +33,23 @@ import { PptxArchive, resolveTarget } from './pptx-archive.js'
  * 这段装配在上游是 `index.ts` 里的 `parseSlideFromArchive` 与 `buildDecorations`，
  * 与保存路径同处一个文件。它们本身不含 Node API，但那个文件引了
  * `node:crypto`——所以这里**逐条照搬那两段**（行为一致，改动只在读法上：
- * 上游同步读，这里 await）。上游改这两段时这里要跟着改，`UPSTREAM.json`
- * 记了 commit。
+ * 上游同步读，这里同步读，因为 `PptxArchive` 预加载了全部条目）。
+ * 上游改这两段时这里要跟着改，`UPSTREAM.json` 记了 commit。
  *
- * ## 只读，所以没有保存路径
+ * ## 编辑入口在 `openPptxForEdit`
  *
- * 上游的 `Slide` 带 `originalXml` / `bodyPrefix` / `bodySuffix`（保存时拼回
- * 字节用）。这里保留它们——`parseSlide` 的返回值原样带出来，删字段反而要
- * 改上游代码。渲染不用这几个字段。
+ * 只读预览（`openPptx`）不需要 `archive`，所以它不返回。编辑要——保存时
+ * 未改动的条目要从 `archive.entries` 原样写回。两个入口共用同一套解析，
+ * 编辑那侧多带一个 `archive` 与三个动作（改文字 / 保存 / 重新渲染）。
  */
 
 /** 打开后的演示文稿 */
 export interface PptxDeck {
   /** 画布尺寸（EMU）——渲染时按它算宽高比 */
   readonly size: SlideSize
-  readonly slides: readonly Slide[]
+  /** 幻灯片。**是函数**——编辑会话保存后模型会变，与编辑入口保持同一形状
+   *  （渲染层只认 `PptxRenderable`，见 `pptx-render.ts`） */
+  slides(): readonly Slide[]
   /** 内容指纹（**不是** sha256，见 `pptx-archive.ts` 文件头） */
   readonly fingerprint: string
   /**
@@ -54,11 +61,11 @@ export interface PptxDeck {
 
 export async function openPptx(bytes: Uint8Array): Promise<PptxDeck> {
   const archive = await PptxArchive.open(bytes)
-  const { size, slidePaths } = await archive.readPresentation()
+  const { size, slidePaths } = archive.readPresentation()
 
   const slides: Slide[] = []
   for (const path of slidePaths) {
-    const slide = await parseSlideFromArchive(archive, path)
+    const slide = parseSlideFromArchive(archive, path)
     if (slide) slides.push(slide)
   }
 
@@ -72,60 +79,55 @@ export async function openPptx(bytes: Uint8Array): Promise<PptxDeck> {
 
   return {
     size,
-    slides,
+    slides: () => slides,
     fingerprint: archive.fingerprint,
-    media: await archive.readMediaDataUrls(),
+    media: archive.readMediaDataUrls(),
   }
 }
 
 /** 一张幻灯片：读它自己 + 上溯版式/母版/主题，装配成 `ParseContext` 后解析 */
-async function parseSlideFromArchive(
-  archive: PptxArchive,
-  slidePath: string,
-): Promise<Slide | null> {
-  const slideXml = await archive.readText(slidePath)
+function parseSlideFromArchive(archive: PptxArchive, slidePath: string): Slide | null {
+  const slideXml = archive.readText(slidePath)
   if (slideXml == null) return null
 
-  const chain = await archive.resolveSlideChain(slidePath)
+  const chain = archive.resolveSlideChain(slidePath)
   const ctx: ParseContext = {}
 
-  const layoutXml =
-    (chain.layoutPath ? await archive.readText(chain.layoutPath) : undefined) ?? undefined
-  const masterXml =
-    (chain.masterPath ? await archive.readText(chain.masterPath) : undefined) ?? undefined
+  const layoutXml = (chain.layoutPath ? archive.readText(chain.layoutPath) : undefined) ?? undefined
+  const masterXml = (chain.masterPath ? archive.readText(chain.masterPath) : undefined) ?? undefined
 
   /**
    * 主题。**`clrMap` 必须在解析下面任何内容之前就位**：深色母版会把配色名
    * 换掉（`bg1` ↔ `dk1`），晚一步所有 `schemeClr` 都会解析成相反的明暗。
    */
   if (chain.themePath) {
-    const themeXml = await archive.readText(chain.themePath)
+    const themeXml = archive.readText(chain.themePath)
     if (themeXml) {
       ctx.theme = parseTheme(themeXml)
       ctx.theme.clrMap = parseClrMap(masterXml, layoutXml, slideXml)
-      ctx.themeMediaRels = await partMediaRels(archive, chain.themePath)
+      ctx.themeMediaRels = partMediaRels(archive, chain.themePath)
     }
   }
 
   // 占位符几何 → 版式优先、母版兜底；文字样式与背景同理
   if (layoutXml) {
-    if (chain.layoutPath) ctx.layoutMediaRels = await partMediaRels(archive, chain.layoutPath)
+    if (chain.layoutPath) ctx.layoutMediaRels = partMediaRels(archive, chain.layoutPath)
     ctx.layoutPlaceholders = parsePlaceholderMap(layoutXml, ctx.theme, ctx.layoutMediaRels)
     ctx.layoutBg = layoutXml
   }
   if (masterXml) {
-    if (chain.masterPath) ctx.masterMediaRels = await partMediaRels(archive, chain.masterPath)
+    if (chain.masterPath) ctx.masterMediaRels = partMediaRels(archive, chain.masterPath)
     ctx.masterPlaceholders = parsePlaceholderMap(masterXml, ctx.theme, ctx.masterMediaRels)
     ctx.masterTextStyles = parseMasterTextStyles(masterXml, ctx.theme, ctx.masterMediaRels)
     ctx.masterBg = masterXml
   }
 
   // presentation.xml 的 <p:defaultTextStyle>：非占位符形状的文字基线默认值
-  const presXml = await archive.readText('ppt/presentation.xml')
+  const presXml = archive.readText('ppt/presentation.xml')
   if (presXml) ctx.defaultTextStyle = parseDefaultTextStyle(presXml, ctx.theme)
 
   // 幻灯片自己的 rels：媒体、图表、SmartArt 预览、超链接…
-  const rels = await archive.readRels(slidePath)
+  const rels = archive.readRels(slidePath)
   const mediaRels = new Map<string, string>()
   const chartXmls = new Map<string, string>()
   const chartMediaRels = new Map<string, Map<string, string>>()
@@ -147,27 +149,27 @@ async function parseSlideFromArchive(
       hlinkRels.set(rel.id, rel.target)
     } else if (rel.type.endsWith('/slide')) {
       // 跳转到某张幻灯片：把目标部件解析成它在演示文稿里的序号
-      slideOrder ??= (await archive.readPresentation()).slidePaths
+      slideOrder ??= archive.readPresentation().slidePaths
       const idx = slideOrder.indexOf(resolveTarget(slidePath, rel.target))
       if (idx >= 0) hlinkRels.set(rel.id, `slide:${idx}`)
     } else if (rel.type.endsWith('/image')) {
       mediaRels.set(rel.id, resolveTarget(slidePath, rel.target))
     } else if (rel.type.endsWith('/chart') || rel.type.endsWith('/chartEx')) {
       const target = resolveTarget(slidePath, rel.target)
-      const xml = await archive.readText(target)
+      const xml = archive.readText(target)
       if (xml) {
         chartXmls.set(rel.id, xml)
-        chartMediaRels.set(rel.id, await partMediaRels(archive, target))
+        chartMediaRels.set(rel.id, partMediaRels(archive, target))
         // 手绘叠加层在图表自己的 rels 指向的 chartUserShapes 里
-        for (const sub of (await archive.readRels(target)).values()) {
+        for (const sub of archive.readRels(target).values()) {
           if (sub.type.endsWith('/chartUserShapes')) {
-            const usXml = await archive.readText(resolveTarget(target, sub.target))
+            const usXml = archive.readText(resolveTarget(target, sub.target))
             if (usXml) chartUserShapes.set(rel.id, usXml)
           }
           if (sub.type.endsWith('/chartStyle')) chartStyleRels.add(rel.id)
           // 图表局部主题（配色按图表重映射）：schemeClr 必须对着它解析
           if (sub.type.endsWith('/themeOverride')) {
-            const ovXml = await archive.readText(resolveTarget(target, sub.target))
+            const ovXml = archive.readText(resolveTarget(target, sub.target))
             if (ovXml) chartThemeOverrides.set(rel.id, ovXml)
           }
         }
@@ -184,9 +186,9 @@ async function parseSlideFromArchive(
        * 那个 VML 部件自己的图片关系。找不到就画占位块，不猜。
        */
       const vmlPath = resolveTarget(slidePath, rel.target)
-      const vml = await archive.readText(vmlPath)
+      const vml = archive.readText(vmlPath)
       if (vml) {
-        const vmlRels = await archive.readRels(vmlPath)
+        const vmlRels = archive.readRels(vmlPath)
         for (const m of vml.matchAll(/<v:shape\b([^>]*)>([\s\S]*?)<\/v:shape>/g)) {
           const relid = /<v:imagedata\b[^>]*\bo:relid="([^"]+)"/.exec(m[2] ?? '')?.[1]
           const imgRel = relid ? vmlRels.get(relid) : undefined
@@ -205,26 +207,26 @@ async function parseSlideFromArchive(
        * 部件自己的 rels。有了它 SmartArt 能画成静态图，而不是一个占位块。
        */
       const dataPath = resolveTarget(slidePath, rel.target)
-      const dataXml = await archive.readText(dataPath)
+      const dataXml = archive.readText(dataPath)
       if (dataXml) diagramDatas.set(rel.id, dataXml)
       const relId = dataXml
         ? /<dsp:dataModelExt\b[^>]*\brelId="([^"]+)"/.exec(dataXml)?.[1]
         : undefined
       if (relId) {
-        const drawRel = rels.get(relId) ?? (await archive.readRels(dataPath)).get(relId)
+        const drawRel = rels.get(relId) ?? archive.readRels(dataPath).get(relId)
         const basePath = rels.get(relId) ? slidePath : dataPath
         const drawingPath = drawRel ? resolveTarget(basePath, drawRel.target) : undefined
-        const drawingXml = drawingPath ? await archive.readText(drawingPath) : undefined
+        const drawingXml = drawingPath ? archive.readText(drawingPath) : undefined
         if (drawingXml && drawingPath) {
           diagramDrawings.set(rel.id, drawingXml)
-          diagramMediaRels.set(rel.id, await partMediaRels(archive, drawingPath))
+          diagramMediaRels.set(rel.id, partMediaRels(archive, drawingPath))
         }
       }
     } else if (rel.type.endsWith('/diagramLayout')) {
-      const xml = await archive.readText(resolveTarget(slidePath, rel.target))
+      const xml = archive.readText(resolveTarget(slidePath, rel.target))
       if (xml) diagramLayouts.set(rel.id, xml)
     } else if (rel.type.endsWith('/diagramColors')) {
-      const xml = await archive.readText(resolveTarget(slidePath, rel.target))
+      const xml = archive.readText(resolveTarget(slidePath, rel.target))
       if (xml) diagramColors.set(rel.id, xml)
     }
   }
@@ -244,7 +246,7 @@ async function parseSlideFromArchive(
   if (diagramColors.size) ctx.diagramColors = diagramColors
   if (vmlPreviews.size) ctx.vmlPreviews = vmlPreviews
   // 表格样式的自定义定义（内置样式由 table-style 兜底）
-  ctx.tableStyles = (await archive.readText('ppt/tableStyles.xml')) ?? undefined
+  ctx.tableStyles = archive.readText('ppt/tableStyles.xml') ?? undefined
 
   const slide = parseSlide({
     path: slidePath,
@@ -255,31 +257,23 @@ async function parseSlideFromArchive(
   })
 
   // 母版/版式的装饰层（logo、色带、以及启用的页脚/页码/日期），只读渲染
-  const decorations = await buildDecorations(
-    archive,
-    slidePath,
-    slideXml,
-    slide,
-    layoutXml,
-    masterXml,
-    {
-      layoutPath: chain.layoutPath,
-      masterPath: chain.masterPath,
-      theme: ctx.theme,
-      masterPlaceholders: ctx.masterPlaceholders,
-      masterTextStyles: ctx.masterTextStyles,
-      defaultTextStyle: ctx.defaultTextStyle,
-    },
-  )
+  const decorations = buildDecorations(archive, slidePath, slideXml, slide, layoutXml, masterXml, {
+    layoutPath: chain.layoutPath,
+    masterPath: chain.masterPath,
+    theme: ctx.theme,
+    masterPlaceholders: ctx.masterPlaceholders,
+    masterTextStyles: ctx.masterTextStyles,
+    defaultTextStyle: ctx.defaultTextStyle,
+  })
   if (decorations.length) slide.decorations = decorations
 
   return slide
 }
 
 /** 一个部件（版式/母版）自己的图片关系（装饰层里的图片要用） */
-async function partMediaRels(archive: PptxArchive, partPath: string): Promise<Map<string, string>> {
+function partMediaRels(archive: PptxArchive, partPath: string): Map<string, string> {
   const media = new Map<string, string>()
-  for (const rel of (await archive.readRels(partPath)).values()) {
+  for (const rel of archive.readRels(partPath).values()) {
     if (rel.type.endsWith('/image')) media.set(rel.id, resolveTarget(partPath, rel.target))
   }
   return media
@@ -314,7 +308,7 @@ function hfState(xml: string | undefined, attr: 'ftr' | 'sldNum' | 'dt'): 'on' |
  *     （幻灯片上有就跳过版式的，版式上有就跳过母版的）
  *   - 页码字段换成这张片子的实际序号
  */
-async function buildDecorations(
+function buildDecorations(
   archive: PptxArchive,
   slidePath: string,
   slideXml: string,
@@ -329,12 +323,12 @@ async function buildDecorations(
     masterTextStyles?: ReturnType<typeof parseMasterTextStyles>
     defaultTextStyle?: ReturnType<typeof parseDefaultTextStyle>
   },
-): Promise<Slide['elements']> {
+): Slide['elements'] {
   const out: Slide['elements'] = []
 
   let slideNum: number | undefined
   try {
-    const idx = (await archive.readPresentation()).slidePaths.indexOf(slidePath)
+    const idx = archive.readPresentation().slidePaths.indexOf(slidePath)
     if (idx >= 0) slideNum = idx + 1
   } catch {
     /* 页码替换不了可以接受：不画页码比画错页码好 */
@@ -371,7 +365,7 @@ async function buildDecorations(
     if (masterShown || hfTypes.size) {
       const ctx: ParseContext = {
         theme: parts.theme,
-        mediaRels: await partMediaRels(archive, parts.masterPath),
+        mediaRels: partMediaRels(archive, parts.masterPath),
         defaultTextStyle: parts.defaultTextStyle,
       }
       out.push(
@@ -390,7 +384,7 @@ async function buildDecorations(
       // 版式的页脚占位符常常不写 xfrm / 字号，要从母版继承
       const ctx: ParseContext = {
         theme: parts.theme,
-        mediaRels: await partMediaRels(archive, parts.layoutPath),
+        mediaRels: partMediaRels(archive, parts.layoutPath),
         masterPlaceholders: parts.masterPlaceholders,
         masterTextStyles: parts.masterTextStyles,
         defaultTextStyle: parts.defaultTextStyle,
@@ -406,4 +400,167 @@ async function buildDecorations(
   }
 
   return out
+}
+
+/**
+ * **可编辑**的演示文稿：在只读模型之上多带 `archive` 与三个动作。
+ *
+ * ## 为什么与 `PptxDeck` 分开，而不是加一个 `editable` 标志
+ *
+ * 只读预览与编辑的**能力面不同**：编辑会改模型、保存要写字节。用一个类型
+ * 加标志会让「只读场景拿到了 archive」变成可能——而 archive 里的
+ * `entries` 是可变的，误改它就会让保存写出错字节。分开之后类型自己说话：
+ * 只读的调用方拿不到写入口。
+ *
+ * ## 编辑的粒度是**段落**，不是元素
+ *
+ * 实测（真实 pptx）：一个段落里通常只有**一个 run**，文本是整段。所以
+ * 「编辑一个文本框」在模型层就是「替换它的段落数组」，由 vendored 的
+ * `applyEditParagraphs`（`vendor/packages/pptx-ops/src/edit-text.ts`）做映射：
+ *
+ *   - 段落数与顺序按编辑器回传的数组走
+ *   - 每段的 run 按 `srcRun` 回溯到原 run，**未被编辑的属性（字号、字体、
+ *     颜色、项目符号、行距）从原 run 继承**——`...oldRun` 展开
+ *   - 段落数变了（增删段落）走 `patchTextElementXml` 的重建分支
+ *
+ * **run 级格式编辑不在这一版**（加粗/字号/颜色）。上游的完整路径是
+ * `pptx-ops` 的 ops 层 + `setElementFont` / `applyParagraphFormat`，那些
+ * 在 `index.ts` 里、依赖整条写路径。这一版先把「改文字」做对：它是最常用
+ * 的编辑，而它已经是补丁式的（见 `pptx-save.ts`）。
+ */
+export interface PptxEditSession {
+  readonly size: SlideSize
+  /** 当前模型（编辑后会被替换，所以每次读都用 `slides()`） */
+  slides(): readonly Slide[]
+  /** 图片：zip 路径 → data URL（渲染用） */
+  readonly media: ReadonlyMap<string, string>
+  /**
+   * 改一个元素的文字。
+   *
+   * `paragraphs` 是**编辑器回传的段落数组**（形状见 vendored 的
+   * `EditParagraph`）。返回 false 表示这个元素不存在或没有文字（调用方
+   * 应据此提示，而不是静默什么也没发生）。
+   */
+  setText(slideIndex: number, elementId: string, paragraphs: EditParagraph[]): boolean
+  /** 这个幻灯片有未保存的改动吗 */
+  isDirty(slideIndex: number): boolean
+  /** 有任何未保存的改动吗 */
+  hasChanges(): boolean
+  /**
+   * 渲染用的**不可变快照**。
+   *
+   * ## 为什么不能直接把 `slides()` 交给渲染层
+   *
+   * 编辑是**就地**改模型的（补丁式保存要求元素锚点与模型是同一批对象），
+   * 所以 `slides()` 每次返回同一个数组。React 那边拿它当 `useMemo` 的依赖
+   * 不会触发重算——界面会停在旧内容上，而那个症状看着像渲染 bug。
+   *
+   * 这个快照在**版本没变时返回同一个对象**（引用相等，缓存有效）；
+   * 改过之后返回新对象（引用不等，重算）。于是渲染层可以诚实地依赖
+   * 「快照的身份」而不是数一个外部版本号。
+   */
+  view(): PptxRenderable
+  /** 序列化成字节。**不修改会话状态**（保存成功后才 `commit()`） */
+  save(): Promise<Uint8Array>
+  /**
+   * 保存成功后调用：把内存模型与刚写出的字节对齐。
+   *
+   * **必须在 `save()` 成功之后调用**，否则第二次编辑会用旧锚点拼字节、
+   * 悄悄回滚上一次的改动（见 `pptx-save.ts` 的 `commitSaved`）。
+   */
+  commit(): void
+}
+
+export async function openPptxForEdit(bytes: Uint8Array): Promise<PptxEditSession> {
+  const archive = await PptxArchive.open(bytes)
+  const { size, slidePaths } = archive.readPresentation()
+
+  const slides: Slide[] = []
+  for (const path of slidePaths) {
+    const slide = parseSlideFromArchive(archive, path)
+    if (slide) slides.push(slide)
+  }
+  if (slides.length === 0) {
+    throw new Error('这份演示文稿里没有幻灯片（文件可能已损坏）')
+  }
+
+  /** 快照缓存（没改动时必须返回同一个对象，改动后置空以失效） */
+  let cachedView: PptxRenderable | null = null
+  const media = archive.readMediaDataUrls()
+
+  return {
+    size,
+    slides: () => slides,
+    media,
+
+    view() {
+      cachedView ??= { size, slides: () => slides, media }
+      return cachedView
+    },
+
+    setText(slideIndex, elementId, paragraphs) {
+      const slide = slides[slideIndex]
+      if (!slide) return false
+      const el = slide.elements.find((e) => e.id === elementId)
+      if (!el || (el.type !== 'text' && el.type !== 'shape')) return false
+
+      const text = (el as { text?: { paragraphs: Paragraph[] } }).text
+      if (!text) return false
+
+      text.paragraphs = applyEditParagraphs(text.paragraphs, paragraphs)
+      /**
+       * 标脏 → 保存时这个元素的 XML 会被 `patchTextElementXml` 外科式重写
+       * （逐 run 对齐、`<a:br/>` 字节不动），而不是整体重建。
+       */
+      el.dirty = true
+      // 内容变了 → 快照失效（下次 view() 返回新对象，渲染层据此重算）
+      cachedView = null
+      return true
+    },
+
+    isDirty(slideIndex) {
+      const slide = slides[slideIndex]
+      return slide ? slideIsDirty(slide) : false
+    },
+
+    hasChanges() {
+      return slides.some((s) => slideIsDirty(s))
+    },
+
+    async save() {
+      return buildPptxBytes(archive, slides)
+    },
+
+    commit() {
+      commitSaved(slides)
+      // commit 也换了模型（元素锚点与 originalXml 都更新了），所以也要失效
+      cachedView = null
+    },
+  }
+}
+
+/**
+ * 这份幻灯片里能编辑文字的元素（文本框与形状）。
+ *
+ * 上游的 `SlideElement` 是六个成员的联合，`text` 只在 `TextElement` 上，
+ * 所以 `.text` 直接访问会被类型系统拒绝。调用方（界面、测试）都要处理
+ * 「用户选中了一个能编辑文字的元素」这件事，而这个判断写三处就会有一天
+ * 不一致——所以这里给一个判别函数，类型收窄由它保证。
+ */
+export function editableElements(slide: Slide): TextElement[] {
+  return slide.elements.filter(
+    (e): e is TextElement =>
+      (e.type === 'text' || e.type === 'shape') && (e as TextElement).text != null,
+  )
+}
+
+/**
+ * 一个元素当前的文字（不是可编辑的给 null）。
+ *
+ * 与 `editableElements` 分开是因为用途不同：那个是「列出可编辑的」，
+ * 这个是「拿到这个元素的文字」——界面在选中时两者都要用。
+ */
+export function textOfElement(el: Slide['elements'][number]): TextElement['text'] | null {
+  if (el.type !== 'text' && el.type !== 'shape') return null
+  return (el as TextElement).text ?? null
 }

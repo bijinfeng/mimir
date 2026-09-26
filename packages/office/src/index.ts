@@ -47,12 +47,22 @@
 export { openDocx, type DocxSession } from './docx.js'
 export { usePagination } from './pagination.js'
 export { readXlsx, type XlsxCell, type XlsxSheet, type XlsxWorkbook } from './xlsx.js'
-export { openPptx, type PptxDeck } from './pptx.js'
+export {
+  openPptx,
+  openPptxForEdit,
+  // 编辑入口的两个判别函数：一处定义，界面与测试都用它（散开写必然有
+  // 一处漏掉 'shape'——而那种漏是静默的：形状选不上，用户以为它不能编辑）
+  editableElements,
+  textOfElement,
+  type PptxDeck,
+  type PptxEditSession,
+} from './pptx.js'
 export {
   renderSlide,
   renderDeck,
   type RenderPptxOptions,
   type RenderedSlide,
+  type PptxRenderable,
   type PptxMetrics,
 } from './pptx-render.js'
 export {
