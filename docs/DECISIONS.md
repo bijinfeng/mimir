@@ -2730,3 +2730,64 @@ ChatPanel / DocumentPanel / NavSidebar / 设置页；全局样式新增
 
 **仍未做**：xlsx 编辑、pptx 预览（未评估）、xlsx 的日期还原与图表。
 清单见 `TECH.md` §15.7。
+
+---
+
+## D-051 pptx 预览：vendored 上游的解析与渲染，SVG 替换它的 Konva 适配器
+
+**背景**：D-050 补了 xlsx 的只读网格，pptx 是 Office 三格式里最后一块空缺。
+
+**决定**：pptx 做**只读幻灯片预览**，做法是 vendored 上游的**解析**
+（`pptx-engine`）与**布局**（`pptx-render`）两层，再由 mimir 自己写
+**SVG 适配器**（`src/pptx-svg.ts`）替换上游的 Konva（canvas）适配器。
+
+**为什么与 xlsx 的结论相反**（xlsx 是自写 300 行、不 vendored）。差别在
+输入格式的复杂度，不在偏好：
+
+| | xlsx | pptx |
+|---|---|---|
+| 几何 | 行列网格，位置是整数下标 | 每形状一个 EMU 坐标 + 旋转 + 翻转 + 组合嵌套 |
+| 继承 | 样式只管显示 | 幻灯片 → 版式 → 母版 → 主题**四级** |
+| 文字 | 单元格里一行字 | 按字体度量做换行、行高、自动缩字、两端对齐 |
+| 图形 | 无 | 预设几何 160+ 种、贝塞尔、渐变、图案、阴影、3D、图表、SmartArt |
+
+后三行每一条都是「自己写会做错，而错了不报错」的东西。**能复用的不复刻。**
+
+**为什么换掉 Konva**：canvas 里的文字**选不中、搜不到、读屏读不到**，而
+对着幻灯片复制一句话是很自然的动作。上游 `render-tree.ts` 顶部写着
+「Konva is just a thin adapter that draws the RenderTree」——保真逻辑
+（坐标、换行、继承）全在纯数据层，换适配器是它的设计允许的。SVG 的
+`<text>` 三者都有；代价是元素多一些（实测一份 3 页的演示文稿约 200 个）。
+
+**新增两个依赖**：`bidi-js`（UBA 双向文本，上游渲染层唯一运行时依赖，
+MIT/171KB）。上游的 `opentype.js` **没进来**——它在 `MetricsProvider`
+接口后面可注入，不传就用启发式度量。
+
+**五个静默坑**（写进 `src/pptx-svg.ts` 注释，其中第一条是实测踩的）：
+
+| 症状 | 原因 |
+|---|---|
+| 文字间距诡异（「2026」渲染成「2 026」） | 误以为「一个 `GlyphRun` 一个字」，把 run 的 x 拼成逐字坐标列表。实际一个 run 是一个**词**，多余的坐标被浏览器当逐字定位 |
+| 整页空白 | SVG 是 XML——一处未转义的 `<` 让整份文档解析失败 |
+| 形状旋转后位置偏 | OOXML 的 rot 绕框中心；翻转后旋转中心要相应还原 |
+| 合并相邻文字后间距不对 | 位置接不上的两个 run 不能合（合了就被浏览器重排） |
+| 10K 行写路径被拉进闭包 | 渲染层经 `background-promote` 引到 `generate.ts`/`animation.ts`；且裸包名类型导入必须改写到 shim，否则 `index.ts`（带 `node:crypto`）整条进来 |
+
+**复制页的取舍**：`src/pptx.ts` 与 `src/pptx-archive.ts` 是上游
+`index.ts` / `zip.ts` 里「读」那一半的等价实现（上游把读与写放在同一个
+文件，而写那半带 `node:crypto` 与 `Buffer`）。这两段要跟着上游改，
+`UPSTREAM.json` 记了 commit。
+
+**如实标注**（界面底部）：字体用系统里装的（换行位置可能与原件略有差别）、
+阴影为近似且**内阴影不画**、动画不播、SmartArt/OLE 有预渲染图形的画出来
+没有的显示占位块。
+
+**影响**：vendor 从 107 个文件增到 136 个（+31 个 pptx 文件 / 约 23.5K 行）；
+`pnpm-workspace.yaml` 与 `packages/office` 加 `bidi-js`；新增
+`src/pptx-archive.ts`、`src/pptx.ts`、`src/pptx-render.ts`、`src/pptx-svg.ts`
+与 `src/shims/pptx-engine-types.ts`（类型桶，挡住写路径）；`viewerFor` 加
+`deck` 类型；`FilePreview` 原件层接入 `PptxPreview`；同步脚本加一条改写规则
+（裸包名类型导入 → shim）。
+
+**仍未做**：pptx 编辑、动画播放、精确字体度量（要 opentype.js + vendored
+字体）、pptx 的备注页与演讲者视图。清单见 `TECH.md` §15.8。

@@ -22,6 +22,7 @@
     "@tiptap/core": "catalog:",
     "@tiptap/extensions": "catalog:",
     "@tiptap/pm": "catalog:",
+    "bidi-js": "catalog:",
     "fast-xml-parser": "^5.3.4",
     "jszip": "^3.10.1",
     "utif2": "^4.1.0"

@@ -95,6 +95,24 @@ const REWRITES = [
   },
   {
     /**
+     * `@genoffice/pptx-engine` 的**类型导入** → `src/shims/pptx-engine-types.ts`。
+     *
+     * 这一条必须在下面那条 `byPkg` 规则**之前**，否则 `byPkg` 会先把它改写成
+     * 引擎的 `index.ts`，从而把整条写路径（insert/generate/media-insert/
+     * slide-transfer/sections，约 10K 行，带 `node:zlib` 与 `Buffer`）拉进
+     * 闭包。渲染层用到这些符号全是 `import type`，运行时不需要任何代码。
+     *
+     * 只替**裸包名**（`@genoffice/pptx-engine`）。子路径导入是**真代码**，
+     * 必须照常走 byPkg：`./table-grid`、`./identity`、`./background-promote`
+     * 三个在 pptx-render 里都被运行时使用（闭包的负向断言见 §自检）。
+     */
+    match: /from\s+['"]@genoffice\/pptx-engine['"]/g,
+    to: '../src/shims/pptx-engine-types.js',
+    reason:
+      '渲染层对引擎的裸包名导入全是 import type；指向 index 会把带 node:zlib/Buffer 的写路径拉进浏览器闭包',
+  },
+  {
+    /**
      * 自家包的裸导入 → vendor 内的相对路径。
      *
      * 上游用 npm workspace 名（`@genoffice/docx-engine`）互相引用，而这个包在
@@ -379,12 +397,44 @@ async function main() {
       `\n清单里有但闭包已不含 ${removed.length} 个（同步后会移除）:\n  ${removed.join('\n  ')}`,
     )
 
+  /**
+   * 差异检测。
+   *
+   * ## 为什么要**过一遍格式化器**再比
+   *
+   * 同步写出的是 `applyRewrites` 的**原样**产物，而仓库里的 vendor 文件
+   * 随后会被 `pnpm format`（oxfmt）重排：改写把 `@genoffice/x` 换成长相对
+   * 路径，那条 import 超过行宽就被折成多行；长联合类型也会被折开并在每行
+   * **加上前导 `|`**。
+   *
+   * 结果是**逐字节比会永远报差异**。实测：一份已同步的树跑 `--check` 报
+   * 「16 个文件有差异」而它们实际完全一致——于是退出码恒为 1，这个
+   * 「上游是否动了我们 vendored 的文件」的探测器**永远在报警**，等于没有。
+   *
+   * 所以比较前先用**同一个格式化器**（`oxfmt --stdin-filepath`）把期望内容
+   * 格式化一遍——那正是 `sync` → `pnpm format` 之后文件该有的样子。
+   * 归一化空白是不够的：折行会**新增字符**（前导 `|`），不是只改空白。
+   *
+   * 格式化器不可用（没装依赖）时退回逐字节比：会吵，但不会漏报。
+   */
+  const expectedContent = async (rel) => {
+    const raw = applyRewrites(await readFile(join(from, rel), 'utf8'), rel)
+    try {
+      return execFileSync('npx', ['oxfmt', '--stdin-filepath', rel], {
+        input: raw,
+        encoding: 'utf8',
+        stdio: ['pipe', 'pipe', 'ignore'],
+      })
+    } catch {
+      return raw
+    }
+  }
+
   let changed = []
   for (const rel of files) {
     const target = join(pkgRoot, 'vendor', rel)
-    const expected = applyRewrites(await readFile(join(from, rel), 'utf8'), rel)
     const actual = existsSync(target) ? await readFile(target, 'utf8') : null
-    if (actual !== expected) changed.push(rel)
+    if (actual !== (await expectedContent(rel))) changed.push(rel)
   }
   console.log(`\n内容有差异: ${changed.length} 个文件`)
 

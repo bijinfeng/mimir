@@ -120,12 +120,16 @@ export function isInlineSafe(mime: string): boolean {
  * **格式族在这里分派，不在组件里判断。** 列表与详情面板都要回答
  * 「这东西能不能看图」，写两处必然有一天不一致（一处说能、一处说不）。
  */
-export type ViewerKind = 'pdf' | 'image' | 'audio' | 'video' | 'office' | 'sheet' | 'none'
+export type ViewerKind = 'pdf' | 'image' | 'audio' | 'video' | 'office' | 'sheet' | 'deck' | 'none'
 
 /**
- * office 是**编辑器**不是只读查看器（`packages/office`）：docx 可在网页里
- * 直接改并保存回原件。xlsx / pptx 目前只做了「能打开」的验证，编辑要等
- * 各自那条路走通（见 `docs/TECH.md` §15）。
+ * `office` 是**编辑器**不是只读查看器（`packages/office`）：docx 可在网页里
+ * 直接改并保存回原件。
+ *
+ * `sheet` / `deck` 是 xlsx / pptx 的**只读预览**（网格与幻灯片）。它们与
+ * `office` 分开而不是合并，因为三者的能力面不同——合并成一个 kind 会让
+ * 「能不能编辑」这件事只能靠 MIME 再判断一次，那就把这条分派规则拆成两处了。
+ * 各自的实现见 `docs/TECH.md` §15.7。
  */
 export function viewerFor(mime: string | null | undefined): ViewerKind {
   const lower = (mime ?? '').toLowerCase()
@@ -140,6 +144,10 @@ export function viewerFor(mime: string | null | undefined): ViewerKind {
   // 需要另一套工程，见 TECH §15.7）
   if (lower === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
     return 'sheet'
+  }
+  // pptx 是**只读幻灯片预览**（渲成 SVG；见 TECH §15.7）
+  if (lower === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') {
+    return 'deck'
   }
   return 'none'
 }

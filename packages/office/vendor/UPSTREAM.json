@@ -2,12 +2,13 @@
   "_comment": [
     "vendored 自 genspark-ai/genoffice（Apache-2.0）。由 scripts/sync-upstream.mjs 维护，不要手改。",
     "files 是闭包计算结果（从 entries 出发、跳过 skipPackages）——同步时会重新计算并更新。",
-    "entries 是人工选的入口：编辑器（convert/extensions/pagination）+ 排版度量 + 文档状态。"
+    "entries 是人工选的入口：① docx 编辑器（convert/extensions/pagination + 排版度量 + 文档状态）；② pptx 只读预览的**解析与渲染**两层（parse/placeholder/theme 供解析，build-slide 供渲染）。",
+    "pptx 的 zip/rels 读取与「一张幻灯片怎么装配出上下文」在 src/pptx-archive.ts 与 src/pptx.ts（浏览器安全，不含 node: 内建）——上游那两段在 index.ts/zip.ts 里，与写路径耦合。"
   ],
   "upstream": "https://github.com/genspark-ai/genoffice",
   "license": "Apache-2.0",
   "commit": "480548fd55f1be3593ee0d8e316a734751d58309",
-  "syncedAt": "2026-09-25T17:40:29.745Z",
+  "syncedAt": "2026-09-26T03:11:49.915Z",
   "entries": [
     "apps/docs/src/renderer/editor/extensions.ts",
     "apps/docs/src/renderer/editor/convert.ts",
@@ -15,7 +16,12 @@
     "apps/docs/src/renderer/line-metrics.ts",
     "apps/docs/src/renderer/note-format.ts",
     "apps/docs/src/renderer/doc-bytes.ts",
-    "apps/docs/src/renderer/doc-state.ts"
+    "apps/docs/src/renderer/doc-state.ts",
+    "packages/pptx-engine/src/parse.ts",
+    "packages/pptx-engine/src/placeholder.ts",
+    "packages/pptx-engine/src/theme.ts",
+    "packages/pptx-render/src/build-slide.ts",
+    "packages/pptx-render/src/pattern-fills.ts"
   ],
   "skipPackages": [
     "@genoffice/ui",
@@ -150,9 +156,37 @@
     "packages/docx-engine/src/xml-utils.ts",
     "packages/docx-engine/src/zip-load.ts",
     "packages/docx-engine/src/zotero-doc-props.ts",
+    "packages/pptx-engine/src/animation.ts",
+    "packages/pptx-engine/src/background-promote.ts",
+    "packages/pptx-engine/src/chart.ts",
+    "packages/pptx-engine/src/chartex.ts",
+    "packages/pptx-engine/src/color.ts",
     "packages/pptx-engine/src/custgeom.ts",
+    "packages/pptx-engine/src/dgm-hier.ts",
+    "packages/pptx-engine/src/generate.ts",
+    "packages/pptx-engine/src/identity.ts",
+    "packages/pptx-engine/src/named-action.ts",
+    "packages/pptx-engine/src/parse.ts",
+    "packages/pptx-engine/src/placeholder.ts",
+    "packages/pptx-engine/src/scan.ts",
+    "packages/pptx-engine/src/table-grid.ts",
+    "packages/pptx-engine/src/table-style.ts",
+    "packages/pptx-engine/src/theme.ts",
     "packages/pptx-engine/src/types.ts",
-    "packages/pptx-render/src/preset-geometry.ts"
+    "packages/pptx-engine/src/xml-utils.ts",
+    "packages/pptx-render/src/auto-num.ts",
+    "packages/pptx-render/src/build-chart.ts",
+    "packages/pptx-render/src/build-slide.ts",
+    "packages/pptx-render/src/cell-bevel.ts",
+    "packages/pptx-render/src/coords.ts",
+    "packages/pptx-render/src/fill.ts",
+    "packages/pptx-render/src/image-dpi.ts",
+    "packages/pptx-render/src/metrics.ts",
+    "packages/pptx-render/src/pattern-fills.ts",
+    "packages/pptx-render/src/preset-geometry.ts",
+    "packages/pptx-render/src/render-tree.ts",
+    "packages/pptx-render/src/scene3d.ts",
+    "packages/pptx-render/src/text-layout.ts"
   ],
   "fixtures": [
     {

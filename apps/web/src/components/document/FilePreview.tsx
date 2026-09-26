@@ -11,6 +11,7 @@ import {
 } from '@mimir/shared'
 import { MarkdownBody } from '@/components/document/MarkdownBody'
 import { OfficeEditor } from '@/components/document/OfficeEditor'
+import { PptxPreview } from '@/components/document/PptxPreview'
 import { XlsxPreview } from '@/components/document/XlsxPreview'
 import { useContentStyles } from '@/components/ContentTypography.style'
 import { api } from '@/lib/api'
@@ -211,6 +212,11 @@ export function FilePreview({ doc }: { doc: DocumentDetail }) {
     if (viewer === 'sheet') {
       // 网格预览（只读）：读原件字节、在浏览器里画成表格
       return <XlsxPreview key={doc.id} documentId={doc.id} />
+    }
+
+    if (viewer === 'deck') {
+      // 幻灯片预览（只读）：读原件字节、在浏览器里画成 SVG
+      return <PptxPreview key={doc.id} documentId={doc.id} />
     }
 
     if (viewer === 'image') {

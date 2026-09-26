@@ -1,4 +1,4 @@
-# packages/office —— Office 文档的浏览器内编辑
+# packages/office —— Office 文档的浏览器内预览与编辑
 
 这个包是 **vendored 代码 + 一层薄适配**：引擎与编辑器来自
 [GenOffice](https://github.com/genspark-ai/genoffice)（Apache-2.0），
@@ -14,15 +14,33 @@ mimir 侧只加「打开 / 保存」的编排与样式裁剪。
 vendor/          vendored 的上游代码。**一律不改。** 同步会覆盖
   UPSTREAM.json    清单：commit、入口、跳过清单、文件列表（同步脚本维护）
   apps/docs/…      上游的文件，保持原目录形状（便于与上游对照）
+  packages/docx-engine/…   docx 引擎
+  packages/pptx-engine/…   pptx 解析（继承已解析成最终值）
+  packages/pptx-render/…   pptx 布局（Slide → 纯数据的绘制列表）
 src/
   docx.ts          适配层：openDocx → 编辑 → save
+  pagination.ts    docx 分页视图；footnotes.ts 脚注
+  xlsx.ts          xlsx 网格解析（**自己写的**，未 vendored）
+  pptx-archive.ts  pptx 的 zip / rels / 媒体读取（浏览器安全）
+  pptx.ts          pptx 打开：装配每张片子的版式/母版/主题上下文
+  pptx-render.ts   pptx 渲染入口：openPptx + renderDeck → SVG 字符串
+  pptx-svg.ts      RenderSlide → SVG（**我们写的**，替上游的 Konva 适配器）
   index.ts         对外出口
-  shims/i18n.ts    上游 i18n 的等价替代（同步时的改写指向它）
+  shims/i18n.ts          上游 i18n 的等价替代
+  shims/pptx-engine-types.ts  pptx 引擎的类型桶（挡住整条写路径）
   generated/       样式裁剪产物（不进 git，由同步产出）
 scripts/
   sync-upstream.mjs  从上游同步 vendor/（含闭包计算、改写、自检）
   trim-editor-css.mjs 从上游整份样式里裁出编辑器需要的部分
 ```
+
+**三种格式三条路**（`docs/TECH.md` §15.7–15.8，D-050 / D-051）：
+
+| 格式 | 做法 | 为什么 |
+|---|---|---|
+| docx | vendored 引擎 + 编辑器，**可编辑** | 编辑要求文件能读写回来 |
+| xlsx | 自写网格解析（约 300 行），只读 | 「把表画出来」用不到上游的 Rust 侧车 + Univer |
+| pptx | vendored **解析与布局**两层，自写 SVG 适配器，只读 | 四级继承 + 文字度量 + 160 种预设几何，自己写会错得看不出 |
 
 ---
 
@@ -70,6 +88,24 @@ node packages/office/scripts/sync-upstream.mjs --from /tmp/genoffice --check  # 
 同步脚本会：重新计算闭包 → 应用改写与横幅 → 写入 vendor/ → **按闭包清理
 多余文件** → 裁剪样式 → 更新 `UPSTREAM.json`。**它是幂等的**：连续跑两次，
 第二次「内容有差异 0 个文件」。
+
+**跑完同步要跟着跑 `pnpm format`。** 改写会把 `@genoffice/x` 换成长相对
+路径，而 oxfmt 会把超过行宽的那种 import 折成多行——所以「刚同步完」会看到
+十几个文件有差异，格式化之后归零。顺序反了（先 format 后 sync）就会漏掉。
+
+### 一条 pptx 专用的改写（裸包名类型导入）
+
+`@genoffice/pptx-engine` 的**裸包名**导入会被改写到
+`src/shims/pptx-engine-types.ts`，**必须在 `byPkg` 那条规则之前**。
+
+理由：渲染层对引擎的裸包名导入全是 `import type`（运行时不需要任何代码），
+但闭包计算**不区分类型导入**——它会顺着包名走到引擎的 `index.ts`，把整条
+**写路径**（insert / generate / media-insert / slide-transfer / sections，
+约 10K 行，带 `node:zlib` 与 `Buffer`）拉进浏览器闭包。实测：不加这条规则，
+闭包从 135 涨到 146 个文件。
+
+子路径导入（`./table-grid`、`./identity`、`./background-promote`）是**真代码**，
+照常走 `byPkg` 改成相对路径。
 
 ### 闭包自检拦的是哪三类错
 
@@ -136,3 +172,13 @@ node packages/office/scripts/sync-upstream.mjs --from /tmp/genoffice --check  # 
 样式裁剪（`trim-editor-css.mjs`）只保留 `.doc-*` / `.ProseMirror` / `.page-*` /
 `.hf-*` 前缀的规则。**加新的编辑器 UI 时如果样式不生效，先看它是不是被裁掉了**——
 那种失效是静默的（元素渲染出来但没样式）。
+
+### pptx 预览的五个静默坑（都在 `src/pptx-svg.ts` / `src/pptx-archive.ts` 的注释里）
+
+| 症状 | 原因 |
+|---|---|
+| 文字间距诡异（「2026」渲染成「2 026」） | 误以为「一个 `GlyphRun` 一个字」，把 run 的 x 拼成 SVG 的**逐字坐标列表**。实际一个 run 是**一个词**，多余的坐标被浏览器当逐字定位（**实测踩过**） |
+| 整页空白 | SVG 是 XML——一处没转义的 `<` 或 `&` 让整份文档解析失败。`pptx-svg.ts` 有转义测试与「能被 XML 解析」的测试 |
+| 形状旋转后位置偏 | OOXML 的 rot 绕**框中心**；翻转后坐标系回到左上角，旋转中心要相应还原 |
+| 合并相邻 run 后间距不对 | 同格式的两个 run 位置接不上（中间有空档）时**不能合**——合了就被浏览器按自然排版重排 |
+| 幻灯片空白（背景也没了） | 占位符的位置可能在**母版**（幻灯片与版式里都是空 `<p:spPr/>`）。两级上溯链断在任何一级都会让内容叠在 (0,0)。`src/pptx.test.ts` 有一条测试专门断言这个 |

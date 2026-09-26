@@ -34,11 +34,27 @@
  *
  * UI（工具栏、分页容器）由调用方决定——上游的 ribbon 与办公壳没有 vendored
  * 进来，那是 mimir 自己的界面决定的。
+ *
+ * ## 三种格式，三条路（`docs/TECH.md` §15.7）
+ *
+ * | 格式 | 怎么做 | 为什么 |
+ * |---|---|---|
+ * | docx | vendored 上游引擎 + 编辑器，**可编辑** | 编辑要求文件能读写回来，那是上游 134 个文件的价值 |
+ * | xlsx | 自己写的网格解析（`xlsx.ts`，约 300 行），只读 | 「把表画出来」用不到上游的 Rust 侧车 + Univer |
+ * | pptx | vendored 上游的**解析与渲染两层**，画成 SVG（`pptx-svg.ts`），只读 | 上游把保真逻辑做在纯数据的 RenderTree 里，适配器可换 |
  */
 
 export { openDocx, type DocxSession } from './docx.js'
 export { usePagination } from './pagination.js'
 export { readXlsx, type XlsxCell, type XlsxSheet, type XlsxWorkbook } from './xlsx.js'
+export { openPptx, type PptxDeck } from './pptx.js'
+export {
+  renderSlide,
+  renderDeck,
+  type RenderPptxOptions,
+  type RenderedSlide,
+  type PptxMetrics,
+} from './pptx-render.js'
 export {
   pageFootnotesOf,
   makeGapNotesEl,
