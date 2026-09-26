@@ -28,6 +28,12 @@ import { cleanExtractedText, listZipEntries, readZipEntry, xmlToText } from './o
  *
  * 每个工作表转成一个 Markdown 表格。空单元格留空位（不塌缩），
  * 因为塌缩会让列错位——那是比多几个空列严重得多的错误。
+ *
+ * ## 工作表的名字取自 `workbook.xml`
+ *
+ * 名字不在工作表文件里：`sheet1.xml` 里没有「销售数据」四个字。正文大纲写
+ * 「工作表 1」而预览里写「销售数据」，同一份文件就有了两个名字——所以两边
+ * 都从 `workbook.xml` 读（`packages/office/src/xlsx.ts` 是同一套逻辑）。
  */
 export function createXlsxParser(): Parser {
   return {
@@ -38,21 +44,19 @@ export function createXlsxParser(): Parser {
       if (input.type !== 'xlsx') throw new Error('xlsx 解析器只处理 xlsx 输入')
 
       const shared = readSharedStrings(input.data)
-      const sheetNames = listZipEntries(input.data, 'xl/worksheets/', '.xml')
-      if (sheetNames.length === 0) throw new Error('这个文件里没有工作表（不是有效的 xlsx？）')
+      const sheets = listSheets(input.data)
+      if (sheets.length === 0) throw new Error('这个文件里没有工作表（不是有效的 xlsx？）')
 
       const sections: string[] = []
-      for (const [index, entry] of sheetNames.entries()) {
-        const xml = readZipEntry(input.data, entry)
+      for (const sheet of sheets) {
+        const xml = readZipEntry(input.data, sheet.entry)
         if (!xml) continue
 
         const table = sheetToMarkdown(xml, shared)
         if (table === '') continue
 
-        // 工作表名从 workbook.xml + rels 关联才能拿到，链太长；
-        // 用序号 + 文件名更诚实（不编一个可能错的名字）
-        const name = sheetLabel(entry, index)
-        sections.push(`## ${name}\n\n${table}`)
+        // 隐藏的页签在 Excel 里看不到；这里照实标注，而不是悄然略过
+        sections.push(`## ${sheet.hidden ? `${sheet.name}（隐藏）` : sheet.name}\n\n${table}`)
       }
 
       if (sections.length === 0) {
@@ -64,10 +68,75 @@ export function createXlsxParser(): Parser {
   }
 }
 
-/** `xl/worksheets/sheet2.xml` → `工作表 2`。解析不出序号时用「工作表」 */
-function sheetLabel(entry: string, fallbackIndex: number): string {
+interface SheetRef {
+  /** zip 里的路径 */
+  entry: string
+  name: string
+  hidden: boolean
+}
+
+/**
+ * 工作表清单：名字、顺序、隐藏状态。
+ *
+ * 顺序与名字只在 `xl/workbook.xml` 里，`r:id` → 文件路径的映射在它的 rels 里：
+ *
+ * ```xml
+ * <sheet name="销售数据" sheetId="1" r:id="rId3"/>
+ * ```
+ *
+ * 页签顺序由 `<sheet>` 的出现顺序决定——`sheet1.xml` 可以排在 `sheet2.xml`
+ * 之后。所以按文件名编号不只名字是错的，顺序也可能是错的。
+ *
+ * 读不到时退回「工作表 N」：那时名字是**我们编的**（一眼能看出），不是错的。
+ */
+function listSheets(data: Uint8Array): SheetRef[] {
+  const workbook = readZipEntry(data, 'xl/workbook.xml')
+  const rels = readZipEntry(data, 'xl/_rels/workbook.xml.rels')
+
+  if (workbook && rels) {
+    const targets = new Map<string, string>()
+    for (const rel of rels.matchAll(/<Relationship\b([^>]*)\/?>/g)) {
+      const attrs = rel[1] ?? ''
+      const id = /Id="([^"]+)"/.exec(attrs)?.[1]
+      const target = /Target="([^"]+)"/.exec(attrs)?.[1]
+      if (id && target) targets.set(id, normalizeTarget(target))
+    }
+
+    const refs: SheetRef[] = []
+    for (const sheet of workbook.matchAll(/<sheet\b([^>]*)\/?>/g)) {
+      const attrs = sheet[1] ?? ''
+      const rid = /\br:id="([^"]+)"/.exec(attrs)?.[1] ?? ''
+      const name = xmlToText(/name="([^"]*)"/.exec(attrs)?.[1] ?? '')
+      const state = /state="([^"]+)"/.exec(attrs)?.[1] ?? ''
+
+      const entry = targets.get(rid)
+      /**
+       * 只认 `xl/worksheets/*.xml`：`<sheet>` 也能指向图表页（chartsheet），
+       * 那不是网格，交给它只会得到一张空表。
+       */
+      if (!entry || !/^xl\/worksheets\/.+\.xml$/.test(entry)) continue
+      refs.push({ entry, name: name || fallbackName(entry), hidden: state !== '' })
+    }
+    if (refs.length > 0) return refs
+  }
+
+  return listZipEntries(data, 'xl/worksheets/', '.xml').map((entry) => ({
+    entry,
+    name: fallbackName(entry),
+    hidden: false,
+  }))
+}
+
+/** rels 里的 Target 可能是相对 `xl/` 的（`worksheets/sheet1.xml`）也可能是绝对路径 */
+function normalizeTarget(target: string): string {
+  if (target.startsWith('/')) return target.slice(1)
+  return target.startsWith('xl/') ? target : `xl/${target}`
+}
+
+/** `xl/worksheets/sheet2.xml` → `工作表 2`。解析不出序号时用「工作表 ?」 */
+function fallbackName(entry: string): string {
   const number = /sheet(\d+)\.xml$/.exec(entry)?.[1]
-  return `工作表 ${number ?? fallbackIndex + 1}`
+  return `工作表 ${number ?? '?'}`
 }
 
 /**

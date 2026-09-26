@@ -38,6 +38,7 @@
 
 export { openDocx, type DocxSession } from './docx.js'
 export { usePagination } from './pagination.js'
+export { readXlsx, type XlsxCell, type XlsxSheet, type XlsxWorkbook } from './xlsx.js'
 export {
   pageFootnotesOf,
   makeGapNotesEl,

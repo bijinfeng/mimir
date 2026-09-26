@@ -93,6 +93,15 @@ with zipfile.ZipFile(p, 'w') as z:
 <w:p><w:r><w:t>这是 Word 正文里的独特词元QqWw。</w:t></w:r></w:p>
 </w:body></w:document>''')
     elif kind == 'xlsx':
+        # workbook.xml + rels 是必需的：工作表的名字与顺序只在这里，
+        # sheet1.xml 里没有「销售数据」四个字（见 plugins/parser/src/xlsx.ts）
+        z.writestr('xl/workbook.xml', '''<?xml version="1.0"?>
+<workbook xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>
+<sheet name="销售数据" sheetId="1" r:id="rId1"/>
+</sheets></workbook>''')
+        z.writestr('xl/_rels/workbook.xml.rels', '''<?xml version="1.0"?><Relationships>
+<Relationship Id="rId1" Target="worksheets/sheet1.xml"/>
+</Relationships>''')
         z.writestr('xl/sharedStrings.xml', '''<?xml version="1.0"?>
 <sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><si><t>共享字符串独特词元ZzXx</t></si></sst>''')
         z.writestr('xl/worksheets/sheet1.xml', '''<?xml version="1.0"?>
@@ -258,6 +267,11 @@ describe('Office 提取', () => {
      */
     expect(detail.body.body).toContain('共享字符串独特词元ZzXx')
     expect(detail.body.body).not.toMatch(/^\s*0\s*$/m)
+    /*
+     * 页签名字在 `workbook.xml` 里，工作表文件里没有。用「工作表 1」当标题
+     * 的话，同一份文件在正文大纲与原件预览里会有两个不同的名字。
+     */
+    expect(detail.body.body).toContain('## 销售数据')
   })
 
   it('pptx：按页分段提取', async () => {

@@ -11,6 +11,7 @@ import {
 } from '@mimir/shared'
 import { MarkdownBody } from '@/components/document/MarkdownBody'
 import { OfficeEditor } from '@/components/document/OfficeEditor'
+import { XlsxPreview } from '@/components/document/XlsxPreview'
 import { useContentStyles } from '@/components/ContentTypography.style'
 import { api } from '@/lib/api'
 import { FONT_SIZE } from '@/theme/tokens'
@@ -205,6 +206,11 @@ export function FilePreview({ doc }: { doc: DocumentDetail }) {
       // Office 原件层 = 可编辑（`packages/office`，vendored 自 GenOffice）。
       // 改动保存回原件会重算正文与哈希（TECH §13.9），所以编辑后立刻可检索
       return <OfficeEditor key={doc.id} documentId={doc.id} />
+    }
+
+    if (viewer === 'sheet') {
+      // 网格预览（只读）：读原件字节、在浏览器里画成表格
+      return <XlsxPreview key={doc.id} documentId={doc.id} />
     }
 
     if (viewer === 'image') {

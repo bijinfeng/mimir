@@ -120,7 +120,7 @@ export function isInlineSafe(mime: string): boolean {
  * **格式族在这里分派，不在组件里判断。** 列表与详情面板都要回答
  * 「这东西能不能看图」，写两处必然有一天不一致（一处说能、一处说不）。
  */
-export type ViewerKind = 'pdf' | 'image' | 'audio' | 'video' | 'office' | 'none'
+export type ViewerKind = 'pdf' | 'image' | 'audio' | 'video' | 'office' | 'sheet' | 'none'
 
 /**
  * office 是**编辑器**不是只读查看器（`packages/office`）：docx 可在网页里
@@ -135,6 +135,11 @@ export function viewerFor(mime: string | null | undefined): ViewerKind {
   if (lower.startsWith('video/')) return 'video'
   if (lower === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
     return 'office'
+  }
+  // xlsx 是**只读网格预览**（与 office 的可编辑不同：电子表格的读取路径
+  // 需要另一套工程，见 TECH §15.7）
+  if (lower === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+    return 'sheet'
   }
   return 'none'
 }

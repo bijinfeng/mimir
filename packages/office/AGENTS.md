@@ -114,7 +114,8 @@ node packages/office/scripts/sync-upstream.mjs --from /tmp/genoffice --check  # 
 | **工具栏** | 上游的 ribbon 没 vendored（那是它自己的办公壳）。要哪些能力是 mimir 的界面决策 |
 | **大文档解析** | `parseDocx` 是同步重活，上游为它做了 worker（`parse-off-thread.ts`）。现在直接 await，大文档会卡主线程 |
 | **保存冲突** | `PUT /api/documents/:id/file` 不校验 `If-Match`。单客户端可接受，多客户端会互相覆盖 |
-| **xlsx / pptx** | 只验证了 docx。xlsx 走的是另一条路（还有 Rust 侧车与 Univer），pptx 未评估 |
+| **xlsx** | **只读网格预览已做**（`src/xlsx.ts`，约 300 行，零新增依赖）。它与 docx 是**两条技术路线**：上游走 13.7K 行 Rust 侧车 + Univer，而「把表画出来」用不到那一层——所以这里没 vendored 任何东西，自己读 `sheetData`。**编辑**未做（要公式引擎与表格模型）。见 TECH §15.7 |
+| **pptx** | 未评估。**正文层**仍可读（提取为分页文本） |
 | **页内分栏** | 多栏文档按单栏排（上游有 `columns` 支持，未接） |
 | **工具栏面窄** | 现有 6 项（加粗/斜体/下划线/删除线/两种列表）。对齐、字号、颜色、表格操作为空 |
 | **列表编号分配** | 新列表沿用文档里已有的 `numId`；新建编号定义要写 `numbering.xml`（上游的 `allocateListNumId` 在 host 侧，未 vendored） |

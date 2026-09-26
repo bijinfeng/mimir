@@ -2667,3 +2667,66 @@ ChatPanel / DocumentPanel / NavSidebar / 设置页；全局样式新增
 
 **已知边界**（产品化要补）：分页视图、工具栏、大文档 worker 解析、保存冲突检测
 （PUT 不校验 If-Match）、xlsx/pptx 未评估。清单见 `TECH.md` §15.5。
+
+---
+
+## D-050 xlsx 预览：自写只读网格，不 vendored 上游的 Rust 侧车
+
+**背景**：D-049 的收尾清单里有一条「xlsx / pptx 未评估」。审计时它被标为
+**最大的缺口**——目标说「Office 的预览与编辑」，而实际上只有 docx 能看。
+
+**决定**：xlsx 做**只读网格预览**（`packages/office/src/xlsx.ts` + 
+`apps/web/src/components/document/XlsxPreview.tsx`），不做编辑，
+**不 vendored 上游任何代码、不引入 Rust 侧车**。
+
+**为什么这与 docx 的结论不同**。docx 之所以要走 vendored 路线，是因为
+「编辑」要求文件能读写回来，而那是上游 134 个文件的价值所在。xlsx 的
+**预览**只要求把格子的位置与文字画出来，用到的是「解 zip + 读 `sheetData`
++ 按 `r="C3"` 定位」这一层——约 300 行，用已有的 JSZip 依赖即可，
+零新增依赖、零原生模块。
+
+上游的 xlsx 路线服务于**可编辑的电子表格**：13.7K 行 Rust 侧车（会话式读表
++ 公式重算）+ Univer（其 import/export 是付费项）。按预览的需求去 vendored
+它，代价与收益不成比例。
+
+**只读预览如实标注三件事**（承接 `plugins/parser/src/xlsx.ts` 的「不猜」）：
+
+1. **日期不还原**——xlsx 里日期是序列号 + numFmtId 样式。猜错会把普通数字
+   显示成日期，所以显示序列号，界面写明
+2. **公式不重算**——显示 Excel 存好的缓存值，该格加 `title` 标注，右键对齐
+   以便与文本区分
+3. **条件格式 / 图表 / 数据透视不画**——画不出来就留空，不画错的示意
+
+**发现的四个静默错位坑**（全部写进代码注释，都有测试守着）：
+
+| 症状 | 原因 |
+|---|---|
+| 整行向左错位 | 空格的 `<c>` 被 Excel 跳过，必须用 `r="C3"` 的列字母定位 |
+| 整表向上错位 | 整行空的 `<row>` 被丢掉，行号取文件里的 `r`（跳号即事实） |
+| 表格散架 | 合并跨过的空格 Excel 不写 `<c>`——表宽要看 `mergeCell`，`rowSpan` 按渲染行算 |
+| 同一文件两个工作表名 | 名字只在 `workbook.xml`，`sheet1.xml` 里没有 |
+
+**第四条顺带修了正文提取**：`plugins/parser/src/xlsx.ts` 原来按文件名编号，
+把工作表叫「工作表 1」。现在两处都从 `workbook.xml` + rels 读真名、顺序与
+隐藏状态；隐藏的工作表仍然列出并标注「（隐藏）」——Excel 不显示隐藏页签，
+这里若也悄悄略过，用户会以为文件里没有那张表。
+
+**行号栏与跳号**：整行空白的行被丢掉，所以行号栏会跳号（3 → 5）。**显示真实
+行号**就是为了让这事可见，而不是让整表悄悄上移——底部说明也写了这句。
+
+**否决**：
+
+| 方案 | 为什么不用 |
+|---|---|
+| vendored 上游 xlsx（Rust 侧车 + Univer） | 13.7K 行 Rust 需要交叉编译进桌面包与服务器镜像；Univer 的 import/export 是付费项。只读预览用不到公式引擎 |
+| SheetJS | npm 分发停更与 CVE 历史；而我们要的只是「读几个 XML」 |
+| 不做 | 目标说的是 Office 预览，而 xlsx 是最常见的 Office 格式之一。约 300 行的成本换掉最大的缺口 |
+
+**影响**：新增 `packages/office/src/xlsx.ts`（+ 16 条测试）；
+`@mimir/shared` 的 `viewerFor` 加 `sheet` 类型；`FilePreview` 原件层接入
+`XlsxPreview`；`plugins/parser/src/xlsx.ts` 改读 `workbook.xml`（正文里
+的工作表名会变，旧文档重建索引即修复——实测 `reindexVault` 把
+`## 工作表 1` 改成了 `## 销售 & 退货`）。
+
+**仍未做**：xlsx 编辑、pptx 预览（未评估）、xlsx 的日期还原与图表。
+清单见 `TECH.md` §15.7。
