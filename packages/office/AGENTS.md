@@ -110,13 +110,27 @@ node packages/office/scripts/sync-upstream.mjs --from /tmp/genoffice --check  # 
 
 | 缺什么 | 说明 |
 |---|---|
-| ~~分页视图~~ | **已实现**：`src/pagination.ts` 的 `usePagination` 把连续流切成纸张（块级分页）。仍缺块内断行、拆表、页眉脚、分栏——见下 |
+| ~~分页视图~~ | **已实现**：`src/pagination.ts` 把连续流切成纸张，含块内断行、拆表+重复表头、页眉脚、脚注 |
 | **工具栏** | 上游的 ribbon 没 vendored（那是它自己的办公壳）。要哪些能力是 mimir 的界面决策 |
 | **大文档解析** | `parseDocx` 是同步重活，上游为它做了 worker（`parse-off-thread.ts`）。现在直接 await，大文档会卡主线程 |
 | **保存冲突** | `PUT /api/documents/:id/file` 不校验 `If-Match`。单客户端可接受，多客户端会互相覆盖 |
 | **xlsx / pptx** | 只验证了 docx。xlsx 走的是另一条路（还有 Rust 侧车与 Univer），pptx 未评估 |
-| **块内断行** | 段落比一页还长时是**整块下移**，不是像 Word 那样在行边界切开 |
-| **拆表 / 页眉脚 / 脚注 / 分栏** | 这四类页边界特例未做（上游有）。带页眉脚或脚注的文档在页面边界上看不到它们 |
+| **页内分栏** | 多栏文档按单栏排（上游有 `columns` 支持，未接） |
+| **工具栏面窄** | 现有 6 项（加粗/斜体/下划线/删除线/两种列表）。对齐、字号、颜色、表格操作为空 |
+| **列表编号分配** | 新列表沿用文档里已有的 `numId`；新建编号定义要写 `numbering.xml`（上游的 `allocateListNumId` 在 host 侧，未 vendored） |
+
+### 分页的四个静默坑（都在 `src/pagination.ts` 的注释里）
+
+排查分页问题时先看 `window.__mimirPagination`（中间量）与
+`window.__mimirPagError`——分页失败的**三种原因现象相同**（都是「没有页」），
+不记下来只能靠猜。
+
+| 症状 | 原因 |
+|---|---|
+| 页数对但没有页间隙 | `origin` 用了滚动容器的位置（容器一滚动就偏移一个 scrollTop） |
+| 51 个块被量成 1 个 | 传了容器 ref 而不是 `.ProseMirror` 本身 |
+| 分页永久不触发且不报错 | 用 `requestAnimationFrame`——**后台标签页不派发帧** |
+| 分页正常但灰带透明 | `--canvas` / `--docs-paper` 由上游 App 壳运行时注入，未 vendored |
 
 样式裁剪（`trim-editor-css.mjs`）只保留 `.doc-*` / `.ProseMirror` / `.page-*` /
 `.hf-*` 前缀的规则。**加新的编辑器 UI 时如果样式不生效，先看它是不是被裁掉了**——

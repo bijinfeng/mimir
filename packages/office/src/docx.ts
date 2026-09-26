@@ -89,9 +89,20 @@ export interface DocxSession {
   }
   /** 交给 Tiptap 的文档模型 */
   readonly content: PmDocJson
-  /** 文档里的批注与脚注（界面可选展示） */
+  /** 文档里的批注（界面可选展示） */
   readonly comments: unknown
-  readonly footnotes: unknown
+  /**
+   * 脚注数据源（页底脚注区用）。
+   *
+   * 正文里的上标引用由编辑器自己渲染（`DocNoteRef`），但「脚注正文放到
+   * 引用所在页的页底」需要原始块树里的 `noteRef` 与脚注定义——那是分页
+   * 侧的活。这里暴露恰好够用的两样，不让调用方接触整个 ParsedDoc。
+   */
+  readonly footnotes: {
+    parsed: ParsedDoc
+    /** `docxIndex` → 原始块（分页块盒的 run 里没有 noteRef） */
+    blockByDocxIndex: Map<number, Block>
+  }
   /** 保存：把编辑器当前文档转成补丁并写回字节 */
   save(edited: PmDocJson): Promise<Uint8Array>
 }
@@ -141,7 +152,14 @@ export async function openDocx(bytes: Uint8Array): Promise<DocxSession> {
     },
     content,
     comments: parsed.comments,
-    footnotes: parsed.footnotes,
+    footnotes: {
+      parsed,
+      blockByDocxIndex: new Map(
+        parsed.blocks
+          .filter((b) => b.docxIndex !== null)
+          .map((b) => [b.docxIndex as number, b] as const),
+      ),
+    },
     async save(edited: PmDocJson): Promise<Uint8Array> {
       const plan = pmDocToSavePlan(edited, parsed.blocks)
       return saveDocx(

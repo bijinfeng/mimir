@@ -77,6 +77,7 @@ export function OfficeEditor({ documentId }: { documentId: string }) {
      */
     sections: session?.sections ?? NO_SECTIONS,
     headerFooter: session?.headerFooter ?? null,
+    footnotes: session?.footnotes ?? null,
     onPaged: handlePaged,
   })
 

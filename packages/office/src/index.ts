@@ -38,4 +38,11 @@
 
 export { openDocx, type DocxSession } from './docx.js'
 export { usePagination } from './pagination.js'
+export {
+  pageFootnotesOf,
+  makeGapNotesEl,
+  notesAreaHeight,
+  FOOTNOTE_SEPARATOR_H,
+  type FootnoteContext,
+} from './footnotes.js'
 export type { Block } from '../vendor/packages/docx-engine/src/types.js'

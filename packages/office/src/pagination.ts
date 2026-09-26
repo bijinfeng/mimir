@@ -20,6 +20,7 @@ import {
   makeGapHfEl,
 } from '../vendor/apps/docs/src/renderer/editor/hf-dom.js'
 import { pageNumbers } from '../vendor/apps/docs/src/renderer/pagination-hf.js'
+import { makeGapNotesEl, notesAreaHeight, pageFootnotesOf } from './footnotes.js'
 import type { HeaderFooter } from '../vendor/packages/docx-engine/src/types.js'
 import { BlockIndex } from '../vendor/apps/docs/src/renderer/pagination-index.js'
 import {
@@ -97,6 +98,14 @@ export interface PaginationOptions {
    * 它处理分节的重新编号与格式（如罗马数字）。
    */
   headerFooter?: DocxSession['headerFooter'] | null | undefined
+  /**
+   * 脚注数据源。**不传就没有页底脚注区**（正文里的上标引用仍然渲染）。
+   *
+   * 三项都来自 `DocxSession`：`parsed` 提供脚注定义与编号规则，
+   * `blocks` 是原始块树（拿 run 里的 `noteRef`），`blockByDocxIndex`
+   * 把分页块盒映回原始块。
+   */
+  footnotes?: DocxSession['footnotes'] | null | undefined
   /** 总页数回传（界面可以显示「第 x / 共 y 页」） */
   onPaged?: (pageCount: number) => void
 }
@@ -168,6 +177,7 @@ export function usePagination({
   containerRef,
   sections,
   headerFooter,
+  footnotes,
   onPaged,
 }: PaginationOptions): void {
   useEffect(() => {
@@ -299,6 +309,36 @@ export function usePagination({
         const def = kind === 'header' ? hf.header : hf.footer
         return def ? toHeaderFooter(def) : null
       }
+
+      /**
+       * 逐页脚注。分配**必须在切片之后**：它把「引用所在的内容流坐标」
+       * 换算成页号，段落跨页时每条脚注跟着自己的引用走（Word 语义）。
+       */
+      const noteItems =
+        footnotes && footnotes.parsed.footnotes.length > 0
+          ? pageFootnotesOf(
+              {
+                parsed: footnotes.parsed,
+                footnotes: footnotes.parsed.footnotes,
+                blocks,
+                blockByDocxIndex: footnotes.blockByDocxIndex,
+                sections,
+              },
+              slices,
+            )
+          : []
+
+      const marginLeftPx = (settings.marginLeft / 1440) * 96
+      const marginRightPx = (settings.marginRight / 1440) * 96
+      /** 某页脚注区的高度（没有脚注为 0）：分页点要把它从正文里让出来 */
+      const notesHeightFor = (pageIdx: number): number => notesAreaHeight(noteItems[pageIdx] ?? [])
+
+      /** 该页的脚注区元素（没有脚注返回 undefined） */
+      const notesElFor = (pageIdx: number): HTMLElement | undefined => {
+        const items = noteItems[pageIdx]
+        if (!items || items.length === 0) return undefined
+        return makeGapNotesEl(items, box.width - marginLeftPx - marginRightPx)
+      }
       /**
        * 生成某个分页点的页眉脚条带元素。
        *
@@ -312,7 +352,14 @@ export function usePagination({
       function hfPropsFor(page: number): {
         hfEls?: HTMLElement[]
         hfKey?: string
+        notes?: HTMLElement
+        notesKey?: string
       } {
+        /**
+         * 脚注区属于**上一页**：分页点画的是「上一页的页底」，而脚注正在
+         * 那里（Word 也是这个位置）。所以取 `page - 1` 的分配。
+         */
+        const notes = notesElFor(page - 1)
         const geom = hfStripGeom(settings)
         const els: HTMLElement[] = []
         const total = slices.length
@@ -341,7 +388,23 @@ export function usePagination({
             }),
           )
         }
-        if (els.length === 0) return {}
+        const notesItems = noteItems[page - 1] ?? []
+        /**
+         * **脚注区的高度要从正文里预留出来**（加到间隙的下边距上）。
+         *
+         * 不预留的话脚注画在页底、正文照旧排到页底，两者**重叠**——
+         * 实测症状是「脚注文字压在正文上」。
+         */
+        const notesH = notesAreaHeight(notesItems)
+        const notesProps =
+          notes && notesItems.length > 0
+            ? {
+                notes,
+                // key 覆盖条数、内容与总高度：脚注文字改了而元素没重建会显示旧内容
+                notesKey: `${notesItems.length}:${Math.round(notesH)}:${notesItems.map((n) => n.text).join('|').length}`,
+              }
+            : {}
+        if (els.length === 0) return notesProps
         const key = [
           pageNos[page - 1] ?? page,
           pageNos[page] ?? page + 1,
@@ -349,7 +412,7 @@ export function usePagination({
           hfText(prevFooter),
           hfText(nextHeader),
         ].join('·')
-        return { hfEls: els, hfKey: key }
+        return { hfEls: els, hfKey: key, ...notesProps }
       }
 
       const gaps: PageGapSpec[] = []
@@ -360,11 +423,17 @@ export function usePagination({
         const remaining = Math.max(0, contentHeight - (prev.end - prev.start))
         const metrics = {
           marginTop: contentTop + remaining,
-          marginBottom: effectiveBottomPx(settings, 0),
-          // 左右边距从 section 读（Word 文档各不相同）。
-          // twips → px 与上游一致：1440 twips = 1 英寸 = 96 px
-          marginLeft: (settings.marginLeft / 1440) * 96,
-          marginRight: (settings.marginRight / 1440) * 96,
+          /**
+           * 下边距 = 页边距 + **上一页的脚注区高度**。
+           *
+           * 脚注画在页底，正文必须为它让位——不让的话正文排到页底、
+           * 脚注也画在页底，两者**重叠**（实测症状是脚注文字压在正文上）。
+           * 注意是「上一页」的脚注：分页点画的是上一页的页底。
+           */
+          marginBottom: effectiveBottomPx(settings, 0) + notesHeightFor(page - 1),
+          // 左右边距从 section 读（Word 文档各不相同）
+          marginLeft: marginLeftPx,
+          marginRight: marginRightPx,
         }
 
         /**
@@ -661,5 +730,5 @@ export function usePagination({
       if (editor) editor.off('update', onUpdate)
       if (!editor?.isDestroyed && editor?.view?.dom) setPageGaps(editor.view, [])
     }
-  }, [editor, scrollRef, containerRef, sections, headerFooter, onPaged])
+  }, [editor, scrollRef, containerRef, sections, headerFooter, footnotes, onPaged])
 }
