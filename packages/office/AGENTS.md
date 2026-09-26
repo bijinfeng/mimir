@@ -21,6 +21,7 @@ src/
   docx.ts          适配层：openDocx → 编辑 → save
   pagination.ts    docx 分页视图；footnotes.ts 脚注
   xlsx.ts          xlsx 网格解析（**自己写的**，未 vendored）
+  xlsx-edit.ts     xlsx 单元格编辑：补丁式保存 + 内联字符串（**自己写的**）
   pptx-archive.ts  pptx 的 zip / rels / 媒体读写（浏览器安全，预加载 entries）
   pptx.ts          pptx 打开：装配解析上下文 + 编辑会话（openPptxForEdit）
   pptx-save.ts     pptx 保存：元素补丁回字节（**移植自上游 index.ts**）
@@ -172,7 +173,8 @@ node packages/office/scripts/sync-upstream.mjs --from /tmp/genoffice --check  # 
 | **工具栏** | 上游的 ribbon 没 vendored（那是它自己的办公壳）。要哪些能力是 mimir 的界面决策 |
 | **大文档解析** | `parseDocx` 是同步重活，上游为它做了 worker（`parse-off-thread.ts`）。现在直接 await，大文档会卡主线程 |
 | **保存冲突** | `PUT /api/documents/:id/file` 不校验 `If-Match`。单客户端可接受，多客户端会互相覆盖 |
-| **xlsx** | **只读网格预览已做**（`src/xlsx.ts`，约 300 行，零新增依赖）。它与 docx 是**两条技术路线**：上游走 13.7K 行 Rust 侧车 + Univer，而「把表画出来」用不到那一层——所以这里没 vendored 任何东西，自己读 `sheetData`。**编辑**未做（要公式引擎与表格模型）。见 TECH §15.7 |
+| **xlsx** | **网格 + 改单元格已做**（`src/xlsx.ts` 读 + `src/xlsx-edit.ts` 写，零新增依赖）。与 docx/pptx 是**两条技术路线**：上游走 13.7K 行 Rust 侧车 + Univer，而「把表画出来、改几个格子」用不到那一层——所以这里没 vendored 任何东西。见 TECH §15.7 |
+| **xlsx 行/列增删与公式重算** | 这一版只改**现有格的内容**（不改行列结构、不重算公式）。改了被别的公式引用的格子，那边的显示值要等 Excel 打开才更新 |
 | **pptx 编辑** | **改文字已做**（`src/pptx-save.ts`，补丁式保存）。**run 级格式**（加粗/字号/颜色）与元素位置未做——上游那条路走 `pptx-ops` 的 ops 层 + `setElementFont`，依赖 `index.ts` 的整条写路径。见 TECH §15.9 |
 | **pptx 字体度量** | 用启发式（按字符类别估宽度）——**换行位置**可能与原件略有差别。要精确得接 opentype.js + vendored 字体（docx 那边有） |
 | **页内分栏** | 多栏文档按单栏排（上游有 `columns` 支持，未接） |

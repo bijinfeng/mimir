@@ -12,7 +12,7 @@ import {
 import { MarkdownBody } from '@/components/document/MarkdownBody'
 import { OfficeEditor } from '@/components/document/OfficeEditor'
 import { PptxEditor } from '@/components/document/PptxEditor'
-import { XlsxPreview } from '@/components/document/XlsxPreview'
+import { XlsxEditor } from '@/components/document/XlsxEditor'
 import { useContentStyles } from '@/components/ContentTypography.style'
 import { api } from '@/lib/api'
 import { FONT_SIZE } from '@/theme/tokens'
@@ -210,8 +210,8 @@ export function FilePreview({ doc }: { doc: DocumentDetail }) {
     }
 
     if (viewer === 'sheet') {
-      // 网格预览（只读）：读原件字节、在浏览器里画成表格
-      return <XlsxPreview key={doc.id} documentId={doc.id} />
+      // 网格 + 单元格编辑（`packages/office/src/xlsx-edit.ts`）
+      return <XlsxEditor key={doc.id} documentId={doc.id} />
     }
 
     if (viewer === 'deck') {

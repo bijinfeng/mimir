@@ -75,6 +75,13 @@ export interface XlsxSheet {
   /** 工作表名，来自 `workbook.xml`（Excel 里页签上的那个名字） */
   name: string
   /**
+   * 这张表在 zip 里的路径（`xl/worksheets/sheet1.xml`）。
+   *
+   * 编辑路径要用它定位「改哪个 XML」——名字不行（名字可以重名，而且中文名
+   * 与文件名的对应关系只在 `workbook.xml` + rels 里）。
+   */
+  entry: string
+  /**
    * 这张表在 Excel 里是隐藏的（`state="hidden"` / `"veryHidden"`）。
    * 我们仍然列出它、但**标注**：Excel 不显示隐藏页签，而悄悄少一张表
    * 会让用户以为文件里没有它（「不静默」这条规矩）。
@@ -112,7 +119,7 @@ export async function readXlsx(bytes: Uint8Array): Promise<XlsxWorkbook> {
   for (const ref of await listSheets(zip)) {
     const xml = await zip.files[ref.entry]?.async('string')
     if (!xml) continue
-    const sheet = parseSheet(xml, shared, ref.name)
+    const sheet = parseSheet(xml, shared, ref.name, ref.entry)
     if (ref.hidden) sheet.hidden = true
     if (sheet.rows.length > 0) sheets.push(sheet)
   }
@@ -222,7 +229,7 @@ async function readSharedStrings(zip: JSZip): Promise<string[]> {
   return out
 }
 
-function parseSheet(xml: string, shared: string[], name: string): XlsxSheet {
+function parseSheet(xml: string, shared: string[], name: string, entry: string): XlsxSheet {
   const rows: XlsxRow[] = []
   /** 上一个出现过的行号。`r` 是可选属性，缺了要按 Excel 的规矩顺延 */
   let lastNumber = 0
@@ -276,7 +283,7 @@ function parseSheet(xml: string, shared: string[], name: string): XlsxSheet {
     padded.push({ number: row.number, height: row.height, cells })
   }
 
-  return { name, rows: padded, columns: readColWidths(xml, width) }
+  return { name, entry, rows: padded, columns: readColWidths(xml, width) }
 }
 
 function emptyCell(col: number): XlsxCell {
