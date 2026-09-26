@@ -14,7 +14,6 @@ import {
  * 散在组件里就容易只改一处。
  */
 export const SCOPE_LABEL: Record<string, string> = {
-  inbox: '收件箱',
   all: '全部文档',
   archived: '已归档',
 }
@@ -29,7 +28,6 @@ export const SCOPE_LABEL: Record<string, string> = {
 export function scopeParams(scope: string): Pick<DocumentListQuery, 'folder' | 'tag' | 'status'> {
   if (scope.startsWith('folder:')) return { folder: scope.slice('folder:'.length) }
   if (scope.startsWith('tag:')) return { tag: scope.slice('tag:'.length) }
-  if (scope === 'inbox') return { status: 'inbox' }
   if (scope === 'archived') return { status: 'archived' }
   return {}
 }

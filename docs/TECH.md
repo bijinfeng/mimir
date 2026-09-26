@@ -2031,10 +2031,66 @@ packages/office/
 
 ### 15.4 界面接入
 
-`viewerFor()`（`@mimir/shared`）多了一个 `office` 类型，命中 docx 时
-`FilePreview` 的「原件」层渲染 `OfficeEditor` 而不是下载卡片。
+`viewerFor()`（`@mimir/shared`）对三种 Office 格式分别给 `office` / `sheet` /
+`deck` 三个类型，`FilePreview` 命中它们时渲染 **`OfficeSourceEditor`**
+（`apps/web/src/components/document/`）——它是一层**宿主适配层**，只做两件事：
+
+1. 把网络调用包成 `EditorIo`（`load` 取字节 / `save` 写回）——包里不认识
+   cookie，也不知道端点长什么样
+2. 把主题变量（`--me-*`）铺在编辑器祖先上
+
+其余全部（布局、工具条、状态行、分页、保存状态）在 `packages/office` 里。
 保存走**已有的** `PUT /api/documents/:id/file`（§13.9 的替换原件端点）——
 不需要新端点，那正是它的用途。
+
+**为什么分派用 `viewerFor` 而不是各自判 MIME**：它已经是「这个格式用哪个
+查看器」的唯一真相。两处各判一次必然有一天不一致，而那种不一致是静默的
+（看得到文件、但打开的是错的查看器）。
+
+### 15.4.1 统一外壳：四种编辑器共用一套壳
+
+**界面在包里**（`packages/office/src/shell/` 与 `src/editors/`），这是 D-054
+的决定。理由：**「一样」只能由同一份实现保证**。改之前四种格式四套壳
+（docx 一个 antd `Space`、xlsx 表格上方一个编辑行、pptx 右侧 300px 面板、
+markdown 干脆没有工具条），三种保存状态说法——那是用户看到的「不伦不类」。
+
+```
+src/shell/
+  EditorShell.tsx   四个槽位：toolbar / children / footer / status
+  shell.css         外壳样式（主题值走 --me-* 自定义属性）
+  icons.tsx         工具条图标（自绘 SVG，不依赖图标库）
+  editor-commands.ts 方言能力检测与调用
+src/editors/
+  DocxEditor.tsx      xlsx / pptx 同构
+  MarkdownEditor.tsx
+  InlineToolbar.tsx   选区工具条（跟着编辑器实例走，所以在包里）
+  use-source.ts       取字节 → 解析 → 写回，以及「解析结果绑在哪一份字节上」
+  types.ts            EditorIo（宿主提供取与存）
+```
+
+**边界划在「壳」与「内容」之间**：包负责壳，宿主负责**方言与幂等**
+（markdown 的 Tiptap 扩展集合、正文排版类）。所以 `MarkdownEditor` 也在包里
+——它的正文格式（`createExtensions`）是 mimir 的产品决定，壳是通用的。
+
+**主题桥**（`apps/web/src/theme/editor-theme-bridge.ts`）：包不依赖 antd，
+宿主把 antd token 填进 `--me-*`。每个属性都有中性回退值，所以包能脱离宿主
+渲染（测试、静态预览都靠它）。
+
+### 15.4.2 界面层踩过的五个坑（都会静默坏）
+
+| 症状 | 原因 |
+|---|---|
+| 标题渲染成 38px 或 28px | 两个坑叠在一起：① antd 的 `Typography.Title` 自带 `h1:where(...).ant-typography`（特异性 (0,1,1)），单类选择器盖不住 → 38px；② 抬了特异性后**纯 `<h1>` 又匹配不上**那条规则，字号回落到浏览器默认 2em = 28px。修法是两个分支都用 `Typography.Title`：一个元素类型 = 一条样式路径 |
+| 工具条/状态行不粘 | `.mimir-editor` 用了 `overflow: hidden`——它会让这个元素成为滚动容器，里面的 `sticky` 相对**它**定位，而它与内容同高，等于不粘。要用 `overflow: clip`（只裁剪、不建滚动容器） |
+| 工具条背景透出正文 | antd 的 `colorFillQuaternary` 是**半透明**的（`rgba(255,255,255,0.04)`），直接用会让内容从下面透出来。要两层合成：`--me-surface` 打底 + `--me-bar-bg` 叠上去 |
+| 编辑器只有内容高，下面一大片空白 | 高度链缺了任何一环。整条链是 `scroll(min-height:0)` → `cols(min-height:100%)` → `innerWide(align-self:stretch)` → 主题变量层(`flex:1;min-height:0`) → `.mimir-editor(flex:1)`。实测断过两次：`cols` 的 `align-items: flex-start`（子项不被拉伸）、主题变量那一层是默认 `block` |
+| 工具条比头部窄 | 「正文限宽 760px」实现在**外层容器**上，把外壳一起收窄了（实测工具条 680px，而头部的下边框横跨 1240px）。限宽要由外壳**内部**负责（`.mimir-markdown-body` 的 max-width + 居中） |
+
+**一条测试环境的坑**：`packages/office` 的 vitest 默认环境是 **node**，不是
+happy-dom。happy-dom 会替换全局 `URL`，于是解析类测试里的
+`readFileSync(new URL(..., import.meta.url))` 抛 `The URL must be of scheme file`
+——那 48 个测试与 DOM 毫无关系却整片挂掉（实测踩过）。要 DOM 的测试在自己的
+文件顶部写 `@vitest-environment happy-dom`。
 
 ### 15.5 现在的边界
 
@@ -2045,7 +2101,7 @@ packages/office/
 | 列表的编号分配 | 新列表沿用文档里已有的 `numId`；新建编号定义要写 `numbering.xml`，未做 |
 | worker 解析 | `parseDocx` 同步重活，大文档会卡主线程（上游有现成 worker 可接） |
 | 保存冲突 | `PUT` 不校验 `If-Match`；单客户端可接受 |
-| xlsx / pptx 的编辑 | 两者的**只读预览**都已补（§15.7、§15.8），编辑未做——xlsx 要公式引擎与表格模型，pptx 要写回路径 |
+| ~~xlsx / pptx 的编辑~~ | **都已做**：xlsx 改单元格（§15.7）、pptx 改文字（§15.9） |
 | pptx 的字体度量 | 用启发式（按字符类别估宽度），**换行位置**可能与原件略有差别；要精确得接 opentype.js + vendored 字体（§15.8） |
 
 **docx 侧这三条缺项的排序就是产品化的排序**：分页（观感）→ 工具栏（可用）→ worker（大文档）。
@@ -2239,15 +2295,34 @@ MIT/171KB）。上游的另一个依赖 `opentype.js` **没有被拉进来**—�
 **会话的 `version()`→`view()` 与 `commit()` 是契约不是细节**：跳过
 `commit()` 的调用方会在第二次保存时丢数据，而两次保存都「成功」。
 
+**保存路径的验证方式**（不是只跑单元测试就宣布完成）：
+
+| 格式 | 怎么验的 |
+|---|---|
+| pptx | 浏览器改第 1 页标题 → 保存 → **python-pptx** 打开确认文字；zip 逐条目比对：47 个条目**只有 `ppt/slides/slide1.xml` 变化**，其余逐字节相同 |
+| xlsx | 浏览器改 A3 → 保存 → **openpyxl** 读回确认 A3 是新值、A1 未受影响（共享字符串没被动过）；`sharedStrings.xml` 一个字节不变 |
+| docx | 改一段 → 保存 → python-docx 读回确认；`word/document.xml` 之外无变化 |
+
 **docx 编辑器仍未做的三项**（都在 `packages/office/AGENTS.md` 里）：页内分栏（多栏文档按单栏排）、工具栏的面窄（只有 6 项格式）、列表编号的新建分配（沿用已有 numId）。
 
 **仍未做的**：pptx 的 run 级格式编辑（加粗/字号/颜色——上游那条路走
 `pptx-ops` 的 ops 层 + `setElementFont`，需要 `index.ts` 的整条写路径）、
 动画播放、精确字体度量；docx 的三项见上。xlsx 另有**公式重算**（改了被
-别的公式引用的格子，那边的显示值要等 Excel 打开才更新——界面写明）、
+别的公式引用的格子，那边的显示值要等 Excel 打开才更新——状态行写明）、
 行/列的增删（这一版只改现有格的内容）、条件格式、图表、数据透视、日期还原。
 
+**xlsx 编辑的一个静默 bug（实测发现并修掉）**：`setCell` 原先只改 XML 文本、
+不改内存模型，而界面读的是模型（`view()`）——于是保存成功后状态行说
+「已保存」，**格子里还是旧文字**，直到重新打开文件。文件其实是对的
+（openpyxl 读得到新值），所以这是「界面与事实不一致」，比不保存更难发现。
+
+修法是两件事一起做（`xlsx-edit.ts` 的 `applyToModel`），而且**按位置写入**
+不是按列号排序插入：模型的不变量是「位置即列号」（`cells[i].col === i`，
+`readXlsx` 靠补空占位维持），插进去会让下标与列号错开一格，而那种错位是
+静默的（点 C3 改到 D3）。四条回归测试守着。
+
 **一条容易误解的地方**：三种格式的**正文层都是可读的**（提取成 Markdown
-表格/分页文本，能搜、能被 AI 引用），而**原件层**现在也都能看、**三种都
-能改**（docx 全文编辑、xlsx 改格子、pptx 改文字）——两层回答的是不同问题
-（正文层「它讲了什么」，原件层「它原样长什么样」）。这个区分见 §13.1。
+表格/分页文本，能搜、能被 AI 引用），而**原件层**都能看、**三种都能改**
+（docx 全文编辑、xlsx 改格子、pptx 改文字）。不过 §5.12 之后详情里**只有
+原件这一层**——提取结果活在检索索引里（那才是它真正的用途），不再占一个
+页签。这个区分见 §13.1。

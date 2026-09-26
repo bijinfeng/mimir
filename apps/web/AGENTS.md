@@ -115,7 +115,17 @@ ref 声明顺序、初始值用 state 而非 ref），用它之后全部消失�
 
 **内联工具条用官方的 `BubbleMenu`**（`@tiptap/react/menus`）：
 跟随选区、滚动重算、边缘翻转、点工具条不取消选区都是它处理的。
-里面放 antd 控件即可——它只管浮层位置与显隐。
+
+**编辑器外壳在 `@mimir/office` 里**（D-054）：`NoteEditor` 现在是一层适配
+——它只把保存包成 `onSave`、注入方言与排版类、把「立即保存」交给
+`lib/unsaved` 的守卫。壳（工具条 / 状态行 / 布局）与另外三种格式共用同一份
+实现，所以四种编辑器长得一样不靠约定。
+
+**Tiptap v3 的 `useEditor` 默认不在事务上重渲染**
+（`shouldRerenderOnTransaction: false`，为性能）。所以工具条里**不能**在渲染期
+直接读 `editor.isActive(...)`——它会停在「打开文档那一刻」的值，按钮不亮也
+不报错。要用 `useEditorState` 订阅（`MarkdownEditor` 的 `MarkdownToolbar`
+就是这么写的）。
 
 ---
 
@@ -138,15 +148,23 @@ API 客户端在 `lib/api.ts`。三条约定：
 
 ## 文件类文档的界面（`docs/DESIGN.md` §8.16、`docs/TECH.md` §13）
 
-上传件与笔记 / 抓取的资料**共用列表形态与整理动作**，只有正文区多一个分支：
+上传件与笔记 / 抓取的资料**共用列表形态与归类动作**，只有正文区多一个分支：
 
 | `kind` | 正文区 |
 |---|---|
 | `note` | `NoteEditor`（唯一可编辑的） |
-| `file` | `FilePreview`（两层：正文 / 原件） |
+| `file` | `FilePreview`（**直接看原件**，D-054） |
 | 其余 | `MarkdownBody`（只读渲染） |
 
-四条容易做错的地方：
+**`FilePreview` 没有「正文 / 原件」切换**（D-054 去掉的）。分派判据是
+「能不能真的看到东西」：有专用查看器 → 原件；没有但提取出了正文
+（txt / csv / 旧版 doc）→ 正文；两个都没有 → 说明卡片 + 下载。
+用 `viewerFor` 分派，不要自己判 MIME——两处各判一次必然有一天不一致。
+
+**提取结果没有消失**：它仍然可搜、可被 AI 引用。那是它真正的用途，
+不需要在详情里再占一层。
+
+五条容易做错的地方：
 
 1. **正文为空时那第二行必须说明原因**，不能留白。四种原因的措辞由
    `@mimir/shared` 的 `parseSupport()` 派生，列表项与详情面板共用
@@ -157,6 +175,10 @@ API 客户端在 `lib/api.ts`。三条约定：
    渲染得了）。空白在那里等于说「这个文件是空的」
 4. **文本类文件的正文用等宽只读，不走 Markdown**。csv / json 里的换行与 `#`
    会被 Markdown 渲染折叠或当成标题——那是主动把内容显示错
+5. **Office 三种格式走同一个组件**（`OfficeSourceEditor`）：差别在
+   `packages/office` 内部（解析与保存路径），宿主只负责取字节与写回。
+   分三个分支的话，每个分支都要各自记得传 `onDirtyChange`——漏一个就是
+   丢改动的路径
 
 查看器只用浏览器自带能力（`<iframe>` / `<img>` / `<audio>` / `<video>`）：
 pdf.js 那 1MB 换来的是一致外观，而「PDF 批注」这个需求还没出现
@@ -208,7 +230,7 @@ src/**/*.style.ts           组件/页面样式（createStyles）
 2. **不要把 `colorPrimary` 当文字色**——选中态浅底上只有 3.61:1。文字用
    `token.colorLink`
 3. **页面里不写字面量颜色**，用 `token.*`。例外只有 `theme/customToken.ts`
-   里的那几组值（列底色、行内代码色、高亮底、整理条、热力色阶，antd 没有
+   里的那几组值（列底色、行内代码色、高亮底、热力色阶，antd 没有
    这些语义）。**深色那一套也要走 token**，不要在页面里写
    `appearance === 'dark' ? … : …`
 4. **不新增 `.css` 文件，不新增全局类名**。全局样式只有一个出口
@@ -222,8 +244,13 @@ src/**/*.style.ts           组件/页面样式（createStyles）
 7. **覆写 antd 组件内部结构时用 `${prefixCls}`**，不要写死 `.ant-` 前缀——
    antd-style 会把当前前缀给你，换前缀时规则自动跟着换
 8. **antd v6 的 `Tag` 用 `variant="filled"`，不要用 `bordered={false}`**——
-   后者已废弃且会打警告。同理，**来源徽标不要用 `<Tag color="green">` 预设色**，
+   后者已废弃且会打警告。同理，**徽标不要用 `<Tag color="green">` 预设色**，
    预设走 antd 自己的调色板，对比度不由我们控制；用 `components/DocumentBadges.tsx`
+9. **`packages/office` 的样式读 `--me-*` 变量，那些值由
+   `theme/editor-theme-bridge.ts` 填**。改动编辑器里的颜色时改那个桥，
+   不要在 `apps/web` 的样式里再去盖它——两处都在管同一件事，必然有一处
+   是过期的。**变量只在声明它的元素及其子树上生效**，所以那个类必须挂在
+   编辑器祖先上（挂错的表现是样式全部退回回退值：界面能用、颜色不对）
 
 `design.test.ts` 会真算对比度，也会真的挂载 provider 栈验证 cssVar 注入、
 局部样式生成、以及**切换外观后变量块被替换**。它红了不要改断言，先改设计。

@@ -1,12 +1,12 @@
 import {
-  ApartmentOutlined,
   ArrowLeftOutlined,
   DownloadOutlined,
   MessageOutlined,
+  MoreOutlined,
 } from '@ant-design/icons'
-import type { Citation, DocumentDetail } from '@mimir/shared'
+import { viewerFor, type Citation, type DocumentDetail, type NoteUpdate } from '@mimir/shared'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { App, Button, Empty, Skeleton, Tag, Tooltip, Typography } from 'antd'
+import { App, Button, Dropdown, Empty, Skeleton, Tooltip, Typography } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import { StatusBadge } from '@/components/DocumentBadges'
 import { NoteEditor } from '@/components/NoteEditor'
@@ -15,7 +15,8 @@ import { DocumentFooter } from '@/components/document/DocumentFooter'
 import { useStyles } from '@/components/document/DocumentPanel.style'
 import { FilePreview } from '@/components/document/FilePreview'
 import { MarkdownBody } from '@/components/document/MarkdownBody'
-import { TriageBar } from '@/components/document/TriageBar'
+import { buildDocMenu } from '@/components/document/doc-menu'
+import { flattenFolders } from '@/components/document/folders'
 import { extractHeadings } from '@/components/document/headings'
 import { formatMeta } from '@/components/list-helpers'
 import { api } from '@/lib/api'
@@ -25,19 +26,24 @@ import { useAppShell } from '@/lib/app-shell-context'
  * 右栏：文档视图。
  *
  * 结构自上而下：
- *   工具条（路径 + 问 AI）
- *   返回对话（从对话点引用跳过来时出现）
- *   整理条（仅收件箱里的文档，见 document/TriageBar.tsx）
- *   正文 + 右侧大纲
- *   页脚（来源 / 被引用，见 document/DocumentFooter.tsx）
+ *   工具条（路径 + 下载 + 问 AI + ⋯）
+ *   返回（从对话点引用跳过来时出现）
+ *   标题 + 元信息
+ *   正文（笔记可编辑、上传件分两层、资料只读）
+ *   页脚（来源 / 被引用）
  *
  * 「资料」是只读的（`docs/PRD.md` §2.3）——抓来的内容不该被就地编辑，
  * 否则原始快照和派生正文就分不清哪个是真的了。所以非 note 只渲染不挂编辑器。
  *
- * 样式、大纲抽取、整理条、页脚都在 `document/` 下的独立文件里：
- * 这个组件负责**编排**，不是样式仓库。
+ * ## 整理条已移除（D-054）
+ *
+ * 收件箱那一整条橙色横幅（建议标签 / 归入目录 / 完成整理 / 归档）删掉了。
+ * 它占文档顶部一整行、长期存在，而**那三项能力都是低频动作**——读一篇文章
+ * 时并不想看到「归档」按钮。能力没有丢，全部收进了工具条右端的「⋯」菜单
+ * （见 `document/doc-menu.tsx`）。
+ *
+ * 状态徽标保留：归档是**流程状态**，它是这篇文档「在哪个阶段」的唯一提示。
  */
-
 export interface DocumentPanelProps {
   documentId: string | undefined
   /** 阅读态返回库（浏览态）。两栏布局（D-047）里它是离开详情的主路径 */
@@ -57,6 +63,13 @@ export interface DocumentPanelProps {
   onAskAboutSelection: (documentId: string, passage: string) => void
   /** 点击页脚的双链 */
   onOpenDocument: (id: string) => void
+  /**
+   * 文档里有未保存的改动。宿主用它武装离开前的拦截。
+   *
+   * **三条正文分支都要上报**（笔记与三种 Office 格式都能改）——不报就是
+   * 「改完直接切走会丢改动」，而那个症状是静默的（`lib/unsaved.tsx` 记了实测）。
+   */
+  onDirtyChange?: ((dirty: boolean) => void) | undefined
 }
 
 export function DocumentPanel({
@@ -67,25 +80,13 @@ export function DocumentPanel({
   onAskAi,
   onAskAboutSelection,
   onOpenDocument,
+  onDirtyChange,
 }: DocumentPanelProps) {
   const { styles } = useStyles()
   const { styles: contentStyles } = useContentStyles()
   const { clearHighlight } = useAppShell()
   const queryClient = useQueryClient()
-  const { message } = App.useApp()
-
-  /**
-   * 保存状态由编辑器上报，在工具条右侧显示。
-   *
-   * 它原先渲染在正文上方、标题与元信息之间——一块只有「已保存」三个字的
-   * 独立行，两侧都是空的，看起来像没画完的东西；而且**位置会跳**：
-   * 状态出现与消失时整块正文上下移动（`saveRow` 有 min-height 但仍在流里）。
-   *
-   * 移到工具条后它落在**常驻且不占额外高度**的位置，与其他界面状态
-   * （路径、问 AI）同一层——这也符合 `docs/PRD.md` §5.9「工具条常驻」
-   * 的原话，之前那个实现和文档写的位置并不一致。
-   */
-  const [save, setSave] = useState<SaveSnapshot>({ state: 'idle', retry: () => {} })
+  const { message, modal } = App.useApp()
 
   const docQuery = useQuery({
     queryKey: ['document', documentId],
@@ -95,6 +96,43 @@ export function DocumentPanel({
 
   const doc = docQuery.data
   const headings = doc ? extractHeadings(doc.body) : []
+
+  /**
+   * 内容列要不要占满。
+   *
+   * 判据是**「这里有没有编辑器」**：
+   *
+   * | 情况 | 布局 | 为什么 |
+   * |---|---|---|
+   * | 笔记（有编辑器） | 铺满 | 外壳（工具条 + 状态行）要与上面 44px 的头部同宽，否则两条铬条宽度不一致 |
+   * | 文件原件（有查看器） | 铺满 | 纸张、表格、幻灯片是越宽越好看清的东西 |
+   * | 只读资料正文 | 760 | 行宽有可读性上限，再宽眼睛回行时容易串行 |
+   *
+   * 「正文限宽」仍然成立，只是它由**外壳内部**的规则负责
+   * （`.mimir-markdown-body` 的 max-width），而不是靠外层容器收窄——
+   * 后者会把外壳一起收窄（实测：工具条只有 680px 宽，而头部的下边框横跨
+   * 1240px，两条铬条的宽度对不上，看着就是没对齐）。
+   *
+   * 用 `viewerFor` 而不是自己判 MIME：它已经是「这个格式用哪个查看器」的
+   * 唯一真相（`@mimir/shared`），两处各判一次必然有一天不一致。
+   */
+  const wideContent =
+    doc !== undefined &&
+    (doc.kind === 'note' || (doc.sourceKey !== null && viewerFor(doc.mime) !== 'none'))
+
+  /**
+   * 右侧大纲只在**看正文**时给。
+   *
+   * 它是正文的锚点导航（`docs/PRD.md` §5.10），而文件类文档现在直接显示
+   * 原件——原件自带导航（pptx 的页签、xlsx 的表页签、docx 的分页），
+   * 两个导航并排只是白占 196px 并把画布挤窄（实测 pptx 因此从 1208 掉到
+   * 1012，用户的原话是「左右留那么大的空白也没必要」）。
+   *
+   * 顺带一提：pptx 的提取正文按页分成「第 1 页…第 5 页」，那些恰好会被
+   * `extractHeadings` 当成标题，于是大纲列与翻页页签**列着同一批东西**
+   * ——这也是它多余的直接证据。
+   */
+  const showOutline = !wideContent && headings.length >= 2
   const scrollRef = useRef<HTMLDivElement>(null)
   const [activeHeading, setActiveHeading] = useState<string | undefined>()
 
@@ -117,6 +155,31 @@ export function DocumentPanel({
       void queryClient.invalidateQueries({ queryKey: ['documents'] })
     },
     onError: (error: unknown) => message.error(error instanceof Error ? error.message : '改名失败'),
+  })
+
+  /**
+   * 元信息的改动（标签 / 目录 / 归档）。原先是整理条那三个动作，现在从
+   * 「⋯」菜单触发——**失效范围一处不能少**：列表、目录树、标签云、导航计数。
+   * 少刷一处就是界面上有一个数字在骗人。
+   */
+  const patch = useMutation({
+    mutationFn: (input: NoteUpdate) => api.documents.update(documentId!, input),
+    onSuccess: (updated) => {
+      void queryClient.setQueryData(['document', updated.id], updated)
+      void queryClient.invalidateQueries({ queryKey: ['documents'] })
+      void queryClient.invalidateQueries({ queryKey: ['folders'] })
+      void queryClient.invalidateQueries({ queryKey: ['tags'] })
+      void queryClient.invalidateQueries({ queryKey: ['counts'] })
+    },
+    onError: (error: unknown) => message.error(error instanceof Error ? error.message : '操作失败'),
+  })
+
+  /** 目录列表与建议标签：只有打开「⋯」菜单才需要，但 antd 的菜单要一次给全 */
+  const folderQuery = useQuery({ queryKey: ['folders'], queryFn: api.folders.list })
+  const suggestQuery = useQuery({
+    queryKey: ['suggested-tags', documentId, doc?.tags.join(',')],
+    queryFn: () => api.documents.suggestedTags(documentId!),
+    enabled: Boolean(documentId),
   })
 
   /**
@@ -195,10 +258,6 @@ export function DocumentPanel({
     let attempts = 0
 
     /**
-     * **要重试**：effect 首次跑时正文可能还没挂载完（Tiptap 是异步渲染的），
-     * 那时注册的 Range 会在内容重渲染后塌缩成空——`highlights.size` 是 1
-     * 但 `collapsed: true`，看过去就是「没有高亮」。
-     *
      * **清除必须等结束之后**：`clearHighlight` 会改 context，触发本 effect
      * 以 citation=null 重跑，cleanup 把 cancelled 置真——放在开头调用等于
      * 第一次 tick 就被掐断（实测踩过：重试循环从未跑第二轮）。
@@ -272,96 +331,80 @@ export function DocumentPanel({
     )
   }
 
+  const menu = buildDocMenu({
+    doc,
+    onSetTags: (tags) => patch.mutate({ tags }),
+    onSetFolder: (folder) => patch.mutate({ folder }),
+    onArchive: () => {
+      modal.confirm({
+        title: '归档这篇？',
+        // 归档是可逆的（状态位），所以用 confirm 而不是更重的流程，
+        // 但要说清它「不再出现在默认列表里」这个后果
+        content: '归档后它不再出现在默认列表里，但检索仍能找到，也能从「已归档」恢复。',
+        okText: '归档',
+        cancelText: '取消',
+        onOk: () => {
+          patch.mutate({ status: 'archived' })
+          message.success('已归档')
+        },
+      })
+    },
+    onUnarchive: () => {
+      patch.mutate({ status: 'ready' })
+      message.success('已移出归档')
+    },
+    folders: flattenFolders(folderQuery.data?.items ?? []).map((item) => item.path),
+    suggestedTags: suggestQuery.data?.items ?? [],
+  })
+
   return (
     <div className={styles.wrap}>
-      <div className={styles.toolbar}>
-        {/*
-          工具条左侧显示「这个东西在哪」：
-          笔记给 vault 路径（能拿它去 Obsidian 里找），上传件给原文件名，
-          抓取的资料给 URL。上传件不显示 vault 路径——它没有 vault 文件，
-          显示「（尚无快照）」会让人以为记录坏了。
-        */}
-        <span className={styles.path}>
-          {doc.kind === 'file'
-            ? (doc.sourceKey?.split('/').pop() ?? doc.title)
-            : (doc.path ?? doc.url ?? '（尚无快照）')}
-        </span>
+      {/*
+        Office 式头部：**一行**（D-054）。
+        返回 · 标题 · 元信息 · 动作，四段挤在 44px 里——这是 Word / Excel
+        网页版的标题栏形态。原先它占三行（返回胶囊 / 28px 大标题 / 元信息行），
+        约 150px 的铬条压在内容之上，而文件类文档的内容（纸张、表格、幻灯片）
+        恰恰是越高越好。
 
-        {/* 保存状态常驻工具条。**只在笔记上显示**：资料与文件都是只读的，
-            给它们显示「已保存」会让人以为可以编辑（PRD §2.3、DESIGN §8.11） */}
-        {doc.kind === 'note' && <SaveIndicator state={save.state} retry={save.retry} />}
-
-        {/* 上传件的下载入口。它在工具条常驻而不是只出现在「原件」层里——
-            下载是最常用的动作，让它要求先切到原件层是多一步 */}
-        {doc.kind === 'file' && doc.sourceKey && (
-          <Button
-            type="text"
-            size="small"
-            icon={<DownloadOutlined />}
-            className={styles.tbBtn}
-            href={api.documents.sourceUrl(doc.id, { download: true })}
-          >
-            下载
-          </Button>
+        返回按钮**留在头部最左**而不是收进菜单：`docs/PRD.md` §5.5 要求
+        「回去」是显式动作（不能靠浏览器后退），而两栏布局里它是离开详情的
+        主路径。两个返回并存——「返回对话」只在从对话跳来时出现。
+      */}
+      <div className={styles.header}>
+        {onBackToChat && (
+          <button type="button" className={styles.back} onClick={onBackToChat}>
+            <ArrowLeftOutlined style={{ fontSize: 11 }} />
+            返回对话
+          </button>
+        )}
+        {onBack && (
+          <button type="button" className={styles.back} onClick={onBack}>
+            <ArrowLeftOutlined style={{ fontSize: 11 }} />
+            返回库
+          </button>
         )}
 
-        <Tooltip
-          title={
-            doc.body.trim() === ''
-              ? '这篇还没有可检索的正文，问答里引用不到它'
-              : '带这篇的上下文去主视图对话，范围自动锁到这一篇'
-          }
-        >
-          <Button
-            type="text"
-            size="small"
-            icon={<MessageOutlined />}
-            className={styles.tbBtn}
-            onClick={() => onAskAi(doc.id)}
-            /* 没有正文时禁用并说明原因（tooltip 里）——留一个点了没反应的按钮
-               是最坏的一种（DESIGN §7.4） */
-            disabled={doc.body.trim() === ''}
-          >
-            问 AI
-          </Button>
-        </Tooltip>
-      </div>
+        {/*
+          标题：笔记可改（它决定文件名，所以改名会让服务端同步移动 vault 里的
+          文件，见 lib/vault.ts 的 moveNote），文件与资料只读。
 
-      <div className={styles.scroll} ref={scrollRef}>
-        <div className={styles.cols}>
-          <div className={styles.inner}>
-            {/*
-              返回入口（docs/PRD.md §5.5、D-047）：两栏布局里详情占满主区，
-              「回去」必须是一个显式动作。两个返回并存——从对话点引用跳来的
-              场景里「返回对话」优先出现，「返回库」永远可用。
-            */}
-            {(onBackToChat || onBack) && (
-              <div className={styles.backRow}>
-                {onBackToChat && (
-                  <button type="button" className={styles.backChat} onClick={onBackToChat}>
-                    <ArrowLeftOutlined style={{ fontSize: 11 }} />
-                    返回对话
-                  </button>
-                )}
-                {onBack && (
-                  <button type="button" className={styles.backChat} onClick={onBack}>
-                    <ArrowLeftOutlined style={{ fontSize: 11 }} />
-                    返回库
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/*
-              标题：笔记可改，资料只读。改名会让服务端同步移动 vault 里的
-              文件（见 lib/vault.ts 的 moveNote），所以这里不是纯前端改名
-            */}
-            {doc.kind === 'note' ? (
-              <Typography.Title
-                level={1}
-                className={styles.title}
-                editable={{
-                  onChange: (next) => {
+          用 antd 的 `Typography.Title editable` 做就地编辑，它自带确认/取消
+          与键盘行为，比手搓一个可编辑标题可靠。
+        */}
+        {/*
+          **两个分支都是 `Typography.Title`**，即使文件与资料的标题不可改。
+          换成一个裸 `<h1>` 会让那条抬了特异性的规则匹配不上它，字号回落到
+          浏览器默认的 28px（在 44px 的头部里就是「挤且丑」）。一个元素类型
+          = 一条样式路径，不存在「哪条规则匹配不到」。
+        */}
+        <Typography.Title
+          level={1}
+          className={styles.headerTitle}
+          title={doc.title}
+          {...(doc.kind === 'note'
+            ? {
+                editable: {
+                  onChange: (next: string) => {
                     const trimmed = next.trim()
                     // 空标题会让 buildNotePath 生成 `-<id>.md` 这种无名文件，
                     // 所以拒绝空值而不是静默接受
@@ -370,35 +413,78 @@ export function DocumentPanel({
                   },
                   tooltip: '点击修改标题（会同步重命名文件）',
                   maxLength: 200,
-                }}
-              >
-                {doc.title}
-              </Typography.Title>
-            ) : (
-              <h1 className={styles.title}>{doc.title}</h1>
-            )}
-            <DocumentMeta doc={doc} />
+                },
+              }
+            : {})}
+        >
+          {doc.title}
+        </Typography.Title>
 
-            {/*
-              整理条在**标题与元信息之后**。
-              
-              它原先排在最前面，于是打开一篇收件箱文档时，第一眼是一整块
-              待办动作，而「这是哪一篇」的标题被压在下面（用户原话：
-              「标题上面一大片待整理，我觉得不太好看」）。顺序也说不通——
-              你没法在还没看清是什么之前决定怎么归类它。
-              
-              放到这里之后：标题（是什么）→ 元信息（从哪来）→ 整理（怎么办）
-              → 正文。整理动作仍在首屏，没有变难找。
-            */}
-            {doc.status === 'inbox' && <TriageBar doc={doc} />}
+        <DocHeaderMeta doc={doc} />
 
+        <div className={styles.headerActions}>
+          {/* 上传件的下载入口。它在头部常驻而不是等用户切到某一层——
+              下载是最常用的动作（PRD §5.12） */}
+          {doc.kind === 'file' && doc.sourceKey && (
+            <Button
+              type="text"
+              size="small"
+              icon={<DownloadOutlined />}
+              className={styles.tbBtn}
+              href={api.documents.sourceUrl(doc.id, { download: true })}
+            >
+              下载
+            </Button>
+          )}
+
+          <Tooltip
+            title={
+              doc.body.trim() === ''
+                ? '这篇还没有可检索的正文，问答里引用不到它'
+                : '带这篇的上下文去主视图对话，范围自动锁到这一篇'
+            }
+          >
+            <Button
+              type="text"
+              size="small"
+              icon={<MessageOutlined />}
+              className={styles.tbBtn}
+              onClick={() => onAskAi(doc.id)}
+              /* 没有正文时禁用并说明原因（tooltip 里）——留一个点了没反应的
+                 按钮是最坏的一种（DESIGN §7.4） */
+              disabled={doc.body.trim() === ''}
+            >
+              问 AI
+            </Button>
+          </Tooltip>
+
+          {/*
+            「⋯」：元信息与状态动作的出口。原先是整理条上的三项（标签 /
+            目录 / 归档），现在收在一处。它在最右端——**高频动作在左、
+            低频在右**是工具条的通用约定，而这三项都是低频的（D-054）
+          */}
+          <Dropdown trigger={['click']} menu={{ items: menu }} placement="bottomRight">
+            <Button
+              type="text"
+              size="small"
+              icon={<MoreOutlined />}
+              className={styles.tbBtn}
+              aria-label="更多操作"
+            />
+          </Dropdown>
+        </div>
+      </div>
+
+      <div className={styles.scroll} ref={scrollRef}>
+        <div className={styles.cols}>
+          <div className={wideContent ? styles.innerWide : styles.inner}>
             {/*
               三种正文区，按 kind 分派：
 
               | kind | 用什么 | 为什么 |
               |---|---|---|
               | note | NoteEditor | 它是唯一可编辑的东西 |
-              | file | FilePreview | 上传件有原件这一层（PDF 在线看、Word 下文本…） |
+              | file | FilePreview | 上传件有原件这一层（PDF 在线看、Office 可编辑…） |
               | 其余 | MarkdownBody | 抓取的资料只有派生正文，只读渲染 |
 
               抓来的资料不可编辑——它的真相是原始快照 + 派生正文，
@@ -409,11 +495,11 @@ export function DocumentPanel({
                 key={doc.id}
                 document={doc}
                 title={doc.title}
-                onSaveStateChange={setSave}
                 onAskAboutSelection={(passage) => onAskAboutSelection(doc.id, passage)}
+                onDirtyChange={onDirtyChange}
               />
             ) : doc.kind === 'file' ? (
-              <FilePreview key={doc.id} doc={doc} />
+              <FilePreview key={doc.id} doc={doc} onDirtyChange={onDirtyChange} />
             ) : (
               /* 正文排版与编辑器共用同一个类——两个视图都让 Tiptap 渲染同一份
                  Markdown，排版必须同源。这里曾经各自手抄一份，漂移出四处 */
@@ -425,9 +511,9 @@ export function DocumentPanel({
             <DocumentFooter doc={doc} onOpenDocument={onOpenDocument} />
           </div>
 
-          {/* 右侧大纲。标题数 ≥ 2 才出现——两段话的笔记不需要目录，
-              常驻只是白占 196px（docs/PRD.md §5.10） */}
-          {headings.length >= 2 && (
+          {/* 右侧大纲。见 `showOutline` 的两条判据：正文才需要它，
+              而且标题数 ≥ 2 才出现——两段话的笔记不需要目录 */}
+          {showOutline && (
             <aside className={styles.outline}>
               <div className={styles.outlineTitle}>大纲</div>
               {headings.map((heading) => (
@@ -451,82 +537,61 @@ export function DocumentPanel({
 }
 
 /**
- * 保存状态。只在工具条上出现——正文里不放它，见组件顶部的说明。
+ * 头部元信息那一行。
  *
- * 失败时点击重试：不能只把失败画出来却不给动作（`docs/PRD.md` §5.9）。
- */
-type SaveState = 'idle' | 'saving' | 'saved' | 'error'
-
-interface SaveSnapshot {
-  state: SaveState
-  retry: () => void
-}
-
-const SAVE_LABEL: Record<SaveState, string> = {
-  idle: '',
-  saving: '正在保存…',
-  saved: '已保存',
-  error: '保存失败 · 点此重试',
-}
-
-function SaveIndicator({ state, retry }: SaveSnapshot) {
-  const { styles } = useStyles()
-  // 空状态不占位也不留空白：没在保存时工具条上不该有它的痕迹
-  if (state === 'idle') return null
-
-  return (
-    <button
-      type="button"
-      className={`${styles.save} ${state === 'error' ? styles.saveError : ''}`}
-      onClick={state === 'error' ? retry : undefined}
-      /* 非失败态不可点：它只是状态显示，做成按钮但禁掉点击比让它可点更
-         诚实——可点而无事发生是最坏的一种 */
-      disabled={state !== 'error'}
-    >
-      {SAVE_LABEL[state]}
-    </button>
-  )
-}
-
-/**
- * 标题下的元信息行。
+ * 它承载的是「一眼要确认的东西」，按重要性排序（从左到右）：
  *
- * 「手动编辑 / AI 整理」这个标注借自 WeKnora（`docs/PRD.md` §5.10）：
- * 让用户一眼看出内容是**自己写的**还是**机器整理的**。
- * 它和来源徽标是两件事——来源说「从哪来」，这个说「谁生成的」。
+ * | 项 | 为什么在这里 |
+ * |---|---|
+ * | 状态徽标 | 归档是**流程状态**，它决定这篇在不在默认列表里 |
+ * | 来源标注 | 「手动编辑 / AI 整理 / 本机导入」——借自 WeKnora（PRD §5.10）：一眼看出内容是谁生成的 |
+ * | 位置 | 笔记的 vault 路径（能拿它去 Obsidian 里找）／上传件的原文件名／资料的 URL |
+ * | 格式与大小 | 上传件才有（「PDF · 2.4 MB」）；**不是徽标**，格式是开放集合（DESIGN §3.7） |
+ * | 日期 | 最后更新 |
+ *
+ * **标签与目录不在这里**——它们在「⋯」菜单里，而那里还能增删。同一份信息
+ * 摆两处，迟早有一天两处会不一致；而且标签多起来会把这一行挤爆。
+ *
+ * 位置是全行唯一可省略的一项：只有它可能很长（见 `location` 样式）。
  */
-function DocumentMeta({ doc }: { doc: DocumentDetail }) {
+function DocHeaderMeta({ doc }: { doc: DocumentDetail }) {
   const { styles } = useStyles()
   const format = formatMeta(doc)
+  /**
+   * 位置：笔记给 vault 路径（能拿它去 Obsidian 里找），上传件给原文件名
+   * （用户认得的是这个，它没有 vault 文件），资料给 URL。
+   * 空串就不渲染——否则会留下一个孤零零的分隔点。
+   */
+  const location =
+    doc.kind === 'file' ? (doc.sourceKey?.split('/').pop() ?? '') : (doc.path ?? doc.url ?? '')
 
   return (
-    <div className={styles.meta}>
-      {doc.status === 'inbox' && <StatusBadge status="inbox" />}
-      {doc.kind === 'note' ? (
-        <span className={styles.originManual}>手动编辑</span>
-      ) : doc.kind === 'file' ? (
-        /* 上传件说「本机导入」，不说「AI 整理」——后者是在说一个没发生的事，
-           而元信息行里的每一条都该是真的 */
+    <div className={styles.headerMeta}>
+      <StatusBadge status={doc.status} />
+      {/*
+        「手动编辑 / AI 整理 / 本机导入」这个标注让用户一眼看出内容是**自己写的**
+        还是**机器整理的**。上传件说「本机导入」，不说「AI 整理」——后者是在说
+        一个没发生的事，而这一行里的每一条都该是真的。
+      */}
+      {doc.kind === 'file' ? (
         <span className={styles.originManual}>本机导入</span>
+      ) : doc.kind === 'note' ? (
+        <span className={styles.originManual}>手动编辑</span>
       ) : (
         <span className={styles.originAuto}>AI 整理</span>
       )}
-      {/* 格式与大小：中性文字，不是彩色徽标（DESIGN §8.3）。
-          它们与来源徽标并排但语义不同——徽标是「从哪来」，这是「是什么」 */}
-      {format && <span className={styles.formatMeta}>{format}</span>}
-      {doc.folder && (
-        <span>
-          <ApartmentOutlined /> {doc.folder}
+      {/*
+        位置。上传件不显示 vault 路径——它没有 vault 文件，显示「（尚无快照）」
+        会让人以为记录坏了；它显示原文件名，那才是用户认得的东西。
+        空串就不渲染：否则会留下一个孤零零的分隔点（只有一个「·」）。
+      */}
+      {location !== '' && (
+        <span className={styles.location} title={location}>
+          {location}
         </span>
       )}
-      {doc.tags.map((tag) => (
-        <Tag key={tag} variant="filled" style={{ marginInlineEnd: 0 }}>
-          {tag}
-        </Tag>
-      ))}
-      <span className={styles.metaSpacer}>
-        {new Date(doc.updatedAt).toLocaleDateString('zh-CN')}
-      </span>
+      {format && <span className={styles.formatMeta}>{format}</span>}
+      <span>{new Date(doc.updatedAt).toLocaleDateString('zh-CN')}</span>
     </div>
   )
 }

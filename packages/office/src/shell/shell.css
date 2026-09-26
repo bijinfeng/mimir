@@ -1,0 +1,319 @@
+/*
+ * 编辑器外壳的样式。四种编辑器（docx / xlsx / pptx / markdown 笔记）共用。
+ *
+ * ## 为什么这个包里有手写的 CSS
+ *
+ * 界面组件与样式一起放在 `@mimir/office` 里，是 D-054 的决定：四种格式的
+ * 外壳必须**长得一样**，而「一样」只能由同一份实现保证——各写一份的话，
+ * 漂移是必然的，且只在用户眼里看得出来（`apps/web/AGENTS.md` 的同一类教训）。
+ *
+ * ## 主题值一律走自定义属性
+ *
+ * 颜色不在这里写死：宿主（apps/web）把 antd token 填进 `--me-*`，于是
+ * 浅色/深色、品牌色、圆角都跟着界面走，而这一个包不依赖 antd。
+ * 每个属性都带一个中性回退值，所以包能脱离宿主渲染（测试、静态预览）。
+ *
+ * ```
+ * --me-text            主文字
+ * --me-text-weak       次要文字（状态行、计数）
+ * --me-border          描边
+ * --me-bar-bg          工具条底色
+ * --me-surface         内容区底色
+ * --me-hover           悬停底
+ * --me-accent          主色（激活态描边与文字）
+ * --me-accent-bg       主色浅底（激活态底）
+ * --me-radius          圆角
+ * --me-font            正文字体栈
+ * --me-font-mono       等宽字体栈
+ * --me-font-size       正文档字号
+ * --me-font-size-sm    辅助档字号
+ * --me-icon-size       图标字形（**非文本**，见下）
+ * ```
+ *
+ * 字号默认值对应 mimir 的阶梯（`theme/tokens.ts` 的 body 与 note 两档），
+ * 宿主会覆盖成阶梯里的值——这里留 px 是因为包不能 import 宿主的 token。
+ */
+
+.mimir-editor {
+  display: flex;
+  flex-direction: column;
+  /*
+   * **撑满父容器**。宿主把编辑器放在一个 flex 列里（`DocumentPanel` 的内容列
+   * 就是），`flex: 1` 让它吃掉剩余高度——表格与幻灯片因此能一直铺到窗口底，
+   * 而不是在内容下方留一大片空白。
+   *
+   * `min-height: 0` 是 flex 子项能真正收缩的前提；缺了它，里面的滚动容器
+   * 会把整块撑到内容高度，滚动条跑到页面上、工具条跟着滚走（实测踩过）。
+   */
+  flex: 1;
+  min-height: 0;
+  /*
+   * **`clip` 而不是 `hidden`**，这个区别是必需的：`overflow: hidden` 会让
+   * 这个元素变成一个滚动容器，于是里面的 `position: sticky` 会相对它定位
+   * ——而它和内容一样高，等于不粘。`clip` 只裁剪、不建立滚动容器，工具条
+   * 因此能相对**外面真正滚动的那一层**（文档面板）粘住。
+   * 两者都照样裁掉圆角外的内容。
+   */
+  overflow: clip;
+  border: 1px solid var(--me-border, #d9d9d9);
+  border-radius: var(--me-radius, 8px);
+  background: var(--me-surface, #fff);
+  font-family: var(--me-font, inherit);
+  font-size: var(--me-font-size, 13px);
+  color: var(--me-text, #262626);
+}
+
+/* 贴在面板里（文档详情右栏）时不要外框——它已经是面板的一部分 */
+.mimir-editor--flush {
+  border: none;
+  border-radius: 0;
+}
+
+/* ── 顶栏 ─────────────────────────────────────────────────────── */
+
+/*
+ * 工具条与状态行**常驻**（Word 也是这样）：它们跟着文档一起滚走的话，
+ * 「改到一半想改格式」就得先滚回顶部——而长文档里滚回去要好几屏。
+ *
+ * 背景是**两层合成**的：`--me-bar-bg` 是 antd 的半透明填充
+ * （`colorFillQuaternary` → `rgba(255,255,255,0.04)`），半透明的话下面的
+ * 正文会透出来。所以先用 `--me-surface` 铺一层不透明底，再把那个填充叠上去
+ * ——保留了「比内容底亮一档」的分层，同时不透明。
+ */
+.mimir-editor__bar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: wrap;
+  flex: none;
+  min-height: 36px;
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--me-border, #d9d9d9);
+  background-color: var(--me-surface, #fff);
+  background-image: linear-gradient(var(--me-bar-bg, #fafafa), var(--me-bar-bg, #fafafa));
+}
+
+/* 内容区。**必须是 flex 子项且 min-height:0**——否则里面的滚动容器会把
+   整块撑到内容高度，滚动条跑到页面上、工具条跟着滚走（实测踩过） */
+.mimir-editor__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* 贴边模式（编辑器已在面板里、无外框）时，body 自己也不再有外层容器托底，
+   所以它必须能吃掉剩余高度 */
+.mimir-editor--flush .mimir-editor__body {
+  min-height: 0;
+}
+
+/* 内容下方的附属面板（pptx 的段落编辑、xlsx 的单元格编辑） */
+.mimir-editor__footer {
+  flex: none;
+  padding: 8px 10px;
+  border-top: 1px solid var(--me-border, #d9d9d9);
+  background-color: var(--me-surface, #fff);
+  background-image: linear-gradient(var(--me-bar-bg, #fafafa), var(--me-bar-bg, #fafafa));
+}
+
+/* 状态行。页码、字数、格式说明都落在这里——它是 Office 的状态栏 */
+.mimir-editor__status {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex: none;
+  flex-wrap: wrap;
+  min-height: 24px;
+  padding: 3px 10px;
+  border-top: 1px solid var(--me-border, #d9d9d9);
+  background-color: var(--me-surface, #fff);
+  background-image: linear-gradient(var(--me-bar-bg, #fafafa), var(--me-bar-bg, #fafafa));
+  font-size: var(--me-font-size-sm, 12px);
+  color: var(--me-text-weak, #8c8c8c);
+}
+
+/* ── 工具条里的控件 ────────────────────────────────────────────── */
+
+/* 按钮。**必须是一个真 button**：键盘可达、有焦点环、读屏读得到 ——
+   用 div 加 onClick 的写法在工具条里很常见，代价是键盘用户点不到它 */
+.me-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 7px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--me-font-size, 13px);
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.me-btn:hover:not(:disabled) {
+  background: var(--me-hover, #f0f0f0);
+}
+
+/* 激活态（加粗按下去的样子）。用 `aria-pressed` 选择器而不是另加一个类：
+   状态只有一个真相，类名与 aria 两个来源迟早会不一致 */
+.me-btn[aria-pressed='true'] {
+  border-color: var(--me-accent, #1677ff);
+  background: var(--me-accent-bg, #e6f4ff);
+  color: var(--me-accent, #1677ff);
+}
+
+.me-btn:focus-visible {
+  outline: 2px solid var(--me-accent, #1677ff);
+  outline-offset: 1px;
+}
+
+.me-btn:disabled {
+  color: var(--me-text-weak, #8c8c8c);
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* 按钮里的图标字形。字号是**图标尺寸**，不是文本字号——所以单列一个变量，
+   避免被当成「又一个随手写的 font-size」 */
+.me-btn__icon {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--me-icon-size, 15px);
+  line-height: 1;
+}
+
+.me-btn--primary {
+  border-color: var(--me-accent, #1677ff);
+  background: var(--me-accent, #1677ff);
+  color: #fff;
+  padding: 0 12px;
+}
+
+.me-btn--primary:hover:not(:disabled) {
+  background: var(--me-accent-hover, #4096ff);
+  border-color: var(--me-accent-hover, #4096ff);
+  color: #fff;
+}
+
+.me-btn--primary:disabled {
+  background: var(--me-border, #d9d9d9);
+  border-color: var(--me-border, #d9d9d9);
+  color: #fff;
+}
+
+.me-sep {
+  flex: none;
+  width: 1px;
+  height: 16px;
+  margin: 0 5px;
+  background: var(--me-border, #d9d9d9);
+}
+
+.me-spacer {
+  flex: 1;
+  min-width: 4px;
+}
+
+.me-label {
+  font-size: var(--me-font-size-sm, 12px);
+  color: var(--me-text-weak, #8c8c8c);
+  white-space: nowrap;
+}
+
+/* 工具条里的下拉/输入（xlsx 的页签、pptx 的段落框）。用宿主原生的
+   select / input，不自己画控件——那些控件的键盘与 IME 行为不值得重造 */
+.me-select,
+.me-input {
+  height: 26px;
+  min-width: 0;
+  padding: 0 6px;
+  border: 1px solid var(--me-border, #d9d9d9);
+  border-radius: 4px;
+  background: var(--me-surface, #fff);
+  color: inherit;
+  font: inherit;
+  font-size: var(--me-font-size-sm, 12px);
+}
+
+.me-input {
+  flex: 1;
+  padding: 0 8px;
+}
+
+.me-select:focus-visible,
+.me-input:focus-visible {
+  outline: 2px solid var(--me-accent, #1677ff);
+  outline-offset: -1px;
+}
+
+/* 页签（xlsx 的工作表）。横向可滚，不换行——表多的时候换行会把表体挤下去 */
+.me-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.me-tab {
+  flex: none;
+  height: 24px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--me-text-weak, #8c8c8c);
+  font: inherit;
+  font-size: var(--me-font-size-sm, 12px);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.me-tab:hover {
+  background: var(--me-hover, #f0f0f0);
+}
+
+.me-tab[aria-selected='true'] {
+  border-color: var(--me-border, #d9d9d9);
+  background: var(--me-surface, #fff);
+  color: var(--me-text, #262626);
+  font-weight: 600;
+}
+
+/* ── 内容区的两种通用状态 ──────────────────────────────────────── */
+
+/* 居中的骨架/空/错误态。**不占满高度**：一块 40px 的说明配 600px 的空白
+   会让人以为内容加载失败 */
+.me-state {
+  padding: 40px 16px;
+  text-align: center;
+  color: var(--me-text-weak, #8c8c8c);
+  font-size: var(--me-font-size, 13px);
+}
+
+.me-state--error {
+  color: var(--me-danger, #cf1322);
+}
+
+/* 可滚动的画布容器（pptx 的幻灯片、docx 的纸张） */
+.me-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}

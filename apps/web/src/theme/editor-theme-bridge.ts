@@ -1,0 +1,72 @@
+import { createStyles } from 'antd-style'
+import { CONTENT_WIDTH, FONT_MONO, FONT_SANS, FONT_SIZE } from '@/theme/tokens'
+
+/**
+ * 编辑器外壳的主题桥。
+ *
+ * ## 它解决的是什么
+ *
+ * `@mimir/office` 里的编辑器外壳（`shell.css`、`editors.css`）不依赖 antd
+ * ——那是刻意的：这样这个包能独立测试、独立预览，也不必把 antd 的 token
+ * 体系抄一遍。代价是它读不到主题值，所以需要**一道桥**把 antd token 填进
+ * 它约定的那些自定义属性（`--me-*`，见 `shell.css` 顶部那张表）。
+ *
+ * ## 为什么是 `createStyles` 而不是全局变量
+ *
+ * 这些值随外观（浅/深）变，而 `createStyles` 拿到的 `token` 已经是当前
+ * 外观那一套。写死在 `:root` 上就得自己判断外观——`apps/web/AGENTS.md`
+ * 明令不要那么做（「深色那一套也要走 token」）。
+ *
+ * ## 一条静默失效的坑
+ *
+ * CSS 自定义属性**只在声明它的元素及其子树**上生效。所以这个类必须挂在
+ * 编辑器的祖先上，而不是随便一个兄弟节点。挂错的表现是「样式全都退回了
+ * 回退值」——界面看起来是能用的（只是颜色不对），不会报错。
+ */
+export const useEditorThemeVars = createStyles(({ css, token }) => ({
+  /**
+   * 这一层同时是**布局链的一环**，不只是变量容器。
+   *
+   * `flex: 1; min-height: 0` 让它把父容器（`DocumentPanel` 的内容列）的高度
+   * 传下去——编辑器自己写了 `flex: 1`，但它只能在**flex 容器里**吃掉剩余高度。
+   * 一个默认的 `display: block` 包裹层会让链条在它这里断掉：实测编辑器只有
+   * 219px 高（可用的是 800+），下面的滚动区缩成一条，页面大片留白。
+   */
+  vars: css`
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+
+    --me-text: ${token.colorText};
+    --me-text-weak: ${token.colorTextTertiary};
+    --me-border: ${token.colorBorderSecondary};
+    /* 工具条与状态行用第四层填充：它比容器底暗一档，能托住控件而不抢内容 */
+    --me-bar-bg: ${token.colorFillQuaternary};
+    --me-surface: ${token.colorBgContainer};
+    --me-hover: ${token.colorFillTertiary};
+    --me-accent: ${token.colorPrimary};
+    /* 激活态底色。用 antd 派生的浅阶而不是 colorPrimaryBg 的字面值——
+       品牌色改了它自动跟着走 */
+    --me-accent-bg: ${token.colorPrimaryBg};
+    --me-accent-hover: ${token.colorPrimaryHover};
+    /* 焦点环描边。用派生阶而不是主色——正文区很大，主色的环比内容本身抢眼 */
+    --me-accent-border: ${token.colorPrimaryBorder};
+    --me-danger: ${token.colorErrorText};
+    --me-danger-bg: ${token.colorErrorBg};
+    /* 工作台（纸张与幻灯片之外的底）：比容器底暗，让「纸」浮起来 */
+    --me-stage-bg: ${token.colorFillQuaternary};
+    --me-shadow: ${token.boxShadowSecondary};
+
+    /* 正文列宽。笔记没有纸张，靠它把行宽收在可读范围内 */
+    --me-content-width: ${CONTENT_WIDTH}px;
+
+    --me-radius: ${token.borderRadius}px;
+    --me-font: ${FONT_SANS};
+    --me-font-mono: ${FONT_MONO};
+    --me-font-size: ${FONT_SIZE.body}px;
+    --me-font-size-sm: ${FONT_SIZE.note}px;
+    /* 图标字形，非文本。跟着正文字号走一档 */
+    --me-icon-size: ${FONT_SIZE.item}px;
+  `,
+}))

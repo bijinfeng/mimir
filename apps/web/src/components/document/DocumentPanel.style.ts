@@ -15,30 +15,115 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     flex-direction: column;
     background: ${token.colorBgContainer};
   `,
-
-  toolbar: css`
+  /**
+   * 文档头部。**单行**，Office 的标题栏那一档（D-054）。
+   *
+   * 它原先占三行：一个「返回库」胶囊独占一行、28px 的大标题一行、元信息行
+   * 又一行——加起来约 150px，而下面才是内容。Office 的头部只有一行：文件名
+   * 在左、动作在右，其余信息不占版面。文件类文档下面就是纸张 / 表格 / 幻灯片，
+   * 那些是**越高越好**的东西，上面压三行铬条说不过去。
+   *
+   * 顺序固定为：返回 · 标题 · 元信息 · 动作（靠右）。
+   */
+  header: css`
     flex: none;
-    min-height: 48px;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 16px;
+    gap: 8px;
+    height: 44px;
+    padding: 0 12px;
     border-bottom: 1px solid ${token.colorBorderSecondary};
   `,
-  path: css`
+  /**
+   * 文档标题（Office 的标题栏里的文件名）。
+   *
+   * ## 两个坑叠在一起，都静默
+   *
+   * **一、必须用 `&.${prefixCls}-typography` 抬特异性。** antd 的
+   * `Typography.Title` 自带一条
+   * `h1:where(...).ant-typography { font-size: var(--ant-font-size-heading-1) }`
+   * ——`h1` 元素贡献 (0,0,1)、`.ant-typography` 贡献 (0,1,0)，合计 (0,1,1)，
+   * 单类选择器 (0,1,0) 盖不住。不抬的话标题渲染成 38px，而规范写的是 16px，
+   * 且不报错、看起来只是「标题偏大」。
+   *
+   * **二、抬了特异性之后，纯 `<h1>` 又匹配不上这条规则。** 上传件的标题
+   * 原先渲染成裸 `<h1>`，于是 `&&.ant-typography` 匹配不到它，字号回落到
+   * 浏览器默认的 2em = **28px**——一个 44px 的头部里塞着 28px 的字，看起来
+   * 就是「挤在一起且很丑」（用户的原话）。修法是**两个分支都用
+   * `Typography.Title`**：一个元素类型、一条样式路径，不存在「哪条规则
+   * 匹配不到」这种问题。
+   */
+  headerTitle: css`
+    &&.${prefixCls}-typography {
+      flex: none;
+      max-width: 40%;
+      margin: 0;
+      font-size: ${FONT_SIZE.section}px;
+      font-weight: 600;
+      line-height: 1.4;
+      letter-spacing: -0.005em;
+      color: ${token.colorText};
+      /* 长标题省略而不是换行——换行会把 44px 的头部撑成两行 */
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+
+      /* 就地改名时 antd 会把它换成输入框，高度要跟头部一致，否则整行跳动 */
+      .${prefixCls}-typography-edit-content {
+        margin: 0;
+        inset-inline-start: 0;
+      }
+    }
+  `,
+  /* 元信息：一行、可省略。它承载的是「一眼要确认的东西」——状态、来源、
+     在哪、格式与大小、日期。标签与目录不在这里（它们在 doc-menu.tsx 里，
+     那里还能增删——同一份信息两条路径没有必要）。
+
+     **项与项之间给一个分隔点**：五项灰色文字挨在一起时读不出分组，看起来
+     像一长串没说完的话（实测就是这个观感）。点用 `::before` 画，不占 DOM。 */
+  headerMeta: css`
+    display: flex;
+    align-items: center;
+    gap: 8px;
     flex: 1;
     min-width: 0;
-    font-family: ${token.fontFamilyCode};
-    font-size: ${FONT_SIZE.meta}px;
+    overflow: hidden;
+    font-size: ${FONT_SIZE.note}px;
     color: ${token.colorTextTertiary};
+    white-space: nowrap;
+
+    > * {
+      flex: none;
+    }
+
+    /* 除第一个之外的每一项前面一个中点 */
+    > * + *::before {
+      content: '·';
+      margin-right: 8px;
+      color: ${token.colorTextQuaternary};
+    }
+  `,
+  /* 位置（笔记的 vault 路径 / 资料的 URL）。它是元信息里唯一可能很长的一项，
+     所以只有它能被压缩并省略 */
+  location: css`
+    flex: 0 1 auto;
+    min-width: 48px;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
+    font-family: ${token.fontFamilyCode};
+    font-size: ${FONT_SIZE.meta}px;
   `,
-  /* 工具条按钮。默认的 antd Button 是「控件」的重量（有底色、有边框），
-     而工具条上的它更像一个**动作入口**——原型用无底色 + hover 才显形，
-     这样工具条读起来是一条安静的路径栏，不是一个表单。
-     用 antd Button 的 type="text" 做底，这里只补文字尺寸与间距。 */
+  /* 动作区。**靠右**：高频动作在左、状态在中间、动作在右是工具条的通用约定 */
+  headerActions: css`
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex: none;
+    margin-left: auto;
+  `,
+  /* 头部动作按钮的文字档。默认的 antd Button 是「控件」的重量（有底色、
+     有边框），而头部上的它更像一个**动作入口**——无底色 + hover 才显形，
+     这样头部读起来是一条安静的路径栏，不是一个表单 */
   tbBtn: css`
     flex: none;
     font-size: ${FONT_SIZE.note}px;
@@ -48,42 +133,58 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       color: ${token.colorText} !important;
     }
   `,
-  /**
-   * 工具条上的保存状态。
-   *
-   * 它是个 button 只为了让**失败态能点**（重试），所以要把按钮的外观全部
-   * 去掉、只留文字。非失败态 `disabled`，于是没有 hover 反馈——一个可点
-   * 却无事发生的状态显示是最坏的一种（`docs/DESIGN.md` §8.9 同一条理由）。
-   *
-   * 它原先渲染在正文上方、标题与元信息之间：一块只有「已保存」三个字的
-   * 独立行，两侧都空，看起来像没画完；而且**位置会跳**——状态出现与消失时
-   * 整块正文上下移动。移到常驻且不占额外高度的工具条上，与路径、问 AI 同级，
-   * 也正是 `docs/PRD.md` §5.9 写的「工具条常驻」。
-   */
-  save: css`
-    flex: none;
-    padding: 0;
-    border: none;
-    background: none;
-    font-family: inherit;
+  /* 来源标注：手动编辑 / AI 整理 / 本机导入。借自 WeKnora ——
+     标出内容是人写的还是机器生成的（PRD §5.10）。
+
+     两处色对原先写死在浅色上（`#1a56c4` on `#e8f1ff`、`#5c6570` on `#f0f1f3`），
+     深色下它们是「深蓝字压在浅蓝底上」，在本该变暗的面板上会亮得刺眼。
+     改成走语义 token 的成对值：手动编辑 = 信息色对，AI 整理 = 中性色对。
+     两者都在 design.test.ts 的通用矩阵里（语义文字 on 同语义底 ≥ 4.5） */
+  originManual: css`
+    padding: 1px 7px;
+    border-radius: 4px;
     font-size: ${FONT_SIZE.badge}px;
-    color: ${token.colorTextQuaternary};
-    cursor: default;
-
-    /* 非失败态一律 disabled，用它的文字色代表「已完成/进行中」 */
-    &:disabled {
-      color: ${token.colorSuccessText};
-    }
+    font-weight: 500;
+    color: ${token.colorInfoText};
+    background: ${token.colorInfoBg};
   `,
-  /* 失败态：可点、有下划线、用错误色。加上 :disabled 是为了盖过上面那条 */
-  saveError: css`
-    text-decoration: underline;
-    text-underline-offset: 2px;
+  originAuto: css`
+    padding: 1px 7px;
+    border-radius: 4px;
+    font-size: ${FONT_SIZE.badge}px;
+    font-weight: 500;
+    color: ${token.colorTextSecondary};
+    background: ${token.colorFillTertiary};
+  `,
+  /* 上传件的格式与大小（「PDF · 2.4 MB」）。
+     **不是徽标**——它没有底色，只是一条中性文字：格式是文件的属性，
+     而彩色徽标专指「来源」（DESIGN §3.7、§8.3） */
+  formatMeta: css`
+    color: ${token.colorTextTertiary};
+    white-space: nowrap;
+  `,
 
-    &,
-    &:disabled {
-      color: ${token.colorErrorText};
-      cursor: pointer;
+  /* 返回。Office 里没有这个按钮，而 mimir 的两栏布局必须有（PRD §5.5：
+     「回去」是显式动作，不能靠浏览器后退）。做成**低调的小胶囊**：它是
+     入口而非主要内容，不该像原来那样独占一整行 */
+  back: css`
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex: none;
+    height: 26px;
+    padding: 0 9px;
+    border: 1px solid ${token.colorBorderSecondary};
+    border-radius: 999px;
+    background: transparent;
+    font-family: inherit;
+    font-size: ${FONT_SIZE.note}px;
+    color: ${token.colorLink};
+    cursor: pointer;
+    transition: background 0.12s ease-out;
+
+    &:hover {
+      background: ${token.colorFillTertiary};
     }
   `,
 
@@ -97,12 +198,48 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     display: flex;
     align-items: flex-start;
     justify-content: center;
+    /* 铺满滚动容器的高度：原件那一列要能吃掉剩余空间（笔记那一列不需要，
+       它按内容高就够了——所以只是「允许」，不是「强制」） */
+    min-height: 100%;
   `,
+  /**
+   * 内容列。**760px 是正文的（markdown 笔记、抓取的资料）**——行宽有可读性
+   * 上限，再宽眼睛回行时容易串行。原件不适用这条：纸张、表格、幻灯片是
+   * 「越宽越好看清」的东西，在 760px 里被挤成一条（实测在 1440 宽屏上两侧
+   * 各空 280px，用户的原话是「留那么大的空白也没必要」）。
+   */
   inner: css`
     flex: 1;
     min-width: 0;
     max-width: 760px;
     padding: 24px 40px 140px;
+  `,
+  /**
+   * 原件的内容列：占满容器。
+   *
+   * 内边距也收窄（40px → 16px）——那两个边距是为正文的行宽服务的，与
+   * 480px 的编辑器配在一起就是「内容挤在中间、四周一圈空的」。
+   */
+  innerWide: css`
+    flex: 1;
+    min-width: 0;
+    /*
+     * **align-self: stretch 是必须的**：外层内容行是 align-items: flex-start
+     * （正文那一列要按内容高，不要被拉长），于是这一列默认也只有内容高——
+     * 高度链就断在这里，编辑器铺不到窗口底（实测高度只有 219px，而可用的是
+     * 800+）。撑起来之后编辑器自己的 flex: 1 才拿得到剩余高度。
+     */
+    align-self: stretch;
+    /*
+     * **四边不留 padding**（D-054）：编辑器自己带边框与圆角，外面再垫一层
+     * 就是「框套框」——而且垫掉的每一像素都是内容能用的高度。Office 网页版
+     * 也是这样：编辑区直接贴着标题栏，中间没有一条灰带。
+     */
+    padding: 0;
+    /* 内容要能撑满：列本身是 flex 子项，子项再往下要拿到高度 */
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
   `,
 
   /* 右侧大纲。只在标题数 ≥ 2 时出现——两段话的笔记不需要目录，
@@ -155,71 +292,6 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     border-left-color: ${token.colorLink};
     font-weight: 600;
   `,
-
-  /* ── 整理条 ────────────────────────────────────────────
-     收件箱原来是个死胡同：有「待整理」徽标但没有任何整理动作。
-     这里把整理变成一组显式操作，并把建议标签直接摆出来（PRD §2.2 / §5.10）。
-
-     表面用 tintWarningSurface 而**不是** colorWarningBg：后者是给提示条调的，
-     饱和度偏高，而整理条在文档顶部占一整行、长期存在，用它会变成页面上最吵
-     的东西（实测第一眼全落在它上面，而不是标题）。原型那个 #fffaf2 是同色相
-     但淡两档。文字仍用 colorWarningText——在更淡的底上对比度只增不减。 */
-  triage: css`
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-    /* 收紧一档：原先 11px 14px 在收件箱的每一篇上都占一整行，
-       而它只是**辅助动作**，不该和正文抢纵向空间 */
-    padding: 9px 12px;
-    margin: 0 0 22px;
-    border: 1px solid ${token.borderWarningSurface};
-    border-radius: 9px;
-    background: ${token.tintWarningSurface};
-
-    /* 建议标签与分隔线在窄列下一起换行时，让按钮组整体留在同一行 */
-    > button {
-      flex: none;
-    }
-  `,
-  triageLabel: css`
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    flex: none;
-    font-size: ${FONT_SIZE.note}px;
-    font-weight: 600;
-    color: ${token.colorWarningText};
-  `,
-  triageHint: css`
-    font-size: ${FONT_SIZE.note}px;
-    color: ${token.colorTextSecondary};
-    margin-right: 1px;
-  `,
-  triageSep: css`
-    width: 1px;
-    height: 18px;
-    background: ${token.borderWarningSurface};
-    margin: 0 1px;
-  `,
-
-  /* 元信息行。原型在这里有一条下边框把「标题+元信息」与正文分开，
-     而不是让标题直接撞上第一段——没有这条线时标题与正文糊成一片，
-     读者分不出「这篇的开头」在哪。 */
-  meta: css`
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 9px;
-    padding-bottom: 16px;
-    margin-bottom: 22px;
-    border-bottom: 1px solid ${token.colorBorderSecondary};
-    font-size: ${FONT_SIZE.note}px;
-    color: ${token.colorTextTertiary};
-  `,
-  metaSpacer: css`
-    margin-left: auto;
-  `,
   /* 来源标注：手动编辑 / AI 整理。
      借自 WeKnora —— 标出内容是人写的还是机器生成的（PRD 5.10）。
 
@@ -227,30 +299,6 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
      深色下它们是「深蓝字压在浅蓝底上」，在本该变暗的面板上会亮得刺眼。
      改成走语义 token 的成对值：手动编辑 = 信息色对，AI 整理 = 中性色对。
      两者都在 design.test.ts 的通用矩阵里（语义文字 on 同语义底 ≥ 4.5）。 */
-  originManual: css`
-    font-size: ${FONT_SIZE.badge}px;
-    font-weight: 500;
-    padding: 1px 7px;
-    border-radius: 4px;
-    color: ${token.colorInfoText};
-    background: ${token.colorInfoBg};
-  `,
-  originAuto: css`
-    font-size: ${FONT_SIZE.badge}px;
-    font-weight: 500;
-    padding: 1px 7px;
-    border-radius: 4px;
-    color: ${token.colorTextSecondary};
-    background: ${token.colorFillTertiary};
-  `,
-
-  /* 上传件的格式与大小（「PDF · 2.4 MB」）。
-     **不是徽标**——它没有底色，只是一条中性文字：格式是文件的属性，
-     而彩色徽标在这个界面里专指「来源」（DESIGN §3.7、§8.3） */
-  formatMeta: css`
-    color: ${token.colorTextTertiary};
-    white-space: nowrap;
-  `,
 
   /* 标题。原型用 letter-spacing:-.01em 收紧——28px 的中文标题不收紧
      会显得松散。字号阶梯见 docs/DESIGN.md §4.2。
@@ -262,16 +310,6 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
      而单类选择器只有 (0,1,0)，把它盖不住。实测标题因此渲染成 **38px**
      （antd 的 h1 档），而规范写的是 28px，且不报错、看起来只是「标题偏大」。
      叠上 `&.ant-typography` 后 (0,2,0) 胜出。 */
-  title: css`
-    &.${prefixCls}-typography {
-      font-size: ${FONT_SIZE.display}px;
-      font-weight: 700;
-      line-height: 1.3;
-      letter-spacing: -0.01em;
-      margin: 0 0 8px;
-      color: ${token.colorText};
-    }
-  `,
 
   /* ── 页脚：来源 / 被引用 ────────────────────────────── */
   foot: css`
@@ -320,31 +358,6 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     b {
       display: block;
       margin-bottom: 3px;
-    }
-  `,
-
-  backRow: css`
-    display: flex;
-    gap: 8px;
-  `,
-
-  backChat: css`
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    margin-bottom: 14px;
-    padding: 4px 10px;
-    border: 1px solid ${token.colorBorderSecondary};
-    border-radius: 999px;
-    background: transparent;
-    font-family: inherit;
-    font-size: ${FONT_SIZE.note}px;
-    color: ${token.colorLink};
-    cursor: pointer;
-    transition: background 0.12s ease-out;
-
-    &:hover {
-      background: ${token.colorFillTertiary};
     }
   `,
 

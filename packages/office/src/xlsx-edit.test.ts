@@ -294,3 +294,84 @@ describe('xlsx 编辑：清空一个格子', () => {
     expect(reopened.sheets[0]!.rows.find((r) => r.number === 2)?.cells[0]?.text).toBe('')
   })
 })
+
+describe('xlsx 编辑：模型与 XML 必须一起改', () => {
+  /**
+   * **这条守的是实测踩过的静默 bug。**
+   *
+   * `setCell` 原先只改 XML 文本、不改内存模型，而界面读的是模型
+   * （`view()`）——于是保存成功后状态行说「已保存」，单元格还显示旧文字，
+   * 直到用户重新打开这份文件。文件里其实已经是新值（openpyxl 读得到），
+   * 所以这是一个「界面与事实不一致」的错，比不保存更难发现。
+   *
+   * 断言分两层：模型（界面读它）与重新解析的字节（文件里的事实）。
+   */
+  it('改一个格子后，模型里立刻是新值', async () => {
+    const session = await openXlsxForEdit(load())
+    const before = session.view().sheets[0]!.rows.find((r) => r.number === 2)?.cells[0]?.text
+    expect(before).toBe('姓名')
+
+    session.setCell({ sheet: 0, row: 2, col: 0 }, '改过的')
+
+    const after = session.view().sheets[0]!.rows.find((r) => r.number === 2)?.cells[0]?.text
+    expect(after).toBe('改过的')
+  })
+
+  it('写数字之后模型标成 numeric（右对齐跟着新值走）', async () => {
+    const session = await openXlsxForEdit(load())
+    session.setCell({ sheet: 0, row: 2, col: 0 }, '123.5')
+    const cell = session.view().sheets[0]!.rows.find((r) => r.number === 2)?.cells[0]
+    expect(cell?.numeric).toBe(true)
+
+    session.setCell({ sheet: 0, row: 2, col: 0 }, '文字')
+    const text = session.view().sheets[0]!.rows.find((r) => r.number === 2)?.cells[0]
+    expect(text?.numeric).toBeUndefined()
+  })
+
+  it('覆盖公式格时模型里的 formula 标记一起清掉', async () => {
+    const session = await openXlsxForEdit(load())
+    // 夹具里 C3 是公式（缓存值 1001）
+    const formula = session.view().sheets[0]!.rows.find((r) => r.number === 3)?.cells[2]
+    expect(formula?.formula).toBe(true)
+
+    session.setCell({ sheet: 0, row: 3, col: 2 }, '500')
+    const after = session.view().sheets[0]!.rows.find((r) => r.number === 3)?.cells[2]
+    expect(after?.formula).toBeUndefined()
+    expect(after?.text).toBe('500')
+  })
+
+  /**
+   * 模型的不变量是「位置即列号」（`cells[i].col === i`）——`readXlsx` 给每行
+   * 补空占位来维持它，界面也按 `row.cells[col]` 直接取。
+   *
+   * 所以插一个新格子时**必须按位置写入**，不能按列号排序插入：插进去会让
+   * 下标与列号错开一格，而那种错位是静默的（点 C3 改到 D3）。
+   *
+   * 夹具的每张表都试一遍（而不是挑一行），因为这条不变量是**整表**的性质。
+   */
+  it('写一个新格子后，每一行的 col 仍然等于下标', async () => {
+    const session = await openXlsxForEdit(load())
+    const sheet = session.view().sheets[0]!
+
+    // 每行都往它的右侧写一格：这会触发「补齐占位」那条分支
+    const targets = sheet.rows.map((row) => ({ number: row.number, col: row.cells.length + 1 }))
+    for (const target of targets) {
+      session.setCell({ sheet: 0, row: target.number, col: target.col }, '新格')
+    }
+
+    const after = session.view().sheets[0]!
+    /** 把每行的实际列号拼成一个数组——断言就能无条件做，也看得见错在哪 */
+    const mismatches = after.rows.flatMap((row) =>
+      row.cells
+        .filter((cell, index) => cell.col !== index)
+        .map((cell) => `第${row.number}行:${cell.col}≠下标`),
+    )
+    expect(mismatches).toEqual([])
+
+    // 刚写的那些格子确实在模型里（不然上面的断言可以靠「什么都没做」通过）
+    for (const target of targets) {
+      const row = after.rows.find((r) => r.number === target.number)!
+      expect(row.cells[target.col]?.text).toBe('新格')
+    }
+  })
+})

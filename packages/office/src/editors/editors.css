@@ -1,0 +1,264 @@
+/*
+ * 三种格式各自的渲染细节。外壳管框架，这里管「表/幻灯片/纸张」本身。
+ *
+ * 与 shell.css 同一条规矩：颜色走 `--me-*` 自定义属性（宿主填 antd token），
+ * 每个属性带中性回退值，所以这个包能脱离宿主渲染。
+ */
+
+/* ── xlsx：表体 ────────────────────────────────────────────────── */
+
+/* 表体的外框由它自己画（不像 docx 的纸张那样有上游样式兜底）。
+   `position: relative` 是给「写不进去」的提示条定位用的 */
+.mimir-xlsx-wrap {
+  position: relative;
+  background: var(--me-surface, #fff);
+}
+
+.mimir-xlsx {
+  border-collapse: collapse;
+  font-size: var(--me-font-size, 13px);
+  /* 数字列对齐用等宽数字：不等宽的话每行的数字宽度不同，纵向扫一列很费眼 */
+  font-variant-numeric: tabular-nums;
+}
+
+/* 行号列。**sticky + 左对齐**：横向滚动时它必须留在原地，
+   否则滚到右边就看不出这一行是第几行了 */
+.mimir-xlsx__gutter {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 34px;
+  padding: 2px 6px;
+  border: 1px solid var(--me-border, #d9d9d9);
+  background: var(--me-bar-bg, #fafafa);
+  color: var(--me-text-weak, #8c8c8c);
+  font-weight: normal;
+  text-align: center;
+  user-select: none;
+}
+
+.mimir-xlsx__cell {
+  max-width: 320px;
+  padding: 2px 6px;
+  border: 1px solid var(--me-border, #d9d9d9);
+  background: var(--me-surface, #fff);
+  color: var(--me-text, #262626);
+  vertical-align: top;
+  white-space: pre-wrap;
+  cursor: cell;
+}
+
+.mimir-xlsx__cell:hover {
+  background: var(--me-hover, #f0f0f0);
+}
+
+.mimir-xlsx__cell--num {
+  text-align: right;
+}
+
+/* 选中的格子用主色描边（outline 不占布局，不会把表格挤动一格） */
+.mimir-xlsx__cell--on {
+  outline: 2px solid var(--me-accent, #1677ff);
+  outline-offset: -2px;
+  background: var(--me-accent-bg, #e6f4ff);
+}
+
+/* 单元格编辑行（内容下方的附属面板） */
+.mimir-cell-editor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mimir-cell-editor__ref {
+  min-width: 46px;
+  color: var(--me-text-weak, #8c8c8c);
+  font-family: var(--me-font-mono, monospace);
+  font-size: var(--me-font-size-sm, 12px);
+}
+
+/* 就地的「写不进去」提示。**不弹窗**：它是编辑动作的直接结果，
+   应该出现在编辑动作旁边（弹窗会打断连续录入） */
+.mimir-apply-error {
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--me-border, #d9d9d9);
+  background: var(--me-danger-bg, #fff2f0);
+  color: var(--me-danger, #cf1322);
+  font-size: var(--me-font-size-sm, 12px);
+}
+
+/* ── pptx：幻灯片画布 ──────────────────────────────────────────── */
+
+/* 画布底色比内容底暗一档：幻灯片是白纸，工作台要能区分出来
+   （深色下同理——纸跟着内容底走，工作台跟着布局底走） */
+.mimir-pptx-stage {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 16px;
+  background: var(--me-stage-bg, #f5f5f5);
+}
+
+.mimir-pptx-slide {
+  max-width: 100%;
+  background: #fff;
+  box-shadow: var(--me-shadow, 0 2px 10px rgb(0 0 0 / 12%));
+  /* 幻灯片里的文字要能选中——这是换掉 canvas 适配器的全部理由 */
+  user-select: text;
+
+  svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  /* 可点的元素给个手势提示——选中是编辑的入口 */
+  [data-element-id] {
+    cursor: pointer;
+  }
+}
+
+/* 选中的元素：SVG 里那一个是它，加一圈主色描边 */
+.mimir-pptx-slide [data-element-id].mimir-pptx-selected {
+  outline: 2px solid var(--me-accent, #1677ff);
+  outline-offset: 1px;
+}
+
+/* 段落编辑（内容下方的附属面板） */
+.mimir-paras {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.mimir-paras__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.mimir-paras__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 168px;
+  overflow-y: auto;
+}
+
+/* 段落输入框用 textarea（一段可能是好几行），但长得像单行输入框：
+   自适应的多行输入在 Office 里反而不好对齐——用户看不出边界在哪 */
+.mimir-paras__item {
+  width: 100%;
+  min-height: 26px;
+  padding: 4px 8px;
+  border: 1px solid var(--me-border, #d9d9d9);
+  border-radius: 4px;
+  background: var(--me-surface, #fff);
+  color: inherit;
+  font: inherit;
+  font-size: var(--me-font-size, 13px);
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.mimir-paras__item:focus-visible {
+  outline: 2px solid var(--me-accent, #1677ff);
+  outline-offset: -1px;
+}
+
+/* ── docx：纸张滚动区 ──────────────────────────────────────────── */
+
+/* 上游的编辑器样式给 `.editor-scroll` 定了内边距与纸张间距，
+   这里只把「工作台底色」接上我们的 token（见 DocxEditor 的注释：
+   上游那两个变量由它的 App 壳运行时注入，我们没 vendored 那个壳） */
+.mimir-docx-scroll {
+  background: var(--me-stage-bg, #f5f5f5);
+  --canvas: var(--me-stage-bg, #f5f5f5);
+  --docs-paper: var(--me-surface, #fff);
+}
+
+/* ── markdown：笔记正文 ────────────────────────────────────────── */
+
+/*
+ * 滚动区。笔记没有纸张，所以底色就是内容底（不像 docx 有工作台与纸两层）。
+ *
+ * **方向上的内边距为 0**：外壳（工具条、状态行）要铺满，而正文的呼吸空间
+ * 由下面那个内容列自己给（它居中且限宽，两边自然留白）。
+ */
+.mimir-markdown-scroll {
+  background: var(--me-surface, #fff);
+  padding: 0;
+}
+
+/*
+ * 正文挂载点。
+ *
+ * **`min-height` 不是装饰，它决定「点空白处也能继续写」**：ProseMirror 的
+ * 高度默认等于内容高度，所以一篇三行笔记的编辑区只有约 98px，而可见的
+ * 正文列高约 900px——下面 800px 是**死区**，点上去什么都不发生（实测：
+ * 点击后 `activeElement` 是 `body`）。记笔记最常见的一步就是「打开 →
+ * 在末尾接着写」，那一击落空很败好感。
+ *
+ * 给到 46vh 之后，这一片空白的点击会落在编辑区里，Tiptap 把光标放到最近的
+ * 文字位置——即末尾，这是所有编辑器的一致行为。
+ */
+/*
+ * 正文列。**行宽是有可读性上限的**：760px 约 45 个汉字，再宽眼睛回行时
+ * 容易串行（docs/DESIGN.md §4.3 的 CONTENT_WIDTH）。由宿主填
+ * --me-content-width，回退值是同一个数。
+ *
+ * 居中的那 760 是**正文**，不是外壳：工具条与状态行仍然横跨整个宽度，
+ * 这样它们与上面 44px 的文档头部对齐。
+ */
+.mimir-markdown-body {
+  max-width: var(--me-content-width, 760px);
+  margin: 0 auto;
+  padding: 18px 20px 48px;
+}
+
+.mimir-markdown-body .ProseMirror {
+  min-height: 46vh;
+  outline: none;
+}
+
+/*
+ * 焦点环。
+ *
+ * **`:focus-visible` 在这里不够用**：正文是 contenteditable，而规范规定
+ * 文本输入类元素的 `:focus-visible` **永远匹配**（浏览器无法假定用户接下来
+ * 用键盘还是鼠标）。实测鼠标点进正文也会拿到一圈原生环
+ * `outline: auto 1px rgb(16,16,16)`，而点进正文是几乎每次编辑都会做的事。
+ *
+ * `--mimir-focus-ring-style` 由宿主按**最近一次输入方式**切换：
+ * 鼠标是 none、键盘是 solid。于是「键盘用户看得见焦点」与「鼠标用户看不到
+ * 一圈黑框」同时成立。变量在宿主上声明（见 apps/web/src/lib/input-modality.ts），
+ * 这里只消费它——**默认值必须是 none**，否则宿主没装那个模块时环又会回来。
+ */
+.mimir-markdown-body .ProseMirror:focus {
+  outline-style: var(--mimir-focus-ring-style, none);
+  outline-width: 2px;
+  outline-color: var(--me-accent-border, #91caff);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* 状态行上的可点文字（「保存失败 · 点此重试」）。做成按钮但长得像文字：
+   它是状态的一部分，画成一个方框按钮会让状态行看起来像工具条 */
+.me-status-action {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--me-danger, #cf1322);
+  font: inherit;
+  font-size: var(--me-font-size-sm, 12px);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.me-status-action:focus-visible {
+  outline: 2px solid var(--me-accent, #1677ff);
+  outline-offset: 1px;
+}

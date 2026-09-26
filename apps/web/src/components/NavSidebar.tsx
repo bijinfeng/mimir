@@ -72,7 +72,7 @@ import { useUnsaved } from '@/lib/unsaved'
 export interface NavSelection {
   /** 当前所在页。三值——设置页曾经被并进 docs，导致它永远不高亮 */
   page: 'docs' | 'chat' | 'settings'
-  /** 文档页的筛选：inbox / all / note / clip / folder:<path> / tag:<name> */
+  /** 文档页的筛选：all / archived / folder:<path> / tag:<name> */
   scope: string
   /** 当前打开的文档 id（docs 页）或会话 id（chat 页） */
   id?: string
@@ -112,8 +112,7 @@ export function NavSidebar({
     runGuarded(() => void navigate({ to: '/docs', search: { scope } }))
   const goChat = (id?: string) =>
     runGuarded(
-      () =>
-        void navigate({ to: '/chat', search: id ? { scope: 'inbox', id } : { scope: 'inbox' } }),
+      () => void navigate({ to: '/chat', search: id ? { scope: 'all', id } : { scope: 'all' } }),
     )
 
   /**
@@ -127,7 +126,7 @@ export function NavSidebar({
       () =>
         void navigate({
           to: '/settings',
-          search: { scope: 'inbox', section: 'account' as const },
+          search: { scope: 'all', section: 'account' as const },
         }),
     )
 
@@ -141,7 +140,7 @@ export function NavSidebar({
     // 设置页的 search 与 docs 同形状（父路由声明了必填的 scope），
     // 所以这里必须带上它，不能传空对象
     if (key === 'action:settings') {
-      return runGuarded(() => void navigate({ to: '/settings', search: { scope: 'inbox' } }))
+      return runGuarded(() => void navigate({ to: '/settings', search: { scope: 'all' } }))
     }
   }
 

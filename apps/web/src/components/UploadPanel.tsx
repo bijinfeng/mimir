@@ -181,12 +181,12 @@ export function UploadPanel({ onUploaded }: UploadPanelProps) {
           showIcon
           message={
             rows.every((row) => row.state === 'done')
-              ? `${rows.length} 个文件已收进收件箱`
+              ? `${rows.length} 个文件已收进知识库`
               : '有些文件没能收进来（每一条的原因见上）'
           }
           description={
             <span className={styles.doneHint}>
-              收进来的文件带着标签「待整理」，可以按自己的目录与标签归类。
+              收进来的文件现在就能检索、能被问答引用；标签与目录可以在文档详情的 「⋯」菜单里补。
             </span>
           }
         />

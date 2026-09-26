@@ -1,6 +1,6 @@
 import type { Citation, Message } from '@mimir/shared'
 import type { UIMessage } from '@tanstack/ai-react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { App as AntApp, Button, Skeleton } from 'antd'
 import { createStyles } from 'antd-style'
 import { useRef, useState } from 'react'
@@ -158,46 +158,6 @@ const useStyles = createStyles(({ css, token }) => ({
     margin-bottom: 8px;
     color: ${token.colorText};
   `,
-  /* 待整理建议（新对话空态里）。点一下把范围锁到那一篇——
-     比「一句提示语」有用，因为启动新对话最典型的动机就是「我刚收了几篇东西」 */
-  suggestions: css`
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    margin-top: 22px;
-    text-align: left;
-  `,
-  suggestionsLabel: css`
-    padding: 0 0 6px;
-    font-size: ${FONT_SIZE.note}px;
-    color: ${token.colorTextTertiary};
-  `,
-  suggestion: css`
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 7px 10px;
-    border: none;
-    border-radius: 6px;
-    background: ${token.tintList};
-    font-family: inherit;
-    text-align: left;
-    cursor: pointer;
-    transition: background 0.12s ease-out;
-
-    &:hover {
-      background: ${token.tintHover};
-    }
-  `,
-  suggestionTitle: css`
-    flex: 1;
-    min-width: 0;
-    font-size: ${FONT_SIZE.item}px;
-    color: ${token.colorText};
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  `,
   emptySub: css`
     font-size: ${FONT_SIZE.note}px;
     color: ${token.colorTextTertiary};
@@ -261,22 +221,18 @@ function ChatPanelBody({
   const { openDocument } = useAppShell()
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  /**
-   * 从空态里挑中的文档。
-   *
-   * 它必须住在这里而不是 Composer 里：点选发生在空态（Composer 之外），
-   * 而「范围锁到这一篇」由 Composer 的输入框体现。两个组件是兄弟，
-   * 所以选择落在共同祖先上。
-   *
-   * `draft?.documentId` 优先于它——那是从文档工具条带进来的，
-   * 比在空态里点的更明确。
-   */
-  const [pickedDocumentId, setPickedDocumentId] = useState<string | undefined>()
-
   const chat = useMimirChat({
     conversationId,
     initialMessages,
-    documentId: draft?.documentId ?? pickedDocumentId,
+    /**
+     * 范围锁定的来源**只有 `draft`**（从文档工具条或引用带进来的）。
+     *
+     * 这里曾经还有第二个来源：空态里点选的那一篇（`pickedDocumentId`）。
+     * 收件箱退役后空态不再列文档（D-054），那个状态因此没有写入方——
+     * 一个永远是 undefined 的 state 会让「范围为什么锁在这一篇」多一条
+     * 不存在的路径，所以删掉而不是留着。
+     */
+    documentId: draft?.documentId,
     onConversationCreated,
   })
 
@@ -328,7 +284,7 @@ function ChatPanelBody({
       <div className={styles.scroll} ref={scrollRef}>
         <div className={styles.inner}>
           {isEmpty ? (
-            <ChatEmptyState draft={draft} onStartFromDocument={setPickedDocumentId} />
+            <ChatEmptyState draft={draft} />
           ) : (
             <>
               {/* 检索过程渲染在回答**上方**。默认折叠，展开后是逐步记录
@@ -375,7 +331,7 @@ function ChatPanelBody({
       <Composer
         key={draft?.documentId ?? 'global'}
         initialText={draft?.text ?? ''}
-        scopedDocumentId={draft?.documentId ?? pickedDocumentId}
+        scopedDocumentId={draft?.documentId}
         disabled={chat.isLoading}
         onSend={(text, deepReasoning) => void chat.send(text, deepReasoning)}
       />
@@ -386,37 +342,16 @@ function ChatPanelBody({
 /**
  * 对话空态。
  *
- * 除了「问点什么」这句提示，它还要承担一件事：**新对话时列出待整理的内容**
- * （`docs/PRD.md` §5.10）。
+ * 它曾经列出「待整理的内容」，让刚收进来的东西一键带进对话
+ * （`docs/PRD.md` §5.10）。收件箱退役后（D-054）那个列表没有依据了——
+ * 新内容直接可用，不存在「待」这个状态。空态因此回到它本来的职责：
+ * 说清楚这个输入框会做什么。
  *
- * 那条要求原本落在中栏（「新对话的中栏不空着」），动机是：启动新对话最典型的
- * 动机就是「我刚收了几篇东西，想问问」，把这个动机需要的东西直接摆在眼前，
- * 比一句提示语有用。
- *
- * 中栏在对话模式下删掉之后（§5.2），这个动机没有丢，只是搬到了空态里——
- * 而且**比原来更贴切**：原来那些条目在中栏，与输入框隔着一栏；现在它们就在
- * 输入框上方，点一下就把范围锁到那一篇。
+ * 原先那条动机（「我刚收了东西，想问问」）由**库视图**承接：内容一进来
+ * 就在全部文档里，选中它点「问 AI」就带着上下文进对话，不需要空态再挑几条。
  */
-function ChatEmptyState({
-  draft,
-  onStartFromDocument,
-}: {
-  draft: AskDraft | null
-  onStartFromDocument: (id: string) => void
-}) {
+function ChatEmptyState({ draft }: { draft: AskDraft | null }) {
   const { styles } = useStyles()
-
-  /**
-   * 待整理内容。**只在新对话时请求**——带着上下文进来的（`draft` 有值）
-   * 不需要它，那时用户心里已经有问题了。
-   */
-  const pendingQuery = useQuery({
-    queryKey: ['documents', 'inbox-pending'],
-    queryFn: () => api.documents.list({ status: 'inbox', limit: 4 }),
-    enabled: !draft,
-  })
-
-  const pending = pendingQuery.data?.items ?? []
 
   return (
     <div className={styles.empty}>
@@ -426,24 +361,6 @@ function ChatEmptyState({
           ? '上下文已经准备好，范围锁定在这篇文档'
           : '它会先在你的知识库里检索，再基于命中的原文回答，并给出引用'}
       </div>
-
-      {!draft && pending.length > 0 && (
-        <div className={styles.suggestions}>
-          <div className={styles.suggestionsLabel}>
-            收件箱还有 {pendingQuery.data?.items.length} 条没整理，可以从它们开始问
-          </div>
-          {pending.map((doc) => (
-            <button
-              key={doc.id}
-              type="button"
-              className={styles.suggestion}
-              onClick={() => onStartFromDocument(doc.id)}
-            >
-              <span className={styles.suggestionTitle}>{doc.title}</span>
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   )
 }

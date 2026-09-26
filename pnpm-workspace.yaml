@@ -39,6 +39,10 @@ catalog:
   react: ^19.3.0
   react-dom: ^19.3.0
 
+  # DOM 测试环境。两个包都要用它（web 的组件测试、office 的外壳测试），
+  # 且两者的 DOM 行为必须一致——否则同一段组件代码在两处得到不同结论
+  happy-dom: ^20.0.0
+
   # Tiptap 全家必须同级：它的包共享 ProseMirror 的 schema 与插件协议
   '@tiptap/core': ^3.31.3
   '@tiptap/pm': ^3.31.3

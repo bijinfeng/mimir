@@ -36,6 +36,13 @@
       "when": 1790236835136,
       "tag": "0004_productive_blazing_skull",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790414339458,
+      "tag": "0005_retire_inbox",
+      "breakpoints": true
     }
   ]
 }

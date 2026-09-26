@@ -74,3 +74,35 @@ export {
   type FootnoteContext,
 } from './footnotes.js'
 export type { Block } from '../vendor/packages/docx-engine/src/types.js'
+
+/**
+ * 界面层（D-054）：外壳与三种 Office 编辑器。
+ *
+ * 界面放在这个包里而不是 `apps/web`，理由是四种编辑器（docx / xlsx / pptx /
+ * markdown 笔记）的外壳必须长得一样，而「一样」只能由同一份实现保证——
+ * 各写一份的漂移只在用户眼里看得出来。宿主因此只负责「给字节 / 收回字节」
+ * 与主题变量，不参与编辑器的布局。
+ */
+export {
+  EditorShell,
+  EditorState,
+  ToolbarButton,
+  ToolbarDivider,
+  ToolbarLabel,
+  ToolbarSpacer,
+  ToolbarTabs,
+  type EditorShellProps,
+} from './shell/EditorShell.js'
+export { statusText, useSource, type SourceHandle } from './editors/use-source.js'
+export { OFFICE_MIME, type EditorIo, type EditorProps, type SaveTarget } from './editors/types.js'
+export { DocxEditor } from './editors/DocxEditor.js'
+export { XlsxEditor } from './editors/XlsxEditor.js'
+export { PptxEditor } from './editors/PptxEditor.js'
+export { MarkdownEditor, type MarkdownEditorProps } from './editors/MarkdownEditor.js'
+export {
+  hasCommand,
+  hasMark,
+  hasNode,
+  runCommand,
+  toggleMarkByName,
+} from './shell/editor-commands.js'

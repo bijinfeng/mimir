@@ -670,8 +670,6 @@ describe('自定义 token', () => {
       'tintHover',
       'inlineCodeFg',
       'highlightBg',
-      'tintWarningSurface',
-      'borderWarningSurface',
     ] as const) {
       expect(custom[key], `${key} 不是 hex`).toMatch(/^#[0-9a-f]{6}$/i)
     }
@@ -757,13 +755,15 @@ describe('自定义 token', () => {
     expect(contrastOn(String(token.colorLink), selected)).toBeGreaterThanOrEqual(4.5)
   })
 
-  it.each(APPEARANCES)('整理条上的警告文字 %s下 ≥ 4.5:1', (appearance) => {
+  /**
+   * 警告文字在容器底上的对比度。
+   *
+   * 整理条退役之后（D-054）这条断言只剩一个底要算——原先还有个
+   * `tintWarningSurface`（整理条专用的淡橙底），那个 token 已随它一起退役。
+   * 保留容器底这一条：警告文字仍然会出现在卡片、弹窗这些容器底上。
+   */
+  it.each(APPEARANCES)('警告文字在容器底上 %s 下 ≥ 4.5:1', (appearance) => {
     const token = tokenOf(appearance)
-    const custom = customTokenFor(appearance)
-    expect(
-      contrast(String(token.colorWarningText), custom.tintWarningSurface),
-    ).toBeGreaterThanOrEqual(4.5)
-    // 收集标签的胶囊底是容器色，也要一起算
     expect(
       contrast(String(token.colorWarningText), String(token.colorBgContainer)),
     ).toBeGreaterThanOrEqual(4.5)
@@ -843,8 +843,9 @@ describe('用量热力图色阶', () => {
 })
 
 describe('状态徽标色对', () => {
-  // docs/DESIGN.md §3.7 的表：「待整理」徽标的底色要看得清。
-  // 来源徽标已随 D-047 移除，这张表只剩状态。改配色时这里会拦下来。
+  // docs/DESIGN.md §3.7 的表。来源徽标已随 D-047 移除、收件箱徽标随 D-054
+  // 移除，这张表只剩**归档**与**提取失败**两个偏离常态的状态。
+  // 改配色时这里会拦下来。
   it.each(APPEARANCES)('徽标文字 on 自身底 %s下 ≥ 4.5:1', (appearance) => {
     for (const [name, pair] of Object.entries(BADGE_COLORS[appearance])) {
       expect(

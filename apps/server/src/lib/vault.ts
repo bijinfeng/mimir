@@ -143,7 +143,7 @@ export async function readNote(vaultPath: string): Promise<VaultNote> {
     title: data.title ?? '未命名',
     tags: Array.isArray(data.tags) ? data.tags : [],
     body: parsed.content.trim(),
-    status: data.status ?? 'inbox',
+    status: data.status ?? 'ready',
     folder: typeof data.folder === 'string' && data.folder.trim() ? data.folder.trim() : null,
     createdAt: data.createdAt ?? new Date().toISOString(),
     updatedAt: data.updatedAt ?? new Date().toISOString(),

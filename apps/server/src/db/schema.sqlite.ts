@@ -29,7 +29,7 @@ export const documents = sqliteTable(
     /** note | web | wechat | github | file（kind 是**来源**，格式是 mime 属性） */
     kind: text('kind').notNull(),
     /** inbox | ready | failed | archived */
-    status: text('status').notNull().default('inbox'),
+    status: text('status').notNull().default('ready'),
 
     title: text('title').notNull(),
     /** 正文，Markdown。note 时文件是真相，这里是索引副本 */

@@ -18,7 +18,7 @@ vendor/          vendored 的上游代码。**一律不改。** 同步会覆盖
   packages/pptx-engine/…   pptx 解析（继承已解析成最终值）
   packages/pptx-render/…   pptx 布局（Slide → 纯数据的绘制列表）
 src/
-  docx.ts          适配层：openDocx → 编辑 → save
+  docx.ts          解析层：openDocx → 编辑 → save
   pagination.ts    docx 分页视图；footnotes.ts 脚注
   xlsx.ts          xlsx 网格解析（**自己写的**，未 vendored）
   xlsx-edit.ts     xlsx 单元格编辑：补丁式保存 + 内联字符串（**自己写的**）
@@ -27,6 +27,16 @@ src/
   pptx-save.ts     pptx 保存：元素补丁回字节（**移植自上游 index.ts**）
   pptx-render.ts   pptx 渲染入口：renderSlide / renderDeck → SVG 字符串
   pptx-svg.ts      RenderSlide → SVG（**我们写的**，替上游的 Konva 适配器）
+  shell/           **界面外壳**：四种编辑器共用的框架与控件（D-054）
+    EditorShell.tsx   四个槽位：toolbar / children / footer / status
+    shell.css         外壳样式；主题值走 --me-* 自定义属性
+    icons.tsx         工具条图标（自绘 SVG，不依赖图标库）
+    editor-commands.ts 方言能力检测与调用
+  editors/         **四种编辑器**（docx / xlsx / pptx / markdown）
+    DocxEditor.tsx / XlsxEditor.tsx / PptxEditor.tsx / MarkdownEditor.tsx
+    InlineToolbar.tsx  选区工具条（要编辑器实例，所以在包里）
+    use-source.ts      取字节 → 解析 → 写回（含「解析结果绑在哪个字节上」）
+    types.ts           EditorIo：宿主提供取与存
   index.ts         对外出口
   shims/i18n.ts          上游 i18n 的等价替代
   shims/pptx-engine-types.ts  pptx 引擎的类型桶（挡住整条写路径）
@@ -87,7 +97,31 @@ scripts/
 **收紧类型检查的边界是 `src/`。** 那里是 mimir 自己的代码，按 mimir 的
 规矩来。
 
-### 3. 保存必须走补丁路径
+### 3. 界面与逻辑同包，但**壳与内容分家**
+
+界面在这个包里（D-054），因为四种格式的外壳必须长得一样——而「一样」只能
+由同一份实现保证。边界是：
+
+| 归包 | 归宿主（`apps/web`） |
+|---|---|
+| 壳（工具条 / 状态行 / 布局 / 保存状态） | 方言（markdown 的 Tiptap 扩展集合） |
+| 编辑器组件 | 正文排版类（与只读视图共用同一个） |
+| 解析与保存 | 取字节与写回（`EditorIo`） |
+| 主题变量**消费**（`--me-*`） | 主题变量**提供**（`editor-theme-bridge.ts`） |
+
+**包不依赖 antd**，所以它能独立测试与预览。代价是那道变量桥——不要为了
+「方便」把 antd 引进来，那会让这个包不能再脱开宿主跑。
+
+两条这一层特有的规矩：
+
+- **不要手改 `src/generated/editor.css`**：它是 `trim-editor-css.mjs` 的产物，
+  同步会覆盖
+- **`vitest` 的默认环境是 node，不是 happy-dom**。happy-dom 会替换全局
+  `URL`，于是 `readFileSync(new URL(..., import.meta.url))` 抛
+  `The URL must be of scheme file`——解析类测试整片挂掉（实测踩过 48 个）。
+  要 DOM 的测试在自己的文件顶部写 `@vitest-environment happy-dom`
+
+### 4. 保存必须走补丁路径
 
 `saveDocx` 有两种模式：逐块补丁（未改动的块原样复制 zip 条目）和整体重建。
 **产品里只允许前者**——整体重建会丢掉我们没建模的东西（域代码、修订标记、

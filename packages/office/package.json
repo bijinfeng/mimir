@@ -6,10 +6,12 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./vendor/extensions": "./vendor/apps/docs/src/renderer/editor/extensions.ts",
-    "./vendor/styles.css": "./vendor/apps/docs/src/renderer/styles.css",
-    "./vendor/fonts.css": "./vendor/apps/docs/src/renderer/fonts/fonts.css",
     "./editor.css": "./src/generated/editor.css",
+    "./editors.css": "./src/editors/editors.css",
+    "./shell.css": "./src/shell/shell.css",
+    "./vendor/extensions": "./vendor/apps/docs/src/renderer/editor/extensions.ts",
+    "./vendor/fonts.css": "./vendor/apps/docs/src/renderer/fonts/fonts.css",
+    "./vendor/styles.css": "./vendor/apps/docs/src/renderer/styles.css",
     "./vendor/types": "./vendor/packages/docx-engine/src/types.ts"
   },
   "scripts": {
@@ -21,7 +23,9 @@
   "dependencies": {
     "@tiptap/core": "catalog:",
     "@tiptap/extensions": "catalog:",
+    "@tiptap/markdown": "catalog:",
     "@tiptap/pm": "catalog:",
+    "@tiptap/react": "catalog:",
     "bidi-js": "catalog:",
     "fast-xml-parser": "^5.3.4",
     "jszip": "^3.10.1",
@@ -30,7 +34,10 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "happy-dom": "catalog:",
     "react": "catalog:",
+    "react-dom": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   },

@@ -205,7 +205,7 @@ async function importAsFile(
     size: data.byteLength,
     tags,
     folder: null,
-    status: 'inbox',
+    status: 'ready',
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
   }
@@ -219,7 +219,7 @@ async function importAsFile(
     .values({
       id,
       kind: 'file',
-      status: 'inbox',
+      status: 'ready',
       title,
       body,
       excerpt: toExcerpt(body),

@@ -32,7 +32,7 @@ export const Route = createFileRoute('/_app/chat')({
    * 父级有必填字段而报类型错。
    */
   validateSearch: (search: Record<string, unknown>) => ({
-    scope: typeof search.scope === 'string' && search.scope ? search.scope : 'inbox',
+    scope: typeof search.scope === 'string' && search.scope ? search.scope : 'all',
     ...(typeof search.id === 'string' && search.id ? { id: search.id } : {}),
   }),
   component: ChatRoute,

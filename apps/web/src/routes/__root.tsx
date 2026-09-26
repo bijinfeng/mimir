@@ -16,7 +16,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       throw redirect({ to: '/login', search: { redirect: location.href } })
     }
     if (session && location.pathname === '/login') {
-      throw redirect({ to: '/docs', search: { scope: 'inbox' } })
+      throw redirect({ to: '/docs', search: { scope: 'all' } })
     }
 
     return { session }

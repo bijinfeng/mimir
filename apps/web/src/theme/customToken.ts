@@ -31,17 +31,6 @@ export interface MimirCustomToken {
   highlightBg: string
 
   /**
-   * 整理条的表面与描边。
-   *
-   * `colorWarningBg` (`#fff3e0`) 是给**提示条**用的，饱和度偏高；整理条在
-   * 文档顶部占一整行且长期存在，用它会变成页面上最吵的东西。
-   * 原型实测的 `#fffaf2` + `#ffe0b2` 是同色相但淡两档，既认得出是「待办」
-   * 又不抢标题。文字色仍用 `colorWarningText`（在这两个底上对比度只增不减）。
-   */
-  tintWarningSurface: string
-  borderWarningSurface: string
-
-  /**
    * 用量热力图的四档色阶。
    *
    * 浅色取 antd 蓝色阶的 2 / 3 / 5 / 7 阶（`docs/DESIGN.md` §3.6.1）。
@@ -77,9 +66,6 @@ const LIGHT: MimirCustomToken = {
   tintHover: '#fafbff',
   inlineCodeFg: '#c7254e',
   highlightBg: '#fff3b0',
-  tintWarningSurface: '#fffaf2',
-  borderWarningSurface: '#ffe0b2',
-
   // 用量热力图色阶（浅 → 深）。见 docs/DESIGN.md §3.6.1 的四条约束
   heatL1: '#cfe6ff',
   heatL2: '#91caff',
@@ -103,9 +89,6 @@ const DARK: MimirCustomToken = {
   tintHover: '#1b1e21',
   inlineCodeFg: '#ff8a9a',
   highlightBg: '#4a3c10',
-  tintWarningSurface: '#23201a',
-  borderWarningSurface: '#4a3a1e',
-
   heatL1: '#10395e',
   heatL2: '#1c5fa8',
   heatL3: '#3b8fe6',

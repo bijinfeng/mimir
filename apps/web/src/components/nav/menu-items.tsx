@@ -1,7 +1,6 @@
 import {
   AppstoreOutlined,
   HddOutlined,
-  InboxOutlined,
   MessageOutlined,
   PlusOutlined,
   SearchOutlined,
@@ -82,12 +81,16 @@ export function buildActions(): MenuItem[] {
 }
 
 /**
- * 知识库的两个视图。来源（笔记 / 资料）不再是浏览维度（D-047）——
- * 库靠目录、标签与搜索组织，入口只剩状态（收件箱）与全集（全部文档）。
+ * 知识库的两个视图。来源（笔记 / 资料）不再是浏览维度（D-047），
+ * 收件箱也不再是（D-054）——库靠目录、标签与搜索组织，
+ * 入口只剩全集与归档。
+ *
+ * **不要把它当作「少一个筛选」而加回来**：收件箱存在的前提是「先收进来、
+ * 之后再整理」那条两段式流程，而它已经退役（新的内容直接可用）。
+ * 理由与代价见 D-054。
  */
 export function buildScopes(counts: DocumentCounts | undefined): MenuItem[] {
   const rows = [
-    { key: 'inbox', icon: <InboxOutlined />, label: '收件箱', count: counts?.inbox },
     { key: 'all', icon: <AppstoreOutlined />, label: '全部文档', count: counts?.all },
     { key: 'archived', icon: <HddOutlined />, label: '已归档', count: counts?.archived },
   ]

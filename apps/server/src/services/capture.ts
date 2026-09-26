@@ -160,7 +160,7 @@ export async function capture(params: CaptureParams): Promise<CaptureResponse> {
     .values({
       id,
       kind: raw.kind,
-      status: 'inbox',
+      status: 'ready',
       title,
       body: markdown,
       excerpt: toExcerpt(markdown),

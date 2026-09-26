@@ -15,8 +15,8 @@ import {
  */
 describe('导航 key 的编码与解码', () => {
   it('文档页把 scope 编成 scope:<name>', () => {
-    expect(currentKey({ page: 'docs', scope: 'inbox' })).toBe('scope:inbox')
     expect(currentKey({ page: 'docs', scope: 'all' })).toBe('scope:all')
+    expect(currentKey({ page: 'docs', scope: 'archived' })).toBe('scope:archived')
   })
 
   it('标签筛选点亮「全部文档」——侧边栏没有标签项', () => {
@@ -34,16 +34,16 @@ describe('导航 key 的编码与解码', () => {
   })
 
   it('对话页有 id 时指向那个会话，没有 id 时指向「新建对话」', () => {
-    expect(currentKey({ page: 'chat', scope: 'inbox', id: 'abc' })).toBe('conv:abc')
+    expect(currentKey({ page: 'chat', scope: 'all', id: 'abc' })).toBe('conv:abc')
     // 没有 id = 新对话。它必须映射到 action:new-chat，
     // 否则侧边栏会没有任何选中项（用户看不出自己在哪）
-    expect(currentKey({ page: 'chat', scope: 'inbox' })).toBe('action:new-chat')
+    expect(currentKey({ page: 'chat', scope: 'all' })).toBe('action:new-chat')
   })
 
   it('设置页指向设置项', () => {
     // 这条曾经是坏的：设置页被并进 docs，于是判据 scope === 'settings'
     // 永远不成立，设置项从来不高亮
-    expect(currentKey({ page: 'settings', scope: 'inbox' })).toBe('action:settings')
+    expect(currentKey({ page: 'settings', scope: 'all' })).toBe('action:settings')
   })
 
   it('每个 currentKey 的结果都能在 items 里找到对应的 key', () => {
@@ -58,7 +58,7 @@ describe('导航 key 的编码与解码', () => {
       }
     }
     collect(buildActions() as never)
-    collect(buildScopes({ inbox: 1, all: 2, archived: 0 } as never) as never)
+    collect(buildScopes({ all: 2, archived: 0 }) as never)
     collect(buildConversations([], 10) as never)
     // 空会话列表时 buildConversations 返回一个带空 children 的分组，
     // 这里补上真实情形的那一条
@@ -68,15 +68,16 @@ describe('导航 key 的编码与解码', () => {
     allKeys.add('action:settings')
 
     for (const input of [
-      { page: 'docs' as const, scope: 'inbox' },
       { page: 'docs' as const, scope: 'all' },
-      // 来源（note / clip）不再是 scope（D-047）。标签走 tag: 前缀，
-      // currentKey 把它映射到「全部文档」点亮（目录树的 folder key
-      // 属于 NavSidebar 的树，不在 buildScopes 的清单里，不进这个断言）
+      { page: 'docs' as const, scope: 'archived' },
+      // 来源（note / clip）不再是 scope（D-047），收件箱也不再是（D-054）。
+      // 标签走 tag: 前缀，currentKey 把它映射到「全部文档」点亮
+      //（目录树的 folder key 属于 NavSidebar 的树，不在 buildScopes
+      // 的清单里，不进这个断言）
       { page: 'docs' as const, scope: 'tag:react' },
-      { page: 'chat' as const, scope: 'inbox' },
-      { page: 'chat' as const, scope: 'inbox', id: 'abc' },
-      { page: 'settings' as const, scope: 'inbox' },
+      { page: 'chat' as const, scope: 'all' },
+      { page: 'chat' as const, scope: 'all', id: 'abc' },
+      { page: 'settings' as const, scope: 'all' },
     ]) {
       expect(allKeys, `${JSON.stringify(input)} 编出的 key 没有对应的菜单项`).toContain(
         currentKey(input),
@@ -88,12 +89,22 @@ describe('导航 key 的编码与解码', () => {
 describe('菜单项构造', () => {
   it('计数为 0 时不显示计数', () => {
     // 「0」比空白更占注意力，而它不携带信息
-    const items = buildScopes({ inbox: 0, all: 5, archived: 2 }) as {
+    const items = buildScopes({ all: 5, archived: 0 }) as {
       key: string
       extra?: unknown
     }[]
-    expect(items.find((i) => i.key === 'scope:inbox')?.extra).toBeUndefined()
     expect(items.find((i) => i.key === 'scope:all')?.extra).toBe(5)
+    expect(items.find((i) => i.key === 'scope:archived')?.extra).toBeUndefined()
+  })
+
+  /**
+   * 侧边栏的视图就是**全集与归档两个**（D-054：收件箱退役）。
+   * 这条断言守的是「别把收件箱加回来」——加回来不会报错，
+   * 只会让那条两段式流程悄悄复活。
+   */
+  it('只有全部文档与已归档两个视图', () => {
+    const items = buildScopes({ all: 5, archived: 2 }) as { key: string }[]
+    expect(items.map((i) => i.key)).toEqual(['scope:all', 'scope:archived'])
   })
 
   it('会话只有一个分组，不按日期切', () => {

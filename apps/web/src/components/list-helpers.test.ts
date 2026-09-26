@@ -15,7 +15,7 @@ function doc(overrides: Partial<DocumentSummary> = {}): DocumentSummary {
   return {
     id: 'doc1',
     kind: 'file',
-    status: 'inbox',
+    status: 'ready',
     title: '报告.pdf',
     excerpt: '',
     tags: [],
@@ -92,13 +92,23 @@ describe('元信息行的格式与大小', () => {
 })
 
 describe('scope 与筛选条件', () => {
-  it('收件箱按状态过滤，目录与标签各是一条独立条件', () => {
-    expect(scopeParams('inbox')).toEqual({ status: 'inbox' })
+  /**
+   * 收件箱退役后（D-054）状态维度只剩归档一种。
+   * **认不出的 scope 必须回落到「全部」**（空条件）而不是报错或什么都不返回
+   * ——URL 里带着旧链接（`scope=inbox`）进来时要看到全部文档，而不是一片空白。
+   */
+  it('归档按状态过滤，目录与标签各是一条独立条件', () => {
+    expect(scopeParams('archived')).toEqual({ status: 'archived' })
     expect(scopeParams('folder:技术/前端')).toEqual({ folder: '技术/前端' })
     expect(scopeParams('tag:react')).toEqual({ tag: 'react' })
   })
 
   it('全部文档不带任何条件', () => {
     expect(scopeParams('all')).toEqual({})
+  })
+
+  it('认不出的 scope（含已退役的 inbox）回落到全部', () => {
+    expect(scopeParams('inbox')).toEqual({})
+    expect(scopeParams('nonsense')).toEqual({})
   })
 })

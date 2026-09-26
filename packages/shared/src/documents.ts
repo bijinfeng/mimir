@@ -31,10 +31,18 @@ export const CLIP_KINDS = [
 ] as const satisfies readonly DocumentKind[]
 
 /**
- * 处理状态。inbox 是默认落点——先收进来，之后再整理。
- * 没有「收件箱」这一步，知识库会死于收集摩擦。
+ * 处理状态。
+ *
+ * 新收进来的内容直接是 `ready`（D-054）——原先它先落 `inbox`（收件箱），
+ * 再由用户「完成整理」翻成 `ready`。那条两段式流程随整理条一起退役了：
+ * 实测它的代价（每收一篇都要多一个动作）大于收益（用户从不按状态筛选），
+ * 而「待整理」徽标在每一张新卡片上都是一个待办提醒。
+ *
+ * `archived` 保留：它是**有能力对应**的状态（详情页的「⋯」菜单可归档与
+ * 恢复，导航有「已归档」入口）。`failed` 同样保留——它表达「这条记录坏了」，
+ * 与流程无关。
  */
-export const documentStatusSchema = z.enum(['inbox', 'ready', 'failed', 'archived'])
+export const documentStatusSchema = z.enum(['ready', 'failed', 'archived'])
 export type DocumentStatus = z.infer<typeof documentStatusSchema>
 
 export const noteCreateSchema = z.object({
@@ -181,7 +189,6 @@ export type FileUploadResponse = z.infer<typeof fileUploadResponseSchema>
  * 必须与点进去看到的条数一致。
  */
 export const documentCountsSchema = z.object({
-  inbox: z.number().int(),
   all: z.number().int(),
   /** 已归档：归档不是黑洞，导航里有它的入口（D-047 待办收尾） */
   archived: z.number().int(),

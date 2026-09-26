@@ -124,8 +124,8 @@ export async function createNote(input: NoteCreate): Promise<DocumentDetail> {
     title: input.title,
     tags: input.tags,
     body: input.body,
-    status: 'inbox',
-    // 新建的笔记未归档；目录由用户在整理条里指定
+    status: 'ready',
+    // 新建的笔记未归档；目录由用户在详情的「⋯」菜单里指定
     folder: null,
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
@@ -140,7 +140,7 @@ export async function createNote(input: NoteCreate): Promise<DocumentDetail> {
     .values({
       id,
       kind: 'note',
-      status: 'inbox',
+      status: 'ready',
       title: note.title,
       body: note.body,
       path,
@@ -407,10 +407,9 @@ export async function countDocuments(): Promise<DocumentCounts> {
     .from(documents)
     .where(isNull(documents.deletedAt))
 
-  // 来源计数（note / clip）随浏览维度退役（D-047），换成归档计数——
-  // 导航上的每个数字都必须与点进去看到的条数一致（`documentCountsSchema` 的承诺）
+  // 导航上的每个数字都必须与点进去看到的条数一致（`documentCountsSchema`
+  // 的承诺）。来源计数（D-047）与收件箱计数（D-054）都已退役，只剩全集与归档
   return {
-    inbox: rows.filter((row) => row.status === 'inbox').length,
     all: rows.length,
     archived: rows.filter((row) => row.status === 'archived').length,
   }

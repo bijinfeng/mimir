@@ -42,7 +42,7 @@ describe('笔记 CRUD 与文件落盘', () => {
   let noteId = ''
   let originalPath = ''
 
-  it('创建笔记返回 inbox 状态与 vault 路径', async () => {
+  it('创建笔记返回 ready 状态与 vault 路径', async () => {
     const res = await client.post<{
       id: string
       path: string
@@ -55,7 +55,15 @@ describe('笔记 CRUD 与文件落盘', () => {
     })
 
     expect(res.status).toBe(201)
-    expect(res.body.status).toBe('inbox')
+    /**
+     * **新笔记直接就是 `ready`**（D-054）。
+     *
+     * 这里曾经断言 `'inbox'`——那时新内容先落收件箱、由用户「完成整理」再翻成
+     * ready。那条两段式流程随整理条一起退役了：实测它的代价（每收一篇多一个
+     * 动作）大于收益（用户从不按状态筛选）。改这一行是**跟着行为改**，
+     * 不是把断言改松。
+     */
+    expect(res.body.status).toBe('ready')
     expect(res.body.path).toMatch(/\.md$/)
     expect([...res.body.tags].toSorted()).toEqual(['react', '性能'])
 
@@ -80,6 +88,23 @@ describe('笔记 CRUD 与文件落盘', () => {
     expect(res.body.title).toBe('React 渲染性能笔记')
     expect(res.body.path).not.toBe(originalPath)
     expect(res.body.path).toMatch(/-[A-Za-z0-9_-]{8}\.md$/)
+  })
+
+  it('归档与恢复：状态位是可逆的，归档后仍能查到', async () => {
+    const archived = await client.patch<{ status: string }>(`/api/documents/${noteId}`, {
+      status: 'archived',
+    })
+    expect(archived.status).toBe(200)
+    expect(archived.body.status).toBe('archived')
+
+    // 归档**不是删除**：默认列表里看不到，但按归档筛能查到、直接取也取得到
+    const list = await client.get<{ items: { id: string }[] }>('/api/documents?limit=50')
+    expect(list.body.items.some((item) => item.id === noteId)).toBe(true)
+
+    const restored = await client.patch<{ status: string }>(`/api/documents/${noteId}`, {
+      status: 'ready',
+    })
+    expect(restored.body.status).toBe('ready')
   })
 
   it('删除后查不到，且标记为已删除而非物理清除', async () => {

@@ -133,7 +133,7 @@ export function LibraryView({ scope }: { scope: string }) {
                 <span className={styles.cardTitle}>{doc.title}</span>
                 <p className={styles.cardExcerpt}>{excerptText(doc)}</p>
                 <span className={styles.cardMeta}>
-                  {doc.status === 'inbox' && <StatusBadge status="inbox" />}
+                  <StatusBadge status={doc.status} />
                   {/*
                     标签是筛选入口：点它进入该标签的库视图。
                     搜索结果不带标签（检索契约里没有），所以只在浏览态出现

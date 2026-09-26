@@ -102,7 +102,7 @@ export const uploadMetaSchema = z.object({
   size: z.number().int().nonnegative(),
   tags: z.array(z.string()).default([]),
   folder: z.string().nullable().default(null),
-  status: z.string().default('inbox'),
+  status: z.string().default('ready'),
   createdAt: z.string(),
   updatedAt: z.string(),
 })

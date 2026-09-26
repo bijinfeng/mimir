@@ -1,5 +1,5 @@
 import { FileOutlined, WarningOutlined } from '@ant-design/icons'
-import { Button, Empty, Segmented, Typography } from 'antd'
+import { Button, Empty, Typography } from 'antd'
 import { useState } from 'react'
 import { createStyles } from 'antd-style'
 import {
@@ -10,9 +10,7 @@ import {
   type DocumentDetail,
 } from '@mimir/shared'
 import { MarkdownBody } from '@/components/document/MarkdownBody'
-import { OfficeEditor } from '@/components/document/OfficeEditor'
-import { PptxEditor } from '@/components/document/PptxEditor'
-import { XlsxEditor } from '@/components/document/XlsxEditor'
+import { OfficeSourceEditor } from '@/components/document/OfficeSourceEditor'
 import { useContentStyles } from '@/components/ContentTypography.style'
 import { api } from '@/lib/api'
 import { FONT_SIZE } from '@/theme/tokens'
@@ -20,18 +18,23 @@ import { FONT_SIZE } from '@/theme/tokens'
 /**
  * 文件类文档的预览区（`docs/DESIGN.md` §8.16）。
  *
- * ## 两层：正文与原件
+ * ## 直接看原件，没有层切换（D-054）
  *
- * 一份文件有两个可看的东西，它们回答不同的问题：
+ * 这里原先有一个「正文 / 原件」分段控件：正文是从原件提取出的文本（回答
+ * 「它讲了什么」），原件是上传的文件（回答「它原样长什么样」）。用户反馈
+ * 那个切换**不伦不类**——多数时候两个都要看，而切来切去只是让「我现在看的
+ * 是哪一层」变成一个需要记的问题。现在只有一层：**原件**。
  *
- * | 层 | 是什么 | 回答 |
+ * 三层判断，按「能不能真的看到东西」排序：
+ *
+ * | 情况 | 显示 | 为什么 |
  * |---|---|---|
- * | 正文 | 从原件提取出的文本 | 「它讲了什么」（可选中、可被 AI 引用） |
- * | 原件 | 上传的原始文件 | 「它原样长什么样」（PDF 的表格、Word 的版式） |
+ * | 有专用查看器（PDF / 图片 / 音视频 / Office） | 原件 | 那是文件本身的样子，也是编辑入口 |
+ * | 没有查看器但提取出了正文（txt / csv / json / 旧版 doc） | 正文 | 文本文件的正文**就是**它的原样，别处看不到 |
+ * | 两个都没有 | 说明卡片 + 下载 | 空白在那里等于说「这个文件是空的」 |
  *
- * `Segmented` **只在两层都有东西时才出现**。这比「永远显示两个页签」好：
- * 一个点了没反应的页签是假的选择（`docs/DESIGN.md` §7.4 的同一条判断），
- * 而多数文件只有一层——PDF 只有原件、txt 只有正文、图片只有原件。
+ * **提取结果仍然可搜、可被 AI 引用**——那一层没有消失，只是不再占一个页签：
+ * 它活在检索索引里，这也是它真正的用途（`docs/PRD.md` §2.2）。
  *
  * ## 每种格式族的原件查看器都用浏览器自带能力
  *
@@ -40,6 +43,7 @@ import { FONT_SIZE } from '@/theme/tokens'
  * | PDF | `<iframe>` 指向下载端点 | 观感随浏览器（都是原生阅读器，带翻页缩放） |
  * | 图片 | `<img>` | 无 |
  * | 音频 / 视频 | `<audio>` / `<video>` | 需要 Range，服务端已实现单段 |
+ * | Office | `OfficeSourceEditor`（可编辑） | 见 `packages/office` |
  * | 其他 | 一张说明卡片 + 下载按钮 | 无 |
  *
  * 一分钱依赖都不花。pdf.js 那 1MB 换来的是一致的外观与可控的工具栏——
@@ -51,7 +55,14 @@ import { FONT_SIZE } from '@/theme/tokens'
  * 加载失败时**降级成「下载原件」卡片**——空白在那里等于说「这个文件是空的」，
  * 而它只是这个浏览器看不了。与热力图把「用量未上报」画成斜纹同一条规矩。
  */
-export function FilePreview({ doc }: { doc: DocumentDetail }) {
+export function FilePreview({
+  doc,
+  onDirtyChange,
+}: {
+  doc: DocumentDetail
+  /** 原件编辑器有未保存改动时上报（宿主用它拦截离开） */
+  onDirtyChange?: ((dirty: boolean) => void) | undefined
+}) {
   const { styles } = useStyles()
   const { styles: contentStyles } = useContentStyles()
 
@@ -60,66 +71,43 @@ export function FilePreview({ doc }: { doc: DocumentDetail }) {
   const hasBody = doc.body.trim() !== ''
   const hasSource = doc.sourceKey !== null
 
-  const [layer, setLayer] = useState<'body' | 'source'>('body')
+  /**
+   * 这一份能不能看到东西，以及看的是什么。**由一个判据导出**，不是三个
+   * 并列的布尔——并列的话「有没有原件」与「有没有查看器」的组合会退化成
+   * 四五个分支，而其中一半是空态。
+   */
+  const showsSource = hasSource && viewer !== 'none'
+  const showsBody = !showsSource && hasBody
+
   // 查看器加载失败（浏览器不支持这个格式）。按 `doc.id` 记住失败，
   // 换一篇文档时重置——否则「上一篇看不了」会跟着显示到下一篇上
   const [failedFor, setFailedFor] = useState<string | null>(null)
   const viewerFailed = failedFor === doc.id
 
-  const showTabs = hasBody && hasSource
-  const active = showTabs ? layer : hasBody ? 'body' : 'source'
+  /**
+   * 提取失败/没提取到时要说明原因。**这是这一块最要紧的一句话**：
+   * 「还没有提取实现」与「提取失败」对用户的含义完全不同（前者等支持、
+   * 后者可能文件坏了），而留白或统一说「暂无正文」会让两种都变成
+   * 「不知道出了什么事」。
+   *
+   * 它不挡路——原件照常显示，说明挂在它上面。
+   */
+  const extractNote =
+    doc.parseError !== null
+      ? `正文提取失败：${doc.parseError}`
+      : hasBody
+        ? null
+        : support === 'planned'
+          ? '这种格式的正文提取将在后续版本支持，所以它暂时搜不到——原件可以正常查看'
+          : '这个文件里没有可提取的文字，所以它暂时搜不到'
 
   return (
     <div className={styles.wrap}>
-      {showTabs && (
-        <div className={styles.tabs}>
-          <Segmented
-            size="small"
-            value={active}
-            onChange={(value) => setLayer(value as 'body' | 'source')}
-            options={[
-              { label: '正文', value: 'body' },
-              { label: '原件', value: 'source' },
-            ]}
-          />
-        </div>
-      )}
+      {extractNote !== null && !showsBody && <div className={styles.note}>{extractNote}</div>}
 
-      {/*
-        正文为空时说明原因。**这是这块界面最要紧的一句话**：
-        「还没有提取实现」与「提取失败」对用户的含义完全不同，
-        而留白或统一说「暂无正文」会让两种都变成「不知道出了什么事」
-      */}
-      {!hasBody && !hasSource && (
-        <Empty
-          image={<FileOutlined className={styles.bigIcon} />}
-          description={
-            <span>
-              {doc.parseError !== null
-                ? `提取正文失败：${doc.parseError}`
-                : support === 'planned'
-                  ? '这种格式的正文提取将在后续版本支持'
-                  : '文件里没有可提取的文字'}
-              <span className={styles.hint}>原件已经保存，可以下载查看</span>
-            </span>
-          }
-        />
-      )}
-
-      {!hasBody && hasSource && (
-        <div className={styles.sourceOnly}>
-          <div className={styles.note}>
-            {doc.parseError !== null
-              ? `提取正文失败：${doc.parseError}`
-              : support === 'planned'
-                ? '这种格式的正文提取将在后续版本支持——原件可以正常打开'
-                : '这个文件没有可提取的文字'}
-          </div>
-          {renderSource()}
-        </div>
-      )}
-
-      {hasBody && active === 'body' && (
+      {showsSource ? (
+        renderSource()
+      ) : showsBody ? (
         <>
           {/*
             文本类文件的正文是**原样文本**，不是 Markdown。
@@ -127,6 +115,7 @@ export function FilePreview({ doc }: { doc: DocumentDetail }) {
             把 `#` 当标题——那是主动把内容显示错。所以按 mime 分派：
             只有从 HTML / markdown / Office 提取出来的才走 Markdown 渲染
           */}
+          {extractNote !== null && <div className={styles.note}>{extractNote}</div>}
           {isPlainText(doc.mime) ? (
             <pre className={styles.plain}>{doc.body}</pre>
           ) : (
@@ -140,18 +129,30 @@ export function FilePreview({ doc }: { doc: DocumentDetail }) {
           {/*
             从 Office 提取的正文要说明「这是提取的结果」——
             版式与原件不同（表格线、字体、页眉页脚都不还原），
-            不说的话用户会拿它跟 Word 比对，然后以为渲染坏了
+            不说的话用户会拿它跟 Word 比对，然后以为渲染坏了。
+
+            只有**看不到原件**时才会走到这里（如旧版 .doc 没有浏览器内
+            查看器）：能看到原件时，那个原件本身就是答案
           */}
           {isExtracted(doc.mime) && (
             <div className={styles.note}>
               以上文字是从原件里提取的，版式与原件不同（不含字体、页眉页脚与图片位置）。
-              要看原样请切换「原件」。
             </div>
           )}
         </>
+      ) : (
+        <Empty
+          image={<FileOutlined className={styles.bigIcon} />}
+          description={
+            <span>
+              {doc.parseError !== null
+                ? `提取正文失败：${doc.parseError}`
+                : `${formatLabel(doc.mime, doc.title)} 没有在线预览`}
+              <span className={styles.hint}>原件已经保存，可以下载查看</span>
+            </span>
+          }
+        />
       )}
-
-      {hasBody && active === 'source' && renderSource()}
     </div>
   )
 
@@ -181,6 +182,21 @@ export function FilePreview({ doc }: { doc: DocumentDetail }) {
 
     const url = api.documents.sourceUrl(doc.id)
 
+    /*
+      Office 族的原件层 = **可编辑**（`packages/office`，vendored 自 GenOffice）。
+
+      三种格式走同一个组件：差别在包内部（解析与保存路径），宿主这一层只负责
+      「取字节 / 写回字节」。所以这里不需要按格式分三个分支——分出来的话每个
+      分支都要各自记得传 `onDirtyChange`，漏一个就是丢改动的路径。
+
+      改动保存回原件后，服务端会重算正文与哈希（TECH §13.9），所以编辑完
+      立刻可检索。
+    */
+    if (viewer === 'office' || viewer === 'sheet' || viewer === 'deck') {
+      const kind = viewer === 'office' ? 'docx' : viewer === 'sheet' ? 'xlsx' : 'pptx'
+      return <OfficeSourceEditor key={doc.id} doc={doc} kind={kind} onDirtyChange={onDirtyChange} />
+    }
+
     if (viewer === 'pdf') {
       return (
         /*
@@ -201,22 +217,6 @@ export function FilePreview({ doc }: { doc: DocumentDetail }) {
           onError={() => setFailedFor(doc.id)}
         />
       )
-    }
-
-    if (viewer === 'office') {
-      // Office 原件层 = 可编辑（`packages/office`，vendored 自 GenOffice）。
-      // 改动保存回原件会重算正文与哈希（TECH §13.9），所以编辑后立刻可检索
-      return <OfficeEditor key={doc.id} documentId={doc.id} />
-    }
-
-    if (viewer === 'sheet') {
-      // 网格 + 单元格编辑（`packages/office/src/xlsx-edit.ts`）
-      return <XlsxEditor key={doc.id} documentId={doc.id} />
-    }
-
-    if (viewer === 'deck') {
-      // 幻灯片：渲染成 SVG + 文字可编辑（`packages/office/src/pptx-save.ts`）
-      return <PptxEditor key={doc.id} documentId={doc.id} />
     }
 
     if (viewer === 'image') {
@@ -264,10 +264,9 @@ const useStyles = createStyles(({ css, token }) => ({
     display: flex;
     flex-direction: column;
     gap: 12px;
-  `,
-  tabs: css`
-    display: flex;
-    justify-content: flex-start;
+    /* 撑满内容列：原件（纸张、表格、幻灯片）是「越宽越好看清」的东西 */
+    flex: 1;
+    min-width: 0;
   `,
   plain: css`
     margin: 0;
@@ -303,11 +302,6 @@ const useStyles = createStyles(({ css, token }) => ({
     max-height: 70vh;
     border-radius: 8px;
     background: ${token.colorFillQuaternary};
-  `,
-  sourceOnly: css`
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
   `,
   card: css`
     display: flex;

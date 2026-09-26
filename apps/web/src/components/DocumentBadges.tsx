@@ -5,11 +5,19 @@ import { useAppearance, type Appearance } from '@/theme/appearance'
 import { FONT_SIZE } from '@/theme/tokens'
 
 /**
- * 文档状态徽标（收件箱「待整理」）。
+ * 文档状态徽标。
  *
- * 来源（kind）徽标已随 D-047 移除：来源不再是浏览分类，能否编辑在详情里
- * 自然可知，不需要一枚常驻徽标。状态徽标保留——「待整理」是**流程状态**，
- * 是整理流（收件箱 → ready）的进行时标记，与来源是两个维度。
+ * ## 只有「偏离常态」的状态有徽标（D-054）
+ *
+ * 原先有「待整理」（inbox）——它随收件箱那条两段式流程一起退役：新收进来的
+ * 内容直接可用，不存在「待」这个中间态，所以那个徽标没有依据。
+ *
+ * **`ready` 刻意不给徽标。** 它是绝大多数文档的状态，给每张卡片都盖一个
+ * 「已就绪」等于什么都没说，还会把真正需要注意的状态淹掉。所以这里只列
+ * 两种偏离常态的状态：归档（不再出现在默认列表里）与提取失败（记录坏了）。
+ *
+ * 来源（kind）徽标更早移除了（D-047）：来源不是浏览维度，能否编辑在详情里
+ * 自然可知。
  *
  * **不要用 `<Tag color="green">` 这种预设色。** 预设走的是 antd 自己的调色板，
  * 对比度不由我们控制。色对与实测对比度见 `docs/DESIGN.md` §3.7，
@@ -20,10 +28,18 @@ type ColorPair = { fg: string; bg: string }
 type BadgeSpec = { label: string } & Record<Appearance, ColorPair>
 
 const STATUS_STYLE: Partial<Record<DocumentStatus, BadgeSpec>> = {
-  inbox: {
-    label: '待整理',
-    light: { fg: '#b45309', bg: '#fff3e0' },
-    dark: { fg: '#e5b45f', bg: '#2a2213' },
+  /* 中性灰对（与 §3.7 表里的「文件」行同值）：归档是**状态的变化**，
+     不是警告也不是错误，用语义色（红/黄）会把它说成一件出问题的事 */
+  archived: {
+    label: '已归档',
+    light: { fg: '#5c6570', bg: '#f0f1f3' },
+    dark: { fg: '#b3bac2', bg: '#23262b' },
+  },
+  /* 与 §3.7 表里的「抓取失败」同值：两处表达的是同一件事（内容没取到） */
+  failed: {
+    label: '提取失败',
+    light: { fg: '#c5221f', bg: '#fef7f6' },
+    dark: { fg: '#ff8f8a', bg: '#2f1b1c' },
   },
 }
 
@@ -72,6 +88,12 @@ function Badge({ fg, bg, children, style }: BadgeProps) {
   )
 }
 
+/**
+ * 状态徽标。
+ *
+ * **没有徽标的状态返回 null**，不是渲染一个空 span——空 span 会在元信息行里
+ * 留下一个 gap，看起来像少画了一个东西（`ready` 就是这种情况，而它是常态）。
+ */
 export function StatusBadge({ status, style }: { status: DocumentStatus; style?: CSSProperties }) {
   const appearance = useAppearance()
   const item = STATUS_STYLE[status]

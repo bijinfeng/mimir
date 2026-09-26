@@ -29,7 +29,7 @@ import { AppShellContext, type AskDraft } from '@/lib/app-shell-context'
  */
 
 export interface AppSearch {
-  /** inbox / all / folder:<path> / tag:<name>（来源不再是浏览维度，D-047） */
+  /** all / archived / folder:<path> / tag:<name>（来源与收件箱都不再是浏览维度） */
   scope: string
   id?: string
 }
@@ -63,8 +63,8 @@ function writeNavCollapsed(collapsed: boolean): void {
 
 export const Route = createFileRoute('/_app')({
   validateSearch: (search: Record<string, unknown>): AppSearch => ({
-    // scope 用一个字符串编码筛选条件：收件箱 / 全部 / 目录 / 标签互斥
-    scope: typeof search.scope === 'string' && search.scope ? search.scope : 'inbox',
+    // scope 用一个字符串编码筛选条件：全集 / 归档 / 目录 / 标签互斥
+    scope: typeof search.scope === 'string' && search.scope ? search.scope : 'all',
     ...(typeof search.id === 'string' && search.id ? { id: search.id } : {}),
   }),
   component: AppShell,
@@ -292,7 +292,7 @@ function AppShell() {
         onCaptured={(documentId) => {
           setCaptureOpen(false)
           message.success('已入收件箱，记得之后整理')
-          openDocument(documentId, 'inbox')
+          openDocument(documentId, 'all')
         }}
       />
 

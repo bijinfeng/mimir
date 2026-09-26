@@ -8,6 +8,6 @@ import { createFileRoute, redirect } from '@tanstack/react-router'
  */
 export const Route = createFileRoute('/')({
   beforeLoad: () => {
-    throw redirect({ to: '/docs', search: { scope: 'inbox' } })
+    throw redirect({ to: '/docs', search: { scope: 'all' } })
   },
 })

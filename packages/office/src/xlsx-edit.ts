@@ -116,6 +116,49 @@ export async function openXlsxForEdit(bytes: Uint8Array): Promise<XlsxEditSessio
 
   const assertSheet = (index: number): string | null => workbook.sheets[index]?.entry ?? null
 
+  /**
+   * 把改动落到内存模型上。
+   *
+   * 与 `writeCellText`（改 XML）是**两件事**，必须一起做：那个决定写回文件的
+   * 字节，这个决定界面此刻显示什么。只做前者 = 界面停在旧值（实测：状态行
+   * 说「已保存」、单元格还显示旧文字，而 openpyxl 读原件已经是新值）。
+   *
+   * ## 模型的形状是「位置即列号」
+   *
+   * `readXlsx` 会给每一行补齐空占位（`cells[i].col === i`），界面也按
+   * `row.cells[col]` 直接取。所以这里**按位置写入**而不是按列号排序插入——
+   * 插进去会让下标与列号错开一格，而那种错位是静默的（点 C3 改到 D3）。
+   *
+   * 行不够宽时先补空占位到现在这一列，不变量因此始终成立。
+   */
+  const applyToModel = (ref: XlsxCellRef, text: string): void => {
+    const sheet = workbook.sheets[ref.sheet]
+    if (!sheet) return
+    const row = sheet.rows.find((r) => r.number === ref.row)
+    if (!row) return
+
+    // 补齐到 ref.col（超出本行现有宽度时才真的补）
+    for (let i = row.cells.length; i <= ref.col; i += 1) {
+      row.cells.push({ text: '', col: i, colSpan: 1, rowSpan: 1 })
+    }
+
+    const cell = row.cells[ref.col]
+    if (cell === undefined) return
+
+    cell.text = text
+    /** 覆盖的语义是连公式一起覆盖（与 XML 那边删 `<f>` 一致） */
+    delete cell.formula
+    /**
+     * 数值对齐跟着新值走——不然输入数字后它还是左对齐。
+     *
+     * 判据与 `xlsx.ts` 的 `cellOf` 一致（能当数字解析就右对齐）。两处都写
+     * 一遍是刻意的：那是「解析」与「编辑」两条路径各自的判断，抽成共用函数
+     * 反而会让其中一条被另一条的改动带着走。
+     */
+    if (text !== '' && Number.isFinite(Number(text))) cell.numeric = true
+    else delete cell.numeric
+  }
+
   return {
     workbook: () => workbook,
     view() {
@@ -147,6 +190,13 @@ export async function openXlsxForEdit(bytes: Uint8Array): Promise<XlsxEditSessio
       if (next === null) return false
 
       patched.set(entry, next)
+      /**
+       * **模型也要一起改。** 只改 XML 文本的话，`view()`（读模型）会一直
+       * 显示旧值——保存成功、文件里也是新值，而界面上那个格子停在原样，
+       * 直到用户重新打开这份文件。实测症状就是这样：状态行说「已保存」，
+       * 格子还显示「张三」，而 openpyxl 读原件已经是「张三丰」。
+       */
+      applyToModel(ref, text)
       cached = null
       return true
     },
