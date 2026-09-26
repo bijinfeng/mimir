@@ -3,6 +3,7 @@ import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv } from 'vite'
 import { alias } from './alias.ts'
+import { copyPdfjsAssets } from './pdfjs-assets.ts'
 
 /** 仓库根。`.env` 在那里，服务端的 vite.config.ts 读的也是同一个文件 */
 const repoRoot = resolve(import.meta.dirname, '../..')
@@ -20,6 +21,17 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [
+      /**
+       * pdf.js 的运行时资产（cmaps / 标准字体 / wasm）。
+       *
+       * **排在第一位**：`buildStart` 越早跑越好，因为 Vite 随后会复制
+       * `publicDir`——晚于它注册的插件可能赶不上那次复制（开发模式下
+       * 第一次请求就会 404，而刷新后反而正常，属于最难查的一类）。
+       *
+       * 那些文件**不进 git**（见 `pdfjs-assets.ts` 的说明）：它们是
+       * `pdfjs-dist` 依赖自带的资产，从 node_modules 拷过来。
+       */
+      copyPdfjsAssets(),
       // 必须排在 react() 之前：路由插件要先生成 routeTree.gen.ts
       tanstackRouter({ target: 'react', autoCodeSplitting: true }),
       react({

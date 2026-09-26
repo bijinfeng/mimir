@@ -42,3 +42,15 @@ declare module '*?url' {
   const url: string
   export default url
 }
+
+/**
+ * `?worker&url`：把一个文件当**独立 worker 入口**构建，给回它的 URL。
+ *
+ * 与 `?url` 的区别是实质性的：`?url` 只给路径，开发模式下那个路径指向的是
+ * **待 Vite 转换的源文件**（响应里会带 HMR 注入），`new Worker()` 拿它起不来
+ * 且不报错。`?worker&url` 会真的构建一遍（生产模式下产出独立的 worker chunk）。
+ */
+declare module '*?worker&url' {
+  const url: string
+  export default url
+}
