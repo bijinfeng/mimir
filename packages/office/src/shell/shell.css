@@ -402,44 +402,16 @@
 }
 
 /*
- * 文本输入的观感与弹性。
+ * `.me-input` 的**整套观感规则已删**（D-064 分工：控件观感归 `--ant-*`）。
  *
- * **它的历史**：这一段是给原生 `<input>` 手写的整套观感（高度、内边距、
- * 圆角、边框、底色、字号、焦点环）。最后一个原生消费者——`XlsxEditor` footer
- * 里那个占满宽度的格内容编辑框——已经改走 `ToolbarTextField`（antd 的
- * `Input`），所以按 D-064 的分工（控件观感归 `--ant-*`）它**只剩宽度与弹性**，
- * 其余几条都该删。
- *
- * **暂时还留着那几条**（`height` / `padding` / `border` / `border-radius` /
- * `background` / `font`）：它们现在落在四个 antd `Input` 上
+ * 它的历史：这一段的 height / padding / border / border-radius / background /
+ * font 原来是给原生 `<input>` 手写的。最后一个原生消费者（xlsx footer 的格内容
+ * 编辑框）迁到 `ToolbarTextField` 之后，这套规则落在了四个 antd `Input` 上
  * （`ToolbarTextField` 一个、`FindReplaceBar` 两个、xlsx 的格内容框一个），
- * 删掉会同时改 docx / markdown / pdf 的输入框外观——那是一次**跨格式**的
- * 改动，不该混在某一个格式的迁移里做。**下一次动这一段的理由就是这个**：
- * 现在它让输入框与相邻的 antd 按钮在两个值上不一致（圆角 4 vs 8、字号 12 vs 14）。
- *
- * 高度取 `--me-control-height`（24px）——它与相邻的 antd small 档同高，
- * 「同一排一个高度」这条因此对输入框也成立。
- *
- * `.me-select` 已经没有了：13 个下拉全部迁到 antd 的 Select。
+ * 压过 antd small 档——实测同一排里输入框 12px / 按钮 14px、圆角 4 对 8
+ * （真 Chromium）。所以**连类名一起摘掉**：antd 的 Input 只挂
+ * `.me-input--text` / `.me-find__query` 这种**宽度/弹性**类，观感归 antd。
  */
-.me-input {
-  height: var(--me-control-height, 24px);
-  min-width: 0;
-  padding: 0 8px;
-  border: 1px solid var(--me-border, #d9d9d9);
-  border-radius: 4px;
-  background: var(--me-surface, #fff);
-  color: inherit;
-  font: inherit;
-  font-size: var(--me-font-size-sm, 12px);
-  /* 占满剩余宽度（xlsx 的格内容框就是这么用的） */
-  flex: 1;
-}
-
-.me-input:focus-visible {
-  outline: 2px solid var(--me-accent, #1677ff);
-  outline-offset: -1px;
-}
 
 /* 数字输入：窄、居中、表格式数字。挂在 `ToolbarNumberField` 的 antd
    InputNumber 上（它 `controls={false}`，所以没有上下箭头要处理）。
@@ -454,10 +426,16 @@
  * `ToolbarTextField` 把它挂在 antd 的 Input 上：`.me-input--text`（(0,1,0)）
  * 与 antd 的 `:where(.css-…).ant-input` 特异性相同，而这份样式在 head 里更靠后
  * ——所以 180px 生效，而不是 antd 的 `width: 100%`。
+ *
+ * `min-width: 0` 是从被删的 `.me-input` 那里**留下来的唯一一条**：它是 flex 子项
+ * 能收缩的前提（默认 `min-width: auto` 下 `<input>` 的固有宽度会让它顶住不缩，
+ * 窄窗口里把这一行撑破——`AGENTS.md` 坑表里那条「窄窗口下工具条右端看不见」是
+ * 同一类）。xlsx 的格内容框把它覆写成 `flex: 1` 之后正是靠它才能跟着窗口缩。
  */
 .me-input--text {
   width: 180px;
   flex: none;
+  min-width: 0;
 }
 
 /* 带单位的输入（字号 pt、页码 / 共 N 页） */
@@ -633,8 +611,13 @@
  * 插入表格的尺寸网格：8×8 的方块，点哪一格就插多大的表（`ToolbarGridPicker`）。
  * **比一个「行数 / 列数」两个输入框好**：Word 里挑表格大小就是划过一片格子，
  * 数格子比读两个数字再想一下直观得多。markdown 那边是数字框（它的方言要显式
- * 给行数），两条路各自合理，但**样式与 markup 都归原语**，不再出现
- * 「shell.css 定义、EditorShell.tsx 完全不用」的类。
+ * 给行数），两条路各自合理。
+ *
+ * **markup 都归原语**：这一组（`.me-table-grid*`）由 `ToolbarGridPicker` 产出，
+ * 面板里的表单（`.me-menu__fields` / `.me-menu__note`）由 `ToolbarMenuFields` /
+ * `ToolbarMenuNote` 产出——`shell.css` 里已经没有任何「定义了却只由调用方手写
+ * markup 使用」的类（那是这套原语最初要消掉的耦合，最后这两处是随本轮迁移一起
+ * 收进来的）。
  */
 .me-table-grid {
   display: flex;
@@ -866,4 +849,29 @@
    定的，而面板本身只有 176px 起——不覆盖的话输入框会顶破面板 */
 .me-link .me-input--text {
   width: 100%;
+}
+
+/* ── 只给读屏的一小段文字 ──────────────────────────────────────── */
+
+/*
+ * 视觉上不占位、但留在无障碍树里。现在的唯一消费者是 `ToolbarToggleGroup`
+ * 的**图标档**：图标-only 的档位在 antd `Segmented` 里没有可及名称
+ * （`title` 挂在内层 label 的 div 上，可聚焦的是 `<input type=radio>`，
+ * 两者不关联）——实测真 Chromium 的 AX 树里 `radio × 6` 全部 `name: ""`，
+ * 读屏只念「单选按钮 1 of 3」。把 label 文字用这个类塞进 label 元素里，
+ * 名称就回来了，而工具条上仍然只显示图标（位置紧，不能显示文字）。
+ *
+ * 用 `clip-path` 而不是 `display: none` / `visibility: hidden`：后两者会把
+ * 文字从无障碍树里也去掉，而这里的全部目的就是让它留在树里。
+ */
+.me-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

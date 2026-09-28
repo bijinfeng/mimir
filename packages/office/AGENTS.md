@@ -205,7 +205,16 @@ scripts/
   **挂 antd 组件的测试要自己包一层 `ConfigProvider`**（产品里那层是宿主的
   `MimirProvider`）——不包的话量到的不是 small 档，尺寸对不上；而 happy-dom
   下 `Input` / `Select` / `InputNumber` / `Segmented` 的计算高度取不到
-  （返回空串），「一行所有控件同高」只能进浏览器验收
+  （返回空串），「一行所有控件同高」只能进浏览器验收。**这一条已经量过**
+  （无头 Chrome + CDP：Button / Select / Segmented / Input / InputNumber
+  外层与 `.me-btn` 全 24px，见 D-064），但**量它的能力不在 `pnpm check` 里**
+  ——改了工具条尺寸要自己开浏览器再量一遍
+- **弹层里的 antd 控件要连同「它 portal 出去的弹层」一起算作面板内**：
+  `useToolbarPopup` 的 `insidePanel()` 靠 antd 自己写的 `aria-controls` /
+  `aria-owns` 认。只按祖先判断的话，真浏览器里一按选项面板就被关（症状是
+  「点一档什么也不会发生」，界面不报错）。**测试要按 pointerdown → click 的
+  真序列驱动**：只派发 click 时 React 会批处理，`onChange` 照样发出，这个
+  bug 会被测成通过（`EditorShell.test.tsx` 那条「面板里的下拉」就是样板）
 
 ### 4. 保存必须走补丁路径
 

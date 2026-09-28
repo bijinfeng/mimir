@@ -449,6 +449,193 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
     expect(runs[1]).toContain('<a:srgbClr val="C0392B"/>')
   })
 
+  it('段尾追加一个字符：两条 run 都还在，各自的格式不变', async () => {
+    /*
+     * 这一条守的是「改动落在**段尾**」的情形（上一轮实测的高危问题）。取公共
+     * 前后缀之后，纯插入的区间是**零宽**的——它与 0 条 run 相交，于是
+     * `editParagraphRuns` 返回 null、调用方提交「整段一条 run」，两条 run 被压成
+     * 一条、第二条的 sz 与颜色被静默丢掉。修复后插入必须落进插入点所在的那条
+     * run（段尾 = 最后一条），其余 run 原样。
+     */
+    const deck = await twoRunUpstreamDeck()
+    const { host, record } = await mountEditor(deck)
+    await jumpToPage(host, 3)
+    const label = [...host.querySelectorAll('.mimir-pptx-slide [data-element-id]')].find((node) =>
+      node.textContent?.includes('Key'),
+    )!
+    expect(label).toBeDefined()
+    click(label)
+
+    const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="第 1 段"]')!
+    expect(area.value).toBe('Key Results')
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
+      setter!.call(area, 'Key Results!')
+      area.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+
+    const after = await saveAndRead(host, record, 'ppt/slides/slide3.xml')
+    const runs = textRunBlocks(elementXml(after, 'TextBox 2'))
+    // 两条 run 都还在：新字符落在末尾那条（红字正文），标签那条一个字节没动
+    expect(runs).toHaveLength(2)
+    expect(runs[0]).toContain('<a:t>Key </a:t>')
+    expect(runs[0]).toContain('b="1"')
+    expect(runs[0]).toContain('sz="3600"')
+    expect(runs[0]).toContain('<a:srgbClr val="1F2937"/>')
+    expect(runs[1]).toContain('<a:t>Results!</a:t>')
+    expect(runs[1]).toContain('sz="2400"')
+    expect(runs[1]).toContain('<a:srgbClr val="C0392B"/>')
+  })
+
+  it('段首插入一个字符：两条 run 都还在，各自的格式不变', async () => {
+    /*
+     * 段首与段尾是同一个根因的另一面：纯插入的区间是零宽的，与 0 条 run 相交。
+     * 修复前同样走到「整段重写」、把两条 run 压成一条。新字符的归属是第一条
+     * run（在「Key 」的开头打字，新字跟着标签的格式走）。
+     */
+    const deck = await twoRunUpstreamDeck()
+    const { host, record } = await mountEditor(deck)
+    await jumpToPage(host, 3)
+    const label = [...host.querySelectorAll('.mimir-pptx-slide [data-element-id]')].find((node) =>
+      node.textContent?.includes('Key'),
+    )!
+    expect(label).toBeDefined()
+    click(label)
+
+    const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="第 1 段"]')!
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
+      setter!.call(area, '※Key Results')
+      area.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+
+    const after = await saveAndRead(host, record, 'ppt/slides/slide3.xml')
+    const runs = textRunBlocks(elementXml(after, 'TextBox 2'))
+    expect(runs).toHaveLength(2)
+    expect(runs[0]).toContain('<a:t>※Key </a:t>')
+    expect(runs[0]).toContain('b="1"')
+    expect(runs[0]).toContain('sz="3600"')
+    expect(runs[0]).toContain('<a:srgbClr val="1F2937"/>')
+    expect(runs[1]).toContain('<a:t>Results</a:t>')
+    expect(runs[1]).toContain('sz="2400"')
+    expect(runs[1]).toContain('<a:srgbClr val="C0392B"/>')
+  })
+
+  it('run 边界插入一个字符：两条 run 都还在，各自的格式不变', async () => {
+    /*
+     * 插入点正好落在两条 run 的交界（「Key 」与「Results」之间）——零宽区间
+     * 与 0 条 run 相交的第三种来源。归属规则是插入点前那个字符所在的 run
+     * （「Key 」），与「在加粗文字后面接着打字、新字也是加粗的」一致。
+     */
+    const deck = await twoRunUpstreamDeck()
+    const { host, record } = await mountEditor(deck)
+    await jumpToPage(host, 3)
+    const label = [...host.querySelectorAll('.mimir-pptx-slide [data-element-id]')].find((node) =>
+      node.textContent?.includes('Key'),
+    )!
+    expect(label).toBeDefined()
+    click(label)
+
+    const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="第 1 段"]')!
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
+      setter!.call(area, 'Key ·Results')
+      area.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+
+    const after = await saveAndRead(host, record, 'ppt/slides/slide3.xml')
+    const runs = textRunBlocks(elementXml(after, 'TextBox 2'))
+    expect(runs).toHaveLength(2)
+    expect(runs[0]).toContain('<a:t>Key ·</a:t>')
+    expect(runs[0]).toContain('b="1"')
+    expect(runs[0]).toContain('sz="3600"')
+    expect(runs[0]).toContain('<a:srgbClr val="1F2937"/>')
+    expect(runs[1]).toContain('<a:t>Results</a:t>')
+    expect(runs[1]).toContain('sz="2400"')
+    expect(runs[1]).toContain('<a:srgbClr val="C0392B"/>')
+  })
+
+  it('在软换行的下一行行首打字：换行与两条文字 run 都还在，新字落在第二行那条', async () => {
+    /*
+     * 纯插入的落点若掉进软换行哨兵（`text === '\n'` 的那条 run），哨兵就不再
+     * 是 `'\n'`，`patchTextElementXml` 的逐 run 对齐失效、退化成整段重建——
+     * 明明只加一个字。落点规则把「换行之后」的插入改落到下一行那条 run 的
+     * 开头。夹具的两行给了**不同字号**（28pt / 24pt）：修复前走整段重写，两行
+     * 被并成一条 run 重建、都取 dominantRun 的 28pt——第二行的 24pt 静默丢失；
+     * 修复后逐 run 外科式补丁，各自的字号原样。
+     */
+    const zip = await JSZip.loadAsync(load('formatted-text.pptx'))
+    const slide = await zip.file('ppt/slides/slide1.xml')!.async('string')
+    const twoLine = slide.replace(
+      '<a:t>加粗大字</a:t>',
+      '<a:t>加粗</a:t></a:r><a:br/><a:r><a:rPr b="1" sz="2400"/><a:t>大字</a:t>',
+    )
+    expect(twoLine).not.toBe(slide)
+    zip.file('ppt/slides/slide1.xml', twoLine)
+
+    const { host, record } = await mountEditor(await zip.generateAsync({ type: 'uint8array' }))
+    selectOnCanvas(host, 0)
+    const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="第 1 段"]')!
+    expect(area.value).toBe('加粗\n大字')
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
+      setter!.call(area, '加粗\nX大字')
+      area.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+
+    const after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    const sp = elementXml(after, 'TextBox 1')
+    const runs = textRunBlocks(sp)
+    /*
+     * `<a:br/>` 不是 `<a:r>`，所以这个元素共 3 条：第一段两条（加粗 / X大字，
+     * 中间隔着换行）加第二段一条（斜体小字）。第一段的两条**各自的字号**都
+     * 还在——第二行是 24pt，没有被重写并成第一行的 28pt。
+     */
+    expect(runs).toHaveLength(3)
+    expect(runs[0]).toContain('<a:t>加粗</a:t>')
+    expect(runs[0]).toContain('sz="2800"')
+    expect(runs[1]).toContain('<a:t>X大字</a:t>')
+    expect(runs[1]).toContain('sz="2400"')
+    expect(runs[2]).toContain('<a:t>斜体小字</a:t>')
+    expect(sp.indexOf('<a:br/>')).toBeGreaterThan(sp.indexOf('加粗'))
+    expect(sp.indexOf('<a:br/>')).toBeLessThan(sp.indexOf('X大字'))
+  })
+
+  it('整段重写（跨两条 run 的改动）：新文字跟正文那条 run 的格式走，不钉死在第一条', async () => {
+    /*
+     * 跨了两条 run 的改动（整段删了重打）确实只能整段重写——但格式取谁是有
+     * 约定的：`applyEditParagraphs` 对「未带 srcRun 的单 run 替换多 run 段落」
+     * 取 `dominantRun`（正文那条，a rewrite of the whole paragraph is not a
+     * rewrite of its label）。原先回传写死 `srcRun: 0`，绕开了它、钉死在标签
+     * 那条上——正文 24pt 红字被换成标签的 36pt 深灰加粗。
+     */
+    const deck = await twoRunUpstreamDeck()
+    const { host, record } = await mountEditor(deck)
+    await jumpToPage(host, 3)
+    const label = [...host.querySelectorAll('.mimir-pptx-slide [data-element-id]')].find((node) =>
+      node.textContent?.includes('Key'),
+    )!
+    expect(label).toBeDefined()
+    click(label)
+
+    const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="第 1 段"]')!
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
+      setter!.call(area, '全新标题')
+      area.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+
+    const after = await saveAndRead(host, record, 'ppt/slides/slide3.xml')
+    const runs = textRunBlocks(elementXml(after, 'TextBox 2'))
+    // 重写后只有一条 run（文本与原来对不上号），格式跟正文（24pt 红字）走
+    expect(runs).toHaveLength(1)
+    expect(runs[0]).toContain('<a:t>全新标题</a:t>')
+    expect(runs[0]).toContain('sz="2400"')
+    expect(runs[0]).toContain('<a:srgbClr val="C0392B"/>')
+    expect(runs[0]).not.toContain('b="1"')
+    expect(runs[0]).not.toContain('sz="3600"')
+  })
+
   it('两 run 的段落不会被压成一条（这一版最关键的一条）', async () => {
     const deck = await twoRunUpstreamDeck()
 
@@ -786,6 +973,13 @@ describe('PptxEditor 的控件契约', () => {
     // 没改动时保存不能点，且与「正在保存」区分开
     expect(button(host, '保存到库').disabled).toBe(true)
     expect(button(host, '保存到库').getAttribute('title')).toBe('没有未保存的改动')
+
+    /*
+     * **先打开查找栏**：它那四个按钮（上一个 / 下一个匹配、替换这一个、全部替换）
+     * 也有禁用态，而栏关着的时候它们不在树上——这条断言曾经就是这样漏掉它们的
+     * （与 `HtmlEditor.test.tsx` 那条同一个盲区）。
+     */
+    click(button(host, '查找和替换'))
 
     for (const item of host.querySelectorAll<HTMLButtonElement>('button:disabled')) {
       const label = item.getAttribute('aria-label') ?? ''

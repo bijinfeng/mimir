@@ -24,7 +24,8 @@ import { EditorContent, useEditor } from '@tiptap/react'
 import { editorExtensions } from '../../vendor/apps/docs/src/renderer/editor/extensions.js'
 import { openSelect, selectRoot } from '../shell/antd-test-dom.js'
 import { openDocx } from '../docx.js'
-import { DocxToolbar } from './DocxEditor.js'
+import { DocxEditor, DocxToolbar } from './DocxEditor.js'
+import type { EditorIo } from './types.js'
 
 const FIXTURE = join(
   import.meta.dirname,
@@ -295,6 +296,60 @@ describe('DocxToolbar 渲染', () => {
   })
 })
 
+/*
+ * 格式刷取源的那条坑：ProseMirror 的 `$from.marks()` 在位置正好压在两个节点
+ * 的边界上时，返回的是**前一个节点**的 marks。源选区的起点正好是格式区间的
+ * 起点（加粗字前面有个没加粗的字）时它返回**空**——刷子以空格式举起，往目标
+ * 上一点反而把目标的格式抹掉。修法与上游 Ribbon 相同：取**选区区间里第一个
+ * 文本节点**的 marks。
+ */
+describe('格式刷', () => {
+  it('源选区起点正好压在格式区间起点上：举起的是那个格式，目标真的被刷上', async () => {
+    const { host, editor } = await boot()
+    // 构造「一个没加粗的字 + 一段加粗的字」，插进第一个正文段的开头
+    let firstPara = -1
+    editor.state.doc.forEach((node, offset) => {
+      if (firstPara === -1 && node.type.name === 'docParagraph') firstPara = offset
+    })
+    expect(firstPara).toBeGreaterThan(-1)
+    act(() => {
+      editor.commands.setTextSelection(firstPara + 1)
+      editor.commands.insertContentAt({ from: firstPara + 1, to: firstPara + 1 }, [
+        { type: 'text', text: 'A' },
+        { type: 'text', text: 'BDEF', marks: [{ type: 'bold' }] },
+      ])
+    })
+    // 插入之后重新定位段落（位置变了）
+    const paras: { pos: number; firstIsText: boolean }[] = []
+    editor.state.doc.forEach((node, offset) => {
+      if (node.type.name === 'docParagraph') {
+        paras.push({ pos: offset, firstIsText: node.childCount > 0 && node.child(0).isText })
+      }
+    })
+    expect(paras.length).toBeGreaterThan(1)
+    // 源选区：起点正好是加粗区间的起点（A 占 [firstPara+1, firstPara+2)，加粗从 +2 起）
+    act(() => {
+      editor.commands.setTextSelection({ from: paras[0]!.pos + 2, to: paras[0]!.pos + 4 })
+    })
+    // 这正是踩中的那个边界：位置上的 marks 是**空的**（前一个字没加粗），
+    // 而选区里明明有加粗——修之前的取源就落在这里
+    expect(editor.state.selection.$from.marks()).toEqual([])
+    expect(editor.isActive('bold')).toBe(true)
+
+    // 举起格式刷，再选目标：下一段开头两个有文字的段落
+    press(host, '格式刷（先选中格式来源，再选目标）')
+    const target = paras.slice(1).find((para) => para.firstIsText)
+    expect(target).toBeDefined()
+    act(() => {
+      editor.commands.setTextSelection({ from: target!.pos + 1, to: target!.pos + 3 })
+    })
+    // 目标那两个字真的加粗了。bug 版以空格式举起：removeMark 抹完、addMark 落空，
+    // 目标一个标记都拿不到
+    const targetText = editor.state.doc.nodeAt(target!.pos + 1)
+    expect(targetText?.marks.some((mark) => mark.type.name === 'bold')).toBe(true)
+  })
+})
+
 /**
  * 表格菜单的面板：**菜单项 + 一排色块 + 输入框混在同一个面板里**。
  *
@@ -405,5 +460,51 @@ describe('表格菜单的面板', () => {
     expect(event.defaultPrevented).toBe(false)
     expect(document.activeElement).toBe(field)
     expect(document.activeElement).not.toBe(firstItem)
+  })
+})
+
+/**
+ * 整棵 `DocxEditor`（含保存按钮）的禁用契约。
+ *
+ * 它比 `DocxToolbar` 那一组多一件事：**保存按钮在工具条上、但不在
+ * `DocxToolbar` 里**（它由 `DocxEditor` 渲染，见 `DocxEditor.tsx` 那个
+ * `<ToolbarSpacer />` 之后的按钮）。所以上面那组「禁用必须给原因」的断言
+ * 扫不到它——而它正是「没改动 / 正在保存」这两档灰着的常客。
+ */
+describe('DocxEditor 的保存按钮', () => {
+  it('没改动时禁用并说明原因（与其余四种格式措辞一致）', async () => {
+    const io: EditorIo = {
+      load: async () => new Uint8Array(readFileSync(FIXTURE)),
+      save: async () => {},
+    }
+    const host = document.createElement('div')
+    document.body.append(host)
+    const root = createRoot(host)
+    ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+    await act(async () => {
+      root.render(<DocxEditor documentId="save-contract" io={io} />)
+    })
+    /*
+     * 解析是异步的，要等会话真的起来。判据是**保存按钮不再说「文档还没读完」**
+     * ——只等一拍的话会话可能仍是 null，那时保存按钮的禁用原因是另一档，
+     * 断言会在「还没加载完」这个中间态上给出误导性的失败。
+     */
+    for (let i = 0; i < 50; i += 1) {
+      const title = host.querySelector('button[aria-label="保存到库"]')?.getAttribute('title')
+      if (title === '没有未保存的改动') break
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0))
+      })
+    }
+    mounted.push({
+      unmount: () => {
+        act(() => root.unmount())
+        host.remove()
+      },
+    })
+    const save = host.querySelector<HTMLButtonElement>('button[aria-label="保存到库"]')
+    expect(save, '保存按钮没挂出来（工具条没起来）').not.toBeNull()
+    expect(save!.disabled).toBe(true)
+    expect(save!.getAttribute('title')).toBe('没有未保存的改动')
   })
 })

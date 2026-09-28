@@ -187,7 +187,7 @@ export interface ToolbarButtonProps {
   label: string
   /** 图标元素（宿主传 antd 图标进来）。省略时按钮只显示文字 */
   children?: ReactNode
-  /** 按下态（加粗生效时按钮是「按下去」的样子） */
+  /** 按下态（加粗生效时按钮是「按下去」的样子）。**只有真切换按钮才传** */
   active?: boolean
   disabled?: boolean
   /**
@@ -222,7 +222,12 @@ export interface ToolbarButtonProps {
  *     被清掉，于是「给选中的文字加粗」作用不到任何东西（Word 也是这么做的）
  *  3. **激活态写进 `aria-pressed`**，样式选择器也读它——状态只留一个真相。
  *     **antd 的 Button 不认这个属性**（它只在 hover/active 上着色），
- *     所以按下态由 `shell.css` 的 `.me-tb[aria-pressed='true']` 画
+ *     所以按下态由 `shell.css` 的 `.me-tb[aria-pressed='true']` 画。
+ *
+ *     **`active` 只给真切换按钮（`aria-pressed` 随之只在这些按钮上出现）**：
+ *     保存、上一页、A+/A− 这类一次性动作没有「按下 / 没按下」两个状态，无条件
+ *     下发 `aria-pressed="false"` 会让读屏把它们报成「未按下的切换按钮」。不给
+ *     `active` 时 React 整个属性都不渲染，而样式只匹配 `'true'`，所以外观不变。
  *  4. **两种外观两种写法，不能混**：
  *     - 普通按钮：`variant="text" color="default"`，**不要同时传 `type`**
  *     - 主按钮（保存）：**只传 `type="primary"`**，不要传 color/variant
@@ -240,7 +245,7 @@ export interface ToolbarButtonProps {
 export function ToolbarButton({
   label,
   children,
-  active = false,
+  active,
   disabled = false,
   disabledReason,
   primary = false,
@@ -592,9 +597,13 @@ export interface ToolbarToggleGroupProps<T extends string> {
  *  2. **禁用项的原因没法用 `title` 表达**：antd 把 `title` 让给 label 文本了
  *     （实测禁用项的 title 就是它自己的名字）。将来要给某档加 `disabled` 时，
  *     原因得另找地方说——现在这 4 个调用点**都没有禁用档**，所以这风险还没兑现。
- *  3. **图标档只有图标**：antd 的 `icon` + `label` 会两个都画（工具条位置紧，
- *     不能显示文字），所以 `icon` 存在时只传 icon，`label` 只进 `title`
- *     （悬停说明与读屏的名称兜底）。
+ *  3. **图标档只有图标，但名称不能丢**：antd 的 `icon` + `label` 会两个都画
+ *     （工具条位置紧，不能显示文字），所以文字不能直接当 `label` 传。但
+ *     `label` 又**不能不给**——`title` 挂在内层 label 的 div 上，可聚焦的是
+ *     `<input type=radio>`，两者不关联。实测真 Chromium 的 AX 树：只传
+ *     `title` 时 6 个档全部 `name: ""`（把 title 挪到 input 上也仍然是空），
+ *     读屏只念「单选按钮 1 of 3」。所以文字用 `.me-sr-only` 塞进 label 元素
+ *     ——它留在无障碍树里给出名称，视觉上不占位。
  */
 export function ToolbarToggleGroup<T extends string>({
   label,
@@ -619,6 +628,8 @@ export function ToolbarToggleGroup<T extends string>({
           : {
               value: option.value,
               icon: option.icon,
+              // 文字只给读屏（`.me-sr-only`），档上只显示图标
+              label: <span className="me-sr-only">{option.label}</span>,
               title: option.label,
               disabled: option.disabled === true,
             },
@@ -780,7 +791,7 @@ export function ToolbarTextField({
 }: ToolbarTextFieldProps) {
   return (
     <Input
-      className="me-input me-input--text"
+      className="me-input--text"
       type="text"
       aria-label={label}
       title={label}
@@ -864,7 +875,7 @@ export function ToolbarTextArea({
 }
 
 export interface ToolbarFileButtonProps {
-  /** 按钮名字。它同时是隐藏 input 的无障碍名称 */
+  /** 按钮名字。也是可见按钮的无障碍名称（隐藏 input 不进无障碍树，不需要名字） */
   label: string
   /** 交给系统文件选择器的过滤条件，如 `image/png,image/jpeg` */
   accept?: string
@@ -945,6 +956,36 @@ const POPUP_MIN_WIDTH = 176
 const POPUP_EST_HEIGHT = 240
 
 /**
+ * 目标算不算「面板里的东西」——**包括从面板里的控件 portal 出去的弹层**。
+ *
+ * 面板里的 antd `Select` 打开后弹层挂在 body 上（见 `ToolbarSelect` 的说明），
+ * 祖先链不在面板里。只按祖先判断的话，按选项、滚选项都会被当成「点了外面」：
+ * 面板一关、弹层跟着卸载，选项永远点不中——界面不报错，只是点了没反应。
+ *
+ * 判据用 antd 自己写的 `aria-controls` / `aria-owns`：它把弹层与触发它的
+ * 输入框连了起来（`${id}_list`）。「属于面板」= 目标、目标的祖先、或目标的
+ * 后代，是面板里某个控件声明拥有的元素。不用类名：类名等 antd 改版就失效。
+ */
+function insidePanel(panel: HTMLElement | null, target: Node): boolean {
+  if (panel === null) return false
+  if (panel.contains(target)) return true
+  const ids = new Set<string>()
+  for (const element of panel.querySelectorAll('[aria-controls], [aria-owns]')) {
+    for (const attribute of ['aria-controls', 'aria-owns'] as const) {
+      for (const id of (element.getAttribute(attribute) ?? '').split(/\s+/)) {
+        if (id !== '') ids.add(id)
+      }
+    }
+  }
+  for (const id of ids) {
+    const owned = document.getElementById(id)
+    if (owned === null) continue
+    if (owned === target || owned.contains(target) || target.contains(owned)) return true
+  }
+  return false
+}
+
+/**
  * 一条弹出层的定位 + 键盘 + 关闭。
  *
  * ## 为什么**不 portal 到 body**
@@ -1004,8 +1045,9 @@ function useToolbarPopup() {
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target as Node | null
       if (target === null) return
-      // 面板内与触发按钮上的按下不算「点外部」——触发按钮自己会 toggle
-      if (panelRef.current?.contains(target) === true) return
+      // 面板内（含它 portal 出去的弹层）与触发按钮上的按下不算「点外部」
+      // ——触发按钮自己会 toggle
+      if (insidePanel(panelRef.current, target)) return
       if (triggerRef.current?.contains(target) === true) return
       dismiss(false)
     }
@@ -1015,8 +1057,9 @@ function useToolbarPopup() {
     }
     const onScroll = (event: Event) => {
       const target = event.target as Node | null
-      // 面板自己内部滚动（max-height）不算「外面滚了」
-      if (target !== null && panelRef.current?.contains(target) === true) return
+      // 面板自己内部滚动（max-height）不算「外面滚了」；
+      // portal 出去的弹层同理（它也有 max-height）
+      if (target !== null && insidePanel(panelRef.current, target)) return
       dismiss(false)
     }
     const onResize = () => dismiss(false)
@@ -1158,6 +1201,31 @@ export function ToolbarMenuItemRow({ item, close }: ToolbarMenuItemRowProps) {
  */
 export function ToolbarMenuSeparator() {
   return <div className="me-menu__sep" role="separator" />
+}
+
+/**
+ * 面板里的一组**普通控件**（输入框、下拉，而不是菜单项）。
+ *
+ * 与 `ToolbarMenuSeparator` 同一个理由单独导出：`renderPanel` 拿不到 items 的
+ * 渲染器，但同样要把面板里的「标签 + 控件」摆成一行行。**样式与 markup 都归
+ * 这里**——`.me-menu__fields` 原来住在 `shell.css` 却由调用方手写 div，于是
+ * 「shell.css 定义、外壳不产出」的类又多一处（那正是 `ToolbarGridPicker` 要
+ * 消掉的那件事）。
+ *
+ * 键盘规矩**不在这里**：方向键那条已经收进 `ToolbarMenu` 的 `onPanelKeyDown`
+ * （按事件来源判断，表单控件里的一律不抢）。
+ */
+export function ToolbarMenuFields({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="me-menu__fields" role="group" aria-label={label}>
+      {children}
+    </div>
+  )
+}
+
+/** 面板里的一句说明（说清这个开关是干什么的、或为什么某项给不了） */
+export function ToolbarMenuNote({ children }: { children: ReactNode }) {
+  return <p className="me-menu__note">{children}</p>
 }
 
 /**
@@ -1792,6 +1860,13 @@ export function FindReplaceBar({
 
   const countLabel = query === '' ? '—' : count === 0 ? '无匹配' : `${active + 1} / ${count}`
 
+  /**
+   * 这几个按钮禁用时给的原因。**必须给**（DESIGN §8.4）：它们灰着的判据是
+   * `count === 0`，而那有两种情形——还没输查询词、输了但没找到。不说清的
+   * 话 `title` 落回按钮自己的名字，用户只能猜是哪一种。
+   */
+  const findReason = query === '' ? '先输入要查找的内容' : '没有匹配的内容'
+
   /** 查询框：回车 = 下一个（Shift+回车 = 上一个），与浏览器自带的查找一致 */
   const onQueryKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
@@ -1823,11 +1898,12 @@ export function FindReplaceBar({
           这里用 antd 的 `Input` 而**不是** `ToolbarTextField`：查询框要
           `ref`（挂载时 select 已有内容）且回车要区分 Shift（上一个 / 下一个），
           而那个原语的两个入口都表达不了。属性集与它保持一致（aria-label +
-          title + spellCheck + 同一个类名），所以两边的外观不会分叉。
+          title + spellCheck），宽度走 `.me-find__query`（原语的
+          `.me-input--text` 是 180px 固定宽，这一格要弹性）。
         */}
         <Input
           ref={queryRef}
-          className="me-input me-find__query"
+          className="me-find__query"
           type="text"
           value={query}
           aria-label="查找内容"
@@ -1841,10 +1917,20 @@ export function FindReplaceBar({
         <span className="me-find__count" aria-live="polite">
           {countLabel}
         </span>
-        <ToolbarButton label="上一个匹配" disabled={count === 0} onClick={() => step(-1)}>
+        <ToolbarButton
+          label="上一个匹配"
+          disabled={count === 0}
+          disabledReason={findReason}
+          onClick={() => step(-1)}
+        >
           <ChevronLeftIcon />
         </ToolbarButton>
-        <ToolbarButton label="下一个匹配" disabled={count === 0} onClick={() => step(1)}>
+        <ToolbarButton
+          label="下一个匹配"
+          disabled={count === 0}
+          disabledReason={findReason}
+          onClick={() => step(1)}
+        >
           <ChevronRightIcon />
         </ToolbarButton>
         {options !== undefined && onOptionsChange !== undefined && (
@@ -1874,7 +1960,7 @@ export function FindReplaceBar({
       {hasReplace && (
         <div className="me-find__row">
           <Input
-            className="me-input me-find__query"
+            className="me-find__query"
             type="text"
             value={replaceText}
             aria-label="替换为"
@@ -1885,12 +1971,22 @@ export function FindReplaceBar({
             onKeyDown={onReplaceKeyDown}
           />
           {canReplaceOne && (
-            <ToolbarButton label="替换这一个" disabled={count === 0} onClick={replaceCurrent}>
+            <ToolbarButton
+              label="替换这一个"
+              disabled={count === 0}
+              disabledReason={findReason}
+              onClick={replaceCurrent}
+            >
               替换
             </ToolbarButton>
           )}
           {canReplaceAll && (
-            <ToolbarButton label="全部替换" disabled={count === 0} onClick={replaceEvery}>
+            <ToolbarButton
+              label="全部替换"
+              disabled={count === 0}
+              disabledReason={findReason}
+              onClick={replaceEvery}
+            >
               全部替换
             </ToolbarButton>
           )}

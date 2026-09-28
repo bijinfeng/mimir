@@ -146,7 +146,16 @@ describe('HtmlEditor 工具条的控件契约', () => {
      * 会被拉成 `--me-control-height` 之外的值（实测 28px），它的
      * `background: transparent` 还会压过实心按钮。`.me-tb` 才是 antd 按钮的
      * 类（只有按下态那一条规则）。这一条就是那两个坑的守卫。
+     *
+     * **先打开查找栏**：里面有两个 antd `Input`，而它们正是「有没有把
+     * `.me-input` 挂回 antd 控件上」唯一能兑现的地方——栏关着的时候树里
+     * `.ant-input` 一个都没有，这条断言会空转（它曾经就是这样通过的）。
      */
+    press(host.querySelector<HTMLButtonElement>('[aria-label="查找和替换"]')!)
+    expect(
+      host.querySelectorAll('.ant-input').length,
+      '查找栏没打开，这条断言在空转',
+    ).toBeGreaterThan(0)
     expect(host.querySelectorAll('.ant-btn.me-btn').length).toBe(0)
     expect(host.querySelectorAll('.ant-input.me-input').length).toBe(0)
     // `.me-input--num` 是**给 InputNumber 的**（宽度），它没有 height/底色，可以留
@@ -155,6 +164,12 @@ describe('HtmlEditor 工具条的控件契约', () => {
 
   it('禁用的按钮必须说明原因（灰着不说为什么等于让人猜）', async () => {
     const host = await boot()
+    /*
+     * **先打开查找栏**：里面那四个按钮（上一个 / 下一个匹配、替换这一个、
+     * 全部替换）也会禁用，而这条断言原来跑在栏关着的时候——那几个按钮不在树上，
+     * 于是「禁用必须给原因」在查找栏那一半从来没被守过（实测漏掉四个）。
+     */
+    press(host.querySelector<HTMLButtonElement>('[aria-label="查找和替换"]')!)
     let disabledCount = 0
     for (const button of host.querySelectorAll<HTMLButtonElement>('button')) {
       if (!button.disabled) continue
@@ -165,7 +180,7 @@ describe('HtmlEditor 工具条的控件契约', () => {
       // 原因与名字混成一件就等于没说：`title` 与 `aria-label` 必须不同
       expect(title, `禁用的按钮把原因与名字混成一件事：${label}`).not.toBe(label)
     }
-    // 刚打开时撤销 / 重做 / 定位选中元素 / 保存都是禁用的——这一条不该是空循环
+    // 刚打开时撤销 / 重做 / 定位选中元素 / 保存 / 查找栏四个都是禁用的——这一条不该是空循环
     expect(disabledCount).toBeGreaterThan(2)
   })
 

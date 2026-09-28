@@ -200,11 +200,19 @@ describe('ToolbarButton', () => {
     expect(out).toContain('type="button"')
   })
 
-  it('按下态写进 aria-pressed，没有第二处状态', () => {
+  it('按下态写进 aria-pressed，没有第二处状态；不传 active 时整个属性不出现', () => {
     const on = html(<ToolbarButton label="加粗" active onClick={() => {}} />)
-    const off = html(<ToolbarButton label="加粗" onClick={() => {}} />)
+    const off = html(<ToolbarButton label="加粗" active={false} onClick={() => {}} />)
     expect(on).toContain('aria-pressed="true"')
+    // 真切换按钮的「没按下」也要说出来（读屏才知道这是个切换）
     expect(off).toContain('aria-pressed="false"')
+    /*
+     * **一次性动作不该带 aria-pressed**：保存、上一页、A+/A− 没有两个状态，
+     * 无条件下发 `aria-pressed="false"` 会让读屏把它们报成「未按下的切换按钮」
+     * （实测 pdf 工具条上 15 个按钮全带）。判据是「调用方给没给 `active`」。
+     */
+    const plain = html(<ToolbarButton label="保存到库" onClick={() => {}} />)
+    expect(plain).not.toContain('aria-pressed')
   })
 
   it('提示文字同时是无障碍名称（title 之外还要 aria-label）', () => {
@@ -396,6 +404,18 @@ describe('shell.css 的静态守护', () => {
     expect(css).toContain('.me-btn:focus-visible')
     expect(css).toContain('.me-btn:disabled')
     expect(css).toMatch(/--me-control-height:\s*24px/)
+  })
+
+  it('.me-sr-only 留在无障碍树里（用 clip-path，不用 display:none）', () => {
+    /*
+     * 图标档的可及名称完全依赖这段文字留在无障碍树里——`display: none` 与
+     * `visibility: hidden` 会把名称一起去掉，那等于没修。判据是标准的
+     * `clip-path: inset(50%)` 做法，且规则里不能出现那两个属性。
+     */
+    const rule = /\.me-sr-only \{[^}]*\}/.exec(css)?.[0] ?? ''
+    expect(rule).toContain('clip-path: inset(50%)')
+    expect(rule).not.toContain('display: none')
+    expect(rule).not.toContain('visibility: hidden')
   })
 })
 
@@ -692,7 +712,18 @@ describe('ToolbarToggleGroup', () => {
     expect(texts).toEqual(['从左到右', '从右到左'])
   })
 
-  it('给了图标就只显示图标，不把 label 也画上（工具条位置紧）', () => {
+  it('给了图标就只显示图标（文字以 .me-sr-only 留给读屏，名称不能丢）', () => {
+    /*
+     * 「只显示图标」与「有可及名称」曾经只能二选一：旧实现每档是一个带
+     * `aria-label` 的按钮，换成 antd `Segmented` 后 `title` 挂在内层 label 的
+     * div 上、可聚焦的是 `<input type=radio>`，两者不关联——实测真 Chromium 的
+     * AX 树里只传 `title` 的档全部 `name: ""`（6 个档全空；把 title 挪到 input
+     * 上也仍然是空），读屏只念「单选按钮，1 of 3」，用户听不出这一档是什么。
+     *
+     * 所以 label 文字必须**真的在 label 元素里**（那是名称的来源），只是视觉上
+     * 不占位：`.me-sr-only` 用 `clip-path` 藏，而 `display:none` 会把名称一起
+     * 去掉（那等于没修，所以 CSS 那边另有一条静态守护）。
+     */
     const host = mount(
       <ToolbarToggleGroup
         label="对齐方式"
@@ -702,8 +733,11 @@ describe('ToolbarToggleGroup', () => {
       />,
     )
     const item = host.querySelector('.ant-segmented-item-label')!
-    expect(item.textContent).toBe('↤')
-    // 悬停说明仍在（antd 把 title 放在项上，读屏与鼠标都拿得到名字）
+    // 图标还在（档上看得见的是它）
+    expect(item.textContent).toContain('↤')
+    // 名称的来源：文字在 label 元素里
+    expect(item.querySelector('.me-sr-only')?.textContent).toBe('左对齐')
+    // 悬停说明仍在（鼠标也能拿到名字）
     expect(item.getAttribute('title')).toBe('左对齐')
   })
 
@@ -976,6 +1010,48 @@ describe('ToolbarMenu', () => {
     expect(host.querySelector('[role="menu"]')).toBeNull()
   })
 
+  it('面板里的下拉：弹层里的按下不算「点外面」——面板不能被关掉', () => {
+    /*
+     * 面板里的 antd `Select`（docx 的固定行距、行高规则、表格对齐、自动调整
+     * 四处）打开后弹层 portal 到 body，**祖先链不在面板里**：只看
+     * `panelRef.contains(target)` 的话，真浏览器里 pointerdown 一落地面板就关、
+     * 弹层跟着卸载，后面的 click 落在已经不存在的选项上——症状是「点一档什么
+     * 也不会发生」，界面还不报错。这就是换成 antd Select 引入的回归（原来的
+     * 裸 `<select>` 选项在面板内部，所以 contains 判定为「面板内」）。
+     *
+     * 真浏览器的点击序列是 pointerdown → mousedown → mouseup → click，
+     * 这里照抄那一步不放，而**不能只派发 click**：只发 click 的话 React 会把
+     * 它和别的事件一起批处理，onChange 照样发出，这个 bug 会被测成通过。
+     */
+    const onChange = vi.fn<(value: string) => void>()
+    const host = mount(
+      <ToolbarMenu
+        label="固定行距"
+        renderPanel={() => (
+          <ToolbarSelect
+            label="行距规则"
+            value=""
+            onChange={onChange}
+            options={[
+              { value: '', label: '自动（按倍数）' },
+              { value: 'exact', label: '固定值' },
+            ]}
+          />
+        )}
+      />,
+    )
+    click(host.querySelector('.me-btn')!)
+    const option = openSelect(host, '行距规则').find((item) => item.textContent === '固定值')!
+    // 真浏览器按下时先来这一步——面板与选项都要活着
+    act(() => {
+      option.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, cancelable: true }))
+    })
+    expect(host.querySelector('[role="menu"]')).not.toBeNull()
+    expect(option.isConnected).toBe(true)
+    click(option)
+    expect(onChange).toHaveBeenCalledWith('exact')
+  })
+
   it('方向键在项之间移动，跳过禁用项', () => {
     const host = mount(<ToolbarMenu label="段落样式" items={items} />)
     click(host.querySelector('button')!)
@@ -1150,6 +1226,32 @@ describe('FindReplaceBar', () => {
     const buttons = host.querySelectorAll<HTMLButtonElement>('.me-find__row button')
     expect(buttons[0]!.disabled).toBe(true)
     expect(buttons[1]!.disabled).toBe(true)
+  })
+
+  /**
+   * 禁用必须说清**是哪一种**禁用（DESIGN §8.4）。
+   *
+   * 这四个按钮灰着的判据是 `count === 0`，那有两种情形：还没输查询词、
+   * 输了但没找到。不给 `disabledReason` 时 `title` 落回按钮自己的名字，
+   * 用户只能猜。**这条断言曾经扫不到它们**——调用方的契约测试只在工具条
+   * （`.mimir-editor__bar`）上扫，而查找栏在 `.mimir-editor__subbar` 里。
+   */
+  it('禁用时给出原因，且两种原因分得开（没输词 / 没匹配）', () => {
+    const adapter = { ...searchOnly(), search: () => 0 }
+    const empty = mount(<FindReplaceBar adapter={adapter} query="" onQueryChange={() => {}} />)
+    for (const button of empty.querySelectorAll<HTMLButtonElement>('.me-find__row button')) {
+      if (!button.disabled) continue
+      expect(button.getAttribute('title')).toBe('先输入要查找的内容')
+      // 原因与名字不能混成一件（那就是「什么都没说」）
+      expect(button.getAttribute('title')).not.toBe(button.getAttribute('aria-label'))
+    }
+    const typed = mount(
+      <FindReplaceBar adapter={adapter} query="没有这个" onQueryChange={() => {}} />,
+    )
+    const next = typed.querySelector<HTMLButtonElement>('[aria-label="下一个匹配"]')!
+    expect(next.disabled).toBe(true)
+    expect(next.getAttribute('title')).toBe('没有匹配的内容')
+    expect(next.getAttribute('title')).not.toBe(next.getAttribute('aria-label'))
   })
 
   it('关闭时清掉高亮——高亮是画在编辑器上的，不擦会一直留着', () => {

@@ -138,7 +138,18 @@ describe('markdown 的控件契约（渲染层）', () => {
      * (0,1,0)）而 `shell.css` 在 head 里更靠后——挂上之后 small 档按钮会被拉成
      * `--me-control-height` 之外的值（实测 28px），它的 `background: transparent`
      * 还会压过实心的「立即保存」（症状：透明的保存按钮）。
+     *
+     * **先打开链接面板**：里面有一个 antd `Input`（`ToolbarTextField`），而它正是
+     * 「有没有把 `.me-input` 挂回 antd 控件上」唯一能兑现的地方——面板关着时树里
+     * `.ant-input` 一个都没有，这条断言会空转（`HtmlEditor.test.tsx` 里那条曾经
+     * 就是这样通过的）。
      */
+    // 选择器必须限定 `button`：外层那个 `ToolbarGroup` 的 div 也挂着 `aria-label="链接"`
+    press(host.querySelector<HTMLButtonElement>('button[aria-label="链接"]')!)
+    expect(
+      host.querySelectorAll('.ant-input').length,
+      '链接面板没打开，这条断言在空转',
+    ).toBeGreaterThan(0)
     expect(host.querySelectorAll('.ant-btn.me-btn').length).toBe(0)
     expect(host.querySelectorAll('.ant-input.me-input').length).toBe(0)
   })

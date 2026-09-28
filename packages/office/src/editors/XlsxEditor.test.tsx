@@ -166,22 +166,69 @@ function selectedCell(host: HTMLElement): HTMLTableCellElement | null {
 }
 
 /** 假的宿主：读夹具，存下来供断言 */
-function fakeIo(): { io: EditorIo; saved: () => Uint8Array | null } {
+function fakeIo(bytes?: Uint8Array): { io: EditorIo; saved: () => Uint8Array | null } {
   let saved: Uint8Array | null = null
   return {
     io: {
-      load: async () => new Uint8Array(readFileSync(FIXTURE)),
-      save: async (bytes: Uint8Array, _target: SaveTarget) => {
-        saved = bytes
+      load: async () => bytes ?? new Uint8Array(readFileSync(FIXTURE)),
+      save: async (next: Uint8Array, _target: SaveTarget) => {
+        saved = next
       },
     },
     saved: () => saved,
   }
 }
 
+/**
+ * 给夹具接一张空工作表，做出**多表**的工作簿（第二张叫「第二张」）。
+ *
+ * 为什么需要它：页签（`.me-tab`）只在 `view.sheets.length > 1` 时渲染，
+ * 而原来的夹具只有一张表——于是「多工作表时页签仍是裸 button」这条现状
+ * 没有任何断言在守，`SHELL_NON_ANTD` 那条白名单里的 `.me-tab` 也在空转
+ * （它声明「排除了 4 类」，实际只验证了「这 4 类都不存在」）。
+ *
+ * 手工拼这几条 XML 就够了（夹具本身是极简结构）：新条目进 zip、workbook 加
+ * 一行 `<sheet>`、rels 加一条关系。**不动 sheet1**，所以其余断言的前提不变。
+ */
+async function withSecondSheet(): Promise<Uint8Array> {
+  const zip = await JSZip.loadAsync(new Uint8Array(readFileSync(FIXTURE)))
+  zip.file(
+    'xl/worksheets/sheet2.xml',
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+      '<sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>第二张</t></is></c></row></sheetData>' +
+      '</worksheet>',
+  )
+  const rels = await zip.file('xl/_rels/workbook.xml.rels')!.async('string')
+  zip.file(
+    'xl/_rels/workbook.xml.rels',
+    rels.replace(
+      '</Relationships>',
+      '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/></Relationships>',
+    ),
+  )
+  const workbook = await zip.file('xl/workbook.xml')!.async('string')
+  zip.file(
+    'xl/workbook.xml',
+    workbook.replace(
+      '</sheets>',
+      '<sheet name="第二张" sheetId="2" r:id="rId3" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"/></sheets>',
+    ),
+  )
+  return zip.generateAsync({ type: 'uint8array' })
+}
+
 async function openEditor() {
   const handle = fakeIo()
   const host = mount(<XlsxEditor documentId="doc-1" io={handle.io} />)
+  await waitForTable(host)
+  return { host, saved: handle.saved }
+}
+
+/** 挂一棵多表的工作簿 */
+async function openMultiSheetEditor() {
+  const handle = fakeIo(await withSecondSheet())
+  const host = mount(<XlsxEditor documentId="multi" io={handle.io} />)
   await waitForTable(host)
   return { host, saved: handle.saved }
 }
@@ -319,7 +366,27 @@ describe('xlsx 工具条：复制这个格的文字', () => {
     const button = byLabelPrefix(host2, '复制这个格')
     expect((button as HTMLButtonElement).disabled).toBe(true)
     expect(button.getAttribute('title')).toContain('https')
+
+    // 点不进去（事件被禁用态拦住）：状态行不冒出任何「复制失败」——
+    // 「做不到」的说明只由 tooltip 承担，复制动作里没有第二个判断
+    click(button)
+    await act(async () => {
+      await Promise.resolve()
+    })
+    expect(host2.querySelector('.mimir-editor__status')?.textContent).not.toContain('复制失败')
     void host
+  })
+
+  /**
+   * 非安全上下文的「做不到」由禁用态独自说明——`copyCell` 里不允许再有第二个
+   * 剪贴板判断：按钮禁用时点击事件到不了 handler，那里的分支永远走不到，
+   * 写了也从不生效。运行时行为与删掉它完全相同、测试观察不出来，所以照
+   * `editors.css` 宽度覆写那条的先例做**静态守护**：那条只有死分支才用的
+   * 失败措辞不许再出现在源码里（回来一次红一次）。
+   */
+  it('复制动作里没有第二条剪贴板判断（不可达的失败分支不许回来）', () => {
+    const source = readFileSync(join(import.meta.dirname, 'XlsxEditor.tsx'), 'utf8')
+    expect(source).not.toContain('没有写进剪贴板')
   })
 })
 
@@ -405,6 +472,55 @@ describe('xlsx 工具条：跳到上一个 / 下一个公式格', () => {
     expect(host.querySelector('.mimir-cell-editor__ref')?.textContent).toBe('A5')
     click(byLabel(host, '跳到下一个公式格'))
     expect(host.querySelector('.mimir-cell-editor__ref')?.textContent).toBe('C3')
+  })
+})
+
+/**
+ * 编辑是就地改模型的，而查找命中与公式格列表是从快照派生的 `useMemo`。
+ *
+ * 这两条守的是同一种**静默失效**：派生列表 keyed 在一个「编辑后引用不变」
+ * 的对象上。`view()` 在改动后换新对象，但如果派生列表依赖的是
+ * `view.sheets[active]` 这个**切片**的引用，而引擎改动后没有把切片一起换掉，
+ * 依赖判定相等、派生列表就停在编辑前——查找计数说旧数字、公式跳转按钮
+ * 在该禁用时仍可点。界面说的必须是真实模型（界面说了假话比报错更糟）。
+ */
+describe('xlsx 工具条：编辑之后派生列表跟着模型走', () => {
+  it('把一个格改成含查找串之后，命中数跟着变（1 / 3 → 1 / 4）', async () => {
+    const { host } = await openEditor()
+    type(byLabelPrefix(host, '查找内容'), '部')
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+    expect(host.querySelector('.me-find__count')?.textContent).toBe('1 / 3')
+
+    // 把 A2（「姓名」）改成「姓名部」：模型里含「部」的格子从 3 个变 4 个
+    click(cellAt(host, 2, 0))
+    type(byLabel(host, '单元格 A2'), '姓名部')
+    press(byLabel(host, '单元格 A2'), 'Enter')
+
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+    // A2 是第 2 行第 0 列，行主序里排在最前 → 选中它就是第 1 个命中
+    expect(host.querySelector('.me-find__count')?.textContent).toBe('1 / 4')
+  })
+
+  it('唯一的公式格被清空之后，公式跳转按钮禁用并说明原因', async () => {
+    const { host } = await openEditor()
+    click(byLabel(host, '跳到下一个公式格'))
+    expect(host.querySelector('.mimir-cell-editor__ref')?.textContent).toBe('C3')
+
+    // 覆盖的语义是连公式一起清（xlsx-edit.ts 的规矩）：模型里从此没有公式格
+    click(byLabelPrefix(host, '清空这个格'))
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+
+    for (const label of ['跳到上一个公式格', '跳到下一个公式格']) {
+      const button = byLabel(host, label) as HTMLButtonElement
+      expect(button.disabled, `${label} 该禁用了`).toBe(true)
+      expect(button.getAttribute('title')).toBe('这张表里没有公式格')
+    }
   })
 })
 
@@ -516,6 +632,29 @@ describe('xlsx 的控件契约', () => {
     expect(host.querySelectorAll('.mimir-editor [role="button"]').length).toBe(0)
   })
 
+  it('禁用的按钮必须说明原因（灰着不说为什么等于让人猜）', async () => {
+    const { host } = await openEditor()
+    /*
+     * 「保存到库」（没改动 / 正在保存）与 footer 的「应用」（格里的字还没被改过）
+     * 都有一段灰着的时间，而那正是最需要解释的一档——不给原因时 `title` 落回
+     * 按钮名字，用户只能猜。其余五种格式都有这条断言，只有 xlsx 原来没有。
+     */
+    click(cellAt(host, 2, 0))
+    let disabledCount = 0
+    for (const button of host.querySelectorAll<HTMLButtonElement>('button')) {
+      if (!button.disabled) continue
+      disabledCount += 1
+      const title = button.getAttribute('title') ?? ''
+      const label = button.getAttribute('aria-label') ?? button.textContent?.trim() ?? ''
+      expect(title, `禁用的按钮没有说明原因：${label}`).not.toBe('')
+      expect(title, `禁用的按钮把原因与名字混成一件事：${label}`).not.toBe(label)
+    }
+    // 选中一个格之后「应用」是禁用的（还没打字）、「保存到库」也是——不该是空循环
+    expect((byLabel(host, '保存到库') as HTMLButtonElement).disabled).toBe(true)
+    expect((byLabel(host, '应用') as HTMLButtonElement).disabled).toBe(true)
+    expect(disabledCount).toBeGreaterThan(1)
+  })
+
   it('尺寸统一在 small 档（`EditorShell` 那层 ConfigProvider 盖到了每个控件）', async () => {
     const { host } = await openEditor()
     /*
@@ -585,5 +724,44 @@ describe('xlsx 的控件契约', () => {
     const body = rule.slice(rule.indexOf('{') + 1, rule.indexOf('}'))
     expect(body).toMatch(/flex:\s*1/)
     expect(body).toMatch(/width:\s*auto/)
+  })
+
+  /**
+   * 白名单**真的被验证过**：多表工作簿里页签在，且它仍是裸 `<button>`。
+   *
+   * 单表夹具下 `.me-tab` 根本不渲染——`SHELL_NON_ANTD` 声明「排除了 4 类」，
+   * 实际只验证了「这 4 类恰好都不存在」，白名单的每一条理由都没被检验。
+   * 这一条用第二张表把 `.me-tab` 逼出来：它证明①多表时页签确实渲染、
+   * ②它确实是绕过 antd 的那一类（所以白名单该留它）、③上面的扫法在它存在
+   * 时仍然全绿（白名单真的在起作用，而不是靠「碰巧没有」）。
+   */
+  it('多表工作簿：页签是裸 button（白名单里那一类的现状被真的守住）', async () => {
+    const { host } = await openMultiSheetEditor()
+    const tabs = [...host.querySelectorAll<HTMLButtonElement>('.me-tab')]
+    expect(tabs.length, '第二张表没渲染出页签（这条断言会失去意义）').toBe(2)
+    expect(tabs.map((tab) => tab.textContent?.trim())).toEqual(['数据', '第二张'])
+    // 它不在 antd 的档里——这正是它在白名单里的原因（ToolbarTabs 不迁，见 D-064）
+    for (const tab of tabs) {
+      expect(tab.classList.contains('ant-btn')).toBe(false)
+      expect(tab.tagName).toBe('BUTTON')
+    }
+    // 切到第二张：表体换成新表的内容（页签不是装饰）
+    click(tabs[1]!)
+    expect(host.querySelector('.mimir-xlsx')?.textContent).toContain('第二张')
+
+    // 扫法在页签存在时仍然全绿：白名单真的在过滤，而不是「碰巧没有」
+    const all = [
+      ...host.querySelectorAll<HTMLElement>(
+        '.mimir-editor button, .mimir-editor input, .mimir-editor select, .mimir-editor textarea',
+      ),
+    ]
+    const bypass = all
+      .filter(
+        (element) =>
+          ![...element.classList].some((name) => name.startsWith('ant-')) &&
+          !SHELL_NON_ANTD.some((selector) => element.closest(selector) !== null),
+      )
+      .map((element) => `<${element.tagName.toLowerCase()} class="${element.className}">`)
+    expect(bypass, `这些控件绕过了外壳的原语：${JSON.stringify(bypass)}`).toEqual([])
   })
 })

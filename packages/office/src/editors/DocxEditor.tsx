@@ -67,8 +67,8 @@
 import { EditorContent, useEditor } from '@tiptap/react'
 import type { Editor } from '@tiptap/core'
 import { useEffect, useRef, useState, useCallback } from 'react'
-import type { ReactNode } from 'react'
 import { redoDepth, undoDepth } from '@tiptap/pm/history'
+import type { Mark } from '@tiptap/pm/model'
 import type { EditorState, Transaction } from '@tiptap/pm/state'
 import {
   CellSelection,
@@ -125,6 +125,8 @@ import {
   ToolbarLabel,
   ToolbarMenu,
   ToolbarMenuItemRow,
+  ToolbarMenuFields,
+  ToolbarMenuNote,
   ToolbarMenuSeparator,
   ToolbarNotice,
   ToolbarNumberField,
@@ -369,6 +371,36 @@ const CLEARED_PARA_ATTRS: Record<string, null> = {
 
 /** 格式刷搬运的标记类型（上游 `Ribbon.tsx:283`）。语义类标记（链接、批注、修订、域）不搬 */
 const PAINTER_MARK_TYPES = ['bold', 'italic', 'underline', 'strike', 'docTextStyle'] as const
+
+/**
+ * 格式刷举起的源格式。
+ *
+ * **不能只取 `$from.marks()`**：ProseMirror 的 `ResolvedPos.marks()` 在位置
+ * 正好压在两个节点的边界上时（`textOffset === 0`），取的是**前一个节点**的
+ * marks。于是「源选区起点正好是格式区间起点」——加粗字前面有个没加粗的字，
+ * 选区从加粗字开始——它返回**空**：刷子以空格式举起，往目标上一点反而把
+ * 目标的格式抹掉。实测：选区 `{from:2,to:6}` 起点压在加粗区间起点上，
+ * `$from.marks()` 为 `[]`，而选区里的文字全是加粗。
+ *
+ * 修法与上游 `Ribbon.tsx` 相同：取**选区区间里第一个文本节点**的 marks——
+ * 起点正好是格式起点时，第一个文本节点就是带格式的那一个。空选区（没选中
+ * 文字就举起）与区间里没有文本节点（选中了纯原子块）两个场景退回
+ * `$from.marks()`，那是它唯一说得通的用法。
+ */
+function painterSourceMarks(editor: Editor): readonly Mark[] {
+  const { from, to, empty, $from } = editor.state.selection
+  if (empty) return $from.marks()
+  let found: readonly Mark[] | null = null
+  editor.state.doc.nodesBetween(from, to, (node) => {
+    if (found !== null) return false
+    if (node.isText) {
+      found = node.marks
+      return false
+    }
+    return true
+  })
+  return found ?? $from.marks()
+}
 
 /** 工具条强制重读一次「不在编辑器状态里」的东西时用的 meta（见 `refreshToolbar`） */
 const TOOLBAR_REFRESH = 'docxToolbarRefresh'
@@ -672,14 +704,35 @@ function nextStop(current: number, delta: 1 | -1): number | null {
  *
  * 从引用切回正文/标题时**只清引用自己写的那三项**：段落上可能还有用户手动
  * 加的缩进或底纹，一口气清掉是未经请求的副作用。
+ *
+ * **`styleId` 必须显式清成 null**：Tiptap 的 `setNode` 会把段落上没点名的属性
+ * 原样带过去（实现里的 `attributesToCopy`），不清的话画布换了级别、文件里的
+ * `w:pStyle` 还是旧样式（保存路径 `generate.ts:1742` 优先写 `block.styleId`）
+ * ——重开又变回去。实测：Heading1 选「标题 2」，保存后 XML 仍是
+ * `<w:pStyle w:val="Heading1"/>`。
+ *
+ * **导出仅供测试**（`docx-save.test.ts` 断言它落盘的 `w:pStyle`；产品里只经
+ * 段落样式下拉使用）。
  */
-function applyParagraphStyle(editor: Editor, key: string): void {
+export function applyParagraphStyle(editor: Editor, key: string): void {
   if (key === 'quote') {
     // 引用一律是正文段落：标题上点引用应当变成「被引用的正文」，而不是「被引用的标题 2」
-    runCommand(editor, 'setNode', 'docParagraph', { ...QUOTE_ATTRS, kind: null, numId: null })
+    runCommand(editor, 'setNode', 'docParagraph', {
+      ...QUOTE_ATTRS,
+      kind: null,
+      numId: null,
+      styleId: null,
+    })
     return
   }
-  const clear = { borders: null, borderLines: null, indentLeft: null, kind: null, numId: null }
+  const clear = {
+    borders: null,
+    borderLines: null,
+    indentLeft: null,
+    kind: null,
+    numId: null,
+    styleId: null,
+  }
   if (key === 'p') runCommand(editor, 'setNode', 'docParagraph', clear)
   else runCommand(editor, 'setNode', 'docHeading', { ...clear, level: Number(key.slice(1)) || 1 })
 }
@@ -751,21 +804,35 @@ interface TableInfo {
   columnWidths: number[] | null
 }
 
-/** 「1 px = 15 twips」是仓库自己的换算（`convert.ts:827`，96dpi） */
+/**
+ * 「1 px = 15 twips」是仓库自己的换算（`convert.ts:829`，96dpi）。
+ *
+ * **这两个函数是 px 与 twips 之间仅有的通道**：单元格的 `colwidth` 属性存的是
+ * **px**（解析时 `convert.ts:930` 写入，保存时 `convert.ts:1236` 自己乘 15 换回
+ * twips），而界面上的一切都说 twips。漏掉一次换算不报错——症状是「每次编辑把
+ * 列宽放大 15 倍，重开显示值又缩小 15 倍」。
+ */
 const pxToTwips = (px: number): number => Math.round(px * 15)
+/** 反向：界面的 twips 写进 `colwidth`（px）之前过这里 */
+const twipsToPx = (twips: number): number => Math.round(twips / 15)
 
 /**
  * 表格当前每列的宽度（twips）。
  *
  * 来源按可靠性排：
- *  1. 第一行的 `colwidth`（它才是保存时的依据，`convert.ts:1233`）
+ *  1. 第一行的 `colwidth`（它才是保存时的依据，`convert.ts:1233`）——**它是
+ *     px**（解析 `convert.ts:930` 写入、保存 `convert.ts:1236` ×15 回 twips），
+ *     这里过一次 `pxToTwips` 才是界面要的 twips
  *  2. `colWidthsPct` × 表格总宽
  *  3. 都没有 → **null**（调用方据此禁用输入框，而不是编一个数填进去）
  *
  * 总宽优先用 `widthPx`（模型里就有），没有就**量 DOM**——量出来的宽度是分页
  * 与排版都在用的真实值，比自己编一个「6.5 英寸」诚实。
+ *
+ * **导出仅供测试**（`docx-save.test.ts` 的列宽往返断言直接调它；产品里只经
+ * 表格菜单使用）。
  */
-function columnWidthsTwips(editor: Editor, rect: TableRect): number[] | null {
+export function columnWidthsTwips(editor: Editor, rect: TableRect): number[] | null {
   const columns = rect.map.width
   const widths: Array<number | null> = Array.from({ length: columns }, () => null)
   let column = 0
@@ -775,7 +842,9 @@ function columnWidthsTwips(editor: Editor, rect: TableRect): number[] | null {
     if (Array.isArray(declared) && declared.length === span) {
       for (let i = 0; i < span; i += 1) {
         const width = asNumber(declared[i])
-        if (width !== null && width > 0 && column + i < columns) widths[column + i] = width
+        // colwidth 是 px，当 twips 用会把显示值缩小 15 倍（2000 twips 的列显示成 6.65 磅）
+        if (width !== null && width > 0 && column + i < columns)
+          widths[column + i] = pxToTwips(width)
       }
     }
     column += span
@@ -826,8 +895,21 @@ function tableInfo(editor: Editor): TableInfo | null {
  * **每一行的对应格子都要写**：第一行决定保存时算出来的列宽
  * （`convert.ts:1233` 只读第一行），其余行决定画布上这一列有多宽——只写第一行
  * 的话「保存对了、屏幕上看不出来」。跨列的格子按它覆盖的列改数组里那一项。
+ *
+ * **`colwidth` 属性存的是 px**，这里过一次 `twipsToPx`。把 twips 直接写进去的话，
+ * 保存路径（`convert.ts:1236`）会再乘 15：输入 234 磅，文件里出现
+ * `<w:gridCol w:w="70200"/>`（3510 磅，远超页宽）。
+ *
+ * **导出仅供测试**（`docx-save.test.ts` 的列宽往返断言直接调它；产品里只经
+ * 表格菜单使用）。
  */
-function setColumnWidth(editor: Editor, rect: TableRect, column: number, twips: number): void {
+export function setColumnWidth(
+  editor: Editor,
+  rect: TableRect,
+  column: number,
+  twips: number,
+): void {
+  const px = twipsToPx(twips)
   runTableCommand(editor, (state, dispatch) => {
     const tr = state.tr
     let rowPos = rect.tableStart
@@ -840,7 +922,7 @@ function setColumnWidth(editor: Editor, rect: TableRect, column: number, twips: 
         const span = Math.max(1, Number(cell.attrs.colspan) || 1)
         const declared = cell.attrs.colwidth as number[] | null
         if (at === column && span === 1) {
-          tr.setNodeMarkup(cellPos, undefined, { ...cell.attrs, colwidth: [twips] })
+          tr.setNodeMarkup(cellPos, undefined, { ...cell.attrs, colwidth: [px] })
         } else if (
           Array.isArray(declared) &&
           declared.length === span &&
@@ -848,7 +930,7 @@ function setColumnWidth(editor: Editor, rect: TableRect, column: number, twips: 
           column < at + span
         ) {
           const next = [...declared]
-          next[column - at] = twips
+          next[column - at] = px
           tr.setNodeMarkup(cellPos, undefined, { ...cell.attrs, colwidth: next })
         }
         cellPos += cell.nodeSize
@@ -1044,6 +1126,14 @@ export function DocxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
             label={source.saving ? '保存中…' : '保存到库'}
             primary
             disabled={session === null || !dirty || source.saving}
+            /*
+              禁用必须给原因（DESIGN §8.4）。判据是三件事（还没解析出来 / 没改动 /
+              正在保存），各有各的说法：不区分的话按钮灰着时用户只能猜。其余四种
+              格式都给了（pptx / html / markdown / pdf），这里是漏掉的一处。
+            */
+            disabledReason={
+              session === null ? '文档还没读完' : source.saving ? '正在保存…' : '没有未保存的改动'
+            }
             onClick={() => void save()}
           >
             <SaveIcon />
@@ -1395,8 +1485,7 @@ export function DocxToolbar({
               setPainterArmed(false)
               return
             }
-            painterSource.current = editor.state.selection.$from
-              .marks()
+            painterSource.current = painterSourceMarks(editor)
               .filter((mark) => (PAINTER_MARK_TYPES as readonly string[]).includes(mark.type.name))
               .map((mark) => ({ type: mark.type.name, attrs: mark.attrs }))
             setPainterArmed(true)
@@ -1608,22 +1697,12 @@ export function DocxToolbar({
 
 /* ── 段落间距与缩进 ───────────────────────────────────────────── */
 
-/**
- * 菜单面板里的一组普通控件（输入框、下拉）。
- *
- * **只负责摆放**：方向键那条规矩已经收进 `ToolbarMenu` 的 `onPanelKeyDown`
- * （它按事件来源判断，来自 `input` / combobox 那类表单控件的按键一律不抢）。
- * 以前这里挂着 `onKeyDown={event => event.stopPropagation()}`——全仓库唯一
- * 一处，而 markdown 的两个 renderPanel 没有那一层，于是它那边的地址框与
- * 数字框的上下键被菜单吃掉。靠「每个调用点自己记得加」就是下一次静默失效。
+/*
+ * 面板里「标签 + 控件」的摆法走外壳的 `ToolbarMenuFields`（原来这里是本地
+ * `MenuFields` 手写 `div.me-menu__fields`，而那个类写在 `shell.css` 里——
+ * 「样式表定义、外壳不产出」的耦合又多一处）。方向键的规矩一直在
+ * `ToolbarMenu` 的 `onPanelKeyDown` 里（按事件来源判断，表单控件里的一律不抢）。
  */
-function MenuFields({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="me-menu__fields" role="group" aria-label={label}>
-      {children}
-    </div>
-  )
-}
 
 /** 磅 → twips 的一组输入框共用的行 */
 function TwipsField({
@@ -1663,7 +1742,7 @@ function ParagraphSpacingMenu({
       text="间距"
       emptyLabel="选中一段文字后可用"
       renderPanel={() => (
-        <MenuFields label="段落间距与缩进">
+        <ToolbarMenuFields label="段落间距与缩进">
           <TwipsField
             label="段前"
             pt={twipsToPt(state.spaceBefore)}
@@ -1709,7 +1788,7 @@ function ParagraphSpacingMenu({
           >
             清除
           </ToolbarButton>
-        </MenuFields>
+        </ToolbarMenuFields>
       )}
     />
   )
@@ -1735,7 +1814,7 @@ function LineRuleMenu({
       label="固定行距"
       text="固定行距"
       renderPanel={() => (
-        <MenuFields label="固定行距">
+        <ToolbarMenuFields label="固定行距">
           <ToolbarSelect
             label="行距规则"
             value={state.lineRule === 'exact' || state.lineRule === 'atLeast' ? state.lineRule : ''}
@@ -1774,7 +1853,7 @@ function LineRuleMenu({
           >
             回到自动
           </ToolbarButton>
-        </MenuFields>
+        </ToolbarMenuFields>
       )}
     />
   )
@@ -1800,7 +1879,7 @@ const gridCellLabel = (row: number, column: number): string => `插入 ${row} �
  */
 function InsertTablePanel({ editor }: { editor: Editor }) {
   return (
-    <MenuFields label="插入表格">
+    <ToolbarMenuFields label="插入表格">
       <ToolbarGridPicker
         label="插入表格的大小"
         rows={GRID_MAX}
@@ -1808,7 +1887,7 @@ function InsertTablePanel({ editor }: { editor: Editor }) {
         cellLabel={gridCellLabel}
         onPick={(row, column) => insertTable(editor, row, column)}
       />
-    </MenuFields>
+    </ToolbarMenuFields>
   )
 }
 
@@ -1836,7 +1915,7 @@ function LinkPanel({
     onDone()
   }
   return (
-    <MenuFields label="链接地址">
+    <ToolbarMenuFields label="链接地址">
       <span className="me-label">地址</span>
       <ToolbarTextField
         label="链接地址"
@@ -1858,7 +1937,7 @@ function LinkPanel({
       >
         移除
       </ToolbarButton>
-    </MenuFields>
+    </ToolbarMenuFields>
   )
 }
 
@@ -1988,7 +2067,7 @@ function TableMenu({ editor, table }: { editor: Editor; table: TableInfo | null 
 
           <ToolbarMenuSeparator />
 
-          <MenuFields label="单元格">
+          <ToolbarMenuFields label="单元格">
             {/*
               单元格底纹**内联**用外壳的取色器（`inline`，不套触发器与弹层）：
               它长在已经展开的表格菜单里，再开一层面板是两层弹层。
@@ -2069,11 +2148,11 @@ function TableMenu({ editor, table }: { editor: Editor; table: TableInfo | null 
                 </ToolbarButton>
               ))}
             </ToolbarGroup>
-          </MenuFields>
+          </ToolbarMenuFields>
 
           <ToolbarMenuSeparator />
 
-          <MenuFields label="表格属性">
+          <ToolbarMenuFields label="表格属性">
             <ToolbarLabel>行高</ToolbarLabel>
             <ToolbarNumberField
               label="行高"
@@ -2182,7 +2261,7 @@ function TableMenu({ editor, table }: { editor: Editor; table: TableInfo | null 
               都没有。改了只动 XML、屏幕不变，正是这个仓库最讨厌的一类按钮。
             */}
             <ToolbarLabel>表格样式、六边：这份文档没有可用的样式表，改了画布不动</ToolbarLabel>
-          </MenuFields>
+          </ToolbarMenuFields>
         </>
       )}
     />
@@ -2263,9 +2342,9 @@ function RevisionsPanel({ editor, enabled }: { editor: Editor; enabled: boolean 
           }}
         />
       ))}
-      <p className="me-menu__note">
+      <ToolbarMenuNote>
         {enabled ? '打开状态下输入的文字与删除都会记成修订' : '关闭状态下编辑不留修订记录'}
-      </p>
+      </ToolbarMenuNote>
     </>
   )
 }

@@ -349,28 +349,73 @@ function replaceRanges(
 }
 
 /**
- * 段落的文字被**整段重写**时怎么回传（返回 `null` = 走「整段重写」那条路）。
+ * 纯插入（只加字、不删字）落到哪条 run 的哪个位置。
+ *
+ * 插入没有「被改掉的原文」，按「与几条 run 相交」找不到归属——零宽区间与
+ * **0 条** run 相交。规则取**插入点前一个字符所在的 run**：段尾追加落在最后
+ * 一条（在段尾打字，延续的就是最后一条 run 的格式）、run 边界落在前一条
+ * （紧跟在加粗文字后面打字，新字也是加粗的）、段首落在第一条；插入点在某条
+ * run 内部时就地插进那个位置。
+ *
+ * **软换行哨兵不是文字**，新字符不该混进去——混进去哨兵就不再是 `'\n'`，
+ * `patchTextElementXml` 的逐 run 对齐随之失效，明明只加一个字却退化成整段
+ * 重建。所以落点是哨兵的**右边缘**（换行之后 = 下一行行首）且下一条是普通
+ * 文字时，改落到下一条的开头。哨兵与哨兵之间（连续换行的空行）没有普通 run
+ * 可落，仍进哨兵：文本是对的，只是这个元素这一次走 `rebuildTxBody` 的重建
+ * 分支（`generateRunXml` 会把带 `\n` 的 run 重新拆成 run + `<a:br/>`）。
+ */
+function insertIntoRuns(runTexts: readonly string[], at: number, insertion: string): string[] {
+  let target = 0
+  let local = 0
+  let offset = 0
+  for (let index = 0; index < runTexts.length; index += 1) {
+    const start = offset
+    offset += runTexts[index]!.length
+    if (at > 0 && start < at && offset >= at) {
+      target = index
+      local = at - start
+      break
+    }
+  }
+  const here = runTexts[target]
+  const next = runTexts[target + 1]
+  if (here === '\n' && local === here.length && next !== undefined && next !== '\n') {
+    target += 1
+    local = 0
+  }
+  return runTexts.map((text, index) =>
+    index === target ? text.slice(0, local) + insertion + text.slice(local) : text,
+  )
+}
+
+/**
+ * 段落的文字被改之后怎么回传（返回 `null` = 走「整段重写」那条路）。
  *
  * ## 为什么不是「一律压成一条 run」
  *
  * 段落输入框回传的是整段的纯文本，所以最直觉的写法是「每段一条 run」。但那是
- * **破坏性**的：同段其余 run 的格式会被 `dominantRun`（文字最多的那条）顶掉
- * ——实测一份「加粗标签 + 普通正文」的段落（`b="1" sz="3600"` + `sz="2400"`），
- * 在正文里改一个字之后标签的加粗与字号就没了，而保存成功、文字也对。
+ * **破坏性**的：同段其余 run 的格式会被顶掉——实测一份「加粗标签 + 普通正文」
+ * 的段落（`b="1" sz="3600"` + `sz="2400"`），在正文里改一个字之后标签的加粗与
+ * 字号就没了，而保存成功、文字也对。
  *
- * ## 所以：改动落在**一条 run 内**时只改那一条
+ * ## 所以：只改真正变动的那一部分
  *
- * 取新旧文本的**公共前缀与公共后缀**，中间那段就是用户实际改动的范围。它若
- * 只与一条 run 相交，就只改那一条（其余 run 原样回传、带自己的 `srcRun`）；
- * 跨了多条 run（整段删了重打、粘一大段进来）则**说明这确实是一次整段重写**，
- * 交给上游按 `dominantRun` 处理——那是 `applyEditParagraphs` 里写明的行为
- * （「a rewrite of the whole paragraph is not a rewrite of its label」）。
+ * 取新旧文本的**公共前缀与公共后缀**，中间那段就是用户实际改动的范围。
  *
- * 返回 `null` 的两种情形：文本没变（不必提交）、改动跨了多条 run。
+ *  - 改动**落在一条 run 内** → 只改那一条（其余 run 原样回传、带自己的 `srcRun`）
+ *  - 区间是**零宽**（纯插入：段尾追加、段首补字、run 边界塞字）→ 它与 0 条 run
+ *    「相交」，不能按相交数判断——插入落进 `insertIntoRuns` 算出的那一条，其余
+ *    run 原样
+ *  - 跨了多条 run（整段删了重打、粘一大段进来）→ **这确实是一次整段重写**，
+ *    交给上游按 `dominantRun` 处理——那是 `applyEditParagraphs` 里写明的行为
+ *    （「a rewrite of the whole paragraph is not a rewrite of its label」）
+ *
+ * 返回 `null` 的情形：改动跨了多条 run（或段落没有 run 可落）。文本没变时返回
+ * 原样的一组文本——提交它们与「未编辑的段落」走同一条路，一个字节都不会变。
  */
 function editParagraphRuns(runTexts: readonly string[], next: string): { texts: string[] } | null {
   const joined = runTexts.join('')
-  if (next === joined) return null
+  if (next === joined) return { texts: [...runTexts] }
   const limit = Math.min(joined.length, next.length)
   let head = 0
   while (head < limit && joined[head] === next[head]) head += 1
@@ -379,6 +424,12 @@ function editParagraphRuns(runTexts: readonly string[], next: string): { texts: 
     tail += 1
   }
   const range: MatchRange = { start: head, end: joined.length - tail }
+  const replacement = next.slice(head, next.length - tail)
+  if (range.start === range.end) {
+    // 纯插入：零宽区间与任何 run 都不相交，落点单独算（见 `insertIntoRuns`）
+    if (runTexts.length === 0) return null
+    return { texts: insertIntoRuns(runTexts, range.start, replacement) }
+  }
   /** 这个范围与几条 run 相交。跨多条 = 这是一次整段重写，交给上游 */
   let touched = 0
   let offset = 0
@@ -389,7 +440,7 @@ function editParagraphRuns(runTexts: readonly string[], next: string): { texts: 
     touched += 1
   }
   if (touched !== 1) return null
-  return { texts: replaceRanges(runTexts, [range], next.slice(head, next.length - tail)) }
+  return { texts: replaceRanges(runTexts, [range], replacement) }
 }
 
 /**
@@ -623,11 +674,14 @@ export function PptxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
         value,
       )
       /*
-       * 只改动了一条 run → 那条换新文本、其余原样（格式都保住）；跨了多条 → 回传
-       * 整段一条 run，交给 `applyEditParagraphs` 的 `dominantRun` 处理（那正是
-       * 「整段重写」的语义）。
+       * 只改动了一条 run（含纯插入）→ 那条换新文本、其余原样（格式都保住）；
+       * 跨了多条 → 回传整段一条 run。**不带 srcRun**：`applyEditParagraphs` 对
+       * 「未带 srcRun 的单 run 替换多 run 段落」取 `dominantRun`（正文那条）的
+       * 格式，重写的新文字跟着正文走——这是上游写明的语义（「a rewrite of the
+       * whole paragraph is not a rewrite of its label」）。带 srcRun 会绕开它、
+       * 钉死在第一条上，还会把域 run 的身份（幻灯片编号那种）摊到新文字上。
        */
-      if (narrowed === null) return { runs: [{ text: value, srcRun: 0 }], srcPara: paraIndex }
+      if (narrowed === null) return { runs: [{ text: value }], srcPara: paraIndex }
       return {
         runs: narrowed.texts.map((text, runIndex) => ({ text, srcRun: runIndex })),
         srcPara: paraIndex,
@@ -1115,8 +1169,11 @@ export function PptxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
                   增大 / 减小字号用 **A+ / A− 这两个文字标签**，不画 SVG 图标：
                   这一对按钮的意思就是「比现在大一号的字」，字母 A 正是那个意思，
                   而 icons.tsx 里没有、也不该为此造一个形状含义更弱的图标。
-                  按钮的文字字号由 antd 的 `--ant-button-content-font-size-sm`
-                  给（`ToolbarButton` 就是 antd 的 `Button`），与相邻控件同档。
+                  这两个字的字号**不来自 antd 的按钮字号 token**：`children` 被
+                  `ToolbarButton` 包进 `.me-btn__icon`（那是图标字号槽，
+                  `--me-icon-size` = 13.5px），所以渲染出来略小于相邻按钮的文字
+                  （antd small 档是 14px）。视觉上无害，但机制是这一条——别按
+                  「它走 antd 字号」去推别的控件。
                 */}
                 <ToolbarButton
                   label={`增大字号 ${SIZE_STEP_PT}pt（整段）`}

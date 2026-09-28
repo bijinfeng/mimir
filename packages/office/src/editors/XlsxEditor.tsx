@@ -30,7 +30,7 @@
  * | 工作表页签 | `active`；换表时选中与草稿一起清掉 |
  * | 查找上一个 / 下一个 | 遍历 `view().rows[].cells[].text` → `selectCell` |
  * | 上一个 / 下一个公式格 | 遍历 `cell.formula` → `selectCell` |
- * | 复制这个格的文字 | `cellText(ref)` → 剪贴板（**失败如实报**） |
+ * | 复制这个格的文字 | 界面上显示的那串（`shown`，见 `copyCell`）→ 剪贴板（**失败如实报**） |
  * | 清空这个格 | `setCell(ref, '')` |
  * | 十字高亮 | 纯界面开关，不改文档 |
  * | 保存到库 | `session.save()` 成功后 `commit()` |
@@ -167,6 +167,10 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
    * `undefined`，直接调 `writeText` 会抛 TypeError。所以先把按钮禁用并把
    * 原因写在 tooltip 上，而不是让人点了才知道。
    *
+   * 这个判断**只有这一处**（`copyDisabledReason`）。`copyCell` 里不再判
+   * 第二遍——按钮禁用时点击事件根本到不了 handler，那里的分支是永远走不到
+   * 的死代码（写了却从不生效，比不写更糟）。
+   *
    * 渲染期读这个全局是安全的：它一次会话里不会变（安全上下文由地址决定），
    * 而这个包只在浏览器里跑（宿主是 Vite 的 SPA，没有服务端渲染）。
    */
@@ -241,10 +245,6 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
   const copyCell = async () => {
     if (selected === null) return
     const ref = `${columnLetters(selected.col)}${selected.row}`
-    if (!clipboardAvailable) {
-      setNote(`复制失败：${ref} 没有写进剪贴板——这个地址不是安全上下文（要 https 或 localhost）`)
-      return
-    }
     try {
       await navigator.clipboard.writeText(shown)
       setNote(`已复制 ${ref} 的文字（${shown.length} 字符）`)
@@ -510,6 +510,9 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
             label={source.saving ? '保存中…' : '保存到库'}
             primary
             disabled={!dirty || source.saving}
+            // 禁用必须给原因（DESIGN §8.4）：判据是两件事（没改动 / 正在保存），
+            // 不区分的话按钮灰着时用户只能猜。其余四种格式都给了。
+            disabledReason={source.saving ? '正在保存…' : '没有未保存的改动'}
             onClick={() => void save()}
           >
             <SaveIcon />
@@ -551,7 +554,14 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
               }}
               placeholder="输入内容后回车"
             />
-            <ToolbarButton label="应用" disabled={draft === null} onClick={apply}>
+            <ToolbarButton
+              label="应用"
+              disabled={draft === null}
+              // 禁用必须给原因（DESIGN §8.4）：`draft === null` 是「格里的字还没被
+              // 改过」，正是最需要解释的一档——按钮刚出现就是灰的，用户会以为坏了
+              disabledReason="没有改动，不用应用"
+              onClick={apply}
+            >
               应用
             </ToolbarButton>
             {wasFormula && (

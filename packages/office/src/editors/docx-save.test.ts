@@ -18,11 +18,12 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { Editor } from '@tiptap/core'
 import JSZip from 'jszip'
-import { addRowAfter, deleteRow, isInTable } from '@tiptap/pm/tables'
+import { addRowAfter, deleteRow, isInTable, selectedRect } from '@tiptap/pm/tables'
 import { editorExtensions } from '../../vendor/apps/docs/src/renderer/editor/extensions.js'
 import { setSelectionAlign } from '../../vendor/apps/docs/src/renderer/editor/direction.js'
 import { openDocx } from '../docx.js'
 import { runCommand } from '../shell/editor-commands.js'
+import { applyParagraphStyle, columnWidthsTwips, setColumnWidth } from './DocxEditor.js'
 
 const FIXTURE = join(
   import.meta.dirname,
@@ -379,6 +380,132 @@ describe('工具条改动仍然走补丁式保存', () => {
     const { bytes, session, editor } = await makeSession()
     const { changed } = await saveAndDiff(editor, session, bytes)
     expect(changed).toEqual([])
+    editor.destroy()
+  })
+})
+
+/*
+ * 列宽的**单位**是一条独立的回归线。
+ *
+ * 单元格上的 `colwidth` 属性存的是 **px**——解析时 `convert.ts:930` 写入，
+ * 保存时 `convert.ts:1236` 自己乘 15 换回 twips；而工具条的输入框说的是
+ * **twips**（显示时再除 20 变磅）。两头各要一次换算，漏掉任何一次都不会报错，
+ * 症状是「每次编辑把列宽放大 15 倍」：把一列存成 234 磅，文件里出现
+ * `<w:gridCol w:w="70200"/>`（3510 磅，远超页宽），重开控件再显示成 15.6 磅。
+ *
+ * 所以这条线用**往返**守：写入一个值 → 保存 → 检查文件 → 重新读回，三处一致
+ * 才算对。fixture 用 05-long-table.docx（kitchen-sink 的表没有 tblGrid，
+ * `colwidth` 是 null，走不到这条换算）。
+ */
+describe('列宽的单位（colwidth 属性是 px，界面是 twips）', () => {
+  const TABLE_FIXTURE = join(
+    import.meta.dirname,
+    '../../vendor/apps/docs/tests/pagination-corpus/docx/05-long-table.docx',
+  )
+
+  async function makeTableSession() {
+    const bytes = new Uint8Array(readFileSync(TABLE_FIXTURE))
+    const session = await openDocx(bytes)
+    const editor = new Editor({
+      element: document.createElement('div'),
+      extensions: editorExtensions,
+      content: session.content as never,
+    })
+    return { session, editor }
+  }
+
+  it('显示：文件里 2000 twips（100 磅）的列，控件读出来就是 100 磅（不是 6.7）', async () => {
+    const { editor } = await makeTableSession()
+    const at = findTop(editor, 'docTable')
+    editor.commands.setTextSelection(at + 4)
+    const widths = columnWidthsTwips(editor, selectedRect(editor.state))
+    expect(widths).not.toBeNull()
+    // 4 列各 2000 twips = 100 磅。px（133）被当 twips 用会显示成 6.65 磅
+    for (const width of widths!) {
+      expect(Math.abs(width / 20 - 100)).toBeLessThan(1)
+    }
+    editor.destroy()
+  })
+
+  it('往返：写入 3000 twips，文件里就是 w:w="3000"，重开读回还是 3000', async () => {
+    const { session, editor } = await makeTableSession()
+    const at = findTop(editor, 'docTable')
+    editor.commands.setTextSelection(at + 4)
+    setColumnWidth(editor, selectedRect(editor.state), 0, 3000)
+
+    const saved = await session.save(editor.getJSON() as never)
+    const zip = await JSZip.loadAsync(saved)
+    const xml = (await zip.file('word/document.xml')!.async('string')) ?? ''
+    // 写入的 twips 原样落盘。px 当 twips 存的话，保存会再乘 15 → 45000
+    expect(xml).toContain('<w:gridCol w:w="3000"/>')
+
+    // 重新读回还是那个值（这一步同时验证解析侧的换算）
+    const reopened = await openDocx(saved)
+    const editor2 = new Editor({
+      element: document.createElement('div'),
+      extensions: editorExtensions,
+      content: reopened.content as never,
+    })
+    const at2 = findTop(editor2, 'docTable')
+    editor2.commands.setTextSelection(at2 + 4)
+    const again = columnWidthsTwips(editor2, selectedRect(editor2.state))
+    expect(again).not.toBeNull()
+    expect(again![0]).toBe(3000)
+    editor.destroy()
+    editor2.destroy()
+  })
+})
+
+/*
+ * 段落样式下拉改的是**样式**，样式的落点是 `w:pStyle`。
+ *
+ * Tiptap 的 `setNode` 会把段落上**没点名的属性原样带过去**（实现里的
+ * `attributesToCopy`），所以换级别时必须显式清 `styleId`——不清的话画布换了
+ * 级别、文件里还是旧样式（实测：Heading1 选「标题 2」，保存后 XML 仍是
+ * `<w:pStyle w:val="Heading1"/>`，重开又变回 level 1）。kitchen-sink 里
+ * Heading1 与 Heading2 各恰好 1 个，计数可以当断言用。
+ */
+describe('段落样式落到文件（w:pStyle 跟着下拉走）', () => {
+  it('Heading1 选「标题 2」：styleId 清掉，文件里写 Heading2 不再残留 Heading1', async () => {
+    const { bytes, session, editor } = await makeSession()
+    const at = findTop(editor, 'docHeading')
+    expect(editor.state.doc.nodeAt(at)!.attrs.styleId).toBe('Heading1')
+    editor.commands.setTextSelection(at + 1)
+    applyParagraphStyle(editor, 'h2')
+    expect(editor.state.doc.nodeAt(at)!.attrs.level).toBe(2)
+    expect(editor.state.doc.nodeAt(at)!.attrs.styleId).toBeNull()
+
+    const { changed, xml } = await saveAndDiff(editor, session, bytes)
+    expect(changed).toEqual(['word/document.xml'])
+    expect((xml.match(/w:pStyle w:val="Heading1"/g) ?? []).length).toBe(0)
+    expect((xml.match(/w:pStyle w:val="Heading2"/g) ?? []).length).toBe(2)
+    editor.destroy()
+  })
+
+  it('Heading1 选「正文」：pStyle 整个消失', async () => {
+    const { bytes, session, editor } = await makeSession()
+    const at = findTop(editor, 'docHeading')
+    editor.commands.setTextSelection(at + 1)
+    applyParagraphStyle(editor, 'p')
+    expect(editor.state.doc.nodeAt(at)!.attrs.styleId).toBeNull()
+
+    const { changed, xml } = await saveAndDiff(editor, session, bytes)
+    expect(changed).toEqual(['word/document.xml'])
+    expect((xml.match(/w:pStyle w:val="Heading1"/g) ?? []).length).toBe(0)
+    editor.destroy()
+  })
+
+  it('Heading1 选「引用」：引用是直接格式，文件里也不能再是标题样式', async () => {
+    const { bytes, session, editor } = await makeSession()
+    const at = findTop(editor, 'docHeading')
+    editor.commands.setTextSelection(at + 1)
+    applyParagraphStyle(editor, 'quote')
+
+    const { changed, xml } = await saveAndDiff(editor, session, bytes)
+    expect(changed).toEqual(['word/document.xml'])
+    expect((xml.match(/w:pStyle w:val="Heading1"/g) ?? []).length).toBe(0)
+    // 引用的左线照旧落盘（它不是样式，是直接段落格式）
+    expect(xml).toMatch(/<w:pBdr><w:left [^>]*\/><\/w:pBdr>/)
     editor.destroy()
   })
 })

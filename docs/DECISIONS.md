@@ -3377,6 +3377,16 @@ CodeMirror 的实例与编辑历史一起消失，而重新挂载时 `SourceEdit
 上去；段落级属性由 `srcPara` 继承。`src/editors/PptxEditor.test.tsx` 有一条
 断言守着「两条 run 都还在、各自保留字号与颜色」。
 
+**改文字是同一个决定的另一半**（后续实测补全）：段落输入框改字走
+`editParagraphRuns`——公共前后缀圈出改动区间，落在一条 run 内只改那一条；
+**纯插入（段尾追加、段首补字、run 边界塞字）的区间是零宽的，与 0 条 run
+「相交」**，按相交数判断会误判成整段重写、把其余 run 压平（实测两条 run 的
+段落段尾加一个字符，保存后 `<a:r>` 由 2 条变 1 条）。落点规则取**插入点前
+一个字符所在的 run**（段尾 = 最后一条、run 边界 = 前一条、段首 = 第一条），
+软换行哨兵不当落点。跨了多条 run 的才是整段重写：不带 `srcRun` 回传，让
+`applyEditParagraphs` 按 `dominantRun` 跟正文走。段尾 / 段首 / run 边界三条
+回归测试各守「两条 run 都还在、各自的格式不变」。
+
 **决定三：做不到的事不假装能做。**
 
 | 不做 | 为什么 |
@@ -3904,6 +3914,8 @@ cssVar key；对子树里所有 antd 控件生效（正文区当前没有任何 
 - **待确认（未验证）**：`Input` / `Select` / `InputNumber` / `Segmented` 的计算
   高度在 happy-dom 下取不到（返回空串——与「跨元素自定义属性 / 边框不解析」
   同一类限制），所以「一行所有控件同高」只能进浏览器验收
+- **后来补上了**（见下面「真浏览器里复核过这两条修复」一节）：无头 Chrome 里
+  六类控件实测全部 24px——这一条已从「推导」变成「实测过」
 
 ### 落地（2026-09，与上面那份方案的三处出入）
 
@@ -3925,16 +3937,79 @@ cssVar key；对子树里所有 antd 控件生效（正文区当前没有任何 
 **样式边界**（`shell.css` 顶部那段变量表也按这个重写了）：
 
 - **删掉**：`.me-btn--primary*`（主按钮走 antd）、`.me-select`（13 个下拉全迁完）、
-  `.me-input` 的控件观感（高度/内边距/圆角/边框/焦点环——只剩 xlsx 那个绕过原语的
-  裸 input 在用它的**宽度/弹性**）、`--me-accent-hover`（唯一读者是
-  `.me-btn--primary:hover`，已随之删）
+  `.me-input` 的**整套观感**（高度/内边距/圆角/边框/底色/字号/焦点环——它的最后
+  一个原生消费者迁走之后只剩下挂在四个 antd `Input` 上、压过 small 档的坏作用）、
+  `--me-accent-hover`（唯一读者是 `.me-btn--primary:hover`，已随之删）
 - **保留**：`.me-btn` 整块（**两个未迁移触发器**的唯一样式来源，删了它们没有高度、
   没有 hover、键盘用户没有焦点环，而且不会有任何测试或类型报错）、`.me-btn__icon`
-  （`--me-icon-size` 的唯一读者）、`.me-input` 的宽度/弹性、其余的布局与弹层
+  （`--me-icon-size` 的唯一读者）、`.me-input--text` / `.me-input--num` / `.me-find__query`
+  （**只有宽度与弹性**，观感归 antd）、其余的布局与弹层
 - **新增**：`.me-tb[aria-pressed='true']` 与它的 `:hover:not(:disabled)` 伴随
   选择器（后者是必需的：antd 的 `.ant-btn-variant-text:hover:not(:disabled)` 是
-  (0,3,0)，不比它低）
+  (0,3,0)，不比它低）、`.me-sr-only`（图标档的可及名称）
 - `--me-control-height` **28 → 24px**，读者从三个变成两个
+
+**收尾时修掉的两处迁移回归**（第八、九阶段的核对发现，`git show :` 的暗存区
+里还没有这四行改动）：
+
+1. **面板里的 antd `Select` 点不中**：弹层 portal 到 body，而 `useToolbarPopup`
+   的 `pointerdown`（capture）只放过「面板或触发按钮内部」的按下——portal 出去的
+   弹层两个都不在，于是按下瞬间面板被关、选项随面板卸载，后面的 `click` 落空。
+   症状正是这个仓库最怕的那种「点了没反应」，界面不报错。修法：`insidePanel()`
+   用 antd 自己写的 `aria-controls` / `aria-owns`（`${id}_list`）把「面板里的控件
+   拥有的弹层」也算作面板内——不用类名，antd 改版也不失效。只影响 docx（那四个
+   面板内下拉）；`markdown` 的 6 个都在顶层。
+2. **`Segmented` 图标档没有可及名称**：`title` 挂在内层 label 的 div 上、可聚焦的
+   是 `<input type=radio>`，两者不关联——真 Chromium 的 AX 树里 6 个档全部
+   `name: ""`（把 title 挪到 input 上也仍然是空）。修法：文字用 `.me-sr-only`
+   塞进 label 元素（`clip-path` 藏，不是 `display:none`——后者会把名称一起去掉）。
+
+两处各补了一条回归断言，且都**实测过回退修复会变红**（面板那条按真浏览器的
+pointerdown → click 序列驱动；`Segmented` 那条断 `.me-sr-only` 在 label 里）。
+
+**真浏览器里复核过这两条修复**（无头 Chrome + CDP，真 DOM + 真 antd 样式，
+临时页面已删）：
+
+- 面板里的下拉：打开面板 → 打开 antd 弹层 → 按完整点击序列按下选项，
+  量到 `panelAliveAfterPointerDown: true`、选项点中后 `picked: "exact"`
+  （修复前这一档永远是 `null`）
+- `Segmented` 图标档：AX 树里三个 radio 的 `name` 分别是
+  `"</> 只看源码"` / `"◧ 只看预览"` / `"▤ 并列"`（修复前全是空串）
+- `aria-pressed`：两个按钮的树里只有真切换（「加粗」）带 `aria-pressed`，
+  一次性动作（「保存到库」）整个属性不出现
+
+顺带把「一行所有控件同高」这条**从推导变成了实测**（它此前一直标着「未验证：
+happy-dom 取不到计算高度」）：真 Chromium 下 antd Button / Select / Segmented /
+Input / InputNumber 外层与未迁移的 `.me-btn` **全部是 24px**，输入框摘掉
+`.me-input` 之后字号也从 12px 变成 14px（与相邻按钮同档——这正是删掉那段
+观感规则要修的不一致）。
+
+**同批修掉的不一致**（横向核对发现，都不是本次迁移引入的，而是「同一个契约在
+六种格式里做得不一样」）：
+
+- **禁用必须给原因**补了五处：`FindReplaceBar` 的四个按钮（上一个/下一个匹配、
+  替换这一个、全部替换——判据 `count === 0` 有两种情形，「还没输词」与「没找到」
+  分开说）、docx 与 xlsx 的「保存到库」（与 pptx/html/markdown/pdf 对齐）、
+  xlsx footer 的「应用」
+- **`aria-pressed` 只给真切换按钮**：`ToolbarButton` 原来无条件下发（默认
+  `false`），读屏把「保存到库」「上一页」这类一次性动作也报成「未按下的切换
+  按钮」（pdf 工具条上 15 个全中）。改成 `active` 不传时整个属性不渲染
+- `ToolbarTextArea` / `ToolbarTextAreaProps` 补进包的公共导出（同批的兄弟原语
+  全在，唯独它只从深路径 import）
+- pdf 常驻说明里的 `**这一页**` 改成「这一页」（JSX 文本里的星号会原样显示给
+  用户，同段另一处已经改掉了）
+
+**顺带补齐的两处原语缺口**（同一类耦合的最后两处）：
+
+- `ToolbarMenuFields` / `ToolbarMenuNote` 收成原语：`.me-menu__fields` /
+  `.me-menu__note` 原来住在 `shell.css` 里却由 docx 手写 `div` / `p`——正是
+  实现者自己用来论证「必须造 `ToolbarGridPicker`」的同一条理由（「样式一直在
+  shell.css，却没有原语产出这些类名」）。收完之后 `shell.css` 里**没有**
+  「定义了却只由调用方手写 markup 使用」的类了
+- xlsx 白名单不再空转：原夹具只有一张工作表，而页签（`.me-tab`）只在
+  `view.sheets.length > 1` 时渲染——于是「排除了 4 类」实际只验证了「这 4 类
+  都不存在」。新增一条给夹具接第二张空表的断言（页签确实渲染、确实是裸
+  button、白名单真的在过滤而不是碰巧没有）
 
 **契约测试的两条限制**（实测，不是推断）：
 

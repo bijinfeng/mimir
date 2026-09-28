@@ -2180,7 +2180,8 @@ happy-dom。happy-dom 会替换全局 `URL`，于是解析类测试里的
 | 复杂文种字体（`csFont`） | `w:rFonts` 的第三个槽位，要按 `w:rtl` 判断该不该写。中文知识库里命中率极低，做一半反而会把文档改乱 |
 | 表格样式（`tblStyleId`）/ 六边（`tblLook`） | 前者只渲染成 `data-tbl-style`（没有 CSS 规则命中它，同一个缺失的 `docStyleCss`），后者连渲染都没有。改了只动 XML |
 
-**三条会静默出错的收尾**（都有注释与测试守着）：
+**三条会静默出错的收尾**（标题是当时写的，**现在这组已是 6 条**——下面列的
+六项都各有注释与测试守着）：
 
 - 改行距倍数时**同时清掉 `lineRule`/`lineRawTwips`**——`lineRule='exact'` 在画布与
   保存两侧都优先于倍数，不清的话选了「1.5 倍」屏幕和文件都不变
@@ -2188,15 +2189,32 @@ happy-dom。happy-dom 会替换全局 `URL`，于是解析类测试里的
   三遍：`updateAttributes` 只认它拿到的类型名，找不到就 `return false`
 - **格式刷逐类 `removeMark(from, to, type)`**，绝不写不传 markType 的那一次：
   它会把区间上所有标记（链接、批注、修订、域代码）一起清掉
+- **表格列宽两头各换算一次**：单元格的 `colwidth` 属性存 **px**（解析
+  `convert.ts:930` 写入、保存 `convert.ts:1236` 自己 ×15 换回 twips），而输入框
+  说的是 **twips**（显示再 ÷20 变磅）。读要过 `pxToTwips`、写要过 `twipsToPx`
+  （`DocxEditor.tsx` 的 `columnWidthsTwips` / `setColumnWidth`），漏掉任何一次
+  不报错——症状是「每次编辑把列宽放大 15 倍」（实测：234 磅的列存成
+  `<w:gridCol w:w="70200"/>`，重开控件显示 15.4 磅）。往返测试守着
+  （`docx-save.test.ts`）
+- **换段落样式必须显式 `styleId: null`**：Tiptap 的 `setNode` 会把段落上没点名
+  的属性原样带过去（实现里的 `attributesToCopy`），不清的话画布换了级别、文件
+  里的 `w:pStyle` 还是旧样式（`generate.ts:1742` 优先写 `block.styleId`），重开
+  又变回去（实测：Heading1 选「标题 2」，存出来仍是 `w:val="Heading1"`）
+- **格式刷取源取「选区区间里第一个文本节点」的 marks**，不是
+  `$from.marks()`：后者在位置正好压在两个节点的边界上时返回**前一个节点**的
+  marks——源选区起点正好是格式区间起点（加粗字前有个没加粗的字）时它是**空**
+  的，刷子以空格式举起，点目标反而把目标的格式抹掉
 
 `pageBreakBefore` **不在**清除格式的名单里：正文里的分页符就是它（`page-break.ts`
 在段首只打属性、不插字符），清掉等于删掉用户插的分页符。
 
 **测试**（都在 `packages/office/src/editors/`）：`docx-toolbar.test.ts`（18 条，
-模型层）、`docx-toolbar-render.test.tsx`（9 条，挂真组件树点真按钮，含「每个按钮
-都看得见内容」「无障碍名称不重复」两条渲染契约）、`docx-find.test.ts`（12 条）、
-`docx-save.test.ts`（17 条，**保存保真**：每个新命令都断言只改
-`word/document.xml` 且真的写进 XML）。
+模型层）、`docx-toolbar-render.test.tsx`（15 条，挂真组件树点真按钮，含「每个按钮
+都看得见内容」「无障碍名称不重复」两条渲染契约、格式刷取源、以及保存按钮的
+禁用原因）、`docx-find.test.ts`
+（12 条）、`docx-save.test.ts`（22 条，**保存保真**：每个新命令都断言只改
+`word/document.xml` 且真的写进 XML；列宽一条是**往返**——写入、保存、重开读回
+三处一致）。
 
 **在真浏览器里核对过**（无头 Chrome，真 DOM + 真 CSS）：七个宽度下工具条换行而
 不溢出（`scrollWidth === clientWidth`）、39 个图标都有非零尺寸、点「引用」与
@@ -2431,6 +2449,20 @@ MIT/171KB）。上游的另一个依赖 `opentype.js` **没有被拉进来**—�
 每条 run 带自己的 `srcRun` 与原文，只把要改的格式项**追加**上去
 （`PptxEditor.tsx` 的 `applyFormat`），`src/editors/PptxEditor.test.tsx` 有
 一条用例守着「两条 run 都还在、各自保留字号与颜色」。
+
+**改文字同一条规矩（`editParagraphRuns`）**：段落输入框回传整段纯文本，取
+新旧文本的公共前后缀得到改动区间——区间落在一条 run 内就只改那一条；跨了
+多条才是真正的整段重写（不带 `srcRun` 回传，让 `applyEditParagraphs` 取
+`dominantRun`，重写的新文字跟着正文走；带 `srcRun` 会钉死在第一条上，还会把
+域 run 的身份——幻灯片编号那种——摊到新文字上）。**纯插入要单独说**：段尾
+追加、段首补字、run 边界塞字的改动区间是**零宽**的，与 0 条 run「相交」，
+按相交数判断会误判成整段重写（实测两条 run 的段落段尾加一个字符，保存后
+`<a:r>` 由 2 条变 1 条，第二条的 sz/颜色没了——症状与压平完全相同）。落点
+规则：插入点**前一个字符所在的 run**（段尾 = 最后一条、run 边界 = 前一条、
+段首 = 第一条）；软换行哨兵不是文字，落点是哨兵右缘且下一条是普通文字时改落
+下一条的开头，否则哨兵被混进新字符、逐 run 对齐失效退化成重建。回归测试在
+`PptxEditor.test.tsx`：段尾追加 / 段首插入 / run 边界插入三条，各断言「两条
+run 都还在、各自的格式不变」。
 
 **run 的格式项只在真变时写字节**：`applyEditParagraphs` 对
 bold/italic/underline/strike/fontSize/fontFamily/color 逐个比「与旧 run 是否

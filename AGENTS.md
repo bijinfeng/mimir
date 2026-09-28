@@ -149,9 +149,16 @@ SQLite 路径同理：FTS5 的 `unicode61` 分词器也不认中文词边界，�
 | 第二次保存把第一次的改动回滚 | pptx 的 `save()` 成功后必须 `commit()`——否则下次拼字节时干净元素回填的是**旧**字节，而两次保存都报成功 |
 | pptx 编辑后画布不更新 | 编辑是就地改模型的，`slides()` 返回同一个数组，React 的 `useMemo` 依赖它不会重算。要用 `view()` 的**不可变快照**当依赖 |
 | pptx 点画布没反应 | 渲染的 SVG 少了 `data-element-id`（事件代理靠它把点击映射回模型元素）。漏掉是静默的——看着像「这个元素不能编辑」 |
+| **pptx 段尾打字（或段首 / run 边界插字），同段其余 run 的格式没了** | 纯插入的改动区间是**零宽**的，与 0 条 run「相交」——按「区间与几条 run 相交」判断会误判成整段重写、把整段压成一条 run（实测两条 run 的段落段尾加一个字符，`<a:r>` 由 2 变 1）。落点要单独算：插入点**前一个字符所在的 run**（`PptxEditor.tsx` 的 `editParagraphRuns` / `insertIntoRuns`），软换行哨兵不当落点；跨了多条 run 的才是整段重写（不带 `srcRun`，让 `dominantRun` 跟正文走）。`PptxEditor.test.tsx` 的段尾 / 段首 / run 边界 / 软换行四条用例守着 |
 | 改了 A1，D7 也跟着变 | xlsx 的**共享字符串**被就地改写了（`<c t="s"><v>17</v></c>` 里的 17 被多个格子共用）。新文本必须写成内联字符串（`packages/office/src/xlsx-edit.ts`） |
 | 改完格子又变回旧值 | xlsx 的公式格：只换了 `<v>` 而留着 `<f>`，Excel 打开时按公式重算。覆盖时必须连 `<f>` 一起清 |
 | xlsx 新写的格跑到行首 | 插入位置要按**列号**比，而列号要从 `r="A5"` 里只取列字母。我们的预览按 `r` 定位所以照常显示，而 Excel 要求 `<c>` 按列升序 |
+| 表格里改列宽，越改越离谱 | 单元格的 `colwidth` 属性存的是 **px**（解析 `convert.ts:930` 写入、保存 `:1236` 自己 ×15 换回 twips），而输入框说的是 twips——读要过 `pxToTwips`、写要过 `twipsToPx`（`DocxEditor.tsx`），漏掉任何一次就是「每次编辑把列宽放大 15 倍，重开显示又缩小 15 倍」 |
+| 段落样式换了级别，重开又变回去 | Tiptap 的 `setNode` 会把没点名的属性原样带过去（`attributesToCopy`）——换样式必须显式 `styleId: null`，否则文件里的 `w:pStyle` 还是旧样式（`generate.ts:1742` 优先写它） |
+| 格式刷点上去反而把格式抹掉 | 源选区起点正好压在格式区间起点上时，`$from.marks()` 返回**前一个节点**的 marks（实测为空）——要取**选区区间里第一个文本节点**的 marks |
+| 菜单面板里的下拉「点一档什么也不会发生」 | 面板里的 antd `Select` 打开后弹层 **portal 到 body**，而关面板的 `pointerdown`（capture）只认「面板或触发按钮内部」——按下瞬间面板被关、选项随面板卸载，之后的 `click` 落空，界面不报错。`useToolbarPopup` 的 `insidePanel()` 要用 antd 自己写的 `aria-controls` / `aria-owns` 把「面板里控件拥有的弹层」也算作面板内（`EditorShell.tsx`）。**测试也要按真序列驱动**（pointerdown → click）：只派发 click 时 React 会批处理，`onChange` 照样发出，这个 bug 会被测成通过 |
+| 图标档的按钮读屏只念「单选按钮 1 of 3」 | antd `Segmented` 把 `title` 挂在内层 label 的 div 上，而可聚焦的是 `<input type=radio>`——两者不关联，`title` 在这里根本不当名称用（真 Chromium 的 AX 树实测 `name: ""`）。文字要用 `.me-sr-only`（`clip-path`，**不是** `display:none`）塞进 label 元素里 |
+| 输入框比同排的按钮小一号 | `.me-input` 那套手写观感（height / padding / border / 字号）挂在 antd 的 `Input` 上，与 antd 的 `:where(…).ant-input` 特异性相同而项目样式更靠后——实测同一排里输入框 12px / 按钮 14px、圆角 4 对 8。控件观感一律归 `--ant-*`，这个类已删（只剩宽度/弹性类） |
 
 完整清单见 `docs/TECH.md` §10。
 

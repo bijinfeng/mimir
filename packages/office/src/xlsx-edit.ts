@@ -77,6 +77,8 @@ export interface XlsxEditSession {
    *
    * 与 `PptxEditSession.view()` 同一条理由：编辑是就地改的，直接拿
    * `workbook()` 当 React 依赖不会触发重算（引用没变），界面会停在旧内容上。
+   * 改动后换新对象要换到**编辑器会 keyed 的那层**（sheet 对象也换新）——
+   * 只换外层的话，keyed 在切片上的 `useMemo` 依旧不重算，见实现里的说明。
    */
   view(): XlsxWorkbook
   /** 这个格子现在的文字（空串表示空或不存在） */
@@ -174,7 +176,20 @@ export async function openXlsxForEdit(bytes: Uint8Array): Promise<XlsxEditSessio
   return {
     workbook: () => workbook,
     view() {
-      cached ??= { sheets: workbook.sheets }
+      /**
+       * 失效要失效到**编辑器真正当依赖的那一层**。
+       *
+       * 编辑器（`XlsxEditor`）把 `view.sheets[active]` 这一个 sheet 对象当
+       * `useMemo` 的依赖——查找命中与公式格列表都 keyed 在它上。只换外层
+       * 对象的话，这个切片的引用编辑前后是**同一个**，依赖判定相等、派生
+       * 列表不重算（实测：编辑一个格之后查找计数停在旧值，唯一的公式格被
+       * 覆盖成文字后跳转按钮仍可点）。所以改动后把每张表也换成新对象。
+       *
+       * **浅拷贝就够**：行与格是渲染期直接读的，要的本来就是最新值；身份
+       * 只需要变到「有依赖 keyed 在的那一层」。没改动时仍返回同一个对象
+       * （`cached ??=` 不动），所以它照样能当 React 依赖。
+       */
+      cached ??= { sheets: workbook.sheets.map((sheet) => ({ ...sheet })) }
       return cached
     },
 
@@ -240,9 +255,13 @@ export async function openXlsxForEdit(bytes: Uint8Array): Promise<XlsxEditSessio
 
     commit() {
       /**
-       * 把改过的 XML 烧回 `entries`，并**重新解析**模型——下一轮编辑要基于
-       * 新内容（列宽、合并单元格、行号都可能因为这次改动而不同），拿旧模型
-       * 继续改会与新 XML 脱节。
+       * 把改过的 XML 烧回 `entries` 并让 `view()` 重算——**模型不重解析**
+       * （`workbook` 是打开时 `readXlsx` 一次的常量）。
+       *
+       * 为什么可以：`applyToModel` 把内存模型与 XML 补丁**同步改**了，所以
+       * 行号、合并、列宽在两边一致（测试「两次保存都保留各自的改动」守着这条）。
+       * **别信旧注释里那句「重新解析」**——将来若有人依赖「commit 之后模型已
+       * 按新 XML 重推导」这件事，会引入静默错位；要那样就得真的在这里解析一次。
        */
       for (const [path, xml] of patched) entries.set(path, encode(xml))
       patched.clear()
