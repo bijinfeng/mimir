@@ -39,6 +39,14 @@ catalog:
   react: ^19.3.0
   react-dom: ^19.3.0
 
+  # antd 由宿主（apps/web）与编辑器包（packages/office）共用，**必须同一份**：
+  # ConfigProvider 的 SizeContext / ThemeContext / cssVar 注册表都是模块级
+  # 单例，出现第二份拷贝时症状是「某些控件不吃 componentSize、弹层不吃主题」，
+  # 不报错。packages/office 把它声明成 peerDependency 就是为了在结构上保证
+  # 只有一个实例（与 react 同一种做法）。
+  # 升版本只改这里：两边的 package.json 都写 `catalog:`。
+  antd: ^6.6.4
+
   # DOM 测试环境。两个包都要用它（web 的组件测试、office 的外壳测试），
   # 且两者的 DOM 行为必须一致——否则同一段组件代码在两处得到不同结论
   happy-dom: ^20.0.0

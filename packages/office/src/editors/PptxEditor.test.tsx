@@ -1,0 +1,821 @@
+/**
+ * @vitest-environment happy-dom
+ *
+ * pptx 编辑器的**按钮 → 命令**契约。
+ *
+ * ## 为什么必须有这一组（而不是只测模型层）
+ *
+ * 这个仓库最怕的失效是「**点了没反应，也不报错**」。工具条上的每一个按钮都
+ * 只是「拼一份 `EditParagraph[]` 交给 `session.setText`」，写错一处（格式项名字
+ * 拼错、`srcRun` 漏了、`slideIndex` 传成本页序号）不会抛错——界面上看不出
+ * 任何异常，文件里那一项却没写进去。
+ *
+ * 所以这里**挂真的组件、点真的按钮**，然后去保存出来的字节里读 XML：
+ *
+ *   - 断言 `b="1"` / `i="1"` / `u="sng"` / `strike="sngStrike"` / `baseline` /
+ *     `sz` / `<a:latin typeface>` / `<a:srgbClr val>` 真的落到了那一条 run 上
+ *   - 断言**同段兄弟 run 的格式一个都没动**（「加粗标签 + 普通正文」那种段落
+ *     被压成一条 run 是这个界面最容易踩的坑，文件头写着实测过程）
+ *   - 断言查找到的元素在别的页上时会被带过来（跨页匹配），而替换之后原文没了
+ *
+ * 用 `dangerouslySetInnerHTML` 注入的 SVG 在 happy-dom 里是真节点，所以点画布
+ * 选中元素这一步走的也是**与浏览器里同一条路**（事件代理 + `data-element-id`）。
+ */
+
+import { readFileSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { act } from 'react'
+import { createRoot } from 'react-dom/client'
+import { afterEach, describe, expect, it } from 'vitest'
+import JSZip from 'jszip'
+import { PptxEditor } from './PptxEditor.js'
+import { editableElements, openPptxForEdit, textOfElement } from '../pptx.js'
+import { pickSelectOption } from '../shell/antd-test-dom.js'
+import type { EditorIo } from './types.js'
+
+/**
+ * 夹具路径**不能用 `new URL(…, import.meta.url)`**：这个文件跑在 happy-dom 下，
+ * 它替换了全局的 `URL`，`readFileSync` 会拒收那个对象（`The URL must be of
+ * scheme file`）——`vitest.config.ts` 顶部就写着这条，所以解析类的测试默认不进
+ * DOM 环境。这里要 DOM（要挂真组件），于是路径走 `node:url` + `node:path`。
+ */
+const HERE = dirname(fileURLToPath(import.meta.url))
+const fixture = (name: string) => resolve(HERE, '../../tests/fixtures', name)
+
+function load(name: string): Uint8Array {
+  return new Uint8Array(readFileSync(fixture(name)))
+}
+
+/* ── 挂载 / 交互 ─────────────────────────────────────────────── */
+
+const mounted: { unmount: () => void }[] = []
+
+afterEach(() => {
+  for (const item of mounted) item.unmount()
+  mounted.length = 0
+})
+
+/** 写回时收到的字节（保存按钮按下去才有内容） */
+interface Recorder {
+  saved: Uint8Array[]
+}
+
+/**
+ * 把挂起的工作推进完（直到 `done` 为真或超时）。
+ *
+ * **不能只 `await Promise.resolve()`**：读原件与解析 pptx 走的是真 promise 链
+ * （内部有 `setImmediate` 一类），光弹微任务队列推不动它——实测症状是画布一直
+ * 不出现。所以每轮让出一次宏任务。
+ */
+async function settle(done: () => boolean): Promise<void> {
+  for (let i = 0; i < 60 && !done(); i += 1) {
+    await act(async () => {
+      await new Promise((tick) => setTimeout(tick, 2))
+    })
+  }
+}
+
+/**
+ * 挂载编辑器并等到它渲染出 SVG。
+ *
+ * `useSource` 与 `useParsed` 都是异步的（读字节 → 解析），所以要等两段 promise
+ * 各自落地；`settle` 负责这件事。
+ */
+async function mountEditor(
+  bytes: Uint8Array,
+  options: { record?: Recorder } = {},
+): Promise<{ host: HTMLElement; record: Recorder }> {
+  const record: Recorder = options.record ?? { saved: [] }
+  const io: EditorIo = {
+    load: async () => bytes,
+    save: async (next) => {
+      record.saved.push(next)
+    },
+  }
+  const host = document.createElement('div')
+  document.body.append(host)
+  const root = createRoot(host)
+  ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+  await act(async () => {
+    root.render(<PptxEditor documentId="doc-1" io={io} />)
+  })
+  await settle(() => host.querySelector('.mimir-pptx-slide svg') !== null)
+  expect(host.querySelector('.mimir-pptx-slide svg'), '画布没有渲染出来').not.toBeNull()
+  mounted.push({
+    unmount: () => {
+      act(() => root.unmount())
+      host.remove()
+    },
+  })
+  return { host, record }
+}
+
+/** 按无障碍名称找工具条 / 次工具条上的按钮 */
+function button(host: HTMLElement, label: string): HTMLButtonElement {
+  const found = [...host.querySelectorAll('button')].find(
+    (item) => item.getAttribute('aria-label') === label,
+  )
+  if (found === undefined) throw new Error(`没有名为「${label}」的按钮`)
+  return found as HTMLButtonElement
+}
+
+function click(element: Element): void {
+  act(() => {
+    element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+  })
+}
+
+/** 点画布上的第 `index` 个元素（走事件代理，与浏览器里同一条路） */
+function selectOnCanvas(host: HTMLElement, index = 0): string {
+  const nodes = [...host.querySelectorAll('.mimir-pptx-slide [data-element-id]')]
+  const node = nodes[index]
+  if (node === undefined) throw new Error(`画布上没有第 ${index} 个元素`)
+  click(node)
+  const id = node.getAttribute('data-element-id')
+  if (id === null) throw new Error('元素没有 data-element-id')
+  return id
+}
+
+async function saveAndRead(host: HTMLElement, record: Recorder, entry: string): Promise<string> {
+  const before = record.saved.length
+  click(button(host, '保存到库'))
+  /*
+   * 等**这一次**保存（计数增长）而不是「有字节了」：一个测试里保存两次时，
+   * 后者会立刻满足「有字节了」并读到上一次的结果——那样断言看着通过、实际
+   * 检查的是旧字节。踩过。
+   */
+  await settle(() => record.saved.length > before)
+  const bytes = record.saved.at(-1)
+  if (bytes === undefined || record.saved.length <= before) {
+    throw new Error('保存没有写回新的字节')
+  }
+  const zip = await JSZip.loadAsync(bytes)
+  const file = zip.file(entry)
+  if (!file) throw new Error(`zip 里没有 ${entry}`)
+  return file.async('string')
+}
+
+/** 某个元素名对应的那个 `<p:sp>` 的 XML 片段（按 name="…" 定位，够用且稳） */
+function elementXml(xml: string, name: string): string {
+  const at = xml.indexOf(`name="${name}"`)
+  if (at < 0) throw new Error(`XML 里没有 name="${name}"`)
+  const start = xml.lastIndexOf('<p:sp>', at)
+  const end = xml.indexOf('</p:sp>', at)
+  return xml.slice(start, end)
+}
+
+/**
+ * 带着文字的 `<a:r>` 片段（**连 rPr 的子节点**，不只开标签的属性）。
+ *
+ * 颜色与字体在 rPr 里是**子节点**（`<a:solidFill><a:srgbClr val="…"/>`、
+ * `<a:latin typeface="…"/>`），只取开标签会看不到它们——断言就会退化成
+ * 「只看字形属性」，而颜色/字体是不是被顺带改坏了恰好是这里要守的。
+ *
+ * 只认 `<a:r>`：`<a:endParaRPr>` 之类的段落标记不是 run，把它算进来会让
+ * 「第几条 run」对不上。
+ */
+function textRunBlocks(spXml: string): string[] {
+  return [...spXml.matchAll(/<a:r>([\s\S]*?)<\/a:r>/g)].map((match) => match[1]!)
+}
+
+/**
+ * 上游那份 5 页文稿，第 3 页的标题被改造成「加粗标签 `Key ` + 普通正文
+ * `Results`」两 run（`sz=3600 b=1` 深灰 + `sz=2400` 红字）。
+ *
+ * 为什么要造它：**混合格式的段落**是这个界面最容易静默出错的地方——无论是
+ * 「每段回传一条 run」还是「改字顺手压平 run」，症状都一样：保存成功、文字也对，
+ * 只有格式没了。最小夹具（每段一条 run）根本触发不到。
+ */
+async function twoRunUpstreamDeck(): Promise<Uint8Array> {
+  const zip = await JSZip.loadAsync(load('upstream/01_standard_business.pptx'))
+  const slide = await zip.file('ppt/slides/slide3.xml')!.async('string')
+  const twoRun = slide.replace(
+    /<a:r><a:rPr sz="3600" b="1">[\s\S]*?<\/a:r>/,
+    '<a:r><a:rPr sz="3600" b="1"><a:solidFill><a:srgbClr val="1F2937"/></a:solidFill></a:rPr><a:t>Key </a:t></a:r>' +
+      '<a:r><a:rPr sz="2400"><a:solidFill><a:srgbClr val="C0392B"/></a:solidFill></a:rPr><a:t>Results</a:t></a:r>',
+  )
+  expect(twoRun).not.toBe(slide)
+  zip.file('ppt/slides/slide3.xml', twoRun)
+  return zip.generateAsync({ type: 'uint8array' })
+}
+
+/** 用「跳到第几页」输入框翻到某一页（走 `ToolbarNumberField` 的契约：回车提交） */
+async function jumpToPage(host: HTMLElement, page: number): Promise<void> {
+  const field = host.querySelector<HTMLInputElement>('input[aria-label="跳到第几页"]')
+  if (field === null) throw new Error('没有跳页输入框')
+  act(() => {
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+    setter!.call(field, String(page))
+    field.dispatchEvent(new Event('input', { bubbles: true }))
+    field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+  })
+  await settle(
+    () =>
+      host.querySelector('.mimir-editor__status')?.textContent?.includes(`第 ${page} /`) === true,
+  )
+}
+
+/* ── 用例 ───────────────────────────────────────────────────── */
+
+describe('pptx 工具条：每个按钮都真的改了元件', () => {
+  it('加粗整段：两段的 b 一起变（第一段本来就有 b="1"）', async () => {
+    /*
+     * 夹具的第一段是 `b="1" sz="2800"` 的红字、第二段是 `sz="1200" i="1"`。
+     * 两段取值不一致 → 按钮不该亮着（`everyRun` 的判据）；点一次把整段都打开。
+     */
+    const { host, record } = await mountEditor(load('formatted-text.pptx'))
+    // 夹具的第一个元素是「加粗大字 / 斜体小字」两段（`formatted-text.pptx`）
+    selectOnCanvas(host, 0)
+    expect(button(host, '加粗（整段）').getAttribute('aria-pressed')).toBe('false')
+
+    click(button(host, '加粗（整段）'))
+    const after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    const runs = textRunBlocks(elementXml(after, 'TextBox 1'))
+    // 两段都真的加粗了
+    expect(runs[0]).toContain('b="1"')
+    expect(runs[1]).toContain('b="1"')
+    // 第二段原有的斜体与字号、第一段的颜色一个字都没动
+    expect(runs[1]).toContain('i="1"')
+    expect(runs[1]).toContain('sz="1200"')
+    expect(runs[0]).toContain('sz="2800"')
+    expect(runs[0]).toContain('<a:srgbClr val="C0392B"/>')
+  })
+
+  it('加粗再点一次：整段取消（写 b="0" 而不是删属性）', async () => {
+    const { host, record } = await mountEditor(load('formatted-text.pptx'))
+    selectOnCanvas(host, 0)
+    click(button(host, '加粗（整段）'))
+    await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    // 现在两段都是加粗的 → 按钮亮着
+    expect(button(host, '加粗（整段）').getAttribute('aria-pressed')).toBe('true')
+
+    click(button(host, '加粗（整段）'))
+    const after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    const runs = textRunBlocks(elementXml(after, 'TextBox 1'))
+    // `b="0"` 是**显式取消**（覆盖母版/版式继承来的加粗），不是删掉属性
+    expect(runs[0]).toContain('b="0"')
+    expect(runs[1]).toContain('b="0"')
+  })
+
+  it('倾斜整段：i="1"，同段的字号与颜色不受影响', async () => {
+    const { host, record } = await mountEditor(load('formatted-text.pptx'))
+    selectOnCanvas(host, 0)
+    click(button(host, '倾斜（整段）'))
+    const after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    const runs = textRunBlocks(elementXml(after, 'TextBox 1'))
+    expect(runs.filter((item) => item.includes('i="1"')).length).toBe(2)
+    // 第一段的 b="1" 与颜色没被这次改动碰过
+    expect(runs[0]).toContain('b="1"')
+    expect(runs[0]).toContain('<a:srgbClr val="C0392B"/>')
+    expect(runs[0]).toContain('sz="2800"')
+  })
+
+  it('下划线 / 删除线：u="sng" 与 strike="sngStrike"', async () => {
+    // 这个夹具的 run **完全没有 rPr**（字号与字体全从版式继承）→ 走的是
+    // `patchRun` 的「注入一个 rPr」分支，正好是另一条代码路径
+    const { host, record } = await mountEditor(load('title-layout.pptx'))
+    selectOnCanvas(host, 0)
+    click(button(host, '下划线（整段）'))
+    click(button(host, '删除线（整段）'))
+    const after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    const runs = textRunBlocks(elementXml(after, 'Title 1'))
+    expect(runs[0]).toContain('u="sng"')
+    expect(runs[0]).toContain('strike="sngStrike"')
+    // 字号是继承来的（原 run 没有 sz），不该因为改字形被烧进字节
+    expect(runs[0]).not.toContain('sz=')
+  })
+
+  it('上标 / 下标：baseline="30000" 与 "-25000"，再点一次回到 0', async () => {
+    const { host, record } = await mountEditor(load('title-layout.pptx'))
+    selectOnCanvas(host, 0)
+    click(button(host, '上标（整段）'))
+    let after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    expect(textRunBlocks(elementXml(after, 'Title 1'))[0]).toContain('baseline="30000"')
+
+    // 取消（同一页、同一个选中）：写的是显式的 0，而不是删掉属性
+    click(button(host, '上标（整段）'))
+    after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    expect(textRunBlocks(elementXml(after, 'Title 1'))[0]).toContain('baseline="0"')
+
+    click(button(host, '下标（整段）'))
+    after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    expect(textRunBlocks(elementXml(after, 'Title 1'))[0]).toContain('baseline="-25000"')
+  })
+
+  it('清除字形：五项一次性清零，字号与字体不动', async () => {
+    const { host, record } = await mountEditor(load('formatted-text.pptx'))
+    selectOnCanvas(host, 0)
+    click(button(host, '清除字形（加粗、倾斜、下划线、删除线、上下标；不动字号、字体与颜色）'))
+    const after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    const runs = textRunBlocks(elementXml(after, 'TextBox 1'))
+    expect(runs[0]).toContain('b="0"')
+    expect(runs[1]).toContain('i="0"')
+    /*
+     * 下划线与删除线**不写属性**：原件里本来就没有 `u` / `strike`，而
+     * `generate.ts` 的 `patchRunProps` 只在「原本有属性」或「显式要求 none」
+     * 时才写 `u="none"` / `strike="noStrike"`——没有的东西不必声明没有。
+     * 这里守的正是「不乱写」：多写一个 `u="none"` 会让这一条 run 从
+     * 「继承版式的下划线」变成「明确没有下划线」，那是**改了原件的意思**。
+     */
+    expect(runs[0]).not.toContain('u=')
+    expect(runs[0]).not.toContain('strike=')
+    // 字号与颜色是「清除字形」明确不碰的两项
+    expect(runs[0]).toContain('sz="2800"')
+    expect(runs[0]).toContain('<a:srgbClr val="C0392B"/>')
+  })
+
+  it('字号：多档时不显示一个数字（那个数字不是文档里的值）', async () => {
+    const { host } = await mountEditor(load('formatted-text.pptx'))
+    selectOnCanvas(host, 0)
+    // 两段是 28pt 与 12pt → 没有「当前字号」这回事
+    expect(host.querySelector('input[aria-label="字号（pt，整段）"]')).toBeNull()
+    expect(host.textContent).toContain('多档字号')
+  })
+
+  it('字号：写 sz="2000"，并保持原有的字形与颜色', async () => {
+    const { host, record } = await mountEditor(load('title-layout.pptx'))
+    // 第二个元素是正文占位符，两段都是 32pt（继承自版式）
+    selectOnCanvas(host, 1)
+    const field = host.querySelector<HTMLInputElement>('input[aria-label="字号（pt，整段）"]')
+    expect(field, '两段字号一致时应当显示输入框').not.toBeNull()
+    expect(field!.value).toBe('32')
+
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+      setter!.call(field, '20')
+      field!.dispatchEvent(new Event('input', { bubbles: true }))
+      field!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    })
+    const after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    const sp = elementXml(after, 'Content Placeholder 2')
+    const runs = textRunBlocks(sp)
+    expect(runs[0]).toContain('sz="2000"')
+    expect(runs[1]).toContain('sz="2000"')
+    /*
+     * 段落属性（这里的项目符号）**不是**写在幻灯片里的：`•` 来自母版的
+     * `bodyStyle`（`slideMaster1.xml` 里有 `<a:buChar char="•"/>`，而这张
+     * `slide1.xml` 的 `<a:lstStyle/>` 是空的）。所以「没丢」在这里的判据是
+     * **没有凭空写出一段 `<a:pPr>`**——写了就等于把母版的符号烧进这一页，
+     * 那是「改字号顺带改了段落属性」，而它不是这次动作的意思。
+     */
+    expect(sp).not.toContain('<a:pPr')
+    expect(runs[0]).toContain('<a:t>第一条</a:t>')
+  })
+
+  it('增大 / 减小字号：按每条 run 自己的值 ±2pt', async () => {
+    const { host, record } = await mountEditor(load('formatted-text.pptx'))
+    selectOnCanvas(host, 0)
+    click(button(host, '增大字号 2pt（整段）'))
+    let after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    let runs = textRunBlocks(elementXml(after, 'TextBox 1'))
+    // 28 → 30，12 → 14（两段各按自己的值走）
+    expect(runs[0]).toContain('sz="3000"')
+    expect(runs[1]).toContain('sz="1400"')
+
+    click(button(host, '减小字号 2pt（整段）'))
+    after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    runs = textRunBlocks(elementXml(after, 'TextBox 1'))
+    expect(runs[0]).toContain('sz="2800"')
+    expect(runs[1]).toContain('sz="1200"')
+  })
+
+  it('字体：三个槽位都写（latin / ea / cs）', async () => {
+    const { host, record } = await mountEditor(load('title-layout.pptx'))
+    selectOnCanvas(host, 0)
+    // antd 的下拉要打开弹层才渲染选项，选中一项是**点它**（不是改 value 再 change）
+    pickSelectOption(host, '字体（整段，中英文一起换）', '微软雅黑')
+
+    const after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    const sp = elementXml(after, 'Title 1')
+    expect(sp).toContain('<a:latin typeface="微软雅黑"/>')
+    expect(sp).toContain('<a:ea typeface="微软雅黑"/>')
+    expect(sp).toContain('<a:cs typeface="微软雅黑"/>')
+  })
+
+  it('字体颜色：写 srgbClr，并把主题链接标记一起清掉', async () => {
+    const { host, record } = await mountEditor(load('title-layout.pptx'))
+    selectOnCanvas(host, 0)
+    click(button(host, '字体颜色（整段）'))
+    // 面板里的色块：按 option 的 label 找
+    const cell = [...host.querySelectorAll('button[aria-label]')].find(
+      (item) => item.getAttribute('aria-label') === '红',
+    )
+    expect(cell, '调色板里应当有「红」').not.toBeUndefined()
+    click(cell!)
+
+    const after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    const sp = elementXml(after, 'Title 1')
+    expect(sp).toContain('<a:srgbClr val="FF0000"/>')
+    // 颜色是继承来的（colorInherited），改色之后不该还留着「主题色」的语义
+    expect(sp).not.toContain('schemeClr')
+  })
+
+  it('在两 run 的段落里改字：只动那一条，标签的加粗与字号都还在', async () => {
+    /*
+     * 这一条守的是**段落输入框**那条路（与格式按钮无关）。原先的写法是「每段回传
+     * 一条 run」，于是在正文里改一个字会把同段的两条 run 压成一条、取
+     * `dominantRun` 的格式——标签的 `b="1" sz="3600"` 悄悄没了，而保存成功、
+     * 文字也对。修法是取新旧文本的公共前后缀，只改真正变动的那条 run。
+     */
+    const deck = await twoRunUpstreamDeck()
+    const { host, record } = await mountEditor(deck)
+    await jumpToPage(host, 3)
+    const label = [...host.querySelectorAll('.mimir-pptx-slide [data-element-id]')].find((node) =>
+      node.textContent?.includes('Key'),
+    )!
+    expect(label).toBeDefined()
+    click(label)
+
+    // 第一个段落输入框里是「Key Results」——只把正文那半句改掉
+    const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="第 1 段"]')!
+    expect(area.value).toBe('Key Results')
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
+      setter!.call(area, 'Key 成果')
+      area.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+
+    const after = await saveAndRead(host, record, 'ppt/slides/slide3.xml')
+    const runs = textRunBlocks(elementXml(after, 'TextBox 2'))
+    // 两条 run 都还在，各自的字号与颜色都没动，只有第二条的文本变了
+    expect(runs).toHaveLength(2)
+    expect(runs[0]).toContain('<a:t>Key </a:t>')
+    expect(runs[0]).toContain('b="1"')
+    expect(runs[0]).toContain('sz="3600"')
+    expect(runs[0]).toContain('<a:srgbClr val="1F2937"/>')
+    expect(runs[1]).toContain('<a:t>成果</a:t>')
+    expect(runs[1]).toContain('sz="2400"')
+    expect(runs[1]).toContain('<a:srgbClr val="C0392B"/>')
+  })
+
+  it('两 run 的段落不会被压成一条（这一版最关键的一条）', async () => {
+    const deck = await twoRunUpstreamDeck()
+
+    const { host, record } = await mountEditor(deck)
+    await jumpToPage(host, 3)
+    const nodes = [...host.querySelectorAll('.mimir-pptx-slide [data-element-id]')]
+    const label = nodes.find((node) => node.textContent?.includes('Key'))!
+    expect(label, '第 3 页上应当有那个两 run 的文本框').toBeDefined()
+    click(label)
+
+    click(button(host, '倾斜（整段）'))
+    const after = await saveAndRead(host, record, 'ppt/slides/slide3.xml')
+    const runs = textRunBlocks(elementXml(after, 'TextBox 2'))
+    // 两条 run 都还在，各自保留自己的字号与颜色
+    expect(runs).toHaveLength(2)
+    expect(runs[0]).toContain('sz="3600"')
+    expect(runs[0]).toContain('b="1"')
+    expect(runs[0]).toContain('<a:srgbClr val="1F2937"/>')
+    expect(runs[1]).toContain('sz="2400"')
+    expect(runs[1]).toContain('<a:srgbClr val="C0392B"/>')
+    // 两条都变斜了，但两条的文本与其余属性没被动
+    expect(runs[0]).toContain('i="1"')
+    expect(runs[1]).toContain('i="1"')
+    expect(runs[0]).toContain('<a:t>Key </a:t>')
+    expect(runs[1]).toContain('<a:t>Results</a:t>')
+  })
+
+  it('文字编辑仍然工作，且不会把格式清掉', async () => {
+    const { host, record } = await mountEditor(load('formatted-text.pptx'))
+    const id = selectOnCanvas(host, 0)
+    const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="第 1 段"]')!
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
+      setter?.call(area, '改过的第一段')
+      area.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    const after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    expect(after).toContain('改过的第一段')
+    const runs = textRunBlocks(elementXml(after, 'TextBox 1'))
+    // 只改了文字，这一段的字形、字号与颜色一个都没动
+    expect(runs[0]).toContain('b="1"')
+    expect(runs[0]).toContain('sz="2800"')
+    expect(runs[0]).toContain('<a:srgbClr val="C0392B"/>')
+    // 第二段原样
+    expect(runs[1]).toContain('<a:t>斜体小字</a:t>')
+    expect(id).not.toBe('')
+  })
+
+  it('段落里的软换行是真 textarea 才保得住（换单行输入会静默删掉 `<a:br/>`）', async () => {
+    /*
+     * 这一条守的是「为什么段落框必须是 `<textarea>`」（`ToolbarTextArea`）。
+     * 软换行 `<a:br/>` 在模型里是一条 `text === '\n'` 的 run，而**单行 `<input>`
+     * 会在值消毒时把 `\n` 直接删掉**（实测：happy-dom 里 `input.value = 'a\nb'`
+     * 读回来是 `"ab"`，textarea 是 `"a\nb"`；`PptxEditor.tsx` 的注释里也记着）。
+     * 那样「改一个字」会顺手把换行也删了，而保存成功、界面不报错。
+     *
+     * 夹具里没有现成的 `<a:br/>`，所以先把第 1 段的文本改成两行（`\n` 会被
+     * `generateRunXml` 重写成 `<a:r>…</a:r><a:br/><a:r>…`），再从界面改一次。
+     */
+    const zip = await JSZip.loadAsync(load('formatted-text.pptx'))
+    const slide = await zip.file('ppt/slides/slide1.xml')!.async('string')
+    const twoLine = slide.replace(
+      '<a:t>加粗大字</a:t>',
+      '<a:t>加粗</a:t></a:r><a:br/><a:r><a:rPr b="1" sz="2800"/><a:t>大字</a:t>',
+    )
+    expect(twoLine).not.toBe(slide)
+    zip.file('ppt/slides/slide1.xml', twoLine)
+
+    const { host, record } = await mountEditor(await zip.generateAsync({ type: 'uint8array' }))
+    selectOnCanvas(host, 0)
+    const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="第 1 段"]')!
+    // 换行在框里读得到——它没有被消毒掉（这是这一条断言的前提）
+    expect(area.value).toBe('加粗\n大字')
+
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
+      // 只改第二行的两个字：改动落在倒数第一条 run 内
+      setter?.call(area, '加粗\n小字')
+      area.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+
+    const after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    const sp = elementXml(after, 'TextBox 1')
+    // 换行还在（`<a:br/>` 与它两侧的 run 都保住了）
+    expect(after).toContain('<a:br/>')
+    expect(after).toContain('加粗')
+    expect(after).toContain('小字')
+    expect(after).not.toContain('大字')
+    // 第二段（斜体小字）没被这次改动碰到；第一段仍是「一条 run + br + 一条 run」
+    expect(textRunBlocks(sp)).toHaveLength(3)
+    expect(elementXml(after, 'TextBox 1')).toContain('<a:t>斜体小字</a:t>')
+    expect(sp.indexOf('<a:br/>')).toBeLessThan(sp.indexOf('小字'))
+    expect(sp.indexOf('加粗')).toBeLessThan(sp.indexOf('<a:br/>'))
+  })
+})
+
+describe('pptx 工具条：查找和替换', () => {
+  it('跨页命中会被带出来，替换之后原文没了', async () => {
+    const { host, record } = await mountEditor(load('upstream/01_standard_business.pptx'))
+    click(button(host, '查找和替换'))
+
+    const query = host.querySelector<HTMLInputElement>('input[aria-label="查找内容"]')!
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+      setter?.call(query, 'Agenda')
+      query.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    // 匹配数由适配器报给这一条栏（它会重扫：query 是受控 prop）
+    await act(async () => {
+      await Promise.resolve()
+    })
+    expect(host.textContent).toContain('1 / 1')
+
+    // 「Agenda」在第 2 页；点「下一个匹配」应当把那一页带出来
+    click(button(host, '下一个匹配'))
+    expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('第 2 / 5 页')
+
+    const replace = host.querySelector<HTMLInputElement>('input[aria-label="替换为"]')!
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+      setter?.call(replace, '议程')
+      replace.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    click(button(host, '全部替换'))
+
+    const after = await saveAndRead(host, record, 'ppt/slides/slide2.xml')
+    expect(after).toContain('议程')
+    expect(after).not.toContain('Agenda')
+    // 替换不该把那一页的其余文字弄丢
+    expect(after).toContain('Financial results')
+  })
+
+  it('没有可查内容时整条栏空转（adapter 的形参写错会让这里炸）', async () => {
+    const { host } = await mountEditor(load('title-layout.pptx'))
+    click(button(host, '查找和替换'))
+    const query = host.querySelector<HTMLInputElement>('input[aria-label="查找内容"]')!
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+      setter?.call(query, '第')
+      query.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    await act(async () => {
+      await Promise.resolve()
+    })
+    // 标题与正文里各有一个「第」字
+    expect(host.querySelector('.me-find__count')?.textContent).toBe('1 / 2')
+    // 关闭按钮把栏收掉，并把高亮撤掉
+    click(button(host, '关闭查找'))
+    expect(host.querySelector('.me-find')).toBeNull()
+  })
+})
+
+describe('pptx 次工具条：翻页与隐藏标记', () => {
+  it('跳到第 N 页：夹到 1..页数', async () => {
+    const { host } = await mountEditor(load('upstream/01_standard_business.pptx'))
+    const field = host.querySelector<HTMLInputElement>('input[aria-label="跳到第几页"]')!
+    /*
+     * 上界走 `aria-valuemax`（antd 的 InputNumber 用 ARIA 表达取值区间，不再
+     * 写原生 `max` 属性）——读屏因此也拿得到「最大 5 页」，比原来那条更强。
+     */
+    expect(field.getAttribute('aria-valuemax')).toBe('5')
+    expect(field.getAttribute('aria-valuemin')).toBe('1')
+
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+      // 99 超出上界：ToolbarNumberField 必须夹到 5
+      setter?.call(field, '99')
+      field.dispatchEvent(new Event('input', { bubbles: true }))
+      field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    })
+    expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('第 5 / 5 页')
+  })
+
+  it('隐藏页只标记、不改变页序（`<p:sld show="0">`）', async () => {
+    // 把第 2 页标成 show="0"
+    const zip = await JSZip.loadAsync(load('upstream/01_standard_business.pptx'))
+    const slide = await zip.file('ppt/slides/slide2.xml')!.async('string')
+    const hidden = slide.replace(/<p:sld\b([^>]*)>/, '<p:sld$1 show="0">')
+    expect(hidden).not.toBe(slide)
+    zip.file('ppt/slides/slide2.xml', hidden)
+    const deck = await zip.generateAsync({ type: 'uint8array' })
+
+    const { host } = await mountEditor(deck)
+    // 第 1 页没有标记
+    expect(host.textContent).not.toContain('这一页在放映时隐藏')
+
+    const second = [...host.querySelectorAll('.me-tab')].find((tab) => tab.textContent === '2')!
+    click(second)
+    expect(host.textContent).toContain('这一页在放映时隐藏（只读标记）')
+    // 页数没有变（隐藏不是删除）
+    expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('第 2 / 5 页')
+  })
+})
+
+describe('pptx 模型的入口断言（组件之外的事实）', () => {
+  it('选定页码的 input 上界等于幻灯片张数', async () => {
+    const session = await openPptxForEdit(load('upstream/01_standard_business.pptx'))
+    expect(session.slides()).toHaveLength(5)
+    // 与组件读的同一个来源（`view().slides().length`）
+    expect(session.view().slides()).toHaveLength(5)
+  })
+
+  it('夹具里的两段文字：改一段只动那一段', async () => {
+    const session = await openPptxForEdit(load('formatted-text.pptx'))
+    const el = editableElements(session.slides()[0]!)[0]!
+    const texts = textOfElement(el)!.paragraphs.map((p) => p.runs.map((r) => r.text).join(''))
+    expect(texts).toEqual(['加粗大字', '斜体小字'])
+  })
+})
+
+/* ── 控件契约：没有绕过点、尺寸落在 small 档、禁用给原因 ─────────── */
+
+describe('PptxEditor 的控件契约', () => {
+  /**
+   * 扫的是**源码文本**，不是渲染结果——渲染结果里永远能找到 antd 自己渲染的
+   * `<input>`（Select / InputNumber / Upload 都带），所以「有没有人手写原生
+   * 控件」只能在源码这一层问。注释先剥掉：上面那段说明里就写着上一版那个
+   * `<textarea className="mimir-paras__item">`，不剥会把守护弄红。
+   */
+  const source = readFileSync(resolve(HERE, 'PptxEditor.tsx'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^\s*\/\/.*$/gm, '')
+
+  it('没有手写的 button / input / select / textarea', () => {
+    const hits = source.match(/<(button|input|select|textarea)[\s>/]/g) ?? []
+    expect(hits, `PptxEditor.tsx 里还有原生控件：${hits.join(' ')}`).toEqual([])
+  })
+
+  it('不直接 import antd：控件只经过外壳的原语', () => {
+    // 直接 import 会把「尺寸档 / 按下 preventDefault / 禁用给原因」三条约定
+    // 各绕开一处，而绕开之后界面看着没问题
+    expect(source).not.toMatch(/from\s+'antd'/)
+  })
+
+  it('段落输入框是 antd 的多行输入，不是自绘的 textarea', async () => {
+    const { host } = await mountEditor(load('formatted-text.pptx'))
+    selectOnCanvas(host, 0)
+    const areas = [...host.querySelectorAll<HTMLTextAreaElement>('textarea[aria-label^="第 "]')]
+    // 夹具的第一个元素是两段 → 两个框（少了说明面板没渲染出来，断言会在空树上通过）
+    expect(areas).toHaveLength(2)
+    for (const area of areas) {
+      // `ant-input` 是 antd Input/TextArea 的类；small 档由 EditorShell 那层
+      // `ConfigProvider componentSize="small"` 给，调用点自己不用写
+      expect(area.classList.contains('ant-input')).toBe(true)
+      expect(area.classList.contains('ant-input-sm'), `不在 small 档：${area.className}`).toBe(true)
+      // `rows={1}` 是「初始一行」，**不是**单行输入框：段落里的软换行 `<a:br/>`
+      // 只有真的 textarea 才保得住（单行 `Input` 会在值消毒时把 `\n` 删掉）
+      expect(area.getAttribute('rows')).toBe('1')
+      expect(area.getAttribute('placeholder')).toBeTruthy()
+      expect(area.getAttribute('title')).toBe(area.getAttribute('aria-label'))
+    }
+  })
+
+  it('控件都落在 small 档（EditorShell 那层 ConfigProvider 盖到了这棵子树）', async () => {
+    const { host } = await mountEditor(load('upstream/01_standard_business.pptx'))
+    selectOnCanvas(host, 0)
+
+    // 判据是 antd 自己的尺寸档类：happy-dom 下**计算高度取不到**（返回空串，
+    // 与「跨元素自定义属性 / 边框不解析」同一类限制），所以「一行同高」这一条
+    // 只能进浏览器验收；这里守的是机制（尺寸档确实传到了每个控件上）
+    const buttons = [...host.querySelectorAll('.ant-btn')]
+    expect(buttons.length).toBeGreaterThan(8)
+    for (const item of buttons) {
+      expect(item.classList.contains('ant-btn-sm'), `按钮不在 small 档：${item.className}`).toBe(
+        true,
+      )
+    }
+
+    // 字体下拉一个、字号与跳页两个数字框、段落输入框（ToolbarTextArea）
+    const selects = [...host.querySelectorAll('.ant-select')]
+    expect(selects).toHaveLength(1)
+    expect(selects[0]?.classList.contains('ant-select-sm')).toBe(true)
+
+    const numbers = [...host.querySelectorAll('.ant-input-number')]
+    expect(numbers).toHaveLength(2)
+    for (const item of numbers) {
+      expect(item.classList.contains('ant-input-number-sm'), `数字框不在 small 档`).toBe(true)
+    }
+
+    // 段落输入框（`ToolbarTextArea`）。这份文稿第 1 页的元素只有一段，所以
+    // 判据是「至少一个」——**不能只写 0 个也通过**：一个都没有时这一条会在
+    // 空集合上静默通过（`for` 不执行），而那正是它要防的情形
+    const areas = [...host.querySelectorAll('textarea.ant-input')]
+    expect(areas.length).toBeGreaterThan(0)
+    for (const item of areas) expect(item.classList.contains('ant-input-sm')).toBe(true)
+  })
+
+  it('工具条上的原生控件都来自 antd；非 antd 的只有外壳自己那两类', async () => {
+    const { host } = await mountEditor(load('upstream/01_standard_business.pptx'))
+    // 选中一个元素：工具条上「要选中才出现」的那半排（字体下拉、颜色面板的
+    // 触发器、段落输入框）才在 DOM 里——不选的话这一条会漏掉它们
+    selectOnCanvas(host, 0)
+    const all = [...host.querySelectorAll<HTMLElement>('button, input, select, textarea')]
+    expect(all.length).toBeGreaterThan(10)
+
+    const own = all.filter((el) => ![...el.classList].some((name) => name.startsWith('ant-')))
+    /*
+     * 两类有意的例外（都是**外壳的原语**，不是这里绕过原语的写法）：
+     *
+     *  - `.me-tab`：`ToolbarTabs` 的页签。antd 的 `Tabs` 会把页签渲染成 div
+     *    并多一个隐藏的 `.ant-tabs-nav-more`，D-064 明确不迁
+     *  - `.me-btn`：`ToolbarColorPicker` 的触发按钮（面板要就地 `fixed` 且用
+     *    `--me-*` 上色，antd 的 ColorPicker 会 portal）
+     *
+     * 集合相等而不是「数量相等」：多出任何一种类名都说明有人自造了一个控件。
+     */
+    expect(new Set(own.map((el) => el.className))).toEqual(new Set(['me-tab', 'me-btn']))
+
+    // 输入类必须都在 antd 控件的根里（一个裸的都算绕过点）
+    for (const field of host.querySelectorAll('input, select, textarea')) {
+      const insideAntd = field.closest(
+        '.ant-input-number, .ant-select, .ant-input, .ant-upload, .ant-input-number-input',
+      )
+      expect(insideAntd, `有一个裸控件：${field.outerHTML.slice(0, 80)}`).not.toBeNull()
+    }
+
+    /*
+     * 画布是**白名单里的例外**（`PptxEditor.tsx` 里那段注释就是它的存档）：
+     * 它是可点但非按钮的 div —— 被点中的目标是注入进来的 SVG 节点，动作随
+     * 点在哪而变，换成 ToolbarButton 没有意义。这里把它显式钉住：白名单要
+     * 是悄悄多出一处，就会变成「下一处 onClick on div」的先例。
+     */
+    const canvases = [...host.querySelectorAll<HTMLElement>('.mimir-editor__body div')].filter(
+      (el) => el.className === 'mimir-pptx-slide',
+    )
+    expect(canvases).toHaveLength(1)
+    expect(canvases[0]?.getAttribute('role')).toBeNull()
+  })
+
+  it('禁用的按钮都带着原因（灰着而不说为什么等于让人猜）', async () => {
+    const { host } = await mountEditor(load('upstream/01_standard_business.pptx'))
+    // 第 1 页：往回翻不能点，且说明理由
+    expect(button(host, '上一页').disabled).toBe(true)
+    expect(button(host, '上一页').getAttribute('title')).toBe('已经是第一页')
+    // 没改动时保存不能点，且与「正在保存」区分开
+    expect(button(host, '保存到库').disabled).toBe(true)
+    expect(button(host, '保存到库').getAttribute('title')).toBe('没有未保存的改动')
+
+    for (const item of host.querySelectorAll<HTMLButtonElement>('button:disabled')) {
+      const label = item.getAttribute('aria-label') ?? ''
+      const title = item.getAttribute('title') ?? ''
+      expect(title, `「${label}」禁用了却没给理由`).not.toBe('')
+      // 原因与名字混成一件就等于没说
+      expect(title, `「${label}」把原因与名字混成一件事`).not.toBe(label)
+    }
+  })
+
+  it('查找栏就地渲染（不 portal 到 body），且是按下态', async () => {
+    const { host } = await mountEditor(load('title-layout.pptx'))
+    const findButton = button(host, '查找和替换')
+    expect(findButton.getAttribute('aria-pressed')).toBe('false')
+    // 工具条上有一个 antd 的下拉（字体）——它收起时不 portal，所以这条断言
+    // 量的是「查找栏自己有没有被 portal 出去」（`ToolbarMenu` / 颜色面板同理）
+    const before = document.body.childElementCount
+    click(findButton)
+    expect(findButton.getAttribute('aria-pressed')).toBe('true')
+    expect(host.querySelector('.mimir-editor__subbar .me-find')).not.toBeNull()
+    expect(document.body.childElementCount).toBe(before)
+  })
+
+  it('按下工具条按钮不夺焦点：mousedown 被 preventDefault', async () => {
+    const { host } = await mountEditor(load('title-layout.pptx'))
+    const target = button(host, '查找和替换')
+    const event = new MouseEvent('mousedown', { bubbles: true, cancelable: true })
+    act(() => {
+      target.dispatchEvent(event)
+    })
+    expect(event.defaultPrevented).toBe(true)
+  })
+})

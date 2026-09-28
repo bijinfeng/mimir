@@ -260,6 +260,15 @@ src/**/*.style.ts           组件/页面样式（createStyles）
    不要在 `apps/web` 的样式里再去盖它——两处都在管同一件事，必然有一处
    是过期的。**变量只在声明它的元素及其子树上生效**，所以那个类必须挂在
    编辑器祖先上（挂错的表现是样式全部退回回退值：界面能用、颜色不对）
+10. **编辑器工具条里的控件是 antd 组件（D-064），但它们住在 `packages/office`
+    里，不归 `apps/web` 的样式管。** 那棵子树由包内一层只传
+    `componentSize="small"` 的 `ConfigProvider` 管尺寸；要改那里的观感，
+    改 `packages/office/src/shell/shell.css`（布局、弹层、非 antd 元素）或
+    那个包的 `EditorShell.tsx`，**不要在宿主里加 `.ant-*` 覆写**——那会与包内
+    的样式争同一处，而且两边都看不见对方
+11. **`antd` 的版本从 `pnpm-workspace.yaml` 的 catalog 取**（写 `"antd": "catalog:"`）。
+    编辑器包把它声明成 peer，**两份 antd 拷贝的症状是「某些控件不吃
+    componentSize / 弹层不吃主题」，不报错**
 
 `design.test.ts` 会真算对比度，也会真的挂载 provider 栈验证 cssVar 注入、
 局部样式生成、以及**切换外观后变量块被替换**。它红了不要改断言，先改设计。

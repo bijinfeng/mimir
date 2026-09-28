@@ -65,7 +65,7 @@ function ensureWorker(): void {
   workerConfigured = true
 }
 
-/* ── 文档缓存：按字节缓存，渲染只取页 ────────────────────────────── */
+/* ── 文档缓存：按字节缓存，渲染与文字层共用 ──────────────────────── */
 
 interface CachedDoc {
   /** 哪一份字节的文档（同一引用 → 同一份） */
@@ -79,7 +79,51 @@ interface CachedDoc {
   task: { destroy: () => Promise<void> }
 }
 
-let cached: CachedDoc | null = null
+/**
+ * 已解析的文档，按**字节的身份**索引（同一 `Uint8Array` 引用 → 同一份文档）。
+ *
+ * ## 为什么是 `Map` 而不是上一版的单条缓存
+ *
+ * 上一版只留一份（「界面上同时只有一份 PDF 在编辑」）。加了「导入页面」与
+ * 「查找」之后这句话不再成立：
+ *
+ *   - 画布要画某一页，它的来源可能是原件，也可能是**导入的那一份**
+ *   - 查找要把每一页的来源都读一遍（导入的页也要能搜到）
+ *
+ * 单条缓存下这两件事会互相把对方的文档挤掉，症状是翻到导入的页时重新解析
+ * 整份文件（慢，但没有报错）——**每一次翻页都重来一遍**。
+ */
+const cached = new Map<Uint8Array, CachedDoc>()
+
+/**
+ * 还有多少笔渲染在用这些文档。
+ *
+ * 销毁一份**正在被渲染的**文档会让 pdf.js 的渲染任务直接失败（报的是一句
+ * 与用户操作毫无关系的 `Worker was destroyed`）。所以淘汰不立即执行：先记在
+ * `pending` 里，等这一轮渲染结束了再收。
+ */
+let activeRenders = 0
+const pending: CachedDoc[] = []
+
+/** 除了这些字节之外的文档可以收了。编辑器在 bytes / 导入列表变化时调它 */
+export function retainPdfDocuments(keep: readonly (Uint8Array | null)[]): void {
+  const alive = new Set(keep.filter((bytes): bytes is Uint8Array => bytes !== null))
+  for (const [bytes, entry] of cached) {
+    if (alive.has(bytes)) continue
+    cached.delete(bytes)
+    pending.push(entry)
+  }
+  collect()
+}
+
+/** 收掉待销毁的（渲染中就不动它——见 `activeRenders`） */
+function collect(): void {
+  if (activeRenders > 0) return
+  while (pending.length > 0) {
+    const entry = pending.pop()
+    if (entry !== undefined) void entry.task.destroy()
+  }
+}
 
 /**
  * 取（或建）这一份字节的文档。
@@ -90,26 +134,21 @@ let cached: CachedDoc | null = null
  * PDF**（解压、解析对象树、重建字体）。对一个几十 MB 的 PDF，翻一页要等
  * 好几秒，而用户只是点了一下「下一页」。
  *
- * 缓存以**字节的身份**为键（同一份 `Uint8Array` 引用 → 同一份文档），所以
- * 换文档时旧缓存自然作废，不需要显式清理。单条而不是 Map：界面上同时只有
- * 一份 PDF 在编辑，而 Map 的淘汰策略在没有真实压力时只是个猜测。
- *
  * ## `bytes.slice()` 不是可选的
  *
  * pdf.js 把字节 **transfer** 给 worker（零拷贝），传原引用会让调用方手里
  * 那个 `Uint8Array` 变成空（`byteLength === 0`）——而我们还要用它保存。
  * 实测症状：**预览一次之后保存出来的文件是 0 字节**。
+ *
+ * ## 导出它是为了让文字层复用同一份文档
+ *
+ * `pdf-text.ts` 需要一个「字节 → 文档」的加载器。让它自己 `getDocument` 就会
+ * 同一份 PDF 被解析两遍（一份给画布、一份给查找），而两份文档各持一个
+ * worker 侧的对象树——那是白白的几百毫秒与几倍内存。
  */
-async function documentFor(bytes: Uint8Array): Promise<PDFDocumentProxy> {
-  if (cached !== null && cached.bytes === bytes) {
-    return cached.doc
-  }
-
-  // 换文档：先把上一份收掉（它持有 worker 与已解析的对象树）
-  if (cached !== null) {
-    void cached.task.destroy()
-    cached = null
-  }
+export async function loadPdfDocument(bytes: Uint8Array): Promise<PDFDocumentProxy> {
+  const hit = cached.get(bytes)
+  if (hit !== undefined) return hit.doc
 
   ensureWorker()
   const task = getDocument({
@@ -130,7 +169,8 @@ async function documentFor(bytes: Uint8Array): Promise<PDFDocumentProxy> {
   } as Parameters<typeof getDocument>[0])
 
   const doc = await task.promise
-  cached = { bytes, doc, task }
+  const entry: CachedDoc = { bytes, doc, task }
+  cached.set(bytes, entry)
   return doc
 }
 
@@ -197,8 +237,9 @@ export async function renderPdfPages(options: RenderPdfOptions): Promise<PdfRend
   const generation = renderGeneration
   const stale = (): boolean => generation !== renderGeneration
 
+  activeRenders += 1
   try {
-    const doc = await documentFor(bytes)
+    const doc = await loadPdfDocument(bytes)
     if (stale()) {
       return null
     }
@@ -237,6 +278,10 @@ export async function renderPdfPages(options: RenderPdfOptions): Promise<PdfRend
      */
     if (isCancellation(cause)) return null
     throw cause
+  } finally {
+    activeRenders -= 1
+    // 这一笔结束了，被淘汰的文档现在可以收了（见 `retainPdfDocuments`）
+    collect()
   }
 }
 

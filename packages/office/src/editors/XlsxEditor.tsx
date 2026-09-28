@@ -7,7 +7,10 @@
  *
  *   - **公式格会被清掉公式**：只换 `<v>` 而留着 `<f>` 的话，Excel 打开会按
  *     公式重算、用户输入的值被悄悄丢掉。所以覆盖时把整段 `<c>` 换掉
- *   - **样式保留**（`s="…"` 不动），所以改文字不会掉颜色与边框
+ *   - **样式引用会被丢掉**（`s="7"`）：新写的是内联字符串格，不带 `s`
+ *     ——所以覆盖之后那个格的颜色、边框、数字格式都没了。实测过：清空
+ *     `A2`（原本 `s="7"`）写出来是 `<c r="A2" t="inlineStr">…`，而同一行
+ *     别的格子的 `s` 原样还在。**界面必须如实说**，不能让人以为只是改了字
  *   - **新文本写成内联字符串**，绝不改 `sharedStrings.xml`——那里的一项被
  *     多个格子共用，改它会让所有引用它的格子一起变（**静默的**）
  *
@@ -15,8 +18,27 @@
  *
  *   - **不重算公式**：改了被别的公式引用的格子，那些公式的缓存值就旧了。
  *     Excel 打开会重算，我们显示的仍是旧值——状态行里写明
+ *   - **覆盖会丢样式**（见上）——状态行里也写明。这是这一版的能力边界：
+ *     只支持文字与数字，没有「写字但保住格式」那条路
  *   - 日期显示为序列号（`xlsx.ts` 的老规矩）
  *   - 图表、条件格式、透视表不画（读不出来），但**保存不会动它们**
+ *
+ * ## 工具条上每一项落到哪
+ *
+ * | 按钮 | 落到哪 |
+ * |---|---|
+ * | 工作表页签 | `active`；换表时选中与草稿一起清掉 |
+ * | 查找上一个 / 下一个 | 遍历 `view().rows[].cells[].text` → `selectCell` |
+ * | 上一个 / 下一个公式格 | 遍历 `cell.formula` → `selectCell` |
+ * | 复制这个格的文字 | `cellText(ref)` → 剪贴板（**失败如实报**） |
+ * | 清空这个格 | `setCell(ref, '')` |
+ * | 十字高亮 | 纯界面开关，不改文档 |
+ * | 保存到库 | `session.save()` 成功后 `commit()` |
+ *
+ * **每一项都落在内核里真有的函数上**（`xlsx-edit.ts` 的会话 + `xlsx.ts` 的
+ * 模型），没有一个按钮是「先画上、以后再接」——那种按钮点了没反应也不报错，
+ * 是这个仓库最讨厌的一类。做不到的那几件事（改样式、增删行列、重算公式）
+ * 写在状态行里，而不是画成一个按不动的按钮。
  *
  * ## 没选中格子时它就是一个预览
  *
@@ -27,16 +49,27 @@
 
 import { useCallback, useMemo, useState } from 'react'
 import { openXlsxForEdit } from '../xlsx-edit.js'
-import type { XlsxWorkbook } from '../xlsx.js'
+import type { XlsxSheet, XlsxWorkbook } from '../xlsx.js'
 import {
   EditorShell,
   EditorState,
   ToolbarButton,
+  ToolbarDivider,
+  ToolbarGroup,
   ToolbarLabel,
   ToolbarSpacer,
   ToolbarTabs,
+  ToolbarTextField,
 } from '../shell/EditorShell.js'
-import { AlertIcon, SaveIcon } from '../shell/icons.js'
+import {
+  AlertIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  CopyIcon,
+  CrossHighlightIcon,
+  EraserIcon,
+  SaveIcon,
+} from '../shell/icons.js'
 import { statusText, useParsed, useSource } from './use-source.js'
 import { OFFICE_MIME, type EditorProps } from './types.js'
 import '../shell/shell.css'
@@ -76,6 +109,17 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
   const [touched, setTouched] = useState(false)
   /** 写不进去的原因。就地在编辑行里说，不用弹窗打断 */
   const [applyError, setApplyError] = useState<string | null>(null)
+  /** 查找串。**只在当前这张表里找**，不区分大小写（见 `findCells`） */
+  const [query, setQuery] = useState('')
+  /** 十字高亮开关（纯界面状态，文档一个字节都不动） */
+  const [cross, setCross] = useState(false)
+  /**
+   * 「刚做完一件事」的提示（复制成功/失败）。下一个动作就清掉。
+   *
+   * 与 `applyError` 同一个位置、同一个理由：写在状态行上，不弹窗打断。
+   * 复制是**没有可见结果**的动作（文字进了剪贴板），不说一声就等于静默。
+   */
+  const [note, setNote] = useState<string | null>(null)
 
   const sheet = useMemo(() => view?.sheets[active] ?? null, [view, active])
 
@@ -99,7 +143,41 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
   const shown = draft ?? modelText
   const dirty = session?.isDirty() ?? false
 
-  /** 点一个格子 → 选中它（编辑框的值由 `selectedCell` 从模型推导） */
+  /** 这一张表里所有公式格（行主序）。「上一个 / 下一个公式格」按它走 */
+  const formulas = useMemo(() => formulaCells(sheet), [sheet])
+  /** 查找命中（行主序）。`query` 为空时是空表——那时按钮禁用 */
+  const matches = useMemo(() => findCells(sheet, query), [sheet, query])
+  /**
+   * 选中的格恰好是命中之一时，它在命中表里的下标（否则 -1）。
+   *
+   * **从选中反推**而不是另存一个「当前第几个」：存一份就要处理「换表 /
+   * 换个格 / 改查询串」时的夹取，三处漏一处就会出现「3 / 5 但高亮在别处」
+   * 这种界面说假话的状态。
+   */
+  const activeMatch = useMemo(
+    () => matches.findIndex((c) => c.row === selected?.row && c.col === selected?.col),
+    [matches, selected],
+  )
+
+  /**
+   * 剪贴板能不能用。
+   *
+   * `navigator.clipboard` **只在安全上下文里存在**（https / localhost）。
+   * mimir 是自托管的，局域网里常常是 `http://192.168.…`——那时它是
+   * `undefined`，直接调 `writeText` 会抛 TypeError。所以先把按钮禁用并把
+   * 原因写在 tooltip 上，而不是让人点了才知道。
+   *
+   * 渲染期读这个全局是安全的：它一次会话里不会变（安全上下文由地址决定），
+   * 而这个包只在浏览器里跑（宿主是 Vite 的 SPA，没有服务端渲染）。
+   */
+  const clipboardAvailable = typeof navigator !== 'undefined' && navigator.clipboard !== undefined
+
+  /**
+   * 点一个格子 → 选中它（编辑框的值由 `selectedCell` 从模型推导）。
+   *
+   * 顺带把上一条提示（复制成功之类）清掉：它是**上一步动作**的回执，换了
+   * 一个格还挂着会让人以为刚做的事与这个格有关。
+   */
   const selectCell = useCallback(
     (row: number, col: number) => {
       if (!sheet) return
@@ -109,26 +187,71 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
       setSelected({ row, col })
       // 换了一个格 → 草稿回到「没改过」，编辑框显示新格的模型值
       setDraft(null)
+      setNote(null)
     },
     [sheet],
   )
 
+  /**
+   * 把一串文字写进选中的格，并把「界面状态」一起推到位。
+   *
+   * 「应用草稿」与「清空」是**同一件事的两种输入**（都是覆盖一个格），所以
+   * 只有这一处写入路径——两处各写一遍的话，`setEdited` / `touched` /
+   * `onDirtyChange` 迟早有一处漏（而漏了的表现是「文件改了、界面说没改」）。
+   */
+  const commitCell = useCallback(
+    (text: string): boolean => {
+      if (!session || !selected) return false
+      const ref = { sheet: active, row: selected.row, col: selected.col }
+      if (!session.setCell(ref, text)) {
+        setApplyError('这个格写不进去（所在的行或表不在可编辑范围内）')
+        return false
+      }
+      setApplyError(null)
+      setNote(null)
+      setEdited({ source: source.bytes!, view: session.view() })
+      setDraft(null)
+      if (!touched) {
+        setTouched(true)
+        onDirtyChange?.(true)
+      }
+      return true
+    },
+    [session, selected, active, touched, source.bytes, onDirtyChange],
+  )
+
   /** 提交草稿到模型（按回车或点「应用」） */
-  const apply = useCallback(() => {
-    if (!session || !selected || draft === null) return
-    const ref = { sheet: active, row: selected.row, col: selected.col }
-    if (!session.setCell(ref, draft)) {
-      setApplyError('这个格写不进去（所在的行或表不在可编辑范围内）')
+  const apply = () => {
+    if (draft === null) return
+    commitCell(draft)
+  }
+
+  /** 清空选中的格：写空串（`setCell` 的既定语义，见 `xlsx-edit.ts`） */
+  const clearCell = () => {
+    commitCell('')
+  }
+
+  /**
+   * 复制选中格的文字。
+   *
+   * 复制的是**界面上显示的那串**（`shown`，有草稿就用草稿）：格子此刻显示
+   * 「张三丰」而剪贴板里进了模型里的旧值「张三」，是最难查的那种不一致——
+   * 用户只会觉得「复制错了」。有草稿时它与「应用后会长什么样」也完全一致。
+   */
+  const copyCell = async () => {
+    if (selected === null) return
+    const ref = `${columnLetters(selected.col)}${selected.row}`
+    if (!clipboardAvailable) {
+      setNote(`复制失败：${ref} 没有写进剪贴板——这个地址不是安全上下文（要 https 或 localhost）`)
       return
     }
-    setApplyError(null)
-    setEdited({ source: source.bytes!, view: session.view() })
-    setDraft(null)
-    if (!touched) {
-      setTouched(true)
-      onDirtyChange?.(true)
+    try {
+      await navigator.clipboard.writeText(shown)
+      setNote(`已复制 ${ref} 的文字（${shown.length} 字符）`)
+    } catch (cause) {
+      setNote(`复制失败：${cause instanceof Error ? cause.message : String(cause)}`)
     }
-  }, [session, selected, draft, active, touched, source.bytes, onDirtyChange])
+  }
 
   const save = async () => {
     if (!session) return
@@ -147,6 +270,52 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
     setTouched(false)
     onDirtyChange?.(false)
   }
+
+  /** 「上一个 / 下一个」都走同一个动作：按行主序挪到相邻的那一个 */
+  const stepTo = (list: readonly CellPos[], step: 1 | -1) => {
+    const next = stepPosition(list, selected, step)
+    if (next !== null) selectCell(next.row, next.col)
+  }
+
+  /**
+   * 查找串变了。
+   *
+   * **敲字就跳**（增量查找，编辑器里的一致行为）：不跳的话敲完一个字什么都
+   * 没发生，看不出找没找到。已经选中的格本身是命中时不动它——否则在同一个
+   * 格上接着敲下一个字会来回跳。
+   *
+   * 这里重新算一遍命中而**不用 `matches`**：那一个还是**上一次渲染**的值
+   * （setState 是异步的），拿它判「有没有命中」会永远慢一个字——症状是敲完
+   * 最后一个字时不跳。
+   */
+  const onQueryChange = (value: string) => {
+    setQuery(value)
+    setNote(null)
+    if (!sheet) return
+    const found = findCells(sheet, value)
+    if (found.length === 0) return
+    if (selected !== null && found.some((c) => c.row === selected.row && c.col === selected.col)) {
+      return
+    }
+    const first = found[0]
+    if (first !== undefined) selectCell(first.row, first.col)
+  }
+
+  /**
+   * 选中的格子**滚进视野**。
+   *
+   * 查找与公式跳转都只改「选中」，格子可能在滚动区外——不滚的话点了「下一个」
+   * 看起来什么都没发生（高亮在屏幕外）。用 callback ref 而不是 effect 里
+   * `querySelector`：挂上/换元素时 React 自己调它，不必给表格容器一个 ref、
+   * 也不必知道那个格在第几行。
+   *
+   * `useCallback`（空依赖）= 身份稳定。不稳的话每次渲染 React 都会把它卸下
+   * 再挂上，于是**每次渲染都滚一次**——在下面的编辑框里打字会把表格拽回去。
+   * `block: 'nearest'` 让已经在视野里的格子纹丝不动（每次点击都居中会晕）。
+   */
+  const scrollIntoView = useCallback((node: HTMLTableCellElement | null) => {
+    node?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+  }, [])
 
   if (source.loadError !== null) {
     return (
@@ -185,6 +354,43 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
     idle: `${view.sheets.length} 张表`,
   })
 
+  /**
+   * 按钮禁用时显示的原因。**三个来源各不相同**，所以在这里算一次：
+   * 没选中格、选中的格是空的、剪贴板在这个地址上不可用。
+   */
+  const clearDisabledReason =
+    selected === null ? '先点一个格子' : modelText === '' ? '这个格已经是空的' : undefined
+  const copyDisabledReason =
+    selected === null
+      ? '先点一个格子'
+      : !clipboardAvailable
+        ? '这个地址不允许写剪贴板（要 https 或 localhost）'
+        : shown === ''
+          ? '这个格没有内容'
+          : undefined
+  const findDisabledReason =
+    query === ''
+      ? '先输入要查找的内容'
+      : matches.length === 0
+        ? '这张表里没有匹配的格子'
+        : undefined
+  const formulaDisabledReason = formulas.length === 0 ? '这张表里没有公式格' : undefined
+
+  /**
+   * 命中计数。与 `FindReplaceBar` 的措辞一致（`3 / 12`、`无匹配`）。
+   *
+   * 选中格不在命中里（改动后模型变了、或用户点到了别处）时显示**总数**而不是
+   * `0 / 12`：我们不知道「当前是第几个」，如实说共有几个。
+   */
+  const matchLabel =
+    query === ''
+      ? '—'
+      : matches.length === 0
+        ? '无匹配'
+        : activeMatch >= 0
+          ? `${activeMatch + 1} / ${matches.length}`
+          : `共 ${matches.length} 个`
+
   return (
     <EditorShell
       flush={flush}
@@ -201,16 +407,105 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
                   setSelected(null)
                   setDraft(null)
                   setApplyError(null)
+                  setNote(null)
                 }}
                 items={view.sheets.map((s, index) => ({
                   value: index,
                   label: s.hidden ? `${s.name}（隐藏）` : s.name,
                 }))}
               />
-              <ToolbarSpacer />
+              <ToolbarDivider />
             </>
           )}
-          {view.sheets.length <= 1 && <ToolbarSpacer />}
+          <ToolbarGroup label="在当前工作表里查找">
+            <ToolbarTextField
+              label="查找内容（只在当前这张工作表里找，不区分大小写）"
+              value={query}
+              onChange={onQueryChange}
+              // 回车 = 下一个命中（与浏览器里 Ctrl+F 的习惯一致）
+              onSubmit={() => stepTo(matches, 1)}
+              // Esc = 清掉查询（选中留在原处，不把用户带到别的地方去）
+              onCancel={() => setQuery('')}
+              placeholder="查找"
+            />
+            {/*
+              命中数复用查找栏那一个类（`me-find__count`）：它带固定最小宽度，
+              从「3 / 12」跳到「无匹配」时后面的按钮不会被推来推去。
+              `aria-live` 让读屏也听到「有没有找到」——这是查找唯一的反馈。
+            */}
+            <span className="me-label me-find__count" aria-live="polite">
+              {matchLabel}
+            </span>
+            <ToolbarButton
+              label="上一个命中"
+              disabled={findDisabledReason !== undefined}
+              disabledReason={findDisabledReason}
+              onClick={() => stepTo(matches, -1)}
+            >
+              上一个
+            </ToolbarButton>
+            <ToolbarButton
+              label="下一个命中"
+              disabled={findDisabledReason !== undefined}
+              disabledReason={findDisabledReason}
+              onClick={() => stepTo(matches, 1)}
+            >
+              下一个
+            </ToolbarButton>
+          </ToolbarGroup>
+          <ToolbarDivider />
+          <ToolbarGroup label="公式格">
+            <ToolbarButton
+              label="跳到上一个公式格"
+              disabled={formulaDisabledReason !== undefined}
+              disabledReason={formulaDisabledReason}
+              onClick={() => stepTo(formulas, -1)}
+            >
+              <ChevronLeftIcon />
+            </ToolbarButton>
+            <ToolbarButton
+              label="跳到下一个公式格"
+              disabled={formulaDisabledReason !== undefined}
+              disabledReason={formulaDisabledReason}
+              onClick={() => stepTo(formulas, 1)}
+            >
+              <ChevronRightIcon />
+            </ToolbarButton>
+          </ToolbarGroup>
+          <ToolbarGroup label="单元格">
+            <ToolbarButton
+              label="复制这个格的文字"
+              disabled={copyDisabledReason !== undefined}
+              disabledReason={copyDisabledReason}
+              onClick={() => void copyCell()}
+            >
+              <CopyIcon />
+            </ToolbarButton>
+            {/*
+              「清空」的 tooltip 把代价说全：新写的是内联字符串格，**原格上
+              的 `s="…"` 会一起没掉**（颜色、边框、数字格式都在那个引用里）。
+              不写的话用户只知道「内容没了」，打开 Excel 才发现格式也变了。
+            */}
+            <ToolbarButton
+              label="清空这个格（原有的颜色、边框与数字格式会一起丢掉）"
+              disabled={clearDisabledReason !== undefined}
+              disabledReason={clearDisabledReason}
+              onClick={clearCell}
+            >
+              <EraserIcon />
+            </ToolbarButton>
+          </ToolbarGroup>
+          <ToolbarDivider />
+          <ToolbarGroup label="视图">
+            <ToolbarButton
+              label="十字高亮：选中格所在的行与列"
+              active={cross}
+              onClick={() => setCross((on) => !on)}
+            >
+              <CrossHighlightIcon />
+            </ToolbarButton>
+          </ToolbarGroup>
+          <ToolbarSpacer />
           <ToolbarButton
             label={source.saving ? '保存中…' : '保存到库'}
             primary
@@ -228,17 +523,31 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
               {columnLetters(selected.col)}
               {selected.row}
             </span>
-            <input
-              className="me-input"
+            {/*
+              格内容编辑框走 `ToolbarTextField`（antd `Input`）。
+
+              **这里原来是一个裸 `<input className="me-input">`**，Enter → `apply()`、
+              Esc → 丢弃草稿，是同一套事件语义自己又写了一遍——而它与
+              `ToolbarTextField` 的 `onSubmit` / `onCancel` **完全同形**。两处各写
+              一遍就会漂移（同一个外壳里出现两种高度、两种焦点环、两种 Esc 行为），
+              而那正是 D-064 要消掉的东西。
+
+              宽度由 `.mimir-cell-editor .me-input--text` 覆写成「吃掉这一行的
+              剩余宽度」（`editors.css`）：原语给的 180px 是工具条上那一排的尺寸，
+              这一行在内容区下方、宽度随窗口，不覆写会缩成一小段。
+
+              `onCancel` 比原语多收一件事：编辑行上方还有一条「这个格写不进去」
+              的提示（`applyError`）。Esc 是「放弃这次输入」，那条提示也得一起
+              收掉——否则换一个格它还挂在屏幕上说着上一个格的事。
+            */}
+            <ToolbarTextField
+              label={`单元格 ${columnLetters(selected.col)}${selected.row}`}
               value={shown}
-              aria-label={`单元格 ${columnLetters(selected.col)}${selected.row}`}
-              onChange={(event) => setDraft(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') apply()
-                if (event.key === 'Escape') {
-                  setDraft(null)
-                  setApplyError(null)
-                }
+              onChange={(value) => setDraft(value)}
+              onSubmit={apply}
+              onCancel={() => {
+                setDraft(null)
+                setApplyError(null)
               }}
               placeholder="输入内容后回车"
             />
@@ -260,8 +569,14 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
         <>
           <ToolbarLabel>{status}</ToolbarLabel>
           <ToolbarLabel>
-            {applyError ?? '公式不重算：改了被引用的格，那边的显示值要等 Excel 打开才更新'}
+            {applyError ?? note ?? '公式不重算：改了被引用的格，那边的显示值要等 Excel 打开才更新'}
           </ToolbarLabel>
+          {/*
+            第二句是这一版的能力边界，**常驻**（不是出错时才说）：覆盖一个格
+            写的是不带 `s` 的内联字符串格，原来那个格的样式引用就没了。清空
+            是最容易踩的一种（内容本来就不要了，格式的丢失最不显眼）。
+          */}
+          <ToolbarLabel>清空会丢掉该格原有的颜色/边框/数字格式（覆盖也一样）</ToolbarLabel>
         </>
       }
     >
@@ -278,39 +593,169 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
             ))}
           </colgroup>
           <tbody>
-            {sheet.rows.map((row) => (
-              <tr key={`row-${row.number}`} style={{ height: `${row.height}px` }}>
-                <th className="mimir-xlsx__gutter">{row.number}</th>
-                {row.cells.map((cell) =>
-                  cell.covered ? null : (
-                    <td
-                      key={`cell-${cell.col}`}
-                      colSpan={cell.colSpan}
-                      rowSpan={cell.rowSpan}
-                      className={
-                        selected?.row === row.number && selected?.col === cell.col
-                          ? 'mimir-xlsx__cell mimir-xlsx__cell--on'
-                          : cell.numeric
-                            ? 'mimir-xlsx__cell mimir-xlsx__cell--num'
-                            : 'mimir-xlsx__cell'
-                      }
-                      title={cell.formula ? '公式（显示 Excel 算好的缓存值）' : undefined}
-                      onClick={() => selectCell(row.number, cell.col)}
-                    >
-                      {/* 选中的格子显示草稿（实时预览），其余显示模型里的值 */}
-                      {selected?.row === row.number && selected?.col === cell.col
-                        ? shown
-                        : cell.text}
-                    </td>
-                  ),
-                )}
-              </tr>
-            ))}
+            {sheet.rows.map((row) => {
+              /** 十字高亮：选中格所在的整行（连行号格） */
+              const rowOn = cross && selected?.row === row.number
+              return (
+                <tr key={`row-${row.number}`} style={{ height: `${row.height}px` }}>
+                  <th
+                    className={
+                      rowOn ? 'mimir-xlsx__gutter mimir-xlsx__gutter--cross' : 'mimir-xlsx__gutter'
+                    }
+                  >
+                    {row.number}
+                  </th>
+                  {row.cells.map((cell) => {
+                    if (cell.covered) return null
+                    const isSelected = selected?.row === row.number && selected?.col === cell.col
+                    /**
+                     * 十字高亮：选中格所在的**整行或整列**。
+                     *
+                     * 两个条件都要——只判列的话看起来像「高亮了一竖条」，
+                     * 与「我在看哪一行」这个目的一半都没达成（行号格亮着、
+                     * 行里的内容不亮，反而更乱）。
+                     */
+                    const crossOn = cross && (rowOn || selected?.col === cell.col)
+                    return (
+                      <td
+                        key={`cell-${cell.col}`}
+                        colSpan={cell.colSpan}
+                        rowSpan={cell.rowSpan}
+                        /*
+                          选中的格把 ref 让给 `scrollIntoView`：查找与公式跳转
+                          都只改选中，而格子可能在滚动区外（理由见那个函数）。
+                        */
+                        ref={isSelected ? scrollIntoView : undefined}
+                        className={[
+                          'mimir-xlsx__cell',
+                          cell.numeric === true ? 'mimir-xlsx__cell--num' : '',
+                          crossOn ? 'mimir-xlsx__cell--cross' : '',
+                          isSelected ? 'mimir-xlsx__cell--on' : '',
+                        ]
+                          .filter((name) => name !== '')
+                          .join(' ')}
+                        title={cell.formula ? '公式（显示 Excel 算好的缓存值）' : undefined}
+                        /*
+                         * **白名单：这个格子是画布，不是控件。**
+                         *
+                         * 它有 `onClick` 但不是按钮——它是表格网格本身（每一格
+                         * 都要能点着选中，用 `ToolbarButton` 会变成「一个格子里
+                         * 嵌一个按钮」，行列的对齐、合并单元格的 `colSpan` 与
+                         * 十字高亮全都建立在 `<td>` 上）。全仓库「交互元素不走
+                         * 原语」的合法例外只有两处：这里是 xlsx 的网格，另一处
+                         * 是 pptx 那片 SVG 画布（`PptxEditor.tsx` 的
+                         * `.mimir-pptx-slide`）。
+                         *
+                         * 代价照实记：它不是键盘可达的（网格没有 roving tabindex，
+                         * 键盘用户走工具条的「上一个 / 下一个命中」「公式格跳转」
+                         * 那两组按钮换选中格）。这是**有意接受**的边界，不是漏了
+                         * ——真要做完整键盘导航得给网格一套 2D 焦点模型，那是另一件
+                         * 事；而现在**已经有**键盘路径，只是不在网格上。
+                         *
+                         * 别的地方新增这种写法之前先问：它是不是画布？不是就说明
+                         * 它该走原语。
+                         */
+                        onClick={() => selectCell(row.number, cell.col)}
+                      >
+                        {/* 选中的格子显示草稿（实时预览），其余显示模型里的值 */}
+                        {isSelected ? shown : cell.text}
+                      </td>
+                    )
+                  })}
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
     </EditorShell>
   )
+}
+
+/**
+ * 一个格子的位置：行号 1 开始、列号 0 开始（与 `XlsxCellRef` 同一套坐标系）。
+ *
+ * **不是数组下标**：`xlsx.ts` 的模型里行号会跳号（整行空白的行被丢掉了）、
+ * 列号来自 `r="C3"`。用下标的话「下一个」会跳到肉眼看上去不挨着的格。
+ */
+interface CellPos {
+  row: number
+  col: number
+}
+
+/**
+ * 行主序比较：先比行号，再比列号。
+ *
+ * 「前一个 / 后一个」就是**眼睛看着的那个顺序**（先上下、再左右）。按列优先
+ * 或者按解析顺序都会让跳转看起来是乱跳——而那种乱跳只能靠数格子才发现。
+ */
+function isAfter(a: CellPos, b: CellPos): boolean {
+  return a.row > b.row || (a.row === b.row && a.col > b.col)
+}
+
+/**
+ * 「上一个 / 下一个」落在哪一个。`list` 必须已按行主序排好。
+ *
+ * 三种情形各有道理：
+ *
+ *   - **还没选中任何格** → 从表的开头（下一个）或结尾（上一个）进
+ *   - **选中格在表里** → 走相邻那一个，两端**回绕**（与查找框的习惯一致）
+ *   - **选中格不在表里** → 取它之后 / 之前最近的一个；没有了就回绕到另一头
+ *
+ * 返回 `null` **只在 `list` 为空时**——调用方据此把按钮禁用，而不是让一个
+ * 点了没反应的按钮留在工具条上。
+ */
+function stepPosition(
+  list: readonly CellPos[],
+  current: CellPos | null,
+  step: 1 | -1,
+): CellPos | null {
+  if (list.length === 0) return null
+  const first = list[0]
+  const last = list[list.length - 1]
+  if (current === null) return step > 0 ? (first ?? null) : (last ?? null)
+
+  const at = list.findIndex((c) => c.row === current.row && c.col === current.col)
+  if (at >= 0) return list[(at + step + list.length) % list.length] ?? null
+
+  if (step > 0) return list.find((c) => isAfter(c, current)) ?? first ?? null
+  return list.findLast((c) => isAfter(current, c)) ?? last ?? null
+}
+
+/** 一张表里的公式格（行主序）。`covered` 的格选不中，所以不算 */
+function formulaCells(sheet: XlsxSheet | null): CellPos[] {
+  if (sheet === null) return []
+  const out: CellPos[] = []
+  for (const row of sheet.rows) {
+    for (const cell of row.cells) {
+      if (cell.formula === true && cell.covered !== true)
+        out.push({ row: row.number, col: cell.col })
+    }
+  }
+  return out
+}
+
+/**
+ * 查找命中（行主序）。
+ *
+ * **只找当前这一张表**：跨表查找要连页签一起跳，而用户看不到别的表里命中了
+ * 什么——「跳过去了但不知道跳到了哪」比不跳更让人困惑。状态行与按钮 tooltip
+ * 都写着这条边界。
+ *
+ * 不区分大小写（`toLowerCase`）：这是查找框的常规行为。中文没有大小写，
+ * 这里管的是英文与公式里的函数名。
+ */
+function findCells(sheet: XlsxSheet | null, query: string): CellPos[] {
+  if (sheet === null || query === '') return []
+  const needle = query.toLowerCase()
+  const out: CellPos[] = []
+  for (const row of sheet.rows) {
+    for (const cell of row.cells) {
+      if (cell.covered === true) continue
+      if (cell.text.toLowerCase().includes(needle)) out.push({ row: row.number, col: cell.col })
+    }
+  }
+  return out
 }
 
 /** `0` → `A`（列号 → 列字母，格子的引用要它） */

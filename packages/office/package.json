@@ -9,6 +9,7 @@
     "./editor.css": "./src/generated/editor.css",
     "./editors.css": "./src/editors/editors.css",
     "./shell.css": "./src/shell/shell.css",
+    "./test-dom": "./src/shell/antd-test-dom.ts",
     "./vendor/extensions": "./vendor/apps/docs/src/renderer/editor/extensions.ts",
     "./vendor/fonts.css": "./vendor/apps/docs/src/renderer/fonts/fonts.css",
     "./vendor/styles.css": "./vendor/apps/docs/src/renderer/styles.css",
@@ -46,6 +47,7 @@
     "@types/node": "catalog:",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "antd": "catalog:",
     "happy-dom": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
@@ -53,6 +55,7 @@
     "vitest": "catalog:"
   },
   "peerDependencies": {
+    "antd": "catalog:",
     "react": "catalog:"
   }
 }

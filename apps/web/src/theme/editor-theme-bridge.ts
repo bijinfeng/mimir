@@ -6,10 +6,17 @@ import { CONTENT_WIDTH, FONT_MONO, FONT_SANS, FONT_SIZE } from '@/theme/tokens'
  *
  * ## 它解决的是什么
  *
- * `@mimir/office` 里的编辑器外壳（`shell.css`、`editors.css`）不依赖 antd
- * ——那是刻意的：这样这个包能独立测试、独立预览，也不必把 antd 的 token
- * 体系抄一遍。代价是它读不到主题值，所以需要**一道桥**把 antd token 填进
- * 它约定的那些自定义属性（`--me-*`，见 `shell.css` 顶部那张表）。
+ * `@mimir/office` 里的编辑器外壳（`shell.css`、`editors.css`）读一份**自己的**
+ * 自定义属性（`--me-*`，见 `shell.css` 顶部那张表）：底色、分隔线、正文与辅助
+ * 字号、工具条的间距、弹层的阴影与圆角。这些东西 antd 的 token 体系里是有，
+ * 但宿主必须**显式填进去**——CSS 自定义属性不会自己跨包流动。
+ *
+ * ## 它**不**负责什么（D-064 起）
+ *
+ * 工具条**控件**的观感归 antd（高度、内边距、圆角、边框、hover、焦点环、
+ * 禁用态、控件字号），由 antd 自己的 `--ant-*` 承担——这个包现在依赖 antd。
+ * 所以这里不再需要「把控件的高度也填一遍」，`--me-control-height` 由包内自己
+ * 声明（`shell.css`），宿主不填。
  *
  * ## 为什么是 `createStyles` 而不是全局变量
  *
@@ -49,7 +56,6 @@ export const useEditorThemeVars = createStyles(({ css, token }) => ({
     /* 激活态底色。用 antd 派生的浅阶而不是 colorPrimaryBg 的字面值——
        品牌色改了它自动跟着走 */
     --me-accent-bg: ${token.colorPrimaryBg};
-    --me-accent-hover: ${token.colorPrimaryHover};
     /* 焦点环描边。用派生阶而不是主色——正文区很大，主色的环比内容本身抢眼 */
     --me-accent-border: ${token.colorPrimaryBorder};
     --me-danger: ${token.colorErrorText};

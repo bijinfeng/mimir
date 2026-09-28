@@ -56,6 +56,22 @@
   text-align: right;
 }
 
+/*
+ * 十字高亮：选中格所在的**行与列**各铺一层淡底。
+ *
+ * 目的是回答「我在看哪一行哪一列」——表宽了以后只看一个小方框很容易串行。
+ * 颜色取 accent 的 10% 而不是 `--me-hover`：悬停底是灰的，两者撞在一起
+ * 用户会以为指针停在那里。`color-mix` 让它在浅色与深色下都成立
+ * （vendored 的上游样式里也在用它）。
+ *
+ * 必须写在 `--on` **之前**：选中格自己那一格是行与列的交叉点，那里 `--on`
+ * 的底要赢（同特异性，靠先后）。
+ */
+.mimir-xlsx__cell--cross,
+.mimir-xlsx__gutter--cross {
+  background: color-mix(in srgb, var(--me-accent, #1677ff) 10%, var(--me-surface, #fff));
+}
+
 /* 选中的格子用主色描边（outline 不占布局，不会把表格挤动一格） */
 .mimir-xlsx__cell--on {
   outline: 2px solid var(--me-accent, #1677ff);
@@ -69,6 +85,20 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+/*
+ * 格内容编辑框**占满这一行的剩余宽度**（它就是 `ToolbarTextField`，antd 的
+ * `Input`）。原语自带的 `.me-input--text` 是 180px + `flex: none`——那是给
+ * 工具条那一排定的（`shell.css`），而这一行在内容区下方、宽度随窗口。
+ *
+ * 按调用点覆写是这套原语既有的做法（另一个例子是 `.me-link .me-input--text`）。
+ * 关键是 `flex: 1`（basis 0）：它让输入框吃掉行号与「应用」按钮之外的空间，
+ * 而不是按 180px 缩成一小段、也不是按 100% 把兄弟元素挤走。
+ */
+.mimir-cell-editor .me-input--text {
+  flex: 1;
+  width: auto;
 }
 
 .mimir-cell-editor__ref {
@@ -147,26 +177,17 @@
   overflow-y: auto;
 }
 
-/* 段落输入框用 textarea（一段可能是好几行），但长得像单行输入框：
-   自适应的多行输入在 Office 里反而不好对齐——用户看不出边界在哪 */
-.mimir-paras__item {
-  width: 100%;
-  min-height: 26px;
-  padding: 4px 8px;
-  border: 1px solid var(--me-border, #d9d9d9);
-  border-radius: 4px;
-  background: var(--me-surface, #fff);
-  color: inherit;
-  font: inherit;
-  font-size: var(--me-font-size, 13px);
-  line-height: 1.5;
-  resize: vertical;
-}
-
-.mimir-paras__item:focus-visible {
-  outline: 2px solid var(--me-accent, #1677ff);
-  outline-offset: -1px;
-}
+/*
+ * `.mimir-paras__item` **已删（D-064 的适配）**：段落输入框改成外壳的
+ * `ToolbarTextArea`（antd 的 `Input.TextArea`，见 `PptxEditor.tsx` 的 footer），
+ * 高度 / 内边距 / 圆角 / 边框 / 字号 / 焦点环全部由 `--ant-*` 承担。
+ *
+ * **留着的那个坑要记着**：删掉的是这套规则，而它们原来解决的是两件事——
+ * ① 一段可能是好几行（所以必须是 textarea，不能换成单行 `Input`：值消毒会把
+ * `\n` 静默删掉，软换行 `<a:br/>` 就没了）；② 自适应的多行输入在 Office 里
+ * 反而不好对齐（用户看不出边界在哪），所以上一版才把它压成「看着像单行」的
+ * 26px。第 ② 条现在的答案是 antd 的 small 档 + `rows={1}`，**不再是自绘样式**。
+ */
 
 /* ── docx：纸张滚动区 ──────────────────────────────────────────── */
 
@@ -178,6 +199,34 @@
   --canvas: var(--me-stage-bg, #f5f5f5);
   --docs-paper: var(--me-surface, #fff);
 }
+
+/*
+ * 查找高亮。
+ *
+ * **必须写在这里，不能写进 `src/generated/editor.css`**：那份是
+ * `trim-editor-css.mjs` 按前缀裁出来的产物，同步会整个覆盖——而
+ * `search-hit` 不在保留前缀（`.doc-` / `.ProseMirror` / `.page-` / `.hf-` /
+ * `.rb-`）里，注定会被裁掉。上游那份规则本来也读不到色：
+ * `--docs-paper-hit-bg` 由未 vendored 的 App 壳运行时注入（与工作台底色同源）。
+ *
+ * 用 `.mimir-docx-scroll .search-hit` 而不是裸类名：这两个类名很短，容易被
+ * 别处（html 的 CodeMirror 那套）撞上，限在 docx 的滚动区里更稳妥。
+ */
+.mimir-docx-scroll .search-hit {
+  background: var(--me-accent-bg, #e6f4ff);
+  border-radius: 2px;
+}
+
+.mimir-docx-scroll .search-hit-active {
+  background: var(--me-accent, #1677ff);
+  color: #fff;
+}
+
+/* 状态行上的一次性提示（图片读不出来之类）。**不弹窗**：它是动作的直接结果，
+   落在状态行上与「保存失败」同一个位置，不打断正在做的事。
+   样式归外壳原语 `ToolbarNotice`（`shell.css` 的 `.me-notice`）——docx 之前
+   在这里自造了一个 `.mimir-docx-notice`，而 pdf 拿 `ToolbarNote` 顶，同一档
+   文案两处分叉。收进原语之后这个类不再需要，删掉的是类名，不是那条判断。 */
 
 /* ── markdown：笔记正文 ────────────────────────────────────────── */
 
@@ -244,24 +293,14 @@
   border-radius: 4px;
 }
 
-/* 状态行上的可点文字（「保存失败 · 点此重试」）。做成按钮但长得像文字：
-   它是状态的一部分，画成一个方框按钮会让状态行看起来像工具条 */
-.me-status-action {
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--me-danger, #cf1322);
-  font: inherit;
-  font-size: var(--me-font-size-sm, 12px);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  cursor: pointer;
-}
-
-.me-status-action:focus-visible {
-  outline: 2px solid var(--me-accent, #1677ff);
-  outline-offset: 1px;
-}
+/*
+ * `.me-status-action` 已删（D-064）：它的唯一消费者是 markdown 状态行里那两个
+ * 裸 `<button>`，现在改走外壳原语 `ToolbarTextButton`，样式在 `shell.css` 的
+ * `.me-text-btn`（那一份还要压 antd 的 height / padding / border / nowrap，
+ * 所以留在外壳那一层——它是**控件**，不是格式特有的东西）。
+ *
+ * 留着它就是个陷阱：同名的类没消费者，下一个人会以为状态行的可点文字还归这里管。
+ */
 
 /* ── html：源码 + 预览分栏 ─────────────────────────────────────── */
 
@@ -273,6 +312,18 @@
   display: flex;
   flex: 1;
   min-height: 0;
+}
+
+/*
+ * 视图切换用 `hidden` 属性（不是卸载，理由见 HtmlEditor 的 `view` 说明）。
+ *
+ * **这条规则不能省**：`[hidden] { display: none }` 在浏览器的默认样式表里，
+ * 而下面 `.mimir-html-preview-pane` 自己写了 `display: flex`——**作者样式一律
+ * 胜过默认样式**（与选择器特异性无关），于是那个栏位会照常显示、`hidden`
+ * 看起来完全没生效。这一条把它压回去。
+ */
+.mimir-html-split > [hidden] {
+  display: none;
 }
 
 .mimir-html-source {
@@ -310,14 +361,100 @@
 }
 
 /*
- * 预览。白底（页面默认就是白的，跟着深色主题走会让「这个页面长什么样」
- * 失真——浏览器里看网页也不会因为系统是深色就把白底换成黑的）。
+ * 预览一侧（栏位）。
+ *
+ * **它是能滚的**：放大的预览会比这一栏宽（`zoom` 只放大内容，不放大栏），
+ * 那时要能滚过去看右边。工作台底色比内容底暗一档，于是「这一块是预览」与
+ * 「这一块是源码」一眼分得开（与 pdf/pttx 的舞台同一个判断）。
  */
-.mimir-html-preview {
+.mimir-html-preview-pane {
+  display: flex;
   flex: 1 1 50%;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  background: var(--me-stage-bg, #f5f5f5);
+}
+
+/*
+ * 预览的宿主层：**宽度（设备档位）与缩放（`style.zoom`）都加在它身上**，
+ * iframe 只管铺满它。
+ *
+ * ## 为什么宽度是 `calc(100% * var(--html-preview-zoom))`
+ *
+ * `zoom` 不只是「画大一点」——它同时**缩掉元素的布局尺寸**：`zoom: 2` 下
+ * `width: 100%` 解析成「容器宽度 ÷ 2」的局部像素，渲染出来还是容器那么宽。
+ * 于是「放大到 200%」实际得到的是**一个 360px 宽的视口被拉成 720px**：内容
+ * 重排成手机版，而不是同一份布局放大着看（实测：1440 视口下 host 的
+ * offsetWidth 359 对 rect 719）。乘回缩放倍数才是真的放大。
+ *
+ * 宽度按**宿主自己的局部像素**解析，所以这个倍数只能由组件侧一起给
+ * （`--html-preview-zoom` 与 `style.zoom` 是同一个值，见 HtmlEditor）。
+ *
+ * ## 另外两条
+ *
+ * `flex: none`：宿主是预览栏（flex 行）的子项，默认可收缩——不关掉的话上面
+ * 那个宽度会被 flex 收回去，缩放又变回失效（实测踩过）。
+ *
+ * 居中用 `margin-inline: auto` 而不是 `justify-content: center`：内容比容器宽
+ * 时（放大后的预览）后者会把左半边切掉、滚不回去，而 auto 外边距在溢出方向
+ * 上解析成 0，于是两头都滚得到。
+ *
+ * 白底（页面默认就是白的，跟着深色主题走会让「这个页面长什么样」失真——
+ * 浏览器里看网页也不会因为系统是深色就把白底换成黑的）。
+ */
+.mimir-html-preview-host {
+  display: flex;
+  flex: none;
+  margin-inline: auto;
+  width: calc(100% * var(--html-preview-zoom, 1));
+  min-width: 0;
+  background: #fff;
+}
+
+/* 设备档位：平板 768px、手机 390px（与上游的 `responsive` 预览同一档）。
+   桌面档不写宽度——它铺满预览栏。`max-width` 同样要乘回缩放倍数，否则
+   `max-width: 100%` 会在 zoom 2 下把「手机 390px」夹成 719/2 ——设备宽度
+   就白设了（与上面同一笔局部像素的账）。 */
+.mimir-html-preview-host[data-device='tablet'],
+.mimir-html-preview-host[data-device='phone'] {
+  max-width: calc(100% * var(--html-preview-zoom, 1));
+  box-shadow: var(--me-shadow, 0 2px 10px rgb(0 0 0 / 12%));
+}
+
+.mimir-html-preview-host[data-device='tablet'] {
+  width: 768px;
+}
+
+.mimir-html-preview-host[data-device='phone'] {
+  width: 390px;
+}
+
+.mimir-html-preview {
+  flex: 1 1 auto;
   min-width: 0;
   border: none;
   background: #fff;
+}
+
+/*
+ * 元素路径（面包屑）。一排紧凑按钮 + 一个 › 分隔符。
+ *
+ * 分隔符是**装饰**（`aria-hidden` 在标记里）：读屏用户听到的是「body › main ›
+ * h2」里的那三个可点项，不是三个「›」。
+ */
+.mimir-html-crumbs {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.mimir-html-crumbs__sep {
+  display: inline-flex;
+  align-items: center;
+  color: var(--me-text-weak, #8c8c8c);
+  font-size: 11px;
 }
 
 /* 窄屏：上下叠放。左右分栏在 700px 左右时两边都只剩一条，谁都看不清 */
@@ -340,7 +477,7 @@
  */
 .mimir-pdf-stage {
   display: flex;
-  justify-content: center;
+  align-items: flex-start;
   padding: 16px;
   background: var(--me-stage-bg, #f5f5f5);
 }
@@ -349,12 +486,116 @@
  * 页面本身。**白底固定**（与 html 预览同一条理由）：PDF 的页面就是白纸，
  * 跟着深色主题走会让「这份 PDF 长什么样」失真——而 PDF 常常是要打印的。
  *
- * `box-shadow` 而不是描边：描边是结构线，而这里要的是「一张纸浮在工作台上」。
+ * ## 为什么**没有** `max-width: 100%`（这里踩过一次，两个都是静默的）
+ *
+ * 那个属性只夹宽度、不夹高度，而高度由渲染器显式设成目标高度——于是在一个比
+ * 900px 窄的窗口里画的是一张 666×1200 的**被压扁**的页（实测 700px 窗口：
+ * CSS 盒 666×1200、宽高比 0.555，而页面本身是 0.75）。它不会报错，只是
+ * 「看起来有点怪」。
+ *
+ * 更糟的是它让缩放说了假话：150% 时页面被夹回工作台宽度，画布一点没变大，
+ * 而状态行写着「150%」。现在页面保持**缩放指定的尺寸**、工作台横向滚动
+ * （它是 `me-scroll`，本来就能滚）——每个缩放档位都是真的。
  */
 .mimir-pdf-page {
-  max-width: 100%;
-  box-shadow: var(--me-shadow, 0 2px 10px rgb(0 0 0 / 12%));
+  display: block;
+  /* 高度由位图的宽高比决定（canvas 是有内在尺寸的替换元素）。**不写死
+     `height`**：写死了就多一个可能与宽度不同步的数——而不同步的症状正是
+     「画面被拉伸」，不报错 */
+  height: auto;
   background: #fff;
   /* 页面上的文字是画进 canvas 的，选不中——那与 pptx 的 SVG 不同，
      这里如实接受（要可选文字得再叠一层文本层，本版没做） */
+}
+
+/*
+ * 一张纸：画布 + 叠在它上面的两层（命中高亮、待生效的裁剪框）。
+ *
+ * ## 两条不能少
+ *
+ * `align-self: flex-start`：工作台是 flex 行，默认 `align-items: stretch`
+ * 会把这一层**拉到工作台那么高**。而高亮与裁剪框是按这一层的百分比定位的，
+ * 于是「页面 900×1200、这一层 900×667」时高亮被纵向压进 667 里——框落在页面
+ * 上半部分的某个位置（实测过，框住的不是那行字）。这与 AGENTS.md 里那串
+ * 「高度链」是同一类坑：**静默地错，且错的是位置**。
+ *
+ * `margin-inline: auto`：页面比工作台窄时居中。**不用 `justify-content:
+ * center`**——页面比工作台宽时（放大到 200%），flex 的居中会让左边那一截
+ * 滚不到（溢出方向跟着 start 边被裁掉，flex 的老问题）。`margin: auto` 在
+ * 溢出时退化成 0，横向滚动条能一路滚到左边缘。
+ *
+ * 阴影画在这一层（不是 canvas）：高亮在画布**之上**，阴影留在 canvas 上会压在
+ * 高亮与纸的交界处，看着像高亮被纸压住了。两者盒子一样大，观感不变。
+ */
+.mimir-pdf-sheet {
+  position: relative;
+  flex: none;
+  align-self: flex-start;
+  margin-inline: auto;
+  box-shadow: var(--me-shadow, 0 2px 10px rgb(0 0 0 / 12%));
+}
+
+/*
+ * canvas 是 `inline-block`，直接放进块级容器会在它下面留一行行高的空隙
+ * （基线下沉）。那一截空隙会让**这一层的盒子比画面高几个像素**——而两层
+ * 都按这一层的百分比定位，于是高亮整体偏下（字旁的框对不上字）。
+ */
+.mimir-pdf-sheet > .mimir-pdf-page {
+  display: block;
+}
+
+/* 空白页（还没有内容，保存后才成为真的一页） */
+.mimir-pdf-sheet--blank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  /* 虚线框：它是**还没有的东西**，不是一张白纸（后者也是内容） */
+  border: 1px dashed #bfbfbf;
+}
+
+.mimir-pdf-sheet__note {
+  font-size: var(--me-font-size-sm, 12px);
+  color: #8c8c8c;
+}
+
+/*
+ * 命中高亮。
+ *
+ * ## 颜色是**固定值**，不走 `--me-*`
+ *
+ * 高亮画在**白纸上**（`.mimir-pdf-page` 的底是固定的白——PDF 的页面就是白纸，
+ * 跟着主题走会让「这份 PDF 长什么样」失真）。所以它要的是「在白底上看得见的
+ * 黄/橙」，而 `--me-accent` 是给**界面**（有主题底）用的：深色主题下它偏亮，
+ * 压在白纸上反而看不清。
+ *
+ * `mix-blend-mode: multiply` 让底下的字透出来——不透明的高亮会把文字盖掉，
+ * 而「找到的那几个字长什么样」正是要找的东西。当前那一处用橙色区分。
+ */
+.mimir-pdf-hit {
+  position: absolute;
+  border-radius: 2px;
+  background: #ffe58f;
+  mix-blend-mode: multiply;
+  /* 高亮不该挡住画布的滚动与后续的点击（它是标注，不是控件） */
+  pointer-events: none;
+}
+
+.mimir-pdf-hit[data-active='true'] {
+  background: #ffa940;
+}
+
+/*
+ * 待生效的裁剪框：框外压暗。
+ *
+ * 用 `box-shadow` 的扩散而不是四个伪元素：不需要知道页面多大，`9999px` 的阴影
+ * 把外面全铺上。**它表达的是「保存后只看得见这一块」**，不是「画面被裁了」
+ * ——画布画的始终是原件。所以框外的内容还看得见（只是暗），与「裁剪不改内容」
+ * 这条事实一致。
+ */
+.mimir-pdf-crop {
+  position: absolute;
+  border: 1px solid #faad14;
+  box-shadow: 0 0 0 9999px rgb(0 0 0 / 28%);
+  pointer-events: none;
 }

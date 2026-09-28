@@ -2048,7 +2048,7 @@ packages/office/
 查看器」的唯一真相。两处各判一次必然有一天不一致，而那种不一致是静默的
 （看得到文件、但打开的是错的查看器）。
 
-### 15.4.1 统一外壳：四种编辑器共用一套壳
+### 15.4.1 统一外壳：六种编辑器共用一套壳
 
 **界面在包里**（`packages/office/src/shell/` 与 `src/editors/`），这是 D-054
 的决定。理由：**「一样」只能由同一份实现保证**。改之前四种格式四套壳
@@ -2057,13 +2057,27 @@ markdown 干脆没有工具条），三种保存状态说法——那是用户�
 
 ```
 src/shell/
-  EditorShell.tsx   四个槽位：toolbar / children / footer / status
-  shell.css         外壳样式（主题值走 --me-* 自定义属性）
+  EditorShell.tsx   五个槽位：toolbar / subbar / children / footer / status
+                    加一层只传 componentSize="small" 的 ConfigProvider（D-064）
+                    与一组工具条原语。其中 ToolbarButton / Select / NumberField /
+                    TextField / **TextArea**（多行，pptx 的段落编辑框：单行 `Input`
+                    会在值消毒时把软换行的 `\n` 静默删掉）/ **TextButton**（状态行
+                    里有动作的一句话：重试 / 关掉这条提示。`variant="link"` 被
+                    `.me-text-btn` 压成下划线文字）/ ToggleGroup /
+                    FileButton / Divider 由 antd 渲染；Menu / ColorPicker /
+                    GridPicker / Tabs 仍是自己的实现（弹层必须就地 `fixed`）
+  shell.css         外壳样式：布局、弹层，以及非 antd 的元素（主题值走 --me-*）
   icons.tsx         工具条图标（自绘 SVG，不依赖图标库）
   editor-commands.ts 方言能力检测与调用
+  antd-test-dom.ts  驱动 antd 下拉的测试辅助（以 @mimir/office/test-dom 导出）
 src/editors/
   DocxEditor.tsx      xlsx / pptx 同构
-  MarkdownEditor.tsx
+  PptxEditor.tsx      幻灯片：SVG 画布（**可点而不经原语的白名单，只此与 xlsx
+                      的 `<td>` 网格两处**，见 D-064 的「各格式的适配」）
+  MarkdownEditor.tsx  笔记：工具条 30+ 个控件（D-061）
+  markdown-format.ts  markdown 方言的判据与操作（整张列表的范围、段落样式的
+                      当前值、列对齐、工具条状态串）。**导出**给宿主测——
+                      方言在宿主那边，只有它能验证这些行为
   InlineToolbar.tsx   选区工具条（跟着编辑器实例走，所以在包里）
   use-source.ts       取字节 → 解析 → 写回，以及「解析结果绑在哪一份字节上」
   types.ts            EditorIo（宿主提供取与存）
@@ -2073,9 +2087,40 @@ src/editors/
 （markdown 的 Tiptap 扩展集合、正文排版类）。所以 `MarkdownEditor` 也在包里
 ——它的正文格式（`createExtensions`）是 mimir 的产品决定，壳是通用的。
 
-**主题桥**（`apps/web/src/theme/editor-theme-bridge.ts`）：包不依赖 antd，
-宿主把 antd token 填进 `--me-*`。每个属性都有中性回退值，所以包能脱离宿主
-渲染（测试、静态预览都靠它）。
+**主题桥**（`apps/web/src/theme/editor-theme-bridge.ts`）：宿主把 antd token
+填进 `--me-*`。每个属性都有中性回退值，所以包能脱离宿主渲染（静态预览仍靠它）。
+
+**桥不退役，但「包不依赖 antd」已由 D-064 推翻**：工具条的控件换成 antd 组件，
+这个包从此依赖 antd。两件事互不替代——
+
+- antd 实例与主题由宿主的 `MimirProvider` 提供（`ThemeProvider` + 只放 locale
+  的 `ConfigProvider` + cssVar key）。包只允许一层 `ConfigProvider`，**只传
+  `componentSize="small"`、不传 `theme`**，位置在 `EditorShell` 内部、包住
+  `.mimir-editor` 整棵子树。传 `theme` 会重算 cssVar 的 key、`--ant-*` 变量名
+  跟着变，引用处静默失效（§5 那条「内层 `ConfigProvider` 传 `theme`」）
+- `--me-*` 仍然是外壳**自己的**颜色与间距的真相来源（底色、分隔线、正文字号、
+  工具条的 gap 都由 `shell.css` 管），换掉的只是「控件本身也得手写」
+
+**哪一层管什么**（D-064 重新划的边界，改工具条样式前先读这一张）：
+
+| 归 antd（`--ant-*`） | 归 `shell.css`（`--me-*`） |
+|---|---|
+| 控件的高度、内边距、圆角、边框、hover、焦点环、禁用态、控件字号 | 外壳布局（`.mimir-editor` 的四条约束、`flex-wrap`、状态行） |
+| 按钮的实心 / 文本两档外观、下拉的弹层、分段控件的选中外观、水波纹 | 弹层（`.me-menu*` / `.me-color*`，就地 `fixed`，**不 portal**）与非 antd 元素（色块、页签、状态块、说明段落） |
+| 数字框的上下抓手（我们 `controls={false}` 关掉了） | 按钮的**按下态**（`.me-tb[aria-pressed='true']`——antd 不认这个属性）与两个未迁移触发器的 `.me-btn` |
+
+**三条 antd 才有的坑**（都实测过，改这几个原语时先看一眼）：
+
+1. **`type="primary"` 不能与 `variant` / `color` 混着传**：antd 的分支是「先看
+   color && variant，都给了就直接用」，于是
+   `<Button type="primary" variant="text" color="default">` 会同时带
+   `ant-btn-primary` 与 text/default 的两个类——渲染出来是**透明的「保存」**，
+   而它不报任何警告。所以「保存」的断言要同时盯 `ant-btn-color-primary` 与
+   `ant-btn-variant-solid`（`EditorShell.test.tsx` 守这条）
+2. **antd 不认 `aria-pressed` / `aria-expanded` 的着色语义**：`Button` 只在
+   hover/active 上着色，「当前这一段是加粗的」必须自己用属性选择器画
+3. **`Divider` 的 `type="vertical"` 在 v6 已废弃**（打 `console.error`），
+   要用 `orientation="vertical"`
 
 ### 15.4.2 界面层踩过的五个坑（都会静默坏）
 
@@ -2093,19 +2138,88 @@ happy-dom。happy-dom 会替换全局 `URL`，于是解析类测试里的
 ——那 48 个测试与 DOM 毫无关系却整片挂掉（实测踩过）。要 DOM 的测试在自己的
 文件顶部写 `@vitest-environment happy-dom`。
 
+### 15.4.3 docx 的工具条：能力清单与四项如实不做
+
+工具条在 `packages/office/src/editors/DocxEditor.tsx`（`DocxToolbar`），分成八组。
+**每一个控件都先证明命令存在**（`editor-commands.ts` 的 `hasMark` / `hasNode` /
+`runCommand`），可用性来自 `readSnapshot` 的一次订阅——所以按钮的亮灭跟着光标走。
+
+| 组 | 内容 |
+|---|---|
+| 历史记录 | 撤销 / 重做（`disabled` 来自 `undoDepth`/`redoDepth`，不是渲染期另算的） |
+| 段落样式 | 正文 / 标题 N（**只列文档里真的存在的级别**）/ 引用 |
+| 字体 | 中文字体、西文字体**两个独立下拉**（`w:eastAsia` 与 `w:ascii` 是两个槽位） |
+| 字号 | 21 档下拉（**半磅**存储、**磅**显示）+ 增大 / 减小 |
+| 字符格式 | 加粗 / 倾斜 / 下划线 / 删除线 / 上标 / 下标 / 字体颜色 / 突出显示 / 清除格式 / 格式刷 |
+| 段落 | 四种对齐 / 行距倍数 / 段落底纹 / 文字方向 / 间距与缩进 / 固定行距 |
+| 列表与缩进 | 项目符号 / 编号 / 减少 / 增加 |
+| 表格与插入 | 表格菜单（只在光标进表格时出现）/ 尺寸网格插表 / 插图 / 链接 / 分页符 / 上移下移 / 查找 / 修订 / 拼写检查 |
+
+**四类做法与原因**（完整取舍见 D-062）：
+
+1. **「引用」是直接段落格式，不是样式。** 按 `styleId` 的 CSS 来自
+   `doc-style-css.ts`，**那个文件没 vendored**（跟着上游的 App 壳）。写
+   `styleId: 'Quote'` 只改 XML、画布不动。所以「引用」= 左缩进 + 左侧边线，
+   三项都在 schema 里、画布会画、保存会写、清除格式清得掉
+2. **标题级别只列存在的**（`DocxSession.headingLevels`）。文档没有 `Heading3` 时
+   选它会生成没有 `w:pStyle` 的段落——画布像标题、Word 里是正文
+3. **查找高亮走装饰器**（`docx-find.ts` → `searchPluginKey`），不是往文档里插标记：
+   查找因此不会把文档改脏、不进撤销栈、不影响补丁式保存的逐块比对。匹配按
+   **文本块拼平文本**做——逐个文本节点比对会漏掉跨标记的匹配（`in**for**mation`）
+4. **`.search-hit` 的样式在 `src/editors/editors.css`**，不在
+   `src/generated/editor.css`（后者的保留前缀里没有 `search-hit`，同步会覆盖；
+   而上游那份规则读的 `--docs-paper-hit-bg` 本来就来自未 vendored 的壳）
+
+**仍然没做**（如实留下，不是漏掉）：
+
+| 动作 | 为什么 |
+|---|---|
+| 字符间距 / 缩放 / 全部大写 / 小型大写 / 字符边框 / 文本效果 / 发光 / 带圈 | 这些在 schema 里是 `rendered: false` 的**透传**属性：改了模板里的值，保存时 `mergeRPrModel` 用 `rawRPr` 的原字节覆盖回去。**能显示、写不进去**——只有重新打开一份带这些格式的文档才看得到 |
+| 段落边框（四边） | `borders` 的取值是 `"tblr"` 的子集，画布与保存都认，但线型有 20 多种而面板里只放得下「有/无」——那会误导。目前只有「引用」用到它（`l`） |
+| 表格边框的线型与颜色 | 同上：只给了「全部 / 无 / 下框线」三个预设 |
+| 复杂文种字体（`csFont`） | `w:rFonts` 的第三个槽位，要按 `w:rtl` 判断该不该写。中文知识库里命中率极低，做一半反而会把文档改乱 |
+| 表格样式（`tblStyleId`）/ 六边（`tblLook`） | 前者只渲染成 `data-tbl-style`（没有 CSS 规则命中它，同一个缺失的 `docStyleCss`），后者连渲染都没有。改了只动 XML |
+
+**三条会静默出错的收尾**（都有注释与测试守着）：
+
+- 改行距倍数时**同时清掉 `lineRule`/`lineRawTwips`**——`lineRule='exact'` 在画布与
+  保存两侧都优先于倍数，不清的话选了「1.5 倍」屏幕和文件都不变
+- 清除格式的段落那一半要**逐类写** docParagraph / docHeading / docListItem
+  三遍：`updateAttributes` 只认它拿到的类型名，找不到就 `return false`
+- **格式刷逐类 `removeMark(from, to, type)`**，绝不写不传 markType 的那一次：
+  它会把区间上所有标记（链接、批注、修订、域代码）一起清掉
+
+`pageBreakBefore` **不在**清除格式的名单里：正文里的分页符就是它（`page-break.ts`
+在段首只打属性、不插字符），清掉等于删掉用户插的分页符。
+
+**测试**（都在 `packages/office/src/editors/`）：`docx-toolbar.test.ts`（18 条，
+模型层）、`docx-toolbar-render.test.tsx`（9 条，挂真组件树点真按钮，含「每个按钮
+都看得见内容」「无障碍名称不重复」两条渲染契约）、`docx-find.test.ts`（12 条）、
+`docx-save.test.ts`（17 条，**保存保真**：每个新命令都断言只改
+`word/document.xml` 且真的写进 XML）。
+
+**在真浏览器里核对过**（无头 Chrome，真 DOM + 真 CSS）：七个宽度下工具条换行而
+不溢出（`scrollWidth === clientWidth`）、39 个图标都有非零尺寸、点「引用」与
+「段落底纹」之后画布上的计算样式是预期值。这一轮抓出两条单测抓不到的：
+`ToolbarToggleGroup` 没图标时渲染成空方块（DOM 断言全过），以及分组名与控件名
+重复（读屏念两遍）——两者现在都有断言守着，见 D-062。
+
 ### 15.5 现在的边界
 
 | 缺什么 | 后果 |
 |---|---|
 | 页内分栏 | 多栏文档按单栏排（容量算错，页数偏多） |
-| 工具栏的能力面窄 | 只有加粗/斜体/下划线/删除线/列表；对齐、字号、颜色等未做（上游 ribbon 未 vendored） |
+| 工具栏里仍然空着的几项 | 字符间距 / 大小写 / 字符边框与效果（`rawRPr` 透传那批，写了存不下去）、表格边框的线型与颜色（只给了三个预设）、复杂文种字体（`csFont`）。其余已补齐，见 §15.4.3 |
 | 列表的编号分配 | 新列表沿用文档里已有的 `numId`；新建编号定义要写 `numbering.xml`，未做 |
 | worker 解析 | `parseDocx` 同步重活，大文档会卡主线程（上游有现成 worker 可接） |
 | 保存冲突 | `PUT` 不校验 `If-Match`；单客户端可接受 |
-| ~~xlsx / pptx 的编辑~~ | **都已做**：xlsx 改单元格（§15.7）、pptx 改文字（§15.9） |
+| ~~xlsx / pptx 的编辑~~ | **都已做**：xlsx 改单元格（§15.7）、pptx 改文字与整段字形（§15.9） |
+| pptx 的元素位置 | 改框（拖动/改尺寸）未做——上游那条路走 `pptx-ops` 的 ops 层 + `setElementTransform`（§15.9） |
+| pptx 的段落格式 | 项目符号、行距、对齐一律**沿用原件**，界面不给改（改了要写 `pPr`，那是另一条补丁路径） |
 | pptx 的字体度量 | 用启发式（按字符类别估宽度），**换行位置**可能与原件略有差别；要精确得接 opentype.js + vendored 字体（§15.8） |
 
-**docx 侧这三条缺项的排序就是产品化的排序**：分页（观感）→ 工具栏（可用）→ worker（大文档）。
+**docx 侧缺项的排序就是产品化的排序**：分页（观感）→ 工具栏（可用）→ worker（大文档）。
+工具栏已经补齐（§15.4.3），所以剩下的两条是分栏与 worker。
 
 ### 15.6 分页视图
 
@@ -2160,7 +2274,7 @@ Markdown / HTML），mimir 现在六种都有：
 |---|---|---|---|---|
 | **docx** | ✓ **完整分页视图**（块内断行、拆表、页眉脚、脚注） | ✓ 全文编辑（`src/docx.ts`） | **补丁式**（逐块） | |
 | **xlsx** | ✓ **网格**（`src/xlsx.ts`），多表页签、合并单元格、行号栏 | ✓ **改单元格文字**（`src/xlsx-edit.ts`） | **补丁式**（按 sheet XML） | 见下 |
-| **pptx** | ✓ **幻灯片**（渲成 SVG），页签翻页、版式继承、图片、图表 | ✓ **改文字**（`src/pptx-save.ts`） | **补丁式**（按元素锚点） | §15.8 |
+| **pptx** | ✓ **幻灯片**（渲成 SVG），页签翻页、版式继承、图片、图表；隐藏页有只读标记 | ✓ **改文字 + 整段字形**（加粗/倾斜/下划线/删除线/上下标/字号/字体/颜色，`src/pptx-save.ts`）；查找替换跨全篇 | **补丁式**（按元素锚点） | §15.8、§15.9 |
 | **html** | ✓ **源码 + 预览双栏**（`src/editors/HtmlEditor.tsx`） | ✓ **改源码**（CodeMirror） | 整体重写（保留 BOM/换行风格） | §15.9 |
 | **markdown** | ✓ 编辑器即预览（`src/editors/MarkdownEditor.tsx`） | ✓ 全文编辑 | 写回正文列（vault 文件同步） | 上传 `.md` **即导入为笔记** |
 | **pdf** | ✓ **逐页渲染**（pdf.js → canvas，`src/editors/pdf-render.ts`） | △ **页面级**：旋转、删除、调序（pdf-lib） | **整体重写** | §15.10 |
@@ -2192,12 +2306,13 @@ sheet 的 XML」这一层。所以自己写了约 300 行解析 + 约 250 行编
 XML**，zip 里其余条目逐字节原样写回。Excel 的 XML 里有大量我们没建模的
 东西（条件格式、数据验证、图表、透视表、切片器），整体重建会静默丢掉它们。
 
-**两条 xlsx 特有的规矩**（`src/xlsx-edit.ts` 的文件头详述）：
+**三条 xlsx 特有的规矩**（`src/xlsx-edit.ts` 的文件头详述）：
 
 | 规矩 | 为什么 |
 |---|---|
 | **绝不改 `sharedStrings.xml`**，新文本写成内联字符串 | 共享字符串是**共享**的：`<c t="s"><v>17</v></c>` 里的 17 指向表里第 17 项，而多个格子会指向同一项。改那一项会让所有引用它的格子一起变——用户改 A1，D7 也变了，没有任何提示 |
 | **公式格被覆盖时连 `<f>` 一起清掉** | 只换 `<v>` 而留着 `<f>` 的话，Excel 打开会按公式重算，用户输入的值被悄悄丢掉 |
+| **覆盖（含清空）会丢掉该格的 `s=` 样式引用** | 新写的是 `t="inlineStr"` 的格，不带 `s`，而颜色、边框、数字格式都在 `s` 指向的 `styles.xml` 里。实测：清空 `A2`（原本 `s="7"`）写出 `<c r="A2" t="inlineStr"><is><t></t></is></c>`，同一行别的格的 `s="9"` 原样还在。这是能力边界（这一版没有「只改字、保住格式」那条路），所以状态行与「清空」按钮的 tooltip 都如实写着——**不静默丢掉用户看不出来的东西** |
 
 **只读预览如实标注三件事**（`docs/PRD.md` §5.12 的「不猜」规矩）：
 
@@ -2279,8 +2394,10 @@ MIT/171KB）。上游的另一个依赖 `opentype.js` **没有被拉进来**—�
 
 ### 15.9 pptx 编辑：补丁式保存，改文字不动格式
 
-**能编辑什么**：幻灯片的**文字**（改内容、增删段落）。元素的颜色、字号、
-位置、动画仍要在原件里改（下载 → 改 → 传回，§5.12 的替换原件）。
+**能编辑什么**：幻灯片的**文字**（改内容、增删段落）与**整段的字形**（加粗、
+倾斜、下划线、删除线、上标/下标、字号、字体、字体颜色——D-060）。元素的位置
+与大小、项目符号/行距/对齐、动画仍要在原件里改（下载 → 改 → 传回，§5.12 的
+替换原件）。
 
 **怎么做到「改一行字不重排整篇 XML」**：与 docx 同一条思路（§15.2），
 但机制不同——pptx 是**按元素锚点**：
@@ -2305,6 +2422,25 @@ MIT/171KB）。上游的另一个依赖 `opentype.js` **没有被拉进来**—�
 `patchTextElementXml` 在 run 数对齐时**逐个 run 原地改** `rPr` 上的属性，
 不重建节点。
 
+**改格式时必须逐 run 回传**（D-060 的实测结论）：`EditParagraph` 允许
+「每段一条 run、文本是整段拼起来的」这种形状，但在有混合格式的段落上它是
+**破坏性**的——`applyEditParagraphs` 会取 `dominantRun`（文字最多的那条）的
+格式，同段其余 run 的字号/颜色/加粗被静默丢掉。实测（`formatted-text.pptx`
+那类「加粗标签 + 普通正文」的段落）压成一条 run 后，写出的
+`<a:rPr>` 只剩 `sz="2400"`，标签的 `b="1" sz="3600"` 没了。界面的做法是
+每条 run 带自己的 `srcRun` 与原文，只把要改的格式项**追加**上去
+（`PptxEditor.tsx` 的 `applyFormat`），`src/editors/PptxEditor.test.tsx` 有
+一条用例守着「两条 run 都还在、各自保留字号与颜色」。
+
+**run 的格式项只在真变时写字节**：`applyEditParagraphs` 对
+bold/italic/underline/strike/fontSize/fontFamily/color 逐个比「与旧 run 是否
+相同」，相同就不清 `*Implicit` 标记——于是 `patchRunProps` 不写那个属性。
+所以「点一个已生效的按钮」与「传回同一个字号」都不改文件（那条断言也在
+`PptxEditor.test.tsx` 里：改字号后 `b="1"` 与颜色原样）。**下划线与删除线的
+取消**另有规矩：原件里本来没有 `u` / `strike` 时什么都不写（写 `u="none"`
+等于把「继承版式」改成「明确没有」，那是改了原件的意思）；原本有属性或有
+`underlineExplicitNone` 才写 `none`/`noStrike`。
+
 **四条实测踩过的坑**：
 
 | 症状 | 原因 |
@@ -2325,10 +2461,10 @@ MIT/171KB）。上游的另一个依赖 `opentype.js` **没有被拉进来**—�
 | xlsx | 浏览器改 A3 → 保存 → **openpyxl** 读回确认 A3 是新值、A1 未受影响（共享字符串没被动过）；`sharedStrings.xml` 一个字节不变 |
 | docx | 改一段 → 保存 → python-docx 读回确认；`word/document.xml` 之外无变化 |
 
-**docx 编辑器仍未做的三项**（都在 `packages/office/AGENTS.md` 里）：页内分栏（多栏文档按单栏排）、工具栏的面窄（只有 6 项格式）、列表编号的新建分配（沿用已有 numId）。
+**docx 编辑器仍未做的**（都在 `packages/office/AGENTS.md` 里）：页内分栏（多栏文档按单栏排）、列表编号的新建分配（沿用已有 numId）、以及 §15.4.3 末尾列的几项格式。
 
-**仍未做的**：pptx 的 run 级格式编辑（加粗/字号/颜色——上游那条路走
-`pptx-ops` 的 ops 层 + `setElementFont`，需要 `index.ts` 的整条写路径）、
+**仍未做的**：pptx 的**元素位置与大小**（拖动改框；上游那条路走
+`pptx-ops` 的 ops 层 + `setElementTransform`）、项目符号/行距/对齐的改动、
 动画播放、精确字体度量；docx 的三项见上。xlsx 另有**公式重算**（改了被
 别的公式引用的格子，那边的显示值要等 Excel 打开才更新——状态行写明）、
 行/列的增删（这一版只改现有格的内容）、条件格式、图表、数据透视、日期还原。
@@ -2383,23 +2519,56 @@ StylePanel（373 行）——mimir 用自己的统一外壳（§15.4.1）。与�
 编辑一个 CRLF 的 Windows 页面，保存后整篇变成 LF，git diff 会显示「全文件
 都改了」——而用户只改了一个字。
 
+**工具条接的都是 vendored 内核里已有的函数**（`SourceEditorHandle`，
+`vendor/apps/html/src/renderer/source/SourceEditor.tsx`）：
+
+| 控件 | 接的是 |
+|---|---|
+| 撤销 / 重做 | `undo()` / `redo()`，可用性由 `canUndo()` / `canRedo()` 喂 |
+| 查找和替换 | `findTarget()` → `FindReplaceBar`。**零适配**：`cmFindTarget` 的返回形状与 `FindTarget`（`src/shims/ui.ts`）逐字一致；高亮类 `.search-hit` / `.search-hit-active` 由 `cm-find.ts` 的 StateField 画 |
+| 视图（源码 / 分栏 / 预览） | 三个栏位的 `hidden` |
+| 设备（桌面 / 平板 / 手机） | 预览宿主层的 `data-device`（宽度写在 editors.css） |
+| 预览缩放 | 预览宿主层的 `zoom` + `--html-preview-zoom` |
+| 元素路径（面包屑） | `ancestorsOf(map, sid)` + `map.bySid` 拿祖先，末段用 `gx:select` 带回来的 `tag` / `className` |
+
+### 15.11.1 三个静默坑（都在 `HtmlEditor.tsx` 的注释里）
+
+| 症状 | 原因 |
+|---|---|
+| **切到预览再切回来，中间改的东西没了**（接着敲键就把它覆盖掉） | 视图切换写成了条件渲染。源码编辑器一卸载，CodeMirror 的实例与编辑历史一起消失，而重新挂载时 `SourceEditor` 只吃 `initialText`——那是**刚打开文件时**的文本。所以两个栏位**始终挂着**，只用 `hidden` 决定谁在布局里 |
+| **`hidden` 看起来完全没生效** | `[hidden] { display: none }` 在**浏览器默认样式表**里，而 `.mimir-html-preview-pane` 自己写了 `display: flex`——**作者样式一律胜过默认样式**（与选择器特异性无关）。要有 `.mimir-html-split > [hidden] { display: none }` 压回去（实测：少了这条，切到「只看预览」时源码栏照常占着半屏） |
+| **「放大到 200%」得到的是手机版布局** | `zoom` 不只是画大，它**同时缩掉元素的布局尺寸**：`zoom: 2` 下 `width: 100%` 解析成「容器宽度 ÷ 2」的局部像素，渲染出来还是容器那么宽——于是得到「一个 360px 宽的视口被拉成 720px」，内容被重排了。实测（1440 视口）：只给 `zoom` 时 host 的 `offsetWidth` 359 对 `rect` 719，frame 内视口被压到 359。要 `width: calc(100% * var(--html-preview-zoom))` 乘回来，**并且 `flex: none`**——宿主是 flex 子项，默认可收缩会把宽度又收回去。设备档位那两条 `max-width` 同理 |
+
+**面包屑与预览是双向的**：点预览里的元素 → 面包屑出来；点面包屑 → 预览滚到
+那个元素并选中它（`postMessage` 一条 `gx:select`，检视脚本在 `inspector.js` 的
+消息分支里处理——与用户手点走**同一条路径、同一种高亮**）。父页读不到 frame 的
+DOM（没有 `allow-same-origin`），所以只能走这条路；实测确认 frame 内那条选中框
+（`[data-gx-inspector-overlay="select"]`）跟着面包屑走。
+
+**选中的元素被删掉时面包屑自己落下**：靠 `map.bySid.has(sid)` **在渲染期派生**
+（不是在 effect 里清 state——那会踩 `set-state-in-effect` 的级联渲染，也会先有
+一帧「元素没了但路径还在」）。sid 由 `buildParseMap` 跨重建复用，所以常见的编辑
+（在别处敲字）不会让选中掉下来，只有元素真的没了才掉。
+
 **一处未来要改的地方**：预览的加载是「编辑 → 重建 srcdoc」的整篇策略，所以
 **每敲一个字预览都会整页重载**（滚动位置会回到顶部）。上游用「推给主进程 +
 版本号换 URL」也有同样的整页重载，所以这不是退步；但它确实是 HTML 编辑器
 最明显的粗糙处。要做好的话得增量更新预览（把改动 patch 进 frame 的 DOM），
 那是下一步。
 
-### 15.12 PDF：pdf.js 渲染 + pdf-lib 页面操作
+### 15.12 PDF：pdf.js 读、pdf-lib 写，文字层自建
 
-**两份库的分工是刻意的**：pdf.js（Apache-2.0）**读**、pdf-lib（MIT）**写**。
-反过来（用一个库做两件事）两头都做不好——pdf.js 没有写 API，pdf-lib 的渲染
-能力很弱。
+**三份库的分工是刻意的**：pdf.js（Apache-2.0）**读**（画页面 + 取文字），
+pdf-lib（MIT）**写**（页面结构）。反过来（用一个库做两件事）两头都做不好
+——pdf.js 没有写 API，pdf-lib 的渲染能力很弱。两份库**共用同一份文档缓存**
+（按字节的身份；`pdf-render.ts` 的 `loadPdfDocument`），否则同一份 PDF 会被
+解析两遍，各持一个 worker 侧的对象树。
 
 **一处必须带上的资产**（3.9MB，`apps/web/public/pdfjs/`）：
 
 | 资产 | 少了它的症状 |
 |---|---|
-| `cmaps/`（169 个文件） | **中文/日文/韩文的 PDF 整段文字不显示**（不是乱码，是空白）——那些 PDF 用 CID 字体，字符到字形的映射表不在文件里 |
+| `cmaps/`（169 个文件） | **中文/日文/韩文的 PDF 整段文字不显示**（不是乱码，是空白）——那些 PDF 用 CID 字体，字符到字形的映射表不在文件里。查找也一样：`getTextContent` 读不出汉字 |
 | `standard_fonts/`（16 个） | 用标准 14 字体但没内嵌的 PDF 显示为空白或错位 |
 | `wasm/`（13 个） | JPEG 2000 / JBIG2 图像解码失败 |
 
@@ -2409,20 +2578,147 @@ StylePanel（373 行）——mimir 用自己的统一外壳（§15.4.1）。与�
 **原样复制、不改名**的位置。服务端的静态中间件（`lib/static.ts`）为此补了
 `.bcmap` / `.pfb` / `.wasm` 三个 MIME。
 
-**两个实测踩过的坑**（都在 `pdf-render.ts` 的注释里）：
+#### 页面模型：一页由四样东西决定
+
+`editors/pdf-pages.ts`（没有一行 JSX，所以它测得动）：
+
+```
+origin   这一页是从哪来的：原件第 N 页 / 空白页 / 别处导入的第 N 页
+rotation 目标旋转（绝对值，不是增量）
+crop     裁剪：四边各内缩多少 pt（相对**原件可视区**）
+paper    纸型：目标尺寸。非 null 时内容按 k 缩放
+```
+
+**旋转是绝对值、且不改盒子的宽高**：PDF 的 `/Rotate` 是「显示时把页面转多少
+度」，它不改 MediaBox。所以盒子尺寸始终是未旋转的那一套，界面要的显示尺寸由
+`displaySize()` 现算。上一版在模型里存交换后的宽高，于是「旋转两次回到原样」
+要靠两次交换抵消——那种表示一旦有一处忘了交换，页面的长宽比就是错的，而画布
+只会画得不对、不会报错。
+
+**尺寸取 CropBox 而不是 MediaBox**：被裁过的 PDF 到处都是（扫描仪、出版社的
+排版稿都带 CropBox），用户看到的是 CropBox 那一块。取 MediaBox 的症状是界面上
+的尺寸比实际大一圈，而且用户再裁一刀时基准是错的。
+
+**`isPristine` 与 `sameLayout` 是两个不同的判据**（都别再合并）：
+
+| 判据 | 比的是 | 用在哪 |
+|---|---|---|
+| `isPristine` | 布局 vs **打开时解析出的原件** | 刚打开时「有没有改动」 |
+| `sameLayout` | 两份**布局**逐页比 | 保存之后与**磁盘上那份文件**比 |
+
+**「转过去再转回来」不算改动**（`isPristine`）：判据必须是结构本身，不能是
+「有没有操作过」。否则「转 90° 又转回来」会让保存按钮亮着，点下去把整份文件
+重写一遍（字节全变）——而用户什么都没改。
+
+**保存之后基线换成磁盘上那份**（`PdfEdit.file`）：保存成功后 `reload()` 是一个
+来回的异步，在新字节到之前 `source.bytes` 还是旧的。拿旧原件当基线会同时出两个
+错——「保存完仍显示已修改」（真浏览器里实测到：字节已写出 2075 字节，状态行还
+挂着「已修改，未保存」）与「改回磁盘上那份之后保存按钮变灰，退不回去」。
+
+#### 保存：整体重建，且**导入的字节必须跟着改动走**
+
+`buildPdfBytes` 新建文档 + 按目标顺序拷贝页面（按来源分组，一份来源只
+`copyPages` 一次）。不原地改：`removePage` / `setRotation` 可以原地改，但
+**页序调整没有原地版本**（pdf-lib 没有 movePage），导入页面更是只能 `copyPages`。
+统一走拷贝的额外好处是**结果只取决于目标结构**，与操作历史无关。
+
+**导入的页在原件里不存在**，所以那份字节必须与改动一起留着
+（`PdfEdit.imports`）。丢了它的症状是：第一次保存成功、第二次保存（从同一份
+原件重建）把导入的页**静默丢掉**——两次都报成功。所以 `buildPdfBytes` 找不到
+导入字节时**抛错**，不静默跳过。
+
+**裁剪只改可视区，内容一字未删**：`setCropBox` 只写一个键，内容流逐字节相同
+（`pdf-pages.test.ts` 直接比内容流字节）。界面上如实写着这一句，画布上则用
+「框外压暗」表达待生效——画布画的始终是原件（裁剪与纸型是保存后才生效的），
+把画面裁掉会与文字层、命中高亮各说各话。
+
+**纸型：`scaleContent(k, k)` 与 `setSize(w, h)` 必须配对**，`k = min(纸宽/可视宽,
+纸高/可视高)`。只改纸不缩内容，内容会跑到纸外；只缩内容不改纸，纸还是原来的
+大小。**缩放后要补一次 `translateContent(vx·(1−k), vy·(1−k))`**：`scaleContent`
+是绕**原点**缩放的，而裁剪后的可视区不在原点——绕原点缩放的症状是「裁一刀再
+换纸型，画面整体平移一截」（实测：300pt 宽的页裁掉左边 50pt 再缩到 200pt，不补
+平移的话文字整段左移 50pt）。换纸型之后可视区重置为整张新纸，否则裁剪框还停在
+旧坐标上。
+
+#### 文字层与查找（`editors/pdf-text.ts`）
+
+| 做 | 不做 |
+|---|---|
+| `getTextContent()` 取文字与位置，整份文档里找一个串 | **改文字**（要 PDFium 的 7MB WASM） |
+| 命中换算成**页面比例矩形**（0..1），画在画布上 | 正则、通配符；选中文字 |
+
+矩形用 `getViewport({ scale: 1, rotation })` 换算，`rotation` 就是**画布渲染时
+传的那个**——所以文字层与画面必然对齐，包括原件自带的 `/Rotate`。代价是旋转
+变了要重算矩形，为此原始文字（用户空间的四边形）单独按（字节, 原页号）缓存，
+重算只做一次坐标变换。
+
+**矩形存比例而不是像素**：画布宽度随缩放变（40–240%），比例让缩放、换页、换
+DPI 都不用重算。存像素就要在每次缩放时重算一遍，而漏算一处症状是「放大之后
+高亮跑偏」，不报错。
+
+**搜索是同步的，扫描是异步的**：`FindAdapter.search` 按契约同步返回匹配数，
+而 `getTextContent()` 是异步的。所以文字在**打开查找之前**先扫一遍（带进度、
+可取消），搜索本身在内存里做。反过来（在 `search` 里发起异步扫描）会让匹配数
+晚一拍到——栏上显示的是上一次的结果，那看起来就是「搜不到」。
+
+**中文的两件事**：cmaps 让 pdf.js 能读出汉字；而**全词匹配的边界用 ASCII 词
+字符集**（`[A-Za-z0-9_]`），于是汉字天然没有「词边界」——「组件」在「组件性能」
+里照样匹配。这正是中文该有的语义：硬按空格切会让中文搜不到，而那种开关比没有
+开关更坏。
+
+**索引与画布共用同一份文档，所以不能调 `page.cleanup()`**：它会把这一页**正在
+进行的渲染任务取消掉**（`pdf.mjs` 的 `#tryCleanup` 里 `internalRenderTask.cancel()`），
+症状是画面变白且无报错——正是这个文件里记过的那类坑。
+
+#### 画布与叠加层：百分比定位的前提是「这一层的盒子与画面一样大」
+
+高亮与裁剪框按页面比例定位，分母是那张纸（`.mimir-pdf-sheet`）。**这一层的盒子
+必须与 canvas 的 CSS 盒完全一致**，而这里实测踩过三处（都会静默地错位置）：
+
+| 症状 | 原因 |
+|---|---|
+| 高亮纵向被压扁、框住的不是那行字 | 工作台是 flex 行，默认 `align-items: stretch` 把「纸」拉到工作台那么高。实测：页面 900×1200、纸层 900×667，于是百分比定位的高亮挤进 667 里。要 `align-self: flex-start` |
+| 缩放说了假话（写 150%、画布一点没变大） | `.mimir-pdf-page` 上的 `max-width: 100%` 只夹宽度不夹高度。700px 窗口下画出一张 666×1200 的**被压扁**的页（宽高比 0.555，而页面是 0.75）。现在页面保持缩放指定的尺寸、工作台横向滚动 |
+| 放大的页面左边滚不到 | 用 `justify-content: center` 居中时，溢出方向跟着 start 边被裁掉。改成子项 `margin-inline: auto`（溢出时退化成 0） |
+| 窄窗口下工具条右端的「保存」看不见 | `.mimir-editor` 是 flex 子项，`min-width: auto` 让它不会缩到比内容更窄（里面是 900px 的页面）——420px 窗口里外壳量出 932px。它看起来像「工具条没折行」，其实是外壳的宽度下界。补 `min-width: 0`；`overflow: clip` 挡不住（Chrome 只对 `hidden`/`auto`/`scroll` 把自动最小尺寸算作 0，而 `clip` 是工具条 sticky 必需的） |
+
+**canvas 不写死 `height`**：高度由位图的宽高比决定（canvas 是有内在尺寸的替换
+元素）。写死了就多一个可能与宽度不同步的数——不同步的症状正是「画面被拉伸」。
+
+**页面底与高亮的颜色是固定值**（不跟 `--me-*`）：PDF 的页面就是白纸（跟着深色
+主题走会让「这份 PDF 长什么样」失真），所以高亮要的是「在白底上看得见的黄/
+橙」，而 `--me-accent` 是给**界面**（有主题底）用的。`mix-blend-mode: multiply`
+让底下的字透出来——不透明的高亮会把文字盖掉，而「那几个字长什么样」正是要找
+的东西。
+
+#### 实测踩过的坑（都会静默坏）
 
 | 症状 | 原因 |
 |---|---|
 | 界面全白，且**没有任何报错** | 第一版用「模块级记一个 `activeCancel`，新调用先取消旧的」防并发。而 StrictMode 挂载两次 → 第二次取消了第一次、第二次自己又被 cleanup 取消 → **两次都没画**。单独跑 pdf.js 能画出 2566 个非白像素，放进组件就空白。改用**代次**：每次调用领一个号，await 之间对一次「我还是最新的吗」，不是就收掉自己、返回 null，**不去取消别人** |
 | `Cannot use the same canvas during multiple render() operations` | 什么都不做时，后一个渲染在前一个没画完时开始。这就是上面那条要解决的问题 |
+| 预览过一次之后保存的 PDF 是 0 字节 | `getDocument` 把字节 **transfer** 给 worker，传原引用会让调用方手里的 `Uint8Array` 变成空。要传 `bytes.slice()` |
+| 保存完状态行还挂着「已修改，未保存」 | 拿旧原件当基线（见上面 `PdfEdit.file`）。字节其实已经写出去了，所以这是「界面与事实不一致」 |
+| 第二次保存把导入的页丢掉 | 导入的字节没跟着改动走 |
+| 裁一刀再换纸型，画面整体平移 | `scaleContent` 绕原点缩放，而裁剪后的可视区不在原点 |
+| 中文 PDF 整段文字空白 | cmaps 没加载到（按原始文件名取，见上） |
 
-**另一处**：`getDocument` 要传 `bytes.slice()`。pdf.js 把字节 **transfer** 给
-worker，传原引用会让调用方手里的 `Uint8Array` 变成空——而我们还要用它保存。
-症状是「预览一次之后保存出来的文件是 0 字节」。
+#### 验证方式（不是只跑单元测试就宣布完成）
 
-**保存是整体重建**（`buildPdfBytes`）：新建文档 + 按目标顺序拷贝页面。不原地
-改（`removePage` / `setRotation` 可以，但**页序调整没有原地版本**）——统一走
-拷贝的额外好处是**结果只取决于目标布局**，与操作历史无关。
+| 验什么 | 怎么验的 | 结果 |
+|---|---|---|
+| 页序、旋转、插入空白页、导入的页 | `pdf-pages.test.ts` 用 **pdf.js 独立读回**每页的文字与尺寸，再用 **pdf-lib 独立读回**旋转角与盒子 | 3 页倒序 + 旋转 → 逐页对上；导入的页第二次保存仍在；导入字节丢了**抛错** |
+| 裁剪不动内容 | 逐字节比内容流（`contentBytes`） | 裁剪前后内容流完全相同，只有 CropBox 变了 |
+| 纸型缩放锚点 | 换纸型前后用 pdf.js 读**文字落点** | 裁左边 50pt 再缩到 200pt：x 从 100 → 90（= 50+(100−50)×0.8）；不补平移会得到 80 |
+| 画布投影（四个旋转角） | `pdf-pages.test.ts` 把 `projectBox` 与 pdf.js 的 `convertToViewportPoint` **逐个角**比对 | 0/90/180/270 全部一致到 1e-6 |
+| 中文查找 | 手工拼一份 Type0/Identity-H 的 CID PDF（字体不内嵌、靠 ToUnicode 映射——真实中文 PDF 的形状） | 读出「组件」、搜得到、高亮框在字上 |
+| **真浏览器**（无头 Chrome + CDP，37 项） | 真 pdf.js 渲染 + 真 pdf-lib 保存 + 真文件选择器（`DOM.setFileInputFiles`）；断言画布的非白像素、高亮的盒子与**框内的墨迹数**、工具条在 420px 下的换行 | 37/37；高亮框内非白像素 2399（英文）/ 2973（中文）——框住的确实是字 |
 
-**验证方式**：改页序/旋转/删页之后保存，用 **pdf-lib 独立读回**确认页数与
-每页旋转角（实测：3 页 → 2 页、第 1 页 `Rotate 90`）。
+**保存出来的字节还要独立读回**：真浏览器里保存 3 次，每次都用 pdf-lib 读页数
+与旋转、用 pdf.js 读每页文字。实测第 2 次（导入中文页之后）4 页、旋转
+`[90,90,0,90]`、文字含「组件性能」；第 3 次（再转 90° 再存）**导入的页仍在**
+——这条直接守着上面那个「第二次保存丢页」的坑。
+
+**仍未做的**：改文字（PDFium 的 WASM）、单边裁剪（模型支持四边各自的量，界面上
+只能四边等量）、表单填写、矢量图形编辑、批注、以及**选中/复制页面上的文字**
+（文字层只用来定位高亮，没有做可选的文本层）。

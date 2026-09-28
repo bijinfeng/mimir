@@ -68,6 +68,18 @@ export interface DocxSession {
   readonly sections: SectionInfo[]
 
   /**
+   * 这份文档里**真的存在**的标题级别（升序，1–9）。
+   *
+   * 工具条的「段落样式」下拉只能列这些级别。理由在保存路径上：生成标题时
+   * `styleId` 取 `ctx.headingStyleIds.get(level)`（`generate.ts:1737`），
+   * 而它来自解析时读到的 `word/styles.xml`。文档没有 Heading3 时选「标题 3」
+   * 会生成一个**没有 `w:pStyle` 的段落**——画布上有 h3 的样子（那是本地的
+   * `h1..h6` 规则），保存重开后 Word 里却是正文。这种「看着对、文件里不对」
+   * 只能靠只列出存在的级别来避免。
+   */
+  readonly headingLevels: readonly number[]
+
+  /**
    * 页眉页脚：默认变体与 first/even 变体（分页时按 `titlePg` /
    * `evenAndOddHeaders` 选）。
    *
@@ -140,6 +152,7 @@ export async function openDocx(bytes: Uint8Array): Promise<DocxSession> {
     blocks: parsed.blocks,
     extras: parsed.extras,
     sections,
+    headingLevels: [...parsed.headingStyleIds.keys()].toSorted((a, b) => a - b),
     headerFooter: {
       header: defaultHfPart(parsed, 'header'),
       footer: defaultHfPart(parsed, 'footer'),

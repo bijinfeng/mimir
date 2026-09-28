@@ -93,6 +93,38 @@ export function NoteEditor({ document: doc, title, onAskAboutSelection, onDirtyC
     [doc.id, title, queryClient, message],
   )
 
+  /**
+   * 「插入图片」：把图片存进资料库，再把地址插进正文。
+   *
+   * ## 顺序与代价
+   *
+   * 上传**先发生**：正文里写的地址必须已经能取到，否则存下去的是一张 404 的图
+   * （而只有刷新页面之后才看得出来）。代价是**插一张图会在资料库里多一条
+   * `file` 文档**——这是有意的产品决定：正文里只留一个地址、原件存得住、也能
+   * 被单独搜到；嵌 base64 会让笔记膨胀十倍，而且没有任何东西在守。
+   *
+   * ## 为什么 alt 用原文件名
+   *
+   * 图加载不出来时 `alt` 是唯一还能读的东西。文件名（`图表-1.png`）比
+   * 「image」有意义，而这里没有更好的来源——用户插图时并没有机会填描述。
+   *
+   * ## 上传完要让库视图知道
+   *
+   * 新文档会出现在「最近」里，所以失效一次文档列表的查询。**不失效正文缓存**
+   * （`['document', id]`）：那些是别的文档，与这一次无关。
+   */
+  const uploadImage = useCallback(
+    async (file: File) => {
+      const uploaded = await api.documents.upload(file)
+      void queryClient.invalidateQueries({ queryKey: ['documents'] })
+      return {
+        url: api.documents.sourceUrl(uploaded.document.id),
+        name: uploaded.document.title,
+      }
+    },
+    [queryClient],
+  )
+
   return (
     <div className={themeVars.vars}>
       <MarkdownEditor
@@ -105,6 +137,7 @@ export function NoteEditor({ document: doc, title, onAskAboutSelection, onDirtyC
         onSaveHandle={setSave}
         flush
         onAskAboutSelection={(passage) => onAskAboutSelection?.(passage)}
+        onUploadImage={uploadImage}
       />
     </div>
   )

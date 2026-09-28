@@ -2957,6 +2957,10 @@ zip 里其余条目逐字节原样写回。
 独立测试、独立预览，而且会把 antd 的 token 体系抄第二遍。
 每个属性都有中性回退值，所以包能脱离宿主渲染。
 
+> **后一句的前提已被 D-064 反转（2026-09）**：包**现在**依赖 antd 了（工具条
+> 控件换成 antd 组件）。桥本身不退役——颜色、间距、正文字号仍由它提供；退役
+> 的只是「控件也得手写」。原文保留以便评审当时的取舍。
+
 ### 二、头部单行，标题 16px
 
 头部 = 返回 · 标题 · 元信息 · 动作，挤在 44px 里（Word / Excel 网页版的
@@ -3218,3 +3222,798 @@ LF 风格保留。
 **验证**：旋转 + 删页之后保存，用 **pdf-lib 独立读回**确认页数（3 → 2）与
 每页旋转角（第 1 页 `Rotate 90`）；渲染验证用 canvas 像素计数（画出的蓝框
 31345 像素、文字 48740 像素，与夹具里画的形状对应）。
+
+---
+
+## D-058 工具条的共享原语：六个编辑器 import 同一套，不各自画控件
+
+> **一条否决已被 D-064 推翻（2026-09）**：下面否决表里「引 antd 的
+> `Select` / `Dropdown` / `ColorPicker`」那一条不再成立——工具条的控件要换成
+> antd 组件，这个包从此依赖 antd。**本决定的主体（共享原语、六个编辑器
+> import 同一套、不各自画控件）不变**，换的是那批原语的实现。原文保留以便
+> 对照当时的判断，见 D-064。
+
+**背景**：六种编辑器的工具条要补齐到 GenOffice 的水平（用户原话「现在的编辑器
+工具栏可用的工具都太简陋了，需要对齐 GenOffice」）。而 D-054 的前提是六种
+**长得一样**——「一样」只能由同一份实现保证。如果六个编辑器各自写下拉、颜色
+面板、查找栏，漂移是必然的，且只在用户眼里看得出来。
+
+**决定**：把工具条的共享原语加进 `packages/office/src/shell/EditorShell.tsx`，
+从 `src/index.ts` 导出，六个编辑器只 import：
+
+| 原语 | 为什么不能用一个普通 `ToolbarButton` 代替 |
+|---|---|
+| `useToolbarState` | 订阅编辑器状态。Tiptap v3 的 `useEditor` 默认**不在事务上重渲染**（`shouldRerenderOnTransaction` 默认 false），渲染期直接读 `isActive` 会停在旧值——按钮不跟着光标亮/灭，不报错 |
+| `ToolbarGroup` | 按钮组的 `role=group` 边界。`ToolbarDivider` 是兄弟 flex 项，工具条 `flex-wrap` 换行时那 1px 会落在行末或行首 |
+| `ToolbarSelect` | 枚举下拉（21 档字号）。按钮只有布尔态，而这里**显示区本身就是状态** |
+| `ToolbarNumberField` | 连续取值（页码 1..N，N 打开才知道）。夹到区间、Esc 还原、空值不提交 |
+| `ToolbarTextField` | 输入不是动作。回车含义各处不同（查找/链接/搜索）所以回调化，但**框本身必须一致**——同一排三种高度就是 D-054 要消的漂移 |
+| `ToolbarToggleGroup` | 互斥组：一个 value 进、一个 value 出。排成一排按钮会让互斥退化成「每处各自读一次状态」，写错一处两个同时亮 |
+| `ToolbarMenu` | 触发按钮 + 面板，触发按钮带 `aria-expanded` |
+| `ToolbarColorPicker` | 触发器显示**当前颜色**，面板是网格，还要能表达「没设置」 |
+| `ToolbarFileButton` | 开系统文件选择器；顺带只写一遍「选完清空 `input.value`」 |
+| `FindReplaceBar` | 受控的查找/替换栏，四个格式要的是一模一样的一条 |
+| `EditorShell` 的 `subbar` 槽 | 查找栏、幻灯片导航、公式栏落在这里 |
+
+**否决**：
+
+| 方案 | 为什么不用 |
+|---|---|
+| 每个编辑器自己写控件 | 六份拷贝，漂移只在用户眼里看得出来（D-054 的整个理由） |
+| 引 antd 的 `Select` / `Dropdown` / `ColorPicker` | **已被 D-064 推翻（2026-09）**：这个包**不依赖 antd** 是刻意的（能独立测试、独立预览）。代价是那道 `--me-*` 变量桥，不是反过来。推翻的理由是实测——四个原语都没有 `disabled` 支持、`ToolbarNumberField` 没有 `step`，手写控件追不上 antd 已有的东西。**原文保留**，见 D-064 |
+| 菜单 portal 到 `body` | portal 会离开 `--me-*` 所在子树，深色主题下弹层退回浅色回退值。就地渲染 + `position: fixed`（fixed 的包含块是视口）既保住变量，也不会被外壳的 `overflow: clip` 裁掉 |
+| 次工具条自己再写一条 `sticky top: 0` | 会与工具条重叠（工具条已占 `top: 0`，次工具条 DOM 在后，盖住右端的「保存」）。写死 `top: 32px` 也不行——工具条 `flex-wrap`，窄窗口折成两行就错位。改成一并包进 `.mimir-editor__chrome`，只有它 sticky |
+| `disabledReason` 用外面包一层 `title` | **不成立**：按钮自己已用 `label` 设了 `title`，内层抢在外层之前。改成禁用时按钮自身的 `title` 让给原因，`aria-label` 仍保持 `label` |
+| 把 `replaceOne` / `replaceAll` 定成必选 | 与「pdf 只有查找」矛盾，会逼 pdf 塞两个空实现——空实现点了没反应，正是这个仓库最讨厌的按钮。拆成 `FindAdapter` 与 `FindReplaceAdapter extends FindAdapter`，渲染判据是「方法存在」 |
+
+**影响**：
+
+- `FindAdapter` 的形状**照 vendored 的 `FindTarget`**（`src/shims/ui.ts`，
+  来自上游 `find-panel.tsx`），所以 html 那边现成的 `cmFindTarget` 零适配可用
+- `ToolbarColorOption` 的 `value` 与 `swatch` **必须分开**：docx 的突出显示
+  存的是 OOXML 的 16 个色名（`marks.ts` 的 `HIGHLIGHT_CSS`），写错色名 Word
+  静默忽略；`swatch` 才是界面上的 CSS 颜色
+- 图标用自绘 SVG，**样式里不再出现当图标用的字形**（`↶`/`❝`/`＋` 那种）：
+  字形宽度与粗细由字体决定，两种编辑器里对不上，而且字体缺失时退成方框
+- 契约测试在 `src/shell/EditorShell.test.tsx`（结构、aria 状态、真 button、
+  按下时 `preventDefault`）。`useToolbarState` 那条是用最小 Tiptap 方言造一个
+  **真编辑器**验证订阅生效，不是打桩
+
+---
+
+## D-059 html 编辑器：视图 / 设备 / 缩放三项都落在**预览宿主层**上
+
+**背景**：D-058 把工具条的共享原语铺开了，html 这一格里要接的是「源码 + 预览」
+这个格式特有的东西——视图怎么排、预览多宽、放大多少。上游的 `PreviewFrame`
+（`vendor/apps/html/src/renderer/preview/PreviewFrame.tsx:57`）给的是同一条思路：
+`<div class="preview-host" style={{ zoom: zoom / 100 }}><iframe/></div>`——
+**宿主层负责尺寸，frame 只管铺满**。这三项都照这个形状接。
+
+**决定**：
+
+| 项 | 落在哪 | 值 |
+|---|---|---|
+| 视图 | 三个栏位的 `hidden` | 源码 / 分栏（默认）/ 预览 |
+| 设备 | 预览宿主层的 `data-device` | 桌面（铺满）/ 平板 768px / 手机 390px，宽度写在 `editors.css` |
+| 缩放 | 预览宿主层的 `zoom` + `--html-preview-zoom` | 50–200、步长 10（`ToolbarNumberField` 上下界，步长在组件里取整） |
+
+**为什么视图不能用条件渲染**（这条决定的主要代价就是它）：源码编辑器一卸载，
+CodeMirror 的实例与编辑历史一起消失，而重新挂载时 `SourceEditor` 只吃
+`initialText`——那是**刚打开文件时**的文本（`initial` 不随编辑前进）。于是
+「切到预览再切回来」会看到旧内容，接着敲键就把中间改的东西覆盖掉。所以两个
+栏位**始终挂着**，只用 `hidden` 决定谁在布局里：文件是真身，视图只是它的一种
+呈现。**这不是性能取舍，是正确性。**
+
+**否决**：
+
+| 方案 | 为什么不用 |
+|---|---|
+| 视图切换用条件渲染（少渲染一个 CodeMirror） | 会静默丢内容（上面那段）。而且实测代码量一样——省不下什么 |
+| 给 iframe 自己加 `style={{ zoom }}` | 上面那层没有能改宽度的宿主层（`flex: 1 1 50%` 在 iframe 上），设备档位就没地方落。上游也是加在宿主层 |
+| 「放大」= 把宽度改小让内容重排 | 那不是缩放，是把桌面页面变成手机版。用户点「放大」要的是**同一份布局看得更清楚** |
+| 生成式 CSS：`zoom` 下让 `width: 100%` 自动乘回倍数 | 宽度按元素的**局部像素**解析，纯 CSS 里拿不到「外面的容器多宽 ÷ 倍数」这个量（`100%` 就是那个局部值）。只能由组件侧把倍数一起给出 |
+| 面包屑做成常驻一条提示行 | 没有选中时那一行永远是同一句话——常驻空行是这个外壳明确不要的（`EditorShell` 的注释）。有选中才出来（与 pptx 的段落面板同一个出现方式） |
+
+**三个静默坑**（都在 `HtmlEditor.tsx` / `editors.css` 的注释里，TECH §15.11.1
+有完整版）：
+
+1. **代码写对了，`hidden` 也「没生效」**：`[hidden] { display: none }` 在浏览器
+   默认样式表里，而 `.mimir-html-preview-pane` 自己写了 `display: flex`——作者
+   样式一律胜过默认样式（**与选择器特异性无关**）。所以必须有
+   `.mimir-html-split > [hidden] { display: none }`
+2. **`zoom` 会缩掉布局尺寸**：`zoom: 2` 下 `width: 100%` 是容器的一半。实测
+   1440 视口、只给 `zoom` 时 host 的 `offsetWidth` 359 对 `rect` 719，frame 里
+   的视口被压到 359——「放大」得到的是手机版布局。要
+   `width: calc(100% * var(--html-preview-zoom))`，**并且 `flex: none`**（宿主是
+   flex 子项，默认可收缩会把宽度又收回去）
+3. **父页读不到 frame 的 DOM**（没有 `allow-same-origin`，D-056），所以面包屑
+   → 预览是 `postMessage` 一条 `gx:select`，与用户手点走同一条路径
+
+**验证**（真 Chromium，`playwright-core` 驱动探针页面 + 1440×900）：
+
+- 撤销/重做：打字后 `canUndo` 变可用、撤销后文字里的 `X` 消失、重做后回来；
+  两个按钮在无历史时 `disabled` 且 `title` 是原因
+- 视图：`hidden` 切换后两栏的实测宽度在 1438 / 0 之间跳，**`.cm-content` 始终在
+  DOM 里**（不卸载），切走再切回来内容与撤销栈都在
+- 设备：手机档 frame 内视口 = 390、平板 = 768、桌面 = 719（预览栏宽）
+- 缩放：渲染宽度 359 / 719 / 1437 对 50% / 100% / 200%，而 frame 内视口恒为
+  ~718（**同一份布局**）；999 夹到 200、34 夹到 50、空值不提交
+- 查找替换：`cmFindTarget` 零适配接上——查 `alpha` 得 `1 / 3`、高亮节点 3 个
+  （`.search-hit` 背景 `rgb(22,119,255)`）、下一个变 `2 / 3` 且只有一个
+  `.search-hit-active`；全部替换后源码里 `alpha` 归零；Esc 关闭后高亮节点为 0
+- 面包屑：**在 frame 里真点** `span.badge` → `html › body › main › section ›
+  span.badge`；点 `section` → frame 内选中框宽度 703（对应整段）而源码里选中
+  了 `<section class="hero">…`；元素被删掉后面包屑清空、整个 subbar 槽位不渲染
+- 工具条在 1440 / 1100 / 900 / 700 / 560px 五档下 `scrollWidth === clientWidth`
+  （换行到 5 行，不撑破外壳、页面无横向滚动）
+- 保存：改过的文字写进去了，而 `data-sid` 与 `data-gx-inspector` **都不在**文件里
+
+---
+
+## D-060 pptx 的 run 级格式：工具条作用在**整段**，且回传时必须逐 run
+
+**背景**：pptx 的工具条要补齐（D-058 那批原语的第一个真实消费者）。用户要的
+能力是加粗/倾斜/下划线/删除线/上下标/字号/字体/颜色/清除字形/查找替换——那些
+在 `pptx-ops` 的 `EditRun` 里都有字段（`bold` / `italic` / `underline` /
+`strike` / `baseline` / `fontSize` / `fontFamily` / `color`），问题在于**怎么用
+它们而不破坏文件**。
+
+**决定一：粒度是整段，标签里写明。** 界面里能选的是画布上的元素与段落的
+输入框，**没有 run 级选区**。所以工具条上的每一个格式按钮都写着「（整段）」，
+状态行也说明「格式按段生效」。不这么写的话用户会以为能只加粗半句话，而按钮
+会把整段一起改掉——那不是「少一个功能」，是界面在说假话。
+
+**决定二：回传格式必须逐 run，不能压成「每段一条 run」。**
+`EditParagraph` 允许「每段一条 run、文本是整段拼起来的」这种形状（上游的 AI
+工具与脚本就走那条路，它们本来就是在整段重写）。**但在这个界面上它是错的**：
+`applyEditParagraphs` 对「未带 srcRun 的单 run 替换一个多 run 段落」会取
+`dominantRun`（文字最多的那条）的格式，同段其余 run 的字号/颜色/加粗被静默
+丢掉。实测（`formatted-text.pptx` 那类「加粗标签 + 普通正文」的段落，
+`b="1" sz="3600"` + `sz="2400"` 红字）：压成一条 run 后写出的 `<a:rPr>` 只剩
+`sz="2400"`，标签的加粗与字号都没了——**保存成功、文件能打开、文字也对，
+只有格式悄悄错了**。
+
+所以 `applyFormat` 逐 run 回传：每条带自己的 `srcRun` 与原文，格式项**追加**
+上去；段落级属性由 `srcPara` 继承。`src/editors/PptxEditor.test.tsx` 有一条
+断言守着「两条 run 都还在、各自保留字号与颜色」。
+
+**决定三：做不到的事不假装能做。**
+
+| 不做 | 为什么 |
+|---|---|
+| 「清除所有格式」 | 只有字号/字体/颜色有「回到继承」的表达缺口——XML 里没有「删掉这个 sz 属性、同时保住主题链接」的写法（`fontSizeImplicit` / `colorInherited` 是解析出来的标记，不是能写回去的东西）。所以那一个按钮叫**「清除字形」**，label 里把五项列全 |
+| 字体颜色的「清除」 | 同上。`ToolbarColorPicker` 的 `onClear` 不给——给了等于承诺一件做不到的事 |
+| 隐藏/取消隐藏幻灯片 | `<p:sld show="0">` 是**结构**改动，我们的保存只补 patch 不改结构。所以只显示一个只读标记（`renderSlide(...).hidden`） |
+
+**决定四：几个「宁可不显示」的取舍。**
+
+- **字号/字体/颜色在多档时不显示一个数字**：取不到「当前值」时 `ToolbarSelect`
+  显示「多档字体」、字号位置显示「多档字号」，**不拿第一条 run 冒充**。显示了
+  一个数字，用户就会以为那是文档里的值
+- **按钮常驻、禁用带原因**：加粗这几个**禁用而不消失**（工具条的样子固定下来），
+  禁用的原因分两种写在 `disabledReason` 里（「先在画布上点一个文字框或形状」/
+  「这个元素里没有文字」）。下拉与输入框做不到禁用（`ToolbarSelect` /
+  `ToolbarNumberField` 的契约里没有 disabled），所以它们换成一行说明——那是
+  一句为什么，不是一个假控件
+- **增大/减小字号要求每条 run 都读得到字号**，读不到就禁用并说明原因
+  （`Number.isFinite` 兜底）
+
+**决定五：把幻灯片导航与查找栏移到次工具条。** 页签的数量跟着页数长（30 页
+的文稿会把工具条挤成好几行），而次工具条是真正吸顶的那一层，`.me-tabs` 自己
+横滚（`overflow-x: auto` 的自动最小宽度是 0），窄窗口下不撑破外壳。跳页用
+`ToolbarNumberField`（`min=1`、`max=页数`，页数打开文件才知道，下拉要枚举 N 项）。
+
+**决定六：查找替换的作用域是全篇，高亮画在渲染结果上。** 匹配按「页 + 元素 +
+段」三级算，命中的元素被整体描边（琥珀色，与选中的品牌蓝区分）并把那一页带
+出来——一次只渲染一页，所以跨页的命中要跟着翻页。替换回传的每一段带
+`srcPara`、每条 run 带 `srcRun`，否则那一段的格式会被冲掉。实现上
+`onDocChanged` 由编辑器自己造一个订阅（段落输入框与查找替换都是改文档的地方，
+不通知的话匹配数会停在编辑之前）。
+
+**影响**：
+
+- `src/editors/PptxEditor.tsx` 的工具条从 4 个控件长到 18 个；新增
+  `src/editors/PptxEditor.test.tsx`（19 条）：**挂真组件、点真按钮**，然后从
+  保存出的字节里读 XML 断言 `b="1"` / `i="1"` / `u="sng"` /
+  `strike="sngStrike"` / `baseline="30000"` / `sz` / `<a:latin>` /
+  `<a:srgbClr>` 真的落到了那一条 run 上，且**兄弟 run 一个都没被动**
+- 画布上的选中与查找命中现在真的画出来了（`editors.css` 里那条
+  `[data-element-id]` 规则在此之前是死代码）
+- TECH §15.9 与 §15.6 的「能编辑什么」、`packages/office/AGENTS.md` 的能力边界
+  同批更新
+
+**验证**（在真无头 Chromium 里挂真组件、点真按钮，不是只看代码推断）：
+
+- 工具条形在 1440 / 1100 / 900 / 700 / 560 / **460px** 六档下每一层都是
+  `scrollWidth === clientWidth`、页面 `docOverflow === 0`；工具条在 ≤700px 折成
+  两行（面板与次工具条各自横滚/换行，不撑破外壳）
+- 点「加粗 / 倾斜 / 下划线」+「增大字号 2pt」+ 查找替换（`Results` → `成果`），
+  保存后**用 python-pptx 打开**：那一 run 是 `b=True i=True u=True sz=38.0
+  color=1F2937`、文字 `Key 成果`——五个动作都真的落到了文件里，且颜色没被顺带
+  改掉
+- 那一次保存的 zip 逐条目比对：**47 个条目里只有 `slide2.xml` 与 `slide3.xml`
+  变化**（替换命中的两处），其余 45 个逐字节相同
+- 未选中时「加粗」`disabled` 且 `title` 是原因（「先在画布上点一个文字框或
+  形状」）；选中后同一个按钮可用且 `aria-pressed` 反映当前值
+- 高亮真的画出来了：选中环 `rgb(22, 119, 255) / 2px / solid`，查找命中环
+  `rgb(212, 136, 6) / 2px`（截图里两种颜色的像素都数得到）。**注意这是
+  `editors.css` 里那条 `[data-element-id]` 规则第一次真的生效**——在此之前
+  它是死代码（选中了画布上没有任何反馈）
+- 跳页：输入 99 夹到最后一页（happy-dom 用例），浏览器里跳第 3 页 → 状态行
+  「第 3 / 5 页」
+- 段落输入框改字（`Key Results` → `Key 成果`）后保存：**只有 `slide3.xml`
+  变化**，那一 run 仍是 `b=True sz=36.0 color=1F2937`（python-pptx 读回）——
+  改字不会掉格式，也不会压平 run
+
+**一条量出来的坑**：状态行那个 label 一度写成 598px 长（`white-space: nowrap`
+的 `.me-label` 自身就是宽度下限），560px 窗口下把 `.mimir-editor` 撑到 620 宽、
+页面出现横向滚动。**工具条与次工具条的 `flex-wrap` 救不了它**——不是它们在
+撑。所以状态行/工具条里的说明文字要短，长解释放附属面板。
+
+**顺带修掉的一个既有静默 bug（同一类问题的另一半）**：段落输入框原先**把所有
+段落都压成一条 run**（`setParagraph` 的 `paragraphs.map(...)`），所以在正文里改
+一个字会顺手压平**同段与其它段**的 run 结构——混合格式的段落里，标签的加粗与
+字号没了，而保存成功、文字也对。修法两步：没被改的段落原样回传（每条 run 带
+自己的 `srcRun`）；被改的那一段取新旧文本的公共前后缀，**只改真正变动的那条
+run**，跨多条时才整段重写（那才是 `dominantRun` 的语义）。回归用例
+「在两 run 的段落里改字：只动那一条，标签的加粗与字号都还在」——把修法改回去
+（强制回传整段）这条用例会失败，所以它守的是真事。
+
+**仍未做**：元素位置与大小（拖动改框）、项目符号/行距/对齐的改动、动画。
+
+---
+
+## D-061 markdown 笔记的工具条：九个段落样式，且每个按钮都先证明命令存在
+
+**背景**：把「markdown 笔记」的编辑器工具条补齐到与另外五种格式同一水平
+（D-054 的外壳、D-058 的原语都已就位）。之前它只有五个行内标记、三个标题按钮、
+两种列表、引用、代码块、分隔线——没有撤销/重做、没有段落样式、没有链接、没有
+任务列表、没有缩进、没有表格、没有图片、没有代码块语言。
+
+**决定一：段落样式是**九项**的下拉（正文 / h1-h6 / 引用 / 代码块），
+规范只到 h3 说的是排版不是可写范围。**
+
+`docs/DESIGN.md` §4.3 给 h1-h3 定了字号（28 / 20 / 16px），说的是**排版**；
+「能不能写 h4」是另一个问题——markdown 本来就允许六级标题，`@tiptap/starter-kit`
+的 `heading` 默认 `levels: [1..6]`，而只读视图里 h4-h6 按浏览器默认渲染（比
+正文大、比 h3 小，层级仍然看得出来）。少给三级有一个具体的坏处：**在别处写好
+的笔记导入后选不中已有的 h4**（下拉显示「混合」，改一下就掉级）。
+
+所以：**九个都能写，规范只到 h3**。要让 h4-h6 也有一档字号，改的是
+`ContentTypography.style.ts`（一件事），不是把选项砍掉（另一件事）。
+
+**决定二：`h4`-`h6` 之外，还有两处「界面这么说、文件却不是这样」要讲清楚。**
+
+- **下划线不是 GFM**：`@tiptap/markdown` 把它序列化成 `++文字++`（实测），
+  别的 markdown 工具多半不认。保留它（StarterKit 自带），但按钮的 `title` /
+  `aria-label` 里写明「存成 ++文字++，不是 GFM」——一个序列化出去别人认不出的
+  标记，用的人有权知道
+- **任务列表与普通列表是两种节点**（`taskItem` / `listItem`），缩进的命令也分
+  两套。用错节点名时命令**返回 false 且不报错**，正是「点了没反应」，所以节点名
+  按光标处判断
+
+**决定三：状态与能力**来自同一个订阅**（一个字符串）。**
+
+`toolbarStateOf` 返回一个 token 串，里面有两类：
+
+| 类 | 例子 | 谁读它 |
+|---|---|---|
+| 状态 | `bold`、`style:h2`、`table` | 按钮的 `active`、下拉的值 |
+| 能力 | `undo`、`sink`、`delRow`、`clear` | 按钮的 `disabled` |
+
+合在一个 `useEditorState` 订阅里不是图省事：`can().undo()` / `can().redo()` 是
+**历史栈**的状态而不是文档状态，在渲染期另算会停在打开文档那一刻——敲了几个字
+之后撤销按钮还是灰的，撤销到底之后又还亮着。两类分开算就必然出现这种错位。
+
+token 用**精确匹配**（按空格切开）而不是子串：之前那版 `state.includes('code')`
+会让光标在**代码块**里时「行内代码」按钮跟着亮（`codeBlock` 含 `code`）。
+
+**决定四：每一个按钮都先证明命令存在，不存在的如实禁用并给原因。**
+
+这是本仓库最贵的教训（`editor-commands.ts` 顶部）：Tiptap 的 `chain()` 是惰性的，
+调一个不存在的命令**不报错**、只是什么都不做、`run()` 照样返回 true。所以每个
+按钮的 `disabled` 都接 `hasMark` / `hasNode` / `hasCommand` / `can().*`，
+`disabledReason` 里写清是哪一种「不可用」（方言没有 / 光标不在列表里 /
+已经在最外层 / 先选中文字）。
+
+**决定五：四个「做不到就如实禁用」的具体判断（都由实测定的）。**
+
+| 动作 | 实测现象 | 处理 |
+|---|---|---|
+| 任务列表 | `toggleTaskList` 的作用域是**光标那一项**：光标在第二项上点，列表被拆成两张（`- [ ] 一` + `- 二` + `- 三`），而命令返回 true | 先把选区铺到整张列表的**文字区间**再 toggle，同一条链、一个事务 |
+| 任务列表（嵌套） | 嵌套列表上**四种走法都坏**：整张文字区间与 `setNodeSelection` 都返回 false 且文档一字未改；逐项链式会把内层项抬出来；光标在内层时普通 toggle 把结构拆散 | **禁用并说明**「这张列表有嵌套项，先减少缩进拆成平级」。留一个点了没反应、或者会把文档改坏的按钮更糟 |
+| 链接（空选区） | `setLink` 返回 true 却**不改文档**——它只把 `link` 塞进 storedMarks，接着敲的字变成链接（实测 `一[新字](https://x.y)段文字`） | 空选区且不在链接里时「应用」禁用，理由「先选中要加链接的文字」 |
+| 清除格式 | `unsetAllMarks` 在空选区上直接返回 true；`isActive(mark)` 在跨格式选区上全是 false（「整个选区都是粗体」才为真） | 判据改用 `doc.rangeHasMark(from, to, type)`——范围内**有一段**带标记就给这个能力 |
+
+**决定六：列对齐必须改整列。**
+
+`setCellAttr`（prosemirror-tables）对**文本选区**只改光标那一格，而 markdown 的
+列对齐**一列只有一个值**（写在表头下面那条分隔行上）。只改一格会当场产生两处
+不一致——实测：给正文行的一格设 `align:center` 后，markdown 整列都成了 `:---:`，
+而**表头格的 `align` 仍是 `null`**，界面接着读 `getAttributes('tableHeader').align`
+会说「没对齐」。所以先造一个覆盖整列的 `CellSelection`（`TableMap.cellsInRect`），
+再 `setCellAttribute`，最后把光标放回原处——都在一条链里。
+
+**决定七：插图会在资料库里多一条 `file` 文档，这是产品决定。**
+
+「插入图片」走宿主的 `api.documents.upload(file)`，于是**插一张图 = 资料库多一条
+文档**（`apps/server/src/services/upload.ts` 那条路）。换来的是正文里只留一个地址、
+原件存得住、也能被单独搜到。正文里嵌 base64 的路不走：它会让笔记膨胀十倍，而且
+没有任何东西在守。上传失败时**什么都不插**并把原因写到状态行（留一个半插入的
+图片比不插更糟）。
+
+顺序也是硬的：**先上传、再写地址**——反过来会存下一个 404 的图片，而只有刷新
+页面之后才看得出来。
+
+**决定八：拼写检查写死成显式值。**
+
+按钮要显示「开 / 关」，而 `spellcheck` 不写时 `getAttribute` 是 `null`——两处
+说法迟早不一致。所以初始就是 `spellcheck="true"`（浏览器的默认行为也是开），
+点一下写死 `"false"`，并且值**同时进 `useEditor` 的 options**（换文档会重建实例，
+只在事件里 `setOptions` 的话新实例又回到默认）。
+
+**否决**：
+
+| 方案 | 为什么不用 |
+|---|---|
+| 段落样式排成一排按钮（原先 h1/h2/h3 三个 + 引用 + 代码块五个） | 九个取值排成按钮会占掉大半条工具条，而按钮只有布尔态——「现在这段是什么」得由谁亮着来表达，五个按钮就有五种可能写错 |
+| 用 `window.prompt` 收链接地址 | 阻塞式对话框、样式由浏览器定，而且**在 Electron 里被禁用**（D-046 的载体）——那正是「点了没反应」 |
+| 「插入表格」给一个 `withHeaderRow` 开关 | markdown 的表格**必须有**表头行（列对齐就写在表头下面那条分隔行上）。关掉它序列化出的表会多一行空表头（实测 3 行 → 4 行） |
+| 图片嵌 base64 进正文 | 笔记膨胀十倍，且没有任何东西在守。见决定七 |
+| 代码块语言表手抄一份常量 | 编辑器注册的是哪一份 lowlight、下拉里能选的就该是哪一份。抄一份会在「表里有、低亮不认」时**静默失去高亮**。所以从方言自己的 lowlight 实例上 `listLanguages()` 读（实测 37 种） |
+| 撤销/重做的 `disabled` 在渲染期另算 | 它来自历史栈，会停在打开文档那一刻。见决定三 |
+
+**影响**：
+
+- `packages/office/src/editors/markdown-format.ts`（新）：方言相关的判据与操作
+  （整张列表的作用域、段落样式的当前值、列对齐、状态串）。**从
+  `@mimir/office` 导出**是有意的——宿主拿着真方言，只有它能验证这些行为
+- `packages/office/src/editors/MarkdownEditor.tsx`：工具条从 12 个控件长到 30+
+  （分组的按钮、两个下拉、两个菜单、一个文件按钮）；新增 `onUploadImage` 这个
+  宿主注入的回调（包不 import 宿主）
+- `apps/web/src/editor/markdown-toolbar.test.ts`（46 条）：在**真方言**上跑
+  `markdown-format.ts` 的每条判据——文档里那些「实测」写的就是这个文件跑出来的
+- `apps/web/src/editor/MarkdownEditor.test.tsx`（21 条）：挂真工具条 + 真编辑器
+  实例，**点真按钮**然后读 `getMarkdown()` 的正文
+- `apps/web/src/editor/MarkdownImage.test.tsx`（2 条）：插图这条路（选文件 →
+  上传 → 地址写进正文；失败时一个字都不插）
+- `apps/web/src/components/NoteEditor.tsx`：接上 `onUploadImage`
+- 知识：`docs/DESIGN.md` 只到 h3 的那条现在明确是**排版**规范；`docs/TECH.md`
+  §15.4.1 的编辑器清单里补上 markdown 的工具条组成
+
+**仍未做**：AI 的四个内联改写动作（`InlineToolbar` 里保留但禁用，M1）与
+「插入图片」之外的上传入口。
+
+---
+
+## D-062 docx 的工具条：四种能力如实不做，且「引用」不走 styleId
+
+**背景**：D-058 把共享原语铺开了，docx 这一格里要接的是 GenOffice 水平的一整条
+段落与字符格式工具条（用户原话「对齐 GenOffice」）。它的 schema 是 vendored 引擎
+自己的方言（`docParagraph` / `docHeading` / `docListItem`），与 markdown 那套
+（D-061）不同——而里面有几项**照着上游的写法接会变成静默失效**，这正是需要
+记下来的部分。
+
+**决定一：「引用」落成直接段落格式，不写 `styleId`。**
+
+上游的样式画廊调 `applyParagraphStyle(editor, 'h1')`，里面走
+`setNode('docHeading')` 或 `setNode('docParagraph')`（`ribbon-tabs.tsx:133-138`）。
+标题那一支没问题——`generate.ts:1737` 按 `ctx.headingStyleIds.get(level)` 取
+`pStyle`，而那份表来自解析时读到的 `styles.xml`。但**「引用」这一档上游根本没有**：
+它对应的是文档里的 `Quote` 样式，而按 `styleId` 的 CSS 由 `doc-style-css.ts` 在
+运行时注入——**那个文件没有 vendored**（它跟着上游的 App 壳）。于是写
+`styleId: 'Quote'` 的结果是：XML 里多一个 `w:pStyle`，画布上一个像素都不变。
+
+所以「引用」落成**直接段落格式**：左缩进 0.25 英寸 + 左侧一条 2pt `BFBFBF` 边线。
+这三项都在 schema 里、画布会画（`extensions.ts` 的 `blockAttrs` 读
+`indentLeft`/`borders`）、保存会写（`generate.ts:1211-1239` 的 `w:pBdr`/`w:ind`），
+而且**清除格式清的正是它们**——所以它可进可出。
+
+同理「表格样式」（`tblStyleId`）与「六边」（`tblLook`）两个菜单项**故意不给控件**：
+前者在画布上只渲染成 `data-tbl-style`，而没有任何 CSS 规则命中它（同一个缺失的
+`docStyleCss`），后者连渲染都没有。改了只动 XML、屏幕不变。
+
+**决定二：标题级别只列文档里真的存在的那些。**
+
+`DocxSession` 新增 `headingLevels`（来自 `parsed.headingStyleIds` 的键）。文档没有
+`Heading3` 时选「标题 3」会生成一个**没有 `w:pStyle` 的段落**——画布上有 h3 的样子
+（那是本地的 `h1..h6` 规则），保存重开后 Word 里却是正文。文档里一个标题样式都没有
+时，下拉里放一条**禁用的说明项**（「这份文档没有标题样式」），而不是让它变成一个
+只有「正文」一项的空控件（DESIGN §8.4 规矩 1）。
+
+**决定三：四种能力如实不做，并写进 tooltip。**
+
+| 动作 | 为什么不做 |
+|---|---|
+| 字符间距 / 缩放 / 全部大写 / 小型大写 | `caps` / `charSpacingTwips` 那批在 schema 里是 `rendered: false` 的**透传**属性：改了模板里的值，保存时 `mergeRPrModel` 会用 `rawRPr` 的原字节覆盖回去。屏幕上也不会变 |
+| 字符边框 / 底纹 / 文本效果 / 发光 / 带圈 | 同上（都在 `rawRPr` 的透传名单里）。它们**能显示**（`docTextStyle` 的 `renderHTML` 画），但工具条写不进去——只有重新打开一份带这些格式的文档才会看到 |
+| 段落边框（四边） | `borders` 这个 attr 的取值是 `"tblr"` 的子集（`para-border-merge.ts` 的 `DK_SIDE`），画布与保存都认。但**只有「引用」用到了 l**：四边各配一条线要在面板里放四种线型 + 颜色，而这块的取值空间（`w:val` 的 20 多种线型）没有对应的界面控件。留一个只能选「有/无」的开关会误导 |
+| 阿拉伯语 / 希伯来语等复杂文种字体（`csFont`） | 它是 `w:rFonts` 的**第三个槽位**，而我们要按 `w:rtl` 判断该不该写。单用户中文知识库里命中率极低，做一半（写了但没有 rtl 语义）反而会把文档改乱 |
+
+**决定四：字号增减必须兜底，否则 NaN 会真落盘。**
+
+`getAttributes('docTextStyle').sizeHalfPoints` 在文字**没有直接字号**时是
+`undefined`（字号继承自段落样式），而 `undefined ± 2` 是 `NaN`。它会一路走到保存：
+`convert.ts:3163` 把 `sizeHalfPoints` 写进运行签名、`generate.ts:2772` 拿它生成
+`w:sz w:val="NaN"`。所以这一个按钮是**禁用 + 说明原因**（「当前文字没有直接字号：
+字号继承自段落样式，先在左边选一个字号」），不是「按了没反应」。
+
+**决定五：查找/替换自己写匹配，但高亮走 vendored 的装饰器。**
+
+上游的 `FindPanel` 是一个**完整的界面组件**（自带输入框与状态机），与 mimir 的
+`FindReplaceBar` 是两套。所以只借它的匹配思路（按文本块拼平文本、记下每个字符的
+位置），高亮通过 `setMeta(searchPluginKey, { ranges, activeIndex })` 交给
+`SearchHighlightExtension`（`decoration-extensions.ts:27`）。**装饰器不是内容**：
+查找因此不会把文档改脏、不进撤销栈、不影响补丁式保存的逐块比对。
+
+`.search-hit` 的样式**补在 `src/editors/editors.css`**，不补
+`src/generated/editor.css`——后者是 `trim-editor-css.mjs` 的产物（`search-hit`
+不在它的保留前缀里），同步会整个覆盖；而且上游那份规则读的
+`--docs-paper-hit-bg` 由未 vendored 的 App 壳注入，本来就取不到色。
+
+**决定六：真浏览器里核对过，它抓出两条单测抓不到的。**（无头 Chrome，真 DOM +
+真 CSS，跑完截图逐张看）
+
+| 现象 | 为什么单测看不见 | 修法 |
+|---|---|---|
+| 文字方向那两个按钮渲染成**两个空的纯色方块** | `ToolbarToggleGroup` 只传 `option.icon`，而 `ToolbarButton` 里那段是 `{children !== undefined && …}`——传 `undefined` 等于什么都不渲染。而 DOM 断言**全过**：`aria-label` 有、点击有效、`disabled` 也对 | 没有图标时退回 `label` 文字（`option.icon ?? option.label`）。这一条现在是 `EditorShell.test.tsx` 里的契约，判据是**按钮里渲染出来的文字**——第一版写成「HTML 里含这几个字」，而 `label` 同时进了 `aria-label`，所以**把修复回退之后它照样通过**（实测），改成读 `textContent` 才真的拦得住 |
+| 分组名与组里那个下拉同名（「表格」「字号」各出现两次） | 两条独立的断言各自都过；只有把整棵树的 `aria-label` 收上来去重才看得见 | 分组名与控件名各说各的（「表格与插入」对「表格」「插入表格」、「字号」对「字号（磅）」）。`docx-toolbar-render.test.tsx` 有一条去重断言守着 |
+
+同一轮核对确认的：**工具条在 1280 / 1100 / 900 / 700 / 520 / 420 / 320 七个宽度下
+换行而不溢出**（`scrollWidth === clientWidth`，行数 2→9），39 个 SVG 图标全部
+有非零尺寸（字形当图标会在字体缺失时退成方框，这条守住），点「引用」后画布上
+那一段真的是 `border-left: 3px rgb(191,191,191)` + `margin-left: 24px`，
+点「段落底纹」后真的是 `background: rgb(222,234,246)`。
+
+**决定七：三个「会静默失效」的收尾，都是实测出来的。**
+
+| 现象 | 原因 |
+|---|---|
+| 选了「1.5 倍行距」屏幕与文件都不变 | `lineRule='exact'` 在画布与保存两侧都**优先于**倍数（`line-metrics.ts:1465`、`generate.ts:1178`）。所以改倍数时**同时清掉 `lineRule`/`lineRawTwips`** |
+| 「清除格式」清不掉标题上的对齐 | `updateAttributes` 只认它拿到的那个类型名，找不到就 `return false`（`@tiptap/core` 的 `updateAttributes`）。所以清段落格式要**逐类写** docParagraph / docHeading / docListItem 三遍 |
+| 格式刷把链接、批注、修订一起刷掉了 | `tr.removeMark(from, to)` **不传 markType 会清掉区间上所有标记**。正确做法是逐类 `tr.removeMark(from, to, type)` 再 addMark（只搬 `bold`/`italic`/`underline`/`strike`/`docTextStyle`） |
+
+`pageBreakBefore` **不在**清除格式的名单里：正文里的分页符就是它（`page-break.ts`
+在段首只打这个属性、不插字符），清掉等于删掉用户插的分页符，而隔着几屏看不出来。
+
+**否决**：
+
+| 方案 | 为什么不用 |
+|---|---|
+| 「引用」写 `styleId: 'Quote'` | 画布不动（见决定一）。这是本仓库最不能接受的一类按钮 |
+| 列出 `styles.xml` 里**所有**段落样式当下拉 | 样式表里有几十个（含 `Normal`、`TableGrid`、Word 内部样式），而且除了标题以外都画不出来——列出来就是一堆点了没反应的项 |
+| 标题级别固定列 1–3（照 markdown 那套） | 文档里没有 `Heading2` 时选它会写出一个没有 `pStyle` 的段落：画布像标题、Word 里是正文。列**存在的**级别是唯一诚实的做法 |
+| 一个下拉同时管东亚与西文字体 | 它们是 `w:rFonts` 的**两个槽位**。合成一个，选一次中文字体会把西文字体一起冲掉（Word 里这两个是分开设的，正是为了避免这件事） |
+| 字号增减用 `unsetMark` 兜底（没值时就不动） | 按钮点了没反应——比禁用更糟。禁用 + 说明原因 |
+| 查找用浏览器自带的 Ctrl+F | 它搜的是**渲染后的 DOM**，跨标记的匹配（`in**for**mation`）与脚注引用都会错位；而且替换做不到 |
+| 查找高亮往文档里插标记 | 会把文档改脏（补丁式保存的逐块比对退化）、进撤销栈、用户按一次 Ctrl+Z 把高亮撤没了 |
+
+**影响**：
+
+- `packages/office/src/editors/DocxEditor.tsx`：工具条从 6 个按钮长到 40+ 个控件
+  （八个分组、四个下拉、六个菜单、两个取色器、一个文件按钮）；新增
+  `refreshToolbar`（让工具条重读不在编辑器状态里的东西——修订开关在
+  `storage` 上、`spellcheck` 在 DOM 属性上，改了都不派发事务）
+- `packages/office/src/editors/docx-find.ts`（新）：匹配 + 替换 + 高亮的适配器。
+  按编辑器实例用 `WeakMap` 缓存——`FindReplaceBar` 的 effect 把 `adapter` 放进了
+  依赖数组，每次渲染新建对象等于每帧全量重扫
+- `packages/office/src/docx.ts`：`DocxSession` 增加 `headingLevels`
+- `packages/office/src/editors/editors.css`：`.search-hit` / `.search-hit-active`
+  与状态行提示的样式（**不能**写进 `generated/editor.css`）
+- `packages/office/src/shell/EditorShell.tsx`：`ToolbarColorPicker` 增加可选
+  `icon`——同一个工具条上有两个取色器时，没设置颜色时它们的触发器长得一模一样
+  （都是一条斜线 + 箭头），光看形状分不出哪个是字体颜色、哪个是段落底纹
+- 测试：`docx-toolbar.test.ts`（18 条，模型层）、`docx-toolbar-render.test.tsx`
+  （7 条，挂真组件树点真按钮）、`docx-find.test.ts`（12 条）、
+  `docx-save.test.ts`（17 条，**保存保真**：每个新命令都断言只改
+  `word/document.xml`、且真的写进 XML）
+- 知识：`packages/office/AGENTS.md` 的「已知边界」里那条「工具栏面窄」可以撤了
+
+**仍未做**：单元格/表格的**边框线型与颜色**（只给了「全部/无/下框线」三个预设）、
+`csFont`、以及 `rawRPr` 透传那一批（字符间距、大小写、文本效果）。
+
+---
+
+## D-063 PDF 的页面工具箱：结构改动做全，文字只读不写
+
+**背景**：D-057 把 PDF 定成「只做页面级（旋转/删除/调序）」。用户要求把它的
+工具条补齐到与另外五种同一个水平。补齐的过程中发现：页面级**还有一大半没做**
+（倒序、插入空白页、导入页面、裁剪、换纸型），而 D-057 里写着的边界
+（「页面级操作是纯结构改动」）恰恰说明这些都该做——它们全是结构。
+
+**决定**：PDF 的工具条从 8 个按钮扩到下面这些，**每个都接一个真的存在的命令**：
+
+| 工具 | 落在哪 | 命令 |
+|---|---|---|
+| 上一页 / 下一页 / 跳到第 N 页 | 工具条左端 | `setNav`（页码走 `ToolbarNumberField`，范围 1..页数） |
+| 缩小 / 放大 / 缩放比例 | 工具条右端 | `zoom`（40–240，比例走 `ToolbarNumberField`） |
+| 查找 | 工具条 → 次工具条 | `FindAdapter`（**只给查找，不给替换**）：`getTextContent` + 自建索引 |
+| 旋转这一页 / 全部页 | 工具条 + 「整份」菜单 | `withRotation` → `page.setRotation(degrees(angle))` |
+| 整份倒序 | 「整份」菜单 | `layout.toReversed()` → `copyPages` 按新序 |
+| 这一页前移 / 后移 | 工具条 | 页序数组换个位置 |
+| 插入空白页 | 工具条 | `out.insertPage(position, [595.28, 841.89])` |
+| 导入页面 | 工具条（`ToolbarFileButton`） | 第二次 `PDFDocument.load` + `copyPages` |
+| 删除这一页 | 工具条 | 从页序里去掉（**至少留一页**） |
+| 裁剪 | 「裁剪」菜单 | `page.setCropBox(x, y, w, h)` |
+| 这一页的纸型 | 下拉 | `page.scaleContent(k, k)` + `page.setSize(w, h)`（配对） |
+| 保存到库 | 工具条右端 | `buildPdfBytes`（整体重建）→ `source.reload()` |
+
+**四种取舍，每条都有理由**：
+
+| 取舍 | 为什么 |
+|---|---|
+| **查找只读**：`FindAdapter` 而不是 `FindReplaceAdapter` | 改文字要拆内容流（D-057 的整套代价）。而给两个空的 `replaceOne`/`replaceAll` 会渲染出两个点了没反应的按钮——`EditorShell.tsx` 把替换方法定成**可选**就是为了这个 |
+| **裁剪与纸型的界面只有「四边等量」** | 页面模型里四边各自算（`PdfCropInsets`），但界面上单边裁剪在旋转之后就分不清「左右」。常见用途只有「去掉扫描件的黑边」，那是四边等量。模型不改，将来补界面即可 |
+| **裁剪与纸型在保存前只做「标注」** | 画布画的始终是**原件**（它们是保存后才生效的改动）。裁剪用框外压暗、纸型只在状态行写目标尺寸。把画布按待生效的裁剪缩掉会让画面与文字层、命中高亮分成两套坐标系（高亮会落在画面外面） |
+| **导入的页面把字节留在改动里**（`PdfEdit.imports`） | 那些页在原件里不存在。不留着就是「第一次保存成功、第二次保存静默丢掉它们」——两次都报成功。找不到时**抛错**，不静默跳过 |
+| **「有没有改动」比的是结构，不是操作历史** | 转 90° 再转回来仍是原样，那时保存按钮该是灰的。所以 `isPristine` 逐页比结构（页数、来源+页号、旋转、裁剪、纸型、尺寸）——与 D-057 那条「结果只取决于目标布局」是同一个判断的两面 |
+| **保存之后基线换成磁盘上那份**（`PdfEdit.file`） | `reload()` 有一段时间差，拿旧原件当基线会让「保存完仍显示已修改」，以及「改回磁盘上那份之后退不回去」。两者都是真浏览器里实测到的 |
+
+**新加的共享原语**（D-058 说的「六个编辑器 import 同一套」）：
+
+- `ToolbarNote`：**会折行的**说明段落。原来的 `ToolbarLabel` 带
+  `white-space: nowrap`（工具条上的短标签要这样），拿它写一两百字的说明会一路
+  撑出外壳——实测 420px 窗口下 footer 的 `scrollWidth` 2150 对 `clientWidth` 418
+- 三个图标：`CropIcon` / `BlankPageIcon` / `ReverseOrderIcon`（仍然自绘 SVG，
+  不用字形）
+
+**真浏览器里实测发现并修掉的三个静默错**（都会「看着差不多，其实错了」）：
+
+| 症状 | 原因 |
+|---|---|
+| 高亮纵向被压扁，框住的不是那行字 | 工作台是 flex 行，`align-items: stretch` 把「纸」拉到了工作台那么高（页面 900×1200、纸层 900×667），于是百分比定位的高亮挤进 667 里 |
+| 缩放说了假话（输入 150%，画布一点没变大） | `.mimir-pdf-page` 上的 `max-width: 100%` 只夹宽度不夹高度：700px 窗口下画出 666×1200 的**被压扁**的页（宽高比 0.555 对页面的 0.75） |
+| 状态行卡在「已修改，未保存」 | 保存完 `reload()` 还没回来，`dirty` 仍是真的。已写出 2075 字节却这么说，是界面在说假话 |
+| 窄窗口下工具条右端的「保存」看不见 | 宽度链缺了一环：`.mimir-editor` 是 flex 子项，`min-width: auto` 让它不会缩到比内容（900px 的页面）更窄——420px 窗口里外壳量出 932px。这是 AGENTS.md 那条「高度链」的宽度孪生，而 `overflow: clip` 挡不住它 |
+
+**验证**（三层，都不是只看代码）：
+
+1. **单测 56 条**（`pdf-pages.test.ts` 30 + `pdf-text.test.ts` 16 …）：用
+   **pdf-lib 与 pdf.js 独立读回产出物**——页序/旋转/空白页尺寸、裁剪前后**内容流
+   逐字节相同**、换纸型的缩放锚点（裁左边 50pt 再缩到 200pt，文字 x 从 100 → 90）、
+   四个旋转角的画布投影与 pdf.js 的 `convertToViewportPoint` **逐个角比对**到 1e-6
+2. **中文**：手工拼一份 Type0/Identity-H 的 CID PDF（字体不内嵌、靠 ToUnicode
+   映射——真实中文 PDF 的形状），读出「组件」、搜得到、高亮框在字上
+3. **真浏览器 37 项**（无头 Chrome + CDP，真 pdf.js 渲染 + 真 pdf-lib 保存 + 真
+   文件选择器）：断言画布的**非白像素数**、高亮的盒子与**框内的墨迹数**
+   （英文 2399 / 中文 2973——框住的确实是字）、工具条在 420px 下折成 3 行不撑破
+   外壳、以及「保存 3 次，每次独立读回」——第 3 次证明了**导入的页还在**
+
+**仍未做**：改文字（PDFium 的 7MB WASM）、单边裁剪的界面、页面文字的选中/复制
+（文字层只用来定位高亮）、表单填写、批注。
+
+---
+
+## D-064 工具条的控件改用 antd：颠倒「这个包不依赖 antd」那条取舍（推翻 D-058 的否决）
+
+**背景**：用户要求把 `packages/office` 六个编辑器的工具条从手写原生控件换成
+antd 组件。这直接顶到 D-058「工具条的共享原语」里的一条否决：
+
+> **引 antd 的 `Select` / `Dropdown` / `ColorPicker`** —— 这个包**不依赖
+> antd** 是刻意的（能独立测试、独立预览）。代价是那道 `--me-*` 变量桥，
+> 不是反过来
+
+**为什么原来的理由现在不成立**：「能独立测试、独立预览」这个收益是真的
+（今天仍在用），但它换来的是壳里一整套手写控件得自己追赶 antd 已有的东西，
+而缺口是**实测**出来的，不是偏好：
+
+| 实测缺口 | 后果 |
+|---|---|
+| `ToolbarSelect` / `ToolbarToggleGroup` / `ToolbarColorPicker` / `ToolbarMenu` **在控件这一级没有 `disabled`**——四个 props 接口里都没有这个字段（`EditorShell.tsx:262` / `:334` / `:694` / `:865`），只有「下拉的某一项 / 菜单的某一项」能禁用（`:259` / `:687`），以及 `ToolbarButton` 有（`:148`） | 加载期只有按钮那一类跟着禁用（`DocxEditor.tsx:1032` 的 `disabled={session === null}`），上一轮核对实测 **19 个控件可点**。点「段落底纹」选色后文档被标成「已修改，未保存」，而保存写出的字节与原件**完全相同**——界面在说假话，正是这个仓库最不能接受的一类错 |
+| `ToolbarNumberField` **没有 `step`**——props 只有 `label` / `value` / `onCommit` / `min` / `max` / `suffix`（`EditorShell.tsx:384`），`HtmlEditor.tsx:178` 的注释也写着这一点 | `type=number` 的原生 spinner 每档 ±1，而调用方把值吸附回 10 的倍数（`normalizeZoom`，`HtmlEditor.tsx:181-186`）——用户点一下上箭头，**看着没反应** |
+
+两条指向同一个判断：**把这件事做对需要的不是更多手写代码**。继续往手写控件里
+补 `disabled` / `step` 是可行路线，但补完仍是散在四个原语里的四份实现；而 antd
+那边是现成的、且已经随 token 校准过。这与 D-042 是同一条判断——宿主早在那里
+就定了「界面里不写原生控件：所有交互元素走 antd」，而 `shell.css` 给
+`.me-select` / `.me-input` 手写外观（`shell.css:305`）正是 D-042 否决过的做法
+（`DECISIONS.md:2174`：「保留原生控件，另写 CSS 覆盖它们的默认外观」）。
+
+**决定**：`packages/office/src/shell` 的控件改用 antd 组件（`Button` /
+`Select` / `InputNumber` / `Input` / `Segmented` / `Divider` / `Upload`——**探针
+阶段列进去的 `Dropdown` 与 `ColorPicker` 最后没有迁**，理由见下面「落地」一节），
+**包从此依赖 antd**。原来那批原语的名字与调用点不变（D-058「六个编辑器
+import 同一套」不撤销），换的是它们的实现。
+
+**尺寸：只把控件降到 small 档，不是全应用密度开关。** 选「嵌套一个
+**只传 `componentSize`、不传 `theme`** 的 `ConfigProvider`」，位置在
+`EditorShell` 内部、包住 `.mimir-editor` 整棵子树（一处改完六种编辑器 +
+三个就地渲染的弹层）。
+
+**不给它 `theme` 是关键**，实测（`apps/web` 临时探针，已删）：
+
+| 观测 | 值 | 它证明什么 |
+|---|---|---|
+| 同一次渲染里外层 `Button` / 内层 `Button` 的类名 | 外层不含 `ant-btn-sm`、内层含 | 尺寸只落在这棵子树 |
+| 内层元素的类名 | 仍是 `css-var-root`，不是 `css-var-_r_i_` | 没重算 cssVar 的 key、没新建主题实例（`MimirProvider.tsx` 那条「内层不能再传 theme」的规矩没被绕开） |
+| 叠在真实 `MimirProvider` 栈里，内层按钮的类名 / 计算高度 | `ant-btn … mimir … ant-btn-sm` / **24px** | 与宿主主题共存，small 档就是 24px |
+| `console.error` / `console.warn` | 除自己故意触发的 `Divider` 废弃告警外都是空 | 没有藏着报错 |
+| 它是否产生 DOM 节点 | 不产生（`host.childElementCount` = 1，首个子元素仍是我们的 `div`） | 宿主 bridge 的 `flex: 1; min-height: 0` 与 `.mimir-editor` 的高度链不受影响 |
+
+**影响面**：只在这棵编辑器子树，不动宿主 `MimirProvider` / `tokens.ts` /
+cssVar key；对子树里所有 antd 控件生效（正文区当前没有任何 antd 控件，所以
+不存在「编辑内容被缩小」的副作用）；我们自己的间距（`.mimir-editor__bar` 的
+`gap: 2px` / padding、`.me-find` 的 gap）仍由 `shell.css` 管——它是「把控件
+降到 small 档」，不是 `compactAlgorithm` 那种全应用密度开关。
+
+**配套的一步（必须在换控件之前做）**：`--me-control-height` **28px → 24px**
+（`shell.css:52`）。两条理由：
+
+1. antd small 档按钮实测计算高度 **24px**，而 `.me-tab`（`shell.css:655`）与
+   `.me-color__cell`（`shell.css:546`）本来就是 24px——今天「同一排三种高度」
+   是真实存在的，改这一个数就收成一档；同时它让两个未迁移的弹层触发按钮
+   （`.me-btn`）与 antd 控件同高
+2. **顺序不能反**：实测给 antd 小按钮挂 `className="me-btn"` 时，
+   `.me-btn { height: var(--me-control-height, 28px) }`（`shell.css:203`）会压过
+   antd 的 `:where(…).ant-btn-sm`——同特异性 (0,1,0)、项目样式在 head 里更
+   靠后——量到 **28px**；不挂则是 **24px**。所以「所有按钮 24px」这条判据只有
+   在「`ToolbarButton` 改挂 `me-tb`（不挂 `me-btn`）+ `--me-control-height`
+   已改 24」之后才可能通过
+
+**否决**：
+
+| 方案 | 为什么不用 |
+|---|---|
+| `compactAlgorithm` | 全局密度开关，没有局部作用域；要局部就得套带 `theme` 的 `ConfigProvider`，而那是禁区（重算 cssVar key）。而且它是把所有尺寸一起压，不只是控件 |
+| 顶层 `componentSize="small"` | 侧边栏 / 设置页 / 对话面板一起变小 |
+| 组件级 token | 只能进 `theme`，实测会让 cssVar key 变成 `css-var-_r_i_` |
+| 纯 CSS 在祖先上覆盖 `--ant-*` | 实测无效：变量声明在组件自己的根上，`!important` 也压不住 |
+| 用字面量覆盖 `.ant-btn-sm` | 违反 `apps/web/AGENTS.md` 样式第 4/7 条（不新增全局类名、覆写 antd 内部结构要用 `${prefixCls}`） |
+| 继续用手写控件，往里补 `disabled` / `step` | 补完仍是四个原语里的四份实现，而 antd 那套已经随 token 校准过——上面那两条实测缺口就是「追不上」的证据 |
+
+**代价**：**这个包不再能脱离 antd 渲染。**
+
+- 独立静态预览、包外的临时探针页面都要带上 antd 与一层 provider
+- 包内测试要自己包一层 provider（至少 `ConfigProvider componentSize="small"`），
+  否则量到的不是产品里那一档尺寸
+- 「能独立测试、独立预览」这个收益不大，但确实变小了——那正是当初否决它的
+  理由。现在用上面两条实测缺口来抵
+
+**补偿**（谁提供什么）：
+
+| 谁 | 提供什么 |
+|---|---|
+| 宿主 `apps/web` 的 `MimirProvider` | **antd 实例与主题**（`ThemeProvider` + 只放 locale 的 `ConfigProvider` + cssVar key）。包**不新建主题** |
+| `packages/office/package.json` | 声明 `antd` 依赖，**版本与宿主同一份**（宿主现写 `^6.6.4`，`apps/web/package.json:36`）。落地时进 `pnpm-workspace.yaml` 的 `catalog`，两个包都从它取——各写一次版本必然错开 |
+| `EditorShell` 内部 | 只传 `componentSize="small"` 的那层 `ConfigProvider`；**不传 `theme`** |
+| 包的测试 | 需要 DOM 的测试照旧在自己文件顶部写 `@vitest-environment happy-dom`（`packages/office/vitest.config.ts` 的默认环境仍是 node）；挂载用 antd 的测试要包一层 provider，生产里那层是宿主的 `MimirProvider` |
+
+**影响**：
+
+- `EditorShell.test.tsx:357` 那条断言写着「是原生 select」（`:369` 断言
+  `'<select'`）——换实现后它必须改。但**改的是「怎么断言」，不是「断言什么」**：
+  无障碍名称与全部选项仍要有，只是不再锚在 `<select>` 上
+- `EditorShell.tsx` 里「为什么是原生 `<select>`」那段注释（`:282`）与弹层
+  不 portal 那段里的「这个包不依赖 antd」（`:585`）、`shell.css:302` 的
+  「用宿主原生的 select / input，不自己画控件」、以及
+  `apps/web/src/theme/editor-theme-bridge.ts` 开头那句「不依赖 antd ——那是
+  刻意的：这样这个包能独立测试、独立预览」都会随之过期，**与实现同批
+  改掉**——注释说着旧理由，下一个人就会照着它把 antd 换回去
+- `--me-*` 变量桥**不退役**：颜色、间距、正文字号仍由它提供（antd 组件也要跟
+  外壳的底色一致），退役的只是「控件本身也得手写」
+- 工具条里那批自绘 SVG 图标（`icons.tsx`）**先不动**：D-058 那条「样式里不出
+  现当图标用的字形」仍然成立，图标换不换是另一件事
+
+**验证状态**（如实标）：
+
+- **上一轮已实测**（临时探针已删，材料来自本次改动的评审）：加载期 19 个控件
+  可点、点「段落底纹」标脏而保存字节与原件相同、上表五条观测、两条高度
+  （antd small = 24px、挂 `.me-btn` 后 = 28px）
+- **本轮读代码确认**：四个原语的 props 接口里没有 `disabled`、`ToolbarNumberField`
+  的 props 里没有 `step`、`normalizeZoom` 把值吸到 10 的倍数——三处的行号见上
+- **待确认（未验证）**：`Input` / `Select` / `InputNumber` / `Segmented` 的计算
+  高度在 happy-dom 下取不到（返回空串——与「跨元素自定义属性 / 边框不解析」
+  同一类限制），所以「一行所有控件同高」只能进浏览器验收
+
+### 落地（2026-09，与上面那份方案的三处出入）
+
+与方案不同的地方逐条记下来——**方案是探针期的判断，落地时有两处被实测推翻、
+一处按范围收窄**：
+
+| 原语 | 落地结果 | 与方案的出入及理由 |
+|---|---|---|
+| `ToolbarButton` | ✅ antd `Button` | 无。两条写法分开（普通 `variant="text" color="default"`、主按钮只传 `type="primary"`），按下态由 `shell.css` 的 `.me-tb[aria-pressed]` 画——**antd 完全不认 `aria-pressed`**（`grep` 它的 `es/` 只有 `input/Password.js` 用到），不补规则就是「按下去没反应」 |
+| `ToolbarSelect` | ✅ antd `Select` | 无。`suffixIcon` 必须换（默认箭头带 `aria-label="down"`，docx 有 9 个下拉 → 名字重复）。**弹层 portal 到 body 是显式例外**：弹层内容只有文本、不吃 `--me-*`，antd 自己的 `css-var-root` 提供 `--ant-*`；改 `getPopupContainer` 会被外壳的 `overflow: clip` 裁掉 |
+| `ToolbarNumberField` | ✅ antd `InputNumber`（`stringMode` + `controls={false}`） | 无。三条提交规矩（夹区间 / Esc 还原 / 空不提交）仍在外面的包装里。**新增一条**：清空后 antd 会一直空着（失焦也不恢复），所以提交时丢掉草稿、显示回外部值——否则「空值不提交」会变成「界面空着、模型还是旧值」，即界面说假话 |
+| `ToolbarTextField` | ✅ antd `Input` | 无 |
+| `ToolbarDivider` | ✅ antd `Divider orientation="vertical"` | 无。**不传 `className`**（`.me-sep` 的 1px 宽 + antd 的左边框叠加会画出 2px；这一点是从两边的源码推的，happy-dom 量不到 `border-inline-start-width`，真浏览器里核） |
+| `ToolbarToggleGroup` | ✅ antd `Segmented` | 契约从「只有一个 `aria-pressed=true`」改成「恰好一个 radio `checked`」。**`onMouseDown` 要自己 preventDefault**（实测 Segmented 项自己不拦，落点是一个可聚焦的 radio） |
+| `ToolbarFileButton` | ✅ antd `Upload`（`beforeUpload` 返回 false） | 无。rc-upload 用「换 key 重挂 input」代替我们那句「清空 value」，目标一致 |
+| `ToolbarMenu` / `ToolbarColorPicker` | ❌ **不迁** | 方案里列了 antd 的 `Dropdown` / `ColorPicker`，落地时否掉：① 两者都**portal 到 body**，而面板的内容要用 `--me-*` 上色（菜单项的 `aria-current` 高亮、颜色网格的描边），出了子树就退回浅色回退值；② antd 的 `Dropdown` **不给触发按钮 `aria-expanded` / `aria-haspopup`**（展开只多一个类名），而那正是「读屏要知道它能展开」的语义；③ ColorPicker 的 `value` 是**颜色本身**，我们的是「存进文档的东西」（OOXML 色名），要接就得双向映射。改 `getPopupContainer` 不可行——见 `ToolbarSelect` 那一行的实测 |
+| `ToolbarGroup` / `ToolbarSpacer` / `ToolbarLabel` / `ToolbarNote` / `ToolbarTabs` / `EditorState` / `useToolbarState` / `EditorShell` 骨架 | ❌ 不迁 | 方案里就没列。理由各自写在 `EditorShell.tsx` 的头注释表里（`Space` 会给每个子项包一层、`Typography` 会把字号阶梯接到 antd token 那边、`Tabs` 会把页签渲染成 div 并多一个隐藏的 `ant-tabs-nav-more`、`useToolbarState` 订阅的是 Tiptap 的外部可变状态） |
+
+**样式边界**（`shell.css` 顶部那段变量表也按这个重写了）：
+
+- **删掉**：`.me-btn--primary*`（主按钮走 antd）、`.me-select`（13 个下拉全迁完）、
+  `.me-input` 的控件观感（高度/内边距/圆角/边框/焦点环——只剩 xlsx 那个绕过原语的
+  裸 input 在用它的**宽度/弹性**）、`--me-accent-hover`（唯一读者是
+  `.me-btn--primary:hover`，已随之删）
+- **保留**：`.me-btn` 整块（**两个未迁移触发器**的唯一样式来源，删了它们没有高度、
+  没有 hover、键盘用户没有焦点环，而且不会有任何测试或类型报错）、`.me-btn__icon`
+  （`--me-icon-size` 的唯一读者）、`.me-input` 的宽度/弹性、其余的布局与弹层
+- **新增**：`.me-tb[aria-pressed='true']` 与它的 `:hover:not(:disabled)` 伴随
+  选择器（后者是必需的：antd 的 `.ant-btn-variant-text:hover:not(:disabled)` 是
+  (0,3,0)，不比它低）
+- `--me-control-height` **28 → 24px**，读者从三个变成两个
+
+**契约测试的两条限制**（实测，不是推断）：
+
+1. **计算样式断言在这套配置下做不到**：`import '@mimir/office/shell.css'` 在
+   vitest 里不注入任何规则（默认 `test.css: false`，实测 STYLE_TAGS: 0），所以
+   「按下态背景色与没按下不同」只能在浏览器里看。单元测试这一层改成**读 CSS
+   文本**的静态守护（`EditorShell.test.tsx` 的「shell.css 的静态守护」一组），
+   删掉规则就红
+2. **antd 下拉的弹层是「按需创建、之后复用」的**：同一个下拉第二次打开不会出现
+   新节点，所以测试里不能用「打开前后 diff」认它（实测：打开 → 选中 → 再打开，
+   `.ant-select-dropdown` 始终只有一个）。驱动这套动作的辅助放在
+   `packages/office/src/shell/antd-test-dom.ts`，以 `@mimir/office/test-dom`
+   导出——四个测试文件（外壳、docx、pptx、宿主的 markdown）共用同一份
+
+**顺带清掉的死代码**：`apps/web/src/components/document/InlineToolbar.tsx`（111 行）
+没有任何地方 import，而它里面用的正是这次要消除的写法（`Button type="text"`、
+已废弃的 `Divider type="vertical"`）。留着会被当成「宿主里的 antd 工具条」的样板。
+删掉后全仓库 `rg InlineToolbar apps/web/src` 无命中；包里那份
+（`packages/office/src/editors/InlineToolbar.tsx`）**仍在用**，不动。
+
+### 各格式的适配（与上面同批）
+
+原语换完之后，六个编辑器各自剩下的原生控件逐个处理。**结论是补了几档缺失的原语
+（`ToolbarTextArea`、`ToolbarTextButton`…），并把两处画布写进白名单**——没有一件
+是「顺手加」的：
+
+**一、`ToolbarTextArea`（antd `Input.TextArea`）**：pptx 的段落编辑框原来是裸
+`<textarea className="mimir-paras__item">`，一套自写的高度（26px）、字号（正文档
+13px 而工具条控件 12px）与焦点环。`ToolbarTextField` 顶不了它——那是 `type="text"`
+（无 `rows`、无 resize、单行），而**「一段文字可能带换行」不是幻灯片的属性**：
+pptx 的软换行 `<a:br/>` 在模型里就是一条 `text === '\n'` 的 run，硬换成单行
+`Input` 的代价是 HTML 的值消毒会把 `\n` 静默删掉（文件里少一个 `<a:br/>`，界面
+不报错）。所以多行进外壳，`.mimir-paras__item` 整块删掉。
+
+如实记两条**没有解决**的差别：① antd 给原生 textarea 的 `min-height` 取
+`controlHeight`（32px）且**不随 size 档变小**（small 档只改内边距与字号，见
+`antd/es/input/style/textarea.js`），所以它比工具条那一排（24px）高，与原先的
+26px 也不同高——两者不在同一行里；要压到 24px 只能覆盖 antd 的 `min-height`，
+那是 D-064 已否决的「拿自己的样式覆盖控件观感」。② `resize` 用 antd 的默认值
+（`vertical`），与上一版手写的一致。
+
+**二、`ToolbarTextButton`（antd `Button variant="link"`）**：markdown 状态行里那两处
+可点文字（「保存失败：… · 点此重试」「… · 点此关闭」）原来是裸
+`<button className="me-status-action">`。缺的是**「有动作的一句话」**这一档：
+`ToolbarNotice` 只说明不带动作，`ToolbarButton` 是 24px 的方框——在状态行里放方框
+会把那一行看成第二条工具条。所以补一档，`.me-status-action` 整块删掉
+（`editors.css` 只留一句说明它去哪了：留一个没有消费者的类名是个陷阱）。
+
+三处值得记：① 用 `variant="link"` 而不是 `"text"`——`text` 的 hover 底色是
+`colorErrorBg`（危险色下会在状态行里闪出一块红底），`link` 的 hover 底色是透明；
+② 字色钉在宿主校准过的 `--me-danger`，**不用** antd 的 `colorError`：后者
+（`#ff4d4f`）在白底上实测 **3.27:1**，不达 AA，而 `--me-danger` 是 5.80:1（浅色）/
+6.59:1（深色）。钉的时候要连 `:hover` / `:active` 一起写（antd 的 hover 规则是
+(0,3,0)，只写基础那条会被它盖掉）；③ antd 的 `white-space: nowrap` 必须压成
+`normal` + `overflow-wrap: anywhere`——错误文本长度不由我们定，而外壳是
+`overflow: clip`，不断行就是**把原因裁掉**。
+
+**三、可点而非按钮的两处白名单**：pptx 的 SVG 画布
+（`PptxEditor.tsx` 的 `.mimir-pptx-slide`）与 xlsx 的 `<td>` 网格。它们**不该**
+换成 `ToolbarButton`：被点中的目标是画布里注入的 SVG 节点（事件代理按
+`data-element-id` 映射回模型），动作随点在哪而变。写成显式白名单是**为了让第三处
+无处可藏**——不写下来，它就会变成「下一处 `onClick` on div」的先例。代价如实
+记着：键盘用户目前没有「在画布上选一个元素」的路径（`div` 不可聚焦），键盘路径
+是先用鼠标选一次、之后改字全在段落输入框里。
+
+**同批的统一**：禁用按钮一律补 `disabledReason`（pptx 的「上一页 / 下一页 /
+保存到库」，见 DESIGN §8.4），并给 pptx 补了一组控件契约测试
+（`PptxEditor.test.tsx` 的「控件契约」一节：静态守护没有手写原生控件、尺寸都在
+small 档、禁用都给原因、查找栏就地渲染、按下 preventDefault）——与 html / pdf /
+docx 那几组同构。
+
+markdown 的那一组**拆成两半**，因为方言在宿主那边：包里
+（`packages/office/src/editors/markdown-controls.test.ts`）读源码文本守「没有人
+手写原生控件 / 不直接 import antd / 不把 `.me-btn` 挂到控件上」，宿主
+（`apps/web/src/editor/markdown-controls.test.tsx`）挂**整个** `MarkdownEditor`
+守渲染层的四条（没有绕过点、都在 small 档、禁用给原因、`ToolbarMenu` 的面板不
+portal）外加状态行那一条端到端：改文档 → 等过 900ms 防抖 → 自动保存失败 →
+点「点此重试」→ 真的再存一次。挂**整个**编辑器而不是只挂工具条是必需的——那层
+`ConfigProvider` 在 `EditorShell` 内部，只挂工具条量到的是默认 32px 档，而产品里
+不是。另外两处「图快就会静默通过」如实记着：「立即保存」在没有改动时禁用（点它
+什么都不发生），而改完文档后它立刻变成「正在保存…」且仍然禁用，所以失败只能由
+防抖那次自动保存产生。

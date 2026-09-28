@@ -67,3 +67,48 @@ export function runCommand(editor: Editor, name: string, ...args: unknown[]): bo
 export function toggleMarkByName(editor: Editor, name: string): void {
   runCommand(editor, 'toggleMark', name)
 }
+
+/** `runCommandChain` 的一步：命令名 + 它的参数 */
+export interface CommandStep {
+  name: string
+  args?: readonly unknown[]
+}
+
+/**
+ * 在**同一条链、同一个事务**里跑多条命令。
+ *
+ * ## 为什么必须有这一个（而不是连着调两次 `runCommand`）
+ *
+ * 有些动作只有「先设选区、再改结构」才成立：任务列表的作用域是光标那一项，
+ * 要先把选区铺到整张列表再 toggle；改链接要先 `extendMarkRange('link')`
+ * 把整条链接选进来。分两次 `runCommand` 会有两个问题：
+ *
+ *  1. **中间态是真的会落到文档上的**（两次派发之间状态就那样），而链式调用
+ *     的第二步读到的 `state` 是链上的 `tr.selection`——这正是我们要的
+ *  2. 两次派发各留下一次选区事务，靠 history 的 500ms 分组才合成一步撤销。
+ *     合成链则天然是一步
+ *
+ * ## 任何一步不存在就整条不跑
+ *
+ * 与 `runCommand` 同一条纪律：先全部检测，再执行。**不要**跑一半——
+ * 「选区被挪到整张列表、而 toggle 没执行」比什么都不做更难解释。
+ *
+ * 返回 false = 至少有一条命令不存在（方言不支持），调用方据此禁用按钮。
+ */
+export function runCommandChain(editor: Editor, steps: readonly CommandStep[]): boolean {
+  const chain = editor.chain().focus() as unknown as Record<
+    string,
+    ((...args: unknown[]) => unknown) | undefined
+  >
+  for (const step of steps) {
+    if (typeof chain[step.name] !== 'function') return false
+  }
+  let current: unknown = chain
+  for (const step of steps) {
+    const fn = (current as Record<string, (...args: unknown[]) => unknown>)[step.name]
+    if (typeof fn !== 'function') return false
+    current = fn.call(current, ...(step.args ?? []))
+  }
+  const run = (current as { run?: unknown }).run
+  return typeof run === 'function' && (run as () => boolean).call(current)
+}

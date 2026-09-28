@@ -6,6 +6,11 @@ build/
 # TanStack Router 的生成产物缓存
 .tanstack/
 
+# 工作流脚本草稿（机器所有：CreateWorkflow 写、AmendWorkflow 读）。
+# 它是运行期的中间产物，不是源码——`git add -A` 扫进来会让每次跑工作流都多出
+# 一批未跟踪文件。要留某个工作流就用 SaveWorkflow（它写到 .zcode/workflows/）
+.zcode/workflow-drafts/
+
 # Office 包的 CSS 裁剪产物（从 vendor 重现，见 packages/office/scripts/trim-editor-css.mjs）
 packages/office/src/generated/
 
