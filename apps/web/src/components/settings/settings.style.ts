@@ -58,6 +58,10 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
    *
    * 只调两处：导航与内容之间的间距，以及 tab 的字号——
    * antd 默认 14px 与正文同大，分不出「导航」与「内容」。
+   *
+   * 窄屏（≤880px）用的不是它，而是下面那个 `Select`：八个分区在 420px 里
+   * 排不下（实测文字合计约 256px，导航条可用宽度只有 247px），而 `Tabs`
+   * 不折行——它会把首个标签裁成半个字。
    */
   tabs: css`
     .${prefixCls}-tabs-nav {
@@ -67,6 +71,17 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       padding: 10px 0;
       font-size: ${FONT_SIZE.item}px;
     }
+  `,
+
+  /**
+   * 窄屏形态的分区导航（`Select`，见 `routes/_app.settings.tsx`）。
+   *
+   * 与 tab 栏同一个位置、同一段下间距（26px），所以两种形态之间切换时
+   * 下面的内容不会跳一下。
+   */
+  sectionSelect: css`
+    display: block;
+    margin-bottom: 26px;
   `,
 
   /* ── 分区标题 ───────────────────────────────────────── */
@@ -130,10 +145,17 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     }
   `,
   /* 固定标签列宽，让右侧的值对齐成一条竖线——扫读时视线不用来回跳
-     （与左导航「右侧对齐的元信息」是同一个理由，DESIGN §8.1） */
+     （与左导航「右侧对齐的元信息」是同一个理由，DESIGN §8.1）。
+
+     宽度取**最长标签的实际宽度**（实测 124px），不是随手一个整数近似：
+     标签文案来自注册表（core 的键表与插件的 `params`），最长的两条是
+     「关键词（jieba 分词）」123px 与「每篇最多引用块数」105px。给 92px 时
+     它们折成两行，同一块面板的行高就分成 22px 与 44px 两档，断词还把
+     「每篇最多引用块 / 数」切在词中间——而这一列存在的理由是**对齐**，
+     不是省这 30px。列宽一次放宽，加新键时也不会再撞上。 */
   rowLabel: css`
     flex: none;
-    width: 92px;
+    width: 124px;
     font-size: ${FONT_SIZE.excerpt}px;
     line-height: 1.7;
     color: ${token.colorTextSecondary};
@@ -311,12 +333,27 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     font-weight: 600;
     color: ${token.colorText};
   `,
-  /** 常用标记：一个小圆点，比「常用」两个字轻 */
-  presetDot: css`
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: ${token.colorPrimary};
+  /**
+   * 「常用」标记。
+   *
+   * 原先是一个 5px 的蓝点（`presetDot`）。点是**只有形状没有含义**的东西：
+   * 页面上没有图例、卡片也没有 `title`，用户无从知道它想说「常用」——
+   * 六张带点的卡与另外三张相比只是「多了个点」（DESIGN §7.3 对只有图标
+   * 表达的控件要求可访问名称，这条对**标记**同样成立）。换成文字之后
+   * 它自带解释，也不必再靠猜。
+   *
+   * 色对与 `sourceBadge` 同类：弱底色 + 次级文字，不用语义色——
+   * 「常用」不是状态好坏，只是排序依据。
+   */
+  presetTag: css`
+    flex: none;
+    padding: 0 5px;
+    border-radius: 4px;
+    background: ${token.colorFillTertiary};
+    font-size: ${FONT_SIZE.badge}px;
+    font-weight: 400;
+    line-height: 1.6;
+    color: ${token.colorTextSecondary};
   `,
   presetUrl: css`
     font-family: ${token.fontFamilyCode};

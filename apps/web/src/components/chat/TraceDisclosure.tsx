@@ -14,8 +14,16 @@ import { FONT_SIZE } from '@/theme/tokens'
  * ## 两个 antd 组件，各管一段
  *
  * - `Collapse` 管**展开/折叠**：受控开合、键盘可达、动效都现成
- * - `Steps`（`direction="vertical"`）管**步骤时间轴**：圆点、连接线、
- *   每步的 title/description 布局都是它内建的
+ * - `Steps`（`orientation="vertical"`）管**步骤时间轴**：圆点、连接线、
+ *   每步的 title / content 布局都是它内建的
+ *
+ * ## v6 改过名的两处，写旧名不报错只是**什么都没发生**
+ *
+ * - `direction` → `orientation`（`direction` 会打废弃警告）
+ * - `items[].description` / `.ant-steps-item-description` → `content` /
+ *   `.ant-steps-item-content`。CSS 写旧类名时规则静默失配，这一步的明细
+ *   退回正文的 14px 与正文色，比它自己的标题（12.5px）还显眼——
+ *   层级是反的，而控制台里只有一条警告
  *
  * 一开始这两处都是手写的（自己画圆点和竖线、自己管展开状态）。
  * 手写版的问题不是不好看，而是**漏了细节**：连接线在最后一步要断掉、
@@ -86,7 +94,12 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
       line-height: 1.6 !important;
       color: ${token.colorTextSecondary} !important;
     }
-    .${prefixCls}-steps-item-description {
+    /* v6 把这一层的类名从 -description 换成了 -content
+       （items 里的 description 也随之废弃，见下面 Steps 的 items）。
+       写旧类名不会报错——那条规则只是再也匹配不到任何元素，
+       于是这一步的明细继承正文的 14px 与正文色，比它自己的标题还大
+       （实测 14px / rgba(31,35,41,.88) 对标题的 12.5px / #5c6570）。 */
+    .${prefixCls}-steps-item-content {
       font-size: ${FONT_SIZE.badge}px !important;
       line-height: 1.6 !important;
       color: ${token.colorTextTertiary} !important;
@@ -141,7 +154,7 @@ export function TraceDisclosure({ trace }: { trace: Trace }) {
           ),
           children: (
             <Steps
-              direction="vertical"
+              orientation="vertical"
               size="small"
               className={styles.steps}
               items={trace.steps.map((step) => ({
@@ -149,7 +162,7 @@ export function TraceDisclosure({ trace }: { trace: Trace }) {
                 icon: STEP_ICON[step.icon],
                 status: step.icon === 'check' ? ('finish' as const) : ('process' as const),
                 title: step.text,
-                description: (
+                content: (
                   <>
                     {step.keywords && step.keywords.length > 0 && (
                       <span className={styles.keywords}>

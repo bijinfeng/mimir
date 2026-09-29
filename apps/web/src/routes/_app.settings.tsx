@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { Tabs } from 'antd'
+import { Select, Tabs } from 'antd'
+import { useSyncExternalStore } from 'react'
 import { AccountSection } from '@/components/settings/AccountSection'
 import { AppearanceSection } from '@/components/settings/AppearanceSection'
 import { DataSection } from '@/components/settings/DataSection'
@@ -9,6 +10,7 @@ import { RetrievalSection } from '@/components/settings/RetrievalSection'
 import { StatsSection } from '@/components/settings/StatsSection'
 import { StorageSection } from '@/components/settings/StorageSection'
 import { useStyles } from '@/components/settings/settings.style'
+import { NAV_NARROW_QUERY } from '@/theme/tokens'
 
 /**
  * 设置页。
@@ -38,6 +40,21 @@ import { useStyles } from '@/components/settings/settings.style'
  * 用 `?section=` 而不是 `useState`：设置页的地址是可以贴给人的，
  * 「去设置 > 数据与备份」应当能直接给一个链接。刷新回到原分区也是同一件事。
  * 默认值是 models，与原来的首个 tab 一致。
+ *
+ * ## 窄屏下分区导航换成下拉（`Select`）
+ *
+ * 八个分区在 420px 的视口里排不下：实测 tab 文字合计约 256px，而导航条可用
+ * 宽度只有 247px——**连字符都放不下**，于是横向 tab 栏必然把某一个标签切成
+ * 半个字（实测首个 tab 只剩「型」，看起来像渲染坏了）。antd 的 `Tabs` 不折行，
+ * 只能靠右端的 ⋯ 菜单够到被切掉的两个分区。
+ *
+ * 所以窄屏（`NAV_NARROW_QUERY`，与左导航同一个断点，`docs/DESIGN.md` §5.5）
+ * 换成 `Select`：八个分区的名字都完整、可读，一次点击就能到。宽屏仍是横向
+ * tab——那一档 `docs/DESIGN.md` §8.12 的取舍（并列选项摊开比藏进下拉少一次
+ * 点击）成立，因为那时它摊得下。
+ *
+ * 断点从 `tokens.ts` 取，不在这里写数字：它要与外壳的网格（`_app.tsx`）和
+ * 栏内的 `matchMedia`（`lib/nav-collapse.ts`）说的是同一个宽度。
  */
 
 const SECTIONS = [
@@ -71,6 +88,31 @@ function resolveSection(value: unknown): SectionKey {
     : 'models'
 }
 
+/**
+ * 窄屏吗。**订阅的是 `NAV_NARROW_QUERY` 本身，不是另一个数字**。
+ *
+ * 用 `useSyncExternalStore` 而不是 `useState` + `useEffect`：与
+ * `lib/nav-collapse.ts` 同一个理由——`matchMedia` 是同步可读的，窄窗口打开时
+ * 首帧就该是下拉，走 effect 会先渲染一帧 tab 栏再换掉（一次可见的闪烁）。
+ *
+ * 没有 `matchMedia`（极老浏览器 / 某些测试环境）时按宽屏处理：那是这一页的
+ * 默认形态。
+ */
+const narrowMedia =
+  typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    ? window.matchMedia(NAV_NARROW_QUERY)
+    : null
+
+function subscribeNarrow(onChange: () => void): () => void {
+  if (!narrowMedia || typeof narrowMedia.addEventListener !== 'function') return () => {}
+  narrowMedia.addEventListener('change', onChange)
+  return () => narrowMedia.removeEventListener('change', onChange)
+}
+
+function useNarrowViewport(): boolean {
+  return useSyncExternalStore(subscribeNarrow, () => narrowMedia?.matches ?? false)
+}
+
 export const Route = createFileRoute('/_app/settings')({
   /**
    * `section` **可选**，不是「必须有默认值」。
@@ -91,34 +133,57 @@ function SettingsPage() {
   const navigate = useNavigate()
   const search = Route.useSearch()
   const section = resolveSection(search.section)
+  const narrow = useNarrowViewport()
+
+  /**
+   * 换分区。
+   *
+   * `replace` 而不是 `push`：分区切换是页内定位，不是导航，不该让「返回」
+   * 变成在设置内部一路退回去。
+   *
+   * `scope` 要显式带上：搜索参数沿路由树合并，父路由的 scope 是必需字段，
+   * 下次跳到文档区时它决定看哪个视图。
+   */
+  const goSection = (key: string) => {
+    void navigate({
+      to: '/settings',
+      search: { scope: search.scope, section: resolveSection(key) },
+      replace: true,
+    })
+  }
 
   return (
     <div className={styles.page}>
       <div className={styles.inner}>
         <h1 className={styles.title}>设置</h1>
 
-        <Tabs
-          className={styles.tabs}
-          activeKey={section}
-          onChange={(key) => {
-            const next = resolveSection(key)
-            // replace 而不是 push：分区切换是页内定位，不是导航，
-            // 不该让「返回」变成在设置内部一路退回去。
-            //
-            // scope 要显式带上：搜索参数沿路由树合并，父路由的 scope 是
-            // 必需字段，下次跳到文档区时它决定看哪个视图
-            void navigate({
-              to: '/settings',
-              search: { scope: search.scope, section: next },
-              replace: true,
-            })
-          }}
-          items={SECTIONS.map((item) => ({
-            key: item.key,
-            label: item.label,
-            children: <SectionBody section={item.key} />,
-          }))}
-        />
+        {narrow ? (
+          /* 窄屏：八个分区排不下横向 tab 栏，换成下拉。
+             `aria-label` 是它唯一的名称——一个没有可见标签的 Select 读屏
+             只会念出当前值，听不出这是一件「选分区」的控件（DESIGN §7.3）。 */
+          <Select
+            className={styles.sectionSelect}
+            value={section}
+            onChange={goSection}
+            options={SECTIONS.map((item) => ({ value: item.key, label: item.label }))}
+            aria-label="设置分区"
+          />
+        ) : (
+          <Tabs
+            className={styles.tabs}
+            activeKey={section}
+            onChange={goSection}
+            items={SECTIONS.map((item) => ({
+              key: item.key,
+              label: item.label,
+              children: <SectionBody section={item.key} />,
+            }))}
+          />
+        )}
+
+        {/* 下拉形态下内容不在 Tabs 的 panel 里，单独渲染一次。
+            两种形态**只渲染一个内容体**，不会出现两份状态 */}
+        {narrow && <SectionBody section={section} />}
       </div>
     </div>
   )

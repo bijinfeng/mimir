@@ -22,7 +22,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { Editor } from '@tiptap/core'
 import { EditorContent, useEditor } from '@tiptap/react'
 import { editorExtensions } from '../../vendor/apps/docs/src/renderer/editor/extensions.js'
-import { openSelect, selectRoot } from '../shell/antd-test-dom.js'
+import { openSelect, selectRoot, selectValueText } from '../shell/antd-test-dom.js'
 import { openDocx } from '../docx.js'
 import { DocxEditor, DocxToolbar } from './DocxEditor.js'
 import type { EditorIo } from './types.js'
@@ -241,6 +241,58 @@ describe('DocxToolbar 渲染', () => {
     expect(shown).toHaveLength(21)
     expect(shown[0]).toBe('5')
     expect(shown[shown.length - 1]).toBe('72')
+  })
+
+  /**
+   * 两个字体下拉**必须有可见的前缀**。
+   *
+   * 它们各管一个槽位（`w:eastAsia` 与 `w:ascii`），而两个都是「（默认）」时
+   * 外观完全一样——`ToolbarGroup` 只渲染 `aria-label`，名字到不了眼睛。实测
+   * 截图里那两个下拉并排，只有鼠标 hover 的 `title` 说得清哪个是哪个，而
+   * DESIGN §0.2 要的是「状态必须能被看见」。
+   */
+  it('中文字体 / 西文字体各自带着可见的前缀，不靠 tooltip 分', async () => {
+    const { host } = await boot()
+    const group = host.querySelector('[aria-label="字体"]')
+    expect(group, '工具条上没有「字体」这个组').not.toBeNull()
+    const visible = (group?.textContent ?? '').trim()
+    expect(visible).toContain('中文')
+    expect(visible).toContain('西文')
+    // 两个下拉各自都还在（前缀是加出来的，不是替换了控件）
+    expect(selectRoot(host, '中文字体')).not.toBeNull()
+    expect(selectRoot(host, '西文字体')).not.toBeNull()
+
+    // 字号那个下拉也在旁边写着它管的是什么（原先只有一个「其它」）
+    expect(host.querySelector('[aria-label="字号"]')?.textContent ?? '').toContain('字号')
+  })
+
+  it('没有直接字号时显示「（默认）」，不冒充「我选了别的字号」', async () => {
+    const { host, editor } = await boot()
+    act(() => {
+      editor.commands.setTextSelection({ from: 2, to: 5 })
+      editor.chain().focus().unsetMark('docTextStyle').run()
+    })
+    // `value === null` 是「这里没有直接字号，继承自样式」
+    expect(selectValueText(host, '字号（磅）')).toBe('（默认）')
+  })
+
+  it('有直接字号但不在档位里时，显示「半磅（其它）」而不是裸的内部单位', async () => {
+    const { host, editor } = await boot()
+    act(() => {
+      editor.commands.setTextSelection({ from: 2, to: 5 })
+      // 23 半磅（11.5 磅）不在 21 档里——正是需要说「不在档位表里」的情形
+      editor.chain().focus().setMark('docTextStyle', { sizeHalfPoints: 23 }).run()
+    })
+    expect(selectValueText(host, '字号（磅）')).toBe('23（其它）')
+  })
+
+  it('在档位里的字号显示磅（22 半磅 → 11 磅）', async () => {
+    const { host, editor } = await boot()
+    act(() => {
+      editor.commands.setTextSelection({ from: 2, to: 5 })
+      editor.chain().focus().setMark('docTextStyle', { sizeHalfPoints: 22 }).run()
+    })
+    expect(selectValueText(host, '字号（磅）')).toBe('11')
   })
 
   it('点「加粗」真的给选区加上 bold（按钮不是装饰）', async () => {

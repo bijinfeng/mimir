@@ -70,6 +70,7 @@ import {
   EditorState,
   FindReplaceBar,
   ToolbarButton,
+  ToolbarConfirm,
   ToolbarDivider,
   ToolbarFileButton,
   ToolbarGroup,
@@ -934,14 +935,45 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
           >
             <FileImportIcon />
           </ToolbarFileButton>
-          <ToolbarButton
-            label="删除这一页"
+          {/*
+            ## 删除这一页要确认
+
+            它与左右两个按钮（插入空白页、导入页面）都是纯图标、并排一排，而
+            它的代价与它们完全不对称：**没有撤销**。docx / html / 笔记的工具条
+            都有「撤销 (Ctrl+Z)」，pdf 这条没有——用户会按同样的预期去按
+            Ctrl+Z，而那里没有（`applyPages` 只换页序，不留历史）。一次误点
+            就少一页，唯一的路是「不保存、退出、重进」。
+
+            加确认而不是加一套 history：撤销要做进进出出的栈，那是新能力
+            （PRD §5.9 的三选项是给对话与笔记定的），而这里要的是「别误触」。
+            仓里另外两处不可逆的删除（设置页的头像、供应商）用的是同一个做法
+            ——`Popconfirm` + 一句后果说明，见 `AccountSection.tsx:174`。
+
+            弹层会 portal 到 body：与 `ToolbarSelect` 同一个显式例外（`.mimir-editor`
+            是 `overflow: clip`，就地渲染会被裁掉），而 antd 的弹层自带
+            `css-var-root`，`--ant-*` 由它自己提供，深色下不会退回浅色。
+          */}
+          <ToolbarConfirm
+            title="删掉这一页？"
+            description="没有撤销，只能靠不保存退出"
+            confirmLabel="删除这一页"
             disabled={layout.length <= 1}
-            disabledReason="至少要留一页"
-            onClick={removePage}
+            onConfirm={removePage}
           >
-            <TrashIcon />
-          </ToolbarButton>
+            {/*
+              **不给 `onClick`**：这一档的点击由 `ToolbarConfirm` 提供
+              （rc-trigger 会把自己的处理器 merge 到这个子元素上），自己再挂
+              一个空处理函数只会让人以为这里还有事要做——与 `ToolbarButtonProps`
+              里那条「可以不给 onClick」是同一件事。
+            */}
+            <ToolbarButton
+              label="删除这一页"
+              disabled={layout.length <= 1}
+              disabledReason="至少要留一页"
+            >
+              <TrashIcon />
+            </ToolbarButton>
+          </ToolbarConfirm>
 
           <ToolbarDivider />
 
@@ -1049,7 +1081,8 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
           <ToolbarNote>
             裁剪与纸型只作用于这一页。裁剪只改可视区：页内容一字未删，裁剪前后解码出的内容流完全相同（测过）。
             纸型会按比例缩放内容并改纸张尺寸，两个一起写才不拉伸。画布画的始终是原件，所以保存之前裁剪用框外压暗表示、
-            纸型只在状态行里写着目标尺寸。保存会用 pdf-lib
+            纸型只在状态行里写着目标尺寸。删除、调序、旋转也一样只在保存时落到文件上——保存之前退出，原件一字未动
+            （这条是删除没有撤销时的退路）。保存会用 pdf-lib
             重写整个文件（页面级操作是它擅长的，但字节与原件不同）。 改文字不在本版——PDF
             的文字是内容流里的绘制指令，改一个字要重排整段（那要 PDFium 的 7MB WASM，见 TECH
             §15.12）。

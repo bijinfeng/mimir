@@ -140,7 +140,38 @@ export function FilePreview({
             </div>
           )}
         </>
+      ) : hasSource ? (
+        /*
+          「有原件、但没有查看器也没有正文」的降级态（`归档资料.zip` 就是）。
+
+          **它必须带一个主按钮。** DESIGN §8.16 给这一档的规定是「图标 +
+          「{格式} 没有在线预览」+ 主按钮『下载原件』」，而第一版只有一个
+          antd `Empty`：整屏（x 204–1440、y 80–866）没有第二个可点元素，
+          唯一的出口是 44px 头部最右端那个「下载」——而提示语正说着
+          「可以下载查看」（实测整页可点的只有侧栏 9 项加头部四个按钮）。
+          说得出下一步却不给入口，比不说更让人以为坏了。
+
+          形状与 `renderSource()` 里那张降级卡片**同一张**：两处说的是
+          同一件事（这个格式没有在线预览），按钮文案也必须是同一句
+          ——两处各写一套的话，同一件事在界面上会有两种说法。
+        */
+        <div className={styles.card}>
+          <FileOutlined className={styles.cardIcon} />
+          <div className={styles.cardText}>
+            <Typography.Text strong>
+              {doc.parseError !== null
+                ? `提取正文失败：${doc.parseError}`
+                : `${formatLabel(doc.mime, doc.title)} 没有在线预览`}
+            </Typography.Text>
+            <div className={styles.cardHint}>原件已经保存，可以下载查看</div>
+          </div>
+          <Button type="primary" href={api.documents.sourceUrl(doc.id, { download: true })}>
+            下载原件
+          </Button>
+        </div>
       ) : (
+        /* 没有原件的记录：**不给下载按钮**——没有东西可下，点了只会得到
+           一个 404，那正是 DESIGN §7.4 说的假动作 */
         <Empty
           image={<FileOutlined className={styles.bigIcon} />}
           description={
@@ -148,7 +179,6 @@ export function FilePreview({
               {doc.parseError !== null
                 ? `提取正文失败：${doc.parseError}`
                 : `${formatLabel(doc.mime, doc.title)} 没有在线预览`}
-              <span className={styles.hint}>原件已经保存，可以下载查看</span>
             </span>
           }
         />
@@ -216,13 +246,31 @@ export function FilePreview({
     }
 
     if (viewer === 'image') {
+      /*
+        图片**只封顶、不放大**（DESIGN §8.16：「`<img>`，`max-width: 100%`，
+        圆角 8px」）。
+
+        `.imageLink` 上的 `align-self: flex-start` 是这句话的落点：内容列是
+        flex 列、默认 `align-items: stretch`，于是 `max-width` 只挡住放大、
+        挡不住**拉伸**——实测 880×520 的原件在 1240px 的列里被画成 1240×734
+        （放大 1.41 倍后插值，图比原件糊）。`align-self` 让它按自己的尺寸
+        排，`max-width` 仍在窄窗口下把它收进列宽。
+      */
       return (
-        <img
-          className={styles.image}
-          src={url}
-          alt={doc.title}
-          onError={() => setFailedFor(doc.id)}
-        />
+        <a
+          className={styles.imageLink}
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          title="在新标签打开原件（实际大小）"
+        >
+          <img
+            className={styles.image}
+            src={url}
+            alt={doc.title}
+            onError={() => setFailedFor(doc.id)}
+          />
+        </a>
       )
     }
 
@@ -263,6 +311,16 @@ const useStyles = createStyles(({ css, token }) => ({
     /* 撑满内容列：原件（纸张、表格、幻灯片）是「越宽越好看清」的东西 */
     flex: 1;
     min-width: 0;
+    /*
+     * **min-height: 0 是高度链里必需的一环。**
+     *
+     * 这一层夹在内容列（innerWide）与主题变量层（editor-theme-bridge
+     * 的 vars）之间，两边都写了 min-height: 0，只有它默认 auto
+     * ——于是 flex 子项的自动最小尺寸又把外壳撑到内容高（实测 pptx：
+     * 容器 856px、外壳 888px），超出视口的那一截正是附属面板与状态行
+     * 所在的位置。链上少一环不会报错，只让底部那一格「消失」（DESIGN §7.7）。
+     */
+    min-height: 0;
   `,
   plain: css`
     margin: 0;
@@ -286,12 +344,34 @@ const useStyles = createStyles(({ css, token }) => ({
     border-radius: 8px;
     background: ${token.colorFillQuaternary};
   `,
+  /*
+    图片这一格。**它是链接**——「看真实大小」需要一个出口，而原注释声称
+    「点击查看实际大小由浏览器原生行为提供（图片在新标签打开）」，实测
+    `img.closest('a') === null`、`cursor: auto`、点一下 location 不变：
+    那个行为不存在（这类「注释说得像已经做了」的地方只有对着界面点一次
+    才发现）。所以要么把注释删掉，要么把链接补上——补上更省事，也把
+    「原件到底多大」这条信息还给用户。
+  */
+  imageLink: css`
+    /* 只封顶、不拉伸：见上面调用处的说明 */
+    align-self: flex-start;
+    max-width: 100%;
+    display: block;
+    border-radius: 8px;
+    transition: opacity 0.12s ease-out;
+
+    &:hover {
+      opacity: 0.88;
+    }
+  `,
   image: css`
     max-width: 100%;
-    /* 自适应到内容列宽度。点击查看实际大小由浏览器原生行为提供
-       （图片在新标签打开）——不做自己的缩放控件 */
+    /* 宽高按原件比例，不放大——列比图宽时它保持自己的像素尺寸 */
+    height: auto;
+    /* 圆角与外框在链接这一层，图片自己不再画，避免两层边线 */
     border-radius: 8px;
     border: 1px solid ${token.colorBorderSecondary};
+    display: block;
   `,
   media: css`
     width: 100%;
@@ -332,11 +412,5 @@ const useStyles = createStyles(({ css, token }) => ({
     font-size: ${FONT_SIZE.note}px;
     color: ${token.colorTextTertiary};
     line-height: 1.7;
-  `,
-  hint: css`
-    display: block;
-    margin-top: 6px;
-    font-size: ${FONT_SIZE.meta}px;
-    color: ${token.colorTextQuaternary};
   `,
 }))

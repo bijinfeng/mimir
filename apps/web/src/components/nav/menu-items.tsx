@@ -1,13 +1,6 @@
-import {
-  AppstoreOutlined,
-  HddOutlined,
-  MessageOutlined,
-  PlusOutlined,
-  SearchOutlined,
-  UploadOutlined,
-} from '@ant-design/icons'
+import { MessageOutlined, PlusOutlined, SearchOutlined, UploadOutlined } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
-import type { ConversationSummary, DocumentCounts } from '@mimir/shared'
+import type { ConversationSummary } from '@mimir/shared'
 import { formatRelative } from '@/components/list-helpers'
 
 /**
@@ -24,7 +17,6 @@ import { formatRelative } from '@/components/list-helpers'
  * action:search         动作：搜索（命令面板）
  * action:capture        动作：收集内容
  * action:settings       动作：设置
- * scope:inbox           导航：知识库的四个视图
  * conv:<id>             导航：某次会话
  * ```
  *
@@ -37,32 +29,22 @@ type MenuItem = Required<MenuProps>['items'][number]
 
 export type NavAction = 'new-chat' | 'search' | 'capture' | 'settings'
 
-/** 把当前所在位置编码成一个菜单 key，与 items 里的 key 对应 */
+/**
+ * 把当前所在位置编码成一个菜单 key，与 items 里的 key 对应。
+ *
+ * 文档页返回 **null**（D-068）：侧边栏菜单里没有任何 scope 项——
+ * 「全部文档」入口已移除（进库就是默认视图），目录树由 `FolderSection`
+ * 自己高亮，标签筛选没有对应项。返回 null 时调用方给空 selectedKeys，
+ * 不强点亮任何东西。
+ */
 export function currentKey(input: {
   page: 'docs' | 'chat' | 'settings'
   scope: string
   id?: string | undefined
-}): string {
+}): string | null {
   if (input.page === 'settings') return 'action:settings'
   if (input.page === 'chat') return input.id ? `conv:${input.id}` : 'action:new-chat'
-
-  /**
-   * 标签筛选点亮「全部文档」。
-   *
-   * 侧边栏**没有标签项**（标签是「横切」维度，归中栏的筛选行与命令面板），
-   * 所以按标签筛选时侧边栏本来会没有任何选中项——用户彻底失去位置感。
-   *
-   * 点亮「全部文档」是诚实的近似：标签筛选确实是「全部文档」的一个子筛选
-   * （命中的可以是笔记也可以是资料）。比「不点亮」好在用户至少知道自己
-   * 在文档区，而不是怀疑界面坏了。
-   *
-   * 目录（folder:）不同——侧边栏**有**目录树，那时应该点亮具体的那个目录，
-   * 所以下面它保持自己的 key。
-   */
-  if (input.scope.startsWith('tag:')) return 'scope:all'
-
-  // scope 已经是 `folder:x` 这种带前缀的形式，直接用
-  return `scope:${input.scope}`
+  return null
 }
 
 /** 顶部动作列表。右侧只显示**真实存在**的快捷键——不编不存在的 */
@@ -78,30 +60,6 @@ export function buildActions(): MenuItem[] {
     },
     { key: 'action:capture', icon: <UploadOutlined />, label: '收集内容' },
   ]
-}
-
-/**
- * 知识库的两个视图。来源（笔记 / 资料）不再是浏览维度（D-047），
- * 收件箱也不再是（D-054）——库靠目录、标签与搜索组织，
- * 入口只剩全集与归档。
- *
- * **不要把它当作「少一个筛选」而加回来**：收件箱存在的前提是「先收进来、
- * 之后再整理」那条两段式流程，而它已经退役（新的内容直接可用）。
- * 理由与代价见 D-054。
- */
-export function buildScopes(counts: DocumentCounts | undefined): MenuItem[] {
-  const rows = [
-    { key: 'all', icon: <AppstoreOutlined />, label: '全部文档', count: counts?.all },
-    { key: 'archived', icon: <HddOutlined />, label: '已归档', count: counts?.archived },
-  ]
-
-  return rows.map((row) => ({
-    key: `scope:${row.key}`,
-    icon: row.icon,
-    label: row.label,
-    // 计数为 0 时不显示——「0」比空白更占注意力，而它不携带信息
-    extra: row.count ? row.count : undefined,
-  }))
 }
 
 /**

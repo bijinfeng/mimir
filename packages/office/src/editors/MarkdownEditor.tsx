@@ -65,6 +65,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   EditorShell,
   ToolbarButton,
+  ToolbarDivider,
   ToolbarFileButton,
   ToolbarGroup,
   ToolbarLabel,
@@ -559,6 +560,20 @@ export function MarkdownToolbar({
     listItem === null ? '光标不在列表里' : '这一项已经在最外层（上面没有同级项）'
   const indentReason = listItem === null ? '光标不在列表里' : '上面没有同级项，无法再往里缩进'
 
+  /*
+   * 工具条上的**分隔线**。
+   *
+   * 这条工具条有八到十个组，而 `.mimir-editor__bar` 与 `.me-group` 的 `gap`
+   * 都是 2px——不画线的话**组与组的间隔与组内按钮的间隔一样**，整条读成一个
+   * 没有结构的图标带（实测：组与组之间 7 个间隔全是 2px，栏内一条竖线都没有）。
+   * 同壳的另外五种格式都画了（docx 5 条、xlsx 3、pptx 2、html 3、pdf 3），
+   * 只有笔记这条漏了——而 DESIGN §8.4.1 要求六种格式「长得一样不靠约定」。
+   *
+   * **只画在真正的组边界**（而且只在**前一组确实渲染了**时才画）：工具条是
+   * `flex-wrap` 的，分隔线只是一个兄弟 flex 项，画在每两个按钮之间的话它会
+   * 在换行时落到行末或行首，看起来像没画对（`ToolbarDivider` 的说明）。
+   * 所以这里跟着前一个组的条件走，不产生「两条相邻」或「行首一条」。
+   */
   return (
     <>
       {hasCommand(editor, 'undo') && (
@@ -582,6 +597,9 @@ export function MarkdownToolbar({
         </ToolbarGroup>
       )}
 
+      {/* 历史 | 样式：只有前一组真的渲染了才画（见上面「分隔线」那段） */}
+      {hasCommand(editor, 'undo') && <ToolbarDivider />}
+
       {/*
         段落样式用一个下拉而不是一排按钮（原先 h1/h2/h3 三个按钮 + 引用 +
         代码块五个）。九个取值排成按钮会占掉大半条工具条，而按钮只有布尔态——
@@ -598,6 +616,12 @@ export function MarkdownToolbar({
           />
         </ToolbarGroup>
       )}
+
+      {/* 样式 | 行内格式。**与上一条互补**：两个前置组各自带一条自己的尾线，
+          于是四种组合下都恰好只有「前面已经落了一个组」的那几条——样式缺席时
+          上一条补位、历史缺席时这一条补位，两者都缺席时一条也不画（行首不会
+          凭空多一条竖线） */}
+      {styleOptions.length > 0 && <ToolbarDivider />}
 
       <ToolbarGroup label="行内格式">
         <ToolbarButton
@@ -669,11 +693,17 @@ export function MarkdownToolbar({
         </ToolbarButton>
       </ToolbarGroup>
 
+      {/* 行内格式 | 链接。这一条无条件：行内格式永远在，所以它前面一定有东西 */}
+      <ToolbarDivider />
+
       {hasMark(editor, 'link') && (
         <ToolbarGroup label="链接">
           <LinkMenu editor={editor} linked={on('link')} emptySelection={on('emptySelection')} />
         </ToolbarGroup>
       )}
+
+      {/* 链接 | 列表：链接缺席时上一条正好是「行内格式 | 列表」，不会连出两条 */}
+      {hasMark(editor, 'link') && <ToolbarDivider />}
 
       <ToolbarGroup label="列表">
         {hasNode(editor, 'bulletList') && (
@@ -735,6 +765,9 @@ export function MarkdownToolbar({
           <IndentIcon />
         </ToolbarButton>
       </ToolbarGroup>
+
+      {/* 缩进 | 插入 */}
+      <ToolbarDivider />
 
       <ToolbarGroup label="插入">
         {hasNode(editor, 'table') &&

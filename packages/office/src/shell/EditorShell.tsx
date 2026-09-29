@@ -48,7 +48,7 @@
  */
 
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
-import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react'
+import type { ComponentProps, KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react'
 import { useEditorState } from '@tiptap/react'
 import type { Editor } from '@tiptap/core'
 import {
@@ -57,6 +57,7 @@ import {
   Divider,
   Input,
   InputNumber,
+  Popconfirm,
   Segmented,
   Select,
   Upload,
@@ -209,6 +210,15 @@ export interface ToolbarButtonProps {
    * 打开选择器，自己再挂一个空处理函数只会让人以为这里还有事要做。
    */
   onClick?: () => void
+  /**
+   * 转发给 antd `Button` 的 ref。
+   *
+   * **必须真的转下去**（React 19 的 ref-as-prop）：`ToolbarConfirm` 这类
+   * 包一层的原语用 `cloneElement(child, { ref })` 拿触发元素来定位弹层，
+   * 而丢掉 ref 之后弹层会静默留在 `left: -1000vw; top: -1000vh`——DOM 里
+   * 看得到、截图里看不见（见下面 `ToolbarButton` 里的实测值）。
+   */
+  ref?: ComponentProps<typeof Button>['ref']
 }
 
 /**
@@ -250,9 +260,22 @@ export function ToolbarButton({
   disabledReason,
   primary = false,
   onClick,
+  ref,
 }: ToolbarButtonProps) {
   return (
     <Button
+      /*
+       * **ref 要转到 antd 的 Button 上**（React 19 的 ref-as-prop：函数组件直接
+       * 收 `ref`，不再是 `forwardRef`）。
+       *
+       * 不转的话包在 `ToolbarConfirm` / 将来的 Tooltip 里会**静默错位**：
+       * rc-trigger 用 `cloneElement(child, { ref })` 拿触发元素来定位，而
+       * 函数组件把 `ref` 丢掉之后 `targetEle` 是 null，`onAlign` 直接返回
+       * ——弹层留在初始位置 `left: -1000vw; top: -1000vh`（实测：真实浏览器里
+       * 确认框的 rect 是 x=-14400、y=-9000，屏幕上根本看不见，而 DOM 里
+       * 一切正常、点确认也能走到 `onConfirm`）。
+       */
+      ref={ref}
       /*
        * 主按钮只传 `type`；其余只传 `variant` + `color`。两者的分支在 antd
        * 里是互斥的糖（见上），混着传会得到透明的实心按钮。
@@ -367,6 +390,84 @@ export function ToolbarNote({ children }: { children: ReactNode }) {
  */
 export function ToolbarNotice({ children }: { children: ReactNode }) {
   return <span className="me-notice">{children}</span>
+}
+
+export interface ToolbarConfirmProps {
+  /** 问句。一句话说清要发生什么（「删掉这一页？」） */
+  title: string
+  /**
+   * 后果。**必须有**：这一档不是「确认一下」，而是「这件事没有退路、退路是
+   * 什么」——用户在按下之前要知道代价。
+   */
+  description: string
+  /** 确认按钮的文案。写成动作本身（「删除这一页」）而不是「确定」 */
+  confirmLabel: string
+  /** 取消的文案。默认「算了」——比「取消」更像人话，也说得清它是「不做了」 */
+  cancelLabel?: string
+  /** 禁用时不弹（按钮自己已经灰了、且写着原因） */
+  disabled?: boolean
+  onConfirm: () => void
+  /** 触发按钮。**必须是一个能渲染 `title` 与 `aria-label` 的 `<button>`** */
+  children: ReactNode
+}
+
+/**
+ * 不可逆动作的**就地确认**（antd `Popconfirm`）。
+ *
+ * ## 为什么要有这个原语
+ *
+ * 工具条上有几处动作没有撤销：pdf 的「删除这一页」就是。它与左右两个按钮
+ * （插入空白页、导入页面）都是纯图标、并排一排，代价却完全不对称——一次
+ * 误点就少一页，而 pdf 这条工具条**没有别的格式都有的撤销**，唯一的路是
+ * 「不保存、退出、重进」。
+ *
+ * 三处约束的来源：
+ *
+ *  1. **别自己写一个二次确认**（改按钮文案、第一次点变「再点一次」之类）：
+ *     那是一套只有这一个控件懂的状态，键盘用户与读屏用户都拿不到
+ *  2. **弹层 portal 到 body 是显式的例外**——`.mimir-editor` 是 `overflow: clip`，
+ *     就地渲染会被裁掉；antd 的弹层自带 `css-var-root`，`--ant-*` 由它自己提供，
+ *     深色下不会退回浅色回退值（与 `ToolbarSelect` 同一条，见那里的长注释）
+ *  3. **编辑器不直接 import antd**（`pdf-toolbar-render.test.tsx` 有一条静态守护
+ *     在守它）：所以这一档收进外壳，与其余控件同一个出处
+ *
+ * ## 为什么不用 `Modal.confirm`
+ *
+ * 命令式的 `Modal.confirm` 拿的是自己的状态，与 React 树脱开——`PdfEditor`
+ * 里那些「改哪一页」的判据都在闭包里，命令式那条路要么把状态再读一遍、要么
+ * 拿到过期的值。声明式的 `Popconfirm` 就在这棵子树里，点确认时它调用的函数
+ * 与按钮上的那个是同一次渲染的。
+ */
+export function ToolbarConfirm({
+  title,
+  description,
+  confirmLabel,
+  cancelLabel = '算了',
+  disabled,
+  onConfirm,
+  children,
+}: ToolbarConfirmProps) {
+  return (
+    <Popconfirm
+      title={title}
+      description={description}
+      okText={confirmLabel}
+      cancelText={cancelLabel}
+      // 确认按钮是危险动作，用危险色——它与「取消」只差一个位置，颜色是唯一
+      // 提示「这一下真的会删掉东西」
+      okButtonProps={{ danger: true, autoInsertSpace: false }}
+      /*
+        `autoInsertSpace: false` 与 `ToolbarButton` 那一条同一个理由：antd 会在
+        **两个汉字**的按钮文案里插一个空格（「算了」→「算 了」），而这条工具条
+        上其余控件都没有那个空格。这一档是 antd 自己建的按钮，只能在这里关。
+      */
+      cancelButtonProps={{ autoInsertSpace: false }}
+      disabled={disabled === true}
+      onConfirm={onConfirm}
+    >
+      {children}
+    </Popconfirm>
+  )
 }
 
 export interface ToolbarTextButtonProps {
@@ -488,6 +589,22 @@ export interface ToolbarSelectProps<T extends string> {
   onChange: (value: T) => void
   /** `value` 不在选项里时显示什么。默认 `—` */
   fallbackLabel?: string
+  /**
+   * `value === null` 时显示什么。省略时用 `fallbackLabel`。
+   *
+   * ## 为什么这一档要能与 `fallbackLabel` 分开
+   *
+   * 那是**两件不同的事**，而它们现在共用一个说法：
+   *
+   *   - `value === null`：这一处**没有直接取值**，实际值继承自别处
+   *     （docx 的字号继承自段落样式）——用户什么都没选
+   *   - 值不在选项里：**有一个具体的值**，只是不在预设档位里（docx 半磅 22 =
+   *     11 磅，档位表里没有）
+   *
+   * 用同一个词（docx 原先两处共用一个「其它」）时，第一句会被读成第二句：
+   * 「我（不知何时）选了别的字号」，而事实是「这里没有字号，跟着样式走」。
+   */
+  emptyLabel?: string
 }
 
 /**
@@ -533,6 +650,7 @@ export function ToolbarSelect<T extends string>({
   options,
   onChange,
   fallbackLabel = '—',
+  emptyLabel,
 }: ToolbarSelectProps<T>) {
   const known = value !== null && options.some((option) => option.value === value)
   return (
@@ -544,7 +662,9 @@ export function ToolbarSelect<T extends string>({
       // antd 会把原值原样显示出来，而不在档位里时那往往是一个内部单位
       // （docx 的字号存半磅，直接显示 22 而用户填的是 11 磅）
       value={known ? value : null}
-      placeholder={value === null ? fallbackLabel : `${value}（${fallbackLabel}）`}
+      // 两种「不是档位里的值」各有各的说法：`null` 是「这里没有直接取值」，
+      // 其余是「有一个具体的值，只是不在预设档位里」（见 `emptyLabel` 的说明）
+      placeholder={value === null ? (emptyLabel ?? fallbackLabel) : `${value}（${fallbackLabel}）`}
       suffixIcon={<ChevronDownIcon />}
       options={options.map((option) => ({
         value: option.value,

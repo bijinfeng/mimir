@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import type { DocumentSummary } from '@mimir/shared'
-import { excerptText, formatMeta, scopeParams } from '@/components/list-helpers'
+import {
+  emptyScopeHint,
+  excerptText,
+  formatMeta,
+  readLibraryLayout,
+  scopeParams,
+  scopeTitle,
+  writeLibraryLayout,
+} from '@/components/list-helpers'
 
 /**
  * 库卡片的渲染规则（`docs/DESIGN.md` §8.2、§8.3，`docs/TECH.md` §13）。
@@ -93,12 +101,13 @@ describe('元信息行的格式与大小', () => {
 
 describe('scope 与筛选条件', () => {
   /**
-   * 收件箱退役后（D-054）状态维度只剩归档一种。
+   * 状态维度已整体退役（收件箱随 D-054、归档随 D-065），scope 只剩
+   * 目录与标签两条独立条件。
    * **认不出的 scope 必须回落到「全部」**（空条件）而不是报错或什么都不返回
-   * ——URL 里带着旧链接（`scope=inbox`）进来时要看到全部文档，而不是一片空白。
+   * ——URL 里带着旧链接（`scope=inbox`、`scope=archived`）进来时要看到
+   * 全部文档，而不是一片空白。
    */
-  it('归档按状态过滤，目录与标签各是一条独立条件', () => {
-    expect(scopeParams('archived')).toEqual({ status: 'archived' })
+  it('目录与标签各是一条独立条件', () => {
     expect(scopeParams('folder:技术/前端')).toEqual({ folder: '技术/前端' })
     expect(scopeParams('tag:react')).toEqual({ tag: 'react' })
   })
@@ -107,8 +116,67 @@ describe('scope 与筛选条件', () => {
     expect(scopeParams('all')).toEqual({})
   })
 
-  it('认不出的 scope（含已退役的 inbox）回落到全部', () => {
+  it('认不出的 scope（含已退役的 inbox / archived）回落到全部', () => {
     expect(scopeParams('inbox')).toEqual({})
+    expect(scopeParams('archived')).toEqual({})
     expect(scopeParams('nonsense')).toEqual({})
+  })
+})
+
+describe('库视图的布局偏好', () => {
+  /**
+   * 布局是纯客户端偏好（D-067），存 localStorage。守三条：
+   * 值要能往返、**非法值必须回落卡片**（手改或旧版本的值不能炸掉页面）、
+   * 存储被禁时（抛错）同样回落而不是崩。
+   */
+  it('默认是卡片，读写能往返', () => {
+    expect(readLibraryLayout()).toBe('card')
+    writeLibraryLayout('list')
+    expect(readLibraryLayout()).toBe('list')
+    writeLibraryLayout('card')
+    expect(readLibraryLayout()).toBe('card')
+  })
+
+  it('非法值回落卡片', () => {
+    localStorage.setItem('mimir.library-layout', 'table')
+    expect(readLibraryLayout()).toBe('card')
+  })
+})
+
+describe('标题与空态文案对「范围」是否说真话', () => {
+  /**
+   * 在目录里搜索时，检索**不带目录条件**（`searchQuerySchema` 只有
+   * kind / tag），结果其实来自全库。而侧栏那条目录仍高亮着——标题不说破
+   * 的话，用户会得出「这个目录里有这篇文章」。这与列表项第二行不能说谎
+   * 是同一条规矩（DESIGN §0.2）。
+   */
+  it('目录里搜索时标题写明范围是全部文档', () => {
+    expect(scopeTitle('folder:技术/前端', '样例')).toBe('搜索结果 · 全部文档')
+  })
+
+  it('标签能被检索过滤，标题照旧只说搜索结果', () => {
+    expect(scopeTitle('tag:前端', '样例')).toBe('搜索结果')
+  })
+
+  it('浏览态标题按 scope 取目录名与标签名', () => {
+    expect(scopeTitle('folder:技术/前端', '')).toBe('前端')
+    expect(scopeTitle('tag:前端', '')).toBe('#前端')
+    expect(scopeTitle('all', '')).toBe('全部文档')
+  })
+
+  /**
+   * 空目录里的两个入口建出来的东西不归入该目录（createNote 写 folder: null），
+   * 不说明的话用户会以为按钮没生效。
+   */
+  it('目录为空时如实说明内容会落在库根', () => {
+    const hint = emptyScopeHint('folder:生活')
+    expect(hint).toContain('库根')
+    expect(hint).toContain('指派')
+  })
+
+  it('全部文档与标签没有这个落差（不给多余的提示）', () => {
+    expect(emptyScopeHint('all')).toBeNull()
+    expect(emptyScopeHint('tag:前端')).toBeNull()
+    expect(emptyScopeHint('nonsense')).toBeNull()
   })
 })

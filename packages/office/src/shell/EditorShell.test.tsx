@@ -288,6 +288,32 @@ describe('ToolbarButton', () => {
     const host = mount(<ToolbarButton label="保存" primary onClick={() => {}} />)
     expect(mouseDown(host.querySelector('button')!)).toBe(true)
   })
+
+  /**
+   * **ref 必须转发到真正的 `<button>` 上。**
+   *
+   * `ToolbarConfirm`（以及将来任何包一层的定位原语）靠
+   * `cloneElement(child, { ref })` 拿触发元素；ref 被函数组件丢掉时
+   * rc-trigger 的 `targetEle` 是 null，`onAlign` 直接返回，弹层留在初始位置
+   * `left: -1000vw; top: -1000vh`——**DOM 里一切正常、点确认也能走到
+   * `onConfirm`，只有屏幕上看不见**（真实浏览器实测：确认框的 rect 是
+   * x=-14400、y=-9000）。所以这里断的是「ref 落到了一个真元素上」。
+   */
+  it('ref 转发到真正的 button 上（丢掉它会让外层的弹层静默跑到屏幕外）', () => {
+    let captured: Element | null = null
+    mount(
+      <ToolbarButton
+        label="加粗"
+        onClick={() => {}}
+        ref={(node) => {
+          captured = node
+        }}
+      />,
+    )
+    expect(captured).not.toBeNull()
+    expect(captured!.tagName).toBe('BUTTON')
+    expect(captured!.getAttribute('aria-label')).toBe('加粗')
+  })
 })
 
 describe('ToolbarTabs', () => {
@@ -540,6 +566,54 @@ describe('ToolbarSelect', () => {
     expect(out).toContain('混合')
     // 一个「已选中」的标记都没有——显示区是占位，不是第一项
     expect(out).not.toContain('ant-select-content-has-value')
+  })
+
+  /**
+   * `null`（这里没有直接取值）与「值不在档位里」是**两件事**，说的是两句不同
+   * 的话：前者是「这里没设，跟着样式走」，后者是「有一个具体的值，只是不在
+   * 预设档位里」。共用一个说法时第一句会被读成第二句——docx 的字号原先两处
+   * 都是「其它」，在没设字号的文字上显示成「我选了别的字号」。
+   */
+  it('`emptyLabel` 只作用于 `null` 那一支，不碰「值不在档位里」那一句', () => {
+    const empty = html(
+      <ToolbarSelect
+        label="字号（磅）"
+        value={null}
+        fallbackLabel="其它"
+        emptyLabel="（默认）"
+        onChange={() => {}}
+        options={[{ value: '22', label: '11' }]}
+      />,
+    )
+    expect(empty).toContain('（默认）')
+    expect(empty).not.toContain('其它')
+
+    const outside = html(
+      <ToolbarSelect
+        label="字号（磅）"
+        value="22"
+        fallbackLabel="其它"
+        emptyLabel="（默认）"
+        onChange={() => {}}
+        options={[{ value: '20', label: '10' }]}
+      />,
+    )
+    // 有具体值（半磅 22 = 11 磅）时仍说「22（其它）」，不冒充默认
+    expect(outside).toContain('22（其它）')
+    expect(outside).not.toContain('（默认）')
+  })
+
+  it('不给 `emptyLabel` 时退回 `fallbackLabel`（老调用点行为不变）', () => {
+    const out = html(
+      <ToolbarSelect
+        label="字号"
+        value={null}
+        fallbackLabel="混合"
+        onChange={() => {}}
+        options={[{ value: '12', label: '12' }]}
+      />,
+    )
+    expect(out).toContain('混合')
   })
 
   /**

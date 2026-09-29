@@ -18,6 +18,7 @@ import {
   mimirDarkTheme,
   NAV_NARROW_BREAKPOINT,
   NAV_NARROW_QUERY,
+  themeConfigFor,
 } from './tokens'
 
 /**
@@ -446,6 +447,50 @@ describe('关键值真的覆盖了 antd 默认', () => {
   })
 })
 
+describe('设置页分区标签的选中色（antd Tabs）', () => {
+  /**
+   * antd 的 `itemSelectedColor` 默认取 `colorPrimary`——那是**填充**角色
+   * （按钮底、选中项底，见 §3.5）。而同一排里未选中的标签走 `colorText`，
+   * 于是强调关系是反的：实测深色下选中项 3.50:1，未选中项 13.23:1
+   * （浅色 4.10 对 10.89）。「我现在在哪一区」成了整排里最暗、最难读的
+   * 那一个，看起来像被禁用。
+   *
+   * 这条要守的是**静默失效**：组件 token 写错名字，或 `components` 层
+   * 没挂进 ThemeConfig，界面只是「蓝得不一样」，没人会当成 bug 去查——
+   * 所以这里断言生效值等于本外观的链接色，而不是「看着挺蓝」。
+   */
+  it.each(APPEARANCES)('%s 下选中色走链接色而不是主色填充', (appearance) => {
+    const tabs = themeConfigFor(appearance).components?.Tabs
+    expect(
+      tabs?.itemSelectedColor,
+      `${NAMES[appearance]}：Tabs 没有组件级选中色（会退回 colorPrimary）`,
+    ).toBe(appearance === 'dark' ? '#79b8ff' : '#0958d9')
+    // 与 colorPrimary 同值就是没覆盖上——那正是要拦的退化
+    expect(tabs?.itemSelectedColor).not.toBe(String(tokenOf(appearance).colorPrimary))
+  })
+
+  it.each(APPEARANCES)('选中标签在容器底上 %s 下 ≥ 4.5:1', (appearance) => {
+    const selected = String(themeConfigFor(appearance).components?.Tabs?.itemSelectedColor)
+    expect(
+      contrastOn(selected, String(tokenOf(appearance).colorBgContainer)),
+      `${NAMES[appearance]}：当前分区的标签读不清（13.5px 正文要 AA）`,
+    ).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it('深色的选中标签不比浅色弱（跨外观不回归）', () => {
+    // §3.8 的不回归规则。这条在本条发现里是**反过来**的：修之前
+    // 深色 3.50 弱于浅色 4.10，而单看深色截图判断不出来。
+    const selectedOf = (appearance: Appearance) =>
+      contrastOn(
+        String(themeConfigFor(appearance).components?.Tabs?.itemSelectedColor),
+        String(tokenOf(appearance).colorBgContainer),
+      )
+    expect(selectedOf('dark'), '深色的选中标签比浅色还弱').toBeGreaterThanOrEqual(
+      selectedOf('light'),
+    )
+  })
+})
+
 /**
  * 扫描组件源码，找出违反字号阶梯的行。
  *
@@ -846,7 +891,7 @@ describe('用量热力图色阶', () => {
 
 describe('状态徽标色对', () => {
   // docs/DESIGN.md §3.7 的表。来源徽标已随 D-047 移除、收件箱徽标随 D-054
-  // 移除，这张表只剩**归档**与**提取失败**两个偏离常态的状态。
+  // 移除、归档徽标随 D-065 移除，这张表只剩**提取失败**一个偏离常态的状态。
   // 改配色时这里会拦下来。
   it.each(APPEARANCES)('徽标文字 on 自身底 %s下 ≥ 4.5:1', (appearance) => {
     for (const [name, pair] of Object.entries(BADGE_COLORS[appearance])) {
@@ -1013,6 +1058,19 @@ function Probe() {
     createElement(ProbeGlobal),
     createElement('h1', null, '标题'),
   )
+}
+
+/**
+ * 当前注入的 token 变量块。
+ *
+ * cssinjs 把变量写在 `style[data-token-hash="mimir"]` 里（值是 `cssVar` 的
+ * key），所以「组件 token 有没有真的注册成变量」只能从这里读。
+ * 提到模块级是 lint 的要求（`unicorn/consistent-function-scoping`）。
+ */
+function readTokenVars(): string {
+  return [...document.querySelectorAll('style[data-token-hash="mimir"]')]
+    .map((style) => style.textContent ?? '')
+    .join('\n')
 }
 
 /** 挂载真实的 provider 栈，返回 DOM、注入的 CSS 文本与卸载函数 */
@@ -1237,4 +1295,108 @@ describe('外观切换真的生效', () => {
 
     await unmount()
   })
+
+  it('组件级 token 也被 provider 栈注入成变量（切换外观后跟着换）', async () => {
+    /**
+     * 上面那条静态断言只证明「配置里写了」。组件 token 要经
+     * `getComponentToken` 合并、再经 cssinjs 注册成 `--ant-tabs-*`，
+     * 中间任何一环断了都**只有界面会变**（退回 `colorPrimary`，
+     * 仍然「是蓝色」，看着不像坏了）。所以这里挂真实 provider 栈
+     * 取自证的实际生效变量——组件 token 走的是与全局 token 不同的注册
+     * 路径（`useCSSVarRegister` 只对渲染过的组件注册），静态值测不出来。
+     */
+    const { Tabs } = await import('antd')
+    const { host, unmount } = await renderApp(
+      createElement(Tabs, {
+        items: [
+          { key: 'a', label: '模型' },
+          { key: 'b', label: '检索' },
+        ],
+      }),
+    )
+
+    expect(readTokenVars(), '浅色下 Tabs 变量没有注册').toMatch(
+      /--ant-tabs-item-selected-color:#0958d9/i,
+    )
+    // 选中项必须真的画成那个色：变量注册了但选择器没用上，界面还是旧色
+    // （jsdom 会把 var() 解出来，但不把 hex 规范化成 rgb——两种写法都要认）
+    const selected = host.querySelector('.ant-tabs-tab-active .ant-tabs-tab-btn')
+    expect(['#0958d9', 'rgb(9, 88, 217)']).toContain(getComputedStyle(selected as Element).color)
+
+    await switchAppearance('dark')
+    expect(readTokenVars(), '深色下 Tabs 变量没跟着换').toMatch(
+      /--ant-tabs-item-selected-color:#79b8ff/i,
+    )
+
+    await unmount()
+  })
 })
+
+describe('表单校验的错误文字用校准过的色', () => {
+  /**
+   * ## 这条守的是一个「变量对、画面对不上」的洞
+   *
+   * antd 的 Form 把校验错误写成 `color: token.colorError`
+   * （`es/form/style/index.js:246`）——那是**未校准**的 `#ff4d4f`
+   * （白底 3.27:1），而不是本规范 §3.3/§3.4 校准过的 `colorErrorText`
+   * （浅色 `#c5221f` 5.80:1、深色 `#f0777a` 6.59:1）。
+   *
+   * 上面那组「语义色对」断言测的是 token——两边都是绿的，而画面上那行
+   * 红字是另一个值。**变量对不等于渲染出来的就对**，所以这里必须把
+   * provider 栈挂起来、真的读一次 `getComputedStyle`。
+   *
+   * `styles/global.ts` 里那条规则盖的就是这个（选择器写两段是为了压过
+   * antd 自己的 (0,2,0)）。删掉它这条会红。
+   *
+   * **先切外观再挂载**：`getComputedStyle` 读的是真实渲染出来的那一帧，
+   * 而默认外观是浅色——不切的话深色那一轮读到的其实是浅色的值
+   * （上面那些静态断言不受影响，它们比的是 token 本身）。
+   */
+  it.each(APPEARANCES)(
+    '%s 下 explain-error 是 colorErrorText，不是 antd 的 colorError',
+    async (appearance) => {
+      await switchAppearance(appearance)
+
+      const { Form } = await import('antd')
+      const { host, unmount } = await renderApp(
+        createElement(
+          Form,
+          null,
+          createElement(
+            Form.Item as never,
+            {
+              label: '邮箱',
+              validateStatus: 'error',
+              help: '请输入邮箱',
+              children: createElement('input'),
+            } as never,
+          ),
+        ),
+      )
+
+      const node = host.querySelector('.ant-form-item-explain-error')
+      expect(node, '没有渲染出校验错误行，测试本身失效了').not.toBeNull()
+
+      const token = tokenOf(appearance)
+      const expected = String(token.colorErrorText)
+      const rendered = getComputedStyle(node as Element).color
+
+      // jsdom 会把 var() 解出来，但不把 hex 规范化成 rgb——两种写法都要认
+      expect(
+        [expected, hexToRgb(expected)],
+        `${NAMES[appearance]}：校验错误文字没走校准色`,
+      ).toContain(rendered)
+      // 与未校准的那一支必须不同，否则这条断言等于没写
+      expect(expected).not.toBe(String(token.colorError))
+
+      await unmount()
+    },
+  )
+})
+
+/** `#c5221f` → `rgb(197, 34, 31)`。只处理六位 hex（token 全是这个形状） */
+function hexToRgb(hex: string): string {
+  const value = hex.replace('#', '')
+  const [r, g, b] = [0, 2, 4].map((at) => Number.parseInt(value.slice(at, at + 2), 16))
+  return `rgb(${r}, ${g}, ${b})`
+}

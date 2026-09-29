@@ -46,9 +46,14 @@ export const useHeatmapStyles = createStyles(({ css, token }) => ({
     --rhm-rect-hover-stroke: ${token.colorPrimaryBorder};
     --rhm-rect-active: ${token.heatL4};
 
-    /* 标签颜色走 currentColor（库的 LabelsWeek / LabelsMonth 都写了
-       fill: currentColor），所以在这里统一给一个弱化的文字色 */
-    color: ${token.colorTextTertiary};
+    /* 月份 / 星期标签的颜色。
+       库在 svg 上写了**内联**样式 —— color: var(--rhm-text-color, #24292e)
+       （esm/SVG.js），标签自己是 fill: currentColor，所以同元素上的
+       color 压不过它，只能给这个变量赋值。不给的表现是深色下标签用库的
+       回退色 #24292e 画在 #141618 的底上，实测 1.23:1：整条时间轴等于
+       没画（哪一列是哪个月、哪一行是星期几都读不出来）。浅色下同一个
+       回退值是 14:1，所以这个洞只在深色露出来。 */
+    --rhm-text-color: ${token.colorTextTertiary};
 
     /* 库的格子默认带 cursor: pointer，但这里点击没有行为——
        留下手型会让人以为可以点开（DESIGN §7.4 的同一条判断） */
@@ -96,10 +101,24 @@ export const useHeatmapStyles = createStyles(({ css, token }) => ({
   `,
 
   /* ── 图例 ─────────────────────────────────────────── */
+  /**
+   * 图例**允许换行**（`flex-wrap`）。
+   *
+   * 它是说明文字，不是图的一部分：窄窗口下它比面板宽（420px 视口里
+   * 实测 clientWidth 266 / scrollWidth 427），而不换行时面板的
+   * `overflow: hidden` 直接把尾部切掉——「这一年还没有用量 · 按
+   * Asia/Shanghai 聚合」停在半个字上，没有省略号，看起来像文案本来就
+   * 是断的，而**聚合口径**恰恰是这张图唯一需要声明的口径。
+   *
+   * 与图不同待遇：图有 `chartScroll` 的横向滚动（它必须保持列的
+   * 形状），图例宁可折到第二行。
+   */
   legend: css`
     display: flex;
     align-items: center;
     gap: 3px;
+    row-gap: 4px;
+    flex-wrap: wrap;
     margin-top: 8px;
     font-size: ${FONT_SIZE.badge}px;
     color: ${token.colorTextTertiary};

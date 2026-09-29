@@ -13,8 +13,9 @@ import { FONT_SIZE } from '@/theme/tokens'
  * 内容直接可用，不存在「待」这个中间态，所以那个徽标没有依据。
  *
  * **`ready` 刻意不给徽标。** 它是绝大多数文档的状态，给每张卡片都盖一个
- * 「已就绪」等于什么都没说，还会把真正需要注意的状态淹掉。所以这里只列
- * 两种偏离常态的状态：归档（不再出现在默认列表里）与提取失败（记录坏了）。
+ * 「已就绪」等于什么都没说，还会把真正需要注意的状态淹掉。归档徽标已随
+ * 归档交互整体退役（D-065）。所以这里只剩一种偏离常态的状态：
+ * 提取失败（记录坏了）。
  *
  * 来源（kind）徽标更早移除了（D-047）：来源不是浏览维度，能否编辑在详情里
  * 自然可知。
@@ -28,13 +29,6 @@ type ColorPair = { fg: string; bg: string }
 type BadgeSpec = { label: string } & Record<Appearance, ColorPair>
 
 const STATUS_STYLE: Partial<Record<DocumentStatus, BadgeSpec>> = {
-  /* 中性灰对（与 §3.7 表里的「文件」行同值）：归档是**状态的变化**，
-     不是警告也不是错误，用语义色（红/黄）会把它说成一件出问题的事 */
-  archived: {
-    label: '已归档',
-    light: { fg: '#5c6570', bg: '#f0f1f3' },
-    dark: { fg: '#b3bac2', bg: '#23262b' },
-  },
   /* 与 §3.7 表里的「抓取失败」同值：两处表达的是同一件事（内容没取到） */
   failed: {
     label: '提取失败',

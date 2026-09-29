@@ -3,6 +3,7 @@ import type { SearchHit, SearchResponse } from '@mimir/shared'
 import { channelsForMode, createPipeline, defaultMode, type SnippetPort } from '@mimir/core'
 import { db } from '../db/client.js'
 import { documents } from '../db/schema.js'
+import { stripMarkdown } from '../lib/text.js'
 import { assemble } from '../plugins/host.js'
 
 /**
@@ -72,7 +73,26 @@ const snippetPort: SnippetPort = {
       // 命中时窗口前方留 SNIPPET_LEAD 个字符做上下文；没命中（子串通道
       // 会给出正文没有整串查询词的命中）退回正文开头
       const start = pos >= 0 ? Math.max(0, pos - SNIPPET_LEAD) : 0
-      const text = row.body.slice(start, start + SNIPPET_LENGTH)
+      const raw = row.body.slice(start, start + SNIPPET_LENGTH)
+      /**
+       * 展示文本要**洗掉 Markdown 标记**，与库卡片走同一条规则
+       * （`lib/text.ts` 的 `stripMarkdown`，`toExcerpt` 用的就是它）。
+       *
+       * 原先这里是原样的 `body.slice(...)`，于是同一份文档在库卡片里读作
+       * 「前端性能优化的三条主线 性能问题很少是…」，在搜索结果里读作
+       * 「# 前端性能优化的三条主线 性能问题很少是…更常见的是**一条链路上
+       * 每一环都只慢一点**」——同一份东西两个样子，用户会以为搜到的是
+       * 另一条。
+       *
+       * **两个偏移不动**：`start` / `end` 是「这段取自正文的哪个区间」，
+       * 即原始窗口的边界，与清洗后的展示文本长度无关（清洗会去掉 `#`、`**`，
+       * 于是 `end - start` 不再等于 `text.length`）。契约里写明它们是给
+       * 「跳回原文」用的，要按展示文本高亮得另加一个纯文本字段。
+       *
+       * 清洗结果为空时退回原窗口：围栏代码块与图片会被整段丢掉，而第二行
+       * 留白在界面上等于说「这篇没有内容」（`docs/DESIGN.md` §8.2）。
+       */
+      const text = stripMarkdown(raw) || raw
       return {
         id: row.id,
         documentId: row.id,
@@ -84,7 +104,7 @@ const snippetPort: SnippetPort = {
         size: row.size,
         text,
         start,
-        end: start + text.length,
+        end: start + raw.length,
       }
     })
   },

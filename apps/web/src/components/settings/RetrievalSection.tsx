@@ -2,7 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import { Input, Typography } from 'antd'
 import { useState } from 'react'
 import { api } from '@/lib/api'
-import { Note, Panel, Row, SourceBadge } from '@/components/settings/parts'
+import { BlockDesc, Note, Panel, Row, SourceBadge } from '@/components/settings/parts'
+import { SettingControl } from '@/components/settings/SettingControl'
 import { useStyles } from '@/components/settings/settings.style'
 
 /**
@@ -16,9 +17,16 @@ import { useStyles } from '@/components/settings/settings.style'
  *
  * ## 参数从 `/api/config` 来，不在前端抄一份
  *
- * 权重与融合参数是**可配的**（设置页的模型分区就能改），
- * 前端抄一份会在调参之后继续显示旧值——那是「界面说谎」，
- * 比没有这一页更糟。
+ * 权重与融合参数是**在这里改的**（`SettingControl`，与存储分区同一套
+ * 形态：显式保存 + 来源徽标），前端抄一份会在调参之后继续显示旧值——
+ * 那是「界面说谎」，比没有这一页更糟。
+ *
+ * **可写就必须给入口**：这五个键（`retrieval.rrfK` / `perLegLimit` /
+ * `maxChunksPerDoc` 与两条通道的 `weight`）都是 `writable: true`，
+ * 而这一页下面那段文案正教用户「改完权重后在这里试一句」——
+ * 只印数值不给输入框时，用户按指引去调参却找不到任何地方能改，
+ * 只能去改 `.env` 再重启，正是 `docs/TECH.md` §7.5 要消掉的那种摩擦。
+ * 那一行还挂着「来源」徽标，更容易让人以为是自己没找到改的地方。
  *
  * ## 通道列表也来自注册表
  *
@@ -58,15 +66,20 @@ export function RetrievalSection() {
 
   const weightOf = (id: string) => settings.find((entry) => entry.key === `retrieval.${id}.weight`)
 
+  /** 数值很短（RRF k 最大三位数），给它们 320px 会把值列撑得不像输入框 */
+  const NUMBER_WIDTH = 110
+
   return (
     <>
       <Panel title="融合参数">
         {retrievalParams.map((entry) => (
           <Row key={entry.key} label={entry.label}>
-            <span className={styles.mono}>{String(entry.value)}</span>
-            <span style={{ marginLeft: 10 }}>
+            <div className={styles.actions}>
+              <SettingControl entry={entry} width={NUMBER_WIDTH} />
               <SourceBadge source={entry.source} />
-            </span>
+            </div>
+            <BlockDesc>{entry.description}</BlockDesc>
+            {entry.problem ? <BlockDesc>{entry.problem}</BlockDesc> : null}
           </Row>
         ))}
         <Row label="分词器">jieba（@node-rs/jieba）· 写入时预分词</Row>
@@ -77,15 +90,14 @@ export function RetrievalSection() {
           const weight = weightOf(leg.id)
           return (
             <Row key={leg.id} label={leg.name}>
-              <div className={styles.actions}>
-                {weight ? (
-                  <>
-                    <span className={styles.mono}>权重 {String(weight.value)}</span>
-                    <SourceBadge source={weight.source} />
-                  </>
-                ) : null}
-                <span className={styles.hint}>{leg.description}</span>
-              </div>
+              {weight ? (
+                <div className={styles.actions}>
+                  <SettingControl entry={weight} width={NUMBER_WIDTH} />
+                  <SourceBadge source={weight.source} />
+                </div>
+              ) : null}
+              <BlockDesc>{leg.description}</BlockDesc>
+              {weight?.problem ? <BlockDesc>{weight.problem}</BlockDesc> : null}
             </Row>
           )
         })}

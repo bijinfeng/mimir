@@ -206,14 +206,38 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
     color: ${token.colorLink};
   `,
 
+  /**
+   * 页脚。
+   *
+   * **换行只能发生在项与项之间。** 页脚是 `display: flex` + `gap`，各段是裸
+   * `<span>`——中文可以在任意字间断行。实测窄到 440px 以下时页脚占两行，
+   * 而断点在词内部：「↑ ↓ 选 / 择」「Enter 打 / 开」「Esc 关 / 闭」
+   * （w=400/440 → 页脚 55px，w=480 以上 → 37px）。快捷键提示读不成句，
+   * 用户看不出那几组键各是做什么的。
+   *
+   * 所以每一项 `flex: none` + `nowrap`（项不会被压扁，字也不拆），整行
+   * `flex-wrap: wrap`：放不下时整项落到下一行。行间距取 4px 而不是 12px
+   * ——那是**换行后**两行之间的距离，按 DESIGN §5.1 的 4px 网格走，列间距不变。
+   */
   foot: css`
     display: flex;
     align-items: center;
-    gap: 12px;
+    flex-wrap: wrap;
+    gap: 4px 12px;
     padding: 9px 18px;
     border-top: 1px solid ${token.colorSplit};
     font-size: ${FONT_SIZE.badge}px;
     color: ${token.colorTextTertiary};
+  `,
+  footItem: css`
+    flex: none;
+    white-space: nowrap;
+  `,
+  /** 右侧那句是补充说明而非必需信息：贴右，放不下时整句落到下一行 */
+  footHint: css`
+    flex: none;
+    margin-left: auto;
+    white-space: nowrap;
   `,
   kbd: css`
     font-family: ${token.fontFamilyCode};
@@ -275,6 +299,14 @@ function PaletteBody({
     enabled: shouldSearch,
   })
 
+  /**
+   * 两条操作命令。副标题用 `docs/DESIGN.md` §8.10 原型里的措辞（「直接落进库」）。
+   *
+   * 曾经写的是「落在收件箱 / 进收件箱」——收件箱视图与导航项已随 D-054 退役
+   * （`docs/DECISIONS.md`:3022：新内容 `status` 直接 `ready`）。界面里再没有
+   * 那个去处：用户收集完一篇东西却被告知内容进了「收件箱」，会去找一个不存在
+   * 的视图，怀疑内容没收到。文案说的是别处（对话框、toast）也要说同一件事。
+   */
   const commands: PaletteItem[] = (
     [
       {
@@ -282,7 +314,7 @@ function PaletteBody({
         key: 'new-note',
         icon: <FileAddOutlined />,
         title: '新建笔记',
-        sub: '空白 Markdown 笔记，落在收件箱',
+        sub: '空白 Markdown 笔记，直接落进库',
         run: () => void onNewNote(),
       },
       {
@@ -290,7 +322,7 @@ function PaletteBody({
         key: 'capture',
         icon: <UploadOutlined />,
         title: '收集网页 / 公众号 / GitHub',
-        sub: '粘贴 URL 抓取，进收件箱',
+        sub: '粘贴 URL 抓取，直接落进库',
         run: onOpenCapture,
       },
     ] satisfies PaletteItem[]
@@ -419,7 +451,19 @@ function PaletteBody({
 
           {documents.length > 0 && (
             <>
-              <div className={styles.sectionLabel}>{value.trim() ? '匹配的文档' : '最近打开'}</div>
+              {/*
+               * 这里曾经是 `value.trim() ? '匹配的文档' : '最近打开'` —— 后半句
+               * 永远不会渲染：文档行的唯一来源是 `searchQuery.data?.hits`，
+               * 而那个查询 `enabled: shouldSearch`（输入 ≥ 2 字），与
+               * `value.trim()` 为空互斥。三条路都是死的：空查询下 hits 为
+               * undefined，缓存里也没有空键的条目（queryKey 带 value），
+               * 于是「最近打开」这个意图在界面上从来没有发生过。
+               *
+               * 想要真的「最近打开」得另接一个最近文档查询——那是新增产品行为，
+               * 按仓库铁律要先改 `docs/DESIGN.md` §8.10 再改代码。这里只把
+               * 不可能成立的分支删掉，说它实际是什么。
+               */}
+              <div className={styles.sectionLabel}>匹配的文档</div>
               {documents.map((item, index) => (
                 <PaletteRow
                   key={item.key}
@@ -468,17 +512,17 @@ function PaletteBody({
         )}
 
         <div className={styles.foot}>
-          <span>
+          <span className={styles.footItem}>
             <span className={styles.kbd}>↑</span>
             <span className={styles.kbd}>↓</span>选择
           </span>
-          <span>
+          <span className={styles.footItem}>
             <span className={styles.kbd}>Enter</span>打开
           </span>
-          <span>
+          <span className={styles.footItem}>
             <span className={styles.kbd}>Esc</span>关闭
           </span>
-          <span style={{ marginLeft: 'auto' }}>输入两个字以上会同时给 AI 答案</span>
+          <span className={styles.footHint}>输入两个字以上会同时给 AI 答案</span>
         </div>
       </div>
     </Modal>

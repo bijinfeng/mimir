@@ -240,15 +240,15 @@ function ChatPanelBody({
   const lastRole = chat.messages.at(-1)?.role
 
   /**
-   * 落库消息里的检索过程与引用。
+   * 落库消息里的检索过程、引用与失败。
    *
-   * **历史会话也必须能看到这两个**——它们不是「刚才读了什么」的实时状态，
+   * **历史会话也必须能看到这三个**——它们不是「刚才读了什么」的实时状态，
    * 而是**这条回答的依据**，和回答本身一样是内容的一部分。
    *
    * 曾经只渲染实时事件推来的那一份，于是打开历史会话时：中栏显示
    * 「本次引用 2 个来源」，右栏却既没有检索过程也没有引用块——两栏说的
-   * 不是同一件事。而库里明明存着它们（`messages.trace` / `messages.citations`），
-   * 只是渲染层没用。
+   * 不是同一件事。而库里明明存着它们（`messages.trace` / `messages.citations`
+   * / `messages.failure`），只是渲染层没用。
    *
    * ## 为什么按**位置**取而不是按 id
    *
@@ -263,14 +263,55 @@ function ChatPanelBody({
   const storedAssistant = (initialMessages ?? []).findLast((item) => item.role === 'assistant')
 
   /**
-   * 当前该显示哪一份检索过程与引用。
+   * 载入的那一轮还在不在渲染范围内。
+   *
+   * `chat.messages` 在灌入 `initialMessages` 之后**只由发送追加**，所以
+   * 长度与载入时相等就说明用户还没发过新消息——落库的 trace / 引用 / 失败
+   * 仍然属于当前显示的这一轮。
+   *
+   * 少了这一条会错在「发过新消息之后」：那时 `storedAssistant` 指的是
+   * **上一轮**的回答，而它的失败卡片会挂在新回答下面（发一次成功的提问，
+   * 却在回答下面看到上一轮的「模型额度用尽」）。
+   */
+  const showingLoadedRound = chat.messages.length === (initialMessages?.length ?? 0)
+
+  /**
+   * 当前该显示哪一份检索过程、引用与失败。
    *
    * 实时那份（`chat.trace`）属于**最后一条助手消息**；历史消息用落库的。
    * 两者取其一而不是叠加，因为它们描述的是同一件事。
+   *
+   * 失败卡片原先只认实时那份（`chat.failure` 只由 SSE 的 `mimir.failure`
+   * 事件写，见 `lib/use-mimir-chat.ts`），于是**打开历史会话时它完全不渲染**：
+   * 库里存着「这条回答失败过、原因是什么」，界面却是一片空白，
+   * 用户看不到额度用尽，也拿不到那三条出路（PRD §5.8）。
+   * `failure` 与 trace / 引用是同一类落库字段，走同一条回退。
    */
-  const activeTrace = chat.trace ?? storedAssistant?.trace ?? null
+  const activeTrace = chat.trace ?? (showingLoadedRound ? (storedAssistant?.trace ?? null) : null)
   const activeCitations =
-    chat.citations.length > 0 ? chat.citations : (storedAssistant?.citations ?? [])
+    chat.citations.length > 0
+      ? chat.citations
+      : showingLoadedRound
+        ? (storedAssistant?.citations ?? [])
+        : []
+  const activeFailure =
+    chat.failure?.kind ?? (showingLoadedRound ? (storedAssistant?.failure ?? null) : null)
+
+  /**
+   * 这一轮的结果（检索过程、引用、动作行）现在该不该渲染。
+   *
+   * 两个条件的含义不同：
+   *
+   *  - **实时那份**只在最后一条不是用户消息时有意义。用户消息是新一轮的
+   *    开端，它下面挂的块属于上一轮，看起来却像这一轮的检索过程
+   *  - **落库那份**在最后一条是用户消息时**同样有效**——那正是「追问过、
+   *    还没答」的历史会话：库里存着上一条回答的引用与检索过程，
+   *    不该整组消失。原先只判 `lastRole !== 'user'`，于是这种会话里
+   *    引用块和「存成笔记 / 复制」一个都不显示（PRD §5.2 说引用是回答的
+   *    一部分，§5.7 说结论要能沉淀下来）
+   */
+  const showRoundResult =
+    lastRole !== 'user' || (showingLoadedRound && storedAssistant !== undefined)
 
   /** 最后一条助手回答的纯文本（复制动作用）。流式中间态由 UI parts 累积 */
   const lastAnswerText =
@@ -290,7 +331,7 @@ function ChatPanelBody({
               {/* 检索过程渲染在回答**上方**。默认折叠，展开后是逐步记录
                   （PRD §5.6）：它是「这条回答的依据」，所以归到回答里，
                   而不是飘在页面顶端 */}
-              {activeTrace && lastRole !== 'user' && <TraceDisclosure trace={activeTrace} />}
+              {activeTrace && showRoundResult && <TraceDisclosure trace={activeTrace} />}
 
               <div className={styles.thread}>
                 <mimirChatUI.Chat chat={chat as never} />
@@ -300,11 +341,15 @@ function ChatPanelBody({
                 失败卡片。有失败时渲染它而**不是**引用卡与重试入口——
                 因为此时用户需要的不是「再试一次」，而是「这次花没花钱、
                 内容丢没丢、换个做法有没有用」（PRD §5.8）。
+
+                分类取自实时事件或落库记录（见 activeFailure）；落库只存
+                分类、没有原始错误文本，所以 detail 只在实时那份存在时给，
+                其余交给 FailureCard 自己的预设文案兜底。
               */}
-              {chat.failure ? (
+              {activeFailure ? (
                 <FailureCard
-                  failure={chat.failure.kind}
-                  detail={chat.failure.message}
+                  failure={activeFailure}
+                  detail={chat.failure?.message}
                   onSearchOnly={() => void chat.send('只检索，不调模型，把命中的原文列出来', false)}
                   onRetry={() => {
                     const previous = lastQuestionOf(chat.messages)
@@ -312,7 +357,7 @@ function ChatPanelBody({
                   }}
                 />
               ) : (
-                lastRole !== 'user' && (
+                showRoundResult && (
                   <>
                     <CitationCards citations={activeCitations} onOpen={onOpenCitation} />
                     <AnswerActionsRow

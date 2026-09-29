@@ -1,5 +1,12 @@
 import { Hono } from 'hono'
-import { documentListQuerySchema, noteCreateSchema, noteUpdateSchema } from '@mimir/shared'
+import {
+  documentListQuerySchema,
+  folderCreateSchema,
+  folderDeleteSchema,
+  folderMoveSchema,
+  noteCreateSchema,
+  noteUpdateSchema,
+} from '@mimir/shared'
 import { HttpError, parseInput } from '../lib/http.js'
 import {
   countDocuments,
@@ -10,7 +17,7 @@ import {
   listDocuments,
   updateNote,
 } from '../services/documents.js'
-import { listFolderTree } from '../services/folders.js'
+import { createFolder, deleteFolder, listFolderTree, moveFolder } from '../services/folders.js'
 import { suggestTags } from '../services/suggestions.js'
 import { countOrphanFiles, reindexVault } from '../services/vault-index.js'
 import type { AppEnv } from '../types.js'
@@ -75,15 +82,33 @@ documentsRoute.get('/:id/suggested-tags', async (c) => {
 })
 
 /**
- * 目录树。
+ * 目录树与目录管理。
  *
  * 挂在 `/api/folders` 而不是 `/api/documents/folders`：它是**派生的聚合**，
  * 不是文档资源的一部分。放在文档下会让 `/documents/:id` 有歧义
  * （`folders` 会被当成一个 id）。
+ *
+ * D-068 起目录是实体（folders 表），增删改移都在这里：
+ * 改名与移动共用 PATCH（from 子树整体搬到 to），删除时文档保留、指派清空。
  */
 export const foldersRoute = new Hono<AppEnv>()
 
 foldersRoute.get('/', async (c) => c.json({ items: await listFolderTree() }))
+
+foldersRoute.post('/', async (c) => {
+  const input = await parseInput(c, 'json', folderCreateSchema)
+  return c.json({ path: await createFolder(input.path) }, 201)
+})
+
+foldersRoute.patch('/', async (c) => {
+  const input = await parseInput(c, 'json', folderMoveSchema)
+  return c.json({ moved: await moveFolder(input.from, input.to) })
+})
+
+foldersRoute.delete('/', async (c) => {
+  const input = await parseInput(c, 'query', folderDeleteSchema)
+  return c.json({ cleared: await deleteFolder(input.path) })
+})
 
 /**
  * 重建索引。用于「用外部编辑器改了文件」「从别处拷来一批 md」之后同步。

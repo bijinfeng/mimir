@@ -37,6 +37,33 @@
   user-select: none;
 }
 
+/*
+ * 列字母行（A/B/C…）。行号栏的**镜像**：它回答「这一列是第几列」，与行号栏
+ * 一起让「C3」这个引用在屏幕上找得到落点（没有它，用户只能靠蓝色选中框反推
+ * 列号）。样式与行号栏同一套——它们都是网格的 chrome，不是数据。
+ *
+ * `top: 0` 让它纵向滚动时钉住（滚动区是 `.mimir-xlsx-wrap` 的 `me-scroll`）。
+ * `z-index` 比行号栏高一档：横向滚动时左上角那个交角格要同时压住两者。
+ */
+.mimir-xlsx__colhead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  min-width: 34px;
+  padding: 2px 6px;
+  border: 1px solid var(--me-border, #d9d9d9);
+  background: var(--me-bar-bg, #fafafa);
+  color: var(--me-text-weak, #8c8c8c);
+  font-weight: normal;
+  text-align: center;
+  user-select: none;
+}
+
+/* 左上角：行号栏与列头都是 sticky，交叉点要自己占一格并压住两者 */
+.mimir-xlsx__corner {
+  z-index: 2;
+}
+
 .mimir-xlsx__cell {
   max-width: 320px;
   padding: 2px 6px;
@@ -198,6 +225,21 @@
   background: var(--me-stage-bg, #f5f5f5);
   --canvas: var(--me-stage-bg, #f5f5f5);
   --docs-paper: var(--me-surface, #fff);
+  /*
+   * 纸张阴影。**上游把它定义在没被 import 的那份样式里**：
+   * `--docs-page-shadow` 只在 `vendor/apps/docs/src/renderer/styles.css` 出现
+   * （两份外观各一处），而 `DocxEditor.tsx` 只 import shell / generated /
+   * fonts / editors 四份——于是 `.doc-page` 的 `box-shadow: var(--docs-page-shadow)`
+   * 解析成 `none`（实测计算值就是 `none`），纸与工作台糊成一片：读长文档时
+   * 看不出页面从哪儿开始、左右留白在哪儿。
+   *
+   * 阴影取**一档**（`--me-page-shadow`，宿主填 `boxShadowTertiary`）：纸是
+   * 「微浮起」的卡片，不是浮层——DESIGN §5.3 把 secondary 留给对话框与下拉，
+   * 而 pptx 幻灯片 / pdf 页面用的 `--me-shadow`（secondary）在同一个判断下
+   * 偏重了。三处的「纸」现在各有各的档：pdf/pptx 是浮层档（它们更大、更像
+   * 独立的画布），docx 的纸用卡片档。回退值带一点中性灰，脱离宿主也不会没影。
+   */
+  --docs-page-shadow: var(--me-page-shadow, 0 1px 2px rgb(0 0 0 / 5%), 0 2px 4px rgb(0 0 0 / 3%));
 }
 
 /*

@@ -28,7 +28,7 @@ export const documents = sqliteTable(
     id: text('id').primaryKey(),
     /** note | web | wechat | github | file（kind 是**来源**，格式是 mime 属性） */
     kind: text('kind').notNull(),
-    /** inbox | ready | failed | archived */
+    /** ready | failed（archived 已随 D-065 退役，存量行由迁移转 ready） */
     status: text('status').notNull().default('ready'),
 
     title: text('title').notNull(),
@@ -96,6 +96,17 @@ export const tags = sqliteTable(
   },
   (t) => [uniqueIndex('tags_name_idx').on(t.name)],
 )
+
+/**
+ * 目录注册表（D-068）。语义见 schema.pg.ts。
+ */
+export const folders = sqliteTable('folders', {
+  /** 完整路径本身是主键，如 `技术/前端/React`。见 schema.pg.ts */
+  path: text('path').primaryKey(),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+    .notNull()
+    .$defaultFn(() => new Date()),
+})
 
 export const documentTags = sqliteTable(
   'document_tags',

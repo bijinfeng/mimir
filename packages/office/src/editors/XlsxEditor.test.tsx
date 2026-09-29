@@ -573,6 +573,59 @@ describe('xlsx 工具条：状态行如实交代代价', () => {
   })
 })
 
+describe('xlsx 的列字母行', () => {
+  /**
+   * 附属面板与状态行用的是 **Excel 记法**（`C3`），而网格里原来只有一竖列
+   * 行号——那个引用在屏幕上找不到落点，用户只能用蓝色选中框反推列号。这一组
+   * 守「列头真的在，而且与格子对齐」。
+   */
+  it('表头有一行列字母，与行号栏同一套 chrome', async () => {
+    const { host } = await openEditor()
+    const head = host.querySelector('table.mimir-xlsx thead')
+    expect(head, '网格没有列字母行').not.toBeNull()
+
+    const letters = [...head!.querySelectorAll<HTMLTableCellElement>('.mimir-xlsx__colhead')]
+    expect(letters.length).toBeGreaterThan(0)
+    // 夹具是 A/B/C…：第一格是 A，且都是大写字母
+    expect(letters.map((cell) => cell.textContent)).toEqual(
+      letters.map((_, index) => String.fromCharCode(65 + index)),
+    )
+    for (const cell of letters) {
+      expect(cell.tagName).toBe('TH')
+      // 列头是表头（读屏按「第 C 列」念），不是普通格子
+      expect(cell.getAttribute('scope')).toBe('col')
+    }
+
+    // 左上角交角格：两个 sticky 的交叉点，不给它会压住第一个列字母
+    expect(head!.querySelector('.mimir-xlsx__gutter.mimir-xlsx__corner')).not.toBeNull()
+  })
+
+  it('列头数 = 行里的数据格数（列头不许多、也不许少）', async () => {
+    const { host } = await openEditor()
+    const firstRow = [...host.querySelectorAll('tr')].find((tr) => tr.querySelector('td') !== null)
+    if (firstRow === undefined) throw new Error('表里没有数据行')
+    // 行号格 + 数据格（合并覆盖的不渲染，所以用 colSpan 累加）
+    let span = 0
+    for (const td of firstRow.querySelectorAll<HTMLTableCellElement>('td')) {
+      span += Number(td.getAttribute('colspan') ?? 1)
+    }
+    const letters = host.querySelectorAll('.mimir-xlsx__colhead')
+    expect(letters.length).toBe(span)
+  })
+
+  it('附属面板上的引用真的能对到列头（C3 的 C 在列头上）', async () => {
+    const { host } = await openEditor()
+    // 夹具的公式格在 C3（见文件头那张表）
+    click(cellAt(host, 3, 2))
+    expect(host.querySelector('.mimir-cell-editor__ref')?.textContent).toBe('C3')
+
+    const letters = [...host.querySelectorAll<HTMLTableCellElement>('.mimir-xlsx__colhead')].map(
+      (cell) => cell.textContent,
+    )
+    expect(letters).toContain('C')
+  })
+})
+
 /* ── 控件契约：这个格式的控件全走外壳的 antd 原语 ───────────────── */
 
 /**

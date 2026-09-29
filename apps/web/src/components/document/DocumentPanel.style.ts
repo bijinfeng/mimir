@@ -92,8 +92,62 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     color: ${token.colorTextTertiary};
     white-space: nowrap;
 
+    /*
+     * 短标签**不收缩**——半截的标签（「手…」）与半截的汉字一样读不出意思。
+     *
+     * 原先写的就是 flex: none，问题出在**没有任何东西让位**：这一行比内容
+     * 窄时由外层 overflow: hidden 直接切一刀——22px 的容器里放 60px 的
+     * 「手动编辑」徽标，结果是「手动」加半个字配一条竖直硬切边（实测
+     * 420px 视口：文字右缘 341 对裁剪线 310，31px 文字被切掉）。
+     *
+     * 让位分两层：**长项缩（省略号）**、**短项整块消失**。长项是位置
+     * （vault 路径 / 原文件名 / URL），它自己那条规则带 flex: 0 1 auto 与
+     * min-width 48px——缩了也仍然有用，所以它接住所有挤压；短项是徽标、
+     * 格式、日期，它们由下面的容器查询按重要性整块摘掉。
+     */
     > * {
       flex: none;
+    }
+
+    /*
+     * **整项让位**（见下面的容器查询）：短标签不缩成「手…」。
+     *
+     * 「手动编辑」这类标注只有四五个字，缩到极限剩下的一个多字读不出
+     * 意思，而它要么说清、要么让开。让位的顺序按「谁最不重要」：日期 →
+     * 格式与大小 → 来源标注 → 全空。位置（vault 路径 / 原文件名 / URL）
+     * 留到最后——它是这一行里唯一**缩了也仍然有用**的一项。
+     *
+     * 判据是**这一行自己的宽度**（容器查询）而不是视口宽度：同一个视口下
+     * 笔记的标题短、上传件还多一个「下载」按钮，两者的元信息行能差一倍
+     * （实测 480px 视口：笔记 58px 对上传件 27px），按视口定阈值必然有一边
+     * 判断错。这一行最后有多宽由 flex 算，不由我们猜。
+     *
+     * 阈值是**按最宽的一档相加**得出的（上传件那一档：来源 60 + 中点 8 +
+     * 位置 48 + 中点 8 + 格式 82 + 中点 8 + 日期 68 = 282），所以它覆盖
+     * 项数更少的笔记。位置自己带 48px 的下界，于是任何一档都不会「缩到
+     * 看不见字」——真到了 48px 以下，整行空着。
+     */
+    container-type: inline-size;
+
+    /* 日期最不重要：282px = 60 + 8 + 48 + 8 + 82 + 8 + 68 + 2 */
+    @container (max-width: 282px) {
+      > :last-child {
+        display: none;
+      }
+    }
+
+    /* 来源标注 / 状态徽标：124px = 60 + 8 + 48 + 8 */
+    @container (max-width: 124px) {
+      > :first-child {
+        display: none;
+      }
+    }
+
+    /* 连 48px 的位置都放不下：空着，不留一截 */
+    @container (max-width: 48px) {
+      > * {
+        display: none;
+      }
     }
 
     /* 除第一个之外的每一项前面一个中点 */
@@ -139,7 +193,12 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
      两处色对原先写死在浅色上（`#1a56c4` on `#e8f1ff`、`#5c6570` on `#f0f1f3`），
      深色下它们是「深蓝字压在浅蓝底上」，在本该变暗的面板上会亮得刺眼。
      改成走语义 token 的成对值：手动编辑 = 信息色对，AI 整理 = 中性色对。
-     两者都在 design.test.ts 的通用矩阵里（语义文字 on 同语义底 ≥ 4.5） */
+     两者都在 design.test.ts 的通用矩阵里（语义文字 on 同语义底 ≥ 4.5）。
+
+     **窄到放不下时整块让位**（见 headerMeta 的 container-type 与那里的阈值，
+     124px）：四个字的标注缩成「手…」读不出意思，而它要么说清、要么让开。
+     阈值必须与那里一致——状态徽标存在时它是第二个子项，
+     那条「第一项」的规则管不到它 */
   originManual: css`
     padding: 1px 7px;
     border-radius: 4px;
@@ -147,6 +206,10 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     font-weight: 500;
     color: ${token.colorInfoText};
     background: ${token.colorInfoBg};
+
+    @container (max-width: 124px) {
+      display: none;
+    }
   `,
   originAuto: css`
     padding: 1px 7px;
@@ -155,6 +218,10 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     font-weight: 500;
     color: ${token.colorTextSecondary};
     background: ${token.colorFillTertiary};
+
+    @container (max-width: 124px) {
+      display: none;
+    }
   `,
   /* 上传件的格式与大小（「PDF · 2.4 MB」）。
      **不是徽标**——它没有底色，只是一条中性文字：格式是文件的属性，
@@ -162,6 +229,12 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   formatMeta: css`
     color: ${token.colorTextTertiary};
     white-space: nowrap;
+
+    /* 格式与大小比位置更早让位（206px = 60 + 8 + 48 + 8 + 82）。
+       让位的判据与阈值见 headerMeta 的 container-type 那一段 */
+    @container (max-width: 206px) {
+      display: none;
+    }
   `,
 
   /* 返回。Office 里没有这个按钮，而 mimir 的两栏布局必须有（PRD §5.5：
@@ -198,9 +271,24 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    /* 铺满滚动容器的高度：原件那一列要能吃掉剩余空间（笔记那一列不需要，
-       它按内容高就够了——所以只是「允许」，不是「强制」） */
-    min-height: 100%;
+    /*
+     * **height: 100% 而不是 min-height: 100%**：这一行是**有界**的。
+     *
+     * 原先写 min-height 时它只是下限，高度仍按内容 auto 撑开——于是外壳
+     * （.mimir-editor）在可用高度只有 856px 的容器里量出 922px，超出
+     * 66px；换来的是面板那个滚动条，代价是**外壳的底部被挤出视口**：pptx
+     * 选中一个文本框之后，附属面板（y 875–931）与状态行（sticky bottom，
+     * y 873–900）同占一段位置，前者整块落在视口外——点上去像没反应。
+     * 实测同一位置 xlsx 的面板 y 833–873 刚好放得下，所以只有 pptx 露出来。
+     *
+     * 定死高度之后，多出来的内容由**外壳自己**滚（.me-scroll，它本来就是
+     * flex: 1 + min-height: 0 + overflow: auto）——工具条、附属面板、状态行
+     * 都在这条滚动链之外，三个都常驻可见。
+     *
+     * 只读资料那一列不受影响：它是 align-self: flex-start、按内容高，
+     * 撑出这一行时面板照样滚（scrollHeight 会算上溢出的后代）。
+     */
+    height: 100%;
   `,
   /**
    * 内容列。**760px 是正文的（markdown 笔记、抓取的资料）**——行宽有可读性

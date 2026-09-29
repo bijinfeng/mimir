@@ -43,6 +43,15 @@ export interface AppShellContextValue {
   openDocument: (id: string, scope?: string) => void
 
   /**
+   * 打开「收集内容」对话框。
+   *
+   * 对话框的实例挂在应用壳（_app.tsx），侧边栏、命令面板与库视图都要能
+   * 唤起它——入口可以多个，**对话框必须只有一个**，否则各处自挂一份，
+   * 上传进度与粘贴的链接就各活各的了。
+   */
+  openCapture: () => void
+
+  /**
    * 从对话的引用跳去文档。
    *
    * 与 openDocument 的区别是它记住「从哪来」，这样文档顶部能显示

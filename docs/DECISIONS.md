@@ -4092,3 +4092,506 @@ portal）外加状态行那一条端到端：改文档 → 等过 900ms 防抖 �
 不是。另外两处「图快就会静默通过」如实记着：「立即保存」在没有改动时禁用（点它
 什么都不发生），而改完文档后它立刻变成「正在保存…」且仍然禁用，所以失败只能由
 防抖那次自动保存产生。
+
+## D-065 归档交互整体退役：库的浏览维度只剩目录、标签与搜索
+
+**背景**：用户要求把左导航「全部文档 / 已归档」两个入口合并成一个——
+不再需要归档这个交互，相关代码与文档全部清除。
+
+**决定**：
+
+- `documentStatusSchema` 收成 `['ready', 'failed']`；`documentCountsSchema`
+  只剩 `{ all }`。D-047 那次「note/clip → archived」的计数契约改动至此整体退役。
+- 左导航「知识库」组只剩「全部文档」一项。`scope=archived` 与 `scope=inbox`
+  一样按「认不出的 scope 回落到全集」处理（旧链接进来看到全部文档，不会白屏）。
+- 详情「⋯」菜单的「归档 / 移出归档」一项与配套确认框删除；
+  「已归档」状态徽标删除（DESIGN §3.7 的表只剩「提取失败」一行）。
+- API 的 `status` 字段不再接受 `'archived'`（写入返回 400）；
+  `api.test.ts` 有一条用例守着它别悄悄回来。
+- 存量数据：`drizzle/0006_retire_archive.sql` 与
+  `drizzle-sqlite/0003_retire_archive.sql` 把 `status='archived'` 的行转回
+  `'ready'`（与 0005 / 0002 的 `retire_inbox` 同一条做法）。
+
+**理由**：库的组织靠目录、标签与搜索（D-047 的同一方向），归档引入的是
+第二个状态位——「默认列表 vs 已归档」的分流、一枚常驻徽标、一个导航入口、
+一份计数契约，都是为它服务的成本。既然交互本身不要了，这套外围一起拆，
+而不是留一个「有能力对应但没人到达」的状态值（那正是 D-054 拆收件箱时
+反对过的形状）。
+
+**影响**：破坏性契约变更（counts 少一个字段、status 少一个值）。单机自托管
+场景下唯一的 API 消费方是自带前端，随同批更新；数据库存量行由迁移转换，
+不丢任何文档。
+
+## D-066 左导航的知识库组：单分组 + 次级小标题（随 D-065 的导航收敛而来）
+
+**背景**：归档视图退役（D-065）后「知识库」组只剩「全部文档」一项；随后
+「知识库」「目录」两个分组合并成一个。合并后目录树没有标题直接跟在
+「全部文档」后面，观感突兀——树像悬挂物，「视图」与「实体」混在同一层。
+用户要求先调研竞品再定形态。
+
+**竞品结论**：纯知识库类（Notion / Joplin / Zotero / Apple Notes）无一例外
+保留两级标题——分组之下的维度用**次级小标题**表达（Joplin 的 Tags、
+Zotero 的 Saved Searches、Apple Notes 的智能文件夹）；收藏类（Cubox /
+Eagle / Omnivore）用「入口 → 自动聚合 → 手动整理」分层；对话×知识混合类
+（Claude Projects / Perplexity Spaces / NotebookLM / Cherry Studio）的
+合流容器是「项目 / 空间」，与本项目「库是浏览主角」的定位不同，不采。
+
+**决定**：知识库组保持单分组；目录树前放**降级的小标题**「目录」——
+同字号同色，weight 500 对 600、顶部间距 6px 对 14px（`NavSidebar.style.ts`
+的 `treeHeading`）。不放假的「＋」：目录由 `documents.folder` 派生、
+不存在空目录，按钮必须对应真实能力（DESIGN §7.4「点了没反应是最坏的」）。
+空态文案只描述来源（「归入目录的文档会出现在这里」），不承诺不存在的动作。
+
+**已知缺口（不在本条内解决）**：详情「⋯」菜单的「归入目录」只列已有目录，
+空库时用户无法创建第一个目录——API（`noteUpdateSchema.folder` 接受任意
+新路径）与 UI 之间有 gap，待单独决定。
+
+**影响**：`apps/web/src/components/NavSidebar.tsx` / `NavSidebar.style.ts`；
+`DESIGN.md` §8.1 补侧栏分组形态。
+
+## D-067 库视图：卡片 / 列表双布局 + 页面级的收集与新建入口
+
+**背景**：用户要求库列表页整体优化——要有列表和卡片两种布局，
+以及上传和创建入口。此前浏览态只有卡片网格一种排版，收集与新建
+只能走侧边栏 / 命令面板，页面本身（尤其空态）只有一句话。
+
+**决定**：
+
+- 两种布局消费**同一份**列表数据，切换只换排版：卡片（网格，默认，
+  扫读摘要）与列表（两行行条，扫读标题清单）。偏好存 `localStorage`
+  （`mimir.library-layout`），与折叠偏好同一条判断；非法值回落卡片。
+- 切换控件是带文字标签的 `Segmented`（搜索框右侧）——纯图标档的
+  可及名称问题（AGENTS 坑表）靠「文字就在标签里」绕开。
+- 头部右侧常驻「收集内容」与「新建笔记」。收集复用应用壳唯一的
+  `CaptureDialog`（`AppShellContext` 新增 `openCapture`——对话框一个实例、
+  三个入口，上传进度与粘贴的链接才不会各活各的）；新建直接建一篇
+  「未命名笔记」并进入编辑，与命令面板同一条路径。
+- 空态给同样两个按钮（搜索无结果时只给文案，不给答非所问的动作）。
+
+**竞品依据**（D-066 同一轮调研）：卡片/列表双布局是资料库类应用
+（Eagle、Zotero、Readwise Reader）的标准配置；「页面内常驻收集/新建 +
+空态动作出口」是 Notion / Cubox 的普遍形态。
+
+**影响**：`LibraryView.tsx` / `.style.ts`、`list-helpers.ts`
+（`readLibraryLayout` / `writeLibraryLayout`）、`app-shell-context.ts`
+（`openCapture`）、`_app.tsx`（provider 接线）；`DESIGN.md` §8.2 重写
+（顺带清掉 D-047/D-054 遗留的中栏描述——来源胶囊与待整理徽标早已退役）、
+PRD §5.2 浏览态行。
+
+## D-068 目录成为实体：侧边栏直接增删改移（推翻「纯派生、不建表」）
+
+**背景**：用户拍板两件事——左导航去掉「全部文档」项；目录要能在侧边栏
+直接**新增 / 修改 / 删除 / 移动**。前者移除了「视图」入口，后者要求目录
+在没有文档时也存在（否则「新建目录」无处落地），这直接顶到既有决策：
+「目录树由 `documents.folder` 纯派生、不建表，建表会立刻产生两个真相源」
+（`packages/shared/src/structure.ts` 旧注释）。
+
+**决定**：
+
+- `folders` 表（路径即主键）成为**树结构的唯一真相**；`documents.folder`
+  仍是归档指派（冗余路径串，列表过滤与计数走它）。一致性由服务端维护：
+  指派到新路径时 `ensureFolders` 自动补建祖先（mkdir -p）——归档指派、
+  外部 md 的 frontmatter、上传件 meta.json 三个写入点都接了线。
+- 新建：`POST /api/folders`（mkdir -p，重复 409）。改名与移动是同一个
+  操作：`PATCH` 把 from 子树整体搬到 to（`技术/前端 → 归档/组件` 是改名，
+  `技术/前端 → 归档/前端` 是移动）， folders 行、documents 行、笔记
+  frontmatter、上传件 meta.json 按**文件先行的顺序**批量前缀重写。
+  搬进自己的子树 400。
+- 删除：只删结构。`DELETE /api/folders?path=` 删除子树行，里面的文档
+  **保留**、指派清空（回库根）——文档的删除有独立的确认流，不搭便车。
+- 前端：`FolderSection`（标题行 hover ＋ / 行 hover ⋯ / 拖拽重挂父级，
+  拖成兄弟不是实现的语义）。折叠态整块换成**一个回库的图标按钮**——
+  层级树没有「只剩图标」的形态，但 48px 栏里不能没有进库的入口。
+- 侧边栏菜单不再有任何 scope 项，`currentKey` 文档页返回 null。
+
+**为什么推翻旧决策**：旧决策的前提是「目录没有独立生命周期」——它是
+文档归档的影子。用户要求直接管理目录后，空目录必须存在，影子模型装不下。
+两张表的「两个真相源」由 ensureFolders / 前缀重写这两个服务端不变量闭合，
+且指派串带来的过滤效率不变。
+
+**测试隔离教训**：多个测试文件并行共用同一个测试库（global-setup 每轮
+只清一次），structure.test 与本块都建「技术/前端」会撞 409——跨文件
+共享库里的建资源用例必须带随机前缀。
+
+**影响**：`packages/shared/src/structure.ts`（操作 schema + 注释）、
+两个 schema 文件与迁移（PG `0007_folder_entity` / SQLite
+`0004_folder_entity`，含存量回填）、`services/folders.ts`（四个操作）、
+`routes/documents.ts`、`lib/api.ts`、`FolderSection.tsx`、
+`NavSidebar.tsx` / `.style.ts`、`menu-items.tsx` 及测试；PRD §5.3、
+DESIGN §8.1、TECH §10 坑表（better-sqlite3 事务配 async 回调会炸）。
+
+## D-069 展开态左导航的「回库根」入口落在分区标题上；树行必须是一次 flex 布局
+
+**背景**：两个独立复核都指向同一处——D-068 去掉「全部文档」导航项之后，
+**展开态**的左导航里没有任何控件能回到库根。点一次卡片上的标签
+（`scope=tag:缓存`）或随便进一个目录（`scope=folder:技术`），剩下的路只有
+浏览器后退或改地址栏；点当前选中的目录行也不回落（那只是 `onSelect(path)`）。
+折叠态有等价物（48px rail 里的九宫格图标按钮，`goDocs('all')`），
+展开态没有——两个状态的能力不对称，而缺的是更常用的那一个。
+命令面板的固定项只有「新建笔记」「收集网页 / 公众号 / GitHub」，也没有回库。
+
+第二个问题更硬：**目录树的每一行都把名字画在下一行上**。rc-tree 的结构是
+`.ant-tree-node-content-wrapper`（block，行高 28px）里放「图标 +
+`.ant-tree-title`」，而 `.ant-tree-title` 是**行内**元素；行内容
+（名称 + 计数 + ⋯）却是个块级 flex 盒子——它放不进行内格式化上下文里图标
+所在的 line box，被折到下一行。逐行实测：标题 top 比本行高**恰好 28px**
+（技术 345.2 → 373.2、后端 377.2 → 405.2、……七行无一例外），于是
+「这一行的名字 + 上一行的图标」在视觉上配成一对，图标还压在名字上（24×24
+的矩形相交，实测五对重合）。
+
+**决定**：
+
+- 给树的 `.ant-tree-node-content-wrapper` 补 `display: flex; align-items: center`、
+  给 `.ant-tree-title` 补 `display: flex; flex: 1; min-width: 0`——让这一行成为
+  **一次** flex 布局。名称靠左、计数紧随、⋯ 由 `margin-inline-start: auto`
+  贴行尾（右边缘 193，与标题行的 ＋、底部齿轮同一条竖线）。
+- 「全部文档」的入口放在展开态的**「知识库」标题行**上（`onSelect('')`，
+  语义沿用 D-068 的空路径 = 库根）。不另加一行导航项：D-068 的结论是
+  「侧边栏放结构，不放重复的库入口」，而这里要的只是「回得去」，标题最省地方。
+  它仍是素文字标签，只借 antd 文本按钮的焦点环与键盘激活（D-042）。
+
+**为什么不是「加回『全部文档』导航项」**：那正是 D-068 拿掉的东西，加回去
+等于推翻它而不是补它的缺口——数据与筛选都没变，缺的是一个**出口**，
+不是一个入口。
+
+**影响**：`apps/web/src/components/nav/FolderSection.tsx`（treeWrap 覆盖、
+标题改为入口按钮）、`docs/DESIGN.md` §8.1；坑表条目见 TECH §10。
+
+---
+
+## D-070 数据库驱动由 `/api/config` 回传；设置页不写死厂商名
+
+**背景**：「数据与备份」的「真相在哪」面板第三行写的是硬编码的
+`Postgres · 前两者可以完整重建它`。而驱动是**部署事实**（D-045）：服务器
+部署走 Postgres，本地开发与桌面端走 SQLite。实测那次（`DATABASE_URL=file:
+/tmp/mimir-vis/mimir.db`，同一屏「文档 17」与库里的行数一致）界面上说的
+是 Postgres，而进程连的是 SQLite——这一行是**可被当场证伪的假话**，
+而设置页最该守的就是「界面上说的每个事实都能验证」。
+
+根因不是笔误，是**信息的来源不对**：`/api/config` 当时只回
+`settings` / `plugins` / `modelConfig` 三块，驱动这一个字都没有，
+组件只能自己编一个。
+
+**决定**：`/api/config` 多回一块 `database: { driver, file }`。
+
+- `driver` 取 `env.dbDriver`（`apps/server/src/env.ts` 按 `DATABASE_URL`
+  的协议头判定，D-045 的同一处判定），界面按它映射厂商名
+  （`postgres` → `Postgres`、`sqlite` → `SQLite`）
+- `file` 只在 SQLite 下有值，是库文件路径——它是这一行里用户真正能去看
+  一眼的东西。Postgres 下为 `null`：连接串含凭据，不下发
+- 它**不进设置键表**：`DATABASE_URL` 改了就重启，属于 TECH §7.5
+  「不写进程级配置」那一类，界面只读显示
+
+**否决**：
+
+| 方案 | 为什么不用 |
+|---|---|
+| 前端按 `window.location` / 用户代理猜 | 驱动是服务端进程的属性，浏览器看不到 |
+| 把驱动做成可写设置项 | 那需要热重启进程，是 §7.5 明确排除的「假表单」 |
+| 只写「数据库」两个字，不写厂商 | 这一行的用途就是回答「我的数据落在哪种库上、能不能重建」，省掉它等于没答 |
+| 顺手把 `DATABASE_URL` 也下发 | 连接串含凭据，而界面不需要它 |
+
+**影响**：`packages/shared/src/config.ts`（新增 `databaseInfoSchema`、
+`runtimeConfigSchema` 多一块）、`apps/server/src/routes/config.ts`、
+`apps/web/src/components/settings/DataSection.tsx`；TECH §7.4 的
+「`GET /api/config` 回四块」。
+
+
+---
+
+## D-071 原件的未保存改动也走守卫；开发服务器不再往 API 响应里注入脚本
+
+**背景**：两组独立复核各自发现同一类「静默丢东西」，它们都源于
+「一份实现只接上了一半」：
+
+1. **状态行说有未保存的改动，离开时不拦。** 未保存守卫（`lib/unsaved`）的
+   消费方只有左导航、库视图、笔记编辑器与拦截框——四种原件编辑器
+   （docx / xlsx / pptx / html / pdf）只调 `onDirtyChange`，而
+   `DocumentPanel` 的 `onDirtyChange` 在路由处根本没传，返回按钮也不走
+   `runGuarded`。实测：删掉 PDF 一页后状态行写「已修改，未保存」，点「返回库」
+   直接回库视图、modal 数为 0；笔记的同一个动作会弹三选一。**同一动作两种
+   结果**比两种都不拦更糟。
+2. **dev 下 `.html` 原件被注入 HMR 脚本。** `@hono/vite-dev-server` 默认按
+   `content-type: ^text/html` 往响应体末尾追加
+   `<script>import("/@vite/client")</script>`，**不看 `Content-Disposition`
+   是 inline 还是 attachment**。于是 `/api/documents/:id/file` 取回的
+   `.html` 原件是 659 字节而磁盘上是 619；源码编辑器把这段当文件内容显示出来
+   （头部的元信息同时写着「文本 · 619 B」），敲两个字点保存就把 42 字节写进
+   用户的文件。
+
+**决定**：
+
+- **原件编辑器必须武装守卫**（与笔记同一套）：`OfficeSourceEditor` 调
+  `useUnsaved().setDirty` / `setSave`，`DocumentPanel` 的「返回库」「返回对话」
+  与页脚双链都走 `runGuarded`。守卫的入口放 ref、注册用空依赖——provider 每次
+  渲染都新建那两个函数，写进依赖数组会让「脏标记一变 → 清理跑一遍 →
+  把刚报的 true 抹成 false」，表现只是「没弹框」。
+- **「立即保存」的通道只在笔记上有**，所以原件的「保存并离开」**不放行**：
+  回到编辑态、改动还在，并指引用它工具条右端的「保存到库」。
+  `packages/office` 的 `EditorProps` 没有 `MarkdownEditor` 那样的
+  `onSaveHandle`，加它要动那个包——留作下一步，而不是在这里假装存过了。
+- **关掉 dev server 的客户端脚本注入**：
+  `apps/server/vite.config.ts` 的 `devServer({ entry: 'src/dev.ts',
+  injectClientScript: false })`。这个 dev server 不服务自己的 HTML 页面
+  （前端页面由 `apps/web` 提供），注入只会落到 API 响应上。
+
+**否决**：
+
+| 方案 | 为什么不用 |
+|---|---|
+| 只在返回按钮上加确认 | 侧栏、命令面板、页脚双链、浏览器后退都是离开路径，一处一处补必然漏 |
+| 让原件编辑器自己弹 `Modal.confirm` | 与笔记两套交互；PRD §5.9 要的是**三个**选项，而三选一的框只能有一份实现 |
+| 把 `.html` 的 `Content-Disposition` 改成 inline | 那正是 §13 里禁止的：`text/html` 与 `svg` 内联等于在自己的源上执行用户文件里的脚本 |
+| 在 `OfficeSourceEditor` 里再包一层「去掉尾部脚本」 | 治标——原件字节 = 磁盘上的文件这条前提不该由前端来修 |
+| 给原件编辑器也发一个假的 `onSaveHandle`（返回 true） | 放行一个没保存的改动，比不拦截更糟（PRD §5.9 的最后一句） |
+
+**影响**：`apps/web/src/components/document/OfficeSourceEditor.tsx`、
+`apps/web/src/components/DocumentPanel.tsx`、`apps/server/vite.config.ts`；
+PRD §5.9（守卫的适用范围与「立即保存」的缺口）、TECH §10（注入那条坑）。
+
+---
+
+## D-072 窄屏的设置分区导航换成下拉；登录页与库的窄屏收尾
+
+**背景**：视觉审计在 420px 视口下量到的几处「宽度算错」：
+
+- 设置页的八个分区平铺需要约 256px，而导航条可用宽度只有 247px。`Tabs`
+  不折行，于是首个标签被裁成半个字（实测只剩「型」），
+  「数据与备份 / 外观 / 账号」只能去右端的 ⋯ 里找。
+- 登录卡片写死 `width: 400px`，而页面左右各 24px 的内边距让它在视口 < 448px
+  时溢出：360px 下 `scrollWidth` 424，密码框右端的「显示密码」整颗落在视口外。
+  只加 `max-width: 100%` 不够——`display: grid` 的隐式列 track 最小尺寸是
+  `min-content`，卡片那个 400px 会把 track 撑到 400，百分比解析的就是它。
+- 表单校验的错误文字是 antd 的 `token.colorError`（`#ff4d4f`，白底 3.27:1），
+  而规范 §3.3 校准过的那支 `colorErrorText`（5.80:1）没被取用——
+  变量是对的、画面上那行红字是另一个值。
+
+**决定**：
+
+- ≤880px（`NAV_NARROW_QUERY`，与左导航同一个断点）设置页的分区导航换成
+  `Select`：八个名字都完整。宽屏仍是横向 tab（§8.12 那条取舍在摊得下时成立）。
+  两种形态**只渲染一个内容体**，不留两份状态。
+- 登录页的网格列写成 `minmax(0, 1fr)` 并给卡片 `max-width: 100%`——
+  两处要一起改，只改一处等于没改。
+- 校验错误色在 `styles/global.ts` 里覆盖成 `colorErrorText`，选择器写两段
+  （`.ant-form .ant-form-item-explain-error`）以压过 antd 自己的 (0,2,0)。
+  **同时补一条运行时断言**（`design.test.ts` 真的挂 provider 读
+  `getComputedStyle`）——只比 token 的断言两边都是绿的，看不见这个洞。
+
+**否决**：
+
+| 方案 | 为什么不用 |
+|---|---|
+| 给 tab 栏加 `overflow-x: auto` 让它横滚 | 认了「看不见全部选项」这件事；设置页按「你要改哪一项」组织，分区名认不出来就得多点一次 |
+| 窄屏只留图标 | 八个分区没有一眼可辨的图标，而图标档还要解决可及名称（DESIGN §4.2 那条 Segmented 的教训） |
+| 把卡片宽度删掉、全用 `max-width` | 宽屏下卡片会撑满内容列（760px），登录页变成一张大横条 |
+| 只给登录页的 `createStyles` 加错误色规则 | 下一处用 `Form` 的地方会静默退回未校准的色，而守门测试看不见 |
+
+**影响**：`apps/web/src/routes/_app.settings.tsx`、
+`apps/web/src/components/settings/settings.style.ts`、`apps/web/src/routes/login.tsx`、
+`apps/web/src/styles/global.ts`、`apps/web/src/theme/design.test.ts`；
+DESIGN §8.12 与 §8.15 之后新增的两段说明。
+
+---
+
+## D-073 根路由要有中文的错误兜底；几处「一次只补了一半」的收尾
+
+**背景**：审计里剩下几条都是同一种形态——**某个能力只在一个方向上做了**：
+
+- 根路由的 `beforeLoad` 会请求会话，而它没有 `errorComponent`。服务端重启 /
+  容器没起来 / 客户端指错地址时整页是 TanStack Router 的英文开发页
+  （`Something went wrong!` + `Hide Error` + 红框 `Failed to fetch`），
+  没有卡片、没有重试入口，控制台还打一条「error wasn't caught by any route」。
+  登录页恰恰是唯一一个「别的都坏了它也得在」的页面。
+- 品牌字标在两处出现，而 §9.1 只规定了左导航那份（700 / .06em），登录页那行
+  写「同上」；实现照 antd 标题默认值渲染成 600 / .02em ——**单看登录页不难看**，
+  两处并排才露出一个更细、字距更紧的字标。
+- 登录失败只有一条 3 秒的 toast（无关闭按钮、表单里不留痕迹）：去看了眼密码
+  管理器再回来，页面上只剩一个填好的表单。§0.2「状态必须能被看见，且必须能
+  带得走」两半都不满足。
+- 密码框的可见性开关是 `role="button" tabindex="0"` 的元素，键盘能 Tab 到，
+  但焦点环是浏览器默认的 1px 黑方框，与同页其它可聚焦元素的蓝色环不是一套
+  语言（§7.2 要求自定义可聚焦元素补自己的环）。
+- 搜索片段的 `text` 是正文的原样切片（带 `#`、`**`），而库卡片走的是
+  `toExcerpt` 的清洗——同一份文档两个入口两个样子。
+- 密码输入框同 `Alert message` / `Modal maskClosable` 一样是 antd v6 已废弃
+  的写法，挂在应用壳上的那一个 `Modal` 让**每个页面加载**都往控制台打一条。
+
+**决定**：
+
+- 根路由补 `errorComponent`：中文、按「有没有拿到状态码」分两类说清下一步、
+  给一个「重试」按钮（`router.invalidate()` 之后再 `reset()`——`reset()` 单独
+  用是无效的，那个 match 仍是 `error`，会立刻重新抛出，用户看到的是点了没反应）。
+- 登录页的字标改成 700 / .06em，并把「『同上』管的是字重与字距，不管字号」
+  写进 §9.1——两处的**字形**必须同源，字号才随标记尺寸走。
+- 登录失败除 toast 外在表单上方留一条 `Alert`，常驻到下一次提交才清掉。
+- 密码可见性开关的焦点环补 `box-shadow: 0 0 0 3px token.controlOutline`
+  （用 token 而不是写死的 rgba，深色下自动换更亮的一档）。
+- 检索片段的展示文本过 `stripMarkdown`（与 `toExcerpt` 同一份规则），
+  **两个偏移不动**——它们指向正文区间，是「跳回原文」用的，
+  不再满足 `end - start === text.length` 是刻意的，写进 TECH §4.8 的契约说明。
+- `Modal maskClosable` → `mask={{ closable: false }}`、`Alert message` → `title`，
+  两条都补进 DESIGN §7.5 的迁移表（那里的规矩是「会打警告的写法记下来」）。
+
+**否决**：
+
+| 方案 | 为什么不用 |
+|---|---|
+| 错误兜底直接显示 `error.message` | `Failed to fetch` 是浏览器给的英文，用户看不懂，也不知道下一步做什么 |
+| 只在登录页加错误边界 | 守卫在根路由，首屏就可能落在任何路径上 |
+| 把登录失败改成只有常驻 `Alert`、去掉 toast | toast 是「这次点击的结果」（不看表单也知道），两者职责不同 |
+| 登录页字标改成 20px/700/.06em 后把设计表也改成这组 | 那会让两处字号也分叉；「同上」要管的是字形，字号本来就该随标记尺寸 |
+| 片段两个偏移跟着清洗后的文本走 | 偏移是给「跳回原文并高亮」用的，跟着展示文本走会让契约里的坐标失真 |
+
+**影响**：`apps/web/src/routes/__root.tsx`、`apps/web/src/routes/login.tsx`、
+`apps/web/src/components/UnsavedGuard.tsx`、`apps/server/src/lib/text.ts`、
+`apps/server/src/search/index.ts`；DESIGN §7.5 / §8.15 / §9.1、
+PRD §5.9 与 §5.12 的引用路径、TECH §4.8 / §10。
+
+---
+
+## D-074 历史会话的失败卡片、引用与检索过程都从落库记录回退
+
+**背景**：`ChatPanel` 只渲染**实时事件推来**的失败、检索过程与引用
+（`chat.failure` / `chat.trace` / `chat.citations`，只由 SSE 写入）。
+打开一条历史会话时：库里存着 `messages.failure = 'quota'`、`messages.trace`
+与 `messages.citations`，界面却是一片空白——**用户看到上一条回答什么都没有，
+既不知道上次为什么没出结果，也拿不到 PRD §5.8 要求的三条出路**。
+检索过程与引用更早修过一次（同一函数里已有从 `storedAssistant` 回退的代码），
+失败卡片漏了；而那次修的门控是 `lastRole !== 'user'`，于是
+「追问过、还没答」的会话里整组结果（引用 + 存成笔记 / 复制）也一个都不显示。
+
+**决定**：三者走同一条回退——实时那份优先，没有就用**最后一条助手消息**的落库记录；
+落库只存失败分类、没有原始错误文本，`detail` 交给 `FailureCard` 的预设文案兜底。
+回退多一个门控 `showingLoadedRound`（`chat.messages.length === initialMessages.length`）：
+发过新消息之后，`storedAssistant` 指的是**上一轮**，它的失败卡片会挂在新回答下面。
+
+**否决**：
+
+| 方案 | 为什么不用 |
+|---|---|
+| 只把 `chat.failure` 改成 `chat.failure ?? storedAssistant.failure` | 少一条长度门控就会在「发新消息后」显示上一轮的失败卡片——发一次成功的提问，却看到「模型额度用尽」 |
+| 让 `use-mimir-chat` 的 `toUiMessage` 把 failure 塞进 UIMessage 的 parts | 那会把 mimir 的业务字段塞进 AG-UI 的消息形状，要自定义渲染器；且落库消息里的 trace / 引用已有既定的取用路径（按位置对齐），多一套会让两者漂移 |
+| 失败卡片不给 `detail`（实时那份也去掉） | 服务端的原文通常比预设文案具体（它看得到 HTTP 状态码），有它在就不该丢 |
+| 门控从 `lastRole !== 'user'` 改成无条件渲染 | 提问等待中会在用户气泡下面闪出上一轮的引用与「存成笔记」 |
+| 引用块的通道名取注册表（`/api/config` 的 `plugins`） | 引用块要为此多一次请求；而且注册表给的是 `关键词（jieba 分词）` 这类**设置页用的名字**，与检索过程那一行的「词级召回」不是一套词——两块内容挨着，两个名字会让人以为它们不是一回事 |
+
+**影响**：`apps/web/src/components/ChatPanel.tsx`（`showingLoadedRound` /
+`activeFailure` / `showRoundResult`）、`apps/web/src/components/chat/CitationCards.tsx`
+（`CHANNEL_LABEL` 与标题行右端的通道徽标）、`apps/web/src/components/chat/TraceDisclosure.tsx`
+（antd v6 的 `Steps` 槽位）、`apps/web/src/components/chat/Composer.tsx`
+（模型名空串兜底、开关标签移出轨道）；DESIGN §8.5 / §8.6 / §8.8。
+
+---
+
+## D-075 库视图的七处收尾：正文列对齐、头部换行、元信息行、焦点环、标签 hover、范围与落点说真话
+
+**背景**：库视图（卡片 / 列表两态）经审计发现七处「代码读不出来、对着界面
+才看得见」的问题。它们的共同形态是**不报错**——界面只是读起来别扭或悄悄
+说错话：
+
+| 症状 | 实测 |
+|---|---|
+| 卡片 / 行条与标题、搜索框不在同一条竖线上 | 标题与搜索框 x=308，卡片外框 x=280；列表行内文字 293（卡片 296） |
+| 420px 下标题折成「全部 / 文档」、计数折成「17 / 条」 | h1 盒 48×60 两行、计数 18×38 两行，而右侧两枚按钮共占 228px |
+| 同一排卡片的时间不在一条线上 | 第二排与第三排左起第二张卡的时间落到第二行（该卡 meta 盒 49px，其余 20–26px） |
+| 卡片 Tab 聚焦只有浏览器默认黑环 | `outline: rgb(16,16,16) auto 1px`、`box-shadow: none`（深色下浅灰环） |
+| 深色下 hover 可点标签，文字掉到 2.82:1 | `colorPrimary` 当文字（浅色同处 3.80:1） |
+| 目录里搜索静默变成全库检索，侧栏仍高亮那个目录 | 请求是 `/api/search?q=…&limit=50`，无 folder；两张命中卡都不在该目录 |
+| 空目录里「新建笔记」把内容建到库根 | 请求体 `{"title":"未命名笔记","body":"","tags":[]}`；`createNote` 写 `folder: null` |
+
+**决定**：
+
+1. **两侧留白只给一层**——挂在 `page`（28px），头部与 body 各自去掉左右
+   内边距，让标题、搜索框、卡片 / 行条的外沿落在同一条竖线上。卡片与行条
+   **内部**的内边距差 3px 不做统一：§5.1 有意让两种布局密度不同。
+2. **头部 `flex-wrap` + 标题与计数 `nowrap`**（标题截断带省略号，计数
+   `flex: none` 保持完整）。不写断点——与卡片网格同一条理由（§5.4）。
+3. **元信息行分两层**：外层不折行、`align-items: baseline`，时间 `flex: none`；
+   可折行的「徽标 + 标签 + 格式」在内层。**用 baseline 而不是 center**：
+   实测在折行情形下，center 会把时间的基线拉到整块中部（与第一行差 15px），
+   baseline 让它与第一行文字同基线。
+4. **卡片与行条补 `:focus-visible`**：`border-color: colorPrimaryBorder` +
+   `box-shadow: 0 0 0 3px controlOutline`。柔光走 token（深色的不透明度
+   更高），与 `Composer` 的 `focus-within` 同一处做法。
+5. **标签 hover 从 `colorPrimary` 改成 `colorLink`**（§3.5 的同一条推论）。
+6. **范围与落点各说一句真话**：目录里搜索时标题写「搜索结果 · 全部文档」；
+   空目录的空态写明内容落在库根、可在详情指派（`list-helpers.ts` 的
+   `scopeTitle` / `emptyScopeHint`）。同时**标签视图的搜索真的把 `tag`
+   传下去**——它本来就在契约里，不传等于同一个 bug 的另一半。
+
+**否决**：
+
+| 方案 | 为什么不用 |
+|---|---|
+| 给检索契约加 folder（把目录范围真传下去） | 要改 `packages/shared/src/search.ts`、`LegContext`、两条 leg 的 SQL 与宿主 `SearchParams`——一次界面收尾不该动检索契约。先让范围**可见**，契约改动留给功能需求的那一天 |
+| 切到搜索时清掉侧栏的目录选中态 | 那会改「当前在哪」这个状态的含义（用户点搜索只是想筛当前目录），而且 URL 里的 scope 仍在——清掉高亮等于界面与 URL 不一致 |
+| 窄屏把两个入口收成图标档 | 那要动可及名称的处理（AGENTS 坑表里 Segmented 那条），而这里真正的问题是标题与计数被挤折——`flex-wrap` 更小、更准 |
+| 卡片标签上限从 3 降到 2 | 治的是同一症状但会**少显示一个标签**（那是筛选入口），属产品行为改动 |
+| 卡片内边距与行条内边距拉到同一个值 | 两种布局的密度差是 §5.1 定的（卡片 15–17px、行条 10–11px），不是漂移 |
+| 空目录的按钮改带 folder（新建笔记直接进该目录） | 要给 `noteCreateSchema` 加字段、改服务端写路径与收集对话框；先如实说明落点，等「目录内新建」成为需求再动 |
+| 给 `.ant-tag` 补 `:focus-visible` 之外再补一层 outline | 卡片与行条是自定义 button，`outline: none` 后靠 box-shadow 与边框色两条线索——这正是 §7.2 的写法；多一层 outline 会与 antd 控件的观感分叉 |
+
+**影响**：`apps/web/src/components/library/LibraryView.style.ts`、
+`apps/web/src/components/library/LibraryView.tsx`、
+`apps/web/src/components/list-helpers.ts`（`scopeTitle` / `emptyScopeHint`）、
+`apps/web/src/components/list-helpers.test.ts`；DESIGN §8.2。
+
+---
+
+## D-076 Office 编辑器的一轮修复：pptx 缺几何兜底、纸张阴影、组名可见、列字母行、删除确认
+
+**背景**：Office 编辑器（docx / xlsx / pptx / html / markdown / pdf）经审计发现
+六处「对着界面才看得见」的问题。它们分两类：**渲染兜底**与**同壳的一致性**。
+
+| 症状 | 实测 |
+|---|---|
+| 某些 pptx 打开后文字**逐字竖排**、字压着字、冲出纸外（看着像文件坏了） | 画布上 46 个 `<text>`、44 行；首个元素 `offset={x:0,y:0,cx:0,cy:0}`。用仓库自己的渲染器复跑三份文件：缺几何的那份 44 行，另外两份（带 `<a:xfrm>`）分别是 2 行与 3 行 |
+| docx 的纸与工作台只差 4/255，看不出纸从哪儿开始 | 工作台 `#fbfbfb`、纸 `#ffffff`；`.doc-page` 计算 `box-shadow: none`（`--docs-page-shadow` 只定义在一份没被 import 的 vendor 样式里） |
+| docx 工具条上两个一模一样的「（默认）」下拉，看不出哪个管中文哪个管西文 | 两个下拉同属 `aria-label="字体"` 的组，而 `ToolbarGroup` 不渲染可见文字；组名只到得了读屏与 hover |
+| xlsx 附属面板写着 `C3`，网格里却没有列字母 | 表里 5 个 `<th>` 全是行号栏，无 `thead` |
+| 笔记工具条八组控件摊成一条没有分隔的图标带（同壳另外五种都有分隔线） | 组与组的 7 个间隔全是 2px，栏内竖线 0 条；docx 同一条栏有 5 条 |
+| pdf 的「删除这一页」一下生效，没有确认也没有撤销 | 点一次页数就变，无确认框；`grep 撤销 PdfEditor.tsx` 无结果，而另外三种格式都有 |
+
+**决定**：
+
+1. **缺几何在渲染层兜底，不写回模型**。`pptx-render.ts` 的
+   `withFallbackGeometry` 只对有文字的 text/shape、按 `sldSz` 比例回填默认框。
+   模型一个字节不动（保存是补丁式的、按 `anchor.originalXml` 回填），
+   并用 `geometryFilled` 在状态行**如实说明**「N 个文本框在文件里没有几何，
+   按默认框渲染」。
+2. **纸张阴影单列一档 `--me-page-shadow`（`boxShadowTertiary`）**，而不是继续
+   借用 `--me-shadow`（secondary）。DESIGN §5.3 把 secondary 定为浮层档，
+   纸是「微浮起」的卡片。pdf 页面与 pptx 幻灯片更大、更像独立画布，保留
+   secondary 不动。
+3. **组名要能被看见**：两个字体下拉与字号前面补 `.me-label` 级的前缀。同时给
+   `ToolbarSelect` 加 `emptyLabel`，把「这里没有直接取值」（`value === null`）
+   与「有一个值、只是不在预设档位里」分成两句不同的话（「（默认）」对「其它」）。
+4. **列字母行与行号栏同一套 sticky chrome**（含左上角交角格），选中列跟着
+   十字高亮亮——数据一直是 `sheet.columns`，只是从没渲染过。
+5. **分隔线只画在真正的组边界**，且只有前一组确实渲染了才画：工具条是
+   `flex-wrap` 的，分隔线是兄弟 flex 项，插密了会在换行时落到行末或行首。
+6. **不可逆动作加确认，不加撤销栈**：新增外壳原语 `ToolbarConfirm`
+   （antd `Popconfirm`）。同时把「删除/调序/旋转只在保存时落到文件上、
+   保存之前退出原件一字未动」写进 PDF 的常驻说明——那是没有撤销时的退路。
+
+**否决**：
+
+| 方案 | 为什么不用 |
+|---|---|
+| 给缺几何的 `<p:sp>` 补 `<a:xfrm>` 再回写文件 | 那是**编文件里没有的东西**，而且 `vendor/UPSTREAM.json` 明令不改 vendor、保存是补丁式（按原始字节回填）——写回去等于让「打开一份文件就会改它」 |
+| 把缺几何的文本框画成占位块/警告 | 那会把「能读的内容」换成「读不了」——文字是好的，坏的只是它的框 |
+| 让上游渲染器把 0 宽的框按纸宽重排（改 vendor） | 同样违反 UPSTREAM 的边界；渲染层的兜底只在 mimir 侧，同步上游时不会丢 |
+| docx 的纸也换成 `--me-shadow`（与 pdf/pptx 一致） | 纸张是内容的一部分（分页视图里一页接一页），浮层档的阴影会让每页看起来像一个可拖动的面板；「一致」在这里指的是**同一套 token 有档可依**，不是同一个值 |
+| 给 pdf 补一对撤销/重做按钮 | 那要做进进出出的历史栈，是**新能力**（且要与宿主守卫、保存后的基线对齐）；而这一条要解决的是「别误触」。先给确认与退路说明 |
+| 列字母用 `columnLetters` 拼在选择器里当 `data` 属性而不渲染 | 那等于没修：问题的全部就是「屏幕上找不到这个引用」 |
+| 笔记的工具条每个按钮之间都插分隔线 | `ToolbarDivider` 的既有说明：工具条是 `flex-wrap` 的，插密了那条 1px 会在换行时落到行末或行首，看起来像没画对 |
+
+**影响**：`packages/office/src/pptx-render.ts`、`editors/PptxEditor.tsx`、
+`editors/XlsxEditor.tsx`、`editors/DocxEditor.tsx`、`editors/MarkdownEditor.tsx`、
+`editors/PdfEditor.tsx`、`editors/editors.css`、`shell/EditorShell.tsx`、
+`shell/shell.css`；`apps/web/src/theme/editor-theme-bridge.ts`；
+测试：`pptx.test.ts`、`XlsxEditor.test.tsx`、`docx-toolbar-render.test.tsx`、
+`markdown-controls.test.ts`、`pdf-toolbar-render.test.tsx`、
+`shell/EditorShell.test.tsx`。文档：TECH §15.13、DESIGN §8.4.1。
+

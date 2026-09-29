@@ -22,7 +22,7 @@ export const documents = pgTable(
     id: text('id').primaryKey(),
     /** note | web | wechat | github | file（kind 是**来源**，格式是 mime 属性） */
     kind: text('kind').notNull(),
-    /** inbox | ready | failed | archived */
+    /** ready | failed（archived 已随 D-065 退役，存量行由迁移转 ready） */
     status: text('status').notNull().default('ready'),
 
     title: text('title').notNull(),
@@ -112,6 +112,21 @@ export const tags = pgTable(
   },
   (t) => [uniqueIndex('tags_name_idx').on(t.name)],
 )
+
+/**
+ * 目录注册表（D-068）。
+ *
+ * 曾经由文档的 folder 字段纯派生、刻意不建表（见 packages/shared/src/structure.ts
+ * 的旧注释）；「侧边栏直接增删改移目录」推翻了它——**空目录没有文档，在派生
+ * 模型里无处存在**。现在这张表是树结构的唯一真相，`documents.folder` 是归档
+ * 指派（冗余路径串）。一致性由服务端维护：指派到新路径自动补建祖先
+ * （mkdir -p），改/删目录批量重写指派（含笔记 frontmatter 与上传件 meta.json）。
+ */
+export const folders = pgTable('folders', {
+  /** 完整路径本身是主键，如 `技术/前端/React`——目录没有 id，路径就是身份 */
+  path: text('path').primaryKey(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
 
 export const documentTags = pgTable(
   'document_tags',

@@ -306,31 +306,41 @@ function PresetPicker({
       覆盖——那只改 antd 不知道的部分（docs/DECISIONS.md D-045）。
     */
     return (
-      <div className={styles.presetGrid}>
-        {sorted.map((preset) => (
-          <Button
-            key={preset.id}
-            className={styles.presetCard}
-            onClick={() => {
-              setPicked(preset)
-              setCustomUrl(preset.baseUrl)
-            }}
-          >
-            <span className={styles.presetBody}>
-              <span className={styles.presetName}>
-                {preset.name}
-                {preset.popular ? <span className={styles.presetDot} /> : null}
+      <>
+        <div className={styles.presetGrid}>
+          {sorted.map((preset) => (
+            <Button
+              key={preset.id}
+              className={styles.presetCard}
+              onClick={() => {
+                setPicked(preset)
+                setCustomUrl(preset.baseUrl)
+              }}
+            >
+              <span className={styles.presetBody}>
+                <span className={styles.presetName}>
+                  {preset.name}
+                  {preset.popular ? <span className={styles.presetTag}>常用</span> : null}
+                </span>
+                <span className={styles.presetUrl}>{preset.baseUrl || '需要自己填地址'}</span>
               </span>
-              <span className={styles.presetUrl}>{preset.baseUrl || '需要自己填地址'}</span>
-            </span>
-          </Button>
-        ))}
-        <Button className={styles.presetCard} onClick={onCancel}>
-          <span className={styles.presetBody}>
-            <span className={styles.presetName}>取消</span>
-          </span>
-        </Button>
-      </div>
+            </Button>
+          ))}
+        </div>
+
+        {/*
+          「取消」在网格**外面**，与「+ 添加供应商」同一个动作区。
+
+          它原先也是网格里的一张卡：同一描边、同一列宽，排在最后一个供应商
+          之后（实测 237×41 对供应商卡的 237×58）——扫读时读作第 9 家
+          「叫取消的供应商」，点下去才知道是返回。DESIGN §7.3 要的就是
+          「可点击元素各自可辨认」：两种动作（选一家 / 退出这个选择器）
+          不该共用一种形状。
+        */}
+        <div className={styles.actions} style={{ marginTop: 8 }}>
+          <Button onClick={onCancel}>取消</Button>
+        </div>
+      </>
     )
   }
 

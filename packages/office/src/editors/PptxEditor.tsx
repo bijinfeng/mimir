@@ -1356,6 +1356,17 @@ export function PptxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
         <>
           <ToolbarLabel>{status}</ToolbarLabel>
           {/*
+            缺几何的文本框如实说明（DESIGN §0.2）。**这一条不是可选的**：那些
+            框是按幻灯片比例补出来的（`pptx-render.ts` 的 `withFallbackGeometry`），
+            用户看到的版式不是文件里的版式——不说的话他会以为这就是原件的样子，
+            然后在 PowerPoint 里发现位置完全不同。短句，理由与下面那条相同。
+          */}
+          {rendered.geometryFilled > 0 && (
+            <ToolbarLabel>
+              {rendered.geometryFilled} 个文本框在文件里没有几何，按默认框渲染
+            </ToolbarLabel>
+          )}
+          {/*
             这条文字**必须短**：`.me-label` 是 `white-space: nowrap`，而状态行
             虽然 `flex-wrap`，一个不换行的 label 自身就是宽度下限——太长会把整
             个外壳的 min-content 撑过窄窗口（实测 560px 下 598px 的文字让

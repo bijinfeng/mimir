@@ -4,14 +4,15 @@ import type { MenuProps } from 'antd'
 /**
  * 文档工具条上的「⋯」菜单。
  *
- * ## 它接的是整理条退役后的那三项能力（D-054）
+ * ## 它接的是整理条退役后的那几项能力（D-054）
  *
  * 原先「建议标签 / 归入目录 / 完成整理 / 归档」摆在文档顶部的橙色横幅里，
- * 占一整行、长期存在。问题是**它们都是低频动作**：读一篇文章时并不想看到
- * 「归档」按钮，而那一整行横幅把标题与正文都往下挤。
+ * 占一整行、长期存在。问题是**它们都是低频动作**：读一篇文章时并不想被
+ * 一整行横幅把标题与正文往下挤。
  *
- * 收进菜单之后能力一个不少，但不再占版面。代价是多一次点击——这笔账划算，
- * 因为「加标签」与「归档」都不是阅读时会连续做的动作。
+ * 收进菜单之后能力不占版面。代价是多一次点击——这笔账划算，因为
+ * 「加标签」不是阅读时会连续做的动作。归档不在其列：它已随归档交互
+ * 整体退役（D-065），文档不再有第二个状态位。
  *
  * ## 为什么在这里写成纯函数
  *
@@ -41,8 +42,6 @@ export interface DocMenuOptions {
   doc: DocumentDetail
   onSetTags: (tags: string[]) => void
   onSetFolder: (folder: string) => void
-  onArchive: () => void
-  onUnarchive: () => void
   /** 已有目录路径，由调用方从目录查询里取 */
   folders?: readonly string[]
   /** 建议标签（后端按正文高频词算的）。没有就不显示这一组 */
@@ -129,14 +128,6 @@ export function buildDocMenu(options: DocMenuOptions): MenuProps['items'] {
     label: doc.folder ? `目录（${doc.folder}）` : '归入目录',
     children: folderChildren,
   })
-
-  items.push({ type: 'divider' })
-
-  items.push(
-    doc.status === 'archived'
-      ? { key: 'unarchive', label: '移出归档', onClick: options.onUnarchive }
-      : { key: 'archive', label: '归档', onClick: options.onArchive },
-  )
 
   return items
 }

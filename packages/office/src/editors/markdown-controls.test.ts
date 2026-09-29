@@ -98,4 +98,32 @@ describe('markdown 的控件契约（静态守护）', () => {
       .replace(/^\s*\/\/.*$/gm, '')
     expect(css, 'editors.css 里又出现了 .me-status-action 的规则').not.toMatch(/\.me-status-action/)
   })
+
+  /**
+   * 工具条上**要有分组分隔线**。
+   *
+   * 八到十个组的间隔与组内按钮的间隔在 CSS 里是同一个值（`.mimir-editor__bar`
+   * 与 `.me-group` 的 `gap` 都是 2px），所以不画线时整条读成一个没有结构的
+   * 图标带——「插入表格」与「加粗」的扫描成本一样。实测笔记这条栏的 7 个组间
+   * 间隔全是 2px、栏内一条竖线都没有，而同壳的另外五种格式都有（docx 5 条、
+   * xlsx 3、pptx 2、html 3、pdf 3）。
+   *
+   * 判据只能读源码文本：这条工具条要真挂起来得有宿主的方言扩展（见文件头），
+   * 而「组边界上有没有 `ToolbarDivider`」不需要方言就能问。同时钉住**数量**：
+   * 一条都不许少（回到图标带）、也不许每两个按钮插一条（`ToolbarDivider` 的
+   * 说明：工具条是 flex-wrap 的，分隔线的位置是兄弟 flex 项，插密了会在换行
+   * 时落到行末/行首）。
+   */
+  it('组与组之间有 `ToolbarDivider`（八到十个组读得出边界）', () => {
+    const editor = sourceOf('MarkdownEditor.tsx')
+    const dividers = editor.match(/<ToolbarDivider\s*\/>/g) ?? []
+    const groups = editor.match(/<ToolbarGroup\b/g) ?? []
+    expect(groups.length, '这条工具条的组数掉下来了（断言会失去意义）').toBeGreaterThanOrEqual(8)
+    expect(
+      dividers.length,
+      '组边界的分隔线一条都不许少——没有它整条就是一个没有结构的图标带',
+    ).toBeGreaterThanOrEqual(4)
+    expect(dividers.length, '分隔线比组还多：别每两个按钮插一条').toBeLessThan(groups.length)
+    expect(editor).toContain('ToolbarDivider,')
+  })
 })

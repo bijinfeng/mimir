@@ -10,7 +10,9 @@ import type {
   DocumentSummary,
   ExportStats,
   FileUploadResponse,
+  FolderDeleteResponse,
   FolderListResponse,
+  FolderMoveResponse,
   NoteCreate,
   NoteUpdate,
   ProbeResult,
@@ -253,6 +255,26 @@ export const api = {
   folders: {
     list() {
       return request<FolderListResponse>('/api/folders')
+    },
+    /** 新建目录。路径含父级（mkdir -p），已存在时抛 409 */
+    create(path: string) {
+      return request<{ path: string }>('/api/folders', {
+        method: 'POST',
+        body: JSON.stringify({ path }),
+      })
+    },
+    /** 改名与移动是同一个操作：from 子树整体搬到 to */
+    move(from: string, to: string) {
+      return request<FolderMoveResponse>('/api/folders', {
+        method: 'PATCH',
+        body: JSON.stringify({ from, to }),
+      })
+    },
+    /** 删除目录（文档保留、指派清空）。返回被移出的文档数 */
+    remove(path: string) {
+      return request<FolderDeleteResponse>(`/api/folders?path=${encodeURIComponent(path)}`, {
+        method: 'DELETE',
+      })
     },
   },
 

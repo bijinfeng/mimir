@@ -48,8 +48,17 @@ export default defineConfig(({ mode }) => {
        * 只在 dev 生效：它把每个请求交给 `src/dev.ts` 的 `app.fetch`，
        * 并且自己监听端口——所以服务端入口不能同时再起一个 `@hono/node-server`，
        * 见 `src/dev.ts` 里的说明。
+       *
+       * `injectClientScript: false`：这个 dev server **不服务自己的 HTML 页面**
+       * （前端页面由 `apps/web` 的 dev server 提供），它只服务 API。而
+       * `@hono/vite-dev-server` 默认按 `content-type: text/html` 往响应体末尾
+       * 追加 `<script>import("/@vite/client")</script>`（`dev-server.mjs:126`），
+       * **不看 `Content-Disposition` 是 inline 还是 attachment**。于是上传的
+       * `.html` 原件走 `/api/documents/:id/file` 取回时多出 42 字节，编辑器把
+       * 它当文件内容显示出来、保存一次就写进用户的文件——原件字节 =
+       * 磁盘上的文件这条前提在开发路径上悄悄不成立（实测 619 B → 659/661 B）。
        */
-      devServer({ entry: 'src/dev.ts' }),
+      devServer({ entry: 'src/dev.ts', injectClientScript: false }),
     ],
 
     server: {

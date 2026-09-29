@@ -29,7 +29,7 @@
  * 都跟着界面走。每个属性都带一个中性回退值，所以包能脱离宿主渲染
  * （测试、静态预览）。
  *
- * 下表是**全部** `--me-*`（宿主填 20 个，见 `editor-theme-bridge.ts`）：
+ * 下表是**全部** `--me-*`（宿主填 21 个，见 `editor-theme-bridge.ts`）：
  *
  * ```
  * --me-text            主文字                    --me-accent          主色（激活态描边与文字）
@@ -40,8 +40,9 @@
  * --me-hover           悬停底                    --me-stage-bg        工作台底（纸张之外）
  * --me-radius          圆角                     --me-content-width   正文列宽
  * --me-shadow          弹层阴影（菜单、颜色面板）  --me-font            正文字体栈
- * --me-font-mono       等宽字体栈                --me-font-size       正文档字号
- * --me-font-size-sm    辅助档字号                --me-icon-size       图标字形（**非文本**）
+ * --me-page-shadow     纸张阴影（docx 的纸）      --me-font-size       正文档字号
+ * --me-font-mono       等宽字体栈                --me-font-size-sm    辅助档字号
+ * --me-icon-size       图标字形（**非文本**）
  * ```
  *
  * `--me-accent-hover` 已删（D-064）：它唯一的读者是 `.me-btn--primary:hover`，

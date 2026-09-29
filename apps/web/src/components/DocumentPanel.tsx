@@ -21,6 +21,7 @@ import { extractHeadings } from '@/components/document/headings'
 import { formatMeta } from '@/components/list-helpers'
 import { api } from '@/lib/api'
 import { useAppShell } from '@/lib/app-shell-context'
+import { useUnsaved } from '@/lib/unsaved'
 
 /**
  * 右栏：文档视图。
@@ -37,12 +38,13 @@ import { useAppShell } from '@/lib/app-shell-context'
  *
  * ## 整理条已移除（D-054）
  *
- * 收件箱那一整条橙色横幅（建议标签 / 归入目录 / 完成整理 / 归档）删掉了。
- * 它占文档顶部一整行、长期存在，而**那三项能力都是低频动作**——读一篇文章
- * 时并不想看到「归档」按钮。能力没有丢，全部收进了工具条右端的「⋯」菜单
- * （见 `document/doc-menu.tsx`）。
+ * 收件箱那一整条橙色横幅（建议标签 / 归入目录 / 完成整理）删掉了。
+ * 它占文档顶部一整行、长期存在，而**那几项能力都是低频动作**——读一篇文章
+ * 时不想被一整行横幅挤压正文。能力没有丢，全部收进了工具条右端的「⋯」菜单
+ * （见 `document/doc-menu.tsx`）。归档不在其列：它已随归档交互整体退役
+ * （D-065）。
  *
- * 状态徽标保留：归档是**流程状态**，它是这篇文档「在哪个阶段」的唯一提示。
+ * 状态徽标保留：`failed` 表达「这条记录坏了」，是唯一偏离常态的状态。
  */
 export interface DocumentPanelProps {
   documentId: string | undefined
@@ -85,8 +87,9 @@ export function DocumentPanel({
   const { styles } = useStyles()
   const { styles: contentStyles } = useContentStyles()
   const { clearHighlight } = useAppShell()
+  const { runGuarded } = useUnsaved()
   const queryClient = useQueryClient()
-  const { message, modal } = App.useApp()
+  const { message } = App.useApp()
 
   const docQuery = useQuery({
     queryKey: ['document', documentId],
@@ -116,23 +119,35 @@ export function DocumentPanel({
    * 用 `viewerFor` 而不是自己判 MIME：它已经是「这个格式用哪个查看器」的
    * 唯一真相（`@mimir/shared`），两处各判一次必然有一天不一致。
    */
-  const wideContent =
-    doc !== undefined &&
-    (doc.kind === 'note' || (doc.sourceKey !== null && viewerFor(doc.mime) !== 'none'))
+  /** 这一份有没有**能看的原件**（有查看器的那种）。见下面两条判据 */
+  const showsSource = doc !== undefined && doc.sourceKey !== null && viewerFor(doc.mime) !== 'none'
+
+  const wideContent = doc !== undefined && (doc.kind === 'note' || showsSource)
 
   /**
-   * 右侧大纲只在**看正文**时给。
+   * 右侧大纲的判据**只有一个**：正文里有没有 ≥ 2 个标题。
    *
-   * 它是正文的锚点导航（`docs/PRD.md` §5.10），而文件类文档现在直接显示
-   * 原件——原件自带导航（pptx 的页签、xlsx 的表页签、docx 的分页），
+   * 它是正文的锚点导航（`docs/PRD.md` §5.10），唯一的豁免是**有原件的
+   * 文件类文档**——原件自带导航（pptx 的页签、xlsx 的表页签、docx 的分页），
    * 两个导航并排只是白占 196px 并把画布挤窄（实测 pptx 因此从 1208 掉到
    * 1012，用户的原话是「左右留那么大的空白也没必要」）。
    *
    * 顺带一提：pptx 的提取正文按页分成「第 1 页…第 5 页」，那些恰好会被
    * `extractHeadings` 当成标题，于是大纲列与翻页页签**列着同一批东西**
    * ——这也是它多余的直接证据。
+   *
+   * ## 为什么不再看 `wideContent`
+   *
+   * 第一版写成 `!wideContent && headings.length >= 2`，而 `wideContent` 对
+   * **笔记恒为真**（笔记的正文列要铺满，见上），于是笔记永远命中
+   * `!wideContent === false`：标题再多也放不出大纲，而右侧那 240px 本来就
+   * 空着。写这一行时笔记还是「内容高就够」的那一列，D-054 让笔记的正文列
+   * 也铺满之后两个判据就脱钩了——「内容列多宽」与「要不要大纲」是两件事。
+   *
+   * 实测（1440×900，样张 `Qh3DUSfWcbrYM6MT` 有 7 个标题）：
+   * `document.querySelectorAll('aside').length === 0`，全页没有「大纲」二字。
    */
-  const showOutline = !wideContent && headings.length >= 2
+  const showOutline = headings.length >= 2 && !showsSource
   const scrollRef = useRef<HTMLDivElement>(null)
   const [activeHeading, setActiveHeading] = useState<string | undefined>()
 
@@ -158,7 +173,7 @@ export function DocumentPanel({
   })
 
   /**
-   * 元信息的改动（标签 / 目录 / 归档）。原先是整理条那三个动作，现在从
+   * 元信息的改动（标签 / 目录）。原先是整理条上的动作，现在从
    * 「⋯」菜单触发——**失效范围一处不能少**：列表、目录树、标签云、导航计数。
    * 少刷一处就是界面上有一个数字在骗人。
    */
@@ -193,38 +208,96 @@ export function DocumentPanel({
    */
   const body = doc?.body ?? ''
   useEffect(() => {
-    const root = scrollRef.current
-    if (!root) return
+    const panel = scrollRef.current
+    if (!panel) return
 
     const list = extractHeadings(body)
     if (list.length < 2) return
 
-    const targets = list
-      .map((heading) => root.querySelector(`#${heading.id}`))
-      .filter((node): node is Element => node !== null)
-    if (targets.length === 0) return
+    let observer: IntersectionObserver | null = null
+    let timer = 0
+    let attempts = 0
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .toSorted((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0]
-        if (visible?.target.id) setActiveHeading(visible.target.id)
-      },
-      { root, rootMargin: '0px 0px -70% 0px', threshold: 0 },
-    )
+    /**
+     * **要重试**，而且要能**重挂**。两条都是实测定下来的：
+     *
+     * 1. 这个 effect 跑的时候正文可能还没挂载完——笔记的 Tiptap 与只读渲染
+     *    都是异步的，标题节点那时还不存在，一次找不到就再也找不到
+     *    （`body` 不会变第二次）。
+     * 2. **找到的节点之后还会被换掉**：内容装进 ProseMirror 时编辑器会重建
+     *    那一层 DOM，于是观察的是已经脱离文档的旧节点——观察器的回调照样来，
+     *    每个 entry 的 rect 全是 0（实测 `tops: [0,0,0,0,0,0,0]`），
+     *    `isIntersecting` 永远为假，症状是**高亮停在第 0 项、而大纲与跳转
+     *    都正常**（看上去只像「联动没生效」）。
+     *
+     * 所以：只在第一项拿不到 rect 时重挂，最多 20 次。Unmount 时两样都清掉。
+     */
+    const attach = () => {
+      const targets = headingNodes(panel, list.length)
+      const stale = targets.length === 0 || targets[0]!.getBoundingClientRect().height === 0
+      if (stale) {
+        attempts += 1
+        if (attempts < 20) timer = window.setTimeout(attach, 150)
+        return
+      }
 
-    for (const target of targets) observer.observe(target)
-    return () => observer.disconnect()
+      /* 观察的 root 必须是**真正在滚的那一层**（笔记与原件是外壳里的
+         `.me-scroll`，只读资料是面板）——见 `jumpTo` 的同一条说明。
+         root 写错时观察器仍然「工作」，只是永远不触发 */
+      const root = scrollableAncestor(targets[0]!, panel)
+
+      observer = new IntersectionObserver(
+        (entries) => {
+          /*
+            **观察目标被换掉时要重挂。** 内容装进 ProseMirror 时编辑器会重建
+            那一层 DOM，于是我们观察的是已经脱离文档的旧节点：回调照样来，
+            每个 entry 的 rect 全是 0（实测 `tops: [0,0,0,0,0,0,0]`），
+            `isIntersecting` 永远为假——症状是**高亮停在第 0 项，而大纲与
+            跳转都正常**（看上去只像「联动没做」）。判据用「第一项已经不在
+            文档里」，不是「没有 entry 相交」——正文滚出视野时后者也成立。
+          */
+          if (!targets[0]!.isConnected) {
+            observer?.disconnect()
+            attach()
+            return
+          }
+
+          const visible = entries
+            .filter((entry) => entry.isIntersecting)
+            .toSorted((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0]
+          const index = visible ? targets.indexOf(visible.target) : -1
+          const heading = index === -1 ? undefined : list[index]
+          if (heading) setActiveHeading(heading.id)
+        },
+        { root, rootMargin: '0px 0px -70% 0px', threshold: 0 },
+      )
+
+      for (const target of targets) observer.observe(target)
+    }
+
+    attach()
+
+    return () => {
+      window.clearTimeout(timer)
+      observer?.disconnect()
+    }
   }, [body])
 
-  const jumpTo = (id: string) => {
+  const jumpTo = (index: number) => {
     const root = scrollRef.current
-    const target = root?.querySelector(`#${id}`)
+    const target = root ? headingNodes(root, headings.length)[index] : undefined
     if (!root || !target) return
-    root.scrollTo({
+    /* 滚的是**目标所在的那一层**：笔记与原件现在由外壳自己滚
+       （`.me-scroll`，见 DocumentPanel.style.ts 的 `cols`），只读资料
+       那一列才是面板在滚。写死面板的话，笔记里点大纲会「点了没反应」——
+       面板的量根本不够滚，而目标在更里面那一层。 */
+    const scroller = scrollableAncestor(target, root)
+    scroller.scrollTo({
       top:
-        target.getBoundingClientRect().top - root.getBoundingClientRect().top + root.scrollTop - 20,
+        target.getBoundingClientRect().top -
+        scroller.getBoundingClientRect().top +
+        scroller.scrollTop -
+        20,
       behavior: 'smooth',
     })
   }
@@ -335,24 +408,6 @@ export function DocumentPanel({
     doc,
     onSetTags: (tags) => patch.mutate({ tags }),
     onSetFolder: (folder) => patch.mutate({ folder }),
-    onArchive: () => {
-      modal.confirm({
-        title: '归档这篇？',
-        // 归档是可逆的（状态位），所以用 confirm 而不是更重的流程，
-        // 但要说清它「不再出现在默认列表里」这个后果
-        content: '归档后它不再出现在默认列表里，但检索仍能找到，也能从「已归档」恢复。',
-        okText: '归档',
-        cancelText: '取消',
-        onOk: () => {
-          patch.mutate({ status: 'archived' })
-          message.success('已归档')
-        },
-      })
-    },
-    onUnarchive: () => {
-      patch.mutate({ status: 'ready' })
-      message.success('已移出归档')
-    },
     folders: flattenFolders(folderQuery.data?.items ?? []).map((item) => item.path),
     suggestedTags: suggestQuery.data?.items ?? [],
   })
@@ -369,16 +424,21 @@ export function DocumentPanel({
         返回按钮**留在头部最左**而不是收进菜单：`docs/PRD.md` §5.5 要求
         「回去」是显式动作（不能靠浏览器后退），而两栏布局里它是离开详情的
         主路径。两个返回并存——「返回对话」只在从对话跳来时出现。
+
+        两个都走 `runGuarded`：这里是**离开详情的主路径**，而原先它直接
+        `navigate`，于是编辑器刚写着「已修改，未保存」的那一笔改动就这么丢了
+        （与侧栏导航不一致——那里一直有拦截）。有未保存内容时才弹守卫框，
+        干净时不留任何中间态（`lib/unsaved.tsx` 的 `runGuarded`）。
       */}
       <div className={styles.header}>
         {onBackToChat && (
-          <button type="button" className={styles.back} onClick={onBackToChat}>
+          <button type="button" className={styles.back} onClick={() => runGuarded(onBackToChat)}>
             <ArrowLeftOutlined style={{ fontSize: 11 }} />
             返回对话
           </button>
         )}
         {onBack && (
-          <button type="button" className={styles.back} onClick={onBack}>
+          <button type="button" className={styles.back} onClick={() => runGuarded(onBack)}>
             <ArrowLeftOutlined style={{ fontSize: 11 }} />
             返回库
           </button>
@@ -459,9 +519,9 @@ export function DocumentPanel({
           </Tooltip>
 
           {/*
-            「⋯」：元信息与状态动作的出口。原先是整理条上的三项（标签 /
-            目录 / 归档），现在收在一处。它在最右端——**高频动作在左、
-            低频在右**是工具条的通用约定，而这三项都是低频的（D-054）
+            「⋯」：元信息动作的出口。原先是整理条上的几项（标签 / 目录），
+            现在收在一处。它在最右端——**高频动作在左、低频在右**是工具条
+            的通用约定，而这两项都是低频的（D-054）
           */}
           <Dropdown trigger={['click']} menu={{ items: menu }} placement="bottomRight">
             <Button
@@ -508,22 +568,28 @@ export function DocumentPanel({
               </div>
             )}
 
-            <DocumentFooter doc={doc} onOpenDocument={onOpenDocument} />
+            {/* 页脚双链与「返回库」是同一类动作：换一篇=离开这一篇。
+                同样走守卫，否则「改完点一个双链」是又一条静默丢改动的路
+                （中栏列表里的同一动作一直是拦的，见 LibraryView 的 open） */}
+            <DocumentFooter
+              doc={doc}
+              onOpenDocument={(id) => runGuarded(() => onOpenDocument(id))}
+            />
           </div>
 
-          {/* 右侧大纲。见 `showOutline` 的两条判据：正文才需要它，
-              而且标题数 ≥ 2 才出现——两段话的笔记不需要目录 */}
+          {/* 右侧大纲。判据见 `showOutline`：正文里有 ≥ 2 个标题就出现，
+              有原件的文件类文档除外（原件自带导航） */}
           {showOutline && (
             <aside className={styles.outline}>
               <div className={styles.outlineTitle}>大纲</div>
-              {headings.map((heading) => (
+              {headings.map((heading, index) => (
                 <button
                   key={heading.id}
                   type="button"
                   className={`${styles.olItem} ${heading.level === 3 ? styles.olItemLv3 : ''} ${
                     activeHeading === heading.id ? styles.olItemActive : ''
                   }`}
-                  onClick={() => jumpTo(heading.id)}
+                  onClick={() => jumpTo(index)}
                 >
                   {heading.text}
                 </button>
@@ -543,7 +609,7 @@ export function DocumentPanel({
  *
  * | 项 | 为什么在这里 |
  * |---|---|
- * | 状态徽标 | 归档是**流程状态**，它决定这篇在不在默认列表里 |
+ * | 状态徽标 | `failed` 是**状态**，它说「这条记录坏了」——`ready` 不给徽标（DESIGN §3.7） |
  * | 来源标注 | 「手动编辑 / AI 整理 / 本机导入」——借自 WeKnora（PRD §5.10）：一眼看出内容是谁生成的 |
  * | 位置 | 笔记的 vault 路径（能拿它去 Obsidian 里找）／上传件的原文件名／资料的 URL |
  * | 格式与大小 | 上传件才有（「PDF · 2.4 MB」）；**不是徽标**，格式是开放集合（DESIGN §3.7） |
@@ -594,6 +660,48 @@ function DocHeaderMeta({ doc }: { doc: DocumentDetail }) {
       <span>{new Date(doc.updatedAt).toLocaleDateString('zh-CN')}</span>
     </div>
   )
+}
+
+/**
+ * 正文里的标题节点，**按 DOM 顺序**——与 `extractHeadings` 的产出同序。
+ *
+ * ## 为什么按序号取，而不是按 `#id`
+ *
+ * 只读正文（`MarkdownBody`）在挂载后会给渲染出的 h1–h6 补上 `id`，那时
+ * 按 id 找是对的。但笔记的正文在 Tiptap 里（`contenteditable`）：
+ *
+ *  - 那里的标题**没有 id**，而且补不上——ProseMirror 用 MutationObserver
+ *    看自己的 DOM，下一个事务会把外来的属性改动一并重建掉（实测：给 7 个
+ *    标题写好 id，敲两个字之后 7 个 id 全空）
+ *  - 于是「点大纲」在笔记里是一条静默的死链：`querySelector('#h-0')` 永远
+ *    返回 null，`jumpTo` 直接 return，看上去就是点了没反应（DESIGN §7.4
+ *    说的最坏那种）
+ *
+ * 序号对应是同一个组件的既有做法：`MarkdownBody` 补 id 用的就是
+ * `nodes[index] ← headings[index]`。所以两处共用这一条规则。
+ * 已知的偏差：围栏代码块里的 `#` 会被正则当成标题、而 DOM 里没有对应节点
+ * ——那种情况下错位一格（与 `MarkdownBody` 的 id 补法同源，不是新引入的）。
+ */
+function headingNodes(root: HTMLElement, count: number): Element[] {
+  if (count === 0) return []
+  return [...root.querySelectorAll('h1, h2, h3, h4, h5, h6')].slice(0, count)
+}
+
+/**
+ * 目标所在的那一层**真正能滚**的容器（最近的、滚得动的那一个）。
+ *
+ * 注释区有两层滚动：面板（`.scroll`，只读资料用它）与编辑器外壳里的
+ * `.me-scroll`（笔记与原件用它，见 `packages/office/src/shell/shell.css`）。
+ * 目标在哪一层里，就滚哪一层——逐层往上找第一个「overflow 是 auto/scroll
+ * 且内容确实超出」的祖先，找不到就退回面板。
+ */
+function scrollableAncestor(node: Element, fallback: HTMLElement): HTMLElement {
+  for (let parent = node.parentElement; parent; parent = parent.parentElement) {
+    const overflowY = getComputedStyle(parent).overflowY
+    if (overflowY !== 'auto' && overflowY !== 'scroll') continue
+    if (parent.scrollHeight > parent.clientHeight + 1) return parent
+  }
+  return fallback
 }
 
 /** 归一化：小写、去空白、去 Markdown 记号——原始正文与渲染 DOM 的公共子串 */

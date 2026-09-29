@@ -1,10 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  buildActions,
-  buildConversations,
-  buildScopes,
-  currentKey,
-} from '@/components/nav/menu-items'
+import { buildActions, buildConversations, currentKey } from '@/components/nav/menu-items'
 
 /**
  * 左导航的 key 约定。
@@ -14,23 +9,12 @@ import {
  * 点下去什么都不发生，也没有任何提示。只能靠断言覆盖。
  */
 describe('导航 key 的编码与解码', () => {
-  it('文档页把 scope 编成 scope:<name>', () => {
-    expect(currentKey({ page: 'docs', scope: 'all' })).toBe('scope:all')
-    expect(currentKey({ page: 'docs', scope: 'archived' })).toBe('scope:archived')
-  })
-
-  it('标签筛选点亮「全部文档」——侧边栏没有标签项', () => {
-    // 侧边栏移除了标签分组，所以按标签筛选时没有对应的项可点亮。
-    // 返回 scope:all 是**诚实的近似**：标签筛选是「全部文档」的子筛选，
-    // 用户至少知道自己还在文档区，而不是怀疑界面坏了。
-    //
-    // 若将来标签回到侧边栏，这里应该改成返回 `tag:react` 本身
-    expect(currentKey({ page: 'docs', scope: 'tag:react' })).toBe('scope:all')
-  })
-
-  it('目录筛选点亮具体的那个目录', () => {
-    // 与标签不同：侧边栏**有**目录树，所以应当精确点亮
-    expect(currentKey({ page: 'docs', scope: 'folder:技术/前端' })).toBe('scope:folder:技术/前端')
+  it('文档页返回 null：没有 scope 项，目录树自己高亮（D-068）', () => {
+    // 「全部文档」入口已移除（进库就是默认视图）；目录高亮由 FolderSection
+    // 按 scope=folder: 精确点亮；标签筛选没有对应项，不强点亮任何东西
+    expect(currentKey({ page: 'docs', scope: 'all' })).toBeNull()
+    expect(currentKey({ page: 'docs', scope: 'tag:react' })).toBeNull()
+    expect(currentKey({ page: 'docs', scope: 'folder:技术/前端' })).toBeNull()
   })
 
   it('对话页有 id 时指向那个会话，没有 id 时指向「新建对话」', () => {
@@ -58,7 +42,6 @@ describe('导航 key 的编码与解码', () => {
       }
     }
     collect(buildActions() as never)
-    collect(buildScopes({ all: 2, archived: 0 }) as never)
     collect(buildConversations([], 10) as never)
     // 空会话列表时 buildConversations 返回一个带空 children 的分组，
     // 这里补上真实情形的那一条
@@ -68,13 +51,6 @@ describe('导航 key 的编码与解码', () => {
     allKeys.add('action:settings')
 
     for (const input of [
-      { page: 'docs' as const, scope: 'all' },
-      { page: 'docs' as const, scope: 'archived' },
-      // 来源（note / clip）不再是 scope（D-047），收件箱也不再是（D-054）。
-      // 标签走 tag: 前缀，currentKey 把它映射到「全部文档」点亮
-      //（目录树的 folder key 属于 NavSidebar 的树，不在 buildScopes
-      // 的清单里，不进这个断言）
-      { page: 'docs' as const, scope: 'tag:react' },
       { page: 'chat' as const, scope: 'all' },
       { page: 'chat' as const, scope: 'all', id: 'abc' },
       { page: 'settings' as const, scope: 'all' },
@@ -83,30 +59,12 @@ describe('导航 key 的编码与解码', () => {
         currentKey(input),
       )
     }
+    // 文档页编出 null（没有对应菜单项）——目录树的高亮在 FolderSection
+    expect(currentKey({ page: 'docs', scope: 'folder:技术' })).toBeNull()
   })
 })
 
 describe('菜单项构造', () => {
-  it('计数为 0 时不显示计数', () => {
-    // 「0」比空白更占注意力，而它不携带信息
-    const items = buildScopes({ all: 5, archived: 0 }) as {
-      key: string
-      extra?: unknown
-    }[]
-    expect(items.find((i) => i.key === 'scope:all')?.extra).toBe(5)
-    expect(items.find((i) => i.key === 'scope:archived')?.extra).toBeUndefined()
-  })
-
-  /**
-   * 侧边栏的视图就是**全集与归档两个**（D-054：收件箱退役）。
-   * 这条断言守的是「别把收件箱加回来」——加回来不会报错，
-   * 只会让那条两段式流程悄悄复活。
-   */
-  it('只有全部文档与已归档两个视图', () => {
-    const items = buildScopes({ all: 5, archived: 2 }) as { key: string }[]
-    expect(items.map((i) => i.key)).toEqual(['scope:all', 'scope:archived'])
-  })
-
   it('会话只有一个分组，不按日期切', () => {
     const items = buildConversations(
       [

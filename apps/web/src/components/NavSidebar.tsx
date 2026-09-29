@@ -1,5 +1,5 @@
 import {
-  FolderOpenOutlined,
+  AppstoreOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -8,16 +8,12 @@ import {
 } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { Avatar, Button, Dropdown, Menu, Tree, Tooltip } from 'antd'
+import { Avatar, Button, Dropdown, Menu, Tooltip } from 'antd'
 import type { MenuProps } from 'antd'
 import { BrandMark } from '@/components/BrandMark'
 import { useStyles } from '@/components/NavSidebar.style'
-import {
-  buildActions,
-  buildConversations,
-  buildScopes,
-  currentKey,
-} from '@/components/nav/menu-items'
+import { FolderSection } from '@/components/nav/FolderSection'
+import { buildActions, buildConversations, currentKey } from '@/components/nav/menu-items'
 import { api } from '@/lib/api'
 import { useUnsaved } from '@/lib/unsaved'
 
@@ -39,12 +35,9 @@ import { useUnsaved } from '@/lib/unsaved'
  * │ 昨天                        │
  * │   💬 昨天问的      1 天前   │
  * ├────────────────────────────┤
- * │ 知识库                      │
- * │   ▤ 收件箱              4  │
- * │   ▦ 全部文档            5  │
- * ├────────────────────────────┤
- * │ 目录                        │
- * │   📁 技术                   │
+ * │ 知识库                   ＋ │  目录树（D-068）：行上 ⋯ 管理与拖拽移动
+ * │   📁 技术                 2 │
+ * │      📁 前端              1 │
  * ├────────────────────────────┤
  * │ ⚙ 设置                      │
  * └────────────────────────────┘
@@ -72,7 +65,7 @@ import { useUnsaved } from '@/lib/unsaved'
 export interface NavSelection {
   /** 当前所在页。三值——设置页曾经被并进 docs，导致它永远不高亮 */
   page: 'docs' | 'chat' | 'settings'
-  /** 文档页的筛选：all / archived / folder:<path> / tag:<name> */
+  /** 文档页的筛选：all / folder:<path> / tag:<name> */
   scope: string
   /** 当前打开的文档 id（docs 页）或会话 id（chat 页） */
   id?: string
@@ -110,7 +103,6 @@ export function NavSidebar({
   const navigate = useNavigate()
   const { runGuarded } = useUnsaved()
 
-  const countsQuery = useQuery({ queryKey: ['counts'], queryFn: api.documents.counts })
   const foldersQuery = useQuery({ queryKey: ['folders'], queryFn: api.folders.list })
   const conversationsQuery = useQuery({
     queryKey: ['conversations'],
@@ -141,7 +133,6 @@ export function NavSidebar({
 
   /** 点击分发。key 的约定见 components/nav/menu-items.tsx */
   const onMenuClick: MenuProps['onClick'] = ({ key }) => {
-    if (key.startsWith('scope:')) return goDocs(key.slice('scope:'.length))
     if (key.startsWith('conv:')) return goChat(key.slice('conv:'.length))
     if (key === 'action:new-chat') return goChat()
     if (key === 'action:search') return onOpenPalette()
@@ -153,7 +144,6 @@ export function NavSidebar({
     }
   }
 
-  const folders = foldersQuery.data?.items ?? []
   const selectedKey = currentKey(selection)
   const conversations = conversationsQuery.data?.items ?? []
 
@@ -224,57 +214,57 @@ export function NavSidebar({
           mode="inline"
           className={`${styles.menu} ${collapsed ? styles.menuCollapsed : ''}`}
           inlineCollapsed={collapsed}
-          selectedKeys={[selectedKey]}
+          selectedKeys={selectedKey ? [selectedKey] : []}
           onClick={onMenuClick}
           items={[
             ...buildActions(),
             { type: 'divider' },
             ...conversationItems,
-            { type: 'divider' },
-            {
-              type: 'group',
-              label: '知识库',
-              children: buildScopes(countsQuery.data),
-            },
+            /* 尾部分隔线只在展开态渲染：折叠态下知识库区块收成一个图标，
+               两条 divider 叠在一起会像渲染坏了 */
+            ...(collapsed ? [] : [{ type: 'divider' as const }]),
           ]}
         />
 
         {/*
-          目录树在折叠态下**整块隐藏**。
-          
-          一个层级树没有「只剩图标」的形态：留着它会变成一列缩进错乱、
-          认不出是什么的文件夹图标。而它本来就是低频入口（`PRD.md` §5.2
-          的左栏清单里它排在最后），折叠时让位是合理的代价。
-          
-          同理，会话历史在折叠态下由 `inlineCollapsed` 收成图标 + tooltip——
+          知识库分区（D-068）：目录树 + 增删改移都在 `FolderSection` 里。
+          「全部文档」导航项已移除——进库就是默认视图，侧边栏放的是**结构**
+          （目录树）而不是一个重复的入口。
+
+          折叠态下换成**一个图标按钮**：层级树没有「只剩图标」的形态
+          （留着会是一列缩进错乱的文件夹图标），但折叠后如果什么都不渲染，
+          48px 的栏里就没有任何进入库的入口——那等于断了整条导航。
+          图标（九宫格）不指某个目录，只回库的默认视图。
+
+          会话历史在折叠态下由 `inlineCollapsed` 收成图标 + tooltip——
           相对时间那一栏会消失，那是 rail 的固有代价。
         */}
-        {collapsed ? null : (
-          <div className={styles.treeGroup}>
-            <div
-              className={styles.emptyHint}
-              style={{ paddingTop: 14, fontWeight: 600, color: 'inherit' }}
-            >
-              目录
-            </div>
-            {folders.length === 0 ? (
-              <div className={styles.emptyHint}>还没归入任何目录</div>
-            ) : (
-              <Tree
-                blockNode
-                showIcon
-                defaultExpandAll
-                className={styles.treeWrap}
-                selectedKeys={
-                  selection.page === 'docs' && selection.scope.startsWith('folder:')
-                    ? [selection.scope.slice('folder:'.length)]
-                    : []
-                }
-                icon={<FolderOpenOutlined />}
-                treeData={toTreeData(folders, styles.treeCount)}
-                onSelect={(_keys, info) => goDocs(`folder:${String(info.node.key)}`)}
+        {collapsed ? (
+          <div className={styles.collapsedLibrary}>
+            <Tooltip title="知识库" placement="right">
+              <Button
+                type="text"
+                aria-label="知识库"
+                icon={<AppstoreOutlined />}
+                onClick={() => goDocs('all')}
               />
-            )}
+            </Tooltip>
+          </div>
+        ) : (
+          <div className={styles.treeGroup}>
+            <FolderSection
+              items={foldersQuery.data?.items}
+              isLoading={foldersQuery.isLoading}
+              activePath={
+                selection.page === 'docs' && selection.scope.startsWith('folder:')
+                  ? selection.scope.slice('folder:'.length)
+                  : null
+              }
+              onSelect={(path) =>
+                /* 空路径 = 删除当前目录后回库的默认视图，不是 folder: 前缀 */
+                goDocs(path ? `folder:${path}` : 'all')
+              }
+            />
           </div>
         )}
       </div>
@@ -364,6 +354,20 @@ function AccountRow({
     { key: 'signout', icon: <LogoutOutlined />, label: '登出', danger: true },
   ]
 
+  const accountTrigger = (
+    <Button
+      type="text"
+      className={`${styles.account} ${collapsed ? styles.accountCollapsed : ''}`}
+      /* 折叠态只剩一个字母头像：名字与「这是一组账号动作」都得靠可及名称补回来 */
+      aria-label={collapsed ? `${user.name}，账号与登出` : undefined}
+    >
+      <Avatar size={26} src={user.image ?? undefined} className={styles.accountAvatar}>
+        {user.name.slice(0, 1).toUpperCase()}
+      </Avatar>
+      {collapsed ? null : <span className={styles.accountName}>{user.name}</span>}
+    </Button>
+  )
+
   return (
     <div className={`${styles.accountRow} ${collapsed ? styles.accountRowCollapsed : ''}`}>
       <Dropdown
@@ -377,12 +381,27 @@ function AccountRow({
           },
         }}
       >
-        <div className={`${styles.account} ${collapsed ? styles.accountCollapsed : ''}`}>
-          <Avatar size={26} src={user.image ?? undefined} className={styles.accountAvatar}>
-            {user.name.slice(0, 1).toUpperCase()}
-          </Avatar>
-          {collapsed ? null : <span className={styles.accountName}>{user.name}</span>}
-        </div>
+        {/*
+          触发器是 antd 的 `Button`，**不是带 onClick 的 div**（D-042）。
+
+          它原来是个 div，于是折叠后那个字母头像既不在 tab 序列里、也没有
+          可及名称：整条 rail 的键盘序列是「折叠开关 → 菜单 → 知识库 →
+          设置」，账号行被跳过（实测），而鼠标悬停也弹不出任何提示
+          （同一栏里其余图标都有 tooltip）。登出因此在这条栏里失去了名字。
+
+          换成 `Button` 就同时解决三件事：可聚焦、Enter/Space 打开菜单
+          （Dropdown 靠点击触发，而 div 按 Enter 不发 click）、以及外层
+          `Tooltip` 能挂上去。
+
+          Tooltip **只在折叠态给**：展开态名字就写在旁边，再弹一次是噪音。
+        */}
+        {collapsed ? (
+          <Tooltip title={user.name} placement="right">
+            {accountTrigger}
+          </Tooltip>
+        ) : (
+          accountTrigger
+        )}
       </Dropdown>
 
       {/*
@@ -402,29 +421,4 @@ function AccountRow({
       </Tooltip>
     </div>
   )
-}
-
-interface TreeDatum {
-  key: string
-  title: React.ReactNode
-  children?: TreeDatum[]
-}
-
-/** 服务端的目录树 → antd Tree 的形状。key 用完整路径，因为它本身就是筛选条件 */
-function toTreeData(
-  nodes: { path: string; name: string; count: number; children: unknown[] }[],
-  countClass: string,
-): TreeDatum[] {
-  return nodes.map((node) => ({
-    key: node.path,
-    title: (
-      <span>
-        {node.name}
-        <span className={countClass}>{node.count}</span>
-      </span>
-    ),
-    ...(node.children.length > 0
-      ? { children: toTreeData(node.children as typeof nodes, countClass) }
-      : {}),
-  }))
 }

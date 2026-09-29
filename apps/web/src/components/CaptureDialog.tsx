@@ -15,7 +15,8 @@ import { FONT_SIZE } from '@/theme/tokens'
  * 这是原型阶段补的第一个洞（`docs/PRD.md` §2.2）：插件列表里列了六个抓取器，
  * 但界面上根本没有地方粘贴链接。收集不到东西，后面整条链都没有意义。
  *
- * 上传文件与粘贴链接是**同一件事**——把外部的东西收进库，都先进收件箱。
+ * 上传文件与粘贴链接是**同一件事**——把外部的东西收进库，抓到即入库（收件箱
+ * 流程已随 D-054 退役，新内容直接可用）。
  * 合成一个对话框而不是两个入口：用户不该先判断「我这次算哪种」，
  * 而那个判断对结果没有任何影响。
  *
@@ -251,14 +252,24 @@ export function CaptureDialog({ open, onClose, onCaptured }: CaptureDialogProps)
       title="收集内容"
       width={540}
       destroyOnHidden
+      /*
+       * 圆角 12px 与命令面板同一档。
+       *
+       * `docs/DESIGN.md` §5.2 把「对话框、命令面板、输入框组」定为 **12–14px**，
+       * 而 antd 的 `borderRadiusLG` 是 base(8) + 2 = 10px（§8.10 记了同一件事），
+       * 够不到那个区间。不覆写的话这个对话框是 10px，而命令面板是 12px——
+       * 同族浮层并排看会有两种圆角，收集对话框显得更「硬」（实测两张截图
+       * 的左上角弧线到 dx=6 / dx=8 才收到直角）。
+       */
+      styles={{ container: { borderRadius: 12 } }}
       footer={
         <div className={styles.footer}>
           <span className={styles.footerHint}>
             {tab === 'upload'
-              ? '上传的文件也先进收件箱，之后按标签与目录整理'
+              ? '上传的文件直接入库，之后按标签与目录整理'
               : failure
                 ? '这次没成功。可以先试试别的链接，或改用浏览器扩展。'
-                : '抓到的内容先进收件箱，之后再整理'}
+                : '抓到的内容直接入库，之后按标签与目录整理'}
           </span>
           <Button onClick={close}>{tab === 'upload' ? '关闭' : '取消'}</Button>
           {/* 上传页签的「行动按钮」在面板里（每行一个结果，按钮要说清打开哪一个），
@@ -330,7 +341,16 @@ export function CaptureDialog({ open, onClose, onCaptured }: CaptureDialogProps)
                 const doneCount = stages.length
                 const index = STAGE_ORDER.indexOf(stage)
                 const isRunning = running && index === doneCount
-                const failed = failure && index === doneCount
+                /*
+                 * **必须收成 boolean。** `failure` 是 `{…} | null`，直接写
+                 * `failure && index === doneCount` 时失败为 null 的那一帧
+                 * `failed` 就是 `null`，而它被传给了 antd-style 的 `cx`——
+                 * `isReactCssResult(null)` 会执行 `'styles' in null` 并抛
+                 * TypeError（实测：点「抓取」的**那一刻**对话框就崩，
+                 * 整棵树被 error boundary 接走，连成功后的 toast 都到不了）。
+                 * `false` / `undefined` 没有问题，只有 `null` 会。
+                 */
+                const failed = Boolean(failure) && index === doneCount
 
                 return (
                   <div key={stage} className={cx(styles.stage, isRunning && styles.stageActive)}>
@@ -387,7 +407,7 @@ export function CaptureDialog({ open, onClose, onCaptured }: CaptureDialogProps)
 
           {running && (
             <Typography.Text type="secondary" className={styles.hint}>
-              <InboxOutlined /> 抓完会直接进收件箱
+              <InboxOutlined /> 抓完会直接入库
             </Typography.Text>
           )}
         </div>

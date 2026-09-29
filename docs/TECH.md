@@ -312,6 +312,15 @@ M1 要「引用可点回原文位置」，而文档级的命中点不出位置�
 变的只是服务端从「文档」换成「分块」再组装回这个形状——所以界面、引用卡片、
 「跳回原文并高亮」都不用改，而引用位置从「猜的」变成「索引里记的」。
 
+**`text` 是洗过 Markdown 的展示文本，`start`/`end` 是**未洗的窗口边界**。**
+两者不再满足 `end - start === text.length`（清洗会去掉 `#`、`**`、表格竖线）
+——这是刻意的：偏移那对字段是给「跳回原文」用的，指向正文里的区间，不能跟着
+展示走。而 `text` 会被直接渲染在库卡片与命令面板的副标题上，留着标记就会读成
+源码（同一份文档在库卡片里干净、在搜索结果里带 `#`，用户会以为搜到的是另一条）。
+清洗规则只有一份：`apps/server/src/lib/text.ts` 的 `stripMarkdown`，浏览路径的
+`toExcerpt` 也用它。要用 `text` 做高亮的话，得另加一个纯文本字段，不要改这两个
+偏移的含义。
+
 `chunks` 表（派生数据，可从 `documents.body` 完全重建）：
 
 ```sql
@@ -1044,13 +1053,19 @@ fromWire(incoming, existing)  → 把已存的密钥合回来（写入时）
 
 这样「可配置的东西」和「代码里的实现」永远一一对应，不会出现设置里有开关但代码里没有对应逻辑。
 
-**值的真相在服务端，界面不自己存一份。** `GET /api/config` 回三块：
+**值的真相在服务端，界面不自己存一份。** `GET /api/config` 回四块：
 
 | 块 | 内容 |
 |---|---|
 | `settings` | 每个键的当前值（密钥除外）、来源、类型、说明、改了要不要重建索引 |
 | `plugins` | 四条接缝的描述符 + 可用性 |
 | `models` | 角色 → 就绪状态（派生值，不存） |
+| `database` | 当前驱动（`postgres` / `sqlite`）与 SQLite 的库文件路径 |
+
+`database` 是**部署事实**（`DATABASE_URL` 不入键表，见 §7.5），但它必须由服务端
+回传而不是由界面写死厂商名：双后端（D-045）下写死的那一半在另一套部署里必然说错，
+而「数据与备份」分区的「真相在哪」正是用户拿来核对的地方——同一屏上的
+「文档 17」就是可对照的。Postgres 下 `file` 为 `null`：连接串含凭据，不下发。
 
 早期版本把这些值硬编码在设置页组件里，于是改了 `MODEL_CHAT_MODEL` 之后界面仍显示旧模型名——
 设置页自己写的原则是「画一个存不进去的假表单比没有更糟」，显示一个说不了真的值属于同一类问题。
@@ -1292,6 +1307,7 @@ M1 的新代码大多是「纯函数 + SQL」，两类都能用能说明用户�
 | 无头截图动画冻结 | 浮层看起来透明 | 只是截图问题，真实浏览器正常 |
 | oxlint 的 react-in-jsx-scope | React 17+ 报「React 必须在作用域内」 | 关掉，这是历史遗留规则 |
 | oxlint 的 import/no-named-as-default | Tiptap 包同时有 default 与 named 导出，误报 | 关掉，统一用 named 导入 |
+| better-sqlite3 的事务配 async 回调 | drizzle 的 `db.transaction(async (tx) => …)` 在 better-sqlite3 上回调被当同步跑——提交发生在 await 之前，后续语句报「事务外使用 tx」或静默写丢（实测 500） | **不用事务**：顺序写 + 「文件先行」兜底（`services/folders.ts`）；真需要原子性时用同步回调 |
 | oxfmt 格式化中文表格 | 列宽按字节算，中文表格反而更乱 | oxfmt 排除 `**/*.md` |
 | React Compiler 的 0.x peer 范围 | `^0.145.0` 对 0.x 是 `>=0.145.0 <0.146.0` | 装 0.145.x；装 0.150.0 会报 unmet peer |
 | 抑制 React 规则会让编译器跳过组件 | 编译通过了，但组件没被优化，且无任何提示 | 保持 `logDiagnostics: true`；改成符合 Rules of React 而不是 disable |
@@ -1302,6 +1318,7 @@ M1 的新代码大多是「纯函数 + SQL」，两类都能用能说明用户�
 | workspace 包以源码发布 | 生产容器启动报 `ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`——Node 拒绝执行 node_modules 里的 TS | `@mimir/shared` 以源码发布，但**由使用方编译**：前后端都交给 Vite（server 是 SSR 构建）。见 D-023、D-033 |
 | 打包时把源码目录结构拍平 | `resolveWebDist()` 少算一级目录，静态资源静默 404 | Vite 的 SSR 构建开 `preserveModules`（配 `preserveModulesRoot: src`），保持一文件对一文件 |
 | 服务端 dev 入口自己起监听 | 启动即 `EADDRINUSE`——dev 入口与 Vite 的 dev server 抢同一个端口 | 监听只由 `src/index.ts`（生产入口）做；`src/dev.ts` 只导出 `app`，交给 `@hono/vite-dev-server` |
+| dev server 往 **API 响应**里注入客户端脚本 | 上传的 `.html` 原件经 `/api/documents/:id/file` 取回时多出 `<script>import("/@vite/client")</script>`（619 → 659 字节）：源码编辑器把那 42 字节当成文件内容显示，保存一次就写进用户的文件，而**没有任何报错** | 这个 dev server 不服务自己的 HTML 页面（前端页面由 `apps/web` 提供），所以关掉注入：`devServer({ entry: 'src/dev.ts', injectClientScript: false })`。`@hono/vite-dev-server` 默认按 `content-type: ^text/html` 追加脚本，**不看 `Content-Disposition`** 是 inline 还是 attachment |
 | 照抄 Vite 文档里的 `build.rollupOptions` | Vite 8 里它只是 `rolldownOptions` 的别名（已标注 deprecated） | 新配置一律用 `rolldownOptions` |
 | 仓库根靠标志文件查找 | 生产镜像里没有 `pnpm-workspace.yaml`，启动即抛错 | 找不到时退回 `cwd` 而不是抛错；容器里全部传绝对路径 |
 | `src/` 与 `dist/` 层级不一致 | 静态资源路径在仓库内正确、在镜像里算到 `/web/dist` | 按候选路径探测 + `WEB_DIST` 显式指定，不用写死的相对偏移 |
@@ -1361,6 +1378,7 @@ M1 的新代码大多是「纯函数 + SQL」，两类都能用能说明用户�
 | `DATABASE_URL` 缺失时默认 SQLite | 原先连 Postgres 的环境漏配它，会**静默换到空库**——症状是「数据全丢了」 | 部署环境始终显式设置（compose / Dockerfile 已如此）；启动日志打印当前驱动与库位置 |
 | better-sqlite3 是同步 I/O | 大查询会阻塞事件循环，所有并发请求排队 | 单用户 + 个人库规模（查询毫秒级）可接受；PG 路径（服务器部署）不受影响。见 RESEARCH §11.1 |
 | **同一个断点被 CSS 与 React 各写一份** | 窄屏（≤880px）下外壳的 `@media` 把左列压到 48px，而栏内内容按用户偏好仍渲染成展开态——中文标签逐字竖排、品牌名与折叠开关叠在一起。界面**不报错**，只是全变形，且只改了其中一处的人看不出来 | 断点在 `theme/tokens.ts` 定义一次（`NAV_NARROW_QUERY`），CSS 与 `matchMedia` 共用；`design.test.ts` 守住外壳里不再出现这个字面量。见 DESIGN §5.5 / D-055 |
+| **目录树每行都把名字画在下一行上** | rc-tree 的行是 `.ant-tree-node-content-wrapper`（block）里放「图标 + `.ant-tree-title`」，而 title 是**行内**元素；行内容却是块级 flex 盒子，放不进行内上下文里图标所在的 line box，被折到下一行——每行标题 top 比本行高**恰好 28px**。后果是 `elementFromPoint` / 真指针取「技术」字形中心命中的是「后端」那一行，点目录进错目录，而界面没有任何提示 | 让这一行成为一次 flex 布局：wrapper 补 `display: flex; align-items: center`，title 补 `display: flex; flex: 1; min-width: 0`（`FolderSection.tsx` 的 `treeWrap`）。见 DESIGN §8.1 / D-069 |
 
 ---
 
@@ -2754,3 +2772,35 @@ DPI 都不用重算。存像素就要在每次缩放时重算一遍，而漏算�
 **仍未做的**：改文字（PDFium 的 WASM）、单边裁剪（模型支持四边各自的量，界面上
 只能四边等量）、表单填写、矢量图形编辑、批注、以及**选中/复制页面上的文字**
 （文字层只用来定位高亮，没有做可选的文本层）。
+
+### 15.13 编辑器外壳与三种「纸」的观感（2026-09 修复轮）
+
+这一轮只修界面层的可见缺陷，**没有新增能力、没有改数据模型**。四条与
+「看得见的事实」有关，记在这里是因为它们的成因都不是「某个值写错了」。
+
+| 症状 | 成因 | 修法 |
+|---|---|---|
+| 打开某些 pptx，画布上的字**逐字竖排**、字压着字并冲出纸外 | `<p:sp>` 的几何三处来源（自己的 `<a:xfrm>`、占位符链、或者什么都没有）里第三种没兜底，`transform` 落在 `(0,0,0,0)`；而 `layoutText` 的可用宽度是 `max(0 − 内边距, 1) = 1px`，于是每个汉字占一行 | 渲染层兜底（`pptx-render.ts` 的 `withFallbackGeometry`）：**只对有文字的 text/shape**、按 `sldSz` 比例回填默认框（左右各 5%、高 20%，多个框竖向排开）。模型一个字节不动（保存是补丁式的），并用 `RenderedSlide.geometryFilled` 在状态行如实说明「N 个文本框在文件里没有几何」 |
+| docx 的纸与工作台糊成一片（差 4/255），看不出纸从哪儿开始 | `.doc-page` 的 `box-shadow: var(--docs-page-shadow)` 里的变量**只定义在一份没被 import 的 vendor 样式**里（`vendor/apps/docs/src/renderer/styles.css`），于是解析成 `none` | 宿主补 `--me-page-shadow`（`boxShadowTertiary`——DESIGN §5.3 里「卡片微浮起」那一档），`editors.css` 的 `.mimir-docx-scroll` 把它接到 `--docs-page-shadow` 上 |
+| docx 工具条上两个一模一样的「（默认）」下拉，看不出哪个管中文哪个管西文 | `ToolbarGroup` 只渲染 `role="group"` + `aria-label`，不渲染可见文字——组名只到得了读屏与 hover 的 `title` | 两个字体下拉与字号前面补 `.me-label` 级的可见前缀（中文 / 西文 / 字号）；字号的 `null` 档改用新加的 `emptyLabel`（「（默认）」），与「值不在档位里」的「其它」分开 |
+| xlsx 附属面板写着 `C3`，而网格里只有行号栏、没有列字母 | 列字母从未渲染（模型里一直有 `sheet.columns`，它是列宽的同一条数据） | 表头补一行 `<th class="mimir-xlsx__colhead">` + 左上角交角格；与行号栏共用一套 sticky chrome，选中列跟着十字高亮亮 |
+
+另外两处是**交互的不对称**，属于「同壳的六种格式应当一致」：
+
+- **笔记工具条没有分组分隔线**（其余五种都有）。`.mimir-editor__bar` 与
+  `.me-group` 的 `gap` 都是 2px，不画线时组与组、组内按钮的间隔完全一样，
+  八到十个组读成一个没有结构的图标带。修法是按已有的组边界补
+  `<ToolbarDivider />`（**只画在真正的组边界**，且只有前一组确实渲染了才画）。
+- **pdf 的「删除这一页」一下生效、没有确认也没有撤销**（docx / html / 笔记
+  的工具条都有撤销）。这一条加的是**确认**而不是撤销栈：撤销是新能力，而这
+  里要的是「别误触」。为此新增外壳原语 `ToolbarConfirm`（antd `Popconfirm`），
+  并在 PDF 的常驻说明里写清退路——删除、调序、旋转都只在保存时落到文件上。
+
+**一个包裹在 `ToolbarConfirm` 里暴露出来的静默 bug**：`ToolbarButton` 是函数
+组件，没有把 `ref` 转给 antd 的 `Button`。rc-trigger 用
+`cloneElement(child, { ref })` 拿触发元素来定位，ref 丢掉之后 `targetEle` 是
+null、`onAlign` 直接返回，弹层留在初始位置 `left: -1000vw; top: -1000vh`。
+**DOM 里一切正常**（`.ant-popconfirm` 在、文案在、点确认也能走到 `onConfirm`），
+只有屏幕上没有——真实浏览器实测确认框的 rect 是 `x=-14400, y=-9000`。
+React 19 的 ref-as-prop 下补 `ref` 透传即可，`EditorShell.test.tsx` 有一条
+断言守着「ref 落到真 `<button>` 上」。

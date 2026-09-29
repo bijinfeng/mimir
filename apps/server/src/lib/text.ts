@@ -7,26 +7,44 @@ export function contentHash(text: string): string {
 }
 
 /**
+ * 去掉 Markdown 语法标记，只留文字。**列表摘要与检索摘要共用这一份**。
+ *
+ * 摘要的位置（库卡片、命令面板、引用片段）回答的是「这段在说什么」，
+ * 而不是「原文长什么样」——`#`、`**`、表格竖线留在里面会打断句子，
+ * 读起来像源码。而正文本身的渲染由界面负责，标记不在这里丢。
+ *
+ * 为什么抽出来：这个"清洗"曾经只做在浏览路径上（`toExcerpt`），检索路径
+ * 直接 `body.slice(...)` 原样给前端——于是**同一份文档**在库卡片里是干净的、
+ * 在命令面板的搜索结果里带着 `#` 与 `**`。两条路径各写一遍清洗必然漂移，
+ * 所以规则只有这一处。
+ */
+export function stripMarkdown(markdown: string): string {
+  return (
+    markdown
+      // 围栏代码块整体丢掉
+      .replace(/```[\s\S]*?```/g, ' ')
+      // 行内代码保留内容
+      .replace(/`([^`]*)`/g, '$1')
+      // 图片整体丢掉，链接只留文字
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+      .replace(/^\s{0,3}#{1,6}\s+/gm, '')
+      .replace(/^\s{0,3}>\s?/gm, '')
+      .replace(/^\s{0,3}[-*+]\s+/gm, '')
+      .replace(/^\s{0,3}\d+\.\s+/gm, '')
+      .replace(/[*_~]{1,3}/g, '')
+      .replace(/\|/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+  )
+}
+
+/**
  * 列表与搜索结果用的纯文本摘要。
  * 去掉 Markdown 语法标记，让预览读起来是「内容」而不是「源码」。
  */
 export function toExcerpt(markdown: string, maxLength = 200): string {
-  const plain = markdown
-    // 围栏代码块整体丢掉
-    .replace(/```[\s\S]*?```/g, ' ')
-    // 行内代码保留内容
-    .replace(/`([^`]*)`/g, '$1')
-    // 图片整体丢掉，链接只留文字
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
-    .replace(/^\s{0,3}#{1,6}\s+/gm, '')
-    .replace(/^\s{0,3}>\s?/gm, '')
-    .replace(/^\s{0,3}[-*+]\s+/gm, '')
-    .replace(/^\s{0,3}\d+\.\s+/gm, '')
-    .replace(/[*_~]{1,3}/g, '')
-    .replace(/\|/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
+  const plain = stripMarkdown(markdown)
 
   if (plain.length <= maxLength) return plain
   return `${plain.slice(0, maxLength).trimEnd()}…`

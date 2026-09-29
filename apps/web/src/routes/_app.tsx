@@ -31,7 +31,7 @@ import { NAV_NARROW_QUERY } from '@/theme/tokens'
  */
 
 export interface AppSearch {
-  /** all / archived / folder:<path> / tag:<name>（来源与收件箱都不再是浏览维度） */
+  /** all / folder:<path> / tag:<name>（来源、收件箱与归档都不再是浏览维度） */
   scope: string
   id?: string
 }
@@ -65,7 +65,7 @@ function writeNavCollapsed(collapsed: boolean): void {
 
 export const Route = createFileRoute('/_app')({
   validateSearch: (search: Record<string, unknown>): AppSearch => ({
-    // scope 用一个字符串编码筛选条件：全集 / 归档 / 目录 / 标签互斥
+    // scope 用一个字符串编码筛选条件：全集 / 目录 / 标签互斥
     scope: typeof search.scope === 'string' && search.scope ? search.scope : 'all',
     ...(typeof search.id === 'string' && search.id ? { id: search.id } : {}),
   }),
@@ -244,6 +244,7 @@ function AppShell() {
         citation,
         clearHighlight: () => setCitation(null),
         openDocument,
+        openCapture: () => setCaptureOpen(true),
         openCitation,
         cameFromChat,
         backToChat: () =>
@@ -317,7 +318,10 @@ function AppShell() {
         onClose={() => setCaptureOpen(false)}
         onCaptured={(documentId) => {
           setCaptureOpen(false)
-          message.success('已入收件箱，记得之后整理')
+          /* 收件箱视图已随 D-054 退役（`docs/DECISIONS.md`:3022，新内容默认
+             `ready`）——这里再说「已入收件箱」等于指认一个不存在的去处。
+             与 CaptureDialog 页脚同一句话：入库之后按标签与目录整理。 */
+          message.success('已入库，之后按标签与目录整理')
           openDocument(documentId, 'all')
         }}
       />

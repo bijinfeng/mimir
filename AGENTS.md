@@ -122,6 +122,7 @@ SQLite 路径同理：FTS5 的 `unicode61` 分词器也不认中文词边界，�
 | 工具条不粘（滚走了） | `.mimir-editor` 用了 `overflow: hidden`——它会让元素成为滚动容器，里面的 `sticky` 相对它定位而它与内容同高。要用 `overflow: clip` |
 | **窄窗口下工具条右端的「保存」看不见** | 宽度链缺了一环：`.mimir-editor` 是 flex 子项，`min-width: auto` 让它不会缩到比内容更窄（里面有一张 900px 的 pdf 页面），于是整块外壳比视口宽（实测 420px 窗口里量出 932px）。它看起来像「工具条没折行」，其实是外壳的宽度下界。`min-width: 0` 即可——注意 `overflow: clip` **挡不住**它（Chrome 只对 `hidden`/`auto`/`scroll` 把自动最小尺寸算作 0），而 `clip` 又是 sticky 那条必需的 |
 | **小屏幕下侧边栏被压缩变形** | 同一个断点（880px）被写了两份：外壳的 `@media` 把左列压到 48px，而栏内内容仍按折叠偏好渲染成展开态——中文标签逐字竖排、品牌名与开关叠在一起（实测 `scrollWidth` 129 对 `clientWidth` 47）。断点只在 `theme/tokens.ts` 定义（`NAV_NARROW_QUERY`），CSS 与 `lib/nav-collapse.ts` 的 `matchMedia` 共用它（DESIGN §5.5 / D-055） |
+| **目录树点哪行不进哪行** | rc-tree 的 `.ant-tree-title` 是行内元素，而标题内容是个块级 flex 盒子——放不进图标所在的 line box，被折到下一行（实测每行标题 top 比本行高恰好 28px）。名字画在下一行的行带上，`elementFromPoint` 取名字中心命中的是后一行：点「技术」进的是 `folder:技术/后端`。wrapper 补 `display:flex;align-items:center`、title 补 `display:flex;flex:1;min-width:0`（`FolderSection.tsx` 的 `treeWrap`，DESIGN §8.1 / D-069） |
 | 改了单元格、保存也成功，界面上还是旧值 | `setCell` 只改了 XML 没改内存模型，而界面读模型（`view()`）。文件是对的，所以只有对着界面看才发现（TECH §15.7） |
 | 编辑器标题字号不对（38px 或 28px） | 前者是 antd `Typography.Title` 的自带规则特异性更高；后者是抬了特异性之后纯 `<h1>` 又匹配不上、回落到浏览器默认 2em。两个分支都要用 `Typography.Title` |
 | 中文 PDF 整段文字空白（不是乱码） | pdf.js 的 cmaps 没加载到。它按**原始文件名**取（`cmaps/Adobe-GB1-0.bcmap`），所以资产必须放 `apps/web/public/pdfjs/`（原样复制、不改名）——带哈希的产物目录里没有那些名字，404 之后内容就是空白（TECH §15.12） |

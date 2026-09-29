@@ -218,43 +218,21 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     }
   `,
 
-  /* ── 目录树 ──────────────────────────────────────────
-     Tree 不在 Menu 里：Menu 是扁平的，而目录是层级结构。
-     两处的行高与选中态必须看起来是同一套东西 */
+  /* ── 知识库分区（D-068）──────────────────────────────
+     目录树与增删改移在 `FolderSection` 里（自带标题行与树样式）；
+     这里只管它在栏里的占位与折叠态的替身 */
   treeGroup: css`
-    padding: 0 6px;
+    padding: 0;
   `,
-  treeWrap: css`
-    .${prefixCls}-tree {
-      background: transparent;
-      font-size: ${FONT_SIZE.item}px;
-    }
+  collapsedLibrary: css`
+    display: flex;
+    justify-content: center;
+    padding: 14px 0 4px;
 
-    .${prefixCls}-tree-node-content-wrapper {
-      height: 28px;
-      line-height: 28px;
-      padding-inline: 6px !important;
-      border-radius: 6px;
-      color: ${token.colorTextSecondary};
+    /* 图标与上面折叠的菜单图标同一档对比度 */
+    .anticon {
+      opacity: 0.8;
     }
-
-    .${prefixCls}-tree-node-selected .${prefixCls}-tree-node-content-wrapper {
-      background: ${token.colorPrimaryBg};
-      color: ${token.colorLink};
-    }
-  `,
-  treeCount: css`
-    margin-inline-start: 6px;
-    font-size: ${FONT_SIZE.badge}px;
-    color: ${token.colorTextTertiary};
-    font-variant-numeric: tabular-nums;
-  `,
-
-  emptyHint: css`
-    padding: 2px 14px 6px;
-    font-size: ${FONT_SIZE.note}px;
-    line-height: 1.7;
-    color: ${token.colorTextTertiary};
   `,
 
   /* ── 底部 ──────────────────────────────────────────── */
@@ -299,14 +277,24 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   /**
    * 底部那一行：账号在左、设置图标贴右。
    *
-   * `padding` 与菜单项对齐（4px 5px 是 `.ant-menu` 的默认内边距，
-   * 而这里自行给一份，让图标与上面各行的右边缘落在同一条竖线上）。
+   * **左右位置由行内边距 + 账号项自己的 `margin-inline` 决定，不各写一套。**
+   * 这里只留 6px 的右侧内边距（与菜单项、树行控件的行尾同一个数），
+   * 左侧交给账号项的 `margin-inline: ${NAV_ITEM_MARGIN}px`——于是账号盒
+   * 与菜单项盒同为 [6, …]，头像与菜单图标都落在 x=14，齿轮右边缘与树行的
+   * ⋯ 同为 193（实测）。
+   *
+   * 第一版写的是 `padding: 2px 5px 3px` 而账号项又带自己的 6px margin，
+   * 两套值相加得到账号盒 [11, 160]——比菜单项盒 [6, 197] 整体右移 5px，
+   * 头像因此落在 x=19 而菜单图标在 x=14，与上面那段注释写的
+   * 「头像与菜单图标落在同一条竖线上」并不符。
+   *
+   * 折叠态由 `accountRowCollapsed` 整个覆写（`padding: 4px 0 5px`），
+   * 所以这两个数在 48px 的 rail 里不会把图标挤出中线。
    */
   accountRow: css`
     display: flex;
     align-items: center;
-    gap: 2px;
-    padding: 2px 5px 3px;
+    padding: 2px 6px 3px 0;
   `,
   accountRowCollapsed: css`
     flex-direction: column;
@@ -320,23 +308,8 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
      * 账号侧占满剩余宽度，把设置图标挤到最右——这是「贴最右」的实现，
      * 不靠 margin-left: auto（那个在折叠态（竖排）会失效）。
      */
-    flex: 1;
     align-items: center;
     gap: 8px;
-    /*
-     * width: auto 配两侧 margin，**与菜单项同一种盒子**。
-     *
-     * 第一版写的是 width: calc(100% - 12px)，算出来比菜单项窄 4px——
-     * 差别在于百分比的参照是父容器的**内容盒**，而 antd 菜单项
-     * 是按 flex 子项（width: auto 加 margin）撑出来的。
-     * 两种算法在有 padding 的容器里不相等，于是两行的右边缘差 4px。
-     *
-     * 用同一种布局方式就没有这个换算问题：flex 的块级子项默认
-     * width: auto 就会占满剩余宽度。
-     *
-     * 注：这段注释里**不能出现反引号**——它所在的模板字符串会被提前结束
-     * （见 TECH.md 第 10 节的坑表，这个坑咬过五次）。
-     */
     /*
      * flex: 1 让它撑满，而不是被内容收缩。
      *
@@ -344,20 +317,33 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
      * 块级布局里成立——antd 的菜单项在 ul 的 flex 上下文里是**被拉伸**的
      * （实测 191 = 容器 199 减两侧 margin 6+6，正好占满）。
      * 这里显式写 flex: 1，得到同一个结果，不依赖父容器的布局巧合。
+     *
+     * 注：这段注释里**不能出现反引号**——它所在的模板字符串会被提前结束
+     * （见 TECH.md 第 10 节的坑表，这个坑咬过五次）。
      */
     flex: 1;
     margin: 1px ${NAV_ITEM_MARGIN}px 4px;
     height: ${NAV_ITEM_HEIGHT}px;
+    /* antd Button 自己的内边距与高度在这里不需要：这一行的高度、对齐都
+       照抄上面的菜单项（见上面那张实测表）。只借 Button 三样东西——
+       焦点环、悬停底、以及 Enter/Space 能激活（Dropdown 认的是点击，
+       而 div 按 Enter 不发 click，所以它现在是 Button 而不是 div，D-042）。
+       折叠态才因此进得了 tab 序列、挂得上 tooltip。
+
+       悬停底**不自己写**：文本按钮的 hover 底由 antd 按主题算
+       （浅色与上面菜单项的 hover 同一个值，深色自动换一档）。自己写一份
+       就会在两种外观下与它分叉——那正是 D-042 记的那类错误。
+
+       注：这几段注释里**不能出现反引号**——它所在的模板字符串会被提前结束
+       （见 TECH.md 第 10 节的坑表，这个坑咬过五次）。 */
     padding: 0 8px;
+    /* antd 把按钮内容居中；头像列必须贴左，否则它与上面那列图标错开
+       （实测居中时头像落在 x=41.5，贴左 14 才对得上） */
+    justify-content: flex-start;
     border: none;
     border-radius: 6px;
     background: none;
-    cursor: pointer;
     text-align: left;
-
-    &:hover {
-      background: ${token.colorFillQuaternary};
-    }
   `,
   accountCollapsed: css`
     justify-content: center;
@@ -377,6 +363,11 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
    * 尺寸与账号行的头像同高（26px），让右端那个图标与左端的头像
    * 看起来是同一层级的两个元素；热区比图标本身大（`size="small"`
    * 的 antd 按钮是 24×24），点得到。
+   *
+   * **右边缘由 `accountRow` 的右侧内边距定位**（193，与树行的 ⋯ 同一条
+   * 竖线）。不给这个按钮加 `margin-inline-end`：折叠态下它是竖排居中，
+   * 那 6px 会让齿轮偏出中线 3px（实测 x=8 而头像 x=11），而折叠态的行内边距
+   * 已被整个覆写。
    */
   accountSettings: css`
     flex: none;

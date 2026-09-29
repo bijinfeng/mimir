@@ -50,7 +50,17 @@ export function UnsavedGuard() {
       open={Boolean(pending)}
       title="有改动还没保存"
       closable={false}
-      maskClosable={false}
+      /**
+       * `mask={{ closable: false }}` 而不是 `maskClosable={false}`。
+       *
+       * antd 6.6.4 把那个 prop 标成 `@deprecated Please use mask.closable instead`
+       * （`es/modal/interface.d.ts:71`），而它在**每次渲染**时就检查——prop 存在
+       * 就发警告，与有没有 open 无关，于是每个页面加载都会往控制台打一条。
+       * 这一屏的语义恰恰是「点遮罩不能走」（有未保存内容时不许放行），
+       * 迁移到新写法才不会在 antd 7 移除旧 prop 后**静默退回**「点遮罩就关」。
+       * 同类迁移见 `docs/DESIGN.md` §7.5（antd v6 的两处 API 变更）。
+       */
+      mask={{ closable: false }}
       keyboard={false}
       onCancel={() => resolve('cancel')}
       footer={[

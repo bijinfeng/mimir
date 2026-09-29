@@ -1,11 +1,12 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { openPptx } from './pptx.js'
-import type { Slide } from '../vendor/packages/pptx-engine/src/types.js'
+import type { Slide, SlideSize } from '../vendor/packages/pptx-engine/src/types.js'
 import { buildRenderSlide } from '../vendor/packages/pptx-render/src/build-slide.js'
 import { HeuristicMetrics } from '../vendor/packages/pptx-render/src/metrics.js'
 import { XMLValidator } from 'fast-xml-parser'
 import { renderSlideToSvg } from './pptx-svg.js'
+import { renderSlide } from './pptx-render.js'
 
 /**
  * pptx 的**打开**（`src/pptx.ts` + `src/pptx-archive.ts`）。
@@ -260,5 +261,95 @@ describe('SVG 渲染', () => {
     })
     const svg = renderSlideToSvg(tree)
     expect(svg).toContain('图片未解析')
+  })
+})
+
+/**
+ * 缺几何的文本框（`<p:sp>` 既没有 `<a:xfrm>`、也没有占位符链可继承）。
+ *
+ * 症状不是「看不见」而是**逐字竖排**：`layoutText` 的可用宽度是
+ * `max(0 - 内边距, 1) = 1px`，于是每个字占一行、字压着字并冲出纸外——看着
+ * 像文件坏了（实测一份这样的样例：46 个 `<text>`、44 行）。兜底在
+ * `pptx-render.ts` 的 `withFallbackGeometry`，这一组守两件事：**兜底真的
+ * 发生**、以及**状态行能据实说明**（`geometryFilled`）。
+ */
+describe('缺几何的文本框', () => {
+  /**
+   * 把标题那一份的几何抹成 0×0（真实文件里就是「没有 `<a:xfrm>`」）。
+   *
+   * 用 `structuredClone` 而不是改夹具：夹具由 `docx.test.ts` 那一类断言共用，
+   * 改它会顺着引用传到别的用例里。
+   */
+  async function withMissingGeometry(): Promise<{
+    slide: Slide
+    size: SlideSize
+    /** 被抹掉几何的那一个元素 */
+    id: string
+  }> {
+    const deck = await openPptx(load(TITLE_LAYOUT))
+    const slide = structuredClone(deck.slides()[0]!) as Slide
+    const title = slide.elements.find((e) => (e as { text?: unknown }).text != null)
+    if (title === undefined) throw new Error('夹具里没有带文字的图形')
+    title.transform.offset.cx = 0
+    title.transform.offset.cy = 0
+    return { slide, size: deck.size, id: title.id }
+  }
+
+  it('上游直接渲染会逐字竖排（这一条说明兜底不是多余的）', async () => {
+    const { slide, size } = await withMissingGeometry()
+    const raw = renderSlideToSvg(
+      buildRenderSlide(slide, size, { fitWidthPx: 960, metrics: new HeuristicMetrics() }),
+    )
+    // 一个字一个 `<text>`——竖排的直接证据
+    expect(raw).toMatch(/<text[^>]*>用<\/text>/)
+    expect(raw).not.toMatch(/<text[^>]*>用版式建的标题页<\/text>/)
+  })
+
+  it('渲染入口按默认框回填：一行整句，并如实报出回填了几个', async () => {
+    const { slide, size } = await withMissingGeometry()
+    const rendered = renderSlide({ size, slides: () => [slide], media: new Map() }, 0, {
+      fitWidthPx: 960,
+    })
+    expect(rendered).not.toBeNull()
+    expect(rendered!.geometryFilled).toBe(1)
+
+    // 整句落在一行里（不再一个字一个 `<text>`）
+    const whole = /<text\s+x="([\d.]+)"\s+y="([\d.]+)"[^>]*>用版式建的标题页<\/text>/.exec(
+      rendered!.svg,
+    )
+    expect(whole, '整句没有渲染成一个文本节点').not.toBeNull()
+    expect(rendered!.svg).not.toMatch(/<text[^>]*>用<\/text>/)
+
+    /*
+     * 回填的框**不能跑出纸外**：默认框取的是 sldSz 的比例（左右各 5%、
+     * 高 20%），所以它的落点必须在画布以内——写死 EMU 的话 16:9 的画布上
+     * 会顶出去。判据取**那一句自己**的坐标，不是全页的最小值（版式给的
+     * 项目符号本来就落在 x=0，那是正常的）。
+     */
+    const [, x, y] = whole!
+    expect(Number(x)).toBeGreaterThan(0.04 * rendered!.widthPx)
+    expect(Number(y)).toBeGreaterThan(0)
+    expect(Number(y)).toBeLessThan(rendered!.heightPx)
+  })
+
+  it('几何完好的页一个都不回填（不误伤正常文件）', async () => {
+    const deck = await openPptx(load(TITLE_LAYOUT))
+    const rendered = renderSlide(deck, 0, { fitWidthPx: 960 })
+    expect(rendered!.geometryFilled).toBe(0)
+    expect(rendered!.svg).toMatch(/<text[^>]*>用版式建的标题页<\/text>/)
+  })
+
+  it('模型不被改动：回填只发生在渲染层（保存路径读的是原模型）', async () => {
+    const { slide, size, id } = await withMissingGeometry()
+    renderSlide({ size, slides: () => [slide], media: new Map() }, 0, { fitWidthPx: 960 })
+    /*
+     * 保存是补丁式的（按 `anchor.originalXml` 回填未改动的元素），所以
+     * **一旦渲染层回写模型**，下一次保存就会把编出来的几何写进文件——
+     * 那正是「不要手改 vendor / 不要编文件里没有的东西」要避免的。
+     */
+    const target = slide.elements.find((el) => el.id === id)
+    expect(target).toBeDefined()
+    expect(target!.transform.offset.cx).toBe(0)
+    expect(target!.transform.offset.cy).toBe(0)
   })
 })

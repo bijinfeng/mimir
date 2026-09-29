@@ -339,6 +339,67 @@ describe('PdfEditor 工具条的控件', () => {
 /* ── 动作真的落到文件上 ───────────────────────────────────────── */
 
 describe('PdfEditor 工具条的动作', () => {
+  /**
+   * 「删除这一页」**必须问一句**。
+   *
+   * 它与左右两个纯图标按钮（插入空白页、导入页面）并排，代价却完全不同：这一条
+   * 工具条**没有撤销**（docx / html / 笔记都有），一次误点就少一页，唯一的路
+   * 是「不保存、退出、重进」。所以要两层保护：**弹一次确认**，并**在状态行/
+   * 说明里给出退路**（保存之前原件一字未动）。这一组把两层都钉住。
+   */
+  it('「删除这一页」先弹确认：取消不动、确认才真的删', async () => {
+    const { host } = await mount(await makePdf({ pages: 3 }))
+    expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('/ 3 页')
+
+    click(button(host, '删除这一页'))
+    /*
+     * antd 的 `Popconfirm` portal 到 body（显式的例外：`.mimir-editor` 是
+     * `overflow: clip`，就地渲染会被裁掉），所以弹层不在 `host` 里。
+     */
+    const popup = document.querySelector('.ant-popconfirm')
+    expect(popup, '点「删除这一页」没有弹确认框').not.toBeNull()
+    // 说清代价：没有撤销
+    expect(popup?.textContent).toContain('没有撤销')
+
+    // 取消：页数不动、也没有未保存的改动
+    const cancel = [...popup!.querySelectorAll('button')].find(
+      (item) => item.textContent?.trim() === '算了',
+    )
+    if (cancel === undefined) throw new Error('确认框里没有取消按钮: ' + popup!.outerHTML)
+    click(cancel)
+    expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('/ 3 页')
+    expect(host.querySelector('.mimir-editor__status')?.textContent).not.toContain('已修改')
+
+    // 再来一次并确认：这一回真的少一页
+    await settle(() => document.querySelector('.ant-popconfirm') === null)
+    click(button(host, '删除这一页'))
+    const again = document.querySelector('.ant-popconfirm')
+    const confirm = [...(again?.querySelectorAll('button') ?? [])].find(
+      (item) => item.textContent?.trim() === '删除这一页',
+    )
+    if (confirm === undefined) throw new Error('确认框里没有确认按钮')
+    click(confirm)
+    expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('/ 2 页')
+    expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('已修改，未保存')
+  })
+
+  it('删除确认是外壳的原语（PdfEditor 不直接 import antd）', () => {
+    // 「顺手在编辑器里 import 一次 antd」会把尺寸档 / 禁用给原因两条约定绕开
+    // 一处（上面那两条静态守护守着），这一条守「确认框也走原语」
+    const text = readFileSync(SOURCE, 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/^\s*\/\/.*$/gm, '')
+    expect(text).not.toMatch(/from\s+'antd'/)
+    expect(text).toContain('ToolbarConfirm')
+  })
+
+  it('删除没有撤销这件事有退路：说明里写着「保存之前原件一字未动」', async () => {
+    const { host } = await mount(await makePdf({ pages: 3 }))
+    const note = host.querySelector('.mimir-editor__footer .me-note')
+    expect(note, 'PDF 的常驻说明没有渲染').not.toBeNull()
+    expect(note?.textContent).toContain('保存之前退出，原件一字未动')
+  })
+
   it('旋转 + 保存：写回的字节里那一页真的是 90 度', async () => {
     const { host, saved } = await mount(await makePdf())
 

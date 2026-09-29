@@ -38,11 +38,11 @@ export const CLIP_KINDS = [
  * 实测它的代价（每收一篇都要多一个动作）大于收益（用户从不按状态筛选），
  * 而「待整理」徽标在每一张新卡片上都是一个待办提醒。
  *
- * `archived` 保留：它是**有能力对应**的状态（详情页的「⋯」菜单可归档与
- * 恢复，导航有「已归档」入口）。`failed` 同样保留——它表达「这条记录坏了」，
- * 与流程无关。
+ * `failed` 同样保留——它表达「这条记录坏了」，与流程无关。归档状态已随
+ * 归档交互整体退役（D-065）：浏览组织靠目录、标签与搜索，不再有第二个
+ * 状态位，存量数据由迁移转回 `ready`。
  */
-export const documentStatusSchema = z.enum(['ready', 'failed', 'archived'])
+export const documentStatusSchema = z.enum(['ready', 'failed'])
 export type DocumentStatus = z.infer<typeof documentStatusSchema>
 
 export const noteCreateSchema = z.object({
@@ -190,8 +190,6 @@ export type FileUploadResponse = z.infer<typeof fileUploadResponseSchema>
  */
 export const documentCountsSchema = z.object({
   all: z.number().int(),
-  /** 已归档：归档不是黑洞，导航里有它的入口（D-047 待办收尾） */
-  archived: z.number().int(),
 })
 export type DocumentCounts = z.infer<typeof documentCountsSchema>
 

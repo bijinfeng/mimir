@@ -1,6 +1,7 @@
 import { DownloadOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { App, Button, Skeleton } from 'antd'
+import type { DatabaseInfo } from '@mimir/shared'
 import { api } from '@/lib/api'
 import { Block, BlockDesc, Panel, Row, Stats } from '@/components/settings/parts'
 import { useStyles } from '@/components/settings/settings.style'
@@ -11,12 +12,22 @@ import { useStyles } from '@/components/settings/settings.style'
  * 这一页的核心陈述是「**Markdown 文件是真相，数据库只是可重建的索引**」，
  * 所以它把「真相在哪」放在最前面，动作（重建索引、导出）放在后面——
  * 顺序本身就是解释：先知道文件在哪，重建成什么、导出的是什么才有意义。
+ *
+ * ## 「数据库」那一行按服务端回传的驱动渲染
+ *
+ * 它一度是写死的 `Postgres`，而驱动是**部署事实**：服务器是 Postgres，
+ * 本地开发与桌面端是 SQLite（D-045）。写死的那一半在另一套部署里
+ * 说了一个可被当场证伪的假话——而这一页最该守的恰恰是
+ * 「界面上说的每个事实都能验证」（同一行下面的「文档 17」就是可对照的）。
+ * 所以厂商名从 `/api/config` 的 `database` 来，SQLite 下再带上库文件——
+ * 那是用户能真的去看一眼的东西。
  */
 export function DataSection() {
   const { styles } = useStyles()
   const { message } = App.useApp()
 
   const statsQuery = useQuery({ queryKey: ['export-stats'], queryFn: api.export.stats })
+  const configQuery = useQuery({ queryKey: ['config'], queryFn: api.config })
 
   const reindex = useMutation({
     mutationFn: api.maintenance.reindex,
@@ -30,6 +41,7 @@ export function DataSection() {
   })
 
   const stats = statsQuery.data
+  const database = configQuery.data?.database
 
   return (
     <>
@@ -40,7 +52,17 @@ export function DataSection() {
         <Row label="原始快照">
           <span className={styles.mono}>data/raw/</span>
         </Row>
-        <Row label="数据库">Postgres · 前两者可以完整重建它</Row>
+        <Row label="数据库">
+          {database ? (
+            <>
+              <span className={styles.mono}>{DATABASE_NAMES[database.driver]}</span>
+              {database.file ? <span className={styles.mono}> · {database.file}</span> : null}
+              <span> · 前两者可以完整重建它</span>
+            </>
+          ) : (
+            <Skeleton.Button active size="small" />
+          )}
+        </Row>
       </Panel>
 
       <Panel title="维护">
@@ -113,4 +135,16 @@ function formatBytes(bytes: number | undefined): string {
   if (bytes < 1024) return `${bytes} B`
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+}
+
+/**
+ * 驱动标识 → 用户认得的名字。
+ *
+ * 提到模块作用域的映射而不是在 JSX 里写三元：契约里的值是 `postgres` /
+ * `sqlite`（小写标识），界面上要说的是厂商名，两者必须只在一处对应。
+ * 写成内联三元时，加第三种驱动会在不动声色间落到 `else` 分支上。
+ */
+const DATABASE_NAMES: Record<DatabaseInfo['driver'], string> = {
+  postgres: 'Postgres',
+  sqlite: 'SQLite',
 }

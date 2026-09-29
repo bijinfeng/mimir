@@ -8,6 +8,7 @@ import { readNote, toVaultPath, writeNote, VAULT_PREFIX } from '../lib/vault.js'
 import { documentIdFromKey, readUpload, readUploadMeta, UPLOAD_PREFIX } from '../lib/uploads.js'
 import { activeStorage } from '../plugins/host.js'
 import { syncTags } from './documents.js'
+import { ensureFolders } from './folders.js'
 import { syncDocumentLinks } from './links.js'
 import { extractText } from './extract.js'
 
@@ -203,6 +204,9 @@ export async function reindexVault(): Promise<ReindexResult> {
       updatedAt: new Date(note.updatedAt),
     }
 
+    // 外部文件的 frontmatter 可能带任何目录（D-068：注册表是树的唯一真相）
+    await ensureFolders(note.folder)
+
     await db
       .insert(documents)
       .values(values)
@@ -282,6 +286,8 @@ export async function reindexVault(): Promise<ReindexResult> {
       createdAt: new Date(meta.createdAt),
       updatedAt: new Date(meta.updatedAt),
     }
+
+    await ensureFolders(meta.folder)
 
     await db
       .insert(documents)

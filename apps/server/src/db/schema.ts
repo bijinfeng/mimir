@@ -24,6 +24,7 @@ function pick<K extends keyof typeof pg>(key: K): (typeof pg)[K] {
 
 export const documents = pick('documents')
 export const tags = pick('tags')
+export const folders = pick('folders')
 export const documentTags = pick('documentTags')
 export const conversations = pick('conversations')
 export const messages = pick('messages')

@@ -1308,7 +1308,19 @@ export function DocxToolbar({
         onChange={(value) => applyParagraphStyle(editor, value)}
       />
 
+      {/*
+        字体与字号：**两个字体下拉必须有可见的前缀**。
+
+        它们各自是「中文字体」与「西文字体」（`w:rFonts` 的 `w:eastAsia` 与
+        `w:ascii`/`w:hAnsi` —— 两个槽位），而**两个都是「（默认）」时外观完全
+        一样**：`ToolbarGroup` 只渲染 `role="group"` 与 `aria-label`，不渲染可见
+        文字，名字只到得了读屏与 hover 的 `title`（实测两个「（默认）」并排，
+        肉眼分不出哪个管哪一个）。DESIGN §0.2 要的是「状态必须能被看见」——
+        而这恰好是「看得见的状态分不出是谁的状态」。所以每项前面给两个字，
+        取 `.me-label` 那一档（12px、次要色）：组宽只多两个字，不动布局。
+      */}
       <ToolbarGroup label="字体">
+        <ToolbarLabel>中文</ToolbarLabel>
         <ToolbarSelect
           label="中文字体"
           value={state.font ?? ''}
@@ -1317,6 +1329,7 @@ export function DocxToolbar({
             runCommand(editor, 'setMark', 'docTextStyle', { font: value === '' ? null : value })
           }
         />
+        <ToolbarLabel>西文</ToolbarLabel>
         <ToolbarSelect
           label="西文字体"
           value={state.fontAscii ?? ''}
@@ -1330,6 +1343,7 @@ export function DocxToolbar({
       </ToolbarGroup>
 
       <ToolbarGroup label="字号">
+        <ToolbarLabel>字号</ToolbarLabel>
         <ToolbarSelect
           label="字号（磅）"
           value={state.sizeHalfPoints === null ? null : String(state.sizeHalfPoints)}
@@ -1338,6 +1352,12 @@ export function DocxToolbar({
             label: String(halfPointsToPt(half)),
           }))}
           fallbackLabel="其它"
+          /*
+            `null` 与「不在档位里」是两件事，不能共用「其它」：这一份文档上
+            文字没有直接字号（继承自段落样式），显示「其它」会被读成
+            「我选了别的字号」。`emptyLabel` 的说明在 `ToolbarSelect` 上。
+          */
+          emptyLabel="（默认）"
           onChange={(value) =>
             runCommand(editor, 'setMark', 'docTextStyle', { sizeHalfPoints: Number(value) })
           }

@@ -7,20 +7,22 @@ import {
   type RuntimeConfig,
 } from '@mimir/shared'
 import { HttpError, parseInput } from '../lib/http.js'
+import { env } from '../env.js'
 import { activeStorage, assemble } from '../plugins/host.js'
 import { describeModel, record } from '../services/usage.js'
 import type { AppEnv } from '../types.js'
 
 /**
- * 运行时配置：设置、插件、模型配置。
+ * 运行时配置：设置、插件、模型配置、数据库事实。
  *
- * ## 三块的读法与写法
+ * ## 四块的读法与写法
  *
  * | 块 | 读 | 写 |
  * |---|---|---|
  * | `settings` | 标量键 + 来源 | `PATCH /config/settings`（单个或整批）|
  * | `plugins` | 各接缝的实现清单与状态 | 无（注册是代码事实）|
  * | `modelConfig` | 供应商列表 + 角色绑定 + 预设目录 | `PATCH /config/settings` 的 `model.config` 键 |
+ * | `database` | 当前驱动 + SQLite 库文件 | 无（`DATABASE_URL` 是部署事实，不在键表里）|
  *
  * 模型配置与标量设置**走同一个写入端点**：它本来就是设置层的一个 json 键
  * （`docs/TECH.md` §7.5 的键集闭集）。为它单开一个端点会造出第二条
@@ -53,6 +55,20 @@ configRoute.get('/', async (c) => {
     settings: entries,
     plugins,
     modelConfig,
+    /**
+     * 真相落在哪种库上。
+     *
+     * **由服务端回传而不是界面写死厂商名**：双后端下（D-045）写死的那一个
+     * 在另一半部署里必然是错的，而设置页「真相在哪」这一行恰恰是用户拿来
+     * 核对的地方——说错等于让他去找一个不存在的实例。
+     *
+     * 只回传库文件、不回传连接串：Postgres 的连接串里有凭据，
+     * 而 `DATABASE_URL` 本身按 §7.5 是部署事实、不入键表也不下发。
+     */
+    database: {
+      driver: env.dbDriver,
+      file: env.dbDriver === 'sqlite' ? env.databaseFile : null,
+    },
     probes: [...probes.values()],
   } satisfies RuntimeConfig)
 })

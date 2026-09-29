@@ -173,10 +173,48 @@ const darkCalibration: MappingAlgorithm = (seedToken, mapToken) => ({
   colorLink: DARK_LINK,
 })
 
+/**
+ * 组件级 token —— 只放「全局 token 表达不了」的那几个角色。
+ *
+ * ## 为什么 Tabs 的选中色必须单独给
+ *
+ * antd 的 `itemSelectedColor` 默认取 `colorPrimary`
+ * （`es/tabs/style/index.js` 的 `prepareComponentToken`），而 `colorPrimary`
+ * 承担的是**填充**角色（按钮底、选中项底）——按 §3.5 的推论，「不要把它
+ * 直接用在文字上」。同一排里**未选中**的标签走 `colorText`，于是
+ * **强调关系是反的**：
+ *
+ * | | 选中项 | 未选中项 | 容器底 |
+ * |---|---|---|---|
+ * | 浅色（实测） | `#1677ff` 4.10:1 | `rgba(31,35,41,.88)` 10.89:1 | `#ffffff` |
+ * | 深色（实测） | `#1668dc` 3.50:1 | `rgba(255,255,255,.85)` 13.23:1 | `#141618` |
+ *
+ * 两处都低于 AA（13.5px 正文），深色还比浅色更弱——与 §3.8 的跨外观
+ * 不回归规则相反，单看深色截图看不出来（「当前在哪一区」只是整排里最暗的
+ * 那一个，像被禁用）。
+ *
+ * 修法与 §3.5 同一条：**强调的文字用 `colorLink`，强调的填充用
+ * `colorPrimary`**。所以只换文字色；ink bar（下划线）是填充角色，
+ * 仍由 antd 取 `colorPrimary`，不动。
+ *
+ * ## 为什么两套外观各写一次显式取值
+ *
+ * 组件 token 是**最终值**：`getComponentToken` 把它直接并进结果，不参与
+ * 算法派生、也不受 `formatToken` 删同名键的影响。所以这里不能写
+ * `colorLink` 这个 token 名，只能写字面值——两边各自引用本外观的链接色
+ * 常量（浅色 `#0958d9` 6.16:1，深色 `#79b8ff` 8.74:1），改链接色时两处
+ * 一起跟着走，不会漂移成两种蓝。
+ */
+const COMPONENT_TOKEN: Record<Appearance, ThemeConfig['components']> = {
+  light: { Tabs: { itemSelectedColor: LIGHT_COLOR.colorLink } },
+  dark: { Tabs: { itemSelectedColor: DARK_LINK } },
+}
+
 export const mimirTheme: ThemeConfig = {
   // key 固定成 mimir：注入的变量类名稳定（.mimir），换主题时不会整页重算变量名
   cssVar: { key: 'mimir' },
   token: { ...BASE_TOKEN, ...LIGHT_COLOR },
+  components: COMPONENT_TOKEN.light,
 }
 
 /**
@@ -191,6 +229,7 @@ export const mimirDarkTheme: ThemeConfig = {
   cssVar: { key: 'mimir' },
   token: { ...BASE_TOKEN, ...DARK_COLOR },
   algorithm: darkCalibration,
+  components: COMPONENT_TOKEN.dark,
 }
 
 /** 当前外观对应的主题配置。`MimirProvider` 用它，**不要**在别处再判一次 */

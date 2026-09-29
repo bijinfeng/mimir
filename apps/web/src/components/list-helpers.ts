@@ -15,7 +15,6 @@ import {
  */
 export const SCOPE_LABEL: Record<string, string> = {
   all: '全部文档',
-  archived: '已归档',
 }
 
 /**
@@ -25,21 +24,91 @@ export const SCOPE_LABEL: Record<string, string> = {
  * 组织靠目录、标签与搜索。后端的 kind/kinds 参数仍在契约里，
  * 只是 UI 不再产生它们。
  */
-export function scopeParams(scope: string): Pick<DocumentListQuery, 'folder' | 'tag' | 'status'> {
+export function scopeParams(scope: string): Pick<DocumentListQuery, 'folder' | 'tag'> {
   if (scope.startsWith('folder:')) return { folder: scope.slice('folder:'.length) }
   if (scope.startsWith('tag:')) return { tag: scope.slice('tag:'.length) }
-  if (scope === 'archived') return { status: 'archived' }
   return {}
 }
 
+/**
+ * 标题栏里那一行标题。
+ *
+ * ## 搜索时为什么目录要说「全部文档」
+ *
+ * 检索契约（`@mimir/shared` 的 `searchQuerySchema`）只有 `kind` / `tag`，
+ * **没有目录**——所以带着 `scope=folder:X` 搜索时，结果其实来自全库。
+ * 而侧栏那条目录仍高亮着，界面不说破的话，用户会得出「这个目录里有这篇
+ * 文章」——一个错的结论，且看不出来（DESIGN §0.2「状态必须能被看见」）。
+ *
+ * 所以在目录里搜索时，标题如实写出范围是**全部文档**；标签能被检索过滤
+ * （`tag` 参数存在），标题照旧只说「搜索结果」。
+ */
 export function scopeTitle(scope: string, query: string): string {
-  if (query) return '搜索结果'
+  if (query) return scope.startsWith('folder:') ? '搜索结果 · 全部文档' : '搜索结果'
   if (scope.startsWith('folder:')) {
     const path = scope.slice('folder:'.length)
     return path.split('/').pop() ?? '目录'
   }
   if (scope.startsWith('tag:')) return `#${scope.slice('tag:'.length)}`
   return SCOPE_LABEL[scope] ?? '全部文档'
+}
+
+/**
+ * 空态里那句「这个动作不会落进当前范围」。
+ *
+ * ## 为什么要有它
+ *
+ * 空目录里的两个入口（收集内容 / 新建笔记）建出来的东西**不归入该目录**：
+ * 新建笔记写 `folder: null`（`services/documents.ts` 的 `createNote`），
+ * 收集走的是上传 + 抓取，也不带目录。于是用户站在空目录里点「新建笔记」，
+ * 内容落在库根，回来一看目录还是空的——像按钮没生效。
+ *
+ * 改动写入路径要动契约（`noteCreateSchema` 没有 folder）与服务端写路径，
+ * 超出了这一处；所以先**如实说明**会建到哪里、以及建好后怎么指派
+ * （同 `excerptText` 那条「不静默说谎」）。
+ *
+ * 只给目录、不给标签：**空目录是一个正常状态**（D-068 起目录是实体，
+ * 侧栏会列出它），用户会真的站在一个空目录里；而标签由文档派生，
+ * 「标签视图为空」只出现在旧链接上，不是日常路径。
+ *
+ * 返回 null 表示当前 scope 没有这个落差（全部文档 / 标签 / 认不出的 scope）。
+ */
+export function emptyScopeHint(scope: string): string | null {
+  if (scope.startsWith('folder:')) {
+    return '新建与收集的内容落在库根，建好后可在详情的「⋯」里指派到这个目录'
+  }
+  return null
+}
+
+/**
+ * 库视图的布局偏好（卡片 / 列表）。
+ *
+ * 纯客户端的渲染偏好，存 `localStorage` 而不是数据库——与侧边栏折叠
+ * （`_app.tsx` 的 `NAV_COLLAPSED_KEY`）同一条判断：服务端不关心，
+ * 也没必要为它多一次请求。读不到或值非法时回落**卡片**——它是
+ * D-047 以来的默认形态，老用户不应因为加了个开关就换一种观感。
+ */
+export const LIBRARY_LAYOUTS = ['card', 'list'] as const
+export type LibraryLayout = (typeof LIBRARY_LAYOUTS)[number]
+
+const LIBRARY_LAYOUT_KEY = 'mimir.library-layout'
+
+export function readLibraryLayout(): LibraryLayout {
+  try {
+    const value = localStorage.getItem(LIBRARY_LAYOUT_KEY)
+    return LIBRARY_LAYOUTS.includes(value as LibraryLayout) ? (value as LibraryLayout) : 'card'
+  } catch {
+    // localStorage 在隐私模式或存储被禁用时会抛错——一个偏好不该有那种能力
+    return 'card'
+  }
+}
+
+export function writeLibraryLayout(layout: LibraryLayout): void {
+  try {
+    localStorage.setItem(LIBRARY_LAYOUT_KEY, layout)
+  } catch {
+    // 写不进去只影响「下次打开还记不记得」，不该影响这次切换
+  }
 }
 
 /**

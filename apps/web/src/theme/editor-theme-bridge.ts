@@ -62,7 +62,13 @@ export const useEditorThemeVars = createStyles(({ css, token }) => ({
     --me-danger-bg: ${token.colorErrorBg};
     /* 工作台（纸张与幻灯片之外的底）：比容器底暗，让「纸」浮起来 */
     --me-stage-bg: ${token.colorFillQuaternary};
+    /* 浮层阴影（菜单、颜色面板，以及 pptx 幻灯片与 pdf 页面这两块「大画布」） */
     --me-shadow: ${token.boxShadowSecondary};
+    /* 纸张阴影（docx 的 .doc-page）。**单列一档**：DESIGN §5.3 的 secondary
+       是给浮层的，纸是「微浮起」的卡片，归 tertiary。原先纸张读的是
+       --docs-page-shadow，那个变量只在一份没被 import 的 vendor 样式里，
+       于是纸与工作台糊成一片（editors.css 的 .mimir-docx-scroll 记着） */
+    --me-page-shadow: ${token.boxShadowTertiary};
 
     /* 正文列宽。笔记没有纸张，靠它把行宽收在可读范围内 */
     --me-content-width: ${CONTENT_WIDTH}px;

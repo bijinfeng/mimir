@@ -1,16 +1,17 @@
 import { z } from 'zod'
 
 /**
- * 运行时配置的传输契约：设置、插件、模型配置。
+ * 运行时配置的传输契约：设置、插件、模型配置、数据库事实。
  * **密钥绝不出现在这里**——包括供应商列表里的每一把。
  *
- * ## 三块的分工
+ * ## 四块的分工
  *
  * | 块 | 是什么 |
  * |---|---|
  * | `settings` | 标量配置项（键 → 值 + 来源） |
  * | `plugins` | 各接缝的实现清单与状态 |
  * | `modelConfig` | **模型域**：供应商列表 + 角色绑定 + 预设目录 |
+ * | `database` | **部署事实**：当前驱动与 SQLite 库文件（见 `databaseInfoSchema`） |
  *
  * 模型配置为什么不摊平成一堆 `model.*` 标量键：供应商是一个**集合**
  * （每家一个 baseURL 与一把密钥），而标量键表达不了集合。
@@ -305,12 +306,33 @@ export const probeRequestSchema = z.object({
 })
 export type ProbeRequest = z.infer<typeof probeRequestSchema>
 
+/* ── 数据库 ───────────────────────────────────────────── */
+
+/**
+ * 真相落在哪种数据库上。
+ *
+ * 它是**部署事实**，不是可配项（`DATABASE_URL` 改了就重启，不在键表里，
+ * `docs/TECH.md` §7.5 的「不写进程级配置」）——但设置页必须如实说
+ * 「数据库」这一行是什么。所以它由服务端回传，界面不写死厂商名：
+ * 双后端（D-045）下写死厂商名的一半场景必然说错，
+ * 而设置页最该守的就是「界面上说的每个事实都能验证」。
+ *
+ * `file` 只在 SQLite 下有值：它是库文件的位置，也是那一行里
+ * 用户真正能去核对的东西（Postgres 下连接串含凭据，不下发）。
+ */
+export const databaseInfoSchema = z.object({
+  driver: z.enum(['postgres', 'sqlite']),
+  file: z.string().nullable(),
+})
+export type DatabaseInfo = z.infer<typeof databaseInfoSchema>
+
 /* ── 顶层 ─────────────────────────────────────────────── */
 
 export const runtimeConfigSchema = z.object({
   settings: z.array(settingEntrySchema),
   plugins: z.array(pluginDescriptorSchema),
   modelConfig: modelConfigSchema,
+  database: databaseInfoSchema,
   probes: z.array(probeResultSchema),
 })
 export type RuntimeConfig = z.infer<typeof runtimeConfigSchema>

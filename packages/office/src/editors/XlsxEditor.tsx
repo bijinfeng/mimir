@@ -602,6 +602,43 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
               <col key={`col-${column.col}`} style={{ width: `${column.width}px` }} />
             ))}
           </colgroup>
+          {/*
+            ## 列字母行
+
+            没有它，「C3」这个引用**在屏幕上找不到落点**：附属面板与工具条
+            说的是 Excel 记法，而网格里只有一竖列行号——用户只能用蓝色选中框
+            反推。跳到上一个/下一个公式格时文字变了、位置也变了，反而更难对。
+
+            数据就是同一份 `sheet.columns`（列头与列宽本就是一件事的两面），
+            样式与行号栏共用一套（`.mimir-xlsx__gutter` 那套 sticky 的 chrome）：
+            横向滚动时它跟着表走，纵向滚动时钉在顶端。
+
+            选中列的高亮与行号栏**对称**：行号栏亮的是「我在看哪一行」，列头亮
+            的是「我在看哪一列」——十字高亮本来就是这两条线上的判断。
+          */}
+          <thead>
+            <tr>
+              {/*
+                左上角那个交角格：行号栏与列头都是 sticky，它们的交叉点必须
+                自己占一格，否则第一条列字母会被行号栏压住。空内容 + 无表头
+                语义（它是装饰，不是数据）
+              */}
+              <th className="mimir-xlsx__gutter mimir-xlsx__corner" aria-hidden="true" />
+              {sheet.columns.map((column) => (
+                <th
+                  key={`colhead-${column.col}`}
+                  scope="col"
+                  className={
+                    cross && selected?.col === column.col
+                      ? 'mimir-xlsx__colhead mimir-xlsx__colhead--cross'
+                      : 'mimir-xlsx__colhead'
+                  }
+                >
+                  {columnLetters(column.col)}
+                </th>
+              ))}
+            </tr>
+          </thead>
           <tbody>
             {sheet.rows.map((row) => {
               /** 十字高亮：选中格所在的整行（连行号格） */

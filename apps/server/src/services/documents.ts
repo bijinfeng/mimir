@@ -21,7 +21,7 @@ import {
   type VaultNote,
 } from '../lib/vault.js'
 import { readUploadMeta, removeUpload, writeUploadMeta } from '../lib/uploads.js'
-import { normalizeFolder } from './folders.js'
+import { ensureFolders, normalizeFolder } from './folders.js'
 import { getDocumentLinks, syncDocumentLinks } from './links.js'
 
 /**
@@ -179,6 +179,10 @@ export async function updateNote(id: string, input: NoteUpdate): Promise<Documen
   // 用 ?? 会把「移出目录」当成「不修改」
   const folder =
     input.folder === undefined ? existing.folder : normalizeFolder(input.folder) || null
+
+  // 指派到新目录时先补建注册表行（mkdir -p）：folders 表是树结构的唯一真相（D-068），
+  // 漏了这一步，文档指派存在而树上看不到这个目录
+  await ensureFolders(folder)
 
   // 标题变了就跟随改名，保证文件名和内容一致；
   // 自动生成的 id 后缀保证不会和已有文件冲突
@@ -403,14 +407,12 @@ export async function listAllTags(): Promise<{ name: string; count: number }[]> 
  */
 export async function countDocuments(): Promise<DocumentCounts> {
   const rows = await db
-    .select({ kind: documents.kind, status: documents.status })
+    .select({ id: documents.id })
     .from(documents)
     .where(isNull(documents.deletedAt))
 
   // 导航上的每个数字都必须与点进去看到的条数一致（`documentCountsSchema`
-  // 的承诺）。来源计数（D-047）与收件箱计数（D-054）都已退役，只剩全集与归档
-  return {
-    all: rows.length,
-    archived: rows.filter((row) => row.status === 'archived').length,
-  }
+  // 的承诺）。来源计数（D-047）、收件箱计数（D-054）与归档计数（D-065）
+  // 都已退役，只剩全集
+  return { all: rows.length }
 }

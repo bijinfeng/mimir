@@ -90,21 +90,10 @@ describe('笔记 CRUD 与文件落盘', () => {
     expect(res.body.path).toMatch(/-[A-Za-z0-9_-]{8}\.md$/)
   })
 
-  it('归档与恢复：状态位是可逆的，归档后仍能查到', async () => {
-    const archived = await client.patch<{ status: string }>(`/api/documents/${noteId}`, {
-      status: 'archived',
-    })
-    expect(archived.status).toBe(200)
-    expect(archived.body.status).toBe('archived')
-
-    // 归档**不是删除**：默认列表里看不到，但按归档筛能查到、直接取也取得到
-    const list = await client.get<{ items: { id: string }[] }>('/api/documents?limit=50')
-    expect(list.body.items.some((item) => item.id === noteId)).toBe(true)
-
-    const restored = await client.patch<{ status: string }>(`/api/documents/${noteId}`, {
-      status: 'ready',
-    })
-    expect(restored.body.status).toBe('ready')
+  it('归档已退役（D-065）：status 不再接受 archived，写回 400', async () => {
+    // 归档交互整体移除后 'archived' 不在状态枚举里——这里守着它别悄悄回来
+    const res = await client.patch(`/api/documents/${noteId}`, { status: 'archived' })
+    expect(res.status).toBe(400)
   })
 
   it('删除后查不到，且标记为已删除而非物理清除', async () => {
@@ -126,5 +115,110 @@ describe('参数校验', () => {
   it('检索缺 q 参数时返回 400', async () => {
     const res = await client.get('/api/search')
     expect(res.status).toBe(400)
+  })
+})
+
+describe('目录管理（D-068）', () => {
+  // **目录名带随机后缀**：多个测试文件并行共用同一个测试库
+  // （global-setup 每轮只清一次），structure.test 也建了「技术/前端」，
+  // 固定名字会撞出 409。随机前缀让本块与其它文件彻底隔离。
+  const uniq = `测试${Math.random().toString(36).slice(2, 6)}`
+  const createdIds: string[] = []
+
+  const treePaths = async (): Promise<string[]> => {
+    const tree = await client.get<{ items: { path: string; children: unknown[] }[] }>(
+      '/api/folders',
+    )
+    const out: string[] = []
+    const walk = (nodes: { path: string; children: unknown[] }[]) => {
+      for (const node of nodes) {
+        out.push(node.path)
+        walk(node.children as { path: string; children: unknown[] }[])
+      }
+    }
+    walk(tree.body.items)
+    return out
+  }
+
+  it('新建目录：mkdir -p 补建祖先，重复创建 409', async () => {
+    const created = await client.post<{ path: string }>('/api/folders', {
+      path: `${uniq}/前端`,
+    })
+    expect(created.status).toBe(201)
+    expect(created.body.path).toBe(`${uniq}/前端`)
+
+    const dup = await client.post('/api/folders', { path: `${uniq}/前端` })
+    expect(dup.status).toBe(409)
+
+    const paths = await treePaths()
+    expect(paths).toContain(uniq)
+    expect(paths).toContain(`${uniq}/前端`)
+  })
+
+  it('改名 / 移动重写整个子树与文档指派（含子目录）', async () => {
+    // 两篇笔记分别归到 uniq/前端 与 uniq/前端/React
+    const a = await client.post<{ id: string }>('/api/documents/notes', {
+      title: '目录测试 A',
+      body: 'A',
+      tags: [],
+    })
+    const b = await client.post<{ id: string }>('/api/documents/notes', {
+      title: '目录测试 B',
+      body: 'B',
+      tags: [],
+    })
+    await client.patch(`/api/documents/${a.body.id}`, { folder: `${uniq}/前端` })
+    await client.patch(`/api/documents/${b.body.id}`, { folder: `${uniq}/前端/React` })
+    createdIds.push(a.body.id, b.body.id)
+
+    // 指派到新路径时注册表自动补建（mkdir -p）
+    const before = await treePaths()
+    expect(before).toContain(`${uniq}/前端/React`)
+
+    const moved = await client.patch<{ moved: number }>('/api/folders', {
+      from: `${uniq}/前端`,
+      to: `${uniq}/组件`,
+    })
+    expect(moved.status).toBe(200)
+    expect(moved.body.moved).toBe(2)
+
+    const paths = await treePaths()
+    expect(paths).toContain(`${uniq}/组件`)
+    expect(paths).toContain(`${uniq}/组件/React`)
+    expect(paths).not.toContain(`${uniq}/前端`)
+
+    const detail = await client.get<{ folder: string | null }>(`/api/documents/${b.body.id}`)
+    expect(detail.body.folder).toBe(`${uniq}/组件/React`)
+  })
+
+  it('不能把目录搬进自己的子树', async () => {
+    const res = await client.patch('/api/folders', {
+      from: uniq,
+      to: `${uniq}/组件/${uniq}`,
+    })
+    expect(res.status).toBe(400)
+  })
+
+  it('删除目录：文档保留、指派清空，子树一起删', async () => {
+    // 上一轮用例已把 uniq/前端 移到 uniq/组件；连同子目录一起删
+    const clearedMain = await client.delete<{ cleared: number }>(
+      '/api/folders?path=' + encodeURIComponent(`${uniq}/组件`),
+    )
+    expect(clearedMain.status).toBe(200)
+    expect(clearedMain.body.cleared).toBe(2)
+
+    const paths = await treePaths()
+    expect(paths).not.toContain(`${uniq}/组件`)
+    expect(paths).not.toContain(`${uniq}/组件/React`)
+    // 父级 uniq 不在被删范围
+    expect(paths).toContain(uniq)
+
+    const list = await client.get<{ items: { id: string; folder: string | null }[] }>(
+      '/api/documents?limit=100',
+    )
+    const folderOf = new Map(list.body.items.map((item) => [item.id, item.folder]))
+    for (const id of createdIds) {
+      expect(folderOf.get(id), `文档 ${id} 应被移出目录`).toBeNull()
+    }
   })
 })
