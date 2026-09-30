@@ -32,7 +32,13 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     gap: 8px;
     height: 44px;
     padding: 0 12px;
-    border-bottom: 1px solid ${token.colorBorderSecondary};
+    /* 界线滚动才显形（D-070）：正文开始从标题栏下面被切断时才需要它 */
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s ease-out;
+
+    &[data-scrolled] {
+      border-bottom-color: ${token.colorBorderSecondary};
+    }
   `,
   /**
    * 文档标题（Office 的标题栏里的文件名）。
@@ -403,7 +409,8 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   foot: css`
     margin-top: 40px;
     padding-top: 18px;
-    border-top: 1px solid ${token.colorBorderSecondary};
+    /* 不画线（D-070）：40px 的留白已经把「正文」和「元信息」分成两段，
+       线是重复信号——这是滚动内容内部的分区，不是固定区与滚动区的边界 */
   `,
   footRow: css`
     display: flex;

@@ -1,4 +1,4 @@
-import { eq, gte, sql } from 'drizzle-orm'
+import { and, desc, eq, gte, inArray, sql } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import type { UsageByRole, UsageDay, UsageRecord, UsageSource, UsageStats } from '@mimir/shared'
 import { db } from '../db/client.js'
@@ -88,6 +88,36 @@ export async function describeModel(role: string): Promise<{
   } catch {
     return { model: '', providerId: '', baseUrlHost: '' }
   }
+}
+
+/**
+ * 某个会话最近一次模型调用的记账行——「上下文容量」的数据源。
+ *
+ * promptTokens 是**那次请求真正发给模型的完整上下文**（系统提示 + 全部
+ * 消息 + 检索命中），由 SDK 的 usage chunk 带回、usageLog 逐次落账
+ * （refId 记的就是会话 id）——比任何字符估算都真。只认 source:
+ * chat / ask：summarize / embed 的记账不是对话上下文，混进来就是另一种说谎。
+ */
+export async function latestConversationContext(conversationId: string): Promise<{
+  promptTokens: number | null
+  completionTokens: number | null
+  totalTokens: number | null
+  model: string
+  at: Date
+} | null> {
+  const rows = await db
+    .select({
+      promptTokens: usageLog.promptTokens,
+      completionTokens: usageLog.completionTokens,
+      totalTokens: usageLog.totalTokens,
+      model: usageLog.model,
+      at: usageLog.at,
+    })
+    .from(usageLog)
+    .where(and(eq(usageLog.refId, conversationId), inArray(usageLog.source, ['chat', 'ask'])))
+    .orderBy(desc(usageLog.at))
+    .limit(1)
+  return rows[0] ?? null
 }
 
 /** 从 URL 里取主机名。解析失败返回空串（宁可显示「—」也不要一个错的域名） */

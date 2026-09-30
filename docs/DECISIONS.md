@@ -4595,3 +4595,175 @@ PRD §5.9 与 §5.12 的引用路径、TECH §4.8 / §10。
 `markdown-controls.test.ts`、`pdf-toolbar-render.test.tsx`、
 `shell/EditorShell.test.tsx`。文档：TECH §15.13、DESIGN §8.4.1。
 
+
+## D-070 界面去线：静态分割线清零，界线只在内容滚动时显形（Notion 对齐）
+
+**背景**：用户看着侧栏 + 库视图（可见 5 条线）说「很多分割线，不太好」，并
+点名 Notion——它的侧栏与正文区一条线都没有。盘点全应用后共约 20 处线：
+侧栏右缘竖线、菜单内两条 divider、账号行上线、库头部下线、详情标题栏下线、
+编辑器工具条 / 子工具条 / 状态行线、对话输入区上线、命令面板三处、设置页
+面板标题条线 + 行线 + 统计页脚线、各下拉菜单 divider、正文 `hr`、卡片与
+浮层描边。
+
+**决定**：
+
+1. **静态分割线一律不画**。分组交给留白与标签（「对话」「知识库」分组标签
+   本来就在做这件事，线是第三个重复信号）；分区交给底色（侧栏 `tintNav`
+   与主区 `colorBgLayout` 深浅两套都保持「布局底 < 导航底」的次序，色差
+   即边界，右缘竖线删除）。
+2. **「固定区 vs 滚动内容」的界线改成滚动才显形**：`scrollTop > 0` 时淡入、
+   回顶淡出（`lib/use-scrolled.ts`，document 捕获监听——详情页先渲染加载态、
+   滚动容器晚挂载也能接上）。落在四处：侧栏账号行上线、库头部下线、详情
+   标题栏下线、对话输入区上线。静态时与 Notion 一样一根线都没有，内容被
+   切断的那一刻边界又有交代。
+3. **删掉两处「底色/留白已代劳」的线**：详情页脚（来源 / 被引用，上方已有
+   40px 留白）、设置面板标题条（`tintList` 底色已分层）。
+4. **保留的线各有不可替代的职责**：设置页键值行 / 块之间的行线（表格式
+   信息，行高且混有提示文字，行线帮助扫读——Notion 的表格同样有线）；编辑器
+   外壳的工具条 / 子工具条 / 状态行线（控件解剖，Office 一族的母语；且滚动
+   容器在各格式编辑器内部，为一个 hairline 把滚动状态穿透六个编辑器不值）；
+   命令面板内部的线（输入框下线兼任聚焦指示，DESIGN §7.2）；下拉菜单的
+   divider（隔开动作与危险操作）；正文 `hr`（内容，不是 UI）；卡片与浮层
+   描边（形状，不是分隔）。
+
+**实测**：`pnpm check` 通过；浏览器双主题截图——静态下侧栏、库、详情、
+对话、设置均无线；侧栏压矮视口制造溢出，滚动后账号行上线显形
+（`data-scrolled="true"`、border 色变为 `colorBorderSecondary`）、滚回顶部
+淡出（属性移除、回到透明）；验证用的临时长笔记已删（`DELETE /api/documents/:id`
+返回 200，库恢复 2 条）。
+
+**影响**：`apps/web/src/lib/use-scrolled.ts`（新增）、`NavSidebar.tsx` /
+`NavSidebar.style.ts`、`library/LibraryView.tsx` / `.style.ts`、
+`DocumentPanel.tsx` / `document/DocumentPanel.style.ts`、
+`ChatPanel.tsx`、`chat/Composer.tsx`、`settings/settings.style.ts`。
+文档：DESIGN §8.1。
+
+
+## D-077 对话可以停、状态可见、失败不再说谎（M0 的四处补齐）
+
+**背景**：对话是本产品的主交互（PRD §5.2），但审计出四处「界面上说不清正在
+发生什么」：
+
+| 症状 | 事实 |
+|---|---|
+| 生成中**没法停**，输入区被 `disabled` 锁死 | 长回答要等十几秒，唯一的出口是刷新页面（那会把半截回答也扔掉） |
+| 按下发送到第一个 token 之间**界面上什么都没有** | 检索跑两个通道 + 模型建连接是整轮里最长的一段等待，而它唯一没有反馈 |
+| 回答一长就看不到正在写什么 | apps/web 对消息区**零 scrollTop 写入**（`grep` 只命中 DocumentPanel / CommandPalette），看起来像卡住 |
+| 失败卡片上「换一个模型 / 去充值 / 接着生成…」点下去**什么都不发生** | `onClick` 里两个 `if` 把其余出路静默吃掉；「只检索」重发的是**那句指令**而不是原问题，检索拿指令去查词、模型照调，点下去必然再失败一次 |
+
+**决定**：
+
+1. **停止**：生成中发送键换成「停止」，输入框从 `disabled` 改 `readOnly`，
+   Esc（带 `isComposing` 判据）也能停。停止后留一行「已停止生成 · 以上是已
+   生成的部分」。
+2. **本轮结果的渲染门控**：停止之后不给动作条，assistant 一个字都没有时也不给。
+   理由是 `save()` 取的是**库里最后一条 assistant**，而停止/早断的那一轮在库里
+   没有 assistant 行——它会安静地把**上一轮**的答案存成笔记并提示「已存为笔记」。
+3. **等待期状态行**：相位全部由已有数据算出，不新增服务端字段。判据是
+   「最后一条是 user，**或**最后一条 assistant 还没有正文」——只发到
+   `RUN_STARTED` 时 messages 里连 assistant 都没有，按「用户之后那条助手消息」
+   字面实现会把最该显示的那一段漏成空白。正文一出整行撤掉。
+4. **自动跟随**：自己发出的新消息无条件跳到底，流式内容只在距底 32px 内跟随，
+   离底给「回到底部」。
+5. **失败不再说谎**：未实现的出路真 `disabled` + 「M0 未实现」tooltip；
+   「只检索」改成把**原问题**连同一次性 `scope: 'search'` 发进流式端点
+   （服务端复用 `!modelReady` 那条分支，与 `/ask` 的 scope 语义对齐）；
+   流中断（建会话失败、fetch 抛）有自己的一张卡，与四类失败互斥显示。
+6. **拆分**：`ChatPanel.tsx` 536 → **256 行**（createStyles 移 `chat/ChatPanel.style.ts`，
+   空态 / 消息区 / 本轮结果 / 动作条各一个文件）。依据是「它是不是一个独立关注点」，
+   行数只是信号——消息区那一块（`ChatThread.tsx`）的关注点是**五样东西的上下顺序**
+   （检索过程 / 消息列表 / 状态行 / 已停止那行 / 本轮结果），散在各处最容易乱掉。
+
+**否决**：
+
+| 方案 | 为什么不用 |
+|---|---|
+| 停止时把 `disabled` 留着（锁死输入区） | 用户按不到 Esc，且自己刚打的字会变灰看不清——`readOnly` 才是「现在不能发，字还在」 |
+| Esc 不加 `isComposing` 判据 | 中文输入法里 Esc 是取消候选词，会把正在生成的回答一起停掉。rc-input 对 Enter 就是这个判据，照抄 |
+| 停止后照常渲染动作条，靠 `savedNoteId` 之类兜底 | 兜不住：库里那一刻的最后一条 assistant 就是**上一轮**的，点了会说谎 |
+| 把空 assistant 渲染成一个「已停止」占位块 | 停止/早断的占位与「刚发出、正在等」的空档看起来一样，而它们的含义完全不同；空盒子还占着 `gap:20px`。直接不渲染 |
+| 只把 `chat.failure` 那条路径补上流中断提示 | 建会话失败的 reject 根本不经过 `chat.failure`（那是 SSE 事件写的），它只在 `send()` 的 Promise 上 |
+| 状态行里并列显示服务端 `trace.tookMs` | 两个钟（客户端从挂载起算、服务端从开跑起算），同一屏两个「耗时」必然有一个是错的 |
+| 「回到底部」放进滚动容器里 | 它会跟着内容滚走，用户真需要它的那一刻正好够不着 |
+| 流中断的收尾放在组件里（`handleStreamError`）而不是 hook 的 `onError` | 组件拿不到「SDK 什么时候把错误交出来」这件事；`useChat` 的 `onError` 才是那个点。放在 hook 里同一个 effect 里做完，少一条要走一遍组件的控制流 |
+| 用 `try … finally` 收尾 `setSaving` / `setPending` | React Compiler 遇到 `try … finally` **跳过整个组件**（实测 `CompileError (BuildHIR::lowerStatement) Handle TryStatement with a finalizer ('finally') clause`），而它是静默的——不报错，只是那棵子树不再被优化。两条路径各写一次即可 |
+
+**风险（如实记下）**：
+
+- **停止只 abort 本地请求**（SDK 自述：不发任何服务端消息），所以**半截回答不
+  保证落库**。界面因此不许诺「已保存」。
+- 失败卡片的「重试 / 只检索」用**本轮发出的文本 + 本轮深度思考**重发；历史轮
+  没有落库这两个字段（`packages/shared/src/conversations.ts` 的 messageSchema
+  只有 text / trace / citations / failure），只能发 `false` 并在卡片里**写明**
+  「当时有没有开深度思考没有存下来，重试按「关闭」处理」。
+- 「只检索」会在会话里**多留一条同样的用户消息**（服务端每请求都
+  `appendMessage({role:'user'})`），当前没有改/删消息的端点。
+- 32px 的跟随阈值、状态行的相位文案是最需要对着真界面调的两处。
+- 等待期那条状态行与检索过程（落库那份）是同一件事的前后半段，**同一屏不并列
+  两个耗时**是这条的约束。
+
+**实测**（`pnpm check` + 真 Chromium 逐条看行为）：
+
+- `pnpm check` 全绿：lint 0 warnings、`lint:styles`、format、11 个包 typecheck、
+  apps/web 232 + apps/server 146 + packages/office 380 + plugins/storage 13 /
+  provider 20 / desktop 3。
+- **真 Chromium（headless + CDP 驱动，合成 SSE）**——用临时探针页挂真实的
+  `ChatPanel`（跑完已删），服务器用 `fetch` 的替换实现按 AG-UI 协议逐块喂
+  事件，逐条看完：
+
+  | 场景 | 看到 |
+  |---|---|
+  | 正常一轮 | 发送后立刻是「正在检索知识库 · 0s」+「停止」键 + 只读输入框（placeholder「正在生成，按 Esc 停止」）；trace 到了变「检索完成 · 命中 1 段 · 正在生成」；正文一出状态行撤掉；跑完出引用卡 + 「存成笔记 / 复制」 |
+  | 只 `RUN_STARTED` 时按停止 | 停止键立刻换回发送键、输入框恢复可编辑、出现「已停止生成 · 以上是已生成的部分」、**没有**动作条（`fetch` 调用次数 = 1，没有第二次请求） |
+  | 正文流到一半按停止 | 半截正文留在屏幕上 + 「已停止生成」，动作条消失（对照：不停止时同样状态有动作条） |
+  | 服务端发 `mimir.failure` | 失败卡（额度用尽）；「换一个模型」「去充值」真的 `disabled`（`b.disabled === true`）、「只检索」可点；鼠标移到禁用的按钮上弹出 **`M0 未实现`**（DOM 里读到 `.ant-tooltip` 的 innerText） |
+  | 点「只检索」 | 第二次请求的 `forwardedProps` = `{"conversationId":"c-probe","deepReasoning":false,"scope":"search"}`，问题文本仍是原问题 |
+  | 点「重试」 | `fetch` 调用次数 1 → 2（真的重发） |
+  | 点「把问题放回输入框」 | 输入框内容变回原问题（nonce 重挂载生效） |
+  | 流中断（无分类） | 「连接中断」卡 + 原始错误 + 「重试 / 把问题放回输入框」，与失败卡互斥（有分类时不出现） |
+  | 跟随 | 流式中每 1.5s 采样：`距底 = 0` 恒定（跨行没中断跟随）；往上滚 150px 后 1.5s 内 `scrollTop` 不变（内容从 467 长到 941 也没被拽回）；点「回到底部」后 `scrollTop === max` |
+  | 布局 | 「回到底部」按钮 rect `x=856..880, y=547..571`，滚动区 rect `0..900 × 0..583`——贴在滚动区右下角内部，没有越界 |
+  | 空会话 + 建会话失败 | 「发送失败：请先登录」（`POST /api/conversations` 401），**空态里也渲染** |
+  | 深浅两套 | 深色下输入区、状态行、停止键、消息气泡均正常，没有露出白底 |
+
+- **这一轮真浏览器验出四个只有跑起来才看得见的 bug**，都已修：
+  1. `pending` 罩住了整个 `send()`：在只收到 `RUN_STARTED` 时按停止，SDK 的
+     `sendMessage` Promise 不落地，界面**永久**停在「生成中」（停止键撤不掉、
+     输入框永远只读）。改成 hook 里的 `creating`——**只罩建会话那一趟**
+  2. 流中断时状态行还在转：失败卡下面挂着一行「正在生成 · 1s」。状态行现在
+     在 `failure` / `error` / `stopped` 三种情况下都不显示
+  3. 建会话失败那一行原来只在消息列表分支里渲染，而它**最容易发生的正是空会话**
+     ——空态里那次失败完全没有痕迹
+  4. 跟随的判据原本是「每次回调现算距底」：一个 token 只改宽度不改高度，真正
+     触发 ResizeObserver 的是**换行**，而换行一次长高**一整行**（实测 40px），
+     已经越过 32px 阈值——跟随就此中断（实测：点「自己发新消息」后 320ms
+     就不再贴底，距底 32px）。改成「跟随是状态、增长只看状态」，实测跨行不掉
+
+- React Compiler 逐文件探针（`babel-plugin-react-compiler` 单独跑）：
+  `ChatPanel` / `ChatPanelBody` / `ChatThread` / `RoundResult` / `StreamStatusLine` /
+  `ChatEmptyState` / `Composer` / `FailureCard` / `StreamErrorCard` /
+  `AnswerActionsRow` / `useStickToBottom` / `useMimirChat` 全部 `CompileSuccess`。
+  **`try … finally` 会让整个组件被跳过**（`CompileError (BuildHIR::lowerStatement)
+  Handle TryStatement with a finalizer ('finalizer') clause`），三处收尾因此都
+  改成两条路径各写一次。
+- 服务端：临时集成用例（跑完已删）直接调 `streamChat`，`scope: 'search'` 时
+  `streamChat`（模型）**未被调用**、SSE 里有「没有调用模型」，trace 的关键词来自
+  原问题的 jieba 切分；不带 scope 时正常调模型。
+
+**上游的坑（这次量出来的，写在这里免得下次再查）**：服务端只要在正文开始前
+把流**正常结束**（`RUN_FINISHED`，或像失败那样发完自定义事件再 `RUN_ERROR`），
+客户端就不会留下助手消息——库里那条 `messages.failure = 'quota'` 于是
+**当场看不到**，要刷新或重新打开会话才从落库记录回退出来。这不是本次改动引入的
+（`createChatUI` 的 `message` 只是不渲染空消息），修它要动 SDK 的事件处理，
+不在这一批里。
+
+**影响**：`apps/web/src/components/ChatPanel.tsx`（拆到 256 行）、
+`components/chat/ChatPanel.style.ts` / `ChatEmptyState.tsx` / `ChatThread.tsx` /
+`RoundResult.tsx` / `AnswerActionsRow.tsx` / `StreamStatusLine.tsx`（新增）、
+`components/chat/Composer.tsx`、`components/chat/FailureCard.tsx`、
+`lib/use-stick-to-bottom.ts`（新增）、`lib/chat-ui.tsx`（空 assistant 不渲染 +
+订正一句错注释）、`lib/use-mimir-chat.ts`（`stopped` / `onError` 刷会话 / `stop()` 自带失效 /
+`send` 的 scope）、
+`apps/server/src/services/assistant-stream.ts`（`mimirProps` 认 `scope`）。
+文档：PRD §5.6（等待期）、§5.7（动作条门控）、§5.8（出路必须真的能走 + 请求没走完）、
+§5.13（生成可以随时停下）、§5.14（贴底才跟随）；DESIGN §8.7 / §8.8 / §8.8.1。

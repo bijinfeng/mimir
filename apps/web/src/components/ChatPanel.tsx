@@ -1,31 +1,30 @@
 import type { Citation, Message } from '@mimir/shared'
-import type { UIMessage } from '@tanstack/ai-react'
-import { useQueryClient } from '@tanstack/react-query'
 import { App as AntApp, Button, Skeleton } from 'antd'
-import { createStyles } from 'antd-style'
+import { ArrowDownOutlined } from '@ant-design/icons'
 import { useRef, useState } from 'react'
-import { SaveOutlined, ExportOutlined } from '@ant-design/icons'
-import { CitationCards } from '@/components/chat/CitationCards'
+import { useChatPanelStyles } from '@/components/chat/ChatPanel.style'
+import { ChatThread, questionToRefill } from '@/components/chat/ChatThread'
 import { Composer } from '@/components/chat/Composer'
-import { FailureCard } from '@/components/chat/FailureCard'
-import { TraceDisclosure } from '@/components/chat/TraceDisclosure'
-import { api } from '@/lib/api'
 import type { AskDraft } from '@/lib/app-shell-context'
 import { useAppShell } from '@/lib/app-shell-context'
-import { mimirChatUI } from '@/lib/chat-ui'
 import { useMimirChat } from '@/lib/use-mimir-chat'
-import { FONT_SIZE } from '@/theme/tokens'
+import { useScrolled } from '@/lib/use-scrolled'
+import { useStickToBottom } from '@/lib/use-stick-to-bottom'
 
 /**
- * 右栏：对话视图。
+ * 对话面板（右栏）。
  *
  * 会话优先意味着对话是**主视图**，不是侧边面板（`docs/PRD.md` §5.2）。
  *
  * 消息列表的渲染交给官方的 `createChatUI`（见 lib/chat-ui.tsx），
  * 流式状态交给 `useChat`（见 lib/use-mimir-chat.ts）。这里只负责：
- *  - 主区里的布局与滚动
- *  - 检索过程与引用卡片的位置（它们是「本轮的结果」，不是消息里的片段）
+ *  - 主区里的滚动与外壳（`lib/use-stick-to-bottom.ts`）
+ *  - 会话相关的本地状态：发送前的 pending、建会话失败、本轮发出的参数
  *  - 输入区
+ *
+ * 其余各块在 `components/chat/` 里各有文件：消息区（含检索过程 / 状态行 /
+ * 本轮结果的位置）、空态、引用卡、失败卡、输入区。这个文件曾经 536 行，
+ * `apps/web/AGENTS.md` 的 300 行是信号，拆的依据是「它是不是一个独立关注点」。
  */
 
 export interface ChatPanelProps {
@@ -41,130 +40,6 @@ export interface ChatPanelProps {
   onConversationCreated: (conversationId: string) => void
 }
 
-const useStyles = createStyles(({ css, token }) => ({
-  /* 存成笔记 / 打开笔记的行：跟在引用卡之后，弱化成一条次级动作 */
-  saveRow: css`
-    display: flex;
-    justify-content: flex-end;
-    margin-top: -6px;
-  `,
-  wrap: css`
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    background: ${token.colorBgContainer};
-  `,
-  scroll: css`
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    padding: 24px 0 16px;
-  `,
-  inner: css`
-    max-width: 860px;
-    margin: 0 auto;
-    padding: 0 40px;
-  `,
-
-  /* 消息的排布。用户消息靠右、助手消息占满宽度——
-     助手回答里会有表格与代码块，限宽会让它们挤成一团 */
-  /* 消息之间的间距。原型的对话列是 max-width:860px 的居中单列，
-     消息之间留 20px —— 比正文段落间距大，比卡片间距小。
-     用户消息靠右、助手消息占满宽度（回答里会有表格与代码块，
-     限宽会让它们挤成一团）。 */
-  thread: css`
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-
-    [data-role='user'] {
-      align-self: flex-end;
-      max-width: 78%;
-      padding: 9px 14px;
-      border-radius: 12px 12px 2px 12px;
-      background: ${token.colorPrimaryBg};
-      font-size: ${FONT_SIZE.body}px;
-      line-height: 1.7;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
-    [data-role='assistant'] {
-      font-size: ${FONT_SIZE.body}px;
-      line-height: 1.75;
-      color: ${token.colorText};
-    }
-
-    /* 助手回答是 Markdown（由官方的 TextPart 渲染），
-       所以这里要覆盖它的元素样式以符合 mimir 的正文规范 */
-    [data-role='assistant'] {
-      p {
-        margin: 12px 0;
-      }
-      h1,
-      h2,
-      h3 {
-        margin: 20px 0 10px;
-        line-height: 1.5;
-      }
-      h1 {
-        font-size: ${FONT_SIZE.pageTitle}px;
-      }
-      h2 {
-        font-size: ${FONT_SIZE.section}px;
-      }
-      ul,
-      ol {
-        margin: 12px 0;
-        padding-left: 22px;
-      }
-      code {
-        font-family: ${token.fontFamilyCode};
-        font-size: ${FONT_SIZE.excerpt}px;
-        background: ${token.colorFillSecondary};
-        color: ${token.inlineCodeFg};
-        padding: 1.5px 5px;
-        border-radius: ${token.borderRadiusSM}px;
-      }
-      pre {
-        background: ${token.colorFillTertiary};
-        border: 1px solid ${token.colorBorderSecondary};
-        border-radius: ${token.borderRadius}px;
-        padding: 14px 16px;
-        overflow-x: auto;
-        font-size: ${FONT_SIZE.excerpt}px;
-
-        code {
-          background: none;
-          color: ${token.colorText};
-          padding: 0;
-        }
-      }
-      a {
-        color: ${token.colorLink};
-        text-decoration: underline;
-        text-underline-offset: 2px;
-      }
-    }
-  `,
-
-  empty: css`
-    padding: 80px 20px;
-    text-align: center;
-  `,
-  emptyTitle: css`
-    font-size: ${FONT_SIZE.section}px;
-    font-weight: 600;
-    margin-bottom: 8px;
-    color: ${token.colorText};
-  `,
-  emptySub: css`
-    font-size: ${FONT_SIZE.note}px;
-    color: ${token.colorTextTertiary};
-    line-height: 1.9;
-  `,
-}))
-
 export function ChatPanel({
   conversationId,
   draft,
@@ -173,7 +48,7 @@ export function ChatPanel({
   onOpenCitation,
   onConversationCreated,
 }: ChatPanelProps) {
-  const { styles } = useStyles()
+  const { styles } = useChatPanelStyles()
 
   /**
    * **数据没到位就不挂载对话体。**
@@ -217,9 +92,13 @@ function ChatPanelBody({
   onOpenCitation,
   onConversationCreated,
 }: ChatPanelProps) {
-  const { styles } = useStyles()
+  const { styles } = useChatPanelStyles()
   const { openDocument } = useAppShell()
+  const { message: antdMessage } = AntApp.useApp()
   const scrollRef = useRef<HTMLDivElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
+  /* 输入区上方的界线随消息滚动显形（D-070） */
+  const scrolled = useScrolled(scrollRef)
 
   const chat = useMimirChat({
     conversationId,
@@ -236,285 +115,180 @@ function ChatPanelBody({
     onConversationCreated,
   })
 
+  /**
+   * 建会话失败时的错误。
+   *
+   * `send()` 唯一会 reject 的一支就是它（流侧的失败不 reject：实测
+   * `rejected = no`，错误只出现在 `chat.error` 上，由「连接中断」那张卡渲染）。
+   * 原先这里 `void chat.send(...)` 把 reject 丢掉，于是「按了发送、界面回到
+   * 原样」——连一句报错都没有。
+   */
+  const [sendError, setSendError] = useState<string | null>(null)
+
+  /**
+   * 本轮发出的文本与「深度思考」。
+   *
+   * 失败卡片的「重试 / 只检索」要重发**原来那个问题**，而不是把「重试」
+   * 两个字发出去；而历史轮没有落库这两个字段
+   * （`packages/shared/src/conversations.ts` 的 messageSchema 只有
+   * text / trace / citations / failure），只能从本地消息里取文本、并按
+   * 「开关未知」渲染一条说明。
+   *
+   * `nonce` 是「把问题放回输入框」用的杠杆：Composer 的文本在它自己的 state 里
+   * （只认挂载时的 `initialText`），而它的 key 已经是重挂载的开关
+   * （`key={draft?.documentId ?? 'global'}`）——点按钮时改 nonce 是最小的接法。
+   */
+  const [lastSend, setLastSend] = useState<{
+    text: string
+    deepReasoning: boolean
+    /** 是本地刚发的（true）还是从历史记录推的（false） */
+    known: boolean
+    nonce: number
+  }>({ text: '', deepReasoning: false, known: false, nonce: 0 })
+
+  /**
+   * 忙 = 这一轮在飞，或**正在新建会话**。
+   *
+   * `creating` 那一段 `chat.isLoading` 还是假，界面看不出有东西在飞——新会话里
+   * 连按两次 Enter 会建出两个会话。它由 hook 维护（只有它知道建会话那一趟的
+   * 起止），而且**只在建会话期间为真**：把标志位罩住整个 `send()` 会被停止
+   * 生成卡死（实测在只收到 `RUN_STARTED` 时停止，SDK 的 `sendMessage` Promise
+   * 不落地，界面就永久停在「生成中」）。
+   */
+  const busy = chat.isLoading || chat.creating
+  /**
+   * 本轮检索范围（「+ 添加上下文」所选，或从文档工具条带进来的 draft 锁定）。
+   * 每轮发送都以它的 documentId 覆盖挂载值（见 use-mimir-chat 的 send）；
+   * null = 整个知识库。
+   */
+  const [contextDoc, setContextDoc] = useState<{ id: string; title: string } | null>(
+    draft?.documentId ? { id: draft.documentId, title: '当前文档' } : null,
+  )
+
+  const send = async (
+    text: string,
+    options: {
+      deepReasoning?: boolean
+      scope?: 'search'
+      documentId?: string | null
+    } = {},
+  ) => {
+    setSendError(null)
+    setLastSend({
+      text,
+      deepReasoning: options.deepReasoning ?? false,
+      known: true,
+      nonce: lastSend.nonce,
+    })
+    /* 建会话失败是 `send()` 唯一会 reject 的一支（流侧的失败不 reject，
+       见上面 `sendError` 的说明）。这里**不设忙标志**——那是 hook 的
+       `creating` 的职责，而且它只覆盖建会话那一趟。 */
+    try {
+      await chat.send(text, options)
+    } catch (error) {
+      setSendError(error instanceof Error ? error.message : '发送失败')
+    }
+  }
+
+  /** 重发本轮的问题（重试 / 只检索两条出路共用） */
+  const resend = (scope?: 'search') => {
+    const previous = questionToRefill(chat, lastSend.text)
+    if (!previous) return
+    void send(previous, {
+      deepReasoning: lastSend.deepReasoning,
+      scope,
+      documentId: contextDoc?.id ?? null,
+    })
+  }
+
+  /**
+   * 自动跟随（DESIGN §8.7）。
+   *
+   * `jumpKey` 用消息条数：用户自己发出的新消息总是跳到底；流式追加的
+   * token 不改变条数，于是它只在贴底时跟随（`use-stick-to-bottom` 的两条规则）。
+   */
+  const { atBottom, scrollToBottom } = useStickToBottom(scrollRef, contentRef, chat.messages.length)
+
+  /* 停止生成：半截回答**不保证落库**（SDK 只 abort 本地请求，不发任何服务端
+     消息），所以界面只说「已停止」+「以上是已生成的部分」，不说「已保存」 */
+  const stop = () => {
+    chat.stop()
+    antdMessage.info('已停止生成')
+  }
+
   const isEmpty = chat.messages.length === 0
-  const lastRole = chat.messages.at(-1)?.role
 
   /**
-   * 落库消息里的检索过程、引用与失败。
-   *
-   * **历史会话也必须能看到这三个**——它们不是「刚才读了什么」的实时状态，
-   * 而是**这条回答的依据**，和回答本身一样是内容的一部分。
-   *
-   * 曾经只渲染实时事件推来的那一份，于是打开历史会话时：中栏显示
-   * 「本次引用 2 个来源」，右栏却既没有检索过程也没有引用块——两栏说的
-   * 不是同一件事。而库里明明存着它们（`messages.trace` / `messages.citations`
-   * / `messages.failure`），只是渲染层没用。
-   *
-   * ## 为什么按**位置**取而不是按 id
-   *
-   * `useChat` 会把传进去的 `initialMessages` 重新规范化，**消息 id 会被
-   * 重新生成**（`normalizeToUIMessage(message, generateMessageId)`）。
-   * 所以按 id 去查落库记录永远查不到——实测症状就是「代码明明写了，
-   * 界面上什么都不显示」。
-   *
-   * 按「最后一条助手消息是第几条」对齐则稳定：两边的顺序都由服务端
-   * 的写入顺序决定，不会因为 id 重生成而错位。
+   * 输入区节点，**两个位置共用**：空态时渲染在问候语下面（居中成组，
+   * Notion / ChatGPT 的新对话形态——用户拍板），开始对话后由面板底部
+   * 的 composerLine 接管。发第一条消息时消息数 0→1，它从居中组挪到
+   * 底部——组件会重挂载，文字已经清空所以没有损失；「深度思考」的开关
+   * 状态会随之回到默认关，这是本次重挂载的已知代价。
    */
-  const storedAssistant = (initialMessages ?? []).findLast((item) => item.role === 'assistant')
-
-  /**
-   * 载入的那一轮还在不在渲染范围内。
-   *
-   * `chat.messages` 在灌入 `initialMessages` 之后**只由发送追加**，所以
-   * 长度与载入时相等就说明用户还没发过新消息——落库的 trace / 引用 / 失败
-   * 仍然属于当前显示的这一轮。
-   *
-   * 少了这一条会错在「发过新消息之后」：那时 `storedAssistant` 指的是
-   * **上一轮**的回答，而它的失败卡片会挂在新回答下面（发一次成功的提问，
-   * 却在回答下面看到上一轮的「模型额度用尽」）。
-   */
-  const showingLoadedRound = chat.messages.length === (initialMessages?.length ?? 0)
-
-  /**
-   * 当前该显示哪一份检索过程、引用与失败。
-   *
-   * 实时那份（`chat.trace`）属于**最后一条助手消息**；历史消息用落库的。
-   * 两者取其一而不是叠加，因为它们描述的是同一件事。
-   *
-   * 失败卡片原先只认实时那份（`chat.failure` 只由 SSE 的 `mimir.failure`
-   * 事件写，见 `lib/use-mimir-chat.ts`），于是**打开历史会话时它完全不渲染**：
-   * 库里存着「这条回答失败过、原因是什么」，界面却是一片空白，
-   * 用户看不到额度用尽，也拿不到那三条出路（PRD §5.8）。
-   * `failure` 与 trace / 引用是同一类落库字段，走同一条回退。
-   */
-  const activeTrace = chat.trace ?? (showingLoadedRound ? (storedAssistant?.trace ?? null) : null)
-  const activeCitations =
-    chat.citations.length > 0
-      ? chat.citations
-      : showingLoadedRound
-        ? (storedAssistant?.citations ?? [])
-        : []
-  const activeFailure =
-    chat.failure?.kind ?? (showingLoadedRound ? (storedAssistant?.failure ?? null) : null)
-
-  /**
-   * 这一轮的结果（检索过程、引用、动作行）现在该不该渲染。
-   *
-   * 两个条件的含义不同：
-   *
-   *  - **实时那份**只在最后一条不是用户消息时有意义。用户消息是新一轮的
-   *    开端，它下面挂的块属于上一轮，看起来却像这一轮的检索过程
-   *  - **落库那份**在最后一条是用户消息时**同样有效**——那正是「追问过、
-   *    还没答」的历史会话：库里存着上一条回答的引用与检索过程，
-   *    不该整组消失。原先只判 `lastRole !== 'user'`，于是这种会话里
-   *    引用块和「存成笔记 / 复制」一个都不显示（PRD §5.2 说引用是回答的
-   *    一部分，§5.7 说结论要能沉淀下来）
-   */
-  const showRoundResult =
-    lastRole !== 'user' || (showingLoadedRound && storedAssistant !== undefined)
-
-  /** 最后一条助手回答的纯文本（复制动作用）。流式中间态由 UI parts 累积 */
-  const lastAnswerText =
-    chat.messages
-      .findLast((item) => item.role === 'assistant')
-      ?.parts.map((part) => (part.type === 'text' ? part.content : ''))
-      .join('') ?? ''
+  const composer = (
+    <Composer
+      key={`${draft?.documentId ?? 'global'}:${lastSend.nonce}`}
+      initialText={lastSend.nonce > 0 ? lastSend.text : (draft?.text ?? '')}
+      conversationId={chat.activeId}
+      contextDocument={contextDoc ?? undefined}
+      onContextDocumentChange={setContextDoc}
+      busy={busy}
+      onSend={(text, deepReasoning) =>
+        void send(text, { deepReasoning, documentId: contextDoc?.id ?? null })
+      }
+      onStop={stop}
+    />
+  )
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.scroll} ref={scrollRef}>
-        <div className={styles.inner}>
-          {isEmpty ? (
-            <ChatEmptyState draft={draft} />
-          ) : (
-            <>
-              {/* 检索过程渲染在回答**上方**。默认折叠，展开后是逐步记录
-                  （PRD §5.6）：它是「这条回答的依据」，所以归到回答里，
-                  而不是飘在页面顶端 */}
-              {activeTrace && showRoundResult && <TraceDisclosure trace={activeTrace} />}
-
-              <div className={styles.thread}>
-                <mimirChatUI.Chat chat={chat as never} />
-              </div>
-
-              {/*
-                失败卡片。有失败时渲染它而**不是**引用卡与重试入口——
-                因为此时用户需要的不是「再试一次」，而是「这次花没花钱、
-                内容丢没丢、换个做法有没有用」（PRD §5.8）。
-
-                分类取自实时事件或落库记录（见 activeFailure）；落库只存
-                分类、没有原始错误文本，所以 detail 只在实时那份存在时给，
-                其余交给 FailureCard 自己的预设文案兜底。
-              */}
-              {activeFailure ? (
-                <FailureCard
-                  failure={activeFailure}
-                  detail={chat.failure?.message}
-                  onSearchOnly={() => void chat.send('只检索，不调模型，把命中的原文列出来', false)}
-                  onRetry={() => {
-                    const previous = lastQuestionOf(chat.messages)
-                    if (previous) void chat.send(previous, false)
-                  }}
-                />
-              ) : (
-                showRoundResult && (
-                  <>
-                    <CitationCards citations={activeCitations} onOpen={onOpenCitation} />
-                    <AnswerActionsRow
-                      activeId={chat.activeId}
-                      answerText={lastAnswerText}
-                      onOpenNote={(noteId) => openDocument(noteId, 'all')}
-                    />
-                  </>
-                )
-              )}
-            </>
-          )}
+      <div className={styles.scrollWrap}>
+        <div className={styles.scroll} ref={scrollRef} data-empty={isEmpty || undefined}>
+          <div className={isEmpty ? styles.innerEmpty : styles.inner} ref={contentRef}>
+            <ChatThread
+              chat={chat}
+              draft={draft}
+              initialMessages={initialMessages}
+              lastSend={lastSend}
+              sendError={sendError}
+              composer={composer}
+              onOpenCitation={onOpenCitation}
+              onOpenNote={(noteId) => openDocument(noteId, 'all')}
+              onRetry={() => resend()}
+              onSearchOnly={() => resend('search')}
+              onRefill={() => {
+                const question = questionToRefill(chat, lastSend.text)
+                if (!question) return
+                setLastSend((current) => ({
+                  ...current,
+                  text: question,
+                  nonce: current.nonce + 1,
+                }))
+              }}
+            />
+          </div>
         </div>
+
+        {/* 离底时才出现。它浮在滚动区之上，所以不能放进滚动容器里 */}
+        {!atBottom && (
+          <Button
+            className={styles.backToBottom}
+            size="small"
+            shape="circle"
+            icon={<ArrowDownOutlined />}
+            aria-label="回到底部"
+            onClick={scrollToBottom}
+          />
+        )}
       </div>
 
-      <Composer
-        key={draft?.documentId ?? 'global'}
-        initialText={draft?.text ?? ''}
-        scopedDocumentId={draft?.documentId}
-        disabled={chat.isLoading}
-        onSend={(text, deepReasoning) => void chat.send(text, deepReasoning)}
-      />
-    </div>
-  )
-}
-
-/**
- * 对话空态。
- *
- * 它曾经列出「待整理的内容」，让刚收进来的东西一键带进对话
- * （`docs/PRD.md` §5.10）。收件箱退役后（D-054）那个列表没有依据了——
- * 新内容直接可用，不存在「待」这个状态。空态因此回到它本来的职责：
- * 说清楚这个输入框会做什么。
- *
- * 原先那条动机（「我刚收了东西，想问问」）由**库视图**承接：内容一进来
- * 就在全部文档里，选中它点「问 AI」就带着上下文进对话，不需要空态再挑几条。
- */
-function ChatEmptyState({ draft }: { draft: AskDraft | null }) {
-  const { styles } = useStyles()
-
-  return (
-    <div className={styles.empty}>
-      <div className={styles.emptyTitle}>{draft ? '就这一篇提问' : '问点什么'}</div>
-      <div className={styles.emptySub}>
-        {draft
-          ? '上下文已经准备好，范围锁定在这篇文档'
-          : '它会先在你的知识库里检索，再基于命中的原文回答，并给出引用'}
-      </div>
-    </div>
-  )
-}
-
-/**
- * 重试要重发**上一个问题**，而不是发「重试」这两个字。
- *
- * 从 UIMessage 的 text part 里取——它没有直接的 text 字段，
- * 消息内容是 parts 数组。
- */
-function lastQuestionOf(messages: UIMessage[]): string | undefined {
-  const lastUser = messages.findLast((item) => item.role === 'user')
-  if (!lastUser) return undefined
-
-  return lastUser.parts
-    .filter((part) => part.type === 'text')
-    .map((part) => (typeof part.content === 'string' ? part.content : ''))
-    .join('')
-}
-
-/**
- * 「存成笔记」——闭环的最后一环（`docs/PRD.md` §5.7）：对话产出结论，
- * 界面上必须有地方把它沉淀下来。服务端把回答与引用写成站内链接，
- * 存出来的笔记自动进双链系统（services/conversations.ts）。
- *
- * 作用对象是**最后一条助手回答**（读完整篇想存下的就是它）。
- * 落库消息的 id 与界面消息的 id 不同（useChat 会重新生成 id），
- * 所以点击时按会话现取落库记录、按「最后一条助手消息」对齐——
- * 与 storedAssistant 的取用是同一个模式。服务端按 messageId 幂等：
- * 重复点击返回同一篇笔记，按钮转成「打开笔记」。
- */
-function AnswerActionsRow({
-  activeId,
-  answerText,
-  onOpenNote,
-}: {
-  activeId: string | undefined
-  answerText: string
-  onOpenNote: (noteId: string) => void
-}) {
-  const { styles } = useStyles()
-  const { message: antdMessage } = AntApp.useApp()
-  const queryClient = useQueryClient()
-  const [savedNoteId, setSavedNoteId] = useState<string | null>(null)
-  const [saving, setSaving] = useState(false)
-
-  if (!activeId) return null
-
-  const save = async () => {
-    setSaving(true)
-    try {
-      // 现取落库消息：流式完成后 onFinish 已让缓存失效，这里拿到的是
-      // 含最新回答 id 的一份
-      const conversation = await queryClient.fetchQuery({
-        queryKey: ['conversation', activeId],
-        queryFn: () => api.conversations.get(activeId),
-      })
-      const lastAssistant = conversation.messages
-        .toReversed()
-        .find((item) => item.role === 'assistant')
-      if (!lastAssistant) {
-        antdMessage.warning('没有可保存的回答')
-        return
-      }
-      const result = await api.conversations.saveAsNote({ messageId: lastAssistant.id })
-      setSavedNoteId(result.noteId)
-      void queryClient.invalidateQueries({ queryKey: ['conversation', activeId] })
-      antdMessage.success('已存为笔记')
-    } catch (error) {
-      antdMessage.error(error instanceof Error ? error.message : '存为笔记失败')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(answerText)
-      antdMessage.success('已复制')
-    } catch {
-      antdMessage.error('复制失败')
-    }
-  }
-
-  return (
-    <div className={styles.saveRow}>
-      {savedNoteId ? (
-        <Button
-          type="text"
-          size="small"
-          icon={<ExportOutlined />}
-          onClick={() => onOpenNote(savedNoteId)}
-        >
-          打开笔记
-        </Button>
-      ) : (
-        <Button
-          type="text"
-          size="small"
-          icon={<SaveOutlined />}
-          loading={saving}
-          onClick={() => void save()}
-        >
-          存成笔记
-        </Button>
+      {/* 空态时输入区在居中组里（ChatThread 渲染），底部这条不渲染——
+          否则同一个输入框会出现两份 */}
+      {!isEmpty && (
+        <div className={styles.composerLine} data-scrolled={scrolled || undefined}>
+          {composer}
+        </div>
       )}
-      <Button type="text" size="small" onClick={() => void copy()}>
-        复制
-      </Button>
     </div>
   )
 }

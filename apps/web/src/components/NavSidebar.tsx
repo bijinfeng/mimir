@@ -10,11 +10,13 @@ import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { Avatar, Button, Dropdown, Menu, Tooltip } from 'antd'
 import type { MenuProps } from 'antd'
+import { useRef } from 'react'
 import { BrandMark } from '@/components/BrandMark'
 import { useStyles } from '@/components/NavSidebar.style'
 import { FolderSection } from '@/components/nav/FolderSection'
 import { buildActions, buildConversations, currentKey } from '@/components/nav/menu-items'
 import { api } from '@/lib/api'
+import { useScrolled } from '@/lib/use-scrolled'
 import { useUnsaved } from '@/lib/unsaved'
 
 /**
@@ -171,6 +173,11 @@ export function NavSidebar({
           ]
       : buildConversations(conversations, CONVERSATION_LIMIT)
 
+  /* 滚动后才显形底部账号行的界线（D-070）：会话列表长了开始被切断时，
+     它与固定页脚之间需要一道边界；静态下界面无线 */
+  const bodyRef = useRef<HTMLDivElement>(null)
+  const bodyScrolled = useScrolled(bodyRef)
+
   return (
     <nav className={styles.nav}>
       <div className={`${styles.topBar} ${collapsed ? styles.topBarCollapsed : ''}`}>
@@ -209,21 +216,16 @@ export function NavSidebar({
         ) : null}
       </div>
 
-      <div className={styles.body}>
+      <div className={`${styles.body} ${collapsed ? styles.bodyCollapsed : ''}`} ref={bodyRef}>
         <Menu
           mode="inline"
           className={`${styles.menu} ${collapsed ? styles.menuCollapsed : ''}`}
           inlineCollapsed={collapsed}
           selectedKeys={selectedKey ? [selectedKey] : []}
           onClick={onMenuClick}
-          items={[
-            ...buildActions(),
-            { type: 'divider' },
-            ...conversationItems,
-            /* 尾部分隔线只在展开态渲染：折叠态下知识库区块收成一个图标，
-               两条 divider 叠在一起会像渲染坏了 */
-            ...(collapsed ? [] : [{ type: 'divider' as const }]),
-          ]}
+          /* 不放 divider：分组由「对话」「知识库」标签与留白承担（D-070）。
+             之前尾部那条只在展开态渲染，是怕折叠态两条叠在一起像渲染坏了 */
+          items={[...buildActions(), ...conversationItems]}
         />
 
         {/*
@@ -276,7 +278,7 @@ export function NavSidebar({
         下面一行账号。那一项菜单完全是多余的：设置是个**图标就能表达**的
         目的地，不值得占一整行的高度，而两行叠在一起还把底部撑得很高。
       */}
-      <div className={styles.foot}>
+      <div className={styles.foot} data-scrolled={bodyScrolled || undefined}>
         <AccountRow
           collapsed={collapsed}
           settingsActive={selection.page === 'settings'}

@@ -38,6 +38,18 @@ interface MimirProps {
   conversationId?: string
   documentId?: string
   deepReasoning?: boolean
+  /**
+   * 只用检索，不调模型（与 `/ask` 的 `scope` 语义对齐）。
+   *
+   * 失败卡片上的「只检索，不调模型」是 PRD §5.8 的一类出路，原先的实现是
+   * 把「只检索，不调模型，把命中的原文列出来」当成**问题文本**重发——
+   * 检索于是拿这句指令去查词、模型也照常被调用，点下去必然再失败一次。
+   *
+   * 这个字段是那次修复的落点：认它就走下面 `!modelReady` 那条同一条分支
+   * （命中原文原样列出、说明没有花钱），只是原因从「没配模型」变成
+   * 「用户选了只检索」。
+   */
+  scope?: 'search'
 }
 
 const CONTEXT_CHAR_BUDGET = 6000
@@ -213,6 +225,7 @@ function mimirProps(forwarded: Record<string, unknown> | undefined): MimirProps 
     ...(typeof props.conversationId === 'string' ? { conversationId: props.conversationId } : {}),
     ...(typeof props.documentId === 'string' ? { documentId: props.documentId } : {}),
     deepReasoning: props.deepReasoning === true,
+    ...(props.scope === 'search' ? { scope: 'search' as const } : {}),
   }
 }
 
@@ -326,8 +339,9 @@ async function* createStream(params: StreamParams): AsyncGenerator<StreamChunk> 
     value: { citations: retrieval.citations },
   } as StreamChunk
 
-  // 没配模型 → 只把命中的原文发出去，并说明没有花钱
-  if (!(await modelReady('chat'))) {
+  // 只检索：用户显式选了这条出路，或没配模型。两条走同一条分支——
+  // 区别只在 `searchOnlyAnswer` 的措辞里，用户反正都得到一个「没有花钱」的答案
+  if (props.scope === 'search' || !(await modelReady('chat'))) {
     const text = searchOnlyAnswer(question, retrieval.citations)
     for await (const chunk of textOnlyStream(text)) yield chunk
     await persistAssistant(conversationId, text, retrieval, null, turnStartedAt)

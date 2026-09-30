@@ -30,7 +30,15 @@ export const useStyles = createStyles(({ css, token }) => ({
   head: css`
     flex: none;
     padding: 18px 0 14px;
-    border-bottom: 1px solid ${token.colorBorderSecondary};
+    /* 界线滚动才显形（D-070）：卡片/行条开始从头部下面被切断时才需要它，
+       静态下头部与列表之间只有留白 */
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s ease-out;
+
+    &[data-scrolled] {
+      border-bottom-color: ${token.colorBorderSecondary};
+    }
+
     display: flex;
     flex-direction: column;
     gap: 12px;

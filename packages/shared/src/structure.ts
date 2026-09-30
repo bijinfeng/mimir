@@ -24,6 +24,10 @@ export interface FolderNode {
   name: string
   /** 该目录（含子目录）下的文档数 */
   count: number
+  /** 知识库描述（D-078）。创建时填写，可为空串 */
+  description: string | null
+  /** 知识库图标的键（FOLDER_ICONS 之一）。null = 未选，树里回退默认文件夹图标 */
+  icon: string | null
   children: FolderNode[]
 }
 
@@ -32,6 +36,8 @@ export const folderNodeSchema: z.ZodType<FolderNode> = z.lazy(() =>
     path: z.string(),
     name: z.string(),
     count: z.number().int(),
+    description: z.string().nullable(),
+    icon: z.string().nullable(),
     children: z.array(folderNodeSchema),
   }),
 )
@@ -58,7 +64,36 @@ export const folderPathSchema = z
   })
 
 /** 新建目录。路径含父级（mkdir -p 语义），如 `技术/前端` */
-export const folderCreateSchema = z.object({ path: folderPathSchema })
+/**
+ * 知识库图标的键与标签（D-078）。键落库（`folders.icon`），标签给选择器
+ * 与读屏；放在 shared 是因为服务端要按它校验创建参数——只此一份口径。
+ */
+export const FOLDER_ICONS = [
+  { key: 'humanities', label: '人文' },
+  { key: 'history', label: '历史' },
+  { key: 'social', label: '社科' },
+  { key: 'law', label: '法律' },
+  { key: 'science', label: '科学' },
+  { key: 'natural', label: '理科' },
+  { key: 'tech', label: '技术' },
+  { key: 'computer', label: '计算机' },
+  { key: 'engineering', label: '工程' },
+  { key: 'education', label: '教育' },
+  { key: 'business', label: '商业' },
+  { key: 'art', label: '艺术' },
+  { key: 'language', label: '语言' },
+] as const
+
+export type FolderIconKey = (typeof FOLDER_ICONS)[number]['key']
+
+export const folderCreateSchema = z.object({
+  path: folderPathSchema,
+  /** 知识库描述。截断到 2000 字由服务端兜底，前端用 maxLength 先拦 */
+  description: z.string().max(2000).optional(),
+  /** 图标键（FOLDER_ICONS 之一）；不传 = 未选 */
+  icon: z.enum(FOLDER_ICON_KEYS).optional(),
+})
+
 
 /**
  * 改名与移动是同一个操作：把 `from` 子树整体搬到 `to`。

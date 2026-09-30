@@ -115,6 +115,9 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
    *
    * 分区已经有 16px 的标题了（`sectionTitle`），面板再用同级字号会把
    * 层级压平。所以它走 13px / 600 / 次级色——读作「这一组是什么」。
+   *
+   * 标题条与行之间不画线（D-070）：tintList 底色已经把「标题条」和
+   * 「内容行」分成两种表面，线是重复信号。
    */
   panelTitle: css`
     padding: 11px 16px;
@@ -122,7 +125,6 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     font-weight: 600;
     color: ${token.colorTextSecondary};
     background: ${token.tintList};
-    border-bottom: 1px solid ${token.colorBorderSecondary};
   `,
   /** 面板标题里的接缝标识：等宽、比标题再弱一档 */
   seamTag: css`

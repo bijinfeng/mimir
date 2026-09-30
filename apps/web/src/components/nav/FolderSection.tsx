@@ -38,24 +38,36 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
     display: flex;
     align-items: center;
     justify-content: space-between;
-    /* 与 antd 分组标签同节奏（NavSidebar.style.ts 的 group-title 一致） */
-    padding: 14px 6px 4px 14px;
+    /* 与 antd 分组标签同节奏（NavSidebar.style.ts 的 group-title 一致）：
+       顶部间距拆成 margin（组间距）+ padding（行内），行悬停的底色只染
+       行内那 30px，不把 11px 的组间距也染进去 */
+    margin-top: 11px;
+    /* 左内距 8 + 容器 padding-inline 6 = 文字仍在 14px——与「对话」分组
+       标签的文字位置同一条竖线（间距归容器统一，见 NavSidebar 的 body） */
+    padding: 3px 6px 3px 8px;
+    border-radius: 6px;
+    /* 整行是「回到全部文档」的入口（D-069 的标题入口扩到整行）：
+       整行可点、整行悬停高亮——不再只看「知识库」三个字的区域。
+       底色与下方目录行的悬停底同款（colorBgTextHover），两行读作一套 */
+    cursor: pointer;
+
+    &:hover {
+      background: ${token.colorBgTextHover};
+
+      .folder-head-title {
+        color: ${token.colorTextSecondary};
+      }
+
+      .folder-head-add {
+        opacity: 1;
+      }
+    }
+
+    /* 键盘用户 tab 进行内按钮时，+ 同样显形 */
+    &:focus-within .folder-head-add {
+      opacity: 1;
+    }
   `,
-  /**
-   * 分区标题，**同时是「回到全部文档」的入口**。
-   *
-   * 展开态此前没有任何回库根的入口：D-068 移除了「全部文档」导航项之后，
-   * 进过一次目录（或点过卡片上的标签）就只剩浏览器后退一条路——
-   * 折叠态的替身（`NavSidebar.tsx` 的 `collapsedLibrary`）反倒有这个按钮。
-   *
-   * 不把它做成一行导航项：用户拍板过「左导航不放重复的库入口」（D-068），
-   * 而这里要的只是「回得去」，标题行本身最省地方。语义沿用那条决策——
-   * 目录路径为空即库根（`onSelect('')`）。
-   *
-   * 观感仍是素文字标签：去掉 antd 文本按钮的内边距与固定高度，
-   * 只借它的焦点环、悬停反馈与「Enter/Space 可激活」——裸 span 加 onClick
-   * 键盘按不动（D-042）。
-   */
   headTitle: css`
     height: auto;
     /* 竖向补到 24px（antd 小按钮的高度）：字号只有 badge 档，而这是个
@@ -65,19 +77,24 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
     font-weight: 600;
     color: ${token.colorTextTertiary};
     letter-spacing: 0.02em;
-
-    &:hover {
-      color: ${token.colorTextSecondary};
+    /*
+     * 按钮自己不画悬停底色：整行的底色由 head:hover 承担（用户拍板），
+     * 否则行底色上还叠着一枚只裹住三个字的小 pill（两层高亮）。
+     * antd 文本按钮的悬停底色特异性更高，!important 与本文件其它
+     * 覆盖同一条先例。
+     */
+    &,
+    &:hover,
+    &:focus-visible,
+    &:active {
+      background-color: transparent !important;
     }
   `,
   headAdd: css`
     opacity: 0;
     transition: opacity 0.12s ease-out;
-
-    &:hover,
-    &:focus-visible {
-      opacity: 1;
-    }
+    /* 显形条件在 head 上：行悬停（.folder-head-add）与行内聚焦
+       （head:focus-within）各一条——这里只管过渡 */
   `,
   headAddAlways: css`
     opacity: 1;
@@ -103,9 +120,19 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
    * 这正是 `folderTitleRender` 那个 span 的写法（`margin-inline-start: auto`）。
    */
   treeWrap: css`
-    .${prefixCls}-tree {
+    /*
+     * 树根本体。选择器必须「&.ant-tree」——treeWrap 类就挂在树根自己身上，
+     * 写成后代式「.treeWrap .ant-tree」的祖先-后代关系**不成立**，整条静默失效：
+     * 上一版就是这样，目录一直顶着 antd 默认的 colorBgContainer 底色
+     * （D-070 删掉右缘线之后没了遮挡，这块色才被人眼看出）。实测树根
+     * bg = rgb(20,22,24)、侧栏 = rgb(15,17,19)，整块浮起。树要坐在 tintNav 上。
+     */
+    &.${prefixCls}-tree {
       background: transparent;
-      font-size: ${FONT_SIZE.item}px;
+      /* font-size 这里原本还想给 FONT_SIZE.item（13.5）——它跟背景一起静默
+         失效过，目录文字一直是继承的 14px。修好选择器会让它第一次真生效，
+         那是夹带的视觉改动，不在「去底色 + 三角对位」这两件事里；
+         字号要不要收紧，单独拍板。 */
     }
 
     .${prefixCls}-tree-node-content-wrapper {
@@ -127,9 +154,70 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
       min-width: 0;
     }
 
-    .${prefixCls}-tree-node-selected .${prefixCls}-tree-node-content-wrapper {
-      background: ${token.colorPrimaryBg};
-      color: ${token.colorLink};
+    /* 选中态不在这里写：antd 自己给选中的 content-wrapper 挂
+       -node-selected 类并直接上样式，而「.node-selected .wrapper」这种
+       后代式同样匹配不到类在自己身上的元素——上一版这条从没生效过，
+       实际一直是 antd 默认样式在渲染。删掉，不养死代码。 */
+
+    /*
+     * 展开三角与目录图标共用**同一个槽位**（Notion 式，D-068 的行上再加这条）。
+     * switcher 恒为 0 宽，三角绝对定位**盖在目录图标自己的位置**，行悬停时
+     * 图标 visibility 让位——三个量实测锚定（父子两级同值，缩进整体平移）：
+     *   图标中心 x = switcher 左缘 + 0(margin-inline-end 已让位给容器)
+     *              + 6(wrapper 的 padding-inline-start) + 12(iconEle 半宽) = 18px；
+     *   标题 x = switcher 左缘 + 22 + 12 = 34px，悬停前后一个像素都不挪。
+     * 上一版让 switcher 悬停时长到 24px、三角落在它自己槽位的中心（12px），
+     * 比图标中心（22px）左偏 10px——用户看到的就是「下拉图标换了个位置」。
+     * 「有没有三角可换」以 rc-tree 自己的叶子标记为准：switcher 的 -noop 类、
+     * 行上的 -treenode-leaf 类。**不能用 -treenode-switcher-open/close 圈定**——
+     * 这版 @rc-component/tree 给叶子行也挂 -switcher-close，按它选会把叶子行的
+     * 图标藏掉却没三角补位（实测悬停子目录行只剩一块空白）。
+     * 展开收起仍是 rc-tree 自己在管（点三角 / 键盘方向键），这里只动外观。
+     */
+    .${prefixCls}-tree-switcher {
+      width: 0 !important;
+      /* 三角要浮出到图标槽位上，不能裁在 0 宽的盒子里 */
+      overflow: visible;
+      transition: none;
+      color: ${token.colorTextTertiary};
+      /* pill 左缘归容器统一（侧栏 body 的 padding-inline），antd 给
+         switcher 的 4px marginInlineEnd 让位——它曾是树行 pill 比菜单
+         pill 多缩 4px 的来源 */
+      margin-inline-end: 0 !important;
+    }
+
+    .${prefixCls}-tree-switcher:not(.${prefixCls}-tree-switcher-noop)
+    .${prefixCls}-tree-switcher-icon {
+      position: absolute;
+      left: 18px;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0;
+      /* 闲时不能拦点击：这个位置平时是目录图标，点它 = 进目录；
+         悬停后图标隐身、三角顶上，点击才轮到展开/收起 */
+      pointer-events: none;
+      /* content-wrapper 是 relative 且 DOM 在 switcher 之后，同为 auto 时
+         它盖住三角——elementFromPoint 实测命中 wrapper，点击落空。
+         抬一层，悬停时三角才接得到点击 */
+      z-index: 1;
+    }
+
+    .${prefixCls}-tree-treenode:not(.${prefixCls}-tree-treenode-leaf):hover
+    .${prefixCls}-tree-switcher:not(.${prefixCls}-tree-switcher-noop)
+    .${prefixCls}-tree-switcher-icon {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .${prefixCls}-tree-treenode:not(.${prefixCls}-tree-treenode-leaf):hover
+    .${prefixCls}-tree-iconEle {
+      /* visibility 而非 display：留着 24px 的盒子，标题一个像素都不挪 */
+      visibility: hidden;
+    }
+
+    /* antd 给 switcher hover 画的胶囊默认贴 left:0，跟进到三角中心（22−12） */
+    .${prefixCls}-tree-switcher:not(.${prefixCls}-tree-switcher-noop):before {
+      left: 10px !important;
     }
   `,
   rowCount: css`
@@ -376,20 +464,24 @@ export function FolderSection({ items, isLoading, activePath, onSelect }: Folder
 
   return (
     <div>
-      <div className={styles.head}>
+      <div className={styles.head} onClick={() => onSelect('')}>
         {/* 标题即「全部文档」入口：进过目录 / 点过标签之后，这是展开态里
             唯一能回库根的控件（折叠态有它的替身，见 NavSidebar）。
-            悬停给一句说明——它看起来只是个分组标签 */}
-        <Tooltip title="回到全部文档" placement="right">
-          <Button
-            type="text"
-            size="small"
-            className={styles.headTitle}
-            onClick={() => onSelect('')}
-          >
-            知识库
-          </Button>
-        </Tooltip>
+            整行都可点（onClick 在 head 上、行悬停整行高亮）。「知识库」
+            三个字只是它看得见的名字，不画自己的悬停底色（整行的底色由
+            head 承担）。行内两个按钮都 stopPropagation：点 + 是新建，
+            不该顺带回库根。 */}
+        <Button
+          type="text"
+          size="small"
+          className={`folder-head-title ${styles.headTitle}`}
+          onClick={(event) => {
+            event.stopPropagation()
+            onSelect('')
+          }}
+        >
+          知识库
+        </Button>
         <Tooltip title="新建目录" placement="right">
           <Button
             type="text"
@@ -397,8 +489,11 @@ export function FolderSection({ items, isLoading, activePath, onSelect }: Folder
             aria-label="新建目录"
             icon={<PlusOutlined />}
             /* 空库里 ＋ 常驻：hover 显形的前提是「已经有东西可指」，此时没有 */
-            className={`${styles.headAdd} ${isEmpty ? styles.headAddAlways : ''}`}
-            onClick={() => openCreate('')}
+            className={`folder-head-add ${styles.headAdd} ${isEmpty ? styles.headAddAlways : ''}`}
+            onClick={(event) => {
+              event.stopPropagation()
+              openCreate('')
+            }}
           />
         </Tooltip>
       </div>

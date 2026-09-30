@@ -8,7 +8,7 @@ import {
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { App, Button, Empty, Input, Segmented, Skeleton, Tag } from 'antd'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { DocumentSummary } from '@mimir/shared'
 import { StatusBadge } from '@/components/DocumentBadges'
 import {
@@ -24,6 +24,7 @@ import {
 } from '@/components/list-helpers'
 import { api } from '@/lib/api'
 import { useAppShell } from '@/lib/app-shell-context'
+import { useScrolled } from '@/lib/use-scrolled'
 import { useUnsaved } from '@/lib/unsaved'
 import { useStyles } from '@/components/library/LibraryView.style'
 
@@ -144,9 +145,13 @@ export function LibraryView({ scope }: { scope: string }) {
     }
   }
 
+  /* 头部界线随列表滚动显形（D-070），开关挂在列表的滚动容器上 */
+  const bodyRef = useRef<HTMLDivElement>(null)
+  const bodyScrolled = useScrolled(bodyRef)
+
   return (
     <div className={styles.page}>
-      <div className={styles.head}>
+      <div className={styles.head} data-scrolled={bodyScrolled || undefined}>
         <div className={styles.headRow}>
           <div className={styles.headTitle}>
             <h1 className={styles.title}>{scopeTitle(scope, query)}</h1>
@@ -183,7 +188,7 @@ export function LibraryView({ scope }: { scope: string }) {
         </div>
       </div>
 
-      <div className={styles.body}>
+      <div className={styles.body} ref={bodyRef}>
         {listQuery.isLoading ? (
           <div className={styles.loading}>
             <Skeleton active paragraph={{ rows: 5 }} title={false} />

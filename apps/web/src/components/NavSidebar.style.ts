@@ -22,7 +22,8 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     display: flex;
     flex-direction: column;
     background: ${token.tintNav};
-    border-right: 1px solid ${token.colorBorderSecondary};
+    /* 与主区的分界靠 tintNav 底色差，不画线（D-070）：深浅两套的
+       colorBgLayout 都比 tintNav 深一档，色差已经在说「这是两个区」 */
   `,
 
   /* ── 顶栏：品牌 + 折叠开关 ─────────────────────────── */
@@ -72,6 +73,19 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     min-height: 0;
     overflow-y: auto;
     padding-bottom: 6px;
+    /*
+     * 左右内距统一在这里给（用户拍板：容器层解决，菜单项 / 树行 / 标题行
+     * 的悬停底色都受益）：所有 pill 的左右缘对齐到同一条线（6px），各
+     * 子元素自己设置的横向间隔随之让位——菜单项的 margin-inline、树行
+     * switcher 的 margin-inline-end、标题行的左内距都只保留「内容在
+     * pill 里的位置」，不再承担「pill 与栏缘的距离」。
+     * 折叠态豁免（bodyCollapsed）：48px rail 的图标靠 margin-inline 4px
+     * 居中，容器再吃 6px 会把图标挤偏 3px。
+     */
+    padding-inline: ${NAV_ITEM_MARGIN}px;
+  `,
+  bodyCollapsed: css`
+    padding-inline: 0;
   `,
 
   /**
@@ -90,13 +104,27 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     .${prefixCls}-menu-submenu-title {
       height: ${NAV_ITEM_HEIGHT}px;
       line-height: ${NAV_ITEM_HEIGHT}px;
-      margin: 1px ${NAV_ITEM_MARGIN}px;
+      /* 横向外边距归零：左右内距由容器的 padding-inline 统一承担
+         （见 body 的说明），这里只留上下 1px 的行间距 */
+      margin: 1px 0;
       padding-inline: 8px !important;
+      /* 占满整行：antd 给菜单项设了 fit-content（实测收缩到内容宽 160px），
+         悬停底色只在文字那一截——占满后底色的左右缘就是容器的
+         padding-inline（6px），与树行 / 标题行同一条线 */
+      width: 100% !important;
       border-radius: 6px;
       color: ${token.colorTextSecondary};
     }
     .${prefixCls}-menu-item:hover {
       background: ${token.colorFillTertiary};
+    }
+    /* 分组标题（「对话」）与「知识库」标题行同一条左缘：antd 给组标题的
+       内距是 14px，文字落在 20——这里收到 8，文字与「知识库」同落在
+       容器 6px + 8px = 14px 上 */
+    .${prefixCls}-menu-item-group-title {
+      /* !important 与上面 padding-inline 同理：antd 自己的 14px 规则
+         特异性相同、注入顺序不定，普通声明实测没盖过去 */
+      padding-inline: 8px !important;
     }
 
     /* 选中态：整行浅底 + 链接色文字。用 colorLink 而不是 colorPrimary
@@ -140,11 +168,6 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     /* 选中项的计数跟着变成链接色，否则浅蓝底上会有一块灰字显得脏 */
     .${prefixCls}-menu-item-selected .${prefixCls}-menu-item-extra {
       color: ${token.colorLink};
-    }
-
-    .${prefixCls}-menu-item-divider {
-      margin: 8px 12px 8px 10px;
-      border-color: ${token.colorBorderSecondary};
     }
   `,
 
@@ -238,7 +261,15 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   /* ── 底部 ──────────────────────────────────────────── */
   foot: css`
     flex: none;
-    border-top: 1px solid ${token.colorBorderSecondary};
+    /* 界线滚动才显形（D-070）：会话列表被切断、内容顶着页脚走时，
+       这里需要一道边界；静态下无线，与 Notion 的侧栏一致 */
+    border-top: 1px solid transparent;
+    transition: border-color 0.2s ease-out;
+
+    &[data-scrolled] {
+      border-top-color: ${token.colorBorderSecondary};
+    }
+
     padding: 4px 0;
   `,
 

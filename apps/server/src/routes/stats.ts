@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { USAGE_HISTORY_DAYS } from '@mimir/shared'
-import { stats } from '../services/usage.js'
+import { latestConversationContext, stats } from '../services/usage.js'
 import type { AppEnv } from '../types.js'
 
 /**
@@ -23,3 +23,10 @@ import type { AppEnv } from '../types.js'
 export const statsRoute = new Hono<AppEnv>()
 
 statsRoute.get('/', async (c) => c.json(await stats(USAGE_HISTORY_DAYS)))
+/**
+ * 某个会话最近一次模型调用的记账——对话页「上下文容量」chip 的数据源。
+ * 口径在 service 里（latestConversationContext），路由只做转接。
+ */
+statsRoute.get('/conversation/:id', async (c) =>
+  c.json(await latestConversationContext(c.req.param('id'))),
+)

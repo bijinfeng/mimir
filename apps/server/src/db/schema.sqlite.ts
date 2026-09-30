@@ -103,6 +103,10 @@ export const tags = sqliteTable(
 export const folders = sqliteTable('folders', {
   /** 完整路径本身是主键，如 `技术/前端/React`。见 schema.pg.ts */
   path: text('path').primaryKey(),
+  /** 知识库描述（D-078）。空串 = 没写 */
+  description: text('description').notNull().default(''),
+  /** 知识库图标的键（shared 的 FOLDER_ICONS 之一）。null = 未选 */
+  icon: text('icon'),
   createdAt: integer('created_at', { mode: 'timestamp_ms' })
     .notNull()
     .$defaultFn(() => new Date()),

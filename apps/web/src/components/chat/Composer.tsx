@@ -1,38 +1,57 @@
-import { SendOutlined } from '@ant-design/icons'
-import { useQuery } from '@tanstack/react-query'
-import { Button, Input, Switch, Tag, Tooltip } from 'antd'
+import { SendOutlined, StopOutlined } from '@ant-design/icons'
+import { Button, Input, Tag } from 'antd'
 import { createStyles } from 'antd-style'
 import { useState } from 'react'
-import { FONT_SIZE } from '@/theme/tokens'
-import { api } from '@/lib/api'
+import {
+  AddContextDropdown,
+  ContextUsageChip,
+  ModelDropdown,
+  StrengthDropdown,
+} from '@/components/chat/composer/ComposerMenus'
+import type { ContextDoc } from '@/components/chat/composer/ComposerMenus'
 
 /**
  * 输入区。
  *
- * 两样东西常驻可见：
- *  - 深度思考开关 —— 决定用推理模型还是对话模型
- *  - 当前模型名 —— 用户有权知道自己这句话会发给哪个模型。
- *    **从运行时配置读**（`/api/config` 的角色绑定），不硬编码供应商的模型名：
- *    配置换了模型而界面还报旧名字，是在说谎（D-047 清理项）
+ * Codex 式底栏（用户拍板）：上面是输入框（3 行起、自动长高到 8 行），
+ * 下面一条工具栏分两组——
  *
- * 范围 pill 只在锁定到某一篇时出现（从文档工具条进来，`docs/PRD.md` §5.5）；
- * 「范围：整个知识库」是永久默认值，常驻显示不携带信息（D-047 清理项）。
+ *  - **左**：+ 添加上下文（把本轮检索范围锁到某篇文档）、范围 pill、
+ *    上下文容量（usageLog 里该会话最近一次请求的真实 promptTokens）。
+ *    原来的「未配置模型」胶囊并入模型菜单。
+ *  - **右**：思考强度（标准 / 深入 = 对话角色 / 推理角色）、当前模型、
+ *    发送 / 停止。原来的「深度思考」开关升级成了强度下拉——M0 的
+ *    思考强度就是这条角色轴，真正的 effort 透传要等后端加参数。
+ *
+ * 范围的语义：`draft` 锁定（从文档工具条「问 AI」进来）与「+ 添加上下文」
+ * 所选**共用同一个状态**（`contextDocument`），都以每轮发送的 documentId
+ * 覆盖挂载值（见 `use-mimir-chat` 的 send）——移除 pill 就回到整个知识库。
  */
 
 export interface ComposerProps {
-  /** 预填内容（从「就这段提问」带进来的引用） */
   initialText?: string
-  /** 锁定到某一篇时显示范围 pill */
-  scopedDocumentId?: string | undefined
-  disabled: boolean
+  /**
+   * 正在生成。发送键换成「停止」，输入框转只读。
+   *
+   * **不是 `disabled`**：`disabled` 连焦点都拿不到，用户按不到 Esc 也看不到
+   * 自己刚打的字；`readOnly` 是「现在不能发，但字还在、还能选中复制」。
+   */
+  busy: boolean
+  /** 会话 id：容量 chip 用它查最近一次请求的真实 token 记账（usageLog.refId） */
+  conversationId?: string | undefined
+  /** 本轮检索范围（draft 锁定或「+ 添加上下文」所选）；null = 整个知识库 */
+  contextDocument?: ContextDoc | undefined
+  onContextDocumentChange: (doc: ContextDoc | null) => void
   onSend: (text: string, deepReasoning: boolean) => void
+  onStop: () => void
 }
 
-const useStyles = createStyles(({ css, token }) => ({
+const useStyles = createStyles(({ css, token, prefixCls }) => ({
   wrap: css`
     flex: none;
     padding: 12px 0 18px;
-    border-top: 1px solid ${token.colorBorderSecondary};
+    /* 与消息列表的界线不在这里画（D-070）：显形开关在 ChatPanel——
+       消息列表的 scrollTop 归它管，线画在包着本组件的 composerLine 上 */
     background: ${token.colorBgContainer};
   `,
   inner: css`
@@ -51,80 +70,62 @@ const useStyles = createStyles(({ css, token }) => ({
       border-color 0.12s ease-out,
       box-shadow 0.12s ease-out;
 
-    /*
-     聚焦时不换边框色，改用一圈柔光 + 边框提亮（DESIGN §8.8）。
-     柔光用 token.controlOutline 而不是字面量 rgba：
-     它是 antd 按当前主色与底色算好的半透明主色，换外观时会跟着变
-     （浅色 rgba(5,145,255,.1)、深色 rgba(23,117,249,.31)——
-     深色的不透明度更高，因为它在深底上要更亮才看得出来）。
-     原先写死的 rgba(22,119,255,.1) 在深色下几乎不可见。
-    */
     &:focus-within {
       border-color: ${token.colorPrimaryBorder};
       box-shadow: 0 0 0 3px ${token.controlOutline};
+    }
+
+    /*
+     * 输入框不画自己的焦点环——**外层盒子才是容器**（DESIGN §8.8）。
+     * antd v6 给聚焦的输入类控件加了 focusOutline（实测计算样式
+     * outline: rgb(22,119,255) solid 1px），叠在盒子的聚焦边框上就是
+     * 用户看到的两层边框。命令面板当年为同一条关过三处（DESIGN §8.6），
+     * 这里是第四处。
+     */
+    .${prefixCls}-input {
+      &:focus,
+      &:focus-within,
+      &:hover {
+        outline: none;
+        box-shadow: none;
+      }
     }
   `,
   bar: css`
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 4px;
     margin-top: 7px;
   `,
-  /* 深度思考开关 + 它的标签。
-     标签**放在轨道外面**：antd 的 Switch 把 children 渲染进轨道，而轨道
-     底色取 colorTextQuaternary（antd/es/switch/style/index.js），
-     那一档在 DESIGN §3.3 里的定位是「占位符与禁用态，不承载信息」——
-     白字压上去实测 3.11:1。把标签移出来，它走文字阶（浅色 5.91:1），
-     轨道回到纯图形，两边都不再互相将就。
-
-     外面这层是 `<label>` 不是 `<span>`：Switch 渲染的是一个 `<button>`
-     （可被 label 关联），所以点标签上的字仍然能拨动开关——这和标签原来
-     长在轨道里时的可点范围一致。工具提示也挂在这一层上（antd 的 Tooltip
-     包住的是整个「开关 + 文字」）。 */
-  deepReason: css`
-    display: inline-flex;
+  barGroup: css`
+    display: flex;
     align-items: center;
-    gap: 6px;
-    cursor: pointer;
+    gap: 2px;
+    min-width: 0;
   `,
-  deepReasonLabel: css`
-    font-size: ${FONT_SIZE.item}px;
-    color: ${token.colorTextSecondary};
-  `,
-  model: css`
-    font-family: ${token.fontFamilyCode};
-    font-size: ${FONT_SIZE.badge}px;
-    color: ${token.colorTextTertiary};
-    padding: 2px 7px;
-    border-radius: 5px;
-    background: ${token.colorFillQuaternary};
-    white-space: nowrap;
+  pill: css`
+    max-width: 200px;
+    /* antd Tag 自带右外边距，会跟关闭按钮之间留出一条缝 */
+    margin-inline-end: 0;
   `,
 }))
 
-export function Composer({ initialText = '', scopedDocumentId, disabled, onSend }: ComposerProps) {
+export function Composer({
+  initialText = '',
+  busy,
+  conversationId,
+  contextDocument,
+  onContextDocumentChange,
+  onSend,
+  onStop,
+}: ComposerProps) {
   const { styles } = useStyles()
   const [text, setText] = useState(initialText)
   const [deepReasoning, setDeepReasoning] = useState(false)
 
-  /**
-   * 角色绑定的模型名。从设置读而不是硬编码：用户在设置页换过模型后，
-   * 这里显示的必须是**这一次提问真的会发给**的那个。
-   * 配置未就绪/角色未绑定时显示占位——比显示一个可能错误的模型名诚实。
-   *
-   * 兜底用 `||` 而不是 `??`：未配置时服务端给的是**空串**而不是 null，
-   * `??` 挡不住它，渲染出的是一枚一个字都没有的灰胶囊（实测宽 14px）——
-   * 看起来像没加载完，而它恰恰是用来告诉你「这句话会发给谁」的那个控件。
-   */
-  const configQuery = useQuery({ queryKey: ['config'], queryFn: api.config })
-  const roleName = deepReasoning ? 'reasoning' : 'chat'
-  const modelName = configQuery.data?.modelConfig.roles.find(
-    (role) => role.role === roleName,
-  )?.model
-
   const submit = () => {
     const value = text.trim()
-    if (!value || disabled) return
+    if (!value || busy) return
     setText('')
     onSend(value, deepReasoning)
   }
@@ -143,44 +144,65 @@ export function Composer({ initialText = '', scopedDocumentId, disabled, onSend 
                 submit()
               }
             }}
-            autoSize={{ minRows: 1, maxRows: 6 }}
+            onKeyDown={(event) => {
+              /**
+               * 生成中按 Esc 停止。
+               *
+               * `!isComposing` 不能省：中文输入法里 Esc 是**取消候选词**，
+               * 这时按下去不该把正在生成的回答也停掉。rc-input 对 Enter
+               * 就是这么挡的（`@rc-component/input/es/TextArea.js:101` 的
+               * `e.key === 'Enter' && !e.nativeEvent.isComposing`），
+               * 这里照同一个判据。
+               */
+              if (event.key === 'Escape' && busy && !event.nativeEvent.isComposing) {
+                event.preventDefault()
+                onStop()
+              }
+            }}
+            autoSize={{ minRows: 3, maxRows: 8 }}
             variant="borderless"
-            placeholder={scopedDocumentId ? '就这一篇提问…' : '直接向知识库提问…'}
-            disabled={disabled}
+            placeholder={
+              busy
+                ? '正在生成，按 Esc 停止'
+                : contextDocument
+                  ? `就「${contextDocument.title}」提问…`
+                  : '直接向知识库提问…'
+            }
+            readOnly={busy}
           />
 
           <div className={styles.bar}>
-            <Tooltip title="用推理模型回答，更慢但更适合复杂问题">
-              <label className={styles.deepReason}>
-                <Switch
-                  size="small"
-                  aria-label="深度思考"
-                  checked={deepReasoning}
-                  onChange={setDeepReasoning}
-                />
-                <span className={styles.deepReasonLabel}>深度思考</span>
-              </label>
-            </Tooltip>
-
-            {scopedDocumentId && (
-              <Tag variant="filled" style={{ marginInlineEnd: 0 }}>
-                范围：当前文档
-              </Tag>
-            )}
-
+            <div className={styles.barGroup}>
+              <AddContextDropdown onPick={onContextDocumentChange} />
+              {contextDocument && (
+                <Tag
+                  closable
+                  onClose={() => onContextDocumentChange(null)}
+                  className={styles.pill}
+                  title={`本轮检索范围：${contextDocument.title}`}
+                >
+                  范围：{contextDocument.title}
+                </Tag>
+              )}
+              <ContextUsageChip conversationId={conversationId} />
+            </div>
             <span style={{ flex: 1 }} />
-            <span className={styles.model}>{modelName || '未配置模型'}</span>
-
-            <Button
-              type="primary"
-              size="small"
-              icon={<SendOutlined />}
-              loading={disabled}
-              disabled={!text.trim()}
-              onClick={submit}
-            >
-              发送
-            </Button>
+            <div className={styles.barGroup}>
+              <StrengthDropdown value={deepReasoning} onChange={setDeepReasoning} />
+              <ModelDropdown deepReasoning={deepReasoning} />
+              {busy ? (
+                <Button size="small" icon={<StopOutlined />} onClick={onStop} aria-label="停止" />
+              ) : (
+                <Button
+                  type="primary"
+                  size="small"
+                  icon={<SendOutlined />}
+                  disabled={!text.trim()}
+                  onClick={submit}
+                  aria-label="发送"
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>

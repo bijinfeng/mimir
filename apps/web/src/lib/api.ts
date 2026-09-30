@@ -427,6 +427,20 @@ export const api = {
   stats() {
     return request<UsageStats>('/api/stats')
   },
+  /**
+   * 某个会话最近一次模型调用的记账——对话页「上下文容量」chip 的数据源。
+   * promptTokens 是那次请求真正发给模型的完整上下文——比字符估算真。
+   * 没有记账（新会话还没发过、或供应商没回传）返回 null。
+   */
+  conversationContext(id: string) {
+    return request<{
+      promptTokens: number | null
+      completionTokens: number | null
+      totalTokens: number | null
+      model: string
+      at: string
+    } | null>(`/api/stats/conversation/${encodeURIComponent(id)}`)
+  },
 
   /**
    * 头像。

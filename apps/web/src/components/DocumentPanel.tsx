@@ -21,6 +21,7 @@ import { extractHeadings } from '@/components/document/headings'
 import { formatMeta } from '@/components/list-helpers'
 import { api } from '@/lib/api'
 import { useAppShell } from '@/lib/app-shell-context'
+import { useScrolled } from '@/lib/use-scrolled'
 import { useUnsaved } from '@/lib/unsaved'
 
 /**
@@ -149,6 +150,8 @@ export function DocumentPanel({
    */
   const showOutline = headings.length >= 2 && !showsSource
   const scrollRef = useRef<HTMLDivElement>(null)
+  /* 标题栏的界线随正文滚动显形（D-070） */
+  const headerScrolled = useScrolled(scrollRef)
   const [activeHeading, setActiveHeading] = useState<string | undefined>()
 
   /**
@@ -430,7 +433,7 @@ export function DocumentPanel({
         （与侧栏导航不一致——那里一直有拦截）。有未保存内容时才弹守卫框，
         干净时不留任何中间态（`lib/unsaved.tsx` 的 `runGuarded`）。
       */}
-      <div className={styles.header}>
+      <div className={styles.header} data-scrolled={headerScrolled || undefined}>
         {onBackToChat && (
           <button type="button" className={styles.back} onClick={() => runGuarded(onBackToChat)}>
             <ArrowLeftOutlined style={{ fontSize: 11 }} />
