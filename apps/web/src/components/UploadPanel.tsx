@@ -1,7 +1,7 @@
-import { CheckCircleOutlined, CloseCircleOutlined, LoadingOutlined } from '@ant-design/icons'
 import { Alert, Button, Typography, Upload } from 'antd'
-import { useState } from 'react'
 import { createStyles } from 'antd-style'
+import { CircleCheck, CircleX, LoaderCircle } from 'lucide-react'
+import { useState } from 'react'
 import { FILE_MAX_BYTES, formatBytes, formatLabel } from '@mimir/shared'
 import { api } from '@/lib/api'
 import { FONT_SIZE } from '@/theme/tokens'
@@ -34,6 +34,10 @@ import { FONT_SIZE } from '@/theme/tokens'
  */
 export interface UploadPanelProps {
   onUploaded: (documentId: string) => void
+  /** 归入的目录。从知识库页唤起时带当前路径；不带 = 库根 */
+  folder?: string | null
+  /** 用文件夹选择器（webkitdirectory），按相对子路径展开成目录树 */
+  directory?: boolean
 }
 
 interface UploadRow {
@@ -47,7 +51,22 @@ interface UploadRow {
   documentId: string | null
 }
 
-export function UploadPanel({ onUploaded }: UploadPanelProps) {
+/**
+ * 这个文件该归入哪个目录。
+ *
+ * 文件夹上传时浏览器给每个文件一个 `webkitRelativePath`
+ * （如 `论文集/2024/a.pdf`）——**首段是所选文件夹自己的名字**，保留它：
+ * 用户选的是「论文集」，收进来就叫「论文集」，目录结构原样重现。
+ * 单文件上传没有相对路径，落进目标目录本身。
+ */
+function targetFolderFor(file: File, folder?: string | null): string | undefined {
+  const relative = file.webkitRelativePath ?? ''
+  const dir = relative.includes('/') ? relative.slice(0, relative.lastIndexOf('/')) : ''
+  if (!dir) return folder ?? undefined
+  return folder ? `${folder}/${dir}` : dir
+}
+
+export function UploadPanel({ onUploaded, folder, directory }: UploadPanelProps) {
   const { styles } = useStyles()
   const [rows, setRows] = useState<UploadRow[]>([])
   const [busy, setBusy] = useState(false)
@@ -63,7 +82,7 @@ export function UploadPanel({ onUploaded }: UploadPanelProps) {
 
     const initial: UploadRow[] = files.map((file, index) => ({
       key: `${file.name}-${index}`,
-      name: file.name,
+      name: file.webkitRelativePath || file.name,
       size: file.size,
       state: 'pending',
       detail: '',
@@ -72,6 +91,8 @@ export function UploadPanel({ onUploaded }: UploadPanelProps) {
     setRows(initial)
 
     for (const [index, file] of files.entries()) {
+      const target = targetFolderFor(file, folder)
+
       setRows((current) =>
         current.map((row, i) => (i === index ? { ...row, state: 'uploading' } : row)),
       )
@@ -94,7 +115,7 @@ export function UploadPanel({ onUploaded }: UploadPanelProps) {
       }
 
       try {
-        const result = await api.documents.upload(file)
+        const result = await api.documents.upload(file, target)
         setRows((current) =>
           current.map((row, i) =>
             i === index
@@ -136,6 +157,9 @@ export function UploadPanel({ onUploaded }: UploadPanelProps) {
     <div className={styles.body}>
       <Upload.Dragger
         multiple
+        /* 「上传文件夹」模式：webkitdirectory 选择整个目录，每个文件自带
+           webkitRelativePath（见 targetFolderFor） */
+        directory={directory}
         // 不设 accept：**任何格式都能收**。认不出的格式原件仍然保存、
         // 能下载——用一个 accept 白名单把用户挡在外面，等于替他决定
         // 什么东西不属于他的知识库
@@ -151,10 +175,13 @@ export function UploadPanel({ onUploaded }: UploadPanelProps) {
         showUploadList={false}
         className={styles.dragger}
       >
-        <p className={styles.dropTitle}>把文件拖到这里，或点击选择</p>
+        <p className={styles.dropTitle}>
+          {directory ? '选择一个文件夹' : '把文件拖到这里，或点击选择'}
+        </p>
         <p className={styles.dropHint}>
-          单个文件上限 {formatBytes(FILE_MAX_BYTES)}。Markdown 会导入为可编辑笔记；
-          其他格式原件保存、能预览与下载
+          {directory
+            ? `里面的文件按目录结构原样收进${folder ? `「${folder}」` : '知识库'}，空文件夹会被跳过`
+            : `单个文件上限 ${formatBytes(FILE_MAX_BYTES)}。Markdown 会导入为可编辑笔记；其他格式原件保存、能预览与下载`}
         </p>
       </Upload.Dragger>
 
@@ -206,9 +233,9 @@ export function UploadPanel({ onUploaded }: UploadPanelProps) {
 
 /** 每行的状态图标。颜色走语义 token——深色下也要对（DESIGN §3.4） */
 function iconFor(state: UploadRow['state'], styles: Record<string, string>) {
-  if (state === 'done') return <CheckCircleOutlined className={styles.iconDone} />
-  if (state === 'failed') return <CloseCircleOutlined className={styles.iconFail} />
-  if (state === 'uploading') return <LoadingOutlined />
+  if (state === 'done') return <CircleCheck className={styles.iconDone} size={14} />
+  if (state === 'failed') return <CircleX className={styles.iconFail} size={14} />
+  if (state === 'uploading') return <LoaderCircle size={14} />
   return null
 }
 

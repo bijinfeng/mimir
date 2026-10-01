@@ -1,15 +1,8 @@
-import {
-  AppstoreOutlined,
-  LogoutOutlined,
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
-  SettingOutlined,
-  UserOutlined,
-} from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { Avatar, Button, Dropdown, Menu, Tooltip } from 'antd'
 import type { MenuProps } from 'antd'
+import { LayoutGrid, LogOut, PanelLeftClose, PanelLeftOpen, Settings, User } from 'lucide-react'
 import { useRef } from 'react'
 import { BrandMark } from '@/components/BrandMark'
 import { useStyles } from '@/components/NavSidebar.style'
@@ -30,16 +23,15 @@ import { useUnsaved } from '@/lib/unsaved'
  * ├────────────────────────────┤
  * │ ＋ 新建对话                 │  动作列表（图标 + 文字 + 右侧快捷键）
  * │ ⌕ 搜索              Ctrl K │
- * │ ⤒ 收集内容                 │
  * ├────────────────────────────┤
- * │ 今天                        │  会话，按日期分组（素文字标签，不可折叠）
+ * │ 对话                        │  会话（素文字分组标签，不可折叠）
  * │   💬 React 性能优化  2 小时前│
  * │ 昨天                        │
  * │   💬 昨天问的      1 天前   │
  * ├────────────────────────────┤
- * │ 知识库                   ＋ │  目录树（D-068）：行上 ⋯ 管理与拖拽移动
- * │   📁 技术                 2 │
- * │      📁 前端              1 │
+ * │ 知识库                   ＋ │  平铺的知识库列表（D-079）：行上 ⋯ 改名/删除
+ * │   📁 技术笔记             2 │  子目录不在这里——它们是库内部结构，
+ * │   📁 生活                  1 │  在知识库页里以文件夹卡片呈现
  * ├────────────────────────────┤
  * │ ⚙ 设置                      │
  * └────────────────────────────┘
@@ -76,7 +68,6 @@ export interface NavSelection {
 export interface NavSidebarProps {
   selection: NavSelection
   onOpenPalette: () => void
-  onOpenCapture: () => void
   /** 折叠状态由 `_app.tsx` 持有——它要据此改三栏宽度，见那里的注释 */
   collapsed: boolean
   /**
@@ -96,7 +87,6 @@ const CONVERSATION_LIMIT = 12
 export function NavSidebar({
   selection,
   onOpenPalette,
-  onOpenCapture,
   collapsed,
   showToggle = true,
   onToggleCollapsed,
@@ -138,7 +128,6 @@ export function NavSidebar({
     if (key.startsWith('conv:')) return goChat(key.slice('conv:'.length))
     if (key === 'action:new-chat') return goChat()
     if (key === 'action:search') return onOpenPalette()
-    if (key === 'action:capture') return onOpenCapture()
     // 设置页的 search 与 docs 同形状（父路由声明了必填的 scope），
     // 所以这里必须带上它，不能传空对象
     if (key === 'action:settings') {
@@ -209,7 +198,7 @@ export function NavSidebar({
               size="small"
               aria-label={collapsed ? '展开侧边栏' : '折叠侧边栏'}
               aria-expanded={!collapsed}
-              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+              icon={collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
               onClick={onToggleCollapsed}
             />
           </Tooltip>
@@ -229,14 +218,14 @@ export function NavSidebar({
         />
 
         {/*
-          知识库分区（D-068）：目录树 + 增删改移都在 `FolderSection` 里。
-          「全部文档」导航项已移除——进库就是默认视图，侧边栏放的是**结构**
-          （目录树）而不是一个重复的入口。
+          知识库分区（D-068 起，D-079 改平铺）：增删改都在 `FolderSection` 里。
+          侧边栏只列**顶层**（知识库自己）；子目录是库内部结构，在知识库页里
+          呈现（文件夹卡片 + 面包屑）。
 
-          折叠态下换成**一个图标按钮**：层级树没有「只剩图标」的形态
-          （留着会是一列缩进错乱的文件夹图标），但折叠后如果什么都不渲染，
+          折叠态下换成**一个图标按钮**：平铺列表没有「只剩图标」的形态
+          （一列无名的文件夹图标认不出谁是谁），但折叠后如果什么都不渲染，
           48px 的栏里就没有任何进入库的入口——那等于断了整条导航。
-          图标（九宫格）不指某个目录，只回库的默认视图。
+          图标（九宫格）不指某个知识库，只回库的默认视图。
 
           会话历史在折叠态下由 `inlineCollapsed` 收成图标 + tooltip——
           相对时间那一栏会消失，那是 rail 的固有代价。
@@ -247,7 +236,7 @@ export function NavSidebar({
               <Button
                 type="text"
                 aria-label="知识库"
-                icon={<AppstoreOutlined />}
+                icon={<LayoutGrid size={16} />}
                 onClick={() => goDocs('all')}
               />
             </Tooltip>
@@ -346,14 +335,14 @@ function AccountRow({
   if (!user) return null
 
   const items: MenuProps['items'] = [
-    { key: 'account', icon: <UserOutlined />, label: '账号资料' },
+    { key: 'account', icon: <User size={16} />, label: '账号资料' },
     /*
      * 外观（主题）不在这里：它是设置页「外观」分区的职责（带完整的
      * 说明与取舍记录）。同一个设置出现两个家，必然有一天只改一处。
      * 见 D-047 待办收尾。
      */
     { type: 'divider' },
-    { key: 'signout', icon: <LogoutOutlined />, label: '登出', danger: true },
+    { key: 'signout', icon: <LogOut size={16} />, label: '登出', danger: true },
   ]
 
   const accountTrigger = (
@@ -414,7 +403,7 @@ function AccountRow({
         <Button
           type="text"
           size="small"
-          icon={<SettingOutlined />}
+          icon={<Settings size={16} />}
           className={`${styles.accountSettings} ${settingsActive ? styles.accountSettingsActive : ''}`}
           onClick={onOpenSettings}
           aria-label="设置"

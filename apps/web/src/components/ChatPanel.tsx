@@ -1,6 +1,6 @@
 import type { Citation, Message } from '@mimir/shared'
 import { App as AntApp, Button, Skeleton } from 'antd'
-import { ArrowDownOutlined } from '@ant-design/icons'
+import { ArrowDown } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { useChatPanelStyles } from '@/components/chat/ChatPanel.style'
 import { ChatThread, questionToRefill } from '@/components/chat/ChatThread'
@@ -275,7 +275,7 @@ function ChatPanelBody({
             className={styles.backToBottom}
             size="small"
             shape="circle"
-            icon={<ArrowDownOutlined />}
+            icon={<ArrowDown size={16} />}
             aria-label="回到底部"
             onClick={scrollToBottom}
           />

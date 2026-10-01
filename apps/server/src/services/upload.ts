@@ -14,6 +14,7 @@ import { toSearchText } from '@mimir/tokenizer'
 import { readUploadMeta, removeUpload, writeUpload, type UploadMeta } from '../lib/uploads.js'
 import { activeStorage } from '../plugins/host.js'
 import { createNote, loadTags, syncTags } from './documents.js'
+import { ensureFolders, normalizeFolder } from './folders.js'
 import { extractText } from './extract.js'
 
 /**
@@ -51,6 +52,12 @@ export interface UploadInput {
   data: Uint8Array
   /** 用户上传时给的标签（可选）。目前界面不传，留给未来的批量导入 */
   tags?: string[]
+  /**
+   * 归入的目录（可选）。从知识库页上传时带上——「上传文件夹」展开出的
+   * 相对子路径也拼在这里（如 `知识库/资料/论文`），由 `ensureFolders`
+   * mkdir -p 补注册表行。
+   */
+  folder?: string
 }
 
 export async function uploadFile(input: UploadInput): Promise<FileUploadResponse> {
@@ -71,10 +78,10 @@ export async function uploadFile(input: UploadInput): Promise<FileUploadResponse
   // `.md` → 笔记。判定用扩展名而不是 mime：`.md` 常被浏览器报成 text/plain，
   // 而「用户传的是不是 markdown 文件」这件事只有文件名知道
   if (isMarkdownFilename(filename)) {
-    return importMarkdownAsNote(filename, input.data, input.tags ?? [])
+    return importMarkdownAsNote(filename, input.data, input.tags ?? [], input.folder)
   }
 
-  return importAsFile(filename, mime, input.data, input.tags ?? [])
+  return importAsFile(filename, mime, input.data, input.tags ?? [], input.folder)
 }
 
 export class UploadError extends Error {
@@ -96,6 +103,7 @@ async function importMarkdownAsNote(
   filename: string,
   data: Uint8Array,
   tags: string[],
+  folder?: string,
 ): Promise<FileUploadResponse> {
   const text = decodeUploadedText(data)
   const { frontmatter, body } = splitFrontmatter(text)
@@ -103,7 +111,7 @@ async function importMarkdownAsNote(
   const title = frontmatter.title ?? titleFromFilename(filename)
   const allTags = [...new Set([...tags, ...(frontmatter.tags ?? [])])]
 
-  const note = await createNote({ title, body, tags: allTags })
+  const note = await createNote({ title, body, tags: allTags, folder })
 
   return {
     document: note,
@@ -190,12 +198,15 @@ async function importAsFile(
   mime: string,
   data: Uint8Array,
   tags: string[],
+  folder?: string,
 ): Promise<FileUploadResponse> {
   const id = nanoid(16)
   const now = new Date()
   const title = titleFromFilename(filename)
 
   const extracted = await extractText(filename, mime, data)
+
+  const assignedFolder = folder ? normalizeFolder(folder) || null : null
 
   const meta: UploadMeta = {
     id,
@@ -204,13 +215,15 @@ async function importAsFile(
     mime,
     size: data.byteLength,
     tags,
-    folder: null,
+    folder: assignedFolder,
     status: 'ready',
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
   }
 
-  // 先文件（铁律 2）：原件 → meta.json → 数据库行
+  // 先文件（铁律 2）：原件 → meta.json → 数据库行。目录指派要过
+  // ensureFolders——注册表没有的路径先补建（mkdir -p，D-068）
+  if (assignedFolder) await ensureFolders(assignedFolder)
   const { key } = await writeUpload(id, filename, data, meta)
 
   const body = extracted.markdown
@@ -229,6 +242,7 @@ async function importAsFile(
       mime,
       size: data.byteLength,
       parseError: extracted.error,
+      folder: assignedFolder,
       createdAt: now,
       updatedAt: now,
     })

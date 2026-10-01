@@ -12,6 +12,7 @@ import { documents } from '../db/schema.js'
 import { toSearchText } from '@mimir/tokenizer'
 import { contentHash, toExcerpt } from '../lib/text.js'
 import { assemble, activeStorage } from '../plugins/host.js'
+import { ensureFolders, normalizeFolder } from './folders.js'
 
 /**
  * 抓取编排（宿主的适配层）。
@@ -37,6 +38,8 @@ import { assemble, activeStorage } from '../plugins/host.js'
 export interface CaptureParams {
   url: string
   source: DetectedSource
+  /** 抓完归入的目录（可选）。从知识库页发起时带上，见 captureInputSchema */
+  folder?: string
 }
 
 /** 按注册顺序找第一个匹配的抓取器。`web` 的 matches 永远为真，所以一定有结果 */
@@ -65,6 +68,8 @@ export async function capture(params: CaptureParams): Promise<CaptureResponse> {
   const { seams } = assemble()
   const stages: CaptureStageResult[] = []
   const capturer = pickCapturer(seams, params.url)
+  const folder = params.folder ? normalizeFolder(params.folder) || null : null
+  if (folder) await ensureFolders(folder)
 
   // 阶段 1：抓取。与「提取正文」在同一个实现里——把它们拆开只会复制代码，
   // 而拆解只影响进度展示的粒度，不影响正确性
@@ -169,6 +174,7 @@ export async function capture(params: CaptureParams): Promise<CaptureResponse> {
       url: params.url,
       canonicalUrl: canonicalize(params.url),
       author: raw.author ?? null,
+      folder,
       capturedAt: now,
       createdAt: now,
       updatedAt: now,

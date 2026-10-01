@@ -1,6 +1,6 @@
-import { SendOutlined, StopOutlined } from '@ant-design/icons'
 import { Button, Input, Tag } from 'antd'
 import { createStyles } from 'antd-style'
+import { Send, Square } from 'lucide-react'
 import { useState } from 'react'
 import {
   AddContextDropdown,
@@ -191,12 +191,17 @@ export function Composer({
               <StrengthDropdown value={deepReasoning} onChange={setDeepReasoning} />
               <ModelDropdown deepReasoning={deepReasoning} />
               {busy ? (
-                <Button size="small" icon={<StopOutlined />} onClick={onStop} aria-label="停止" />
+                <Button
+                  size="small"
+                  icon={<Square size={16} fill="currentColor" />}
+                  onClick={onStop}
+                  aria-label="停止"
+                />
               ) : (
                 <Button
                   type="primary"
                   size="small"
-                  icon={<SendOutlined />}
+                  icon={<Send size={16} />}
                   disabled={!text.trim()}
                   onClick={submit}
                   aria-label="发送"

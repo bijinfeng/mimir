@@ -1,4 +1,5 @@
 import { and, count, eq, isNull, like, or, sql } from 'drizzle-orm'
+import { customAlphabet } from 'nanoid'
 import type { DocumentStatus, FolderNode } from '@mimir/shared'
 import { db } from '../db/client.js'
 import { documents, folders } from '../db/schema.js'
@@ -21,6 +22,12 @@ import { loadTags } from './documents.js'
  *  - 删除 → 子树行删除，里面的文档**保留**、指派清空（回库根）
  */
 
+/**
+ * 知识库短码。从 32 字符表（去掉了易混的 0/O、1/I/L）里取 6 位——单用户
+ * 的几百个目录撞不上；路径才是身份，短码只承担「能念、能复制」。
+ */
+const generateCode = customAlphabet('23456789ABCDEFGHJKMNPQRSTUVWXYZ', 6)
+
 /** 把 `技术/前端/React` 拆成逐段路径，用于构建中间节点 */
 function segmentsOf(folder: string): string[] {
   return folder
@@ -42,6 +49,10 @@ interface MutableNode {
   /** 该节点自身（不含子节点）的文档数 */
   own: number
   children: Map<string, MutableNode>
+  description: string | null
+  icon: string | null
+  /** 知识库短码。注册表里没有的派生节点为 null（树会照常挂出来计数） */
+  code: string | null
 }
 
 /**
@@ -50,7 +61,14 @@ interface MutableNode {
  */
 export async function listFolderTree(): Promise<FolderNode[]> {
   const [rows, docCounts] = await Promise.all([
-    db.select({ path: folders.path }).from(folders),
+    db
+      .select({
+        path: folders.path,
+        description: folders.description,
+        icon: folders.icon,
+        code: folders.code,
+      })
+      .from(folders),
     db
       .select({ folder: documents.folder, count: count() })
       .from(documents)
@@ -58,22 +76,40 @@ export async function listFolderTree(): Promise<FolderNode[]> {
       .groupBy(documents.folder),
   ])
 
-  const root: MutableNode = { name: '', own: 0, children: new Map() }
+  const root: MutableNode = {
+    name: '',
+    own: 0,
+    children: new Map(),
+    description: null,
+    icon: null,
+    code: null,
+  }
 
   // 先按注册表建骨架——没有文档的目录也要出现在树里（这正是 D-068 的意义）
-  for (const { path } of rows) {
-    const segments = segmentsOf(path)
+  for (const row of rows) {
+    const segments = segmentsOf(row.path)
     if (segments.length === 0) continue
 
     let current = root
     for (const segment of segments) {
       let next = current.children.get(segment)
       if (!next) {
-        next = { name: segment, own: 0, children: new Map() }
+        next = {
+          name: segment,
+          own: 0,
+          children: new Map(),
+          description: null,
+          icon: null,
+          code: null,
+        }
         current.children.set(segment, next)
       }
       current = next
     }
+    // 元信息落在**路径自己那一级**（祖先行是 mkdir -p 的副产品，没有元信息）
+    current.description = row.description || null
+    current.icon = row.icon
+    current.code = row.code || null
   }
 
   // 再把计数落上去。注册表之外的 folder（理论上不应存在，见 ensureFolders
@@ -88,7 +124,14 @@ export async function listFolderTree(): Promise<FolderNode[]> {
     for (const segment of segments) {
       let next = current.children.get(segment)
       if (!next) {
-        next = { name: segment, own: 0, children: new Map() }
+        next = {
+          name: segment,
+          own: 0,
+          children: new Map(),
+          description: null,
+          icon: null,
+          code: null,
+        }
         current.children.set(segment, next)
       }
       current = next
@@ -112,6 +155,9 @@ function toNodes(node: MutableNode, prefix: string): FolderNode[] {
       path,
       name: child.name,
       count: child.own + descendantTotal,
+      description: child.description,
+      icon: child.icon,
+      code: child.code,
       children,
     })
   }
@@ -135,17 +181,39 @@ export async function ensureFolders(folder: string | null | undefined): Promise<
   if (!normalized) return
 
   const segments = segmentsOf(normalized)
-  const rows = segments.map((_, index) => ({ path: segments.slice(0, index + 1).join('/') }))
+  const rows = segments.map((_, index) => ({
+    path: segments.slice(0, index + 1).join('/'),
+    /* 每行都给短码：子目录将来被移动成顶层时不用补号 */
+    code: generateCode(),
+  }))
   await db.insert(folders).values(rows).onConflictDoNothing()
 }
 
 /** 新建目录。路径含父级（mkdir -p）；已存在时 409 */
-export async function createFolder(input: string): Promise<string> {
-  const path = normalizeFolder(input)
+export interface CreateFolderInput {
+  path: string
+  /** 知识库描述（D-078）。只附着在目标路径自己那行上，祖先行留空 */
+  description?: string | undefined
+  /** 知识库图标键（shared 的 FOLDER_ICONS 之一） */
+  icon?: string | undefined
+}
+
+export async function createFolder(input: CreateFolderInput): Promise<string> {
+  const path = normalizeFolder(input.path)
   if (!path) throw new HttpError(400, 'INVALID_INPUT', '目录路径不合法')
 
   const segments = segmentsOf(path)
-  const rows = segments.map((_, index) => ({ path: segments.slice(0, index + 1).join('/') }))
+  const rows = segments.map((_, index) => {
+    const isTarget = index === segments.length - 1
+    return {
+      path: segments.slice(0, index + 1).join('/'),
+      /* 描述与图标只属于被创建的那一级：mkdir -p 建出的祖先行是路径的
+         副产品，不该继承子级的元信息 */
+      description: isTarget ? (input.description?.trim() ?? '') : '',
+      icon: isTarget ? (input.icon ?? null) : null,
+      code: generateCode(),
+    }
+  })
   const inserted = await db.insert(folders).values(rows).onConflictDoNothing().returning()
 
   // 最后一段必须真的插进去了，否则就是「目录已存在」——

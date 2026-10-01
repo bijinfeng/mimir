@@ -1,13 +1,7 @@
-import {
-  CheckOutlined,
-  DownOutlined,
-  PieChartOutlined,
-  PlusOutlined,
-  ThunderboltOutlined,
-} from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { Button, Dropdown, Popover, Typography } from 'antd'
+import { ChartPie, Check, ChevronDown, Plus, Zap } from 'lucide-react'
 import { api } from '@/lib/api'
 
 /**
@@ -57,7 +51,7 @@ export function AddContextDropdown({ onPick }: { onPick: (doc: ContextDoc) => vo
             : [{ key: 'empty', label: '知识库还没有文档', disabled: true }],
       }}
     >
-      <Button type="text" size="small" aria-label="添加上下文" icon={<PlusOutlined />} />
+      <Button type="text" size="small" aria-label="添加上下文" icon={<Plus size={16} />} />
     </Dropdown>
   )
 }
@@ -83,9 +77,9 @@ export function StrengthDropdown({
       }}
     >
       <Button type="text" size="small" aria-label="思考强度">
-        <ThunderboltOutlined />
+        <Zap size={16} />
         {value ? '深入' : '标准'}
-        <DownOutlined style={{ fontSize: 10 }} />
+        <ChevronDown size={10} />
       </Button>
     </Dropdown>
   )
@@ -106,13 +100,13 @@ export function ModelDropdown({ deepReasoning }: { deepReasoning: boolean }) {
         items: [
           {
             key: 'chat',
-            icon: activeKey === 'chat' ? <CheckOutlined /> : undefined,
+            icon: activeKey === 'chat' ? <Check size={16} /> : undefined,
             label: `对话模型：${chatModel || '未配置'}`,
             disabled: true,
           },
           {
             key: 'reasoning',
-            icon: activeKey === 'reasoning' ? <CheckOutlined /> : undefined,
+            icon: activeKey === 'reasoning' ? <Check size={16} /> : undefined,
             label: `深度思考模型：${deepModel || '未配置'}`,
             disabled: true,
           },
@@ -127,7 +121,7 @@ export function ModelDropdown({ deepReasoning }: { deepReasoning: boolean }) {
     >
       <Button type="text" size="small" aria-label="当前模型">
         {(deepReasoning ? deepModel : chatModel) || '未配置模型'}
-        <DownOutlined style={{ fontSize: 10 }} />
+        <ChevronDown size={10} />
       </Button>
     </Dropdown>
   )
@@ -168,7 +162,7 @@ export function ContextUsageChip({ conversationId }: { conversationId: string | 
       }
     >
       <Button type="text" size="small" aria-label="上下文容量">
-        <PieChartOutlined />
+        <ChartPie size={16} />
         {formatTokens(row.promptTokens)} tok
       </Button>
     </Popover>

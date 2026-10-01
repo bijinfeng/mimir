@@ -119,14 +119,19 @@ export async function createNote(input: NoteCreate): Promise<DocumentDetail> {
   const id = nanoid(16)
   const path = buildNotePath(input.title, id, now)
 
+  // 建到指定目录（知识库页的「直接编辑」会带）：先补注册表行（mkdir -p），
+  // 再把指派写进 frontmatter 与数据库——与 updateNote 的指派路径同一条规则
+  const folder = input.folder ? normalizeFolder(input.folder) || null : null
+  await ensureFolders(folder)
+
   const note: VaultNote = {
     id,
     title: input.title,
     tags: input.tags,
     body: input.body,
     status: 'ready',
-    // 新建的笔记未归档；目录由用户在详情的「⋯」菜单里指定
-    folder: null,
+    // 目录由创建参数决定；不带参数时未指派，之后可在详情的「⋯」菜单里指定
+    folder,
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
     path,
@@ -144,6 +149,7 @@ export async function createNote(input: NoteCreate): Promise<DocumentDetail> {
       title: note.title,
       body: note.body,
       path,
+      folder,
       ...index,
       createdAt: now,
       updatedAt: now,

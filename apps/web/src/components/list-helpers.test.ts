@@ -1,12 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { DocumentSummary } from '@mimir/shared'
 import {
-  emptyScopeHint,
   excerptText,
   formatMeta,
   readLibraryLayout,
   scopeParams,
-  scopeTitle,
   writeLibraryLayout,
 } from '@/components/list-helpers'
 
@@ -140,43 +138,5 @@ describe('库视图的布局偏好', () => {
   it('非法值回落卡片', () => {
     localStorage.setItem('mimir.library-layout', 'table')
     expect(readLibraryLayout()).toBe('card')
-  })
-})
-
-describe('标题与空态文案对「范围」是否说真话', () => {
-  /**
-   * 在目录里搜索时，检索**不带目录条件**（`searchQuerySchema` 只有
-   * kind / tag），结果其实来自全库。而侧栏那条目录仍高亮着——标题不说破
-   * 的话，用户会得出「这个目录里有这篇文章」。这与列表项第二行不能说谎
-   * 是同一条规矩（DESIGN §0.2）。
-   */
-  it('目录里搜索时标题写明范围是全部文档', () => {
-    expect(scopeTitle('folder:技术/前端', '样例')).toBe('搜索结果 · 全部文档')
-  })
-
-  it('标签能被检索过滤，标题照旧只说搜索结果', () => {
-    expect(scopeTitle('tag:前端', '样例')).toBe('搜索结果')
-  })
-
-  it('浏览态标题按 scope 取目录名与标签名', () => {
-    expect(scopeTitle('folder:技术/前端', '')).toBe('前端')
-    expect(scopeTitle('tag:前端', '')).toBe('#前端')
-    expect(scopeTitle('all', '')).toBe('全部文档')
-  })
-
-  /**
-   * 空目录里的两个入口建出来的东西不归入该目录（createNote 写 folder: null），
-   * 不说明的话用户会以为按钮没生效。
-   */
-  it('目录为空时如实说明内容会落在库根', () => {
-    const hint = emptyScopeHint('folder:生活')
-    expect(hint).toContain('库根')
-    expect(hint).toContain('指派')
-  })
-
-  it('全部文档与标签没有这个落差（不给多余的提示）', () => {
-    expect(emptyScopeHint('all')).toBeNull()
-    expect(emptyScopeHint('tag:前端')).toBeNull()
-    expect(emptyScopeHint('nonsense')).toBeNull()
   })
 })

@@ -122,7 +122,14 @@ SQLite 路径同理：FTS5 的 `unicode61` 分词器也不认中文词边界，�
 | 工具条不粘（滚走了） | `.mimir-editor` 用了 `overflow: hidden`——它会让元素成为滚动容器，里面的 `sticky` 相对它定位而它与内容同高。要用 `overflow: clip` |
 | **窄窗口下工具条右端的「保存」看不见** | 宽度链缺了一环：`.mimir-editor` 是 flex 子项，`min-width: auto` 让它不会缩到比内容更窄（里面有一张 900px 的 pdf 页面），于是整块外壳比视口宽（实测 420px 窗口里量出 932px）。它看起来像「工具条没折行」，其实是外壳的宽度下界。`min-width: 0` 即可——注意 `overflow: clip` **挡不住**它（Chrome 只对 `hidden`/`auto`/`scroll` 把自动最小尺寸算作 0），而 `clip` 又是 sticky 那条必需的 |
 | **小屏幕下侧边栏被压缩变形** | 同一个断点（880px）被写了两份：外壳的 `@media` 把左列压到 48px，而栏内内容仍按折叠偏好渲染成展开态——中文标签逐字竖排、品牌名与开关叠在一起（实测 `scrollWidth` 129 对 `clientWidth` 47）。断点只在 `theme/tokens.ts` 定义（`NAV_NARROW_QUERY`），CSS 与 `lib/nav-collapse.ts` 的 `matchMedia` 共用它（DESIGN §5.5 / D-055） |
+| **折叠后侧栏排版乱了（图标偏右 + 底部冒横向滚动条）** | 展开态的 `width: 100% !important`（占满整行）与折叠态 `margin-inline: 4px`（图标居中用）叠加，项盒比 48px rail 宽 4px——实测 `scrollWidth` 52 对 `clientWidth` 48、图标中心 28 而非 24。折叠态要 `width: calc(100% - 8px) !important`（`NavSidebar.style.ts` 的 `menuCollapsed`，DESIGN §5.4）；两条规则一个管展开一个管折叠，改一条要看另一条 |
 | **目录树点哪行不进哪行** | rc-tree 的 `.ant-tree-title` 是行内元素，而标题内容是个块级 flex 盒子——放不进图标所在的 line box，被折到下一行（实测每行标题 top 比本行高恰好 28px）。名字画在下一行的行带上，`elementFromPoint` 取名字中心命中的是后一行：点「技术」进的是 `folder:技术/后端`。wrapper 补 `display:flex;align-items:center`、title 补 `display:flex;flex:1;min-width:0`（`FolderSection.tsx` 的 `treeWrap`，DESIGN §8.1 / D-069） |
+| **菜单项里图标与文字不在一条中线上** | antd 给菜单项的 `line-height: 30px`（整行高）会**继承**到文字层：13.5px 中文排进 30px 行盒，中文字形没有西文下伸部，墨迹天然偏上——实测文字比图标高 1.5px。修法是把**文字层**（`.ant-menu-item-label` / `-extra`）行高压回 `normal`，不动 li 的行高（那是行框，改了整行塌）。残余 ≤0.5px 是字形度量，不做像素补偿（`NavSidebar.style.ts` 的 menu，DESIGN §8.1） |
+| **悬停才出现的按钮/动作条一直不显形（但点得到）** | antd-style 的样式块编译成哈希类名（`acss-xxxx`），同一文件里写 `.card:hover &` 这种**字面类名**的后代选择器永远匹配不到——宿主上没有那个类，规则静默失效：元素 opacity 仍是 0 但留在文档流里、仍可点（自动化点得中、人眼看不见）。宿主要额外挂一个字面类（`LibraryView` 的 `.kb-card` / `.kb-row`，`FolderSection` 的行是同一条做法的先例） |
+| **图标迁移后尺寸不对（巨大 / 挤成一团）** | antd 图标随 `font-size` 缩放，lucide 默认 **24px 固定尺寸**——迁移时必须给显式 `size`（本仓两档：14 小字形 / 16 常规按钮槽）。「停止」这类**实心**图标要 `fill="currentColor"`（lucide 的 Square 默认描边空心） |
+| **进目录页图标切换动效不对（箭头朝上）** | morphicons 的路径形变与 antd 自带的收起态 `-90°` 旋转叠加了——`transform: none !important` 关掉 antd 那一半，朝向只归动效库一处（DESIGN §8.1） |
+| **`const Icon = map[key]; <Icon/>` 让整个组件不再被优化** | `react(no-unstable-nested-components)` 判它「渲染期定义组件」，React Compiler 随即跳过（铁律 1 的静默退化）。渲染时直接调用返回的组件函数，或把组件表提到模块级（`FolderGlyph` / `renderSwitcherIcon` 的写法） |
+| **`pnpm db:generate:pg` 生成「删掉全部表」的迁移** | `drizzle.config.ts` 的 `schema` 曾指向按 DATABASE_URL 分发方言的 `schema.ts`（`pick()` 动态层），drizzle-kit 静态分析不了 → 读到空 schema。已改指 `schema.pg.ts` 本体。**PG 的快照链还缺 0005–0007**，所以 `folders` 这类表它仍会提议 CREATE TABLE——手写 ALTER 覆盖（见 `drizzle/0008_folder_meta.sql`） |
 | **目录树整体浮着一块底色 / 树根样式写了不生效** | createStyles 里把树根样式写成 `.treeWrap .ant-tree` 后代式，而 treeWrap 类就挂在**树根自己身上**——祖先-后代关系不成立，规则静默失效：目录顶着 antd 的 colorBgContainer 坐了两个迭代，D-070 删掉右缘线没了遮挡才被看见。同一条坑还埋着选中态规则（`-node-selected` 类也在 wrapper 自己身上，从没生效过，一直是 antd 默认在渲染）。要用 `&.ant-tree` 同元素选择器；css 模板注释里不能出现反引号（直接终止模板串，check-style-backticks 守着）。展开三角的坑在同一段代码里还有一对：三角必须 z-index 抬过 content-wrapper（relative 且 DOM 在后，否则 elementFromPoint 命中 wrapper、点三角落空），闲时 pointer-events none（那个位置平时点图标 = 进目录）（`FolderSection.tsx` 的 `treeWrap`，DESIGN §8.1） |
 | 改了单元格、保存也成功，界面上还是旧值 | `setCell` 只改了 XML 没改内存模型，而界面读模型（`view()`）。文件是对的，所以只有对着界面看才发现（TECH §15.7） |
 | 编辑器标题字号不对（38px 或 28px） | 前者是 antd `Typography.Title` 的自带规则特异性更高；后者是抬了特异性之后纯 `<h1>` 又匹配不上、回落到浏览器默认 2em。两个分支都要用 `Typography.Title` |
@@ -191,7 +198,7 @@ SQLite 路径同理：FTS5 的 `unicode61` 分词器也不认中文词边界，�
 | 设计 | 定稿 |
 | 数据库 | **双后端**（D-045）：服务器 = Postgres 17 + pgvector（Docker）；本地开发 / 桌面端 = SQLite（免 Docker，`DATABASE_URL` 未设置时默认） |
 | 后端 | M0 完成：文档 CRUD、目录、标签、双链、检索、会话、抓取、问答（流式）、导出 |
-| 前端 | 两栏界面（D-047）：导航 + 主区（库视图 / 详情两态）、会话导航、对话视图、命令面板、抓取对话框、设置页。**四种编辑器共用一套外壳**（D-054：上工具条 / 中编辑区 / 下状态行，铺满容器，头部单行） |
+| 前端 | 两栏界面（D-047）：导航 + 主区（知识库页 / 详情两态）、会话导航、对话视图、命令面板、抓取对话框、设置页。**知识库是内容的主容器**（D-079）：侧栏平铺列知识库，进子文件夹靠「文档 / …」面包屑；没有「全部文档」页（`scope=all` 落到第一个知识库）；收集入口是知识库页的「添加文档」下拉（上传文件 / 上传文件夹 / 网页抓取 / 直接编辑，都带当前目录）。**四种编辑器共用一套外壳**（D-054：上工具条 / 中编辑区 / 下状态行，铺满容器，头部单行） |
 | 桌面端 | **Electron 载体**（D-046）：窗口加载宿主的地址（cookie / SSE / Range 原生可用），可切远程地址 |
 | 文件 | **多格式上传已落地**（`docs/TECH.md` §13、D-044）：任意格式的原件入库、列表、按格式预览、下载、替换、随导出打包；文本 / HTML / Office 的正文可搜。**PDF 的正文提取**与 RSS 未做 |
 | 六种格式 | **GenOffice 支持的六种都能预览与编辑**（D-056 / D-057）：docx 全文、xlsx 单元格、pptx 文字、html 源码、markdown（即笔记）、pdf 页面级（旋转/删除/调序）。PDF 的**改文字**未做——那要 PDFium 的 WASM，见 TECH §15.12 |

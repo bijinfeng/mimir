@@ -1,7 +1,7 @@
-import { FileAddOutlined, SearchOutlined, UploadOutlined } from '@ant-design/icons'
 import { useQuery } from '@tanstack/react-query'
 import { Empty, Input, Modal, Spin, Typography } from 'antd'
 import { createStyles } from 'antd-style'
+import { FilePlus, Search, Upload } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { api } from '@/lib/api'
@@ -312,7 +312,7 @@ function PaletteBody({
       {
         type: 'command',
         key: 'new-note',
-        icon: <FileAddOutlined />,
+        icon: <FilePlus size={16} />,
         title: '新建笔记',
         sub: '空白 Markdown 笔记，直接落进库',
         run: () => void onNewNote(),
@@ -320,7 +320,7 @@ function PaletteBody({
       {
         type: 'command',
         key: 'capture',
-        icon: <UploadOutlined />,
+        icon: <Upload size={16} />,
         title: '收集网页 / 公众号 / GitHub',
         sub: '粘贴 URL 抓取，直接落进库',
         run: onOpenCapture,
@@ -424,7 +424,7 @@ function PaletteBody({
             autoFocus
             size="large"
             variant="borderless"
-            prefix={<SearchOutlined />}
+            prefix={<Search size={16} />}
             placeholder="搜索文档、执行操作，或直接提问…"
             value={value}
             onChange={(event) => handleChange(event.target.value)}

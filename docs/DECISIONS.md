@@ -4767,3 +4767,129 @@ PRD §5.9 与 §5.12 的引用路径、TECH §4.8 / §10。
 `apps/server/src/services/assistant-stream.ts`（`mimirProps` 认 `scope`）。
 文档：PRD §5.6（等待期）、§5.7（动作条门控）、§5.8（出路必须真的能走 + 请求没走完）、
 §5.13（生成可以随时停下）、§5.14（贴底才跟随）；DESIGN §8.7 / §8.8 / §8.8.1。
+
+## D-078 知识库有名称 / 描述 / 图标；图标库统一 lucide，展开三角接 morphicons
+
+**背景**：用户要求（依次）：① 新建目录的对话框改为「创建知识库」，带名称、
+描述、图标三个字段；② 全项目图标从 `@ant-design/icons` 换成 lucide；
+③ 图标切换的过渡用 morphicons（用户给的仓库链接）。
+
+**决定**：
+
+1. **`folders` 表加 `description`（默认空串）与 `icon`（可空）两列**，
+   双方言各一条迁移（SQLite `0005_folder_meta`、PG `0008_folder_meta`，
+   都是纯 ALTER）。元信息**只挂在被创建的那一级**：`createFolder` 走
+   mkdir -p 时补出的祖先行 description 空、icon null，不继承子级。
+   `listFolderTree` 把它带出来（`FolderNode` 新增两字段，zod 同步）。
+2. **图标键落库、组件映射留在界面层**：`FOLDER_ICONS`（13 项，键+中文标签）
+   在 `packages/shared`——服务端按它校验创建参数（`z.enum`），界面按它
+   渲染网格；键 → lucide 组件的映射在 `apps/web/src/components/nav/folder-icons.ts`。
+   服务端不认识任何图标库。
+3. **表单**：模态标题「创建知识库」，名称必填（60 字）、描述可选（2000 字
+   上限 + 计数）、图标 13 格可不选（再点已选格取消，`aria-pressed` 如实）。
+   重命名仍只问名字（改描述/图标属后续功能）。
+4. **图标库统一 lucide**：17 个文件的 `@ant-design/icons` 全部迁移到
+   `lucide-react`（残留 0）。尺寸规则：显式 `size` 两档（14 小字形 / 16
+   常规），不靠字体继承——antd 图标随 font-size 缩放、lucide 默认 24px。
+   停用符号（停止）用 `Square` + `fill="currentColor"` 保持实心语义。
+5. **展开三角用 morphicons 形变**：收起右箭头 ↔ 展开下箭头，spring
+   物理、中途可打断、`reducedMotion="user"`。图标数据取自 vanilla `lucide`
+   包（morphicons 吃 IconNode 数据不吃组件）。antd 自带的收起态 -90° 旋转
+   被 `transform: none !important` 关掉（两套叠加会朝上）。
+
+**实测**：`listFolderTree` 直接调用验证（建带描述+图标 → 树返回齐全；
+旧调用形态仍工作 → 两字段 null；清理干净）；dev SQLite 库列已就位
+（`__drizzle_migrations` 6 条 + PRAGMA 列检查）；`pnpm check` 的 lint /
+format / typecheck 全绿，web 232 测试全过。
+
+**同时修复的既有事故（非本次功能引入）**：
+- **PG 迁移根因**：`drizzle.config.ts` 的 `schema` 原指向 `./src/db/schema.ts`
+  ——那是按 DATABASE_URL 动态分发方言的 `pick()` 层，drizzle-kit 静态分析不了，
+  读到空 schema。症状：`db:generate:pg` 产出「13 条 DROP TABLE」的假迁移
+  （实测 `0008_fuzzy_luminals.sql`），或报「无变化」。**PG 侧自 0007 之后
+  实际没能再生成过迁移**。修法：config 指向 `schema.pg.ts` 本体。
+- **被误删的 8 个 PG 迁移已恢复**：会话中我为排查该问题 `rm -rf` 过
+  `apps/server/drizzle`（错误操作），文件已从 `05ca383` 恢复（8 个 SQL +
+  5 个 snapshot + journal 与其一致）。
+- **PG 快照链仍缺 0005–0007**（存量问题）：journal 有 8 条但 meta 只到
+  0004，所以 generate 对 `folders` 会提议 CREATE TABLE（生产库已建过）。
+  本次的 0008 因此**手写为 ALTER**，不用生成器产物。补快照链属独立工作，
+  未纳入本次改动。
+
+**已知测试抖动（如实记录）**：`packages/office` 的 2–6 个测试在
+`pnpm check` 的并行负载下偶发 5s 超时（Tiptap / pdfjs 初始化重），
+单文件与 `--no-file-parallelism` 全量跑均 380/380 通过；office 包不依赖
+本次改动的任何模块（其 package.json 无 `@mimir/shared`）。超时是既有
+抖动，非本次引入。
+
+**影响**：`packages/shared/src/structure.ts`；`apps/server/src/db/schema.{pg,sqlite}.ts`、
+`drizzle.config.ts`、`services/folders.ts`、`routes/documents.ts`、
+`drizzle/0008_folder_meta.sql`、`drizzle-sqlite/0005_folder_meta.sql`；
+`apps/web/src/components/nav/{FolderSection.tsx,folder-icons.ts}`、`lib/api.ts`
+及 16 个图标迁移文件；`apps/web/package.json`（lucide-react / lucide / morphicons）。
+文档：DESIGN §8.1。
+
+## D-079 知识库是内容的主容器：页改为「知识库页」，侧栏平铺，「添加文档」四动作
+
+**背景**：用户依次给了两张目标稿：① 知识库列表页要长成「名称 / 描述 /
+ID / 创建者 + 工具条 + 文件夹与文件卡片」的样子；② 「添加文档」按钮要改成
+下拉（上传文件 / 上传文件夹 / 网页抓取 / 直接编辑）。随后追加两条：③ 侧栏
+的知识库列表不要目录树、平铺；④「全部文档」页不需要了。
+
+**决定**：
+
+1. **「全部文档」页退役**。`scope=all` 不再渲染列表——进 `/docs` 时库视图
+   重定向到第一个知识库（`replace`）；一个知识库都没有时给创建引导。
+   标签视图（`scope=tag:`）保留（横切筛选，不是容器）。`SCOPE_LABEL.all`
+   只在认不出的 scope 上兜底。**这是产品判断**：内容都住在知识库里，
+   一个混装全部的页会让「归属」这件事重新变得可有可无。
+2. **侧栏知识库列表平铺**。只列顶层；子目录是库内部结构，在知识库页里以
+   文件夹卡片与「文档 / …」面包屑呈现。随树删除：rc-tree 目录树与那套
+   展开三角几何、拖拽重挂父级（`dropTargetPath`）、行内「新建子目录」。
+   行上 ⋯ 保留改名 / 删除。折叠态的九宫格图标按钮不变（回第一个知识库）。
+3. **知识库页版式按用户给的目标稿**（DESIGN §8.2 有逐段说明）：头部
+   （名称 / 描述 / 知识库 ID / 创建者）在进子文件夹时**不变**；面包屑在
+   「文档」那一行；身份区与工具条之间一条**静态分割线**（用户明确要求，
+   是 D-070「静态线清零」的一处显式例外——它划分的是两个不同角色的区段）。
+   工具条：计数 + 卡片/列表 + 新建文件夹 + 新建文件 + 添加文档。
+4. **卡片是文件展台**：标题行（图标 + 名称 + 格式徽标 + 悬停动作）、属性行
+   （大小 / 摘要——不重复徽标里的格式）、底部（状态徽标 + 绝对时间）。
+   `StatusBadge` 加 `showReady`：卡片两态并列（其余场合仍只在偏离常态时
+   显示，D-054 的判据不变）。文件夹卡片同形同网格。
+5. **「添加文档」下拉四动作**：上传文件 / 上传文件夹 / 网页抓取 / 直接编辑。
+   四条路都**带当前目录**——这需要打通三处写入端：`noteCreateSchema` 加
+   `folder`、`captureInputSchema` 加 `folder`、上传 multipart 加 `folder`
+   字段（`services/upload.ts` 的 `UploadInput.folder`，`importAsFile` 与
+   `.md` 导入两条支路都接）。`AppShellContext.openCapture` 改为接收
+   `CaptureOptions`（`tab` / `directory` / `folder`），对话框实例按次换
+   `key` 重置初始页签。
+6. **「上传文件夹」保留相对结构**：`webkitRelativePath` 的每个子路径拼进
+   `folder`（`targetFolderFor`），首段保留（用户选的是「论文集」，入库就叫
+   「论文集」）；服务端 `ensureFolders` 补注册表行。
+7. **整页拖放上传**：拖放区是整页，覆盖层 `pointer-events: none`，
+   dragenter/leave 用计数器防抖。只在知识库视图生效。
+8. **`folders` 表加 `code`**（知识库短码，双方言各一条迁移：SQLite
+   `0006_kb_code`、PG `0009_kb_code`；后者因 PG 快照链缺 0005–0007 而
+   手写 ALTER + 回填）。建库 / mkdir -p 时生成、改名与移动不变——用在
+   头部「知识库 ID」与一键复制。**否决**把路径当 ID 展示：路径会随改名
+   变化，用户念不出来也复制不了。
+9. **库视图不再有搜索框与「收集内容 / 新建笔记」按钮**：目标稿那一版把
+   入口收进「添加文档」下拉；搜索改从命令面板（Ctrl K）与侧栏进入。
+   `emptyScopeHint` 与其测试退役（写入路径已带目录，不存在「建到别处」
+   这回事）。
+
+**实测**：dev 隔离实例（`/tmp/mimir-vis`，3100 + 5199）全链路——
+进 `/docs` 落第一个知识库、头部身份在子目录不变、面包屑「文档 / 后端」
+可点回、下拉四项与目标稿一致、点「直接编辑」建的笔记 `folder=技术`
+（查库确认）、上传 md 带 `folder=技术/参考资料` 落位、抓取 example.com
+带 folder 落位、新建文件夹出现且计数 0、删除确认流文案、卡片两态徽标、
+列表布局（修掉横向溢出后 `scrollWidth == clientWidth == 1280`）、
+整页拖放覆盖层出现（合成 dragenter）、浅色外观。`pnpm check` 全绿
+（lint / format / typecheck / 全部测试）。
+
+**影响**：`packages/shared/src/{documents,structure,capture}.ts`；
+`apps/server/src/{services/{folders,documents,upload,capture}.ts,routes/{files,capture}.ts,db/schema.{pg,sqlite}.ts}`、
+`drizzle/0009_kb_code.sql`、`drizzle-sqlite/0006_kb_code.sql` 与两份快照；
+`apps/web/src/components/{library/LibraryView.tsx,library/LibraryView.style.ts,DocumentBadges.tsx,CaptureDialog.tsx,UploadPanel.tsx,KnowledgeBaseCreateModal.tsx,nav/FolderSection.tsx}`、
+`lib/{api.ts,app-shell-context.ts}`、`routes/_app.tsx`、`components/list-helpers.ts`。
+文档：DESIGN §8.1 / §8.2、本页。

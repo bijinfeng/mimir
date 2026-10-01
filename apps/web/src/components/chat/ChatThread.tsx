@@ -1,5 +1,5 @@
-import { PauseCircleOutlined } from '@ant-design/icons'
 import type { Citation, Message } from '@mimir/shared'
+import { PauseCircle } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { ChatEmptyState } from '@/components/chat/ChatEmptyState'
 import { useChatPanelStyles } from '@/components/chat/ChatPanel.style'
@@ -137,7 +137,7 @@ export function ChatThread({
           以及「它没有被保存」——停止只 abort 本地请求，不保证落库 */}
       {chat.stopped && (
         <div className={styles.stopped}>
-          <PauseCircleOutlined />
+          <PauseCircle size={14} />
           已停止生成 · 以上是已生成的部分
         </div>
       )}

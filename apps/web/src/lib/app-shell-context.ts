@@ -25,6 +25,16 @@ export interface AskDraft {
   documentId?: string
 }
 
+/** 打开收集对话框时的预置项。全部可省——省略即保持对话框自己的默认 */
+export interface CaptureOptions {
+  /** 初始页签。缺省「粘贴链接」——那是收集对话框的第一入口 */
+  tab?: 'url' | 'upload'
+  /** 上传文件夹（webkitdirectory 选择器）。与 tab: 'upload' 搭配使用 */
+  directory?: boolean
+  /** 内容落进的目录（知识库页把它当前路径带进来）；不带 = 库根 */
+  folder?: string | null
+}
+
 export interface AppShellContextValue {
   askDraft: AskDraft | null
   setAskDraft: (draft: AskDraft | null) => void
@@ -48,8 +58,12 @@ export interface AppShellContextValue {
    * 对话框的实例挂在应用壳（_app.tsx），侧边栏、命令面板与库视图都要能
    * 唤起它——入口可以多个，**对话框必须只有一个**，否则各处自挂一份，
    * 上传进度与粘贴的链接就各活各的了。
+   *
+   * `options` 让唤起方**跳过一次选择**：库视图的「添加文档」菜单知道用户
+   * 想要哪个页签（上传 / 抓取）、也知道内容该落进哪个知识库——这些由
+   * 打开它的人决定，而不是让用户在对话框里再选一遍。
    */
-  openCapture: () => void
+  openCapture: (options?: CaptureOptions) => void
 
   /**
    * 从对话的引用跳去文档。

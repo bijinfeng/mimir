@@ -210,14 +210,28 @@ export const api = {
       return request<DocumentCounts>('/api/documents/counts')
     },
     /**
+     * 删除文档。服务端把它移进回收站（笔记）或直接删记录 + 原件（上传件）。
+     * **界面必须先过确认框**——不可撤销的动作不能挂在一步之内
+     * （`doc-menu.tsx` 的同一条判断）。
+     */
+    remove(id: string) {
+      return request<{ ok: boolean }>(`/api/documents/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      })
+    },
+    /**
      * 上传一个文件。**走 multipart，不复用 `request()`**——那个函数会
      * 强制 `Content-Type: application/json`，而 multipart 的 boundary
      * 必须由 fetch 自己生成（手写它会与实际的 body 不一致）。
      * 与 `avatar.upload` 同一条做法（那里是仓库里第一个 multipart 端点）。
+     *
+     * `folder`：归入的目录。从知识库页上传时带上，「上传文件夹」展开出的
+     * 相对子路径也拼在里面；不带 = 落库根。
      */
-    async upload(file: File) {
+    async upload(file: File, folder?: string) {
       const body = new FormData()
       body.append('file', file)
+      if (folder) body.append('folder', folder)
 
       return sendMultipart<FileUploadResponse>('/api/documents/files', 'POST', body)
     },
@@ -256,11 +270,14 @@ export const api = {
     list() {
       return request<FolderListResponse>('/api/folders')
     },
-    /** 新建目录。路径含父级（mkdir -p），已存在时抛 409 */
-    create(path: string) {
+    /**
+     * 新建目录 / 知识库。路径含父级（mkdir -p），已存在时抛 409。
+     * 描述与图标（D-078）附着在被创建的那一级上，可省略。
+     */
+    create(path: string, meta: { description?: string; icon?: string } = {}) {
       return request<{ path: string }>('/api/folders', {
         method: 'POST',
-        body: JSON.stringify({ path }),
+        body: JSON.stringify({ path, ...meta }),
       })
     },
     /** 改名与移动是同一个操作：from 子树整体搬到 to */
@@ -310,10 +327,11 @@ export const api = {
   },
 
   capture: {
-    run(url: string) {
+    /** `folder`：抓完归入的目录（知识库页发起时带上） */
+    run(url: string, folder?: string) {
       return request<CaptureResponse>('/api/capture', {
         method: 'POST',
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url, ...(folder ? { folder } : {}) }),
       })
     },
   },

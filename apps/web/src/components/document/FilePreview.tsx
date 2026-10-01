@@ -1,7 +1,7 @@
-import { FileOutlined, WarningOutlined } from '@ant-design/icons'
 import { Button, Empty, Typography } from 'antd'
-import { useState } from 'react'
 import { createStyles } from 'antd-style'
+import { File, TriangleAlert } from 'lucide-react'
+import { useState } from 'react'
 import {
   formatBytes,
   formatLabel,
@@ -156,7 +156,7 @@ export function FilePreview({
           ——两处各写一套的话，同一件事在界面上会有两种说法。
         */
         <div className={styles.card}>
-          <FileOutlined className={styles.cardIcon} />
+          <File className={styles.cardIcon} size={22} />
           <div className={styles.cardText}>
             <Typography.Text strong>
               {doc.parseError !== null
@@ -173,7 +173,7 @@ export function FilePreview({
         /* 没有原件的记录：**不给下载按钮**——没有东西可下，点了只会得到
            一个 404，那正是 DESIGN §7.4 说的假动作 */
         <Empty
-          image={<FileOutlined className={styles.bigIcon} />}
+          image={<File className={styles.bigIcon} size={34} />}
           description={
             <span>
               {doc.parseError !== null
@@ -192,7 +192,7 @@ export function FilePreview({
     if (viewerFailed || viewer === 'none') {
       return (
         <div className={styles.card}>
-          <WarningOutlined className={styles.cardIcon} />
+          <TriangleAlert className={styles.cardIcon} size={22} />
           <div className={styles.cardText}>
             <Typography.Text strong>
               {viewerFailed

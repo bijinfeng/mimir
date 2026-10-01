@@ -118,6 +118,31 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     .${prefixCls}-menu-item:hover {
       background: ${token.colorFillTertiary};
     }
+    /* 图标 → 文字的间距只由 svg 自己的 margin-right（8）承担：
+       antd 还给标题内容加了 margin-inline-start 10px，两个叠加实测 18px */
+    .${prefixCls}-menu-title-content {
+      margin-inline-start: 0 !important;
+    }
+
+    /**
+     * 文字的行盒压回 normal（≈1.2），**图标的垂直居中才真的成立**。
+     *
+     * 上面菜单项的 line-height: 30px 是给整行（含图标）的，会**继承**到
+     * 文字层：13.5px 的中文被排进 30px 的行盒里，行盒上下各留 8px 余量，
+     * 而中文字形没有西文那种下伸部——墨迹在行盒里天然偏上。实测「搜索」
+     * 这一项：文字墨迹中心比图标中心高 **1.5px**（图标 48.0 / 文字 46.5），
+     * 「新建对话」差 0.5px（十字图标的墨迹恰好居中，掩盖了一部分）。
+     *
+     * 只压**文字层**（label 与右侧 extra），不动 li 的 30px 行高——那是
+     * 图标与文字共用的行框，改了整行会塌。压完之后文字由 flex 的
+     * align-items: center 真正居中：实测 Δ 从 −1.5px 收敛到 0，
+     * 右侧 Ctrl K 也从 +1.0 收敛到 −0.5。
+     */
+    .${prefixCls}-menu-item-label,
+    .${prefixCls}-menu-item-extra {
+      line-height: normal !important;
+    }
+
     /* 分组标题（「对话」）与「知识库」标题行同一条左缘：antd 给组标题的
        内距是 14px，文字落在 20——这里收到 8，文字与「知识库」同落在
        容器 6px + 8px = 14px 上 */
@@ -211,6 +236,12 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
          恰好是 --ant-menu-collapsed-icon-size，换个尺寸就偏。 */
       justify-content: center !important;
       margin-inline: 4px;
+      /* 宽度必须扣掉左右 margin：基础规则那条 width: 100%（展开态要的
+         「占满一行」）在 48px 的 rail 里 = 48px，两侧再各加 4px margin
+         就是 52px——比栏宽多 4px，图标偏右 4px，body 还多出一条横向
+         滚动条（实测 scrollWidth 52 > clientWidth 48）。减 8 后项盒
+         是 [4, 44]，图标中心落回栏中线 24 */
+      width: calc(100% - 8px) !important;
       padding-inline: 0 !important;
     }
 

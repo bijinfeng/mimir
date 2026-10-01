@@ -28,7 +28,21 @@ import { FONT_SIZE } from '@/theme/tokens'
 type ColorPair = { fg: string; bg: string }
 type BadgeSpec = { label: string } & Record<Appearance, ColorPair>
 
+/**
+ * 状态徽标（D-054 起「偏离常态才有徽标」，D-079 知识库卡片恢复两态）。
+ *
+ * **`ready`（就绪）只在知识库卡片上显示**（`StatusBadge` 的 `showReady`）——
+ * 卡片底部那一格是「这份文档现在能不能用」的陈列位，两态并列才能扫读；
+ * 而在别处（列表行、详情面板）逐个盖「就绪」仍然是噪音，保持原判据。
+ * 色对取自校准过的语义色对（`theme/tokens.ts` 的 success / error 组），
+ * `design.test.ts` 对两套外观跑同一组阈值。
+ */
 const STATUS_STYLE: Partial<Record<DocumentStatus, BadgeSpec>> = {
+  ready: {
+    label: '就绪',
+    light: { fg: '#137333', bg: '#e6f4ea' },
+    dark: { fg: '#6cc24a', bg: '#162312' },
+  },
   /* 与 §3.7 表里的「抓取失败」同值：两处表达的是同一件事（内容没取到） */
   failed: {
     label: '提取失败',
@@ -86,10 +100,22 @@ function Badge({ fg, bg, children, style }: BadgeProps) {
  * 状态徽标。
  *
  * **没有徽标的状态返回 null**，不是渲染一个空 span——空 span 会在元信息行里
- * 留下一个 gap，看起来像少画了一个东西（`ready` 就是这种情况，而它是常态）。
+ * 留下一个 gap，看起来像少画了一个东西。
+ *
+ * 默认 `ready` 不显示（它绝大多数时候是常态）；知识库卡片给 `showReady`
+ * 明确要求「两态并列」时才显示「就绪」。
  */
-export function StatusBadge({ status, style }: { status: DocumentStatus; style?: CSSProperties }) {
+export function StatusBadge({
+  status,
+  style,
+  showReady,
+}: {
+  status: DocumentStatus
+  style?: CSSProperties
+  showReady?: boolean
+}) {
   const appearance = useAppearance()
+  if (status === 'ready' && !showReady) return null
   const item = STATUS_STYLE[status]
   if (!item) return null
   const pair = item[appearance]

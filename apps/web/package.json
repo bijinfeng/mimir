@@ -37,6 +37,9 @@
     "antd-style": "^4.1.0",
     "dayjs": "^1.11.23",
     "lowlight": "^3.3.0",
+    "lucide": "^1.48.0",
+    "lucide-react": "^1.48.0",
+    "morphicons": "^1.7.1",
     "react": "catalog:",
     "react-dom": "catalog:"
   },

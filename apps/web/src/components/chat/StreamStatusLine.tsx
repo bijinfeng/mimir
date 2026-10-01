@@ -1,5 +1,5 @@
-import { LoadingOutlined } from '@ant-design/icons'
 import { createStyles } from 'antd-style'
+import { LoaderCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { FONT_SIZE } from '@/theme/tokens'
 
@@ -72,7 +72,7 @@ export function StreamStatusLine({ retrieved, hitCount }: StreamStatusLineProps)
 
   return (
     <div className={styles.line} role="status" aria-live="polite">
-      <LoadingOutlined className={styles.glyph} />
+      <LoaderCircle size={14} className={styles.glyph} />
       <span>
         {retrieved
           ? `检索完成${hitCount > 0 ? ` · 命中 ${hitCount} 段` : ''} · 正在生成`

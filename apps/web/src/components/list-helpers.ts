@@ -10,12 +10,9 @@ import {
  * 库视图的状态文案与派生计算。
  *
  * 抽出来的理由：这些函数不依赖组件，而且**它们的一致性直接影响可读性**——
- * 「收件箱」这个标题在导航、库视图、查询参数里必须指的是同一件事，
+ * 同一个目录路径在侧栏、面包屑、查询参数里必须指的是同一件事，
  * 散在组件里就容易只改一处。
  */
-export const SCOPE_LABEL: Record<string, string> = {
-  all: '全部文档',
-}
 
 /**
  * scope 字符串 → 列表查询参数。目录与标签是两个不同的筛选维度。
@@ -28,56 +25,6 @@ export function scopeParams(scope: string): Pick<DocumentListQuery, 'folder' | '
   if (scope.startsWith('folder:')) return { folder: scope.slice('folder:'.length) }
   if (scope.startsWith('tag:')) return { tag: scope.slice('tag:'.length) }
   return {}
-}
-
-/**
- * 标题栏里那一行标题。
- *
- * ## 搜索时为什么目录要说「全部文档」
- *
- * 检索契约（`@mimir/shared` 的 `searchQuerySchema`）只有 `kind` / `tag`，
- * **没有目录**——所以带着 `scope=folder:X` 搜索时，结果其实来自全库。
- * 而侧栏那条目录仍高亮着，界面不说破的话，用户会得出「这个目录里有这篇
- * 文章」——一个错的结论，且看不出来（DESIGN §0.2「状态必须能被看见」）。
- *
- * 所以在目录里搜索时，标题如实写出范围是**全部文档**；标签能被检索过滤
- * （`tag` 参数存在），标题照旧只说「搜索结果」。
- */
-export function scopeTitle(scope: string, query: string): string {
-  if (query) return scope.startsWith('folder:') ? '搜索结果 · 全部文档' : '搜索结果'
-  if (scope.startsWith('folder:')) {
-    const path = scope.slice('folder:'.length)
-    return path.split('/').pop() ?? '目录'
-  }
-  if (scope.startsWith('tag:')) return `#${scope.slice('tag:'.length)}`
-  return SCOPE_LABEL[scope] ?? '全部文档'
-}
-
-/**
- * 空态里那句「这个动作不会落进当前范围」。
- *
- * ## 为什么要有它
- *
- * 空目录里的两个入口（收集内容 / 新建笔记）建出来的东西**不归入该目录**：
- * 新建笔记写 `folder: null`（`services/documents.ts` 的 `createNote`），
- * 收集走的是上传 + 抓取，也不带目录。于是用户站在空目录里点「新建笔记」，
- * 内容落在库根，回来一看目录还是空的——像按钮没生效。
- *
- * 改动写入路径要动契约（`noteCreateSchema` 没有 folder）与服务端写路径，
- * 超出了这一处；所以先**如实说明**会建到哪里、以及建好后怎么指派
- * （同 `excerptText` 那条「不静默说谎」）。
- *
- * 只给目录、不给标签：**空目录是一个正常状态**（D-068 起目录是实体，
- * 侧栏会列出它），用户会真的站在一个空目录里；而标签由文档派生，
- * 「标签视图为空」只出现在旧链接上，不是日常路径。
- *
- * 返回 null 表示当前 scope 没有这个落差（全部文档 / 标签 / 认不出的 scope）。
- */
-export function emptyScopeHint(scope: string): string | null {
-  if (scope.startsWith('folder:')) {
-    return '新建与收集的内容落在库根，建好后可在详情的「⋯」里指派到这个目录'
-  }
-  return null
 }
 
 /**
@@ -161,6 +108,43 @@ export function formatMeta(doc: DocumentSummary): string | null {
   if (doc.kind !== 'file' || !doc.mime) return null
   const label = formatLabel(doc.mime, doc.title)
   return doc.size === null ? label : `${label} · ${formatBytes(doc.size)}`
+}
+
+/**
+ * 卡片元信息行里的种类词：笔记 / 网页 / 公众号 / GitHub。
+ *
+ * 上传件返回 null——它的这一位是「格式」（formatLabel），由调用方画成
+ * 徽标，两种身份不混在同一列。
+ */
+export function kindLabel(doc: DocumentSummary): string | null {
+  if (doc.kind === 'note') return '笔记'
+  if (doc.kind === 'web') return '网页'
+  if (doc.kind === 'wechat') return '公众号'
+  if (doc.kind === 'github') return 'GitHub'
+  return null
+}
+
+/**
+ * 上传件的格式徽标（PDF / XLSX / DOCX…）。仅上传件有格式这一说。
+ */
+export function formatChip(doc: DocumentSummary): string | null {
+  if (doc.kind !== 'file' || !doc.mime) return null
+  return formatLabel(doc.mime, doc.title)
+}
+
+/**
+ * 卡片右下角的绝对时间（`2026/09/30 15:15`）。
+ *
+ * 卡片是**文件**的展台（图1 形态），绝对时间比相对时间对得上用户的文件
+ * 习惯；自己拼而不用 toLocaleString：后者在 zh-CN 下是 `2026/9/30 15:15`，
+ * 月/日不补零会让同一列的宽度跳。
+ */
+const pad2 = (value: number) => String(value).padStart(2, '0')
+
+export function formatDate(iso: string): string {
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return ''
+  return `${date.getFullYear()}/${pad2(date.getMonth() + 1)}/${pad2(date.getDate())} ${pad2(date.getHours())}:${pad2(date.getMinutes())}`
 }
 
 /**

@@ -129,6 +129,12 @@ export const folders = pgTable('folders', {
   description: text('description').notNull().default(''),
   /** 知识库图标的键（shared 的 FOLDER_ICONS 之一）。null = 未选 */
   icon: text('icon'),
+  /**
+   * 知识库短码（如 `7ZZRF7`）。路径会随改名/移动变化，界面上能复制分享的
+   * 是这个稳定的短码；只有顶层（知识库）在界面上用，但每行都生成——
+   * 子目录将来被移动成顶层时不用补号。
+   */
+  code: text('code').notNull().default(''),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 

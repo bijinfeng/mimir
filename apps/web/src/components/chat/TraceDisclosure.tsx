@@ -1,7 +1,7 @@
-import { CheckOutlined, ReadOutlined, SearchOutlined, ThunderboltOutlined } from '@ant-design/icons'
 import { Collapse, Steps, Tag } from 'antd'
-import type { Trace, TraceStep } from '@mimir/shared'
 import { createStyles } from 'antd-style'
+import { BookOpen, Check, Search, Zap } from 'lucide-react'
+import type { Trace, TraceStep } from '@mimir/shared'
 import { FONT_SIZE } from '@/theme/tokens'
 
 /**
@@ -37,10 +37,10 @@ import { FONT_SIZE } from '@/theme/tokens'
  */
 
 const STEP_ICON: Record<TraceStep['icon'], React.ReactNode> = {
-  think: <ThunderboltOutlined />,
-  search: <SearchOutlined />,
-  read: <ReadOutlined />,
-  check: <CheckOutlined />,
+  think: <Zap size={9} />,
+  search: <Search size={9} />,
+  read: <BookOpen size={9} />,
+  check: <Check size={9} />,
 }
 
 const useStyles = createStyles(({ css, token, prefixCls }) => ({
@@ -147,7 +147,7 @@ export function TraceDisclosure({ trace }: { trace: Trace }) {
           key: 'trace',
           label: (
             <span className={styles.summary}>
-              <ThunderboltOutlined />
+              <Zap size={14} />
               思考 <strong>{trace.rounds}</strong> 轮 · 调用 <strong>{trace.tools}</strong> 次工具 ·
               耗时 <strong>{(trace.tookMs / 1000).toFixed(1)}s</strong>
             </span>

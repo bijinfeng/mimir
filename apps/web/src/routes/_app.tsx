@@ -14,7 +14,7 @@ import { CommandPalette } from '@/components/CommandPalette'
 import { NavSidebar } from '@/components/NavSidebar'
 import { UnsavedGuard } from '@/components/UnsavedGuard'
 import { api } from '@/lib/api'
-import { AppShellContext, type AskDraft } from '@/lib/app-shell-context'
+import { AppShellContext, type AskDraft, type CaptureOptions } from '@/lib/app-shell-context'
 import { useForcedNavCollapse } from '@/lib/nav-collapse'
 import { NAV_NARROW_QUERY } from '@/theme/tokens'
 
@@ -153,6 +153,21 @@ function AppShell() {
 
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [captureOpen, setCaptureOpen] = useState(false)
+  /**
+   * 这次打开收集对话框的预置项 + 序号。
+   *
+   * **序号是必须的**：`initialTab` 之类的初始值只在挂载时读一次，而对话框
+   * 实例常驻应用壳——上次从「上传文件」打开过、这次想从「网页抓取」打开，
+   * 不换 key 的话组件不会重新初始化，用户会看到上一次的页签。
+   */
+  const [captureRequest, setCaptureRequest] = useState<(CaptureOptions & { nonce: number }) | null>(
+    null,
+  )
+
+  const openCapture = (options?: CaptureOptions) => {
+    setCaptureRequest({ ...options, nonce: Date.now() })
+    setCaptureOpen(true)
+  }
 
   /** 「问 AI」带进对话的上下文，见 AskDraft 的说明 */
   const [askDraft, setAskDraft] = useState<AskDraft | null>(null)
@@ -244,7 +259,7 @@ function AppShell() {
         citation,
         clearHighlight: () => setCitation(null),
         openDocument,
-        openCapture: () => setCaptureOpen(true),
+        openCapture,
         openCitation,
         cameFromChat,
         backToChat: () =>
@@ -260,7 +275,6 @@ function AppShell() {
               ...(search.id ? { id: search.id } : {}),
             }}
             onOpenPalette={() => setPaletteOpen(true)}
-            onOpenCapture={() => setCaptureOpen(true)}
             collapsed={navCollapsed}
             /* 窄屏下折叠是**视口强制的**，开关跟着收起来：这个宽度里它点了
                也不会展开（`@media` 与它无关地压着左列宽度），留着只会让人
@@ -286,7 +300,7 @@ function AppShell() {
         onClose={() => setPaletteOpen(false)}
         onOpenCapture={() => {
           setPaletteOpen(false)
-          setCaptureOpen(true)
+          openCapture()
         }}
         onOpenDocument={(id) => {
           setPaletteOpen(false)
@@ -314,7 +328,12 @@ function AppShell() {
       />
 
       <CaptureDialog
+        /* key 按次换：initialTab / folder / directory 都只在挂载时读一次 */
+        key={captureRequest?.nonce ?? 'capture'}
         open={captureOpen}
+        initialTab={captureRequest?.tab}
+        directory={captureRequest?.directory}
+        folder={captureRequest?.folder ?? null}
         onClose={() => setCaptureOpen(false)}
         onCaptured={(documentId) => {
           setCaptureOpen(false)
@@ -322,7 +341,12 @@ function AppShell() {
              `ready`）——这里再说「已入收件箱」等于指认一个不存在的去处。
              与 CaptureDialog 页脚同一句话：入库之后按标签与目录整理。 */
           message.success('已入库，之后按标签与目录整理')
-          openDocument(documentId, 'all')
+          /* 从知识库页收进来的内容指回那个知识库（「返回库」回得到原地）；
+             从别处唤起的落库根，回库默认视图 */
+          openDocument(
+            documentId,
+            captureRequest?.folder ? `folder:${captureRequest.folder}` : 'all',
+          )
         }}
       />
 

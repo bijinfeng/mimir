@@ -97,7 +97,16 @@ foldersRoute.get('/', async (c) => c.json({ items: await listFolderTree() }))
 
 foldersRoute.post('/', async (c) => {
   const input = await parseInput(c, 'json', folderCreateSchema)
-  return c.json({ path: await createFolder(input.path) }, 201)
+  return c.json(
+    {
+      path: await createFolder({
+        path: input.path,
+        description: input.description,
+        icon: input.icon,
+      }),
+    },
+    201,
+  )
 })
 
 foldersRoute.patch('/', async (c) => {

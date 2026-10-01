@@ -1,6 +1,6 @@
-import { DownloadOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { App, Button, Skeleton } from 'antd'
+import { Download, RefreshCw } from 'lucide-react'
 import type { DatabaseInfo } from '@mimir/shared'
 import { api } from '@/lib/api'
 import { Block, BlockDesc, Panel, Row, Stats } from '@/components/settings/parts'
@@ -69,7 +69,7 @@ export function DataSection() {
         <Block>
           <div className={styles.actions} style={{ marginBottom: 8 }}>
             <Button
-              icon={<ReloadOutlined />}
+              icon={<RefreshCw size={16} />}
               loading={reindex.isPending}
               onClick={() => reindex.mutate()}
             >
@@ -105,7 +105,7 @@ export function DataSection() {
         <Block>
           <div className={styles.actions}>
             <Button
-              icon={<DownloadOutlined />}
+              icon={<Download size={16} />}
               onClick={() => {
                 // 走浏览器的原生下载而不是 fetch+blob：导出可能有几十 MB，
                 // 原生下载能进下载管理器、可续传
@@ -115,7 +115,7 @@ export function DataSection() {
               Markdown + 附件（zip）
             </Button>
             <Button
-              icon={<DownloadOutlined />}
+              icon={<Download size={16} />}
               onClick={() => {
                 window.location.href = '/api/export/json'
               }}

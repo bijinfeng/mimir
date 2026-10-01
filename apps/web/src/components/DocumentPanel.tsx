@@ -1,12 +1,7 @@
-import {
-  ArrowLeftOutlined,
-  DownloadOutlined,
-  MessageOutlined,
-  MoreOutlined,
-} from '@ant-design/icons'
 import { viewerFor, type Citation, type DocumentDetail, type NoteUpdate } from '@mimir/shared'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { App, Button, Dropdown, Empty, Skeleton, Tooltip, Typography } from 'antd'
+import { ArrowLeft, Download, Ellipsis, MessageCircle } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { StatusBadge } from '@/components/DocumentBadges'
 import { NoteEditor } from '@/components/NoteEditor'
@@ -436,13 +431,13 @@ export function DocumentPanel({
       <div className={styles.header} data-scrolled={headerScrolled || undefined}>
         {onBackToChat && (
           <button type="button" className={styles.back} onClick={() => runGuarded(onBackToChat)}>
-            <ArrowLeftOutlined style={{ fontSize: 11 }} />
+            <ArrowLeft size={11} />
             返回对话
           </button>
         )}
         {onBack && (
           <button type="button" className={styles.back} onClick={() => runGuarded(onBack)}>
-            <ArrowLeftOutlined style={{ fontSize: 11 }} />
+            <ArrowLeft size={11} />
             返回库
           </button>
         )}
@@ -492,7 +487,7 @@ export function DocumentPanel({
             <Button
               type="text"
               size="small"
-              icon={<DownloadOutlined />}
+              icon={<Download size={16} />}
               className={styles.tbBtn}
               href={api.documents.sourceUrl(doc.id, { download: true })}
             >
@@ -510,7 +505,7 @@ export function DocumentPanel({
             <Button
               type="text"
               size="small"
-              icon={<MessageOutlined />}
+              icon={<MessageCircle size={16} />}
               className={styles.tbBtn}
               onClick={() => onAskAi(doc.id)}
               /* 没有正文时禁用并说明原因（tooltip 里）——留一个点了没反应的
@@ -530,7 +525,7 @@ export function DocumentPanel({
             <Button
               type="text"
               size="small"
-              icon={<MoreOutlined />}
+              icon={<Ellipsis size={16} />}
               className={styles.tbBtn}
               aria-label="更多操作"
             />

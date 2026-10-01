@@ -1,4 +1,4 @@
-import { MessageOutlined, PlusOutlined, SearchOutlined, UploadOutlined } from '@ant-design/icons'
+import { MessageCircle, Plus, Search } from 'lucide-react'
 import type { MenuProps } from 'antd'
 import type { ConversationSummary } from '@mimir/shared'
 import { formatRelative } from '@/components/list-helpers'
@@ -15,7 +15,6 @@ import { formatRelative } from '@/components/list-helpers'
  * ```
  * action:new-chat       动作：新对话
  * action:search         动作：搜索（命令面板）
- * action:capture        动作：收集内容
  * action:settings       动作：设置
  * conv:<id>             导航：某次会话
  * ```
@@ -50,15 +49,14 @@ export function currentKey(input: {
 /** 顶部动作列表。右侧只显示**真实存在**的快捷键——不编不存在的 */
 export function buildActions(): MenuItem[] {
   return [
-    { key: 'action:new-chat', icon: <PlusOutlined />, label: '新建对话' },
+    { key: 'action:new-chat', icon: <Plus size={16} />, label: '新建对话' },
     {
       key: 'action:search',
-      icon: <SearchOutlined />,
+      icon: <Search size={16} />,
       label: '搜索',
       // Ctrl K 是真的绑了（见 _app.tsx 的 window keydown）
       extra: <kbd style={{ fontFamily: 'inherit' }}>Ctrl K</kbd>,
     },
-    { key: 'action:capture', icon: <UploadOutlined />, label: '收集内容' },
   ]
 }
 
@@ -87,7 +85,7 @@ export function buildConversations(
       label: '对话',
       children: conversations.slice(0, limit).map((conversation) => ({
         key: `conv:${conversation.id}`,
-        icon: <MessageOutlined />,
+        icon: <MessageCircle size={16} />,
         label: conversation.title || '新对话',
         // 相对时间：翻会话时想知道的是「多久以前问的」
         extra: formatRelative(conversation.updatedAt),

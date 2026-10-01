@@ -26,6 +26,18 @@ export type CaptureStageResult = z.infer<typeof captureStageResultSchema>
 
 export const captureInputSchema = z.object({
   url: z.string().trim().url('请输入完整的链接（含 https://）').max(2000),
+  /**
+   * 抓完归入哪个目录。从知识库页发起抓取时带上——「网页抓取」进的是
+   * 用户当前所在的知识库，不是又一个只能靠搜索找到的游离文档。
+   */
+  folder: z
+    .string()
+    .trim()
+    .max(200)
+    .refine((value) => !value.split('/').some((segment) => segment === '..'), {
+      message: '目录路径不能包含 ..',
+    })
+    .optional(),
 })
 export type CaptureInput = z.infer<typeof captureInputSchema>
 

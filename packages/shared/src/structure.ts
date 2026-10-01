@@ -28,6 +28,12 @@ export interface FolderNode {
   description: string | null
   /** 知识库图标的键（FOLDER_ICONS 之一）。null = 未选，树里回退默认文件夹图标 */
   icon: string | null
+  /**
+   * 知识库短码（如 `7ZZRF7`）。只有**顶层**（知识库自己）在界面上使用；
+   * 子目录也生成一份，是为了「子目录被提升为顶层」时不用补号。
+   * 建库时生成、改名/移动不变——路径就是身份，短码只是给人念的别名。
+   */
+  code: string | null
   children: FolderNode[]
 }
 
@@ -38,6 +44,7 @@ export const folderNodeSchema: z.ZodType<FolderNode> = z.lazy(() =>
     count: z.number().int(),
     description: z.string().nullable(),
     icon: z.string().nullable(),
+    code: z.string().nullable(),
     children: z.array(folderNodeSchema),
   }),
 )
@@ -84,7 +91,23 @@ export const FOLDER_ICONS = [
   { key: 'language', label: '语言' },
 ] as const
 
-export type FolderIconKey = (typeof FOLDER_ICONS)[number]['key']
+export const FOLDER_ICON_KEYS = [
+  'humanities',
+  'history',
+  'social',
+  'law',
+  'science',
+  'natural',
+  'tech',
+  'computer',
+  'engineering',
+  'education',
+  'business',
+  'art',
+  'language',
+] as const
+
+export type FolderIconKey = (typeof FOLDER_ICON_KEYS)[number]
 
 export const folderCreateSchema = z.object({
   path: folderPathSchema,
@@ -93,7 +116,6 @@ export const folderCreateSchema = z.object({
   /** 图标键（FOLDER_ICONS 之一）；不传 = 未选 */
   icon: z.enum(FOLDER_ICON_KEYS).optional(),
 })
-
 
 /**
  * 改名与移动是同一个操作：把 `from` 子树整体搬到 `to`。

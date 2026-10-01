@@ -43,6 +43,12 @@ filesRoute.post('/files', async (c) => {
     throw new HttpError(400, 'INVALID_INPUT', '请求里没有文件（字段名应为 file）')
   }
 
+  // 归入的目录（可选）。multipart 的普通字段与文件字段混在同一个 body 里，
+  // 类型上要收窄一次；空串按「没带」处理
+  const folderField = body?.folder
+  const folder =
+    typeof folderField === 'string' && folderField.trim() !== '' ? folderField : undefined
+
   // 读进内存再校验大小：`file.size` 是浏览器声明的值，不能只信它。
   // 而且校验必须在写任何文件之前（先写再校验会留下永远不会被引用的文件）
   const data = new Uint8Array(await file.arrayBuffer())
@@ -52,6 +58,7 @@ filesRoute.post('/files', async (c) => {
       filename: file.name || 'unnamed',
       declaredMime: file.type,
       data,
+      folder,
     })
     return c.json(result, 201)
   } catch (error) {

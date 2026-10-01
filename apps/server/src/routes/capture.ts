@@ -53,7 +53,7 @@ captureRoute.post('/', async (c) => {
     throw new HttpError(400, 'INVALID_URL', '无法识别的链接，需要以 http:// 或 https:// 开头')
   }
 
-  const result = await capture({ url: input.url, source })
+  const result = await capture({ url: input.url, source, folder: input.folder })
 
   // 抓取阶段失败时主动声明，让前端走失败分支而不是把空预览当成功。
   // 用 200 + stages 里的 failed 也可以，但那样前端要检查两层状态——

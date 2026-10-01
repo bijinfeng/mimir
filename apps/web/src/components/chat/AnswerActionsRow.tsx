@@ -1,6 +1,6 @@
-import { ExportOutlined, SaveOutlined } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import { App as AntApp, Button } from 'antd'
+import { ExternalLink, Save } from 'lucide-react'
 import { useState } from 'react'
 import { useChatPanelStyles } from '@/components/chat/ChatPanel.style'
 import { api } from '@/lib/api'
@@ -91,7 +91,7 @@ export function AnswerActionsRow({
         <Button
           type="text"
           size="small"
-          icon={<ExportOutlined />}
+          icon={<ExternalLink size={16} />}
           onClick={() => onOpenNote(savedNoteId)}
         >
           打开笔记
@@ -100,7 +100,7 @@ export function AnswerActionsRow({
         <Button
           type="text"
           size="small"
-          icon={<SaveOutlined />}
+          icon={<Save size={16} />}
           loading={saving}
           onClick={() => void save()}
         >

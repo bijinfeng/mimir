@@ -107,6 +107,8 @@ export const folders = sqliteTable('folders', {
   description: text('description').notNull().default(''),
   /** 知识库图标的键（shared 的 FOLDER_ICONS 之一）。null = 未选 */
   icon: text('icon'),
+  /** 知识库短码。见 schema.pg.ts 的同名列 */
+  code: text('code').notNull().default(''),
   createdAt: integer('created_at', { mode: 'timestamp_ms' })
     .notNull()
     .$defaultFn(() => new Date()),

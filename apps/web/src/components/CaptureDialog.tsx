@@ -1,7 +1,7 @@
-import { CheckOutlined, CloseOutlined, InboxOutlined, LoadingOutlined } from '@ant-design/icons'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Input, Modal, Segmented, Typography } from 'antd'
 import { createStyles } from 'antd-style'
+import { Check, Inbox, LoaderCircle, X } from 'lucide-react'
 import { useState } from 'react'
 import type { CaptureStage, CaptureStageResult, DetectedSource } from '@mimir/shared'
 import { detectSource } from '@mimir/shared'
@@ -29,6 +29,12 @@ export interface CaptureDialogProps {
   open: boolean
   onClose: () => void
   onCaptured: (documentId: string) => void
+  /** 初始页签。从「添加文档」菜单唤起时由菜单决定，用户少点一步 */
+  initialTab?: 'url' | 'upload'
+  /** 上传页签用文件夹选择器（webkitdirectory）——「上传文件夹」菜单项走这条 */
+  directory?: boolean
+  /** 内容落进的目录。从知识库页唤起时带当前路径；不带 = 库根 */
+  folder?: string | null
 }
 
 const STAGE_LABEL: Record<CaptureStage, string> = {
@@ -176,12 +182,20 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
 }))
 
-export function CaptureDialog({ open, onClose, onCaptured }: CaptureDialogProps) {
+export function CaptureDialog({
+  open,
+  onClose,
+  onCaptured,
+  initialTab,
+  directory,
+  folder,
+}: CaptureDialogProps) {
   const { styles, cx } = useStyles()
   const queryClient = useQueryClient()
 
   const [url, setUrl] = useState('')
-  const [tab, setTab] = useState<'url' | 'upload'>('url')
+  /* 惰性初始化只读一次 prop：本组件随应用壳常驻，key 由调用方按次更换 */
+  const [tab, setTab] = useState<'url' | 'upload'>(initialTab ?? 'url')
   const [stages, setStages] = useState<CaptureStageResult[]>([])
   const [failure, setFailure] = useState<{ message: string; stage?: string } | null>(null)
 
@@ -196,7 +210,7 @@ export function CaptureDialog({ open, onClose, onCaptured }: CaptureDialogProps)
 
   /** 抓取失败时把已完成的阶段留下来，让用户看到卡在哪一步 */
   const capture = useMutation({
-    mutationFn: (target: string) => api.capture.run(target),
+    mutationFn: (target: string) => api.capture.run(target, folder ?? undefined),
     onMutate: () => {
       setFailure(null)
       setStages([])
@@ -249,7 +263,8 @@ export function CaptureDialog({ open, onClose, onCaptured }: CaptureDialogProps)
     <Modal
       open={open}
       onCancel={close}
-      title="收集内容"
+      /* 落点进标题：从知识库页唤起时，对话框一眼能看出「收进哪里」 */
+      title={folder ? `收进「${folder}」` : '收集内容'}
       width={540}
       destroyOnHidden
       /*
@@ -265,11 +280,17 @@ export function CaptureDialog({ open, onClose, onCaptured }: CaptureDialogProps)
       footer={
         <div className={styles.footer}>
           <span className={styles.footerHint}>
-            {tab === 'upload'
-              ? '上传的文件直接入库，之后按标签与目录整理'
-              : failure
-                ? '这次没成功。可以先试试别的链接，或改用浏览器扩展。'
-                : '抓到的内容直接入库，之后按标签与目录整理'}
+            {/* 落点如实说：从知识库页唤起时，收进去的就是那个知识库。
+                措辞跟着页签走——上传页签里说「抓完」是答非所问 */}
+            {folder
+              ? tab === 'upload'
+                ? `上传的文件将收进「${folder}」，传完直接可用`
+                : `抓到的内容将收进「${folder}」，抓完直接可用`
+              : tab === 'upload'
+                ? '上传的文件直接入库，之后按标签与目录整理'
+                : failure
+                  ? '这次没成功。可以先试试别的链接，或改用浏览器扩展。'
+                  : '抓到的内容直接入库，之后按标签与目录整理'}
           </span>
           <Button onClick={close}>{tab === 'upload' ? '关闭' : '取消'}</Button>
           {/* 上传页签的「行动按钮」在面板里（每行一个结果，按钮要说清打开哪一个），
@@ -301,6 +322,8 @@ export function CaptureDialog({ open, onClose, onCaptured }: CaptureDialogProps)
 
       {tab === 'upload' ? (
         <UploadPanel
+          folder={folder}
+          directory={directory}
           onUploaded={(documentId) => {
             close()
             onCaptured(documentId)
@@ -363,11 +386,11 @@ export function CaptureDialog({ open, onClose, onCaptured }: CaptureDialogProps)
                       )}
                     >
                       {result ? (
-                        <CheckOutlined />
+                        <Check size={14} />
                       ) : failed ? (
-                        <CloseOutlined />
+                        <X size={14} />
                       ) : isRunning ? (
-                        <LoadingOutlined />
+                        <LoaderCircle size={14} />
                       ) : null}
                     </span>
                     <span>{STAGE_LABEL[stage]}</span>
@@ -407,7 +430,7 @@ export function CaptureDialog({ open, onClose, onCaptured }: CaptureDialogProps)
 
           {running && (
             <Typography.Text type="secondary" className={styles.hint}>
-              <InboxOutlined /> 抓完会直接入库
+              <Inbox size={14} /> 抓完会直接入库
             </Typography.Text>
           )}
         </div>

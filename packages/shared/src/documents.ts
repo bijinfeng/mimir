@@ -45,16 +45,12 @@ export const CLIP_KINDS = [
 export const documentStatusSchema = z.enum(['ready', 'failed'])
 export type DocumentStatus = z.infer<typeof documentStatusSchema>
 
-export const noteCreateSchema = z.object({
-  title: z.string().trim().min(1, '标题不能为空').max(200),
-  body: z.string().default(''),
-  tags: z.array(z.string().trim().min(1).max(50)).max(20).default([]),
-})
-export type NoteCreate = z.infer<typeof noteCreateSchema>
-
 /**
  * 目录路径。空字符串表示「移出目录」——不能与「不修改」混为一谈，
  * 所以 `nullable` 只是让它能表达「清空」，`undefined` 才是「不动」。
+ *
+ * 定义在 `noteCreateSchema` 之前：后者也引用它（Zod 的对象字面量在
+ * 模块加载时就求值，引用后置的 const 会踩暂时性死区）。
  */
 const folderSchema = z
   .string()
@@ -63,6 +59,19 @@ const folderSchema = z
   .refine((value) => !value.split('/').some((segment) => segment === '..'), {
     message: '目录路径不能包含 ..',
   })
+
+export const noteCreateSchema = z.object({
+  title: z.string().trim().min(1, '标题不能为空').max(200),
+  body: z.string().default(''),
+  tags: z.array(z.string().trim().min(1).max(50)).max(20).default([]),
+  /**
+   * 建到哪个目录。**从知识库页里新建时必须带**——「直接编辑」建出的笔记
+   * 要落进当前知识库，否则用户回头找不到它（库视图已没有「全部文档」页，
+   * 未指派的文档只剩搜索与标签两条路）。
+   */
+  folder: folderSchema.optional(),
+})
+export type NoteCreate = z.infer<typeof noteCreateSchema>
 
 export const noteUpdateSchema = z.object({
   title: z.string().trim().min(1).max(200).optional(),
