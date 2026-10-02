@@ -24,8 +24,22 @@ import { z } from 'zod'
  * `total` 缺失但分项在是常见情况，不该白扔。两边都缺才算「未知」。
  */
 
-/** 一次调用的来源。它回答「这笔钱花在哪个功能上」 */
-export const usageSourceSchema = z.enum(['chat', 'ask', 'summary', 'embed', 'probe'])
+/**
+ * 一次调用的来源。它回答「这笔钱花在哪个功能上」。
+ *
+ * M1-D 起多了 `tag`（AI 标签建议）与 `rewrite`（内联改写）两个取值：
+ * 它们与摘要不该压成一个值——「分功能记账」问的正是这个
+ * （`docs/TECH.md` §12.1 的四个刻意设计之一）。新增取值只影响新数据。
+ */
+export const usageSourceSchema = z.enum([
+  'chat',
+  'ask',
+  'summary',
+  'tag',
+  'rewrite',
+  'embed',
+  'probe',
+])
 export type UsageSource = z.infer<typeof usageSourceSchema>
 
 /**

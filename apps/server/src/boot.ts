@@ -1,7 +1,8 @@
 import { createApp } from './app.js'
-import { dbDriver, assertOwnerConfigComplete } from './env.js'
+import { dbDriver, env, assertOwnerConfigComplete } from './env.js'
 import { runMigrations } from './db/migrate.js'
-import { ensureOwnerAccount } from './services/bootstrap.js'
+import { ensureOwnerAccount, hasAnyUser } from './services/bootstrap.js'
+import { seedDefaultLibrary } from './services/seed.js'
 
 /**
  * 启动前的准备 + 路由装配。**两个入口共用这一份**：
@@ -21,6 +22,10 @@ import { ensureOwnerAccount } from './services/bootstrap.js'
  *  3. 所有者账号要在**能接受请求之前**建好。反过来会有一个短暂窗口：服务
  *     已经在收请求，但账号还没建好——此时登录会得到「密码错误」，
  *     而它其实是「马上就好」。窗口只有几十毫秒，表现却是随机的登录失败
+ *
+ * 4. 默认内容（知识库 + 产品说明）在**账号之后**补齐：它的另一个入口是
+ *    建号钩子（`auth.ts`），那条路只对新建的账号有效——本次改动之前
+ *    就建过号的实例要靠这里（见 `ensureDefaultContent`）
  */
 export async function boot() {
   assertOwnerConfigComplete()
@@ -28,6 +33,43 @@ export async function boot() {
     await runMigrations()
   }
   await ensureOwnerAccount()
+  await ensureDefaultContent()
 
   return createApp()
+}
+
+/**
+ * 已有实例的默认内容补齐。
+ *
+ * `seedDefaultLibrary` 的另一个入口是建号钩子（`auth.ts`），它只对
+ * **新建的账号**有效——本次改动之前就建过号的实例不会再经过那个钩子，
+ * 于是永远看不到默认知识库。这里补上那一条路。
+ *
+ * 三道闸门让它在各种环境下都不会做错事：
+ *
+ *  1. **没有账号就不播**——播种是给「已经能用这个产品的人」看的；
+ *     全新部署在主人注册之前不该在数据目录里长出内容
+ *     （那条路由建号钩子在注册瞬间完成）
+ *  2. **已播过就不播**——`seed.defaultContent` 标记，在 `seed.ts` 里查。
+ *     这条是「用户删掉了默认知识库，重启后它不该回来」的落点
+ *  3. **失败不阻断启动**——默认内容是附赠，服务起不来才是事故
+ *     （与 `ensureOwnerAccount` 的失败处理同一条规矩）
+ */
+async function ensureDefaultContent(): Promise<void> {
+  // 测试环境跳过：集成测试有自己的账号与库准备流程，而它们到处是
+  // 「库里有几篇文档」这类断言——自动多出两行会让它们以难以定位的方式失败
+  // （与 `ensureOwnerAccount` 跳过测试同一条理由）
+  if (env.nodeEnv === 'test') return
+
+  try {
+    if (!(await hasAnyUser())) return
+    const result = await seedDefaultLibrary()
+    if (result.libraryCreated || result.documentCreated) {
+      console.log(
+        `[seed] 已为已有实例补齐默认内容（库：${result.libraryCreated}，说明：${result.documentCreated}）`,
+      )
+    }
+  } catch (error) {
+    console.warn('[seed] 默认内容补齐失败（不影响启动与使用）：', error)
+  }
 }

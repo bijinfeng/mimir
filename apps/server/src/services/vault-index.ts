@@ -10,6 +10,7 @@ import { activeStorage } from '../plugins/host.js'
 import { syncTags } from './documents.js'
 import { ensureFolders } from './folders.js'
 import { syncDocumentLinks } from './links.js'
+import { syncChunks } from './chunks.js'
 import { extractText } from './extract.js'
 
 /**
@@ -224,6 +225,17 @@ export async function reindexVault(): Promise<ReindexResult> {
     // 「删库重建」之后所有反链会指向空
     await syncDocumentLinks(id, note.body)
 
+    /**
+     * 分块同样是派生数据，也必须能从正文重建（§4.8）。
+     *
+     * **这里只重建分块、不重跑嵌入**：重跑嵌入要花钱，而「重建索引」
+     * 这个动作的名字里没有花钱的意思。需要向量时走 `POST /maintenance/embed`
+     * 分批补——那一步按「缺哪些」可重入（§4.10），所以两步分开是安全的。
+     *
+     * 跳过重算的那条路径（内容没变）保留已有向量，这正是想要的。
+     */
+    await syncChunks(id, note.body)
+
     if (existingIds.has(id)) {
       result.updated += 1
     } else {
@@ -297,6 +309,9 @@ export async function reindexVault(): Promise<ReindexResult> {
     // 标签只在 meta.json 里（上传件没有 vault 文件）
     await syncTags(id, meta.tags)
     await syncDocumentLinks(id, body)
+    // 正文这一轮是**重新提取**的，所以分块必须跟着重算——
+    // 旧分块对应的是旧正文，留着它们会让引用跳到错误的位置
+    await syncChunks(id, body)
 
     if (existingIds.has(id)) {
       result.updated += 1

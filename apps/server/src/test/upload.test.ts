@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import { inflateRawSync } from 'node:zlib'
+import { PDFDocument, StandardFonts } from 'pdf-lib'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { eq } from 'drizzle-orm'
 import { db } from '../db/client.js'
@@ -590,5 +591,111 @@ describe('替换原件', () => {
     const names = listed.map((key) => key.split('/').pop())
     expect(names).toContain('替换后.txt')
     expect(names).not.toContain('替换前.txt')
+  })
+})
+
+/**
+ * PDF 的文本提取（M1-E）。
+ *
+ * 与上面 docx / xlsx / pptx 那几条的分量不同：PDF 不是 ZIP 容器，它没有
+ * 「XML 里就有这些字」这种结构性保证——文字是**内容流里的绘制指令**，
+ * 必须靠一个真正的 PDF 解析器才取得到。所以这里用 `pdf-lib` 现造
+ * 一份真实 PDF（理由与用 Python 造 OOXML 相同：假文件测不出真细节）。
+ *
+ * 断言挑的是**用户能看见**的两件事：正文里的词能被搜到（说明提取真的
+ * 落库了），多页文档带页标题（引用卡片上的「第 N 页」）。
+ */
+/**
+ * 造一份页数可控、带文字的 PDF。
+ *
+ * 放在 describe 外面（而不是里面当局部函数）：它不捕获任何外部变量，
+ * 放在里面等于每次进这个 describe 都重新建一个函数对象——
+ * `unicorn(consistent-function-scoping)` 会指出来，而那条规则的理由
+ * 与 React 那边「组件类型不稳定」是同一个。
+ */
+async function makePdf(lines: string[][]): Promise<Uint8Array> {
+  const doc = await PDFDocument.create()
+  const font = await doc.embedFont(StandardFonts.Helvetica)
+  for (const pageLines of lines) {
+    const page = doc.addPage([420, 300])
+    pageLines.forEach((line, index) => {
+      page.drawText(line, { x: 24, y: 240 - index * 24, size: 13, font })
+    })
+  }
+  return new Uint8Array(await doc.save())
+}
+
+describe('上传：PDF 的文本提取', () => {
+  it('正文里的文字能被搜到（说明提取真的发生了）', async () => {
+    const cookie = await getAuthCookie()
+    const bytes = await makePdf([
+      ['The unique token is QuokkaShift.', 'Second line of the same paragraph.'],
+      ['Another page also mentions QuokkaShift.'],
+    ])
+
+    const uploaded = await upload(cookie, '报告.pdf', bytes, 'application/pdf')
+    expect(uploaded.status).toBe(201)
+    // 提取成功时 parseError 为空（失败才会有值）
+    expect(uploaded.body.parseError).toBeFalsy()
+
+    const id = uploaded.body.document!.id
+    const res = await app.request(`/api/search?q=${encodeURIComponent('QuokkaShift')}`, {
+      headers: { cookie },
+    })
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as { hits: { documentId: string }[] }
+    expect(body.hits.map((hit) => hit.documentId)).toContain(id)
+  })
+
+  it('多页文档每页带一个小标题，段落边界保留', async () => {
+    const cookie = await getAuthCookie()
+    const bytes = await makePdf([['Alpha page text'], ['Beta page text']])
+
+    const uploaded = await upload(cookie, '两页.pdf', bytes, 'application/pdf')
+    expect(uploaded.status).toBe(201)
+
+    const detail = await app.request(`/api/documents/${uploaded.body.document!.id}`, {
+      headers: { cookie },
+    })
+    const body = (await detail.json()) as { body: string }
+
+    expect(body.body).toContain('## 第 1 页')
+    expect(body.body).toContain('## 第 2 页')
+    expect(body.body).toContain('Alpha page text')
+    expect(body.body).toContain('Beta page text')
+  })
+
+  it('单页文档不加页标题（「第 1 页」在一页里是噪音）', async () => {
+    const cookie = await getAuthCookie()
+    const uploaded = await upload(
+      cookie,
+      '单页.pdf',
+      await makePdf([['Only one page here']]),
+      'application/pdf',
+    )
+
+    const detail = await app.request(`/api/documents/${uploaded.body.document!.id}`, {
+      headers: { cookie },
+    })
+    const body = (await detail.json()) as { body: string }
+    expect(body.body).toContain('Only one page here')
+    expect(body.body).not.toContain('第 1 页')
+  })
+
+  it('没有文字层的 PDF 如实报错，而不是留一片空白', async () => {
+    const cookie = await getAuthCookie()
+    // 一页什么都不画 = 没有文字层（扫描件的等价物）
+    const bytes = await makePdf([[]])
+
+    const uploaded = await upload(cookie, '空白.pdf', bytes, 'application/pdf')
+    expect(uploaded.status).toBe(201)
+
+    /**
+     * 关键：**必须有一句话说清楚**（界面据此显示「文件里没有可提取的文字」），
+     * 而不是 markdown 为空、`parse_error` 也为空——那在界面上是留白，
+     * 等于告诉用户「这个文件是空的」，而它明明有一页。
+     */
+    expect(uploaded.body.parseError).toBeTruthy()
+    expect(uploaded.body.parseError).toContain('没有可提取的文字')
   })
 })

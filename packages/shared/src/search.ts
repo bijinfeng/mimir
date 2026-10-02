@@ -83,3 +83,15 @@ export const searchResponseSchema = z.object({
   hits: z.array(searchHitSchema),
 })
 export type SearchResponse = z.infer<typeof searchResponseSchema>
+
+/**
+ * 补嵌入的请求（`POST /maintenance/embed`，M1-B）。
+ *
+ * `limit` 是**这一轮最多嵌几条**，不是「要嵌完」——分批让这一步可中断，
+ * 而重入的判据是向量表里有没有行（`docs/TECH.md` §4.10），
+ * 所以中断之后接着调一次就行。
+ */
+export const embedRequestSchema = z.object({
+  limit: z.coerce.number().int().min(1).max(500).default(64),
+})
+export type EmbedRequest = z.infer<typeof embedRequestSchema>

@@ -141,6 +141,32 @@ export const CORE_SETTING_SPECS: readonly SettingSpec[] = [
     validate: (value) => (String(value).trim() === '' ? '不能为空' : null),
   },
 
+  /* ── 内部状态（不是给人配的）───────────────────────────── */
+
+  {
+    /**
+     * 默认内容播种的标记（`services/seed.ts`）。
+     *
+     * 它**不是一项配置**，而是「这件事已经做过」的记录——但设置表本来就是
+     * 这个项目里唯一的键值存储，为一行标记单开一张表不值得。
+     * 用 `hidden` 让它在设置页上不可见（那个标志的用途之一就是
+     * 「能读、但不该有人填」）。
+     *
+     * 为什么需要它：播种的判据若是「库是不是空的」，用户删掉默认知识库之后
+     * 每次重启它都会回来——那是明确的意思表示被无视。记一个版本号之后
+     * 「已播过」这件事与内容现状无关，将来换一套默认内容时递增版本即可。
+     */
+    key: 'seed.defaultContent',
+    label: '默认内容播种版本',
+    description: '内部状态：记录默认知识库与产品说明是否已播种过。不要在设置页改它',
+    group: 'data',
+    type: 'number',
+    envName: null,
+    defaultValue: 0,
+    rebuild: 'none',
+    hidden: true,
+  },
+
   /* ── 统计 ─────────────────────────────────────────────── */
   {
     key: 'stats.timezone',

@@ -50,6 +50,27 @@
       "when": 1791879000000,
       "tag": "0006_kb_code",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1791966000000,
+      "tag": "0007_chunks",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": 6,
+      "when": 1792052400000,
+      "tag": "0007_chunks_fts",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1792138800000,
+      "tag": "0008_feeds",
+      "breakpoints": true
     }
   ]
 }

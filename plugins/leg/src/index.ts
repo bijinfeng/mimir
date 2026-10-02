@@ -1,6 +1,7 @@
 import type { PluginHost } from '@mimir/shared'
 import { createKeywordLeg } from './keyword.js'
 import { createSubstringLeg } from './substring.js'
+import { createVectorLeg } from './vector.js'
 
 /**
  * 检索通道插件包。
@@ -81,5 +82,58 @@ export function install(host: PluginHost): void {
       ],
     },
     createSubstringLeg(host.db),
+  )
+
+  host.leg(
+    {
+      seam: 'leg',
+      id: 'vector',
+      name: '语义向量',
+      description: '按语义相近召回，不依赖字面匹配。需要配置向量化模型并补嵌入',
+      file: 'plugins/leg/src/vector.ts',
+      configKeys: ['retrieval.vector.weight', 'model.embed.dimensions'],
+      /**
+       * **就绪性 = 配了向量化模型**（D-080 的「用途」声明到这里的落点）。
+       *
+       * 判据不是「`model.embed.dimensions` 有值」——那个键有默认值 1024，
+       * 永远非空。真正的判据是「角色绑定里 embed 指向了哪个模型」，
+       * 而那是模型域的形状（`model.config` 的一段 JSON），
+       * 所以从那里读。
+       *
+       * 未就绪时这条通道不出现在编排里（core 按状态过滤），
+       * 于是 `hybrid` 通道集里没有它、`channels` 里也没有它——
+       * 「为什么没走向量」在界面上看得到原因（`reason`）。
+       */
+      unavailable: (read) => {
+        const config = read.get('model.config')
+        if (!config || typeof config !== 'object') return '还没有配置向量化模型'
+        const roles = (
+          config as { roles?: Record<string, { providerId?: string; model?: string } | null> }
+        ).roles
+        const binding = roles?.embed
+        if (!binding?.model) return '还没有给「向量化」角色绑定模型（设置 › 模型 › 任务分配）'
+        return null
+      },
+      params: [
+        {
+          key: 'retrieval.vector.weight',
+          label: '向量通道权重',
+          description:
+            '语义召回与词级召回是两种不同信号，权重接近时融合最平衡。调高它会偏向「意思相近但用词不同」的段落',
+          group: 'retrieval',
+          type: 'number',
+          envName: null,
+          defaultValue: 1.2,
+          rebuild: 'none',
+          validate: (value) => {
+            const n = Number(value)
+            if (!Number.isFinite(n)) return '必须是数字'
+            if (n < 0 || n > 10) return '必须在 0 到 10 之间'
+            return null
+          },
+        },
+      ],
+    },
+    createVectorLeg(host.db),
   )
 }

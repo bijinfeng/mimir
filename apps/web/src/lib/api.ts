@@ -1,4 +1,6 @@
 import type {
+  AiTagsResponse,
+  AiTextResponse,
   ApiError,
   AuthSetupState,
   CaptureResponse,
@@ -9,6 +11,8 @@ import type {
   DocumentListQuery,
   DocumentSummary,
   ExportStats,
+  FeedRefreshResult,
+  FeedSummary,
   FetchedModelsResult,
   FileUploadResponse,
   FolderDeleteResponse,
@@ -206,6 +210,26 @@ export const api = {
         `/api/documents/${encodeURIComponent(id)}/suggested-tags`,
       )
     },
+    /**
+     * AI 标签建议（M1-D）。与上面那条的区别：这是**模型判断**，
+     * 要花钱、要用户显式点一下，所以是 POST。界面上的文案也不同
+     * （「建议标签」vs「让 AI 建议」）——一次付费调用不该藏在
+     * 一个用户以为是本地计算的动作里。
+     */
+    suggestedTagsAi(id: string) {
+      return request<AiTagsResponse>(`/api/documents/${encodeURIComponent(id)}/suggested-tags/ai`, {
+        method: 'POST',
+      })
+    },
+    /**
+     * AI 摘要（M1-D）。走 `summarize` 角色（有自己的适配器）。
+     * **不落库**——要看就重新生成，比维护一份会过期的摘要便宜（见服务端注释）。
+     */
+    summary(id: string) {
+      return request<AiTextResponse>(`/api/documents/${encodeURIComponent(id)}/summary`, {
+        method: 'POST',
+      })
+    },
     counts() {
       return request<DocumentCounts>('/api/documents/counts')
     },
@@ -350,10 +374,86 @@ export const api = {
 
   maintenance: {
     reindex() {
-      return request<{ scanned: number; created: number; updated: number; removed: number }>(
-        '/api/maintenance/reindex',
-        { method: 'POST' },
+      return request<{
+        scanned: number
+        created: number
+        updated: number
+        removed: number
+        orphans: number
+      }>('/api/maintenance/reindex', { method: 'POST' })
+    },
+    /** 分块状态：共 N 段 · 待嵌入 M 段（`pending` 为 null = 没配向量化模型） */
+    chunks() {
+      return request<{
+        total: number
+        documents: number
+        pending: number | null
+      }>('/api/maintenance/chunks')
+    },
+    /**
+     * 补一批嵌入（M1-B）。**分批**是可中断的保证：一次嵌完全库，
+     * 中途断线就全白费。`remaining` 归零时界面说「全部已嵌入」。
+     */
+    embed(limit = 64) {
+      return request<{ processed: number; remaining: number | null; failed: number }>(
+        '/api/maintenance/embed',
+        { method: 'POST', body: JSON.stringify({ limit }) },
       )
+    },
+    /** 全量重算分块（换了分块参数之后用）。不含嵌入——那是另一步 */
+    rebuildChunks() {
+      return request<{ documents: number; chunks: number }>('/api/maintenance/chunks/rebuild', {
+        method: 'POST',
+      })
+    },
+  },
+
+  /**
+   * 内联改写（M1-D）。**挂在 /api/ai 而不是文档下**：改写的文本
+   * 可能还没保存（编辑器里选中一段直接改），所以它不要求先有文档。
+   */
+  ai: {
+    rewrite(input: {
+      text: string
+      action: 'rewrite' | 'translate' | 'shorten' | 'expand'
+      instruction?: string
+      documentId?: string
+    }) {
+      return request<AiTextResponse>('/api/ai/rewrite', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      })
+    },
+  },
+
+  /** RSS / Atom 订阅（M1-E）。收进来的文章仍在 documents，这里只管订阅关系 */
+  feeds: {
+    list() {
+      return request<{ items: FeedSummary[] }>('/api/feeds')
+    },
+    create(input: { url: string; folder?: string }) {
+      return request<{ feed: FeedSummary; imported: number; skipped: number }>('/api/feeds', {
+        method: 'POST',
+        body: JSON.stringify(input),
+      })
+    },
+    update(input: { url: string; title?: string; folder?: string | null }) {
+      return request<{ ok: boolean }>('/api/feeds', {
+        method: 'PATCH',
+        body: JSON.stringify(input),
+      })
+    },
+    remove(url: string) {
+      return request<{ ok: boolean }>(`/api/feeds?url=${encodeURIComponent(url)}`, {
+        method: 'DELETE',
+      })
+    },
+    /** 拉取新条目。带 url 更新一个、不带则全部更新（串行，见服务端注释） */
+    refresh(url?: string) {
+      return request<{ items: FeedRefreshResult[] }>('/api/feeds/refresh', {
+        method: 'POST',
+        body: JSON.stringify(url ? { url } : {}),
+      })
     },
   },
 

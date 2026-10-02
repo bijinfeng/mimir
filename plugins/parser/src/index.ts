@@ -1,7 +1,9 @@
 import type { PluginHost } from '@mimir/shared'
 import { createDocxParser } from './docx.js'
+import { createHtmlFragmentParser } from './html-fragment.js'
 import { createHtmlParser } from './html.js'
 import { createMarkdownParser } from './markdown.js'
+import { createPdfParser } from './pdf.js'
 import { createPptxParser } from './pptx.js'
 import { createTextParser } from './text.js'
 import { createXlsxParser } from './xlsx.js'
@@ -23,20 +25,23 @@ import { createXlsxParser } from './xlsx.js'
  *
  * | 类 | 谁 | 拿到什么 |
  * |---|---|---|
- * | 文本类 | markdown / html / text | 已经是字符串 |
+ * | 文本类 | markdown / html / html-fragment / text | 已经是字符串 |
  * | 字节类 | docx / xlsx / pptx | 原件字节（它们是 ZIP 容器） |
  *
  * **字节→字符串的解码不在这一层**：`.txt` 的解码会失败（GBK），
  * 而那个失败要由编排层说成「这个文件不是 UTF-8 文本」，所以宿主在上传路径里
  * 先解码、再交给 `text` 实现。这里拿到的永远是能直接用的字符串。
  *
- * ## 旧版 Office 与 PDF 为什么不在这里
+ * ## 旧版 Office 为什么不在这里
  *
  * `.doc` / `.xls` / `.ppt` 不是 ZIP 而是 OLE 复合文档，要另一套解析，
  * 收益远小于代价——上传能存、能下载，只是没有可搜的正文。
- * PDF 的**文本提取**还没有实现（它需要另一套库，选型见 `docs/RESEARCH.md` 的规矩），
- * 但 PDF 的**预览**不依赖提取（浏览器自带阅读器），所以它现在可用。
- * 这两条都在设置页的解析分区如实显示（`planned` 状态）。
+ * 它们在设置页的解析分区如实显示（`planned` 状态）。
+ *
+ * PDF 的文本提取在 M1-E 落地（`pdf.ts`）：**复用仓库里已有的 pdf.js**
+ * （`packages/office` 的页面预览用的是同一个库），所以没有引入第二份
+ * PDF 解析实现。预览与提取是两条独立的路：预览走浏览器里 pdf.js 的
+ * 渲染，提取走 Node 里同一份 pdf.js 的 `getTextContent()`。
  */
 export function install(host: PluginHost): void {
   host.parser(
@@ -61,6 +66,18 @@ export function install(host: PluginHost): void {
       configKeys: [],
     },
     createHtmlParser(host.settings),
+  )
+
+  host.parser(
+    {
+      seam: 'parser',
+      id: 'html-fragment',
+      name: 'HTML 片段直转',
+      description: '内容已经是正文片段（如 RSS 的 content:encoded）时直接转换，不跑正文提取',
+      file: 'plugins/parser/src/html-fragment.ts',
+      configKeys: [],
+    },
+    createHtmlFragmentParser(),
   )
 
   host.parser(
@@ -109,5 +126,18 @@ export function install(host: PluginHost): void {
       configKeys: [],
     },
     createPptxParser(),
+  )
+
+  host.parser(
+    {
+      seam: 'parser',
+      id: 'pdf',
+      name: 'PDF 文本提取',
+      description:
+        '提取 PDF 的文字层，按页分段（多页文档每页一个小标题）。扫描件没有文字层，那种文件会如实报错，不做 OCR',
+      file: 'plugins/parser/src/pdf.ts',
+      configKeys: [],
+    },
+    createPdfParser(),
   )
 }

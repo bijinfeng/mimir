@@ -14,17 +14,20 @@ function quote(token: string): string {
 /**
  * 关键词通道——**SQLite 方言**（本地开发 / 桌面端，D-045）。
  *
- * 索引是 `documents_fts`（FTS5 standalone 虚拟表，`search_text` 列装的
+ * 索引是 `chunks_fts`（FTS5 standalone 虚拟表，`chunks.search_text` 装的
  * 是 jieba 预分词后的空格分隔词元；`unicode61` 按空白切词，词元一一对应，
- * 见 `RESEARCH.md` §11.2）。维护靠 documents 上的三个触发器，不靠本通道。
+ * 见 `RESEARCH.md` §11.2）。维护靠 chunks 上的三个触发器，不靠本通道。
+ *
+ * **检索单元在 M1-C 从文档下沉到分块**（§4.8）：返回 chunk id，
+ * 过滤仍然作用在所属文档上（分块只有正文与偏移，「这篇删了吗」是文档的属性）。
  *
  * 与 PG 方言（`keyword.pg.ts`）共享的语义：queryTokens 过滤 + D-014
  * 覆盖门槛。实现路径不同：
  *
  *   1. **覆盖集合**：每个词元一条 FTS 查询（走倒排索引），拿到「含这个词
- *      的文档 id 集合」——门槛要的是逐词命中数，一条 OR 查询给不出来
- *   2. **排序**：一条 OR 匹配查询按 `bm25()` 排好；join documents 把
- *      删除态与 kind/tag 过滤下推（FTS5 表只有词元，没有元数据）
+ *      的分块 id 集合」——门槛要的是逐词命中数，一条 OR 查询给不出来
+ *   2. **排序**：一条 OR 匹配查询按 `bm25()` 排好；join chunks / documents
+ *      把删除态与 kind/tag 过滤下推（FTS5 表只有词元，没有元数据）
  *   3. **门槛过滤在内存里做**：候选已按相关度有序，顺序扫、达标才收，
  *      收满 limit 个即停
  *
@@ -44,19 +47,20 @@ export function createKeywordLegSqlite(db: PluginDatabase): RetrievalLeg {
 
       const coverage = await Promise.all(
         tokens.map(async (token) => {
-          const rows = await db.execute<{ doc_id: string }>(sql`
-            select doc_id from documents_fts where documents_fts match ${quote(token)}
+          const rows = await db.execute<{ chunk_id: string }>(sql`
+            select chunk_id from chunks_fts where chunks_fts match ${quote(token)}
           `)
-          return new Set(rows.map((row) => row.doc_id))
+          return new Set(rows.map((row) => row.chunk_id))
         }),
       )
 
       const anyMatch = tokens.map(quote).join(' OR ')
       const ranked = await db.execute<{ id: string; score: number }>(sql`
-        select documents_fts.doc_id as id, bm25(documents_fts) as score
-        from documents_fts
-        join documents d on d.id = documents_fts.doc_id
-        where documents_fts match ${anyMatch}
+        select chunks_fts.chunk_id as id, bm25(chunks_fts) as score
+        from chunks_fts
+        join chunks c on c.id = chunks_fts.chunk_id
+        join documents d on d.id = c.document_id
+        where chunks_fts match ${anyMatch}
           and d.deleted_at is null
           ${kind ? sql`and d.kind = ${kind}` : sql``}
           ${

@@ -13,6 +13,7 @@ import { toSearchText } from '@mimir/tokenizer'
 import { contentHash, toExcerpt } from '../lib/text.js'
 import { assemble, activeStorage } from '../plugins/host.js'
 import { ensureFolders, normalizeFolder } from './folders.js'
+import { rebuildChunksAndEmbed } from './chunks.js'
 
 /**
  * 抓取编排（宿主的适配层）。
@@ -157,42 +158,14 @@ export async function capture(params: CaptureParams): Promise<CaptureResponse> {
       })
   }
 
-  const id = nanoid(16)
-  const now = new Date()
-
-  const [row] = await db
-    .insert(documents)
-    .values({
-      id,
-      kind: raw.kind,
-      status: 'ready',
-      title,
-      body: markdown,
-      excerpt: toExcerpt(markdown),
-      searchText: toSearchText(title, markdown),
-      contentHash: contentHash(markdown),
-      url: params.url,
-      canonicalUrl: canonicalize(params.url),
-      author: raw.author ?? null,
-      folder,
-      capturedAt: now,
-      createdAt: now,
-      updatedAt: now,
-    })
-    .onConflictDoNothing({ target: documents.canonicalUrl })
-    .returning({ id: documents.id })
-
-  // 同一篇文章抓两次只留一条（canonical_url 唯一索引）。冲突时返回已有记录的 id，
-  // 而不是报错——用户重复粘贴同一个链接是常见行为，不该看到错误
-  const documentId =
-    row?.id ??
-    (
-      await db
-        .select({ id: documents.id })
-        .from(documents)
-        .where(eq(documents.canonicalUrl, canonicalize(params.url)))
-    )[0]?.id ??
-    null
+  const { documentId } = await ingestDocument({
+    kind: raw.kind,
+    title,
+    markdown,
+    url: params.url,
+    author: raw.author ?? null,
+    folder,
+  })
 
   return {
     kind: params.source.kind,
@@ -234,4 +207,84 @@ export function canonicalize(url: string): string {
   } catch {
     return url.trim()
   }
+}
+
+export interface IngestInput {
+  kind: string
+  title: string
+  markdown: string
+  /** 来源地址。它是**去重键**（`canonical_url`）的来源 */
+  url: string
+  author?: string | null
+  folder?: string | null
+  publishedAt?: Date | null
+}
+
+/**
+ * 把一份「已经转成 Markdown」的内容入库。**抓取与 RSS 订阅共用这一条路径。**
+ *
+ * 抽出来的理由与上传那次漏掉分块是同一个教训（`upload.ts` 的注释）：
+ * 写入路径一旦有第二份拷贝，就会有一份漏掉某个环节——而漏掉的那个
+ * 表现是「这篇搜不到」，没有任何报错。
+ *
+ * 返回 `{ documentId, created }`：
+ * - `created: false` = 同一 URL 已经在库里（`canonical_url` 唯一索引命中）
+ * - 已存在时**不重算分块、不重跑嵌入**（正文与原来相同，重跑是白花钱）
+ */
+export async function ingestDocument(input: IngestInput): Promise<{
+  documentId: string | null
+  created: boolean
+}> {
+  const id = nanoid(16)
+  const now = new Date()
+
+  const [row] = await db
+    .insert(documents)
+    .values({
+      id,
+      kind: input.kind,
+      status: 'ready',
+      title: input.title,
+      body: input.markdown,
+      excerpt: toExcerpt(input.markdown),
+      searchText: toSearchText(input.title, input.markdown),
+      contentHash: contentHash(input.markdown),
+      url: input.url,
+      canonicalUrl: canonicalize(input.url),
+      author: input.author ?? null,
+      folder: input.folder ?? null,
+      ...(input.publishedAt ? { publishedAt: input.publishedAt } : {}),
+      capturedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    })
+    .onConflictDoNothing({ target: documents.canonicalUrl })
+    .returning({ id: documents.id })
+
+  // 同一篇文章抓两次只留一条（canonical_url 唯一索引）。冲突时返回已有记录的 id，
+  // 而不是报错——用户重复粘贴同一个链接是常见行为，不该看到错误
+  const documentId =
+    row?.id ??
+    (
+      await db
+        .select({ id: documents.id })
+        .from(documents)
+        .where(eq(documents.canonicalUrl, canonicalize(input.url)))
+    )[0]?.id ??
+    null
+
+  if (!row?.id || !documentId) return { documentId, created: false }
+
+  /**
+   * 分块 + 尽力嵌入。**只在这次真的新入库时做**：重复抓同一篇
+   * （`onConflictDoNothing` 命中）时正文与原来相同，重算分块是白花时间、
+   * 重跑嵌入是白花钱。
+   */
+  await rebuildChunksAndEmbed(documentId, input.markdown).catch((error: unknown) => {
+    // 分块失败不该让抓取显示为失败：正文已经入库了，重建索引会补上。
+    // 但必须留日志——否则「这篇搜不到」会没有任何线索
+    console.warn(`入库后的分块/嵌入失败（${documentId}），重建索引可修复：`, error)
+  })
+
+  return { documentId, created: true }
 }

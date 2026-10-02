@@ -34,6 +34,8 @@ const TABLES = [
   'messages',
   'conversationRefs',
   'documentLinks',
+  'chunks',
+  'feeds',
   'settings',
   'usageLog',
   'user',
@@ -43,7 +45,21 @@ const TABLES = [
 ] as const
 
 /** PG 侧的方言专有索引，不参与对齐比较（SQLite 侧的替代物见各注释） */
-const PG_ONLY_INDEXES = new Set(['documents_search_idx', 'documents_body_trgm_idx'])
+const PG_ONLY_INDEXES = new Set([
+  'documents_search_idx',
+  'documents_body_trgm_idx',
+  'chunks_search_idx',
+  'chunks_content_trgm_idx',
+])
+
+/**
+ * 双方言**形状本来不同**的列：向量列。
+ *
+ * PG 是 `halfvec`（半精度、文本形态进出），SQLite 是 BLOB（sqlite-vec 的
+ * float32 字节）。两者是同一语义（一段向量）的两种物理表示，跨方言的
+ * 等价性由向量通道各自的实现测试守，不靠逐列类型比较。
+ */
+const DIALECT_SPECIFIC_COLUMNS = new Set(['chunkEmbeddings.embedding'])
 
 describe('schema 双方言对齐（D-045）', () => {
   const pgNs = pg as unknown as Record<string, PgTable>
@@ -61,16 +77,20 @@ describe('schema 双方言对齐（D-045）', () => {
       const pgTable = pgConfig(pgNs[name]!)
       const liteTable = liteConfig(liteNs[name]!)
 
-      const pgColumns = pgTable.columns.map((column) => ({
-        name: column.name,
-        kind: column.dataType,
-        notNull: column.notNull,
-      }))
-      const liteColumns = liteTable.columns.map((column) => ({
-        name: column.name,
-        kind: column.dataType,
-        notNull: column.notNull,
-      }))
+      const pgColumns = pgTable.columns
+        .filter((column) => !DIALECT_SPECIFIC_COLUMNS.has(`${name}.${column.name}`))
+        .map((column) => ({
+          name: column.name,
+          kind: column.dataType,
+          notNull: column.notNull,
+        }))
+      const liteColumns = liteTable.columns
+        .filter((column) => !DIALECT_SPECIFIC_COLUMNS.has(`${name}.${column.name}`))
+        .map((column) => ({
+          name: column.name,
+          kind: column.dataType,
+          notNull: column.notNull,
+        }))
       expect(liteColumns).toEqual(pgColumns)
 
       const pgIndexes = pgTable.indexes

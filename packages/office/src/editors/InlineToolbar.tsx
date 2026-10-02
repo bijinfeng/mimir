@@ -11,28 +11,54 @@
  * 换成「宿主给一个回调、包自己渲染工具条」，两个问题一起消失：
  * 组件类型稳定，且实例不外泄。
  *
- * ## 为什么「改写 / 翻译 / 精简 / 扩写」保留但禁用
+ * ## 「改写 / 翻译 / 精简 / 扩写」由宿主注入（M1-D）
  *
- * 它们需要模型侧的内联改写能力（`docs/PRD.md` §4 M1），M0 还没有。
- * **保留但禁用并在 tooltip 里说明原因**，比直接删掉好：删掉会让用户找不到
- * 这个入口（以为产品不支持），而做得像能点却没反应是最坏的一种
+ * 这四项需要模型侧的内联改写能力，M1-D 落了地。实现方式与「就这段提问」
+ * 完全一致：**宿主给一个回调**（`onRewrite`），包自己不碰网络——
+ * 它不知道 `api` 是什么、也不知道模型配在哪。
+ *
+ * 代价是四个按钮在**没有回调时**要保留但禁用（M0 的行为）：删掉会让
+ * 用户找不到这个入口（以为产品不支持），而做得像能点却没反应是最坏的一种
  * （`docs/DESIGN.md` §7.4）。
  *
- * 「就这段提问」现在就能用：它把选中内容作为引用带进主视图对话，
- * 这是删掉 AI 侧栏后补的三件事之一（§5.5）。
+ * ## 为什么结果要替换选区，而不是弹出显示
+ *
+ * 改写的用处是「换掉这段文字」。弹一个面板显示结果会让用户多做一次
+ * 复制粘贴，而那正是这个功能要省掉的事。所以回调返回新文本时，
+ * **直接替换选区**——这是唯一让「选中 → 改写」成为一个完整动作的做法。
+ *
+ * 替换走 Tiptap 的 `insertContent`：它经过 schema 校验（不会把 HTML
+ * 注入文档），且自动进入 undo 栈（用户能 Ctrl+Z 撤销，这很重要——
+ * 模型改坏了要能一键回到原文）。
  */
 
 import { BubbleMenu } from '@tiptap/react/menus'
 import type { Editor } from '@tiptap/core'
 import { ToolbarButton, ToolbarDivider } from '../shell/EditorShell.js'
 
-/** 需要模型侧能力、M0 还没有的四个动作 */
-const REWRITE_ACTIONS = ['改写', '翻译', '精简', '扩写'] as const
+/** 内联改写的四个动作。key 与服务端契约的 `rewriteActionSchema` 一一对应 */
+const REWRITE_ACTIONS = [
+  { label: '改写', action: 'rewrite' },
+  { label: '翻译', action: 'translate' },
+  { label: '精简', action: 'shorten' },
+  { label: '扩写', action: 'expand' },
+] as const
+
+export type RewriteActionName = (typeof REWRITE_ACTIONS)[number]['action']
 
 export interface InlineToolbarProps {
   editor: Editor
   /** 「就这段提问」：把选中的话带进对话 */
   onAskAboutSelection: (passage: string) => void
+  /**
+   * 内联改写。返回改写后的文本，由这里替换掉选区。
+   *
+   * **成功时返回文本、失败时抛错**：把「显示错误」留给宿主（它才知道
+   * 该怎么提示用户），这里只负责「拿到文本就替换」这一件事。
+   */
+  onRewrite?: (text: string, action: RewriteActionName) => Promise<string | null>
+  /** 正在改写（按钮转 loading，防连点） */
+  rewriting?: boolean
 }
 
 /**
@@ -47,7 +73,23 @@ function selectedTextOf(editor: Editor): string {
   return editor.state.doc.textBetween(from, to, '\n').trim()
 }
 
-export function InlineToolbar({ editor, onAskAboutSelection }: InlineToolbarProps) {
+export function InlineToolbar({
+  editor,
+  onAskAboutSelection,
+  onRewrite,
+  rewriting = false,
+}: InlineToolbarProps) {
+  /**
+   * 替换选区。
+   *
+   * `insertContent` 而不是 `setContent`：前者只动选区、经过 schema 校验、
+   * 且进 undo 栈。`setContent` 会整篇重写（把光标位置、历史全丢掉），
+   * 那对一个「改一段」的动作来说是灾难。
+   */
+  const replaceSelection = (text: string): void => {
+    editor.chain().focus().insertContent(text).run()
+  }
+
   return (
     <BubbleMenu
       editor={editor}
@@ -64,14 +106,26 @@ export function InlineToolbar({ editor, onAskAboutSelection }: InlineToolbarProp
       options={{ placement: 'top', offset: 8 }}
     >
       <div className="mimir-inline-bar">
-        {REWRITE_ACTIONS.map((action) => (
+        {REWRITE_ACTIONS.map(({ label, action }) => (
           <ToolbarButton
             key={action}
-            label={`${action}需要模型侧的内联改写能力（M1）`}
-            disabled
-            onClick={() => {}}
+            label={
+              onRewrite ? `${label}（选中这一段，交给模型）` : `${label}需要先在设置里配置模型`
+            }
+            /* 没有回调时禁用并在 tooltip 里说明原因——见文件头注释 */
+            disabled={!onRewrite || rewriting}
+            onClick={() => {
+              if (!onRewrite) return
+              const passage = selectedTextOf(editor)
+              if (passage === '') return
+              void onRewrite(passage, action).then((next) => {
+                // null = 宿主已经处理过（例如弹了「没配模型」的提示）。
+                // 不替换、也不报错——这里没有「失败」这个概念
+                if (next !== null) replaceSelection(next)
+              })
+            }}
           >
-            {action}
+            {label}
           </ToolbarButton>
         ))}
 

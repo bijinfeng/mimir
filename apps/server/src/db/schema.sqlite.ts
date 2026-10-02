@@ -1,5 +1,13 @@
 import { sql } from 'drizzle-orm'
-import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
+import {
+  blob,
+  index,
+  integer,
+  primaryKey,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from 'drizzle-orm/sqlite-core'
 
 /**
  * SQLite 方言的 schema（本地开发 / 桌面端，D-045）。
@@ -208,7 +216,74 @@ export const documentLinks = sqliteTable(
   (t) => [primaryKey({ columns: [t.fromId, t.toId] }), index('document_links_to_idx').on(t.toId)],
 )
 
+/**
+ * 检索单元（M1-B）。语义与三处刻意设计见 schema.pg.ts。
+ *
+ * SQLite 侧的全文索引不是列上的 GIN，而是 `chunks_fts` 虚拟表 + 触发器
+ * （新迁移 `0007_chunks_fts.sql`，与 documents_fts 同一套做法）。
+ */
+export const chunks = sqliteTable(
+  'chunks',
+  {
+    id: text('id').primaryKey(),
+    documentId: text('document_id')
+      .notNull()
+      .references(() => documents.id, { onDelete: 'cascade' }),
+    idx: integer('idx').notNull(),
+    content: text('content').notNull(),
+    searchText: text('search_text').notNull().default(''),
+    startAt: integer('start_at').notNull(),
+    endAt: integer('end_at').notNull(),
+    heading: text('heading'),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' })
+      .notNull()
+      .$defaultFn(() => new Date()),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (t) => [uniqueIndex('chunks_document_idx_idx').on(t.documentId, t.idx)],
+)
+
+/**
+ * 分块的向量（M1-B）。PG 侧是 halfvec + 按维度分区的 HNSW 表达式索引，
+ * SQLite 侧是 BLOB（sqlite-vec 的 float32 字节，`vec_distance_cosine`
+ * 标量函数直接吃这个形状）——这一列不参与双方言逐列对齐断言。
+ */
+export const chunkEmbeddings = sqliteTable(
+  'chunk_embeddings',
+  {
+    chunkId: text('chunk_id')
+      .notNull()
+      .references(() => chunks.id, { onDelete: 'cascade' }),
+    model: text('model').notNull(),
+    dimension: integer('dimension').notNull(),
+    embedding: blob('embedding', { mode: 'buffer' }).notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (t) => [primaryKey({ columns: [t.chunkId, t.model] })],
+)
+
 /** 配置覆盖层。只存显式写入的行，不 seed 默认值（TECH §7.5）。语义见 schema.pg.ts */
+/** RSS / Atom 订阅源（M1-E）。语义见 schema.pg.ts。 */
+export const feeds = sqliteTable(
+  'feeds',
+  {
+    url: text('url').primaryKey(),
+    title: text('title').notNull().default(''),
+    folder: text('folder'),
+    lastFetchedAt: integer('last_fetched_at', { mode: 'timestamp_ms' }),
+    lastError: text('last_error'),
+    itemCount: integer('item_count').notNull().default(0),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (t) => [index('feeds_folder_idx').on(t.folder)],
+)
+
 export const settings = sqliteTable(
   'settings',
   {

@@ -713,6 +713,51 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     font-size: ${FONT_SIZE.meta}px;
     color: ${token.colorTextTertiary};
   `,
+
+  /* ── 订阅（M1-E）───────────────────────────────────────── */
+
+  /** 加订阅那一行：输入框吃掉剩余宽度，两个按钮在右侧 */
+  feedAdd: css`
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+
+    > *:first-child {
+      flex: 1;
+      min-width: 0;
+    }
+  `,
+
+  feedTitle: css`
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  `,
+
+  feedActions: css`
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+  `,
+
+  /** 地址用等宽：feed URL 里的路径段是有意义的，等宽更容易比对 */
+  feedUrl: css`
+    font-family: ${token.fontFamilyCode};
+    font-size: ${FONT_SIZE.meta}px;
+    color: ${token.colorTextSecondary};
+    overflow-wrap: anywhere;
+  `,
+
+  /**
+   * 失败原因用错误文字色（成对的语义 token，不是随手挑的红）。
+   * 它必须显眼——这一行是「这个源现在不工作」的唯一线索。
+   */
+  feedError: css`
+    font-size: ${FONT_SIZE.meta}px;
+    color: ${token.colorErrorText};
+    overflow-wrap: anywhere;
+  `,
 }))
 
 /**

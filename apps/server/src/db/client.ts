@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module'
 import { drizzle as drizzleSqlite } from 'drizzle-orm/better-sqlite3'
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js'
 import { drizzle as drizzlePg } from 'drizzle-orm/postgres-js'
@@ -64,6 +65,31 @@ function createSqlite(): PostgresJsDatabase<typeof pgSchema> {
   sqlite.pragma('journal_mode = WAL')
   sqlite.pragma('busy_timeout = 5000')
   sqlite.pragma('synchronous = NORMAL')
+
+  /**
+   * 加载 sqlite-vec 扩展（M1-C 的向量通道用它算余弦距离）。
+   *
+   * **装不上就抛错，不静默降级**：它的缺席表现是「语义检索返回空」，
+   * 而那看起来像「库里没有相关内容」——正是最难查的一类。抛在建立连接时
+   * （启动即失败）比等到第一次检索好得多。
+   *
+   * 用 `createRequire` 而不是顶层 import：`sqlite-vec` 是**按平台的**
+   * 可选依赖（只有 linux-x64 / darwin / win32 的预编译包），而服务器部署
+   * 走 Postgres 路径、根本不需要它——顶层 import 会让那条路径也去解析它。
+   * better-sqlite3 的 `loadExtension` 需要已解析的模块导出，所以用 require。
+   */
+  try {
+    const require = createRequire(import.meta.url)
+    const sqliteVec = require('sqlite-vec') as { load(db: unknown): void }
+    sqliteVec.load(sqlite)
+  } catch (error) {
+    throw new Error(
+      '加载 sqlite-vec 扩展失败（本地 / 桌面端的语义检索需要它）。' +
+        `原始错误：${error instanceof Error ? error.message : String(error)}`,
+      // 带上 cause：抛出去的是一句人话，而排查时要看的是原始栈
+      { cause: error },
+    )
+  }
 
   return drizzleSqlite(sqlite, { schema: sqliteSchema }) as never
 }

@@ -41,6 +41,11 @@ function escapeLike(input: string): string {
  *
  * **兜底不等于不设门槛**：真正需要兜底的场景是「分词切法不一致」，
  * 那时 needle 只有一两个，门槛自然也就是 1；而不相干的长查询会被挡在外面。
+ *
+ * ## 检索单元是分块（M1-C，§4.8）
+ *
+ * 与关键词通道同一处改动：返回 chunk id 而不是文档 id，
+ * 过滤仍作用在所属文档上。
  */
 export function createSubstringLegPostgres(db: PluginDatabase): RetrievalLeg {
   return {
@@ -48,7 +53,7 @@ export function createSubstringLegPostgres(db: PluginDatabase): RetrievalLeg {
     defaultWeight: 0.6,
 
     async run({ query, limit, kind, tag }: LegContext): Promise<RankedHit[]> {
-      // 只留长度 ≥ 2 的词：单字符子串会命中几乎所有文档，没有区分度
+      // 只留长度 ≥ 2 的词：单字符子串会命中几乎所有分块，没有区分度
       const needles = new Set(queryTokens(query).filter((token) => token.length >= 2))
 
       /**
@@ -84,7 +89,7 @@ export function createSubstringLegPostgres(db: PluginDatabase): RetrievalLeg {
        * 只是没法用它直接排序，而我们要的排序信息本来也不在索引里。
        */
       const coverage = sql.join(
-        tokens.map((token) => sql`(d.body ilike ${`%${escapeLike(token)}%`} escape '\\')::int`),
+        tokens.map((token) => sql`(c.content ilike ${`%${escapeLike(token)}%`} escape '\\')::int`),
         sql` + `,
       )
 
@@ -93,17 +98,18 @@ export function createSubstringLegPostgres(db: PluginDatabase): RetrievalLeg {
       const rows = await db.execute<{ id: string; rank: number }>(sql`
         select id, row_number() over (order by hits desc, hit_pos asc, body_len asc) as rank
         from (
-          select d.id,
+          select c.id,
                  (${coverage}) as hits,
-                 length(d.body) as body_len,
+                 length(c.content) as body_len,
                  least(${sql.join(
                    tokens.map(
                      (token) =>
-                       sql`coalesce(nullif(strpos(lower(d.body), lower(${token})), 0), 2147483647)`,
+                       sql`coalesce(nullif(strpos(lower(c.content), lower(${token})), 0), 2147483647)`,
                    ),
                    sql`, `,
                  )}) as hit_pos
-          from documents d
+          from chunks c
+          join documents d on d.id = c.document_id
           where d.deleted_at is null
             ${kind ? sql`and d.kind = ${kind}` : sql``}
             ${

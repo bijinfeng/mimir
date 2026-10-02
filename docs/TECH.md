@@ -801,9 +801,9 @@ token、耗时与成败——**金额暂不记**：token 是供应商回传的�
 
 | 接缝 | 输入 → 输出 | 已有实现（`plugins/`） | 规划 |
 |---|---|---|---|
-| `capturer` | URL → **原始内容** + 元数据（不转换格式） | 网页、公众号、GitHub | RSS、Star 同步、扩展 |
-| `parser` | 原始内容 → 统一 Markdown（不抓取、不写库） | Markdown 直通、HTML 正文提取 | PDF、Word |
-| `leg` | 查询 → 已排序的**检索单元** id 列表 | 关键词、子串兜底 | 向量、重排序 |
+| `capturer` | URL → **原始内容** + 元数据（不转换格式） | 网页、公众号、GitHub；**feed 解析**（`feed.ts`，RSS 2.0 / Atom 归一，M1-E） | Star 同步、扩展 |
+| `parser` | 原始内容 → 统一 Markdown（不抓取、不写库） | Markdown 直通、HTML 正文提取、**HTML 片段直转**（feed 用，M1-E）、纯文本、Word、Excel、PowerPoint、**PDF 文字层**（M1-E） | 旧版 .doc、OCR |
+| `leg` | 查询 → 已排序的**检索单元** id 列表 | 关键词、子串兜底、**语义向量**（PG=halfvec HNSW / SQLite=sqlite-vec 标量函数，M1-C） | 重排序 |
 | `provider` | 角色 → 模型适配器 | openai-compatible（chat / reasoning / summarize / embed） | 原生 Ollama、rerank |
 | `storage` | 相对路径（key）→ 字节 | **本地磁盘**（默认）、S3 / 对象存储 | WebDAV、其他兼容端点 |
 
@@ -1252,14 +1252,53 @@ SQLite 直接拷 `data/mimir.db`，或运行中的热备用 `VACUUM INTO`）。
 
 ---
 
+### 8.7 首启的默认内容（知识库 + 产品说明）
+
+全新的库是空的。第一次打开的人（包括部署完自己试用的那一刻）看到的是
+一句「先创建一个知识库」，而这句话不解释「这东西怎么用、第一步做什么」。
+
+所以第一次建号时会播种一份默认内容（`services/seed.ts`）：一个叫
+**「开始使用」**的知识库 + 一篇 **《mimir 产品说明》**。说明本身是一篇
+普通笔记——可搜、可被 AI 引用、可随时改或删——它在解释产品的同时
+演示了「一条笔记长什么样」。
+
+**为什么是文档而不是引导浮层**：浮层是要关掉才能继续的东西，
+而一篇真文档本身就是可留下、可改、可被搜到的资产。
+
+**触发点是两个入口 + 一个持久标记**：
+
+| 入口 | 覆盖 |
+|---|---|
+| `auth.ts` 的 `user.create.after` | 新建号（环境变量建号与首次注册共用这一个钩子） |
+| `boot.ts` 的 `ensureDefaultContent` | **已有实例**——它们不会再经过建号钩子 |
+
+判据是设置表里的 `seed.defaultContent`（版本号，`hidden` 键），
+**不是「库是不是空的」**：用户删掉默认知识库是明确的意思表示，
+下次启动它不该回来——用「库空就播」的判据会让它每重启一次就长回来一次，
+而用户不会想到「有个标记说该播」。换一套默认内容时递增版本号即可。
+
+播种走**与用户操作完全相同的那条写入路径**（`createFolder` / `createNote`），
+所以铁律 2（先文件后数据库）、分块建索引、frontmatter 与目录指派
+一个不漏。少了任何一环，得到的都是一份「看着在、搜不到」的说明。
+
+两个入口失败都不阻断（账号与启动是核心，默认内容是附赠），
+测试环境由两个入口各自跳过（集成测试有自己的账号与库准备流程）。
+
+`settings.update()` 的返回值**必须检查**：它对未注册的键与校验失败是
+「返回 issues、不写」。不检查的话标记没落库而函数照常报成功——症状是
+每次重启重播一次，而且**用户删掉默认内容之后它会再回来**。
+（实测踩过：开发中的实例热重载时装配层还拿着旧键表，写入被静默拒绝。）
+
+---
+
 ## 9. 测试策略
 
 ### 9.1 当前覆盖
 
 | 范围 | 数量 | 方式 |
 |---|---|---|
-| 服务端集成 | 71 | Hono 的 `app.request()` 内存调用，不占端口 |
-| 前端组件与编辑器 | 117 | happy-dom + 真实 Tiptap 实例 + 真实渲染算对比度 |
+| 服务端集成 | 197 | Hono 的 `app.request()` 内存调用，不占端口。M1 新增：分块四类断言（23）、分块级检索与引用组装（5）、feed 解析与订阅链路（12，真起 HTTP 服务器）、PDF 提取（4，pdf-lib 现造真文件）、嵌入端点（3） |
+| 前端组件与编辑器 | 247 | happy-dom + 真实 Tiptap 实例 + 真实渲染算对比度 |
 
 前端那批里，与外观切换直接相关的两组：
 
@@ -1412,6 +1451,7 @@ M1 的新代码大多是「纯函数 + SQL」，两类都能用能说明用户�
 | **重建索引按目录逐个 LIST** | `uploads/<id>/` 一个目录一次 `list` 调用。对象存储的 LIST 是**按请求计费**的（§8.5），500 篇就是 500 次请求——本地磁盘看不出来 | 一次 `list(UPLOAD_PREFIX)` 之后按 id 归类（`vault-index.ts` 的 `listUploads()`）。**有 meta 但没有原件时也要返回那一条**（`originalKey: null`），否则「记录还在但原件丢了」这种情形会被整条吞掉 |
 | 非 UTF-8 的文本文件 | `new TextDecoder()` 默认**不抛错**，非法字节被换成 U+FFFD——一份 GBK 的中文 txt 变成满屏 `��`，而库照常入库、检索照常建索引，搜什么都搜不到 | `decodeUtf8` 用 `fatal: true`，失败就抛错并由上传路径记进 `parse_error`。与「中文必须预分词」同一条规矩：静默降级比报错更糟。不做编码自动探测（猜错就是乱码入库） |
 | S3 上传的字节流被当成字符串 | `Blob`/`Uint8Array` 的 buffer 可能是 `SharedArrayBuffer`（`ArrayBufferLike`），直接交给 `new Blob([bytes])` 在某些环境类型不过、或复制出错误内容 | 复制成独立 `ArrayBuffer` 再传（测试里这么做；上传路径用 `file.arrayBuffer()` 天然是 `ArrayBuffer`）。**不是类型洁癖**：`SharedArrayBuffer` 被当作 `ArrayBuffer` 时读出来是垃圾 |
+| **迁移写了却不生效，且不报错** | drizzle 按 `meta/_journal.json` 的 `when` 与「库里已应用的最大值」比较，只跑更大的那些。**手工编过时间戳的条目会把新迁移挤到后面**——实测 `0006_kb_code` / `0009_kb_code` 的 `when` 是未来时间（1791879000000），而 drizzle-kit 用真实当前时间生成新迁移，于是 `chunks` / `chunk_embeddings` / `feeds` 在已有实例上一张都没建，而 `pnpm db:migrate` 打印「迁移完成」。`apps/server/src/db/migrations.test.ts` 用单调性断言守着 |
 | 把一个格式的「没有实现」说成「解析失败」 | 用户看到「失败」会去查自己的文件，而那个格式我们还没做——这是**静默说谎**（与热力图把「用量未上报」画成空底同类） | `parseSupport()` 三态（`now` / `planned` / `none`）在 `@mimir/shared`，界面的措辞由它派生；`parse_error` 只记**真的试过并失败**的原因。`upload.test.ts` 断言损坏的 docx 有 `parseError` 而未知格式是 `null` |
 | **SQLite 默认关闭外键** | `onDelete: 'cascade'` 全部**静默失效**——删会话留下孤儿消息、删文档留下孤儿标签关联，不报错 | 连接建立时显式 `PRAGMA foreign_keys = ON`（`db/client.ts`），与 PG 默认开启的行为对齐 |
 | **FTS5 索引靠触发器维护** | 触发器漏建或被绕过时「写入正常、中文搜不到」——索引悄悄落后于表 | 触发器建在 `documents` 的 INSERT / UPDATE(OF search_text) / DELETE 上（覆盖全部写入路径）；`pnpm db:reindex` 全量重建兜底。见 RESEARCH §11.2 |
@@ -1442,24 +1482,58 @@ M1 的新代码大多是「纯函数 + SQL」，两类都能用能说明用户�
      + `POST /config/probe`
    - 设置页：模型分区可编辑、来源徽标、四态状态 + 「测试连接」探测；
      插件分区改为从注册表渲染（原先是一份会漂移的手写数组）
-5. **M1-B 分块与向量化**
-   - `chunks` / `chunk_embeddings` 表 + 迁移（**PG 与 SQLite 各一份**，与主 schema 同一个守卫测试对齐）
-   - `lib/chunk.ts`（确定性、偏移可逆、按结构切）+ 四类断言（§9.5）
-   - 分块接入写入路径（笔记保存、抓取入库）与重建索引
-   - `POST /maintenance/embed` 分批补嵌入
-6. **M1-C 混合检索**
-   - 两条现有通道改成返回分块 id（各自一个文件，`plugins/leg/src/`）
-   - `plugins/leg/src/vector/`（PG=halfvec HNSW / SQLite=sqlite-vec，同一接缝两个方言模块）+ 在 `install()` 里注册一行
-   - `mode` 落成通道筛选，默认模式由注册表推导
-   - 引用组装：相邻分块合并 + 每篇上限
-7. **M1-D 带引用的问答与 AI 摘要、标签建议、内联改写**
+5. ~~**M1-B 分块与向量化**~~ —— **已完成**（D-084）
+   - ~~`chunks` / `chunk_embeddings` 表 + 迁移（**PG 与 SQLite 各一份**，与主 schema 同一个守卫测试对齐）~~
+     `drizzle/0010_chunks.sql`（含按维度分区的 HNSW 表达式索引，手写——drizzle
+     表达不了）与 `drizzle-sqlite/0007_chunks.sql` + `0007_chunks_fts.sql`（FTS5
+     虚拟表 + 触发器，与 documents_fts 同一套做法）
+   - ~~`lib/chunk.ts`（确定性、偏移可逆、按结构切）+ 四类断言（§9.5）~~
+     23 条用例；**分块的 `search_text` 必须带标题**（否则按标题里的词搜不到正文，
+     实测 `search.test.ts` 抓到）
+   - ~~分块接入写入路径（笔记保存、抓取入库）与重建索引~~
+     **四条**写入路径统一走 `services/chunks.ts` 的 `rebuildChunksAndEmbed`
+     （笔记新建 / 更新、抓取、上传、重建索引）——上传那条一度漏掉，
+     被 `upload.test.ts` 当场抓到，正是「抄三遍必漏一处」的实证
+   - ~~`POST /maintenance/embed` 分批补嵌入~~ 外加 `GET /maintenance/chunks`
+     （状态）与 `POST /maintenance/chunks/rebuild`（重算分块，不调模型）。
+     界面入口在设置 › 检索的「分块与向量」面板
+6. ~~**M1-C 混合检索**~~ —— **已完成**（D-084）
+   - ~~两条现有通道改成返回分块 id（各自一个文件，`plugins/leg/src/`）~~
+     编排层一行没改（D-032 的判据兑现）
+   - ~~`plugins/leg/src/vector/`（PG=halfvec HNSW / SQLite=sqlite-vec，同一接缝两个方言模块）+ 在 `install()` 里注册一行~~
+     **SQLite 用标量函数 `vec_distance_cosine` 而不是 `vec0` 虚拟表**——
+     向量已经在 `chunk_embeddings` 一张表里，vec0 要第二份数据与同步逻辑；
+     KNN 查询与 kind/tag/删除态过滤的组合也更直接（RESEARCH §11.3 的量级论证
+     不变，两者同为暴力扫描）。扩展在连接时加载（`db/client.ts`），
+     **加载失败抛错不降级**——它的缺席表现是「语义搜不到」，静默降级等于埋雷
+   - ~~`mode` 落成通道筛选，默认模式由注册表推导~~
+     未就绪的通道不进编排（状态由 core 的 `computeStatus` 算，不另写判断）
+   - ~~引用组装：相邻分块合并 + 每篇上限~~ `search/index.ts` 的
+     `assembleCitations`；问答与 `/api/search` 共用 `searchChunks`，
+     界面契约（`SearchHit`）一个字没改
+7. ~~**M1-D 带引用的问答与 AI 摘要、标签建议、内联改写**~~ —— **已完成**（D-084）
+   - 摘要：`POST /api/documents/:id/summary`，走 `summarize` 角色；
+     **不落库**（现用现生成，避免「正文改了摘要还是旧的」这个状态）
+   - AI 标签：`POST /api/documents/:id/suggested-tags/ai`，与统计版并存
+     （统计版零成本随开随算，AI 版要花钱、单独入口标明）
+   - 内联改写：`POST /api/ai/rewrite`（不挂在文档下——改写的文本可能还没保存）；
+     编辑器选区工具条由宿主注入回调（与「就这段提问」同一模式），
+     结果**直接替换选区**（进 undo 栈可撤销）
+   - 三条能力共用 `services/ai-text.ts`（形状相同：文本进文本出），
+     没配模型时**如实说**（`usedModel: false` + 一句说明），不静默降级
 8. ~~M1-E PDF / Word 上传（`parser` 接缝的第一个真实现）与 RSS~~
-   —— **PDF / Word 的正文提取与文件上传已在 §13 提前落地**（见 D-044）：
-   docx / xlsx / pptx 是 `parser` 接缝的新实现，纯文本有直通。
-   **剩下的**：PDF 的**文本提取**（它需要另一套库，选型要走
-   `RESEARCH.md` 的规矩）与 RSS 订阅。PDF 的**预览**已经可用
-   （浏览器自带阅读器），所以 PDF 现在能上传、能看、能下载、能整理，
-   只是内容还搜不到
+   —— **全部落地**（D-044 上传与 Office 提取；D-084 补齐 PDF 与 RSS）：
+   - **PDF 文字层提取**（`plugins/parser/src/pdf.ts`）：**复用仓库里已有的
+     pdf.js**（`packages/office` 的页面预览是同一个库），不引入第二个 PDF
+     解析实现。`getTextContent()` 的 `hasEOL` 直接给出行边界；中文行尾
+     不补空格（补了会切出假词边界）；多页文档每页一个小标题（分块器把它
+     当边界，引用卡片显示「第 N 页」）；扫描件没有文字层，如实报错不做 OCR
+   - **RSS 订阅**：`feeds` 表（订阅关系，双方言）+ `plugins/capturer/src/feed.ts`
+     （RSS 2.0 / Atom 字段归一）+ `services/feeds.ts`（编排）+ 设置 › 订阅。
+     收进来的文章走 `ingestDocument`（与「粘贴 URL」同一条写入路径，铁律 3）。
+     feed 的 `content:encoded` 走 **html-fragment** 解析器——它是正文片段，
+     再跑 Readability 会因「太短、不像一篇文章」丢掉（实测两行片段返回 null）。
+     轮询由用户触发（M1 没有 jobs 层）；退订不删已收文章
 9. 之后再回到 PRD 第 6 节的待决项
 **横向的一步（与上面五段都不冲突）**：`usage_log` 的表与采集点。
 **它排在 M1-A 之后、M1-B 之前**——M1-A 做的正是「provider 角色化 + `model.ts`
@@ -1835,7 +1909,7 @@ note」——抓取的资料也没有原件（它的真相是 `raw/` 快照 + �
 
 | 情形 | `body` | `parse_error` | 界面说什么 |
 |---|---|---|---|
-| 这个格式还没有提取实现（PDF） | `''` | `NULL` | 「这种格式的正文提取将在后续版本支持」 |
+| 这个格式还没有提取实现（`planned`，M1-E 起暂无此格式——PDF 已补上文字层提取） | `''` | `NULL` | 「这种格式的正文提取将在后续版本支持」 |
 | 试过、失败了（非 UTF-8 / 损坏的容器） | `''` | 原因 | 「提取正文失败：{原因}」 |
 | 文件本身没有可提取的文字 | `''` | `NULL` | 「文件里没有可提取的文字」 |
 | 空文件（`size = 0`） | `''` | `NULL` | 「空文件」 |
@@ -2053,7 +2127,10 @@ SSE 聊天流、文件 Range、multipart 上传、zip 导出全部是同源 HTTP
 
 ### 15.1 它解决什么
 
-§13 定下的边界是「PDF 能看原件但正文搜不到；Office 三件套能搜但看不见」。
+§13 定下的边界原本是「PDF 能看原件但正文搜不到；Office 三件套能搜但看不见」——
+M1-E 补上了 PDF 的文字层提取（复用预览那份 pdf.js），六种格式现在**都能搜**；
+边界变成「Office 三件套与 PDF 都既可看又可搜，只有旧版二进制格式（.doc/.xls/.ppt）
+与纯图片还搜不到」。
 这一节补上后半：**docx 可以在网页里直接读、直接改、直接存回原件**，
 且改完之后服务端重算正文与哈希（§13.9），所以编辑的结果立刻可检索。
 
@@ -2371,7 +2448,7 @@ Markdown / HTML），mimir 现在六种都有：
 | **pptx** | ✓ **幻灯片**（渲成 SVG），页签翻页、版式继承、图片、图表；隐藏页有只读标记 | ✓ **改文字 + 整段字形**（加粗/倾斜/下划线/删除线/上下标/字号/字体/颜色，`src/pptx-save.ts`）；查找替换跨全篇 | **补丁式**（按元素锚点） | §15.8、§15.9 |
 | **html** | ✓ **源码 + 预览双栏**（`src/editors/HtmlEditor.tsx`） | ✓ **改源码**（CodeMirror） | 整体重写（保留 BOM/换行风格） | §15.9 |
 | **markdown** | ✓ 编辑器即预览（`src/editors/MarkdownEditor.tsx`） | ✓ 全文编辑 | 写回正文列（vault 文件同步） | 上传 `.md` **即导入为笔记** |
-| **pdf** | ✓ **逐页渲染**（pdf.js → canvas，`src/editors/pdf-render.ts`） | △ **页面级**：旋转、删除、调序（pdf-lib） | **整体重写** | §15.10 |
+| **pdf** | ✓ **逐页渲染**（pdf.js → canvas，`src/editors/pdf-render.ts`） | △ **页面级**：旋转、删除、调序（pdf-lib） | **整体重写** | §15.10；**正文提取已落地**（M1-E，服务端复用同一份 pdfjs-dist，见 §11 第 8 条）——六种格式现在都能搜 |
 
 **「补丁式」与「整体重写」的区别不只是技术细节，它决定能不能放心保存**：
 

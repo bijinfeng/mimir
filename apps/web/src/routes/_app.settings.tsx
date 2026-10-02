@@ -4,6 +4,7 @@ import { useSyncExternalStore } from 'react'
 import { AccountSection } from '@/components/settings/AccountSection'
 import { AppearanceSection } from '@/components/settings/AppearanceSection'
 import { DataSection } from '@/components/settings/DataSection'
+import { FeedsSection } from '@/components/settings/FeedsSection'
 import { ModelsSection } from '@/components/settings/ModelsSection'
 import { PluginsSection } from '@/components/settings/PluginsSection'
 import { RetrievalSection } from '@/components/settings/RetrievalSection'
@@ -61,6 +62,7 @@ import { NAV_NARROW_QUERY } from '@/theme/tokens'
 const SECTIONS = [
   { key: 'models', label: '模型' },
   { key: 'retrieval', label: '检索' },
+  { key: 'feeds', label: '订阅' },
   { key: 'storage', label: '存储' },
   { key: 'plugins', label: '插件' },
   { key: 'stats', label: '统计' },
@@ -203,6 +205,7 @@ function SectionBody({ section }: { section: SectionKey }) {
   if (section === 'data') return <DataSection />
   if (section === 'plugins') return <PluginsSection />
   if (section === 'models') return <ModelsSection />
+  if (section === 'feeds') return <FeedsSection />
   if (section === 'storage') return <StorageSection />
   if (section === 'stats') return <StatsSection />
   if (section === 'appearance') return <AppearanceSection />

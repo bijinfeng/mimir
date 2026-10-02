@@ -150,6 +150,31 @@ export function DocumentPanel({
   const [activeHeading, setActiveHeading] = useState<string | undefined>()
 
   /**
+   * AI 的结果**不落库**（服务端也不存，见 `services/ai-text.ts` 的注释），
+   * 所以它只活在这一次打开里。摘要是「现在想看一眼这篇讲了什么」——
+   * 存下来就会引入「正文改了、摘要还是旧的」这个新状态要维护。
+   *
+   * ## 结果里带着它属于哪一篇，而不是用 effect 清空
+   *
+   * 换文档时「清空上一次的摘要」用 `useEffect` 写会命中
+   * `react(set-state-in-effect)`——那条规则是对的：**setState 不是 effect 的职责**
+   * （effect 是给外部系统做同步用的），而且那样写会让 React Compiler
+   * 跳过整个组件（铁律 1 的静默退化）。
+   *
+   * 正确做法是**在渲染期派生**：把 `documentId` 一起存进结果，
+   * 渲染时对不上就当作没有。这样「有没有结果」永远由当前数据决定，
+   * 不存在「切换之后旧结果还在屏幕上」的窗口。
+   */
+  const [aiSummary, setAiSummary] = useState<{
+    documentId: string
+    text: string
+    model: string
+  } | null>(null)
+  const [aiSummaryLoading, setAiSummaryLoading] = useState(false)
+  /** AI 给出的标签候选。与统计版建议标签分开显示——来源不同，可信度不同 */
+  const [aiTags, setAiTags] = useState<{ documentId: string; tags: string[] } | null>(null)
+
+  /**
    * 标题住在面板而不是编辑器里。
    *
    * 标题是**文档级元数据**——它决定文件名（`lib/vault.ts` 的 buildNotePath），
@@ -186,6 +211,63 @@ export function DocumentPanel({
     },
     onError: (error: unknown) => message.error(error instanceof Error ? error.message : '操作失败'),
   })
+
+  /**
+   * AI 摘要（M1-D）。**不落库**，所以结果只放进本地 state。
+   *
+   * 用一个普通 async 函数而不是 `useMutation`：它没有「成功之后要
+   * 失效哪些查询」这件事要处理（服务端什么都没写），而 mutation 的
+   * 那套缓存语义在这里全是空的。loading 与错误各自如实反映。
+   */
+  const runSummary = async (): Promise<void> => {
+    if (!documentId || aiSummaryLoading) return
+    setAiSummaryLoading(true)
+    try {
+      const result = await api.documents.summary(documentId)
+      if (!result.usedModel) {
+        // 没配模型时**如实说**，不显示一段像摘要的说明文字（见 ai-text.ts）
+        message.warning(result.text)
+        return
+      }
+      setAiSummary({ documentId, text: result.text, model: result.model })
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : '生成摘要失败')
+    } finally {
+      setAiSummaryLoading(false)
+    }
+  }
+
+  /**
+   * AI 标签建议（M1-D）。
+   *
+   * 结果**不自动挂上**——它是一组候选，用户要自己选。自动加标签会让
+   * 「AI 猜错了」变成一件需要用户去删的事，而 AI 猜对时用户反而没有获得感。
+   */
+  const runAiTags = async (): Promise<void> => {
+    if (!documentId || aiSummaryLoading) return
+    setAiSummaryLoading(true)
+    try {
+      const result = await api.documents.suggestedTagsAi(documentId)
+      if (!result.usedModel) {
+        message.warning('AI 标签建议需要先配置模型（设置 › 模型 › 任务分配）')
+        return
+      }
+      if (result.tags.length === 0) {
+        message.info('AI 没有给出新的标签')
+        return
+      }
+      /**
+       * 摆成按钮让用户点（与统计版建议标签的交互一致）。
+       * 用一个 keys 数组当 message 的 key 前缀，重复点同一批标签不会
+       * 叠出一堆一模一样的提示。
+       */
+      setAiTags({ documentId, tags: result.tags })
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : 'AI 建议标签失败')
+    } finally {
+      setAiSummaryLoading(false)
+    }
+  }
 
   /** 目录列表与建议标签：只有打开「⋯」菜单才需要，但 antd 的菜单要一次给全 */
   const folderQuery = useQuery({ queryKey: ['folders'], queryFn: api.folders.list })
@@ -402,12 +484,22 @@ export function DocumentPanel({
     )
   }
 
+  /**
+   * 渲染期派生：结果属于当前这一篇才显示（见上面 state 的注释）。
+   * 这样切文档不需要 effect，也不存在「旧结果留在屏幕上」的窗口。
+   */
+  const visibleSummary = aiSummary?.documentId === documentId ? aiSummary : null
+  const visibleAiTags = aiTags?.documentId === documentId ? aiTags.tags : []
+
   const menu = buildDocMenu({
     doc,
     onSetTags: (tags) => patch.mutate({ tags }),
     onSetFolder: (folder) => patch.mutate({ folder }),
     folders: flattenFolders(folderQuery.data?.items ?? []).map((item) => item.path),
     suggestedTags: suggestQuery.data?.items ?? [],
+    onAiTags: () => void runAiTags(),
+    onSummary: () => void runSummary(),
+    aiBusy: aiSummaryLoading,
   })
 
   return (
@@ -536,6 +628,57 @@ export function DocumentPanel({
       <div className={styles.scroll} ref={scrollRef}>
         <div className={styles.cols}>
           <div className={wideContent ? styles.innerWide : styles.inner}>
+            {/*
+              AI 的两块结果摆在正文之上（metadata 之下）。
+
+              **位置有讲究**：摘要是「这篇讲了什么」的总览，它是**读之前**
+              有用的东西；放在正文之后就等于要求用户先滚到底。
+              AI 标签候选同理——它们是要被点进标签的候选，放在正文末尾
+              会让人以为选完了。
+
+              两块都只在这个会话里存在（服务端不存），所以它们出没
+              不产生「这里以前有东西、现在没了」的疑惑——关掉再开
+              就是「重新生成一次」的语义。
+            */}
+            {visibleSummary ? (
+              <div className={styles.aiBlock}>
+                <div className={styles.aiLabel}>AI 摘要 · {visibleSummary.model}</div>
+                <div className={styles.aiText}>{visibleSummary.text}</div>
+              </div>
+            ) : null}
+
+            {visibleAiTags.length > 0 ? (
+              <div className={styles.aiBlock}>
+                <div className={styles.aiLabel}>AI 建议的标签（点一下加上）</div>
+                <div className={styles.aiTags}>
+                  {visibleAiTags
+                    .filter((tag) => !doc.tags.includes(tag))
+                    .map((tag) => (
+                      <button
+                        key={tag}
+                        type="button"
+                        className={styles.aiTag}
+                        onClick={() => {
+                          patch.mutate({ tags: [...doc.tags, tag] })
+                          // 加过的从候选里拿掉——留着会让「点了没变化」变得可能
+                          setAiTags((current) =>
+                            current === null
+                              ? current
+                              : { ...current, tags: current.tags.filter((item) => item !== tag) },
+                          )
+                        }}
+                      >
+                        ＋ {tag}
+                      </button>
+                    ))}
+                  {/* 全部加完之后给一句说明，而不是留一个空盒子 */}
+                  {visibleAiTags.every((tag) => doc.tags.includes(tag)) ? (
+                    <span className={styles.aiLabel}>都加上了</span>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+
             {/*
               三种正文区，按 kind 分派：
 

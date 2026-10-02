@@ -41,10 +41,24 @@ describe('列表项的第二行（摘要）', () => {
     expect(excerptText(doc({ excerpt: '本报告回顾了 2025 财年…' }))).toBe('本报告回顾了 2025 财年…')
   })
 
-  it('PDF 还没提取正文时，如实说是「将在后续支持」而不是留空', () => {
+  /**
+   * M1-E 之前 PDF 是「还没有实现」（`planned`），列表里说「将在后续支持」。
+   * 它现在**有实现**了（`plugins/parser/src/pdf.ts`），所以同一个输入走
+   * `now` 那条分支——空正文的原因变成「文件里没有可提取的文字」，
+   * 而 `parseSupport` 的三态结构仍在（`planned` 那一档现在是空集，
+   * `none` 由下面的未知格式覆盖）。
+   *
+   * 断言改成了**新的真相**，而用例守的东西没变：**第二行永远不能留白**。
+   *
+   * 这里**不测 `parse_error` 的具体文案**：列表拿到的是 `DocumentSummary`，
+   * 而它没有这个字段（那是 `DocumentDetail` 的）。具体失败原因显示在
+   * 文档详情里（`FilePreview` 上方那一行）——列表只回答「有没有正文」。
+   */
+  it('PDF 提取不出正文时，如实说是「没有可提取的文字」而不是留空', () => {
     const text = excerptText(doc({ mime: 'application/pdf' }))
     expect(text).not.toBe('')
-    expect(text).toContain('后续版本支持')
+    expect(text).not.toContain('后续版本支持')
+    expect(text).toContain('没有可提取的文字')
   })
 
   it('未知格式说「可下载查看」，不假装它有正文', () => {

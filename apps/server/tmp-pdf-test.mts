@@ -1,0 +1,16 @@
+import { PDFDocument, StandardFonts } from 'pdf-lib'
+import { createPdfParser } from '@mimir/plugin-parser'
+const doc = await PDFDocument.create()
+const font = await doc.embedFont(StandardFonts.Helvetica)
+const page = doc.addPage([400, 400])
+page.drawText('Velocity of light', { x: 30, y: 350, size: 14, font })
+page.drawText('is a constant value', { x: 30, y: 330, size: 14, font })
+page.drawText('Second paragraph here.', { x: 30, y: 280, size: 12, font })
+const page2 = doc.addPage([400, 400])
+page2.drawText('Page two content', { x: 30, y: 350, size: 12, font })
+const bytes = new Uint8Array(await doc.save())
+const parser = createPdfParser()
+const result = await parser.parse({ type: 'pdf', data: bytes, filename: 'test.pdf' })
+console.log('--- markdown ---')
+console.log(JSON.stringify(result.markdown))
+console.log('parser:', result.parser, 'imageCount:', result.imageCount)

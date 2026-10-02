@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm'
 import {
   boolean,
+  customType,
   index,
   integer,
   jsonb,
@@ -244,6 +245,91 @@ export const documentLinks = pgTable(
 )
 
 /**
+ * 检索单元（M1-B，`docs/TECH.md` §4.8）。
+ *
+ * 「引用指回原文位置」的前提是检索单元自带偏移——M0 的文档级命中点不出位置，
+ * 只能拿查询词去猜。分块是**派生数据**：`documents.body` 完全可重建，
+ * 所以删库后由「重建索引」恢复（`services/chunks.ts` 的 syncChunks）。
+ *
+ * 三处刻意的设计（`docs/TECH.md` §4.8）：
+ *
+ * 1. **id 确定性**（`文档 id:序号`）。重建后同一篇的同一段还是同一个 id，
+ *    于是向量表上的冲突是更新而不是插入——否则每重建一次攒一批孤儿向量
+ * 2. **偏移相对完整正文**（不是相对分块），引用与高亮直接可用
+ * 3. **不存 is_enabled**。它的用途是「不删也能把某段排除出检索」，
+ *    而那需要一个「排除这一段」的动作才成立——先加后忘的字段会变成
+ *    没人读的列
+ */
+export const chunks = pgTable(
+  'chunks',
+  {
+    id: text('id').primaryKey(),
+    documentId: text('document_id')
+      .notNull()
+      .references(() => documents.id, { onDelete: 'cascade' }),
+    /** 从 0 开始。相邻（idx 连续）的分块在引用组装时会被合并 */
+    idx: integer('idx').notNull(),
+    /** 分块正文。**逐字节等于 `body.slice(start_at, end_at)`**（测试断言守着） */
+    content: text('content').notNull(),
+    /** jieba 预分词（铁律 4）：词级通道走这一列，子串通道走 content */
+    searchText: text('search_text').notNull().default(''),
+    /** 相对完整正文的字符偏移 */
+    startAt: integer('start_at').notNull(),
+    endAt: integer('end_at').notNull(),
+    /** 所属标题路径，如「部署 / 已知坑」 */
+    heading: text('heading'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex('chunks_document_idx_idx').on(t.documentId, t.idx),
+    // 与 documents 上那两个同构：词级走 search_text，子串兜底走 content。
+    // 这两条是 PG 专有索引（SQLite 由 chunks_fts 虚拟表与触发器替代），
+    // parity 守卫测试把它们排除在跨方言比较之外
+    index('chunks_search_idx').using('gin', sql`to_tsvector('simple', ${t.searchText})`),
+    index('chunks_content_trgm_idx').using('gin', sql`${t.content} gin_trgm_ops`),
+  ],
+)
+
+/**
+ * 分块的向量（M1-B，`docs/TECH.md` §4.8）。
+ *
+ * **独立成表**（WeKnora 的生产实践）而不是往 chunks 上加列：换 embedding
+ * 模型时旧向量共存、不立刻删；同一分块可以有多个模型的行。
+ * 主键 `(chunk_id, model)` 让「补嵌入」天然可重入——判据是表里有没有行，
+ * 不需要进度计数器（`docs/TECH.md` §4.10）。
+ *
+ * **PG 用 `halfvec`**：维度上限 2000 → 4000（`docs/TECH.md` §4.5 实测）。
+ * 列上不带维度修饰符（`halfvec` 而不是 `halfvec(1024)`）——同一列要容纳
+ * 不同维度的模型，维度写在 `dimension` 列里。HNSW 索引是**按维度的
+ * 表达式索引**，由迁移手写（drizzle 表达不了），见 `drizzle/0010_chunks.sql`；
+ * 查询必须写成同一个表达式并带 `dimension = N`，否则索引静默不命中。
+ *
+ * `embedding` 的列类型在 SQLite 侧是 BLOB（sqlite-vec 的 float32 字节），
+ * 这一列**不参与**双方言的逐列对齐断言（见 `schema-parity.test.ts`）。
+ */
+const halfvec = customType<{ data: string; driverData: string }>({
+  dataType: () => 'halfvec',
+})
+
+export const chunkEmbeddings = pgTable(
+  'chunk_embeddings',
+  {
+    chunkId: text('chunk_id')
+      .notNull()
+      .references(() => chunks.id, { onDelete: 'cascade' }),
+    /** 产生这个向量的模型名。换模型后的旧行保留（可回滚、可对比） */
+    model: text('model').notNull(),
+    /** 向量的实际维度。查询按它筛选，与模型名一起决定用哪批行 */
+    dimension: integer('dimension').notNull(),
+    /** 半精度向量，文本形态（`[0.1,0.2,…]`）进出，由查询里的 `::halfvec` 解释 */
+    embedding: halfvec('embedding').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.chunkId, t.model] })],
+)
+
+/**
  * 配置覆盖层。**只存「界面显式设置过」的行**，不 seed 默认值。
  *
  * 解析顺序是 `本表 > 环境变量 > 代码默认`（`docs/TECH.md` §7.5）。
@@ -256,6 +342,49 @@ export const documentLinks = pgTable(
  * 哪些键可写是**闭集**（`@mimir/core` 的键表 + 插件声明的 params），
  * 写入端点在写之前会校验——这个表只负责承载值，不负责解释它。
  */
+/**
+ * RSS / Atom 订阅源（M1-E，`docs/PRD.md` §3.1）。
+ *
+ * 「技术博客的主路径是 RSS / Atom 订阅」——它比爬首页稳得多，
+ * 也不需要处理反爬。这张表记的是**订阅关系**，不是文章：
+ * 文章本身仍然走 `documents`（统一形状，铁律 3）。
+ *
+ * `last_item_at` 是**水位线**：轮询时只关心比它新的条目，
+ * 所以重复轮询的代价与「库里已有多少篇」无关。
+ * 不用「已入库的文章列表」做判据的原因是那需要每个源一遍 join——
+ * 而 `canonical_url` 唯一索引本来就会挡住重复入库（第二道保险）。
+ */
+export const feeds = pgTable(
+  'feeds',
+  {
+    /** 订阅源的 URL（feed 地址本身，不是站点首页） */
+    url: text('url').primaryKey(),
+    /** 显示名。首次拉取时从 feed 的 <title> 取，用户可改 */
+    title: text('title').notNull().default(''),
+    /** 新文章归入的目录。null = 未指派 */
+    folder: text('folder'),
+    /**
+     * 最后成功拉取的时间。null = 还没成功拉过。
+     *
+     * **与 `last_error` 分开**：拉取失败时这里的值不动——它回答的是
+     * 「上次成功是什么时候」，而界面要能同时说「3 天前成功过」
+     * 与「昨天那次失败了：404」。
+     */
+    lastFetchedAt: timestamp('last_fetched_at', { withTimezone: true }),
+    /**
+     * 最后一次失败的说明。null = 上次成功了。
+     *
+     * 只在「这次失败」时写、成功时清空：一个永远不会被清空的错误字段
+     * 会让用户以为它一直在坏。
+     */
+    lastError: text('last_error'),
+    /** 累计入库的条数（这一轮加的）。**只增不减**，用于界面上「共收了多少」 */
+    itemCount: integer('item_count').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('feeds_folder_idx').on(t.folder)],
+)
+
 export const settings = pgTable(
   'settings',
   {

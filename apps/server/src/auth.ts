@@ -91,6 +91,45 @@ export const auth = betterAuth({
             })
           }
         },
+        /**
+         * 建号之后播种默认内容（一个知识库 + 一份产品说明，见 `services/seed.ts`）。
+         *
+         * ## 为什么这个入口在这里
+         *
+         * 它覆盖**两条建号路径**：`OWNER_EMAIL` 环境变量建号
+         * （`ensureOwnerAccount` 调 `auth.api.signUpEmail`）与首次注册。
+         * 两者走的是同一个 user 创建流程，播种因此只写一份。
+         *
+         * 另一个入口是 `boot.ts`——那是给**本次改动之前就建过号的实例**用的
+         * （它们不会再经过这个钩子）。两个入口都查同一个持久标记
+         * （`seed.defaultContent`），所以谁先跑都只会播一次；
+         * 「用户删掉了默认内容」也由那个标记挡住，不会重新长出来。
+         *
+         * ## 失败不阻断建号
+         *
+         * 账号是核心，默认内容是附赠：播种失败只留日志，注册照常成功。
+         * 与 `ensureOwnerAccount` 的失败处理同一条规矩。
+         */
+        after: async () => {
+          // 测试环境跳过：集成测试有自己的账号与库准备流程，而它们到处是
+          // 「库里有几篇文档」这类断言——自动多出两行会让它们以难以定位的方式失败
+          if (env.nodeEnv === 'test') return
+
+          try {
+            // 动态 import：auth.ts 在启动最早期就被加载（app / bootstrap 都引它），
+            // 而 seed 走的是完整写入链路（vault、插件装配）。让这条依赖在**用到时才加载**，
+            // 既避开模块初始化顺序上的环，也不拖慢每次启动
+            const { seedDefaultLibrary } = await import('./services/seed.js')
+            const result = await seedDefaultLibrary()
+            if (result.libraryCreated || result.documentCreated) {
+              console.log(
+                `[seed] 已创建默认知识库与产品说明（库：${result.libraryCreated}，说明：${result.documentCreated}）`,
+              )
+            }
+          } catch (error) {
+            console.warn('[seed] 默认内容播种失败（不影响账号与使用）：', error)
+          }
+        },
       },
     },
   },

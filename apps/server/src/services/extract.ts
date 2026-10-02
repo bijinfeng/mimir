@@ -77,10 +77,19 @@ async function runParser(
     throw new Error(`没有注册能处理 ${target} 的解析器（${mime}）。检查 plugins/parser/ 的注册`)
   }
 
-  const input =
-    target === 'docx' || target === 'xlsx' || target === 'pptx'
-      ? ({ type: target, data, filename } as const)
-      : ({ type: target, content: decodeUploadedText(data) } as const)
+  /**
+   * 文本类与字节类分开喂（`ParseInput` 的判别联合）。
+   *
+   * 判据是**枚举文本类**而不是枚举字节类：将来再加一种字节格式
+   * （旧版 .doc、更多 OOXML）时，忘改这里的后果是「把二进制丢给
+   * `decodeUploadedText`」——那会抛出一个莫名其妙的编码错误，
+   * 而不是「忘了登记新格式」。往「文本类」这个短清单上加名字，
+   * 忘了改的话新格式走字节路径，恰好是对的。
+   */
+  const isText = target === 'markdown' || target === 'html' || target === 'text'
+  const input = isText
+    ? ({ type: target, content: decodeUploadedText(data) } as const)
+    : ({ type: target, data, filename } as const)
 
   const parsed = await found.impl.parse(input)
   return parsed.markdown

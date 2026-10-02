@@ -79,7 +79,7 @@ import {
   type ToolbarMenuItem,
   type ToolbarSelectOption,
 } from '../shell/EditorShell.js'
-import { InlineToolbar } from './InlineToolbar.js'
+import { InlineToolbar, type RewriteActionName } from './InlineToolbar.js'
 import {
   BoldIcon,
   BulletListIcon,
@@ -229,6 +229,13 @@ export interface MarkdownEditorProps {
    */
   onAskAboutSelection?: (passage: string) => void
   /**
+   * 内联改写（M1-D）。宿主注入——包不碰网络，理由见 `InlineToolbar` 的头注释。
+   * 没有它时四个动作按钮保留但禁用（tooltip 说明原因）。
+   */
+  onRewrite?: (text: string, action: RewriteActionName) => Promise<string | null>
+  /** 正在改写：按钮转 loading */
+  rewriting?: boolean
+  /**
    * 「插入图片」：把文件交给宿主的资料库，拿回一个能插进正文的地址。
    *
    * **上传会在资料库里多一条 `file` 文档**——这是产品决定，不是副作用
@@ -255,6 +262,8 @@ export function MarkdownEditor({
   onDirtyChange,
   onSaveHandle,
   onAskAboutSelection,
+  onRewrite,
+  rewriting,
   onUploadImage,
   flush = false,
 }: MarkdownEditorProps) {
@@ -488,7 +497,12 @@ export function MarkdownEditor({
         浮层是白白的实例；`editor` 还没就绪时 BubbleMenu 会拿到 null。
       */}
       {editor && onAskAboutSelection ? (
-        <InlineToolbar editor={editor} onAskAboutSelection={onAskAboutSelection} />
+        <InlineToolbar
+          editor={editor}
+          onAskAboutSelection={onAskAboutSelection}
+          {...(onRewrite ? { onRewrite } : {})}
+          {...(rewriting === undefined ? {} : { rewriting })}
+        />
       ) : null}
       <div className="me-scroll mimir-markdown-scroll">
         <div className={contentClassName}>

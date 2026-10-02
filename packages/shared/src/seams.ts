@@ -61,8 +61,15 @@ export interface Capturer {
 
 /**
  * 文本类输入。内容本身就是字符串——抓取器产出的都是这一类。
+ *
+ * `html-fragment` 与 `html` 的区别是**要不要找正文**：
+ * 一整个网页需要 Readability 从导航与广告里挑出 article，
+ * 而 feed 的 `content:encoded` 给的**已经是正文片段**——再跑一遍
+ * Readability 只会把它当「太短，不是一篇文章」而丢掉（实测：
+ * 两行的片段返回 null，于是整条退化成裸 HTML）。
+ * 所以它们是两种输入，不是同一种带个开关。
  */
-export type TextParseType = 'html' | 'markdown' | 'text'
+export type TextParseType = 'html' | 'html-fragment' | 'markdown' | 'text'
 
 /**
  * 字节类输入。Office 文档是 ZIP 容器，必须先拿到**字节**才能取出里面的 XML。
@@ -74,7 +81,7 @@ export type TextParseType = 'html' | 'markdown' | 'text'
  * 旧版二进制格式（`.doc` / `.xls` / `.ppt`）**不在这里**：它们不是 ZIP，
  * 需要另一套解析（OLE 复合文档），收益远小于代价。
  */
-export type BinaryParseType = 'docx' | 'xlsx' | 'pptx'
+export type BinaryParseType = 'docx' | 'xlsx' | 'pptx' | 'pdf'
 
 /** parser 能接受的输入类型。抓取器声明自己产出什么，宿主据此选实现 */
 export type ParseInputType = TextParseType | BinaryParseType
@@ -106,7 +113,12 @@ export type ParseInput = TextParseInput | BinaryParseInput
 
 /** 文本实现的入口断言。字节实现（docx 等）对称地判 `!isTextParseInput` */
 export function isTextParseInput(input: ParseInput): input is TextParseInput {
-  return input.type === 'html' || input.type === 'markdown' || input.type === 'text'
+  return (
+    input.type === 'html' ||
+    input.type === 'html-fragment' ||
+    input.type === 'markdown' ||
+    input.type === 'text'
+  )
 }
 
 export interface ParseResult {
@@ -138,6 +150,22 @@ export interface RankedHit {
   rank: number
 }
 
+/**
+ * 向量通道需要的两样东西（M1-C）。
+ *
+ * 合在一个对象里而不是两个可选字段：**要么全有、要么全没有**。
+ * 命中「模型名有了但造向量的路没打通」这种半截状态的实现，
+ * 会在运行期才失败——而那时表现成「语义搜不到」，看起来像库里没有相关内容。
+ */
+export interface EmbedPort {
+  /** 把一段文本变成向量。查不到时由宿主的实现抛错（见 `LegContext.embedQuery`） */
+  of(text: string): Promise<number[]>
+  /** 向量表里该查哪个模型的行（`chunk_embeddings.model`） */
+  model: string
+  /** 该模型的实际维度。查询按它筛选，与模型名一起决定用哪批行 */
+  dimension: number
+}
+
 export interface LegContext {
   /** 原始查询串，未分词 */
   query: string
@@ -146,6 +174,19 @@ export interface LegContext {
   /** 可选的过滤条件 */
   kind?: string
   tag?: string
+  /**
+   * 向量通道的输入端口（M1-C，`docs/TECH.md` §4.11）。
+   *
+   * 为什么是端口而不是让通道自己去调模型：向量通道需要向量，而
+   * 「配了哪个 embedding 模型、密钥在哪、怎么发请求」是 `provider` 接缝
+   * 的知识（§7.4 的「宿主不认识具体实现」）。通道只声明「我要什么」，
+   * 造它的事情在宿主。
+   *
+   * 没有可用模型时宿主**不会注册这个通道**（就绪性由注册表算出来），
+   * 所以实现可以假定它存在；可选是为了让不含向量通道的路径能构造出
+   * 不含它的上下文。
+   */
+  embed?: EmbedPort
 }
 
 export interface RetrievalLeg {

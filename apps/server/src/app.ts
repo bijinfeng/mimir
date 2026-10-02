@@ -9,9 +9,16 @@ import { captureRoute } from './routes/capture.js'
 import { avatarRoute } from './routes/avatar.js'
 import { configRoute } from './routes/config.js'
 import { chatRoute, conversationsRoute } from './routes/conversations.js'
-import { documentsRoute, foldersRoute, maintenanceRoute, tagsRoute } from './routes/documents.js'
+import {
+  aiTextRoute,
+  documentsRoute,
+  foldersRoute,
+  maintenanceRoute,
+  tagsRoute,
+} from './routes/documents.js'
 import { filesRoute } from './routes/files.js'
 import { exportRoute } from './routes/export.js'
+import { feedsRoute } from './routes/feeds.js'
 import { setupRoute } from './routes/setup.js'
 import { mountStatic } from './lib/static.js'
 import { searchRoute } from './routes/search.js'
@@ -66,9 +73,13 @@ export function createApp() {
   api.route('/folders', foldersRoute)
   api.route('/tags', tagsRoute)
   api.route('/search', searchRoute)
+  // 内联改写：文本可能还没保存，所以不挂在某篇文档下（M1-D）
+  api.route('/ai', aiTextRoute)
   api.route('/conversations', conversationsRoute)
   api.route('/chat', chatRoute)
   api.route('/capture', captureRoute)
+  // RSS / Atom 订阅（M1-E）：订阅关系是一类资源，收进来的文章仍在 documents
+  api.route('/feeds', feedsRoute)
   api.route('/export', exportRoute)
   api.route('/maintenance', maintenanceRoute)
   api.route('/config', configRoute)

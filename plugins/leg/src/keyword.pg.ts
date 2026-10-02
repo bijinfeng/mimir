@@ -8,11 +8,14 @@ import type { LegContext, PluginDatabase, RankedHit, RetrievalLeg } from '@mimir
  * jieba 预分词 + `ts_rank_cd` 排序；SQLite 方言见 `keyword.sqlite.ts`，
  * 通道语义（门槛、排序职责）的总体说明在 `keyword.ts` 分发器里。
  *
- * 这是主力召回通道，因为它有**词边界语义**——命中的是完整的词，
- * 不是碰巧包含这几个字的任意位置。
+ * ## 检索单元是**分块**，不是文档（M1-C，§4.8）
  *
- * 排序用 `ts_rank_cd`（cover density）而不是 `ts_rank`：前者更看重查询词
- * 在文档中的聚集程度，对「多个关键词都出现且挨得近」的文档给分更高。
+ * M0 返回文档 id，M1 改成分块 id——「引用指回原文位置」的前提是命中点
+ * 自带偏移，而文档级的命中点不出位置。两条通道各自一个文件（`docs/DECISIONS.md`
+ * D-032 的判据），改的是它们，编排层一行没动。
+ *
+ * 过滤（kind / tag / 删除态）仍然作用在所属文档上：分块表只有正文与偏移，
+ * 「这篇是不是已删除」「它属于哪个知识库」是文档的属性。
  *
  * ## 召回门槛：至少命中一半的查询词
  *
@@ -26,8 +29,6 @@ import type { LegContext, PluginDatabase, RankedHit, RetrievalLeg } from '@mimir
  *
  * 所以取中间：**命中的词数要达到查询词数的一半**（向上取整，至少 1 个）。
  * 排序仍交给 `ts_rank_cd`：命中的词越多、越集中，排得越前。
- *
- * 这也**免掉了停用词表**：门槛本身挡住了「只有通用词命中」的文档。
  *
  * ## 性能：门槛必须下推到 WHERE
  *
@@ -63,7 +64,7 @@ export function createKeywordLegPostgres(db: PluginDatabase): RetrievalLeg {
       const coverage = sql.join(
         tokens.map(
           (token) =>
-            sql`(to_tsvector('simple', d.search_text) @@ plainto_tsquery('simple', ${token}))::int`,
+            sql`(to_tsvector('simple', c.search_text) @@ plainto_tsquery('simple', ${token}))::int`,
         ),
         sql` + `,
       )
@@ -71,10 +72,11 @@ export function createKeywordLegPostgres(db: PluginDatabase): RetrievalLeg {
       const rows = await db.execute<{ id: string; rank: number }>(sql`
         select id, row_number() over (order by score desc) as rank
         from (
-          select d.id,
-                 ts_rank_cd(to_tsvector('simple', d.search_text), ${anyMatch}) as score,
+          select c.id,
+                 ts_rank_cd(to_tsvector('simple', c.search_text), ${anyMatch}) as score,
                  (${coverage}) as hits
-          from documents d
+          from chunks c
+          join documents d on d.id = c.document_id
           where d.deleted_at is null
             ${kind ? sql`and d.kind = ${kind}` : sql``}
             ${

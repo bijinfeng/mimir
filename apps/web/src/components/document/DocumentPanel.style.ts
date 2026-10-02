@@ -406,6 +406,59 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
      叠上 `&.ant-typography` 后 (0,2,0) 胜出。 */
 
   /* ── 页脚：来源 / 被引用 ────────────────────────────── */
+  /**
+   * AI 的两块结果（摘要 / 标签候选）。
+   *
+   * 底色比正文**略浅一档**（`colorFillQuaternary` 而不是容器底色）：
+   * 它是模型生成的内容，不是文档本身，视觉上必须能与正文分开——
+   * 用户读到的每一句话都该知道它是谁说的（与引用卡片的处理同一条规矩）。
+   *
+   * 不用警示色（橙 / 黄）：摘要不是警告。用配色区分「这是机器生成的」
+   * 会让它看起来像出了问题。
+   */
+  aiBlock: css`
+    margin: 0 0 20px;
+    padding: 14px 16px;
+    border-radius: 8px;
+    background: var(--ant-color-fill-quaternary);
+  `,
+
+  aiLabel: css`
+    font-size: ${FONT_SIZE.meta}px;
+    color: var(--ant-color-text-secondary);
+    margin-bottom: 6px;
+  `,
+
+  aiText: css`
+    font-size: ${FONT_SIZE.body}px;
+    line-height: 1.7;
+    color: var(--ant-color-text);
+    white-space: pre-wrap;
+  `,
+
+  aiTags: css`
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  `,
+
+  aiTag: css`
+    border: 1px solid var(--ant-color-border);
+    background: var(--ant-color-bg-container);
+    color: var(--ant-color-text);
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: ${FONT_SIZE.excerpt}px;
+    cursor: pointer;
+    font-family: inherit;
+
+    &:hover {
+      border-color: var(--ant-color-primary);
+      color: var(--ant-color-primary);
+    }
+  `,
+
   foot: css`
     margin-top: 40px;
     padding-top: 18px;

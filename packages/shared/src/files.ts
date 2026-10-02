@@ -204,7 +204,7 @@ export type ParseSupport = 'now' | 'planned' | 'none'
  * 分开是必要的——`planned` 的格式现在没有实现（返回 null），
  * 而界面仍要知道它是「将要有」而不是「压根没有」。
  */
-export type ParseTarget = 'markdown' | 'html' | 'text' | 'docx' | 'xlsx' | 'pptx'
+export type ParseTarget = 'markdown' | 'html' | 'text' | 'docx' | 'xlsx' | 'pptx' | 'pdf'
 
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -221,6 +221,9 @@ export function parseTargetFor(
   if (lower === DOCX_MIME) return 'docx'
   if (lower === XLSX_MIME) return 'xlsx'
   if (lower === PPTX_MIME) return 'pptx'
+  // PDF 的文字层提取（M1-E）。扫描件提取不出文字——那由实现如实报错，
+  // 不是「没有实现」（parseSupport 的 planned 分支因此不再有 pdf）
+  if (lower === 'application/pdf') return 'pdf'
 
   // 其余文本类（txt / csv / json / yaml / xml / 代码）都走纯文本直通
   if (lower.startsWith('text/')) return 'text'
@@ -233,6 +236,7 @@ export function parseTargetFor(
   if (ext === 'docx') return 'docx'
   if (ext === 'xlsx') return 'xlsx'
   if (ext === 'pptx') return 'pptx'
+  if (ext === 'pdf') return 'pdf'
   if (TEXT_EXTENSIONS.has(ext)) return 'text'
 
   return null
@@ -306,13 +310,15 @@ export function parseSupport(mime: string | null | undefined, filename?: string)
 /**
  * 现在还没有正文提取、但路线图上有的一类。
  *
- * `application/pdf` 在这里——它缺的是**文本提取**，而它的**预览**已经能用了
- * （浏览器自带的阅读器），所以界面上 PDF 是「能看原件 + 还没有可搜的正文」，
- * 这与 Office 那三个（有提取、无预览）正好互补。
+ * **现在是空集**：M1-E 给 PDF 补上了文本提取（`plugins/parser/src/pdf.ts`），
+ * 最后一个 `planned` 格式用完了。保留这个结构与 `ParseSupport` 的三态
+ * 而不是删掉它——「还没有实现」与「这个格式没有正文」是两件事，
+ * 前者随时会再有（旧版 .doc / 图片 OCR 都在候选里），而删掉三态之后
+ * 再加回来会让 `parseSupport` 的每个调用方都要改。
  */
-const PLANNED_MIMES = new Set(['application/pdf'])
+const PLANNED_MIMES = new Set<string>()
 
-const PLANNED_EXTENSIONS = new Set(['pdf'])
+const PLANNED_EXTENSIONS = new Set<string>()
 
 /**
  * 人类可读的字节数。

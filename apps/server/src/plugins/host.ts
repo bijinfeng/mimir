@@ -323,6 +323,22 @@ export function activeStorage(): StorageBackend {
   return assemble().activeStorage()
 }
 
+/**
+ * 方言感知的**裸 SQL** 执行口。宿主自己需要写方言相关查询时用它。
+ *
+ * 为什么必须有这个东西：`db`（`db/client.ts`）在 SQLite 路径下**没有
+ * `.execute()`**（drizzle 的 better-sqlite3 驱动只有 `.all()` /
+ * `.run()`）。直接 `db.execute(sql\`...\`)` 在 PG 上跑得好好的、
+ * 在 SQLite 上抛 `is not a function`——而本地开发与桌面端走的正是 SQLite。
+ *
+ * 这个函数与传给插件的 `PluginDatabase` 是**同一个实现**（那里早就有
+ * 这层方言适配），所以两处的行为天生一致。别在别处再写一次
+ * `if (dbDriver === 'sqlite')`——方言分支按 D-045 应当点名收敛。
+ */
+export function executeRaw<T = unknown>(query: unknown): Promise<T[]> {
+  return pluginDatabase.execute<T>(query)
+}
+
 export type { Assembled }
 export type LegRegistry = ReturnType<typeof createSeamHost>['leg']
 export type { Capturer, ModelProvider, Parser, RetrievalLeg, StorageBackend }

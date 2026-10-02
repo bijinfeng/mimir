@@ -1,6 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
-import { Input, Typography } from 'antd'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { App, Button, Input, Typography } from 'antd'
 import { useState } from 'react'
+import { Database, RefreshCw } from 'lucide-react'
 import { api } from '@/lib/api'
 import { BlockDesc, Note, Panel, Row, SourceBadge } from '@/components/settings/parts'
 import { SettingControl } from '@/components/settings/SettingControl'
@@ -36,9 +37,56 @@ import { useStyles } from '@/components/settings/settings.style'
  */
 export function RetrievalSection() {
   const { styles } = useStyles()
+  const { message } = App.useApp()
+  const queryClient = useQueryClient()
   const [probe, setProbe] = useState('')
 
   const configQuery = useQuery({ queryKey: ['config'], queryFn: api.config })
+
+  /**
+   * 分块与嵌入的状态（M1-B）。
+   *
+   * 「待嵌入 N 段」是这一页**最需要如实显示的数字**：向量通道就绪但
+   * 向量还没补上时，语义检索会安静地少返回结果——而那看起来像
+   * 「库里没有相关内容」（`docs/TECH.md` §4.10 的「界面以待嵌入 N 段
+   * 如实显示」）。`pending` 为 null 表示没配向量化模型，那时这一栏
+   * 该说「未配置」而不是显示 0（0 会被读成「都嵌好了」）。
+   */
+  const chunkQuery = useQuery({
+    queryKey: ['chunks-status'],
+    queryFn: api.maintenance.chunks,
+  })
+
+  const embed = useMutation({
+    mutationFn: () => api.maintenance.embed(64),
+    onSuccess: (result) => {
+      void queryClient.invalidateQueries({ queryKey: ['chunks-status'] })
+      if (result.remaining === null) {
+        message.info('还没有配置向量化模型')
+        return
+      }
+      if (result.remaining === 0) {
+        message.success(`全部嵌入完成（这次补了 ${result.processed} 段）`)
+        return
+      }
+      message.success(
+        `补了 ${result.processed} 段，还剩 ${result.remaining} 段——再点一次继续` +
+          (result.failed > 0 ? `（${result.failed} 篇失败，详见日志）` : ''),
+      )
+    },
+    onError: (error: unknown) =>
+      message.error(error instanceof Error ? error.message : '补嵌入失败'),
+  })
+
+  const rebuildChunks = useMutation({
+    mutationFn: api.maintenance.rebuildChunks,
+    onSuccess: (result) => {
+      void queryClient.invalidateQueries({ queryKey: ['chunks-status'] })
+      message.success(`分块已重建：${result.documents} 篇文档，共 ${result.chunks} 段`)
+    },
+    onError: (error: unknown) =>
+      message.error(error instanceof Error ? error.message : '重建分块失败'),
+  })
   const settings = configQuery.data?.settings ?? []
   const legs = (configQuery.data?.plugins ?? []).filter((plugin) => plugin.seam === 'leg')
 
@@ -69,8 +117,62 @@ export function RetrievalSection() {
   /** 数值很短（RRF k 最大三位数），给它们 320px 会把值列撑得不像输入框 */
   const NUMBER_WIDTH = 110
 
+  const status = chunkQuery.data
+
   return (
     <>
+      <Panel title="分块与向量">
+        <Row label="分块">
+          <span className={styles.blockDesc}>
+            {status ? `${status.documents} 篇文档 · 共 ${status.total} 段` : '读取中…'}
+          </span>
+        </Row>
+        <Row label="待嵌入">
+          {/*
+            `null` 是「没配向量化模型」——不能显示成 0（那会被读成「都嵌好了」），
+            也不能显示成「未知」（用户会以为是在加载）。如实说没配。
+          */}
+          {status === undefined ? (
+            <span className={styles.blockDesc}>读取中…</span>
+          ) : status.pending === null ? (
+            <span className={styles.blockDesc}>
+              未配置向量化模型（设置 › 模型 › 任务分配）— 语义通道不会参与检索
+            </span>
+          ) : status.pending === 0 ? (
+            <span className={styles.blockDesc}>0 段 —— 全部已嵌入</span>
+          ) : (
+            <span className={styles.blockDesc}>
+              {status.pending} 段 —— 这些段落暂时只能按关键词搜到
+            </span>
+          )}
+        </Row>
+
+        <div className={styles.block}>
+          <div className={styles.actions}>
+            <Button
+              icon={<Database size={14} />}
+              loading={embed.isPending}
+              disabled={status?.pending === null || status?.pending === 0}
+              onClick={() => embed.mutate()}
+            >
+              补嵌入（分批，一次 64 段）
+            </Button>
+            <Button
+              icon={<RefreshCw size={14} />}
+              loading={rebuildChunks.isPending}
+              onClick={() => rebuildChunks.mutate()}
+            >
+              重建分块
+            </Button>
+          </div>
+          <BlockDesc>
+            补嵌入会调用向量化模型（**会产生用量**），分批是为了可中断——中途失败或刷新页面，
+            下次从还没嵌入的那些继续。重建分块只重算切分、不调模型；换了分块大小或重叠之后
+            需要重建，而重建会把受影响段落的旧向量一起清掉，之后要再补嵌入。
+          </BlockDesc>
+        </div>
+      </Panel>
+
       <Panel title="融合参数">
         {retrievalParams.map((entry) => (
           <Row key={entry.key} label={entry.label}>

@@ -23,6 +23,7 @@ import {
 import { readUploadMeta, removeUpload, writeUploadMeta } from '../lib/uploads.js'
 import { ensureFolders, normalizeFolder } from './folders.js'
 import { getDocumentLinks, syncDocumentLinks } from './links.js'
+import { rebuildChunksAndEmbed } from './chunks.js'
 
 /**
  * 文档服务。
@@ -163,6 +164,7 @@ export async function createNote(input: NoteCreate): Promise<DocumentDetail> {
   // 漏掉这一步的后果是：笔记正文里写着的链接不产生反链，
   // 对方文档底部的「被引用」里看不到它
   await syncDocumentLinks(id, note.body)
+  await rebuildChunksAndEmbed(id, note.body)
 
   return {
     ...toSummary(row, [...input.tags].toSorted()),
@@ -275,6 +277,7 @@ export async function updateNote(id: string, input: NoteUpdate): Promise<Documen
   // 正文变了，出链跟着重建。放在数据库写入之后：链接表是索引，
   // 而正文是真相——先写完真相再更新索引，顺序与全局规则一致
   await syncDocumentLinks(id, body)
+  await rebuildChunksAndEmbed(id, body)
 
   return {
     ...toSummary(row, [...tagNames].toSorted()),

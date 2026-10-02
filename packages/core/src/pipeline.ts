@@ -1,4 +1,4 @@
-import type { LegContext, RetrievalLeg } from '@mimir/shared'
+import type { EmbedPort, LegContext, RetrievalLeg } from '@mimir/shared'
 import { fuse, type FusionChannel } from './fuse.js'
 
 /**
@@ -67,6 +67,14 @@ export interface SearchRequest {
 }
 
 export interface SearchHitResult {
+  /**
+   * 检索单元 id。M0 是文档 id，M1-C 起是**分块 id**（§4.8 的下沉）。
+   *
+   * 为什么它必须透传：引用组装要按它取分块正文、判断相邻（`idx` 在
+   * 确定性 id 的冒号后半段里）。丢掉它再按偏移反推是一次
+   * 「把已有信息扔掉再找回来」——而反推会失败（两条断言都过不了）。
+   */
+  id: string
   documentId: string
   kind: string
   title: string
@@ -95,6 +103,17 @@ export interface PipelineDeps {
   settings: {
     getNumber(key: string): Promise<number>
   }
+  /**
+   * 向量通道的端口（M1-C）。
+   *
+   * 与 `snippets` 同一种东西：core 定义「我需要什么」，宿主提供它。
+   * 编排层只把它放进 `LegContext`，不认识任何具体通道——
+   * 「哪些通道用它、怎么用」是那些通道自己的事。
+   *
+   * 可选：没配 embedding 模型时宿主给不出来，而那时向量通道
+   * 根本不在 `legs` 里（就绪性由宿主按注册表算）。
+   */
+  embed?: EmbedPort
 }
 
 /** 每通道候选数、RRF k 的键名。装配层与设置页共用这两个常量 */
@@ -125,6 +144,7 @@ export function createPipeline(deps: PipelineDeps): Pipeline {
         limit: perLegLimit,
         ...(request.kind ? { kind: request.kind } : {}),
         ...(request.tag ? { tag: request.tag } : {}),
+        ...(deps.embed ? { embed: deps.embed } : {}),
       }
 
       // 并行跑所有通道。通道之间没有依赖，串行执行只是白白等待。
@@ -167,6 +187,8 @@ export function createPipeline(deps: PipelineDeps): Pipeline {
 
         return [
           {
+            // 检索单元 id 原样透传（M1-C 起是分块 id），见 SearchHitResult 的注释
+            id: row.id,
             documentId: row.documentId,
             kind: row.kind,
             title: row.title,

@@ -113,6 +113,32 @@ export function NoteEditor({ document: doc, title, onAskAboutSelection, onDirtyC
    * 新文档会出现在「最近」里，所以失效一次文档列表的查询。**不失效正文缓存**
    * （`['document', id]`）：那些是别的文档，与这一次无关。
    */
+  /**
+   * 内联改写（M1-D）。**这是宿主侧的唯一一处**：包（`@mimir/office`）
+   * 只负责「拿到文本就替换选区」，网络、提示、失败处理都在这里。
+   *
+   * 返回 `null` 表示「宿主处理过了、不要替换」——没配模型时就是这样：
+   * 弹一句说明比把「改写需要先配置模型…」那段文字塞进正文好得多。
+   */
+  const onRewrite = useCallback(
+    async (text: string, action: 'rewrite' | 'translate' | 'shorten' | 'expand') => {
+      try {
+        const result = await api.ai.rewrite({ text, action, documentId: doc.id })
+        if (!result.usedModel) {
+          message.warning(result.text)
+          return null
+        }
+        return result.text
+      } catch (error) {
+        message.error(error instanceof Error ? error.message : '改写失败')
+        // 抛出去让 InlineToolbar 的 promise 结束；这里已经提示过了，
+        // 所以返回 null 而不是把错误再抛一层（那会在控制台留一个未处理的拒绝）
+        return null
+      }
+    },
+    [doc.id, message],
+  )
+
   const uploadImage = useCallback(
     async (file: File) => {
       const uploaded = await api.documents.upload(file)
@@ -137,6 +163,7 @@ export function NoteEditor({ document: doc, title, onAskAboutSelection, onDirtyC
         onSaveHandle={setSave}
         flush
         onAskAboutSelection={(passage) => onAskAboutSelection?.(passage)}
+        onRewrite={onRewrite}
         onUploadImage={uploadImage}
       />
     </div>

@@ -5253,3 +5253,187 @@ hover 那一刻：
 都是 `0.8px solid transparent`、盒子都是 156×30，只有背景色从透明变成
 `rgba(255,255,255,0.08)`。放大截图确认 hover 态只有底色变化。坑已登记进
 AGENTS.md 与 TECH §10 的静默坑表。`pnpm check` 全绿。
+
+## D-084 M1 收官：分块向量化、混合检索、AI 三件套、PDF 提取与 RSS 订阅
+
+**背景**：M1 的 B / C / D / E 四段是 MVP 收官的最后一块（§11 的推进顺序）。
+落地时每一段都遇到了「文档写的是方向、代码要选一条具体路」的岔口，
+这一条把它们记在一起——每一条都附了岔口上**没被选的那条路**是什么。
+
+**决定**（按段）：
+
+**M1-B（分块与向量化）**
+
+1. **分块的 `search_text` 必须带标题**（`chunkText` 的 `title` 参数）。
+   M0 的 `documents.search_text` 是 `toSearchText(title, body)`；分块表只装
+   正文的话，「标题里的词」就从索引里消失了——标题是「React 组件性能优化」、
+   正文通篇没有「组件」二字时，搜「组件」命中 0。实测被 `search.test.ts`
+   第一条用例抓到。标题由 `syncChunks` **从数据库现取**而不是调用方传：
+   六个调用点里只要有一个在改名前调用就会固化旧标题。
+2. **嵌入失败绝不阻断写入，且内容没变不重嵌**。判据是「已有分块与重算的
+   分块逐块对齐」（id + 起止偏移）——改一个错别字会重嵌，改标题不重嵌。
+   没有这个判据，每次保存都会把向量删光重买。
+3. **`db.execute` 在 SQLite 侧不存在**。`pendingEmbeddingCount` 最初用
+   `db.execute(sql…)`，PG 上跑得好好的、SQLite 上抛 `is not a function`
+   （drizzle 的 better-sqlite3 驱动只有 `.all()` / `.run()`）。修法是新增
+   `plugins/host.ts` 的 `executeRaw`——它与传给插件的 `PluginDatabase.execute`
+   是**同一个实现**，方言分支继续点名收敛。测试补了三条端点用例
+   （`embed.test.ts`），专门让这些 SQL 在 SQLite 下真的跑一遍。
+
+**M1-C（混合检索）**
+
+4. **SQLite 的向量通道用标量函数 `vec_distance_cosine`，不用 `vec0` 虚拟表**。
+   `RESEARCH.md` §11.3 的蓝图是 vec0；落地时发现 vec0 是一张**独立的虚拟表**，
+   需要第二份数据与同步逻辑（写入 / 删除 / 重建都要跟着搬），而向量本来就有
+   `chunk_embeddings` 这张表。两者同为暴力扫描，量级论证不变，标量函数还能与
+   kind / tag / 删除态过滤自由组合。扩展在连接时加载（`db/client.ts`），
+   **加载失败抛错**：它的缺席表现是「语义搜不到」，静默降级等于埋雷。
+5. **PG 侧 HNSW 是按维度的表达式索引**（`embedding::halfvec(1024)`，
+   `drizzle/0010_chunks.sql` 手写——drizzle 表达不了）。查询必须写成同一个
+   表达式并带 `dimension = N`，否则索引静默不命中。没建索引的维度仍正确
+   （顺扫，个人库规模毫秒级），要索引就照语句加一行。
+6. **未就绪的通道不进编排**。就绪性由 core 的 `computeStatus` 统一算
+   （向量通道的 `unavailable` 读 `model.config` 的 embed 绑定），宿主过滤掉
+   非 active 的再交给 pipeline——不另写一套判断，两套判断必然漂移。
+7. **界面契约一个字没改**。`/api/search` 仍返回文档级的 `SearchHit`；
+   问答路径直接消费分块级结果（`searchChunks` → `assembleCitations`），
+   引用的 `start/end` 从此是分块自身的真实区间。D-032 的判据兑现：
+   两条通道改返回分块 id，编排层一行没改。
+
+**M1-D（摘要 / AI 标签 / 内联改写）**
+
+8. **AI 结果一律不落库**。摘要、AI 标签、改写都是「现在想看一眼」——
+   落库会引入「正文改了、摘要还是旧的」这个新状态。改写结果直接**替换选区**
+   （走 `insertContent`，进 undo 栈可撤销）。
+9. **三个能力共用一个文件**（`services/ai-text.ts`）：形状完全一样
+   （文本进文本出），差别只在提示词。没配模型时返回 `usedModel: false`
+   与一句说明——**如实说没花钱**，不静默降级成一段像结果的说明文字。
+10. **内联改写挂在 `/api/ai` 而不是文档下**：改写的文本可能还没保存。
+
+**M1-E（PDF 提取 / RSS）**
+
+11. **PDF 提取复用 pdf.js**：`packages/office` 的页面预览已经在用它
+    （Apache-2.0），再引入 pdf-parse / pdfium 就是第二份 PDF 解析实现——
+    两份实现对同一份文件的结论可能不同。Node 侧走 legacy build 的
+    `getTextContent()`，`hasEOL` 直接给行边界；**中文行尾不补空格**
+    （补了会让分词切出假边界）；多页文档每页一个小标题（分块器把它当边界，
+    引用卡片显示「第 N 页」）。扫描件没有文字层，如实报错、不做 OCR。
+12. **feed 的 `content:encoded` 走 `html-fragment` 解析器，不走 html**。
+    Readability 的职责是「从一整个网页里找出正文」，而 feed 给的**已经是
+    正文片段**——实测两行的片段被它判为「不是一篇文章」返回 null，
+    整条退化成裸 HTML。`html-fragment` 直转（turndown），与抓网页共用
+    同一个转换函数。
+13. **RSS 轮询由用户触发，不做后台定时**：M1 没有 jobs 表 + worker 那一层
+    （§4.10 的同一形态——批处理逻辑与触发方式无关，先证明逻辑对）。
+    订阅时先拉一次（拉不通不落库，不留「订了但从没成功过」的源）；
+    失败原因与上次成功时间**分开显示**；退订**不删**已收文章——
+    「别再自动收」与「删掉读过的」是两个动作，后者不可逆，不藏在退订里。
+14. **feed 条目入库与「粘贴 URL」共用 `ingestDocument`**（从 `capture.ts`
+    抽出）：写入路径的第二份拷贝必然漏环节——上传路径漏过分块就是前科
+    （本条 D-084 的第 2 点里那次实测）。
+
+**影响**：schema 两份 + 三个新迁移（`0010_chunks` / `0007_chunks[_fts]` /
+`0011_feeds` / `0008_feeds`）；`plugins/leg` 加向量通道；`plugins/parser`
+加 pdf 与 html-fragment；`plugins/capturer` 加 feed 解析（`./feed` 子路径导出）；
+服务端新增 `services/chunks.ts` / `services/ai-text.ts` / `services/feeds.ts`
+与 `/api/ai`、`/api/feeds`、`/maintenance/chunks*` 路由；前端加设置 › 订阅、
+设置 › 检索的「分块与向量」面板、文档「⋯」菜单的 AI 组、编辑器选区工具条的
+四个改写动作。`sqlite-vec`（MIT）与 `fast-xml-parser`（MIT，parser 已在用）
+是新依赖；`sqlite-vec` 按平台分发且只服务 SQLite 路径（PG 部署不解析它，
+连接时才 require）。
+
+**验证方式**：`pnpm check` 全绿（oxlint / oxfmt / typecheck / 服务端 197 +
+前端 247 条测试）。服务端集成测试在 SQLite 上跑（`app.request()` 内存调用），
+覆盖：分块四类断言（偏移可逆 / 确定性 / 覆盖完整 / 按结构切，23 条）、
+分块级检索与引用组装（通道返回分块 id、引用偏移逐字节跳回原文、相邻合并、
+每篇上限）、feed 解析两种方言 + 真起 HTTP 服务器的订阅链路（转 Markdown、
+可搜、重复更新不重复入库、失败如实记录、退订不删文章）、PDF 提取
+（pdf-lib 现造真文件：可搜、页标题、单页不加标题、无文字层如实报错）、
+嵌入端点在 SQLite 下的真实执行。`pnpm --filter @mimir/server build`
+验证产物（pdfjs 编译进 bundle、`preserveModules` 契约不破）。
+Postgres 路径（halfvec / HNSW 迁移）本机无 Docker 未实测，部署时首次
+`db:migrate` 要盯一眼；迁移语句均为幂等形态（`CREATE INDEX IF NOT EXISTS`）。
+
+## D-085 首次建号播种默认内容：一个知识库 + 一篇产品说明
+
+**背景**：全新的库是空的——侧边栏没有知识库，主区只有一句「先创建一个
+知识库」。对第一次打开的人（包括部署完自己试用的那一刻），空屏不解释
+「这东西是干什么的、我第一步该做什么」。
+
+**决定**：
+
+1. **默认内容是一篇真文档，不是引导浮层。** 播种一个叫「开始使用」的
+   知识库（图标 `computer`，带一句描述），里面一篇《mimir 产品说明》。
+   浮层是**要关掉才能继续的东西**，而一篇真文档是可留下、可改、
+   可被搜到、可被 AI 引用的资产——它同时演示了「一条笔记长什么样」。
+2. **说明的内容有两条自我要求**：每一句都经得起当场验证（提到的按钮、
+   `Ctrl K`、设置分区都真的存在——说明书里出现点不到的按钮比没有更糟），
+   且它自己就是 Markdown 的示例（二级标题、有序列表、行内代码）。
+3. **触发点是两个入口 + 一个持久标记。**
+   - `auth.ts` 的 `user.create.after`：新建号。它覆盖两条建号路径
+     （`OWNER_EMAIL` 环境变量建号与首次注册共用这一个钩子），所以只写一份
+   - `boot.ts` 的 `ensureDefaultContent`：**已有实例**。本次改动之前就建过号
+     的实例不会再经过建号钩子，只能靠启动时补
+   - 判据是设置表的 `seed.defaultContent`（版本号，`hidden` 键），
+     **不是「库是不是空的」**。后者会让「用户删掉默认知识库」变成
+     删不掉的东西——每次重启它都长回来，而用户不会想到「有个标记说该播」
+4. **写入走与用户操作完全相同的路径**（`createFolder` / `createNote`），
+   于是铁律 2（先文件后数据库）、分块与索引、frontmatter、目录指派
+   一个不漏。直接插表会得到一份「看着在、搜不到」的说明。
+5. **失败不阻断**（账号与启动是核心，默认内容是附赠）；**测试环境两个入口
+   各自跳过**（集成测试有自己的账号与库准备流程，自动多出的两行会让
+   「库里有几篇文档」这类断言以难以定位的方式失败）。跳过写在**触发点**
+   而不是服务里，所以 `seedDefaultLibrary` 本身可被测试直接调用。
+
+**影响**：新增 `apps/server/src/services/seed.ts`；`auth.ts` 加
+`user.create.after` 钩子；`boot.ts` 加 `ensureDefaultContent`（在
+`ensureOwnerAccount` 之后，让环境变量建号的路径也走同一次启动）；
+`packages/core` 的键表加一个 `hidden` 键 `seed.defaultContent`；
+`settings.update()` 的返回值在 seed 里**必须检查**。
+
+**验证方式**：新增 `seed.test.ts` 四条（服务端合计 202）——建出的知识库与
+说明的字段齐全、**说明真的落成 vault 文件**（读磁盘校验「文件是真相」）、
+再播一次零变化、**删掉知识库后重播不回来**、播完能被检索到（分块与索引生效）。
+真机验证两条路径：隔离实例 + `OWNER_EMAIL` 建号（日志见
+「已创建默认知识库与产品说明」，标记落库）；把标记删掉模拟已有实例重启
+（`boot.ts` 补齐，标记写回，不重复建内容）。用户本人的实例（`data/mimir.db`）
+补上了「开始使用」知识库与说明，浏览器里确认侧栏出现该库、说明正确渲染。
+
+**踩到的坑**：开发中的实例热重载时，装配层还拿着旧的键表，
+`settings.update({ 'seed.defaultContent': 1 })` 因「未知的配置键」被
+**静默拒绝**（它返回 issues 而不抛错）——结果是内容在、标记不在，
+而那次启动之后不会有第二次机会。两处修正：seed 检查 `update()` 的返回值
+并在失败时抛错（让上层记日志），以及给已有实例补上 `boot.ts` 那条路。
+
+## D-086 迁移日志的 `when` 必须严格递增（否则迁移被静默跳过）
+
+**背景**：M1 的三张新表（`chunks` / `chunk_embeddings` / `feeds`）在**已有实例**
+上一张都没建，而 `pnpm db:migrate` 与启动时的自动迁移都打印「迁移完成」。
+发现它靠的是偶然：播种的产品说明写进了库，但一条分块都没有——不是报错发现的。
+
+**根因**：drizzle 的判据是「`when` 大于库里已应用的最大 `created_at`」。
+journal 里早期条目被手工编过时间戳，`0006_kb_code` 的 `when` 是
+**未来**时间（1791879000000 ≈ 2026-10-13），而 `drizzle-kit generate`
+用真实当前时间（1790950320258 ≈ 2026-10-02）——新迁移的 `when` 更小，
+于是 0010/0011 永远不会被选中。全新库不受影响（那里按顺序全跑），
+**只有已有实例会中招**，而它们正是升级路径上的人。
+
+**决定**：把新迁移的 `when` 改到现有最大值之后（顺延整点，保持可读），
+序号与 SQL 一律不动。已应用的迁移不会重跑（它们在库里），未应用的补上。
+并加一条守卫测试（`apps/server/src/db/migrations.test.ts`）：
+两份 journal 的 `when` 严格递增、`idx` 连续。它**只**校验这两条不变量——
+手工编过的值无法追溯成「真实时间」，而排序正确才是 drizzle 需要的全部。
+
+**为什么这是「静默」类问题里最贵的一种**：写迁移的人会以为它生效了，
+`db:migrate` 的输出也在说生效了，而失败的表现是**几条 SQL 报错**
+（`no such table: chunks`）——那些报错在用户点某个功能之前不出现。
+一台服务器可能带着「缺三张表」的状态运行很久。
+
+**影响**：`drizzle/meta/_journal.json` 与 `drizzle-sqlite/meta/_journal.json`
+的时间戳；新增 `migrations.test.ts`。
+
+**验证方式**：在真实库的**副本**上跑 `pnpm db:migrate`，看到
+`__drizzle_migrations` 由 7 行变 10 行、三张表与 `chunks_fts` 建出；
+故意把最后一条的 `when` 改回退，守卫测试**当场失败**并指出是哪两条
+（证明它不是空转），恢复后转绿。用户实例已按此修复并补跑一次
+`rebuildAllChunks`（3 篇文档 → 5 段，`chunks_fts` 同步）。

@@ -169,6 +169,14 @@ SQLite 路径同理：FTS5 的 `unicode61` 分词器也不认中文词边界，�
 | 图标档的按钮读屏只念「单选按钮 1 of 3」 | antd `Segmented` 把 `title` 挂在内层 label 的 div 上，而可聚焦的是 `<input type=radio>`——两者不关联，`title` 在这里根本不当名称用（真 Chromium 的 AX 树实测 `name: ""`）。文字要用 `.me-sr-only`（`clip-path`，**不是** `display:none`）塞进 label 元素里 |
 | 输入框比同排的按钮小一号 | `.me-input` 那套手写观感（height / padding / border / 字号）挂在 antd 的 `Input` 上，与 antd 的 `:where(…).ant-input` 特异性相同而项目样式更靠后——实测同一排里输入框 12px / 按钮 14px、圆角 4 对 8。控件观感一律归 `--ant-*`，这个类已删（只剩宽度/弹性类） |
 | antd 按钮 hover 时「边框一闪 + 内容抖一下」 | 我们给按钮写 `border: none` 而 antd 的变体样式在 `&:hover` 里用**简写**重写 `border`（`border-width: 1px` + 变体色，特异性高于单类）——hover 那一刻边框从 none 变 1px：颜色从 `currentColor`（深色下是白）过渡到透明，白边一闪；border-box 重算让内容内移 1px（实测头像 x 14 → 14.8）。修法是**留一个恒为透明的 1px 边框**（`border: 1px solid transparent`），并把过渡限定到 `color` / `background-color`（antd 默认的 `all` 会让边框宽度也参与过渡）。裸 `<button>` 不受影响（没有变体样式），只有 antd `Button` 需要 |
+| **SQLite 下裸 SQL 报 `db.execute is not a function`** | drizzle 的 better-sqlite3 驱动**没有 `.execute()`**（只有 `.all()` / `.run()`），而 PG 侧有——同一段代码在服务器（PG）上正常、本地开发与桌面端（SQLite）上炸。宿主自己的方言 SQL 走 `plugins/host.ts` 的 `executeRaw`（与传给插件的 `PluginDatabase.execute` 同一个实现）；**别在 services 里再写 `if (dbDriver === 'sqlite')`**（D-045 的方言分支要点名收敛）。服务端集成测试默认跑 SQLite，所以这类错误「测试全绿、本地炸」不存在——前提是那条 SQL 真的被某条测试跑到（`embed.test.ts` 就是为此而写） |
+| **写了迁移却「没生效」（不报错、不建表）** | drizzle 只跑 `when` **大于**库里已应用最大值的那些迁移，而 `when` 来自 `meta/_journal.json`。**手工编过时间戳的条目会把新迁移挤到后面**：实测 `0006_kb_code` 的 `when` 是未来时间（1791879000000 ≈ 2026-10-13），而 drizzle-kit 生成新迁移用的是真实当前时间（更小），于是 `chunks` / `chunk_embeddings` / `feeds` 在**已有实例**上一张都没建，而 `pnpm db:migrate` 打印「迁移完成」（全新库不受影响——那里按顺序全跑，中招的正是升级路径）。`apps/server/src/db/migrations.test.ts` 的单调性断言守着 |
+| **drizzle 迁移 SQL 的注释里不能出现断点标记** | 迁移文件按 `--> statement-breakpoint` 切分语句，**注释里出现这串字符也会被切开**——实测注释被拦腰切断后，前半段变成「没有语句」的片段，迁移直接报 `contains no statements`。触发器体里有分号，所以触发器单独一个迁移文件（`0001_fts.sql` / `0007_chunks_fts.sql` 的同一条理由） |
+| **sqlite-vec 装不上是静默的（直到第一次语义检索）** | 它按平台分发（linux-x64 等），且只有 SQLite 路径需要。加载在连接时做（`db/client.ts` 的 `createRequire`，**不在模块顶层 import**——PG 部署根本不需要它，顶层 import 会让那条路径也去解析）；**加载失败要抛错**：它的缺席表现是「语义检索返回空」，看起来像「库里没有相关内容」，是最难查的一类 |
+| **分块的检索文本漏掉标题** | `documents.search_text` 是 `toSearchText(title, body)`，分块表只装正文的话，标题里的词就从索引消失（标题「React 组件性能优化」、正文没有「组件」二字时搜「组件」命中 0）。分块器的 `searchText` 一律 `toSearchText(title, content)`，标题由 `syncChunks` 从数据库现取（调用方传会固化旧标题） |
+| **feed 的正文片段跑 Readability 会丢** | RSS 的 `content:encoded` 按规范**已经是正文**，而 Readability 的职责是「从整页里找正文」——两行的片段会被它判为「不像一篇文章」返回 null，整条退化成裸 HTML。片段走 `html-fragment` 解析器（turndown 直转），与抓网页共用同一个转换函数 |
+| **播种/一次性动作「做过了」但标记没落库** | `settings.update()` 对**未注册的键与校验失败**都是「返回 `issues`、不写」——不检查返回值就会「内容写了、标记没写」而函数照常返回成功。症状是每次重启重播一次，而更坏的一种是**用户删掉默认内容之后它又回来**（标记的全部意义就是防这个）。实测踩过：开发中的实例热重载时装配层拿着旧键表，写入被静默拒绝。凡是靠 `settings` 记一次性状态的地方都要看 `ok` |
+| **改了文档却没重算分块（第四条写入路径）** | 分块的写入点只有 `syncChunks` 一个，但**调用它**的路径有四条（笔记新建 / 更新、抓取、上传、重建索引）——抄三遍必漏一处，实测漏的就是上传。新写入路径一律调 `services/chunks.ts` 的 `rebuildChunksAndEmbed` |
 
 完整清单见 `docs/TECH.md` §10。
 
@@ -198,12 +206,13 @@ SQLite 路径同理：FTS5 的 `unicode61` 分词器也不认中文词边界，�
 |---|---|
 | 设计 | 定稿 |
 | 数据库 | **双后端**（D-045）：服务器 = Postgres 17 + pgvector（Docker）；本地开发 / 桌面端 = SQLite（免 Docker，`DATABASE_URL` 未设置时默认） |
-| 后端 | M0 完成：文档 CRUD、目录、标签、双链、检索、会话、抓取、问答（流式）、导出 |
+| 后端 | M0 完成：文档 CRUD、目录、标签、双链、检索、会话、抓取、问答（流式）、导出。**首启播种**（D-085）：第一次建号时自动建一个「开始使用」知识库 + 一篇《mimir 产品说明》；已有实例由启动时补齐，靠 `seed.defaultContent` 标记保证只播一次 |
 | 前端 | 两栏界面（D-047）：导航 + 主区（知识库页 / 详情两态）、会话导航、对话视图、命令面板、抓取对话框、设置页。**知识库是内容的主容器**（D-079）：侧栏平铺列知识库，进子文件夹靠「文档 / …」面包屑；没有「全部文档」页（`scope=all` 落到第一个知识库）；收集入口是知识库页的「添加文档」下拉（上传文件 / 上传文件夹 / 网页抓取 / 直接编辑，都带当前目录）。**四种编辑器共用一套外壳**（D-054：上工具条 / 中编辑区 / 下状态行，铺满容器，头部单行） |
 | 桌面端 | **Electron 载体**（D-046）：窗口加载宿主的地址（cookie / SSE / Range 原生可用），可切远程地址 |
-| 文件 | **多格式上传已落地**（`docs/TECH.md` §13、D-044）：任意格式的原件入库、列表、按格式预览、下载、替换、随导出打包；文本 / HTML / Office 的正文可搜。**PDF 的正文提取**与 RSS 未做 |
+| 文件 | **多格式上传已落地**（`docs/TECH.md` §13、D-044）：任意格式的原件入库、列表、按格式预览、下载、替换、随导出打包；文本 / HTML / Office / **PDF** 的正文可搜（M1-E，D-084）。**RSS 订阅已落地**（设置 › 订阅；收进来的文章与手动抓取同形状） |
 | 六种格式 | **GenOffice 支持的六种都能预览与编辑**（D-056 / D-057）：docx 全文、xlsx 单元格、pptx 文字、html 源码、markdown（即笔记）、pdf 页面级（旋转/删除/调序）。PDF 的**改文字**未做——那要 PDFium 的 WASM，见 TECH §15.12 |
 | Office | 三种格式的原件层都能看、**都能改**：**docx 全文编辑**（分页视图 + 工具栏；D-049）、**pptx 改文字**（渲成 SVG；D-051/D-052）、**xlsx 改单元格**（D-050/D-053）。三者保存都是**补丁式**（改一处不重排整篇 XML）。**界面在包里**（`packages/office/src/shell` + `src/editors`），markdown 笔记与它们同壳（D-054） |
-| 下一步 | 见 `docs/TECH.md` §11（M1：分块与向量化 → 混合检索 → 带引用的问答） |
+| 检索与 AI | **M1 完成**（D-084）：分块 + 向量化（PG=halfvec HNSW / SQLite=sqlite-vec）、混合检索（关键词 + 子串 + 向量，加权 RRF）、引用指回分块真实偏移（相邻合并 + 每篇上限）、AI 摘要 / 标签建议（「⋯」菜单） / 内联改写（选区工具条）。分块与嵌入状态在设置 › 检索；「待嵌入 N 段」如实显示，补嵌入分批可重入 |
+| 下一步 | M2（PRD §4）：浏览器扩展、GitHub Star 同步、划线与注释、移动端速记。Postgres 路径的向量迁移（`drizzle/0010_chunks.sql` 的 HNSW）部署时首次跑一次确认 |
 
 不确定从哪开始就问，不要猜。

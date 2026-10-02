@@ -3,10 +3,27 @@ import { chatParamsFromRequestBody, toServerSentEventsResponse } from '@tanstack
 import type { Citation, FailureKind, Trace, TraceStep } from '@mimir/shared'
 import { EVENT_CITATIONS, EVENT_CONVERSATION, EVENT_FAILURE, EVENT_TRACE } from '@mimir/shared'
 import { toQueryText } from '@mimir/tokenizer'
-import { search } from '../search/index.js'
+import { assemble } from '../plugins/host.js'
+import { assembleCitations, searchChunks, type AssembledCitation } from '../search/index.js'
 import { appendMessage, createConversation, ensureTitle, getConversation } from './conversations.js'
 import { streamChat as streamModelChat, modelReady } from './model.js'
 import { getDocument } from './documents.js'
+
+/**
+ * 通道名的中文标签（trace 用）。与 `assistant.ts` 同一套取值，
+ * 未知的通道名原样显示——加通道时不需要回来改
+ */
+const CHANNEL_LABELS: Record<string, string> = {
+  keyword: '词级召回',
+  substring: '子串兜底',
+  vector: '语义向量',
+}
+
+/** 每篇最多贡献几条引用（`retrieval.maxChunksPerDoc`，§4.11 的第 3 步） */
+async function maxChunksPerDoc(): Promise<number> {
+  const { settings } = assemble()
+  return settings.getNumber('retrieval.maxChunksPerDoc')
+}
 
 /**
  * 流式问答（AG-UI 协议）。
@@ -108,30 +125,37 @@ async function retrieve(question: string, documentId?: string): Promise<Retrieva
     steps.push({ icon: 'check', text: '指定的文档不存在，改为检索全库' })
   }
 
-  const result = await search({ q: question, limit: 8 })
+  const result = await searchChunks({ q: question, limit: 8 })
 
   const byChannel = (name: string) =>
-    result.hits.filter((hit) => (hit.matchedBy as string[]).includes(name)).length
+    result.hits.filter((hit) => hit.matchedBy.includes(name)).length
 
   if (result.hits.length > 0) {
     // 这一行是 trace 里最有信息量的一条：它把「词级命中」与「子串兜底命中」
     // 分开报。看到「子串兜底 1 段」就知道是分词没切对但被兜住了，
-    // 两个都是 0 才是真的没存过（docs/PRD.md §5.6）
-    steps.push({
-      icon: 'search',
-      text: '通道召回结果',
-      meta: `词级召回 ${byChannel('keyword')} 段 · 子串兜底 ${byChannel('substring')} 段`,
+    // 两个都是 0 才是真的没存过（docs/PRD.md §5.6）。
+    //
+    // 通道名**不写死**：`channels` 来自注册表，M1-C 加上向量通道后
+    // 这里无需改动（每个就绪的通道各报一行）
+    const parts = result.channels.map((name) => {
+      const label = CHANNEL_LABELS[name] ?? name
+      return `${label} ${byChannel(name)} 段`
     })
+    steps.push({ icon: 'search', text: '通道召回结果', meta: parts.join(' · ') })
   }
 
-  const citations = buildCitations(result.hits)
+  // 引用组装：相邻分块合并 + 每篇上限（§4.11 的第 2、3 步）。
+  // 上限从设置来（`retrieval.maxChunksPerDoc`），默认 3
+  const maxPerDoc = await maxChunksPerDoc()
+  const assembled = await assembleCitations(result.hits, { limit: 8, maxPerDoc })
+  const citations = buildCitations(assembled)
   const documentCount = new Set(citations.map((item) => item.documentId)).size
 
   if (citations.length > 0) {
     steps.push({
       icon: 'read',
       text: '读取命中的文档并合并相邻分块',
-      meta: `来自 ${documentCount} 个文档，共 ${citations.length} 个分块`,
+      meta: `来自 ${documentCount} 个文档，共 ${citations.length} 段`,
     })
   }
 
@@ -152,23 +176,32 @@ async function retrieve(question: string, documentId?: string): Promise<Retrieva
   }
 }
 
-function buildCitations(hits: Awaited<ReturnType<typeof search>>['hits']): Citation[] {
+/**
+ * 引用卡片由**组装好的分块段**给出（M1-C，§4.11）。
+ *
+ * 偏移是分块自己的真实区间，不再是查询词猜出来的位置——「跳回原文并高亮」
+ * 因此落在正确的地方。截断到 `PER_CITATION_CHARS` 时 `end` 跟着缩：
+ * 契约里它的含义是「这段文字在正文里的结束位置」，不能与 snippet 对不上。
+ */
+function buildCitations(assembled: AssembledCitation[]): Citation[] {
   const citations: Citation[] = []
   let budget = CONTEXT_CHAR_BUDGET
 
-  for (const hit of hits) {
+  for (const item of assembled) {
     if (budget <= 0) break
-    const text = hit.snippet.text.slice(0, Math.min(PER_CITATION_CHARS, budget))
+    const text = item.text.slice(0, Math.min(PER_CITATION_CHARS, budget))
     budget -= text.length
 
     citations.push({
-      documentId: hit.documentId,
-      kind: hit.kind,
-      title: hit.title,
+      documentId: item.documentId,
+      // 来源的联合类型在契约里收窄，而检索层只保证「它是 documents.kind」
+      // （core 不认识这个枚举）。断言发生在**构造 Citation 的这一个点**上
+      kind: item.kind as Citation['kind'],
+      title: item.title,
       snippet: text,
-      start: hit.snippet.start,
-      end: hit.snippet.start + text.length,
-      matchedBy: hit.matchedBy,
+      start: item.start,
+      end: item.start + text.length,
+      matchedBy: item.matchedBy,
     })
   }
 

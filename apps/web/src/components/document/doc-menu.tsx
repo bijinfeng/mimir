@@ -46,6 +46,17 @@ export interface DocMenuOptions {
   folders?: readonly string[]
   /** 建议标签（后端按正文高频词算的）。没有就不显示这一组 */
   suggestedTags?: readonly string[]
+  /**
+   * AI 标签建议（M1-D）。**与上面那条并存、不合并**：
+   * 统计版零成本、随开随算；AI 版要花钱、要用户点一下。
+   * 后者单独一条菜单项，文案里写明「AI」——一次付费调用不该藏在
+   * 一个用户以为是本地计算的动作里。
+   */
+  onAiTags?: () => void
+  /** 生成 AI 摘要（M1-D）。同样要花钱，所以文案里写明 */
+  onSummary?: () => void
+  /** 正在生成（按钮转 loading，防连点） */
+  aiBusy?: boolean
 }
 
 export function buildDocMenu(options: DocMenuOptions): MenuProps['items'] {
@@ -128,6 +139,43 @@ export function buildDocMenu(options: DocMenuOptions): MenuProps['items'] {
     label: doc.folder ? `目录（${doc.folder}）` : '归入目录',
     children: folderChildren,
   })
+
+  /* ── AI（M1-D）────────────────────────────────────────────────
+   *
+   * 「AI 建议标签」与「AI 摘要」放在菜单底部一个独立的组里，
+   * 与上面那些**零成本**的整理动作分开。分组的理由不是好看：
+   * 它们是这个菜单里仅有的**会花钱**的两项（`docs/PRD.md` §5.8 要求
+   * 用户随时知道「这次花钱了吗」），而混在标签、目录之间会让这一点不可见。
+   *
+   * 没有正文时禁用（AI 读不到东西）：一条「点了没反应」的菜单项
+   * 是最坏的一种（DESIGN §7.4），所以给禁用态而不是让它去失败。
+   */
+  if (options.onAiTags || options.onSummary) {
+    const hasBody = doc.body.trim().length > 0
+    const aiChildren: MenuProps['items'] = []
+
+    if (options.onAiTags) {
+      aiChildren.push({
+        key: 'ai-tags',
+        label: options.aiBusy ? 'AI 正在读…' : 'AI 建议标签',
+        disabled: !hasBody || options.aiBusy === true,
+        onClick: options.onAiTags,
+      })
+    }
+    if (options.onSummary) {
+      aiChildren.push({
+        key: 'ai-summary',
+        label: options.aiBusy ? 'AI 正在读…' : 'AI 摘要',
+        disabled: !hasBody || options.aiBusy === true,
+        onClick: options.onSummary,
+      })
+    }
+
+    if (aiChildren.length > 0) {
+      items.push({ type: 'divider' })
+      items.push({ type: 'group', label: 'AI（会产生用量）', children: aiChildren })
+    }
+  }
 
   return items
 }

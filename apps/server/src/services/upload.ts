@@ -13,6 +13,7 @@ import { documents } from '../db/schema.js'
 import { toSearchText } from '@mimir/tokenizer'
 import { readUploadMeta, removeUpload, writeUpload, type UploadMeta } from '../lib/uploads.js'
 import { activeStorage } from '../plugins/host.js'
+import { rebuildChunksAndEmbed } from './chunks.js'
 import { createNote, loadTags, syncTags } from './documents.js'
 import { ensureFolders, normalizeFolder } from './folders.js'
 import { extractText } from './extract.js'
@@ -251,6 +252,18 @@ async function importAsFile(
   if (!row) throw new Error('上传入库失败：数据库未返回记录')
 
   if (tags.length > 0) await syncTags(id, tags)
+
+  /**
+   * 分块 + 尽力嵌入。**这是第四条写入路径**（笔记新建、笔记更新、抓取入库、
+   * 上传入库）——上面那三条都调了 `rebuildChunksAndEmbed`，漏掉这一条的
+   * 后果是「上传的文件正文提取出来了、也能搜到词，但检索单元在分块表里
+   * 没有对应行」——`search.test.ts` 的「文本文件内容可被搜索」当场抓到了它。
+   *
+   * 失败不让上传失败：文件与数据库都已经写好，重建索引会补上分块。
+   */
+  await rebuildChunksAndEmbed(id, body).catch((error: unknown) => {
+    console.warn(`上传后的分块/嵌入失败（${id}），重建索引可修复：`, error)
+  })
 
   return {
     document: toUploadSummary(row, tags),

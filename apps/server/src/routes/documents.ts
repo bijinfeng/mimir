@@ -1,6 +1,8 @@
 import { Hono } from 'hono'
 import {
+  aiTextRequestSchema,
   documentListQuerySchema,
+  embedRequestSchema,
   folderCreateSchema,
   folderDeleteSchema,
   folderMoveSchema,
@@ -17,6 +19,8 @@ import {
   listDocuments,
   updateNote,
 } from '../services/documents.js'
+import { rewriteText, suggestTagsAi, summarizeText } from '../services/ai-text.js'
+import { chunkStats, embedPending, rebuildAllChunks } from '../services/chunks.js'
 import { createFolder, deleteFolder, listFolderTree, moveFolder } from '../services/folders.js'
 import { suggestTags } from '../services/suggestions.js'
 import { countOrphanFiles, reindexVault } from '../services/vault-index.js'
@@ -66,6 +70,37 @@ export const tagsRoute = new Hono<AppEnv>()
 tagsRoute.get('/', async (c) => c.json({ items: await listAllTags() }))
 
 /**
+ * 内联改写（M1-D，`docs/PRD.md` §4 M1）。
+ *
+ * 挂在顶层 `/api/ai` 而不是 `/api/documents/...`：改写的文本**可能还没保存**
+ * （编辑器里选中一段直接改），所以它不该要求先有一篇文档。
+ * `documentId` 只是可选的记账归属。
+ *
+ * 三个能力（摘要 / 标签 / 改写）里只有这一个是「不依赖某篇文档」的，
+ * 所以它单独一个路由组；另外两个挂在文档下（它们要读正文）。
+ */
+export const aiTextRoute = new Hono<AppEnv>()
+
+aiTextRoute.post('/rewrite', async (c) => {
+  const input = await parseInput(c, 'json', aiTextRequestSchema)
+  if (!input.action) {
+    throw new HttpError(
+      400,
+      'INVALID_INPUT',
+      '改写需要指定 action（rewrite / translate / shorten / expand）',
+    )
+  }
+
+  const result = await rewriteText(input.text, input.action, {
+    ...(input.instruction ? { instruction: input.instruction } : {}),
+    // `refId` 是可选的记账归属：没有 documentId 时**不编一个假值**，
+    // 空着比错的归属诚实（账本里「这笔属于谁」必须是真的）
+    ...(input.documentId ? { refId: input.documentId } : {}),
+  })
+  return c.json(result)
+})
+
+/**
  * 建议标签。
  *
  * 整理条把它直接摆成按钮（`docs/PRD.md` §5.10）——后端早就该算它，
@@ -79,6 +114,47 @@ documentsRoute.get('/:id/suggested-tags', async (c) => {
 
   const items = await suggestTags(doc.title, doc.body, { exclude: doc.tags })
   return c.json({ items })
+})
+
+/**
+ * AI 标签建议（M1-D）。
+ *
+ * 与上面那条共用一个 URL 前缀但语义不同：那是**统计**（jieba 词频，
+ * 零成本、随开随算），这是**模型判断**（要花钱、要用户点一下）。
+ * 分成两个端点而不是一个带开关的：界面上的两处文案完全不同
+ * （「建议标签」vs「让 AI 建议」），而一个带开关的端点会让
+ * 「这次花了钱没有」变成要看参数才知道。
+ */
+documentsRoute.post('/:id/suggested-tags/ai', async (c) => {
+  const doc = await getDocument(c.req.param('id'))
+  if (!doc) throw new HttpError(404, 'NOT_FOUND', '文档不存在')
+
+  const result = await suggestTagsAi(doc.title, doc.body, {
+    exclude: doc.tags,
+    refId: doc.id,
+  })
+  return c.json(result)
+})
+
+/**
+ * AI 摘要（M1-D）。
+ *
+ * 走 `summarize` 角色（有自己的适配器，§5.2）。摘要**不落库**——
+ * 它是「现在想看一眼这篇讲了什么」，而落库会引入「摘要过期了吗」
+ * 这个新状态（正文改了、摘要还是旧的）。要看就重新生成一次，
+ * 这在 M1 的量级上比维护一份会过期的缓存便宜。
+ */
+documentsRoute.post('/:id/summary', async (c) => {
+  const doc = await getDocument(c.req.param('id'))
+  if (!doc) throw new HttpError(404, 'NOT_FOUND', '文档不存在')
+
+  /**
+   * 正文太长时只取前面一段：摘要模型对超长输入会截断或报错，
+   * 而**截断由我们做**能保证「取的是开头」这一确定行为
+   * （让模型自己截断时，截在哪里不可知）。
+   */
+  const result = await summarizeText(doc.body.slice(0, 12000), doc.id)
+  return c.json(result)
 })
 
 /**
@@ -131,3 +207,33 @@ maintenanceRoute.post('/reindex', async (c) => {
 })
 
 maintenanceRoute.get('/orphans', async (c) => c.json({ orphans: await countOrphanFiles() }))
+
+/**
+ * 分块状态（M1-B，`docs/TECH.md` §4.10）。
+ *
+ * 返回「共 N 段 · 待嵌入 M 段」，`pending` 为 `null` 表示没配向量化模型——
+ * 界面上「待嵌入」这一栏该显式说是「未配置向量化模型」，而不是显示 0：
+ * 0 会被读成「都嵌好了」，而实际上一条都没有。
+ */
+maintenanceRoute.get('/chunks', async (c) => c.json(await chunkStats()))
+
+/**
+ * 分批补嵌入。**可重入**（§4.10）：判据是向量表里有没有行，
+ * 不是进度计数器——中途失败或重启，下一次从缺的那些继续。
+ *
+ * 返回 `processed`（本次嵌了几条）与 `remaining`（还剩几条）：
+ * 界面按它显示进度条，也用它决定要不要继续调。
+ */
+maintenanceRoute.post('/embed', async (c) => {
+  const input = await parseInput(c, 'json', embedRequestSchema)
+  return c.json(await embedPending(input.limit))
+})
+
+/**
+ * 全量重算分块（换了 `parser.chunk.size` / `overlap` 之后用）。
+ *
+ * **不含嵌入**——重算分块会把变了的分块的旧向量一起删掉（级联），
+ * 新的向量要接着调 `/maintenance/embed` 补。两件事分开是刻意的：
+ * 一个不花钱、一个花钱，分开的按钮让用户知道钱花在哪一步。
+ */
+maintenanceRoute.post('/chunks/rebuild', async (c) => c.json(await rebuildAllChunks()))

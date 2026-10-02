@@ -38,6 +38,7 @@
     "linkedom": "^0.18.13",
     "nanoid": "^6.0.1",
     "postgres": "^3.4.9",
+    "sqlite-vec": "0.1.9",
     "turndown": "^7.2.4",
     "zod": "catalog:"
   },
@@ -48,6 +49,7 @@
     "@types/node": "catalog:",
     "@types/turndown": "^5.0.6",
     "drizzle-kit": "^0.31.10",
+    "pdf-lib": "catalog:",
     "tsx": "4.23.13",
     "typescript": "catalog:",
     "vite": "catalog:",
