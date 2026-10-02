@@ -10,12 +10,36 @@ import { useStatusStyles, useStyles } from './settings.style'
  * 只应该是「填什么内容」，不是「长什么样」。
  */
 
-/** 一组相关的设置项。`title` 是分组标签，不是标题 */
-export function Panel({ title, children }: { title?: ReactNode; children: ReactNode }) {
+/**
+ * 一组相关的设置项。`title` 是分组标签，`extra` 是标题条**右端**的动作。
+ *
+ * `extra`（「拉取模型」/「+ 手动添加」这类）放在标题条上而不是内容区顶部：
+ * 它们是**这一组的动作**，属于标题条的一部分。放进内容区会让「这一组是
+ * 什么」与「能对它做什么」分成两块纵排，白白多占一行高度（demo 形态，
+ * 用户拍板）。右对齐靠 `margin-left: auto`，标题是什么长度都不影响。
+ *
+ * `children` 可省——「预设」那个面板的全部内容（当前选的是哪家 +
+ * 「重新选择」）都在标题条上，没有内容体，再塞一个空 div 会多出
+ * 一段没有内容的内边距。
+ */
+export function Panel({
+  title,
+  extra,
+  children,
+}: {
+  title?: ReactNode
+  extra?: ReactNode
+  children?: ReactNode
+}) {
   const { styles } = useStyles()
   return (
     <div className={styles.panel}>
-      {title ? <div className={styles.panelTitle}>{title}</div> : null}
+      {title || extra ? (
+        <div className={styles.panelTitle}>
+          {title}
+          {extra ? <span className={styles.panelExtra}>{extra}</span> : null}
+        </div>
+      ) : null}
       {children}
     </div>
   )

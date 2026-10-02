@@ -187,15 +187,120 @@ export const MODEL_ROLE_LABELS: Record<ModelRole, string> = {
   embed: '向量化',
 }
 
-/** 模型条目从哪来。它决定了界面上能不能删、刷新时会不会被覆盖 */
+/**
+ * 模型的**用途**：这个模型能拿来做哪类调用。
+ *
+ * ## 为什么要有它（取代按模型名猜）
+ *
+ * 早先「这个模型能不能做向量化」是按模型名里的 `embed` / `bge` 这类词猜的
+ * （`modelsForRole` 与 `probeProvider` 各猜一遍）。猜错的失败方向虽然安全
+ * （用户多看到一个选项），但两个问题真实存在：名字不带关键词的 embedding
+ * 模型（如 `voyage-3`）永远被排除在向量化之外；而用户也没法纠正——
+ * 界面上根本没有这个开关。
+ *
+ * 现在用途是**模型条目上的显式标注**，标记是它唯一的作用：
+ *
+ * | 用途 | 谁能选它 |
+ * |---|---|
+ * | `chat` | 对话 / 深度思考 / 摘要 三个角色 |
+ * | `embed` | 向量化 |
+ * | `rerank` | 重排序（角色未实现，标注先留着） |
+ *
+ * 推断（`inferModelPurposes`）只在**没有显式标注**时兜底：旧配置回填、
+ * 预设建议、端点没回传类型的拉取结果——推断出的值落库之后就是显式标注，
+ * 用户随时可改。
+ */
+export const MODEL_PURPOSES = ['chat', 'embed', 'rerank'] as const
+export type ModelPurpose = (typeof MODEL_PURPOSES)[number]
+
+export const MODEL_PURPOSE_LABELS: Record<ModelPurpose, string> = {
+  chat: '对话',
+  embed: '向量化',
+  rerank: '重排序',
+}
+
+/**
+ * 每个角色接受哪些用途的模型。**任务分配的候选过滤只看这一张表**。
+ *
+ * 摘要与深度思考都归 `chat`：它们与对话共用同一类模型，只是选谁的问题。
+ * `rerank` 没有对应角色——角色本身还没实现（`docs/TECH.md` §5.7），
+ * 标了它的模型暂时不进任何下拉。
+ */
+export const MODEL_ROLE_PURPOSES: Record<ModelRole, ModelPurpose[]> = {
+  chat: ['chat'],
+  reasoning: ['chat'],
+  summarize: ['chat'],
+  embed: ['embed'],
+}
+
+/**
+ * 按模型名推断用途。**这是兜底，不是判据**——推断出来的值会落库，
+ * 之后它是显式标注，用户可改。
+ *
+ * 顺序有意义：`bge-reranker-v2-m3` 同时命中 `bge`（embed 线索）与
+ * `rerank`，所以先判 rerank。误判的代价是用户看到一个多余的候选，
+ * 不是看到一个错误的候选（与 `docs/TECH.md` §5.7 的失败方向一致）。
+ */
+export function inferModelPurposes(modelId: string): ModelPurpose[] {
+  const lower = modelId.toLowerCase()
+  if (lower.includes('rerank')) return ['rerank']
+  if (/embed|bge|gte|e5|nomic/.test(lower)) return ['embed']
+  return ['chat']
+}
+
+/** 模型条目从哪来。它决定了界面上能不能删、拉取时会不会被覆盖 */
 export const modelSourceSchema = z.enum(['preset', 'fetched', 'manual'])
 export type ModelSource = z.infer<typeof modelSourceSchema>
+
+export const modelPurposeSchema = z.enum(MODEL_PURPOSES)
 
 export const providerModelSchema = z.object({
   id: z.string(),
   source: modelSourceSchema,
+  /**
+   * 用途。正常恒非空——空数组只可能出现在提交的形状里，
+   * 服务端归一化（`instances.ts` 的 `normalizePurposes`）会按模型名回填。
+   */
+  purposes: z.array(modelPurposeSchema),
 })
 export type ProviderModel = z.infer<typeof providerModelSchema>
+
+/**
+ * 从端点拉回来的一个模型。
+ *
+ * `purpose` 是**端点回传的类型提示**（如某些网关的 `type: "embedding"`），
+ * 解析不出为 `null`——那时界面按 `inferModelPurposes` 兜底。
+ * 拉取结果不写配置：要不要、怎么合，由界面在保存时决定（D-080）。
+ */
+export const fetchedModelSchema = z.object({
+  id: z.string(),
+  purpose: modelPurposeSchema.nullable(),
+})
+export type FetchedModel = z.infer<typeof fetchedModelSchema>
+
+export const fetchedModelsResultSchema = z.object({
+  models: z.array(fetchedModelSchema),
+  fetchedAt: z.string(),
+})
+export type FetchedModelsResult = z.infer<typeof fetchedModelsResultSchema>
+
+/**
+ * 拉取模型列表的请求。
+ *
+ * 三种来源按序解析（`plugins/provider/src/provider.ts` 的 `fetchModels`）：
+ * 1. `apiKeyDraft`——新建时用户刚填、还没落库的那把
+ * 2. `providerId` 对应实例已存的密钥——编辑时界面拿不到密钥，由服务端解
+ * 3. 都没有 → 拒绝
+ *
+ * `baseUrl` 由界面传（新建时也还没落库），所以这是一次**纯读**请求：
+ * 它不依赖配置里已有什么，也不写回任何东西。
+ */
+export const fetchModelsInputSchema = z.object({
+  providerId: z.string().min(1).nullable().default(null),
+  baseUrl: z.string(),
+  apiKeyDraft: z.string().nullable().default(null),
+})
+export type FetchModelsInput = z.infer<typeof fetchModelsInputSchema>
 
 /**
  * 一个**供应商实例**（下发形状）。

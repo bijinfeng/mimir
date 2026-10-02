@@ -402,7 +402,26 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     /* antd 把按钮内容居中；头像列必须贴左，否则它与上面那列图标错开
        （实测居中时头像落在 x=41.5，贴左 14 才对得上） */
     justify-content: flex-start;
-    border: none;
+    /*
+     * 边框**留 1px 但一直透明**，不要写 border: none。
+     *
+     * antd 的变体样式在 hover 时用简写重写 border（特异性高于我们这一条），
+     * 于是 hover 那一刻边框从 none 变成 1px solid：颜色从 currentColor
+     * （深色下是白）过渡到透明——**白边一闪**；同时 border-box 重算，
+     * 内容被挤进去 1px——实测头像 x 从 14 跳到 14.8，就是那一下抖动。
+     *
+     * 留一个恒为透明的边框，两种情况都不成立：盒子尺寸不变、颜色不变，
+     * 只有 antd 给的那条 hover 底色在起作用（那正是想要的效果）。
+     *
+     * 注：这段注释里**不能出现反引号**——它所在的模板字符串会被提前结束
+     * （见 TECH.md 第 10 节的坑表，这个坑咬过五次）。
+     */
+    border: 1px solid transparent;
+    /* 过渡只留颜色与底色：antd 默认的 all 会让边框宽度也参与过渡，
+       宽度不可动画，重算发生在过渡的每一帧上（抖动的第二个来源） */
+    transition:
+      color 0.2s,
+      background-color 0.2s;
     border-radius: 6px;
     background: none;
     text-align: left;

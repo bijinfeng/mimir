@@ -349,6 +349,40 @@ describe('/api/config 的形状', () => {
       '就绪状态与原因必须一致（ready 为真则原因为 null，为假则必须有原因）',
     ).toEqual([])
   })
+
+  /**
+   * 拉取模型是**纯读**（D-080）：它不写配置，所以创建表单里也能用。
+   * 两条不花网络的失败路径把它的边界说清楚——真发请求的部分由
+   * 浏览器实测覆盖（假端点那次验证过合并规则与类型提示）。
+   */
+  it('拉取模型：没有密钥时拒绝，且不改动配置', async () => {
+    const before = await client.get<{ modelConfig: { providers: unknown[] } }>('/api/config')
+
+    const res = await client.request<{ error: { message: string } }>('/api/config/fetch-models', {
+      method: 'POST',
+      body: JSON.stringify({
+        providerId: null,
+        baseUrl: 'https://example.dev/v1',
+        apiKeyDraft: null,
+      }),
+    })
+
+    expect(res.status).toBe(400)
+    expect(res.body.error.message).toContain('密钥')
+
+    const after = await client.get<{ modelConfig: { providers: unknown[] } }>('/api/config')
+    expect(after.body.modelConfig.providers).toEqual(before.body.modelConfig.providers)
+  })
+
+  it('拉取模型：地址不是 http(s) 时拒绝', async () => {
+    const res = await client.request<{ error: { message: string } }>('/api/config/fetch-models', {
+      method: 'POST',
+      body: JSON.stringify({ providerId: null, baseUrl: 'ftp://nope', apiKeyDraft: 'k' }),
+    })
+
+    expect(res.status).toBe(400)
+    expect(res.body.error.message).toContain('http')
+  })
 })
 
 describe('构建配置（防 D-023 那个坑）', () => {

@@ -2,10 +2,13 @@ import { chat, embed, summarize } from '@tanstack/ai'
 import { openaiCompatible } from '@tanstack/ai-openai/compatible'
 import { createOpenaiEmbedding, createOpenaiSummarize } from '@tanstack/ai-openai'
 import type {
+  FetchedModel,
+  FetchedModelsResult,
+  FetchModelsInput,
   ModelAdapter,
   ModelProvider,
+  ModelPurpose,
   ModelRole,
-  ProviderInstance,
   ProviderOverview,
   ProviderProbe,
   PluginSettings,
@@ -13,10 +16,10 @@ import type {
 } from '@mimir/shared'
 import { MODEL_ROLES, MODEL_ROLE_LABELS as LABELS } from '@mimir/shared'
 import {
+  canServe,
   coerceExisting,
   findPreset,
   wireProviders,
-  withFetchedModels,
   type InternalModelConfig,
   type InternalProvider,
 } from './instances.js'
@@ -46,9 +49,6 @@ import { PROVIDER_PRESETS } from './presets.js'
 
 /** 模型配置的键。它一个键装下整个模型域（供应商是集合，标量键表达不了）*/
 const CONFIG_KEY = 'model.config'
-
-/** 预设里没有标注角色的模型 → 按它的 id 猜能不能用来做向量化 */
-const EMBEDDING_HINTS = ['embed', 'bge', 'gte', 'e5', 'text-embedding', 'nomic']
 
 /*
  * 三个适配器工厂放模块级而不是工厂函数内部：它们只依赖入参，不捕获任何
@@ -82,9 +82,18 @@ function buildSummarize(baseUrl: string, apiKey: string, model: string) {
   return createOpenaiSummarize(model as 'gpt-4o-mini', apiKey, { baseURL: baseUrl })
 }
 
-function looksLikeEmbedding(modelId: string): boolean {
-  const lower = modelId.toLowerCase()
-  return EMBEDDING_HINTS.some((hint) => lower.includes(hint))
+/**
+ * 端点回传的模型类型 → 用途。认不出返回 `null`（由界面按模型名兜底）。
+ *
+ * 这是**顺手的提示，不是判据**：多数 OpenAI 兼容端点只回 `{ id }`，
+ * 少数网关会带 `type` / `object` 字段。判错的代价与推断一样——
+ * 用户看到一个可改的默认值。
+ */
+function purposeFromEndpointType(value: string): ModelPurpose | null {
+  if (/rerank/i.test(value)) return 'rerank'
+  if (/embed/i.test(value)) return 'embed'
+  if (/^(chat|llm|language|text|completion)/i.test(value)) return 'chat'
+  return null
 }
 
 export function createOpenAiCompatibleProvider(
@@ -203,6 +212,18 @@ export function createOpenAiCompatibleProvider(
         const missing: string[] = []
         if (instance.apiKey === '') missing.push('密钥')
         if (binding.model.trim() === '') missing.push('模型')
+
+        /**
+         * 绑定的模型必须真的存在、且用途覆盖这个角色。
+         *
+         * 这不是多余的兜底：手改配置、或改了模型用途之后旧绑定没被清掉，
+         * 都会落到这里。不检查的话界面上显示「就绪」，而第一次调用
+         * 才在深处失败——那是「说真话」原则不允许的（`docs/TECH.md` §7.8）。
+         */
+        const bound = instance.models.find((model) => model.id === binding.model)
+        const servesRole = bound !== undefined && canServe(bound, role)
+        if (missing.length === 0 && bound === undefined) missing.push('模型（已不在列表里）')
+        if (missing.length === 0 && !servesRole) missing.push('用途（该模型未标为可用于此角色）')
 
         // 密钥能不能解开也算「就绪」的一部分：解不开与没配对用户是不同的原因，
         // 但都不能干活
@@ -330,22 +351,23 @@ export function createOpenAiCompatibleProvider(
         const { instance, apiKey } = await resolveInstance(providerId)
 
         /**
-         * 探测哪个模型？优先用它自己列表里的第一个聊天模型。
+         * 探测哪个模型？优先用列表里第一个**标了对话用途**的模型。
          *
          * 这一步的目的是「验证这个供应商能不能用」，所以**不应该依赖角色绑定**
          * ——新建供应商时它还没绑定任何角色。挑模型也不该挑 embedding
-         * （它要一次不同的调用），所以按名字猜一下。
+         * （它要一次不同的调用），所以按用途筛——那是用户声明过的，
+         * 比按名字猜准。
          */
         const candidate =
           modelId ??
-          instance.models.find((model) => !looksLikeEmbedding(model.id))?.id ??
+          instance.models.find((model) => model.purposes.includes('chat'))?.id ??
           instance.models[0]?.id ??
           ''
 
         if (candidate === '') {
           // 没有模型也能验证**密钥与地址**：拉一次模型列表就够了，
           // 而且它不花 token
-          const listed = await fetchModels(instance, apiKey)
+          const listed = await listEndpointModels(instance.baseUrl, apiKey)
           return {
             ok: true,
             message: `连通，端点报告 ${listed.length} 个模型`,
@@ -363,23 +385,51 @@ export function createOpenAiCompatibleProvider(
       })
     },
 
-    async refreshModels(providerId): Promise<ProviderInstance> {
-      const { instance, apiKey } = await resolveInstance(providerId)
-      const models = await fetchModels(instance, apiKey)
-      const fetchedAt = new Date().toISOString()
+    /**
+     * 拉模型清单：**纯读**，结果不写配置（D-080）。
+     *
+     * 密钥的三种来源按序解析：本次新填的草稿 > 已存实例解出的密钥。
+     * 两者都没有时拒绝——探测与拉取都需要一次真实鉴权。
+     *
+     * 为什么不在服务端挑「有没有已存的」而是让界面传 providerId：
+     * 界面拿得到 id 却拿不到密钥，所以「用哪把密钥」这个决定必须
+     * 发生在服务端。传 `apiKeyDraft` 只是为了新建时（还没有实例）能用。
+     */
+    async fetchModels(input: FetchModelsInput): Promise<FetchedModelsResult> {
+      const baseUrl = input.baseUrl.trim().replace(/\/+$/, '')
+      if (!/^https?:\/\//i.test(baseUrl)) {
+        throw new Error('接口地址必须以 http:// 或 https:// 开头')
+      }
 
-      // 拉取成功就写回：界面下次读到的就是这个新列表。
-      // 保留用户手加的模型（withFetchedModels 的职责）
-      const updated = withFetchedModels(instance, models, fetchedAt)
-      await saveInstance(updated)
+      const apiKey = await resolveFetchKey(input)
+      const models = await listEndpointModels(baseUrl, apiKey)
 
-      return wireProviders([updated])[0]!
+      return { models, fetchedAt: new Date().toISOString() }
     },
   }
 
-  /** 拉模型列表：OpenAI 兼容的 `GET /models`。不花 token */
-  async function fetchModels(instance: InternalProvider, apiKey: string): Promise<string[]> {
-    const url = `${instance.baseUrl.replace(/\/+$/, '')}/models`
+  /** 拉取时要用的密钥：新填的草稿优先，其次已存实例 */
+  async function resolveFetchKey(input: FetchModelsInput): Promise<string> {
+    const draft = (input.apiKeyDraft ?? '').trim()
+    if (draft !== '') return draft
+
+    if (input.providerId) {
+      const { instance } = await resolveInstance(input.providerId)
+      return decryptKey(instance)
+    }
+
+    throw new Error('还没有密钥。先填入 API 密钥再拉取')
+  }
+
+  /**
+   * 端点的模型清单：`GET /models`。不花 token，所以可以放心点。
+   *
+   * 返回形状带**用途提示**：多数 OpenAI 兼容端点只回 `{ id }`，
+   * 少数网关在条目里带 `type` / `object`。认得出就用，认不出交给
+   * 界面按模型名兜底——两条路都会落成一个用户可改的显式标注。
+   */
+  async function listEndpointModels(baseUrl: string, apiKey: string): Promise<FetchedModel[]> {
+    const url = `${baseUrl}/models`
 
     let response: Response
     try {
@@ -389,7 +439,7 @@ export function createOpenAiCompatibleProvider(
       })
     } catch (error) {
       // 带上 cause：原始异常里有 errno 与地址，丢它会让排查断在这里
-      throw new Error(describeNetworkError(error, instance.baseUrl), { cause: error })
+      throw new Error(describeNetworkError(error, baseUrl), { cause: error })
     }
 
     if (response.status === 401 || response.status === 403) {
@@ -406,22 +456,26 @@ export function createOpenAiCompatibleProvider(
     const items = Array.isArray(body?.data) ? body.data : []
 
     // `{ data: [{ id }] }` 是 OpenAI 的形状；有些端点直接给数组
-    const ids = items
-      .map((item) => (item as { id?: unknown }).id)
-      .filter((id): id is string => typeof id === 'string' && id.trim() !== '')
+    const models = items.flatMap((item): FetchedModel[] => {
+      const id = (item as { id?: unknown }).id
+      if (typeof id !== 'string' || id.trim() === '') return []
 
-    if (ids.length === 0) {
+      const type = (item as { type?: unknown }).type
+      const object = (item as { object?: unknown }).object
+      const hint = typeof type === 'string' ? type : typeof object === 'string' ? object : ''
+
+      return [{ id: id.trim(), purpose: hint === '' ? null : purposeFromEndpointType(hint) }]
+    })
+
+    const unique = [...new Map(models.map((model) => [model.id, model])).values()].toSorted(
+      (a, b) => a.id.localeCompare(b.id),
+    )
+
+    if (unique.length === 0) {
       throw new Error('端点没有返回任何模型。可能是它在内存里还没加载模型（本地推理服务常见）')
     }
 
-    return [...new Set(ids)].toSorted()
-  }
-
-  /** 写回一个实例（按 id 替换）*/
-  async function saveInstance(updated: InternalProvider): Promise<void> {
-    const config = await loadConfig()
-    const providers = config.providers.map((item) => (item.id === updated.id ? updated : item))
-    await settings.setJson(CONFIG_KEY, { ...config, providers })
+    return unique
   }
 }
 

@@ -2,8 +2,19 @@ import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { Avatar, Button, Dropdown, Menu, Tooltip } from 'antd'
 import type { MenuProps } from 'antd'
-import { LayoutGrid, LogOut, PanelLeftClose, PanelLeftOpen, Settings, User } from 'lucide-react'
-import { useRef } from 'react'
+import {
+  ChartColumn,
+  Check,
+  LayoutGrid,
+  LogOut,
+  Palette,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Settings,
+  User,
+} from 'lucide-react'
+import { useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { BrandMark } from '@/components/BrandMark'
 import { useStyles } from '@/components/NavSidebar.style'
 import { FolderSection } from '@/components/nav/FolderSection'
@@ -11,6 +22,7 @@ import { buildActions, buildConversations, currentKey } from '@/components/nav/m
 import { api } from '@/lib/api'
 import { useScrolled } from '@/lib/use-scrolled'
 import { useUnsaved } from '@/lib/unsaved'
+import { THEME_MODES, THEME_MODE_LABELS, useThemeMode, type ThemeMode } from '@/theme/appearance'
 
 /**
  * 左导航。
@@ -109,30 +121,37 @@ export function NavSidebar({
     )
 
   /**
-   * 去设置 › 账号。
+   * 去设置 › 某个分区。
    *
    * `scope` 必须显式带上：搜索参数沿路由树合并，而父路由把它声明成必填。
-   * `section` 也必须带——不带会落在默认的「模型」分区，而用户点的是头像。
+   * `section` 也必须带——「账号资料」与「数据统计」各有明确的目的地，
+   * 不带就会落在默认的第一个分区。
    */
-  const goSettings = () =>
+  const goSettingsSection = (section: 'account' | 'stats') =>
     runGuarded(
       () =>
         void navigate({
           to: '/settings',
-          search: { scope: 'all', section: 'account' as const },
+          search: { scope: 'all', section },
         }),
     )
+
+  /**
+   * 去设置首页（**不带 `section`**）——落在默认的第一个分区（模型）。
+   *
+   * 这是齿轮 ⚙ 的去处：它不带名字，用户要的是「打开设置」而不是
+   * 「打开设置的某一分区」。先前它跟账号资料共用 `section: 'account'`，
+   * 于是点齿轮落在最后一个 tab——用户报的就是这个。
+   */
+  const goSettings = () =>
+    runGuarded(() => void navigate({ to: '/settings', search: { scope: 'all' } }))
 
   /** 点击分发。key 的约定见 components/nav/menu-items.tsx */
   const onMenuClick: MenuProps['onClick'] = ({ key }) => {
     if (key.startsWith('conv:')) return goChat(key.slice('conv:'.length))
     if (key === 'action:new-chat') return goChat()
     if (key === 'action:search') return onOpenPalette()
-    // 设置页的 search 与 docs 同形状（父路由声明了必填的 scope），
-    // 所以这里必须带上它，不能传空对象
-    if (key === 'action:settings') {
-      return runGuarded(() => void navigate({ to: '/settings', search: { scope: 'all' } }))
-    }
+    if (key === 'action:settings') return goSettings()
   }
 
   const selectedKey = currentKey(selection)
@@ -271,8 +290,9 @@ export function NavSidebar({
         <AccountRow
           collapsed={collapsed}
           settingsActive={selection.page === 'settings'}
-          onOpenAccount={() => goSettings()}
-          onOpenSettings={() => goSettings()}
+          onOpenAccount={() => goSettingsSection('account')}
+          onOpenSettings={goSettings}
+          onOpenStats={() => goSettingsSection('stats')}
         />
       </div>
     </nav>
@@ -290,8 +310,20 @@ export function NavSidebar({
  * └──────────────────────────────────┘
  * ```
  *
- * - **头像 + 名字**：点开菜单（账号资料 / 外观 / 登出）
- * - **⚙ 图标贴最右**：直接进设置
+ * - **头像 + 名字**：点开菜单（账号资料 / 主题 / 数据统计 / 登出）
+ * - **⚙ 图标贴最右**：直接进设置首页（落在第一个分区，不替用户选分区）
+ *
+ * ## 菜单里的两个快捷入口
+ *
+ * 「主题」是一个子菜单（三个取值：跟随系统 / 浅色 / 深色，当前项打勾），
+ * 「数据统计」直接跳设置 › 统计分区。两者都是**同一设置的第二个入口**——
+ * 完整说明仍在设置页（「外观」分区解释它为什么只存在本浏览器、
+ * 「统计」分区有热力图与表格）。快捷入口只做切换与跳转，不长出新语义。
+ *
+ * 早先这里刻意不放主题（理由是「同一个设置出现两个家，必然有一天只改
+ * 一处」）。用户要求加之后，那个风险由**同一个写入函数**兜住：
+ * 菜单与设置页都调 `appearance.ts` 的 `setThemeMode`，没有第二份状态
+ * 可漂移（`docs/DECISIONS.md` D-081）。
  *
  * ## 为什么不是「两行」或「点哪都进设置」
  *
@@ -316,14 +348,29 @@ function AccountRow({
   settingsActive,
   onOpenAccount,
   onOpenSettings,
+  onOpenStats,
 }: {
   collapsed: boolean
   settingsActive: boolean
   onOpenAccount: () => void
   onOpenSettings: () => void
+  onOpenStats: () => void
 }) {
   const { styles } = useStyles()
   const sessionQuery = useQuery({ queryKey: ['session'], queryFn: api.auth.session })
+  const { mode, setMode } = useThemeMode()
+  /**
+   * 主题子菜单的展开状态。**受控**——这是子菜单那个「弹层残留」的修法：
+   *
+   * 子菜单浮层是**独立的 portal**（挂在 body 下，不在 Dropdown 的弹层里）。
+   * 非受控时，点完子项父层关闭，而它不知道自己该收——于是留在页面上，
+   * 里面的勾还是点之前的值（实测）。受控之后，选择动作与收起动作是同一步，
+   * 弹层没有「悬着」的窗口。
+   *
+   * 声明必须在 `if (!user) return null` **之前**（hooks 不能有条件地少调），
+   * 所以它排在早退之前。
+   */
+  const [themeOpen, setThemeOpen] = useState(false)
   const user = sessionQuery.data?.user
 
   /**
@@ -334,13 +381,41 @@ function AccountRow({
    */
   if (!user) return null
 
+  /**
+   * 主题的三个取值，挂在「主题」子菜单下（**级联形态**，用户拍板）。
+   *
+   * 早先试过子菜单又退回分组平铺，原因是两个实测问题——点完子项后
+   * 弹层残留（独立 portal 不知道父层关了）与勾不更新。这次回到子菜单，
+   * 用**受控 `openKeys`** 修掉根因：选中子项时同步收起子菜单
+   * （见下面的 `onClick`），关整个菜单时也重置（`Dropdown` 的
+   * `onOpenChange`）。弹层残留的窗口因此不存在，勾也随重渲染更新。
+   *
+   * 当前项用 `Check` 打勾而**不禁用**：点当前值是无操作，禁用会读成
+   * 「这一项坏了」——`ComposerMenus` 里那组「当前模型」是真禁用
+   * （那是展示行，不是选择行），两者语义不同。
+   *
+   * 勾走菜单项的 **`extra`**（行尾）而不是 `icon`（行首）：三个取值里只有
+   * 一个带勾，放行首会让选中项的文字比其他两项**整体右移一格**——扫读时
+   * 「浅色」与「深色」不在同一条竖线上。放行尾则文字左对齐、勾在右侧对齐。
+   *
+   * 三个值从 `THEME_MODES` 来、文案从 `THEME_MODE_LABELS` 来：设置页的
+   * `Segmented` 用的是同一对来源，加取值或改文案只改一处。
+   */
+  const themeChildren: MenuProps['items'] = THEME_MODES.map((value: ThemeMode) => ({
+    key: `theme:${value}`,
+    label: THEME_MODE_LABELS[value],
+    extra: mode === value ? <Check size={16} /> : undefined,
+  }))
+
   const items: MenuProps['items'] = [
     { key: 'account', icon: <User size={16} />, label: '账号资料' },
-    /*
-     * 外观（主题）不在这里：它是设置页「外观」分区的职责（带完整的
-     * 说明与取舍记录）。同一个设置出现两个家，必然有一天只改一处。
-     * 见 D-047 待办收尾。
-     */
+    {
+      key: 'theme',
+      icon: <Palette size={16} />,
+      label: '主题',
+      children: themeChildren,
+    },
+    { key: 'stats', icon: <ChartColumn size={16} />, label: '数据统计' },
     { type: 'divider' },
     { key: 'signout', icon: <LogOut size={16} />, label: '登出', danger: true },
   ]
@@ -349,8 +424,11 @@ function AccountRow({
     <Button
       type="text"
       className={`${styles.account} ${collapsed ? styles.accountCollapsed : ''}`}
-      /* 折叠态只剩一个字母头像：名字与「这是一组账号动作」都得靠可及名称补回来 */
-      aria-label={collapsed ? `${user.name}，账号与登出` : undefined}
+      /* 折叠态只剩一个字母头像：「这是谁的账号」「点开是一组动作」
+         都得靠可及名称补回来。文案取「账号菜单」而不是逐项列举——
+         菜单里有四项（账号资料 / 主题 / 数据统计 / 登出），列全了
+         又长又漏得快 */
+      aria-label={collapsed ? `${user.name}，账号菜单` : undefined}
     >
       <Avatar size={26} src={user.image ?? undefined} className={styles.accountAvatar}>
         {user.name.slice(0, 1).toUpperCase()}
@@ -364,10 +442,43 @@ function AccountRow({
       <Dropdown
         trigger={['click']}
         placement="topRight"
+        /* 关菜单时把子菜单状态一并重置：下次打开停在收起态（与 antd
+           的默认行为一致），也不会留下一个「上次展开过的」子菜单 */
+        onOpenChange={(open) => {
+          if (!open) setThemeOpen(false)
+        }}
         menu={{
           items,
+          /* 受控展开（理由见 `themeOpen` 的声明处） */
+          openKeys: themeOpen ? ['theme'] : [],
+          onOpenChange: (keys) => setThemeOpen(keys.includes('theme')),
+          /*
+            主题三项走这里分发（key 前缀 `theme:`）——它们不是独立动作按钮，
+            而是这一组选择里的一个取值。放在分发处而不是给每项挂 onClick：
+            「加一个取值」只需要改 `THEME_MODES`（它本来就是唯一清单），
+            分发处不用动。
+
+            选中时**先把子菜单收起来再切主题**：子菜单浮层是独立 portal，
+            不收的窗口期里它会悬在页面上（上一版的 bug）。收起的动作与
+            选择同一步，就不存在那个窗口。
+          */
           onClick: ({ key }) => {
+            if (key.startsWith('theme:')) {
+              /*
+                用 `flushSync` **同步**收起子菜单，再切主题。
+                
+                不等它异步渲染：`Dropdown` 关闭时 rc-trigger 不再重渲染
+                overlay，而子菜单弹层是**独立 portal**——异步的 state 更新
+                会赶不上关闭动作，弹层就留在屏幕上（实测 aria-expanded 一直
+                是 true、popup 持续可见，而 state 早已是 false）。
+                rc-menu 内部对同类「React 18 合并事件导致不同步」也用
+                flushSync（见其 `triggerOpenKeys` 的 forceFlush 分支）。
+              */
+              flushSync(() => setThemeOpen(false))
+              return setMode(key.slice('theme:'.length) as ThemeMode)
+            }
             if (key === 'account') return onOpenAccount()
+            if (key === 'stats') return onOpenStats()
             if (key === 'signout') return void api.auth.signOutAndLeave()
           },
         }}

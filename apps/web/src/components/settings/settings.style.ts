@@ -119,16 +119,37 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
    * 标题条与行之间不画线（D-070）：tintList 底色已经把「标题条」和
    * 「内容行」分成两种表面，线是重复信号。
    */
+  /**
+   * 面板标题条：**flex 行**——标题在左、`extra` 动作在右。
+   *
+   * flex 而不是块级行内文本：`extra` 里是 antd 的小按钮（24px），
+   * 需要与标题在一条中线上对齐；右对齐靠 `panelExtra` 的 `margin-left: auto`。
+   * `gap` 负责标题与接缝标识之间的间距（`seamTag` 原本的 margin-left
+   * 移到这里，两处都给会叠成 18px）。
+   *
+   * 内边距仍是 11px 16px（只有一处面板带 `extra`，44px 对 43px 的高差
+   * 看不出来；收掉的话另外十几个面板的标题条会一起矮 6px）。
+   * 标题条与内容行之间不画线（D-070）：tintList 底色已经把两种表面分开。
+   */
   panelTitle: css`
+    display: flex;
+    align-items: center;
+    gap: 9px;
     padding: 11px 16px;
     font-size: ${FONT_SIZE.excerpt}px;
     font-weight: 600;
     color: ${token.colorTextSecondary};
     background: ${token.tintList};
   `,
+  /** 标题条右端的动作组。`margin-left: auto` 把它推到最右 */
+  panelExtra: css`
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  `,
   /** 面板标题里的接缝标识：等宽、比标题再弱一档 */
   seamTag: css`
-    margin-left: 9px;
     font-family: ${token.fontFamilyCode};
     font-size: ${FONT_SIZE.meta}px;
     font-weight: 400;
@@ -254,12 +275,87 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   `,
 
   /* ── 供应商卡片 ─────────────────────────────────────── */
-  /** 一行里的字段并排：显示名 + 地址 + 密钥状态 */
+  /**
+   * 卡片：信息在左、三个动作在右上、展开入口整行在下（demo 形态）。
+   *
+   * 两列网格而不是「信息块 + 下面一排按钮」：动作与信息是**并列**的两个
+   * 子项，右上角本来就是卡级动作的惯常位置；纵排会让每张卡多出一行按钮的
+   * 高度。第三行（展开入口）与展开后的模型明细都跨两列（`grid-column`），
+   * 与 demo 的 `pcard` 同一套。
+   */
+  providerCard: css`
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 12px;
+    padding: 14px 16px;
+
+    & + & {
+      border-top: 1px solid ${token.colorBorderSecondary};
+    }
+  `,
+  /** 右上角的动作组。`flex-start` 让它们贴着这一行的上缘（与名字同高） */
+  providerActions: css`
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding-top: 2px;
+  `,
+  /** 展开入口所在的行：跨两列、与上方信息隔一点距离 */
+  providerExpander: css`
+    grid-column: 1 / -1;
+    margin-top: 9px;
+  `,
+  /**
+   * 「查看模型」的链接样式。
+   *
+   * 它是**裸 button + 这套样式**而不是 antd `Button type="link"`：后者带
+   * 自己的内边距与行高，为把文字与卡片左缘对齐要覆写三处（padding /
+   * height / font-size），而这条链接的全部形态就五个属性。裸 button 也
+   * 出现在同一分区的用途 chip 上（`chip`），不是新做法。
+   *
+   * hover 给下划线而不是换色：链接色本身已经是强调色，换色是重复信号
+   * （与左导航菜单项 hover 同一条）。
+   */
+  expanderLink: css`
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: ${token.colorLink};
+    font-size: ${FONT_SIZE.note}px;
+    line-height: 1.7;
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  `,
+  /** 一行里的字段并排：显示名 + 密钥状态 */
   providerHead: css`
     display: flex;
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
+  `,
+  /** 卡片上的供应商名。比正文重一档，它是这一块的标题 */
+  providerName: css`
+    font-size: ${FONT_SIZE.body}px;
+    font-weight: 600;
+    line-height: 1.5;
+    color: ${token.colorText};
+  `,
+  /** 接口地址。等宽 + 一档更弱——它是核对用的，不是主角 */
+  providerUrl: css`
+    margin-top: 1px;
+    font-family: ${token.fontFamilyCode};
+    font-size: ${FONT_SIZE.meta}px;
+    line-height: 1.7;
+    color: ${token.colorTextTertiary};
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   `,
   /**
    * 密钥状态徽标。
@@ -280,24 +376,16 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     line-height: 1.7;
     color: ${token.colorSuccessText};
   `,
-  /** 模型名列表。等宽 + 可换行，扫读时像看一份清单 */
-  modelChips: css`
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    margin-top: 8px;
-  `,
-  modelChip: css`
-    margin: 0;
-    font-family: ${token.fontFamilyCode};
-    font-size: ${FONT_SIZE.meta}px;
-  `,
 
   /* ── 预设选择器 ─────────────────────────────────────── */
   presetGrid: css`
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 8px;
+    /* 与面板里其它块同一套内边距（block 的 13px 16px）：
+       第一版漏了它，九张卡片直接贴着面板的四条边（实测网格矩形 758×189
+       而卡片起止就是面板边界），看起来像面板被压扁了 */
+    padding: 13px 16px;
   `,
   /**
    * 预设卡片。
@@ -418,6 +506,212 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     font-size: ${FONT_SIZE.note}px;
     line-height: 1.75;
     color: ${token.colorTextSecondary};
+  `,
+
+  /* ── 供应商表单（D-080）───────────────────────────────
+     创建与编辑复用同一张表单。形态沿用设置页的键值行：标签列定宽、
+     值列对齐——与任务分配那一组行是同一套（DESIGN §8.1 的「同一列对齐」）。 */
+  formBar: css`
+    margin-bottom: 14px;
+    /* 返回按钮贴左，不要 antd Button 的内边距把它推进去 */
+    margin-left: -7px;
+  `,
+  formRow: css`
+    display: flex;
+    gap: 16px;
+    padding: 12px 16px;
+
+    & + & {
+      border-top: 1px solid ${token.colorBorderSecondary};
+    }
+  `,
+  formLabel: css`
+    flex: none;
+    width: 92px;
+    font-size: ${FONT_SIZE.excerpt}px;
+    line-height: 32px;
+    color: ${token.colorTextSecondary};
+  `,
+  formValue: css`
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  `,
+  formError: css`
+    flex-basis: 100%;
+    font-size: ${FONT_SIZE.badge}px;
+    line-height: 1.7;
+    color: ${token.colorErrorText};
+  `,
+  formFoot: css`
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  `,
+  /** 表单里的说明文字（模型用途那段）。比 blockDesc 收一点，因为它连着控件 */
+  modelHint: css`
+    padding: 0 16px 10px;
+    font-size: ${FONT_SIZE.note}px;
+    line-height: 1.75;
+    color: ${token.colorTextSecondary};
+
+    b {
+      font-weight: 600;
+      color: ${token.colorText};
+    }
+  `,
+  /**
+   * 拉取结果的一行摘要。
+   *
+   * 用主色的浅底（`colorPrimaryBg`）而不是语义色：拉取成功不是「状态好」，
+   * 它只是「刚发生了一件事、结果在下面那些行里」——语义色会读成
+   * 「上线了 / 出问题了」。
+   */
+  pullNote: css`
+    margin: 0 16px 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: ${token.colorPrimaryBg};
+    font-size: ${FONT_SIZE.note}px;
+    line-height: 1.7;
+    color: ${token.colorLink};
+  `,
+
+  /* ── 模型清单：表头 + 行（编辑态与只读态共用网格）────────
+     两者的列宽只有一处定义（`modelColumns`），所以只读展开的行与表单里的
+     行是同一套竖线。用 flex 各自算会各算各的（列表页表头那条教训，D-079）。 */
+  modelHead: css`
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 196px 56px 32px;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px 6px;
+    font-size: ${FONT_SIZE.meta}px;
+    color: ${token.colorTextTertiary};
+    border-bottom: 1px solid ${token.colorBorderSecondary};
+  `,
+  modelRow: css`
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 196px 56px 32px;
+    align-items: center;
+    gap: 12px;
+    padding: 7px 16px;
+
+    & + & {
+      border-top: 1px solid ${token.colorBorderSecondary};
+    }
+  `,
+  modelRowRead: css`
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 196px 56px;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 16px;
+
+    & + & {
+      border-top: 1px solid ${token.colorBorderSecondary};
+    }
+  `,
+  /**
+   * 拉取后新增的行闪一下主色底。
+   *
+   * **只闪新增的**，不是「整块刷新一下」：用户需要知道的是「哪些是刚来的」，
+   * 对整个列表做一次动效等于没告诉任何事。动画结束后底色回到透明，
+   * 但类名留在 DOM 上（`animation-fill-mode: both` 的 `100%` 帧是透明），
+   * 所以不需要定时器去摘它。
+   */
+  modelRowFlash: css`
+    animation: mimir-model-flash 2.6s ease-out both;
+
+    @keyframes mimir-model-flash {
+      0% {
+        background: ${token.colorPrimaryBg};
+      }
+      100% {
+        background: transparent;
+      }
+    }
+  `,
+  /** 只读展开的模型明细：与上方摘要行之间一条线，表明「这是同一张卡的另一层」 */
+  readonlyModels: css`
+    grid-column: 1 / -1;
+    margin-top: 10px;
+    border-top: 1px solid ${token.colorBorderSecondary};
+  `,
+  modelId: css`
+    font-family: ${token.fontFamilyCode};
+    font-size: ${FONT_SIZE.note}px;
+    color: ${token.colorText};
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  `,
+  modelInput: css`
+    font-family: ${token.fontFamilyCode};
+    font-size: ${FONT_SIZE.note}px;
+  `,
+  chipGroup: css`
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+  `,
+  /**
+   * 用途 chip（可点的）。
+   *
+   * 壳是真实 `<button>` 而不是 `Tag.CheckableTag`：`aria-pressed` 是
+   * 「这是一个开关」的语义，antd 的 CheckableTag 只渲染出视觉，
+   * 读屏念不出按下状态。选中态的配色对与导航项同源
+   * （`colorPrimaryBg` 底 + `colorLink` 字，DESIGN §8.1）。
+   */
+  chip: css`
+    display: inline-flex;
+    align-items: center;
+    height: 22px;
+    padding: 0 8px;
+    border: 1px solid ${token.colorBorderSecondary};
+    border-radius: 6px;
+    background: ${token.colorFillQuaternary};
+    font-size: ${FONT_SIZE.meta}px;
+    line-height: 1;
+    color: ${token.colorTextSecondary};
+    cursor: pointer;
+    transition:
+      color 0.12s,
+      border-color 0.12s,
+      background 0.12s;
+
+    &:hover {
+      border-color: ${token.colorTextQuaternary};
+    }
+  `,
+  chipOn: css`
+    background: ${token.colorPrimaryBg};
+    border-color: ${token.colorPrimaryBorder};
+    color: ${token.colorLink};
+    font-weight: 500;
+  `,
+  /** 只读态的用途 chip：同一形状，但不可点、也不给 hover */
+  chipStatic: css`
+    display: inline-flex;
+    align-items: center;
+    height: 22px;
+    padding: 0 8px;
+    border: 1px solid ${token.colorPrimaryBorder};
+    border-radius: 6px;
+    background: ${token.colorPrimaryBg};
+    font-size: ${FONT_SIZE.meta}px;
+    line-height: 1;
+    color: ${token.colorLink};
+  `,
+  /** 来源标签：拉取 / 预设 / 手动。中性三态，不用语义色（不是好坏之分） */
+  sourceTag: css`
+    font-size: ${FONT_SIZE.meta}px;
+    color: ${token.colorTextTertiary};
   `,
 }))
 

@@ -1,16 +1,20 @@
 import { randomUUID } from 'node:crypto'
-import type {
-  ModelRole,
-  ProviderInstance,
-  ProviderModel,
-  ProviderPreset,
-  RoleBinding,
-  SecretCodec,
+import {
+  MODEL_PURPOSES,
+  MODEL_ROLE_PURPOSES,
+  inferModelPurposes,
+  type ModelRole,
+  type ModelPurpose,
+  type ProviderInstance,
+  type ProviderModel,
+  type ProviderPreset,
+  type RoleBinding,
+  type SecretCodec,
 } from '@mimir/shared'
 import { findPreset, inferPresetId } from './presets.js'
 
 /**
- * 供应商实例的存取：**加密、脱敏、密钥合并**。
+ * 供应商实例的存取：**加密、脱敏、密钥合并、模型用途归一化**。
  *
  * 这个文件是模型配置里最容易出错的一处，所以它只做这一件事，
  * 且有独立的测试（`instances.test.ts`）。
@@ -71,8 +75,8 @@ export function emptyModelConfig(): InternalModelConfig {
  *
  * ## 只有这一处实现
  *
- * `overview()` 与 `refreshModels()` 都调它。两份「哪些字段下发」的清单
- * 必然漂移，而那种漂移的症状是密钥泄漏，且没有任何报错。
+ * `toWire`（`overview()` 走它）只调这一个函数。两份「哪些字段下发」的
+ * 清单必然漂移，而那种漂移的症状是密钥泄漏，且没有任何报错。
  */
 export function wireProviders(providers: InternalProvider[]): ProviderInstance[] {
   return providers.map((provider) => ({
@@ -214,14 +218,37 @@ function normalizeModels(raw: unknown): ProviderModel[] {
     const id = typeof item === 'string' ? item : ((item as { id?: unknown }).id as string)
     if (typeof id !== 'string' || id.trim() === '' || seen.has(id)) continue
 
-    seen.add(id)
+    const trimmed = id.trim()
+    seen.add(trimmed)
     models.push({
-      id: id.trim(),
+      id: trimmed,
       source: normalizeSource((item as { source?: unknown }).source),
+      purposes: normalizePurposes((item as { purposes?: unknown }).purposes, trimmed),
     })
   }
 
   return models
+}
+
+/**
+ * 用途归一化。**空数组是回填的触发条件**，不是保留状态。
+ *
+ * 三个到达这里的来源：用户提交（可能忘标）、旧配置（没有这个字段）、
+ * 端点拉取（没回传类型）。三者的正确落库形状是同一个——按模型名推断出
+ * 一个可改的显式标注。留着空数组会让模型从所有角色的下拉里消失，
+ * 而用户看不出为什么。
+ */
+function normalizePurposes(raw: unknown, modelId: string): ModelPurpose[] {
+  if (!Array.isArray(raw)) return inferModelPurposes(modelId)
+
+  const known = new Set<string>(MODEL_PURPOSES)
+  const purposes = [
+    ...new Set(
+      raw.filter((item): item is ModelPurpose => typeof item === 'string' && known.has(item)),
+    ),
+  ]
+
+  return purposes.length > 0 ? purposes : inferModelPurposes(modelId)
 }
 
 function normalizeSource(raw: unknown): ProviderModel['source'] {
@@ -231,15 +258,23 @@ function normalizeSource(raw: unknown): ProviderModel['source'] {
 /**
  * 角色绑定。
  *
- * 指向不存在的供应商的绑定**被丢掉**（不是留着一个悬空引用）：
- * 删掉一个供应商时，指着它的角色会自动变成「未绑定」，
- * 那比让它们悄悄指向一个不存在的 id 好——后者在提问时才报错。
+ * 两条丢弃规则，它们的共同点都是「这个绑定干活时会失败或干错活」：
+ *
+ *  1. 指向不存在的供应商——删掉一个供应商时，指着它的角色自动变成
+ *     「未绑定」，比悄悄指向一个不存在的 id 好（后者在提问时才报错）
+ *  2. 指向一个**没有该角色所需用途**的模型——比如向量化角色绑着一个
+ *     只标了「对话」的模型。用途是用户声明的「这个模型能不能干这个活」，
+ *     声明与绑定矛盾时不保留绑定
+ *
+ * 两条都是**显式置空**而不是跳过：跳过会让库里保留上一次的绑定
+ * （整份配置是覆盖写，缺一个 key 就是「删掉它」），于是指向已删供应商的
+ * 绑定会在库里复活。
  */
 function normalizeRoles(
   raw: unknown,
   providers: InternalProvider[],
 ): Partial<Record<ModelRole, InternalRoleBinding | null>> {
-  const known = new Set(providers.map((provider) => provider.id))
+  const byId = new Map(providers.map((provider) => [provider.id, provider]))
   const roles: Partial<Record<ModelRole, InternalRoleBinding | null>> = {}
   const source = (raw ?? {}) as Record<string, unknown>
 
@@ -252,18 +287,23 @@ function normalizeRoles(
 
     const binding = value as Partial<RoleBinding>
 
-    // 形状不对、或指向一个不存在的供应商 → **显式置空**而不是跳过。
-    //
-    // 两者的区别在写到存储上是实的：跳过会让库里保留上一次的绑定
-    // （因为整份配置是覆盖写，缺一个 key 就是「删掉它」），
-    // 而置空是明确表达「这个角色没有绑定」。
-    // 前者会让一个指向已删供应商的绑定在库里复活。
     if (
       typeof binding.providerId !== 'string' ||
       typeof binding.model !== 'string' ||
-      binding.model.trim() === '' ||
-      !known.has(binding.providerId)
+      binding.model.trim() === ''
     ) {
+      roles[role] = null
+      continue
+    }
+
+    const provider = byId.get(binding.providerId)
+    if (!provider) {
+      roles[role] = null
+      continue
+    }
+
+    const model = provider.models.find((item) => item.id === binding.model)
+    if (!model || !canServe(model, role)) {
       roles[role] = null
       continue
     }
@@ -274,15 +314,39 @@ function normalizeRoles(
   return roles
 }
 
+/**
+ * 一个模型能不能服务某个角色。**候选过滤与绑定校验共用这一条**——
+ * 分成两份就会漂移成「下拉里能选、保存后被清掉」这种自相矛盾的行为。
+ */
+export function canServe(model: ProviderModel, role: ModelRole): boolean {
+  const required = MODEL_ROLE_PURPOSES[role]
+  return model.purposes.some((purpose) => required.includes(purpose))
+}
+
 /* ── 其它小工具 ───────────────────────────────────────── */
 
-/** 把库里那份（可能是 undefined / 坏掉的）收敛成一个可用的形状 */
+/**
+ * 把库里那份（可能是 undefined / 坏掉的）收敛成一个可用的形状。
+ *
+ * **读取路径也要过 `normalizeModels`**：旧配置的模型条目没有 `purposes`
+ * 字段，直接下发会让界面拿到 `undefined`——而界面对它做 `.purposes.some(...)`，
+ * 那会在下拉渲染时崩掉。回填按模型名推断，与写入路径同一份实现。
+ */
 export function coerceExisting(raw: unknown): InternalModelConfig {
   if (!raw || typeof raw !== 'object') return emptyModelConfig()
 
   const value = raw as Partial<InternalModelConfig>
+  const providers: InternalProvider[] = []
+
+  if (Array.isArray(value.providers)) {
+    for (const provider of value.providers as InternalProvider[]) {
+      const normalized = Object.assign({}, provider, { models: normalizeModels(provider.models) })
+      providers.push(normalized)
+    }
+  }
+
   return {
-    providers: Array.isArray(value.providers) ? (value.providers as InternalProvider[]) : [],
+    providers,
     roles: (value.roles ?? {}) as InternalModelConfig['roles'],
     ...(value.migratedFrom ? { migratedFrom: value.migratedFrom } : {}),
   }
@@ -306,34 +370,16 @@ export function fromPreset(
       name: options.name?.trim() || preset.name,
       family: preset.family,
       baseUrl: preset.baseUrl,
-      // 预设的模型先当作 'preset' 来源，拉取成功后会被替换
-      models: preset.models.map((id) => ({ id, source: 'preset' as const })),
+      // 预设的模型先当作 'preset' 来源与推断用途，拉取后才能被端点清单取代
+      models: preset.models.map((id) => ({
+        id,
+        source: 'preset' as const,
+        purposes: inferModelPurposes(id),
+      })),
       hasKey: options.apiKey !== '',
       modelsFetchedAt: null,
     },
     apiKey: options.apiKey,
-  }
-}
-
-/** 用拉取到的模型列表更新一个实例。保留用户手加的那些 */
-export function withFetchedModels(
-  instance: InternalProvider,
-  models: string[],
-  fetchedAt: string,
-): InternalProvider {
-  const manual = instance.models.filter((model) => model.source === 'manual')
-  const manualIds = new Set(manual.map((model) => model.id))
-
-  return {
-    ...instance,
-    // 拉取的在前（它们是端点的真实清单），手加的保留在后
-    models: [
-      ...models
-        .filter((id) => !manualIds.has(id))
-        .map((id) => ({ id, source: 'fetched' as const })),
-      ...manual,
-    ],
-    modelsFetchedAt: fetchedAt,
   }
 }
 

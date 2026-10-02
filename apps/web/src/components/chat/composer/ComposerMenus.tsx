@@ -114,7 +114,11 @@ export function ModelDropdown({ deepReasoning }: { deepReasoning: boolean }) {
           {
             key: 'manage',
             label: '管理模型',
-            onClick: () => void navigate({ to: '/settings', search: { scope: 'all' } }),
+            /* 显式点名 `models` 而不是靠默认值：这是一个**有名字的目的地**
+               （去配模型），而不是「打开设置」。靠默认值会在分区顺序调整时
+               悄悄落到别的 tab，而界面上没有任何东西提示这件事发生了 */
+            onClick: () =>
+              void navigate({ to: '/settings', search: { scope: 'all', section: 'models' } }),
           },
         ],
       }}

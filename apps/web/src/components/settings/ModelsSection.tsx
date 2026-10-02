@@ -1,16 +1,18 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { App, Button, Select, Skeleton, Tooltip } from 'antd'
+import { App, Button, Cascader, Skeleton, Tooltip } from 'antd'
+import { useState } from 'react'
 import type { ModelRoleStatus, ProviderInstance, RuntimeConfig } from '@mimir/shared'
 import { api, ApiRequestError } from '@/lib/api'
+import { ProviderForm } from '@/components/settings/ProviderForm'
 import { ProviderList } from '@/components/settings/ProviderList'
 import {
-  modelsForRole,
-  roleHint,
+  roleOptions,
+  rolesToRecord,
   useSaveModelConfig,
   withRoleBound,
   type ModelConfigDraft,
 } from '@/components/settings/model-config'
-import { Note, Panel, Row } from '@/components/settings/parts'
+import { Panel, Row } from '@/components/settings/parts'
 import { useStyles } from '@/components/settings/settings.style'
 
 /**
@@ -19,7 +21,7 @@ import { useStyles } from '@/components/settings/settings.style'
  * ## 为什么放同一屏（而多数同类产品是两屏）
  *
  * 那些产品分屏是因为它们要装下 60-90 个预设供应商与十几个角色。
- * mimir 的规模是个位数供应商 + 五个角色——一屏装得下，而**装得下就放一起**：
+ * mimir 的规模是个位数供应商 + 四个角色——一屏装得下，而**装得下就放一起**：
  * 「我的模型从哪来」与「哪件事用哪个模型」是同一个决定的两半，
  * 分开两屏会让人来回对照。
  *
@@ -27,18 +29,24 @@ import { useStyles } from '@/components/settings/settings.style'
  *
  * | 块 | 是什么 |
  * |---|---|
- * | 供应商 | 连接：地址 + 密钥 + 这个端点有哪些模型 |
+ * | 供应商 | 连接：地址 + 密钥 + 这个端点有哪些模型（含用途）|
  * | 任务分配 | 绑定：每个角色用**哪个供应商的哪个模型** |
  *
- * 之前是「一份全局连接 + 一堆裸模型名」，所以改供应商要来回看两处、
- * 而且无法表达「对话用 A 家、向量化用 B 家」。现在下边那一栏的选择器
- * 自带供应商——「模型和提供商分开」这个问题在下拉里就消失了。
+ * ## 列表与表单是两个视图，不是两种组件（D-080）
+ *
+ * 列表只读（`ProviderList`），点「编辑」或「+ 添加供应商」切到表单
+ * （`ProviderForm`，创建与编辑复用）。表单是**同一屏里的另一个视图**，
+ * 不弹窗、不跳路由：供应商配置本来就是这一页的内容，
+ * 弹窗会把「我在配哪一段」这层上下文切掉。
  */
 export function ModelsSection() {
   const { styles } = useStyles()
   const configQuery = useQuery({ queryKey: ['config'], queryFn: api.config })
   const save = useSaveModelConfig()
   const { message } = App.useApp()
+
+  /** 「编辑中」的目标实例。`undefined` = 在列表态；`null` = 新建 */
+  const [editing, setEditing] = useState<ProviderInstance | null | undefined>(undefined)
 
   const modelConfig = configQuery.data?.modelConfig
 
@@ -72,15 +80,28 @@ export function ModelsSection() {
     })
   }
 
+  if (editing !== undefined) {
+    return (
+      <ProviderForm
+        /* key 让切换编辑对象时表单重建：内部 state（名称 / 模型草稿）在
+           初始化时取一次，不重建就会带着上一个供应商的值 */
+        key={editing?.id ?? 'new'}
+        providers={modelConfig.providers}
+        roles={modelConfig.roles}
+        presets={modelConfig.presets}
+        editing={editing}
+        onDraft={commit}
+        onDone={() => setEditing(undefined)}
+      />
+    )
+  }
+
   return (
     <>
-      <Note>
-        密钥只存服务端，<span className={styles.strong}>不下发浏览器</span>。
-      </Note>
-
       <ProviderList
         providers={modelConfig.providers}
-        presets={modelConfig.presets}
+        roles={modelConfig.roles}
+        onEdit={setEditing}
         onDraft={commit}
       />
 
@@ -106,30 +127,31 @@ export function ModelsSection() {
   )
 }
 
-function rolesToRecord(roles: ModelRoleStatus[]): Record<string, unknown> {
-  const result: Record<string, unknown> = {}
-  for (const role of roles) {
-    result[role.role] =
-      role.providerId && role.model ? { providerId: role.providerId, model: role.model } : null
-  }
-  return result
-}
-
 /**
- * 一个角色：供应商 + 模型两个下拉，外加状态与探测。
+ * 一个角色：**一个级联选择器（供应商 → 模型）**，外加状态与探测。
  *
- * ## 为什么是两个下拉而不是一个「供应商/模型」组合下拉
+ * ## 为什么合并成一个级联（用户拍板，取代早先的两个 Select）
  *
- * 组合下拉（一个 listbox 里分组）在选项多时更好，但 mimir 的规模下
- * 两个下拉更直接：**先选家再选型号**是用户心里的顺序，而且改供应商时
- * 不用重新在一长串里找位置。
+ * 两个下拉的问题出在「先选家」这个中间态：用户选了供应商、还没选模型时，
+ * 角色处于半配置状态——界面上写「未就绪」，而用户以为已经配好，于是去点
+ * 「测试」发现按不动。级联把「选家」与「选型号」收在一次选择里，
+ * **选中叶子才算绑定**，那个中间态不存在。
+ *
+ * 早先选两个 Select 的理由是「先选家再选型号是用户心里的顺序」——
+ * 那个顺序在级联里依然成立（第一层就是家），只是不再把半成品状态落下来。
  *
  * ## 就绪状态与原因都来自服务端
  *
  * 前端不自己判断「这个角色能不能用」——那需要知道供应商有没有密钥、
- * 密钥能不能解开、模型名是否为空。那些条件写在服务端一处
- * （`plugins/provider/src/provider.ts` 的 `overview()`），
- * 前端复刻一遍必然漂移。
+ * 密钥能不能解开、模型名是否为空、模型的用途覆不覆盖这个角色。
+ * 那些条件写在服务端一处（`plugins/provider/src/provider.ts` 的
+ * `overview()`），前端复刻一遍必然漂移。**原因只在 tooltip 里出现**：
+ * 每行下方不再挂一行说明（用户要求去掉），需要时悬停「未就绪」读。
+ *
+ * ## 选项怎么填
+ *
+ * 候选过滤（用途）、孤立绑定、没有可用模型时的占位都由
+ * `roleOptions` 负责（那个纯函数有测试）；这里只管渲染与提交。
  */
 function RoleRow({
   role,
@@ -152,80 +174,43 @@ function RoleRow({
     onError: (error) => messageApi.error(String(error)),
   })
 
-  const current = providers.find((provider) => provider.id === role.providerId)
-  const choices = current ? modelsForRole(current, role.role) : []
-  const hint = roleHint(role)
-
   /**
-   * 模型下拉的选项。
+   * 占位符。
    *
-   * 当前绑定的模型**不在列表里时也要显示出来**，否则用户看不到自己选了什么
-   * （它可能是刚被「拉取模型」刷掉的名字，或是手改配置写进来的）。
+   * 摘要允许留空（会回落到对话模型），所以它的空态说「留空（回落到对话模型）」
+   * ——否则用户不知道空着也是合法的，会以为没配完。其余角色必须选到一个
+   * 具体模型，「选择供应商与模型」把这一步要做的两件事一起说了。
    */
-  const modelOptions = [
-    ...(role.model !== '' && !choices.some((model) => model.id === role.model)
-      ? [{ value: role.model, label: `${role.model}（不在列表里）` }]
-      : []),
-    ...choices.map((model) => ({ value: model.id, label: model.id })),
-  ]
+  const placeholder = role.role === 'summarize' ? '留空（回落到对话模型）' : '选择供应商与模型'
 
   return (
     <Row label={role.label}>
       {/*
-        两个下拉都用 antd 的 `Select`，宽度写死。
-        宽度不写死的话它会**随选中项的文字长度变宽**，而这两列在五行之间
-        要能上下对齐（扫读时视线不用来回跳，DESIGN §8.1）。宽度取
-        「够放常见供应商名 + 缺密钥后缀」——再长的名字截断，下拉里读全。
-
-        早期这里是原生 `<select>`（理由是「五行设置页用不上浮层与虚拟列表」），
-        但它不服从 token 体系：深色下是浏览器默认的白框，是整页唯一不属于
-        这套设计的东西——与统计分区、账号分区被改掉的是同一个问题
-        （docs/DECISIONS.md D-042、D-045）。
+        宽度写死。级联的下拉浮层按内容宽（供应商列 + 模型列），
+        但触发器固定宽度，让四个角色的控件在行间上下对齐
+        （扫读时视线不用来回跳，DESIGN §8.1）。
       */}
       <div className={styles.actions}>
-        <Select<string | undefined>
-          style={{ width: 200 }}
-          value={role.providerId ?? undefined}
-          placeholder="选择供应商"
+        <Cascader
+          style={{ width: 420 }}
+          value={
+            role.providerId !== null && role.model !== ''
+              ? [role.providerId, role.model]
+              : undefined
+          }
+          placeholder={placeholder}
           allowClear
-          /* 下拉按内容宽：选项里会缀「· 缺密钥」，不必压进 200px 的框 */
-          popupMatchSelectWidth={false}
-          aria-label={`${role.label}的供应商`}
-          onChange={(providerId) => {
-            if (!providerId) {
+          aria-label={`${role.label}的模型`}
+          onChange={(value) => {
+            // 清除（[]）与「只点到供应商层」都归为留空——
+            // 级联的 changeOnSelect 是关的，后者本不该发生，兜一下
+            if (!Array.isArray(value) || value.length < 2) {
               onBind(null)
               return
             }
-            // 换供应商时模型要跟着重置——旧模型名在另一家多半不存在，
-            // 留着它会让这个角色处于「绑定了一个不存在的模型」的状态
-            const next = providers.find((provider) => provider.id === providerId)
-            const first = next ? modelsForRole(next, role.role)[0]?.id : undefined
-            onBind(first ? { providerId, model: first } : null)
+            onBind({ providerId: String(value[0]), model: String(value[1]) })
           }}
-          options={providers.map((provider) => ({
-            value: provider.id,
-            label: provider.hasKey ? provider.name : `${provider.name} · 缺密钥`,
-          }))}
-        />
-
-        <Select<string | undefined>
-          style={{ width: 220 }}
-          value={role.model === '' ? undefined : role.model}
-          disabled={!current || choices.length === 0}
-          /*
-            两种情况要分开说：
-            - 没选供应商 → 「先选供应商」（用户知道下一步做什么）
-            - 选了但没有模型 → 「这家没有模型」（用户知道要去拉取或手加）
-            两者都显示同一句话会让用户以为是后一种而出错方向
-          */
-          placeholder={current ? '这家没有模型' : '先选供应商'}
-          popupMatchSelectWidth={false}
-          aria-label={`${role.label}的模型`}
-          onChange={(model) => {
-            if (!current || !model) return
-            onBind({ providerId: current.id, model })
-          }}
-          options={modelOptions}
+          options={roleOptions(role, providers)}
         />
 
         <StatusDot role={role} />
@@ -239,12 +224,6 @@ function RoleRow({
           测试
         </Button>
       </div>
-
-      {hint ? (
-        <div className={styles.blockDesc} style={{ marginTop: 5 }}>
-          {hint}
-        </div>
-      ) : null}
     </Row>
   )
 }

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { SecretCodec } from '@mimir/shared'
 import {
+  canServe,
   coerceExisting,
   fromWire,
   toWire,
-  withFetchedModels,
   type InternalModelConfig,
 } from './instances.js'
 import { migrateLegacySettings, shouldMigrate } from './migrate.js'
@@ -46,7 +46,7 @@ function configWith(apiKey: string): InternalModelConfig {
         family: 'openai-compatible',
         baseUrl: 'https://api.deepseek.com/v1',
         apiKey,
-        models: [{ id: 'deepseek-chat', source: 'preset' }],
+        models: [{ id: 'deepseek-chat', source: 'preset', purposes: ['chat'] }],
         modelsFetchedAt: null,
       },
     ],
@@ -217,25 +217,127 @@ describe('角色绑定', () => {
 
     expect(result.config.roles.summarize).toBeNull()
   })
+
+  it('绑定一个用途不符的模型时被清空（向量化绑到对话模型是错的）', () => {
+    const result = fromWire(
+      {
+        providers: [wireOf(configWith(''))],
+        roles: { embed: { providerId: 'p1', model: 'deepseek-chat' } },
+      },
+      undefined,
+      fakeCipher,
+    )
+
+    // deepseek-chat 的用途是 ['chat']，不覆盖 embed → 不保留
+    expect(result.config.roles.embed).toBeNull()
+  })
+
+  it('绑定一个用途覆盖的模型时保留', () => {
+    const existing = configWith('')
+    existing.providers[0]!.models = [
+      { id: 'deepseek-chat', source: 'preset', purposes: ['chat'] },
+      { id: 'bge-m3', source: 'manual', purposes: ['embed', 'rerank'] },
+    ]
+
+    const result = fromWire(
+      {
+        providers: [wireOf(existing)],
+        roles: { embed: { providerId: 'p1', model: 'bge-m3' } },
+      },
+      undefined,
+      fakeCipher,
+    )
+
+    expect(result.config.roles.embed).toEqual({ providerId: 'p1', model: 'bge-m3' })
+  })
 })
 
-describe('拉取模型列表', () => {
-  it('用户手加的模型不在拉取时被冲掉', () => {
-    const instance = {
-      ...configWith('').providers[0]!,
-      models: [
-        { id: 'from-preset', source: 'preset' as const },
-        { id: 'hand-added', source: 'manual' as const },
+describe('模型用途', () => {
+  it('缺失用途时按模型名回填（旧配置读取路径）', () => {
+    const coerced = coerceExisting({
+      providers: [
+        {
+          id: 'p1',
+          preset: 'custom',
+          name: 'x',
+          family: 'openai-compatible',
+          baseUrl: 'https://example.dev/v1',
+          apiKey: '',
+          // 旧形状：没有 purposes 字段
+          models: [
+            { id: 'text-embedding-3-small', source: 'fetched' },
+            { id: 'bge-reranker-v2-m3', source: 'fetched' },
+            { id: 'gpt-4o-mini', source: 'fetched' },
+          ],
+          modelsFetchedAt: null,
+        },
       ],
-    }
+      roles: {},
+    })
 
-    const updated = withFetchedModels(instance, ['fetched-a', 'fetched-b'], '2026-01-01T00:00:00Z')
+    const purposes = coerced.providers[0]!.models.map((model) => model.purposes)
+    expect(purposes).toEqual([['embed'], ['rerank'], ['chat']])
+  })
 
-    const ids = updated.models.map((model) => model.id)
-    expect(ids).toContain('hand-added')
-    expect(ids).toContain('fetched-a')
-    expect(ids).not.toContain('from-preset')
-    expect(updated.modelsFetchedAt).toBe('2026-01-01T00:00:00Z')
+  it('写入时提交的空用途数组按模型名回填（不是一个都不剩）', () => {
+    const result = fromWire(
+      {
+        providers: [
+          {
+            id: 'p1',
+            preset: 'custom',
+            name: 'x',
+            family: 'openai-compatible',
+            baseUrl: 'https://example.dev/v1',
+            hasKey: false,
+            models: [{ id: 'BAAI/bge-m3', source: 'manual', purposes: [] }],
+            modelsFetchedAt: null,
+          },
+        ],
+        roles: {},
+        keyDrafts: { p1: 'k' },
+      },
+      undefined,
+      fakeCipher,
+    )
+
+    expect(result.config.providers[0]!.models[0]!.purposes).toEqual(['embed'])
+  })
+
+  it('不认识的用途值被丢掉，认得出的保留', () => {
+    const result = fromWire(
+      {
+        providers: [
+          {
+            id: 'p1',
+            preset: 'custom',
+            name: 'x',
+            family: 'openai-compatible',
+            baseUrl: 'https://example.dev/v1',
+            hasKey: false,
+            models: [{ id: 'm', source: 'manual', purposes: ['chat', 'bogus'] }],
+            modelsFetchedAt: null,
+          },
+        ],
+        roles: {},
+        keyDrafts: { p1: 'k' },
+      },
+      undefined,
+      fakeCipher,
+    )
+
+    expect(result.config.providers[0]!.models[0]!.purposes).toEqual(['chat'])
+  })
+
+  it('canServe 按角色用途表判定', () => {
+    const embedModel = { id: 'e', source: 'manual' as const, purposes: ['embed' as const] }
+
+    expect(canServe(embedModel, 'embed')).toBe(true)
+    expect(canServe(embedModel, 'chat')).toBe(false)
+    // 摘要与推理都接受 chat 用途
+    const chatModel = { id: 'c', source: 'manual' as const, purposes: ['chat' as const] }
+    expect(canServe(chatModel, 'summarize')).toBe(true)
+    expect(canServe(chatModel, 'reasoning')).toBe(true)
   })
 })
 

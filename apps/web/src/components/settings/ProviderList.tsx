@@ -1,146 +1,131 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { App, Button, Empty, Input, Popconfirm, Tag, Tooltip, Typography } from 'antd'
+import { useMutation } from '@tanstack/react-query'
+import { App, Button, Empty, Popconfirm } from 'antd'
+import { ChevronDown } from 'lucide-react'
 import { useState } from 'react'
-import type { ProviderInstance, ProviderPreset } from '@mimir/shared'
-import { api, ApiRequestError } from '@/lib/api'
 import {
-  providerSummary,
-  withRoleBindingCleared,
+  MODEL_PURPOSE_LABELS,
+  type ModelRoleStatus,
+  type ProviderInstance,
+  type ProviderPreset,
+} from '@mimir/shared'
+import { api } from '@/lib/api'
+import {
+  purposeSummary,
+  withProviderRemoved,
   type ModelConfigDraft,
 } from '@/components/settings/model-config'
 import { Panel } from '@/components/settings/parts'
 import { useStyles } from '@/components/settings/settings.style'
 
 /**
- * 供应商列表。
+ * 供应商列表。**只读**（D-080）——看是看，改是改。
  *
- * ## 一次配置 = 一个实例，所以同一家可以配两次
+ * ## 为什么不再是「就地编辑」
  *
- * 这是与「一份全局 baseURL + key」的实质区别：列表里每一项各有自己的
- * 地址、密钥与模型列表。要一个云端做对话 + 一个本地做向量化，
- * 建两条即可——不需要任何「多实例」的特殊机制，因为**列表本身就是形状**。
+ * 早先每一家都是展开的输入框（名字 / 地址 / 密钥 / 模型），一屏里全是
+ * 可编辑控件：想确认「向量化这家配好没有」要从三个输入框里把值读出来，
+ * 而误点一下就是一个未保存的改动。现在卡片只展示事实——
+ * 名字、密钥有没有、地址、几个模型、用途分布、哪个角色在用——
+ * 要改就进「编辑」页（与创建复用同一张表单）。
  *
- * ## 密钥的三个动作（三个必须分清的状态）
+ * ## 展开的模型明细也是只读的
  *
- * | 用户做什么 | 提交什么 | 服务端 |
- * |---|---|---|
- * | 不改密钥，只改名字 | 不传那个 id | 保留已存的那把 |
- * | 新填一把 | 传新值 | 加密后替换 |
- * | 点「清除」 | 传空串 | 删掉 |
- *
- * 中间那一列是**界面上唯一需要理解的部分**：不传与传空串的含义完全不同，
- * 而搞错的后果是密钥被静默清掉。
+ * 用途标在模型行上（D-080 的用途模型），所以看一眼就知道
+ * 「向量化这家有没有能用的」。改用途要去编辑页——那是一个显式动作。
  */
 export function ProviderList({
   providers,
-  presets,
+  roles,
+  onEdit,
   onDraft,
 }: {
   providers: ProviderInstance[]
-  presets: ProviderPreset[]
+  roles: ModelRoleStatus[]
+  /** `null` 表示新建 */
+  onEdit: (provider: ProviderInstance | null) => void
   /** 把改动交给外层统一提交（一个 json 键 = 整份配置一起写） */
   onDraft: (draft: ModelConfigDraft, options?: { silent?: boolean }) => void
 }) {
   const { styles } = useStyles()
-  const [adding, setAdding] = useState(false)
+  const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set())
+
+  const toggle = (id: string) => {
+    const next = new Set(expanded)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    setExpanded(next)
+  }
 
   return (
-    <>
-      <Panel
-        title={
-          <>
-            供应商
-            <span className={styles.seamTag}>
-              {providers.length > 0 ? `${providers.length} 个` : '还没有配置'}
-            </span>
-          </>
-        }
-      >
-        {providers.length === 0 ? (
-          <div className={styles.block}>
-            <Empty
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description={
-                <span className={styles.blockDesc}>加一个供应商，下面的角色就能选它的模型</span>
-              }
-            />
-          </div>
-        ) : (
-          providers.map((provider) => (
-            <ProviderCard
-              key={provider.id}
-              provider={provider}
-              providersSnapshot={providers}
-              onDraft={onDraft}
-            />
-          ))
-        )}
-
+    <Panel
+      title={
+        <>
+          供应商
+          <span className={styles.seamTag}>
+            {providers.length > 0 ? `${providers.length} 个` : '还没有配置'}
+          </span>
+        </>
+      }
+    >
+      {providers.length === 0 ? (
         <div className={styles.block}>
-          {adding ? (
-            <PresetPicker
-              presets={presets}
-              onCancel={() => setAdding(false)}
-              onPick={(preset, name, apiKey, provider) => {
-                setAdding(false)
-                onDraft(
-                  {
-                    providers: [...providers, provider],
-                    roles: {},
-                    keyDrafts: { [provider.id]: apiKey },
-                  } as ModelConfigDraft,
-                  { silent: true },
-                )
-                void name
-              }}
-            />
-          ) : (
-            <Button type="dashed" onClick={() => setAdding(true)}>
-              + 添加供应商
-            </Button>
-          )}
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description={
+              <span className={styles.blockDesc}>加一个供应商，下面的角色就能选它的模型</span>
+            }
+          />
         </div>
-      </Panel>
-    </>
+      ) : (
+        providers.map((provider) => (
+          <ProviderCard
+            key={provider.id}
+            provider={provider}
+            providersSnapshot={providers}
+            roles={roles}
+            expanded={expanded.has(provider.id)}
+            onToggle={() => toggle(provider.id)}
+            onEdit={() => onEdit(provider)}
+            onDraft={onDraft}
+          />
+        ))
+      )}
+
+      <div className={styles.block}>
+        <Button type="dashed" block onClick={() => onEdit(null)}>
+          + 添加供应商
+        </Button>
+      </div>
+    </Panel>
   )
 }
 
 /**
- * 一个供应商。
+ * 一个供应商（只读卡片）。
  *
- * 字段就地可改（名字 / 地址），因为它们是**一行的两个属性**——
- * 弹窗或折叠面板会让「改一下地址」变成三步操作。
- * 模型列表与密钥另有两个显式动作（拉取 / 保存），因为它们各要一次请求。
+ * 摘要行回答四个问题：有几个模型、什么时候拉的、用途怎么分布、
+ * 哪个角色在用。它们全是**扫读型事实**——用户来这一页就是来核对这些的。
  */
 function ProviderCard({
   provider,
   providersSnapshot,
+  roles,
+  expanded,
+  onToggle,
+  onEdit,
   onDraft,
 }: {
   provider: ProviderInstance
   /** 完整列表：删除时要基于它算出「去掉这一个」的结果 */
   providersSnapshot: ProviderInstance[]
+  roles: ModelRoleStatus[]
+  expanded: boolean
+  onToggle: () => void
+  onEdit: () => void
   onDraft: (draft: ModelConfigDraft, options?: { silent?: boolean }) => void
 }) {
   const { styles } = useStyles()
   const { message } = App.useApp()
-  const queryClient = useQueryClient()
-
-  const [name, setName] = useState(provider.name)
-  const [baseUrl, setBaseUrl] = useState(provider.baseUrl)
-  const [keyDraft, setKeyDraft] = useState('')
-
-  /** 拉到新列表后本地也要跟上（服务端已经写回了） */
-  const refresh = useMutation({
-    mutationFn: () => api.refreshProviderModels(provider.id),
-    onSuccess: (result) => {
-      message.success(`拉到 ${result.instance.models.length} 个模型`)
-      void queryClient.invalidateQueries({ queryKey: ['config'] })
-    },
-    onError: (error) => {
-      message.error(error instanceof ApiRequestError ? error.message : String(error))
-    },
-  })
 
   /** 供应商级探测：不依赖角色绑定，所以新建之后立刻能验 */
   const probe = useMutation({
@@ -152,72 +137,51 @@ function ProviderCard({
     onError: (error) => message.error(String(error)),
   })
 
-  const dirty = name !== provider.name || baseUrl !== provider.baseUrl || keyDraft !== ''
+  const usedBy = roles.filter((role) => role.providerId === provider.id)
+  const purposes = purposeSummary(provider.models)
+  const fetched = provider.modelsFetchedAt
+    ? `${new Date(provider.modelsFetchedAt).toLocaleString()} 拉取过`
+    : '来自预设'
+
+  const meta = [
+    `${provider.models.length} 个模型 · ${fetched}`,
+    purposes,
+    usedBy.length > 0 ? `角色在用：${usedBy.map((role) => role.label).join('、')}` : null,
+  ].filter(Boolean)
 
   return (
-    <div className={styles.block}>
-      <div className={styles.providerHead}>
-        <Input
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          style={{ width: 160 }}
-          placeholder="显示名"
-        />
-        <Input
-          value={baseUrl}
-          onChange={(event) => setBaseUrl(event.target.value)}
-          style={{ flex: 1, minWidth: 200 }}
-          placeholder="https://api.example.com/v1"
-        />
-        <KeyBadge provider={provider} />
+    <div className={styles.providerCard}>
+      <div>
+        <div className={styles.providerHead}>
+          <span className={styles.providerName}>{provider.name}</span>
+          <KeyBadge provider={provider} />
+        </div>
+
+        <div className={styles.providerUrl}>{provider.baseUrl}</div>
+        <div className={styles.blockDesc} style={{ marginTop: 5 }}>
+          {meta.join(' · ')}
+        </div>
       </div>
 
-      <div className={styles.providerHead} style={{ marginTop: 8 }}>
-        <Input.Password
-          value={keyDraft}
-          onChange={(event) => setKeyDraft(event.target.value)}
-          style={{ width: 260 }}
-          placeholder={provider.hasKey ? '已配置密钥（留空则不修改）' : '填入 API 密钥'}
-        />
-
-        <Button
-          size="small"
-          type={dirty ? 'primary' : 'default'}
-          disabled={!dirty}
-          onClick={() => {
-            /**
-             * 一行的改动一起提交：名字、地址、密钥（如果有新填的）。
-             *
-             * 密钥只在**用户真的填了**时才进 `keyDrafts`——留空意味着
-             * 「别动已存的那把」。这正是 `keyDrafts` 与「传空串」的区别。
-             */
-            onDraft({
-              providers: [{ ...provider, name, baseUrl }],
-              roles: {},
-              ...(keyDraft.trim() !== '' ? { keyDrafts: { [provider.id]: keyDraft } } : {}),
-            })
-            setKeyDraft('')
-          }}
-        >
-          {dirty ? '保存' : '已保存'}
-        </Button>
-
-        <Button size="small" loading={refresh.isPending} onClick={() => refresh.mutate()}>
-          拉取模型
-        </Button>
-
+      {/*
+        三个动作在**右上角**（demo 形态，用户拍板）：它们作用于整张卡，
+        与左侧「这个供应商是谁」的信息是两个并列的子项。挤在信息块下面
+        会让卡片在纵向上多出一行按钮的高度，而右上角本来就是这类
+        「卡级动作」的惯常位置。
+      */}
+      <div className={styles.providerActions}>
         <Button size="small" loading={probe.isPending} onClick={() => probe.mutate()}>
           测试连接
         </Button>
-
+        <Button size="small" onClick={onEdit}>
+          编辑
+        </Button>
         <Popconfirm
           title="删除这个供应商？"
           description="绑定到它的角色会被清空"
           onConfirm={() =>
             // 从外层传来的完整列表里摘掉这一个（并清掉指向它的角色绑定）
-            onDraft(
-              withRoleBindingCleared({ providers: providersSnapshot, roles: {} }, provider.id),
-            )
+            onDraft(withProviderRemoved({ providers: providersSnapshot, roles: {} }, provider.id))
           }
         >
           <Button size="small" danger>
@@ -226,183 +190,60 @@ function ProviderCard({
         </Popconfirm>
       </div>
 
-      <div className={styles.blockDesc} style={{ marginTop: 6 }}>
-        {providerSummary(provider)}
-        {provider.modelsFetchedAt
-          ? ` · ${new Date(provider.modelsFetchedAt).toLocaleString()} 拉取过`
-          : provider.models.length > 0
-            ? ' · 来自预设'
-            : ''}
+      {/*
+        「查看模型」是**链接样式**（demo 形态）而不是与上面三个动作同款的
+        按钮：它不作用于这一张卡，而是**展开这张卡的另一层**。同款按钮会让
+        四个并排的动作里混进一个语义不同的东西；链接色 + 无边框把它读成
+        「这一行的展开入口」。箭头在文字之后，展开时翻转。
+      */}
+      <div className={styles.providerExpander}>
+        <button type="button" className={styles.expanderLink} onClick={onToggle}>
+          {expanded ? '收起模型' : `查看模型（${provider.models.length}）`}
+          <ChevronDown
+            size={10}
+            style={{
+              transform: expanded ? 'rotate(180deg)' : undefined,
+              transition: 'transform .15s',
+            }}
+          />
+        </button>
       </div>
 
-      {provider.models.length > 0 ? (
-        <div className={styles.modelChips}>
-          {provider.models.slice(0, 12).map((model) => (
-            <Tag key={model.id} className={styles.modelChip}>
-              {model.id}
-            </Tag>
-          ))}
-          {provider.models.length > 12 ? (
-            <span className={styles.blockDesc}>还有 {provider.models.length - 12} 个…</span>
-          ) : null}
+      {expanded ? (
+        <div className={styles.readonlyModels}>
+          {provider.models.length === 0 ? (
+            <div className={styles.blockDesc}>这家还没有模型。进「编辑」拉取或手动添加。</div>
+          ) : (
+            provider.models.map((model) => (
+              <div key={model.id} className={styles.modelRowRead}>
+                <span className={styles.modelId} title={model.id}>
+                  {model.id}
+                </span>
+                <span className={styles.chipGroup}>
+                  {model.purposes.map((purpose) => (
+                    <span key={purpose} className={styles.chipStatic}>
+                      {MODEL_PURPOSE_LABELS[purpose]}
+                    </span>
+                  ))}
+                </span>
+                <span className={styles.sourceTag}>{SOURCE_TEXT[model.source]}</span>
+              </div>
+            ))
+          )}
         </div>
       ) : null}
     </div>
   )
 }
 
+const SOURCE_TEXT = { preset: '预设', fetched: '拉取', manual: '手动' } as const
+
 /** 密钥状态徽标。**只显示有没有，不显示值** */
 function KeyBadge({ provider }: { provider: ProviderInstance }) {
   const { styles } = useStyles()
 
-  if (provider.hasKey) {
-    return (
-      <Tooltip title="密钥已加密存储，不会下发到浏览器">
-        <span className={styles.okBadge}>已配置密钥</span>
-      </Tooltip>
-    )
-  }
-
-  return (
-    <Tooltip title="没有密钥就没法发请求。点「保存」提交你填的那把">
-      <span className={styles.pending}>未配置密钥</span>
-    </Tooltip>
-  )
+  if (provider.hasKey) return <span className={styles.okBadge}>已配置密钥</span>
+  return <span className={styles.pending}>未配置密钥</span>
 }
 
-/**
- * 预设选择器。
- *
- * 这是「加一家服务商不需要写代码」的界面落点：列表直接来自服务端
- * 返回的预设目录（`plugins/provider/src/presets.ts`），所以加一行数据
- * 界面上就多一个选项。
- *
- * 排序把常用（`popular`）放前面，其余按字母——常用的四五家覆盖绝大多数情况。
- */
-function PresetPicker({
-  presets,
-  onPick,
-  onCancel,
-}: {
-  presets: ProviderPreset[]
-  onPick: (preset: ProviderPreset, name: string, apiKey: string, provider: ProviderInstance) => void
-  onCancel: () => void
-}) {
-  const { styles } = useStyles()
-  const [picked, setPicked] = useState<ProviderPreset | null>(null)
-  const [key, setKey] = useState('')
-  const [customUrl, setCustomUrl] = useState('')
-
-  const sorted = [...presets].toSorted((a, b) => {
-    if (a.popular !== b.popular) return a.popular ? -1 : 1
-    return a.name.localeCompare(b.name)
-  })
-
-  if (!picked) {
-    /*
-      预设卡片是 antd `Button`（`default` 变体），不是手写的 `<button>`：
-      描边、hover 底色、按下态、焦点环都由 token 给，深浅两套外观都管得到。
-      卡片自己的排版（三行、左对齐、随内容高度）由 `presetCard` / `presetBody`
-      覆盖——那只改 antd 不知道的部分（docs/DECISIONS.md D-045）。
-    */
-    return (
-      <>
-        <div className={styles.presetGrid}>
-          {sorted.map((preset) => (
-            <Button
-              key={preset.id}
-              className={styles.presetCard}
-              onClick={() => {
-                setPicked(preset)
-                setCustomUrl(preset.baseUrl)
-              }}
-            >
-              <span className={styles.presetBody}>
-                <span className={styles.presetName}>
-                  {preset.name}
-                  {preset.popular ? <span className={styles.presetTag}>常用</span> : null}
-                </span>
-                <span className={styles.presetUrl}>{preset.baseUrl || '需要自己填地址'}</span>
-              </span>
-            </Button>
-          ))}
-        </div>
-
-        {/*
-          「取消」在网格**外面**，与「+ 添加供应商」同一个动作区。
-
-          它原先也是网格里的一张卡：同一描边、同一列宽，排在最后一个供应商
-          之后（实测 237×41 对供应商卡的 237×58）——扫读时读作第 9 家
-          「叫取消的供应商」，点下去才知道是返回。DESIGN §7.3 要的就是
-          「可点击元素各自可辨认」：两种动作（选一家 / 退出这个选择器）
-          不该共用一种形状。
-        */}
-        <div className={styles.actions} style={{ marginTop: 8 }}>
-          <Button onClick={onCancel}>取消</Button>
-        </div>
-      </>
-    )
-  }
-
-  return (
-    <div className={styles.block}>
-      <Typography.Paragraph className={styles.blockDesc} style={{ marginBottom: 10 }}>
-        {picked.name}
-        {picked.note ? ` — ${picked.note}` : ''}
-      </Typography.Paragraph>
-
-      <div className={styles.actions}>
-        <Input
-          value={customUrl}
-          onChange={(event) => setCustomUrl(event.target.value)}
-          style={{ width: 320 }}
-          placeholder="接口地址"
-        />
-        <Input.Password
-          value={key}
-          onChange={(event) => setKey(event.target.value)}
-          style={{ width: 260 }}
-          placeholder={
-            picked.id === 'ollama' || picked.id === 'lmstudio' ? '本地服务随便填一个' : 'API 密钥'
-          }
-        />
-        <Button
-          type="primary"
-          onClick={() =>
-            onPick(
-              picked,
-              picked.name,
-              key.trim() === '' && (picked.id === 'ollama' || picked.id === 'lmstudio')
-                ? 'local'
-                : key,
-              buildInstance(picked, customUrl),
-            )
-          }
-        >
-          添加
-        </Button>
-        <Button onClick={() => setPicked(null)}>返回</Button>
-      </div>
-    </div>
-  )
-}
-
-/**
- * 从预设造一个实例。
- *
- * id 在前端生成（`crypto.randomUUID`）：服务端只把它当作不透明的标识，
- * 而本地生成让「加供应商」成为一次纯粹的写入——不需要先请服务端分配一个 id，
- * 也就没有「分配了但没保存」的中间态。
- */
-function buildInstance(preset: ProviderPreset, baseUrl: string): ProviderInstance {
-  return {
-    id: crypto.randomUUID(),
-    preset: preset.id,
-    name: preset.name,
-    family: preset.family,
-    baseUrl: baseUrl.trim().replace(/\/+$/, ''),
-    hasKey: false,
-    models: preset.models.map((id) => ({ id, source: 'preset' as const })),
-    modelsFetchedAt: null,
-  }
-}
+export type { ProviderPreset }

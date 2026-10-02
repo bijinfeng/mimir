@@ -39,7 +39,8 @@ import { NAV_NARROW_QUERY } from '@/theme/tokens'
  *
  * 用 `?section=` 而不是 `useState`：设置页的地址是可以贴给人的，
  * 「去设置 > 数据与备份」应当能直接给一个链接。刷新回到原分区也是同一件事。
- * 默认值是 models，与原来的首个 tab 一致。
+ * 不带参数时落在**第一个分区**（`DEFAULT_SECTION`，结构性取
+ * `SECTIONS[0]`，不写死字面量——见那里的说明）。
  *
  * ## 窄屏下分区导航换成下拉（`Select`）
  *
@@ -73,6 +74,15 @@ type SectionKey = (typeof SECTIONS)[number]['key']
 const SECTION_KEYS = SECTIONS.map((section) => section.key) as readonly string[]
 
 /**
+ * 默认分区：**结构性地取第一个**，不写死字面量。
+ *
+ * 「打开设置」的语义是「打开这一页」，落在哪个 tab 应当是「排在最前面的
+ * 那一个」而不是一个需要跟着维护的常量——调整分区顺序时默认值自然跟着走，
+ * 不会出现「第一个是检索、不带参数却打开模型」。
+ */
+const DEFAULT_SECTION: SectionKey = SECTIONS[0].key
+
+/**
  * 把任意输入收敛成一个已知分区。
  *
  * 两个调用点（`validateSearch` 与组件）都走这里，是因为**只在一处收敛不够**：
@@ -85,7 +95,7 @@ const SECTION_KEYS = SECTIONS.map((section) => section.key) as readonly string[]
 function resolveSection(value: unknown): SectionKey {
   return typeof value === 'string' && SECTION_KEYS.includes(value)
     ? (value as SectionKey)
-    : 'models'
+    : DEFAULT_SECTION
 }
 
 /**

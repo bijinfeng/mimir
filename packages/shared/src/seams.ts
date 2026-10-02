@@ -1,4 +1,6 @@
 import type {
+  FetchedModelsResult,
+  FetchModelsInput,
   ModelRole,
   ProviderInstance,
   ProviderPreset,
@@ -183,15 +185,6 @@ export interface ProviderProbe {
 }
 
 /**
- * 拉取模型列表的结果。它是**观测**（这个端点现在有哪些模型），
- * 所以带着时刻——界面上要显示「N 分钟前」。
- */
-export interface ModelListResult {
-  models: string[]
-  fetchedAt: string
-}
-
-/**
  * 模型提供方（一条接缝，不是一家服务商）。
  *
  * ## 为什么是「族」而不是「一家」
@@ -218,10 +211,13 @@ export interface ModelProvider {
   /** 角色级真实调用。只由用户显式触发（`docs/TECH.md` §7.8） */
   probe(role: ModelRole): Promise<ProviderProbe>
   /**
-   * 向端点拉模型列表。**显式动作**（用户点「拉取模型」），
-   * 一次真实请求；成功时把结果写进该供应商的模型列表并返回更新后的实例。
+   * 向端点拉模型清单。**纯读：结果不写配置**（D-080）。
+   *
+   * 早先它是「拉取并写回」，于是拉取只能发生在供应商已保存之后——
+   * 而创建表单里用户还没保存任何东西。现在界面拿着结果进草稿、
+   * 随保存一起提交，拉取与手改就是同一份草稿。
    */
-  refreshModels(providerId: string): Promise<ProviderInstance>
+  fetchModels(input: FetchModelsInput): Promise<FetchedModelsResult>
   /**
    * 供应商级探测：真的发一次最小请求。
    *

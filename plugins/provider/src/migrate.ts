@@ -1,4 +1,9 @@
-import type { ModelRole, ProviderInstance, RoleBinding } from '@mimir/shared'
+import {
+  inferModelPurposes,
+  type ModelRole,
+  type ProviderInstance,
+  type RoleBinding,
+} from '@mimir/shared'
 import { inferPresetId } from './presets.js'
 import type { InternalModelConfig, InternalProvider } from './instances.js'
 
@@ -94,7 +99,12 @@ export function migrateLegacySettings(input: MigrationInput): InternalModelConfi
     baseUrl,
     // 旧密钥是明文（或来自环境变量），迁移时加密落库
     apiKey: apiKey === '' ? '' : encrypt(apiKey),
-    models: models.map((id) => ({ id, source: 'preset' as const })),
+    // 用途按模型名推断：旧配置里没有这个字段，推断出的值落库后用户可改
+    models: models.map((id) => ({
+      id,
+      source: 'preset' as const,
+      purposes: inferModelPurposes(id),
+    })),
     modelsFetchedAt: null,
   }
 

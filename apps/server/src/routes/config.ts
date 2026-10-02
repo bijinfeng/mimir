@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import {
+  fetchModelsInputSchema,
   probeRequestSchema,
   updateSettingsInputSchema,
   type ModelConfig,
@@ -251,24 +252,27 @@ async function recordProbe(target: string, startedAt: number, ok: boolean): Prom
 }
 
 /**
- * 拉取一个供应商的模型列表。
+ * 拉取一个供应商的模型清单。
  *
- * 这是个**写操作**（拉到的结果写回配置），所以用 POST。
- * 它也是一次真实网络请求——由用户显式点按钮触发，不自动跑。
+ * 这是个**纯读**请求（D-080）：它不写配置，界面把结果拿进创建 / 编辑表单的
+ * 草稿，随「保存」一起提交。所以创建表单里也能拉——那里还没有实例。
+ *
+ * 用 POST 而不是 GET：它要带上密钥（草稿或已存的），而那不该进 URL。
+ * 密钥的解析在插件里（`fetchModels`）——界面拿不到密钥，只能传 id 或草稿。
  */
-configRoute.post('/providers/:id/refresh', async (c) => {
+configRoute.post('/fetch-models', async (c) => {
   const { providers } = assemble()
   const provider = requireProvider(providers)
+  const input = await parseInput(c, 'json', fetchModelsInputSchema)
 
   try {
-    const instance = await provider.refreshModels(c.req.param('id'))
-    return c.json({ ok: true, instance })
+    return c.json(await provider.fetchModels(input))
   } catch (error) {
     // 拉取失败要说清原因（密钥不对 / 没有 /models / 连不上），
     // 那些话由插件产生——它才知道这个端点的脾气
     throw new HttpError(
       400,
-      'REFRESH_FAILED',
+      'FETCH_MODELS_FAILED',
       error instanceof Error ? error.message : '拉取模型列表失败',
     )
   }

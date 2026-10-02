@@ -1,0 +1,1238 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>mimir · 供应商页改造 demo</title>
+<style>
+:root{
+  color-scheme: light;
+  --bg:#f5f6f8; --container:#fff; --elevated:#fff;
+  --border:#d9d9d9; --border-2:#f0f0f0;
+  --text:#1f2329; --text-2:#5c6570; --text-3:#68707c; --text-4:#8b939c;
+  --primary:#1677ff; --primary-hover:#4096ff; --link:#0958d9;
+  --primary-soft:#e6f4ff; --primary-border:#91caff;
+  --ok-bg:#e6f4ea; --ok-text:#137333;
+  --warn-bg:#fff3e0; --warn-text:#b45309;
+  --err-bg:#fef7f6; --err-text:#c5221f; --err-border:#e8b4b0;
+  --fill:#f5f5f5; --fill-2:#fafafa;
+  --tint-list:#fcfcfd; --tint-nav:#fbfbfc;
+  --shadow:0 6px 16px rgba(0,0,0,.08),0 3px 6px -4px rgba(0,0,0,.12),0 9px 28px 8px rgba(0,0,0,.05);
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+  --mono:ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace;
+}
+[data-theme=dark]{
+  color-scheme: dark;
+  --bg:#0b0c0e; --container:#141618; --elevated:#1e2022;
+  --border:#3c4044; --border-2:#2e3134;
+  --text:rgba(255,255,255,.92); --text-2:rgba(255,255,255,.68); --text-3:rgba(255,255,255,.52); --text-4:rgba(255,255,255,.4);
+  --primary:#1677ff; --primary-hover:#3c89ff; --link:#79b8ff;
+  --primary-soft:#111a2c; --primary-border:#1e3a5f;
+  --ok-bg:#162312; --ok-text:#6cc24a;
+  --warn-bg:#2b2111; --warn-text:#e0a830;
+  --err-bg:#2c1618; --err-text:#f0777a; --err-border:#5c2b2b;
+  --fill:#1e2022; --fill-2:#191b1d;
+  --tint-list:#111315; --tint-nav:#0f1113;
+  --shadow:0 6px 16px rgba(0,0,0,.5),0 3px 6px -4px rgba(0,0,0,.6),0 9px 28px 8px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:var(--sans); background:var(--bg); color:var(--text);
+  font-size:14px; line-height:1.6; -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+button{font-family:inherit;font-size:inherit;color:inherit;background:none;border:none;cursor:pointer}
+input,select{font-family:inherit;font-size:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--primary);outline-offset:1px;border-radius:4px}
+
+/* ───────── 演示控制条（非产品 UI） ───────── */
+.demo-bar{
+  position:sticky;top:0;z-index:60;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  background:#1f2329;color:#e8eaed;padding:9px 16px;font-size:12.5px;
+}
+.demo-brand{font-weight:600}
+.demo-sub{color:#9aa0a6}
+.demo-notes{position:relative}
+.demo-notes summary{cursor:pointer;color:#b6bcc3;list-style:none;user-select:none}
+.demo-notes summary::marker{content:''}
+.demo-notes summary::after{content:' ▾';color:#7c848c}
+.demo-notes[open] summary::after{content:' ▴'}
+.demo-notes ol{
+  position:absolute;left:0;top:26px;z-index:70;width:560px;
+  background:#2c3138;border:1px solid #3a4048;border-radius:8px;
+  padding:12px 14px 12px 30px;color:#c9ced4;line-height:1.8;
+}
+.demo-actions{margin-left:auto;display:flex;gap:8px}
+.demo-actions button{
+  border:1px solid #3a4048;border-radius:6px;color:#c9ced4;
+  padding:3px 10px;font-size:12px;background:#2c3138;
+}
+.demo-actions button:hover{color:#fff;border-color:#5b636c}
+kbd{
+  font-family:var(--mono);font-size:10.5px;background:var(--fill);color:var(--text-3);
+  border:1px solid var(--border-2);border-bottom-width:2px;border-radius:4px;padding:0 4px;
+}
+
+/* ───────── 外壳：左导航 + 内容列 ───────── */
+.shell{display:flex;min-height:calc(100vh - 44px)}
+.nav{
+  flex:none;width:180px;padding:18px 12px;border-right:1px solid var(--border-2);
+  display:flex;flex-direction:column;gap:2px;
+}
+.nav-brand{font-weight:700;font-size:14px;padding:0 10px 14px}
+.nav-item{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:6px 10px;border-radius:8px;font-size:13.5px;color:var(--text-2);
+}
+.nav-item.active{background:var(--primary-soft);color:var(--link);font-weight:500}
+.page{flex:1;min-width:0;overflow-y:auto;padding:28px 40px 72px}
+.inner{max-width:760px;margin:0 auto}
+h1.title{margin:0 0 10px;font-size:19px;font-weight:700;line-height:1.4}
+
+/* ───────── 分区导航 ───────── */
+.tabs{display:flex;gap:22px;border-bottom:1px solid var(--border-2);margin-bottom:26px}
+.tab{
+  position:relative;padding:8px 0 10px;font-size:13.5px;color:var(--text-2);
+}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--link)}
+.tab.active::after{
+  content:'';position:absolute;left:-4px;right:-4px;bottom:-1px;height:2px;
+  background:var(--primary);border-radius:2px;
+}
+
+/* ───────── 通用零件 ───────── */
+.note{
+  padding:12px 15px;margin:14px 0;background:var(--tint-nav);
+  border:1px solid var(--border-2);border-radius:8px;
+  font-size:12.5px;line-height:1.8;color:var(--text-2);
+}
+.note b{color:var(--text)}
+.panel{
+  background:var(--container);border:1px solid var(--border-2);border-radius:10px;
+  overflow:hidden;margin-bottom:14px;
+}
+.panel-head{
+  display:flex;align-items:center;gap:9px;padding:9px 16px;
+  background:var(--tint-list);font-size:13px;font-weight:600;color:var(--text-2);
+}
+.panel-title{font-weight:600}
+.tag{
+  font-size:11.5px;font-weight:400;color:var(--text-3);
+  background:var(--fill);border-radius:4px;padding:0 6px;line-height:1.7;
+}
+.spacer{flex:1}
+.panel-hint{
+  padding:9px 16px;font-size:12px;line-height:1.7;color:var(--text-3);
+  border-bottom:1px solid var(--border-2);
+}
+.panel-hint b{color:var(--text-2);font-weight:600}
+.panel-body{padding:13px 16px}
+.panel-foot{padding:13px 16px;border-top:1px solid var(--border-2)}
+.hint{font-size:12px;color:var(--text-3);line-height:1.7}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:5px;
+  height:32px;padding:0 15px;border-radius:8px;
+  border:1px solid var(--border);background:var(--container);color:var(--text);
+  font-size:14px;transition:all .15s;white-space:nowrap;
+}
+.btn:hover{border-color:var(--primary-hover);color:var(--link)}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+.btn.primary:hover{background:var(--primary-hover);border-color:var(--primary-hover);color:#fff}
+.btn.danger{color:var(--err-text);border-color:var(--err-border)}
+.btn.danger:hover{color:#fff;background:var(--err-text);border-color:var(--err-text)}
+.btn.sm{height:26px;padding:0 10px;font-size:12.5px;border-radius:7px}
+.btn.dashed{border-style:dashed;color:var(--text-2);width:100%}
+.btn.dashed:hover{color:var(--link);border-color:var(--primary)}
+.btn:disabled{opacity:.45;cursor:not-allowed;color:var(--text-3);border-color:var(--border)}
+.btn:disabled:hover{border-color:var(--border)}
+.linkbtn{color:var(--link);font-size:12.5px;padding:0}
+.linkbtn:hover{text-decoration:underline}
+.badge{
+  display:inline-flex;align-items:center;flex:none;padding:1px 7px;border-radius:4px;
+  background:var(--fill);font-size:11.5px;color:var(--text-2);line-height:1.7;
+}
+.badge.ok{background:var(--ok-bg);color:var(--ok-text);font-weight:600}
+.badge.warn{background:var(--warn-bg);color:var(--warn-text)}
+.badge.soft{background:var(--primary-soft);color:var(--link)}
+.mono{font-family:var(--mono);font-size:12px}
+.ok-text{color:var(--ok-text)}
+.warn-text{color:var(--warn-text)}
+.err-text{color:var(--err-text)}
+.muted{color:var(--text-3)}
+
+/* 用途 chip */
+.chip{
+  display:inline-flex;align-items:center;height:22px;padding:0 8px;
+  border:1px solid var(--border-2);border-radius:6px;background:var(--fill-2);
+  font-size:12px;color:var(--text-2);cursor:pointer;transition:all .12s;user-select:none;
+}
+.chip:hover{border-color:var(--text-4)}
+.chip.on{background:var(--primary-soft);border-color:var(--primary-border);color:var(--link);font-weight:500}
+.chip.static{cursor:default}
+.chip.static:hover{border-color:var(--border-2)}
+.chip.static.on:hover{border-color:var(--primary-border)}
+.purposes{display:flex;gap:5px;flex-wrap:wrap}
+
+/* 输入 */
+.input{
+  height:32px;padding:0 11px;border-radius:8px;border:1px solid var(--border);
+  background:var(--container);color:var(--text);font-size:14px;width:220px;
+  transition:border-color .15s, box-shadow .15s;
+}
+.input::placeholder{color:var(--text-4)}
+.input:hover{border-color:var(--primary-hover)}
+.input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-soft)}
+.midinput{width:100%;font-family:var(--mono);font-size:12.5px;height:28px}
+.ferr{color:var(--err-text);font-size:12px;margin-top:5px}
+
+/* 级联选择器（供应商 → 模型，一次选完） */
+.cascade{position:relative;display:inline-flex}
+.cascade-trigger{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  width:420px;height:32px;padding:0 11px;border-radius:8px;border:1px solid var(--border);
+  background:var(--container);font-size:13px;color:var(--text);cursor:pointer;
+  transition:border-color .15s;
+}
+.cascade-trigger:hover{border-color:var(--primary-hover)}
+.cascade-trigger.empty .cascade-value{color:var(--text-4)}
+.cascade-value{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cascade-trigger .caret{
+  flex:none;width:6px;height:6px;
+  border-right:1.5px solid var(--text-3);border-bottom:1.5px solid var(--text-3);
+  transform:rotate(45deg);margin-top:-3px;transition:transform .15s;
+}
+.cascade.open .caret{transform:rotate(225deg);margin-top:2px}
+.cascade-pop{
+  /* fixed 而不是 absolute：面板本身 overflow:hidden（圆角要裁标题条），
+     absolute 的浮层会被裁掉。fixed 相对视口，坐标在渲染后按触发器对齐 */
+  position:fixed;z-index:40;display:flex;
+  background:var(--elevated);border:1px solid var(--border-2);border-radius:8px;
+  box-shadow:var(--shadow);overflow:hidden;
+}
+.cascade-col{min-width:172px;max-height:264px;overflow-y:auto;padding:4px}
+.cascade-col + .cascade-col{border-left:1px solid var(--border-2);min-width:200px}
+.cascade-item{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:5px 9px;border-radius:6px;font-size:13px;cursor:pointer;color:var(--text);
+  white-space:nowrap;
+}
+.cascade-item:hover{background:var(--fill)}
+.cascade-item.on{background:var(--primary-soft);color:var(--link);font-weight:500}
+.cascade-item.plain{cursor:default;color:var(--text-4)}
+.cascade-item.plain:hover{background:none}
+.cascade-item .go{color:var(--text-4);font-size:12px}
+.cascade-models .cascade-item{font-family:var(--mono);font-size:12.5px;justify-content:flex-start}
+
+/* ───────── 供应商卡片（只读） ───────── */
+.pcard{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;
+  padding:14px 16px;
+}
+.pcard + .pcard{border-top:1px solid var(--border-2)}
+.pcard-line1{display:flex;align-items:center;gap:8px}
+.pcard-name{font-size:14px;font-weight:600}
+.pcard-url{
+  color:var(--text-3);font-family:var(--mono);font-size:12px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;
+}
+.pcard-meta{font-size:12.5px;color:var(--text-2);margin-top:5px;line-height:1.75}
+.pcard-actions{display:flex;align-items:flex-start;gap:8px;padding-top:2px}
+.pcard-expander{grid-column:1/-1;margin-top:9px}
+.pmodel-list{
+  grid-column:1/-1;margin-top:8px;border-top:1px solid var(--border-2);
+  padding-top:2px;
+}
+
+/* ───────── 模型行 ───────── */
+.mhead,.mrow{
+  display:grid;grid-template-columns:minmax(0,1fr) 196px 56px 30px;
+  align-items:center;gap:12px;padding:7px 16px;
+}
+.mhead{
+  padding-top:10px;padding-bottom:6px;font-size:12px;color:var(--text-3);
+  border-bottom:1px solid var(--border-2);
+}
+.mrow{border-top:1px solid var(--border-2);font-size:13px}
+.mrow.read{grid-template-columns:minmax(0,1fr) 196px 56px;padding:6px 16px}
+.pmodel-list .mrow:first-child{border-top:none}
+.mhead + .mrow{border-top:none}
+.mid{
+  font-family:var(--mono);font-size:12.5px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.iconbtn{
+  width:24px;height:24px;border-radius:6px;color:var(--text-3);
+  font-size:13px;line-height:1;display:inline-flex;align-items:center;justify-content:center;
+}
+.iconbtn:hover{background:var(--err-bg);color:var(--err-text)}
+.row-err{grid-column:1/-1;margin:0 0 4px}
+@keyframes flashIn{0%{background:var(--primary-soft)}100%{background:transparent}}
+.mrow.flash{animation:flashIn 2.6s ease-out}
+.pull-note{
+  margin:10px 16px 2px;padding:8px 12px;border-radius:8px;
+  background:var(--primary-soft);color:var(--link);font-size:12.5px;line-height:1.7;
+}
+
+/* ───────── 表单 ───────── */
+.back{margin-bottom:12px;display:inline-block}
+.form-title{margin:0 0 14px;font-size:17px;font-weight:600}
+.frow{display:flex;gap:16px;padding:12px 16px}
+.frow + .frow{border-top:1px solid var(--border-2)}
+.flabel{flex:none;width:92px;font-size:13px;color:var(--text-2);line-height:32px}
+.fvalue{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.form-foot{display:flex;align-items:center;gap:10px;margin-top:16px}
+
+/* 预设 */
+.preset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));gap:8px;padding:13px 16px}
+.preset-card{
+  display:flex;flex-direction:column;gap:3px;align-items:flex-start;text-align:left;
+  border:1px solid var(--border);border-radius:8px;padding:9px 11px;background:var(--container);
+  transition:all .15s;
+}
+.preset-card:hover{border-color:var(--primary);background:var(--fill-2)}
+.preset-name{font-size:12.5px;font-weight:600}
+.preset-url{
+  font-family:var(--mono);font-size:11.5px;color:var(--text-3);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;
+}
+
+/* ───────── 任务分配 ───────── */
+.role-row{display:flex;gap:16px;padding:12px 16px;align-items:flex-start}
+.role-row + .role-row{border-top:1px solid var(--border-2)}
+.role-label{flex:none;width:92px;font-size:13px;color:var(--text-2);line-height:32px}
+.role-ctl{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.role-state{font-size:12.5px;color:var(--text-3)}
+
+/* ───────── 浮层 ───────── */
+.mask{
+  position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:80;
+  display:flex;align-items:flex-start;justify-content:center;padding-top:16vh;
+}
+.modal{
+  width:400px;max-width:calc(100vw - 32px);background:var(--elevated);
+  border-radius:10px;box-shadow:var(--shadow);padding:20px 22px 16px;
+}
+.modal-title{font-size:15px;font-weight:600;margin-bottom:8px}
+.modal-body{font-size:13px;color:var(--text-2);line-height:1.8;margin-bottom:18px}
+.modal-foot{display:flex;justify-content:flex-end;gap:10px}
+.toast{
+  position:fixed;left:50%;bottom:36px;transform:translateX(-50%);z-index:90;
+  background:var(--elevated);border:1px solid var(--border-2);border-radius:8px;
+  box-shadow:var(--shadow);padding:9px 14px;font-size:13px;
+  display:flex;align-items:center;gap:8px;max-width:80vw;
+}
+.toast .dot{width:7px;height:7px;border-radius:50%;background:var(--ok-text);flex:none}
+.toast.err .dot{background:var(--err-text)}
+.toast .dot.warn{background:var(--warn-text)}
+</style>
+</head>
+<body>
+
+<div class="demo-bar">
+  <span class="demo-brand">mimir · 供应商页改造 demo</span>
+  <span class="demo-sub">演示数据，不联网</span>
+  <details class="demo-notes">
+    <summary>这次改了什么</summary>
+    <ol>
+      <li>供应商列表默认<strong>只读</strong>：卡片只展示摘要，点「查看模型」展开用途明细，不再一屏输入框</li>
+      <li>「编辑」进表单页，<strong>创建与编辑复用同一个页面</strong>（创建时多一步预设选择）</li>
+      <li>模型清单成为配置的一部分：每个模型标<strong>用途</strong>（对话 / 向量化 / 重排序），用途决定任务分配里哪些角色能选中它</li>
+      <li>任务分配里「供应商 + 模型」合并成<strong>一个级联选择器</strong>：一次选中叶子才算绑定，不再有「选了家还没选型号」的半配置状态</li>
+      <li>「拉取模型」在表单里做：结果先进<strong>草稿</strong>（可改可删），保存才生效；已存在的模型保留你改过的用途，新模型按端点回传的类型或模型名推断；手动添加 / 编辑始终可用</li>
+    </ol>
+  </details>
+  <div class="demo-actions">
+    <button data-action="toggle-theme">切换深色</button>
+    <button data-action="reset">重置演示数据</button>
+  </div>
+</div>
+
+<div class="shell">
+  <aside class="nav">
+    <div class="nav-brand">mimir</div>
+    <div class="nav-item">对话</div>
+    <div class="nav-item">知识库</div>
+    <div class="nav-item">搜索 <kbd>Ctrl K</kbd></div>
+    <div class="nav-item active">设置</div>
+  </aside>
+  <main class="page">
+    <div class="inner">
+      <h1 class="title">设置</h1>
+      <div class="tabs" id="tabs"></div>
+      <div id="content"></div>
+    </div>
+  </main>
+</div>
+
+<div id="overlay"></div>
+<div id="toastbox"></div>
+
+<script>
+/* ═══════════ 演示数据与词汇表 ═══════════ */
+
+const PURPOSES = [
+  { id:'chat',   label:'对话',   hint:'可用于「对话 / 深度思考 / 摘要」三个角色' },
+  { id:'embed',  label:'向量化', hint:'可用于「向量化」角色' },
+  { id:'rerank', label:'重排序', hint:'「重排序」角色尚未实现（M1），可以先把模型标上' },
+]
+
+const ROLE_DEFS = [
+  { id:'chat',      label:'对话',     purposes:['chat'] },
+  { id:'reasoning', label:'深度思考', purposes:['chat'] },
+  { id:'summarize', label:'摘要',     purposes:['chat'], fallback:true },
+  { id:'embed',     label:'向量化',   purposes:['embed'] },
+]
+
+const PRESETS = [
+  { id:'deepseek',    name:'DeepSeek',            baseUrl:'https://api.deepseek.com/v1', models:['deepseek-chat','deepseek-reasoner'] },
+  { id:'siliconflow', name:'硅基流动',             baseUrl:'https://api.siliconflow.cn/v1', models:['Qwen/Qwen3-8B','BAAI/bge-m3','BAAI/bge-reranker-v2-m3'] },
+  { id:'dashscope',   name:'通义千问',             baseUrl:'https://dashscope.aliyuncs.com/compatible-mode/v1', models:['qwen-plus','text-embedding-v4'] },
+  { id:'zhipu',       name:'智谱 GLM',            baseUrl:'https://open.bigmodel.cn/api/paas/v4', models:['glm-4-plus','embedding-3'] },
+  { id:'openai',      name:'OpenAI',              baseUrl:'https://api.openai.com/v1', models:['gpt-4o-mini','text-embedding-3-small'] },
+  { id:'ollama',      name:'Ollama（本地）',       baseUrl:'http://localhost:11434/v1', models:[] },
+  { id:'custom',      name:'自定义（OpenAI 兼容）', baseUrl:'', models:[] },
+]
+
+function m(id, purposes, source){ return { id, purposes, source: source || 'fetched' } }
+
+function seedProviders(){
+  return [
+    {
+      id:'p-aggr', name:'聚合网关', baseUrl:'https://api.example.com/v1', hasKey:true,
+      modelsFetchedAt:'2026-09-30T15:21:20', probe:null,
+      models:[
+        m('auto',['chat']), m('claude-opus-5',['chat']), m('deepseek-flash',['chat']),
+        m('deepseek-v4-flash',['chat']), m('deepseek-v4.1-flash',['chat']),
+        m('doubao-embedding-vision',['embed']), m('glm-4.7',['chat']), m('glm-4.7-flash',['chat']),
+        m('glm-5.2',['chat']), m('glm-5.3',['chat']), m('glm-5.3-flash',['chat']),
+        m('gpt-5.6-luna',['chat']), m('bge-m3',['embed']), m('bge-reranker-v2-m3',['rerank']),
+        m('kimi-k2.5',['chat']), m('qwen3-max',['chat']), m('qwen3-235b',['chat']),
+        m('gemini-3.5-pro',['chat']), m('grok-5',['chat']), m('o4-mini',['chat']),
+        m('doubao-1.5-pro',['chat']),
+      ],
+    },
+    {
+      id:'p-ds', name:'DeepSeek', baseUrl:'https://api.deepseek.com/v1', hasKey:true,
+      modelsFetchedAt:'2026-10-01T23:12:12', probe:null,
+      models:[ m('deepseek-flash',['chat']), m('deepseek-v4-pro',['chat']) ],
+    },
+  ]
+}
+
+function seedRoles(){
+  return {
+    chat:      { providerId:'p-aggr', model:'glm-5.3' },
+    reasoning: { providerId:'p-ds',   model:'deepseek-v4-pro' },
+    summarize: null,
+    embed:     null,
+  }
+}
+
+/* ═══════════ 状态 ═══════════ */
+
+let state = {
+  theme:'light',
+  tab:'models',
+  view:'list',          // 'list' | 'form'
+  expanded:new Set(),
+  providers: seedProviders(),
+  roles: seedRoles(),
+  roleProbes: {},       // roleId -> {ok,message,at}
+  cascade:null,         // { roleId, providerId } —— 打开中的角色级联
+  form:null,
+  modal:null,
+  toast:null,
+}
+
+function resetDemo(){
+  state.providers = seedProviders()
+  state.roles = seedRoles()
+  state.roleProbes = {}
+  state.cascade = null
+  state.form = null
+  state.expanded = new Set()
+  state.view = 'list'
+  state.toast = { text:'已重置演示数据', kind:'' }
+  scheduleToastClear()
+  render()
+}
+
+/* ═══════════ 工具 ═══════════ */
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))
+const fmtTime = (iso) => { try { return new Date(iso).toLocaleString('zh-CN', { hour12:false }) } catch { return iso } }
+const purposeLabel = (id) => (PURPOSES.find(p => p.id === id)?.label ?? id)
+const sourceLabel = (s) => ({ preset:'预设', fetched:'拉取', manual:'手动' }[s] ?? s)
+const sourceHint = (s) => ({
+  preset:'来自预设建议；拉取后被端点真实清单取代',
+  fetched:'来自端点 /models',
+  manual:'手动添加；拉取时不会被冲掉',
+}[s] ?? '')
+
+/* 用途推断：端点回传的类型优先，其次看模型名。宁可给一个可改的默认值，也不要留空 */
+function inferPurposes(id, metaType){
+  if (metaType === 'embedding') return ['embed']
+  if (metaType === 'rerank') return ['rerank']
+  if (metaType === 'chat') return ['chat']
+  if (/rerank/i.test(id)) return ['rerank']
+  if (/embed|bge|gte|e5|nomic/i.test(id)) return ['embed']
+  return ['chat']
+}
+
+/* ═══════════ 拉取模型（演示版：不联网） ═══════════ */
+
+function mockPull(baseUrl){
+  return new Promise((resolve) => setTimeout(() => resolve(pullDataFor(baseUrl)), 850))
+}
+
+function pullDataFor(baseUrl){
+  if (/api\.example\.com/.test(baseUrl)){
+    return {
+      metaCount:1,
+      models:[
+        {id:'auto'},{id:'claude-opus-5'},{id:'deepseek-flash'},{id:'deepseek-v4-flash'},
+        {id:'deepseek-v4.1-flash'},{id:'doubao-embedding-vision'},{id:'glm-4.7'},{id:'glm-4.7-flash'},
+        {id:'glm-5.2'},{id:'glm-5.3'},{id:'glm-5.3-flash'},{id:'gpt-5.6-luna'},{id:'bge-m3'},
+        {id:'bge-reranker-v2-m3'},{id:'kimi-k2.5'},{id:'qwen3-max'},{id:'qwen3-235b'},
+        {id:'gemini-3.5-pro'},{id:'o4-mini'},{id:'doubao-1.5-pro'},
+        {id:'voyage-3', type:'embedding'},   // 端点回传了类型：名字里没有 embed 字样，也能标对
+        {id:'qwen3-coder'},
+      ],
+    }
+  }
+  if (/deepseek\.com/.test(baseUrl)){
+    return { metaCount:0, models:[{id:'deepseek-flash'},{id:'deepseek-v4-pro'},{id:'deepseek-v5'},{id:'deepseek-embed-v1'}] }
+  }
+  if (/siliconflow/.test(baseUrl)){
+    return { metaCount:0, models:[{id:'Qwen/Qwen3-8B'},{id:'BAAI/bge-m3'},{id:'BAAI/bge-reranker-v2-m3'}] }
+  }
+  if (/openai\.com/.test(baseUrl)){
+    return { metaCount:0, models:[{id:'gpt-4o-mini'},{id:'gpt-4o'},{id:'text-embedding-3-small'}] }
+  }
+  return { metaCount:0, models:[{id:'gpt-4o-mini'},{id:'text-embedding-3-small'}] }
+}
+
+/* 合并规则：端点清单为准，但不动手动加的、也不动用户标过的用途 */
+function mergeFetched(models, res){
+  const byId = new Map(models.map((x) => [x.id, x]))
+  const seen = new Set()
+  const next = []
+  const addedIds = []
+  let added = 0
+  let kept = 0
+
+  for (const f of res.models){
+    const cur = byId.get(f.id)
+    if (cur){ next.push({ ...cur, source: cur.source === 'manual' ? 'manual' : 'fetched' }); kept++ }
+    else { next.push({ id:f.id, source:'fetched', purposes: inferPurposes(f.id, f.type) }); added++; addedIds.push(f.id) }
+    seen.add(f.id)
+  }
+  for (const x of models) if (x.source === 'manual' && !seen.has(x.id)) { next.push(x); kept++ }
+
+  const removed = models.filter((x) => x.source !== 'manual' && !seen.has(x.id)).length
+  return { models:next, added, kept, removed, addedIds }
+}
+
+/* ═══════════ 渲染 ═══════════ */
+
+const TABS = ['模型','检索','存储','插件','统计','数据与备份','外观','账号']
+
+function render(){
+  document.documentElement.dataset.theme = state.theme
+  document.querySelector('[data-action="toggle-theme"]').textContent = state.theme === 'light' ? '切换深色' : '切换浅色'
+  document.getElementById('tabs').innerHTML = TABS.map((label, i) => {
+    const key = i === 0 ? 'models' : label
+    return `<button class="tab ${state.tab === key ? 'active' : ''}" data-action="tab" data-tab="${key}">${label}</button>`
+  }).join('')
+  document.getElementById('content').innerHTML = state.tab !== 'models'
+    ? `<div class="note">（本 demo 只做「模型」分区，其它分区保持原样）</div>`
+    : (state.view === 'form' ? renderForm() : renderList())
+  positionCascadePop()
+  renderOverlay()
+}
+
+/* 级联浮层是 fixed 定位（面板 overflow:hidden 会裁掉 absolute），
+   渲染完按触发器的位置对上 */
+function positionCascadePop(){
+  if (!state.cascade) return
+  const trigger = document.querySelector(`[data-action="cascade-toggle"][data-role="${state.cascade.roleId}"]`)
+  const pop = document.querySelector('.cascade-pop')
+  if (!trigger || !pop) return
+  const r = trigger.getBoundingClientRect()
+  pop.style.left = `${r.left}px`
+  pop.style.top = `${r.bottom + 4}px`
+  /* 下方空间不够就翻到上面 */
+  if (r.bottom + pop.offsetHeight + 8 > window.innerHeight) {
+    pop.style.top = `${Math.max(8, r.top - pop.offsetHeight - 4)}px`
+  }
+}
+
+/* ── 列表（只读） ── */
+function renderList(){
+  const list = state.providers.length === 0
+    ? `<div class="panel-body" style="text-align:center;color:var(--text-3);padding:28px">还没有配置供应商</div>`
+    : state.providers.map(providerCard).join('')
+
+  return `
+  <section class="panel">
+    <div class="panel-head"><span class="panel-title">供应商</span><span class="tag">${state.providers.length} 个</span></div>
+    ${list}
+    <div class="panel-foot"><button class="btn dashed" data-action="add">+ 添加供应商</button></div>
+  </section>
+  ${rolePanel()}`
+}
+
+function providerCard(p){
+  const expanded = state.expanded.has(p.id)
+  const used = ROLE_DEFS.filter((r) => state.roles[r.id]?.providerId === p.id)
+  const counts = purposeCounts(p.models)
+  const meta = [
+    `${p.models.length} 个模型`,
+    p.modelsFetchedAt ? `${fmtTime(p.modelsFetchedAt)} 拉取过` : '来自预设',
+    counts,
+    used.length ? `角色在用：${used.map((r) => r.label).join('、')}` : '未参与角色分配',
+  ]
+  const probeLine = p.probe
+    ? ` · 测试：<span class="${p.probe.ok ? 'ok-text' : 'err-text'}" title="${esc(p.probe.message)}">${p.probe.ok ? '可用' : '不可用'}</span>`
+    : ''
+
+  return `
+  <div class="pcard">
+    <div>
+      <div class="pcard-line1">
+        <span class="pcard-name">${esc(p.name)}</span>
+        <span class="badge ${p.hasKey ? 'ok' : 'warn'}">${p.hasKey ? '已配置密钥' : '未配置密钥'}</span>
+      </div>
+      <div class="pcard-url">${esc(p.baseUrl)}</div>
+      <div class="pcard-meta">${meta.join(' · ')}${probeLine}</div>
+    </div>
+    <div class="pcard-actions">
+      <button class="btn sm" data-action="probe" data-id="${p.id}">测试连接</button>
+      <button class="btn sm" data-action="edit" data-id="${p.id}">编辑</button>
+      <button class="btn sm danger" data-action="del" data-id="${p.id}">删除</button>
+    </div>
+    <div class="pcard-expander">
+      <button class="linkbtn" data-action="expand" data-id="${p.id}">
+        ${expanded ? '收起模型' : `查看模型（${p.models.length}）`} <span style="font-size:10px">${expanded ? '▲' : '▼'}</span>
+      </button>
+    </div>
+    ${expanded ? `<div class="pmodel-list">${p.models.map(modelRowRead).join('')}</div>` : ''}
+  </div>`
+}
+
+function modelRowRead(x){
+  return `<div class="mrow read">
+    <span class="mid" title="${esc(x.id)}">${esc(x.id)}</span>
+    <span class="purposes">${x.purposes.map((pid) => chipStatic(pid)).join('')}</span>
+    <span class="badge" title="${esc(sourceHint(x.source))}">${sourceLabel(x.source)}</span>
+  </div>`
+}
+
+function chipStatic(pid){
+  const p = PURPOSES.find((x) => x.id === pid)
+  return `<span class="chip static ${pid === 'rerank' ? '' : 'on'}" title="${esc(p?.hint ?? '')}">${esc(p?.label ?? pid)}</span>`
+}
+
+function purposeCounts(models){
+  const map = {}
+  for (const x of models) for (const pid of x.purposes) map[pid] = (map[pid] ?? 0) + 1
+  const parts = PURPOSES.filter((p) => map[p.id]).map((p) => `${p.label} ${map[p.id]}`)
+  return parts.length ? `用途：${parts.join(' · ')}` : '未标用途'
+}
+
+/* ── 任务分配 ── */
+function rolePanel(){
+  return `
+  <section class="panel">
+    <div class="panel-head"><span class="panel-title">任务分配</span></div>
+    ${ROLE_DEFS.map(roleRow).join('')}
+  </section>`
+}
+
+function roleRow(r){
+  const binding = state.roles[r.id]
+  const provider = binding ? state.providers.find((p) => p.id === binding.providerId) : null
+  const open = state.cascade?.roleId === r.id
+  /* 打开时以浮层里正在浏览的那家为准（第一层点了谁看谁），否则看当前绑定 */
+  const activeProviderId = open
+    ? state.cascade.providerId
+    : (binding?.providerId ?? state.providers[0]?.id ?? null)
+
+  const placeholder = r.fallback ? '留空（回落到对话模型）' : '选择供应商与模型'
+  const label = binding && provider
+    ? `${provider.name} / ${binding.model}`
+    : placeholder
+
+  const probe = state.roleProbes[r.id]
+  /* 与真实界面同一条：未绑定时只说「未就绪」，原因在 tooltip 里 */
+  const stateText = !binding || !provider
+    ? '未就绪'
+    : (probe ? (probe.ok ? '可用' : '不可用') : '未测试')
+  const reasonText = !binding || !provider
+    ? (r.fallback ? '留空时回落到对话模型' : '还没有选择模型')
+    : (probe ? probe.message : '')
+
+  return `
+  <div class="role-row">
+    <div class="role-label">${r.label}</div>
+    <div class="role-ctl">
+      <span class="cascade ${open ? 'open' : ''}">
+        <button class="cascade-trigger ${binding ? '' : 'empty'}" data-action="cascade-toggle" data-role="${r.id}"
+          title="${binding ? esc(label) : ''}">
+          <span class="cascade-value">${esc(label)}</span>
+          <span class="caret"></span>
+        </button>
+        ${open ? cascadePop(r, activeProviderId) : ''}
+      </span>
+      <span class="role-state" title="${esc(reasonText)}">${stateText}</span>
+      <button class="btn sm" data-action="role-probe" data-role="${r.id}" ${binding && provider ? '' : 'disabled'}>测试</button>
+    </div>
+  </div>`
+}
+
+function cascadePop(r, activeProviderId){
+  const binding = state.roles[r.id]
+  const activeProvider = state.providers.find((p) => p.id === activeProviderId) ?? null
+
+  const providersHtml = state.providers.map((p) => `
+    <div class="cascade-item ${p.id === activeProviderId ? 'on' : ''}"
+      data-action="cascade-provider" data-role="${r.id}" data-provider="${p.id}">
+      <span>${esc(p.name)}${p.hasKey ? '' : ' · 缺密钥'}</span><span class="go">›</span>
+    </div>`).join('')
+
+  if (!activeProvider){
+    return `<div class="cascade-pop">
+      <div class="cascade-col">${providersHtml}</div>
+      <div class="cascade-col cascade-models"><div class="cascade-item plain">先选一家供应商</div></div>
+    </div>`
+  }
+
+  const choices = activeProvider.models.filter((x) => x.purposes.some((pid) => r.purposes.includes(pid)))
+  /* 当前绑定的模型不在候选里（被拉取刷掉、或用途改了）也要挂出来，
+     否则用户看不到自己选了什么 */
+  const missing = binding && binding.providerId === activeProvider.id
+    && !activeProvider.models.some((x) => x.id === binding.model)
+    ? [{ id: binding.model, gone: true }]
+    : []
+  const items = [...missing, ...choices.map((x) => ({ id: x.id, gone: false }))]
+
+  const modelsHtml = items.length
+    ? items.map((m) => `
+      <div class="cascade-item ${binding?.providerId === activeProvider.id && binding?.model === m.id ? 'on' : ''}"
+        data-action="cascade-model" data-role="${r.id}" data-provider="${activeProvider.id}" data-model="${esc(m.id)}">
+        <span>${esc(m.id)}${m.gone ? '（不在列表）' : ''}</span>
+      </div>`).join('')
+    : '<div class="cascade-item plain">没有可用于该角色的模型</div>'
+
+  return `
+  <div class="cascade-pop">
+    <div class="cascade-col">${providersHtml}</div>
+    <div class="cascade-col cascade-models">${modelsHtml}</div>
+  </div>`
+}
+
+/* ── 表单（创建 / 编辑复用） ── */
+function keyStateHtml(f){
+  return f.keyCleared
+    ? '<span class="badge warn">待清除</span>'
+    : (f.hasKey || f.keyDraft.trim())
+      ? '<span class="badge ok">已配置密钥</span>'
+      : '<span class="badge">未配置密钥</span>'
+}
+
+function keyZoneHtml(f){
+  return `
+    ${f.hasKey && !f.keyCleared ? '<button class="btn sm" data-action="clear-key">清除</button>' : ''}
+    ${f.keyCleared ? '<button class="linkbtn" data-action="undo-clear-key">撤销清除</button>' : ''}
+    ${keyStateHtml(f)}`
+}
+
+function renderForm(){
+  const f = state.form
+  const isCreate = f.mode === 'create'
+
+  const keyPlaceholder = f.keyCleared
+    ? '保存后将清除密钥'
+    : f.hasKey ? '已配置密钥（留空不修改）' : '填入 API 密钥'
+
+  return `
+  <button class="linkbtn back" data-action="back">← 返回供应商列表</button>
+  <h2 class="form-title">${isCreate ? '新建供应商' : '编辑供应商'}</h2>
+  ${isCreate ? presetPanel(f) : ''}
+
+  <section class="panel">
+    <div class="panel-head"><span class="panel-title">连接</span></div>
+    <div class="frow">
+      <div class="flabel">显示名</div>
+      <div class="fvalue">
+        <input class="input" data-field="name" value="${esc(f.name)}" placeholder="比如 DeepSeek" autocomplete="off" />
+        ${f.errors.name ? `<div class="ferr">${f.errors.name}</div>` : ''}
+      </div>
+    </div>
+    <div class="frow">
+      <div class="flabel">接口地址</div>
+      <div class="fvalue">
+        <input class="input" style="width:100%;max-width:440px" data-field="baseUrl" value="${esc(f.baseUrl)}" placeholder="https://api.example.com/v1" autocomplete="off" />
+        ${f.errors.baseUrl ? `<div class="ferr">${f.errors.baseUrl}</div>` : ''}
+      </div>
+    </div>
+    <div class="frow">
+      <div class="flabel">API 密钥</div>
+      <div class="fvalue">
+        <input class="input" style="width:260px" type="password" data-field="keyDraft" data-key-input value="${esc(f.keyDraft)}" placeholder="${keyPlaceholder}" autocomplete="off" />
+        <span data-key-zone style="display:contents">${keyZoneHtml(f)}</span>
+        ${f.errors.key ? `<div class="ferr">${f.errors.key}</div>` : ''}
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <span class="panel-title">模型与用途</span><span class="tag">${f.models.length} 个</span>
+      <span class="spacer"></span>
+      <button class="btn sm" data-action="pull" ${f.pulling ? 'disabled' : ''}>${f.pulling ? '拉取中…' : '拉取模型'}</button>
+      <button class="btn sm" data-action="add-model">+ 手动添加</button>
+    </div>
+    <div class="panel-hint">
+      用途决定模型能被「任务分配」里的哪些角色选中：<b>对话</b> → 对话 / 深度思考 / 摘要；<b>向量化</b> → 向量化。<br />
+      拉取会以端点清单为准，但保留手动添加的模型与你标过的用途；「重排序」角色尚未实现，可以先把模型标上。
+    </div>
+    ${f.pullNote ? `<div class="pull-note">${f.pullNote}</div>` : ''}
+    <div class="mhead"><span>模型</span><span>用途</span><span>来源</span><span></span></div>
+    ${f.models.map((x, i) => modelRowEdit(f, x, i)).join('')}
+  </section>
+
+  <div class="form-foot">
+    <button class="btn primary" data-action="save">保存</button>
+    <button class="btn" data-action="back">取消</button>
+    <span class="hint">
+      ${isCreate
+        ? '「拉取模型」用的是上面刚填的地址与密钥，不会先落库。'
+        : '拉取结果与用途修改都先留在草稿里，点「保存」才生效。'}
+    </span>
+  </div>`
+}
+
+function modelRowEdit(f, x, i){
+  const manual = x.source === 'manual'
+  const flash = f.flashIds.includes(x.id) ? 'flash' : ''
+  return `<div class="mrow edit ${flash}">
+    ${manual
+      ? `<input class="input midinput" data-model-input="${i}" value="${esc(x.id)}" placeholder="模型 ID" autocomplete="off" />`
+      : `<span class="mid" title="${esc(x.id)}">${esc(x.id)}</span>`}
+    <span class="purposes">
+      ${PURPOSES.map((p) => `<button class="chip ${x.purposes.includes(p.id) ? 'on' : ''}" aria-pressed="${x.purposes.includes(p.id)}"
+        title="${esc(p.hint)}" data-action="toggle-purpose" data-idx="${i}" data-purpose="${p.id}">${p.label}</button>`).join('')}
+    </span>
+    <span class="badge" title="${esc(sourceHint(x.source))}">${sourceLabel(x.source)}</span>
+    <button class="iconbtn" data-action="del-model" data-idx="${i}" title="从列表里移除（若来自拉取，下次拉取会重新出现）">✕</button>
+    ${f.errors['model' + i] ? `<div class="ferr row-err">${f.errors['model' + i]}</div>` : ''}
+  </div>`
+}
+
+function presetPanel(f){
+  if (f.preset){
+    return `<section class="panel">
+      <div class="panel-head"><span class="panel-title">预设</span><span class="tag">${esc(f.preset.name)}</span>
+        <span class="spacer"></span><button class="linkbtn" data-action="unpick-preset">重新选择</button></div>
+    </section>`
+  }
+  return `<section class="panel">
+    <div class="panel-head"><span class="panel-title">从预设开始</span><span class="tag">可选，也可以直接填</span></div>
+    <div class="preset-grid">
+      ${PRESETS.map((p) => `<button class="preset-card" data-action="pick-preset" data-preset="${p.id}">
+        <span class="preset-name">${esc(p.name)}</span>
+        <span class="preset-url">${esc(p.baseUrl) || '需要自己填地址'}</span>
+      </button>`).join('')}
+    </div>
+  </section>`
+}
+
+/* ── 浮层 ── */
+function renderOverlay(){
+  const modal = state.modal
+  document.getElementById('overlay').innerHTML = modal ? `
+    <div class="mask">
+      <div class="modal" role="dialog" aria-modal="true">
+        <div class="modal-title">${esc(modal.title)}</div>
+        <div class="modal-body">${modal.body}</div>
+        <div class="modal-foot">
+          <button class="btn" data-action="modal-cancel">${esc(modal.cancelText ?? '取消')}</button>
+          <button class="btn ${modal.danger ? 'danger' : 'primary'}" data-action="modal-ok">${esc(modal.okText ?? '确定')}</button>
+        </div>
+      </div>
+    </div>` : ''
+
+  document.getElementById('toastbox').innerHTML = state.toast ? `
+    <div class="toast ${state.toast.kind === 'err' ? 'err' : ''}">
+      <span class="dot ${state.toast.kind === 'warn' ? 'warn' : ''}"></span>${esc(state.toast.text)}
+    </div>` : ''
+}
+
+/* ═══════════ 动作 ═══════════ */
+
+function toast(text, kind = ''){
+  state.toast = { text, kind }
+  scheduleToastClear()
+}
+let toastTimer = null
+function scheduleToastClear(){
+  clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => { state.toast = null; renderOverlay() }, 3200)
+}
+
+function openModal(cfg){ state.modal = cfg; renderOverlay() }
+function closeModal(){ state.modal = null; renderOverlay() }
+
+function openCreate(){
+  state.form = {
+    mode:'create', providerId:null, preset:null,
+    name:'', baseUrl:'', hasKey:false, keyDraft:'', keyCleared:false,
+    models:[], dirty:false, pulling:false, pullNote:null, flashIds:[], errors:{}, focusIdx:null,
+  }
+  state.view = 'form'
+  render()
+}
+
+function openEdit(id){
+  const p = state.providers.find((x) => x.id === id)
+  if (!p) return
+  state.form = {
+    mode:'edit', providerId:id, preset:null,
+    name:p.name, baseUrl:p.baseUrl, hasKey:p.hasKey, keyDraft:'', keyCleared:false,
+    models: p.models.map((x) => ({ ...x, purposes:[...x.purposes] })),
+    dirty:false, pulling:false, pullNote:null, flashIds:[], errors:{}, focusIdx:null,
+  }
+  state.view = 'form'
+  render()
+}
+
+function tryBack(){
+  if (state.form?.dirty){
+    openModal({
+      title:'放弃未保存的改动？',
+      body:'保存之前，这些改动（名称、地址、密钥、模型与用途）都不会生效。',
+      okText:'放弃并返回', danger:true,
+      onOk(){
+        state.form = null; state.view = 'list'; closeModal(); render()
+      },
+    })
+    return
+  }
+  state.form = null
+  state.view = 'list'
+  render()
+}
+
+function pickPreset(id){
+  const p = PRESETS.find((x) => x.id === id)
+  if (!p) return
+  const f = state.form
+  f.preset = { id:p.id, name:p.name }
+  f.name = p.name
+  f.baseUrl = p.baseUrl
+  f.models = p.models.map((mid) => ({ id:mid, source:'preset', purposes: inferPurposes(mid) }))
+  f.dirty = true
+  f.errors = {}
+  render()
+}
+
+function addManualModel(){
+  const f = state.form
+  const empty = f.models.findIndex((x) => x.source === 'manual' && x.id.trim() === '')
+  if (empty >= 0){ focusModelInput(empty); return }
+  f.models.push({ id:'', source:'manual', purposes:['chat'] })
+  f.dirty = true
+  render()
+  focusModelInput(f.models.length - 1)
+}
+
+function focusModelInput(idx){
+  const input = document.querySelector(`[data-model-input="${idx}"]`)
+  if (input) input.focus()
+}
+
+function togglePurpose(idx, purpose){
+  const f = state.form
+  const x = f.models[idx]
+  if (!x) return
+  x.purposes = x.purposes.includes(purpose)
+    ? x.purposes.filter((p) => p !== purpose)
+    : [...x.purposes, purpose]
+  f.dirty = true
+  delete f.errors['model' + idx]
+  render()
+}
+
+function removeModel(idx){
+  const f = state.form
+  const x = f.models[idx]
+  if (!x) return
+  const bound = ROLE_DEFS.filter((r) => {
+    const b = state.roles[r.id]
+    return b && b.providerId === f.providerId && b.model === x.id
+  })
+  if (bound.length > 0 && f.mode === 'edit'){
+    openModal({
+      title:`移除「${x.id}」？`,
+      body:`它正被「${bound.map((r) => r.label).join('、')}」角色使用，保存后会需要重新分配。`,
+      okText:'移除', danger:true,
+      onOk(){ f.models.splice(idx, 1); f.dirty = true; closeModal(); render() },
+    })
+    return
+  }
+  f.models.splice(idx, 1)
+  f.dirty = true
+  render()
+}
+
+function doPull(){
+  const f = state.form
+  if (f.pulling) return
+  const url = f.baseUrl.trim()
+  if (!url){ f.errors = { ...f.errors, baseUrl:'先填接口地址' }; render(); toast('先填接口地址', 'err'); return }
+  const local = /localhost|127\.0\.0\.1/.test(url)
+  if (!f.keyDraft.trim() && !f.hasKey && !local){ toast('先填 API 密钥', 'err'); return }
+
+  f.pulling = true
+  f.pullNote = null
+  render()
+
+  mockPull(url).then((res) => {
+    const merged = mergeFetched(f.models, res)
+    f.models = merged.models
+    f.flashIds = merged.addedIds
+    f.pullNote = `拉取完成：新增 ${merged.added} · 移除 ${merged.removed} · 保留 ${merged.kept}`
+      + (res.metaCount > 0 ? `（其中 ${res.metaCount} 个新模型的用途来自端点回传的类型）` : '（端点没回传类型，新模型的用途按模型名推断）')
+      + ' —— 保存后生效'
+    f.pulling = false
+    f.dirty = true
+    f.errors = {}
+    render()
+    toast(`拉到 ${res.models.length} 个模型`)
+  })
+}
+
+function saveForm(){
+  const f = state.form
+  const errors = {}
+  if (!f.name.trim()) errors.name = '请填写显示名'
+
+  const url = f.baseUrl.trim()
+  if (!url) errors.baseUrl = '请填写接口地址'
+  else if (!/^https?:\/\//i.test(url)) errors.baseUrl = '要以 http:// 或 https:// 开头'
+
+  const seen = new Set()
+  f.models.forEach((x, i) => {
+    const id = x.id.trim()
+    if (!id){ errors['model' + i] = '请填写模型 ID，或删掉这一行'; return }
+    if (seen.has(id)){ errors['model' + i] = '模型 ID 重复'; return }
+    seen.add(id)
+    if (x.purposes.length === 0) errors['model' + i] = '至少标一个用途'
+  })
+
+  const local = /localhost|127\.0\.0\.1/.test(url)
+  if (f.mode === 'create' && !f.keyDraft.trim() && !local && !f.keyCleared)
+    errors.key = '新供应商需要一个密钥（本地服务随便填一个）'
+
+  f.errors = errors
+  if (Object.keys(errors).length > 0){ render(); toast('还有几处没填完', 'err'); return }
+
+  const models = f.models.map((x) => ({ id:x.id.trim(), source:x.source, purposes:[...x.purposes] }))
+  const cleanUrl = url.replace(/\/+$/, '')
+
+  if (f.mode === 'create'){
+    state.providers.push({
+      id:'p-' + Math.random().toString(36).slice(2, 8),
+      name:f.name.trim(), baseUrl:cleanUrl, hasKey:true, models,
+      modelsFetchedAt: f.pullNote ? new Date().toISOString() : null,
+      probe:null,
+    })
+  } else {
+    const p = state.providers.find((x) => x.id === f.providerId)
+    p.name = f.name.trim()
+    p.baseUrl = cleanUrl
+    p.models = models
+    if (f.keyCleared) p.hasKey = false
+    else if (f.keyDraft.trim()) p.hasKey = true
+    if (f.pullNote) p.modelsFetchedAt = new Date().toISOString()
+    for (const r of ROLE_DEFS){
+      const b = state.roles[r.id]
+      if (b && b.providerId === p.id && !models.some((x) => x.id === b.model)) state.roles[r.id] = null
+    }
+  }
+
+  state.form = null
+  state.view = 'list'
+  toast('已保存')
+  render()
+}
+
+function probeProvider(id){
+  const p = state.providers.find((x) => x.id === id)
+  if (!p) return
+  const candidate = (p.models.find((x) => !x.purposes.includes('embed')) ?? p.models[0])?.id ?? ''
+  toast('正在测试连接…', 'warn')
+  setTimeout(() => {
+    p.probe = { ok:true, message:`连通，模型 ${candidate} 有响应`, at:new Date().toISOString() }
+    toast(candidate ? `连通，模型 ${candidate} 有响应（412ms）` : '连通，端点报告模型列表可访问')
+    render()
+  }, 750)
+}
+
+function deleteProvider(id){
+  const p = state.providers.find((x) => x.id === id)
+  if (!p) return
+  const used = ROLE_DEFS.filter((r) => state.roles[r.id]?.providerId === id)
+  openModal({
+    title:`删除供应商「${p.name}」？`,
+    body: used.length
+      ? `指向它的角色分配会被清空（${used.map((r) => r.label).join('、')}）。密钥与模型清单一起删除。`
+      : '它的密钥与模型清单会一起删除。',
+    okText:'删除', danger:true,
+    onOk(){
+      state.providers = state.providers.filter((x) => x.id !== id)
+      for (const r of ROLE_DEFS) if (state.roles[r.id]?.providerId === id) state.roles[r.id] = null
+      state.expanded.delete(id)
+      closeModal()
+      render()
+      toast(`已删除「${p.name}」`)
+    },
+  })
+}
+
+/** 级联里选中一个模型 = 完成绑定（第一层只切换浏览，不落绑定） */
+function bindRoleModel(roleId, providerId, model){
+  state.roles[roleId] = { providerId, model }
+  delete state.roleProbes[roleId]
+  state.cascade = null
+  render()
+}
+
+/** 打开/收起一个角色的级联浮层。打开时先停在当前绑定的那家（没有就第一家） */
+function toggleCascade(roleId){
+  if (state.cascade?.roleId === roleId){
+    state.cascade = null
+    render()
+    return
+  }
+  const binding = state.roles[roleId]
+  const providerId = binding?.providerId ?? state.providers[0]?.id ?? null
+  if (!providerId) return
+  state.cascade = { roleId, providerId }
+  render()
+}
+
+function probeRole(roleId){
+  const binding = state.roles[roleId]
+  const provider = binding ? state.providers.find((x) => x.id === binding.providerId) : null
+  if (!binding || !provider) return
+  toast('正在测试…', 'warn')
+  setTimeout(() => {
+    state.roleProbes[roleId] = { ok:true, message:`连通，模型 ${binding.model} 有响应` }
+    toast(`连通，模型 ${binding.model} 有响应（380ms）`)
+    render()
+  }, 700)
+}
+
+/* ═══════════ 事件 ═══════════ */
+
+document.addEventListener('click', (e) => {
+  const target = e.target.closest('[data-action]')
+  if (!target) return
+  if (target.tagName === 'SELECT' || target.tagName === 'INPUT') return
+  const a = target.dataset.action
+  const f = state.form
+
+  if (a === 'toggle-theme'){ state.theme = state.theme === 'light' ? 'dark' : 'light'; render(); return }
+  if (a === 'reset'){
+    openModal({ title:'重置演示数据？', body:'所有演示改动都会清掉，回到初始状态。', okText:'重置',
+      onOk(){ resetDemo(); closeModal() } })
+    return
+  }
+  if (a === 'tab'){ state.tab = target.dataset.tab; render(); return }
+
+  if (a === 'add'){ openCreate(); return }
+  if (a === 'edit'){ openEdit(target.dataset.id); return }
+  if (a === 'expand'){
+    const id = target.dataset.id
+    state.expanded.has(id) ? state.expanded.delete(id) : state.expanded.add(id)
+    render()
+    return
+  }
+  if (a === 'probe'){ probeProvider(target.dataset.id); return }
+  if (a === 'del'){ deleteProvider(target.dataset.id); return }
+
+  if (a === 'modal-cancel'){ closeModal(); return }
+  if (a === 'modal-ok'){ state.modal?.onOk?.(); return }
+
+  /* 级联：这三个动作在列表态也在（与表单无关），所以放在 !f 判断之前 */
+  if (a === 'cascade-toggle'){ toggleCascade(target.dataset.role); return }
+  if (a === 'cascade-provider'){
+    /* 第一层只切换浏览，不落绑定——选中叶子才算配好 */
+    if (state.cascade) { state.cascade.providerId = target.dataset.provider; render() }
+    return
+  }
+  if (a === 'cascade-model'){
+    bindRoleModel(target.dataset.role, target.dataset.provider, target.dataset.model)
+    return
+  }
+
+  if (!f) return
+  if (a === 'back'){ tryBack(); return }
+  if (a === 'pick-preset'){ pickPreset(target.dataset.preset); return }
+  if (a === 'unpick-preset'){ f.preset = null; render(); return }
+  if (a === 'clear-key'){ f.keyDraft = ''; f.keyCleared = true; f.dirty = true; render(); return }
+  if (a === 'undo-clear-key'){ f.keyCleared = false; f.dirty = true; render(); return }
+  if (a === 'pull'){ doPull(); return }
+  if (a === 'add-model'){ addManualModel(); return }
+  if (a === 'toggle-purpose'){ togglePurpose(Number(target.dataset.idx), target.dataset.purpose); return }
+  if (a === 'del-model'){ removeModel(Number(target.dataset.idx)); return }
+  if (a === 'save'){ saveForm(); return }
+  if (a === 'role-probe'){ probeRole(target.dataset.role); return }
+})
+
+/* 点浮层外面关掉级联。放在 click 的冒泡末尾：上面的处理器已经换过 render，
+   所以这里重新读一次 state 再判断 */
+document.addEventListener('click', (e) => {
+  if (!state.cascade) return
+  if (e.target.closest('.cascade')) return
+  state.cascade = null
+  render()
+})
+
+document.addEventListener('input', (e) => {
+  const t = e.target
+  const f = state.form
+  if (!f) return
+  if (t.dataset.field){
+    f[t.dataset.field] = t.value
+    f.dirty = true
+    if (t.dataset.field === 'keyDraft'){
+      // 重新填了密钥就撤销「待清除」；徽标随输入实时更新（不整页重渲染，避免丢焦点）
+      if (t.value.trim()) f.keyCleared = false
+      const zone = document.querySelector('[data-key-zone]')
+      if (zone) zone.innerHTML = keyZoneHtml(f)
+    }
+    return
+  }
+  if (t.dataset.modelInput !== undefined){
+    const idx = Number(t.dataset.modelInput)
+    if (f.models[idx]){ f.models[idx].id = t.value; f.dirty = true }
+  }
+})
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape'){
+    if (state.modal){ closeModal(); return }
+    if (state.cascade){ state.cascade = null; render() }
+  }
+})
+
+render()
+</script>
+</body>
+</html>

@@ -9,6 +9,7 @@ import type {
   DocumentListQuery,
   DocumentSummary,
   ExportStats,
+  FetchedModelsResult,
   FileUploadResponse,
   FolderDeleteResponse,
   FolderListResponse,
@@ -16,7 +17,6 @@ import type {
   NoteCreate,
   NoteUpdate,
   ProbeResult,
-  ProviderInstance,
   RuntimeConfig,
   SaveNoteInput,
   SearchQueryInput,
@@ -423,14 +423,16 @@ export const api = {
   },
 
   /**
-   * 拉取一个供应商的模型列表。**这是一次真实网络请求，也是个写操作**
-   * （结果会写回配置），所以用 POST 且由用户显式触发。
+   * 拉取一个供应商的模型清单。**纯读**：结果不写配置，进表单草稿（D-080）。
+   *
+   * 密钥的三种来源由服务端按序解析（新填的草稿 > 已存实例）。
+   * 所以新建时也能拉——传刚填进表单的地址与密钥即可。
    */
-  refreshProviderModels(providerId: string) {
-    return request<{ ok: boolean; instance: ProviderInstance }>(
-      `/api/config/providers/${encodeURIComponent(providerId)}/refresh`,
-      { method: 'POST' },
-    )
+  fetchModels(input: { providerId: string | null; baseUrl: string; apiKeyDraft: string | null }) {
+    return request<FetchedModelsResult>('/api/config/fetch-models', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    })
   },
 
   /**
