@@ -97,6 +97,17 @@ export interface EditorShellProps {
    * 留一个框会在面板里出现「框套框」，看起来像两个可以分别滚动的东西。
    */
   flush?: boolean
+  /**
+   * 编辑区**右侧**的固定列（如笔记的大纲导航）。
+   *
+   * 给出时 body 变成「主列 + 侧列」两栏：工具条与状态行仍然**整行**，
+   * 侧列夹在它们之间——这是语雀式阅读布局的形状（工具条下面、正文右边），
+   * 而不是把侧列放在外壳外面、与工具条并排（那样工具条被挤窄，
+   * 与头部和状态行的整行宽度对不上）。
+   *
+   * 侧列自己滚：外壳不管它的内容与滚动方式。
+   */
+  bodySide?: ReactNode
 }
 
 /**
@@ -129,6 +140,7 @@ export function EditorShell({
   footer,
   status,
   flush = false,
+  bodySide,
 }: EditorShellProps) {
   const hasChrome = toolbar !== undefined || subbar !== undefined
   return (
@@ -140,7 +152,17 @@ export function EditorShell({
             {subbar !== undefined && <div className="mimir-editor__subbar">{subbar}</div>}
           </div>
         )}
-        <div className="mimir-editor__body">{children}</div>
+        {bodySide !== undefined ? (
+          <div className="mimir-editor__body mimir-editor__body--split">
+            {children}
+            {/* 侧列是 **浮层**：绝对定位钉在 body 右上角，不参与布局——
+                滚动仍由主内容自己的容器承担（滚动条在画布最右缘），
+                大纲不随内容滚走（语雀式）。内容侧由 padding 让出它的位置 */}
+            <div className="mimir-editor__side">{bodySide}</div>
+          </div>
+        ) : (
+          <div className="mimir-editor__body">{children}</div>
+        )}
         {footer !== undefined && <div className="mimir-editor__footer">{footer}</div>}
         {status !== undefined && <div className="mimir-editor__status">{status}</div>}
       </div>

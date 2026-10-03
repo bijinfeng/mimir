@@ -5437,3 +5437,231 @@ journal 里早期条目被手工编过时间戳，`0006_kb_code` 的 `when` 是
 故意把最后一条的 `when` 改回退，守卫测试**当场失败**并指出是哪两条
 （证明它不是空转），恢复后转绿。用户实例已按此修复并补跑一次
 `rebuildAllChunks`（3 篇文档 → 5 段，`chunks_fts` 同步）。
+
+## D-087 文档页的「问 AI」侧栏；大纲移进编辑器外壳（语雀式阅读布局）
+
+**背景**：用户在文档页点「问 AI」被跳去主视图对话，正在读的内容被打断；
+并给出语雀阅读助手的截图作为目标形态——右侧滑出对话侧栏、大纲在工具栏
+正下方。这两条推翻 / 修正了此前的两个决定。
+
+**决定一：文档页加「问 AI」侧栏（修订 PRD §5.5）**
+
+§5.5 曾以「侧栏的范围比内联宽、比主视图窄，两边都不如」删掉侧栏。
+D-087 的修正：**那个判断对库级提问成立，对「读一篇文档时问它」不成立**——
+后者的范围天然就是这一篇，跳走再回来才是真正的摩擦。所以：
+
+1. 侧栏**只加在文档页**，主视图对话仍是库级提问的家——两个入口并存、
+   按场景分工（PRD §5.5 已重写）
+2. 对话体**整体复用 `ChatPanel`**（流式 / 检索过程 / 引用卡 / 失败出路 /
+   停止 / 存为笔记全都在），差异只有：`draft.documentId` 锁定单篇
+   （走后端的单篇检索模式）、`onConversationCreated` 为 no-op（不进 URL）、
+   引用点击由父级分派（同一篇 → 原地滚动高亮；别的文档 → 导航）
+3. **关闭是折叠不是卸载**：容器宽度 0 + overflow hidden，组件保持挂载——
+   流式进行中收起再展开，回答与已生成内容都在。离开这一篇才真正卸载
+4. 「就这段提问」的预填靠 Composer **key 里加入 draft.text**：侧栏不经路由
+   重挂，text 变化触发 Composer 重挂（与主视图「跳转重挂清输入」同一性质）
+
+**决定二：大纲浮层化，滚动条回到画布右缘（bodySide 槽，同日迭代两次）**
+
+笔记页原先的大纲是 `cols` 层的右侧列，与**编辑器工具条并排**——工具条被
+挤窄，与头部 / 状态行的整行宽度对不上。目标形状（用户给的语雀样张）：
+
+- 工具条整行
+- 工具条下面：左正文、右大纲；**大纲固定在右上角**，不随内容滚走
+- **内容的滚动条在画布最右缘**——而不是夹在大纲左边
+
+第一版实现是「主列 + 侧列」的 flex 两栏（`__main` / `__side`），被用户
+以下一条反馈否掉：那版的滚动条属于主列，落在大纲左侧；且大纲是布局列，
+不「固定」。最终形态：`EditorShell` 的 `bodySide` 给出时，body 只加
+`position: relative`，侧列 `__side` 是 **绝对定位浮层**（top/right/bottom
+钉在 body 右上角、own scroll），主滚动层（`.me-scroll`）保持整幅——
+滚动条自然落在画布最右缘；正文让位靠 `.me-scroll` 的 `padding-right: 220px`
+（居中的 760 正文因此整体左移，与语雀一致）；浮层底色不透明
+（宿主的 `outlineSide` 上），滚动内容从它底下经过不透字。
+
+工具条与状态行仍整行。只读资料路径保持 `cols` 层 aside 不变（无工具条，
+页面级滚动条的右缘本来就是画布右缘）。
+
+**影响**：`packages/office` 的 EditorShell / shell.css / MarkdownEditor
+（新增 bodySide 透传）；web 侧新增 `document/DocChatSidebar.tsx`，
+`DocumentPanel`（根容器改为 flex row、侧栏状态、引用合并派生
+`activeCitation = citation ?? sidebarCitation`），`ChatPanel` 的 Composer key
+加入 draft.text；`_app.docs.tsx` 删掉 `goAsk` 导航路径。
+
+**验证方式**：浏览器实测——工具栏整行（795px）横跨、大纲列从工具栏正下方
+（y=106）开始；「问 AI」打开 400px 侧栏，composer 显示「范围：当前文档」；
+发消息走通（模型端点自身报 400 时失败卡如实给出三条出路；「只检索」路径
+命中本篇并带「限定本篇」标注）；选段 →「就这段提问」侧栏自动展开且输入框
+预填引用格式选段；关闭后容器折到 1px 且组件保持挂载。`pnpm check` 全绿
+（服务端 206 + 前端 247 + office 380）。
+
+**踩到的坑**：给侧栏内容选样式类时误用了外层折叠容器的类（`aiSidebar`，
+宽度过渡 + overflow hidden），套两层的结果是内容被自己的 overflow 折成
+0.8px——而测量时 `class*='aiSidebarTitle'` 这类**哈希类名查不到**（antd-style
+编译后是 acss-xxx），一度让「内容到底渲染没有」看起来像灵异现象。教训：
+调试 antd-style 的组件时用 aria-label / 文本定位，不要用源码里的类名字符串。
+
+## D-088 段落样式下拉从 antd Select 迁到 ToolbarMenu
+
+**背景**：用户反馈笔记工具条的「正文」下拉（antd `Select`）——**选项列表被
+挤压得看不清**。Select 的弹层宽度跟着 62px 的触发器走，九个中文选项挤在
+表单控件尺寸的行高里。
+
+**决定**：换成与「链接」同一套的 `ToolbarMenu`（me-menu 弹层）：触发按钮
+`text` 显示当前样式（取不到时「混合」），九个选项是整行菜单项、当前值
+打勾（`aria-current`）、不可用的样式照旧不出现。选完面板关闭、焦点回
+触发按钮——这些是 `ToolbarMenu` 原语自带的，调用点只给 `items`。
+
+**为什么不动 docx 工具条的 9 个 Select**：那边的选择器是字号（21 档数字）、
+字体这类「表单语义」的取值，且 `ToolbarSelect` 上有专门的值外处理
+（半磅显示、virtual=false 的测试契约）。用户点名的是笔记的段落样式——
+一个「命令菜单」（切样式是动作），与「填表单」（选字号）本来就该是
+两种控件；哪天 docx 的样式下拉也被抱怨，再按同一条判据迁移。
+
+**影响**：`MarkdownEditor.tsx`（styleOptions → styleItems，ToolbarSelect
+→ ToolbarMenu）；`markdown-controls.test.tsx` 的「尺寸统一」测试改为
+「有 Select 则必 sm」+ 断言段落样式触发器带 `aria-haspopup="menu"`
+（常驻 Select 已消失，存在性断言让位）。
+
+**验证方式**：浏览器实测——打开菜单九项全出、项宽 166px（Select 弹层只有
+62px 宽）、当前值打勾；选「标题 2」正文立即变 h2、触发按钮文字跟随、
+面板关闭；撤销后文档回到原样（已保存 · 2418 字）。`pnpm check` 全绿。
+
+## D-089 文档头部的标题编辑态：改成「还是那行标题，只是可以打了」
+
+**背景**：用户反馈头部样式要再优化，「特别是标题编辑的时样式」。实测进入
+编辑态（点铅笔）后，antd 默认渲染出来的是一套**表单控件**语言：28–32px 高的
+输入框、8px 圆角、蓝色 focus 框 + 外发光、灰底——嵌在 44px 的无框单行头部里
+三处都突兀（比同排按钮高 8px、把视线引到框上、圆角宣告它是另一个东西）。
+
+**决定**：接管成与标题同高的**淡底胶囊**——28px 高（与工具条按钮同档）、
+边框恒透明（focus 也不亮框）、无外发光、6px 圆角、`colorFillTertiary` 底提示
+可打字、`field-sizing: content` 让宽度跟随内容（不支持的浏览器退回 antd 量的
+宽度，宽松一点无害）；编辑区最大宽度从 40% 放宽到 60%（长标题编辑时看得见
+更多内容）；`white-space: nowrap` 让长标题**只长宽不长高**——`field-sizing`
+默认也管高度，实测长标题会换行成两行把头部撑到 54px，而头部高度是硬约束。
+
+铅笔本身也弱化成 `colorTextTertiary`（低频入口，悬停标题时才亮）。
+
+**为什么这不算「改 antd 的样式」**：这条头部是**文档的标题栏**，编辑它就该
+是在原位置改一行字，而不是弹出一个表单。视觉语言的选择跟着**所在容器**走，
+不是跟着控件走——同一条规则在设置页的表单里成立，在标题栏里不成立。
+
+**踩到的坑**（这个坑值得记进 AGENTS 静默坑表）：改完样式**完全没生效**，
+量到的还是 antd 默认值。根因是 antd 进入编辑态时把 `className` 一起挂在了
+编辑容器上——我们的 `headerTitle` 哈希类就在那个容器自己身上，而我写成了
+`.headerTitle .ant-typography-edit-content`（**后代**）式的选择器：永远匹配
+不到，且静默。这与仓库里已经记过的「树根样式写成后代式」是同一个坑。
+修法：`&.ant-typography-edit-content` 同元素选择器。
+
+**影响**：`apps/web/src/components/document/DocumentPanel.style.ts` 的
+`headerTitle`（新增编辑态规则；header 上不再有那两段）；AGENTS 静默坑表加一条。
+
+**验证方式**：浏览器实测（深色外观）——编辑态输入框 28px 高、边框
+`rgba(0,0,0,0)`、`boxShadow: none`、圆角 6px、底部 `colorFillTertiary`；
+长标题（38 字）编辑时框宽 658px、行数 1、**头部行高仍是 44px**、元信息与
+返回按钮都还在；回车确认改名成功退出编辑态，Esc 取消后标题恢复原样。
+`pnpm check` 全绿（服务端 206 + 前端 247 + office 380）。
+
+## D-090 侧栏空态：使用指南在上、输入框固定底部
+
+**背景**：用户指出侧栏里「对话框要固定在底部，然后上面显示一些助手的使用
+指南」——并给了语雀阅读助手的截图。此前侧栏复用的 `ChatPanel` 空态是
+主视图那套**居中舞台**（问候语 + 输入框成一组居中），在 400px 的窄面板里
+读起来是个空页面，也不告诉用户这个面板能做什么。
+
+**决定**：给 `ChatPanel` 加 `guide` prop（**侧栏专用，函数式**）。
+
+1. **给出 `guide` 时布局换成「指南占滚动区、输入框固定底部」**；主视图不传，
+   仍用居中舞台。两种形态各自服务一个场景——主视图是全屏页面，居中像
+   「新对话」；侧栏是窄面板 + 辅助阅读，输入框钉底部才不显得空
+2. **指南回答三个问题**：你是谁（问候）、能干什么（四条能力清单，按「读这篇」
+   的实际用途列而不是产品功能）、我该问什么（**可点的示例问题**——
+   空输入框是最大的门槛，给一两个真问题比任何说明都有效）
+3. **示例问题点了直接发出**，不是塞进输入框让用户再按回车：问题文本已经完整，
+   多一步确认只是摩擦
+4. **示例只写能稳定命中的**（速读本文 / 提出要点 / 解释细节）——它们都走
+   「限定本篇」的检索、问的都是这一篇本身，不依赖库里还存了什么。一条点了
+   没用的建议比没有建议更伤（用户会怀疑整个功能坏了）
+5. **开始对话后指南撤下**（判据是「空 + 有 guide」）：它的使命是「第一次打开
+   时告诉他这面板能干什么」，对话开始后不该再占位置
+
+**实现要点**：`ChatPanel` 的 `guide` 是 `(ask) => ReactNode`，`ask` 绑着
+`send`（指南里的建议要能一键发出，而 `send` 只在 ChatPanel 里）；
+`ChatThread` 加 `emptyStage` 把「是否渲染居中问候」交给调用方。
+**render-prop 必须提到模块级函数**（`renderGuide`）——写成内联箭头会被
+`react(no-unstable-nested-components)` 判成渲染期定义组件，React Compiler
+随即跳过 `DocChatSidebar`（铁律 1 的静默退化）。这条也加进了 AGENTS 坑表。
+
+**影响**：`ChatPanel.tsx`（guide prop + guideMode 布局分支）、`ChatThread.tsx`
+（`emptyStage`）、`document/DocChatGuide.tsx`（新组件）、`DocChatSidebar.tsx`
+（接入 + 模块级 renderGuide）、`DocumentPanel.style.ts`（guide 样式组）。
+
+**验证方式**：浏览器实测——打开侧栏，指南从面板顶部（44px，标题栏之下）开始、
+输入框底栏贴在面板底（1014 对 1014）；四条能力清单与三个示例问题都在；
+点「速读本文」→ 指南撤下、问题发出、走检索回答、输入框保持贴底。
+`pnpm check` 全绿（含 0 warning）。
+
+## D-091 桌面端的名字与图标：可执行文件名、WM_CLASS 与应用图标
+
+**背景**：用户指出「桌面客户端的名字和图标也需要改下，现在用的都是默认的吧」。
+实测确认**三处都是默认/错误值**：
+
+1. **没有应用图标** —— 打包配置里一个 `icon` 都没有（白纸一张）
+2. **可执行文件名是 `@mimirdesktop`** —— electron-builder 不给
+   `executableName` 时用 package.json 的 `name`（`@mimir/desktop`）拼出来，
+   而 Linux 的窗口列表与 WM_CLASS 按它推导，任务栏上就显示那个东西
+3. **开发模式下 WM_CLASS 是 `electron`** —— 任务栏 / Alt+Tab 显示「Electron」
+
+**决定**：
+
+1. **图标**：`resources/icon.svg` 的几何来自 favicon 的同一份路径，生成
+   `icon.png`（1024）/ `icon.icns`（11 档）/ `icon.ico`（7 档），三个都**提交进
+   仓库**（图标是几乎不变的二进制资产，生成它需要一条画图链路，而打包的人
+   不该为此装东西）。`mac.icon` / `linux.icon` / `win.icon` 都配上——
+   加平台时忘配的症状是「打包成功、装完是白纸」
+2. **图形只有一个真相源**：`make-icons.ts` 在运行时**从 favicon.svg 读**引号
+   路径（解析 `<path d>`），不在脚本里另抄一份。读不到就抛错，不退回默认值
+   （那会让「读文件失败」表现成「图标画出来了但不是最新的」）
+3. **`executableName: mimir`** 显式给出
+4. **Linux 的 WM_CLASS** 用 `app.setDesktopName('mimir.desktop')` 设置
+5. **窗口图标**：`BrowserWindow` 的 `icon` 在 Linux / Windows 指向
+   `resources/icon.png`（after-pack 拷进产物）；**macOS 不传**——那边用
+   bundle 里的 `.icns`
+
+**踩到的坑（三个「看起来该生效」的方案都无效）**：
+
+| 方案 | 实测结果 |
+|---|---|
+| `app.commandLine.appendSwitch('class', 'mimir')` | WM_CLASS 仍是 `electron` |
+| 命令行传 `--class=mimir`（含 `--wm-class`） | 同上，Electron 44 已不读这个开关 |
+| 把可执行文件改名 / 软链成 `mimir` 再启动 | 仍读作 `electron` |
+| **`app.setDesktopName('mimir.desktop')`** | ✅ WM_CLASS 变成 `"mimir", "mimir"` |
+
+`setDesktopName` 的语义是「这个应用对应哪个 .desktop 文件」，桌面环境据此
+把窗口与启动器条目、图标关联起来。**参数要带 `.desktop` 后缀**。
+
+**另一条弯路：图标怎么渲染（本机没有 rsvg / ImageMagick）**
+
+先试了 Electron 的 Chromium 截图（最直觉），在 Wayland 上不稳定：
+`data:` URL 在小尺寸报 `ERR_FAILED`；每个尺寸开一个窗口时 16px 能过、
+24px 起报 `UnknownVizError`；复用一个窗口反复 `loadFile` 第二次就挂。
+最后用 **`@napi-rs/canvas`**（纯原生、不开窗口、不需要显示环境）——
+它没有 SVG 解析器，但图标的几何本来就是读 favicon 的路径数据，
+用 `Path2D` 直接画比先解析 SVG 更直接。已把包 `@napi-rs/canvas` 显式声明
+为本包的 devDependency（不再依赖「它恰好是 pdfjs-dist 的可选依赖」）。
+
+**影响**：`apps/desktop/resources/`（三个图标二进制）、
+`scripts/make-icons.ts`（新脚本，`pnpm --filter @mimir/desktop icons`）、
+`electron-builder.yml`（`executableName` + 三平台 `icon`）、
+`src/main.ts`（`setDesktopName` + 窗口图标）、
+`scripts/after-pack.mjs`（把 `icon.png` 拷进产物）。
+
+**验证方式**：`npx electron-builder --dir --linux` 真打包一次——产物里的
+可执行文件名为 `mimir`、`resources/icon.png` 就位；启动该产物并用 `xprop`
+读窗口属性：`WM_CLASS = "mimir", "mimir"`、窗口标题 `mimir`、
+`_NET_WM_ICON` 有数据、数据目录是 `~/.config/mimir/data`（不再是 `Electron`）。
+图标本身按 16/24/32/48px 拼成放大预览核对过可辨识度（16px 仍认得出引号）；
+ICO 的 7 档与 ICNS 的魔数/长度都用脚本断言过格式自洽。
+生成脚本的「读不到 favicon 路径」分支也实测过：改坏 favicon 后脚本
+**响亮报错**而不是画出一个旧图形。

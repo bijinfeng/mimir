@@ -9,7 +9,19 @@ import { FONT_SIZE } from '@/theme/tokens'
  * 规范见 `docs/DESIGN.md` §4.3 / §5。
  */
 export const useStyles = createStyles(({ css, token, prefixCls }) => ({
+  /**
+   * 根容器：文档视图 + （可选的）问 AI 侧栏，横向排列。
+   * `.wrap` 原来的职责（整列）原样保留，只是变成了根的一个 flex 子项。
+   */
+  root: css`
+    height: 100%;
+    display: flex;
+    min-width: 0;
+    background: ${token.colorBgContainer};
+  `,
   wrap: css`
+    flex: 1;
+    min-width: 0;
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -74,10 +86,55 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       white-space: nowrap;
       text-overflow: ellipsis;
 
-      /* 就地改名时 antd 会把它换成输入框，高度要跟头部一致，否则整行跳动 */
-      .${prefixCls}-typography-edit-content {
+      /* 铅笔是低频入口：弱化成 tertiary（悬停标题时才亮） */
+      .${prefixCls}-typography-edit {
+        color: ${token.colorTextTertiary};
+      }
+
+      /*
+       * 就地改名（D-089）：编辑态要读作「**还是那行标题，只是可以打了**」。
+       *
+       * 三处 antd 默认值在这条无框单行头部里都突兀：32px 高比同排按钮高
+       * 8px（整行跳动）、蓝色 focus 框把视线从内容引到框上、8px 圆角宣告
+       * 它是另一个东西。
+       *
+       * ## 选择器必须写成**同元素**式，不能写成后代式
+       *
+       * antd 把 className 一起挂在编辑容器上（实测编辑容器的 classList
+       * 里就有 headerTitle 那个哈希类），所以将两个类写成**后代**关系的
+       * 选择器永远匹配不到——那个类的元素就是容器自己。这正是 AGENTS.md
+       * 记过的「树根样式写成后代式」同一个坑：规则静默失效，量到的还是
+       * antd 默认值。写成 &. 同元素才对。
+       *
+       * ## 长标题不换行（头部高度是硬约束）
+       *
+       * field-sizing: content 让宽度跟随内容，但它默认也管高度——
+       * 标题一长就换行成两行、把 44px 的头部撑高（实测 54px）。所以配
+       * white-space: nowrap 只长宽不长高，超出时由输入框自己横向滚。
+       */
+      &.${prefixCls}-typography-edit-content {
+        max-width: 60%;
+        display: flex;
+        align-items: center;
+        flex: none;
         margin: 0;
         inset-inline-start: 0;
+      }
+
+      &.${prefixCls}-typography-edit-content textarea {
+        height: 28px;
+        min-height: 0;
+        min-width: 120px;
+        padding: 0 8px;
+        line-height: 26px;
+        border: 1px solid transparent;
+        border-radius: 6px;
+        background: ${token.colorFillTertiary};
+        box-shadow: none;
+        resize: none;
+        white-space: nowrap;
+        overflow-x: auto;
+        field-sizing: content;
       }
     }
   `,
@@ -338,6 +395,188 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
 
   /* 右侧大纲。只在标题数 ≥ 2 时出现——两段话的笔记不需要目录，
      常驻只是白占 196px（docs/PRD.md §5.10） */
+  /**
+   * 笔记的大纲：在编辑器外壳的 bodySide 里（工具栏下面、正文右边）。
+   * 外壳的 `.mimir-editor__side` 已经给了宽度 / 滚动 / 右内边距，
+   * 这里只补排版细节。sticky 不需要——侧列本身就是固定高度。
+   */
+  outlineSide: css`
+    height: 100%;
+    padding: 6px 0 24px 10px;
+    /* 浮层浮在滚动内容之上，底必须不透明——否则滚动的文字从大纲字缝里透出来 */
+    background: ${token.colorBgContainer};
+  `,
+
+  /* ── 问 AI 侧栏（D-087）────────────────────────────────── */
+
+  /**
+   * 侧栏容器。**挂载与可见分离**的落点：`data-open` 不在时宽度折到 0
+   * （transition 让它滑出），里面的内容保持挂载——流式进行中关掉再打开，
+   * 回答还在继续。内层固定 400px，折起时内容不被压扁。
+   */
+  /* ── 侧栏空态的使用指南（D-090）────────────────────────── */
+
+  guide: css`
+    padding: 16px 4px 24px;
+  `,
+
+  guideHello: css`
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: ${FONT_SIZE.body}px;
+    font-weight: 600;
+    color: ${token.colorText};
+    margin-bottom: 8px;
+  `,
+
+  guideLead: css`
+    margin: 0 0 16px;
+    font-size: ${FONT_SIZE.note}px;
+    line-height: 1.75;
+    color: ${token.colorTextSecondary};
+  `,
+
+  /**
+   * 能力清单的卡片。底色比面板浅一档（fill 档而不是容器色）——
+   * 它是一块「说明」，与聊天内容区分开；不用警示色，这里没有异常。
+   */
+  guideCard: css`
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: ${token.colorFillQuaternary};
+    margin-bottom: 14px;
+  `,
+
+  guideCardTitle: css`
+    font-size: ${FONT_SIZE.note}px;
+    font-weight: 600;
+    color: ${token.colorText};
+    margin-bottom: 8px;
+  `,
+
+  guideList: css`
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    li {
+      display: grid;
+      grid-template-columns: 6px 1fr;
+      column-gap: 8px;
+      font-size: ${FONT_SIZE.note}px;
+      line-height: 1.6;
+    }
+
+    b {
+      color: ${token.colorText};
+      font-weight: 600;
+    }
+  `,
+
+  /** 每个要点前的小圆点。用它而不是 li 的 marker：marker 的对齐在不同引擎下不一致 */
+  guideDot: css`
+    width: 5px;
+    height: 5px;
+    margin-top: 7px;
+    border-radius: 50%;
+    background: ${token.colorPrimary};
+  `,
+
+  /** 要点的第二行说明。与标题同一格（第二列），自然换行 */
+  guideItemDesc: css`
+    grid-column: 2;
+    color: ${token.colorTextTertiary};
+  `,
+
+  /** 示例问题：一排可点的胶囊，点一下直接发出 */
+  guideSuggest: css`
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+  `,
+
+  guideChip: css`
+    border: 1px solid ${token.colorBorder};
+    background: ${token.colorBgContainer};
+    color: ${token.colorText};
+    border-radius: 14px;
+    padding: 4px 12px;
+    font-size: ${FONT_SIZE.note}px;
+    font-family: inherit;
+    line-height: 1.5;
+    cursor: pointer;
+
+    &:hover {
+      border-color: ${token.colorPrimary};
+      color: ${token.colorLink};
+    }
+  `,
+
+  guideFoot: css`
+    margin: 0;
+    font-size: ${FONT_SIZE.meta}px;
+    line-height: 1.7;
+    color: ${token.colorTextTertiary};
+  `,
+
+  aiSidebar: css`
+    flex: none;
+    width: 0;
+    overflow: hidden;
+    border-left: 1px solid transparent;
+    transition:
+      width 0.22s ease-out,
+      border-color 0.22s ease-out;
+
+    &[data-open] {
+      width: 400px;
+      border-left-color: ${token.colorBorderSecondary};
+    }
+  `,
+
+  aiSidebarInner: css`
+    width: 400px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  `,
+
+  aiSidebarHeader: css`
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    height: 44px;
+    padding: 0 8px 0 14px;
+    border-bottom: 1px solid ${token.colorBorderSecondary};
+  `,
+
+  /**
+   * 侧栏标题。长标题截断——它后面只有一个关闭按钮，让标题吃掉剩余空间
+   * 并省略，比把按钮挤出去好。
+   */
+  aiSidebarTitle: css`
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: ${FONT_SIZE.note}px;
+    font-weight: 600;
+    color: ${token.colorTextSecondary};
+  `,
+
+  aiSidebarBody: css`
+    flex: 1;
+    min-height: 0;
+  `,
+
   outline: css`
     flex: none;
     width: 196px;

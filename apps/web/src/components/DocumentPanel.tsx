@@ -10,12 +10,13 @@ import { DocumentFooter } from '@/components/document/DocumentFooter'
 import { useStyles } from '@/components/document/DocumentPanel.style'
 import { FilePreview } from '@/components/document/FilePreview'
 import { MarkdownBody } from '@/components/document/MarkdownBody'
+import { DocChatSidebar } from '@/components/document/DocChatSidebar'
 import { buildDocMenu } from '@/components/document/doc-menu'
 import { flattenFolders } from '@/components/document/folders'
 import { extractHeadings } from '@/components/document/headings'
 import { formatMeta } from '@/components/list-helpers'
 import { api } from '@/lib/api'
-import { useAppShell } from '@/lib/app-shell-context'
+import { useAppShell, type AskDraft } from '@/lib/app-shell-context'
 import { useScrolled } from '@/lib/use-scrolled'
 import { useUnsaved } from '@/lib/unsaved'
 
@@ -50,15 +51,6 @@ export interface DocumentPanelProps {
   citation?: Citation | null | undefined
   /** 从对话点引用跳过来时，显示「返回对话」 */
   onBackToChat?: (() => void) | undefined
-  /** 工具条「问 AI」：带着这篇的上下文进主视图对话 */
-  onAskAi: (documentId: string) => void
-  /**
-   * 内联工具条「就这段提问」：带着选中的话进对话。
-   *
-   * 与「问 AI」的区别是它**锚定了选中内容**——范围同样锁在这一篇，
-   * 但把选中的话预填进输入框，比「问整篇」精确（PRD §5.5）。
-   */
-  onAskAboutSelection: (documentId: string, passage: string) => void
   /** 点击页脚的双链 */
   onOpenDocument: (id: string) => void
   /**
@@ -75,8 +67,6 @@ export function DocumentPanel({
   onBack,
   citation,
   onBackToChat,
-  onAskAi,
-  onAskAboutSelection,
   onOpenDocument,
   onDirtyChange,
 }: DocumentPanelProps) {
@@ -173,6 +163,36 @@ export function DocumentPanel({
   const [aiSummaryLoading, setAiSummaryLoading] = useState(false)
   /** AI 给出的标签候选。与统计版建议标签分开显示——来源不同，可信度不同 */
   const [aiTags, setAiTags] = useState<{ documentId: string; tags: string[] } | null>(null)
+
+  /**
+   * 「问 AI」侧栏（D-087）。
+   *
+   * `docId` 锁定它属于哪一篇：切到别的文档时它就不渲染了（渲染期派生，
+   * 不需要 effect）。`open: false` 时**保持挂载**只折叠——流式进行中关掉
+   * 再打开，回答还在继续（卸载会连 `useChat` 的客户端一起丢掉）。
+   */
+  const [aiSidebar, setAiSidebar] = useState<{
+    docId: string
+    draft: AskDraft
+    open: boolean
+  } | null>(null)
+  /** 侧栏里点开的、属于当前这一篇的引用：原地滚动高亮，不走导航 */
+  const [sidebarCitation, setSidebarCitation] = useState<Citation | null>(null)
+
+  /** 打开侧栏。「就这段提问」把选中内容带引号预填进输入框（范围同样锁这一篇） */
+  const askAi = (passage?: string) => {
+    if (!documentId) return
+    setAiSidebar({
+      docId: documentId,
+      draft: {
+        text: passage
+          ? `关于这篇里这段：\n> ${passage.replace(/\n+/g, ' ').slice(0, 200)}\n\n`
+          : '',
+        documentId,
+      },
+      open: true,
+    })
+  }
 
   /**
    * 标题住在面板而不是编辑器里。
@@ -383,6 +403,12 @@ export function DocumentPanel({
   }
 
   /**
+   * 生效的引用：路由带来的（对话页跳来）与侧栏里点开的，走同一条
+   * 「滚动 + 高亮」的 effect。prop 优先——它带一次导航，语义更新。
+   */
+  const activeCitation = citation ?? sidebarCitation
+
+  /**
    * 引用跳转的下半句：滚动到原文区间并高亮（D-047 待办收尾）。
    *
    * 定位用**归一化文本匹配**而不是 citation.start/end 的字符偏移——
@@ -397,8 +423,8 @@ export function DocumentPanel({
    */
   useEffect(() => {
     const root = scrollRef.current
-    if (!root || !doc || !citation) return
-    const snippet = citation.snippet
+    if (!root || !doc || !activeCitation) return
+    const snippet = activeCitation.snippet
 
     /**
      * **要重试**：effect 首次跑时正文可能还没挂载完（笔记的 Tiptap 与
@@ -416,7 +442,9 @@ export function DocumentPanel({
      * 第一次 tick 就被掐断（实测踩过：重试循环从未跑第二轮）。
      */
     const finish = () => {
-      clearHighlight()
+      // 侧栏的引用用完清本地状态；来自 shell（对话页跳来）的走 context 清除
+      if (sidebarCitation) setSidebarCitation(null)
+      else clearHighlight()
     }
 
     const tick = () => {
@@ -450,7 +478,7 @@ export function DocumentPanel({
     return () => {
       cancelled = true
     }
-  }, [doc, citation, clearHighlight])
+  }, [doc, activeCitation, sidebarCitation, clearHighlight])
 
   if (!documentId) {
     return (
@@ -502,9 +530,23 @@ export function DocumentPanel({
     aiBusy: aiSummaryLoading,
   })
 
+  /**
+   * 侧栏的挂载与可见是两件事（见 aiSidebar state 的注释）：
+   * 属于这一篇就保持挂载（流式不丢），open 决定它展不展开。
+   */
+  const sidebarMounted = aiSidebar !== null && aiSidebar.docId === documentId
+  const sidebarOpen = sidebarMounted && aiSidebar!.open
+
+  /** 侧栏里点引用：同一篇原地高亮，别的文档走导航（离开这一篇，侧栏随之卸载） */
+  const openSidebarCitation = (id: string, cite: Citation) => {
+    if (id === documentId) setSidebarCitation(cite)
+    else onOpenDocument(id)
+  }
+
   return (
-    <div className={styles.wrap}>
-      {/*
+    <div className={styles.root}>
+      <div className={styles.wrap}>
+        {/*
         Office 式头部：**一行**（D-054）。
         返回 · 标题 · 元信息 · 动作，四段挤在 44px 里——这是 Word / Excel
         网页版的标题栏形态。原先它占三行（返回胶囊 / 28px 大标题 / 元信息行），
@@ -520,115 +562,115 @@ export function DocumentPanel({
         （与侧栏导航不一致——那里一直有拦截）。有未保存内容时才弹守卫框，
         干净时不留任何中间态（`lib/unsaved.tsx` 的 `runGuarded`）。
       */}
-      <div className={styles.header} data-scrolled={headerScrolled || undefined}>
-        {onBackToChat && (
-          <button type="button" className={styles.back} onClick={() => runGuarded(onBackToChat)}>
-            <ArrowLeft size={11} />
-            返回对话
-          </button>
-        )}
-        {onBack && (
-          <button type="button" className={styles.back} onClick={() => runGuarded(onBack)}>
-            <ArrowLeft size={11} />
-            返回库
-          </button>
-        )}
+        <div className={styles.header} data-scrolled={headerScrolled || undefined}>
+          {onBackToChat && (
+            <button type="button" className={styles.back} onClick={() => runGuarded(onBackToChat)}>
+              <ArrowLeft size={11} />
+              返回对话
+            </button>
+          )}
+          {onBack && (
+            <button type="button" className={styles.back} onClick={() => runGuarded(onBack)}>
+              <ArrowLeft size={11} />
+              返回库
+            </button>
+          )}
 
-        {/*
+          {/*
           标题：笔记可改（它决定文件名，所以改名会让服务端同步移动 vault 里的
           文件，见 lib/vault.ts 的 moveNote），文件与资料只读。
 
           用 antd 的 `Typography.Title editable` 做就地编辑，它自带确认/取消
           与键盘行为，比手搓一个可编辑标题可靠。
         */}
-        {/*
+          {/*
           **两个分支都是 `Typography.Title`**，即使文件与资料的标题不可改。
           换成一个裸 `<h1>` 会让那条抬了特异性的规则匹配不上它，字号回落到
           浏览器默认的 28px（在 44px 的头部里就是「挤且丑」）。一个元素类型
           = 一条样式路径，不存在「哪条规则匹配不到」。
         */}
-        <Typography.Title
-          level={1}
-          className={styles.headerTitle}
-          title={doc.title}
-          {...(doc.kind === 'note'
-            ? {
-                editable: {
-                  onChange: (next: string) => {
-                    const trimmed = next.trim()
-                    // 空标题会让 buildNotePath 生成 `-<id>.md` 这种无名文件，
-                    // 所以拒绝空值而不是静默接受
-                    if (!trimmed || trimmed === doc.title) return
-                    renameTitle.mutate(trimmed)
+          <Typography.Title
+            level={1}
+            className={styles.headerTitle}
+            title={doc.title}
+            {...(doc.kind === 'note'
+              ? {
+                  editable: {
+                    onChange: (next: string) => {
+                      const trimmed = next.trim()
+                      // 空标题会让 buildNotePath 生成 `-<id>.md` 这种无名文件，
+                      // 所以拒绝空值而不是静默接受
+                      if (!trimmed || trimmed === doc.title) return
+                      renameTitle.mutate(trimmed)
+                    },
+                    tooltip: '点击修改标题（会同步重命名文件）',
+                    maxLength: 200,
                   },
-                  tooltip: '点击修改标题（会同步重命名文件）',
-                  maxLength: 200,
-                },
-              }
-            : {})}
-        >
-          {doc.title}
-        </Typography.Title>
-
-        <DocHeaderMeta doc={doc} />
-
-        <div className={styles.headerActions}>
-          {/* 上传件的下载入口。它在头部常驻而不是等用户切到某一层——
-              下载是最常用的动作（PRD §5.12） */}
-          {doc.kind === 'file' && doc.sourceKey && (
-            <Button
-              type="text"
-              size="small"
-              icon={<Download size={16} />}
-              className={styles.tbBtn}
-              href={api.documents.sourceUrl(doc.id, { download: true })}
-            >
-              下载
-            </Button>
-          )}
-
-          <Tooltip
-            title={
-              doc.body.trim() === ''
-                ? '这篇还没有可检索的正文，问答里引用不到它'
-                : '带这篇的上下文去主视图对话，范围自动锁到这一篇'
-            }
+                }
+              : {})}
           >
-            <Button
-              type="text"
-              size="small"
-              icon={<MessageCircle size={16} />}
-              className={styles.tbBtn}
-              onClick={() => onAskAi(doc.id)}
-              /* 没有正文时禁用并说明原因（tooltip 里）——留一个点了没反应的
-                 按钮是最坏的一种（DESIGN §7.4） */
-              disabled={doc.body.trim() === ''}
-            >
-              问 AI
-            </Button>
-          </Tooltip>
+            {doc.title}
+          </Typography.Title>
 
-          {/*
+          <DocHeaderMeta doc={doc} />
+
+          <div className={styles.headerActions}>
+            {/* 上传件的下载入口。它在头部常驻而不是等用户切到某一层——
+              下载是最常用的动作（PRD §5.12） */}
+            {doc.kind === 'file' && doc.sourceKey && (
+              <Button
+                type="text"
+                size="small"
+                icon={<Download size={16} />}
+                className={styles.tbBtn}
+                href={api.documents.sourceUrl(doc.id, { download: true })}
+              >
+                下载
+              </Button>
+            )}
+
+            <Tooltip
+              title={
+                doc.body.trim() === ''
+                  ? '这篇还没有可检索的正文，问答里引用不到它'
+                  : '带这篇的上下文去主视图对话，范围自动锁到这一篇'
+              }
+            >
+              <Button
+                type="text"
+                size="small"
+                icon={<MessageCircle size={16} />}
+                className={styles.tbBtn}
+                onClick={() => askAi()}
+                /* 没有正文时禁用并说明原因（tooltip 里）——留一个点了没反应的
+                 按钮是最坏的一种（DESIGN §7.4） */
+                disabled={doc.body.trim() === ''}
+              >
+                问 AI
+              </Button>
+            </Tooltip>
+
+            {/*
             「⋯」：元信息动作的出口。原先是整理条上的几项（标签 / 目录），
             现在收在一处。它在最右端——**高频动作在左、低频在右**是工具条
             的通用约定，而这两项都是低频的（D-054）
           */}
-          <Dropdown trigger={['click']} menu={{ items: menu }} placement="bottomRight">
-            <Button
-              type="text"
-              size="small"
-              icon={<Ellipsis size={16} />}
-              className={styles.tbBtn}
-              aria-label="更多操作"
-            />
-          </Dropdown>
+            <Dropdown trigger={['click']} menu={{ items: menu }} placement="bottomRight">
+              <Button
+                type="text"
+                size="small"
+                icon={<Ellipsis size={16} />}
+                className={styles.tbBtn}
+                aria-label="更多操作"
+              />
+            </Dropdown>
+          </div>
         </div>
-      </div>
 
-      <div className={styles.scroll} ref={scrollRef}>
-        <div className={styles.cols}>
-          <div className={wideContent ? styles.innerWide : styles.inner}>
-            {/*
+        <div className={styles.scroll} ref={scrollRef}>
+          <div className={styles.cols}>
+            <div className={wideContent ? styles.innerWide : styles.inner}>
+              {/*
               AI 的两块结果摆在正文之上（metadata 之下）。
 
               **位置有讲究**：摘要是「这篇讲了什么」的总览，它是**读之前**
@@ -640,46 +682,46 @@ export function DocumentPanel({
               不产生「这里以前有东西、现在没了」的疑惑——关掉再开
               就是「重新生成一次」的语义。
             */}
-            {visibleSummary ? (
-              <div className={styles.aiBlock}>
-                <div className={styles.aiLabel}>AI 摘要 · {visibleSummary.model}</div>
-                <div className={styles.aiText}>{visibleSummary.text}</div>
-              </div>
-            ) : null}
-
-            {visibleAiTags.length > 0 ? (
-              <div className={styles.aiBlock}>
-                <div className={styles.aiLabel}>AI 建议的标签（点一下加上）</div>
-                <div className={styles.aiTags}>
-                  {visibleAiTags
-                    .filter((tag) => !doc.tags.includes(tag))
-                    .map((tag) => (
-                      <button
-                        key={tag}
-                        type="button"
-                        className={styles.aiTag}
-                        onClick={() => {
-                          patch.mutate({ tags: [...doc.tags, tag] })
-                          // 加过的从候选里拿掉——留着会让「点了没变化」变得可能
-                          setAiTags((current) =>
-                            current === null
-                              ? current
-                              : { ...current, tags: current.tags.filter((item) => item !== tag) },
-                          )
-                        }}
-                      >
-                        ＋ {tag}
-                      </button>
-                    ))}
-                  {/* 全部加完之后给一句说明，而不是留一个空盒子 */}
-                  {visibleAiTags.every((tag) => doc.tags.includes(tag)) ? (
-                    <span className={styles.aiLabel}>都加上了</span>
-                  ) : null}
+              {visibleSummary ? (
+                <div className={styles.aiBlock}>
+                  <div className={styles.aiLabel}>AI 摘要 · {visibleSummary.model}</div>
+                  <div className={styles.aiText}>{visibleSummary.text}</div>
                 </div>
-              </div>
-            ) : null}
+              ) : null}
 
-            {/*
+              {visibleAiTags.length > 0 ? (
+                <div className={styles.aiBlock}>
+                  <div className={styles.aiLabel}>AI 建议的标签（点一下加上）</div>
+                  <div className={styles.aiTags}>
+                    {visibleAiTags
+                      .filter((tag) => !doc.tags.includes(tag))
+                      .map((tag) => (
+                        <button
+                          key={tag}
+                          type="button"
+                          className={styles.aiTag}
+                          onClick={() => {
+                            patch.mutate({ tags: [...doc.tags, tag] })
+                            // 加过的从候选里拿掉——留着会让「点了没变化」变得可能
+                            setAiTags((current) =>
+                              current === null
+                                ? current
+                                : { ...current, tags: current.tags.filter((item) => item !== tag) },
+                            )
+                          }}
+                        >
+                          ＋ {tag}
+                        </button>
+                      ))}
+                    {/* 全部加完之后给一句说明，而不是留一个空盒子 */}
+                    {visibleAiTags.every((tag) => doc.tags.includes(tag)) ? (
+                      <span className={styles.aiLabel}>都加上了</span>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+
+              {/*
               三种正文区，按 kind 分派：
 
               | kind | 用什么 | 为什么 |
@@ -691,54 +733,99 @@ export function DocumentPanel({
               抓来的资料不可编辑——它的真相是原始快照 + 派生正文，
               就地改写会让「原文是什么」变得不可考。上传件同理。
             */}
-            {doc.kind === 'note' ? (
-              <NoteEditor
-                key={doc.id}
-                document={doc}
-                title={doc.title}
-                onAskAboutSelection={(passage) => onAskAboutSelection(doc.id, passage)}
-                onDirtyChange={onDirtyChange}
-              />
-            ) : doc.kind === 'file' ? (
-              <FilePreview key={doc.id} doc={doc} onDirtyChange={onDirtyChange} />
-            ) : (
-              /* 正文排版与编辑器共用同一个类——两个视图都让 Tiptap 渲染同一份
+              {doc.kind === 'note' ? (
+                <NoteEditor
+                  key={doc.id}
+                  document={doc}
+                  title={doc.title}
+                  onAskAboutSelection={(passage) => askAi(passage)}
+                  onDirtyChange={onDirtyChange}
+                  {...(showOutline
+                    ? {
+                        bodySide: (
+                          <aside className={styles.outlineSide}>
+                            <div className={styles.outlineTitle}>大纲</div>
+                            {headings.map((heading, index) => (
+                              <button
+                                key={heading.id}
+                                type="button"
+                                className={`${styles.olItem} ${heading.level === 3 ? styles.olItemLv3 : ''} ${
+                                  activeHeading === heading.id ? styles.olItemActive : ''
+                                }`}
+                                onClick={() => jumpTo(index)}
+                              >
+                                {heading.text}
+                              </button>
+                            ))}
+                          </aside>
+                        ),
+                      }
+                    : {})}
+                />
+              ) : doc.kind === 'file' ? (
+                <FilePreview key={doc.id} doc={doc} onDirtyChange={onDirtyChange} />
+              ) : (
+                /* 正文排版与编辑器共用同一个类——两个视图都让 Tiptap 渲染同一份
                  Markdown，排版必须同源。这里曾经各自手抄一份，漂移出四处 */
-              <div className={contentStyles.content}>
-                <MarkdownBody body={doc.body} headings={headings} />
-              </div>
-            )}
+                <div className={contentStyles.content}>
+                  <MarkdownBody body={doc.body} headings={headings} />
+                </div>
+              )}
 
-            {/* 页脚双链与「返回库」是同一类动作：换一篇=离开这一篇。
+              {/* 页脚双链与「返回库」是同一类动作：换一篇=离开这一篇。
                 同样走守卫，否则「改完点一个双链」是又一条静默丢改动的路
                 （中栏列表里的同一动作一直是拦的，见 LibraryView 的 open） */}
-            <DocumentFooter
-              doc={doc}
-              onOpenDocument={(id) => runGuarded(() => onOpenDocument(id))}
-            />
-          </div>
+              <DocumentFooter
+                doc={doc}
+                onOpenDocument={(id) => runGuarded(() => onOpenDocument(id))}
+              />
+            </div>
 
-          {/* 右侧大纲。判据见 `showOutline`：正文里有 ≥ 2 个标题就出现，
-              有原件的文件类文档除外（原件自带导航） */}
-          {showOutline && (
-            <aside className={styles.outline}>
-              <div className={styles.outlineTitle}>大纲</div>
-              {headings.map((heading, index) => (
-                <button
-                  key={heading.id}
-                  type="button"
-                  className={`${styles.olItem} ${heading.level === 3 ? styles.olItemLv3 : ''} ${
-                    activeHeading === heading.id ? styles.olItemActive : ''
-                  }`}
-                  onClick={() => jumpTo(index)}
-                >
-                  {heading.text}
-                </button>
-              ))}
-            </aside>
-          )}
+            {/* 右侧大纲。判据见 `showOutline`：正文里有 ≥ 2 个标题就出现，
+              有原件的文件类文档除外（原件自带导航）。
+              **笔记的大纲不走这里**——它在编辑器外壳的 bodySide 里
+              （工具栏下面、正文右边，语雀式布局，D-087） */}
+            {showOutline && doc.kind !== 'note' && (
+              <aside className={styles.outline}>
+                <div className={styles.outlineTitle}>大纲</div>
+                {headings.map((heading, index) => (
+                  <button
+                    key={heading.id}
+                    type="button"
+                    className={`${styles.olItem} ${heading.level === 3 ? styles.olItemLv3 : ''} ${
+                      activeHeading === heading.id ? styles.olItemActive : ''
+                    }`}
+                    onClick={() => jumpTo(index)}
+                  >
+                    {heading.text}
+                  </button>
+                ))}
+              </aside>
+            )}
+          </div>
         </div>
       </div>
+
+      {/*
+        「问 AI」侧栏（D-087）。挂载与可见分离：关闭只是折起（宽度 0），
+        组件保持挂载——流式进行中关掉再打开，回答还在继续。
+      */}
+      {sidebarMounted && (
+        <div
+          className={styles.aiSidebar}
+          data-open={sidebarOpen || undefined}
+          aria-hidden={!sidebarOpen}
+        >
+          <DocChatSidebar
+            doc={doc}
+            draft={aiSidebar!.draft}
+            onClose={() =>
+              setAiSidebar((current) => (current ? { ...current, open: false } : current))
+            }
+            onOpenCitation={openSidebarCitation}
+          />
+        </div>
+      )}
     </div>
   )
 }

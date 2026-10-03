@@ -186,6 +186,27 @@
   min-height: 0;
 }
 
+/* bodySide 给出时：主滚动层保持整幅（滚动条在画布最右缘），
+   侧列是钉在右上角的**浮层**——不随内容滚走。主内容用 padding-right
+   让出侧列的位置（.me-scroll 上，居中的正文因此整体左移）。 */
+.mimir-editor__body--split {
+  position: relative;
+}
+
+.mimir-editor__body--split > .me-scroll {
+  padding-right: 220px;
+}
+
+.mimir-editor__side {
+  position: absolute;
+  top: 8px;
+  right: 16px;
+  bottom: 8px;
+  width: 196px;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
 /* 内容下方的附属面板（pptx 的段落编辑、xlsx 的单元格编辑） */
 .mimir-editor__footer {
   flex: none;

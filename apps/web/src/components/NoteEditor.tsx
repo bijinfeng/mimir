@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type { DocumentDetail } from '@mimir/shared'
 import { useQueryClient } from '@tanstack/react-query'
 import { App } from 'antd'
@@ -46,9 +47,17 @@ interface Props {
   onAskAboutSelection?: (passage: string) => void
   /** 有未保存改动时上报。宿主用它武装离开前的拦截 */
   onDirtyChange?: ((dirty: boolean) => void) | undefined
+  /** 编辑区右侧的固定列（大纲）。透传给编辑器外壳的 bodySide */
+  bodySide?: ReactNode
 }
 
-export function NoteEditor({ document: doc, title, onAskAboutSelection, onDirtyChange }: Props) {
+export function NoteEditor({
+  document: doc,
+  title,
+  onAskAboutSelection,
+  onDirtyChange,
+  bodySide,
+}: Props) {
   const { styles: contentStyles } = useContentStyles()
   const { styles: themeVars } = useEditorThemeVars()
   const { message } = App.useApp()
@@ -163,6 +172,7 @@ export function NoteEditor({ document: doc, title, onAskAboutSelection, onDirtyC
         onSaveHandle={setSave}
         flush
         onAskAboutSelection={(passage) => onAskAboutSelection?.(passage)}
+        {...(bodySide !== undefined ? { bodySide } : {})}
         onRewrite={onRewrite}
         onUploadImage={uploadImage}
       />

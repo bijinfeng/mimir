@@ -1,7 +1,7 @@
 import type { Citation, Message } from '@mimir/shared'
 import { App as AntApp, Button, Skeleton } from 'antd'
 import { ArrowDown } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import { useChatPanelStyles } from '@/components/chat/ChatPanel.style'
 import { ChatThread, questionToRefill } from '@/components/chat/ChatThread'
 import { Composer } from '@/components/chat/Composer'
@@ -38,6 +38,19 @@ export interface ChatPanelProps {
   onOpenCitation: (documentId: string, citation: Citation) => void
   /** 新会话建出来后换 URL */
   onConversationCreated: (conversationId: string) => void
+  /**
+   * 空态的使用指南（**侧栏专用**，D-090）。
+   *
+   * 给出时布局换成「指南在上、输入框固定底部」——与语雀的阅读助手同形。
+   * 主视图不传它：那边的空态是**居中舞台**（问候语与输入框成一组，
+   * ChatGPT / Notion 的形态，用户拍板过），两种形态各自服务一个场景：
+   * 侧栏窄、是「辅助当前阅读」的工具，指南 + 底部输入更像助手面板。
+   *
+   * 传的是**渲染函数而不是节点**：指南里的建议问题要能一键发出去，
+   * 而 `send` 只在这个组件里。函数收下 `ask`，返回的仍是普通 JSX
+   * （不是组件——那个坑见 `InlineToolbar` 的说明）。
+   */
+  guide?: ((ask: (question: string) => void) => ReactNode) | undefined
 }
 
 export function ChatPanel({
@@ -47,6 +60,7 @@ export function ChatPanel({
   messagesLoading,
   onOpenCitation,
   onConversationCreated,
+  guide,
 }: ChatPanelProps) {
   const { styles } = useChatPanelStyles()
 
@@ -81,6 +95,7 @@ export function ChatPanel({
       initialMessages={initialMessages}
       onOpenCitation={onOpenCitation}
       onConversationCreated={onConversationCreated}
+      {...(guide !== undefined ? { guide } : {})}
     />
   )
 }
@@ -91,6 +106,7 @@ function ChatPanelBody({
   initialMessages,
   onOpenCitation,
   onConversationCreated,
+  guide,
 }: ChatPanelProps) {
   const { styles } = useChatPanelStyles()
   const { openDocument } = useAppShell()
@@ -227,7 +243,10 @@ function ChatPanelBody({
    */
   const composer = (
     <Composer
-      key={`${draft?.documentId ?? 'global'}:${lastSend.nonce}`}
+      /* key 里的 draft.text：侧栏（D-087）不经过路由重挂，「就这段提问」
+         的预填只能靠 text 变化触发重挂——与主视图跳转重挂是同一性质
+         （文字清空、深度思考回默认），注释见 ChatPanelBody 顶部的说明 */
+      key={`${draft?.documentId ?? 'global'}:${lastSend.nonce}:${draft?.text ?? ''}`}
       initialText={lastSend.nonce > 0 ? lastSend.text : (draft?.text ?? '')}
       conversationId={chat.activeId}
       contextDocument={contextDoc ?? undefined}
@@ -240,18 +259,35 @@ function ChatPanelBody({
     />
   )
 
+  /**
+   * 指南模式（D-090）：空态且宿主给了 `guide` 时，空态不再是居中舞台——
+   * 指南占滚动区、输入框固定底部。判据只看「空 + 有指南」：一旦开始对话，
+   * 这一块就恢复成消息列（指南的使命是「第一次打开时告诉他这面板能干什么」，
+   * 对话开始后它不该再占位置）。
+   */
+  const guideMode = isEmpty && guide !== undefined
+
   return (
     <div className={styles.wrap}>
       <div className={styles.scrollWrap}>
-        <div className={styles.scroll} ref={scrollRef} data-empty={isEmpty || undefined}>
-          <div className={isEmpty ? styles.innerEmpty : styles.inner} ref={contentRef}>
+        <div
+          className={styles.scroll}
+          ref={scrollRef}
+          data-empty={(isEmpty && !guideMode) || undefined}
+        >
+          <div
+            className={isEmpty && !guideMode ? styles.innerEmpty : styles.inner}
+            ref={contentRef}
+          >
+            {guideMode ? guide((question) => void send(question, {})) : null}
             <ChatThread
               chat={chat}
               draft={draft}
               initialMessages={initialMessages}
               lastSend={lastSend}
               sendError={sendError}
-              composer={composer}
+              composer={guideMode ? null : composer}
+              emptyStage={!guideMode}
               onOpenCitation={onOpenCitation}
               onOpenNote={(noteId) => openDocument(noteId, 'all')}
               onRetry={() => resend()}
@@ -282,9 +318,10 @@ function ChatPanelBody({
         )}
       </div>
 
-      {/* 空态时输入区在居中组里（ChatThread 渲染），底部这条不渲染——
-          否则同一个输入框会出现两份 */}
-      {!isEmpty && (
+      {/* 空态（且非指南模式）时输入区在居中组里（ChatThread 渲染），
+          底部这条不渲染——否则同一个输入框会出现两份。
+          指南模式下反过来：输入框**固定在这条底部线上**，指南自己占滚动区 */}
+      {(!isEmpty || guideMode) && (
         <div className={styles.composerLine} data-scrolled={scrolled || undefined}>
           {composer}
         </div>

@@ -37,6 +37,7 @@ export function ChatThread({
   lastSend,
   sendError,
   composer,
+  emptyStage = true,
   onOpenCitation,
   onOpenNote,
   onRetry,
@@ -53,6 +54,13 @@ export function ChatThread({
   sendError: string | null
   /** 输入区节点：空态时渲染在问候语下面（居中成组），非空时由 ChatPanel 挂底部 */
   composer: ReactNode
+  /**
+   * 空态是否用「居中舞台」形态（问候语 + 输入框成一组）。
+   *
+   * 侧栏的指南模式传 `false`：那边输入框固定在底部、指南占滚动区
+   * （D-090），空态不渲染 `ChatEmptyState`（指南自己带问候与说明）。
+   */
+  emptyStage?: boolean
   onOpenCitation: (documentId: string, citation: Citation) => void
   onOpenNote: (noteId: string) => void
   onRetry: () => void
@@ -110,7 +118,7 @@ export function ChatThread({
   if (isEmpty) {
     return (
       <>
-        <ChatEmptyState draft={draft} />
+        {emptyStage && <ChatEmptyState draft={draft} />}
         {/* 建会话失败在空态里最容易发生（send() 第一件事就是建会话），
             居中组里也要有它——用居中版的一行，组的其它内容都居中 */}
         {sendError !== null && <div className={styles.emptyError}>发送失败：{sendError}</div>}

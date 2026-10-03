@@ -9,13 +9,16 @@
     "start": "electron .",
     "package": "electron-builder",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "icons": "tsx scripts/make-icons.ts"
   },
   "devDependencies": {
     "@mimir/shared": "workspace:*",
+    "@napi-rs/canvas": "1.0.9",
     "@types/node": "catalog:",
     "electron": "^44.4.5",
     "electron-builder": "^26.15.3",
+    "tsx": "4.23.13",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vitest": "catalog:"

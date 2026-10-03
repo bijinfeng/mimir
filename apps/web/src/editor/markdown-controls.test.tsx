@@ -125,10 +125,15 @@ describe('markdown 的控件契约（渲染层）', () => {
       '这些按钮不在 small 档',
     ).toEqual([])
 
-    // 段落样式那一个下拉（代码块语言只在代码块里出现，这份正文里没有）
+    // 常驻的 Select 已随段落样式迁去 me-menu（D-087）而消失；代码块语言的
+    // Select 只在代码块里出现，这份正文里没有——所以这里只剩「有则必 sm」，
+    // 存在性断言留给 docx 工具条（那边仍有 9 个）。
     const selects = [...host.querySelectorAll<HTMLElement>('.mimir-editor .ant-select')]
-    expect(selects.length).toBeGreaterThan(0)
     for (const item of selects) expect(item.classList.contains('ant-select-sm')).toBe(true)
+    // 段落样式现在是 me-menu 触发器：带 haspopup/expanded，面板开着时九项可读
+    const styleTrigger = host.querySelector<HTMLButtonElement>('button[aria-label="段落样式"]')
+    expect(styleTrigger).not.toBeNull()
+    expect(styleTrigger!.getAttribute('aria-haspopup')).toBe('menu')
   })
 
   it('不把 `.me-btn` / `.me-input` 挂到 antd 控件上（会把高度与实心底色压回去）', async () => {

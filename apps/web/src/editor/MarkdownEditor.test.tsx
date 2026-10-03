@@ -38,7 +38,17 @@ import { MarkdownToolbar } from '@mimir/office'
  * 外壳三处的测试在做同一套动作，各写一份必然漂移——而这个仓库最讨厌的就是
  * 同一件事的两份实现。
  */
-import { openSelect, pickSelectOption, selectRoot, selectValueText } from '@mimir/office/test-dom'
+// 代码块语言仍是 ToolbarSelect（表单语义的取值），段落样式已是 me-menu（D-088）——
+// 两套助手并存，各服务各的控件
+import {
+  menuTriggerText,
+  openMenuItems,
+  openSelect,
+  pickMenuItem,
+  pickSelectOption,
+  selectRoot,
+  selectValueText,
+} from '@mimir/office/test-dom'
 import { createExtensions } from './extensions.js'
 
 /* ── 挂载 / 交互 ─────────────────────────────────────────────── */
@@ -172,7 +182,9 @@ describe('工具条渲染', () => {
     ]) {
       expect(hasButton(host, label), `缺按钮：${label}`).toBe(true)
     }
-    expect(selectRoot(host, '段落样式')).not.toBeNull()
+    // 段落样式已迁去 me-menu（D-088）：判据是触发按钮存在（带 haspopup）
+    const styleTrigger = host.querySelector('button[aria-label="段落样式"]')
+    expect(styleTrigger?.getAttribute('aria-haspopup')).toBe('menu')
     expect(hasButton(host, '链接')).toBe(true)
   })
 
@@ -232,21 +244,31 @@ describe('段落样式下拉', () => {
   it('九项：正文 / h1-h6 / 引用 / 代码块', () => {
     const { host } = mount('正文\n')
     // 选项在弹层里，所以要打开才读得到（文案就是判据：用户看到的是它）
-    expect(openSelect(host, '段落样式').map((option) => (option.textContent ?? '').trim())).toEqual(
-      ['正文', '标题 1', '标题 2', '标题 3', '标题 4', '标题 5', '标题 6', '引用', '代码块'],
-    )
+    expect(
+      openMenuItems(host, '段落样式').map((option) => (option.textContent ?? '').trim()),
+    ).toEqual([
+      '正文',
+      '标题 1',
+      '标题 2',
+      '标题 3',
+      '标题 4',
+      '标题 5',
+      '标题 6',
+      '引用',
+      '代码块',
+    ])
   })
 
   it('下拉显示光标处当前的样式，选了就改文档', () => {
     const { host, editor } = mount('## 标题\n\n正文\n')
 
     cursorAt(editor, '标题')
-    expect(selectValueText(host, '段落样式')).toBe('标题 2')
+    expect(menuTriggerText(host, '段落样式')).toBe('标题 2')
 
-    pickSelectOption(host, '段落样式', '标题 4')
+    pickMenuItem(host, '段落样式', '标题 4')
     expect(markdown(editor)).toBe('#### 标题\n\n正文')
 
-    pickSelectOption(host, '段落样式', '代码块')
+    pickMenuItem(host, '段落样式', '代码块')
     expect(markdown(editor)).toBe('```\n标题\n```\n\n正文')
   })
 })

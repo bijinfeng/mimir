@@ -60,6 +60,7 @@
  */
 
 import type { Editor, Extensions } from '@tiptap/core'
+import type { ReactNode } from 'react'
 import { EditorContent, useEditor, useEditorState } from '@tiptap/react'
 import { useEffect, useRef, useState } from 'react'
 import {
@@ -235,6 +236,8 @@ export interface MarkdownEditorProps {
   onRewrite?: (text: string, action: RewriteActionName) => Promise<string | null>
   /** 正在改写：按钮转 loading */
   rewriting?: boolean
+  /** 编辑区右侧的固定列（如大纲）。见 EditorShell 的 bodySide */
+  bodySide?: ReactNode
   /**
    * 「插入图片」：把文件交给宿主的资料库，拿回一个能插进正文的地址。
    *
@@ -264,6 +267,7 @@ export function MarkdownEditor({
   onAskAboutSelection,
   onRewrite,
   rewriting,
+  bodySide,
   onUploadImage,
   flush = false,
 }: MarkdownEditorProps) {
@@ -481,6 +485,7 @@ export function MarkdownEditor({
           </ToolbarButton>
         </>
       }
+      {...(bodySide !== undefined ? { bodySide } : {})}
       status={
         <>
           {/*
@@ -559,9 +564,20 @@ export function MarkdownToolbar({
   const style = styleFromToolbarState(state)
   const listItem = listItemNameFromState(state)
 
-  const styleOptions: ToolbarSelectOption<ParagraphStyle>[] = PARAGRAPH_STYLES.filter((item) =>
+  /**
+   * 段落样式用 **`ToolbarMenu`**（与「链接」同一套 me-menu 弹层），不是
+   * antd Select：Select 弹层的选项行高与宽度都按表单控件设计，九个中文
+   * 选项挤在里面看不清（用户的原话）。me-menu 的菜单项是整行按钮、
+   * 有 hover 态与当前值打勾格，读起来是「菜单」而不是「表单」。
+   */
+  const styleItems: ToolbarMenuItem[] = PARAGRAPH_STYLES.filter((item) =>
     styleAvailable(editor, item),
-  ).map((item) => ({ value: item, label: STYLE_LABEL[item] }))
+  ).map((item) => ({
+    key: item,
+    label: STYLE_LABEL[item],
+    active: style === item,
+    onSelect: () => applyParagraphStyle(editor, item),
+  }))
 
   const languages = codeLanguageOptions(editor)
   const language = currentCodeLanguage(editor)
@@ -619,14 +635,12 @@ export function MarkdownToolbar({
         代码块五个）。九个取值排成按钮会占掉大半条工具条，而按钮只有布尔态——
         「现在这段是什么」得由谁亮着来表达，五个按钮就有五种可能写错。
       */}
-      {styleOptions.length > 0 && (
+      {styleItems.length > 0 && (
         <ToolbarGroup label="段落样式">
-          <ToolbarSelect
+          <ToolbarMenu
             label="段落样式"
-            value={style}
-            fallbackLabel="混合"
-            options={styleOptions}
-            onChange={(next) => applyParagraphStyle(editor, next)}
+            text={style === null ? '混合' : STYLE_LABEL[style]}
+            items={styleItems}
           />
         </ToolbarGroup>
       )}
@@ -635,7 +649,7 @@ export function MarkdownToolbar({
           于是四种组合下都恰好只有「前面已经落了一个组」的那几条——样式缺席时
           上一条补位、历史缺席时这一条补位，两者都缺席时一条也不画（行首不会
           凭空多一条竖线） */}
-      {styleOptions.length > 0 && <ToolbarDivider />}
+      {styleItems.length > 0 && <ToolbarDivider />}
 
       <ToolbarGroup label="行内格式">
         <ToolbarButton

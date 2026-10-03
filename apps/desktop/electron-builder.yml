@@ -9,8 +9,18 @@
 # server 的 node_modules 来自 `pnpm --filter @mimir/server deploy --prod`
 # 的产物（apps/desktop/server-deploy，由根的 desktop:build 先生成）。
 # better-sqlite3 v13 自带 N-API 预编译（跨 Node/Electron 通用），无需重编。
+#
+# 图标来自 `resources/icon.icns|ico|png`（生成脚本 `scripts/make-icons.ts`，
+# 见那里的说明与 D-091）。三个文件**提交进仓库**——生成它们需要一条画图
+# 链路，而打包的人不该为此装任何东西。
 appId: app.mimir.desktop
+# 打包产物的名字（应用名 / 安装包名 / macOS 菜单栏）。与界面品牌一致
 productName: mimir
+# 可执行文件的名字。**必须显式给**：不给时 electron-builder 用 package.json
+# 的 `name`（`@mimir/desktop`）拼成 `@mimirdesktop`——而 Linux 的 WM_CLASS
+# 与窗口列表正是按可执行文件名推导的，于是任务栏上显示的是那个东西
+# （实测打包出来确实是 `@mimirdesktop`，用户当场就会看到）
+executableName: mimir
 directories:
   output: release
 files:
@@ -20,9 +30,17 @@ asarUnpack:
 npmRebuild: false
 afterPack: scripts/after-pack.mjs
 mac:
+  icon: resources/icon.icns
   category: public.app-category.productivity
   # 不签不公证：ad-hoc 签名在 afterPack 里做（否则 macOS 直接 SIGKILL 秒退）。
   # 正式分发需要开发者证书 + 公证（identity + notarize），本机构建仅自用。
   identity: null
   target:
     - dmg
+# 下面两段当前不构建（desktop:build 只打 macOS 的 dmg），但**先配上**：
+# 加平台时忘配图标的症状是「打包成功、装完是一张白纸」，而那时才会回头翻这里
+linux:
+  icon: resources/icon.png
+  category: Office
+win:
+  icon: resources/icon.ico

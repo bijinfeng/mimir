@@ -17,6 +17,34 @@ import { startHost, type HostHandle } from './host.js'
 // 在读取 userData 之前定名，否则开发/未打包形态下数据会落进 "Electron" 目录
 app.setName('mimir')
 
+/**
+ * Linux 桌面上的进程身份（窗口列表、任务栏、Alt+Tab）。
+ *
+ * ## 与 `app.setName` 是两件事
+ *
+ * `setName` 改的是 Electron 内部的应用名（决定 userData 目录、macOS 菜单栏），
+ * 而 Linux 的窗口列表读的是 **WM_CLASS**。开发模式下它是 `electron`
+ * （按可执行文件名推导，打包后随 productName 变成 mimir）——所以不设这个
+ * 开关时，任务栏上显示的一直是「Electron」，正是「名字还是默认的」那句话
+ * 看到的画面。
+ *
+ * ## 只有 setDesktopName 有用（三个错误方案都实测过）
+ *
+ *  - `app.commandLine.appendSwitch('class', 'mimir')` —— 无效，WM_CLASS 仍是 electron
+ *  - 命令行传 `--class=mimir` —— 同样无效（Electron 44 里这个开关已不被读）
+ *  - 把可执行文件改名 / 软链成 `mimir` 再启动 —— 仍读作 electron
+ *
+ * `app.setDesktopName('mimir.desktop')` 一设就生效。语义是「这个应用对应哪个
+ * .desktop 文件」：桌面环境据此把窗口与启动器条目、图标关联起来，WM_CLASS
+ * 随之变成 `mimir`。**参数要带 `.desktop` 后缀**（那是文件名的形状，
+ * 传纯 `mimir` 不生效）。
+ *
+ * 只在 Linux 设：macOS / Windows 的显示名来自 bundle 与 exe 元数据。
+ */
+if (process.platform === 'linux') {
+  app.setDesktopName('mimir.desktop')
+}
+
 let host: HostHandle | null = null
 let bootInfo: DesktopBootInfo | null = null
 
@@ -36,12 +64,28 @@ function resolvePaths(): { serverDist: string; webDist: string } {
   }
 }
 
+/**
+ * 窗口图标的路径。
+ *
+ * 打包后由 `after-pack` 拷到 `resources/icon.png`；开发时直接读仓库里的
+ * 那一份。**macOS 不传**：那边窗口图标来自 .app 包的 `icon.icns`
+ * （打包时由 electron-builder 写入），传了也不生效。
+ */
+function windowIcon(): string | undefined {
+  if (process.platform === 'darwin') return undefined
+  return app.isPackaged
+    ? join(process.resourcesPath, 'icon.png')
+    : join(app.getAppPath(), 'resources', 'icon.png')
+}
+
 function createWindow(url: string): void {
+  const icon = windowIcon()
   const win = new BrowserWindow({
     width: 1440,
     height: 900,
     // 与前端浅色主题的底色一致，避免加载瞬间的白/黑闪烁方向错误
     backgroundColor: '#ffffff',
+    ...(icon === undefined ? {} : { icon }),
     webPreferences: {
       preload: join(__dirname, 'preload.js'),
       contextIsolation: true,

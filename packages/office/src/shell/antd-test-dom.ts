@@ -98,3 +98,51 @@ export function selectValueText(host: HTMLElement, label: string): string {
   const root = selectRoot(host, label)
   return (root.querySelector('.ant-select-content')?.textContent ?? '').trim()
 }
+
+/* ── ToolbarMenu（me-menu）的驱动 ─────────────────────────────── */
+
+/**
+ * 找到某个 `ToolbarMenu` 的**触发按钮**。
+ *
+ * 判据是 `aria-label` + `.me-btn` 类：`ToolbarMenu` 的触发器是手写按钮
+ * （`aria-haspopup="menu"` + `aria-expanded`），与 antd 的 Select 触发器
+ * （`aria-label` 在内层 input 上）不是一回事。
+ */
+export function menuTrigger(host: HTMLElement, label: string): HTMLButtonElement {
+  // 不限定 `.mimir-editor`：工具条测试可以只渲染 MarkdownToolbar（没有外壳）
+  const trigger = [...host.querySelectorAll<HTMLButtonElement>('button.me-btn')].find(
+    (item) => item.getAttribute('aria-label') === label,
+  )
+  if (trigger === undefined) throw new Error(`没有名为「${label}」的菜单触发器`)
+  return trigger
+}
+
+/** 打开一个 `ToolbarMenu`，返回它的菜单项（整行按钮，收起时不渲染） */
+export function openMenuItems(host: HTMLElement, label: string): HTMLElement[] {
+  const trigger = menuTrigger(host, label)
+  inAct(() => {
+    trigger.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }))
+    trigger.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+  })
+  const panel = [...document.querySelectorAll('.me-menu__panel[role="menu"]')].find(
+    (item) => item.getAttribute('aria-label') === label,
+  )
+  if (panel === undefined) throw new Error(`「${label}」的面板没有打开`)
+  return [...panel.querySelectorAll<HTMLElement>('button.me-menu__item')]
+}
+
+/** 打开菜单、按显示的文案选中一项（选完面板自动关闭） */
+export function pickMenuItem(host: HTMLElement, label: string, itemText: string): void {
+  const item = openMenuItems(host, label).find(
+    (element) => (element.textContent ?? '').trim() === itemText,
+  )
+  if (item === undefined) throw new Error(`「${label}」里没有「${itemText}」这一项`)
+  inAct(() => {
+    item.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+  })
+}
+
+/** 菜单收起时触发按钮上的文字（`.me-menu__text`，如段落样式的「正文」） */
+export function menuTriggerText(host: HTMLElement, label: string): string {
+  return (menuTrigger(host, label).querySelector('.me-menu__text')?.textContent ?? '').trim()
+}

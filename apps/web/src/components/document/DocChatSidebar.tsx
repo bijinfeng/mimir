@@ -1,0 +1,94 @@
+import type { Citation, DocumentDetail } from '@mimir/shared'
+import { Button } from 'antd'
+import { X } from 'lucide-react'
+import { ChatPanel } from '@/components/ChatPanel'
+import { DocChatGuide } from '@/components/document/DocChatGuide'
+import type { AskDraft } from '@/lib/app-shell-context'
+import { useStyles } from '@/components/document/DocumentPanel.style'
+
+/**
+ * 文档页右侧的对话侧栏（「问 AI」）。
+ *
+ * ## 为什么回到侧栏（PRD §5.5 的修订，D-087）
+ *
+ * §5.5 原先规定「AI 只有一个入口：主视图对话」，侧栏被整体删过一次。
+ * 这次按用户的决定加回来——**但只加在文档页**：读一篇文档时的提问
+ * 天然锚定这一篇，跳去主视图对话意味着离开正在读的内容；语雀的
+ * 阅读助手证明了这个场景里「留在原地」是对的。主视图对话仍然是
+ * 库级提问的家（它有自己的页面与导航），两个入口并存、分工不同。
+ *
+ * ## 复用而不是另写一套
+ *
+ * 对话体是**整个 `ChatPanel`**：流式、检索过程、引用卡、失败卡、
+ * 停止、存为笔记——主视图有的它都有。差异只有三个 prop：
+ *
+ * - `draft.documentId` 锁定单篇：后端的检索只在这一篇里做
+ *   （`assistant-stream.ts` 的单篇模式），composer 上显示「当前文档」
+ * - `onConversationCreated` 是 no-op：会话 id 由 hook 内部持有，
+ *   侧栏不进 URL、不进左侧会话历史的高亮
+ * - `onOpenCitation` 由父级决定：同一篇 → 原地滚动高亮；
+ *   别的文档 → 走 `openDocument` 导航
+ *
+ * ## 侧栏活着的时候关闭是**隐藏**而不是卸载
+ *
+ * 流式进行中关掉再打开，回答还在继续、已生成的内容还在——
+ * 卸载会把这些全部丢掉（`useChat` 的客户端随组件销毁）。
+ * 所以关闭只把容器折起（宽度 0 + overflow hidden），组件保持挂载，
+ * 直到离开这一篇文档才真正卸载。
+ */
+export interface DocChatSidebarProps {
+  doc: DocumentDetail
+  /** 打开时的预填（「就这段提问」带选中的话；「问 AI」为空） */
+  draft: AskDraft
+  onClose: () => void
+  /** 引用被点击。同一篇由父级原地高亮，别的文档由父级导航 */
+  onOpenCitation: (documentId: string, citation: Citation) => void
+}
+
+/**
+ * 指南的 render-prop。
+ *
+ * **必须是模块级函数**，不能写成 `guide={(ask) => <DocChatGuide …/>}` 内联箭头：
+ * `react(no-unstable-nested-components)` 会判它是「渲染期定义组件」，
+ * React Compiler 随即跳过整个 DocChatSidebar（铁律 1 的静默退化）。
+ * 这个模式与 `folder-icons.tsx` 的 `FolderGlyph` 同源。
+ */
+function renderGuide(
+  doc: DocumentDetail,
+  ask: (question: string) => void,
+): ReturnType<typeof DocChatGuide> {
+  return <DocChatGuide doc={doc} onAsk={ask} />
+}
+
+export function DocChatSidebar({ doc, draft, onClose, onOpenCitation }: DocChatSidebarProps) {
+  const { styles } = useStyles()
+
+  return (
+    /* 注意：这里**不能**用 `styles.aiSidebar`——那是外层折叠容器（宽度过渡 +
+       overflow hidden）的类。侧栏内容自己只需要「固定 400px、占满高」，
+       套两层折叠类会让内容被自己的 overflow 折成 0.8px（实测踩过）。 */
+    <aside className={styles.aiSidebarInner} aria-label="问 AI 侧栏">
+      <div className={styles.aiSidebarHeader}>
+        <span className={styles.aiSidebarTitle}>问 AI · {doc.title}</span>
+        <Button
+          type="text"
+          size="small"
+          aria-label="关闭侧栏"
+          icon={<X size={16} />}
+          onClick={onClose}
+        />
+      </div>
+      <div className={styles.aiSidebarBody}>
+        <ChatPanel
+          conversationId={undefined}
+          draft={draft}
+          onOpenCitation={onOpenCitation}
+          onConversationCreated={() => {}}
+          /* 空态换成「指南在上、输入框固定底部」（D-090，语雀式）。
+             模块级 renderGuide：内联箭头会被判成渲染期定义组件 */
+          guide={(ask) => renderGuide(doc, ask)}
+        />
+      </div>
+    </aside>
+  )
+}
