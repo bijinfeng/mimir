@@ -901,6 +901,12 @@ export interface ToolbarTextFieldProps {
   /** Esc */
   onCancel?: () => void
   placeholder?: string
+  /**
+   * 这是「查找」输入框。挂上之后 `useFindHotkey` 能按 Ctrl+F 把焦点送进来
+   * （标记走 `data-find-input`，**不看 className 或 aria-label**——那两样
+   * 都会被无关的样式/文案调整改掉，而改掉的那一刻快捷键是静默失效的）。
+   */
+  findInput?: boolean
 }
 
 /** `Input` 的 ref 形状（`.select()` 拿它做「打开就选中已有查询」） */
@@ -930,6 +936,7 @@ export function ToolbarTextField({
   onSubmit,
   onCancel,
   placeholder,
+  findInput = false,
 }: ToolbarTextFieldProps) {
   return (
     <Input
@@ -939,6 +946,7 @@ export function ToolbarTextField({
       title={label}
       placeholder={placeholder}
       value={value}
+      {...(findInput ? { 'data-find-input': true } : {})}
       // 查找框 / 链接地址被拼写检查划红线是纯噪音
       spellCheck={false}
       onChange={(event) => onChange(event.target.value)}
@@ -948,6 +956,58 @@ export function ToolbarTextField({
       }}
     />
   )
+}
+
+/**
+ * Ctrl / Cmd+F 打开查找。
+ *
+ * ## 为什么要有这条
+ *
+ * docx 的工具条上写着「查找和替换 **(Ctrl+F)**」，而按下去实际弹出的是
+ * **浏览器自带的查找**（那是找整个页面的，不是找文档内容）——标签承诺了
+ * 一个不存在的动作（实测发现，D-096）。xlsx 的查找框是常驻的，而
+ * markdown 笔记根本没有查找。
+ *
+ * ## 焦点由这里统一送
+ *
+ * `onReveal` 只负责「把查找栏显示出来」——各编辑器的打开方式不同
+ * （docx/html 是隐藏的栏，xlsx 常驻不用开）。焦点统一送到
+ * `[data-find-input]`（两种查找框都挂了），**并且 `select()`**：
+ * 与浏览器 Ctrl+F 的行为一致，再按一次是「改掉上次的查询」而不是追加。
+ *
+ * `preventDefault` 是必须的：不拦的话浏览器自带的查找条会同时弹出来，
+ * 两层查找叠在一起。唯一拦不住的场景是 html 编辑器的**预览 iframe 里**
+ * ——焦点在 iframe 内时按键事件到不了宿主窗口，那一层留给浏览器原生查找
+ * （在状态行也没承诺过那种情况下可用）。
+ */
+export function useFindHotkey(onReveal?: () => void): void {
+  const revealRef = useRef(onReveal)
+  useEffect(() => {
+    revealRef.current = onReveal
+  })
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 'f') return
+      event.preventDefault()
+      revealRef.current?.()
+      /**
+       * 用 **setTimeout 而不是 requestAnimationFrame**。
+       *
+       * 与 `pagination.ts` 里那条同一个坑：rAF 在**不可见**（后台标签页、
+       * 某些内嵌 webview）时根本不派发帧——实测 IAB 里 `rafFired === false`，
+       * 于是焦点永远送不到查找框（症状是「Ctrl+F 什么都不发生」）。
+       * 这里只需要「等这一次渲染落地」，`setTimeout(0)` 与 rAF 等价且不受
+       * 可见性影响。
+       */
+      setTimeout(() => {
+        const input = document.querySelector<HTMLInputElement>('[data-find-input]')
+        input?.focus()
+        input?.select()
+      }, 0)
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
 }
 
 export interface ToolbarTextAreaProps {
@@ -2052,6 +2112,8 @@ export function FindReplaceBar({
           title="查找内容"
           placeholder="查找"
           spellCheck={false}
+          /* Ctrl+F 的焦点落点（`useFindHotkey` 查这个属性，不看类名） */
+          data-find-input="true"
           onChange={(event) => onQueryChange(event.target.value)}
           onKeyDown={onQueryKeyDown}
         />

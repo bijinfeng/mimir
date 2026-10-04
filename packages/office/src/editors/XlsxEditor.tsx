@@ -60,6 +60,7 @@ import {
   ToolbarSpacer,
   ToolbarTabs,
   ToolbarTextField,
+  useFindHotkey,
 } from '../shell/EditorShell.js'
 import {
   AlertIcon,
@@ -317,6 +318,14 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
     node?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
   }, [])
 
+  /**
+   * Ctrl+F 把焦点送到查找框。xlsx 的查找框**常驻**工具条，所以不需要
+   * `onReveal`——只补快捷键（其余格式的查找栏是隐藏的，要显形）。
+   * 那个框在 `toolbar` 的 JSX 里，它只在 `session` 就绪后渲染；
+   * 这个 hook 只注册监听，随时按都安全（找不到输入框时静默）。
+   */
+  useFindHotkey()
+
   if (source.loadError !== null) {
     return (
       <EditorShell flush={flush} status={<ToolbarLabel>读取失败</ToolbarLabel>}>
@@ -427,6 +436,8 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
               // Esc = 清掉查询（选中留在原处，不把用户带到别的地方去）
               onCancel={() => setQuery('')}
               placeholder="查找"
+              // Ctrl+F 把焦点送到这里（findInput 挂 data-find-input 标记）
+              findInput
             />
             {/*
               命中数复用查找栏那一个类（`me-find__count`）：它带固定最小宽度，

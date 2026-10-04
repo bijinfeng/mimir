@@ -3,6 +3,7 @@ import { App, Button, Cascader, Skeleton, Tooltip } from 'antd'
 import { useState } from 'react'
 import type { ModelRoleStatus, ProviderInstance, RuntimeConfig } from '@mimir/shared'
 import { api, ApiRequestError } from '@/lib/api'
+import { LoadError } from '@/components/LoadError'
 import { ProviderForm } from '@/components/settings/ProviderForm'
 import { ProviderList } from '@/components/settings/ProviderList'
 import {
@@ -49,6 +50,10 @@ export function ModelsSection() {
   const [editing, setEditing] = useState<ProviderInstance | null | undefined>(undefined)
 
   const modelConfig = configQuery.data?.modelConfig
+
+  if (configQuery.isError) {
+    return <LoadError message="配置读取失败" onRetry={() => void configQuery.refetch()} />
+  }
 
   if (!modelConfig) {
     return (
@@ -192,7 +197,10 @@ function RoleRow({
       */}
       <div className={styles.actions}>
         <Cascader
-          style={{ width: 420 }}
+          /* maxWidth 与固定宽并存：420px 让四个角色在行间上下对齐（同列扫读），
+             而窄视口下内容列只有约 340px——没有 maxWidth 时控件比列宽，
+             整页横向滚动。固定的是「对齐基准」，不是「最小宽度」 */
+          style={{ width: 420, maxWidth: '100%' }}
           value={
             role.providerId !== null && role.model !== ''
               ? [role.providerId, role.model]

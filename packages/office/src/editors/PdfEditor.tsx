@@ -751,6 +751,29 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
     )
   }
 
+  /**
+   * 空文档（0 页）。
+   *
+   * **必须单独分一支**：`page === null` 同时覆盖三种情况——「还在解析」
+   * 「解析失败」与「解析成功但一页都没有」。前两种上面已经拦掉了，
+   * 留下的这一种直接落到「正在解析 PDF…」上就**永久转圈**：一份合法的
+   * 0 页 PDF（`/Kids []`、`/Count 0`——导出的空白文档、被清空过的
+   * 扫描件都可能长这样）实测会一直停在那句提示上，看起来像在慢慢读。
+   *
+   * 判据用 `opened.value` 而不是 `layout.length`：后者在没有改动时才等于
+   * 解析结果，而这里的场景就是「没有任何页可编辑」——解析已经完成、
+   * 结果就是空数组。
+   */
+  if (opened.value?.length === 0) {
+    return (
+      <EditorShell flush={flush} status={<ToolbarLabel>这份 PDF 没有页面</ToolbarLabel>}>
+        <EditorState>
+          这份 PDF 里一页都没有（0 页）。原件已保存，可以下载后用别的工具打开确认。
+        </EditorState>
+      </EditorShell>
+    )
+  }
+
   if (page === null) {
     return (
       <EditorShell flush={flush} status={<ToolbarLabel>读取中…</ToolbarLabel>}>

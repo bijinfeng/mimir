@@ -51,7 +51,14 @@
     ],
 
     "unicorn/prefer-node-protocol": "error",
-    "no-console": "off"
+    "no-console": "off",
+
+    // 这条规则本意是拦「用同一个引用值填满数组」，但 canvas 的
+    // `ctx.fill(path, 'evenodd')` 形状与它撞了——它把 ctx.fill 认成
+    // Array.prototype.fill。图标脚本（apps/desktop/scripts/make-icons.ts）
+    // 正是这么画的，而那是标准用法。代码里的行内豁免对这条规则不生效
+    // （next-line / disable 都试过），所以在这里关
+    "unicorn/no-array-fill-with-reference-type": "off"
   },
   "ignorePatterns": [
     "**/dist/**",

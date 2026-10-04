@@ -1,5 +1,5 @@
 import { createStyles } from 'antd-style'
-import { FONT_SIZE } from '@/theme/tokens'
+import { FONT_SIZE, NAV_NARROW_QUERY } from '@/theme/tokens'
 
 /**
  * 文档视图的样式。
@@ -416,8 +416,16 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
    */
   /* ── 侧栏空态的使用指南（D-090）────────────────────────── */
 
+  /*
+   * 横向内边距由 `--mimir-chat-gutter` 提供（ChatPanel 的 inner），
+   * 这里只管纵向节奏——两处都加会在侧栏里叠出双倍左缩进。
+   *
+   * 顶部给 0：滚动区自己已经有 24px 上边距，再加上这里的 16px 就是
+   * 从面板顶到问候语之间空 84px（44 头部 + 24 + 16）——在 400px 宽的
+   * 面板里那是很显眼的一段空白。底部留 8，与滚动区的 16 合成 24。
+   */
   guide: css`
-    padding: 16px 4px 24px;
+    padding: 0 0 8px;
   `,
 
   guideHello: css`
@@ -443,7 +451,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
    */
   guideCard: css`
     padding: 12px 14px;
-    border-radius: 8px;
+    border-radius: ${token.borderRadius}px;
     background: ${token.colorFillQuaternary};
     margin-bottom: 14px;
   `,
@@ -492,12 +500,18 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     color: ${token.colorTextTertiary};
   `,
 
-  /** 示例问题：一排可点的胶囊，点一下直接发出 */
+  /**
+   * 快捷提问：一排可点的胶囊，点一下直接发出。
+   *
+   * **没有下外边距**：它现在是 `composerTop` 的最后一个子元素、紧挨着
+   * 输入框，而下面那 12px 由 Composer 自己的上内边距提供。这里再留一格
+   * 会叠成 34px 的空隙（实测：14 + 8 + 12）——胶囊与输入框是一组，
+   * 中间只该有一口气。
+   */
   guideSuggest: css`
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin-bottom: 14px;
   `,
 
   guideChip: css`
@@ -517,13 +531,6 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     }
   `,
 
-  guideFoot: css`
-    margin: 0;
-    font-size: ${FONT_SIZE.meta}px;
-    line-height: 1.7;
-    color: ${token.colorTextTertiary};
-  `,
-
   aiSidebar: css`
     flex: none;
     width: 0;
@@ -537,6 +544,21 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       width: 400px;
       border-left-color: ${token.colorBorderSecondary};
     }
+
+    /* ≤880px：400px 的固定宽在这个视口里比主区还宽（420px 视口减 48px
+       导航只剩 372px），右缘会被主区的 overflow: hidden 裁掉——
+       输入框右端、发送按钮都点不到。窄屏改成**占满主区**：此时侧栏
+       与文档是二选一的关系，正是移动端抽屉的形态。
+       过渡也一起关掉：宽度从 0 动画到 100% 的过程中内容会被一路挤扁，
+       而主区宽度本来就是弹性的。查询串来自 tokens.ts，与左导航折叠、
+       大纲判据共用同一个 880px。 */
+    @media ${NAV_NARROW_QUERY} {
+      transition: none;
+
+      &[data-open] {
+        width: 100%;
+      }
+    }
   `,
 
   aiSidebarInner: css`
@@ -544,6 +566,15 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     height: 100%;
     display: flex;
     flex-direction: column;
+
+    /* 内层跟着外层一起放开：外层占满主区时内层仍是固定 400px 的话，
+       比容器窄就留一条空档、宽了又被裁。max-width: 100% 对两种视口
+       都成立——它解析的是外层（0 或 400 / 0 或主区宽），与 aiSidebar
+       那两个宽度是**一对**，改一个要看另一个 */
+    @media ${NAV_NARROW_QUERY} {
+      width: 100%;
+      max-width: 100%;
+    }
   `,
 
   aiSidebarHeader: css`
@@ -658,7 +689,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   aiBlock: css`
     margin: 0 0 20px;
     padding: 14px 16px;
-    border-radius: 8px;
+    border-radius: ${token.borderRadius}px;
     background: var(--ant-color-fill-quaternary);
   `,
 
@@ -721,8 +752,16 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     flex-wrap: wrap;
     gap: 6px;
   `,
+  /* 双链的一条。**是真 button**（键盘可达），所以要把浏览器给 button 的
+     默认观感全部推掉：它要看起来就是一条正文里的链接。
+     padding 归 0 而不是留 2px——留了会在行里垫高、行距与旁边的标签对不上 */
   footLink: css`
+    padding: 0;
+    border: none;
+    background: none;
+    font-family: inherit;
     font-size: ${FONT_SIZE.note}px;
+    line-height: inherit;
     color: ${token.colorLink};
     cursor: pointer;
     text-decoration: underline;
@@ -731,12 +770,18 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     &:hover {
       opacity: 0.8;
     }
+
+    &:focus-visible {
+      outline: 2px solid ${token.colorPrimaryBorder};
+      outline-offset: 2px;
+      border-radius: 2px;
+    }
   `,
 
   warn: css`
     margin-top: 20px;
     padding: 11px 14px;
-    border-radius: 8px;
+    border-radius: ${token.borderRadius}px;
     font-size: ${FONT_SIZE.note}px;
     line-height: 1.75;
     color: ${token.colorWarningText};

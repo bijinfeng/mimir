@@ -68,10 +68,13 @@ export function folderIconOf(
  * `react(no-unstable-nested-components)` 会判成「渲染期定义组件」，
  * React Compiler 随即跳过这个组件（铁律 1 的静默退化）。这里直接调用
  * 模块级的渲染函数，两个问题一起绕开（见文件头的说明）。
+ *
+ * 默认 16（不是 15）：同一个知识库图标在侧栏行与卡片里必须同大——
+ * 原先默认 15、卡片显式传 16，两处差 1px，并排看是「同一个图标两种大小」
  */
 export function FolderGlyph({
   iconKey,
-  size = 15,
+  size = 16,
 }: {
   iconKey: string | null | undefined
   size?: number

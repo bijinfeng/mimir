@@ -4,6 +4,7 @@ import type { EditorIo } from '@mimir/office'
 import { DocxEditor, HtmlEditor, PdfEditor, PptxEditor, XlsxEditor } from '@mimir/office'
 import { App } from 'antd'
 import { useEditorThemeVars } from '@/theme/editor-theme-bridge'
+import { useAppearance } from '@/theme/appearance'
 import { api } from '@/lib/api'
 import { useUnsaved } from '@/lib/unsaved'
 
@@ -39,6 +40,7 @@ export function OfficeSourceEditor({
   const { styles: themeVars } = useEditorThemeVars()
   const { message } = App.useApp()
   const { setDirty, setSave } = useUnsaved()
+  const appearance = useAppearance()
 
   /**
    * 取与存。**必须封装成稳定的引用**（`useCallback`）：`useSource`
@@ -137,7 +139,20 @@ export function OfficeSourceEditor({
     }
   }, [])
 
-  const props = { documentId: doc.id, io, onDirtyChange: reportDirty }
+  const props = {
+    documentId: doc.id,
+    io,
+    onDirtyChange: reportDirty,
+    /**
+     * 当前外观透给编辑器。
+     *
+     * docx 用它决定要不要给纸张容器挂 `page-dark`（见 `EditorProps` 的
+     * 说明）。**必须从 `useAppearance()` 取而不是读 DOM 的 `data-theme`**：
+     * 那是「观测与调试用」的属性（`theme/appearance.ts` 的注释），
+     * 真相在订阅里——跟着系统偏好切换时只有订阅会重渲染。
+     */
+    appearance,
+  }
 
   /**
    * 主题变量必须铺在**编辑器的祖先**上。

@@ -50,6 +50,7 @@ import type { CSSProperties } from 'react'
 import {
   EditorShell,
   FindReplaceBar,
+  useFindHotkey,
   ToolbarButton,
   ToolbarDivider,
   ToolbarLabel,
@@ -435,6 +436,16 @@ export function HtmlEditor({ documentId, io, onDirtyChange, flush = false }: Edi
       setFindOpen(false)
       return
     }
+    openFind()
+  }
+
+  /**
+   * 打开查找栏（**不切换**）。
+   *
+   * 与 toggle 分开是因为 Ctrl+F 的语义是「显示查找」——已经开着时再按
+   * 应当是聚焦而不是把它关掉（否则快捷键会在连按时一闪一闪）。
+   */
+  const openFind = () => {
     /**
      * 适配器在**事件里**从 ref 取（渲染期读 ref 会被编译器判违规，而
      * `findTarget()` 要 CodeMirror 的 view）。取到 null 时栏仍然打开：那是
@@ -448,6 +459,9 @@ export function HtmlEditor({ documentId, io, onDirtyChange, flush = false }: Edi
     if (view === 'preview') setView('split')
     setFindOpen(true)
   }
+
+  /** Ctrl+F（工具条按钮上没写这个快捷键，但它是同类编辑器的通行约定） */
+  useFindHotkey(openFind)
 
   const save = async () => {
     if (decoded.value === null || doc === null) return

@@ -153,6 +153,12 @@ export const useHeatmapStyles = createStyles(({ css, token }) => ({
   swatch4: css`
     background: ${token.heatL4};
   `,
+  /* 无记录时的说明。「没有」要说得出来——不然热力图面板只剩一个标题 */
+  empty: css`
+    padding: 18px 16px;
+    font-size: ${FONT_SIZE.note}px;
+    color: ${token.colorTextSecondary};
+  `,
 }))
 
 /** 统计分区的通用样式：按角色的表与页脚 */

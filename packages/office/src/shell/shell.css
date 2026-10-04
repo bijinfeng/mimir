@@ -147,6 +147,26 @@
   background-image: linear-gradient(var(--me-bar-bg, #fafafa), var(--me-bar-bg, #fafafa));
 }
 
+/*
+ * 窄屏：工具条折行后的高度上限。
+ *
+ * docx 的工具条有八到十个组，420px 视口下折成 **9 行 243px**（占 900px
+ * 屏高的 27%）——正文只剩一小条，「工具条比内容还高」（实测发现，D-096）。
+ * 这里给 chrome 一个上限并让它自己滚：**按钮一个不少**（不砍功能，砍了
+ * 用户会找不到），但不会把编辑区挤没。滚动条只在真的超高时出现
+ * （`max-height` 不触发就没有滚动条）。
+ *
+ * 断点与宿主应用的窄屏断点同值（880px，`apps/web/src/theme/tokens.ts` 的
+ * `NAV_NARROW_QUERY`）——这个包不认识宿主的断点常量，值写在这里并注明出处：
+ * 宿主改断点时这里要一起看。
+ */
+@media (max-width: 880px) {
+  .mimir-editor__chrome {
+    max-height: 128px;
+    overflow-y: auto;
+  }
+}
+
 .mimir-editor__bar {
   display: flex;
   align-items: center;
@@ -306,7 +326,15 @@
 .me-tb[aria-pressed='true']:hover:not(:disabled) {
   border-color: var(--me-accent, #1677ff);
   background: var(--me-accent-bg, #e6f4ff);
-  color: var(--me-accent, #1677ff);
+  /*
+   * 文字色走 `--me-accent-text`（= colorLink），不是 `--me-accent`。
+   *
+   * **主色是填充角色，不能当文字用**（DESIGN §3.5）：实测按下态
+   * `#1668dc` on `#15325b` 只有 2.47:1（浅色 3.66:1），33 个按钮的
+   * 激活态全都偏难认。链接色在同一个底上是 5.50 / 6.17。
+   * 回退值也换成链接色，脱离宿主时保持一致。
+   */
+  color: var(--me-accent-text, #0958d9);
 }
 
 /* 按钮里的图标字形。字号是**图标尺寸**，不是文本字号——所以单列一个变量，
@@ -565,9 +593,11 @@
   cursor: not-allowed;
 }
 
-/* 当前值：`aria-current` 是状态来源，样式读它，不另加类 */
+/* 当前值：`aria-current` 是状态来源，样式读它，不另加类。
+   文字色同 `.me-tb` 那条：主色是填充角色，当 12px 文字用不达标
+   （实测浅色 4.10:1、深色 3.50:1）——走 --me-accent-text（colorLink） */
 .me-menu__item[aria-current='true'] {
-  color: var(--me-accent, #1677ff);
+  color: var(--me-accent-text, #0958d9);
   font-weight: 600;
 }
 

@@ -71,10 +71,30 @@ export const useChatPanelStyles = createStyles(({ css, token }) => ({
       border-top-color: ${token.colorBorderSecondary};
     }
   `,
+  /**
+   * 输入框上方那一排（快捷提问）。**与消息列同一套对齐**：同样的
+   * max-width 与 gutter 变量，否则它会与输入框错开——那两处看似无关，
+   * 但肉眼一眼就能看出没对齐。
+   */
+  composerTop: css`
+    max-width: 860px;
+    margin: 0 auto;
+    /* 下内边距为 0：与输入框之间的那口气由 Composer 自己的上内边距给
+       （12px）。这里再垫一层会叠成两段空隙——D-093 收尾时实测过
+       34px 的间隔，就是三层边距累加出来的 */
+    padding: 0 var(--mimir-chat-gutter, 40px);
+  `,
+
   inner: css`
     max-width: 860px;
     margin: 0 auto;
-    padding: 0 40px;
+    /*
+     * 左右内边距走变量：主视图是 860px 的宽列，40px 是那里的比例；
+     * 侧栏只有 400px，同样的 40px 会吃掉五分之一宽度，内容被压成一条
+     * （实测指南在 400px 面板里只剩 320px 宽）。侧栏把它覆写成 16px
+     * ——同一个「栏宽 → 边距」的比例关系，两种宽度下都成立。
+     */
+    padding: 0 var(--mimir-chat-gutter, 40px);
   `,
 
   /* 消息的排布。用户消息靠右、助手消息占满宽度——

@@ -182,13 +182,13 @@ function FeedRow({
         <span className={styles.feedActions}>
           <Button
             size="small"
-            icon={<RefreshCw size={13} />}
+            icon={<RefreshCw size={14} />}
             loading={refreshing}
             onClick={onRefresh}
           >
             更新
           </Button>
-          <Button size="small" danger icon={<Trash2 size={13} />} onClick={onRemove}>
+          <Button size="small" danger icon={<Trash2 size={14} />} onClick={onRemove}>
             退订
           </Button>
         </span>

@@ -42,13 +42,20 @@ export function AddContextDropdown({ onPick }: { onPick: (doc: ContextDoc) => vo
       menu={{
         items: docs.isLoading
           ? [{ key: 'loading', label: '加载中…', disabled: true }]
-          : items.length > 0
-            ? items.map((doc) => ({
-                key: doc.id,
-                label: doc.title,
-                onClick: () => onPick({ id: doc.id, title: doc.title }),
-              }))
-            : [{ key: 'empty', label: '知识库还没有文档', disabled: true }],
+          : docs.isError
+            ? /* 失败不能落进「知识库还没有文档」那一支——那句话把请求失败
+                 说成了「你没有内容」。这里给一个能按的动作（见 LoadError）。 */
+              [{ key: 'retry', label: '读取失败，点此重试' }]
+            : items.length > 0
+              ? items.map((doc) => ({
+                  key: doc.id,
+                  label: doc.title,
+                  onClick: () => onPick({ id: doc.id, title: doc.title }),
+                }))
+              : [{ key: 'empty', label: '知识库还没有文档', disabled: true }],
+        onClick: ({ key }) => {
+          if (key === 'retry') void docs.refetch()
+        },
       }}
     >
       <Button type="text" size="small" aria-label="添加上下文" icon={<Plus size={16} />} />
@@ -79,7 +86,7 @@ export function StrengthDropdown({
       <Button type="text" size="small" aria-label="思考强度">
         <Zap size={16} />
         {value ? '深入' : '标准'}
-        <ChevronDown size={10} />
+        <ChevronDown size={12} />
       </Button>
     </Dropdown>
   )
@@ -125,7 +132,7 @@ export function ModelDropdown({ deepReasoning }: { deepReasoning: boolean }) {
     >
       <Button type="text" size="small" aria-label="当前模型">
         {(deepReasoning ? deepModel : chatModel) || '未配置模型'}
-        <ChevronDown size={10} />
+        <ChevronDown size={12} />
       </Button>
     </Dropdown>
   )

@@ -1,0 +1,1209 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>桌面端自定义标题栏 · 方案对比</title>
+    <style>
+      /* ══════════════════════════════════════════════════════════
+         这个文件是**布局评审用的 demo**，不是产品代码。
+         它把三个方案 × 两个平台并排摆出来，让「控件在哪、谁被让位、
+         垂直空间花多少」三件事一眼可比。
+
+         颜色 / 字号 / 尺寸全部抄自真实实现：
+           侧栏 200px（折叠 48）· 页面头部 44px · 品牌 #1677ff
+           字号阶梯见 apps/web/src/theme/tokens.ts
+         所以这里的观感与真实应用一致，可以直接据此判断。
+         ══════════════════════════════════════════════════════════ */
+
+      :root {
+        --brand: #1677ff;
+        --font:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+          'Microsoft YaHei', sans-serif;
+        --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+
+        /* 浅色（DESIGN §3.3–§3.6） */
+        --bg-layout: #f5f6f8;
+        --bg-container: #ffffff;
+        --bg-elevated: #ffffff;
+        --text: #1f2329;
+        --text-2: #5c6570;
+        --text-3: #68707c;
+        --border-2: #e8eaed;
+        --border: #d9dde2;
+        --fill-3: #f1f3f5;
+        --chrome: #f5f6f8;
+        --titlebar: #f0f1f3;
+        --hover: rgba(0, 0, 0, 0.05);
+      }
+      [data-theme='dark'] {
+        --bg-layout: #0b0c0e;
+        --bg-container: #141618;
+        --bg-elevated: #1e2022;
+        --text: #e8eaed;
+        --text-2: rgba(255, 255, 255, 0.72);
+        --text-3: rgba(255, 255, 255, 0.52);
+        --border-2: #2e3134;
+        --border: #3a3d41;
+        --fill-3: rgba(255, 255, 255, 0.08);
+        --chrome: #1a1c1e;
+        --titlebar: #1e2022;
+        --hover: rgba(255, 255, 255, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 0 0 64px;
+        background: var(--bg-layout);
+        color: var(--text);
+        font-family: var(--font);
+        font-size: 14px;
+        line-height: 1.6;
+      }
+
+      /* ── demo 自己的控制条（不属于产品 UI，原型也是这么做的）──── */
+      .demo-bar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 12px 24px;
+        background: #1f2329;
+        color: #fff;
+        border-bottom: 1px solid #000;
+      }
+      .demo-bar h1 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 600;
+      }
+      .demo-bar .sub {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 12.5px;
+      }
+      .demo-bar .spacer {
+        flex: 1;
+      }
+      .demo-bar label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12.5px;
+        color: rgba(255, 255, 255, 0.85);
+        cursor: pointer;
+        user-select: none;
+      }
+      .demo-bar button {
+        font: inherit;
+        font-size: 12.5px;
+        padding: 5px 12px;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        cursor: pointer;
+      }
+      .demo-bar button:hover {
+        background: rgba(255, 255, 255, 0.16);
+      }
+
+      /* ── 方案区块 ─────────────────────────────────────────── */
+      .option {
+        /* 单列堆叠、每帧约 1270px 宽：并排两栏时每帧只剩 600px，
+           而窗口里的布局（侧栏 200 + 内容 + 控件）在 600px 下看不清——
+           评的是「控件在哪、谁让位」，宽度不够就判断不了 */
+        max-width: 1320px;
+        margin: 32px auto 0;
+        padding: 0 24px;
+      }
+      .option-head {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        margin-bottom: 4px;
+      }
+      .option-tag {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        background: var(--brand);
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
+        flex: none;
+        transform: translateY(2px);
+      }
+      .option-head h2 {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 600;
+      }
+      .option-head .cost {
+        font-size: 12.5px;
+        color: var(--text-3);
+        padding: 1px 8px;
+        border-radius: 999px;
+        background: var(--fill-3);
+      }
+      .option-desc {
+        margin: 0 0 14px;
+        max-width: 1040px;
+        font-size: 13px;
+        color: var(--text-2);
+      }
+      .option-desc b {
+        color: var(--text);
+      }
+      .option-desc .warn {
+        color: #b45309;
+      }
+      [data-theme='dark'] .option-desc .warn {
+        color: #e0a240;
+      }
+
+      .frames {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 20px;
+      }
+      .frame-wrap {
+        min-width: 0;
+      }
+      .frame-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+        font-size: 12.5px;
+        color: var(--text-2);
+      }
+      .frame-label .badge {
+        font-size: 11.5px;
+        padding: 0 6px;
+        border-radius: 4px;
+        background: var(--fill-3);
+        color: var(--text-3);
+      }
+
+      /* ── 窗口外框 ─────────────────────────────────────────── */
+      .window {
+        position: relative;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+        background: var(--bg-container);
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+        height: 420px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* 应用外壳：侧栏 + 主区 */
+      .shell {
+        flex: 1;
+        min-height: 0;
+        display: grid;
+        grid-template-columns: 200px minmax(0, 1fr);
+      }
+      .nav {
+        background: var(--chrome);
+        border-right: 1px solid var(--border-2);
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+      .nav-top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 44px;
+        padding: 0 12px;
+        flex: none;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-weight: 600;
+        font-size: 14px;
+        letter-spacing: -0.01em;
+      }
+      .brand svg {
+        display: block;
+      }
+      .nav-collapse {
+        margin-left: auto;
+        width: 24px;
+        height: 24px;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--text-3);
+        display: grid;
+        place-items: center;
+      }
+      .nav-list {
+        padding: 4px 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 30px;
+        padding: 0 8px;
+        border-radius: 6px;
+        font-size: 13.5px;
+        color: var(--text-2);
+      }
+      .nav-item.on {
+        background: var(--fill-3);
+        color: var(--text);
+        font-weight: 600;
+      }
+      .nav-item svg {
+        flex: none;
+        opacity: 0.8;
+      }
+      .nav-sep {
+        margin: 10px 8px 0;
+        padding: 0 8px;
+        font-size: 11.5px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        color: var(--text-3);
+      }
+      .nav-bottom {
+        margin-top: auto;
+        padding: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .avatar {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--brand);
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+        display: grid;
+        place-items: center;
+        flex: none;
+      }
+
+      .main {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        min-height: 0;
+        background: var(--bg-container);
+      }
+      /* 文档页的头部：返回 · 标题 · 元信息 · 动作（真实实现是 44px 单行） */
+      .doc-header {
+        flex: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 44px;
+        padding: 0 12px;
+        border-bottom: 1px solid var(--border-2);
+      }
+      .back {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        height: 24px;
+        padding: 0 8px;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--text-2);
+        font: inherit;
+        font-size: 12.5px;
+        flex: none;
+      }
+      .doc-title {
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: -0.005em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 40%;
+        flex: none;
+      }
+      .doc-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+        min-width: 0;
+        font-size: 12.5px;
+        color: var(--text-3);
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      .doc-actions {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        flex: none;
+      }
+      .icon-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        height: 24px;
+        padding: 0 8px;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--text-2);
+        font: inherit;
+        font-size: 12.5px;
+      }
+      .icon-btn.only {
+        width: 24px;
+        padding: 0;
+        justify-content: center;
+      }
+
+      .doc-body {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        padding: 18px 28px;
+      }
+      .doc-body h3 {
+        margin: 0 0 10px;
+        font-size: 19px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+      .doc-body p {
+        margin: 0 0 10px;
+        font-size: 13.5px;
+        color: var(--text-2);
+        line-height: 1.75;
+      }
+      .doc-body .skel {
+        height: 8px;
+        border-radius: 4px;
+        background: var(--fill-3);
+        margin-bottom: 9px;
+      }
+
+      /* ── 窗口控制按钮（Win / Linux）────────────────────────── */
+      .win-ctl {
+        display: flex;
+        flex: none;
+        align-self: stretch;
+      }
+      .win-btn {
+        width: 46px;
+        border: 0;
+        background: transparent;
+        color: var(--text-2);
+        display: grid;
+        place-items: center;
+        cursor: default;
+        padding: 0;
+      }
+      .win-btn:hover {
+        background: var(--hover);
+      }
+      .win-btn.close:hover {
+        background: #e81123;
+        color: #fff;
+      }
+      .win-btn svg {
+        display: block;
+      }
+
+      /* ── 红绿灯（macOS）────────────────────────────────────── */
+      .lights {
+        position: absolute;
+        left: 16px;
+        top: 16px;
+        display: flex;
+        gap: 8px;
+        z-index: 5;
+      }
+      .lights i {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: block;
+      }
+      .lights i:nth-child(1) {
+        background: #ff5f57;
+      }
+      .lights i:nth-child(2) {
+        background: #febc2e;
+      }
+      .lights i:nth-child(3) {
+        background: #28c840;
+      }
+      /* 未聚焦窗口的红绿灯是灰的——这里不做，保持聚焦态 */
+
+      /* ── 拖动区可视化 ─────────────────────────────────────── */
+      [data-drag-reveal] .drag {
+        outline: 1px dashed rgba(22, 119, 255, 0.85);
+        outline-offset: -1px;
+        background: rgba(22, 119, 255, 0.07);
+      }
+      [data-drag-reveal] .drag-legend {
+        display: flex;
+      }
+      .drag-legend {
+        display: none;
+        align-items: center;
+        gap: 6px;
+        margin-top: 6px;
+        font-size: 11.5px;
+        color: var(--text-3);
+      }
+      .drag-legend i {
+        width: 14px;
+        height: 10px;
+        border: 1px dashed rgba(22, 119, 255, 0.85);
+        background: rgba(22, 119, 255, 0.07);
+        display: block;
+      }
+    </style>
+  </head>
+  <body data-theme="light">
+    <!-- demo 控制条：不属于产品 UI -->
+    <div class="demo-bar">
+      <h1>桌面端自定义标题栏 · 三个方案</h1>
+      <span class="sub">Windows / Linux 自绘控件 · macOS 保留红绿灯</span>
+      <span class="spacer"></span>
+      <label>
+        <input type="checkbox" id="reveal" />
+        显示拖动区
+      </label>
+      <button id="theme">切到深色</button>
+    </div>
+
+    <!-- ══════════════ 方案 A ══════════════ -->
+    <section class="option">
+      <div class="option-head">
+        <span class="option-tag">A</span>
+        <h2>整条标题栏</h2>
+        <span class="cost">垂直代价 +44px</span>
+      </div>
+      <p class="option-desc">
+        窗口顶部一条<b>贯穿全宽</b>的标题栏：左端是品牌，右端是控件。应用外壳（侧栏 + 主区）整块下移。
+        最稳、最像「桌面应用」；代价是<b>垂直空间多花 44px</b>——侧栏的品牌行与它重复了一次内容
+        （可以合并成一条：品牌画在标题栏里，侧栏顶部那条去掉）。
+      </p>
+      <div class="frames">
+        <!-- Win / Linux -->
+        <div class="frame-wrap">
+          <div class="frame-label">Windows / Linux <span class="badge">自绘控件 · 右上角</span></div>
+          <div class="window">
+            <div
+              class="drag"
+              style="
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                height: 44px;
+                padding: 0 12px;
+                background: var(--titlebar);
+                border-bottom: 1px solid var(--border-2);
+                flex: none;
+              "
+            >
+              <span class="brand">
+                <svg width="15" height="15" viewBox="0 0 32 32" fill="none">
+                  <path
+                    fill="var(--brand)"
+                    fill-rule="evenodd"
+                    clip-rule="evenodd"
+                    d="M11 7.4c-3.1 1.5-4.9 4-4.9 7.3v6a2.1 2.1 0 0 0 2.1 2.1h3.2a2.1 2.1 0 0 0 2.1-2.1v-4a2.1 2.1 0 0 0-2.1-2.1H9.2c.2-1.7 1.1-2.9 2.7-3.7z M9.7 17.4a2 2 0 1 0 0 4 2 2 0 1 0 0-4z M25 7.4c-3.1 1.5-4.9 4-4.9 7.3v6a2.1 2.1 0 0 0 2.1 2.1h3.2a2.1 2.1 0 0 0 2.1-2.1v-4a2.1 2.1 0 0 0-2.1-2.1h-2.2c.2-1.7 1.1-2.9 2.7-3.7z M23.7 17.4a2 2 0 1 0 0 4 2 2 0 1 0 0-4z"
+                  />
+                </svg>
+                mimir
+              </span>
+              <span style="font-size: 12.5px; color: var(--text-3)">mimir 产品说明 — 知识库</span>
+              <span style="flex: 1"></span>
+              <span class="win-ctl">
+                <button class="win-btn" title="最小化">
+                  <svg width="10" height="10" viewBox="0 0 10 10">
+                    <path d="M0 5h10" stroke="currentColor" stroke-width="1" />
+                  </svg>
+                </button>
+                <button class="win-btn" title="最大化">
+                  <svg width="10" height="10" viewBox="0 0 10 10">
+                    <rect x=".5" y=".5" width="9" height="9" stroke="currentColor" fill="none" />
+                  </svg>
+                </button>
+                <button class="win-btn close" title="关闭">
+                  <svg width="10" height="10" viewBox="0 0 10 10">
+                    <path d="M0 0l10 10M10 0L0 10" stroke="currentColor" stroke-width="1" />
+                  </svg>
+                </button>
+              </span>
+            </div>
+            <div class="shell">
+              <aside class="nav">
+                <div class="nav-top">
+                  <span class="brand" style="font-size: 13.5px; opacity: 0.55">知识库</span>
+                  <button class="nav-collapse">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" />
+                      <path d="M9 3v18" />
+                    </svg>
+                  </button>
+                </div>
+                <div class="nav-list">
+                  <div class="nav-item">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                    新建对话
+                  </div>
+                  <div class="nav-item">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                    搜索
+                  </div>
+                </div>
+                <div class="nav-sep">对话</div>
+                <div class="nav-list">
+                  <div class="nav-item">产品说明怎么用</div>
+                  <div class="nav-item">React 重渲染</div>
+                </div>
+                <div class="nav-sep">知识库</div>
+                <div class="nav-list">
+                  <div class="nav-item on">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                    开始使用
+                  </div>
+                  <div class="nav-item">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                    测试目录
+                  </div>
+                </div>
+                <div class="nav-bottom">
+                  <span class="avatar">S</span>
+                  <span style="font-size: 13.5px; color: var(--text-2)">smoke</span>
+                </div>
+              </aside>
+              <main class="main">
+                <div class="doc-header">
+                  <button class="back">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+                    返回库
+                  </button>
+                  <span class="doc-title">mimir 产品说明</span>
+                  <span class="doc-meta"><span>手动编辑</span><span>·</span><span>2026/10/mimir-产品说明-odburTLw.md</span></span>
+                  <span class="doc-actions">
+                    <button class="icon-btn">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.99 16.34a2 2 0 0 1 .1 1.17l-1.07 3.29a1 1 0 0 0 1.24 1.17l3.4-1a2 2 0 0 1 1.1.09 10 10 0 1 0-4.77-4.72"/></svg>
+                      问 AI
+                    </button>
+                    <button class="icon-btn only">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                    </button>
+                  </span>
+                </div>
+                <div class="doc-body">
+                  <h3>mimir 产品说明</h3>
+                  <div class="skel" style="width: 92%"></div>
+                  <div class="skel" style="width: 86%"></div>
+                  <div class="skel" style="width: 96%"></div>
+                  <div class="skel" style="width: 70%; margin-bottom: 18px"></div>
+                  <p style="font-weight: 600; color: var(--text)">一、它解决什么问题</p>
+                  <div class="skel" style="width: 94%"></div>
+                  <div class="skel" style="width: 88%"></div>
+                  <div class="skel" style="width: 91%"></div>
+                  <div class="skel" style="width: 55%"></div>
+                </div>
+              </main>
+            </div>
+          </div>
+          <div class="drag-legend"><i></i> 蓝色虚线 = 可拖动区（`-webkit-app-region: drag`）</div>
+        </div>
+
+        <!-- macOS -->
+        <div class="frame-wrap">
+          <div class="frame-label">macOS <span class="badge">系统红绿灯 · 左上角</span></div>
+          <div class="window">
+            <span class="lights"><i></i><i></i><i></i></span>
+            <div
+              class="drag"
+              style="
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                height: 44px;
+                padding: 0 12px 0 88px;
+                background: var(--titlebar);
+                border-bottom: 1px solid var(--border-2);
+                flex: none;
+              "
+            >
+              <span class="brand">
+                <svg width="15" height="15" viewBox="0 0 32 32" fill="none">
+                  <path
+                    fill="var(--brand)"
+                    fill-rule="evenodd"
+                    clip-rule="evenodd"
+                    d="M11 7.4c-3.1 1.5-4.9 4-4.9 7.3v6a2.1 2.1 0 0 0 2.1 2.1h3.2a2.1 2.1 0 0 0 2.1-2.1v-4a2.1 2.1 0 0 0-2.1-2.1H9.2c.2-1.7 1.1-2.9 2.7-3.7z M9.7 17.4a2 2 0 1 0 0 4 2 2 0 1 0 0-4z M25 7.4c-3.1 1.5-4.9 4-4.9 7.3v6a2.1 2.1 0 0 0 2.1 2.1h3.2a2.1 2.1 0 0 0 2.1-2.1v-4a2.1 2.1 0 0 0-2.1-2.1h-2.2c.2-1.7 1.1-2.9 2.7-3.7z M23.7 17.4a2 2 0 1 0 0 4 2 2 0 1 0 0-4z"
+                  />
+                </svg>
+                mimir
+              </span>
+              <span style="font-size: 12.5px; color: var(--text-3)">mimir 产品说明 — 知识库</span>
+            </div>
+            <div class="shell">
+              <aside class="nav">
+                <div class="nav-top">
+                  <span class="brand" style="font-size: 13.5px; opacity: 0.55">知识库</span>
+                </div>
+                <div class="nav-list">
+                  <div class="nav-item">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                    新建对话
+                  </div>
+                  <div class="nav-item">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                    搜索
+                  </div>
+                </div>
+                <div class="nav-sep">对话</div>
+                <div class="nav-list">
+                  <div class="nav-item">产品说明怎么用</div>
+                  <div class="nav-item">React 重渲染</div>
+                </div>
+                <div class="nav-sep">知识库</div>
+                <div class="nav-list">
+                  <div class="nav-item on">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                    开始使用
+                  </div>
+                  <div class="nav-item">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                    测试目录
+                  </div>
+                </div>
+                <div class="nav-bottom">
+                  <span class="avatar">S</span>
+                  <span style="font-size: 13.5px; color: var(--text-2)">smoke</span>
+                </div>
+              </aside>
+              <main class="main">
+                <div class="doc-header">
+                  <button class="back">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+                    返回库
+                  </button>
+                  <span class="doc-title">mimir 产品说明</span>
+                  <span class="doc-meta"><span>手动编辑</span><span>·</span><span>2026/10/mimir-产品说明-odburTLw.md</span></span>
+                  <span class="doc-actions">
+                    <button class="icon-btn">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.99 16.34a2 2 0 0 1 .1 1.17l-1.07 3.29a1 1 0 0 0 1.24 1.17l3.4-1a2 2 0 0 1 1.1.09 10 10 0 1 0-4.77-4.72"/></svg>
+                      问 AI
+                    </button>
+                    <button class="icon-btn only">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                    </button>
+                  </span>
+                </div>
+                <div class="doc-body">
+                  <h3>mimir 产品说明</h3>
+                  <div class="skel" style="width: 92%"></div>
+                  <div class="skel" style="width: 86%"></div>
+                  <div class="skel" style="width: 96%"></div>
+                  <div class="skel" style="width: 70%; margin-bottom: 18px"></div>
+                  <p style="font-weight: 600; color: var(--text)">一、它解决什么问题</p>
+                  <div class="skel" style="width: 94%"></div>
+                  <div class="skel" style="width: 88%"></div>
+                  <div class="skel" style="width: 91%"></div>
+                  <div class="skel" style="width: 55%"></div>
+                </div>
+              </main>
+            </div>
+          </div>
+          <div class="drag-legend"><i></i> 红绿灯固定左上（`trafficLightPosition`），标题栏内容整体右移让位</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ 方案 B ══════════════ -->
+    <section class="option">
+      <div class="option-head">
+        <span class="option-tag">B</span>
+        <h2>侧栏到顶 + 控件浮在内容区右上</h2>
+        <span class="cost">垂直代价 0px</span>
+      </div>
+      <p class="option-desc">
+        不加任何横条：侧栏照旧顶到窗口最上面（品牌在最左），
+        <b>控件浮在内容区头部的右端</b>。这一条在视觉上最接近 Notion / Linear / Obsidian 的桌面版。
+        代价是<b class="warn">页面自己的头部要为它让位</b>——文档页头部右端的「问 AI / ⋯」
+        得往左站，否则与控件挤在一起；库页、对话页的头部同理。
+      </p>
+      <div class="frames">
+        <div class="frame-wrap">
+          <div class="frame-label">Windows / Linux <span class="badge">自绘控件 · 右上角</span></div>
+          <div class="window">
+            <div class="shell">
+              <aside class="nav">
+                <div class="nav-top drag">
+                  <span class="brand">
+                    <svg width="15" height="15" viewBox="0 0 32 32" fill="none">
+                      <path
+                        fill="var(--brand)"
+                        fill-rule="evenodd"
+                        clip-rule="evenodd"
+                        d="M11 7.4c-3.1 1.5-4.9 4-4.9 7.3v6a2.1 2.1 0 0 0 2.1 2.1h3.2a2.1 2.1 0 0 0 2.1-2.1v-4a2.1 2.1 0 0 0-2.1-2.1H9.2c.2-1.7 1.1-2.9 2.7-3.7z M9.7 17.4a2 2 0 1 0 0 4 2 2 0 1 0 0-4z M25 7.4c-3.1 1.5-4.9 4-4.9 7.3v6a2.1 2.1 0 0 0 2.1 2.1h3.2a2.1 2.1 0 0 0 2.1-2.1v-4a2.1 2.1 0 0 0-2.1-2.1h-2.2c.2-1.7 1.1-2.9 2.7-3.7z M23.7 17.4a2 2 0 1 0 0 4 2 2 0 1 0 0-4z"
+                      />
+                    </svg>
+                    mimir
+                  </span>
+                  <button class="nav-collapse">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" />
+                      <path d="M9 3v18" />
+                    </svg>
+                  </button>
+                </div>
+                <div class="nav-list">
+                  <div class="nav-item">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                    新建对话
+                  </div>
+                  <div class="nav-item">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                    搜索
+                  </div>
+                </div>
+                <div class="nav-sep">对话</div>
+                <div class="nav-list">
+                  <div class="nav-item">产品说明怎么用</div>
+                  <div class="nav-item">React 重渲染</div>
+                </div>
+                <div class="nav-sep">知识库</div>
+                <div class="nav-list">
+                  <div class="nav-item on">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                    开始使用
+                  </div>
+                  <div class="nav-item">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                    测试目录
+                  </div>
+                </div>
+                <div class="nav-bottom">
+                  <span class="avatar">S</span>
+                  <span style="font-size: 13.5px; color: var(--text-2)">smoke</span>
+                </div>
+              </aside>
+              <main class="main">
+                <!-- 头部整行可拖，但右端留出控件的位置（138px） -->
+                <div class="doc-header" style="padding-right: 138px; position: relative">
+                  <button class="back drag">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+                    返回库
+                  </button>
+                  <span class="doc-title">mimir 产品说明</span>
+                  <span class="doc-meta"><span>手动编辑</span><span>·</span><span>2026/10/mimir-产品说明-odburTLw.md</span></span>
+                  <span class="doc-actions drag">
+                    <button class="icon-btn">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.99 16.34a2 2 0 0 1 .1 1.17l-1.07 3.29a1 1 0 0 0 1.24 1.17l3.4-1a2 2 0 0 1 1.1.09 10 10 0 1 0-4.77-4.72"/></svg>
+                      问 AI
+                    </button>
+                    <button class="icon-btn only">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                    </button>
+                  </span>
+                  <!-- 悬浮控件：绝对定位在这一行的右端 -->
+                  <span class="win-ctl drag" style="position: absolute; right: 0; top: 0; bottom: 0; height: 44px">
+                    <button class="win-btn" title="最小化">
+                      <svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 5h10" stroke="currentColor" stroke-width="1" /></svg>
+                    </button>
+                    <button class="win-btn" title="最大化">
+                      <svg width="10" height="10" viewBox="0 0 10 10"><rect x=".5" y=".5" width="9" height="9" stroke="currentColor" fill="none" /></svg>
+                    </button>
+                    <button class="win-btn close" title="关闭">
+                      <svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 0l10 10M10 0L0 10" stroke="currentColor" stroke-width="1" /></svg>
+                    </button>
+                  </span>
+                </div>
+                <div class="doc-body">
+                  <h3>mimir 产品说明</h3>
+                  <div class="skel" style="width: 92%"></div>
+                  <div class="skel" style="width: 86%"></div>
+                  <div class="skel" style="width: 96%"></div>
+                  <div class="skel" style="width: 70%; margin-bottom: 18px"></div>
+                  <p style="font-weight: 600; color: var(--text)">一、它解决什么问题</p>
+                  <div class="skel" style="width: 94%"></div>
+                  <div class="skel" style="width: 88%"></div>
+                  <div class="skel" style="width: 91%"></div>
+                  <div class="skel" style="width: 55%"></div>
+                </div>
+              </main>
+            </div>
+          </div>
+          <div class="drag-legend"><i></i> 可拖：侧栏品牌行 / 文档头部的空白处 / 控件条两侧</div>
+        </div>
+
+        <div class="frame-wrap">
+          <div class="frame-label">macOS <span class="badge">系统红绿灯 · 左上角（压住侧栏顶部）</span></div>
+          <div class="window">
+            <span class="lights"><i></i><i></i><i></i></span>
+            <div class="shell">
+              <aside class="nav">
+                <!-- 红绿灯占了左上角：品牌行右移让位 -->
+                <div class="nav-top drag" style="padding-left: 76px">
+                  <span class="brand">
+                    <svg width="15" height="15" viewBox="0 0 32 32" fill="none">
+                      <path
+                        fill="var(--brand)"
+                        fill-rule="evenodd"
+                        clip-rule="evenodd"
+                        d="M11 7.4c-3.1 1.5-4.9 4-4.9 7.3v6a2.1 2.1 0 0 0 2.1 2.1h3.2a2.1 2.1 0 0 0 2.1-2.1v-4a2.1 2.1 0 0 0-2.1-2.1H9.2c.2-1.7 1.1-2.9 2.7-3.7z M9.7 17.4a2 2 0 1 0 0 4 2 2 0 1 0 0-4z M25 7.4c-3.1 1.5-4.9 4-4.9 7.3v6a2.1 2.1 0 0 0 2.1 2.1h3.2a2.1 2.1 0 0 0 2.1-2.1v-4a2.1 2.1 0 0 0-2.1-2.1h-2.2c.2-1.7 1.1-2.9 2.7-3.7z M23.7 17.4a2 2 0 1 0 0 4 2 2 0 1 0 0-4z"
+                      />
+                    </svg>
+                    mimir
+                  </span>
+                </div>
+                <div class="nav-list">
+                  <div class="nav-item">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                    新建对话
+                  </div>
+                  <div class="nav-item">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                    搜索
+                  </div>
+                </div>
+                <div class="nav-sep">对话</div>
+                <div class="nav-list">
+                  <div class="nav-item">产品说明怎么用</div>
+                  <div class="nav-item">React 重渲染</div>
+                </div>
+                <div class="nav-sep">知识库</div>
+                <div class="nav-list">
+                  <div class="nav-item on">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                    开始使用
+                  </div>
+                </div>
+                <div class="nav-bottom">
+                  <span class="avatar">S</span>
+                  <span style="font-size: 13.5px; color: var(--text-2)">smoke</span>
+                </div>
+              </aside>
+              <main class="main">
+                <div class="doc-header drag">
+                  <button class="back">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+                    返回库
+                  </button>
+                  <span class="doc-title">mimir 产品说明</span>
+                  <span class="doc-meta"><span>手动编辑</span><span>·</span><span>2026/10/mimir-产品说明-odburTLw.md</span></span>
+                  <span class="doc-actions">
+                    <button class="icon-btn">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.99 16.34a2 2 0 0 1 .1 1.17l-1.07 3.29a1 1 0 0 0 1.24 1.17l3.4-1a2 2 0 0 1 1.1.09 10 10 0 1 0-4.77-4.72"/></svg>
+                      问 AI
+                    </button>
+                    <button class="icon-btn only">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                    </button>
+                  </span>
+                </div>
+                <div class="doc-body">
+                  <h3>mimir 产品说明</h3>
+                  <div class="skel" style="width: 92%"></div>
+                  <div class="skel" style="width: 86%"></div>
+                  <div class="skel" style="width: 96%"></div>
+                  <div class="skel" style="width: 70%; margin-bottom: 18px"></div>
+                  <p style="font-weight: 600; color: var(--text)">一、它解决什么问题</p>
+                  <div class="skel" style="width: 94%"></div>
+                  <div class="skel" style="width: 88%"></div>
+                  <div class="skel" style="width: 91%"></div>
+                  <div class="skel" style="width: 55%"></div>
+                </div>
+              </main>
+            </div>
+          </div>
+          <div class="drag-legend">
+            <i></i> 红绿灯压在侧栏顶部：品牌行右移 76px 让位（Obsidian 的做法）
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ 方案 C ══════════════ -->
+    <section class="option">
+      <div class="option-head">
+        <span class="option-tag">C</span>
+        <h2>控件并入页面自己的头部</h2>
+        <span class="cost">垂直代价 0px · 改动面最大</span>
+      </div>
+      <p class="option-desc">
+        文档头部（44px）<b>本身就是标题栏</b>：空白处可拖，右端放控件。
+        空间利用最彻底——不新增任何一行。代价是<b class="warn">每个页面的头部都要实现同一套让位与拖动规则</b>
+        （文档页 / 库页 / 对话页 / 设置页头部各不相同），而且头部里本来就有
+        很多可点元素（返回、标题编辑、问 AI、⋯），每个都要显式标 `no-drag`，漏一个就是「点不动」。
+      </p>
+      <div class="frames">
+        <div class="frame-wrap">
+          <div class="frame-label">Windows / Linux <span class="badge">自绘控件 · 并入头部右端</span></div>
+          <div class="window">
+            <div class="shell">
+              <aside class="nav">
+                <div class="nav-top drag">
+                  <span class="brand">
+                    <svg width="15" height="15" viewBox="0 0 32 32" fill="none">
+                      <path
+                        fill="var(--brand)"
+                        fill-rule="evenodd"
+                        clip-rule="evenodd"
+                        d="M11 7.4c-3.1 1.5-4.9 4-4.9 7.3v6a2.1 2.1 0 0 0 2.1 2.1h3.2a2.1 2.1 0 0 0 2.1-2.1v-4a2.1 2.1 0 0 0-2.1-2.1H9.2c.2-1.7 1.1-2.9 2.7-3.7z M9.7 17.4a2 2 0 1 0 0 4 2 2 0 1 0 0-4z M25 7.4c-3.1 1.5-4.9 4-4.9 7.3v6a2.1 2.1 0 0 0 2.1 2.1h3.2a2.1 2.1 0 0 0 2.1-2.1v-4a2.1 2.1 0 0 0-2.1-2.1h-2.2c.2-1.7 1.1-2.9 2.7-3.7z M23.7 17.4a2 2 0 1 0 0 4 2 2 0 1 0 0-4z"
+                      />
+                    </svg>
+                    mimir
+                  </span>
+                  <button class="nav-collapse">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" />
+                      <path d="M9 3v18" />
+                    </svg>
+                  </button>
+                </div>
+                <div class="nav-list">
+                  <div class="nav-item">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                    新建对话
+                  </div>
+                  <div class="nav-item">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                    搜索
+                  </div>
+                </div>
+                <div class="nav-sep">知识库</div>
+                <div class="nav-list">
+                  <div class="nav-item on">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                    开始使用
+                  </div>
+                </div>
+                <div class="nav-bottom">
+                  <span class="avatar">S</span>
+                  <span style="font-size: 13.5px; color: var(--text-2)">smoke</span>
+                </div>
+              </aside>
+              <main class="main">
+                <div class="doc-header drag" style="padding-right: 0">
+                  <button class="back">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+                    返回库
+                  </button>
+                  <span class="doc-title">mimir 产品说明</span>
+                  <span class="doc-meta"><span>手动编辑</span><span>·</span><span>2026/10/…-odburTLw.md</span></span>
+                  <span class="doc-actions">
+                    <button class="icon-btn">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.99 16.34a2 2 0 0 1 .1 1.17l-1.07 3.29a1 1 0 0 0 1.24 1.17l3.4-1a2 2 0 0 1 1.1.09 10 10 0 1 0-4.77-4.72"/></svg>
+                      问 AI
+                    </button>
+                    <button class="icon-btn only">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                    </button>
+                  </span>
+                  <span class="win-ctl drag" style="height: 44px; margin-left: 6px">
+                    <button class="win-btn" title="最小化">
+                      <svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 5h10" stroke="currentColor" stroke-width="1" /></svg>
+                    </button>
+                    <button class="win-btn" title="最大化">
+                      <svg width="10" height="10" viewBox="0 0 10 10"><rect x=".5" y=".5" width="9" height="9" stroke="currentColor" fill="none" /></svg>
+                    </button>
+                    <button class="win-btn close" title="关闭">
+                      <svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 0l10 10M10 0L0 10" stroke="currentColor" stroke-width="1" /></svg>
+                    </button>
+                  </span>
+                </div>
+                <div class="doc-body">
+                  <h3>mimir 产品说明</h3>
+                  <div class="skel" style="width: 92%"></div>
+                  <div class="skel" style="width: 86%"></div>
+                  <div class="skel" style="width: 96%"></div>
+                  <div class="skel" style="width: 70%; margin-bottom: 18px"></div>
+                  <p style="font-weight: 600; color: var(--text)">一、它解决什么问题</p>
+                  <div class="skel" style="width: 94%"></div>
+                  <div class="skel" style="width: 88%"></div>
+                  <div class="skel" style="width: 91%"></div>
+                  <div class="skel" style="width: 55%"></div>
+                </div>
+              </main>
+            </div>
+          </div>
+          <div class="drag-legend"><i></i> 头部整行可拖；其中的按钮逐个标 `no-drag`</div>
+        </div>
+
+        <div class="frame-wrap">
+          <div class="frame-label">macOS <span class="badge">系统红绿灯 · 压住侧栏顶部</span></div>
+          <div class="window">
+            <span class="lights"><i></i><i></i><i></i></span>
+            <div class="shell">
+              <aside class="nav">
+                <div class="nav-top drag" style="padding-left: 76px">
+                  <span class="brand">
+                    <svg width="15" height="15" viewBox="0 0 32 32" fill="none">
+                      <path
+                        fill="var(--brand)"
+                        fill-rule="evenodd"
+                        clip-rule="evenodd"
+                        d="M11 7.4c-3.1 1.5-4.9 4-4.9 7.3v6a2.1 2.1 0 0 0 2.1 2.1h3.2a2.1 2.1 0 0 0 2.1-2.1v-4a2.1 2.1 0 0 0-2.1-2.1H9.2c.2-1.7 1.1-2.9 2.7-3.7z M9.7 17.4a2 2 0 1 0 0 4 2 2 0 1 0 0-4z M25 7.4c-3.1 1.5-4.9 4-4.9 7.3v6a2.1 2.1 0 0 0 2.1 2.1h3.2a2.1 2.1 0 0 0 2.1-2.1v-4a2.1 2.1 0 0 0-2.1-2.1h-2.2c.2-1.7 1.1-2.9 2.7-3.7z M23.7 17.4a2 2 0 1 0 0 4 2 2 0 1 0 0-4z"
+                      />
+                    </svg>
+                    mimir
+                  </span>
+                </div>
+                <div class="nav-list">
+                  <div class="nav-item">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                    新建对话
+                  </div>
+                  <div class="nav-item">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                    搜索
+                  </div>
+                </div>
+                <div class="nav-sep">知识库</div>
+                <div class="nav-list">
+                  <div class="nav-item on">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                    开始使用
+                  </div>
+                </div>
+                <div class="nav-bottom">
+                  <span class="avatar">S</span>
+                  <span style="font-size: 13.5px; color: var(--text-2)">smoke</span>
+                </div>
+              </aside>
+              <main class="main">
+                <div class="doc-header drag">
+                  <button class="back">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+                    返回库
+                  </button>
+                  <span class="doc-title">mimir 产品说明</span>
+                  <span class="doc-meta"><span>手动编辑</span><span>·</span><span>2026/10/mimir-产品说明-odburTLw.md</span></span>
+                  <span class="doc-actions">
+                    <button class="icon-btn">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.99 16.34a2 2 0 0 1 .1 1.17l-1.07 3.29a1 1 0 0 0 1.24 1.17l3.4-1a2 2 0 0 1 1.1.09 10 10 0 1 0-4.77-4.72"/></svg>
+                      问 AI
+                    </button>
+                    <button class="icon-btn only">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+                    </button>
+                  </span>
+                </div>
+                <div class="doc-body">
+                  <h3>mimir 产品说明</h3>
+                  <div class="skel" style="width: 92%"></div>
+                  <div class="skel" style="width: 86%"></div>
+                  <div class="skel" style="width: 96%"></div>
+                  <div class="skel" style="width: 70%; margin-bottom: 18px"></div>
+                  <p style="font-weight: 600; color: var(--text)">一、它解决什么问题</p>
+                  <div class="skel" style="width: 94%"></div>
+                  <div class="skel" style="width: 88%"></div>
+                  <div class="skel" style="width: 91%"></div>
+                  <div class="skel" style="width: 55%"></div>
+                </div>
+              </main>
+            </div>
+          </div>
+          <div class="drag-legend"><i></i> mac 不需要右侧控件——红绿灯已在左上</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ 对照与说明 ══════════════ -->
+    <section class="option">
+      <div class="option-head">
+        <span class="option-tag" style="background: var(--text-3)">?</span>
+        <h2>三个方案的差别（只看三件事）</h2>
+      </div>
+      <div style="overflow-x: auto">
+        <table
+          style="
+            border-collapse: collapse;
+            font-size: 13px;
+            min-width: 900px;
+            background: var(--bg-container);
+            border: 1px solid var(--border-2);
+            border-radius: 8px;
+          "
+        >
+          <thead>
+            <tr style="text-align: left">
+              <th style="padding: 8px 14px; font-weight: 600; border-bottom: 1px solid var(--border-2)">方案</th>
+              <th style="padding: 8px 14px; font-weight: 600; border-bottom: 1px solid var(--border-2)">控件在哪</th>
+              <th style="padding: 8px 14px; font-weight: 600; border-bottom: 1px solid var(--border-2)">垂直代价</th>
+              <th style="padding: 8px 14px; font-weight: 600; border-bottom: 1px solid var(--border-2)">要让位的东西</th>
+              <th style="padding: 8px 14px; font-weight: 600; border-bottom: 1px solid var(--border-2)">风险</th>
+            </tr>
+          </thead>
+          <tbody style="color: var(--text-2)">
+            <tr>
+              <td style="padding: 9px 14px; border-bottom: 1px solid var(--border-2)"><b style="color: var(--text)">A 整条标题栏</b></td>
+              <td style="padding: 9px 14px; border-bottom: 1px solid var(--border-2)">独立 44px 条 · 右端</td>
+              <td style="padding: 9px 14px; border-bottom: 1px solid var(--border-2)">+44px</td>
+              <td style="padding: 9px 14px; border-bottom: 1px solid var(--border-2)">侧栏品牌行（可与标题栏合并）</td>
+              <td style="padding: 9px 14px; border-bottom: 1px solid var(--border-2)">无（最稳）</td>
+            </tr>
+            <tr>
+              <td style="padding: 9px 14px; border-bottom: 1px solid var(--border-2)"><b style="color: var(--text)">B 侧栏到顶 + 控件浮右上</b></td>
+              <td style="padding: 9px 14px; border-bottom: 1px solid var(--border-2)">内容头部右端（悬浮）</td>
+              <td style="padding: 9px 14px; border-bottom: 1px solid var(--border-2)">0</td>
+              <td style="padding: 9px 14px; border-bottom: 1px solid var(--border-2)">每个页面头部右端留 138px；mac 品牌行右移</td>
+              <td style="padding: 9px 14px; border-bottom: 1px solid var(--border-2)">头部动作变挤：窄窗口下「问 AI / ⋯」可能被压掉</td>
+            </tr>
+            <tr>
+              <td style="padding: 9px 14px"><b style="color: var(--text)">C 并入页面头部</b></td>
+              <td style="padding: 9px 14px">页面头部右端（同一行）</td>
+              <td style="padding: 9px 14px">0</td>
+              <td style="padding: 9px 14px">四类页面头部各实现一遍</td>
+              <td style="padding: 9px 14px">no-drag 漏标 → 按钮点不动</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="option-desc" style="margin-top: 14px">
+        <b>两个平台共同的注意点</b>：① 红绿灯与控件所在的行必须能拖（`-webkit-app-region: drag`），
+        其中每个可点元素要 `no-drag`，<b class="warn">漏标就是「点不动」且不报错</b>；
+        ② 双击标题栏要最大化/还原（mac 由系统给，Win/Linux 要自己接）；
+        ③ 窗口最大化时右侧控件要贴到屏幕角（不能有圆角或间隙）。
+      </p>
+    </section>
+
+    <script>
+      // demo 自己的开关，与产品无关
+      const reveal = document.getElementById('reveal')
+      reveal.addEventListener('change', () => {
+        document.body.toggleAttribute('data-drag-reveal', reveal.checked)
+      })
+      const themeBtn = document.getElementById('theme')
+      themeBtn.addEventListener('click', () => {
+        const dark = document.body.getAttribute('data-theme') === 'dark'
+        document.body.setAttribute('data-theme', dark ? 'light' : 'dark')
+        themeBtn.textContent = dark ? '切到深色' : '切到浅色'
+      })
+    </script>
+  </body>
+</html>

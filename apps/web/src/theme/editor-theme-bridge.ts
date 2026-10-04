@@ -53,6 +53,23 @@ export const useEditorThemeVars = createStyles(({ css, token }) => ({
     --me-surface: ${token.colorBgContainer};
     --me-hover: ${token.colorFillTertiary};
     --me-accent: ${token.colorPrimary};
+    /**
+     * 强调的**文字**角色。
+     *
+     * --me-accent 是 colorPrimary，它承担填充与描边（按钮底、选中底、
+     * 边框、焦点环）；把它当文字用是 DESIGN §3.5 明令禁止的那一条——
+     * 实测工具条按下态浅色 3.66:1、深色 **2.47:1**（#1668dc on #15325b），
+     * 菜单「当前值」浅色 4.10:1、深色 3.50:1。
+     *
+     * 所以文字那一档另给 colorLink（它本来就是「强调文字」的角色，
+     * 校准过：浅色 6.16:1、深色 8.74:1，落在 accent 底上是 5.50 / 6.17）。
+     * 消费点只有两处，都在 shell.css：.me-tb[aria-pressed='true']
+     * 与 .me-menu__item[aria-current='true']。
+     *
+     * 这段注释里不能出现反引号——它在 createStyles 的模板串里会终止字符串
+     * （check-style-backticks 守着；实测已经踩过一次）。
+     */
+    --me-accent-text: ${token.colorLink};
     /* 激活态底色。用 antd 派生的浅阶而不是 colorPrimaryBg 的字面值——
        品牌色改了它自动跟着走 */
     --me-accent-bg: ${token.colorPrimaryBg};

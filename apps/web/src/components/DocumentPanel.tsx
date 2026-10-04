@@ -17,6 +17,7 @@ import { extractHeadings } from '@/components/document/headings'
 import { formatMeta } from '@/components/list-helpers'
 import { api } from '@/lib/api'
 import { useAppShell, type AskDraft } from '@/lib/app-shell-context'
+import { useNarrowViewport } from '@/lib/nav-collapse'
 import { useScrolled } from '@/lib/use-scrolled'
 import { useUnsaved } from '@/lib/unsaved'
 
@@ -132,8 +133,17 @@ export function DocumentPanel({
    *
    * 实测（1440×900，样张 `Qh3DUSfWcbrYM6MT` 有 7 个标题）：
    * `document.querySelectorAll('aside').length === 0`，全页没有「大纲」二字。
+   *
+   * ## 窄屏（≤880px）下不渲染
+   *
+   * 大纲列固定 196px（笔记那侧还要外壳再让 220px 的 padding-right），
+   * 420px 视口里正文只剩约 150px——实测一行约 7 个字，中文竖着一路折
+   * （`docs/DESIGN.md` §5.5 的窄屏规则是「防止布局崩坏」，不是移动方案：
+   * 这个宽度里正文的完整性优先于锚点导航）。判据与左导航折叠、设置页
+   * 分区下拉共用 `useNarrowViewport`——同一个 880px 只问一处。
    */
-  const showOutline = headings.length >= 2 && !showsSource
+  const narrowViewport = useNarrowViewport()
+  const showOutline = headings.length >= 2 && !showsSource && !narrowViewport
   const scrollRef = useRef<HTMLDivElement>(null)
   /* 标题栏的界线随正文滚动显形（D-070） */
   const headerScrolled = useScrolled(scrollRef)
@@ -565,13 +575,13 @@ export function DocumentPanel({
         <div className={styles.header} data-scrolled={headerScrolled || undefined}>
           {onBackToChat && (
             <button type="button" className={styles.back} onClick={() => runGuarded(onBackToChat)}>
-              <ArrowLeft size={11} />
+              <ArrowLeft size={14} />
               返回对话
             </button>
           )}
           {onBack && (
             <button type="button" className={styles.back} onClick={() => runGuarded(onBack)}>
-              <ArrowLeft size={11} />
+              <ArrowLeft size={14} />
               返回库
             </button>
           )}
@@ -639,7 +649,11 @@ export function DocumentPanel({
               <Button
                 type="text"
                 size="small"
-                icon={<MessageCircle size={16} />}
+                /* 14 而不是 16：这是带文字的 small 按钮（12.5px 字），
+                   16px 的图标比同排按钮里的文字大出一圈，看着压过文字
+                   （同一条头部里 `返回库` 的图标是 11px）。带文字的
+                   small 按钮在仓库里统一用 14（DESIGN §7.1 的两档之一） */
+                icon={<MessageCircle size={14} />}
                 className={styles.tbBtn}
                 onClick={() => askAi()}
                 /* 没有正文时禁用并说明原因（tooltip 里）——留一个点了没反应的
@@ -809,12 +823,20 @@ export function DocumentPanel({
       {/*
         「问 AI」侧栏（D-087）。挂载与可见分离：关闭只是折起（宽度 0），
         组件保持挂载——流式进行中关掉再打开，回答还在继续。
+
+        **`inert` 是必须的**：折起时它只是 `width: 0` + `overflow: hidden`，
+        元素仍在文档流里、里面的按钮与输入框仍可聚焦——键盘用户按 Tab 会
+        掉进这块看不见的 400px 面板（而且它在 `aria-hidden` 容器里，
+        「隐藏容器内含可聚焦元素」本身就是无效 ARIA）。`inert` 一次解决
+        两件事：移出 tab 序列 + 移出可及树。收起态下用 `inert={true}`，
+        展开时不给属性（React 会把 false 渲染成没这个属性）。
       */}
       {sidebarMounted && (
         <div
           className={styles.aiSidebar}
           data-open={sidebarOpen || undefined}
           aria-hidden={!sidebarOpen}
+          inert={!sidebarOpen}
         >
           <DocChatSidebar
             doc={doc}

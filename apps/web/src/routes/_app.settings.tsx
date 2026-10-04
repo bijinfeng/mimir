@@ -1,6 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Select, Tabs } from 'antd'
-import { useSyncExternalStore } from 'react'
 import { AccountSection } from '@/components/settings/AccountSection'
 import { AppearanceSection } from '@/components/settings/AppearanceSection'
 import { DataSection } from '@/components/settings/DataSection'
@@ -11,7 +10,7 @@ import { RetrievalSection } from '@/components/settings/RetrievalSection'
 import { StatsSection } from '@/components/settings/StatsSection'
 import { StorageSection } from '@/components/settings/StorageSection'
 import { useStyles } from '@/components/settings/settings.style'
-import { NAV_NARROW_QUERY } from '@/theme/tokens'
+import { useNarrowViewport } from '@/lib/nav-collapse'
 
 /**
  * 设置页。
@@ -98,31 +97,6 @@ function resolveSection(value: unknown): SectionKey {
   return typeof value === 'string' && SECTION_KEYS.includes(value)
     ? (value as SectionKey)
     : DEFAULT_SECTION
-}
-
-/**
- * 窄屏吗。**订阅的是 `NAV_NARROW_QUERY` 本身，不是另一个数字**。
- *
- * 用 `useSyncExternalStore` 而不是 `useState` + `useEffect`：与
- * `lib/nav-collapse.ts` 同一个理由——`matchMedia` 是同步可读的，窄窗口打开时
- * 首帧就该是下拉，走 effect 会先渲染一帧 tab 栏再换掉（一次可见的闪烁）。
- *
- * 没有 `matchMedia`（极老浏览器 / 某些测试环境）时按宽屏处理：那是这一页的
- * 默认形态。
- */
-const narrowMedia =
-  typeof window !== 'undefined' && typeof window.matchMedia === 'function'
-    ? window.matchMedia(NAV_NARROW_QUERY)
-    : null
-
-function subscribeNarrow(onChange: () => void): () => void {
-  if (!narrowMedia || typeof narrowMedia.addEventListener !== 'function') return () => {}
-  narrowMedia.addEventListener('change', onChange)
-  return () => narrowMedia.removeEventListener('change', onChange)
-}
-
-function useNarrowViewport(): boolean {
-  return useSyncExternalStore(subscribeNarrow, () => narrowMedia?.matches ?? false)
 }
 
 export const Route = createFileRoute('/_app/settings')({

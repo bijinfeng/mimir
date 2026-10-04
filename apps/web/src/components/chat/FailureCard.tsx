@@ -86,7 +86,9 @@ export const FAILURE_UI: Record<
   quota: {
     title: '模型额度用尽',
     detail: '服务商返回余额不足。本次请求没有产生费用，检索结果仍然有效。',
-    note: '检索在本地 Postgres 完成，不受额度影响',
+    /* 不写「在 Postgres 上完成」：驱动是部署事实（服务器 PG / 本地与桌面
+       SQLite，D-045），界面说死一种就在另一种上说了句可被当场证伪的话 */
+    note: '检索在本地数据库完成，不受额度影响',
     actions: [
       { label: '只检索，不调模型', primary: true, implemented: true },
       { label: '换一个模型' },
@@ -116,7 +118,9 @@ export const FAILURE_UI: Record<
   offline: {
     title: '网络不可达',
     detail: '无法连接模型服务。检索在本地数据库完成，仍然可用。',
-    note: '离线时仍可：全文搜索、阅读与编辑笔记、整理收件箱',
+    /* 「整理收件箱」随收件箱视图一起退役了（D-054/D-065）——
+       那句话指向一个不存在的去处 */
+    note: '离线时仍可：全文搜索、阅读与编辑笔记',
     actions: [
       { label: '只检索，不调模型', primary: true, implemented: true },
       { label: '重试', implemented: true },

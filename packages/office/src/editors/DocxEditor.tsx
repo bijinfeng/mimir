@@ -134,6 +134,7 @@ import {
   ToolbarSpacer,
   ToolbarTextField,
   ToolbarToggleGroup,
+  useFindHotkey,
   useToolbarState,
   type ToolbarColorOption,
   type ToolbarMenuItem,
@@ -998,7 +999,13 @@ async function insertImage(editor: Editor, file: File): Promise<void> {
 
 /* ── 页面 ─────────────────────────────────────────────────────── */
 
-export function DocxEditor({ documentId, io, onDirtyChange, flush = false }: EditorProps) {
+export function DocxEditor({
+  documentId,
+  io,
+  onDirtyChange,
+  flush = false,
+  appearance = 'light',
+}: EditorProps) {
   const source = useSource(io, documentId)
   /** 解析。结果与「哪一份字节」绑在一起（见 useParsed 的说明） */
   const parsed = useParsed(source.bytes, openDocx)
@@ -1023,7 +1030,56 @@ export function DocxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
   /** 分页要的两个元素：滚动容器与 ProseMirror 根 */
   const scrollRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const handlePaged = useCallback((count: number) => setPageCount(count), [])
+
+  /**
+   * 当前页（跟随滚动）。
+   *
+   * 页间隙是分页引擎插进文档的 `.page-gap` 元素（一页一条）——所以
+   * 「滚过几个间隙」就是「在第几页」。**不额外量页高**：那是分页引擎的
+   * 职责，再算一遍必然有一天与它不一致。
+   *
+   * 原先状态行的 `第 1` 是**写死的**：滚到第 7 页仍显示「第 1 / 共 7 页」，
+   * 而 pptx / pdf 都显示真实页码（实测发现，D-096）。
+   */
+  const [currentPage, setCurrentPage] = useState(1)
+  const syncCurrentPage = useCallback(() => {
+    const scroller = scrollRef.current
+    if (scroller === null) return
+    const top = scroller.getBoundingClientRect().top
+    let crossed = 0
+    for (const gap of scroller.querySelectorAll('.page-gap')) {
+      // +1 的容差：间隙的顶边恰好落在滚动口顶边时算「已经翻过去」
+      if (gap.getBoundingClientRect().top <= top + 1) crossed += 1
+    }
+    // setState 只在值真的变化时才产生渲染（相同值 React 会跳过）
+    setCurrentPage(crossed + 1)
+  }, [])
+
+  const handlePaged = useCallback(
+    (count: number) => {
+      setPageCount(count)
+      // 分页重排后页数可能变了（删内容、改字号），当前页重新算一次——
+      // 不重算的话会停在越界的页码上
+      syncCurrentPage()
+    },
+    [syncCurrentPage],
+  )
+
+  /** 滚动时更新当前页。用**被动监听**：滚动是高频事件，默认的主动监听
+      会等我们的处理器跑完才继续滚，长文档里能看出卡顿 */
+  useEffect(() => {
+    const scroller = scrollRef.current
+    if (scroller === null) return
+    scroller.addEventListener('scroll', syncCurrentPage, { passive: true })
+    return () => scroller.removeEventListener('scroll', syncCurrentPage)
+  }, [syncCurrentPage])
+
+  /**
+   * Ctrl+F 打开查找栏（工具条标签上写着这个快捷键，就得真的能用——见
+   * `useFindHotkey` 的说明）。只负责「显示」，焦点归那个 hook 管。
+   */
+  const openFind = useCallback(() => setFindOpen(true), [])
+  useFindHotkey(openFind)
 
   const editor = useEditor(
     {
@@ -1076,7 +1132,9 @@ export function DocxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
   const status = statusText({
     handle: source,
     dirty,
-    idle: session ? `第 1 / 共 ${pageCount} 页` : '读取中…',
+    // 页码跟随滚动。`min` 只是防越界：分页重排的那一帧里 gap 数量与
+    // pageCount 可能差一，显示越界页码比慢半拍更难看
+    idle: session ? `第 ${Math.min(currentPage, pageCount)} / 共 ${pageCount} 页` : '读取中…',
   })
 
   /**
@@ -1172,8 +1230,20 @@ export function DocxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
         </>
       }
     >
-      {/* 滚动容器：分页要量它的顶部作原点，所以它必须是真正滚动的那一层 */}
-      <div ref={scrollRef} className="me-scroll mimir-docx-scroll">
+      {/*
+        滚动容器：分页要量它的顶部作原点，所以它必须是真正滚动的那一层。
+
+        `page-dark` **只在外观是深色时挂上**：文档里作者显式写的文字颜色
+        按原样渲染（`w:color` 的孪生值 `--dk-*` 由编辑器发出），而上游的
+        「切到孪生值」规则写在 `.page-dark` 子树里——不挂这个类的话，
+        深色纸上「显式黑字」就是黑压黑，实测完全不可见（D-096）。
+        浅色下**绝不能挂**：那些规则同样会把颜色改掉（浅色纸上的
+        孪生值是另一套）。
+      */}
+      <div
+        ref={scrollRef}
+        className={`me-scroll mimir-docx-scroll${appearance === 'dark' ? ' page-dark' : ''}`}
+      >
         <div ref={containerRef} className="editor-scroll mimir-office">
           <div className="doc-page">
             <EditorContent editor={editor} />

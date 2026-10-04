@@ -12,10 +12,12 @@ import { useEffect, useState } from 'react'
 import { CaptureDialog } from '@/components/CaptureDialog'
 import { CommandPalette } from '@/components/CommandPalette'
 import { NavSidebar } from '@/components/NavSidebar'
+import { TitleBar } from '@/components/TitleBar'
 import { UnsavedGuard } from '@/components/UnsavedGuard'
 import { api } from '@/lib/api'
 import { AppShellContext, type AskDraft, type CaptureOptions } from '@/lib/app-shell-context'
 import { useForcedNavCollapse } from '@/lib/nav-collapse'
+import { isDesktopShell } from '@/lib/desktop-shell'
 import { NAV_NARROW_QUERY } from '@/theme/tokens'
 
 /**
@@ -87,10 +89,37 @@ const useStyles = createStyles(({ css, token }) => ({
    * `overflow: hidden` 是配套的：万一某个子元素仍然溢出，让它被裁掉
    * 而不是把页面撑长。
    */
+  /**
+   * 外壳：标题栏（仅桌面端）在上，原来的两栏网格在下面。
+   *
+   * **用 flex 列而不是 `grid-template-rows: auto minmax(0, 1fr)`。**
+   * 网格那版踩过一个静默的坑：`TitleBar` 在 Web 端 `return null`
+   * （浏览器里没有窗口可控制，整块不渲染），于是网格只剩一个子元素——
+   * 它落进 `auto` 那一行，`1fr` 行空置，下面的两栏网格只拿到「内容高」
+   * 而不是整幅高度。实测 1440×900：知识库页 398px、对话页 302px、
+   * 设置页 740px，下方全空。Electron 里标题栏渲染了所以看不出来，
+   * **Web 部署全站中招**（用户只在浏览器里看，等于整个产品矮了一截）。
+   *
+   * flex 列对「子项数量」不敏感：标题栏有无都行，剩下的那层用
+   * `flex: 1` 吃掉剩余高度——`min-height: 0` 仍然要写，见下面 `app`。
+   */
+  shell: css`
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  `,
+
   app: css`
     display: grid;
     grid-template-columns: 200px minmax(0, 1fr);
-    height: 100%;
+    /* 吃掉标题栏之下的全部剩余高度。外层现在是 flex 列（见 shell 那一段）：
+       这一层不写 height: 100% ——那是对着「父容器只有自己」的静态写法，
+       而这里的父容器还装着标题栏，写死就会多出 44px 的溢出。
+       注意这段是 CSS 模板串里的注释，**不能出现反引号**（会终止字符串，
+       check-style-backticks 守着） */
+    flex: 1;
     min-height: 0;
     overflow: hidden;
     background: ${token.colorBgLayout};
@@ -126,7 +155,7 @@ const useStyles = createStyles(({ css, token }) => ({
   appCollapsed: css`
     display: grid;
     grid-template-columns: 48px minmax(0, 1fr);
-    height: 100%;
+    flex: 1;
     min-height: 0;
     overflow: hidden;
     background: ${token.colorBgLayout};
@@ -266,32 +295,55 @@ function AppShell() {
           void navigate({ to: '/chat', search: { scope: search.scope, id: lastConversationId } }),
       }}
     >
-      <div className={gridClass}>
-        <div className={styles.nav}>
-          <NavSidebar
-            selection={{
-              page,
-              scope: search.scope,
-              ...(search.id ? { id: search.id } : {}),
-            }}
-            onOpenPalette={() => setPaletteOpen(true)}
-            collapsed={navCollapsed}
-            /* 窄屏下折叠是**视口强制的**，开关跟着收起来：这个宽度里它点了
+      <div className={styles.shell}>
+        {/*
+        自绘标题栏（D-094，方案 A）。**只在桌面端渲染**——浏览器里没有
+        窗口可控制，画一条自己的标题栏等于复刻标签栏，且那三个按钮点了
+        什么都不会发生（`desktopBridge` 在 Web 部署下是 undefined）。
+        组件自己判这一点，这里不需要条件。
+      */}
+        <TitleBar
+          collapsed={navCollapsed}
+          showToggle={!narrowViewport}
+          onToggleCollapsed={() => {
+            setNavCollapsedPref((collapsed) => {
+              const next = !collapsed
+              writeNavCollapsed(next)
+              return next
+            })
+          }}
+        />
+
+        <div className={gridClass}>
+          <div className={styles.nav}>
+            <NavSidebar
+              selection={{
+                page,
+                scope: search.scope,
+                ...(search.id ? { id: search.id } : {}),
+              }}
+              onOpenPalette={() => setPaletteOpen(true)}
+              collapsed={navCollapsed}
+              /* 窄屏下折叠是**视口强制的**，开关跟着收起来：这个宽度里它点了
                也不会展开（`@media` 与它无关地压着左列宽度），留着只会让人
                以为按钮坏了 */
-            showToggle={!narrowViewport}
-            onToggleCollapsed={() => {
-              setNavCollapsedPref((collapsed) => {
-                const next = !collapsed
-                writeNavCollapsed(next)
-                return next
-              })
-            }}
-          />
-        </div>
+              showToggle={!narrowViewport}
+              /* 桌面端那一行由窗口标题栏承担（D-094）——两条并排是重复，
+               且合并后垂直空间净增为零 */
+              hideTopBar={isDesktopShell()}
+              onToggleCollapsed={() => {
+                setNavCollapsedPref((collapsed) => {
+                  const next = !collapsed
+                  writeNavCollapsed(next)
+                  return next
+                })
+              }}
+            />
+          </div>
 
-        <div className={styles.main}>
-          <Outlet />
+          <div className={styles.main}>
+            <Outlet />
+          </div>
         </div>
       </div>
 

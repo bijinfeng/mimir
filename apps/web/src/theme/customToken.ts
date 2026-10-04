@@ -23,7 +23,16 @@ export interface MimirCustomToken {
   tintList: string
   /** 第四层表面：左导航、浮层页脚 */
   tintNav: string
-  /** 列表项 / 引用块悬停时的底。比 `tintList` 亮一档，表示「可以点」 */
+  /**
+   * 列表项 / 引用块悬停时的底。
+   *
+   * **要与 `tintList` 拉开可见的差**：第一版是 `#fafbff`，与 `#fcfcfd`
+   * 只差 **1.01:1**——浅色下「悬停提亮一档」这个信号根本不存在（深色那边
+   * 原本也只有 1.11）。现在两套都按 ≥1.08:1 挑（实测浅色 1.09、深色 1.16），
+   * 与 antd 自己的 `colorFillTertiary` 悬停底同一档——列表、菜单、按钮
+   * 的悬停深浅一致，不靠约定。
+   * `design.test.ts` 有一条守着这个下限。
+   */
   tintHover: string
   /** 行内代码字色。配 `colorFillSecondary` 底 */
   inlineCodeFg: string
@@ -63,7 +72,8 @@ declare module 'antd-style' {
 const LIGHT: MimirCustomToken = {
   tintList: '#fcfcfd',
   tintNav: '#fbfbfc',
-  tintHover: '#fafbff',
+  // 与 tintList 差 1.09:1（第一版 #fafbff 只有 1.01，等于没有悬停反馈）
+  tintHover: '#f4f5f7',
   inlineCodeFg: '#c7254e',
   highlightBg: '#fff3b0',
   // 用量热力图色阶（浅 → 深）。见 docs/DESIGN.md §3.6.1 的四条约束
@@ -86,7 +96,8 @@ const LIGHT: MimirCustomToken = {
 const DARK: MimirCustomToken = {
   tintList: '#111315',
   tintNav: '#0f1113',
-  tintHover: '#1b1e21',
+  // 与 tintList 差 1.16:1（比浅色那档再拉开一点——深色下亮度差更难感知）
+  tintHover: '#1e2225',
   inlineCodeFg: '#ff8a9a',
   highlightBg: '#4a3c10',
   heatL1: '#10395e',

@@ -67,6 +67,19 @@ const LIGHT_COLOR = {
   // ── 品牌 ──────────────────────────────────────────────
   colorPrimary: '#1677ff',
   colorLink: '#0958d9',
+  /**
+   * 悬停/按下的链接色。
+   *
+   * **必须显式给**：不给的话 antd 从种子派生出 `#579df2`（悬停）——
+   * 它在白底上只有 **2.80:1**，鼠标一放上去链接就淡到快看不见
+   * （深色那边更糟，见 `darkCalibration`）。这两个键不是种子名，
+   * 写进来会被保留（`formatToken` 只删与种子同名的键）。
+   *
+   * 取值都按「≥4.5:1 on 白底与选中底 #e6f4ff」挑（实算值）：
+   * hover `#1562d6` 5.60 / 5.00；active `#0f4bbd` 7.60 / 6.79。
+   */
+  colorLinkHover: '#1562d6',
+  colorLinkActive: '#0f4bbd',
 
   // ── 文字阶 ────────────────────────────────────────────
   colorTextBase: '#1f2329',
@@ -171,6 +184,17 @@ const darkCalibration: MappingAlgorithm = (seedToken, mapToken) => ({
   // 的 token，而那种偏差不会报错。
   ...(mapToken ?? theme.darkAlgorithm(seedToken)),
   colorLink: DARK_LINK,
+  /**
+   * 悬停 / 按下的链接色，**必须一起校准**。
+   *
+   * 只写 `colorLink` 的那一版留下了一个洞：hover / active 由算法从
+   * **旧种子**派生，深色下得到 `#15417e`（容器底 **1.80:1**）与
+   * `#1554ad`（2.51:1）——比常态的 8.74:1 弱五倍，鼠标放上去链接就像
+   * 被禁用了。深色里「更亮 = 更强」，所以两档都比常态更亮：
+   * hover `#a5d0ff` 11.29:1、active `#c6e2ff` 13.58:1（容器底实算）。
+   */
+  colorLinkHover: '#a5d0ff',
+  colorLinkActive: '#c6e2ff',
 })
 
 /**
@@ -344,6 +368,17 @@ export const NAV_NARROW_QUERY = `(max-width: ${NAV_NARROW_BREAKPOINT}px)`
  *
  * 字号**不随外观变**：深色下不是「字变大」，只是底色变了。
  */
+/**
+ * 窗口标题栏的高度（D-094）。
+ *
+ * **与页面头部同档（44px）**：两处 44px 叠起来读作「上铬条 + 下铬条」，
+ * 节奏一致；而桌面端合并掉侧栏那条顶栏之后，垂直空间净增为零。
+ *
+ * 写在这里的原因与断点一样：这个值同时被标题栏组件（内联高度）与
+ * 页面布局（主区高度的起点）读，各写一份必然漂移。
+ */
+export const TITLEBAR_HEIGHT = 44
+
 export const FONT_SIZE = {
   /** 文档标题（编辑器 H1）。全界面最大的一档 */
   display: 28,

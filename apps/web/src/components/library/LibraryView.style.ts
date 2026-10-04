@@ -319,10 +319,15 @@ export const useStyles = createStyles(({ css, token }) => ({
     text-overflow: ellipsis;
     cursor: pointer;
 
+    /* 焦点环的宽度**与卡片自己那条一致（3px）**：标题聚焦时卡片会因
+       focus-within 也画一条 3px；两处 2/3 混用时两层环的粗细对不上，
+       看起来像没对齐。全站的自定义元素统一走 DESIGN §7.2 的 3px；
+       侧栏那几行是 **inset** 环——那是另一个约束（栏体 overflow-y: auto
+       会裁掉外扩的环），见 FolderSection 的 rowBtn */
     &:focus-visible {
       outline: none;
       border-radius: 4px;
-      box-shadow: 0 0 0 2px ${token.controlOutline};
+      box-shadow: 0 0 0 3px ${token.controlOutline};
     }
   `,
   chip: css`
@@ -422,7 +427,7 @@ export const useStyles = createStyles(({ css, token }) => ({
     width: 100%;
     padding: 8px 12px;
     border: 1px solid transparent;
-    border-radius: 8px;
+    border-radius: ${token.borderRadius}px;
     background: none;
     font-family: inherit;
     text-align: left;
@@ -467,10 +472,11 @@ export const useStyles = createStyles(({ css, token }) => ({
     overflow: hidden;
     text-overflow: ellipsis;
 
+    /* 宽度与行自己那条（row 的 3px）一致，理由见 cardTitle 那一段 */
     &:focus-visible {
       outline: none;
       border-radius: 4px;
-      box-shadow: 0 0 0 2px ${token.controlOutline};
+      box-shadow: 0 0 0 3px ${token.controlOutline};
     }
   `,
   /**

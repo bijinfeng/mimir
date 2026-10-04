@@ -51,6 +51,14 @@ export interface ChatPanelProps {
    * （不是组件——那个坑见 `InlineToolbar` 的说明）。
    */
   guide?: ((ask: (question: string) => void) => ReactNode) | undefined
+  /**
+   * 输入框**正上方**那一排动作（侧栏的快捷提问胶囊，D-093）。
+   *
+   * 与 `guide` 分开是因为位置不同：指南占滚动区，而这一排要贴着输入框
+   * ——「马上要用的动作」放在底部栏才顺手（语雀的阅读助手也是这个位置）。
+   * 只在空态（指南模式）显示：对话一开始，那一排的使命就结束了。
+   */
+  guideActions?: ((ask: (question: string) => void) => ReactNode) | undefined
 }
 
 export function ChatPanel({
@@ -61,6 +69,7 @@ export function ChatPanel({
   onOpenCitation,
   onConversationCreated,
   guide,
+  guideActions,
 }: ChatPanelProps) {
   const { styles } = useChatPanelStyles()
 
@@ -96,6 +105,7 @@ export function ChatPanel({
       onOpenCitation={onOpenCitation}
       onConversationCreated={onConversationCreated}
       {...(guide !== undefined ? { guide } : {})}
+      {...(guideActions !== undefined ? { guideActions } : {})}
     />
   )
 }
@@ -107,6 +117,7 @@ function ChatPanelBody({
   onOpenCitation,
   onConversationCreated,
   guide,
+  guideActions,
 }: ChatPanelProps) {
   const { styles } = useChatPanelStyles()
   const { openDocument } = useAppShell()
@@ -323,6 +334,13 @@ function ChatPanelBody({
           指南模式下反过来：输入框**固定在这条底部线上**，指南自己占滚动区 */}
       {(!isEmpty || guideMode) && (
         <div className={styles.composerLine} data-scrolled={scrolled || undefined}>
+          {/* 快捷提问贴着输入框（D-093）。放在 composerLine 里面而不是
+              滚动区：它要一直看得见，且与输入框同一条对齐线 */}
+          {guideMode && guideActions !== undefined ? (
+            <div className={styles.composerTop}>
+              {guideActions((question) => void send(question, {}))}
+            </div>
+          ) : null}
           {composer}
         </div>
       )}

@@ -287,6 +287,27 @@ function PaletteBody({
   const listRef = useRef<HTMLDivElement>(null)
 
   /**
+   * 关闭时**把焦点还给打开它的人**。
+   *
+   * 这一层是唯一「关闭即卸载」的对话框（外层 `if (!open) return null`）——
+   * 而 antd 的焦点归还是挂在 `visible: false` 那条路径上的，卸载不会走到
+   * 那里。实测：从某个按钮按 Ctrl+K 打开、Esc 关闭，`activeElement` 是
+   * `BODY`，键盘用户每次用完面板都要重新 Tab 一大段才能回到刚才的位置。
+   *
+   * 记的是**挂载时的 activeElement**（打开前的焦点所在），卸载时若它还在
+   * 文档里就还回去。`isConnected` 的判断是必须的：触发按钮可能随导航一起
+   * 消失（例如从「新建对话」进对话页之后，那个按钮还在侧栏，但历史里点
+   * 进来的会话项可能已经不在了），对着一个已卸载的元素 focus 是空操作，
+   * 而不判断也不会报错——只是行为「有时不生效」，最难查。
+   */
+  useEffect(() => {
+    const previous = document.activeElement
+    return () => {
+      if (previous instanceof HTMLElement && previous.isConnected) previous.focus()
+    }
+  }, [])
+
+  /**
    * 输入两个字以上才检索。
    *
    * 一个字就查的话，中文里几乎所有字都会命中一大片，

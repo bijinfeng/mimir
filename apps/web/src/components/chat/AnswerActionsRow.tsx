@@ -67,11 +67,13 @@ export function AnswerActionsRow({
         const result = await api.conversations.saveAsNote({ messageId: lastAssistant.id })
         setSavedNoteId(result.noteId)
         void queryClient.invalidateQueries({ queryKey: ['conversation', activeId] })
-        antdMessage.success('已存为笔记')
+        // 「存成笔记」是这一组的统一说法（PRD §5.7、按钮文案、api.ts 注释）；
+        // 提示条跟着按钮走，不另起一个「已存为笔记」
+        antdMessage.success('已存成笔记')
       }
       setSaving(false)
     } catch (error) {
-      antdMessage.error(error instanceof Error ? error.message : '存为笔记失败')
+      antdMessage.error(error instanceof Error ? error.message : '存成笔记失败')
       setSaving(false)
     }
   }

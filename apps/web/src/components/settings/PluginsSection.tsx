@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Skeleton } from 'antd'
 import type { PluginSeam, PluginStatus } from '@mimir/shared'
 import { api } from '@/lib/api'
+import { LoadError } from '@/components/LoadError'
 import {
   Block,
   BlockDesc,
@@ -60,6 +61,10 @@ export function PluginsSection() {
   const { styles } = useStyles()
   const configQuery = useQuery({ queryKey: ['config'], queryFn: api.config })
   const plugins = configQuery.data?.plugins
+
+  if (configQuery.isError) {
+    return <LoadError message="插件注册表读取失败" onRetry={() => void configQuery.refetch()} />
+  }
 
   if (!plugins) {
     return (

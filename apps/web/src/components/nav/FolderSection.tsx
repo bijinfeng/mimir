@@ -33,6 +33,9 @@ import { FONT_SIZE } from '@/theme/tokens'
 interface FolderSectionProps {
   items: FolderNode[] | undefined
   isLoading: boolean
+  /** 请求失败。必须与「空」分开——失败时装作没有知识库是界面在说谎 */
+  isError?: boolean
+  onRetry?: () => void
   /** 当前选中的目录完整路径（scope=folder:x 时），其余视图为 null */
   activePath: string | null
   onSelect: (path: string) => void
@@ -99,6 +102,18 @@ const useStyles = createStyles(({ css, token }) => ({
     font-size: ${FONT_SIZE.note}px;
     line-height: 1.7;
     color: ${token.colorTextTertiary};
+  `,
+  /* 读取失败。与 emptyHint 同样的排版，但失败提示要**能被看见**
+     （tertiary 太弱——它读起来像一句说明而不是一个问题），所以用次级文字色 */
+  errorHint: css`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 2px 8px 6px 14px;
+    font-size: ${FONT_SIZE.note}px;
+    line-height: 1.7;
+    color: ${token.colorTextSecondary};
   `,
   dialogHint: css`
     margin-top: 8px;
@@ -239,7 +254,14 @@ function FolderRow({ folder, active, onSelect, onAction }: RowProps): ReactNode 
   )
 }
 
-export function FolderSection({ items, isLoading, activePath, onSelect }: FolderSectionProps) {
+export function FolderSection({
+  items,
+  isLoading,
+  isError = false,
+  onRetry,
+  activePath,
+  onSelect,
+}: FolderSectionProps) {
   const { styles } = useStyles()
   const queryClient = useQueryClient()
   const { message, modal } = App.useApp()
@@ -366,6 +388,16 @@ export function FolderSection({ items, isLoading, activePath, onSelect }: Folder
       {isLoading ? (
         <div className={styles.emptyHint}>
           <Skeleton active paragraph={{ rows: 2 }} title={false} />
+        </div>
+      ) : isError ? (
+        /* 失败不能落进「还没有知识库」那一支——那句会让用户以为库没了 */
+        <div className={styles.errorHint}>
+          <span>知识库读取失败</span>
+          {onRetry ? (
+            <Button type="link" size="small" onClick={onRetry}>
+              重试
+            </Button>
+          ) : null}
         </div>
       ) : folders.length === 0 ? (
         <div className={styles.emptyHint}>还没有知识库，点上方 ＋ 创建</div>

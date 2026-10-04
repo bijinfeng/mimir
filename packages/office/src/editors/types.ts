@@ -50,4 +50,17 @@ export interface EditorProps {
    * 贴边模式：编辑器已经在某个面板里（文档详情右栏），不要再套一层外框。
    */
   flush?: boolean
+  /**
+   * 当前外观。
+   *
+   * **只有 docx 用它，而且只在深色下起作用**：文档里**作者显式写的文字
+   * 颜色**（`w:color`）按原样渲染，深色纸上「显式黑字」就是黑压黑。
+   * 上游为此做了一套「孪生值」机制（`--dk-c` 等，见 vendor 的
+   * `editor/dark-page.ts`）——编辑器发孪生值，CSS 只在带 `page-dark` 类的
+   * 子树里切过去。所以深色下要往纸张容器挂那个类。
+   *
+   * 不传给别的格式：xlsx / pptx 的颜色在各自引擎里处理，html / pdf 的
+   * 画布本来就固定（见 DESIGN §5.4 的「纸是白的」）。
+   */
+  appearance?: 'light' | 'dark'
 }

@@ -200,7 +200,7 @@ function ProviderCard({
         <button type="button" className={styles.expanderLink} onClick={onToggle}>
           {expanded ? '收起模型' : `查看模型（${provider.models.length}）`}
           <ChevronDown
-            size={10}
+            size={12}
             style={{
               transform: expanded ? 'rotate(180deg)' : undefined,
               transition: 'transform .15s',

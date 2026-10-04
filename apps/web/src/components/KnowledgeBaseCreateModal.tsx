@@ -38,19 +38,31 @@ const useStyles = createStyles(({ css, token }) => ({
       margin-top: 0;
     }
   `,
+  /**
+   * 图标网格：**flex 换行 + 居中**，不是 4 列定行网格。
+   *
+   * 13 个图标按 4 列排出来是 4/4/4/1——最后一行孤零零一个格子贴在左缘，
+   * 看起来像渲染漏了几格。换行 + 居中之后，末行的 1 个（或 2 个、3 个）
+   * 落在中线上，读作「这一组到此为止」而不是「少了三个」。
+   *
+   * 每格宽 `(100% - 3×gap) / 4` 保持四列节奏：居中只在**不完整的行**
+   * 上产生可见差别（整行四个正好铺满，居中没有效果）。
+   */
   iconGrid: css`
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 8px;
   `,
   iconCell: css`
+    width: calc((100% - 24px) / 4);
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 5px;
     padding: 9px 4px 7px;
     border: 1px solid ${token.colorBorderSecondary};
-    border-radius: 8px;
+    border-radius: ${token.borderRadius}px;
     background: transparent;
     color: ${token.colorTextSecondary};
     font-size: ${FONT_SIZE.badge}px;

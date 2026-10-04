@@ -230,7 +230,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     margin: 14px 0;
     background: ${token.tintNav};
     border: 1px solid ${token.colorBorderSecondary};
-    border-radius: 8px;
+    border-radius: ${token.borderRadius}px;
     font-size: ${FONT_SIZE.note}px;
     line-height: 1.8;
     color: ${token.colorTextSecondary};
@@ -575,7 +575,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   pullNote: css`
     margin: 0 16px 10px;
     padding: 8px 12px;
-    border-radius: 8px;
+    border-radius: ${token.borderRadius}px;
     background: ${token.colorPrimaryBg};
     font-size: ${FONT_SIZE.note}px;
     line-height: 1.7;

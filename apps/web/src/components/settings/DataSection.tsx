@@ -3,6 +3,7 @@ import { App, Button, Skeleton } from 'antd'
 import { Download, RefreshCw } from 'lucide-react'
 import type { DatabaseInfo } from '@mimir/shared'
 import { api } from '@/lib/api'
+import { LoadError } from '@/components/LoadError'
 import { Block, BlockDesc, Panel, Row, Stats } from '@/components/settings/parts'
 import { useStyles } from '@/components/settings/settings.style'
 
@@ -59,6 +60,8 @@ export function DataSection() {
               {database.file ? <span className={styles.mono}> · {database.file}</span> : null}
               <span> · 前两者可以完整重建它</span>
             </>
+          ) : configQuery.isError ? (
+            <LoadError compact message="读取失败" onRetry={() => void configQuery.refetch()} />
           ) : (
             <Skeleton.Button active size="small" />
           )}
@@ -96,6 +99,8 @@ export function DataSection() {
               { label: '正文体积', value: formatBytes(stats.bytes) },
             ]}
           />
+        ) : statsQuery.isError ? (
+          <LoadError compact message="统计读取失败" onRetry={() => void statsQuery.refetch()} />
         ) : (
           <Block>
             <Skeleton active paragraph={{ rows: 1 }} title={false} />

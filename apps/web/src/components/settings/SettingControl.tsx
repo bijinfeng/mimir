@@ -125,7 +125,11 @@ export function SettingControl({
   }
 
   const common = {
-    style: width ? { width } : undefined,
+    /* maxWidth 是必须的：宽度按「值列要有多宽」写死（320 之类的数值），
+       而设置页的内容列本身会随视口收窄——420px 视口下可用宽只有约 340px，
+       没有 maxWidth 时控件比列还宽，整页横向滚动（DESIGN §5.5 不允许）。
+       flex 子项默认 min-width:auto 不收缩，所以要显式压住 */
+    style: width ? { width, maxWidth: '100%' } : undefined,
     disabled: save.isPending,
     onPressEnter: () => commit(),
     ...(placeholder ? { placeholder } : {}),

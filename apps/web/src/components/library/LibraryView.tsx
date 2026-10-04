@@ -39,6 +39,7 @@ import {
 } from '@mimir/shared'
 import { StatusBadge } from '@/components/DocumentBadges'
 import { KnowledgeBaseCreateModal } from '@/components/KnowledgeBaseCreateModal'
+import { LoadError } from '@/components/LoadError'
 import {
   excerptText,
   formatChip,
@@ -199,6 +200,8 @@ export function LibraryView({ scope }: { scope: string }) {
     mutationFn: (name: string) => api.folders.create(joinPath(folderPath ?? '', name)),
     onSuccess: () => {
       invalidateList()
+      // 「新建」是文件夹这条线的统一动词（按钮「新建文件夹」、弹窗标题「新建文件夹」）；
+      // 知识库那条线用「创建」（知识库是更重的实体，语义上创建而非新建）
       message.success('已新建文件夹')
       setFolderDialogOpen(false)
       setFolderName('')
@@ -407,14 +410,14 @@ export function LibraryView({ scope }: { scope: string }) {
                     onClick={() => void copyCode()}
                   >
                     <span className={styles.idChipInner}>
-                      <span>知识库 ID:</span>
+                      <span>知识库 ID：</span>
                       <span className={`kb-id-code ${styles.idCode}`}>{kbRoot.code}</span>
-                      <Copy size={13} className={`kb-id-icon ${styles.idIcon}`} />
+                      <Copy size={14} className={`kb-id-icon ${styles.idIcon}`} />
                     </span>
                   </Button>
                 </Tooltip>
               )}
-              {userName && <span>创建者: {userName}</span>}
+              {userName && <span>创建者：{userName}</span>}
             </div>
           </>
         ) : (
@@ -515,6 +518,15 @@ export function LibraryView({ scope }: { scope: string }) {
           <div className={styles.loading}>
             <Skeleton active paragraph={{ rows: 5 }} title={false} />
           </div>
+        ) : listQuery.isError || foldersQuery.isError ? (
+          /* 失败必须先于「空」判断（见 LoadError 的说明）：把请求失败
+             渲染成「这里还是空的」是界面在说谎——数据没丢，只是这次没取到 */
+          <LoadError
+            message="文档列表读取失败"
+            onRetry={() => {
+              void (listQuery.isError ? listQuery.refetch() : foldersQuery.refetch())
+            }}
+          />
         ) : isStaleFolder ? (
           <Empty
             className={styles.empty}
@@ -872,7 +884,7 @@ function FolderRowMenu({
           type="text"
           size="small"
           aria-label={`文件夹 ${name} 的操作`}
-          icon={<Ellipsis size={15} />}
+          icon={<Ellipsis size={16} />}
           onClick={(event) => event.stopPropagation()}
         />
       </Dropdown>
@@ -936,7 +948,7 @@ function DocCard({ doc, onOpen, onEdit, onReplace, onDelete }: DocCardProps) {
             type="text"
             size="small"
             aria-label={`打开 ${doc.title}`}
-            icon={<Eye size={15} />}
+            icon={<Eye size={16} />}
             onClick={(event) => {
               event.stopPropagation()
               onOpen()
@@ -947,7 +959,7 @@ function DocCard({ doc, onOpen, onEdit, onReplace, onDelete }: DocCardProps) {
               type="text"
               size="small"
               aria-label={`下载 ${doc.title}`}
-              icon={<Download size={15} />}
+              icon={<Download size={16} />}
               href={api.documents.sourceUrl(doc.id, { download: true })}
               onClick={(event) => event.stopPropagation()}
             />
@@ -957,7 +969,7 @@ function DocCard({ doc, onOpen, onEdit, onReplace, onDelete }: DocCardProps) {
               type="text"
               size="small"
               aria-label={`编辑 ${doc.title}`}
-              icon={<Pencil size={15} />}
+              icon={<Pencil size={16} />}
               onClick={(event) => {
                 event.stopPropagation()
                 onEdit()
@@ -969,7 +981,7 @@ function DocCard({ doc, onOpen, onEdit, onReplace, onDelete }: DocCardProps) {
               type="text"
               size="small"
               aria-label={`替换原件 ${doc.title}`}
-              icon={<RefreshCw size={15} />}
+              icon={<RefreshCw size={16} />}
               onClick={(event) => {
                 event.stopPropagation()
                 onReplace()
@@ -980,7 +992,7 @@ function DocCard({ doc, onOpen, onEdit, onReplace, onDelete }: DocCardProps) {
             type="text"
             size="small"
             aria-label={`删除 ${doc.title}`}
-            icon={<Trash2 size={15} />}
+            icon={<Trash2 size={16} />}
             onClick={(event) => {
               event.stopPropagation()
               onDelete()

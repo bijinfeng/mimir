@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router'
 import { useState } from 'react'
 import { ChatPanel } from '@/components/ChatPanel'
+import { LoadError } from '@/components/LoadError'
+import { useChatPanelStyles } from '@/components/chat/ChatPanel.style'
 import { api } from '@/lib/api'
 import { useAppShell } from '@/lib/app-shell-context'
 
@@ -39,6 +41,7 @@ export const Route = createFileRoute('/_app/chat')({
 })
 
 function ChatRoute() {
+  const { styles } = useChatPanelStyles()
   const { askDraft, setAskDraft, openCitation } = useAppShell()
   const navigate = useNavigate()
   const search = useSearch({ from: '/_app/chat' })
@@ -67,6 +70,24 @@ function ChatRoute() {
   // 否则右栏会永远卡在骨架上，用户看不到任何提示）
   const messagesLoading = Boolean(search.id) && !isOwned && conversationQuery.isPending
 
+  /**
+   * 历史消息读取失败。**不能放行成空对话**——用户点开一个旧会话，
+   * 看到的会是「问点什么」的全新空态，而记录其实还在库里：
+   * 那比报错更吓人（看起来像对话被清空了）。给一条明确的失败 + 重试。
+   */
+  if (conversationQuery.isError) {
+    return (
+      <div className={styles.wrap}>
+        <div className={styles.inner}>
+          <LoadError
+            message="会话读取失败"
+            detail="记录还在，重试一下就能打开。"
+            onRetry={() => void conversationQuery.refetch()}
+          />
+        </div>
+      </div>
+    )
+  }
   return (
     <ChatPanel
       key={panelKey}

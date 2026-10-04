@@ -91,6 +91,17 @@ export interface NavSidebarProps {
    */
   showToggle?: boolean
   onToggleCollapsed: () => void
+  /**
+   * 整块不渲染顶栏（品牌 + 折叠开关）。
+   *
+   * 桌面端（D-094）由**窗口标题栏**承担这一行——它就在 44px 之上，
+   * 内容也是「品牌 + 折叠开关」。两条并排是重复，而合并之后垂直空间
+   * 净增为零（标题栏 44px 换掉侧栏顶栏 44px）。
+   *
+   * 浏览器里标题栏不渲染，所以这个标志为 `false`——Web 部署的样子
+   * 与改动前完全一致。
+   */
+  hideTopBar?: boolean
 }
 
 /** 会话历史最多显示多少条。再多侧边栏就要长时间滚动，而它们极少被翻到 */
@@ -102,6 +113,7 @@ export function NavSidebar({
   collapsed,
   showToggle = true,
   onToggleCollapsed,
+  hideTopBar = false,
 }: NavSidebarProps) {
   const { styles } = useStyles()
   const navigate = useNavigate()
@@ -152,6 +164,7 @@ export function NavSidebar({
     if (key === 'action:new-chat') return goChat()
     if (key === 'action:search') return onOpenPalette()
     if (key === 'action:settings') return goSettings()
+    if (key === 'action:retry-conversations') return void conversationsQuery.refetch()
   }
 
   const selectedKey = currentKey(selection)
@@ -166,9 +179,22 @@ export function NavSidebar({
    *
    * 补一个图标是错的做法——那会让人以为「还没有对话」是个能点的入口。
    * 折叠态里它没有信息量（会话列表本身也收成了图标），直接不渲染。
+   *
+   * **读取失败与「还没有对话」是两种形态**（见 `LoadError` 的说明）：
+   * 失败时显示一条可点的重试项，而不是让用户以为会话历史没了。
    */
-  const conversationItems =
-    conversations.length === 0
+  const conversationItems = conversationsQuery.isError
+    ? collapsed
+      ? []
+      : [
+          {
+            key: 'conv-group:all',
+            type: 'group' as const,
+            label: '对话',
+            children: [{ key: 'action:retry-conversations', label: '读取失败，点此重试' }],
+          },
+        ]
+    : conversations.length === 0
       ? collapsed
         ? []
         : [
@@ -188,15 +214,17 @@ export function NavSidebar({
 
   return (
     <nav className={styles.nav}>
-      <div className={`${styles.topBar} ${collapsed ? styles.topBarCollapsed : ''}`}>
-        <span className={`${styles.brandLockup} ${collapsed ? styles.brandLockupCollapsed : ''}`}>
-          <BrandMark size={20} title={null} />
-          {/* 折叠后只剩标记：品牌名是这一列里唯一「不折叠也能猜到」的东西，
+      {/* 桌面端不渲染：那一行搬进了窗口标题栏（hideTopBar 的说明） */}
+      {hideTopBar ? null : (
+        <div className={`${styles.topBar} ${collapsed ? styles.topBarCollapsed : ''}`}>
+          <span className={`${styles.brandLockup} ${collapsed ? styles.brandLockupCollapsed : ''}`}>
+            <BrandMark size={20} title={null} />
+            {/* 折叠后只剩标记：品牌名是这一列里唯一「不折叠也能猜到」的东西，
               而它是 48px 宽放不下的那部分 */}
-          {collapsed ? null : <b>mimir</b>}
-        </span>
+            {collapsed ? null : <b>mimir</b>}
+          </span>
 
-        {/*
+          {/*
           侧边栏折叠开关。
           
           **它替代了原先的「返回上一处」按钮。** 那个按钮的问题不是没用，
@@ -210,19 +238,20 @@ export function NavSidebar({
           **窄屏下整块不渲染**（`showToggle === false`）：那时折叠由视口决定，
           开关按下去不会有任何变化。顶栏因此只剩品牌标记一项。
         */}
-        {showToggle ? (
-          <Tooltip title={collapsed ? '展开侧边栏' : '折叠侧边栏'} placement="right">
-            <Button
-              type="text"
-              size="small"
-              aria-label={collapsed ? '展开侧边栏' : '折叠侧边栏'}
-              aria-expanded={!collapsed}
-              icon={collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
-              onClick={onToggleCollapsed}
-            />
-          </Tooltip>
-        ) : null}
-      </div>
+          {showToggle ? (
+            <Tooltip title={collapsed ? '展开侧边栏' : '折叠侧边栏'} placement="right">
+              <Button
+                type="text"
+                size="small"
+                aria-label={collapsed ? '展开侧边栏' : '折叠侧边栏'}
+                aria-expanded={!collapsed}
+                icon={collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+                onClick={onToggleCollapsed}
+              />
+            </Tooltip>
+          ) : null}
+        </div>
+      )}
 
       <div className={`${styles.body} ${collapsed ? styles.bodyCollapsed : ''}`} ref={bodyRef}>
         <Menu
@@ -265,6 +294,8 @@ export function NavSidebar({
             <FolderSection
               items={foldersQuery.data?.items}
               isLoading={foldersQuery.isLoading}
+              isError={foldersQuery.isError}
+              onRetry={() => void foldersQuery.refetch()}
               activePath={
                 selection.page === 'docs' && selection.scope.startsWith('folder:')
                   ? selection.scope.slice('folder:'.length)

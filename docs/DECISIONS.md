@@ -5665,3 +5665,297 @@ D-087 的修正：**那个判断对库级提问成立，对「读一篇文档时
 ICO 的 7 档与 ICNS 的魔数/长度都用脚本断言过格式自洽。
 生成脚本的「读不到 favicon 路径」分支也实测过：改坏 favicon 后脚本
 **响亮报错**而不是画出一个旧图形。
+
+## D-092 侧栏的内边距按栏宽缩放；「问 AI」图标收到 14px
+
+**背景**：两条反馈——「四周留得间隔太多了」「这个图标也太大了，和文字都不协调」。
+
+**测量**：侧栏 400px 里指南只有 **320px** 可用宽。根因是 `ChatPanel` 与
+`Composer` 的 `inner` 各写死 `padding: 0 40px`——那是给主视图 860px 列的
+比例，在 400px 的面板里吃掉五分之一宽度，正文被压成一条窄柱。
+同时纵向还有 24（滚动区）+ 16（指南）两层上边距叠着，从面板顶到问候语
+空 84px。
+
+**图标**：文档头部「问 AI」是**带文字**的 small 按钮（12.5px 字），
+而它用的是 16px 图标——比同排文字大一圈，实测图标高占按钮高的 67%
+（同一条头部里「返回库」的图标是 11px，占 42%）。DESIGN §7.1 的两档
+约定是「小字形上下文 14，常规按钮槽 16」，带文字的 small 按钮属于前者。
+
+**决定**：
+
+1. **左右内边距走变量** `--mimir-chat-gutter`（默认 40px，侧栏覆写 16px）。
+   `ChatPanel` 与 `Composer` 共用它——两处各写死一个值就会在侧栏里错开，
+   而输入框必须与上面的内容对齐（实测对齐后两者左缘都是 16px）
+2. 变量设在**侧栏容器**上（`DocChatSidebar` 的 `aiSidebarBody`），
+   不去改那两个 style 文件的默认值——那样会把主视图一起改窄
+3. **指南的横向内边距归 0**：它已经由上面的 gutter 提供，这里再加会叠出
+   双倍左缩进。纵向顶部也给 0（滚动区已有 24px），底部 8px
+4. **「问 AI」图标 16 → 14**
+
+**影响**：`ChatPanel.style.ts`、`Composer.tsx`、`DocChatSidebar.tsx`
+（CSS 变量）、`DocumentPanel.style.ts`（guide 纵向内边距）、
+`DocumentPanel.tsx`（图标尺寸）。
+
+**验证方式**：浏览器实测——侧栏左缩进 44 → **16px**、顶部空白 84 → **68px**、
+指南可用宽 320 → **368px**；指南文字与输入框左缘**对齐**（都是 16px）；
+「问 AI」图标 16 → **14px**（按钮 65×24 不变）。主视图对话页**未受影响**：
+实测其容器仍是 `max-width: 860px` + `padding: 0 40px`（变量在侧栏作用域内，
+主视图取默认值）。`pnpm check` 全绿。
+
+## D-093 侧栏的快捷提问贴着输入框；去掉指南尾句
+
+**背景**：两条反馈——「这句话不要」（指南底部那句「对话会留在这里；一轮问答
+结束后可以「存为笔记」」）、「上面的三个快捷按钮放到对话框上面」。
+
+**决定**：
+
+1. **删掉尾句**。它说的是「对话会留在这里 + 可以存为笔记」——前半句是
+   自明的（面板就在那儿），后半句是**动作条上已经写着的事**（一轮问答
+   结束后答案下方就有「存为笔记」）。一句既不解释也不指路的说明占一行，
+   属于噪音
+2. **三个快捷提问移到输入框正上方**。它们从指南里拆出来（`DocQuickAsks`），
+   经 `ChatPanel` 的新插槽 `guideActions` 渲染在 `composerLine` 里、
+   输入框之前。理由：它们是**马上要用的动作**，贴着输入框才顺手；
+   留在指南里会悬在半空——实测指南只占面板一半高，按钮离输入框还有
+   200px。语雀的阅读助手也是这个位置
+3. **按钮排的对齐与消息列同一套**（同样的 `max-width: 860px` + 同一个
+   `--mimir-chat-gutter` 变量），否则它会与输入框错开几个像素——
+   两处看似无关，但一眼就能看出没对齐（实测改完两边左缘都是 895）
+4. **对话开始后按钮与指南一起撤**：判据仍是「空 + 有 guide」，
+   `guideActions` 只在指南模式渲染
+
+**影响**：`DocChatGuide.tsx`（拆出 `DocQuickAsks` + `QUICK_ASKS`，
+删尾句）、`ChatPanel.tsx`（`guideActions` 插槽）、`ChatPanel.style.ts`
+（`composerTop`）、`DocChatSidebar.tsx`（两个模块级 render 函数）、
+`DocumentPanel.style.ts`（删 `guideFoot` 样式）。
+
+**验证方式**：浏览器实测——尾句消失；三枚胶囊渲染在输入框上方、
+左缘与输入框对齐（都是 895）；点「提出要点」→ 问题发出、指南与整排按钮
+一起撤下、走检索给出回答。`pnpm check` 全绿（服务端 206 + 前端 247 + office 380）。
+
+**收尾（同一轮反馈）**：「三个胶囊和输入框之间的间隔太大」——实测 34px。
+三层边距累加出来的：胶囊行当时还留着 `margin-bottom: 14px`（它在指南里时
+下面还有尾句，搬走后成了悬空的余量）、`composerTop` 的 `padding-bottom: 8px`、
+Composer 自身的 `padding-top: 12px`。**间距归一处**：胶囊行去掉下外边距、
+`composerTop` 下内边距归 0，只留 Composer 那一层——12px，胶囊与输入框
+成为一组。改完实测 34 → **12px**。
+
+## D-094 桌面端自绘窗口标题栏（方案 A）
+
+**背景**：用户要求「桌面客户端的标题栏使用自定义标题栏，Windows 和 Linux 使用
+自定义窗口控制按钮放到右上角，Mac 使用系统红绿灯」。先做了三个方案的 demo
+（`output/desktop-titlebar-demo.html`）并逐帧截图评审，用户选定**方案 A：
+整条标题栏**。
+
+**决定**：
+
+1. **一条贯穿全宽的 44px 标题栏，在「侧栏 + 主区」之上**。它与内容是上下
+   关系而不是并排：这样它自己的宽度与窗口等宽，右端控件贴住窗口边缘
+   （最大化时贴屏幕角），中途不必为侧栏宽度做任何调整
+2. **合并侧栏原来的顶栏**——那是一条 44px 的「品牌 + 折叠开关」行，
+   与标题栏做的是同一件事。合并之后**垂直空间净增为零**（这是选 A 而不是
+   B/C 的关键理由：它们的 0 代价要以「每个页面头部让位 138px」或
+   「四类头部各实现一遍拖动规则」来换）
+3. **平台差异由窗口配置决定**，不是我们的选择：macOS 用
+   `titleBarStyle: 'hidden'`（**保留系统红绿灯**，`frame: false` 会把它们
+   一起去掉，那在 mac 上是反惯例的）+ `trafficLightPosition` 抬到垂直居中；
+   Windows / Linux 用 `frame: false`（三条路里只有它两平台行为一致）
+4. **最大化状态由宿主广播，页面不自己记**。它能由按钮、双击标题栏、系统
+   快捷键、Windows 贴靠四条路改变，页面自己维护的布尔值必然有一天与真相
+   脱节（症状：「最大化之后按钮还是『最大化』的图标」）。宿主监听
+   `maximize` / `unmaximize` 推给页面，`toggleMaximize` 也只说「切换」，
+   目标态由宿主判断
+5. **Web 部署下整块不渲染**（`desktopBridge` 是 `undefined`）：浏览器里
+   没有窗口可控制，画一条自己的标题栏等于复刻标签栏，那三个按钮点了什么
+   都不会发生。`hideTopBar` 同理——Web 端侧栏顶栏原样保留
+
+**踩到的坑（三条，都会静默）**：
+
+| 坑 | 症状 | 修法 |
+|---|---|---|
+| 窗口的 `preload` 写成相对路径（`'./dist/preload.js'`） | 加载 http 地址时 Electron **无法解析**，preload 静默不执行——`window.mimirDesktop` 根本不存在 | 用 `path.join(__dirname, 'dist/preload.js')` |
+| 探测时忘了重建 `apps/web/dist` | 桌面端加载的是**构建产物**，改了源码不重建就永远看不到变化（盯着源码怀疑人生） | 改前端后 `pnpm --filter @mimir/web build` |
+| `NodeJS.Platform` 写进 `packages/shared` | 那个包不含 Node 类型（浏览器与服务端共用），整个 shared 编译不过 | 用自有的 `DesktopPlatform` 字面量联合 |
+
+**影响**：`packages/shared/src/desktop.ts`（`DesktopWindowApi` 契约）、
+`apps/desktop/src/{preload,main}.ts`（桥 + 窗口配置 + IPC）、
+`apps/web/src/lib/desktop-shell.ts`（新，桥的读取与 `isDesktopShell`）、
+`apps/web/src/components/TitleBar.{tsx,style.ts}`（新）、
+`apps/web/src/routes/_app.tsx`（外壳改为「标题栏 + 两栏网格」）、
+`apps/web/src/components/NavSidebar.tsx`（`hideTopBar`）、
+`apps/web/src/theme/tokens.ts`（`TITLEBAR_HEIGHT`）。
+
+**验证方式**：在**运行中的真实 Electron 窗口**里用 CDP 求值实测（起了完整
+桌面端 `electron .` + `--remote-debugging-port`）：
+
+- 标题栏 44px 高、`-webkit-app-region: drag`（拖得动）
+- 四个按钮（折叠 + 最小化 + 最大化 + 关闭）**全部 `no-drag`**——这一条最
+  要紧：漏标的表现是「按钮点不动」且不报错，所以是量出来的不是看出来的
+- 侧栏顶从 44px 开始（顶栏已合并，无重复）
+- 点「最大化」→ `xprop` 读到窗口真的 `_NET_WM_STATE_MAXIMIZED_HORZ/VERT`，
+  且按钮文案自动变成「向下还原」（证明宿主广播的状态被页面收到了）
+- 点「最小化」→ `WM_STATE: Iconic`
+- 浏览器端（Web 部署）复查：没有桥、标题栏不渲染、侧栏顶栏照旧
+  （折叠态 48px 无品牌名 / 展开态 200px 显示 mimir，与改动前一致）
+
+`pnpm check` 全绿（服务端 206 + 前端 247 + office 380）。
+
+## D-095 一轮 UI 盘点后的修复：外壳高度链、窄屏让位、失败态如实化
+
+**背景**：一次全界面盘点（1440×900 与 420px 视口实测 + 代码扫描），
+按 P0/P1/P2 处置。P0 两条都是**用户看不见报错、只是界面坏了**的那类。
+
+**P0-1：Web 部署全站高度塌陷（D-094 的回归）**。`.shell` 当时是
+`grid-template-rows: auto minmax(0, 1fr)`，而 `TitleBar` 在 Web 端
+`return null`——网格只剩一个子元素落进 `auto` 行，`1fr` 行空置。
+实测 1440×900：知识库页 398px、对话页 302px、设置页 740px，下方全空。
+**Electron 里标题栏渲染了所以看不出来，Web 部署全站中招**。改成
+flex 列（`flex: 1` 吃掉剩余高度）：对子项数量不敏感，标题栏有无都成立。
+另：`app` / `appCollapsed` 的 `height: 100%` 去掉——父容器还装着标题栏，
+写死会多出 44px。
+
+**P0-2：窄屏让位**。420px 视口下文档编辑页正文只剩约 150px（一行约
+7 个字），根因是大纲列固定 196px（笔记那侧外壳再让 220px padding）。
+处置：同一断点（`NAV_NARROW_QUERY`）下**大纲不渲染**（笔记与只读两条
+路径同一判据），并把设置页那个重复实现的 `useNarrowViewport` 收敛进
+`lib/nav-collapse.ts`（一处 matchMedia，三处用：导航折叠 / 设置分区下拉 /
+大纲）。「问 AI」侧栏同断点下从固定 400px 改成占满主区——400px 比主区
+还宽，右缘会被裁掉，输入框右端与发送键点不到。
+
+**P1：失败态如实化（新增 `LoadError` 组件）**。六处「请求失败渲染成
+空/永远骨架」：文档列表说「这里还是空的」、知识库说「还没有知识库」、
+会话说「还没有对话」、文档选择器说「知识库还没有文档」、四个设置分区
+永远停在骨架、统计页分块状态永远「读取中…」。判据是 `isError` 而不是
+`!data`——后者把「加载中」与「加载失败」混成一种形态。历史会话加载
+失败**不再放行成空对话**（那看起来像对话被清空了）。
+
+其余 P1：检索设置页 `**会产生用量**` 的星号字面量（改成 `<b>`）；
+`aiSidebar` 折起时加 `inert`（原先 Tab 能掉进那块不可见的 400px 面板，
+且「`aria-hidden` 容器含可聚焦元素」是无效 ARIA）；双链页脚 `<span onClick>`
+换成 `button`（键盘用户原先在这条唯一的跳转路径上什么都做不了）；
+设置页固定宽控件加 `maxWidth: 100%`（420px 视口整页横向滚动）；
+空热力图给文案（原先只剩一个标题框）；知识库 ID / 创建者的半角冒号改全角。
+
+**P2**：图标档位从 9/10/11/13/15 五档额外尺寸收敛回 14/16 两档
+（`TraceDisclosure` 的 9px 是 Steps 圆点内的字形，有注释说明，保留）；
+`FolderGlyph` 默认 15 → 16（与卡片同大）；焦点环 2px → 3px 统一；
+「存为笔记」→「存成笔记」、「新建/创建」按文件夹/知识库两条线分开；
+失效文案两条（「检索在本地 Postgres 完成」在 SQLite 上是假话、
+「整理收件箱」指向已退役的视图）；图标网格改 flex 换行居中（13 格
+按 4 列排会剩一个孤格）。
+
+**影响**：`_app.tsx`、`lib/nav-collapse.ts`、`DocumentPanel.{tsx,style.ts}`、
+`DocumentFooter.tsx`、`LoadError.tsx`（新）、`NavSidebar.tsx`、
+`FolderSection.tsx`、`LibraryView.{tsx,style.ts}`、`_app.chat.tsx`、
+`_app.settings.tsx`、`RetrievalSection.tsx`、`Storage/Models/Plugins/DataSection.tsx`、
+`UsageHeatmap.tsx`、`StatsSection.style.ts`、`SettingControl.tsx`、
+`KnowledgeBaseCreateModal.tsx`、`FailureCard.tsx`、`AnswerActionsRow.tsx`、
+`ComposerMenus.tsx`、`FeedsSection.tsx`、`folder-icons.tsx`、`docs/DESIGN.md` §5.5。
+
+**验证方式**：临时实例（独立端口与库）+ IAB 浏览器逐项实测。
+
+| 项 | 测法 | 结果 |
+|---|---|---|
+| 外壳高度链（Web） | 1440×900 量 `.shell` 子项 | 主区 398px → **900px**（满高） |
+| 桌面端形态不回归 | 往 shell 里插一个 44px 节点模拟标题栏 | 44 + 856 = 900，**正好不溢出** |
+| 大纲窄屏让位 | 420px 下开文档详情 | 大纲 1 → **0** 条，正文列 97 → **317px**，`scrollWidth` 420 无溢出 |
+| 问 AI 侧栏窄屏 | 420px 下点「问 AI」 | 面板宽 400 → **372px**（= 主区宽），无裁剪、无横向溢出 |
+| 侧栏 inert | 开/关「问 AI」 | 关：`inert` + `aria-hidden` + 宽 0.8px；开：无 inert |
+| 失败态（LoadError） | 拦截 `/api/documents` 返回 500 | 出「文档列表读取失败 / 数据还在，重试一下就能出来」+ 重试键，**不再显示「这里还是空的」** |
+| 设置页窄窗 | 420px 下开模型 / 存储分区 | `scrollWidth` = `clientWidth` = 420，无横向滚动 |
+| 检索页星号字面量 | 页面全文搜 `**` | 0 处（原先唯一一处已改成加粗） |
+| 图标网格末行 | 打开创建知识库弹窗量 13 格 | 4/4/4/**1 且末格居中**（容器中线） |
+| 白角冒号 | 知识库页 meta 行 | 「知识库 ID：」「创建者：」全角 |
+
+`pnpm check` 全绿（前端 247 + 服务端 206 + office 380 + 插件 38 + 桌面 3；含 lint、format、typecheck）。
+
+## D-096 第三轮 UI 盘点的修复：深色纸张机制、链接状态色、Ctrl+F
+
+**背景**：第三轮盘点（浅色主题全界面 + 四种 Office 编辑器实测 + 对话框键盘
+交互）。这轮找到的三条 P0 里有两条是**上游机制被我们的裁剪脚本静默切断**。
+
+**P0-1：深色下 docx 里作者显式写的颜色不可见**。编辑器一直在正确地发
+`--dk-*` 孪生值（实测 span 上就有 `--dk-c: #ffffff`），而消费它们的两组
+规则全被 `trim-editor-css.mjs` 丢掉：
+
+1. 深色纸张那一整块包在 `@media screen { … }` 里，而判据看的是选择器文本
+   ——`@media screen` 不以任何保留前缀开头，**整块 5.6KB 被扔**
+2. `--docs-paper-*` 系列变量块的选择器就叫 `:root`，判据却在**选择器**上
+   找 `--docs-` 这些名字（它们在声明体里），于是**变量定义也全被扔**
+
+症状叠加：显式黑字落在深色纸上（实测 `rgb(0,0,0)` on `#141618`），而
+上游的 remap 规则又不在了。修法两处：
+
+- 判据改成读**声明体**（`bodyOf`），并对 `@media` **递归过滤内部规则**
+  （保外壳、只留通过的规则；`prefers-color-scheme` 的暗色块仍丢弃——
+  那是按系统偏好切壳，与用户设置的 mimir 外观无关）
+- `.page-dark` 前缀的规则整组保留（含 `:where(.page-dark) …` 那种写法）
+- 生成脚本里加**自检**：`.page-dark` / `--docs-paper-ink` / `--canvas`
+  三样缺一即抛错，并说明症状（这几样丢了都是静默的）
+- 宿主按外观挂类：`EditorProps` 新增 `appearance`，`OfficeSourceEditor`
+  从 `useAppearance()` 取（不是读 DOM 的 `data-theme`——那是观测属性），
+  docx 在深色时给滚动容器加 `page-dark`
+
+**P0-2：悬停/按下的链接色比常态弱**。深色校准层只写了 `colorLink` 的最终
+值，hover / active 由算法从旧种子派生：`#15417e`（容器底 **1.80:1**）与
+`#1554ad`（2.51:1），比常态的 8.74:1 弱五倍。浅色 hover `#579df2` 也只有
+2.80:1。两个键都显式写进主题（不是种子名，`formatToken` 不删）：
+浅色 `#1562d6` / `#0f4bbd`，深色 `#a5d0ff` / `#c6e2ff`。
+`design.test.ts` 新增断言守「两档 ≥ 4.5:1 且不比常态更弱」。
+
+**P0-3：Office 工具条把主色当文字**。33 个按下态按钮的唯一外观来源
+（`.me-tb[aria-pressed='true']`）在深色下是 `#1668dc` on `#15325b`
+= **2.47:1**（浅色 3.66:1）；`.me-menu__item[aria-current='true']` 同病
+（4.10 / 3.50）。这与 DESIGN §3.5 判过的是同一条：主色是填充角色。
+桥接层新增 `--me-accent-text`（= `colorLink`），两处消费点改用它。
+
+**P1**：
+
+- **0 页 PDF 永久「正在解析 PDF…」**（手搓 `/Kids []` + `/Count 0` 复现）：
+  `page === null` 同时覆盖「在解析」与「一页都没有」，补一支 `opened.value`
+  为空的判断，如实说「这份 PDF 里一页都没有」
+- **docx 页码永远「第 1 页」**（滚到底仍显示 1）：状态行的 `第 1` 是写死的。
+  改成跟随滚动——页间隙（`.page-gap`）一页一条，滚过几条就是第几页；
+  `setTimeout` 而不是 rAF（rAF 在不可见时根本不派发，分页那边记过同一个坑）
+- **Ctrl+F 是空承诺**（工具条写着却只弹浏览器自带的查找）：外壳新增
+  `useFindHotkey`，查找框统一挂 `data-find-input`；docx / html 用它开栏，
+  xlsx 用它聚焦常驻输入框。**焦点用 `setTimeout` 送**——第一版写 rAF，
+  实测在 IAB 里 `rafFired === false`，焦点永远送不到
+- **xlsx 公式警告没有任何样式**（`mimir-cell-editor__warn` 全仓无规则，
+  渲染成中性 12px/400）：补危险色 + 500 字重
+- **浅色引用卡悬停不可见**（`tintHover` vs `tintList` = **1.01:1**）：
+  两套都重取（浅 `#f4f5f7` 1.09、深 `#1e2225` 1.16），测试守 ≥1.06
+- **命令面板关闭后焦点丢到 body**（它是唯一「关闭即卸载」的对话框，
+  antd 的焦点归还走不到）：补挂载时记录 + 卸载时归还（判 `isConnected`）
+- **窄屏 docx 工具条占 243px**（420px 视口折 9 行、27% 屏高）：chrome
+  加 `max-height: 128px` + 自身滚动，按钮一个不少
+
+**已知差距（不在本次范围）**：markdown 笔记**没有查找**（其余五种格式都有；
+xlsx 的查找还是自建的行内组，与其余四种的 `FindReplaceBar` 交互不同）；
+xlsx / pptx 没有撤销。这三条都不是「承诺了没做到」，是能力缺口，需要单独立项。
+
+**影响**：`packages/office/scripts/trim-editor-css.mjs`、
+`packages/office/src/generated/editor.css`（生成物）、
+`packages/office/src/editors/{types,DocxEditor,PdfEditor,XlsxEditor,HtmlEditor}.tsx`、
+`packages/office/src/shell/{EditorShell.tsx,shell.css}`、
+`packages/office/src/editors/editors.css`、
+`apps/web/src/theme/{tokens,customToken,editor-theme-bridge,design.test}.ts(x)`、
+`apps/web/src/components/{CommandPalette.tsx,document/OfficeSourceEditor.tsx}`、
+`docs/DESIGN.md` §3.5/§5.5/§8.5。
+
+**验证方式**：临时实例 + 真实样张（含手工 patch 出显式颜色的 docx、
+pdf-lib 生成的合法 0 页 PDF）逐项实测。
+
+| 项 | 测法 | 结果 |
+|---|---|---|
+| 深色显式颜色（P0-1） | patch 出 `w:color=000000` 的 docx，深色下读计算色 | 容器带上 `page-dark`；黑字 → `rgb(255,255,255)`、深蓝 → `rgb(172,194,233)`，截图可见 |
+| 链接状态色（P0-2） | 深色下读 `--ant-color-link-hover/active` | `#a5d0ff` / `#c6e2ff`（原先 `#15417e` / `#1554ad`） |
+| 按下态（P0-3） | 选中文字按 Ctrl+B，读按钮计算色 | `rgb(121,184,255)` on `rgb(21,50,91)`（原先 `rgb(22,104,220)`） |
+| 0 页 PDF（P1-1） | 上传手搓的 `/Kids []` PDF | 「这份 PDF 里一页都没有（0 页）」，不再转圈 |
+| 页码跟随（P1-2） | 滚到底后读状态行 | 派发 scroll 后「第 7 / 共 7 页」（滚轮在 IAB 里不派发事件，用显式派发验证） |
+| Ctrl+F（P1-3） | docx / xlsx 各按一次 | 都是焦点进入查找框（`activeElement === input`）；docx 输入 Lorem 得到「1 / 95」+ 95 处高亮 |
+| xlsx 警告（P1-4） | 点公式格读计算色 | `rgb(240,119,122)` + 字重 500（原先 52% 白 + 400） |
+| 窄屏工具条（P1-4） | 420px 视口量 chrome | 243px → **128px**（`max-height` 生效、可滚、按钮未减） |
+| 命令面板焦点（P1-4） | 从按钮打开再 Esc | 焦点回到原按钮（原先掉到 `BODY`） |
+
+`pnpm check` 全绿（前端 251 + 服务端 206 + office 380 + 插件 38 + 桌面 3）。

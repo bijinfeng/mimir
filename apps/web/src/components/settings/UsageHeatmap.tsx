@@ -278,7 +278,12 @@ function WhenVisible({ children }: { children: React.ReactNode }) {
 export function UsageHeatmap({ days, thresholds, timezone }: HeatmapProps) {
   const { styles } = useHeatmapStyles()
 
-  if (days.length === 0) return null
+  /* 没有任何记录时给一句话，而不是 `return null`——上一层的 Panel 会照常
+     渲染标题，留下一个只有「消耗热力图」四个字的空盒子（新实例上就是这个
+     样子）。「没有」要说得出来才算如实 */
+  if (days.length === 0) {
+    return <div className={styles.empty}>这一年还没有用量记录。</div>
+  }
 
   const from = days[0]!.date
   const to = days.at(-1)!.date

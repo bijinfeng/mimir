@@ -3,6 +3,7 @@ import { App, Button, Input, Typography } from 'antd'
 import { useState } from 'react'
 import { Database, RefreshCw } from 'lucide-react'
 import { api } from '@/lib/api'
+import { LoadError } from '@/components/LoadError'
 import { BlockDesc, Note, Panel, Row, SourceBadge } from '@/components/settings/parts'
 import { SettingControl } from '@/components/settings/SettingControl'
 import { useStyles } from '@/components/settings/settings.style'
@@ -122,55 +123,67 @@ export function RetrievalSection() {
   return (
     <>
       <Panel title="分块与向量">
-        <Row label="分块">
-          <span className={styles.blockDesc}>
-            {status ? `${status.documents} 篇文档 · 共 ${status.total} 段` : '读取中…'}
-          </span>
-        </Row>
-        <Row label="待嵌入">
-          {/*
+        {chunkQuery.isError ? (
+          /* 「读取中…」在失败时会永远挂着——用户以为它在加载，实际是请求失败 */
+          <div className={styles.block}>
+            <LoadError
+              compact
+              message="分块状态读取失败"
+              onRetry={() => void chunkQuery.refetch()}
+            />
+          </div>
+        ) : (
+          <>
+            <Row label="分块">
+              <span className={styles.blockDesc}>
+                {status ? `${status.documents} 篇文档 · 共 ${status.total} 段` : '读取中…'}
+              </span>
+            </Row>
+            <Row label="待嵌入">
+              {/*
             `null` 是「没配向量化模型」——不能显示成 0（那会被读成「都嵌好了」），
             也不能显示成「未知」（用户会以为是在加载）。如实说没配。
           */}
-          {status === undefined ? (
-            <span className={styles.blockDesc}>读取中…</span>
-          ) : status.pending === null ? (
-            <span className={styles.blockDesc}>
-              未配置向量化模型（设置 › 模型 › 任务分配）— 语义通道不会参与检索
-            </span>
-          ) : status.pending === 0 ? (
-            <span className={styles.blockDesc}>0 段 —— 全部已嵌入</span>
-          ) : (
-            <span className={styles.blockDesc}>
-              {status.pending} 段 —— 这些段落暂时只能按关键词搜到
-            </span>
-          )}
-        </Row>
+              {status === undefined ? (
+                <span className={styles.blockDesc}>读取中…</span>
+              ) : status.pending === null ? (
+                <span className={styles.blockDesc}>
+                  未配置向量化模型（设置 › 模型 › 任务分配）— 语义通道不会参与检索
+                </span>
+              ) : status.pending === 0 ? (
+                <span className={styles.blockDesc}>0 段 —— 全部已嵌入</span>
+              ) : (
+                <span className={styles.blockDesc}>
+                  {status.pending} 段 —— 这些段落暂时只能按关键词搜到
+                </span>
+              )}
+            </Row>
 
-        <div className={styles.block}>
-          <div className={styles.actions}>
-            <Button
-              icon={<Database size={14} />}
-              loading={embed.isPending}
-              disabled={status?.pending === null || status?.pending === 0}
-              onClick={() => embed.mutate()}
-            >
-              补嵌入（分批，一次 64 段）
-            </Button>
-            <Button
-              icon={<RefreshCw size={14} />}
-              loading={rebuildChunks.isPending}
-              onClick={() => rebuildChunks.mutate()}
-            >
-              重建分块
-            </Button>
-          </div>
-          <BlockDesc>
-            补嵌入会调用向量化模型（**会产生用量**），分批是为了可中断——中途失败或刷新页面，
-            下次从还没嵌入的那些继续。重建分块只重算切分、不调模型；换了分块大小或重叠之后
-            需要重建，而重建会把受影响段落的旧向量一起清掉，之后要再补嵌入。
-          </BlockDesc>
-        </div>
+            <div className={styles.block}>
+              <div className={styles.actions}>
+                <Button
+                  icon={<Database size={14} />}
+                  loading={embed.isPending}
+                  disabled={status?.pending === null || status?.pending === 0}
+                  onClick={() => embed.mutate()}
+                >
+                  补嵌入（分批，一次 64 段）
+                </Button>
+                <Button
+                  icon={<RefreshCw size={14} />}
+                  loading={rebuildChunks.isPending}
+                  onClick={() => rebuildChunks.mutate()}
+                >
+                  重建分块
+                </Button>
+              </div>
+              <BlockDesc>
+                补嵌入会调用向量化模型（<b>会产生用量</b>
+                ），分批是为了可中断——中途失败或刷新页面，下次从还没嵌入的那些继续。重建分块只重算切分、不调模型；换了分块大小或重叠之后需要重建，而重建会把受影响段落的旧向量一起清掉，之后要再补嵌入。
+              </BlockDesc>
+            </div>
+          </>
+        )}
       </Panel>
 
       <Panel title="融合参数">

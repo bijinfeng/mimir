@@ -1,8 +1,9 @@
+import type { CSSProperties } from 'react'
 import type { Citation, DocumentDetail } from '@mimir/shared'
 import { Button } from 'antd'
 import { X } from 'lucide-react'
 import { ChatPanel } from '@/components/ChatPanel'
-import { DocChatGuide } from '@/components/document/DocChatGuide'
+import { DocChatGuide, DocQuickAsks } from '@/components/document/DocChatGuide'
 import type { AskDraft } from '@/lib/app-shell-context'
 import { useStyles } from '@/components/document/DocumentPanel.style'
 
@@ -53,11 +54,13 @@ export interface DocChatSidebarProps {
  * React Compiler 随即跳过整个 DocChatSidebar（铁律 1 的静默退化）。
  * 这个模式与 `folder-icons.tsx` 的 `FolderGlyph` 同源。
  */
-function renderGuide(
-  doc: DocumentDetail,
-  ask: (question: string) => void,
-): ReturnType<typeof DocChatGuide> {
-  return <DocChatGuide doc={doc} onAsk={ask} />
+function renderGuide(doc: DocumentDetail): ReturnType<typeof DocChatGuide> {
+  return <DocChatGuide doc={doc} />
+}
+
+/** 输入框上方的快捷提问。同样必须在模块级（理由见上） */
+function renderQuickAsks(ask: (question: string) => void): ReturnType<typeof DocQuickAsks> {
+  return <DocQuickAsks onAsk={ask} />
 }
 
 export function DocChatSidebar({ doc, draft, onClose, onOpenCitation }: DocChatSidebarProps) {
@@ -78,15 +81,26 @@ export function DocChatSidebar({ doc, draft, onClose, onOpenCitation }: DocChatS
           onClick={onClose}
         />
       </div>
-      <div className={styles.aiSidebarBody}>
+      {/*
+        侧栏的内容边距。`--mimir-chat-gutter` 是 ChatPanel 与 Composer
+        共用的「栏宽 → 左右边距」比例：主视图 860px 列用 40px（默认值），
+        400px 的面板用 16px。设在这里而不是改两个 style 文件——那样会
+        把主视图一起改窄。
+      */}
+      <div
+        className={styles.aiSidebarBody}
+        style={{ '--mimir-chat-gutter': '16px' } as CSSProperties}
+      >
         <ChatPanel
           conversationId={undefined}
           draft={draft}
           onOpenCitation={onOpenCitation}
           onConversationCreated={() => {}}
-          /* 空态换成「指南在上、输入框固定底部」（D-090，语雀式）。
-             模块级 renderGuide：内联箭头会被判成渲染期定义组件 */
-          guide={(ask) => renderGuide(doc, ask)}
+          /* 空态换成「指南在上、输入框固定底部」（D-090，语雀式），
+             快捷提问贴着输入框（D-093）。两个都是模块级 render 函数：
+             内联箭头会被判成渲染期定义组件（铁律 1 的静默退化） */
+          guide={() => renderGuide(doc)}
+          guideActions={(ask) => renderQuickAsks(ask)}
         />
       </div>
     </aside>

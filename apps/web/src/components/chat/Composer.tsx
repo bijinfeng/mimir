@@ -57,7 +57,9 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
   inner: css`
     max-width: 860px;
     margin: 0 auto;
-    padding: 0 40px;
+    /* 与消息列（ChatPanel 的 inner）同一个变量——输入框必须与上面的内容
+       对齐，两处各写死一个 40px 就会在侧栏里错开（见那边的说明） */
+    padding: 0 var(--mimir-chat-gutter, 40px);
   `,
   /* 圆角 14px 与内边距取自 DESIGN §8.8（原型实测值）：这是页面上最大的
      单个控件，圆角比面板的 8px 大一档，才不会被看成一个普通的输入框 */

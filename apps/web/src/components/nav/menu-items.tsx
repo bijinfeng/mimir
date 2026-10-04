@@ -16,12 +16,17 @@ import { formatRelative } from '@/components/list-helpers'
  * action:new-chat       动作：新对话
  * action:search         动作：搜索（命令面板）
  * action:settings       动作：设置
+ * action:retry-conversations  动作：会话列表读取失败后重试
  * conv:<id>             导航：某次会话
  * ```
  *
  * （标签那一组已移除——它是「横切」维度的入口，而侧边栏是「归属」维度的地方；
  * 标签筛选改从命令面板与中栏的筛选行进入。这条记在这里是为了避免后人
  * 又把它加回来。）
+ *
+ * `action:retry-conversations` 由 `NavSidebar` 在 `conversationsQuery.isError`
+ * 时直接构造（不经过这里的函数——那条分支要读查询状态，
+ * 而这个文件是纯函数）。写在这里是为了 key 表完整：分发端按它匹配。
  */
 
 type MenuItem = Required<MenuProps>['items'][number]

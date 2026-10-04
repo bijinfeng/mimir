@@ -92,6 +92,24 @@ function selectorOf(rule) {
   return head.trim()
 }
 
+/**
+ * 取规则的**声明体**（第一个 `{` 与最后一个 `}` 之间）。
+ *
+ * `:root` 变量块的判据必须看这里而不是选择器：选择器就叫 `:root`，
+ * 里面有没有 `--docs-*` 变量在它上面看不出来。第一版写成
+ * `.test(selector)` 于是**所有变量块都被静默丢掉**——症状不是报错，
+ * 而是 `--docs-paper-ink` 这类变量全程解析成空值：页眉页脚虚线不画、
+ * 图表标签在深色下是黑压深底（实测见 D-096）。
+ */
+function bodyOf(rule) {
+  const brace = rule.indexOf('{')
+  const last = rule.lastIndexOf('}')
+  return brace === -1 || last <= brace ? '' : rule.slice(brace + 1, last)
+}
+
+/** 与变量块相关的名字：编辑器规则读它们，所以定义块要一起留下 */
+const VAR_NAME = /--(docs|word|doc|page|cell|hf)-|--canvas\b/
+
 function keep(rule) {
   const selector = selectorOf(rule)
   if (selector === null) return false
@@ -100,29 +118,60 @@ function keep(rule) {
   if (DROP_PREFIXES.some((p) => first.startsWith(p))) return false
 
   /**
+   * 媒体查询：**递归过滤内部规则**，而不是整块收或整块丢。
+   *
+   * 这一条是 D-096 修的第二个静默洞：深色纸张机制（`.page-dark` 的变量块
+   * 与 `--dk-*` 孪生的消费规则）整个包在 `@media screen { … }` 里，而
+   * `selectorOf` 给出的选择器是 `@media screen`——它不以任何保留前缀开头，
+   * 于是那 5.6KB 规则被整块丢掉。症状是**深色下作者显式写的文字颜色
+   * 不被重映射**（显式黑字落在深色纸上，实测不可见），而整套 `--dk-*`
+   * 孪生值照常由编辑器代码发出、只是没人消费。
+   *
+   * `prefers-color-scheme` 的暗色块**显式丢弃**：那是 vendor 应用按
+   * **系统偏好**切自己的壳，而 mimir 的外观是用户设置（与系统偏好可以
+   * 不一致）。深色的纸张由宿主加 `.page-dark` 类驱动——见
+   * `apps/web/src/components/document/OfficeSourceEditor.tsx`。
+   */
+  if (first.startsWith('@media')) {
+    if (first.includes('prefers-color-scheme')) return false
+    return splitRules(bodyOf(rule)).some(keep)
+  }
+
+  /**
    * 变量块：只留编辑器自用的前缀。
    *
-   * `--canvas` 必须一起留——它是**页间隙灰带的底色**（`.page-gap::before`
-   * 的 `background`）。漏了它的症状是：分页功能完全正常（页数对、间隙高度对），
-   * 但**纸上什么都看不见**——因为灰带画成了透明。实测踩过。
+   * 判据看**声明体**（见 `bodyOf` 的说明）。`--canvas` 必须一起留——它是
+   * **页间隙灰带的底色**（`.page-gap::before` 的 `background`）。漏了它的
+   * 症状是：分页功能完全正常（页数对、间隙高度对），但**纸上什么都看不见**
+   * ——因为灰带画成了透明。实测踩过。
    */
   if (first.startsWith(':root')) {
-    return /--(docs|word|doc|page|cell|hf)-|--canvas\b/.test(selector)
+    return VAR_NAME.test(bodyOf(rule))
   }
   /**
-   * 只含变量的主题覆写块（`.workspace-dark`、`.page-dark`）也保留：
-   * 它们定义深色下的 `--canvas` / `--docs-paper`，而编辑器规则读这些变量。
-   * 判据是「块里只有自定义属性，没有实际声明」——纯变量容器值得留，
-   * 带任何真实声明的（那是壳的样式）丢弃。
+   * 只含变量的主题覆写块（`.workspace-dark`）保留：判据是「块里只有自定义
+   * 属性，没有实际声明」——纯变量容器值得留，带任何真实声明的丢弃。
    */
-  if (/^\.(workspace-dark|page-dark)\b/.test(first)) {
-    const body = rule.slice(rule.indexOf('{') + 1)
-    const declarations = body
+  if (/^\.workspace-dark\b/.test(first)) {
+    const declarations = bodyOf(rule)
       .split(';')
       .map((d) => d.trim())
       .filter(Boolean)
     return declarations.length > 0 && declarations.every((d) => d.startsWith('--'))
   }
+  /**
+   * `.page-dark` 作用域下的规则整组保留（变量块与 `--dk-*` 孪生的消费规则
+   * 都以此前缀开头）。它们是纸张的深色机制，不在 KEEP_PREFIXES 的
+   * 「元素类名」判断里，但同属编辑器渲染层。
+   *
+   * **要连 `:where(.page-dark)` 一起匹配**：消费规则写的是
+   * `:where(.page-dark) [style*='--dk-c:']…`（` :where()` 压低特异性
+   * 让后来的纸张规则能盖过它），选择器**以 `:where(` 开头**。
+   * 只判 `.page-dark` 前缀会把它们全丢——而那正是「显式颜色在深色下
+   * 不被重映射」的直接原因（实测踩过）。
+   */
+  if (first.startsWith('.page-dark') || first.includes('.page-dark')) return true
+
   // 全局元素选择器一律丢弃（会改 mimir 的整页排版）
   if (/^(html|body|\*)/.test(first)) return false
 
@@ -143,19 +192,56 @@ const VAR_FIX = [
   [/var\(--word-heading\)/g, 'var(--docs-word-heading, #2f5496)'],
 ]
 
+/**
+ * 媒体查询块的重建：保留外壳（`@media … {` … `}`），内部只放通过 `keep`
+ * 的规则。`keep` 对媒体块的判断是「内部**有**可留的规则」，而真正写出时
+ * 要的是「只有可留的规则」——两件事分开做（前者用于统计与断言，
+ * 后者用于产物）。
+ */
+function filterMedia(rule) {
+  const brace = rule.indexOf('{')
+  const inner = splitRules(rule.slice(brace + 1, rule.lastIndexOf('}'))).filter(keep)
+  if (inner.length === 0) return null
+  return `${rule.slice(0, brace + 1)}\n${inner.join('\n')}\n}`
+}
+
 async function main() {
   const css = await readFile(SRC, 'utf8')
   const rules = splitRules(css)
-  const kept = rules.filter(keep).map((rule) => {
-    let out = rule
+  const kept = []
+  for (const rule of rules) {
+    if (!keep(rule)) continue
+    const first = selectorOf(rule).split(',')[0].trim()
+    let out = first.startsWith('@media') ? filterMedia(rule) : rule
+    if (out === null) continue
     for (const [pattern, replacement] of VAR_FIX) out = out.replace(pattern, replacement)
-    return out
-  })
+    kept.push(out)
+  }
+
+  /**
+   * 自检：这几样东西一旦被裁掉，症状都是**静默**的（界面不报错，只是颜色
+   * 或虚线没了）。放在生成脚本里而不是测试里：产物进 .gitignore，
+   * 而每次生成都会跑这一遍——构建时就红，比事后翻界面快。
+   */
+  const output = kept.join('\n')
+  const REQUIRED = [
+    ['.page-dark', '深色纸张机制（--dk-* 孪生的消费规则）'],
+    ['--docs-paper-ink', '纸张墨色变量'],
+    ['--canvas', '页间隙灰带底色'],
+  ]
+  for (const [needle, why] of REQUIRED) {
+    if (!output.includes(needle)) {
+      throw new Error(
+        `裁剪产物缺少「${why}」（找 ${needle}）——判据又把它丢了。` +
+          `症状是静默的：界面不报错，只是这一类元素颜色/虚线不画。`,
+      )
+    }
+  }
 
   const header = [
     '/* 生成物，不要手改 —— 由 packages/office/scripts/trim-editor-css.mjs 从',
     ' * vendor/apps/docs/src/renderer/styles.css 裁出。改判据请改那个脚本。',
-    ` *${' '}保留了 ${kept.length}/${rules.length} 条规则（只留编辑器与纸张排版）。`,
+    ` *${' '}保留了 ${kept.length}/${rules.length} 条顶层规则（只留编辑器与纸张排版）。`,
     ' */',
     '',
   ].join('\n')

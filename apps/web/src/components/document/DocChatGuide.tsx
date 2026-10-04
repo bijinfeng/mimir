@@ -10,7 +10,8 @@ import { useStyles } from '@/components/document/DocumentPanel.style'
  *
  *  1. **你是谁**——一句话的问候（标题里已经写了「问 AI · 文档名」）
  *  2. **你能干什么**——能力清单，按「读这篇」的实际用途列，不列产品功能
- *  3. **我该问什么**——可点的示例问题。空输入框是最大的门槛，
+ *  3. **我该问什么**——可点的示例问题（`DocQuickAsks`，渲染在输入框
+ *     正上方而不是这里，见那个组件的说明）。空输入框是最大的门槛，
  *     给一两个真问题比任何说明都有效
  *
  * ## 示例问题按文档类型给
@@ -29,24 +30,48 @@ import { useStyles } from '@/components/document/DocumentPanel.style'
  * 指南占住空间、输入框钉在底部才不显得空。共同的判断是
  * 「空态必须说清楚这个输入框会做什么」。
  */
-export function DocChatGuide({
-  doc,
-  onAsk,
-}: {
-  doc: DocumentDetail
-  onAsk: (question: string) => void
-}) {
+/**
+ * 快捷提问。**只给能稳定命中的**——它们都会走「限定本篇」的检索，
+ * 而这三条问的都是「这一篇本身」，不依赖用户存了什么别的内容。
+ */
+export const QUICK_ASKS = [
+  { label: '速读本文', question: '这篇讲了什么？用几句话概括。' },
+  { label: '提出要点', question: '这篇里最重要的几个要点是什么？' },
+  { label: '解释细节', question: '这篇里有哪些我需要特别注意的细节？' },
+] as const
+
+/**
+ * 快捷提问那一排胶囊。
+ *
+ * **渲染在输入框正上方**（`ChatPanel` 的 `guideActions` 插槽），不是指南
+ * 里——它们是「马上要用的动作」，贴着输入框才顺手；放在指南中间会悬在
+ * 半空（实测：指南只占面板一半高，按钮离输入框还有 200px）。
+ * 语雀的阅读助手也是这个位置（速读本文 / 提出问题贴着输入框）。
+ *
+ * 点一下**直接发出**，不是塞进输入框让用户再按回车：问题文本已经完整，
+ * 多一步确认只是摩擦。
+ */
+export function DocQuickAsks({ onAsk }: { onAsk: (question: string) => void }) {
   const { styles } = useStyles()
 
-  /**
-   * 示例问题。**只给能稳定命中的**——它们都会走「限定本篇」的检索，
-   * 而下面三条问的都是「这一篇本身」，不依赖用户存了什么别的内容。
-   */
-  const suggestions = [
-    { label: '速读本文', question: '这篇讲了什么？用几句话概括。' },
-    { label: '提出要点', question: '这篇里最重要的几个要点是什么？' },
-    { label: '解释细节', question: '这篇里有哪些我需要特别注意的细节？' },
-  ]
+  return (
+    <div className={styles.guideSuggest}>
+      {QUICK_ASKS.map((item) => (
+        <button
+          key={item.label}
+          type="button"
+          className={styles.guideChip}
+          onClick={() => onAsk(item.question)}
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+export function DocChatGuide({ doc }: { doc: DocumentDetail }) {
+  const { styles } = useStyles()
 
   return (
     <div className={styles.guide}>
@@ -88,25 +113,6 @@ export function DocChatGuide({
           </li>
         </ul>
       </div>
-
-      {/*
-        示例问题：点一下直接发出去（不是塞进输入框让用户再按一次回车）。
-        它们的问题文本已经完整，多一步确认只是摩擦。
-      */}
-      <div className={styles.guideSuggest}>
-        {suggestions.map((item) => (
-          <button
-            key={item.label}
-            type="button"
-            className={styles.guideChip}
-            onClick={() => onAsk(item.question)}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
-
-      <p className={styles.guideFoot}>对话会留在这里；一轮问答结束后可以「存为笔记」。</p>
     </div>
   )
 }

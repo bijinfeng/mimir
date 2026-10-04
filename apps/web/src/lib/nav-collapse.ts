@@ -2,7 +2,14 @@ import { useSyncExternalStore } from 'react'
 import { NAV_NARROW_QUERY } from '@/theme/tokens'
 
 /**
- * 窄屏（≤880px）下左导航是否**被视口强制折叠**。
+ * 窄屏（≤880px）吗。
+ *
+ * 这个断点决定三件事，它们问的是**同一个** matchMedia：
+ *
+ *  1. 左导航是否被视口强制折叠（`routes/_app.tsx`）
+ *  2. 设置页的分区导航换成下拉（`routes/_app.settings.tsx`）
+ *  3. 文档大纲是否渲染（`components/DocumentPanel.tsx`——窄屏下正文
+ *     减去大纲列只剩约 150px，实测一行约 7 个字）
  *
  * ## 它解决的是什么
  *
@@ -16,9 +23,10 @@ import { NAV_NARROW_QUERY } from '@/theme/tokens'
  *
  * ## 与手动折叠的关系
  *
- * 它返回的是「**视口强制的**折叠」，与 `localStorage` 里那份用户偏好是两回事：
- * 偏好照常保存，窄屏下被这个返回值压过（`collapsed = 偏好 || 强制`），窗口
- * 变宽后偏好原样生效。所以它不写任何持久化状态。
+ * `useForcedNavCollapse` 返回的是「**视口强制的**折叠」，与 `localStorage`
+ * 里那份用户偏好是两回事：偏好照常保存，窄屏下被这个返回值压过
+ * （`collapsed = 偏好 || 强制`），窗口变宽后偏好原样生效。所以它不写任何
+ * 持久化状态。
  *
  * ## 为什么用 `useSyncExternalStore` 而不是 `useState` + `useEffect`
  *
@@ -46,6 +54,14 @@ function getSnapshot(): boolean {
   return media?.matches ?? false
 }
 
-export function useForcedNavCollapse(): boolean {
+export function useNarrowViewport(): boolean {
   return useSyncExternalStore(subscribe, getSnapshot)
+}
+
+/**
+ * 左导航强制折叠。**与 `useNarrowViewport` 同一个事实**，名字留给导航
+ * 那一处：读 `_app.tsx` 时「导航为什么收起」比「视口窄不窄」更接近意图。
+ */
+export function useForcedNavCollapse(): boolean {
+  return useNarrowViewport()
 }

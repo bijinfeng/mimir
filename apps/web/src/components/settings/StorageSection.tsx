@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Button, Radio, Skeleton } from 'antd'
 import { ApiRequestError, api } from '@/lib/api'
+import { LoadError } from '@/components/LoadError'
 import {
   Block,
   BlockDesc,
@@ -53,6 +54,10 @@ export function StorageSection() {
       void configQuery.refetch()
     },
   })
+
+  if (configQuery.isError) {
+    return <LoadError message="配置读取失败" onRetry={() => void configQuery.refetch()} />
+  }
 
   if (!config) {
     return (

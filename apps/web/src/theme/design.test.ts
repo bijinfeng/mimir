@@ -217,6 +217,40 @@ describe('对比度底线', () => {
     ).toBeGreaterThanOrEqual(4.5)
   })
 
+  /**
+   * 悬停与按下的链接色。
+   *
+   * **这一条是补的洞**：第一版只校准了 `colorLink` 的最终值，hover / active
+   * 交给算法派生——深色下得到 `#15417e`（容器底 **1.80:1**）与 `#1554ad`
+   * （2.51:1），比常态的 8.74:1 弱五倍：鼠标一放上去链接就像被禁用了
+   * （实测发现，D-096）。浅色的 hover 也只有 2.80:1。
+   *
+   * 两个键都显式写进了主题（它们不是种子名，`formatToken` 不删），
+   * 这里守生效值：**比常态不能更弱**，且仍达 AA。
+   */
+  it.each(APPEARANCES)('悬停/按下的链接色 %s下也达 4.5:1（且不弱于常态）', (appearance) => {
+    const token = tokenOf(appearance)
+    const surfaces = [String(token.colorBgContainer), String(token.colorPrimaryBg)]
+    const base = contrastOn(String(token.colorLink), String(token.colorBgContainer))
+    for (const [name, value] of [
+      ['colorLinkHover', token.colorLinkHover],
+      ['colorLinkActive', token.colorLinkActive],
+    ] as const) {
+      for (const surface of surfaces) {
+        const ratio = contrastOn(String(value), surface)
+        expect(
+          ratio,
+          `${NAMES[appearance]}：${name} 在 ${surface} 上不达 4.5:1（实测 ${ratio.toFixed(2)}）`,
+        ).toBeGreaterThanOrEqual(4.5)
+      }
+      // 「悬停比常态更弱」正是修掉的那个 bug，这里守它不再回来
+      expect(
+        contrastOn(String(value), String(token.colorBgContainer)),
+        `${NAMES[appearance]}：${name} 比常态链接色更弱`,
+      ).toBeGreaterThanOrEqual(base * 0.8)
+    }
+  })
+
   it.each(APPEARANCES)('占位符允许低于 4.5，但仍要看得见（%s下 ≥ 3:1）', (appearance) => {
     // 占位符 / 禁用态不承载信息，WCAG 不要求 4.5；
     // 但低到 2:1 以下就等于没画，这里守一个下限。
@@ -728,6 +762,25 @@ describe('自定义 token', () => {
     for (const key of Object.keys(mimirCustomToken) as (keyof typeof mimirCustomToken)[]) {
       expect(mimirDarkCustomToken[key], `深色的 ${key} 与浅色相同`).not.toBe(mimirCustomToken[key])
     }
+  })
+
+  /**
+   * 悬停底与列表底必须**看得出差别**。
+   *
+   * `tintHover` 的第一版是 `#fafbff` 对 `#fcfcfd`——对比度 **1.01:1**，
+   * 浅色下「悬停提亮一档」这个信号等于不存在（引用卡、列表行都是这个
+   * 组合），而静态截图完全看不出来（实测发现，D-096）。
+   *
+   * 下限取 1.06：`colorFillTertiary` 那类悬停底在同类底色上大约是 1.08–1.12，
+   * 1.06 是「肉眼可辨」的最低档；低于它就是在原地踏步。
+   */
+  it.each(APPEARANCES)('悬停底与列表底可辨（%s下 ≥ 1.06:1）', (appearance) => {
+    const custom = customTokenFor(appearance)
+    const ratio = contrast(custom.tintHover, custom.tintList)
+    expect(
+      ratio,
+      `${NAMES[appearance]}：tintHover 与 tintList 只差 ${ratio.toFixed(3)}:1，悬停没有反馈`,
+    ).toBeGreaterThanOrEqual(1.06)
   })
 
   it.each(APPEARANCES)('行内代码字色配 fill-secondary 底 %s下 ≥ 4.5:1', (appearance) => {
