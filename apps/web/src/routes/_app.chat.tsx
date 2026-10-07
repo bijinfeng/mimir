@@ -1,11 +1,13 @@
-import { useQuery } from '@tanstack/react-query'
+import { ChatPanel } from '@mimir/chat'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, useNavigate, useSearch } from '@tanstack/react-router'
 import { useState } from 'react'
-import { ChatPanel } from '@/components/ChatPanel'
+import { ChatThemeBridge } from '@/components/chat/ChatThemeBridge'
 import { LoadError } from '@/components/LoadError'
-import { useChatPanelStyles } from '@/components/chat/ChatPanel.style'
 import { api } from '@/lib/api'
 import { useAppShell } from '@/lib/app-shell-context'
+import { createChatIo } from '@/lib/chat-io'
+import { useChatComposerStatus } from '@/lib/use-chat-composer-status'
 
 /**
  * 对话模式（右栏）。
@@ -13,6 +15,11 @@ import { useAppShell } from '@/lib/app-shell-context'
  * 会话 id 走 URL（`?id=`），这样刷新、从会话历史点进来都能接上——
  * 会话优先的导航（`docs/PRD.md` §5.2）要求会话是可寻址的，
  * 只放组件状态里的话，刷新一次当前对话就没了。
+ *
+ * 对话体本身在 `@mimir/chat` 里（那边有完整的消息区、检索过程、引用、
+ * 失败卡、输入区与流式状态）。这个路由只做**宿主该做的事**：
+ * 会话寻址、历史读取失败时那一条明确的错误、以及把动作面（`ChatIo`）
+ * 与数据槽接给包。
  *
  * ## 为什么需要 `ownedId`
  *
@@ -24,6 +31,10 @@ import { useAppShell } from '@/lib/app-shell-context'
  * 所以这里区分两种 id 变化：
  *  - **我们刚创建的**（`ownedId`）：不重挂载，保持流式状态
  *  - **从导航/历史点进来的另一个会话**：重挂载，重新灌入历史消息
+ *
+ * 重挂载契约**没有变**：会话 id 与那一批消息在挂载时定下（agent 的
+ * threadId、请求里的 forwardedProps），而「自己建的会话不重挂」是保流式的
+ * 唯一办法。搬到包里之后这一点由 `panelKey` 继续承担。
  */
 export const Route = createFileRoute('/_app/chat')({
   /**
@@ -41,9 +52,9 @@ export const Route = createFileRoute('/_app/chat')({
 })
 
 function ChatRoute() {
-  const { styles } = useChatPanelStyles()
-  const { askDraft, setAskDraft, openCitation } = useAppShell()
+  const { askDraft, setAskDraft, openCitation, openDocument } = useAppShell()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const search = useSearch({ from: '/_app/chat' })
 
   /**
@@ -59,49 +70,82 @@ function ChatRoute() {
   // key 固定为 'new' 的情况有两种：真·新对话，以及我们自己刚创建的那个
   const panelKey = search.id && !isOwned ? search.id : 'new'
 
+  /**
+   * 历史读取的失败**不能放行成空对话**——用户点开一个旧会话，看到的会是
+   * 「问点什么」的全新空态，而记录其实还在库里：那比报错更吓人
+   * （看起来像对话被清空了）。给一条明确的失败 + 重试。
+   *
+   * 注意历史**内容**不再由这里取：包的历史适配器自己调
+   * `io.loadConversation`（打开会话时引擎出骨架屏，见包内的 ChatThread）。
+   * 这里这一次查询只为了「读不到时拦住」——它的键与包读的是同一个
+   * （`['conversation', id]`），所以两边共享缓存，不是两次请求。
+   */
   const conversationQuery = useQuery({
     queryKey: ['conversation', search.id],
     queryFn: () => api.conversations.get(search.id!),
-    // 自己创建的会话不需要在这里取：消息是流式来的，本地就是最新的
     enabled: Boolean(search.id) && !isOwned,
   })
 
-  // 新对话没有历史要等；查阅已有会话时要等查询回来（失败也放行，
-  // 否则右栏会永远卡在骨架上，用户看不到任何提示）
-  const messagesLoading = Boolean(search.id) && !isOwned && conversationQuery.isPending
+  const composerStatus = useChatComposerStatus(search.id)
 
   /**
-   * 历史消息读取失败。**不能放行成空对话**——用户点开一个旧会话，
-   * 看到的会是「问点什么」的全新空态，而记录其实还在库里：
-   * 那比报错更吓人（看起来像对话被清空了）。给一条明确的失败 + 重试。
+   * 动作面（`ChatIo` 的实现）。
+   *
+   * 每次渲染新建对象是**安全的**：包内只在事件回调里用它，不参与渲染
+   * 依赖（`io` 是「动作」不是「数据」）。真正需要稳定的是它背后接的
+   * queryClient 与 navigate——那两个来自 hook，本身是稳定的。
    */
+  const io = createChatIo({
+    invalidate: (keys) => {
+      for (const key of keys) void queryClient.invalidateQueries({ queryKey: key })
+    },
+    onConversationCreated: (conversationId) => {
+      // 记下这是我们自己建的：URL 变化不触发重挂载，流式状态得以保留
+      setOwnedId(conversationId)
+      setAskDraft(null)
+      void navigate({ to: '/chat', search: { scope: search.scope, id: conversationId } })
+    },
+    onManageModels: () => {
+      /* 显式点名 `models` 而不是靠默认值：那是一个**有名字的目的地**
+         （去配模型），而不是「打开设置」。靠默认值会在分区顺序调整时
+         悄悄落到别的 tab，而界面上没有任何东西提示这件事发生了 */
+      void navigate({ to: '/settings', search: { scope: 'all', section: 'models' } })
+    },
+  })
+
   if (conversationQuery.isError) {
     return (
-      <div className={styles.wrap}>
-        <div className={styles.inner}>
-          <LoadError
-            message="会话读取失败"
-            detail="记录还在，重试一下就能打开。"
-            onRetry={() => void conversationQuery.refetch()}
-          />
-        </div>
-      </div>
+      <ChatThemeBridge>
+        <LoadError
+          message="会话读取失败"
+          detail="记录还在，重试一下就能打开。"
+          onRetry={() => void conversationQuery.refetch()}
+        />
+      </ChatThemeBridge>
     )
   }
+
   return (
-    <ChatPanel
-      key={panelKey}
-      conversationId={search.id}
-      draft={askDraft}
-      initialMessages={conversationQuery.data?.messages}
-      messagesLoading={messagesLoading}
-      onOpenCitation={openCitation}
-      onConversationCreated={(conversationId) => {
-        // 记下这是我们自己建的：URL 变化不触发重挂载，流式状态得以保留
-        setOwnedId(conversationId)
-        setAskDraft(null)
-        void navigate({ to: '/chat', search: { scope: search.scope, id: conversationId } })
-      }}
-    />
+    /* 主题变量挂在面板祖先上（字号八档 + gutter 默认值 40px）。
+       挂在别处的话包里的样式会退回回退值——界面能用、字号差半个像素，
+       不报错（见 ChatHostVars 的说明） */
+    <ChatThemeBridge>
+      <ChatPanel
+        key={panelKey}
+        conversationId={search.id}
+        draft={
+          askDraft === null
+            ? null
+            : {
+                text: askDraft.text,
+                ...(askDraft.documentId ? { documentId: askDraft.documentId } : {}),
+              }
+        }
+        onOpenCitation={openCitation}
+        onOpenNote={(noteId) => openDocument(noteId, 'all')}
+        io={io}
+        composerStatus={composerStatus}
+      />
+    </ChatThemeBridge>
   )
 }

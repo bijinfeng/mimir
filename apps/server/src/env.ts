@@ -151,6 +151,23 @@ export const env = {
    */
   ownerEmail: process.env.OWNER_EMAIL ?? '',
   ownerPassword: process.env.OWNER_PASSWORD ?? '',
+
+  /**
+   * 本地模式（D-100）：桌面客户端的进程内私有宿主用的形态。
+   *
+   * 语义是「这台机器上的所有者直接用，不需要登录」——但**不是**「API 没有
+   * 鉴权」：入口是宿主注入的 `mimir-local` 令牌 cookie（`localToken`），
+   * `requireAuth` 先试真实会话、再验它。理由见 `services/local-mode.ts`。
+   *
+   * 它是部署事实（由 `apps/desktop/src/host.ts` 注入），不进设置页。
+   * 与 DATABASE_URL 同一条：设错了不会「运行到一半才发现」，启动期即断言。
+   */
+  localMode: process.env.MIMIR_LOCAL_MODE === '1',
+  /**
+   * 本地模式的访问令牌。宿主每次启动随机生成（每次启动换一把，不需要
+   * 持久化：它只在这一个宿主进程的生命周期里被比较）。
+   */
+  localToken: process.env.MIMIR_LOCAL_TOKEN ?? '',
 } as const
 
 /** 两个所有者变量都配了才算启用 */
@@ -182,4 +199,18 @@ if (env.ownerPassword && env.ownerPassword.length < 8) {
 
 if (env.nodeEnv === 'production' && env.authSecret === 'dev-only-insecure-secret-change-me') {
   throw new Error('生产环境必须设置 AUTH_SECRET（openssl rand -base64 32）')
+}
+
+/**
+ * 本地模式必须带令牌（D-100）。
+ *
+ * **绝不能降级成「有 localMode 但无令牌 ⇒ 免鉴权放行」**：那样一个扫本机
+ * 端口的网页就能读写整个知识库，而开发机上这条路径根本不会被注意到。
+ * 缺令牌就是配置错误，启动即报错。
+ */
+if (env.localMode && !env.localToken) {
+  throw new Error(
+    '本地模式（MIMIR_LOCAL_MODE=1）必须同时设置 MIMIR_LOCAL_TOKEN。' +
+      '它由桌面宿主每次启动随机生成并注入（apps/desktop/src/host.ts），不要手工填。',
+  )
 }

@@ -4,8 +4,10 @@ import { Alert, App, Button, Card, Form, Input, Skeleton, Typography } from 'ant
 import { createStyles } from 'antd-style'
 import { useState } from 'react'
 import { BrandMark } from '@/components/BrandMark'
+import { TitleBar } from '@/components/TitleBar'
 import { FONT_SIZE } from '@/theme/tokens'
 import { api, ApiRequestError } from '@/lib/api'
+import { desktopBridge, isDesktopShell } from '@/lib/desktop-shell'
 
 /**
  * 登录页。
@@ -57,8 +59,21 @@ interface SignUpValues extends LoginValues {
 }
 
 const useStyles = createStyles(({ css, token, prefixCls }) => ({
-  page: css`
+  /*
+    外壳：标题栏 + 页面。**登录页也需要那条标题栏**（D-100）——
+    桌面壳是 `frame: false`，没有它就没有拖动区与关闭按钮；
+    而云端模式落地的第一个界面恰恰就是远端的登录页。
+    浏览器里 `TitleBar` 自己返回 null，所以这层多出来的只是一个 flex 列。
+  */
+  shell: css`
     height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  `,
+  page: css`
+    flex: 1;
+    min-height: 0;
     display: grid;
     /*
       列宽写死 minmax(0, 1fr)，不是默认的 auto。
@@ -148,6 +163,15 @@ function LoginPage() {
 
   const needsSetup = stateQuery.data?.needsSetup ?? false
   const prefill = stateQuery.data?.prefill ?? null
+  /**
+   * 本地模式（D-100）：这个宿主由桌面客户端启动，凭据由客户端持有
+   * （宿主注入的本机令牌），**密码登录不会成功**。
+   *
+   * 什么时候会走到这一页？只有一种情况：客户端注入的令牌丢了（cookie
+   * 被清掉、或从普通浏览器直接打开了 `127.0.0.1:<port>`）。所以文案不说
+   * 「本地模式不需要登录」——那对此刻的用户没有用——而是说清**该去哪儿**。
+   */
+  const localMode = stateQuery.data?.localMode ?? false
 
   /** 登录成功后的收尾：清缓存、跳走 */
   const onAuthenticated = async (greeting: string) => {
@@ -219,54 +243,82 @@ function LoginPage() {
   }
 
   return (
-    <div className={styles.page}>
-      <Card className={styles.card}>
-        <div className={styles.brand}>
-          <BrandMark size={28} title={null} />
-          <Typography.Title level={4}>mimir</Typography.Title>
-        </div>
+    <div className={styles.shell}>
+      {/* 桌面壳的拖动区与窗口控件。浏览器里它返回 null（没有窗口可控制） */}
+      <TitleBar />
+      <div className={styles.page}>
+        <Card className={styles.card}>
+          <div className={styles.brand}>
+            <BrandMark size={28} title={null} />
+            <Typography.Title level={4}>mimir</Typography.Title>
+          </div>
 
-        {/* 失败提示条放在表单**上方**：它在说「上一次提交的结果」，
+          {/* 失败提示条放在表单**上方**：它在说「上一次提交的结果」，
             而按钮在表单底部——放下面会被键盘与滚动推走。
             `title` 而不是 `message`：后者在 antd v6 已废弃、会打一条警告
             （同类迁移见 docs/DESIGN.md §7.5） */}
-        {formError !== null && (
-          <Alert className={styles.formError} type="error" showIcon title={formError} />
-        )}
+          {formError !== null && (
+            <Alert className={styles.formError} type="error" showIcon title={formError} />
+          )}
 
-        {/* 状态还没回来时不要先渲染登录表单——那会让首次使用的用户
+          {/* 状态还没回来时不要先渲染登录表单——那会让首次使用的用户
             先看到一个「登录」，半秒后又被换成「注册」 */}
-        {stateQuery.isLoading ? (
-          <Skeleton active paragraph={{ rows: 4 }} title={false} />
-        ) : needsSetup ? (
-          <>
-            <Typography.Paragraph type="secondary" className={styles.hint}>
-              这是首次启动，请创建唯一账号。创建之后注册入口会自动关闭。
-            </Typography.Paragraph>
-            <SignUpForm
-              onSubmit={submit((values) => signUp.mutate(values))}
-              pending={signUp.isPending}
-            />
-          </>
-        ) : (
-          <>
-            <Typography.Paragraph type="secondary" className={styles.hint}>
-              单用户自托管，请用你的账号登录。
-            </Typography.Paragraph>
-            {prefill && (
-              <Typography.Paragraph className={styles.prefillNote}>
-                开发环境：已按 <code>.env</code> 的 OWNER_EMAIL 预填，可直接登录。
+          {stateQuery.isLoading ? (
+            <Skeleton active paragraph={{ rows: 4 }} title={false} />
+          ) : localMode ? (
+            /* 本地模式（D-100）：这里没有可填的东西——凭据由桌面客户端持有。
+             给出路（回客户端），而不是给一个填了也不会成功的表单 */
+            <>
+              <Typography.Paragraph type="secondary" className={styles.hint}>
+                这是一个本地使用的 mimir：不需要登录，数据全在这台电脑上。
               </Typography.Paragraph>
-            )}
-            <LoginForm
-              initialEmail={prefill?.email ?? ''}
-              initialPassword={prefill?.password ?? ''}
-              onSubmit={submit((values) => signIn.mutate(values))}
-              pending={signIn.isPending}
-            />
-          </>
-        )}
-      </Card>
+              <Typography.Paragraph className={styles.prefillNote}>
+                看到这一页，通常是因为从普通浏览器打开了桌面客户端的数据服务。 请回到 mimir
+                桌面客户端使用——它自己就能进入，这里没有密码可填。
+              </Typography.Paragraph>
+            </>
+          ) : needsSetup ? (
+            <>
+              <Typography.Paragraph type="secondary" className={styles.hint}>
+                这是首次启动，请创建唯一账号。创建之后注册入口会自动关闭。
+              </Typography.Paragraph>
+              <SignUpForm
+                onSubmit={submit((values) => signUp.mutate(values))}
+                pending={signUp.isPending}
+              />
+            </>
+          ) : (
+            <>
+              <Typography.Paragraph type="secondary" className={styles.hint}>
+                单用户自托管，请用你的账号登录。
+              </Typography.Paragraph>
+              {prefill && (
+                <Typography.Paragraph className={styles.prefillNote}>
+                  开发环境：已按 <code>.env</code> 的 OWNER_EMAIL 预填，可直接登录。
+                </Typography.Paragraph>
+              )}
+              <LoginForm
+                initialEmail={prefill?.email ?? ''}
+                initialPassword={prefill?.password ?? ''}
+                onSubmit={submit((values) => signIn.mutate(values))}
+                pending={signIn.isPending}
+              />
+            </>
+          )}
+
+          {/* 桌面壳里给一条**不依赖远端可用性**的出路（D-100）：选错服务器
+            （或想改用本地使用）时，设置页进不去——它也在远端——而选择页
+            由客户端自己提供，是此刻唯一还活着的入口 */}
+          {isDesktopShell() ? (
+            <Typography.Paragraph className={styles.prefillNote}>
+              <Button type="link" size="small" onClick={() => desktopBridge?.mode.openSetup()}>
+                更换使用方式…
+              </Button>
+              （换一个服务器，或改用本地使用）
+            </Typography.Paragraph>
+          ) : null}
+        </Card>
+      </div>
     </div>
   )
 }

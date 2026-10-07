@@ -8,7 +8,7 @@
     "build": "vite build",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "vitest run && vitest run --config vitest.local.config.ts",
     "db:generate:pg": "drizzle-kit generate",
     "db:generate:sqlite": "drizzle-kit generate --config drizzle-sqlite.config.ts",
     "db:migrate": "tsx src/db/migrate.ts",
@@ -43,6 +43,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@ag-ui/client": "0.0.59",
     "@hono/vite-dev-server": "^0.26.1",
     "@types/archiver": "^8.0.0",
     "@types/better-sqlite3": "^9.6.0",

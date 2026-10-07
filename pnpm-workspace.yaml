@@ -47,6 +47,12 @@ catalog:
   # 升版本只改这里：两边的 package.json 都写 `catalog:`。
   antd: ^6.6.4
 
+  # antd-style 与 antd 同一条理由（packages/chat 的对话面板读宿主 token）：
+  # 它有自己的**模块级 cache**（es/core/CacheManager.js 与 createEmotion 实例），
+  # 出现第二份拷贝时症状是「样式重复注入、顺序漂移」——不报错，只是同一处
+  # 观感时对时错。packages/chat 把它声明成 peer 就是为了在结构上保证单实例。
+  antd-style: ^4.1.0
+
   # DOM 测试环境。两个包都要用它（web 的组件测试、office 的外壳测试），
   # 且两者的 DOM 行为必须一致——否则同一段组件代码在两处得到不同结论
   happy-dom: ^20.0.0

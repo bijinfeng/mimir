@@ -21,9 +21,26 @@ export interface RunningServer {
 }
 
 export async function startServer(options: { hostname?: string } = {}): Promise<RunningServer> {
+  /**
+   * 本地模式的监听地址**强制回环**（D-100）。
+   *
+   * 免登录建立在「同一台机器」这个前提上：宿主注入了令牌，而令牌只写进
+   * 本机桌面客户端的 cookie jar。一旦绑到 0.0.0.0，局域网里任何人都能
+   * 打开这个地址、走本机用户身份直接读写整个知识库。
+   *
+   * 所以这不是「桌面端碰巧传了 127.0.0.1」，而是本地模式下**无法**监听
+   * 其他地址——把「随机端口 + 回环」从调用方的自觉变成结构性的保证。
+   *
+   * 校验放在 `boot()` **之前**：配置错误不该先跑一遍迁移与装配才报错。
+   */
+  const hostname = options.hostname ?? (env.localMode ? '127.0.0.1' : undefined)
+  if (env.localMode && hostname !== '127.0.0.1' && hostname !== 'localhost') {
+    throw new Error(`本地模式只允许监听回环地址，收到：${hostname}`)
+  }
+
   const app = await boot()
 
-  const server = serve({ fetch: app.fetch, port: env.port, hostname: options.hostname }, (info) => {
+  const server = serve({ fetch: app.fetch, port: env.port, hostname }, (info) => {
     console.log(`mimir server 监听 http://localhost:${info.port}`)
     console.log(`  数据目录 ${env.dataDir}`)
     // 驱动与库位置必须打在启动日志里：「数据全空」时第一眼要看的就是这行
@@ -31,6 +48,9 @@ export async function startServer(options: { hostname?: string } = {}): Promise<
     console.log(
       dbDriver === 'postgres' ? `  数据库 postgres` : `  数据库 sqlite（${env.databaseFile}）`,
     )
+    if (env.localMode) {
+      console.log('  本地模式：免登录（入口是宿主注入的本机令牌）；不对外监听')
+    }
   })
 
   return { server, app }

@@ -417,8 +417,10 @@ FONT_MONO = "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace
 | `meta` | 12 | 时间戳、路径、计数 |
 | `badge` | 11.5 | 徽标、计数 |
 
-**组件里不要写字面的 `font-size`**——`design.test.ts` 会扫源码拦下来。
-唯一的例外是图标字形，必须在行内标注 `非文本` 才放行。
+**组件里不要写字面的 `font-size`**——`design.test.ts` 会扫源码拦下来
+（扫描根含 `packages/chat/src`，见 §10.4）。包内写的是
+`var(--mimir-chat-font-note, 12.5px)` 这种形式（值由宿主填，回退值与上表
+一致）。唯一的例外是图标字形，必须在行内标注 `非文本` 才放行。
 
 采 .5 级差而不是整数档：这份界面信息密度高（列表项里同时有标题、摘要、
 徽标、计数），整数档在相邻层级之间跳得太大。
@@ -676,6 +678,13 @@ AGENTS.md 样式第 6 条）——声明在 `html` 上的 `var(--ant-color-prima
 这个模式只用在文本输入类元素上。其余控件继续用标准的 `:focus-visible`
 ——它们的行为是对的，加一层输入方式追踪只是多余的复杂度。
 
+**一处例外是对话的输入区**（§8.8，D-099）：它是「外层盒子当容器」的结构
+（圆角 14px 的框才是可见的输入区），焦点态只提亮**盒子**的边框色，
+内层输入框自己的 outline 与 box-shadow 全关——两层焦点提示叠在一起就是
+用户看到的双边框。这让「自定义元素补 3px 柔光盘」这条在那一处不适用；
+理由是柔光与边框的过渡不同步会让容器看起来抖一下，且 assistant-ui 的
+composer 也是这么处理的。
+
 ### 7.3 可点击元素
 
 - 必须有 `cursor: pointer`
@@ -784,9 +793,10 @@ AGENTS.md 样式第 6 条）——声明在 `html` 上的 `var(--ant-color-prima
 内容滚动、开始被固定区切断的那一刻淡入（`lib/use-scrolled.ts` 的
 `scrollTop > 0` → `data-scrolled` → border-color 过渡；滚回顶部即淡出）。
 落在四处：侧栏底部账号行上线、库头部下线、详情标题栏下线、对话输入区上线
-（线画在 `ChatPanel` 的 `composerLine` 包裹层，因为消息列表的 scrollTop 归
-它管）。**不显形的场合**：设置页键值行 / 块之间的行线（表格式信息，行线帮
-助扫读）、编辑器外壳的工具条 / 子工具条 / 状态行（控件解剖——Office 一族
+（线画在包的 `composerLine` 包裹层，因为消息列表的 scrollTop 归它管——
+对话那一份钩子在 `packages/chat/src/hooks/use-scrolled.ts`，**与宿主那份是
+刻意的两份**：滚动容器在包内，包 import 不到宿主）。**不显形的场合**：
+设置页键值行 / 块之间的行线（表格式信息，行线帮助扫读）、编辑器外壳的工具条 / 子工具条 / 状态行（控件解剖——Office 一族
 的母语，且滚动容器在各格式编辑器内部，为一个 hairline 把滚动状态穿透六个
 编辑器不值）、命令面板内部的线（输入框下线还兼任聚焦指示，DESIGN §7.2）、
 下拉菜单的 divider（隔开动作与危险操作）、正文的 `hr`（那是内容）。
@@ -1219,11 +1229,34 @@ pptx 的幻灯片、html 的源码 + 预览双栏、markdown 的正文、pdf 的
 `postMessage`——父页读不到 frame 的 DOM）。它**有选中才出现**，不占一条常驻空行；
 没有选中时状态行已经在说「点一个元素可以定位到它的源码」。
 
+**§8.5–§8.8.1 讲的对话块住在独立包 `@mimir/chat` 里**（D-099，
+`packages/chat/src/`）。下面各节只说**长什么样**，这里先交代**它怎么长出来的**：
+
+- **状态层在包里**（`@assistant-ui/react` + `@assistant-ui/react-ag-ui`），
+  宿主只提供数据与动作：数据是 `composerStatus`（文档列表 / 模型角色 / 用量，
+  宿主 `useQuery` 取好），动作是 `ChatIo`（建会话 / 读历史 / 存笔记 / 跳转，
+  宿主实现在 `apps/web/src/lib/chat-io.ts`）。包 import 不到宿主的
+  api / router / queryClient
+- **trace / 引用 / 失败是消息里的 data part**（`mimir.trace` /
+  `mimir.citations` / `mimir.failure`），实时与历史**同一个形状**：实时由
+  服务端 CUSTOM 事件经引擎聚合而来，历史由包的适配器把落库字段转成同名 part。
+  所以下面三块（§8.5 引用、§8.6 检索过程、§8.8.1 失败卡）都不再有「实时份
+  与落库份按位置对齐」——消息在哪，它的依据就在哪（旧 `RoundResult` 的
+  `resolveRound` 整体退役）
+- **主题**：antd token 不需要桥（包内 `createStyles` 直接读宿主的
+  `theme.useToken()`），**字号与栏宽比例走 CSS 变量**：宿主在面板祖先上挂
+  `--mimir-chat-font-*` 八档（值来自 `FONT_SIZE`）与 `--mimir-chat-gutter`
+  （主视图 40px、文档侧栏 16px），包内样式一律
+  `var(--mimir-chat-font-note, 12.5px)` 这样消费。**消息列与输入区共用
+  同一个 gutter 变量**（`ChatPanel.style.ts` 的 `inner` 与 `Composer` 的
+  `inner`）——两处各写一份边距必然在侧栏里错开（实测只剩 320px 可用宽度）
+
 ### 8.5 引用块（对话回答下方）
 
 **一条条通栏的浅色出处块，不是并排的卡片方阵。**
 
-- `max-width:640px`（与检索过程、消息气泡同宽），`padding:8px 11px`，圆角 6px
+- `max-width:640px`（比消息列窄一档：引用是简短的出处，限宽让「一条条通栏」
+  读起来是短行），`padding:8px 11px`，圆角 6px
 - **无边框**，只有 `tintList` 底色。描边会把它变成一个「控件」，
   而它是一块**引用区**
 - `hover` 提亮到 `tintHover`（浅色 `#f4f5f7`、深色 `#1e2225`），表示「可以点」。
@@ -1239,88 +1272,204 @@ pptx 的幻灯片、html 的源码 + 预览双栏、markdown 的正文、pdf 的
 并排卡片会让人误以为它们是**可对比的选项**（像产品对比表），而实际上
 它们是同一段回答的多个出处，没有并列关系。
 
+组件是包内 `parts/CitationList.tsx`，数据只从 `mimir.citations` data part 读
+（`parts/data-parts.ts` 的 `useCitationsPart`）——与历史会话同一个入口。
+
 ### 8.6 检索过程
 
-外壳 `border` + `tintNav` 底 + 圆角 8px；头部 `8px 11px`；
-展开后是 `Steps`（v6 里是 `orientation="vertical"`；旧的 `direction`
-只是废弃别名）的步骤时间轴。
+**assistant-ui 官方 registry 的 Reasoning 形态**（D-099 收尾；参照
+`packages/ui/.../elements/reasoning.tsx`，shadcn 分发的那一份）——
+**一个带边框的圆角盒**，不是时间轴：
 
-**每一步的明细要用 v6 的 `content` 槽位，不是废弃的 `description`。**
-两者渲染出的类名不同（`-content` / `-description`），CSS 写旧类名不会报错，
-只是**再也匹配不到元素**：明细退回正文的 14px 与正文色，比它自己的标题
-（12.5px / `colorTextSecondary`）还大还深，层级是反的。明细本身取
-`badge` 11.5px + `colorTextTertiary`。
+```
+┌──────────────────────────────────────────────┐
+│ 🧠 思考 1 轮 · 调用 2 次工具 (1.4s) ⌄         │
+│     先把问题拿去知识库里找相关内容              │
+│     用 jieba 切分查询词  这份 文档 讲 了 什么 ？ │
+│     通道召回结果  词级召回 7 段 · 子串兜底 2 段  │
+│     读取命中的文档并合并相邻分块  来自 1 个文档…  │
+│     确认没有遗漏，生成回答                      │
+└──────────────────────────────────────────────┘
+```
 
-**折叠标题必须带三个真数字**：`思考 N 轮 · 调用 M 次工具 · 耗时 Xs`。
-它们来自服务端真实执行的结果，不是渲染时编的——编的数字比没有更糟，
-用户会拿它做判断。
+- **盒**：`rounded-lg border px-3 py-2`（官方 ReasoningRoot 的
+  variant=outline 是默认形态），`colorBorderSecondary` +
+  `borderRadiusLG`
+- **触发行**：Brain 图标（16px）+ 标签 + ChevronDown；`text-sm`、
+  `colorTextSecondary` → hover 提到正文色；chevron 关闭时 -90°
+  （朝右）、打开转正（官方 `ease-[cubic-bezier(0.32,0.72,0,1)]` 换算成
+  0.2s ease-out）
+- **标签 live 时 shimmer**（官方 `.shimmer` 工具类的换算：
+  background-clip:text 渐变扫光）并带计秒
+- **内容**：`ps-6 pt-2 pb-2` 的 muted **正文**（非等宽、无行首标记、
+  无图标），max-h-64 内滚动；分词结果与每步数字是裸文本，比步骤文字
+  再浅一档（`colorTextQuaternary`）——官方 ReasoningText 是纯
+  muted prose，没有 Tag 盒子
+- 展开跟随与手动开合的优先级、每轮自动归零的秒数，行为同 D-098
+
+**位置在最后一条用户消息之后、它的回答之前**（question → 过程 → 回答，
+也是 PRD 这句「回答上方」的字面落位）。现在它就长在**那条助手消息自己的
+根里**（`parts/MessageItem.tsx` 的显式顺序：过程 → 正文 → 引用 → 失败/中断
+→ 停止 → 动作条）——历史多轮会话里它因此贴着自己那一轮，而不是飘在整个
+会话顶上。
+
+组件是包内 `parts/TraceActivity.tsx`，数据只从 `mimir.trace` data part 读
+（`parts/data-parts.ts` 的 `useTracePart`，**只认最后一个**——一轮发两份，
+后一份带整轮耗时，覆盖前一份）。「还在跑」的判据是消息状态
+`running`（或整条 thread 在跑且它是最后一条），不再有旁路的 `stopped` /
+`creating` 布尔。
+
+**摘要必须带三个真数字**：`思考 N 轮 · 调用 M 次工具 (耗时 Xs)`——
+官方 Reasoning 的标签格式是 `Reasoning (12s)`，mimir 的三个数字按同款
+括号包秒落位。它们来自服务端真实执行的结果，不是渲染时编的。
+
+**这条样式翻过两次，都如实记**：最早的 Steps 时间轴 → D-097 改平成
+muted 行 → D-099 抽包时一度按文档站自绘版做成 mono 行（引擎换了、参考
+对象选错了）→ 用户点名「一定要参考官方实现」后，按官方 registry 的
+Reasoning 重写为描边盒形态。**参考对象必须是官方 registry 分发的组件，
+不是文档站自己魔改的那套**——两者的差别就是这一课。
+
+**不引入引擎的 ● 脉冲点**：那会成为第二个进度表面（D-098 明令只有一个）。
+活态靠 marker 变蓝、文字微光与走着的秒数。
+
+#### 8.6.1 其余消息体类型（每一种都按官方件）
+
+AG-UI 的消息体不止正文一种。引擎的 `MessagePrimitive.Parts` **平台默认
+组件在 react 上是 `() => null`**——没挂槽位的类型一律**静默消失**
+（不报错、不占位）。所以每一类都有官方件的换算与一条测试守着：
+
+| part | 渲染成 |
+|---|---|
+| `reasoning`（模型思考） | 官方 Reasoning 盒，与检索过程共用外壳（`parts/reasoning-shell.tsx`），标签「模型思考 (Ns)」；运行时开关 `showThinking: true` 才聚得出来，两半必须同批 |
+| `tool-call` | 官方 ToolFallback：状态图标（running 转圈 / complete 勾 / incomplete 叉）+ 「Used tool: **名字**」+ 耗时（引擎的 `useToolCallElapsed`）+ 展开的 Args/Result 两段 |
+| `source` | 官方 Sources pill：首字母徽标 + 标题，安全 href 新开 |
+| `file` / `audio` | 官方 file chip：mime 图标 + 文件名 + 下载钮 |
+| `image` | 圆角缩略图（最多 320px 宽），点击原图新开 |
+| `data` | mimir 三个显式读取口（trace / citations / failure，见 §8.6） |
+
+**不接线的两类**（记录在案，不是遗漏）：`generative-ui`（要一份组件
+白名单作安全边界，无产品支点）与 `quote`（metadata 槽，不是 part
+内容）。工具调用的 `action` / `human-response` 是交互日志而非 part。
 
 ### 8.7 对话消息
 
-**空态：问候语与输入框是一组，在可视区里垂直居中**（Notion / ChatGPT 的新
-对话形态，用户拍板）。空态时输入框不贴面板底部——它跟「问点什么」成组居中；
-发出第一条消息（消息数 0→1）后输入部落回面板底部，居中组让位给消息列。
+**空态：欢迎语在列内左对齐**（官方 ThreadWelcome 形态：
+24px 一句话 `text-2xl font-medium tracking-tight`，这一档字号来自
+`--mimir-chat-font-display`，宿主阶梯的 `display` 档填它），纵向仍由
+auto 边距居中——官方 ThreadRoot 的 `isEmpty && justify-center` 同款。
+空态时输入框不贴面板底部——它跟欢迎语成一组居中；发出第一条消息
+（消息数 0→1）后输入部落回面板底部，让位给消息列。
 布局由滚动列的 `data-empty` 承担：空态时它变 flex 列、内容组的上下
 `margin: auto` 负责居中——auto 边距在空间不足时自动归零，问候语+输入框
 超高时内容照常可滚（`justify-content: center` 会把溢出部分的顶部裁到
 摸不着）。输入框节点在两个位置**共用同一份 JSX**：从居中组挪到底部时
 组件会重挂载，文字已在发送时清空所以没有损失，「深度思考」开关随之回到
 默认关——这是重挂载的已知代价。空态里的「发送失败」行也跟着组居中
-（会话里那条 `stopped` 靠左是对的——它跟的是消息列）。
+（会话里那条「已停止生成」靠左是对的——它跟的是消息列）。
+
+**打开历史会话出的是骨架屏，不是空白。** 数据没到位时 `thread.isLoading`
+为真（实测 true→false），消息区渲染一套模仿消息形状的骨架（一条短的提问条
++ 三条递减的文本条，1.4s 的呼吸），`role="status"` + `clip-path` 的 sr-only
+文案「正在加载会话」（`clip-path` 而不是 `display: none`——后者会把它从
+无障碍树上摘掉）。动效退化由 `styles/global.ts` 的全局
+`prefers-reduced-motion` 规则管（那一处对全仓 `animation` 生效，不必逐块写）。
+**宿主不再有「数据没到位就不许挂载」的硬契约**（旧引擎 `useChat` 的
+`initialMessages` 只在挂载那一刻生效留下的产物，D-099 后由包的历史适配器 +
+`thread.isLoading` 承担：`packages/chat/src/ChatThread.tsx`）。
 
 | | 用户 | 助手 |
 |---|---|---|
-| 对齐 | 右 | 占满宽度 |
-| 背景 | `colorPrimaryBg` 气泡 | 无 |
-| 内边距 | `10px 14px` | 0 |
-| 圆角 | 12px | — |
+| 对齐 | **右**（`align-self: flex-end`，D-099 收尾） | 左，占满宽度 |
+| 背景 | `colorFillTertiary` 气泡（中性 muted，不是主色浅底） | 无 |
+| 圆角 / 内边距 | 16px / `10px 14px` | 0（只有 `8px 0` 的呼吸） |
+| 限宽 | `max-width: 85%` | 不限宽 |
+| 说话人标记 | 无——靠对齐与气泡 | 无 |
+
+**用户气泡的两次翻转，如实记录**：最早是 `colorPrimaryBg` 气泡（IM 的
+做法）→ D-097 改平成 transcript（行首 `›` 标记）→ D-099 收尾用户点名
+「整个对话的交互样式都按 assistant-ui 来」，气泡回归但换了底——
+**`colorFillTertiary`（中性 muted）而不是回到主色浅底**：表达
+「这是你说的」用灰度就够，主色浅底会让提问看起来像一个可交互的控件。
+D-097 的三条理由（长问题折行、阅读轴线、IM 气质）仍然成立，被用户明示的
+样式取向覆盖——上游长什么样，这里就长什么样；这条判断记在 D-099。
+
+消息之间**没有列级 gap**：assistant-ui 给每条消息 `py-2` 的呼吸，
+轮次间的空隙由消息自己的上下 padding 出（8+8=16px），不是容器的 20px。
+助手消息根挂 `content-visibility: auto` +
+`contain-intrinsic-size: auto 200px`——长会话里每条回答都参与布局是浪费，
 
 助手回答**不限宽**：里面会有表格与代码块，限宽会把它们挤成一团。
-消息之间 `gap:20px`。
 
-**一个 part 都没有的助手消息不渲染。** 停止生成或流一开始就断掉时，SDK 会留下
-`[user, assistant(0 parts)]`；空盒子仍然占着 `gap:20px`，用户看到的是一段莫名
-多出来的空白，像空气泡。没有内容就没有这一条。
+**动作条（存成笔记 / 复制）也是上游形态**：官方 `AssistantActionBar` 的
+`ms-2 mt-?` 图标钮排——每颗是官方 `TooltipIconButton` 的换算：
+**24px（size-6 p-1）**、ghost（hover 提字 + 浅底）、**按下缩 0.9**
+（active:scale-90）、tooltip 走 antd Tooltip；复制态 Copy ↔ Check 换图标。
+左对齐跟在回答下面。失败 / 中断轮仍互斥（见 §8.8.1）。
+
+助手消息根挂 `content-visibility: auto` +
+`contain-intrinsic-size: auto 200px`——长会话里每条回答都参与布局是浪费，
+占位高度让滚动条不因「还没渲染的条目」乱跳。
+
+**一个 part 都没有的助手消息不渲染。** 停止生成或流一开始就断掉时，引擎会留下
+`[user, assistant(0 parts)]`；空盒子仍然占着排版位，用户看到的是一段莫名
+多出来的空白，像空气泡。没有内容就没有这一条——**但它还在跑的时候例外**：
+那一支是「正在检索知识库 · Ns」的载体（消息在 `composer.send()` 那一刻就已
+乐观存在，而第一个 part 要等服务端事件才有；这段窗口里什么都不显示，就是
+对着一个按了发送却没反应的界面）。
 
 #### 自动跟随：贴底才跟随
 
 | 时机 | 行为 |
 |---|---|
-| 自己发出的新消息、打开已有会话（挂载） | 无条件跳到底 |
-| 流式内容变高 | 只在距底 < **32px** 时跟随 |
-| 离底 | 右下角出现「回到底部」圆钮（`box-shadow` 走浮层档，`right:20px; bottom:12px`） |
+| 自己发出的新消息、打开已有会话（挂载）、切换会话 | 无条件跳到底（引擎的三个 `scrollToBottomOn*` 钩子，默认全开） |
+| 流式内容变高 | 只在「跟随意图」还开着时跟随 |
+| 离底 | **居中**出现「回到底部」圆钮——官方 `ThreadScrollToBottom` 的位形（`-top-12 self-center`：悬在 composer 上方），40px 圆形 outline（`colorBorderSecondary` 描边 + 容器底），不是右下角加阴影 |
 
-32px 是**脱离跟随的闸门**，不是「单次增长允许多大」：滚动位置是小数（取 0 会让
-「一直在底部」的判定随机失灵），而一次滚轮在 Chrome 里约 100px——32px 足以让
-「想往上读」立刻生效，又容得下滚动位置的零头。
+**跟随由引擎的滚动原语承担**（`ThreadPrimitive.Viewport` /
+`ScrollToBottom`）：意图是一份状态——在 scroll 回调里判「用户往上滚」
+（`scrollTop` 减小而内容高度未变）才关掉；内容增长由 `ResizeObserver` +
+`MutationObserver` 双盯驱动——只监听 scroll 的话「用户停在中间、回答继续长」
+这一段不会有任何回调；而跟随写 `scrollTop` **会再触发 scroll**，引擎在回调里
+只在「贴底与否」真的变了才更新 store。贴底判据是它的 `isViewportAtBottom`
+（`|scrollHeight - scrollTop - clientHeight| <= 1`，读 0.15.23 的源码确认）。
 
-跟随由 `ResizeObserver` 盯**内容高度**驱动，不是盯 scroll——流式追加 token 不触发
-scroll 事件，只监听 scroll 的话「用户停在中间、回答继续长」这一段不会有任何回调。
-反过来，跟随写 `scrollTop` **会再触发 scroll**，所以 scroll 回调里只在
-「是否贴底」真的变了才 setState，否则流式期间是自激（token → 滚 → setState → 渲染 → 滚）。
-
-**「是否跟随」必须是状态，不能每次现算距离。** 真浏览器实测：跟随中距底恒为 0，
-而一个 token 在**同一行内**只改宽度不改高度、ResizeObserver 根本不触发；它触发的
-那一刻是**换行**，而换行一次长高**一整行**（消息区实测 40px：14px × 1.75 的行高
-再加段落 margin）——已经越过 32px 阈值。所以「增长后重算距底、小于阈值才跟随」会在
-第一次换行时把跟随关掉，而此后每个 token 都不再改高度、也就再没有回调来恢复它
-（实测症状：点「自己发新消息」后 320ms 就不再贴底，距底 32px）。正确形状是
-`ResizeObserver` **只看那个状态**，距离只在 scroll 事件里算。
+这一节在搬迁前是手写的 `use-stick-to-bottom` + 32px 闸门。那 32px 曾经要挡的
+是「滚动位置是小数」与「一次滚轮约 100px」这两件事，而它背后真正的结论是：
+**「是否跟随」必须是状态，不能每次现算距离**——一个 token 在同一行内只改宽度
+不改高度、观察器不触发；触发的那一刻是换行，而换行一次长高**一整行**（消息区
+实测 40px），已经越过任何小阈值。所以「增长后重算距底、小于阈值才跟随」会在
+第一次换行时把跟随关掉，此后每个 token 都不再改高度、也就再没有回调恢复它
+（实测症状：点「自己发新消息」后 320ms 就不再贴底）。引擎把这条结论做进了
+原语（跟随意图单独存，距离只用来决定「回到底部」按钮的显隐），手写版与 32px
+一并退役。
 
 **「回到底部」浮在滚动区之上**，不能放进滚动容器里——那样它会跟着内容滚走。
+显隐由引擎的 `ScrollToBottom` 在贴底时置 `disabled` 承担，样式把它
+`visibility: hidden`（**不是**条件渲染：浮层从布局里消失会让位置跳一下）。
 
-#### 生成期的状态行
+#### 生成期：检索过程行活着（D-098）
 
-`⟳ 正在检索知识库 · 3s` / `⟳ 检索完成 · 命中 4 段 · 正在生成 · 7s`
+等待期**没有独立的状态行**——检索过程行本尊就是进度表面（Codex 的
+「Worked for…」节奏，一个表面贯穿整轮）：
 
-与消息同一个左边距（`inner` 的 40px），`note` 12.5px + `colorTextTertiary`，
-数字走 `tabular-nums`（每秒变化，等宽才不跳）。行内图标 14px（§7.1）——不跟着
-12.5px 的文字缩，否则它比一行字还小。
+- **发送后立刻出现**。检索结果还没到时是一行「正在检索知识库 · Ns」
+  （不是 Collapse——没有可展开的内容就不长成可展开的样子）
+- **检索一到就地展开**：折叠标题换成「思考 N 轮 · 调用 M 次工具 · Ns」，
+  秒数持续在走（叶子组件 `LiveSeconds` 计时，不在渲染期读时钟）；
+  时间轴里 `process` 状态的图标带 1.6s 的呼吸（有这一口气，
+  「还在跑」与「跑完了」扫一眼就能区分）
+- **正文一出收起**，但行还挂着——折叠标题里的秒数**继续走**
+  （模型仍在耗时）；流结束时服务端会再推一份带完整 `tookMs` 的
+  trace，秒数换成那个真实的总数。客户端的钟只管「用户已经等了几秒」，
+  服务端的钟只出现在折叠摘要里，两者不同屏并列
+- **不显示的三种情况不变**：这一轮已经失败（屏幕上该有的是那张带出路的卡）、
+  请求报错、用户按了停止。**「活着」的判据是忙**（消息状态 `running`，或整条
+  thread 在跑且它是最后一条）——只看「最后一条是 user」的话，打开一个停在
+  半截的历史会话会挂出一条永远在走的幽灵计时（StreamStatusLine 时代的真 bug，
+  跟着重做修掉；`parts/MessageItem.tsx` 的两个判据取或）
 
-**正文一出整行撤掉**，不与流式并存两个进度指示。另外三种情况也不显示：
-**这一轮已经失败**（流断了，「还在跑」是假的，屏幕上该有的是那张带出路的卡）、
-**请求报错**、**用户按了停止**（下面一行已经写着「已停止生成」，上面还转着
-「正在生成 · 3s」是自相矛盾的）。
+字的规格与旧状态行相同：与消息同一个左边距，`note` 12.5px +
+`colorTextSecondary`，数字走 `tabular-nums`。
 
 #### 「已停止生成」那一行
 
@@ -1330,12 +1479,16 @@ scroll 事件，只监听 scroll 的话「用户停在中间、回答继续长�
 
 ### 8.8 输入区（composer）
 
-圆角 14px（页面上最大的单个控件）、内边距 `12px 14px 9px`、
-边框 `colorBorder`。
+**官方 composer shell 的换算**（D-099 收尾）：`rounded-(--composer-radius)`
+= **16px**、`p-2` = **8px 内边距**、底是 **muted 30% 掺透明**
+（`colorFillQuaternary`，比实色 muted 轻）、描边最浅一档
+（`colorBorderSecondary`）。
 
-聚焦时不换边框色，改用**一圈柔光 + 边框提亮**（`colorPrimaryBorder` +
-`0 0 0 3px token.controlOutline`）。这比「边框变蓝」安静，也不会让输入区
-在长文里跳出来。规范见 §7.2（焦点必须可见）。
+聚焦时只把描边提一档（`colorBorder`；官方
+`focus-within:border-foreground/25` 同款，不是主色柔光），过渡也只有
+`border-color` 一条。原先还叠一圈 `token.controlOutline` 的柔光，D-099
+重做时移除了：阴影与边框的过渡不同步，容器会看起来「抖」一下；这是 §7.2
+「补 3px 柔光盘」的一处**明确例外**（见那一节末尾）。
 
 **内层输入框不画自己的焦点环。** antd v6 给聚焦的输入类控件加了
 focusOutline（实测计算样式 `outline: 1px` 主色），叠在盒子的聚焦边框上
@@ -1343,37 +1496,75 @@ focusOutline（实测计算样式 `outline: 1px` 主色），叠在盒子的聚�
 :hover` 下 outline 与 box-shadow 全部关掉（命令面板当年为同一条关过三处，
 这里是第四处——同一个坑散在四处，集中记在 §8.6）。
 
-柔光用的是 `token.controlOutline` 而不是写死的 `rgba(22,119,255,.08)`：
-它是 antd 按当前主色与底色算出的半透明主色，换外观时跟着变
-（浅色 `rgba(5,145,255,.1)`、深色 `rgba(23,117,249,.31)`）——深色的不透明度
-更高，写死浅色那个值在深色下几乎看不见。
+**发送与停止是一个键位的两种形态，都由引擎原语渲染**：空闲渲染
+`ComposerPrimitive.Send`、生成中整颗换成 `ComposerPrimitive.Cancel`
+（`render` 把 antd 的观感套上去），可用性也归引擎的
+`canSend` / `canCancel`。不要自己写 `<Button onClick={composer.send()}>`：
+`canSend` 只管「有没有内容」，而**生成中能不能排队**是另一条规则
+（引擎把 `capabilities.queue` 也算进去）——手写那版会在生成中禁掉按钮，
+于是「生成中 Enter 排队」这条 D-098 的语义在鼠标路径上根本到不了，而键盘
+那条却通着，两个入口行为不一致且不报错（`packages/chat/AGENTS.md` 记了
+这条）。**也不要把两颗都常驻**（第一版那样，空闲时停止键是一块灰方块）：
+官方 `thread.tsx` 用 `AuiIf` 条件渲染，条件渲染一次解决两件事——
+视觉干净，且鼠标路径的键位语义与键盘一致（本包实测修过）。
+钮的形态是官方 `size-7 rounded-full`：**28px 圆形、深底浅字**
+（shadcn 的 `variant=default` 近黑底，换算成 `colorText` 反色），
+图标 ArrowUp / Square(fill)，禁用只降透明度（`disabled:opacity-40`）——
+不用 antd Button（它的 disabled 会换灰底盖掉深底形态），是套了
+引擎原语的原生 button。
 
-#### 生成中：发送键换「停止」，输入框转只读
+#### 生成中：发送键换「停止」，输入框可打字、Enter 排队（D-098）
 
 | 状态 | 发送键 | 输入框 |
 |---|---|---|
 | 空闲 | 「发送」（primary，`SendOutlined`），无内容时 disabled | 可编辑 |
-| 生成中 | 「停止」（默认样式，`StopOutlined`） | `readOnly`，placeholder 换成「正在生成，按 Esc 停止」 |
+| 生成中 | 「停止」（默认样式，`StopOutlined`） | **可编辑**（D-098 前是 `readOnly`），placeholder「生成中 · Enter 排队这条，Esc 停止」 |
 
-**为什么是 `readOnly` 而不是 `disabled`**：`disabled` 让控件连焦点都拿不到——
-用户按不到 Esc，而且自己刚打的字会变灰。`readOnly` 是「现在不能发，但字还在、
-还能选中复制」。停止键用默认样式而不是红色：**停止不是危险操作**，它是用户
-拿回主动权的那一下（§3.4）。
+**生成中不让打字等于逼用户干等**（Codex 同款）：Enter 在生成中**排队**
+——本轮正常结束后自动发出。排队的那条显示在输入框上方一行（「已排队」
++ 单行省略 + ×），× 把它**取回输入框**。
+
+**排队不是百灵鸟**：本轮**停止 / 失败 / 流中断**时，排队的字**还给输入框**
+而不发——用户停在半截通常是想改主意，替他把排队的话发出去是说谎般的体贴。
+**引擎默认不这么做**（取消时它只 `notifyCancelled()` → 暂停队列），所以
+「取首条 → 写回输入框 → 删掉那条」是包在 `onCancel` 里显式做的——漏了它的
+症状是用户的字不见了（`packages/chat/src/runtime/use-mimir-runtime.ts`）。
+「回填输入框」是一条普通的 `composer.setText`（旧实现里它靠 nonce 重挂载
+组件，那个补丁退役）。
+
+队列在引擎里其实是**多条**，而 D-098 定的是单条：界面只显示 `queue[0]`
+（「已排队」+ 单行省略 + ×），排在后面的等前一条发出去后依次露头；逐条自动
+发送的失败语义留待将来另定。
+
+**为什么不再是 `readOnly`**：等回答的几十秒里正好想好追问；`readOnly`
+时代用户只能拿备忘录。Esc 停止的快捷键保留。停止键用默认样式而不是红色：
+**停止不是危险操作**，它是用户拿回主动权的那一下（§3.4）。
 
 **Esc 的判据必须带 `isComposing`**：中文输入法里 Esc 是取消候选词，这时按下去
 不该把正在生成的回答也停掉。rc-input 对 Enter 就是这个判据
 （`@rc-component/input` 的 `TextArea.js`）。
 
-**底栏是 Codex 式的两分组（用户拍板）**：输入框 3 行起（autoSize 到 8 行），
-下面一条工具栏——左边是「+ 添加上下文」、范围 pill 与上下文容量，右边是
-思考强度、当前模型与发送/停止。
+**输入框单行起**（官方 `rows=1 min-h-10`，textarea 透明底
+`px-2.5 py-1`），autoSize 长高到 8 行。**底栏的布局语法照官方动作行**：
+左边是控件组——「+ 添加上下文」、范围 pill、上下文容量、思考强度、当前
+模型——右边只有发送/停止一颗钮。
+
+**+ 添加上下文的钮是官方 ComposerAddAttachment 形态**：28px 圆形幽灵钮
+（muted 字 → hover 提亮 + 浅底、按下缩 0.96），tooltip 走 antd。
 
 **+ 添加上下文 = 把本轮检索范围锁到某篇文档**。服务端的检索按
 documentId 过滤（`retrieve(question, documentId)`），范围**逐轮生效**：
 菜单列最近的文档（M0 无附件 / 技能，后续再扩），选中后底栏出现可移除的
-范围 pill，占位符随之变成「就「…」提问…」。范围状态（draft 锁定与 +
-所选）共用一份，以每轮发送的 documentId 覆盖挂载值（`use-mimir-chat`
-的 send）；移除 pill 回到整个知识库。
+范围 pill，占位符随之变成「就「…」提问…」。范围状态由面板持有，每轮通过
+composer 的 `runConfig` 写进**那条消息**（引擎在发送时读 composer 的
+runConfig 挂到消息上，队列里存的是完整 AppendMessage，所以排队的那条也带
+自己那一轮的范围）；服务端从 `forwardedProps.runConfig` 读（D-099 的
+Stage 0，顶层旧通道仍认、顶层优先）。移除 pill 回到整个知识库。
+
+**底栏三个菜单的数据都由宿主取好传进来**（`composerStatus`：文档列表 /
+模型角色 / 用量，宿主 `useQuery`——键名、缓存策略与失效时机是宿主的知识）。
+三态（加载中 / 失败 / 空）如实传：「读取失败，点此重试」与「知识库还没有
+文档」是两件事，混成一支会让用户以为自己的内容没了。
 
 **上下文容量用真记账，不做字符估算**。`usageLog.refId` 记的就是会话 id，
 chip 显示该会话最近一次请求的 promptTokens——那是**真的发给模型的完整
@@ -1381,6 +1572,9 @@ chip 显示该会话最近一次请求的 promptTokens——那是**真的发给
 逐次落账。没有记账（新会话还没发过、或供应商没回传）就不渲染 chip——
 显示一个 0，与「null 和 0 不能合并」是同一条。点开是明细（模型 / 输入 /
 输出 / 合计）。对窗口总量的百分比要等模型配置补窗口大小，M0 不编。
+（D-099 剥掉模型那一趟的 `RUN_FINISHED` 时，那份用量被接住转挂在服务端
+自己那条 `RUN_FINISHED` 的 `metadata` 上——**目前没有消费者**，记的是
+「剥事件不顺手丢数据」；chip 的账始终来自 `usageLog`。）
 
 **思考强度下拉：标准 / 深入** = 用对话角色还是推理角色回答（原「深度
 思考」开关的下拉化——开关退役）。M0 的思考强度就是这条角色轴；真正的
@@ -1389,8 +1583,9 @@ effort 透传（低 / 中 / 高）要等后端给流加参数，到那时下拉�
 **当前模型是展示 + 管理入口，不是选择器**：触发器显示「这句话会发给谁」
 （随强度联动：标准→对话角色绑定，深入→推理角色绑定；未绑定如实显示
 「未配置模型」），菜单里列两个角色的绑定（当前项打勾、禁用——纯展示）
-与「管理模型」（去设置页）。M0 不做会话级换模型：绑定是全局配置，会话级
-覆盖要后端加 per-request 参数。
+与「管理模型」（去设置页的 `models` 分区——**显式点名目的地**，靠默认值
+会在分区顺序调整时悄悄落到别的 tab）。M0 不做会话级换模型：绑定是全局
+配置，会话级覆盖要后端加 per-request 参数。
 
 **旧开关的标签教训仍然有效**：Switch 把 children 渲染进轨道，轨道底色
 `colorTextQuaternary` 上白字只有 3.11:1——强度下拉的标签直接走文字阶，
@@ -1404,6 +1599,32 @@ effort 透传（低 / 中 / 高）要等后端给流加参数，到那时下拉�
 - **失败卡片**：模型侧的四类失败（PRD §5.8）。标题 + 说明 + 出路按钮 + 一行注
 - **流中断卡片**：请求根本没走完。标题「连接中断」+ 原始错误 + 两条出路
   （重试 / 把问题放回输入框）+ 一行注
+
+**两张卡都收进消息列里**（D-099 前它们挂在消息列外侧/末尾）：错误是**这条
+消息**的一部分，排在正文与引用之后（`parts/MessageItem.tsx` 的显式顺序），
+容器带 `role="alert"`。互斥判据从「旁路 state 里有没有 failure」变成
+**「这条消息里有没有 `mimir.failure` data part」**——有 part 说明服务端
+已经分过类（走失败卡），没有才是真·中断（走引擎的消息状态
+`incomplete` + 错误文本，`MessagePrimitive.Error`）。
+
+**「已停止生成」那一行同源，形态取官方 StoppedRun 的 reason pill**：
+mono 药丸（Square 10px 实心 + 「已停止生成」，`colorFillQuaternary` 底、
+9999px 圆角）+ 旁边一句「以上是已生成的部分」。判据从自维护的 `stopped`
+布尔变成消息状态**`incomplete` 且 `reason === 'cancelled'`**。`reason` 那一半不能省——停止
+与失败共用 `incomplete`（失败是 `reason: 'error'`），只判 `type` 会把这一行
+挂到失败卡下面，同一屏「请求超时」与「已停止生成」互相打架（实测踩过，
+`ChatPanel.test.tsx` 的失败轮用例守着）。**不抄引擎的 StoppedRun 的
+Continue / Discard**：服务端没有可续跑的 run 记录，那对按钮会是空壳
+（`parts/StoppedNotice.tsx`）。
+
+**回答下的动作条**（存成笔记 / 复制）只在最后一条消息上——三个条件：
+这条消息**正文非空**、**没在生成中**（`status` 不是 running）、且**不是
+失败/中断轮**（没有 `mimir.failure` part 且 `status` 不是 incomplete）。
+前两条管「没有正文的一轮」；第三条是旧实现的明确决定（PRD §5.7/§5.8
+「失败卡与动作互斥」）——失败轮的正文是错误原文，「存成笔记」会把一句
+400 存进知识库、「复制」只会复制报错，而那时用户要的是出路、不是沉淀。
+重做时丢过一次，回归用例补上了。「复制」带 `data-copied` 状态 + 图标
+200ms 交换（§7 的同一条曲线）。
 
 **未实现的出路真的 `disabled` + 「M0 未实现」tooltip**，不是看着能点却在
 `onClick` 里静默什么都不做。tooltip 要包一层 `<span>`：antd 的 Button 禁用时是
@@ -1976,8 +2197,11 @@ antd 标题的默认值渲染成 600 + 0.02em，单看登录页没问题，两�
 apps/web/src/theme/tokens.ts         ← antd token 的真相来源（ThemeConfig）
 apps/web/src/theme/customToken.ts    ← mimir 自己的 token（antd 没有的语义）
 apps/web/src/theme/MimirProvider.tsx ← provider 与全局样式的唯一组装处
-apps/web/src/styles/global.ts        ← 全局样式：重置、高度链、文档字体、动效退化
+apps/web/src/styles/global.ts        ← 全局样式：重置、高度链、文档字体、底色、动效退化
 apps/web/src/**/*.style.ts           ← 组件/页面样式（createStyles）
+packages/chat/src/**/*.style.ts      ← 对话包的样式（createStyles，同上）
+packages/office/src/**/*.css         ← 编辑器包的手写 CSS（模板边界的样式，
+                                        读 --me-* 变量；见 §8.4.1 与 office/AGENTS.md）
 ```
 
 三条约定：
@@ -1989,6 +2213,22 @@ apps/web/src/**/*.style.ts           ← 组件/页面样式（createStyles）
    组件简单就合并进组件文件——不必为了「规范」拆出一个只放三行样式的文件。
 3. **不要新增 CSS 文件**。全局样式已经有一个出口（`styles/global.ts`），
    再开一个 `.css` 就绕开了 token 体系，也绕开了类型检查。
+
+**跨包的样式有两条通道**（两个前端包按需要各用其一；对话包两条都用，
+编辑器包主要用第二条）：
+
+- **antd token 直接读**——包内的 `createStyles` 内部就是宿主的
+  `theme.useToken()`，自动继承外观与自定义 token；包**不新建主题**、不传
+  theme 的 ConfigProvider（内层传 theme 会重算 cssVar key，`--ant-*` 变量名
+  一变，引用处静默失效）
+- **CSS 变量桥**——`createStyles` 的样式体是静态字符串，读不到 React
+  context，CSS 自定义属性是唯一能跨包流动的通道。宿主在面板/编辑器祖先上
+  挂值（`editor-theme-bridge.ts` 的 `--me-*`、`ChatThemeBridge` 的
+  `--mimir-chat-*`），包内写 `var(--mimir-chat-font-note, 12.5px)` 并带回退值。
+  **挂错位置的表现是样式全退回回退值**——界面能用、字号差半个像素，不报错
+- **包内的 `createStyles` 模板串里不能出现反引号**（注释里也不行）——
+  `scripts/check-style-backticks.mjs` 守着，它的扫描根含 `packages/chat/src`
+  （新包也要加进去：代码搬走了、守卫扫不到，等于静默失去覆盖）
 
 ### 10.2 用 token，不要写字面量
 
@@ -2061,6 +2301,11 @@ antd-style 自己那套 `themeMode`。两个理由：
 3. 文字-1 ≥ 7:1（AAA）
 4. 占位符 ≥ 3:1
 5. 跨外观不回归：深色的每个文字色都不得弱于浅色对应的那个
+
+**它的扫描根包含 `packages/chat/src`**（D-099，字号阶梯守卫随代码一起搬；
+反引号守卫在 `scripts/check-style-backticks.mjs`，同样加了那个根）：
+这两条守卫都是靠扫源码工作的，漏掉一个目录的表现是「代码搬走了、守卫以为
+它还在」——静默失去覆盖，不是报错。
 
 **深色没有「稍差一点也可以」的分支。** 那种分支一旦存在，深色就会在几次
 迭代后变成「看起来还行」而不是「测得过的」。

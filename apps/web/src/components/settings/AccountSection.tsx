@@ -10,7 +10,12 @@ import { useAccountStyles } from './AccountSection.style'
 /**
  * 账号。
  *
- * 单用户自托管，这里做三件事：**改名称、换头像、登出**。
+ * 单用户自托管，这里做三件事：**改名称、换头像、登出**——但在本地模式
+ * （D-100）下只剩前两件：没有登出、没有邮箱，因为**本机用户不是登录来的**，
+ * 进入方式由桌面客户端自己持有（宿主注入的本机令牌）。
+ *
+ * 「现在是哪种模式」由服务端说了算（`RuntimeConfig.localMode`），界面不猜：
+ * 猜错的表现是一个点了必然失败的「登出」按钮。
  *
  * ## 明确不做
  *
@@ -39,6 +44,8 @@ export function AccountSection() {
 
   const sessionQuery = useQuery({ queryKey: ['session'], queryFn: api.auth.session })
   const session = sessionQuery.data
+  const configQuery = useQuery({ queryKey: ['config'], queryFn: api.config })
+  const localMode = configQuery.data?.localMode ?? false
 
   return (
     <>
@@ -48,24 +55,35 @@ export function AccountSection() {
             <AvatarColumn session={session ?? null} />
 
             <div className={accountStyles.profileBody}>
-              <NameField session={session ?? null} />
-              <div className={accountStyles.emailRow}>
-                <span className={accountStyles.emailLabel}>邮箱</span>
-                <span className={accountStyles.emailValue}>{session?.user.email ?? '—'}</span>
-              </div>
-              <BlockDesc>
-                要换邮箱，改服务端的 <Typography.Text code>OWNER_EMAIL</Typography.Text> 再重启。
-              </BlockDesc>
+              <NameField session={session ?? null} localMode={localMode} />
+              {localMode ? (
+                <BlockDesc>本地使用，数据只在这台电脑上。名称与头像只影响这里的显示。</BlockDesc>
+              ) : (
+                <>
+                  <div className={accountStyles.emailRow}>
+                    <span className={accountStyles.emailLabel}>邮箱</span>
+                    <span className={accountStyles.emailValue}>{session?.user.email ?? '—'}</span>
+                  </div>
+                  <BlockDesc>
+                    要换邮箱，改服务端的 <Typography.Text code>OWNER_EMAIL</Typography.Text>{' '}
+                    再重启。
+                  </BlockDesc>
+                </>
+              )}
             </div>
           </div>
         </Block>
       </Panel>
 
-      <div className={styles.actions} style={{ marginTop: 14 }}>
-        <Button danger onClick={() => void api.auth.signOutAndLeave()}>
-          登出
-        </Button>
-      </div>
+      {/* 登出只在云端模式出现：本地模式下没有「登出去哪」——下一次打开
+          还是同一台机器、同一个本机用户。留一颗点了没反应的按钮比没有更糟 */}
+      {localMode ? null : (
+        <div className={styles.actions} style={{ marginTop: 14 }}>
+          <Button danger onClick={() => void api.auth.signOutAndLeave()}>
+            登出
+          </Button>
+        </div>
+      )}
     </>
   )
 }
@@ -189,8 +207,15 @@ function AvatarColumn({ session }: { session: AuthSession | null }) {
   )
 }
 
-/** 名称。显式保存——与设置页其它键的行为一致 */
-function NameField({ session }: { session: AuthSession | null }) {
+/**
+ * 名称。显式保存——与设置页其它键的行为一致。
+ *
+ * 两个模式下**写入端点不同**：云端走 Better Auth 的 `update-user`，
+ * 本地模式走 `/api/local/profile`（前者的路径要求一个真实会话，本地模式
+ * 靠本机令牌进入，那条路必然失败）。这不是两条业务规则——名称还是那个
+ * 名称，差别只在「谁能写这个用户行」。
+ */
+function NameField({ session, localMode }: { session: AuthSession | null; localMode: boolean }) {
   const { styles: accountStyles } = useAccountStyles()
   const { message } = App.useApp()
   const queryClient = useQueryClient()
@@ -215,7 +240,13 @@ function NameField({ session }: { session: AuthSession | null }) {
   const dirty = draft.trim() !== serverName && draft.trim() !== ''
 
   const save = useMutation({
-    mutationFn: (name: string) => api.auth.updateUser({ name }),
+    // 两个端点返回的形状不同（`{status}` 与 `{name}`），而这里不关心返回值——
+    // 保存成功后统一靠 `['session']` 的重取刷新界面。吞掉返回值也让返回类型
+    // 归一，否则 useMutation 会按第一个分支推出一个联合类型（TS 会拒绝）
+    mutationFn: async (name: string) => {
+      if (localMode) await api.local.updateProfile({ name })
+      else await api.auth.updateUser({ name })
+    },
     onSuccess: () => {
       message.success('名称已保存')
       void queryClient.invalidateQueries({ queryKey: ['session'] })

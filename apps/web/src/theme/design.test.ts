@@ -563,7 +563,14 @@ async function scanFontSizeViolations(): Promise<{
     }
   }
 
-  for (const root of ['src/components', 'src/routes']) await walk(root)
+  /**
+   * 扫的范围。
+   *
+   * `../../packages/chat/src` 是对话包（D-099）：它的字体栈与字号同样要
+   * 走阶梯，而**它的代码不在 `src/` 下**——不加这一条，那批组件就从守卫的
+   * 射程里静默消失了（这条守卫是靠扫源码工作的，扫不到等于没有）。
+   */
+  for (const root of ['src/components', 'src/routes', '../../packages/chat/src']) await walk(root)
   return { literals, extraBraces }
 }
 

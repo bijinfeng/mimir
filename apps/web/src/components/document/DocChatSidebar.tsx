@@ -1,10 +1,15 @@
-import type { CSSProperties } from 'react'
+import { ChatPanel } from '@mimir/chat'
 import type { Citation, DocumentDetail } from '@mimir/shared'
+import { useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 import { Button } from 'antd'
 import { X } from 'lucide-react'
-import { ChatPanel } from '@/components/ChatPanel'
+import { ChatThemeBridge } from '@/components/chat/ChatThemeBridge'
 import { DocChatGuide, DocQuickAsks } from '@/components/document/DocChatGuide'
+import { useAppShell } from '@/lib/app-shell-context'
+import { createChatIo } from '@/lib/chat-io'
 import type { AskDraft } from '@/lib/app-shell-context'
+import { useChatComposerStatus } from '@/lib/use-chat-composer-status'
 import { useStyles } from '@/components/document/DocumentPanel.style'
 
 /**
@@ -65,6 +70,27 @@ function renderQuickAsks(ask: (question: string) => void): ReturnType<typeof Doc
 
 export function DocChatSidebar({ doc, draft, onClose, onOpenCitation }: DocChatSidebarProps) {
   const { styles } = useStyles()
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  /* 「打开笔记」：存成笔记之后跳到那篇。侧栏不自己处理导航——与
+     「问 AI」进来的方式对称（那条也走 appShell） */
+  const { openDocument } = useAppShell()
+  /* 侧栏的会话不在 URL 里，所以容量 chip 拿不到会话 id——`conversationId`
+     传 undefined 时那一支查询是 disabled 的（它会显示「没有记账就不渲染」，
+     与侧栏的定位一致：这里不看上下文开销） */
+  const composerStatus = useChatComposerStatus(undefined)
+
+  const io = createChatIo({
+    invalidate: (keys) => {
+      for (const key of keys) void queryClient.invalidateQueries({ queryKey: key })
+    },
+    /* 会话 id 由包内部持有：侧栏不进 URL、不进左侧会话历史的高亮
+       （D-087 的三条差异之一）。这里的 no-op 是刻意的 */
+    onConversationCreated: () => {},
+    onManageModels: () => {
+      void navigate({ to: '/settings', search: { scope: 'all', section: 'models' } })
+    },
+  })
 
   return (
     /* 注意：这里**不能**用 `styles.aiSidebar`——那是外层折叠容器（宽度过渡 +
@@ -87,21 +113,27 @@ export function DocChatSidebar({ doc, draft, onClose, onOpenCitation }: DocChatS
         400px 的面板用 16px。设在这里而不是改两个 style 文件——那样会
         把主视图一起改窄。
       */}
-      <div
-        className={styles.aiSidebarBody}
-        style={{ '--mimir-chat-gutter': '16px' } as CSSProperties}
-      >
-        <ChatPanel
-          conversationId={undefined}
-          draft={draft}
-          onOpenCitation={onOpenCitation}
-          onConversationCreated={() => {}}
-          /* 空态换成「指南在上、输入框固定底部」（D-090，语雀式），
-             快捷提问贴着输入框（D-093）。两个都是模块级 render 函数：
-             内联箭头会被判成渲染期定义组件（铁律 1 的静默退化） */
-          guide={() => renderGuide(doc)}
-          guideActions={(ask) => renderQuickAsks(ask)}
-        />
+      <div className={styles.aiSidebarBody}>
+        {/* 边距与字号由这个桥填给包（`--mimir-chat-gutter: 16px` 是
+            400px 窄栏的比例；主视图吃 40px 的默认值）。它必须包住面板 */}
+        <ChatThemeBridge gutter="16px">
+          <ChatPanel
+            conversationId={undefined}
+            draft={{
+              text: draft.text,
+              ...(draft.documentId ? { documentId: draft.documentId } : {}),
+            }}
+            onOpenCitation={onOpenCitation}
+            onOpenNote={(noteId) => openDocument(noteId)}
+            io={io}
+            composerStatus={composerStatus}
+            /* 空态换成「指南在上、输入框固定底部」（D-090，语雀式），
+               快捷提问贴着输入框（D-093）。两个都是模块级 render 函数：
+               内联箭头会被判成渲染期定义组件（铁律 1 的静默退化） */
+            guide={() => renderGuide(doc)}
+            guideActions={(ask) => renderQuickAsks(ask)}
+          />
+        </ChatThemeBridge>
       </div>
     </aside>
   )

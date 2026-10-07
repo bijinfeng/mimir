@@ -351,6 +351,11 @@ skill（由 `skills-lock.json` 锁定哈希），`.claude/skills`、`.zcode/skil
 
 ## D-013 对话 UI 与状态交给 TanStack AI 的 React 层
 
+> **部分已被 D-099 取代**（库那一层）：对话状态与渲染仍然不手搓（这一条的
+> 原则不变），但浏览器侧的库从 `@tanstack/ai-react` 换成了 **assistant-ui**，
+> 组件搬进 `packages/chat`。下面的推理与两张实测表仍是「为什么不手搓」的
+> 证据，读的时候把表格里的库名对应到今天的功能即可。
+
 **背景**：M0 把原型的三栏界面接上真实后端时，对话部分最初是手写的——
 自己维护消息数组、自己拼流式 token、自己做乐观追加与错误回退。
 写完之后发现：这套东西与 TanStack AI 提供的 `useChat` 几乎逐条重合，
@@ -409,6 +414,11 @@ skill（由 `skills-lock.json` 锁定哈希），`.claude/skills`、`.zcode/skil
   打错一个字母是静默失效
 - 非流式的 `POST /api/conversations/:id/ask` 保留：测试与 curl 用它，
   且与流式版共用同一套检索
+
+**D-099 之后怎么读这一条**：上面那两张表里「`useChat` / `createChatUI` /
+`TextPart`」对应的格子现在读作「引擎（assistant-ui）的对应能力」；
+「两个必须踩对的接口细节」里，第 1 条由历史适配器 + 骨架屏解决，
+第 2 条**结论不变**（会话 id 走请求体）。以 D-099 为准。
 
 **顺带发现的检索缺陷**（D-014 单列）。
 
@@ -4452,6 +4462,10 @@ PRD §5.9 与 §5.12 的引用路径、TECH §4.8 / §10。
 
 ## D-074 历史会话的失败卡片、引用与检索过程都从落库记录回退
 
+> **已被 D-099 取代**（数据模型那一层）：实时份与落库份的**按位置对齐**
+> 整体退役——trace / 引用 / 失败现在是消息里的 data part，实时与历史同一个
+> 形状，「回退」不再是一段逻辑。下面记的是当时的做法与它防住的坑。
+
 **背景**：`ChatPanel` 只渲染**实时事件推来**的失败、检索过程与引用
 （`chat.failure` / `chat.trace` / `chat.citations`，只由 SSE 写入）。
 打开一条历史会话时：库里存着 `messages.failure = 'quota'`、`messages.trace`
@@ -4641,6 +4655,12 @@ PRD §5.9 与 §5.12 的引用路径、TECH §4.8 / §10。
 
 ## D-077 对话可以停、状态可见、失败不再说谎（M0 的四处补齐）
 
+> **部分已被 D-099 取代**：这一条列出的四处问题与它们的**结论**仍有效
+> （停止要有出口、等待期要有反馈、跟随要看状态、出路必须真的能走）；
+> 但把它们落下去的那套实现（`creating` 布尔、`stopped` 布尔、
+> `use-stick-to-bottom` 的 32px 闸门、`chat.failure` 旁路 state）随组件
+> 搬进 `packages/chat/src/` 并换成了引擎的状态。下面保留原文。
+
 **背景**：对话是本产品的主交互（PRD §5.2），但审计出四处「界面上说不清正在
 发生什么」：
 
@@ -4756,6 +4776,8 @@ PRD §5.9 与 §5.12 的引用路径、TECH §4.8 / §10。
 **当场看不到**，要刷新或重新打开会话才从落库记录回退出来。这不是本次改动引入的
 （`createChatUI` 的 `message` 只是不渲染空消息），修它要动 SDK 的事件处理，
 不在这一批里。
+（D-099 后这条的前提不再成立：失败是一个可渲染的 `mimir.failure` data part，
+连消息一起出现。**未在浏览器里复验**——D-099 的验证边界记在那一条。）
 
 **影响**：`apps/web/src/components/ChatPanel.tsx`（拆到 256 行）、
 `components/chat/ChatPanel.style.ts` / `ChatEmptyState.tsx` / `ChatThread.tsx` /
@@ -5959,3 +5981,532 @@ pdf-lib 生成的合法 0 页 PDF）逐项实测。
 | 命令面板焦点（P1-4） | 从按钮打开再 Esc | 焦点回到原按钮（原先掉到 `BODY`） |
 
 `pnpm check` 全绿（前端 251 + 服务端 206 + office 380 + 插件 38 + 桌面 3）。
+
+## D-097 对话消息去气泡、检索过程去盒：对齐 Codex 的 transcript 形态
+
+**背景**：用户指认对话页两处「特别的丑」：① 用户消息是右对齐的
+`colorPrimaryBg` 气泡；② 检索过程是 `border` + `tintNav` 底的折叠盒。
+两者都是「聊天软件」的画法，与 D-077 起对齐的 Codex 交互（transcript、
+activity 折叠行）不同形。
+
+**Codex 的交互是什么样的**（三端一致的骨架）：
+
+1. **transcript，不是信使**：消息列是一份工作记录，用户与助手的轮次
+   全部左对齐占满宽度，靠说话人标记（CLI 的 `›`、web 的头像）与留白区分，
+   不靠气泡与左右交替——回答里有代码块、表格时尤其重要
+2. **元信息塌成一行 muted 字**：推理与工具活动折叠成
+   「Worked for 2m 14s」这样的单行 dim 文字，展开是缩进的 activity 列表；
+   不画盒子——盒子会让元信息跟正文抢层级
+3. **回答是视觉中心**：全宽 markdown；过程与状态都是配角
+
+**改动**：
+
+- 用户消息：去气泡（背景 / 圆角 / 右对齐 / 78% 限宽全删），改行首
+  `›` 标记 + 500 字重；标记绝对定位挂在左缩进槽里（行内 `::before`
+  会因 TextPart 的块级正文自己占一行，flex 会把多 part 摆成一排）
+- 检索过程：去外壳（border / tintNav / overflow 全删），标题行 hover
+  提亮（`colorFillTertiary`），数字不再加重提色；展开内容缩进到
+  标题文字之下（左内距 22px）；标题的 Zap 图标删掉（caret 就够）
+- 检索过程的**位置**从「整个消息列上方」移到「最后一条用户消息之后、
+  它的回答之前」：question → 过程 → 回答，正是 PRD §5.6「回答上方」的
+  字面落位，也是 Codex 的 prompt → activity → result 顺序。实现是消息列
+  内的 flex order（消息 0 / 检索过程 1 / 最后一条助手消息 2），不动
+  SDK 的消息渲染；历史多轮会话里它因此贴着自己那一轮，而不是飘在
+  整个会话顶上
+
+**不做的**：给用户消息加「编辑重发」、给 trace 换自绘时间轴——前者是
+能力项（PRD 未列），后者 antd Steps 的圆点 / 连接线 / 键盘可达都是现成的。
+
+**影响**：`apps/web/src/components/chat/ChatPanel.style.ts`（thread 的
+user 规则与 order 落位）、`apps/web/src/components/chat/ChatThread.tsx`
+（TraceDisclosure 移进 thread）、`apps/web/src/components/chat/TraceDisclosure.tsx`、
+`docs/DESIGN.md` §8.5/§8.6/§8.7。
+（这些文件随后在 D-099 里搬进 `packages/chat/src/`——上面的路径是这一条
+生效时的位置。）
+
+**验证方式**：`pnpm check` 全绿；浏览器实测对话页（有真实 trace 与多轮
+消息的会话）浅色 + 深色：用户消息左对齐通栏、行首 `›`、无底色；
+trace 无盒、hover 有浅底、展开缩进对齐标题文字；文档页「问 AI」侧栏
+（400px）同套样式无溢出。
+
+## D-098 等待期是一个活着的检索过程行；生成中可打字、追问排队
+
+**背景**：D-097 把检索过程行的样式对齐了 Codex（无盒、muted、缩进展开），
+用户确认样式「很对」，并提出要 **Codex 完整的对话交互体验**。对照 Codex 的
+轮次生命周期，缺两块：
+
+1. **干活时 activity 行是死的**。服务端其实在检索一结束就把整份 trace
+   推给前端（抢在模型之前，见 `assistant-stream.ts`），结束时再推一份带
+   整轮耗时的——数据早就在，界面却把它藏到正文出现，另立一条
+   StreamStatusLine 顶班。同一件事两个表面，是「进度指示」的分裂
+2. **生成中输入框只读**。等回答的几十秒里正好想好追问，不让打字等于
+   逼用户干等或拿备忘录。Codex 的做法是可打字、Enter 排队、本轮结束自动发出
+
+**改动**：
+
+- **一个表面贯穿整轮**：发送后立刻出现「正在检索知识库 · Ns」（此刻
+  trace 未到，不是 Collapse——没有可展开的内容就不长成可展开的样子）；
+  检索一到就地展开成步骤时间轴，秒数持续在走（`LiveSeconds` 叶子组件，
+  D-077 的计时规矩），`process` 图标带呼吸；**正文一出收起但行还挂着**，
+  秒数继续走；流结束时换成服务端推来的整轮真实 `tookMs`。
+  StreamStatusLine 整个退役（连同它「命中 N 段」的第二相位——展开的
+  时间轴本身就是那个信息）
+- **幽灵计时顺带修掉**：旧判据只看「最后一条是 user」，打开一个停在半截
+  的历史会话（停止过的轮次恰好就是这个形状）会挂出一条永远在走的
+  「正在检索」。新判据加**忙**（`isLoading || creating`）
+- **生成中可打字**：`readOnly` 移除，Enter 在生成中**排队**（随强度开关
+  一起捕获）；排队条显示在输入框上方（× 取回）。**本轮正常结束自动发出；
+  停止 / 失败 / 流中断则还给输入框**——用户停在半截通常是想改主意，
+  替他把排队的话发出去是说谎般的体贴
+- **回填与重试解耦**：「把文本放回输入框」的杠杆从 `lastSend` 挪到独立的
+  `prefill`——回填不该改写「重试要重发哪个问题」的记录
+
+**不做的**：多条排队（队列深度 1，够覆盖「想到一条追问」的主流场景；
+多条要处理逐条自动发送的失败语义，等真实需要再立项）、生成中改检索范围
+（范围逐轮生效，正在跑的那轮不受影响，本就是现状）。
+
+**影响**：`apps/web/src/components/chat/TraceDisclosure.tsx`（活模式 +
+`LiveSeconds`）、`apps/web/src/components/chat/ChatThread.tsx`
+（live 判据 + 行的挂载门控）、`apps/web/src/components/chat/StreamStatusLine.tsx`
+（删除）、`apps/web/src/components/chat/Composer.tsx`（可打字 + 排队条）、
+`apps/web/src/components/ChatPanel.tsx`（排队状态机 + `prefill`）、
+`docs/PRD.md` §5.6、`docs/DESIGN.md` §8.6/§8.7/§8.8。
+（排队与「停止还给输入框」的语义在 D-099 里随组件搬进 `packages/chat/src/`；
+`prefill` / `lastSend` 那对状态被引擎的 composer 取代——D-098 定的**行为**
+不变，只是落点变成了 `runtime/use-mimir-runtime.ts` 的 `onCancel`。）
+
+**验证方式**：`pnpm check` 全绿；浏览器实测：发送后立刻出现「正在检索
+知识库 · Ns」、检索到后展开且秒数在走、正文一出收起、流结束换成真实
+耗时；生成中打字 Enter 出现「已排队」条、正常结束后自动发出为新一轮；
+停止后排队的那条回到输入框；打开停止过的历史会话不再有幽灵计时。
+（流式各相位的截图与数据见会话记录；模型侧依赖本地代理，实时流式
+手感以代理恢复后为准。）
+
+## D-099 对话组件抽成 @mimir/chat；浏览器侧引擎换成 assistant-ui
+
+**背景**：对话面板（消息区、检索过程、引用、失败卡、输入区、流式状态）
+一直在 `apps/web` 里，状态层是 `@tanstack/ai-react` 的 `useChat`。它身上
+攒了三处补丁，每一处都不是「写法不好看」，而是**同一件事有两套数据**：
+
+1. **实时份与落库份按位置对齐**。trace / 引用 / 失败是旁路的自定义事件
+   收进 state（`use-mimir-chat-events.ts`），历史消息是另一条路径，两者靠
+   `RoundResult.tsx` 的 `resolveRound` 按**位置**把「这一轮的结果」与
+   「这条落库消息」对齐（那个文件 80 行注释就是在解释为什么不能按 id）
+2. **`initialMessages` 只在挂载那一刻生效**（`useChat` 把客户端建在
+   `useMemo(..., [])` 里）→ 宿主长出「数据没到位就不许挂载」的硬契约
+   （`ChatPanel` 的 `messagesLoading` 分支）
+3. **`creating` 布尔**：新会话的第一问要先建会话再发请求，那段忙状态是
+   手工维护的
+
+用户要求按 assistant-ui 的交互重做对话。
+
+**决策**：采用方案 A——**对话引擎换成 `@assistant-ui/react` +
+`@assistant-ui/react-ag-ui`**（内部是 `@ag-ui/client`），antd 组件层写在
+它上面；组件抽成独立包 **`@mimir/chat`**，目录与发布方式对齐
+`packages/office` 的先例（源码发布、无 build 脚本，由使用方编译进产物）。
+方案 B（保留 `useChat`、只借设计）**否掉**，理由见下。
+
+### 硬前置：服务端事件顺序先合规（Stage 0）
+
+assistant-ui 的 AG-UI 客户端对事件顺序有**硬校验**，而 mimir 原有流三条
+都不满足——这是「换引擎」的前置条件，不是可选优化：
+
+- 流的第一条事件往往是 `CUSTOM`（会话 id / 检索过程），而 AG-UI 的客户端
+  在流开头就校验第一条；实测 `@ag-ui/client@0.0.59` 抛
+  `AGUIError: First event must be 'RUN_STARTED'`，**整轮一个字节都用不了**
+- 只检索那条路径（`textOnlyStream`）一条生命周期事件都没有
+- 终局那份「整轮耗时」的 trace 发在模型 `RUN_FINISHED` **之后**，同样被拒
+  （`Cannot send event type 'CUSTOM': The run has already finished`）
+
+服务端的修法（`apps/server/src/services/assistant-stream.ts`）：
+
+- `createStream` 第一件事发**自己的** `RUN_STARTED`（runId 服务端生成，
+  `threadId` = 会话 id）——它标识的是「这一轮问答」，与模型那一趟调用不是
+  同一个生命周期（只检索路径压根不调模型，却同样是一轮）
+- 模型流里的 `RUN_STARTED` / `RUN_FINISHED` **剥掉不转发**：叠加会命中
+  `Cannot send 'RUN_STARTED' while a run is still active`；模型的用量
+  （原先搭它的 `RUN_FINISHED` 流出去）接住挂到自己那条
+  `RUN_FINISHED` 的 `metadata` 上（**目前没有消费者**——界面上的上下文
+  容量读的是服务端记的 `usageLog`，保留它是为了「剥事件时不顺手丢数据」）
+- 终局 trace 抢在自己的 `RUN_FINISHED` 之前发
+- 失败路径保持 `CUSTOM(mimir.failure)` → `RUN_ERROR`（`RUN_ERROR` 是终局
+  事件，带分类的必须排在它前面）
+- `mimirProps` 增加 `forwardedProps.runConfig` 回退（顶层优先）：新前端把
+  `runConfig.custom`（范围 / 强度）放在这一层，队列里的每条消息带着自己
+  那一轮的设置到服务端
+
+**新增 `apps/server/src/test/chat-stream.test.ts`**：把 `/api/chat` 的真实
+SSE 字节起本地服务喂给 `@ag-ui/client@0.0.59`，断言「RUN_STARTED 在首、
+RUN_FINISHED 在尾且各只有一条」。只断言「流里有 RUN_STARTED」是不够的——
+那条断言在顺序错时照样通过（RUN_STARTED 也可能出现在第三位）。为此
+`apps/server` 加 devDependency `@ag-ui/client@0.0.59`。
+
+### 为什么 A 而不是 B
+
+- **B 的组件层与 A 的组件层是同一份**（同样的 antd 组件、同样的
+  `createStyles`、同样的 DOM 结构），差别只在 `use-mimir-chat.ts` 那一个
+  文件的数据来源。所以「只借设计」等于把 primitives 手抄一遍——而本仓
+  `apps/web/AGENTS.md` 的原则恰恰是「不要手搓流式状态与消息 UI」，选 A
+  执行得更彻底
+- primitives 的行为层（focus 时机、Escape 取消、紧凑态防抖、队列生命周期、
+  parts 分组、a11y 属性、content-visibility、motion-reduce）要么手写、
+  要么放弃
+- B 作为**回退**保留：包与组件重写（Stage 1）不变，只把
+  `runtime/use-mimir-runtime.ts` 换回 useChat 适配器
+
+**铁律 5 的适用边界要说清**：「模型调用交给 SDK / 适配器只在
+`plugins/provider` / 不引 RAG 框架」约束的是**服务端怎么调模型**——chat /
+embed / rerank / summarize 仍全部走 TanStack AI，适配器仍只在
+`plugins/provider/` 里构造，`/api/chat` 仍是 `toServerSentEventsResponse`
+产出的 AG-UI 流，一行不动。换掉的只是**浏览器侧的 AG-UI 客户端与状态层**。
+assistant-ui 不是 RAG 框架：它不接管 documents / chunks 的数据模型，引用
+仍指回我们自己的表。
+
+**A 的代价（如实）**：新增 `@assistant-ui/react@0.15.23`（MIT）与
+`@assistant-ui/react-ag-ui@0.0.63`（依赖 `@ag-ui/client`）。实现时用 esbuild
+最小入口量过体积：assistant-ui 那套 62.4KB gzip，TanStack 那套（ai-react +
+ai-client + markdown）55.2KB gzip——最小入口净增约 7KB gzip，真实差还要
+加上我们保留的 markdown 份。两者都是 0.x，**锁精确版本**（本仓对 0.x 已有
+先例：`@tanstack/ai` 0.55.0）。`@tanstack/markdown` 保留（0.0.13，与
+ai-react 内部那份同源），正文渲染不动；`apps/web` 删掉
+`@tanstack/ai-react`（grep 确认只有 chat 的四个文件引用它）。
+
+### 包的公开 API 契约
+
+`packages/chat`（源码发布；`exports` 只有 `./src/index.ts` 与 `./test-dom`；
+`antd` / `antd-style` / `react` / `react-dom` 进 peerDependencies——
+antd-style 有自己的模块级 cache，两份拷贝的症状是样式重复注入与顺序漂移、
+不报错，所以 `pnpm-workspace.yaml` 的 catalog 也追加了 `antd-style`）。
+
+公开面只有三样（`packages/chat/src/index.ts`）：
+
+- **`<ChatPanel {...} />`**——props：`conversationId`（undefined = 新对话）、
+  `draft`（`ChatDraft = { text?; documentId? }`，宿主把 `AskDraft` 映射进来）、
+  `onOpenCitation` / `onOpenNote`、`guide?` / `guideActions?`（D-090/D-093 的
+  双插槽原样保留，仍是渲染函数，宿主必须传模块级函数）、`io: ChatIo`、
+  `composerStatus`（文档列表 / 模型角色 / 用量三份数据，宿主 `useQuery`
+  取好，三态如实传）
+- **`ChatIo`**——`createConversation()` / `loadConversation(id)` /
+  `onConversationCreated(id)` / `onTurnSettled(id)` / `saveAsNote(id)` /
+  `onManageModels()` / `chatUrl?`。宿主实现在
+  `apps/web/src/lib/chat-io.ts`（与 `packages/office` 的 `EditorIo` 同一条
+  边界：壳与渲染归包，方言与取写归宿主；包内 import 不到宿主的 api / router
+  / queryClient）
+- **`ChatHostVars`**（主题变量兜底层）与 **`DEFAULT_CHAT_URL`**、类型
+
+### mimir 业务数据是消息的 data part（本次架构的支点）
+
+trace / citations / failure 不再是 props、也不是旁路 state，而是**消息里的
+data part**（`mimir.trace` / `mimir.citations` / `mimir.failure`），两条路径
+同一个形状：
+
+- 实时：服务端 CUSTOM 事件 → 运行时的 run-aggregator 变成 canonical data part
+- 历史：`runtime/history.ts` 把落库字段转成**同名**的 data part，正文最后
+
+于是 `resolveRound` 整体退役（消息在哪，它的依据就在哪），宿主不再需要
+`use-mimir-chat-events.ts`（删除）。**不用引擎的 `makeAssistantDataUI`
+注册渲染器**：它按 parts 顺序就地渲染，而服务端先发 trace / 引用、后发
+正文——引用块会落到回答**上方**；摆回位置要让消息根变 flex 用 order 重排，
+而 flex 会取消外边距折叠（正文段间距 12px → 24px，一次看不见的排版改动）。
+所以 `parts/MessageItem.tsx` 的顺序是显式的（过程 → 正文 → 引用 → 失败 →
+停止 → 动作条），`data` 槽显式关掉。
+
+### 主题与重挂载契约
+
+- **antd token 与自定义 token 不需要桥**：包内全走 `createStyles`（内部就是
+  宿主的 `theme.useToken()`），自动继承外观与 `tintList` / `tintHover` /
+  `inlineCodeFg`。包**不新建主题**、不传 theme 的 ConfigProvider
+- **字号走 CSS 变量桥**：宿主在面板祖先上挂 `--mimir-chat-font-*` 八档
+  （值取自 `theme/tokens.ts` 的 `FONT_SIZE`）与 `--mimir-chat-gutter`，
+  包内一律 `font-size: var(--mimir-chat-font-note, 12.5px)`。理由与
+  `editor-theme-bridge.ts` 同源：`createStyles` 的样式体是静态字符串，
+  CSS 自定义属性是唯一能跨包流动的通道；回退值让包在测试与独立预览时也能
+  渲染。挂错位置的表现是「样式全退回回退值」——不报错
+- **重挂载契约不变**：会话 id 不进连接，agent 的 threadId 与那一批消息在
+  挂载时定下，切换会话仍由宿主 `key` 重挂载（`_app.chat.tsx` 的
+  `panelKey` / `ownedId` 原样保留——自己建的会话不重挂，否则正在接收的
+  流会被丢掉）
+
+### 两条守卫的射程要补上这个包（漏了是静默失去覆盖）
+
+`scripts/check-style-backticks.mjs` 的 `ROOTS` 加 `packages/chat/src`；
+`apps/web/src/theme/design.test.ts` 的 `scanFontSizeViolations` 扫描根加
+`../../packages/chat/src`。两条守卫都是靠扫源码工作的——代码搬走了、扫不到
+等于没有（已用临时探针验证守卫确实覆盖该目录）。
+
+### 不做的
+
+- **`makeAssistantDataUI` 注册渲染器**（理由见上）
+- **StoppedRun 的 Continue / Discard**：服务端没有可续跑的 run 记录，
+  那对按钮会是空壳
+- **Reload 按钮走 runtime.reload**：分支未定，不做
+- **多条排队**：引擎的队列实际是**多条**，而 D-098 定的是单条；当前 UI 只
+  显示 `queue[0]`（其余等前一条发出去后依次露头），逐条自动发送的失败语义
+  留待将来另定
+- **队列的「还给输入框」不靠引擎**：停止时引擎只 `notifyCancelled()` →
+  暂停队列、不还回输入框，所以包在 `onCancel` 里显式「取首条 → setText →
+  removeQueueItem」——漏了它的症状是**用户的字不见了**
+
+### 影响
+
+- **新增**：`packages/chat/`（`src/index.ts`、`ChatPanel.tsx`、
+  `ChatThread.tsx`、`EmptyStage.tsx`、`ChatHostVars.tsx`、
+  `ChatPanel.style.ts`、`custom-token.d.ts`、`runtime/*`、`parts/*`、
+  `composer/*`、`hooks/use-scrolled.ts`、`test-dom.ts`、`AGENTS.md`、
+  `package.json`、`tsconfig.json`、`vitest.config.ts`）、
+  `apps/web/src/lib/chat-io.ts`、
+  `apps/web/src/lib/use-chat-composer-status.ts`、
+  `apps/web/src/components/chat/ChatThemeBridge.tsx`、
+  `apps/server/src/test/chat-stream.test.ts`
+- **搬进包**（`git mv`）：`ChatPanel.style.ts`、`ChatEmptyState.tsx` →
+  `EmptyStage.tsx`、`chat/composer/ComposerMenus.tsx`、`lib/use-scrolled.ts`、
+  `AnswerActionsRow.tsx` → `parts/AnswerActions.tsx`、`CitationCards.tsx` →
+  `parts/CitationList.tsx`、`FailureCard.tsx` → `parts/FailureNotice.tsx`、
+  `TraceDisclosure.tsx` → `parts/TraceActivity.tsx`
+- **删除**：`apps/web/src/components/ChatPanel.tsx`、
+  `chat/{ChatThread,Composer,RoundResult}.tsx`、
+  `lib/{use-mimir-chat.ts,use-mimir-chat-events.ts,chat-ui.tsx,use-stick-to-bottom.ts}`
+- **修改**：`apps/server/src/services/assistant-stream.ts`（Stage 0）、
+  `apps/web/src/routes/_app.chat.tsx`、`components/document/DocChatSidebar.tsx`
+  （渲染包 + `ChatThemeBridge gutter="16px"`，模块级 `renderGuide` /
+  `renderQuickAsks` 原样保留，`onConversationCreated` 仍是 no-op）、
+  `apps/web/package.json`、`apps/server/package.json`、
+  `pnpm-workspace.yaml`、两条守卫脚本
+- **文档**：`docs/DESIGN.md` §8.5–§8.8.1、`docs/TECH.md` §3/§5.4/§5.5、
+  `apps/web/AGENTS.md` 的「对话」一节；包内约定见 `packages/chat/AGENTS.md`
+
+### 验证方式
+
+- **`pnpm check` 全绿**（同步这份文档时跑的，exit 0）：lint 0 warnings
+  0 errors、`lint:styles` 通过、`format:check` 通过、全部 13 个 workspace
+  包 typecheck Done；测试 desktop 3 + provider 25 + storage 13 +
+  **chat 25** + office 380 + web 251 + server 209（其余包无测试文件）
+- 包内测试（`pnpm --filter @mimir/chat test`，3 个文件 25 条）是「起真 HTTP
+  服务推真实帧」的端到端，不 mock 引擎；`apps/server` 的
+  `chat-stream.test.ts` 同款做法验事件顺序
+- **浏览器实测（收尾时补做）**：主视图空态（居中舞台）、发问后的检索
+  过程行与失败卡、引用卡点击跳回原文并**高亮命中区间**（CSS Custom
+  Highlight 注册表里 1 个 range、文本与命中一致）、文档侧栏 400px 的
+  指南模式与快捷提问、浅色与深色两套渲染——全部核对通过
+
+**交接验收时找到并修掉的三处**（在浏览器里发现的，包内测试当时是绿的）：
+
+1. **`useFailurePart` 的选择器返回对象字面量** → `Maximum update depth
+   exceeded`、整页交给错误边界（任何带失败 part 的会话一渲染就白屏）。
+   选择器改为只取 `part.data` 这个 store 里已有的引用，展示对象在选择器外
+   组装；包 `AGENTS.md` 记了这条（`useSyncExternalStore` 的 `Object.is` 比较）
+2. **发送 / 停止两颗按钮同时常驻** → 空闲时右侧多一块灰色停止方块。
+   改为单键位条件渲染（与上游 `thread.tsx` 的 `AuiIf` 形态一致）；那条
+   「生成中排队」的测试从「点发送键」改成「按 Enter」（生成中已无发送键位，
+   Enter 才是排队的真实路径）
+3. **「已停止生成」挂到了失败卡下面**：`incomplete` 被停止与失败共用，
+   只判 `status.type` 会同时说「请求超时」与「已停止生成」。判据补上
+   `reason === 'cancelled'`；**动作条**（存成笔记 / 复制）也在失败 / 中断轮
+   恢复不渲染（旧实现「失败卡与动作互斥」的明确决定，重做时丢过一次）——
+   新增包内回归用例，DESIGN §8.8.1 同步
+
+**一处有意的行为变化**：失败轮的**引用卡照常显示**（旧实现与失败卡互斥）。
+失败卡文案本来就写着「命中的分块已经保存在上面」「已命中的内容没有丢」——
+旧版把引用藏起来，那句话指向空处；显示出来才让「内容丢了吗」这个必答问题
+有实证（PRD §5.8）。动作条仍互斥（见上）。
+
+**未做（如实）**：`HttpAgent` 的 `credentials: 'include'` 跨源那条缝没验
+（Node 里没有 cookie jar，同源已验证）；React Compiler 的 `logDiagnostics`
+没开，没有逐组件确认编译器没跳过；真实模型的流式生成手感未测（本地模型
+代理当时返回 400，走的是服务端的检索式兜底路径）。
+
+---
+
+## D-100 桌面客户端两种模式：本地离线（免登录）与云端（纯壳）
+
+**背景**：用户要求桌面端支持两种使用方式——**本地模式**（数据全在本机、
+离线可用、连登录都不需要）与**云端模式**（数据在自部署的服务端，客户端只是
+一个壳），第一次启动要有选择过程，之后允许在客户端内切换。D-046 落地的
+桌面端只有一种形态：进程内私有宿主 + SQLite + 首次注册。本条目补上另一半。
+
+**决定**：
+
+1. **首次启动是一个选择页**（`apps/desktop/ui/setup.html`，随包分发的
+   自包含静态页）：本地模式 / 云端模式（填地址）。选择持久化在
+   `<userData>/desktop-config.json`——它是**载体的部署事实**，不进服务端
+   设置表（§7.5 的配置分层；且切换必须能在服务端不可达时完成）。
+   选择页**不依赖本地宿主**：云端用户不必先起一个本地服务才能看到它，
+   宿主起不来时它也还在。
+2. **本地模式 = 现有形态 + 免登录**（`MIMIR_LOCAL_MODE=1`）：
+   - 鉴权不再走 better-auth 会话，而是宿主注入的 **`mimir-local` 令牌
+     cookie**（`MIMIR_LOCAL_TOKEN` 每次启动随机；main 写进 Electron 的
+     cookie jar，httpOnly + SameSite=Lax）。**这不是把 API 变成无鉴权**：
+     随机端口是混淆不是访问控制，一个恶意网页可以扫本机端口；无鉴权 +
+     无 preflight 的跨站写请求等于把 CSRF 保护拆掉。令牌把跨站请求挡在
+     外面（Lax 不带 cookie），也保住 §14.5 那句「DNS rebinding 后的请求
+     同样过不了 requireAuth」。
+   - 宿主建一个**本机用户**（`local@mimir.local`，走 better-auth 自己的
+     `signUpEmail`，密码随机且不公开）：所有权字段、头像、外键都需要一个
+     真实 user 行；直接插表要复刻密码哈希（D-020 记过这条坑）。
+   - `requireAuth` **先试真实会话，再验令牌**——浏览器里用密码登录的老路径
+     仍然成立（不强拆）。`get-session` 在带令牌时返回合成会话，前端的
+     守卫、侧栏头像、账号分区零改动。
+   - **本地模式强制绑定回环地址**（`startServer` 结构性保证）：免登录只在
+     「同一台机器」这个前提下成立，写到 0.0.0.0 就把它变成了公开无鉴权。
+   - 账号域的边界：本地模式没有可用凭据，界面**隐藏登出与邮箱**，
+     名称走专有端点 `PATCH /api/local/profile`（不复刻 better-auth 的
+     update-user）；头像沿用既有 `/api/avatar`（它读的是 context 里的 user）。
+3. **云端模式 = 纯壳**：窗口加载远端地址，远端自己的 Web 产物、cookie 会话、
+   SSE、Range 全部同源原生——这正是 D-046「页面↔宿主走 HTTP」的形态换个
+   宿主，没有新增传输。客户端**不启动本地宿主、不落本地数据**。
+4. **客户端内切换**（设置 › 客户端，桌面壳专属分区）：切换前**校验**
+   （URL 归一化 + 探 `/healthz`，失败就把话说清楚），先持久化再导航；
+   启动/导航失败**不静默**——弹「重试 / 更换模式」。
+   **宿主一旦启动就常驻**，切到云端不销毁：服务端模块不可重入（模块级的
+   db 连接、插件装配、设置缓存），重启宿主不是已支持的路径；代价只是一个
+   回环端口。
+5. 共享契约（`packages/shared/src/desktop.ts`）：`DesktopBootInfo` 增
+   `mode`、`dataDir` 变 `string | null`（云端模式下数据不在本机）；
+   preload 新增 `mode.get / choose / activate`（选择与导航分两步：
+   校验失败要能回到原页面，导航则一定替换页面）。
+
+**否决**：
+
+| 方案 | 为什么不用 |
+|---|---|
+| 隐藏凭据 + 每次启动自动登录（把 better-auth 会话 cookie 注入 Electron） | 要复刻 better-auth 的 cookie 属性与签名格式（SameSite / Secure / Max-Age），任一处对不上就是「本地模式却看到登录页」；还会造出「用户存在但密码不可知」的账号。本机令牌只需一次比对 |
+| 本地模式直接免鉴权（不带令牌） | 恶意网页可扫本机随机端口发起无 preflight 的跨站写请求；随机端口是混淆不是访问控制 |
+| 云端=同步（本地为主、云端备份/多端合并） | 那是另一个产品能力（冲突合并、离线队列、增量协议），PRD 里没有，不该由「切换模式」顺带引入 |
+| 把模式做成服务端设置键 | 它是载体事实；且切换必须能在服务端不可达时完成（设置键存在服务端） |
+| 切到云端时销毁本地宿主 | 服务端模块不可重入（D-045 的连接、§7.4 的装配都建在模块级状态上），重启宿主会炸（第二次 `boot()`） |
+| 首启选择页由本地宿主提供（web 路由） | 云端用户也要先起本地宿主才能看到选择页；静态页与宿主解耦，任何失败下都还在 |
+
+**影响**：`apps/desktop`（`src/{main,host,preload,config,cloud}.ts`、新增
+`ui/setup.html`、`electron-builder.yml`）、`apps/server`（`env.ts`、`index.ts`、
+`app.ts`、`middleware/auth.ts`、新增 `services/local-mode.ts` 与
+`routes/local.ts`）、`packages/shared`（`desktop.ts`、`config.ts`、
+新增 `local.ts`）、`apps/web`（设置页新「客户端」分区、账号分区与左导航
+菜单的本地模式分支、`lib/api.ts`、**登录页也渲染 `TitleBar`**——云端模式落地的
+第一个界面就是远端登录页，而桌面壳 `frame: false` 需要页面给出拖动区与窗口控件，
+实测切到云端后整条窗口 chrome 消失）；`docs/TECH.md` §14、`docs/PRD.md` §5.15。
+
+### 验证方式
+
+**`pnpm check` 全绿**（同步这份文档时跑的，exit 0）：lint 0 warnings 0 errors、
+`lint:styles` 通过、`format:check` 通过、全部 workspace 包 typecheck Done；
+测试 desktop 26 + provider 25 + storage 13 + chat 24 + office 380 + web 251 +
+server 209 + **server 本地模式 10**（新增，独立进程跑 `vitest.local.config.ts`）。
+
+**桌面端实机跑过**（Electron 44 真窗口 + CDP，`--user-data-dir` 指向临时目录，
+不碰用户已有配置，验收后已清理）：
+
+1. 首启 → 选择页（截图核对：两个选项、默认选本地、**没有**多出一行
+   「已在其他方式下使用过？」——那一行是 CSS 漏规则的真实缺陷，见 TECH §10）
+2. 点「开始使用」→ 宿主起在 `127.0.0.1:41877`、窗口直接进 `/docs`（**没有登录页**）、
+   `desktop-config.json` 写成 `{"mode":"local"}`
+3. 鉴权边界实测：同端口不带 cookie → 401、错令牌 → 401、窗口内 `fetch` → 200；
+   `get-session` 返回 `local@mimir.local` 的合成会话
+4. 设置 › 账号（本地模式）：无邮箱、**无登出**；设置 › 客户端：显示当前方式与
+   数据目录；`PATCH /api/local/profile` 改名 → `get-session` 立刻读到新名
+   （顺带实测 Better Auth 的 `update-user` 在本地模式下确实 401——前端那条分支是必需的）
+5. 「更换使用方式…」→ 回到选择页且是**切换形态**（预填地址、有「返回，不改」）；
+   重启后仍进本地模式（读到持久化的配置）
+6. 起一个真实云端实例（38001，独立数据目录）→ 客户端切过去 → 窗口落在云端登录页并
+   完成注册视图；`desktop-config.json` 变 `{"mode":"cloud","cloudUrl":"http://127.0.0.1:38001"}`
+7. 从云端切回本地 → 回到同一个宿主端口（36097）与同一份数据
+8. 云端模式连不上时（`:1` 与空端口两种）→ 选择页当场给出人话错误；清掉 cookie
+   模拟令牌丢失 → 本地模式的登录页显示「回桌面客户端使用」且「更换使用方式…」可用，
+   点「返回，不改」恢复访问（`/docs` + 200）
+
+**截图发现并修掉的两处**（这两处 DOM 断言都看不出来）：登录页在桌面壳里
+**整条窗口 chrome 缺失**（`frame: false` 下不能拖、不能关，而云端落地的第一个界面
+就是登录页——登录页现在也渲染 `TitleBar`）；选择页首启多一行「已在其他方式下使用过？」。
+
+**未做（如实）**：打包产物（`pnpm desktop:build`）未跑——`ui/**` 进 asar 只到
+「配置里写了、开发形态读得到」这一步；Windows / macOS 上的实机行为（红绿灯让位、
+三枚控件位置）只按既有 D-094 的实现推演，未在那些平台上跑过；本地模式下
+`xlsx/pptx/docx` 的编辑链路未在本轮重测（与模式无关，走同一套宿主）。
+
+### D-099 收尾补记：整体样式对齐官方 registry（两轮返工的教训）
+
+交接触觉收尾时用户两次收紧要求，都以**官方 `packages/ui` registry 的
+组件源码**为唯一参照（`thread.aui.tsx` / `reasoning.tsx` / `composer.tsx` /
+`message-actions.tsx`），不是文档站自己魔改的那套（`apps/docs/components/`
+下的 messages / trace-line 是文档站的自用实现，**不**是分发形态——
+第一版 mono 行就错在参考对象选错）：
+
+- **思维链 = 官方 Reasoning**（variant=outline 默认形态）：带边框圆角盒
+  + Brain 触发行（label `思考 N 轮 · 调用 M 次工具 (Ns)`，live shimmer）
+  + chevron 旋转 + `ps-6` 的 muted 正文；曾经的两版（Steps 时间轴、
+  mono 终端行）都按官方重写
+- **用户消息 = 官方 UserMessage**：右对齐 `bg-muted rounded-16 px-4 py-2`
+  气泡（中性 muted 底，非主色浅底），D-097 的 transcript 形态被用户明示
+  的样式取向覆盖
+- **间距 = 官方 gap-y-6**：轮次间 24px 由容器给，消息不再自带 py
+- **动作条 = 官方 AssistantActionBar**：`mt-2` 图标幽灵钮
+  （Copy / 存成笔记），左对齐
+- **composer = 官方 shell**：`border-foreground/10` + muted 30% 掺透明底
+  + 16px 圆角 + 8px 内边距；输入框单行起（`min-h-10`）；动作行
+  「左控件、右发送」，发送钮官方 `size-7 rounded-full` 深底反字
+- **空态 = 官方 ThreadWelcome**：左对齐 24px 欢迎语（新字号档
+  `--mimir-chat-font-display`，宿主阶梯的 `display` 档填它）
+
+附带修掉抽包时遗留的一处静默缺陷：`ChatThread` 漏挂 `styles.thread`
+容器类，全部 `[data-role=…]` 后代样式（用户标记 / 正文排版）整批失配。
+两处 antd-style 的新坑记进根 `AGENTS.md` 表（容器类孤儿、样式体内声明
+`--*` 自定义属性 → 类名非法）。
+
+### D-099 收尾补记（二）：外围交互同样按官方 registry 对齐
+
+思维链之外的最后一批自绘形态全部换成官方件（参照
+`tooltip-icon-button.tsx` / `stopped-run.tsx` / `thread.aui.tsx` 的
+`ThreadHistorySkeleton` 与 `ThreadScrollToBottom` / `attachment.aui.tsx` 的
+`ComposerAddAttachment`）：
+
+- **消息动作条**：官方 `TooltipIconButton` 规格——24px（size-6 p-1）、
+  ghost hover 浅底、**按下缩 0.9**、tooltip 走 antd；存成笔记 / 复制两颗
+- **停止行**：官方 StoppedRun 的 **reason pill**——mono 药丸
+  （Square 10px + 「已停止生成」，`colorFillQuaternary` 底）+ 旁边一句
+  「以上是已生成的部分」；Continue / Discard 仍不做（服务端无可续跑记录）
+- **回到底部**：官方 `ThreadScrollToBottom` 位形——**居中**悬在 composer
+  上方的 40px 圆形 outline 钮（不再是右下角加阴影）
+- **历史加载骨架**：官方 ThreadHistorySkeleton 形状——右侧 h-9 提问气泡
+  （rounded-xl、40% 宽）+ 两组 h-4 递减文本条，入场 fade-in
+- **+ 添加上下文钮**：官方 ComposerAddAttachment 形态——28px 圆形幽灵钮
+
+**未对齐的与理由**：引用块仍是 mimir 的通栏出处卡（snippet + 命中通道是
+PRD §5.2/§5.8 的必答信息，官方 Sources 的域名字母徽标放不下这些）；
+失败四类卡保留（PRD §5.8 出路表）；编辑已发消息（官方 UserActionBar 的
+Edit）需要引擎的编辑会话支持，留待立项；反馈 thumbs 与分支
+（BranchPicker）无产品与数据支点，不做。
+
+### D-099 收尾补记（三）：AG-UI 的每一种消息体类型都接上线
+
+用户追问「AG UI 的消息体类型很多，每一种都按照 assistant-ui 还原了吗」。
+审计结果：**没有**——`MessagePrimitive.Parts` 的平台默认组件在 react 上是
+`() => null`，此前只挂了 Text 与三个 mimir data part，其余类型一律**静默
+消失**（不报错、不占位）。按官方件逐类补齐：
+
+| part 类型 | 生产者 | 现在渲染成 |
+|---|---|---|
+| `text` | 一直在 | 原样（Markdown） |
+| `reasoning` | 深思考的 `REASONING_*` 帧（运行时需 `showThinking: true`，此前默认藏掉） | 官方 Reasoning 盒（与检索过程共用 `reasoning-shell.tsx`，标签「模型思考 (Ns)」） |
+| `tool-call` | 快照 / 将来的子代理与 MCP | 官方 ToolFallback 换算（状态图标 + Used tool: 名字 + 耗时 + Args/Result 两段） |
+| `source` | `MESSAGES_SNAPSHOT` 的错误 / 引用来源 | 官方 Sources pill（首字母徽标 + 标题，安全 href 新开） |
+| `file` | 附件 / 工具产物 | 官方 file chip（mime 图标 + 文件名 + 下载钮） |
+| `image` | 同上 | 圆角缩略图（点击原图新开） |
+| `audio`（引擎已废弃，经 File 槽） | 同上 | 与 file 同款 chip |
+| `data` | mimir 的 trace/citations/failure | 三个显式读取口（原样，见上一次补记） |
+| `generative-ui` / `quote` | 无生产者 | **不接线**（需要组件白名单是安全边界 / metadata 槽，无产品支点；记录在案） |
+
+**关键一处**：`reasoning` 的渲染与 `showThinking: true` 是**同一件事的两半**
+——运行时默认把思考帧藏掉（只留签名占位），开渲染不开开关等于白开。
+两半同批改（`runtime/use-mimir-runtime.ts`）。
+
+**证据（测试里的守卫）**：`parts.test.tsx` 新增「AG-UI part 类型（每一种
+都渲染）」5 条（reasoning / tool-call / source / file / image 各自渲染出
+官方形态）；`ChatPanel.test.tsx` 新增端到端一条——**真实 SSE 帧**
+（`REASONING_MESSAGE_*` + `TOOL_CALL_*`）走完整链路：帧 → 运行时聚合
+（`showThinking: true`）→ parts 槽位 → 官方形态出现在界面上。
+（修这个测试时踩到一个 schema 细节：`REASONING_MESSAGE_START` 需要
+`role: 'reasoning'` 字段，@ag-ui/core 的 zod 校验会拒。）
+
+**两处有依据的偏差**：官方 Reasoning 的 9px 徽标与 ToolFallback 的 10px
+段标都低于本仓 DESIGN §4.2 的可读底线（10.5px）且不在字号阶梯里——统一取
+`badge` 档（11.5px），注释里注明了偏差来源；`react(static-components)`
+又咬了一次（`const Icon = …` 渲染期建组件），改成 helper 返回 JSX。

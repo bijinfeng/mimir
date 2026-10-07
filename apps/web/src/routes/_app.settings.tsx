@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { Select, Tabs } from 'antd'
 import { AccountSection } from '@/components/settings/AccountSection'
 import { AppearanceSection } from '@/components/settings/AppearanceSection'
+import { ClientSection } from '@/components/settings/ClientSection'
 import { DataSection } from '@/components/settings/DataSection'
 import { FeedsSection } from '@/components/settings/FeedsSection'
 import { ModelsSection } from '@/components/settings/ModelsSection'
@@ -10,6 +11,7 @@ import { RetrievalSection } from '@/components/settings/RetrievalSection'
 import { StatsSection } from '@/components/settings/StatsSection'
 import { StorageSection } from '@/components/settings/StorageSection'
 import { useStyles } from '@/components/settings/settings.style'
+import { isDesktopShell } from '@/lib/desktop-shell'
 import { useNarrowViewport } from '@/lib/nav-collapse'
 
 /**
@@ -70,9 +72,30 @@ const SECTIONS = [
   { key: 'account', label: '账号' },
 ] as const
 
-type SectionKey = (typeof SECTIONS)[number]['key']
+type SectionKey = (typeof SECTIONS)[number]['key'] | 'client'
 
-const SECTION_KEYS = SECTIONS.map((section) => section.key) as readonly string[]
+/**
+ * 桌面壳专属分区（D-100）。
+ *
+ * 单独一处、而不是塞进上面那张常量表：那张表的每一项在**所有部署**里都成立，
+ * 而「客户端」只在 Electron 壳里有意义（浏览器的使用方式就是访问哪个地址，
+ * 没有可切换的对象）。混进去会让 Web 部署也多一个点了没有对应页面的 tab。
+ */
+const CLIENT_SECTION = { key: 'client' as const, label: '客户端' }
+
+/** 当前部署下真实存在的分区列表 */
+function sectionsFor(desktop: boolean): { key: SectionKey; label: string }[] {
+  const base = [...SECTIONS]
+  if (!desktop) return base
+  // 客户端分区排在「数据与备份」之后、「外观」之前：它是关于这个应用的
+  // 事实，与「外观」同属「这个客户端本身」那一类
+  return [...base.slice(0, 7), CLIENT_SECTION, ...base.slice(7)]
+}
+
+const SECTION_KEYS: ReadonlySet<string> = new Set([
+  ...SECTIONS.map((s) => s.key),
+  CLIENT_SECTION.key,
+])
 
 /**
  * 默认分区：**结构性地取第一个**，不写死字面量。
@@ -94,7 +117,7 @@ const DEFAULT_SECTION: SectionKey = SECTIONS[0].key
  * 所以组件侧再收敛一次。`activeKey` 永远落在 SECTIONS 里。
  */
 function resolveSection(value: unknown): SectionKey {
-  return typeof value === 'string' && SECTION_KEYS.includes(value)
+  return typeof value === 'string' && SECTION_KEYS.has(value)
     ? (value as SectionKey)
     : DEFAULT_SECTION
 }
@@ -108,7 +131,7 @@ export const Route = createFileRoute('/_app/settings')({
    * 设置页的分区名。缺省值在组件里取。
    */
   validateSearch: (search: Record<string, unknown>): { section?: SectionKey } =>
-    typeof search.section === 'string' && SECTION_KEYS.includes(search.section)
+    typeof search.section === 'string' && SECTION_KEYS.has(search.section)
       ? { section: search.section as SectionKey }
       : {},
   component: SettingsPage,
@@ -118,8 +141,21 @@ function SettingsPage() {
   const { styles } = useStyles()
   const navigate = useNavigate()
   const search = Route.useSearch()
-  const section = resolveSection(search.section)
   const narrow = useNarrowViewport()
+  /**
+   * 分区清单按部署取（桌面壳多一个「客户端」）。
+   * `desktop` 在页面生命周期里不会变（preload 在首帧前注入），所以不需要订阅。
+   */
+  const sections = sectionsFor(isDesktopShell())
+  const resolved = resolveSection(search.section)
+  /**
+   * 浏览器里没有「客户端」分区（见 `CLIENT_SECTION` 的说明），但 URL 里
+   * 可能带着 `?section=client`（有人贴过桌面端的链接）。那时落回默认分区，
+   * 而不是渲染一个空面板——`Tabs` 找不到对应 tab 会渲染成**空白内容区**，
+   * 那看起来像这一页坏了。
+   */
+  const section =
+    resolved === 'client' && !sections.some((s) => s.key === 'client') ? DEFAULT_SECTION : resolved
 
   /**
    * 换分区。
@@ -144,14 +180,14 @@ function SettingsPage() {
         <h1 className={styles.title}>设置</h1>
 
         {narrow ? (
-          /* 窄屏：八个分区排不下横向 tab 栏，换成下拉。
+          /* 窄屏：七八个分区排不下横向 tab 栏，换成下拉。
              `aria-label` 是它唯一的名称——一个没有可见标签的 Select 读屏
              只会念出当前值，听不出这是一件「选分区」的控件（DESIGN §7.3）。 */
           <Select
             className={styles.sectionSelect}
             value={section}
             onChange={goSection}
-            options={SECTIONS.map((item) => ({ value: item.key, label: item.label }))}
+            options={sections.map((item) => ({ value: item.key, label: item.label }))}
             aria-label="设置分区"
           />
         ) : (
@@ -159,7 +195,7 @@ function SettingsPage() {
             className={styles.tabs}
             activeKey={section}
             onChange={goSection}
-            items={SECTIONS.map((item) => ({
+            items={sections.map((item) => ({
               key: item.key,
               label: item.label,
               children: <SectionBody section={item.key} />,
@@ -182,6 +218,7 @@ function SectionBody({ section }: { section: SectionKey }) {
   if (section === 'feeds') return <FeedsSection />
   if (section === 'storage') return <StorageSection />
   if (section === 'stats') return <StatsSection />
+  if (section === 'client') return <ClientSection />
   if (section === 'appearance') return <AppearanceSection />
   if (section === 'account') return <AccountSection />
   return <RetrievalSection />

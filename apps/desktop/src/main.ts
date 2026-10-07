@@ -1,17 +1,40 @@
 import { join, resolve } from 'node:path'
-import { app, BrowserWindow, dialog, ipcMain } from 'electron'
-import type { DesktopBootInfo } from '@mimir/shared'
-import { startHost, type HostHandle } from './host.js'
+import { pathToFileURL } from 'node:url'
+import { app, BrowserWindow, dialog, ipcMain, nativeTheme, session } from 'electron'
+import {
+  LOCAL_TOKEN_COOKIE,
+  type DesktopBootInfo,
+  type DesktopModeResult,
+  type DesktopModeState,
+} from '@mimir/shared/desktop'
+import { normalizeCloudUrl, probeCloudUrl } from './cloud.js'
+import { parseModeConfig, readModeConfig, writeModeConfig } from './config.js'
+import { startHost, type HostHandle, type HostPaths } from './host.js'
 
 /**
  * 桌面端载体（D-046，分层借鉴 deepseek-harness）。
  *
- * 职责只有四件：起宿主、等就绪、开窗、关停。页面加载的就是宿主自己的
- * 地址，所以 cookie 会话、SSE 聊天流、文件的 Range 请求全部同源原生；
- * IPC 只承载 boot 信息与退出（契约见 packages/shared/src/desktop.ts）。
+ * 职责：起宿主（或加载远端）、等就绪、开窗、关停，以及**模式的选择与切换**
+ * （D-100）。页面加载的就是宿主的地址，所以 cookie 会话、SSE 聊天流、文件的
+ * Range 请求全部同源原生；IPC 只承载 boot 信息、窗口控制、模式选择与退出
+ * （契约见 packages/shared/src/desktop.ts）。
  *
- * 开发模式（`pnpm desktop:dev`）：设置 `MIMIR_DESKTOP_URL` 后这里只当
- * 浏览器壳加载 Vite 页面，宿主仍在独立进程里跑——迭代前端不用碰打包链。
+ * ## 两种模式（D-100）
+ *
+ * | 模式 | 窗口加载 | 数据 |
+ * |---|---|---|
+ * | 本地 | 进程内私有宿主（`127.0.0.1:<随机端口>`） | 本机 userData，免登录 |
+ * | 云端 | 用户自部署的地址 | 服务端，登录照旧 |
+ *
+ * 首次启动加载**选择页**（`ui/setup.html`，静态文件，不依赖任何宿主）；
+ * 之后由 `desktop-config.json` 决定。切换从两个地方发起：本地/云端页面里的
+ * 「设置 › 客户端」（走 preload 的 mode API），以及连不上服务器时的兜底弹窗。
+ *
+ * ## 开发模式（`pnpm desktop:dev`）
+ *
+ * 设置 `MIMIR_DESKTOP_URL` 后这里只当浏览器壳加载 Vite 页面，宿主仍在独立
+ * 进程里跑——迭代前端不用碰打包链。这时**没有模式**（get 返回 null，
+ * choose 明确说不可用），避免「开发时点的切换改了真实配置」。
  */
 
 // 在读取 userData 之前定名，否则开发/未打包形态下数据会落进 "Electron" 目录
@@ -47,6 +70,28 @@ if (process.platform === 'linux') {
 
 let host: HostHandle | null = null
 let bootInfo: DesktopBootInfo | null = null
+let win: BrowserWindow | null = null
+/** 当前模式。开发模式（MIMIR_DESKTOP_URL）下恒为 null */
+let modeState: DesktopModeState | null = null
+/**
+ * 未受信任的页面（云端模式的远端页）最近一次**经过确认**的选择。
+ *
+ * 只有它与当前 `modeState` 一致时 `activate()` 才放行——否则一个被篡改的
+ * 远端页面可以在用户眼皮底下驱动导航（见下方 `isTrustedSender` 的说明）。
+ */
+let approvedUntrustedSwitch: DesktopModeState | null = null
+/**
+ * 窗口里现在是不是选择页。
+ *
+ * 与 `modeState` 是**两件事**，不能合并：`modeState` 是「用户选了哪种模式」，
+ * 选择页只是暂时覆盖在上面。展示选择页时清掉 `modeState` 会让那一页
+ * 把自己当成首次启动（显示「选择使用方式」而不是「切换」，还会丢掉
+ * 预填的服务器地址），退出时也没法「返回」。
+ *
+ * 它只用来让 `did-fail-load` 忽略选择页自己的加载失败（那页是 file://，
+ * 加载失败没有可重试的远端地址）。
+ */
+let setupVisible = false
 
 function resolvePaths(): { serverDist: string; webDist: string } {
   if (app.isPackaged) {
@@ -94,7 +139,8 @@ function windowIcon(): string | undefined {
  *
  * **`frame: false` 的连带影响**：窗口的四角圆角与阴影由系统给（mac 有、
  * Windows 11 有、Linux 视合成器），拖动与双击最大化要页面自己接——
- * 这就是 `-webkit-app-region` 与下面的 IPC 存在的原因。
+ * 这就是 `-webkit-app-region` 与下面的 IPC 存在的原因。选择页也照这条走
+ * （它自带一条拖动区与窗口控件）。
  */
 function windowChromeOptions(): Electron.BrowserWindowConstructorOptions {
   if (process.platform === 'darwin') {
@@ -106,13 +152,14 @@ function windowChromeOptions(): Electron.BrowserWindowConstructorOptions {
   return { frame: false }
 }
 
-function createWindow(url: string): void {
+function createWindow(url: string): BrowserWindow {
   const icon = windowIcon()
-  const win = new BrowserWindow({
+  win = new BrowserWindow({
     width: 1440,
     height: 900,
-    // 与前端浅色主题的底色一致，避免加载瞬间的白/黑闪烁方向错误
-    backgroundColor: '#ffffff',
+    // 与前端主题的底色一致，避免加载瞬间的白/黑闪烁方向错误。
+    // 选择页与深色系统同理——底色跟系统走（页面本身也按 prefers-color-scheme 渲染）
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#0b0c0e' : '#ffffff',
     ...windowChromeOptions(),
     ...(icon === undefined ? {} : { icon }),
     webPreferences: {
@@ -122,7 +169,12 @@ function createWindow(url: string): void {
     },
   })
   windowControls(win)
+  watchCloudLoadFailure(win)
+  win.on('closed', () => {
+    win = null
+  })
   void win.loadURL(url)
+  return win
 }
 
 /**
@@ -136,7 +188,7 @@ function createWindow(url: string): void {
  * 与真相脱节（症状是「最大化之后按钮还是『最大化』的图标」）。
  * 这里监听 `maximize` / `unmaximize` 两个事件，广播给所有窗口。
  */
-function windowControls(win: BrowserWindow): void {
+function windowControls(target: BrowserWindow): void {
   /**
    * 先清掉上一次的注册。**单窗口下这一步按理不需要**（关窗即退出，
    * `createWindow` 只跑一次），但重复注册 `ipcMain.handle` 会**抛错**
@@ -148,24 +200,324 @@ function windowControls(win: BrowserWindow): void {
   ipcMain.removeHandler('mimir:window-maximized')
 
   ipcMain.on('mimir:window', (_event, action: string) => {
-    if (action === 'minimize') win.minimize()
+    if (target.isDestroyed()) return
+    if (action === 'minimize') target.minimize()
     else if (action === 'toggle-maximize') {
       // 目标态由宿主判断——页面说「切换」，不说「最大化」
-      if (win.isMaximized()) win.unmaximize()
-      else win.maximize()
-    } else if (action === 'close') win.close()
+      if (target.isMaximized()) target.unmaximize()
+      else target.maximize()
+    } else if (action === 'close') target.close()
   })
 
-  ipcMain.handle('mimir:window-maximized', () => win.isMaximized())
+  ipcMain.handle('mimir:window-maximized', () => !target.isDestroyed() && target.isMaximized())
 
   const broadcast = (maximized: boolean): void => {
-    if (!win.isDestroyed()) {
-      win.webContents.send('mimir:window-maximized-changed', maximized)
+    if (!target.isDestroyed()) {
+      target.webContents.send('mimir:window-maximized-changed', maximized)
     }
   }
-  win.on('maximize', () => broadcast(true))
-  win.on('unmaximize', () => broadcast(false))
+  target.on('maximize', () => broadcast(true))
+  target.on('unmaximize', () => broadcast(false))
 }
+
+/* ── 模式：选择页、启动与切换（D-100） ───────────────────────── */
+
+/** 选择页的位置。打包后在 asar 内，开发时在 `apps/desktop/ui/`，两种形态同一表达式 */
+function setupPagePath(): string {
+  return join(app.getAppPath(), 'ui', 'setup.html')
+}
+
+function setupPageUrl(): string {
+  return pathToFileURL(setupPagePath()).href
+}
+
+/**
+ * 这个页面有没有资格改客户端模式。
+ *
+ * ## 为什么不是「所有页面都可以」
+ *
+ * 云端模式下窗口里跑的是**远端服务端发来的页面**。如果它对模式 API 无所不能，
+ * 一台被攻破（或本来就恶意）的服务器就能：让客户端启动本地宿主 → 导航过去 →
+ * 把本机知识库读走；或者把客户端指向钓鱼站点去收密码。用户不该为「服务器
+ * 被攻破」赔上本机数据。
+ *
+ * 受信任的只有两种页面：**选择页**（file:// 的静态文件）与**本机宿主**
+ * （127.0.0.1 上的我们自己的前端）。开发模式下把 dev 地址也算上（`localhost:5173`）。
+ *
+ * 远端页面仍然可以读 `mode.get()`、也可以发起切换，但**切换一定会先弹一个
+ * 原生确认框**（`confirmUntrustedSwitch`），里面写清目标是谁——那一步是用户
+ * 的，不是页面的。
+ */
+function isTrustedSender(url: string | undefined): boolean {
+  if (!url) return false
+  if (url === setupPageUrl()) return true
+  if (host && url.startsWith(`${host.origin}/`)) return true
+
+  const devUrl = process.env.MIMIR_DESKTOP_URL
+  if (devUrl && url.startsWith(devUrl)) return true
+  return false
+}
+
+async function confirmUntrustedSwitch(state: DesktopModeState): Promise<boolean> {
+  const target =
+    state.mode === 'local'
+      ? '本机知识库（本地模式，数据存在这台电脑上）'
+      : `服务器 ${state.cloudUrl}`
+  const senderHost = win && !win.isDestroyed() ? safeOrigin(win.webContents.getURL()) : '远程页面'
+
+  /**
+   * 两种重载：有窗口时挂成它的模态子窗（居父窗、挡住父窗交互），
+   * 没有窗口时用无主弹窗。`showMessageBox(undefined, options)` 会在
+   * 运行时报参数错误——而这条路径只在「窗口已经被关掉」时走到。
+   */
+  const options: Electron.MessageBoxOptions = {
+    type: 'question',
+    title: '切换使用方式',
+    message: `来自 ${senderHost} 的页面请求切换到：\n${target}`,
+    detail: '如果这不是你刚才在 mimir 里发起的操作，请选择「取消」。',
+    buttons: ['继续切换', '取消'],
+    defaultId: 1,
+    cancelId: 1,
+    noLink: true,
+  }
+  const { response } =
+    win && !win.isDestroyed()
+      ? await dialog.showMessageBox(win, options)
+      : await dialog.showMessageBox(options)
+  return response === 0
+}
+
+function safeOrigin(url: string): string {
+  try {
+    return new URL(url).origin
+  } catch {
+    return url
+  }
+}
+
+/** 起本地宿主（幂等）。**只在这里创建**，这样切换与启动走的是同一条路 */
+async function ensureLocalHost(paths: HostPaths): Promise<HostHandle> {
+  if (host) return host
+
+  const created = await startHost(paths, { localMode: true })
+  host = created
+  // 与浏览器部署的启动日志同一组信息（TECH §8.6）：数据全空时第一眼看这里
+  console.log(`[desktop] 本地模式宿主 ${created.origin}`)
+  console.log(`[desktop] 数据目录 ${created.dataDir}`)
+  console.log(`[desktop] 数据库 sqlite（${join(created.dataDir, 'mimir.db')}）`)
+  return created
+}
+
+/**
+ * 把本机令牌写进 cookie jar。
+ *
+ * 这是「本地模式不需要登录」的**全部机制**：宿主每次启动随机生成令牌，
+ * 服务端的 `requireAuth` 拿它与 cookie 里的值做常量时间比较。令牌不进 URL、
+ * 不进日志、也不从 preload 暴露给页面。
+ *
+ * `httpOnly` + `SameSite=Lax` 是刻意的：前者让脚本读不到它，后者让**跨站**
+ * 请求不会带上它——恶意网页扫到本机端口也只能拿到 401（TECH §14.5）。
+ */
+async function injectLocalCookie(handle: HostHandle): Promise<void> {
+  if (!handle.localToken) return
+  await session.defaultSession.cookies.set({
+    url: handle.origin,
+    name: LOCAL_TOKEN_COOKIE,
+    value: handle.localToken,
+    httpOnly: true,
+    sameSite: 'lax',
+  })
+}
+
+/**
+ * 走到「可以加载这个模式」为止：起宿主 / 更新 boot 信息 / 注入 cookie。
+ *
+ * 返回窗口应当加载的地址。**启动与切换共用它**，两处各抄一份必然会漂移
+ * （比如切换时忘了注入 cookie，症状是「切回本地模式却看到登录页」）。
+ */
+async function prepareTarget(state: DesktopModeState, paths: HostPaths): Promise<string> {
+  if (state.mode === 'local') {
+    const handle = await ensureLocalHost(paths)
+    await injectLocalCookie(handle)
+    bootInfo = {
+      mode: 'local',
+      origin: handle.origin,
+      dataDir: handle.dataDir,
+      version: app.getVersion(),
+    }
+    return handle.origin
+  }
+
+  bootInfo = { mode: 'cloud', origin: state.cloudUrl, dataDir: null, version: app.getVersion() }
+  return state.cloudUrl
+}
+
+/**
+ * 云端模式加载失败：**说清地址、给出三条路**，而不是留一个 Electron 的
+ * 错误页（那种页面上只有英文与「Reload」，用户不知道还能改回本地模式）。
+ *
+ * `-3`（ERR_ABORTED）要忽略：页面自己发起的导航（比如点了一个链接又被
+ * 我们的 loadURL 打断）会带着它来，把它当失败会弹出一个莫名其妙的框。
+ */
+function watchCloudLoadFailure(target: BrowserWindow): void {
+  target.webContents.on(
+    'did-fail-load',
+    (_event, errorCode, errorDescription, _url, isMainFrame) => {
+      if (!isMainFrame || errorCode === -3) return
+      // 选择页自己的加载失败不走这套话术：它没有「换一个地址」这层语义，
+      // 而且那个弹窗会把用户困在一个循环里
+      if (setupVisible) return
+      if (modeState?.mode !== 'cloud') return
+      void handleCloudUnreachable(target, modeState.cloudUrl, errorDescription)
+    },
+  )
+}
+
+async function handleCloudUnreachable(
+  target: BrowserWindow,
+  url: string,
+  detail: string,
+): Promise<void> {
+  if (target.isDestroyed()) return
+  const { response } = await dialog.showMessageBox(target, {
+    type: 'warning',
+    title: '连不上服务器',
+    message: `无法加载 ${url}`,
+    detail: `${detail}\n\n可以重试，或切换使用方式（例如改用本地模式）。`,
+    buttons: ['重试', '更换使用方式', '退出'],
+    defaultId: 0,
+    cancelId: 2,
+    noLink: true,
+  })
+
+  if (response === 0) {
+    void target.loadURL(url)
+  } else if (response === 1) {
+    await showSetupPage(target)
+  } else {
+    app.quit()
+  }
+}
+
+/**
+ * 打开选择页（首次启动与「更换使用方式」共用）。
+ *
+ * **不动 `modeState`**：选择页要读当前模式来决定自己的形态（首次选择 vs
+ * 切换、预填地址、能不能「返回」）。真正改变模式的只有 `choose()`。
+ */
+async function showSetupPage(target: BrowserWindow): Promise<void> {
+  setupVisible = true
+  await target.loadURL(setupPageUrl())
+}
+
+function sameState(a: DesktopModeState, b: DesktopModeState): boolean {
+  if (a.mode !== b.mode) return false
+  return a.mode === 'cloud' && b.mode === 'cloud' ? a.cloudUrl === b.cloudUrl : true
+}
+
+/**
+ * 模式的读取与切换（preload 的 `mimirDesktop.mode`）。
+ *
+ * `choose` 与 `activate` 分两步：校验失败要回到调用页（那页得活着），
+ * 成功之后导航一定替换掉它（那页不需要回执）。合成一步会让导航与 IPC 回执
+ * 赛跑——回执还没送到，页面已经被替换掉了。
+ *
+ * `paths` 为 null 表示**开发形态**（`MIMIR_DESKTOP_URL`）：处理器照样注册，
+ * 但一律如实拒绝/返回空。不注册的话 `ipcRenderer.invoke` 会 reject
+ * （`No handler registered`），而页面那边只会看到一个英文异常——
+ * 「开发模式下不能切换」是一句能给用户看的话。
+ */
+function registerModeBridge(paths: HostPaths | null): void {
+  ipcMain.removeHandler('mimir:mode-get')
+  ipcMain.removeHandler('mimir:mode-choose')
+  ipcMain.removeAllListeners('mimir:mode-activate')
+  ipcMain.removeAllListeners('mimir:mode-open-setup')
+
+  ipcMain.handle('mimir:mode-get', () => modeState)
+
+  ipcMain.handle('mimir:mode-choose', async (event, raw): Promise<DesktopModeResult> => {
+    if (!paths) {
+      return { ok: false, message: '开发模式下不能切换使用方式（宿主在独立进程里跑）' }
+    }
+
+    const senderUrl = event.senderFrame?.url
+    // **不信渲染侧**：IPC 的入参是外部输入，按与配置文件同一套规则校验形状
+    let state = parseModeConfig(raw)
+    if (!state) return { ok: false, message: '选择的内容不完整，请重试' }
+
+    if (!isTrustedSender(senderUrl)) {
+      const approved = await confirmUntrustedSwitch(state)
+      if (!approved) return { ok: false, message: '已取消' }
+      approvedUntrustedSwitch = state
+    }
+
+    if (state.mode === 'cloud') {
+      // 归一化 + 探活都在写配置之前：写一个连不上的地址等于把用户锁在门外
+      // （下次启动会直接加载它），而那时选择页还在，用户能改
+      const normalized = normalizeCloudUrl(state.cloudUrl)
+      if (!normalized.ok || !normalized.url) {
+        return { ok: false, message: normalized.message ?? '地址不合法' }
+      }
+      const probe = await probeCloudUrl(normalized.url)
+      if (!probe.ok) return { ok: false, message: probe.message ?? '连接失败' }
+      state = { mode: 'cloud', cloudUrl: normalized.url }
+    } else {
+      try {
+        await ensureLocalHost(paths)
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : String(error)
+        return { ok: false, message: `本地知识库启动失败：${detail}` }
+      }
+    }
+
+    try {
+      await writeModeConfig(app.getPath('userData'), state)
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error)
+      return { ok: false, message: `无法保存选择：${detail}` }
+    }
+
+    modeState = state
+    approvedUntrustedSwitch = state
+    return { ok: true }
+  })
+
+  ipcMain.on('mimir:mode-activate', (event) => {
+    void (async () => {
+      if (!paths || !modeState) return
+
+      const senderUrl = event.senderFrame?.url
+      if (!isTrustedSender(senderUrl)) {
+        if (!approvedUntrustedSwitch || !sameState(approvedUntrustedSwitch, modeState)) return
+      }
+
+      const target = win
+      try {
+        const url = await prepareTarget(modeState, paths)
+        setupVisible = false
+        if (target && !target.isDestroyed()) await target.loadURL(url)
+        else createWindow(url)
+      } catch (error) {
+        const detail = error instanceof Error ? error.message : String(error)
+        dialog.showErrorBox('切换失败', detail)
+      }
+    })()
+  })
+
+  /**
+   * 「更换使用方式」——把窗口带到选择页。
+   *
+   * 这一步**任何页面都可以请求**（不弹确认框）：它只是打开我们自己的静态页，
+   * 页面本身没有任何能力，改模式的还是用户在那一页上的动作。挡在这里会让
+   * 「云端连不上、要改回本地」这条最需要它的路径变得啰嗦。
+   */
+  ipcMain.on('mimir:mode-open-setup', () => {
+    const target = win
+    if (target && !target.isDestroyed()) void showSetupPage(target)
+  })
+}
+
+/* ── 启动 ─────────────────────────────────────────────── */
 
 async function main(): Promise<void> {
   console.log('[desktop] whenReady，开始启动流程')
@@ -174,19 +526,35 @@ async function main(): Promise<void> {
 
   const devUrl = process.env.MIMIR_DESKTOP_URL
   if (devUrl) {
+    /**
+     * 开发形态：宿主在别的进程里跑，这里只当浏览器壳。
+     *
+     * 模式桥照样注册（`paths` 传 null）——**不注册的话** `mode.get()` 会
+     * reject（`No handler registered`），而调用方只看得到英文异常。
+     * 注册之后开发模式下的答复是一句能读的话：「开发模式下不能切换」。
+     */
+    registerModeBridge(null)
     createWindow(devUrl)
     return
   }
 
+  const paths: HostPaths = {
+    ...resolvePaths(),
+    dataDir: join(app.getPath('userData'), 'data'),
+  }
+  registerModeBridge(paths)
+
+  const config = await readModeConfig(app.getPath('userData'))
+  if (!config) {
+    setupVisible = true
+    createWindow(setupPageUrl())
+    return
+  }
+
+  modeState = config
   try {
-    const paths = { ...resolvePaths(), dataDir: join(app.getPath('userData'), 'data') }
-    host = await startHost(paths)
-    bootInfo = { origin: host.origin, dataDir: host.dataDir, version: app.getVersion() }
-    // 与浏览器部署的启动日志同一组信息（TECH §8.6）：数据全空时第一眼看这里
-    console.log(`[desktop] 宿主 ${host.origin}`)
-    console.log(`[desktop] 数据目录 ${host.dataDir}`)
-    console.log(`[desktop] 数据库 sqlite（${join(host.dataDir, 'mimir.db')}）`)
-    createWindow(host.origin)
+    const url = await prepareTarget(config, paths)
+    createWindow(url)
   } catch (error) {
     // 先落日志（弹窗是阻塞的，用户可能永远不点），再弹窗说清原因
     console.error('[desktop] 启动失败：', error)
@@ -204,10 +572,10 @@ if (!gotLock) {
   app.quit()
 } else {
   app.on('second-instance', () => {
-    const win = BrowserWindow.getAllWindows()[0]
-    if (win) {
-      if (win.isMinimized()) win.restore()
-      win.focus()
+    const existing = BrowserWindow.getAllWindows()[0]
+    if (existing) {
+      if (existing.isMinimized()) existing.restore()
+      existing.focus()
     }
   })
   void app.whenReady().then(main)

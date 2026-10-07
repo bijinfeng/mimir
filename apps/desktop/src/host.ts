@@ -3,7 +3,6 @@ import net from 'node:net'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { randomBytes } from 'node:crypto'
-
 /**
  * 桌面端私有宿主（D-046，借鉴 deepseek-harness 的 host/carrier 分层）。
  *
@@ -38,6 +37,13 @@ export interface HostHandle {
   origin: string
   port: number
   dataDir: string
+  /**
+   * 本地模式的本机令牌（D-100）。云端模式下没有宿主，也就没有它。
+   *
+   * 载体（main.ts）负责把它写进 Electron 的 cookie jar——**只有那一条路**：
+   * 令牌不进 URL、不进日志、也不从 preload 暴露给页面。
+   */
+  localToken: string | null
   /** 关停：先停 HTTP 监听，再关数据库连接 */
   close(): Promise<void>
 }
@@ -65,8 +71,17 @@ export function pickFreePort(hostname = '127.0.0.1'): Promise<number> {
 /**
  * 注入服务端读取的全部部署事实（`docs/TECH.md` §7.5：这些是部署事实，
  * 不进设置页）。桌面宿主只缺端口与路径——其余配置沿用 .env / 默认值。
+ *
+ * `local` 非空时打开**本地模式**（D-100）：免登录（入口是本机令牌）、
+ * 监听强制回环、`/api/local/profile` 可用。令牌每次启动随机生成——
+ * 它只在这个宿主进程的生命周期里被比较，不需要持久化。
  */
-export function applyHostEnv(port: number, paths: HostPaths, authSecret: string): void {
+export function applyHostEnv(
+  port: number,
+  paths: HostPaths,
+  authSecret: string,
+  local?: { token: string },
+): void {
   const origin = `http://127.0.0.1:${port}`
   // 生产形态：lib/static.ts 只在 production 挂载前端产物，桌面宿主需要它
   process.env.NODE_ENV = 'production'
@@ -81,6 +96,16 @@ export function applyHostEnv(port: number, paths: HostPaths, authSecret: string)
   // 生产形态下 env.ts 拒绝默认密钥（TECH §8.2）——桌面宿主用持久化的
   // 私有密钥替代部署方手动配置的那一步
   process.env.AUTH_SECRET = authSecret
+
+  if (local) {
+    // 服务端读的是 '1' 这个字面量；写成 'true' / 'yes' 都会被当成没开，
+    // 而那种失败是静默的（表现是「本地模式却要求登录」）
+    process.env.MIMIR_LOCAL_MODE = '1'
+    process.env.MIMIR_LOCAL_TOKEN = local.token
+  } else {
+    delete process.env.MIMIR_LOCAL_MODE
+    delete process.env.MIMIR_LOCAL_TOKEN
+  }
 }
 
 /**
@@ -119,12 +144,20 @@ export async function waitForReady(origin: string, timeoutMs = 15000): Promise<v
 /**
  * 启动私有宿主。**调用前不要 import 任何 @mimir/server 的模块**——
  * 本函数负责「先注入环境变量再加载服务端」的顺序。
+ *
+ * `options.localMode` 打开本地模式（D-100）：宿主会建一个本机用户、
+ * 放行令牌请求，并且只能绑回环地址（服务端侧结构性保证，见
+ * `apps/server/src/index.ts`）。
  */
-export async function startHost(paths: HostPaths): Promise<HostHandle> {
+export async function startHost(
+  paths: HostPaths,
+  options: { localMode?: boolean } = {},
+): Promise<HostHandle> {
   await mkdir(paths.dataDir, { recursive: true })
 
   const [port, authSecret] = await Promise.all([pickFreePort(), ensureAuthSecret(paths.dataDir)])
-  applyHostEnv(port, paths, authSecret)
+  const localToken = options.localMode ? randomBytes(24).toString('base64url') : null
+  applyHostEnv(port, paths, authSecret, localToken === null ? undefined : { token: localToken })
 
   // 动态 import + 文件 URL：路径含空格/中文时 pathname 会做百分号编码
   // （与 migrate.ts 的 fileURLToPath 是同一条教训，方向相反）
@@ -144,6 +177,7 @@ export async function startHost(paths: HostPaths): Promise<HostHandle> {
     origin,
     port,
     dataDir: paths.dataDir,
+    localToken,
     async close() {
       await new Promise<void>((resolve) => server.close(() => resolve()))
       await serverModule.closeDb()

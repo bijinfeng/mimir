@@ -13,10 +13,10 @@
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
+    "@mimir/chat": "workspace:*",
     "@mimir/office": "workspace:*",
     "@mimir/shared": "workspace:*",
     "@tanstack/ai": "0.55.0",
-    "@tanstack/ai-react": "0.26.0",
     "@tanstack/react-query": "^5.103.1",
     "@tanstack/react-router": "^1.170.38",
     "@tiptap/core": "catalog:",

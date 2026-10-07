@@ -135,6 +135,8 @@ SQLite 路径同理：FTS5 的 `unicode61` 分词器也不认中文词边界，�
 | **工具条标签写了快捷键但它不存在** | docx 的「查找和替换 (Ctrl+F)」曾只弹浏览器自带的页面查找——**按钮上的标签是一份承诺**，写着就得真有。修法是外壳的 `useFindHotkey` + 查找框统一挂 `data-find-input`（标记不看类名/aria——那两样会被无关调整改掉，而改掉的那一刻快捷键静默失效） |
 | **桌面端任务栏显示「Electron」或 `@mimirdesktop`** | 三处都默认错，且都不报错：① electron-builder 不给 `executableName` 时用 package.json 的 `name`（`@mimir/desktop`）拼出 `@mimirdesktop`，而 Linux 的窗口列表按可执行文件名推导；② 开发模式（`electron .`）下可执行文件是 `electron`，WM_CLASS 就是它；③ **`--class` 开关在 Electron 44 里已被忽略**（`appendSwitch('class')`、命令行 `--class=`、把二进制改名都实测无效），只有 **`app.setDesktopName('mimir.desktop')`** 生效——注意参数要带 `.desktop` 后缀 |
 | **给 antd 控件的编辑/展开态写样式，改了却完全没生效** | 两个坑叠在一起：① antd 的 `Typography.Title editable` 进入编辑态时**会把 className 一起挂到编辑容器上**（实测容器的 classList 里就是我们的 `headerTitle` 哈希类），所以「我们的类 + 空格 + antd 类」这种**后代**选择器永远匹配不到——那个类的元素就是容器自己，要写成 `&.ant-typography-edit-content` 同元素式（与「树根样式写成后代式」是同一个坑，`DocumentPanel.style.ts` 的 `headerTitle`）；② 反引号在 createStyles 的 css 模板串里**直接终止字符串**（注释里也不行，`check-style-backticks` 守着） |
+| **消息排版整批失灵（标记消失、正文回退浏览器默认），但类都定义着** | 样式类**定义了却没有人挂**：整组后代选择器（`[data-role='user'] …`）全靠一个容器类作祖先，容器类漏挂（重构时只渲染了 `<Messages/>` 忘了包壳）它们整批静默失配——界面能用、丑一圈、不报错（实测：抽包后 `ChatThread` 漏挂 `styles.thread`，`›` 标记与 markdown 规范全没了）。样式类必须有消费点，抽完壳 grep 一次 |
+| **某个元素整组样式缺失，DevTools 里类名带着 `#` 或括号** | **在 createStyles 的样式体里声明了 `--*` 自定义属性**（哪怕只想拿它当 hover 变量）：antd-style 会把属性**值**拼进类名，`acss-xxx-#5c6570-rgba(…)` 是非法选择器，浏览器整条丢弃，元素裸奔成默认样式（实测：原生 button 灰底 Arial）。消费宿主变量 `var(--mimir-chat-*)` 没问题，声明新的不行；hover 传值走属性选择器（`packages/chat/AGENTS.md` §2） |
 | **悬停才出现的按钮/动作条一直不显形（但点得到）** | antd-style 的样式块编译成哈希类名（`acss-xxxx`），同一文件里写 `.card:hover &` 这种**字面类名**的后代选择器永远匹配不到——宿主上没有那个类，规则静默失效：元素 opacity 仍是 0 但留在文档流里、仍可点（自动化点得中、人眼看不见）。宿主要额外挂一个字面类（`LibraryView` 的 `.kb-card` / `.kb-row`，`FolderSection` 的行是同一条做法的先例） |
 | **图标迁移后尺寸不对（巨大 / 挤成一团）** | antd 图标随 `font-size` 缩放，lucide 默认 **24px 固定尺寸**——迁移时必须给显式 `size`（本仓两档：14 小字形 / 16 常规按钮槽）。「停止」这类**实心**图标要 `fill="currentColor"`（lucide 的 Square 默认描边空心） |
 | **进目录页图标切换动效不对（箭头朝上）** | morphicons 的路径形变与 antd 自带的收起态 `-90°` 旋转叠加了——`transform: none !important` 关掉 antd 那一半，朝向只归动效库一处（DESIGN §8.1） |
@@ -188,6 +190,10 @@ SQLite 路径同理：FTS5 的 `unicode61` 分词器也不认中文词边界，�
 | **feed 的正文片段跑 Readability 会丢** | RSS 的 `content:encoded` 按规范**已经是正文**，而 Readability 的职责是「从整页里找正文」——两行的片段会被它判为「不像一篇文章」返回 null，整条退化成裸 HTML。片段走 `html-fragment` 解析器（turndown 直转），与抓网页共用同一个转换函数 |
 | **播种/一次性动作「做过了」但标记没落库** | `settings.update()` 对**未注册的键与校验失败**都是「返回 `issues`、不写」——不检查返回值就会「内容写了、标记没写」而函数照常返回成功。症状是每次重启重播一次，而更坏的一种是**用户删掉默认内容之后它又回来**（标记的全部意义就是防这个）。实测踩过：开发中的实例热重载时装配层拿着旧键表，写入被静默拒绝。凡是靠 `settings` 记一次性状态的地方都要看 `ok` |
 | **改了文档却没重算分块（第四条写入路径）** | 分块的写入点只有 `syncChunks` 一个，但**调用它**的路径有四条（笔记新建 / 更新、抓取、上传、重建索引）——抄三遍必漏一处，实测漏的就是上传。新写入路径一律调 `services/chunks.ts` 的 `rebuildChunksAndEmbed` |
+| **本地模式（D-100）点进去却要登录** | 令牌的**名字**在两处：桌面宿主写 cookie（`main.ts`）与服务端读 cookie（`services/local-mode.ts`），走 shared 的 `LOCAL_TOKEN_COOKIE` 常量；宿主忘了注入（`injectLocalCookie`）或 env 写成 `true`（服务端只认 `'1'`）都表现成「本地模式却看到登录页」——不报错。改这两处前先看 `docs/TECH.md` §14.6 的表 |
+| **打包版首启白屏（开发时正常）** | 选择页在 `apps/desktop/ui/`，不在 `dist` 下——`electron-builder.yml` 的 `files` 漏了 `ui/**` 时 asar 里没有它，`file://` 加载失败。开发形态读的是仓库里的文件，所以只有打包版才炸 |
+| **切到云端后点「返回」/切换没反应** | `showSetupPage` **不能清 `modeState`**：选择页要靠它决定形态（首次选择 vs 切换）与预填地址。进入选择页只置 `setupVisible`（供 did-fail-load 判断），真正改模式的只有 `choose()` |
+| **桌面端「换了使用方式但下次启动还是旧的」** | 配置写入是「临时文件 + rename」（`config.ts`）。直接覆盖写时电源断了会留下半截 JSON，而读侧把坏文件一律当「还没选过」——表现是回到选择页或模式回退，用户的选择静默丢失 |
 
 完整清单见 `docs/TECH.md` §10。
 
@@ -219,7 +225,7 @@ SQLite 路径同理：FTS5 的 `unicode61` 分词器也不认中文词边界，�
 | 数据库 | **双后端**（D-045）：服务器 = Postgres 17 + pgvector（Docker）；本地开发 / 桌面端 = SQLite（免 Docker，`DATABASE_URL` 未设置时默认） |
 | 后端 | M0 完成：文档 CRUD、目录、标签、双链、检索、会话、抓取、问答（流式）、导出。**首启播种**（D-085）：第一次建号时自动建一个「开始使用」知识库 + 一篇《mimir 产品说明》；已有实例由启动时补齐，靠 `seed.defaultContent` 标记保证只播一次 |
 | 前端 | 两栏界面（D-047）：导航 + 主区（知识库页 / 详情两态）、会话导航、对话视图、命令面板、抓取对话框、设置页。**知识库是内容的主容器**（D-079）：侧栏平铺列知识库，进子文件夹靠「文档 / …」面包屑；没有「全部文档」页（`scope=all` 落到第一个知识库）；收集入口是知识库页的「添加文档」下拉（上传文件 / 上传文件夹 / 网页抓取 / 直接编辑，都带当前目录）。**四种编辑器共用一套外壳**（D-054：上工具条 / 中编辑区 / 下状态行，铺满容器，头部单行） |
-| 桌面端 | **自绘标题栏**（D-094，方案 A）：Win/Linux 自绘控件在右上、mac 保留系统红绿灯；标题栏与侧栏原来那条顶栏合并，垂直空间净增为零。**Electron 载体**（D-046）：窗口加载宿主的地址（cookie / SSE / Range 原生可用），可切远程地址。**品牌**见 D-091：图标由 `scripts/make-icons.ts` 从 favicon 生成、`executableName: mimir`、Linux 用 `setDesktopName('mimir.desktop')` 定 WM_CLASS |
+| 桌面端 | **两种使用方式**（D-100）：**本地使用**（数据在本机 userData、免登录——入口是宿主启动时注入的本机令牌，不是无鉴权）/ **连接服务器**（纯壳，加载自部署地址）。首启有一个选择页（`apps/desktop/ui/setup.html`，自包含静态文件），之后可在设置 › 客户端 ›「更换使用方式」切换（回到那一页）；选择存在 `<userData>/desktop-config.json`，切换不迁移数据、不删本地数据。**自绘标题栏**（D-094，方案 A）：Win/Linux 自绘控件在右上、mac 保留系统红绿灯；标题栏与侧栏原来那条顶栏合并，垂直空间净增为零。**Electron 载体**（D-046）：窗口加载宿主的地址（cookie / SSE / Range 原生可用）。**品牌**见 D-091：图标由 `scripts/make-icons.ts` 从 favicon 生成、`executableName: mimir`、Linux 用 `setDesktopName('mimir.desktop')` 定 WM_CLASS |
 | 文件 | **多格式上传已落地**（`docs/TECH.md` §13、D-044）：任意格式的原件入库、列表、按格式预览、下载、替换、随导出打包；文本 / HTML / Office / **PDF** 的正文可搜（M1-E，D-084）。**RSS 订阅已落地**（设置 › 订阅；收进来的文章与手动抓取同形状） |
 | 六种格式 | **GenOffice 支持的六种都能预览与编辑**（D-056 / D-057）：docx 全文、xlsx 单元格、pptx 文字、html 源码、markdown（即笔记）、pdf 页面级（旋转/删除/调序）。PDF 的**改文字**未做——那要 PDFium 的 WASM，见 TECH §15.12 |
 | Office | 三种格式的原件层都能看、**都能改**：**docx 全文编辑**（分页视图 + 工具栏；D-049）、**pptx 改文字**（渲成 SVG；D-051/D-052）、**xlsx 改单元格**（D-050/D-053）。三者保存都是**补丁式**（改一处不重排整篇 XML）。**界面在包里**（`packages/office/src/shell` + `src/editors`），markdown 笔记与它们同壳（D-054） |

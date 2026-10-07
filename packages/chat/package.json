@@ -1,0 +1,41 @@
+{
+  "name": "@mimir/chat",
+  "version": "0.1.0",
+  "private": true,
+  "description": "对话面板：消息区、检索过程、引用、输入区。状态层是 @assistant-ui/react，宿主注入动作与数据",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./test-dom": "./src/test-dom.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@ag-ui/client": "0.0.59",
+    "@assistant-ui/react": "0.15.23",
+    "@assistant-ui/react-ag-ui": "0.0.63",
+    "@mimir/shared": "workspace:*",
+    "@tanstack/markdown": "0.0.13",
+    "@tanstack/react-query": "^5.103.1",
+    "lucide-react": "^1.48.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "antd": "catalog:",
+    "antd-style": "catalog:",
+    "happy-dom": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "antd": "catalog:",
+    "antd-style": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  }
+}

@@ -1,6 +1,7 @@
 import { Outlet, createRootRouteWithContext, redirect, useRouter } from '@tanstack/react-router'
-import { Button, Result } from 'antd'
+import { Button, Result, Space } from 'antd'
 import { ApiRequestError, api } from '@/lib/api'
+import { desktopBridge, isDesktopShell } from '@/lib/desktop-shell'
 import type { RouterContext } from '@/lib/router-context'
 
 export const Route = createRootRouteWithContext<RouterContext>()({
@@ -60,6 +61,16 @@ function RootError({ error, reset }: { error: unknown; reset: () => void }) {
    */
   const reachable = status !== null
 
+  /**
+   * 桌面壳里多给一条出路（D-100）：**连不上服务器时最需要的动作其实是
+   * 「换一个地址或改用本地使用」**，而设置页此刻进不去（它也在远端）。
+   * 「更换使用方式」把窗口带回客户端自己的选择页——那是唯一一个不依赖
+   * 远端可用性的入口。
+   *
+   * 浏览器里不出现：`window.mimirDesktop` 不存在时这一项没有意义。
+   */
+  const desktop = isDesktopShell()
+
   return (
     <Result
       status="warning"
@@ -70,26 +81,31 @@ function RootError({ error, reset }: { error: unknown; reset: () => void }) {
           : '请确认服务在运行（docker compose ps），以及客户端指向的地址是对的。'
       }
       extra={
-        <Button
-          type="primary"
-          onClick={() => {
-            /**
-             * **必须 `invalidate()`，不能只 `reset()`。**
-             *
-             * 这里的错误是在渲染期抛出的（`beforeLoad` 失败的路由会把错误
-             * 抛给 React），所以 `reset()` 只是让边界清掉错误状态、再渲染一次
-             * 同一棵子树——而那个 match 仍是 `error`，它会立刻重新抛出，
-             * 用户看到的是「点了没反应」。
-             *
-             * `invalidate()` 让路由重新跑一遍 `beforeLoad`（最常见的情况是
-             * 服务端刚好起来了）。重跑完再 `reset()` 清掉边界：
-             * 成功了就正常进页面，失败了就用新的错误再走一次这一屏。
-             */
-            void router.invalidate().finally(() => reset())
-          }}
-        >
-          重试
-        </Button>
+        <Space>
+          <Button
+            type="primary"
+            onClick={() => {
+              /**
+               * **必须 `invalidate()`，不能只 `reset()`。**
+               *
+               * 这里的错误是在渲染期抛出的（`beforeLoad` 失败的路由会把错误
+               * 抛给 React），所以 `reset()` 只是让边界清掉错误状态、再渲染一次
+               * 同一棵子树——而那个 match 仍是 `error`，它会立刻重新抛出，
+               * 用户看到的是「点了没反应」。
+               *
+               * `invalidate()` 让路由重新跑一遍 `beforeLoad`（最常见的情况是
+               * 服务端刚好起来了）。重跑完再 `reset()` 清掉边界：
+               * 成功了就正常进页面，失败了就用新的错误再走一次这一屏。
+               */
+              void router.invalidate().finally(() => reset())
+            }}
+          >
+            重试
+          </Button>
+          {desktop ? (
+            <Button onClick={() => desktopBridge?.mode.openSetup()}>更换使用方式…</Button>
+          ) : null}
+        </Space>
       }
     />
   )

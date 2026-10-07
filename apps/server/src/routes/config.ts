@@ -70,6 +70,12 @@ configRoute.get('/', async (c) => {
       driver: env.dbDriver,
       file: env.dbDriver === 'sqlite' ? env.databaseFile : null,
     },
+    /**
+     * 本地模式（D-100）。与 `database` 同一条理由由服务端回传：
+     * 界面要据此决定账号那一块显示什么（本地模式没有登出、没有邮箱），
+     * 猜错的表现是一个点了没反应的按钮。
+     */
+    localMode: env.localMode,
     probes: [...probes.values()],
   } satisfies RuntimeConfig)
 })

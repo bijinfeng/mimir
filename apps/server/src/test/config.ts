@@ -26,3 +26,26 @@ export const TEST_ENV: Record<string, string> = {
   WEB_ORIGIN: 'http://localhost:5173',
   SERVER_URL: 'http://localhost:3000',
 }
+
+/**
+ * 本地模式（D-100）那一遍测试的环境。
+ *
+ * ## 为什么要**单独跑一个进程**，不能塞进上面的 TEST_ENV
+ *
+ * `env.ts` 在模块加载时读取 `process.env`，`localMode` 一旦打开就会改变
+ * 全局行为：`requireAuth` 多一条令牌分支、`setup/state` 与 `/api/config`
+ * 的形状里多一个字段、`startServer` 会把监听地址钉死在回环。
+ * 那些正是「另一个模式」的实现——让整套测试都跑在本地模式下，
+ * 等于两条路径里有一条永远没被测过（而没被测的那条恰好是生产部署用的）。
+ *
+ * 所以本地模式是一个**独立进程**：`vitest.local.config.ts` 只收录
+ * `local-mode.test.ts`，环境由这里提供。两份 env 只有本地模式那两个变量不同，
+ * 其余（库、数据目录、密钥）走同一份常量——两边分叉是这类测试最容易
+ * 静默失真的地方。
+ */
+export const LOCAL_MODE_TEST_ENV: Record<string, string> = {
+  ...TEST_ENV,
+  MIMIR_LOCAL_MODE: '1',
+  /** 与 `services/local-mode.ts` 的比较对象。测试里用固定值，真实宿主每次随机 */
+  MIMIR_LOCAL_TOKEN: 'test-local-token-0123456789abcdef',
+}

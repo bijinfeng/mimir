@@ -25,8 +25,8 @@
 ### TypeScript 7 的说明
 
 TS 7 是 Go 重写的编译器（`tsc` 是平台原生二进制，通过 `@typescript/typescript-*` 分发）。
-本项目实测通过：三个包的类型检查、服务端构建、Vite 构建全部正常，Drizzle 的 schema 类型
-推断没有出现问题。
+本项目实测通过：全仓 `pnpm -r typecheck`（当时是三个包，现在是全部 workspace 包）、
+服务端构建、Vite 构建全部正常，Drizzle 的 schema 类型推断没有出现问题。
 
 **为什么值得记一笔**：选它的时候是刻意的风险——Go 重写版改变了编译器的实现，
 类型推断的边界行为可能有差异。当时的判断是「先在 5.9 上跑通，等 7 稳定再升」，
@@ -126,7 +126,9 @@ mimir/
 ├── packages/
 │   ├── shared/                  # 契约：zod schema + 类型 + 插件接口（源码发布）
 │   ├── core/                    # 插件宿主骨架：注册表 + 配置 + 融合 + 编排
-│   └── tokenizer/               # 中文分词（写入与检索两侧共用同一份规则）
+│   ├── tokenizer/               # 中文分词（写入与检索两侧共用同一份规则）
+│   ├── office/                  # 六种格式的编辑外壳与解析/保存（D-054，见 §15）
+│   └── chat/                    # 对话面板：消息区、检索过程、引用、输入区（D-099）
 ├── plugins/                     # 插件实现（独立 workspace 包）
 │   ├── capturer/                # URL → 原始内容（网页 / 公众号 / GitHub）
 │   ├── parser/                  # 原始内容 → Markdown（直通 / Readability）
@@ -138,15 +140,24 @@ mimir/
 └── data/                        # 运行时数据，不进 git
 ```
 
-### 三个包与一个目录的分工
+### 包与目录的分工
 
 | 位置 | 是什么 | 依赖谁 |
 |---|---|---|
 | `packages/shared` | **契约**。API 形状、插件接口、运行接口 | 只有 zod |
 | `packages/core` | **骨架**。注册表、配置三层解析、RRF、检索编排 | shared |
 | `packages/tokenizer` | 分词规则。写入与检索两侧**必须**是同一份 | 无 |
+| `packages/office` | **编辑器外壳与六种格式的解析/保存**。前端包（见 §15） | shared |
+| `packages/chat` | **对话面板**。消息区 / 检索过程 / 引用 / 输入区 + 状态层（见 §5.5） | shared |
 | `plugins/*` | **实现**。每条接缝的具体做法 | 只有 shared |
 | `apps/server/src/plugins/host.ts` | **装配**。全仓唯一同时知道宿主与插件的地方 | 两边都有 |
+
+**两个前端包同样是「源码发布、由使用方编译」**（`packages/office`、
+`packages/chat`，D-054/D-099）：`exports` 指 `src/index.ts`、没有 build
+脚本，Vite 把它们编进 `apps/web` 的产物。它们在浏览器侧运行，与
+`shared`/`core`/`tokenizer` 那条服务端依赖链互不相干；共同点是
+「**壳与渲染归包，方言与取写归宿主**」的边界（office 是 `EditorIo`，
+chat 是 `ChatIo` + `composerStatus` 数据槽）。
 
 **依赖方向是单向的**，这是「核心保持精简」可验证的条件：
 
@@ -515,6 +526,11 @@ effect 之前**。
 
 选型对比与证据见 `RESEARCH.md`。这里只写结论与用法。
 
+**适用边界（D-099）**：这一章讲的是**服务端怎么调模型**——chat / embed /
+rerank / summarize 与适配器构造都归 TanStack AI，且适配器只在
+`plugins/provider/` 里建。浏览器侧的对话状态层从 `@tanstack/ai-react`
+换成了 assistant-ui（§5.4/§5.5），那是**另一层职责**，不改变这条边界。
+
 ### 5.1 它提供什么
 
 能力拆成可 tree-shake 的 activities：`chat` / `embed` / `rerank` / `summarize` / 图像音频视频。本项目用到前三个。
@@ -558,27 +574,48 @@ chat / summarize / embed 三个角色，rerank 留到需要它的时候——
 
 ### 5.4 对话的流式接入
 
-M0 的对话**不是**「一次请求一次响应」，而是 AG-UI 协议的服务端事件流
-（`toServerSentEventsResponse`），由前端的 `useChat` 消费。
+对话**不是**「一次请求一次响应」，而是 AG-UI 协议的服务端事件流
+（`toServerSentEventsResponse`），由前端 `@mimir/chat` 里的
+`@assistant-ui/react-ag-ui` 运行时消费（D-099；浏览器侧客户端从
+`@tanstack/ai-react` 的 `useChat` 换到了它，服务端一行没动）。
 
-事件的顺序是刻意的：
+事件的顺序是刻意的，而且**生命周期括号由服务端拥有**（D-099 的修复）：
 
 ```
-mimir.conversation  →  mimir.trace  →  mimir.citations  →  正文
+RUN_STARTED → mimir.conversation → mimir.trace → mimir.citations
+            → 正文 → mimir.trace(整轮耗时) → RUN_FINISHED
 ```
 
-前三个在**模型还没开始生成时**就发出去，于是引用卡片与检索过程立刻出现，
-用户不必对着空白等模型。三个名字与载荷定义在 `packages/shared`
-（`EVENT_TRACE` 等），前后端共用——两边各写一遍字符串的话，
-打错一个字母是静默失效。
+- 中间几个在**模型还没开始生成时**就发出去，于是引用卡片与检索过程立刻出现，
+  用户不必对着空白等模型。三个名字与载荷定义在 `packages/shared`
+  （`EVENT_TRACE` 等），前后端共用——两边各写一遍字符串的话，
+  打错一个字母是静默失效
+- **`RUN_STARTED` 必须是第一条、`RUN_FINISHED` 必须是最后一条**：AG-UI 的
+  客户端在流开头就校验「第一条必须是 RUN_STARTED」，整轮结束后不再收任何
+  事件（实测 `@ag-ui/client@0.0.59` 抛 `First event must be 'RUN_STARTED'`
+  与 `Cannot send event type 'CUSTOM': The run has already finished`）。
+  所以模型那一趟的 `RUN_STARTED` / `RUN_FINISHED` 被服务端**剥掉不转发**
+  （叠加会命中 `Cannot send 'RUN_STARTED' while a run is still active`），
+  模型的用量接住转挂到自己那条 `RUN_FINISHED` 的 `metadata` 上
+  （目前没有消费者——上下文容量读的是服务端记的 `usageLog`）；
+  只检索路径（不调模型）同样补一对括号。顺序由
+  `apps/server/src/test/chat-stream.test.ts` 守着——它把真实的响应字节
+  喂给协议客户端跑一遍，而不是断言「流里有 RUN_STARTED」（那条断言在顺序
+  错时照样通过）
 
 **为什么走自定义事件而不是协议原生的 part**：
 `THINKING_*` 只是一个字符串，而 trace 是结构化的分步记录（每步带图标、
 关键词、具体数字）；citations 含文档 id 与字符偏移，协议里没有对应形状。
+自定义事件在客户端那一侧被聚合器变成**消息里的 data part**
+（`mimir.trace` / `mimir.citations` / `mimir.failure`），与历史会话同一个
+形状——见 §5.5。
 
-**会话 id 放在请求体（`forwardedProps`）而不是 URL**：`useChat` 在 connection
-变化时会重建 ChatClient，重建会切断正在进行的流。代价是新建会话时客户端
-不知道 id，所以服务端用 `mimir.conversation` 事件回传。
+**会话 id 放在请求体（`forwardedProps`）而不是 URL**：地址一变，AG-UI 的
+agent 就要重建，重建会切断正在进行的流。代价是新建会话时客户端不知道 id：
+服务端仍用 `mimir.conversation` 事件回传，而前端在请求发出**之前**先建
+会话（`onRunInitialized` 钩子，被 await 且在建连之前执行——D-099 用它替掉
+了 `creating` 那个忙标志）。每轮的参数（检索范围 / 思考强度）走
+`forwardedProps.runConfig`，顶层旧写法仍认、顶层优先。
 
 非流式的 `POST /api/conversations/:id/ask` 保留：测试与 curl 用它，
 且与流式版**共用同一套检索**（`search()`），所以不会出现「界面看到的引用
@@ -586,29 +623,49 @@ mimir.conversation  →  mimir.trace  →  mimir.citations  →  正文
 
 ### 5.5 前端：用 SDK 的 UI 层，不手搓
 
+对话**整体是一个包**（`packages/chat`，D-099）。它只做这一件事，宿主
+（`apps/web`）只提供数据与动作：
+
 | 层 | 用什么 |
 |---|---|
-| 消息状态与流式接收 | `@tanstack/ai-react` 的 `useChat` |
-| 消息渲染 | `createChatUI`（`@tanstack/ai-react/ui`）+ 官方 `TextPart` |
+| 消息状态、流式接收、队列、停止 | `@assistant-ui/react` + `@assistant-ui/react-ag-ui`（内部是 `@ag-ui/client`） |
+| 消息与输入区的 UI 原语 | 同一套包的 primitives，外面套 antd 组件 |
+| 消息正文渲染 | `@tanstack/markdown` 的 `<Markdown>` + `streamingMarkdownExtension` |
 
-`TextPart` 自带**流式 markdown 解析**（处理半截语法）、HTML 转义与代码高亮入口。
-自己写一份意味着要自己处理「`**` 只到了一半」这种中间态，以及 XSS 转义。
+`@tanstack/markdown` 自带**流式 markdown 解析**（处理半截语法）与 HTML 转义，
+所以回答是 Markdown 渲染的，且「`**` 只到了一半」这种中间态不用自己处理。
+**不换**官方那句 `@assistant-ui/react-markdown`：它带进 react-markdown 与
+一整套 radix 依赖，而本仓现有的流式扩展与样式覆写都长在 `@tanstack/markdown`
+上。
 
-`lib/use-mimir-chat.ts` 是对话状态的唯一入口，组件不直接碰 `useChat`。
-它只做四件 SDK 不该知道的事：会话 id 维护、自定义事件收进 state、
-让 TanStack Query 失效、把引用回传给中栏。
+`packages/chat/src/runtime/use-mimir-runtime.ts` 是对话状态的唯一入口，
+组件不直接碰运行时。它与宿主之间只有两个口：动作面 `ChatIo`
+（建会话 / 读历史 / 存笔记 / 跳转，宿主实现在 `apps/web/src/lib/chat-io.ts`）
+与数据槽 `composerStatus`（文档列表 / 模型角色 / 用量，宿主 `useQuery` 取好）。
+包内 **import 不到**宿主的 api / router / queryClient——这是结构性边界
+（与 `packages/office` 的 `EditorIo` 同一条），不是约定。
 
-**两个必须踩对的接口细节**：
+**三条原 `useChat` 时代的接口细节，各自的下场**：
 
-1. `useChat` 只在**挂载那一刻**读 `initialMessages`（它内部把客户端建在
-   `useMemo(..., [])` 里）。所以打开历史会话时必须等数据取回再挂载对话体。
-   先挂载再补数据的症状是**右栏一直空白，而中栏的「本次引用」正常显示**——
-   两栏说的不是同一件事。
-2. 新会话的第一问会「建会话 → 写 URL」。如果对话体的 key 直接跟着 URL 的 id
-   走，这次导航会**把刚挂载的对话体卸载重建**，把正在接收的流丢掉
-   （症状：提问后右栏什么都不显示，而消息其实已经落库）。
-   所以路由里区分「自己刚创建的 id」（不重挂载）与「导航切换过去的」
-   （重挂载并灌历史）。
+1. `useChat` 只在**挂载那一刻**读 `initialMessages` → 打开历史会话必须等
+   数据取回再挂载对话体（否则右栏一直空白，而中栏的「本次引用」正常显示）。
+   现在由**历史适配器 + `thread.isLoading`** 承担：宿主可以在数据没到位时
+   就挂载，包出骨架屏（`runtime/history.ts` 的 `load()` 返回
+   `ExportedMessageRepository`；`append` 是空实现——落库是服务端的职责）
+2. **会话 id 不进 URL、切换会话由宿主 `key` 重挂载**：新会话的第一问会
+   「建会话 → 写 URL」，如果对话体的 key 直接跟着 URL 的 id 走，这次导航会
+   把刚挂载的对话体卸载重建、把正在接收的流丢掉（症状：提问后右栏什么都
+   不显示，而消息其实已经落库）。区分「自己刚创建的 id」（不重挂载）与
+   「导航切换过去的」（重挂载并灌历史）——这条契约**不变**
+3. **实时份与落库份不再需要对齐**：trace / 引用 / 失败是消息里的 data part
+   （实时由聚合器产生，历史由适配器转成同名 part），旧实现那套按位置对齐
+   的 `resolveRound` 整体退役
+
+**包与宿主的样式边界**：颜色 / 间距 / 圆角走 antd token（包内
+`createStyles` 内部就是宿主的 `theme.useToken()`，包不新建主题）；
+字号与栏宽比例走宿主填的 CSS 变量（`--mimir-chat-font-*` 八档来自
+`FONT_SIZE`、`--mimir-chat-gutter` 主视图 40px / 侧栏 16px），包内写
+`var(…, 回退值)`。细节与坑见 `packages/chat/AGENTS.md`。
 
 ### 5.6 编辑器：也用 SDK 的包装
 
@@ -1417,8 +1474,11 @@ M1 的新代码大多是「纯函数 + SQL」，两类都能用能说明用户�
 | vitest 与 vite 各有一份配置 | 别名只在一边配了，测试报「找不到模块」而构建正常 | 别名定义在 `alias.ts`，两个配置都从它取 |
 | `plainto_tsquery` 的 AND 语义 | 自然语言提问全部 0 命中（四词要求全部出现） | 改成「命中词数 ≥ 一半」+ `ts_rank_cd` 排序，见 D-014 |
 | 子串通道拿整串去 ILIKE | 「兜底」在一句话提问上永远不命中 | 逐词匹配，门槛与词级通道一致 |
-| `useChat` 的 `initialMessages` 只在挂载时生效 | 打开历史会话右栏空白，而中栏的「本次引用」正常 | 等数据取回再挂载对话体，`key={conversationId}` |
-| `useChat` 在 connection 变化时重建客户端 | 发送中如果 URL 变了，正在进行的流被切断 | 会话 id 放请求体（`forwardedProps`），不进 URL |
+| `useChat` 的 `initialMessages` 只在挂载时生效（**旧客户端，已换**） | 打开历史会话右栏空白，而中栏的「本次引用」正常 | D-099 后由包的历史适配器 + `thread.isLoading` 骨架屏承担：数据没到位也能挂载。这条现在只剩历史价值——它解释了为什么 `ChatPanel` 曾有一个 `messagesLoading` 硬契约 |
+| 客户端连接的地址跟着会话变 | 发送中如果 URL 变了，正在进行的流被切断（AG-UI 客户端与 `useChat` 同一条性质） | 会话 id 放请求体（`forwardedProps`），不进 URL；切换会话靠宿主的 `key` 重挂载（D-099 的重挂载契约） |
+| **AG-UI 流的第一条不是 `RUN_STARTED`** | 协议客户端在流开头硬校验，直接抛 `AGUIError: First event must be 'RUN_STARTED'`——**整轮一个字节都用不了**，而症状是「界面完全空白、控制台一句 AGUIError」 | 服务端拥有这一段的生命周期（D-099）：`createStream` 第一件事发自己的 `RUN_STARTED`，模型那一趟的剥掉不转发，终局 trace 抢在自己的 `RUN_FINISHED` 之前。只检索路径同样补一对括号。测试把真实字节喂给 `@ag-ui/client` 守着顺序（只断言「有 RUN_STARTED」在顺序错时照样通过） |
+| **终局 CUSTOM 发在 `RUN_FINISHED` 之后** | 报 `Cannot send event type 'CUSTOM': The run has already finished`，用户永远看不到整轮真实耗时 | 事件顺序：… → trace(整轮) → `RUN_FINISHED`。失败路径同理：`CUSTOM(mimir.failure)` 必须排在 `RUN_ERROR`（终局事件）之前 |
+| 模型自带的 `RUN_STARTED` 直接转发 | 与这一轮自己的那条叠加，命中 `Cannot send 'RUN_STARTED' while a run is still active` | 剥掉模型流的 `RUN_STARTED` / `RUN_FINISHED`，用量接住转挂到自己那条的 `metadata` 上（`assistant-stream.ts` 的 `runFinished`） |
 | 渲染期读写 ref | React Compiler 拒绝优化该组件（`react(refs)`） | 参与渲染的值用 state；只在事件处理器里读写 ref |
 | 模型连接错误不抛异常 | `try/catch` 根本不执行，「每类失败给不同出路」静默失效 | 连接类错误以 `RUN_ERROR` chunk 顺着流发出来，既要看 chunk 也要留 catch |
 | 建会话后写 URL 触发重挂载 | 新会话提问后右栏空白，而消息已落库 | 区分「自己刚创建的 id」与「切换过去的会话」，前者不重挂载 |
@@ -1461,6 +1521,14 @@ M1 的新代码大多是「纯函数 + SQL」，两类都能用能说明用户�
 | **同一个断点被 CSS 与 React 各写一份** | 窄屏（≤880px）下外壳的 `@media` 把左列压到 48px，而栏内内容按用户偏好仍渲染成展开态——中文标签逐字竖排、品牌名与折叠开关叠在一起。界面**不报错**，只是全变形，且只改了其中一处的人看不出来 | 断点在 `theme/tokens.ts` 定义一次（`NAV_NARROW_QUERY`），CSS 与 `matchMedia` 共用；`design.test.ts` 守住外壳里不再出现这个字面量。见 DESIGN §5.5 / D-055 |
 | **目录树每行都把名字画在下一行上** | rc-tree 的行是 `.ant-tree-node-content-wrapper`（block）里放「图标 + `.ant-tree-title`」，而 title 是**行内**元素；行内容却是块级 flex 盒子，放不进行内上下文里图标所在的 line box，被折到下一行——每行标题 top 比本行高**恰好 28px**。后果是 `elementFromPoint` / 真指针取「技术」字形中心命中的是「后端」那一行，点目录进错目录，而界面没有任何提示 | 让这一行成为一次 flex 布局：wrapper 补 `display: flex; align-items: center`，title 补 `display: flex; flex: 1; min-width: 0`（`FolderSection.tsx` 的 `treeWrap`）。见 DESIGN §8.1 / D-069 |
 | **antd 按钮 hover 时边框一闪、内容抖一下** | 给按钮写 `border: none` 压掉描边，而 antd 的变体样式在 `&:hover` 里用**简写**重写 `border`（`border-width: 1px` + 变体色，特异性高于单类）——hover 那一刻边框从 none 变 1px：颜色从 `currentColor`（深色下是白）过渡到透明，于是白边一闪；同时 border-box 重算，内容内移 1px（实测头像 x 14 → 14.8）。界面不报错，只是一闪一抖 | 留一个**恒为透明的 1px 边框**（`border: 1px solid transparent`），并把过渡限定到 `color` / `background-color`（antd 默认的 `all` 会让边框宽度也参与过渡，宽度不可动画、重算发生在每帧上）。裸 `<button>` 不受影响——只有 antd `Button` 有变体样式。见 `NavSidebar.style.ts` 的 `account` |
+| **本地模式却要求登录（D-100）** | 令牌的名字在两处（桌面宿主写 cookie / 服务端读 cookie），宿主忘了注入（`injectLocalCookie`）或 `MIMIR_LOCAL_MODE` 写成 `true`（服务端只认 `'1'`）都会静默退回登录页 | 名字走 shared 的 `LOCAL_TOKEN_COOKIE`；`env.ts` 里「开了本地模式但没令牌」直接启动报错，**绝不降级成「有开关就放行」**。见 §14.6 的表 |
+| **打包版首启白屏、开发时正常（D-100）** | 选择页在 `apps/desktop/ui/`，不在 `dist` 下——`electron-builder.yml` 的 `files` 漏了 `ui/**` 时 asar 里没有它，`file://` 加载失败 | 打包配置显式列 `ui/**`；开发形态读仓库文件，所以只有打包版会炸 |
+| **桌面端切了模式、下次启动又回旧的（D-100）** | 直接覆盖写配置时断电会留下半截 JSON，而读侧把坏文件一律当「还没选过」 | 写入走「临时文件 + rename」（`config.ts`）——同目录 rename 是原子的 |
+| **进选择页后「切换 / 返回」失效（D-100）** | `showSetupPage` 清掉 `modeState` 会让选择页把自己当成首次启动（丢预填地址、无法返回） | 只置 `setupVisible`（供 did-fail-load 判断）；真正改模式的只有 `choose()` |
+| **一条断言在两种模式下互相污染（D-100）** | `MIMIR_LOCAL_MODE` 这类变量在 `env.ts` 模块加载时读一次，混进同一遍会全局改变鉴权与配置形状 | 本地模式有自己的 vitest 配置与进程（`vitest.local.config.ts`），`pnpm test` 连着跑两遍 |
+| **云端模式下窗口不能拖也不能关** | 桌面壳是 `frame: false`，拖动区与三枚控件由页面提供。而云端模式落地的第一个界面是**远端登录页**，登录页原先没有 `TitleBar`——实测切到云端后整条窗口 chrome 凭空消失 | 登录页也渲染 `TitleBar`（无侧栏时 `collapsed` / `showToggle` 可省，只留拖动区与控件）；`TECH §14.6` 的「更换使用方式…」入口也挂在登录页上 |
+| **「连不上」的错误话术透出 `fetch failed`** | Node / 浏览器给的原话是 `fetch failed` / `Failed to fetch`，两种都没说清是「域名解析不了」「没人监听」还是「证书不信任」——而这三件的下一步完全不同 | `cloud.ts` 的 `describeFetchError` 从 `error.cause.code` 判 ECONNREFUSED / ENOTFOUND / CERT… ；另有一条 `bad port`（fetch 会拦一批历史危险端口，如 `:1`，且**不带** code）。测试用「刚释放的空闲端口」而不是 `:1` 来测连接失败 |
+| **选择页首启多出一行「已在其他方式下使用过？」** | `.field` 有 `display:none` 而 `.footnote` 漏了同一条规则——`data-visible='false'` 只是数据，不画出来的那一步靠 CSS | 隐藏规则两个元素都要有（`setup.html`）。**这条是靠截图发现的**，DOM 断言不看渲染结果 |
 
 ---
 
@@ -2033,7 +2101,8 @@ dragenter/leave 用计数器防抖。
 
 ## 14. 桌面端：Electron 载体 + 进程内私有宿主
 
-> 决策记录见 `docs/DECISIONS.md` D-046；调研与版本快照见 `docs/RESEARCH.md` §12。
+> 决策记录见 `docs/DECISIONS.md` D-046 与 **D-100（两种模式）**；调研与版本快照
+> 见 `docs/RESEARCH.md` §12。
 > 分层借鉴 [deepseek-harness](https://github.com/deepseek-ai/deepseek-harness) 的
 > host/carrier 拓扑（"Electron starts the private Desktop Host in Electron Node
 > mode … Web owns RPC and streams; the desktop carrier connects the local page
@@ -2044,10 +2113,13 @@ dragenter/leave 用计数器防抖。
 ```
 ┌─ Electron 载体（apps/desktop）────────────────────────────┐
 │  主进程（Node 模式）                                        │
-│   └─ 私有宿主 = apps/server/dist 的 startServer()          │
-│       SQLite @ userData/data · 127.0.0.1 随机端口           │
-│  BrowserWindow → 加载 http://127.0.0.1:<port>（宿主自己）   │
-│  IPC 只承载：boot 信息（shared 的 DesktopBootInfo）与退出    │
+│   └─ 本地模式：私有宿主 = apps/server/dist 的 startServer() │
+│       SQLite @ userData/data · 127.0.0.1 随机端口 · 免登录  │
+│   └─ 云端模式：不起宿主，窗口加载用户自部署的地址            │
+│  BrowserWindow → 加载宿主地址或远端地址（见 §14.6）          │
+│  IPC 只承载：boot 信息、模式选择/切换、窗口控制与退出         │
+│  （契约：shared 的 DesktopBootInfo / DesktopModeApi /       │
+│   DesktopWindowApi）                                        │
 └────────────────────────────────────────────────────────────┘
 ```
 
@@ -2114,9 +2186,73 @@ SSE 聊天流、文件 Range、multipart 上传、zip 导出全部是同源 HTTP
 - 宿主只绑 `127.0.0.1` + 随机端口；鉴权仍是 better-auth 的
   `SameSite=Lax` cookie——外部网站对宿主的跨站 POST 拿不到 cookie，
   DNS rebinding 后的请求同样过不了 `requireAuth`
+- **本地模式（D-100）：随机端口不算安全边界。** 任何本机进程、以及恶意网页
+  都能扫到那个端口；无鉴权 + 无 preflight 的跨站写请求等于把 CSRF 保护拆掉。
+  所以本地模式的入口是一把**宿主每次启动随机生成的令牌**（`mimir-local`
+  cookie，httpOnly + SameSite=Lax），由 `requireAuth` 与真实会话并列校验。
+  宿主在本地模式下**结构性强制**绑定回环（`startServer` 里判断，非回环直接抛错）
 - Electron 侧 `contextIsolation: true` + `sandbox: true`，preload 只暴露
-  只读的 boot 信息与退出（最小边界）
+  只读的 boot 信息、模式选择与窗口控制（最小边界）
+- **云端模式下的远端页面没有「任意改模式」的能力**：模式 IPC 对不受信任的发送方
+  一定会先弹原生确认框（`isTrustedSender` / `confirmUntrustedSwitch`）。
+  否则一台被攻破的服务器可以让客户端起本地宿主再导航过去，把本机知识库读走
 - 单实例锁：两个窗口同时写一个 SQLite 会撞锁
+
+### 14.6 两种模式：本地离线与云端（D-100）
+
+```
+第一次启动 ──→ ui/setup.html（静态选择页，不依赖任何宿主）
+                 ├─ 本地使用 ──→ 起私有宿主（本地模式）→ 数据在本机、免登录
+                 └─ 连接服务器 → 归一化地址 + 探 /healthz → 窗口加载远端
+
+之后启动 ──→ <userData>/desktop-config.json 决定（{mode:'local'} 或
+             {mode:'cloud', cloudUrl}）
+切换 ──→ 设置 › 客户端 ›「更换使用方式」→ 回到那一页（它读得到当前模式，
+         所以显示的是「切换」而不是「首次选择」，并能「返回，不改」）
+云端连不上 ──→ did-fail-load 弹「重试 / 更换使用方式 / 退出」
+```
+
+选择存在**载体**里而不是服务端设置表：它是部署事实（§7.5），而且切换必须
+能在服务端不可达时完成——设置键恰恰在那时读不到。写入是「临时文件 + rename」：
+半截 JSON 的表现是「下次启动又回到选择页」，用户的选择静默丢失。
+
+选择页是**自包含静态文件**（无外部资源、无框架、自带拖动区与窗口控制）：
+它要在「宿主没起来」「地址还没填」的时刻可靠显示，也是云端用户唯一会看到的
+本地页面。打包时靠 `electron-builder.yml` 的 `files: ui/**` 进 asar。
+
+**本地模式的鉴权**（免登录但不免鉴权）：
+
+| 层 | 做法 |
+|---|---|
+| 令牌 | 宿主每次启动 `randomBytes(24)`，注入 `MIMIR_LOCAL_TOKEN`；不持久化 |
+| 传递 | main 进程写进 Electron cookie jar（httpOnly + SameSite=Lax）。不进 URL、不进日志、不从 preload 暴露 |
+| 校验 | `requireAuth` **先试真实会话，再验令牌**（`middleware/auth.ts`）。比对走 `timingSafeEqual` |
+| 本机用户 | `local@mimir.local`，走 better-auth 自己的 `signUpEmail` 创建（密码随机不公开）——所有权字段、外键、建号钩子里的默认内容播种都需要一个真实 user 行；直接插表要复刻密码哈希（D-020 记过这条坑） |
+| 会话读取 | `GET /api/auth/get-session` 在带令牌时返回合成会话（注册在 `auth.handler` 通配之前——与 `setup/state` 同一条 Hono 顺序坑），前端守卫、侧栏头像零改动 |
+| 资料 | `PATCH /api/local/profile` 只改名称（本地模式才有；其他部署 404）。改完**清缓存**——`ensureLocalOwner` 缓存了用户行 |
+| 纪律 | `MIMIR_LOCAL_MODE=1` 但没令牌 → 启动即报错。**绝不能降级成「有开关就放行」** |
+
+界面按 `RuntimeConfig.localMode` 分支（服务端回传，界面不猜）：
+账号分区隐藏邮箱与登出、左导航菜单去掉登出、登录页改成「回客户端使用」。
+本地模式下名称走 `/api/local/profile`，云端仍走 Better Auth 的 `update-user`。
+
+**云端地址的处理**（`apps/desktop/src/cloud.ts`）：
+
+- **归一化**：去首尾空白、缺协议时补（本机与内网段补 http，公网域名补 https
+  ——与 Jellyfin / Home Assistant 客户端同一条分法）、去末尾斜杠与查询串、
+  保留路径前缀（反代挂子路径的部署）
+- **探活**：`GET <url>/healthz` 且必须回 `{ok:true}`。只看「有没有响应」不够：
+  同机上别的服务、或反代配错的域名也会回 200，用户会得到「地址是对的、
+  进去却是别人的页面」
+- 探活与归一化**都在写配置之前**：写一个连不上的地址等于把用户锁在门外
+
+**切换的边界**：
+
+- **宿主一旦启动就常驻**，切到云端不销毁：服务端模块不可重入（模块级的 db 连接、
+  插件装配、设置缓存），重启宿主不是已支持的路径。代价只是一个回环端口
+- **切换不迁移数据**：本地与云端是两套独立的存储，界面明确说「不会删除本地数据」
+- 开发形态（`MIMIR_DESKTOP_URL`）下模式 API 返回 null / 明确拒绝——
+  开发时点到的切换不该改真实配置
 
 ---
 

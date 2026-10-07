@@ -652,10 +652,30 @@ export const api = {
      * 改名称。**走 Better Auth 自带的端点**，不在 `/api/` 下再包一层——
      * 包一层等于把校验规则复制到两处，而会话校验、字段白名单都在
      * Better Auth 里（`docs/TECH.md` §12.6）。
+     *
+     * 本地模式下用不了它（那条路径要求一个真实会话，而本地模式靠宿主
+     * 注入的本机令牌进入）——那种情况下走下面的 `api.local`。
      */
     updateUser(input: { name: string }) {
       return request<{ status: boolean }>('/api/auth/update-user', {
         method: 'POST',
+        body: JSON.stringify(input),
+      })
+    },
+  },
+
+  /**
+   * 本地模式专有（D-100）。
+   *
+   * 「要不要显示这一组能力」由服务端说了算（`RuntimeConfig.localMode`），
+   * 界面不猜——猜错的两种表现都是坏界面：在本地模式里显示一个点了必然
+   * 失败的「登出」，或在云端模式里把账号那块拆掉。
+   */
+  local: {
+    /** 改本机用户的名称。语义与 `auth.updateUser({ name })` 相同，入口不同 */
+    updateProfile(input: { name: string }) {
+      return request<{ name: string }>('/api/local/profile', {
+        method: 'PATCH',
         body: JSON.stringify(input),
       })
     },

@@ -389,6 +389,15 @@ function AccountRow({
 }) {
   const { styles } = useStyles()
   const sessionQuery = useQuery({ queryKey: ['session'], queryFn: api.auth.session })
+  const configQuery = useQuery({ queryKey: ['config'], queryFn: api.config })
+  /**
+   * 本地模式（D-100）：菜单里**不再有登出**。
+   *
+   * 本机用户不是登录来的（桌面客户端注入令牌直接进入），登出之后没有任何
+   * 可以「出」的地方——留在那里就是一颗点了没反应的按钮。服务端是这件事
+   * 的真相来源（`RuntimeConfig.localMode`），界面不猜。
+   */
+  const localMode = configQuery.data?.localMode ?? false
   const { mode, setMode } = useThemeMode()
   /**
    * 主题子菜单的展开状态。**受控**——这是子菜单那个「弹层残留」的修法：
@@ -447,8 +456,13 @@ function AccountRow({
       children: themeChildren,
     },
     { key: 'stats', icon: <ChartColumn size={16} />, label: '数据统计' },
-    { type: 'divider' },
-    { key: 'signout', icon: <LogOut size={16} />, label: '登出', danger: true },
+    // 登出只在云端模式出现（本地模式的理由见 `localMode` 的声明处）
+    ...(localMode
+      ? []
+      : [
+          { type: 'divider' as const },
+          { key: 'signout', icon: <LogOut size={16} />, label: '登出', danger: true },
+        ]),
   ]
 
   const accountTrigger = (
@@ -457,8 +471,8 @@ function AccountRow({
       className={`${styles.account} ${collapsed ? styles.accountCollapsed : ''}`}
       /* 折叠态只剩一个字母头像：「这是谁的账号」「点开是一组动作」
          都得靠可及名称补回来。文案取「账号菜单」而不是逐项列举——
-         菜单里有四项（账号资料 / 主题 / 数据统计 / 登出），列全了
-         又长又漏得快 */
+         菜单在三到四项之间（账号资料 / 主题 / 数据统计 / 登出，本地模式
+         下没有最后一项），列全了又长又漏得快 */
       aria-label={collapsed ? `${user.name}，账号菜单` : undefined}
     >
       <Avatar size={26} src={user.image ?? undefined} className={styles.accountAvatar}>

@@ -12,6 +12,13 @@ import type { RefObject } from 'react'
  *
  * 用法：`data-scrolled={scrolled || undefined}` 挂在**画线的那一个元素**上，
  * CSS 里 `&[data-scrolled] { border-…-color: … }`（默认透明 + transition）。
+ *
+ * ## 它与 `packages/chat/src/hooks/use-scrolled.ts` 是**两份**
+ *
+ * 不是笔误：对话包带了自己的一份（它 import 不到宿主）。这个文件留给宿主
+ * 自己的使用方——列表页、文档详情、导航侧栏的固定区都用它。
+ * 「一份实现两处放」在这里是必要的代价（29 行、无依赖、纯 DOM 事件），
+ * 比「让宿主去依赖一个 UI 包里的工具函数」更容易解释。
  */
 export function useScrolled(ref: RefObject<HTMLElement | null>): boolean {
   const [scrolled, setScrolled] = useState(false)

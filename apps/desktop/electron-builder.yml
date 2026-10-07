@@ -25,6 +25,10 @@ directories:
   output: release
 files:
   - dist/**
+  # 首次启动的选择页（D-100）。**必须显式列进来**：它不在 dist 下，
+  # 而 `app.getAppPath()` 在打包形态里指向 asar 根——漏了这一行，
+  # 打包版首次启动会加载一个不存在的 file:// 地址（白屏），开发时却正常
+  - ui/**
 asarUnpack:
   - '**/*.node'
 npmRebuild: false

@@ -31,7 +31,14 @@
 import { readdir, readFile } from 'node:fs/promises'
 import { join, relative } from 'node:path'
 
-const ROOTS = ['apps/web/src', 'apps/server/src']
+const ROOTS = [
+  'apps/web/src',
+  'apps/server/src',
+  // 对话包（D-099）：它的 createStyles 块同样在这条守卫的射程里。
+  // 漏掉它的表现是「代码搬走了、守卫以为它还在」——而扫目录正是这条
+  // 守卫唯一的存在理由
+  'packages/chat/src',
+]
 /** 只扫这些形态的模板开头，避免把普通的 `${'`'}` 之类误判 */
 const OPENER = /(?:^|\s)(?:css|createGlobalStyle)`/
 /** 收尾反引号独占一行（缩进 + 反引号，后面可跟一个逗号） */

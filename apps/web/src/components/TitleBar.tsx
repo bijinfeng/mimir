@@ -48,14 +48,24 @@ import { BrandMark } from '@/components/BrandMark'
  * 见 demo 的对照表）。
  */
 export interface TitleBarProps {
-  /** 侧栏折叠状态。桌面端折叠按钮搬到这里了 */
-  collapsed: boolean
-  onToggleCollapsed: () => void
+  /**
+   * 侧栏折叠状态。桌面端折叠按钮搬到这里了。
+   *
+   * **可选**：登录页（以及云端模式落在远端登录页的那一刻）也用这一条标题栏，
+   * 而那里没有侧栏可折叠——`frame: false` 下窗口必须有一条拖动区与关闭按钮，
+   * 否则用户连窗口都拖不动、关不掉。缺省时整块折叠按钮不渲染。
+   */
+  collapsed?: boolean
+  onToggleCollapsed?: () => void
   /** 窄屏下折叠由视口决定，开关点了不会有变化——那时不渲染它 */
-  showToggle: boolean
+  showToggle?: boolean
 }
 
-export function TitleBar({ collapsed, onToggleCollapsed, showToggle }: TitleBarProps) {
+export function TitleBar({
+  collapsed = false,
+  onToggleCollapsed,
+  showToggle = false,
+}: TitleBarProps) {
   const { styles } = useStyles()
   const { styles: navStyles } = useNavStyles()
 
@@ -101,7 +111,7 @@ export function TitleBar({ collapsed, onToggleCollapsed, showToggle }: TitleBarP
         <b>mimir</b>
       </span>
 
-      {showToggle ? (
+      {showToggle && onToggleCollapsed ? (
         <Tooltip title={collapsed ? '展开侧边栏' : '折叠侧边栏'} placement="bottomLeft">
           <button
             type="button"

@@ -35,6 +35,16 @@ export const authSetupStateSchema = z.object({
       password: z.string(),
     })
     .nullable(),
+  /**
+   * 这个宿主是不是运行在**本地模式**（D-100）。
+   *
+   * 登录页要据此说清一件事：本地模式的凭据是宿主生成、不公开的
+   * （桌面壳靠本机令牌直接进入），所以在这里填密码登录**不会成功**。
+   * 不告诉用户的话，他看到的只是一个「密码怎么都不对」的表单。
+   *
+   * 它同样在登录之前就要能读到，所以只能暴露这一个布尔值。
+   */
+  localMode: z.boolean(),
 })
 export type AuthSetupState = z.infer<typeof authSetupStateSchema>
 

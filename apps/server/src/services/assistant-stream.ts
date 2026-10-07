@@ -3,6 +3,7 @@ import { chatParamsFromRequestBody, toServerSentEventsResponse } from '@tanstack
 import type { Citation, FailureKind, Trace, TraceStep } from '@mimir/shared'
 import { EVENT_CITATIONS, EVENT_CONVERSATION, EVENT_FAILURE, EVENT_TRACE } from '@mimir/shared'
 import { toQueryText } from '@mimir/tokenizer'
+import { nanoid } from 'nanoid'
 import { assemble } from '../plugins/host.js'
 import { assembleCitations, searchChunks, type AssembledCitation } from '../search/index.js'
 import { appendMessage, createConversation, ensureTitle, getConversation } from './conversations.js'
@@ -28,22 +29,42 @@ async function maxChunksPerDoc(): Promise<number> {
 /**
  * 流式问答（AG-UI 协议）。
  *
- * 请求由前端的 `useChat` 生成：body 是 AG-UI 的 `RunAgentInput`，
- * mimir 自己的参数走 `forwardedProps`（`sendMessage(text, { body })` 会合并进去）。
+ * 请求由前端的 AG-UI 运行时生成（`@assistant-ui/react-ag-ui`）：body 是
+ * AG-UI 的 `RunAgentInput`，mimir 自己的参数走 `forwardedProps`
+ * （运行时的 `runConfig.custom` 会挂到 `forwardedProps.runConfig` 下）。
  *
  * ## 为什么会话 id 在 body 里而不是 URL 里
  *
- * 连接地址一旦跟着会话变化，`useChat` 就会**重建 ChatClient**，
+ * 连接地址一旦跟着会话变化，客户端就会**重建 agent**，
  * 而重建会把正在进行的流切断。让地址固定、把 id 放进 forwardedProps，
  * 这个问题就不存在了。代价是新建会话时客户端不知道 id，
- * 所以服务端用 `mimir.conversation` 事件回传。
+ * 所以服务端用 `mimir.conversation` 事件回传——客户端那一侧则在请求发出
+ * 之前先建会话（`onRunInitialized` 里，见 apps/web 的 chat-io）。
  *
  * ## 事件顺序
  *
- *   conversation → trace → citations → 正文
+ *   RUN_STARTED → conversation → trace → citations → 正文 → trace(整轮耗时) → RUN_FINISHED
  *
  * 前几个在**模型还没开始生成时**就发出去，于是引用卡片与检索过程
  * 立刻出现，用户不会对着空白等模型。
+ *
+ * **生命周期括号由服务端拥有。** 这一条是 2026-10 的修复（D-099）：
+ * 在这之前这条流里**没有**服务端自己的 RUN_STARTED / RUN_FINISHED——
+ * 只有模型那一趟的（顺着 `for await` 转发出来），于是：
+ *
+ *  - 流的第一条事件往往是 `CUSTOM`（会话 id / 检索过程），而 AG-UI 的
+ *    客户端在**流开头**就校验「第一条必须是 RUN_STARTED」——实测
+ *    `@ag-ui/client@0.0.59` 直接抛 `AGUIError: First event must be 'RUN_STARTED'`，
+ *    整轮问答一个字节都到不了界面
+ *  - 终局那份「整轮耗时」的 trace 发在模型的 RUN_FINISHED **之后**，
+ *    同样被拒：`Cannot send event type 'CUSTOM': The run has already finished`
+ *  - 只检索那条路径（`textOnlyStream`）一条生命周期事件都没有
+ *
+ * 所以现在：函数第一件事发自己的 RUN_STARTED，模型流里的 RUN_STARTED /
+ * RUN_FINISHED 当作**模型那一趟的内部事件**不转发（叠加会命中
+ * `Cannot send 'RUN_STARTED' while a run is still active`），终局 trace
+ * 抢在自己的 RUN_FINISHED 之前。写成一条测试守着
+ * （`src/test/chat-stream.test.ts`，它把真实响应字节喂给 @ag-ui/client）。
  *
  * 为什么用自定义事件而不是协议原生的 part：trace 是结构化的分步记录
  * （每步带图标、关键词、具体数字），而原生 thinking part 只是一个字符串；
@@ -243,6 +264,9 @@ function searchOnlyAnswer(question: string, citations: Citation[]): string {
  *
  * 没有模型时也走同一个协议：前端只认一种流形状，不该为「检索模式」
  * 再写一套渲染路径——那样两条路径的差异会日积月累变成两套 UI。
+ *
+ * **它的生命周期括号由 `createStream` 补**（这里的 RUN_STARTED / RUN_FINISHED
+ * 由外层统一发，见文件头的事件顺序一节）：这一段只负责正文本身。
  */
 async function* textOnlyStream(text: string): AsyncGenerator<StreamChunk> {
   const messageId = `msg-${Date.now()}`
@@ -254,11 +278,37 @@ async function* textOnlyStream(text: string): AsyncGenerator<StreamChunk> {
 /** 从 AG-UI 请求体里取 mimir 的参数 */
 function mimirProps(forwarded: Record<string, unknown> | undefined): MimirProps {
   const props = forwarded ?? {}
+  /**
+   * 第二轮参数通道：`forwardedProps.runConfig`。
+   *
+   * assistant-ui 的 AG-UI 运行时把 `runConfig.custom` 放在这一层
+   * （`AgUiThreadRuntimeCore` 的 buildRunInput：
+   * `...runConfig?.custom ? { runConfig: runConfig.custom } : {}`），
+   * 而 top-level 那几个键是旧前端（TanStack `useChat`）的写法——新前端也
+   * 用它，但只用于 `conversationId`（agent 在请求发出前注入的那个），
+   * 其余三个走 runConfig。
+   *
+   * 两条都认，**顶层优先**（它更具体：注入发生在运行时合并之后）。
+   *
+   * 这是「排队的那条消息带着自己那轮的检索范围」的前提：队列里存的是
+   * 完整的 AppendMessage，runConfig 随它一路到服务端。
+   */
+  const runConfig =
+    typeof props.runConfig === 'object' && props.runConfig !== null
+      ? (props.runConfig as Record<string, unknown>)
+      : {}
+  const pick = (key: 'conversationId' | 'documentId'): unknown =>
+    props[key] === undefined ? runConfig[key] : props[key]
+
   return {
-    ...(typeof props.conversationId === 'string' ? { conversationId: props.conversationId } : {}),
-    ...(typeof props.documentId === 'string' ? { documentId: props.documentId } : {}),
-    deepReasoning: props.deepReasoning === true,
-    ...(props.scope === 'search' ? { scope: 'search' as const } : {}),
+    ...(typeof pick('conversationId') === 'string'
+      ? { conversationId: pick('conversationId') as string }
+      : {}),
+    ...(typeof pick('documentId') === 'string' ? { documentId: pick('documentId') as string } : {}),
+    deepReasoning: props.deepReasoning === true || runConfig.deepReasoning === true,
+    ...(props.scope === 'search' || runConfig.scope === 'search'
+      ? { scope: 'search' as const }
+      : {}),
   }
 }
 
@@ -348,6 +398,16 @@ async function* createStream(params: StreamParams): AsyncGenerator<StreamChunk> 
    */
   const turnStartedAt = performance.now()
 
+  /**
+   * **这一轮问答的生命周期括号由服务端拥有**（见文件头的事件顺序一节）。
+   *
+   * runId 是服务端生成的：它标识的是「这一轮问答」，与模型那一趟调用不是
+   * 同一个生命周期——只检索那条路径压根不调模型，却同样是一轮。
+   * threadId 用会话 id（AG-UI 的 thread 就是我们的会话）。
+   */
+  const runId = `run_${nanoid(16)}`
+  yield { type: 'RUN_STARTED', runId, threadId: conversationId } as StreamChunk
+
   // 让前端拿到会话 id（新会话时它还不知道）
   if (isNew) {
     yield {
@@ -373,15 +433,19 @@ async function* createStream(params: StreamParams): AsyncGenerator<StreamChunk> 
   } as StreamChunk
 
   // 只检索：用户显式选了这条出路，或没配模型。两条走同一条分支——
-  // 区别只在 `searchOnlyAnswer` 的措辞里，用户反正都得到一个「没有花钱」的答案
+  // 区别只在 `searchOnlyAnswer` 的措辞里，用户反正都得到一个「没有花钱」的答案。
+  // 它同样要收一对生命周期括号：没有模型不等于「没有这一轮」。
+  // （这一条路径**不补发**终局那份整轮耗时的 trace：它没有模型那一趟，
+  //  检索耗时就是全部，先发的那份已经是对的）
   if (props.scope === 'search' || !(await modelReady('chat'))) {
     const text = searchOnlyAnswer(question, retrieval.citations)
     for await (const chunk of textOnlyStream(text)) yield chunk
     await persistAssistant(conversationId, text, retrieval, null, turnStartedAt)
+    yield runFinished(runId, conversationId, undefined)
     return
   }
 
-  // 历史消息由客户端带过来（useChat 维护整段对话），服务端不重复维护一份。
+  // 历史消息由客户端带过来（AG-UI 的运行时维护整段对话），服务端不重复维护一份。
   // 最后一条是本次提问，已经单独带上下文传了，所以去掉避免重复
   const parsed = await chatParamsFromRequestBody(params.requestBody).catch(() => null)
   const history = (parsed?.messages ?? []).slice(0, -1)
@@ -403,8 +467,14 @@ async function* createStream(params: StreamParams): AsyncGenerator<StreamChunk> 
 
     let answer = ''
     let streamError: string | null = null
+    /** 模型那一趟报的用量。原先它随 RUN_FINISHED 一起流出去，现在剥掉生命周期
+        事件之后要单独接住，挂在我们自己那条 RUN_FINISHED 的 metadata 上继续往
+        前传（AG-UI 的 schema 不认顶层 usage 之外的扩展，metadata 是它认的口子） */
+    let modelUsage: unknown
 
     for await (const chunk of stream) {
+      const type = (chunk as { type?: string }).type
+
       // 累积正文用于落库：模型的文本以 TEXT_MESSAGE_CONTENT 的 delta 到达，
       // 而落库要的是完整文本
       const delta = (chunk as { delta?: unknown }).delta
@@ -421,13 +491,34 @@ async function* createStream(params: StreamParams): AsyncGenerator<StreamChunk> 
        *
        * 所以这里既看 chunk，也保留 catch 兜住真正抛出的异常。
        */
-      if ((chunk as { type?: string }).type === 'RUN_ERROR') {
+      if (type === 'RUN_ERROR') {
         streamError = (chunk as { message?: string }).message ?? '模型调用失败'
+      }
+
+      /**
+       * **模型那一趟的 RUN_STARTED / RUN_FINISHED 不转发。**
+       *
+       * 它们说的是「模型调用开始了/结束了」，而这一轮问答的生命周期由
+       * 上面那条 RUN_STARTED 拥有——叠加会命中 AG-UI 客户端的
+       * `Cannot send 'RUN_STARTED' while a run is still active`，
+       * 而 RUN_FINISHED 更糟：它之后再有 CUSTOM（下面那份整轮耗时的 trace）
+       * 就发不出去了（`Cannot send event type 'CUSTOM': The run has already
+       * finished`），用户永远看不到真实耗时。
+       *
+       * 两条都在本机用 @ag-ui/client@0.0.59 复现过。
+       * 失败时 `RUN_ERROR` 仍然透传——它是「这一轮坏了」的事实，
+       * 由客户端的 run 状态机收尾；分类信息另有 mimir.failure。
+       */
+      const isModelLifecycle = type === 'RUN_STARTED' || type === 'RUN_FINISHED'
+
+      // 模型那一趟的用量随它的 RUN_FINISHED 到，剥掉事件本身之前先接住
+      if (type === 'RUN_FINISHED') {
+        modelUsage = (chunk as { usage?: unknown }).usage
       }
 
       // 失败时不把框架的 RUN_ERROR 直接透传，由下面统一发带分类的事件。
       // 否则前端会先收到一个无分类的错误、再收到一个带分类的，两套说法
-      if (streamError === null) yield chunk
+      if (!isModelLifecycle && streamError === null) yield chunk
     }
 
     if (streamError !== null) {
@@ -435,7 +526,8 @@ async function* createStream(params: StreamParams): AsyncGenerator<StreamChunk> 
     }
 
     // 整轮结束：再发一次带完整耗时的检索过程，覆盖掉先发的那一份。
-    // 这样实时看到的数字与落库的、刷新后重放的数字是同一个
+    // 这样实时看到的数字与落库的、刷新后重放的数字是同一个。
+    // **必须在自己的 RUN_FINISHED 之前**——之后发的 CUSTOM 客户端不收
     yield {
       type: 'CUSTOM',
       name: EVENT_TRACE,
@@ -443,6 +535,8 @@ async function* createStream(params: StreamParams): AsyncGenerator<StreamChunk> 
     } as StreamChunk
 
     await persistAssistant(conversationId, answer, retrieval, null, turnStartedAt)
+
+    yield runFinished(runId, conversationId, modelUsage)
   } catch (error) {
     // 失败路径每类给不同出路（docs/PRD.md §5.8）。分类是**服务端的知识**：
     // 它看得到 HTTP 状态码与原始错误，而前端只看到一句被规范化过的文本。
@@ -462,10 +556,45 @@ async function* createStream(params: StreamParams): AsyncGenerator<StreamChunk> 
     } as StreamChunk
 
     // 先推自定义事件（带分类），再推协议层的 RUN_ERROR（带原文）。
-    // 前端按前者选出路、按后者显示原因，所以两者都要
+    // 前端按前者选出路、按后者显示原因，所以两者都要。
+    //
+    // 顺序说明：`RUN_ERROR` 是**终局事件**（客户端在那之后不再收任何事件，
+    // 见 @ag-ui/client 的 `Cannot send event type 'CUSTOM': The run has
+    // already finished`），所以带分类的 mimir.failure 必须排在它前面——
+    // 实测这个顺序（RUN_STARTED → … → CUSTOM(failure) → RUN_ERROR）客户端
+    // 正常收到分类并进入错误态
     yield { type: 'CUSTOM', name: EVENT_FAILURE, value: { failure, message: text } } as StreamChunk
     yield { type: 'RUN_ERROR', message: text } as StreamChunk
   }
+}
+
+/**
+ * `RUN_FINISHED`。
+ *
+ * 抽成函数的原因只有一条：它必须与开头那条 `RUN_STARTED` **共用同一个
+ * runId 与 threadId**（客户端按 runId 判断「这是不是当前这一轮的结束」，
+ * 对不上会被当成游离事件）。
+ *
+ * 失败那条出口不用它——`RUN_ERROR` 自己就是终局事件。
+ */
+function runFinished(runId: string, threadId: string, usage: unknown): StreamChunk {
+  return {
+    type: 'RUN_FINISHED',
+    runId,
+    threadId,
+    /**
+     * 模型那一趟报的用量挂在这里。
+     *
+     * 它原先搭着模型自己的 `RUN_FINISHED` 流出去，而那条现在被剥掉了——
+     * 不接住的话这份用量就凭空消失。顶层 `usage` 是 TanStack 的扩展字段，
+     * AG-UI 的 schema 只认 `metadata`（不认的键会被 zod 静默 strip），
+     * 所以放这里。
+     *
+     * 目前**没有消费者**：界面上的上下文容量读的是 `usageLog`（服务端记的账），
+     * 与这份不是同一个来源。保留它是为了「剥事件时不顺手丢数据」。
+     */
+    ...(usage === undefined ? {} : { metadata: { tanstack: { usage } } }),
+  } as StreamChunk
 }
 
 /**

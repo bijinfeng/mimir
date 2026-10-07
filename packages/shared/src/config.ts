@@ -438,6 +438,14 @@ export const runtimeConfigSchema = z.object({
   plugins: z.array(pluginDescriptorSchema),
   modelConfig: modelConfigSchema,
   database: databaseInfoSchema,
+  /**
+   * 这个宿主是不是运行在**本地模式**（桌面壳的进程内私有宿主，D-100）。
+   *
+   * 与 `database` 同一条理由由服务端回传而不是界面猜：它是部署事实，
+   * 而界面要据此决定「账号这一块该不该出现登出与邮箱」——猜错的表现是
+   * 一个点了没反应的按钮。
+   */
+  localMode: z.boolean(),
   probes: z.array(probeResultSchema),
 })
 export type RuntimeConfig = z.infer<typeof runtimeConfigSchema>

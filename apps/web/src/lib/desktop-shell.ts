@@ -1,4 +1,4 @@
-import type { DesktopBootInfo, DesktopWindowApi } from '@mimir/shared'
+import type { DesktopBootInfo, DesktopWindowApi, DesktopModeApi } from '@mimir/shared/desktop'
 
 /**
  * 桌面端桥（`window.mimirDesktop`）的类型与取值。
@@ -24,6 +24,8 @@ import type { DesktopBootInfo, DesktopWindowApi } from '@mimir/shared'
 export interface MimirDesktopBridge {
   boot: () => Promise<DesktopBootInfo | null>
   quit: () => void
+  /** 使用方式的选择与切换（D-100）。开发模式下 `get()` 恒为 null */
+  mode: DesktopModeApi
   window: DesktopWindowApi
 }
 

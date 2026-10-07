@@ -19,8 +19,10 @@ import {
 import { filesRoute } from './routes/files.js'
 import { exportRoute } from './routes/export.js'
 import { feedsRoute } from './routes/feeds.js'
+import { localRoute } from './routes/local.js'
 import { setupRoute } from './routes/setup.js'
 import { mountStatic } from './lib/static.js'
+import { localSessionPayload, localTokenMatches } from './services/local-mode.js'
 import { searchRoute } from './routes/search.js'
 import { statsRoute } from './routes/stats.js'
 import type { AppEnv } from './types.js'
@@ -61,6 +63,22 @@ export function createApp() {
    */
   app.route('/api/auth/setup', setupRoute)
 
+  /**
+   * 本地模式的会话读取（D-100）。
+   *
+   * `get-session` 必须**先于**通配的 `auth.handler` 注册，否则会被它接走
+   * （与 setupRoute 同一条坑：Hono 按注册顺序匹配）。带本机令牌时直接返回
+   * 合成会话，前端因此不需要为本地模式改一行鉴权代码；不带令牌（或不是
+   * 本地模式）时原样落回 better-auth，浏览器里的密码登录一行没变。
+   */
+  app.get('/api/auth/get-session', async (c) => {
+    if (localTokenMatches(c.req.header('cookie'))) {
+      const payload = await localSessionPayload()
+      if (payload) return c.json(payload)
+    }
+    return auth.handler(c.req.raw)
+  })
+
   // 通配放最后：它会接走 /api/auth/ 下的其余一切
   app.on(['GET', 'POST'], '/api/auth/*', (c) => auth.handler(c.req.raw))
 
@@ -85,6 +103,9 @@ export function createApp() {
   api.route('/config', configRoute)
   api.route('/stats', statsRoute)
   api.route('/avatar', avatarRoute)
+  // 本地模式专有端点（D-100）。非本地模式下它自己也回 404——
+  // 注册与否都行，这里只注册一次，能力判断留在路由里
+  api.route('/local', localRoute)
 
   app.route('/api', api)
 
