@@ -14,16 +14,37 @@ mimir —— 自托管的个人知识库。写 Markdown 笔记、收集外部资
 
 ---
 
+## 常用命令
+
+| 命令 | 干什么 |
+|---|---|
+| `pnpm dev` | 全仓并行 dev（web / server 等有 dev 脚本的包；桌面端另用 `pnpm desktop:dev`） |
+| `pnpm check` | lint + 样式守卫 + format + typecheck + test，一条命令跑完 |
+| `pnpm build` / `pnpm test` / `pnpm -r typecheck` | 全仓构建 / 测试 / 类型检查 |
+| `pnpm lint`（`lint:fix`）/ `pnpm format:check`（`format`） | oxlint / oxfmt（oxfmt 不碰 `**/*.md`） |
+| `pnpm db:up` / `db:down` | 起 / 停 Postgres（Docker）。不设 `DATABASE_URL` 时本地默认 SQLite，不需要它 |
+| `pnpm db:migrate` / `db:reindex` | 跑迁移 / 重建全文与分块索引 |
+| `pnpm db:generate:pg` + `db:generate:sqlite` | 生成两侧迁移，**两边的迁移文件要同批提交** |
+| `pnpm desktop:dev` / `desktop:build` | 桌面端开发（加载 web **构建产物**）/ 打包安装包（`server-deploy/` 是 gitignore 的产物） |
+
+---
+
 ## 开工前必读（按顺序）
 
 | 顺序 | 文件 | 读它是为了 |
 |---|---|---|
-| 1 | 本页 | 铁律与完成定义 |
+| 1 | 本页 | 铁律、完成定义、跨区域的坑 |
 | 2 | `docs/PRD.md` 的 §1 非目标 | 知道什么不该做 |
-| 3 | 你改动区域的 `AGENTS.md` | 区域特有的规则 |
+| 3 | 从根到你改动的目录**沿途**的 `AGENTS.md` | 区域规则与坑表；最近者优先（见下） |
 | 4 | 任务涉及的 `docs/TECH.md` 章节 | 该模块的设计 |
 
 不必通读全部文档。但上面四项**没读完不要开始写代码**。
+
+**AGENTS.md 沿目录嵌套**（openai/codex 的同一套约定）：工作在某个目录时，
+从仓库根到该目录**沿途**的每份 `AGENTS.md` 都适用——下层只**加码**，
+不放松根上的铁律（最近者优先）。某个目录有独属于自己的规则与坑，就在那里
+建一份；一份超过约 200 行、且其中某块内容只属于某个子目录时，继续往下拆。
+个人本地的临时覆盖写 `AGENTS.override.md`（已 gitignore，不提交）。
 
 ---
 
@@ -113,107 +134,66 @@ SQLite 路径同理：FTS5 的 `unicode61` 分词器也不认中文词边界，�
 
 ## 会静默出错的地方
 
-这几类问题**不报错**，只在你以为没问题的时候悄悄地错。改动相关代码前读一遍。
+这几类问题**不报错**，只在你以为没问题的时候悄悄地错。
+
+坑**按区域就近记录**（改哪里的代码，哪份坑表就跟着被读），每份区域
+`AGENTS.md` 都有一节「会静默出错的地方」；本节只收**跨区域**的。
+新坑记到所属区域的坑表，跨区域的记这里。TECH §10 只做路由。
+
+| 你要改的区域 | 坑表在 |
+|---|---|
+| 编辑器与界面总则（`apps/web`） | `apps/web/AGENTS.md` |
+| ├ Markdown 编辑器（`apps/web/src/editor`） | `apps/web/src/editor/AGENTS.md` |
+| ├ 主题与外观（`apps/web/src/theme`） | `apps/web/src/theme/AGENTS.md` |
+| ├ 文档面板与文件预览（`apps/web/src/components/document`） | `apps/web/src/components/document/AGENTS.md` |
+| Office / PDF 总则（`packages/office`） | `packages/office/AGENTS.md` |
+| ├ 编辑器外壳——四种格式共用（`packages/office/src/shell`） | `packages/office/src/shell/AGENTS.md` |
+| └ 各格式编辑器（`packages/office/src/editors`） | `packages/office/src/editors/AGENTS.md` |
+| 对话面板（`packages/chat`） | `packages/chat/AGENTS.md` |
+| 服务端 / 数据库 / 检索 / 存储（`apps/server`） | `apps/server/AGENTS.md` |
+| 桌面端（`apps/desktop`） | `apps/desktop/AGENTS.md` |
+
+跨区域的坑：
 
 | 症状 | 原因 |
 |---|---|
-| 中文搜不到 | 缺了 jieba 预分词，或 `new Jieba()` 没带词典（会退化成逐字切分）；SQLite 下还可能是 FTS5 触发器被绕过、索引落后于表（`pnpm db:reindex` 重建） |
-| 编辑器只有内容高、下面一大片空白 | 高度链缺了一环。整条链是 `scroll(min-height:0)` → `cols(min-height:100%)` → `innerWide(align-self:stretch)` → 主题变量层(`flex:1;min-height:0`) → `.mimir-editor(flex:1)`。实测断过两次：`cols` 的 `align-items: flex-start`、主题变量那一层是默认 `block` |
-| 工具条不粘（滚走了） | `.mimir-editor` 用了 `overflow: hidden`——它会让元素成为滚动容器，里面的 `sticky` 相对它定位而它与内容同高。要用 `overflow: clip` |
-| **窄窗口下工具条右端的「保存」看不见** | 宽度链缺了一环：`.mimir-editor` 是 flex 子项，`min-width: auto` 让它不会缩到比内容更窄（里面有一张 900px 的 pdf 页面），于是整块外壳比视口宽（实测 420px 窗口里量出 932px）。它看起来像「工具条没折行」，其实是外壳的宽度下界。`min-width: 0` 即可——注意 `overflow: clip` **挡不住**它（Chrome 只对 `hidden`/`auto`/`scroll` 把自动最小尺寸算作 0），而 `clip` 又是 sticky 那条必需的 |
-| **小屏幕下侧边栏被压缩变形** | 同一个断点（880px）被写了两份：外壳的 `@media` 把左列压到 48px，而栏内内容仍按折叠偏好渲染成展开态——中文标签逐字竖排、品牌名与开关叠在一起（实测 `scrollWidth` 129 对 `clientWidth` 47）。断点只在 `theme/tokens.ts` 定义（`NAV_NARROW_QUERY`），CSS 与 `lib/nav-collapse.ts` 的 `matchMedia` 共用它（DESIGN §5.5 / D-055） |
-| **折叠后侧栏排版乱了（图标偏右 + 底部冒横向滚动条）** | 展开态的 `width: 100% !important`（占满整行）与折叠态 `margin-inline: 4px`（图标居中用）叠加，项盒比 48px rail 宽 4px——实测 `scrollWidth` 52 对 `clientWidth` 48、图标中心 28 而非 24。折叠态要 `width: calc(100% - 8px) !important`（`NavSidebar.style.ts` 的 `menuCollapsed`，DESIGN §5.4）；两条规则一个管展开一个管折叠，改一条要看另一条 |
-| **目录树点哪行不进哪行** | rc-tree 的 `.ant-tree-title` 是行内元素，而标题内容是个块级 flex 盒子——放不进图标所在的 line box，被折到下一行（实测每行标题 top 比本行高恰好 28px）。名字画在下一行的行带上，`elementFromPoint` 取名字中心命中的是后一行：点「技术」进的是 `folder:技术/后端`。wrapper 补 `display:flex;align-items:center`、title 补 `display:flex;flex:1;min-width:0`（`FolderSection.tsx` 的 `treeWrap`，DESIGN §8.1 / D-069） |
-| **菜单项里图标与文字不在一条中线上** | antd 给菜单项的 `line-height: 30px`（整行高）会**继承**到文字层：13.5px 中文排进 30px 行盒，中文字形没有西文下伸部，墨迹天然偏上——实测文字比图标高 1.5px。修法是把**文字层**（`.ant-menu-item-label` / `-extra`）行高压回 `normal`，不动 li 的行高（那是行框，改了整行塌）。残余 ≤0.5px 是字形度量，不做像素补偿（`NavSidebar.style.ts` 的 menu，DESIGN §8.1） |
-| **改了桌面端标题栏的前端代码，窗口里看不到变化** | 桌面端加载的是 `apps/web/dist` 的**构建产物**（不是 dev server）——不跑 `pnpm --filter @mimir/web build` 就永远看不到改动，而症状只是「什么都没发生」，很容易去怀疑 IPC 或 preload |
-| **自绘标题栏里的按钮点不动（控制台无报错）** | 标题栏整条是 `-webkit-app-region: drag`，里面每个可点元素必须显式 `-webkit-app-region: no-drag`。漏标的表现是「点击被当成拖窗口」——不报错、没有日志、看起来像按钮坏了。**这条是方案 C 被否掉的理由**（要标注的地方太多） |
-| **`window.mimirDesktop` 在窗口里不存在** | `BrowserWindow` 的 `preload` 写成了相对路径（`'./dist/preload.js'`）：加载 http 地址时 Electron 解析不了它，**preload 静默不执行**。要用 `path.join(__dirname, …)` 的绝对路径 |
-| **Web 端整站内容只有几百像素高、下方一大片空** | 外壳网格按「标题栏 + 两栏」写了两行（`grid-template-rows: auto minmax(0,1fr)`），而 `TitleBar` 在浏览器端 `return null`（没有窗口可控制）——只剩一个子元素落进 `auto` 行，`1fr` 行空置。实测 1440×900：知识库页 398px、对话页 302px、设置页 740px。Electron 里标题栏在所以看不出来。修法是外层改 **flex 列**（对子项数量不敏感），子层用 `flex: 1` 吃剩余高度（`_app.tsx` 的 shell / app，D-095） |
-| **深色下 docx 里作者写的文字颜色不可见（黑压黑）** | 上游的「深色纸张」机制是「编辑器发 `--dk-*` 孪生值 + CSS 在 `.page-dark` 子树里切过去」，而**两组规则都被裁剪脚本静默丢掉**：① 消费规则包在 `@media screen {}` 里，判据看选择器文本、`@media` 不匹配任何保留前缀 → 整块扔；② `--docs-paper-*` 变量块的选择器就叫 `:root`，判据却在**选择器**上找 `--docs-`（那些名字在**声明体**里）→ 变量定义也全扔。修法是判据读声明体 + 对 `@media` 递归过滤内部规则 + `.page-dark` 整组保留，**并在生成脚本里加自检**（`.page-dark` / `--docs-paper-ink` / `--canvas` 缺一即抛错，并写明症状）。宿主侧还要按外观挂类（`EditorProps.appearance` → docx 在深色时给滚动容器加 `page-dark`，D-096） |
 | **`--me-accent` 当文字色用（工具条按下态、菜单当前值）** | 主色是**填充**角色（按钮底、选中底、边框、焦点环）。实测按下态 `#1668dc` on `#15325b` = **2.47:1**（浅色 3.66:1）、菜单当前值浅色 4.10:1／深色 3.50:1——33 个按钮的激活态全都偏难认，而单看一处「像是有高亮」所以没人查。强调**文字**走 `--me-accent-text`（桥接层填 `colorLink`；DESIGN §3.5 的同一条推论，D-096） |
 | **rAF 在不可见时根本不派发（焦点送不到 / 分页永久失效）** | `requestAnimationFrame` 的语义是「下一个渲染帧之前」，后台标签页、`display:none` 容器、部分内嵌 webview 里**永远没有帧**——回调不执行且不报错。实测 IAB 里 `rafFired === false`（`useFindHotkey` 第一版就是这么写的，Ctrl+F 什么都不发生）。要「等这次渲染落地」用 `setTimeout(fn, 0)`（分页那边记过同一个坑，D-096） |
-| **工具条标签写了快捷键但它不存在** | docx 的「查找和替换 (Ctrl+F)」曾只弹浏览器自带的页面查找——**按钮上的标签是一份承诺**，写着就得真有。修法是外壳的 `useFindHotkey` + 查找框统一挂 `data-find-input`（标记不看类名/aria——那两样会被无关调整改掉，而改掉的那一刻快捷键静默失效） |
-| **桌面端任务栏显示「Electron」或 `@mimirdesktop`** | 三处都默认错，且都不报错：① electron-builder 不给 `executableName` 时用 package.json 的 `name`（`@mimir/desktop`）拼出 `@mimirdesktop`，而 Linux 的窗口列表按可执行文件名推导；② 开发模式（`electron .`）下可执行文件是 `electron`，WM_CLASS 就是它；③ **`--class` 开关在 Electron 44 里已被忽略**（`appendSwitch('class')`、命令行 `--class=`、把二进制改名都实测无效），只有 **`app.setDesktopName('mimir.desktop')`** 生效——注意参数要带 `.desktop` 后缀 |
-| **给 antd 控件的编辑/展开态写样式，改了却完全没生效** | 两个坑叠在一起：① antd 的 `Typography.Title editable` 进入编辑态时**会把 className 一起挂到编辑容器上**（实测容器的 classList 里就是我们的 `headerTitle` 哈希类），所以「我们的类 + 空格 + antd 类」这种**后代**选择器永远匹配不到——那个类的元素就是容器自己，要写成 `&.ant-typography-edit-content` 同元素式（与「树根样式写成后代式」是同一个坑，`DocumentPanel.style.ts` 的 `headerTitle`）；② 反引号在 createStyles 的 css 模板串里**直接终止字符串**（注释里也不行，`check-style-backticks` 守着） |
-| **消息排版整批失灵（标记消失、正文回退浏览器默认），但类都定义着** | 样式类**定义了却没有人挂**：整组后代选择器（`[data-role='user'] …`）全靠一个容器类作祖先，容器类漏挂（重构时只渲染了 `<Messages/>` 忘了包壳）它们整批静默失配——界面能用、丑一圈、不报错（实测：抽包后 `ChatThread` 漏挂 `styles.thread`，`›` 标记与 markdown 规范全没了）。样式类必须有消费点，抽完壳 grep 一次 |
 | **某个元素整组样式缺失，DevTools 里类名带着 `#` 或括号** | **在 createStyles 的样式体里声明了 `--*` 自定义属性**（哪怕只想拿它当 hover 变量）：antd-style 会把属性**值**拼进类名，`acss-xxx-#5c6570-rgba(…)` 是非法选择器，浏览器整条丢弃，元素裸奔成默认样式（实测：原生 button 灰底 Arial）。消费宿主变量 `var(--mimir-chat-*)` 没问题，声明新的不行；hover 传值走属性选择器（`packages/chat/AGENTS.md` §2） |
 | **悬停才出现的按钮/动作条一直不显形（但点得到）** | antd-style 的样式块编译成哈希类名（`acss-xxxx`），同一文件里写 `.card:hover &` 这种**字面类名**的后代选择器永远匹配不到——宿主上没有那个类，规则静默失效：元素 opacity 仍是 0 但留在文档流里、仍可点（自动化点得中、人眼看不见）。宿主要额外挂一个字面类（`LibraryView` 的 `.kb-card` / `.kb-row`，`FolderSection` 的行是同一条做法的先例） |
 | **图标迁移后尺寸不对（巨大 / 挤成一团）** | antd 图标随 `font-size` 缩放，lucide 默认 **24px 固定尺寸**——迁移时必须给显式 `size`（本仓两档：14 小字形 / 16 常规按钮槽）。「停止」这类**实心**图标要 `fill="currentColor"`（lucide 的 Square 默认描边空心） |
-| **进目录页图标切换动效不对（箭头朝上）** | morphicons 的路径形变与 antd 自带的收起态 `-90°` 旋转叠加了——`transform: none !important` 关掉 antd 那一半，朝向只归动效库一处（DESIGN §8.1） |
 | **给组件传 `render={(x) => <Child …/>}` 这种内联箭头，整个组件不再被优化** | `react(no-unstable-nested-components)` 判它是「渲染期定义组件」，React Compiler 随即跳过宿主组件（铁律 1 的静默退化）——lint 会报，但**如果你在报之前就提交了**，症状是「没有报错，只是这个组件不再被优化」。修法：render-prop 提到**模块级函数**（`DocChatSidebar` 的 `renderGuide` / `folder-icons.tsx` 的 `FolderGlyph` 是先例） |
 | **`const Icon = map[key]; <Icon/>` 让整个组件不再被优化** | `react(no-unstable-nested-components)` 判它「渲染期定义组件」，React Compiler 随即跳过（铁律 1 的静默退化）。渲染时直接调用返回的组件函数，或把组件表提到模块级（`FolderGlyph` / `renderSwitcherIcon` 的写法） |
-| **`pnpm db:generate:pg` 生成「删掉全部表」的迁移** | `drizzle.config.ts` 的 `schema` 曾指向按 DATABASE_URL 分发方言的 `schema.ts`（`pick()` 动态层），drizzle-kit 静态分析不了 → 读到空 schema。已改指 `schema.pg.ts` 本体。**PG 的快照链还缺 0005–0007**，所以 `folders` 这类表它仍会提议 CREATE TABLE——手写 ALTER 覆盖（见 `drizzle/0008_folder_meta.sql`） |
-| **目录树整体浮着一块底色 / 树根样式写了不生效** | createStyles 里把树根样式写成 `.treeWrap .ant-tree` 后代式，而 treeWrap 类就挂在**树根自己身上**——祖先-后代关系不成立，规则静默失效：目录顶着 antd 的 colorBgContainer 坐了两个迭代，D-070 删掉右缘线没了遮挡才被看见。同一条坑还埋着选中态规则（`-node-selected` 类也在 wrapper 自己身上，从没生效过，一直是 antd 默认在渲染）。要用 `&.ant-tree` 同元素选择器；css 模板注释里不能出现反引号（直接终止模板串，check-style-backticks 守着）。展开三角的坑在同一段代码里还有一对：三角必须 z-index 抬过 content-wrapper（relative 且 DOM 在后，否则 elementFromPoint 命中 wrapper、点三角落空），闲时 pointer-events none（那个位置平时点图标 = 进目录）（`FolderSection.tsx` 的 `treeWrap`，DESIGN §8.1） |
-| 改了单元格、保存也成功，界面上还是旧值 | `setCell` 只改了 XML 没改内存模型，而界面读模型（`view()`）。文件是对的，所以只有对着界面看才发现（TECH §15.7） |
-| 编辑器标题字号不对（38px 或 28px） | 前者是 antd `Typography.Title` 的自带规则特异性更高；后者是抬了特异性之后纯 `<h1>` 又匹配不上、回落到浏览器默认 2em。两个分支都要用 `Typography.Title` |
-| 中文 PDF 整段文字空白（不是乱码） | pdf.js 的 cmaps 没加载到。它按**原始文件名**取（`cmaps/Adobe-GB1-0.bcmap`），所以资产必须放 `apps/web/public/pdfjs/`（原样复制、不改名）——带哈希的产物目录里没有那些名字，404 之后内容就是空白（TECH §15.12） |
-| PDF 界面全白且无报错 | 并发渲染。第一版用「取消上一次」防并发，而 StrictMode 挂载两次会让两次都没画。要用**代次**（`pdf-render.ts`） |
-| 预览过一次之后保存的 PDF 是 0 字节 | `getDocument` 把字节 transfer 给 worker 了。要传 `bytes.slice()` |
-| 删了会话/文档但关联记录还在 | SQLite 默认**关闭**外键，CASCADE 静默失效——连接时必须显式 `PRAGMA foreign_keys = ON`（`db/client.ts` 已做，别在新连接里漏） |
-| 原先连 Postgres 的环境「数据全空」 | `DATABASE_URL` 没设，默认换到了 SQLite 空库（`data/mimir.db`）——部署环境要显式设置；启动日志打印当前驱动与库位置 |
-| 组件没变快 | React Compiler 静默跳过了（抑制了 React 规则，或 ref 声明晚于使用它的 effect） |
-| 建索引失败 | pgvector 的 HNSW 上限 2000 维，超过要用 `halfvec` |
-| 类型对不上 | `^0.145.0` 这类 peer 范围对 0.x 版本意味着 `>=0.145.0 <0.146.0`，装最新版会失败 |
-| 生产启动报错 | workspace 包（`@mimir/shared` / `core` / `tokenizer` / `plugins/*`）以源码发布，Node 不执行 node_modules 里的 TS —— 必须由使用方编译进产物。把任何一个标成 external 就是这个症状，而**本地开发完全正常** |
+| 组件没变快 | React Compiler 静默跳过了这个组件，且无任何提示。常见触发：抑制了 React 规则（铁律 1）、ref 声明在使用它的 effect 之后（`react-compiler(Immutability)` 警告）、渲染期读写 ref（`react(refs)`）——参与渲染的值用 state，只在事件处理器里读写 ref。保持 `logDiagnostics: true`；改代码结构而不是 disable |
+| 类型对不上 | `^0.145.0` 这类 peer 范围对 0.x 版本意味着 `>=0.145.0 <0.146.0`——装最新版会报 unmet peer，锁到同一个小版本系列 |
+| 生产启动报错 | workspace 包（`@mimir/shared` / `core` / `tokenizer` / `plugins/*`）以源码发布，Node 不执行 node_modules 里的 TS（`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`）——必须由使用方编译进产物（前后端都交给 Vite，见 D-023 / D-033）。把任何一个标成 external 就是这个症状，而**本地开发完全正常** |
 | 改设置看起来没生效 | 值被环境变量压住了，或保存请求没发出去。设置页必须如实显示**来源**（界面/环境变量/默认），且保存是显式动作而非 `onBlur`——绑定在 blur 上的保存实测不触发，而界面上值看着是改了的 |
-| 设置项在界面上有、代码里没人读 | 键没有注册进键表（`packages/core` 的 `CORE_SETTING_SPECS` 或插件的 `params`）。写入端点会拒绝未注册的键，但只读代码看不出来 |
-| 插件在设置页显示的状态不对 | 状态由 core 从 `requires` / `unavailable()` 算出来（`docs/TECH.md` §7.4）。实现自己编状态字符串就会与真实原因脱节 |
-| 描述符指向的文件不存在 | `plugins.test.ts` 有一条断言在守（描述符的 `file` 路径必须真实存在）。它防的是「设置页显示的文件路径是手写的」——那正是重构要消掉的东西 |
-| 静态资源 404 | 服务端产物被打包成 chunk，`resolveWebDist()` 算错层级 —— Vite 的 SSR 构建要开 `preserveModules` |
-| 服务端 dev 起不来 | dev 入口自己调了 `serve()`，与 Vite 的 dev server 抢端口 —— 监听只由生产入口 `src/index.ts` 做 |
-| 路径算错 | `src/` 与 `dist/` 的目录层级不同，不要写死相对偏移量 |
-| 状态色看不清 | 换了 antd 的**种子色**，派生色跑偏；或用了 `Tag color="green"` 预设色（对比度不由我们控制） |
-| 界面颜色不对但不报错 | 内层 `ConfigProvider` 又传了一次 `theme` —— `cssVar` 的 key 被重算，`--ant-*` 变量名换了，引用处静默失效 |
-| 改了深色的链接色但没生效 | 与 seed **同名**的 token（`colorLink`、`colorPrimary`）会被 antd 的 `formatToken` 丢掉，值由算法重新派生 —— 浅色下看着像生效了（浅色阶把输入色放在第 6 阶），深色下不达标注。要用 `tokens.ts` 的校准层（`MappingAlgorithm`） |
-| 深色下焦点环看不见 | antd 深色把 `colorPrimaryBg` 与 `colorPrimaryBorder` 设成**同一个值**，而后者是焦点环。深色单独校准了描边 |
-| 深色下露出白色 | `html` 上没画底色，或没写 `color-scheme` —— 滚动条与原生下拉不受 CSS 管辖 |
-| 深色用户看到一下白闪 | 外观状态没在首帧前算出来。`theme/appearance.ts` 与 `index.html` 的内联脚本必须同源 || 改了字但格式没了（或文件里别的东西被重排） | 补丁式保存退化成整体重建。pptx 靠**元素锚点**（未改动的元素用 `anchor.originalXml` 原样回填，见 `packages/office/src/pptx-save.ts`），docx 靠**块比对**。`pptx-save.test.ts` / `docx.test.ts` 各有断言守着「只有该变的条目变」 |
-| 第二次保存把第一次的改动回滚 | pptx 的 `save()` 成功后必须 `commit()`——否则下次拼字节时干净元素回填的是**旧**字节，而两次保存都报成功 |
-| pptx 编辑后画布不更新 | 编辑是就地改模型的，`slides()` 返回同一个数组，React 的 `useMemo` 依赖它不会重算。要用 `view()` 的**不可变快照**当依赖 |
-| pptx 点画布没反应 | 渲染的 SVG 少了 `data-element-id`（事件代理靠它把点击映射回模型元素）。漏掉是静默的——看着像「这个元素不能编辑」 |
-| **pptx 段尾打字（或段首 / run 边界插字），同段其余 run 的格式没了** | 纯插入的改动区间是**零宽**的，与 0 条 run「相交」——按「区间与几条 run 相交」判断会误判成整段重写、把整段压成一条 run（实测两条 run 的段落段尾加一个字符，`<a:r>` 由 2 变 1）。落点要单独算：插入点**前一个字符所在的 run**（`PptxEditor.tsx` 的 `editParagraphRuns` / `insertIntoRuns`），软换行哨兵不当落点；跨了多条 run 的才是整段重写（不带 `srcRun`，让 `dominantRun` 跟正文走）。`PptxEditor.test.tsx` 的段尾 / 段首 / run 边界 / 软换行四条用例守着 |
-| 改了 A1，D7 也跟着变 | xlsx 的**共享字符串**被就地改写了（`<c t="s"><v>17</v></c>` 里的 17 被多个格子共用）。新文本必须写成内联字符串（`packages/office/src/xlsx-edit.ts`） |
-| 改完格子又变回旧值 | xlsx 的公式格：只换了 `<v>` 而留着 `<f>`，Excel 打开时按公式重算。覆盖时必须连 `<f>` 一起清 |
-| xlsx 新写的格跑到行首 | 插入位置要按**列号**比，而列号要从 `r="A5"` 里只取列字母。我们的预览按 `r` 定位所以照常显示，而 Excel 要求 `<c>` 按列升序 |
-| 表格里改列宽，越改越离谱 | 单元格的 `colwidth` 属性存的是 **px**（解析 `convert.ts:930` 写入、保存 `:1236` 自己 ×15 换回 twips），而输入框说的是 twips——读要过 `pxToTwips`、写要过 `twipsToPx`（`DocxEditor.tsx`），漏掉任何一次就是「每次编辑把列宽放大 15 倍，重开显示又缩小 15 倍」 |
-| 段落样式换了级别，重开又变回去 | Tiptap 的 `setNode` 会把没点名的属性原样带过去（`attributesToCopy`）——换样式必须显式 `styleId: null`，否则文件里的 `w:pStyle` 还是旧样式（`generate.ts:1742` 优先写它） |
-| 格式刷点上去反而把格式抹掉 | 源选区起点正好压在格式区间起点上时，`$from.marks()` 返回**前一个节点**的 marks（实测为空）——要取**选区区间里第一个文本节点**的 marks |
-| 菜单面板里的下拉「点一档什么也不会发生」 | 面板里的 antd `Select` 打开后弹层 **portal 到 body**，而关面板的 `pointerdown`（capture）只认「面板或触发按钮内部」——按下瞬间面板被关、选项随面板卸载，之后的 `click` 落空，界面不报错。`useToolbarPopup` 的 `insidePanel()` 要用 antd 自己写的 `aria-controls` / `aria-owns` 把「面板里控件拥有的弹层」也算作面板内（`EditorShell.tsx`）。**测试也要按真序列驱动**（pointerdown → click）：只派发 click 时 React 会批处理，`onChange` 照样发出，这个 bug 会被测成通过 |
-| 图标档的按钮读屏只念「单选按钮 1 of 3」 | antd `Segmented` 把 `title` 挂在内层 label 的 div 上，而可聚焦的是 `<input type=radio>`——两者不关联，`title` 在这里根本不当名称用（真 Chromium 的 AX 树实测 `name: ""`）。文字要用 `.me-sr-only`（`clip-path`，**不是** `display:none`）塞进 label 元素里 |
-| 输入框比同排的按钮小一号 | `.me-input` 那套手写观感（height / padding / border / 字号）挂在 antd 的 `Input` 上，与 antd 的 `:where(…).ant-input` 特异性相同而项目样式更靠后——实测同一排里输入框 12px / 按钮 14px、圆角 4 对 8。控件观感一律归 `--ant-*`，这个类已删（只剩宽度/弹性类） |
-| antd 按钮 hover 时「边框一闪 + 内容抖一下」 | 我们给按钮写 `border: none` 而 antd 的变体样式在 `&:hover` 里用**简写**重写 `border`（`border-width: 1px` + 变体色，特异性高于单类）——hover 那一刻边框从 none 变 1px：颜色从 `currentColor`（深色下是白）过渡到透明，白边一闪；border-box 重算让内容内移 1px（实测头像 x 14 → 14.8）。修法是**留一个恒为透明的 1px 边框**（`border: 1px solid transparent`），并把过渡限定到 `color` / `background-color`（antd 默认的 `all` 会让边框宽度也参与过渡）。裸 `<button>` 不受影响（没有变体样式），只有 antd `Button` 需要 |
-| **SQLite 下裸 SQL 报 `db.execute is not a function`** | drizzle 的 better-sqlite3 驱动**没有 `.execute()`**（只有 `.all()` / `.run()`），而 PG 侧有——同一段代码在服务器（PG）上正常、本地开发与桌面端（SQLite）上炸。宿主自己的方言 SQL 走 `plugins/host.ts` 的 `executeRaw`（与传给插件的 `PluginDatabase.execute` 同一个实现）；**别在 services 里再写 `if (dbDriver === 'sqlite')`**（D-045 的方言分支要点名收敛）。服务端集成测试默认跑 SQLite，所以这类错误「测试全绿、本地炸」不存在——前提是那条 SQL 真的被某条测试跑到（`embed.test.ts` 就是为此而写） |
-| **写了迁移却「没生效」（不报错、不建表）** | drizzle 只跑 `when` **大于**库里已应用最大值的那些迁移，而 `when` 来自 `meta/_journal.json`。**手工编过时间戳的条目会把新迁移挤到后面**：实测 `0006_kb_code` 的 `when` 是未来时间（1791879000000 ≈ 2026-10-13），而 drizzle-kit 生成新迁移用的是真实当前时间（更小），于是 `chunks` / `chunk_embeddings` / `feeds` 在**已有实例**上一张都没建，而 `pnpm db:migrate` 打印「迁移完成」（全新库不受影响——那里按顺序全跑，中招的正是升级路径）。`apps/server/src/db/migrations.test.ts` 的单调性断言守着 |
-| **drizzle 迁移 SQL 的注释里不能出现断点标记** | 迁移文件按 `--> statement-breakpoint` 切分语句，**注释里出现这串字符也会被切开**——实测注释被拦腰切断后，前半段变成「没有语句」的片段，迁移直接报 `contains no statements`。触发器体里有分号，所以触发器单独一个迁移文件（`0001_fts.sql` / `0007_chunks_fts.sql` 的同一条理由） |
-| **sqlite-vec 装不上是静默的（直到第一次语义检索）** | 它按平台分发（linux-x64 等），且只有 SQLite 路径需要。加载在连接时做（`db/client.ts` 的 `createRequire`，**不在模块顶层 import**——PG 部署根本不需要它，顶层 import 会让那条路径也去解析）；**加载失败要抛错**：它的缺席表现是「语义检索返回空」，看起来像「库里没有相关内容」，是最难查的一类 |
-| **分块的检索文本漏掉标题** | `documents.search_text` 是 `toSearchText(title, body)`，分块表只装正文的话，标题里的词就从索引消失（标题「React 组件性能优化」、正文没有「组件」二字时搜「组件」命中 0）。分块器的 `searchText` 一律 `toSearchText(title, content)`，标题由 `syncChunks` 从数据库现取（调用方传会固化旧标题） |
-| **feed 的正文片段跑 Readability 会丢** | RSS 的 `content:encoded` 按规范**已经是正文**，而 Readability 的职责是「从整页里找正文」——两行的片段会被它判为「不像一篇文章」返回 null，整条退化成裸 HTML。片段走 `html-fragment` 解析器（turndown 直转），与抓网页共用同一个转换函数 |
-| **播种/一次性动作「做过了」但标记没落库** | `settings.update()` 对**未注册的键与校验失败**都是「返回 `issues`、不写」——不检查返回值就会「内容写了、标记没写」而函数照常返回成功。症状是每次重启重播一次，而更坏的一种是**用户删掉默认内容之后它又回来**（标记的全部意义就是防这个）。实测踩过：开发中的实例热重载时装配层拿着旧键表，写入被静默拒绝。凡是靠 `settings` 记一次性状态的地方都要看 `ok` |
-| **改了文档却没重算分块（第四条写入路径）** | 分块的写入点只有 `syncChunks` 一个，但**调用它**的路径有四条（笔记新建 / 更新、抓取、上传、重建索引）——抄三遍必漏一处，实测漏的就是上传。新写入路径一律调 `services/chunks.ts` 的 `rebuildChunksAndEmbed` |
-| **本地模式（D-100）点进去却要登录** | 令牌的**名字**在两处：桌面宿主写 cookie（`main.ts`）与服务端读 cookie（`services/local-mode.ts`），走 shared 的 `LOCAL_TOKEN_COOKIE` 常量；宿主忘了注入（`injectLocalCookie`）或 env 写成 `true`（服务端只认 `'1'`）都表现成「本地模式却看到登录页」——不报错。改这两处前先看 `docs/TECH.md` §14.6 的表 |
-| **打包版首启白屏（开发时正常）** | 选择页在 `apps/desktop/ui/`，不在 `dist` 下——`electron-builder.yml` 的 `files` 漏了 `ui/**` 时 asar 里没有它，`file://` 加载失败。开发形态读的是仓库里的文件，所以只有打包版才炸 |
-| **切到云端后点「返回」/切换没反应** | `showSetupPage` **不能清 `modeState`**：选择页要靠它决定形态（首次选择 vs 切换）与预填地址。进入选择页只置 `setupVisible`（供 did-fail-load 判断），真正改模式的只有 `choose()` |
-| **桌面端「换了使用方式但下次启动还是旧的」** | 配置写入是「临时文件 + rename」（`config.ts`）。直接覆盖写时电源断了会留下半截 JSON，而读侧把坏文件一律当「还没选过」——表现是回到选择页或模式回退，用户的选择静默丢失 |
-
-完整清单见 `docs/TECH.md` §10。
+| **本地模式（D-100）点进去却要登录** | 令牌的**名字**在两处：桌面宿主写 cookie（`main.ts`）与服务端读 cookie（`services/local-mode.ts`），走 shared 的 `LOCAL_TOKEN_COOKIE` 常量；宿主忘了注入（`injectLocalCookie`）或 env 写成 `true`（服务端只认 `'1'`）都表现成「本地模式却看到登录页」——不报错。服务端「开了本地模式但没令牌」直接启动报错，绝不降级成「有开关就放行」。改这两处前先看 `docs/TECH.md` §14.6 的表 |
+| 当天发布的依赖被拒 | pnpm 12 的供应链策略——锁到上一个稳定版本 |
+| 无头截图里浮层看起来透明 | 动画冻结——只是截图问题，真实浏览器正常 |
+| oxlint 的历史规则误报 | `react-in-jsx-scope`（React 17+ 的历史遗留）与 `import/no-named-as-default`（Tiptap 包同时有 default 与 named 导出）——都关掉，统一用 named 导入 |
+| oxfmt 把中文表格越排越乱 | 列宽按字节算——oxfmt 排除 `**/*.md` |
+| node_modules 里出现没声明过的包 | `@vitejs/plugin-react` 的 optional peer 被 pnpm autoInstallPeers 自动装了——不是依赖没删干净 |
+| 照抄 Vite 文档的 `build.rollupOptions` | Vite 8 里它只是 `rolldownOptions` 的别名（已标 deprecated）。新配置一律用 `rolldownOptions` |
+| 测试报「找不到模块」而构建正常 | vitest 与 vite 各有一份配置，别名只在一边配了。别名定义在 `alias.ts`，两个配置都从它取 |
+| 改了样式文件，报错指向一句中文注释（`Expected a semicolon`） | 反引号在 createStyles / createGlobalStyle 的 css 模板串里**直接终止字符串**——注释里也不行，整段样式变非法 TS，而改的人只是往注释里加了一对强调用的反引号。模板里一律不写反引号，强调用「」或 `**`。机器守：`scripts/check-style-backticks.mjs` 逐行配对扫描（正则写法抓不到，见该脚本注释；**加断言后要用注入验证它能红**——第一版就是永远绿的）。这个坑咬过三次（`StatsSection.style.ts` 两次、`styles/global.ts` 一次） |
 
 ---
 
 ## 文档地图
 
-| 你想知道 | 去哪 |
+细分的「按问题找」在 [`docs/INDEX.md`](docs/INDEX.md)（唯一一份，这里不重复）。
+速查：
+
+| 你要动的地方 | 入口 |
 |---|---|
-| 该不该做某个功能 | `docs/PRD.md` §1 非目标、§4 功能范围 |
-| 某个交互为什么长这样 | `docs/PRD.md` §5 关键交互决策 |
-| 某个技术选型为什么 | `docs/TECH.md` §1 与被否决的方案 |
-| 某个视觉决定为什么、该用什么值 | `docs/DESIGN.md`（有实测对比度） |
-| 为什么不用某个方案 | `docs/RESEARCH.md` —— 有星数、版本号、许可证、实测数据 |
-| 数据模型 / 检索设计 | `docs/TECH.md` §4、§7 |
-| 想加一个插件（新来源 / 新通道 / 新模型）| `docs/TECH.md` §7.4 + 对应包的 `install()` |
-| 某个配置项能不能改、改了什么时候生效 | `docs/TECH.md` §7.5（配置分层）|
-| 部署与已知坑 | `docs/TECH.md` §8、§10 |
-| 历史上做过哪些决定 | `docs/DECISIONS.md` |
-| 原型长什么样 | `output/index.html`（双击打开） |
+| 产品边界、里程碑 | `docs/PRD.md`（§1 非目标、§4 功能范围） |
+| 技术设计、数据模型、插件接缝、部署 | `docs/TECH.md` |
+| 视觉与交互的值（实测对比度） | `docs/DESIGN.md` |
+| 选型证据与被否决的方案 | `docs/RESEARCH.md` |
+| 历史决策（为什么这样选） | `docs/DECISIONS.md`（顶部有分组索引） |
+| 交互原型 | `output/index.html`（双击打开） |
+| **区域规则与坑表** | 各级 `AGENTS.md`——完整嵌套地图见「会静默出错的地方」的路由表 |
 
 ---
 

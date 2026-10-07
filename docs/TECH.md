@@ -1430,105 +1430,24 @@ M1 的新代码大多是「纯函数 + SQL」，两类都能用能说明用户�
 
 ## 10. 已知约束与坑
 
-按踩到的顺序记录，避免重复。
+坑**按区域就近记录**：改哪里的代码，哪份坑表就跟着被读。唯一真相在各区域的
+`AGENTS.md`（每份都有「会静默出错的地方」一节）与根 `AGENTS.md`（跨区域的坑），
+本节只做路由，不再收坑。
 
-| 坑 | 现象 | 处理 |
-|---|---|---|
-| jieba 不加载词典 | 分词退化成逐字 | 必须 `Jieba.withDict(dict)` |
-| Postgres 对中文无词边界 | 搜「组件」搜不到 | 写入时预分词 + 子串兜底通道 |
-| pgvector 维度上限 | 2048 维建 HNSW 索引报错 | 用 `halfvec`（上限 4000）或降到 1024 维 |
-| Tiptap StarterKit 已含 Link | 重复扩展告警，链接配置被覆盖 | 在 `StarterKit.configure()` 里配，不再单独 import |
-| `URL.pathname` 含中文 | 百分号编码导致找不到目录 | 一律用 `fileURLToPath` |
-| pnpm 12 供应链策略 | 当天发布的依赖被拒 | 锁到上一个稳定版本 |
-| 测试污染真实数据 | vault 里多出测试文件 | 测试库 + 测试目录双重隔离 |
-| 无头截图动画冻结 | 浮层看起来透明 | 只是截图问题，真实浏览器正常 |
-| oxlint 的 react-in-jsx-scope | React 17+ 报「React 必须在作用域内」 | 关掉，这是历史遗留规则 |
-| oxlint 的 import/no-named-as-default | Tiptap 包同时有 default 与 named 导出，误报 | 关掉，统一用 named 导入 |
-| better-sqlite3 的事务配 async 回调 | drizzle 的 `db.transaction(async (tx) => …)` 在 better-sqlite3 上回调被当同步跑——提交发生在 await 之前，后续语句报「事务外使用 tx」或静默写丢（实测 500） | **不用事务**：顺序写 + 「文件先行」兜底（`services/folders.ts`）；真需要原子性时用同步回调 |
-| oxfmt 格式化中文表格 | 列宽按字节算，中文表格反而更乱 | oxfmt 排除 `**/*.md` |
-| React Compiler 的 0.x peer 范围 | `^0.145.0` 对 0.x 是 `>=0.145.0 <0.146.0` | 装 0.145.x；装 0.150.0 会报 unmet peer |
-| 抑制 React 规则会让编译器跳过组件 | 编译通过了，但组件没被优化，且无任何提示 | 保持 `logDiagnostics: true`；改成符合 Rules of React 而不是 disable |
-| ref 声明在使用它的 effect 之后 | `react-compiler(Immutability)` 警告，静默不优化 | 声明顺序放在 effect 之前 |
-| 未声明的包出现在 node_modules | 以为依赖没删干净 | `@vitejs/plugin-react` 的 optional peer，pnpm autoInstallPeers 自动装的 |
-| 静态资源的隐藏依赖 | 测试行为取决于本地是否跑过构建 | 挂载静态资源显式判断 `NODE_ENV`，不看 dist 是否存在 |
-| 路由树是生成物 | 干净检出直接跑 `typecheck` 找不到 `routeTree.gen.ts` | 用 `tsr generate` 显式生成，写进 typecheck/build 脚本 |
-| workspace 包以源码发布 | 生产容器启动报 `ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`——Node 拒绝执行 node_modules 里的 TS | `@mimir/shared` 以源码发布，但**由使用方编译**：前后端都交给 Vite（server 是 SSR 构建）。见 D-023、D-033 |
-| 打包时把源码目录结构拍平 | `resolveWebDist()` 少算一级目录，静态资源静默 404 | Vite 的 SSR 构建开 `preserveModules`（配 `preserveModulesRoot: src`），保持一文件对一文件 |
-| 服务端 dev 入口自己起监听 | 启动即 `EADDRINUSE`——dev 入口与 Vite 的 dev server 抢同一个端口 | 监听只由 `src/index.ts`（生产入口）做；`src/dev.ts` 只导出 `app`，交给 `@hono/vite-dev-server` |
-| dev server 往 **API 响应**里注入客户端脚本 | 上传的 `.html` 原件经 `/api/documents/:id/file` 取回时多出 `<script>import("/@vite/client")</script>`（619 → 659 字节）：源码编辑器把那 42 字节当成文件内容显示，保存一次就写进用户的文件，而**没有任何报错** | 这个 dev server 不服务自己的 HTML 页面（前端页面由 `apps/web` 提供），所以关掉注入：`devServer({ entry: 'src/dev.ts', injectClientScript: false })`。`@hono/vite-dev-server` 默认按 `content-type: ^text/html` 追加脚本，**不看 `Content-Disposition`** 是 inline 还是 attachment |
-| 照抄 Vite 文档里的 `build.rollupOptions` | Vite 8 里它只是 `rolldownOptions` 的别名（已标注 deprecated） | 新配置一律用 `rolldownOptions` |
-| 仓库根靠标志文件查找 | 生产镜像里没有 `pnpm-workspace.yaml`，启动即抛错 | 找不到时退回 `cwd` 而不是抛错；容器里全部传绝对路径 |
-| `src/` 与 `dist/` 层级不一致 | 静态资源路径在仓库内正确、在镜像里算到 `/web/dist` | 按候选路径探测 + `WEB_DIST` 显式指定，不用写死的相对偏移 |
-| 内层 `ConfigProvider` 传 `theme` | `cssVar` 的 key 被重算，`--ant-*` 变量名改变，引用变量的地方颜色静默不对 | 主题只由 `ThemeProvider` 传；内层 `ConfigProvider` 只放 locale（`theme/MimirProvider.tsx`） |
-| 半透明 token 直接算对比度 | 得到把黑色当底色的假数字（`colorFillSecondary` 算出 2.86:1，实际 4.93:1） | 先用 `composite()` 合成到所在底色再算，见 `design.test.ts` |
-| `createGlobalStyle` 里用 `--ant-*` | 变量注入在 antd 组件 DOM 子树上，全局规则里取不到 | 用 `${(p) => p.theme.xxx}` 读主题值 |
-| **与 seed 同名的 token 覆盖会被丢弃** | 在 `token` 里写 `colorLink` / `colorPrimary` **不生效**——`formatToken` 把这些键从最终结果里删掉，值由算法重新派生。浅色下看不出来（浅色阶把输入色放在第 6 阶，而 `colorLink` 恰好取第 6 阶），深色下就露出来了：`#0958d9` 派生出的颜色在选中底上只有 3.97:1 | 需要精确控制时用**校准层**：一个 `MappingAlgorithm` 挂在 `algorithm` 数组最后，它写进去的值不会被改写（`tokens.ts` 的 `darkCalibration`） |
-| antd 深色自带的 `colorLink` 不达 AA | `#1668dc` 在深色容器底上只有 **3.50:1**；`colorInfoText` 同源 | 深色显式校准链接色（`#79b8ff`，容器底 8.74:1），不依赖算法的派生值 |
-| 深色算法把 `colorPrimaryBg` 与 `colorPrimaryBorder` 设成同一个值 | 前者是选中项的底、后者是焦点环——同值意味着焦点环落在选中项上完全看不见（实测 **1.00:1**），而那是键盘用户唯一的线索 | 深色单独校准 `colorPrimaryBorder`；`design.test.ts` 断言「环与选中底 ≥ 1.5:1」 |
-| 深色下照搬浅色的字面量颜色 | `#fafbff`（悬停底）、`#e8f1ff` / `#f0f1f3`（来源标注）、`#68707c`（说明文字）压在深底上不是刺眼就是看不见，且**不报错** | 一律走 token：悬停用 `tintHover`，来源标注成对使用语义 token |
-| 深色页面露出浏览器默认的白 | 滚动到顶端之外、overscroll 回弹、页面比视口短这三种情况露出的是 `html` 的底；滚动条与原生下拉也不受 CSS 管辖 | `html` 上画 `colorBgLayout`，并把外观写到 `html` 的 `color-scheme` 上（后者决定滚动条与原生控件的明暗） |
-| 首帧脚本的内联背景压住全局规则 | 内联样式优先于样式表，于是**运行时切换外观后 `html` 的底不变**（刷新后才对），表现是切换后 overscroll 露出上一层外观的颜色 | `styles/global.ts` 里那条 `html { background }` 带 `!important`——它针对的是那一个内联声明，`design.test.ts` 守着它 |
-| antd-style 的 `themeMode='auto'` 首帧闪白 | 它的首次系统匹配走 `setTimeout(…, 1)`，第一帧按浅色渲染再翻成深色 | 自己持有外观状态（`theme/appearance.ts`），把 `appearance` 作为**受控 prop** 传进去；`index.html` 内联一段等价脚本覆盖样式注入前的那段空白 |
-| `localStorage` 在隐私模式下读取会**抛错** | 不兜住的话整个应用壳渲染不出来——一个渲染偏好不该有这种能力 | `try/catch` 包住读写（`appearance.ts` 与 `routes/_app.tsx` 同一条） |
-| 存了不认识的外观值 | 控件匹配不上任何一项，界面显示空白且**没有任何报错** | 读回来时收敛到 `auto`（`MODE_SET.has()`），不当合法值传下去 |
-| vitest 与 vite 各有一份配置 | 别名只在一边配了，测试报「找不到模块」而构建正常 | 别名定义在 `alias.ts`，两个配置都从它取 |
-| `plainto_tsquery` 的 AND 语义 | 自然语言提问全部 0 命中（四词要求全部出现） | 改成「命中词数 ≥ 一半」+ `ts_rank_cd` 排序，见 D-014 |
-| 子串通道拿整串去 ILIKE | 「兜底」在一句话提问上永远不命中 | 逐词匹配，门槛与词级通道一致 |
-| `useChat` 的 `initialMessages` 只在挂载时生效（**旧客户端，已换**） | 打开历史会话右栏空白，而中栏的「本次引用」正常 | D-099 后由包的历史适配器 + `thread.isLoading` 骨架屏承担：数据没到位也能挂载。这条现在只剩历史价值——它解释了为什么 `ChatPanel` 曾有一个 `messagesLoading` 硬契约 |
-| 客户端连接的地址跟着会话变 | 发送中如果 URL 变了，正在进行的流被切断（AG-UI 客户端与 `useChat` 同一条性质） | 会话 id 放请求体（`forwardedProps`），不进 URL；切换会话靠宿主的 `key` 重挂载（D-099 的重挂载契约） |
-| **AG-UI 流的第一条不是 `RUN_STARTED`** | 协议客户端在流开头硬校验，直接抛 `AGUIError: First event must be 'RUN_STARTED'`——**整轮一个字节都用不了**，而症状是「界面完全空白、控制台一句 AGUIError」 | 服务端拥有这一段的生命周期（D-099）：`createStream` 第一件事发自己的 `RUN_STARTED`，模型那一趟的剥掉不转发，终局 trace 抢在自己的 `RUN_FINISHED` 之前。只检索路径同样补一对括号。测试把真实字节喂给 `@ag-ui/client` 守着顺序（只断言「有 RUN_STARTED」在顺序错时照样通过） |
-| **终局 CUSTOM 发在 `RUN_FINISHED` 之后** | 报 `Cannot send event type 'CUSTOM': The run has already finished`，用户永远看不到整轮真实耗时 | 事件顺序：… → trace(整轮) → `RUN_FINISHED`。失败路径同理：`CUSTOM(mimir.failure)` 必须排在 `RUN_ERROR`（终局事件）之前 |
-| 模型自带的 `RUN_STARTED` 直接转发 | 与这一轮自己的那条叠加，命中 `Cannot send 'RUN_STARTED' while a run is still active` | 剥掉模型流的 `RUN_STARTED` / `RUN_FINISHED`，用量接住转挂到自己那条的 `metadata` 上（`assistant-stream.ts` 的 `runFinished`） |
-| 渲染期读写 ref | React Compiler 拒绝优化该组件（`react(refs)`） | 参与渲染的值用 state；只在事件处理器里读写 ref |
-| 模型连接错误不抛异常 | `try/catch` 根本不执行，「每类失败给不同出路」静默失效 | 连接类错误以 `RUN_ERROR` chunk 顺着流发出来，既要看 chunk 也要留 catch |
-| 建会话后写 URL 触发重挂载 | 新会话提问后右栏空白，而消息已落库 | 区分「自己刚创建的 id」与「切换过去的会话」，前者不重挂载 |
-| 只存草稿不导航 | 点「问 AI」没反应 | 设置草稿后必须一起 `navigate` |
-| trace 只量检索耗时 | 界面永远显示「耗时 0.0s」 | 整轮结束后再发一次带完整耗时的 trace 覆盖它 |
-| 召回通道的门槛写在外层查询 | 过滤条件引用的是计算列，**GIN 与 trigram 索引静默失效**，改走全表扫描；5 万行实测：关键词通道「零命中」也要 **292 ms**（索引本该立刻返回「没有」），命中 1/7 时 328 ms | 门槛谓词下推到 `WHERE`，命中数与排序分开算：零命中降到 **0.012 ms**（Bitmap Index Scan），命中密集时仍有 38.5 ms 的真实排序成本。见 `RESEARCH.md` §9.5 |
-| HNSW 索引建在表达式上，查询不写同一个表达式 | 索引**静默不命中**，退化成顺序扫描（和上一行同一类，但更隐蔽：20 万行才会明显） | 索引与查询都用 `embedding::halfvec(1024)`，且都带 `WHERE dimension = 1024`。见 §4.8 |
-| `halfvec` 索引上不带维度过滤 | pgvector 无法用 partial index，`dimension` 谓词必须与索引定义一致 | 查询里显式 `WHERE dimension = <该索引的维度>` |
-| 未 seed 的默认值覆盖 `.env` | 部署方在环境变量里配的值被空默认值静默吃掉 | settings 表只存**显式写入**的行；解析时「没有行」才看环境变量。见 §7.5 |
-| 密钥解密失败被当成空值 | `AUTH_SECRET` 轮换后所有 key 静默失效，用户以为是自己没配 | 捕获解密失败并在界面上明说「请重新填写」，不静默兜底。见 §7.6 |
-| 探测端点自动触发 | 每次进设置页都发一次真实模型调用，慢且花钱 | 可用性是四态（未配置/未测试/可用/不可用），探测只在用户点「测试连接」时发生。见 §7.8 |
-| 用量按会话时区聚合 | `(at AT TIME ZONE $tz)::date` 缺了时区就按 UTC 切天——容器默认 UTC，**凌晨 0 点到 8 点的消耗全算到前一天，图整体左移一格且不报错** | 时区取 `stats.timezone`（默认 `Asia/Shanghai`）并在图旁标出；`at` 是 `timestamptz`，换时区只是换聚合方式，历史数据自动重算。见 §12.4 |
-| 未上报的用量被当成 0 | 兼容端点不回传 usage，那天有调用却渲染成空白格子，等于图在说「我那天没用」 | `usage_log` 的 token 三列**可为 null 且 null ≠ 0**；聚合时把「有调用但用量未知」单独计数并画成斜纹，不画成空。见 §12.3 |
-| 流式调用的 usage 只在末尾到达 | 只在 `for await` 正文时拿不到用量；若把 `RUN_FINISHED` 提前消费掉更会漏 | 记账放在**包住整条流**的透传生成器里（`finally` 落账），不放在正文累加处。见 §12.2 |
-| 头像 URL 固定导致换图不生效 | 文件名是 `<userId>.webp` 不变的，浏览器拿缓存里的旧图一直显示，界面上看起来「上传没反应」 | 指针里带版本：`user.image = /api/avatar?v=<时间戳>`，响应 `Cache-Control: private, immutable`。见 §12.6 |
-| 会话 cookie 缓存住用户资料的旧值 | **与上一行是两个独立的陈旧源，只修一个不够。** 实测：先修了 `?v=`，界面上的头像依然不动——因为 `get-session` 在 `session.cookieCache` 的 `maxAge` 内直接读 cookie 里那份 `{session, user}` 快照，而头像是绕开 Better Auth 直接写库的，缓存不会刷新 | `cookieCache: { enabled: false }`。`cookieCache.version` **不能**用来做资料指纹：它读的时候也拿 cookie 里那份 user 重算，与写入时是同一个对象，必然自洽。见 §12.6 与 D-037 |
-| 图表库的日期键格式不对齐 | 库内部用 `YYYY/M/D`（**不补零**），API 给 `2026-09-18`（补零）。直接 `replaceAll('-','/')` 得到的键永远查不到，于是 `rectRender` 里的自定义规则**全部静默失效**，而图照常渲染、看起来正常 | 只在一个 `dateKey()` 里统一转换。与「月份标签跳过整月」同一类：日期格式不一致，不报错只是不对。见 §12.8 |
-| 热力图少渲染最后几天 | 库的 `gridNum` 从**容器宽度**推（`floor((clientWidth - leftPad)/(rectSize+space))`），不是从日期范围推。CSS 自适应会安静丢掉放不下的天——370 天在 680px 容器里只画 53 列，最后 4 天（含「今天」）消失 | 自己按日期范围算宽度传给 SVG。见 §12.8 |
-| 界面里用了原生控件 | 语法对、typecheck 过、界面「看着还行」，但**深浅主题都管不到它们**——深色下原生 `<select>` / `<input type="file">` 是浏览器默认的白框，整页唯一不属于这套设计的东西。各浏览器默认外观还不同，而本项目所有视觉值都是实测校准的 | 交互元素一律用 antd（`Segmented` / `Table` / `Upload` / `Button` / `Typography.Text code`）。手写 `<table>` 还要自己抄一份表头底色与行 hover，那份必然漂移。见 D-042 |
-| CSS 模板体内的注释里写了反引号 | 反引号提前结束模板，整段样式变非法 TS，报错指向一句中文注释。**咬过三次**（`StatsSection.style.ts` 两次、`styles/global.ts` 一次）——文档拦不住手 | 加机器守：`design.test.ts` 的「样式模板里没有多余的反引号」逐行配对扫描（正则写法抓不到，见该测试的注释）。**加断言后要用注入验证它能红**——第一版正则就是永远绿的 |
-| 图表库在隐藏面板里列数算成 0 | antd `Tabs` 切走的面板是 `display: none`，`clientWidth` 为 0 → 列数 `floor((clientWidth-leftPad)/(rectSize+space))` 为 0 → **一格都不画**，只剩星期标签。且只在挂载时量一次，恢复与否全靠凑巧重渲染：实测同一页面来回切，**有时 376 格、有时 0 格** | 宽度为 0 时**不挂载**该库，用 `ResizeObserver` 等它有位置了再挂（`WhenVisible`）。见 §12.8 |
-| **CSS 模板字符串的注释里写了反引号** | 反引号提前结束模板，整段样式变成非法 TS。报错位置指向一句看起来毫无问题中文注释（React Compiler 插件报 `Expected a semicolon`），而**改的人不知道自己动了样式**——只是往注释里加了一对用于强调的反引号。这个坑咬过两次（一次在 `StatsSection.style.ts`，一次在 `styles/global.ts`） | `createStyles` / `createGlobalStyle` 的模板里**一律不写反引号**，注释里强调用「」或 `**`。样式文件改完在浏览器里看一眼，别只看 typecheck 通过 |
-| 三个存储目录各有独立默认值 | 容器里头像**不落盘在挂载卷上**：Dockerfile 与 compose 只设了 `VAULT_DIR` / `RAW_DIR`，漏了 `AVATARS_DIR`，于是它回落到 `cwd + /data/avatars` = `/app/data/avatars`。上传与显示都正常，**`--build` 重部署后头像消失** | 收成单个 `DATA_DIR`，三类文件是它的三个前缀（`vault/` / `raw/` / `avatars/`）。漏配在结构上不可能发生。见 D-038 与 `RESEARCH.md` §10.10 |
-| S3 改名不是原子的 | 对象存储没有 `rename(2)`，只能「复制 + 删除」。复制成功、删除失败时同一个笔记有**两个文件**，而重建索引按 id upsert 会让它们互相覆盖——**哪一份胜出取决于扫描顺序**，不报错 | 顺序固定为先复制后删除（任何时刻不丢数据）；`reindexVault` 检测「同一 id 多个路径」并跳过 + 打日志，`ReindexResult.duplicates` 把这件事变成可观测的。见 `RESEARCH.md` §10.3a |
-| S3 列举漏掉第 1000 个之后的文件 | LIST 每次最多回 1000 个 key，必须靠 `ContinuationToken` 翻页。漏掉的表现是「库里超过 1000 篇之后，重建索引静默漏掉一部分」 | `plugins/storage/src/s3.ts` 的 `list` 循环处理 `IsTruncated`；不用 `delimiter`（那要把请求数翻倍）。见 `RESEARCH.md` §10.3b |
-| `@aws-sdk/client-s3` 的默认校验和 | 3.729.0 起上传默认加 `x-amz-checksum-crc32`，而 Cloudflare R2 等兼容实现不认这个头，直接拒收（LobeHub 为它提过 PR 5479） | `requestChecksumCalculation: 'WHEN_REQUIRED'` 与 `responseChecksumValidation: 'WHEN_REQUIRED'`。**一行配置，不是选 SDK 的代价**。见 `RESEARCH.md` §10.11 |
-| 中文对象名在复制时找不到源 | `slugify` 保留汉字，而 `CopySource` 不编码时 S3 按字面量找对象，结果是「复制失败」或复制出一个空对象 | `CopySource` 按**段**编码：`key.split('/').map(encodeURIComponent).join('/')`（保留 `/` 作分隔） |
-| **上传件的元数据只写在数据库里** | 整理出的标签与目录活在数据库里，而 `meta.json` 还是旧的——重建索引读回旧值，**用户加的标签静默消失**。它与笔记的 frontmatter 是同一个角色，漏写就是漏了「文件是真相」 | `updateNote` 里对 `kind === 'file'` 写回 `meta.json`（`services/documents.ts`）。`upload.test.ts` 有一条断言守着「重建后标签与目录都还在」 |
-| **xlsx 的单元格文字在 `sharedStrings.xml` 里** | 只读 `sheet1.xml` 会「解析成功」而正文是一串数字下标（`<c t="s"><v>17</v></c>`）——看起来像正常提取，实际全是垃圾 | 先读共享字符串表再查表；下标**从 0 开始**（不是 1）。`upload.test.ts` 断言提取出的正文里有真正的文字 |
-| **重建索引按目录逐个 LIST** | `uploads/<id>/` 一个目录一次 `list` 调用。对象存储的 LIST 是**按请求计费**的（§8.5），500 篇就是 500 次请求——本地磁盘看不出来 | 一次 `list(UPLOAD_PREFIX)` 之后按 id 归类（`vault-index.ts` 的 `listUploads()`）。**有 meta 但没有原件时也要返回那一条**（`originalKey: null`），否则「记录还在但原件丢了」这种情形会被整条吞掉 |
-| 非 UTF-8 的文本文件 | `new TextDecoder()` 默认**不抛错**，非法字节被换成 U+FFFD——一份 GBK 的中文 txt 变成满屏 `��`，而库照常入库、检索照常建索引，搜什么都搜不到 | `decodeUtf8` 用 `fatal: true`，失败就抛错并由上传路径记进 `parse_error`。与「中文必须预分词」同一条规矩：静默降级比报错更糟。不做编码自动探测（猜错就是乱码入库） |
-| S3 上传的字节流被当成字符串 | `Blob`/`Uint8Array` 的 buffer 可能是 `SharedArrayBuffer`（`ArrayBufferLike`），直接交给 `new Blob([bytes])` 在某些环境类型不过、或复制出错误内容 | 复制成独立 `ArrayBuffer` 再传（测试里这么做；上传路径用 `file.arrayBuffer()` 天然是 `ArrayBuffer`）。**不是类型洁癖**：`SharedArrayBuffer` 被当作 `ArrayBuffer` 时读出来是垃圾 |
-| **迁移写了却不生效，且不报错** | drizzle 按 `meta/_journal.json` 的 `when` 与「库里已应用的最大值」比较，只跑更大的那些。**手工编过时间戳的条目会把新迁移挤到后面**——实测 `0006_kb_code` / `0009_kb_code` 的 `when` 是未来时间（1791879000000），而 drizzle-kit 用真实当前时间生成新迁移，于是 `chunks` / `chunk_embeddings` / `feeds` 在已有实例上一张都没建，而 `pnpm db:migrate` 打印「迁移完成」。`apps/server/src/db/migrations.test.ts` 用单调性断言守着 |
-| 把一个格式的「没有实现」说成「解析失败」 | 用户看到「失败」会去查自己的文件，而那个格式我们还没做——这是**静默说谎**（与热力图把「用量未上报」画成空底同类） | `parseSupport()` 三态（`now` / `planned` / `none`）在 `@mimir/shared`，界面的措辞由它派生；`parse_error` 只记**真的试过并失败**的原因。`upload.test.ts` 断言损坏的 docx 有 `parseError` 而未知格式是 `null` |
-| **SQLite 默认关闭外键** | `onDelete: 'cascade'` 全部**静默失效**——删会话留下孤儿消息、删文档留下孤儿标签关联，不报错 | 连接建立时显式 `PRAGMA foreign_keys = ON`（`db/client.ts`），与 PG 默认开启的行为对齐 |
-| **FTS5 索引靠触发器维护** | 触发器漏建或被绕过时「写入正常、中文搜不到」——索引悄悄落后于表 | 触发器建在 `documents` 的 INSERT / UPDATE(OF search_text) / DELETE 上（覆盖全部写入路径）；`pnpm db:reindex` 全量重建兜底。见 RESEARCH §11.2 |
-| SQLite 的 `LIKE` 只对 ASCII 不区分大小写 | 同一条 `like` 在 PG（区分）与 SQLite（不区分）行为不同——「测试在 PG 上绿、SQLite 上行为不同」这类方言分歧 | 需要精确语义的地方**两侧都显式 `lower()`**（子串通道已经这么做）；目录前缀等 ASCII 场景接受差异 |
-| `DATABASE_URL` 缺失时默认 SQLite | 原先连 Postgres 的环境漏配它，会**静默换到空库**——症状是「数据全丢了」 | 部署环境始终显式设置（compose / Dockerfile 已如此）；启动日志打印当前驱动与库位置 |
-| better-sqlite3 是同步 I/O | 大查询会阻塞事件循环，所有并发请求排队 | 单用户 + 个人库规模（查询毫秒级）可接受；PG 路径（服务器部署）不受影响。见 RESEARCH §11.1 |
-| **同一个断点被 CSS 与 React 各写一份** | 窄屏（≤880px）下外壳的 `@media` 把左列压到 48px，而栏内内容按用户偏好仍渲染成展开态——中文标签逐字竖排、品牌名与折叠开关叠在一起。界面**不报错**，只是全变形，且只改了其中一处的人看不出来 | 断点在 `theme/tokens.ts` 定义一次（`NAV_NARROW_QUERY`），CSS 与 `matchMedia` 共用；`design.test.ts` 守住外壳里不再出现这个字面量。见 DESIGN §5.5 / D-055 |
-| **目录树每行都把名字画在下一行上** | rc-tree 的行是 `.ant-tree-node-content-wrapper`（block）里放「图标 + `.ant-tree-title`」，而 title 是**行内**元素；行内容却是块级 flex 盒子，放不进行内上下文里图标所在的 line box，被折到下一行——每行标题 top 比本行高**恰好 28px**。后果是 `elementFromPoint` / 真指针取「技术」字形中心命中的是「后端」那一行，点目录进错目录，而界面没有任何提示 | 让这一行成为一次 flex 布局：wrapper 补 `display: flex; align-items: center`，title 补 `display: flex; flex: 1; min-width: 0`（`FolderSection.tsx` 的 `treeWrap`）。见 DESIGN §8.1 / D-069 |
-| **antd 按钮 hover 时边框一闪、内容抖一下** | 给按钮写 `border: none` 压掉描边，而 antd 的变体样式在 `&:hover` 里用**简写**重写 `border`（`border-width: 1px` + 变体色，特异性高于单类）——hover 那一刻边框从 none 变 1px：颜色从 `currentColor`（深色下是白）过渡到透明，于是白边一闪；同时 border-box 重算，内容内移 1px（实测头像 x 14 → 14.8）。界面不报错，只是一闪一抖 | 留一个**恒为透明的 1px 边框**（`border: 1px solid transparent`），并把过渡限定到 `color` / `background-color`（antd 默认的 `all` 会让边框宽度也参与过渡，宽度不可动画、重算发生在每帧上）。裸 `<button>` 不受影响——只有 antd `Button` 有变体样式。见 `NavSidebar.style.ts` 的 `account` |
-| **本地模式却要求登录（D-100）** | 令牌的名字在两处（桌面宿主写 cookie / 服务端读 cookie），宿主忘了注入（`injectLocalCookie`）或 `MIMIR_LOCAL_MODE` 写成 `true`（服务端只认 `'1'`）都会静默退回登录页 | 名字走 shared 的 `LOCAL_TOKEN_COOKIE`；`env.ts` 里「开了本地模式但没令牌」直接启动报错，**绝不降级成「有开关就放行」**。见 §14.6 的表 |
-| **打包版首启白屏、开发时正常（D-100）** | 选择页在 `apps/desktop/ui/`，不在 `dist` 下——`electron-builder.yml` 的 `files` 漏了 `ui/**` 时 asar 里没有它，`file://` 加载失败 | 打包配置显式列 `ui/**`；开发形态读仓库文件，所以只有打包版会炸 |
-| **桌面端切了模式、下次启动又回旧的（D-100）** | 直接覆盖写配置时断电会留下半截 JSON，而读侧把坏文件一律当「还没选过」 | 写入走「临时文件 + rename」（`config.ts`）——同目录 rename 是原子的 |
-| **进选择页后「切换 / 返回」失效（D-100）** | `showSetupPage` 清掉 `modeState` 会让选择页把自己当成首次启动（丢预填地址、无法返回） | 只置 `setupVisible`（供 did-fail-load 判断）；真正改模式的只有 `choose()` |
-| **一条断言在两种模式下互相污染（D-100）** | `MIMIR_LOCAL_MODE` 这类变量在 `env.ts` 模块加载时读一次，混进同一遍会全局改变鉴权与配置形状 | 本地模式有自己的 vitest 配置与进程（`vitest.local.config.ts`），`pnpm test` 连着跑两遍 |
-| **云端模式下窗口不能拖也不能关** | 桌面壳是 `frame: false`，拖动区与三枚控件由页面提供。而云端模式落地的第一个界面是**远端登录页**，登录页原先没有 `TitleBar`——实测切到云端后整条窗口 chrome 凭空消失 | 登录页也渲染 `TitleBar`（无侧栏时 `collapsed` / `showToggle` 可省，只留拖动区与控件）；`TECH §14.6` 的「更换使用方式…」入口也挂在登录页上 |
-| **「连不上」的错误话术透出 `fetch failed`** | Node / 浏览器给的原话是 `fetch failed` / `Failed to fetch`，两种都没说清是「域名解析不了」「没人监听」还是「证书不信任」——而这三件的下一步完全不同 | `cloud.ts` 的 `describeFetchError` 从 `error.cause.code` 判 ECONNREFUSED / ENOTFOUND / CERT… ；另有一条 `bad port`（fetch 会拦一批历史危险端口，如 `:1`，且**不带** code）。测试用「刚释放的空闲端口」而不是 `:1` 来测连接失败 |
-| **选择页首启多出一行「已在其他方式下使用过？」** | `.field` 有 `display:none` 而 `.footnote` 漏了同一条规则——`data-visible='false'` 只是数据，不画出来的那一步靠 CSS | 隐藏规则两个元素都要有（`setup.html`）。**这条是靠截图发现的**，DOM 断言不看渲染结果 |
+2026-10 整理：原先这里按时间累积的 95 条与根坑表的区域条目已归位合并到各区域
+（重复条目取并集；「pgvector 维度上限」一条修正了 2048 的旧数字——HNSW 对
+`vector` 的上限是 2000 维）。
+
+| 区域 | 坑表 |
+|---|---|
+| 编辑器与界面（`apps/web`） | `apps/web/AGENTS.md` |
+| Office / PDF 的预览与编辑（`packages/office`） | `packages/office/AGENTS.md` |
+| 对话面板（`packages/chat`） | `packages/chat/AGENTS.md` |
+| 服务端 / 数据库 / 检索 / 存储（`apps/server`） | `apps/server/AGENTS.md` |
+| 桌面端（`apps/desktop`） | `apps/desktop/AGENTS.md` |
+| 跨区域（工具链 / 依赖 / React Compiler / antd-style 机制） | 根 `AGENTS.md` |
+
+部署相关的坑在 §8；桌面端两种模式的行为矩阵在 §14.6。
 
 ---
 

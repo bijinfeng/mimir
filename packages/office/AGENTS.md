@@ -352,3 +352,10 @@ node packages/office/scripts/sync-upstream.mjs --from /tmp/genoffice --check  # 
 | 切到预览再切回来，中间改的东西没了（接着敲键就把它覆盖） | 视图切换写成了**条件渲染**。源码编辑器一卸载，CodeMirror 的实例与编辑历史一起消失，而重新挂载时只吃 `initialText`——那是刚打开文件时的文本。两个栏位必须**始终挂着**，只用 `hidden` |
 | `hidden` 属性看起来完全没生效 | `[hidden] { display: none }` 在**浏览器默认样式表**里，而 `.mimir-html-preview-pane` 自己写了 `display: flex`——作者样式一律胜过默认样式（与特异性无关）。要有 `.mimir-html-split > [hidden] { display: none }` 压回去 |
 | 「放大到 200%」得到的是手机版布局 | `zoom` 同时**缩掉布局尺寸**：`zoom: 2` 下 `width: 100%` 是容器的一半，于是 frame 的视口被压到 360px、内容重排。要 `width: calc(100% * var(--html-preview-zoom))` 乘回来，**并且 `flex: none`**（否则 flex 又把它收回去）。实测：1438 视口下 host 的 `offsetWidth` 359 对 `rect` 719 |
+
+### 保存与编辑的静默坑
+
+补丁式保存、pptx 的 run 边界、xlsx 的共享字符串与公式格、docx 的列宽与
+样式 id、pdf 的 cmaps 与并发渲染——**见 `src/editors/AGENTS.md`**
+（与编辑器代码同目录，最近者优先）。外壳（工具条 / 高度链 / 弹层）的坑在
+`src/shell/AGENTS.md`。

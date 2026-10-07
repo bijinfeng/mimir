@@ -1,6 +1,9 @@
 # apps/web/AGENTS.md
 
 前端的区域规则。根目录的 `AGENTS.md` 仍然适用，这里只写这一层特有的。
+**本层还有三份按子目录嵌套的规则**（最近者优先，改到那里先读那份）：
+`src/editor/`（Markdown 编辑器）、`src/theme/`（token 与外观）、
+`src/components/document/`（文档面板与文件预览）。
 
 ---
 
@@ -12,8 +15,8 @@ src/
 ├── router.tsx       路由实例（routeTree.gen.ts 是生成物，不要手改）
 ├── routes/          页面。根路由承担鉴权守卫，_app.tsx 是三栏骨架
 ├── components/      可复用组件；document/ 是文档页的子组件
-├── editor/          Tiptap 扩展配置与保真测试
-├── theme/           设计 token、自定义 token、provider 与守门测试
+├── editor/          Tiptap 扩展配置与保真测试（有独立的 AGENTS.md）
+├── theme/           设计 token、自定义 token、provider 与守门测试（有独立的 AGENTS.md）
 ├── styles/          全局样式（唯一的全局出口）
 └── lib/             API 客户端 / Query 配置 / 路由 context / 对话包的宿主适配
 ```
@@ -140,38 +143,6 @@ useEffect(() => {
 
 ---
 
-## 编辑器
-
-Tiptap 的 markdown 往返**不是无损的，但是幂等的**——首次保存会把内容整理成
-编辑器的规范形，之后不再变化。改 `editor/extensions.ts` 后必须跑
-`pnpm test`，`drift.test.ts` 会验证幂等性没被破坏。
-
-**扩展不要重复引入**：`StarterKit` 已经内置 `codeBlock` 与 `link`。
-重复引入会触发 `Duplicate extension names` 警告，且配置会被其中一份覆盖——
-不报错，只是行为不对。
-
-**实例管理交给 `@tiptap/react` 的 `useEditor`，不要 `new Editor()`。**
-它把每个回调都包一层、从 `options.current` 读，所以回调里直接用最新的
-props/state 就行；手写版需要三个「靠注释提醒自己」的约束（ref 承接回调、
-ref 声明顺序、初始值用 state 而非 ref），用它之后全部消失。
-`deps` 传 `[]` 时它只 `setOptions` 不重建实例，所以保存回写不会丢光标。
-
-**内联工具条用官方的 `BubbleMenu`**（`@tiptap/react/menus`）：
-跟随选区、滚动重算、边缘翻转、点工具条不取消选区都是它处理的。
-
-**编辑器外壳在 `@mimir/office` 里**（D-054）：`NoteEditor` 现在是一层适配
-——它只把保存包成 `onSave`、注入方言与排版类、把「立即保存」交给
-`lib/unsaved` 的守卫。壳（工具条 / 状态行 / 布局）与另外三种格式共用同一份
-实现，所以四种编辑器长得一样不靠约定。
-
-**Tiptap v3 的 `useEditor` 默认不在事务上重渲染**
-（`shouldRerenderOnTransaction: false`，为性能）。所以工具条里**不能**在渲染期
-直接读 `editor.isActive(...)`——它会停在「打开文档那一刻」的值，按钮不亮也
-不报错。要用 `useEditorState` 订阅（`MarkdownEditor` 的 `MarkdownToolbar`
-就是这么写的）。
-
----
-
 ## 调后端
 
 API 客户端在 `lib/api.ts`。三条约定：
@@ -186,82 +157,6 @@ API 客户端在 `lib/api.ts`。三条约定：
 **multipart 走 `sendMultipart`，不要用 `request()`**——后者会强制
 `Content-Type: application/json`，而 multipart 的 boundary 必须由 fetch
 自己生成（手写它会与实际的 body 不一致）。上传与替换原件都是这么发的。
-
----
-
-## 文件类文档的界面（`docs/DESIGN.md` §8.16、`docs/TECH.md` §13）
-
-上传件与笔记 / 抓取的资料**共用列表形态与归类动作**，只有正文区多一个分支：
-
-| `kind` | 正文区 |
-|---|---|
-| `note` | `NoteEditor`（唯一可编辑的） |
-| `file` | `FilePreview`（**直接看原件**，D-054） |
-| 其余 | `MarkdownBody`（只读渲染） |
-
-**`FilePreview` 没有「正文 / 原件」切换**（D-054 去掉的）。分派判据是
-「能不能真的看到东西」：有专用查看器 → 原件；没有但提取出了正文
-（txt / csv / 旧版 doc）→ 正文；两个都没有 → 说明卡片 + 下载。
-用 `viewerFor` 分派，不要自己判 MIME——两处各判一次必然有一天不一致。
-
-**六种格式的编辑器都走 `OfficeSourceEditor`**（docx / xlsx / pptx / html /
-pdf；markdown 是笔记，走 `NoteEditor`）。它是宿主的适配层，只做两件事：
-包 `EditorIo`（取字节 / 写回）、铺主题变量。**加第七种格式时不要新建组件**
-——在 `viewerFor` 加一个 kind、在 `OfficeSourceEditor` 加一个分支就是全部改动。
-
-**提取结果没有消失**：它仍然可搜、可被 AI 引用。那是它真正的用途，
-不需要在详情里再占一层。
-
-五条容易做错的地方：
-
-1. **正文为空时那第二行必须说明原因**，不能留白。四种原因的措辞由
-   `@mimir/shared` 的 `parseSupport()` 派生，列表项与详情面板共用
-   `list-helpers.ts` 的 `excerptText()`——**不要在组件里现编一句话**
-2. **格式与大小是中性文字，不是徽标**。彩色徽标只给「来源」（`KindBadge`）；
-   格式是开放集合，按「一格式一色」走下去每加一种就要多一组色对
-3. **查看器加载失败要降级成下载卡片**（HEIC 能通过 MIME 判断但浏览器未必
-   渲染得了）。空白在那里等于说「这个文件是空的」
-4. **文本类文件的正文用等宽只读，不走 Markdown**。csv / json 里的换行与 `#`
-   会被 Markdown 渲染折叠或当成标题——那是主动把内容显示错
-5. **所有能编辑的格式走同一个组件**（`OfficeSourceEditor`）：差别在
-   `packages/office` 内部（解析与保存路径），宿主只负责取字节与写回。
-   分多个分支的话，每个分支都要各自记得传 `onDirtyChange`——漏一个就是
-   丢改动的路径
-6. **PDF 的资产在 `public/pdfjs/`，不要在别处引**：pdf.js 按**原始文件名**
-   取 cmap（`cmaps/Adobe-GB1-0.bcmap`），所以那些文件必须被原样复制、不改名。
-   `public/` 是唯一这样的位置。挪走或改成打包器哈希 URL 的症状是**中文 PDF
-   整段文字空白**（不是乱码），而它不报错（TECH §15.12）
-
-查看器只用浏览器自带能力（`<iframe>` / `<img>` / `<audio>` / `<video>`）：
-pdf.js 那 1MB 换来的是一致外观，而「PDF 批注」这个需求还没出现
-（`docs/PRD.md` §1 明确不做非 Markdown 原件的在线编辑）。
-
----
-
-## 字号：走阶梯，不要写字面量
-
-`theme/tokens.ts` 的 `FONT_SIZE` 是**唯一**的字号来源，九档、每档对应一个
-角色（`body` / `item` / `excerpt` / `note` / `meta` / `badge` …）。
-
-```ts
-// ✗ 随手写一个值 —— 全仓曾散落过 11 个不同的 font-size
-font-size: 13px;
-
-// ✓ 先找角色
-font-size: ${FONT_SIZE.excerpt}px;
-```
-
-`design.test.ts` 会扫源码拦下字面量（**扫描根含 `packages/chat/src`**——
-对话包的组件不在 `src/` 下，不加进那条守卫就把它们静默漏掉了）。
-唯一的例外是**图标字形**，必须在行内标注 `非文本` 才放行
-（`font-size: 9px; /* 图标字形，非文本 */`）。
-
-包**不能** import 这个模块（它不认识宿主），所以包内写的是
-`var(--mimir-chat-font-note, 12.5px)`——值由 `ChatThemeBridge` 从这个
-`FONT_SIZE` 填下去。改阶梯时改这里，包里的回退值跟着对齐即可。
-
-理由见 `docs/DECISIONS.md` D-017：字号最容易被随手改，而同一个角色在不同
-页面用不同值不会报错，只会让整页看起来不整齐。
 
 ---
 
@@ -335,23 +230,25 @@ src/**/*.style.ts           组件/页面样式（createStyles）
 
 ---
 
-## 外观（浅色 / 深色）
+## 会静默出错的地方
 
-两套外观是**并列**的，不是「浅色 + 一个滤镜」。加任何颜色前先读
-`docs/DESIGN.md` §3.8。
+这几类问题**不报错**，只在你以为没问题的时候悄悄地错。改相关代码前先扫一遍。
+新坑记到这里；**子目录还有更细的坑表**（`src/editor`、`src/theme`、
+`src/components/document`，以及 `packages/office` 的 `src/shell` / `src/editors`
+——外壳与各格式编辑器的坑跟着代码走），跨区域的记根 `AGENTS.md`。
 
-三条硬约束：
-
-1. **需要两套值的东西用 `useAppearance()` 分支**（如徽标色对），
-   而不是在样式里散落 `appearance === 'dark' ? … : …` 判断。
-   样式层拿 token 就够，`customTokenFor(appearance)` 已经按外观选好了
-2. **深色不得弱于浅色。** 深色最常见的退化是「看着还行就用」，
-   而单看深色的截图判断不出来——`design.test.ts` 有一条跨外观逐项比较
-3. **与 seed 同名的 token 覆盖会被 antd 丢掉**（`colorLink`、`colorPrimary`
-   这些）。需要精确控制时用 `tokens.ts` 的校准层，那是一个
-   `MappingAlgorithm`，跑在算法链最后。**浅色下这条看不出来**，
-   所以别用「浅色生效了」推断深色也生效
-
-外观状态在 `theme/appearance.ts`，它把结果写到 `html` 的 `data-theme` 与
-`color-scheme` 上。`index.html` 里有一段**等价的内联脚本**先跑一遍，
-覆盖「脚本执行到样式注入」那段空白——改判断逻辑时两处必须一起改。
+| 症状 | 原因 |
+|---|---|
+| **小屏幕下侧边栏被压缩变形** | 同一个断点（880px）被写了两份：外壳的 `@media` 把左列压到 48px，而栏内内容仍按折叠偏好渲染成展开态——中文标签逐字竖排、品牌名与开关叠在一起（实测 `scrollWidth` 129 对 `clientWidth` 47）。断点只在 `theme/tokens.ts` 定义（`NAV_NARROW_QUERY`），CSS 与 `lib/nav-collapse.ts` 的 `matchMedia` 共用它（DESIGN §5.5 / D-055）；`design.test.ts` 守住外壳里不再出现这个字面量 |
+| **折叠后侧栏排版乱了（图标偏右 + 底部冒横向滚动条）** | 展开态的 `width: 100% !important`（占满整行）与折叠态 `margin-inline: 4px`（图标居中用）叠加，项盒比 48px rail 宽 4px——实测 `scrollWidth` 52 对 `clientWidth` 48、图标中心 28 而非 24。折叠态要 `width: calc(100% - 8px) !important`（`NavSidebar.style.ts` 的 `menuCollapsed`，DESIGN §5.4）；两条规则一个管展开一个管折叠，改一条要看另一条 |
+| **目录树点哪行不进哪行** | rc-tree 的 `.ant-tree-title` 是行内元素，而标题内容是个块级 flex 盒子——放不进图标所在的 line box，被折到下一行（实测每行标题 top 比本行高恰好 28px）。名字画在下一行的行带上，`elementFromPoint` 取名字中心命中的是后一行：点「技术」进的是 `folder:技术/后端`。wrapper 补 `display:flex;align-items:center`、title 补 `display:flex;flex:1;min-width:0`（`FolderSection.tsx` 的 `treeWrap`，DESIGN §8.1 / D-069） |
+| **菜单项里图标与文字不在一条中线上** | antd 给菜单项的 `line-height: 30px`（整行高）会**继承**到文字层：13.5px 中文排进 30px 行盒，中文字形没有西文下伸部，墨迹天然偏上——实测文字比图标高 1.5px。修法是把**文字层**（`.ant-menu-item-label` / `-extra`）行高压回 `normal`，不动 li 的行高（那是行框，改了整行塌）。残余 ≤0.5px 是字形度量，不做像素补偿（`NavSidebar.style.ts` 的 menu，DESIGN §8.1） |
+| **Web 端整站内容只有几百像素高、下方一大片空** | 外壳网格按「标题栏 + 两栏」写了两行（`grid-template-rows: auto minmax(0,1fr)`），而 `TitleBar` 在浏览器端 `return null`（没有窗口可控制）——只剩一个子元素落进 `auto` 行，`1fr` 行空置。实测 1440×900：知识库页 398px、对话页 302px、设置页 740px。Electron 里标题栏在所以看不出来。修法是外层改 **flex 列**（对子项数量不敏感），子层用 `flex: 1` 吃剩余高度（`_app.tsx` 的 shell / app，D-095） |
+| **进目录页图标切换动效不对（箭头朝上）** | morphicons 的路径形变与 antd 自带的收起态 `-90°` 旋转叠加了——`transform: none !important` 关掉 antd 那一半，朝向只归动效库一处（DESIGN §8.1） |
+| **目录树整体浮着一块底色 / 树根样式写了不生效** | createStyles 里把树根样式写成 `.treeWrap .ant-tree` 后代式，而 treeWrap 类就挂在**树根自己身上**——祖先-后代关系不成立，规则静默失效：目录顶着 antd 的 colorBgContainer 坐了两个迭代，D-070（界面去线）删掉右缘线没了遮挡才被看见。同一条坑还埋着选中态规则（`-node-selected` 类也在 wrapper 自己身上，从没生效过，一直是 antd 默认在渲染）。要用 `&.ant-tree` 同元素选择器。展开三角的坑在同一段代码里还有一对：三角必须 z-index 抬过 content-wrapper（relative 且 DOM 在后，否则 elementFromPoint 命中 wrapper、点三角落空），闲时 pointer-events none（那个位置平时点图标 = 进目录）（`FolderSection.tsx` 的 `treeWrap`，DESIGN §8.1） |
+| 界面里混进原生控件（深色下白框） | 语法对、typecheck 过、浅色下「看着还行」，但深浅主题都管不到原生 `<select>` / `<input type="file">`，各浏览器默认外观还不同。交互元素一律用 antd（`Segmented` / `Table` / `Upload` / `Button` / `Typography.Text code`）。见 D-042 |
+| 热力图的日期键全部静默失配 | 图表库用 `YYYY/M/D`（**不补零**），API 给 `2026-09-18`（补零）——直接 `replaceAll('-','/')` 得到的键永远查不到，自定义规则全部失效而图照常渲染。只在一个 `dateKey()` 里统一转换。见 §12.8 |
+| 热力图少渲染最后几天（含「今天」） | 库的 `gridNum` 从**容器宽度**推，不从日期范围推——CSS 自适应会安静丢掉放不下的天（370 天在 680px 容器里只画 53 列）。自己按日期范围算宽度传给 SVG。见 §12.8 |
+| 热力图有时一格都不画 | antd `Tabs` 切走的面板是 `display: none`，`clientWidth` 为 0 → 列数为 0；且只在挂载时量一次，恢复与否全靠凑巧（实测同一页面来回切，有时 376 格、有时 0 格）。宽度为 0 时**不挂载**该库，用 `ResizeObserver` 等它有位置了再挂（`WhenVisible`）。见 §12.8 |
+| 干净检出直接跑 `typecheck` 找不到 `routeTree.gen.ts` | 路由树是生成物。用 `tsr generate` 显式生成，已写进 typecheck/build 脚本 |
+| antd 按钮 hover 时「边框一闪 + 内容抖一下」 | 我们给按钮写 `border: none` 而 antd 的变体样式在 `&:hover` 里用**简写**重写 `border`（`border-width: 1px` + 变体色，特异性高于单类）——hover 那一刻边框从 none 变 1px：颜色从 `currentColor`（深色下是白）过渡到透明，白边一闪；border-box 重算让内容内移 1px（实测头像 x 14 → 14.8）。修法是**留一个恒为透明的 1px 边框**（`border: 1px solid transparent`），并把过渡限定到 `color` / `background-color`（antd 默认的 `all` 会让边框宽度也参与过渡）。裸 `<button>` 不受影响（没有变体样式），只有 antd `Button` 需要（D-083） |

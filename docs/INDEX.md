@@ -17,9 +17,11 @@
 | 插件接缝怎么加实现 | [`TECH.md`](TECH.md) §7 |
 | 文件存在哪、怎么换成 S3 | [`TECH.md`](TECH.md) §7.2、[`DECISIONS.md`](DECISIONS.md) D-038 |
 | 上传的文件（原件 / 预览 / 提取正文） | [`TECH.md`](TECH.md) §13、[`DESIGN.md`](DESIGN.md) §8.16、[`DECISIONS.md`](DECISIONS.md) D-044 |
-| 怎么部署、有什么坑 | [`TECH.md`](TECH.md) §8、§10 |
+| 怎么部署 | [`TECH.md`](TECH.md) §8 |
+| 某类坑去哪找 | 各区域 `AGENTS.md` 的「会静默出错的地方」；跨区域的在根 [`../AGENTS.md`](../AGENTS.md)（[`TECH.md`](TECH.md) §10 只做路由） |
+| 某个区域有什么规矩 | 该区域的 `AGENTS.md`——沿目录嵌套、最近者优先（`apps/web` / `apps/server` / `apps/desktop` / `packages/chat` / `packages/office` 各一份，web 与 office 的子目录还有更细的）；完整地图见根 [`../AGENTS.md`](../AGENTS.md) |
 | 用量统计怎么记账、账号资料怎么存 | [`TECH.md`](TECH.md) §12 |
-| 历史上做过哪些决定 | [`DECISIONS.md`](DECISIONS.md) |
+| 历史上做过哪些决定 | [`DECISIONS.md`](DECISIONS.md)（顶部有分组索引） |
 | 界面长什么样 | [`../output/index.html`](../output/index.html)（双击打开，交互原型） |
 | 现在做到哪了、下一步 | [`TECH.md`](TECH.md) §11、根目录 `AGENTS.md` |
 
@@ -68,3 +70,5 @@ PRD.md          做什么、不做什么         ← 产品判断
    否则后人会重新踩一遍已经踩过的坑。
 4. **区分「确定的」和「未验证的」。** `RESEARCH.md` §5.4 标了一处未能验证的结论
    （ParadeDB 的中文分词质量）。这种标注比假装确定有用。
+5. **坑按区域就近记。** 新坑写到所属区域 `AGENTS.md` 的「会静默出错的地方」，
+   跨区域的记根 `AGENTS.md`；`TECH.md` §10 只做路由、不再收坑。
