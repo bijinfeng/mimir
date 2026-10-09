@@ -1,6 +1,6 @@
-# apps/web/src/editor —— Markdown 笔记的编辑器
+# packages/renderer/src/editor —— Markdown 笔记的编辑器
 
-Tiptap 扩展配置与保真测试。父层 `apps/web/AGENTS.md` 仍然适用。
+Tiptap 扩展配置与保真测试。父层 `packages/renderer/AGENTS.md` 仍然适用。
 编辑器外壳（工具条 / 状态行 / 高度链）**不在这里**，在 `packages/office/src/shell`
 ——`NoteEditor` 只是适配层：把保存包成 `onSave`、注入方言与排版类、
 把「立即保存」交给 `lib/unsaved` 的守卫。

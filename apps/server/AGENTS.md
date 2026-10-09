@@ -200,7 +200,7 @@ src/
 | 换了头像界面上一直显示旧图 | 头像文件名不变（`<userId>.webp`），浏览器拿缓存旧图——界面上看起来「上传没反应」。指针里带版本：`user.image = /api/avatar?v=<时间戳>`。见 §12.6 |
 | 先修了头像缓存，界面依然不动 | 会话 cookie 缓存住用户资料的旧值——**两个独立的陈旧源，只修一个不够**。`get-session` 在 `cookieCache` 的 `maxAge` 内直接读 cookie 里那份快照，而头像是绕开 Better Auth 直接写库的。`cookieCache: { enabled: false }`；`cookieCache.version` **不能**当资料指纹（读写是同一个对象，必然自洽）。见 §12.6 与 D-037 |
 | 测试行为取决于本地是否跑过构建 | 静态资源的隐藏依赖——挂载静态资源显式判断 `NODE_ENV`，不看 dist 是否存在 |
-| 上传的 `.html` 原件保存一次就多出 42 字节 | dev server 往 **API 响应**里注入客户端脚本：`.html` 原件经 `/api/documents/:id/file` 取回时多了 `<script>import("/@vite/client")</script>`，源码编辑器把它当文件内容——**没有任何报错**。这个 dev server 不服务自己的 HTML 页面，关掉注入：`injectClientScript: false`（`@hono/vite-dev-server` 默认按 `content-type: ^text/html` 追加，**不看 Content-Disposition**）（D-071） |
+| 上传的 `.html` 原件保存后多出脚本字节 | dev server 默认向 HTML 响应注入客户端脚本，连原件 API 也受影响；保持 `vite.config.ts` 的 `injectClientScript: false`，具体原因见该配置旁的注释 |
 | 生产镜像里没有 `pnpm-workspace.yaml`，启动即抛错 | 仓库根靠标志文件查找——找不到时退回 `cwd` 而不是抛错；容器里全部传绝对路径 |
 | 静态资源在仓库内正确、在镜像里 404 | 服务端产物被打包成 chunk，`src/` 与 `dist/` 的目录层级不同——`resolveWebDist()` 少算一级。Vite 的 SSR 构建开 `preserveModules`（配 `preserveModulesRoot: src`）+ 按候选路径探测 + `WEB_DIST` 显式指定，不要写死相对偏移量 |
 | 服务端 dev 起不来（`EADDRINUSE`） | dev 入口自己调了 `serve()`，与 Vite 的 dev server 抢端口——监听只由生产入口 `src/index.ts` 做；`src/dev.ts` 只导出 `app`，交给 `@hono/vite-dev-server` |

@@ -1,7 +1,7 @@
-# apps/web/src/components/document —— 文档页的子组件
+# packages/renderer/src/components/document —— 文档页的子组件
 
 `DocumentPanel`（详情面板）、`FilePreview`（原件预览）、`DocChatSidebar`
-（问 AI 侧栏）等文档页子组件。父层 `apps/web/AGENTS.md` 仍然适用。
+（问 AI 侧栏）等文档页子组件。父层 `packages/renderer/AGENTS.md` 仍然适用。
 
 ---
 
@@ -11,7 +11,7 @@
 
 | `kind` | 正文区 |
 |---|---|
-| `note` | `NoteEditor`（唯一可编辑的） |
+| `note` | `NoteEditor`（Markdown 笔记） |
 | `file` | `FilePreview`（**直接看原件**，D-054） |
 | 其余 | `MarkdownBody`（只读渲染） |
 
@@ -20,8 +20,8 @@
 （txt / csv / 旧版 doc）→ 正文；两个都没有 → 说明卡片 + 下载。
 用 `viewerFor` 分派，不要自己判 MIME——两处各判一次必然有一天不一致。
 
-**六种格式的编辑器都走 `OfficeSourceEditor`**（docx / xlsx / pptx / html /
-pdf；markdown 是笔记，走 `NoteEditor`）。它是宿主的适配层，只做两件事：
+**五种原件格式的编辑器都走 `OfficeSourceEditor`**（docx / xlsx / pptx /
+html / pdf；markdown 是笔记，走 `NoteEditor`）。它是宿主的适配层，只做两件事：
 包 `EditorIo`（取字节 / 写回）、铺主题变量。**加第七种格式时不要新建组件**
 ——在 `viewerFor` 加一个 kind、在 `OfficeSourceEditor` 加一个分支就是全部改动。
 
@@ -48,9 +48,8 @@ pdf；markdown 是笔记，走 `NoteEditor`）。它是宿主的适配层，只�
    `public/` 是唯一这样的位置。挪走或改成打包器哈希 URL 的症状是**中文 PDF
    整段文字空白**（不是乱码），而它不报错（TECH §15.12）
 
-查看器只用浏览器自带能力（`<iframe>` / `<img>` / `<audio>` / `<video>`）：
-pdf.js 那 1MB 换来的是一致外观，而「PDF 批注」这个需求还没出现
-（`docs/PRD.md` §1 明确不做非 Markdown 原件的在线编辑）。
+不支持 Office/PDF 的格式仍按 `viewerFor` 降级到浏览器原生查看器或下载卡片；
+六种可编辑格式的能力边界见 `docs/TECH.md` §15。
 
 ---
 
