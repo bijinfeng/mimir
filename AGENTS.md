@@ -25,7 +25,7 @@ mimir —— 自托管的个人知识库。写 Markdown 笔记、收集外部资
 | `pnpm db:up` / `db:down` | 起 / 停 Postgres（Docker）。不设 `DATABASE_URL` 时本地默认 SQLite，不需要它 |
 | `pnpm db:migrate` / `db:reindex` | 跑迁移 / 重建全文与分块索引 |
 | `pnpm db:generate:pg` + `db:generate:sqlite` | 生成两侧迁移，**两边的迁移文件要同批提交** |
-| `pnpm desktop:dev` / `desktop:build` | 桌面端开发（加载 web **构建产物**）/ 打包安装包（`server-deploy/` 是 gitignore 的产物） |
+| `pnpm desktop:dev` / `desktop:build` | 桌面端开发（electron-vite 三段 watch 构建，**改完刷新窗口**）/ 打包安装包（`server-deploy/` 是 gitignore 的产物） |
 
 ---
 
@@ -142,10 +142,11 @@ SQLite 路径同理：FTS5 的 `unicode61` 分词器也不认中文词边界，�
 
 | 你要改的区域 | 坑表在 |
 |---|---|
-| 编辑器与界面总则（`apps/web`） | `apps/web/AGENTS.md` |
-| ├ Markdown 编辑器（`apps/web/src/editor`） | `apps/web/src/editor/AGENTS.md` |
-| ├ 主题与外观（`apps/web/src/theme`） | `apps/web/src/theme/AGENTS.md` |
-| ├ 文档面板与文件预览（`apps/web/src/components/document`） | `apps/web/src/components/document/AGENTS.md` |
+| 编辑器与界面总则（`packages/renderer`——两个平台共用） | `packages/renderer/AGENTS.md` |
+| ├ Markdown 编辑器（`packages/renderer/src/editor`） | `packages/renderer/src/editor/AGENTS.md` |
+| ├ 主题与外观（`packages/renderer/src/theme`） | `packages/renderer/src/theme/AGENTS.md` |
+| ├ 文档面板与文件预览（`packages/renderer/src/components/document`） | `packages/renderer/src/components/document/AGENTS.md` |
+| 浏览器部署的壳（`apps/web`） | `apps/web/AGENTS.md` |
 | Office / PDF 总则（`packages/office`） | `packages/office/AGENTS.md` |
 | ├ 编辑器外壳——四种格式共用（`packages/office/src/shell`） | `packages/office/src/shell/AGENTS.md` |
 | └ 各格式编辑器（`packages/office/src/editors`） | `packages/office/src/editors/AGENTS.md` |
@@ -157,6 +158,7 @@ SQLite 路径同理：FTS5 的 `unicode61` 分词器也不认中文词边界，�
 
 | 症状 | 原因 |
 |---|---|
+| **两个平台共用的界面代码里出现平台判断（`window.mimirDesktop` / `process`）** | 界面代码在 `packages/renderer`，**浏览器与桌面渲染进程各编译一份**（D-103）。平台差异一律走 `src/slots.ts` 的插槽，由两个入口注入（`apps/web/src/index.tsx`、`apps/desktop/src/renderer/index.tsx`）。写成运行时判断不报错，但那一支在另一个平台永远不成立：桌面专属组件被打进浏览器产物，而读代码的人分不清它是死代码还是有用分支 |
 | **`--me-accent` 当文字色用（工具条按下态、菜单当前值）** | 主色是**填充**角色（按钮底、选中底、边框、焦点环）。实测按下态 `#1668dc` on `#15325b` = **2.47:1**（浅色 3.66:1）、菜单当前值浅色 4.10:1／深色 3.50:1——33 个按钮的激活态全都偏难认，而单看一处「像是有高亮」所以没人查。强调**文字**走 `--me-accent-text`（桥接层填 `colorLink`；DESIGN §3.5 的同一条推论，D-096） |
 | **rAF 在不可见时根本不派发（焦点送不到 / 分页永久失效）** | `requestAnimationFrame` 的语义是「下一个渲染帧之前」，后台标签页、`display:none` 容器、部分内嵌 webview 里**永远没有帧**——回调不执行且不报错。实测 IAB 里 `rafFired === false`（`useFindHotkey` 第一版就是这么写的，Ctrl+F 什么都不发生）。要「等这次渲染落地」用 `setTimeout(fn, 0)`（分页那边记过同一个坑，D-096） |
 | **某个元素整组样式缺失，DevTools 里类名带着 `#` 或括号** | **在 createStyles 的样式体里声明了 `--*` 自定义属性**（哪怕只想拿它当 hover 变量）：antd-style 会把属性**值**拼进类名，`acss-xxx-#5c6570-rgba(…)` 是非法选择器，浏览器整条丢弃，元素裸奔成默认样式（实测：原生 button 灰底 Arial）。消费宿主变量 `var(--mimir-chat-*)` 没问题，声明新的不行；hover 传值走属性选择器（`packages/chat/AGENTS.md` §2） |
@@ -204,8 +206,8 @@ SQLite 路径同理：FTS5 的 `unicode61` 分词器也不认中文词边界，�
 | 设计 | 定稿 |
 | 数据库 | **双后端**（D-045）：服务器 = Postgres 17 + pgvector（Docker）；本地开发 / 桌面端 = SQLite（免 Docker，`DATABASE_URL` 未设置时默认） |
 | 后端 | M0 完成：文档 CRUD、目录、标签、双链、检索、会话、抓取、问答（流式）、导出。**首启播种**（D-085）：第一次建号时自动建一个「开始使用」知识库 + 一篇《mimir 产品说明》；已有实例由启动时补齐，靠 `seed.defaultContent` 标记保证只播一次 |
-| 前端 | 两栏界面（D-047）：导航 + 主区（知识库页 / 详情两态）、会话导航、对话视图、命令面板、抓取对话框、设置页。**知识库是内容的主容器**（D-079）：侧栏平铺列知识库，进子文件夹靠「文档 / …」面包屑；没有「全部文档」页（`scope=all` 落到第一个知识库）；收集入口是知识库页的「添加文档」下拉（上传文件 / 上传文件夹 / 网页抓取 / 直接编辑，都带当前目录）。**四种编辑器共用一套外壳**（D-054：上工具条 / 中编辑区 / 下状态行，铺满容器，头部单行） |
-| 桌面端 | **两种使用方式**（D-100）：**本地使用**（数据在本机 userData、免登录——入口是宿主启动时注入的本机令牌，不是无鉴权）/ **连接服务器**（纯壳，加载自部署地址）。首启有一个选择页（`apps/desktop/ui/setup.html`，自包含静态文件），之后可在设置 › 客户端 ›「更换使用方式」切换（回到那一页）；选择存在 `<userData>/desktop-config.json`，切换不迁移数据、不删本地数据。**自绘标题栏**（D-094，方案 A）：Win/Linux 自绘控件在右上、mac 保留系统红绿灯；标题栏与侧栏原来那条顶栏合并，垂直空间净增为零。**Electron 载体**（D-046）：窗口加载宿主的地址（cookie / SSE / Range 原生可用）。**品牌**见 D-091：图标由 `scripts/make-icons.ts` 从 favicon 生成、`executableName: mimir`、Linux 用 `setDesktopName('mimir.desktop')` 定 WM_CLASS |
+| 前端 | **界面代码抽成 `@mimir/renderer`**（D-103）：浏览器（`apps/web`）与桌面渲染进程各是一个薄壳，平台差异走插槽注入。两栏界面（D-047）：导航 + 主区（知识库页 / 详情两态）、会话导航、对话视图、命令面板、抓取对话框、设置页。**知识库是内容的主容器**（D-079）：侧栏平铺列知识库，进子文件夹靠「文档 / …」面包屑；没有「全部文档」页（`scope=all` 落到第一个知识库）；收集入口是知识库页的「添加文档」下拉（上传文件 / 上传文件夹 / 网页抓取 / 直接编辑，都带当前目录）。**四种编辑器共用一套外壳**（D-054：上工具条 / 中编辑区 / 下状态行，铺满容器，头部单行） |
+| 桌面端 | **两种使用方式**（D-100）：**本地使用**（数据在本机 userData、免登录——入口是宿主启动时注入的本机令牌，不是无鉴权）/ **连接服务器**（纯壳，加载自部署地址）。首启有一个选择页（`apps/desktop/ui/setup.html`，自包含静态文件），之后可在设置 › 客户端 ›「更换使用方式」切换（回到那一页）；选择存在 `<userData>/desktop-config.json`，切换不迁移数据、不删本地数据。**自绘标题栏**（D-094，方案 A）：Win/Linux 自绘控件在右上、mac 保留系统红绿灯；标题栏与侧栏原来那条顶栏合并，垂直空间净增为零。**Electron 载体**（D-046）：窗口加载宿主的地址（cookie / SSE / Range 原生可用）。**三段由 electron-vite 构建**（D-103：main / preload / renderer，渲染进程不再从 `apps/web/dist` 取）。**品牌**见 D-091：图标由 `scripts/make-icons.ts` 从 favicon 生成、`executableName: mimir`、Linux 用 `setDesktopName('mimir.desktop')` 定 WM_CLASS |
 | 文件 | **多格式上传已落地**（`docs/TECH.md` §13、D-044）：任意格式的原件入库、列表、按格式预览、下载、替换、随导出打包；文本 / HTML / Office / **PDF** 的正文可搜（M1-E，D-084）。**RSS 订阅已落地**（设置 › 订阅；收进来的文章与手动抓取同形状） |
 | 六种格式 | **GenOffice 支持的六种都能预览与编辑**（D-056 / D-057）：docx 全文、xlsx 单元格、pptx 文字、html 源码、markdown（即笔记）、pdf 页面级（旋转/删除/调序）。PDF 的**改文字**未做——那要 PDFium 的 WASM，见 TECH §15.12 |
 | Office | 三种格式的原件层都能看、**都能改**：**docx 全文编辑**（分页视图 + 工具栏；D-049）、**pptx 改文字**（渲成 SVG；D-051/D-052）、**xlsx 改单元格**（D-050/D-053）。三者保存都是**补丁式**（改一处不重排整篇 XML）。**界面在包里**（`packages/office/src/shell` + `src/editors`），markdown 笔记与它们同壳（D-054） |

@@ -116,17 +116,30 @@ mimir/
 │   │       ├── services/        # 业务逻辑（写入路径、问答、抓取编排）
 │   │       ├── routes/          # HTTP 路由
 │   │       └── plugins/         # **装配层**（host.ts）——见下
-│   └── web/                     # React SPA
+│   ├── web/                     # 浏览器部署的**壳**（D-103）
+│   │   ├── src/index.tsx        #   注入浏览器插槽 → createApp()
+│   │   └── index.html           #   首帧外观脚本 + 挂载点
+│   └── desktop/                 # Electron 载体（D-046）。三段由 electron-vite 构建（D-103）
+│       ├── electron.vite.config.ts
 │       └── src/
-│           ├── routes/          # 路由（根路由承担鉴权守卫）
-│           ├── components/      # 含 settings/（各分区）
-│           ├── editor/          # Tiptap 扩展与保真测试
-│           ├── theme/           # 设计 token、外观状态、provider、守门测试
-│           └── lib/             # API 客户端 / Query / 路由 context
+│           ├── main/            #   主进程：窗口、两种模式装配、进程内宿主
+│           ├── preload/         #   沙箱化 preload（只暴露握手契约）
+│           └── renderer/        #   **只有载体独有的**：标题栏、选择页、
+│                                #   客户端专属路由（/client/*，D-104）
 ├── packages/
 │   ├── shared/                  # 契约：zod schema + 类型 + 插件接口（源码发布）
 │   ├── core/                    # 插件宿主骨架：注册表 + 配置 + 融合 + 编排
 │   ├── tokenizer/               # 中文分词（写入与检索两侧共用同一份规则）
+│   ├── renderer/                # **界面与业务代码**：两个平台共用一份源码（D-103）
+│   │   ├── src/platform.tsx     #   平台契约：判别联合 + 三个 hook（D-104）
+│   │   ├── src/router.tsx       #   buildRouter()：按平台组装路由实例
+│   │   ├── route-config.mjs     #   路由生成配置（插件与生成脚本共用一份）
+│   │   ├── src/routes/          #   **基础**路由（根路由承担鉴权守卫）
+│   │   ├── src/components/      #   含 settings/（各分区）
+│   │   ├── src/editor/          #   Tiptap 扩展与保真测试
+│   │   ├── src/theme/           #   设计 token、外观状态、provider、守门测试
+│   │   ├── src/lib/             #   API 客户端 / Query / 路由 context
+│   │   └── vite-preset.ts       #   两个平台共用的构建插件（路由生成 / pdf.js 资产）
 │   ├── office/                  # 六种格式的编辑外壳与解析/保存（D-054，见 §15）
 │   └── chat/                    # 对话面板：消息区、检索过程、引用、输入区（D-099）
 ├── plugins/                     # 插件实现（独立 workspace 包）
@@ -147,6 +160,7 @@ mimir/
 | `packages/shared` | **契约**。API 形状、插件接口、运行接口 | 只有 zod |
 | `packages/core` | **骨架**。注册表、配置三层解析、RRF、检索编排 | shared |
 | `packages/tokenizer` | 分词规则。写入与检索两侧**必须**是同一份 | 无 |
+| `packages/renderer` | **界面与业务代码**。浏览器与桌面渲染进程共用一份源码，平台差异走插槽（D-103） | shared、office、chat |
 | `packages/office` | **编辑器外壳与六种格式的解析/保存**。前端包（见 §15） | shared |
 | `packages/chat` | **对话面板**。消息区 / 检索过程 / 引用 / 输入区 + 状态层（见 §5.5） | shared |
 | `plugins/*` | **实现**。每条接缝的具体做法 | 只有 shared |
@@ -2123,7 +2137,7 @@ Electron 的 npm 包与运行二进制分开下载：pnpm 的 registry 不决定
 ### 14.6 两种模式：本地离线与云端（D-100）
 
 ```
-第一次启动 ──→ ui/setup.html（静态选择页，不依赖任何宿主）
+第一次启动 ──→ setup.html（选择页，不依赖任何宿主；D-103 起是渲染进程的第二个入口）
                  ├─ 本地使用 ──→ 起私有宿主（本地模式）→ 数据在本机、免登录
                  └─ 连接服务器 → 归一化地址 + 探 /healthz → 窗口加载远端
 
@@ -2140,7 +2154,7 @@ Electron 的 npm 包与运行二进制分开下载：pnpm 的 registry 不决定
 
 选择页是**自包含静态文件**（无外部资源、无框架、自带拖动区与窗口控制）：
 它要在「宿主没起来」「地址还没填」的时刻可靠显示，也是云端用户唯一会看到的
-本地页面。打包时靠 `electron-builder.yml` 的 `files: ui/**` 进 asar。
+本地页面。它在渲染产物里（`dist/renderer/setup.html`），由 `files: dist/**` 进 asar。
 
 **本地模式的鉴权**（免登录但不免鉴权）：
 

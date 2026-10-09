@@ -1,7 +1,8 @@
-# 桌面端打包配置（D-046）。
+# 桌面端打包配置（D-046 / D-103）。
 #
-# 结构：dist/**（主进程与 preload，进 asar）。宿主运行所需的三件套
-# （web dist、server dist + drizzle-sqlite、server 生产 node_modules）
+# 结构：dist/**（主进程、preload **与渲染进程**三段都进 asar——渲染进程自
+# D-103 起是本包 electron-vite 的入口，不再从 apps/web 拷产物）。
+# 服务端运行所需的三件套（dist + drizzle-sqlite + 生产 node_modules）
 # 由 afterPack 钩子（scripts/after-pack.mjs）拷进 Resources——
 # 不用 extraResources 是因为它会跳过点开头的目录（dist/node_modules/.pnpm
 # 会被静默丢掉，运行时报模块找不到，见钩子内的说明）。
@@ -24,11 +25,9 @@ executableName: mimir
 directories:
   output: release
 files:
+  # 三段产物 + 选择页（D-103）：选择页自 D-103 起是渲染进程的第二个入口，
+  # 产物就在 dist/renderer/setup.html，所以不再需要单独列 ui/**
   - dist/**
-  # 首次启动的选择页（D-100）。**必须显式列进来**：它不在 dist 下，
-  # 而 `app.getAppPath()` 在打包形态里指向 asar 根——漏了这一行，
-  # 打包版首次启动会加载一个不存在的 file:// 地址（白屏），开发时却正常
-  - ui/**
 asarUnpack:
   - '**/*.node'
 npmRebuild: false

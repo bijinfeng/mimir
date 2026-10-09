@@ -2,8 +2,18 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
-    "types": ["node"],
-    "lib": ["ES2023"]
+    // 三段源码共用一份配置：主进程与 preload 要 node，渲染进程要 DOM。
+    // vite/client 给渲染进程的 `?raw` / `?worker&url` 这类导入提供声明
+    "types": ["node", "vite/client"],
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "allowImportingTsExtensions": true,
+    "paths": {
+      // 只有本包渲染进程自己的代码（标题栏与桥访问器）。
+      // @mimir/renderer 是正常的 package 导入，**不在这里配内部路径**——
+      // 配了就等于把包当目录用，它挪一个文件就会无声弄坏桌面端
+      "@/*": ["./src/renderer/*"]
+    }
   },
-  "include": ["src", "vite.config.ts", "vitest.config.ts"]
+  "include": ["src", "electron.vite.config.ts", "vitest.config.ts", "renderer-alias.ts"]
 }

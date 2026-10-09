@@ -36,15 +36,17 @@ export default async function afterPack(context) {
         )
       : path.join(appOutDir, 'resources')
 
-  // 三份资源全部来自 desktop:build 的 deploy 产物（apps/desktop/server-deploy）：
+  // 服务端的三份资源来自 desktop:build 的 deploy 产物（apps/desktop/server-deploy）：
   // 它是 `pnpm --filter @mimir/server deploy --prod` 的输出，dist / drizzle-sqlite /
-  // node_modules 三件套齐全且 node_modules 已按生产依赖裁剪
+  // node_modules 三件套齐全且 node_modules 已按生产依赖裁剪。
+  //
+  // **前端产物不在这里拷**（D-103）：渲染进程已经是本包 electron-vite 的第三个
+  // 入口，产物在 `dist/renderer`，由打包配置的 `files: dist/**` 进 asar。
   const deploy = path.join(here, '..', 'server-deploy')
   const jobs = [
     // 窗口图标（Linux / Windows 运行时读它；macOS 用 .app 包里的 .icns）。
     // 与打包配置里的 `mac.icon` 是两个用途：那个进 bundle，这个给 BrowserWindow
     [path.join(here, '..', 'resources', 'icon.png'), path.join(resources, 'icon.png')],
-    [path.join(here, '..', '..', '..', 'apps', 'web', 'dist'), path.join(resources, 'web', 'dist')],
     [path.join(deploy, 'dist'), path.join(resources, 'server', 'dist')],
     [path.join(deploy, 'drizzle-sqlite'), path.join(resources, 'server', 'drizzle-sqlite')],
     [path.join(deploy, 'node_modules'), path.join(resources, 'server', 'node_modules')],

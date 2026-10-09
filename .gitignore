@@ -10,14 +10,25 @@ build/
 # 它是运行期的中间产物，不是源码——`git add -A` 扫进来会让每次跑工作流都多出
 # 一批未跟踪文件。要留某个工作流就用 SaveWorkflow（它写到 .zcode/workflows/）
 .zcode/workflow-drafts/
+# 会话期的计划草稿，同理（每次 `git add -A` 都会把它扫进来）
+.zcode/plans/
 
 # Office 包的 CSS 裁剪产物（从 vendor 重现，见 packages/office/scripts/trim-editor-css.mjs）
 packages/office/src/generated/
 
 # pdf.js 的运行时资产（cmaps / 标准字体 / wasm）。**它们是 pdfjs-dist 依赖
-# 自带的**，构建时从 node_modules 拷过来（apps/web/pdfjs-assets.ts），
+# 自带的**，构建时从 node_modules 拷过来（packages/renderer/vite-preset.ts），
 # 不进 git——提交它们会让仓库白大三倍，且升级依赖时容易忘了同步。
+# 两个平台各有一份 public/：浏览器部署与桌面渲染进程（D-103）
 apps/web/public/pdfjs/
+apps/desktop/public/pdfjs/
+
+# 文件路由的生成产物（@tanstack/router-plugin 在 dev/build 时写出）。
+# **每个平台一份**：桌面端在基础路由之外多挂自己的页面（D-104）
+apps/web/src/routeTree.gen.ts
+apps/desktop/src/renderer/routeTree.gen.ts
+# 包内那一份只含基础路由，供本包 typecheck 校验路径字面量（见 route-register.ts）
+packages/renderer/src/routeTree.gen.ts
 
 # 桌面端打包产物与 deploy 中转目录（D-046）
 apps/desktop/release/

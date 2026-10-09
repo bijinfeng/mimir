@@ -18,7 +18,7 @@
 
 按主题分组；正文按 D-号 grep（如 `grep -n "## D-045" docs/DECISIONS.md`）。
 **新决策追加到文末，并在本表对应分组补一行。** 注：D-070 出现过一次重号
-（两条决策共用一个编号），都保留原样；新决策从 D-101 起编。
+（两条决策共用一个编号），都保留原样；新决策从 D-105 起编。
 
 ### 产品与信息架构
 
@@ -128,6 +128,8 @@
 | D-094 | 桌面端自绘窗口标题栏（方案 A） |
 | D-100 | 桌面客户端两种模式：本地离线（免登录）与云端（纯壳） |
 | D-102 | 桌面端复用服务端的形态与守卫：保持路径依赖，补类型安全与产物守卫 |
+| D-103 | 界面抽成 `@mimir/renderer`；桌面端三段交给 electron-vite |
+| D-104 | 平台差异改走 Context + 判别联合；路由支持平台注入 |
 
 ### 数据库、存储与部署
 
@@ -6727,3 +6729,278 @@ Edit）需要引擎的编辑会话支持，留待立项；反馈 thumbs 与分�
 2. 类型保护注入：临时把 `RunningServer` 的 `server` 字段改名 → desktop 编译报错 → 恢复
 3. 守卫覆盖：删 `apps/server/dist` → `pnpm --filter @mimir/desktop exec electron .` → 弹窗显示清单式错误 → 恢复
 4. `pnpm desktop:start` → 正常启动（本地模式窗口、注册/登录/建笔记/搜索/关窗重启数据保留）
+
+---
+
+## D-103 界面抽成 @mimir/renderer；桌面端三段交给 electron-vite（2026-10）
+
+### 背景
+
+界面代码原先住在 `apps/web`，桌面端通过**加载 `apps/web/dist` 的构建产物**
+复用它。这个形态有三处实际成本：
+
+1. **开发时改了前端看不到变化**：桌面端读的是产物，不重新 `build` 那个包就
+   永远是旧界面。症状只是「什么都没发生」，很容易去怀疑 IPC 或 preload——
+   这条坑在 `apps/desktop/AGENTS.md` 的坑表里挂了很久
+2. **桌面专属的东西混在共享代码里**：自绘标题栏（D-094）住在 `apps/web`，
+   而它整条是 `-webkit-app-region: drag`、三枚控件走 IPC；浏览器里整块
+   `return null`。于是浏览器产物里带着一块永不成立的分支，且 Web 端踩过一次
+   由它引起的高度链断裂（D-095：标题栏返回 null 导致网格少一个子元素）
+3. **构建链是三步串行**：web → server → desktop，而中间那一步的产物
+   消费方只有桌面端
+
+### 决定
+
+**一、界面与业务代码抽成 `packages/renderer`**，以源码发布（与
+`@mimir/chat` / `@mimir/shared` 同一种做法，D-023）。两个使用方都变成薄壳：
+
+```
+apps/web/src/index.tsx              注入浏览器插槽 → createApp()
+apps/desktop/src/renderer/index.tsx 注入桌面插槽   → createApp()
+```
+
+**二、平台差异走插槽注入**（`src/slots.ts`），在挂载前由入口 `setPlatformSlots()`：
+
+| 插槽 | 浏览器 | 桌面端 |
+|---|---|---|
+| `renderTitleBar` | `() => null` | 渲染自绘标题栏 |
+| `isDesktopShell` | `false` | `true`（侧栏不画自己的顶栏） |
+| `getDesktopBridge` | `undefined` | `window.mimirDesktop` |
+
+标题栏随之搬进 `apps/desktop/src/renderer/components/`。
+
+**三、桌面端三段由 electron-vite 构建**（main / preload / renderer）。
+渲染产物落在 `dist/renderer`，宿主把它当静态根——不再有「从另一个包取产物」
+这一步，`desktop:build` 少一步串行。
+
+**四、包内一律相对导入**，不再使用 `@/` 别名（抽包时改掉 204 处）。
+
+**五、首启选择页也进构建**，成为 renderer 段的第二个 HTML 入口。
+它原先是 `apps/desktop/ui/setup.html`——553 行自包含的静态页，手写了一套
+`--bg` / `--text` / `--border` 变量、一份深色媒体查询、一份 BrandMark 的
+path、以及两枚窗口控件（文件里那句注释写得很直白：「品牌标记另存一份最小
+实现：这个页面不能 import 应用的组件」）。那个前提现在不成立了。
+
+改完之后它用同一套 antd 主题、同一个 `BrandMark`、同一组 `WindowControls`
+（后者顺带从标题栏里抽了出来，两处共用）。`ui/` 目录随之删除，
+`electron-builder.yml` 里的 `files: ui/**` 也去掉了。
+
+### 否决
+
+**方案 A：保持现状，只把标题栏挪走**
+- 成本最低，但三条背景里只解决第二条。「改了前端看不到变化」与构建链串行
+  都还在，而那两条才是每天都会碰到的
+
+**方案 B：运行时条件判断（`if (window.mimirDesktop)`）**
+- 不需要插槽这层间接，看着更直接
+- 否决原因：两个平台**各编译一份**这份源码，运行时判断意味着浏览器产物里
+  带着桌面专属的组件，而那一支永远不成立。更要紧的是可读性——下一个人
+  无法判断一处判断是死代码还是有用分支。插槽把「谁有、谁没有」写在入口，
+  一处就能读完
+
+**方案 C：构建期环境变量（`VITE_PLATFORM=desktop`）配合 tree-shaking**
+- 能解决产物体积，但要求渲染层知道「有几种平台」，新增一种就要改共享代码。
+  插槽反过来：渲染层只声明「我需要一个标题栏」，谁来给它是使用方的事
+
+**方案 D：`electron-vite dev`（标准形态，renderer 跑 Vite dev server）**
+- 这是 electron-vite 的推荐用法，能拿到 HMR
+- 否决原因：**它打破 D-046 的同源前提**。那个形态让主进程读
+  `ELECTRON_RENDERER_URL` 去加载 dev server，而窗口必须加载宿主自己的地址，
+  cookie 会话、SSE 聊天流、文件 Range 请求才全部原生可用。本地模式的免登录
+  （D-100）更是直接挂在上面——令牌是写给 `http://127.0.0.1:<宿主端口>` 的
+  httpOnly cookie（`SameSite=Lax`），窗口换成 `localhost:<vite 端口>` 后那条
+  cookie 根本不会带上，症状正是坑表里的「本地模式却看到登录页」。
+  所以 `desktop:dev` 用 `build --watch`：放弃 HMR，保住同源
+
+**方案 E：选择页做成主应用的一条路由（`/setup`），不要第二个 HTML 入口**
+- 这样连 HTML 都只有一份，看着最干净
+- 否决原因：这一页**必须在没有任何宿主时也能打开**（首启时本地宿主还没起，
+  云端连不上时远端也没有），所以它只能由 `file://` 加载；而主应用的路由是
+  history 模式，`file://` 下不工作。改成 hash 模式可以绕过，但那会改变主应用
+  在宿主下的全部 URL 形状，代价远大于多一个 HTML 入口。
+  现在的形态只是入口分开，设计系统与组件仍然共用
+
+**electron-vite 用 6.0.0-beta.7**：6.0 正式版尚未发布（最新稳定是 5.0.0），
+而 5.x 不支持 Vite 8 的 `rolldownOptions`。本仓 Vite 已在 8.3。
+
+### 影响
+
+- 新增 `packages/renderer`；`apps/web/src` 从 96 个文件缩到 1 个
+- 三份区域规则随代码迁走：`src/editor` / `src/theme` /
+  `src/components/document` 的 `AGENTS.md` 现在在 `packages/renderer` 下
+- 构建插件（文件路由生成、pdf.js 资产）收进 `@mimir/renderer/vite-preset`，
+  两个平台引同一份。各写一遍的话两件事都**不报错**：路由漏生成是某一页
+  404，pdf.js 资产漏拷是中文 PDF 整段空白
+- `MimirDesktopBridge` 的形状移进 `packages/shared/src/desktop.ts`：
+  preload 按它注入、渲染侧按它消费，不再两边各写一份
+- favicon 现在两份（两个平台各有 `public/`），`design.test.ts` 的品牌形状
+  断言改为守三者同形
+- 选择页从 553 行静态 HTML 变成 React 页面（`src/renderer/setup/`），
+  `apps/desktop/ui/` 整个删除；窗口控件抽成 `WindowControls`，标题栏与选择页
+  共用一份（原先是两份，尺寸与 hover 色各写一遍）
+- 桌面端新增启动自检 `scripts/smoke.mjs`（手动跑），**两个场景**：
+  已选模式（宿主起来、页面取到数据）与首次启动（落选择页、**宿主不启动**）
+
+### 过程中发现并修掉的一处既有缺陷
+
+`host.ts` 的 `serverRoot` 原先是 `serverDist/../..`——那依赖「serverDist 与
+webDist 同在 `apps/` 下」这个巧合。渲染产物搬进桌面包后它不再成立，表现为
+把 `apps/drizzle-sqlite`（一个从来不存在的路径）报成缺失。
+
+这个缺陷**此前就是脆的**，只是恰好没被触发。`artifacts.test.ts` 抓不到它：
+那边直接传 `serverRoot`，推导这一步根本没被覆盖。现在 `host.test.ts` 锁住了
+推导本身（注入旧写法验证过它会红）。
+
+### 验证方式
+
+1. `pnpm check` 全绿：lint 0 error、format 全通过、全仓 typecheck、
+   测试 renderer 251 / server 219 / office 380 / desktop 37 / chat 31
+2. **新增断言都做了注入验证**（确认它们会红，而不是永远绿）：
+   - 标题栏漏标 `me-no-drag` → 报「『折叠侧边栏』漏了 me-no-drag」
+   - `serverRoot` 改回退两级 → 报路径断言失败
+   - 改一个 favicon 的 path → 报「desktop 的 favicon 与组件画的形状不一致」
+3. 两个平台都真实构建：`apps/web` 产物与 `apps/desktop` 三段（含
+   `dist/renderer/pdfjs` 的 198 个资产）
+4. **桌面端真实启动自检通过**（`node scripts/smoke.mjs`，本地模式）：
+   渲染产物与样式被加载、`get-session` 200（免登录生效）、
+   `/api/documents` 与 `/api/folders` 200（守卫放行、外壳渲染）
+5. 新增渲染测试 11 条：标题栏 5 条（no-drag 标注、macOS 不画控件、三枚控件的
+   动作、最大化状态订阅、窄屏不渲染折叠开关），选择页 6 条（三种入口形态、
+   地址为空时禁用主按钮、失败显示原话且不导航、成功后调 activate）
+6. **两个启动场景都验过**：已选模式正常进入主界面；空 userData 时落在选择页
+   且**不启动宿主**（后者是选择页能在首启打开的前提）
+
+**未在真机上目视确认的部分**：标题栏的纯视觉细节（关闭按钮的红底白字
+hover、macOS 红绿灯的让位距离）。本机是 Wayland，`scrot` 抓不到 Electron
+的窗口内容（实测截出来是空图），所以这几项仍需人工看一眼——
+它们的机器可守部分已由上面那 5 条测试覆盖。
+
+---
+
+## D-104 平台差异改走 Context + 判别联合；路由支持平台注入（2026-10）
+
+### 背景
+
+D-103 抽出 `@mimir/renderer` 时，平台差异用的是一对模块级函数
+（`setPlatformSlots()` / `getPlatformSlots()`）。调研社区做法后发现它有四个
+代价，前三个是实测的：
+
+1. **顺序依赖隐式**：必须在挂载前调 setter。忘了的话报错发生在首帧 render
+   里，被路由的 `errorComponent` 吞成一张「出错了」卡片——指不回入口
+2. **测试成本高到没人写**：同一文件里第二次调 setter 直接抛，于是换桩必须
+   `vi.resetModules()` + 动态 import，**且消费组件也得一起重导入**（它的
+   闭包持有自己那份模块实例）。结果是那 6 个消费点**一个测试都没有**
+3. **类型表达不了「桌面端一定有桥」**：`getDesktopBridge?:` 是双重可选
+   （方法可选 + 返回可空），于是 `ClientSection.tsx` 被迫写
+   `bridge?.mode.openSetup()`——一个在自己 JSDoc 里声称「浏览器下整块不渲染」
+   的组件，仍要防御桥不存在。那条可选链永远不走空分支，但类型逼着你写
+4. **Fast Refresh 会二次执行模块体**：一个既导出组件、又在模块作用域调一次性
+   setter 的文件被热接受时（实测 Vite 发 `js-update` 而非 `full-reload`），
+   setter 第二次调用抛 `already configured`，表现是「改一行后白屏、刷新就好」。
+   当时两个入口只导出副作用所以没中——**那是巧合，不是设计**
+
+另外 D-103 留了一件没做的事：**桌面端无法注入自己的路由**。路由树由 Vite
+插件在构建期扫 `packages/renderer/src/routes/` 生成，而插槽是运行时的——
+那时路由树早已定型。
+
+### 决定
+
+**一、平台契约改成 React Context + 判别联合**（`packages/renderer/src/platform.tsx`）：
+
+```ts
+export type Platform =
+  | { kind: 'browser' }
+  | { kind: 'desktop'; bridge: MimirDesktopBridge
+      renderTitleBar: (props: TitleBarSlotProps) => ReactNode }
+```
+
+桌面端那一支里两项都是**必填**，所以消费端收窄之后不需要任何可选链。
+消费走三个 hook：`useIsDesktop()` / `useDesktopBridge()` / `useTitleBar()`。
+
+**二、平台与路由都成为 `createApp` 的参数**：
+
+```ts
+createApp(root, { router, platform })
+```
+
+顺序由函数签名保证——忘传是类型错，不是运行时异常。
+
+**三、路由支持平台注入**：路由树产物从包内移到**各应用**，由
+`virtualRouteConfig` 组合「基础路由 + 平台专属路由」。桌面端挂
+`src/renderer/routes/` 到 `/client` 前缀下，首个实例是「关于」页
+（显示版本 / 数据目录 / 使用方式——全是载体的事实，浏览器里一件都没有）。
+
+**四、路由配置单例化**（`route-config.mjs`）：同时被 Vite 插件与
+`generate-routes.mjs` 使用。后者存在是因为路由树是构建产物，而
+`tsc --noEmit` 需要它先存在。
+
+### 否决
+
+**方案 A：保持模块级单例，只补测试**
+- 四个代价里只能缓解第二个，而且是靠给每个测试写一遍 `resetModules` 样板
+
+**方案 B：依赖注入容器（VS Code / AFFiNE 风格）**
+- VS Code 用 `registerSingleton` + 多个 ServiceIdentifier 分层，AFFiNE 用
+  `configureDesktopApiModule`——两者都很成熟
+- 否决原因：**规模不匹配**。那两个项目各有几十到上百个服务要装配，而 mimir
+  只有**两个**真实差异（标题栏、桥）。为此引入容器 + identifier 体系，
+  是拿 VS Code 的解去解一个两变量的问题。铁律 5 对 RAG 框架说的是同一句话
+
+**方案 C：构建期文件后缀替换（Bluesky / Expo 风格，`*.desktop.tsx`）**
+- 实测在本仓的 vite@8.3.0 + rolldown@1.2.9 上可行（`resolve.extensions` 与
+  package `exports` condition 两种机制都跑通了），TS 侧 `moduleSuffixes` 在
+  TypeScript 7.0.2 上也工作。产物隔离最彻底
+- 否决原因：**它要求 `pnpm -r typecheck` 拆成两遍**（每个平台一份 tsconfig，
+  照 Bluesky 的 `tsconfig.check.web.json` 做法），漏跑一份就是「某个平台的
+  类型错没人发现」——而漏的那一半不报错。为两个差异点付这笔结构性代价不划算。
+  另外 `resolve.extensions` 是全局的，桌面构建里连 `node_modules` 的解析都会
+  先试 `.desktop.tsx`
+
+**方案 D：运行时合并两棵路由树**
+- 最直观：包里导出基础树，应用追加自己的
+- 否决原因：**API 不支持**。`Route._addFileChildren` 是**替换**语义
+  （`router-core/dist/esm/route.js`，实测确认），追加会把原有子路由覆盖掉；
+  `createRouter` 也只在初始化时 `buildRouteTree()` 一次，没有 merge API
+
+**方案 E：换成 React Router**
+- 它的路由是普通数据结构，合并天然可行
+- 否决原因：**没必要**。`virtualRouteConfig` 的 `physical()` 能挂载多个目录
+  （含跨包的），实测跳包路由与类型都正确生成、`autoCodeSplitting` 对外部目录
+  同样生效。换库要重写整个路由层，还会丢掉 TanStack Router 的类型安全路由
+  （D-001 选它的理由之一）
+
+### 影响
+
+- `slots.ts` 删除；`platform.tsx` 取代它，三个 hook 代替 `getPlatformSlots()`
+- 顺带清掉两个冗余字段：`platform: 'browser' | 'desktop'`（它的注释自承
+  「不应作为条件分支依据」）与 `beforeMount`（注释自承「当前两个平台都不需要」）。
+  `isDesktopShell()` 并进 `kind`——它与 `getDesktopBridge()` 本来在回答同一个问题
+- **路由树每个平台一份**：`apps/web/src/routeTree.gen.ts` 与
+  `apps/desktop/src/renderer/routeTree.gen.ts`，都 gitignore。包内另有一份
+  仅含基础路由，供本包 typecheck 校验 `createFileRoute` 的路径字面量
+- `RouterContext` 与 `AuthSession` 必须出现在**公共导出面**上：跨包的文件路由
+  要求路由 context 的类型是公开的，否则生成的树每个路由都报 TS2883
+  （`inferred type cannot be named … not portable`）
+- 两个应用的 `typecheck` / `build` 都先跑 `routes:generate`
+
+### 验证方式
+
+1. `pnpm check` 全绿：lint 0 error、format 通过、全仓 typecheck、
+   测试 renderer 254 / server 219 / office 380 / desktop 43 / chat 31
+2. **判别联合的类型约束用探针证实**（写三段错误用法，确认都报错后删掉）：
+   浏览器端给 `bridge` → TS2353；桌面端缺 `bridge` → TS2322；
+   未收窄就读 `p.bridge` → TS2339。这三条正是旧版 `getDesktopBridge?.()`
+   拦不住的
+3. **跳包路由挂载先用真实生成器单独跑通**再改全量：确认跨包目录被正确挂载、
+   导入路径按相对计算、类型完整生成
+4. **平台隔离已核对**：桌面端路由树的 `fullPaths` 含 `/client/about`，
+   web 侧一处都没有——在 web 写那个 `to` 是类型错，不是运行时 404
+5. 新增 `platform.test.tsx` 3 条（桥按平台有无、isDesktop、缺 Provider 时抛），
+   注入缺陷验证过能红
+6. 两个平台都真实构建；桌面端的 `about` 页作为独立 chunk 产出
+   （code splitting 对跨包注入的路由同样生效）
+7. **桌面端两场景启动自检通过**（`node scripts/smoke.mjs`）：已选模式下
+   渲染产物加载 + 免登录生效 + 守卫放行；首次启动落选择页且**不启动宿主**
+
+**未目视确认**：「关于」页的实际观感（它是新页面，只验证了构建产物与路由注册）。
+本机是 Wayland，`scrot` 抓不到 Electron 窗口内容。

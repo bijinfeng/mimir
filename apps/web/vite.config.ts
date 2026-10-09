@@ -1,13 +1,21 @@
 import { resolve } from 'node:path'
-import { tanstackRouter } from '@tanstack/router-plugin/vite'
+import { rendererPlugins } from '@mimir/renderer/vite-preset'
 import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv } from 'vite'
 import { alias } from './alias.ts'
-import { copyPdfjsAssets } from './pdfjs-assets.ts'
 
 /** 仓库根。`.env` 在那里，服务端的 vite.config.ts 读的也是同一个文件 */
 const repoRoot = resolve(import.meta.dirname, '../..')
 
+/**
+ * 浏览器部署的构建（D-103）。
+ *
+ * 这个应用现在只是**薄壳**：一个入口文件，注入浏览器那套平台插槽，然后挂载
+ * `@mimir/renderer`。界面与业务代码全在那个包里，与桌面渲染进程共用一份。
+ *
+ * 渲染层自己需要的构建期插件（文件路由生成、pdf.js 资产）由
+ * `@mimir/renderer/vite-preset` 提供——两个平台引同一份，不各写一遍。
+ */
 export default defineConfig(({ mode }) => {
   /**
    * 后端端口**不在前端这里再写一遍**。
@@ -21,19 +29,13 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [
-      /**
-       * pdf.js 的运行时资产（cmaps / 标准字体 / wasm）。
-       *
-       * **排在第一位**：`buildStart` 越早跑越好，因为 Vite 随后会复制
-       * `publicDir`——晚于它注册的插件可能赶不上那次复制（开发模式下
-       * 第一次请求就会 404，而刷新后反而正常，属于最难查的一类）。
-       *
-       * 那些文件**不进 git**（见 `pdfjs-assets.ts` 的说明）：它们是
-       * `pdfjs-dist` 依赖自带的资产，从 node_modules 拷过来。
-       */
-      copyPdfjsAssets(),
-      // 必须排在 react() 之前：路由插件要先生成 routeTree.gen.ts
-      tanstackRouter({ target: 'react', autoCodeSplitting: true }),
+      ...rendererPlugins({
+        publicDir: resolve(import.meta.dirname, 'public'),
+        // 路由树产物落在本应用：桌面端会多挂几条自己的路由，两个平台
+        // 共用一份产物的话，浏览器会拿到一条它永远到不了的路由（D-104）
+        generatedRouteTree: resolve(import.meta.dirname, 'src/routeTree.gen.ts'),
+        // 浏览器没有平台专属页面
+      }),
       react({
         /**
          * React Compiler：构建期自动插入记忆化，替代手写 useMemo / useCallback / memo。

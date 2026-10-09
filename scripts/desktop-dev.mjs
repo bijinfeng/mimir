@@ -6,6 +6,20 @@
  * 本地模式由宿主强制使用 userData 下的 SQLite；仓库 .env 的数据库配置不会覆盖它。
  *
  * 保留进程组清理：构建或 Electron 启动失败时不留孤儿进程。
+ *
+ * ## 为什么不是 `electron-vite dev`（D-103）
+ *
+ * electron-vite 的 dev 形态会为渲染进程另起一个 Vite dev server，并让主进程
+ * 读 `ELECTRON_RENDERER_URL` 去加载它。**那会打破 D-046 的同源前提**：窗口
+ * 加载的必须是宿主自己的地址，cookie 会话、SSE 聊天流、文件的 Range 请求
+ * 才全部原生可用。本地模式的免登录更是直接挂在这上面——令牌是写给
+ * `http://127.0.0.1:<宿主端口>` 的 httpOnly cookie（`SameSite=Lax`），
+ * 窗口若换成 `localhost:<vite 端口>`，那条 cookie 根本不会带上，
+ * 症状正是坑表里那条「本地模式却看到登录页」。
+ *
+ * 所以这里用 `electron-vite build --watch`：三段仍产到 `dist/`，由宿主做静态
+ * 服务，窗口地址不变。代价是渲染进程没有 HMR，改完要刷新窗口（Ctrl+R）——
+ * 但比旧形态（改了 web 不重新 build 就永远看不到变化）已经前进了一步。
  */
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
@@ -83,5 +97,7 @@ process.on('SIGTERM', () => void shutdown(143))
 
 run('desktop', 'pnpm', ['desktop:start'], {
   // Electron 首次启动会单独下载二进制；pnpm 的 npm registry 不控制这一步。
-  env: { ELECTRON_MIRROR: process.env.ELECTRON_MIRROR ?? 'https://npmmirror.com/mirrors/electron/' },
+  env: {
+    ELECTRON_MIRROR: process.env.ELECTRON_MIRROR ?? 'https://npmmirror.com/mirrors/electron/',
+  },
 })

@@ -1,0 +1,69 @@
+{
+  "name": "@mimir/renderer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "渲染层公共代码：浏览器与桌面端共享的 UI 组件、路由、主题。平台差异通过插槽注入",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./titlebar-kit": "./src/titlebar-kit.ts",
+    "./vite-preset": "./vite-preset.ts"
+  },
+  "scripts": {
+    "typecheck": "pnpm routes:generate && tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "routes:generate": "node generate-routes.mjs src/routeTree.gen.ts"
+  },
+  "dependencies": {
+    "@ant-design/icons": "^6.1.0",
+    "@mimir/chat": "workspace:*",
+    "@mimir/office": "workspace:*",
+    "@mimir/shared": "workspace:*",
+    "@tanstack/ai": "0.55.0",
+    "@tanstack/react-query": "^5.103.1",
+    "@tanstack/react-router": "^1.170.38",
+    "@tanstack/router-generator": "^1.167.40",
+    "@tanstack/router-plugin": "^1.168.40",
+    "@tanstack/virtual-file-routes": "^1.162.0",
+    "@tiptap/core": "catalog:",
+    "@tiptap/extension-bubble-menu": "catalog:",
+    "@tiptap/extension-code-block-lowlight": "catalog:",
+    "@tiptap/extension-image": "catalog:",
+    "@tiptap/extension-placeholder": "catalog:",
+    "@tiptap/extension-table": "catalog:",
+    "@tiptap/extension-task-item": "catalog:",
+    "@tiptap/extension-task-list": "catalog:",
+    "@tiptap/extensions": "catalog:",
+    "@tiptap/markdown": "catalog:",
+    "@tiptap/pm": "catalog:",
+    "@tiptap/react": "catalog:",
+    "@tiptap/starter-kit": "catalog:",
+    "@uiw/react-heat-map": "2.3.4",
+    "dayjs": "^1.11.23",
+    "lowlight": "^3.3.0",
+    "lucide": "^1.48.0",
+    "lucide-react": "^1.48.0",
+    "morphicons": "^1.7.1",
+    "pdfjs-dist": "catalog:"
+  },
+  "devDependencies": {
+    "@tanstack/router-cli": "1.167.38",
+    "@types/node": "catalog:",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "antd": "catalog:",
+    "antd-style": "catalog:",
+    "happy-dom": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "antd": "catalog:",
+    "antd-style": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  }
+}

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>mimir</title>
+    <!--
+      首帧外观。**放在这里而不是 React 里**：React 挂载前浏览器会先按默认
+      （白色）画一帧，深色用户看到的就是一下白闪——而那一帧的时长正好是
+      bundle 解析加首次渲染，在慢机器上很明显。
+
+      这段脚本的判断与 `packages/renderer/src/theme/appearance.ts` 完全同源：
+      读同一个 key、同样的取值收敛、同样兜住 localStorage 抛错。两边必须一起改，
+      否则会出现「首帧深色、挂载后变浅色」的闪烁。
+
+      背景色与 `packages/renderer/src/styles/global.ts` 的 `html` 规则完全同源
+      （那一条的注释也解释过为什么 --me-bg-layout 不行）。
+    -->
+    <script>
+      ;(function () {
+        var appearance = null
+        try {
+          var stored = localStorage.getItem('mimir.appearance')
+          if (stored === 'light' || stored === 'dark') appearance = stored
+        } catch (error) {
+          // 隐私模式下 localStorage 读取会抛错，当作「没存过」
+        }
+        if (!appearance) {
+          appearance =
+            window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark'
+              : 'light'
+        }
+        var root = document.documentElement
+        root.dataset.theme = appearance
+        root.style.colorScheme = appearance
+        root.style.background = appearance === 'dark' ? '#0b0c0e' : '#f5f6f8'
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- 相对路径：这份 HTML 就是 renderer 段的 root（electron-vite 的约定位置） -->
+    <script type="module" src="./index.tsx"></script>
+  </body>
+</html>

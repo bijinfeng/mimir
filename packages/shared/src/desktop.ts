@@ -140,3 +140,25 @@ export interface DesktopWindowApi {
    */
   onMaximizeChange(listener: (maximized: boolean) => void): () => void
 }
+
+/**
+ * preload 注入到页面上的那一个对象（`window.mimirDesktop`）的完整形状。
+ *
+ * ## 为什么它在 shared 而不在渲染侧（D-103）
+ *
+ * 它是**契约**：preload 按这个形状注入（`apps/desktop/src/preload/index.ts`），
+ * 渲染侧按这个形状消费（插槽的 `getDesktopBridge()`）。两边各写一份的话，
+ * 加一个方法时漏掉一侧是静默的——类型过得去，运行时才发现 `undefined is not
+ * a function`。
+ *
+ * **浏览器里这个对象不存在**，所以消费方拿到的永远是 `| undefined`；
+ * 「可能没有」这件事由渲染侧的插槽表达，不写进这个契约里。
+ */
+export interface MimirDesktopBridge {
+  /** 启动信息。开发模式（`MIMIR_DESKTOP_URL`）下为 null */
+  boot: () => Promise<DesktopBootInfo | null>
+  quit: () => void
+  /** 使用方式的选择与切换（D-100）。首次启动尚未选择时 `get()` 为 null */
+  mode: DesktopModeApi
+  window: DesktopWindowApi
+}
