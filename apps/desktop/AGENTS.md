@@ -46,6 +46,11 @@ apps/desktop/
 | 症状 | 原因 |
 |---|---|
 | **改了桌面端标题栏的前端代码，窗口里看不到变化** | 桌面端加载的是 `apps/web/dist` 的**构建产物**（不是 dev server）——不跑 `pnpm --filter @mimir/web build` 就永远看不到改动，而症状只是「什么都没发生」，很容易去怀疑 IPC 或 preload |
+| **绕过 `desktop:start` 直接 `electron .` 且产物缺失 → 报 ERR_MODULE_NOT_FOUND** | 现在 `host.ts` 在动态 import 之前会检查四个必需产物（serverDist/index.js、db/migrate.js、drizzle-sqlite/、webDist/index.html），缺失时给出"缺少 N 个必需产物：...，修复：pnpm desktop:start"的清单式错误。但**过期产物**（改了代码没重新构建）仍只能靠手动重新构建发现 |
+| **`desktop:dev` 客户端启动失败后，下一次启动报 3000 被占用** | 旧编排器在独立 Vite 进程里起服务端，直接启动的 `pnpm` 退出后孙进程可能继续监听 3000。现在 `desktop:dev` 与 `desktop:start` 共用进程内宿主和 SQLite，端口随机分配；编排器仍清理整棵进程树，防止构建或 Electron 失败时留孤儿进程 |
+| **`desktop:dev` 误用 `.env` 的 PostgreSQL，启动时报缺表** | 旧编排器的独立服务端继承仓库 `.env`。现在与正式桌面端走同一条宿主路径，`host.ts` 在加载服务端前明确设置 SQLite 的 `DATABASE_URL` 与 `DATA_DIR`，不受 `.env` 的 PostgreSQL 配置影响 |
+| **`desktop:dev` 报 `Downloading Electron binary... TypeError: fetch failed`** | npm 包虽已由 pnpm registry 安装，Electron 首次运行还会从 GitHub 单独下载二进制；GitHub 不通时包存在但 `dist/electron` 缺失。`desktop:dev` 给子进程默认传 `ELECTRON_MIRROR`（npmmirror，可由用户覆盖）。手动补装命令见 TECH §14.4；无需删整个 `node_modules` |
+| **首次运行 `desktop:dev`，Electron 报主进程入口 `dist/main.js` 不存在** | Electron 的 npm 包只带运行时，应用主进程与 preload 要由桌面包的 Vite 构建。根命令 `desktop:dev` 调用 `desktop:start`，由它先完成 web/server/desktop 构建 |
 | **自绘标题栏里的按钮点不动（控制台无报错）** | 标题栏整条是 `-webkit-app-region: drag`，里面每个可点元素必须显式 `-webkit-app-region: no-drag`。漏标的表现是「点击被当成拖窗口」——不报错、没有日志、看起来像按钮坏了。**这条是方案 C 被否掉的理由**（要标注的地方太多） |
 | **`window.mimirDesktop` 在窗口里不存在** | `BrowserWindow` 的 `preload` 写成了相对路径（`'./dist/preload.js'`）：加载 http 地址时 Electron 解析不了它，**preload 静默不执行**。要用 `path.join(__dirname, …)` 的绝对路径 |
 | **云端模式下窗口不能拖也不能关** | 桌面壳是 `frame: false`，拖动区与三枚控件由页面提供，而云端模式落地的第一个界面是**远端登录页**——登录页原先没有 `TitleBar`，实测切到云端后整条窗口 chrome 凭空消失。登录页也要渲染 `TitleBar`（无侧栏时只留拖动区与控件） |

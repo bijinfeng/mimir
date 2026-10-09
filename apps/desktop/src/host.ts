@@ -3,6 +3,8 @@ import net from 'node:net'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { randomBytes } from 'node:crypto'
+import type { RunningServer } from '@mimir/server'
+import { requiredArtifacts, findMissing, formatMissingMessage } from './artifacts.js'
 /**
  * 桌面端私有宿主（D-046，借鉴 deepseek-harness 的 host/carrier 分层）。
  *
@@ -153,6 +155,14 @@ export async function startHost(
   paths: HostPaths,
   options: { localMode?: boolean } = {},
 ): Promise<HostHandle> {
+  // 在 mkdir(dataDir) 之前检查产物，避免建了空目录再报错
+  const serverRoot = join(paths.serverDist, '../..')
+  const artifacts = requiredArtifacts(paths.serverDist, serverRoot, paths.webDist)
+  const missing = findMissing(artifacts)
+  if (missing.length > 0) {
+    throw new Error(formatMissingMessage(missing))
+  }
+
   await mkdir(paths.dataDir, { recursive: true })
 
   const [port, authSecret] = await Promise.all([pickFreePort(), ensureAuthSecret(paths.dataDir)])
@@ -163,9 +173,7 @@ export async function startHost(
   // （与 migrate.ts 的 fileURLToPath 是同一条教训，方向相反）
   const serverIndex = pathToFileURL(join(paths.serverDist, 'index.js')).href
   const serverModule = (await import(serverIndex)) as {
-    startServer: (options?: {
-      hostname?: string
-    }) => Promise<{ server: { close(cb: () => void): void } }>
+    startServer: (options?: { hostname?: string }) => Promise<RunningServer>
     closeDb: () => Promise<void>
   }
 

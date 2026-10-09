@@ -103,8 +103,8 @@ pnpm db:migrate
 同一个 web 界面，无需部署（D-046、TECH §14）：
 
 ```bash
-pnpm desktop:dev     # 开发：Electron 窗口加载 Vite 页面
-pnpm desktop:start   # 进程内私有宿主（与打包一致的形态）
+pnpm desktop:dev     # 构建并启动桌面端；本地模式使用 userData/data/mimir.db
+pnpm desktop:start   # 同一启动路径；改代码后重启以重新构建
 pnpm desktop:build   # 打 macOS dmg（输出 apps/desktop/release/，ad-hoc 签名仅本机可用）
 ```
 

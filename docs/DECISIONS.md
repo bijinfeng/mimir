@@ -127,6 +127,7 @@
 | D-091 | 桌面端的名字与图标：可执行文件名、WM_CLASS 与应用图标 |
 | D-094 | 桌面端自绘窗口标题栏（方案 A） |
 | D-100 | 桌面客户端两种模式：本地离线（免登录）与云端（纯壳） |
+| D-102 | 桌面端复用服务端的形态与守卫：保持路径依赖，补类型安全与产物守卫 |
 
 ### 数据库、存储与部署
 
@@ -6664,3 +6665,65 @@ Edit）需要引擎的编辑会话支持，留待立项；反馈 thumbs 与分�
 段标都低于本仓 DESIGN §4.2 的可读底线（10.5px）且不在字号阶梯里——统一取
 `badge` 档（11.5px），注释里注明了偏差来源；`react(static-components)`
 又咬了一次（`const Icon = …` 渲染期建组件），改成 helper 返回 JSX。
+
+---
+
+## D-102 桌面端复用服务端的形态与守卫（2025-01）
+
+### 背景
+
+用户质疑当前形态（桌面端通过动态 import 服务端构建产物 + process.env 注入配置）不优雅，要求调研其他开源产品的做法。经调研 15 个同类产品（deepseek-harness、Trilium、Actual、AFFiNE、SiYuan、n8n-desktop、anything-llm、khoj、element-desktop、VS Code、Bitwarden、Joplin、StandardNotes、Logseq、Karakeep），核实了三条替代路线的技术可行性与成本。
+
+当前存在三个隐患：
+1. **类型契约悬空**：desktop 的 `host.ts` 用手写 `as { startServer; closeDb }` 转型，服务端改签名不会编译失败；且 `closeDb` 当前没被 `apps/server/src/index.ts` 导出（悬空）
+2. **产物缺失报错难懂**：缺 `apps/server/dist/index.js` 时报 `ERR_MODULE_NOT_FOUND`，新手不知道怎么修
+3. **顺序约束靠自觉**：必须先 `applyHostEnv` 再 `import()`，顺序错了静默失败（`env.ts` 在模块加载时读 process.env）
+
+### 否决表
+
+调研确认了以下路线**技术上不可行**或**成本过高**：
+
+| 路线 | 致命卡点 | 成本估算 |
+|---|---|---|
+| **抽核心包**（`packages/backend-core`，两个宿主都依赖） | ① 原生模块（better-sqlite3 / @node-rs/jieba / sqlite-vec）的 node_modules 解析冲突：desktop after-pack 只拷 server-deploy 的，不拷其他 workspace 包的<br>② `import.meta.url` 推导 drizzle / web dist 依赖文件在源码树的深度，核心包在 `packages/` 会破掉<br>③ apps/server 也要依赖核心包，Dockerfile 复杂度爆炸 | >500 行改动 + 构建链重设计 |
+| **去端口改协议**（Trilium 式 `trilium-app://` 桥接层） | ① 桥接层 300-600 行（mock socket、header 剥离、SSE flushHeaders 补丁）<br>② cookie 会话在非 http scheme 上无先例（元素级 `<img>/<video>/下载锚点` 带不了 header）<br>③ 丢失"浏览器直开端口"行为（PRD §5.15） | 300-600 行 + 媒体/SSE 三重不确定 |
+| **服务端全局惰性初始化**（env 改成 getter + 所有模块延迟配置） | ① 25+ 文件需要改（45 处 `env.*` 读取分布在 18 个文件、`dbDriver` 在 6 处）<br>② `db/client.ts` 的 `db` 与 `sql` 导出、better-auth 实例、Hono app 都在模块顶层创建<br>③ 回归面覆盖全部路由与中间件 | 300-500 行，只为消除顺序约束（但守卫 30 行就能拦住） |
+
+### 决定
+
+保持当前的**路径依赖 + 动态 import** 形态，补三项改进（最小改动 + 消除隐患）：
+
+1. **类型安全契约**：desktop `import type { RunningServer } from '@mimir/server'`（只类型，不进运行时），手写 `as` 转型换成服务端导出的类型；`closeDb` 补进 `apps/server/src/index.ts` 的导出
+2. **产物缺失守卫**：`startHost()` 开头检查四个必需产物（serverDist/index.js、db/migrate.js、drizzle-sqlite/、webDist/index.html），缺失时给出清单式错误 + 修复命令（`pnpm desktop:start`）
+3. **顺序自检**（可选）：动态 import 之后比对 `env.port` 与注入值，不一致抛"服务端模块在注入之前被加载"
+
+### 理由
+
+**调研结论**：没有一家同类产品"桌面端源码级复用服务端"（要么没服务端、要么服务端是 Go 子进程 / npm 包 / 远端地址）。与 mimir 最接近的是 Trilium（主进程内跑完整 server + better-sqlite3），它也是路径依赖，但用 `initializeCore({ dbProvider, crypto, ... })` 注入 providers，且自造 `trilium-app://` 协议（不绑端口）。
+
+当前的三个隐患都能被守卫拦住：
+- 类型悬空 → `import type` 从服务端拿类型，签名不一致即编译失败
+- 产物缺失 → 守卫给出"缺什么 + 怎么修"的清单
+- 顺序约束 → 自检在 import 之后立刻比对，顺序错了抛明确错误
+
+改动量：~140 行代码（不含文档与测试），全在桌面端接缝处，**服务端零改动、打包链零改动**。
+
+对比"显式配置"方案（env.ts 改造 + configureServer）：那版要动 6 个服务端文件、350 行改动、改测试；这版只补 `closeDb` 导出（1 行）+ desktop 守卫（140 行），测试零改动。
+
+对比"抽核心包"：核心包方案要解决原生模块解析、路径推导、构建链三重问题，预估 >500 行改动 + 高回归风险；这版只在接缝处加守卫。
+
+### 影响
+
+- `apps/desktop/package.json` 加 `devDependencies: { "@mimir/server": "workspace:*" }`（只为类型，Vite SSR 构建默认 external 第三方，打包产物不受影响）
+- `apps/server/src/index.ts` 补导出 `closeDb`
+- desktop 缺产物时报错从 `ERR_MODULE_NOT_FOUND` 变成"缺少 N 个必需产物：...，修复：pnpm desktop:start"
+- `host.ts` 的 `RunningServer` 类型来自服务端自身（不再是手写契约）
+
+不影响：前端、部署、云端模式、构建链、after-pack 逻辑。
+
+### 验证方式
+
+1. `pnpm check` 全绿（lint / format / typecheck / 全仓测试）
+2. 类型保护注入：临时把 `RunningServer` 的 `server` 字段改名 → desktop 编译报错 → 恢复
+3. 守卫覆盖：删 `apps/server/dist` → `pnpm --filter @mimir/desktop exec electron .` → 弹窗显示清单式错误 → 恢复
+4. `pnpm desktop:start` → 正常启动（本地模式窗口、注册/登录/建笔记/搜索/关窗重启数据保留）

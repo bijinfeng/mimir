@@ -24,7 +24,7 @@ import type { DesktopBootInfo, DesktopWindowApi, DesktopModeApi } from '@mimir/s
 export interface MimirDesktopBridge {
   boot: () => Promise<DesktopBootInfo | null>
   quit: () => void
-  /** 使用方式的选择与切换（D-100）。开发模式下 `get()` 恒为 null */
+  /** 使用方式的选择与切换（D-100）。首次启动尚未选择时 `get()` 为 null */
   mode: DesktopModeApi
   window: DesktopWindowApi
 }

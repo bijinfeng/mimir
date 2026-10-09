@@ -2,21 +2,20 @@
 /**
  * 桌面端开发编排（`pnpm desktop:dev`）。
  *
- * 三件事并行：服务端 dev（3000，走 .env）、web vite（5173）、Electron 壳。
- * Electron 只加载 http://localhost:5173（MIMIR_DESKTOP_URL），不进程内起宿主——
- * 迭代前端用这条链路；进程内宿主（与打包一致）用 `pnpm desktop:start` 验证。
+ * 与 `pnpm desktop:start` 使用同一条构建与进程内宿主路径。
+ * 本地模式由宿主强制使用 userData 下的 SQLite；仓库 .env 的数据库配置不会覆盖它。
  *
- * 任一子进程退出即全部收尾，不留孤儿。
+ * 保留进程组清理：构建或 Electron 启动失败时不留孤儿进程。
  */
-import { spawn } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
+import { spawnProcess, stopProcessTree } from './desktop-dev-process.mjs'
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..')
 
 const children = []
 function run(name, command, args, options = {}) {
-  const child = spawn(command, args, {
+  const child = spawnProcess(command, args, {
     cwd: options.cwd ?? repoRoot,
     env: { ...process.env, ...options.env },
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -42,52 +41,47 @@ function run(name, command, args, options = {}) {
         .join('\n') + '\n',
     ),
   )
+  const closed = new Promise((resolve) => child.once('close', resolve))
+  children.push({ child, closed })
+  child.on('error', (error) => {
+    console.error(`${tag} 启动失败：`, error)
+    void shutdown(1)
+  })
   child.on('exit', (code) => {
     console.log(`${tag} 退出（code=${code ?? 'signal'}）`)
-    shutdown(code ?? 1)
+    void shutdown(code ?? 1)
   })
-  children.push(child)
   return child
 }
 
 let shuttingDown = false
-function shutdown(code) {
+async function shutdown(code) {
   if (shuttingDown) return
   shuttingDown = true
-  for (const child of children) {
-    if (!child.killed) child.kill('SIGTERM')
+  const results = await Promise.allSettled(children.map(({ child }) => stopProcessTree(child)))
+  for (const result of results) {
+    if (result.status === 'rejected') console.error('关闭开发进程失败：', result.reason)
+  }
+
+  // 给子进程收尾的时间；卡住时强制结束整个进程组。
+  const closed = Promise.all(children.map(({ closed: done }) => done))
+  let timeout
+  const finished = await Promise.race([
+    closed.then(() => true),
+    new Promise((resolve) => {
+      timeout = setTimeout(() => resolve(false), 5000)
+    }),
+  ])
+  clearTimeout(timeout)
+  if (!finished) {
+    await Promise.allSettled(children.map(({ child }) => stopProcessTree(child, 'SIGKILL')))
   }
   process.exit(code)
 }
-process.on('SIGINT', () => shutdown(130))
-process.on('SIGTERM', () => shutdown(143))
+process.on('SIGINT', () => void shutdown(130))
+process.on('SIGTERM', () => void shutdown(143))
 
-// 1. 服务端 + 前端
-run('server', 'pnpm', ['--filter', '@mimir/server', 'dev'])
-run('web', 'pnpm', ['--filter', '@mimir/web', 'dev'])
-
-// 2. 等 5173 就绪后再开 Electron 窗口
-const webUrl = 'http://localhost:5173/'
-const deadline = Date.now() + 30000
-async function waitWeb() {
-  while (Date.now() < deadline) {
-    try {
-      const res = await fetch(webUrl)
-      if (res.ok) return
-    } catch {}
-    await new Promise((resolve) => setTimeout(resolve, 300))
-  }
-  throw new Error(`web dev server 未就绪：${webUrl}`)
-}
-
-waitWeb()
-  .then(() => {
-    run('electron', 'pnpm', ['--filter', '@mimir/desktop', 'start'], {
-      cwd: join(repoRoot, 'apps/desktop'),
-      env: { MIMIR_DESKTOP_URL: webUrl },
-    })
-  })
-  .catch((error) => {
-    console.error(error instanceof Error ? error.message : error)
-    shutdown(1)
-  })
+run('desktop', 'pnpm', ['desktop:start'], {
+  // Electron 首次启动会单独下载二进制；pnpm 的 npm registry 不控制这一步。
+  env: { ELECTRON_MIRROR: process.env.ELECTRON_MIRROR ?? 'https://npmmirror.com/mirrors/electron/' },
+})

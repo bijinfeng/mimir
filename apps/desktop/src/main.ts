@@ -30,11 +30,7 @@ import { startHost, type HostHandle, type HostPaths } from './host.js'
  * 之后由 `desktop-config.json` 决定。切换从两个地方发起：本地/云端页面里的
  * 「设置 › 客户端」（走 preload 的 mode API），以及连不上服务器时的兜底弹窗。
  *
- * ## 开发模式（`pnpm desktop:dev`）
- *
- * 设置 `MIMIR_DESKTOP_URL` 后这里只当浏览器壳加载 Vite 页面，宿主仍在独立
- * 进程里跑——迭代前端不用碰打包链。这时**没有模式**（get 返回 null，
- * choose 明确说不可用），避免「开发时点的切换改了真实配置」。
+ * `pnpm desktop:dev` 与 `pnpm desktop:start` 都走本机宿主与正常的模式选择。
  */
 
 // 在读取 userData 之前定名，否则开发/未打包形态下数据会落进 "Electron" 目录
@@ -71,7 +67,7 @@ if (process.platform === 'linux') {
 let host: HostHandle | null = null
 let bootInfo: DesktopBootInfo | null = null
 let win: BrowserWindow | null = null
-/** 当前模式。开发模式（MIMIR_DESKTOP_URL）下恒为 null */
+/** 当前模式；首次启动尚未选择时为 null */
 let modeState: DesktopModeState | null = null
 /**
  * 未受信任的页面（云端模式的远端页）最近一次**经过确认**的选择。
@@ -242,7 +238,7 @@ function setupPageUrl(): string {
  * 被攻破」赔上本机数据。
  *
  * 受信任的只有两种页面：**选择页**（file:// 的静态文件）与**本机宿主**
- * （127.0.0.1 上的我们自己的前端）。开发模式下把 dev 地址也算上（`localhost:5173`）。
+ * （127.0.0.1 上的我们自己的前端）。
  *
  * 远端页面仍然可以读 `mode.get()`、也可以发起切换，但**切换一定会先弹一个
  * 原生确认框**（`confirmUntrustedSwitch`），里面写清目标是谁——那一步是用户
@@ -253,8 +249,6 @@ function isTrustedSender(url: string | undefined): boolean {
   if (url === setupPageUrl()) return true
   if (host && url.startsWith(`${host.origin}/`)) return true
 
-  const devUrl = process.env.MIMIR_DESKTOP_URL
-  if (devUrl && url.startsWith(devUrl)) return true
   return false
 }
 
@@ -422,12 +416,8 @@ function sameState(a: DesktopModeState, b: DesktopModeState): boolean {
  * 成功之后导航一定替换掉它（那页不需要回执）。合成一步会让导航与 IPC 回执
  * 赛跑——回执还没送到，页面已经被替换掉了。
  *
- * `paths` 为 null 表示**开发形态**（`MIMIR_DESKTOP_URL`）：处理器照样注册，
- * 但一律如实拒绝/返回空。不注册的话 `ipcRenderer.invoke` 会 reject
- * （`No handler registered`），而页面那边只会看到一个英文异常——
- * 「开发模式下不能切换」是一句能给用户看的话。
  */
-function registerModeBridge(paths: HostPaths | null): void {
+function registerModeBridge(paths: HostPaths): void {
   ipcMain.removeHandler('mimir:mode-get')
   ipcMain.removeHandler('mimir:mode-choose')
   ipcMain.removeAllListeners('mimir:mode-activate')
@@ -436,10 +426,6 @@ function registerModeBridge(paths: HostPaths | null): void {
   ipcMain.handle('mimir:mode-get', () => modeState)
 
   ipcMain.handle('mimir:mode-choose', async (event, raw): Promise<DesktopModeResult> => {
-    if (!paths) {
-      return { ok: false, message: '开发模式下不能切换使用方式（宿主在独立进程里跑）' }
-    }
-
     const senderUrl = event.senderFrame?.url
     // **不信渲染侧**：IPC 的入参是外部输入，按与配置文件同一套规则校验形状
     let state = parseModeConfig(raw)
@@ -523,20 +509,6 @@ async function main(): Promise<void> {
   console.log('[desktop] whenReady，开始启动流程')
   ipcMain.handle('mimir:boot-info', () => bootInfo)
   ipcMain.on('mimir:quit', () => app.quit())
-
-  const devUrl = process.env.MIMIR_DESKTOP_URL
-  if (devUrl) {
-    /**
-     * 开发形态：宿主在别的进程里跑，这里只当浏览器壳。
-     *
-     * 模式桥照样注册（`paths` 传 null）——**不注册的话** `mode.get()` 会
-     * reject（`No handler registered`），而调用方只看得到英文异常。
-     * 注册之后开发模式下的答复是一句能读的话：「开发模式下不能切换」。
-     */
-    registerModeBridge(null)
-    createWindow(devUrl)
-    return
-  }
 
   const paths: HostPaths = {
     ...resolvePaths(),

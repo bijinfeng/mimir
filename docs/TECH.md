@@ -2050,14 +2050,11 @@ SSE 聊天流、文件 Range、multipart 上传、zip 导出全部是同源 HTTP
 
 ### 14.2 启动顺序（不可换）
 
-1. `pickFreePort()`：OS 分配空闲端口。随机端口避免与用户自部署的
-   mimir 服务冲突，也压小本机误触面
-2. **先注入环境变量，再动态 import 服务端**：`env.ts` 与 better-auth 都在
-   模块加载时读取（`trustedOrigins`/`baseURL`/端口），导入选早了配置就定死。
-   注入项：`PORT`、`SERVER_URL`/`WEB_ORIGIN`（= 宿主源）、`DATA_DIR`、
-   `DATABASE_URL=file:<dataDir>/mimir.db`、`WEB_DIST`、`AUTH_SECRET`
-3. `startServer({ hostname: '127.0.0.1' })`——只绑回环地址
-4. 轮询 `/healthz` 就绪后开窗（超时明确报错，不静默等待）
+1. **检查必需产物**：`serverDist/index.js`、`db/migrate.js`、`drizzle-sqlite/`、`webDist/index.html`，缺失时给出清单式错误 + 修复命令
+2. `pickFreePort()`：OS 分配空闲端口。随机端口避免与用户自部署的 mimir 服务冲突，也压小本机误触面
+3. **先注入环境变量，再动态 import 服务端**：`env.ts` 与 better-auth 都在模块加载时读取（`trustedOrigins`/`baseURL`/端口），导入选早了配置就定死。注入项：`PORT`、`SERVER_URL`/`WEB_ORIGIN`（= 宿主源）、`DATA_DIR`、`DATABASE_URL=file:<dataDir>/mimir.db`、`WEB_DIST`、`AUTH_SECRET`
+4. `startServer({ hostname: '127.0.0.1' })`——只绑回环地址
+5. 轮询 `/healthz` 就绪后开窗（超时明确报错，不静默等待）
 
 其中 `AUTH_SECRET` 由宿主**持久化**在数据目录（`auth-secret`，0600）：
 会话 cookie 用它签名，每次启动随机的话「重启就要重新登录」。
@@ -2077,9 +2074,15 @@ SSE 聊天流、文件 Range、multipart 上传、zip 导出全部是同源 HTTP
 
 | 命令 | 做什么 |
 |---|---|
-| `pnpm desktop:dev` | web vite（5173）+ server dev + Electron 加载 5173（`MIMIR_DESKTOP_URL` 模式：壳不进程内起宿主，宿主走 dev 进程） |
+| `pnpm desktop:dev` | 调用 `desktop:start` 的同一条构建与启动链，附带进程树清理和 Electron 二进制镜像默认值；开发时改代码需重启。选择「本地使用」后，由 Electron 进程内宿主使用 userData 下的 SQLite，不占固定 3000/5173 端口 |
 | `pnpm desktop:start` | 构建 web/server/desktop 产物后，Electron 进程内起宿主（与打包一致的形态，连同一份 userData 数据） |
 | `pnpm desktop:build` | 上述构建 + `pnpm deploy --prod` 收集 server 生产依赖 + electron-builder 打 dmg |
+
+Electron 的 npm 包与运行二进制分开下载：pnpm 的 registry 不决定二进制来源。
+`desktop:dev` 缺少二进制时默认从 npmmirror 下载（可用 `ELECTRON_MIRROR` 覆盖）；
+若手动修复安装，在仓库根目录运行
+`ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ node apps/desktop/node_modules/electron/install.js`，
+再用 `pnpm --filter @mimir/desktop exec electron --version` 核对。无需删除整个 `node_modules`。
 
 打包要点（坑都在这里踩过）：
 
@@ -2170,8 +2173,6 @@ SSE 聊天流、文件 Range、multipart 上传、zip 导出全部是同源 HTTP
 - **宿主一旦启动就常驻**，切到云端不销毁：服务端模块不可重入（模块级的 db 连接、
   插件装配、设置缓存），重启宿主不是已支持的路径。代价只是一个回环端口
 - **切换不迁移数据**：本地与云端是两套独立的存储，界面明确说「不会删除本地数据」
-- 开发形态（`MIMIR_DESKTOP_URL`）下模式 API 返回 null / 明确拒绝——
-  开发时点到的切换不该改真实配置
 
 ---
 

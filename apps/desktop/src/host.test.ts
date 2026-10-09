@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import net from 'node:net'
-import { applyHostEnv, pickFreePort, waitForReady } from './host.js'
+import { applyHostEnv, pickFreePort, waitForReady, startHost } from './host.js'
 import { join } from 'node:path'
 
 describe('pickFreePort', () => {
@@ -103,3 +103,17 @@ describe('waitForReady', () => {
     await expect(waitForReady('http://127.0.0.1:1', 300)).rejects.toThrow(/未就绪/)
   })
 })
+
+describe('startHost', () => {
+  it('产物缺失时抛清单式错误（而不是等到动态 import 时才报 ERR_MODULE_NOT_FOUND）', async () => {
+    const paths = {
+      serverDist: '/nonexistent-server-dist',
+      webDist: '/nonexistent-web-dist',
+      dataDir: '/tmp/mimir-test-data',
+    }
+
+    await expect(startHost(paths)).rejects.toThrow(/缺少.*必需产物/)
+    await expect(startHost(paths)).rejects.toThrow(/pnpm desktop:start/)
+  })
+})
+

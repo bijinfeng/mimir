@@ -283,6 +283,9 @@ importers:
 
   apps/desktop:
     devDependencies:
+      '@mimir/server':
+        specifier: workspace:*
+        version: link:../server
       '@mimir/shared':
         specifier: workspace:*
         version: link:../../packages/shared

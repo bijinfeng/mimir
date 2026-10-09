@@ -1317,3 +1317,76 @@ unknown）——api 客户端因此采用「单例 + 模块级传输配置」而
 对**单用户自托管**而言：编辑只有两条现实路径——挂一个 4 GB 级的文档服务器
 （买不到对应价值），或者用 Apache-2.0 的补丁式引擎自己接（本项目选的）。
 预览则可以轻量得多（`docx-preview` 74 KB，或 LibreOffice 转 PDF 保真但重）。
+
+---
+
+## 14. 多端同构调研：桌面端如何复用服务端（2025-01）
+
+> 决策记录见 `docs/DECISIONS.md` D-102；本节为技术调研证据。
+
+### 14.1 调研方法
+
+用户质疑 mimir 桌面端当前形态（动态 import 服务端构建产物 + env 注入）不优雅，要求调研其他产品如何做多端代码复用。
+
+**网络约束**：GitHub 直连不可用（443 端口连接超时），经本地代理（mihomo，127.0.0.1:7890）克隆仓库或用 jsdelivr CDN 读源码（`https://cdn.jsdelivr.net/gh/OWNER/REPO@BRANCH/PATH`）。
+
+**覆盖范围**：15 个开源产品，按形态分类：
+- **宿主内嵌型**（桌面端包含后端进程）：deepseek-harness、Trilium、Actual、anything-llm、khoj、n8n-desktop
+- **本地优先型**（存储在客户端）：AFFiNE、SiYuan、Joplin、StandardNotes、Logseq
+- **共享核心库型**：Joplin、StandardNotes、Karakeep
+- **薄壳与分层型**：element-desktop、Bitwarden、VS Code
+
+每个仓库核实：① 端的划分（桌面/web/服务端目录）② 桌面端从哪拿后端（子进程/主进程内/远端）③ 代码复用机制（workspace 包/构建产物/源码打包）④ 平台差异接缝（条件导出/DI/适配器）⑤ 打包形态（带文件路径证据）。
+
+### 14.2 关键发现
+
+**没有一家"桌面端源码级复用服务端"**——要么没有服务端（AFFiNE、Joplin、Logseq 的存储逻辑在客户端），要么服务端是独立交付物（SiYuan 用 Go 子进程、n8n 依赖已发布的 npm 包）。
+
+与 mimir 最接近的是 **Trilium**（主进程内跑完整 server + better-sqlite3）：
+- 主进程直接 `import` 服务端源码（`@triliumnext/server/src/*`，两个 monorepo package）
+- 用 `initializeCore({ dbProvider, crypto, platform, messaging, ... })` 注入 providers（`apps/desktop/src/main.ts:241-291`）
+- 自造 `trilium-app://` 协议（`apps/desktop/src/protocol.ts`，700 行桥接层：mock socket、header 剥离、SSE flushHeaders 补丁），**不绑端口**
+- drizzle 迁移目录与 web dist 的推导依赖 `import.meta.url`（与 mimir 同型）
+
+### 14.3 逐产品证据（表格）
+
+| 产品 | 桌面端从哪拿后端 | 平台差异接缝 | 端口与鉴权 | 证据文件 |
+|---|---|---|---|---|
+| **Trilium** | 主进程内 import server 源码 | 构造注入 providers + `trilium-app://` | 无端口（协议桥接） | `apps/desktop/src/main.ts:241`、`protocol.ts:63` |
+| **Actual** | `utilityProcess.fork` 子进程 | `imports` 条件导出（`#platform/server/sqlite` 的 electron/api/default） | 子进程 IPC | `packages/loot-core/package.json` exports、`packages/desktop-electron/src/main.ts` |
+| **dsh** | Electron RunAsNode 子进程跑 profile runner | 插件树 profile patch 层 | 随机端口 + cookie | `apps/desktop/src/host-process.ts:58`、`README.md` |
+| **AFFiNE** | 无服务端进程；存储经 nbstore RPC（worker） | `bootstrap/{browser,electron}` + sqlite vs idb | 无 | `packages/frontend/apps/electron-renderer/src/app/setup.ts:11`、`packages/common/nbstore/` |
+| **SiYuan** | spawn Go kernel 子进程 | 编译期 ifdef（`/// #if BROWSER`，694 处） | 固定 6806 | `app/src/boot/globalEvent.ts`、`kernel/` |
+| **n8n-desktop** | spawn `n8n` npm 包 | 无（依赖已发布包） | 固定 5679 + 随机 Basic Auth | `main/n8n.ts:30`、`README.md` |
+| **anything-llm** | 打包进去的 backend（整仓 copy） | 整仓代码 copy 进 wrapper | 3001 + Bearer | 未开源（README 描述） |
+| **khoj** | 纯壳，连远端或用户自托管 | 无 | 用户手填 Key | `package.json` dependencies 无 server |
+| **Joplin** | 无服务端；本地 SQLite | 单例 shim 启动期注入 | 无 | `packages/lib/shim.ts`、`packages/app-desktop/` |
+| **StandardNotes** | 无服务端；desktop/mobile 跑 web 构建产物 | DI 容器 `DeviceInterface` | 无 | `packages/snjs/` DI、`packages/web/` |
+| **Logseq** | 无服务端；`Fs` protocol | `worker/platform` 适配器，启动时 `validate-platform!` 校验 | 无 | `src/main/frontend/fs.cljs:19`、`worker/platform.cljs` |
+| **element-desktop** | 构建期下载 element-web release 打进 asar | web 侧探测 `window.electron` | 远端 homeserver | `scripts/fetch-package.ts`、`electron-main.ts:481` |
+| **VS Code** | Electron 主进程 + utilityProcess | `common`/`browser`/`electron-browser` 分层 + `layersChecker` | IPC | `src/vs/platform/`、入口横幅注释 |
+| **Bitwarden** | 主进程 + napi + Rust 代理子进程 | libs 抽象 + Angular DI 两套实现 | IPC | `libs/common/`、`apps/desktop/` |
+| **Karakeep** | 无桌面端（移动端共享 `packages/shared` 纯函数） | 分层隔离 | 无 | `packages/shared/` |
+
+### 14.4 分类轴总结
+
+按**谁提供后端**分类：
+- **内嵌完整服务端**：Trilium（主进程内 import）、dsh（子进程 profile runner）、Actual（子进程 utilityProcess）、anything-llm（打包）
+- **子进程但不是 Node**：SiYuan（Go kernel）、n8n（spawn npm 包）
+- **无服务端进程**：AFFiNE、Joplin、StandardNotes、Logseq（存储在客户端，Web/SQLite/IndexedDB）
+- **纯壳**：khoj、element-desktop（连远端）
+
+按**平台差异接缝**分类：
+- **构造注入**：Trilium（`initializeCore` providers）、Bitwarden（DI 容器）、StandardNotes（`DeviceInterface`）
+- **条件导出**：Actual（`imports` 字段的 `#platform/*`）
+- **编译期 ifdef**：SiYuan（`/// #if BROWSER`）
+- **适配器 + 启动校验**：Logseq（`worker/platform.cljs` 的 `validate-platform!`）
+- **插件树 patch**：dsh（Cordis profile）
+- **bootstrap 分支**：AFFiNE（`bootstrap/browser` vs `bootstrap/electron`）
+
+### 14.5 结论
+
+1. **mimir 的路线不是孤例**：Trilium 几乎同构（主进程内 import server、better-sqlite3）；dsh 与 Actual 用子进程但仍是路径依赖。
+2. **没人抽核心包让两个宿主共用**：原因是 ① workspace 包以源码发布时，原生模块的 node_modules 解析会冲突 ② `import.meta.url` 推导依赖文件深度，抽包会破掉。
+3. **"去端口改协议"代价高**：Trilium 的 `protocol.ts` 有 700 行桥接层，且卡在 cookie 会话（非 http scheme 无先例）、媒体 Range、SSE 三处。
+4. **真正要补的是守卫与类型约束**：产物缺失、类型悬空、顺序约束都能被守卫拦住（改动 < 150 行），而抽包/改协议/惰性初始化的改动量都是 300-600 行且引入新复杂度。

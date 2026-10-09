@@ -5,6 +5,8 @@ import { boot } from './boot.js'
 import { dbDriver, env } from './env.js'
 import type { AppEnv } from './types.js'
 
+export { closeDb } from './db/client.js'
+
 /**
  * 生产入口。构建后跑 `node dist/index.js`（Dockerfile 的 CMD）。
  *

@@ -13,6 +13,7 @@
     "icons": "tsx scripts/make-icons.ts"
   },
   "devDependencies": {
+    "@mimir/server": "workspace:*",
     "@mimir/shared": "workspace:*",
     "@napi-rs/canvas": "1.0.9",
     "@types/node": "catalog:",

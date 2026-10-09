@@ -21,7 +21,7 @@ contextBridge.exposeInMainWorld('mimirDesktop', {
   /**
    * 使用方式（D-100）：本地离线 / 云端。
    *
-   * `get()` 在首次启动（还没选过）与开发模式下返回 null；
+   * `get()` 在首次启动（还没选过）时返回 null；
    * `choose()` 只负责校验与持久化（本地模式还会把宿主起好），**不导航**；
    * `activate()` 才让窗口切过去（单向通知，调用它的页面会被替换）。
    */
