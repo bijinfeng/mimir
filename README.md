@@ -1,285 +1,49 @@
 # mimir
 
-自托管的个人知识库：写 Markdown 笔记、收集外部资料、带引用地问 AI。
-
-单用户，部署在自己的服务器上。
-
----
-
-## 文档
-
-**如果你是 AI agent，先读 [`AGENTS.md`](AGENTS.md)** —— 那里有铁律与完成定义。
-
-| 文档 | 内容 | 什么时候看 |
-|---|---|---|
-| [`AGENTS.md`](AGENTS.md) | agent 入口：铁律、完成定义、跨区域的坑与指路 | 动手之前 |
-| 各级 `AGENTS.md`（根 + 各区域与子目录） | 区域规则与该处的坑表，沿目录嵌套、最近者优先 | 改某个目录之前 |
-| [`docs/INDEX.md`](docs/INDEX.md) | 文档索引，按问题找 | 不知道看哪份时 |
-| [`docs/DECISIONS.md`](docs/DECISIONS.md) | 决策日志，含被否决的选项与原因 | 想问「为什么这样选」 |
-| [`docs/PRD.md`](docs/PRD.md) | 产品需求：非目标、核心洞见、内容来源方案、功能范围、关键交互决策 | 想知道「为什么长这样」 |
-| [`docs/TECH.md`](docs/TECH.md) | 技术方案：选型、架构、数据模型、检索设计、插件接缝、部署 | 要动手改代码 |
-| [`docs/RESEARCH.md`](docs/RESEARCH.md) | 调研记录：竞品分析、实测数据、被否决的方案及理由 | 想问「为什么不用 X」 |
-| [`output/`](output/) | 交互原型：单文件静态页，双击打开，无构建无依赖 | 想看界面长什么样 |
-
----
-
-## 当前状态
-
-| | 状态 |
-|---|---|
-| 设计 | 已定稿。布局、编辑器、导航结构、AI 入口、失败路径全部确定 |
-| 原型 | `output/index.html`，三栏 + 所见即所得，覆盖正常路径与异常路径 |
-| 后端 | **M0 完成**：文档 CRUD、目录、标签、双链、中文检索、会话、抓取、流式问答、导出 |
-| 前端 | **M0 完成**：三栏界面、会话优先导航、文档视图、对话视图、命令面板、设置页 |
-| 测试 | 服务端 41 项集成 + 前端 63 项（编辑器往返、设计守门） |
-
-M0 之后是 M1：分块与向量化 → 混合检索 → 带引用的问答。见 `docs/TECH.md` §11。
-
-已有实现：
-
-```
-apps/server/src/
-  ├── app.ts              路由装配（鉴权中间件 + 静态资源 + 错误外壳）
-  ├── auth.ts             Better Auth，含单用户注册规则
-  ├── env.ts              环境变量集中校验
-  ├── db/                 7 张表 + 迁移
-  ├── lib/                jieba 分词 / 文本工具 / vault 读写 / HTTP 辅助
-  ├── plugins/leg/        检索通道（接缝的第一个定型实现）
-  ├── search/             检索编排 + 加权 RRF 融合
-  └── services/           文档服务 / 索引重建
-
-apps/web/src/
-  ├── routes/             路由（根路由承担鉴权守卫）
-  ├── components/         NoteEditor（Tiptap 接后端 + 保存状态）
-  ├── editor/             Tiptap 扩展配置 + 往返保真与幂等性测试
-  └── lib/                API 客户端 / Query 配置 / 路由 context
-
-packages/shared/          前后端共享的 zod schema（源码发布，由使用方编译）
-```
-
----
+自托管的单用户个人知识库：写 Markdown 笔记、收集资料，并带引用地问 AI。
+浏览器端连接自部署服务；桌面端可离线使用本机数据，也可连接服务端。
+产品边界见 [PRD](docs/PRD.md)，架构见 [TECH](docs/TECH.md)。
 
 ## 快速开始
 
-**默认路径用 SQLite，不需要 Docker。** 克隆下来三条命令就能跑：
+需要 pnpm。默认本地开发使用 SQLite，不需要 Docker：
 
 ```bash
-# 1. 装依赖
 pnpm install
-
-# 2. （可选）配置环境变量
 cp .env.example .env
-openssl rand -base64 32   # 把输出填进 AUTH_SECRET
-
-#    强烈建议同时设 OWNER_EMAIL / OWNER_PASSWORD（见「账号」一节）
-#    设了之后启动时会自动建号，跳过首次注册
-
-# 3. 起开发服务（首次启动自动建库建表，数据落在 data/mimir.db）
+# 在 .env 中设置 AUTH_SECRET；建议同时设置 OWNER_EMAIL / OWNER_PASSWORD
 pnpm dev
 ```
 
-**要与生产一致的 Postgres 路径**（服务器部署就是它）：
+浏览器开发页默认在 `http://localhost:5173`，API 默认在 3000。
+如需生产一致的 Postgres 路径，设置 `DATABASE_URL`，启动数据库后运行
+`pnpm db:migrate`；详见 [部署说明](docs/TECH.md)。
+
+桌面端：
 
 ```bash
-# 1. 配置环境变量（compose 读取 .env 做插值，必须先就位）
-cp .env.example .env
-openssl rand -base64 32   # 把输出填进 AUTH_SECRET
-
-# 2. 起数据库（Postgres 17 + pgvector，端口 5544）
-docker compose up -d postgres
-
-# 3. 建表（Postgres 路径是手动迁移，与生产习惯一致）
-pnpm db:migrate
-
-# 4. pnpm dev
+pnpm desktop:dev
 ```
 
-两条路径共用同一套 schema、服务层与界面，`DATABASE_URL` 决定用哪个
-（未设置 = SQLite；详见 `docs/TECH.md` §8.6 与 D-045）。
+首次启动选择“本地使用”或“连接服务器”。本地模式数据保存在 Electron 的
+userData 目录，免登录但仍使用仅本机可用的令牌鉴权；云端模式直接加载服务器
+页面，不同步或迁移本地数据。桌面端界面改动后需刷新窗口。打包用
+`pnpm desktop:build`。
 
-### 桌面端（Electron）
+完整检查运行 `pnpm check`。服务器部署参见 [TECH §8](docs/TECH.md)。
 
-桌面端 = Electron 壳里跑**同一个服务端**（SQLite，数据在用户目录）+
-同一个 web 界面，无需部署（D-046、TECH §14）：
+## 账号与安全
 
-```bash
-pnpm desktop:dev     # 构建并启动桌面端；本地模式使用 userData/data/mimir.db
-pnpm desktop:start   # 同一启动路径；改代码后重启以重新构建
-pnpm desktop:build   # 打 macOS dmg（输出 apps/desktop/release/，ad-hoc 签名仅本机可用）
-```
+单用户实例建议设置 `OWNER_EMAIL` 和 `OWNER_PASSWORD`：服务端启动时创建
+或同步所有者账号，避免首次注册窗口被他人抢先使用，也提供重置密码的路径。
+两项必须同时设置；生产环境必须显式设置 `AUTH_SECRET`。
+不要将自托管服务裸露在公网；部署与备份要求见 [TECH §8](docs/TECH.md)。
 
-窗口加载的是本地宿主的地址，登录、搜索、流式问答与浏览器完全同源。
+## 文档
 
-`pnpm dev` 一条命令并行起两个包，改代码即生效：
+AI agent 开工先读 [AGENTS.md](AGENTS.md)。按问题找规范与历史原因，从
+[文档索引](docs/INDEX.md) 进入。日常修改不必逐次登记：只有现行契约改变才
+更新其唯一归属文档；验证记录留在提交或 PR，不追加过程文档。
 
-| 包 | 命令 | 说明 |
-|---|---|---|
-| `apps/server` | `vite` | API 在 **3000**，改动即时生效（不重启进程）|
-| `apps/web` | `vite` | 前端在 **5173**，HMR |
-
-两个包用的是同一套工具（Vite 8，版本由 catalog 统一）。服务端由
-`@hono/vite-dev-server` 把请求交给 `src/dev.ts` 导出的 Hono 应用，
-改一个文件只失效相关模块，不再像 `tsx watch` 那样整进程重启。
-
-`packages/shared` 没有独立的构建进程：它以源码发布，两个包都由 Vite 直接编译
-（服务端**生产**构建也走 Vite 的 SSR 构建，见 D-033）。
-改 shared 的 schema，两边都会立即生效。
-
-**开发时访问 `http://localhost:5173`**（Vite）。它把 `/api` 代理到 3000，
-所以前端不需要跨源配置，cookie 也正常。3000 上的 API 单独也能访问，
-但前端页面在 5173。
-
-> 如果 3000 已被占用，`pnpm dev` 会直接报错而不是换端口（`strictPort`）：
-> 换了端口，前端代理就指向一个没人监听的地址。先结束占用它的进程再重试——
-> `fuser -k 3000/tcp`，或 `ss -ltnp | grep :3000` 找到 pid 再 kill。
->
-> 需要指向别的后端时用 `VITE_API_TARGET=http://localhost:3100 pnpm dev`
-> （改动 `vite.config.ts` 里的代理目标，默认 3000）。
-
-首次打开时：
-
-- **配了 `OWNER_EMAIL` / `OWNER_PASSWORD`** → 账号已在启动时建好，直接登录
-- **没配** → 显示「首次注册」表单（邮箱 + 密码 + 确认密码），
-  创建后注册入口自动关闭
-
-两种形态由服务端告知（`/api/auth/setup/state`），不是前端猜的——
-早期版本靠「先试登录、失败再试注册」来猜，结果**密码打错时会显示
-「该邮箱已被使用」**，而用户真正的问题是密码错了。
-
-跑完整校验（lint + format + 类型 + 测试）：
-
-```bash
-pnpm check
-```
-
-生产部署（单容器，同时提供 API 与前端）：
-
-```bash
-cp .env.example .env      # 填好 AUTH_SECRET
-pnpm docker:prod          # docker compose --profile prod up -d --build
-```
-
-已验证：容器 `healthy`、`/` 与 `/docs` 深路由返回 200、未鉴权访问 API 返回 401。
-
----
-
-## 账号
-
-单用户自托管。注册规则是「第一个注册的人成为唯一用户，之后自动关闭」——
-用规则代替开关，因为暴露在公网时忘记关开关等于把注册口敞开。
-
-**推荐用环境变量指定所有者账号**：
-
-```bash
-OWNER_EMAIL=me@example.com
-OWNER_PASSWORD=a-long-random-password
-```
-
-设置后服务端启动时会按这两个值准备好账号，**跳过首次注册**。为什么推荐：
-
-| 不设的后果 | 设了之后 |
-|---|---|
-| 部署完到你注册之间有一个时间窗——服务若已暴露公网，谁先访问谁就成为那个唯一用户 | 所有者由部署配置决定，不由谁先到决定 |
-| 清库重建会把账号一起删掉 | 重启即恢复 |
-| 忘记密码**没有任何找回路径**（没有邮件服务） | 改 `OWNER_PASSWORD` 重启即同步 |
-
-它的语义是**所有者账号的真相来源**：
-
-| 库里的状态 | 启动时的行为 |
-|---|---|
-| 没有账号 | 按环境变量创建 |
-| 邮箱一致、密码不同 | 同步密码（这就是找回路径）|
-| 邮箱不同 | 只警告，**不动它**（静默替换掉别人的账号是破坏性的）|
-
-两个变量都要设，只设一个会启动报错。密码至少 8 位。
-决策逻辑见 `docs/DECISIONS.md` D-020。
-
----
-
-## 工具链
-
-| 用途 | 工具 | 备注 |
-|---|---|---|
-| 类型检查 | TypeScript **7.0.2** | Go 重写版，装的是平台原生二进制 |
-| 构建优化 | **React Compiler** | 自动记忆化，替代手写 useMemo / useCallback |
-| Lint | **oxlint** 1.83 | 单命令跑全仓，48 文件约 100ms |
-| Format | **oxfmt** 0.68 | 见下方说明 |
-| 测试 | Vitest 5 | 服务端集成 + 前端编辑器 |
-| 构建（前后端） | **Vite 8** | 同一套工具干两边的活：前端是浏览器构建，服务端是 SSR 构建（Rolldown + Oxc）。把 shared 的源码一并编译进 `dist` |
-| 依赖版本 | **pnpm catalog** | 版本写在 `pnpm-workspace.yaml`，包内用 `catalog:` |
-
-一条命令做完整校验：
-
-```bash
-pnpm check     # lint → format:check → typecheck → test
-```
-
-CI 与本地跑的是同一条命令，避免「本地过了 CI 挂」。
-
-**oxfmt 不格式化 Markdown**，这是刻意的。它会把表格补齐到等宽，而列宽是按字节算的——
-含中文时算出来的宽度在任何编辑器里都不对齐，源文件反而更难读。Markdown 是内容，不是代码。
-
-## 四条贯穿全局的规则
-
-改动代码前值得先读这四条，它们解释了大部分看起来「绕」的设计。
-
-**1. 文件是真相，数据库是可重建的索引。**
-笔记是 `data/vault/` 下的纯 md，抓取的原始快照在 `data/raw/`。删掉数据库可以从文件完整重建。
-所以：换 embedding 模型、改分块策略、升级解析器都可以放心全量重跑。
-
-**2. 写入顺序永远是先文件后数据库。**
-反过来会产生「数据库里有、文件打不开」的记录。正序最坏只是「文件已存在但尚未入库」，重建索引即可修复。
-
-**3. 所有内容统一成为 Markdown。**
-不管来源是手写、网页、公众号还是 GitHub，入库后都是同一条 `documents` 记录 + 同一套正文。
-检索、引用、导出都只需要处理一种形状。
-
-**4. 模型调用交给 TanStack AI，检索层自己写。**
-这不算「手搓 AI」——chat / embed / rerank 全部走现成 SDK；
-自己写的只有 SQL 查询和分块，而这两件事恰恰必须贴合自己的表，交给框架反而要打架。
-
----
-
-## 目录结构
-
-```
-mimir/
-├── apps/
-│   ├── server/           Hono API + worker
-│   ├── web/              React SPA
-│   └── desktop/          Electron 载体（进程内私有宿主，D-046）
-├── packages/
-│   └── shared/           前后端共享契约
-├── output/               交互原型（静态单文件）
-├── docs/                 产品需求 / 技术方案 / 调研记录 / 决策日志
-├── AGENTS.md             agent 入口：铁律与完成定义
-└── data/                 运行时数据，不进 git
-    ├── vault/            笔记（真相）
-    ├── raw/              原始快照
-    ├── avatars/          头像（非内容）
-    ├── mimir.db          SQLite 库（本地开发/桌面端；服务器用 Postgres）
-    └── .test/            测试专用，与真实数据隔离
-```
-
----
-
-## 下一步
-
-按 `docs/TECH.md` §11，M0 已完成，接下来是 M1：
-
-1. 分块与向量化（Postgres 用 pgvector HNSW；SQLite 用 sqlite-vec，两套方言同一接缝）
-2. 混合检索：关键词 + 子串 + 向量，加权 RRF 融合
-3. 带引用的知识库问答，引用可点回原文位置
-4. PDF / Word 上传与解析、RSS 订阅
-
----
-
-## 已知坑
-
-踩过的都记在 `docs/TECH.md` §10，改动相关代码前建议扫一眼。最容易踩的五个：
-
-- **jieba 不加载词典会退化成逐字切分**，必须 `Jieba.withDict(dict)`
-- **Postgres 对中文没有词边界**，posts 里的「组件性能优化」是一个 token，搜「组件」搜不到
-- **SQLite 的 FTS5 索引靠触发器维护**，触发器被绕过时写入正常、中文搜不到——`pnpm db:reindex` 可重建
-- **SQLite 默认关闭外键**，必须连接时显式 `PRAGMA foreign_keys = ON`（client.ts 已做），否则 CASCADE 静默失效
-- **pgvector 的 HNSW 索引上限 2000 维**，超过要用 `halfvec`
+`output/` 是静态交互原型，可能保留早期形态；现行行为以 PRD、TECH 和 DESIGN
+为准。

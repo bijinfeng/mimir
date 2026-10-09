@@ -77,15 +77,24 @@ export function mountStatic<E extends Env>(app: Hono<E>): boolean {
     const candidate = normalize(join(root, requested))
     if (candidate.startsWith(root + sep) && extname(candidate) && existsSync(candidate)) {
       const body = await readFile(candidate)
+      // Vite 的哈希产物可长期缓存；HTML 与 public 目录里的固定文件须重新校验。
+      const hashedAsset = /^\/assets\/[^/]+-[A-Za-z0-9_-]{8,}\.[^/]+$/.test(requested)
       return new Response(body, {
-        headers: { 'Content-Type': MIME[extname(candidate)] ?? 'application/octet-stream' },
+        headers: {
+          'Content-Type': MIME[extname(candidate)] ?? 'application/octet-stream',
+          'Cache-Control': hashedAsset ? 'public, max-age=31536000, immutable' : 'no-cache',
+        },
       })
     }
 
-    // 其余一律交给 SPA 路由处理。带哈希的静态资源文件名不会撞上真实路由，
-    // 所以这里不需要额外的白名单。
+    // 过期页面引用的哈希资源已经不存在时必须报 404，不能把 HTML 当 JS 返回。
+    if (requested.startsWith('/assets/') || extname(requested)) return c.notFound()
+
+    // 没有文件后缀的深路由交给 SPA 处理。
     const html = await readFile(indexHtml, 'utf8')
-    return new Response(html, { headers: { 'Content-Type': MIME['.html']! } })
+    return new Response(html, {
+      headers: { 'Content-Type': MIME['.html']!, 'Cache-Control': 'no-cache' },
+    })
   })
 
   return true

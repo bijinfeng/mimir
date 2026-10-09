@@ -654,7 +654,7 @@ agent 就要重建，重建会切断正在进行的流。代价是新建会话�
 
 `packages/chat/src/runtime/use-mimir-runtime.ts` 是对话状态的唯一入口，
 组件不直接碰运行时。它与宿主之间只有两个口：动作面 `ChatIo`
-（建会话 / 读历史 / 存笔记 / 跳转，宿主实现在 `apps/web/src/lib/chat-io.ts`）
+（建会话 / 读历史 / 存笔记 / 跳转，宿主实现在 `packages/renderer/src/lib/chat-io.ts`）
 与数据槽 `composerStatus`（文档列表 / 模型角色 / 用量，宿主 `useQuery` 取好）。
 包内 **import 不到**宿主的 api / router / queryClient——这是结构性边界
 （与 `packages/office` 的 `EditorIo` 同一条），不是约定。
@@ -809,7 +809,7 @@ M0 **保留但禁用**并在 tooltip 里说明——直接删掉用户会找不�
    要求先保存
 2. 拉取、手改、改用途是**同一份草稿**，保存一次全落库
 
-合并规则三条（`mergeFetchedModels`，`apps/web/src/components/settings/model-config.ts`），
+合并规则三条（`mergeFetchedModels`，`packages/renderer/src/components/settings/model-config.ts`），
 方向都是「不覆盖用户的显式标注」：
 
 | 情况 | 处理 |
@@ -1263,6 +1263,8 @@ pnpm --filter @mimir/server build
 
 镜像里有两个 Node 进程吗？没有，只有一个：`node dist/index.js` 同时提供 API
 与前端静态资源。单用户自托管不值得拆成三个容器加一个反代。
+静态服务对 SPA 深路由返回 `index.html`（`no-cache`）；缺失的静态文件返回 404，
+避免旧页面把 HTML 当成 JS 加载。Vite 生成的哈希资源可以长期缓存。
 
 服务端为什么要打包而不是 `tsc` 直出：shared 的源码是 TS，Node 在生产环境不能
 执行 `node_modules` 里的 `.ts`（`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`），
@@ -1364,36 +1366,12 @@ SQLite 直接拷 `data/mimir.db`，或运行中的热备用 `VACUUM INTO`）。
 
 ## 9. 测试策略
 
-### 9.1 当前覆盖
+### 9.1 覆盖原则
 
-| 范围 | 数量 | 方式 |
-|---|---|---|
-| 服务端集成 | 197 | Hono 的 `app.request()` 内存调用，不占端口。M1 新增：分块四类断言（23）、分块级检索与引用组装（5）、feed 解析与订阅链路（12，真起 HTTP 服务器）、PDF 提取（4，pdf-lib 现造真文件）、嵌入端点（3） |
-| 前端组件与编辑器 | 247 | happy-dom + 真实 Tiptap 实例 + 真实渲染算对比度 |
-
-前端那批里，与外观切换直接相关的两组：
-
-| 文件 | 守什么 |
-|---|---|
-| `theme/design.test.ts`（81） | 两套外观跑**同一组**对比度断言（浅色与深色各一遍，`it.each(APPEARANCES)`）、跨外观不回归、切换后 cssVar 变量块真的被替换且只有一块 |
-| `theme/appearance.test.ts`（8） | 偏好持久化、跟随系统、坏值回落、`localStorage` 抛错不炸、`color-scheme` 被写对 |
-
-`design.test.ts` 里最有价值的两条不是对比度，而是**装配**：
-「切到深色后变量块只有一块」防的是「两套色混在一起」——
-那种情况看起来只是「有点怪」，但只要渲染顺序变一次就会整块翻车；
-「深色的每个文字色不弱于浅色」防的是深色在几次迭代后悄悄退化。
-
-服务端那些里，与 M1 骨架直接相关的三组：
-
-| 文件 | 守什么 |
-|---|---|
-| `settings.test.ts`（13） | 配置的三条回落路径、整批拒绝、密钥加密落库与「解不开 ≠ 没配」 |
-| `plugins.test.ts`（11） | 描述符的 `file` 路径真实存在、`leg` 描述符与注册表 id 一致、`configKeys` 都注册过、抓取来源识别两处不漂移、构建配置没把 workspace 包 external 化 |
-| `search.test.ts`（11） | 检索召回回归（自然语言提问、部分词匹配排序、tsquery 语法安全）——见 D-014 |
-
-`plugins.test.ts` 那一条防的正是这次重构的起因：设置页的清单与代码里的注册表
-**各说各话**（D-030）。同理 `SettingControl.test.tsx` 守的是「改了值但没保存」
-——那个缺陷人工点一下很容易漏（点完看起来是对的，值也在框里）。
+`pnpm check` 执行 lint、格式、类型检查和各包测试；测试数量不是稳定契约，
+不在技术方案里逐次登记。前端的主题守门测试覆盖浅色/深色的对比度和变量
+注入；服务端的配置、插件和检索测试覆盖回落路径、注册表一致性与召回行为。
+新增路径要测用户可见的结果，以及可能静默失效的装配边界。
 
 ### 9.2 测试库隔离
 
@@ -1448,13 +1426,10 @@ M1 的新代码大多是「纯函数 + SQL」，两类都能用能说明用户�
 `AGENTS.md`（每份都有「会静默出错的地方」一节）与根 `AGENTS.md`（跨区域的坑），
 本节只做路由，不再收坑。
 
-2026-10 整理：原先这里按时间累积的 95 条与根坑表的区域条目已归位合并到各区域
-（重复条目取并集；「pgvector 维度上限」一条修正了 2048 的旧数字——HNSW 对
-`vector` 的上限是 2000 维）。
-
 | 区域 | 坑表 |
 |---|---|
-| 编辑器与界面（`apps/web`） | `apps/web/AGENTS.md` |
+| 共用界面与编辑器（`packages/renderer`） | `packages/renderer/AGENTS.md` 及沿途子目录规则 |
+| 浏览器壳（`apps/web`） | `apps/web/AGENTS.md` |
 | Office / PDF 的预览与编辑（`packages/office`） | `packages/office/AGENTS.md` |
 | 对话面板（`packages/chat`） | `packages/chat/AGENTS.md` |
 | 服务端 / 数据库 / 检索 / 存储（`apps/server`） | `apps/server/AGENTS.md` |
@@ -1465,82 +1440,15 @@ M1 的新代码大多是「纯函数 + SQL」，两类都能用能说明用户�
 
 ---
 
-## 11. 推进顺序
+## 11. 当前范围
 
-1. ~~定 `src/plugins/` 的目录形状与注册表接口~~ —— 已完成（`plugins/leg/` 定型）
-2. ~~M0 前端：登录 → 笔记列表与编辑器 → 检索 → 收件箱与整理~~
-3. ~~M0 抓取器：粘贴 URL（三来源）~~
-4. ~~**M1-A 插件的骨架**~~ —— 已完成
-   - 契约：`packages/shared/src/{plugin,seams,config}.ts`
-     （声明 + 运行接口 + 传输契约；放 shared 是为了不形成包级循环，见 §3）
-   - 骨架：`packages/core/src/{registry,settings/*,fuse,pipeline}.ts`
-   - 实现：`plugins/{capturer,parser,leg,provider}/`（四个独立 workspace 包）
-   - 分词：`packages/tokenizer/`（写入与检索两侧共用同一份规则）
-   - 装配：`apps/server/src/plugins/host.ts`（唯一同时知道宿主与插件的文件）
-   - 适配器收口：`services/model.ts`，`assistant.ts` 与 `assistant-stream.ts`
-     两处重复的 `openaiCompatible` 已删除
-   - `/api/config` 换成三块（settings / plugins / models）+ `PATCH /config/settings`
-     + `POST /config/probe`
-   - 设置页：模型分区可编辑、来源徽标、四态状态 + 「测试连接」探测；
-     插件分区改为从注册表渲染（原先是一份会漂移的手写数组）
-5. ~~**M1-B 分块与向量化**~~ —— **已完成**（D-084）
-   - ~~`chunks` / `chunk_embeddings` 表 + 迁移（**PG 与 SQLite 各一份**，与主 schema 同一个守卫测试对齐）~~
-     `drizzle/0010_chunks.sql`（含按维度分区的 HNSW 表达式索引，手写——drizzle
-     表达不了）与 `drizzle-sqlite/0007_chunks.sql` + `0007_chunks_fts.sql`（FTS5
-     虚拟表 + 触发器，与 documents_fts 同一套做法）
-   - ~~`lib/chunk.ts`（确定性、偏移可逆、按结构切）+ 四类断言（§9.5）~~
-     23 条用例；**分块的 `search_text` 必须带标题**（否则按标题里的词搜不到正文，
-     实测 `search.test.ts` 抓到）
-   - ~~分块接入写入路径（笔记保存、抓取入库）与重建索引~~
-     **四条**写入路径统一走 `services/chunks.ts` 的 `rebuildChunksAndEmbed`
-     （笔记新建 / 更新、抓取、上传、重建索引）——上传那条一度漏掉，
-     被 `upload.test.ts` 当场抓到，正是「抄三遍必漏一处」的实证
-   - ~~`POST /maintenance/embed` 分批补嵌入~~ 外加 `GET /maintenance/chunks`
-     （状态）与 `POST /maintenance/chunks/rebuild`（重算分块，不调模型）。
-     界面入口在设置 › 检索的「分块与向量」面板
-6. ~~**M1-C 混合检索**~~ —— **已完成**（D-084）
-   - ~~两条现有通道改成返回分块 id（各自一个文件，`plugins/leg/src/`）~~
-     编排层一行没改（D-032 的判据兑现）
-   - ~~`plugins/leg/src/vector/`（PG=halfvec HNSW / SQLite=sqlite-vec，同一接缝两个方言模块）+ 在 `install()` 里注册一行~~
-     **SQLite 用标量函数 `vec_distance_cosine` 而不是 `vec0` 虚拟表**——
-     向量已经在 `chunk_embeddings` 一张表里，vec0 要第二份数据与同步逻辑；
-     KNN 查询与 kind/tag/删除态过滤的组合也更直接（RESEARCH §11.3 的量级论证
-     不变，两者同为暴力扫描）。扩展在连接时加载（`db/client.ts`），
-     **加载失败抛错不降级**——它的缺席表现是「语义搜不到」，静默降级等于埋雷
-   - ~~`mode` 落成通道筛选，默认模式由注册表推导~~
-     未就绪的通道不进编排（状态由 core 的 `computeStatus` 算，不另写判断）
-   - ~~引用组装：相邻分块合并 + 每篇上限~~ `search/index.ts` 的
-     `assembleCitations`；问答与 `/api/search` 共用 `searchChunks`，
-     界面契约（`SearchHit`）一个字没改
-7. ~~**M1-D 带引用的问答与 AI 摘要、标签建议、内联改写**~~ —— **已完成**（D-084）
-   - 摘要：`POST /api/documents/:id/summary`，走 `summarize` 角色；
-     **不落库**（现用现生成，避免「正文改了摘要还是旧的」这个状态）
-   - AI 标签：`POST /api/documents/:id/suggested-tags/ai`，与统计版并存
-     （统计版零成本随开随算，AI 版要花钱、单独入口标明）
-   - 内联改写：`POST /api/ai/rewrite`（不挂在文档下——改写的文本可能还没保存）；
-     编辑器选区工具条由宿主注入回调（与「就这段提问」同一模式），
-     结果**直接替换选区**（进 undo 栈可撤销）
-   - 三条能力共用 `services/ai-text.ts`（形状相同：文本进文本出），
-     没配模型时**如实说**（`usedModel: false` + 一句说明），不静默降级
-8. ~~M1-E PDF / Word 上传（`parser` 接缝的第一个真实现）与 RSS~~
-   —— **全部落地**（D-044 上传与 Office 提取；D-084 补齐 PDF 与 RSS）：
-   - **PDF 文字层提取**（`plugins/parser/src/pdf.ts`）：**复用仓库里已有的
-     pdf.js**（`packages/office` 的页面预览是同一个库），不引入第二个 PDF
-     解析实现。`getTextContent()` 的 `hasEOL` 直接给出行边界；中文行尾
-     不补空格（补了会切出假词边界）；多页文档每页一个小标题（分块器把它
-     当边界，引用卡片显示「第 N 页」）；扫描件没有文字层，如实报错不做 OCR
-   - **RSS 订阅**：`feeds` 表（订阅关系，双方言）+ `plugins/capturer/src/feed.ts`
-     （RSS 2.0 / Atom 字段归一）+ `services/feeds.ts`（编排）+ 设置 › 订阅。
-     收进来的文章走 `ingestDocument`（与「粘贴 URL」同一条写入路径，铁律 3）。
-     feed 的 `content:encoded` 走 **html-fragment** 解析器——它是正文片段，
-     再跑 Readability 会因「太短、不像一篇文章」丢掉（实测两行片段返回 null）。
-     轮询由用户触发（M1 没有 jobs 层）；退订不删已收文章
-9. 之后再回到 PRD 第 6 节的待决项
-**横向的一步（与上面五段都不冲突）**：`usage_log` 的表与采集点。
-**它排在 M1-A 之后、M1-B 之前**——M1-A 做的正是「provider 角色化 + `model.ts`
-收口」，做完那里采集点就定形了。表与界面可以分开做：
+M0、M1 已落地：文档管理、双数据库后端、分块与向量化、混合检索、
+带引用问答、AI 文本能力、文件正文提取及 RSS 订阅。**现行实现契约**
+分散在本文件对应章节，不再在这里复制一份已完成的施工清单。
 
-> 记账表的价值随时间增长。界面上线晚半年没有关系，**采集晚上线就永远缺那段历史**。
+后续产品范围以 `PRD.md` §4 的 M2/M3 为准；尚未立项的事项不在技术方案
+里写成实现任务。部署时需确认 Postgres 路径的向量索引迁移
+（`drizzle/0010_chunks.sql`）已执行。
 
 ---
 
@@ -1824,26 +1732,11 @@ gridNum = floor((svg.clientWidth - leftPad) / (rectSize + space))
 > 这类「换个实现才暴露的时序依赖」值得单独记：它不是新引入的 bug，
 > 而是**原先被实现细节掩盖掉的假设**浮出来了。
 
-#### 一条方法论：加断言之后要**验它能红**
+#### 守卫必须证明会失败
 
-本轮修那个反引号坑时加了一条测试（`design.test.ts` 的
-「样式模板里没有多余的反引号」），第一版用正则：
-
-```
-/(?:css|createGlobalStyle)`([\s\S]*?)`/g      ← 错的
-```
-
-非贪婪匹配会停在**第一个杂散反引号**处，于是捕获到的「模板体」里
-永远不含反引号——**这条测试永远绿，包括在真正违规的时候**。
-
-发现它靠的是往一个样式文件里注入一对反引号、跑测试、看它是否变红。
-第一次注入还注错了地方（注在模板外的 JSDoc 里，那是合法的），
-所以连「注入点是否正确」也得确认。
-
-**规则**：一条新断言写完，先让它红一次再相信它。
-「测试通过」本身不构成证据——**没红过的断言，与没写过没有区别**。
-这与本项目对验证的一贯要求是同一条（`AGENTS.md` 的完成定义第 6 条：
-没跑过的东西不要声称跑过），只是把它推到了断言自身。
+新增静态检查后，要故意注入一次它应捕获的错误并确认测试变红，再还原。
+只跑一遍“全绿”不能证明守卫有效；样式模板反引号检查的第一版正则就曾
+因提前结束匹配而永远绿。具体脚本与区域坑见根 `AGENTS.md`。
 
 #### 只有一条退化，已接受
 
@@ -2048,7 +1941,7 @@ dragenter/leave 用计数器防抖。
 │  主进程（Node 模式）                                        │
 │   └─ 本地模式：私有宿主 = apps/server/dist 的 startServer() │
 │       SQLite @ userData/data · 127.0.0.1 随机端口 · 免登录  │
-│   └─ 云端模式：不起宿主，窗口加载用户自部署的地址            │
+│   └─ 云端模式：不起宿主，系统边框窗口加载自部署地址（D-105）│
 │  BrowserWindow → 加载宿主地址或远端地址（见 §14.6）          │
 │  IPC 只承载：boot 信息、模式选择/切换、窗口控制与退出         │
 │  （契约：shared 的 DesktopBootInfo / DesktopModeApi /       │
@@ -2088,8 +1981,8 @@ SSE 聊天流、文件 Range、multipart 上传、zip 导出全部是同源 HTTP
 
 | 命令 | 做什么 |
 |---|---|
-| `pnpm desktop:dev` | 调用 `desktop:start` 的同一条构建与启动链，附带进程树清理和 Electron 二进制镜像默认值；开发时改代码需重启。选择「本地使用」后，由 Electron 进程内宿主使用 userData 下的 SQLite，不占固定 3000/5173 端口 |
-| `pnpm desktop:start` | 构建 web/server/desktop 产物后，Electron 进程内起宿主（与打包一致的形态，连同一份 userData 数据） |
+| `pnpm desktop:dev` | 先完整构建并启动，再 watch 桌面三段产物；改渲染代码后刷新窗口，改 main/preload 后重启。附带进程树清理和 Electron 二进制镜像默认值。本地模式由进程内宿主使用 userData 下的 SQLite，不占固定 3000/5173 端口 |
+| `pnpm desktop:start` | 构建 server/desktop 产物后启动 Electron；桌面渲染进程由本包构建，不依赖 web 产物 |
 | `pnpm desktop:build` | 上述构建 + `pnpm deploy --prod` 收集 server 生产依赖 + electron-builder 打 dmg |
 
 Electron 的 npm 包与运行二进制分开下载：pnpm 的 registry 不决定二进制来源。
@@ -2132,6 +2025,8 @@ Electron 的 npm 包与运行二进制分开下载：pnpm 的 registry 不决定
 - **云端模式下的远端页面没有「任意改模式」的能力**：模式 IPC 对不受信任的发送方
   一定会先弹原生确认框（`isTrustedSender` / `confirmUntrustedSwitch`）。
   否则一台被攻破的服务器可以让客户端起本地宿主再导航过去，把本机知识库读走
+- **云端窗口由系统提供边框和窗口控件**（D-105）：远端提供的是 Web 构建，
+  不含桌面标题栏；主进程的「更换使用方式」菜单在登录页也可用
 - 单实例锁：两个窗口同时写一个 SQLite 会撞锁
 
 ### 14.6 两种模式：本地离线与云端（D-100）
@@ -2152,9 +2047,10 @@ Electron 的 npm 包与运行二进制分开下载：pnpm 的 registry 不决定
 能在服务端不可达时完成——设置键恰恰在那时读不到。写入是「临时文件 + rename」：
 半截 JSON 的表现是「下次启动又回到选择页」，用户的选择静默丢失。
 
-选择页是**自包含静态文件**（无外部资源、无框架、自带拖动区与窗口控制）：
-它要在「宿主没起来」「地址还没填」的时刻可靠显示，也是云端用户唯一会看到的
-本地页面。它在渲染产物里（`dist/renderer/setup.html`），由 `files: dist/**` 进 asar。
+选择页是桌面渲染进程的**第二个 HTML 入口**：不依赖宿主即可从 `file://` 打开，
+但与本地主界面复用 React、主题、品牌和窗口控件。它在渲染产物里
+（`dist/renderer/setup.html`），由 `files: dist/**` 进 asar。云端模式从系统
+边框窗口进入选择页时先建无边框新窗口，再关旧窗（D-105）。
 
 **本地模式的鉴权**（免登录但不免鉴权）：
 
@@ -2257,7 +2153,7 @@ packages/office/
 
 `viewerFor()`（`@mimir/shared`）对三种 Office 格式分别给 `office` / `sheet` /
 `deck` 三个类型，`FilePreview` 命中它们时渲染 **`OfficeSourceEditor`**
-（`apps/web/src/components/document/`）——它是一层**宿主适配层**，只做两件事：
+（`packages/renderer/src/components/document/`）——它是一层**宿主适配层**，只做两件事：
 
 1. 把网络调用包成 `EditorIo`（`load` 取字节 / `save` 写回）——包里不认识
    cookie，也不知道端点长什么样
@@ -2296,7 +2192,7 @@ src/shell/
 src/editors/
   DocxEditor.tsx      xlsx / pptx 同构
   PptxEditor.tsx      幻灯片：SVG 画布（**可点而不经原语的白名单，只此与 xlsx
-                      的 `<td>` 网格两处**，见 D-064 的「各格式的适配」）
+                      的 `<td>` 网格两处**，见 `packages/office/AGENTS.md`）
   MarkdownEditor.tsx  笔记：工具条 30+ 个控件（D-061）
   markdown-format.ts  markdown 方言的判据与操作（整张列表的范围、段落样式的
                       当前值、列对齐、工具条状态串）。**导出**给宿主测——
@@ -2310,7 +2206,7 @@ src/editors/
 （markdown 的 Tiptap 扩展集合、正文排版类）。所以 `MarkdownEditor` 也在包里
 ——它的正文格式（`createExtensions`）是 mimir 的产品决定，壳是通用的。
 
-**主题桥**（`apps/web/src/theme/editor-theme-bridge.ts`）：宿主把 antd token
+**主题桥**（`packages/renderer/src/theme/editor-theme-bridge.ts`）：宿主把 antd token
 填进 `--me-*`。每个属性都有中性回退值，所以包能脱离宿主渲染（静态预览仍靠它）。
 
 **桥不退役，但「包不依赖 antd」已由 D-064 推翻**：工具条的控件换成 antd 组件，
@@ -2361,7 +2257,7 @@ happy-dom。happy-dom 会替换全局 `URL`，于是解析类测试里的
 ——那 48 个测试与 DOM 毫无关系却整片挂掉（实测踩过）。要 DOM 的测试在自己的
 文件顶部写 `@vitest-environment happy-dom`。
 
-### 15.4.3 docx 的工具条：能力清单与四项如实不做
+### 15.4.3 docx 的工具条：能力与边界
 
 工具条在 `packages/office/src/editors/DocxEditor.tsx`（`DocxToolbar`），分成八组。
 **每一个控件都先证明命令存在**（`editor-commands.ts` 的 `hasMark` / `hasNode` /
@@ -2378,7 +2274,7 @@ happy-dom。happy-dom 会替换全局 `URL`，于是解析类测试里的
 | 列表与缩进 | 项目符号 / 编号 / 减少 / 增加 |
 | 表格与插入 | 表格菜单（只在光标进表格时出现）/ 尺寸网格插表 / 插图 / 链接 / 分页符 / 上移下移 / 查找 / 修订 / 拼写检查 |
 
-**四类做法与原因**（完整取舍见 D-062）：
+**关键做法与原因**（取舍见 D-062）：
 
 1. **「引用」是直接段落格式，不是样式。** 按 `styleId` 的 CSS 来自
    `doc-style-css.ts`，**那个文件没 vendored**（跟着上游的 App 壳）。写
@@ -2403,47 +2299,7 @@ happy-dom。happy-dom 会替换全局 `URL`，于是解析类测试里的
 | 复杂文种字体（`csFont`） | `w:rFonts` 的第三个槽位，要按 `w:rtl` 判断该不该写。中文知识库里命中率极低，做一半反而会把文档改乱 |
 | 表格样式（`tblStyleId`）/ 六边（`tblLook`） | 前者只渲染成 `data-tbl-style`（没有 CSS 规则命中它，同一个缺失的 `docStyleCss`），后者连渲染都没有。改了只动 XML |
 
-**三条会静默出错的收尾**（标题是当时写的，**现在这组已是 6 条**——下面列的
-六项都各有注释与测试守着）：
-
-- 改行距倍数时**同时清掉 `lineRule`/`lineRawTwips`**——`lineRule='exact'` 在画布与
-  保存两侧都优先于倍数，不清的话选了「1.5 倍」屏幕和文件都不变
-- 清除格式的段落那一半要**逐类写** docParagraph / docHeading / docListItem
-  三遍：`updateAttributes` 只认它拿到的类型名，找不到就 `return false`
-- **格式刷逐类 `removeMark(from, to, type)`**，绝不写不传 markType 的那一次：
-  它会把区间上所有标记（链接、批注、修订、域代码）一起清掉
-- **表格列宽两头各换算一次**：单元格的 `colwidth` 属性存 **px**（解析
-  `convert.ts:930` 写入、保存 `convert.ts:1236` 自己 ×15 换回 twips），而输入框
-  说的是 **twips**（显示再 ÷20 变磅）。读要过 `pxToTwips`、写要过 `twipsToPx`
-  （`DocxEditor.tsx` 的 `columnWidthsTwips` / `setColumnWidth`），漏掉任何一次
-  不报错——症状是「每次编辑把列宽放大 15 倍」（实测：234 磅的列存成
-  `<w:gridCol w:w="70200"/>`，重开控件显示 15.4 磅）。往返测试守着
-  （`docx-save.test.ts`）
-- **换段落样式必须显式 `styleId: null`**：Tiptap 的 `setNode` 会把段落上没点名
-  的属性原样带过去（实现里的 `attributesToCopy`），不清的话画布换了级别、文件
-  里的 `w:pStyle` 还是旧样式（`generate.ts:1742` 优先写 `block.styleId`），重开
-  又变回去（实测：Heading1 选「标题 2」，存出来仍是 `w:val="Heading1"`）
-- **格式刷取源取「选区区间里第一个文本节点」的 marks**，不是
-  `$from.marks()`：后者在位置正好压在两个节点的边界上时返回**前一个节点**的
-  marks——源选区起点正好是格式区间起点（加粗字前有个没加粗的字）时它是**空**
-  的，刷子以空格式举起，点目标反而把目标的格式抹掉
-
-`pageBreakBefore` **不在**清除格式的名单里：正文里的分页符就是它（`page-break.ts`
-在段首只打属性、不插字符），清掉等于删掉用户插的分页符。
-
-**测试**（都在 `packages/office/src/editors/`）：`docx-toolbar.test.ts`（18 条，
-模型层）、`docx-toolbar-render.test.tsx`（15 条，挂真组件树点真按钮，含「每个按钮
-都看得见内容」「无障碍名称不重复」两条渲染契约、格式刷取源、以及保存按钮的
-禁用原因）、`docx-find.test.ts`
-（12 条）、`docx-save.test.ts`（22 条，**保存保真**：每个新命令都断言只改
-`word/document.xml` 且真的写进 XML；列宽一条是**往返**——写入、保存、重开读回
-三处一致）。
-
-**在真浏览器里核对过**（无头 Chrome，真 DOM + 真 CSS）：七个宽度下工具条换行而
-不溢出（`scrollWidth === clientWidth`）、39 个图标都有非零尺寸、点「引用」与
-「段落底纹」之后画布上的计算样式是预期值。这一轮抓出两条单测抓不到的：
-`ToolbarToggleGroup` 没图标时渲染成空方块（DOM 断言全过），以及分组名与控件名
-重复（读屏念两遍）——两者现在都有断言守着，见 D-062。
+编辑器实现时会静默失效的细节见 `packages/office/src/editors/AGENTS.md`。
 
 ### 15.5 现在的边界
 
@@ -2786,13 +2642,8 @@ StylePanel（373 行）——mimir 用自己的统一外壳（§15.4.1）。与�
 | 预览缩放 | 预览宿主层的 `zoom` + `--html-preview-zoom` |
 | 元素路径（面包屑） | `ancestorsOf(map, sid)` + `map.bySid` 拿祖先，末段用 `gx:select` 带回来的 `tag` / `className` |
 
-### 15.11.1 三个静默坑（都在 `HtmlEditor.tsx` 的注释里）
-
-| 症状 | 原因 |
-|---|---|
-| **切到预览再切回来，中间改的东西没了**（接着敲键就把它覆盖掉） | 视图切换写成了条件渲染。源码编辑器一卸载，CodeMirror 的实例与编辑历史一起消失，而重新挂载时 `SourceEditor` 只吃 `initialText`——那是**刚打开文件时**的文本。所以两个栏位**始终挂着**，只用 `hidden` 决定谁在布局里 |
-| **`hidden` 看起来完全没生效** | `[hidden] { display: none }` 在**浏览器默认样式表**里，而 `.mimir-html-preview-pane` 自己写了 `display: flex`——**作者样式一律胜过默认样式**（与选择器特异性无关）。要有 `.mimir-html-split > [hidden] { display: none }` 压回去（实测：少了这条，切到「只看预览」时源码栏照常占着半屏） |
-| **「放大到 200%」得到的是手机版布局** | `zoom` 不只是画大，它**同时缩掉元素的布局尺寸**：`zoom: 2` 下 `width: 100%` 解析成「容器宽度 ÷ 2」的局部像素，渲染出来还是容器那么宽——于是得到「一个 360px 宽的视口被拉成 720px」，内容被重排了。实测（1440 视口）：只给 `zoom` 时 host 的 `offsetWidth` 359 对 `rect` 719，frame 内视口被压到 359。要 `width: calc(100% * var(--html-preview-zoom))` 乘回来，**并且 `flex: none`**——宿主是 flex 子项，默认可收缩会把宽度又收回去。设备档位那两条 `max-width` 同理 |
+HTML 编辑器的挂载、`hidden` 样式与缩放布局的静默坑，只在
+`packages/office/src/editors/AGENTS.md` 维护。
 
 **面包屑与预览是双向的**：点预览里的元素 → 面包屑出来；点面包屑 → 预览滚到
 那个元素并选中它（`postMessage` 一条 `gx:select`，检视脚本在 `inspector.js` 的
@@ -2927,15 +2778,9 @@ DPI 都不用重算。存像素就要在每次缩放时重算一遍，而漏算�
 
 #### 画布与叠加层：百分比定位的前提是「这一层的盒子与画面一样大」
 
-高亮与裁剪框按页面比例定位，分母是那张纸（`.mimir-pdf-sheet`）。**这一层的盒子
-必须与 canvas 的 CSS 盒完全一致**，而这里实测踩过三处（都会静默地错位置）：
-
-| 症状 | 原因 |
-|---|---|
-| 高亮纵向被压扁、框住的不是那行字 | 工作台是 flex 行，默认 `align-items: stretch` 把「纸」拉到工作台那么高。实测：页面 900×1200、纸层 900×667，于是百分比定位的高亮挤进 667 里。要 `align-self: flex-start` |
-| 缩放说了假话（写 150%、画布一点没变大） | `.mimir-pdf-page` 上的 `max-width: 100%` 只夹宽度不夹高度。700px 窗口下画出一张 666×1200 的**被压扁**的页（宽高比 0.555，而页面是 0.75）。现在页面保持缩放指定的尺寸、工作台横向滚动 |
-| 放大的页面左边滚不到 | 用 `justify-content: center` 居中时，溢出方向跟着 start 边被裁掉。改成子项 `margin-inline: auto`（溢出时退化成 0） |
-| 窄窗口下工具条右端的「保存」看不见 | `.mimir-editor` 是 flex 子项，`min-width: auto` 让它不会缩到比内容更窄（里面是 900px 的页面）——420px 窗口里外壳量出 932px。它看起来像「工具条没折行」，其实是外壳的宽度下界。补 `min-width: 0`；`overflow: clip` 挡不住（Chrome 只对 `hidden`/`auto`/`scroll` 把自动最小尺寸算作 0，而 `clip` 是工具条 sticky 必需的） |
+高亮与裁剪框按页面比例定位，分母是那张纸（`.mimir-pdf-sheet`）。
+**纸层的 CSS 盒必须与 canvas 同尺寸**；布局导致的静默错位见
+`packages/office/src/editors/AGENTS.md`。
 
 **canvas 不写死 `height`**：高度由位图的宽高比决定（canvas 是有内在尺寸的替换
 元素）。写死了就多一个可能与宽度不同步的数——不同步的症状正是「画面被拉伸」。
@@ -2946,66 +2791,20 @@ DPI 都不用重算。存像素就要在每次缩放时重算一遍，而漏算�
 让底下的字透出来——不透明的高亮会把文字盖掉，而「那几个字长什么样」正是要找
 的东西。
 
-#### 实测踩过的坑（都会静默坏）
+#### 验证边界
 
-| 症状 | 原因 |
-|---|---|
-| 界面全白，且**没有任何报错** | 第一版用「模块级记一个 `activeCancel`，新调用先取消旧的」防并发。而 StrictMode 挂载两次 → 第二次取消了第一次、第二次自己又被 cleanup 取消 → **两次都没画**。单独跑 pdf.js 能画出 2566 个非白像素，放进组件就空白。改用**代次**：每次调用领一个号，await 之间对一次「我还是最新的吗」，不是就收掉自己、返回 null，**不去取消别人** |
-| `Cannot use the same canvas during multiple render() operations` | 什么都不做时，后一个渲染在前一个没画完时开始。这就是上面那条要解决的问题 |
-| 预览过一次之后保存的 PDF 是 0 字节 | `getDocument` 把字节 **transfer** 给 worker，传原引用会让调用方手里的 `Uint8Array` 变成空。要传 `bytes.slice()` |
-| 保存完状态行还挂着「已修改，未保存」 | 拿旧原件当基线（见上面 `PdfEdit.file`）。字节其实已经写出去了，所以这是「界面与事实不一致」 |
-| 第二次保存把导入的页丢掉 | 导入的字节没跟着改动走 |
-| 裁一刀再换纸型，画面整体平移 | `scaleContent` 绕原点缩放，而裁剪后的可视区不在原点 |
-| 中文 PDF 整段文字空白 | cmaps 没加载到（按原始文件名取，见上） |
-
-#### 验证方式（不是只跑单元测试就宣布完成）
-
-| 验什么 | 怎么验的 | 结果 |
-|---|---|---|
-| 页序、旋转、插入空白页、导入的页 | `pdf-pages.test.ts` 用 **pdf.js 独立读回**每页的文字与尺寸，再用 **pdf-lib 独立读回**旋转角与盒子 | 3 页倒序 + 旋转 → 逐页对上；导入的页第二次保存仍在；导入字节丢了**抛错** |
-| 裁剪不动内容 | 逐字节比内容流（`contentBytes`） | 裁剪前后内容流完全相同，只有 CropBox 变了 |
-| 纸型缩放锚点 | 换纸型前后用 pdf.js 读**文字落点** | 裁左边 50pt 再缩到 200pt：x 从 100 → 90（= 50+(100−50)×0.8）；不补平移会得到 80 |
-| 画布投影（四个旋转角） | `pdf-pages.test.ts` 把 `projectBox` 与 pdf.js 的 `convertToViewportPoint` **逐个角**比对 | 0/90/180/270 全部一致到 1e-6 |
-| 中文查找 | 手工拼一份 Type0/Identity-H 的 CID PDF（字体不内嵌、靠 ToUnicode 映射——真实中文 PDF 的形状） | 读出「组件」、搜得到、高亮框在字上 |
-| **真浏览器**（无头 Chrome + CDP，37 项） | 真 pdf.js 渲染 + 真 pdf-lib 保存 + 真文件选择器（`DOM.setFileInputFiles`）；断言画布的非白像素、高亮的盒子与**框内的墨迹数**、工具条在 420px 下的换行 | 37/37；高亮框内非白像素 2399（英文）/ 2973（中文）——框住的确实是字 |
-
-**保存出来的字节还要独立读回**：真浏览器里保存 3 次，每次都用 pdf-lib 读页数
-与旋转、用 pdf.js 读每页文字。实测第 2 次（导入中文页之后）4 页、旋转
-`[90,90,0,90]`、文字含「组件性能」；第 3 次（再转 90° 再存）**导入的页仍在**
-——这条直接守着上面那个「第二次保存丢页」的坑。
+页面结构改动需用 pdf-lib 与 pdf.js **独立读回产物**，覆盖页序、旋转、
+导入页的连续保存、裁剪不改内容流及换纸型后的文字落点。中文查找用
+带 ToUnicode 映射的 CID PDF 验证；画布与高亮对齐、窄窗换行须在真浏览器
+查看，不能只靠单元测试。
 
 **仍未做的**：改文字（PDFium 的 WASM）、单边裁剪（模型支持四边各自的量，界面上
 只能四边等量）、表单填写、矢量图形编辑、批注、以及**选中/复制页面上的文字**
 （文字层只用来定位高亮，没有做可选的文本层）。
 
-### 15.13 编辑器外壳与三种「纸」的观感（2026-09 修复轮）
+### 15.13 编辑器外壳的界面约束
 
-这一轮只修界面层的可见缺陷，**没有新增能力、没有改数据模型**。四条与
-「看得见的事实」有关，记在这里是因为它们的成因都不是「某个值写错了」。
-
-| 症状 | 成因 | 修法 |
-|---|---|---|
-| 打开某些 pptx，画布上的字**逐字竖排**、字压着字并冲出纸外 | `<p:sp>` 的几何三处来源（自己的 `<a:xfrm>`、占位符链、或者什么都没有）里第三种没兜底，`transform` 落在 `(0,0,0,0)`；而 `layoutText` 的可用宽度是 `max(0 − 内边距, 1) = 1px`，于是每个汉字占一行 | 渲染层兜底（`pptx-render.ts` 的 `withFallbackGeometry`）：**只对有文字的 text/shape**、按 `sldSz` 比例回填默认框（左右各 5%、高 20%，多个框竖向排开）。模型一个字节不动（保存是补丁式的），并用 `RenderedSlide.geometryFilled` 在状态行如实说明「N 个文本框在文件里没有几何」 |
-| docx 的纸与工作台糊成一片（差 4/255），看不出纸从哪儿开始 | `.doc-page` 的 `box-shadow: var(--docs-page-shadow)` 里的变量**只定义在一份没被 import 的 vendor 样式**里（`vendor/apps/docs/src/renderer/styles.css`），于是解析成 `none` | 宿主补 `--me-page-shadow`（`boxShadowTertiary`——DESIGN §5.3 里「卡片微浮起」那一档），`editors.css` 的 `.mimir-docx-scroll` 把它接到 `--docs-page-shadow` 上 |
-| docx 工具条上两个一模一样的「（默认）」下拉，看不出哪个管中文哪个管西文 | `ToolbarGroup` 只渲染 `role="group"` + `aria-label`，不渲染可见文字——组名只到得了读屏与 hover 的 `title` | 两个字体下拉与字号前面补 `.me-label` 级的可见前缀（中文 / 西文 / 字号）；字号的 `null` 档改用新加的 `emptyLabel`（「（默认）」），与「值不在档位里」的「其它」分开 |
-| xlsx 附属面板写着 `C3`，而网格里只有行号栏、没有列字母 | 列字母从未渲染（模型里一直有 `sheet.columns`，它是列宽的同一条数据） | 表头补一行 `<th class="mimir-xlsx__colhead">` + 左上角交角格；与行号栏共用一套 sticky chrome，选中列跟着十字高亮亮 |
-
-另外两处是**交互的不对称**，属于「同壳的六种格式应当一致」：
-
-- **笔记工具条没有分组分隔线**（其余五种都有）。`.mimir-editor__bar` 与
-  `.me-group` 的 `gap` 都是 2px，不画线时组与组、组内按钮的间隔完全一样，
-  八到十个组读成一个没有结构的图标带。修法是按已有的组边界补
-  `<ToolbarDivider />`（**只画在真正的组边界**，且只有前一组确实渲染了才画）。
-- **pdf 的「删除这一页」一下生效、没有确认也没有撤销**（docx / html / 笔记
-  的工具条都有撤销）。这一条加的是**确认**而不是撤销栈：撤销是新能力，而这
-  里要的是「别误触」。为此新增外壳原语 `ToolbarConfirm`（antd `Popconfirm`），
-  并在 PDF 的常驻说明里写清退路——删除、调序、旋转都只在保存时落到文件上。
-
-**一个包裹在 `ToolbarConfirm` 里暴露出来的静默 bug**：`ToolbarButton` 是函数
-组件，没有把 `ref` 转给 antd 的 `Button`。rc-trigger 用
-`cloneElement(child, { ref })` 拿触发元素来定位，ref 丢掉之后 `targetEle` 是
-null、`onAlign` 直接返回，弹层留在初始位置 `left: -1000vw; top: -1000vh`。
-**DOM 里一切正常**（`.ant-popconfirm` 在、文案在、点确认也能走到 `onConfirm`），
-只有屏幕上没有——真实浏览器实测确认框的 rect 是 `x=-14400, y=-9000`。
-React 19 的 ref-as-prop 下补 `ref` 透传即可，`EditorShell.test.tsx` 有一条
-断言守着「ref 落到真 `<button>` 上」。
+当前六种编辑器的共同形态、纸张层级、工具条与状态行见
+`DESIGN.md` §8.4.1。缺几何的 PPTX 文本框、确认弹层定位等静默坑，
+按代码归属记在 `packages/office/src/editors/AGENTS.md` 与
+`packages/office/src/shell/AGENTS.md`，这里不重复一次修复的症状表。

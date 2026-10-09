@@ -67,7 +67,7 @@ src/
     MarkdownEditor.tsx 笔记：30+ 个工具条控件（D-061）
     markdown-format.ts markdown 方言的判据与操作（整张列表的范围、段落样式的
                        当前值、列对齐、工具条状态串）。**导出**给宿主测——
-                       方言在宿主那边（`apps/web/src/editor/extensions.ts`），
+                       方言在宿主那边（`packages/renderer/src/editor/extensions.ts`），
                        只有真方言能验证这些行为
     MarkdownEditor.test.tsx（在宿主）按钮 → 命令：挂真工具条 + 真编辑器实例
     markdown-controls.test.ts  控件契约的**静态**一半（读源码：没有手写原生
@@ -154,7 +154,7 @@ scripts/
 界面在这个包里（D-054），因为六种格式的外壳必须长得一样——而「一样」只能
 由同一份实现保证。边界是：
 
-| 归包 | 归宿主（`apps/web`） |
+| 归包 | 归宿主（`packages/renderer`，两端共用） |
 |---|---|
 | 壳（工具条 / 状态行 / 布局 / 保存状态） | 方言（markdown 的 Tiptap 扩展集合） |
 | 编辑器组件 | 正文排版类（与只读视图共用同一个） |
@@ -281,25 +281,15 @@ node packages/office/scripts/sync-upstream.mjs --from /tmp/genoffice --check  # 
 `files` 由脚本从入口出发沿 import 图算出。所以**上游新增的依赖会自动进来**，
 但**新功能不会**（那要改 `entries`）。
 
-闭包算完后脚本会**自检**：每个被抽出的文件，它的每个相对导入都要能在闭包内
-解析到；不满足就报错退出。这条自检是有代价换来的——解析不完整时是**静默**
-跳过文件的，实测踩过两次：
-
-| 症状 | 原因 |
-|---|---|
-| docx-engine 的 35 个文件全丢，闭包 93 → 56 | `.js` 后缀没映射回 `.ts`（改写产出 NodeNext 写法） |
-| 9 个文件漏掉（watermark / protection / blank…） | 抓 import 的正则不允许跨行，而上游大量用多行 `export { … } from` |
-
-两次都是「脚本成功退出、文件少了一批」。有自检之后同类失误会直接报错。
+闭包算完后脚本会自检每个相对导入都能在闭包内解析；对应的静默漏文件
+症状与原因见上一节，不在这里重复。
 
 ---
 
-## 已知边界（POC 与产品的距离）
+## 能力边界
 
 | 缺什么 | 说明 |
 |---|---|
-| ~~分页视图~~ | **已实现**：`src/pagination.ts` 把连续流切成纸张，含块内断行、拆表+重复表头、页眉脚、脚注 |
-| ~~工具栏~~ | **docx 已补齐**（`src/editors/DocxEditor.tsx` 的 `DocxToolbar`，八组 40+ 控件，清单与四项如实不做见 TECH §15.4.3）。上游的 ribbon 没 vendored（那是它自己的办公壳），所以每一项都是 mimir 自己的界面决策 |
 | **大文档解析** | `parseDocx` 是同步重活，上游为它做了 worker（`parse-off-thread.ts`）。现在直接 await，大文档会卡主线程 |
 | **保存冲突** | `PUT /api/documents/:id/file` 不校验 `If-Match`。单客户端可接受，多客户端会互相覆盖 |
 | **xlsx** | **网格 + 改单元格已做**（`src/xlsx.ts` 读 + `src/xlsx-edit.ts` 写，零新增依赖）。与 docx/pptx 是**两条技术路线**：上游走 13.7K 行 Rust 侧车 + Univer，而「把表画出来、改几个格子」用不到那一层——所以这里没 vendored 任何东西。见 TECH §15.7 |
@@ -344,14 +334,6 @@ node packages/office/scripts/sync-upstream.mjs --from /tmp/genoffice --check  # 
 | 形状旋转后位置偏 | OOXML 的 rot 绕**框中心**；翻转后坐标系回到左上角，旋转中心要相应还原 |
 | 合并相邻 run 后间距不对 | 同格式的两个 run 位置接不上（中间有空档）时**不能合**——合了就被浏览器按自然排版重排 |
 | 幻灯片空白（背景也没了） | 占位符的位置可能在**母版**（幻灯片与版式里都是空 `<p:spPr/>`）。两级上溯链断在任何一级都会让内容叠在 (0,0)。`src/pptx.test.ts` 有一条测试专门断言这个 |
-
-### html 编辑器的三个静默坑（都在 `src/editors/HtmlEditor.tsx` / `editors.css` 的注释里，完整版见 TECH §15.11.1）
-
-| 症状 | 原因 |
-|---|---|
-| 切到预览再切回来，中间改的东西没了（接着敲键就把它覆盖） | 视图切换写成了**条件渲染**。源码编辑器一卸载，CodeMirror 的实例与编辑历史一起消失，而重新挂载时只吃 `initialText`——那是刚打开文件时的文本。两个栏位必须**始终挂着**，只用 `hidden` |
-| `hidden` 属性看起来完全没生效 | `[hidden] { display: none }` 在**浏览器默认样式表**里，而 `.mimir-html-preview-pane` 自己写了 `display: flex`——作者样式一律胜过默认样式（与特异性无关）。要有 `.mimir-html-split > [hidden] { display: none }` 压回去 |
-| 「放大到 200%」得到的是手机版布局 | `zoom` 同时**缩掉布局尺寸**：`zoom: 2` 下 `width: 100%` 是容器的一半，于是 frame 的视口被压到 360px、内容重排。要 `width: calc(100% * var(--html-preview-zoom))` 乘回来，**并且 `flex: none`**（否则 flex 又把它收回去）。实测：1438 视口下 host 的 `offsetWidth` 359 对 `rect` 719 |
 
 ### 保存与编辑的静默坑
 

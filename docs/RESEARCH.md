@@ -1150,28 +1150,16 @@ INSERT / UPDATE(OF search_text) / DELETE 上，所有写入路径（笔记保存
 上传、重建索引）自动被覆盖，没有「某个写入点忘了同步索引」的静默缺口；
 `pnpm db:reindex` 做全量重建兜底。
 
-### 11.3 向量检索：sqlite-vec vs pgvector（M1-B 蓝图，本轮不实现）
+### 11.3 向量检索：sqlite-vec 与 pgvector 的规模边界
 
-第二个否决理由「sqlite-vec 是纯暴力检索」**属实**，量化对比：
+SQLite 的 sqlite-vec 是暴力扫描，Postgres 用 pgvector HNSW。对个人知识库
+预计的 1–10 万 chunk，暴力扫描的绝对延迟可接受；百万级时需重新评估。
+这里的数量级是估算，不能当作生产性能承诺。
 
-| 项 | pgvector HNSW（§6.2 实测） | sqlite-vec 暴力扫描 |
-|---|---|---|
-| 5000 向量 top-10 | 0.084 ms | 同量级（扫描 5000×1024 维 ≈ 5×10⁶ 乘加，亚毫秒） |
-| 10 万 chunk × 1024 维 | ~0.1 ms | ≈ 10⁸ 乘加，C 实现 SIMD 下 **毫秒~几十毫秒级** |
-| 100 万 chunk | ~1 ms | 数百毫秒，开始影响交互 |
-
-个人知识库的 chunk 量级是 1–10 万（≈ 1000–10000 篇文档），暴力扫描的绝对
-延迟完全可接受；百万级才需要重新评估——那时触发的是 D-024/D-031 既有逃生舱
-（把 Postgres 请回来做向量库），而不是现在为一个不存在的规模付钱。
-
-M1-B 的双后端蓝图（写在 §4.5/§4.8，本轮只做设计）：
-
-- **PG 侧**：维持 §4.8 的 `halfvec` HNSW + 按维度分区的 partial index 设计，不变
-- **SQLite 侧**：`vec0` 虚拟表（`embedding float[1024]` + 维度元数据列），
-  KNN 查询 `WHERE embedding MATCH :query AND k = :n`；sqlite-vec 是 MIT 许可，
-  npm 分发平台预编译的 loadable extension，`better-sqlite3.loadExtension()` 加载
-- 两条侧实现为**同一个 vector leg 的两个方言模块**——与 keyword/substring
-  通道同一组织方式
+早期蓝图曾考虑 sqlite-vec 的 `vec0` 虚拟表；落地时选择标量函数
+`vec_distance_cosine`（D-084）：向量已在 `chunk_embeddings` 表中，
+再建 `vec0` 会增加第二份数据及同步路径，也不利于与 kind/tag/删除态
+过滤组合。PG 侧使用 `halfvec` HNSW。两种方言仍实现同一个 vector leg。
 
 ### 11.4 并发、可靠性与运维
 
@@ -1247,16 +1235,6 @@ unknown）——api 客户端因此采用「单例 + 模块级传输配置」而
   （绑定到 127.0.0.1 的 Host 才有对应 cookie）
 - Electron `contextIsolation + sandbox`，preload 只暴露只读 boot 信息与退出
 - 单实例锁避免双窗口并发写同一个 SQLite
-
-### 12.5 验证记录（2026-09-25）
-
-- `pnpm desktop:start`（进程内宿主 + 构建产物）：注册 → 建笔记 →
-  搜「组件」双通道命中 → 杀进程重启 → 登录态与数据保留
-  （数据在 `~/Library/Application Support/mimir/data`，含
-  `auth-secret`/`mimir.db`/WAL）
-- `pnpm desktop:build` 产出 dmg（460MB，x64，ad-hoc 签名）；安装到
-  `~/Applications` 后启动：宿主起、登录、搜索「组件」命中——与
-  desktop:start 行为一致
 
 ---
 

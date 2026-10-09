@@ -147,9 +147,8 @@ function LoginPage() {
   const { styles } = useStyles()
   const { message } = App.useApp()
   const bridge = useDesktopBridge()
-  /* 登录页也要那条标题栏（D-100）：云端模式落地的第一个界面是远端登录页，
-     而壳是 frame: false——没有它用户连窗口都拖不动。这里没有侧栏可折叠，
-     所以三项都给静默值 */
+  /* 桌面 renderer 意外落到登录页时仍要有标题栏；云端模式现在由远端 Web 构建
+     与系统窗口边框负责（D-105）。这里没有侧栏可折叠，三项都给静默值。 */
   const titleBar = useTitleBar({ collapsed: false, showToggle: false, onToggleCollapsed: noop })
   const router = useRouter()
   const queryClient = useQueryClient()

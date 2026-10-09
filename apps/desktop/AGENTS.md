@@ -49,7 +49,9 @@ createApp(createRoot(container), {
 路由（而类型上还合法）。
 
 标题栏之所以住在这里而不在渲染层：它整条是 `-webkit-app-region: drag`、
-三枚控件走 IPC——浏览器里一件都不存在。
+三枚控件走 IPC——浏览器里一件都不存在。**仅本地模式**加载这份桌面
+renderer；云端模式加载远端 Web 构建，用系统边框与原生「更换使用方式」菜单
+（D-105）。桌面专属路由和设置分区在云端页面中也不存在。
 
 ### 选择页为什么是第二个 HTML 入口，而不是主应用的一条路由
 
@@ -98,8 +100,9 @@ electron-vite 的 dev 形态会为渲染进程另起一个 Vite dev server，让
 `http://127.0.0.1:<宿主端口>` 的 httpOnly cookie（`SameSite=Lax`），
 窗口换成 `localhost:<vite 端口>` 后那条 cookie 根本不会带上。
 
-所以 `desktop:dev` 走 `electron-vite build --watch`：三段仍产到 `dist/`，
-由宿主做静态服务。代价是渲染进程没有 HMR，改完要刷新窗口（Ctrl+R）。
+所以 `desktop:dev` 先完整构建并启动，再走 `electron-vite build --watch`：
+三段仍产到 `dist/`，由宿主做静态服务。渲染进程没有 HMR，改完要刷新窗口
+（Ctrl+R）；main/preload 的新产物要重启 Electron 才会加载。
 
 ### 启动自检
 
@@ -128,10 +131,10 @@ electron-vite 的 dev 形态会为渲染进程另起一个 Vite dev server，让
 | **`desktop:dev` 客户端启动失败后，下一次启动报 3000 被占用** | 旧编排器在独立 Vite 进程里起服务端，直接启动的 `pnpm` 退出后孙进程可能继续监听 3000。现在 `desktop:dev` 与 `desktop:start` 共用进程内宿主和 SQLite，端口随机分配；编排器仍清理整棵进程树，防止构建或 Electron 失败时留孤儿进程 |
 | **`desktop:dev` 误用 `.env` 的 PostgreSQL，启动时报缺表** | 旧编排器的独立服务端继承仓库 `.env`。现在与正式桌面端走同一条宿主路径，`host.ts` 在加载服务端前明确设置 SQLite 的 `DATABASE_URL` 与 `DATA_DIR`，不受 `.env` 的 PostgreSQL 配置影响 |
 | **`desktop:dev` 报 `Downloading Electron binary... TypeError: fetch failed`** | npm 包虽已由 pnpm registry 安装，Electron 首次运行还会从 GitHub 单独下载二进制；GitHub 不通时包存在但 `dist/electron` 缺失。`desktop:dev` 给子进程默认传 `ELECTRON_MIRROR`（npmmirror，可由用户覆盖）。手动补装命令见 TECH §14.4；无需删整个 `node_modules` |
-| **首次运行 `desktop:dev`，Electron 报主进程入口 `dist/main.js` 不存在** | Electron 的 npm 包只带运行时，应用主进程与 preload 要由桌面包的 Vite 构建。根命令 `desktop:dev` 调用 `desktop:start`，由它先完成 web/server/desktop 构建 |
+| **首次运行 `desktop:dev`，Electron 报主进程入口不存在** | Electron 的 npm 包只带运行时，应用主进程与 preload 要由桌面包的 Vite 构建。根命令 `desktop:dev` 调用 `desktop:start`，由它先完成 server/desktop 构建；产物入口是 `dist/main/index.js` |
 | **自绘标题栏里的按钮点不动（控制台无报错）** | 标题栏整条是 `-webkit-app-region: drag`，里面每个可点元素必须显式 `-webkit-app-region: no-drag`。漏标的表现是「点击被当成拖窗口」——不报错、没有日志、看起来像按钮坏了。**这条是方案 C 被否掉的理由**（要标注的地方太多） |
 | **`window.mimirDesktop` 在窗口里不存在** | `BrowserWindow` 的 `preload` 写成了相对路径（`'./dist/preload.js'`）：加载 http 地址时 Electron 解析不了它，**preload 静默不执行**。要用 `path.join(__dirname, …)` 的绝对路径——三段布局下主进程在 `dist/main/`，所以是 `__dirname/../preload/index.js`（D-103） |
-| **云端模式下窗口不能拖也不能关** | 桌面壳是 `frame: false`，拖动区与三枚控件由页面提供，而云端模式落地的第一个界面是**远端登录页**——登录页原先没有 `TitleBar`，实测切到云端后整条窗口 chrome 凭空消失。登录页也要渲染 `TitleBar`（无侧栏时只留拖动区与控件） |
+| **云端模式下窗口不能拖也不能关** | 云端直接加载远端 Web 构建，它固定注入 `{ kind: 'browser' }`，不会渲染桌面标题栏。云端窗口必须用系统边框，模式切换由主进程菜单提供（D-105）；本地与选择页才用 `frame: false` / 自绘控件。跨这两种形态切换时先建新窗口再关旧窗，避免 `window-all-closed` 退出应用 |
 | **桌面端任务栏显示「Electron」或 `@mimirdesktop`** | 三处都默认错，且都不报错：① electron-builder 不给 `executableName` 时用 package.json 的 `name`（`@mimir/desktop`）拼出 `@mimirdesktop`，而 Linux 的窗口列表按可执行文件名推导；② 开发模式（`electron .`）下可执行文件是 `electron`，WM_CLASS 就是它；③ **`--class` 开关在 Electron 44 里已被忽略**（`appendSwitch('class')`、命令行 `--class=`、把二进制改名都实测无效），只有 **`app.setDesktopName('mimir.desktop')`** 生效——注意参数要带 `.desktop` 后缀（D-091 / D-094） |
 | **打包版首启白屏（开发时正常）** | 选择页自 D-103 起是渲染进程的第二个入口，产物在 `dist/renderer/setup.html`，由打包配置的 `files: dist/**` 带进 asar——所以这一条现在是**结构性成立**的（原先它在 `ui/` 下，`files` 漏了 `ui/**` 就只有打包版炸）。但改 `setupPagePath()` 或 renderer 的 `outDir` 时仍要想到这对：开发形态读仓库里的文件，打包形态读 asar 内的，两者路径表达式必须同一个 |
 | **切到云端后点「返回」/切换没反应** | `showSetupPage` **不能清 `modeState`**：选择页要靠它决定形态（首次选择 vs 切换）与预填地址。进入选择页只置 `setupVisible`（供 did-fail-load 判断），真正改模式的只有 `choose()` |

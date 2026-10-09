@@ -1,6 +1,6 @@
 import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { app, BrowserWindow, dialog, ipcMain, nativeTheme, session } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, session } from 'electron'
 import {
   LOCAL_TOKEN_COOKIE,
   type DesktopBootInfo,
@@ -67,6 +67,8 @@ if (process.platform === 'linux') {
 let host: HostHandle | null = null
 let bootInfo: DesktopBootInfo | null = null
 let win: BrowserWindow | null = null
+type WindowSurface = 'setup' | 'local' | 'cloud'
+let windowSurface: WindowSurface | null = null
 /** 当前模式；首次启动尚未选择时为 null */
 let modeState: DesktopModeState | null = null
 /**
@@ -130,9 +132,9 @@ function windowIcon(): string | undefined {
 }
 
 /**
- * 自绘标题栏的窗口配置（D-094）。
+ * 本地模式与选择页的自绘标题栏配置（D-094）；云端用系统边框（D-105）。
  *
- * 两个平台走两条不同的路，这是 Electron 的既有形状，不是我们的选择：
+ * 自绘窗口在两个系统平台走不同的路：
  *
  * | 平台 | 配置 | 原因 |
  * |---|---|---|
@@ -148,7 +150,9 @@ function windowIcon(): string | undefined {
  * 这就是 `-webkit-app-region` 与下面的 IPC 存在的原因。选择页也照这条走
  * （它自带一条拖动区与窗口控件）。
  */
-function windowChromeOptions(): Electron.BrowserWindowConstructorOptions {
+function windowChromeOptions(surface: WindowSurface): Electron.BrowserWindowConstructorOptions {
+  // 远端提供的是浏览器构建，里面没有桌面标题栏；由系统负责云端窗口的控件。
+  if (surface === 'cloud') return {}
   if (process.platform === 'darwin') {
     return {
       titleBarStyle: 'hidden',
@@ -158,15 +162,16 @@ function windowChromeOptions(): Electron.BrowserWindowConstructorOptions {
   return { frame: false }
 }
 
-function createWindow(url: string): BrowserWindow {
+function createWindow(url: string, surface: WindowSurface): BrowserWindow {
   const icon = windowIcon()
-  win = new BrowserWindow({
+  const created = new BrowserWindow({
     width: 1440,
     height: 900,
     // 与前端主题的底色一致，避免加载瞬间的白/黑闪烁方向错误。
     // 选择页与深色系统同理——底色跟系统走（页面本身也按 prefers-color-scheme 渲染）
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#0b0c0e' : '#ffffff',
-    ...windowChromeOptions(),
+    ...windowChromeOptions(surface),
+    autoHideMenuBar: surface !== 'cloud',
     ...(icon === undefined ? {} : { icon }),
     webPreferences: {
       /**
@@ -182,13 +187,33 @@ function createWindow(url: string): BrowserWindow {
       sandbox: true,
     },
   })
-  windowControls(win)
-  watchCloudLoadFailure(win)
-  win.on('closed', () => {
-    win = null
+  win = created
+  windowSurface = surface
+  windowControls(created)
+  watchCloudLoadFailure(created)
+  created.on('closed', () => {
+    if (win === created) {
+      win = null
+      windowSurface = null
+    }
   })
-  void win.loadURL(url)
-  return win
+  void created.loadURL(url)
+  return created
+}
+
+/** 窗口装饰不能在现有 BrowserWindow 上切换；先开新窗，避免触发退出。 */
+async function loadWindow(
+  target: BrowserWindow,
+  url: string,
+  surface: WindowSurface,
+): Promise<void> {
+  if ((windowSurface === 'cloud') !== (surface === 'cloud')) {
+    createWindow(url, surface)
+    target.close()
+    return
+  }
+  windowSurface = surface
+  await target.loadURL(url)
 }
 
 /**
@@ -426,8 +451,44 @@ async function handleCloudUnreachable(
  * 切换、预填地址、能不能「返回」）。真正改变模式的只有 `choose()`。
  */
 async function showSetupPage(target: BrowserWindow): Promise<void> {
+  if (target.isDestroyed() || target !== win) return
   setupVisible = true
-  await target.loadURL(setupPageUrl())
+  await loadWindow(target, setupPageUrl(), 'setup')
+}
+
+/** 云端页面不带桌面设置入口，切换动作必须由载体自己提供。 */
+function installApplicationMenu(): void {
+  Menu.setApplicationMenu(
+    Menu.buildFromTemplate([
+      {
+        label: 'mimir',
+        submenu: [
+          {
+            label: '更换使用方式…',
+            accelerator: 'CmdOrCtrl+Shift+M',
+            click: () => {
+              const target = win
+              if (target && !target.isDestroyed()) void showSetupPage(target)
+            },
+          },
+          { type: 'separator' },
+          { role: 'quit' },
+        ],
+      },
+      {
+        label: '编辑',
+        submenu: [
+          { role: 'undo' },
+          { role: 'redo' },
+          { type: 'separator' },
+          { role: 'cut' },
+          { role: 'copy' },
+          { role: 'paste' },
+          { role: 'selectAll' },
+        ],
+      },
+    ]),
+  )
 }
 
 function sameState(a: DesktopModeState, b: DesktopModeState): boolean {
@@ -507,8 +568,8 @@ function registerModeBridge(paths: HostPaths): void {
       try {
         const url = await prepareTarget(modeState, paths)
         setupVisible = false
-        if (target && !target.isDestroyed()) await target.loadURL(url)
-        else createWindow(url)
+        if (target && !target.isDestroyed()) await loadWindow(target, url, modeState.mode)
+        else createWindow(url, modeState.mode)
       } catch (error) {
         const detail = error instanceof Error ? error.message : String(error)
         dialog.showErrorBox('切换失败', detail)
@@ -533,6 +594,7 @@ function registerModeBridge(paths: HostPaths): void {
 
 async function main(): Promise<void> {
   console.log('[desktop] whenReady，开始启动流程')
+  installApplicationMenu()
   ipcMain.handle('mimir:boot-info', () => bootInfo)
   ipcMain.on('mimir:quit', () => app.quit())
 
@@ -545,14 +607,14 @@ async function main(): Promise<void> {
   const config = await readModeConfig(app.getPath('userData'))
   if (!config) {
     setupVisible = true
-    createWindow(setupPageUrl())
+    createWindow(setupPageUrl(), 'setup')
     return
   }
 
   modeState = config
   try {
     const url = await prepareTarget(config, paths)
-    createWindow(url)
+    createWindow(url, config.mode)
   } catch (error) {
     // 先落日志（弹窗是阻塞的，用户可能永远不点），再弹窗说清原因
     console.error('[desktop] 启动失败：', error)

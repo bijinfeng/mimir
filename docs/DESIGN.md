@@ -5,7 +5,7 @@
 它不是组件库文档——组件用 antd，用法看官方。这里只写 mimir 自己的那部分：
 哪些用了 antd 默认、哪些覆盖了、为什么。
 
-代码侧的真相来源是 `apps/web/src/theme/tokens.ts`，本文档解释它。
+代码侧的真相来源是 `packages/renderer/src/theme/tokens.ts`，本文档解释它。
 两者冲突时以代码为准，但请把文档一起改掉。
 
 ## 与原型的分工
@@ -15,15 +15,11 @@
 | 层 | 谁说了算 | 为什么 |
 |---|---|---|
 | 值（颜色、字号、间距、动效） | **本文档** | 本文档的值是实测出来的：原型里 `#1677ff` 当文字只有 3.61:1，本文档改用 `colorLink` 并算了 5.50:1。`design.test.ts` 守着这条线 |
-| 形态（每个组件长什么样、由哪些值组成） | **§8** | §8 的数值取自原型的计算样式；原型先于规范成熟 |
-| 交互（点什么会发生什么） | `PRD.md` §5 | 原型是它的验证载体 |
+| 形态（每个组件长什么样、由哪些值组成） | **§8** | 已定型的界面形态写在这里，原型仅供演示 |
+| 交互（点什么会发生什么） | `PRD.md` §5 | 产品交互以需求文档为准 |
 
-一句话：**原型在「形态」上更成熟，本文档在「值」上更成熟。**
-两者冲突时按上面的表判断该听谁的，而不是一律以某一方为准。
-
-§8 是这份文档**曾经缺失的一层**——只有值、没有形态时，每个组件各写各的，
-于是出现了全仓 11 个不同字号、导航项与列表项内边距不一致的界面。
-用户说「太粗糙」，粗糙的不是某个值，是**没有形态可依**。
+原型可能保留早期布局；冲突时以本文档的现行视觉规范和 `PRD.md` §5 的
+交互契约为准，不把历史原型当成实现依据。
 
 ---
 
@@ -374,7 +370,7 @@ token（`DocumentPanel.style.ts` 的 `originManual` / `originAuto`）：
 ### 4.1 字体栈
 
 ```ts
-// apps/web/src/theme/tokens.ts
+// packages/renderer/src/theme/tokens.ts
 FONT_SANS = "-apple-system, BlinkMacSystemFont, 'Segoe UI',
              'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif"
 FONT_MONO = "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace"
@@ -1217,12 +1213,12 @@ pptx 的幻灯片、html 的源码 + 预览双栏、markdown 的正文、pdf 的
 
 **html 的三种视图用 `hidden` 切，不是条件渲染**：源码编辑器一卸载，CodeMirror
 的实例与编辑历史一起没了，而重新挂载读的是**刚打开文件时**的文本——「切到预览
-再切回来」会看到旧内容，接着敲键就把中间改的覆盖掉（TECH §15.11.1）。
+再切回来」会看到旧内容，接着敲键就把中间改的覆盖掉（D-059）。
 
 **预览有三档设备宽度（桌面 / 平板 768px / 手机 390px）与 50–200% 缩放**：网页是
 流式布局，「它在手机上长什么样」只能靠改视口宽度看。缩放是**真放大**（同一份布局
-放大着看），不是把视口缩窄再拉宽——两者的区别在 `zoom` 的语义上，TECH §15.11.1
-有实测数据与那条必需的 `calc(100% * var(--zoom))`。
+放大着看），不是把视口缩窄再拉宽；缩放的布局陷阱见
+`packages/office/src/editors/AGENTS.md`。
 
 **元素路径（面包屑）落在次工具条上**，不在内容区：它是**当前选中**的反映，与
 「这份内容怎么了」同一类信息。点一段就把预览与源码一起挪到那个元素（预览那边走
@@ -1235,7 +1231,7 @@ pptx 的幻灯片、html 的源码 + 预览双栏、markdown 的正文、pdf 的
 - **状态层在包里**（`@assistant-ui/react` + `@assistant-ui/react-ag-ui`），
   宿主只提供数据与动作：数据是 `composerStatus`（文档列表 / 模型角色 / 用量，
   宿主 `useQuery` 取好），动作是 `ChatIo`（建会话 / 读历史 / 存笔记 / 跳转，
-  宿主实现在 `apps/web/src/lib/chat-io.ts`）。包 import 不到宿主的
+  宿主实现在 `packages/renderer/src/lib/chat-io.ts`）。包 import 不到宿主的
   api / router / queryClient
 - **trace / 引用 / 失败是消息里的 data part**（`mimir.trace` /
   `mimir.citations` / `mimir.failure`），实时与历史**同一个形状**：实时由
@@ -2194,11 +2190,11 @@ antd 标题的默认值渲染成 600 + 0.02em，单看登录页没问题，两�
 职责分工：
 
 ```
-apps/web/src/theme/tokens.ts         ← antd token 的真相来源（ThemeConfig）
-apps/web/src/theme/customToken.ts    ← mimir 自己的 token（antd 没有的语义）
-apps/web/src/theme/MimirProvider.tsx ← provider 与全局样式的唯一组装处
-apps/web/src/styles/global.ts        ← 全局样式：重置、高度链、文档字体、底色、动效退化
-apps/web/src/**/*.style.ts           ← 组件/页面样式（createStyles）
+packages/renderer/src/theme/tokens.ts         ← antd token 的真相来源（ThemeConfig）
+packages/renderer/src/theme/customToken.ts    ← mimir 自己的 token（antd 没有的语义）
+packages/renderer/src/theme/MimirProvider.tsx ← provider 与全局样式的唯一组装处
+packages/renderer/src/styles/global.ts        ← 全局样式：重置、高度链、文档字体、底色、动效退化
+packages/renderer/src/**/*.style.ts           ← 组件/页面样式（createStyles）
 packages/chat/src/**/*.style.ts      ← 对话包的样式（createStyles，同上）
 packages/office/src/**/*.css         ← 编辑器包的手写 CSS（模板边界的样式，
                                         读 --me-* 变量；见 §8.4.1 与 office/AGENTS.md）

@@ -1,12 +1,12 @@
-# packages/office/src/shell —— 四种编辑器共用的外壳
+# packages/office/src/shell —— 六种编辑器共用的外壳
 
 工具条 / 状态行 / 高度链 / 弹层都在这里（`EditorShell.tsx`、`shell.css`、
-`.mimir-editor` 与 `.me-*` 类）：markdown 笔记与三种 Office 格式共用同一份
-实现，四种编辑器长得一样不靠约定（D-054）。父层 `packages/office/AGENTS.md`
+`.mimir-editor` 与 `.me-*` 类）：markdown、html、pdf 与三种 Office 格式
+共用同一份实现，外观一致不靠约定（D-054）。父层 `packages/office/AGENTS.md`
 与根 `AGENTS.md` 仍然适用。
 
-宿主侧的边界（不要在 `apps/web` 里盖这棵子树的 `.ant-*`、`--me-*` 变量由
-`theme/editor-theme-bridge.ts` 填）见 `apps/web/AGENTS.md`「样式」一节。
+宿主侧的边界（不要在共用界面里盖这棵子树的 `.ant-*`、`--me-*` 变量由
+主题桥填）见 `packages/renderer/AGENTS.md`「样式」一节。
 
 ---
 
@@ -24,4 +24,5 @@
 | **工具条标签写了快捷键但它不存在** | docx 的「查找和替换 (Ctrl+F)」曾只弹浏览器自带的页面查找——**按钮上的标签是一份承诺**，写着就得真有。修法是外壳的 `useFindHotkey` + 查找框统一挂 `data-find-input`（标记不看类名/aria——那两样会被无关调整改掉，而改掉的那一刻快捷键静默失效） |
 | 菜单面板里的下拉「点一档什么也不会发生」 | 面板里的 antd `Select` 打开后弹层 **portal 到 body**，而关面板的 `pointerdown`（capture）只认「面板或触发按钮内部」——按下瞬间面板被关、选项随面板卸载，之后的 `click` 落空，界面不报错。`useToolbarPopup` 的 `insidePanel()` 要用 antd 自己写的 `aria-controls` / `aria-owns` 把「面板里控件拥有的弹层」也算作面板内（`EditorShell.tsx`）。**测试也要按真序列驱动**（pointerdown → click）：只派发 click 时 React 会批处理，`onChange` 照样发出，这个 bug 会被测成通过 |
 | 图标档的按钮读屏只念「单选按钮 1 of 3」 | antd `Segmented` 把 `title` 挂在内层 label 的 div 上，而可聚焦的是 `<input type=radio>`——两者不关联，`title` 在这里根本不当名称用（真 Chromium 的 AX 树实测 `name: ""`）。文字要用 `.me-sr-only`（`clip-path`，**不是** `display:none`）塞进 label 元素里 |
+| 确认弹层在 DOM 中却不可见 | `Popconfirm` 的触发器若是包装组件，必须把 `ref` 透传到真实按钮；否则 rc-trigger 拿不到定位元素，弹层会被放到屏幕外。检查 `ToolbarButton` 的 ref 与弹层实际位置，不能只断言 DOM 里有弹层 |
 | 输入框比同排的按钮小一号 | `.me-input` 那套手写观感（height / padding / border / 字号）挂在 antd 的 `Input` 上，与 antd 的 `:where(…).ant-input` 特异性相同而项目样式更靠后——实测同一排里输入框 12px / 按钮 14px、圆角 4 对 8。控件观感一律归 `--ant-*`，这个类已删（只剩宽度/弹性类） |

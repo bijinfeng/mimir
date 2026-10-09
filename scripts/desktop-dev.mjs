@@ -17,9 +17,9 @@
  * 窗口若换成 `localhost:<vite 端口>`，那条 cookie 根本不会带上，
  * 症状正是坑表里那条「本地模式却看到登录页」。
  *
- * 所以这里用 `electron-vite build --watch`：三段仍产到 `dist/`，由宿主做静态
- * 服务，窗口地址不变。代价是渲染进程没有 HMR，改完要刷新窗口（Ctrl+R）——
- * 但比旧形态（改了 web 不重新 build 就永远看不到变化）已经前进了一步。
+ * 所以先完整构建并启动，再用 `electron-vite build --watch` 维护三段产物：
+ * 窗口地址不变。渲染进程没有 HMR，改完要刷新窗口（Ctrl+R）；主进程与
+ * preload 的新产物要重启桌面进程才会加载。
  */
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
@@ -35,16 +35,17 @@ function run(name, command, args, options = {}) {
     stdio: ['ignore', 'pipe', 'pipe'],
   })
   const tag = `[${name}]`
-  child.stdout.on('data', (data) =>
+  child.stdout.on('data', (data) => {
+    const output = data.toString()
     process.stdout.write(
-      data
-        .toString()
+      output
         .split('\n')
         .filter(Boolean)
         .map((line) => `${tag} ${line}`)
         .join('\n') + '\n',
-    ),
-  )
+    )
+    options.onOutput?.(output)
+  })
   child.stderr.on('data', (data) =>
     process.stderr.write(
       data
@@ -95,9 +96,18 @@ async function shutdown(code) {
 process.on('SIGINT', () => void shutdown(130))
 process.on('SIGTERM', () => void shutdown(143))
 
+let startupOutput = ''
+let watchStarted = false
 run('desktop', 'pnpm', ['desktop:start'], {
   // Electron 首次启动会单独下载二进制；pnpm 的 npm registry 不控制这一步。
   env: {
     ELECTRON_MIRROR: process.env.ELECTRON_MIRROR ?? 'https://npmmirror.com/mirrors/electron/',
+  },
+  onOutput(output) {
+    if (watchStarted || shuttingDown) return
+    startupOutput = (startupOutput + output).slice(-1024)
+    if (!startupOutput.includes('[desktop] whenReady')) return
+    watchStarted = true
+    run('watch', 'pnpm', ['--filter', '@mimir/desktop', 'build:watch'])
   },
 })
