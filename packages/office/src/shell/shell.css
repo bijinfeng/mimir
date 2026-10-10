@@ -148,32 +148,62 @@
 }
 
 /*
- * 窄屏：工具条折行后的高度上限。
+ * 窄屏：命令区折行后的高度上限。
  *
  * docx 的工具条有八到十个组，420px 视口下折成 **9 行 243px**（占 900px
  * 屏高的 27%）——正文只剩一小条，「工具条比内容还高」（实测发现，D-096）。
- * 这里给 chrome 一个上限并让它自己滚：**按钮一个不少**（不砍功能，砍了
- * 用户会找不到），但不会把编辑区挤没。滚动条只在真的超高时出现
+ * 只给命令区一个上限并让它自己滚：**按钮一个不少**，保存仍在右侧常驻，
+ * 次工具条仍在下方，编辑区也不会被挤没。滚动条只在真的超高时出现
  * （`max-height` 不触发就没有滚动条）。
  *
- * 断点与宿主应用的窄屏断点同值（880px，`apps/web/src/theme/tokens.ts` 的
+ * 断点与宿主应用的窄屏断点同值（880px，`packages/renderer/src/theme/tokens.ts` 的
  * `NAV_NARROW_QUERY`）——这个包不认识宿主的断点常量，值写在这里并注明出处：
  * 宿主改断点时这里要一起看。
  */
-@media (max-width: 880px) {
-  .mimir-editor__chrome {
-    max-height: 128px;
-    overflow-y: auto;
-  }
-}
-
 .mimir-editor__bar {
   display: flex;
+  align-items: stretch;
+  gap: 12px;
+  min-height: 58px;
+  padding: 8px 12px 5px;
+}
+
+.mimir-editor__tools {
+  display: flex;
   align-items: center;
-  gap: 2px;
+  align-content: start;
+  flex: 1;
   flex-wrap: wrap;
-  min-height: 36px;
-  padding: 5px 8px;
+  gap: 6px;
+  min-width: 0;
+}
+
+.mimir-editor__actions {
+  display: flex;
+  align-items: flex-start;
+  align-self: stretch;
+  flex: none;
+  gap: 6px;
+  padding: 3px 0 0 12px;
+  border-left: 1px solid var(--me-border, #d9d9d9);
+}
+
+/* 只滚动命令区，主操作留在工具条右端。次工具条也保持可见。 */
+@media (max-width: 880px) {
+  .mimir-editor__bar {
+    gap: 8px;
+    padding: 6px 8px;
+  }
+
+  .mimir-editor__tools {
+    max-height: min(128px, 22vh);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+
+  .mimir-editor__actions {
+    padding-left: 8px;
+  }
 }
 
 /* 次工具条（查找替换栏、幻灯片导航）。分隔线只画在「上面确实有工具条」时：
@@ -302,7 +332,7 @@
 /* 焦点环与禁用态。**不能跟着 `.me-btn` 一起删**：这两个触发按钮没有 antd
    的样式兜底，删掉之后键盘用户按 Tab 走到「段落样式」上什么都不显示 */
 .me-btn:focus-visible {
-  outline: 2px solid var(--me-accent, #1677ff);
+  outline: 2px solid var(--me-accent, #6e50b9);
   outline-offset: 1px;
 }
 
@@ -324,8 +354,8 @@
  */
 .me-tb[aria-pressed='true'],
 .me-tb[aria-pressed='true']:hover:not(:disabled) {
-  border-color: var(--me-accent, #1677ff);
-  background: var(--me-accent-bg, #e6f4ff);
+  border-color: var(--me-accent, #6e50b9);
+  background: var(--me-accent-bg, #e4dcf7);
   /*
    * 文字色走 `--me-accent-text`（= colorLink），不是 `--me-accent`。
    *
@@ -334,7 +364,7 @@
    * 激活态全都偏难认。链接色在同一个底上是 5.50 / 6.17。
    * 回退值也换成链接色，脱离宿主时保持一致。
    */
-  color: var(--me-accent-text, #0958d9);
+  color: var(--me-accent-text, #543b9a);
 }
 
 /* 按钮里的图标字形。字号是**图标尺寸**，不是文本字号——所以单列一个变量，
@@ -518,6 +548,38 @@
   flex-wrap: wrap;
 }
 
+.me-group__caption {
+  display: none;
+}
+
+/* Office 式功能区：真实命令按组呈现，组名可见且不增加虚构页签。 */
+.mimir-editor__tools > .me-group {
+  position: relative;
+  min-height: 42px;
+  padding: 2px 4px 17px;
+  border-radius: calc(var(--me-radius, 8px) / 2);
+}
+
+.mimir-editor__tools > .me-group:hover {
+  background: var(--me-hover, #f0f0f0);
+}
+
+.mimir-editor__tools > .me-group > .me-group__caption {
+  position: absolute;
+  right: 3px;
+  bottom: 1px;
+  left: 3px;
+  display: block;
+  overflow: hidden;
+  color: var(--me-text-weak, #8c8c8c);
+  font-size: var(--me-font-size-sm, 12px);
+  line-height: 14px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
 /* ── 弹出层：菜单与颜色面板 ─────────────────────────────────────── */
 
 /*
@@ -557,7 +619,7 @@
 }
 
 .me-menu__panel:focus-visible {
-  outline: 2px solid var(--me-accent-border, #91caff);
+  outline: 2px solid var(--me-accent-border, #a993d5);
   outline-offset: -2px;
 }
 
@@ -583,7 +645,7 @@
 }
 
 .me-menu__item:focus-visible {
-  outline: 2px solid var(--me-accent, #1677ff);
+  outline: 2px solid var(--me-accent, #6e50b9);
   outline-offset: -2px;
 }
 
@@ -597,7 +659,7 @@
    文字色同 `.me-tb` 那条：主色是填充角色，当 12px 文字用不达标
    （实测浅色 4.10:1、深色 3.50:1）——走 --me-accent-text（colorLink） */
 .me-menu__item[aria-current='true'] {
-  color: var(--me-accent-text, #0958d9);
+  color: var(--me-accent-text, #543b9a);
   font-weight: 600;
 }
 
@@ -687,12 +749,12 @@
 }
 
 .me-table-grid__cell:hover {
-  border-color: var(--me-accent, #1677ff);
-  background: var(--me-accent-bg, #e6f4ff);
+  border-color: var(--me-accent, #6e50b9);
+  background: var(--me-accent-bg, #e4dcf7);
 }
 
 .me-table-grid__cell:focus-visible {
-  outline: 2px solid var(--me-accent, #1677ff);
+  outline: 2px solid var(--me-accent, #6e50b9);
   outline-offset: 1px;
 }
 
@@ -720,17 +782,17 @@
 }
 
 .me-color__cell:hover:not(:disabled) {
-  border-color: var(--me-accent, #1677ff);
+  border-color: var(--me-accent, #6e50b9);
 }
 
 .me-color__cell:focus-visible {
-  outline: 2px solid var(--me-accent, #1677ff);
+  outline: 2px solid var(--me-accent, #6e50b9);
   outline-offset: 1px;
 }
 
 .me-color__cell[aria-pressed='true'] {
-  border-color: var(--me-accent, #1677ff);
-  box-shadow: 0 0 0 1px var(--me-accent, #1677ff) inset;
+  border-color: var(--me-accent, #6e50b9);
+  box-shadow: 0 0 0 1px var(--me-accent, #6e50b9) inset;
 }
 
 .me-color__cell--clear {

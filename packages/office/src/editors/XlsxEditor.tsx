@@ -57,7 +57,6 @@ import {
   ToolbarDivider,
   ToolbarGroup,
   ToolbarLabel,
-  ToolbarSpacer,
   ToolbarTabs,
   ToolbarTextField,
   useFindHotkey,
@@ -516,19 +515,20 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
               <CrossHighlightIcon />
             </ToolbarButton>
           </ToolbarGroup>
-          <ToolbarSpacer />
-          <ToolbarButton
-            label={source.saving ? '保存中…' : '保存到库'}
-            primary
-            disabled={!dirty || source.saving}
-            // 禁用必须给原因（DESIGN §8.4）：判据是两件事（没改动 / 正在保存），
-            // 不区分的话按钮灰着时用户只能猜。其余四种格式都给了。
-            disabledReason={source.saving ? '正在保存…' : '没有未保存的改动'}
-            onClick={() => void save()}
-          >
-            <SaveIcon />
-          </ToolbarButton>
         </>
+      }
+      toolbarActions={
+        <ToolbarButton
+          label={source.saving ? '保存中…' : '保存到库'}
+          primary
+          disabled={!dirty || source.saving}
+          // 禁用必须给原因（DESIGN §8.4）：判据是两件事（没改动 / 正在保存），
+          // 不区分的话按钮灰着时用户只能猜。其余四种格式都给了。
+          disabledReason={source.saving ? '正在保存…' : '没有未保存的改动'}
+          onClick={() => void save()}
+        >
+          <SaveIcon />
+        </ToolbarButton>
       }
       footer={
         selected ? (

@@ -3,7 +3,8 @@ import { App, Avatar, Button, Input, Popconfirm, Upload } from 'antd'
 import { useEffect, useState } from 'react'
 import { api, type AuthSession } from '../../lib/api'
 import { cropAvatar } from '../../lib/avatar'
-import { Block, Panel, TechnicalDetails } from './parts'
+import { LoadError } from '../LoadError'
+import { Block, Panel } from './parts'
 import { useAccountStyles } from './AccountSection.style'
 
 /**
@@ -45,8 +46,20 @@ export function AccountSection() {
   const configQuery = useQuery({ queryKey: ['config'], queryFn: api.config })
   const localMode = configQuery.data?.localMode ?? false
 
+  if (sessionQuery.isError || configQuery.isError) {
+    return (
+      <LoadError
+        message="账号资料读取失败"
+        onRetry={() => {
+          if (sessionQuery.isError) void sessionQuery.refetch()
+          if (configQuery.isError) void configQuery.refetch()
+        }}
+      />
+    )
+  }
+
   return (
-    <Panel title="资料">
+    <Panel title="个人资料">
       <Block>
         <div className={accountStyles.profile}>
           <AvatarColumn session={session ?? null} />
@@ -64,11 +77,6 @@ export function AccountSection() {
           </div>
         </div>
       </Block>
-      {localMode ? null : (
-        <TechnicalDetails>
-          更换邮箱需修改服务端的 <code>OWNER_EMAIL</code>，然后重启服务。
-        </TechnicalDetails>
-      )}
       {localMode ? null : (
         <div className={accountStyles.accountFooter}>
           <Button danger onClick={() => void api.auth.signOutAndLeave()}>
@@ -129,6 +137,9 @@ function AvatarColumn({ session }: { session: AuthSession | null }) {
       message.success('已移除头像')
       void queryClient.invalidateQueries({ queryKey: ['session'] })
     },
+    onError: (error) => {
+      message.error(error instanceof Error ? error.message : '移除头像失败')
+    },
   })
 
   const image = preview ?? session?.user.image ?? undefined
@@ -183,7 +194,7 @@ function AvatarColumn({ session }: { session: AuthSession | null }) {
         {image ? (
           <Popconfirm
             title="移除头像？"
-            description="会回到名称首字的字母头像"
+            description="移除后显示名称首字"
             onConfirm={() => remove.mutate()}
           >
             <Button size="small" loading={remove.isPending}>
@@ -192,9 +203,6 @@ function AvatarColumn({ session }: { session: AuthSession | null }) {
           </Popconfirm>
         ) : null}
       </div>
-
-      {/* 上传会自动裁剪，所以这不是「你必须先裁好」的要求，而是告知 */}
-      <div className={accountStyles.avatarHint}>自动裁成方形</div>
     </div>
   )
 }

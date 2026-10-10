@@ -1221,25 +1221,24 @@ export function PptxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
           <ToolbarButton label="查找和替换" active={findOpen} onClick={toggleFind}>
             <FindIcon />
           </ToolbarButton>
-
-          <ToolbarSpacer />
-
-          <ToolbarButton
-            label={source.saving ? '保存中…' : '保存到库'}
-            primary
-            disabled={!dirty || source.saving}
-            /*
+        </>
+      }
+      toolbarActions={
+        <ToolbarButton
+          label={source.saving ? '保存中…' : '保存到库'}
+          primary
+          disabled={!dirty || source.saving}
+          /*
               禁用必须给原因（DESIGN §8.4）。`disabled` 的判据是两件事（没改动 /
               正在保存），它们各有各的说法：不区分的话「保存」灰着时用户只能猜
               是没改还是正在写。不给这一条时 `ToolbarButton` 把 `title` 留在
               按钮名上（`title === aria-label === "保存到库"`），等于什么都没说。
             */
-            disabledReason={source.saving ? '正在保存…' : '没有未保存的改动'}
-            onClick={() => void save()}
-          >
-            <SaveIcon />
-          </ToolbarButton>
-        </>
+          disabledReason={source.saving ? '正在保存…' : '没有未保存的改动'}
+          onClick={() => void save()}
+        >
+          <SaveIcon />
+        </ToolbarButton>
       }
       /*
         次工具条：幻灯片导航 + 查找栏。

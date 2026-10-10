@@ -1,7 +1,8 @@
 import { BrandMark } from '@mimir/renderer/titlebar-kit'
 import type { DesktopModeState } from '@mimir/shared/desktop'
-import { Alert, Button, Input, Tag, Typography } from 'antd'
+import { Alert, Button, Input, Typography } from 'antd'
 import type { InputRef } from 'antd'
+import { Cloud, Laptop } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { WindowControls } from '@/components/WindowControls'
 import { desktopBridge } from '@/lib/desktop-bridge'
@@ -60,14 +61,6 @@ export function SetupPage() {
   const [pending, setPending] = useState(false)
   const [failure, setFailure] = useState<string | null>(null)
   const [note, setNote] = useState<string | null>(null)
-  /**
-   * 首次启动时那条「已在其他方式下使用过？更改」的脚注。
-   *
-   * 它只在**首次启动**出现，点一下就把这一页切成「切换」的措辞——
-   * 用于「换了机器但数据在服务器上」这种情况。
-   */
-  const [switching, setSwitching] = useState(false)
-
   /** antd 的 Input 是值，ref 的类型要取它的实例类型 */
   const urlRef = useRef<InputRef>(null)
 
@@ -95,8 +88,8 @@ export function SetupPage() {
     if (choice === 'cloud') urlRef.current?.focus()
   }, [choice])
 
-  /** 已经有生效中的模式，或首次启动时点了脚注的「更改」 */
-  const isSwitch = current !== null || switching
+  /** 已经有生效中的模式 */
+  const isSwitch = current !== null
   const canCancel = current !== null
 
   /**
@@ -142,10 +135,6 @@ export function SetupPage() {
   return (
     <div className={styles.page}>
       <div className={styles.bar} data-platform={desktopBridge?.window.platform}>
-        <span className={styles.brand}>
-          <BrandMark size={18} title={null} />
-          <b>mimir</b>
-        </span>
         <span className={styles.spacer} />
         {/*
           这一页也需要窗口控件：壳是 `frame: false`，没有它用户连窗口都关不掉。
@@ -155,125 +144,118 @@ export function SetupPage() {
       </div>
 
       <div className={styles.body}>
-        <div className={styles.card}>
-          <Typography.Title level={4}>
-            {isSwitch ? '切换使用方式' : '选择使用方式'}
-          </Typography.Title>
-
-          <Typography.Paragraph type="secondary" className={styles.lead}>
-            {isSwitch
-              ? '换一种方式使用 mimir。本地数据不会因为切换而删除，随时可以切回来。'
-              : 'mimir 可以完全离线地在这台电脑上使用，也可以连上你自己的服务器。这个选择随时可以在客户端的设置 › 客户端里改。'}
-          </Typography.Paragraph>
-
-          {error !== null && (
-            <Alert type="error" showIcon title={error} style={{ marginBottom: 16 }} />
-          )}
-
-          <div className={styles.options} role="group">
-            <button
-              type="button"
-              className={styles.option}
-              aria-pressed={choice === 'local'}
-              onClick={() => {
-                setChoice('local')
-                setFailure(null)
-              }}
-            >
-              <span className={styles.optionName}>
-                本地使用
-                <Tag variant="filled">不需要登录</Tag>
-              </span>
-              <span className={styles.optionDesc}>
-                数据全部存在这台电脑上，不联网也能用。适合一个人、一台机器。
-              </span>
-            </button>
-
-            <button
-              type="button"
-              className={styles.option}
-              aria-pressed={choice === 'cloud'}
-              onClick={() => {
-                setChoice('cloud')
-                setFailure(null)
-              }}
-            >
-              <span className={styles.optionName}>
-                连接服务器
-                <Tag variant="filled">需要登录</Tag>
-              </span>
-              <span className={styles.optionDesc}>
-                数据存在你自己的 mimir 服务器上。适合多台设备访问同一份知识库。
-              </span>
-            </button>
+        <div className={styles.brandPane}>
+          <div className={styles.brand}>
+            <BrandMark size={38} title={null} />
+            <Typography.Title level={2} className={styles.brandName}>
+              mimir
+            </Typography.Title>
           </div>
+          <p className={styles.brandPosition}>知识工作区</p>
+        </div>
+        <div className={styles.formPane}>
+          <div className={styles.formContent}>
+            <Typography.Title level={2} className={styles.heading}>
+              {isSwitch ? '切换使用方式' : '选择使用方式'}
+            </Typography.Title>
 
-          {choice === 'cloud' && (
-            <div className={styles.field}>
-              <Typography.Text>服务器地址</Typography.Text>
-              <Input
-                ref={urlRef}
-                type="url"
-                value={cloudUrl}
-                placeholder="https://mimir.example.com"
-                autoComplete="off"
-                spellCheck={false}
-                disabled={pending}
-                onChange={(event) => setCloudUrl(event.target.value)}
-                onPressEnter={() => void submit()}
-                style={{ marginTop: 6 }}
-              />
-              <Typography.Paragraph type="secondary" style={{ marginTop: 6, marginBottom: 0 }}>
-                填部署 mimir 时对外提供服务的那个地址。
-              </Typography.Paragraph>
-            </div>
-          )}
+            <Typography.Paragraph type="secondary" className={styles.lead}>
+              {isSwitch
+                ? '切换后可随时换回；本地数据不会被删除。'
+                : '选择资料存放的位置。之后可在设置中更改。'}
+            </Typography.Paragraph>
 
-          <div className={styles.row}>
-            <Button
-              type="primary"
-              loading={pending}
-              disabled={modeApi === undefined || (choice === 'cloud' && cloudUrl.trim() === '')}
-              onClick={() => void submit()}
-            >
-              {isSwitch ? '切换' : '开始使用'}
-            </Button>
-
-            {canCancel && (
-              /**
-               * 「返回，不改」走 `activate()` 而不是自己拼地址——宿主那边会顺带
-               * 把本机令牌重新注入（本地模式下这是必须的一步），
-               * 地址归一化也只有一处。
-               */
-              <Button
-                disabled={pending}
-                onClick={() => {
-                  setNote('正在返回…')
-                  desktopBridge?.mode.activate()
-                }}
-              >
-                返回，不改
-              </Button>
+            {error !== null && (
+              <Alert type="error" showIcon title={error} style={{ marginBottom: 16 }} />
             )}
 
-            {note !== null && <Typography.Text type="secondary">{note}</Typography.Text>}
-          </div>
-
-          {!isSwitch && (
-            <Typography.Paragraph className={styles.footnote}>
-              已在其他方式下使用过？
-              <Button
-                type="link"
-                size="small"
+            <div className={styles.options} role="group">
+              <button
+                type="button"
+                className={styles.option}
+                aria-pressed={choice === 'local'}
+                disabled={pending}
                 onClick={() => {
-                  setChoice('cloud')
-                  setSwitching(true)
+                  setChoice('local')
+                  setFailure(null)
                 }}
               >
-                更改
+                <Laptop size={20} aria-hidden="true" />
+                <span className={styles.optionText}>
+                  <span className={styles.optionName}>本地使用</span>
+                  <span className={styles.optionDesc}>资料保存在此设备，可离线使用。</span>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                className={styles.option}
+                aria-pressed={choice === 'cloud'}
+                disabled={pending}
+                onClick={() => {
+                  setChoice('cloud')
+                  setFailure(null)
+                }}
+              >
+                <Cloud size={20} aria-hidden="true" />
+                <span className={styles.optionText}>
+                  <span className={styles.optionName}>连接服务器</span>
+                  <span className={styles.optionDesc}>连接你自己的服务器，在多台设备上使用。</span>
+                </span>
+              </button>
+            </div>
+
+            {choice === 'cloud' && (
+              <div className={styles.field}>
+                <Typography.Text>服务器地址</Typography.Text>
+                <Input
+                  ref={urlRef}
+                  type="url"
+                  value={cloudUrl}
+                  placeholder="https://mimir.example.com"
+                  autoComplete="off"
+                  spellCheck={false}
+                  disabled={pending}
+                  onChange={(event) => setCloudUrl(event.target.value)}
+                  onPressEnter={() => void submit()}
+                  style={{ marginTop: 6 }}
+                />
+                <Typography.Paragraph type="secondary" style={{ marginTop: 6, marginBottom: 0 }}>
+                  输入你的 mimir 服务器地址。
+                </Typography.Paragraph>
+              </div>
+            )}
+
+            <div className={styles.row}>
+              <Button
+                type="primary"
+                loading={pending}
+                disabled={modeApi === undefined || (choice === 'cloud' && cloudUrl.trim() === '')}
+                onClick={() => void submit()}
+              >
+                {isSwitch ? '切换' : '开始使用'}
               </Button>
-            </Typography.Paragraph>
-          )}
+
+              {canCancel && (
+                /**
+                 * 「返回，不改」走 `activate()` 而不是自己拼地址——宿主那边会顺带
+                 * 把本机令牌重新注入（本地模式下这是必须的一步），
+                 * 地址归一化也只有一处。
+                 */
+                <Button
+                  disabled={pending}
+                  onClick={() => {
+                    setNote('正在返回…')
+                    desktopBridge?.mode.activate()
+                  }}
+                >
+                  返回，不改
+                </Button>
+              )}
+
+              {note !== null && <Typography.Text type="secondary">{note}</Typography.Text>}
+            </div>
+          </div>
         </div>
       </div>
     </div>

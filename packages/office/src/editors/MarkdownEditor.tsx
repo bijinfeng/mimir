@@ -73,7 +73,6 @@ import {
   ToolbarMenu,
   ToolbarNumberField,
   ToolbarSelect,
-  ToolbarSpacer,
   ToolbarTextButton,
   ToolbarTextField,
   useToolbarState,
@@ -473,17 +472,18 @@ export function MarkdownEditor({
             onToggleSpellCheck={toggleSpellCheck}
             onPickImage={onUploadImage === undefined ? undefined : (file) => void insertImage(file)}
           />
-          <ToolbarSpacer />
-          <ToolbarButton
-            label={state === 'saving' ? '正在保存…' : '立即保存'}
-            primary
-            disabled={!dirty || state === 'saving'}
-            disabledReason="没有未保存的改动"
-            onClick={() => void saveNowRef.current()}
-          >
-            <SaveIcon />
-          </ToolbarButton>
         </>
+      }
+      toolbarActions={
+        <ToolbarButton
+          label={state === 'saving' ? '正在保存…' : '立即保存'}
+          primary
+          disabled={!dirty || state === 'saving'}
+          disabledReason="没有未保存的改动"
+          onClick={() => void saveNowRef.current()}
+        >
+          <SaveIcon />
+        </ToolbarButton>
       }
       {...(bodySide !== undefined ? { bodySide } : {})}
       status={

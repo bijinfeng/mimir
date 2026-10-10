@@ -1,5 +1,6 @@
 import { MessagePrimitive, useAuiState } from '@assistant-ui/react'
 import type { ComponentType, ReactNode } from 'react'
+import { useChatPanelStyles } from '../ChatPanel.style.js'
 import { askOptionsFor, questionBefore, useMimirChatApi } from '../runtime/chat-context.js'
 import { AnswerActions } from './AnswerActions.js'
 import { CitationList } from './CitationList.js'
@@ -32,15 +33,10 @@ import { useCitationsPart, useFailurePart, useTracePart } from './data-parts.js'
  * 「过程在上、引用在下」。见 `data-parts.ts` 里那一节（还有为什么不用
  * flex + order 重排：那会取消正文的段间距折叠，是一次看不见的排版改动）。
  *
- * ## 与 assistant-ui 默认形态的三处差异（都是刻意的）
+ * ## 消息形态
  *
- * 1. **不画头像、不写名字**。角色靠对齐与 `data-role` 区分——这是本仓
- *    早已有的形态（D-097 的 transcript）。写在这里是为了防「顺手补个
- *    圆形首字母」
- * 2. **用户消息不右对齐、不上底色**：D-097 有三条理由（中文长问题在
- *    860px 列里会被压碎；提问一缩进右侧，检索过程 / 引用卡 / 回答的
- *    通栏阅读轴线就断了）。视觉差异由行首 `›`、字重与属性承担
- * 3. **一条 part 都没有的助手消息不渲染**。停止生成或流一开始就断掉时，
+ * 1. 用户消息右对齐、使用浅色气泡；助手回答以 mimir 名称引出正文。
+ * 2. **一条 part 都没有的助手消息不渲染**。停止生成或流一开始就断掉时，
  *    引擎会留下 `[user, assistant(0 parts)]`（实测：一个字都没到时就是这个
  *    形状），而空盒子仍然占着 `thread` 的 `gap: 20px`——用户看到的是
  *    「提问下面莫名多出一段空白」，看起来像空气泡
@@ -80,6 +76,7 @@ function UserText() {
 }
 
 function AssistantMessage() {
+  const { styles } = useChatPanelStyles()
   const api = useMimirChatApi()
   const trace = useTracePart()
   const citations = useCitationsPart()
@@ -136,6 +133,9 @@ function AssistantMessage() {
 
   return (
     <MessagePrimitive.Root data-role="assistant">
+      <div className={styles.assistantHeading}>
+        <span>mimir</span>
+      </div>
       {/* 检索过程行。干活时（running）无条件在——检索结果没到时它是
           「正在检索知识库 · Ns」，到了就地展开成步骤。
           `expanded` 跟着 `running`：正文一出翻 false → 自动折叠

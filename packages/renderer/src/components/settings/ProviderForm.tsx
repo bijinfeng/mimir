@@ -4,7 +4,6 @@ import { ArrowLeft, X } from 'lucide-react'
 import { useState } from 'react'
 import {
   MODEL_PURPOSES,
-  MODEL_PURPOSE_LABELS,
   inferModelPurposes,
   type FetchedModel,
   type ModelPurpose,
@@ -16,6 +15,8 @@ import {
 import { api, ApiRequestError } from '../../lib/api'
 import {
   mergeFetchedModels,
+  modelPurposeLabel,
+  modelRoleLabel,
   rolesToRecord,
   validateProviderForm,
   withProviderSaved,
@@ -221,7 +222,7 @@ export function ProviderForm({
     if (boundRoles.length > 0) {
       modal.confirm({
         title: `移除「${model.id}」？`,
-        content: `它正被「${boundRoles.map((role) => role.label).join('、')}」角色使用，保存后会需要重新分配。`,
+        content: `它正被「${boundRoles.map(modelRoleLabel).join('、')}」任务使用，保存后需要重新分配。`,
         okText: '移除',
         okButtonProps: { danger: true },
         cancelText: '取消',
@@ -437,7 +438,7 @@ export function ProviderForm({
       >
         <div className={styles.modelHint} style={{ paddingTop: 12 }}>
           用途决定可分配的任务：<b>对话</b>可用于对话、深度思考和摘要；
-          <b>向量化</b>用于语义检索。
+          <b>语义搜索</b>用于查找意思相近的内容。
         </div>
 
         {pullNote ? <div className={styles.pullNote}>{pullNote}</div> : null}
@@ -598,7 +599,7 @@ function ModelRow({
               aria-pressed={on}
               onClick={() => onToggle(purpose)}
             >
-              {MODEL_PURPOSE_LABELS[purpose]}
+              {modelPurposeLabel(purpose)}
             </button>
           )
         })}

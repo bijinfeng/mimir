@@ -1,8 +1,8 @@
 import { Button } from 'antd'
 import { useQuery } from '@tanstack/react-query'
-import { api } from '../../lib/api'
+import { LoadError } from '../LoadError'
 import { useDesktopBridge } from '../../platform'
-import { Block, BlockDesc, Panel, Row, TechnicalDetails } from './parts'
+import { Block, BlockDesc, Panel, Row } from './parts'
 
 /**
  * 客户端（桌面壳专属，D-100 / D-103）。
@@ -30,43 +30,32 @@ import { Block, BlockDesc, Panel, Row, TechnicalDetails } from './parts'
 export function ClientSection() {
   const bridge = useDesktopBridge()
 
-  const configQuery = useQuery({ queryKey: ['config'], queryFn: api.config })
   const bootQuery = useQuery({
     queryKey: ['desktop-boot'],
     queryFn: async () => (await bridge?.boot()) ?? null,
   })
 
   const mode = bootQuery.data?.mode
-  const dataDir = bootQuery.data?.dataDir ?? null
   const origin = bootQuery.data?.origin ?? null
 
+  if (bootQuery.isError) {
+    return <LoadError message="客户端状态读取失败" onRetry={() => void bootQuery.refetch()} />
+  }
+
   return (
-    <>
-      <Panel title="使用方式">
-        <Row label="当前">
-          {mode === undefined
-            ? '读取中…'
-            : mode === 'local'
-              ? '本地使用（数据在这台电脑上）'
-              : '连接服务器'}
-        </Row>
-        {mode === 'cloud' && origin ? <Row label="服务器">{origin}</Row> : null}
-        <Block>
-          <Button onClick={() => bridge?.mode.openSetup()}>更换使用方式</Button>
-          <BlockDesc>切换不会迁移数据，本地与服务器上的数据分别保留。</BlockDesc>
-        </Block>
-        <TechnicalDetails>
-          {mode === 'local' && dataDir ? <Row label="数据目录">{dataDir}</Row> : null}
-          {configQuery.data?.database ? (
-            <Row label="数据库">
-              {configQuery.data.database.driver === 'sqlite' ? 'SQLite' : 'PostgreSQL'}
-            </Row>
-          ) : null}
-          {configQuery.data?.database.file ? (
-            <Row label="数据库文件">{configQuery.data.database.file}</Row>
-          ) : null}
-        </TechnicalDetails>
-      </Panel>
-    </>
+    <Panel title="使用方式">
+      <Row label="当前">
+        {mode === undefined
+          ? '读取中…'
+          : mode === 'local'
+            ? '本地使用（数据在这台电脑上）'
+            : '连接服务器'}
+      </Row>
+      {mode === 'cloud' && origin ? <Row label="服务器">{origin}</Row> : null}
+      <Block>
+        <Button onClick={() => bridge?.mode.openSetup()}>更换使用方式</Button>
+        <BlockDesc>切换不会迁移数据，本地与服务器上的数据分别保留。</BlockDesc>
+      </Block>
+    </Panel>
   )
 }

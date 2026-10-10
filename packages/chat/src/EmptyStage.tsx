@@ -1,3 +1,4 @@
+import { MessageSquareText } from 'lucide-react'
 import type { ChatDraft } from './types.js'
 import { useChatPanelStyles } from './ChatPanel.style.js'
 
@@ -20,7 +21,15 @@ export function EmptyStage({ draft }: { draft: ChatDraft | null }) {
 
   return (
     <div className={styles.empty}>
+      <div className={styles.emptyMark} aria-hidden="true">
+        <MessageSquareText size={22} strokeWidth={1.8} />
+      </div>
       <div className={styles.emptyTitle}>{draft?.documentId ? '针对本文提问' : '向知识库提问'}</div>
+      <p className={styles.emptyLead}>
+        {draft?.documentId
+          ? '围绕这篇文档提问，回答可跳回原文。'
+          : '检索你的文档，回答会附上原文引用。'}
+      </p>
     </div>
   )
 }

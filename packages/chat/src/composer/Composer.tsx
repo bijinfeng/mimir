@@ -3,6 +3,7 @@ import { Button, Tag } from 'antd'
 import { createStyles } from 'antd-style'
 import { ArrowUp, Square, X } from 'lucide-react'
 import { useEffect } from 'react'
+import { CONTENT_WIDTH } from '../ChatPanel.style.js'
 import type { ChatIo } from '../runtime/io.js'
 import type { ChatComposerStatus } from '../types.js'
 import type { ContextDoc } from './ComposerMenus.js'
@@ -47,13 +48,14 @@ import {
 const useStyles = createStyles(({ css, token, prefixCls }) => ({
   wrap: css`
     flex: none;
-    padding: 12px 0 18px;
+    padding: 12px 0 22px;
     /* 与消息列表的界线不在这里画（D-070）：显形开关在 ChatPanel——
        消息列表的 scrollTop 归它管，线画在包着本组件的 composerLine 上 */
     background: ${token.colorBgContainer};
   `,
   inner: css`
-    max-width: 860px;
+    width: 100%;
+    max-width: ${CONTENT_WIDTH}px;
     margin: 0 auto;
     /* 与消息列（ChatPanel 的 inner）同一个变量——输入框必须与上面的内容
        对齐，两处各写死一个 40px 就会在侧栏里错开（见那边的说明） */
@@ -68,15 +70,16 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
    */
   box: css`
     border: 1px solid ${token.colorBorderSecondary};
-    border-radius: 16px;
-    background: ${token.colorFillQuaternary};
-    padding: 8px;
+    border-radius: ${token.borderRadiusLG}px;
+    background: ${token.colorBgContainer};
+    box-shadow: ${token.boxShadowTertiary};
+    padding: 10px;
     /* 焦点态只过渡 border-color：加 box-shadow 那一半会让容器「抖」
        （阴影与边框不同步） */
     transition: border-color 0.12s ease-out;
 
     &:focus-within {
-      border-color: ${token.colorBorder};
+      border-color: ${token.colorPrimaryBorder};
     }
 
     /*
@@ -101,7 +104,7 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
       border: none;
       outline: none;
       background: none;
-      padding: 4px 10px; /* 官方 px-2.5 py-1 */
+      padding: 5px 7px;
       min-height: 40px; /* 官方 min-h-10 */
       resize: none;
       width: 100%;
@@ -118,19 +121,37 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
   bar: css`
     display: flex;
     align-items: center;
-    gap: 4px;
-    margin-top: 7px;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    margin-top: 9px;
   `,
   barGroup: css`
     display: flex;
     align-items: center;
-    gap: 2px;
+    flex-wrap: wrap;
+    gap: 4px;
     min-width: 0;
   `,
+  barLeft: css`
+    flex: 1 1 auto;
+  `,
+  barRight: css`
+    justify-content: flex-end;
+    margin-left: auto;
+  `,
   pill: css`
-    max-width: 200px;
-    /* antd Tag 自带右外边距，会跟关闭按钮之间留出一条缝 */
+    display: inline-flex;
+    align-items: center;
+    max-width: 160px;
+    /* 关闭图标始终留在可见区域，长标题只截断文字。 */
     margin-inline-end: 0;
+  `,
+  pillText: css`
+    display: block;
+    max-width: 125px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   `,
   /* 发送 / 停止：官方 size-7（28px）rounded-full 深底浅字
      （variant=default 的换算——shadcn 的 default 是近黑底，这里用
@@ -139,18 +160,20 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     flex: none;
     border: none;
-    border-radius: 9999px;
-    background: ${token.colorText};
-    color: ${token.colorBgContainer};
+    border-radius: ${token.borderRadiusSM}px;
+    background: ${token.colorPrimary};
+    color: ${token.colorTextLightSolid};
     cursor: pointer;
-    transition: opacity 0.12s ease-out;
+    transition:
+      background-color 0.12s ease-out,
+      opacity 0.12s ease-out;
 
     &:hover:not(:disabled) {
-      opacity: 0.88;
+      background: ${token.colorPrimaryHover};
     }
     &:focus-visible {
       outline: 1px solid ${token.colorPrimaryBorder};
@@ -160,9 +183,6 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
       opacity: 0.4;
       cursor: not-allowed;
     }
-  `,
-  spacer: css`
-    flex: 1;
   `,
   /* 排队中的追问：输入框与工具栏之间的一行。单行省略——它只是
      「有一条在排队」的提醒，全文等自动发出之后就在回答流里了 */
@@ -280,8 +300,12 @@ export function Composer({
           <QueueRow />
 
           <div className={styles.bar}>
-            <div className={styles.barGroup}>
-              <AddContextDropdown onPick={onContextDocumentChange} documents={status.documents} />
+            <div className={`${styles.barGroup} ${styles.barLeft}`}>
+              <AddContextDropdown
+                onPick={onContextDocumentChange}
+                documents={status.documents}
+                hasSelection={contextDocument !== null}
+              />
               {contextDocument && (
                 <Tag
                   closable
@@ -289,15 +313,13 @@ export function Composer({
                   className={styles.pill}
                   title={`本轮检索范围：${contextDocument.title}`}
                 >
-                  范围：{contextDocument.title}
+                  <span className={styles.pillText}>范围：{contextDocument.title}</span>
                 </Tag>
               )}
               <ContextUsageChip usage={status.usage} />
             </div>
-            <span className={styles.spacer} />
-            <div className={styles.barGroup}>
-              {/* 强度 / 模型 / 容量归到左侧控件组（官方布局语法：
-                  左边是控件、右边只有发送） */}
+            <div className={`${styles.barGroup} ${styles.barRight}`}>
+              {/* 本轮强度与全局模型绑定贴着发送键，窄栏允许整组换行。 */}
               <StrengthDropdown value={deepReasoning} onChange={onDeepReasoningChange} />
               <ModelDropdown
                 deepReasoning={deepReasoning}

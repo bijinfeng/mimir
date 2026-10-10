@@ -18,7 +18,6 @@ import { formatMeta } from './list-helpers'
 import { api } from '../lib/api'
 import { useAppShell, type AskDraft } from '../lib/app-shell-context'
 import { useNarrowViewport } from '../lib/nav-collapse'
-import { useScrolled } from '../lib/use-scrolled'
 import { useUnsaved } from '../lib/unsaved'
 
 /**
@@ -112,7 +111,7 @@ export function DocumentPanel({
   const wideContent = doc !== undefined && (doc.kind === 'note' || showsSource)
 
   /**
-   * 右侧大纲的判据**只有一个**：正文里有没有 ≥ 2 个标题。
+   * 右侧大纲只在正文有 ≥ 2 个标题且有足够空间时出现。
    *
    * 它是正文的锚点导航（`.trellis/spec/project/product.md` §5.10），唯一的豁免是**有原件的
    * 文件类文档**——原件自带导航（pptx 的页签、xlsx 的表页签、docx 的分页），
@@ -143,10 +142,8 @@ export function DocumentPanel({
    * 分区下拉共用 `useNarrowViewport`——同一个 880px 只问一处。
    */
   const narrowViewport = useNarrowViewport()
-  const showOutline = headings.length >= 2 && !showsSource && !narrowViewport
   const scrollRef = useRef<HTMLDivElement>(null)
   /* 标题栏的界线随正文滚动显形（D-070） */
-  const headerScrolled = useScrolled(scrollRef)
   const [activeHeading, setActiveHeading] = useState<string | undefined>()
 
   /**
@@ -547,6 +544,8 @@ export function DocumentPanel({
    */
   const sidebarMounted = aiSidebar !== null && aiSidebar.docId === documentId
   const sidebarOpen = sidebarMounted && aiSidebar!.open
+  // 阅读助手占用右侧 400px；同时显示大纲会把正文挤到难以阅读。
+  const showOutline = headings.length >= 2 && !showsSource && !narrowViewport && !sidebarOpen
 
   /** 侧栏里点引用：同一篇原地高亮，别的文档走导航（离开这一篇，侧栏随之卸载） */
   const openSidebarCitation = (id: string, cite: Citation) => {
@@ -559,7 +558,7 @@ export function DocumentPanel({
       <div className={styles.wrap}>
         {/*
         Office 式头部：**一行**（D-054）。
-        返回 · 标题 · 元信息 · 动作，四段挤在 44px 里——这是 Word / Excel
+        返回 · 标题 · 元信息 · 动作，四段放在 48px 里——这是 Word / Excel
         网页版的标题栏形态。原先它占三行（返回胶囊 / 28px 大标题 / 元信息行），
         约 150px 的铬条压在内容之上，而文件类文档的内容（纸张、表格、幻灯片）
         恰恰是越高越好。
@@ -573,17 +572,27 @@ export function DocumentPanel({
         （与侧栏导航不一致——那里一直有拦截）。有未保存内容时才弹守卫框，
         干净时不留任何中间态（`lib/unsaved.tsx` 的 `runGuarded`）。
       */}
-        <div className={styles.header} data-scrolled={headerScrolled || undefined}>
+        <div className={styles.header}>
           {onBackToChat && (
-            <button type="button" className={styles.back} onClick={() => runGuarded(onBackToChat)}>
+            <button
+              type="button"
+              className={styles.back}
+              aria-label="返回对话"
+              onClick={() => runGuarded(onBackToChat)}
+            >
               <ArrowLeft size={14} />
-              返回对话
+              <span>返回对话</span>
             </button>
           )}
           {onBack && (
-            <button type="button" className={styles.back} onClick={() => runGuarded(onBack)}>
+            <button
+              type="button"
+              className={styles.back}
+              aria-label="返回知识库"
+              onClick={() => runGuarded(onBack)}
+            >
               <ArrowLeft size={14} />
-              返回库
+              <span>返回库</span>
             </button>
           )}
 
@@ -597,7 +606,7 @@ export function DocumentPanel({
           {/*
           **两个分支都是 `Typography.Title`**，即使文件与资料的标题不可改。
           换成一个裸 `<h1>` 会让那条抬了特异性的规则匹配不上它，字号回落到
-          浏览器默认的 28px（在 44px 的头部里就是「挤且丑」）。一个元素类型
+          浏览器默认的 28px（在 48px 的头部里仍会显得拥挤）。一个元素类型
           = 一条样式路径，不存在「哪条规则匹配不到」。
         */}
           <Typography.Title
@@ -634,6 +643,7 @@ export function DocumentPanel({
                 size="small"
                 icon={<Download size={16} />}
                 className={styles.tbBtn}
+                aria-label="下载原件"
                 href={api.documents.sourceUrl(doc.id, { download: true })}
               >
                 下载
@@ -656,6 +666,7 @@ export function DocumentPanel({
                    small 按钮在仓库里统一用 14（DESIGN §7.1 的两档之一） */
                 icon={<MessageCircle size={14} />}
                 className={styles.tbBtn}
+                aria-label="询问这篇文档"
                 onClick={() => askAi()}
                 /* 没有正文时禁用并说明原因（tooltip 里）——留一个点了没反应的
                  按钮是最坏的一种（DESIGN §7.4） */
@@ -861,8 +872,8 @@ export function DocumentPanel({
  * | 项 | 为什么在这里 |
  * |---|---|
  * | 状态徽标 | `failed` 是**状态**，它说「这条记录坏了」——`ready` 不给徽标（DESIGN §3.7） |
- * | 来源标注 | 「手动编辑 / AI 整理 / 本机导入」——借自 WeKnora（PRD §5.10）：一眼看出内容是谁生成的 |
- * | 位置 | 笔记的 vault 路径（能拿它去 Obsidian 里找）／上传件的原文件名／资料的 URL |
+ * | 来源 | 笔记、文件或资料来源；不猜测内容是否由 AI 整理 |
+ * | 原始出处 | 上传件的原文件名或资料的 URL；笔记不展示内部存储路径 |
  * | 格式与大小 | 上传件才有（「PDF · 2.4 MB」）；**不是徽标**，格式是开放集合（DESIGN §3.7） |
  * | 日期 | 最后更新 |
  *
@@ -875,31 +886,29 @@ function DocHeaderMeta({ doc }: { doc: DocumentDetail }) {
   const { styles } = useStyles()
   const format = formatMeta(doc)
   /**
-   * 位置：笔记给 vault 路径（能拿它去 Obsidian 里找），上传件给原文件名
-   * （用户认得的是这个，它没有 vault 文件），资料给 URL。
+   * 原始出处：上传件给原文件名，资料给 URL，笔记不展示内部路径。
    * 空串就不渲染——否则会留下一个孤零零的分隔点。
    */
   const location =
-    doc.kind === 'file' ? (doc.sourceKey?.split('/').pop() ?? '') : (doc.path ?? doc.url ?? '')
+    doc.kind === 'file'
+      ? (doc.sourceKey?.split('/').pop() ?? '')
+      : doc.kind === 'note'
+        ? ''
+        : (doc.url ?? '')
+  const sourceLabel = {
+    note: '笔记',
+    file: '文件',
+    web: '网页',
+    wechat: '公众号',
+    github: 'GitHub',
+  }[doc.kind]
 
   return (
     <div className={styles.headerMeta}>
       <StatusBadge status={doc.status} />
+      <span className={styles.originManual}>{sourceLabel}</span>
       {/*
-        「手动编辑 / AI 整理 / 本机导入」这个标注让用户一眼看出内容是**自己写的**
-        还是**机器整理的**。上传件说「本机导入」，不说「AI 整理」——后者是在说
-        一个没发生的事，而这一行里的每一条都该是真的。
-      */}
-      {doc.kind === 'file' ? (
-        <span className={styles.originManual}>本机导入</span>
-      ) : doc.kind === 'note' ? (
-        <span className={styles.originManual}>手动编辑</span>
-      ) : (
-        <span className={styles.originAuto}>AI 整理</span>
-      )}
-      {/*
-        位置。上传件不显示 vault 路径——它没有 vault 文件，显示「（尚无快照）」
-        会让人以为记录坏了；它显示原文件名，那才是用户认得的东西。
+        原始出处。上传件显示用户认得的原文件名，资料可查看来源 URL。
         空串就不渲染：否则会留下一个孤零零的分隔点（只有一个「·」）。
       */}
       {location !== '' && (

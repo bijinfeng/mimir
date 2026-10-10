@@ -77,13 +77,13 @@ describe('默认内容播种', () => {
     expect(doc!.kind).toBe('note')
     expect(doc!.folder).toBe('开始使用')
     // 正文是那份说明（不是空壳）
-    expect(doc!.body).toContain('它解决什么')
+    expect(doc!.body).toContain('从这里开始')
     // 摘要与检索文本都建了——「能被搜到」是这份说明的意义之一
     expect(doc!.excerpt).not.toBe('')
     expect(doc!.searchText).not.toBe('')
 
     /**
-     * **正文完整**（八节都在、以结尾句收尾）。
+     * **正文完整**（从入门到备份、以结尾句收尾）。
      *
      * 这条是实测教训：维护脚本曾用正则从 seed.ts 源码里现抽正文，
      * 在第一个代码围栏（反引号 + 换行）处截断，库里存了半篇说明——
@@ -91,10 +91,11 @@ describe('默认内容播种', () => {
      * 所以这里断言「库里存的 = 常量本身」，任何截断当场暴露。
      */
     expect(doc!.body).toBe(PRODUCT_DOC_BODY)
-    expect(PRODUCT_DOC_BODY).toContain('## 八、它刻意不做什么')
+    expect(PRODUCT_DOC_BODY).toContain('## 数据与备份')
+    expect(PRODUCT_DOC_BODY).not.toContain('RRF')
     expect(
       PRODUCT_DOC_BODY.trimEnd().endsWith(
-        '这份文档是普通笔记。改它、删它、把它移进别的知识库，都可以。',
+        '这篇说明也是一篇普通笔记。熟悉之后，可以编辑、移动或删除它。',
       ),
     ).toBe(true)
 
@@ -106,7 +107,7 @@ describe('默认内容播种', () => {
     const note = await readNote(doc!.path!)
     expect(note.title).toBe('mimir 产品说明')
     expect(note.folder).toBe('开始使用')
-    expect(note.body).toContain('它解决什么')
+    expect(note.body).toContain('从这里开始')
   })
 
   it('再播一次什么都不做（标记挡住了）', async () => {

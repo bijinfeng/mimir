@@ -274,6 +274,17 @@ describe('对比度底线', () => {
       contrast('#ffffff', '#1677ff'),
     )
   })
+
+  it.each(APPEARANCES)('主按钮悬停态与主色文字 %s下保持可读', (appearance) => {
+    const token = tokenOf(appearance)
+    expect(contrast('#ffffff', String(token.colorPrimaryHover))).toBeGreaterThanOrEqual(4.5)
+    expect(
+      contrastOn(String(token.colorPrimaryText), String(token.colorBgContainer)),
+    ).toBeGreaterThanOrEqual(4.5)
+    expect(
+      contrastOn(String(token.colorPrimaryTextHover), String(token.colorBgContainer)),
+    ).toBeGreaterThanOrEqual(4.5)
+  })
 })
 
 describe('非文本对比度：焦点环与描边', () => {
@@ -435,7 +446,7 @@ describe('关键值真的覆盖了 antd 默认', () => {
     expect(ours).not.toBe(String(antdDarkDefault.colorLink))
     // 校准层里写死的那个值，逐字比对——改了取值而忘了改这里会红，
     // 那正是「文档与代码各说各话」的入口（DESIGN §3.8 有同一张表）
-    expect(ours).toBe('#79b8ff')
+    expect(ours).toBe('#ddcaff')
   })
 
   it('深色主题把校准层挂在 algorithm 上（不是定义了一个没人用的函数）', () => {
@@ -464,7 +475,7 @@ describe('关键值真的覆盖了 antd 默认', () => {
   })
 
   it('品牌与形状保持既有决定', () => {
-    expect(lightToken.colorPrimary).toBe('#1677ff')
+    expect(lightToken.colorPrimary).toBe('#6e50b9')
     expect(lightToken.borderRadius).toBe(8)
     expect(lightToken.fontSize).toBe(14)
   })
@@ -498,7 +509,7 @@ describe('设置页分区标签的选中色（antd Tabs）', () => {
     expect(
       tabs?.itemSelectedColor,
       `${NAMES[appearance]}：Tabs 没有组件级选中色（会退回 colorPrimary）`,
-    ).toBe(appearance === 'dark' ? '#79b8ff' : '#0958d9')
+    ).toBe(appearance === 'dark' ? '#ddcaff' : '#543b9a')
     // 与 colorPrimary 同值就是没覆盖上——那正是要拦的退化
     expect(tabs?.itemSelectedColor).not.toBe(String(tokenOf(appearance).colorPrimary))
   })
@@ -522,6 +533,19 @@ describe('设置页分区标签的选中色（antd Tabs）', () => {
     expect(selectedOf('dark'), '深色的选中标签比浅色还弱').toBeGreaterThanOrEqual(
       selectedOf('light'),
     )
+  })
+})
+
+describe('设置分区菜单的选中文字', () => {
+  it.each(APPEARANCES)('%s 下选中文字在选中底上可读', (appearance) => {
+    const color = themeConfigFor(appearance).components?.Menu?.itemSelectedColor
+    expect(color, `${NAMES[appearance]}：Menu 选中文字不能退回填充主色`).toBe(
+      String(tokenOf(appearance).colorLink),
+    )
+    expect(
+      contrastOn(String(color), String(tokenOf(appearance).colorPrimaryBg)),
+      `${NAMES[appearance]}：设置分区选中文字对比度不足`,
+    ).toBeGreaterThanOrEqual(4.5)
   })
 })
 
@@ -1186,7 +1210,7 @@ describe('cssVar 运行时确实注入了变量', () => {
     const { host, css, unmount } = await renderApp()
 
     // 这些变量是内容排版与列底色的依赖：它们必须真的存在
-    expect(css).toMatch(/--ant-color-text-tertiary:\s*#68707c/i)
+    expect(css).toMatch(/--ant-color-text-tertiary:\s*#68636f/i)
     expect(css).toMatch(/--ant-color-success-text:\s*#137333/i)
     expect(css).toMatch(/--ant-font-family:/i)
 
@@ -1259,7 +1283,7 @@ describe('cssVar 运行时确实注入了变量', () => {
     // 所有引用变量的地方会静默失效——所以在这里守一条。
     const { host, css, unmount } = await renderApp()
 
-    expect(css).toMatch(/--ant-color-text-tertiary:\s*#68707c/i)
+    expect(css).toMatch(/--ant-color-text-tertiary:\s*#68636f/i)
     expect(host.querySelector('.ant-app')?.className).toContain('mimir')
 
     await unmount()
@@ -1272,8 +1296,8 @@ describe('主题真的接通了', () => {
     // 断言覆盖值 + 变量类名两件事，才能区分「接通了」和「antd 默认恰好也是这个色」。
     const { host, css, unmount } = await renderApp()
 
-    expect(css).toContain('--ant-color-primary:#1677ff')
-    expect(css).toContain('--ant-color-link:#0958d9')
+    expect(css).toContain('--ant-color-primary:#6e50b9')
+    expect(css).toContain('--ant-color-link:#543b9a')
     expect(css).toContain('--ant-border-radius:8px')
     expect(host.querySelector('.ant-app')?.className).toContain('mimir')
 
@@ -1316,9 +1340,9 @@ describe('外观切换真的生效', () => {
     expect(after.length, '变量块不该有第二份').toBe(1)
 
     const darkVars = [...after].map((style) => style.textContent ?? '').join('\n')
-    expect(darkVars).toMatch(/--ant-color-bg-container:\s*#141618/i)
-    expect(darkVars).toMatch(/--ant-color-link:\s*#79b8ff/i)
-    expect(darkVars).toMatch(/--ant-color-text-tertiary:\s*rgba\(255,\s*255,\s*255,\s*0?\.52\)/i)
+    expect(darkVars).toMatch(/--ant-color-bg-container:\s*#29292d/i)
+    expect(darkVars).toMatch(/--ant-color-link:\s*#ddcaff/i)
+    expect(darkVars).toMatch(/--ant-color-text-tertiary:\s*rgba\(255,\s*255,\s*255,\s*0?\.66\)/i)
     // 浅色那套值必须已经不在了——否则就是「两套色混在一起」，最难查的一种
     expect(darkVars).not.toContain('--ant-color-bg-container:#ffffff')
 
@@ -1358,7 +1382,7 @@ describe('外观切换真的生效', () => {
     const block = document.querySelector('style[data-token-hash="mimir"]')?.textContent ?? ''
 
     expect(block).toMatch(/--ant-color-bg-container:\s*#ffffff/i)
-    expect(block).not.toContain('--ant-color-bg-container:#141618')
+    expect(block).not.toContain('--ant-color-bg-container:#29292d')
 
     await unmount()
   })
@@ -1383,16 +1407,16 @@ describe('外观切换真的生效', () => {
     )
 
     expect(readTokenVars(), '浅色下 Tabs 变量没有注册').toMatch(
-      /--ant-tabs-item-selected-color:#0958d9/i,
+      /--ant-tabs-item-selected-color:#543b9a/i,
     )
     // 选中项必须真的画成那个色：变量注册了但选择器没用上，界面还是旧色
     // （jsdom 会把 var() 解出来，但不把 hex 规范化成 rgb——两种写法都要认）
     const selected = host.querySelector('.ant-tabs-tab-active .ant-tabs-tab-btn')
-    expect(['#0958d9', 'rgb(9, 88, 217)']).toContain(getComputedStyle(selected as Element).color)
+    expect(['#543b9a', 'rgb(84, 59, 154)']).toContain(getComputedStyle(selected as Element).color)
 
     await switchAppearance('dark')
     expect(readTokenVars(), '深色下 Tabs 变量没跟着换').toMatch(
-      /--ant-tabs-item-selected-color:#79b8ff/i,
+      /--ant-tabs-item-selected-color:#ddcaff/i,
     )
 
     await unmount()

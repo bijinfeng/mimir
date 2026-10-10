@@ -1,0 +1,9 @@
+{"file": ".trellis/tasks/10-10-visual-redesign/research/design-spec-map.md", "reason": "现行视觉契约章节地图；实施时按需读取完整规范"}
+{"file": ".trellis/spec/renderer/frontend/conventions.md", "reason": "共享渲染层和样式边界"}
+{"file": ".trellis/spec/renderer/frontend/theme/conventions.md", "reason": "双主题和 token 校准约束"}
+{"file": ".trellis/spec/chat/frontend/conventions.md", "reason": "对话包与宿主主题桥接约束"}
+{"file": ".trellis/tasks/10-10-visual-redesign/research/visual-review.md", "reason": "旧版问题和方向稿边界"}
+{"file": ".trellis/spec/office/frontend/shell/conventions.md", "reason": "六格式共用编辑器外壳与顶部工具区槽位"}
+{"file": ".trellis/spec/office/frontend/editors/conventions.md", "reason": "各格式真实工具命令与画布边界"}
+{"file": ".trellis/spec/renderer/frontend/document/conventions.md", "reason": "文档阅读、编辑和右侧助手的宿主布局"}
+{"file": ".trellis/tasks/10-10-visual-redesign/research/component-system-audit.md", "reason": "Ant Design/Lucide现状、旧规范冲突与实施边界"}

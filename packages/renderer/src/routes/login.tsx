@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
-import { Alert, App, Button, Card, Form, Input, Skeleton, Typography } from 'antd'
+import { Alert, App, Button, Form, Input, Skeleton, Typography } from 'antd'
 import { createStyles } from 'antd-style'
 import { useState } from 'react'
 import { BrandMark } from '../components/BrandMark'
@@ -60,7 +60,7 @@ interface SignUpValues extends LoginValues {
 /** 这一页没有侧栏，标题栏的折叠回调是个空动作 */
 const noop = () => {}
 
-const useStyles = createStyles(({ css, token, prefixCls }) => ({
+const useStyles = createStyles(({ css, token }) => ({
   /*
     外壳：标题栏 + 页面。**登录页也需要那条标题栏**（D-100 / D-103）——
     桌面壳是 `frame: false`，没有它就没有拖动区与关闭按钮；
@@ -77,44 +77,67 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
     flex: 1;
     min-height: 0;
     display: grid;
-    /*
-      列宽写死 minmax(0, 1fr)，不是默认的 auto。
-      默认那一档的 track 最小尺寸是 min-content，于是卡片上写死的 400px
-      会把 track 撑到 400——卡片再写 max-width: 100% 也没用，
-      百分比解析的就是那个 400。实测：视口 420px 时卡片仍是 400 宽、
-      整页 scrollWidth 424（.trellis/spec/project/design.md §5.5 不允许横向溢出）。
-    */
-    grid-template-columns: minmax(0, 1fr);
-    place-items: center;
+    grid-template-columns: minmax(320px, 2fr) minmax(0, 3fr);
     background: ${token.colorBgLayout};
-    padding: 24px;
+    overflow: auto;
+    @media (max-width: 760px) {
+      grid-template-columns: minmax(0, 1fr);
+      align-content: start;
+    }
   `,
-  card: css`
-    width: 400px;
-    /* 窄窗口下要能收窄。写死 400px 时视口一旦小于 448px
-       （卡片 400 + 页面左右各 24 的 padding）整页就横向溢出：实测 360px
-       视口下 scrollWidth 424、密码框右端的「显示密码」整颗落在视口外。
-       max-width: 100% 解析的是上面那个 track 的宽度，所以两处要一起改 */
-    max-width: 100%;
+  brandPane: css`
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-width: 0;
+    padding: clamp(32px, 5vw, 72px);
+    background: ${token.tintNav};
+    border-right: 1px solid ${token.colorBorderSecondary};
+    @media (max-width: 760px) {
+      padding: 28px 28px 20px;
+      border-right: 0;
+      border-bottom: 1px solid ${token.colorBorderSecondary};
+    }
   `,
-  /* 标记与标题同排。标题自己带 antd 的 h4 上下边距，这里要清掉，
-     否则标记会被顶到偏下 */
   brand: css`
     display: flex;
     align-items: center;
-    gap: 9px;
-    margin-bottom: 4px;
-    color: ${token.colorPrimary};
-
-    .${prefixCls}-typography {
-      margin: 0;
-      /* 与左导航的字标是**同一副字形**（.trellis/spec/project/design.md §9.1 的登录页那一行
-         写的是「同上」，也就是 700 / letter-spacing .06em）。原先这里是
-         antd 标题默认的 600 加一个 0.02em——同一个标记在两处出现时字重与
-         字距都不一样，并排放才看得出来，单看登录页看不出来 */
-      font-weight: 700;
-      letter-spacing: 0.06em;
+    gap: 12px;
+    color: ${token.colorLink};
+  `,
+  brandName: css`
+    margin: 0 !important;
+    color: ${token.colorText} !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.06em;
+  `,
+  brandPosition: css`
+    margin: 0;
+    color: ${token.colorTextSecondary};
+    font-size: ${FONT_SIZE.body}px;
+    @media (max-width: 760px) {
+      display: none;
     }
+  `,
+  formPane: css`
+    min-width: 0;
+    display: grid;
+    place-items: center;
+    padding: 48px 28px;
+    background: ${token.colorBgContainer};
+    @media (max-width: 760px) {
+      display: block;
+      padding: 40px 28px 56px;
+    }
+  `,
+  formContent: css`
+    width: min(100%, 400px);
+    min-width: 0;
+  `,
+  heading: css`
+    margin: 0 0 28px !important;
+    font-size: ${FONT_SIZE.display}px !important;
+    line-height: 1.25 !important;
   `,
   hint: css`
     margin-bottom: 18px;
@@ -133,8 +156,8 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
     margin-bottom: 16px;
   `,
   auxiliaryNote: css`
-    margin-top: -6px;
-    margin-bottom: 14px;
+    margin-top: 18px;
+    margin-bottom: 0;
     font-size: ${FONT_SIZE.meta}px;
     color: ${token.colorTextTertiary};
     line-height: 1.7;
@@ -251,67 +274,93 @@ function LoginPage() {
       {/* 桌面端是拖动区与窗口控件，浏览器里是 null */}
       {titleBar}
       <div className={styles.page}>
-        <Card className={styles.card}>
+        <div className={styles.brandPane}>
           <div className={styles.brand}>
             <BrandMark size={28} title={null} />
-            <Typography.Title level={4}>mimir</Typography.Title>
+            <Typography.Title className={styles.brandName} level={4}>
+              mimir
+            </Typography.Title>
           </div>
+          <p className={styles.brandPosition}>知识工作区</p>
+        </div>
 
-          {/* 失败提示条放在表单**上方**：它在说「上一次提交的结果」，
+        <main className={styles.formPane}>
+          <div className={styles.formContent}>
+            <Typography.Title className={styles.heading} level={1}>
+              {stateQuery.isLoading
+                ? '请稍候'
+                : stateQuery.isError
+                  ? '暂时无法登录'
+                  : localMode
+                    ? '返回客户端'
+                    : needsSetup
+                      ? '创建账号'
+                      : '登录'}
+            </Typography.Title>
+
+            {/* 失败提示条放在表单**上方**：它在说「上一次提交的结果」，
             而按钮在表单底部——放下面会被键盘与滚动推走。
             `title` 而不是 `message`：后者在 antd v6 已废弃、会打一条警告
             （同类迁移见 .trellis/spec/project/design.md §7.5） */}
-          {formError !== null && (
-            <Alert className={styles.formError} type="error" showIcon title={formError} />
-          )}
+            {formError !== null && (
+              <Alert className={styles.formError} type="error" showIcon title={formError} />
+            )}
 
-          {/* 状态还没回来时不要先渲染登录表单——那会让首次使用的用户
+            {/* 状态还没回来时不要先渲染登录表单——那会让首次使用的用户
             先看到一个「登录」，半秒后又被换成「注册」 */}
-          {stateQuery.isLoading ? (
-            <Skeleton active paragraph={{ rows: 4 }} title={false} />
-          ) : localMode ? (
-            /* 本地模式（D-100）：这里没有可填的东西——凭据由桌面客户端持有。
+            {stateQuery.isLoading ? (
+              <Skeleton active paragraph={{ rows: 4 }} title={false} />
+            ) : stateQuery.isError ? (
+              <>
+                <Alert
+                  className={styles.formError}
+                  type="error"
+                  showIcon
+                  title="无法连接服务"
+                  description={describeError(stateQuery.error)}
+                />
+                <Button type="primary" onClick={() => void stateQuery.refetch()}>
+                  重试
+                </Button>
+              </>
+            ) : localMode ? (
+              /* 本地模式（D-100）：这里没有可填的东西——凭据由桌面客户端持有。
              给出路（回客户端），而不是给一个填了也不会成功的表单 */
-            <>
-              <Typography.Paragraph type="secondary" className={styles.hint}>
-                此地址仅供 mimir 桌面客户端使用。
-              </Typography.Paragraph>
-              <Typography.Paragraph className={styles.auxiliaryNote}>
-                请返回桌面客户端继续使用。
-              </Typography.Paragraph>
-            </>
-          ) : needsSetup ? (
-            <>
-              <Typography.Paragraph type="secondary" className={styles.hint}>
-                首次使用，请创建账号。创建后注册入口将关闭。
-              </Typography.Paragraph>
-              <SignUpForm
-                onSubmit={submit((values) => signUp.mutate(values))}
-                pending={signUp.isPending}
-              />
-            </>
-          ) : (
-            <>
-              <LoginForm
-                initialEmail={prefill?.email ?? ''}
-                initialPassword={prefill?.password ?? ''}
-                onSubmit={submit((values) => signIn.mutate(values))}
-                pending={signIn.isPending}
-              />
-            </>
-          )}
+              <>
+                <Typography.Paragraph type="secondary" className={styles.hint}>
+                  请在桌面客户端继续使用。
+                </Typography.Paragraph>
+              </>
+            ) : needsSetup ? (
+              <>
+                <SignUpForm
+                  onSubmit={submit((values) => signUp.mutate(values))}
+                  pending={signUp.isPending}
+                />
+              </>
+            ) : (
+              <>
+                <LoginForm
+                  initialEmail={prefill?.email ?? ''}
+                  initialPassword={prefill?.password ?? ''}
+                  onSubmit={submit((values) => signIn.mutate(values))}
+                  pending={signIn.isPending}
+                />
+              </>
+            )}
 
-          {/* 桌面壳里给一条**不依赖远端可用性**的出路（D-100 / D-103）：选错服务器
+            {/* 桌面壳里给一条**不依赖远端可用性**的出路（D-100 / D-103）：选错服务器
             （或想改用本地使用）时，设置页进不去——它也在远端——而选择页
             由客户端自己提供，是此刻唯一还活着的入口 */}
-          {bridge ? (
-            <Typography.Paragraph className={styles.auxiliaryNote}>
-              <Button type="link" size="small" onClick={() => bridge.mode.openSetup()}>
-                更换使用方式…
-              </Button>
-            </Typography.Paragraph>
-          ) : null}
-        </Card>
+            {bridge ? (
+              <Typography.Paragraph className={styles.auxiliaryNote}>
+                <Button type="link" size="small" onClick={() => bridge.mode.openSetup()}>
+                  更换使用方式…
+                </Button>
+              </Typography.Paragraph>
+            ) : null}
+          </div>
+        </main>
       </div>
     </div>
   )
@@ -346,7 +395,7 @@ function LoginForm({
       <Form.Item name="password" label="密码" rules={[{ required: true, message: '请输入密码' }]}>
         <Input.Password autoComplete="current-password" placeholder="密码" />
       </Form.Item>
-      <Button type="primary" htmlType="submit" block loading={pending}>
+      <Button type="primary" htmlType="submit" block loading={pending} size="large">
         登录
       </Button>
     </Form>
@@ -399,7 +448,7 @@ function SignUpForm({
       >
         <Input.Password autoComplete="new-password" placeholder="再输入一次" />
       </Form.Item>
-      <Button type="primary" htmlType="submit" block loading={pending}>
+      <Button type="primary" htmlType="submit" block loading={pending} size="large">
         创建账号
       </Button>
     </Form>

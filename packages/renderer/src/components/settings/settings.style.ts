@@ -1,25 +1,12 @@
 import { createStyles } from 'antd-style'
-import { CONTENT_WIDTH, FONT_SIZE } from '../../theme/tokens'
+import { FONT_SIZE, NAV_NARROW_QUERY } from '../../theme/tokens'
 
 /**
  * 设置页的样式。
  *
- * 这个页面不是一堆散落的表单，而是**插件注册表的人类可读视图**
- * （`.trellis/spec/project/architecture.md` §7.4）：每一行「可配置的东西」都对应一个注册进接缝的实现。
+ * 设置只展示用户能理解的状态和可执行操作；部署与实现细节留在服务端配置中。
  *
- * ## 形态：一个内容列 + 若干面板
- *
- * 早期版本是把 `Tabs` 摆成 `tabPosition="left"` 放在内容列**里面**。
- * 三个后果都在截图里看得见：
- *
- *  1. 它和全局左导航并排成了**两条左栏**，而这一页的位置反馈
- *     已经由左导航的「设置」提供了
- *  2. 限宽的 760px 内容列里再切出一条约 100px 的 tab 竖栏，
- *     正文实际只剩约 570px，右侧却空着半个屏幕
- *  3. 选中态的 ink bar 是一条脱离文字的竖线，看起来像渲染坏了
- *
- * 所以分区导航改成**横向**（见 `routes/_app.settings.tsx`），
- * 内容列恢复成完整的 760px（`.trellis/spec/project/design.md` §5.4）。
+ * 宽屏采用 246px 分区栏和最多 730px 的正文列；窄屏用 Select 定位分区。
  *
  * ## 为什么面板自己画边框，而不是用 `Card`
  *
@@ -30,20 +17,60 @@ import { CONTENT_WIDTH, FONT_SIZE } from '../../theme/tokens'
 export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   page: css`
     height: 100%;
-    overflow-y: auto;
-    padding: 28px 40px 64px;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 246px minmax(0, 1fr);
+    overflow: hidden;
+    background: ${token.colorBgContainer};
+    @media ${NAV_NARROW_QUERY} {
+      display: flex;
+      flex-direction: column;
+    }
   `,
   inner: css`
-    max-width: ${CONTENT_WIDTH}px;
-    margin: 0 auto;
+    max-width: 730px;
+    margin: 0;
+  `,
+  sectionRail: css`
+    min-height: 0;
+    overflow-y: auto;
+    padding: 30px 12px;
+    background: ${token.tintNav};
+    border-right: 1px solid ${token.colorBorderSecondary};
+  `,
+  content: css`
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 42px clamp(28px, 5vw, 72px) 80px;
+    @media ${NAV_NARROW_QUERY} {
+      flex: 1;
+      padding: 28px 24px 64px;
+    }
+  `,
+  mobileHead: css`
+    flex: none;
+    padding: 22px 24px 18px;
+    background: ${token.tintNav};
+    border-bottom: 1px solid ${token.colorBorderSecondary};
   `,
 
   /* ── 页头 ───────────────────────────────────────────── */
   title: css`
-    margin: 0 0 8px;
+    margin: 0 16px 24px;
     font-size: ${FONT_SIZE.pageTitle}px;
     font-weight: 700;
     line-height: 1.4;
+    color: ${token.colorText};
+    @media ${NAV_NARROW_QUERY} {
+      margin: 0 0 14px;
+    }
+  `,
+  contentTitle: css`
+    margin: 0 0 28px;
+    font-size: ${FONT_SIZE.display}px;
+    font-weight: 600;
+    line-height: 1.3;
     color: ${token.colorText};
   `,
   lead: css`
@@ -53,23 +80,19 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     color: ${token.colorTextSecondary};
   `,
 
-  /**
-   * 分区导航（横向 Tabs）。
-   *
-   * 只调两处：导航与内容之间的间距，以及 tab 的字号——
-   * antd 默认 14px 与正文同大，分不出「导航」与「内容」。
-   *
-   * 窄屏（≤880px）用的不是它，而是下面那个 `Select`：八个分区在 420px 里
-   * 排不下（实测文字合计约 256px，导航条可用宽度只有 247px），而 `Tabs`
-   * 不折行——它会把首个标签裁成半个字。
-   */
-  tabs: css`
-    .${prefixCls}-tabs-nav {
-      margin-bottom: 26px;
+  /** 宽屏分区菜单。 */
+  sectionMenu: css`
+    &.${prefixCls}-menu {
+      background: transparent;
+      border: 0;
     }
-    .${prefixCls}-tabs-tab {
-      padding: 10px 0;
+    .${prefixCls}-menu-item {
+      margin: 2px 0;
+      width: 100%;
+      height: 36px;
+      line-height: 36px;
       font-size: ${FONT_SIZE.item}px;
+      border-radius: ${token.borderRadius}px;
     }
   `,
 
@@ -80,8 +103,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
    * 下面的内容不会跳一下。
    */
   sectionSelect: css`
-    display: block;
-    margin-bottom: 26px;
+    width: 100%;
   `,
 
   /* ── 分区标题 ───────────────────────────────────────── */
@@ -102,12 +124,12 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   /* ── 面板：一组相关的设置项 ─────────────────────────── */
   panel: css`
     background: ${token.colorBgContainer};
-    border: 1px solid ${token.colorBorderSecondary};
-    border-radius: 10px;
+    border-top: 1px solid ${token.colorBorderSecondary};
+    border-radius: 0;
     overflow: hidden;
 
     & + & {
-      margin-top: 14px;
+      margin-top: 24px;
     }
   `,
   /**
@@ -135,11 +157,11 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     display: flex;
     align-items: center;
     gap: 9px;
-    padding: 11px 16px;
+    padding: 16px 0 10px;
     font-size: ${FONT_SIZE.excerpt}px;
     font-weight: 600;
     color: ${token.colorTextSecondary};
-    background: ${token.tintList};
+    background: transparent;
   `,
   /** 标题条右端的动作组。`margin-left: auto` 把它推到最右 */
   panelExtra: css`
@@ -161,27 +183,29 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     display: flex;
     align-items: baseline;
     gap: 16px;
-    padding: 12px 16px;
+    padding: 14px 0;
 
     & + & {
       border-top: 1px solid ${token.colorBorderSecondary};
+    }
+    @media (max-width: 680px) {
+      flex-direction: column;
+      gap: 3px;
     }
   `,
   /* 固定标签列宽，让右侧的值对齐成一条竖线——扫读时视线不用来回跳
      （与左导航「右侧对齐的元信息」是同一个理由，DESIGN §8.1）。
 
-     宽度取**最长标签的实际宽度**（实测 124px），不是随手一个整数近似：
-     标签文案来自注册表（core 的键表与插件的 `params`），最长的两条是
-     「关键词（jieba 分词）」123px 与「每篇最多引用块数」105px。给 92px 时
-     它们折成两行，同一块面板的行高就分成 22px 与 44px 两档，断词还把
-     「每篇最多引用块 / 数」切在词中间——而这一列存在的理由是**对齐**，
-     不是省这 30px。列宽一次放宽，加新键时也不会再撞上。 */
+     124px 保留现有表单标签的对齐空间；窄屏改为上下排列。 */
   rowLabel: css`
     flex: none;
     width: 124px;
     font-size: ${FONT_SIZE.excerpt}px;
     line-height: 1.7;
     color: ${token.colorTextSecondary};
+    @media (max-width: 680px) {
+      width: auto;
+    }
   `,
   rowValue: css`
     flex: 1;
@@ -197,11 +221,28 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
 
   /* ── 块：一段占满整行的内容（插件条目、说明 + 按钮） ── */
   block: css`
-    padding: 13px 16px;
+    padding: 15px 0;
 
     & + & {
       border-top: 1px solid ${token.colorBorderSecondary};
     }
+  `,
+  capabilityGrid: css`
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 24px;
+    @media (max-width: 600px) {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  `,
+  capabilityItem: css`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+    padding: 12px 0;
+    border-bottom: 1px solid ${token.colorBorderSecondary};
   `,
   blockTitle: css`
     display: flex;
@@ -278,6 +319,9 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 12px;
     padding: 14px 16px;
+    @media (max-width: 680px) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   `,
   statLabel: css`
     font-size: ${FONT_SIZE.meta}px;
@@ -336,6 +380,10 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     & + & {
       border-top: 1px solid ${token.colorBorderSecondary};
     }
+    @media (max-width: 680px) {
+      grid-template-columns: minmax(0, 1fr);
+      padding-inline: 0;
+    }
   `,
   /** 右上角的动作组。`flex-start` 让它们贴着这一行的上缘（与名字同高） */
   providerActions: css`
@@ -343,6 +391,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     align-items: flex-start;
     gap: 8px;
     padding-top: 2px;
+    flex-wrap: wrap;
   `,
   /** 展开入口所在的行：跨两列、与上方信息隔一点距离 */
   providerExpander: css`
@@ -581,6 +630,11 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     & + & {
       border-top: 1px solid ${token.colorBorderSecondary};
     }
+    @media (max-width: 680px) {
+      flex-direction: column;
+      gap: 4px;
+      padding-inline: 0;
+    }
   `,
   formLabel: css`
     flex: none;
@@ -588,6 +642,10 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     font-size: ${FONT_SIZE.excerpt}px;
     line-height: 32px;
     color: ${token.colorTextSecondary};
+    @media (max-width: 680px) {
+      width: auto;
+      line-height: 1.5;
+    }
   `,
   formValue: css`
     flex: 1;
@@ -651,6 +709,11 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     font-size: ${FONT_SIZE.meta}px;
     color: ${token.colorTextTertiary};
     border-bottom: 1px solid ${token.colorBorderSecondary};
+    @media (max-width: 680px) {
+      grid-template-columns: minmax(0, 1fr) minmax(96px, 130px) 46px 28px;
+      gap: 6px;
+      padding-inline: 0;
+    }
   `,
   modelRow: css`
     display: grid;
@@ -662,6 +725,11 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     & + & {
       border-top: 1px solid ${token.colorBorderSecondary};
     }
+    @media (max-width: 680px) {
+      grid-template-columns: minmax(0, 1fr) minmax(96px, 130px) 46px 28px;
+      gap: 6px;
+      padding-inline: 0;
+    }
   `,
   modelRowRead: css`
     display: grid;
@@ -672,6 +740,11 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
 
     & + & {
       border-top: 1px solid ${token.colorBorderSecondary};
+    }
+    @media (max-width: 680px) {
+      grid-template-columns: minmax(0, 1fr) minmax(96px, 130px) 46px;
+      gap: 6px;
+      padding-inline: 0;
     }
   `,
   /**
@@ -779,10 +852,13 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     gap: 8px;
     align-items: center;
     margin-bottom: 8px;
+    @media (max-width: 680px) {
+      flex-wrap: wrap;
+    }
 
     > *:first-child {
       flex: 1;
-      min-width: 0;
+      min-width: min(100%, 220px);
     }
   `,
 

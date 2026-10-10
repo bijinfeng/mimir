@@ -31,7 +31,7 @@ import { createStyles } from 'antd-style'
  */
 
 /** 内容列宽（原型实测过的中文阅读宽度）。**只在这里写一次** */
-export const CONTENT_WIDTH = 860
+export const CONTENT_WIDTH = 850
 
 export const useChatPanelStyles = createStyles(({ css, token }) => ({
   /* 存成笔记 / 打开笔记的行：跟在引用卡之后，弱化成一条次级动作 */
@@ -42,6 +42,7 @@ export const useChatPanelStyles = createStyles(({ css, token }) => ({
   `,
   wrap: css`
     height: 100%;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     background: ${token.colorBgContainer};
@@ -56,7 +57,8 @@ export const useChatPanelStyles = createStyles(({ css, token }) => ({
   scroll: css`
     height: 100%;
     overflow-y: auto;
-    padding: 24px 0 16px;
+    overflow-x: hidden;
+    padding: 38px 0 24px;
 
     /* 空态：整列变成居中舞台——问候语与输入框成一组、在可视区里垂直居中
        （Notion / ChatGPT 的新对话形态，用户拍板）。开始对话后输入部落回
@@ -73,6 +75,7 @@ export const useChatPanelStyles = createStyles(({ css, token }) => ({
     width: 100%;
     max-width: ${CONTENT_WIDTH}px;
     margin: auto;
+    padding-bottom: 24px;
   `,
   /* 离底时才出现的「回到底部」。位置贴着滚动区右下角、留出与内容列同量级
      的边距；阴影走浮层档（DESIGN §5.3）——它浮在内容之上。
@@ -119,6 +122,7 @@ export const useChatPanelStyles = createStyles(({ css, token }) => ({
      Composer 里——显形开关（滚动容器的 scrollTop）归面板管 */
   composerLine: css`
     border-top: 1px solid transparent;
+    background: ${token.colorBgContainer};
     transition: border-color 0.2s ease-out;
 
     &[data-scrolled] {
@@ -140,6 +144,7 @@ export const useChatPanelStyles = createStyles(({ css, token }) => ({
   `,
 
   inner: css`
+    width: 100%;
     max-width: ${CONTENT_WIDTH}px;
     margin: 0 auto;
     /*
@@ -151,33 +156,21 @@ export const useChatPanelStyles = createStyles(({ css, token }) => ({
     padding: 0 var(--mimir-chat-gutter, 40px);
   `,
 
-  /* 消息的排布。Codex 式的 transcript，不是聊天气泡：用户消息不缩进右边、
-     不上底色，行首一枚 › 标记（挂在左缩进槽里）承担「这是你说的」，
-     其余靠留白与字号分层。助手回答占满宽度——回答里会有表格与代码块，
-     限宽会让它们挤成一团 */
+  /* 用户问题靠右，回答沿阅读列展开；正文里的表格与代码块保留宽度。 */
   thread: css`
     display: flex;
     flex-direction: column;
-    gap: 24px; /* 官方 gap-y-6：轮次之间的空隙是容器的，不是消息自己的 */
+    gap: 36px;
+    padding-bottom: 28px;
 
-    /*
-     * 消息的排布（assistant-ui 的 thread 形态，D-099 收尾）：
-     *
-     *  - **用户消息：右对齐的 muted 气泡**。对应上游的 flex justify-end +
-     *    bg-muted + rounded-2xl + max-width 85% + px-4 py-3；
-     *    D-097 曾把它改平成左对齐 transcript（行首 › 标记），用户随后点名
-     *    「整个对话的交互样式都按 assistant-ui 来」，气泡回归——
-     *    三条「气泡压碎中文」的理由被用户明示的样式取向覆盖，记录在案
-     *  - **助手消息：左对齐占满宽度**，只有 py-2 的呼吸——assistant-ui
-     *    不用大间距，轮次之间的空隙由每条消息自己的上下 padding 出
-     *  - 说话人的区分靠**对齐 + 气泡**（上游同款），不再需要行首标记
-     */
+    /* 气泡控制最大宽度，长中文问题不会挤成窄列。 */
     [data-role='user'] {
       align-self: flex-end;
-      max-width: 85%;
-      background: ${token.colorFillTertiary};
-      border-radius: 16px; /* 官方 rounded-(--composer-radius) = 1rem */
-      padding: 8px 16px; /* 官方 px-4 py-2 */
+      max-width: min(85%, 620px);
+      background: ${token.colorFillQuaternary};
+      border: 1px solid ${token.colorBorderSecondary};
+      border-radius: ${token.borderRadiusLG}px;
+      padding: 11px 15px;
       font-size: var(--mimir-chat-font-body, 14px);
       line-height: 1.7;
       white-space: pre-wrap;
@@ -192,8 +185,9 @@ export const useChatPanelStyles = createStyles(({ css, token }) => ({
     }
 
     [data-role='assistant'] {
+      min-width: 0;
       font-size: var(--mimir-chat-font-body, 14px);
-      line-height: 1.75;
+      line-height: 1.8;
       color: ${token.colorText};
 
       /* 渲染性能：长会话里每一条都参与布局是浪费。contain-intrinsic-size
@@ -271,19 +265,43 @@ export const useChatPanelStyles = createStyles(({ css, token }) => ({
     }
   `,
 
+  assistantHeading: css`
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    color: ${token.colorText};
+    font-size: var(--mimir-chat-font-note, 12.5px);
+    font-weight: 600;
+  `,
+
   empty: css`
-    /* 空态（官方 ThreadWelcome 形态）：欢迎语在列内**左对齐**（不是
-       居中舞台），24px medium 一句话（官方 text-2xl font-medium
-       tracking-tight），下方留 mb-6 与输入区隔开 */
-    padding: 0 2px 24px;
-    text-align: left;
+    padding: 0 var(--mimir-chat-gutter, 40px) 28px;
+    text-align: center;
+  `,
+  emptyMark: css`
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    margin-bottom: 20px;
+    border: 1px solid ${token.colorBorderSecondary};
+    border-radius: ${token.borderRadiusLG}px;
+    background: ${token.colorFillSecondary};
+    color: ${token.colorLink};
   `,
   emptyTitle: css`
-    font-size: var(--mimir-chat-font-display, 24px); /* 官方 text-2xl */
-    font-weight: 500;
-    letter-spacing: -0.02em; /* 官方 tracking-tight */
-    margin-bottom: 8px;
+    font-size: var(--mimir-chat-font-display, 24px);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.3;
+    margin-bottom: 9px;
     color: ${token.colorText};
+  `,
+  emptyLead: css`
+    margin: 0;
+    color: ${token.colorTextSecondary};
+    font-size: var(--mimir-chat-font-note, 12.5px);
+    line-height: 1.65;
   `,
   /* 空态里的发送失败行：组的其它内容都居中，它也居中
      （会话里那条 stopped 靠左是对的——它跟的是消息列） */

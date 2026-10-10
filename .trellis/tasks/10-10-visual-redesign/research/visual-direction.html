@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>mimir · Obsidian 风格方向稿</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; height: 100%; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; font-size: 13px; background: var(--frame); color: var(--ink); }
+    body[data-theme="light"] { --frame:#e7e7ea; --chrome:#ececef; --rail:#eeeeef; --side:#f4f4f5; --surface:#fff; --paper:#fff; --ink:#27262a; --muted:#77747e; --faint:#a09da5; --line:#dedde2; --hover:#e8e4f2; --active:#e4dcf7; --accent:#6e50b9; --accent-dark:#543b9a; --chip:#f3f1f7; }
+    body[data-theme="dark"] { --frame:#141416; --chrome:#1b1b1e; --rail:#1c1c20; --side:#222226; --surface:#29292d; --paper:#29292d; --ink:#e4e2e8; --muted:#aaa6b0; --faint:#77737e; --line:#3a393f; --hover:#34303e; --active:#443958; --accent:#b7a1f0; --accent-dark:#d1c1fb; --chip:#37323f; }
+    .window { width: 100vw; height: 100vh; display: flex; flex-direction: column; border: 1px solid var(--line); background: var(--surface); overflow: hidden; }
+    .chrome { height: 42px; flex: none; display: flex; align-items: center; padding: 0 17px; gap: 14px; background: var(--chrome); border-bottom: 1px solid var(--line); color: var(--muted); }
+    .traffic { display:flex; gap:8px; width: 65px; }
+    .traffic i { width: 10px; height: 10px; border:1px solid var(--faint); border-radius:50%; opacity:.6; }
+    .chrome-title { margin: 0 auto; font-size: 12px; letter-spacing:.01em; }
+    .chrome-right { width:65px; text-align:right; letter-spacing:.1em; }
+    .workspace { flex: 1; min-height:0; display:flex; }
+    .rail { width: 52px; flex:none; display:flex; flex-direction:column; align-items:center; padding: 14px 0 12px; gap:8px; background:var(--rail); border-right:1px solid var(--line); }
+    .brand { width:27px; height:27px; border-radius:8px; display:grid; place-items:center; background:var(--accent); color:#fff; font-weight:700; font-size:18px; line-height:1; margin-bottom:18px; }
+    .rail-button { width:36px; height:36px; border-radius:8px; display:grid; place-items:center; color:var(--muted); }
+    .rail-button.active { color:var(--accent-dark); background:var(--active); }
+    .rail-spacer { flex:1; }
+    svg { width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+    .sidebar { width: 242px; flex:none; display:flex; flex-direction:column; background:var(--side); border-right:1px solid var(--line); }
+    .side-top { height:54px; display:flex; align-items:center; justify-content:space-between; padding:0 16px 0 20px; font-weight:650; font-size:15px; letter-spacing:.01em; }
+    .side-icon { color:var(--muted); }
+    .side-search { margin:4px 12px 19px; height:33px; border-radius:7px; border:1px solid var(--line); background:var(--surface); color:var(--faint); display:flex; align-items:center; gap:8px; padding:0 10px; }
+    .side-search svg { width:14px; height:14px; }
+    .shortcut { margin-left:auto; font-size:11px; }
+    .side-heading { margin: 5px 19px 7px; color:var(--muted); font-size:11px; font-weight:600; }
+    .side-row { height:32px; margin:1px 8px; padding:0 12px; display:flex; align-items:center; gap:9px; border-radius:6px; color:var(--muted); }
+    .side-row.active { background:var(--active); color:var(--accent-dark); font-weight:600; }
+    .side-row .count { margin-left:auto; color:var(--faint); font-size:11px; }
+    .side-row svg { width:15px; height:15px; }
+    .side-divider { border-top:1px solid var(--line); margin:17px 16px 14px; }
+    .side-bottom { margin-top:auto; border-top:1px solid var(--line); height:58px; display:flex; align-items:center; gap:10px; padding:0 15px; color:var(--muted); }
+    .avatar { width:28px; height:28px; border-radius:8px; display:grid; place-items:center; background:var(--active); color:var(--accent-dark); font-weight:700; }
+    .main { min-width:0; flex:1; display:flex; flex-direction:column; background:var(--surface); }
+    .pane-top { height:48px; flex:none; display:flex; align-items:center; gap:10px; padding:0 24px; border-bottom:1px solid var(--line); color:var(--muted); }
+    .pane-top strong { color:var(--ink); font-weight:600; }
+    .pane-top .right { margin-left:auto; display:flex; gap:16px; align-items:center; }
+    .pane-top svg { width:15px; height:15px; }
+    .library-content { width:min(100%,1080px); margin:0 auto; padding:54px 52px 70px; }
+    .eyebrow { color:var(--accent-dark); font-size:12px; font-weight:650; margin-bottom:12px; }
+    h1 { font-size:29px; line-height:1.3; font-weight:650; letter-spacing:-.03em; margin:0; }
+    .subline { color:var(--muted); margin:11px 0 0; font-size:13px; }
+    .library-actions { display:flex; align-items:center; gap:8px; margin:41px 0 27px; }
+    .button { height:32px; padding:0 12px; border:1px solid var(--line); border-radius:6px; display:inline-flex; align-items:center; gap:7px; background:var(--surface); color:var(--ink); font-size:12px; font-weight:500; }
+    .button svg { width:14px; height:14px; }
+    .button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+    .button-group { margin-left:auto; display:flex; gap:5px; }
+    .button.muted { background:var(--side); color:var(--muted); border-color:var(--side); }
+    .list-title { display:flex; align-items:center; padding:0 8px 11px; color:var(--muted); font-size:11px; font-weight:600; border-bottom:1px solid var(--line); }
+    .list-title span:last-child { margin-left:auto; }
+    .doc-row { height:64px; display:flex; align-items:center; gap:14px; padding:0 9px; border-bottom:1px solid var(--line); }
+    .doc-symbol { width:32px; height:35px; border-radius:5px; border:1px solid var(--line); display:grid; place-items:center; background:var(--chip); color:var(--accent-dark); }
+    .doc-symbol svg { width:16px; height:16px; }
+    .doc-name { font-weight:600; font-size:13px; margin-bottom:5px; }
+    .doc-excerpt { color:var(--muted); font-size:11px; }
+    .doc-date { color:var(--faint); font-size:11px; margin-left:auto; }
+    .doc-canvas { flex:1; min-height:0; display:flex; }
+    .editor { flex:1; min-width:0; overflow:hidden; background:var(--paper); }
+    .editor-inner { width:min(100%,800px); margin:0 auto; padding:62px 52px 80px; }
+    .editor-kicker { color:var(--muted); font-size:12px; margin-bottom:20px; }
+    .editor h1 { font-size:32px; letter-spacing:-.035em; margin-bottom:28px; }
+    .editor p, .editor li { font-size:15px; line-height:1.85; letter-spacing:.005em; color:var(--ink); }
+    .editor p { margin:0 0 18px; }
+    .editor h2 { font-size:22px; font-weight:650; margin:35px 0 17px; }
+    .editor ol { padding-left:21px; }
+    .editor li { padding-left:5px; margin:8px 0; }
+    .accent-text { color:var(--accent-dark); }
+    .outline { width:220px; flex:none; background:var(--side); border-left:1px solid var(--line); padding:24px 12px; }
+    .outline-title { font-size:11px; font-weight:650; color:var(--muted); margin:0 12px 14px; }
+    .outline-row { padding:9px 11px; border-radius:5px; color:var(--muted); font-size:12px; margin:3px 0; }
+    .outline-row.active { background:var(--active); color:var(--accent-dark); font-weight:600; }
+    .settings-side { width:246px; flex:none; border-right:1px solid var(--line); background:var(--side); padding:28px 13px; }
+    .settings-side h2 { margin:0 13px 22px; font-size:18px; }
+    .settings-group { margin:24px 13px 7px; color:var(--faint); font-size:10px; font-weight:650; }
+    .settings-item { height:36px; display:flex; align-items:center; padding:0 13px; border-radius:6px; color:var(--muted); }
+    .settings-item.active { background:var(--active); color:var(--accent-dark); font-weight:650; }
+    .settings-content { flex:1; overflow:hidden; padding:55px 68px; }
+    .settings-inner { max-width:730px; }
+    .settings-inner h1 { font-size:26px; margin-bottom:33px; }
+    .section-label { font-size:11px; color:var(--muted); font-weight:650; margin-bottom:13px; }
+    .setting-block { border-top:1px solid var(--line); padding:20px 0; display:flex; align-items:flex-start; gap:24px; }
+    .setting-copy { flex:1; }
+    .setting-copy strong { font-size:13px; font-weight:600; }
+    .setting-copy p { color:var(--muted); margin:7px 0 0; line-height:1.55; }
+    .field { width:290px; height:34px; border:1px solid var(--line); background:var(--surface); border-radius:6px; padding:8px 10px; color:var(--ink); }
+    .setting-control { display:flex; align-items:center; gap:8px; }
+    .settings-note { border-top:1px solid var(--line); padding:18px 0; color:var(--muted); font-size:12px; }
+    .settings-note span { color:var(--accent-dark); }
+    .status { flex:none; height:24px; display:flex; align-items:center; justify-content:flex-end; padding:0 14px; border-top:1px solid var(--line); background:var(--chrome); color:var(--faint); font-size:11px; }
+  </style>
+</head>
+<body data-theme="light">
+  <div class="window" id="app"></div>
+  <script>
+    window.addEventListener('error', e => { document.querySelector('#app').textContent = String(e.error || e.message); });
+    const params = new URLSearchParams(location.search);
+    document.body.dataset.theme = params.get('theme') === 'dark' ? 'dark' : 'light';
+    const view = params.get('view') || 'library';
+    const svg = {
+      search:'<circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/>',
+      folder:'<path d="M3 6h6l2 2h10v11H3z"/>',
+      file:'<path d="M6 2h8l5 5v15H6z"/><path d="M14 2v6h5"/>',
+      chat:'<path d="M4 5h16v12H9l-5 4z"/>',
+      plus:'<path d="M12 4v16M4 12h16"/>',
+      settings:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M19 5l-2 2M7 17l-2 2"/>',
+      chevron:'<path d="m8 10 4 4 4-4"/>',
+      panel:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/>',
+      dots:'<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',
+      list:'<path d="M9 6h12M9 12h12M9 18h12M3 6h2M3 12h2M3 18h2"/>',
+      grid:'<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>',
+      book:'<path d="M4 5h7a3 3 0 0 1 3 3v13H7a3 3 0 0 0-3 1zM20 5h-3a3 3 0 0 0-3 3v13h3a3 3 0 0 1 3 1z"/>',
+    };
+    const I = (name) => `<svg viewBox="0 0 24 24" aria-hidden="true">${svg[name]}</svg>`;
+    const rail = `<aside class="rail"><div class="brand">m</div><div class="rail-button ${view==='library'||view==='document'?'active':''}">${I('book')}</div><div class="rail-button">${I('search')}</div><div class="rail-button">${I('chat')}</div><div class="rail-button">${I('plus')}</div><div class="rail-spacer"></div><div class="rail-button ${view==='settings'?'active':''}">${I('settings')}</div></aside>`;
+    const sidebar = `<aside class="sidebar"><div class="side-top">mimir <span class="side-icon">${I('panel')}</span></div><div class="side-search">${I('search')} 搜索 <span class="shortcut">⌘ K</span></div><div class="side-heading">知识库</div><div class="side-row active">${I('folder')} 开始使用 <span class="count">1</span></div><div class="side-divider"></div><div class="side-heading">最近文档</div><div class="side-row">${I('file')} mimir 产品说明</div><div class="side-bottom"><span class="avatar">A</span> audit</div></aside>`;
+    const paneTop = (title) => `<div class="pane-top">知识库 <span>›</span> <strong>${title}</strong><span class="right">${I('search')}${I('dots')}</span></div>`;
+    const library = `<main class="main">${paneTop('开始使用')}<div class="library-content"><div class="eyebrow">知识库</div><h1>开始使用</h1><p class="subline">1 个文档 <span style="padding:0 8px;color:var(--faint)">·</span> RT4CYC</p><div class="library-actions"><span class="button primary">${I('plus')} 添加文档</span><span class="button">${I('folder')} 新建文件夹</span><span class="button">${I('file')} 新建文件</span><div class="button-group"><span class="button muted">${I('list')} 列表</span><span class="button">${I('grid')} 卡片</span></div></div><div class="list-title"><span>名称</span><span>更新于</span></div><div class="doc-row"><span class="doc-symbol">${I('file')}</span><div><div class="doc-name">mimir 产品说明</div><div class="doc-excerpt">笔记 · 已保存</div></div><span class="doc-date">今天 13:40</span></div></div></main>`;
+    const documentView = `<main class="main">${paneTop('mimir 产品说明')}<div class="doc-canvas"><article class="editor"><div class="editor-inner"><div class="editor-kicker">开始使用 / 笔记</div><h1>mimir 产品说明</h1><p>mimir 是一个自托管的个人知识库：写 Markdown 笔记、收集外部资料，带引用地向 AI 提问，部署在自己的服务器上。</p><p>这份说明随安装附带。读完之后，这里可以改成你自己的知识库。</p><h2>它解决什么问题</h2><p>收藏式的工具都有一个共同的死法：<strong>存的时候很勤，看时找不到。</strong>mimir 针对的是整条链路，五个环节缺一不可。</p><ol><li><strong>收集</strong>——粘贴网址抓正文、上传任意格式的文件、订阅 RSS 博客。</li><li><strong>整理</strong>——用知识库与文件夹，让内容有清楚的归属。</li><li><strong>检索</strong>——用关键词、语义向量和组合检索找回原文。</li><li><strong>提问</strong>——回答附带 <span class="accent-text">[1]</span> <span class="accent-text">[2]</span> 引用，点击即可回到原文。</li></ol></div></article><aside class="outline"><div class="outline-title">本文大纲</div><div class="outline-row active">它解决什么问题</div><div class="outline-row">界面怎么长</div><div class="outline-row">内容怎么进来</div><div class="outline-row">你的数据在哪里</div></aside></div></main>`;
+    const settings = `<aside class="settings-side"><h2>设置</h2><div class="settings-group">工作方式</div><div class="settings-item">模型</div><div class="settings-item">检索</div><div class="settings-item">订阅</div><div class="settings-group">数据与扩展</div><div class="settings-item">存储</div><div class="settings-item">插件</div><div class="settings-item">统计</div><div class="settings-item">数据与备份</div><div class="settings-group">应用</div><div class="settings-item active">外观</div><div class="settings-item">账号</div></aside><main class="main"><div class="pane-top"><strong>设置</strong><span class="right">${I('dots')}</span></div><div class="settings-content"><div class="settings-inner"><h1>外观</h1><div class="section-label">颜色模式</div><div class="setting-block"><div class="setting-copy"><strong>主题</strong><p>选择在这个设备上使用的外观。</p></div><div class="setting-control"><span class="button">浅色</span><span class="button muted">深色</span><span class="button muted">跟随系统</span></div></div><div class="settings-note">外观更改只影响当前设备。</div></div></div></main>`;
+    const chrome = `<header class="chrome"><span class="traffic"><i></i><i></i><i></i></span><span class="chrome-title">${view==='settings'?'设置':view==='document'?'mimir 产品说明':'开始使用'} · mimir</span><span class="chrome-right">${I('dots')}</span></header>`;
+    document.querySelector('#app').innerHTML = chrome + `<div class="workspace">${rail}${view==='settings'?settings:sidebar+(view==='document'?documentView:library)}</div>` + `<div class="status">${view==='document'?'已保存 · 2418 字':'mimir · 本地知识库'}</div>`;
+  </script>
+</body>
+</html>

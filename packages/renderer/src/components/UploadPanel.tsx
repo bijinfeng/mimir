@@ -1,6 +1,6 @@
 import { Alert, Button, Typography, Upload } from 'antd'
 import { createStyles } from 'antd-style'
-import { CircleCheck, CircleX, LoaderCircle } from 'lucide-react'
+import { ArrowUpFromLine, CircleCheck, CircleX, LoaderCircle } from 'lucide-react'
 import { useState } from 'react'
 import { FILE_MAX_BYTES, formatBytes, formatLabel } from '@mimir/shared'
 import { api } from '../lib/api'
@@ -175,6 +175,7 @@ export function UploadPanel({ onUploaded, folder, directory }: UploadPanelProps)
         showUploadList={false}
         className={styles.dragger}
       >
+        <ArrowUpFromLine className={styles.dropIcon} size={22} aria-hidden="true" />
         <p className={styles.dropTitle}>
           {directory ? '选择一个文件夹' : '把文件拖到这里，或点击选择'}
         </p>
@@ -206,7 +207,7 @@ export function UploadPanel({ onUploaded, folder, directory }: UploadPanelProps)
         <Alert
           type={rows.some((row) => row.state === 'failed') ? 'warning' : 'success'}
           showIcon
-          message={
+          title={
             rows.every((row) => row.state === 'done')
               ? `${rows.length} 个文件已上传`
               : '部分文件上传失败，请查看上方原因'
@@ -241,9 +242,11 @@ const useStyles = createStyles(({ css, token }) => ({
     gap: 14px;
   `,
   dragger: css`
-    /* antd 的 Dragger 自带虚线框与 hover 提亮，这里只调内边距——
-       「拖拽区要看起来像能放东西」由它的默认形态负责 */
-    padding: 8px 0;
+    padding: 16px 0;
+  `,
+  dropIcon: css`
+    margin-bottom: 8px;
+    color: ${token.colorLink};
   `,
   dropTitle: css`
     margin: 0;
@@ -268,9 +271,13 @@ const useStyles = createStyles(({ css, token }) => ({
     align-items: center;
     gap: 8px;
     padding: 7px 10px;
-    border-radius: 6px;
+    border-radius: ${token.borderRadiusSM}px;
     font-size: ${FONT_SIZE.item}px;
     background: ${token.colorFillQuaternary};
+
+    @media (max-width: 600px) {
+      flex-wrap: wrap;
+    }
   `,
   rowIcon: css`
     display: inline-flex;
@@ -298,9 +305,16 @@ const useStyles = createStyles(({ css, token }) => ({
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+
+    @media (max-width: 600px) {
+      flex-basis: 100%;
+      max-width: none;
+      padding-left: 24px;
+    }
   `,
   actions: css`
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
   `,
   iconDone: css`

@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { App, Button, Input, Skeleton, Tag } from 'antd'
+import { App, Button, Input, Popconfirm, Skeleton, Tag } from 'antd'
 import { Plus, RefreshCw, Rss, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import type { FeedSummary } from '@mimir/shared'
 import { api } from '../../lib/api'
+import { LoadError } from '../LoadError'
 import { Block, BlockDesc, Panel, Row } from './parts'
 import { useStyles } from './settings.style'
 
@@ -83,20 +84,24 @@ export function FeedsSection() {
     mutationFn: (url: string) => api.feeds.remove(url),
     onSuccess: () => {
       invalidate()
-      message.success('已退订（已收进来的文章保留在知识库里）')
+      message.success('已退订')
     },
+    onError: (error: unknown) => message.error(error instanceof Error ? error.message : '退订失败'),
   })
 
   const feeds = feedsQuery.data?.items ?? []
 
   return (
     <>
-      <Panel title="订阅" extra={<Tag>{feeds.length} 个源</Tag>}>
+      <Panel
+        title="RSS / Atom 来源"
+        extra={feeds.length > 0 ? <Tag>{feeds.length} 个源</Tag> : null}
+      >
         <Block>
           <div className={styles.feedAdd}>
             <Input
               aria-label="RSS 或 Atom 地址"
-              placeholder="RSS 或 Atom 地址，例如 https://example.com/feed.xml"
+              placeholder="粘贴 RSS 或 Atom 地址"
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               onPressEnter={() => {
@@ -121,11 +126,18 @@ export function FeedsSection() {
               全部更新
             </Button>
           </div>
-          <BlockDesc>新文章会自动加入知识库。退订后已收文章保留。</BlockDesc>
+          <BlockDesc>新文章会自动加入知识库。</BlockDesc>
         </Block>
+        {!feedsQuery.isLoading && !feedsQuery.isError && feeds.length === 0 ? (
+          <Block>
+            <BlockDesc>还没有订阅源。</BlockDesc>
+          </Block>
+        ) : null}
       </Panel>
 
-      {feedsQuery.isLoading ? (
+      {feedsQuery.isError ? (
+        <LoadError message="订阅读取失败" onRetry={() => void feedsQuery.refetch()} />
+      ) : feedsQuery.isLoading ? (
         <Skeleton active />
       ) : (
         feeds.map((feed) => (
@@ -173,9 +185,15 @@ function FeedRow({
           >
             更新
           </Button>
-          <Button size="small" danger icon={<Trash2 size={14} />} onClick={onRemove}>
-            退订
-          </Button>
+          <Popconfirm
+            title="退订这个来源？"
+            description="已收文章仍保留在知识库"
+            onConfirm={onRemove}
+          >
+            <Button size="small" danger icon={<Trash2 size={14} />}>
+              退订
+            </Button>
+          </Popconfirm>
         </span>
       }
     >
@@ -189,9 +207,7 @@ function FeedRow({
       </Row>
       <Row label="上次成功">
         <span className={styles.feedUrl}>
-          {feed.lastFetchedAt
-            ? new Date(feed.lastFetchedAt).toLocaleString()
-            : '（还没有成功拉取过）'}
+          {feed.lastFetchedAt ? new Date(feed.lastFetchedAt).toLocaleString() : '尚未成功拉取'}
         </span>
       </Row>
       <Row label="已收文章">

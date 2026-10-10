@@ -75,6 +75,8 @@ import {
 export interface EditorShellProps {
   /** 顶栏（工具条）。一般不直接放裸子元素，用下面的控件原语摆 */
   toolbar?: ReactNode
+  /** 工具条右端常驻的主操作；窄窗口滚动格式命令时仍可使用 */
+  toolbarActions?: ReactNode
   /**
    * 次工具条（工具条下面那一行）。查找替换栏、pptx 的幻灯片导航、xlsx 的
    * 公式栏都落在这里。
@@ -113,7 +115,7 @@ export interface EditorShellProps {
 /**
  * 外壳本体。
  *
- * 五个槽位自上而下：`toolbar` → `subbar` → `children` → `footer` → `status`
+ * 五层自上而下：`toolbar`（含右侧 `toolbarActions`）→ `subbar` → `children` → `footer` → `status`
  * （工具条与次工具条同包在一条 sticky 容器里，所以视觉上是四行）。
  * 没传的槽位不渲染——**不留空占位**：一条空的次工具条会让人以为这里本来
  * 应该有东西而没显示出来。
@@ -135,6 +137,7 @@ export interface EditorShellProps {
  */
 export function EditorShell({
   toolbar,
+  toolbarActions,
   subbar,
   children,
   footer,
@@ -142,13 +145,20 @@ export function EditorShell({
   flush = false,
   bodySide,
 }: EditorShellProps) {
-  const hasChrome = toolbar !== undefined || subbar !== undefined
+  const hasChrome = toolbar !== undefined || toolbarActions !== undefined || subbar !== undefined
   return (
     <ConfigProvider componentSize="small">
       <div className={flush ? 'mimir-editor mimir-editor--flush' : 'mimir-editor'}>
         {hasChrome && (
           <div className="mimir-editor__chrome">
-            {toolbar !== undefined && <div className="mimir-editor__bar">{toolbar}</div>}
+            {(toolbar !== undefined || toolbarActions !== undefined) && (
+              <div className="mimir-editor__bar" role="group" aria-label="编辑工具">
+                <div className="mimir-editor__tools">{toolbar}</div>
+                {toolbarActions !== undefined && (
+                  <div className="mimir-editor__actions">{toolbarActions}</div>
+                )}
+              </div>
+            )}
             {subbar !== undefined && <div className="mimir-editor__subbar">{subbar}</div>}
           </div>
         )}
@@ -332,6 +342,9 @@ export function ToolbarGroup({ label, children }: { label: string; children: Rea
   return (
     <div className="me-group" role="group" aria-label={label}>
       {children}
+      <span className="me-group__caption" aria-hidden="true">
+        {label}
+      </span>
     </div>
   )
 }
@@ -359,8 +372,8 @@ export function ToolbarDivider() {
 /**
  * 撑开剩余空间，把后面的内容推到右边。
  *
- * 工具条的约定：**左边是「对内容做什么」，右边是「这份内容怎么了」**
- * （状态文字 + 保存）。所以每个编辑器的工具条末尾都会有一个它。
+ * 只在普通工具内容或附属面板里需要弹性占位时使用。
+ * 主保存动作走 `toolbarActions` 槽位，窄窗口滚动命令时保持可见。
  */
 export function ToolbarSpacer() {
   return <span className="me-spacer" />

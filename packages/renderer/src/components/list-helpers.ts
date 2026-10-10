@@ -32,8 +32,8 @@ export function scopeParams(scope: string): Pick<DocumentListQuery, 'folder' | '
  *
  * 纯客户端的渲染偏好，存 `localStorage` 而不是数据库——与侧边栏折叠
  * （`_app.tsx` 的 `NAV_COLLAPSED_KEY`）同一条判断：服务端不关心，
- * 也没必要为它多一次请求。读不到或值非法时回落**卡片**——它是
- * D-047 以来的默认形态，老用户不应因为加了个开关就换一种观感。
+ * 也没必要为它多一次请求。新版工作区默认用便于扫读的列表；已经选过
+ * 卡片或列表的用户仍按自己的偏好展示。
  */
 export const LIBRARY_LAYOUTS = ['card', 'list'] as const
 export type LibraryLayout = (typeof LIBRARY_LAYOUTS)[number]
@@ -43,10 +43,10 @@ const LIBRARY_LAYOUT_KEY = 'mimir.library-layout'
 export function readLibraryLayout(): LibraryLayout {
   try {
     const value = localStorage.getItem(LIBRARY_LAYOUT_KEY)
-    return LIBRARY_LAYOUTS.includes(value as LibraryLayout) ? (value as LibraryLayout) : 'card'
+    return LIBRARY_LAYOUTS.includes(value as LibraryLayout) ? (value as LibraryLayout) : 'list'
   } catch {
     // localStorage 在隐私模式或存储被禁用时会抛错——一个偏好不该有那种能力
-    return 'card'
+    return 'list'
   }
 }
 

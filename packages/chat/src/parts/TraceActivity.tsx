@@ -8,8 +8,7 @@ import type { Trace } from '@mimir/shared'
  * （`packages/ui/src/components/react/assistant-ui/elements/reasoning.tsx`，
  * shadcn 分发的那一份；用户点名「一定要参考官方实现」。）：
  *
- * - **一个带边框的圆角盒**（`rounded-lg border px-3 py-2`，variant=outline
- *   是官方默认）——不是无边框行，也不是 Steps 时间轴
+ * - 浅色折叠行承载检索过程，不把过程做成大卡片或时间轴
  * - 触发行：**Brain 图标 + 标签 + ChevronDown**，`text-sm`、muted →
  *   hover 提到正文色；chevron 关闭时 -90°（朝右）、打开时转正
  * - 标签在 live 时 **shimmer**（官方的 `.shimmer` 工具类，这里用
@@ -34,13 +33,14 @@ import type { Trace } from '@mimir/shared'
  */
 
 const useStyles = createStyles(({ css, token }) => ({
-  /* 官方 ReasoningRoot variant=outline：rounded-lg border px-3 py-2。
-     它是回答上方的一块「过程记录」，official 画法就是一个描边盒 */
+  /* 安静的过程记录，贴在它所解释的回答上方。 */
   root: css`
-    margin-bottom: 16px; /* 官方 mb-4：与后面的正文隔开 */
-    border: 1px solid ${token.colorBorderSecondary};
-    border-radius: ${token.borderRadiusLG}px;
-    padding: 8px 12px;
+    width: fit-content;
+    max-width: 100%;
+    margin-bottom: 18px;
+    border-radius: ${token.borderRadiusSM}px;
+    padding: 2px 9px;
+    background: ${token.colorFillQuaternary};
   `,
   /* 触发行：Brain + 标签 + chevron，text-sm，muted → hover 提亮 */
   trigger: css`
@@ -48,13 +48,13 @@ const useStyles = createStyles(({ css, token }) => ({
     align-items: center;
     gap: 8px;
     width: fit-content;
-    max-width: 75%;
+    max-width: 100%;
     padding: 6px 0;
     border: none;
     background: none;
     cursor: pointer;
     text-align: left;
-    font-size: var(--mimir-chat-font-body, 14px);
+    font-size: var(--mimir-chat-font-note, 12.5px);
     color: ${token.colorTextSecondary};
     transition: color 0.15s ease-out;
 
@@ -104,8 +104,8 @@ const useStyles = createStyles(({ css, token }) => ({
     gap: 8px;
     max-height: 256px;
     overflow-y: auto;
-    padding: 8px 0 8px 24px;
-    font-size: var(--mimir-chat-font-body, 14px);
+    padding: 8px 5px 11px 24px;
+    font-size: var(--mimir-chat-font-note, 12.5px);
     line-height: 1.7;
     color: ${token.colorTextSecondary};
   `,

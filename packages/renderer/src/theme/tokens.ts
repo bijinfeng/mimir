@@ -22,8 +22,7 @@ import type { Appearance } from './appearance'
  *    这种灰绿脏色。所以种子保持 antd 默认，只覆盖真正要改的叶子。
  *
  * 2. **文字色与填充色分开。**
- *    `#1677ff` 作文字在浅蓝底上只有 3.61:1（选中态导航项就是这个组合），
- *    所以文字角色走 `colorLink`，取 antd 同色阶第 7 阶 `#0958d9`。
+ *    选中项的文字走 `colorLink`，按钮与选中底走 `colorPrimary`。
  *
  * 3. **语义色必须成对使用。**
  *    状态文字配同语义浅底。antd 默认那套是不达标的：实测 successText on
@@ -65,8 +64,17 @@ const BASE_TOKEN = {
  */
 const LIGHT_COLOR = {
   // ── 品牌 ──────────────────────────────────────────────
-  colorPrimary: '#1677ff',
-  colorLink: '#0958d9',
+  colorPrimary: '#6e50b9',
+  colorPrimaryBg: '#e4dcf7',
+  colorPrimaryBgHover: '#dcd1f3',
+  colorPrimaryBorder: '#a993d5',
+  colorPrimaryBorderHover: '#987dc9',
+  colorPrimaryHover: '#7658b2',
+  colorPrimaryActive: '#5b409d',
+  colorPrimaryText: '#543b9a',
+  colorPrimaryTextHover: '#4a318d',
+  colorPrimaryTextActive: '#40277e',
+  colorLink: '#543b9a',
   /**
    * 悬停/按下的链接色。
    *
@@ -75,20 +83,19 @@ const LIGHT_COLOR = {
    * （深色那边更糟，见 `darkCalibration`）。这两个键不是种子名，
    * 写进来会被保留（`formatToken` 只删与种子同名的键）。
    *
-   * 取值都按「≥4.5:1 on 白底与选中底 #e6f4ff」挑（实算值）：
-   * hover `#1562d6` 5.60 / 5.00；active `#0f4bbd` 7.60 / 6.79。
+   * 当前紫色值需在白底与选中底上保持可读，测试守住这两种组合。
    */
-  colorLinkHover: '#1562d6',
-  colorLinkActive: '#0f4bbd',
+  colorLinkHover: '#4a318d',
+  colorLinkActive: '#40277e',
 
   // ── 文字阶 ────────────────────────────────────────────
-  colorTextBase: '#1f2329',
+  colorTextBase: '#27262a',
   // 次要正文：摘要、表单标签、引用原文（三种内容底 5.47–5.91:1）
-  colorTextSecondary: '#5c6570',
+  colorTextSecondary: '#605c67',
   // 元信息：时间戳、路径、计数（三种内容底 4.63–5.00:1）
-  colorTextTertiary: '#68707c',
+  colorTextTertiary: '#68636f',
   // 占位符与禁用态：不承载信息，允许低于 4.5
-  colorTextQuaternary: '#8b939c',
+  colorTextQuaternary: '#88838e',
 
   // ── 语义色对：浅底 + 同色深阶文字 ─────────────────────
   colorSuccessBg: '#e6f4ea',
@@ -101,7 +108,11 @@ const LIGHT_COLOR = {
   colorInfoText: '#1a56c4',
 
   // ── 表面 ──────────────────────────────────────────────
-  colorBgLayout: '#f5f6f8',
+  colorBgLayout: '#e7e7ea',
+  colorBgContainer: '#ffffff',
+  colorBgElevated: '#ffffff',
+  colorBorder: '#d9d7df',
+  colorBorderSecondary: '#e4e2e8',
 } as const
 
 /**
@@ -110,7 +121,7 @@ const LIGHT_COLOR = {
  * **它不能写在 `DARK_COLOR` 里**，理由见 `darkCalibration` 的注释：
  * 与 seed 同名的键会被算法重算，直接传会被丢掉。
  */
-const DARK_LINK = '#79b8ff'
+const DARK_LINK = '#ddcaff'
 
 /**
  * 深色的颜色。
@@ -122,28 +133,28 @@ const DARK_LINK = '#79b8ff'
 const DARK_COLOR = {
   // ── 表面 ──────────────────────────────────────────────
   // 与浅色同序：布局底 < 导航底 < 列表底 < 容器底（见 customToken.ts）
-  colorBgLayout: '#0b0c0e',
-  colorBgContainer: '#141618',
-  colorBgElevated: '#1e2022',
-  colorBorder: '#3c4044',
-  colorBorderSecondary: '#2e3134',
+  colorBgLayout: '#141416',
+  colorBgContainer: '#29292d',
+  colorBgElevated: '#34343a',
+  colorBorder: '#514d58',
+  colorBorderSecondary: '#3b3941',
 
   // ── 文字阶 ────────────────────────────────────────────
   // 深色的四级也是同一色的四档透明度，但档位必须拉开：
   // antd 深色默认的 0.45 / 0.25 在容器底上只有 4.54 / 2.25
-  colorTextSecondary: 'rgba(255,255,255,0.68)',
-  colorTextTertiary: 'rgba(255,255,255,0.52)',
-  colorTextQuaternary: 'rgba(255,255,255,0.4)',
+  colorTextSecondary: 'rgba(255,255,255,0.76)',
+  colorTextTertiary: 'rgba(255,255,255,0.66)',
+  colorTextQuaternary: 'rgba(255,255,255,0.48)',
 
   /**
    * 主色浅底与描边。
    *
    * 深色算法把 `colorPrimaryBg` 与 `colorPrimaryBorder` 设成**同一个值**
-   * （`#15325b`），而它们承担的是两种角色：前者是「选中项的底」，后者是
+   * 而它们承担的是两种角色：前者是「选中项的底」，后者是
    * 「焦点环 / 选中项的描边」。同值意味着焦点环在选中项上完全看不见
    * （实测 1.00:1）。只校准描边这一半。
    */
-  colorPrimaryBorder: '#4b93dc',
+  colorPrimaryBorder: '#ab90e9',
 
   // ── 语义色对：深底 + 亮阶文字 ─────────────────────────
   colorSuccessBg: '#162312',
@@ -151,9 +162,9 @@ const DARK_COLOR = {
   colorWarningBg: '#2b2111',
   colorWarningText: '#e0a830',
   colorErrorBg: '#2c1618',
-  colorErrorText: '#f0777a',
+  colorErrorText: '#ff9295',
   colorInfoBg: '#111a2c',
-  colorInfoText: '#6a9fef',
+  colorInfoText: '#9bbcff',
 } as const
 
 /**
@@ -183,6 +194,15 @@ const darkCalibration: MappingAlgorithm = (seedToken, mapToken) => ({
   // 单独拿出来算也得到同一套值——否则它会静默算出一份少了 darkAlgorithm
   // 的 token，而那种偏差不会报错。
   ...(mapToken ?? theme.darkAlgorithm(seedToken)),
+  colorPrimary: '#694ca8',
+  colorPrimaryBg: '#443958',
+  colorPrimaryBgHover: '#514365',
+  colorPrimaryBorderHover: '#c1a7f1',
+  colorPrimaryHover: '#7658b2',
+  colorPrimaryActive: '#573b94',
+  colorPrimaryText: DARK_LINK,
+  colorPrimaryTextHover: '#eadfff',
+  colorPrimaryTextActive: '#c6aff8',
   colorLink: DARK_LINK,
   /**
    * 悬停 / 按下的链接色，**必须一起校准**。
@@ -193,8 +213,8 @@ const darkCalibration: MappingAlgorithm = (seedToken, mapToken) => ({
    * 被禁用了。深色里「更亮 = 更强」，所以两档都比常态更亮：
    * hover `#a5d0ff` 11.29:1、active `#c6e2ff` 13.58:1（容器底实算）。
    */
-  colorLinkHover: '#a5d0ff',
-  colorLinkActive: '#c6e2ff',
+  colorLinkHover: '#ddcffd',
+  colorLinkActive: '#eee7ff',
 })
 
 /**
@@ -226,12 +246,18 @@ const darkCalibration: MappingAlgorithm = (seedToken, mapToken) => ({
  * 组件 token 是**最终值**：`getComponentToken` 把它直接并进结果，不参与
  * 算法派生、也不受 `formatToken` 删同名键的影响。所以这里不能写
  * `colorLink` 这个 token 名，只能写字面值——两边各自引用本外观的链接色
- * 常量（浅色 `#0958d9` 6.16:1，深色 `#79b8ff` 8.74:1），改链接色时两处
- * 一起跟着走，不会漂移成两种蓝。
+ * 常量（浅色从 `LIGHT_COLOR.colorLink` 取，深色从 `DARK_LINK` 取），改链接色时两处
+ * 一起跟着走，不会漂移成两套强调色。
  */
 const COMPONENT_TOKEN: Record<Appearance, ThemeConfig['components']> = {
-  light: { Tabs: { itemSelectedColor: LIGHT_COLOR.colorLink } },
-  dark: { Tabs: { itemSelectedColor: DARK_LINK } },
+  light: {
+    Tabs: { itemSelectedColor: LIGHT_COLOR.colorLink },
+    Menu: { itemSelectedColor: LIGHT_COLOR.colorLink },
+  },
+  dark: {
+    Tabs: { itemSelectedColor: DARK_LINK },
+    Menu: { itemSelectedColor: DARK_LINK },
+  },
 }
 
 export const mimirTheme: ThemeConfig = {
@@ -318,7 +344,7 @@ export const NAV_ITEM_HEIGHT = 30
 export const NAV_ITEM_MARGIN = 6
 
 /**
- * 窄屏断点：≤880px 时左导航**强制折叠**成 48px 图标条（`.trellis/spec/project/design.md` §5.5）。
+ * 窄屏断点：≤880px 时任务侧栏收起，只保留 52px 功能栏（`.trellis/spec/project/design.md` §5.5）。
  *
  * ## 为什么它必须是一个共享的查询串，而不是各写各的
  *
@@ -327,7 +353,7 @@ export const NAV_ITEM_MARGIN = 6
  *  1. **外壳的网格**（`routes/_app.tsx` 的 `@media`）——决定左列多宽
  *  2. **`matchMedia`**（`lib/nav-collapse.ts`）——决定栏内**内容**怎么渲染
  *
- * 第二处容易被漏掉，因为只改网格「看起来也能跑」：容器确实收成了 48px，
+ * 第二处容易被漏掉，因为只改网格「看起来也能跑」：容器确实收成了功能栏宽度，
  * 而栏里的标签、目录树、品牌名是 React 渲染的，它们挤在一个图标条的宽度里
  * 逐字换行——实测「知识库」竖成一列、品牌名与折叠开关叠在一起、目录树整块
  * 歪掉。**不报错，只是全变形了**。

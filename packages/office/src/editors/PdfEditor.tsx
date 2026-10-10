@@ -81,7 +81,6 @@ import {
   ToolbarNotice,
   ToolbarNumberField,
   ToolbarSelect,
-  ToolbarSpacer,
   type FindAdapter,
   type ToolbarMenuItem,
 } from '../shell/EditorShell.js'
@@ -1047,19 +1046,18 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
               <ZoomInIcon />
             </ToolbarButton>
           </ToolbarGroup>
-
-          <ToolbarSpacer />
-
-          <ToolbarButton
-            label={source.saving ? '保存中…' : '保存到库'}
-            primary
-            disabled={!dirty || source.saving}
-            disabledReason={source.saving ? '正在保存' : '没有改动，不用保存'}
-            onClick={() => void save()}
-          >
-            <SaveIcon />
-          </ToolbarButton>
         </>
+      }
+      toolbarActions={
+        <ToolbarButton
+          label={source.saving ? '保存中…' : '保存到库'}
+          primary
+          disabled={!dirty || source.saving}
+          disabledReason={source.saving ? '正在保存' : '没有改动，不用保存'}
+          onClick={() => void save()}
+        >
+          <SaveIcon />
+        </ToolbarButton>
       }
       /*
         次工具条：查找栏。它排在这里（而不是工具条里）的原因是**它有自己的

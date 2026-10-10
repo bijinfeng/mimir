@@ -42,9 +42,8 @@ export interface MimirCustomToken {
   /**
    * 用量热力图的四档色阶。
    *
-   * 浅色取 antd 蓝色阶的 2 / 3 / 5 / 7 阶（`.trellis/spec/project/design.md` §3.6.1）。
-   * **第一档刻意比 `colorPrimaryBg`（#e6f4ff）深**：那个值在白底上只差
-   * 1.05:1，拿它当最浅档会让「有一点活动」与「完全没活动」看起来一样——
+   * 浅色取紫色的四档色阶（`.trellis/spec/project/design.md` §3.6）。
+   * **第一档刻意比 `colorPrimaryBg` 深**：过浅会让「有一点活动」与「完全没活动」看起来一样——
    * 而那是贡献图最常见的失败。
    *
    * 空格子反过来用 `colorFillQuaternary`，两边让开。
@@ -70,17 +69,17 @@ declare module 'antd-style' {
 }
 
 const LIGHT: MimirCustomToken = {
-  tintList: '#fcfcfd',
-  tintNav: '#fbfbfc',
+  tintList: '#f8f8fa',
+  tintNav: '#f4f4f5',
   // 与 tintList 差 1.09:1（第一版 #fafbff 只有 1.01，等于没有悬停反馈）
-  tintHover: '#f4f5f7',
+  tintHover: '#e9e5ef',
   inlineCodeFg: '#c7254e',
   highlightBg: '#fff3b0',
-  // 用量热力图色阶（浅 → 深）。见 .trellis/spec/project/design.md §3.6.1 的四条约束
-  heatL1: '#cfe6ff',
-  heatL2: '#91caff',
-  heatL3: '#4096ff',
-  heatL4: '#0958d9',
+  // 用量热力图色阶（浅 → 深）。见 .trellis/spec/project/design.md §3.6
+  heatL1: '#e1d8f3',
+  heatL2: '#bea9e4',
+  heatL3: '#9171d0',
+  heatL4: '#543b9a',
 }
 
 /**
@@ -89,21 +88,21 @@ const LIGHT: MimirCustomToken = {
  * 与浅色**同序但反方向**：浅色里「列底比容器底略暗」，深色里变成「列底比
  * 容器底更暗」——保持「两栏之间有分隔、但不用边框」这同一个效果。
  *
- * 热力图色阶在深色下与 `colorPrimaryBorder` 共用了蓝阶的中段，
+ * 热力图色阶在深色下与 `colorPrimaryBorder` 共用了紫色阶的中段，
  * 这是有意的：它们是同一个色相族里的两个用途，而焦点环不该在色阶里出现
  * 完全落空的一档。
  */
 const DARK: MimirCustomToken = {
-  tintList: '#111315',
-  tintNav: '#0f1113',
+  tintList: '#252529',
+  tintNav: '#222226',
   // 与 tintList 差 1.16:1（比浅色那档再拉开一点——深色下亮度差更难感知）
-  tintHover: '#1e2225',
-  inlineCodeFg: '#ff8a9a',
+  tintHover: '#393340',
+  inlineCodeFg: '#ffa6b4',
   highlightBg: '#4a3c10',
-  heatL1: '#10395e',
-  heatL2: '#1c5fa8',
-  heatL3: '#3b8fe6',
-  heatL4: '#7bbcff',
+  heatL1: '#4a3b68',
+  heatL2: '#6f55a6',
+  heatL3: '#a183df',
+  heatL4: '#cbb5ff',
 }
 
 /** 当前外观对应的自定义 token。`MimirProvider` 用它 */

@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { Select, Tabs } from 'antd'
+import { Menu, Select } from 'antd'
 import { AccountSection } from '../components/settings/AccountSection'
 import { AppearanceSection } from '../components/settings/AppearanceSection'
 import { ClientSection } from '../components/settings/ClientSection'
@@ -17,7 +17,7 @@ import { useNarrowViewport } from '../lib/nav-collapse'
 /**
  * 设置页。
  *
- * 它不是一堆散落的表单，而是**插件注册表的人类可读视图**（`.trellis/spec/project/architecture.md` §7.4）：
+ * 它按用户任务展示配置与支持能力；实现清单留在服务端。
  * 每一行「可配置的东西」都对应一个注册进接缝的实现。这样「可配置的东西」
  * 和「代码里的实现」永远一一对应，不会出现设置里有开关但代码里没有对应逻辑。
  *
@@ -25,17 +25,7 @@ import { useNarrowViewport } from '../lib/nav-collapse'
  * 其余分区**如实标注「现在改不了」**，而不是画一个存不进去的假表单——
  * 那种表单比没有更糟：用户改了、以为生效了，实际什么都没发生。
  *
- * ## 布局：分区导航是**横向**的
- *
- * 早期版本用 `tabPosition="left"` 把分区导航摆在内容列里面，于是这一页
- * 有了**两条左栏**：全局左导航 + 分区的 tab 竖栏。三个后果：
- *
- *  1. 位置反馈重复了——左上角的「设置」已经说明你在哪一页
- *  2. 760px 的限宽内容列里再切掉约 100px，正文只剩约 570px，而右侧空着
- *  3. antd 的 ink bar 是一条脱离文字的竖线，看起来像渲染坏了
- *
- * 改成横向之后，内容列恢复成完整的 760px（`.trellis/spec/project/design.md` §5.4 的
- * 「设置内容列 760px」），且这一页仍然只占一栏。
+ * 分区导航在宽屏为独立侧栏，窄屏为 Select。正文只渲染当前分区。
  *
  * ## 分区选择走 URL
  *
@@ -46,15 +36,8 @@ import { useNarrowViewport } from '../lib/nav-collapse'
  *
  * ## 窄屏下分区导航换成下拉（`Select`）
  *
- * 八个分区在 420px 的视口里排不下：实测 tab 文字合计约 256px，而导航条可用
- * 宽度只有 247px——**连字符都放不下**，于是横向 tab 栏必然把某一个标签切成
- * 半个字（实测首个 tab 只剩「型」，看起来像渲染坏了）。antd 的 `Tabs` 不折行，
- * 只能靠右端的 ⋯ 菜单够到被切掉的两个分区。
- *
- * 所以窄屏（`NAV_NARROW_QUERY`，与左导航同一个断点，`.trellis/spec/project/design.md` §5.5）
- * 换成 `Select`：八个分区的名字都完整、可读，一次点击就能到。宽屏仍是横向
- * tab——那一档 `.trellis/spec/project/design.md` §8.12 的取舍（并列选项摊开比藏进下拉少一次
- * 点击）成立，因为那时它摊得下。
+ * 窄屏（`NAV_NARROW_QUERY`，与工作区侧栏同一个断点）换成 `Select`，
+ * 完整显示分区名；宽屏用独立分区栏，使正文保持足够宽度。
  *
  * 断点从 `tokens.ts` 取，不在这里写数字：它要与外壳的网格（`_app.tsx`）和
  * 栏内的 `matchMedia`（`lib/nav-collapse.ts`）说的是同一个宽度。
@@ -65,7 +48,7 @@ const SECTIONS = [
   { key: 'retrieval', label: '检索' },
   { key: 'feeds', label: '订阅' },
   { key: 'storage', label: '存储' },
-  { key: 'plugins', label: '插件' },
+  { key: 'plugins', label: '支持能力' },
   { key: 'stats', label: '统计' },
   { key: 'data', label: '数据与备份' },
   { key: 'appearance', label: '外观' },
@@ -176,13 +159,9 @@ function SettingsPage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.inner}>
-        <h1 className={styles.title}>设置</h1>
-
-        {narrow ? (
-          /* 窄屏：七八个分区排不下横向 tab 栏，换成下拉。
-             `aria-label` 是它唯一的名称——一个没有可见标签的 Select 读屏
-             只会念出当前值，听不出这是一件「选分区」的控件（DESIGN §7.3）。 */
+      {narrow ? (
+        <div className={styles.mobileHead}>
+          <h1 className={styles.title}>设置</h1>
           <Select
             className={styles.sectionSelect}
             value={section}
@@ -190,23 +169,27 @@ function SettingsPage() {
             options={sections.map((item) => ({ value: item.key, label: item.label }))}
             aria-label="设置分区"
           />
-        ) : (
-          <Tabs
-            className={styles.tabs}
-            activeKey={section}
-            onChange={goSection}
-            items={sections.map((item) => ({
-              key: item.key,
-              label: item.label,
-              children: <SectionBody section={item.key} />,
-            }))}
+        </div>
+      ) : (
+        <aside className={styles.sectionRail} aria-label="设置分区">
+          <h1 className={styles.title}>设置</h1>
+          <Menu
+            className={styles.sectionMenu}
+            mode="inline"
+            selectedKeys={[section]}
+            onClick={({ key }) => goSection(key)}
+            items={sections.map((item) => ({ key: item.key, label: item.label }))}
           />
-        )}
-
-        {/* 下拉形态下内容不在 Tabs 的 panel 里，单独渲染一次。
-            两种形态**只渲染一个内容体**，不会出现两份状态 */}
-        {narrow && <SectionBody section={section} />}
-      </div>
+        </aside>
+      )}
+      <main className={styles.content}>
+        <div className={styles.inner}>
+          <h2 className={styles.contentTitle}>
+            {sections.find((item) => item.key === section)?.label}
+          </h2>
+          <SectionBody section={section} />
+        </div>
+      </main>
     </div>
   )
 }

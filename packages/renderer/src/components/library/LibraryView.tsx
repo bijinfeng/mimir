@@ -393,10 +393,10 @@ export function LibraryView({ scope }: { scope: string }) {
           <>
             <h1 className={styles.kbTitle}>{kbTitle}</h1>
             {kbDesc && <p className={styles.kbDesc}>{kbDesc}</p>}
-            {kbRoot?.code && (
-              <div className={styles.metaRow}>
-                {/* 整块可点：hover 整块提亮（与侧栏行同款底色），tooltip 说明
-                  动作——「点击复制」这个提示只在悬停时给，静态时不占地方 */}
+            <div className={styles.metaRow}>
+              <span>{listQuery.isLoading ? '正在读取文档' : `${items.length} 个文档`}</span>
+              {/* ID 整块可点，悬停时提示复制动作。 */}
+              {kbRoot?.code && (
                 <Tooltip title="点击复制知识库 ID">
                   <Button
                     type="text"
@@ -412,28 +412,24 @@ export function LibraryView({ scope }: { scope: string }) {
                     </span>
                   </Button>
                 </Tooltip>
-              </div>
-            )}
+              )}
+            </div>
           </>
         ) : (
           <h1 className={styles.kbTitle}>{tagName ? `#${tagName}` : '知识库'}</h1>
         )}
 
         <div className={styles.toolbar}>
-          <span className={styles.count}>
-            {listQuery.isLoading ? '…' : `${items.length} 个文档`}
-          </span>
+          {showKbChrome && (
+            <Dropdown trigger={['click']} menu={{ items: ADD_MENU, onClick: onAddMenu }}>
+              <Button type="primary" className={styles.toolbarPrimary} icon={<Plus size={16} />}>
+                添加文档
+              </Button>
+            </Dropdown>
+          )}
           <div className={styles.toolbarActions}>
             {/* 带文字标签的 Segmented：纯图标档的可及名称问题（AGENTS 坑表）
                 在这里靠「文字就在标签里」直接绕开 */}
-            <Segmented
-              value={layout}
-              onChange={(value) => switchLayout(value as LibraryLayout)}
-              options={[
-                { value: 'card', icon: <LayoutGrid size={16} />, label: '卡片' },
-                { value: 'list', icon: <List size={16} />, label: '列表' },
-              ]}
-            />
             {showKbChrome && (
               <>
                 <Button
@@ -449,13 +445,15 @@ export function LibraryView({ scope }: { scope: string }) {
               </>
             )}
           </div>
-          {showKbChrome && (
-            <Dropdown trigger={['click']} menu={{ items: ADD_MENU, onClick: onAddMenu }}>
-              <Button type="primary" className={styles.toolbarPrimary} icon={<Plus size={16} />}>
-                添加文档
-              </Button>
-            </Dropdown>
-          )}
+          <Segmented
+            className={styles.layoutSwitch}
+            value={layout}
+            onChange={(value) => switchLayout(value as LibraryLayout)}
+            options={[
+              { value: 'list', icon: <List size={16} />, label: '列表' },
+              { value: 'card', icon: <LayoutGrid size={16} />, label: '卡片' },
+            ]}
+          />
         </div>
 
         {/*
@@ -614,7 +612,7 @@ export function LibraryView({ scope }: { scope: string }) {
                   {folder.name}
                 </button>
                 <span className={styles.rowMeta}>{folder.count} 个文档</span>
-                <span className={styles.rowMenuCell}>
+                <span className={`kb-row-menu ${styles.rowMenuCell}`}>
                   <FolderRowMenu
                     name={folder.name}
                     onRename={() => openRename(folder)}
@@ -686,7 +684,11 @@ export function LibraryView({ scope }: { scope: string }) {
         okButtonProps={{ disabled: folderName.trim() === '', loading: createFolderMut.isPending }}
         destroyOnHidden
       >
+        <label className={styles.modalFieldLabel} htmlFor="folder-name">
+          文件夹名称
+        </label>
         <Input
+          id="folder-name"
           autoFocus
           value={folderName}
           placeholder="如：参考资料"
@@ -713,7 +715,11 @@ export function LibraryView({ scope }: { scope: string }) {
         }}
         destroyOnHidden
       >
+        <label className={styles.modalFieldLabel} htmlFor="folder-rename">
+          文件夹名称
+        </label>
         <Input
+          id="folder-rename"
           autoFocus
           value={renameValue}
           maxLength={60}

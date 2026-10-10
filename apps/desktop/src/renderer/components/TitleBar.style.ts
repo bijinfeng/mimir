@@ -46,12 +46,16 @@ export const useStyles = createStyles(({ css, token }) => ({
    */
   brand: css`
     flex: none;
+    display: inline-flex;
+    align-items: center;
     gap: 6px;
     margin-right: 0;
+    color: ${token.colorText};
 
     b {
       font-size: ${FONT_SIZE.item}px;
-      letter-spacing: 0.04em;
+      font-weight: 700;
+      letter-spacing: 0.06em;
     }
   `,
 

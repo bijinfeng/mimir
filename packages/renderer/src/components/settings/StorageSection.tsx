@@ -3,7 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { App, Button, Radio, Skeleton } from 'antd'
 import { ApiRequestError, api } from '../../lib/api'
 import { LoadError } from '../LoadError'
-import { Block, BlockDesc, BlockTitle, Panel, Row, StatusBadge, TechnicalDetails } from './parts'
+import { Block, BlockDesc, Panel, Row, StatusBadge } from './parts'
 import { SettingControl } from './SettingControl'
 import { useStyles } from './settings.style'
 
@@ -89,8 +89,8 @@ export function StorageSection() {
                           : '未选中'}
                 </StatusBadge>
               </span>
-              {backend.status.kind === 'unavailable' || backend.status.kind === 'needs-config' ? (
-                <span className={styles.storageOptionReason}>{backend.status.reason}</span>
+              {backend.status.kind === 'needs-config' ? (
+                <span className={styles.storageOptionReason}>请完成下方存储配置。</span>
               ) : null}
             </Radio>
           ))}
@@ -101,27 +101,6 @@ export function StorageSection() {
 
         {/* 切换时丢弃上一种后端的探测结果，避免展示过期状态。 */}
         <StorageProbe key={selected} />
-        <TechnicalDetails>
-          {backends.map((backend) => (
-            <Block key={backend.id}>
-              <BlockTitle>{backend.name}</BlockTitle>
-              <BlockDesc>{backend.description}</BlockDesc>
-            </Block>
-          ))}
-          <Row label="文件位置">
-            {selected === 's3' ? (
-              <span className={styles.mono}>
-                {String(settings.find((entry) => entry.key === 'storage.s3.bucket')?.value ?? '') ||
-                  '未配置桶名'}
-              </span>
-            ) : (
-              <span className={styles.mono}>默认 data/（可通过 DATA_DIR 更改）</span>
-            )}
-          </Row>
-          <Row label="目录结构">
-            <span className={styles.mono}>vault/ · raw/ · avatars/</span>
-          </Row>
-        </TechnicalDetails>
       </Panel>
 
       {s3Entries.length > 0 ? (

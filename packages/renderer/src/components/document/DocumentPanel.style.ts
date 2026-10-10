@@ -14,9 +14,11 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
    * `.wrap` 原来的职责（整列）原样保留，只是变成了根的一个 flex 子项。
    */
   root: css`
+    position: relative;
     height: 100%;
     display: flex;
     min-width: 0;
+    overflow: hidden;
     background: ${token.colorBgContainer};
   `,
   wrap: css`
@@ -35,21 +37,21 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
    * 在左、动作在右，其余信息不占版面。文件类文档下面就是纸张 / 表格 / 幻灯片，
    * 那些是**越高越好**的东西，上面压三行铬条说不过去。
    *
-   * 顺序固定为：返回 · 标题 · 元信息 · 动作（靠右）。
+   * 顺序固定为：返回 · 标题 · 元信息 · 动作（靠右）。与下方工具区
+   * 之间用轻边界区分，正文滚动时顶部操作持续可见。
    */
   header: css`
     flex: none;
     display: flex;
     align-items: center;
     gap: 8px;
-    height: 44px;
-    padding: 0 12px;
-    /* 界线滚动才显形（D-070）：正文开始从标题栏下面被切断时才需要它 */
-    border-bottom: 1px solid transparent;
-    transition: border-color 0.2s ease-out;
+    height: 48px;
+    padding: 0 20px;
+    border-bottom: 1px solid ${token.colorBorderSecondary};
 
-    &[data-scrolled] {
-      border-bottom-color: ${token.colorBorderSecondary};
+    @media (max-width: 600px) {
+      padding-inline: 10px;
+      gap: 4px;
     }
   `,
   /**
@@ -85,6 +87,12 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
+
+      @media (max-width: 600px) {
+        flex: 1;
+        min-width: 0;
+        max-width: none;
+      }
 
       /* 铅笔是低频入口：弱化成 tertiary（悬停标题时才亮） */
       .${prefixCls}-typography-edit {
@@ -154,6 +162,10 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     font-size: ${FONT_SIZE.note}px;
     color: ${token.colorTextTertiary};
     white-space: nowrap;
+
+    @media (max-width: 600px) {
+      display: none;
+    }
 
     /*
      * 短标签**不收缩**——半截的标签（「手…」）与半截的汉字一样读不出意思。
@@ -249,6 +261,12 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     &:hover {
       color: ${token.colorText} !important;
     }
+
+    @media (max-width: 500px) {
+      .${prefixCls}-btn-icon + span {
+        display: none;
+      }
+    }
   `,
   /* 来源标注：手动编辑 / AI 整理 / 本机导入。借自 WeKnora ——
      标出内容是人写的还是机器生成的（PRD §5.10）。
@@ -322,6 +340,16 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     &:hover {
       background: ${token.colorFillTertiary};
     }
+
+    @media (max-width: 500px) {
+      width: 28px;
+      justify-content: center;
+      padding: 0;
+
+      span {
+        display: none;
+      }
+    }
   `,
 
   scroll: css`
@@ -362,8 +390,16 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   inner: css`
     flex: 1;
     min-width: 0;
-    max-width: 760px;
-    padding: 24px 40px 140px;
+    max-width: 860px;
+    padding: 48px 50px 140px;
+
+    @media ${NAV_NARROW_QUERY} {
+      padding: 28px 24px 110px;
+    }
+
+    @media (max-width: 600px) {
+      padding-inline: 18px;
+    }
   `,
   /**
    * 原件的内容列：占满容器。
@@ -450,10 +486,11 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
    * 它是一块「说明」，与聊天内容区分开；不用警示色，这里没有异常。
    */
   guideCard: css`
-    padding: 12px 14px;
+    padding: 16px 18px;
+    border: 1px solid ${token.colorBorderSecondary};
     border-radius: ${token.borderRadius}px;
     background: ${token.colorFillQuaternary};
-    margin-bottom: 14px;
+    margin-bottom: 16px;
   `,
 
   guideCardTitle: css`
@@ -469,12 +506,12 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
 
     li {
       display: grid;
-      grid-template-columns: 6px 1fr;
-      column-gap: 8px;
+      grid-template-columns: 2px 1fr;
+      column-gap: 12px;
       font-size: ${FONT_SIZE.note}px;
       line-height: 1.6;
     }
@@ -485,13 +522,12 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     }
   `,
 
-  /** 每个要点前的小圆点。用它而不是 li 的 marker：marker 的对齐在不同引擎下不一致 */
+  /** 每个要点前的细色条，与工作区选中态使用同一语义色。 */
   guideDot: css`
-    width: 5px;
-    height: 5px;
-    margin-top: 7px;
-    border-radius: 50%;
-    background: ${token.colorPrimary};
+    width: 2px;
+    height: 100%;
+    border-radius: 2px;
+    background: ${token.colorLink};
   `,
 
   /** 要点的第二行说明。与标题同一格（第二列），自然换行 */
@@ -518,7 +554,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     border: 1px solid ${token.colorBorder};
     background: ${token.colorBgContainer};
     color: ${token.colorText};
-    border-radius: 14px;
+    border-radius: 999px;
     padding: 4px 12px;
     font-size: ${FONT_SIZE.note}px;
     font-family: inherit;
@@ -543,20 +579,21 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     &[data-open] {
       width: 400px;
       border-left-color: ${token.colorBorderSecondary};
+      background: ${token.colorBgContainer};
     }
 
-    /* ≤880px：400px 的固定宽在这个视口里比主区还宽（420px 视口减 48px
-       导航只剩 372px），右缘会被主区的 overflow: hidden 裁掉——
-       输入框右端、发送按钮都点不到。窄屏改成**占满主区**：此时侧栏
-       与文档是二选一的关系，正是移动端抽屉的形态。
-       过渡也一起关掉：宽度从 0 动画到 100% 的过程中内容会被一路挤扁，
-       而主区宽度本来就是弹性的。查询串来自 tokens.ts，与左导航折叠、
-       大纲判据共用同一个 880px。 */
-    @media ${NAV_NARROW_QUERY} {
+    /* 工作区不足以并排放正文和 400px 助手时，覆盖正文右侧。
+       留 40px 露出正文，使它仍被理解为当前文档的辅助面板。 */
+    @media (max-width: 1250px) {
+      position: absolute;
+      inset-block: 0;
+      right: 0;
+      z-index: 5;
       transition: none;
 
       &[data-open] {
-        width: 100%;
+        width: min(400px, calc(100% - 40px));
+        box-shadow: ${token.boxShadowSecondary};
       }
     }
   `,
@@ -567,11 +604,8 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     display: flex;
     flex-direction: column;
 
-    /* 内层跟着外层一起放开：外层占满主区时内层仍是固定 400px 的话，
-       比容器窄就留一条空档、宽了又被裁。max-width: 100% 对两种视口
-       都成立——它解析的是外层（0 或 400 / 0 或主区宽），与 aiSidebar
-       那两个宽度是**一对**，改一个要看另一个 */
-    @media ${NAV_NARROW_QUERY} {
+    /* 覆盖层变窄时让内容随宽度收缩，发送按钮始终在面板内。 */
+    @media (max-width: 1250px) {
       width: 100%;
       max-width: 100%;
     }
@@ -611,10 +645,10 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   outline: css`
     flex: none;
     width: 196px;
-    position: sticky;
-    top: 0;
-    align-self: flex-start;
-    padding: 30px 14px 40px 0;
+    align-self: stretch;
+    padding: 28px 12px 40px;
+    border-left: 1px solid ${token.colorBorderSecondary};
+    background: ${token.tintNav};
     max-height: 100%;
     overflow-y: auto;
   `,
@@ -632,7 +666,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     padding: 5px 9px;
     border: none;
     border-left: 2px solid transparent;
-    border-radius: 0 6px 6px 0;
+    border-radius: ${token.borderRadiusSM}px;
     background: transparent;
     font-family: inherit;
     font-size: ${FONT_SIZE.note}px;

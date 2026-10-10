@@ -30,9 +30,10 @@ export interface KnowledgeBaseCreateModalProps {
 const useStyles = createStyles(({ css, token }) => ({
   fieldLabel: css`
     display: block;
-    margin: 14px 0 6px;
+    margin: 20px 0 7px;
     font-size: ${FONT_SIZE.item}px;
-    color: ${token.colorTextSecondary};
+    font-weight: 600;
+    color: ${token.colorText};
 
     &:first-child {
       margin-top: 0;
@@ -53,6 +54,10 @@ const useStyles = createStyles(({ css, token }) => ({
     flex-wrap: wrap;
     justify-content: center;
     gap: 8px;
+    padding: 10px;
+    border: 1px solid ${token.colorBorderSecondary};
+    border-radius: ${token.borderRadius}px;
+    background: ${token.colorFillQuaternary};
   `,
   iconCell: css`
     width: calc((100% - 24px) / 4);
@@ -63,7 +68,7 @@ const useStyles = createStyles(({ css, token }) => ({
     padding: 9px 4px 7px;
     border: 1px solid ${token.colorBorderSecondary};
     border-radius: ${token.borderRadius}px;
-    background: transparent;
+    background: ${token.colorBgContainer};
     color: ${token.colorTextSecondary};
     font-size: ${FONT_SIZE.badge}px;
     cursor: pointer;
@@ -72,11 +77,16 @@ const useStyles = createStyles(({ css, token }) => ({
       border-color: ${token.colorPrimaryBorder};
       color: ${token.colorText};
     }
+
+    &:focus-visible {
+      outline: 2px solid ${token.colorPrimaryBorder};
+      outline-offset: 2px;
+    }
   `,
   iconCellActive: css`
-    border-color: ${token.colorPrimary};
+    border-color: ${token.colorLink};
     background: ${token.colorPrimaryBg};
-    color: ${token.colorPrimary};
+    color: ${token.colorLink};
   `,
 }))
 
@@ -155,12 +165,12 @@ export function KnowledgeBaseCreateModal({
       />
 
       <label className={styles.fieldLabel} htmlFor="kb-desc">
-        描述
+        描述（可选）
       </label>
       <Input.TextArea
         id="kb-desc"
         value={description}
-        placeholder="这库收什么内容（可留空）"
+        placeholder="简单描述这个知识库"
         autoSize={{ minRows: 3, maxRows: 5 }}
         maxLength={2000}
         showCount

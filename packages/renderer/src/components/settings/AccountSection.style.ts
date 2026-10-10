@@ -53,12 +53,6 @@ export const useAccountStyles = createStyles(({ css, token }) => ({
     padding: 0;
     font-size: ${FONT_SIZE.note}px;
   `,
-  avatarHint: css`
-    font-size: ${FONT_SIZE.badge}px;
-    color: ${token.colorTextTertiary};
-    white-space: nowrap;
-  `,
-
   profileBody: css`
     flex: 1;
     min-width: 0;
@@ -70,6 +64,7 @@ export const useAccountStyles = createStyles(({ css, token }) => ({
     display: flex;
     align-items: center;
     gap: 9px;
+    min-width: 0;
   `,
   emailRow: css`
     display: flex;
@@ -93,6 +88,7 @@ export const useAccountStyles = createStyles(({ css, token }) => ({
     color: ${token.colorText};
   `,
   nameInput: css`
+    min-width: 0;
     max-width: 260px;
   `,
   accountFooter: css`

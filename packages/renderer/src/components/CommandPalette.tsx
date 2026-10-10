@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { SearchHit } from '@mimir/shared'
 import { Button, Input, Modal } from 'antd'
 import { createStyles } from 'antd-style'
-import { FilePlus, Search, Upload } from 'lucide-react'
+import { FilePlus, Search, Sparkles, Upload } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { api } from '../lib/api'
@@ -56,7 +56,7 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
   searchRow: css`
     display: flex;
     align-items: center;
-    padding: 13px 18px;
+    padding: 16px 20px;
     border-bottom: 1px solid ${token.colorSplit};
     transition: border-color 0.2s;
 
@@ -100,13 +100,13 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
 
   /* ── 列表 ──────────────────────────────────────────── */
   list: css`
-    max-height: 46vh;
+    max-height: min(48vh, 440px);
     overflow-y: auto;
-    padding: 6px 0;
+    padding: 8px;
   `,
 
   sectionLabel: css`
-    padding: 9px 18px 5px;
+    padding: 12px 10px 7px;
     font-size: ${FONT_SIZE.badge}px;
     font-weight: 600;
     color: ${token.colorTextTertiary};
@@ -118,8 +118,10 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
     align-items: center;
     gap: 11px;
     width: 100%;
-    padding: 9px 18px;
+    min-height: 48px;
+    padding: 7px 10px;
     border: none;
+    border-radius: ${token.borderRadiusSM}px;
     background: transparent;
     font-family: inherit;
     text-align: left;
@@ -147,8 +149,12 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
   `,
   itemIcon: css`
     flex: none;
-    width: 20px;
-    text-align: center;
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border: 1px solid ${token.colorBorderSecondary};
+    border-radius: ${token.borderRadiusSM}px;
     font-size: ${FONT_SIZE.item}px;
     color: ${token.colorTextSecondary};
   `,
@@ -181,7 +187,7 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    padding: 10px 18px;
+    padding: 10px 20px;
     border-top: 1px solid ${token.colorSplit};
     background: ${token.tintNav};
     font-size: ${FONT_SIZE.note}px;
@@ -223,7 +229,7 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
     align-items: center;
     flex-wrap: wrap;
     gap: 4px 12px;
-    padding: 9px 18px;
+    padding: 10px 20px;
     border-top: 1px solid ${token.colorSplit};
     font-size: ${FONT_SIZE.badge}px;
     color: ${token.colorTextTertiary};
@@ -412,24 +418,10 @@ function PaletteBody({
       width={620}
       centered={false}
       destroyOnHidden
-      /*
-       * body 与 container 的内边距都归零，三段各自管自己的左右内边距
-       * （见 useStyles.searchRow / list / foot）。
-       *
-       * **两处都要归零**：antd v6 的 `.ant-modal-container` 自带
-       * `padding: 20px 24px`（实测），只清 body 的话每一行仍会内缩 24px，
-       * hover 底色到不了面板边缘——命令面板的行应该是通栏的。
-       *
-       * `overflow: hidden` 是必需的：内容首尾两段要通栏，不裁掉的话
-       * 容器圆角会被子元素的直角盖住。
-       *
-       * 圆角用 12px 而不是 `token.borderRadiusLG`（现值 10px）：
-       * `.trellis/spec/project/design.md` §5.2 把「对话框、命令面板」定为 **12–14px**，
-       * 而 antd 的 LG 是按 base + 2 派生的，够不到那个区间。
-       */
+      /* 内容首尾通栏，圆角与表面层次由全局 Modal token 控制。 */
       styles={{
         body: { padding: 0 },
-        container: { padding: 0, borderRadius: 12, overflow: 'hidden' },
+        container: { padding: 0, overflow: 'hidden' },
       }}
       /* 贴着屏幕上方而不是垂直居中：命令面板是「从顶部拉出来」的东西，
          居中会让人以为是个对话框，期待它挡住并取代后面的一切。
@@ -503,7 +495,7 @@ function PaletteBody({
         {question && (
           <div className={styles.aiRow}>
             <span className={styles.aiStatus}>
-              <span className={styles.aiIco}>✦</span>
+              <Sparkles className={styles.aiIco} size={16} aria-hidden="true" />
               <span>
                 {!shouldSearch
                   ? '输入至少两个字搜索文档'

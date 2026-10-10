@@ -41,7 +41,7 @@ export function AppearanceSection() {
   const { mode, setMode } = useThemeMode()
 
   return (
-    <Panel title="外观">
+    <Panel title="界面颜色">
       <Row label="颜色模式">
         <div className={styles.actions}>
           <Segmented<ThemeMode>

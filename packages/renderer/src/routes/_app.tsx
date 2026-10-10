@@ -19,17 +19,7 @@ import { useForcedNavCollapse } from '../lib/nav-collapse'
 import { useIsDesktop, useTitleBar } from '../platform'
 import { NAV_NARROW_QUERY } from '../theme/tokens'
 
-/**
- * 两栏骨架（pathless layout，D-047）。
- *
- * 左导航 / 主区。主区的内容由子路由决定：文档模式在库（浏览）与详情
- * （阅读）两态间切换（由 URL 的 `id` 有无驱动），对话与设置是整块内容。
- * 宽度与断点见 `.trellis/spec/project/design.md` §5.4 / §5.5：200 / 1fr，窄屏 180，折叠 48。
- *
- * 做成 **layout 路由**而不是每个页面各渲染一份：切换「对话 / 文档」时
- * 只有主区换内容，左导航不重新挂载。否则每次切换都会重拉目录树与标签、
- * 丢掉导航的滚动位置——那些都是用户能感觉到的抖动。
- */
+/** 常驻功能栏、可折叠任务侧栏和主工作区共用这一层，切换页面时导航不会重挂载。 */
 
 export interface AppSearch {
   /** all / folder:<path> / tag:<name>（来源、收件箱与归档都不再是浏览维度） */
@@ -74,34 +64,6 @@ export const Route = createFileRoute('/_app')({
 })
 
 const useStyles = createStyles(({ css, token }) => ({
-  /* 两栏外壳。
-   *
-   * **那两个 min-height: 0 不是装饰，缺了它整个滚动结构就失效。**
-   * grid / flex 里项目的自动最小尺寸是 `min-height: auto`，即「不能小于
-   * 内容的高度」。于是主区那两千像素的内容会把整行撑到两千像素，
-   * `height: 100%` 形同虚设——结果是**整页滚动**，而主区里那个
-   * `overflow-y: auto` 永远不触发（它自己已经和内容一样高了）。
-   *
-   * 症状很迷惑：看着像「内容不能滚动」，实际是高度链断在中间那一层
-   * （与 .trellis/spec/project/design.md §7.6 记的 AntApp 断链是同一类问题）。
-   *
-   * `overflow: hidden` 是配套的：万一某个子元素仍然溢出，让它被裁掉
-   * 而不是把页面撑长。
-   */
-  /**
-   * 外壳：标题栏（仅桌面端）在上，原来的两栏网格在下面。
-   *
-   * **用 flex 列而不是 `grid-template-rows: auto minmax(0, 1fr)`。**
-   * 网格那版踩过一个静默的坑：`TitleBar` 在 Web 端 `return null`
-   * （浏览器里没有窗口可控制，整块不渲染），于是网格只剩一个子元素——
-   * 它落进 `auto` 那一行，`1fr` 行空置，下面的两栏网格只拿到「内容高」
-   * 而不是整幅高度。实测 1440×900：知识库页 398px、对话页 302px、
-   * 设置页 740px，下方全空。Electron 里标题栏渲染了所以看不出来，
-   * **Web 部署全站中招**（用户只在浏览器里看，等于整个产品矮了一截）。
-   *
-   * flex 列对「子项数量」不敏感：标题栏有无都行，剩下的那层用
-   * `flex: 1` 吃掉剩余高度——`min-height: 0` 仍然要写，见下面 `app`。
-   */
   shell: css`
     display: flex;
     flex-direction: column;
@@ -109,51 +71,24 @@ const useStyles = createStyles(({ css, token }) => ({
     min-height: 0;
     overflow: hidden;
   `,
-
   app: css`
     display: grid;
-    grid-template-columns: 200px minmax(0, 1fr);
-    /* 吃掉标题栏之下的全部剩余高度。外层现在是 flex 列（见 shell 那一段）：
-       这一层不写 height: 100% ——那是对着「父容器只有自己」的静态写法，
-       而这里的父容器还装着标题栏，写死就会多出 44px 的溢出。
-       注意这段是 CSS 模板串里的注释，**不能出现反引号**（会终止字符串，
-       check-style-backticks 守着） */
+    grid-template-columns: 294px minmax(0, 1fr);
     flex: 1;
     min-height: 0;
     overflow: hidden;
     background: ${token.colorBgLayout};
 
     @media (max-width: 1100px) {
-      grid-template-columns: 180px minmax(0, 1fr);
+      grid-template-columns: 266px minmax(0, 1fr);
     }
-
-    /* ≤880px：导航强制折叠成图标条，而不是隐藏——隐藏等于断了所有导航。
-       这里写死 48px（与折叠态同宽），展开偏好在此宽度下被压过。
-
-       **查询串来自 tokens.ts**，不在这里写字面量：同一个断点还要在
-       lib/nav-collapse.ts 里用 matchMedia 问一次（栏内的内容怎么渲染由
-       它决定）。两处各写一份的话，改一处漏一处是静默的——网格收窄了而内容
-       还是展开态的形状，症状就是栏里那一堆字被挤成一列竖排。 */
     @media ${NAV_NARROW_QUERY} {
-      grid-template-columns: 48px minmax(0, 1fr);
+      grid-template-columns: 52px minmax(0, 1fr);
     }
   `,
-  /**
-   * 侧边栏折叠：左列收成 48px 的图标条。
-   *
-   * 宽度的真相在这里而不在 `NavSidebar` 里——折叠要改的是
-   * `grid-template-columns`（左列 200px → 48px），而网格属于这一层。
-   * 放在栏内的话，栏自己收窄了、网格没变，只会留下一片空的 200px。
-   *
-   * 48px 的来由：图标 20px + 左右各 14px，与展开态的 200px 是同一套
-   * 内边距节奏，折叠时图标落在与展开态文字相同的视觉竖线上。
-   *
-   * **折叠不跨断点切换**——窄屏（≤1100px）下折叠宽度同样是 48px，
-   * 不跟着 180 那套走，否则「折叠」在不同屏幕宽度下会折叠出两种宽度。
-   */
   appCollapsed: css`
     display: grid;
-    grid-template-columns: 48px minmax(0, 1fr);
+    grid-template-columns: 52px minmax(0, 1fr);
     flex: 1;
     min-height: 0;
     overflow: hidden;
@@ -162,7 +97,9 @@ const useStyles = createStyles(({ css, token }) => ({
   nav: css`
     min-width: 0;
     min-height: 0;
-    overflow: hidden;
+    overflow: visible;
+    position: relative;
+    z-index: 2;
   `,
   main: css`
     min-width: 0;
@@ -231,6 +168,7 @@ function AppShell() {
    * 之后不用再管。用惰性初始化读取，只在挂载时读一次。
    */
   const [navCollapsedPref, setNavCollapsedPref] = useState(() => readNavCollapsed())
+  const [overlayOpen, setOverlayOpen] = useState(false)
 
   /**
    * 窄屏（≤880px）下**强制折叠**，与用户偏好取或。
@@ -245,7 +183,7 @@ function AppShell() {
    * 留着它只会让人以为按钮坏了。
    */
   const narrowViewport = useForcedNavCollapse()
-  const navCollapsed = navCollapsedPref || narrowViewport
+  const navCollapsed = isSettings || navCollapsedPref || narrowViewport
 
   const isDesktop = useIsDesktop()
 
@@ -264,7 +202,7 @@ function AppShell() {
    */
   const titleBar = useTitleBar({
     collapsed: navCollapsed,
-    showToggle: !narrowViewport,
+    showToggle: !narrowViewport && !isSettings,
     onToggleCollapsed: toggleNavCollapsed,
   })
 
@@ -309,6 +247,7 @@ function AppShell() {
         event.preventDefault()
         setPaletteOpen((open) => !open)
       }
+      if (event.key === 'Escape') setOverlayOpen(false)
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
@@ -345,11 +284,12 @@ function AppShell() {
                 ...(search.id ? { id: search.id } : {}),
               }}
               onOpenPalette={() => setPaletteOpen(true)}
+              onOpenCapture={() => openCapture()}
               collapsed={navCollapsed}
-              /* 窄屏下折叠是**视口强制的**，开关跟着收起来：这个宽度里它点了
-               也不会展开（`@media` 与它无关地压着左列宽度），留着只会让人
-               以为按钮坏了 */
-              showToggle={!narrowViewport}
+              overlayOpen={overlayOpen && narrowViewport && !isSettings}
+              narrowViewport={narrowViewport}
+              onToggleOverlay={() => setOverlayOpen((open) => !open)}
+              onCloseOverlay={() => setOverlayOpen(false)}
               /* 桌面端那一行由窗口标题栏承担（D-094 / D-103）——两条并排是重复，
                且合并后垂直空间净增为零 */
               hideTopBar={isDesktop}

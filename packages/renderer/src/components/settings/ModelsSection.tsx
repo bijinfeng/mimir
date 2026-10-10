@@ -7,6 +7,7 @@ import { LoadError } from '../LoadError'
 import { ProviderForm } from './ProviderForm'
 import { ProviderList } from './ProviderList'
 import {
+  modelRoleLabel,
   roleOptions,
   rolesToRecord,
   useSaveModelConfig,
@@ -179,10 +180,16 @@ function RoleRow({
   const probe = useMutation({
     mutationFn: () => api.probeRole(role.role),
     onSuccess: (result) => {
-      if (result.ok) messageApi.success(result.message)
-      else messageApi.error(result.message)
+      if (result.ok) {
+        messageApi.success(role.role === 'embed' ? '语义搜索模型可用' : result.message)
+      } else {
+        messageApi.error(
+          role.role === 'embed' ? '语义搜索模型不可用，请检查模型设置' : result.message,
+        )
+      }
     },
-    onError: (error) => messageApi.error(String(error)),
+    onError: (error) =>
+      messageApi.error(role.role === 'embed' ? '语义搜索模型测试失败' : String(error)),
   })
 
   /**
@@ -195,7 +202,7 @@ function RoleRow({
   const placeholder = role.role === 'summarize' ? '留空（回落到对话模型）' : '选择供应商与模型'
 
   return (
-    <Row label={role.label}>
+    <Row label={modelRoleLabel(role)}>
       {/*
         宽度写死。级联的下拉浮层按内容宽（供应商列 + 模型列），
         但触发器固定宽度，让四个角色的控件在行间上下对齐
@@ -214,7 +221,7 @@ function RoleRow({
           }
           placeholder={placeholder}
           allowClear
-          aria-label={`${role.label}的模型`}
+          aria-label={`${modelRoleLabel(role)}的模型`}
           onChange={(value) => {
             // 清除（[]）与「只点到供应商层」都归为留空——
             // 级联的 changeOnSelect 是关的，后者本不该发生，兜一下
@@ -258,7 +265,9 @@ function StatusDot({ role }: { role: ModelRoleStatus }) {
 
   if (!role.ready) {
     return (
-      <Tooltip title={role.reason ?? '需要先配置'}>
+      <Tooltip
+        title={role.role === 'embed' ? '请先为语义搜索选择可用模型' : (role.reason ?? '需要先配置')}
+      >
         <span className={styles.pending}>未就绪</span>
       </Tooltip>
     )
@@ -273,11 +282,17 @@ function StatusDot({ role }: { role: ModelRoleStatus }) {
   }
 
   return probe.ok ? (
-    <Tooltip title={`${probe.message}（${formatTime(probe.at)}）`}>
+    <Tooltip
+      title={
+        role.role === 'embed'
+          ? `语义搜索模型可用（${formatTime(probe.at)}）`
+          : `${probe.message}（${formatTime(probe.at)}）`
+      }
+    >
       <span className={styles.hint}>可用</span>
     </Tooltip>
   ) : (
-    <Tooltip title={probe.message}>
+    <Tooltip title={role.role === 'embed' ? '请检查语义搜索模型设置' : probe.message}>
       <span className={styles.warnText}>不可用</span>
     </Tooltip>
   )

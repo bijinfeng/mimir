@@ -138,19 +138,19 @@ describe('scope 与筛选条件', () => {
 describe('库视图的布局偏好', () => {
   /**
    * 布局是纯客户端偏好（D-067），存 localStorage。守三条：
-   * 值要能往返、**非法值必须回落卡片**（手改或旧版本的值不能炸掉页面）、
+   * 值要能往返、**非法值必须回落列表**（手改或旧版本的值不能炸掉页面）、
    * 存储被禁时（抛错）同样回落而不是崩。
    */
-  it('默认是卡片，读写能往返', () => {
-    expect(readLibraryLayout()).toBe('card')
+  it('默认是列表，读写能往返', () => {
+    expect(readLibraryLayout()).toBe('list')
     writeLibraryLayout('list')
     expect(readLibraryLayout()).toBe('list')
     writeLibraryLayout('card')
     expect(readLibraryLayout()).toBe('card')
   })
 
-  it('非法值回落卡片', () => {
+  it('非法值回落列表', () => {
     localStorage.setItem('mimir.library-layout', 'table')
-    expect(readLibraryLayout()).toBe('card')
+    expect(readLibraryLayout()).toBe('list')
   })
 })

@@ -27,10 +27,10 @@ import { createStyles } from 'antd-style'
  * 以为它们不是一回事。注册表里将来多出来的通道没有对应词就原样显示 id，
  * 那比编一个名字诚实。
  *
- * ## 为什么是通栏的浅色块，而不是并排的卡片方阵
+ * ## 为什么是通栏列表，而不是并排的卡片方阵
  *
- * 曾经做成 grid 的卡片方阵。原型不是那样——它把引用做成**一条条通栏的
- * 浅色出处块**（`max-width:640px`，无边框，只有 tintList 底色）。
+ * 曾经做成 grid 的卡片方阵。这里把引用做成通栏列表，并用顶部细线与
+ * 正文区分。默认没有卡片底色，悬停时才提示可以点开。
  * 差别不只是好看：
  *
  *  - 引用在语义上接近**脚注**：「这段结论出自哪里」。通栏更贴这个语义
@@ -109,27 +109,32 @@ const useStyles = createStyles(({ css, token }) => ({
   list: css`
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    margin-top: 12px;
+    gap: 3px;
+    margin-top: 21px;
+    padding-top: 11px;
+    border-top: 1px solid ${token.colorBorderSecondary};
     /* 与检索过程、消息气泡同宽：对话列里这三样是一条竖线上的三个块 */
-    max-width: 640px;
+    max-width: 100%;
   `,
-  /* 无边框、只有底色。原型没给引用块描边——描边会把它变成一个「控件」，
-     而它其实是一块**引用区**。hover 只提亮底色，表示「可以点」 */
+  /* 默认不画卡片边框，hover 提亮底色提示可跳回原文。 */
   card: css`
     display: block;
     width: 100%;
-    padding: 8px 11px;
+    padding: 8px 10px;
     border: none;
     border-radius: 6px;
-    background: ${token.tintList};
+    background: transparent;
     font-family: inherit;
     text-align: left;
     cursor: pointer;
     transition: background 0.12s ease-out;
 
     &:hover {
-      background: ${token.tintHover};
+      background: ${token.colorFillQuaternary};
+    }
+    &:focus-visible {
+      outline: 2px solid ${token.colorPrimaryBorder};
+      outline-offset: -2px;
     }
   `,
   top: css`

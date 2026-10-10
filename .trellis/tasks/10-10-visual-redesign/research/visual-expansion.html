@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>mimir · 对话与编辑工作区方向稿</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; height: 100%; }
+    body { --frame:#e7e7ea; --rail:#eeeef0; --side:#f5f5f7; --surface:#fff; --canvas:#ebeaed; --paper:#fff; --ink:#29272d; --muted:#77737e; --line:#dedce3; --active:#e8e1f5; --accent:#684bb2; --accent-text:#503990; --soft:#f7f5fa; font: 13px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif; color:var(--ink); background:var(--frame); }
+    body[data-theme="dark"] { --frame:#151417; --rail:#1d1c20; --side:#242328; --surface:#2b2a2f; --canvas:#19191c; --paper:#303036; --ink:#e9e6ed; --muted:#b0aab7; --line:#403d45; --active:#493e5b; --accent:#aa91e9; --accent-text:#cbb8fb; --soft:#353139; }
+    svg { width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+    button { font:inherit; }
+    .app { height:100vh; width:100vw; display:flex; flex-direction:column; border:1px solid var(--line); overflow:hidden; }
+    .titlebar { flex:none; height:38px; display:flex; align-items:center; justify-content:center; background:var(--frame); border-bottom:1px solid var(--line); color:var(--muted); font-size:11px; letter-spacing:.02em; }
+    .workspace { flex:1; min-height:0; display:flex; position:relative; }
+    .rail { flex:none; width:52px; display:flex; flex-direction:column; align-items:center; gap:8px; padding:12px 0; background:var(--rail); border-right:1px solid var(--line); }
+    .brand { width:27px; height:27px; display:grid; place-items:center; border-radius:8px; background:var(--accent); color:#fff; font-size:18px; font-weight:700; margin-bottom:16px; }
+    .rail a { width:36px; height:36px; display:grid; place-items:center; color:var(--muted); border-radius:8px; }
+    .rail a.active { color:var(--accent-text); background:var(--active); }
+    .rail .spacer { flex:1; }
+    .sidebar, .settings-side { flex:none; width:242px; background:var(--side); border-right:1px solid var(--line); display:flex; flex-direction:column; min-height:0; }
+    .side-head { height:60px; flex:none; display:flex; align-items:center; justify-content:space-between; padding:0 17px; font-size:15px; font-weight:650; }
+    .side-head span { font-size:11px; color:var(--muted); font-weight:450; }
+    .side-button { margin:2px 12px 19px; height:34px; border-radius:7px; background:var(--accent); color:#fff; display:flex; align-items:center; gap:8px; padding:0 10px; font-weight:600; }
+    .side-button svg { width:15px; height:15px; }
+    .side-label { margin:7px 18px 6px; font-size:11px; font-weight:650; color:var(--muted); }
+    .side-row { height:33px; margin:1px 8px; padding:0 11px; border-radius:6px; display:flex; align-items:center; gap:8px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .side-row.active { background:var(--active); color:var(--accent-text); font-weight:600; }
+    .side-row svg { width:14px; height:14px; flex:none; }
+    .side-row .meta { margin-left:auto; opacity:.65; font-size:11px; }
+    .side-sep { border-top:1px solid var(--line); margin:16px 15px 11px; }
+    .side-user { margin-top:auto; height:56px; border-top:1px solid var(--line); display:flex; align-items:center; gap:9px; padding:0 15px; color:var(--muted); }
+    .avatar { width:27px; height:27px; border-radius:8px; background:var(--active); color:var(--accent-text); display:grid; place-items:center; font-weight:650; }
+    .main { flex:1; min-width:0; display:flex; flex-direction:column; background:var(--surface); }
+    .main-head { flex:none; height:48px; padding:0 24px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:12px; color:var(--muted); }
+    .main-head strong { color:var(--ink); font-weight:620; }
+    .main-head .grow { flex:1; }
+    .head-action { height:28px; padding:0 9px; border:1px solid var(--line); border-radius:6px; display:flex; align-items:center; gap:6px; background:var(--surface); color:var(--ink); }
+    .head-action.emphasis { background:var(--accent); border-color:var(--accent); color:#fff; }
+    .head-action svg { width:13px; height:13px; }
+    .scene { display:none; flex:1; min-height:0; }
+    body[data-view="chat-empty"] .chat-empty,
+    body[data-view="chat-answer"] .chat-answer,
+    body[data-view="models"] .models,
+    body[data-view="doc-guide"] .doc-guide,
+    body[data-view="doc-edit"] .doc-edit,
+    body[data-view="models-empty"] .models-empty { display:flex; }
+    body[data-view="models"] .sidebar, body[data-view="models-empty"] .sidebar { display:none; }
+    body:not([data-view="models"]):not([data-view="models-empty"]) .settings-side { display:none; }
+    .settings-side { padding:17px 9px; }
+    .settings-side h2 { margin:10px 12px 19px; font-size:18px; }
+    .settings-side .side-label { margin-top:18px; }
+    .chat-empty, .chat-answer { flex-direction:column; }
+    .chat-stage { flex:1; min-height:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:28px; }
+    .chat-mark { width:42px; height:42px; display:grid; place-items:center; border:1px solid var(--line); border-radius:13px; color:var(--accent-text); background:var(--soft); margin-bottom:22px; }
+    .chat-mark svg { width:22px; height:22px; }
+    .chat-stage h1 { font-size:29px; line-height:1.3; font-weight:620; letter-spacing:-.035em; margin:0 0 9px; }
+    .chat-stage p { margin:0 0 34px; color:var(--muted); font-size:13px; }
+    .composer { width:min(100% - 64px,770px); margin:0 auto 30px; border:1px solid var(--line); border-radius:12px; background:var(--surface); box-shadow:0 8px 25px #15111e0b; }
+    .chat-stage .composer { margin:0; }
+    .composer-placeholder { min-height:64px; padding:16px 18px; color:var(--muted); font-size:14px; }
+    .composer-bar { display:flex; align-items:center; gap:8px; padding:0 10px 9px; }
+    .composer-control { min-height:29px; display:flex; align-items:center; gap:5px; padding:0 8px; border-radius:6px; color:var(--muted); }
+    .composer-control svg { width:14px; height:14px; }
+    .composer-control.scope { color:var(--accent-text); background:var(--soft); }
+    .composer-bar .grow { flex:1; }
+    .send { width:29px; height:29px; display:grid; place-items:center; border-radius:7px; background:var(--accent); color:white; }
+    .send svg { width:15px; height:15px; }
+    .chat-thread { flex:1; min-height:0; overflow:auto; padding:46px 40px 55px; }
+    .messages { width:min(100%,770px); margin:0 auto; }
+    .message-user { width:fit-content; max-width:75%; margin:0 0 42px auto; background:var(--soft); border:1px solid var(--line); border-radius:11px; padding:12px 16px; font-size:14px; }
+    .answer-kicker { display:flex; align-items:center; gap:9px; font-size:12px; font-weight:600; margin-bottom:17px; }
+    .answer-kicker .tiny { width:22px; height:22px; display:grid; place-items:center; border-radius:6px; background:var(--active); color:var(--accent-text); }
+    .process { width:fit-content; padding:7px 10px; color:var(--muted); background:var(--side); border-radius:6px; font-size:11px; margin-bottom:21px; }
+    .answer p { font-size:15px; line-height:1.8; margin:0 0 16px; }
+    .answer h2 { font-size:17px; margin:24px 0 10px; }
+    .answer ol { padding-left:22px; font-size:14px; line-height:1.85; }
+    .cite { color:var(--accent-text); font-weight:650; font-size:12px; }
+    .source { margin:24px 0 0; border-top:1px solid var(--line); padding:14px 0; display:flex; align-items:center; gap:8px; color:var(--muted); font-size:12px; }
+    .source strong { color:var(--ink); font-weight:550; }
+    .models { overflow:auto; padding:44px 60px 70px; }
+    .models-inner { width:min(100%,790px); margin:0 auto; }
+    .models h1 { font-size:28px; margin:0 0 8px; letter-spacing:-.025em; }
+    .models-intro { color:var(--muted); margin:0 0 31px; }
+    .demo-tag { display:inline-block; margin-left:11px; font-size:11px; padding:2px 6px; border-radius:4px; background:var(--soft); color:var(--muted); border:1px solid var(--line); vertical-align:middle; }
+    .section-top { margin:27px 0 12px; display:flex; align-items:center; justify-content:space-between; }
+    .section-top h2 { margin:0; font-size:16px; }
+    .provider { border:1px solid var(--line); border-radius:9px; padding:15px 17px; display:flex; align-items:center; gap:13px; }
+    .provider-icon { width:33px; height:33px; border-radius:8px; background:var(--soft); color:var(--accent-text); display:grid; place-items:center; font-weight:700; }
+    .provider-copy { flex:1; }
+    .provider-copy strong { display:block; font-weight:620; }
+    .provider-copy small { color:var(--muted); }
+    .ready { color:#2c7c51; background:#e9f5ee; border-radius:4px; padding:3px 7px; font-size:11px; }
+    .ready.waiting { color:var(--muted); background:var(--soft); }
+    body[data-theme="dark"] .ready { color:#8ad7a7; background:#274635; }
+    body[data-theme="dark"] .ready.waiting { color:var(--muted); background:var(--soft); }
+    .row { min-height:66px; border-top:1px solid var(--line); display:flex; align-items:center; gap:16px; }
+    .row-label { width:145px; font-weight:560; }
+    .select { width:330px; max-width:100%; border:1px solid var(--line); padding:8px 10px; border-radius:6px; color:var(--ink); }
+    .row .ready { margin-left:auto; }
+    .test { border:1px solid var(--line); border-radius:6px; padding:5px 10px; }
+    .test.disabled { color:var(--muted); background:var(--soft); }
+    .empty-provider { border:1px dashed var(--line); border-radius:10px; min-height:210px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; color:var(--muted); }
+    .empty-provider strong { color:var(--ink); font-size:15px; }
+    .empty-provider .head-action { margin-top:7px; }
+    .doc-guide { overflow:hidden; }
+    .read-area { flex:1; min-width:0; background:var(--surface); overflow:auto; }
+    .read-paper { max-width:780px; margin:0 auto; padding:57px 42px; }
+    .crumb { color:var(--muted); font-size:12px; margin-bottom:21px; }
+    .read-paper h1 { font-size:31px; letter-spacing:-.03em; margin:0 0 27px; }
+    .read-paper p { font-size:15px; line-height:1.9; }
+    .read-paper h2 { margin-top:39px; }
+    .assistant { width:400px; flex:none; min-width:0; border-left:1px solid var(--line); display:flex; flex-direction:column; }
+    .assistant-head { height:48px; flex:none; display:flex; align-items:center; justify-content:space-between; padding:0 17px; border-bottom:1px solid var(--line); font-weight:600; }
+    .assistant-body { flex:1; min-height:0; padding:27px 17px; overflow:auto; }
+    .assistant-body h2 { font-size:16px; margin:0 0 10px; }
+    .assistant-body > p { color:var(--muted); margin:0 0 22px; line-height:1.65; }
+    .guide-card { border:1px solid var(--line); background:var(--soft); border-radius:9px; padding:17px 18px; }
+    .guide-card strong { display:block; margin-bottom:11px; }
+    .guide-item { margin:13px 0; padding-left:14px; border-left:2px solid var(--accent); }
+    .guide-item b { display:block; font-size:12px; }
+    .guide-item span { color:var(--muted); font-size:11px; line-height:1.55; }
+    .assistant-compose { padding:12px 15px 14px; border-top:1px solid var(--line); }
+    .quick { display:flex; gap:6px; margin-bottom:10px; }
+    .quick span { border:1px solid var(--line); border-radius:20px; padding:5px 8px; color:var(--accent-text); font-size:11px; }
+    .assistant-compose .composer { width:100%; margin:0; }
+    .assistant-compose .composer-placeholder { min-height:53px; font-size:12px; }
+    .assistant-compose .composer-bar { font-size:11px; }
+    .doc-edit { flex-direction:column; background:var(--canvas); }
+    .office-chrome { flex:none; background:var(--surface); border-bottom:1px solid var(--line); }
+    .office-tabs { height:37px; display:flex; align-items:flex-end; gap:19px; padding:0 22px; border-bottom:1px solid var(--line); color:var(--muted); font-size:12px; }
+    .office-tabs span { height:100%; display:flex; align-items:center; }
+    .office-tabs .selected { color:var(--accent-text); border-bottom:2px solid var(--accent); font-weight:650; }
+    .office-tabs .grow { flex:1; }
+    .office-tools { min-height:77px; display:flex; align-items:stretch; gap:0; padding:10px 15px 8px; overflow:hidden; }
+    .tool-group { display:flex; flex-direction:column; justify-content:space-between; gap:6px; padding:0 12px; border-right:1px solid var(--line); }
+    .tool-group:first-child { padding-left:4px; }
+    .tool-group:last-child { border-right:none; }
+    .tool-line { display:flex; align-items:center; gap:4px; white-space:nowrap; }
+    .tool { height:26px; min-width:27px; display:grid; place-items:center; padding:0 7px; border:1px solid transparent; border-radius:4px; font-size:12px; }
+    .tool.selected { color:var(--accent-text); background:var(--active); }
+    .tool.field { min-width:97px; justify-content:start; border-color:var(--line); }
+    .tool-group small { color:var(--muted); font-size:10px; text-align:center; }
+    .office-canvas { flex:1; overflow:auto; padding:26px 38px 44px; }
+    .office-page { width:min(100%,735px); min-height:1000px; padding:69px 75px; margin:0 auto; background:var(--paper); border:1px solid var(--line); box-shadow:0 3px 15px #15111e13; }
+    .office-page h1 { font-size:28px; margin:0 0 34px; }
+    .office-page h2 { font-size:18px; margin:37px 0 12px; }
+    .office-page p, .office-page li { font-size:14px; line-height:1.9; }
+    .office-status { height:28px; flex:none; padding:0 17px; display:flex; align-items:center; gap:15px; border-top:1px solid var(--line); background:var(--surface); color:var(--muted); font-size:11px; }
+    .office-status .grow { flex:1; }
+    .mobile-save { display:none !important; }
+    .muted-note { color:var(--muted); font-size:10px; }
+    @media (max-width:1100px) { .assistant { width:350px; } .office-tools .low-priority { display:none; } }
+    @media (max-width:880px) { .sidebar,.settings-side { display:none !important; } .assistant { width:330px; } .models { padding:32px; } }
+    @media (max-width:650px) { .assistant { position:absolute; top:0; right:0; bottom:0; width:min(400px,calc(100vw - 52px)); z-index:5; background:var(--surface); box-shadow:-12px 0 30px #14101c25; } .office-canvas { padding:15px; } .office-page { padding:35px 25px; } .office-tools { overflow:auto; } .office-tabs .desktop-saved,.office-tools .save-group { display:none; } .office-tabs .mobile-save { display:flex !important; align-items:center; height:26px; padding:0 9px; margin-bottom:5px; border-radius:5px; background:var(--accent); color:#fff; } .composer { width:calc(100% - 28px); } .composer-bar { flex-wrap:wrap; } .models { padding:20px; } .row { flex-wrap:wrap; padding:10px 0; gap:7px; } }
+  </style>
+</head>
+<body data-view="chat-empty" data-theme="light">
+  <div class="app">
+    <div class="titlebar">mimir · 工作区视觉方向稿</div>
+    <div class="workspace">
+      <nav class="rail" aria-label="功能导航">
+        <div class="brand">m</div>
+        <a id="rail-chat" class="active" title="对话"><svg viewBox="0 0 24 24"><path d="M4 5h16v12H9l-5 4z"/></svg></a>
+        <a id="rail-doc" title="知识库"><svg viewBox="0 0 24 24"><path d="M4 5h7a3 3 0 0 1 3 3v13H7a3 3 0 0 0-3 1zM20 5h-3a3 3 0 0 0-3 3v13h3a3 3 0 0 1 3 1z"/></svg></a>
+        <a title="搜索"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></svg></a>
+        <a title="收集"><svg viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></svg></a>
+        <div class="spacer"></div>
+        <a id="rail-settings" title="设置"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg></a>
+      </nav>
+      <aside class="sidebar">
+        <div class="side-head">mimir <span>收起侧栏</span></div>
+        <div class="side-button"><svg viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></svg>新建对话</div>
+        <div class="side-label">最近对话</div>
+        <div id="side-chat" class="side-row active">mimir 的检索方式 <span class="meta">今天</span></div>
+        <div class="side-row">如何整理研究资料 <span class="meta">昨天</span></div>
+        <div class="side-sep"></div>
+        <div class="side-label">知识库</div>
+        <div class="side-row"><svg viewBox="0 0 24 24"><path d="M3 6h7l2 2h9v12H3z"/></svg>全部文档</div>
+        <div id="side-doc" class="side-row"><svg viewBox="0 0 24 24"><path d="M3 6h7l2 2h9v12H3z"/></svg>开始使用</div>
+        <div class="side-user"><div class="avatar">A</div>账户</div>
+      </aside>
+      <aside class="settings-side">
+        <h2>设置</h2>
+        <div class="side-label">工作方式</div>
+        <div class="side-row active">模型</div>
+        <div class="side-row">检索</div>
+        <div class="side-row">订阅</div>
+        <div class="side-label">数据与扩展</div>
+        <div class="side-row">存储</div>
+        <div class="side-row">插件</div>
+        <div class="side-row">统计</div>
+        <div class="side-row">数据与备份</div>
+        <div class="side-label">应用</div>
+        <div class="side-row">外观</div>
+        <div class="side-row">账号</div>
+      </aside>
+      <main class="main">
+        <div class="main-head"><strong id="head-title">对话</strong><div class="grow"></div><span class="muted-note">静态方向稿 · 操作仅示意</span></div>
+        <section class="scene chat-empty">
+          <div class="chat-stage">
+            <div class="chat-mark"><svg viewBox="0 0 24 24"><path d="M4 5h16v12H9l-5 4z"/></svg></div>
+            <h1>向知识库提问</h1>
+            <p>检索你的文档，回答会附上原文引用。</p>
+            <div class="composer"><div class="composer-placeholder">输入问题…</div><div class="composer-bar"><span class="composer-control">＋</span><span class="composer-control">标准 ⌄</span><span class="composer-control">当前模型 ⌄</span><div class="grow"></div><span class="send">↑</span></div></div>
+          </div>
+        </section>
+        <section class="scene chat-answer">
+          <div class="chat-thread"><div class="messages">
+            <div class="message-user">mimir 如何把资料变成可追溯的回答？</div>
+            <div class="answer"><div class="answer-kicker"><span class="tiny">m</span>mimir</div>
+              <div class="process">⌄ 已检索 2 个文档 · 4 个片段 · 1.0 秒</div>
+              <p>mimir 会先在知识库中检索相关原文，再根据命中的内容生成回答。你可以沿着引用返回原文核对。<span class="cite">[1]</span></p>
+              <h2>从资料到回答</h2>
+              <ol><li>收集网页、文件或笔记，整理到知识库。</li><li>提问时检索相关片段，并合并同一文档的相邻内容。<span class="cite">[2]</span></li><li>将引用附在对应的回答位置。</li></ol>
+            </div>
+          </div></div>
+          <div class="composer"><div class="composer-placeholder">继续提问…</div><div class="composer-bar"><span class="composer-control scope">范围：全部文档</span><span class="composer-control">标准 ⌄</span><span class="composer-control">当前模型 ⌄</span><div class="grow"></div><span class="send">↑</span></div></div>
+        </section>
+        <section class="scene models"><div class="models-inner">
+          <h1>模型 <span class="demo-tag">示例配置</span></h1><p class="models-intro">先连接供应商，再为各项任务选择模型。</p>
+          <div class="section-top"><h2>供应商</h2><span class="head-action emphasis">＋ 添加供应商</span></div>
+          <div class="provider"><div class="provider-icon">M</div><div class="provider-copy"><strong>示例供应商</strong><small>2 个模型 · 密钥已配置</small></div><span class="ready">已连接</span><span class="head-action">编辑</span></div>
+          <div class="section-top"><h2>任务分配</h2></div>
+          <div class="row"><span class="row-label">对话</span><span class="select">示例供应商 / 通用模型　⌄</span><span class="ready">就绪</span><span class="test">测试</span></div>
+          <div class="row"><span class="row-label">深度思考</span><span class="select">示例供应商 / 推理模型　⌄</span><span class="ready">就绪</span><span class="test">测试</span></div>
+          <div class="row"><span class="row-label">摘要</span><span class="select">留空（回落到对话模型）　⌄</span><span class="ready">可用</span><span class="test">测试</span></div>
+          <div class="row"><span class="row-label">向量化</span><span class="select">选择供应商与模型　⌄</span><span class="ready waiting">待配置</span><span class="test disabled">测试</span></div>
+          <p class="muted-note">此页仅展示配置态的版式；真实状态、模型名称与按钮可用性由服务端决定。</p>
+        </div></section>
+        <section class="scene models models-empty"><div class="models-inner">
+          <h1>模型</h1><p class="models-intro">先连接供应商，再为各项任务选择模型。</p>
+          <div class="section-top"><h2>供应商</h2></div>
+          <div class="empty-provider"><strong>还没有供应商</strong><span>连接一个模型服务后，就能配置对话和检索任务。</span><span class="head-action emphasis">＋ 添加供应商</span></div>
+          <div class="section-top"><h2>任务分配</h2></div>
+          <p class="muted-note">添加供应商后可选择模型。</p>
+        </div></section>
+        <section class="scene doc-guide">
+          <article class="read-area"><div class="read-paper"><div class="crumb">开始使用 / 笔记</div><h1>mimir 产品说明</h1><p>mimir 是一个自托管的个人知识库：写 Markdown 笔记、收集外部资料，带引用地向 AI 提问，部署在自己的服务器上。</p><p>这份说明随安装附带。读完之后，这里可以改成你自己的知识库。</p><h2>它解决什么问题</h2><p>收藏式的工具都有一个共同的死法：存的时候很勤，看时找不到。mimir 针对的是整条链路。</p></div></article>
+          <aside class="assistant"><div class="assistant-head">问 AI · mimir 产品说明 <span>×</span></div><div class="assistant-body"><h2>👋 你好，我是阅读助手</h2><p>我会读当前这篇《mimir 产品说明》，帮你概括内容、回答问题。范围锁定在这一篇，不会去找别的文档。</p><div class="guide-card"><strong>快速上手指南</strong><div class="guide-item"><b>速读文章</b><span>点下面的「速读本文」，或直接在输入框里提问</span></div><div class="guide-item"><b>带着问题读法</b><span>选中正文里的一段话，点浮出的「就这段提问」——比问整篇更精确</span></div><div class="guide-item"><b>提问会先检索</b><span>回答基于命中原文并标出 [1] [2] 引用，点引用能跳回原处</span></div><div class="guide-item"><b>没配模型也能用</b><span>那种情况下它只做检索、把命中的原文列出来，并说明没有花钱</span></div></div></div><div class="assistant-compose"><div class="quick"><span>速读本文</span><span>提出要点</span><span>解释细节</span></div><div class="composer"><div class="composer-placeholder">就这篇文档提问…</div><div class="composer-bar"><span class="composer-control scope">当前文档</span><span class="composer-control">标准 ⌄</span><div class="grow"></div><span class="send">↑</span></div></div></div></aside>
+        </section>
+        <section class="scene doc-edit">
+          <div class="office-chrome">
+            <div class="office-tabs"><span class="selected">开始</span><span>插入</span><span>查找</span><div class="grow"></div><span class="desktop-saved">已修改</span><span class="mobile-save">保存</span></div>
+            <div class="office-tools">
+              <div class="tool-group"><div class="tool-line"><span class="tool">↶</span><span class="tool">↷</span></div><small>历史记录</small></div>
+              <div class="tool-group"><div class="tool-line"><span class="tool field">等线　⌄</span><span class="tool field" style="min-width:50px">11　⌄</span></div><small>字体与字号</small></div>
+              <div class="tool-group"><div class="tool-line"><span class="tool selected"><b>B</b></span><span class="tool"><i>I</i></span><span class="tool"><u>U</u></span><span class="tool">S̶</span><span class="tool"><u>A</u></span></div><small>字符格式</small></div>
+              <div class="tool-group"><div class="tool-line"><span class="tool">☰</span><span class="tool">≡</span><span class="tool">☷</span><span class="tool">• ≡</span><span class="tool">1. ≡</span></div><small>段落</small></div>
+              <div class="tool-group low-priority"><div class="tool-line"><span class="tool">表格</span><span class="tool">图片</span><span class="tool">链接</span></div><small>插入</small></div>
+              <div class="tool-group save-group" style="margin-left:auto"><div class="tool-line"><span class="head-action emphasis">保存到库</span></div><small>文档</small></div>
+            </div>
+          </div>
+          <div class="office-canvas"><article class="office-page"><h1>mimir 产品说明</h1><p>mimir 是一个自托管的个人知识库：写 Markdown 笔记、收集外部资料，带引用地向 AI 提问，部署在自己的服务器上。</p><p>这份说明随安装附带。读完之后，这里可以改成你自己的知识库。</p><h2>它解决什么问题</h2><p>收藏式的工具都有一个共同的死法：<b>存的时候很勤，看时找不到。</b>mimir 针对的是整条链路，五个环节缺一不可。</p><ol><li>收集网页、文件和笔记。</li><li>用知识库与文件夹整理内容。</li><li>检索原文并带引用地提问。</li></ol></article></div>
+          <div class="office-status"><span>已修改，未保存</span><span>5 个块</span><div class="grow"></div><span>第 1 页</span><span>100%</span></div>
+        </section>
+      </main>
+    </div>
+  </div>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const allowed = ['chat-empty','chat-answer','models','models-empty','doc-guide','doc-edit'];
+    const view = params.get('view');
+    document.body.dataset.view = allowed.includes(view) ? view : 'chat-empty';
+    document.body.dataset.theme = params.get('theme') === 'dark' ? 'dark' : 'light';
+    const titles = {'chat-empty':'新对话','chat-answer':'mimir 的检索方式','models':'模型设置','models-empty':'模型设置','doc-guide':'mimir 产品说明','doc-edit':'mimir 产品说明 · 编辑'};
+    document.querySelector('#head-title').textContent = titles[document.body.dataset.view];
+    if (document.body.dataset.view.startsWith('doc-')) {
+      document.querySelector('#rail-chat').classList.remove('active');
+      document.querySelector('#rail-doc').classList.add('active');
+      document.querySelector('#side-chat').classList.remove('active');
+      document.querySelector('#side-doc').classList.add('active');
+    }
+    if (document.body.dataset.view.startsWith('models')) {
+      document.querySelector('#rail-chat').classList.remove('active');
+      document.querySelector('#rail-settings').classList.add('active');
+    }
+  </script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { Descriptions, Skeleton, Typography } from 'antd'
+import { Alert, Button, Skeleton, Typography } from 'antd'
 import { createStyles } from 'antd-style'
 import { desktopBridge } from '@/lib/desktop-bridge'
 
@@ -9,9 +9,7 @@ import { desktopBridge } from '@/lib/desktop-bridge'
  *
  * ## 它为什么是桌面端自己的路由
  *
- * 这一页显示的全部是**载体的事实**：应用版本（`app.getVersion()`）、
- * 数据根在本机哪个目录、当前是哪种使用方式。浏览器部署里一件都不存在——
- * 那边既没有「版本」（它就是当前访问的那个服务端），也没有「本机数据目录」。
+ * 这一页显示桌面客户端的版本和当前使用方式。浏览器部署里没有客户端版本。
  *
  * 放进共享路由再加条件渲染的话，浏览器侧会多出一条**永远到不了的路由**：
  * 类型上 `to="/client/about"` 合法、点进去是一片说不出话的空白。
@@ -28,11 +26,36 @@ const useStyles = createStyles(({ css, token }) => ({
   page: css`
     height: 100%;
     overflow-y: auto;
-    padding: 24px;
+    padding: 42px clamp(28px, 5vw, 72px) 80px;
     background: ${token.colorBgContainer};
   `,
-  card: css`
-    max-width: 680px;
+  content: css`
+    max-width: 730px;
+  `,
+  heading: css`
+    margin: 0 0 28px !important;
+  `,
+  section: css`
+    border-top: 1px solid ${token.colorBorderSecondary};
+    padding-top: 16px;
+  `,
+  row: css`
+    display: flex;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid ${token.colorBorderSecondary};
+    @media (max-width: 600px) {
+      flex-direction: column;
+      gap: 4px;
+    }
+  `,
+  label: css`
+    width: 124px;
+    flex: none;
+    color: ${token.colorTextSecondary};
+  `,
+  value: css`
+    color: ${token.colorText};
   `,
 }))
 
@@ -50,36 +73,32 @@ function AboutPage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.card}>
-        <Typography.Title level={4}>关于 mimir</Typography.Title>
-        <Typography.Paragraph type="secondary">
-          自托管的个人知识库。这一页显示的是这台电脑上这个客户端的事实。
-        </Typography.Paragraph>
-
+      <div className={styles.content}>
+        <Typography.Title level={2} className={styles.heading}>
+          关于 mimir
+        </Typography.Title>
         {boot.isLoading ? (
-          <Skeleton active paragraph={{ rows: 3 }} title={false} />
+          <Skeleton active paragraph={{ rows: 2 }} title={false} />
+        ) : boot.isError || !boot.data ? (
+          <Alert
+            type="error"
+            showIcon
+            title="暂时无法读取客户端信息"
+            action={<Button onClick={() => void boot.refetch()}>重试</Button>}
+          />
         ) : (
-          <Descriptions column={1} size="small" bordered>
-            <Descriptions.Item label="版本">{boot.data?.version ?? '读取中…'}</Descriptions.Item>
-            <Descriptions.Item label="使用方式">
-              {boot.data?.mode === 'local'
-                ? '本地使用（数据在这台电脑上）'
-                : boot.data?.mode === 'cloud'
-                  ? '连接服务器'
-                  : '未知'}
-            </Descriptions.Item>
-            {/*
-              数据目录**只有本地模式有**（云端模式下数据在服务端，本机只有一个壳）。
-              那条不变量写在 `DesktopBootInfo.dataDir` 的类型里（可空），
-              所以这里是「有就显示」而不是「显示一个空值」。
-            */}
-            {boot.data?.dataDir ? (
-              <Descriptions.Item label="数据目录">{boot.data.dataDir}</Descriptions.Item>
-            ) : null}
-            <Descriptions.Item label="窗口加载的地址">
-              {boot.data?.origin ?? '未知'}
-            </Descriptions.Item>
-          </Descriptions>
+          <div className={styles.section}>
+            <div className={styles.row}>
+              <span className={styles.label}>版本</span>
+              <span className={styles.value}>{boot.data.version}</span>
+            </div>
+            <div className={styles.row}>
+              <span className={styles.label}>使用方式</span>
+              <span className={styles.value}>
+                {boot.data.mode === 'local' ? '本地使用' : '连接服务器'}
+              </span>
+            </div>
+          </div>
         )}
       </div>
     </div>

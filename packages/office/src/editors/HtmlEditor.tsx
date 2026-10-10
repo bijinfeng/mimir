@@ -55,7 +55,6 @@ import {
   ToolbarDivider,
   ToolbarLabel,
   ToolbarNumberField,
-  ToolbarSpacer,
   ToolbarToggleGroup,
   type FindReplaceAdapter,
 } from '../shell/EditorShell.js'
@@ -620,26 +619,25 @@ export function HtmlEditor({ documentId, io, onDirtyChange, flush = false }: Edi
           >
             定位选中元素
           </ToolbarButton>
-
-          <ToolbarSpacer />
-
-          <ToolbarButton
-            label={source.saving ? '保存中…' : '保存到库'}
-            primary
-            disabled={!dirty || source.saving}
-            /*
-             * 禁用必须给原因（DESIGN §8.4）。`disabled` 的判据是两件事
-             * （没改动 / 正在保存），而它们**各有各的说法**：不区分的话
-             * 「保存」灰着时用户只能猜是没改还是正在写。不给这一条时
-             * `ToolbarButton` 把 `title` 留在按钮名上（实测
-             * `title === aria-label === "保存到库"`），等于什么都没说。
-             */
-            disabledReason={source.saving ? '正在保存…' : '没有未保存的改动'}
-            onClick={() => void save()}
-          >
-            <SaveIcon />
-          </ToolbarButton>
         </>
+      }
+      toolbarActions={
+        <ToolbarButton
+          label={source.saving ? '保存中…' : '保存到库'}
+          primary
+          disabled={!dirty || source.saving}
+          /*
+           * 禁用必须给原因（DESIGN §8.4）。`disabled` 的判据是两件事
+           * （没改动 / 正在保存），而它们**各有各的说法**：不区分的话
+           * 「保存」灰着时用户只能猜是没改还是正在写。不给这一条时
+           * `ToolbarButton` 把 `title` 留在按钮名上（实测
+           * `title === aria-label === "保存到库"`），等于什么都没说。
+           */
+          disabledReason={source.saving ? '正在保存…' : '没有未保存的改动'}
+          onClick={() => void save()}
+        >
+          <SaveIcon />
+        </ToolbarButton>
       }
       /*
         次工具条：查找栏 + 元素路径。**两条都落在这里**（`subbar` 与工具条同包

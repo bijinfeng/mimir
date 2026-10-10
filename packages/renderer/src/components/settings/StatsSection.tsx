@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Skeleton, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { api } from '../../lib/api'
+import { LoadError } from '../LoadError'
 import { Panel, Stats } from './parts'
 import { useStyles } from './settings.style'
 import { useStatsStyles } from './StatsSection.style'
@@ -102,6 +103,9 @@ export function StatsSection() {
   const data = statsQuery.data
 
   if (!data) {
+    if (statsQuery.isError) {
+      return <LoadError message="用量读取失败" onRetry={() => void statsQuery.refetch()} />
+    }
     return (
       <div className={styles.block}>
         <Skeleton active paragraph={{ rows: 4 }} title={false} />
@@ -111,15 +115,15 @@ export function StatsSection() {
 
   if (data.totals.calls === 0 && data.totals.unknownCount === 0) {
     return (
-      <Panel title="用量">
-        <div className={statsStyles.empty}>暂无调用记录。使用模型后可在这里查看用量。</div>
+      <Panel title="用量概览">
+        <div className={statsStyles.empty}>还没有模型调用记录。</div>
       </Panel>
     )
   }
 
   return (
     <>
-      <Panel title="用量（token）">
+      <Panel title="用量概览 · token">
         <Stats
           items={[
             { label: '今日', value: formatTokens(data.totals.today) },
@@ -130,13 +134,13 @@ export function StatsSection() {
         />
       </Panel>
 
-      <Panel title="用量趋势（token）">
+      <Panel title="每日趋势 · token">
         <UsageHeatmap days={data.days} thresholds={data.thresholds} timezone={data.timezone} />
       </Panel>
 
-      <Panel title="按角色">
+      <Panel title="按任务">
         {data.byRole.length === 0 ? (
-          <div className={statsStyles.empty}>暂无调用记录。</div>
+          <div className={statsStyles.empty}>还没有记录。</div>
         ) : (
           /*
             用 antd Table 而不是手写 `<table>`：表头底色、单元格内边距、

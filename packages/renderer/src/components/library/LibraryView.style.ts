@@ -1,5 +1,5 @@
 import { createStyles } from 'antd-style'
-import { FONT_SIZE } from '../../theme/tokens'
+import { FONT_SIZE, NAV_NARROW_QUERY } from '../../theme/tokens'
 
 /**
  * 知识库页（浏览态主区）的样式（D-079，形态对齐用户给的目标稿）。
@@ -16,9 +16,7 @@ import { FONT_SIZE } from '../../theme/tokens'
  * └──────┘ └──────┘ └──────┘
  * ```
  *
- * 卡片是**文件展台**：标题行（图标 + 名称 + 格式徽标 + 悬停显形的动作）、
- * 一条属性（格式 · 大小）、底部一行（状态徽标 · 绝对时间）。与旧卡片的
- * 区别是扫读对象从「摘要」换成「属性」——知识库管理的是文件，不是读摘要。
+ * 默认列表便于扫读文件；卡片仍作为用户可切换的文件展台。
  *
  * ## 两侧留白只给一次
  *
@@ -32,16 +30,24 @@ export const useStyles = createStyles(({ css, token }) => ({
     min-height: 0;
     display: flex;
     flex-direction: column;
-    padding: 0 28px;
+    padding: 0 clamp(20px, 4vw, 64px);
     background: ${token.colorBgContainer};
+
+    @media (max-width: 600px) {
+      padding-inline: 16px;
+    }
   `,
 
   head: css`
     flex: none;
-    padding: 22px 0 0;
+    padding: 48px 0 0;
     max-width: 1080px;
     width: 100%;
     margin: 0 auto;
+
+    @media ${NAV_NARROW_QUERY} {
+      padding-top: 28px;
+    }
   `,
   kbTitle: css`
     font-size: ${FONT_SIZE.display}px;
@@ -90,7 +96,7 @@ export const useStyles = createStyles(({ css, token }) => ({
     align-items: center;
     flex-wrap: wrap;
     gap: 6px 18px;
-    margin-top: 14px;
+    margin-top: 10px;
     font-size: ${FONT_SIZE.meta}px;
     color: ${token.colorTextTertiary};
   `,
@@ -188,9 +194,13 @@ export const useStyles = createStyles(({ css, token }) => ({
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 10px 12px;
-    margin-top: 18px;
-    padding: 14px 0 12px;
-    border-top: 1px solid ${token.colorBorderSecondary};
+    margin-top: 34px;
+    padding: 0 0 20px;
+
+    @media (max-width: 720px) {
+      margin-top: 24px;
+      gap: 8px;
+    }
   `,
   count: css`
     font-size: ${FONT_SIZE.note}px;
@@ -204,12 +214,17 @@ export const useStyles = createStyles(({ css, token }) => ({
     gap: 8px;
 
     @media (max-width: 720px) {
-      order: 2;
+      order: 3;
       flex-basis: 100%;
     }
   `,
   toolbarPrimary: css`
     flex: none;
+    order: 0;
+  `,
+  layoutSwitch: css`
+    order: 2;
+    margin-left: auto;
 
     @media (max-width: 720px) {
       order: 1;
@@ -257,14 +272,16 @@ export const useStyles = createStyles(({ css, token }) => ({
     min-height: 0;
     overflow-y: auto;
     padding-bottom: 40px;
+    scrollbar-gutter: stable;
   `,
 
   /* ── 卡片网格 ─────────────────────────────────────── */
   grid: css`
     max-width: 1080px;
+    width: 100%;
     margin: 0 auto;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
     gap: 12px;
     align-content: start;
   `,
@@ -275,7 +292,7 @@ export const useStyles = createStyles(({ css, token }) => ({
     gap: 6px;
     padding: 12px 14px 10px;
     border: 1px solid ${token.colorBorderSecondary};
-    border-radius: 10px;
+    border-radius: ${token.borderRadius}px;
     background: ${token.colorBgContainer};
     font-family: inherit;
     text-align: left;
@@ -286,7 +303,7 @@ export const useStyles = createStyles(({ css, token }) => ({
 
     &:hover {
       border-color: ${token.colorPrimaryBorder};
-      box-shadow: ${token.boxShadowTertiary};
+      background: ${token.colorFillQuaternary};
     }
 
     /* 卡片本体不可聚焦（里面是标题按钮 + 动作按钮，见 DocCard 的注释），
@@ -409,17 +426,19 @@ export const useStyles = createStyles(({ css, token }) => ({
    */
   list: css`
     max-width: 1080px;
+    width: 100%;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
     gap: 2px;
+    container-type: inline-size;
   `,
   listHead: css`
     display: grid;
-    grid-template-columns: 22px minmax(0, 1fr) minmax(0, 300px) 76px 116px;
+    grid-template-columns: 22px minmax(0, 1fr) minmax(0, 260px) 76px 116px;
     align-items: center;
     gap: 10px;
-    padding: 0 12px 6px;
+    padding: 0 12px 10px;
     font-size: ${FONT_SIZE.badge}px;
     color: ${token.colorTextTertiary};
     /* 表头下这一条线是表格语汇的一部分（用户点名「表格缺少表头」）——
@@ -427,16 +446,34 @@ export const useStyles = createStyles(({ css, token }) => ({
        没有界线时，标签看起来像第一行数据 */
     border-bottom: 1px solid ${token.colorBorderSecondary};
     margin-bottom: 4px;
+
+    @container (max-width: 700px) {
+      grid-template-columns: 22px minmax(0, 1fr) 110px;
+
+      > :nth-child(3),
+      > :nth-child(4) {
+        display: none;
+      }
+    }
+
+    @container (max-width: 480px) {
+      grid-template-columns: 22px minmax(0, 1fr) 32px;
+
+      > :last-child {
+        display: none;
+      }
+    }
   `,
   row: css`
     display: grid;
-    grid-template-columns: 22px minmax(0, 1fr) minmax(0, 300px) 76px 116px;
+    grid-template-columns: 22px minmax(0, 1fr) minmax(0, 260px) 76px 116px;
     align-items: center;
     gap: 10px;
     width: 100%;
+    min-height: 56px;
     padding: 8px 12px;
     border: 1px solid transparent;
-    border-radius: ${token.borderRadius}px;
+    border-radius: ${token.borderRadiusSM}px;
     background: none;
     font-family: inherit;
     text-align: left;
@@ -455,12 +492,33 @@ export const useStyles = createStyles(({ css, token }) => ({
       box-shadow: 0 0 0 3px ${token.controlOutline};
       outline: none;
     }
+
+    @container (max-width: 700px) {
+      grid-template-columns: 22px minmax(0, 1fr) 110px;
+
+      > :nth-child(3),
+      > :nth-child(4):not(.kb-row-menu) {
+        display: none;
+      }
+    }
+
+    @container (max-width: 480px) {
+      grid-template-columns: 22px minmax(0, 1fr) 32px;
+
+      > :last-child:not(.kb-row-menu) {
+        display: none;
+      }
+    }
   `,
   /** 行尾的 ⋯（文件夹行）：占时间列、贴右缘，与文档行的时间同一列位 */
   rowMenuCell: css`
     grid-column: 5;
     justify-self: end;
     display: inline-flex;
+
+    @container (max-width: 700px) {
+      grid-column: 3;
+    }
   `,
   /**
    * 行内标题。既用于文档行的 span，也用于文件夹行的 button——
@@ -531,6 +589,13 @@ export const useStyles = createStyles(({ css, token }) => ({
     max-width: 1080px;
     margin: 0 auto;
     padding: 8px 0;
+  `,
+  modalFieldLabel: css`
+    display: block;
+    margin-bottom: 8px;
+    font-size: ${FONT_SIZE.note}px;
+    font-weight: 600;
+    color: ${token.colorText};
   `,
 
   /**

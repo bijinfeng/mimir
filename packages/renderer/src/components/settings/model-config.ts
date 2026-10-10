@@ -367,6 +367,15 @@ export function purposeSummary(models: ProviderModel[]): string {
   }
 
   return [...counts.entries()]
-    .map(([purpose, count]) => `${MODEL_PURPOSE_LABELS[purpose]} ${count}`)
+    .map(([purpose, count]) => `${modelPurposeLabel(purpose)} ${count}`)
     .join(' · ')
+}
+
+/** 只改设置界面的显示语汇，模型角色和用途标识继续沿用服务端契约。 */
+export function modelPurposeLabel(purpose: ModelPurpose): string {
+  return purpose === 'embed' ? '语义搜索' : MODEL_PURPOSE_LABELS[purpose]
+}
+
+export function modelRoleLabel(role: Pick<ModelRoleStatus, 'role' | 'label'>): string {
+  return role.role === 'embed' ? '语义搜索' : role.label
 }

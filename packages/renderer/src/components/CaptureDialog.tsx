@@ -50,7 +50,8 @@ const useStyles = createStyles(({ css, token }) => ({
   body: css`
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
+    padding-bottom: 8px;
   `,
   fieldLabel: css`
     font-size: ${FONT_SIZE.note}px;
@@ -60,7 +61,7 @@ const useStyles = createStyles(({ css, token }) => ({
   /* 两个页签的切换条。放在弹窗内容区顶部、通栏等宽——
      「粘贴链接 / 上传文件」是同一个动作的两种方式，没有主次 */
   tabs: css`
-    margin-bottom: 16px;
+    margin-bottom: 22px;
   `,
   hint: css`
     font-size: ${FONT_SIZE.meta}px;
@@ -89,7 +90,10 @@ const useStyles = createStyles(({ css, token }) => ({
     display: flex;
     flex-direction: column;
     gap: 2px;
-    padding: 4px 0;
+    padding: 10px 14px;
+    border: 1px solid ${token.colorBorderSecondary};
+    border-radius: ${token.borderRadius}px;
+    background: ${token.colorFillQuaternary};
   `,
   stage: css`
     display: flex;
@@ -147,7 +151,7 @@ const useStyles = createStyles(({ css, token }) => ({
   preview: css`
     padding: 11px 13px;
     border: 1px solid ${token.colorBorderSecondary};
-    border-radius: 8px;
+    border-radius: ${token.borderRadius}px;
     background: ${token.tintList};
   `,
   previewTitle: css`
@@ -267,16 +271,6 @@ export function CaptureDialog({
       title={folder ? `收进「${folder}」` : '收集内容'}
       width={540}
       destroyOnHidden
-      /*
-       * 圆角 12px 与命令面板同一档。
-       *
-       * `.trellis/spec/project/design.md` §5.2 把「对话框、命令面板、输入框组」定为 **12–14px**，
-       * 而 antd 的 `borderRadiusLG` 是 base(8) + 2 = 10px（§8.10 记了同一件事），
-       * 够不到那个区间。不覆写的话这个对话框是 10px，而命令面板是 12px——
-       * 同族浮层并排看会有两种圆角，收集对话框显得更「硬」（实测两张截图
-       * 的左上角弧线到 dx=6 / dx=8 才收到直角）。
-       */
-      styles={{ container: { borderRadius: 12 } }}
       footer={
         <div className={styles.footer}>
           <Button onClick={close}>{tab === 'upload' ? '关闭' : '取消'}</Button>
@@ -397,7 +391,7 @@ export function CaptureDialog({
             <Alert
               type="warning"
               showIcon
-              message={failure.message}
+              title={failure.message}
               description={
                 detected?.kind === 'wechat' ? (
                   <span className={styles.hint}>

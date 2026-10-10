@@ -1,5 +1,5 @@
 import type { TitleBarSlotProps } from '@mimir/renderer'
-import { BrandMark, useNavStyles } from '@mimir/renderer/titlebar-kit'
+import { BrandMark } from '@mimir/renderer/titlebar-kit'
 import { Tooltip } from 'antd'
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useStyles } from '@/components/TitleBar.style'
@@ -60,7 +60,6 @@ import { desktopBridge } from '@/lib/desktop-bridge'
  */
 export function TitleBar({ collapsed, onToggleCollapsed, showToggle }: TitleBarSlotProps) {
   const { styles } = useStyles()
-  const { styles: navStyles } = useNavStyles()
 
   // 读一次就够：preload 在首帧之前注入，平台不会变（见 desktop-bridge.ts）
   const platform = desktopBridge?.window.platform
@@ -73,7 +72,7 @@ export function TitleBar({ collapsed, onToggleCollapsed, showToggle }: TitleBarS
         自己的头部负责，标题栏里再显示一遍是重复（而且它要知道文档标题，
         那是一次额外的请求）。
       */}
-      <span className={`${navStyles.brandLockup} ${styles.brand}`}>
+      <span className={styles.brand}>
         <BrandMark size={18} title={null} />
         <b>mimir</b>
       </span>

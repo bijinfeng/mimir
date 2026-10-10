@@ -131,7 +131,6 @@ import {
   ToolbarNotice,
   ToolbarNumberField,
   ToolbarSelect,
-  ToolbarSpacer,
   ToolbarTextField,
   ToolbarToggleGroup,
   useFindHotkey,
@@ -1179,24 +1178,25 @@ export function DocxEditor({
             onToggleFind={() => setFindOpen((open) => !open)}
             onNotice={setNotice}
           />
-          <ToolbarSpacer />
-          <ToolbarButton
-            label={source.saving ? '保存中…' : '保存到库'}
-            primary
-            disabled={session === null || !dirty || source.saving}
-            /*
+        </>
+      }
+      toolbarActions={
+        <ToolbarButton
+          label={source.saving ? '保存中…' : '保存到库'}
+          primary
+          disabled={session === null || !dirty || source.saving}
+          /*
               禁用必须给原因（DESIGN §8.4）。判据是三件事（还没解析出来 / 没改动 /
               正在保存），各有各的说法：不区分的话按钮灰着时用户只能猜。其余四种
               格式都给了（pptx / html / markdown / pdf），这里是漏掉的一处。
             */
-            disabledReason={
-              session === null ? '文档还没读完' : source.saving ? '正在保存…' : '没有未保存的改动'
-            }
-            onClick={() => void save()}
-          >
-            <SaveIcon />
-          </ToolbarButton>
-        </>
+          disabledReason={
+            session === null ? '文档还没读完' : source.saving ? '正在保存…' : '没有未保存的改动'
+          }
+          onClick={() => void save()}
+        >
+          <SaveIcon />
+        </ToolbarButton>
       }
       /*
         次工具条：查找替换栏。它**与工具条同包在 sticky 容器里**（见 shell.css）

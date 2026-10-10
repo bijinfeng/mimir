@@ -1,7 +1,6 @@
 import { Button, Modal } from 'antd'
 import { createStyles } from 'antd-style'
 import { useUnsaved } from '../lib/unsaved'
-import { FONT_SIZE } from '../theme/tokens'
 
 /**
  * 未保存内容的拦截框。
@@ -33,12 +32,6 @@ const useStyles = createStyles(({ css, token }) => ({
     line-height: 1.75;
     color: ${token.colorText};
   `,
-  hint: css`
-    margin: 8px 0 0;
-    font-size: ${FONT_SIZE.badge}px;
-    line-height: 1.75;
-    color: ${token.colorTextTertiary};
-  `,
 }))
 
 export function UnsavedGuard() {
@@ -67,7 +60,7 @@ export function UnsavedGuard() {
         <Button key="cancel" onClick={() => resolve('cancel')}>
           继续编辑
         </Button>,
-        <Button key="discard" onClick={() => resolve('discard')}>
+        <Button key="discard" danger onClick={() => resolve('discard')}>
           丢弃改动
         </Button>,
         <Button key="save" type="primary" onClick={() => resolve('save')}>
@@ -75,8 +68,7 @@ export function UnsavedGuard() {
         </Button>,
       ]}
     >
-      <p className={styles.body}>离开会丢失这次的修改。可以先把内容存下来再走。</p>
-      <p className={styles.hint}>保存失败时不会放行——否则你以为存上了，实际丢了。</p>
+      <p className={styles.body}>离开前保存改动，或丢弃改动。</p>
     </Modal>
   )
 }

@@ -15,7 +15,6 @@
     "routes:generate": "node generate-routes.mjs src/routeTree.gen.ts"
   },
   "dependencies": {
-    "@ant-design/icons": "^6.1.0",
     "@mimir/chat": "workspace:*",
     "@mimir/office": "workspace:*",
     "@mimir/shared": "workspace:*",

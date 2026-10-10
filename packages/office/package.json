@@ -38,6 +38,7 @@
     "bidi-js": "catalog:",
     "fast-xml-parser": "^5.3.4",
     "jszip": "^3.10.1",
+    "lucide-react": "^1.48.0",
     "parse5": "catalog:",
     "pdf-lib": "catalog:",
     "pdfjs-dist": "catalog:",

@@ -446,6 +446,29 @@ describe('shell.css 的静态守护', () => {
 })
 
 describe('EditorShell 的次工具条', () => {
+  it('保存留在独立操作区，窄窗口滚动格式命令时不会随之卷走', () => {
+    const out = html(
+      <EditorShell
+        toolbar={
+          <ToolbarGroup label="字符格式">
+            <ToolbarButton label="加粗" />
+          </ToolbarGroup>
+        }
+        toolbarActions={<ToolbarButton label="保存到库" primary />}
+      >
+        <div>内容</div>
+      </EditorShell>,
+    )
+    expect(out).toContain('mimir-editor__tools')
+    expect(out).toContain('mimir-editor__actions')
+    expect(out.indexOf('mimir-editor__actions')).toBeLessThan(out.indexOf('保存到库'))
+    expect(out).toContain('me-group__caption')
+
+    const css = readFileSync(join(here, 'shell.css'), 'utf8')
+    expect(css).toMatch(/\.mimir-editor__tools\s*\{[^}]*overflow-y:\s*auto/s)
+    expect(css).not.toMatch(/\.mimir-editor__chrome\s*\{[^}]*overflow-y:\s*auto/s)
+  })
+
   it('subbar 在工具条之后、内容之前，且与工具条同包一层——两行各自 sticky 会重叠', () => {
     const out = html(
       <EditorShell toolbar={<span>工具条</span>} subbar={<span>次工具条</span>}>

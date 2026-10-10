@@ -1,15 +1,16 @@
 import { useMutation } from '@tanstack/react-query'
 import { App, Button, Popconfirm, Tooltip } from 'antd'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Plus } from 'lucide-react'
 import { useState } from 'react'
-import {
-  MODEL_PURPOSE_LABELS,
-  type ModelRoleStatus,
-  type ProviderInstance,
-  type ProviderPreset,
-} from '@mimir/shared'
+import { type ModelRoleStatus, type ProviderInstance, type ProviderPreset } from '@mimir/shared'
 import { api } from '../../lib/api'
-import { purposeSummary, withProviderRemoved, type ModelConfigDraft } from './model-config'
+import {
+  modelPurposeLabel,
+  modelRoleLabel,
+  purposeSummary,
+  withProviderRemoved,
+  type ModelConfigDraft,
+} from './model-config'
 import { Panel } from './parts'
 import { useStyles } from './settings.style'
 
@@ -62,6 +63,18 @@ export function ProviderList({
           ) : null}
         </>
       }
+      extra={
+        providers.length > 0 ? (
+          <Button
+            size="small"
+            type="primary"
+            icon={<Plus size={14} />}
+            onClick={() => onEdit(null)}
+          >
+            添加供应商
+          </Button>
+        ) : null
+      }
     >
       {providers.length === 0 ? (
         <div className={styles.providerEmpty}>
@@ -84,12 +97,6 @@ export function ProviderList({
           />
         ))
       )}
-
-      {providers.length > 0 ? (
-        <div className={styles.block}>
-          <Button onClick={() => onEdit(null)}>添加供应商</Button>
-        </div>
-      ) : null}
     </Panel>
   )
 }
@@ -140,7 +147,7 @@ function ProviderCard({
   const meta = [
     `${provider.models.length} 个模型 · ${fetched}`,
     purposes,
-    usedBy.length > 0 ? `角色在用：${usedBy.map((role) => role.label).join('、')}` : null,
+    usedBy.length > 0 ? `已用于：${usedBy.map(modelRoleLabel).join('、')}` : null,
   ].filter(Boolean)
 
   return (
@@ -218,7 +225,7 @@ function ProviderCard({
                 <span className={styles.chipGroup}>
                   {model.purposes.map((purpose) => (
                     <span key={purpose} className={styles.chipStatic}>
-                      {MODEL_PURPOSE_LABELS[purpose]}
+                      {modelPurposeLabel(purpose)}
                     </span>
                   ))}
                 </span>

@@ -1,4 +1,5 @@
 import type { DocumentDetail } from '@mimir/shared'
+import { BookOpen } from 'lucide-react'
 import { useStyles } from './DocumentPanel.style'
 
 /**
@@ -76,7 +77,7 @@ export function DocChatGuide({ doc }: { doc: DocumentDetail }) {
   return (
     <div className={styles.guide}>
       <div className={styles.guideHello}>
-        <span aria-hidden="true">👋</span> 你好，我是阅读助手
+        <BookOpen size={17} aria-hidden="true" /> 你好，我是阅读助手
       </div>
       <p className={styles.guideLead}>
         我会读当前这篇《{doc.title}》，帮你概括内容、回答问题。 范围锁定在这一篇，不会去找别的文档。

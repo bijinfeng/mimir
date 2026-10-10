@@ -37,19 +37,20 @@ export interface ContextDoc {
 
 /** + 添加上下文：列最近的文档，选中即锁定本轮检索范围 */
 const useStyles = createStyles(({ css, token }) => ({
-  /* 官方 ComposerAddAttachment：size-7 rounded-full、muted 字、
-     hover 提亮 + muted/15 底、按下缩 0.96（attachment.aui.tsx） */
   addTrigger: css`
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    gap: 5px;
+    min-height: 30px;
+    padding: 0 8px;
     flex: none;
     border: none;
     background: none;
-    border-radius: 9999px;
-    color: ${token.colorTextQuaternary};
+    border-radius: ${token.borderRadiusSM}px;
+    font: inherit;
+    font-size: var(--mimir-chat-font-note, 12.5px);
+    color: ${token.colorTextSecondary};
     cursor: pointer;
     transition:
       color 0.12s ease-out,
@@ -69,14 +70,34 @@ const useStyles = createStyles(({ css, token }) => ({
       transform: scale(0.96);
     }
   `,
+  menuTrigger: css`
+    min-height: 30px;
+    padding-inline: 8px;
+    border-radius: ${token.borderRadiusSM}px;
+    color: ${token.colorTextSecondary};
+
+    &:hover,
+    &:focus-visible {
+      color: ${token.colorText};
+    }
+  `,
+  modelLabel: css`
+    display: block;
+    max-width: 136px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  `,
 }))
 
 export function AddContextDropdown({
   onPick,
   documents: docs,
+  hasSelection,
 }: {
   onPick: (doc: ContextDoc) => void
   documents: ChatComposerStatus['documents']
+  hasSelection: boolean
 }) {
   const { styles } = useStyles()
   const items = docs.items.slice(0, 20)
@@ -102,11 +123,14 @@ export function AddContextDropdown({
         },
       }}
     >
-      {/* 官方 ComposerAddAttachment 的形态：28px 圆形幽灵钮，
-          muted 字 → hover 提亮 + 浅底，按下缩 0.96；tooltip 走 antd */}
-      <Tooltip title="添加上下文">
-        <button type="button" className={styles.addTrigger} aria-label="添加上下文">
-          <Plus size={16} />
+      <Tooltip title={hasSelection ? '更换本轮检索范围' : '选择本轮检索范围'}>
+        <button
+          type="button"
+          className={styles.addTrigger}
+          aria-label={hasSelection ? '更换本轮检索范围' : '本轮检索范围：全部文档'}
+        >
+          <Plus size={15} aria-hidden="true" />
+          {hasSelection ? '更换范围' : '范围：全部文档'}
         </button>
       </Tooltip>
     </Dropdown>
@@ -121,6 +145,7 @@ export function StrengthDropdown({
   value: boolean
   onChange: (deep: boolean) => void
 }) {
+  const { styles } = useStyles()
   return (
     <Dropdown
       trigger={['click']}
@@ -133,7 +158,12 @@ export function StrengthDropdown({
         onClick: ({ key }) => onChange(key === 'deep'),
       }}
     >
-      <Button type="text" size="small" aria-label="思考强度">
+      <Button
+        type="text"
+        size="small"
+        className={styles.menuTrigger}
+        aria-label={`思考强度：${value ? '深入' : '标准'}`}
+      >
         <Zap size={16} />
         {value ? '深入' : '标准'}
         <ChevronDown size={12} />
@@ -152,6 +182,7 @@ export function ModelDropdown({
   modelRoles: ChatComposerStatus['modelRoles']
   onManageModels: () => void
 }) {
+  const { styles } = useStyles()
   const chatModel = modelRoles.chat
   const deepModel = modelRoles.reasoning
   const activeKey = deepReasoning ? 'reasoning' : 'chat'
@@ -184,8 +215,15 @@ export function ModelDropdown({
         ],
       }}
     >
-      <Button type="text" size="small" aria-label="当前模型">
-        {(deepReasoning ? deepModel : chatModel) || '未配置模型'}
+      <Button
+        type="text"
+        size="small"
+        className={styles.menuTrigger}
+        aria-label={`当前全局模型：${(deepReasoning ? deepModel : chatModel) || '未配置'}`}
+      >
+        <span className={styles.modelLabel}>
+          {(deepReasoning ? deepModel : chatModel) || '未配置模型'}
+        </span>
         <ChevronDown size={12} />
       </Button>
     </Dropdown>
