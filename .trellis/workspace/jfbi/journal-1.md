@@ -27,3 +27,25 @@
 ### Status
 
 [OK] **Completed**
+
+
+## Session 2: 整站视觉体系与布局改造
+<!-- trellis-session: v=2 fp=8121e0d22a5a78a7 -->
+
+**Date**: 2026-10-10
+**Task**: 整站视觉体系与布局改造
+**Branch**: `codex/visual-redesign`
+
+### Summary
+
+统一 Obsidian 风格工作区、Ant Design 与 Lucide；完成登录、知识库、文档、对话、Office 和设置布局，并移除面向用户的技术详情。内置浏览器验收及 pnpm check 通过。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `3c4991a` | feat: 重做整站工作区视觉与设置体验 |
+
+### Status
+
+[OK] **Completed**
