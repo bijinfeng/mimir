@@ -77,23 +77,28 @@ TS 7 是 Go 重写的编译器（`tsc` 是平台原生二进制，通过 `@types
 │  documents / chunks      │  data/vault/    笔记（真相）    │
 │  jobs / usage_log        │  data/uploads/  上传的原件      │
 │  FTS + pgvector 索引      │  data/raw/      抓取快照        │
-│  ← 数据库可从文件重建      │  data/avatars/  头像（非内容）  │
+│  文件类文档可重建索引      │  data/avatars/  头像（非内容）  │
 └──────────────────────────┴───────────────────────────────┘
 ```
 
 ### 一条贯穿全局的规则
 
-**文件是真相，数据库是可重建的索引。**
+**笔记与上传件以文件为真相；数据库还保存无法从文件重建的数据。**
 
 - 笔记正文在 `data/vault/年/月/标题-id.md`，纯文件，可以直接用 Typora / Obsidian / VS Code 打开（编辑器规范形见 PRD 5.4）
 - **上传的原件在 `data/uploads/<文档id>/<原文件名>`**，旁边一份 `meta.json`
   记着标题、标签、目录与时间——所以文件类文档**也能从文件重建**（§13）
-- 抓取的原始快照在 `data/raw/<hash>/`
-- 数据库只存索引、元数据、任务状态、对话
+- 抓取的原始快照在 `data/raw/<hash>/`，但抓取后的 Markdown 正文和来源元数据
+  存在数据库，现有重建索引不会从快照恢复它们
+- 分块、全文与向量是派生索引；抓取件、对话、账号、设置、空目录等不能仅靠
+  `vault/` 和 `uploads/` 恢复
 
-**收益**：换 embedding 模型、改分块策略、升级解析器——都可以放心全量重跑，而不是数据迁移。
+**收益**：笔记和上传件的派生索引可以重算；换 embedding 模型、改分块策略可重跑，
+但这不等于整个数据库可丢弃。
 
-**代价**：写入要同时落文件和数据库，两边可能不一致。写入顺序固定为**先文件后数据库**：反过来会产生「数据库里有、文件打不开」的记录；正序最坏只是「文件已存在但尚未入库」，重建索引即可修复。
+**代价**：文件类文档写入要同时落文件和数据库，两边可能不一致。顺序固定为
+**先文件后数据库**：反过来会产生「数据库里有、文件打不开」的记录；正序最坏
+只是「文件已存在但尚未入库」，重建索引即可修复。
 
 ---
 
@@ -437,6 +442,12 @@ CREATE INDEX chunk_embeddings_1024_idx ON chunk_embeddings
 `embed()`，写回后继续。中途失败或重启，下一次从「还没有向量的分块」继续——
 因为**判据是向量表里有没有行，不是进度计数器**。这条让重入变成天然性质，
 而不是要靠记状态维持的东西。
+
+**旧索引修复**：升级前若改过正文或标题，旧版本可能留下与 `documents.body`
+不一致的分块或过时的标题检索词。升级后在「设置 › 检索」手动运行一次
+「重建分块」；它逐篇核对当前正文、标题和分块参数，保留未变化分块的向量，
+清掉变化分块的旧向量。随后查看「待嵌入」并按需分批补齐。
+这与 `pnpm db:reindex` 的全文索引维护不是同一个动作。
 
 M1 后段的 `jobs` 表 + 进程内 worker（§2 架构图里的那层）会把这一批批循环
 交给后台跑，届时界面上的「待嵌入 N 段」变成有进度的任务。现在先用端点触发，
@@ -875,6 +886,11 @@ GitHub 的 API 与限额），解析器只负责「HTML → Markdown」。
 解析器用 `accepts` 声明自己能处理哪些类型——**宿主按声明选实现，
 不用 try 一遍看谁不报错**（GitHub 的 README 本来就是 md，再走 HTML 转换是倒退）。
 
+网页、公众号与 feed 共用 `capturer/src/http.ts` 的抓取预算：超时覆盖请求与
+响应体读取；响应在流读取时逐块执行 `capture.maxBytes` 限额，超限即取消读取，
+不能先 `arrayBuffer()` 再判断。`Content-Length` 只用于提前拒绝，实际字节数
+仍要计数，避免无长度或错误声明的响应绕过限额。
+
 #### `storage`：与其他四条有一处本质不同
 
 前四条都是**复数**的：多个 leg 一起跑（融合），其余三条按 URL / 输入类型 /
@@ -1273,22 +1289,55 @@ docker run -d --network host \
 
 ### 8.5 备份
 
-默认（本地文件后端）：`data/` 目录 + 数据库转储定时打包（Postgres 用 `pg_dump`；
-SQLite 直接拷 `data/mimir.db`，或运行中的热备用 `VACUUM INTO`）。
-因为「文件是真相」，最坏情况可以从 `data/vault`（笔记）、`data/uploads`（上传的原件）与
-`data/raw`（抓取快照）**完整重建数据库**。
+完整实例备份必须同时保存**数据库、内容存储和解密密钥**。本地文件后端至少包含
+`data/` 与数据库快照：Postgres 用 `pg_dump`；SQLite 运行中用 Online Backup API
+或 `VACUUM INTO`，停机后才可直接复制数据库文件。SQLite 使用 WAL 时，运行中
+单独复制 `mimir.db` 不是可靠的快照。服务端还需单独保管原 `AUTH_SECRET`：
+模型供应商密钥由它派生的密钥加密，换掉后旧密文无法解开；桌面本地模式的
+`auth-secret` 位于 userData，整目录备份时须包含它。
+
+`vault/` 与 `uploads/` 可重建笔记、上传件及其派生索引，**不能完整重建数据库**：
+抓取/RSS 正文、对话、账号、设置、空目录等依赖数据库。`raw/` 只是抓取快照，
+现有重建流程不从它恢复抓取件。JSON/ZIP 是迁出用导出格式，没有实例恢复入口，
+不能替代数据库快照。`POST /api/maintenance/reindex` 只扫描笔记与上传件；
+SQLite 的 `pnpm db:reindex` 只重建 FTS，二者都不是备份恢复。
 
 `uploads/` 必须一起备份——它是文件的真相，丢了就真的丢了（正文只是它的
 派生数据）。`avatars/` 可以丢：它是账户资料，不重建任何东西（D-036）。
 
-选 S3 后端之后，真相在桶里，备份变成两件事：**桶本身的持久化**
+选 S3 后端之后，文件类文档的真相在桶里，备份变成**数据库转储、桶对象、密钥**：
+桶本身的持久化
 （对象存储通常自带冗余，但版本控制与生命周期策略要自己开）
 加**数据库转储**。注意列表类操作在 S3 上是按请求计费的，
 所以「定期全量拉回本地」这类做法要先算成本——而重建索引只 LIST 一次
 （§13.2 的 `listUploads()`），不按目录逐个列举。
 
-两种后端都成立的一条没有变：**数据库始终是可重建的**，
-所以数据库转储丢了不致命，桶或 `data/` 丢了才致命。
+两种后端都需要在备份期间暂停写入或使用能保证数据库与对象版本一致的流程，
+否则跨数据库与文件的更新可能只备到一半。备份应记录应用/schema 版本、校验清单，
+并在隔离环境演练恢复；数据库转储丢失对非文件类数据是不可逆损失。
+
+**桌面本地模式（SQLite + 本地文件）现有可演练的离线流程**：完全退出应用后，
+对它的 `userData/data` 目录运行以下命令。`auth-secret` 与 `mimir.db` 同在该目录；
+缺任何一个都会拒绝备份。备份是含密钥的**明文目录**，必须保存在受控位置。
+
+```bash
+node apps/server/scripts/sqlite-backup.mjs backup <userData/data> <新的备份目录> --app-stopped
+node apps/server/scripts/sqlite-backup.mjs verify <备份目录>
+node apps/server/scripts/sqlite-backup.mjs restore <备份目录> <不存在的隔离恢复目录>
+```
+
+备份用 SQLite Online Backup API 取包含 WAL 已提交事务的数据库快照，复制其余
+数据文件并逐文件记 SHA-256，清单记录应用版本与已应用的 schema 迁移；校验还会
+运行 SQLite `quick_check`。恢复先校验、
+只接受不存在的目标目录，**不覆盖现有实例**。`--app-stopped` 是操作者对
+“桌面应用及私有宿主均已退出”的确认；工具无法仅凭 SQLite 文件锁证明跨数据库
+与文件没有并发写入。隔离恢复后应启动该副本检查文档、原件与会话。
+
+这条命令**不适用于 Postgres / S3**。Docker 部署仍需停 app 写入后分别保存
+`pg_dump`、`data/` 或桶对象及原 `AUTH_SECRET`，并在隔离部署中演练；当前尚无
+自动化的 Postgres/S3 恢复命令，不能把 SQLite 流程当成完整覆盖。
+它目前也只在源码仓库中提供，未集成进桌面安装包；`desktop-config.json` 位于
+`userData` 根部而非 `data/`，恢复到新用户目录后需重新选择「本地使用」。
 
 ### 8.6 本地开发与桌面端（SQLite）
 
@@ -1363,7 +1412,7 @@ SQLite 直接拷 `data/mimir.db`，或运行中的热备用 `VACUUM INTO`）。
 
 检索相关的测试**两种方言都要过**（方言对齐门）：设置
 `TEST_DATABASE_URL=postgres://…mimir_test` 时，`globalSetup` 改走 Postgres 路径
-（清库、建扩展、推 schema），同一套断言在 PG 上复跑——两个通道的 SQL 是
+（清库、运行正式迁移），同一套断言在 PG 上复跑——两个通道的 SQL 是
 按方言分开写的，只在一种方言上绿的测试不算绿。
 
 集成测试用**独立的测试库**（Postgres 路径下库名必须包含 `mimir_test`，
@@ -1374,7 +1423,7 @@ SQLite 直接拷 `data/mimir.db`，或运行中的热备用 `VACUUM INTO`）。
 ### 9.3 一条命令
 
 ```bash
-pnpm check     # oxlint → oxfmt --check → typecheck → test
+pnpm check     # oxlint → 样式守卫 → oxfmt --check → typecheck → test
 ```
 
 CI 与本地 pre-push 跑的是同一条，避免两处逻辑漂移。
@@ -1754,6 +1803,7 @@ documents 表
 
 data/uploads/<文档id>/<原文件名>   ← 原件（真相）
                     /meta.json    ← 元数据（标题/标签/目录/状态/时间）
+                    /versions/<版本>/<原文件名> ← 替换后的原件
 ```
 
 **检测的判据是 `kind === 'file'` 且 `sourceKey !== null`**，不是「kind 不等于
@@ -1772,10 +1822,12 @@ note」——抓取的资料也没有原件（它的真相是 `raw/` 快照 + �
 ### 13.3 写入顺序
 
 ```
-校验（大小） → 原件 → meta.json → 数据库行
+请求体限额 → 文件大小校验 → 原件 → meta.json → 数据库行
 ```
 
-- **校验在最前**：先写再校验会留下一个永远不会被引用的文件（与头像同一条）
+- **校验在最前**：上传/替换在解析 multipart 前逐块限制整个请求体为
+  50 MiB + 1 MiB 元数据开销（即使无 `Content-Length` 或声明值偏小也会中止）；
+  文件本身仍限 50 MiB，且写入前复查。先写再校验会留下无引用的文件
 - **original 先于 meta**：反过来会产生一个「有元数据、没原件」的目录
 - **数据库最后**：铁律 2。最坏产生「有文件没入库」，重建索引能捡回来
 
@@ -1802,6 +1854,12 @@ note」——抓取的资料也没有原件（它的真相是 `raw/` 快照 + �
 `services/extract.ts`。上传与重建索引都要「给一份文件的字节，取出可读正文」，
 而两处对失败的处理不同（上传要存进 `parse_error`，重建只打日志）。
 所以**「用哪个 parser、怎么把字节喂给它」放在一个文件里**，调用方各自处理结果。
+
+OOXML（docx/xlsx/pptx）的提取还在 `plugins/parser/src/ooxml.ts` 共用一次
+流式 ZIP 扫描：只解正文需要的 XML，按实际输出字节限制单条 16 MiB、累计
+64 MiB，部件数最多 10000，输入压缩包最多 50 MiB。ZIP 里声明的原始大小只
+用于提前拒绝，流回调仍要计数。超限不会删掉原件；上传把具体原因写入
+`parse_error`，重建索引则记录失败。取舍见 D-109。
 
 抄成两份的那天起，就会出现「上传时提取成功、重建后提取失败」这种取决于
 走哪条路径的行为差异——而它不报错。
@@ -1864,9 +1922,14 @@ GET /api/documents/:id/file?download=1 强制附件
 | 正文 / `parse_error` / 大小 / mime | 重算 | 内容变了，派生数据全跟着变 |
 | 原文件名 | 用新的 | 用户多半也在改文件名（`.v2.pdf`），拦着不让改很怪 |
 
-原件按「先写新的、再删旧的」换（新文件名可能与旧的不同，不能用同一个 key
-覆盖）：任何时刻都至少有一份可读的原件。删旧 key 放在数据库写入**之后**，
-最坏留一个孤儿文件而不是裂图。
+每次替换都写入唯一的版本 key（`uploads/<id>/versions/<版本>/<原文件名>`），
+即使同名也不能覆盖旧 key。`meta.json` 记录当前 `sourceKey`，重建索引只认
+该指针；旧版没有指针时按原文件名定位，不能从多份原件中随机选一份。
+原文件名恰为 `meta.json`（大小写不敏感）时，原件 key 加 `original-` 前缀，
+避免与同目录的元数据文件冲突；下载名仍取元数据里的原文件名。
+顺序是新原件 → meta 指针 → 数据库 → 删除旧原件。数据库提交前旧 key 始终
+可读；中途失败至多留下未引用的版本。数据库写入失败时尽力恢复旧 meta，
+重建索引仍能以文件中的指针为准恢复内容。
 
 ### 13.10 导出与备份
 
@@ -1966,13 +2029,18 @@ SSE 聊天流、文件 Range、multipart 上传、zip 导出全部是同源 HTTP
 |---|---|
 | `pnpm desktop:dev` | 先完整构建并启动，再 watch 桌面三段产物；改渲染代码后刷新窗口，改 main/preload 后重启。附带进程树清理和 Electron 二进制镜像默认值。本地模式由进程内宿主使用 userData 下的 SQLite，不占固定 3000/5173 端口 |
 | `pnpm desktop:start` | 构建 server/desktop 产物后启动 Electron；桌面渲染进程由本包构建，不依赖 web 产物 |
-| `pnpm desktop:build` | 上述构建 + `pnpm deploy --prod` 收集 server 生产依赖 + electron-builder 打 dmg |
+| `pnpm desktop:build` | 上述构建 + `pnpm deploy --prod` 收集 server 生产依赖 + electron-builder 按宿主平台打包（macOS 为 dmg，Linux 为 AppImage；Windows 安装包尚未实测） |
 
 Electron 的 npm 包与运行二进制分开下载：pnpm 的 registry 不决定二进制来源。
 `desktop:dev` 缺少二进制时默认从 npmmirror 下载（可用 `ELECTRON_MIRROR` 覆盖）；
 若手动修复安装，在仓库根目录运行
 `ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ node apps/desktop/node_modules/electron/install.js`，
 再用 `pnpm --filter @mimir/desktop exec electron --version` 核对。无需删除整个 `node_modules`。
+Linux 打包时 builder 还会下载 AppImage 工具；若 GitHub TLS 断连，运行
+`ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/ pnpm desktop:build`。
+产物在 `apps/desktop/release/`，可对实际 AppImage 运行
+`MIMIR_SMOKE_EXECUTABLE=<AppImage 绝对路径> node apps/desktop/scripts/smoke.mjs`；
+它用一次性 userData 验证本地与首启两种模式，且会清理 AppImage 的整个进程组。
 
 打包要点（坑都在这里踩过）：
 
@@ -2003,11 +2071,14 @@ Electron 的 npm 包与运行二进制分开下载：pnpm 的 registry 不决定
   所以本地模式的入口是一把**宿主每次启动随机生成的令牌**（`mimir-local`
   cookie，httpOnly + SameSite=Lax），由 `requireAuth` 与真实会话并列校验。
   宿主在本地模式下**结构性强制**绑定回环（`startServer` 里判断，非回环直接抛错）
-- Electron 侧 `contextIsolation: true` + `sandbox: true`，preload 只暴露
-  只读的 boot 信息、模式选择与窗口控制（最小边界）
-- **云端模式下的远端页面没有「任意改模式」的能力**：模式 IPC 对不受信任的发送方
-  一定会先弹原生确认框（`isTrustedSender` / `confirmUntrustedSwitch`）。
-  否则一台被攻破的服务器可以让客户端起本地宿主再导航过去，把本机知识库读走
+- Electron 侧 `contextIsolation: true` + `sandbox: true`。preload 只装到本地页与
+  首启选择页；云端远端页面没有桌面桥，切换使用方式走主进程原生菜单。
+- **本地令牌与云端页面不共用 cookie jar**：本地、选择页、云端分别使用独立
+  Session；云端按规范化服务地址再隔离，避免不同 localhost 端口互带会话。
+  窗口跨模式时重建而不是只导航，确保 Session 真正切换。
+- 主窗口只允许在当前应用源内导航；跨源 http(s) 链接交给系统浏览器，
+  非 http(s) 目标拒绝。新窗口也走同一判据，同源预览窗口不注入 preload。
+  会话权限默认拒绝，避免远端内容取得摄像头、麦克风等系统权限。
 - **云端窗口由系统提供边框和窗口控件**（D-105）：远端提供的是 Web 构建，
   不含桌面标题栏；主进程的「更换使用方式」菜单在登录页也可用
 - 单实例锁：两个窗口同时写一个 SQLite 会撞锁
@@ -2360,6 +2431,12 @@ Markdown / HTML），mimir 现在六种都有：
 | **pdf** | ✓ **逐页渲染**（pdf.js → canvas，`src/editors/pdf-render.ts`） | △ **页面级**：旋转、删除、调序（pdf-lib） | **整体重写** | §15.10；**正文提取已落地**（M1-E，服务端复用同一份 pdfjs-dist，见 §11 第 8 条）——六种格式现在都能搜 |
 
 **「补丁式」与「整体重写」的区别不只是技术细节，它决定能不能放心保存**：
+
+浏览器打开 docx/xlsx/pptx 前另有 ZIP 边界（`packages/office/src/zip-bounds.ts`，
+D-110）：输入最多 50 MiB、部件最多 10000、单条实际解压最多 64 MiB、
+累计实际解压最多 400 MiB。xlsx/pptx 的读取与编辑共用有界流；docx 在
+vendored 解析器前先流式预检，不改上游代码。它与服务端正文提取的 16/64 MiB
+预算是**两条路径**，不能只测其中一条就宣称 Office 受保护。
 
 | | 补丁式（docx / xlsx / pptx） | 整体重写（html / markdown / pdf） |
 |---|---|---|
@@ -2715,6 +2792,12 @@ paper    纸型：目标尺寸。非 null 时内容按 k 缩放
 （`PdfEdit.imports`）。丢了它的症状是：第一次保存成功、第二次保存（从同一份
 原件重建）把导入的页**静默丢掉**——两次都报成功。所以 `buildPdfBytes` 找不到
 导入字节时**抛错**，不静默跳过。
+
+**整体重建的保真边界**：页面拷贝不会自动带走文档级信息。保存时显式复制
+Title、Author、Subject、Keywords、Creator、Producer 与创建/修改时间；若原件
+Catalog 含页面树之外的文档级结构（例如 AcroForm、签名、书签、嵌入附件或
+XMP 元数据），当前实现不能保证保真，必须在写回前拒绝并提示改用外部工具。
+不能把「页面可见内容相同」等同于「原件无损」。
 
 **裁剪只改可视区，内容一字未删**：`setCropBox` 只写一个键，内容流逐字节相同
 （`pdf-pages.test.ts` 直接比内容流字节）。界面上如实写着这一句，画布上则用

@@ -2,16 +2,18 @@ import { readFileSync } from 'node:fs'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { execFile } from 'node:child_process'
+import { execFile, execFileSync } from 'node:child_process'
 import { promisify } from 'node:util'
 import { inflateRawSync } from 'node:zlib'
 import { PDFDocument, StandardFonts } from 'pdf-lib'
-import { beforeAll, describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { eq } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { documents } from '../db/schema.js'
 import { reindexVault } from '../services/vault-index.js'
 import { activeStorage } from '../plugins/host.js'
+import { metaKey, readUploadMeta, writeUploadMeta } from '../lib/uploads.js'
+import { MAX_XML_ENTRY_BYTES } from '../../../../plugins/parser/src/ooxml.js'
 import { app, getAuthCookie, makeClient } from './helpers.js'
 
 const execFileAsync = promisify(execFile)
@@ -125,6 +127,49 @@ with zipfile.ZipFile(p, 'w') as z:
 }
 
 describe('上传：原件是真相', () => {
+  it('上传和替换在 multipart 解析前拒绝超限请求体，返回同一错误外壳', async () => {
+    const cookie = await getAuthCookie()
+    const form = new FormData()
+    form.append('file', new Blob(['small']), 'small.txt')
+
+    for (const [method, path] of [
+      ['POST', '/api/documents/files'],
+      ['PUT', '/api/documents/missing/file'],
+    ] as const) {
+      const response = await app.request(path, {
+        method,
+        headers: { Cookie: cookie, 'Content-Length': String(52 * 1024 * 1024) },
+        body: form,
+      })
+      expect(response.status).toBe(413)
+      expect(await response.json()).toMatchObject({ error: { code: 'TOO_LARGE' } })
+    }
+  })
+
+  it('高压缩比 docx 超过解压预算时保留原件，并如实标记正文提取失败', async () => {
+    const script = `
+import io, sys, zipfile
+archive = io.BytesIO()
+with zipfile.ZipFile(archive, 'w', compression=zipfile.ZIP_DEFLATED) as z:
+    z.writestr('word/document.xml', 'x' * ${MAX_XML_ENTRY_BYTES + 1})
+sys.stdout.buffer.write(archive.getvalue())
+`
+    const bytes = new Uint8Array(execFileSync('python3', ['-c', script]))
+    expect(bytes.byteLength).toBeLessThan(50 * 1024 * 1024)
+
+    const cookie = await getAuthCookie()
+    const created = await upload(cookie, 'oversized.docx', bytes)
+    expect(created.status).toBe(201)
+    expect(created.body.parseError).toContain('Office XML 部件过大')
+    expect(created.body.charCount).toBe(0)
+
+    const response = await app.request(`/api/documents/${created.body.document!.id}/file`, {
+      headers: { Cookie: cookie },
+    })
+    expect(response.status).toBe(200)
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(bytes)
+  })
+
   it('原件逐字节落在存储里，能用下载端点原样取回', async () => {
     // 用不可压缩的随机字节：全零的内容会让「写空了」与「写对了」分不出来
     const bytes = new Uint8Array(2048)
@@ -548,6 +593,128 @@ describe('列表与筛选', () => {
 })
 
 describe('替换原件', () => {
+  it('meta 丢失时替换会从数据库恢复已整理的标签', async () => {
+    const cookie = await getAuthCookie()
+    const created = await upload(cookie, '恢复标签.txt', '旧正文', 'text/plain')
+    const id = created.body.document!.id
+    await client.patch(`/api/documents/${id}`, { tags: ['已整理'] })
+    await activeStorage().remove(metaKey(id))
+
+    const form = new FormData()
+    form.append('file', new Blob(['新正文']), '恢复标签.txt')
+    const response = await app.request(`/api/documents/${id}/file`, {
+      method: 'PUT',
+      headers: { Cookie: cookie },
+      body: form,
+    })
+    expect(response.status).toBe(200)
+    expect(await readUploadMeta(id)).toMatchObject({ tags: ['已整理'] })
+    await reindexVault()
+    const detail = await client.get<{ tags: string[] }>(`/api/documents/${id}`)
+    expect(detail.body.tags).toContain('已整理')
+  })
+
+  it('原文件名为 meta.json 时不会覆盖元数据', async () => {
+    const cookie = await getAuthCookie()
+    const created = await upload(cookie, 'meta.json', '{"message":"原件"}', 'application/json')
+    expect(created.status).toBe(201)
+    const id = created.body.document!.id
+    const [row] = await db.select().from(documents).where(eq(documents.id, id))
+    expect(row!.sourceKey).toBe(`uploads/${id}/original-meta.json`)
+    expect(new TextDecoder().decode(await activeStorage().read(row!.sourceKey!))).toBe(
+      '{"message":"原件"}',
+    )
+    expect(await readUploadMeta(id)).toMatchObject({
+      filename: 'meta.json',
+      sourceKey: row!.sourceKey,
+    })
+    await reindexVault()
+    const [restored] = await db.select().from(documents).where(eq(documents.id, id))
+    expect(restored!.sourceKey).toBe(row!.sourceKey)
+  })
+
+  it('旧版 meta 没有 sourceKey 时仍按文件名恢复', async () => {
+    const cookie = await getAuthCookie()
+    const created = await upload(cookie, '旧格式.txt', '兼容重建词元KkLl', 'text/plain')
+    const id = created.body.document!.id
+    const meta = (await readUploadMeta(id))!
+    const legacyMeta = { ...meta }
+    delete legacyMeta.sourceKey
+    await writeUploadMeta(id, legacyMeta)
+    await reindexVault()
+    const [restored] = await db.select().from(documents).where(eq(documents.id, id))
+    expect(restored!.sourceKey).toBe(`uploads/${id}/旧格式.txt`)
+    expect(restored!.body).toContain('兼容重建词元KkLl')
+  })
+
+  it('同名替换不覆盖旧字节，重建索引只选择 meta 指向的版本', async () => {
+    const cookie = await getAuthCookie()
+    const created = await upload(cookie, '同名.txt', '旧版本独特词元MmNn', 'text/plain')
+    const id = created.body.document!.id
+    const [before] = await db.select().from(documents).where(eq(documents.id, id))
+    const oldKey = before!.sourceKey!
+
+    const form = new FormData()
+    form.append('file', new Blob(['新版本独特词元PpQq']), '同名.txt')
+    const response = await app.request(`/api/documents/${id}/file`, {
+      method: 'PUT',
+      headers: { Cookie: cookie },
+      body: form,
+    })
+    expect(response.status).toBe(200)
+
+    const [after] = await db.select().from(documents).where(eq(documents.id, id))
+    expect(after!.sourceKey).not.toBe(oldKey)
+    expect(after!.sourceKey).toContain('/versions/')
+    expect(await readUploadMeta(id)).toMatchObject({ sourceKey: after!.sourceKey })
+    expect(new TextDecoder().decode(await activeStorage().read(after!.sourceKey!))).toContain(
+      '新版本独特词元PpQq',
+    )
+    expect(await activeStorage().list(`uploads/${id}`)).not.toContain(oldKey)
+
+    // 留下一份未提交版本：LIST 顺序不能决定重建结果。
+    const strayKey = `uploads/${id}/versions/stray/同名.txt`
+    await activeStorage().write(strayKey, '不应选中的孤儿版本')
+    await reindexVault()
+    const [restored] = await db.select().from(documents).where(eq(documents.id, id))
+    expect(restored!.sourceKey).toBe(after!.sourceKey)
+    expect(restored!.body).toContain('新版本独特词元PpQq')
+    await activeStorage().remove(strayKey)
+  })
+
+  it('写 meta 失败时旧原件和数据库指针保持可用', async () => {
+    const cookie = await getAuthCookie()
+    const created = await upload(cookie, '故障.txt', '仍能读取的旧内容', 'text/plain')
+    const id = created.body.document!.id
+    const [before] = await db.select().from(documents).where(eq(documents.id, id))
+    const storage = activeStorage()
+    const write = storage.write.bind(storage)
+    const failed = vi.spyOn(storage, 'write').mockImplementation(async (key, data) => {
+      if (key === `uploads/${id}/meta.json`) throw new Error('模拟 meta 写入失败')
+      await write(key, data)
+    })
+    try {
+      const form = new FormData()
+      form.append('file', new Blob(['不会提交的新内容']), '故障.txt')
+      const response = await app.request(`/api/documents/${id}/file`, {
+        method: 'PUT',
+        headers: { Cookie: cookie },
+        body: form,
+      })
+      expect(response.status).toBeGreaterThanOrEqual(500)
+    } finally {
+      failed.mockRestore()
+    }
+    const [after] = await db.select().from(documents).where(eq(documents.id, id))
+    expect(after!.sourceKey).toBe(before!.sourceKey)
+    expect(new TextDecoder().decode(await storage.read(before!.sourceKey!))).toBe(
+      '仍能读取的旧内容',
+    )
+    await reindexVault()
+    const [restored] = await db.select().from(documents).where(eq(documents.id, id))
+    expect(restored!.sourceKey).toBe(before!.sourceKey)
+  })
+
   it('换掉原件后正文重算，但标签与目录保持不变', async () => {
     const cookie = await getAuthCookie()
     const created = await upload(cookie, '替换前.txt', '旧内容词元AaBb。', 'text/plain')

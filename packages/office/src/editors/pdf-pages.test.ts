@@ -118,6 +118,53 @@ describe('readPdfPages', () => {
   })
 })
 
+describe('PDF 文档级信息的保存边界', () => {
+  it('重排页面时保留标准文档信息', async () => {
+    const doc = await PDFDocument.create()
+    doc.addPage([300, 400])
+    doc.setTitle('保留标题')
+    doc.setAuthor('作者')
+    doc.setSubject('主题')
+    doc.setKeywords(['alpha beta'])
+    doc.setCreator('创建者')
+    doc.setProducer('生成者')
+    doc.setCreationDate(new Date('2024-01-02T03:04:05.000Z'))
+    doc.setModificationDate(new Date('2024-02-03T04:05:06.000Z'))
+    const bytes = await doc.save()
+
+    const rebuilt = await buildPdfBytes({
+      bytes,
+      layout: [refOf(0, { width: 300, height: 400 }, 90)],
+      imports: NO_IMPORTS,
+    })
+    const reopened = await PDFDocument.load(rebuilt, { updateMetadata: false })
+    expect(reopened.getTitle()).toBe('保留标题')
+    expect(reopened.getAuthor()).toBe('作者')
+    expect(reopened.getSubject()).toBe('主题')
+    expect(reopened.getKeywords()).toBe('alpha beta')
+    expect(reopened.getCreator()).toBe('创建者')
+    expect(reopened.getProducer()).toBe('生成者')
+    expect(reopened.getCreationDate()?.toISOString()).toBe('2024-01-02T03:04:05.000Z')
+    expect(reopened.getModificationDate()?.toISOString()).toBe('2024-02-03T04:05:06.000Z')
+    expect(reopened.getPages()[0]?.getRotation().angle).toBe(90)
+  })
+
+  it('原件含表单时拒绝重建，防止字段静默丢失', async () => {
+    const doc = await PDFDocument.create()
+    const page = doc.addPage([300, 400])
+    doc.getForm().createTextField('contact').addToPage(page)
+    const bytes = await doc.save()
+
+    await expect(
+      buildPdfBytes({
+        bytes,
+        layout: [refOf(0, { width: 300, height: 400 }, 90)],
+        imports: NO_IMPORTS,
+      }),
+    ).rejects.toThrow(/AcroForm.*未写回原件/)
+  })
+})
+
 describe('buildPdfBytes 的页序与旋转', () => {
   it('倒序 + 旋转 90 度：逐页对（用 pdf.js 读回，不是我们自己的模型）', async () => {
     const bytes = await makePdf([

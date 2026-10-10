@@ -5,7 +5,13 @@ import { documents } from '../db/schema.js'
 import { toSearchText } from '@mimir/tokenizer'
 import { contentHash, toExcerpt } from '../lib/text.js'
 import { readNote, toVaultPath, writeNote, VAULT_PREFIX } from '../lib/vault.js'
-import { documentIdFromKey, readUpload, readUploadMeta, UPLOAD_PREFIX } from '../lib/uploads.js'
+import {
+  documentIdFromKey,
+  readUpload,
+  readUploadMeta,
+  uploadKey,
+  UPLOAD_PREFIX,
+} from '../lib/uploads.js'
 import { activeStorage } from '../plugins/host.js'
 import { syncTags } from './documents.js'
 import { ensureFolders } from './folders.js'
@@ -27,7 +33,7 @@ import { extractText } from './extract.js'
  * ## 上传件为什么能参与重建（抓取件不能）
  *
  * 抓取件没有用户可见的文件——正文只在数据库里，`raw/` 快照是派生物。
- * 上传件的真相是 `uploads/<id>/<原名>`，而 `meta.json` 记着标题、标签、
+ * 上传件的真相在 `uploads/<id>/`，而 `meta.json` 指向当前原件并记着标题、标签、
  * 目录与时间。所以**上传件是重建能力最强的一类**：目录还在，删库也能恢复；
  * 正文能重新提取就重新提取，不能就留空（那时 `parse_error` 或
  * `parseSupport()` 会说明原因）。
@@ -80,13 +86,13 @@ async function listVaultNotes(): Promise<string[]> {
 }
 
 /**
- * `uploads/` 下可恢复的文档：每个 id 带它的原件 key（可能为 null）。
+ * `uploads/` 下可恢复的文档：每个 id 带这一轮 LIST 找到的候选原件 key。
  *
  * 以 `meta.json` 为判据而不是「目录里有文件」：一份原件写到一半失败、
  * 或者用户手工往里丢了个文件，都不该被当成一条可恢复的文档——
  * meta 里才有标题、标签、目录、时间这些**只能来自用户**的信息。
  *
- * **有 meta 但没有原件时仍然要返回这条**（`originalKey: null`）：
+ * **有 meta 但没有原件时仍然要返回这条**（候选集合为空）：
  * 记录本身有价值——「有这么一份文件，但原件不见了」比「什么都没有」有用，
  * 用户看到它才知道要找回来。原件的缺失由 `source_key` 为 null 如实表达。
  *
@@ -97,12 +103,12 @@ async function listVaultNotes(): Promise<string[]> {
  * 一个文件一次 LIST 的写法在 500 篇的库上就是 500 次请求。
  */
 async function listUploads(): Promise<{
-  entries: { id: string; originalKey: string | null }[]
+  entries: { id: string; originalKeys: Set<string> }[]
   orphans: number
 }> {
   const keys = await activeStorage().list(UPLOAD_PREFIX)
 
-  const originals = new Map<string, string>()
+  const originals = new Map<string, Set<string>>()
   const withMeta = new Set<string>()
   const seen = new Set<string>()
 
@@ -111,11 +117,15 @@ async function listUploads(): Promise<{
     if (!id) continue
     seen.add(id)
     if (key.endsWith('/meta.json')) withMeta.add(id)
-    else originals.set(id, key)
+    else {
+      const candidates = originals.get(id) ?? new Set<string>()
+      candidates.add(key)
+      originals.set(id, candidates)
+    }
   }
 
   let orphans = 0
-  const entries: { id: string; originalKey: string | null }[] = []
+  const entries: { id: string; originalKeys: Set<string> }[] = []
 
   for (const id of seen) {
     if (!withMeta.has(id)) {
@@ -123,7 +133,7 @@ async function listUploads(): Promise<{
       console.warn(`uploads/${id} 里没有 meta.json，跳过（不是一条可恢复的文档）`)
       continue
     }
-    entries.push({ id, originalKey: originals.get(id) ?? null })
+    entries.push({ id, originalKeys: originals.get(id) ?? new Set() })
   }
 
   return { entries, orphans }
@@ -253,9 +263,15 @@ export async function reindexVault(): Promise<ReindexResult> {
    * 提取失败不阻止恢复：原件在、记录在，只是没有正文（`parse_error` 或
    * `parseSupport()` 会说明原因）。这与上传时的那条判断一致。
    */
-  for (const { id, originalKey } of uploads.entries) {
+  for (const { id, originalKeys } of uploads.entries) {
     const meta = await readUploadMeta(id)
     if (!meta) continue
+
+    // 版本目录可能残留未提交的替换。绝不靠 LIST 顺序选原件。
+    // 旧版 meta 没有 sourceKey 时，只认当时的固定文件名路径。
+    const expectedKey = meta.sourceKey ?? uploadKey(id, meta.filename)
+    const originalKey =
+      expectedKey.startsWith(`uploads/${id}/`) && originalKeys.has(expectedKey) ? expectedKey : null
 
     if (seenIds.has(id)) {
       result.duplicates += 1

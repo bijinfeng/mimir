@@ -40,10 +40,13 @@ mac:
   identity: null
   target:
     - dmg
-# 下面两段当前不构建（desktop:build 只打 macOS 的 dmg），但**先配上**：
-# 加平台时忘配图标的症状是「打包成功、装完是一张白纸」，而那时才会回头翻这里
+# Linux 明确只构建 AppImage；不使用 builder 默认的 AppImage + Snap 双目标，
+# 否则同一份安装包要额外下载 Snap 模板并打两次（实测本机）。
+# Windows 图标先配好；尚未在 Windows 宿主验证其安装包。
 linux:
   icon: resources/icon.png
   category: Office
+  target:
+    - AppImage
 win:
   icon: resources/icon.ico

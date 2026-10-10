@@ -396,14 +396,15 @@ export async function assembleCitations(
   for (const group of byDocument.values()) {
     group.pieces.sort((a, b) => a.start - b.start)
 
-    /** 合并 idx 连续（或偏移相接）的相邻块 */
+    /** 合并 idx 连续且偏移相接或重叠的块；重叠文字只保留一次 */
     const merged: Piece[] = []
     for (const piece of group.pieces) {
       const last = merged[merged.length - 1]
-      const contiguous = last !== undefined && piece.idx === last.idx + 1
+      const contiguous = last !== undefined && piece.idx === last.idx + 1 && piece.start <= last.end
       if (contiguous) {
-        last.content += piece.content
+        last.content += piece.content.slice(last.end - piece.start)
         last.end = Math.max(last.end, piece.end)
+        last.idx = piece.idx
       } else {
         merged.push({ ...piece })
       }

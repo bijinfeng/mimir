@@ -1,9 +1,10 @@
 import { and, eq, isNull } from 'drizzle-orm'
 import { Hono } from 'hono'
-import { isInlineSafe } from '@mimir/shared'
+import { FILE_MAX_BYTES, isInlineSafe } from '@mimir/shared'
 import { db } from '../db/client.js'
 import { documents } from '../db/schema.js'
 import { HttpError } from '../lib/http.js'
+import { readUploadForm } from '../lib/multipart.js'
 import { readUpload } from '../lib/uploads.js'
 import { readUploadMeta } from '../lib/uploads.js'
 import { replaceUpload, uploadFile, UploadError } from '../services/upload.js'
@@ -30,14 +31,14 @@ export const filesRoute = new Hono<AppEnv>()
  * 多文件的部分失败报告会变成一团糊（哪个成功了？标签应用到谁？），
  * 而逐文件请求天然给出逐文件的答案。代价是多个往返，对单用户不是问题。
  *
- * ## `parseBody` 而不是流式收
- *
- * 与头像同一条判断（见 `routes/avatar.ts`）：上限 50MB 一次性读完没有内存顾虑，
- * 而流式收要在流的中间做校验（「读了 40MB 才发现太大」），复杂度换不来东西。
+ * multipart 解析前先逐块限制整个请求体；解析后 service 再限制文件本身。
  */
 filesRoute.post('/files', async (c) => {
-  const body = await c.req.parseBody().catch(() => null)
-  const file = body?.file
+  const body = await readUploadForm(c.req.raw).catch((error: unknown) => {
+    if (error instanceof HttpError) throw error
+    return null
+  })
+  const file = body?.get('file')
 
   if (!(file instanceof File)) {
     throw new HttpError(400, 'INVALID_INPUT', '请求里没有文件（字段名应为 file）')
@@ -45,12 +46,13 @@ filesRoute.post('/files', async (c) => {
 
   // 归入的目录（可选）。multipart 的普通字段与文件字段混在同一个 body 里，
   // 类型上要收窄一次；空串按「没带」处理
-  const folderField = body?.folder
+  const folderField = body?.get('folder')
   const folder =
     typeof folderField === 'string' && folderField.trim() !== '' ? folderField : undefined
 
-  // 读进内存再校验大小：`file.size` 是浏览器声明的值，不能只信它。
-  // 而且校验必须在写任何文件之前（先写再校验会留下永远不会被引用的文件）
+  if (file.size > FILE_MAX_BYTES)
+    throw asHttpError(new UploadError('TOO_LARGE', '文件太大（上限 50 MiB）'))
+  // 解析器已检查整个请求体；service 会在写文件之前复查实际文件字节数。
   const data = new Uint8Array(await file.arrayBuffer())
 
   try {
@@ -68,13 +70,18 @@ filesRoute.post('/files', async (c) => {
 
 /** 替换已有上传件的原件（下载 → 外部工具改 → 传回）。见 services/upload.ts */
 filesRoute.put('/:id/file', async (c) => {
-  const body = await c.req.parseBody().catch(() => null)
-  const file = body?.file
+  const body = await readUploadForm(c.req.raw).catch((error: unknown) => {
+    if (error instanceof HttpError) throw error
+    return null
+  })
+  const file = body?.get('file')
 
   if (!(file instanceof File)) {
     throw new HttpError(400, 'INVALID_INPUT', '请求里没有文件（字段名应为 file）')
   }
 
+  if (file.size > FILE_MAX_BYTES)
+    throw asHttpError(new UploadError('TOO_LARGE', '文件太大（上限 50 MiB）'))
   const data = new Uint8Array(await file.arrayBuffer())
 
   try {
@@ -94,7 +101,7 @@ filesRoute.put('/:id/file', async (c) => {
 function asHttpError(error: unknown): unknown {
   if (error instanceof UploadError) {
     const status = error.code === 'TOO_LARGE' ? 413 : 400
-    return new HttpError(status as 400, error.code, error.message)
+    return new HttpError(status, error.code, error.message)
   }
   return error
 }

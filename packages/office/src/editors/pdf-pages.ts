@@ -32,7 +32,7 @@
  * 交换，页面的长宽比就是错的，而画布只会画得不对、不会报错。
  */
 
-import { degrees, PDFDocument, type PDFPage } from 'pdf-lib'
+import { degrees, PDFDict, PDFDocument, type PDFPage } from 'pdf-lib'
 
 /** 宽高（pt）。**未旋转**的盒子尺寸 */
 export interface PdfSize {
@@ -459,7 +459,9 @@ export async function buildPdfBytes({
   imports,
 }: PdfBuildInput): Promise<Uint8Array> {
   const source = await PDFDocument.load(bytes, { ignoreEncryption: true, updateMetadata: false })
-  const out = await PDFDocument.create()
+  assertSafeToRebuild(source)
+  const out = await PDFDocument.create({ updateMetadata: false })
+  copyDocumentInfo(source, out)
 
   // 要拷哪些页，按来源分组（`positions` 与 `indices` 一一对应）
   interface CopyGroup {
@@ -514,6 +516,67 @@ export async function buildPdfBytes({
   }
 
   return out.save()
+}
+
+/**
+ * copyPages 只搬页对象，不搬 Catalog 中的文档级结构。遇到尚未明确保留的
+ * 结构就拒绝写回：丢失表单、书签或签名比提示用户用外部工具编辑更糟。
+ * Info 字典也只允许下面显式复制的标准字段，避免静默丢自定义元数据。
+ */
+function assertSafeToRebuild(source: PDFDocument): void {
+  if (source.isEncrypted) {
+    throw new Error('这份 PDF 已加密，暂不支持安全保存；请下载原件，用外部工具编辑')
+  }
+
+  const extraCatalogKeys = source.catalog
+    .entries()
+    .map(([key]) => key.toString())
+    .filter((key) => key !== '/Type' && key !== '/Pages')
+  if (extraCatalogKeys.length > 0) {
+    throw new Error(
+      `这份 PDF 含有暂不能保留的文档结构（${extraCatalogKeys.join('、')}），未写回原件；请下载后用外部工具编辑`,
+    )
+  }
+
+  const info = source.context.lookupMaybe(source.context.trailerInfo.Info, PDFDict)
+  const supported = new Set([
+    '/Title',
+    '/Author',
+    '/Subject',
+    '/Keywords',
+    '/Creator',
+    '/Producer',
+    '/CreationDate',
+    '/ModDate',
+  ])
+  const extraInfoKeys = info
+    ?.entries()
+    .map(([key]) => key.toString())
+    .filter((key) => !supported.has(key))
+  if (extraInfoKeys?.length) {
+    throw new Error(
+      `这份 PDF 含有暂不能保留的元数据（${extraInfoKeys.join('、')}），未写回原件；请下载后用外部工具编辑`,
+    )
+  }
+}
+
+function copyDocumentInfo(source: PDFDocument, out: PDFDocument): void {
+  const title = source.getTitle()
+  if (title !== undefined) out.setTitle(title)
+  const author = source.getAuthor()
+  if (author !== undefined) out.setAuthor(author)
+  const subject = source.getSubject()
+  if (subject !== undefined) out.setSubject(subject)
+  const keywords = source.getKeywords()
+  if (keywords !== undefined) out.setKeywords([keywords])
+  const creator = source.getCreator()
+  if (creator !== undefined) out.setCreator(creator)
+  const producer = source.getProducer()
+  if (producer !== undefined) out.setProducer(producer)
+  const created = source.getCreationDate()
+  if (created !== undefined) out.setCreationDate(created)
+  const modified = source.getModificationDate()
+  if (modified !== undefined) out.setModificationDate(modified)
 }
 
 async function loadImported(

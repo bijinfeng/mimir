@@ -10,9 +10,8 @@ import { useStyles } from './settings.style'
 /**
  * 数据与备份。
  *
- * 这一页的核心陈述是「**Markdown 文件是真相，数据库只是可重建的索引**」，
- * 所以它把「真相在哪」放在最前面，动作（重建索引、导出）放在后面——
- * 顺序本身就是解释：先知道文件在哪，重建成什么、导出的是什么才有意义。
+ * 笔记与上传件以文件为真相，但抓取件、对话与设置仍依赖数据库。
+ * 先说明各类数据的位置，再展示重建索引与迁出动作；两者都不是实例备份。
  *
  * ## 「数据库」那一行按服务端回传的驱动渲染
  *
@@ -58,7 +57,7 @@ export function DataSection() {
             <>
               <span className={styles.mono}>{DATABASE_NAMES[database.driver]}</span>
               {database.file ? <span className={styles.mono}> · {database.file}</span> : null}
-              <span> · 前两者可以完整重建它</span>
+              <span> · 抓取件、对话和设置需备份数据库</span>
             </>
           ) : configQuery.isError ? (
             <LoadError compact message="读取失败" onRetry={() => void configQuery.refetch()} />
@@ -79,14 +78,17 @@ export function DataSection() {
               立即重建索引
             </Button>
           </div>
-          <BlockDesc>扫描 vault 并同步数据库。用外部编辑器改过文件之后需要跑一次。</BlockDesc>
+          <BlockDesc>
+            扫描 vault 与 uploads 并同步文件类文档的索引；不会恢复抓取件、对话和设置。
+          </BlockDesc>
         </Block>
       </Panel>
 
       <Panel title="导出">
         <Block>
           <BlockDesc>
-            Markdown 包可以直接用 Obsidian / Typora 打开；JSON 含元数据与对话，用于备份。
+            Markdown 包可用 Obsidian / Typora 打开；JSON 不含上传原件，也不能直接恢复实例。
+            完整备份需同时保存数据库、内容文件与密钥。
           </BlockDesc>
         </Block>
 

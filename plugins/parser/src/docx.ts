@@ -1,5 +1,5 @@
 import type { ParseInput, ParseResult, Parser } from '@mimir/shared'
-import { cleanExtractedText, readZipEntry, xmlToText } from './ooxml.js'
+import { cleanExtractedText, openOoxmlArchive, xmlToText } from './ooxml.js'
 
 /**
  * `.docx` → Markdown 的**文本提取**（`docs/TECH.md` §13）。
@@ -36,7 +36,8 @@ export function createDocxParser(): Parser {
     async parse(input: ParseInput): Promise<ParseResult> {
       if (input.type !== 'docx') throw new Error('docx 解析器只处理 docx 输入')
 
-      const xml = readZipEntry(input.data, 'word/document.xml')
+      const archive = openOoxmlArchive(input.data, (path) => path === 'word/document.xml')
+      const xml = archive.read('word/document.xml')
       if (!xml) {
         throw new Error('这个文件不是有效的 docx（缺少 word/document.xml）')
       }

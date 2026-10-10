@@ -1,10 +1,11 @@
 import { z } from 'zod'
+import { nanoid } from 'nanoid'
 import { activeStorage } from '../plugins/host.js'
 
 /**
  * 上传原件的存放规则（`docs/TECH.md` §13）。
  *
- * ## 路径形状：`uploads/<文档id>/<原文件名>`
+ * ## 路径形状：首次上传 `uploads/<文档id>/<原文件名>`；替换写 `versions/<版本>/<原文件名>`
  *
  * **按 id 分目录，不按 hash。** 内容寻址（按 hash 存、多文档共享一份原件）
  * 的唯一收益是「重复文件只占一份空间」——单用户自洽的库里这个收益很小，
@@ -12,7 +13,7 @@ import { activeStorage } from '../plugins/host.js'
  * `data/uploads` 目录**自己就能回答问题**：这个目录对应哪条文档、
  * 它是什么格式、什么时候进来的（文件 mtime）。
  *
- * **文件名保留用户给的原文**（只做最小消毒），不 slugify：中文文件名
+ * **文件名保留用户给的原文**（只做最小消毒，保留名 `meta.json` 除外），不 slugify：中文文件名
  * 直接可读，而 slugify 会把它变成一串拼音或 `untitled`——磁盘上就没法认了。
  * 与 `vault/年/月/标题-id.md` 同一个想法。
  *
@@ -24,7 +25,8 @@ import { activeStorage } from '../plugins/host.js'
  *
  * ## 写入顺序：原件 → meta.json → 数据库
  *
- * 铁律 2 的延长。中间失败最坏产生「有文件没入库」，重建索引能捡回来；
+ * 铁律 2 的延长。替换必须写唯一 key，meta.json 用 sourceKey 指明当前原件。
+ * 中间失败最坏产生「有文件没入库」，重建索引能捡回来；
  * 反过来会产生「库里有记录、文件打不开」，那是裂图。
  */
 
@@ -68,7 +70,18 @@ export function sanitizeFilename(rawName: string): string {
 
 /** 原件的存储 key */
 export function uploadKey(documentId: string, filename: string): string {
-  return `${UPLOAD_PREFIX}/${documentId}/${sanitizeFilename(filename)}`
+  return `${UPLOAD_PREFIX}/${documentId}/${storageFilename(filename)}`
+}
+
+/** 替换始终写独立版本；即使文件名相同也不能覆盖当前原件。 */
+export function replacementUploadKey(documentId: string, filename: string): string {
+  return `${UPLOAD_PREFIX}/${documentId}/versions/${nanoid(12)}/${sanitizeFilename(filename)}`
+}
+
+/** 原件不能占用同目录的元数据保留名（Windows 上大小写也视为相同）。 */
+function storageFilename(filename: string): string {
+  const safe = sanitizeFilename(filename)
+  return safe.toLowerCase() === META_NAME ? `original-${safe}` : safe
 }
 
 /** 元数据的存储 key */
@@ -96,8 +109,10 @@ export function documentIdFromKey(key: string): string | null {
 export const uploadMetaSchema = z.object({
   id: z.string(),
   title: z.string(),
-  /** 原文件名（含扩展名）。与 key 的最后一段一致，存它是为了让 meta 自解释 */
+  /** 用户给的原文件名（含扩展名）；保留名冲突时可能不同于 key 的最后一段。 */
   filename: z.string(),
+  /** 当前原件的精确 key；旧版 meta 没有此字段，重建时按原文件名回退。 */
+  sourceKey: z.string().optional(),
   mime: z.string(),
   size: z.number().int().nonnegative(),
   tags: z.array(z.string()).default([]),
@@ -117,13 +132,13 @@ export async function writeUpload(
   filename: string,
   data: Uint8Array,
   meta: UploadMeta,
+  key = uploadKey(documentId, filename),
 ): Promise<{ key: string; metaKey: string }> {
   const storage = activeStorage()
-  const key = uploadKey(documentId, filename)
   const metaFile = metaKey(documentId)
 
   await storage.write(key, data)
-  await storage.write(metaFile, JSON.stringify(meta, null, 2))
+  await storage.write(metaFile, JSON.stringify({ ...meta, sourceKey: key }, null, 2))
 
   return { key, metaKey: metaFile }
 }

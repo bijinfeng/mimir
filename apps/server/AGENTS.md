@@ -84,7 +84,8 @@ src/
 而那个失败要变成一句人话。**不要在 parser 里做解码**。
 
 字节类（Office）是 ZIP 容器，自己读里面的 XML。`plugins/parser/src/ooxml.ts`
-是共用的底座（zip 读取 + XML 抽文字）。
+是共用的底座（zip 读取 + XML 抽文字）；它按**实际解压字节**限制 XML，
+不要在格式解析器里绕开它直接 `unzipSync`（D-109）。
 
 **新增一种可提取的格式要动两处**：这里的 `accepts`，以及
 `@mimir/shared/src/files.ts` 的 `parseTargetFor` / `parseSupport`——

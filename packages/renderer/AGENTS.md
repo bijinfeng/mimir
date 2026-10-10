@@ -13,8 +13,8 @@
 界面与业务代码的**全部**。两个使用方都只是薄壳：
 
 ```
-apps/web/src/index.tsx              注入浏览器插槽 → createApp()
-apps/desktop/src/renderer/index.tsx 注入桌面插槽   → createApp()
+apps/web/src/index.tsx              注入浏览器平台与路由 → createApp()
+apps/desktop/src/renderer/index.tsx 注入桌面平台与路由   → createApp()
 ```
 
 它**以源码发布**（`exports` 指 `src/*.ts`，与 `@mimir/chat` / `@mimir/shared`
@@ -93,11 +93,10 @@ export type Platform =
 ```
 src/
 ├── main.tsx         createApp(root)：只组装 provider，不放具体配置
-├── slots.ts         平台插槽的接口与存取（D-103）
+├── platform.tsx     平台 Context 与判别联合（D-104）
 ├── titlebar-kit.ts  标题栏实现方要用的件（品牌、侧栏字形、高度常量）
 ├── router.tsx       buildRouter()：按平台组装路由实例
-├── index.ts         导出面：createApp + 插槽
-├── router.tsx       路由实例（routeTree.gen.ts 是生成物，不要手改）
+├── index.ts         导出面：createApp + 平台契约
 ├── routes/          页面。根路由承担鉴权守卫，_app.tsx 是两栏骨架
 ├── components/      可复用组件；document/ 是文档页的子组件
 ├── editor/          Tiptap 扩展配置与保真测试（有独立的 AGENTS.md）

@@ -1,6 +1,6 @@
 import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, session } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, session, shell } from 'electron'
 import {
   LOCAL_TOKEN_COOKIE,
   type DesktopBootInfo,
@@ -10,6 +10,7 @@ import {
 import { normalizeCloudUrl, probeCloudUrl } from './cloud.js'
 import { parseModeConfig, readModeConfig, writeModeConfig } from './config.js'
 import { startHost, type HostHandle, type HostPaths } from './host.js'
+import { navigationDecision, partitionFor, type WindowSurface } from './security.js'
 
 /**
  * 桌面端载体（D-046，分层借鉴 deepseek-harness）。
@@ -67,7 +68,6 @@ if (process.platform === 'linux') {
 let host: HostHandle | null = null
 let bootInfo: DesktopBootInfo | null = null
 let win: BrowserWindow | null = null
-type WindowSurface = 'setup' | 'local' | 'cloud'
 let windowSurface: WindowSurface | null = null
 /** 当前模式；首次启动尚未选择时为 null */
 let modeState: DesktopModeState | null = null
@@ -164,6 +164,9 @@ function windowChromeOptions(surface: WindowSurface): Electron.BrowserWindowCons
 
 function createWindow(url: string, surface: WindowSurface): BrowserWindow {
   const icon = windowIcon()
+  const partition = partitionFor(surface, url)
+  const browserSession = session.fromPartition(partition)
+  guardPermissions(browserSession)
   const created = new BrowserWindow({
     width: 1440,
     height: 900,
@@ -174,6 +177,7 @@ function createWindow(url: string, surface: WindowSurface): BrowserWindow {
     autoHideMenuBar: surface !== 'cloud',
     ...(icon === undefined ? {} : { icon }),
     webPreferences: {
+      partition,
       /**
        * **必须是绝对路径。** 写成相对路径（`'./dist/preload.js'`）时，
        * 加载 http 地址的窗口里 Electron 解析不了它，**preload 静默不执行**——
@@ -182,7 +186,7 @@ function createWindow(url: string, surface: WindowSurface): BrowserWindow {
        * electron-vite 把三段分别产到 `dist/main` / `dist/preload` /
        * `dist/renderer`（D-103），所以从主进程所在目录回上一层再进 preload。
        */
-      preload: join(__dirname, '../preload/index.js'),
+      ...(surface === 'cloud' ? {} : { preload: join(__dirname, '../preload/index.js') }),
       contextIsolation: true,
       sandbox: true,
     },
@@ -190,6 +194,7 @@ function createWindow(url: string, surface: WindowSurface): BrowserWindow {
   win = created
   windowSurface = surface
   windowControls(created)
+  guardNavigation(created, url, partition)
   watchCloudLoadFailure(created)
   created.on('closed', () => {
     if (win === created) {
@@ -207,13 +212,81 @@ async function loadWindow(
   url: string,
   surface: WindowSurface,
 ): Promise<void> {
-  if ((windowSurface === 'cloud') !== (surface === 'cloud')) {
+  // Session 在 BrowserWindow 构造时固定；即使只是 local ↔ setup 也必须换窗。
+  if (windowSurface !== surface) {
     createWindow(url, surface)
     target.close()
     return
   }
   windowSurface = surface
   await target.loadURL(url)
+}
+
+const guardedSessions = new WeakSet<Electron.Session>()
+
+/** 不让页面自行请求设备/系统权限；仅主框架的复制操作可以写剪贴板。 */
+function guardPermissions(browserSession: Electron.Session): void {
+  if (guardedSessions.has(browserSession)) return
+  guardedSessions.add(browserSession)
+  browserSession.setPermissionCheckHandler((contents, permission, origin, details) =>
+    Boolean(
+      permission === 'clipboard-sanitized-write' &&
+      contents &&
+      details.isMainFrame &&
+      navigationDecision(contents.getURL(), origin) === 'allow',
+    ),
+  )
+  browserSession.setPermissionRequestHandler((contents, permission, callback, details) => {
+    const requestingUrl = 'requestingUrl' in details ? details.requestingUrl : ''
+    callback(
+      permission === 'clipboard-sanitized-write' &&
+        details.isMainFrame &&
+        navigationDecision(contents.getURL(), requestingUrl) === 'allow',
+    )
+  })
+}
+
+/** 主导航与新窗口共用源边界，防止远端页面跳到常驻的本地宿主。 */
+function guardNavigation(target: BrowserWindow, appUrl: string, partition: string): void {
+  const redirect = (url: string): void => {
+    if (navigationDecision(appUrl, url) === 'external') {
+      void shell
+        .openExternal(url)
+        .catch((error: unknown) => console.warn('[desktop] 无法在系统浏览器打开链接：', error))
+    }
+  }
+
+  target.webContents.on('will-navigate', (event) => {
+    if (navigationDecision(appUrl, event.url) === 'allow') return
+    event.preventDefault()
+    redirect(event.url)
+  })
+  target.webContents.on('will-redirect', (event) => {
+    if (navigationDecision(appUrl, event.url) === 'allow') return
+    event.preventDefault()
+    redirect(event.url)
+  })
+  target.webContents.setWindowOpenHandler(({ url }) => {
+    const decision = navigationDecision(appUrl, url)
+    if (decision !== 'allow') {
+      redirect(url)
+      return { action: 'deny' }
+    }
+    return {
+      action: 'allow',
+      overrideBrowserWindowOptions: {
+        webPreferences: {
+          partition,
+          contextIsolation: true,
+          sandbox: true,
+          nodeIntegration: false,
+        },
+      },
+    }
+  })
+  target.webContents.on('did-create-window', (child) => {
+    guardNavigation(child, appUrl, partition)
+  })
 }
 
 /**
@@ -291,9 +364,8 @@ function setupPageUrl(): string {
  * 受信任的只有两种页面：**选择页**（我们自己的 file:// 页面）与**本机宿主**
  * （127.0.0.1 上的我们自己的前端）。
  *
- * 远端页面仍然可以读 `mode.get()`、也可以发起切换，但**切换一定会先弹一个
- * 原生确认框**（`confirmUntrustedSwitch`），里面写清目标是谁——那一步是用户
- * 的，不是页面的。
+ * D-107 后远端页面不装 preload，正常情况下没有模式桥。这里仍按发送方
+ * 校验并对不受信任的请求弹原生确认框，作为主进程的纵深防御。
  */
 function isTrustedSender(url: string | undefined): boolean {
   if (!url) return false
@@ -365,7 +437,7 @@ async function ensureLocalHost(paths: HostPaths): Promise<HostHandle> {
  */
 async function injectLocalCookie(handle: HostHandle): Promise<void> {
   if (!handle.localToken) return
-  await session.defaultSession.cookies.set({
+  await session.fromPartition(partitionFor('local', handle.origin)).cookies.set({
     url: handle.origin,
     name: LOCAL_TOKEN_COOKIE,
     value: handle.localToken,

@@ -11,9 +11,9 @@ import { callEmbed, modelName } from './model.js'
  *
  * ## 分块是派生数据，重建的入口只有一个
  *
- * `documents.body` 是真相，`chunks` 完全可从它重算。所以这个文件里
- * **只有 `syncChunks` 一个写入点**：保存笔记、抓取入库、重建索引、
- * 补嵌入，全都调到它。第二处写入会让「分块到底是谁算的」出现两个答案。
+ * `documents.body` 是真相，`chunks` 完全可从它重算。保存笔记、抓取入库、
+ * 重建索引、手动重建分块都通过 `syncChunks` 核对派生行。补嵌入只写
+ * `chunk_embeddings`，不重算分块。
  *
  * ## 嵌入失败绝不阻断写入（§4.10）
  *
@@ -26,7 +26,7 @@ import { callEmbed, modelName } from './model.js'
 export interface ChunkSyncResult {
   /** 重建后这篇文档的分块数 */
   count: number
-  /** 内容没变、跳过了重建（分块与向量都保持原样） */
+  /** 分块正文没变、向量仍有效；标题等检索元信息可能已原位更新 */
   unchanged: boolean
 }
 
@@ -40,7 +40,7 @@ export interface ChunkSyncResult {
  *    限流、断网都只是「这段暂时搜不到语义」，而笔记必须存下来。
  *    失败留一条日志，界面上以「待嵌入 N 段」如实显示
  *
- * 抽成一个函数的理由是**写入路径有三条**（新建笔记、更新笔记、抓取入库），
+ * 抽成一个函数的理由是写入路径不止一条（新建/更新笔记、抓取、上传），
  * 抄三遍必然会漏掉一处——而漏掉的那条路径上的文档永远搜不到语义，
  * 且没有任何症状。
  */
@@ -58,10 +58,9 @@ export async function rebuildChunksAndEmbed(documentId: string, body: string): P
 /**
  * 重建一篇文档的分块。
  *
- * **内容没变时直接跳过**：判据是「已有的块与当前正文切出来的块逐块对齐」
- * （id、起止偏移都相同）——那足以说明正文没变（分块是正文的确定性函数）。
- * 没有这个跳过的话，每次保存笔记都要删光重插：分块行本身无所谓，但
- * `chunk_embeddings` 的级联会一起删掉向量，于是每次改一个错别字都要重新掏钱嵌入。
+ * **正文没变时保留向量**：逐块比较 id、偏移和 content，不能只比区间——
+ * 等长修改也会改变正文。仅标题变化时 searchText 需要原位更新，但向量
+ * 输入仍是 content，不必级联删除向量再花钱嵌入。
  *
  * 换分块策略（`parser.chunk.size`）后要全量重跑：`rebuildAllChunks` 是入口。
  */
@@ -86,7 +85,14 @@ export async function syncChunks(documentId: string, body: string): Promise<Chun
   const next = chunkText(body, { size, overlap, title }, documentId)
 
   const existing = await db
-    .select({ id: chunks.id, startAt: chunks.startAt, endAt: chunks.endAt })
+    .select({
+      id: chunks.id,
+      content: chunks.content,
+      searchText: chunks.searchText,
+      heading: chunks.heading,
+      startAt: chunks.startAt,
+      endAt: chunks.endAt,
+    })
     .from(chunks)
     .where(eq(chunks.documentId, documentId))
     .orderBy(chunks.idx)
@@ -95,9 +101,20 @@ export async function syncChunks(documentId: string, body: string): Promise<Chun
     existing.length === next.length &&
     existing.every(
       (row, i) =>
-        row.id === next[i]!.id && row.startAt === next[i]!.start && row.endAt === next[i]!.end,
+        row.id === next[i]!.id &&
+        row.startAt === next[i]!.start &&
+        row.endAt === next[i]!.end &&
+        row.content === next[i]!.content,
     )
   ) {
+    for (const [index, row] of existing.entries()) {
+      const chunk = next[index]!
+      if (row.searchText === chunk.searchText && row.heading === chunk.heading) continue
+      await db
+        .update(chunks)
+        .set({ searchText: chunk.searchText, heading: chunk.heading, updatedAt: new Date() })
+        .where(eq(chunks.id, row.id))
+    }
     return { count: existing.length, unchanged: true }
   }
 
@@ -305,7 +322,8 @@ export async function chunkStats(): Promise<{
  * 全量重建所有文档的分块（**不含嵌入**）。
  *
  * 换分块参数（`parser.chunk.size` / `overlap`）之后必须跑一次——
- * `db:reindex` 与设置页的「重建分块」都走这里。逐篇同步做，不并发：
+ * 设置页的「重建分块」走这里；`db:reindex` 是另一条索引维护路径。
+ * 逐篇同步做，不并发：
  * 进度如实可见（哪一篇开始/完成），而并发只会让失败难以定位。
  *
  * 嵌入留在下一步（`POST /maintenance/embed` 分批补）——§4.10 的两条理由：

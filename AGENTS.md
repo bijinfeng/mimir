@@ -74,7 +74,9 @@ React Compiler 会跳过「抑制了 React 规则」的组件——抑制 hook �
 ✓ 文件 → 数据库    失败时只是「文件存在但未入库」，重建索引即修复
 ```
 
-因为**文件是真相，数据库是可重建的索引**。任何新的写入路径都要遵守这个顺序。
+因为笔记和上传件的**文件是内容真相，数据库行是它们的索引**。这不表示整个
+数据库可丢弃：抓取正文、对话、设置等仍需数据库备份。新的文件类写入路径要
+遵守这个顺序。
 
 ### 3. 所有内容统一成为 Markdown
 
@@ -167,7 +169,7 @@ SQLite 路径同理：FTS5 的 `unicode61` 分词器也不认中文词边界，�
 
 | 症状 | 原因 |
 |---|---|
-| **两个平台共用的界面代码里出现平台判断（`window.mimirDesktop` / `process`）** | 界面代码在 `packages/renderer`，**浏览器与桌面渲染进程各编译一份**（D-103）。平台差异一律走 `src/slots.ts` 的插槽，由两个入口注入（`apps/web/src/index.tsx`、`apps/desktop/src/renderer/index.tsx`）。写成运行时判断不报错，但那一支在另一个平台永远不成立：桌面专属组件被打进浏览器产物，而读代码的人分不清它是死代码还是有用分支 |
+| **两个平台共用的界面代码里出现平台判断（`window.mimirDesktop` / `process`）** | 界面代码在 `packages/renderer`，**浏览器与桌面渲染进程各编译一份**（D-103）。平台差异走 `src/platform.tsx` 的 Context + 判别联合，由两个入口注入（D-104；`apps/web/src/index.tsx`、`apps/desktop/src/renderer/index.tsx`）。写成运行时判断不报错，但那一支在另一个平台永远不成立：桌面专属组件被打进浏览器产物，而读代码的人分不清它是死代码还是有用分支 |
 | **`--me-accent` 当文字色用（工具条按下态、菜单当前值）** | 主色是**填充**角色（按钮底、选中底、边框、焦点环）。实测按下态 `#1668dc` on `#15325b` = **2.47:1**（浅色 3.66:1）、菜单当前值浅色 4.10:1／深色 3.50:1——33 个按钮的激活态全都偏难认，而单看一处「像是有高亮」所以没人查。强调**文字**走 `--me-accent-text`（桥接层填 `colorLink`；DESIGN §3.5 的同一条推论，D-096） |
 | **rAF 在不可见时根本不派发（焦点送不到 / 分页永久失效）** | `requestAnimationFrame` 的语义是「下一个渲染帧之前」，后台标签页、`display:none` 容器、部分内嵌 webview 里**永远没有帧**——回调不执行且不报错。实测 IAB 里 `rafFired === false`（`useFindHotkey` 第一版就是这么写的，Ctrl+F 什么都不发生）。要「等这次渲染落地」用 `setTimeout(fn, 0)`（分页那边记过同一个坑，D-096） |
 | **某个元素整组样式缺失，DevTools 里类名带着 `#` 或括号** | **在 createStyles 的样式体里声明了 `--*` 自定义属性**（哪怕只想拿它当 hover 变量）：antd-style 会把属性**值**拼进类名，`acss-xxx-#5c6570-rgba(…)` 是非法选择器，浏览器整条丢弃，元素裸奔成默认样式（实测：原生 button 灰底 Arial）。消费宿主变量 `var(--mimir-chat-*)` 没问题，声明新的不行；hover 传值走属性选择器（`packages/chat/AGENTS.md` §2） |

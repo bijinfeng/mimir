@@ -400,7 +400,7 @@ export const api = {
         { method: 'POST', body: JSON.stringify({ limit }) },
       )
     },
-    /** 全量重算分块（换了分块参数之后用）。不含嵌入——那是另一步 */
+    /** 全量核对分块（参数变化或升级修复旧索引后用）。不含嵌入——那是另一步 */
     rebuildChunks() {
       return request<{ documents: number; chunks: number }>('/api/maintenance/chunks/rebuild', {
         method: 'POST',

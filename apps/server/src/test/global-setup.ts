@@ -1,4 +1,3 @@
-import { execSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { mkdir, rm } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
@@ -36,8 +35,6 @@ function findRepoRoot(start: string): string {
 }
 
 const repoRoot = findRepoRoot(dirname(fileURLToPath(import.meta.url)))
-/** server 包根：drizzle.config.ts 在这里，不是在仓库根 */
-const serverRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
 
 /** TEST_ENV 里的路径统一相对仓库根 */
 function testPath(relative: string | undefined): string | null {
@@ -68,25 +65,21 @@ export async function setup() {
   }
 
   if (isPostgres) {
-    // 3. 清库（PG 专属：schema 级重建 + 建扩展）
+    // 3. 清库（PG 专属：schema 级重建）。后续走生产使用的正式迁移，
+    // 由 runMigrations 自己按顺序建扩展与表，不能用 push 绕过迁移文件。
     const sql = postgres(TEST_DATABASE_URL, { max: 1 })
     await sql`drop schema public cascade`
+    // drizzle 的迁移日志在独立 schema；只删 public 会让第二遍测试以为
+    // 迁移已应用，随后在空库里访问不存在的表。
+    await sql`drop schema if exists drizzle cascade`
     await sql`create schema public`
-    await sql`create extension if not exists pg_trgm`
-    await sql`create extension if not exists vector`
     await sql.end()
 
-    // 4. 建表。用 drizzle-kit push 而不是跑迁移，避免测试依赖迁移文件的顺序。
-    execSync('npx drizzle-kit push --force --config drizzle.config.ts', {
-      stdio: 'pipe',
-      env: { ...process.env, DATABASE_URL: TEST_DATABASE_URL },
-      cwd: serverRoot,
-    })
-    return
+    // 4. 与 SQLite 一样，在导入 env.ts 之前把目标库放进进程环境。
   }
 
   // SQLite 路径：测试库文件在 DATA_DIR 下面，上面清根时已一并删掉。
-  // 走与运行时同一条 runMigrations()（journal 记账、幂等），含 FTS5 表与触发器。
+  // 两条路径都走运行时的 runMigrations()（journal 记账、幂等）。
   // 动态 import：必须先把 TEST_ENV 写进 process.env，env.ts 在模块加载时
   // 就读取并解析 DATABASE_URL。
   for (const [key, value] of Object.entries(TEST_ENV)) {

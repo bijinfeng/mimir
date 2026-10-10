@@ -1,5 +1,6 @@
 /**
  * 桌面端启动自检（手动跑：`node scripts/smoke.mjs`）。
+ * 设置 `MIMIR_SMOKE_EXECUTABLE` 可对解包后的真实可执行文件运行同一组判据。
  *
  * 它回答的是「这个客户端真的起来了吗」——而那是**代码推断不出来**的：
  * 三段产物各自构建成功、类型也过，窗口里仍然可能是白屏（preload 静默不执行、
@@ -28,11 +29,13 @@
  */
 import { spawn } from 'node:child_process'
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { createServer } from 'node:http'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const desktopRoot = join(dirname(fileURLToPath(import.meta.url)), '..')
+const packagedExecutable = process.env.MIMIR_SMOKE_EXECUTABLE
 
 // 转义序列用 String.fromCharCode 拼，不写字面控制字符：
 // 直接写 \u001b 会触发 no-control-regex（那条规则防的是误打进正则的控制字符）
@@ -52,10 +55,22 @@ async function run({ preset, until, graceMs = 12_000, timeoutMs = 90_000 }) {
   }
 
   const child = spawn(
-    join(desktopRoot, 'node_modules', '.bin', 'electron'),
-    ['.', `--user-data-dir=${userData}`],
-    { cwd: desktopRoot, stdio: ['ignore', 'pipe', 'pipe'] },
+    packagedExecutable ?? join(desktopRoot, 'node_modules', '.bin', 'electron'),
+    [...(packagedExecutable ? [] : ['.']), `--user-data-dir=${userData}`],
+    // AppImage 是包装进程：只 kill child 会留下真正的 Electron 孙进程，
+    // 下一轮首启测试随后复用上一轮单实例，得到假的「已选模式」日志。
+    { cwd: desktopRoot, stdio: ['ignore', 'pipe', 'pipe'], detached: process.platform !== 'win32' },
   )
+
+  const killTree = (signal) => {
+    if (!child.pid) return
+    try {
+      if (process.platform === 'win32') child.kill(signal)
+      else process.kill(-child.pid, signal)
+    } catch (error) {
+      if (error.code !== 'ESRCH') throw error
+    }
+  }
 
   let log = ''
   const collect = (chunk) => {
@@ -64,25 +79,32 @@ async function run({ preset, until, graceMs = 12_000, timeoutMs = 90_000 }) {
   child.stdout.on('data', collect)
   child.stderr.on('data', collect)
 
-  const outcome = await Promise.race([
-    until
-      ? new Promise((resolve) => {
-          const timer = setInterval(() => {
-            if (until.test(log)) {
-              clearInterval(timer)
-              resolve('ready')
-            }
-          }, 300)
-        })
-      : new Promise((resolve) => setTimeout(() => resolve('waited'), graceMs)),
-    new Promise((resolve) => setTimeout(() => resolve('timeout'), timeoutMs)),
-    new Promise((resolve) => child.once('exit', () => resolve('exited'))),
-  ])
+  const outcome = await new Promise((resolve) => {
+    let pollTimer
+    let graceTimer
+    const finish = (value) => {
+      clearInterval(pollTimer)
+      clearTimeout(graceTimer)
+      clearTimeout(deadlineTimer)
+      child.off('exit', onExit)
+      resolve(value)
+    }
+    const onExit = () => finish('exited')
+    child.once('exit', onExit)
+    if (until) {
+      pollTimer = setInterval(() => {
+        if (typeof until === 'function' ? until(log) : until.test(log)) finish('ready')
+      }, 300)
+    } else {
+      graceTimer = setTimeout(() => finish('waited'), graceMs)
+    }
+    const deadlineTimer = setTimeout(() => finish('timeout'), timeoutMs)
+  })
 
   const alive = child.exitCode === null
-  child.kill('SIGTERM')
+  killTree('SIGTERM')
   await new Promise((r) => setTimeout(r, 1500))
-  if (child.exitCode === null) child.kill('SIGKILL')
+  killTree('SIGKILL')
   await rm(userData, { recursive: true, force: true })
 
   return { outcome, alive, log: log.replace(ANSI, '') }
@@ -117,6 +139,42 @@ checks.push(
   [!/启动失败|Error:/.test(setup.log), 'B 首次启动没有报错'],
 )
 
+/* ── C. 云端模式：远端页面没有本机桥，也不启动本地宿主 ──────── */
+const cloudRequests = []
+const cloudServer = createServer((request, response) => {
+  cloudRequests.push(request.url ?? '')
+  if (request.url === '/') {
+    response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
+    response.end(
+      '<!doctype html><script>fetch("/bridge-probe?exposed=" + ("mimirDesktop" in window))</script>',
+    )
+  } else {
+    response.writeHead(204)
+    response.end()
+  }
+})
+await new Promise((resolve) => cloudServer.listen(0, '127.0.0.1', resolve))
+const cloudAddress = cloudServer.address()
+if (!cloudAddress || typeof cloudAddress === 'string') throw new Error('云端冒烟测试未获得端口')
+const cloudOrigin = `http://127.0.0.1:${cloudAddress.port}`
+let cloud
+try {
+  cloud = await run({
+    preset: { mode: 'cloud', cloudUrl: cloudOrigin },
+    until: () => cloudRequests.some((path) => path === '/bridge-probe?exposed=false'),
+  })
+} finally {
+  cloudServer.closeAllConnections()
+  await new Promise((resolve, reject) =>
+    cloudServer.close((error) => (error ? reject(error) : resolve())),
+  )
+}
+checks.push(
+  [cloud.outcome === 'ready', 'C 云端模式：远端页面已加载且拿不到桌面桥'],
+  [cloudRequests.includes('/'), 'C 云端模式：窗口确实请求了远端页面'],
+  [!/本地模式宿主|--> GET \/api\//.test(cloud.log), 'C 云端模式：没有启动本地宿主'],
+)
+
 console.log('')
 let failure = null
 for (const [pass, label] of checks) {
@@ -130,6 +188,8 @@ if (failure) {
   console.error(main.log.split('\n').slice(-30).join('\n'))
   console.error('— B 日志尾部 —')
   console.error(setup.log.split('\n').slice(-30).join('\n'))
+  console.error('— C 日志尾部 —')
+  console.error(cloud.log.split('\n').slice(-30).join('\n'))
   process.exit(1)
 }
 console.log('\n[smoke] 自检通过')

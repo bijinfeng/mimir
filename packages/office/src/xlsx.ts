@@ -1,4 +1,4 @@
-import JSZip from 'jszip'
+import { BoundedZip } from './zip-bounds.js'
 
 /**
  * xlsx 的**网格模型**（浏览器侧只读预览）。
@@ -111,13 +111,16 @@ const colWidthToPx = (chars: number): number => Math.round(chars * 7 + 5)
 const rowHeightToPx = (pt: number): number => Math.round((pt * 4) / 3)
 
 export async function readXlsx(bytes: Uint8Array): Promise<XlsxWorkbook> {
-  const zip = await JSZip.loadAsync(bytes)
+  return readXlsxArchive(await BoundedZip.open(bytes))
+}
 
+/** 编辑路径复用同一份已解压的 XML 与预算，不重复加载 ZIP。 */
+export async function readXlsxArchive(zip: BoundedZip): Promise<XlsxWorkbook> {
   const shared = await readSharedStrings(zip)
 
   const sheets: XlsxSheet[] = []
   for (const ref of await listSheets(zip)) {
-    const xml = await zip.files[ref.entry]?.async('string')
+    const xml = await zip.readText(ref.entry)
     if (!xml) continue
     const sheet = parseSheet(xml, shared, ref.name, ref.entry)
     if (ref.hidden) sheet.hidden = true
@@ -152,9 +155,9 @@ interface SheetRef {
  * 解析不出来时退回「按文件名排序 + 工作表 N」：那时给的名称是**我们编的**
  * （与 `plugins/parser/src/xlsx.ts` 的文本提取同一条退路），而不是错的。
  */
-async function listSheets(zip: JSZip): Promise<SheetRef[]> {
-  const workbook = await zip.file('xl/workbook.xml')?.async('string')
-  const rels = await zip.file('xl/_rels/workbook.xml.rels')?.async('string')
+async function listSheets(zip: BoundedZip): Promise<SheetRef[]> {
+  const workbook = await zip.readText('xl/workbook.xml')
+  const rels = await zip.readText('xl/_rels/workbook.xml.rels')
 
   if (workbook && rels) {
     const targets = new Map<string, string>()
@@ -183,7 +186,8 @@ async function listSheets(zip: JSZip): Promise<SheetRef[]> {
     if (refs.length > 0) return refs
   }
 
-  return Object.keys(zip.files)
+  return zip
+    .list('xl/worksheets/')
     .filter((name) => /^xl\/worksheets\/sheet\d+\.xml$/.test(name))
     .toSorted((a, b) => sheetIndex(a) - sheetIndex(b))
     .map((entry) => ({ entry, name: fallbackName(entry), hidden: false }))
@@ -205,10 +209,9 @@ function sheetIndex(entry: string): number {
   return Number(/sheet(\d+)\.xml$/.exec(entry)?.[1] ?? 0)
 }
 
-async function readSharedStrings(zip: JSZip): Promise<string[]> {
-  const file = zip.file('xl/sharedStrings.xml')
-  if (!file) return []
-  const xml = await file.async('string')
+async function readSharedStrings(zip: BoundedZip): Promise<string[]> {
+  const xml = await zip.readText('xl/sharedStrings.xml')
+  if (!xml) return []
 
   /**
    * 每个 `<si>` 里的多个 `<t>` 要**拼起来**：富文本被切成多个 run，

@@ -1,5 +1,5 @@
 import type { ParseInput, ParseResult, Parser } from '@mimir/shared'
-import { cleanExtractedText, listZipEntries, readZipEntry, xmlToText } from './ooxml.js'
+import { cleanExtractedText, openOoxmlArchive, xmlToText, type OoxmlArchive } from './ooxml.js'
 
 /**
  * `.pptx` → Markdown 的**文本提取**（`docs/TECH.md` §13）。
@@ -31,12 +31,13 @@ export function createPptxParser(): Parser {
     async parse(input: ParseInput): Promise<ParseResult> {
       if (input.type !== 'pptx') throw new Error('pptx 解析器只处理 pptx 输入')
 
-      const slides = listZipEntries(input.data, 'ppt/slides/', '.xml')
+      const archive = openOoxmlArchive(input.data, (path) => /^ppt\/slides\/[^/]+\.xml$/.test(path))
+      const slides = archive.list('ppt/slides/', '.xml')
       if (slides.length === 0) throw new Error('这个文件里没有幻灯片（不是有效的 pptx？）')
 
       const sections: string[] = []
       for (const [index, entry] of slides.entries()) {
-        const xml = readZipEntry(input.data, entry)
+        const xml = archive.read(entry)
         if (!xml) continue
 
         const text = slideText(xml)
@@ -51,7 +52,7 @@ export function createPptxParser(): Parser {
 
       return {
         markdown: cleanExtractedText(sections.join('\n\n')),
-        imageCount: countImages(input.data, slides),
+        imageCount: countImages(archive, slides),
         parser: 'pptx',
       }
     },
@@ -88,8 +89,8 @@ function slideText(xml: string): string {
  * 比数 `<a:blip>` 更准（同一个图片被多页引用时 blip 会出现多次，
  * 而 media 里的文件只有一个）。
  */
-function countImages(data: Uint8Array, slides: string[]): number {
-  const media = listZipEntries(data, 'ppt/media/')
+function countImages(archive: OoxmlArchive, slides: string[]): number {
+  const media = archive.list('ppt/media/')
   if (media.length > 0) return media.length
   // 兜底：没有 media 目录时按引用数（老版本 PowerPoint 偶尔不用 media/）
   return slides.length

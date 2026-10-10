@@ -51,14 +51,36 @@ export async function fetchText(
     throw new Error(`HTTP ${response.status} ${response.statusText}`)
   }
 
-  const buffer = await response.arrayBuffer()
-  if (buffer.byteLength > options.maxBytes) {
-    const mb = (buffer.byteLength / 1024 / 1024).toFixed(1)
-    const limitMb = (options.maxBytes / 1024 / 1024).toFixed(0)
-    throw new Error(`内容过大（${mb} MB），超过 ${limitMb} MB 上限`)
+  const declaredLength = response.headers.get('content-length')
+  if (declaredLength && /^\d+$/.test(declaredLength) && Number(declaredLength) > options.maxBytes) {
+    void response.body?.cancel().catch(() => undefined)
+    throw tooLarge(Number(declaredLength), options.maxBytes)
   }
 
-  return { text: new TextDecoder('utf-8').decode(buffer), bytes: buffer.byteLength }
+  const reader = response.body?.getReader()
+  if (!reader) return { text: '', bytes: 0 }
+
+  const decoder = new TextDecoder('utf-8')
+  const parts: string[] = []
+  let bytes = 0
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    bytes += value.byteLength
+    if (bytes > options.maxBytes) {
+      void reader.cancel().catch(() => undefined)
+      throw tooLarge(bytes, options.maxBytes)
+    }
+    parts.push(decoder.decode(value, { stream: true }))
+  }
+  parts.push(decoder.decode())
+  return { text: parts.join(''), bytes }
+}
+
+function tooLarge(bytes: number, maxBytes: number) {
+  const mb = (bytes / 1024 / 1024).toFixed(1)
+  const limitMb = (maxBytes / 1024 / 1024).toFixed(1)
+  return new Error(`内容过大（${mb} MB），超过 ${limitMb} MB 上限`)
 }
 
 /** 从设置里读抓取参数。每次抓取现读，用户在设置页改完立刻生效 */

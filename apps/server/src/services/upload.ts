@@ -11,7 +11,15 @@ import {
 import { db } from '../db/client.js'
 import { documents } from '../db/schema.js'
 import { toSearchText } from '@mimir/tokenizer'
-import { readUploadMeta, removeUpload, writeUpload, type UploadMeta } from '../lib/uploads.js'
+import {
+  metaKey,
+  readUploadMeta,
+  removeUpload,
+  replacementUploadKey,
+  writeUpload,
+  writeUploadMeta,
+  type UploadMeta,
+} from '../lib/uploads.js'
 import { activeStorage } from '../plugins/host.js'
 import { rebuildChunksAndEmbed } from './chunks.js'
 import { createNote, loadTags, syncTags } from './documents.js'
@@ -311,8 +319,7 @@ function toUploadSummary(
  * | 正文 / 提取错误 / 大小 / mime | 重算 | 内容变了，派生数据全都要跟着变 |
  * | 原文件名 | 用新名字 | 用户多半也在改文件名（`.v2.pdf`），拦着不让改很怪 |
  *
- * 原件按「先写新的再删旧的」换：新文件名可能与旧的不同，所以不能用同一个
- * key 覆盖——写完新的、再删掉旧 key，任何时刻都至少有一份可读的原件。
+ * 每次替换都用唯一版本 key，同名也不能覆盖数据库当前指向的旧原件。
  */
 export async function replaceUpload(
   documentId: string,
@@ -340,6 +347,7 @@ export async function replaceUpload(
 
   const oldKey = existing.sourceKey
   const meta = await readUploadMeta(documentId)
+  const tags = (await loadTags([documentId])).get(documentId) ?? []
   const now = new Date()
 
   const { key } = await writeUpload(
@@ -353,7 +361,7 @@ export async function replaceUpload(
           filename,
           mime,
           size: input.data.byteLength,
-          tags: [],
+          tags,
           folder: existing.folder,
           status: existing.status,
           createdAt: existing.createdAt.toISOString(),
@@ -366,28 +374,43 @@ export async function replaceUpload(
           size: input.data.byteLength,
           updatedAt: now.toISOString(),
         },
+    replacementUploadKey(documentId, filename),
   )
 
   const body = extracted.markdown
-  const [row] = await db
-    .update(documents)
-    .set({
-      body,
-      excerpt: toExcerpt(body),
-      searchText: toSearchText(existing.title, body),
-      contentHash: contentHash(body),
-      sourceKey: key,
-      mime,
-      size: input.data.byteLength,
-      parseError: extracted.error,
-      updatedAt: now,
-    })
-    .where(eq(documents.id, documentId))
-    .returning()
+  let row: typeof documents.$inferSelect
+  try {
+    const [updated] = await db
+      .update(documents)
+      .set({
+        body,
+        excerpt: toExcerpt(body),
+        searchText: toSearchText(existing.title, body),
+        contentHash: contentHash(body),
+        sourceKey: key,
+        mime,
+        size: input.data.byteLength,
+        parseError: extracted.error,
+        updatedAt: now,
+      })
+      .where(eq(documents.id, documentId))
+      .returning()
+    if (!updated) throw new Error('替换原件入库失败：数据库未返回记录')
+    row = updated
+  } catch (error) {
+    // meta 已指向新文件。数据库失败时恢复旧指针；若恢复也失败，保留新文件，
+    // 让重建索引仍能沿 meta 找到它，而不是制造另一种裂图。
+    try {
+      if (meta) await writeUploadMeta(documentId, meta)
+      else await activeStorage().remove(metaKey(documentId))
+      await activeStorage().remove(key)
+    } catch (rollbackError) {
+      console.warn(`替换原件回滚失败（${documentId}），请核对 meta.json：`, rollbackError)
+    }
+    throw error
+  }
 
-  if (!row) return null
-
-  // 旧 key 与新的不同名时才删。**放在数据库写入之后**：反过来一旦写库失败，
+  // **放在数据库写入之后**：反过来一旦写库失败，
   // 原件已经没了，而记录还指着它（裂图）。现在最坏是留一个孤儿文件
   if (oldKey && oldKey !== key) {
     await activeStorage()
@@ -396,8 +419,6 @@ export async function replaceUpload(
         console.warn(`删除旧原件失败：${oldKey}`, error)
       })
   }
-
-  const tags = (await loadTags([documentId])).get(documentId) ?? []
 
   return {
     document: toUploadSummary(row, tags),

@@ -159,15 +159,22 @@ export function createS3Storage(load: S3ConfigLoader): StorageBackend {
 
     async read(key) {
       const { client, options } = await resolve()
-      const result = await client.send(
-        new GetObjectCommand({ Bucket: options.bucket, Key: joinKey(options.prefix, key) }),
-      )
+      try {
+        const result = await client.send(
+          new GetObjectCommand({ Bucket: options.bucket, Key: joinKey(options.prefix, key) }),
+        )
 
-      if (!result.Body) throw new Error(`读取 ${key} 失败：响应里没有内容`)
+        if (!result.Body) throw new Error('响应里没有内容')
 
-      // SDK 返回的是 SdkStream（Node 下是 Readable）。契约要 Uint8Array，
-      // 所以这里一次性读完——单用户笔记在 KB 量级，流式的复杂度不值得
-      return result.Body.transformToByteArray()
+        // SDK 返回的是 SdkStream（Node 下是 Readable）。契约要 Uint8Array，
+        // 所以这里一次性读完——单用户笔记在 KB 量级，流式的复杂度不值得
+        return await result.Body.transformToByteArray()
+      } catch (error) {
+        // 兼容端点的 NoSuchKey 文案未必带对象名；存储契约要求错误指出 key。
+        throw new Error(`读取 ${key} 失败：${describeS3Error(error, options.bucket)}`, {
+          cause: error,
+        })
+      }
     },
 
     async write(key, data) {

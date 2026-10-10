@@ -23,6 +23,7 @@ src/
   xlsx.ts          xlsx 网格解析（**自己写的**，未 vendored）
   xlsx-edit.ts     xlsx 单元格编辑：补丁式保存 + 内联字符串（**自己写的**）
   pptx-archive.ts  pptx 的 zip / rels / 媒体读写（浏览器安全，预加载 entries）
+  zip-bounds.ts    浏览器侧 OOXML 的流式解压预算；docx 进 vendor 前预检
   pptx.ts          pptx 打开：装配解析上下文 + 编辑会话（openPptxForEdit）
   pptx-save.ts     pptx 保存：元素补丁回字节（**移植自上游 index.ts**）
   pptx-render.ts   pptx 渲染入口：renderSlide / renderDeck → SVG 字符串
@@ -224,6 +225,12 @@ OLE 对象、自定义样式）。
 
 `src/docx.test.ts` 有一条断言在守它：改一段后**只允许 `word/document.xml`
 变化**。这条红了不要放宽断言，先查是不是保存路径退化了。
+
+### 5. 未受信任的 Office ZIP 不直接调用 `file.async()`
+
+`file.async()` 会先解完整个条目，事后比较长度挡不住单条解压炸弹。
+docx/xlsx/pptx 的打开入口必须经过 `src/zip-bounds.ts`；xlsx/pptx 从有界流
+取得字节，docx 在不可改的 vendor 解析器前预检所有部件（D-110）。
 
 ---
 

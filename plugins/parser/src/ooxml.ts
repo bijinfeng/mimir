@@ -1,4 +1,5 @@
-import { unzipSync } from 'fflate'
+import { Unzip, UnzipInflate } from 'fflate'
+import { FILE_MAX_BYTES } from '@mimir/shared'
 
 /**
  * OOXML（`.docx` / `.xlsx` / `.pptx`）提取的共用底座。
@@ -10,7 +11,7 @@ import { unzipSync } from 'fflate'
  * 而它们真正值钱的排版还原能力我们用不上——正文层是**文本提取**，
  * 不是「在浏览器里还原 Word 版式」。
  *
- * fflate：MIT、零运行时依赖、解压一个 50MB 内的 OOXML 足够快。
+ * fflate：MIT、零运行时依赖。解压走流回调，避免压缩包上限被误当成内存上限。
  *
  * ## 三个格式的共同形状
  *
@@ -23,37 +24,91 @@ import { unzipSync } from 'fflate'
  * .pptx  ppt/slides/slide1.xml      每页的文字
  * ```
  *
- * ## `unzipSync` 会不会吃掉内存
+ * ## 解压预算
  *
- * 会用。上限 50MB 的 zip 解压后可能到数百 MB（XML 冗余度高）。
- * 这是**已知且接受**的代价：单用户自托管、同时最多一个上传，
- * 而换流式解压要让每个提取器都变成流式状态机——复杂度换不来东西。
- * 超限的文件在上传端点就被挡住了（`FILE_MAX_BYTES`）。
+ * 压缩包 ≤ 50 MiB 不等于解压后有上界。共用读取层只解需要的 XML，
+ * 按实际输出限制单条 16 MiB、累计 64 MiB；ZIP 声明的大小只用于提前拒绝。
+ * 原件依然保存，超限只让正文提取失败（D-109）。
  */
 
-/** 取出一个 XML 条目的文本内容。条目不存在时返回 null（而不是抛错） */
-export function readZipEntry(data: Uint8Array, path: string): string | null {
-  const files = unzipSync(data, { filter: (file) => file.name === path })
-  const entry = files[path]
-  if (!entry) return null
-  return new TextDecoder('utf-8').decode(entry)
+export const MAX_XML_ENTRY_BYTES = 16 * 1024 * 1024
+export const MAX_TOTAL_XML_BYTES = 64 * 1024 * 1024
+export const MAX_ZIP_PARTS = 10_000
+
+export interface OoxmlArchive {
+  read(path: string): string | null
+  list(prefix: string, suffix?: string): string[]
 }
 
 /**
- * 列出 zip 里匹配某个前缀的条目名（按名排序）。
- *
- * 排序是必要的：`sheet1.xml` / `sheet10.xml` / `sheet2.xml` 的字典序不等于
- * 工作表顺序，而不排序的话「第 3 张表」在导出的正文里会跳到第 10 张前面。
+ * 一次扫描 ZIP；只解调用方需要的 XML。小块输入让单次 inflate 的输出
+ * 不会远超上限，实际计数才是最终边界（ZIP 元数据不可信）。
  */
-export function listZipEntries(data: Uint8Array, prefix: string, suffix = ''): string[] {
+export function openOoxmlArchive(
+  data: Uint8Array,
+  selectXml: (path: string) => boolean,
+  limits: { entryBytes: number; totalBytes: number; parts: number } = {
+    entryBytes: MAX_XML_ENTRY_BYTES,
+    totalBytes: MAX_TOTAL_XML_BYTES,
+    parts: MAX_ZIP_PARTS,
+  },
+): OoxmlArchive {
+  if (data.byteLength > FILE_MAX_BYTES) throw new Error('Office 原件超过 50 MiB，无法提取正文')
+
   const names: string[] = []
-  unzipSync(data, {
-    filter: (file) => {
-      if (file.name.startsWith(prefix) && file.name.endsWith(suffix)) names.push(file.name)
-      return false
-    },
+  const seen = new Set<string>()
+  const xml = new Map<string, string>()
+  let totalBytes = 0
+  const unzip = new Unzip((file) => {
+    if (seen.has(file.name)) throw new Error(`Office ZIP 含重复部件：${file.name}`)
+    seen.add(file.name)
+    names.push(file.name)
+    if (names.length > limits.parts) throw new Error(`Office ZIP 部件数超过 ${limits.parts}`)
+    if (!selectXml(file.name)) return
+
+    if (file.originalSize !== undefined && file.originalSize > limits.entryBytes) {
+      throw new Error(`Office XML 部件过大：${file.name}（上限 ${limits.entryBytes} 字节）`)
+    }
+    if (file.originalSize !== undefined && totalBytes + file.originalSize > limits.totalBytes) {
+      throw new Error(`Office XML 累计解压量超过 ${limits.totalBytes} 字节`)
+    }
+
+    const decoder = new TextDecoder('utf-8')
+    const chunks: string[] = []
+    let entryBytes = 0
+    file.ondata = (error, chunk, final) => {
+      if (error) throw error
+      if (chunk) {
+        entryBytes += chunk.byteLength
+        totalBytes += chunk.byteLength
+        if (entryBytes > limits.entryBytes) {
+          throw new Error(`Office XML 部件过大：${file.name}（上限 ${limits.entryBytes} 字节）`)
+        }
+        if (totalBytes > limits.totalBytes) {
+          throw new Error(`Office XML 累计解压量超过 ${limits.totalBytes} 字节`)
+        }
+        chunks.push(decoder.decode(chunk, { stream: true }))
+      }
+      if (final) {
+        chunks.push(decoder.decode())
+        xml.set(file.name, chunks.join(''))
+      }
+    }
+    file.start()
   })
-  return sortedNaturally(names)
+  unzip.register(UnzipInflate)
+  const INPUT_CHUNK_BYTES = 1024
+  for (let offset = 0; offset < data.byteLength; offset += INPUT_CHUNK_BYTES) {
+    const end = Math.min(offset + INPUT_CHUNK_BYTES, data.byteLength)
+    unzip.push(data.subarray(offset, end), end === data.byteLength)
+  }
+  if (data.byteLength === 0) unzip.push(data, true)
+
+  return {
+    read: (path) => xml.get(path) ?? null,
+    list: (prefix, suffix = '') =>
+      sortedNaturally(names.filter((name) => name.startsWith(prefix) && name.endsWith(suffix))),
+  }
 }
 
 /** 按自然序排序（不改原数组）：`slide2` 排在 `slide10` 前面 */

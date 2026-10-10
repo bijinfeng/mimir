@@ -1,6 +1,6 @@
-import JSZip from 'jszip'
 import { XMLParser } from 'fast-xml-parser'
 import type { SlideSize } from '../vendor/packages/pptx-engine/src/types.js'
+import { BoundedZip } from './zip-bounds.js'
 
 /**
  * pptx 的**压缩包读写层**（浏览器安全）。
@@ -25,9 +25,8 @@ import type { SlideSize } from '../vendor/packages/pptx-engine/src/types.js'
  * 上游就是这么做的，而这不是随意选择：**补丁式保存要求每个条目的原始字节
  * 都在手里**——保存时要逐字节写回没动过的条目。
  *
- * 代价是内存。所以 `open` 时按**实际解压出的总字节数**记账并设上限
- * （`MAX_TOTAL_UNCOMPRESSED_BYTES`）。用 zip 头部声明的大小是不成立的：
- * 那是文件自己写的，一个恶意文件可以声明 1KB 实际炸 1GB。
+ * 代价是内存。`BoundedZip` 在每个输出块到达时检查实际解压字节，
+ * 而不是 `file.async()` 解完整个条目后才判断大小（D-110）。
  *
  * 这里**不是**「顺带把预览也改成预加载」——预览与编辑共用同一个 archive，
  * 两套读取语义（一套异步按需、一套同步预加载）只会让调用方到处判断。
@@ -85,24 +84,7 @@ export class PptxArchive {
   ) {}
 
   static async open(bytes: Uint8Array): Promise<PptxArchive> {
-    const zip = await JSZip.loadAsync(bytes)
-    assertWithinLimits(zip)
-
-    const entries = new Map<string, Uint8Array>()
-    let total = 0
-    for (const name of Object.keys(zip.files)) {
-      const file = zip.files[name]
-      if (!file || file.dir) continue
-      const data = await file.async('uint8array')
-      total += data.byteLength
-      if (total > MAX_TOTAL_UNCOMPRESSED_BYTES) {
-        throw new Error(
-          `这份 pptx 解压后过大（累计超过 ${Math.round(MAX_TOTAL_UNCOMPRESSED_BYTES / 1024 / 1024)}MB），已停止解析`,
-        )
-      }
-      entries.set(name, data)
-    }
-
+    const entries = await (await BoundedZip.open(bytes)).readAll()
     return new PptxArchive(entries, fnv1a(bytes))
   }
 
@@ -363,31 +345,6 @@ export function resolveTarget(basePart: string, target: string): string {
   }
   return out.join('/')
 }
-
-/**
- * 压缩包边界。
- *
- * 两条都是**便宜且成立**的检查：
- *   - **条目数**：中央目录里的条目数（读一次即可，文件自己声明的值在这里
- *     是可信的——它决定不了我们要分配多少内存）
- *   - **累计解压量**：在 `readEntry` 里按实际解出的字节记账。用声明值是不
- *     成立的（恶意文件可以声明 1KB 实际炸 1GB），所以那条没做
- */
-function assertWithinLimits(zip: JSZip): void {
-  const count = Object.values(zip.files).filter((f) => !f.dir).length
-  if (count > MAX_PARTS) {
-    throw new Error(`这份 pptx 的部件数异常（${count} 个，超过 ${MAX_PARTS}）`)
-  }
-}
-
-/** 部件数上限。一张幻灯片至少一个部件，一万个足够任何真实演示文稿 */
-const MAX_PARTS = 10000
-
-/**
- * 累计解压上限（字节）。取 400MB：一份 50MB 的 pptx（上传上限）正常展开
- * 大约是这个量级，而解压炸弹会远超它。
- */
-const MAX_TOTAL_UNCOMPRESSED_BYTES = 400 * 1024 * 1024
 
 /** FNV-1a 32 位。**不是**密码学哈希，只用来给「同一份文件」一个稳定标识 */
 function fnv1a(bytes: Uint8Array): string {

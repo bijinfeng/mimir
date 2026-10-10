@@ -230,7 +230,7 @@ maintenanceRoute.post('/embed', async (c) => {
 })
 
 /**
- * 全量重算分块（换了 `parser.chunk.size` / `overlap` 之后用）。
+ * 全量核对分块（换了 `parser.chunk.size` / `overlap`，或升级修复旧索引后用）。
  *
  * **不含嵌入**——重算分块会把变了的分块的旧向量一起删掉（级联），
  * 新的向量要接着调 `/maintenance/embed` 补。两件事分开是刻意的：

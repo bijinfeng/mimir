@@ -64,9 +64,9 @@ renderer；云端模式加载远端 Web 构建，用系统边框与原生「更�
 BrandMark 的 path）。现在它用同一套 antd 主题、同一个 `BrandMark`、
 同一组 `WindowControls`——那些是不该有第二份的东西。
 
-`isTrustedSender()` 的信任判据是「页面 URL 等于那个 `file://` 地址」，
-改选择页的产出位置时要一起看：安全模型挂在它上面（云端模式下窗口里跑的是
-远端页面，不能让它驱动模式切换）。
+`isTrustedSender()` 的信任判据包含「页面 URL 等于那个 `file://` 地址」，
+改选择页的产出位置时要一起看。云端模式不再装 preload（D-107），远端页面
+无法直接拿桌面桥；主进程仍保留发送方校验作为纵深防御。
 
 **两种使用方式**（D-100）：本地使用（数据在本机 userData，入口是宿主注入的
 本机令牌，不是无鉴权）/ 连接服务器（纯壳，加载自部署地址）。行为矩阵见
@@ -142,3 +142,5 @@ electron-vite 的 dev 形态会为渲染进程另起一个 Vite dev server，让
 | **「连不上」的错误话术透出 `fetch failed`** | Node / 浏览器给的原话没说清是「域名解析不了」「没人监听」还是「证书不信任」，而这三件的下一步完全不同。`cloud.ts` 的 `describeFetchError` 从 `error.cause.code` 判 ECONNREFUSED / ENOTFOUND / CERT…；另有一条 `bad port`（fetch 拦一批历史危险端口，且**不带** code）。测试用「刚释放的空闲端口」而不是 `:1` 来测连接失败 |
 | **选择页的三种形态串了（首启显示「切换」的措辞、或多出不该有的按钮）** | 三种入口形态（首启 / 设置里更换 / 云端连不上的兜底）只差几句文案与一两个按钮的有无，漏一处不报错，只是界面在说错话。D-103 之前靠手写 `data-visible` + CSS 控制，踩过一次：`.field` 有 `display:none` 而 `.footnote` 漏了同一条规则——**那次是靠截图发现的**，DOM 断言看不出来。现在是 React 的条件渲染，`SetupPage.test.tsx` 逐条锁住了三种形态 |
 | **改了选择页的产出位置，模式切换的安全模型跟着失效** | `isTrustedSender()` 的判据是「页面 URL 等于 `setupPageUrl()`」。云端模式下窗口里跑的是**远端服务端发来的页面**，它不能驱动模式切换（否则一台被攻破的服务器能让客户端启动本地宿主再导航过去，把本机知识库读走）。改 `setupPagePath()` 时两处要一起看——不一致的表现不是报错，而是**选择页自己的按钮变成「不受信任」**，点了会多弹一个原生确认框 |
+| **切到另一 localhost 服务后带上本地免登录令牌** | Cookie 不按端口隔离；若本地与云端共用 `defaultSession`，`127.0.0.1:<另一个端口>` 也收到 `mimir-local`。本地令牌只写入 `persist:mimir-local`，云端按服务器地址分 Session；`BrowserWindow` 的 Session 创建后不能只靠 `loadURL` 切换，跨模式必须新建窗口（D-107） |
+| **远端页面打开本地宿主或请求设备权限** | 仅同源 URL 可留在 Electron 窗口；`will-navigate`、重定向与 `window.open` 都要守，跨源 web 链接交系统浏览器。云端不加载 preload，Session 默认拒绝设备权限；同源文件预览子窗口也不注入 preload（D-107） |

@@ -11,6 +11,7 @@ import {
   pmDocOptions,
   pmDocToSavePlan,
 } from '../vendor/apps/docs/src/renderer/editor/convert.js'
+import { BoundedZip } from './zip-bounds.js'
 
 /**
  * 编辑器文档的类型。
@@ -127,6 +128,7 @@ export interface DocxSession {
  * 接进产品时要考虑 worker，否则大文档会卡住主线程。
  */
 export async function openDocx(bytes: Uint8Array): Promise<DocxSession> {
+  await (await BoundedZip.open(bytes)).preflightAll()
   const parsed = await parseDocx(bytes)
 
   /**

@@ -1,5 +1,5 @@
 import type { ParseInput, ParseResult, Parser } from '@mimir/shared'
-import { cleanExtractedText, listZipEntries, readZipEntry, xmlToText } from './ooxml.js'
+import { cleanExtractedText, openOoxmlArchive, xmlToText, type OoxmlArchive } from './ooxml.js'
 
 /**
  * `.xlsx` → Markdown 的**文本提取**（`docs/TECH.md` §13）。
@@ -43,13 +43,21 @@ export function createXlsxParser(): Parser {
     async parse(input: ParseInput): Promise<ParseResult> {
       if (input.type !== 'xlsx') throw new Error('xlsx 解析器只处理 xlsx 输入')
 
-      const shared = readSharedStrings(input.data)
-      const sheets = listSheets(input.data)
+      const archive = openOoxmlArchive(
+        input.data,
+        (path) =>
+          path === 'xl/sharedStrings.xml' ||
+          path === 'xl/workbook.xml' ||
+          path === 'xl/_rels/workbook.xml.rels' ||
+          /^xl\/worksheets\/.+\.xml$/.test(path),
+      )
+      const shared = readSharedStrings(archive)
+      const sheets = listSheets(archive)
       if (sheets.length === 0) throw new Error('这个文件里没有工作表（不是有效的 xlsx？）')
 
       const sections: string[] = []
       for (const sheet of sheets) {
-        const xml = readZipEntry(input.data, sheet.entry)
+        const xml = archive.read(sheet.entry)
         if (!xml) continue
 
         const table = sheetToMarkdown(xml, shared)
@@ -89,9 +97,9 @@ interface SheetRef {
  *
  * 读不到时退回「工作表 N」：那时名字是**我们编的**（一眼能看出），不是错的。
  */
-function listSheets(data: Uint8Array): SheetRef[] {
-  const workbook = readZipEntry(data, 'xl/workbook.xml')
-  const rels = readZipEntry(data, 'xl/_rels/workbook.xml.rels')
+function listSheets(archive: OoxmlArchive): SheetRef[] {
+  const workbook = archive.read('xl/workbook.xml')
+  const rels = archive.read('xl/_rels/workbook.xml.rels')
 
   if (workbook && rels) {
     const targets = new Map<string, string>()
@@ -120,7 +128,7 @@ function listSheets(data: Uint8Array): SheetRef[] {
     if (refs.length > 0) return refs
   }
 
-  return listZipEntries(data, 'xl/worksheets/', '.xml').map((entry) => ({
+  return archive.list('xl/worksheets/', '.xml').map((entry) => ({
     entry,
     name: fallbackName(entry),
     hidden: false,
@@ -146,8 +154,8 @@ function fallbackName(entry: string): string {
  * 只取第一个 `<t>` 会让「**加粗**的部分」之后的内容整段消失。
  * 索引严格按 `<si>` 的出现顺序（从 0 开始）。
  */
-function readSharedStrings(data: Uint8Array): string[] {
-  const xml = readZipEntry(data, 'xl/sharedStrings.xml')
+function readSharedStrings(archive: OoxmlArchive): string[] {
+  const xml = archive.read('xl/sharedStrings.xml')
   if (!xml) return []
 
   const out: string[] = []

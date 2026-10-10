@@ -1,10 +1,10 @@
 import { beforeAll, describe, expect, it } from 'vitest'
-import { sql } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import { db } from '../db/client.js'
 import { chunks } from '../db/schema.js'
 import { chunkText } from '../lib/chunk.js'
 import { assembleCitations, searchChunks } from '../search/index.js'
-import { createNote } from '../services/documents.js'
+import { createNote, updateNote } from '../services/documents.js'
 import { getAuthCookie, makeClient } from './helpers.js'
 
 /**
@@ -62,6 +62,110 @@ describe('检索单元下沉到分块（M1-C）', () => {
     expect(body.slice(citation!.start, citation!.end)).toBe(citation!.text)
   })
 
+  it('等长正文修改后不会沿用旧分块和旧检索词', async () => {
+    const before = 'alpha unique-red omega'
+    const after = 'alpha unique-new omega'
+    const created = await createNote({ title: '等长更新', body: before, tags: [] })
+
+    await updateNote(created.id, { body: after })
+
+    const rows = await db
+      .select({ content: chunks.content, searchText: chunks.searchText })
+      .from(chunks)
+      .where(eq(chunks.documentId, created.id))
+    expect(rows).toHaveLength(1)
+    expect(rows[0]!.content).toBe(after)
+    expect(rows[0]!.searchText).toContain('new')
+    expect(rows[0]!.searchText).not.toContain('red')
+
+    const hits = await searchChunks({ q: 'unique-new', limit: 20 })
+    expect(hits.hits.some((hit) => hit.documentId === created.id)).toBe(true)
+  })
+
+  it('仅改标题会更新分块检索词，而不重建正文分块', async () => {
+    const created = await createNote({ title: '红色标题', body: 'body stays', tags: [] })
+    const [before] = await db
+      .select({ id: chunks.id, createdAt: chunks.createdAt })
+      .from(chunks)
+      .where(eq(chunks.documentId, created.id))
+
+    await updateNote(created.id, { title: '蓝色标题' })
+
+    const [after] = await db
+      .select({ id: chunks.id, createdAt: chunks.createdAt, searchText: chunks.searchText })
+      .from(chunks)
+      .where(eq(chunks.documentId, created.id))
+    expect(after!.id).toBe(before!.id)
+    expect(after!.createdAt).toEqual(before!.createdAt)
+    expect(after!.searchText).toContain('蓝色')
+    expect(after!.searchText).not.toContain('红色')
+
+    const hits = await searchChunks({ q: '蓝色', limit: 20 })
+    expect(hits.hits.some((hit) => hit.documentId === created.id)).toBe(true)
+  })
+
+  it('手动重建能修复升级前留下的旧正文与检索词，同时保留健康分块', async () => {
+    const current = 'repair-marker new-value'
+    const stale = 'repair-marker old-value'
+    expect(current.length).toBe(stale.length)
+    const damaged = await createNote({ title: '索引修复用例', body: current, tags: [] })
+    const healthy = await createNote({ title: '健康分块用例', body: '无需改动的正文', tags: [] })
+    const [healthyBefore] = await db
+      .select({ createdAt: chunks.createdAt })
+      .from(chunks)
+      .where(eq(chunks.documentId, healthy.id))
+
+    // 模拟旧版仅按 id/偏移比较时遗留的分块；文档正文仍是新内容。
+    await db
+      .update(chunks)
+      .set({ content: stale, searchText: stale })
+      .where(eq(chunks.documentId, damaged.id))
+
+    const rebuilt = await client.post<{ documents: number; chunks: number }>(
+      '/api/maintenance/chunks/rebuild',
+      {},
+    )
+    expect(rebuilt.status).toBe(200)
+    expect(rebuilt.body.documents).toBeGreaterThanOrEqual(2)
+
+    const [repaired] = await db
+      .select({ content: chunks.content, searchText: chunks.searchText })
+      .from(chunks)
+      .where(eq(chunks.documentId, damaged.id))
+    expect(repaired!.content).toBe(current)
+    expect(repaired!.searchText).toContain('new')
+    expect(repaired!.searchText).not.toContain('old')
+
+    const [healthyAfter] = await db
+      .select({ createdAt: chunks.createdAt })
+      .from(chunks)
+      .where(eq(chunks.documentId, healthy.id))
+    expect(healthyAfter!.createdAt).toEqual(healthyBefore!.createdAt)
+  })
+
+  it('手动重建能原位修复旧标题检索词，不重建正文分块', async () => {
+    const created = await createNote({ title: '现行标题词', body: 'stable body', tags: [] })
+    const [before] = await db
+      .select({ createdAt: chunks.createdAt })
+      .from(chunks)
+      .where(eq(chunks.documentId, created.id))
+    await db
+      .update(chunks)
+      .set({ searchText: '旧版标题词 stable body' })
+      .where(eq(chunks.documentId, created.id))
+
+    const rebuilt = await client.post('/api/maintenance/chunks/rebuild', {})
+    expect(rebuilt.status).toBe(200)
+
+    const [after] = await db
+      .select({ createdAt: chunks.createdAt, searchText: chunks.searchText })
+      .from(chunks)
+      .where(eq(chunks.documentId, created.id))
+    expect(after!.createdAt).toEqual(before!.createdAt)
+    expect(after!.searchText).toContain('现行')
+    expect(after!.searchText).not.toContain('旧版')
+  })
+
   it('同一篇的相邻分块被合并成一段（而不是重复进上下文）', async () => {
     // 长正文 + 小分块：同一个主题连续跨多块
     const paragraph = '关于潮汐锁定的连续叙述，每一段都相关。'
@@ -86,6 +190,9 @@ describe('检索单元下沉到分块（M1-C）', () => {
     // 且合并出来的每段都比单个分块长（那正是合并的意义）
     const maxChunkLength = Math.max(...own.map((item) => item.snippet.end - item.snippet.start))
     expect(mine.some((item) => item.end - item.start > maxChunkLength)).toBe(true)
+    for (const citation of mine) {
+      expect(citation.text).toBe(body.slice(citation.start, citation.end))
+    }
   })
 
   it('每篇文档最多贡献 maxPerDoc 条', async () => {

@@ -1,5 +1,6 @@
 import JSZip from 'jszip'
-import { readXlsx, type XlsxWorkbook } from './xlsx.js'
+import { readXlsxArchive, type XlsxWorkbook } from './xlsx.js'
+import { BoundedZip } from './zip-bounds.js'
 
 /**
  * xlsx 的**单元格文字编辑**（补丁式保存）。
@@ -112,16 +113,11 @@ export interface XlsxEditSession {
  * （不保存），而这里要（未改动的条目原样写回）。
  */
 export async function openXlsxForEdit(bytes: Uint8Array): Promise<XlsxEditSession> {
-  const archive = await JSZip.loadAsync(bytes)
-  const workbook = await readXlsx(bytes)
+  const archive = await BoundedZip.open(bytes)
+  const workbook = await readXlsxArchive(archive)
 
   /** 每个条目一次解压（改动只发生在 sheet XML 上，其余原样持有） */
-  const entries = new Map<string, Uint8Array>()
-  for (const name of Object.keys(archive.files)) {
-    const file = archive.files[name]
-    if (!file || file.dir) continue
-    entries.set(name, await file.async('uint8array'))
-  }
+  const entries = await archive.readAll()
 
   /** 改过的表：entry 路径 → 新的 XML 文本 */
   const patched = new Map<string, string>()

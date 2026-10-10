@@ -425,6 +425,27 @@ describe('PdfEditor 工具条的动作', () => {
     expect(button(host, '保存到库').getAttribute('title')).toBe('没有改动，不用保存')
   })
 
+  it('带表单的 PDF 不写回原件，并在编辑器中说明原因', async () => {
+    const doc = await PDFDocument.create()
+    const page = doc.addPage([300, 400])
+    doc.getForm().createTextField('contact').addToPage(page)
+    const { host, saved } = await mount(await doc.save())
+
+    click(button(host, '向右旋转 90 度'))
+    click(button(host, '保存到库'))
+    await settle(() =>
+      (host.querySelector('.mimir-editor__footer .me-notice')?.textContent ?? '').includes(
+        '未保存',
+      ),
+    )
+
+    expect(saved).toHaveLength(0)
+    const notice = host.querySelector('.mimir-editor__footer .me-notice')?.textContent ?? ''
+    expect(notice).toContain('AcroForm')
+    expect(notice).toContain('未写回原件')
+    expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('已修改，未保存')
+  })
+
   it('弹层面板就地渲染，不 portal 到 body（否则深色下会退回浅色回退值）', async () => {
     const { host } = await mount(await makePdf())
     const before = document.body.childElementCount

@@ -7,10 +7,9 @@ import type { DesktopBootInfo, DesktopModeResult, DesktopModeState } from '@mimi
  *
  * ## 边界
  *
- * 页面拿不到 BrowserWindow、路径、句柄这些它不该碰的东西。「模式」那一组
- * 也只是一组动作请求：**能不能改由主进程判断**（远端页面发起切换一定会先
- * 弹原生确认框，见 main.ts 的 isTrustedSender）。preload 不做也不该做这个
- * 判断——它是渲染进程里的代码，任何校验放这里都等于放给页面自己。
+ * 页面拿不到 BrowserWindow、路径、句柄这些它不该碰的东西。preload 只装在
+ * 本地页与选择页；云端远端页面不装它（D-107）。「模式」仍只是动作请求，
+ * **能不能改由主进程判断**；preload 不做这个判断——它是渲染进程里的代码。
  */
 contextBridge.exposeInMainWorld('mimirDesktop', {
   boot: (): Promise<DesktopBootInfo | null> => ipcRenderer.invoke('mimir:boot-info'),

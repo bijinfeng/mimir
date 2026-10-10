@@ -38,11 +38,12 @@
  * 的模型，它**不保留**原始字节里那些它没理解的东西（增量更新的对象、
  * 线性化提示、未引用的对象）。所以保存后的文件会比原件小、内容逐字节不同。
  *
- * 三种情况仍然安全：
- *   - **页面级操作是它擅长的**：页对象、页树、目录、字体、图像流都被正确搬运
+ * 页面编辑的边界：
+ *   - **页面级操作是它擅长的**：页对象、字体、图像流能随页面搬运；书签目录不在此列
  *   - 未编辑时**不保存**——判据是**页面结构与原件是否逐页相同**（`isPristine`），
  *     不是「有没有操作过」：转过去再转回来仍然是原样，那时按钮就该是灰的，
  *     否则「什么都没改」也会把整份文件重写一遍
+ *   - 常见文档信息显式复制；有额外 Catalog 结构时拒绝写回，不静默丢表单等数据
  *   - 界面上如实写着「保存会重写整个文件」，用户下载原件可以对比
  *
  * ## 一页改了什么，都记在 `PdfPageRef` 上
@@ -574,11 +575,17 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
   const save = async () => {
     if (settled === null || source.bytes === null) return
     setNotice(null)
-    const bytes = await buildPdfBytes({
-      bytes: source.bytes,
-      layout: settled.pages,
-      imports: settled.imports,
-    })
+    let bytes: Uint8Array
+    try {
+      bytes = await buildPdfBytes({
+        bytes: source.bytes,
+        layout: settled.pages,
+        imports: settled.imports,
+      })
+    } catch (cause) {
+      setNotice(`未保存：${messageOf(cause)}`)
+      return
+    }
     const ok = await source.save(bytes, { name: 'document.pdf', mime: OFFICE_MIME.pdf })
     if (!ok) return
     /**
@@ -1106,9 +1113,9 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
             纸型会按比例缩放内容并改纸张尺寸，两个一起写才不拉伸。画布画的始终是原件，所以保存之前裁剪用框外压暗表示、
             纸型只在状态行里写着目标尺寸。删除、调序、旋转也一样只在保存时落到文件上——保存之前退出，原件一字未动
             （这条是删除没有撤销时的退路）。保存会用 pdf-lib
-            重写整个文件（页面级操作是它擅长的，但字节与原件不同）。 改文字不在本版——PDF
-            的文字是内容流里的绘制指令，改一个字要重排整段（那要 PDFium 的 7MB WASM，见 TECH
-            §15.12）。
+            重写整个文件（页面级操作是它擅长的，但字节与原件不同）；表单、签名等无法保留时会拒绝保存。
+            改文字不在本版——PDF 的文字是内容流里的绘制指令，改一个字要重排整段（那要 PDFium 的 7MB
+            WASM，见 TECH §15.12）。
           </ToolbarNote>
         )
       }
