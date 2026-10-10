@@ -81,3 +81,36 @@
 ### Next Steps
 
 - 按审查报告优先级安排产品代码修复与未覆盖场景复测
+
+
+## Session 4: 第二轮 UI 审查问题整改
+<!-- trellis-session: v=2 fp=6ceeda784c2ca377 -->
+
+**Date**: 2026-10-11
+**Task**: 第二轮 UI 审查问题整改
+**Branch**: `codex/ui-review-round-2`
+
+### Summary
+
+修复 F1–F22 交互与 Markdown 头部问题，保留头部、工具栏、内容区域结构；完成审查证据与验收记录，归档三个相关 Trellis 任务。
+
+### Main Changes
+
+- 改进自动保存离开保护、焦点与表单反馈、最近笔记、命令入口、互链及目录操作。
+- 重整 Markdown 笔记头部和单行工具栏，并同步产品与设计规范。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `c151a95` | feat: 修复第二轮 UI 审查问题并优化笔记工作区 |
+| `5d679be` | docs: 记录第二轮 UI 审查与整改验收 |
+
+### Testing
+
+- [OK] pnpm check 与 git diff --check 通过。
+- [OK] SQLite 与 PostgreSQL 17 + pgvector 服务端集成测试各 240 项通过；浅深主题及 1440/1100/880/600px 视口已核对。
+
+### Status
+
+[OK] **Completed**
