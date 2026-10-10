@@ -23,6 +23,7 @@
 | **进目录页图标切换动效不对（箭头朝上）** | morphicons 的路径形变与 antd 自带的收起态 `-90°` 旋转叠加了——`transform: none !important` 关掉 antd 那一半，朝向只归动效库一处（DESIGN §8.1） |
 | **目录树整体浮着一块底色 / 树根样式写了不生效** | createStyles 里把树根样式写成 `.treeWrap .ant-tree` 后代式，而 treeWrap 类就挂在**树根自己身上**——祖先-后代关系不成立，规则静默失效：目录顶着 antd 的 colorBgContainer 坐了两个迭代，D-070（界面去线）删掉右缘线没了遮挡才被看见。同一条坑还埋着选中态规则（`-node-selected` 类也在 wrapper 自己身上，从没生效过，一直是 antd 默认在渲染）。要用 `&.ant-tree` 同元素选择器。展开三角的坑在同一段代码里还有一对：三角必须 z-index 抬过 content-wrapper（relative 且 DOM 在后，否则 elementFromPoint 命中 wrapper、点三角落空），闲时 pointer-events none（那个位置平时点图标 = 进目录）（`FolderSection.tsx` 的 `treeWrap`，DESIGN §8.1） |
 | 界面里混进原生控件（深色下白框） | 语法对、typecheck 过、浅色下「看着还行」，但深浅主题都管不到原生 `<select>` / `<input type="file">`，各浏览器默认外观还不同。交互元素一律用 antd（`Segmented` / `Table` / `Upload` / `Button` / `Typography.Text code`）。见 D-042 |
+| 点击「登出」后页面不变，控制台报 HTTP 415 | Better Auth 的 `/api/auth/sign-out` 要求 JSON 请求头；`lib/api.ts` 的 `request()` 只有在 body 存在时才加 `Content-Type`。两个登出入口都应发送空 JSON 对象 `{}`，再清空会话并回登录页。 |
 | 热力图的日期键全部静默失配 | 图表库用 `YYYY/M/D`（**不补零**），API 给 `2026-09-18`（补零）——直接 `replaceAll('-','/')` 得到的键永远查不到，自定义规则全部失效而图照常渲染。只在一个 `dateKey()` 里统一转换。见 §12.8 |
 | 热力图少渲染最后几天（含「今天」） | 库的 `gridNum` 从**容器宽度**推，不从日期范围推——CSS 自适应会安静丢掉放不下的天（370 天在 680px 容器里只画 53 列）。自己按日期范围算宽度传给 SVG。见 §12.8 |
 | 热力图有时一格都不画 | antd `Tabs` 切走的面板是 `display: none`，`clientWidth` 为 0 → 列数为 0；且只在挂载时量一次，恢复与否全靠凑巧（实测同一页面来回切，有时 376 格、有时 0 格）。宽度为 0 时**不挂载**该库，用 `ResizeObserver` 等它有位置了再挂（`WhenVisible`）。见 §12.8 |

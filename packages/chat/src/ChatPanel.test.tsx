@@ -7,7 +7,7 @@ import { afterAll, afterEach, describe, expect, it } from 'vitest'
 import { installDomShims } from './test-dom.js'
 import { ChatPanel } from './ChatPanel.js'
 import type { ChatIo } from './runtime/io.js'
-import type { ChatComposerStatus } from './types.js'
+import type { ChatComposerStatus, ChatDraft } from './types.js'
 
 /**
  * 面板的端到端挂载（**不 mock 引擎**）。
@@ -208,7 +208,7 @@ afterAll(() => {
   process.off('unhandledRejection', onUnhandled)
 })
 
-let mounted: { root: Root; container: HTMLElement } | null = null
+let mounted: { root: Root; container: HTMLElement; io: ChatIo } | null = null
 const servers: { server: Server; drain: () => void }[] = []
 
 afterEach(async () => {
@@ -227,7 +227,7 @@ afterEach(async () => {
   }
 })
 
-async function mount(io: ChatIo) {
+async function mount(io: ChatIo, draft: ChatDraft | null = null) {
   const container = document.createElement('div')
   document.body.appendChild(container)
   const root = createRoot(container)
@@ -235,7 +235,7 @@ async function mount(io: ChatIo) {
     root.render(
       createElement(ChatPanel, {
         conversationId: undefined,
-        draft: null,
+        draft,
         onOpenCitation: () => {},
         onOpenNote: () => {},
         io,
@@ -243,8 +243,25 @@ async function mount(io: ChatIo) {
       }),
     )
   })
-  mounted = { root, container }
+  mounted = { root, container, io }
   return container
+}
+
+async function rerender(draft: ChatDraft | null) {
+  if (!mounted) throw new Error('对话面板尚未挂载')
+  const { root, io } = mounted
+  await act(async () => {
+    root.render(
+      createElement(ChatPanel, {
+        conversationId: undefined,
+        draft,
+        onOpenCitation: () => {},
+        onOpenNote: () => {},
+        io,
+        composerStatus: EMPTY_STATUS,
+      }),
+    )
+  })
 }
 
 /** 往输入框里打字。React 的受控 textarea 要绕开 value 的 setter */
@@ -272,6 +289,63 @@ async function send(container: HTMLElement) {
     await new Promise((resolve) => setTimeout(resolve, 60))
   })
 }
+
+describe('ChatPanel：宿主草稿', () => {
+  const io = makeIo('http://127.0.0.1:1/api/chat')
+
+  it('从搜索带来的纯文本草稿预填输入框，空态仍是全库提问', async () => {
+    const container = await mount(io, { text: '搜索里的问题' })
+    expect(container.querySelector('textarea')?.value).toBe('搜索里的问题')
+    expect(textOf(container)).toContain('向知识库提问')
+    expect(textOf(container)).not.toContain('针对本文提问')
+  })
+
+  it('已挂载时消费新草稿一次，同一草稿重渲染不覆盖编辑', async () => {
+    const first: ChatDraft = { text: '第一次提问' }
+    const container = await mount(io, first)
+    await type(container, '用户修改的内容')
+
+    await rerender(first)
+    expect(container.querySelector('textarea')?.value).toBe('用户修改的内容')
+
+    const second: ChatDraft = { text: '第二次提问', documentId: 'doc-1' }
+    await rerender(second)
+    expect(container.querySelector('textarea')?.value).toBe('第二次提问')
+    expect(textOf(container)).toContain('针对本文提问')
+    expect(textOf(container)).toContain('范围：当前文档')
+
+    await type(container, '在文档内手动改过的问题')
+    await rerender({ ...second })
+    expect(container.querySelector('textarea')?.value).toBe('第二次提问')
+
+    await rerender({ text: '回到全库提问' })
+    expect(container.querySelector('textarea')?.value).toBe('回到全库提问')
+    expect(textOf(container)).toContain('向知识库提问')
+    expect(textOf(container)).not.toContain('范围：当前文档')
+  })
+
+  it('文档入口的空草稿只锁定范围，不清空已经输入的问题', async () => {
+    const container = await mount(io, { text: '', documentId: 'doc-1' })
+    expect(textOf(container)).toContain('范围：当前文档')
+    await type(container, '还没发出的提问')
+
+    await rerender({ text: '', documentId: 'doc-1' })
+    expect(container.querySelector('textarea')?.value).toBe('还没发出的提问')
+    expect(textOf(container)).toContain('范围：当前文档')
+  })
+
+  it('已有一轮回答的对话收到搜索草稿时仍能预填', async () => {
+    const handle = serve(() => successFrames())
+    servers.push(handle)
+    const container = await mount(makeIo(await handle.listen()))
+    await type(container, '上一轮问题')
+    await send(container)
+    await waitFor(container, () => textOf(container).includes('回答'), '上一轮回答')
+
+    await rerender({ text: '从搜索带来的下一问' })
+    expect(container.querySelector('textarea')?.value).toBe('从搜索带来的下一问')
+  })
+})
 
 /**
  * 在输入框里按 Enter。

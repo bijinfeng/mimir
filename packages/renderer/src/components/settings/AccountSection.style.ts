@@ -95,4 +95,10 @@ export const useAccountStyles = createStyles(({ css, token }) => ({
   nameInput: css`
     max-width: 260px;
   `,
+  accountFooter: css`
+    display: flex;
+    justify-content: flex-end;
+    padding: 12px 16px;
+    border-top: 1px solid ${token.colorBorderSecondary};
+  `,
 }))

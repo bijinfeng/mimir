@@ -85,15 +85,15 @@ export function detectSource(url: string): DetectedSource | null {
     return {
       kind: 'wechat',
       label: '微信公众号',
-      note: '图片需要带 Referer 才能下载，代码常是截图',
+      note: '图片保留原链接，正文可离线阅读',
     }
   }
   if (/github\.com/i.test(value)) {
     return {
       kind: 'github',
       label: 'GitHub 仓库',
-      note: '走 API 取 README 与 release，只抓 README 和 docs/',
+      note: '收集仓库信息和 README',
     }
   }
-  return { kind: 'web', label: '网页', note: 'Readability 提取正文' }
+  return { kind: 'web', label: '网页', note: '提取网页正文' }
 }

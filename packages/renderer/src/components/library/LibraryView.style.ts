@@ -8,8 +8,8 @@ import { FONT_SIZE } from '../../theme/tokens'
  *
  * ```
  * 测试知识库                              ← 知识库名（hero 标题）
- * 暂无描述                                ← 描述或占位的「暂无描述」
- * 知识库 ID: 7ZZRF7 ⧉   创建者: kebai     ← 元信息行
+ * 描述（有内容时）                        ← 无描述时不占一行
+ * 知识库 ID: 7ZZRF7 ⧉                   ← 可复制的元信息
  * 4 个文档   [卡片|列表] [新建文件夹] [新建文件] [添加文档 ▾]
  * 文档                支持文本…可直接拖到本页上传
  * ┌──────┐ ┌──────┐ ┌──────┐            ← 文件夹卡片在前，文档卡片在后
@@ -58,9 +58,6 @@ export const useStyles = createStyles(({ css, token }) => ({
     font-size: ${FONT_SIZE.excerpt}px;
     color: ${token.colorTextSecondary};
     line-height: 1.6;
-  `,
-  kbDescEmpty: css`
-    color: ${token.colorTextQuaternary};
   `,
   /* 面包屑（在「文档」那一行里）：知识库根 + 每一段子目录 */
   /**
@@ -205,6 +202,18 @@ export const useStyles = createStyles(({ css, token }) => ({
     align-items: center;
     flex-wrap: wrap;
     gap: 8px;
+
+    @media (max-width: 720px) {
+      order: 2;
+      flex-basis: 100%;
+    }
+  `,
+  toolbarPrimary: css`
+    flex: none;
+
+    @media (max-width: 720px) {
+      order: 1;
+    }
   `,
 
   /**

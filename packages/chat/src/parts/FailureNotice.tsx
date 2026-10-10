@@ -77,17 +77,14 @@ export const FAILURE_UI: Record<
     title: string
     /** 预设说明。服务端没给原文时用它 */
     detail: string
-    /** 回答「内容丢了吗」与「还能做什么」 */
-    note: string
     actions: { label: string; primary?: boolean; implemented?: boolean }[]
   }
 > = {
   quota: {
-    title: '模型额度用尽',
-    detail: '服务商返回余额不足。本次请求没有产生费用，检索结果仍然有效。',
+    title: '模型请求受限',
+    detail: '服务商拒绝了本次请求。请检查额度或稍后重试；模型用量以服务商账单为准。',
     /* 不写「在 Postgres 上完成」：驱动是部署事实（服务器 PG / 本地与桌面
        SQLite，D-045），界面说死一种就在另一种上说了句可被当场证伪的话 */
-    note: '检索在本地数据库完成，不受额度影响',
     actions: [
       { label: '只检索，不调模型', primary: true, implemented: true },
       { label: '换一个模型' },
@@ -96,8 +93,7 @@ export const FAILURE_UI: Record<
   },
   timeout: {
     title: '请求超时',
-    detail: '等待过久没有响应。命中的分块已经保存在上面，重试不会重新检索。',
-    note: '已命中的内容没有丢',
+    detail: '模型响应超时。可以重试，或只查看检索结果。',
     actions: [
       { label: '重试', primary: true, implemented: true },
       { label: '缩小到当前文档' },
@@ -106,8 +102,7 @@ export const FAILURE_UI: Record<
   },
   truncated: {
     title: '回答被截断',
-    detail: '已达到单次输出上限。前面的内容完整，可以接着生成。',
-    note: '命中的分块没有被丢弃',
+    detail: '回答达到输出上限。已显示的内容仍可查看。',
     actions: [
       { label: '接着生成' },
       { label: '只要结论' },
@@ -116,10 +111,9 @@ export const FAILURE_UI: Record<
   },
   offline: {
     title: '网络不可达',
-    detail: '无法连接模型服务。检索在本地数据库完成，仍然可用。',
+    detail: '无法连接模型服务。仍可查看检索结果或稍后重试。',
     /* 「整理收件箱」随收件箱视图一起退役了（D-054/D-065）——
        那句话指向一个不存在的去处 */
-    note: '离线时仍可：全文搜索、阅读与编辑笔记',
     actions: [
       { label: '只检索，不调模型', primary: true, implemented: true },
       { label: '重试', implemented: true },
@@ -128,7 +122,7 @@ export const FAILURE_UI: Record<
 }
 
 /** 未实现的动作。写在这里而不是每处现编一句，措辞只有一份 */
-const NOT_IMPLEMENTED = 'M0 未实现'
+const NOT_IMPLEMENTED = '暂不可用'
 
 export function FailureCard({
   failure,
@@ -194,11 +188,8 @@ export function FailureCard({
           )
         })}
       </div>
-      <div className={styles.note}>{ui.note}</div>
       {!deepReasoningKnown && (
-        <div className={styles.note}>
-          这是历史记录：当时有没有开「深度思考」没有存下来，重试按「关闭」处理
-        </div>
+        <div className={styles.note}>历史记录未保存思考模式；重试将使用标准模式。</div>
       )}
     </div>
   )
@@ -253,7 +244,7 @@ export function StreamErrorCard({
           把问题放回输入框
         </Button>
       </div>
-      <div className={styles.note}>这一轮没有生成回答，所以知识库里也不会多出一条记录</div>
+      <div className={styles.note}>本轮未生成回答。</div>
     </div>
   )
 }

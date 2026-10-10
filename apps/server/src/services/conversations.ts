@@ -8,6 +8,7 @@ import type {
   Message,
   Trace,
 } from '@mimir/shared'
+import { SEARCH_ONLY_RESULT_TEXT } from '@mimir/shared'
 import { db } from '../db/client.js'
 import { conversationRefs, conversations, documents, messages } from '../db/schema.js'
 import { createNote } from './documents.js'
@@ -135,6 +136,17 @@ export interface AppendMessageInput {
  * 登记为幂等（onConflictDoNothing）：同一次会话里引用同一篇两次是正常的。
  */
 export async function appendMessage(input: AppendMessageInput): Promise<Message> {
+  // SQLite 以毫秒存时间；同一轮提问与回答可能落在同一毫秒。
+  // 历史消息按 createdAt 排序，所以新消息至少比上一条晚 1ms，
+  // 不能把随机 id 当作同毫秒时的发送顺序。
+  const [latest] = await db
+    .select({ createdAt: messages.createdAt })
+    .from(messages)
+    .where(eq(messages.conversationId, input.conversationId))
+    .orderBy(desc(messages.createdAt))
+    .limit(1)
+  const createdAt = new Date(Math.max(Date.now(), (latest?.createdAt.getTime() ?? 0) + 1))
+
   const [row] = await db
     .insert(messages)
     .values({
@@ -145,6 +157,7 @@ export async function appendMessage(input: AppendMessageInput): Promise<Message>
       trace: input.trace ?? null,
       citations: input.citations ?? [],
       failure: input.failure ?? null,
+      createdAt,
     })
     .returning()
 
@@ -209,19 +222,26 @@ export async function saveMessageAsNote(
 
   const citations = (row.citations as Citation[] | null) ?? []
 
-  const body = [
-    row.text,
-    '',
-    ...(citations.length > 0
-      ? [
-          '## 引用来源',
-          '',
-          ...citations.map((cite) => `- [${cite.title}](/doc/${cite.documentId})`),
-        ]
-      : []),
-  ].join('\n')
-
-  const note = await createNote({ title: noteTitleFrom(row.text), body, tags: ['对话沉淀'] })
+  // 新的只检索回答把原文放在引用卡里；保存为独立笔记时要把片段带上。
+  // 只认固定状态文案，旧历史回答和模型生成内容仍按原样保存。
+  const isSearchOnly = row.text === SEARCH_ONLY_RESULT_TEXT && citations.length > 0
+  const body = isSearchOnly
+    ? citations
+        .map((cite) => `## [${cite.title}](/doc/${cite.documentId})\n\n${cite.snippet}`)
+        .join('\n\n')
+    : [
+        row.text,
+        '',
+        ...(citations.length > 0
+          ? [
+              '## 引用来源',
+              '',
+              ...citations.map((cite) => `- [${cite.title}](/doc/${cite.documentId})`),
+            ]
+          : []),
+      ].join('\n')
+  const title = noteTitleFrom(isSearchOnly ? `检索摘录：${citations[0]?.title ?? ''}` : row.text)
+  const note = await createNote({ title, body, tags: ['对话沉淀'] })
 
   await db.update(messages).set({ savedNoteId: note.id }).where(eq(messages.id, messageId))
 

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { Empty, Input, Modal, Spin, Typography } from 'antd'
+import type { SearchHit } from '@mimir/shared'
+import { Button, Input, Modal } from 'antd'
 import { createStyles } from 'antd-style'
 import { FilePlus, Search, Upload } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
@@ -21,7 +22,7 @@ import { FONT_SIZE } from '../theme/tokens'
 export interface CommandPaletteProps {
   open: boolean
   onClose: () => void
-  onOpenDocument: (id: string) => void
+  onOpenSearchHit: (hit: SearchHit) => void
   onAsk: (question: string) => void
   onOpenCapture: () => void
   onNewNote: () => void | Promise<void>
@@ -173,25 +174,12 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
     white-space: nowrap;
   `,
 
-  /** 空态 / 加载态也要有左右内边距，否则文字会顶到面板边缘 */
-  emptyBox: css`
-    padding: 26px 18px;
-  `,
-
   /* ── 底部两段 ──────────────────────────────────────── */
-  /**
-   * 有输入时预览 AI 回答：体现「搜索和问答是同一个入口」。
-   *
-   * 底色用 `tintNav`（中性极浅灰）而**不是** `colorPrimaryBg`：高亮项用的
-   * 就是那个浅蓝，两者相邻时同一片蓝会连成一块，看起来像一个跨行的选中态。
-   * 而且 §0.1 说语义色只出现在真的有状态的地方——这条是**提示**，不是状态。
-   *
-   * AI 的暗示由 `✦` 图标的 `colorLink` 承担，不靠底色。
-   * 与 `.trellis/spec/project/design.md` §8.6 检索过程用同一种表面处理，二者是同类东西。
-   */
+  /** 检索状态与独立提问动作。中性底色使它与高亮结果明显分开。 */
   aiRow: css`
     display: flex;
-    align-items: flex-start;
+    align-items: center;
+    justify-content: space-between;
     gap: 8px;
     padding: 10px 18px;
     border-top: 1px solid ${token.colorSplit};
@@ -204,6 +192,17 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
     flex: none;
     margin-top: 2px;
     color: ${token.colorLink};
+  `,
+  aiStatus: css`
+    display: inline-flex;
+    align-items: center;
+    min-width: 0;
+    gap: 8px;
+  `,
+  aiActions: css`
+    display: inline-flex;
+    align-items: center;
+    flex: none;
   `,
 
   /**
@@ -233,12 +232,6 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
     flex: none;
     white-space: nowrap;
   `,
-  /** 右侧那句是补充说明而非必需信息：贴右，放不下时整句落到下一行 */
-  footHint: css`
-    flex: none;
-    margin-left: auto;
-    white-space: nowrap;
-  `,
   kbd: css`
     font-family: ${token.fontFamilyCode};
     font-size: ${FONT_SIZE.badge}px;
@@ -255,7 +248,7 @@ interface PaletteItem {
   key: string
   icon?: ReactNode
   title: string
-  sub: string
+  sub?: string
   run: () => void
 }
 
@@ -276,7 +269,7 @@ export function CommandPalette({ open, ...rest }: CommandPaletteProps) {
 
 function PaletteBody({
   onClose,
-  onOpenDocument,
+  onOpenSearchHit,
   onAsk,
   onOpenCapture,
   onNewNote,
@@ -335,29 +328,35 @@ function PaletteBody({
         key: 'new-note',
         icon: <FilePlus size={16} />,
         title: '新建笔记',
-        sub: '空白 Markdown 笔记，直接落进库',
         run: () => void onNewNote(),
       },
       {
         type: 'command',
         key: 'capture',
         icon: <Upload size={16} />,
-        title: '收集网页 / 公众号 / GitHub',
-        sub: '粘贴 URL 抓取，直接落进库',
+        title: '收集链接或文件',
+        sub: '网页、公众号、GitHub、文件',
         run: onOpenCapture,
       },
     ] satisfies PaletteItem[]
   ).filter((item) => !value.trim() || matches(item, value))
 
-  const documents: PaletteItem[] = (searchQuery.data?.hits ?? []).map((hit) => ({
+  const documents: PaletteItem[] = (searchQuery.data?.hits ?? []).map((hit, index) => ({
     type: 'document',
-    key: hit.documentId,
+    key: `${hit.documentId}-${hit.snippet.start}-${hit.snippet.end}-${index}`,
     title: hit.title,
     sub: hit.snippet.text,
-    run: () => onOpenDocument(hit.documentId),
+    run: () => onOpenSearchHit(hit),
   }))
 
   const items = [...commands, ...documents]
+  const activeItem = items[activeIndex]
+  const question = value.trim()
+  const askQuestion = () => {
+    if (!question) return
+    onAsk(question)
+    onClose()
+  }
 
   /**
    * 输入变化时把高亮收回到第一项。
@@ -381,20 +380,19 @@ function PaletteBody({
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'ArrowDown') {
       event.preventDefault()
-      setActiveIndex((index) => Math.min(items.length - 1, index + 1))
+      if (items.length > 0) setActiveIndex((index) => Math.min(items.length - 1, index + 1))
     } else if (event.key === 'ArrowUp') {
       event.preventDefault()
-      setActiveIndex((index) => Math.max(0, index - 1))
+      if (items.length > 0) setActiveIndex((index) => Math.max(0, index - 1))
     } else if (event.key === 'Enter') {
       event.preventDefault()
       const item = items[activeIndex]
       if (item) {
         item.run()
         onClose()
-      } else if (value.trim()) {
+      } else if (question) {
         // 没有匹配项时，回车把它当成一个问题
-        onAsk(value.trim())
-        onClose()
+        askQuestion()
       }
     }
   }
@@ -446,104 +444,111 @@ function PaletteBody({
             size="large"
             variant="borderless"
             prefix={<Search size={16} />}
-            placeholder="搜索文档、执行操作，或直接提问…"
+            aria-label="搜索文档或输入问题"
+            placeholder="搜索文档或输入问题"
             value={value}
             onChange={(event) => handleChange(event.target.value)}
             onKeyDown={handleKeyDown}
           />
         </div>
 
-        <div className={styles.list} ref={listRef}>
-          {commands.length > 0 && (
-            <>
-              <div className={styles.sectionLabel}>操作</div>
-              {commands.map((item, index) => (
-                <PaletteRow
-                  key={item.key}
-                  item={item}
-                  index={index}
-                  active={index === activeIndex}
-                  onHover={setActiveIndex}
-                  className={cx}
-                />
-              ))}
-            </>
-          )}
+        {items.length > 0 && (
+          <div className={styles.list} ref={listRef}>
+            {commands.length > 0 && (
+              <>
+                <div className={styles.sectionLabel}>操作</div>
+                {commands.map((item, index) => (
+                  <PaletteRow
+                    key={item.key}
+                    item={item}
+                    index={index}
+                    active={index === activeIndex}
+                    onHover={setActiveIndex}
+                    className={cx}
+                  />
+                ))}
+              </>
+            )}
 
-          {documents.length > 0 && (
-            <>
-              {/*
-               * 这里曾经是 `value.trim() ? '匹配的文档' : '最近打开'` —— 后半句
-               * 永远不会渲染：文档行的唯一来源是 `searchQuery.data?.hits`，
-               * 而那个查询 `enabled: shouldSearch`（输入 ≥ 2 字），与
-               * `value.trim()` 为空互斥。三条路都是死的：空查询下 hits 为
-               * undefined，缓存里也没有空键的条目（queryKey 带 value），
-               * 于是「最近打开」这个意图在界面上从来没有发生过。
-               *
-               * 想要真的「最近打开」得另接一个最近文档查询——那是新增产品行为，
-               * 按仓库铁律要先改 `.trellis/spec/project/design.md` §8.10 再改代码。这里只把
-               * 不可能成立的分支删掉，说它实际是什么。
-               */}
-              <div className={styles.sectionLabel}>匹配的文档</div>
-              {documents.map((item, index) => (
-                <PaletteRow
-                  key={item.key}
-                  item={item}
-                  index={commands.length + index}
-                  active={commands.length + index === activeIndex}
-                  onHover={setActiveIndex}
-                  className={cx}
-                />
-              ))}
-            </>
-          )}
+            {documents.length > 0 && (
+              <>
+                {/*
+                 * 这里曾经是 `value.trim() ? '匹配的文档' : '最近打开'` —— 后半句
+                 * 永远不会渲染：文档行的唯一来源是 `searchQuery.data?.hits`，
+                 * 而那个查询 `enabled: shouldSearch`（输入 ≥ 2 字），与
+                 * `value.trim()` 为空互斥。三条路都是死的：空查询下 hits 为
+                 * undefined，缓存里也没有空键的条目（queryKey 带 value），
+                 * 于是「最近打开」这个意图在界面上从来没有发生过。
+                 *
+                 * 想要真的「最近打开」得另接一个最近文档查询——那是新增产品行为，
+                 * 按仓库铁律要先改 `.trellis/spec/project/design.md` §8.10 再改代码。这里只把
+                 * 不可能成立的分支删掉，说它实际是什么。
+                 */}
+                <div className={styles.sectionLabel}>匹配的文档</div>
+                {documents.map((item, index) => (
+                  <PaletteRow
+                    key={item.key}
+                    item={item}
+                    index={commands.length + index}
+                    active={commands.length + index === activeIndex}
+                    onHover={setActiveIndex}
+                    className={cx}
+                  />
+                ))}
+              </>
+            )}
+          </div>
+        )}
 
-          {items.length === 0 && (
-            <div className={styles.emptyBox}>
-              {searchQuery.isFetching ? (
-                <div style={{ textAlign: 'center' }}>
-                  <Spin />
-                </div>
-              ) : (
-                <Empty
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                  description={
-                    <Typography.Text type="secondary">
-                      没有匹配的内容。按 Enter 把它当成问题问知识库
-                    </Typography.Text>
-                  }
-                />
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* 有输入时预览 AI 会怎么回答——「搜索和问答同一个入口」的体现 */}
-        {shouldSearch && (
+        {question && (
           <div className={styles.aiRow}>
-            <span className={styles.aiIco}>✦</span>
-            <span>
-              {searchQuery.isFetching
-                ? '正在检索…'
-                : documents.length > 0
-                  ? `关于「${value.trim()}」命中 ${documents.length} 处，按 Enter 直接提问可以拿到带引用的回答。`
-                  : `知识库里暂时没有「${value.trim()}」的记录。按 Enter 仍可提问，它会告诉你确实没存过。`}
+            <span className={styles.aiStatus}>
+              <span className={styles.aiIco}>✦</span>
+              <span>
+                {!shouldSearch
+                  ? '输入至少两个字搜索文档'
+                  : searchQuery.isFetching
+                    ? '正在检索…'
+                    : searchQuery.isError
+                      ? '搜索失败，请重试'
+                      : documents.length > 0
+                        ? `找到 ${documents.length} 处`
+                        : '没有匹配的文档'}
+              </span>
+            </span>
+            <span className={styles.aiActions}>
+              {searchQuery.isError && (
+                <Button size="small" type="link" onClick={() => void searchQuery.refetch()}>
+                  重试
+                </Button>
+              )}
+              <Button size="small" type="link" onClick={askQuestion}>
+                提问
+              </Button>
             </span>
           </div>
         )}
 
         <div className={styles.foot}>
-          <span className={styles.footItem}>
-            <span className={styles.kbd}>↑</span>
-            <span className={styles.kbd}>↓</span>选择
-          </span>
-          <span className={styles.footItem}>
-            <span className={styles.kbd}>Enter</span>打开
-          </span>
+          {items.length > 0 && (
+            <span className={styles.footItem}>
+              <span className={styles.kbd}>↑</span>
+              <span className={styles.kbd}>↓</span>选择
+            </span>
+          )}
+          {(activeItem || question) && (
+            <span className={styles.footItem}>
+              <span className={styles.kbd}>Enter</span>
+              {activeItem
+                ? activeItem.type === 'document'
+                  ? '打开所选结果'
+                  : '执行所选操作'
+                : '提问'}
+            </span>
+          )}
           <span className={styles.footItem}>
             <span className={styles.kbd}>Esc</span>关闭
           </span>
-          <span className={styles.footHint}>输入两个字以上会同时给 AI 答案</span>
         </div>
       </div>
     </Modal>
@@ -579,7 +584,7 @@ function PaletteRow({
         <span className={styles.itemTitle} data-role="title">
           {item.title}
         </span>
-        <span className={styles.itemSub}>{item.sub}</span>
+        {item.sub && <span className={styles.itemSub}>{item.sub}</span>}
       </span>
     </button>
   )
@@ -587,5 +592,5 @@ function PaletteRow({
 
 function matches(item: PaletteItem, query: string): boolean {
   const needle = query.trim().toLowerCase()
-  return `${item.title} ${item.sub}`.toLowerCase().includes(needle)
+  return `${item.title} ${item.sub ?? ''}`.toLowerCase().includes(needle)
 }

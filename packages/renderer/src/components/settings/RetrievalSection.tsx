@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Database, RefreshCw } from 'lucide-react'
 import { api } from '../../lib/api'
 import { LoadError } from '../LoadError'
-import { BlockDesc, Note, Panel, Row, SourceBadge } from './parts'
+import { BlockDesc, Panel, Row, SourceBadge, TechnicalDetails } from './parts'
 import { SettingControl } from './SettingControl'
 import { useStyles } from './settings.style'
 
@@ -148,13 +148,13 @@ export function RetrievalSection() {
                 <span className={styles.blockDesc}>读取中…</span>
               ) : status.pending === null ? (
                 <span className={styles.blockDesc}>
-                  未配置向量化模型（设置 › 模型 › 任务分配）— 语义通道不会参与检索
+                  未配置向量化模型；语义检索暂不可用。请在「模型」中分配向量化任务。
                 </span>
               ) : status.pending === 0 ? (
-                <span className={styles.blockDesc}>0 段 —— 全部已嵌入</span>
+                <span className={styles.blockDesc}>全部已嵌入</span>
               ) : (
                 <span className={styles.blockDesc}>
-                  {status.pending} 段 —— 这些段落暂时只能按关键词搜到
+                  {status.pending} 段；补嵌入前只能按关键词检索。
                 </span>
               )}
             </Row>
@@ -167,7 +167,7 @@ export function RetrievalSection() {
                   disabled={status?.pending === null || status?.pending === 0}
                   onClick={() => embed.mutate()}
                 >
-                  补嵌入（分批，一次 64 段）
+                  补嵌入
                 </Button>
                 <Button
                   icon={<RefreshCw size={14} />}
@@ -178,10 +178,12 @@ export function RetrievalSection() {
                 </Button>
               </div>
               <BlockDesc>
-                若升级前修改过正文或标题，请运行一次「重建分块」，修正可能留下的旧检索内容；更改分块大小或重叠后也需要运行。它不调模型，未变化段落的向量会保留；发生变化的段落会清除旧向量，再用「补嵌入」补齐（
-                <b>会产生用量</b>）。补嵌入可分批继续，中断后不会从头重做。
+                调整分块参数后请重建分块；变化的段落需重新补嵌入，<b>会产生模型用量</b>。
               </BlockDesc>
             </div>
+            <TechnicalDetails>
+              补嵌入每次处理最多 64 段，可多次继续。重建分块不会调用模型；未变化段落的向量会保留。
+            </TechnicalDetails>
           </>
         )}
       </Panel>
@@ -197,7 +199,9 @@ export function RetrievalSection() {
             {entry.problem ? <BlockDesc>{entry.problem}</BlockDesc> : null}
           </Row>
         ))}
-        <Row label="分词器">jieba（@node-rs/jieba）· 写入时预分词</Row>
+        <TechnicalDetails>
+          <Row label="分词器">jieba（@node-rs/jieba）· 写入时预分词</Row>
+        </TechnicalDetails>
       </Panel>
 
       <Panel title="检索通道">
@@ -220,16 +224,13 @@ export function RetrievalSection() {
 
       <Panel title="相关性自检">
         <div className={styles.block}>
-          <Typography.Paragraph className={styles.blockDesc} style={{ marginBottom: 10 }}>
-            改完分词词典或权重后，在这里试一句——用的是库里的真实内容。
-          </Typography.Paragraph>
-
           <Input.Search
-            placeholder="比如：向量检索"
+            aria-label="测试检索词"
+            placeholder="输入检索词，例如：向量检索"
             value={probe}
             onChange={(event) => setProbe(event.target.value)}
             loading={probeQuery.isFetching}
-            enterButton="试一下"
+            enterButton="测试检索"
           />
         </div>
 
@@ -249,8 +250,7 @@ export function RetrievalSection() {
 
             {result.total === 0 && (
               <Typography.Paragraph className={styles.blockDesc} style={{ margin: '6px 0 0' }}>
-                没有命中。若确认内容存在，请检查分块是否已建立、正文是否已更新；词级通道还依赖写入时的
-                jieba 分词，子串通道可兜底部分分词问题。
+                没有命中。若文档中确有相关内容，请先检查分块状态，必要时重建分块。
               </Typography.Paragraph>
             )}
 
@@ -259,23 +259,18 @@ export function RetrievalSection() {
                 className={`${styles.blockDesc} ${styles.warnText}`}
                 style={{ margin: '6px 0 0' }}
               >
-                词级召回 0 段、子串兜底命中：分词没切对，但兜底通道救回来了。
+                关键词未命中，子串检索找到了结果；可能是分词不匹配。
               </Typography.Paragraph>
             )}
 
             {result.hits.map((hit) => (
-              <div key={hit.documentId} className={styles.file}>
+              <div key={`${hit.documentId}:${hit.snippet.start}`} className={styles.file}>
                 {hit.title}（{hit.matchedBy.join(' + ')}）
               </div>
             ))}
           </div>
         )}
       </Panel>
-
-      <Note>
-        若自检报告 0 命中而你确认存过，先在本页重建分块；若笔记或上传件的文件记录缺失，
-        再去「数据与备份」重建文件索引。后者无法从文件恢复抓取件。
-      </Note>
     </>
   )
 }

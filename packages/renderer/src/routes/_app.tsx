@@ -5,7 +5,7 @@ import {
   useNavigate,
   useSearch,
 } from '@tanstack/react-router'
-import type { Citation } from '@mimir/shared'
+import type { Citation, SearchHit } from '@mimir/shared'
 import { App as AntApp } from 'antd'
 import { createStyles } from 'antd-style'
 import { useEffect, useState } from 'react'
@@ -282,6 +282,20 @@ function AppShell() {
     void navigate({ to: '/docs', search: { scope: 'all', id: documentId } })
   }
 
+  const openSearchHit = (hit: SearchHit) => {
+    setCameFromChat(false)
+    setCitation({
+      documentId: hit.documentId,
+      kind: hit.kind,
+      title: hit.title,
+      snippet: hit.snippet.text,
+      start: hit.snippet.start,
+      end: hit.snippet.end,
+      matchedBy: hit.matchedBy,
+    })
+    void navigate({ to: '/docs', search: { scope: 'all', id: hit.documentId } })
+  }
+
   /**
    * Ctrl K 打开命令面板。
    *
@@ -356,9 +370,9 @@ function AppShell() {
           setPaletteOpen(false)
           openCapture()
         }}
-        onOpenDocument={(id) => {
+        onOpenSearchHit={(hit) => {
           setPaletteOpen(false)
-          openDocument(id, 'all')
+          openSearchHit(hit)
         }}
         onAsk={(question) => {
           setPaletteOpen(false)

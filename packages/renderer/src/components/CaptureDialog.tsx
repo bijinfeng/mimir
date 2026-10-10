@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Alert, Button, Input, Modal, Segmented, Typography } from 'antd'
+import { Alert, Button, Input, Modal, Segmented } from 'antd'
 import { createStyles } from 'antd-style'
-import { Check, Inbox, LoaderCircle, X } from 'lucide-react'
+import { Check, LoaderCircle, X } from 'lucide-react'
 import { useState } from 'react'
 import type { CaptureStage, CaptureStageResult, DetectedSource } from '@mimir/shared'
 import { detectSource } from '@mimir/shared'
@@ -41,7 +41,7 @@ const STAGE_LABEL: Record<CaptureStage, string> = {
   fetch: '获取页面',
   extract: '提取正文',
   assets: '处理图片',
-  convert: '统一转 Markdown',
+  convert: '整理内容',
 }
 
 const STAGE_ORDER: CaptureStage[] = ['fetch', 'extract', 'assets', 'convert']
@@ -51,6 +51,11 @@ const useStyles = createStyles(({ css, token }) => ({
     display: flex;
     flex-direction: column;
     gap: 12px;
+  `,
+  fieldLabel: css`
+    font-size: ${FONT_SIZE.note}px;
+    font-weight: 600;
+    color: ${token.colorText};
   `,
   /* 两个页签的切换条。放在弹窗内容区顶部、通栏等宽——
      「粘贴链接 / 上传文件」是同一个动作的两种方式，没有主次 */
@@ -171,14 +176,9 @@ const useStyles = createStyles(({ css, token }) => ({
   footer: css`
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 8px;
     width: 100%;
-  `,
-  footerHint: css`
-    flex: 1;
-    font-size: ${FONT_SIZE.meta}px;
-    color: ${token.colorTextTertiary};
-    text-align: left;
   `,
 }))
 
@@ -279,19 +279,6 @@ export function CaptureDialog({
       styles={{ container: { borderRadius: 12 } }}
       footer={
         <div className={styles.footer}>
-          <span className={styles.footerHint}>
-            {/* 落点如实说：从知识库页唤起时，收进去的就是那个知识库。
-                措辞跟着页签走——上传页签里说「抓完」是答非所问 */}
-            {folder
-              ? tab === 'upload'
-                ? `上传的文件将收进「${folder}」，传完直接可用`
-                : `抓到的内容将收进「${folder}」，抓完直接可用`
-              : tab === 'upload'
-                ? '上传的文件直接入库，之后按标签与目录整理'
-                : failure
-                  ? '这次没成功。可以先试试别的链接，或改用浏览器扩展。'
-                  : '抓到的内容直接入库，之后按标签与目录整理'}
-          </span>
           <Button onClick={close}>{tab === 'upload' ? '关闭' : '取消'}</Button>
           {/* 上传页签的「行动按钮」在面板里（每行一个结果，按钮要说清打开哪一个），
               所以这里不重复放一个「上传」——它也不知道该上传什么 */}
@@ -331,9 +318,13 @@ export function CaptureDialog({
         />
       ) : (
         <div className={styles.body}>
+          <label className={styles.fieldLabel} htmlFor="capture-url">
+            网页链接
+          </label>
           <Input
+            id="capture-url"
             autoFocus
-            placeholder="https://…"
+            placeholder="https://example.com/article"
             value={url}
             onChange={(event) => setUrl(event.target.value)}
             onPressEnter={() => {
@@ -351,7 +342,7 @@ export function CaptureDialog({
             </div>
           ) : url.trim() ? (
             <div className={cx(styles.kind, styles.kindWarn)}>
-              无法识别的链接，需要以 http:// 或 https:// 开头
+              请输入以 http:// 或 https:// 开头的链接
             </div>
           ) : (
             <div className={styles.hint}>支持网页、公众号文章、GitHub 仓库</div>
@@ -410,8 +401,7 @@ export function CaptureDialog({
               description={
                 detected?.kind === 'wechat' ? (
                   <span className={styles.hint}>
-                    公众号反爬严格，高频访问会撞墙，图片还需要 Referer 才下得动。
-                    可以稍后重试，或改用浏览器扩展在你的会话里抓取。
+                    公众号可能限制抓取。请稍后重试，或在浏览器扩展中收集。
                   </span>
                 ) : undefined
               }
@@ -426,12 +416,6 @@ export function CaptureDialog({
                 <span>{stages[2]?.meta ?? ''}</span>
               </div>
             </div>
-          )}
-
-          {running && (
-            <Typography.Text type="secondary" className={styles.hint}>
-              <Inbox size={14} /> 抓完会直接入库
-            </Typography.Text>
           )}
         </div>
       )}

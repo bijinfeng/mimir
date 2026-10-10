@@ -1,0 +1,4 @@
+{"file": ".trellis/tasks/10-10-ui-ux-audit/research/spec-contracts.md", "reason": "提取产品、视觉、文案与设置架构契约；完整规范按需查阅"}
+{"file": ".trellis/spec/renderer/frontend/index.md", "reason": "renderer 规范索引与实现边界"}
+{"file": ".trellis/spec/server/backend/index.md", "reason": "只检索回答服务端规范"}
+{"file": ".trellis/tasks/10-10-ui-ux-audit/audit.md", "reason": "逐屏证据和文案改写基线"}

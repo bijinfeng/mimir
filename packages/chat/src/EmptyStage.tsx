@@ -20,12 +20,7 @@ export function EmptyStage({ draft }: { draft: ChatDraft | null }) {
 
   return (
     <div className={styles.empty}>
-      <div className={styles.emptyTitle}>{draft ? '就这一篇提问' : '问点什么'}</div>
-      <div className={styles.emptySub}>
-        {draft
-          ? '上下文已经准备好，范围锁定在这篇文档'
-          : '它会先在你的知识库里检索，再基于命中的原文回答，并给出引用'}
-      </div>
+      <div className={styles.emptyTitle}>{draft?.documentId ? '针对本文提问' : '向知识库提问'}</div>
     </div>
   )
 }

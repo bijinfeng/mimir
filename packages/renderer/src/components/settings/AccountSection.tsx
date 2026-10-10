@@ -1,10 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { App, Avatar, Button, Input, Popconfirm, Typography, Upload } from 'antd'
+import { App, Avatar, Button, Input, Popconfirm, Upload } from 'antd'
 import { useEffect, useState } from 'react'
 import { api, type AuthSession } from '../../lib/api'
 import { cropAvatar } from '../../lib/avatar'
-import { Block, BlockDesc, Panel } from './parts'
-import { useStyles } from './settings.style'
+import { Block, Panel, TechnicalDetails } from './parts'
 import { useAccountStyles } from './AccountSection.style'
 
 /**
@@ -39,7 +38,6 @@ import { useAccountStyles } from './AccountSection.style'
  * 在慢网络下是真实的：几秒内界面上什么都没有变化。
  */
 export function AccountSection() {
-  const { styles } = useStyles()
   const { styles: accountStyles } = useAccountStyles()
 
   const sessionQuery = useQuery({ queryKey: ['session'], queryFn: api.auth.session })
@@ -48,43 +46,37 @@ export function AccountSection() {
   const localMode = configQuery.data?.localMode ?? false
 
   return (
-    <>
-      <Panel title="资料">
-        <Block>
-          <div className={accountStyles.profile}>
-            <AvatarColumn session={session ?? null} />
+    <Panel title="资料">
+      <Block>
+        <div className={accountStyles.profile}>
+          <AvatarColumn session={session ?? null} />
 
-            <div className={accountStyles.profileBody}>
-              <NameField session={session ?? null} localMode={localMode} />
-              {localMode ? (
-                <BlockDesc>本地使用，数据只在这台电脑上。名称与头像只影响这里的显示。</BlockDesc>
-              ) : (
-                <>
-                  <div className={accountStyles.emailRow}>
-                    <span className={accountStyles.emailLabel}>邮箱</span>
-                    <span className={accountStyles.emailValue}>{session?.user.email ?? '—'}</span>
-                  </div>
-                  <BlockDesc>
-                    要换邮箱，改服务端的 <Typography.Text code>OWNER_EMAIL</Typography.Text>{' '}
-                    再重启。
-                  </BlockDesc>
-                </>
-              )}
-            </div>
+          <div className={accountStyles.profileBody}>
+            <NameField session={session ?? null} localMode={localMode} />
+            {localMode ? null : (
+              <>
+                <div className={accountStyles.emailRow}>
+                  <span className={accountStyles.emailLabel}>邮箱</span>
+                  <span className={accountStyles.emailValue}>{session?.user.email ?? '—'}</span>
+                </div>
+              </>
+            )}
           </div>
-        </Block>
-      </Panel>
-
-      {/* 登出只在云端模式出现：本地模式下没有「登出去哪」——下一次打开
-          还是同一台机器、同一个本机用户。留一颗点了没反应的按钮比没有更糟 */}
+        </div>
+      </Block>
       {localMode ? null : (
-        <div className={styles.actions} style={{ marginTop: 14 }}>
+        <TechnicalDetails>
+          更换邮箱需修改服务端的 <code>OWNER_EMAIL</code>，然后重启服务。
+        </TechnicalDetails>
+      )}
+      {localMode ? null : (
+        <div className={accountStyles.accountFooter}>
           <Button danger onClick={() => void api.auth.signOutAndLeave()}>
             登出
           </Button>
         </div>
       )}
-    </>
+    </Panel>
   )
 }
 
@@ -260,6 +252,7 @@ function NameField({ session, localMode }: { session: AuthSession | null; localM
     <div className={accountStyles.nameRow}>
       <span className={accountStyles.emailLabel}>名称</span>
       <Input
+        aria-label="名称"
         value={draft}
         maxLength={60}
         onChange={(event) => setDraft(event.target.value)}

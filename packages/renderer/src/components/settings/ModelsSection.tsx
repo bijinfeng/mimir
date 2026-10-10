@@ -111,22 +111,28 @@ export function ModelsSection() {
       />
 
       <Panel title="任务分配">
-        {modelConfig.roles.map((role) => (
-          <RoleRow
-            key={role.role}
-            role={role}
-            providers={modelConfig.providers}
-            onBind={(binding) =>
-              commit(
-                withRoleBound(
-                  { providers: modelConfig.providers, roles: rolesToRecord(modelConfig.roles) },
-                  role.role,
-                  binding,
-                ),
-              )
-            }
-          />
-        ))}
+        {modelConfig.providers.length === 0 ? (
+          <div className={styles.block}>
+            <div className={styles.blockDesc}>添加供应商后可选择模型</div>
+          </div>
+        ) : (
+          modelConfig.roles.map((role) => (
+            <RoleRow
+              key={role.role}
+              role={role}
+              providers={modelConfig.providers}
+              onBind={(binding) =>
+                commit(
+                  withRoleBound(
+                    { providers: modelConfig.providers, roles: rolesToRecord(modelConfig.roles) },
+                    role.role,
+                    binding,
+                  ),
+                )
+              }
+            />
+          ))
+        )}
       </Panel>
     </>
   )
@@ -223,14 +229,16 @@ function RoleRow({
 
         <StatusDot role={role} />
 
-        <Button
-          size="small"
-          loading={probe.isPending}
-          disabled={!role.ready}
-          onClick={() => probe.mutate()}
-        >
-          测试
-        </Button>
+        <Tooltip title="会发起真实模型调用，可能产生用量">
+          <Button
+            size="small"
+            loading={probe.isPending}
+            disabled={!role.ready}
+            onClick={() => probe.mutate()}
+          >
+            测试
+          </Button>
+        </Tooltip>
       </div>
     </Row>
   )
@@ -258,7 +266,7 @@ function StatusDot({ role }: { role: ModelRoleStatus }) {
 
   if (!probe) {
     return (
-      <Tooltip title="配置看起来齐了，但还没实际调用过。点「测试」发一次真实请求">
+      <Tooltip title="尚未测试。测试会发起真实模型调用。">
         <span className={styles.muted}>未测试</span>
       </Tooltip>
     )

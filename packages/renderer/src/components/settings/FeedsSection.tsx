@@ -4,7 +4,7 @@ import { Plus, RefreshCw, Rss, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import type { FeedSummary } from '@mimir/shared'
 import { api } from '../../lib/api'
-import { Block, BlockDesc, Note, Panel, Row } from './parts'
+import { Block, BlockDesc, Panel, Row } from './parts'
 import { useStyles } from './settings.style'
 
 /**
@@ -91,16 +91,12 @@ export function FeedsSection() {
 
   return (
     <>
-      <Panel title="订阅（RSS / Atom）" extra={<Tag>{feeds.length} 个源</Tag>}>
-        <BlockDesc>
-          技术博客的主路径。定时拉取更新，新文章自动入库——它们与手动抓来的资料是同一种记录，
-          可搜、可被引用。退订只停止自动更新，已经收进知识库的文章会保留。
-        </BlockDesc>
-
+      <Panel title="订阅" extra={<Tag>{feeds.length} 个源</Tag>}>
         <Block>
           <div className={styles.feedAdd}>
             <Input
-              placeholder="https://example.com/feed.xml（feed 地址，不是站点首页）"
+              aria-label="RSS 或 Atom 地址"
+              placeholder="RSS 或 Atom 地址，例如 https://example.com/feed.xml"
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               onPressEnter={() => {
@@ -125,23 +121,12 @@ export function FeedsSection() {
               全部更新
             </Button>
           </div>
-          <Note>
-            订阅时会先拉取一次——拉不通就不落库，避免留下一个「订了但从没成功过」的源
-            （那种源与「暂时坏掉的源」长得一样，而该做的事完全不同）。
-          </Note>
+          <BlockDesc>新文章会自动加入知识库。退订后已收文章保留。</BlockDesc>
         </Block>
       </Panel>
 
       {feedsQuery.isLoading ? (
         <Skeleton active />
-      ) : feeds.length === 0 ? (
-        <Panel title="还没有订阅">
-          <BlockDesc>
-            粘一个 feed 地址在上面即可。找不到 feed 地址时，多数站点在
-            <code> /feed.xml</code> 或 <code> /rss.xml</code>，也可以在页面源码里搜
-            <code> application/rss+xml</code>。
-          </BlockDesc>
-        </Panel>
       ) : (
         feeds.map((feed) => (
           <FeedRow

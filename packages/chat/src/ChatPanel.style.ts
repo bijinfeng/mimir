@@ -285,11 +285,6 @@ export const useChatPanelStyles = createStyles(({ css, token }) => ({
     margin-bottom: 8px;
     color: ${token.colorText};
   `,
-  emptySub: css`
-    font-size: var(--mimir-chat-font-note, 12.5px);
-    color: ${token.colorTextTertiary};
-    line-height: 1.9;
-  `,
   /* 空态里的发送失败行：组的其它内容都居中，它也居中
      （会话里那条 stopped 靠左是对的——它跟的是消息列） */
   emptyError: css`

@@ -1,7 +1,7 @@
-import { AssistantRuntimeProvider, ThreadPrimitive, useAuiState } from '@assistant-ui/react'
+import { AssistantRuntimeProvider, ThreadPrimitive, useAui, useAuiState } from '@assistant-ui/react'
 import { Button } from 'antd'
 import { ArrowDown } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useChatPanelStyles } from './ChatPanel.style.js'
 import { ChatThread } from './ChatThread.js'
 import { Composer } from './composer/Composer.js'
@@ -10,7 +10,7 @@ import { EmptyStage } from './EmptyStage.js'
 import { useScrolled } from './hooks/use-scrolled.js'
 import { MimirChatProvider, useMimirChatApi } from './runtime/chat-context.js'
 import { useMimirRuntime } from './runtime/use-mimir-runtime.js'
-import type { ChatPanelProps } from './types.js'
+import type { ChatDraft, ChatPanelProps } from './types.js'
 
 /**
  * 对话面板。
@@ -68,6 +68,7 @@ function ChatPanelBody({
   'draft' | 'guide' | 'guideActions' | 'io' | 'composerStatus' | 'onOpenCitation' | 'onOpenNote'
 >) {
   const { styles } = useChatPanelStyles()
+  const aui = useAui()
   const api = useMimirChatApi()
   const empty = useAuiState((state) => state.thread.isEmpty)
   const scrollRef = useRef<HTMLDivElement | null>(null)
@@ -89,6 +90,25 @@ function ChatPanelBody({
   const [contextDoc, setContextDoc] = useState<ContextDoc | null>(
     draft?.documentId ? { id: draft.documentId, title: '当前文档' } : null,
   )
+  const appliedDraft = useRef<ChatDraft | null>(null)
+
+  /** 新的宿主草稿只消费一次；普通重渲染不能覆盖用户在输入框里的修改。 */
+  useEffect(() => {
+    if (!draft) {
+      appliedDraft.current = null
+      return
+    }
+    if (appliedDraft.current === draft) return
+    appliedDraft.current = draft
+
+    setContextDoc((current) => {
+      if (!draft.documentId) return null
+      return current?.id === draft.documentId
+        ? current
+        : { id: draft.documentId, title: '当前文档' }
+    })
+    if (draft.text) aui.composer.setText(draft.text)
+  }, [aui, draft])
   /** 深入 = 用推理角色回答（这一轮的设置，随消息的 runConfig 走） */
   const [deepReasoning, setDeepReasoning] = useState(false)
 

@@ -5,6 +5,7 @@ import { assembleCitations, searchChunks, type AssembledCitation } from '../sear
 import { appendMessage, getConversation } from './conversations.js'
 import { callChat, modelReady } from './model.js'
 import { getDocument } from './documents.js'
+import { searchOnlyAnswer } from './search-only-answer.js'
 
 /**
  * 通道名的中文标签（trace 用）。
@@ -31,7 +32,7 @@ async function maxChunksPerDoc(): Promise<number> {
  * 两条路径，按**有没有配模型**分叉，而不是按用户选了什么：
  *
  *  1. 配了 `MODEL_API_KEY`：检索 → 组装上下文 → 调模型 → 带引用回答
- *  2. 没配（或显式 scope=search）：只检索，把命中的分块列出来
+ *  2. 没配（或显式 scope=search）：只检索，命中的原文由引用卡展示
  *
  * 第二条不是「降级」而是**产品的一部分**：`.trellis/spec/project/product.md` §5.8 明确要求
  * 「网络不可达时只用检索不调模型」——检索在本地 Postgres、笔记在本地文件，
@@ -76,7 +77,7 @@ export async function ask(params: AskParams): Promise<AskResponse> {
     const assistant = await appendMessage({
       conversationId: params.conversationId,
       role: 'assistant',
-      text: searchOnlyAnswer(params.question, retrieval.citations),
+      text: searchOnlyAnswer(retrieval.citations),
       trace: retrieval.trace,
       citations: retrieval.citations,
     })
@@ -277,29 +278,6 @@ function formatContext(citations: Citation[]): string {
 /** trace 的收口：轮次、工具数、耗时只在这里算一次，避免各分支各写一遍 */
 function finishTrace(steps: TraceStep[], rounds: number, tools: number, startedAt: number): Trace {
   return { rounds, tools, tookMs: Math.round(performance.now() - startedAt), steps }
-}
-
-/**
- * 没有模型时的回答。
- *
- * 刻意不生成「我找到了 N 条内容」这种话术——那是模型该做的事。
- * 检索路径的职责是把命中的原文**原样**交给用户，并说清楚没有花钱。
- */
-function searchOnlyAnswer(question: string, citations: Citation[]): string {
-  if (citations.length === 0) {
-    return `知识库里没有找到与「${question}」相关的内容。\n\n如果确认存过，可能是分词没切对——试试换个说法，或者检查该文档是否已重建索引。`
-  }
-
-  const lines = citations.map(
-    (cite, index) =>
-      `${index + 1}. 《${cite.title}》\n   ${cite.snippet.slice(0, 200).replace(/\n/g, ' ')}…`,
-  )
-
-  return [
-    `没有调用模型（未配置，或你选了「只用检索」）。下面是检索命中的 ${citations.length} 个分块，原文未经过改写：`,
-    '',
-    ...lines,
-  ].join('\n')
 }
 
 async function callModel(params: AskParams, retrieval: Retrieval): Promise<string> {

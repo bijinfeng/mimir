@@ -316,12 +316,6 @@ export function ProviderForm({
       </div>
 
       <h2 className={styles.sectionTitle}>{isCreate ? '新建供应商' : '编辑供应商'}</h2>
-      <p className={styles.sectionDesc}>
-        {isCreate
-          ? '从预设开始，或直接填下面的字段。'
-          : '改完点「保存」才生效。拉取的结果与手改的模型一起提交。'}
-      </p>
-
       {isCreate ? (
         <PresetPanel
           presets={presets}
@@ -442,15 +436,15 @@ export function ProviderForm({
         }
       >
         <div className={styles.modelHint} style={{ paddingTop: 12 }}>
-          用途决定模型能被「任务分配」里的哪些角色选中：<b>对话</b> → 对话 / 深度思考 / 摘要；
-          <b>向量化</b> → 向量化。拉取会保留你标过的用途与手动添加的模型。
+          用途决定可分配的任务：<b>对话</b>可用于对话、深度思考和摘要；
+          <b>向量化</b>用于语义检索。
         </div>
 
         {pullNote ? <div className={styles.pullNote}>{pullNote}</div> : null}
 
         {models.length === 0 ? (
           <div className={styles.modelHint} style={{ paddingTop: 12 }}>
-            还没有模型。点「拉取模型」从端点取，或「+ 手动添加」自己填。
+            暂无模型。
           </div>
         ) : (
           <>
@@ -485,9 +479,6 @@ export function ProviderForm({
           保存
         </Button>
         <Button onClick={tryBack}>取消</Button>
-        <span className={styles.hint}>
-          {isCreate ? '拉取用的是上面填的地址与密钥。' : '拉取与用途修改都先留在这里，保存才生效。'}
-        </span>
       </div>
     </>
   )
@@ -538,14 +529,7 @@ function PresetPanel({
   })
 
   return (
-    <Panel
-      title={
-        <>
-          从预设开始
-          <span className={styles.seamTag}>可选，也可以直接填</span>
-        </>
-      }
-    >
+    <Panel title="从预设开始">
       <div className={styles.presetGrid}>
         {sorted.map((preset) => (
           <Button key={preset.id} className={styles.presetCard} onClick={() => onPick(preset)}>

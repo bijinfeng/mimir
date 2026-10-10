@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest'
+import { appendMessage } from '../services/conversations.js'
 import { app, getAuthCookie, makeClient } from './helpers.js'
 
 /**
@@ -222,13 +223,62 @@ describe('会话与问答', () => {
   })
 
   it('未配模型时走「只用检索」路径，并说明没有调模型', async () => {
-    const ask = await client.post<{ messages: { text: string }[] }>('/api/conversations/ask', {
-      question: 'React',
+    const source = await client.post<{ id: string }>('/api/documents/notes', {
+      title: '检索状态测试',
+      body: '引用卡展示这段原文，不应在回答正文里再展示一次。',
+      tags: [],
+    })
+    const ask = await client.post<{
+      conversationId: string
+      messages: { text: string; citations: { documentId: string; snippet: string }[] }[]
+    }>('/api/conversations/ask', {
+      question: '引用卡展示',
+      scope: 'search',
+      documentId: source.body.id,
+    })
+    const last = ask.body.messages.at(-1)
+    expect(last?.text).toBe('仅展示检索结果，未调用模型。')
+    expect(last?.citations.length).toBeGreaterThan(0)
+    expect(last?.citations.some((citation) => citation.documentId === source.body.id)).toBe(true)
+    for (const citation of last?.citations ?? []) {
+      expect(last?.text).not.toContain(citation.snippet)
+    }
+
+    const reloaded = await client.get<{
+      messages: {
+        role: string
+        text: string
+        createdAt: string
+        citations: { documentId: string }[]
+      }[]
+    }>(`/api/conversations/${ask.body.conversationId}`)
+    expect(reloaded.body.messages.map((message) => message.role).slice(-2)).toEqual([
+      'user',
+      'assistant',
+    ])
+    expect(
+      Date.parse(reloaded.body.messages.at(-1)?.createdAt ?? '') -
+        Date.parse(reloaded.body.messages.at(-2)?.createdAt ?? ''),
+    ).toBeGreaterThan(0)
+    expect(reloaded.body.messages.at(-1)?.text).toBe(last?.text)
+    expect(
+      reloaded.body.messages
+        .at(-1)
+        ?.citations.some((citation) => citation.documentId === source.body.id),
+    ).toBe(true)
+  })
+
+  it('检索无命中时明确说明未调用模型并给出下一步', async () => {
+    const ask = await client.post<{
+      messages: { text: string; citations: unknown[] }[]
+    }>('/api/conversations/ask', {
+      question: 'zqxvnoresult987654',
       scope: 'search',
     })
     const last = ask.body.messages.at(-1)
-    // 明确告诉用户没花钱——这是失败路径设计里要求回答的三个问题之一
-    expect(last?.text).toContain('没有调用模型')
+    expect(last?.citations).toHaveLength(0)
+    expect(last?.text).toContain('未找到相关内容，未调用模型')
+    expect(last?.text).toContain('试试其他关键词')
   })
 
   it('不存在的会话返回 404 而不是静默新建', async () => {
@@ -248,12 +298,14 @@ describe('存成笔记', () => {
       tags: [],
     })
 
-    const ask = await client.post<{ conversationId: string; messages: { id: string }[] }>(
-      '/api/conversations/ask',
-      { question: 'HNSW 索引', scope: 'search' },
-    )
+    const ask = await client.post<{
+      conversationId: string
+      messages: { id: string; citations: { snippet: string }[] }[]
+    }>('/api/conversations/ask', { question: 'HNSW 索引', scope: 'search' })
     const assistantId = ask.body.messages.at(-1)?.id
+    const excerpt = ask.body.messages.at(-1)?.citations[0]?.snippet
     expect(assistantId).toBeDefined()
+    expect(excerpt).toBeDefined()
 
     const saved = await client.post<{ noteId: string }>('/api/conversations/messages/note', {
       messageId: assistantId,
@@ -266,7 +318,9 @@ describe('存成笔记', () => {
       links: { sources: { id: string }[] }
     }>(`/api/documents/${saved.body.noteId}`)
 
-    // 存下来的不能是孤零零一段话——引用来源要真的成为链接
+    // 聊天正文保持简短；存成独立笔记时补回原文片段和来源链接。
+    expect(note.body.body).toContain(excerpt)
+    expect(note.body.body).not.toContain('仅展示检索结果')
     expect(note.body.body).toContain('引用来源')
     expect(note.body.links.sources.map((item) => item.id)).toContain(target.body.id)
 
@@ -275,6 +329,39 @@ describe('存成笔记', () => {
       messageId: assistantId,
     })
     expect(again.body.noteId).toBe(saved.body.noteId)
+  })
+
+  it('普通回答和旧版检索回答保存时仍保留原正文', async () => {
+    const source = await client.post<{ id: string }>('/api/documents/notes', {
+      title: '旧版回答来源',
+      body: '旧版回答引用的原文。',
+      tags: [],
+    })
+    const created = await client.post<{ id: string }>('/api/conversations', {})
+    const oldText = '没有调用模型（未配置，或你选了「只用检索」）。旧版回答正文。'
+    const assistant = await appendMessage({
+      conversationId: created.body.id,
+      role: 'assistant',
+      text: oldText,
+      citations: [
+        {
+          documentId: source.body.id,
+          kind: 'note',
+          title: '旧版回答来源',
+          snippet: '旧版回答引用的原文。',
+          start: 0,
+          end: '旧版回答引用的原文。'.length,
+          matchedBy: ['keyword'],
+        },
+      ],
+    })
+    const saved = await client.post<{ noteId: string }>('/api/conversations/messages/note', {
+      messageId: assistant.id,
+    })
+    const note = await client.get<{ body: string }>(`/api/documents/${saved.body.noteId}`)
+    expect(note.body.body).toContain(oldText)
+    expect(note.body.body).toContain('## 引用来源')
+    expect(note.body.body).toContain(`[旧版回答来源](/doc/${source.body.id})`)
   })
 })
 

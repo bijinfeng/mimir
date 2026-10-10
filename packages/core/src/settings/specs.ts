@@ -62,7 +62,7 @@ export const CORE_SETTING_SPECS: readonly SettingSpec[] = [
   {
     key: 'retrieval.rrfK',
     label: 'RRF k',
-    description: '融合公式 weight/(k+rank) 里的 k。60 是原论文取值，作用是压低头部名次的绝对优势',
+    description: '数值越大，各通道的排名差异越小',
     group: 'retrieval',
     type: 'number',
     envName: 'RETRIEVAL_RRF_K',
@@ -73,7 +73,7 @@ export const CORE_SETTING_SPECS: readonly SettingSpec[] = [
   {
     key: 'retrieval.perLegLimit',
     label: '每通道候选数',
-    description: '每个通道各取这么多候选再融合。取得比最终结果多，融合才有意义',
+    description: '每个检索通道参与合并的结果上限',
     group: 'retrieval',
     type: 'number',
     envName: 'RETRIEVAL_PER_LEG_LIMIT',
@@ -84,7 +84,7 @@ export const CORE_SETTING_SPECS: readonly SettingSpec[] = [
   {
     key: 'retrieval.maxChunksPerDoc',
     label: '每篇最多引用块数',
-    description: '防止一篇长文霸占全部上下文。命中同一篇的相邻分块会先合并再计数',
+    description: '单篇文档最多提供的引用片段数',
     group: 'retrieval',
     type: 'number',
     envName: null,
@@ -97,7 +97,7 @@ export const CORE_SETTING_SPECS: readonly SettingSpec[] = [
   {
     key: 'parser.chunk.size',
     label: '分块大小',
-    description: '每块的目标字符数。太小会切断上下文，太大会稀释语义。改了要重建分块',
+    description: '每段的目标字数；修改后需重建分块',
     group: 'parser',
     type: 'number',
     envName: null,
@@ -108,7 +108,7 @@ export const CORE_SETTING_SPECS: readonly SettingSpec[] = [
   {
     key: 'parser.chunk.overlap',
     label: '分块重叠',
-    description: '相邻块的重叠字符数，让跨块边界的内容不至于两边都丢。改了要重建分块',
+    description: '相邻段落的重叠字数；修改后需重建分块',
     group: 'parser',
     type: 'number',
     envName: null,
@@ -121,8 +121,7 @@ export const CORE_SETTING_SPECS: readonly SettingSpec[] = [
   {
     key: 'storage.backend',
     label: '存储后端',
-    description:
-      '笔记、原始快照与头像存在哪里。本地 = 磁盘上的 data/，S3 = 对象存储。换后端不会搬运已有数据，切换前请自行迁移',
+    description: '切换存储不会迁移已有文件，请先完成迁移',
     group: 'storage',
     type: 'string',
     envName: 'STORAGE_BACKEND',

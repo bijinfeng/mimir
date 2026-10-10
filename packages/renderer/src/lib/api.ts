@@ -619,7 +619,10 @@ export const api = {
       })
     },
     signOut() {
-      return request<{ success: boolean }>('/api/auth/sign-out', { method: 'POST' })
+      return request<{ success: boolean }>('/api/auth/sign-out', {
+        method: 'POST',
+        body: '{}',
+      })
     },
     /**
      * 登出并回到登录页。
@@ -635,7 +638,10 @@ export const api = {
      */
     async signOutAndLeave(): Promise<void> {
       // 直接发请求，不走 `this`——对象字面量内部自引用能跑但读起来绕
-      await request<{ success: boolean }>('/api/auth/sign-out', { method: 'POST' })
+      await request<{ success: boolean }>('/api/auth/sign-out', {
+        method: 'POST',
+        body: '{}',
+      })
       // 整页重载会清掉内存里的一切（查询缓存、草稿、历史）
       window.location.href = '/login'
     },

@@ -33,7 +33,7 @@ const S3_PARAMS: SettingSpec[] = [
   {
     key: 'storage.s3.endpoint',
     label: '端点地址',
-    description: 'MinIO / R2 / 各家的兼容端点，形如 https://s3.example.com。留空则走 AWS 官方端点',
+    description: '自建 S3 服务填写地址；使用 AWS S3 时留空',
     group: 'storage',
     type: 'string',
     envName: 'S3_ENDPOINT',
@@ -52,7 +52,7 @@ const S3_PARAMS: SettingSpec[] = [
   {
     key: 'storage.s3.region',
     label: '区域',
-    description: '桶所在区域。自建端点也要一个非空值（MinIO 通常用 us-east-1）',
+    description: '桶所在区域；自建服务通常填 us-east-1',
     group: 'storage',
     type: 'string',
     envName: 'S3_REGION',
@@ -63,7 +63,7 @@ const S3_PARAMS: SettingSpec[] = [
   {
     key: 'storage.s3.bucket',
     label: '桶名',
-    description: '已存在的桶，不会自动创建',
+    description: '填写已有桶名，不会自动创建',
     group: 'storage',
     type: 'string',
     envName: 'S3_BUCKET',
@@ -73,7 +73,7 @@ const S3_PARAMS: SettingSpec[] = [
   {
     key: 'storage.s3.accessKeyId',
     label: 'Access Key ID',
-    description: '只存服务端，明文显示（它不是密钥）。要和下面的 Secret 配成一对',
+    description: '与 Secret Access Key 配套填写',
     group: 'storage',
     type: 'string',
     envName: 'S3_ACCESS_KEY_ID',
@@ -83,7 +83,7 @@ const S3_PARAMS: SettingSpec[] = [
   {
     key: 'storage.s3.secretAccessKey',
     label: 'Secret Access Key',
-    description: '加密后存库，绝不下发浏览器',
+    description: '与 Access Key ID 配套填写',
     group: 'storage',
     type: 'secret',
     envName: 'S3_SECRET_ACCESS_KEY',
@@ -93,7 +93,7 @@ const S3_PARAMS: SettingSpec[] = [
   {
     key: 'storage.s3.pathStyle',
     label: '路径风格寻址',
-    description: '自建端点（MinIO / R2）通常需要打开。关掉要求 DNS 能解析桶名前缀',
+    description: '自建 S3 服务通常需要开启',
     group: 'storage',
     type: 'boolean',
     envName: 'S3_PATH_STYLE',
@@ -103,7 +103,7 @@ const S3_PARAMS: SettingSpec[] = [
   {
     key: 'storage.s3.prefix',
     label: '桶内前缀',
-    description: '所有对象放在这个前缀下，便于与别的数据共用一个桶。留空则放在桶根',
+    description: '选填；留空则保存到桶根',
     group: 'storage',
     type: 'string',
     envName: 'S3_PREFIX',
@@ -121,7 +121,8 @@ const S3_PARAMS: SettingSpec[] = [
 function notSelected(read: DeclarationReader, self: string): string | null {
   const selected = String(read.get('storage.backend') ?? 'local').trim() || 'local'
   if (selected === self) return null
-  return `正在用 ${selected}`
+  const name = selected === 'local' ? '本地磁盘' : selected === 's3' ? 'S3 / 对象存储' : selected
+  return `正在使用${name}`
 }
 
 export interface StoragePluginOptions {
@@ -138,7 +139,7 @@ export function install(host: PluginHost, options: StoragePluginOptions): void {
       seam: 'storage',
       id: 'local',
       name: '本地磁盘',
-      description: 'data/ 里就是普通文件，可以用 Typora / Obsidian 打开，也可以交给 git',
+      description: '文件保存在本机',
       file: 'plugins/storage/src/local.ts',
       configKeys: [],
       params: LOCAL_PARAMS,
@@ -153,7 +154,7 @@ export function install(host: PluginHost, options: StoragePluginOptions): void {
       seam: 'storage',
       id: 's3',
       name: 'S3 / 对象存储',
-      description: '放进任意 S3 兼容存储（AWS S3 / MinIO / Cloudflare R2），本地不留文件',
+      description: '文件保存在 S3 兼容服务',
       file: 'plugins/storage/src/s3.ts',
       configKeys: S3_PARAMS.map((spec) => spec.key),
       params: S3_PARAMS,

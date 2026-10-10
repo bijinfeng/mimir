@@ -974,8 +974,8 @@ export function install(host: PluginHost): void {
     {
       seam: 'leg',
       id: 'keyword',
-      name: '关键词（jieba 分词）',
-      description: '词级召回，有词边界语义',
+      name: '关键词匹配',
+      description: '按词匹配，适合查找明确的名称或术语',
       file: 'plugins/leg/src/keyword.ts',   // 设置页会显示它
       configKeys: ['retrieval.keyword.weight'],
       params: [/* 这个实现独占的配置键 */],

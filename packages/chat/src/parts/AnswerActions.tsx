@@ -1,9 +1,22 @@
 import { useAuiState } from '@assistant-ui/react'
+import { SEARCH_ONLY_RESULT_TEXT, type Citation } from '@mimir/shared'
 import { App as AntApp, Tooltip } from 'antd'
 import { Check, Copy, ExternalLink, Save } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { createStyles } from 'antd-style'
 import { useMimirChatApi } from '../runtime/chat-context.js'
+import { useCitationsPart } from './data-parts.js'
+
+/** 检索结果复制原文和来源；模型回答保持已有的正文复制语义。 */
+export function copyAnswerText(text: string, citations: Citation[]): string {
+  if (text !== SEARCH_ONLY_RESULT_TEXT || citations.length === 0) return text
+
+  return citations
+    .map(
+      (citation) => `${citation.snippet}\n来源：[${citation.title}](/doc/${citation.documentId})`,
+    )
+    .join('\n\n')
+}
 
 /**
  * 回答下的动作条：「存成笔记」与「复制」。
@@ -100,6 +113,7 @@ const useStyles = createStyles(({ css, token }) => ({
 export function AnswerActions() {
   const { styles } = useStyles()
   const api = useMimirChatApi()
+  const citations = useCitationsPart()
   const { message: antdMessage } = AntApp.useApp()
 
   /**
@@ -188,7 +202,7 @@ export function AnswerActions() {
           aria-label={copied ? '已复制' : '复制回答'}
           onClick={() => {
             void navigator.clipboard
-              .writeText(text)
+              .writeText(copyAnswerText(text, citations))
               .then(() => {
                 setCopied(true)
                 antdMessage.success('已复制')

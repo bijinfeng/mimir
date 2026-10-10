@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Skeleton, Table, Typography } from 'antd'
+import { Skeleton, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { api } from '../../lib/api'
 import { Panel, Stats } from './parts'
@@ -109,13 +109,17 @@ export function StatsSection() {
     )
   }
 
+  if (data.totals.calls === 0 && data.totals.unknownCount === 0) {
+    return (
+      <Panel title="用量">
+        <div className={statsStyles.empty}>暂无调用记录。使用模型后可在这里查看用量。</div>
+      </Panel>
+    )
+  }
+
   return (
     <>
-      <Typography.Paragraph className={styles.sectionDesc}>
-        每次模型调用都记账，含失败与「测试连接」——所以调用次数不等于你提问的次数。
-      </Typography.Paragraph>
-
-      <Panel>
+      <Panel title="用量（token）">
         <Stats
           items={[
             { label: '今日', value: formatTokens(data.totals.today) },
@@ -126,15 +130,13 @@ export function StatsSection() {
         />
       </Panel>
 
-      <Panel title="消耗热力图">
+      <Panel title="用量趋势（token）">
         <UsageHeatmap days={data.days} thresholds={data.thresholds} timezone={data.timezone} />
       </Panel>
 
       <Panel title="按角色">
         {data.byRole.length === 0 ? (
-          <div className={statsStyles.empty}>
-            还没有调用记录。配置模型后问一次问题就会出现在这里。
-          </div>
+          <div className={statsStyles.empty}>暂无调用记录。</div>
         ) : (
           /*
             用 antd Table 而不是手写 `<table>`：表头底色、单元格内边距、
@@ -162,27 +164,24 @@ export function StatsSection() {
              混进「我的用量」是另一种说谎
         */}
         <div className={statsStyles.footer}>
-          共 <span className={statsStyles.footerStrong}>{data.totals.calls}</span> 次调用
+          累计 <span className={statsStyles.footerStrong}>{data.totals.calls}</span>{' '}
+          次调用（含失败）
           {data.totals.unknownCount > 0 ? (
             <>
-              ，其中 <span className={statsStyles.footerStrong}>{data.totals.unknownCount}</span> 次
-              供应商未回传用量（消耗未知，不是 0）
+              ；图示期间有{' '}
+              <span className={statsStyles.footerStrong}>{data.totals.unknownCount}</span>{' '}
+              次调用未返回用量，不能按 0 计算
             </>
           ) : null}
           {data.totals.probeCalls > 0 ? (
             <>
-              ，另有 <span className={statsStyles.footerStrong}>{data.totals.probeCalls}</span>{' '}
-              次来自设置页的「测试连接」
+              ；其中 <span className={statsStyles.footerStrong}>{data.totals.probeCalls}</span>{' '}
+              次为「测试连接」（会产生用量）
             </>
           ) : null}
           。
         </div>
       </Panel>
-
-      <Typography.Paragraph className={styles.muted} style={{ marginTop: 14 }}>
-        token 是供应商回传的事实，所以只统计它。金额要按单价换算，而单价随时会变——
-        用今天的单价乘历史用量，会让过去的金额自己变，那是记账的大忌。
-      </Typography.Paragraph>
     </>
   )
 }

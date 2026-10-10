@@ -2,7 +2,7 @@ import { Button } from 'antd'
 import { useQuery } from '@tanstack/react-query'
 import { api } from '../../lib/api'
 import { useDesktopBridge } from '../../platform'
-import { Block, BlockDesc, Panel, Row } from './parts'
+import { Block, BlockDesc, Panel, Row, TechnicalDetails } from './parts'
 
 /**
  * 客户端（桌面壳专属，D-100 / D-103）。
@@ -51,35 +51,21 @@ export function ClientSection() {
               : '连接服务器'}
         </Row>
         {mode === 'cloud' && origin ? <Row label="服务器">{origin}</Row> : null}
-        {/*
-          本地模式下把数据目录**如实显示出来**：它是用户唯一能自己去核对
-          「我的东西在哪」的地方，也是备份时该拷贝的路径（与设置 › 数据与备份
-          里那份信息同源）。
-        */}
-        {mode === 'local' && dataDir ? <Row label="数据目录">{dataDir}</Row> : null}
         <Block>
-          <BlockDesc>
-            本地使用不需要登录，数据全在这台电脑上、断网也能写。
-            连接服务器时数据存在你自己的服务器上，适合多台设备访问同一份知识库。
-            换一种方式不会删除已有的本地数据，随时可以切回来。
-          </BlockDesc>
+          <Button onClick={() => bridge?.mode.openSetup()}>更换使用方式</Button>
+          <BlockDesc>切换不会迁移数据，本地与服务器上的数据分别保留。</BlockDesc>
         </Block>
-      </Panel>
-
-      <div style={{ marginTop: 14 }}>
-        <Button onClick={() => bridge?.mode.openSetup()}>更换使用方式…</Button>
-      </div>
-
-      {/* 服务端事实（库文件位置）与上面的数据目录是两件事：前者是当前连接
-          的那个宿主自己的库，后者是这个客户端的数据根。两个都显示，
-          用户核对的场合不同 */}
-      <Panel title="当前连接">
-        <Row label="服务">
-          {configQuery.data?.database.driver === 'sqlite' ? '本地 SQLite' : 'PostgreSQL'}
-        </Row>
-        {configQuery.data?.database.file ? (
-          <Row label="库文件">{configQuery.data.database.file}</Row>
-        ) : null}
+        <TechnicalDetails>
+          {mode === 'local' && dataDir ? <Row label="数据目录">{dataDir}</Row> : null}
+          {configQuery.data?.database ? (
+            <Row label="数据库">
+              {configQuery.data.database.driver === 'sqlite' ? 'SQLite' : 'PostgreSQL'}
+            </Row>
+          ) : null}
+          {configQuery.data?.database.file ? (
+            <Row label="数据库文件">{configQuery.data.database.file}</Row>
+          ) : null}
+        </TechnicalDetails>
       </Panel>
     </>
   )

@@ -108,7 +108,7 @@ describe('对话流的事件顺序（AG-UI 合规）', () => {
     const frames = await chat({
       threadId: created.body.id,
       runId: 'r1',
-      messages: [{ id: 'u1', role: 'user', content: '知识库里有什么' }],
+      messages: [{ id: 'u1', role: 'user', content: 'zqxvstreamempty987654' }],
       tools: [],
       context: [],
       state: {},
@@ -122,7 +122,48 @@ describe('对话流的事件顺序（AG-UI 合规）', () => {
     expect(seen.custom).toContain('mimir.trace')
     expect(seen.finished, '整轮跑完没有收到 RUN_FINISHED').toBe(true)
     expect(seen.failure).toBeNull()
-    expect(seen.text.length).toBeGreaterThan(0)
+    expect(seen.text).toContain('未找到相关内容，未调用模型')
+    expect(seen.text).toContain('试试其他关键词')
+  })
+
+  it('流式只检索只发短状态，引用保存在会话里', async () => {
+    const source = await client.post<{ id: string }>('/api/documents/notes', {
+      title: '流式检索来源',
+      body: '流式引用原文应当留在引用卡中。',
+      tags: [],
+    })
+    const created = await client.post<{ id: string }>('/api/conversations', {})
+    const frames = await chat({
+      threadId: created.body.id,
+      runId: 'r1',
+      messages: [{ id: 'u1', role: 'user', content: '流式引用原文' }],
+      tools: [],
+      context: [],
+      state: {},
+      forwardedProps: {
+        conversationId: created.body.id,
+        documentId: source.body.id,
+        scope: 'search',
+      },
+    })
+
+    const seen = await feed(frames, created.body.id)
+    expect(seen.text).toBe('仅展示检索结果，未调用模型。')
+    expect(seen.custom).toContain('mimir.citations')
+
+    const reloaded = await client.get<{
+      messages: {
+        role: string
+        text: string
+        citations: { documentId: string; snippet: string }[]
+      }[]
+    }>(`/api/conversations/${created.body.id}`)
+    const answer = reloaded.body.messages.at(-1)
+    expect(answer?.role).toBe('assistant')
+    expect(answer?.text).toBe(seen.text)
+    expect(answer?.citations).toHaveLength(1)
+    expect(answer?.citations[0]?.documentId).toBe(source.body.id)
+    expect(answer?.text).not.toContain(answer?.citations[0]?.snippet)
   })
 
   it('会话 id 走 forwardedProps.runConfig 也能认出（新前端的通道）', async () => {

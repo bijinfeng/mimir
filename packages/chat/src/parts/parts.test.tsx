@@ -1,9 +1,11 @@
 import type { Citation, Trace } from '@mimir/shared'
+import { SEARCH_ONLY_RESULT_TEXT } from '@mimir/shared'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { TraceDisclosure } from './TraceActivity.js'
 import { CitationList } from './CitationList.js'
+import { copyAnswerText } from './AnswerActions.js'
 import { FailureCard } from './FailureNotice.js'
 import { MarkdownPart } from './MarkdownPart.js'
 import { FilePart, ImagePart, SourcePart } from './MediaParts.js'
@@ -93,6 +95,43 @@ describe('CitationList', () => {
     expect(html).toContain('unknown-channel')
     expect(html).toContain('组件性能优化')
   })
+
+  it('引用摘要展示 Markdown 内容，保留原文卡的跳转入口', () => {
+    const formatted: Citation = {
+      ...citations[0]!,
+      snippet: '# 标题\n**关键结论**与 `代码`。',
+    }
+    const html = renderToString(
+      createElement(CitationList, { citations: [formatted], onOpen: () => {} }),
+    )
+    expect(html).toContain('标题 关键结论与 代码')
+    expect(html).not.toContain('**关键结论**')
+    expect(html).toContain('<button')
+  })
+})
+
+describe('复制回答', () => {
+  const citation: Citation = {
+    documentId: 'doc-1',
+    kind: 'note',
+    title: '来源笔记',
+    snippet: '这是可复制的原文。',
+    start: 0,
+    end: 10,
+    matchedBy: ['keyword'],
+  }
+
+  it('只检索结果复制原文与来源链接', () => {
+    const copied = copyAnswerText(SEARCH_ONLY_RESULT_TEXT, [citation])
+    expect(copied).toContain(citation.snippet)
+    expect(copied).toContain('[来源笔记](/doc/doc-1)')
+    expect(copied).not.toContain(SEARCH_ONLY_RESULT_TEXT)
+  })
+
+  it('普通模型回答和旧历史文本按原样复制', () => {
+    expect(copyAnswerText('模型回答 [1]', [citation])).toBe('模型回答 [1]')
+    expect(copyAnswerText('旧版检索回答', [citation])).toBe('旧版检索回答')
+  })
 })
 
 describe('FailureCard', () => {
@@ -104,7 +143,7 @@ describe('FailureCard', () => {
         onRetry: () => {},
       }),
     )
-    expect(quota).toContain('模型额度用尽')
+    expect(quota).toContain('模型请求受限')
     expect(quota).toContain('只检索，不调模型')
     /* 「换一个模型」「去充值」没有实现——按钮保留（PRD §5.8 要求说清
        「还能做什么」），但真的禁用 */

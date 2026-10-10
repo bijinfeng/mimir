@@ -86,7 +86,7 @@ import { useStyles } from './LibraryView.style'
  * 虚线盒子。拖放只在知识库视图生效（标签视图没有可落的目录）。
  */
 export function LibraryView({ scope }: { scope: string }) {
-  const { styles, cx } = useStyles()
+  const { styles } = useStyles()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { openDocument, openCapture } = useAppShell()
@@ -97,7 +97,6 @@ export function LibraryView({ scope }: { scope: string }) {
   const [layout, setLayout] = useState<LibraryLayout>(readLibraryLayout)
 
   const foldersQuery = useQuery({ queryKey: ['folders'], queryFn: api.folders.list })
-  const sessionQuery = useQuery({ queryKey: ['session'], queryFn: api.auth.session })
 
   const folderPath = scope.startsWith('folder:') ? scope.slice('folder:'.length) : null
   const tagName = scope.startsWith('tag:') ? scope.slice('tag:'.length) : null
@@ -337,7 +336,6 @@ export function LibraryView({ scope }: { scope: string }) {
 
   const kbTitle = kbRoot?.name ?? segments[0] ?? ''
   const kbDesc = kbRoot?.description ?? ''
-  const userName = sessionQuery.data?.user.name
 
   /* 固定头部与滚动内容之间那条界线随滚动显形（D-070），开关挂在列表的滚动容器上 */
   const bodyRef = useRef<HTMLDivElement>(null)
@@ -394,13 +392,11 @@ export function LibraryView({ scope }: { scope: string }) {
         {showKbChrome ? (
           <>
             <h1 className={styles.kbTitle}>{kbTitle}</h1>
-            <p className={cx(styles.kbDesc, !kbDesc && styles.kbDescEmpty)}>
-              {kbDesc || '暂无描述'}
-            </p>
-            <div className={styles.metaRow}>
-              {/* 整块可点：hover 整块提亮（与侧栏行同款底色），tooltip 说明
+            {kbDesc && <p className={styles.kbDesc}>{kbDesc}</p>}
+            {kbRoot?.code && (
+              <div className={styles.metaRow}>
+                {/* 整块可点：hover 整块提亮（与侧栏行同款底色），tooltip 说明
                   动作——「点击复制」这个提示只在悬停时给，静态时不占地方 */}
-              {kbRoot?.code && (
                 <Tooltip title="点击复制知识库 ID">
                   <Button
                     type="text"
@@ -416,9 +412,8 @@ export function LibraryView({ scope }: { scope: string }) {
                     </span>
                   </Button>
                 </Tooltip>
-              )}
-              {userName && <span>创建者：{userName}</span>}
-            </div>
+              </div>
+            )}
           </>
         ) : (
           <h1 className={styles.kbTitle}>{tagName ? `#${tagName}` : '知识库'}</h1>
@@ -451,14 +446,16 @@ export function LibraryView({ scope }: { scope: string }) {
                 <Button icon={<FilePlus2 size={16} />} onClick={() => void createNote()}>
                   新建文件
                 </Button>
-                <Dropdown trigger={['click']} menu={{ items: ADD_MENU, onClick: onAddMenu }}>
-                  <Button type="primary" icon={<Plus size={16} />}>
-                    添加文档
-                  </Button>
-                </Dropdown>
               </>
             )}
           </div>
+          {showKbChrome && (
+            <Dropdown trigger={['click']} menu={{ items: ADD_MENU, onClick: onAddMenu }}>
+              <Button type="primary" className={styles.toolbarPrimary} icon={<Plus size={16} />}>
+                添加文档
+              </Button>
+            </Dropdown>
+          )}
         </div>
 
         {/*
@@ -506,8 +503,7 @@ export function LibraryView({ scope }: { scope: string }) {
           </span>
           {showSectionHint && (
             <span className={styles.sectionHint}>
-              支持 Markdown、文本与代码、CSV / Excel、PDF、Word、PPT 等；单文件不超过{' '}
-              {formatBytes(FILE_MAX_BYTES)}。可直接拖到本页上传。
+              可拖入文件上传，单文件不超过 {formatBytes(FILE_MAX_BYTES)}
             </span>
           )}
         </div>

@@ -184,7 +184,7 @@ describe('插件注册表', () => {
        * 所以现在只说后半句，而断言守的是它必须说出来：
        * 不知道「现在用的是谁」，用户就无法判断该不该切。
        */
-      expect(reason, '要说出当前实际在用哪个后端').toContain('local')
+      expect(reason, '要用用户能认出的名称说出当前后端').toContain('本地磁盘')
       expect(reason, '不该复述旁边徽标已写的「未选中」').not.toContain('未选中')
 
       // 而 local 仍然可用（它就是被选中的那个）

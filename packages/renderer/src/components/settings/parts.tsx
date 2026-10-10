@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { Collapse } from 'antd'
 import type { SettingSource } from '@mimir/shared'
 import { useStatusStyles, useStyles } from './settings.style'
 
@@ -104,6 +105,19 @@ export function FilePath({ children }: { children: ReactNode }) {
   return <div className={styles.file}>{children}</div>
 }
 
+/** 排查时才需要的实现信息，默认不占据设置内容。 */
+export function TechnicalDetails({ children }: { children: ReactNode }) {
+  const { styles } = useStyles()
+  return (
+    <Collapse
+      className={styles.technicalDetails}
+      ghost
+      size="small"
+      items={[{ key: 'details', label: '技术详情', children }]}
+    />
+  )
+}
+
 /**
  * 状态徽标。
  *
@@ -162,5 +176,5 @@ export function SourceBadge({ source }: { source: SettingSource }) {
 const SOURCE_HINT: Record<SettingSource, string> = {
   settings: '这个值是在本页设置的，优先于环境变量',
   env: '来自部署时的环境变量。在本页填写会覆盖它',
-  default: '没人配过，用的是代码里的默认值',
+  default: '使用默认值',
 }

@@ -4,7 +4,7 @@ import { Download, RefreshCw } from 'lucide-react'
 import type { DatabaseInfo } from '@mimir/shared'
 import { api } from '../../lib/api'
 import { LoadError } from '../LoadError'
-import { Block, BlockDesc, Panel, Row, Stats } from './parts'
+import { Block, BlockDesc, Note, Panel, Row, Stats, TechnicalDetails } from './parts'
 import { useStyles } from './settings.style'
 
 /**
@@ -45,26 +45,30 @@ export function DataSection() {
 
   return (
     <>
-      <Panel title="真相在哪">
-        <Row label="笔记目录">
-          <span className={styles.mono}>data/vault/</span>
-        </Row>
-        <Row label="原始快照">
-          <span className={styles.mono}>data/raw/</span>
-        </Row>
-        <Row label="数据库">
+      <Panel title="数据位置">
+        <Row label="笔记与上传件">内容文件</Row>
+        <Row label="抓取件、对话、设置">
           {database ? (
-            <>
-              <span className={styles.mono}>{DATABASE_NAMES[database.driver]}</span>
-              {database.file ? <span className={styles.mono}> · {database.file}</span> : null}
-              <span> · 抓取件、对话和设置需备份数据库</span>
-            </>
+            DATABASE_NAMES[database.driver]
           ) : configQuery.isError ? (
             <LoadError compact message="读取失败" onRetry={() => void configQuery.refetch()} />
           ) : (
             <Skeleton.Button active size="small" />
           )}
         </Row>
+        <TechnicalDetails>
+          <Row label="笔记目录">
+            <span className={styles.mono}>默认 data/vault/</span>
+          </Row>
+          <Row label="原始快照">
+            <span className={styles.mono}>默认 data/raw/</span>
+          </Row>
+          {database?.file ? (
+            <Row label="数据库文件">
+              <span className={styles.mono}>{database.file}</span>
+            </Row>
+          ) : null}
+        </TechnicalDetails>
       </Panel>
 
       <Panel title="维护">
@@ -75,23 +79,14 @@ export function DataSection() {
               loading={reindex.isPending}
               onClick={() => reindex.mutate()}
             >
-              立即重建索引
+              重建文件索引
             </Button>
           </div>
-          <BlockDesc>
-            扫描 vault 与 uploads 并同步文件类文档的索引；不会恢复抓取件、对话和设置。
-          </BlockDesc>
+          <BlockDesc>仅恢复笔记与上传件的文件索引，无法恢复抓取件、对话和设置。</BlockDesc>
         </Block>
       </Panel>
 
       <Panel title="导出">
-        <Block>
-          <BlockDesc>
-            Markdown 包可用 Obsidian / Typora 打开；JSON 不含上传原件，也不能直接恢复实例。
-            完整备份需同时保存数据库、内容文件与密钥。
-          </BlockDesc>
-        </Block>
-
         {stats ? (
           <Stats
             items={[
@@ -130,8 +125,11 @@ export function DataSection() {
               JSON（含元数据与对话）
             </Button>
           </div>
+          <BlockDesc>JSON 不含上传原件，不能直接恢复实例。</BlockDesc>
         </Block>
       </Panel>
+
+      <Note>完整备份需保存数据库、内容文件和密钥。</Note>
     </>
   )
 }

@@ -218,6 +218,42 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     color: ${token.colorTextSecondary};
   `,
 
+  storageOptions: css`
+    display: block;
+  `,
+  storageOption: css`
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    padding: 13px 16px;
+    width: 100%;
+
+    & + & {
+      border-top: 1px solid ${token.colorBorderSecondary};
+    }
+  `,
+  storageOptionHead: css`
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    color: ${token.colorText};
+    font-size: ${FONT_SIZE.item}px;
+  `,
+  storageOptionReason: css`
+    display: block;
+    margin-top: 3px;
+    font-size: ${FONT_SIZE.note}px;
+    line-height: 1.7;
+    color: ${token.colorTextSecondary};
+  `,
+  appearanceNote: css`
+    padding: 0 16px 13px;
+    font-size: ${FONT_SIZE.note}px;
+    line-height: 1.7;
+    color: ${token.colorTextTertiary};
+  `,
+
   /* ── 说明块：解释「为什么这里改不了」这类前提 ──────────
      它不是提示条，不该用 `colorInfoBg`（那是有状态才用的语义色，
      DESIGN §0.1）。用导航底的浅灰 + 一档更弱的文字即可。
@@ -275,6 +311,14 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   `,
 
   /* ── 供应商卡片 ─────────────────────────────────────── */
+  providerEmpty: css`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 18px 16px;
+  `,
   /**
    * 卡片：信息在左、三个动作在右上、展开入口整行在下（demo 形态）。
    *
@@ -465,6 +509,19 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     font-family: ${token.fontFamilyCode};
     font-size: ${FONT_SIZE.meta}px;
     color: ${token.colorTextTertiary};
+  `,
+  technicalDetails: css`
+    margin: 0 16px 12px;
+
+    .${prefixCls}-collapse-header {
+      color: ${token.colorLink} !important;
+      padding: 6px 0 !important;
+    }
+
+    .${prefixCls}-collapse-content-box {
+      padding: 4px 0 0 !important;
+      color: ${token.colorTextSecondary};
+    }
   `,
   actions: css`
     display: flex;

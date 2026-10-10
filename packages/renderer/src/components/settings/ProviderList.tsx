@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
-import { App, Button, Empty, Popconfirm } from 'antd'
+import { App, Button, Popconfirm, Tooltip } from 'antd'
 import { ChevronDown } from 'lucide-react'
 import { useState } from 'react'
 import {
@@ -57,20 +57,18 @@ export function ProviderList({
       title={
         <>
           供应商
-          <span className={styles.seamTag}>
-            {providers.length > 0 ? `${providers.length} 个` : '还没有配置'}
-          </span>
+          {providers.length > 0 ? (
+            <span className={styles.seamTag}>{providers.length} 个</span>
+          ) : null}
         </>
       }
     >
       {providers.length === 0 ? (
-        <div className={styles.block}>
-          <Empty
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description={
-              <span className={styles.blockDesc}>加一个供应商，下面的角色就能选它的模型</span>
-            }
-          />
+        <div className={styles.providerEmpty}>
+          <span className={styles.blockDesc}>暂无供应商</span>
+          <Button type="primary" onClick={() => onEdit(null)}>
+            添加供应商
+          </Button>
         </div>
       ) : (
         providers.map((provider) => (
@@ -87,11 +85,11 @@ export function ProviderList({
         ))
       )}
 
-      <div className={styles.block}>
-        <Button type="dashed" block onClick={() => onEdit(null)}>
-          + 添加供应商
-        </Button>
-      </div>
+      {providers.length > 0 ? (
+        <div className={styles.block}>
+          <Button onClick={() => onEdit(null)}>添加供应商</Button>
+        </div>
+      ) : null}
     </Panel>
   )
 }
@@ -166,9 +164,11 @@ function ProviderCard({
         「卡级动作」的惯常位置。
       */}
       <div className={styles.providerActions}>
-        <Button size="small" loading={probe.isPending} onClick={() => probe.mutate()}>
-          测试连接
-        </Button>
+        <Tooltip title="会发起真实模型调用，可能产生用量">
+          <Button size="small" loading={probe.isPending} onClick={() => probe.mutate()}>
+            测试连接
+          </Button>
+        </Tooltip>
         <Button size="small" onClick={onEdit}>
           编辑
         </Button>

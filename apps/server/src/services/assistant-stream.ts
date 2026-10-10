@@ -9,6 +9,7 @@ import { assembleCitations, searchChunks, type AssembledCitation } from '../sear
 import { appendMessage, createConversation, ensureTitle, getConversation } from './conversations.js'
 import { streamChat as streamModelChat, modelReady } from './model.js'
 import { getDocument } from './documents.js'
+import { searchOnlyAnswer } from './search-only-answer.js'
 
 /**
  * 通道名的中文标签（trace 用）。与 `assistant.ts` 同一套取值，
@@ -84,7 +85,7 @@ interface MimirProps {
    * 检索于是拿这句指令去查词、模型也照常被调用，点下去必然再失败一次。
    *
    * 这个字段是那次修复的落点：认它就走下面 `!modelReady` 那条同一条分支
-   * （命中原文原样列出、说明没有花钱），只是原因从「没配模型」变成
+   * （原文由引用卡展示、说明未调用模型），只是原因从「没配模型」变成
    * 「用户选了只检索」。
    */
   scope?: 'search'
@@ -235,28 +236,6 @@ function formatContext(citations: Citation[]): string {
   return citations
     .map((cite, i) => `【${i + 1}】${cite.title}\n${cite.snippet}`)
     .join('\n\n---\n\n')
-}
-
-/**
- * 没有配模型时的回答。
- *
- * 刻意不生成「我找到了 N 条内容」这种话术——那是模型该做的事。
- * 这条路径的职责是把命中的原文**原样**交给用户，并说清楚没有花钱
- * （`.trellis/spec/project/product.md` §5.8：失败路径要回答「这次花钱了吗」）。
- */
-function searchOnlyAnswer(question: string, citations: Citation[]): string {
-  if (citations.length === 0) {
-    return `知识库里没有找到与「${question}」相关的内容。\n\n如果确认存过，可能是分词没切对——试试换个说法，或者检查该文档是否已重建索引。`
-  }
-
-  return [
-    `没有调用模型（未配置，或你选了「只用检索」）。下面是检索命中的 ${citations.length} 个分块，原文未经过改写：`,
-    '',
-    ...citations.map(
-      (cite, i) =>
-        `${i + 1}. 《${cite.title}》\n   ${cite.snippet.slice(0, 200).replace(/\n/g, ' ')}…`,
-    ),
-  ].join('\n')
 }
 
 /**
@@ -433,12 +412,12 @@ async function* createStream(params: StreamParams): AsyncGenerator<StreamChunk> 
   } as StreamChunk
 
   // 只检索：用户显式选了这条出路，或没配模型。两条走同一条分支——
-  // 区别只在 `searchOnlyAnswer` 的措辞里，用户反正都得到一个「没有花钱」的答案。
+  // 两种原因共用同一个结果状态，原文由引用卡展示。
   // 它同样要收一对生命周期括号：没有模型不等于「没有这一轮」。
   // （这一条路径**不补发**终局那份整轮耗时的 trace：它没有模型那一趟，
   //  检索耗时就是全部，先发的那份已经是对的）
   if (props.scope === 'search' || !(await modelReady('chat'))) {
-    const text = searchOnlyAnswer(question, retrieval.citations)
+    const text = searchOnlyAnswer(retrieval.citations)
     for await (const chunk of textOnlyStream(text)) yield chunk
     await persistAssistant(conversationId, text, retrieval, null, turnStartedAt)
     yield runFinished(runId, conversationId, undefined)

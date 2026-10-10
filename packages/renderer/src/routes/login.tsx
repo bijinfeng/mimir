@@ -132,9 +132,7 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
   formError: css`
     margin-bottom: 16px;
   `,
-  /* 开发环境预填的提示条。刻意做得低调：它是给开发者的便利，
-     不是产品功能的一部分 */
-  prefillNote: css`
+  auxiliaryNote: css`
     margin-top: -6px;
     margin-bottom: 14px;
     font-size: ${FONT_SIZE.meta}px;
@@ -276,17 +274,16 @@ function LoginPage() {
              给出路（回客户端），而不是给一个填了也不会成功的表单 */
             <>
               <Typography.Paragraph type="secondary" className={styles.hint}>
-                这是一个本地使用的 mimir：不需要登录，数据全在这台电脑上。
+                此地址仅供 mimir 桌面客户端使用。
               </Typography.Paragraph>
-              <Typography.Paragraph className={styles.prefillNote}>
-                看到这一页，通常是因为从普通浏览器打开了桌面客户端的数据服务。 请回到 mimir
-                桌面客户端使用——它自己就能进入，这里没有密码可填。
+              <Typography.Paragraph className={styles.auxiliaryNote}>
+                请返回桌面客户端继续使用。
               </Typography.Paragraph>
             </>
           ) : needsSetup ? (
             <>
               <Typography.Paragraph type="secondary" className={styles.hint}>
-                这是首次启动，请创建唯一账号。创建之后注册入口会自动关闭。
+                首次使用，请创建账号。创建后注册入口将关闭。
               </Typography.Paragraph>
               <SignUpForm
                 onSubmit={submit((values) => signUp.mutate(values))}
@@ -295,14 +292,6 @@ function LoginPage() {
             </>
           ) : (
             <>
-              <Typography.Paragraph type="secondary" className={styles.hint}>
-                单用户自托管，请用你的账号登录。
-              </Typography.Paragraph>
-              {prefill && (
-                <Typography.Paragraph className={styles.prefillNote}>
-                  开发环境：已按 <code>.env</code> 的 OWNER_EMAIL 预填，可直接登录。
-                </Typography.Paragraph>
-              )}
               <LoginForm
                 initialEmail={prefill?.email ?? ''}
                 initialPassword={prefill?.password ?? ''}
@@ -316,11 +305,10 @@ function LoginPage() {
             （或想改用本地使用）时，设置页进不去——它也在远端——而选择页
             由客户端自己提供，是此刻唯一还活着的入口 */}
           {bridge ? (
-            <Typography.Paragraph className={styles.prefillNote}>
+            <Typography.Paragraph className={styles.auxiliaryNote}>
               <Button type="link" size="small" onClick={() => bridge.mode.openSetup()}>
                 更换使用方式…
               </Button>
-              （换一个服务器，或改用本地使用）
             </Typography.Paragraph>
           ) : null}
         </Card>

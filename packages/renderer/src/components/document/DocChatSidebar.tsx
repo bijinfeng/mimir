@@ -119,10 +119,7 @@ export function DocChatSidebar({ doc, draft, onClose, onOpenCitation }: DocChatS
         <ChatThemeBridge gutter="16px">
           <ChatPanel
             conversationId={undefined}
-            draft={{
-              text: draft.text,
-              ...(draft.documentId ? { documentId: draft.documentId } : {}),
-            }}
+            draft={draft}
             onOpenCitation={onOpenCitation}
             onOpenNote={(noteId) => openDocument(noteId)}
             io={io}

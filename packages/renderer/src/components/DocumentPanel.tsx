@@ -421,10 +421,9 @@ export function DocumentPanel({
   /**
    * 引用跳转的下半句：滚动到原文区间并高亮（D-047 待办收尾）。
    *
-   * 定位用**归一化文本匹配**而不是 citation.start/end 的字符偏移——
-   * 偏移指向原始 Markdown 正文，而渲染后的 DOM 里没有 `**` 这类记号，
-   * 直接按偏移找必然错位。匹配先试全文，再试前缀（长引用被截断时仍能命中）；
-   * 都找不到就只跳转不高亮——不做「看起来高亮了其实是别处」的假动作。
+   * 定位用归一化文本匹配。偏移指向原始 Markdown，不能直接当 DOM 偏移；
+   * 当相同片段出现多次时，先用原文偏移确定第几次出现，再匹配渲染后的
+   * 对应片段。找不到就只打开文档，不高亮错误位置。
    *
    * 高亮用 CSS Custom Highlight API：Range 注册到 `CSS.highlights`，
    * 不改 DOM（只读正文与 Tiptap 编辑器的文本节点都适用），样式在
@@ -445,6 +444,9 @@ export function DocumentPanel({
      */
     let cancelled = false
     let attempts = 0
+    let pendingRange: Range | null = null
+    // 同一文档连续打开两个命中时，不能把上一个仍有效的高亮当成本次结果。
+    window.CSS?.highlights?.delete('mimir-citation')
 
     /**
      * **清除必须等结束之后**：`clearHighlight` 会改 context，触发本 effect
@@ -461,25 +463,24 @@ export function DocumentPanel({
       if (cancelled) return
       attempts += 1
 
-      const registered = window.CSS?.highlights?.get('mimir-citation')
-      const alive = registered
-        ? [...registered].find(
-            (range): range is Range => !range.collapsed && range.startContainer.isConnected,
-          )
-        : undefined
+      const alive =
+        pendingRange && !pendingRange.collapsed && pendingRange.startContainer.isConnected
+          ? pendingRange
+          : null
 
       if (alive) {
         // 上一次注册的还活着 → 内容已稳定：滚过去，收工
         const rect = alive.getBoundingClientRect()
-        root.scrollTo({
-          top: rect.top - root.getBoundingClientRect().top + root.scrollTop - 140,
+        const scroller = scrollableAncestor(alive.startContainer.parentElement ?? root, root)
+        scroller.scrollTo({
+          top: rect.top - scroller.getBoundingClientRect().top + scroller.scrollTop - 140,
           behavior: 'smooth',
         })
         finish()
         return
       }
 
-      highlightSnippet(root, snippet)
+      pendingRange = highlightSnippet(root, snippet, doc.body, activeCitation.start)
       if (attempts < 20) window.setTimeout(tick, 150)
       else finish()
     }
@@ -969,6 +970,40 @@ function normalizeForMatch(text: string): { norm: string; map: number[] } {
   return { norm: norm.join(''), map }
 }
 
+/** 从原文偏移推算目标是第几次出现，再去渲染后的正文找同一次出现。 */
+export function findPreferredSnippetPosition(
+  rendered: string,
+  sourceBody: string,
+  needle: string,
+  sourceStart: number,
+): number {
+  const { norm: source, map } = normalizeForMatch(sourceBody)
+  const occurrences: number[] = []
+  for (let at = source.indexOf(needle); at !== -1; at = source.indexOf(needle, at + 1)) {
+    occurrences.push(at)
+  }
+
+  // 旧引用或正文已改动时，回到原先的文本匹配行为。
+  if (occurrences.length === 0) return rendered.indexOf(needle)
+
+  let preferred = 0
+  for (let index = 1; index < occurrences.length; index += 1) {
+    if (
+      Math.abs(map[occurrences[index]!]! - sourceStart) <
+      Math.abs(map[occurrences[preferred]!]! - sourceStart)
+    ) {
+      preferred = index
+    }
+  }
+
+  let at = -1
+  for (let index = 0; index <= preferred; index += 1) {
+    at = rendered.indexOf(needle, at + 1)
+    if (at === -1) return -1
+  }
+  return at
+}
+
 /**
  * 在滚动容器里找 snippet 对应的文本区间。
  *
@@ -976,7 +1011,12 @@ function normalizeForMatch(text: string): { norm: string; map: number[] } {
  * 对全文做 indexOf，再把命中位置映射回「哪个节点的第几个字符」。
  * 返回的 Range 直接可用于 Highlight 与 scroll 定位。
  */
-function highlightSnippet(root: HTMLElement, snippet: string): Range | null {
+function highlightSnippet(
+  root: HTMLElement,
+  snippet: string,
+  sourceBody: string,
+  sourceStart: number,
+): Range | null {
   // 检索摘要可能以「…」结尾（片段被截断的标记），它不在原文里，必须剥掉
   const raw = snippet
     .trim()
@@ -984,7 +1024,9 @@ function highlightSnippet(root: HTMLElement, snippet: string): Range | null {
     .trim()
   if (raw.length < 4) return null
 
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+  // 头部、AI 摘要和大纲也可能重复正文词句；优先只在真实正文里找。
+  const contentRoot = root.querySelector<HTMLElement>('.ProseMirror, pre') ?? root
+  const walker = document.createTreeWalker(contentRoot, NodeFilter.SHOW_TEXT)
   const chunks: { node: Text; norm: string; map: number[] }[] = []
   let full = ''
   for (let node = walker.nextNode() as Text | null; node; node = walker.nextNode() as Text | null) {
@@ -1002,15 +1044,13 @@ function highlightSnippet(root: HTMLElement, snippet: string): Range | null {
   let at = -1
   let needle = ''
   for (const candidate of candidates) {
-    at = full.indexOf(candidate)
+    at = findPreferredSnippetPosition(full, sourceBody, candidate, sourceStart)
     if (at !== -1) {
       needle = candidate
       break
     }
   }
   if (at === -1) return null
-
-  if (typeof Highlight === 'undefined') return null
 
   /**
    * 全文区间 [at, at + needle.length) 与各块的区间求交集——
@@ -1039,6 +1079,9 @@ function highlightSnippet(root: HTMLElement, snippet: string): Range | null {
   if (!started) return null
 
   if (range.collapsed) return null
-  window.CSS?.highlights?.set('mimir-citation', new Highlight(range))
+  // 缺少 Custom Highlight API 时仍返回 Range，保证命中片段能滚入视野。
+  if (typeof Highlight !== 'undefined') {
+    window.CSS?.highlights?.set('mimir-citation', new Highlight(range))
+  }
   return range
 }

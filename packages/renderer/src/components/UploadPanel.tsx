@@ -126,7 +126,7 @@ export function UploadPanel({ onUploaded, folder, directory }: UploadPanelProps)
                   detail:
                     result.charCount > 0
                       ? `已提取 ${result.charCount.toLocaleString('zh-CN')} 字`
-                      : '原件已保存，正文解析见详情',
+                      : '原件已保存；可搜索状态见详情',
                   documentId: result.document.id,
                 }
               : row,
@@ -180,8 +180,8 @@ export function UploadPanel({ onUploaded, folder, directory }: UploadPanelProps)
         </p>
         <p className={styles.dropHint}>
           {directory
-            ? `里面的文件按目录结构原样收进${folder ? `「${folder}」` : '知识库'}，空文件夹会被跳过`
-            : `单个文件上限 ${formatBytes(FILE_MAX_BYTES)}。Markdown 会导入为可编辑笔记；其他格式原件保存、能预览与下载`}
+            ? '保留目录结构，跳过空文件夹'
+            : `单个文件不超过 ${formatBytes(FILE_MAX_BYTES)}。Markdown 导入为笔记，其他格式保存原件`}
         </p>
       </Upload.Dragger>
 
@@ -208,13 +208,8 @@ export function UploadPanel({ onUploaded, folder, directory }: UploadPanelProps)
           showIcon
           message={
             rows.every((row) => row.state === 'done')
-              ? `${rows.length} 个文件已收进知识库`
-              : '有些文件没能收进来（每一条的原因见上）'
-          }
-          description={
-            <span className={styles.doneHint}>
-              收进来的文件现在就能检索、能被问答引用；标签与目录可以在文档详情的 「⋯」菜单里补。
-            </span>
+              ? `${rows.length} 个文件已上传`
+              : '部分文件上传失败，请查看上方原因'
           }
         />
       )}
@@ -303,9 +298,6 @@ const useStyles = createStyles(({ css, token }) => ({
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-  `,
-  doneHint: css`
-    font-size: ${FONT_SIZE.note}px;
   `,
   actions: css`
     display: flex;

@@ -27,15 +27,15 @@ export function install(host: PluginHost): void {
     {
       seam: 'leg',
       id: 'keyword',
-      name: '关键词（jieba 分词）',
-      description: '词级召回，有词边界语义。三个通道里精度最高，是主力',
+      name: '关键词匹配',
+      description: '按词匹配，适合查找明确的名称或术语',
       file: 'plugins/leg/src/keyword.ts',
       configKeys: ['retrieval.keyword.weight'],
       params: [
         {
           key: 'retrieval.keyword.weight',
           label: '关键词通道权重',
-          description: '有词边界语义的通道，权重应当高于兜底通道',
+          description: '提高后，关键词匹配的结果更容易排在前面',
           group: 'retrieval',
           type: 'number',
           envName: null,
@@ -57,16 +57,15 @@ export function install(host: PluginHost): void {
     {
       seam: 'leg',
       id: 'substring',
-      name: '子串兜底',
-      description: '不受分词结果影响。词级通道切错了它还能捞回来，代价是精度低',
+      name: '文本片段匹配',
+      description: '按文字片段匹配，可补足关键词未命中的内容',
       file: 'plugins/leg/src/substring.ts',
       configKeys: ['retrieval.substring.weight'],
       params: [
         {
           key: 'retrieval.substring.weight',
           label: '子串兜底权重',
-          description:
-            '没有词边界语义，所以低于关键词通道。调高它会更容易捞回分词切错的段落，代价是噪声',
+          description: '提高后，包含查询片段的结果更容易排在前面',
           group: 'retrieval',
           type: 'number',
           envName: null,
@@ -88,8 +87,8 @@ export function install(host: PluginHost): void {
     {
       seam: 'leg',
       id: 'vector',
-      name: '语义向量',
-      description: '按语义相近召回，不依赖字面匹配。需要配置向量化模型并补嵌入',
+      name: '语义匹配',
+      description: '按意思相近程度匹配，需先配置向量化模型',
       file: 'plugins/leg/src/vector.ts',
       configKeys: ['retrieval.vector.weight', 'model.embed.dimensions'],
       /**
@@ -118,8 +117,7 @@ export function install(host: PluginHost): void {
         {
           key: 'retrieval.vector.weight',
           label: '向量通道权重',
-          description:
-            '语义召回与词级召回是两种不同信号，权重接近时融合最平衡。调高它会偏向「意思相近但用词不同」的段落',
+          description: '提高后，语义相近的结果更容易排在前面',
           group: 'retrieval',
           type: 'number',
           envName: null,

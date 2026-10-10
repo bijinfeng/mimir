@@ -55,6 +55,9 @@ export const citationSchema = z.object({
 })
 export type Citation = z.infer<typeof citationSchema>
 
+/** 只检索消息的持久化状态；保存与复制时据此从引用中还原可用内容。 */
+export const SEARCH_ONLY_RESULT_TEXT = '仅展示检索结果，未调用模型。'
+
 /**
  * 模型侧失败。四类各自给不同出路（`.trellis/spec/project/product.md` §5.8）——
  * 统一给一个「重试」等于把判断推回给用户，而用户此刻最缺判断依据。

@@ -1,4 +1,6 @@
 import type { Citation } from '@mimir/shared'
+import { parseMarkdown } from '@tanstack/markdown'
+import type { BlockNode, InlineNode } from '@tanstack/markdown'
 import { Tag } from 'antd'
 import { createStyles } from 'antd-style'
 
@@ -49,6 +51,58 @@ const CHANNEL_LABEL: Record<string, string> = {
   substring: '子串兜底',
   vector: '向量',
   scope: '限定本篇',
+}
+
+/** 卡片显示可扫读的文字；点击仍传原始 Citation，保留精确片段与偏移。 */
+function inlineText(node: InlineNode): string {
+  switch (node.type) {
+    case 'text':
+    case 'inlineCode':
+      return node.value
+    case 'image':
+      return node.alt
+    case 'break':
+      return ' '
+    case 'inlineHtml':
+      return ''
+    case 'footnoteReference':
+      return ''
+    default:
+      return node.children.map(inlineText).join('')
+  }
+}
+
+function blockText(node: BlockNode): string {
+  switch (node.type) {
+    case 'paragraph':
+    case 'heading':
+      return node.children.map(inlineText).join('')
+    case 'code':
+    case 'html':
+      return node.value
+    case 'list':
+      return node.items.map((item) => item.children.map(blockText).join(' ')).join(' ')
+    case 'blockquote':
+    case 'callout':
+    case 'component':
+      return node.children.map(blockText).join(' ')
+    case 'table':
+      return [...node.header, ...node.rows.flat()]
+        .map((cell) => cell.children.map(inlineText).join(' '))
+        .join(' ')
+    case 'footnotes':
+      return node.items.map((item) => item.children.map(blockText).join(' ')).join(' ')
+    case 'thematicBreak':
+      return ''
+  }
+}
+
+function citationPreview(snippet: string): string {
+  return parseMarkdown(snippet, { frontmatter: false, headingIds: false })
+    .children.map(blockText)
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 const useStyles = createStyles(({ css, token }) => ({
@@ -152,7 +206,7 @@ export function CitationList({
               </Tag>
             )}
           </div>
-          <div className={styles.snippet}>{citation.snippet}</div>
+          <div className={styles.snippet}>{citationPreview(citation.snippet)}</div>
         </button>
       ))}
     </div>

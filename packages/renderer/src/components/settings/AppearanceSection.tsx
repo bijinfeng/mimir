@@ -1,5 +1,5 @@
 import { Segmented } from 'antd'
-import { Note, Panel, Row } from './parts'
+import { Panel, Row } from './parts'
 import { useStyles } from './settings.style'
 import {
   THEME_MODE_LABELS,
@@ -41,26 +41,21 @@ export function AppearanceSection() {
   const { mode, setMode } = useThemeMode()
 
   return (
-    <>
-      <Panel title="外观">
-        <Row label="颜色模式">
-          <div className={styles.actions}>
-            <Segmented<ThemeMode>
-              value={mode}
-              onChange={(next) => setMode(next)}
-              options={THEME_MODES.map((value) => ({
-                value,
-                label: THEME_MODE_LABELS[value],
-              }))}
-              aria-label="界面外观"
-            />
-          </div>
-        </Row>
-      </Panel>
-
-      <Note>
-        存在<span className={styles.strong}>当前浏览器</span>里，换设备要重选。
-      </Note>
-    </>
+    <Panel title="外观">
+      <Row label="颜色模式">
+        <div className={styles.actions}>
+          <Segmented<ThemeMode>
+            value={mode}
+            onChange={(next) => setMode(next)}
+            options={THEME_MODES.map((value) => ({
+              value,
+              label: THEME_MODE_LABELS[value],
+            }))}
+            aria-label="界面外观"
+          />
+        </div>
+      </Row>
+      <div className={styles.appearanceNote}>仅在当前客户端生效。</div>
+    </Panel>
   )
 }

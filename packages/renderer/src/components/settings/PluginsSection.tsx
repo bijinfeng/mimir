@@ -3,7 +3,16 @@ import { Skeleton } from 'antd'
 import type { PluginSeam, PluginStatus } from '@mimir/shared'
 import { api } from '../../lib/api'
 import { LoadError } from '../LoadError'
-import { Block, BlockDesc, BlockTitle, FilePath, Panel, SeamTag, StatusBadge } from './parts'
+import {
+  Block,
+  BlockDesc,
+  BlockTitle,
+  FilePath,
+  Panel,
+  SeamTag,
+  StatusBadge,
+  TechnicalDetails,
+} from './parts'
 import { useStyles } from './settings.style'
 
 /**
@@ -30,15 +39,12 @@ import { useStyles } from './settings.style'
  * 前者是「将来会有」，后者是「现在缺个东西，补上就能用」。
  */
 
-const SEAM_LABELS: Record<PluginSeam, { name: string; note: string }> = {
-  capturer: { name: '抓取器', note: '把一份外部来源变成原始内容 + 元数据，不负责转换格式' },
-  parser: { name: '解析器', note: '把原始内容转成统一 Markdown，不抓取、不写库' },
-  leg: { name: '检索通道', note: '每个通道独立召回一批结果，再由融合层合并' },
-  provider: { name: '模型提供方', note: '按角色提供模型适配器：对话、摘要、向量化' },
-  storage: {
-    name: '存储后端',
-    note: '笔记、原始快照与头像存到哪里。任何时刻只有一个在用，其余是备选',
-  },
+const SEAM_LABELS: Record<PluginSeam, string> = {
+  capturer: '抓取器',
+  parser: '解析器',
+  leg: '检索通道',
+  provider: '模型提供方',
+  storage: '文件存储',
 }
 
 /**
@@ -53,6 +59,9 @@ export function PluginsSection() {
   const { styles } = useStyles()
   const configQuery = useQuery({ queryKey: ['config'], queryFn: api.config })
   const plugins = configQuery.data?.plugins
+  const selectedStorage = String(
+    configQuery.data?.settings.find((entry) => entry.key === 'storage.backend')?.value ?? 'local',
+  )
 
   if (configQuery.isError) {
     return <LoadError message="插件注册表读取失败" onRetry={() => void configQuery.refetch()} />
@@ -72,30 +81,36 @@ export function PluginsSection() {
         const items = plugins.filter((plugin) => plugin.seam === seam)
         if (items.length === 0) return null
 
-        const meta = SEAM_LABELS[seam]
         return (
-          <Panel
-            key={seam}
-            title={
-              <>
-                {meta.name}
-                <SeamTag>seam: {seam}</SeamTag>
-              </>
-            }
-          >
-            <Block>
-              <BlockDesc>{meta.note}</BlockDesc>
-            </Block>
+          <Panel key={seam} title={SEAM_LABELS[seam]}>
             {items.map((plugin) => (
               <Block key={plugin.id}>
-                <BlockTitle badge={<StatusLabel status={plugin.status} />}>
+                <BlockTitle
+                  badge={
+                    <StatusLabel
+                      status={plugin.status}
+                      inactiveStorage={plugin.seam === 'storage' && plugin.id !== selectedStorage}
+                    />
+                  }
+                >
                   {plugin.name}
                 </BlockTitle>
-                <BlockDesc>{plugin.description}</BlockDesc>
                 <StatusReason status={plugin.status} />
-                <FilePath>{plugin.file}</FilePath>
               </Block>
             ))}
+            <TechnicalDetails>
+              <SeamTag>seam: {seam}</SeamTag>
+              {items.map((plugin) => (
+                <Block key={plugin.id}>
+                  <BlockTitle>{plugin.name}</BlockTitle>
+                  <BlockDesc>{plugin.description}</BlockDesc>
+                  {plugin.status.kind === 'planned' ? (
+                    <BlockDesc>{plugin.status.note}</BlockDesc>
+                  ) : null}
+                  <FilePath>{plugin.file}</FilePath>
+                </Block>
+              ))}
+            </TechnicalDetails>
           </Panel>
         )
       })}
@@ -110,9 +125,17 @@ export function PluginsSection() {
  * 完全不同：前者是「将来会有」，后者是「现在缺个东西，补上就能用」。
  * 用布尔会把「待开发」显示成红色的「不可用」——那是在说它坏了。
  */
-function StatusLabel({ status }: { status: PluginStatus }) {
+function StatusLabel({
+  status,
+  inactiveStorage,
+}: {
+  status: PluginStatus
+  inactiveStorage: boolean
+}) {
   if (status.kind === 'active') return <StatusBadge on>可用</StatusBadge>
   if (status.kind === 'needs-config') return <StatusBadge on={false}>待配置</StatusBadge>
+  if (status.kind === 'unavailable' && inactiveStorage)
+    return <StatusBadge on={false}>未选中</StatusBadge>
   if (status.kind === 'unavailable') return <StatusBadge on={false}>不可用</StatusBadge>
   return <StatusBadge on={false}>待开发</StatusBadge>
 }
@@ -121,9 +144,6 @@ function StatusLabel({ status }: { status: PluginStatus }) {
 function StatusReason({ status }: { status: PluginStatus }) {
   if (status.kind === 'needs-config' || status.kind === 'unavailable') {
     return <BlockDesc>{status.reason}</BlockDesc>
-  }
-  if (status.kind === 'planned') {
-    return <BlockDesc>{status.note}</BlockDesc>
   }
   return null
 }

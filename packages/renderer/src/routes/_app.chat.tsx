@@ -133,14 +133,7 @@ function ChatRoute() {
       <ChatPanel
         key={panelKey}
         conversationId={search.id}
-        draft={
-          askDraft === null
-            ? null
-            : {
-                text: askDraft.text,
-                ...(askDraft.documentId ? { documentId: askDraft.documentId } : {}),
-              }
-        }
+        draft={askDraft}
         onOpenCitation={openCitation}
         onOpenNote={(noteId) => openDocument(noteId, 'all')}
         io={io}
