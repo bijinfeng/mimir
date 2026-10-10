@@ -49,3 +49,35 @@
 ### Status
 
 [OK] **Completed**
+
+
+## Session 3: 第二轮 UI 审查
+<!-- trellis-session: v=2 fp=9f6d94dca78135ae -->
+
+**Date**: 2026-10-10
+**Task**: 第二轮 UI 审查
+**Branch**: `codex/ui-review-round-2`
+
+### Summary
+
+完成合并后网页端九个分区的实际走查；归档 23 张截图与按优先级排序的审查报告。
+
+### Main Changes
+
+- 确认全局收集落库提示、无模型对话文案、搜索结果辨识度、窄窗口工具区及设置空态问题
+
+### Git Commits
+
+(No commits - planning session)
+
+### Testing
+
+- [OK] 核对 23 张截图和全部报告链接；git diff --check 通过
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 按审查报告优先级安排产品代码修复与未覆盖场景复测
