@@ -24,7 +24,7 @@ import { useUnsaved } from '../../lib/unsaved'
  *
  * ## 保存走已有的替换原件端点
  *
- * `PUT /api/documents/:id/file` 服务端会重算正文与哈希（`TECH.md` §13.9），
+ * `PUT /api/documents/:id/file` 服务端会重算正文与哈希（`.trellis/spec/project/architecture.md` §13.9），
  * 所以编辑完立刻可检索，**不需要新端点**。这也意味着编辑的是**原件**：
  * 标签、目录、状态都保留（那是用户整理的结果，与文件内容无关）。
  */
@@ -46,7 +46,7 @@ export function OfficeSourceEditor({
    * 取与存。**必须封装成稳定的引用**（`useCallback`）：`useSource`
    * 会把它放进 ref，但每次渲染新建对象仍会让下游的比较失效。
    *
-   * 这里的 `useCallback` 不是「手写记忆化」——`apps/web/AGENTS.md` 禁的是
+   * 这里的 `useCallback` 不是「手写记忆化」——`.trellis/spec/renderer/frontend/conventions.md` 禁的是
    * 为了性能而手写的 `useMemo`/`useCallback`（React Compiler 会做）。这里
    * 是**语义**要求的：`io` 是编辑器加载的触发条件之一，引用飘忽会让它
    * 反复重新加载。
@@ -75,7 +75,7 @@ export function OfficeSourceEditor({
    * `runGuarded`）。原先只有 `NoteEditor` 喂它，于是同一动作两种结果——
    * 笔记离开会被拦下问一句，而原件（docx / xlsx / pptx / html / pdf）
    * 状态行刚写着「已修改，未保存」，点「返回库」「设置」就直接走，
-   * 改动没了且没有任何提示（`docs/PRD.md` §5.9 要求三个选项）。
+   * 改动没了且没有任何提示（`.trellis/spec/project/product.md` §5.9 要求三个选项）。
    */
   const reportDirty = useCallback(
     (dirty: boolean) => {

@@ -6,7 +6,7 @@ import { FONT_SIZE } from '../theme/tokens'
 /**
  * 未保存内容的拦截框。
  *
- * `docs/PRD.md` §5.9：给**三个**选项，而不是两个。
+ * `.trellis/spec/project/product.md` §5.9：给**三个**选项，而不是两个。
  * 「继续编辑 / 丢弃改动 / 保存并离开」——两选项（留下 / 丢弃）把这个场景
  * 变成二选一的拷问，而用户真正想要的往往是第三种。
  *
@@ -24,7 +24,7 @@ import { FONT_SIZE } from '../theme/tokens'
  * 深色下这处漏网就露出来了：`#68707c` 压在深底上几乎看不见。
  *
  * 顺带把 `className="ant-btn"` 换成 antd 的 `Button`：手写前缀在
- * antd 换 prefixCls 时会整组失效（`apps/web/AGENTS.md` 样式第 7 条），
+ * antd 换 prefixCls 时会整组失效（`.trellis/spec/renderer/frontend/conventions.md` 样式第 7 条），
  * 而这里是在 JSX 里，`${prefixCls}` 根本拿不到。
  */
 const useStyles = createStyles(({ css, token }) => ({
@@ -58,7 +58,7 @@ export function UnsavedGuard() {
        * 就发警告，与有没有 open 无关，于是每个页面加载都会往控制台打一条。
        * 这一屏的语义恰恰是「点遮罩不能走」（有未保存内容时不许放行），
        * 迁移到新写法才不会在 antd 7 移除旧 prop 后**静默退回**「点遮罩就关」。
-       * 同类迁移见 `docs/DESIGN.md` §7.5（antd v6 的两处 API 变更）。
+       * 同类迁移见 `.trellis/spec/project/design.md` §7.5（antd v6 的两处 API 变更）。
        */
       mask={{ closable: false }}
       keyboard={false}

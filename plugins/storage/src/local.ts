@@ -14,7 +14,7 @@ import type { StorageBackend, StorageProbe } from '@mimir/shared'
  * ```
  *
  * 于是老部署升级上去之后，`data/` 里一个字节都不动，Typora / Obsidian /
- * git 仍然直接可用（`docs/RESEARCH.md` §10.8）。
+ * git 仍然直接可用（`.trellis/spec/project/research.md` §10.8）。
  *
  * ## 为什么 key 用 `/` 而不是平台分隔符
  *

@@ -33,14 +33,14 @@ import type {
 
 /**
  * 会话。`image` 是**带版本号的头像 URL**（`/api/avatar?v=...`）——
- * 文件名固定，不带版本就会一直显示缓存里的旧图（`docs/TECH.md` §12.6）。
+ * 文件名固定，不带版本就会一直显示缓存里的旧图（`.trellis/spec/project/architecture.md` §12.6）。
  */
 export interface AuthSession {
   user: { id: string; email: string; name: string; image?: string | null }
 }
 
 /**
- * 类型安全的 API 客户端——**前端唯一的服务端访问口**（`docs/TECH.md` §14）。
+ * 类型安全的 API 客户端——**前端唯一的服务端访问口**（`.trellis/spec/project/architecture.md` §14）。
  *
  * 四点约定：
  *  1. 开发时经 Vite 代理打到后端（见 vite.config.ts），生产由同一个服务提供，
@@ -203,7 +203,7 @@ export const api = {
     },
     /**
      * 建议标签。整理条把它直接摆成按钮，用户点一下就能挂上——
-     * 这是把收件箱从「死胡同」变成能整理的关键一步（`docs/PRD.md` §2.2）。
+     * 这是把收件箱从「死胡同」变成能整理的关键一步（`.trellis/spec/project/product.md` §2.2）。
      */
     suggestedTags(id: string) {
       return request<SuggestedTagsResponse>(
@@ -263,7 +263,7 @@ export const api = {
      * 替换某个上传件的原件（下载 → 改 → 传回）。标签与目录保持不变。
      *
      * Office 在线编辑保存走的就是它：编辑器产出新字节 → multipart 传回。
-     * 服务端会重算正文、哈希与 parse_error（`docs/TECH.md` §13.9），
+     * 服务端会重算正文、哈希与 parse_error（`.trellis/spec/project/architecture.md` §13.9），
      * 所以改完的文档立刻能被检索到。
      */
     async replaceSource(id: string, file: File) {
@@ -469,7 +469,7 @@ export const api = {
 
   /**
    * 写设置。`null` 表示**删除覆盖**，回落到环境变量或默认值——
-   * 那是一个真实的动作，不是「清空输入框」的副作用（docs/TECH.md §7.5）。
+   * 那是一个真实的动作，不是「清空输入框」的副作用（.trellis/spec/project/architecture.md §7.5）。
    *
    * 服务端整批校验，任一键不合法则整批拒绝（400 + issues）。
    */
@@ -488,7 +488,7 @@ export const api = {
    * （见服务端 routes/config.ts 的注释）。
    *
    * 显式动作，不自动触发：每次进设置页都写一个对象是浪费，
-   * 而且 S3 的写是按请求计费的（同 docs/TECH.md §7.8 对模型探测的判断）。
+   * 而且 S3 的写是按请求计费的（同 .trellis/spec/project/architecture.md §7.8 对模型探测的判断）。
    */
   probeStorage() {
     return request<{ target: string; ok: boolean; message: string }>('/api/config/storage-probe', {
@@ -500,7 +500,7 @@ export const api = {
    * 角色级探测：探这个角色绑定的模型。
    *
    * 只由用户显式点击触发——每次进设置页都发一次真实调用，慢且花钱
-   * （docs/TECH.md §7.8）。
+   * （.trellis/spec/project/architecture.md §7.8）。
    */
   probeRole(role: string) {
     return request<ProbeResult>('/api/config/probe-role', {
@@ -536,7 +536,7 @@ export const api = {
   },
 
   /**
-   * 用量统计（`docs/TECH.md` §12）。
+   * 用量统计（`.trellis/spec/project/architecture.md` §12）。
    *
    * 时区不由前端传——它是部署配置（`stats.timezone`），跟着服务端走。
    * 让前端传会让「同一份数据在两个浏览器上分档不同」，而那种差异
@@ -651,7 +651,7 @@ export const api = {
     /**
      * 改名称。**走 Better Auth 自带的端点**，不在 `/api/` 下再包一层——
      * 包一层等于把校验规则复制到两处，而会话校验、字段白名单都在
-     * Better Auth 里（`docs/TECH.md` §12.6）。
+     * Better Auth 里（`.trellis/spec/project/architecture.md` §12.6）。
      *
      * 本地模式下用不了它（那条路径要求一个真实会话，而本地模式靠宿主
      * 注入的本机令牌进入）——那种情况下走下面的 `api.local`。

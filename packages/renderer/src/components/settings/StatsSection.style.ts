@@ -2,7 +2,7 @@ import { createStyles } from 'antd-style'
 import { FONT_SIZE } from '../../theme/tokens'
 
 /**
- * 热力图与统计表的样式（`docs/DESIGN.md` §3.6.1 / §8.12）。
+ * 热力图与统计表的样式（`.trellis/spec/project/design.md` §3.6.1 / §8.12）。
  *
  * ## 颜色只有一个来源
  *

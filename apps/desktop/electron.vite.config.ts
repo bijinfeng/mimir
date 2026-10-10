@@ -9,7 +9,7 @@ import { rendererAlias } from './renderer-alias.ts'
  *
  * 取代原先那份只打 main 与 preload 的 `vite.config.ts`：渲染进程以前是
  * 「加载 apps/web 的构建产物」，改了前端代码不重新 build 就永远看不到变化
- * （`AGENTS.md` 的坑表记过这条）。现在渲染进程是本包的第三个入口，
+ * （`.trellis/spec/desktop/runtime/pitfalls.md` 的坑表记过这条）。现在渲染进程是本包的第三个入口，
  * `electron-vite dev` 三段一起热重载。
  *
  * ## 为什么没有 externalizeDepsPlugin
@@ -94,7 +94,7 @@ export default defineConfig({
       react({
         /**
          * React Compiler。**两个平台都必须开**：它是构建期的自动记忆化，
-         * 关掉的症状是「组件没变快」而不是报错（根 `AGENTS.md` 铁律 1）。
+         * 关掉的症状是「组件没变快」而不是报错（`.trellis/spec/project/rules.md` 铁律 1）。
          */
         compiler: { logDiagnostics: true },
       }),

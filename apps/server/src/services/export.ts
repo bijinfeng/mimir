@@ -8,7 +8,7 @@ import { slugify } from '../lib/text.js'
 import { readUpload } from '../lib/uploads.js'
 
 /**
- * 全量导出（`docs/PRD.md` §4 M0）。
+ * 全量导出（`.trellis/spec/project/product.md` §4 M0）。
  *
  * 为什么这是硬需求：本项目的存储规则是「Markdown 文件是真相」，
  * 那就必须证明**内容可以脱离这个应用被拿走**。
@@ -148,7 +148,7 @@ export function exportMarkdownZip(): PassThrough {
          * 上传的原件一并打包进 `原件/`。
          *
          * **这是导出对文件类文档必须做的事。** 导出的承诺是「内容可以脱离
-         * 这个应用被拿走」（`docs/PRD.md` §4 M0），而对一份 PDF 来说，
+         * 这个应用被拿走」（`.trellis/spec/project/product.md` §4 M0），而对一份 PDF 来说，
          * 正文只是它的派生物——原件才是内容。只导正文等于搬走了目录、
          * 留下了书。
          *

@@ -8,7 +8,7 @@ import { readAvatar, removeAvatar, writeAvatar } from '../services/avatar.js'
 import type { AppEnv } from '../types.js'
 
 /**
- * 头像的上传与读取（`docs/TECH.md` §12.6、D-036）。
+ * 头像的上传与读取（`.trellis/spec/project/architecture.md` §12.6、D-036）。
  *
  * ## 为什么读取也要鉴权
  *

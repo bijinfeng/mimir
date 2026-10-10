@@ -16,7 +16,7 @@ function quote(token: string): string {
  *
  * 索引是 `chunks_fts`（FTS5 standalone 虚拟表，`chunks.search_text` 装的
  * 是 jieba 预分词后的空格分隔词元；`unicode61` 按空白切词，词元一一对应，
- * 见 `RESEARCH.md` §11.2）。维护靠 chunks 上的三个触发器，不靠本通道。
+ * 见 `.trellis/spec/project/research.md` §11.2）。维护靠 chunks 上的三个触发器，不靠本通道。
  *
  * **检索单元在 M1-C 从文档下沉到分块**（§4.8）：返回 chunk id，
  * 过滤仍然作用在所属文档上（分块只有正文与偏移，「这篇删了吗」是文档的属性）。

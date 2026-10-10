@@ -15,7 +15,7 @@ import { z } from 'zod'
  *
  * 模型配置为什么不摊平成一堆 `model.*` 标量键：供应商是一个**集合**
  * （每家一个 baseURL 与一把密钥），而标量键表达不了集合。
- * 摊平的后果见 `docs/RESEARCH.md`：某个成熟产品用「按位置对齐的三个数组」
+ * 摊平的后果见 `.trellis/spec/project/research.md`：某个成熟产品用「按位置对齐的三个数组」
  * 存多家供应商，删除时要手工重排下标。
  */
 
@@ -175,7 +175,7 @@ export type PluginDescriptor = z.infer<typeof pluginDescriptorSchema>
 
 /**
  * 模型角色。**按任务分角色，而不是按服务商分**——
- * 「摘要换一个便宜模型」是最直接的成本控制手段（`docs/TECH.md` §5.7）。
+ * 「摘要换一个便宜模型」是最直接的成本控制手段（`.trellis/spec/project/architecture.md` §5.7）。
  */
 export const MODEL_ROLES = ['chat', 'reasoning', 'summarize', 'embed'] as const
 export type ModelRole = (typeof MODEL_ROLES)[number]
@@ -223,7 +223,7 @@ export const MODEL_PURPOSE_LABELS: Record<ModelPurpose, string> = {
  * 每个角色接受哪些用途的模型。**任务分配的候选过滤只看这一张表**。
  *
  * 摘要与深度思考都归 `chat`：它们与对话共用同一类模型，只是选谁的问题。
- * `rerank` 没有对应角色——角色本身还没实现（`docs/TECH.md` §5.7），
+ * `rerank` 没有对应角色——角色本身还没实现（`.trellis/spec/project/architecture.md` §5.7），
  * 标了它的模型暂时不进任何下拉。
  */
 export const MODEL_ROLE_PURPOSES: Record<ModelRole, ModelPurpose[]> = {
@@ -239,7 +239,7 @@ export const MODEL_ROLE_PURPOSES: Record<ModelRole, ModelPurpose[]> = {
  *
  * 顺序有意义：`bge-reranker-v2-m3` 同时命中 `bge`（embed 线索）与
  * `rerank`，所以先判 rerank。误判的代价是用户看到一个多余的候选，
- * 不是看到一个错误的候选（与 `docs/TECH.md` §5.7 的失败方向一致）。
+ * 不是看到一个错误的候选（与 `.trellis/spec/project/architecture.md` §5.7 的失败方向一致）。
  */
 export function inferModelPurposes(modelId: string): ModelPurpose[] {
   const lower = modelId.toLowerCase()
@@ -332,7 +332,7 @@ export type ProviderInstance = z.infer<typeof providerInstanceSchema>
  *
  * 加一家的做法：往预设表里加一行。不需要写适配器——只要它说 OpenAI 兼容
  * 协议，同一个 `openai-compatible` 适配器族就能接住它
- * （`docs/RESEARCH.md`：四个成熟产品都有这份目录，最大的有 90 项）。
+ * （`.trellis/spec/project/research.md`：四个成熟产品都有这份目录，最大的有 90 项）。
  */
 export const providerPresetSchema = z.object({
   id: z.string(),
@@ -354,7 +354,7 @@ export type ProviderPreset = z.infer<typeof providerPresetSchema>
  * 角色绑定：**指向「哪个供应商的哪个模型」**，不是一个裸模型名。
  *
  * 裸模型名的问题在多供应商下立刻暴露：两家都有 `glm-4` 时无法区分，
- * 于是要么禁止重名，要么给模型名加前缀（`docs/RESEARCH.md` 记了一个
+ * 于是要么禁止重名，要么给模型名加前缀（`.trellis/spec/project/research.md` 记了一个
  * 因裸 id 寻址而不得不发明前缀的实例）。绑定成一对，这个问题不存在。
  */
 export const roleBindingSchema = z.object({
@@ -389,7 +389,7 @@ export type ModelConfig = z.infer<typeof modelConfigSchema>
 
 /**
  * 探测结果。**不进数据库**：它是「刚才通不通」的观测，不是配置。
- * 重启即回到「未测试」，比留一个可能过期的「可用」诚实（`docs/TECH.md` §7.8）。
+ * 重启即回到「未测试」，比留一个可能过期的「可用」诚实（`.trellis/spec/project/architecture.md` §7.8）。
  */
 export const probeResultSchema = z.object({
   /** 角色名（角色级探测）或供应商 id（供应商级探测）*/
@@ -417,7 +417,7 @@ export type ProbeRequest = z.infer<typeof probeRequestSchema>
  * 真相落在哪种数据库上。
  *
  * 它是**部署事实**，不是可配项（`DATABASE_URL` 改了就重启，不在键表里，
- * `docs/TECH.md` §7.5 的「不写进程级配置」）——但设置页必须如实说
+ * `.trellis/spec/project/architecture.md` §7.5 的「不写进程级配置」）——但设置页必须如实说
  * 「数据库」这一行是什么。所以它由服务端回传，界面不写死厂商名：
  * 双后端（D-045）下写死厂商名的一半场景必然说错，
  * 而设置页最该守的就是「界面上说的每个事实都能验证」。

@@ -4,7 +4,7 @@ import { latestConversationContext, stats } from '../services/usage.js'
 import type { AppEnv } from '../types.js'
 
 /**
- * 用量统计的读取端点（`docs/TECH.md` §12）。
+ * 用量统计的读取端点（`.trellis/spec/project/architecture.md` §12）。
  *
  * 只有一条 GET：聚合在服务端做完，界面不做算术。理由是**口径必须只有一处**——
  * 今日/本周/本月与热力图如果各自在两端算，迟早会出现「上面写 12 万、

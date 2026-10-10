@@ -14,7 +14,7 @@ import { useStyles } from './settings.style'
  * 改动之前，这里的清单是前端写死的，与 `plugins/leg/index.ts` 的真实注册表
  * 没有连接：加一个通道要改两处，而「待开发」条目连文件路径都是手写的。
  * 那正是「设置里有开关但代码里没有对应逻辑」的镜像——
- * 代码里有实现，界面里有一份会漂移的抄本（`docs/DECISIONS.md` D-030）。
+ * 代码里有实现，界面里有一份会漂移的抄本（`.trellis/spec/project/decisions.md` D-030）。
  *
  * 现在 `GET /api/config` 的 `plugins` 直接来自注册表，
  * `structure.test.ts` 有一条断言验证每个 `file` 路径真实存在。

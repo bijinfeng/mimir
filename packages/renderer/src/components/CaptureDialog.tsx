@@ -10,9 +10,9 @@ import { api } from '../lib/api'
 import { FONT_SIZE } from '../theme/tokens'
 
 /**
- * 收集内容对话框：**粘贴链接与上传文件两个页签**（`docs/TECH.md` §13）。
+ * 收集内容对话框：**粘贴链接与上传文件两个页签**（`.trellis/spec/project/architecture.md` §13）。
  *
- * 这是原型阶段补的第一个洞（`docs/PRD.md` §2.2）：插件列表里列了六个抓取器，
+ * 这是原型阶段补的第一个洞（`.trellis/spec/project/product.md` §2.2）：插件列表里列了六个抓取器，
  * 但界面上根本没有地方粘贴链接。收集不到东西，后面整条链都没有意义。
  *
  * 上传文件与粘贴链接是**同一件事**——把外部的东西收进库，抓到即入库（收件箱
@@ -270,7 +270,7 @@ export function CaptureDialog({
       /*
        * 圆角 12px 与命令面板同一档。
        *
-       * `docs/DESIGN.md` §5.2 把「对话框、命令面板、输入框组」定为 **12–14px**，
+       * `.trellis/spec/project/design.md` §5.2 把「对话框、命令面板、输入框组」定为 **12–14px**，
        * 而 antd 的 `borderRadiusLG` 是 base(8) + 2 = 10px（§8.10 记了同一件事），
        * 够不到那个区间。不覆写的话这个对话框是 10px，而命令面板是 12px——
        * 同族浮层并排看会有两种圆角，收集对话框显得更「硬」（实测两张截图

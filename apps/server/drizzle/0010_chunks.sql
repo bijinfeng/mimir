@@ -28,10 +28,10 @@ CREATE INDEX "chunks_content_trgm_idx" ON "chunks" USING gin ("content" gin_trgm
 -- 向量索引（手写，drizzle 表达不了表达式索引）。
 --
 -- **按维度分区的 HNSW**：一张 chunk_embeddings 同时容纳多个不同维度的模型，
--- 换模型时旧向量共存、不立刻删（docs/TECH.md §4.8）。
+-- 换模型时旧向量共存、不立刻删（.trellis/spec/project/architecture.md §4.8）。
 --
 -- 查询必须写成**同一个表达式** `embedding::halfvec(1024) <=> $1` 并带上
--- `WHERE dimension = 1024`，否则索引静默不命中（docs/TECH.md §4.8 点名
+-- `WHERE dimension = 1024`，否则索引静默不命中（.trellis/spec/project/architecture.md §4.8 点名
 -- 这是本期最容易踩的一处）。
 --
 -- 三个常用维度都建：1024（BGE / Qwen / M3E 这类默认）、

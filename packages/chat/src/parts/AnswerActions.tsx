@@ -8,7 +8,7 @@ import { useMimirChatApi } from '../runtime/chat-context.js'
 /**
  * 回答下的动作条：「存成笔记」与「复制」。
  *
- * ## 「存成笔记」是闭环的最后一环（`docs/PRD.md` §5.7）
+ * ## 「存成笔记」是闭环的最后一环（`.trellis/spec/project/product.md` §5.7）
  *
  * 对话产出结论，界面上必须有地方把它沉淀下来。服务端把回答与引用写成
  * 站内链接，存出来的笔记自动进双链系统（services/conversations.ts）。

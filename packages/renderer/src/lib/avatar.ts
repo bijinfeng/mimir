@@ -1,5 +1,5 @@
 /**
- * 头像的客户端裁剪（`docs/TECH.md` §12.6、D-036）。
+ * 头像的客户端裁剪（`.trellis/spec/project/architecture.md` §12.6、D-036）。
  *
  * ## 为什么在浏览器里裁
  *

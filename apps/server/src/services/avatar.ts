@@ -1,7 +1,7 @@
 import { activeStorage } from '../plugins/host.js'
 
 /**
- * 头像的存储层（`docs/TECH.md` §12.6、D-036）。
+ * 头像的存储层（`.trellis/spec/project/architecture.md` §12.6、D-036）。
  *
  * ## 固定文件名，覆盖写
  *
@@ -21,7 +21,7 @@ import { activeStorage } from '../plugins/host.js'
  * 换到存储接缝之后这条边界由**前缀**继续保证：头像在 `avatars/`，
  * 内容在 `vault/`，而 `vault-index` 只遍历后者。原先靠两个独立目录，
  * 现在靠同一个根下的两个前缀，语义一样而少一处配置
- * （`docs/RESEARCH.md` §10.10 记了三个目录各自默认带来的那个缺陷）。
+ * （`.trellis/spec/project/research.md` §10.10 记了三个目录各自默认带来的那个缺陷）。
  */
 
 /** 头像的 key 前缀。与 vault 分开的边界见文件头注释 */

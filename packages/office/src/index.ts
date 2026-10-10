@@ -6,7 +6,7 @@
  * 引擎与编辑器 vendored 自 [GenOffice](https://github.com/genspark-ai/genoffice)
  * （Apache-2.0），见 `vendor/UPSTREAM.json` 与 `scripts/sync-upstream.mjs`。
  *
- * 为什么是它：调研（`docs/RESEARCH.md` §13）里没有第二条同时满足
+ * 为什么是它：调研（`.trellis/spec/project/research.md` §13）里没有第二条同时满足
  * **真编辑 + 无独立服务 + 许可宽松**的路——
  *   - ONLYOFFICE：1.9 GB 镜像 + 4 GB RAM 的独立容器
  *   - Collabora CODE：开发版官方明说「不适合生产」，生产版收费
@@ -35,7 +35,7 @@
  * UI（工具栏、分页容器）由调用方决定——上游的 ribbon 与办公壳没有 vendored
  * 进来，那是 mimir 自己的界面决定的。
  *
- * ## 三种格式，三条路（`docs/TECH.md` §15.7）
+ * ## 三种格式，三条路（`.trellis/spec/project/architecture.md` §15.7）
  *
  * | 格式 | 怎么做 | 为什么 |
  * |---|---|---|

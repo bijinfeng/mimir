@@ -13,7 +13,7 @@ import { useChatComposerStatus } from '../lib/use-chat-composer-status'
  * 对话模式（右栏）。
  *
  * 会话 id 走 URL（`?id=`），这样刷新、从会话历史点进来都能接上——
- * 会话优先的导航（`docs/PRD.md` §5.2）要求会话是可寻址的，
+ * 会话优先的导航（`.trellis/spec/project/product.md` §5.2）要求会话是可寻址的，
  * 只放组件状态里的话，刷新一次当前对话就没了。
  *
  * 对话体本身在 `@mimir/chat` 里（那边有完整的消息区、检索过程、引用、

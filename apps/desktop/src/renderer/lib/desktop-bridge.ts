@@ -7,7 +7,7 @@ import type { MimirDesktopBridge } from '@mimir/shared/desktop'
  *
  * `packages/shared/src/desktop.ts` 里是**契约**（宿主与载体之间的形状），
  * 这里多出来的只有一件事：**它可能不存在**。preload 失效过一次（相对路径
- * 写法让它静默不执行，见 `AGENTS.md` 的坑表），所以消费端不能假设它一定在。
+ * 写法让它静默不执行，见 `.trellis/spec/desktop/runtime/pitfalls.md` 的坑表），所以消费端不能假设它一定在。
  *
  * ## 为什么是模块级常量而不是 hook
  *

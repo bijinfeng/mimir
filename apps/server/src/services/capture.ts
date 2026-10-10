@@ -33,7 +33,7 @@ import { rebuildChunksAndEmbed } from './chunks.js'
  *
  * 每一步都在后端实际发生，失败时能准确指出是哪一步挂的。
  * 「获取页面」失败是反爬，「提取正文」失败是页面结构不认识——
- * 两者对用户的下一步动作完全不同（`docs/PRD.md` §5.8）。
+ * 两者对用户的下一步动作完全不同（`.trellis/spec/project/product.md` §5.8）。
  */
 
 export interface CaptureParams {

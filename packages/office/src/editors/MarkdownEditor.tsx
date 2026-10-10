@@ -33,7 +33,7 @@
  *
  * ## 保存是防抖的，但状态始终可见
  *
- * 文字类产品最让人失去信任的是丢内容（`docs/PRD.md` §5.9）。所以：输入后
+ * 文字类产品最让人失去信任的是丢内容（`.trellis/spec/project/product.md` §5.9）。所以：输入后
  * 900ms 防抖保存，状态行实时显示「正在保存… / 已保存 / 保存失败」，
  * 失败时点状态行重试。有未保存内容时切换文档由宿主的守卫拦截
  * ——`onSaveHandle` 就是交给它的那把「立即保存」。
@@ -52,11 +52,11 @@
  *
  * ## 段落样式为什么是九个取值，而正文规范只到 h3
  *
- * `docs/DESIGN.md` §4.3 给 h1-h3 定了字号（28 / 20 / 16），说的是**排版**；
+ * `.trellis/spec/project/design.md` §4.3 给 h1-h3 定了字号（28 / 20 / 16），说的是**排版**；
  * 「能不能写 h4」是另一个问题——markdown 本来就允许六级标题，`@tiptap/starter-kit`
  * 的 heading 默认 `levels: [1..6]`，而只读视图里 h4-h6 按浏览器默认渲染。
  * 少给三级会让用户在别处写好的笔记导入后**选不中已有的 h4**（下拉显示「混合」，
- * 改一下就掉级）。取舍记在 `docs/DECISIONS.md` 的 D-059。
+ * 改一下就掉级）。取舍记在 `.trellis/spec/project/decisions.md` 的 D-059。
  */
 
 import type { Editor, Extensions } from '@tiptap/core'
@@ -217,7 +217,7 @@ export interface MarkdownEditorProps {
    * 把「立即保存」交给宿主，供「保存并离开」调用。卸载时传 null。
    *
    * 返回值必须反映**真实结果**：拦截框靠它决定放不放行——放行了而实际
-   * 没存上，比不拦截更糟（`docs/PRD.md` §5.9）。
+   * 没存上，比不拦截更糟（`.trellis/spec/project/product.md` §5.9）。
    */
   onSaveHandle?: (save: (() => Promise<boolean>) | null) => void
   /**
@@ -298,7 +298,7 @@ export function MarkdownEditor({
    * 于是不会先闪一帧旧内容。
    *
    * 用 state 而不是 ref：这个值要在**渲染期**喂给 `useEditor`，而渲染期读
-   * ref 会让 React Compiler 拒绝优化这个组件（`apps/web/AGENTS.md` 记过）。
+   * ref 会让 React Compiler 拒绝优化这个组件（`.trellis/spec/renderer/frontend/conventions.md` 记过）。
    */
   const [snapshot, setSnapshot] = useState({ doc: documentId, body: initialContent })
   if (snapshot.doc !== documentId) setSnapshot({ doc: documentId, body: initialContent })

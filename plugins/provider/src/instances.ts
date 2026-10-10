@@ -51,7 +51,7 @@ export interface InternalModelConfig {
   /**
    * 已废弃的键值，迁移时读一次就丢弃。
    *
-   * 保留它是为了让老配置能平滑转换（`docs/DECISIONS.md` D-039）：
+   * 保留它是为了让老配置能平滑转换（`.trellis/spec/project/decisions.md` D-039）：
    * 用户升级后不该重新填一遍密钥。迁移完成后这里会被清空。
    */
   migratedFrom?: { baseUrl?: string; apiKey?: string; chatModel?: string }

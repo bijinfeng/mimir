@@ -16,7 +16,7 @@ import { routeTree } from '@/routeTree.gen'
  *
  * 写成内联箭头会让 `react(no-unstable-nested-components)` 判它是「渲染期
  * 定义组件」，React Compiler 随即跳过宿主组件——而那是**静默**的退化
- * （根 `AGENTS.md` 铁律 1：不报错，只是组件不再被优化）。
+ * （`.trellis/spec/project/rules.md` 铁律 1：不报错，只是组件不再被优化）。
  */
 const renderTitleBar = (props: Parameters<typeof TitleBar>[0]) => <TitleBar {...props} />
 

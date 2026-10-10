@@ -7,7 +7,7 @@ import { db } from '../db/client.js'
 import { user } from '../db/schema.js'
 
 /**
- * 头像与名称的行为断言（`docs/DECISIONS.md` D-036 的验证方式）。
+ * 头像与名称的行为断言（`.trellis/spec/project/decisions.md` D-036 的验证方式）。
  *
  * 四类失效都很静默，所以每条断言对应一个：
  *
@@ -57,7 +57,7 @@ async function listFiles(dir: string): Promise<string[]> {
  * 这两个目录**不再各自来自一个环境变量**，而是同一个 `DATA_DIR` 下的
  * 两个前缀（`avatars/` 与 `vault/`，见 `StorageBackend` 的契约注释）。
  * 改动之前它们各有独立默认值，容器里漏配 `AVATARS_DIR` 时头像会落到
- * 容器可写层（`docs/RESEARCH.md` §10.10）——现在这种漏配不可能发生。
+ * 容器可写层（`.trellis/spec/project/research.md` §10.10）——现在这种漏配不可能发生。
  *
  * 测试仍然断言**物理目录**，因为「头像不进 vault」这条边界
  * 在本地后端上的表现就是「不在那个目录里」（D-036 的验证方式）。

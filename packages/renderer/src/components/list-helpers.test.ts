@@ -9,7 +9,7 @@ import {
 } from './list-helpers'
 
 /**
- * 库卡片的渲染规则（`docs/DESIGN.md` §8.2、§8.3，`docs/TECH.md` §13）。
+ * 库卡片的渲染规则（`.trellis/spec/project/design.md` §8.2、§8.3，`.trellis/spec/project/architecture.md` §13）。
  *
  * 这些是纯函数，但它们守的是**界面上说不说实话**：
  * 一份还没解析出正文的文件，列表里那第二行写什么。

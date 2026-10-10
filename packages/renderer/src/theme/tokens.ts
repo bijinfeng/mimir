@@ -3,7 +3,7 @@ import type { MappingAlgorithm, ThemeConfig } from 'antd'
 import type { Appearance } from './appearance'
 
 /**
- * mimir 的设计 token —— 代码侧的唯一真相来源。规范与实测对比度见 `docs/DESIGN.md`。
+ * mimir 的设计 token —— 代码侧的唯一真相来源。规范与实测对比度见 `.trellis/spec/project/design.md`。
  *
  * ## 两种外观，共用一份形状
  *
@@ -61,7 +61,7 @@ const BASE_TOKEN = {
 } as const
 
 /**
- * 浅色的颜色。每一项的用途与实测对比度见 `docs/DESIGN.md` §3.3–§3.6。
+ * 浅色的颜色。每一项的用途与实测对比度见 `.trellis/spec/project/design.md` §3.3–§3.6。
  */
 const LIGHT_COLOR = {
   // ── 品牌 ──────────────────────────────────────────────
@@ -115,7 +115,7 @@ const DARK_LINK = '#79b8ff'
 /**
  * 深色的颜色。
  *
- * 取值来自 antd 深色算法的实际派生值再加校准（`docs/DESIGN.md` §3.8 有表）：
+ * 取值来自 antd 深色算法的实际派生值再加校准（`.trellis/spec/project/design.md` §3.8 有表）：
  * 文字阶与语义色对在深色下**比浅色更松**（深色底上文字的对比度天然更高），
  * 所以这里的值是按「≥ 浅色现状」而不是「随便挑一个好看的」定的。
  */
@@ -318,7 +318,7 @@ export const NAV_ITEM_HEIGHT = 30
 export const NAV_ITEM_MARGIN = 6
 
 /**
- * 窄屏断点：≤880px 时左导航**强制折叠**成 48px 图标条（`docs/DESIGN.md` §5.5）。
+ * 窄屏断点：≤880px 时左导航**强制折叠**成 48px 图标条（`.trellis/spec/project/design.md` §5.5）。
  *
  * ## 为什么它必须是一个共享的查询串，而不是各写各的
  *

@@ -71,7 +71,7 @@ export function pickFreePort(hostname = '127.0.0.1'): Promise<number> {
 }
 
 /**
- * 注入服务端读取的全部部署事实（`docs/TECH.md` §7.5：这些是部署事实，
+ * 注入服务端读取的全部部署事实（`.trellis/spec/project/architecture.md` §7.5：这些是部署事实，
  * 不进设置页）。桌面宿主只缺端口与路径——其余配置沿用 .env / 默认值。
  *
  * `local` 非空时打开**本地模式**（D-100）：免登录（入口是本机令牌）、

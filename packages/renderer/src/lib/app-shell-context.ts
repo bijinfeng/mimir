@@ -43,7 +43,7 @@ export interface AppShellContextValue {
    * 被点击的引用。
    *
    * 文档打开后据此滚动到原文区间并高亮——「点击跳回原文位置」的下半句，
-   * 只跳到文档而不指出位置，在长文里等于没跳（`docs/PRD.md` §5.1）。
+   * 只跳到文档而不指出位置，在长文里等于没跳（`.trellis/spec/project/product.md` §5.1）。
    * 消费一次后由消费方清掉，否则它会跟着用户去下一篇文档。
    */
   citation: Citation | null

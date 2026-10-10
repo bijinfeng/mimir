@@ -48,7 +48,7 @@ export const useStyles = createStyles(({ css, token }) => ({
       font-weight: 700;
       letter-spacing: 0.06em;
       /* 文字用正文色而不是主色：主色作文字在白底上只有 4.10:1
-         （docs/DESIGN.md §3.5），品牌名不该是全页唯一不达标的文字 */
+         （.trellis/spec/project/design.md §3.5），品牌名不该是全页唯一不达标的文字 */
       color: ${token.colorText};
     }
   `,
@@ -64,7 +64,7 @@ export const useStyles = createStyles(({ css, token }) => ({
     display: grid;
     /* minmax(0, 1fr) 而不是默认的 auto：auto 那一档的 track 最小尺寸是
        min-content，卡片上写死的宽度会把 track 撑开，窄窗口下整页横向溢出
-       （与登录页记过的同一条，docs/DESIGN.md §5.5） */
+       （与登录页记过的同一条，.trellis/spec/project/design.md §5.5） */
     grid-template-columns: minmax(0, 1fr);
     place-items: center;
     padding: 24px;

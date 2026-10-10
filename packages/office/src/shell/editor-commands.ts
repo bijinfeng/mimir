@@ -11,7 +11,7 @@
  * （`bulletList` / `heading` / …），docx 用 vendored 引擎自己定义的
  * （`docListItem` / `docParagraph` / …）。所以工具条不能假定某个节点或命令一定
  * 存在——不存在时按钮应该是**禁用的**，而不是留一个点了没反应的按钮
- * （`docs/DESIGN.md` §7.4 禁止的东西）。
+ * （`.trellis/spec/project/design.md` §7.4 禁止的东西）。
  *
  * ## 三层检测，按可靠性排序
  *

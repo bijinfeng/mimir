@@ -1,11 +1,11 @@
 import type { ParseInput, ParseResult, Parser } from '@mimir/shared'
 
 /**
- * `.pdf` → Markdown 的**文本提取**（M1-E，`docs/TECH.md` §13 / §15.12）。
+ * `.pdf` → Markdown 的**文本提取**（M1-E，`.trellis/spec/project/architecture.md` §13 / §15.12）。
  *
  * ## 选型：pdf.js（复用已有的依赖）
  *
- * `RESEARCH.md` 的规矩是「选型要有依据」。这里不需要新选型：
+ * `.trellis/spec/project/research.md` 的规矩是「选型要有依据」。这里不需要新选型：
  * **pdf.js 已经在仓库里**（`packages/office` 用它做页面预览），
  * 它的 `getTextContent()` 正是「把一页的文字按项取出来」的官方 API。
  * 再引入一个 PDF 文本库（pdf-parse / pdfium）会带来第二份 PDF 解析实现，

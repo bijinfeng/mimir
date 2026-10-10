@@ -18,7 +18,7 @@ import { isTextParseInput } from '@mimir/shared'
  *
  * 1. **`<section>` 标签的换行语义**：微信与不少中文站点用 `<section>` 组织段落，
  *    turndown 默认会丢掉它们的分隔，结果是整篇挤成一坨
- * 2. **代码块与表格要保留**：它们是技术内容的主要载体（`docs/PRD.md` §3.1）
+ * 2. **代码块与表格要保留**：它们是技术内容的主要载体（`.trellis/spec/project/product.md` §3.1）
  *
  * ## 为什么不用 `new JSDOM()`
  *

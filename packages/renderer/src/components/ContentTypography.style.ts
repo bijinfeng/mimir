@@ -11,7 +11,7 @@ import { FONT_SIZE } from '../theme/tokens'
  * 两处——编辑态一份、只读态一份——两份手抄的规则漂移出四处（图片没有
  * `max-width` 撑破内容列、行内代码底一个用字面量一个用 token、字号差半档、
  * 任务列表两边都没处理），而**没有任何一处报错**。
- * 漂移的代价正是 `docs/DESIGN.md` §8 开头那段话：**没有形态可依时每个组件
+ * 漂移的代价正是 `.trellis/spec/project/design.md` §8 开头那段话：**没有形态可依时每个组件
  * 各写各的**。同一篇笔记在编辑态与只读态长得不一样，用户会以为内容变了。
  *
  * 放这个目录（而不是 `src/styles/`）是刻意的：`design.test.ts` 的字号字面量
@@ -20,11 +20,11 @@ import { FONT_SIZE } from '../theme/tokens'
  *
  * ## 规则来源
  *
- * `docs/DESIGN.md` §4.3 是这份值的规范。Tiptap 渲染的是裸 DOM（`<h1>`
+ * `.trellis/spec/project/design.md` §4.3 是这份值的规范。Tiptap 渲染的是裸 DOM（`<h1>`
  * `<pre>` `<table>` 拿不到 className），所以只能从挂载点的类名往下写嵌套
  * 选择器——这正是 `createStyles` 嵌套选择器的用途，且规则有作用域。
  *
- * **不写字面量颜色**（`apps/web/AGENTS.md` 样式第 3 条）：全部走 `token.*`，
+ * **不写字面量颜色**（`.trellis/spec/renderer/frontend/conventions.md` 样式第 3 条）：全部走 `token.*`，
  * 于是换主题时正文不会掉队。对比度由 `design.test.ts` 守。
  */
 export const useContentStyles = createStyles(({ css, token }) => ({

@@ -3,7 +3,7 @@ import type { PluginSettings } from '@mimir/shared'
 import { fetchLimits, fetchText, USER_AGENT } from './http.js'
 
 /**
- * RSS / Atom 解析（M1-E，`docs/PRD.md` §3.1）。
+ * RSS / Atom 解析（M1-E，`.trellis/spec/project/product.md` §3.1）。
  *
  * ## 为什么不放在 `parser` 接缝里
  *

@@ -4,7 +4,7 @@ import { ChartPie, Check, ChevronDown, Plus, Zap } from 'lucide-react'
 import type { ChatComposerStatus } from '../types.js'
 
 /**
- * 输入区底栏的菜单与指示器（`docs/DESIGN.md` §8.8）。
+ * 输入区底栏的菜单与指示器（`.trellis/spec/project/design.md` §8.8）。
  *
  * Codex 式底栏在 mimir M0 的诚实形态——每个控件都接真实状态，没有一个
  * 「看着能点」：

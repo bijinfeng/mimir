@@ -5,7 +5,7 @@ import { useStatusStyles, useStyles } from './settings.style'
 /**
  * 设置页的四个零件。
  *
- * 抽出来是因为六个分区用的是**同一套形态**（`docs/DESIGN.md` §8 的理由：
+ * 抽出来是因为六个分区用的是**同一套形态**（`.trellis/spec/project/design.md` §8 的理由：
  * 没有形态可依时每个分区各写各的，界面就会一件件地跑偏）。分区的差异
  * 只应该是「填什么内容」，不是「长什么样」。
  */
@@ -48,7 +48,7 @@ export function Panel({
 /**
  * 面板标题里的 `seam:` 标识。
  *
- * 走等宽（`docs/DESIGN.md` §4.1 把「插件的 seam 标识」列为等宽的用途之一）：
+ * 走等宽（`.trellis/spec/project/design.md` §4.1 把「插件的 seam 标识」列为等宽的用途之一）：
  * 它是一个代码里的标识符，不是中文文案——等宽让它在标题里一眼可分。
  */
 export function SeamTag({ children }: { children: ReactNode }) {
@@ -140,7 +140,7 @@ export function Stats({ items }: { items: { label: string; value: string }[] }) 
 /**
  * 值的来源徽标：界面 / 环境变量 / 默认。
  *
- * **这是可写设置页上最有信息量的一处**（`docs/TECH.md` §7.5）。
+ * **这是可写设置页上最有信息量的一处**（`.trellis/spec/project/architecture.md` §7.5）。
  * 解析顺序是「界面覆盖 > 环境变量 > 默认」，所以用户必须能一眼看出
  * 「我现在看到的是我改过的，还是别人（部署配置）定的」——
  * 否则改了不生效时他没法判断是自己没保存，还是被环境变量压住了。

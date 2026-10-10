@@ -23,7 +23,7 @@
    加了就等于把编译时机重新变成一个需要排序的隐性约束。
 2. **服务端不能 `tsc` 直出。** Node 不执行 `node_modules` 里的 `.ts`
    （`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`），所以 shared 的源码
-   必须被编译进服务端产物。理由与取舍见 `docs/DECISIONS.md` D-023，
+   必须被编译进服务端产物。理由与取舍见 `.trellis/spec/project/decisions.md` D-023，
    构建工具的选择见 D-033。
 
 改 schema 后由各使用方重新编译；桌面端开发时还需刷新窗口。

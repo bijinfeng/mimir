@@ -28,7 +28,7 @@ function toScalar(value: unknown): string | number | boolean | null {
  * ```
  *
  * 用户看到的是「我改了」，实际什么都没发生。这正是设置页自己那条
- * 「画一个存不进去的假表单比没有更糟」（`docs/TECH.md` §7.7）。
+ * 「画一个存不进去的假表单比没有更糟」（`.trellis/spec/project/architecture.md` §7.7）。
  *
  * 所以改成：改动即标脏 → 出现「保存」按钮 → 点它或按回车保存。
  * 两条路径都比一个看不见的 blur 可靠，而且**用户能看见自己还没保存**。
@@ -72,7 +72,7 @@ export function SettingControl({
    * **用「渲染期调整 state」而不是 `useEffect`**：effect 里同步 setState
    * 会触发一轮级联渲染，React 自己的 lint（`react/set-state-in-effect`）
    * 会拦下它，而且 React Compiler 会**跳过整个组件**（静默不优化，
-   * 见 `apps/web/AGENTS.md`）。这个写法是 React 官方推荐的替代方案：
+   * 见 `.trellis/spec/renderer/frontend/conventions.md`）。这个写法是 React 官方推荐的替代方案：
    * 在同一次渲染中根据上一次的 props 调整 state，React 会立刻重渲染
    * 且不提交中间状态，用户看不到闪烁。
    */
@@ -149,7 +149,7 @@ export function SettingControl({
         /*
           开关用 antd 的 `Switch` 而不是原生 checkbox：原生控件不服从 token
           体系——深色下是浏览器默认的白框，而勾选态的颜色（各浏览器不同）
-          也不由我们校准（docs/DECISIONS.md D-042、D-045）。
+          也不由我们校准（.trellis/spec/project/decisions.md D-042、D-045）。
         */
         <Switch
           checked={draft === true}

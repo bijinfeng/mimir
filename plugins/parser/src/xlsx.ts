@@ -2,7 +2,7 @@ import type { ParseInput, ParseResult, Parser } from '@mimir/shared'
 import { cleanExtractedText, openOoxmlArchive, xmlToText, type OoxmlArchive } from './ooxml.js'
 
 /**
- * `.xlsx` → Markdown 的**文本提取**（`docs/TECH.md` §13）。
+ * `.xlsx` → Markdown 的**文本提取**（`.trellis/spec/project/architecture.md` §13）。
  *
  * ## 单元格里的文字存在两个地方
  *

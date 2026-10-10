@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { chunkId, chunkText, type Chunk } from '../lib/chunk.js'
 
 /**
- * 分块器的四类断言（`docs/TECH.md` §9.5）。
+ * 分块器的四类断言（`.trellis/spec/project/architecture.md` §9.5）。
  *
  * 这一组不是「测函数返回值」——它们守的是**引用能不能跳回原文**这件事：
  *

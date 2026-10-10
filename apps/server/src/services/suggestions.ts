@@ -6,7 +6,7 @@ import { tokenize } from '@mimir/tokenizer'
 /**
  * 建议标签。
  *
- * 整理条把这几个词直接摆成按钮（`docs/PRD.md` §5.10）。关键点是
+ * 整理条把这几个词直接摆成按钮（`.trellis/spec/project/product.md` §5.10）。关键点是
  * **后端早就该算它**——界面上没地方显示等于白算。
  *
  * 用 jieba 而不是正则：原型里的正则 `/[\u4e00-\u9fa5]{2,4}/g` 只能切出

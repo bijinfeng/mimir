@@ -56,7 +56,7 @@ COPY --from=builder /repo/apps/web/dist ./web/dist
 
 # 数据目录挂载点。三类文件（vault / raw / avatars）都是它的前缀，
 # 全部落在卷上——**按目录逐个传环境变量会漏，而漏了不报错**
-# （头像就这么丢过一次，见 docs/RESEARCH.md §10.10）。
+# （头像就这么丢过一次，见 .trellis/spec/project/research.md §10.10）。
 RUN mkdir -p /data/vault /data/raw /data/avatars && chown -R mimir:mimir /data /app
 VOLUME ["/data"]
 

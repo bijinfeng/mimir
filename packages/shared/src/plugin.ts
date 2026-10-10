@@ -42,14 +42,14 @@ export type { PluginSeam, PluginStatus }
  * **为什么状态由 core 算而不是各实现自己写**：把「缺配置」这个最常见的情况
  * 收敛成一条规则，就不会出现八个实现各自编八种理由。实现只需要声明
  * 它依赖什么，而 `unavailable()` 留给真正需要自定义判断的那几个
- * （见 `docs/TECH.md` §7.4）。
+ * （见 `.trellis/spec/project/architecture.md` §7.4）。
  *
  * ## `unavailable` 拿到的是**已解析的值**，不只是「有没有配」
  *
  * 这是存储接缝带出来的一处契约放宽。原先的判据只有 `isProvided(key)`
  * ——「这个键有没有人显式配过」——它回答不了「**当前选中了哪个后端**」：
  * 本地与 S3 都配好之后，两个后端在设置页上都会显示「可用」，
- * 而实际上只有一个是真相（`docs/RESEARCH.md` §10.6）。
+ * 而实际上只有一个是真相（`.trellis/spec/project/research.md` §10.6）。
  *
  * 收下 `read` 之后，未选中的后端可以如实报告
  * 「当前未选中（正在用 local）」——那正是 `unavailable` 的语义：
@@ -133,7 +133,7 @@ export interface PluginDatabase {
   execute<T = unknown>(query: unknown): Promise<T[]>
 }
 
-/** 插件读配置的方式。与设置页共用同一套解析结果（`docs/TECH.md` §7.5） */
+/** 插件读配置的方式。与设置页共用同一套解析结果（`.trellis/spec/project/architecture.md` §7.5） */
 export interface PluginSettings {
   getNumber(key: string): Promise<number>
   getString(key: string): Promise<string>
@@ -162,7 +162,7 @@ export interface PluginSettings {
  *
  * `register` 同时收下声明与实现：这样「注册表里有实现」与
  * 「设置页里有这一行」是同一件事，不会各说各话——那正是这次重构的起因
- * （`docs/DECISIONS.md` D-030）。
+ * （`.trellis/spec/project/decisions.md` D-030）。
  */
 export interface Registry<TImpl> {
   /** 注册一个实现。id 重复会在注册时报错，而不是静默覆盖 */
@@ -196,7 +196,7 @@ export interface RegisteredPlugin<TImpl> {
  *
  * 这就是全部的插件协议。没有生命周期钩子、没有依赖注入容器、没有配置文件——
  * 那些是插件**框架**的东西，而这里要的是「加一个实现＝加一个文件」
- * （`docs/DECISIONS.md` D-007 与 D-031）。
+ * （`.trellis/spec/project/decisions.md` D-007 与 D-031）。
  *
  * ## 为什么按接缝分方法，而不是一个通用的 `register(seam, ...)`
  *

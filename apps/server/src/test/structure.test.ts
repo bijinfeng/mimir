@@ -207,7 +207,7 @@ describe('会话与问答', () => {
     expect(assistant).toBeDefined()
 
     // trace 必须存在：没有它，AI 说「没找到」时用户无法分辨
-    // 是没存过、还是分词没匹配上（docs/PRD.md §5.6）
+    // 是没存过、还是分词没匹配上（.trellis/spec/project/product.md §5.6）
     expect(assistant?.trace).not.toBeNull()
     expect(assistant?.trace?.steps.length).toBeGreaterThan(0)
 

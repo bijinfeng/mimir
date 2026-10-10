@@ -5,7 +5,7 @@
  * ## 这个包是什么
  *
  * mimir 需要「在浏览器里预览并编辑 docx」。现成路线里没有许可宽松、可自托管、
- * 且能真编辑的库（见 docs/RESEARCH.md §13 的调研）：ONLYOFFICE 要 1.9 GB 容器、
+ * 且能真编辑的库（见 .trellis/spec/project/research.md §13 的调研）：ONLYOFFICE 要 1.9 GB 容器、
  * Collabora 开发版官方不推荐生产、CryptPad 路线背着 580 MB 静态资源与 AGPL §7
  * 附加条款。GenOffice（Apache-2.0）是唯一同时满足「真编辑」「无独立服务」
  * 「许可宽松」的，它的引擎是补丁式保存——**未改动的 zip 条目逐字节原样写回**

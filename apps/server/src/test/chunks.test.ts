@@ -8,7 +8,7 @@ import { createNote, updateNote } from '../services/documents.js'
 import { getAuthCookie, makeClient } from './helpers.js'
 
 /**
- * M1-C 的检索单元回归（`docs/TECH.md` §9.5 的另一半）。
+ * M1-C 的检索单元回归（`.trellis/spec/project/architecture.md` §9.5 的另一半）。
  *
  * M0 的检索单元是文档，M1 是分块。这一组的价值在于**守住那几个
  * 「界面看不出来」的性质**：

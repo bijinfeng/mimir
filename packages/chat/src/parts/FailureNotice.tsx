@@ -5,7 +5,7 @@ import { createStyles } from 'antd-style'
 /**
  * 模型侧失败。
  *
- * `docs/PRD.md` §5.8：**每类失败给不同出路**，而不是统一一个「重试」。
+ * `.trellis/spec/project/product.md` §5.8：**每类失败给不同出路**，而不是统一一个「重试」。
  * 统一重试等于把判断推回给用户，而用户此刻恰恰最缺判断依据——
  * 他不知道这次花没花钱、内容丢没丢、换个做法有没有用。
  *
@@ -67,7 +67,7 @@ const useStyles = createStyles(({ css, token }) => ({
  * 点下去什么都不发生（`onClick` 里那两个 `if` 把其余的静默吃掉），
  * 那比不显示更让人困惑：用户以为点了没用，而不是知道这个能力还没有。
  *
- * 出路本身保留（`docs/PRD.md` §5.8 要求说清「还能做什么」），
+ * 出路本身保留（`.trellis/spec/project/product.md` §5.8 要求说清「还能做什么」），
  * 所以不能删掉它们，只能如实标注。
  */
 
@@ -164,7 +164,7 @@ export function FailureCard({
         {ui.actions.map((action) => {
           /**
            * 每条出路的可用性写在数据里（见 FAILURE_UI 的 implemented）。
-           * 禁用时**保留按钮**：`docs/PRD.md` §5.8 的意思是「说清还有哪些
+           * 禁用时**保留按钮**：`.trellis/spec/project/product.md` §5.8 的意思是「说清还有哪些
            * 可能」，直接删掉用户就找不到这个入口了。
            *
            * tooltip 包一层 `<span>`：antd 的 Button 在禁用态是
@@ -209,7 +209,7 @@ export function FailureCard({
  *
  * ## 为什么它和 FailureCard 是两张卡
  *
- * `PRD.md` §5.8 的四类失败是**模型侧的**：额度、超时、截断、网络。
+ * `.trellis/spec/project/product.md` §5.8 的四类失败是**模型侧的**：额度、超时、截断、网络。
  * 它们由服务端分类（服务端看得到 HTTP 状态码），每类给不同出路，
  * 而且服务端会**为它们落一条助手消息**（所以历史上还能回看）。
  *

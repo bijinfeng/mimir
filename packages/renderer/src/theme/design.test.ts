@@ -25,7 +25,7 @@ import {
  * 设计 token 的守卫测试。
  *
  * 这份规范里所有「对比度 ≥ 4.5:1」的承诺都在这里被真正计算一遍——
- * 规范写在 `docs/DESIGN.md`，但如果不测，它会在某次 antd 升级或
+ * 规范写在 `.trellis/spec/project/design.md`，但如果不测，它会在某次 antd 升级或
  * 某次「我换个颜色试试」之后静默失效。
  *
  * 改 token 导致这里红了，不要改断言，先改设计。
@@ -401,7 +401,7 @@ describe('非文本对比度：焦点环与描边', () => {
 
 describe('关键值真的覆盖了 antd 默认', () => {
   it('浅色的语义文字不用 antd 默认值', () => {
-    // antd 默认那套文字色在自家浅底上只有 1.83–3.66:1，见 docs/DESIGN.md §3
+    // antd 默认那套文字色在自家浅底上只有 1.83–3.66:1，见 .trellis/spec/project/design.md §3
     const fallback = theme.getDesignToken()
     expect(lightToken.colorSuccessText).not.toBe(fallback.colorSuccessText)
     expect(lightToken.colorWarningText).not.toBe(fallback.colorWarningText)
@@ -618,7 +618,7 @@ describe('字号阶梯', () => {
  *  2. `styles/global.ts` 的底色注释（并行改动引入）
  *  3. `StatsSection.style.ts` 的表格竖线注释（我修第 1 条时又写的）
  *
- * 前两次都写进了 `TECH.md` §10 的坑表——**但文档拦不住手**。
+ * 前两次都写进了 `.trellis/spec/project/architecture.md` §10 的坑表——**但文档拦不住手**。
  * 所以补这条机器守：它扫的就是那对多余的引号。
  */
 async function scanTemplateBackticks(): Promise<string[]> {
@@ -748,7 +748,7 @@ describe('字体栈只有一处定义', () => {
   })
 
   it('字体栈含中文兜底', () => {
-    // docs/DESIGN.md §2.1：antd 默认栈到 Roboto 就结束，
+    // .trellis/spec/project/design.md §2.1：antd 默认栈到 Roboto 就结束，
     // Linux 上会一路落到 sans-serif，中文可能渲染成点阵字体
     expect(FONT_SANS).toContain('PingFang SC')
     expect(FONT_SANS).toContain('Microsoft YaHei')
@@ -891,7 +891,7 @@ describe('用量热力图色阶', () => {
    *
    * 浅色下用 `colorPrimaryBg`（#e6f4ff）当最浅档时，它与白底只差 1.05:1，
    * 「有一点活动」和「完全没活动」在屏幕上几乎一样——这是贡献图
-   * 最常见的失败（docs/DESIGN.md §3.6.1）。
+   * 最常见的失败（.trellis/spec/project/design.md §3.6.1）。
    *
    * 深色下同一个判断仍在，但方向相反：空格子是**更暗**的一方，
    * 所以色阶往亮走。
@@ -957,7 +957,7 @@ describe('用量热力图色阶', () => {
 })
 
 describe('状态徽标色对', () => {
-  // docs/DESIGN.md §3.7 的表。来源徽标已随 D-047 移除、收件箱徽标随 D-054
+  // .trellis/spec/project/design.md §3.7 的表。来源徽标已随 D-047 移除、收件箱徽标随 D-054
   // 移除、归档徽标随 D-065 移除，这张表只剩**提取失败**一个偏离常态的状态。
   // 改配色时这里会拦下来。
   it.each(APPEARANCES)('徽标文字 on 自身底 %s下 ≥ 4.5:1', (appearance) => {
@@ -1054,7 +1054,7 @@ describe('设置页与对话区的色对', () => {
 
 describe('布局常量', () => {
   it('内容列只有一个宽度值', () => {
-    // docs/DESIGN.md §5.4：同一条内容在列表里和详情里不该有两种宽度。
+    // .trellis/spec/project/design.md §5.4：同一条内容在列表里和详情里不该有两种宽度。
     // 页面里出现新的 maxWidth 字面量时，先问它是不是第三种「内容列」。
     expect(CONTENT_WIDTH).toBe(760)
   })
@@ -1231,7 +1231,7 @@ describe('cssVar 运行时确实注入了变量', () => {
   it('动效退化规则在全局样式里', async () => {
     const { css, unmount } = await renderApp()
 
-    // docs/DESIGN.md §6：前庭功能敏感的用户，这不是可选项
+    // .trellis/spec/project/design.md §6：前庭功能敏感的用户，这不是可选项
     expect(css).toMatch(/prefers-reduced-motion/)
     expect(css).toMatch(/transition-duration:\s*0\.01ms/)
 

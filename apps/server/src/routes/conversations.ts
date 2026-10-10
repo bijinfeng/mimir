@@ -19,7 +19,7 @@ conversationsRoute.get('/', async (c) => c.json({ items: await listConversations
 
 /**
  * 直连提问：不指定会话时自动开一个新的。
- * 命令面板里直接提问走这条（`docs/PRD.md` §5.10：输入两个字以上会附 AI 回答）。
+ * 命令面板里直接提问走这条（`.trellis/spec/project/product.md` §5.10：输入两个字以上会附 AI 回答）。
  */
 conversationsRoute.post('/ask', async (c) => {
   const input = await parseInput(c, 'json', askInputSchema)
@@ -52,7 +52,7 @@ conversationsRoute.delete('/:id', async (c) => {
 })
 
 /**
- * 提问。这是整个产品的主交互（会话优先，`docs/PRD.md` §5.2），
+ * 提问。这是整个产品的主交互（会话优先，`.trellis/spec/project/product.md` §5.2），
  * 所以它同时做三件事：检索、可选地调模型、把结果落库。
  *
  * 两个入口分工明确：

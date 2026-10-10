@@ -229,7 +229,7 @@ function NameField({ session, localMode }: { session: AuthSession | null; localM
    *
    * **渲染期调整 state，不用 `useEffect`**：effect 里同步 setState 会触发
    * 一轮级联渲染，React 的 lint 会拦下它，而且 React Compiler 会
-   * **跳过整个组件**（静默不优化，见 `apps/web/AGENTS.md` 与
+   * **跳过整个组件**（静默不优化，见 `.trellis/spec/renderer/frontend/conventions.md` 与
    * `SettingControl` 的同一条注释）。
    */
   if (serverName !== lastServerName) {

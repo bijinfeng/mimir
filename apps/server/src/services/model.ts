@@ -18,7 +18,7 @@ import { describeModel, effectiveTokens, record, tokenFields } from './usage.js'
  * ## 记账也放在这里，理由与上面同一条
  *
  * **它是唯一一条会把请求发出去的收口点**，所以用量记账放这里就不可能出现
- * 「新加一条调用路径忘了记账」（`docs/TECH.md` §12.7、D-034）。
+ * 「新加一条调用路径忘了记账」（`.trellis/spec/project/architecture.md` §12.7、D-034）。
  * 记账本身是旁路——`record()` 永不抛错，记不上账不能让问答失败。
  *
  * ## 契约边界上的断言
@@ -344,7 +344,7 @@ export async function callEmbed(input: string[], refId?: string | null): Promise
 
 /**
  * 摘要。**用 summarize 角色**，不是拿 chat 假装——
- * 两者的适配器与选项形状都不同（`docs/TECH.md` §5.2）。
+ * 两者的适配器与选项形状都不同（`.trellis/spec/project/architecture.md` §5.2）。
  */
 export async function callSummarize(text: string, refId?: string | null): Promise<string> {
   const adapter = await adapterFor('summarize')
@@ -360,7 +360,7 @@ export async function callSummarize(text: string, refId?: string | null): Promis
     /**
      * 摘要的 usage 直接读返回值——它走的是 summarize activity，不是 chat，
      * 所以拿不到 `middleware.onFinish`。**形状不同正是要分成两个角色的原因**
-     * （`docs/TECH.md` §5.2 的第 3 条边界）。
+     * （`.trellis/spec/project/architecture.md` §5.2 的第 3 条边界）。
      */
     await account(
       { role: 'summarize', source: 'summary', refId: refId ?? null },

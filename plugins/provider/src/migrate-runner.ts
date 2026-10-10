@@ -12,7 +12,7 @@ import { migrateLegacySettings, shouldMigrate } from './migrate.js'
  *
  *  1. **加密旧密钥**。旧密钥可能是库里的密文，也可能是环境变量里的明文，
  *     两种都要**加密后**落进新配置。加密口是 `host.secrets`，
- *     只有插件拿得到（宿主的服务层刻意没有它——`docs/TECH.md` §7.6）
+ *     只有插件拿得到（宿主的服务层刻意没有它——`.trellis/spec/project/architecture.md` §7.6）
  *  2. **知道新形状**。它是模型域的拥有者，转换规则在 `migrate.ts` 里
  *
  * 如果放在宿主，宿主就要读旧的 `model.*` 标量键（那是模型域的知识），

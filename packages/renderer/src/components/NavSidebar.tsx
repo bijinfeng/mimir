@@ -49,12 +49,12 @@ import { THEME_MODES, THEME_MODE_LABELS, useThemeMode, type ThemeMode } from '..
  * └────────────────────────────┘
  * ```
  *
- * 折叠后（48px，`DESIGN.md` §5.4）只剩图标列：目录树与分组标签不渲染，
+ * 折叠后（48px，`.trellis/spec/project/design.md` §5.4）只剩图标列：目录树与分组标签不渲染，
  * 顶栏的标记与开关改成竖排。状态的持有者是 `_app.tsx`——折叠要改的是
  * 外层的 `grid-template-columns`，网格在哪一层，状态就在哪一层。
- * 详见 `docs/DECISIONS.md` D-026。
+ * 详见 `.trellis/spec/project/decisions.md` D-026。
  *
- * ## 会话优先（`docs/PRD.md` §5.2）
+ * ## 会话优先（`.trellis/spec/project/product.md` §5.2）
  *
  * 「新建对话」在动作列表第一项、会话历史紧随其后，然后才是知识库入口。
  * 这不是排序偏好——它决定了中栏的语义（对话模式下中栏是「本次引用」）。
@@ -331,7 +331,7 @@ export function NavSidebar({
 }
 
 /**
- * 底部账号行（`docs/DESIGN.md` §8.13）。
+ * 底部账号行（`.trellis/spec/project/design.md` §8.13）。
  *
  * ## 一行，两个目标（形态参照一份桌面应用的左下角）
  *
@@ -354,7 +354,7 @@ export function NavSidebar({
  * 早先这里刻意不放主题（理由是「同一个设置出现两个家，必然有一天只改
  * 一处」）。用户要求加之后，那个风险由**同一个写入函数**兜住：
  * 菜单与设置页都调 `appearance.ts` 的 `setThemeMode`，没有第二份状态
- * 可漂移（`docs/DECISIONS.md` D-081）。
+ * 可漂移（`.trellis/spec/project/decisions.md` D-081）。
  *
  * ## 为什么不是「两行」或「点哪都进设置」
  *

@@ -3,7 +3,7 @@ import { nanoid } from 'nanoid'
 import { activeStorage } from '../plugins/host.js'
 
 /**
- * 上传原件的存放规则（`docs/TECH.md` §13）。
+ * 上传原件的存放规则（`.trellis/spec/project/architecture.md` §13）。
  *
  * ## 路径形状：首次上传 `uploads/<文档id>/<原文件名>`；替换写 `versions/<版本>/<原文件名>`
  *
@@ -163,7 +163,7 @@ export async function readUpload(key: string): Promise<Uint8Array> {
  * 不为它加一个 `rmdir` 到接缝里，理由有两条：
  *
  *  1. 那个方法只对一个后端有意义（S3 上是空实现），属于「把接口设计
- *     迁就某一个实现」——而 `docs/TECH.md` §7.3 要的正是相反的方向
+ *     迁就某一个实现」——而 `.trellis/spec/project/architecture.md` §7.3 要的正是相反的方向
  *  2. **这个项目本来就是这个行为**：`trashNote` 也把笔记移走、
  *     留下空的 `年/月/` 目录。为了一个纯装饰性的差别引进一条新接缝，
  *     换不来任何东西

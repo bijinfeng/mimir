@@ -27,8 +27,8 @@
     "react/react-in-jsx-scope": "off",
 
     // 这条建议手写 useMemo 包裹 context value，但本项目开了 React Compiler，
-    // 它**已经**在编译期给 context value 插入记忆化（见 docs/DECISIONS.md D-009
-    // 与 apps/web/AGENTS.md：不要手写 useMemo / useCallback / memo）。
+    // 它**已经**在编译期给 context value 插入记忆化（见 .trellis/spec/project/decisions.md D-009
+    // 与 .trellis/spec/renderer/frontend/conventions.md：不要手写 useMemo / useCallback / memo）。
     // 手写一份会让「哪些记忆化是编译器做的」变得含混，而且编译器不会因为
     // 存在手写记忆化就停止工作——两套机制叠在一起只会让人误判优化来源。
     "react/jsx-no-constructed-context-values": "off",

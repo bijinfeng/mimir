@@ -11,7 +11,7 @@ import { replaceUpload, uploadFile, UploadError } from '../services/upload.js'
 import type { AppEnv } from '../types.js'
 
 /**
- * 上传、替换与下载原件（`docs/TECH.md` §13）。
+ * 上传、替换与下载原件（`.trellis/spec/project/architecture.md` §13）。
  *
  * 挂在与 `/api/documents` 同一个前缀下：原件是**文档的一部分**，
  * 不是另一个资源。分开成 `/api/files` 会让人以为它是独立的一类东西，

@@ -1,7 +1,7 @@
 import { toSearchText } from '@mimir/tokenizer'
 
 /**
- * 分块器（M1-B，`docs/TECH.md` §4.9）。
+ * 分块器（M1-B，`.trellis/spec/project/architecture.md` §4.9）。
  *
  * ## 三条硬要求，每条对应一类静默错误
  *

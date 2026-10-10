@@ -7,7 +7,7 @@ import { assemble, executeRaw } from '../plugins/host.js'
 import { callEmbed, modelName } from './model.js'
 
 /**
- * 分块的写入与查询（M1-B，`docs/TECH.md` §4.8 / §4.10）。
+ * 分块的写入与查询（M1-B，`.trellis/spec/project/architecture.md` §4.8 / §4.10）。
  *
  * ## 分块是派生数据，重建的入口只有一个
  *
@@ -33,7 +33,7 @@ export interface ChunkSyncResult {
 /**
  * 重建分块并尽力补嵌入（**所有写入路径的统一收尾**）。
  *
- * **两件事分先后、且失败互不影响**（`docs/TECH.md` §4.10）：
+ * **两件事分先后、且失败互不影响**（`.trellis/spec/project/architecture.md` §4.10）：
  *
  * 1. 分块是纯计算，属于写入路径的一部分——它失败说明代码坏了，直接抛
  * 2. 嵌入要发请求、要花钱，**失败绝不让写入失败**。provider 没配、

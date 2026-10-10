@@ -8,7 +8,7 @@ import { settings } from '../db/schema.js'
  *
  * 表在 `db/schema.ts`（`settings`），**只存界面显式写入的行**——
  * 迁移不 seed 默认值，否则部署方在 `.env` 里配的值会被空默认值静默覆盖
- * （`docs/TECH.md` §7.5）。
+ * （`.trellis/spec/project/architecture.md` §7.5）。
  *
  * ## 读不到表时当作「没有覆盖」，而不是启动失败
  *

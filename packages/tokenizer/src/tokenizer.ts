@@ -2,7 +2,7 @@ import { Jieba } from '@node-rs/jieba'
 import { dict } from '@node-rs/jieba/dict.js'
 
 /**
- * 中文分词（`docs/TECH.md` §4.4）。
+ * 中文分词（`.trellis/spec/project/architecture.md` §4.4）。
  *
  * 为什么必须做这件事：Postgres 的 `simple` / `unicode61` 分词器没有中文词边界概念，
  * 「组件性能优化」会被当成**一个** token。所以写入时用 jieba 切好、以空格连接

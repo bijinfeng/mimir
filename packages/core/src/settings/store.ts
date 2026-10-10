@@ -10,7 +10,7 @@ import type { SecretCipher } from './crypto.js'
 import type { SettingRegistry } from './specs.js'
 
 /**
- * 设置的三层解析：`覆盖行 > 环境变量 > 代码默认`（`docs/TECH.md` §7.5）。
+ * 设置的三层解析：`覆盖行 > 环境变量 > 代码默认`（`.trellis/spec/project/architecture.md` §7.5）。
  *
  * **每个键独立判断，不整份回落**：某个键在界面改过、另一个键走环境变量，
  * 是完全正常的状态，而且要能在界面上分别显示来源。

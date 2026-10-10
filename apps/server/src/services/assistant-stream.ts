@@ -154,7 +154,7 @@ async function retrieve(question: string, documentId?: string): Promise<Retrieva
   if (result.hits.length > 0) {
     // 这一行是 trace 里最有信息量的一条：它把「词级命中」与「子串兜底命中」
     // 分开报。看到「子串兜底 1 段」就知道是分词没切对但被兜住了，
-    // 两个都是 0 才是真的没存过（docs/PRD.md §5.6）。
+    // 两个都是 0 才是真的没存过（.trellis/spec/project/product.md §5.6）。
     //
     // 通道名**不写死**：`channels` 来自注册表，M1-C 加上向量通道后
     // 这里无需改动（每个就绪的通道各报一行）
@@ -242,7 +242,7 @@ function formatContext(citations: Citation[]): string {
  *
  * 刻意不生成「我找到了 N 条内容」这种话术——那是模型该做的事。
  * 这条路径的职责是把命中的原文**原样**交给用户，并说清楚没有花钱
- * （`docs/PRD.md` §5.8：失败路径要回答「这次花钱了吗」）。
+ * （`.trellis/spec/project/product.md` §5.8：失败路径要回答「这次花钱了吗」）。
  */
 function searchOnlyAnswer(question: string, citations: Citation[]): string {
   if (citations.length === 0) {
@@ -538,7 +538,7 @@ async function* createStream(params: StreamParams): AsyncGenerator<StreamChunk> 
 
     yield runFinished(runId, conversationId, modelUsage)
   } catch (error) {
-    // 失败路径每类给不同出路（docs/PRD.md §5.8）。分类是**服务端的知识**：
+    // 失败路径每类给不同出路（.trellis/spec/project/product.md §5.8）。分类是**服务端的知识**：
     // 它看得到 HTTP 状态码与原始错误，而前端只看到一句被规范化过的文本。
     const failure = classifyFailure(error)
     const text = error instanceof Error ? error.message : String(error)
@@ -626,7 +626,7 @@ async function persistAssistant(
   })
 }
 
-/** 把异常映射成前端能识别的失败类型。四类的区分是刻意的，见 docs/PRD.md §5.8 */
+/** 把异常映射成前端能识别的失败类型。四类的区分是刻意的，见 .trellis/spec/project/product.md §5.8 */
 export function classifyFailure(error: unknown): FailureKind {
   const message = error instanceof Error ? error.message : String(error)
   const status = (error as { status?: number }).status

@@ -158,7 +158,7 @@ export const documentTags = pgTable(
 /**
  * 对话。
  *
- * 会话优先的导航（`docs/PRD.md` §5.2）意味着会话是一等公民：它出现在左导航、
+ * 会话优先的导航（`.trellis/spec/project/product.md` §5.2）意味着会话是一等公民：它出现在左导航、
  * 占据中栏的「本次引用」、在右栏展开检索过程。所以必须落库——
  * 只存在内存里的话，刷新一次「会话历史」就空了，那这个导航结构就是假的。
  */
@@ -225,7 +225,7 @@ export const conversationRefs = pgTable(
 )
 
 /**
- * 文档间的链接 —— 让双链是双向的（`docs/PRD.md` §5.10）。
+ * 文档间的链接 —— 让双链是双向的（`.trellis/spec/project/product.md` §5.10）。
  *
  * 链接从 Markdown 正文里的站内链接解析出来（`[标题](/doc/<id>)`），
  * 在每次保存正文时重建该文档的出链。反链不存，靠反向查询得到：
@@ -245,13 +245,13 @@ export const documentLinks = pgTable(
 )
 
 /**
- * 检索单元（M1-B，`docs/TECH.md` §4.8）。
+ * 检索单元（M1-B，`.trellis/spec/project/architecture.md` §4.8）。
  *
  * 「引用指回原文位置」的前提是检索单元自带偏移——M0 的文档级命中点不出位置，
  * 只能拿查询词去猜。分块是**派生数据**：`documents.body` 完全可重建，
  * 所以删库后由「重建索引」恢复（`services/chunks.ts` 的 syncChunks）。
  *
- * 三处刻意的设计（`docs/TECH.md` §4.8）：
+ * 三处刻意的设计（`.trellis/spec/project/architecture.md` §4.8）：
  *
  * 1. **id 确定性**（`文档 id:序号`）。重建后同一篇的同一段还是同一个 id，
  *    于是向量表上的冲突是更新而不是插入——否则每重建一次攒一批孤儿向量
@@ -292,14 +292,14 @@ export const chunks = pgTable(
 )
 
 /**
- * 分块的向量（M1-B，`docs/TECH.md` §4.8）。
+ * 分块的向量（M1-B，`.trellis/spec/project/architecture.md` §4.8）。
  *
  * **独立成表**（WeKnora 的生产实践）而不是往 chunks 上加列：换 embedding
  * 模型时旧向量共存、不立刻删；同一分块可以有多个模型的行。
  * 主键 `(chunk_id, model)` 让「补嵌入」天然可重入——判据是表里有没有行，
- * 不需要进度计数器（`docs/TECH.md` §4.10）。
+ * 不需要进度计数器（`.trellis/spec/project/architecture.md` §4.10）。
  *
- * **PG 用 `halfvec`**：维度上限 2000 → 4000（`docs/TECH.md` §4.5 实测）。
+ * **PG 用 `halfvec`**：维度上限 2000 → 4000（`.trellis/spec/project/architecture.md` §4.5 实测）。
  * 列上不带维度修饰符（`halfvec` 而不是 `halfvec(1024)`）——同一列要容纳
  * 不同维度的模型，维度写在 `dimension` 列里。HNSW 索引是**按维度的
  * 表达式索引**，由迁移手写（drizzle 表达不了），见 `drizzle/0010_chunks.sql`；
@@ -332,7 +332,7 @@ export const chunkEmbeddings = pgTable(
 /**
  * 配置覆盖层。**只存「界面显式设置过」的行**，不 seed 默认值。
  *
- * 解析顺序是 `本表 > 环境变量 > 代码默认`（`docs/TECH.md` §7.5）。
+ * 解析顺序是 `本表 > 环境变量 > 代码默认`（`.trellis/spec/project/architecture.md` §7.5）。
  * 不 seed 是关键：插一批默认行会让部署方在 `.env` 里配的值被空默认值
  * **静默覆盖**，而那是最难查的一类问题（配置明明写了，行为却是默认的）。
  *
@@ -343,7 +343,7 @@ export const chunkEmbeddings = pgTable(
  * 写入端点在写之前会校验——这个表只负责承载值，不负责解释它。
  */
 /**
- * RSS / Atom 订阅源（M1-E，`docs/PRD.md` §3.1）。
+ * RSS / Atom 订阅源（M1-E，`.trellis/spec/project/product.md` §3.1）。
  *
  * 「技术博客的主路径是 RSS / Atom 订阅」——它比爬首页稳得多，
  * 也不需要处理反爬。这张表记的是**订阅关系**，不是文章：
@@ -405,7 +405,7 @@ export const settings = pgTable(
  * 可以直接聚合。但**现有表里没有 token 数**，而 token 只有调用那一刻才知道、
  * 事后无可挽回；`updated_at` 又是可变的（只反映最后一次编辑）。
  *
- * ## 四个刻意的设计（`docs/TECH.md` §12、D-034）
+ * ## 四个刻意的设计（`.trellis/spec/project/architecture.md` §12、D-034）
  *
  * 1. **不加外键**到 conversations / documents，只存 `refId` 字符串。
  *    `messages.conversation_id` 是 `onDelete: 'cascade'`——加外键的话，

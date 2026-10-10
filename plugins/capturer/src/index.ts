@@ -22,7 +22,7 @@ import { createWechatCapturer } from './wechat.js'
  */
 /**
  * 抓取的参数由**抓取器自己声明**：超时与体积上限是「把网页拿下来」这件事
- * 的参数，与宿主、与解析无关（`docs/TECH.md` §7.5 的归属规则）。
+ * 的参数，与宿主、与解析无关（`.trellis/spec/project/architecture.md` §7.5 的归属规则）。
  */
 const CAPTURE_PARAMS: SettingSpec[] = [
   {

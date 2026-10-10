@@ -19,7 +19,7 @@ import { createVectorLeg } from './vector.js'
  * ## 权重来自设置，默认值来自实现
  *
  * 每个实现自己声明 `retrieval.<id>.weight`，用户可以在设置页调
- * （`docs/TECH.md` §7.5）。实现给 `defaultWeight` 作为初始猜测——
+ * （`.trellis/spec/project/architecture.md` §7.5）。实现给 `defaultWeight` 作为初始猜测——
  * 有词边界语义的通道高于兜底通道。
  */
 export function install(host: PluginHost): void {

@@ -175,7 +175,7 @@ export interface LegContext {
   kind?: string
   tag?: string
   /**
-   * 向量通道的输入端口（M1-C，`docs/TECH.md` §4.11）。
+   * 向量通道的输入端口（M1-C，`.trellis/spec/project/architecture.md` §4.11）。
    *
    * 为什么是端口而不是让通道自己去调模型：向量通道需要向量，而
    * 「配了哪个 embedding 模型、密钥在哪、怎么发请求」是 `provider` 接缝
@@ -238,7 +238,7 @@ export interface ProviderProbe {
  *
  * **实现自己解析**，宿主只问「给我对话角色的适配器」。
  * 角色绑定、供应商查找、密钥解密都是模型域的内部形状——
- * 让宿主来解析就是把形状知识漏到宿主里（`docs/TECH.md` §7.4
+ * 让宿主来解析就是把形状知识漏到宿主里（`.trellis/spec/project/architecture.md` §7.4
  * 的「宿主不认识具体实现」）。
  */
 export interface ModelProvider {
@@ -249,7 +249,7 @@ export interface ModelProvider {
   supports(role: ModelRole): Promise<boolean>
   /** 造适配器。角色不可用时抛错——调用方应当先问 supports */
   adapter(role: ModelRole): Promise<ModelAdapter>
-  /** 角色级真实调用。只由用户显式触发（`docs/TECH.md` §7.8） */
+  /** 角色级真实调用。只由用户显式触发（`.trellis/spec/project/architecture.md` §7.8） */
   probe(role: ModelRole): Promise<ProviderProbe>
   /**
    * 向端点拉模型清单。**纯读：结果不写配置**（D-080）。
@@ -352,7 +352,7 @@ export interface StorageBackend {
    * S3 上的失败模式是「复制成功、删除失败」→ 同一个笔记有两个文件。
    * 顺序必须是**先复制后删除**（任何时刻都不丢数据），
    * 而重复文件由 `reindexVault` 的「同一 id 多个路径」检测兜住
-   * （`docs/RESEARCH.md` §10.3a）。
+   * （`.trellis/spec/project/research.md` §10.3a）。
    */
   move(from: string, to: string): Promise<void>
 
@@ -369,7 +369,7 @@ export interface StorageBackend {
    * 真实探测一次：写一个探针 key → 读回 → 删掉。
    *
    * **只由用户显式触发的「测试连接」调用**，理由与模型探测完全相同
-   * （`docs/TECH.md` §7.8）：存储配错会在最坏的时刻才暴露，而自动探测
+   * （`.trellis/spec/project/architecture.md` §7.8）：存储配错会在最坏的时刻才暴露，而自动探测
    * 是每次进设置页都发一次真实写入。
    *
    * 可选——不是每个后端都值得做（本地后端配错的唯一可能是磁盘没了）。

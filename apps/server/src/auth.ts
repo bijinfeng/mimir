@@ -53,7 +53,7 @@ export const auth = betterAuth({
      * →  界面上字母头像一动不动，看起来就是「上传没反应」
      * ```
      *
-     * **这与浏览器缓存那个坑是两个独立的陈旧源**（`docs/TECH.md` §12.6 的
+     * **这与浏览器缓存那个坑是两个独立的陈旧源**（`.trellis/spec/project/architecture.md` §12.6 的
      * `?v=` 只解决后者），只修一个不够——实测先修了 `?v=`，
      * 界面依然不更新，才定位到这里。
      *
@@ -70,7 +70,7 @@ export const auth = betterAuth({
      * 文档、计数、目录好几张表，省这一次没有任何可测量的收益。
      *
      * 这也与全项目反复出现的同一条判断一致：不要为一个不存在的规模问题，
-     * 引入一个会静默出错的东西（`docs/TECH.md` §12.6、D-037）。
+     * 引入一个会静默出错的东西（`.trellis/spec/project/architecture.md` §12.6、D-037）。
      */
     cookieCache: { enabled: false },
   },

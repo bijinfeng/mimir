@@ -409,7 +409,7 @@ describe('零件', () => {
  * 按钮的计算高度是空串），所以「按下态的背景色与没按下不同」这种断言在这里
  * 写不出来。能写的是**读 CSS 文本**，删掉规则就红。
  *
- * 真正的视觉验证在浏览器里做（见 docs/DECISIONS.md D-064 的验收清单）。
+ * 真正的视觉验证在浏览器里做（见 .trellis/spec/project/decisions.md D-064 的验收清单）。
  */
 describe('shell.css 的静态守护', () => {
   const css = readFileSync(join(here, 'shell.css'), 'utf8')

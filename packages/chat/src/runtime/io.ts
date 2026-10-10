@@ -9,7 +9,7 @@ import type { Message } from '@mimir/shared'
  * 别的地方），也不知道 API 客户端长什么样、路由怎么跳、query 缓存叫什么键。
  * 这些都由宿主以接口的形式注入——与 `@mimir/office` 的 `EditorIo`
  * （取字节 / 写回）是同一条边界：**壳与渲染归包，方言与取写归宿主**
- * （packages/office/AGENTS.md 的「宿主 / 包边界」一节）。
+ * （.trellis/spec/office/engine/index.md 的「宿主 / 包边界」一节）。
  *
  * 好处是结构性的：包内 **import 不到**宿主的 `api.ts` / `router` /
  * `queryClient`，所以「顺手在包里发个请求」在模块解析层面就不可能，

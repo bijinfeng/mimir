@@ -15,7 +15,7 @@ import { createKeywordLegSqlite } from './keyword.sqlite.js'
  *   - `keyword.sqlite.ts` 本地开发 / 桌面端：FTS5 + `bm25()`
  *
  * 两条实现的**门槛语义必须一致**（同一批测试在两种方言下都要过，
- * `docs/TECH.md` §9.2）；排序函数不同（`ts_rank_cd` 0~1、bm25 无界负值）
+ * `.trellis/spec/project/architecture.md` §9.2）；排序函数不同（`ts_rank_cd` 0~1、bm25 无界负值）
  * 没有关系——融合层走加权 RRF，只看名次（TECH §4.2）。
  */
 export function createKeywordLeg(db: PluginDatabase): RetrievalLeg {

@@ -19,7 +19,7 @@ import { app, getAuthCookie, makeClient } from './helpers.js'
 const execFileAsync = promisify(execFile)
 
 /**
- * 上传与预览的行为断言（`docs/TECH.md` §13、D-044）。
+ * 上传与预览的行为断言（`.trellis/spec/project/architecture.md` §13、D-044）。
  *
  * 这一组断言针对的都是**静默失效**——出错时不报错，只是行为不对：
  *

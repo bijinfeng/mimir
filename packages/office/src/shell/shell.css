@@ -5,7 +5,7 @@
  *
  * 界面组件与样式一起放在 `@mimir/office` 里，是 D-054 的决定：六种格式的
  * 外壳必须**长得一样**，而「一样」只能由同一份实现保证——各写一份的话，
- * 漂移是必然的，且只在用户眼里看得出来（`apps/web/AGENTS.md` 的同一类教训）。
+ * 漂移是必然的，且只在用户眼里看得出来（`.trellis/spec/renderer/frontend/conventions.md` 的同一类教训）。
  *
  * ## 分工：控件观感归 antd，布局与弹层归这里（D-064）
  *
@@ -479,7 +479,7 @@
  *
  * `min-width: 0` 是从被删的 `.me-input` 那里**留下来的唯一一条**：它是 flex 子项
  * 能收缩的前提（默认 `min-width: auto` 下 `<input>` 的固有宽度会让它顶住不缩，
- * 窄窗口里把这一行撑破——`AGENTS.md` 坑表里那条「窄窗口下工具条右端看不见」是
+ * 窄窗口里把这一行撑破——`.trellis/spec/office/frontend/shell/pitfalls.md` 坑表里那条「窄窗口下工具条右端看不见」是
  * 同一类）。xlsx 的格内容框把它覆写成 `flex: 1` 之后正是靠它才能跟着窗口缩。
  */
 .me-input--text {
@@ -859,7 +859,7 @@
  *
  * ## `min-*: 0` 两条都要写（宽度那一条实测踩过）
  *
- * `min-height: 0` 是「高度链」的那一环（见 AGENTS.md 的坑表）：flex 子项的
+ * `min-height: 0` 是「高度链」的那一环（见 .trellis/spec/office/frontend/shell/pitfalls.md 的坑表）：flex 子项的
  * 默认 `min-height: auto` 会让里面的滚动容器把整块撑到内容高度，滚动条跑到
  * 页面上、工具条跟着滚走。
  *

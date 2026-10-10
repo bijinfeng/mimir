@@ -15,7 +15,7 @@ import { useStyles } from './settings.style'
  * 看各通道各命中多少。
  *
  * 它的价值在于**区分「没存过」和「分词没切对」**——如果词级召回 0 段、
- * 但子串兜底命中了，那就是分词问题（`docs/PRD.md` §5.6 的同一个理由）。
+ * 但子串兜底命中了，那就是分词问题（`.trellis/spec/project/product.md` §5.6 的同一个理由）。
  *
  * ## 参数从 `/api/config` 来，不在前端抄一份
  *
@@ -27,7 +27,7 @@ import { useStyles } from './settings.style'
  * `maxChunksPerDoc` 与两条通道的 `weight`）都是 `writable: true`，
  * 而这一页下面那段文案正教用户「改完权重后在这里试一句」——
  * 只印数值不给输入框时，用户按指引去调参却找不到任何地方能改，
- * 只能去改 `.env` 再重启，正是 `docs/TECH.md` §7.5 要消掉的那种摩擦。
+ * 只能去改 `.env` 再重启，正是 `.trellis/spec/project/architecture.md` §7.5 要消掉的那种摩擦。
  * 那一行还挂着「来源」徽标，更容易让人以为是自己没找到改的地方。
  *
  * ## 通道列表也来自注册表
@@ -49,7 +49,7 @@ export function RetrievalSection() {
    *
    * 「待嵌入 N 段」是这一页**最需要如实显示的数字**：向量通道就绪但
    * 向量还没补上时，语义检索会安静地少返回结果——而那看起来像
-   * 「库里没有相关内容」（`docs/TECH.md` §4.10 的「界面以待嵌入 N 段
+   * 「库里没有相关内容」（`.trellis/spec/project/architecture.md` §4.10 的「界面以待嵌入 N 段
    * 如实显示」）。`pending` 为 null 表示没配向量化模型，那时这一栏
    * 该说「未配置」而不是显示 0（0 会被读成「都嵌好了」）。
    */

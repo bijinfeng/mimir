@@ -18,7 +18,7 @@ import type { LegContext, PluginDatabase, RankedHit, RetrievalLeg } from '@mimir
  *     两个以上参数才是标量。所以单词元时直接用表达式，多词元才包 `min(...)`
  *
  * 没有 trigram 索引，这里是全表扫描——分块表比文档表大（一篇几十段），
- * 但仍在个人库规模内（`RESEARCH.md` §11）；分块也天然更短，
+ * 但仍在个人库规模内（`.trellis/spec/project/research.md` §11）；分块也天然更短，
  * 扫起来的字节量并不比文档表大多少。
  *
  * **检索单元在 M1-C 从文档下沉到分块**（§4.8）：返回 chunk id，

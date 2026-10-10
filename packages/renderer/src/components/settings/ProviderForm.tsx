@@ -84,7 +84,7 @@ function rebuildRows(rows: ModelDraftRow[], models: ProviderModel[]): ModelDraft
  * 手加模型，然后**一起**保存。拉取与手改不是两条路径，
  * 它们是同一个清单的两种填入方式。
  *
- * ## 密钥的三态（与 `docs/TECH.md` §5.7 同一张表）
+ * ## 密钥的三态（与 `.trellis/spec/project/architecture.md` §5.7 同一张表）
  *
  * | 用户做什么 | `keyDraft` | 提交 |
  * |---|---|---|

@@ -5,7 +5,7 @@ import { fetchHtml, fetchLimits } from './http.js'
 /**
  * 微信公众号抓取器。
  *
- * ## 两个必须处理的现实约束（`docs/PRD.md` §3.2）
+ * ## 两个必须处理的现实约束（`.trellis/spec/project/product.md` §3.2）
  *
  * 1. **正文在 `#js_content`**，不在 Readability 能识别的 `<article>` 里。
  *    这是它不能走通用网页路径的原因

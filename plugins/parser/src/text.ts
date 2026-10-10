@@ -1,7 +1,7 @@
 import { isTextParseInput, type ParseInput, type ParseResult, type Parser } from '@mimir/shared'
 
 /**
- * 纯文本直通解析器（`docs/TECH.md` §13）。
+ * 纯文本直通解析器（`.trellis/spec/project/architecture.md` §13）。
  *
  * ## 它反而证明接缝的分工是对的
  *

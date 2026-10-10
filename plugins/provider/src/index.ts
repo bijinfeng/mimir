@@ -13,7 +13,7 @@ import { createOpenAiCompatibleProvider } from './provider.js'
  * 所以加一家服务商是加一行数据，不是加代码。
  *
  * 什么时候才需要第二个实现：当某家的协议与 OpenAI 兼容层**实质不同**时。
- * 已知的两处（`docs/TECH.md` §5.2 提过）：Ollama 的原生 API 在流式形状上
+ * 已知的两处（`.trellis/spec/project/architecture.md` §5.2 提过）：Ollama 的原生 API 在流式形状上
  * 不同（NDJSON vs SSE），rerank 的路径各家不一（`/v1/rerank` vs `/v2/rerank`）。
  * 那时加一个文件即可，宿主与设置页都不用改。
  *
@@ -24,7 +24,7 @@ import { createOpenAiCompatibleProvider } from './provider.js'
  * 为什么不是一堆 `model.provider.<id>.baseUrl` 这样的标量键：
  * 供应商是**集合**，标量键表达不了集合。摊平的后果有实例为证——
  * 某个成熟产品用「按位置对齐的三个数组」存多家供应商，删除时要手工重排下标
- * （`docs/RESEARCH.md`）。
+ * （`.trellis/spec/project/research.md`）。
  *
  * 形状与密钥处理都在 `instances.ts`，这个文件只负责把它声明出来。
  */

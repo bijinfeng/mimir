@@ -4,7 +4,7 @@ import { callChat, callSummarize, modelName, modelReady } from './model.js'
 
 /**
  * 「文本进、文本出」的三条能力：摘要、AI 标签建议、内联改写
- * （`docs/PRD.md` §4 M1）。
+ * （`.trellis/spec/project/product.md` §4 M1）。
  *
  * ## 为什么三条能力共用一个文件
  *
@@ -68,7 +68,7 @@ export interface AiTextOutcome {
 /**
  * 没配模型时的说明。
  *
- * **明确说没花钱**——与失败路径的规矩一致（`docs/PRD.md` §5.8：
+ * **明确说没花钱**——与失败路径的规矩一致（`.trellis/spec/project/product.md` §5.8：
  * 失败路径要回答「这次花钱了吗」）。
  */
 function notConfigured(feature: string): AiTextOutcome {
@@ -145,7 +145,7 @@ export async function suggestTagsAi(
 }
 
 /**
- * 内联改写（`docs/PRD.md` §4 M1：选中一段 → 改写 / 翻译 / 精简 / 扩写）。
+ * 内联改写（`.trellis/spec/project/product.md` §4 M1：选中一段 → 改写 / 翻译 / 精简 / 扩写）。
  *
  * 与摘要的分工：这条路走 `chat` 角色。改写要的是**生成质量**，
  * 而 chat 角色正是为此配置的；`summarize` 角色是给「压缩」用的。

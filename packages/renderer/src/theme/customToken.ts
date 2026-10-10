@@ -16,7 +16,7 @@ import type { Appearance } from './appearance'
  * 这些值同样分浅 / 深两套，由 `customTokenFor` 按当前外观选。
  * 深色不是「把浅色反过来」——四个值的取值依据各自写在下面对应项上。
  *
- * 规范与实测对比度见 `docs/DESIGN.md` §3.6 / §4.3 / §3.8。
+ * 规范与实测对比度见 `.trellis/spec/project/design.md` §3.6 / §4.3 / §3.8。
  */
 export interface MimirCustomToken {
   /** 第四层表面：三栏里的中栏列表、大纲列。比容器底稍冷，用来分隔而不加边框 */
@@ -42,7 +42,7 @@ export interface MimirCustomToken {
   /**
    * 用量热力图的四档色阶。
    *
-   * 浅色取 antd 蓝色阶的 2 / 3 / 5 / 7 阶（`docs/DESIGN.md` §3.6.1）。
+   * 浅色取 antd 蓝色阶的 2 / 3 / 5 / 7 阶（`.trellis/spec/project/design.md` §3.6.1）。
    * **第一档刻意比 `colorPrimaryBg`（#e6f4ff）深**：那个值在白底上只差
    * 1.05:1，拿它当最浅档会让「有一点活动」与「完全没活动」看起来一样——
    * 而那是贡献图最常见的失败。
@@ -76,7 +76,7 @@ const LIGHT: MimirCustomToken = {
   tintHover: '#f4f5f7',
   inlineCodeFg: '#c7254e',
   highlightBg: '#fff3b0',
-  // 用量热力图色阶（浅 → 深）。见 docs/DESIGN.md §3.6.1 的四条约束
+  // 用量热力图色阶（浅 → 深）。见 .trellis/spec/project/design.md §3.6.1 的四条约束
   heatL1: '#cfe6ff',
   heatL2: '#91caff',
   heatL3: '#4096ff',

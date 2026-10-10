@@ -22,7 +22,7 @@ import { createStyles } from 'antd-style'
  *
  * `createStyles` 内部就是宿主的 `theme.useToken()`，所以它自动继承宿主的
  * 外观与自定义 token（`tintList` / `tintHover` / `inlineCodeFg`）。
- * 包**不新建主题**、不传 `theme` 的 ConfigProvider（`packages/office/AGENTS.md`
+ * 包**不新建主题**、不传 `theme` 的 ConfigProvider（`.trellis/spec/office/engine/index.md`
  * 的规矩同样适用：内层传 theme 会重算 cssVar key，`--ant-*` 变量名变了，
  * 引用处静默失效）。
  *

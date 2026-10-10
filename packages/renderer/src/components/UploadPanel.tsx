@@ -7,13 +7,13 @@ import { api } from '../lib/api'
 import { FONT_SIZE } from '../theme/tokens'
 
 /**
- * 「上传文件」这一页（`docs/TECH.md` §13）。
+ * 「上传文件」这一页（`.trellis/spec/project/architecture.md` §13）。
  *
  * ## 为什么放在「收集内容」对话框里，而不是一个顶层按钮
  *
  * 粘贴链接与上传文件是**同一件事**：把外部的东西收进库。分成两个入口会让
  * 用户每次先判断「我这次算哪种」，而那个判断对目标没有任何影响——
- * 两者都进收件箱、都要整理（`docs/PRD.md` §2.2 的收集环节）。
+ * 两者都进收件箱、都要整理（`.trellis/spec/project/product.md` §2.2 的收集环节）。
  *
  * ## 多选，但**逐个串行发请求**
  *

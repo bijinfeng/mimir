@@ -241,7 +241,7 @@ function RoleRow({
  *
  * 「没试过」与「试过不行」必须分开显示：把未测试显示成绿色，
  * 用户会以为已经验证过——而地址写错、模型名下架都只有真发一次才知道
- * （`docs/TECH.md` §7.8）。
+ * （`.trellis/spec/project/architecture.md` §7.8）。
  */
 function StatusDot({ role }: { role: ModelRoleStatus }) {
   const { styles } = useStyles()

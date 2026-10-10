@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 /**
- * 用量统计的传输契约（`docs/TECH.md` §12）。
+ * 用量统计的传输契约（`.trellis/spec/project/architecture.md` §12）。
  *
  * ## 为什么不复用业务表的计数
  *
@@ -29,7 +29,7 @@ import { z } from 'zod'
  *
  * M1-D 起多了 `tag`（AI 标签建议）与 `rewrite`（内联改写）两个取值：
  * 它们与摘要不该压成一个值——「分功能记账」问的正是这个
- * （`docs/TECH.md` §12.1 的四个刻意设计之一）。新增取值只影响新数据。
+ * （`.trellis/spec/project/architecture.md` §12.1 的四个刻意设计之一）。新增取值只影响新数据。
  */
 export const usageSourceSchema = z.enum([
   'chat',

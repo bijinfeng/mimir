@@ -56,7 +56,7 @@ export function createMimirAgent({
     url,
     ...(conversationId ? { threadId: conversationId } : {}),
     /**
-     * 带 cookie（鉴权走 cookie，见 apps/web/AGENTS.md 的「调后端」一节）。
+     * 带 cookie（鉴权走 cookie，见 .trellis/spec/renderer/frontend/conventions.md 的「调后端」一节）。
      * same-origin 下 fetch 默认就会带，这里显式写是为了跨源那条路径
      * 不需要有人记得回来加。
      */

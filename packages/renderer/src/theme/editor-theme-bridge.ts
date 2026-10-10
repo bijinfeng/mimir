@@ -21,7 +21,7 @@ import { CONTENT_WIDTH, FONT_MONO, FONT_SANS, FONT_SIZE } from './tokens'
  * ## 为什么是 `createStyles` 而不是全局变量
  *
  * 这些值随外观（浅/深）变，而 `createStyles` 拿到的 `token` 已经是当前
- * 外观那一套。写死在 `:root` 上就得自己判断外观——`apps/web/AGENTS.md`
+ * 外观那一套。写死在 `:root` 上就得自己判断外观——`.trellis/spec/renderer/frontend/conventions.md`
  * 明令不要那么做（「深色那一套也要走 token」）。
  *
  * ## 一条静默失效的坑

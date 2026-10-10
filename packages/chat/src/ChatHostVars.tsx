@@ -13,7 +13,7 @@ import type { CSSProperties, ReactNode } from 'react'
  *
  * ## 两个变量组，各自的理由
  *
- * - **字号八档**：`docs/DESIGN.md` 的阶梯是宿主的决策（`FONT_SIZE` 九档，
+ * - **字号八档**：`.trellis/spec/project/design.md` 的阶梯是宿主的决策（`FONT_SIZE` 九档，
  *   每档一个角色），包里写死数字会让「同一角色在不同页面用不同值」重新
  *   长出来——那正是阶梯要消灭的。所以值由宿主填。
  * - **`--mimir-chat-gutter`**：内容列宽 → 左右边距的比例。860px 的主视图用

@@ -14,7 +14,7 @@ import { slugify } from './text.js'
  *
  * ## 这一层现在只做「笔记的形状」，不碰文件系统
  *
- * 实际的读写走 `storage` 接缝（`docs/TECH.md` §7.2）。本文件负责的是
+ * 实际的读写走 `storage` 接缝（`.trellis/spec/project/architecture.md` §7.2）。本文件负责的是
  * **笔记特有的知识**：frontmatter 怎么序列化、路径怎么按年月分、
  * 文件名里的 id 后缀怎么取。这些在两个后端上完全一样。
  *
@@ -158,7 +158,7 @@ export async function readNote(vaultPath: string): Promise<VaultNote> {
  * ## 「要么成功，要么没动过」在两个后端上靠的东西不同
  *
  * 本地是 `rename(2)`，文件系统保证原子；S3 是复制 + 删除，**没有这个保证**
- * （`docs/RESEARCH.md` §10.3a）。后者最坏的失败是留下一个重复文件，
+ * （`.trellis/spec/project/research.md` §10.3a）。后者最坏的失败是留下一个重复文件，
  * 而那是可修复的——`reindexVault` 会检测「同一个 id 出现在多个路径」
  * 并跳过其中一个，同时留下日志。
  *

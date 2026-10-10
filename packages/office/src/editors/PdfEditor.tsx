@@ -19,7 +19,7 @@
  *
  * **这条边界是上游的镜像**：它用 PDFium 的 WASM 做成文本替换，但那 7062 行
  * 写着 Electron 的主进程与 Node API。搬进浏览器要重写跨进程那一段，而且
- * PDFium 的 WASM 是 7MB——那是另一件工程（见 `docs/TECH.md` §16 的「仍未做」）。
+ * PDFium 的 WASM 是 7MB——那是另一件工程（见 `.trellis/spec/project/architecture.md` §16 的「仍未做」）。
  *
  * ## 三份库的分工是刻意的
  *

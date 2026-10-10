@@ -3,7 +3,7 @@
  *
  * ## 为什么需要它
  *
- * `docs/DESIGN.md` §7.2 要求焦点必须可见。对绝大多数控件 `:focus-visible`
+ * `.trellis/spec/project/design.md` §7.2 要求焦点必须可见。对绝大多数控件 `:focus-visible`
  * 就够了——浏览器只在键盘导航时给它匹配。但**对文本输入类元素（`<input>`、
  * `contenteditable`）`:focus-visible` 永远匹配**，这是规范行为：文本输入需要
  * 光标与焦点提示，而浏览器无法假定用户接下来会用键盘还是鼠标。
@@ -33,7 +33,7 @@
  * **为什么不在变量里存完整的 ring 值**（比如
  * `2px solid var(--ant-color-primary-border)`）：自定义属性里的 `var()`
  * 是在**声明它的元素**上求值的。这里声明在 `html` 上，而 `--ant-*` 注入在
- * antd 组件的 DOM 子树上（见 `AGENTS.md` 的样式第 6 条），`html` 上取不到
+ * antd 组件的 DOM 子树上（见 `.trellis/spec/renderer/frontend/conventions.md` 的样式第 6 条），`html` 上取不到
  * → 整个值在 computed-value 阶段无效 → `outline` 退回 `none`，
  * 键盘用户的焦点环**静默消失**（实测过）。只存关键字就没有内层引用，
  * 宽度与颜色在使用处（正文元素上，`--ant-*` 可用）解析。

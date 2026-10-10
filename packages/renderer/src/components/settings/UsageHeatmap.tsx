@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useHeatmapStyles } from './StatsSection.style'
 
 /**
- * 用量热力图（`docs/PRD.md` §5.11、`docs/DESIGN.md` §3.6.1 / §8.12）。
+ * 用量热力图（`.trellis/spec/project/product.md` §5.11、`.trellis/spec/project/design.md` §3.6.1 / §8.12）。
  *
  * ## 网格与标签交给 `@uiw/react-heat-map`，产品规则留在这里
  *
@@ -154,7 +154,7 @@ function panelColorsFor(thresholds: number[], maxTokens: number): Record<number,
  *
  * 1. 内联的箭头函数会被 lint 判为「渲染期定义的组件」（React Compiler
  *    与这款 lint 都会因此跳过优化）。**改结构而不是关诊断**——
- *    见 `AGENTS.md` 铁律 1
+ *    见 `.trellis/spec/project/rules.md` 铁律 1
  * 2. 提到外面之后它只依赖 `(props, item)` 两个入参，本身可测、也稳定
  *
  * 所以所需的上下文（是否今天、斜线类名）**放在 `value` 的条目里**由库转发：
@@ -368,7 +368,7 @@ export function UsageHeatmap({ days, thresholds, timezone }: HeatmapProps) {
         {/*
           图例给出**真实区间**，而不是只说「少 / 多」。
 
-          分档取的是这一年里的分位数（`docs/TECH.md` §12.4），所以一格颜色
+          分档取的是这一年里的分位数（`.trellis/spec/project/architecture.md` §12.4），所以一格颜色
           对应的是一个确定的数量级——不写出来，用户只能猜「深蓝是多少」。
           tooltip 给的是单日精确值，这里给的是档位边界，两者分工不同。
 

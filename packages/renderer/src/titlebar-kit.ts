@@ -3,7 +3,7 @@
  *
  * 自绘标题栏只存在于桌面端（`apps/desktop/src/renderer/components/TitleBar.tsx`），
  * 但它要显示的品牌与「与侧栏品牌行同一副字形」这件事属于渲染层——
- * 那是设计系统的一部分（`docs/DESIGN.md` §9.1 要求两处同字重同字距）。
+ * 那是设计系统的一部分（`.trellis/spec/project/design.md` §9.1 要求两处同字重同字距）。
  *
  * ## 为什么要有这一份导出
  *

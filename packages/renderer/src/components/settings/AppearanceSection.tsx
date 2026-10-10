@@ -13,7 +13,7 @@ import {
  *
  * ## 为什么这一项**不在**设置键表里
  *
- * 设置页的每一行通常对应 `CORE_SETTING_SPECS` 里的一个键（`docs/TECH.md` §7.5），
+ * 设置页的每一行通常对应 `CORE_SETTING_SPECS` 里的一个键（`.trellis/spec/project/architecture.md` §7.5），
  * 那一层管的是「服务端读取的配置」。外观不是：它是**纯客户端的渲染偏好**，
  * 服务端一个字节都不需要知道，也没有任何服务端逻辑会读它。
  *

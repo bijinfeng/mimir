@@ -3,14 +3,14 @@ import type { SettingSpec, SettingValue } from '@mimir/shared'
 export type { SettingSpec }
 
 /**
- * 宿主的核心键表 + 插件自带键的合并（`docs/TECH.md` §7.5）。
+ * 宿主的核心键表 + 插件自带键的合并（`.trellis/spec/project/architecture.md` §7.5）。
  *
  * ## 为什么键必须在代码里注册
  *
  * 一条键只有注册过，才允许被写入。少这一层的话，界面上能存进
  * 一个没有任何代码读的值——用户以为改了行为，实际什么都没发生，
  * 而且没有任何症状。WeKnora 的 `settingSpec` 是同一个做法
- * （`RESEARCH.md` §1.5）。
+ * （`.trellis/spec/project/research.md` §1.5）。
  *
  * ## 什么键**不**该进来
  *
@@ -132,7 +132,7 @@ export const CORE_SETTING_SPECS: readonly SettingSpec[] = [
      * 只挡空值——**这里挡不了「不存在的后端名」**。
      *
      * 校验发生在 core 的键表里，而可用后端名由插件注册，core 不认识插件
-     * （包依赖方向决定的，见 `docs/TECH.md` §7.4）。所以未知名字由
+     * （包依赖方向决定的，见 `.trellis/spec/project/architecture.md` §7.4）。所以未知名字由
      * **装配层在解析时抛错**，错误信息里带上当前已注册的全部后端 id。
      *
      * 为什么选择抛错而不是静默回落到 local：静默回落会让用户的笔记写到

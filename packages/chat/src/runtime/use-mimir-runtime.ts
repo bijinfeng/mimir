@@ -24,7 +24,7 @@ import type { AskOptions, MimirChatApi } from './chat-context.js'
  * `agent` 与历史适配器都必须**只建一次**：它们带着订阅与「这一轮的参数」，
  * 每次渲染新建会换掉 in-flight 那一轮的 agent。写法用 `useState(初始化函数)`
  * 而不是 ref——渲染期写 ref 会让 React Compiler 拒绝优化这个 hook
- * （`apps/web/AGENTS.md` 的「只读一次的初始值」那一节给的是同一条结论）。
+ * （`.trellis/spec/renderer/frontend/conventions.md` 的「只读一次的初始值」那一节给的是同一条结论）。
  *
  * ## 停止时为什么要把队列取回来
  *

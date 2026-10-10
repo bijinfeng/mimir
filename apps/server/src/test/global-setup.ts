@@ -17,7 +17,7 @@ import { TEST_DATABASE_URL, TEST_ENV } from './config.js'
  * 双后端（D-045）：默认走 SQLite 临时库（`data/.test/mimir.db`，免 Docker）；
  * 设 `TEST_DATABASE_URL=postgres://…mimir_test` 时走 Postgres 路径——
  * 两个检索通道的 SQL 是按方言分开写的，同一套断言在两种方言下都要过
- * （`docs/TECH.md` §9.2 的「方言对齐门」）。
+ * （`.trellis/spec/project/architecture.md` §9.2 的「方言对齐门」）。
  */
 
 /**

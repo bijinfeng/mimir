@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 /**
- * M1-D 的契约：摘要、AI 标签建议、内联改写（`docs/PRD.md` §4 M1）。
+ * M1-D 的契约：摘要、AI 标签建议、内联改写（`.trellis/spec/project/product.md` §4 M1）。
  *
  * ## 一个文件、一个形状，三条能力共用
  *

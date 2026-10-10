@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 /**
- * 全量导出（`docs/PRD.md` §4 M0）。
+ * 全量导出（`.trellis/spec/project/product.md` §4 M0）。
  *
  * 为什么这是一条硬需求而不是锦上添花：这个产品的存储规则是
  * 「Markdown 文件是真相」，那就必须证明**内容可以脱离这个应用被拿走**。

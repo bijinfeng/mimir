@@ -6,7 +6,7 @@ import { usageLog } from '../db/schema.js'
 import { assemble } from '../plugins/host.js'
 
 /**
- * 用量记账与聚合（`docs/TECH.md` §12、D-034）。
+ * 用量记账与聚合（`.trellis/spec/project/architecture.md` §12、D-034）。
  *
  * ## 记账必须**旁路**，不能进链路
  *
@@ -142,7 +142,7 @@ function finiteOrNull(value: unknown): number | null {
 /**
  * 从 SDK 的 usage 对象里取三个 token 数。
  *
- * **`null` 与 `0` 必须分开**（`docs/TECH.md` §12.3）：
+ * **`null` 与 `0` 必须分开**（`.trellis/spec/project/architecture.md` §12.3）：
  * 缺字段是「供应商没回传」，0 是「确实没花」。所以这里用
  * `typeof === 'number'` 判断而不是 `?? 0`。
  *
@@ -186,7 +186,7 @@ export function effectiveTokens(fields: {
 /* ── 聚合 ─────────────────────────────────────────────── */
 
 /**
- * 时区。**这一条不做就会静默错一格**（`docs/TECH.md` §12.4、§10 的坑表）。
+ * 时区。**这一条不做就会静默错一格**（`.trellis/spec/project/architecture.md` §12.4、§10 的坑表）。
  *
  * 容器默认跑 UTC，而用户在 UTC+8：不显式转时区的话，凌晨 0 点到 8 点的
  * 消耗全算到前一天，热力图整体左移一格，且不报错。
@@ -239,7 +239,7 @@ function startOfMonth(date: string): string {
  *
  * **按当前范围的分位数算，不用固定阈值**：固定阈值在忙的月份全是最深色、
  * 闲的月份全是浅色，图就没信息了。代价是换范围颜色会变，所以界面上
- * 图例必须标出真实区间（`docs/TECH.md` §12.4）。
+ * 图例必须标出真实区间（`.trellis/spec/project/architecture.md` §12.4）。
  *
  * 取 50 / 75 / 90 分位作为三档边界（四档）。**只在非零值上取分位**——
  * 把大量零值算进去会把阈值压到 0，于是「有一天用了 100 token」变成最深色。

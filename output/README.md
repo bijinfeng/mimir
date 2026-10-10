@@ -10,6 +10,6 @@
 
 这些原型不是现行实现或规范；其中的三栏布局、AI 侧栏和统一自绘标题栏等
 历史形态可能已被后续决策取代。当前产品行为以
-[PRD](../docs/PRD.md)、[TECH](../docs/TECH.md) 和
-[DESIGN](../docs/DESIGN.md) 为准，取舍原因见
-[DECISIONS](../docs/DECISIONS.md)。
+[产品契约](../.trellis/spec/project/product.md)、[技术契约](../.trellis/spec/project/architecture.md)和
+[设计契约](../.trellis/spec/project/design.md)为准，取舍原因见
+[决策记录](../.trellis/spec/project/decisions.md)。

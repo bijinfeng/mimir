@@ -9,7 +9,7 @@ import { vectorLegWithQuery } from './vector.js'
  *
  * HNSW 索引建在 `embedding::halfvec(1024)` 这个**表达式**上、带
  * `WHERE dimension = 1024`（`drizzle/0010_chunks.sql`）。所以查询里的
- * 距离表达式必须逐字对应，否则索引静默不命中——`docs/TECH.md` §4.8
+ * 距离表达式必须逐字对应，否则索引静默不命中——`.trellis/spec/project/architecture.md` §4.8
  * 点名这是本期最容易踩的一处。
  *
  * 维度从 `ctx.embed.dimension` 来（设置里 `model.embed.dimensions`），

@@ -9,14 +9,14 @@ import { formatTokens, UsageHeatmap } from './UsageHeatmap'
 import { MODEL_ROLE_LABELS, type UsageByRole } from '@mimir/shared'
 
 /**
- * 用量统计（`docs/TECH.md` §12、`docs/PRD.md` §5.11）。
+ * 用量统计（`.trellis/spec/project/architecture.md` §12、`.trellis/spec/project/product.md` §5.11）。
  *
  * ## 口径：token，不是调用次数
  *
  * 用户明确要求热力图量的是 **token 消耗量**。理由站得住：一次深度推理
  * 可能抵二十次摘要，而「我花了多少」比「我点了多少次」更常被问起。
  *
- * 代价是**它不再能回答「我还在不在用」**（那是 `PRD.md` §7 的成功判据）。
+ * 代价是**它不再能回答「我还在不在用」**（那是 `.trellis/spec/project/product.md` §7 的成功判据）。
  * 补偿很便宜：tooltip 里同时给调用次数，所以两个问题一次答完，
  * 不需要第二张图。
  *
@@ -140,7 +140,7 @@ export function StatsSection() {
             用 antd Table 而不是手写 `<table>`：表头底色、单元格内边距、
             边框与 hover 在深浅两套主题下都已经由 token 校准过，
             自己写一遍等于抄一份会漂移的副本（这正是这个项目反复
-            记录的那类问题——`docs/DESIGN.md` §8 的形态缺位）。
+            记录的那类问题——`.trellis/spec/project/design.md` §8 的形态缺位）。
             关掉分页：这里最多五六行。
           */
           <Table<UsageByRole>

@@ -8,7 +8,7 @@ import type { AppEnv } from '../types.js'
 /**
  * 抓取。
  *
- * `docs/PRD.md` §2.2：收集是五环里的第一环，「界面上根本没有地方粘贴链接」
+ * `.trellis/spec/project/product.md` §2.2：收集是五环里的第一环，「界面上根本没有地方粘贴链接」
  * 会让整条链失效。所以这个路由是 M0 的核心之一。
  */
 export const captureRoute = new Hono<AppEnv>()

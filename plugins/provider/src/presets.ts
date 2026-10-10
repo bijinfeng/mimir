@@ -9,7 +9,7 @@ import type { ProviderPreset } from '@mimir/shared'
  * 能不能拉列表。所以**加一家服务商不需要写代码**——只要它说 OpenAI 兼容
  * 协议，`openai-compatible` 那个族就能接住它。
  *
- * 对照：`docs/RESEARCH.md` 记的四个成熟产品都有这份目录
+ * 对照：`.trellis/spec/project/research.md` 记的四个成熟产品都有这份目录
  * （最大的列了约 90 家）。没有目录的产品（某个用 7 条 URL 做浏览器
  * 自动补全的）用户得自己记 baseURL，而那是最容易填错的一栏。
  *

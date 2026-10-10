@@ -2,7 +2,7 @@
 --
 -- 与 documents_fts（0001_fts.sql）同一套做法：`unicode61` 按空白切词，
 -- 而 search_text 是 jieba 预分词后的空格分隔词元，所以词元一一对应
--- （docs/RESEARCH.md §11.2）。
+-- （.trellis/spec/project/research.md §11.2）。
 --
 -- **为什么单独一个迁移文件而不是接着 0007_chunks.sql**：drizzle 的迁移
 -- 按文件里的 breakpoint 标记切分，而触发器体里本身有分号——写进同一个

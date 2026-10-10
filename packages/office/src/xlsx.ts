@@ -7,7 +7,7 @@ import { BoundedZip } from './zip-bounds.js'
  *
  * 它的读取路径依赖 **13.7K 行的 Rust 侧车**（会话式读表 + 公式重算），
  * 而那是为「可编辑的电子表格」准备的。mimir 只需要**把表画出来**——
- * 「预览」与「编辑」的成本在这里差一个数量级（`TECH.md` §15.7）。
+ * 「预览」与「编辑」的成本在这里差一个数量级（`.trellis/spec/project/architecture.md` §15.7）。
  *
  * ## 与 PDF / Office 那条老规矩一致
  *
@@ -34,7 +34,7 @@ import { BoundedZip } from './zip-bounds.js'
  *      编号，行会整体上移、列会整体左移，而画出来的表**看起来是正常的**
  *   2. 界面用它们当渲染 key。React 反对的是「有身份却用位置冒充」，
  *      而表格的位置**就是**身份——所以身份得由解析器给出，不是 `map` 的
- *      第二个参数（`AGENTS.md` 铁律 1：改结构，不是关诊断）
+ *      第二个参数（`.trellis/spec/project/rules.md` 铁律 1：改结构，不是关诊断）
  */
 
 export interface XlsxCell {

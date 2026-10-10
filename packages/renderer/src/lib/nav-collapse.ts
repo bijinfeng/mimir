@@ -13,7 +13,7 @@ import { NAV_NARROW_QUERY } from '../theme/tokens'
  *
  * ## 它解决的是什么
  *
- * `docs/DESIGN.md` §5.5 规定 ≤880px 时导航折叠成 48px 图标条。原先这件事只在
+ * `.trellis/spec/project/design.md` §5.5 规定 ≤880px 时导航折叠成 48px 图标条。原先这件事只在
  * 外壳的 CSS 里做（`@media` 改 `grid-template-columns`），而栏内的**内容**
  * 仍按 `navCollapsed` 这份用户偏好渲染——于是窄屏下标签、目录树、品牌名被塞
  * 进 48px 里逐字换行（实测：「知识库」竖成一列、品牌名与折叠开关叠在一起）。

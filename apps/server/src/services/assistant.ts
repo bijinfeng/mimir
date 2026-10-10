@@ -33,14 +33,14 @@ async function maxChunksPerDoc(): Promise<number> {
  *  1. 配了 `MODEL_API_KEY`：检索 → 组装上下文 → 调模型 → 带引用回答
  *  2. 没配（或显式 scope=search）：只检索，把命中的分块列出来
  *
- * 第二条不是「降级」而是**产品的一部分**：`docs/PRD.md` §5.8 明确要求
+ * 第二条不是「降级」而是**产品的一部分**：`.trellis/spec/project/product.md` §5.8 明确要求
  * 「网络不可达时只用检索不调模型」——检索在本地 Postgres、笔记在本地文件，
  * 离线不是全盘瘫痪。所以这条路径要能独立工作，并且明确告诉用户
  * 「没有调模型，所以没花钱」。
  *
  * 关于 trace：这些数字全部来自**真实的检索结果**，不是渲染时编的。
  * 编的数字比没有数字更糟——用户会拿它做判断（「是没存过还是分词没匹配上」），
- * 而假数字会让他得出错误结论。见 `docs/PRD.md` §5.6。
+ * 而假数字会让他得出错误结论。见 `.trellis/spec/project/product.md` §5.6。
  */
 
 /** 上下文预算。按字符数粗略限制，避免把整库塞进 prompt。 */
@@ -95,7 +95,7 @@ export async function ask(params: AskParams): Promise<AskResponse> {
     })
     return { conversationId: params.conversationId, messages: [userMessage, assistant] }
   } catch (error) {
-    // 失败路径每类给不同出路（docs/PRD.md §5.8）。这里把异常映射成
+    // 失败路径每类给不同出路（.trellis/spec/project/product.md §5.8）。这里把异常映射成
     // 前端能识别的一类，前端据此渲染对应的出路按钮，而不是统一一个「重试」。
     const assistant = await appendMessage({
       conversationId: params.conversationId,
@@ -187,7 +187,7 @@ async function retrieve(params: AskParams): Promise<Retrieval> {
   if (result.hits.length > 0) {
     // 这一行是 trace 里最有信息量的一条：它区分了「词级命中」与「子串兜底命中」。
     // 用户看到「子串兜底 1 段」时就知道是分词没切对但被兜住了，
-    // 看到全是 0 才是真的没存过。见 docs/PRD.md §5.6。
+    // 看到全是 0 才是真的没存过。见 .trellis/spec/project/product.md §5.6。
     //
     // 通道名来自注册表（`channels`），不写死枚举——M1-C 加上向量通道时
     // 这一行自动多报一个（「语义向量 N 段」）
@@ -350,7 +350,7 @@ async function loadHistory(
 /**
  * 把异常映射成前端能识别的失败类型。
  *
- * 四类的区分是刻意的（`docs/PRD.md` §5.8）：它们对用户的下一步动作完全不同——
+ * 四类的区分是刻意的（`.trellis/spec/project/product.md` §5.8）：它们对用户的下一步动作完全不同——
  * 额度用尽要去充值或换模型，超时要缩小范围，被截断要接着生成，
  * 网络不可达可以先用检索。合并成一个「失败了」等于把判断推回给用户。
  */

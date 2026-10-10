@@ -158,7 +158,7 @@ const useStyles = createStyles(({ css, token }) => ({
  * 返回 **JSX 而不是组件**：lucide 的图标是 forwardRef 对象，不能当普通
  * 函数调用；而「先 `const Icon = …` 再 `<Icon/>`」会被
  * `react(static-components)` 判成「渲染期创建组件」并让 React Compiler
- * 静默跳过整个组件（铁律 1 的同类，根 AGENTS.md 记过）。返回 JSX、
+ * 静默跳过整个组件（铁律 1 的同类，.trellis/spec/project/rules.md 记过）。返回 JSX、
  * 就地调用是唯一两头都不踩的写法。
  */
 function renderMimeIcon(mimeType: string, className: string) {

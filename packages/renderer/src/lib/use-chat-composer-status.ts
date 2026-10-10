@@ -38,7 +38,7 @@ export function useChatComposerStatus(conversationId: string | undefined): ChatC
 
   /**
    * 直接返回新对象，**不手写 `useMemo`**（React Compiler 会在编译期做，
-   * 手写一份只会让人误判优化来自哪里——`apps/web/AGENTS.md` 的规矩）。
+   * 手写一份只会让人误判优化来自哪里——`.trellis/spec/renderer/frontend/conventions.md` 的规矩）。
    * 包内读它时用的是**字段**而不是对象本身（`status.documents` 等），
    * 所以身份每次变化不造成额外渲染。
    */

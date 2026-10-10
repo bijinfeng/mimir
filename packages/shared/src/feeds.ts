@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 /**
- * RSS / Atom 订阅的契约（M1-E，`docs/PRD.md` §3.1）。
+ * RSS / Atom 订阅的契约（M1-E，`.trellis/spec/project/product.md` §3.1）。
  *
  * 订阅是**来源的一种**——收进来的文章仍然落在 `documents`（铁律 3：
  * 所有内容统一成为 Markdown）。这里的形状只描述「订阅关系」本身，

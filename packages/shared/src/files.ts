@@ -1,5 +1,5 @@
 /**
- * 上传文件的纯函数工具（`docs/TECH.md` §13）。
+ * 上传文件的纯函数工具（`.trellis/spec/project/architecture.md` §13）。
  *
  * 放在 `shared` 而不是宿主或前端：`mime` 与「哪些类型可以内联」是**两端共用的
  * 判断**——服务端据此决定 `Content-Disposition`，前端据此决定用哪个查看器。
@@ -139,7 +139,7 @@ export type ViewerKind =
  * `sheet` / `deck` 是 xlsx / pptx 的**只读预览**（网格与幻灯片）。它们与
  * `office` 分开而不是合并，因为三者的能力面不同——合并成一个 kind 会让
  * 「能不能编辑」这件事只能靠 MIME 再判断一次，那就把这条分派规则拆成两处了。
- * 各自的实现见 `docs/TECH.md` §15.7。
+ * 各自的实现见 `.trellis/spec/project/architecture.md` §15.7。
  */
 export function viewerFor(mime: string | null | undefined): ViewerKind {
   const lower = (mime ?? '').toLowerCase()

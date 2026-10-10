@@ -11,7 +11,7 @@ import type { LegContext, PluginDatabase, RankedHit, RetrievalLeg } from '@mimir
  * ## 检索单元是**分块**，不是文档（M1-C，§4.8）
  *
  * M0 返回文档 id，M1 改成分块 id——「引用指回原文位置」的前提是命中点
- * 自带偏移，而文档级的命中点不出位置。两条通道各自一个文件（`docs/DECISIONS.md`
+ * 自带偏移，而文档级的命中点不出位置。两条通道各自一个文件（`.trellis/spec/project/decisions.md`
  * D-032 的判据），改的是它们，编排层一行没动。
  *
  * 过滤（kind / tag / 删除态）仍然作用在所属文档上：分块表只有正文与偏移，
@@ -19,7 +19,7 @@ import type { LegContext, PluginDatabase, RankedHit, RetrievalLeg } from '@mimir
  *
  * ## 召回门槛：至少命中一半的查询词
  *
- * 两个极端都在实测中踩到过（`docs/DECISIONS.md` D-014）：
+ * 两个极端都在实测中踩到过（`.trellis/spec/project/decisions.md` D-014）：
  *
  * **纯 AND 召回太窄。** `plainto_tsquery` 把所有词用 AND 连起来，要求每个词
  * 都出现。「React 重渲染范围怎么缩小？」切出四个词后命中 0 条。
@@ -35,7 +35,7 @@ import type { LegContext, PluginDatabase, RankedHit, RetrievalLeg } from '@mimir
  * 命中数与排序**分开算**。把命中数写在 `HAVING` 或外层 `WHERE` 里，
  * 过滤条件就引用了计算列，**GIN 索引静默失效**、改走全表扫描。
  * 5 万行实测：零命中也要 292 ms；下推后 0.012 ms（Bitmap Index Scan）。
- * 见 `RESEARCH.md` §9.5——这是本期最贵的一处副作用，改动这段 SQL 前先读它。
+ * 见 `.trellis/spec/project/research.md` §9.5——这是本期最贵的一处副作用，改动这段 SQL 前先读它。
  *
  * 安全性：每个词都过 `plainto_tsquery` 参数化，用户输入里的
  * `& | ! : <->` 不会被当成 tsquery 语法。

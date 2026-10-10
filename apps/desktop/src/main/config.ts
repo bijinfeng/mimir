@@ -10,7 +10,7 @@ import type { DesktopModeState } from '@mimir/shared/desktop'
  * 它是**载体事实**：选择必须能在服务端不可达时完成与修改（云端模式连不上
  * 时用户要能改回本地），而服务端设置表恰恰在那时读不到。位置在
  * `<userData>/desktop-config.json`——与数据目录同一棵树，卸载重装的行为
- * 与数据一致（`docs/TECH.md` §7.5 的分层里的「部署事实」一类）。
+ * 与数据一致（`.trellis/spec/project/architecture.md` §7.5 的分层里的「部署事实」一类）。
  *
  * ## 读失败一律当「还没选过」
  *

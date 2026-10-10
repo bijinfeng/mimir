@@ -46,7 +46,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
    * 而用户不该自己猜着按 F5。
    *
    * 用 antd 的 `Result`：图标、标题、动作三段的层级它已经定好了，
-   * 与设置页的空态同一个形态（`docs/DESIGN.md` §7.4：不留一个没有动作的空态）。
+   * 与设置页的空态同一个形态（`.trellis/spec/project/design.md` §7.4：不留一个没有动作的空态）。
    */
   errorComponent: RootError,
 })

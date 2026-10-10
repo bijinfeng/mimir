@@ -7,7 +7,7 @@ import { assemble } from '../plugins/host.js'
 import { ensureFolders, normalizeFolder } from './folders.js'
 
 /**
- * RSS / Atom 订阅（M1-E，`docs/PRD.md` §3.1）。
+ * RSS / Atom 订阅（M1-E，`.trellis/spec/project/product.md` §3.1）。
  *
  * ## 这一层的职责
  *

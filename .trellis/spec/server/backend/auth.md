@@ -1,0 +1,6 @@
+# Authentication pattern
+
+- [`app.ts`](../../../../apps/server/src/app.ts#L50-L110) exposes `/healthz` and auth/setup paths before the protected API group. New business routes mounted on that group inherit `requireAuth`; a new public route requires an explicit placement and review of what it reveals.
+- [`requireAuth`](../../../../apps/server/src/middleware/auth.ts#L25-L45) first checks a Better Auth session cookie, then the desktop local token cookie. On success it sets typed `session` and `user` context variables defined in [`types.ts`](../../../../apps/server/src/types.ts#L1-L12); otherwise it throws a 401 `HttpError`.
+- The local token is an authentication path, not an unauthenticated mode. [`local.ts`](../../../../apps/server/src/routes/local.ts#L21-L35) is still behind `requireAuth` and also returns 404 when local mode is unavailable. The special `get-session` handling is registered before the Better Auth wildcard in [`app.ts`](../../../../apps/server/src/app.ts#L66-L83).
+- The frontend has a second, navigational guard: [`__root.tsx`](../../../../packages/renderer/src/routes/__root.tsx#L7-L25) loads the session and redirects between login and protected pages. This does not replace the server guard.

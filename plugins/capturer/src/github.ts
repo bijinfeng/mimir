@@ -4,13 +4,13 @@ import { USER_AGENT, fetchLimits } from './http.js'
 /**
  * GitHub 仓库抓取器。
  *
- * 走 API 取 README + 元数据，**不克隆仓库**（`docs/PRD.md` §3.3）：
+ * 走 API 取 README + 元数据，**不克隆仓库**（`.trellis/spec/project/product.md` §3.3）：
  * 只抓 README 和 `docs/`，不拉整个仓库。
  *
  * ## 限额
  *
  * 没有 token 时 GitHub API 限额 60 次/小时，够个人用；
- * 配了 `capture.githubToken` 提到 5000。密钥加密落库（`docs/TECH.md` §7.6）。
+ * 配了 `capture.githubToken` 提到 5000。密钥加密落库（`.trellis/spec/project/architecture.md` §7.6）。
  *
  * 403 与 404 分开报，因为对用户的下一步动作不同：
  * 404 是「这个仓库不存在或私有」，403 是「配额用完了，配个 token 就好」。

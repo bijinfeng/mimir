@@ -28,7 +28,7 @@ import { SettingsTableStore } from './settings-store.js'
 /**
  * **装配层：全仓唯一同时知道「宿主」与「插件」的地方。**
  *
- * 这个文件的存在本身就是架构的落点（`docs/TECH.md` §7）：
+ * 这个文件的存在本身就是架构的落点（`.trellis/spec/project/architecture.md` §7）：
  *
  * ```
  *   插件包  ──→ @mimir/shared（契约）       ← 插件不 import 宿主

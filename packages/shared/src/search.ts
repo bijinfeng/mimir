@@ -49,7 +49,7 @@ export const searchHitSchema = z.object({
    * 上传件的格式与大小，随命中一起返回。
    *
    * 为什么检索结果也要带这两个字段：中栏的列表项**只有一种渲染形态**
-   * （`docs/DESIGN.md` §8.2），搜索结果与浏览结果长得一模一样。少了它们，
+   * （`.trellis/spec/project/design.md` §8.2），搜索结果与浏览结果长得一模一样。少了它们，
    * 搜到一个 PDF 时那一行会缺掉「PDF · 2.4 MB」——同一份文档在两种入口下
    * 显示不同，会让人以为搜到的是另一条东西。
    */
@@ -61,7 +61,7 @@ export const searchHitSchema = z.object({
    *
    * 是 `string[]` 而不是字面量联合：通道名来自 `plugins/leg/` 的注册表，
    * 接口约定里 `RetrievalLeg.name` 就是「写进 matchedBy 的那个名字」
-   * （见 `docs/TECH.md` §7.3）。写死枚举会让「加一个通道」变成
+   * （见 `.trellis/spec/project/architecture.md` §7.3）。写死枚举会让「加一个通道」变成
    * 「改契约 + 改前端 + 改测试」——而加通道按设计应该只是加一个文件。
    *
    * 前端把技术名翻成人话（词级召回 / 子串兜底），未知的通道名原样显示。
@@ -88,7 +88,7 @@ export type SearchResponse = z.infer<typeof searchResponseSchema>
  * 补嵌入的请求（`POST /maintenance/embed`，M1-B）。
  *
  * `limit` 是**这一轮最多嵌几条**，不是「要嵌完」——分批让这一步可中断，
- * 而重入的判据是向量表里有没有行（`docs/TECH.md` §4.10），
+ * 而重入的判据是向量表里有没有行（`.trellis/spec/project/architecture.md` §4.10），
  * 所以中断之后接着调一次就行。
  */
 export const embedRequestSchema = z.object({

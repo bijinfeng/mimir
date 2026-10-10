@@ -41,8 +41,6 @@ data/
 .env
 .env.local
 
-# AGENTS.md 的个人本地覆盖（见根 AGENTS.md「开工前必读」）——不提交
-AGENTS.override.md
 *.tsbuildinfo
 .DS_Store
 .vite/

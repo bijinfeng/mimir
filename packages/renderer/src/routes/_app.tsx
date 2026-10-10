@@ -24,7 +24,7 @@ import { NAV_NARROW_QUERY } from '../theme/tokens'
  *
  * 左导航 / 主区。主区的内容由子路由决定：文档模式在库（浏览）与详情
  * （阅读）两态间切换（由 URL 的 `id` 有无驱动），对话与设置是整块内容。
- * 宽度与断点见 `docs/DESIGN.md` §5.4 / §5.5：200 / 1fr，窄屏 180，折叠 48。
+ * 宽度与断点见 `.trellis/spec/project/design.md` §5.4 / §5.5：200 / 1fr，窄屏 180，折叠 48。
  *
  * 做成 **layout 路由**而不是每个页面各渲染一份：切换「对话 / 文档」时
  * 只有主区换内容，左导航不重新挂载。否则每次切换都会重拉目录树与标签、
@@ -83,7 +83,7 @@ const useStyles = createStyles(({ css, token }) => ({
    * `overflow-y: auto` 永远不触发（它自己已经和内容一样高了）。
    *
    * 症状很迷惑：看着像「内容不能滚动」，实际是高度链断在中间那一层
-   * （与 docs/DESIGN.md §7.6 记的 AntApp 断链是同一类问题）。
+   * （与 .trellis/spec/project/design.md §7.6 记的 AntApp 断链是同一类问题）。
    *
    * `overflow: hidden` 是配套的：万一某个子元素仍然溢出，让它被裁掉
    * 而不是把页面撑长。
@@ -391,7 +391,7 @@ function AppShell() {
         onClose={() => setCaptureOpen(false)}
         onCaptured={(documentId) => {
           setCaptureOpen(false)
-          /* 收件箱视图已随 D-054 退役（`docs/DECISIONS.md`:3022，新内容默认
+          /* 收件箱视图已随 D-054 退役（`.trellis/spec/project/decisions.md`:3022，新内容默认
              `ready`）——这里再说「已入收件箱」等于指认一个不存在的去处。
              与 CaptureDialog 页脚同一句话：入库之后按标签与目录整理。 */
           message.success('已入库，之后按标签与目录整理')

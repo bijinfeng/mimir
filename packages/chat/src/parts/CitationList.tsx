@@ -6,13 +6,13 @@ import { createStyles } from 'antd-style'
  * 回答下的引用块。
  *
  * 每个来源显示：标题 + 原文片段 + **命中通道**。点击跳回原文位置
- * （`docs/PRD.md` §5.2）。`documentId` 与字符偏移都来自服务端检索的真实结果，
+ * （`.trellis/spec/project/product.md` §5.2）。`documentId` 与字符偏移都来自服务端检索的真实结果，
  * 所以「点引用跳回原文」是真的能跳的，不是装饰。
  *
  * ## 命中通道为什么必须显示
  *
- * 通道是判断「这条为什么被选中」的唯一线索（`docs/PRD.md` §5.2 把
- * 「标题、原文片段与命中通道」列为引用块的组成部分；`docs/TECH.md` §7 说
+ * 通道是判断「这条为什么被选中」的唯一线索（`.trellis/spec/project/product.md` §5.2 把
+ * 「标题、原文片段与命中通道」列为引用块的组成部分；`.trellis/spec/project/architecture.md` §7 说
  * 实际跑了哪些通道写进 `matchedBy`，就是为了让这件事在界面上可解释）。
  * 缺了它，用户看不出这条是词级命中还是子串兜底命中——而后者意味着
  * **分词没切对、检索随时可能漏**。

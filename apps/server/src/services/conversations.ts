@@ -15,7 +15,7 @@ import { createNote } from './documents.js'
 /**
  * 对话持久化。
  *
- * 会话优先的导航（`docs/PRD.md` §5.2）意味着会话必须能跨刷新存在——
+ * 会话优先的导航（`.trellis/spec/project/product.md` §5.2）意味着会话必须能跨刷新存在——
  * 只放内存里的话，「会话历史」按日期分组就是假的，中栏的「本次引用」
  * 也会在刷新后空掉。
  */
@@ -193,7 +193,7 @@ export async function deleteConversation(id: string): Promise<boolean> {
 }
 
 /**
- * 「存成笔记」——闭环的最后一环（`docs/PRD.md` §5.7）。
+ * 「存成笔记」——闭环的最后一环（`.trellis/spec/project/product.md` §5.7）。
  *
  * 关键在于**保留引用来源**：存下来的不是孤零零一段话。做法是把引用写成
  * 站内链接（`[标题](/doc/<id>)`），这样它会自动进入双链系统——

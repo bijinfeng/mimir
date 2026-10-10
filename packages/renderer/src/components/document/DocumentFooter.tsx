@@ -4,7 +4,7 @@ import { useStyles } from './DocumentPanel.style'
 /**
  * 双链页脚。
  *
- * 借鉴 WeKnora（`docs/PRD.md` §5.10）：列出「来源」和「被引用」，
+ * 借鉴 WeKnora（`.trellis/spec/project/product.md` §5.10）：列出「来源」和「被引用」，
  * 让双向链接是双向的。没有链接时不渲染——空的两行标签只是噪音。
  *
  * ## 每一条是 button 而不是带 onClick 的 span

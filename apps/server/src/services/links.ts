@@ -6,7 +6,7 @@ import { documentLinks, documents } from '../db/schema.js'
 /**
  * 双链。
  *
- * `docs/PRD.md` §5.10：「文档底部列出『来源』和『被引用』，让双向链接是双向的。」
+ * `.trellis/spec/project/product.md` §5.10：「文档底部列出『来源』和『被引用』，让双向链接是双向的。」
  *
  * 链接从正文里的**站内链接**解析：`[标题](/doc/<id>)`。
  * 用 id 而不是标题做锚点，理由是标题会改——按标题匹配的话，对方改个名

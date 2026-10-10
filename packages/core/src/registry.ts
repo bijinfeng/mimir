@@ -29,17 +29,17 @@ export type { Registry, RegisteredPlugin }
 
 /**
  * 算出显示用的状态。**规则只有这一份**，各实现不自己编字符串
- * （`docs/TECH.md` §7.4）：实现只声明「我依赖哪些键」、「我还有什么别的原因不能干活」。
+ * （`.trellis/spec/project/architecture.md` §7.4）：实现只声明「我依赖哪些键」、「我还有什么别的原因不能干活」。
  *
  * 这个函数刻意是**同步且廉价**的：它在 `/api/config` 每次被请求时对每条接缝
  * 跑一遍。真实探测（发一次模型调用、写一个探针对象）不在这里——那必须是
- * 用户显式触发的动作（`docs/TECH.md` §7.8）。
+ * 用户显式触发的动作（`.trellis/spec/project/architecture.md` §7.8）。
  *
  * ## `read` 为什么是必需的参数而不是可省略的
  *
  * 它是给 `unavailable(read)` 用的：只靠 `isProvided` 回答不了
  * 「当前选中了哪个后端」。存储接缝一注册就有两个实现、而只有一个在干活，
- * 没有它设置页会把两个都显示成「可用」（`docs/RESEARCH.md` §10.6）。
+ * 没有它设置页会把两个都显示成「可用」（`.trellis/spec/project/research.md` §10.6）。
  */
 export function computeStatus(
   declaration: PluginDeclaration,

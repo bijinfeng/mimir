@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 /**
  * 未保存内容的拦截。
  *
- * `docs/PRD.md` §5.9 要求离开未保存内容时给**三个**选项：
+ * `.trellis/spec/project/product.md` §5.9 要求离开未保存内容时给**三个**选项：
  * 继续编辑 / 丢弃改动 / 保存并离开。两选项（留下 / 丢弃）会把这个场景
  * 变成二选一的拷问，而用户真正想要的往往是第三种。
  *
@@ -82,7 +82,7 @@ export function UnsavedProvider({ children }: { children: ReactNode }) {
       const ok = save ? await save() : true
       if (!ok) {
         // 保存失败就不放行——放行了用户以为存上了，实际丢了，
-        // 比不拦截更糟（docs/PRD.md §5.9）
+        // 比不拦截更糟（.trellis/spec/project/product.md §5.9）
         setDirtyState(true)
         return
       }

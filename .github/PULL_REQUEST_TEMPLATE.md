@@ -4,8 +4,8 @@
 
 ## 为什么
 
-<!-- 如果是在实现 docs/ 里已有的决策，指出来即可。
-     如果是新决策，说明取舍，并在 docs/DECISIONS.md 追加一条。 -->
+<!-- 如果是在实现 Trellis 里已有的决策，指出来即可。
+     如果是新决策，说明取舍，并在 .trellis/spec/project/decisions.md 追加一条。 -->
 
 ## 验证方式
 
@@ -18,10 +18,10 @@
 ## 自检
 
 - [ ] `pnpm check` 通过（lint + format + typecheck + test）
-- [ ] 没有违反根目录 `AGENTS.md` 的铁律
-- [ ] 没有碰 `docs/PRD.md` §1 的非目标清单
-- [ ] 改了行为 → 同步更新了对应文档
-- [ ] 有实质取舍 → 在 `docs/DECISIONS.md` 追加了一条
+- [ ] 没有违反 `.trellis/spec/project/rules.md` 的项目规则
+- [ ] 没有碰 `.trellis/spec/project/product.md` §1 的非目标清单
+- [ ] 改了现行契约 → 更新了唯一归属文档
+- [ ] 有未来可能被误改的实质取舍 → 在 `.trellis/spec/project/decisions.md` 记录了理由
 
 ## 影响面
 

@@ -28,7 +28,7 @@ import type { StorageBackend, StorageProbe } from '@mimir/shared'
  * 而不少 S3 兼容实现（旧 MinIO、各类网关、Cloudflare R2）不认这个头。
  * LobeHub 为此提过 PR 5479，LobeChat 的注释直接写着
  * 「temporarily disable S3 client integrity check for Cloudflare R2」
- * （`docs/RESEARCH.md` §10.11）。
+ * （`.trellis/spec/project/research.md` §10.11）。
  *
  * `requestChecksumCalculation: 'WHEN_REQUIRED'` 就是那个开关，
  * 所以这不是选 SDK 的代价，只是一行配置。
@@ -60,7 +60,7 @@ export interface S3StorageOptions {
   /**
    * 路径风格寻址。默认为真——自建端点几乎都是这个模式。
    *
-   * 两种写法的区别（`docs/RESEARCH.md` §10.7 与 LobeHub 的文档同）：
+   * 两种写法的区别（`.trellis/spec/project/research.md` §10.7 与 LobeHub 的文档同）：
    * ```
    * path-style:    endpoint/bucket/key
    * virtual-host:  bucket.endpoint/key
@@ -216,7 +216,7 @@ export function createS3Storage(load: S3ConfigLoader): StorageBackend {
        * （`reindexVault` 会检测「同一个 id 多个路径」并报出来）。
        *
        * 复制走 `CopyObjectCommand`——**服务端复制**，正文不出对象存储
-       * （实测请求体 0 字节，`docs/RESEARCH.md` §10.3a）。不能改成
+       * （实测请求体 0 字节，`.trellis/spec/project/research.md` §10.3a）。不能改成
        * 「先 read 再 write」：那会让正文在网络上走两遍，而且失败时的
        * 中间态更难收拾。
        *
@@ -243,7 +243,7 @@ export function createS3Storage(load: S3ConfigLoader): StorageBackend {
       /**
        * 递归列举 + 翻页。**不带 `delimiter`**：那会把中间层折叠成
        * `CommonPrefixes`，于是要逐层下钻——实测在深层 vault 上请求数是
-       * 递归方式的 2 倍以上（7 个文件：7 次 vs 3 次，`docs/RESEARCH.md` §10.3b）。
+       * 递归方式的 2 倍以上（7 个文件：7 次 vs 3 次，`.trellis/spec/project/research.md` §10.3b）。
        *
        * 代价是必须处理翻页：每次最多 1000 个 key，`IsTruncated` 之后的
        * 内容靠 `ContinuationToken` 拿。漏掉这一段的表现是

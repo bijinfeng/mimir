@@ -48,7 +48,7 @@ export interface ReindexResult {
    * 同一个 `id` 出现在多个路径下的文件数。
    *
    * **这是 S3 后端特有的失败模式的可观测面。** 那边改名是「复制 + 删除」
-   * 两步而非原子的 `rename(2)`（`docs/RESEARCH.md` §10.3a），
+   * 两步而非原子的 `rename(2)`（`.trellis/spec/project/research.md` §10.3a），
    * 复制成功、删除失败就会留下两个同 id 的文件。没有这个计数的话，
    * 表现是「upsert 时互相覆盖」，而哪一份胜出取决于扫描顺序——
    * 一个不报错的静默错误。
@@ -99,7 +99,7 @@ async function listVaultNotes(): Promise<string[]> {
  * 缺 meta 的目录既不能恢复也不该静默消失，所以单独计数（`orphanUploads`）。
  *
  * **只扫一次**：原件 key 从这一次 `list` 的结果里分出来，不再按目录逐个
- * 重新列举。对象存储的 LIST 是按请求计费的（`docs/TECH.md` §8.5），
+ * 重新列举。对象存储的 LIST 是按请求计费的（`.trellis/spec/project/architecture.md` §8.5），
  * 一个文件一次 LIST 的写法在 500 篇的库上就是 500 次请求。
  */
 async function listUploads(): Promise<{

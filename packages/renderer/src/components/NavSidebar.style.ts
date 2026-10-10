@@ -14,7 +14,7 @@ import { FONT_SIZE, NAV_ITEM_HEIGHT, NAV_ITEM_MARGIN } from '../theme/tokens'
  *  3. **右侧对齐的元信息**（计数、相对时间）——它让每一行的左侧
  *     对齐成一条整齐的竖线，扫读时视线不用来回跳
  *
- * 组件形态见 `docs/DESIGN.md` §8，字号一律走 `FONT_SIZE`（D-017）。
+ * 组件形态见 `.trellis/spec/project/design.md` §8，字号一律走 `FONT_SIZE`（D-017）。
  */
 export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   nav: css`
@@ -58,7 +58,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       font-weight: 700;
       letter-spacing: 0.06em;
       /* 文字用正文色而不是主色：主色 #1677ff 作文字在白底上只有 4.10:1
-         （docs/DESIGN.md §3.5），品牌名不该是全页唯一不达标的文字 */
+         （.trellis/spec/project/design.md §3.5），品牌名不该是全页唯一不达标的文字 */
       color: ${token.colorText};
     }
   `,
@@ -305,7 +305,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   `,
 
   /**
-   * 底部账号行（`docs/DESIGN.md` §8.13）。
+   * 底部账号行（`.trellis/spec/project/design.md` §8.13）。
    *
    * ## 尺寸与对齐**照抄上面的菜单项**（实测值）
    *
@@ -330,7 +330,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
    *
    * 账号行也是「设置」的一个入口（进的是设置 › 账号），所以它在
    * 账号分区时应当和菜单项一样点亮：`colorPrimaryBg` 底 + `colorLink` 字。
-   * 这三重线索（底色 + 字色 + 字重）是 `DESIGN.md` §8.1 定的导航项形态，
+   * 这三重线索（底色 + 字色 + 字重）是 `.trellis/spec/project/design.md` §8.1 定的导航项形态，
    * 直接沿用，不另创一种「选中」的样子。
    *
    * 底色用 `colorPrimaryBg` 而不是 `colorFillQuaternary`（第一版）：
@@ -381,7 +381,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
      * 这里显式写 flex: 1，得到同一个结果，不依赖父容器的布局巧合。
      *
      * 注：这段注释里**不能出现反引号**——它所在的模板字符串会被提前结束
-     * （见 TECH.md 第 10 节的坑表，这个坑咬过五次）。
+     * （见 .trellis/spec/project/architecture.md 第 10 节的坑表，这个坑咬过五次）。
      */
     flex: 1;
     margin: 1px ${NAV_ITEM_MARGIN}px 4px;
@@ -397,7 +397,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
        就会在两种外观下与它分叉——那正是 D-042 记的那类错误。
 
        注：这几段注释里**不能出现反引号**——它所在的模板字符串会被提前结束
-       （见 TECH.md 第 10 节的坑表，这个坑咬过五次）。 */
+       （见 .trellis/spec/project/architecture.md 第 10 节的坑表，这个坑咬过五次）。 */
     padding: 0 8px;
     /* antd 把按钮内容居中；头像列必须贴左，否则它与上面那列图标错开
        （实测居中时头像落在 x=41.5，贴左 14 才对得上） */
@@ -414,7 +414,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
      * 只有 antd 给的那条 hover 底色在起作用（那正是想要的效果）。
      *
      * 注：这段注释里**不能出现反引号**——它所在的模板字符串会被提前结束
-     * （见 TECH.md 第 10 节的坑表，这个坑咬过五次）。
+     * （见 .trellis/spec/project/architecture.md 第 10 节的坑表，这个坑咬过五次）。
      */
     border: 1px solid transparent;
     /* 过渡只留颜色与底色：antd 默认的 all 会让边框宽度也参与过渡，

@@ -27,7 +27,7 @@ import { ensureFolders, normalizeFolder } from './folders.js'
 import { extractText } from './extract.js'
 
 /**
- * 文件上传的编排（`docs/TECH.md` §13）。
+ * 文件上传的编排（`.trellis/spec/project/architecture.md` §13）。
  *
  * ## 它做四件事，顺序是刻意的
  *
@@ -49,7 +49,7 @@ import { extractText } from './extract.js'
  * ## 提取失败**不是**上传失败
  *
  * 原件已经存下、列表里看得见、能下载、能导出。只是暂时搜不到内容。
- * 这与「嵌入失败绝不让写入失败」是同一条判断（`docs/TECH.md` §4.10）：
+ * 这与「嵌入失败绝不让写入失败」是同一条判断（`.trellis/spec/project/architecture.md` §4.10）：
  * **检索是可选能力，收藏是核心**。所以函数正常返回，用 `charCount` 与
  * `parseError` 两个字段分别报告，让界面说实话。
  */
@@ -303,7 +303,7 @@ function toUploadSummary(
 }
 
 /**
- * 替换一个上传件的原件（`docs/TECH.md` §13）。
+ * 替换一个上传件的原件（`.trellis/spec/project/architecture.md` §13）。
  *
  * ## 为什么需要它
  *

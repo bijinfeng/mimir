@@ -1,13 +1,13 @@
 import { createCipheriv, createDecipheriv, hkdfSync, randomBytes } from 'node:crypto'
 
 /**
- * 密钥的落库加解密（`docs/TECH.md` §7.6）。
+ * 密钥的落库加解密（`.trellis/spec/project/architecture.md` §7.6）。
  *
  * 两件事是刻意的：
  *
  *  1. **密钥从宿主的 `AUTH_SECRET` 派生**，不引入第二个必填环境变量。
  *     WeKnora 用一个独立的 32 字节 `SYSTEM_AES_KEY`，未设时**退化成明文落库**
- *     （`RESEARCH.md` §1.5）——那是「多一个必填项」换来的一个静默的坑。
+ *     （`.trellis/spec/project/research.md` §1.5）——那是「多一个必填项」换来的一个静默的坑。
  *     本项目已经有且必须有 `AUTH_SECRET`（生产环境不设直接拒绝启动），
  *     用它派生即可，且不存在「忘了设就明文存」的状态。
  *  2. **密文带 `enc:v1:` 前缀**。将来换算法或换派生参数时，

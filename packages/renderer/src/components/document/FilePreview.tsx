@@ -16,7 +16,7 @@ import { api } from '../../lib/api'
 import { FONT_SIZE } from '../../theme/tokens'
 
 /**
- * 文件类文档的预览区（`docs/DESIGN.md` §8.16）。
+ * 文件类文档的预览区（`.trellis/spec/project/design.md` §8.16）。
  *
  * ## 直接看原件，没有层切换（D-054）
  *
@@ -34,7 +34,7 @@ import { FONT_SIZE } from '../../theme/tokens'
  * | 两个都没有 | 说明卡片 + 下载 | 空白在那里等于说「这个文件是空的」 |
  *
  * **提取结果仍然可搜、可被 AI 引用**——那一层没有消失，只是不再占一个页签：
- * 它活在检索索引里，这也是它真正的用途（`docs/PRD.md` §2.2）。
+ * 它活在检索索引里，这也是它真正的用途（`.trellis/spec/project/product.md` §2.2）。
  *
  * ## 每种格式族的原件查看器都用浏览器自带能力
  *
@@ -47,7 +47,7 @@ import { FONT_SIZE } from '../../theme/tokens'
  * | 其他 | 一张说明卡片 + 下载按钮 | 无 |
  *
  * 一分钱依赖都不花。pdf.js 那 1MB 换来的是一致的外观与可控的工具栏——
- * 那要等到「PDF 批注」这个需求真出现时再算（`docs/PRD.md` §4 M2）。
+ * 那要等到「PDF 批注」这个需求真出现时再算（`.trellis/spec/project/product.md` §4 M2）。
  *
  * ## 查看器报错要降级，不留白
  *

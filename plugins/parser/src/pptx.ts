@@ -2,7 +2,7 @@ import type { ParseInput, ParseResult, Parser } from '@mimir/shared'
 import { cleanExtractedText, openOoxmlArchive, xmlToText, type OoxmlArchive } from './ooxml.js'
 
 /**
- * `.pptx` → Markdown 的**文本提取**（`docs/TECH.md` §13）。
+ * `.pptx` → Markdown 的**文本提取**（`.trellis/spec/project/architecture.md` §13）。
  *
  * ## 一页一节的形状
  *
@@ -21,7 +21,7 @@ import { cleanExtractedText, openOoxmlArchive, xmlToText, type OoxmlArchive } fr
  *    这里退化成按行取文字（用「 / 」分隔），不转 Markdown 表格——
  *    幻灯片上的表格往往很短，转成表格反而不如一行文字清楚
  *
- * 图片里的文字（扫描件、贴图）提取不到——需要 OCR，明确不做（`PRD.md` §1）。
+ * 图片里的文字（扫描件、贴图）提取不到——需要 OCR，明确不做（`.trellis/spec/project/product.md` §1）。
  */
 export function createPptxParser(): Parser {
   return {

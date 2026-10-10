@@ -26,7 +26,7 @@ import type { AppEnv } from '../types.js'
  * | `database` | 当前驱动 + SQLite 库文件 | 无（`DATABASE_URL` 是部署事实，不在键表里）|
  *
  * 模型配置与标量设置**走同一个写入端点**：它本来就是设置层的一个 json 键
- * （`docs/TECH.md` §7.5 的键集闭集）。为它单开一个端点会造出第二条
+ * （`.trellis/spec/project/architecture.md` §7.5 的键集闭集）。为它单开一个端点会造出第二条
  * 写入路径，而两条路径的校验早晚会漂移。
  */
 export const configRoute = new Hono<AppEnv>()
@@ -84,7 +84,7 @@ configRoute.get('/', async (c) => {
  * 写入设置。**整批校验，任一键不合法则整批拒绝。**
  *
  * `null` 表示删除覆盖、回落到环境变量或默认值——那是一个真实的动作，
- * 不是「清空输入框」的副作用（`docs/TECH.md` §7.5）。
+ * 不是「清空输入框」的副作用（`.trellis/spec/project/architecture.md` §7.5）。
  */
 configRoute.patch('/settings', async (c) => {
   const { settings } = assemble()
@@ -111,7 +111,7 @@ configRoute.patch('/settings', async (c) => {
  * ## 与模型探测同一条规则：显式动作，不自动触发
  *
  * 每次进设置页都写一个对象是明显的浪费，而且 S3 的写是按请求计费的
- * （`docs/TECH.md` §7.8）。
+ * （`.trellis/spec/project/architecture.md` §7.8）。
  *
  * **不记账**：与模型探测不同，这里没有 token 消耗，也没有「我没怎么用怎么
  * 有记录」的问题——写一个几字节的探针对象不构成用户可感知的用量。
@@ -152,7 +152,7 @@ configRoute.post('/probe', async (c) => {
   const startedAt = performance.now()
 
   /**
-   * 探测也记账，但 token 三列留空（`docs/TECH.md` §12.2）。
+   * 探测也记账，但 token 三列留空（`.trellis/spec/project/architecture.md` §12.2）。
    *
    * 它是**真实调用**（发 `"ping"`、`max_tokens: 1`），不记的话用户会发现
    * 「我没怎么用，怎么有调用记录」。但它也不该混进「我的用量」——

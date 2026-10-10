@@ -63,7 +63,7 @@ export function writeLibraryLayout(layout: LibraryLayout): void {
  *
  * ## 为什么这一行不能空着
  *
- * 卡片的第二行是摘要（`docs/DESIGN.md` §8.2）。一份还没提取出正文的文件
+ * 卡片的第二行是摘要（`.trellis/spec/project/design.md` §8.2）。一份还没提取出正文的文件
  * 没有摘要——如果就此留白，那一行看起来像**加载失败或者坏掉了**。
  * 更糟的是它传达了一个确定的错误信息：「这篇没有内容」。
  *

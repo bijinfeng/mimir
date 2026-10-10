@@ -25,7 +25,7 @@ export interface FusionChannel {
   weight: number
 }
 
-/** RRF 的 k 默认值。作用与出处见 `docs/TECH.md` §4.2；实际取值由设置决定 */
+/** RRF 的 k 默认值。作用与出处见 `.trellis/spec/project/architecture.md` §4.2；实际取值由设置决定 */
 export const DEFAULT_RRF_K = 60
 
 export interface FusedItem {
@@ -75,7 +75,7 @@ export function fuse(channels: readonly FusionChannel[], k = DEFAULT_RRF_K): Fus
  *
  * 通道自己的分数（`ts_rank_cd` 之外还有 BM25，常 >10）**不能**直接当
  * 相关性展示或参与后续加权：尺度大的通道会淹没别的项。这条借自
- * WeKnora 的生产实践（`RESEARCH.md` §1.2）。
+ * WeKnora 的生产实践（`.trellis/spec/project/research.md` §1.2）。
  *
  * 注意它**不用于 RRF**——RRF 只看名次，这正是选它的理由。
  * 这个函数是给「展示分数」与「rerank 前的候选打分」用的。

@@ -11,19 +11,19 @@ import { createS3Storage, type S3StorageOptions } from './s3.js'
  * 而存储**任何时刻只有一个在用**，其余是备选。这个差异由 `unavailable(read)`
  * 如实体现：没被选中的后端显示「当前未选中」，而不是也报「可用」。
  *
- * 收下 `read` 是这次改动给契约带来的唯一放宽（`docs/RESEARCH.md` §10.6）：
+ * 收下 `read` 是这次改动给契约带来的唯一放宽（`.trellis/spec/project/research.md` §10.6）：
  * `isProvided` 只能回答「有没有配过」，回答不了「选中了哪个」。
  *
  * ## 数据根为什么不在设置页里
  *
- * `DATA_DIR` 是**部署事实**（`docs/TECH.md` §7.5 的配置分层），与
+ * `DATA_DIR` 是**部署事实**（`.trellis/spec/project/architecture.md` §7.5 的配置分层），与
  * `DATABASE_URL` 同类：改它等于换一整个数据集，出现在界面里就是假表单
  * ——M0 设置页已经用「不画存不进去的表单」否决过这类东西。
  * 所以本地后端的根由宿主通过 `dataDir` 注入，不走设置键。
  *
  * 这也顺带修掉了「三个目录各自独立默认」那个坑：容器里只设了 `VAULT_DIR`
  * 与 `RAW_DIR`、漏了 `AVATARS_DIR` 时，头像会静静地落到容器可写层
- * （`docs/RESEARCH.md` §10.10）。现在只有一个根，漏配在结构上不可能发生。
+ * （`.trellis/spec/project/research.md` §10.10）。现在只有一个根，漏配在结构上不可能发生。
  */
 
 /** 本地后端没有自己的配置键——根目录由宿主注入 */
@@ -162,7 +162,7 @@ export function install(host: PluginHost, options: StoragePluginOptions): void {
        *
        * `prefix` 与 `pathStyle` 有可用的默认值，所以不列进来——
        * `requires` 的判据是「有没有人**显式**配过」，把带默认值的键放进来
-       * 会让这个后端永远显示「待配置」（`docs/TECH.md` §7.4）。
+       * 会让这个后端永远显示「待配置」（`.trellis/spec/project/architecture.md` §7.4）。
        */
       requires: ['storage.s3.bucket', 'storage.s3.accessKeyId', 'storage.s3.secretAccessKey'],
       unavailable: (read) => notSelected(read, 's3'),

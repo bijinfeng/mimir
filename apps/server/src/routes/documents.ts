@@ -70,7 +70,7 @@ export const tagsRoute = new Hono<AppEnv>()
 tagsRoute.get('/', async (c) => c.json({ items: await listAllTags() }))
 
 /**
- * 内联改写（M1-D，`docs/PRD.md` §4 M1）。
+ * 内联改写（M1-D，`.trellis/spec/project/product.md` §4 M1）。
  *
  * 挂在顶层 `/api/ai` 而不是 `/api/documents/...`：改写的文本**可能还没保存**
  * （编辑器里选中一段直接改），所以它不该要求先有一篇文档。
@@ -103,7 +103,7 @@ aiTextRoute.post('/rewrite', async (c) => {
 /**
  * 建议标签。
  *
- * 整理条把它直接摆成按钮（`docs/PRD.md` §5.10）——后端早就该算它，
+ * 整理条把它直接摆成按钮（`.trellis/spec/project/product.md` §5.10）——后端早就该算它，
  * 界面上没地方显示等于白算。放在文档路由下（`/:id/suggested-tags`）而不是
  * 单独端点，是因为它需要正文，而正文只有服务端能读到最新的
  * （文件可能被外部编辑器改过，见 services/documents.ts 的 getDocument）。
@@ -209,7 +209,7 @@ maintenanceRoute.post('/reindex', async (c) => {
 maintenanceRoute.get('/orphans', async (c) => c.json({ orphans: await countOrphanFiles() }))
 
 /**
- * 分块状态（M1-B，`docs/TECH.md` §4.10）。
+ * 分块状态（M1-B，`.trellis/spec/project/architecture.md` §4.10）。
  *
  * 返回「共 N 段 · 待嵌入 M 段」，`pending` 为 `null` 表示没配向量化模型——
  * 界面上「待嵌入」这一栏该显式说是「未配置向量化模型」，而不是显示 0：

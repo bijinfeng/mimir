@@ -5,7 +5,7 @@ import { CONTENT_WIDTH, FONT_SIZE } from '../../theme/tokens'
  * 设置页的样式。
  *
  * 这个页面不是一堆散落的表单，而是**插件注册表的人类可读视图**
- * （`docs/TECH.md` §7.4）：每一行「可配置的东西」都对应一个注册进接缝的实现。
+ * （`.trellis/spec/project/architecture.md` §7.4）：每一行「可配置的东西」都对应一个注册进接缝的实现。
  *
  * ## 形态：一个内容列 + 若干面板
  *
@@ -19,13 +19,13 @@ import { CONTENT_WIDTH, FONT_SIZE } from '../../theme/tokens'
  *  3. 选中态的 ink bar 是一条脱离文字的竖线，看起来像渲染坏了
  *
  * 所以分区导航改成**横向**（见 `routes/_app.settings.tsx`），
- * 内容列恢复成完整的 760px（`docs/DESIGN.md` §5.4）。
+ * 内容列恢复成完整的 760px（`.trellis/spec/project/design.md` §5.4）。
  *
  * ## 为什么面板自己画边框，而不是用 `Card`
  *
  * `Card` + `Descriptions bordered` 会形成「卡片边框 + 表格边框 + 行分隔线」
  * 三层线，而设置项本身就是**结构化的键值数据**，行与行之间一条浅线足够。
- * 值全部走 `token.*`，不写字面量（`docs/DESIGN.md` §3）。
+ * 值全部走 `token.*`，不写字面量（`.trellis/spec/project/design.md` §3）。
  */
 export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   page: css`
@@ -396,7 +396,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
    *
    * `&.${prefixCls}-btn` 而不是裸类名：antd 的 `.${prefixCls}-btn` 与
    * 这一条同为单类选择器，谁后注入谁赢——那种胜负不该被依赖
-   * （AGENTS.md 的样式规则第 7 条：覆写内部结构用 `${prefixCls}`）。
+   * （.trellis/spec/renderer/frontend/conventions.md 的样式规则第 7 条：覆写内部结构用 `${prefixCls}`）。
    */
   presetCard: css`
     &.${prefixCls}-btn {
@@ -765,7 +765,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
  *
  * 颜色成对取自语义 token（`colorSuccessText` on `colorSuccessBg`，实测 ≥ 4.5:1），
  * **不用 `<Tag color="green">` 预设色**——预设走 antd 自己的调色板，
- * 对比度不由我们控制（`components/DocumentBadges.tsx` 的同一条理由，AGENTS.md 第 8 条）。
+ * 对比度不由我们控制（`components/DocumentBadges.tsx` 的同一条理由，.trellis/spec/renderer/frontend/conventions.md 第 8 条）。
  */
 export const useStatusStyles = createStyles(({ css, token }, props: { on: boolean }) => ({
   badge: css`

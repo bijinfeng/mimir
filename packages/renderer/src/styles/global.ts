@@ -8,7 +8,7 @@ import { createGlobalStyle } from 'antd-style'
  * 组件样式一律走 `createStyles`（局部作用域），不要往这里加。
  *
  * 内容区排版（编辑器正文）曾经也在这里，现在挂在 `NoteEditor` 的样式模块上——
- * 它是一个组件的样式，就该有作用域。规范见 `docs/DESIGN.md` §4.3。
+ * 它是一个组件的样式，就该有作用域。规范见 `.trellis/spec/project/design.md` §4.3。
  */
 export const GlobalStyles = createGlobalStyle`
   * {
@@ -43,7 +43,7 @@ export const GlobalStyles = createGlobalStyle`
    * antd 的 Form 把 explain 文案写成 color: token.colorError
    * （es/form/style/index.js:246），也就是未校准的 #ff4d4f——白底
    * 3.27:1、深色 #dc4446 压在容器底上 4.28:1，都不到 AA。而项目按
-   * docs/DESIGN.md §3.1/§3.3 校准过语义文字色（浅色 #c5221f 5.80:1、
+   * .trellis/spec/project/design.md §3.1/§3.3 校准过语义文字色（浅色 #c5221f 5.80:1、
    * 深色 #f0777a 6.59:1），只是这一处没被 antd 取用。
    *
    * 为什么放在全局而不是登录页的 createStyles 里：它盖的是 antd 内部的
@@ -70,7 +70,7 @@ export const GlobalStyles = createGlobalStyle`
    * 它是 role="button" + tabindex="0" 的元素，键盘能 Tab 到，但 antd 没给它
    * 焦点样式——实测 Tab 到它时是浏览器默认的 outline: rgb(16,16,16) auto 1px，
    * 紧贴字形的小黑方框，与同页其它可聚焦元素的蓝色环不是一套语言
-   * （docs/DESIGN.md §7.2：焦点必须可见，自定义的可聚焦元素补项目自己的环；
+   * （.trellis/spec/project/design.md §7.2：焦点必须可见，自定义的可聚焦元素补项目自己的环；
    * 登录按钮实测是 3px 的蓝环、输入框是主色光晕）。
    *
    * 用 token.controlOutline 而不是字面量 rgba(22,119,255,.1)：它是 antd 按
@@ -94,7 +94,7 @@ export const GlobalStyles = createGlobalStyle`
    * 而那种白闪看起来像渲染出错了。
    *
    * 这里用插值而不是 --ant-* 变量：
-   * 变量注入在 antd 组件的 DOM 子树上，html 上取不到（见 §10.3）。
+   * 变量注入在 antd 组件的 DOM 子树上，html 上取不到（见 .trellis/spec/renderer/frontend/theme/pitfalls.md）。
    *
    * **!important 是为了压过 index.html 里那段首帧脚本**（它给 html 写了一个
    * 内联兜底背景，只为覆盖「脚本执行到样式注入」那段空白）。内联样式优先于

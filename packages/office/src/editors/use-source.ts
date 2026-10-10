@@ -17,7 +17,7 @@
  * 宿主传进来的 `io` 是对象字面量，每次渲染都是新引用；写进依赖数组会让
  * 「加载 → setState → 重渲染 → 重新加载」无限循环。但把 `io` 从依赖里去掉
  * 又会被 `react-hooks/exhaustive-deps` 拦下，而**抑制 React 规则是禁止的**
- * （`AGENTS.md` 铁律 1：编译器会静默跳过整个组件）。
+ * （`.trellis/spec/project/rules.md` 铁律 1：编译器会静默跳过整个组件）。
  *
  * 所以用 ref 承接最新值、注册一个稳定的转发函数——`NoteEditor` 里
  * `saveNowRef` 是同一个手法。ref 的更新 effect 声明在加载 effect **之前**。

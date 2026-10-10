@@ -21,7 +21,7 @@ import { FONT_SIZE } from '../theme/tokens'
  * 自然可知。
  *
  * **不要用 `<Tag color="green">` 这种预设色。** 预设走的是 antd 自己的调色板，
- * 对比度不由我们控制。色对与实测对比度见 `docs/DESIGN.md` §3.7，
+ * 对比度不由我们控制。色对与实测对比度见 `.trellis/spec/project/design.md` §3.7，
  * `design.test.ts` 对两套外观跑同一组阈值——深色不能因为「看得过去」就放宽。
  */
 

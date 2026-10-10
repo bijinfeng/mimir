@@ -9,7 +9,7 @@ import { api } from './api'
  * 对话包不知道 API 客户端长什么样、query 缓存的键叫什么、路由怎么跳——
  * 那些是**这个应用**的知识。与 `packages/office` 的 `EditorIo`
  * （取字节 / 写回）同一条边界：**壳与渲染归包，方言与取写归宿主**
- * （`packages/office/AGENTS.md` 的「宿主 / 包边界」）。好处是结构性的：
+ * （`.trellis/spec/office/engine/index.md` 的「宿主 / 包边界」）。好处是结构性的：
  * 包内 import 不到 `api.ts` / router / queryClient。
  *
  * ## 用工厂而不是常量对象

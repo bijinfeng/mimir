@@ -86,7 +86,7 @@ if (offenders.length > 0) {
   for (const line of offenders) console.error(`  ${line}`)
   console.error(
     '\n注释里想强调某个 CSS 属性时，用「」或 ** 包起来，不要用反引号。' +
-      '（详见 docs/TECH.md 第 10 节的坑表）',
+      '（详见 .trellis/spec/project/architecture.md 第 10 节的坑表）',
   )
   process.exit(1)
 }

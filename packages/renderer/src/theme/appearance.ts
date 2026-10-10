@@ -18,7 +18,7 @@ import { useSyncExternalStore } from 'react'
  *
  * 与左栏折叠同一个判断（`routes/_app.tsx`）：它是**纯客户端的渲染偏好**——
  * 服务端一个字节都不用知道，也没有任何服务端逻辑会读它。放进 settings 表
- * 会多出三件坏事：设置页多一条假的「可配置项」（`TECH.md` §7.5 的闭集会被
+ * 会多出三件坏事：设置页多一条假的「可配置项」（`.trellis/spec/project/architecture.md` §7.5 的闭集会被
  * 撑开）、首帧要等一次请求才知道该用哪套色（闪白）、以及同一台机器上
  * 两个浏览器的偏好会互相覆盖。
  *

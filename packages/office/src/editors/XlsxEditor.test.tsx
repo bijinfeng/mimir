@@ -38,7 +38,7 @@ import type { EditorIo, SaveTarget } from './types.js'
  * 夹具路径用 `import.meta.dirname` 拼，**不用 `new URL(..., import.meta.url)`**。
  *
  * happy-dom 会替换全局 `URL`，于是 `readFileSync(new URL(…))` 抛
- * 「The URL must be of scheme file」——`packages/office/AGENTS.md` 记着这条
+ * 「The URL must be of scheme file」——`.trellis/spec/office/engine/index.md` 记着这条
  * （实测过：解析类测试整片挂掉）。这个文件要 DOM，所以必须绕开那个全局。
  */
 const FIXTURE = join(

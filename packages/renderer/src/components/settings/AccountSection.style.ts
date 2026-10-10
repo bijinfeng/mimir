@@ -2,7 +2,7 @@ import { createStyles } from 'antd-style'
 import { FONT_SIZE } from '../../theme/tokens'
 
 /**
- * 账号分区的样式（`docs/DESIGN.md` §8.14）。
+ * 账号分区的样式（`.trellis/spec/project/design.md` §8.14）。
  *
  * 两栏：左边头像（72px 圆形 + 两个动作），右边名称与邮箱。
  * 头像独立成列而不是挤在名称左边，是因为**它有动作**——
@@ -23,7 +23,7 @@ export const useAccountStyles = createStyles(({ css, token }) => ({
   `,
   avatar: css`
     /* 无头像时的字母底色：走主色浅底而不是主色填充——
-       填充是按钮的语义（docs/DESIGN.md §3.5） */
+       填充是按钮的语义（.trellis/spec/project/design.md §3.5） */
     background: ${token.colorPrimaryBg};
     color: ${token.colorLink};
     font-size: ${FONT_SIZE.pageTitle}px;
@@ -41,7 +41,7 @@ export const useAccountStyles = createStyles(({ css, token }) => ({
    *
    * 用的是 antd `Button type="link"`，所以颜色 / hover / 禁用态都走 token
    * （链接色是 `colorLink`——主色作文字在浅底上不达标，见
-   * `docs/DESIGN.md` §3.5）。这里只压掉它默认的内边距，
+   * `.trellis/spec/project/design.md` §3.5）。这里只压掉它默认的内边距，
    * 让两个按钮贴着头像排得紧一些。
    *
    * 第一版是 `<label>` + 隐藏的原生 `<input type="file">` 加一个裸

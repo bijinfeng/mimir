@@ -47,7 +47,7 @@ export type Platform =
        *
        * **必须传模块级函数**：写成内联箭头会让
        * `react(no-unstable-nested-components)` 判它是「渲染期定义组件」，
-       * React Compiler 随即跳过宿主组件（根 `AGENTS.md` 铁律 1 的静默退化）。
+       * React Compiler 随即跳过宿主组件（`.trellis/spec/project/rules.md` 铁律 1 的静默退化）。
        */
       renderTitleBar: (props: TitleBarSlotProps) => ReactNode
     }

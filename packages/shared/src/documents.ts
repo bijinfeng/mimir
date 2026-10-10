@@ -7,7 +7,7 @@ import { z } from 'zod'
  * 图片…）是 `file` 的**属性**，存在 `mime` 列里、显示在元信息行——不新增
  * `pdf` / `docx` 这类 kind。理由：`kind` 是写进 URL、筛选器与 `matchedBy`
  * 的公开值，每加一种格式就要多一组徽标色对，而「给每个类型配一个色」正是
- * `docs/DESIGN.md` §0.1 明确反对的设计（见 `docs/DECISIONS.md` D-044）。
+ * `.trellis/spec/project/design.md` §0.1 明确反对的设计（见 `.trellis/spec/project/decisions.md` D-044）。
  *
  * note 是自己写的（可编辑、文件是真相）；其余都是资料（原件 + 派生正文），
  * 检索时对自己的笔记加权。`file` 是上传的原件——与抓取的资料同样只读，
@@ -135,7 +135,7 @@ export const documentDetailSchema = documentSummarySchema.extend({
   parseError: z.string().nullable(),
   /**
    * 双链。`sources` 是这篇链接出去的，`backlinks` 是链接到这篇的
-   * （`docs/PRD.md` §5.10）。由服务端解析正文里的站内链接得到，
+   * （`.trellis/spec/project/product.md` §5.10）。由服务端解析正文里的站内链接得到，
    * 前端不重复实现一套解析——两处实现必然有一天不一致。
    */
   links: z.object({
@@ -179,7 +179,7 @@ export type DocumentListQuery = z.infer<typeof documentListQuerySchema>
  *
  * **上传与解析是两件事，一次请求里做、但分别报告。** 解析失败不构成失败：
  * 原件已经存下、列表里看得见、能下载，只是暂时搜不到内容——
- * 这正是「嵌入失败绝不让写入失败」的同一条判断（`docs/TECH.md` §4.10），
+ * 这正是「嵌入失败绝不让写入失败」的同一条判断（`.trellis/spec/project/architecture.md` §4.10），
  * 只不过换成了解析。所以用 `charCount` 与 `parseError` 两个字段如实报告，
  * 而不是用一个 `ok` 把两种结果混成一个。
  */
@@ -205,7 +205,7 @@ export type DocumentCounts = z.infer<typeof documentCountsSchema>
 /**
  * 建议标签。
  *
- * 整理条把这几个词直接摆成按钮（`docs/PRD.md` §5.10）——
+ * 整理条把这几个词直接摆成按钮（`.trellis/spec/project/product.md` §5.10）——
  * 后端早就该算它，界面上没地方显示等于白算。
  * 返回的是「从这篇内容里提取出的高频词」，不是模型生成的结果，
  * 所以它没有延迟、不花钱，可以随文档打开就请求。

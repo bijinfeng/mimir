@@ -82,7 +82,7 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
       默认那一档的 track 最小尺寸是 min-content，于是卡片上写死的 400px
       会把 track 撑到 400——卡片再写 max-width: 100% 也没用，
       百分比解析的就是那个 400。实测：视口 420px 时卡片仍是 400 宽、
-      整页 scrollWidth 424（docs/DESIGN.md §5.5 不允许横向溢出）。
+      整页 scrollWidth 424（.trellis/spec/project/design.md §5.5 不允许横向溢出）。
     */
     grid-template-columns: minmax(0, 1fr);
     place-items: center;
@@ -108,7 +108,7 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
 
     .${prefixCls}-typography {
       margin: 0;
-      /* 与左导航的字标是**同一副字形**（docs/DESIGN.md §9.1 的登录页那一行
+      /* 与左导航的字标是**同一副字形**（.trellis/spec/project/design.md §9.1 的登录页那一行
          写的是「同上」，也就是 700 / letter-spacing .06em）。原先这里是
          antd 标题默认的 600 加一个 0.02em——同一个标记在两处出现时字重与
          字距都不一样，并排放才看得出来，单看登录页看不出来 */
@@ -122,7 +122,7 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
   /**
    * 失败提示条。它常驻到下一次提交，而不是只活一条 toast。
    *
-   * `docs/DESIGN.md` §0.2：状态必须能被看见，**且必须带得走**。3 秒的
+   * `.trellis/spec/project/design.md` §0.2：状态必须能被看见，**且必须带得走**。3 秒的
    * `message.error` 两半都不满足——用户去看一眼密码管理器、切个窗口再回来，
    * 页面上就只剩一个填好的表单，没有任何「刚才失败了」的线索。
    *
@@ -194,7 +194,7 @@ function LoginPage() {
    * 上一次提交为什么失败。**常驻**到下一次提交，而不是只活一条 toast。
    *
    * 假密码打错一次、恰好去看了一眼密码管理器或切了窗口再回来，页面上就只剩
-   * 一个填好的表单、没有任何「刚才失败了」的线索——`docs/DESIGN.md` §0.2
+   * 一个填好的表单、没有任何「刚才失败了」的线索——`.trellis/spec/project/design.md` §0.2
    * 要求状态必须能被看见**且必须带得走**，3 秒的 toast 两半都不满足。
    *
    * 清空的时机是**下一次提交**，不是「用户开始打字」：那条提示回答的是
@@ -262,7 +262,7 @@ function LoginPage() {
           {/* 失败提示条放在表单**上方**：它在说「上一次提交的结果」，
             而按钮在表单底部——放下面会被键盘与滚动推走。
             `title` 而不是 `message`：后者在 antd v6 已废弃、会打一条警告
-            （同类迁移见 docs/DESIGN.md §7.5） */}
+            （同类迁移见 .trellis/spec/project/design.md §7.5） */}
           {formError !== null && (
             <Alert className={styles.formError} type="error" showIcon title={formError} />
           )}

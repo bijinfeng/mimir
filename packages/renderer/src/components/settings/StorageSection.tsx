@@ -24,7 +24,7 @@ import { useStyles } from './settings.style'
  *
  * 存储接缝是**单数**的：同一时刻只有一个在承接写入。把未选中的也列出来
  * 是为了让「我配过另一个」这件事可见，同时如实说明它当前没在干活
- * （`docs/RESEARCH.md` §10.6）。只显示选中的那个会让用户以为配置丢了。
+ * （`.trellis/spec/project/research.md` §10.6）。只显示选中的那个会让用户以为配置丢了。
  */
 export function StorageSection() {
   const { styles } = useStyles()
@@ -163,7 +163,7 @@ export function StorageSection() {
 /**
  * 「测试连接」。
  *
- * 与模型那边的探测同一条规则（`docs/TECH.md` §7.8）：**真实动作、显式触发**。
+ * 与模型那边的探测同一条规则（`.trellis/spec/project/architecture.md` §7.8）：**真实动作、显式触发**。
  * 它写一个探针对象到当前选中的后端，读回、再删掉——所以探通即代表
  * 真的能写能读，而不是「配置项填全了」。
  *

@@ -29,7 +29,7 @@
  *
  * 同步回调会让「等待一帧」变成递归调用栈（React 的调度器会撞上无限递归）。
  * `setTimeout(fn, 0)` 是**等这次渲染落地**的通行做法（本仓记过同一条：
- * 后台标签页里 rAF 根本不派发，见根 `AGENTS.md` 的坑表）。
+ * 后台标签页里 rAF 根本不派发，见`.trellis/spec/project/pitfalls.md` 的坑表）。
  */
 /* rAF：happy-dom 有，但它绑在它自己的 window 上；组件里调用
    `window.requestAnimationFrame` 时可能落到 window 而不是 globalThis。

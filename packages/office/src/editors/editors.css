@@ -317,7 +317,7 @@
  */
 /*
  * 正文列。**行宽是有可读性上限的**：760px 约 45 个汉字，再宽眼睛回行时
- * 容易串行（docs/DESIGN.md §4.3 的 CONTENT_WIDTH）。由宿主填
+ * 容易串行（.trellis/spec/project/design.md §4.3 的 CONTENT_WIDTH）。由宿主填
  * --me-content-width，回退值是同一个数。
  *
  * 居中的那 760 是**正文**，不是外壳：工具条与状态行仍然横跨整个宽度，
@@ -578,7 +578,7 @@
  * `align-self: flex-start`：工作台是 flex 行，默认 `align-items: stretch`
  * 会把这一层**拉到工作台那么高**。而高亮与裁剪框是按这一层的百分比定位的，
  * 于是「页面 900×1200、这一层 900×667」时高亮被纵向压进 667 里——框落在页面
- * 上半部分的某个位置（实测过，框住的不是那行字）。这与 AGENTS.md 里那串
+ * 上半部分的某个位置（实测过，框住的不是那行字）。这与 .trellis/spec/office/frontend/editors/pitfalls.md 里那串
  * 「高度链」是同一类坑：**静默地错，且错的是位置**。
  *
  * `margin-inline: auto`：页面比工作台窄时居中。**不用 `justify-content:

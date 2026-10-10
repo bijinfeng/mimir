@@ -24,7 +24,7 @@
  *
  * **尺寸档由 `EditorShell` 里那层 `ConfigProvider componentSize="small"` 给**
  * （只传 componentSize、不传 theme——传 theme 会让 antd 重算 cssVar 的 key，
- * `--ant-*` 变量名跟着变，引用处静默失效，见 `apps/web/AGENTS.md` 第 5 条）。
+ * `--ant-*` 变量名跟着变，引用处静默失效，见 `.trellis/spec/renderer/frontend/conventions.md` 第 5 条）。
  *
  * 下面这几样**故意不用 antd**，每一条都有理由：
  *
@@ -125,10 +125,10 @@ export interface EditorShellProps {
  *
  *  1. **不传 `theme`**：antd 会按传入的 theme 重算 `cssVar` 的 key，
  *     `--ant-*` 变量名跟着变，所有引用变量的地方**静默失效**
- *     （`apps/web/AGENTS.md` 第 5 条）。尺寸档不是主题。
+ *     （`.trellis/spec/renderer/frontend/conventions.md` 第 5 条）。尺寸档不是主题。
  *  2. **它不产生 DOM 节点**（实测 `host.childElementCount` 渲染前后都是 1），
  *     所以 `.mimir-editor` 的高度链与宽度链不受影响——那两条链断过两次，
- *     见 `shell.css` 与根 `AGENTS.md` 的坑表。
+ *     见 `shell.css` 与`.trellis/spec/project/pitfalls.md` 的坑表。
  *
  * 注意它**不是** antd 的 compactAlgorithm 那种全应用密度开关：只把控件降到
  * small 档，间距仍由 `shell.css` 的 `.mimir-editor__bar { gap: 2px }` 管。

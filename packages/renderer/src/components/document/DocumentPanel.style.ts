@@ -6,7 +6,7 @@ import { FONT_SIZE, NAV_NARROW_QUERY } from '../../theme/tokens'
  *
  * 单独成文件的原因：正文排版（Tiptap 渲染出的裸 DOM）与只读正文的
  * 样式覆写加起来三百多行，混在组件文件里会把逻辑挤到看不见。
- * 规范见 `docs/DESIGN.md` §4.3 / §5。
+ * 规范见 `.trellis/spec/project/design.md` §4.3 / §5。
  */
 export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   /**
@@ -102,7 +102,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
        *
        * antd 把 className 一起挂在编辑容器上（实测编辑容器的 classList
        * 里就有 headerTitle 那个哈希类），所以将两个类写成**后代**关系的
-       * 选择器永远匹配不到——那个类的元素就是容器自己。这正是 AGENTS.md
+       * 选择器永远匹配不到——那个类的元素就是容器自己。这正是 .trellis/spec/renderer/frontend/document/pitfalls.md
        * 记过的「树根样式写成后代式」同一个坑：规则静默失效，量到的还是
        * antd 默认值。写成 &. 同元素才对。
        *
@@ -394,7 +394,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   `,
 
   /* 右侧大纲。只在标题数 ≥ 2 时出现——两段话的笔记不需要目录，
-     常驻只是白占 196px（docs/PRD.md §5.10） */
+     常驻只是白占 196px（.trellis/spec/project/product.md §5.10） */
   /**
    * 笔记的大纲：在编辑器外壳的 bodySide 里（工具栏下面、正文右边）。
    * 外壳的 `.mimir-editor__side` 已经给了宽度 / 滚动 / 右内边距，
@@ -665,7 +665,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
      两者都在 design.test.ts 的通用矩阵里（语义文字 on 同语义底 ≥ 4.5）。 */
 
   /* 标题。原型用 letter-spacing:-.01em 收紧——28px 的中文标题不收紧
-     会显得松散。字号阶梯见 docs/DESIGN.md §4.2。
+     会显得松散。字号阶梯见 .trellis/spec/project/design.md §4.2。
 
      **必须用 `&.${prefixCls}-typography` 抬特异性。** 标题是 antd 的
      `Typography.Title`，它自带一条

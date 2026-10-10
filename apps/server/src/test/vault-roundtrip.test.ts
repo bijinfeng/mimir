@@ -27,7 +27,7 @@ import { getAuthCookie, makeClient } from './helpers.js'
  *     头条主张的一半：「文件可以直接用 Typora / Obsidian 打开」。
  *     只做第 1 层的话，本地后端把文件存进某个数据库大字段也能骗过测试
  *
- * 见 docs/DECISIONS.md 与根目录 AGENTS.md 铁律 2。
+ * 见 .trellis/spec/project/decisions.md 与.trellis/spec/project/rules.md 铁律 2。
  */
 
 /** key → 磁盘上的绝对路径。**只对本地后端成立**，测试环境固定用它 */
@@ -86,7 +86,7 @@ describe('文件是真相，数据库可重建', () => {
    * 这一条守的是「可以直接用 Typora / Obsidian 打开、可以 git 版本管理」
    * 这句主张（`lib/vault.ts` 的文件头）。文件跑到 `data/vault/` 之外的
    * 任何布局都会让它失败——而那正是需要被拦住的改动
-   * （`docs/RESEARCH.md` §10.8 记了换成 S3 之后这部分性质的真实损失）。
+   * （`.trellis/spec/project/research.md` §10.8 记了换成 S3 之后这部分性质的真实损失）。
    */
   it('本地后端把笔记写成 DATA_DIR 下的普通 md 文件', async () => {
     const created = await client.post<{ id: string; path: string }>('/api/documents/notes', {

@@ -15,6 +15,8 @@
     "output/**",
     "pnpm-lock.yaml",
     "**/*.md",
-    ".agents/**"
+    ".agents/**",
+    ".trellis/.template-hashes.json",
+    ".trellis/tasks/**"
   ]
 }

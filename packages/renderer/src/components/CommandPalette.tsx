@@ -10,7 +10,7 @@ import { FONT_SIZE } from '../theme/tokens'
 /**
  * 命令面板（Ctrl K）。
  *
- * `docs/PRD.md` §5.10 与原型 README：搜索文档、执行操作，**或直接提问**。
+ * `.trellis/spec/project/product.md` §5.10 与原型 README：搜索文档、执行操作，**或直接提问**。
  * 三条出路共用一个输入框是刻意的——用户此刻只有「我想找点什么」这个意图，
  * 让他先选「这是搜索还是提问」是把分类负担推给他。
  *
@@ -67,7 +67,7 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
      * 三处都要关掉：antd v6 给输入类控件加了 focusOutline（实测计算样式
      * outline: rgb(22,119,255) solid 1px），它会画出那个蓝色胶囊。
      *
-     * 前缀走 prefixCls 变量而不是写死 .ant-（AGENTS.md 样式第 7 条）。
+     * 前缀走 prefixCls 变量而不是写死 .ant-（.trellis/spec/renderer/frontend/conventions.md 样式第 7 条）。
      */
     .${prefixCls}-input-affix-wrapper,
     .${prefixCls}-input {
@@ -187,7 +187,7 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
    * 而且 §0.1 说语义色只出现在真的有状态的地方——这条是**提示**，不是状态。
    *
    * AI 的暗示由 `✦` 图标的 `colorLink` 承担，不靠底色。
-   * 与 `DESIGN.md` §8.6 检索过程用同一种表面处理，二者是同类东西。
+   * 与 `.trellis/spec/project/design.md` §8.6 检索过程用同一种表面处理，二者是同类东西。
    */
   aiRow: css`
     display: flex;
@@ -321,10 +321,10 @@ function PaletteBody({
   })
 
   /**
-   * 两条操作命令。副标题用 `docs/DESIGN.md` §8.10 原型里的措辞（「直接落进库」）。
+   * 两条操作命令。副标题用 `.trellis/spec/project/design.md` §8.10 原型里的措辞（「直接落进库」）。
    *
    * 曾经写的是「落在收件箱 / 进收件箱」——收件箱视图与导航项已随 D-054 退役
-   * （`docs/DECISIONS.md`:3022：新内容 `status` 直接 `ready`）。界面里再没有
+   * （`.trellis/spec/project/decisions.md`:3022：新内容 `status` 直接 `ready`）。界面里再没有
    * 那个去处：用户收集完一篇东西却被告知内容进了「收件箱」，会去找一个不存在
    * 的视图，怀疑内容没收到。文案说的是别处（对话框、toast）也要说同一件事。
    */
@@ -426,7 +426,7 @@ function PaletteBody({
        * 容器圆角会被子元素的直角盖住。
        *
        * 圆角用 12px 而不是 `token.borderRadiusLG`（现值 10px）：
-       * `docs/DESIGN.md` §5.2 把「对话框、命令面板」定为 **12–14px**，
+       * `.trellis/spec/project/design.md` §5.2 把「对话框、命令面板」定为 **12–14px**，
        * 而 antd 的 LG 是按 base + 2 派生的，够不到那个区间。
        */
       styles={{
@@ -481,7 +481,7 @@ function PaletteBody({
                * 于是「最近打开」这个意图在界面上从来没有发生过。
                *
                * 想要真的「最近打开」得另接一个最近文档查询——那是新增产品行为，
-               * 按仓库铁律要先改 `docs/DESIGN.md` §8.10 再改代码。这里只把
+               * 按仓库铁律要先改 `.trellis/spec/project/design.md` §8.10 再改代码。这里只把
                * 不可能成立的分支删掉，说它实际是什么。
                */}
               <div className={styles.sectionLabel}>匹配的文档</div>

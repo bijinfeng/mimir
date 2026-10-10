@@ -17,7 +17,7 @@ import { useNarrowViewport } from '../lib/nav-collapse'
 /**
  * 设置页。
  *
- * 它不是一堆散落的表单，而是**插件注册表的人类可读视图**（`docs/TECH.md` §7.4）：
+ * 它不是一堆散落的表单，而是**插件注册表的人类可读视图**（`.trellis/spec/project/architecture.md` §7.4）：
  * 每一行「可配置的东西」都对应一个注册进接缝的实现。这样「可配置的东西」
  * 和「代码里的实现」永远一一对应，不会出现设置里有开关但代码里没有对应逻辑。
  *
@@ -34,7 +34,7 @@ import { useNarrowViewport } from '../lib/nav-collapse'
  *  2. 760px 的限宽内容列里再切掉约 100px，正文只剩约 570px，而右侧空着
  *  3. antd 的 ink bar 是一条脱离文字的竖线，看起来像渲染坏了
  *
- * 改成横向之后，内容列恢复成完整的 760px（`docs/DESIGN.md` §5.4 的
+ * 改成横向之后，内容列恢复成完整的 760px（`.trellis/spec/project/design.md` §5.4 的
  * 「设置内容列 760px」），且这一页仍然只占一栏。
  *
  * ## 分区选择走 URL
@@ -51,9 +51,9 @@ import { useNarrowViewport } from '../lib/nav-collapse'
  * 半个字（实测首个 tab 只剩「型」，看起来像渲染坏了）。antd 的 `Tabs` 不折行，
  * 只能靠右端的 ⋯ 菜单够到被切掉的两个分区。
  *
- * 所以窄屏（`NAV_NARROW_QUERY`，与左导航同一个断点，`docs/DESIGN.md` §5.5）
+ * 所以窄屏（`NAV_NARROW_QUERY`，与左导航同一个断点，`.trellis/spec/project/design.md` §5.5）
  * 换成 `Select`：八个分区的名字都完整、可读，一次点击就能到。宽屏仍是横向
- * tab——那一档 `docs/DESIGN.md` §8.12 的取舍（并列选项摊开比藏进下拉少一次
+ * tab——那一档 `.trellis/spec/project/design.md` §8.12 的取舍（并列选项摊开比藏进下拉少一次
  * 点击）成立，因为那时它摊得下。
  *
  * 断点从 `tokens.ts` 取，不在这里写数字：它要与外壳的网格（`_app.tsx`）和

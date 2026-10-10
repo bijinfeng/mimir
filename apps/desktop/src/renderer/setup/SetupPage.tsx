@@ -43,7 +43,7 @@ export function SetupPage() {
    *
    * 读成状态会让「这个窗口不是桌面客户端」那句话经由一次 effect 里的
    * setState 产生——而那是 `react(set-state-in-effect)` 要拦的级联渲染，
-   * 且 React Compiler 会因此跳过整个组件（根 AGENTS.md 铁律 1）。
+   * 且 React Compiler 会因此跳过整个组件（.trellis/spec/project/rules.md 铁律 1）。
    */
   const modeApi = desktopBridge?.mode
 

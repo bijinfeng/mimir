@@ -13,7 +13,7 @@ import {
 import { app, getAuthCookie, makeClient } from './helpers.js'
 
 /**
- * 用量记账的行为断言（`docs/DECISIONS.md` D-034 的四条验证方式）。
+ * 用量记账的行为断言（`.trellis/spec/project/decisions.md` D-034 的四条验证方式）。
  *
  * ## 为什么这四条
  *

@@ -47,7 +47,7 @@ export interface PmDocJson {
  * 这是能安全编辑别人的 docx 的前提（Word 的 XML 有大量我们没建模的东西：
  * 域代码、修订标记、自定义样式、OLE 对象）。
  *
- * 实测数据（`RESEARCH.md` §13）：原样保存 11/11 条目字节相同；
+ * 实测数据（`.trellis/spec/project/research.md` §13）：原样保存 11/11 条目字节相同；
  * 改一段时只有 document.xml 变化 2724 → 2739 字节。
  */
 

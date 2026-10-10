@@ -7,7 +7,7 @@ import { vectorLegWithQuery } from './vector.js'
  *
  * ## 为什么用标量函数而不是 `vec0` 虚拟表
  *
- * `RESEARCH.md` §11.3 的蓝图是 `vec0` 虚拟表 + 暴力 KNN。真实落地时
+ * `.trellis/spec/project/research.md` §11.3 的蓝图是 `vec0` 虚拟表 + 暴力 KNN。真实落地时
  * 选了**标量距离函数**，理由是两条：
  *
  *   1. `vec0` 是一张独立的虚拟表，它需要自己的一份数据同步（分块写入、
@@ -18,7 +18,7 @@ import { vectorLegWithQuery } from './vector.js'
  *      它**不能与别的过滤条件自由组合**（kind / tag / 删除态）——
  *      在个人库规模下，先过滤再算距离的顺扫反而更简单也更可控
  *
- * 量级论证见 `RESEARCH.md` §11.3：SQLite 侧本来就是纯暴力扫描，
+ * 量级论证见 `.trellis/spec/project/research.md` §11.3：SQLite 侧本来就是纯暴力扫描，
  * `vec0` 与标量函数在同一量级（几十万向量以内都是毫秒级）；
  * 个人库（万级分块）远在安全区。
  *

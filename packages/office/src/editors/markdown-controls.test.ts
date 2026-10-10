@@ -3,11 +3,10 @@
  *
  * ## 为什么这一组是读源码文本、而不是挂组件
  *
- * 因为**方言在宿主那边**（`apps/web/src/editor/extensions.ts`）。挂一棵真树要
+ * 因为**方言在宿主那边**（`packages/renderer/src/editor/extensions.ts`）。挂一棵真树要
  * 一套真扩展，而这个包不依赖 `@tiptap/starter-kit`；拿一组临时凑的扩展挂出来
- * 测的就是**另一个编辑器**（`apps/web/AGENTS.md` 那句「测试必须针对真实配置」
- * 说的正是这件事）。所以渲染层的契约在宿主
- * （`apps/web/src/editor/MarkdownEditor.test.tsx` 的「控件契约」一节：按 antd 的
+ * 测的就是**另一个编辑器**。所以渲染层的契约在宿主
+ * （`packages/renderer/src/editor/MarkdownEditor.test.tsx` 的「控件契约」一节：按 antd 的
  * 类名数控件、量 small 档、禁用给原因、状态行的可点文字），这里只守**这个文件
  * 里有没有人手写原生控件**——那一条不需要方言，而且正是会静默退回去的那一条。
  *

@@ -7,7 +7,7 @@ import { createSubstringLegSqlite } from './substring.sqlite.js'
  *
  * ## 为什么需要它
  *
- * 分词器对同一串文字在查询侧和索引侧可能切得不同（`docs/TECH.md` §4.3）：
+ * 分词器对同一串文字在查询侧和索引侧可能切得不同（`.trellis/spec/project/architecture.md` §4.3）：
  *
  * ```
  * 问：「React 重渲染范围怎么缩小？」

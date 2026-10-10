@@ -158,7 +158,7 @@ export function createOpenAiCompatibleProvider(
      * 摘要留空时回落到对话角色。
      *
      * 这是刻意的：摘要用强模型只是浪费钱，不是错误
-     * （`docs/TECH.md` §5.7）。而**向量化没有回落**——
+     * （`.trellis/spec/project/architecture.md` §5.7）。而**向量化没有回落**——
      * 拿对话模型算向量是错的，所以它没配就是「向量通道不可用」。
      */
     if (!binding && role === 'summarize') binding = config.roles.chat ?? null
@@ -218,7 +218,7 @@ export function createOpenAiCompatibleProvider(
          *
          * 这不是多余的兜底：手改配置、或改了模型用途之后旧绑定没被清掉，
          * 都会落到这里。不检查的话界面上显示「就绪」，而第一次调用
-         * 才在深处失败——那是「说真话」原则不允许的（`docs/TECH.md` §7.8）。
+         * 才在深处失败——那是「说真话」原则不允许的（`.trellis/spec/project/architecture.md` §7.8）。
          */
         const bound = instance.models.find((model) => model.id === binding.model)
         const servesRole = bound !== undefined && canServe(bound, role)
@@ -300,7 +300,7 @@ export function createOpenAiCompatibleProvider(
          * 原因在类型上：三种适配器是三个不同类，合成一个联合传给
          * `embed()` / `chat()` 只能靠 `as never` 压过去，而 `as never`
          * 会把选项类型也推成 `never`——于是 `input: 'ping'` 都通不过，
-         * 得在每个字段上再断言一次（`docs/TECH.md` §5.2 记过这个坑）。
+         * 得在每个字段上再断言一次（`.trellis/spec/project/architecture.md` §5.2 记过这个坑）。
          *
          * 每个分支用自己那个具体工厂，类型就是完整的。
          */

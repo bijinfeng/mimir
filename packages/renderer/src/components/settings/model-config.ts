@@ -46,7 +46,7 @@ export function modelConfigOf(config: RuntimeConfig | undefined): ModelConfig | 
  *
  * 成功后让 `['config']` 失效——服务端是唯一真相源，前端不自己维护
  * 「已保存的那份」。这样「界面上显示的值」与「服务端真正在用的值」
- * 永远一致（设置页自己那条原则，`docs/TECH.md` §7.7）。
+ * 永远一致（设置页自己那条原则，`.trellis/spec/project/architecture.md` §7.7）。
  */
 export function useSaveModelConfig() {
   const queryClient = useQueryClient()
@@ -117,7 +117,7 @@ export function withRoleBound(
  * 所以保存时把**不再能服务该角色**的绑定一起清掉（服务端 `normalizeRoles`
  * 也兜一次，两层说同一件事）。
  *
- * 密钥的三态在这里收口（与 `docs/TECH.md` §5.7 的表格一致）：
+ * 密钥的三态在这里收口（与 `.trellis/spec/project/architecture.md` §5.7 的表格一致）：
  * 不填 = 不带那个 id（保留已存的）；填了 = 进 `keyDrafts`；
  * 清除 = 进 `keyDrafts` 传空串。
  */

@@ -16,7 +16,7 @@ import { getAuthCookie, makeClient } from './helpers.js'
  *
  * 改动之前，设置页的插件清单是**前端手写的数组**，与 `plugins/leg/index.ts`
  * 的真实注册表没有连接：加一个通道要改两处，而界面上的「待开发」条目
- * 连文件路径都是手写的（`docs/DECISIONS.md` D-030）。
+ * 连文件路径都是手写的（`.trellis/spec/project/decisions.md` D-030）。
  *
  * 所以这里断言的是三件「两处各说各话」会立刻暴露的事：
  *
@@ -53,7 +53,7 @@ describe('插件注册表', () => {
    * 存储接缝与另外四条有一处本质不同：**它是单数的**。
    *
    * 未被选中的那个后端不能显示成「可用」——那会让设置页说
-   * 「两个存储后端都可用」，而实际只有一个是真相（`docs/RESEARCH.md` §10.6）。
+   * 「两个存储后端都可用」，而实际只有一个是真相（`.trellis/spec/project/research.md` §10.6）。
    * 这条断言守的是 `unavailable(read)` 真的读到了 `storage.backend`：
    * 如果哪天有人把 read 参数去掉、退回只用 `isProvided`，这里会红。
    *
@@ -130,7 +130,7 @@ describe('插件注册表', () => {
 
   /**
    * **这条是「未选中」那个新状态的直接断言**，也是这次改动给契约
-   * 加 `read` 参数的全部理由（`docs/RESEARCH.md` §10.6）。
+   * 加 `read` 参数的全部理由（`.trellis/spec/project/research.md` §10.6）。
    *
    * 把 S3 配齐（但 `storage.backend` 仍是 local），它必须显示
    * 「当前未选中（正在用 local）」而不是「可用」——否则设置页会同时
@@ -424,7 +424,7 @@ describe('构建配置（防 D-023 那个坑）', () => {
    *
    * 只在**已经构建过**时运行（`pnpm check` 不包含构建步骤，而在这里跑一次
    * `vite build` 太慢）。所以它不是把关的那一道，而是「构建过就该是干净的」
-   * 这一性质的可执行记录。真正把关的是镜像构建（`docs/TECH.md` §8.4）。
+   * 这一性质的可执行记录。真正把关的是镜像构建（`.trellis/spec/project/architecture.md` §8.4）。
    */
   it('已构建的产物里没有未编译的 workspace import', () => {
     const distDir = resolve(repoRoot, 'apps/server/dist')

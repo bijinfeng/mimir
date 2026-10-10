@@ -29,7 +29,7 @@ export const LOCAL_TOKEN_COOKIE = 'mimir-local'
  * | `cloud` | 自部署的服务端 | **没有本地宿主**，窗口加载远端地址 |
  *
  * 它不是服务端设置项：选择存在 `<userData>/desktop-config.json`，
- * 因为切换必须能在服务端不可达时完成（`docs/TECH.md` §7.5 的配置分层）。
+ * 因为切换必须能在服务端不可达时完成（`.trellis/spec/project/architecture.md` §7.5 的配置分层）。
  */
 export type DesktopMode = 'local' | 'cloud'
 

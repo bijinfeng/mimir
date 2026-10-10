@@ -41,7 +41,7 @@ describe('分块状态端点（M1-B）', () => {
     /**
      * 没配向量化模型时 `pending` 是 **null**，不是 0。
      * 这条断言值一条用例：显示成 0 会被读成「都嵌好了」，
-     * 而实际上一段都没嵌（`docs/TECH.md` §4.10 的规矩）。
+     * 而实际上一段都没嵌（`.trellis/spec/project/architecture.md` §4.10 的规矩）。
      */
     expect([null, 0]).toContain(res.body.pending)
   })

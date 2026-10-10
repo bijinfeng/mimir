@@ -4,7 +4,7 @@ import { documentKindSchema } from './documents.js'
 /**
  * 对话。
  *
- * 会话优先的导航（`docs/PRD.md` §5.2）意味着会话是一等公民：它出现在左导航、
+ * 会话优先的导航（`.trellis/spec/project/product.md` §5.2）意味着会话是一等公民：它出现在左导航、
  * 占据中栏的「本次引用」、在右栏展开检索过程。所以它必须落库——
  * 只存在内存里的话，刷新一次「会话历史」就空了，那这个导航结构就是假的。
  */
@@ -15,7 +15,7 @@ export type MessageRole = z.infer<typeof messageRoleSchema>
 /**
  * 检索过程的一步。
  *
- * 每一步带**具体数字**（`docs/PRD.md` §5.6）：个人知识库里这条比在企业里更重要——
+ * 每一步带**具体数字**（`.trellis/spec/project/product.md` §5.6）：个人知识库里这条比在企业里更重要——
  * AI 说「没找到」时，你能分辨是确实没存过、还是存了但分词没匹配上。
  * 所以这些字段来自真实的通道召回结果，不是渲染时编的。
  */
@@ -56,7 +56,7 @@ export const citationSchema = z.object({
 export type Citation = z.infer<typeof citationSchema>
 
 /**
- * 模型侧失败。四类各自给不同出路（`docs/PRD.md` §5.8）——
+ * 模型侧失败。四类各自给不同出路（`.trellis/spec/project/product.md` §5.8）——
  * 统一给一个「重试」等于把判断推回给用户，而用户此刻最缺判断依据。
  */
 export const failureKindSchema = z.enum(['quota', 'timeout', 'truncated', 'offline'])

@@ -52,7 +52,7 @@
  * （颜色 `BFBFBF`）。它们三个都在 schema 里、画布会画（`extensions.ts` 的
  * `blockAttrs` 读 `indentLeft`/`borders`）、保存会写
  * （`generate.ts:1211-1239` 的 `w:pBdr` / `w:ind`）——而 `清除格式` 清的正是
- * 这几项，所以它可进可出。取舍见 `docs/DECISIONS.md` D-062。
+ * 这几项，所以它可进可出。取舍见 `.trellis/spec/project/decisions.md` D-062。
  *
  * 同理**不提供**「表格样式」（`tblStyleId`）与「六边」（`tblLook`）：那两个
  * 属性在画布上只渲染成 `data-tbl-style`（没有规则命中它），改了也是只改 XML。

@@ -21,7 +21,7 @@ import { createXlsxParser } from './xlsx.js'
  * 边界收得这么窄，是为了让「换一个 HTML 转换策略」或「加一种文件格式」
  * 都不需要碰抓取器、数据库与检索——那三处各自都不知道内容是怎么变过来的。
  *
- * ## 输入分成两类（`docs/TECH.md` §7.2 的 `ParseInput` 判别联合）
+ * ## 输入分成两类（`.trellis/spec/project/architecture.md` §7.2 的 `ParseInput` 判别联合）
  *
  * | 类 | 谁 | 拿到什么 |
  * |---|---|---|

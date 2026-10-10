@@ -3,7 +3,7 @@ import { createVectorLegPostgres } from './vector.pg.js'
 import { createVectorLegSqlite } from './vector.sqlite.js'
 
 /**
- * 向量通道（M1-C，`docs/TECH.md` §4.8 / §4.11）。
+ * 向量通道（M1-C，`.trellis/spec/project/architecture.md` §4.8 / §4.11）。
  *
  * ## 没有对外接口（embed 模型）时这个通道不注册
  *

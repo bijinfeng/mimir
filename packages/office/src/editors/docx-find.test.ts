@@ -27,7 +27,7 @@ import { docxFindAdapter, findRanges, foldCase } from './docx-find.js'
  * 这个文件要 DOM（Tiptap 的 `Editor` 要一个 contenteditable 元素），所以跑在
  * happy-dom 下——而 happy-dom **替换了全局 `URL`**，于是
  * `readFileSync(new URL(…))` 抛 `The URL must be of scheme file`（Node 认不出
- * happy-dom 那个 URL 对象）。`packages/office/AGENTS.md` 记过这个坑，这里的
+ * happy-dom 那个 URL 对象）。`.trellis/spec/office/engine/index.md` 记过这个坑，这里的
  * 做法是它的第二种解法：压根不构造 URL。
  */
 const FIXTURE = join(
