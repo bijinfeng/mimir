@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/project/design.md", "reason": "现行视觉与布局契约"}
+{"file": ".trellis/spec/renderer/frontend/document/index.md", "reason": "文档头部规范入口"}
+{"file": ".trellis/spec/office/frontend/shell/index.md", "reason": "共享编辑器外壳约束"}
+{"file": ".trellis/tasks/10-10-markdown-header-obsidian/research/obsidian-reference.md", "reason": "Obsidian 官方资料与证据边界"}

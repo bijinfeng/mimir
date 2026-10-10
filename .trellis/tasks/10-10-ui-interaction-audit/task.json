@@ -1,0 +1,29 @@
+{
+  "id": "ui-interaction-audit",
+  "name": "ui-interaction-audit",
+  "title": "UI 交互细节审查",
+  "description": "逐项验证网页版主要交互的键盘、焦点、反馈、校验、弹层、保存、导航与响应式行为，并记录实际操作证据。",
+  "status": "in_progress",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "jfbi",
+  "assignee": "jfbi",
+  "createdAt": "2026-10-10",
+  "completedAt": null,
+  "branch": "codex/ui-review-round-2",
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "10-10-markdown-header-obsidian",
+    "10-11-ui-audit-remediation"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}

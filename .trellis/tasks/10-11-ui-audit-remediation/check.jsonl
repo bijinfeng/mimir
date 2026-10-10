@@ -1,0 +1,4 @@
+{"file": ".trellis/spec/project/quality.md", "reason": "全仓质量门槛"}
+{"file": ".trellis/spec/renderer/frontend/index.md", "reason": "界面回归检查"}
+{"file": ".trellis/spec/office/frontend/editors/index.md", "reason": "编辑器回归检查"}
+{"file": ".trellis/spec/server/backend/index.md", "reason": "计数后端回归检查"}

@@ -1,0 +1,3 @@
+{"file": ".trellis/spec/project/quality.md", "reason": "项目质量门槛"}
+{"file": ".trellis/spec/renderer/frontend/document/index.md", "reason": "文档视图审查约束"}
+{"file": ".trellis/spec/office/frontend/shell/index.md", "reason": "共享外壳回归检查"}

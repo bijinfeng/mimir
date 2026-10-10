@@ -1,0 +1,6 @@
+{"file": ".trellis/spec/project/product.md", "reason": "当前产品边界与行为契约"}
+{"file": ".trellis/spec/renderer/frontend/index.md", "reason": "渲染层开发规范"}
+{"file": ".trellis/spec/office/frontend/editors/index.md", "reason": "Markdown 编辑器约束"}
+{"file": ".trellis/spec/server/backend/index.md", "reason": "检索统计后端约束"}
+{"file": ".trellis/tasks/10-11-ui-audit-remediation/research/f1-f12.md", "reason": "前十二项代码研究"}
+{"file": ".trellis/tasks/10-11-ui-audit-remediation/research/f13-f19.md", "reason": "笔记流程代码研究"}
