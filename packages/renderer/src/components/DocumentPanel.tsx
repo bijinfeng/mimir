@@ -1,6 +1,17 @@
 import { viewerFor, type Citation, type DocumentDetail, type NoteUpdate } from '@mimir/shared'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { App, Button, Dropdown, Empty, Skeleton, Tooltip, Typography } from 'antd'
+import {
+  App,
+  Button,
+  Dropdown,
+  Empty,
+  Input,
+  Modal,
+  Select,
+  Skeleton,
+  Tooltip,
+  Typography,
+} from 'antd'
 import { ArrowLeft, Download, Ellipsis, MessageCircle } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { StatusBadge } from './DocumentBadges'
@@ -19,6 +30,8 @@ import { api } from '../lib/api'
 import { useAppShell, type AskDraft } from '../lib/app-shell-context'
 import { useNarrowViewport } from '../lib/nav-collapse'
 import { useUnsaved } from '../lib/unsaved'
+
+const editorScrollPositions = new Map<string, number>()
 
 /**
  * 右栏：文档视图。
@@ -72,7 +85,7 @@ export function DocumentPanel({
 }: DocumentPanelProps) {
   const { styles } = useStyles()
   const { styles: contentStyles } = useContentStyles()
-  const { clearHighlight } = useAppShell()
+  const { clearHighlight, newNoteFocusId, requestNewNoteFocus } = useAppShell()
   const { runGuarded } = useUnsaved()
   const queryClient = useQueryClient()
   const { message } = App.useApp()
@@ -84,6 +97,57 @@ export function DocumentPanel({
   })
 
   const doc = docQuery.data
+  const docKind = doc?.kind
+  const [command, setCommand] = useState<'rename' | 'move' | 'search' | null>(null)
+  const [commandValue, setCommandValue] = useState('')
+  const commandTriggerRef = useRef<HTMLElement | null>(null)
+
+  useEffect(() => {
+    const onCommand = (event: Event) => {
+      const detail = (event as CustomEvent<'rename' | 'move' | 'search'>).detail
+      if (detail !== 'rename' && detail !== 'move' && detail !== 'search') return
+      if (detail === 'rename' && doc?.kind !== 'note') return
+      commandTriggerRef.current = document.activeElement as HTMLElement | null
+      setCommandValue(
+        detail === 'rename' ? (doc?.title ?? '') : detail === 'move' ? (doc?.folder ?? '') : '',
+      )
+      setCommand(detail)
+    }
+    window.addEventListener('mimir:document-command', onCommand)
+    return () => window.removeEventListener('mimir:document-command', onCommand)
+  }, [doc])
+
+  useEffect(() => {
+    if (!documentId || !docKind) return
+    let timer = 0
+    let attempts = 0
+    const attach = () => {
+      const inner = scrollRef.current?.querySelector<HTMLElement>('.me-scroll')
+      const scroller = docKind === 'note' ? inner : (inner ?? scrollRef.current)
+      if (!scroller) {
+        if (++attempts < 20) timer = window.setTimeout(attach, 100)
+        return
+      }
+      const saved = editorScrollPositions.get(documentId)
+      if (saved !== undefined) {
+        scroller.scrollTop = saved
+        // 编辑器壳先出现、正文后排版；高度尚不足时等正文就绪再恢复。
+        if (scroller.scrollTop < saved - 2 && ++attempts < 20) {
+          timer = window.setTimeout(attach, 100)
+          return
+        }
+      }
+      const track = () => editorScrollPositions.set(documentId, scroller.scrollTop)
+      scroller.addEventListener('scroll', track, { passive: true })
+      cleanup = () => scroller.removeEventListener('scroll', track)
+    }
+    let cleanup = () => {}
+    timer = window.setTimeout(attach, 100)
+    return () => {
+      window.clearTimeout(timer)
+      cleanup()
+    }
+  }, [documentId, docKind])
   const headings = doc ? extractHeadings(doc.body) : []
 
   /**
@@ -183,12 +247,14 @@ export function DocumentPanel({
     draft: AskDraft
     open: boolean
   } | null>(null)
+  const aiTriggerRef = useRef<HTMLElement | null>(null)
   /** 侧栏里点开的、属于当前这一篇的引用：原地滚动高亮，不走导航 */
   const [sidebarCitation, setSidebarCitation] = useState<Citation | null>(null)
 
   /** 打开侧栏。「就这段提问」把选中内容带引号预填进输入框（范围同样锁这一篇） */
   const askAi = (passage?: string) => {
     if (!documentId) return
+    aiTriggerRef.current = document.activeElement as HTMLElement | null
     setAiSidebar({
       docId: documentId,
       draft: {
@@ -238,6 +304,50 @@ export function DocumentPanel({
     },
     onError: (error: unknown) => message.error(error instanceof Error ? error.message : '操作失败'),
   })
+
+  const moveDocument = async (folder: string) => {
+    if (!doc || folder === (doc.folder ?? '')) return true
+    const before = doc.folder ?? ''
+    const targetId = doc.id
+    try {
+      const updated = await api.documents.update(targetId, { folder })
+      queryClient.setQueryData(['document', targetId], updated)
+      void queryClient.invalidateQueries({ queryKey: ['documents'] })
+      void queryClient.invalidateQueries({ queryKey: ['folders'] })
+      const destination = folder || '知识库根'
+      message.success({
+        duration: 8,
+        content: (
+          <span>
+            已移到 {destination}　
+            <Button
+              type="link"
+              size="small"
+              onClick={() => {
+                void (async () => {
+                  try {
+                    const restored = await api.documents.update(targetId, { folder: before })
+                    queryClient.setQueryData(['document', targetId], restored)
+                    void queryClient.invalidateQueries({ queryKey: ['documents'] })
+                    void queryClient.invalidateQueries({ queryKey: ['folders'] })
+                    message.success(`已移回 ${before || '知识库根'}`)
+                  } catch (error) {
+                    message.error(error instanceof Error ? error.message : '撤销移动失败')
+                  }
+                })()
+              }}
+            >
+              撤销
+            </Button>
+          </span>
+        ),
+      })
+      return true
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : '移动失败')
+      return false
+    }
+  }
 
   /**
    * AI 摘要（M1-D）。**不落库**，所以结果只放进本地 state。
@@ -530,7 +640,7 @@ export function DocumentPanel({
   const menu = buildDocMenu({
     doc,
     onSetTags: (tags) => patch.mutate({ tags }),
-    onSetFolder: (folder) => patch.mutate({ folder }),
+    onSetFolder: (folder) => void moveDocument(folder),
     folders: flattenFolders(folderQuery.data?.items ?? []).map((item) => item.path),
     suggestedTags: suggestQuery.data?.items ?? [],
     onAiTags: () => void runAiTags(),
@@ -553,13 +663,43 @@ export function DocumentPanel({
     else onOpenDocument(id)
   }
 
+  const closeCommand = () => {
+    setCommand(null)
+    requestAnimationFrame(() => {
+      const target = commandTriggerRef.current
+      if (target?.isConnected) target.focus()
+      else document.querySelector<HTMLElement>('[aria-label="更多操作"]')?.focus()
+    })
+  }
+
+  const findInDocument = () => {
+    const root = scrollRef.current
+    const query = commandValue.trim()
+    if (!root || query.length < 2) return
+    const range = highlightSnippet(
+      root,
+      query,
+      doc.body,
+      doc.body.toLowerCase().indexOf(query.toLowerCase()),
+      2,
+    )
+    if (!range) {
+      message.info('当前文档没有匹配内容')
+      return
+    }
+    const scroller = scrollableAncestor(range.startContainer.parentElement ?? root, root)
+    scroller.scrollTop +=
+      range.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 80
+    closeCommand()
+  }
+
   return (
     <div className={styles.root}>
       <div className={styles.wrap}>
         {/*
-        Office 式头部：**一行**（D-054）。
-        返回 · 标题 · 元信息 · 动作，四段放在 48px 里——这是 Word / Excel
-        网页版的标题栏形态。原先它占三行（返回胶囊 / 28px 大标题 / 元信息行），
+        文件使用 Office 式单行头部（D-054）；笔记仍保留这一独立头部区域，
+        但由标题获得主要宽度和字重，返回与元信息退到次级。
+        返回 · 标题 · 元信息 · 动作，四段放在 48px 里。原先它占三行（返回胶囊 / 28px 大标题 / 元信息行），
         约 150px 的铬条压在内容之上，而文件类文档的内容（纸张、表格、幻灯片）
         恰恰是越高越好。
 
@@ -572,11 +712,11 @@ export function DocumentPanel({
         （与侧栏导航不一致——那里一直有拦截）。有未保存内容时才弹守卫框，
         干净时不留任何中间态（`lib/unsaved.tsx` 的 `runGuarded`）。
       */}
-        <div className={styles.header}>
+        <div className={`${styles.header}${doc.kind === 'note' ? ` ${styles.noteHeader}` : ''}`}>
           {onBackToChat && (
             <button
               type="button"
-              className={styles.back}
+              className={`${styles.back}${doc.kind === 'note' ? ` ${styles.noteBack}` : ''}`}
               aria-label="返回对话"
               onClick={() => runGuarded(onBackToChat)}
             >
@@ -587,7 +727,7 @@ export function DocumentPanel({
           {onBack && (
             <button
               type="button"
-              className={styles.back}
+              className={`${styles.back}${doc.kind === 'note' ? ` ${styles.noteBack}` : ''}`}
               aria-label="返回知识库"
               onClick={() => runGuarded(onBack)}
             >
@@ -764,6 +904,9 @@ export function DocumentPanel({
                   key={doc.id}
                   document={doc}
                   title={doc.title}
+                  focusOnReady={newNoteFocusId === doc.id}
+                  onFocusReady={() => requestNewNoteFocus(null)}
+                  onOpenInternalNote={(id) => runGuarded(() => onOpenDocument(id))}
                   onAskAboutSelection={(passage) => askAi(passage)}
                   onDirtyChange={onDirtyChange}
                   {...(showOutline
@@ -853,13 +996,78 @@ export function DocumentPanel({
           <DocChatSidebar
             doc={doc}
             draft={aiSidebar!.draft}
-            onClose={() =>
+            onClose={() => {
               setAiSidebar((current) => (current ? { ...current, open: false } : current))
-            }
+              requestAnimationFrame(() => {
+                if (aiTriggerRef.current?.isConnected) aiTriggerRef.current.focus()
+                else document.querySelector<HTMLElement>('[aria-label="询问这篇文档"]')?.focus()
+              })
+            }}
             onOpenCitation={openSidebarCitation}
           />
         </div>
       )}
+      <Modal
+        title={
+          command === 'rename'
+            ? '重命名当前笔记'
+            : command === 'move'
+              ? '移动当前文档'
+              : '搜索当前笔记'
+        }
+        open={command !== null}
+        onCancel={closeCommand}
+        onOk={async () => {
+          if (command === 'rename') {
+            const next = commandValue.trim()
+            if (next && next !== doc.title) await renameTitle.mutateAsync(next)
+          } else if (command === 'move') {
+            if (!(await moveDocument(commandValue))) return
+          } else if (command === 'search') {
+            findInDocument()
+            return
+          }
+          closeCommand()
+        }}
+        okText={command === 'rename' ? '重命名' : command === 'move' ? '移动' : '查找'}
+        okButtonProps={{
+          disabled: (command === 'rename' || command === 'search') && !commandValue.trim(),
+        }}
+        destroyOnHidden
+      >
+        {command === 'rename' ? (
+          <Input
+            autoFocus
+            aria-label="新标题"
+            maxLength={200}
+            value={commandValue}
+            onChange={(event) => setCommandValue(event.target.value)}
+          />
+        ) : command === 'search' ? (
+          <Input
+            autoFocus
+            aria-label="在当前笔记中查找"
+            value={commandValue}
+            onChange={(event) => setCommandValue(event.target.value)}
+            onPressEnter={findInDocument}
+          />
+        ) : (
+          <Select
+            autoFocus
+            aria-label="目标目录"
+            style={{ width: '100%' }}
+            value={commandValue}
+            onChange={setCommandValue}
+            options={[
+              { value: '', label: '知识库根' },
+              ...flattenFolders(folderQuery.data?.items ?? []).map((item) => ({
+                value: item.path,
+                label: item.path,
+              })),
+            ]}
+          />
+        )}
+      </Modal>
     </div>
   )
 }
@@ -877,8 +1085,7 @@ export function DocumentPanel({
  * | 格式与大小 | 上传件才有（「PDF · 2.4 MB」）；**不是徽标**，格式是开放集合（DESIGN §3.7） |
  * | 日期 | 最后更新 |
  *
- * **标签与目录不在这里**——它们在「⋯」菜单里，而那里还能增删。同一份信息
- * 摆两处，迟早有一天两处会不一致；而且标签多起来会把这一行挤爆。
+ * 标签在「⋯」菜单里编辑；笔记的目录只读展示在此，帮用户确认当前位置。
  *
  * 位置是全行唯一可省略的一项：只有它可能很长（见 `location` 样式）。
  */
@@ -886,14 +1093,14 @@ function DocHeaderMeta({ doc }: { doc: DocumentDetail }) {
   const { styles } = useStyles()
   const format = formatMeta(doc)
   /**
-   * 原始出处：上传件给原文件名，资料给 URL，笔记不展示内部路径。
+   * 位置：上传件给原文件名，资料给 URL，笔记展示所属目录。
    * 空串就不渲染——否则会留下一个孤零零的分隔点。
    */
   const location =
     doc.kind === 'file'
       ? (doc.sourceKey?.split('/').pop() ?? '')
       : doc.kind === 'note'
-        ? ''
+        ? (doc.folder ?? '知识库根')
         : (doc.url ?? '')
   const sourceLabel = {
     note: '笔记',
@@ -904,9 +1111,9 @@ function DocHeaderMeta({ doc }: { doc: DocumentDetail }) {
   }[doc.kind]
 
   return (
-    <div className={styles.headerMeta}>
+    <div className={`${styles.headerMeta}${doc.kind === 'note' ? ` ${styles.noteMeta}` : ''}`}>
       <StatusBadge status={doc.status} />
-      <span className={styles.originManual}>{sourceLabel}</span>
+      {doc.kind !== 'note' && <span className={styles.originManual}>{sourceLabel}</span>}
       {/*
         原始出处。上传件显示用户认得的原文件名，资料可查看来源 URL。
         空串就不渲染：否则会留下一个孤零零的分隔点（只有一个「·」）。
@@ -1025,13 +1232,14 @@ function highlightSnippet(
   snippet: string,
   sourceBody: string,
   sourceStart: number,
+  minLength = 4,
 ): Range | null {
   // 检索摘要可能以「…」结尾（片段被截断的标记），它不在原文里，必须剥掉
   const raw = snippet
     .trim()
     .replace(/(\.{3}|…)$/, '')
     .trim()
-  if (raw.length < 4) return null
+  if (raw.length < minLength) return null
 
   // 头部、AI 摘要和大纲也可能重复正文词句；优先只在真实正文里找。
   const contentRoot = root.querySelector<HTMLElement>('.ProseMirror, pre') ?? root
@@ -1048,7 +1256,7 @@ function highlightSnippet(
   const needleFull = normalizeForMatch(raw).norm
   // 全文命中优先；正文可能被编辑过或引用被截断，逐级退化为更短的前缀
   const candidates = [needleFull, needleFull.slice(0, 40), needleFull.slice(0, 20)].filter(
-    (candidate) => candidate.length >= 4,
+    (candidate) => candidate.length >= minLength,
   )
   let at = -1
   let needle = ''

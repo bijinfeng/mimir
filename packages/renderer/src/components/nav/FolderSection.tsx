@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { App, Button, Dropdown, Input, Modal, Skeleton, Tooltip } from 'antd'
 import { createStyles } from 'antd-style'
 import { Ellipsis, Plus } from 'lucide-react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { FolderNode } from '@mimir/shared'
 import { KnowledgeBaseCreateModal } from '../KnowledgeBaseCreateModal'
@@ -281,12 +281,22 @@ export function FolderSection({
     initial: string
   } | null>(null)
   const [name, setName] = useState('')
+  const renameTriggerRef = useRef<HTMLElement | null>(null)
 
   const openRename = (path: string) => {
+    renameTriggerRef.current =
+      Array.from(document.querySelectorAll<HTMLElement>('button')).find(
+        (button) => button.getAttribute('aria-label') === `知识库 ${nameOf(path)} 的操作`,
+      ) ?? null
     setName(nameOf(path))
     setDialog({ path, initial: nameOf(path) })
   }
   const closeDialog = () => setDialog(null)
+  const restoreRenameFocus = () => {
+    const trigger = renameTriggerRef.current
+    if (trigger?.isConnected && trigger.getClientRects().length > 0) trigger.focus()
+    else document.querySelector<HTMLElement>('[aria-label="知识库"]')?.focus()
+  }
 
   const invalidate = () => {
     void queryClient.invalidateQueries({ queryKey: ['folders'] })
@@ -434,6 +444,7 @@ export function FolderSection({
         open={dialog !== null}
         onOk={submitDialog}
         onCancel={closeDialog}
+        afterClose={restoreRenameFocus}
         okText="重命名"
         cancelText="取消"
         okButtonProps={{ disabled: name.trim() === '' }}

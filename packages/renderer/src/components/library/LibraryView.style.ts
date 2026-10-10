@@ -393,6 +393,21 @@ export const useStyles = createStyles(({ css, token }) => ({
     .kb-row:focus-within & {
       opacity: 1;
     }
+
+    @media (hover: none), (max-width: 600px) {
+      opacity: 1;
+    }
+  `,
+  cardActionDirect: css`
+    @media (hover: none), (max-width: 600px) {
+      display: none;
+    }
+  `,
+  cardActionMore: css`
+    display: none;
+    @media (hover: none), (max-width: 600px) {
+      display: inline-flex;
+    }
   `,
   cardMeta: css`
     font-size: ${FONT_SIZE.note}px;

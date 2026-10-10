@@ -99,6 +99,8 @@ export interface EditorShellProps {
    * 留一个框会在面板里出现「框套框」，看起来像两个可以分别滚动的东西。
    */
   flush?: boolean
+  /** 仅 Markdown 笔记使用的紧凑单行工具栏外观 */
+  variant?: 'note'
   /**
    * 编辑区**右侧**的固定列（如笔记的大纲导航）。
    *
@@ -143,12 +145,15 @@ export function EditorShell({
   footer,
   status,
   flush = false,
+  variant,
   bodySide,
 }: EditorShellProps) {
   const hasChrome = toolbar !== undefined || toolbarActions !== undefined || subbar !== undefined
   return (
     <ConfigProvider componentSize="small">
-      <div className={flush ? 'mimir-editor mimir-editor--flush' : 'mimir-editor'}>
+      <div
+        className={`mimir-editor${flush ? ' mimir-editor--flush' : ''}${variant === 'note' ? ' mimir-editor--note' : ''}`}
+      >
         {hasChrome && (
           <div className="mimir-editor__chrome">
             {(toolbar !== undefined || toolbarActions !== undefined) && (
@@ -1218,7 +1223,7 @@ function insidePanel(panel: HTMLElement | null, target: Node): boolean {
  * 坐标是**打开那一刻**算出来的。滚动之后触发按钮已经不在原处，面板还悬在
  * 旧位置——比关掉更让人困惑。改窗口大小同理。
  */
-function useToolbarPopup() {
+function useToolbarPopup(panelWidth = POPUP_MIN_WIDTH) {
   const triggerRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const [position, setPosition] = useState<PopupPosition | null>(null)
@@ -1235,7 +1240,8 @@ function useToolbarPopup() {
       setPosition({ top: 0, left: 0 })
       return
     }
-    const left = Math.max(8, Math.min(rect.left, window.innerWidth - POPUP_MIN_WIDTH - 8))
+    const width = Math.min(panelWidth, window.innerWidth - 16)
+    const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8))
     const below = window.innerHeight - rect.bottom
     setPosition(
       below < POPUP_EST_HEIGHT && rect.top > below
@@ -1346,6 +1352,8 @@ export interface ToolbarMenuProps {
    * `close` 由外壳给——**别自己想办法关**，否则焦点不会回到触发按钮。
    */
   renderPanel?: (close: () => void) => ReactNode
+  /** 自定义面板需要更宽时，用实际宽度参与视口边缘定位。 */
+  panelWidth?: number
   /** 没有可选项时那条禁用说明的文字（DESIGN §8.4 规矩 1：不留空子菜单） */
   emptyLabel?: string
 }
@@ -1463,9 +1471,10 @@ export function ToolbarMenu({
   icon,
   items,
   renderPanel,
+  panelWidth,
   emptyLabel = '没有可选项',
 }: ToolbarMenuProps) {
-  const { open, position, triggerRef, panelRef, toggle, close } = useToolbarPopup()
+  const { open, position, triggerRef, panelRef, toggle, close } = useToolbarPopup(panelWidth)
 
   const enabledItems = (): HTMLElement[] => {
     const list = panelRef.current?.querySelectorAll<HTMLElement>(ITEM_SELECTOR)
@@ -1552,8 +1561,16 @@ export function ToolbarMenu({
           onKeyDown={onPanelKeyDown}
           style={
             position.bottom === undefined
-              ? { top: position.top, left: position.left }
-              : { bottom: position.bottom, left: position.left }
+              ? {
+                  top: position.top,
+                  left: position.left,
+                  ...(panelWidth ? { width: Math.min(panelWidth, window.innerWidth - 16) } : {}),
+                }
+              : {
+                  bottom: position.bottom,
+                  left: position.left,
+                  ...(panelWidth ? { width: Math.min(panelWidth, window.innerWidth - 16) } : {}),
+                }
           }
         >
           {renderPanel !== undefined ? (

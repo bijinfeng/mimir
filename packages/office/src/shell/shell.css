@@ -4,8 +4,8 @@
  * ## 为什么这个包里有手写的 CSS
  *
  * 界面组件与样式一起放在 `@mimir/office` 里，是 D-054 的决定：六种格式的
- * 外壳必须**长得一样**，而「一样」只能由同一份实现保证——各写一份的话，
- * 漂移是必然的，且只在用户眼里看得出来（`.trellis/spec/renderer/frontend/conventions.md` 的同一类教训）。
+ * 外壳共用同一份实现；笔记通过 `.mimir-editor--note` 收敛工具栏高度，
+ * 其他格式仍沿用 Office 外观。
  *
  * ## 分工：控件观感归 antd，布局与弹层归这里（D-064）
  *
@@ -16,7 +16,7 @@
  * 这份 CSS 只管 antd 管不到的三件事：
  *
  *  1. **布局**：`.mimir-editor` 的四条约束（`flex:1` / `min-height:0` /
- *     `min-width:0` / `overflow:clip`）、工具条的 `flex-wrap`、组与状态行的摆法
+ *     `min-width:0` / `overflow:clip`）、组与状态行的摆法，以及笔记单行工具栏
  *  2. **弹层**：`.me-menu*` / `.me-color*` —— 就地渲染 + `position: fixed`，
  *     **不 portal 到 body**（portal 会离开 `--me-*` 子树，深色下退回浅色回退值）
  *  3. **不是 antd 控件的东西**：色块、斜线、页签、状态块、说明段落，
@@ -188,6 +188,42 @@
   border-left: 1px solid var(--me-border, #d9d9d9);
 }
 
+/* 笔记使用连续的单行命令轨；仅命令区滚动，保存动作仍贴右。 */
+.mimir-editor--note .mimir-editor__bar {
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 5px 10px;
+}
+
+.mimir-editor--note .mimir-editor__tools {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  white-space: nowrap;
+}
+
+.mimir-editor--note .mimir-editor__actions {
+  align-items: center;
+  padding: 0 0 0 8px;
+}
+
+.mimir-editor--note .mimir-editor__tools > .me-group {
+  flex: none;
+  flex-wrap: nowrap;
+  min-height: 0;
+  padding: 2px;
+}
+
+.mimir-editor--note .mimir-editor__tools > .me-group:hover {
+  background: transparent;
+}
+
+.mimir-editor--note .mimir-editor__tools > .me-group > .me-group__caption {
+  display: none;
+}
+
 /* 只滚动命令区，主操作留在工具条右端。次工具条也保持可见。 */
 @media (max-width: 880px) {
   .mimir-editor__bar {
@@ -203,6 +239,11 @@
 
   .mimir-editor__actions {
     padding-left: 8px;
+  }
+
+  .mimir-editor--note .mimir-editor__tools {
+    max-height: none;
+    overflow-y: hidden;
   }
 }
 
@@ -593,6 +634,48 @@
   display: inline-flex;
 }
 
+/* `[[` 内链建议跟随光标；固定定位避免被正文滚动层或外壳裁掉。 */
+.me-note-link-picker {
+  position: fixed;
+  z-index: 24;
+  width: min(280px, calc(100vw - 16px));
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 4px;
+  border: 1px solid var(--me-border, #d9d9d9);
+  border-radius: var(--me-radius, 8px);
+  background: var(--me-surface, #fff);
+  box-shadow: var(--me-shadow, 0 8px 24px rgb(0 0 0 / 0.12));
+}
+
+.me-note-link-picker__item {
+  display: block;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: calc(var(--me-radius, 8px) / 2);
+  background: transparent;
+  color: var(--me-text, #262626);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.me-note-link-picker__item:hover,
+.me-note-link-picker__item[aria-selected='true'] {
+  background: var(--me-hover, #f0f0f0);
+}
+
+.me-note-link-picker__item:focus-visible {
+  outline: 2px solid var(--me-accent-border, #6e50b9);
+  outline-offset: -2px;
+}
+
+.me-note-link-picker__hint {
+  padding: 6px 8px;
+  color: var(--me-text-weak, #8c8c8c);
+}
+
 .me-menu__text {
   white-space: nowrap;
 }
@@ -963,6 +1046,23 @@
    定的，而面板本身只有 176px 起——不覆盖的话输入框会顶破面板 */
 .me-link .me-input--text {
   width: 100%;
+}
+
+.me-link__notes {
+  padding-top: 6px;
+  border-top: 1px solid var(--me-border, #d9d9d9);
+}
+
+.me-link__section {
+  margin-bottom: 6px;
+  color: var(--me-text-weak, #8c8c8c);
+  font-size: var(--me-font-size-sm, 12px);
+}
+
+.me-link__note-list {
+  max-height: 156px;
+  overflow-y: auto;
+  margin-top: 4px;
 }
 
 /* ── 只给读屏的一小段文字 ──────────────────────────────────────── */

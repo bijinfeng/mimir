@@ -36,6 +36,7 @@ export function FeedsSection() {
   const { message } = App.useApp()
   const queryClient = useQueryClient()
   const [draft, setDraft] = useState('')
+  const [urlError, setUrlError] = useState<string | null>(null)
 
   const feedsQuery = useQuery({ queryKey: ['feeds'], queryFn: api.feeds.list })
 
@@ -51,6 +52,7 @@ export function FeedsSection() {
     mutationFn: (url: string) => api.feeds.create({ url }),
     onSuccess: (result) => {
       setDraft('')
+      setUrlError(null)
       invalidate()
       message.success(
         result.imported > 0
@@ -58,8 +60,29 @@ export function FeedsSection() {
           : `已订阅《${result.feed.title}》（暂时没有新文章）`,
       )
     },
-    onError: (error: unknown) => message.error(error instanceof Error ? error.message : '订阅失败'),
+    onError: (error: unknown) =>
+      setUrlError(error instanceof Error ? error.message : '订阅失败，请检查地址后重试'),
   })
+
+  const submitFeed = () => {
+    const url = draft.trim()
+    if (!url) {
+      setUrlError('请输入 RSS 或 Atom 地址')
+      return
+    }
+    try {
+      const parsed = new URL(url)
+      if (!['http:', 'https:'].includes(parsed.protocol)) {
+        setUrlError('地址必须以 http:// 或 https:// 开头')
+        return
+      }
+    } catch {
+      setUrlError('请输入完整的网址，例如 https://example.com/feed.xml')
+      return
+    }
+    setUrlError(null)
+    add.mutate(url)
+  }
 
   const refresh = useMutation({
     mutationFn: (url?: string) => api.feeds.refresh(url),
@@ -101,19 +124,21 @@ export function FeedsSection() {
           <div className={styles.feedAdd}>
             <Input
               aria-label="RSS 或 Atom 地址"
+              aria-invalid={urlError !== null}
+              aria-describedby={urlError ? 'feed-url-error' : undefined}
               placeholder="粘贴 RSS 或 Atom 地址"
               value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              onPressEnter={() => {
-                if (draft.trim() !== '') add.mutate(draft.trim())
+              onChange={(event) => {
+                setDraft(event.target.value)
+                setUrlError(null)
               }}
+              onPressEnter={submitFeed}
             />
             <Button
               type="primary"
               icon={<Plus size={14} />}
               loading={add.isPending}
-              disabled={draft.trim() === ''}
-              onClick={() => add.mutate(draft.trim())}
+              onClick={submitFeed}
             >
               订阅
             </Button>
@@ -126,6 +151,11 @@ export function FeedsSection() {
               全部更新
             </Button>
           </div>
+          {urlError ? (
+            <div id="feed-url-error" className={styles.formError} role="alert">
+              {urlError}
+            </div>
+          ) : null}
           <BlockDesc>新文章会自动加入知识库。</BlockDesc>
         </Block>
         {!feedsQuery.isLoading && !feedsQuery.isError && feeds.length === 0 ? (

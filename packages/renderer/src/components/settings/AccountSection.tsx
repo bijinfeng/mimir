@@ -6,6 +6,7 @@ import { cropAvatar } from '../../lib/avatar'
 import { LoadError } from '../LoadError'
 import { Block, Panel } from './parts'
 import { useAccountStyles } from './AccountSection.style'
+import { clearSettingDraft, readSettingDraft, writeSettingDraft } from './draft-memory'
 
 /**
  * 账号。
@@ -65,7 +66,9 @@ export function AccountSection() {
           <AvatarColumn session={session ?? null} />
 
           <div className={accountStyles.profileBody}>
-            <NameField session={session ?? null} localMode={localMode} />
+            {session ? (
+              <NameField key={session.user.id} session={session} localMode={localMode} />
+            ) : null}
             {localMode ? null : (
               <>
                 <div className={accountStyles.emailRow}>
@@ -215,13 +218,14 @@ function AvatarColumn({ session }: { session: AuthSession | null }) {
  * 靠本机令牌进入，那条路必然失败）。这不是两条业务规则——名称还是那个
  * 名称，差别只在「谁能写这个用户行」。
  */
-function NameField({ session, localMode }: { session: AuthSession | null; localMode: boolean }) {
+function NameField({ session, localMode }: { session: AuthSession; localMode: boolean }) {
   const { styles: accountStyles } = useAccountStyles()
   const { message } = App.useApp()
   const queryClient = useQueryClient()
 
-  const serverName = session?.user.name ?? ''
-  const [draft, setDraft] = useState(serverName)
+  const serverName = session.user.name ?? ''
+  const draftKey = `account:${session.user.id}:name`
+  const [draft, setDraft] = useState(() => String(readSettingDraft(draftKey) ?? serverName))
   const [lastServerName, setLastServerName] = useState(serverName)
 
   /**
@@ -234,7 +238,7 @@ function NameField({ session, localMode }: { session: AuthSession | null; localM
    */
   if (serverName !== lastServerName) {
     setLastServerName(serverName)
-    setDraft(serverName)
+    if (readSettingDraft(draftKey) === undefined) setDraft(serverName)
   }
 
   const dirty = draft.trim() !== serverName && draft.trim() !== ''
@@ -248,6 +252,7 @@ function NameField({ session, localMode }: { session: AuthSession | null; localM
       else await api.auth.updateUser({ name })
     },
     onSuccess: () => {
+      clearSettingDraft(draftKey)
       message.success('名称已保存')
       void queryClient.invalidateQueries({ queryKey: ['session'] })
     },
@@ -263,7 +268,12 @@ function NameField({ session, localMode }: { session: AuthSession | null; localM
         aria-label="名称"
         value={draft}
         maxLength={60}
-        onChange={(event) => setDraft(event.target.value)}
+        disabled={save.isPending}
+        onChange={(event) => {
+          setDraft(event.target.value)
+          if (event.target.value === serverName) clearSettingDraft(draftKey)
+          else writeSettingDraft(draftKey, event.target.value)
+        }}
         onPressEnter={() => {
           if (dirty) save.mutate(draft.trim())
         }}

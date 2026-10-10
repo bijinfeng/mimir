@@ -80,7 +80,7 @@ export function DocChatGuide({ doc }: { doc: DocumentDetail }) {
         <BookOpen size={17} aria-hidden="true" /> 你好，我是阅读助手
       </div>
       <p className={styles.guideLead}>
-        我会读当前这篇《{doc.title}》，帮你概括内容、回答问题。 范围锁定在这一篇，不会去找别的文档。
+        默认只参考当前这篇《{doc.title}》，帮你概括内容、回答问题；你可以在范围设置中调整。
       </p>
 
       <div className={styles.guideCard}>

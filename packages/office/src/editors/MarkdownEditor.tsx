@@ -80,6 +80,14 @@ import {
   type ToolbarSelectOption,
 } from '../shell/EditorShell.js'
 import { InlineToolbar, type RewriteActionName } from './InlineToolbar.js'
+import { NoteLinkOption, NoteLinkPicker } from './NoteLinkPicker.js'
+import {
+  insertInternalNoteLink,
+  linkExistingNote,
+  wikiMatchAtCaret,
+  type WikiMatch,
+} from './note-links.js'
+import { markdownShortcutLabel } from './shortcut-label.js'
 import {
   BoldIcon,
   BulletListIcon,
@@ -219,6 +227,13 @@ export interface MarkdownEditorProps {
    * 没存上，比不拦截更糟（`.trellis/spec/project/product.md` §5.9）。
    */
   onSaveHandle?: (save: (() => Promise<boolean>) | null) => void
+  /** 新建笔记的一次性正文焦点意图；已有笔记不传 */
+  focusOnReady?: boolean
+  onFocusReady?: () => void
+  /** `[[` 只补全已有笔记；宿主提供有界标题查询 */
+  searchNotes?: (query: string) => Promise<Array<{ id: string; title: string }>>
+  /** 正文里的 `/doc/<id>` 链接由宿主导航 */
+  onOpenInternalNote?: (id: string) => void
   /**
    * 「就这段提问」：把选中的话交给宿主带进对话。
    *
@@ -263,6 +278,10 @@ export function MarkdownEditor({
   onSave,
   onDirtyChange,
   onSaveHandle,
+  focusOnReady = false,
+  onFocusReady,
+  searchNotes,
+  onOpenInternalNote,
   onAskAboutSelection,
   onRewrite,
   rewriting,
@@ -286,6 +305,31 @@ export function MarkdownEditor({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   /** 给 `beforeunload` 用：那个监听器只注册一次，需要读过期值 */
   const dirtyRef = useRef(false)
+  /** 每次正文改动递增；写请求按版本串行，旧响应不能把新改动标为已保存 */
+  const changeVersionRef = useRef(0)
+  const savedVersionRef = useRef(0)
+  const saveFlightRef = useRef<Promise<boolean> | null>(null)
+  const [pickerResult, setPickerResult] = useState<{
+    token: string
+    items: Array<{ id: string; title: string }>
+    error: string | null
+  }>({ token: '', items: [], error: null })
+  const [pickerSelection, setPickerSelection] = useState({ token: '', index: 0 })
+  const [pickerPosition, setPickerPosition] = useState<{
+    token: string
+    left: number
+    top: number
+  } | null>(null)
+  const [closedPickerToken, setClosedPickerToken] = useState<string | null>(null)
+  const closePickerRef = useRef<() => void>(() => {})
+  const pickerRef = useRef<{
+    token: string
+    match: WikiMatch | null
+    items: Array<{ id: string; title: string }>
+    selected: number
+    visible: boolean
+  }>({ token: '', match: null, items: [], selected: 0, visible: false })
+  const pickNoteRef = useRef<(item: { id: string; title: string }) => void>(() => {})
 
   /**
    * 初始正文的**快照**，跟着文档走。
@@ -325,8 +369,50 @@ export function MarkdownEditor({
        * 它同时**必须在 options 里**（不能只在事件里 `setOptions`）：换文档会
        * 重建实例，那个新实例只认这里的值。
        */
-      editorProps: { attributes: { spellcheck: String(spellCheck) } },
+      editorProps: {
+        attributes: { spellcheck: String(spellCheck) },
+        handleKeyDown: (_view, event) => {
+          const picker = pickerRef.current
+          if (!picker.visible || !picker.match) return false
+          if (event.key === 'Escape') {
+            event.preventDefault()
+            closePickerRef.current()
+            return true
+          }
+          if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+            event.preventDefault()
+            const count = picker.items.length
+            if (count > 0) {
+              setPickerSelection({
+                token: picker.token,
+                index:
+                  event.key === 'ArrowDown'
+                    ? (picker.selected + 1) % count
+                    : (picker.selected - 1 + count) % count,
+              })
+            }
+            return true
+          }
+          if ((event.key === 'Enter' || event.key === 'Tab') && picker.items.length > 0) {
+            event.preventDefault()
+            pickNoteRef.current(picker.items[picker.selected]!)
+            return true
+          }
+          return false
+        },
+        handleClick: (_view, _pos, event) => {
+          if (!onOpenInternalNote || event.button !== 0) return false
+          const target = event.target
+          const link = target instanceof Element ? target.closest('a[href^="/doc/"]') : null
+          const id = link?.getAttribute('href')?.match(/^\/doc\/([A-Za-z0-9_-]+)$/)?.[1]
+          if (!id) return false
+          event.preventDefault()
+          onOpenInternalNote(id)
+          return true
+        },
+      },
       onUpdate: () => {
+        changeVersionRef.current += 1
         dirtyRef.current = true
         setDirty(true)
         onDirtyChange?.(true)
@@ -346,28 +432,93 @@ export function MarkdownEditor({
     [snapshot],
   )
 
+  const wikiToken = useToolbarState(editor, wikiMatchAtCaret)
+  const wikiMatch = wikiToken ? (JSON.parse(wikiToken) as WikiMatch) : null
+  const pickerVisible = Boolean(searchNotes && wikiMatch && wikiToken !== closedPickerToken)
+  const pickerItems = pickerResult.token === wikiToken ? pickerResult.items : []
+  const pickerSelected = pickerSelection.token === wikiToken ? pickerSelection.index : 0
+
+  useEffect(() => {
+    if (!editor || !wikiToken || !pickerVisible || !searchNotes) return
+    const match = JSON.parse(wikiToken) as WikiMatch
+    let active = true
+    const frame = requestAnimationFrame(() => {
+      if (!active) return
+      const coords = editor.view.coordsAtPos(match.to)
+      const left = Math.max(8, Math.min(coords.left, window.innerWidth - 288))
+      const top =
+        coords.bottom + 180 < window.innerHeight ? coords.bottom + 6 : Math.max(8, coords.top - 186)
+      setPickerPosition({ token: wikiToken, left, top })
+    })
+    void searchNotes(match.query)
+      .then((items) => {
+        if (active) setPickerResult({ token: wikiToken, items, error: null })
+      })
+      .catch(() => {
+        if (active) setPickerResult({ token: wikiToken, items: [], error: '笔记列表加载失败' })
+      })
+    return () => {
+      active = false
+      cancelAnimationFrame(frame)
+    }
+  }, [editor, wikiToken, pickerVisible, searchNotes])
+
+  const pickNote = (item: { id: string; title: string }) => {
+    if (!editor || !wikiMatch) return
+    insertInternalNoteLink(editor, wikiMatch, item)
+    setClosedPickerToken(wikiToken)
+  }
+
+  useEffect(() => {
+    pickerRef.current = {
+      token: wikiToken,
+      match: wikiMatch,
+      items: pickerItems,
+      selected: Math.min(pickerSelected, Math.max(0, pickerItems.length - 1)),
+      visible: pickerVisible,
+    }
+    pickNoteRef.current = pickNote
+    closePickerRef.current = () => setClosedPickerToken(wikiToken)
+  })
+
   /**
    * 立即保存并返回真实结果。三处用它：防抖到点、状态行上的「重试」、
    * 离开时的「保存并离开」。
    */
-  const saveNow = async (): Promise<boolean> => {
+  const saveNow = (): Promise<boolean> => {
     if (timerRef.current) {
       clearTimeout(timerRef.current)
       timerRef.current = null
     }
-    try {
-      await onSaveRef.current(editor?.getMarkdown() ?? snapshot.body)
+    if (saveFlightRef.current) return saveFlightRef.current
+    if (!dirtyRef.current) return Promise.resolve(true)
+
+    const flight = (async () => {
+      while (savedVersionRef.current < changeVersionRef.current) {
+        const version = changeVersionRef.current
+        const markdown = editor?.getMarkdown() ?? snapshot.body
+        setState('saving')
+        try {
+          await onSaveRef.current(markdown)
+          savedVersionRef.current = version
+        } catch (cause) {
+          setState('error')
+          setError(cause instanceof Error ? cause.message : String(cause))
+          return false
+        }
+      }
       dirtyRef.current = false
       setDirty(false)
       onDirtyChange?.(false)
       setState('saved')
       setError(null)
       return true
-    } catch (cause) {
-      setState('error')
-      setError(cause instanceof Error ? cause.message : String(cause))
-      return false
-    }
+    })()
+    saveFlightRef.current = flight
+    void flight.finally(() => {
+      if (saveFlightRef.current === flight) saveFlightRef.current = null
+    })
+    return flight
   }
 
   /** `saveNow` 的最新值。注册 effect 声明在它**之后**（Compiler 的要求） */
@@ -381,6 +532,12 @@ export function MarkdownEditor({
     onSaveHandle?.(() => saveNowRef.current())
     return () => onSaveHandle?.(null)
   }, [onSaveHandle])
+
+  useEffect(() => {
+    if (!focusOnReady || !editor) return
+    editor.commands.focus('end')
+    onFocusReady?.()
+  }, [editor, focusOnReady, onFocusReady])
 
   /** 卸载时清掉待触发的防抖定时器，免得在已销毁的实例上保存 */
   useEffect(() => {
@@ -428,7 +585,14 @@ export function MarkdownEditor({
   const toggleSpellCheck = () => {
     const next = !spellCheck
     setSpellCheck(next)
-    editor?.setOptions({ editorProps: { attributes: { spellcheck: String(next) } } })
+    if (editor) {
+      editor.setOptions({
+        editorProps: {
+          ...editor.options.editorProps,
+          attributes: { ...editor.options.editorProps?.attributes, spellcheck: String(next) },
+        },
+      })
+    }
   }
 
   /**
@@ -455,31 +619,37 @@ export function MarkdownEditor({
         danger
         onClick={() => setActionError(null)}
       />
-    ) : (
-      <ToolbarLabel>
-        {state === 'saving' ? '正在保存…' : state === 'saved' ? '已保存' : '未改动'}
-      </ToolbarLabel>
-    )
+    ) : null
 
   return (
     <EditorShell
       flush={flush}
+      variant="note"
       toolbar={
         <>
           <MarkdownToolbar
             editor={editor}
             spellCheck={spellCheck}
             onToggleSpellCheck={toggleSpellCheck}
+            searchNotes={searchNotes}
             onPickImage={onUploadImage === undefined ? undefined : (file) => void insertImage(file)}
           />
         </>
       }
       toolbarActions={
         <ToolbarButton
-          label={state === 'saving' ? '正在保存…' : '立即保存'}
+          label={
+            state === 'saving'
+              ? '正在保存…'
+              : state === 'saved'
+                ? '已保存'
+                : state === 'error'
+                  ? '重试保存'
+                  : '立即保存'
+          }
           primary
           disabled={!dirty || state === 'saving'}
-          disabledReason="没有未保存的改动"
+          disabledReason={state === 'saving' ? '正在保存，请稍候' : '没有未保存的改动'}
           onClick={() => void saveNowRef.current()}
         >
           <SaveIcon />
@@ -509,6 +679,17 @@ export function MarkdownEditor({
           {...(rewriting === undefined ? {} : { rewriting })}
         />
       ) : null}
+      {pickerVisible && wikiMatch && pickerPosition?.token === wikiToken && (
+        <NoteLinkPicker
+          left={pickerPosition.left}
+          top={pickerPosition.top}
+          items={pickerItems}
+          selected={pickerSelected}
+          pending={pickerResult.token !== wikiToken}
+          error={pickerResult.token === wikiToken ? pickerResult.error : null}
+          onPick={pickNote}
+        />
+      )}
       <div className="me-scroll mimir-markdown-scroll">
         <div className={contentClassName}>
           {/* EditorContent 负责把编辑器挂进 React 树，并在卸载时清理 */}
@@ -532,6 +713,7 @@ export interface MarkdownToolbarProps {
   editor: Editor | null
   spellCheck: boolean
   onToggleSpellCheck: () => void
+  searchNotes?: (query: string) => Promise<Array<{ id: string; title: string }>>
   /** 「插入图片」：不给就不渲染那个按钮（没有上传通道时它没有能做的事） */
   onPickImage?: ((file: File) => void) | undefined
 }
@@ -554,6 +736,7 @@ export function MarkdownToolbar({
   editor,
   spellCheck,
   onToggleSpellCheck,
+  searchNotes,
   onPickImage,
 }: MarkdownToolbarProps) {
   const state = useToolbarState(editor, toolbarStateOf)
@@ -597,11 +780,10 @@ export function MarkdownToolbar({
    * 都是 2px——不画线的话**组与组的间隔与组内按钮的间隔一样**，整条读成一个
    * 没有结构的图标带（实测：组与组之间 7 个间隔全是 2px，栏内一条竖线都没有）。
    * 同壳的另外五种格式都画了（docx 5 条、xlsx 3、pptx 2、html 3、pdf 3），
-   * 只有笔记这条漏了——而 DESIGN §8.4.1 要求六种格式「长得一样不靠约定」。
+   * 笔记也保留真正的组边界，只收敛组名与工具栏的高度。
    *
-   * **只画在真正的组边界**（而且只在**前一组确实渲染了**时才画）：工具条是
-   * `flex-wrap` 的，分隔线只是一个兄弟 flex 项，画在每两个按钮之间的话它会
-   * 在换行时落到行末或行首，看起来像没画对（`ToolbarDivider` 的说明）。
+   * **只画在真正的组边界**（而且只在**前一组确实渲染了**时才画）：分隔线
+   * 是兄弟 flex 项，画在每两个按钮之间会破坏组的边界（`ToolbarDivider` 的说明）。
    * 所以这里跟着前一个组的条件走，不产生「两条相邻」或「行首一条」。
    */
   return (
@@ -609,7 +791,7 @@ export function MarkdownToolbar({
       {hasCommand(editor, 'undo') && (
         <ToolbarGroup label="撤销与重做">
           <ToolbarButton
-            label="撤销 (Ctrl+Z)"
+            label={`撤销 (${markdownShortcutLabel('undo')})`}
             disabled={!on('undo')}
             disabledReason="没有可撤销的改动"
             onClick={() => runCommand(editor, 'undo')}
@@ -617,7 +799,7 @@ export function MarkdownToolbar({
             <UndoIcon />
           </ToolbarButton>
           <ToolbarButton
-            label="重做 (Ctrl+Shift+Z)"
+            label={`重做 (${markdownShortcutLabel('redo')})`}
             disabled={!on('redo')}
             disabledReason="没有可重做的改动"
             onClick={() => runCommand(editor, 'redo')}
@@ -653,7 +835,7 @@ export function MarkdownToolbar({
 
       <ToolbarGroup label="行内格式">
         <ToolbarButton
-          label="加粗 (Ctrl+B)"
+          label={`加粗 (${markdownShortcutLabel('bold')})`}
           active={on('bold')}
           disabled={!hasMark(editor, 'bold')}
           disabledReason="这个方言没有加粗标记（bold）"
@@ -662,7 +844,7 @@ export function MarkdownToolbar({
           <BoldIcon />
         </ToolbarButton>
         <ToolbarButton
-          label="倾斜 (Ctrl+I)"
+          label={`倾斜 (${markdownShortcutLabel('italic')})`}
           active={on('italic')}
           disabled={!hasMark(editor, 'italic')}
           disabledReason="这个方言没有斜体标记（italic）"
@@ -677,7 +859,7 @@ export function MarkdownToolbar({
           ——一个序列化出去别人认不出的标记，用的人有权知道。
         */}
         <ToolbarButton
-          label="下划线 (Ctrl+U)：存成 ++文字++，不是 GFM"
+          label={`下划线 (${markdownShortcutLabel('underline')})：存成 ++文字++，不是 GFM`}
           active={on('underline')}
           disabled={!hasMark(editor, 'underline')}
           disabledReason="这个方言没有下划线标记（underline）"
@@ -726,7 +908,12 @@ export function MarkdownToolbar({
 
       {hasMark(editor, 'link') && (
         <ToolbarGroup label="链接">
-          <LinkMenu editor={editor} linked={on('link')} emptySelection={on('emptySelection')} />
+          <LinkMenu
+            editor={editor}
+            linked={on('link')}
+            emptySelection={on('emptySelection')}
+            searchNotes={searchNotes}
+          />
         </ToolbarGroup>
       )}
 
@@ -872,10 +1059,12 @@ function LinkMenu({
   editor,
   linked,
   emptySelection,
+  searchNotes,
 }: {
   editor: Editor
   linked: boolean
   emptySelection: boolean
+  searchNotes?: (query: string) => Promise<Array<{ id: string; title: string }>>
 }) {
   const blocked = emptySelection && !linked
   return (
@@ -883,7 +1072,10 @@ function LinkMenu({
       <ToolbarMenu
         label="链接"
         icon={<LinkIcon />}
-        renderPanel={(close) => <LinkPanel editor={editor} close={close} blocked={blocked} />}
+        panelWidth={248}
+        renderPanel={(close) => (
+          <LinkPanel editor={editor} close={close} blocked={blocked} searchNotes={searchNotes} />
+        )}
       />
       {linked && (
         <ToolbarButton label="移除链接" onClick={() => removeLink(editor)}>
@@ -905,13 +1097,45 @@ function LinkPanel({
   editor,
   close,
   blocked,
+  searchNotes,
 }: {
   editor: Editor
   close: () => void
   blocked: boolean
+  searchNotes?: (query: string) => Promise<Array<{ id: string; title: string }>>
 }) {
   const [href, setHref] = useState(() => currentLinkHref(editor) ?? '')
   const insideLink = currentLinkHref(editor) !== null
+  const [noteQuery, setNoteQuery] = useState('')
+  const [noteResult, setNoteResult] = useState<{
+    query: string
+    items: Array<{ id: string; title: string }>
+  } | null>(null)
+  const [notePending, setNotePending] = useState(Boolean(searchNotes))
+  const [noteError, setNoteError] = useState(false)
+  const noteItems = noteResult?.query === noteQuery.trim() ? noteResult.items : []
+
+  useEffect(() => {
+    if (!searchNotes) return
+    const query = noteQuery.trim()
+    let cancelled = false
+    void searchNotes(query).then(
+      (items) => {
+        if (cancelled) return
+        setNoteResult({ query, items: items.slice(0, 6) })
+        setNotePending(false)
+      },
+      () => {
+        if (cancelled) return
+        setNoteResult({ query, items: [] })
+        setNoteError(true)
+        setNotePending(false)
+      },
+    )
+    return () => {
+      cancelled = true
+    }
+  }, [noteQuery, searchNotes])
 
   const apply = () => {
     const value = href.trim()
@@ -954,6 +1178,52 @@ function LinkPanel({
           移除
         </ToolbarButton>
       </div>
+      {searchNotes && (
+        <div className="me-link__notes">
+          <div className="me-link__section">链接到笔记</div>
+          <ToolbarTextField
+            label="查找已有笔记"
+            value={noteQuery}
+            placeholder="输入笔记名"
+            onChange={(value) => {
+              setNoteQuery(value.slice(0, 100))
+              setNoteResult(null)
+              setNotePending(true)
+              setNoteError(false)
+            }}
+            onSubmit={() => {
+              if (notePending || noteError) return
+              const first = noteItems[0]
+              if (!first) return
+              linkExistingNote(editor, first)
+              close()
+            }}
+            onCancel={close}
+          />
+          <div className="me-link__note-list" aria-label="已有笔记">
+            {notePending ? (
+              <div className="me-note-link-picker__hint">正在查找笔记…</div>
+            ) : noteError ? (
+              <div className="me-note-link-picker__hint" role="alert">
+                查找失败，请重试
+              </div>
+            ) : noteItems.length === 0 ? (
+              <div className="me-note-link-picker__hint">没有匹配的笔记</div>
+            ) : (
+              noteItems.map((item) => (
+                <NoteLinkOption
+                  key={item.id}
+                  title={item.title}
+                  onClick={() => {
+                    linkExistingNote(editor, item)
+                    close()
+                  }}
+                />
+              ))
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

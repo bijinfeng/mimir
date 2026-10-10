@@ -446,6 +446,34 @@ describe('shell.css 的静态守护', () => {
 })
 
 describe('EditorShell 的次工具条', () => {
+  it('笔记变体只作用于笔记，分组名称与保存入口仍可达', () => {
+    const toolbar = (
+      <ToolbarGroup label="字符格式">
+        <ToolbarButton label="加粗" />
+      </ToolbarGroup>
+    )
+    const note = html(
+      <EditorShell
+        variant="note"
+        toolbar={toolbar}
+        toolbarActions={<ToolbarButton label="立即保存" primary />}
+      >
+        <div>正文</div>
+      </EditorShell>,
+    )
+    const office = html(
+      <EditorShell toolbar={toolbar}>
+        <div>正文</div>
+      </EditorShell>,
+    )
+
+    expect(note).toContain('mimir-editor--note')
+    expect(office).not.toContain('mimir-editor--note')
+    expect(note).toContain('aria-label="字符格式"')
+    expect(note.indexOf('mimir-editor__tools')).toBeLessThan(note.indexOf('mimir-editor__actions'))
+    expect(note).toContain('aria-label="立即保存"')
+  })
+
   it('保存留在独立操作区，窄窗口滚动格式命令时不会随之卷走', () => {
     const out = html(
       <EditorShell

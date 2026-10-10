@@ -1,4 +1,4 @@
-import { createContext, useContext, useRef, useState } from 'react'
+import { createContext, useCallback, useContext, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 
 /**
@@ -24,7 +24,11 @@ interface UnsavedContextValue {
   /** 由编辑器在挂载/状态变化时调用 */
   setDirty: (dirty: boolean) => void
   /** 提供一个「重新保存」的入口，供「保存并离开」调用 */
-  setSave: (save: (() => Promise<boolean>) | null) => void
+  setSave: (save: (() => Promise<boolean>) | null, mode?: 'auto' | 'manual') => void
+  /** 自动保存笔记不能承诺丢弃已写入的版本 */
+  saveMode: 'auto' | 'manual'
+  saving: boolean
+  saveError: string | null
   /**
    * 执行一个可能被拦截的动作。
    *
@@ -43,6 +47,11 @@ const UnsavedContext = createContext<UnsavedContextValue | null>(null)
 export function UnsavedProvider({ children }: { children: ReactNode }) {
   const [isDirty, setDirtyState] = useState(false)
   const [pending, setPending] = useState<PendingLeave | null>(null)
+  const [saveMode, setSaveMode] = useState<'auto' | 'manual'>('manual')
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const dirtyRef = useRef(false)
+  const savingRef = useRef(false)
 
   /**
    * 保存函数放 ref 而不是 state：它只是一个命令入口，
@@ -50,49 +59,92 @@ export function UnsavedProvider({ children }: { children: ReactNode }) {
    */
   const saveRef = useRef<(() => Promise<boolean>) | null>(null)
 
-  const setDirty = (dirty: boolean) => {
+  const setDirty = useCallback((dirty: boolean) => {
+    dirtyRef.current = dirty
     setDirtyState(dirty)
-  }
+  }, [])
 
-  const setSave = (save: (() => Promise<boolean>) | null) => {
-    saveRef.current = save
-  }
+  const setSave = useCallback(
+    (save: (() => Promise<boolean>) | null, mode: 'auto' | 'manual' = 'manual') => {
+      saveRef.current = save
+      setSaveMode(save ? mode : 'manual')
+    },
+    [],
+  )
 
   const runGuarded = (action: () => void) => {
-    if (!isDirty) {
+    if (!dirtyRef.current) {
       action()
       return
     }
+    setSaveError(null)
     setPending({ action })
   }
 
   const resolve = (choice: 'cancel' | 'discard' | 'save') => {
     const current = pending
-    setPending(null)
-    if (!current || choice === 'cancel') return
+    if (!current || savingRef.current) return
+    if (choice === 'cancel') {
+      setPending(null)
+      setSaveError(null)
+      return
+    }
 
     if (choice === 'discard') {
+      if (saveMode === 'auto') return
+      setPending(null)
+      dirtyRef.current = false
       setDirtyState(false)
       current.action()
       return
     }
 
+    if (!dirtyRef.current) {
+      setPending(null)
+      current.action()
+      return
+    }
+
+    savingRef.current = true
+    setSaving(true)
+    setSaveError(null)
     void (async () => {
       const save = saveRef.current
-      const ok = save ? await save() : true
-      if (!ok) {
+      try {
+        const ok = save ? await save() : false
+        if (!ok) {
+          setSaveError('保存未完成，请重试或继续编辑。')
+          return
+        }
+        dirtyRef.current = false
+        setDirtyState(false)
+        setPending(null)
+        current.action()
+      } catch (error) {
         // 保存失败就不放行——放行了用户以为存上了，实际丢了，
         // 比不拦截更糟（.trellis/spec/project/product.md §5.9）
-        setDirtyState(true)
-        return
+        setSaveError(error instanceof Error ? error.message : '保存失败，请重试。')
+      } finally {
+        savingRef.current = false
+        setSaving(false)
       }
-      setDirtyState(false)
-      current.action()
     })()
   }
 
   return (
-    <UnsavedContext.Provider value={{ isDirty, setDirty, setSave, runGuarded, pending, resolve }}>
+    <UnsavedContext.Provider
+      value={{
+        isDirty,
+        setDirty,
+        setSave,
+        saveMode,
+        saving,
+        saveError,
+        runGuarded,
+        pending,
+        resolve,
+      }}
+    >
       {children}
     </UnsavedContext.Provider>
   )

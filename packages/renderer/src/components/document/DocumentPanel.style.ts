@@ -30,7 +30,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     background: ${token.colorBgContainer};
   `,
   /**
-   * 文档头部。**单行**，Office 的标题栏那一档（D-054）。
+   * 文档头部。**单行**，文件沿用 Office 标题栏，笔记通过 noteHeader 强化标题。
    *
    * 它原先占三行：一个「返回库」胶囊独占一行、28px 的大标题一行、元信息行
    * 又一行——加起来约 150px，而下面才是内容。Office 的头部只有一行：文件名
@@ -54,8 +54,18 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       gap: 4px;
     }
   `,
+  noteHeader: css`
+    --document-title-flex: 1 1 auto;
+    --document-title-max-width: none;
+    --document-title-size: ${FONT_SIZE.pageTitle}px;
+    gap: 10px;
+
+    @media (max-width: 600px) {
+      gap: 4px;
+    }
+  `,
   /**
-   * 文档标题（Office 的标题栏里的文件名）。
+   * 文档标题。文件用原有 16px，笔记从头部变量读取 19px 与弹性宽度。
    *
    * ## 两个坑叠在一起，都静默
    *
@@ -75,10 +85,11 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
    */
   headerTitle: css`
     &&.${prefixCls}-typography {
-      flex: none;
-      max-width: 40%;
+      flex: var(--document-title-flex, none);
+      min-width: 0;
+      max-width: var(--document-title-max-width, 40%);
       margin: 0;
-      font-size: ${FONT_SIZE.section}px;
+      font-size: var(--document-title-size, ${FONT_SIZE.section}px);
       font-weight: 600;
       line-height: 1.4;
       letter-spacing: -0.005em;
@@ -232,6 +243,10 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       color: ${token.colorTextQuaternary};
     }
   `,
+  noteMeta: css`
+    flex: none;
+    color: ${token.colorTextTertiary};
+  `,
   /* 位置（笔记的 vault 路径 / 资料的 URL）。它是元信息里唯一可能很长的一项，
      所以只有它能被压缩并省略 */
   location: css`
@@ -341,6 +356,11 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       background: ${token.colorFillTertiary};
     }
 
+    &:focus-visible {
+      outline: 2px solid ${token.colorPrimaryBorder};
+      outline-offset: 2px;
+    }
+
     @media (max-width: 500px) {
       width: 28px;
       justify-content: center;
@@ -350,6 +370,13 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
         display: none;
       }
     }
+  `,
+  noteBack: css`
+    height: 28px;
+    padding-inline: 6px;
+    border-color: transparent;
+    border-radius: 6px;
+    color: ${token.colorTextSecondary};
   `,
 
   scroll: css`

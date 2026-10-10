@@ -19,6 +19,7 @@ import type {
   FolderListResponse,
   FolderMoveResponse,
   NoteCreate,
+  NoteLookupItem,
   NoteUpdate,
   ProbeResult,
   RuntimeConfig,
@@ -184,6 +185,11 @@ export const api = {
     list(query: Partial<DocumentListQuery> = {}) {
       return request<{ items: DocumentSummary[] }>(
         `/api/documents${toQuery(query as Record<string, string | string[] | undefined>)}`,
+      )
+    },
+    findNotes(query: string) {
+      return request<{ items: NoteLookupItem[] }>(
+        `/api/documents/notes/lookup${toQuery({ q: query })}`,
       )
     },
     get(id: string) {

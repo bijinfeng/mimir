@@ -4,6 +4,7 @@ import { useState } from 'react'
 import type { SettingEntry } from '@mimir/shared'
 import { ApiRequestError, api } from '../../lib/api'
 import { useStyles } from './settings.style'
+import { clearSettingDraft, readSettingDraft, writeSettingDraft } from './draft-memory'
 
 /** 把契约里的 unknown 值收窄成这个控件能处理的标量。结构化值一律当空 */
 function toScalar(value: unknown): string | number | boolean | null {
@@ -45,11 +46,14 @@ export function SettingControl({
   /** 秘密类的输入框用密码样式，并且不回显当前值 */
   secret = false,
   placeholder,
+  draftScope,
 }: {
   entry: SettingEntry
   width?: number
   secret?: boolean
   placeholder?: string
+  /** Keep only explicitly scoped drafts across section unmounts (S3 uses account ID). */
+  draftScope?: string
 }) {
   const { styles } = useStyles()
   const queryClient = useQueryClient()
@@ -63,7 +67,18 @@ export function SettingControl({
    * 结构化值由专门的界面渲染（如供应商列表），不走这个控件。
    */
   const scalar = toScalar(entry.value)
-  const [draft, setDraft] = useState<string | number | boolean | null>(secret ? '' : scalar)
+  const serverValue = secret ? '' : scalar
+  const draftKey = draftScope ? `${draftScope}:${entry.key}` : null
+  const [draft, setDraft] = useState<string | number | boolean | null>(
+    () => (draftKey ? readSettingDraft(draftKey) : undefined) ?? (secret ? '' : scalar),
+  )
+  const updateDraft = (value: string | number | boolean | null) => {
+    setDraft(value)
+    if (draftKey) {
+      if (value === serverValue) clearSettingDraft(draftKey)
+      else writeSettingDraft(draftKey, value)
+    }
+  }
 
   /**
    * 服务端值变了（保存成功后重新拉取、或另一个标签页改过）
@@ -76,17 +91,18 @@ export function SettingControl({
    * 在同一次渲染中根据上一次的 props 调整 state，React 会立刻重渲染
    * 且不提交中间状态，用户看不到闪烁。
    */
-  const serverValue = secret ? '' : scalar
   const [lastServerValue, setLastServerValue] = useState(serverValue)
   if (serverValue !== lastServerValue) {
     setLastServerValue(serverValue)
-    setDraft(serverValue)
+    if (!draftKey || readSettingDraft(draftKey) === undefined) setDraft(serverValue)
   }
 
   const save = useMutation({
     mutationFn: (value: string | number | boolean | null) =>
       api.updateSettings({ [entry.key]: value }),
     onSuccess: () => {
+      if (draftKey) clearSettingDraft(draftKey)
+      if (secret) setDraft('')
       messageApi.success('已保存')
       void queryClient.invalidateQueries({ queryKey: ['config'] })
     },
@@ -112,7 +128,7 @@ export function SettingControl({
   const commit = (options: { clear?: boolean } = {}) => {
     if (!entry.writable) return
     if (options.clear) {
-      setDraft('')
+      updateDraft('')
       save.mutate(null)
       return
     }
@@ -125,6 +141,7 @@ export function SettingControl({
   }
 
   const common = {
+    'aria-label': entry.label,
     /* maxWidth 是必须的：宽度按「值列要有多宽」写死（320 之类的数值），
        而设置页的内容列本身会随视口收窄——420px 视口下可用宽只有约 340px，
        没有 maxWidth 时控件比列还宽，整页横向滚动（DESIGN §5.5 不允许）。
@@ -143,7 +160,7 @@ export function SettingControl({
         <InputNumber
           {...common}
           value={typeof draft === 'number' ? draft : Number(entry.defaultValue)}
-          onChange={(value) => setDraft(value)}
+          onChange={(value) => updateDraft(value)}
         />
       ) : entry.type === 'boolean' ? (
         /*
@@ -152,10 +169,11 @@ export function SettingControl({
           也不由我们校准（.trellis/spec/project/decisions.md D-042、D-045）。
         */
         <Switch
+          aria-label={entry.label}
           checked={draft === true}
           disabled={save.isPending}
           onChange={(checked) => {
-            setDraft(checked)
+            updateDraft(checked)
             // 开关只有两态，用户点它就是这个意思——不需要再点一次保存
             save.mutate(checked)
           }}
@@ -165,13 +183,13 @@ export function SettingControl({
           {...common}
           value={typeof draft === 'string' ? draft : ''}
           placeholder={placeholder ?? (entry.configured ? '已配置（留空则不修改）' : '尚未配置')}
-          onChange={(event) => setDraft(event.target.value)}
+          onChange={(event) => updateDraft(event.target.value)}
         />
       ) : (
         <Input
           {...common}
           value={typeof draft === 'string' ? draft : String(entry.value ?? '')}
-          onChange={(event) => setDraft(event.target.value)}
+          onChange={(event) => updateDraft(event.target.value)}
         />
       )}
 

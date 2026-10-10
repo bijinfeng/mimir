@@ -9,6 +9,7 @@
     "./editor.css": "./src/generated/editor.css",
     "./editors.css": "./src/editors/editors.css",
     "./shell.css": "./src/shell/shell.css",
+    "./note-links": "./src/editors/note-links.ts",
     "./test-dom": "./src/shell/antd-test-dom.ts",
     "./vendor/extensions": "./vendor/apps/docs/src/renderer/editor/extensions.ts",
     "./vendor/fonts.css": "./vendor/apps/docs/src/renderer/fonts/fonts.css",

@@ -91,6 +91,54 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     overflow-y: auto;
     padding: 8px ${NAV_ITEM_MARGIN}px 6px;
   `,
+  recentGroup: css`
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px solid ${token.colorBorderSecondary};
+  `,
+  recentHeading: css`
+    width: 100%;
+    justify-content: flex-start;
+    color: ${token.colorTextSecondary};
+    font-size: ${FONT_SIZE.item}px;
+    font-weight: 600;
+  `,
+  recentList: css`
+    display: grid;
+    gap: 2px;
+  `,
+  recentItem: css`
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    height: auto;
+    padding: 6px 9px;
+    line-height: 1.4;
+    text-align: left;
+    color: ${token.colorTextSecondary};
+    > span {
+      display: block;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    > small {
+      color: ${token.colorTextTertiary};
+    }
+    &[aria-current='page'] {
+      color: ${token.colorLink};
+      background: ${token.colorPrimaryBg};
+      font-weight: 600;
+    }
+  `,
+  recentEmpty: css`
+    display: block;
+    padding: 6px 9px;
+    color: ${token.colorTextTertiary};
+    font-size: ${FONT_SIZE.item}px;
+  `,
   menu: css`
     background: transparent;
     border-inline-end: none !important;

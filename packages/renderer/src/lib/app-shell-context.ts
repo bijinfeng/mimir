@@ -76,6 +76,10 @@ export interface AppShellContextValue {
   /** 是否从对话跳过来，文档顶部据此决定要不要显示返回入口 */
   cameFromChat: boolean
 
+  /** 新建入口的一次性正文聚焦意图；不能从标题或空正文推断。 */
+  newNoteFocusId: string | null
+  requestNewNoteFocus: (id: string | null) => void
+
   /** 跳回刚才那次对话 */
   backToChat: () => void
 }

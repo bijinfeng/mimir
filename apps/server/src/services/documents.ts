@@ -6,6 +6,7 @@ import type {
   DocumentListQuery,
   DocumentSummary,
   NoteCreate,
+  NoteLookupItem,
   NoteUpdate,
 } from '@mimir/shared'
 import { db } from '../db/client.js'
@@ -365,6 +366,22 @@ export async function listDocuments(query: DocumentListQuery): Promise<DocumentS
 
   const tagMap = await loadTags(rows.map((row) => row.id))
   return rows.map((row) => toSummary(row, tagMap.get(row.id) ?? []))
+}
+
+/** 站内链接的标题补全。服务端限定数量并排除回收站，避免遍历所有文档。 */
+export async function findNotes(query: string): Promise<NoteLookupItem[]> {
+  const conditions = [eq(documents.kind, 'note'), isNull(documents.deletedAt)]
+  if (query) {
+    const escaped = query.replace(/[\\%_]/g, '\\$&')
+    conditions.push(sql`lower(${documents.title}) like lower(${`%${escaped}%`}) escape ${'\\'}`)
+  }
+
+  return db
+    .select({ id: documents.id, title: documents.title })
+    .from(documents)
+    .where(and(...conditions))
+    .orderBy(desc(documents.updatedAt))
+    .limit(20)
 }
 
 /** 软删除：记录打标记，文件移进 vault/.trash，两者都可恢复 */

@@ -258,12 +258,13 @@ describe('markdown 的控件契约（渲染层）', () => {
     })
     expect(down.defaultPrevented).toBe(true)
 
-    // 点了真的重试（第二次成功），状态行回到「已保存」
+    // 点了真的重试（第二次成功）；状态行清除错误，工具栏固定入口显示「已保存」
     await act(async () => {
       retry!.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
       await Promise.resolve()
     })
     expect(attempts, '点了「点此重试」但没有再保存一次——那正是最坏的一种').toBe(2)
-    expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('已保存')
+    expect(host.querySelector('.mimir-editor__status')?.textContent).not.toContain('保存失败')
+    expect(host.querySelector('button[aria-label="已保存"]')).not.toBeNull()
   })
 })

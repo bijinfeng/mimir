@@ -31,8 +31,10 @@ export function StorageSection() {
   const { message } = App.useApp()
   const [showS3Config, setShowS3Config] = useState(false)
   const configQuery = useQuery({ queryKey: ['config'], queryFn: api.config })
+  const sessionQuery = useQuery({ queryKey: ['session'], queryFn: api.auth.session })
 
   const config = configQuery.data
+  const accountId = sessionQuery.data?.user.id
   const backends = (config?.plugins ?? []).filter((plugin) => plugin.seam === 'storage')
   const settings = config?.settings ?? []
 
@@ -51,11 +53,19 @@ export function StorageSection() {
       message.error(error instanceof Error ? error.message : '切换存储失败'),
   })
 
-  if (configQuery.isError) {
-    return <LoadError message="配置读取失败" onRetry={() => void configQuery.refetch()} />
+  if (configQuery.isError || sessionQuery.isError) {
+    return (
+      <LoadError
+        message="配置读取失败"
+        onRetry={() => {
+          void configQuery.refetch()
+          void sessionQuery.refetch()
+        }}
+      />
+    )
   }
 
-  if (!config) {
+  if (!config || !accountId) {
     return (
       <div className={styles.block}>
         <Skeleton active paragraph={{ rows: 4 }} title={false} />
@@ -119,6 +129,7 @@ export function StorageSection() {
                 <Row key={entry.key} label={entry.label}>
                   <SettingControl
                     entry={entry}
+                    draftScope={`account:${accountId}`}
                     secret={entry.type === 'secret'}
                     width={entry.type === 'boolean' ? undefined : 320}
                   />

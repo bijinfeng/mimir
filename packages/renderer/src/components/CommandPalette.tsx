@@ -2,10 +2,20 @@ import { useQuery } from '@tanstack/react-query'
 import type { SearchHit } from '@mimir/shared'
 import { Button, Input, Modal } from 'antd'
 import { createStyles } from 'antd-style'
-import { FilePlus, Search, Sparkles, Upload } from 'lucide-react'
+import {
+  ArrowLeft,
+  FilePlus,
+  FileText,
+  FolderInput,
+  Pencil,
+  Search,
+  Sparkles,
+  Upload,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { api } from '../lib/api'
+import { useRecentDocuments } from '../lib/recent-documents'
 import { FONT_SIZE } from '../theme/tokens'
 
 /**
@@ -26,6 +36,11 @@ export interface CommandPaletteProps {
   onAsk: (question: string) => void
   onOpenCapture: () => void
   onNewNote: () => void | Promise<void>
+  userId?: string
+  currentDocumentId?: string
+  onOpenRecent: (id: string, scope: string) => void
+  onCurrentCommand: (command: 'rename' | 'move' | 'search') => void
+  onReturnToLibrary: () => void
 }
 
 const useStyles = createStyles(({ css, token, prefixCls }) => ({
@@ -279,11 +294,22 @@ function PaletteBody({
   onAsk,
   onOpenCapture,
   onNewNote,
+  userId,
+  currentDocumentId,
+  onOpenRecent,
+  onCurrentCommand,
+  onReturnToLibrary,
 }: Omit<CommandPaletteProps, 'open'>) {
   const { styles, cx } = useStyles()
   const [value, setValue] = useState('')
   const [activeIndex, setActiveIndex] = useState(0)
   const listRef = useRef<HTMLDivElement>(null)
+  const recentQuery = useRecentDocuments(userId)
+  const currentDocQuery = useQuery({
+    queryKey: ['document', currentDocumentId],
+    queryFn: () => api.documents.get(currentDocumentId!),
+    enabled: Boolean(currentDocumentId),
+  })
 
   /**
    * 关闭时**把焦点还给打开它的人**。
@@ -344,18 +370,73 @@ function PaletteBody({
         sub: '网页、公众号、GitHub、文件',
         run: onOpenCapture,
       },
+      ...(currentDocumentId
+        ? [
+            ...(currentDocQuery.data?.kind === 'note'
+              ? [
+                  {
+                    type: 'command' as const,
+                    key: 'rename-current',
+                    icon: <Pencil size={16} />,
+                    title: '重命名当前笔记',
+                    run: () => onCurrentCommand('rename'),
+                  },
+                ]
+              : []),
+            {
+              type: 'command' as const,
+              key: 'move-current',
+              icon: <FolderInput size={16} />,
+              title: '移动当前文档',
+              run: () => onCurrentCommand('move'),
+            },
+            ...(currentDocQuery.data?.kind === 'note'
+              ? [
+                  {
+                    type: 'command' as const,
+                    key: 'search-current',
+                    icon: <Search size={16} />,
+                    title: '搜索当前笔记',
+                    run: () => onCurrentCommand('search'),
+                  },
+                ]
+              : []),
+            {
+              type: 'command' as const,
+              key: 'back-to-library',
+              icon: <ArrowLeft size={16} />,
+              title: '返回知识库',
+              run: onReturnToLibrary,
+            },
+          ]
+        : []),
     ] satisfies PaletteItem[]
   ).filter((item) => !value.trim() || matches(item, value))
 
-  const documents: PaletteItem[] = (searchQuery.data?.hits ?? []).map((hit, index) => ({
-    type: 'document',
-    key: `${hit.documentId}-${hit.snippet.start}-${hit.snippet.end}-${index}`,
-    title: hit.title,
-    sub: hit.snippet.text,
-    run: () => onOpenSearchHit(hit),
-  }))
+  const documents: PaletteItem[] = !value.trim()
+    ? (recentQuery.data ?? [])
+        .filter((doc) => doc.kind === 'note')
+        .map((doc) => ({
+          type: 'document',
+          key: `recent:${doc.id}`,
+          icon: <FileText size={16} />,
+          title: doc.title,
+          sub: doc.folder ?? '知识库根',
+          run: () => onOpenRecent(doc.id, doc.folder ? `folder:${doc.folder}` : 'all'),
+        }))
+    : (searchQuery.data?.hits ?? []).map((hit, index) => ({
+        type: 'document',
+        key: `${hit.documentId}-${hit.snippet.start}-${hit.snippet.end}-${index}`,
+        icon: <FileText size={16} />,
+        title: hit.title,
+        sub: hit.snippet.text,
+        run: () => onOpenSearchHit(hit),
+      }))
 
-  const items = [...commands, ...documents]
+  const documentsFirst = !value.trim()
+  const items = documentsFirst ? [...documents, ...commands] : [...commands, ...documents]
+  const commandStart = documentsFirst ? documents.length : 0
+  const documentStart = documentsFirst ? 0 : commands.length
   const activeItem = items[activeIndex]
   const question = value.trim()
   const askQuestion = () => {
@@ -396,9 +477,6 @@ function PaletteBody({
       if (item) {
         item.run()
         onClose()
-      } else if (question) {
-        // 没有匹配项时，回车把它当成一个问题
-        askQuestion()
       }
     }
   }
@@ -408,6 +486,37 @@ function PaletteBody({
     const node = listRef.current?.querySelector(`[data-index="${activeIndex}"]`)
     node?.scrollIntoView({ block: 'nearest' })
   }, [activeIndex])
+
+  const commandSection = commands.length > 0 && (
+    <>
+      <div className={styles.sectionLabel}>操作</div>
+      {commands.map((item, index) => (
+        <PaletteRow
+          key={item.key}
+          item={item}
+          index={commandStart + index}
+          active={commandStart + index === activeIndex}
+          onHover={setActiveIndex}
+          className={cx}
+        />
+      ))}
+    </>
+  )
+  const documentSection = documents.length > 0 && (
+    <>
+      <div className={styles.sectionLabel}>{documentsFirst ? '最近打开的笔记' : '匹配的文档'}</div>
+      {documents.map((item, index) => (
+        <PaletteRow
+          key={item.key}
+          item={item}
+          index={documentStart + index}
+          active={documentStart + index === activeIndex}
+          onHover={setActiveIndex}
+          className={cx}
+        />
+      ))}
+    </>
+  )
 
   return (
     <Modal
@@ -446,49 +555,23 @@ function PaletteBody({
 
         {items.length > 0 && (
           <div className={styles.list} ref={listRef}>
-            {commands.length > 0 && (
+            {documentsFirst ? (
               <>
-                <div className={styles.sectionLabel}>操作</div>
-                {commands.map((item, index) => (
-                  <PaletteRow
-                    key={item.key}
-                    item={item}
-                    index={index}
-                    active={index === activeIndex}
-                    onHover={setActiveIndex}
-                    className={cx}
-                  />
-                ))}
+                {documentSection}
+                {commandSection}
+              </>
+            ) : (
+              <>
+                {commandSection}
+                {documentSection}
               </>
             )}
+          </div>
+        )}
 
-            {documents.length > 0 && (
-              <>
-                {/*
-                 * 这里曾经是 `value.trim() ? '匹配的文档' : '最近打开'` —— 后半句
-                 * 永远不会渲染：文档行的唯一来源是 `searchQuery.data?.hits`，
-                 * 而那个查询 `enabled: shouldSearch`（输入 ≥ 2 字），与
-                 * `value.trim()` 为空互斥。三条路都是死的：空查询下 hits 为
-                 * undefined，缓存里也没有空键的条目（queryKey 带 value），
-                 * 于是「最近打开」这个意图在界面上从来没有发生过。
-                 *
-                 * 想要真的「最近打开」得另接一个最近文档查询——那是新增产品行为，
-                 * 按仓库铁律要先改 `.trellis/spec/project/design.md` §8.10 再改代码。这里只把
-                 * 不可能成立的分支删掉，说它实际是什么。
-                 */}
-                <div className={styles.sectionLabel}>匹配的文档</div>
-                {documents.map((item, index) => (
-                  <PaletteRow
-                    key={item.key}
-                    item={item}
-                    index={commands.length + index}
-                    active={commands.length + index === activeIndex}
-                    onHover={setActiveIndex}
-                    className={cx}
-                  />
-                ))}
-              </>
-            )}
+        {question && items.length === 0 && !searchQuery.isFetching && (
+          <div className={styles.sectionLabel}>
+            没有匹配的命令{shouldSearch ? '或文档' : '；输入至少两个字搜索文档'}
           </div>
         )}
 
@@ -528,14 +611,10 @@ function PaletteBody({
               <span className={styles.kbd}>↓</span>选择
             </span>
           )}
-          {(activeItem || question) && (
+          {activeItem && (
             <span className={styles.footItem}>
               <span className={styles.kbd}>Enter</span>
-              {activeItem
-                ? activeItem.type === 'document'
-                  ? '打开所选结果'
-                  : '执行所选操作'
-                : '提问'}
+              {activeItem.type === 'document' ? '打开所选结果' : '执行所选操作'}
             </span>
           )}
           <span className={styles.footItem}>

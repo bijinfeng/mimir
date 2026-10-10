@@ -174,6 +174,15 @@ export const documentListQuerySchema = z.object({
 })
 export type DocumentListQuery = z.infer<typeof documentListQuerySchema>
 
+/** 标题补全仅查现存笔记，避免编辑器为 `[[` 拉取整个知识库。 */
+export const noteLookupQuerySchema = z.object({
+  q: z.string().trim().max(100).default(''),
+})
+export type NoteLookupQuery = z.infer<typeof noteLookupQuerySchema>
+
+export const noteLookupItemSchema = z.object({ id: z.string(), title: z.string() })
+export type NoteLookupItem = z.infer<typeof noteLookupItemSchema>
+
 /**
  * 上传一个文件的结果。
  *

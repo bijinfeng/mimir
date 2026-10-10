@@ -6,9 +6,10 @@ import {
   useSearch,
 } from '@tanstack/react-router'
 import type { Citation, SearchHit } from '@mimir/shared'
+import { useQuery } from '@tanstack/react-query'
 import { App as AntApp } from 'antd'
 import { createStyles } from 'antd-style'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { CaptureDialog } from '../components/CaptureDialog'
 import { CommandPalette } from '../components/CommandPalette'
 import { NavSidebar } from '../components/NavSidebar'
@@ -16,6 +17,8 @@ import { UnsavedGuard } from '../components/UnsavedGuard'
 import { api } from '../lib/api'
 import { AppShellContext, type AskDraft, type CaptureOptions } from '../lib/app-shell-context'
 import { useForcedNavCollapse } from '../lib/nav-collapse'
+import { recordRecentDocument } from '../lib/recent-documents'
+import { useUnsaved } from '../lib/unsaved'
 import { useIsDesktop, useTitleBar } from '../platform'
 import { NAV_NARROW_QUERY } from '../theme/tokens'
 
@@ -107,6 +110,13 @@ const useStyles = createStyles(({ css, token }) => ({
     overflow: hidden;
     background: ${token.colorBgContainer};
   `,
+  overlayBackdrop: css`
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    border: 0;
+    background: ${token.colorBgMask};
+  `,
 }))
 
 function AppShell() {
@@ -114,10 +124,15 @@ function AppShell() {
   const navigate = useNavigate()
   const location = useLocation()
   const { message } = AntApp.useApp()
+  const { runGuarded } = useUnsaved()
   const search = useSearch({ from: '/_app' })
+  const sessionQuery = useQuery({ queryKey: ['session'], queryFn: api.auth.session })
+  const userId = sessionQuery.data?.user.id
 
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [captureOpen, setCaptureOpen] = useState(false)
+  const captureTriggerRef = useRef<HTMLElement | null>(null)
+  const restoreCaptureFocusRef = useRef(false)
   /**
    * 这次打开收集对话框的预置项 + 序号。
    *
@@ -130,8 +145,30 @@ function AppShell() {
   )
 
   const openCapture = (options?: CaptureOptions) => {
+    captureTriggerRef.current = document.activeElement as HTMLElement | null
+    restoreCaptureFocusRef.current = false
     setCaptureRequest({ ...options, nonce: Date.now() })
     setCaptureOpen(true)
+  }
+  const closeCapture = () => {
+    restoreCaptureFocusRef.current = true
+    setCaptureOpen(false)
+  }
+  const afterCaptureClose = () => {
+    if (!restoreCaptureFocusRef.current) return
+    restoreCaptureFocusRef.current = false
+    const libraryTrigger = captureRequest?.tab
+      ? document.querySelector<HTMLElement>('[data-capture-trigger]')
+      : null
+    if (libraryTrigger?.getClientRects().length) {
+      libraryTrigger.focus()
+      return
+    }
+    const trigger = captureTriggerRef.current
+    if (trigger?.isConnected && trigger.getClientRects().length > 0) trigger.focus()
+    else {
+      document.querySelector<HTMLElement>('[data-capture-trigger], [aria-label="收集"]')?.focus()
+    }
   }
 
   /** 「问 AI」带进对话的上下文，见 AskDraft 的说明 */
@@ -169,6 +206,7 @@ function AppShell() {
    */
   const [navCollapsedPref, setNavCollapsedPref] = useState(() => readNavCollapsed())
   const [overlayOpen, setOverlayOpen] = useState(false)
+  const [newNoteFocusId, setNewNoteFocusId] = useState<string | null>(null)
 
   /**
    * 窄屏（≤880px）下**强制折叠**，与用户偏好取或。
@@ -212,6 +250,10 @@ function AppShell() {
     setCameFromChat(false)
     void navigate({ to: '/docs', search: { scope, id } })
   }
+
+  useEffect(() => {
+    if (page === 'docs' && search.id && userId) recordRecentDocument(userId, search.id)
+  }, [page, search.id, userId])
 
   const openCitation = (documentId: string, cited: Citation) => {
     setLastConversationId(search.id)
@@ -264,6 +306,8 @@ function AppShell() {
         openCapture,
         openCitation,
         cameFromChat,
+        newNoteFocusId,
+        requestNewNoteFocus: setNewNoteFocusId,
         backToChat: () =>
           void navigate({ to: '/chat', search: { scope: search.scope, id: lastConversationId } }),
       }}
@@ -276,6 +320,15 @@ function AppShell() {
         {titleBar}
 
         <div className={gridClass}>
+          {overlayOpen && narrowViewport && !isSettings && (
+            <button
+              type="button"
+              className={styles.overlayBackdrop}
+              aria-label="关闭侧边栏"
+              tabIndex={-1}
+              onClick={() => setOverlayOpen(false)}
+            />
+          )}
           <div className={styles.nav}>
             <NavSidebar
               selection={{
@@ -294,10 +347,12 @@ function AppShell() {
                且合并后垂直空间净增为零 */
               hideTopBar={isDesktop}
               onToggleCollapsed={toggleNavCollapsed}
+              userId={userId}
+              onOpenDocument={(id, scope) => runGuarded(() => openDocument(id, scope))}
             />
           </div>
 
-          <div className={styles.main}>
+          <div className={styles.main} inert={overlayOpen && narrowViewport && !isSettings}>
             <Outlet />
           </div>
         </div>
@@ -312,7 +367,21 @@ function AppShell() {
         }}
         onOpenSearchHit={(hit) => {
           setPaletteOpen(false)
-          openSearchHit(hit)
+          runGuarded(() => openSearchHit(hit))
+        }}
+        userId={userId}
+        currentDocumentId={page === 'docs' ? search.id : undefined}
+        onOpenRecent={(id, scope) => {
+          setPaletteOpen(false)
+          runGuarded(() => openDocument(id, scope))
+        }}
+        onCurrentCommand={(command) => {
+          setPaletteOpen(false)
+          window.dispatchEvent(new CustomEvent('mimir:document-command', { detail: command }))
+        }}
+        onReturnToLibrary={() => {
+          setPaletteOpen(false)
+          runGuarded(() => void navigate({ to: '/docs', search: { scope: search.scope } }))
         }}
         onAsk={(question) => {
           setPaletteOpen(false)
@@ -328,6 +397,7 @@ function AppShell() {
               tags: [],
             })
             message.success('已新建笔记')
+            setNewNoteFocusId(created.id)
             openDocument(created.id, 'all')
           } catch {
             message.error('新建笔记失败')
@@ -342,8 +412,10 @@ function AppShell() {
         initialTab={captureRequest?.tab}
         directory={captureRequest?.directory}
         folder={captureRequest?.folder ?? null}
-        onClose={() => setCaptureOpen(false)}
+        onClose={closeCapture}
+        onAfterClose={afterCaptureClose}
         onCaptured={(documentId) => {
+          restoreCaptureFocusRef.current = false
           setCaptureOpen(false)
           /* 收件箱视图已随 D-054 退役（`.trellis/spec/project/decisions.md`:3022，新内容默认
              `ready`）——这里再说「已入收件箱」等于指认一个不存在的去处。

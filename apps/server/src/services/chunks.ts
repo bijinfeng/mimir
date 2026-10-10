@@ -244,7 +244,9 @@ export async function pendingEmbeddingCount(): Promise<number | null> {
 
   const rows = await executeRaw<{ count: number | string }>(sql`
     select count(*) as count from chunks c
-    where not exists (
+    join documents d on d.id = c.document_id
+    where d.deleted_at is null
+    and not exists (
       select 1 from chunk_embeddings ce where ce.chunk_id = c.id and ce.model = ${model}
     )
   `)
@@ -278,7 +280,9 @@ export async function embedPending(
   const rows = await executeRaw<{ document_id: string }>(sql`
     select distinct c.document_id
     from chunks c
-    where not exists (
+    join documents d on d.id = c.document_id
+    where d.deleted_at is null
+    and not exists (
       select 1 from chunk_embeddings ce where ce.chunk_id = c.id and ce.model = ${model}
     )
     limit ${Math.max(1, limit)}
@@ -309,7 +313,11 @@ export async function chunkStats(): Promise<{
   documents: number
   pending: number | null
 }> {
-  const rows = await db.select({ documentId: chunks.documentId }).from(chunks)
+  const rows = await db
+    .select({ documentId: chunks.documentId })
+    .from(chunks)
+    .innerJoin(documents, eq(chunks.documentId, documents.id))
+    .where(sql`${documents.deletedAt} is null`)
 
   return {
     total: rows.length,

@@ -123,6 +123,10 @@ export function ProviderForm({
   const [flashIds, setFlashIds] = useState<string[]>([])
   const [dirty, setDirty] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const fieldId = (field: string) => `provider-${editing?.id ?? 'new'}-${field}`
+  const focusError = (field: string) => {
+    requestAnimationFrame(() => document.getElementById(fieldId(field))?.focus())
+  }
 
   /** 已存的密钥状态。编辑时来自实例；本次填的密钥由 `keyDraft` 表达 */
   const hasKey = editing?.hasKey ?? false
@@ -177,6 +181,7 @@ export function ProviderForm({
     if (url === '') {
       setErrors((prev) => ({ ...prev, baseUrl: '先填接口地址' }))
       message.error('先填接口地址')
+      focusError('baseUrl')
       return
     }
     const isLocal = /localhost|127\.0\.0\.1|\.local(\/|:|$)/.test(url)
@@ -280,6 +285,10 @@ export function ProviderForm({
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) {
       message.error('还有几处没填完')
+      const first = ['name', 'baseUrl', 'key', ...models.map((_, index) => `model${index}`)].find(
+        (field) => nextErrors[field],
+      )
+      if (first) focusError(first)
       return
     }
 
@@ -331,16 +340,24 @@ export function ProviderForm({
           <div className={styles.formLabel}>显示名</div>
           <div className={styles.formValue}>
             <Input
+              id={fieldId('name')}
               value={name}
               onChange={(event) => {
                 setName(event.target.value)
+                setErrors((current) => ({ ...current, name: '' }))
                 markDirty()
               }}
               style={{ width: 220 }}
               placeholder="比如 DeepSeek"
               aria-label="显示名"
+              aria-invalid={Boolean(errors.name)}
+              aria-describedby={errors.name ? fieldId('name-error') : undefined}
             />
-            {errors.name ? <div className={styles.formError}>{errors.name}</div> : null}
+            {errors.name ? (
+              <div id={fieldId('name-error')} className={styles.formError} role="alert">
+                {errors.name}
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -348,16 +365,24 @@ export function ProviderForm({
           <div className={styles.formLabel}>接口地址</div>
           <div className={styles.formValue}>
             <Input
+              id={fieldId('baseUrl')}
               value={baseUrl}
               onChange={(event) => {
                 setBaseUrl(event.target.value)
+                setErrors((current) => ({ ...current, baseUrl: '' }))
                 markDirty()
               }}
               style={{ width: '100%', maxWidth: 440 }}
               placeholder="https://api.example.com/v1"
               aria-label="接口地址"
+              aria-invalid={Boolean(errors.baseUrl)}
+              aria-describedby={errors.baseUrl ? fieldId('baseUrl-error') : undefined}
             />
-            {errors.baseUrl ? <div className={styles.formError}>{errors.baseUrl}</div> : null}
+            {errors.baseUrl ? (
+              <div id={fieldId('baseUrl-error')} className={styles.formError} role="alert">
+                {errors.baseUrl}
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -365,9 +390,11 @@ export function ProviderForm({
           <div className={styles.formLabel}>API 密钥</div>
           <div className={styles.formValue}>
             <Input.Password
+              id={fieldId('key')}
               value={keyDraft}
               onChange={(event) => {
                 setKeyDraft(event.target.value)
+                setErrors((current) => ({ ...current, key: '' }))
                 if (event.target.value.trim() !== '') setKeyCleared(false)
                 markDirty()
               }}
@@ -380,6 +407,8 @@ export function ProviderForm({
                     : '填入 API 密钥'
               }
               aria-label="API 密钥"
+              aria-invalid={Boolean(errors.key)}
+              aria-describedby={errors.key ? fieldId('key-error') : undefined}
             />
 
             {hasKey && !keyCleared ? (
@@ -408,7 +437,11 @@ export function ProviderForm({
             ) : null}
 
             <KeyState hasKey={hasKey} keyCleared={keyCleared} keyDraft={keyDraft} />
-            {errors.key ? <div className={styles.formError}>{errors.key}</div> : null}
+            {errors.key ? (
+              <div id={fieldId('key-error')} className={styles.formError} role="alert">
+                {errors.key}
+              </div>
+            ) : null}
           </div>
         </div>
       </Panel>
@@ -462,6 +495,8 @@ export function ProviderForm({
                 index={index}
                 flash={flashIds.includes(row.model.id)}
                 error={errors[`model${index}`]}
+                inputId={fieldId(`model${index}`)}
+                errorId={fieldId(`model${index}-error`)}
                 onRename={(value) => {
                   patchRow(index, { id: value })
                   clearModelError(index)
@@ -555,6 +590,8 @@ function ModelRow({
   index,
   flash,
   error,
+  inputId,
+  errorId,
   onRename,
   onToggle,
   onRemove,
@@ -563,6 +600,8 @@ function ModelRow({
   index: number
   flash: boolean
   error: string | undefined
+  inputId: string
+  errorId: string
   onRename: (value: string) => void
   onToggle: (purpose: ModelPurpose) => void
   onRemove: () => void
@@ -574,11 +613,14 @@ function ModelRow({
     <div className={`${styles.modelRow} ${flash ? styles.modelRowFlash : ''}`}>
       {manual ? (
         <Input
+          id={inputId}
           size="small"
           value={model.id}
           onChange={(event) => onRename(event.target.value)}
           placeholder="模型 ID"
           aria-label={`模型 ${index + 1} 的 ID`}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? errorId : undefined}
           className={styles.modelInput}
           autoFocus={model.id === ''}
         />
@@ -593,10 +635,13 @@ function ModelRow({
           const on = model.purposes.includes(purpose)
           return (
             <button
+              id={!manual && purpose === MODEL_PURPOSES[0] ? inputId : undefined}
               key={purpose}
               type="button"
               className={`${styles.chip} ${on ? styles.chipOn : ''}`}
               aria-pressed={on}
+              aria-invalid={!manual && Boolean(error)}
+              aria-describedby={!manual && error ? errorId : undefined}
               onClick={() => onToggle(purpose)}
             >
               {modelPurposeLabel(purpose)}
@@ -619,7 +664,11 @@ function ModelRow({
         />
       </Tooltip>
 
-      {error ? <div className={styles.formError}>{error}</div> : null}
+      {error ? (
+        <div id={errorId} className={styles.formError} role="alert">
+          {error}
+        </div>
+      ) : null}
     </div>
   )
 }

@@ -16,7 +16,7 @@ import {
   Settings,
   User,
 } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { flushSync } from 'react-dom'
 import { BrandMark } from './BrandMark'
@@ -26,6 +26,7 @@ import { buildActions, buildConversations, currentKey } from './nav/menu-items'
 import { api } from '../lib/api'
 import { useScrolled } from '../lib/use-scrolled'
 import { useUnsaved } from '../lib/unsaved'
+import { useRecentDocuments } from '../lib/recent-documents'
 import { THEME_MODES, THEME_MODE_LABELS, useThemeMode, type ThemeMode } from '../theme/appearance'
 
 export interface NavSelection {
@@ -45,6 +46,8 @@ export interface NavSidebarProps {
   onCloseOverlay: () => void
   onToggleCollapsed: () => void
   hideTopBar?: boolean
+  userId?: string
+  onOpenDocument: (id: string, scope: string) => void
 }
 
 const CONVERSATION_LIMIT = 12
@@ -60,6 +63,8 @@ export function NavSidebar({
   onCloseOverlay,
   onToggleCollapsed,
   hideTopBar = false,
+  userId,
+  onOpenDocument,
 }: NavSidebarProps) {
   const { styles } = useStyles()
   const navigate = useNavigate()
@@ -69,6 +74,17 @@ export function NavSidebar({
     queryKey: ['conversations'],
     queryFn: api.conversations.list,
   })
+  const recentQuery = useRecentDocuments(userId)
+  const [showRecent, setShowRecent] = useState(true)
+  const overlayTriggerRef = useRef<HTMLButtonElement>(null)
+  const overlayCloseRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (!overlayOpen || !narrowViewport) return
+    const trigger = overlayTriggerRef.current
+    overlayCloseRef.current?.focus()
+    return () => trigger?.focus()
+  }, [overlayOpen, narrowViewport])
 
   const goDocs = (scope: string) => {
     onCloseOverlay()
@@ -129,13 +145,18 @@ export function NavSidebar({
   const bodyScrolled = useScrolled(bodyRef)
   const panelVisible = selection.page !== 'settings' && (!collapsed || overlayOpen)
   const railButton = (label: string, icon: ReactNode, onClick: () => void, active = false) => (
-    <Tooltip title={label} placement="right" key={label}>
+    <Tooltip
+      title={label}
+      placement="right"
+      key={label.includes('侧边栏') ? 'sidebar-toggle' : label}
+    >
       <Button
         type="text"
         className={`${styles.railButton} ${active ? styles.railActive : ''}`}
         icon={icon}
         aria-label={label}
         aria-current={active ? 'page' : undefined}
+        ref={label.includes('侧边栏') ? overlayTriggerRef : undefined}
         onClick={onClick}
       />
     </Tooltip>
@@ -173,6 +194,7 @@ export function NavSidebar({
         {railButton('设置', <Settings size={19} />, goSettings, selection.page === 'settings')}
         <div className={styles.railFoot}>
           <AccountRow
+            key={`${selection.page}:${selection.scope}:${selection.id ?? ''}`}
             collapsed
             showSettings={false}
             settingsActive={selection.page === 'settings'}
@@ -193,6 +215,7 @@ export function NavSidebar({
                 size="small"
                 icon={<PanelLeftClose size={16} />}
                 aria-label="关闭侧边栏"
+                ref={overlayCloseRef}
                 onClick={onCloseOverlay}
               />
             )}
@@ -219,6 +242,44 @@ export function NavSidebar({
                 onSelect={(path) => goDocs(path ? `folder:${path}` : 'all')}
               />
             </div>
+            {selection.page === 'docs' && (
+              <div className={styles.recentGroup}>
+                <Button
+                  type="text"
+                  className={styles.recentHeading}
+                  aria-expanded={showRecent}
+                  onClick={() => setShowRecent((value) => !value)}
+                >
+                  最近笔记 {showRecent ? '⌄' : '›'}
+                </Button>
+                {showRecent && (
+                  <div className={styles.recentList}>
+                    {(recentQuery.data ?? []).filter((doc) => doc.kind === 'note').length === 0 ? (
+                      <span className={styles.recentEmpty}>还没有最近打开的笔记</span>
+                    ) : (
+                      (recentQuery.data ?? [])
+                        .filter((doc) => doc.kind === 'note')
+                        .slice(0, 6)
+                        .map((doc) => (
+                          <Button
+                            key={doc.id}
+                            type="text"
+                            className={styles.recentItem}
+                            aria-current={selection.id === doc.id ? 'page' : undefined}
+                            onClick={() => {
+                              onCloseOverlay()
+                              onOpenDocument(doc.id, doc.folder ? `folder:${doc.folder}` : 'all')
+                            }}
+                          >
+                            <span>{doc.title}</span>
+                            <small>{doc.folder ?? '知识库根'}</small>
+                          </Button>
+                        ))
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <div className={styles.foot} data-scrolled={bodyScrolled || undefined} />
         </div>
@@ -266,6 +327,8 @@ function AccountRow({
    * 所以它排在早退之前。
    */
   const [themeOpen, setThemeOpen] = useState(false)
+  const [accountOpen, setAccountOpen] = useState(false)
+  const accountTriggerRef = useRef<HTMLButtonElement>(null)
   const user = sessionQuery.data?.user
 
   /**
@@ -329,6 +392,7 @@ function AccountRow({
          菜单在三到四项之间（账号资料 / 主题 / 数据统计 / 登出，本地模式
          下没有最后一项），列全了又长又漏得快 */
       aria-label={collapsed ? `${user.name}，账号菜单` : undefined}
+      ref={accountTriggerRef}
     >
       <Avatar size={26} src={user.image ?? undefined} className={styles.accountAvatar}>
         {user.name.slice(0, 1).toUpperCase()}
@@ -341,11 +405,14 @@ function AccountRow({
     <div className={`${styles.accountRow} ${collapsed ? styles.accountRowCollapsed : ''}`}>
       <Dropdown
         trigger={['click']}
+        open={accountOpen}
         placement="topRight"
         /* 关菜单时把子菜单状态一并重置：下次打开停在收起态（与 antd
            的默认行为一致），也不会留下一个「上次展开过的」子菜单 */
         onOpenChange={(open) => {
+          setAccountOpen(open)
           if (!open) setThemeOpen(false)
+          if (!open) queueMicrotask(() => accountTriggerRef.current?.focus())
         }}
         menu={{
           items,
@@ -363,6 +430,7 @@ function AccountRow({
             选择同一步，就不存在那个窗口。
           */
           onClick: ({ key }) => {
+            setAccountOpen(false)
             if (key.startsWith('theme:')) {
               /*
                 用 `flushSync` **同步**收起子菜单，再切主题。

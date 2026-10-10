@@ -89,7 +89,7 @@ export function LibraryView({ scope }: { scope: string }) {
   const { styles } = useStyles()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { openDocument, openCapture } = useAppShell()
+  const { openDocument, openCapture, requestNewNoteFocus } = useAppShell()
   const { runGuarded } = useUnsaved()
   const { message, modal } = App.useApp()
 
@@ -148,6 +148,7 @@ export function LibraryView({ scope }: { scope: string }) {
         tags: [],
         ...(folderPath ? { folder: folderPath } : {}),
       })
+      requestNewNoteFocus(created.id)
       open(created.id)
     } catch {
       message.error('新建文件失败')
@@ -160,7 +161,7 @@ export function LibraryView({ scope }: { scope: string }) {
       content:
         doc.kind === 'file'
           ? '不可撤销：记录与原件都会删除。'
-          : '不可撤销：笔记会移入回收站，记录从库中移除。',
+          : '笔记将从知识库移除，文件保留在回收站。当前应用没有一键恢复入口。',
       okText: '删除',
       okButtonProps: { danger: true },
       cancelText: '取消',
@@ -168,7 +169,8 @@ export function LibraryView({ scope }: { scope: string }) {
         try {
           await api.documents.remove(doc.id)
           invalidateList()
-          message.success('已删除')
+          void queryClient.invalidateQueries({ queryKey: ['recent-documents'] })
+          message.success(doc.kind === 'note' ? '已移入回收站' : '已删除文件与原件')
         } catch (error) {
           message.error(error instanceof Error ? error.message : '删除失败')
         }
@@ -225,13 +227,14 @@ export function LibraryView({ scope }: { scope: string }) {
    * 目标路径属于被操作的对象，不属于当前视图：用 `parentOf(from)`。
    */
   const [renameTarget, setRenameTarget] = useState<FolderNode | null>(null)
+  const renameTriggerRef = useRef<HTMLElement | null>(null)
   const [renameValue, setRenameValue] = useState('')
   const renameFolderMut = useMutation({
     mutationFn: (input: { from: string; to: string }) => api.folders.move(input.from, input.to),
     onSuccess: (_data, vars) => {
       invalidateList()
       message.success('已重命名文件夹')
-      setRenameTarget(null)
+      closeRename()
       /* 当前所在位置跟着搬：自己在子树里（或就是它）时改写 scope */
       if (folderPath === vars.from) goFolder(vars.to)
       else if (folderPath?.startsWith(`${vars.from}/`))
@@ -250,7 +253,7 @@ export function LibraryView({ scope }: { scope: string }) {
       return
     }
     if (trimmed === renameTarget.name) {
-      setRenameTarget(null)
+      closeRename()
       return
     }
     renameFolderMut.mutate({
@@ -288,8 +291,17 @@ export function LibraryView({ scope }: { scope: string }) {
   }
 
   const openRename = (folder: FolderNode) => {
+    renameTriggerRef.current = document.activeElement as HTMLElement | null
     setRenameTarget(folder)
     setRenameValue(folder.name)
+  }
+  const closeRename = () => {
+    setRenameTarget(null)
+    requestAnimationFrame(() => {
+      const trigger = renameTriggerRef.current
+      if (trigger?.isConnected) trigger.focus()
+      else bodyRef.current?.querySelector<HTMLElement>('button')?.focus()
+    })
   }
 
   /* 页面级拖放上传 */
@@ -422,7 +434,12 @@ export function LibraryView({ scope }: { scope: string }) {
         <div className={styles.toolbar}>
           {showKbChrome && (
             <Dropdown trigger={['click']} menu={{ items: ADD_MENU, onClick: onAddMenu }}>
-              <Button type="primary" className={styles.toolbarPrimary} icon={<Plus size={16} />}>
+              <Button
+                type="primary"
+                className={styles.toolbarPrimary}
+                data-capture-trigger
+                icon={<Plus size={16} />}
+              >
                 添加文档
               </Button>
             </Dropdown>
@@ -464,7 +481,7 @@ export function LibraryView({ scope }: { scope: string }) {
          * 中间每一段可点，末段是当前所在。右侧的格式提示跟着一起走。
          */}
         <div className={styles.sectionHead} data-scrolled={bodyScrolled || undefined}>
-          <span className={styles.sectionLabel}>
+          <span className={styles.sectionLabel} aria-label={`当前目录：${folderPath ?? '知识库'}`}>
             {folderPath ? (
               <>
                 <button
@@ -577,6 +594,7 @@ export function LibraryView({ scope }: { scope: string }) {
                 onEdit={() => open(doc.id)}
                 onReplace={() => startReplace(doc)}
                 onDelete={() => confirmDelete(doc)}
+                location={documentLocation(doc, folderPath)}
               />
             ))}
           </div>
@@ -630,7 +648,10 @@ export function LibraryView({ scope }: { scope: string }) {
               >
                 <span className={styles.cardIcon}>{docIcon(doc)}</span>
                 <span className={styles.rowTitle}>{doc.title}</span>
-                <span className={styles.rowMeta}>{docMetaOf(doc)}</span>
+                <span className={styles.rowMeta} title={doc.folder ?? '知识库根'}>
+                  {documentLocation(doc, folderPath)}
+                  {docMetaOf(doc) ? ` · ${docMetaOf(doc)}` : ''}
+                </span>
                 <StatusBadge status={doc.status} showReady />
                 <span className={styles.rowTime}>
                   {doc.updatedAt ? formatDate(doc.updatedAt) : ''}
@@ -706,7 +727,7 @@ export function LibraryView({ scope }: { scope: string }) {
         title="重命名文件夹"
         open={renameTarget !== null}
         onOk={submitRename}
-        onCancel={() => setRenameTarget(null)}
+        onCancel={closeRename}
         okText="重命名"
         cancelText="取消"
         okButtonProps={{
@@ -766,6 +787,15 @@ function findFolder(items: FolderNode[], path: string): FolderNode | undefined {
 function docMetaOf(doc: DocumentSummary): string {
   if (doc.kind === 'file') return doc.size === null ? '' : formatBytes(doc.size)
   return excerptText(doc)
+}
+
+function documentLocation(doc: DocumentSummary, currentFolder: string | null): string {
+  if (!doc.folder) return '知识库根'
+  if (!currentFolder) return doc.folder
+  if (doc.folder === currentFolder) return '当前目录'
+  return doc.folder.startsWith(`${currentFolder}/`)
+    ? doc.folder.slice(currentFolder.length + 1)
+    : doc.folder
 }
 
 /** 文档卡片右上角的格式/种类徽标 */
@@ -903,6 +933,7 @@ const FOLDER_MENU: MenuProps['items'] = [
 
 interface DocCardProps {
   doc: DocumentSummary
+  location: string
   onOpen: () => void
   onEdit: () => void
   onReplace: () => void
@@ -923,7 +954,7 @@ interface DocCardProps {
  * 打开入口），鼠标点卡片任意位置也能打开；动作按钮是它的兄弟。
  * 这与文件管理器（Finder / Google Drive）的卡片同构。
  */
-function DocCard({ doc, onOpen, onEdit, onReplace, onDelete }: DocCardProps) {
+function DocCard({ doc, location, onOpen, onEdit, onReplace, onDelete }: DocCardProps) {
   const { styles } = useStyles()
   const chip = chipOf(doc)
   const isFile = doc.kind === 'file'
@@ -947,6 +978,7 @@ function DocCard({ doc, onOpen, onEdit, onReplace, onDelete }: DocCardProps) {
             这里任何一个动作都不该顺带把文档打开 */}
         <span className={styles.cardActions} onClick={(event) => event.stopPropagation()}>
           <Button
+            className={styles.cardActionDirect}
             type="text"
             size="small"
             aria-label={`打开 ${doc.title}`}
@@ -958,6 +990,7 @@ function DocCard({ doc, onOpen, onEdit, onReplace, onDelete }: DocCardProps) {
           />
           {isFile && (
             <Button
+              className={styles.cardActionDirect}
               type="text"
               size="small"
               aria-label={`下载 ${doc.title}`}
@@ -968,6 +1001,7 @@ function DocCard({ doc, onOpen, onEdit, onReplace, onDelete }: DocCardProps) {
           )}
           {isEditable(doc) && (
             <Button
+              className={styles.cardActionDirect}
               type="text"
               size="small"
               aria-label={`编辑 ${doc.title}`}
@@ -980,6 +1014,7 @@ function DocCard({ doc, onOpen, onEdit, onReplace, onDelete }: DocCardProps) {
           )}
           {isFile && (
             <Button
+              className={styles.cardActionDirect}
               type="text"
               size="small"
               aria-label={`替换原件 ${doc.title}`}
@@ -991,6 +1026,7 @@ function DocCard({ doc, onOpen, onEdit, onReplace, onDelete }: DocCardProps) {
             />
           )}
           <Button
+            className={styles.cardActionDirect}
             type="text"
             size="small"
             aria-label={`删除 ${doc.title}`}
@@ -1000,9 +1036,43 @@ function DocCard({ doc, onOpen, onEdit, onReplace, onDelete }: DocCardProps) {
               onDelete()
             }}
           />
+          <Dropdown
+            trigger={['click']}
+            menu={{
+              items: [
+                { key: 'open', label: '打开', onClick: onOpen },
+                ...(isEditable(doc) ? [{ key: 'edit', label: '编辑', onClick: onEdit }] : []),
+                ...(isFile
+                  ? [
+                      {
+                        key: 'download',
+                        label: (
+                          <a href={api.documents.sourceUrl(doc.id, { download: true })}>下载原件</a>
+                        ),
+                      },
+                      { key: 'replace', label: '替换原件', onClick: onReplace },
+                    ]
+                  : []),
+                { type: 'divider' as const },
+                { key: 'remove', label: '删除', danger: true, onClick: onDelete },
+              ],
+            }}
+          >
+            <Button
+              className={styles.cardActionMore}
+              type="text"
+              size="small"
+              aria-label={`${doc.title} 的更多操作`}
+              icon={<Ellipsis size={16} />}
+              onClick={(event) => event.stopPropagation()}
+            />
+          </Dropdown>
         </span>
       </span>
-      <span className={styles.cardMeta}>{docMetaOf(doc)}</span>
+      <span className={styles.cardMeta} title={doc.folder ?? '知识库根'}>
+        {location}
+        {docMetaOf(doc) ? ` · ${docMetaOf(doc)}` : ''}
+      </span>
       <span className={styles.cardFoot}>
         <StatusBadge status={doc.status} showReady />
         <span className={styles.cardTime}>{doc.updatedAt ? formatDate(doc.updatedAt) : ''}</span>

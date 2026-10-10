@@ -45,6 +45,24 @@ describe('分块状态端点（M1-B）', () => {
      */
     expect([null, 0]).toContain(res.body.pending)
   })
+
+  it('软删除的笔记不再计入已收录分块与文档数', async () => {
+    const before = await client.get<{ total: number; documents: number }>('/api/maintenance/chunks')
+    const note = await client.post<{ id: string }>('/api/documents/notes', {
+      title: '待移入回收站的分块状态用例',
+      body: '这篇笔记有可生成分块的正文。',
+      tags: [],
+    })
+    const added = await client.get<{ total: number; documents: number }>('/api/maintenance/chunks')
+    expect(added.body.documents).toBe(before.body.documents + 1)
+    expect(added.body.total).toBeGreaterThan(before.body.total)
+
+    const deleted = await client.delete(`/api/documents/${note.body.id}`)
+    expect(deleted.status).toBe(200)
+    const after = await client.get<{ total: number; documents: number }>('/api/maintenance/chunks')
+    expect(after.body.documents).toBe(before.body.documents)
+    expect(after.body.total).toBe(before.body.total)
+  })
 })
 
 describe('补嵌入端点（M1-B）', () => {

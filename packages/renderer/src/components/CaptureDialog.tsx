@@ -28,6 +28,7 @@ import { FONT_SIZE } from '../theme/tokens'
 export interface CaptureDialogProps {
   open: boolean
   onClose: () => void
+  onAfterClose?: () => void
   onCaptured: (documentId: string) => void
   /** 初始页签。从「添加文档」菜单唤起时由菜单决定，用户少点一步 */
   initialTab?: 'url' | 'upload'
@@ -189,6 +190,7 @@ const useStyles = createStyles(({ css, token }) => ({
 export function CaptureDialog({
   open,
   onClose,
+  onAfterClose,
   onCaptured,
   initialTab,
   directory,
@@ -267,6 +269,7 @@ export function CaptureDialog({
     <Modal
       open={open}
       onCancel={close}
+      afterClose={onAfterClose}
       /* 落点进标题：从知识库页唤起时，对话框一眼能看出「收进哪里」 */
       title={folder ? `收进「${folder}」` : '收集内容'}
       width={540}

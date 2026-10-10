@@ -35,13 +35,14 @@ const useStyles = createStyles(({ css, token }) => ({
 }))
 
 export function UnsavedGuard() {
-  const { pending, resolve } = useUnsaved()
+  const { pending, isDirty, saveMode, saving, saveError, resolve } = useUnsaved()
   const { styles } = useStyles()
+  const auto = saveMode === 'auto'
 
   return (
     <Modal
       open={Boolean(pending)}
-      title="有改动还没保存"
+      title={auto && !isDirty ? '改动已自动保存' : '有改动还没保存'}
       closable={false}
       /**
        * `mask={{ closable: false }}` 而不是 `maskClosable={false}`。
@@ -57,18 +58,33 @@ export function UnsavedGuard() {
       keyboard={false}
       onCancel={() => resolve('cancel')}
       footer={[
-        <Button key="cancel" onClick={() => resolve('cancel')}>
+        <Button key="cancel" disabled={saving} onClick={() => resolve('cancel')}>
           继续编辑
         </Button>,
-        <Button key="discard" danger onClick={() => resolve('discard')}>
-          丢弃改动
-        </Button>,
-        <Button key="save" type="primary" onClick={() => resolve('save')}>
-          保存并离开
+        ...(!auto
+          ? [
+              <Button key="discard" danger disabled={saving} onClick={() => resolve('discard')}>
+                丢弃改动
+              </Button>,
+            ]
+          : []),
+        <Button key="save" type="primary" loading={saving} onClick={() => resolve('save')}>
+          {auto && !isDirty ? '离开' : '保存并离开'}
         </Button>,
       ]}
     >
-      <p className={styles.body}>离开前保存改动，或丢弃改动。</p>
+      <p className={styles.body}>
+        {auto
+          ? isDirty
+            ? '笔记正在自动保存。保存完成后才能离开。'
+            : '这次改动已经写入笔记，可以离开。'
+          : '离开前保存改动，或丢弃改动。'}
+      </p>
+      {saveError && (
+        <p role="alert" className={styles.body}>
+          {saveError}
+        </p>
+      )}
     </Modal>
   )
 }

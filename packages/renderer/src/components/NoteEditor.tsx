@@ -49,6 +49,11 @@ interface Props {
   onDirtyChange?: ((dirty: boolean) => void) | undefined
   /** 编辑区右侧的固定列（大纲）。透传给编辑器外壳的 bodySide */
   bodySide?: ReactNode
+  /** 新建笔记的一次性正文聚焦请求 */
+  focusOnReady?: boolean
+  onFocusReady?: () => void
+  /** 打开正文中的稳定 ID 内链，由面板负责导航守卫与返回位置 */
+  onOpenInternalNote?: (id: string) => void
 }
 
 export function NoteEditor({
@@ -57,12 +62,19 @@ export function NoteEditor({
   onAskAboutSelection,
   onDirtyChange,
   bodySide,
+  focusOnReady,
+  onFocusReady,
+  onOpenInternalNote,
 }: Props) {
   const { styles: contentStyles } = useContentStyles()
   const { styles: themeVars } = useEditorThemeVars()
   const { message } = App.useApp()
   const queryClient = useQueryClient()
   const { setDirty, setSave } = useUnsaved()
+  const registerAutoSave = useCallback(
+    (save: (() => Promise<boolean>) | null) => setSave(save, 'auto'),
+    [setSave],
+  )
 
   /**
    * 上报给宿主的脏标记。
@@ -160,6 +172,14 @@ export function NoteEditor({
     [queryClient],
   )
 
+  const searchNotes = useCallback(
+    async (query: string) => {
+      const result = await api.documents.findNotes(query)
+      return result.items.filter((item) => item.id !== doc.id)
+    },
+    [doc.id],
+  )
+
   return (
     <div className={themeVars.vars}>
       <MarkdownEditor
@@ -169,7 +189,11 @@ export function NoteEditor({
         contentClassName={contentStyles.content}
         onSave={onSave}
         onDirtyChange={reportDirty}
-        onSaveHandle={setSave}
+        onSaveHandle={registerAutoSave}
+        focusOnReady={focusOnReady}
+        onFocusReady={onFocusReady}
+        onOpenInternalNote={onOpenInternalNote}
+        searchNotes={searchNotes}
         flush
         onAskAboutSelection={(passage) => onAskAboutSelection?.(passage)}
         {...(bodySide !== undefined ? { bodySide } : {})}

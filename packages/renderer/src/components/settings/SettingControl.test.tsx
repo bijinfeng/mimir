@@ -169,4 +169,45 @@ describe('设置项的保存', () => {
 
     await unmount()
   })
+
+  it('S3 草稿在控件卸载后仍留在当前账号的内存中', async () => {
+    const entry: SettingEntry = {
+      ...BASE_ENTRY,
+      key: 'storage.s3.accessKey',
+      label: 'Access Key',
+      type: 'secret',
+      value: null,
+      configured: false,
+    }
+    const scope = 'account:draft-test'
+    const first = await render(
+      createElement(SettingControl, { entry, secret: true, draftScope: scope }),
+    )
+    await act(async () => typeInto(first.host.querySelector('input')!, 'unsaved-secret'))
+    await first.unmount()
+
+    const second = await render(
+      createElement(SettingControl, { entry, secret: true, draftScope: scope }),
+    )
+    expect(second.host.querySelector('input')?.value).toBe('unsaved-secret')
+    expect(second.host.querySelector('input')?.getAttribute('aria-label')).toBe('Access Key')
+    await second.unmount()
+  })
+
+  it('布尔配置开关使用配置项名称作为可访问名称', async () => {
+    const { host, unmount } = await render(
+      createElement(SettingControl, {
+        entry: {
+          ...BASE_ENTRY,
+          key: 'storage.s3.pathStyle',
+          label: '路径风格',
+          type: 'boolean',
+          value: false,
+          defaultValue: false,
+        },
+      }),
+    )
+    expect(host.querySelector('[role="switch"]')?.getAttribute('aria-label')).toBe('路径风格')
+    await unmount()
+  })
 })

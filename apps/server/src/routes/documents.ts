@@ -7,6 +7,7 @@ import {
   folderDeleteSchema,
   folderMoveSchema,
   noteCreateSchema,
+  noteLookupQuerySchema,
   noteUpdateSchema,
 } from '@mimir/shared'
 import { HttpError, parseInput } from '../lib/http.js'
@@ -14,6 +15,7 @@ import {
   countDocuments,
   createNote,
   deleteDocument,
+  findNotes,
   getDocument,
   listAllTags,
   listDocuments,
@@ -39,6 +41,11 @@ documentsRoute.get('/', async (c) => {
  * 必须注册在 `/:id` **之前**，否则 `/counts` 会被当成一个文档 id。
  */
 documentsRoute.get('/counts', async (c) => c.json(await countDocuments()))
+
+documentsRoute.get('/notes/lookup', async (c) => {
+  const query = await parseInput(c, 'query', noteLookupQuerySchema)
+  return c.json({ items: await findNotes(query.q) })
+})
 
 /** 新建笔记。走这条路径创建的一定是 note：其余类型都由抓取流程产生。 */
 documentsRoute.post('/notes', async (c) => {
