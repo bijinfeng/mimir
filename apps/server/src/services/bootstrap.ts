@@ -93,16 +93,18 @@ export function decideOwnerAction(input: {
 /**
  * 确保所有者账号存在并与环境变量一致。启动时调用一次。
  *
- * 失败不阻断启动：账号没准备好时用户仍可走首次注册，
- * 而没有服务可访问时连手工注册都做不了。
+ * 常规部署失败不阻断启动：账号没准备好时用户仍可走首次注册。
+ * fnOS 由安装向导指定唯一所有者，失败时必须在监听网关前关闭。
  */
-export async function ensureOwnerAccount(): Promise<OwnerBootstrapResult> {
+export async function ensureOwnerAccount(
+  options: { failClosed?: boolean } = {},
+): Promise<OwnerBootstrapResult> {
   if (!isOwnerConfigured()) return { skipped: 'not-configured' }
 
   // 测试有自己的账号准备流程（test/helpers.ts 的 getAuthCookie，它先试登录
   // 再试注册）。这里插一脚会先占掉「唯一用户」的名额，让那些测试的注册
   // 分支永远走不到——而那个分支正是被测对象之一。
-  if (env.nodeEnv === 'test') return { skipped: 'test' }
+  if (env.nodeEnv === 'test' && !options.failClosed) return { skipped: 'test' }
 
   try {
     const [existing] = await db.select({ id: user.id, email: user.email }).from(user).limit(1)
@@ -134,6 +136,9 @@ export async function ensureOwnerAccount(): Promise<OwnerBootstrapResult> {
     })
 
     if (action.kind === 'skip') {
+      if (options.failClosed) {
+        throw new Error('配置的 OWNER_EMAIL 与数据库中的账号不一致')
+      }
       // 提示要具体到「怎么改过来」，否则用户只知道没生效
       console.warn(
         `[owner] 库里已有账号 ${action.existingEmail}，与 OWNER_EMAIL（${env.ownerEmail}）不同，未改动。\n` +
@@ -183,6 +188,7 @@ export async function ensureOwnerAccount(): Promise<OwnerBootstrapResult> {
     console.log(`[owner] OWNER_PASSWORD 与库里的不一致，已同步密码：${env.ownerEmail}`)
     return { passwordUpdated: true, email: env.ownerEmail }
   } catch (error) {
+    if (options.failClosed) throw error
     // 不抛出：建号失败不该让服务起不来，用户仍可手工注册
     console.warn(
       '[owner] 准备所有者账号失败，可以改用首次注册：',

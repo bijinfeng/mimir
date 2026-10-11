@@ -4,6 +4,7 @@ import { logger } from 'hono/logger'
 import { auth } from './auth.js'
 import { env } from './env.js'
 import { errorBody, HttpError } from './lib/http.js'
+import { fnosAuthRequest, fnosAuthResponse } from './lib/fnos-gateway.js'
 import { requireAuth } from './middleware/auth.js'
 import { captureRoute } from './routes/capture.js'
 import { avatarRoute } from './routes/avatar.js'
@@ -27,6 +28,13 @@ import { searchRoute } from './routes/search.js'
 import { statsRoute } from './routes/stats.js'
 import type { AppEnv } from './types.js'
 
+async function handleAuth(request: Request): Promise<Response> {
+  if (!env.fnosSocket) return auth.handler(request)
+  const gatewayRequest = fnosAuthRequest(request)
+  if (!gatewayRequest) return new Response('Invalid origin', { status: 403 })
+  return fnosAuthResponse(await auth.handler(gatewayRequest), gatewayRequest)
+}
+
 export function createApp() {
   const app = new Hono<AppEnv>()
 
@@ -35,17 +43,19 @@ export function createApp() {
   }
 
   // 开发时前端在 :5173，正式部署由同一个服务提供静态资源，跨源只在开发期存在
-  app.use(
-    '/api/*',
-    cors({
-      origin: env.webOrigin,
-      credentials: true,
-      allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowHeaders: ['Content-Type'],
-      // 原件的 Range 请求要能读到这几个响应头，否则前端拿不到长度与类型
-      exposeHeaders: ['Content-Length', 'Content-Range', 'Accept-Ranges', 'Content-Disposition'],
-    }),
-  )
+  if (!env.fnosSocket) {
+    app.use(
+      '/api/*',
+      cors({
+        origin: env.webOrigin,
+        credentials: true,
+        allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        allowHeaders: ['Content-Type'],
+        // 原件的 Range 请求要能读到这几个响应头，否则前端拿不到长度与类型
+        exposeHeaders: ['Content-Length', 'Content-Range', 'Accept-Ranges', 'Content-Disposition'],
+      }),
+    )
+  }
 
   /** 不需要登录：健康检查 + 认证端点本身 */
   app.get('/healthz', (c) => c.json({ ok: true }))
@@ -76,11 +86,11 @@ export function createApp() {
       const payload = await localSessionPayload()
       if (payload) return c.json(payload)
     }
-    return auth.handler(c.req.raw)
+    return handleAuth(c.req.raw)
   })
 
   // 通配放最后：它会接走 /api/auth/ 下的其余一切
-  app.on(['GET', 'POST'], '/api/auth/*', (c) => auth.handler(c.req.raw))
+  app.on(['GET', 'POST'], '/api/auth/*', (c) => handleAuth(c.req.raw))
 
   /** 以下全部需要登录 */
   const api = new Hono<AppEnv>()

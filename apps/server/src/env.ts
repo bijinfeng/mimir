@@ -86,6 +86,8 @@ export const dbDriver: 'postgres' | 'sqlite' = /^postgres(ql)?:\/\//.test(rawDat
 
 /** SQLite 的库文件路径。相对路径相对仓库根（与 DATA_DIR 同一条解析规则） */
 const databaseFile = dbDriver === 'sqlite' ? resolvePath(rawDatabaseUrl.replace(/^file:/, '')) : ''
+const fnosSocket = process.env.MIMIR_FNOS_SOCKET ?? ''
+const fnosBasePath = process.env.MIMIR_BASE_PATH ?? '/app/mimir'
 
 export const env = {
   nodeEnv: process.env.NODE_ENV ?? 'development',
@@ -101,6 +103,9 @@ export const env = {
   authSecret: required('AUTH_SECRET', 'dev-only-insecure-secret-change-me'),
   webOrigin: process.env.WEB_ORIGIN ?? 'http://localhost:5173',
   serverUrl: process.env.SERVER_URL ?? 'http://localhost:3000',
+  /** fnOS 统一网关只通过私有 Unix Socket 进入；其他部署仍监听 TCP。 */
+  fnosSocket,
+  fnosBasePath,
   repoRoot,
   /**
    * 数据根：本地存储后端的根，也是三类文件的共同父目录。
@@ -213,4 +218,14 @@ if (env.localMode && !env.localToken) {
     '本地模式（MIMIR_LOCAL_MODE=1）必须同时设置 MIMIR_LOCAL_TOKEN。' +
       '它由桌面宿主每次启动随机生成并注入（apps/desktop/src/host.ts），不要手工填。',
   )
+}
+
+if (env.fnosSocket) {
+  if (!isAbsolute(env.fnosSocket)) throw new Error('MIMIR_FNOS_SOCKET 必须是绝对路径')
+  if (env.fnosBasePath !== '/app/mimir') {
+    throw new Error('fnOS 网关路径必须是 /app/mimir')
+  }
+  if (env.localMode) throw new Error('fnOS 模式不能启用桌面本地免登录模式')
+  if (dbDriver !== 'sqlite') throw new Error('fnOS 模式必须使用 SQLite 数据库')
+  if (!isOwnerConfigured()) throw new Error('fnOS 模式必须配置 OWNER_EMAIL 和 OWNER_PASSWORD')
 }

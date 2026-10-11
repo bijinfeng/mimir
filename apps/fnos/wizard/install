@@ -1,0 +1,25 @@
+[
+  {
+    "stepTitle": "设置 Mimir 所有者",
+    "items": [
+      {
+        "type": "text",
+        "field": "wizard_owner_email",
+        "label": "邮箱",
+        "rules": [
+          { "required": true, "message": "请输入所有者邮箱" },
+          { "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$", "message": "请输入有效邮箱" }
+        ]
+      },
+      {
+        "type": "password",
+        "field": "wizard_owner_password",
+        "label": "密码（至少 8 位）",
+        "rules": [
+          { "required": true, "message": "请输入密码" },
+          { "min": 8, "message": "密码至少 8 位" }
+        ]
+      }
+    ]
+  }
+]

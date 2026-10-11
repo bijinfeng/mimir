@@ -15,7 +15,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     const session = await api.auth.session()
 
     if (!session && location.pathname !== '/login') {
-      throw redirect({ to: '/login', search: { redirect: location.href } })
+      throw redirect({ to: '/login', search: { redirect: location.publicHref } })
     }
     if (session && location.pathname === '/login') {
       throw redirect({ to: '/docs', search: { scope: 'all' } })

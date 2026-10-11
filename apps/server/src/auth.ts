@@ -25,7 +25,9 @@ export const auth = betterAuth({
   }),
 
   secret: env.authSecret,
-  baseURL: env.serverUrl,
+  // fnOS has no single configured public host: users open the NAS by IP,
+  // hostname or HTTPS domain. Its private socket request supplies the host.
+  baseURL: env.fnosSocket ? undefined : env.serverUrl,
   basePath: '/api/auth',
 
   emailAndPassword: {
@@ -76,7 +78,7 @@ export const auth = betterAuth({
   },
 
   // 前后端分端口开发时，跨源请求需要被信任
-  trustedOrigins: [env.webOrigin],
+  trustedOrigins: env.fnosSocket ? [] : [env.webOrigin],
 
   databaseHooks: {
     user: {
@@ -138,9 +140,11 @@ export const auth = betterAuth({
     defaultCookieAttributes: {
       sameSite: 'lax',
       httpOnly: true,
-      // 通过 HTTPS 反代部署时自动升级为 secure
-      secure: env.nodeEnv === 'production',
+      // 既有生产部署保持 Secure；fnOS 由网关响应适配按浏览器协议设置
+      secure: env.fnosSocket ? false : env.nodeEnv === 'production',
+      ...(env.fnosSocket ? { path: env.fnosBasePath } : {}),
     },
+    ...(env.fnosSocket ? { useSecureCookies: false } : {}),
   },
 })
 

@@ -15,6 +15,10 @@ export default defineConfig({
      * 全局打开，正常模式的断言会跟着变味。所以它有自己的配置与进程：
      * `vitest.local.config.ts`，由 `pnpm test` 接着跑。
      */
-    exclude: [...configDefaults.exclude, 'src/test/local-mode.test.ts'],
+    exclude: [
+      ...configDefaults.exclude,
+      'src/test/local-mode.test.ts',
+      'src/test/fnos-mode.test.ts',
+    ],
   },
 })

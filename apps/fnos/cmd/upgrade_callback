@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+# Database migrations run when the server starts, after a backup can be taken.
+exit 0

@@ -40,13 +40,14 @@
  * 于是从某些页面打开 PDF 时 cmap 会 404——而那种失效只在特定入口出现，
  * 最难查。绝对路径没有这个问题。
  *
- * 一条部署前提：**应用挂在域名根**。挂在子路径（`example.com/mimir/`）时
- * 这些绝对路径要跟着 base 走——那时改成从 `import.meta.env.BASE_URL` 派生。
- * 目前 compose 与桌面端都挂在根，所以先不做那层（做了也没有场景能验证它）。
+ * fnOS 的同源网关将应用挂在子路径，目录名仍固定，前缀由 Vite 构建时注入。
  */
 
+const viteBaseUrl = (import.meta as ImportMeta & { env: { BASE_URL: string } }).env.BASE_URL
+const basePath = viteBaseUrl.startsWith('/') ? viteBaseUrl.replace(/\/+$/, '') : ''
+
 export const PDFJS_ASSETS = {
-  cmaps: '/pdfjs/cmaps/',
-  standardFonts: '/pdfjs/standard_fonts/',
-  wasm: '/pdfjs/wasm/',
+  cmaps: `${basePath}/pdfjs/cmaps/`,
+  standardFonts: `${basePath}/pdfjs/standard_fonts/`,
+  wasm: `${basePath}/pdfjs/wasm/`,
 } as const

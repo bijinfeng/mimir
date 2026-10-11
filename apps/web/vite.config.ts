@@ -26,8 +26,10 @@ export default defineConfig(({ mode }) => {
    */
   const env = { ...loadEnv(mode, repoRoot, ''), ...process.env }
   const apiTarget = env.VITE_API_TARGET ?? `http://localhost:${env.PORT ?? 3000}`
+  const base = env.MIMIR_BASE_PATH ?? '/'
 
   return {
+    base,
     plugins: [
       ...rendererPlugins({
         publicDir: resolve(import.meta.dirname, 'public'),

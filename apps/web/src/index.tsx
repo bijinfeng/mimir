@@ -16,7 +16,7 @@ const container = document.getElementById('root')
 if (!container) throw new Error('找不到 #root 挂载点')
 
 createApp(createRoot(container), {
-  router: buildRouter(routeTree),
+  router: buildRouter(routeTree, import.meta.env.BASE_URL),
   // 浏览器没有窗口可控制、也没有桥——这两件事由判别联合表达，
   // 不是「传 undefined」（见 @mimir/renderer 的 platform.tsx）
   platform: { kind: 'browser' },

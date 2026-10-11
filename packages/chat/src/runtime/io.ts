@@ -69,7 +69,7 @@ export interface ChatIo {
   /** 「管理模型」菜单项。宿主决定去哪（主视图是 /settings 的 models 分区） */
   onManageModels(): void
   /**
-   * 流式问答的地址。默认 `DEFAULT_CHAT_URL`（`/api/chat`）。
+   * 流式问答的地址。默认 `DEFAULT_CHAT_URL`（在构建的公开路径下）。
    *
    * 它是**固定**的：会话 id 走请求体（`forwardedProps`），不进 URL——
    * 地址一变，AG-UI 的 agent 就要重建，而重建会切断正在进行的流
@@ -84,4 +84,6 @@ export interface ChatIo {
  * 导出它是为了宿主侧能引用同一个字符串——两处各写一份 `/api/chat` 的
  * 症状是「改了服务端路由、前端还指着旧的」，而那种错误只在运行时出现。
  */
-export const DEFAULT_CHAT_URL = '/api/chat'
+const viteBaseUrl = (import.meta as ImportMeta & { env: { BASE_URL: string } }).env.BASE_URL
+const basePath = viteBaseUrl.startsWith('/') ? viteBaseUrl.replace(/\/+$/, '') : ''
+export const DEFAULT_CHAT_URL = `${basePath}/api/chat`

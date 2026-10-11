@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { Hono } from 'hono'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { mountStatic } from '../lib/static'
+import { stripFnosPrefix } from '../lib/fnos-gateway'
 
 describe('生产静态资源', () => {
   let webDist: string
@@ -49,5 +50,18 @@ describe('生产静态资源', () => {
     const response = await app.request('/assets/index-oldhash1.js')
     expect(response.status).toBe(404)
     expect(await response.text()).not.toContain('id="root"')
+  })
+
+  it('fnOS 网关前缀映射静态资源和深路由，拒绝前缀外路径', async () => {
+    const asset = stripFnosPrefix(new Request('http://nas.test/app/mimir/assets/index-abc12345.js'))
+    expect(asset).not.toBeNull()
+    expect(await (await app.fetch(asset!)).text()).toContain('ready = true')
+
+    const deepRoute = stripFnosPrefix(new Request('http://nas.test/app/mimir/docs/42'))
+    expect(deepRoute).not.toBeNull()
+    expect(await (await app.fetch(deepRoute!)).text()).toContain('id="root"')
+
+    expect(stripFnosPrefix(new Request('http://nas.test/assets/index-abc12345.js'))).toBeNull()
+    expect(stripFnosPrefix(new Request('http://nas.test/app/mimir-evil/docs'))).toBeNull()
   })
 })

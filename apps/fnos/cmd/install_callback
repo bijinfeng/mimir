@@ -1,0 +1,9 @@
+#!/bin/sh
+set -eu
+export PATH=/var/apps/nodejs_v22/target/bin:$PATH
+node_bin=${FNOS_NODE_BIN:-/var/apps/nodejs_v22/target/bin/node}
+if [ ! -x "$node_bin" ]; then
+  printf '%s\n' 'Mimir 需要 nodejs_v22 运行时。' > "${TRIM_TEMP_LOGFILE:-/dev/stderr}"
+  exit 1
+fi
+exec "$node_bin" "$TRIM_APPDEST/install.mjs"

@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+# Persistent etc/ and var/ are retained by fnOS. Never rewrite owner credentials.
+exit 0

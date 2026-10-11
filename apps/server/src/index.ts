@@ -1,8 +1,9 @@
 import { pathToFileURL } from 'node:url'
-import { serve } from '@hono/node-server'
+import { createAdaptorServer, serve } from '@hono/node-server'
 import type { Hono } from 'hono'
 import { boot } from './boot.js'
 import { dbDriver, env } from './env.js'
+import { stripFnosPrefix } from './lib/fnos-gateway.js'
 import type { AppEnv } from './types.js'
 
 export { closeDb } from './db/client.js'
@@ -39,8 +40,31 @@ export async function startServer(options: { hostname?: string } = {}): Promise<
   if (env.localMode && hostname !== '127.0.0.1' && hostname !== 'localhost') {
     throw new Error(`本地模式只允许监听回环地址，收到：${hostname}`)
   }
+  if (env.fnosSocket && options.hostname) {
+    throw new Error('fnOS 模式只允许 Unix Socket，不接受 TCP 监听地址')
+  }
 
   const app = await boot()
+
+  if (env.fnosSocket) {
+    const server = createAdaptorServer({
+      fetch: (request) => {
+        const mapped = stripFnosPrefix(request)
+        return mapped ? app.fetch(mapped) : new Response('Not Found', { status: 404 })
+      },
+    })
+    await new Promise<void>((resolve, reject) => {
+      server.once('error', reject)
+      server.listen(env.fnosSocket, () => {
+        server.off('error', reject)
+        resolve()
+      })
+    })
+    console.log(`mimir fnOS 网关监听 Unix Socket ${env.fnosSocket}（${env.fnosBasePath}）`)
+    console.log(`  数据目录 ${env.dataDir}`)
+    console.log(`  数据库 sqlite（${env.databaseFile}）`)
+    return { server, app }
+  }
 
   const server = serve({ fetch: app.fetch, port: env.port, hostname }, (info) => {
     console.log(`mimir server 监听 http://localhost:${info.port}`)

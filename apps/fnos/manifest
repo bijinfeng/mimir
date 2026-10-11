@@ -1,0 +1,13 @@
+appname=mimir
+version=0.1.0
+display_name=Mimir
+desc=个人知识库：笔记、资料收集与带引用的 AI 问答
+source=thirdparty
+platform=x86
+maintainer=Mimir
+desktop_uidir=ui
+desktop_applaunchname=mimir.main
+ctl_stop=true
+checkport=false
+disable_authorization_path=true
+install_dep_apps=nodejs_v22

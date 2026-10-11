@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+# Leave persistent user data to fnOS's uninstall choice.
+exit 0

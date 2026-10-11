@@ -32,7 +32,10 @@ export async function boot() {
   if (dbDriver === 'sqlite') {
     await runMigrations()
   }
-  await ensureOwnerAccount()
+  const owner = await ensureOwnerAccount({ failClosed: Boolean(env.fnosSocket) })
+  if (env.fnosSocket && owner.skipped) {
+    throw new Error('fnOS 所有者账号与数据库中已有账号不一致，拒绝启动')
+  }
   await ensureDefaultContent()
 
   return createApp()

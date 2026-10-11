@@ -34,6 +34,10 @@ packages/renderer/src/routeTree.gen.ts
 apps/desktop/release/
 apps/desktop/server-deploy/
 
+# fnOS staging and installable package
+apps/fnos/staging/
+apps/fnos/release/
+
 # 运行时数据：vault（自己的 md 笔记）、raw（抓取的原文件）、数据库
 # 这些是真相数据，不进 git；由备份流程负责
 data/

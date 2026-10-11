@@ -8,7 +8,7 @@
     "dev": "pnpm -r --parallel --stream dev",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test && node --test scripts/desktop-dev-process.test.mjs",
+    "test": "pnpm -r test && node --test scripts/desktop-dev-process.test.mjs scripts/fnos-package.test.mjs",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "format": "oxfmt",
@@ -25,6 +25,7 @@
     "desktop:dev": "node scripts/desktop-dev.mjs",
     "desktop:start": "pnpm --filter @mimir/server build && pnpm --filter @mimir/desktop build && pnpm --filter @mimir/desktop start",
     "desktop:build": "pnpm --filter @mimir/server build && pnpm --filter @mimir/desktop build && pnpm --filter @mimir/server deploy --prod apps/desktop/server-deploy && pnpm --filter @mimir/desktop package",
+    "fnos:build": "node scripts/build-fnos.mjs",
     "lint:styles": "node scripts/check-style-backticks.mjs"
   },
   "devDependencies": {

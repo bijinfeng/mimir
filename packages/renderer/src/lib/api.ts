@@ -31,6 +31,7 @@ import type {
   UpdateSettingsResponse,
   UsageStats,
 } from '@mimir/shared'
+import { appBasePath, appPath, serverAssetPath } from './app-path'
 
 /**
  * 会话。`image` 是**带版本号的头像 URL**（`/api/avatar?v=...`）——
@@ -44,8 +45,8 @@ export interface AuthSession {
  * 类型安全的 API 客户端——**前端唯一的服务端访问口**（`.trellis/spec/project/architecture.md` §14）。
  *
  * 四点约定：
- *  1. 开发时经 Vite 代理打到后端（见 vite.config.ts），生产由同一个服务提供，
- *     所以默认 baseUrl 是空的、全部同源。
+ *  1. 开发时经 Vite 代理打到后端（见 vite.config.ts），生产由同一个服务提供；
+ *     默认请求前缀来自构建的 BASE_URL，根路径部署时为空。
  *  2. 一律 credentials: 'include'——鉴权走 cookie，不是 header。
  *  3. 服务端的错误外壳是 { error: { code, message } }，这里统一抛 ApiRequestError，
  *     调用方只需要 catch 一种形状。
@@ -81,8 +82,8 @@ export class ApiRequestError extends Error {
 }
 
 /**
- * 当前生效的传输配置。默认同源——与浏览器部署、桌面壳（窗口加载宿主地址）
- * 的形态一致；需要指向别的宿主时在应用启动最前面 configureApiTransport()。
+ * 当前生效的传输配置。默认走当前应用路径下的同源请求；需要指向别的宿主时
+ * 在应用启动最前面 configureApiTransport()。
  *
  * 为什么是「单例 + 模块级配置」而不是 createApi() 工厂：实测 TypeScript 7
  * （本项目的编译器）对「泛型函数作为参数传入、返回大对象字面量」的工厂模式
@@ -99,7 +100,7 @@ export function configureApiTransport(config: RpcConfig): void {
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const doFetch = transport.fetchImpl ?? fetch
-  const res = await doFetch(`${transport.baseUrl ?? ''}${path}`, {
+  const res = await doFetch(`${transport.baseUrl ?? appBasePath}${path}`, {
     ...init,
     credentials: 'include',
     headers: {
@@ -135,7 +136,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
  */
 async function sendMultipart<T>(path: string, method: 'POST' | 'PUT', body: FormData): Promise<T> {
   const doFetch = transport.fetchImpl ?? fetch
-  const res = await doFetch(`${transport.baseUrl ?? ''}${path}`, {
+  const res = await doFetch(`${transport.baseUrl ?? appBasePath}${path}`, {
     method,
     credentials: 'include',
     body,
@@ -291,8 +292,8 @@ export const api = {
      * 鉴权靠 cookie，而浏览器发同源请求时会带上它。
      */
     sourceUrl(id: string, options: { download?: boolean } = {}) {
-      const base = `/api/documents/${encodeURIComponent(id)}/file`
-      return options.download ? `${base}?download=1` : base
+      const url = appPath(`/api/documents/${encodeURIComponent(id)}/file`)
+      return options.download ? `${url}?download=1` : url
     },
   },
 
@@ -369,6 +370,9 @@ export const api = {
   export: {
     stats() {
       return request<ExportStats>('/api/export/stats')
+    },
+    url(format: 'markdown' | 'json') {
+      return appPath(`/api/export/${format}`)
     },
   },
 
@@ -580,7 +584,13 @@ export const api = {
       const body = new FormData()
       body.append('file', file)
 
-      const res = await fetch('/api/avatar', { method: 'POST', credentials: 'include', body })
+      const doFetch = transport.fetchImpl ?? fetch
+      const res = await doFetch(`${transport.baseUrl ?? appBasePath}/api/avatar`, {
+        method: 'POST',
+        credentials: 'include',
+        body,
+        headers: { ...transport.headers },
+      })
 
       const text = await res.text()
       const parsed: unknown = text ? JSON.parse(text) : null
@@ -594,7 +604,8 @@ export const api = {
         )
       }
 
-      return parsed as { image: string; mime: string; bytes: number }
+      const uploaded = parsed as { image: string; mime: string; bytes: number }
+      return { ...uploaded, image: serverAssetPath(uploaded.image) ?? uploaded.image }
     },
     remove() {
       return request<{ ok: boolean }>('/api/avatar', { method: 'DELETE' })
@@ -649,12 +660,16 @@ export const api = {
         body: '{}',
       })
       // 整页重载会清掉内存里的一切（查询缓存、草稿、历史）
-      window.location.href = '/login'
+      window.location.href = appPath('/login')
     },
     /** 未登录时返回 null，而不是抛错——它用于路由守卫判断 */
     async session() {
       try {
-        return await request<AuthSession>('/api/auth/get-session')
+        const session = await request<AuthSession>('/api/auth/get-session')
+        return {
+          ...session,
+          user: { ...session.user, image: serverAssetPath(session.user.image) },
+        }
       } catch (error) {
         if (error instanceof ApiRequestError && error.status === 401) return null
         throw error

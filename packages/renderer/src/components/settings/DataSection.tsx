@@ -66,7 +66,7 @@ export function DataSection() {
               onClick={() => {
                 // 走浏览器的原生下载而不是 fetch+blob：导出可能有几十 MB，
                 // 原生下载能进下载管理器、可续传
-                window.location.href = '/api/export/markdown'
+                window.location.href = api.export.url('markdown')
               }}
             >
               导出文档与附件
@@ -74,7 +74,7 @@ export function DataSection() {
             <Button
               icon={<Download size={16} />}
               onClick={() => {
-                window.location.href = '/api/export/json'
+                window.location.href = api.export.url('json')
               }}
             >
               导出完整记录
