@@ -218,6 +218,7 @@ export interface ComposerProps {
   /** 深入 = 用推理角色回答（随消息的 runConfig 走） */
   deepReasoning: boolean
   onDeepReasoningChange: (deep: boolean) => void
+  focusOnMount?: boolean
   io: ChatIo
   status: ChatComposerStatus
 }
@@ -227,6 +228,7 @@ export function Composer({
   onContextDocumentChange,
   deepReasoning,
   onDeepReasoningChange,
+  focusOnMount,
   io,
   status,
 }: ComposerProps) {
@@ -260,6 +262,7 @@ export function Composer({
       <div className={styles.inner}>
         <ComposerPrimitive.Root className={styles.box}>
           <ComposerPrimitive.Input
+            autoFocus={focusOnMount}
             /* 3 行起、到 8 行封顶（Codex 式，既有决策）。
                react-textarea-autosize 的 props 直接透传 */
             minRows={3}

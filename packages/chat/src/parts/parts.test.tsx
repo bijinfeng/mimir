@@ -51,6 +51,13 @@ describe('TraceDisclosure', () => {
     expect(html).toContain('3')
   })
 
+  it('只检索回答不暗示调用模型', () => {
+    const html = renderToString(createElement(TraceDisclosure, { trace, searchOnly: true }))
+    expect(html).toContain('检索 2 轮')
+    expect(html).not.toContain('思考')
+    expect(html).not.toContain('调用')
+  })
+
   it('live 时摘要里是客户端的秒数而不是服务端的毫秒', () => {
     const html = renderToString(createElement(TraceDisclosure, { trace, live: true }))
     /* 0s 起算的客户端钟：服务端那个 4210ms 在这时不该出现 */

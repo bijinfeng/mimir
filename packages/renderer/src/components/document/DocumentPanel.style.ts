@@ -55,17 +55,17 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     }
   `,
   noteHeader: css`
-    --document-title-flex: 1 1 auto;
-    --document-title-max-width: none;
-    --document-title-size: ${FONT_SIZE.pageTitle}px;
+    --document-title-size: ${FONT_SIZE.item}px;
+    --document-title-weight: 500;
     gap: 10px;
+    padding-inline: 10px;
 
     @media (max-width: 600px) {
       gap: 4px;
     }
   `,
   /**
-   * 文档标题。文件用原有 16px，笔记从头部变量读取 19px 与弹性宽度。
+   * 文档标题。文件用原有 16px；笔记用克制的单行文件名样式。
    *
    * ## 两个坑叠在一起，都静默
    *
@@ -80,19 +80,19 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
    * 原先渲染成裸 `<h1>`，于是 `&&.ant-typography` 匹配不到它，字号回落到
    * 浏览器默认的 2em = **28px**——一个 44px 的头部里塞着 28px 的字，看起来
    * 就是「挤在一起且很丑」（用户的原话）。修法是**两个分支都用
-   * `Typography.Title`**：一个元素类型、一条样式路径，不存在「哪条规则
-   * 匹配不到」这种问题。
+   * `Typography.Title`**：展示态一个元素类型、一条样式路径，不存在「哪条
+   * 规则匹配不到」这种问题。笔记编辑态单独使用 Input underlined。
    */
   headerTitle: css`
     &&.${prefixCls}-typography {
-      flex: var(--document-title-flex, none);
+      flex: none;
       min-width: 0;
-      max-width: var(--document-title-max-width, 40%);
+      max-width: 40%;
       margin: 0;
       font-size: var(--document-title-size, ${FONT_SIZE.section}px);
-      font-weight: 600;
+      font-weight: var(--document-title-weight, 600);
       line-height: 1.4;
-      letter-spacing: -0.005em;
+      letter-spacing: 0;
       color: ${token.colorText};
       /* 长标题省略而不是换行——换行会把 44px 的头部撑成两行 */
       overflow: hidden;
@@ -104,56 +104,63 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
         min-width: 0;
         max-width: none;
       }
+    }
+  `,
+  noteTitleGroup: css`
+    display: flex;
+    align-items: center;
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 55%;
 
-      /* 铅笔是低频入口：弱化成 tertiary（悬停标题时才亮） */
-      .${prefixCls}-typography-edit {
-        color: ${token.colorTextTertiary};
-      }
+    @media (max-width: 600px) {
+      flex: 1;
+      max-width: none;
+    }
+  `,
+  noteTitleText: css`
+    &&&.${prefixCls}-typography {
+      flex: 0 1 auto;
+      max-width: none;
+    }
+  `,
+  headerTitleEdit: css`
+    flex: none;
+    width: 24px;
+    min-width: 24px;
+    height: 24px;
+    padding: 0;
+    opacity: 0;
+    color: ${token.colorTextTertiary};
+    pointer-events: none;
+    transition: opacity 0.12s ease-out;
 
-      /*
-       * 就地改名（D-089）：编辑态要读作「**还是那行标题，只是可以打了**」。
-       *
-       * 三处 antd 默认值在这条无框单行头部里都突兀：32px 高比同排按钮高
-       * 8px（整行跳动）、蓝色 focus 框把视线从内容引到框上、8px 圆角宣告
-       * 它是另一个东西。
-       *
-       * ## 选择器必须写成**同元素**式，不能写成后代式
-       *
-       * antd 把 className 一起挂在编辑容器上（实测编辑容器的 classList
-       * 里就有 headerTitle 那个哈希类），所以将两个类写成**后代**关系的
-       * 选择器永远匹配不到——那个类的元素就是容器自己。这正是 .trellis/spec/renderer/frontend/document/pitfalls.md
-       * 记过的「树根样式写成后代式」同一个坑：规则静默失效，量到的还是
-       * antd 默认值。写成 &. 同元素才对。
-       *
-       * ## 长标题不换行（头部高度是硬约束）
-       *
-       * field-sizing: content 让宽度跟随内容，但它默认也管高度——
-       * 标题一长就换行成两行、把 44px 的头部撑高（实测 54px）。所以配
-       * white-space: nowrap 只长宽不长高，超出时由输入框自己横向滚。
-       */
-      &.${prefixCls}-typography-edit-content {
-        max-width: 60%;
-        display: flex;
-        align-items: center;
-        flex: none;
-        margin: 0;
-        inset-inline-start: 0;
-      }
+    .note-title-group:hover &,
+    .note-title-group:focus-within & {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    @media (hover: none) {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  `,
+  headerTitleInput: css`
+    &&.${prefixCls}-input {
+      flex: 0 1 auto;
+      width: auto;
+      min-width: 120px;
+      max-width: 55%;
+      height: 24px;
+      padding-inline: 0;
+      font-size: var(--document-title-size, ${FONT_SIZE.section}px);
+      font-weight: var(--document-title-weight, 600);
+      line-height: 1.4;
+      field-sizing: content;
 
-      &.${prefixCls}-typography-edit-content textarea {
-        height: 28px;
-        min-height: 0;
-        min-width: 120px;
-        padding: 0 8px;
-        line-height: 26px;
-        border: 1px solid transparent;
-        border-radius: 6px;
-        background: ${token.colorFillTertiary};
-        box-shadow: none;
-        resize: none;
-        white-space: nowrap;
-        overflow-x: auto;
-        field-sizing: content;
+      @media (max-width: 600px) {
+        flex: 1;
+        max-width: none;
       }
     }
   `,

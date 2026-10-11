@@ -271,7 +271,7 @@ export function CaptureDialog({
       onCancel={close}
       afterClose={onAfterClose}
       /* 落点进标题：从知识库页唤起时，对话框一眼能看出「收进哪里」 */
-      title={folder ? `收进「${folder}」` : '收集内容'}
+      title={folder ? `收进「${folder}」` : '收进知识库根'}
       width={540}
       destroyOnHidden
       footer={

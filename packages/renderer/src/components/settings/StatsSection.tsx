@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
 import { Skeleton, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { api } from '../../lib/api'
@@ -116,7 +117,16 @@ export function StatsSection() {
   if (data.totals.calls === 0 && data.totals.unknownCount === 0) {
     return (
       <Panel title="用量概览">
-        <div className={statsStyles.empty}>还没有模型调用记录。</div>
+        <div className={statsStyles.empty}>
+          还没有模型调用记录。配置模型后，在对话中提问即可查看用量。
+          <Link
+            to="/settings"
+            search={{ scope: 'all', section: 'models' }}
+            className={statsStyles.emptyLink}
+          >
+            前往模型设置
+          </Link>
+        </div>
       </Panel>
     )
   }

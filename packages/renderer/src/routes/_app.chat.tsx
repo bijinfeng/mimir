@@ -134,6 +134,7 @@ function ChatRoute() {
         key={panelKey}
         conversationId={search.id}
         draft={askDraft}
+        focusComposer={!search.id}
         onOpenCitation={openCitation}
         onOpenNote={(noteId) => openDocument(noteId, 'all')}
         io={io}

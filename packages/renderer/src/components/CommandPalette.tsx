@@ -413,6 +413,13 @@ function PaletteBody({
     ] satisfies PaletteItem[]
   ).filter((item) => !value.trim() || matches(item, value))
 
+  const searchHits = searchQuery.data?.hits ?? []
+  const hitTotals = new Map<string, number>()
+  const hitOrdinals = new Map<string, number>()
+  for (const hit of searchHits) {
+    hitTotals.set(hit.documentId, (hitTotals.get(hit.documentId) ?? 0) + 1)
+  }
+
   const documents: PaletteItem[] = !value.trim()
     ? (recentQuery.data ?? [])
         .filter((doc) => doc.kind === 'note')
@@ -424,14 +431,19 @@ function PaletteBody({
           sub: doc.folder ?? '知识库根',
           run: () => onOpenRecent(doc.id, doc.folder ? `folder:${doc.folder}` : 'all'),
         }))
-    : (searchQuery.data?.hits ?? []).map((hit, index) => ({
-        type: 'document',
-        key: `${hit.documentId}-${hit.snippet.start}-${hit.snippet.end}-${index}`,
-        icon: <FileText size={16} />,
-        title: hit.title,
-        sub: hit.snippet.text,
-        run: () => onOpenSearchHit(hit),
-      }))
+    : searchHits.map((hit, index) => {
+        const ordinal = (hitOrdinals.get(hit.documentId) ?? 0) + 1
+        hitOrdinals.set(hit.documentId, ordinal)
+        return {
+          type: 'document',
+          key: `${hit.documentId}-${hit.snippet.start}-${hit.snippet.end}-${index}`,
+          icon: <FileText size={16} />,
+          title:
+            (hitTotals.get(hit.documentId) ?? 0) > 1 ? `${hit.title} · 命中 ${ordinal}` : hit.title,
+          sub: hit.snippet.text,
+          run: () => onOpenSearchHit(hit),
+        }
+      })
 
   const documentsFirst = !value.trim()
   const items = documentsFirst ? [...documents, ...commands] : [...commands, ...documents]
@@ -566,12 +578,6 @@ function PaletteBody({
                 {documentSection}
               </>
             )}
-          </div>
-        )}
-
-        {question && items.length === 0 && !searchQuery.isFetching && (
-          <div className={styles.sectionLabel}>
-            没有匹配的命令{shouldSearch ? '或文档' : '；输入至少两个字搜索文档'}
           </div>
         )}
 

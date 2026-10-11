@@ -12,7 +12,7 @@ import {
   Tooltip,
   Typography,
 } from 'antd'
-import { ArrowLeft, Download, Ellipsis, MessageCircle } from 'lucide-react'
+import { ArrowLeft, Download, Ellipsis, MessageCircle, Pencil } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { StatusBadge } from './DocumentBadges'
 import { NoteEditor } from './NoteEditor'
@@ -276,8 +276,7 @@ export function DocumentPanel({
    *
    * 真相在查询缓存里：改名走 `renameTitle`，成功后把新值写回缓存，
    * 于是标题与编辑器传下去的 `title` 都会跟着更新，不需要额外的本地 state。
-   * 用 antd 的 `Typography.Title editable` 做就地编辑，它自带
-   * 确认/取消与键盘行为，比手搓一个可编辑标题可靠。
+   * 展示态用 Typography.Title，编辑态用 Input underlined；改名仍走同一请求。
    */
   const renameTitle = useMutation({
     mutationFn: (next: string) => api.documents.update(documentId!, { title: next }),
@@ -698,7 +697,7 @@ export function DocumentPanel({
       <div className={styles.wrap}>
         {/*
         文件使用 Office 式单行头部（D-054）；笔记仍保留这一独立头部区域，
-        但由标题获得主要宽度和字重，返回与元信息退到次级。
+        标题用紧凑的文件名样式，返回与元信息退到次级。
         返回 · 标题 · 元信息 · 动作，四段放在 48px 里。原先它占三行（返回胶囊 / 28px 大标题 / 元信息行），
         约 150px 的铬条压在内容之上，而文件类文档的内容（纸张、表格、幻灯片）
         恰恰是越高越好。
@@ -736,41 +735,17 @@ export function DocumentPanel({
             </button>
           )}
 
-          {/*
-          标题：笔记可改（它决定文件名，所以改名会让服务端同步移动 vault 里的
-          文件，见 lib/vault.ts 的 moveNote），文件与资料只读。
-
-          用 antd 的 `Typography.Title editable` 做就地编辑，它自带确认/取消
-          与键盘行为，比手搓一个可编辑标题可靠。
-        */}
-          {/*
-          **两个分支都是 `Typography.Title`**，即使文件与资料的标题不可改。
-          换成一个裸 `<h1>` 会让那条抬了特异性的规则匹配不上它，字号回落到
-          浏览器默认的 28px（在 48px 的头部里仍会显得拥挤）。一个元素类型
-          = 一条样式路径，不存在「哪条规则匹配不到」。
-        */}
-          <Typography.Title
-            level={1}
-            className={styles.headerTitle}
-            title={doc.title}
-            {...(doc.kind === 'note'
-              ? {
-                  editable: {
-                    onChange: (next: string) => {
-                      const trimmed = next.trim()
-                      // 空标题会让 buildNotePath 生成 `-<id>.md` 这种无名文件，
-                      // 所以拒绝空值而不是静默接受
-                      if (!trimmed || trimmed === doc.title) return
-                      renameTitle.mutate(trimmed)
-                    },
-                    tooltip: '点击修改标题（会同步重命名文件）',
-                    maxLength: 200,
-                  },
-                }
-              : {})}
-          >
-            {doc.title}
-          </Typography.Title>
+          {doc.kind === 'note' ? (
+            <EditableNoteTitle
+              key={doc.id}
+              title={doc.title}
+              onRename={(next) => renameTitle.mutate(next)}
+            />
+          ) : (
+            <Typography.Title level={1} className={styles.headerTitle} title={doc.title}>
+              {doc.title}
+            </Typography.Title>
+          )}
 
           <DocHeaderMeta doc={doc} />
 
@@ -1089,6 +1064,81 @@ export function DocumentPanel({
  *
  * 位置是全行唯一可省略的一项：只有它可能很长（见 `location` 样式）。
  */
+function EditableNoteTitle({
+  title,
+  onRename,
+}: {
+  title: string
+  onRename: (next: string) => void
+}) {
+  const { styles } = useStyles()
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(title)
+  const settledRef = useRef(false)
+  const editButtonRef = useRef<HTMLButtonElement>(null)
+
+  const finish = (save: boolean, restoreFocus: boolean) => {
+    if (settledRef.current) return
+    settledRef.current = true
+    setEditing(false)
+    const next = draft.trim()
+    if (save && next && next !== title) onRename(next)
+    if (restoreFocus) requestAnimationFrame(() => editButtonRef.current?.focus())
+  }
+
+  if (editing) {
+    return (
+      <Input
+        autoFocus
+        className={styles.headerTitleInput}
+        variant="underlined"
+        size="small"
+        aria-label="笔记标题"
+        maxLength={200}
+        value={draft}
+        onChange={(event) => setDraft(event.target.value)}
+        onPressEnter={(event) => {
+          event.preventDefault()
+          finish(true, true)
+        }}
+        onKeyDown={(event) => {
+          if (event.key !== 'Escape') return
+          event.preventDefault()
+          event.stopPropagation()
+          finish(false, true)
+        }}
+        onBlur={() => finish(true, false)}
+      />
+    )
+  }
+
+  return (
+    <div className={`note-title-group ${styles.noteTitleGroup}`}>
+      <Typography.Title
+        level={1}
+        className={`${styles.headerTitle} ${styles.noteTitleText}`}
+        title={title}
+      >
+        {title}
+      </Typography.Title>
+      <Button
+        ref={editButtonRef}
+        type="text"
+        size="small"
+        className={styles.headerTitleEdit}
+        aria-label="修改笔记标题（会同步重命名文件）"
+        title="修改笔记标题（会同步重命名文件）"
+        icon={<Pencil size={13} />}
+        onClick={() => {
+          settledRef.current = false
+          setDraft(title)
+          setEditing(true)
+        }}
+      />
+    </div>
+  )
+}
+
 function DocHeaderMeta({ doc }: { doc: DocumentDetail }) {
   const { styles } = useStyles()
   const format = formatMeta(doc)

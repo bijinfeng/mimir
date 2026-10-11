@@ -9,7 +9,7 @@ import { KnowledgeBaseCreateModal } from '../KnowledgeBaseCreateModal'
 import { api } from '../../lib/api'
 import { FolderGlyph } from './folder-icons'
 import { isDescendantOf, joinPath, nameOf, parentOf } from './folder-ops'
-import { FONT_SIZE } from '../../theme/tokens'
+import { FONT_SIZE, NAV_ITEM_HEIGHT } from '../../theme/tokens'
 
 /**
  * 左导航的知识库分区：**平铺的知识库列表** + 增删改（D-079）。
@@ -38,6 +38,8 @@ interface FolderSectionProps {
   onRetry?: () => void
   /** 当前选中的目录完整路径（scope=folder:x 时），其余视图为 null */
   activePath: string | null
+  /** 打开笔记时，当前知识库只作为位置线索，不与笔记争夺选中态 */
+  parentOnly: boolean
   onSelect: (path: string) => void
 }
 
@@ -46,48 +48,31 @@ const useStyles = createStyles(({ css, token }) => ({
     display: flex;
     align-items: center;
     justify-content: space-between;
-    /* 与 antd 分组标签同节奏（NavSidebar.style.ts 的 group-title 一致）：
-       顶部间距拆成 margin（组间距）+ padding（行内），行悬停的底色只染
-       行内那 30px，不把 11px 的组间距也染进去 */
-    margin-top: 11px;
-    /* 左内距 8 + 容器 padding-inline 6 = 文字仍在 14px——与「对话」分组
-       标签的文字位置同一条竖线（间距归容器统一，见 NavSidebar 的 body） */
-    padding: 3px 6px 3px 8px;
+    height: ${NAV_ITEM_HEIGHT}px;
+    margin-top: 10px;
+    padding: 0 2px 0 8px;
     border-radius: 6px;
-
-    &:hover {
-      .folder-head-add {
-        opacity: 1;
-      }
-    }
-
-    /* 键盘用户 tab 进行内按钮时，+ 同样显形 */
-    &:focus-within .folder-head-add {
-      opacity: 1;
-    }
   `,
   headTitle: css`
-    height: auto;
-    /* 竖向补到 24px（antd 小按钮的高度）：字号只有 badge 档，热区不该
-       跟着字形一起缩到 18px */
-    padding: 3px 0;
-    font-size: ${FONT_SIZE.badge}px;
+    font-size: ${FONT_SIZE.note}px;
     font-weight: 600;
     color: ${token.colorTextTertiary};
-    letter-spacing: 0.02em;
-    background-color: transparent;
   `,
   headAdd: css`
-    opacity: 0;
-    transition: opacity 0.12s ease-out;
-    /* 显形条件在 head 上：行悬停（.folder-head-add）与行内聚焦
-       （head:focus-within）各一条——这里只管过渡 */
-  `,
-  headAddAlways: css`
-    opacity: 1;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    padding: 0;
+    color: ${token.colorTextTertiary};
+    &:hover,
+    &:focus-visible {
+      color: ${token.colorLink};
+    }
   `,
   /**
-   * 平铺的行。与旧树行同一套几何（28px 高、6px 圆角、pill 内距归容器），
+   * 平铺的行。与其他导航行同一套几何（30px 高、6px 圆角、pill 内距归容器），
    * 差别只有两个：没有缩进，也不再依赖 rc-tree 的行盒——名字、计数、⋯
    * 直接是一次 flex 布局，旧树「标题被折到下一行」的坑
    * （`.ant-tree-title` 行内元素问题）在结构上就不可能再发生。
@@ -127,12 +112,12 @@ const useStyles = createStyles(({ css, token }) => ({
  * useStyles：FolderRow 是模块级组件（React Compiler 的要求，见下），
  * 它在自己的 hooks 里拿样式，不经过 props 传 className 链。
  */
-const useRowStyles = createStyles(({ css, token }) => ({
+const useRowStyles = createStyles(({ css, token, prefixCls }) => ({
   rowWrap: css`
     display: flex;
     align-items: center;
-    height: 28px;
-    padding-inline: 6px;
+    height: ${NAV_ITEM_HEIGHT}px;
+    padding-inline: 8px 2px;
     border-radius: 6px;
     color: ${token.colorTextSecondary};
     transition: background 0.12s ease-out;
@@ -141,8 +126,13 @@ const useRowStyles = createStyles(({ css, token }) => ({
       background: ${token.colorBgTextHover};
     }
 
-    &[aria-current] {
+    &[data-current='page'] {
       background: ${token.colorPrimaryBg};
+      color: ${token.colorLink};
+    }
+    &[data-current='location'] {
+      color: ${token.colorText};
+      font-weight: 500;
     }
   `,
   rowBtn: css`
@@ -157,6 +147,7 @@ const useRowStyles = createStyles(({ css, token }) => ({
     background: none;
     font-family: inherit;
     font-size: inherit;
+    font-weight: inherit;
     color: inherit;
     cursor: pointer;
 
@@ -175,20 +166,60 @@ const useRowStyles = createStyles(({ css, token }) => ({
     text-align: left;
   `,
   rowCount: css`
-    flex: none;
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
     font-size: ${FONT_SIZE.badge}px;
     color: ${token.colorTextTertiary};
     font-variant-numeric: tabular-nums;
-  `,
-  /* hover 才出现的行级 ⋯。键盘可达：包裹层 focus-within 同样显形 */
-  rowOps: css`
-    opacity: 0;
-    flex: none;
     transition: opacity 0.12s ease-out;
 
     .row:hover &,
-    .row:focus-within & {
+    .row:focus-within &,
+    .row[data-menu-open='true'] & {
+      opacity: 0;
+    }
+    @media (hover: none) {
+      opacity: 0;
+    }
+  `,
+  rowAction: css`
+    position: relative;
+    flex: none;
+    width: 28px;
+    height: 28px;
+  `,
+  /* 数字和 ⋯ 共用右端位置；键盘聚焦、菜单展开时也显示操作。 */
+  rowOps: css`
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    width: 28px;
+    min-width: 28px;
+    height: 28px;
+    padding: 0;
+    color: ${token.colorTextTertiary};
+    pointer-events: none;
+    transition: opacity 0.12s ease-out;
+
+    .row:hover &,
+    .row:focus-within &,
+    .row[data-menu-open='true'] & {
       opacity: 1;
+      pointer-events: auto;
+    }
+    @media (hover: none) {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  `,
+  rowMenu: css`
+    .${prefixCls}-dropdown-menu {
+      min-width: 112px;
+    }
+    .${prefixCls}-dropdown-menu-item {
+      min-height: 30px;
     }
   `,
 }))
@@ -203,6 +234,7 @@ const ROW_MENU = [
 interface RowProps {
   folder: FolderNode
   active: boolean
+  parentOnly: boolean
   onSelect: (path: string) => void
   onAction: (folder: FolderNode, key: string) => void
 }
@@ -214,12 +246,16 @@ interface RowProps {
  * button 里嵌 button 是无效 HTML，读屏会把两个控件念成一个；
  * 旧树行的写法在 rc-tree 的行盒里没有这个问题，平铺后要自己摆对。
  */
-function FolderRow({ folder, active, onSelect, onAction }: RowProps): ReactNode {
+function FolderRow({ folder, active, parentOnly, onSelect, onAction }: RowProps): ReactNode {
   const { styles } = useRowStyles()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuTriggerRef = useRef<HTMLButtonElement>(null)
+  const current = active ? (parentOnly ? 'location' : 'page') : undefined
   return (
     <div
       className={`row ${styles.rowWrap}`}
-      aria-current={active || undefined}
+      data-current={current}
+      data-menu-open={menuOpen || undefined}
       onClick={(event) => {
         // 点 ⋯ 的冒泡不该被当成「进知识库」——⋯ 自己有 handler，
         // 但 Dropdown 的浮层点击也会冒泡到这里，统一在行层排除按钮目标
@@ -230,26 +266,57 @@ function FolderRow({ folder, active, onSelect, onAction }: RowProps): ReactNode 
       <button
         type="button"
         className={styles.rowBtn}
-        aria-current={active || undefined}
+        aria-current={current}
+        aria-label={folder.count > 0 ? `${folder.name}，${folder.count} 篇文档` : folder.name}
         onClick={() => onSelect(folder.path)}
       >
         <FolderGlyph iconKey={folder.icon} />
         <span className={styles.rowName}>{folder.name}</span>
-        {folder.count > 0 && <span className={styles.rowCount}>{folder.count}</span>}
       </button>
-      <Dropdown
-        trigger={['click']}
-        placement="bottomRight"
-        menu={{ items: ROW_MENU, onClick: ({ key }) => onAction(folder, key) }}
-      >
-        <Button
-          type="text"
-          size="small"
-          className={styles.rowOps}
-          aria-label={`知识库 ${folder.name} 的操作`}
-          icon={<Ellipsis size={16} />}
-        />
-      </Dropdown>
+      <div className={styles.rowAction}>
+        {folder.count > 0 && (
+          <span className={styles.rowCount} aria-hidden="true">
+            {folder.count}
+          </span>
+        )}
+        <Dropdown
+          trigger={['click']}
+          placement="rightTop"
+          open={menuOpen}
+          onOpenChange={setMenuOpen}
+          classNames={{ root: styles.rowMenu }}
+          menu={{
+            items: ROW_MENU,
+            onKeyDown: (event) => {
+              if (event.key !== 'Escape') return
+              event.stopPropagation()
+              setMenuOpen(false)
+              menuTriggerRef.current?.focus()
+            },
+            onClick: ({ key }) => {
+              setMenuOpen(false)
+              menuTriggerRef.current?.focus()
+              onAction(folder, key)
+            },
+          }}
+        >
+          <Button
+            ref={menuTriggerRef}
+            type="text"
+            size="small"
+            className={styles.rowOps}
+            aria-label={`知识库 ${folder.name} 的操作`}
+            icon={<Ellipsis size={16} />}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') {
+                event.stopPropagation()
+                setMenuOpen(false)
+                event.currentTarget.focus()
+              }
+            }}
+          />
+        </Dropdown>
+      </div>
     </div>
   )
 }
@@ -260,6 +327,7 @@ export function FolderSection({
   isError = false,
   onRetry,
   activePath,
+  parentOnly,
   onSelect,
 }: FolderSectionProps) {
   const { styles } = useStyles()
@@ -268,7 +336,6 @@ export function FolderSection({
 
   /* 只取顶层——子目录是知识库内部的结构，归知识库页管（D-079） */
   const folders = items ?? []
-  const isEmpty = !isLoading && folders.length === 0
 
   /**
    * 新建走**共享表单**（`KnowledgeBaseCreateModal`）——知识库页的引导空态
@@ -388,8 +455,7 @@ export function FolderSection({
             size="small"
             aria-label="创建知识库"
             icon={<Plus size={16} />}
-            /* 空库里 ＋ 常驻：hover 显形的前提是「已经有东西可指」，此时没有 */
-            className={`folder-head-add ${styles.headAdd} ${isEmpty ? styles.headAddAlways : ''}`}
+            className={styles.headAdd}
             onClick={() => setCreateOpen(true)}
           />
         </Tooltip>
@@ -421,6 +487,7 @@ export function FolderSection({
                 activePath &&
                 (activePath === folder.path || isDescendantOf(activePath, folder.path)),
               )}
+              parentOnly={parentOnly}
               onSelect={onSelect}
               onAction={onRowMenuClick}
             />

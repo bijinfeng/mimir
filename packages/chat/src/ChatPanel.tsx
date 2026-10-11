@@ -61,11 +61,19 @@ function ChatPanelBody({
   draft,
   guide,
   guideActions,
+  focusComposer,
   io,
   composerStatus,
 }: Pick<
   ChatPanelProps,
-  'draft' | 'guide' | 'guideActions' | 'io' | 'composerStatus' | 'onOpenCitation' | 'onOpenNote'
+  | 'draft'
+  | 'guide'
+  | 'guideActions'
+  | 'focusComposer'
+  | 'io'
+  | 'composerStatus'
+  | 'onOpenCitation'
+  | 'onOpenNote'
 >) {
   const { styles } = useChatPanelStyles()
   const aui = useAui()
@@ -140,6 +148,7 @@ function ChatPanelBody({
       onContextDocumentChange={setContextDoc}
       deepReasoning={deepReasoning}
       onDeepReasoningChange={setDeepReasoning}
+      focusOnMount={focusComposer}
       io={io}
       status={composerStatus}
     />

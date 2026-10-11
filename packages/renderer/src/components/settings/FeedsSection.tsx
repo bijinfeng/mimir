@@ -160,7 +160,7 @@ export function FeedsSection() {
         </Block>
         {!feedsQuery.isLoading && !feedsQuery.isError && feeds.length === 0 ? (
           <Block>
-            <BlockDesc>还没有订阅源。</BlockDesc>
+            <BlockDesc>还没有订阅源。在上方粘贴 RSS 或 Atom 地址，然后点“订阅”。</BlockDesc>
           </Block>
         ) : null}
       </Panel>

@@ -1,4 +1,5 @@
 import { MessagePrimitive, useAuiState } from '@assistant-ui/react'
+import { SEARCH_ONLY_RESULT_TEXT } from '@mimir/shared'
 import type { ComponentType, ReactNode } from 'react'
 import { useChatPanelStyles } from '../ChatPanel.style.js'
 import { askOptionsFor, questionBefore, useMimirChatApi } from '../runtime/chat-context.js'
@@ -82,6 +83,11 @@ function AssistantMessage() {
   const citations = useCitationsPart()
   const failure = useFailurePart()
   const parts = useAuiState((state) => state.message.parts.length)
+  const searchOnly = useAuiState((state) =>
+    state.message.parts.some(
+      (part) => part.type === 'text' && part.text === SEARCH_ONLY_RESULT_TEXT,
+    ),
+  )
   /**
    * 消息状态**取整个对象**，不是 `.type`：停止与失败都是 `incomplete`，
    * 区分靠 `reason`（`cancelled` 才是用户按了停止；`error` 是流断了，
@@ -140,7 +146,7 @@ function AssistantMessage() {
           「正在检索知识库 · Ns」，到了就地展开成步骤。
           `expanded` 跟着 `running`：正文一出翻 false → 自动折叠
           （折叠摘要里秒数继续走，那是服务端那条整轮 trace 补上的） */}
-      <TraceDisclosure trace={trace} live={running} expanded={running} />
+      <TraceDisclosure trace={trace} live={running} expanded={running} searchOnly={searchOnly} />
 
       <MessagePrimitive.Parts
         components={{

@@ -53,14 +53,16 @@ export function currentKey(input: {
 
 /** 顶部动作列表。右侧只显示**真实存在**的快捷键——不编不存在的 */
 export function buildActions(): MenuItem[] {
+  const isApplePlatform =
+    typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
   return [
     { key: 'action:new-chat', icon: <Plus size={16} />, label: '新建对话' },
     {
       key: 'action:search',
       icon: <Search size={16} />,
       label: '搜索',
-      // Ctrl K 是真的绑了（见 _app.tsx 的 window keydown）
-      extra: <kbd style={{ fontFamily: 'inherit' }}>Ctrl K</kbd>,
+      // _app.tsx 同时接受 Meta / Ctrl；提示按当前设备显示。
+      extra: <kbd style={{ fontFamily: 'inherit' }}>{isApplePlatform ? '⌘ K' : 'Ctrl K'}</kbd>,
     },
   ]
 }

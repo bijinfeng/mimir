@@ -52,6 +52,8 @@ export interface ChatPanelProps {
   conversationId: string | undefined
   /** 这一问的上下文（预填 / 范围锁定）。瞬时状态，不进 URL */
   draft: ChatDraft | null
+  /** 新建对话时直接把焦点放进提问框；文档侧栏保持原有焦点 */
+  focusComposer?: boolean
   /** 引用卡片被点击 → 跳回原文 */
   onOpenCitation: (documentId: string, citation: Citation) => void
   /** 「打开笔记」（存成笔记之后） */

@@ -5,6 +5,9 @@ import type { MenuProps } from 'antd'
 import {
   ChartColumn,
   Check,
+  ChevronDown,
+  ChevronRight,
+  FileText,
   LibraryBig,
   LogOut,
   MessageCircle,
@@ -136,7 +139,7 @@ export function NavSidebar({
             key: 'conv-group:all',
             type: 'group' as const,
             label: '对话',
-            children: [{ key: 'conv-empty', label: '还没有对话', disabled: true }],
+            children: [],
           },
         ]
       : buildConversations(conversations, CONVERSATION_LIMIT)
@@ -224,10 +227,15 @@ export function NavSidebar({
             <Menu
               mode="inline"
               className={styles.menu}
-              selectedKeys={selectedKey ? [selectedKey] : []}
+              selectedKeys={selectedKey?.startsWith('conv:') ? [selectedKey] : []}
               onClick={onMenuClick}
               items={[...buildActions(), ...conversationItems]}
             />
+            {!conversationsQuery.isError &&
+              !conversationsQuery.isLoading &&
+              conversations.length === 0 && (
+                <p className={styles.conversationEmpty}>暂无对话，点上方“新建对话”</p>
+              )}
             <div className={styles.treeGroup}>
               <FolderSection
                 items={foldersQuery.data?.items}
@@ -239,47 +247,52 @@ export function NavSidebar({
                     ? selection.scope.slice('folder:'.length)
                     : null
                 }
+                parentOnly={Boolean(selection.id)}
                 onSelect={(path) => goDocs(path ? `folder:${path}` : 'all')}
               />
             </div>
-            {selection.page === 'docs' && (
-              <div className={styles.recentGroup}>
-                <Button
-                  type="text"
-                  className={styles.recentHeading}
-                  aria-expanded={showRecent}
-                  onClick={() => setShowRecent((value) => !value)}
-                >
-                  最近笔记 {showRecent ? '⌄' : '›'}
-                </Button>
-                {showRecent && (
-                  <div className={styles.recentList}>
-                    {(recentQuery.data ?? []).filter((doc) => doc.kind === 'note').length === 0 ? (
-                      <span className={styles.recentEmpty}>还没有最近打开的笔记</span>
-                    ) : (
-                      (recentQuery.data ?? [])
-                        .filter((doc) => doc.kind === 'note')
-                        .slice(0, 6)
-                        .map((doc) => (
-                          <Button
-                            key={doc.id}
-                            type="text"
-                            className={styles.recentItem}
-                            aria-current={selection.id === doc.id ? 'page' : undefined}
-                            onClick={() => {
-                              onCloseOverlay()
-                              onOpenDocument(doc.id, doc.folder ? `folder:${doc.folder}` : 'all')
-                            }}
-                          >
-                            <span>{doc.title}</span>
-                            <small>{doc.folder ?? '知识库根'}</small>
-                          </Button>
-                        ))
-                    )}
-                  </div>
+            <div className={styles.recentGroup}>
+              <Button
+                type="text"
+                className={styles.recentHeading}
+                aria-expanded={showRecent}
+                onClick={() => setShowRecent((value) => !value)}
+              >
+                <span>最近笔记</span>
+                {showRecent ? (
+                  <ChevronDown size={15} aria-hidden />
+                ) : (
+                  <ChevronRight size={15} aria-hidden />
                 )}
-              </div>
-            )}
+              </Button>
+              {showRecent && (
+                <div className={styles.recentList}>
+                  {(recentQuery.data ?? []).filter((doc) => doc.kind === 'note').length === 0 ? (
+                    <span className={styles.recentEmpty}>还没有最近打开的笔记</span>
+                  ) : (
+                    (recentQuery.data ?? [])
+                      .filter((doc) => doc.kind === 'note')
+                      .slice(0, 6)
+                      .map((doc) => (
+                        <Button
+                          key={doc.id}
+                          type="text"
+                          className={styles.recentItem}
+                          aria-current={selection.id === doc.id ? 'page' : undefined}
+                          title={`${doc.title} · ${doc.folder ?? '知识库根'}`}
+                          onClick={() => {
+                            onCloseOverlay()
+                            onOpenDocument(doc.id, doc.folder ? `folder:${doc.folder}` : 'all')
+                          }}
+                        >
+                          <FileText size={16} aria-hidden />
+                          <span>{doc.title}</span>
+                        </Button>
+                      ))
+                  )}
+                </div>
+              )}
+            </div>
           </div>
           <div className={styles.foot} data-scrolled={bodyScrolled || undefined} />
         </div>

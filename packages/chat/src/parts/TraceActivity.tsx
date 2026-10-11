@@ -167,12 +167,15 @@ export function TraceDisclosure({
   trace,
   live = false,
   expanded = false,
+  searchOnly = false,
 }: {
   trace: Trace | null
   /** 这一轮还在跑（标记变蓝、文字微光；折叠状态由 expanded 驱动） */
   live?: boolean
   /** 还在等正文（正文一出翻 false → 自动折叠） */
   expanded?: boolean
+  /** 服务端返回的只检索正文，证明本轮未调用模型 */
+  searchOnly?: boolean
 }) {
   const { styles } = useStyles()
   const { styles: kf } = useKeyframes()
@@ -218,7 +221,10 @@ export function TraceDisclosure({
       >
         <Brain className={styles.triggerIcon} aria-hidden />
         <span className={`${styles.label} ${live ? styles.shimmer : ''}`}>
-          思考 {trace.rounds} 轮 · 调用 {trace.tools} 次工具 ({seconds})
+          {searchOnly
+            ? `检索 ${trace.rounds} 轮 · ${trace.tools} 次检索操作`
+            : `思考 ${trace.rounds} 轮 · 调用 ${trace.tools} 次工具`}{' '}
+          ({seconds})
         </span>
         <ChevronDown
           className={styles.chevron}

@@ -239,6 +239,16 @@ export const useStatsStyles = createStyles(({ css, token, prefixCls }) => ({
     font-size: ${FONT_SIZE.note}px;
     color: ${token.colorTextSecondary};
   `,
+  emptyLink: css`
+    display: block;
+    width: fit-content;
+    margin-top: 8px;
+    color: ${token.colorLink};
+    &:focus-visible {
+      outline: 2px solid ${token.colorPrimaryBorder};
+      outline-offset: 2px;
+    }
+  `,
 
   footer: css`
     padding: 12px 16px;

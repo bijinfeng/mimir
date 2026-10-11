@@ -102,7 +102,7 @@ const useStyles = createStyles(({ css, token }) => ({
     min-height: 0;
     overflow: visible;
     position: relative;
-    z-index: 2;
+    z-index: 30;
   `,
   main: css`
     min-width: 0;
@@ -113,7 +113,7 @@ const useStyles = createStyles(({ css, token }) => ({
   overlayBackdrop: css`
     position: fixed;
     inset: 0;
-    z-index: 1;
+    z-index: 29;
     border: 0;
     background: ${token.colorBgMask};
   `,
@@ -420,7 +420,11 @@ function AppShell() {
           /* 收件箱视图已随 D-054 退役（`.trellis/spec/project/decisions.md`:3022，新内容默认
              `ready`）——这里再说「已入收件箱」等于指认一个不存在的去处。
              与 CaptureDialog 页脚同一句话：入库之后按标签与目录整理。 */
-          message.success('已入库，之后按标签与目录整理')
+          message.success(
+            captureRequest?.folder
+              ? `已收进「${captureRequest.folder}」`
+              : '已收进知识库根，之后可按标签与目录整理',
+          )
           /* 从知识库页收进来的内容指回那个知识库（「返回库」回得到原地）；
              从别处唤起的落库根，回库默认视图 */
           openDocument(

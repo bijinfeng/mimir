@@ -36,7 +36,6 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     overflow-y: auto;
     padding: 30px 12px;
     background: ${token.tintNav};
-    border-right: 1px solid ${token.colorBorderSecondary};
   `,
   content: css`
     min-width: 0;
@@ -84,7 +83,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   sectionMenu: css`
     &.${prefixCls}-menu {
       background: transparent;
-      border: 0;
+      border-inline-end: none !important;
     }
     .${prefixCls}-menu-item {
       margin: 2px 0;

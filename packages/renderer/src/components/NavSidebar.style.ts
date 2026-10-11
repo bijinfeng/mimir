@@ -78,8 +78,8 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     align-items: center;
     justify-content: space-between;
     flex: none;
-    height: 54px;
-    padding: 0 14px 0 18px;
+    height: 42px;
+    padding: 0 12px 0 14px;
     border-bottom: 1px solid ${token.colorBorderSecondary};
     color: ${token.colorText};
     font-size: ${FONT_SIZE.item}px;
@@ -92,16 +92,24 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     padding: 8px ${NAV_ITEM_MARGIN}px 6px;
   `,
   recentGroup: css`
-    margin-top: 12px;
-    padding-top: 8px;
-    border-top: 1px solid ${token.colorBorderSecondary};
+    margin-top: 10px;
   `,
   recentHeading: css`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     width: 100%;
-    justify-content: flex-start;
-    color: ${token.colorTextSecondary};
-    font-size: ${FONT_SIZE.item}px;
+    height: ${NAV_ITEM_HEIGHT}px;
+    padding: 0 8px;
+    color: ${token.colorTextTertiary};
+    font-size: ${FONT_SIZE.note}px;
     font-weight: 600;
+    text-align: left;
+
+    &:focus-visible {
+      outline: 2px solid ${token.colorPrimaryBorder};
+      outline-offset: -2px;
+    }
   `,
   recentList: css`
     display: grid;
@@ -109,35 +117,50 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   `,
   recentItem: css`
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
     width: 100%;
-    height: auto;
-    padding: 6px 9px;
-    line-height: 1.4;
+    height: ${NAV_ITEM_HEIGHT}px;
+    padding: 0 8px;
+    font-size: ${FONT_SIZE.item}px;
     text-align: left;
     color: ${token.colorTextSecondary};
+    > svg {
+      flex: none;
+      opacity: 0.72;
+    }
     > span {
-      display: block;
-      max-width: 100%;
+      min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    > small {
-      color: ${token.colorTextTertiary};
-    }
     &[aria-current='page'] {
       color: ${token.colorLink};
       background: ${token.colorPrimaryBg};
-      font-weight: 600;
+      font-weight: 500;
+    }
+    &&[aria-current='page']:hover {
+      color: ${token.colorLink};
+      background: ${token.colorPrimaryBgHover};
+    }
+    &:focus-visible {
+      outline: 2px solid ${token.colorPrimaryBorder};
+      outline-offset: -2px;
     }
   `,
   recentEmpty: css`
     display: block;
-    padding: 6px 9px;
+    padding: 4px 8px 6px;
     color: ${token.colorTextTertiary};
-    font-size: ${FONT_SIZE.item}px;
+    font-size: ${FONT_SIZE.note}px;
+  `,
+  conversationEmpty: css`
+    margin: 0;
+    padding: 4px 8px 6px;
+    color: ${token.colorTextTertiary};
+    font-size: ${FONT_SIZE.note}px;
   `,
   menu: css`
     background: transparent;
@@ -165,11 +188,14 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       line-height: normal !important;
     }
     .${prefixCls}-menu-item-group-title {
-      padding: 14px 8px 4px !important;
+      display: flex;
+      align-items: center;
+      height: ${NAV_ITEM_HEIGHT}px;
+      margin-top: 10px;
+      padding: 0 8px !important;
       color: ${token.colorTextTertiary};
-      font-size: ${FONT_SIZE.badge}px;
+      font-size: ${FONT_SIZE.note}px;
       font-weight: 600;
-      letter-spacing: 0.02em;
     }
     .${prefixCls}-menu-item-selected {
       background: ${token.colorPrimaryBg} !important;
