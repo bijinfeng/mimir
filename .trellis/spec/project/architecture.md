@@ -20,7 +20,7 @@
 | 包管理 | pnpm workspace + **catalog** | 前后端共享类型包；依赖版本集中声明 |
 | 类型检查 | **TypeScript 7.0** | Go 重写版。见下方说明 |
 | Lint / Format | **oxlint + oxfmt** | 单命令跑全仓，比 ESLint + Prettier 快一个数量级 |
-| 部署 | Docker Compose | 自托管服务器：Postgres 容器 + 应用容器；本地开发免 Docker（SQLite） |
+| 部署 | Docker Compose / fnOS `.fpk` | 自托管服务器用 Postgres 容器 + 应用容器；fnOS 原生包用 SQLite + Unix Socket 网关；本地开发免 Docker |
 
 ### TypeScript 7 的说明
 
@@ -124,6 +124,7 @@ mimir/
 │   ├── web/                     # 浏览器部署的**壳**（D-103）
 │   │   ├── src/index.tsx        #   注入浏览器插槽 → createApp()
 │   │   └── index.html           #   首帧外观脚本 + 挂载点
+│   ├── fnos/                    # fnOS x86_64 原生包：manifest、向导、生命周期、桌面入口
 │   └── desktop/                 # Electron 载体（D-046）。三段由 electron-vite 构建（D-103）
 │       ├── electron.vite.config.ts
 │       └── src/
@@ -1354,6 +1355,78 @@ node apps/server/scripts/sqlite-backup.mjs restore <备份目录> <不存在的�
 
 与生产路径的关系：compose / Dockerfile **始终显式**传 `postgres://` 的
 `DATABASE_URL`，不受默认值影响；两条路径共用同一套 schema、迁移体系与服务层。
+
+### 8.6.1 fnOS 原生包部署契约（x86_64）
+
+#### 1. Scope / Trigger
+
+`apps/fnos/` 是 fnOS 原生应用包。fnOS 桌面在 iframe 内打开 `/app/mimir`；
+统一网关把此前缀的请求转发到 `TRIM_APPDEST/app.sock`。应用继续使用 Mimir
+邮箱密码登录，不把 fnOS 用户头当作 Mimir 会话。首版只发布 Linux x86_64。
+
+#### 2. Signatures
+
+| 入口 | 契约 |
+|---|---|
+| `pnpm fnos:build` | Linux x86_64 + Node 22 + 官方 `fnpack`；构建前后端、`pnpm deploy --prod`、加载原生模块并检查 ELF 架构，输出 `apps/fnos/release/*.fpk` |
+| `cmd/install_callback` | 用向导字段初始化持久配置；已有配置不覆盖 |
+| `cmd/main start\|stop\|status` | 启停 `app/launch.mjs`，管理 PID、日志与 `app.sock`；`status` 运行返回 0，否则返回 3 |
+| `startServer()` | 设置 `MIMIR_FNOS_SOCKET` 时只监听 Unix Socket；先迁移 SQLite、确认所有者，再开放 Socket |
+| `stripFnosPrefix(request)` | 仅接收 `/app/mimir` 或 `/app/mimir/*`，剥离前缀后交给 Hono；其他路径 404 |
+
+#### 3. Contracts
+
+- 向导输入：`wizard_owner_email` 是合法邮箱（最长 254 字符）；
+  `wizard_owner_password` 至少 8 字符且不含 NUL。安装脚本原子写入
+  `TRIM_PKGETC/config.json`（`0600`），字段为 `ownerEmail`、`ownerPassword`、
+  随机 `authSecret`。覆盖升级与重试不改这些值。
+- `app/launch.mjs` 从配置注入 `OWNER_EMAIL`、`OWNER_PASSWORD`、
+  `AUTH_SECRET`、`DATA_DIR=TRIM_PKGVAR/data`、
+  `DATABASE_URL=file:<TRIM_PKGVAR/data/mimir.db>`、`WEB_DIST`、
+  `MIMIR_FNOS_SOCKET=TRIM_APPDEST/app.sock`、`MIMIR_BASE_PATH=/app/mimir`。
+  Web 构建用 `/app/mimir/` 作资源与路由基路径；API、下载、聊天流和 PDF
+  资产也必须使用此前缀。
+- `TRIM_PKGVAR/data` 保存 SQLite 及内容；`TRIM_PKGETC` 保存鉴权配置。
+  备份与恢复需要两者及同一应用版本/schema 约束；运行中的 SQLite 不能只复制
+  `mimir.db`（可能有 WAL）。
+- fnOS 认证写请求需同源 `Origin` 或 `Referer`，且网关保留公共 `Host`；若转发
+  `X-Forwarded-Proto`，它须与浏览器协议一致。跨站或不一致返回 403。
+  HTTPS 响应 Cookie 标记 `Secure`，Cookie Path 为 `/app/mimir`。
+
+#### 4. Validation & Error Matrix
+
+| 条件 | 结果 |
+|---|---|
+| 非 Linux x86_64、非 Node 22、缺少生产依赖或原生模块非 x86_64 ELF | 构建失败，不生成可发布包 |
+| 缺少 fnOS 目录、配置缺失或权限比 `0600` 宽、所有者凭据不合法 | 安装或启动失败，错误写入 `TRIM_TEMP_LOGFILE` 或 `TRIM_PKGVAR/mimir.log` |
+| 所有者建号失败或与现有数据库账号不一致 | 启动失败，不开放网关 Socket |
+| 非 `/app/mimir` 网关路径 | HTTP 404 |
+| 登录写请求缺同源来源、跨站来源或协议冲突 | HTTP 403 |
+| Socket 被其他进程占用 | 启动失败，不删除活动 Socket |
+
+#### 5. Good / Base / Bad Cases
+
+- Good：x86_64 首装填写所有者，`start` 创建账号后开放 Socket，内嵌窗口经
+  `/app/mimir` 登录，重启后笔记及登录配置仍在。
+- Base：覆盖升级已有 `config.json`，沿用原所有者和密钥，启动时幂等迁移。
+- Bad：网关没有保留公共 `Host` 或协议头不匹配，登录返回 403；先检查设备
+  实际转发头，再做最小范围适配，不放宽为信任任意 Origin。
+
+#### 6. Tests Required
+
+- `pnpm check`：断言生命周期脚本、路径前缀、Socket 与认证边界；
+  `scripts/fnos-package.test.mjs` 校验包源结构。
+- Linux x86_64 上执行 `pnpm fnos:build`：检查 `*.fpk`、Web 资源前缀，
+  `better-sqlite3`、`sqlite-vec`、`@node-rs/jieba` 实际加载的 ELF 架构。
+- fnOS x86_64 设备上验证首装、HTTPS 内嵌登录、编辑/上传/下载/检索、
+  重启、覆盖升级、Socket 异常与卸载保留；本地测试不能替代实机结论。
+
+#### 7. Wrong vs Correct
+
+```text
+Wrong: 只把 iframe URL 改为 /app/mimir，却继续从 /api 和 /assets 请求资源。
+Correct: Web 构建与所有运行时 URL 共用 /app/mimir/ 基路径，服务端只从网关入口剥离一次前缀。
+```
 
 ---
 

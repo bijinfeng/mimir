@@ -1,0 +1,5 @@
+{"file":".trellis/spec/project/quality.md","reason":"项目统一检查命令及完成定义"}
+{"file":".trellis/spec/project/rules.md","reason":"跨包契约与文档同步审查"}
+{"file":".trellis/spec/server/backend/tests.md","reason":"认证与服务端测试要求"}
+{"file":".trellis/spec/renderer/frontend/index.md","reason":"内嵌网关前缀对共享 UI 的跨平台回归检查"}
+{"file":".trellis/tasks/10-11-fnos-native-platform/research/fnos-package.md","reason":"核对 fnOS 包结构、架构声明、生命周期和未验证风险"}

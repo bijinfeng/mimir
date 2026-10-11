@@ -1,0 +1,8 @@
+{"file":".trellis/spec/project/index.md","reason":"项目规范入口、唯一归属与完成门槛"}
+{"file":".trellis/spec/project/rules.md","reason":"跨包不可违反的实现规则"}
+{"file":".trellis/spec/project/architecture.md","reason":"现有部署、SQLite、静态资源与备份契约"}
+{"file":".trellis/spec/server/backend/index.md","reason":"服务端改动的层级规范入口"}
+{"file":".trellis/spec/server/backend/auth.md","reason":"服务端鉴权边界和受保护路由"}
+{"file":".trellis/spec/renderer/frontend/index.md","reason":"共享渲染层路由、API 与平台适配规范"}
+{"file":".trellis/spec/web/frontend/index.md","reason":"Web 构建入口及路径规范"}
+{"file":".trellis/tasks/10-11-fnos-native-platform/research/fnos-package.md","reason":"fnOS 官方包结构、运行时、向导、权限及本仓实施证据"}
