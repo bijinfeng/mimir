@@ -20,6 +20,7 @@ vi.mock('@mimir/plugin-provider', () => ({
     adapter: { model: 'whisper-1' },
   }),
 }))
+vi.mock('../services/ai-service-settings.js', () => ({ migrateAiServiceSettings: async () => [] }))
 vi.mock('../plugins/host.js', () => ({
   assemble: () => ({ settings: { getBoolean: async () => state.vision } }),
 }))

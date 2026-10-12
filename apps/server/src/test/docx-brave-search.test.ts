@@ -9,6 +9,7 @@ const settings = vi.hoisted(() => ({
   secret: vi.fn<() => Promise<{ ok: true; value: string } | { ok: false; reason: string }>>(),
 }))
 
+vi.mock('../services/ai-service-settings.js', () => ({ migrateAiServiceSettings: async () => [] }))
 vi.mock('../plugins/host.js', () => ({
   assemble: () => ({ settings: { getSecret: settings.secret } }),
 }))

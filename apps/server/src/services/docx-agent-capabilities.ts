@@ -58,7 +58,7 @@ export async function docxAgentCapabilities(
             ? []
             : DOCX_IMAGE_TOOLS.map((tool) => ({
                 name: tool.name,
-                reason: '请配置 DOCX 图片生成 API 密钥和模型',
+                reason: '请配置图片生成 API 密钥和模型',
               }))),
           ...(media.vision || media.audio
             ? []

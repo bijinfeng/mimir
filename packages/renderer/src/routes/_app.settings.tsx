@@ -4,9 +4,9 @@ import { AccountSection } from '../components/settings/AccountSection'
 import { AppearanceSection } from '../components/settings/AppearanceSection'
 import { ClientSection } from '../components/settings/ClientSection'
 import { DataSection } from '../components/settings/DataSection'
-import { DocxAiSection } from '../components/settings/DocxAiSection'
 import { FeedsSection } from '../components/settings/FeedsSection'
 import { ModelsSection } from '../components/settings/ModelsSection'
+import { NetworkSearchSection } from '../components/settings/NetworkSearchSection'
 import { PluginsSection } from '../components/settings/PluginsSection'
 import { RetrievalSection } from '../components/settings/RetrievalSection'
 import { StatsSection } from '../components/settings/StatsSection'
@@ -46,7 +46,7 @@ import { useNarrowViewport } from '../lib/nav-collapse'
 
 const SECTIONS = [
   { key: 'models', label: '模型' },
-  { key: 'docx-ai', label: 'DOCX AI' },
+  { key: 'network-search', label: '网络搜索' },
   { key: 'retrieval', label: '检索' },
   { key: 'feeds', label: '订阅' },
   { key: 'storage', label: '存储' },
@@ -200,7 +200,7 @@ function SectionBody({ section }: { section: SectionKey }) {
   if (section === 'data') return <DataSection />
   if (section === 'plugins') return <PluginsSection />
   if (section === 'models') return <ModelsSection />
-  if (section === 'docx-ai') return <DocxAiSection />
+  if (section === 'network-search') return <NetworkSearchSection />
   if (section === 'feeds') return <FeedsSection />
   if (section === 'storage') return <StorageSection />
   if (section === 'stats') return <StatsSection />

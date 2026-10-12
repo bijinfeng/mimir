@@ -48,6 +48,8 @@ describe('DOCX 能力状态', () => {
     expect(html).toContain('读取当前文档')
     expect(html).toContain('替换选区')
     expect(html).toContain('网页搜索：请配置 Brave Search API 密钥')
+    expect(html).toContain('网络搜索设置')
+    expect(html).not.toContain('模型设置')
     expect(html).not.toContain('生成图片')
   })
 
@@ -58,7 +60,10 @@ describe('DOCX 能力状态', () => {
           documentId: 'd1',
           modelReady: false,
           availableTools: [],
-          unavailableTools: [{ name: 'read_blocks', reason: '请先配置可用的聊天模型' }],
+          unavailableTools: [
+            { name: 'read_blocks', reason: '请先配置可用的聊天模型' },
+            { name: 'web_search', reason: '请先配置可用的聊天模型' },
+          ],
         },
         loading: false,
         error: false,
@@ -70,6 +75,8 @@ describe('DOCX 能力状态', () => {
     )
     expect(html).toContain('聊天模型未就绪')
     expect(html).toContain('读取段落：请先配置可用的聊天模型')
+    expect(html).toContain('模型设置')
+    expect(html).not.toContain('网络搜索设置')
     expect(html).not.toContain('当前已开放')
   })
 
@@ -93,5 +100,29 @@ describe('DOCX 能力状态', () => {
     )
     expect(html).toContain('媒体服务已配置')
     expect(html).toContain('模型的图片、音频或视频输入能力尚未实测')
+  })
+
+  it('图片生成和媒体分析缺失时指向通用模型设置', () => {
+    const html = renderToStaticMarkup(
+      createElement(DocxCapabilityStatus, {
+        capabilities: {
+          documentId: 'd1',
+          modelReady: true,
+          availableTools: ['read_blocks'],
+          unavailableTools: [
+            { name: 'generate_image', reason: '请配置图片生成服务' },
+            { name: 'analyze_media', reason: '请配置视觉或转录服务' },
+          ],
+        },
+        loading: false,
+        error: false,
+        onRetry: () => {},
+        onSettings: () => {},
+        revisionMode: false,
+        onRevisionModeChange: () => {},
+      }),
+    )
+    expect(html).toContain('模型设置')
+    expect(html).not.toContain('网络搜索设置')
   })
 })

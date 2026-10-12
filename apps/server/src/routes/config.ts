@@ -11,6 +11,8 @@ import { HttpError, parseInput } from '../lib/http.js'
 import { env } from '../env.js'
 import { activeStorage, assemble } from '../plugins/host.js'
 import { describeModel, record } from '../services/usage.js'
+import { migrateAiServiceSettings } from '../services/ai-service-settings.js'
+import { braveWebSearch } from '../services/docx-brave-search.js'
 import type { AppEnv } from '../types.js'
 
 /**
@@ -35,6 +37,7 @@ export const configRoute = new Hono<AppEnv>()
 const probes = new Map<string, ProbeResult>()
 
 configRoute.get('/', async (c) => {
+  const migrationIssues = await migrateAiServiceSettings()
   const { settings, descriptors, providers } = assemble()
 
   /**
@@ -45,7 +48,10 @@ configRoute.get('/', async (c) => {
    * 放那里的理由是迁移要加密旧密钥，而加密口只有插件拿得到。
    */
 
-  const entries = await settings.entries()
+  const entries = (await settings.entries()).map((entry) => {
+    const issue = migrationIssues.find((item) => item.key === entry.key)
+    return issue ? Object.assign(entry, { problem: issue.message }) : entry
+  })
   const provider = activeProvider(providers)
   const [plugins, modelConfig] = await Promise.all([
     descriptors(),
@@ -87,6 +93,7 @@ configRoute.get('/', async (c) => {
  * 不是「清空输入框」的副作用（`.trellis/spec/project/architecture.md` §7.5）。
  */
 configRoute.patch('/settings', async (c) => {
+  await migrateAiServiceSettings()
   const { settings } = assemble()
   const input = await parseInput(c, 'json', updateSettingsInputSchema)
   const result = await settings.update(input.values)
@@ -96,6 +103,20 @@ configRoute.patch('/settings', async (c) => {
   }
 
   return c.json(result)
+})
+
+/** Explicit real connection test; never run on settings-page load. */
+configRoute.post('/network-search/test', async (c) => {
+  try {
+    const result = await braveWebSearch({ query: 'Mimir', maxResults: 1 })
+    return c.json({ ok: true, results: result.results.length })
+  } catch (error) {
+    throw new HttpError(
+      400,
+      'NETWORK_SEARCH_TEST_FAILED',
+      error instanceof Error ? error.message : '网络搜索连接测试失败',
+    )
+  }
 })
 
 /**

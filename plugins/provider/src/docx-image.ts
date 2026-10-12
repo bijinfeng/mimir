@@ -9,13 +9,13 @@ export async function docxImageConfiguration(settings: PluginSettings): Promise<
   baseUrl: string
   apiKey: string
 } | null> {
-  const secret = await settings.getSecret('docx.image.apiKey')
+  const secret = await settings.getSecret('model.image.apiKey')
   if (!secret.ok || !secret.value) return null
-  const model = await settings.getString('docx.image.model')
-  if (!MODELS.includes(model as ImageModel)) throw new Error('DOCX 图片生成模型不受当前适配器支持')
-  const baseUrl = await settings.getString('docx.image.baseUrl')
+  const model = await settings.getString('model.image.model')
+  if (!MODELS.includes(model as ImageModel)) throw new Error('图片生成模型不受当前适配器支持')
+  const baseUrl = await settings.getString('model.image.baseUrl')
   const parsed = new URL(baseUrl)
-  if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('DOCX 图片生成接口地址无效')
+  if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('图片生成接口地址无效')
   return { model: model as ImageModel, baseUrl, apiKey: secret.value }
 }
 

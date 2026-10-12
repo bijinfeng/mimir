@@ -61,19 +61,39 @@ export function DocxCapabilityStatus({
   loading: boolean
   error: boolean
   onRetry: () => void
-  onSettings: () => void
+  onSettings: (section: 'models' | 'network-search') => void
   revisionMode: boolean
   onRevisionModeChange: (enabled: boolean) => void
 }) {
   const { styles } = useStyles()
+  const needsNetworkSearch =
+    capabilities?.modelReady &&
+    capabilities.unavailableTools.some(
+      ({ name }) => name === 'web_search' || name === 'image_search',
+    )
+  const needsModels =
+    capabilities &&
+    (!capabilities.modelReady ||
+      capabilities.unavailableTools.some(
+        ({ name }) => name === 'generate_image' || name === 'analyze_media',
+      ))
 
   return (
-    <section className={styles.wrap} aria-label="DOCX AI 能力状态">
+    <section className={styles.wrap} aria-label="文档编辑能力状态">
       <div className={styles.head}>
         <span>文档编辑能力</span>
-        <Button type="link" size="small" onClick={onSettings}>
-          配置
-        </Button>
+        <span>
+          {needsModels ? (
+            <Button type="link" size="small" onClick={() => onSettings('models')}>
+              模型设置
+            </Button>
+          ) : null}
+          {needsNetworkSearch ? (
+            <Button type="link" size="small" onClick={() => onSettings('network-search')}>
+              网络搜索设置
+            </Button>
+          ) : null}
+        </span>
       </div>
       <div className={styles.revision}>
         <span>AI 修订</span>

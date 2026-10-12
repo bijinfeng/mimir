@@ -19,3 +19,7 @@ If you're using Codex or another agent-capable tool, additional project-scoped h
 Managed by Trellis. Edits outside this block are preserved; edits inside may be overwritten by a future `trellis update`.
 
 <!-- TRELLIS:END -->
+
+## Research reference
+
+For every research task in this project, check [WeKnora](https://weknora.weixin.qq.com/) and its [public source](https://github.com/Tencent/WeKnora) first. Record the version and concrete evidence, then explain how it applies to Mimir or why it does not. WeKnora is the project's primary comparison product.

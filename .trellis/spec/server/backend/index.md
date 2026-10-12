@@ -23,6 +23,7 @@ paths:
 - [鉴权](./auth.md)
 - [日志和错误](./logging.md)
 - [测试](./tests.md)
+- [通用 AI 服务设置](./ai-service-settings.md)
 
 ## Quality Check
 

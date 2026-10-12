@@ -147,6 +147,87 @@ describe('配置三层解析', () => {
   })
 })
 
+describe('通用 AI 服务旧键迁移', () => {
+  const specs: SettingSpec[] = [
+    {
+      key: 'docx.brave.apiKey',
+      label: '旧搜索密钥',
+      description: '',
+      group: 'models',
+      type: 'secret',
+      envName: null,
+      defaultValue: '',
+      rebuild: 'none',
+      hidden: true,
+      writable: false,
+    },
+    {
+      key: 'search.web.brave.apiKey',
+      label: '搜索密钥',
+      description: '',
+      group: 'search',
+      type: 'secret',
+      envName: null,
+      defaultValue: '',
+      rebuild: 'none',
+    },
+  ]
+
+  it('moves encrypted bytes once without exposing plaintext or overwriting the replacement', async () => {
+    const cipher = createSecretCipher(SECRET)
+    const encrypted = cipher.encrypt('legacy-brave-key')
+    const store = memoryStore({ 'docx.brave.apiKey': encrypted })
+    const api = createSettingsApi({ store, registry: new SettingRegistry(specs), cipher, env: {} })
+    const pairs = [{ from: 'docx.brave.apiKey', to: 'search.web.brave.apiKey' }]
+    expect(await api.migrateKeys(pairs)).toEqual({ issues: [] })
+    expect(store.rows.get('search.web.brave.apiKey')).toBe(encrypted)
+    expect(store.rows.has('docx.brave.apiKey')).toBe(false)
+    expect(await api.getSecret('search.web.brave.apiKey')).toEqual({
+      ok: true,
+      value: 'legacy-brave-key',
+    })
+    expect(JSON.stringify(await api.entries())).not.toContain('legacy-brave-key')
+    expect(JSON.stringify(await api.entries())).not.toContain('docx.brave.apiKey')
+    await api.update({ 'search.web.brave.apiKey': 'new-key' })
+    expect(await api.migrateKeys(pairs)).toEqual({ issues: [] })
+    expect(await api.getSecret('search.web.brave.apiKey')).toEqual({ ok: true, value: 'new-key' })
+  })
+
+  it('retains an unreadable legacy secret and reports a repair action', async () => {
+    const store = memoryStore({ 'docx.brave.apiKey': 'enc:v1:broken' })
+    const api = createSettingsApi({
+      store,
+      registry: new SettingRegistry(specs),
+      cipher: createSecretCipher(SECRET),
+      env: {},
+    })
+    const result = await api.migrateKeys([
+      { from: 'docx.brave.apiKey', to: 'search.web.brave.apiKey' },
+    ])
+    expect(result.issues[0]).toMatchObject({
+      key: 'search.web.brave.apiKey',
+      message: expect.stringContaining('无法解密'),
+    })
+    expect(store.rows.get('docx.brave.apiKey')).toBe('enc:v1:broken')
+    expect(store.rows.has('search.web.brave.apiKey')).toBe(false)
+  })
+
+  it('keeps the legacy row when writing the replacement fails', async () => {
+    const cipher = createSecretCipher(SECRET)
+    const encrypted = cipher.encrypt('legacy-brave-key')
+    const store = memoryStore({ 'docx.brave.apiKey': encrypted })
+    store.upsert = async () => {
+      throw new Error('database write failed')
+    }
+    const api = createSettingsApi({ store, registry: new SettingRegistry(specs), cipher, env: {} })
+    await expect(
+      api.migrateKeys([{ from: 'docx.brave.apiKey', to: 'search.web.brave.apiKey' }]),
+    ).rejects.toThrow('database write failed')
+    expect(store.rows.get('docx.brave.apiKey')).toBe(encrypted)
+    expect(store.rows.has('search.web.brave.apiKey')).toBe(false)
+  })
+})
+
 describe('写入校验', () => {
   it('拒绝未知的键（键集是闭集）', async () => {
     const api = makeApi(memoryStore())

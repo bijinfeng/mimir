@@ -1,6 +1,7 @@
 import { generateTranscription } from '@tanstack/ai'
 import { docxTranscriptionAdapter, docxTranscriptionConfiguration } from '@mimir/plugin-provider'
 import { assemble } from '../plugins/host.js'
+import { migrateAiServiceSettings } from './ai-service-settings.js'
 import { callChat, modelReady } from './model.js'
 import { record, tokenFields } from './usage.js'
 
@@ -12,9 +13,10 @@ const MAX_AUDIO_BYTES = 10 * 1024 * 1024
 export class DocxMediaInputError extends Error {}
 
 export async function docxMediaReadiness(): Promise<{ vision: boolean; audio: boolean }> {
+  await migrateAiServiceSettings()
   const settings = assemble().settings
   const [visionEnabled, model, transcription] = await Promise.all([
-    settings.getBoolean('docx.media.visionEnabled'),
+    settings.getBoolean('model.vision.enabled'),
     modelReady('chat'),
     docxTranscriptionConfiguration(settings).catch(() => null),
   ])
@@ -57,8 +59,11 @@ function audioMime(item: Media, bytes: Buffer): string {
 }
 
 async function transcribe(item: Media, documentId: string): Promise<string> {
+  const issues = await migrateAiServiceSettings()
+  const issue = issues.find((entry) => entry.key === 'model.transcription.apiKey')
+  if (issue) throw new Error(issue.message)
   const config = await docxTranscriptionAdapter(assemble().settings)
-  if (!config) throw new Error('请先配置 DOCX 音频转录服务')
+  if (!config) throw new Error('请先配置音频转录服务')
   const bytes = decode(item, MAX_AUDIO_BYTES)
   const mime = audioMime(item, bytes)
   const startedAt = performance.now()
@@ -107,7 +112,7 @@ export async function analyzeDocxMedia(input: {
   if (!input.instruction.trim() || input.instruction.length > 4_000)
     throw new DocxMediaInputError('分析要求不能为空且不能超过 4000 字符')
   if (input.kind === 'audio') {
-    if (!ready.audio) throw new Error('请先配置 DOCX 音频转录服务和聊天模型')
+    if (!ready.audio) throw new Error('请先配置音频转录服务和聊天模型')
     if (input.media.length !== 1) throw new DocxMediaInputError('音频分析需要一个文件')
     const transcript = await transcribe(input.media[0]!, input.documentId)
     const text = await callChat({
@@ -121,7 +126,7 @@ export async function analyzeDocxMedia(input: {
     })
     return { text }
   }
-  if (!ready.vision) throw new Error('请先确认聊天模型支持图片输入并启用 DOCX 图片与视频分析')
+  if (!ready.vision) throw new Error('请先确认聊天模型支持图片输入并启用视觉输入')
   if (input.media.length < 1 || input.media.length > (input.kind === 'image' ? 1 : 4)) {
     throw new DocxMediaInputError('图片需要一个文件，视频需要 1 到 4 帧')
   }

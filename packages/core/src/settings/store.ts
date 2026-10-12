@@ -232,6 +232,10 @@ export function isProvided(resolved: ResolvedSetting): boolean {
 /* ── 对外的高阶接口 ───────────────────────────────────── */
 
 export interface SettingsApi extends PluginSettings {
+  /** Move hidden legacy scalar keys to their registered replacement, preserving encrypted bytes. */
+  migrateKeys(pairs: readonly { from: string; to: string }[]): Promise<{
+    issues: { key: string; message: string }[]
+  }>
   /**
    * 下发给浏览器的条目。
    *
@@ -288,6 +292,35 @@ export function createSettingsApi(host: SettingsHost): SettingsApi {
   }
 
   return {
+    async migrateKeys(pairs) {
+      const overrides = await host.store.loadAll()
+      const issues: { key: string; message: string }[] = []
+      for (const { from, to } of pairs) {
+        const oldSpec = specOrThrow(from)
+        const newSpec = specOrThrow(to)
+        if (!oldSpec.hidden || oldSpec.type !== newSpec.type) {
+          throw new Error(`配置迁移不匹配：${from} → ${to}`)
+        }
+        const oldRaw = overrides.get(from)
+        if (oldRaw === undefined) continue
+        if (overrides.has(to)) {
+          await host.store.remove([from])
+          overrides.delete(from)
+          continue
+        }
+        if (oldSpec.type === 'secret' && !host.cipher.decrypt(oldRaw).ok) {
+          issues.push({ key: to, message: '已存的密钥无法解密，请重新填写' })
+          continue
+        }
+        // Copying ciphertext avoids exposing plaintext in migration state or logs.
+        await host.store.upsert([{ key: to, value: oldRaw }])
+        overrides.set(to, oldRaw)
+        await host.store.remove([from])
+        overrides.delete(from)
+      }
+      cache = null
+      return { issues }
+    },
     async entries() {
       const resolved = await load()
       return (

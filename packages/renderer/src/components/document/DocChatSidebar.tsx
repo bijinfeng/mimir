@@ -95,7 +95,7 @@ export function DocChatSidebar({
     queryFn: () => api.conversations.docxAgentCapabilities(doc.id),
     enabled: isDocx && Boolean(docxAgent),
   })
-  const openSettings = (section: 'models' | 'docx-ai') => {
+  const openSettings = (section: 'models' | 'network-search') => {
     runGuarded(() => void navigate({ to: '/settings', search: { scope: 'all', section } }))
   }
   /* 「打开笔记」：存成笔记之后跳到那篇。侧栏不自己处理导航——与
@@ -140,7 +140,7 @@ export function DocChatSidebar({
           loading={!docxAgent || capabilities.isPending}
           error={capabilities.isError}
           onRetry={() => void capabilities.refetch()}
-          onSettings={() => openSettings('docx-ai')}
+          onSettings={openSettings}
           revisionMode={revisionMode}
           onRevisionModeChange={setRevisionMode}
         />

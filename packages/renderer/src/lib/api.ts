@@ -610,6 +610,13 @@ export const api = {
     })
   },
 
+  /** Test the configured web search provider with a real request. */
+  testNetworkSearch() {
+    return request<{ ok: true; results: number }>('/api/config/network-search/test', {
+      method: 'POST',
+    })
+  },
+
   /**
    * 存储后端探测：真的写一个探针对象、读回、再删掉。
    *

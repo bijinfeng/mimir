@@ -1,12 +1,14 @@
 import { generateImage } from '@tanstack/ai'
 import { docxImageAdapter, docxImageConfiguration } from '@mimir/plugin-provider'
 import { assemble } from '../plugins/host.js'
+import { migrateAiServiceSettings } from './ai-service-settings.js'
 import { record, tokenFields } from './usage.js'
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024
 
 export async function docxImageReady(): Promise<boolean> {
   try {
+    await migrateAiServiceSettings()
     return (await docxImageConfiguration(assemble().settings)) !== null
   } catch {
     return false
@@ -29,8 +31,11 @@ export async function generateDocxImage(
 ): Promise<{ dataUrl: string; mimeType: string }> {
   if (!prompt.trim() || prompt.length > 2_000)
     throw new Error('图片描述不能为空且不能超过 2000 字符')
+  const issues = await migrateAiServiceSettings()
+  const issue = issues.find((item) => item.key === 'model.image.apiKey')
+  if (issue) throw new Error(issue.message)
   const config = await docxImageAdapter(assemble().settings)
-  if (!config) throw new Error('请先配置 DOCX 图片生成 API 密钥')
+  if (!config) throw new Error('请先配置图片生成 API 密钥')
   const startedAt = performance.now()
   let usage: unknown
   let ok = false

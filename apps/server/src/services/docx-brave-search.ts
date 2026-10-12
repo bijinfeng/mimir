@@ -1,12 +1,16 @@
 import { assemble } from '../plugins/host.js'
+import { migrateAiServiceSettings } from './ai-service-settings.js'
 
 const BRAVE_BASE = 'https://api.search.brave.com/res/v1'
 
 export type BraveResult = { title: string; url: string; description: string; imageUrl?: string }
 
 async function key(): Promise<string> {
+  const issues = await migrateAiServiceSettings()
+  const migrationIssue = issues.find((item) => item.key === 'search.web.brave.apiKey')
+  if (migrationIssue) throw new Error(migrationIssue.message)
   const { settings } = assemble()
-  const secret = await settings.getSecret('docx.brave.apiKey')
+  const secret = await settings.getSecret('search.web.brave.apiKey')
   if (!secret.ok) {
     throw new Error(
       secret.reason === 'corrupted'

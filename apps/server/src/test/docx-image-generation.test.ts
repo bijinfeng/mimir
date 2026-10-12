@@ -24,6 +24,7 @@ vi.mock('@mimir/plugin-provider', () => ({
   }),
   docxImageConfiguration: async () => ({ model: state.model }),
 }))
+vi.mock('../services/ai-service-settings.js', () => ({ migrateAiServiceSettings: async () => [] }))
 vi.mock('../plugins/host.js', () => ({ assemble: () => ({ settings: {} }) }))
 vi.mock('../services/usage.js', async (importOriginal) => ({
   ...(await importOriginal<object>()),

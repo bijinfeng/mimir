@@ -90,23 +90,23 @@ const DIMENSIONS_PARAM: SettingSpec = {
   },
 }
 
-/** Separate subscription for the DOCX agent's web and image search. */
+/** Application-wide web and image search credentials. */
 const BRAVE_SEARCH_PARAM: SettingSpec = {
-  key: 'docx.brave.apiKey',
+  key: 'search.web.brave.apiKey',
   label: 'Brave Search API 密钥',
-  description: '供 DOCX 对话编辑中的网页与图片搜索使用',
-  group: 'models',
+  description: '供网页与图片搜索使用',
+  group: 'search',
   type: 'secret',
   envName: null,
   defaultValue: '',
   rebuild: 'none',
 }
 
-const DOCX_IMAGE_PARAMS: SettingSpec[] = [
+const IMAGE_PARAMS: SettingSpec[] = [
   {
-    key: 'docx.image.apiKey',
-    label: 'DOCX 图片生成 API 密钥',
-    description: '供 DOCX 对话编辑生成图片使用',
+    key: 'model.image.apiKey',
+    label: '图片生成 API 密钥',
+    description: '供图片生成使用',
     group: 'models',
     type: 'secret',
     envName: null,
@@ -114,8 +114,8 @@ const DOCX_IMAGE_PARAMS: SettingSpec[] = [
     rebuild: 'none',
   },
   {
-    key: 'docx.image.baseUrl',
-    label: 'DOCX 图片生成接口地址',
+    key: 'model.image.baseUrl',
+    label: '图片生成接口地址',
     description: 'OpenAI Images API 兼容地址',
     group: 'models',
     type: 'string',
@@ -124,8 +124,8 @@ const DOCX_IMAGE_PARAMS: SettingSpec[] = [
     rebuild: 'none',
   },
   {
-    key: 'docx.image.model',
-    label: 'DOCX 图片生成模型',
+    key: 'model.image.model',
+    label: '图片生成模型',
     description: 'OpenAI 图片模型，例如 gpt-image-1',
     group: 'models',
     type: 'string',
@@ -135,10 +135,10 @@ const DOCX_IMAGE_PARAMS: SettingSpec[] = [
   },
 ]
 
-const DOCX_MEDIA_PARAMS: SettingSpec[] = [
+const MEDIA_PARAMS: SettingSpec[] = [
   {
-    key: 'docx.media.visionEnabled',
-    label: 'DOCX 图片与视频分析',
+    key: 'model.vision.enabled',
+    label: '视觉输入',
     description: '确认当前聊天模型支持图片输入后启用；视频由浏览器抽帧',
     group: 'models',
     type: 'boolean',
@@ -147,8 +147,8 @@ const DOCX_MEDIA_PARAMS: SettingSpec[] = [
     rebuild: 'none',
   },
   {
-    key: 'docx.media.apiKey',
-    label: 'DOCX 音频转录 API 密钥',
+    key: 'model.transcription.apiKey',
+    label: '音频转录 API 密钥',
     description: 'OpenAI 音频转录服务密钥',
     group: 'models',
     type: 'secret',
@@ -157,8 +157,8 @@ const DOCX_MEDIA_PARAMS: SettingSpec[] = [
     rebuild: 'none',
   },
   {
-    key: 'docx.media.baseUrl',
-    label: 'DOCX 音频转录接口地址',
+    key: 'model.transcription.baseUrl',
+    label: '音频转录接口地址',
     description: 'OpenAI Audio Transcriptions API 兼容地址',
     group: 'models',
     type: 'string',
@@ -167,8 +167,8 @@ const DOCX_MEDIA_PARAMS: SettingSpec[] = [
     rebuild: 'none',
   },
   {
-    key: 'docx.media.transcriptionModel',
-    label: 'DOCX 音频转录模型',
+    key: 'model.transcription.model',
+    label: '音频转录模型',
     description: '例如 whisper-1 或 gpt-4o-mini-transcribe',
     group: 'models',
     type: 'string',
@@ -177,6 +177,24 @@ const DOCX_MEDIA_PARAMS: SettingSpec[] = [
     rebuild: 'none',
   },
 ]
+
+/** Legacy scalar keys remain registered only for one-time server-side migration. */
+const LEGACY_DOCX_PARAMS: SettingSpec[] = [
+  { ...BRAVE_SEARCH_PARAM, key: 'docx.brave.apiKey' },
+  ...IMAGE_PARAMS.map((spec, index) => ({
+    ...spec,
+    key: ['docx.image.apiKey', 'docx.image.baseUrl', 'docx.image.model'][index]!,
+  })),
+  ...MEDIA_PARAMS.map((spec, index) => ({
+    ...spec,
+    key: [
+      'docx.media.visionEnabled',
+      'docx.media.apiKey',
+      'docx.media.baseUrl',
+      'docx.media.transcriptionModel',
+    ][index]!,
+  })),
+].map((spec) => Object.assign(spec, { hidden: true, writable: false }))
 
 /**
  * **历史键**：M1-A 的单供应商形状留下的七个标量键。
@@ -295,8 +313,9 @@ export function install(host: PluginHost): void {
     MODEL_CONFIG_PARAM,
     DIMENSIONS_PARAM,
     BRAVE_SEARCH_PARAM,
-    ...DOCX_IMAGE_PARAMS,
-    ...DOCX_MEDIA_PARAMS,
+    ...IMAGE_PARAMS,
+    ...MEDIA_PARAMS,
+    ...LEGACY_DOCX_PARAMS,
     ...LEGACY_PARAMS,
   ])
 

@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { App, Button, Cascader, Skeleton, Tooltip } from 'antd'
 import { useState } from 'react'
-import type { ModelRoleStatus, ProviderInstance, RuntimeConfig } from '@mimir/shared'
+import type { ModelRoleStatus, ProviderInstance, RuntimeConfig, SettingEntry } from '@mimir/shared'
 import { api, ApiRequestError } from '../../lib/api'
 import { LoadError } from '../LoadError'
 import { ProviderForm } from './ProviderForm'
@@ -14,7 +14,8 @@ import {
   withRoleBound,
   type ModelConfigDraft,
 } from './model-config'
-import { Panel, Row } from './parts'
+import { Block, BlockDesc, Panel, Row } from './parts'
+import { SettingControl } from './SettingControl'
 import { useStyles } from './settings.style'
 
 /**
@@ -51,6 +52,7 @@ export function ModelsSection() {
   const [editing, setEditing] = useState<ProviderInstance | null | undefined>(undefined)
 
   const modelConfig = configQuery.data?.modelConfig
+  const settings = configQuery.data?.settings ?? []
 
   if (configQuery.isError) {
     return <LoadError message="配置读取失败" onRetry={() => void configQuery.refetch()} />
@@ -135,7 +137,49 @@ export function ModelsSection() {
           ))
         )}
       </Panel>
+
+      <ModelServiceSettings
+        title="图片生成"
+        description="配置图片生成服务，供需要生成图片的功能使用。"
+        entries={settings.filter((entry) => entry.key.startsWith('model.image.'))}
+      />
+      <ModelServiceSettings
+        title="视觉输入"
+        description="视觉模型需要支持图片输入；实际能力还取决于所选模型。"
+        entries={settings.filter((entry) => entry.key === 'model.vision.enabled')}
+      />
+      <ModelServiceSettings
+        title="音频转录"
+        description="配置音频转录服务，供需要分析语音的功能使用。"
+        entries={settings.filter((entry) => entry.key.startsWith('model.transcription.'))}
+      />
     </>
+  )
+}
+
+function ModelServiceSettings({
+  title,
+  description,
+  entries,
+}: {
+  title: string
+  description: string
+  entries: SettingEntry[]
+}) {
+  if (entries.length === 0) return null
+
+  return (
+    <Panel title={title}>
+      <Block>
+        <BlockDesc>{description}</BlockDesc>
+      </Block>
+      {entries.map((entry) => (
+        <Row key={entry.key} label={entry.label}>
+          <SettingControl entry={entry} secret={entry.type === 'secret'} width={320} />
+          <BlockDesc>{entry.description}</BlockDesc>
+        </Row>
+      ))}
+    </Panel>
   )
 }
 
