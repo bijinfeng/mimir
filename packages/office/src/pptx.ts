@@ -11,12 +11,28 @@ import {
   parseDefaultTextStyle,
 } from '../vendor/packages/pptx-engine/src/placeholder.js'
 import { parseTheme, parseClrMap } from '../vendor/packages/pptx-engine/src/theme.js'
-import { PptxArchive, resolveTarget } from './pptx-archive.js'
-import { buildPptxBytes, commitSaved, slideIsDirty } from './pptx-save.js'
+import { PptxArchive, relsPathFor, resolveTarget } from './pptx-archive.js'
+import { buildPptxBytes, commitSaved, patchSlideXml, slideIsDirty } from './pptx-save.js'
+import {
+  allocatePptxPage,
+  assertNoIncomingSlideReferences,
+  assertPageCanDetach,
+  assertPresentationStructureSafe,
+  BLANK_SLIDE_XML,
+  blankSlideRels,
+  buildPptxStructurePatch,
+  pageSequenceChanged,
+  readPptxPages,
+  type EntryPatch,
+} from './pptx-structure.js'
 import type { PptxRenderable } from './pptx-render.js'
 import { applyEditParagraphs } from '../vendor/packages/pptx-ops/src/edit-text.js'
 import type { EditParagraph } from '../vendor/packages/pptx-ops/src/types.js'
-import type { Paragraph, TextElement } from '../vendor/packages/pptx-engine/src/types.js'
+import type {
+  Paragraph,
+  SlideElement,
+  TextElement,
+} from '../vendor/packages/pptx-engine/src/types.js'
 
 /**
  * pptx 的**打开**：压缩包 → 幻灯片模型（`packages/office/src/pptx-archive.ts`
@@ -442,6 +458,14 @@ export interface PptxEditSession {
    * 应据此提示，而不是静默什么也没发生）。
    */
   setText(slideIndex: number, elementId: string, paragraphs: EditParagraph[]): boolean
+  /** Insert a blank slide after the given slide; returns its selected index. */
+  insertBlank(afterIndex: number): number
+  /** Duplicate the current slide and its slide relationships after it. */
+  duplicate(index: number): number
+  /** Delete a slide; the last remaining slide cannot be removed. */
+  remove(index: number): number
+  /** Move a slide to a zero-based destination index. */
+  move(fromIndex: number, toIndex: number): number
   /** 这个幻灯片有未保存的改动吗 */
   isDirty(slideIndex: number): boolean
   /** 有任何未保存的改动吗 */
@@ -471,14 +495,30 @@ export interface PptxEditSession {
   commit(): void
 }
 
+function setSlideNumber(element: SlideElement, slideNumber: number): void {
+  if (element.type === 'group') {
+    for (const child of element.children) setSlideNumber(child, slideNumber)
+    return
+  }
+  if (element.type !== 'text' && element.type !== 'shape') return
+  for (const paragraph of element.text?.paragraphs ?? []) {
+    for (const run of paragraph.runs) {
+      if (run.field === 'slidenum') run.text = String(slideNumber)
+    }
+  }
+}
+
 export async function openPptxForEdit(bytes: Uint8Array): Promise<PptxEditSession> {
   const archive = await PptxArchive.open(bytes)
-  const { size, slidePaths } = archive.readPresentation()
+  const { size } = archive.readPresentation()
+  const pages = readPptxPages(archive)
+  let baseline = structuredClone(pages)
 
   const slides: Slide[] = []
-  for (const path of slidePaths) {
-    const slide = parseSlideFromArchive(archive, path)
-    if (slide) slides.push(slide)
+  for (const page of pages) {
+    const slide = parseSlideFromArchive(archive, page.path)
+    if (!slide) throw new Error(`PPTX 幻灯片无法解析：${page.path}`)
+    slides.push(slide)
   }
   if (slides.length === 0) {
     throw new Error('这份演示文稿里没有幻灯片（文件可能已损坏）')
@@ -486,7 +526,24 @@ export async function openPptxForEdit(bytes: Uint8Array): Promise<PptxEditSessio
 
   /** 快照缓存（没改动时必须返回同一个对象，改动后置空以失效） */
   let cachedView: PptxRenderable | null = null
+  let lastSavedPatch: EntryPatch | null = null
   const media = archive.readMediaDataUrls()
+
+  function requireIndex(index: number): Slide {
+    const slide = slides[index]
+    if (!Number.isInteger(index) || !slide) throw new Error('幻灯片序号无效')
+    return slide
+  }
+
+  function invalidate(): void {
+    cachedView = null
+    lastSavedPatch = null
+    slides.forEach((slide, index) => {
+      for (const element of [...slide.elements, ...(slide.decorations ?? [])]) {
+        setSlideNumber(element, index + 1)
+      }
+    })
+  }
 
   return {
     size,
@@ -514,25 +571,115 @@ export async function openPptxForEdit(bytes: Uint8Array): Promise<PptxEditSessio
        */
       el.dirty = true
       // 内容变了 → 快照失效（下次 view() 返回新对象，渲染层据此重算）
-      cachedView = null
+      invalidate()
       return true
+    },
+
+    insertBlank(afterIndex) {
+      requireIndex(afterIndex)
+      assertPresentationStructureSafe(archive)
+      const source = slides[afterIndex]!
+      const layoutPath = source.layoutPath ?? archive.resolveSlideChain(source.path).layoutPath
+      if (!layoutPath || !archive.has(layoutPath)) {
+        throw new Error('这份 PPTX 没有可用的幻灯片版式，无法新增空白页')
+      }
+      const page = allocatePptxPage(archive, pages)
+      const relsXml = blankSlideRels(layoutPath)
+      const relPath = relsPathFor(page.path)
+      archive.setEntry(page.path, BLANK_SLIDE_XML)
+      archive.setEntry(relPath, relsXml)
+      let slide: Slide | null
+      try {
+        slide = parseSlideFromArchive(archive, page.path)
+      } finally {
+        archive.deleteEntry(page.path)
+        archive.deleteEntry(relPath)
+      }
+      if (!slide) throw new Error('空白幻灯片生成失败')
+      page.relsXml = relsXml
+      slides.splice(afterIndex + 1, 0, slide)
+      pages.splice(afterIndex + 1, 0, page)
+      invalidate()
+      return afterIndex + 1
+    },
+
+    duplicate(index) {
+      const source = requireIndex(index)
+      assertPresentationStructureSafe(archive)
+      const sourcePage = pages[index]!
+      assertPageCanDetach(archive, sourcePage)
+      const relsXml = sourcePage.relsXml ?? archive.readText(relsPathFor(source.path))
+      if (!relsXml) throw new Error('这张幻灯片缺少关系表，无法安全复制')
+      const page = allocatePptxPage(archive, pages)
+      page.relsXml = relsXml
+      const clone: Slide = structuredClone(source)
+      clone.path = page.path
+      slides.splice(index + 1, 0, clone)
+      pages.splice(index + 1, 0, page)
+      invalidate()
+      return index + 1
+    },
+
+    remove(index) {
+      requireIndex(index)
+      if (slides.length <= 1) throw new Error('至少保留一张幻灯片')
+      assertPresentationStructureSafe(archive)
+      assertPageCanDetach(archive, pages[index]!)
+      assertNoIncomingSlideReferences(archive, pages[index]!, pages)
+      slides.splice(index, 1)
+      pages.splice(index, 1)
+      invalidate()
+      return Math.min(index, slides.length - 1)
+    },
+
+    move(fromIndex, toIndex) {
+      requireIndex(fromIndex)
+      requireIndex(toIndex)
+      if (fromIndex === toIndex) return toIndex
+      assertPresentationStructureSafe(archive)
+      const [slide] = slides.splice(fromIndex, 1)
+      const [page] = pages.splice(fromIndex, 1)
+      slides.splice(toIndex, 0, slide!)
+      pages.splice(toIndex, 0, page!)
+      invalidate()
+      return toIndex
     },
 
     isDirty(slideIndex) {
       const slide = slides[slideIndex]
-      return slide ? slideIsDirty(slide) : false
+      return slide
+        ? slideIsDirty(slide) || pages[slideIndex]?.path !== baseline[slideIndex]?.path
+        : false
     },
 
     hasChanges() {
-      return slides.some((s) => slideIsDirty(s))
+      return pageSequenceChanged(pages, baseline) || slides.some((s) => slideIsDirty(s))
     },
 
     async save() {
-      return buildPptxBytes(archive, slides)
+      const patch = pageSequenceChanged(pages, baseline)
+        ? buildPptxStructurePatch(archive, baseline, pages, slides)
+        : new Map()
+      const outputBytes = await buildPptxBytes(archive, slides, patch)
+      lastSavedPatch = patch
+      return outputBytes
     },
 
     commit() {
+      if (!lastSavedPatch) throw new Error('必须先成功保存 PPTX，才能提交会话状态')
+      const dirtyXml = new Map(
+        slides
+          .filter((slide) => slideIsDirty(slide))
+          .map((slide) => [slide.path, patchSlideXml(slide)]),
+      )
       commitSaved(slides)
+      for (const [path, data] of lastSavedPatch) {
+        if (data === null) archive.deleteEntry(path)
+        else archive.setEntry(path, data)
+      }
+      for (const [path, xml] of dirtyXml) archive.setEntry(path, xml)
+      baseline = structuredClone(pages)
+      lastSavedPatch = null
       // commit 也换了模型（元素锚点与 originalXml 都更新了），所以也要失效
       cachedView = null
     },

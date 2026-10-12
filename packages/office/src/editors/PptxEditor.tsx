@@ -80,6 +80,7 @@ import {
   ToolbarMenuItemRow,
   ToolbarMenuNote,
   ToolbarMenuSeparator,
+  ToolbarNotice,
   ToolbarNumberField,
   ToolbarSelect,
   ToolbarSpacer,
@@ -103,6 +104,7 @@ import type { FindOptions } from '../shims/ui.js'
 import type { EditParagraph, EditRun } from '../../vendor/packages/pptx-ops/src/types.js'
 import type { Paragraph, TextRun } from '../../vendor/packages/pptx-engine/src/types.js'
 import { statusText, useParsed, useSource } from './use-source.js'
+import { ThumbnailSidebar } from './ThumbnailSidebar.js'
 import { OFFICE_MIME, type EditorProps } from './types.js'
 import '../shell/shell.css'
 import './editors.css'
@@ -113,6 +115,15 @@ import './pptx-pdf-toolbar.css'
  * 960 是「宽屏下不缩得太小、窄屏下还能看」的折中。
  */
 const FIT_WIDTH_PX = 960
+const THUMBNAIL_WIDTH_PX = 136
+
+function PptxThumbnail({ deck, index }: { deck: PptxRenderable; index: number }) {
+  const rendered = useMemo(
+    () => renderSlide(deck, index, { fitWidthPx: THUMBNAIL_WIDTH_PX }),
+    [deck, index],
+  )
+  return rendered ? <span dangerouslySetInnerHTML={{ __html: rendered.svg }} /> : null
+}
 
 /**
  * 上标 / 下标的 baseline 百分比。
@@ -511,6 +522,7 @@ export function PptxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
   const [selected, setSelected] = useState<string | null>(null)
   /** 有改动还没保存（保存后清掉） */
   const [dirty, setDirty] = useState(false)
+  const [pageError, setPageError] = useState<string | null>(null)
   /** 画布容器：SVG 里注入 `data-element-id` 后用它做事件代理与描边 */
   const canvasRef = useRef<HTMLDivElement>(null)
 
@@ -563,6 +575,10 @@ export function PptxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
   }, [view, active])
 
   const slideCount = view?.slides().length ?? 0
+  const thumbnailPages = useMemo(
+    () => view?.slides().map((slide) => ({ key: slide.path })) ?? [],
+    [view],
+  )
 
   /**
    * 模型变了之后的**React 侧跟进**：刷新渲染快照、标脏、通知查找栏重扫。
@@ -577,9 +593,10 @@ export function PptxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
   const afterEdit = () => {
     if (session === null || source.bytes === null) return
     setEdited({ source: source.bytes, view: session.view() })
-    if (!dirty) {
-      setDirty(true)
-      onDirtyChange?.(true)
+    const changed = session.hasChanges()
+    if (changed !== dirty) {
+      setDirty(changed)
+      onDirtyChange?.(changed)
     }
     findEvents.notify()
   }
@@ -616,6 +633,31 @@ export function PptxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
     setSelected(null)
     setParagraphKeys([])
   }, [])
+
+  const editPage = (operation: () => number) => {
+    try {
+      const nextIndex = operation()
+      setPageError(null)
+      goTo(nextIndex)
+      setFindMark(null)
+      afterEditRef.current()
+    } catch (error) {
+      setPageError(error instanceof Error ? error.message : '页面操作失败')
+    }
+  }
+
+  const insertPage = (afterIndex: number) => {
+    if (session) editPage(() => session.insertBlank(afterIndex))
+  }
+  const duplicatePage = (index: number) => {
+    if (session) editPage(() => session.duplicate(index))
+  }
+  const deletePage = (index: number) => {
+    if (session) editPage(() => session.remove(index))
+  }
+  const movePage = (fromIndex: number, toIndex: number) => {
+    if (session) editPage(() => session.move(fromIndex, toIndex))
+  }
 
   /**
    * 选中元素的**文字模型**。
@@ -1391,6 +1433,12 @@ export function PptxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
       status={
         <>
           <ToolbarLabel>{status}</ToolbarLabel>
+          {dirty && (
+            <ToolbarLabel>
+              第 {active + 1} / {slideCount} 页
+            </ToolbarLabel>
+          )}
+          {pageError && <ToolbarNotice>{pageError}</ToolbarNotice>}
           {/*
             缺几何的文本框如实说明（DESIGN §0.2）。**这一条不是可选的**：那些
             框是按幻灯片比例补出来的（`pptx-render.ts` 的 `withFallbackGeometry`），
@@ -1416,8 +1464,19 @@ export function PptxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
         </>
       }
     >
-      <div className="me-scroll mimir-pptx-stage">
-        {/*
+      <ThumbnailSidebar
+        pages={thumbnailPages}
+        activeIndex={active}
+        noun="幻灯片"
+        onSelect={goTo}
+        onInsert={insertPage}
+        onDuplicate={duplicatePage}
+        onDelete={deletePage}
+        onMove={movePage}
+        renderThumbnail={(index) => <PptxThumbnail deck={view} index={index} />}
+      >
+        <div className="me-scroll mimir-pptx-stage">
+          {/*
           ## 白名单：本文件里**唯一**可点而不经过原语元素的元素
 
           工具条上的交互元素一律走外壳的 antd 原语（D-064）。这里是一个
@@ -1439,11 +1498,11 @@ export function PptxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
           要补上键盘选元素，得给画布自己做一层「元素列表 + 方向键」，那是新
           功能，不是这次迁移的范围。
         */}
-        <div
-          ref={canvasRef}
-          className="mimir-pptx-slide"
-          onClick={onClickCanvas}
-          /*
+          <div
+            ref={canvasRef}
+            className="mimir-pptx-slide"
+            onClick={onClickCanvas}
+            /*
             注入渲染好的 SVG。**为什么用 dangerouslySetInnerHTML 而不是 React
             元素**：渲染器是纯函数（绘制列表 → 字符串），产物要能脱离 React
             单独用（存成 .svg、在测试里比对字符串、将来做导出）。重写成 React
@@ -1451,9 +1510,10 @@ export function PptxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
             XML（`pptx-svg.ts` 有转义与可解析性测试），不是用户可控的 HTML。
             **点选靠 data-element-id 属性**——渲染器给每个元素节点写了它。
           */
-          dangerouslySetInnerHTML={{ __html: rendered.svg }}
-        />
-      </div>
+            dangerouslySetInnerHTML={{ __html: rendered.svg }}
+          />
+        </div>
+      </ThumbnailSidebar>
     </EditorShell>
   )
 }

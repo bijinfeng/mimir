@@ -96,7 +96,13 @@ import {
 import { statusText, useParsed, useSource } from './use-source.js'
 import { OFFICE_MIME, type EditorProps } from './types.js'
 import type { FindOptions } from '../shims/ui.js'
-import { loadPdfDocument, renderPdfPages, type PdfRenderHandle } from './pdf-render.js'
+import {
+  cancelPdfRender,
+  loadPdfDocument,
+  renderPdfPages,
+  retainPdfDocuments,
+  type PdfRenderHandle,
+} from './pdf-render.js'
 import {
   BLANK_PAGE_SIZE,
   buildPdfBytes,
@@ -128,6 +134,7 @@ import {
   type PdfRect,
   type PdfTextIndex,
 } from './pdf-text.js'
+import { ThumbnailSidebar } from './ThumbnailSidebar.js'
 import '../shell/shell.css'
 import './editors.css'
 import './pptx-pdf-toolbar.css'
@@ -329,6 +336,16 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
    */
   const layout = useMemo<PdfPageRef[]>(() => settled?.pages ?? original ?? [], [settled, original])
   const imports = settled?.imports ?? NO_IMPORTS
+  const retainedSources = useMemo(
+    () => [source.bytes, ...imports.values()],
+    [source.bytes, imports],
+  )
+  useEffect(() => retainPdfDocuments(retainedSources), [retainedSources])
+  useEffect(() => () => retainPdfDocuments([]), [])
+  const thumbnailPages = useMemo(
+    () => layout.map((ref, index) => ({ key: `${index}:${pageKey(ref)}` })),
+    [layout],
+  )
 
   /** 当前页号夹进有效范围。页数变少（删页、换文档）时**在渲染期导出**，不留中间态 */
   const at = Math.min(active, Math.max(0, layout.length - 1))
@@ -463,25 +480,25 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
     goTo(layout.length - 1 - at)
   }
 
-  /** 删除当前页。**最后一页不允许删**——一份零页的 PDF 是坏文件 */
-  const removePage = () => {
-    if (page === null || layout.length <= 1) return
-    applyPages(layout.filter((_, position) => position !== at))
-    goTo(Math.max(0, Math.min(at, layout.length - 2)))
+  /** 删除指定页。**最后一页不允许删**——一份零页的 PDF 是坏文件 */
+  const removePageAt = (index: number) => {
+    if (index < 0 || index >= layout.length || layout.length <= 1) return
+    applyPages(layout.filter((_, position) => position !== index))
+    goTo(Math.max(0, Math.min(index, layout.length - 2)))
   }
+  const removePage = () => removePageAt(at)
 
-  /** 把当前页往前/往后挪一格 */
-  const move = (delta: -1 | 1) => {
-    if (page === null) return
-    const to = at + delta
-    if (to < 0 || to >= layout.length) return
+  /** 将指定页移到目标位置，工具条和缩略图拖放共用同一动作。 */
+  const movePage = (from: number, to: number) => {
+    if (from < 0 || from >= layout.length || to < 0 || to >= layout.length || from === to) return
     const next = [...layout]
-    const [moved] = next.splice(at, 1)
+    const [moved] = next.splice(from, 1)
     if (moved === undefined) return
     next.splice(to, 0, moved)
     applyPages(next)
     goTo(to)
   }
+  const move = (delta: -1 | 1) => movePage(at, at + delta)
 
   /**
    * 在当前页之后插入一张空白页，并跳到它。
@@ -490,7 +507,8 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
    * `buildPdfBytes` 用 `insertPage` 补一张 A4。**尺寸是 A4 竖版**——不跟当前页
    * 走：插入空白页的用途是「在这两页之间加一张纸」，纸型交给「纸型」那一档。
    */
-  const insertBlank = () => {
+  const insertBlankAt = (afterIndex: number) => {
+    if (afterIndex < 0 || afterIndex >= layout.length) return
     const blank: PdfPageRef = {
       origin: { kind: 'blank' },
       rotation: 0,
@@ -498,8 +516,24 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
       crop: null,
       paper: null,
     }
-    applyPages([...layout.slice(0, at + 1), blank, ...layout.slice(at + 1)])
-    goTo(at + 1)
+    applyPages([...layout.slice(0, afterIndex + 1), blank, ...layout.slice(afterIndex + 1)])
+    goTo(afterIndex + 1)
+  }
+  const insertBlank = () => insertBlankAt(at)
+
+  /** 复制为独立页项；来源可相同，但后续旋转/裁剪等只修改其中一项。 */
+  const duplicatePage = (index: number) => {
+    const originalPage = layout[index]
+    if (originalPage === undefined) return
+    const copy: PdfPageRef = {
+      origin: { ...originalPage.origin },
+      rotation: originalPage.rotation,
+      base: { ...originalPage.base },
+      crop: originalPage.crop === null ? null : { ...originalPage.crop },
+      paper: originalPage.paper === null ? null : { ...originalPage.paper },
+    }
+    applyPages([...layout.slice(0, index + 1), copy, ...layout.slice(index + 1)])
+    goTo(index + 1)
   }
 
   /**
@@ -1135,21 +1169,81 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
         </>
       }
     >
-      <div ref={canvasRef} className="me-scroll mimir-pdf-stage">
-        {renderError !== null ? (
-          <EditorState tone="error">渲染失败：{renderError}</EditorState>
-        ) : (
-          <PdfSheet
-            bytes={source.bytes}
-            page={page}
-            imports={imports}
-            zoom={zoom}
-            highlight={{ matches: highlight.matches, at: highlight.at, page: at }}
-            onError={setRenderError}
-          />
-        )}
-      </div>
+      <ThumbnailSidebar
+        pages={thumbnailPages}
+        activeIndex={at}
+        onSelect={goTo}
+        onInsert={insertBlankAt}
+        onDuplicate={duplicatePage}
+        onDelete={removePageAt}
+        onMove={movePage}
+        renderThumbnail={(index: number) => {
+          const ref = layout[index]
+          return ref === undefined ? null : (
+            <PdfThumbnail bytes={source.bytes} page={ref} imports={imports} />
+          )
+        }}
+        noun="页"
+      >
+        <div ref={canvasRef} className="me-scroll mimir-pdf-stage">
+          {renderError !== null ? (
+            <EditorState tone="error">渲染失败：{renderError}</EditorState>
+          ) : (
+            <PdfSheet
+              bytes={source.bytes}
+              page={page}
+              imports={imports}
+              zoom={zoom}
+              highlight={{ matches: highlight.matches, at: highlight.at, page: at }}
+              onError={setRenderError}
+            />
+          )}
+        </div>
+      </ThumbnailSidebar>
     </EditorShell>
+  )
+}
+
+/** 缩略图复用与主画布相同的来源和旋转，错误只留在本页项。 */
+function PdfThumbnail({
+  bytes,
+  page,
+  imports,
+}: {
+  bytes: Uint8Array | null
+  page: PdfPageRef
+  imports: ReadonlyMap<string, Uint8Array>
+}) {
+  const [error, setError] = useState<string | null>(null)
+  const from = sourceOf(page, bytes, imports)
+  const shown = screenSize(page.base, page.rotation)
+  const style: CSSProperties = {
+    position: 'relative',
+    width: 120,
+    aspectRatio: `${shown.width} / ${shown.height}`,
+    background: '#fff',
+    overflow: 'hidden',
+  }
+  if (from.bytes === null) {
+    return (
+      <div style={style}>
+        {page.origin.kind === 'blank' ? null : '无法预览'}
+        <CropOverlay page={page} />
+      </div>
+    )
+  }
+  return (
+    <div style={style}>
+      <PdfCanvas
+        bytes={from.bytes}
+        pageIndex={from.index}
+        rotation={page.rotation}
+        width={120}
+        onError={setError}
+      />
+      <CropOverlay page={page} />
+      {error === null ? null : <span role="status">预览失败</span>}
+    </div>
   )
 }
 
@@ -1398,6 +1492,7 @@ function PdfCanvas({
 
   useEffect(() => {
     let cancelled = false
+    const canvas = canvasRef.current
     void (async () => {
       try {
         const handle = await renderPdfPages({
@@ -1405,7 +1500,7 @@ function PdfCanvas({
           pageIndex,
           rotation,
           width,
-          canvas: canvasRef.current,
+          canvas,
         })
         if (cancelled) {
           handle?.dispose()
@@ -1421,6 +1516,7 @@ function PdfCanvas({
     })()
     return () => {
       cancelled = true
+      cancelPdfRender(canvas)
       handleRef.current?.dispose()
       handleRef.current = null
     }

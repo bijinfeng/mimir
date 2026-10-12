@@ -94,6 +94,9 @@ interface CachedDoc {
  * 整份文件（慢，但没有报错）——**每一次翻页都重来一遍**。
  */
 const cached = new Map<Uint8Array, CachedDoc>()
+/** 多个缩略图会同时要同一份字节；解析进行中也要共用一笔 loading task。 */
+const loading = new Map<Uint8Array, Promise<PDFDocumentProxy>>()
+let retainedBytes: Set<Uint8Array> | null = null
 
 /**
  * 还有多少笔渲染在用这些文档。
@@ -108,6 +111,7 @@ const pending: CachedDoc[] = []
 /** 除了这些字节之外的文档可以收了。编辑器在 bytes / 导入列表变化时调它 */
 export function retainPdfDocuments(keep: readonly (Uint8Array | null)[]): void {
   const alive = new Set(keep.filter((bytes): bytes is Uint8Array => bytes !== null))
+  retainedBytes = alive
   for (const [bytes, entry] of cached) {
     if (alive.has(bytes)) continue
     cached.delete(bytes)
@@ -149,6 +153,8 @@ function collect(): void {
 export async function loadPdfDocument(bytes: Uint8Array): Promise<PDFDocumentProxy> {
   const hit = cached.get(bytes)
   if (hit !== undefined) return hit.doc
+  const inFlight = loading.get(bytes)
+  if (inFlight !== undefined) return inFlight
 
   ensureWorker()
   const task = getDocument({
@@ -168,15 +174,57 @@ export async function loadPdfDocument(bytes: Uint8Array): Promise<PDFDocumentPro
     isEvalSupported: false,
   } as Parameters<typeof getDocument>[0])
 
-  const doc = await task.promise
-  const entry: CachedDoc = { bytes, doc, task }
-  cached.set(bytes, entry)
-  return doc
+  const promise = task.promise.then(
+    (doc) => {
+      loading.delete(bytes)
+      const entry: CachedDoc = { bytes, doc, task }
+      if (retainedBytes !== null && !retainedBytes.has(bytes)) {
+        pending.push(entry)
+        collect()
+      } else {
+        cached.set(bytes, entry)
+      }
+      return doc
+    },
+    (cause: unknown) => {
+      loading.delete(bytes)
+      throw cause
+    },
+  )
+  loading.set(bytes, promise)
+  return promise
 }
 
 export interface PdfRenderHandle {
   /** 放弃这一笔（组件卸载或换页时） */
   dispose: () => void
+}
+
+interface CanvasRenderState {
+  generation: number
+  task: { cancel: () => void } | null
+  settled: Promise<void> | null
+}
+
+/** 主画布与每个缩略图各有自己的代次和 pdf.js 渲染任务。 */
+const canvasRenders = new WeakMap<HTMLCanvasElement, CanvasRenderState>()
+
+function renderState(canvas: HTMLCanvasElement): CanvasRenderState {
+  let state = canvasRenders.get(canvas)
+  if (state === undefined) {
+    state = { generation: 0, task: null, settled: null }
+    canvasRenders.set(canvas, state)
+  }
+  return state
+}
+
+/** 换页或卸载时连尚在加载文档、未拿到 handle 的绘制一起废弃。 */
+export function cancelPdfRender(canvas: HTMLCanvasElement | null): void {
+  if (canvas === null) return
+  const state = canvasRenders.get(canvas)
+  if (state === undefined) return
+  state.generation += 1
+  state.task?.cancel()
 }
 
 export interface RenderPdfOptions {
@@ -191,21 +239,19 @@ export interface RenderPdfOptions {
 }
 
 /**
- * 渲染的**代次**。
+ * 渲染的**代次**按 canvas 隔离。
  *
  * pdf.js 对同一块 canvas 的并发 `render()` 直接抛
  * `Cannot use the same canvas during multiple render() operations`，而这
  * 条并发**在 React 下必然发生**（StrictMode 挂载两次、快速翻页、连续点放大）。
- * 第一次的实现用「模块级记一个取消入口，新调用先取消旧的」，结果是
+ * 早期实现用「模块级记一个取消入口，新调用先取消旧的」，结果是
  * **两次都不画、界面全白且无报错**：第二次取消了第一次，第二次自己又被
  * cleanup 取消。
  *
- * 代次的语义是「只有最新那一代有权画」：每次调用领一个号，await 之间对一次；
- * 过期的那一代**放弃绘制**（而不是去取消别人）。于是谁先谁后都不会误杀最新
- * 的那一代。被取代时由 pdf.js 自己中断（`RenderingCancelledException`），
- * 那是正常路径。
+ * 代次的语义是「同一块 canvas 只有最新那一代有权画」：每次调用领一个号，
+ * await 之间对一次；过期绘制先取消并等其 promise 结束，再让下一笔碰 canvas。
+ * 每个缩略图与主画布各有状态，不能因别的 canvas 开始绘制而放弃本页。
  */
-let renderGeneration = 0
 
 /**
  * 把一页画到 canvas 上。
@@ -233,11 +279,15 @@ export async function renderPdfPages(options: RenderPdfOptions): Promise<PdfRend
   const { bytes, pageIndex, rotation, width, canvas } = options
   if (!canvas) return null
 
-  renderGeneration += 1
-  const generation = renderGeneration
-  const stale = (): boolean => generation !== renderGeneration
+  const state = renderState(canvas)
+  state.generation += 1
+  const generation = state.generation
+  state.task?.cancel()
+  const previous = state.settled
+  const stale = (): boolean => generation !== state.generation
 
   activeRenders += 1
+  let startedTask: { cancel: () => void } | null = null
   try {
     const doc = await loadPdfDocument(bytes)
     if (stale()) {
@@ -255,6 +305,10 @@ export async function renderPdfPages(options: RenderPdfOptions): Promise<PdfRend
     const ctx = canvas.getContext('2d')
     if (!ctx) return null
 
+    // pdf.js 不允许同一块 canvas 同时有两笔绘制；取消后等旧任务确实结束。
+    if (previous !== null) await previous
+    if (stale()) return null
+
     const dpr = Math.min(window.devicePixelRatio || 1, 2)
     canvas.width = Math.floor(viewport.width * dpr)
     canvas.height = Math.floor(viewport.height * dpr)
@@ -268,8 +322,18 @@ export async function renderPdfPages(options: RenderPdfOptions): Promise<PdfRend
       transform: dpr === 1 ? undefined : [dpr, 0, 0, dpr, 0, 0],
     })
 
+    state.task = renderTask
+    startedTask = renderTask
+    state.settled = renderTask.promise.then(
+      () => {},
+      () => {},
+    )
     await renderTask.promise
-    return { dispose: () => renderTask.cancel() }
+    return {
+      dispose: () => {
+        if (state.generation === generation) cancelPdfRender(canvas)
+      },
+    }
   } catch (cause) {
     /**
      * **取消不是失败。** pdf.js 用 `RenderingCancelledException` 表示它——
@@ -279,6 +343,7 @@ export async function renderPdfPages(options: RenderPdfOptions): Promise<PdfRend
     if (isCancellation(cause)) return null
     throw cause
   } finally {
+    if (state.task === startedTask) state.task = null
     activeRenders -= 1
     // 这一笔结束了，被淘汰的文档现在可以收了（见 `retainPdfDocuments`）
     collect()

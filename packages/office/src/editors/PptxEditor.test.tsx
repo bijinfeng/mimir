@@ -138,6 +138,38 @@ function click(element: Element): void {
   })
 }
 
+async function slideAction(host: HTMLElement, page: number, label: string): Promise<void> {
+  const item = host.querySelectorAll<HTMLElement>('.mimir-page-browser__item')[page - 1]
+  if (!item) throw new Error(`没有第 ${page} 页的缩略图`)
+  act(() => {
+    item.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }))
+  })
+  await act(async () => {
+    await new Promise((tick) => setTimeout(tick, 0))
+  })
+  const menu = [...host.querySelectorAll<HTMLElement>('.ant-dropdown')].findLast(
+    (node) => !node.classList.contains('ant-dropdown-hidden'),
+  )
+  const action = [...(menu?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [])].find(
+    (node) => node.textContent?.trim() === label,
+  )
+  if (!action) throw new Error(`第 ${page} 页没有「${label}」操作`)
+  click(action)
+  await act(async () => {
+    await new Promise((tick) => setTimeout(tick, 0))
+  })
+}
+
+function touchPointer(type: string): Event {
+  const event = new Event(type, { bubbles: true, cancelable: true })
+  Object.defineProperties(event, {
+    pointerType: { value: 'touch' },
+    clientX: { value: 20 },
+    clientY: { value: 20 },
+  })
+  return event
+}
+
 /** 点画布上的第 `index` 个元素（走事件代理，与浏览器里同一条路） */
 function selectOnCanvas(host: HTMLElement, index = 0): string {
   const nodes = [...host.querySelectorAll('.mimir-pptx-slide [data-element-id]')]
@@ -841,6 +873,154 @@ describe('pptx 次工具条：翻页与隐藏标记', () => {
     expect(host.textContent).toContain('这一页在放映时隐藏（只读标记）')
     // 页数没有变（隐藏不是删除）
     expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('第 2 / 5 页')
+  })
+})
+
+describe('pptx 缩略图与页级操作', () => {
+  it('复制后删除副本恢复未修改状态', async () => {
+    const { host } = await mountEditor(load('upstream/01_standard_business.pptx'))
+    await slideAction(host, 1, '复制此幻灯片')
+    expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('未保存')
+    await slideAction(host, 2, '删除此幻灯片')
+    expect(host.querySelectorAll('.mimir-page-browser__item')).toHaveLength(5)
+    expect(host.querySelector('.mimir-editor__status')?.textContent).not.toContain('未保存')
+    expect(button(host, '保存到库').disabled).toBe(true)
+  })
+
+  it('缩略图显示每页真实内容，点击后画布与页码同步', async () => {
+    const { host } = await mountEditor(load('upstream/01_standard_business.pptx'))
+    const previews = host.querySelectorAll('.mimir-page-browser__preview svg')
+    expect(previews.length).toBeGreaterThanOrEqual(2)
+    const first = previews[0]?.textContent
+    const second = previews[1]?.textContent
+    expect(first?.length).toBeGreaterThan(0)
+    expect(second?.length).toBeGreaterThan(0)
+    expect(first).not.toBe(second)
+    click(button(host, '第 2 幻灯片'))
+    expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('第 2 / 5 页')
+    expect(button(host, '第 2 幻灯片').getAttribute('aria-current')).toBe('page')
+    expect(host.querySelector('.mimir-pptx-slide svg')?.textContent).toBe(second)
+  })
+
+  it('新增、复制、移动、删除后保存并重新打开，内容与顺序一致', async () => {
+    const original = load('upstream/01_standard_business.pptx')
+    const source = await openPptxForEdit(original)
+    const sourcePath = source.slides()[1]?.path
+    const { host, record } = await mountEditor(original)
+
+    await slideAction(host, 2, '复制此幻灯片')
+    expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('第 3 / 6 页')
+    expect(host.querySelectorAll('.mimir-page-browser__item')).toHaveLength(6)
+
+    await slideAction(host, 3, '下移')
+    expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('第 4 / 6 页')
+    await slideAction(host, 4, '删除此幻灯片')
+    expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('第 4 / 5 页')
+
+    click(button(host, '新增幻灯片'))
+    expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('第 5 / 6 页')
+    expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('未保存')
+
+    await saveAndRead(host, record, 'ppt/presentation.xml')
+    const reopened = await openPptxForEdit(record.saved.at(-1)!)
+    expect(reopened.slides()).toHaveLength(6)
+    expect(reopened.slides()[1]?.path).toBe(sourcePath)
+    expect(reopened.slides()[4]?.elements).toHaveLength(0)
+  })
+
+  it('拖放排序选择被移动页，操作菜单提供键盘可触发的上移', async () => {
+    const { host } = await mountEditor(load('upstream/01_standard_business.pptx'))
+    const first = host.querySelectorAll('.mimir-page-browser__preview svg')[0]?.textContent
+    const items = host.querySelectorAll<HTMLElement>('.mimir-page-browser__item')
+    const transfer = { effectAllowed: '', dropEffect: '', setData: () => undefined }
+    const dragEvent = (type: string) => {
+      const event = new Event(type, { bubbles: true, cancelable: true })
+      Object.defineProperty(event, 'dataTransfer', { value: transfer })
+      Object.defineProperty(event, 'clientY', { value: 1 })
+      return event
+    }
+    act(() => {
+      items[0]!.dispatchEvent(dragEvent('dragstart'))
+    })
+    act(() => {
+      items[2]!.dispatchEvent(dragEvent('dragover'))
+    })
+    act(() => {
+      items[2]!.dispatchEvent(dragEvent('drop'))
+    })
+    expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('第 3 / 5 页')
+    expect(host.querySelectorAll('.mimir-page-browser__preview svg')[2]?.textContent).toBe(first)
+
+    act(() => {
+      button(host, '第 3 幻灯片').dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'F10', shiftKey: true, bubbles: true }),
+      )
+    })
+    await act(async () => {
+      await new Promise((tick) => setTimeout(tick, 0))
+    })
+    const menu = [...host.querySelectorAll<HTMLElement>('.ant-dropdown')].findLast(
+      (node) => !node.classList.contains('ant-dropdown-hidden'),
+    )
+    const up = [...(menu?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [])].find(
+      (node) => node.textContent?.trim() === '上移',
+    )
+    expect(up).toBeDefined()
+    expect(document.activeElement?.closest('.ant-dropdown-menu')).not.toBeNull()
+    act(() => {
+      up!.focus()
+      up!.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, which: 13, bubbles: true }),
+      )
+    })
+    expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('第 2 / 5 页')
+  })
+
+  it('缩略图栏可收起并重新打开，单页不能删除', async () => {
+    const { host } = await mountEditor(load('upstream/01_standard_business.pptx'))
+    expect(host.querySelectorAll('.mimir-page-browser__menu-button')).toHaveLength(0)
+    click(button(host, '收起缩略图'))
+    expect(host.querySelector('.mimir-page-browser__sidebar')?.hasAttribute('hidden')).toBe(true)
+    click(button(host, '显示缩略图'))
+    expect(host.querySelector('.mimir-page-browser__sidebar')?.hasAttribute('hidden')).toBe(false)
+    const first = host.querySelector('.mimir-page-browser__item') as HTMLElement
+    expect(first.getAttribute('draggable')).toBe('true')
+
+    const single = await mountEditor(load('formatted-text.pptx'))
+    expect(single.host.querySelectorAll('.mimir-page-browser__item')).toHaveLength(1)
+    act(() => {
+      single.host
+        .querySelector('.mimir-page-browser__item')!
+        .dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }))
+    })
+    await act(async () => {
+      await new Promise((tick) => setTimeout(tick, 0))
+    })
+    const deleteItem = [...single.host.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
+      (node) => node.textContent?.trim().startsWith('删除此幻灯片'),
+    )
+    expect(deleteItem?.getAttribute('aria-disabled')).toBe('true')
+    expect(deleteItem?.textContent).toContain('至少保留一张幻灯片')
+  })
+
+  it('触屏长按打开同一页操作菜单，结束触碰不会误选页', async () => {
+    const { host } = await mountEditor(load('upstream/01_standard_business.pptx'))
+    const item = host.querySelectorAll<HTMLElement>('.mimir-page-browser__item')[1]!
+    act(() => {
+      item.dispatchEvent(touchPointer('pointerdown'))
+    })
+    await act(async () => {
+      await new Promise((tick) => setTimeout(tick, 580))
+    })
+    const menu = [...host.querySelectorAll<HTMLElement>('.ant-dropdown')].findLast(
+      (node) => !node.classList.contains('ant-dropdown-hidden'),
+    )
+    expect(menu?.textContent).toContain('复制此幻灯片')
+    act(() => {
+      item.dispatchEvent(touchPointer('pointerup'))
+    })
+    click(button(host, '第 2 幻灯片'))
+    expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('第 1 / 5 页')
   })
 })
 

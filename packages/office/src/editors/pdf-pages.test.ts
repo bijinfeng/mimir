@@ -166,6 +166,22 @@ describe('PDF 文档级信息的保存边界', () => {
 })
 
 describe('buildPdfBytes 的页序与旋转', () => {
+  it('同一来源页复制后，两份内容都保留且旋转彼此独立', async () => {
+    const bytes = await makePdf([
+      { text: 'ONE', width: 300, height: 400 },
+      { text: 'TWO', width: 300, height: 400 },
+    ])
+    const layout = [
+      refOf(0, { width: 300, height: 400 }, 0),
+      refOf(0, { width: 300, height: 400 }, 90),
+      refOf(1, { width: 300, height: 400 }, 0),
+    ]
+    const out = await buildPdfBytes({ bytes, layout, imports: NO_IMPORTS })
+    expect((await readBack(out)).map((page) => page.text)).toEqual(['ONE', 'ONE', 'TWO'])
+    const doc = await PDFDocument.load(out)
+    expect(doc.getPages().map((page) => page.getRotation().angle)).toEqual([0, 90, 0])
+  })
+
   it('倒序 + 旋转 90 度：逐页对（用 pdf.js 读回，不是我们自己的模型）', async () => {
     const bytes = await makePdf([
       { text: 'ONE', width: 300, height: 400 },
@@ -215,6 +231,26 @@ describe('buildPdfBytes 的页序与旋转', () => {
 })
 
 describe('buildPdfBytes 的导入页面', () => {
+  it('同一导入页复制后保存并重开，两个页项均有内容', async () => {
+    const bytes = await makePdf([{ text: 'MAIN', width: 300, height: 400 }])
+    const other = await makePdf([{ text: 'BORROWED', width: 200, height: 200 }])
+    const imported: PdfPageRef = {
+      origin: { kind: 'imported', source: 'import-1', index: 0 },
+      rotation: 0,
+      base: { width: 200, height: 200 },
+      crop: null,
+      paper: null,
+    }
+    const out = await buildPdfBytes({
+      bytes,
+      layout: [imported, { ...imported, rotation: 180 }, refOf(0, { width: 300, height: 400 })],
+      imports: new Map([['import-1', other]]),
+    })
+    expect((await readBack(out)).map((page) => page.text)).toEqual(['BORROWED', 'BORROWED', 'MAIN'])
+    const doc = await PDFDocument.load(out)
+    expect(doc.getPages().map((page) => page.getRotation().angle)).toEqual([0, 180, 0])
+  })
+
   it('导入的页写进产出物，且**第二次保存**（从同一份原件重建）还在', async () => {
     const bytes = await makePdf([{ text: 'MAIN', width: 300, height: 400 }])
     const other = await makePdf([{ text: 'BORROWED', width: 200, height: 200 }])

@@ -352,6 +352,48 @@ describe('PdfEditor 工具条的控件', () => {
 /* ── 动作真的落到文件上 ───────────────────────────────────────── */
 
 describe('PdfEditor 工具条的动作', () => {
+  it('缩略图选择、复制、上移后保存，复制页的旋转与原页独立', async () => {
+    const { host, saved } = await mount(await makePdf())
+    click(button(host, '第 2 页'))
+    expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('第 2 / 2 页')
+
+    act(() => {
+      host
+        .querySelectorAll('.mimir-page-browser__item')[1]!
+        .dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }))
+    })
+    await settle(() => host.querySelector('.ant-dropdown-menu') !== null)
+    const duplicate = [
+      ...host.querySelectorAll<HTMLElement>(
+        '.ant-dropdown:not(.ant-dropdown-hidden) .ant-dropdown-menu-item',
+      ),
+    ].find((item) => item.textContent?.trim() === '复制此页')
+    if (duplicate === undefined) throw new Error('缩略图菜单里没有复制此页')
+    click(duplicate)
+    expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('第 3 / 3 页')
+
+    click(menuItem(host, '向右旋转 90 度'))
+    expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('第 3 / 3 页')
+    act(() => {
+      host
+        .querySelectorAll('.mimir-page-browser__item')[2]!
+        .dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }))
+    })
+    await settle(() => host.querySelector('.ant-dropdown-menu') !== null)
+    const up = [...host.querySelectorAll<HTMLElement>('.ant-dropdown-menu-item')].findLast(
+      (item) => item.textContent?.trim() === '上移',
+    )
+    if (up === undefined) throw new Error('缩略图菜单里没有上移')
+    click(up)
+    expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('第 2 / 3 页')
+
+    click(button(host, '保存到库'))
+    await settle(() => saved.length > 0)
+    const reopened = await PDFDocument.load(saved[0]!)
+    expect(reopened.getPageCount()).toBe(3)
+    expect(reopened.getPages().map((page) => page.getRotation().angle)).toEqual([0, 90, 0])
+  })
+
   /**
    * 「删除这一页」**必须问一句**。
    *

@@ -211,6 +211,7 @@ function modelStrokeToPatch(stroke: Stroke): StrokePatch | null {
 export async function buildPptxBytes(
   archive: PptxArchive,
   slides: readonly Slide[],
+  entryPatch: ReadonlyMap<string, Uint8Array | null> = new Map(),
 ): Promise<Uint8Array> {
   const dirtyByPath = new Map<string, Slide>()
   for (const slide of slides) {
@@ -218,7 +219,12 @@ export async function buildPptxBytes(
   }
 
   const zip = new JSZip()
-  for (const [path, data] of archive.entries) {
+  const entries = new Map(archive.entries)
+  for (const [path, data] of entryPatch) {
+    if (data === null) entries.delete(path)
+    else entries.set(path, data)
+  }
+  for (const [path, data] of entries) {
     const dirty = dirtyByPath.get(path)
     /**
      * `createFolders: false` 是**保真要求**，不是优化。
