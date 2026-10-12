@@ -27,5 +27,11 @@
 export { ChatPanel } from './ChatPanel.js'
 export { ChatHostVars } from './ChatHostVars.js'
 export { DEFAULT_CHAT_URL } from './runtime/io.js'
-export type { ChatPanelProps, ChatComposerStatus, ChatDraft, ChatIo } from './types.js'
+export type {
+  ChatPanelProps,
+  ChatComposerStatus,
+  ChatDraft,
+  ChatIo,
+  ChatDocxAgent,
+} from './types.js'
 export type { MimirChatApi } from './runtime/chat-context.js'

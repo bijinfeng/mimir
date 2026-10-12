@@ -66,7 +66,7 @@
 
 import { EditorContent, useEditor } from '@tiptap/react'
 import type { Editor } from '@tiptap/core'
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo, type CSSProperties } from 'react'
 import { redoDepth, undoDepth } from '@tiptap/pm/history'
 import type { Mark } from '@tiptap/pm/model'
 import type { EditorState, Transaction } from '@tiptap/pm/state'
@@ -110,8 +110,14 @@ import {
   isEastAsianFontName,
 } from '../../vendor/apps/docs/src/renderer/font-list.js'
 import type { SectionInfo } from '../../vendor/packages/docx-engine/src/types.js'
-import { openDocx } from '../docx.js'
+import { openDocx, type DocxSession } from '../docx.js'
 import { usePagination } from '../pagination.js'
+import {
+  effectiveBottomPx,
+  effectiveTopPx,
+  paperWidthPx,
+  sectionPageBox,
+} from '../../vendor/apps/docs/src/renderer/pagination-sections.js'
 import {
   EditorShell,
   EditorState as EditorStateBlock,
@@ -180,6 +186,12 @@ import { hasNode, runCommand, toggleMarkByName } from '../shell/editor-commands.
 import { docxFindAdapter } from './docx-find.js'
 import { statusText, useParsed, useSource } from './use-source.js'
 import { OFFICE_MIME, type EditorProps } from './types.js'
+import {
+  createDocxAgentHandle,
+  docxAgentLiveSections,
+  type DocxAgentHandle,
+} from '../agent/docx-agent.js'
+import type { SaveOptions as DocxSaveOptions } from '../../vendor/packages/docx-engine/src/patch.js'
 import type { FindOptions } from '../shims/ui.js'
 import '../shell/shell.css'
 // 编辑器样式：从 vendored 的整份办公壳样式里裁出的「编辑器 + 纸张排版」部分
@@ -998,13 +1010,18 @@ async function insertImage(editor: Editor, file: File): Promise<void> {
 
 /* ── 页面 ─────────────────────────────────────────────────────── */
 
+export interface DocxEditorProps extends EditorProps {
+  onAgentHandleChange?: (handle: DocxAgentHandle | null) => void
+}
+
 export function DocxEditor({
   documentId,
   io,
   onDirtyChange,
+  onAgentHandleChange,
   flush = false,
   appearance = 'light',
-}: EditorProps) {
+}: DocxEditorProps) {
   const source = useSource(io, documentId)
   /** 解析。结果与「哪一份字节」绑在一起（见 useParsed 的说明） */
   const parsed = useParsed(source.bytes, openDocx)
@@ -1012,6 +1029,23 @@ export function DocxEditor({
   const [pageCount, setPageCount] = useState(1)
   /** 有改动还没保存。保存成功了才清掉 */
   const [dirty, setDirty] = useState(false)
+  const dirtyRef = useRef(false)
+  const onDirtyChangeRef = useRef(onDirtyChange)
+  const onAgentHandleChangeRef = useRef(onAgentHandleChange)
+  const agentHandleRef = useRef<DocxAgentHandle | null>(null)
+  const saveOptionsRef = useRef<DocxSaveOptions>({})
+  const [saveOptionsSnapshot, setSaveOptionsSnapshot] = useState<{
+    session: DocxSession | null
+    options: DocxSaveOptions
+  }>({ session: null, options: {} })
+  useEffect(() => {
+    if (!session) return
+    saveOptionsRef.current = {}
+  }, [session])
+  useEffect(() => {
+    onDirtyChangeRef.current = onDirtyChange
+    onAgentHandleChangeRef.current = onAgentHandleChange
+  })
   /** 查找栏的显隐、查询串与两个开关（栏本身是受控的） */
   const [findOpen, setFindOpen] = useState(false)
   const [findQuery, setFindQuery] = useState('')
@@ -1094,12 +1128,89 @@ export function DocxEditor({
        */
       editorProps: { attributes: { spellcheck: 'true' } },
       onUpdate: () => {
+        dirtyRef.current = true
         setDirty(true)
-        onDirtyChange?.(true)
+        onDirtyChangeRef.current?.(true)
       },
     },
     [session],
   )
+
+  useEffect(() => {
+    if (!editor || !session) return
+    const handle = createDocxAgentHandle(editor, documentId, {
+      isDirty: () => dirtyRef.current,
+      headingLevels: session.headingLevels,
+      session,
+      saveOptions: saveOptionsRef,
+      onSaveOptionsChange: () =>
+        setSaveOptionsSnapshot({ session, options: structuredClone(saveOptionsRef.current) }),
+      onDirtyChange: (next) => {
+        dirtyRef.current = next
+        setDirty(next)
+        onDirtyChangeRef.current?.(next)
+      },
+    })
+    agentHandleRef.current = handle
+    onAgentHandleChangeRef.current?.(handle)
+    return () => {
+      handle.dispose()
+      if (agentHandleRef.current === handle) agentHandleRef.current = null
+      onAgentHandleChangeRef.current?.(null)
+    }
+  }, [editor, session, documentId])
+
+  const liveHeaderFooter = useMemo(() => {
+    if (!session) return null
+    const current = saveOptionsSnapshot.session === session ? saveOptionsSnapshot.options : {}
+    const part = (value: DocxSaveOptions['header']) =>
+      value === undefined
+        ? null
+        : {
+            text: value.text,
+            hasPageNumber: value.pageNumber ?? false,
+            paras: value.paras ?? [],
+          }
+    return {
+      ...session.headerFooter,
+      header: current.header === undefined ? session.headerFooter.header : part(current.header),
+      footer: current.footer === undefined ? session.headerFooter.footer : part(current.footer),
+      headerFirst:
+        current.headerFirst === undefined
+          ? session.headerFooter.headerFirst
+          : part(current.headerFirst),
+      footerFirst:
+        current.footerFirst === undefined
+          ? session.headerFooter.footerFirst
+          : part(current.footerFirst),
+      headerEven:
+        current.headerEven === undefined
+          ? session.headerFooter.headerEven
+          : part(current.headerEven),
+      footerEven:
+        current.footerEven === undefined
+          ? session.headerFooter.footerEven
+          : part(current.footerEven),
+      titlePg: current.titlePg ?? session.headerFooter.titlePg,
+      evenAndOdd: current.evenAndOddHeaders ?? session.headerFooter.evenAndOdd,
+    }
+  }, [session, saveOptionsSnapshot])
+  const liveSections = useMemo(() => {
+    if (!session || !editor) return NO_SECTIONS
+    const options = saveOptionsSnapshot.session === session ? saveOptionsSnapshot.options : {}
+    return docxAgentLiveSections(editor, session, options)
+  }, [session, editor, saveOptionsSnapshot])
+  const pageStyle = useMemo(() => {
+    const first = liveSections[0]?.settings
+    if (!first) return undefined
+    const box = sectionPageBox(first)
+    const px = (twips: number) => (twips / 1440) * 96
+    return {
+      '--page-w': `${paperWidthPx(liveSections)}px`,
+      '--page-h': `${box.height}px`,
+      '--page-pad': `${effectiveTopPx(first, 0)}px ${px(first.marginRight)}px ${effectiveBottomPx(first, 0)}px ${px(first.marginLeft)}px`,
+    } as CSSProperties
+  }, [liveSections])
 
   /**
    * 分页：把连续流切成纸张（`src/pagination.ts`）。它插的是**装饰器**，
@@ -1113,19 +1224,26 @@ export function DocxEditor({
      * 必须是**稳定引用**：`session?.sections ?? []` 每次都新建数组，会让
      * hook 的 effect 每次渲染都重跑并互相取消。未加载时用同一个空数组常量。
      */
-    sections: session?.sections ?? NO_SECTIONS,
-    headerFooter: session?.headerFooter ?? null,
+    sections: liveSections,
+    headerFooter: liveHeaderFooter,
     footnotes: session?.footnotes ?? null,
     onPaged: handlePaged,
   })
 
   const save = async () => {
     if (!session || !editor) return
-    const bytes = await session.save(editor.getJSON() as never)
+    const savingHandle = agentHandleRef.current
+    const savingVersion = savingHandle?.getVersion()
+    const bytes = await session.save(editor.getJSON() as never, saveOptionsRef.current)
     const ok = await source.save(bytes, { name: 'document.docx', mime: OFFICE_MIME.docx })
     if (!ok) return
-    setDirty(false)
-    onDirtyChange?.(false)
+    if (agentHandleRef.current !== savingHandle) return
+    savingHandle?.markSaved()
+    if (savingVersion !== savingHandle?.getVersion()) return
+    const pendingDraft = savingHandle?.hasPendingDraft() ?? false
+    dirtyRef.current = pendingDraft
+    setDirty(pendingDraft)
+    onDirtyChange?.(pendingDraft)
   }
 
   const status = statusText({
@@ -1245,8 +1363,10 @@ export function DocxEditor({
         className={`me-scroll mimir-docx-scroll${appearance === 'dark' ? ' page-dark' : ''}`}
       >
         <div ref={containerRef} className="editor-scroll mimir-office">
-          <div className="doc-page">
-            <EditorContent editor={editor} />
+          <div className="page-wrap" style={pageStyle}>
+            <div className="doc-page">
+              <EditorContent editor={editor} />
+            </div>
           </div>
         </div>
       </div>

@@ -157,6 +157,28 @@ export const conversations = sqliteTable(
   (t) => [index('conversations_updated_at_idx').on(t.updatedAt)],
 )
 
+/** Durable binding for a DOCX agent run awaiting client tool results. */
+export const docxAgentRuns = sqliteTable(
+  'docx_agent_runs',
+  {
+    runId: text('run_id').primaryKey(),
+    conversationId: text('conversation_id')
+      .notNull()
+      .references(() => conversations.id, { onDelete: 'cascade' }),
+    documentId: text('document_id').notNull(),
+    roundId: text('round_id').notNull(),
+    messageId: text('message_id').notNull(),
+    interruptIds: text('interrupt_ids', { mode: 'json' }).$type<string[]>().notNull(),
+    tools: text('tools', { mode: 'json' })
+      .$type<import('@mimir/shared').DocxAgentToolHistory[]>()
+      .notNull(),
+    status: text('status').notNull().default('pending'),
+    expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
+    consumedAt: integer('consumed_at', { mode: 'timestamp_ms' }),
+  },
+  (t) => [index('docx_agent_runs_conversation_idx').on(t.conversationId, t.documentId)],
+)
+
 export const messages = sqliteTable(
   'messages',
   {

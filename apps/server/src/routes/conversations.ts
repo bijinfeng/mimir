@@ -1,8 +1,16 @@
 import { Hono } from 'hono'
+import { z } from 'zod'
 import { askInputSchema, saveNoteInputSchema } from '@mimir/shared'
 import { HttpError, parseInput } from '../lib/http.js'
 import { ask } from '../services/assistant.js'
 import { streamChat } from '../services/assistant-stream.js'
+import { cancelPendingDocxRun } from '../services/docx-agent-runs.js'
+import { docxAgentCapabilities } from '../services/docx-agent-capabilities.js'
+import { generateDocxImage } from '../services/docx-image-generation.js'
+import { streamDocxWriting } from '../services/docx-writing.js'
+import { analyzeDocxMedia, DocxMediaInputError } from '../services/docx-media-analysis.js'
+import { createDocxAgentDocument } from '../services/docx-create-document.js'
+import { fetchDocxImage } from '../services/docx-image-fetch.js'
 import {
   createConversation,
   deleteConversation,
@@ -16,6 +24,134 @@ import type { AppEnv } from '../types.js'
 export const conversationsRoute = new Hono<AppEnv>()
 
 conversationsRoute.get('/', async (c) => c.json({ items: await listConversations() }))
+
+conversationsRoute.get('/docx-agent/capabilities', async (c) => {
+  const documentId = c.req.query('documentId')
+  if (!documentId || documentId.length > 200)
+    throw new HttpError(400, 'INVALID_INPUT', '缺少文档 ID')
+  const capabilities = await docxAgentCapabilities(documentId)
+  if (!capabilities) throw new HttpError(404, 'DOCX_NOT_FOUND', '当前文档不是可编辑的 DOCX 文件')
+  return c.json(capabilities)
+})
+
+conversationsRoute.post('/docx-agent/generate-image', async (c) => {
+  const input = await parseInput(
+    c,
+    'json',
+    z.object({
+      documentId: z.string().min(1).max(200),
+      prompt: z.string().trim().min(1).max(2_000),
+    }),
+  )
+  const capabilities = await docxAgentCapabilities(input.documentId)
+  if (!capabilities) throw new HttpError(404, 'DOCX_NOT_FOUND', '当前文档不是可编辑的 DOCX 文件')
+  if (!capabilities.availableTools.includes('generate_image')) {
+    throw new HttpError(409, 'DOCX_IMAGE_UNAVAILABLE', '请先配置聊天模型和 DOCX 图片生成服务')
+  }
+  try {
+    return c.json(await generateDocxImage(input.prompt, input.documentId))
+  } catch (error) {
+    throw new HttpError(
+      500,
+      'DOCX_IMAGE_FAILED',
+      error instanceof Error ? error.message : '图片生成失败',
+    )
+  }
+})
+
+conversationsRoute.post('/docx-agent/fetch-image', async (c) => {
+  const input = await parseInput(
+    c,
+    'json',
+    z.object({
+      documentId: z.string().min(1).max(200),
+      url: z.string().url().max(2_000),
+    }),
+  )
+  const capabilities = await docxAgentCapabilities(input.documentId)
+  if (!capabilities) throw new HttpError(404, 'DOCX_NOT_FOUND', '当前文档不是可编辑的 DOCX 文件')
+  try {
+    return c.json(await fetchDocxImage(input.url))
+  } catch (error) {
+    throw new HttpError(
+      400,
+      'DOCX_IMAGE_FETCH_FAILED',
+      error instanceof Error ? error.message : '图片下载失败',
+    )
+  }
+})
+
+conversationsRoute.post('/docx-agent/write-document', async (c) => {
+  const input = await parseInput(
+    c,
+    'json',
+    z.object({
+      documentId: z.string().min(1).max(200),
+      instruction: z.string().trim().min(1).max(8_000),
+      context: z.string().max(20_000),
+    }),
+  )
+  return streamDocxWriting({ ...input, signal: c.req.raw.signal })
+})
+
+conversationsRoute.post('/docx-agent/analyze-media', async (c) => {
+  const input = await parseInput(
+    c,
+    'json',
+    z.object({
+      documentId: z.string().min(1).max(200),
+      instruction: z.string().trim().min(1).max(4_000),
+      kind: z.enum(['image', 'audio', 'video']),
+      media: z
+        .array(z.object({ mimeType: z.string().max(100), data: z.string().max(14_000_000) }))
+        .min(1)
+        .max(4),
+    }),
+  )
+  const capabilities = await docxAgentCapabilities(input.documentId)
+  if (!capabilities) throw new HttpError(404, 'DOCX_NOT_FOUND', '当前文档不是可编辑的 DOCX 文件')
+  if (!capabilities.availableTools.includes('analyze_media')) {
+    throw new HttpError(409, 'DOCX_MEDIA_UNAVAILABLE', '请先配置 DOCX 媒体分析服务')
+  }
+  try {
+    return c.json(await analyzeDocxMedia(input))
+  } catch (error) {
+    if (error instanceof DocxMediaInputError)
+      throw new HttpError(400, 'DOCX_MEDIA_INVALID', error.message)
+    throw new HttpError(
+      500,
+      'DOCX_MEDIA_FAILED',
+      error instanceof Error ? error.message : '媒体分析失败',
+    )
+  }
+})
+
+conversationsRoute.post('/docx-agent/create-document', async (c) => {
+  const input = await parseInput(
+    c,
+    'json',
+    z.object({
+      documentId: z.string().min(1).max(200),
+      title: z.string().trim().min(1).max(160),
+      format: z.enum(['docx', 'pdf', 'md', 'html']),
+      content: z.string().trim().min(1).max(100_000),
+    }),
+  )
+  if (!(await docxAgentCapabilities(input.documentId))) {
+    throw new HttpError(404, 'DOCX_NOT_FOUND', '当前文档不是可编辑的 DOCX 文件')
+  }
+  try {
+    const result = await createDocxAgentDocument(input)
+    return c.json(result, 201)
+  } catch (error) {
+    if (error instanceof HttpError) throw error
+    throw new HttpError(
+      500,
+      'DOCX_CREATE_FAILED',
+      error instanceof Error ? error.message : '新文档创建失败',
+    )
+  }
+})
 
 /**
  * 直连提问：不指定会话时自动开一个新的。
@@ -43,6 +179,14 @@ conversationsRoute.get('/:id', async (c) => {
   const conversation = await getConversation(c.req.param('id'))
   if (!conversation) throw new HttpError(404, 'NOT_FOUND', '会话不存在')
   return c.json(conversation)
+})
+
+conversationsRoute.post('/:id/docx-agent/:runId/cancel', async (c) => {
+  const conversation = await getConversation(c.req.param('id'))
+  if (!conversation) throw new HttpError(404, 'NOT_FOUND', '会话不存在')
+  const cancelled = await cancelPendingDocxRun(conversation.id, c.req.param('runId'))
+  if (!cancelled) throw new HttpError(409, 'DOCX_AGENT_NOT_PENDING', '该工具轮已完成或已取消')
+  return c.json({ ok: true })
 })
 
 conversationsRoute.delete('/:id', async (c) => {

@@ -1,4 +1,4 @@
-import type { Citation, FailureKind, Trace } from '@mimir/shared'
+import type { Citation, DocxAgentHistory, FailureKind, Trace } from '@mimir/shared'
 import { useAuiState } from '@assistant-ui/react'
 
 /**
@@ -95,6 +95,19 @@ export function useFailurePart(): { kind: FailureKind; detail: string } | null {
 
   if (data?.failure === undefined) return null
   return { kind: data.failure, detail: data.message ?? '' }
+}
+
+/** Compact persisted DOCX tool outcome; never contains tool arguments or document body. */
+export function useDocxAgentPart(): DocxAgentHistory | null {
+  const data = useAuiState((state) => {
+    for (const part of state.message.parts) {
+      if (part.type === 'data' && part.name === 'mimir.docxAgent') {
+        return part.data as { agent?: DocxAgentHistory }
+      }
+    }
+    return null
+  })
+  return data?.agent ?? null
 }
 
 /** 这条消息的纯文本（正文，不含 data part） */

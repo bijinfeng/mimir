@@ -45,6 +45,17 @@
  */
 
 export { openDocx, type DocxSession } from './docx.js'
+export type { SaveOptions as DocxSaveOptions } from '../vendor/packages/docx-engine/src/patch.js'
+export {
+  DOCX_AGENT_TOOL_NAMES,
+  DOCX_AGENT_OP_NAMES,
+  createDocxAgentHandle,
+  type DocxAgentHandle,
+  type DocxAgentContext,
+  type DocxAgentSelection,
+  type DocxAgentExecuteOptions,
+  type DocxAgentResult,
+} from './agent/docx-agent.js'
 export { usePagination } from './pagination.js'
 export { readXlsx, type XlsxCell, type XlsxSheet, type XlsxWorkbook } from './xlsx.js'
 export { openXlsxForEdit, type XlsxCellRef, type XlsxEditSession } from './xlsx-edit.js'
@@ -203,7 +214,12 @@ export {
 } from './shell/icons.js'
 export { statusText, useSource, type SourceHandle } from './editors/use-source.js'
 export { OFFICE_MIME, type EditorIo, type EditorProps, type SaveTarget } from './editors/types.js'
-export { DocxEditor, DocxToolbar, type DocxToolbarProps } from './editors/DocxEditor.js'
+export {
+  DocxEditor,
+  DocxToolbar,
+  type DocxEditorProps,
+  type DocxToolbarProps,
+} from './editors/DocxEditor.js'
 export { XlsxEditor } from './editors/XlsxEditor.js'
 export { PptxEditor } from './editors/PptxEditor.js'
 export {

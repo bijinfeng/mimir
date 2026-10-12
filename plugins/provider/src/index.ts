@@ -90,6 +90,94 @@ const DIMENSIONS_PARAM: SettingSpec = {
   },
 }
 
+/** Separate subscription for the DOCX agent's web and image search. */
+const BRAVE_SEARCH_PARAM: SettingSpec = {
+  key: 'docx.brave.apiKey',
+  label: 'Brave Search API 密钥',
+  description: '供 DOCX 对话编辑中的网页与图片搜索使用',
+  group: 'models',
+  type: 'secret',
+  envName: null,
+  defaultValue: '',
+  rebuild: 'none',
+}
+
+const DOCX_IMAGE_PARAMS: SettingSpec[] = [
+  {
+    key: 'docx.image.apiKey',
+    label: 'DOCX 图片生成 API 密钥',
+    description: '供 DOCX 对话编辑生成图片使用',
+    group: 'models',
+    type: 'secret',
+    envName: null,
+    defaultValue: '',
+    rebuild: 'none',
+  },
+  {
+    key: 'docx.image.baseUrl',
+    label: 'DOCX 图片生成接口地址',
+    description: 'OpenAI Images API 兼容地址',
+    group: 'models',
+    type: 'string',
+    envName: null,
+    defaultValue: 'https://api.openai.com/v1',
+    rebuild: 'none',
+  },
+  {
+    key: 'docx.image.model',
+    label: 'DOCX 图片生成模型',
+    description: 'OpenAI 图片模型，例如 gpt-image-1',
+    group: 'models',
+    type: 'string',
+    envName: null,
+    defaultValue: 'gpt-image-1',
+    rebuild: 'none',
+  },
+]
+
+const DOCX_MEDIA_PARAMS: SettingSpec[] = [
+  {
+    key: 'docx.media.visionEnabled',
+    label: 'DOCX 图片与视频分析',
+    description: '确认当前聊天模型支持图片输入后启用；视频由浏览器抽帧',
+    group: 'models',
+    type: 'boolean',
+    envName: null,
+    defaultValue: false,
+    rebuild: 'none',
+  },
+  {
+    key: 'docx.media.apiKey',
+    label: 'DOCX 音频转录 API 密钥',
+    description: 'OpenAI 音频转录服务密钥',
+    group: 'models',
+    type: 'secret',
+    envName: null,
+    defaultValue: '',
+    rebuild: 'none',
+  },
+  {
+    key: 'docx.media.baseUrl',
+    label: 'DOCX 音频转录接口地址',
+    description: 'OpenAI Audio Transcriptions API 兼容地址',
+    group: 'models',
+    type: 'string',
+    envName: null,
+    defaultValue: 'https://api.openai.com/v1',
+    rebuild: 'none',
+  },
+  {
+    key: 'docx.media.transcriptionModel',
+    label: 'DOCX 音频转录模型',
+    description: '例如 whisper-1 或 gpt-4o-mini-transcribe',
+    group: 'models',
+    type: 'string',
+    envName: null,
+    defaultValue: 'whisper-1',
+    rebuild: 'none',
+  },
+]
+
 /**
  * **历史键**：M1-A 的单供应商形状留下的七个标量键。
  *
@@ -203,7 +291,14 @@ export function install(host: PluginHost): void {
   currentCipher = host.secrets
 
   // 这个包里的键都属于模型域，包级声明一次
-  host.params([MODEL_CONFIG_PARAM, DIMENSIONS_PARAM, ...LEGACY_PARAMS])
+  host.params([
+    MODEL_CONFIG_PARAM,
+    DIMENSIONS_PARAM,
+    BRAVE_SEARCH_PARAM,
+    ...DOCX_IMAGE_PARAMS,
+    ...DOCX_MEDIA_PARAMS,
+    ...LEGACY_PARAMS,
+  ])
 
   host.provider(
     {
@@ -225,3 +320,5 @@ export function install(host: PluginHost): void {
 export { migrateLegacySettings, shouldMigrate } from './migrate.js'
 export { fromWire, toWire, coerceExisting } from './instances.js'
 export { PROVIDER_PRESETS, inferPresetId } from './presets.js'
+export { docxImageAdapter, docxImageConfiguration } from './docx-image.js'
+export { docxTranscriptionAdapter, docxTranscriptionConfiguration } from './docx-media.js'

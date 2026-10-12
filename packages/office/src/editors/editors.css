@@ -262,6 +262,13 @@
   --docs-page-shadow: var(--me-page-shadow, 0 1px 2px rgb(0 0 0 / 5%), 0 2px 4px rgb(0 0 0 / 3%));
 }
 
+/* The upstream selector starts with .editor-scroll, so trim-editor-css drops it.
+   Width decorations still survive, but columns remain stacked at the same x
+   without this paint transform. Keep it in our tracked editor stylesheet. */
+.mimir-docx-scroll .doc-page:not(.measuring-columns) .doc-col-block {
+  transform: translate(calc(var(--col-dx, 0px) + var(--page-cx, 0px)), var(--col-dy, 0px));
+}
+
 /*
  * 查找高亮。
  *

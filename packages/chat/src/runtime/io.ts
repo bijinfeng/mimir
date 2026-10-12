@@ -68,6 +68,48 @@ export interface ChatIo {
   saveAsNote(conversationId: string): Promise<{ noteId: string }>
   /** 「管理模型」菜单项。宿主决定去哪（主视图是 /settings 的 models 分区） */
   onManageModels(): void
+  /** Open the original DOCX for a persisted tool turn after history reload. */
+  onOpenDocument?: (documentId: string) => void
+  /** Explicitly cancel a pending server-side DOCX interrupt after reload. */
+  cancelDocxAgentRun?: (conversationId: string, runId: string) => Promise<void>
+  /** Generate an image on the server; never return its bytes to the model. */
+  generateDocxImage?: (
+    documentId: string,
+    prompt: string,
+    signal: AbortSignal,
+  ) => Promise<{ dataUrl: string; mimeType: string }>
+  /** Fetch a public image through the server's SSRF-safe proxy before Office insertion. */
+  fetchDocxImage?: (
+    documentId: string,
+    url: string,
+    signal: AbortSignal,
+  ) => Promise<{ dataUrl: string; mimeType: string }>
+  /** Stream long-form writing into an Office draft. */
+  writeDocxDocument?: (
+    input: { documentId: string; instruction: string; context: string },
+    signal: AbortSignal,
+    onDelta: (text: string) => void,
+  ) => Promise<void>
+  /** Analyze media selected by the user or read from the current DOCX canvas. */
+  analyzeDocxMedia?: (
+    input: {
+      documentId: string
+      instruction: string
+      kind: 'image' | 'audio' | 'video'
+      source: File | { dataUrl: string; mimeType: string }
+    },
+    signal: AbortSignal,
+  ) => Promise<{ text: string }>
+  /** Persist a newly created file and return its knowledge-base document ID. */
+  createDocxDocument?: (
+    input: {
+      documentId: string
+      title: string
+      format: 'docx' | 'pdf' | 'md' | 'html'
+      content: string
+    },
+    signal: AbortSignal,
+  ) => Promise<{ documentId: string; title: string; format: string; parseError: string | null }>
   /**
    * 流式问答的地址。默认 `DEFAULT_CHAT_URL`（在构建的公开路径下）。
    *

@@ -65,6 +65,22 @@ export const SEARCH_ONLY_RESULT_TEXT = '仅展示检索结果，未调用模型�
 export const failureKindSchema = z.enum(['quota', 'timeout', 'truncated', 'offline'])
 export type FailureKind = z.infer<typeof failureKindSchema>
 
+/** Compact DOCX tool history; arguments and document content are deliberately excluded. */
+export const docxAgentToolHistorySchema = z.object({
+  interruptId: z.string(),
+  name: z.string(),
+  status: z.enum(['pending', 'completed', 'failed', 'cancelled']),
+  changed: z.boolean().optional(),
+})
+export const docxAgentHistorySchema = z.object({
+  runId: z.string(),
+  documentId: z.string(),
+  status: z.enum(['pending', 'completed', 'failed', 'cancelled']),
+  tools: z.array(docxAgentToolHistorySchema),
+})
+export type DocxAgentHistory = z.infer<typeof docxAgentHistorySchema>
+export type DocxAgentToolHistory = z.infer<typeof docxAgentToolHistorySchema>
+
 export const messageSchema = z.object({
   id: z.string(),
   role: messageRoleSchema,
@@ -75,6 +91,7 @@ export const messageSchema = z.object({
   failure: failureKindSchema.nullable(),
   /** 「存成笔记」之后置位，界面据此显示「已存为笔记」 */
   savedNoteId: z.string().nullable(),
+  agent: docxAgentHistorySchema.optional(),
   createdAt: z.string(),
 })
 export type Message = z.infer<typeof messageSchema>

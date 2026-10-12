@@ -221,6 +221,7 @@ export interface ComposerProps {
   focusOnMount?: boolean
   io: ChatIo
   status: ChatComposerStatus
+  onBeforeSubmit: () => void
 }
 
 export function Composer({
@@ -231,6 +232,7 @@ export function Composer({
   focusOnMount,
   io,
   status,
+  onBeforeSubmit,
 }: ComposerProps) {
   const { styles } = useStyles()
   const aui = useAui()
@@ -260,7 +262,13 @@ export function Composer({
   return (
     <div className={styles.wrap}>
       <div className={styles.inner}>
-        <ComposerPrimitive.Root className={styles.box}>
+        <ComposerPrimitive.Root
+          className={styles.box}
+          onSubmitCapture={onBeforeSubmit}
+          onClickCapture={(event) => {
+            if ((event.target as Element).closest('button[aria-label="发送"]')) onBeforeSubmit()
+          }}
+        >
           <ComposerPrimitive.Input
             autoFocus={focusOnMount}
             /* 3 行起、到 8 行封顶（Codex 式，既有决策）。

@@ -112,6 +112,21 @@ describe('history：Message → ThreadMessageLike', () => {
     const parts = message.content as unknown as { name?: string }[]
     expect(parts.map((part) => part.name)).toEqual([undefined])
   })
+
+  it('DOCX 工具历史只映射摘要，不含参数或正文', () => {
+    const agent = {
+      runId: 'r1',
+      documentId: 'd1',
+      status: 'pending' as const,
+      tools: [
+        { interruptId: 'client_tool_tc1', name: 'replace_selection', status: 'pending' as const },
+      ],
+    }
+    const message = toThreadMessage(storedMessage({ id: 'a2', role: 'assistant', text: '', agent }))
+    const parts = message.content as unknown as { type: string; name?: string; data?: unknown }[]
+    expect(parts.find((part) => part.name === 'mimir.docxAgent')?.data).toEqual({ agent })
+    expect(JSON.stringify(parts)).not.toContain('文档正文')
+  })
 })
 
 describe('history：适配器', () => {

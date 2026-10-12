@@ -1,16 +1,22 @@
 import { ChatPanel } from '@mimir/chat'
+import type { DocxAgentHandle } from '@mimir/office'
 import type { Citation, DocumentDetail } from '@mimir/shared'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { Button } from 'antd'
 import { X } from 'lucide-react'
+import { useState } from 'react'
 import { ChatThemeBridge } from '../chat/ChatThemeBridge'
 import { DocChatGuide, DocQuickAsks } from './DocChatGuide'
 import { useAppShell } from '../../lib/app-shell-context'
 import { createChatIo } from '../../lib/chat-io'
+import { api } from '../../lib/api'
+import { availableDocxAgent } from '../../lib/docx-agent-availability'
+import { useUnsaved } from '../../lib/unsaved'
 import type { AskDraft } from '../../lib/app-shell-context'
 import { useChatComposerStatus } from '../../lib/use-chat-composer-status'
 import { useStyles } from './DocumentPanel.style'
+import { DocxCapabilityStatus } from './DocxCapabilityStatus'
 
 /**
  * 文档页右侧的对话侧栏（「问 AI」）。
@@ -49,6 +55,7 @@ export interface DocChatSidebarProps {
   onClose: () => void
   /** 引用被点击。同一篇由父级原地高亮，别的文档由父级导航 */
   onOpenCitation: (documentId: string, citation: Citation) => void
+  docxAgent?: DocxAgentHandle | null
 }
 
 /**
@@ -68,10 +75,29 @@ function renderQuickAsks(ask: (question: string) => void): ReturnType<typeof Doc
   return <DocQuickAsks onAsk={ask} />
 }
 
-export function DocChatSidebar({ doc, draft, onClose, onOpenCitation }: DocChatSidebarProps) {
+export function DocChatSidebar({
+  doc,
+  draft,
+  onClose,
+  onOpenCitation,
+  docxAgent,
+}: DocChatSidebarProps) {
   const { styles } = useStyles()
+  const [revisionMode, setRevisionMode] = useState(false)
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const { runGuarded } = useUnsaved()
+  const isDocx =
+    doc.kind === 'file' &&
+    doc.mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  const capabilities = useQuery({
+    queryKey: ['docx-agent-capabilities', doc.id],
+    queryFn: () => api.conversations.docxAgentCapabilities(doc.id),
+    enabled: isDocx && Boolean(docxAgent),
+  })
+  const openSettings = (section: 'models' | 'docx-ai') => {
+    runGuarded(() => void navigate({ to: '/settings', search: { scope: 'all', section } }))
+  }
   /* 「打开笔记」：存成笔记之后跳到那篇。侧栏不自己处理导航——与
      「问 AI」进来的方式对称（那条也走 appShell） */
   const { openDocument } = useAppShell()
@@ -88,8 +114,9 @@ export function DocChatSidebar({ doc, draft, onClose, onOpenCitation }: DocChatS
        （D-087 的三条差异之一）。这里的 no-op 是刻意的 */
     onConversationCreated: () => {},
     onManageModels: () => {
-      void navigate({ to: '/settings', search: { scope: 'all', section: 'models' } })
+      openSettings('models')
     },
+    onOpenDocument: (id) => runGuarded(() => openDocument(id)),
   })
 
   return (
@@ -107,6 +134,17 @@ export function DocChatSidebar({ doc, draft, onClose, onOpenCitation }: DocChatS
           onClick={onClose}
         />
       </div>
+      {isDocx ? (
+        <DocxCapabilityStatus
+          capabilities={capabilities.data}
+          loading={!docxAgent || capabilities.isPending}
+          error={capabilities.isError}
+          onRetry={() => void capabilities.refetch()}
+          onSettings={() => openSettings('docx-ai')}
+          revisionMode={revisionMode}
+          onRevisionModeChange={setRevisionMode}
+        />
+      ) : null}
       {/*
         侧栏的内容边距。`--mimir-chat-gutter` 是 ChatPanel 与 Composer
         共用的「栏宽 → 左右边距」比例：主视图 860px 列用 40px（默认值），
@@ -121,9 +159,11 @@ export function DocChatSidebar({ doc, draft, onClose, onOpenCitation }: DocChatS
             conversationId={undefined}
             draft={draft}
             onOpenCitation={onOpenCitation}
-            onOpenNote={(noteId) => openDocument(noteId)}
+            onOpenNote={(noteId) => runGuarded(() => openDocument(noteId))}
             io={io}
             composerStatus={composerStatus}
+            docxAgent={availableDocxAgent(docxAgent, capabilities.data)}
+            docxRevisionMode={revisionMode}
             /* 空态换成「指南在上、输入框固定底部」（D-090，语雀式），
                快捷提问贴着输入框（D-093）。两个都是模块级 render 函数：
                内联箭头会被判成渲染期定义组件（铁律 1 的静默退化） */

@@ -5,6 +5,7 @@ import {
   type ParseExtras,
 } from '../vendor/packages/docx-engine/src/index.js'
 import type { HfPartInfo, ParsedDoc } from '../vendor/packages/docx-engine/src/types.js'
+import type { SaveOptions } from '../vendor/packages/docx-engine/src/patch.js'
 import type { Block, SectionInfo } from '../vendor/packages/docx-engine/src/types.js'
 import {
   blocksToPmDoc,
@@ -117,7 +118,7 @@ export interface DocxSession {
     blockByDocxIndex: Map<number, Block>
   }
   /** 保存：把编辑器当前文档转成补丁并写回字节 */
-  save(edited: PmDocJson): Promise<Uint8Array>
+  save(edited: PmDocJson, options?: SaveOptions): Promise<Uint8Array>
 }
 
 /**
@@ -175,13 +176,12 @@ export async function openDocx(bytes: Uint8Array): Promise<DocxSession> {
           .map((b) => [b.docxIndex as number, b] as const),
       ),
     },
-    async save(edited: PmDocJson): Promise<Uint8Array> {
+    async save(edited: PmDocJson, options: SaveOptions = {}): Promise<Uint8Array> {
       const plan = pmDocToSavePlan(edited, parsed.blocks)
       return saveDocx(
         { ...parsed, extras: parsed.extras } as never,
         plan.saveBlocks as never,
-        // POC 不带入图表补丁等附加参数；上游把这些放在 options 里逐项传
-        {},
+        options,
       )
     },
   }

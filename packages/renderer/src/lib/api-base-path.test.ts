@@ -37,3 +37,12 @@ it('routes JSON, multipart, downloads, and server avatar URLs through the gatewa
   )
   expect(api.export.url('markdown')).toBe('/app/mimir/api/export/markdown')
 })
+
+it('treats a successful null auth response as signed out', async () => {
+  const { api, configureApiTransport } = await import('./api')
+  const fetchImpl = vi.fn<typeof fetch>(async () => Response.json(null))
+  configureApiTransport({ fetchImpl })
+
+  await expect(api.auth.session()).resolves.toBeNull()
+  expect(fetchImpl).toHaveBeenCalledOnce()
+})

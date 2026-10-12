@@ -31,6 +31,7 @@ const TABLES = [
   'tags',
   'documentTags',
   'conversations',
+  'docxAgentRuns',
   'messages',
   'conversationRefs',
   'documentLinks',

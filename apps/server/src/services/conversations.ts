@@ -4,6 +4,7 @@ import type {
   Citation,
   ConversationDetail,
   ConversationSummary,
+  DocxAgentHistory,
   FailureKind,
   Message,
   Trace,
@@ -12,6 +13,7 @@ import { SEARCH_ONLY_RESULT_TEXT } from '@mimir/shared'
 import { db } from '../db/client.js'
 import { conversationRefs, conversations, documents, messages } from '../db/schema.js'
 import { createNote } from './documents.js'
+import { loadDocxAgentHistory } from './docx-agent-runs.js'
 
 /**
  * 对话持久化。
@@ -38,7 +40,7 @@ function toSummary(row: ConversationRow, refs: string[]): ConversationSummary {
  * jsonb 列取回来是 unknown（驱动不做运行时校验），这里显式收敛成契约类型。
  * 写入路径生成的形状由我们自己控制，所以转换只需保证「老数据缺字段时不炸」。
  */
-function toMessage(row: MessageRow): Message {
+function toMessage(row: MessageRow, agent?: DocxAgentHistory): Message {
   return {
     id: row.id,
     role: row.role === 'user' ? 'user' : 'assistant',
@@ -47,6 +49,7 @@ function toMessage(row: MessageRow): Message {
     citations: (row.citations as Citation[] | null) ?? [],
     failure: (row.failure as FailureKind | null) ?? null,
     savedNoteId: row.savedNoteId,
+    ...(agent ? { agent } : {}),
     createdAt: row.createdAt.toISOString(),
   }
 }
@@ -100,7 +103,11 @@ export async function getConversation(id: string): Promise<ConversationDetail | 
   })
 
   const refs = await loadRefs([id])
-  return { ...toSummary(row, refs.get(id) ?? []), messages: messageRows.map(toMessage) }
+  const agentHistory = await loadDocxAgentHistory(id)
+  return {
+    ...toSummary(row, refs.get(id) ?? []),
+    messages: messageRows.map((message) => toMessage(message, agentHistory.get(message.id))),
+  }
 }
 
 /** 新建会话。标题留空，第一次提问时由问题内容生成。 */

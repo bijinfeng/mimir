@@ -50,6 +50,15 @@ export interface ModelCallOptions {
   source: UsageSource
   /** 会话 id 或文档 id，用于「这次调用是给哪篇/哪次对话花的」 */
   refId?: string | null
+  /** Server-selected agent tools; never copied from AG-UI request tools. */
+  tools?: ChatOptions['tools']
+  agentLoopStrategy?: ChatOptions['agentLoopStrategy']
+  threadId?: string
+  runId?: string
+  parentRunId?: string
+  resume?: ChatOptions['resume']
+  state?: unknown
+  abortSignal?: AbortSignal
 }
 
 /**
@@ -102,15 +111,18 @@ async function account(
  */
 function usageTracker(): {
   middleware: ChatMiddleware[]
-  state: { ok: boolean; usage: unknown }
+  state: { ok: boolean; usage: unknown; iterations: unknown[] }
 } {
-  const state = { ok: true, usage: undefined as unknown }
+  const state = { ok: true, usage: undefined as unknown, iterations: [] as unknown[] }
 
   return {
     state,
     middleware: [
       {
         name: 'usage-accounting',
+        onUsage: (_ctx, usage) => {
+          state.iterations.push(usage)
+        },
         onFinish: (_ctx, info: FinishInfo) => {
           state.usage = info.usage
         },
@@ -120,6 +132,17 @@ function usageTracker(): {
       },
     ],
   }
+}
+
+/** Each model iteration can be billable; onFinish is the compatibility fallback. */
+async function accountIterations(
+  options: ModelCallOptions,
+  startedAt: number,
+  state: ReturnType<typeof usageTracker>['state'],
+  failure: { ok: false; kind: string } | { ok: true },
+): Promise<void> {
+  const usages = state.iterations.length > 0 ? state.iterations : [state.usage]
+  for (const usage of usages) await account(options, startedAt, usage, failure)
 }
 
 /** 当前是否有可用的 provider（决定问答走「调模型」还是「只检索」） */
@@ -202,20 +225,28 @@ export async function callChat(options: ModelCallOptions & { stream: false }): P
     ...(options.systemPrompts ? { systemPrompts: options.systemPrompts } : {}),
     messages: options.messages,
     ...(options.modelOptions ? { modelOptions: options.modelOptions } : {}),
+    ...(options.tools ? { tools: options.tools } : {}),
+    ...(options.agentLoopStrategy ? { agentLoopStrategy: options.agentLoopStrategy } : {}),
+    ...(options.threadId ? { threadId: options.threadId } : {}),
+    ...(options.runId ? { runId: options.runId } : {}),
+    ...(options.parentRunId ? { parentRunId: options.parentRunId } : {}),
+    ...(options.resume ? { resume: options.resume } : {}),
+    ...(options.state !== undefined ? { state: options.state } : {}),
+    ...(options.abortSignal ? { abortSignal: options.abortSignal } : {}),
   }
 
   try {
     const text = await chat(withMiddleware(params, middleware))
-    await account(
+    await accountIterations(
       options,
       startedAt,
-      state.usage,
+      state,
       state.ok ? { ok: true } : { ok: false, kind: 'unknown' },
     )
     return text
   } catch (error) {
     // 抛出的失败也要入账——「失败的调用可能已经计费」是失败不能漏记的原因之一
-    await account(options, startedAt, state.usage, { ok: false, kind: classify(error) })
+    await accountIterations(options, startedAt, state, { ok: false, kind: classify(error) })
     throw error
   }
 }
@@ -259,6 +290,14 @@ export async function streamChat(options: ModelCallOptions & { stream: true }) {
     ...(options.systemPrompts ? { systemPrompts: options.systemPrompts } : {}),
     messages: options.messages,
     ...(options.modelOptions ? { modelOptions: options.modelOptions } : {}),
+    ...(options.tools ? { tools: options.tools } : {}),
+    ...(options.agentLoopStrategy ? { agentLoopStrategy: options.agentLoopStrategy } : {}),
+    ...(options.threadId ? { threadId: options.threadId } : {}),
+    ...(options.runId ? { runId: options.runId } : {}),
+    ...(options.parentRunId ? { parentRunId: options.parentRunId } : {}),
+    ...(options.resume ? { resume: options.resume } : {}),
+    ...(options.state !== undefined ? { state: options.state } : {}),
+    ...(options.abortSignal ? { abortSignal: options.abortSignal } : {}),
   }
 
   const stream = await chat(withMiddleware(params, middleware))
@@ -298,10 +337,10 @@ export async function streamChat(options: ModelCallOptions & { stream: true }) {
        * 这也是「记账必须在 model.ts 里」的一个具体好处：调用方不需要知道
        * 自己放弃时还得补一次账。
        */
-      await account(
+      await accountIterations(
         options,
         startedAt,
-        state.usage,
+        state,
         failed === null && state.ok ? { ok: true } : { ok: false, kind: failed ?? 'aborted' },
       )
     }

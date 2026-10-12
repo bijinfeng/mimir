@@ -1,17 +1,16 @@
 import { useEffect, type RefObject } from 'react'
 import type { Editor } from '@tiptap/core'
 import {
-  effectiveBottomPx,
-  effectiveTopPx,
+  sectionGeoms,
   sectionPageBox,
 } from '../vendor/apps/docs/src/renderer/pagination-sections.js'
+import { setColumnLayout } from '../vendor/apps/docs/src/renderer/editor/column-layout.js'
 import { measureBlocks } from '../vendor/apps/docs/src/renderer/pagination-measure.js'
-import { computeSectionedSlices } from '../vendor/apps/docs/src/renderer/pagination-slices.js'
 import {
   anchorElement,
-  fillLineBoxes,
   lineStartAnchor,
   nextLineAnchor,
+  sliceWithLineSplit,
   type LineAnchor,
 } from '../vendor/apps/docs/src/renderer/pagination-lines.js'
 import {
@@ -24,12 +23,23 @@ import { makeGapNotesEl, notesAreaHeight, pageFootnotesOf } from './footnotes.js
 import type { HeaderFooter } from '../vendor/packages/docx-engine/src/types.js'
 import { BlockIndex } from '../vendor/apps/docs/src/renderer/pagination-index.js'
 import {
+  alignGapHfStrips,
   setPageGaps,
   type PageGapSpec,
 } from '../vendor/apps/docs/src/renderer/editor/pagination-gaps.js'
 import type { BlockBox, PageSlice } from '../vendor/apps/docs/src/renderer/pagination-types.js'
 import type { SectionInfo } from '../vendor/packages/docx-engine/src/types.js'
 import type { DocxSession } from './docx.js'
+import {
+  assignLiveBlockSections,
+  gapMetricsForSection,
+  liveColumnPlacements,
+  pageColumnPullUp,
+  pageUnusedHeight,
+  sectionContentWidth,
+  sectionTextLeftOffset,
+  syncSectionPageSheets,
+} from './pagination-geometry.js'
 
 /**
  * 把连续流切成「纸张页面」（分页视图）。
@@ -40,7 +50,7 @@ import type { DocxSession } from './docx.js'
  *
  * ```
  * 测量每块的几何（measureBlocks）
- *   → 按可用高度切页（computeSectionedSlices）
+ *   → 按可用高度和分栏切页（sliceWithLineSplit）
  *     → 每个分页点生成一个「页间隙」元素（setPageGaps 注入 ProseMirror 装饰器）
  * ```
  *
@@ -186,6 +196,7 @@ export function usePagination({
 
     let frame = 0
     let disposed = false
+    let lastWrap: HTMLElement | null = null
 
     /**
      * 就绪检查放在**每次调度时**做，而不是 effect 开头 early return。
@@ -218,10 +229,10 @@ export function usePagination({
        */
       setPageGaps(ctx.editor.view, [])
 
-      const settings = sections[0]!.settings
-      const box = sectionPageBox(settings)
-      const contentTop = effectiveTopPx(settings, 0)
-      const contentHeight = box.height - contentTop - effectiveBottomPx(settings, 0)
+      const geoms = sectionGeoms(sections)
+      const pageEl = pm.closest<HTMLElement>('.doc-page')
+      const wrap = pm.closest<HTMLElement>('.page-wrap')
+      lastWrap = wrap
 
       /**
        * origin = **内容区顶部**的屏幕 Y。
@@ -236,51 +247,59 @@ export function usePagination({
        */
       const origin = pm.getBoundingClientRect().top
 
-      const measured = measureBlocks(pm, origin, 1)
-      const blocks = measured.blocks as BlockBox[]
+      pageEl?.classList.add('measuring-columns')
+      let measured = measureBlocks(pm, origin, 1)
+      let blocks = measured.blocks as BlockBox[]
+      assignLiveBlockSections(pm, blocks, sections)
+      // Width decorations rewrap later sections before their vertical positions are measured.
+      setColumnLayout(ctx.editor.view, liveColumnPlacements(blocks, [], sections, geoms))
+      measured = measureBlocks(pm, origin, 1)
+      blocks = measured.blocks as BlockBox[]
+      assignLiveBlockSections(pm, blocks, sections)
       if (blocks.length === 0) {
+        pageEl?.classList.remove('measuring-columns')
         onPaged?.(1)
         return
       }
 
-      const geoms = [{ contentHeight, forceBreak: false, cols: 1 }]
+      // The F2 slicer emits column regions and fills line boundaries to a fixed point.
+      let slices: PageSlice[] = sliceWithLineSplit(blocks, geoms, measured.totalHeight, 1)
 
-      /**
-       * **切页之前先填行信息。** `fillLineBoxes` 回填每个块的行边界
-       * （`lineOffsets` / `lineBoxes`），而切页引擎靠它做**块内断行**——
-       * 段落比一页长时在行边界切开，而不是整块推到下一页。
-       *
-       * 顺序不能反：先切再填的话，切片里没有行级信息，切表与长段落都只能
-       * 整块处理（症状是长文档里出现大片空白）。
-       */
-      const firstSlices = computeSectionedSlices(blocks, geoms, measured.totalHeight)
-      fillLineBoxes(blocks, geoms, 1, firstSlices)
-
-      /**
-       * **收敛迭代：切 → 填 → 再切，直到切片稳定。**
-       *
-       * 一轮不够。`fillLineBoxes` 的判据里有「这个块跨越了分页点吗」
-       * （`breakYs.hasBetween(block.top, bottom)`）——它是**用上一轮的切片**
-       * 判断的。第一轮切片不知道行信息，把长段落/长表格当成整体，跨越判据就
-       * 失真；此时填出来的行数据是「按整块算」的，第二趟切出来的结果与它
-       * 不完全自洽。
-       *
-       * 实测症状：拆表的**重复表头**不出现（引擎要求表头行已经在上一页上，
-       * `placedHeader` 才为真，而这依赖切点稳定）。多迭代一轮即收敛。
-       *
-       * 上限 3 轮：改动是单调收敛的（切点只会更细），跑满就是稳定；加保险
-       * 防止病态文档下打转。
-       */
-      let slices: PageSlice[] = firstSlices
-      for (let round = 0; round < 3; round += 1) {
-        const next = computeSectionedSlices(blocks, geoms, measured.totalHeight)
-        const stable =
-          next.length === slices.length &&
-          next.every((sl, i) => Math.abs(sl.start - slices[i]!.start) < 0.5)
-        slices = next
-        if (stable) break
-        fillLineBoxes(blocks, geoms, 1, slices)
+      // Column positions depend on slices, while wrapping depends on column widths.
+      // Re-measure after applying the placements until page/column boundaries settle.
+      if (geoms.some((geom) => (geom.cols ?? 1) > 1)) {
+        for (let pass = 0; pass < 6; pass += 1) {
+          const placements = liveColumnPlacements(blocks, slices, sections, geoms)
+          setColumnLayout(ctx.editor.view, placements)
+          measured = measureBlocks(pm, origin, 1)
+          blocks = measured.blocks as BlockBox[]
+          assignLiveBlockSections(pm, blocks, sections)
+          const refined = sliceWithLineSplit(blocks, geoms, measured.totalHeight, 1)
+          const stable =
+            refined.length === slices.length &&
+            refined.every(
+              (slice, index) =>
+                Math.abs(slice.start - slices[index]!.start) < 0.5 &&
+                slice.section === slices[index]!.section,
+            )
+          const nextPlacements = liveColumnPlacements(blocks, refined, sections, geoms)
+          const widthsStable =
+            nextPlacements.length === placements.length &&
+            nextPlacements.every((placement, index) => {
+              const previous = placements[index]
+              return (
+                previous?.el === placement.el &&
+                Math.abs((previous.widthPx ?? -1) - (placement.widthPx ?? -1)) < 0.5 &&
+                Math.abs(previous.dx - placement.dx) < 0.5 &&
+                Math.abs(previous.dy - placement.dy) < 0.5
+              )
+            })
+          slices = refined
+          if (stable && widthsStable) break
+        }
+        setColumnLayout(ctx.editor.view, liveColumnPlacements(blocks, slices, sections, geoms))
       }
+      pageEl?.classList.remove('measuring-columns')
 
       // 按 slice 起点找锚定块，为每个分页点插一个页间隙
       const blockIndex = new BlockIndex(blocks)
@@ -293,6 +312,9 @@ export function usePagination({
        * 用下标 +1 代替**——多节文档的第二节可能从 1 重新开始。
        */
       const pageNos = pageNumbers(slices, sections)
+      const hfLeftFor = (pageIndex: number): number => {
+        return sectionTextLeftOffset(sections, slices[pageIndex]?.section ?? 0)
+      }
       const hf = headerFooter ?? null
       const hfFor = (pageIdx: number, kind: 'header' | 'footer'): HeaderFooter | null => {
         if (!hf) return null
@@ -328,8 +350,6 @@ export function usePagination({
             )
           : []
 
-      const marginLeftPx = (settings.marginLeft / 1440) * 96
-      const marginRightPx = (settings.marginRight / 1440) * 96
       /** 某页脚注区的高度（没有脚注为 0）：分页点要把它从正文里让出来 */
       const notesHeightFor = (pageIdx: number): number => notesAreaHeight(noteItems[pageIdx] ?? [])
 
@@ -337,7 +357,12 @@ export function usePagination({
       const notesElFor = (pageIdx: number): HTMLElement | undefined => {
         const items = noteItems[pageIdx]
         if (!items || items.length === 0) return undefined
-        return makeGapNotesEl(items, box.width - marginLeftPx - marginRightPx)
+        const el = makeGapNotesEl(
+          items,
+          sectionContentWidth(sections[slices[pageIdx]?.section ?? 0]!),
+        )
+        el.style.top = `${pageUnusedHeight(slices[pageIdx]!, geoms) + 5}px`
+        return el
       }
       /**
        * 生成某个分页点的页眉脚条带元素。
@@ -360,33 +385,34 @@ export function usePagination({
          * 那里（Word 也是这个位置）。所以取 `page - 1` 的分配。
          */
         const notes = notesElFor(page - 1)
-        const geom = hfStripGeom(settings)
+        const prevGeom = hfStripGeom(sections[slices[page - 1]?.section ?? 0]!.settings)
+        const nextGeom = hfStripGeom(sections[slices[page]?.section ?? 0]!.settings)
         const els: HTMLElement[] = []
         const total = slices.length
 
         const prevFooter = hfFor(page - 1, 'footer')
         if (prevFooter && hfHasVisibleContent(prevFooter)) {
-          els.push(
-            makeGapHfEl({
-              kind: 'footer',
-              value: prevFooter,
-              pageNo: pageNos[page - 1] ?? page,
-              pageTotal: total,
-              geom,
-            }),
-          )
+          const el = makeGapHfEl({
+            kind: 'footer',
+            value: prevFooter,
+            pageNo: pageNos[page - 1] ?? page,
+            pageTotal: total,
+            geom: prevGeom,
+          })
+          el.style.setProperty('--hf-ml', `${hfLeftFor(page - 1)}px`)
+          els.push(el)
         }
         const nextHeader = hfFor(page, 'header')
         if (nextHeader && hfHasVisibleContent(nextHeader)) {
-          els.push(
-            makeGapHfEl({
-              kind: 'header',
-              value: nextHeader,
-              pageNo: pageNos[page] ?? page + 1,
-              pageTotal: total,
-              geom,
-            }),
-          )
+          const el = makeGapHfEl({
+            kind: 'header',
+            value: nextHeader,
+            pageNo: pageNos[page] ?? page + 1,
+            pageTotal: total,
+            geom: nextGeom,
+          })
+          el.style.setProperty('--hf-ml', `${hfLeftFor(page)}px`)
+          els.push(el)
         }
         const notesItems = noteItems[page - 1] ?? []
         /**
@@ -419,22 +445,9 @@ export function usePagination({
       for (let page = 1; page < slices.length; page += 1) {
         const slice = slices[page]!
         const prev = slices[page - 1]!
-        // 上一页没用完的空间 + 下一页的上边距 = 间隙高度
-        const remaining = Math.max(0, contentHeight - (prev.end - prev.start))
-        const metrics = {
-          marginTop: contentTop + remaining,
-          /**
-           * 下边距 = 页边距 + **上一页的脚注区高度**。
-           *
-           * 脚注画在页底，正文必须为它让位——不让的话正文排到页底、
-           * 脚注也画在页底，两者**重叠**（实测症状是脚注文字压在正文上）。
-           * 注意是「上一页」的脚注：分页点画的是上一页的页底。
-           */
-          marginBottom: effectiveBottomPx(settings, 0) + notesHeightFor(page - 1),
-          // 左右边距从 section 读（Word 文档各不相同）
-          marginLeft: marginLeftPx,
-          marginRight: marginRightPx,
-        }
+        // 未用完的正文高度属于上一张纸，必须落在灰带之前。
+        const metrics = gapMetricsForSection(prev, slice, sections, geoms, notesHeightFor(page - 1))
+        const pullUp = pageColumnPullUp(prev)
 
         /**
          * 先看这个分页点是不是**块内**的（长段落在中间被切开）。
@@ -515,7 +528,8 @@ export function usePagination({
                 )
                 const repeatSpec =
                   slice.repeatHeader ??
-                  (headerRowsInBlock.length > 0 && headerHeightFromBlock < contentHeight
+                  (headerRowsInBlock.length > 0 &&
+                  headerHeightFromBlock < (geoms[slice.section]?.contentHeight ?? 0)
                     ? { top: ownerForTable.top, height: headerHeightFromBlock }
                     : null)
 
@@ -562,13 +576,11 @@ export function usePagination({
                 gaps.push({
                   pos,
                   kind: 'table',
+                  pullUp,
                   cols: gridCols,
                   boundaryY: slice.start,
                   ...hfPropsFor(page),
-                  metrics: {
-                    ...metrics,
-                    marginBottom: metrics.marginBottom + Math.round(remaining),
-                  },
+                  metrics,
                   ...(repeatHeaderEls ? { repeatHeaderEls, repeatHeaderKey } : {}),
                 })
                 continue
@@ -599,6 +611,7 @@ export function usePagination({
               gaps.push({
                 pos,
                 kind: 'inline',
+                pullUp,
                 boundaryY: slice.start,
                 ...hfPropsFor(page),
                 metrics:
@@ -620,6 +633,7 @@ export function usePagination({
         if (!anchor?.el) continue
         gaps.push({
           el: anchor.el,
+          pullUp,
           boundaryY: slice.start,
           metrics,
           ...hfPropsFor(page),
@@ -644,7 +658,7 @@ export function usePagination({
           .map((b) =>
             (b.tableRows ?? []).filter((r) => r.isHeader).reduce((a, r) => a + r.height, 0),
           ),
-        contentHeight: Math.round(contentHeight),
+        contentHeight: geoms.map((geom) => Math.round(geom.contentHeight)),
         totalHeight: Math.round(measured.totalHeight),
         blockCount: blocks.length,
         blockTops: blocks.slice(0, 6).map((b) => Math.round(b.top)),
@@ -653,6 +667,19 @@ export function usePagination({
       }
 
       setPageGaps(ctx.editor.view, gaps)
+      alignGapHfStrips(pm, 0, 1)
+      if (wrap) {
+        const firstBox = sectionPageBox(sections[0]!.settings)
+        const mixedPaper = sections.some((section) => {
+          const box = sectionPageBox(section.settings)
+          return (
+            Math.abs(box.width - firstBox.width) > 0.5 ||
+            Math.abs(box.height - firstBox.height) > 0.5
+          )
+        })
+        wrap.classList.toggle('paper-mixed', mixedPaper)
+        syncSectionPageSheets(wrap, sections, slices, mixedPaper)
+      }
       onPaged?.(slices.length)
     }
 
@@ -684,6 +711,7 @@ export function usePagination({
         try {
           paginateOnce()
         } catch (error) {
+          containerRef.current?.querySelector('.doc-page')?.classList.remove('measuring-columns')
           // 分页失败是**静默**的（界面只显示「共 1 页」，不报错），
           // 所以除了打日志还挂到诊断出口上，便于在浏览器里一眼看到原因
           ;(globalThis as unknown as { __mimirPagError?: unknown }).__mimirPagError = {
@@ -729,6 +757,10 @@ export function usePagination({
       observer.disconnect()
       if (editor) editor.off('update', onUpdate)
       if (!editor?.isDestroyed && editor?.view?.dom) setPageGaps(editor.view, [])
+      if (lastWrap) {
+        syncSectionPageSheets(lastWrap, sections, [], false)
+        lastWrap.classList.remove('paper-mixed')
+      }
     }
   }, [editor, scrollRef, containerRef, sections, headerFooter, footnotes, onPaged])
 }

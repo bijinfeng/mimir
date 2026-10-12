@@ -1,5 +1,7 @@
 import type { ChatIo } from '@mimir/chat'
 import { api } from './api'
+import { prepareDocxMedia } from './docx-media'
+import { mediaImageData, officeImageData } from './docx-image'
 
 /**
  * `@mimir/chat` 的宿主侧动作实现（`ChatIo`）。
@@ -37,6 +39,7 @@ export interface ChatIoDeps {
   onConversationCreated: (id: string) => void
   /** 「管理模型」菜单项的去处（宿主用它的 router） */
   onManageModels: () => void
+  onOpenDocument?: (documentId: string) => void
 }
 
 /** 一轮落定之后要失效的键。写在一处，四处调用点共用同一份 */
@@ -46,6 +49,7 @@ export function createChatIo({
   invalidate,
   onConversationCreated,
   onManageModels,
+  onOpenDocument,
 }: ChatIoDeps): ChatIo {
   return {
     async createConversation() {
@@ -94,5 +98,51 @@ export function createChatIo({
     },
 
     onManageModels,
+    onOpenDocument,
+    async cancelDocxAgentRun(conversationId, runId) {
+      await api.conversations.cancelDocxAgentRun(conversationId, runId)
+      invalidate([['conversation', conversationId]])
+    },
+    async generateDocxImage(documentId, prompt, signal) {
+      return officeImageData(
+        await api.conversations.generateDocxImage(documentId, prompt, signal),
+        signal,
+      )
+    },
+    async fetchDocxImage(documentId, url, signal) {
+      return officeImageData(
+        await api.conversations.fetchDocxImage(documentId, url, signal),
+        signal,
+      )
+    },
+    writeDocxDocument(input, signal, onDelta) {
+      return api.conversations.writeDocxDocument(input, signal, onDelta)
+    },
+    async analyzeDocxMedia(input, signal) {
+      let media: { mimeType: string; data: string }[]
+      if (input.source instanceof File) {
+        media = await prepareDocxMedia(input.source, input.kind, signal)
+      } else {
+        const image = await mediaImageData(input.source, signal)
+        if (!image.dataUrl.startsWith(`data:${image.mimeType};base64,`))
+          throw new Error('文档图片数据无效')
+        media = [{ mimeType: image.mimeType, data: image.dataUrl.split(',')[1] ?? '' }]
+      }
+      if (signal.aborted) throw new Error('媒体分析已停止')
+      return api.conversations.analyzeDocxMedia(
+        {
+          documentId: input.documentId,
+          instruction: input.instruction,
+          kind: input.kind,
+          media,
+        },
+        signal,
+      )
+    },
+    async createDocxDocument(input, signal) {
+      const created = await api.conversations.createDocxDocument(input, signal)
+      invalidate([['documents']])
+      return created
+    },
   }
 }

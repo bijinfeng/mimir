@@ -21,8 +21,11 @@
 用 `viewerFor` 分派，不要自己判 MIME——两处各判一次必然有一天不一致。
 
 **五种原件格式的编辑器都走 `OfficeSourceEditor`**（docx / xlsx / pptx /
-html / pdf；markdown 是笔记，走 `NoteEditor`）。它是宿主的适配层，只做两件事：
-包 `EditorIo`（取字节 / 写回）、铺主题变量。**加第七种格式时不要新建组件**
+html / pdf；markdown 是笔记，走 `NoteEditor`）。它是宿主的适配层：
+包 `EditorIo`（取字节 / 写回）、铺主题变量；DOCX 时另把当前文档绑定的
+`DocxAgentHandle` 交给同页 `DocChatSidebar`。句柄随文档切换失效，不能交给
+主视图或其他格式。跨层合同见 [DOCX 对话编辑](../../../shared/contract/docx-agent.md)。
+**加第七种格式时不要新建组件**
 ——在 `viewerFor` 加一个 kind、在 `OfficeSourceEditor` 加一个分支就是全部改动。
 
 **提取结果没有消失**：它仍然可搜、可被 AI 引用。那是它真正的用途，

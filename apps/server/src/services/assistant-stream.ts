@@ -10,6 +10,7 @@ import { appendMessage, createConversation, ensureTitle, getConversation } from 
 import { streamChat as streamModelChat, modelReady } from './model.js'
 import { getDocument } from './documents.js'
 import { searchOnlyAnswer } from './search-only-answer.js'
+import { streamDocxAgent } from './docx-agent-stream.js'
 
 /**
  * 通道名的中文标签（trace 用）。与 `assistant.ts` 同一套取值，
@@ -324,6 +325,16 @@ export async function streamChat(requestBody: unknown): Promise<Response> {
   const parsed = await chatParamsFromRequestBody(requestBody).catch(() => null)
   if (!parsed) {
     return errorResponse(400, 'AGUI_INVALID', '请求体不符合 AG-UI 协议')
+  }
+
+  const agentProps = parsed.forwardedProps.runConfig
+  if (
+    parsed.forwardedProps.docxAgent === true ||
+    (typeof agentProps === 'object' &&
+      agentProps !== null &&
+      (agentProps as Record<string, unknown>).docxAgent === true)
+  ) {
+    return streamDocxAgent(parsed)
   }
 
   const props = mimirProps(parsed.forwardedProps)

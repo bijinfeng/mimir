@@ -41,6 +41,32 @@ export interface ChatComposerStatus {
   } | null
 }
 
+/** Current DOCX canvas, owned and validated by the host editor. */
+export interface ChatDocxAgent {
+  documentId: string
+  getVersion(): number
+  getContext(): unknown
+  freezeSelection(roundId?: string): { from: number; to: number; text: string }
+  execute(
+    tool: string,
+    args: unknown,
+    options: { expectedVersion?: number; roundId?: string; signal?: AbortSignal },
+  ): Promise<unknown>
+  undoRound(roundId: string): boolean | void | Promise<boolean | void>
+  setRevisionMode?(enabled: boolean): void
+  beginDraft?(roundId: string): void
+  appendDraft?(roundId: string, delta: string): void
+  commitDraft?(roundId: string, options?: { expectedVersion?: number }): Promise<unknown>
+  discardDraft?(roundId: string): void
+  getDraft?(roundId: string): string | null
+  readImage?(blockIndex?: number): {
+    blockIndex: number
+    version: number
+    dataUrl: string
+    mimeType: string
+  }
+}
+
 export interface ChatPanelProps {
   /**
    * 会话 id。`undefined` = 新对话（第一问时由包调 `io.createConversation` 建）。
@@ -88,6 +114,10 @@ export interface ChatPanelProps {
   io: ChatIo
   /** 输入区底栏的数据槽（宿主用 useQuery 取好传进来） */
   composerStatus: ChatComposerStatus
+  /** Only the current DOCX page provides a writable canvas. */
+  docxAgent?: ChatDocxAgent | null
+  /** AI changes become tracked revisions only when the user enables this per-panel switch. */
+  docxRevisionMode?: boolean
 }
 
 /** 与 `runtime/io.ts` 的 `ChatIo` 同一个类型，这里重导出给宿主写实现时用 */

@@ -111,6 +111,7 @@ function ChatRoute() {
          悄悄落到别的 tab，而界面上没有任何东西提示这件事发生了 */
       void navigate({ to: '/settings', search: { scope: 'all', section: 'models' } })
     },
+    onOpenDocument: openDocument,
   })
 
   if (conversationQuery.isError) {

@@ -1,10 +1,11 @@
 import type { Citation } from '@mimir/shared'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ChatIo } from './io.js'
 import { useAgUiRuntime } from '@assistant-ui/react-ag-ui'
 import { createMimirAgent } from './agent.js'
 import { createHistoryAdapter } from './history.js'
 import type { AskOptions, MimirChatApi } from './chat-context.js'
+import type { ChatDocxAgent } from '../types.js'
 
 /**
  * 对话的运行时。**这是这个包里唯一碰流式状态的地方**（组件不直接碰 runtime
@@ -43,12 +44,21 @@ export function useMimirRuntime({
   conversationId,
   onOpenCitation,
   onOpenNote,
+  docxAgent,
 }: {
   io: ChatIo
   conversationId: string | undefined
   onOpenCitation: (documentId: string, citation: Citation) => void
   onOpenNote: (noteId: string) => void
-}): { runtime: ReturnType<typeof useAgUiRuntime>; api: MimirChatApi } {
+  docxAgent?: ChatDocxAgent | null
+}): {
+  runtime: ReturnType<typeof useAgUiRuntime>
+  api: MimirChatApi
+  getDocxRound: () => { id: string; version: number } | null
+  advanceDocxVersion: (version: number) => void
+  registerToolCancel: (cancel: (() => void) | null) => void
+  prepareDocxSend: () => void
+} {
   /**
    * 当前会话 id。
    *
@@ -60,8 +70,15 @@ export function useMimirRuntime({
    * 路径不存在（这也是重挂载契约的一部分）。
    */
   const [activeId, setActiveId] = useState<string | undefined>(conversationId)
-
-  const [agent] = useState(() =>
+  const [round] = useState<{ id: string | null; version: number | null }>(() => ({
+    id: null,
+    version: null,
+  }))
+  const [selection] = useState<{
+    value: { from: number; to: number; text: string } | null
+  }>(() => ({ value: null }))
+  const toolCancelRef = useRef<(() => void) | null>(null)
+  const [agentBinding] = useState(() =>
     createMimirAgent({
       io,
       conversationId,
@@ -69,8 +86,15 @@ export function useMimirRuntime({
         setActiveId(id)
         io.onConversationCreated(id)
       },
+      docxAgent,
+      round,
+      selection,
     }),
   )
+  const agent = agentBinding.agent
+  useEffect(() => {
+    agentBinding.updateDocxAgent(docxAgent)
+  }, [agentBinding, docxAgent])
   const [history] = useState(() => createHistoryAdapter(io, conversationId))
 
   /**
@@ -106,6 +130,7 @@ export function useMimirRuntime({
       settle()
     },
     onCancel: () => {
+      toolCancelRef.current?.()
       /* 见文件头：停止要把排队的那条还回输入框 */
       const composer = runtime.thread.composer
       const first = composer.getState().queue[0]
@@ -126,11 +151,38 @@ export function useMimirRuntime({
     io.onTurnSettled(activeId)
   }
 
+  /** Captured before composer.send(), including when that send only enters the queue. */
+  function docxRunConfig(current: Record<string, unknown>): Record<string, unknown> {
+    if (!docxAgent) return current
+    const roundId = crypto.randomUUID()
+    return {
+      ...current,
+      docxRoundId: roundId,
+      docxSelection: docxAgent.freezeSelection(roundId),
+      docxVersion: docxAgent.getVersion(),
+    }
+  }
+
+  function prepareDocxSend() {
+    const composer = runtime.thread.composer
+    const current = composer.getState().runConfig.custom ?? {}
+    composer.setRunConfig({ custom: docxRunConfig(current) })
+  }
+
   const api: MimirChatApi = {
     activeId,
     sentHere,
     onOpenCitation,
     onOpenNote,
+    onOpenDocument: io.onOpenDocument,
+    cancelDocxAgentRun: io.cancelDocxAgentRun
+      ? async (runId) => {
+          if (!activeId) throw new Error('没有会话，无法取消待处理工具')
+          await io.cancelDocxAgentRun!(activeId, runId)
+          settle()
+        }
+      : undefined,
+    docxDocumentId: docxAgent?.documentId,
     saveAsNote: () => {
       /* 没有会话 id 是不可能的（有回答就有会话），但类型上是 undefined——
          抛出去比发一个 undefined 的请求诚实 */
@@ -148,7 +200,7 @@ export function useMimirRuntime({
        * 「历史轮的失败」都不完全等价，但看得见的那一个至少可解释。
        */
       const current = composer.getState().runConfig.custom ?? {}
-      const next = { ...current, ...runConfigOf(options) }
+      const next = docxRunConfig({ ...current, ...runConfigOf(options) })
       composer.setRunConfig({ custom: next })
       composer.setText(question)
       composer.send()
@@ -162,7 +214,21 @@ export function useMimirRuntime({
     },
   }
 
-  return { runtime, api }
+  return {
+    runtime,
+    api,
+    getDocxRound: () =>
+      round.id !== null && round.version !== null ? { id: round.id, version: round.version } : null,
+    advanceDocxVersion: (version) => setRoundVersion(round, version),
+    registerToolCancel: (cancel) => {
+      toolCancelRef.current = cancel
+    },
+    prepareDocxSend,
+  }
+}
+
+function setRoundVersion(round: { version: number | null }, version: number): void {
+  round.version = version
 }
 
 /**

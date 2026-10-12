@@ -26,6 +26,9 @@ export interface MimirChatApi {
   onOpenCitation: (documentId: string, citation: Citation) => void
   /** 「打开笔记」（存成笔记之后） */
   onOpenNote: (noteId: string) => void
+  onOpenDocument?: (documentId: string) => void
+  cancelDocxAgentRun?: (runId: string) => Promise<void>
+  docxDocumentId?: string
   /**
    * 把一条问题作为新一轮发出。
    *

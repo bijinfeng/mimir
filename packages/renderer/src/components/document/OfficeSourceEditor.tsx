@@ -1,11 +1,12 @@
 import type { DocumentDetail } from '@mimir/shared'
-import { useCallback, useEffect, useMemo, useRef } from 'react'
-import type { EditorIo } from '@mimir/office'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { DocxAgentHandle } from '@mimir/office'
 import { DocxEditor, HtmlEditor, PdfEditor, PptxEditor, XlsxEditor } from '@mimir/office'
 import { App } from 'antd'
 import { useEditorThemeVars } from '../../theme/editor-theme-bridge'
 import { useAppearance } from '../../theme/appearance'
 import { api } from '../../lib/api'
+import { createOfficeSourceIo } from '../../lib/office-source-filename'
 import { useUnsaved } from '../../lib/unsaved'
 
 /**
@@ -32,10 +33,12 @@ export function OfficeSourceEditor({
   doc,
   kind,
   onDirtyChange,
+  onDocxAgentHandleChange,
 }: {
   doc: DocumentDetail
   kind: 'docx' | 'xlsx' | 'pptx' | 'html' | 'pdf'
   onDirtyChange?: (dirty: boolean) => void
+  onDocxAgentHandleChange?: (handle: DocxAgentHandle | null) => void
 }) {
   const { styles: themeVars } = useEditorThemeVars()
   const { message } = App.useApp()
@@ -43,29 +46,15 @@ export function OfficeSourceEditor({
   const appearance = useAppearance()
 
   /**
-   * 取与存。**必须封装成稳定的引用**（`useCallback`）：`useSource`
-   * 会把它放进 ref，但每次渲染新建对象仍会让下游的比较失效。
-   *
-   * 这里的 `useCallback` 不是「手写记忆化」——`.trellis/spec/renderer/frontend/conventions.md` 禁的是
-   * 为了性能而手写的 `useMemo`/`useCallback`（React Compiler 会做）。这里
-   * 是**语义**要求的：`io` 是编辑器加载的触发条件之一，引用飘忽会让它
-   * 反复重新加载。
+   * `useSource` 把 io 放进 ref；同一篇文档的 io 引用必须保持稳定。
+   * `FilePreview` 按 doc.id 给此组件设置 key，换文档时会重新创建 io。
    */
-  const load = useCallback(async () => {
-    const res = await fetch(api.documents.sourceUrl(doc.id), { credentials: 'include' })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    return new Uint8Array(await res.arrayBuffer())
-  }, [doc.id])
-
-  const save = useCallback(
-    async (bytes: Uint8Array, target: { name: string; mime: string }) => {
-      const file = new File([bytes as BlobPart], target.name, { type: target.mime })
-      await api.documents.replaceSource(doc.id, file)
-    },
-    [doc.id],
+  const [io] = useState(() =>
+    createOfficeSourceIo(doc.id, doc.sourceKey, {
+      sourceUrl: api.documents.sourceUrl,
+      replaceSource: api.documents.replaceSource,
+    }),
   )
-
-  const io = useMemo<EditorIo>(() => ({ load, save }), [load, save])
 
   /**
    * 脏标记上报给**应用壳的守卫**（`lib/unsaved`）。
@@ -165,7 +154,7 @@ export function OfficeSourceEditor({
    */
   const editor =
     kind === 'docx' ? (
-      <DocxEditor key={doc.id} flush {...props} />
+      <DocxEditor key={doc.id} flush {...props} onAgentHandleChange={onDocxAgentHandleChange} />
     ) : kind === 'xlsx' ? (
       <XlsxEditor key={doc.id} flush {...props} />
     ) : kind === 'html' ? (

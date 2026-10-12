@@ -8,6 +8,7 @@ import type {
   ConversationSummary,
   DocumentCounts,
   DocumentDetail,
+  DocxAgentCapabilities,
   DocumentListQuery,
   DocumentSummary,
   ExportStats,
@@ -126,6 +127,66 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   }
 
   return body as T
+}
+
+/** NDJSON is consumed incrementally so the DOCX canvas can show each draft delta. */
+async function streamDocxWriting(
+  input: { documentId: string; instruction: string; context: string },
+  signal: AbortSignal,
+  onDelta: (text: string) => void,
+): Promise<void> {
+  const doFetch = transport.fetchImpl ?? fetch
+  const res = await doFetch(
+    `${transport.baseUrl ?? appBasePath}/api/conversations/docx-agent/write-document`,
+    {
+      method: 'POST',
+      body: JSON.stringify(input),
+      signal,
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', ...transport.headers },
+    },
+  )
+  if (!res.ok) {
+    const body = (await res.json()) as ApiError
+    throw new ApiRequestError(
+      res.status,
+      body.error?.code ?? 'UNKNOWN',
+      body.error?.message ?? `写作请求失败（HTTP ${res.status}）`,
+      body.error?.details,
+    )
+  }
+  if (!res.body) throw new Error('写作服务没有返回内容流')
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  let pending = ''
+  let done = false
+  const consume = (line: string) => {
+    if (!line.trim()) return
+    const event = JSON.parse(line) as { type?: string; text?: string; message?: string }
+    if (event.type === 'delta' && typeof event.text === 'string') onDelta(event.text)
+    else if (event.type === 'done') done = true
+    else if (event.type === 'error') throw new Error(event.message ?? '写作服务出错')
+    else throw new Error('写作服务返回了未知事件')
+  }
+  try {
+    for (;;) {
+      const chunk = await reader.read()
+      if (chunk.done) break
+      pending += decoder.decode(chunk.value, { stream: true })
+      if (pending.length > 1_000_000) throw new Error('写作响应过长')
+      let newline = pending.indexOf('\n')
+      while (newline >= 0) {
+        consume(pending.slice(0, newline))
+        pending = pending.slice(newline + 1)
+        newline = pending.indexOf('\n')
+      }
+    }
+    pending += decoder.decode()
+    if (pending.trim()) consume(pending)
+    if (!done) throw new Error('写作流意外中断，草稿尚未确认')
+  } finally {
+    reader.releaseLock()
+  }
 }
 
 /**
@@ -339,6 +400,59 @@ export const api = {
     get(id: string) {
       return request<ConversationDetail>(`/api/conversations/${encodeURIComponent(id)}`)
     },
+    docxAgentCapabilities(documentId: string) {
+      return request<DocxAgentCapabilities>(
+        `/api/conversations/docx-agent/capabilities?documentId=${encodeURIComponent(documentId)}`,
+      )
+    },
+    generateDocxImage(documentId: string, prompt: string, signal?: AbortSignal) {
+      return request<{ dataUrl: string; mimeType: string }>(
+        '/api/conversations/docx-agent/generate-image',
+        { method: 'POST', body: JSON.stringify({ documentId, prompt }), signal },
+      )
+    },
+    fetchDocxImage(documentId: string, url: string, signal?: AbortSignal) {
+      return request<{ dataUrl: string; mimeType: string }>(
+        '/api/conversations/docx-agent/fetch-image',
+        { method: 'POST', body: JSON.stringify({ documentId, url }), signal },
+      )
+    },
+    writeDocxDocument: streamDocxWriting,
+    analyzeDocxMedia(
+      input: {
+        documentId: string
+        instruction: string
+        kind: 'image' | 'audio' | 'video'
+        media: { mimeType: string; data: string }[]
+      },
+      signal?: AbortSignal,
+    ) {
+      return request<{ text: string }>('/api/conversations/docx-agent/analyze-media', {
+        method: 'POST',
+        body: JSON.stringify(input),
+        signal,
+      })
+    },
+    createDocxDocument(
+      input: {
+        documentId: string
+        title: string
+        format: 'docx' | 'pdf' | 'md' | 'html'
+        content: string
+      },
+      signal?: AbortSignal,
+    ) {
+      return request<{
+        documentId: string
+        title: string
+        format: string
+        parseError: string | null
+      }>('/api/conversations/docx-agent/create-document', {
+        method: 'POST',
+        body: JSON.stringify(input),
+        signal,
+      })
+    },
     create() {
       return request<ConversationSummary>('/api/conversations', { method: 'POST' })
     },
@@ -353,6 +467,12 @@ export const api = {
           method: 'POST',
           body: JSON.stringify(input),
         },
+      )
+    },
+    cancelDocxAgentRun(conversationId: string, runId: string) {
+      return request<{ ok: true }>(
+        `/api/conversations/${encodeURIComponent(conversationId)}/docx-agent/${encodeURIComponent(runId)}/cancel`,
+        { method: 'POST' },
       )
     },
   },
@@ -665,7 +785,8 @@ export const api = {
     /** 未登录时返回 null，而不是抛错——它用于路由守卫判断 */
     async session() {
       try {
-        const session = await request<AuthSession>('/api/auth/get-session')
+        const session = await request<AuthSession | null>('/api/auth/get-session')
+        if (!session) return null
         return {
           ...session,
           user: { ...session.user, image: serverAssetPath(session.user.image) },

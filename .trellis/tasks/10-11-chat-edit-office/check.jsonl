@@ -1,0 +1,10 @@
+{"file":".trellis/tasks/10-11-chat-edit-office/research/docx-agent-inventory.md","reason":"逐项核对 36 工具和 15 子操作没有缩水或占位实现"}
+{"file":".trellis/tasks/10-11-chat-edit-office/research/tanstack-ai-capabilities.md","reason":"核对工具编排、AG-UI 中断续轮与多轮记账仍经 TanStack AI"}
+{"file":".trellis/tasks/10-11-chat-edit-office/research/chat-runtime-assessment.md","reason":"核对现有 assistant-ui 运行时与 TanStack 模型工具流的互通实验、历史消息和队列行为"}
+{"file":".trellis/spec/project/quality.md","reason":"pnpm check 和实际界面/解析效果的完成定义"}
+{"file":".trellis/spec/project/rules.md","reason":"vendor、模型与文件安全的跨包规则"}
+{"file":".trellis/spec/office/engine/index.md","reason":"DOCX 补丁保真和 vendor 回归"}
+{"file":".trellis/spec/office/frontend/editors/index.md","reason":"编辑器保存和交互检查入口"}
+{"file":".trellis/spec/chat/frontend/index.md","reason":"AG-UI 工具 part、原问答和失败状态回归"}
+{"file":".trellis/spec/server/backend/tests.md","reason":"鉴权、外部服务失败和服务器测试要求"}
+{"file":".trellis/spec/renderer/frontend/document/index.md","reason":"文档侧栏和离开守卫回归"}

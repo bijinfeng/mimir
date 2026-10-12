@@ -4,6 +4,7 @@ import { AccountSection } from '../components/settings/AccountSection'
 import { AppearanceSection } from '../components/settings/AppearanceSection'
 import { ClientSection } from '../components/settings/ClientSection'
 import { DataSection } from '../components/settings/DataSection'
+import { DocxAiSection } from '../components/settings/DocxAiSection'
 import { FeedsSection } from '../components/settings/FeedsSection'
 import { ModelsSection } from '../components/settings/ModelsSection'
 import { PluginsSection } from '../components/settings/PluginsSection'
@@ -45,6 +46,7 @@ import { useNarrowViewport } from '../lib/nav-collapse'
 
 const SECTIONS = [
   { key: 'models', label: '模型' },
+  { key: 'docx-ai', label: 'DOCX AI' },
   { key: 'retrieval', label: '检索' },
   { key: 'feeds', label: '订阅' },
   { key: 'storage', label: '存储' },
@@ -70,9 +72,9 @@ const CLIENT_SECTION = { key: 'client' as const, label: '客户端' }
 function sectionsFor(desktop: boolean): { key: SectionKey; label: string }[] {
   const base = [...SECTIONS]
   if (!desktop) return base
-  // 客户端分区排在「数据与备份」之后、「外观」之前：它是关于这个应用的
-  // 事实，与「外观」同属「这个客户端本身」那一类
-  return [...base.slice(0, 7), CLIENT_SECTION, ...base.slice(7)]
+  // 客户端分区排在「数据与备份」之后、「外观」之前。
+  const appearanceIndex = base.findIndex((section) => section.key === 'appearance')
+  return [...base.slice(0, appearanceIndex), CLIENT_SECTION, ...base.slice(appearanceIndex)]
 }
 
 const SECTION_KEYS: ReadonlySet<string> = new Set([
@@ -198,6 +200,7 @@ function SectionBody({ section }: { section: SectionKey }) {
   if (section === 'data') return <DataSection />
   if (section === 'plugins') return <PluginsSection />
   if (section === 'models') return <ModelsSection />
+  if (section === 'docx-ai') return <DocxAiSection />
   if (section === 'feeds') return <FeedsSection />
   if (section === 'storage') return <StorageSection />
   if (section === 'stats') return <StatsSection />

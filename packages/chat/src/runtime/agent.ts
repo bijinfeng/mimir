@@ -2,6 +2,7 @@ import { HttpAgent } from '@ag-ui/client'
 import type { RunAgentInput } from '@ag-ui/client'
 import type { ChatIo } from './io.js'
 import { DEFAULT_CHAT_URL } from './io.js'
+import type { ChatDocxAgent } from '../types.js'
 
 /**
  * mimir 的 AG-UI agent：**在请求发出之前**把这一轮的参数补进去。
@@ -43,14 +44,37 @@ export interface MimirAgentOptions {
    * 「建好了但 URL 没换」这类问题无处可查。
    */
   onConversationCreated: (id: string) => void
+  /** Read at request time so a newly loaded or replaced editor is never captured. */
+  docxAgent?: ChatDocxAgent | null
+  round: { id: string | null; version: number | null }
+  selection: { value: { from: number; to: number; text: string } | null }
+}
+
+function queuedSelection(value: unknown): { from: number; to: number; text: string } | null {
+  if (typeof value !== 'object' || value === null) return null
+  const selection = value as Record<string, unknown>
+  if (
+    !Number.isSafeInteger(selection.from) ||
+    !Number.isSafeInteger(selection.to) ||
+    typeof selection.text !== 'string'
+  )
+    return null
+  return selection as { from: number; to: number; text: string }
 }
 
 export function createMimirAgent({
   io,
   conversationId,
   onConversationCreated,
-}: MimirAgentOptions): HttpAgent {
+  docxAgent,
+  round,
+  selection,
+}: MimirAgentOptions): {
+  agent: HttpAgent
+  updateDocxAgent: (next: ChatDocxAgent | null | undefined) => void
+} {
   const url = io.chatUrl ?? DEFAULT_CHAT_URL
+  let activeDocxAgent = docxAgent
 
   const agent = new HttpAgent({
     url,
@@ -82,13 +106,64 @@ export function createMimirAgent({
       const existing =
         typeof forwarded.conversationId === 'string' ? forwarded.conversationId : input.threadId
 
+      const currentDocxAgent = activeDocxAgent
+      if (currentDocxAgent) {
+        const previous =
+          typeof forwarded.runConfig === 'object' && forwarded.runConfig !== null
+            ? (forwarded.runConfig as Record<string, unknown>)
+            : {}
+        // The composer captures this pair before send(), including queued sends.
+        // A resume must retain the same pair; only a legacy/unprepared fresh
+        // request falls back to dispatch-time capture.
+        if (!Array.isArray((input as RunAgentInput & { resume?: unknown }).resume)) {
+          const preparedRound = previous.docxRoundId
+          const preparedSelection = queuedSelection(previous.docxSelection)
+          const preparedVersion = previous.docxVersion
+          if (
+            typeof preparedRound === 'string' &&
+            preparedRound !== round.id &&
+            preparedSelection &&
+            Number.isSafeInteger(preparedVersion)
+          ) {
+            round.id = preparedRound
+            round.version = preparedVersion as number
+            selection.value = preparedSelection
+          } else {
+            round.id = crypto.randomUUID()
+            selection.value = currentDocxAgent.freezeSelection(round.id)
+            round.version = currentDocxAgent.getVersion()
+          }
+        } else if (round.id === null || round.version === null) {
+          throw new Error('DOCX 工具续轮已失去编辑轮次，请重新提问')
+        }
+        if (round.version !== currentDocxAgent.getVersion())
+          throw new Error('文档在本轮指令期间发生了其他修改，请重新发送指令')
+        const liveContext = currentDocxAgent.getContext()
+        const docxContext =
+          typeof liveContext === 'object' && liveContext !== null
+            ? { ...liveContext, selection: selection.value }
+            : liveContext
+        input.forwardedProps = {
+          ...forwarded,
+          runConfig: {
+            ...previous,
+            docxAgent: true,
+            documentId: currentDocxAgent.documentId,
+            docxContext,
+            docxVersion: round.version,
+            docxRoundId: round.id,
+            docxSelection: selection.value,
+          },
+        }
+      }
+
       // 已经有了：什么都不用做（只有真·新会话才建）
       if (existing) return
 
       const created = await io.createConversation()
       params.agent.threadId = created.id
       input.threadId = created.id
-      input.forwardedProps = { ...forwarded, conversationId: created.id }
+      input.forwardedProps = { ...(input.forwardedProps ?? forwarded), conversationId: created.id }
       /* 建完立刻回推：包里更新 activeId（落库查询要用）、宿主换 URL
          （自己建的会话不重挂载对话体，否则正在接收的流会被丢掉——
          见 `_app.chat.tsx` 的 ownedId） */
@@ -96,5 +171,10 @@ export function createMimirAgent({
     },
   })
 
-  return agent
+  return {
+    agent,
+    updateDocxAgent: (next) => {
+      activeDocxAgent = next
+    },
+  }
 }

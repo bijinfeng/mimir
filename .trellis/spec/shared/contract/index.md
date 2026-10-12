@@ -9,6 +9,8 @@ paths:
 
 API 请求/响应 schema 与插件接缝接口的唯一契约包；前后端都从这里取类型。
 
+DOCX 对话编辑的跨层工具与续轮合同见 [docx-agent](./docx-agent.md)。
+
 ## Pre-Development Checklist
 
 - 先读[项目入口](../../project/index.md)和任务涉及的 `.trellis/spec/project/architecture.md §3 与 §7.4` 章节。

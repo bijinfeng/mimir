@@ -1,0 +1,10 @@
+{"file":".trellis/tasks/10-11-chat-edit-office/research/docx-agent-inventory.md","reason":"固定上游 36 工具、15 子操作、当前接缝与外部依赖"}
+{"file":".trellis/tasks/10-11-chat-edit-office/research/tanstack-ai-capabilities.md","reason":"当前 TanStack AI 版本的 agent loop、客户端工具续轮、图片/多模态与 Mimir 包装层差距"}
+{"file":".trellis/tasks/10-11-chat-edit-office/research/chat-runtime-assessment.md","reason":"TanStack React 与 assistant-ui AG-UI 的实际能力、版本兼容及运行时选型"}
+{"file":".trellis/spec/project/rules.md","reason":"模型接缝、文件写入顺序和跨包不可违反规则"}
+{"file":".trellis/spec/office/engine/index.md","reason":"vendor 同步与 DOCX 补丁式保存边界"}
+{"file":".trellis/spec/office/frontend/editors/index.md","reason":"DOCX 编辑器及保存实现入口"}
+{"file":".trellis/spec/renderer/frontend/document/index.md","reason":"文档页侧栏和宿主编辑器集成规范"}
+{"file":".trellis/spec/chat/frontend/index.md","reason":"ChatPanel、AG-UI part、工具状态与宿主动作边界"}
+{"file":".trellis/spec/server/backend/index.md","reason":"服务端鉴权、路由与模型调用规范入口"}
+{"file":".trellis/spec/plugin-provider/backend/index.md","reason":"模型供应商适配与配置边界"}

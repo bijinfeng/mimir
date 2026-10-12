@@ -1,8 +1,15 @@
 # packages/office —— Office 文档的浏览器内预览与编辑
 
-这个包是 **vendored 代码 + 一层薄适配**：引擎与编辑器来自
+这个包是 **vendored 代码 + mimir 适配层**：引擎与编辑器来自
 [GenOffice](https://github.com/genspark-ai/genoffice)（Apache-2.0），
-mimir 侧只加「打开 / 保存」的编排与样式裁剪。
+mimir 侧负责打开、补丁保存、agent 画布句柄与样式裁剪。
+
+DOCX 对话编辑是这层适配的扩展：`src/agent/docx-agent.ts` 持有可撤销的
+`DocxAgentHandle`，读取当前未保存画布，逐工具验证参数与版本，并把正文外的
+样式、批注、注释、图表、页面与媒体改动交给 `DocxSession.save` 的附加选项。
+写工具不得直接改 `vendor/`，也不得用模型 JSON Schema 代替执行时验证；
+活动写作草稿必须计入 dirty 和离开守卫。工具、续轮及保存测试合同见
+[DOCX 对话编辑](../../../shared/contract/docx-agent.md)。
 
 **动手前先读这一页。** 它讲的都是「不知道就会毁掉几个月工作」的事。
 
@@ -311,7 +318,7 @@ node packages/office/scripts/sync-upstream.mjs --from /tmp/genoffice --check  # 
 | **pdf 的选中文字** | 页面上的文字画进 canvas，选不中、复制不了。文字层只用来定位查找的高亮（那与 pdf.js 自带 textLayer 叠 DOM 是两种做法——它要和画布像素级对齐，多一层缩放维度） |
 | **html 的增量预览** | 每敲一个字预览整页重载（滚动位置回顶）。上游也这样，但要做好的话得把改动 patch 进 frame 的 DOM |
 | **html 的点选改样式** | 点选能定位到源码、能顺元素路径上下走，但**不能改样式**（上游 StylePanel 调 `ops.ts` 的 514 行操作编译器，未接） |
-| **页内分栏** | 多栏文档按单栏排（上游有 `columns` 支持，未接） |
+| **页内分栏** | 已接上游分栏切页与位置样式；复杂表格跨栏仍需真实文档复核。`pagination-geometry.test.ts` 用双栏夹具守住左右栏与纸张几何 |
 | **docx 里写不进去的几类格式** | `rawRPr` 透传那批（字符间距、大小写、字符边框、文本效果、发光、带圈）与复杂文种字体（`csFont`）：前者模板里改了保存时会被原字节覆盖，后者要按 `w:rtl` 判断、中文库里命中率极低。表格边框只给了三个预设。见 TECH §15.4.3 |
 | **列表编号分配** | 新列表沿用文档里已有的 `numId`；新建编号定义要写 `numbering.xml`（上游的 `allocateListNumId` 在 host 侧，未 vendored） |
 
@@ -327,6 +334,8 @@ node packages/office/scripts/sync-upstream.mjs --from /tmp/genoffice --check  # 
 | 51 个块被量成 1 个 | 传了容器 ref 而不是 `.ProseMirror` 本身 |
 | 分页永久不触发且不报错 | 用 `requestAnimationFrame`——**后台标签页不派发帧** |
 | 分页正常但灰带透明 | `--canvas` / `--docs-paper` 由上游 App 壳运行时注入，未 vendored |
+| 多节纸张宽度正确但高度不对 | 上页未用完的空间被放进下页上边距，末页又按容器自然高度结束；每页纸张层须按对应节的物理 `pageHeight` 绘制 |
+| 双栏段落变窄、右栏仍为空 | 分栏切页须使用会产出 `regions` 的 `sliceWithLineSplit`；段落位移依赖 `--col-dx` / `--col-dy` 的 CSS `transform`，上游 `.editor-scroll` 前缀规则会被样式裁剪器丢弃，须在受版本控制的编辑器样式保留 |
 
 样式裁剪（`trim-editor-css.mjs`）只保留 `.doc-*` / `.ProseMirror` / `.page-*` /
 `.hf-*` 前缀的规则。**加新的编辑器 UI 时如果样式不生效，先看它是不是被裁掉了**——

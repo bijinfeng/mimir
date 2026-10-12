@@ -68,6 +68,9 @@ export function toThreadMessage(message: Message): ThreadMessageLike {
         data: { failure: message.failure, message: '' },
       })
     }
+    if (message.agent) {
+      parts.push({ type: 'data', name: 'mimir.docxAgent', data: { agent: message.agent } })
+    }
   }
 
   parts.push({ type: 'text', text: message.text })

@@ -10,6 +10,7 @@ import { EmptyStage } from './EmptyStage.js'
 import { useScrolled } from './hooks/use-scrolled.js'
 import { MimirChatProvider, useMimirChatApi } from './runtime/chat-context.js'
 import { useMimirRuntime } from './runtime/use-mimir-runtime.js'
+import { DocxInterruptBridge } from './runtime/DocxInterruptBridge.js'
 import type { ChatDraft, ChatPanelProps } from './types.js'
 
 /**
@@ -38,19 +39,44 @@ export function ChatPanel({
   onOpenCitation,
   onOpenNote,
   io,
+  docxAgent,
+  docxRevisionMode = false,
   ...rest
 }: ChatPanelProps) {
-  const { runtime, api } = useMimirRuntime({ io, conversationId, onOpenCitation, onOpenNote })
+  const { runtime, api, getDocxRound, advanceDocxVersion, registerToolCancel, prepareDocxSend } =
+    useMimirRuntime({
+      io,
+      conversationId,
+      onOpenCitation,
+      onOpenNote,
+      docxAgent,
+    })
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>
       <MimirChatProvider api={api}>
+        {docxAgent && (
+          <DocxInterruptBridge
+            agent={docxAgent}
+            getRound={getDocxRound}
+            advanceVersion={advanceDocxVersion}
+            registerToolCancel={registerToolCancel}
+            generateDocxImage={io.generateDocxImage}
+            fetchDocxImage={io.fetchDocxImage}
+            writeDocxDocument={io.writeDocxDocument}
+            analyzeDocxMedia={io.analyzeDocxMedia}
+            createDocxDocument={io.createDocxDocument}
+            onOpenDocument={io.onOpenDocument}
+            revisionMode={docxRevisionMode}
+          />
+        )}
         <ChatPanelBody
           {...rest}
           draft={draft}
           onOpenCitation={onOpenCitation}
           onOpenNote={onOpenNote}
           io={io}
+          onBeforeSubmit={prepareDocxSend}
         />
       </MimirChatProvider>
     </AssistantRuntimeProvider>
@@ -64,6 +90,7 @@ function ChatPanelBody({
   focusComposer,
   io,
   composerStatus,
+  onBeforeSubmit,
 }: Pick<
   ChatPanelProps,
   | 'draft'
@@ -74,7 +101,7 @@ function ChatPanelBody({
   | 'composerStatus'
   | 'onOpenCitation'
   | 'onOpenNote'
->) {
+> & { onBeforeSubmit: () => void }) {
   const { styles } = useChatPanelStyles()
   const aui = useAui()
   const api = useMimirChatApi()
@@ -151,6 +178,7 @@ function ChatPanelBody({
       focusOnMount={focusComposer}
       io={io}
       status={composerStatus}
+      onBeforeSubmit={onBeforeSubmit}
     />
   )
 

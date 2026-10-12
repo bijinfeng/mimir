@@ -14,6 +14,7 @@ import {
 } from 'antd'
 import { ArrowLeft, Download, Ellipsis, MessageCircle, Pencil } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import type { DocxAgentHandle } from '@mimir/office'
 import { StatusBadge } from './DocumentBadges'
 import { NoteEditor } from './NoteEditor'
 import { useContentStyles } from './ContentTypography.style'
@@ -247,6 +248,7 @@ export function DocumentPanel({
     draft: AskDraft
     open: boolean
   } | null>(null)
+  const [docxAgentHandle, setDocxAgentHandle] = useState<DocxAgentHandle | null>(null)
   const aiTriggerRef = useRef<HTMLElement | null>(null)
   /** 侧栏里点开的、属于当前这一篇的引用：原地滚动高亮，不走导航 */
   const [sidebarCitation, setSidebarCitation] = useState<Citation | null>(null)
@@ -907,7 +909,12 @@ export function DocumentPanel({
                     : {})}
                 />
               ) : doc.kind === 'file' ? (
-                <FilePreview key={doc.id} doc={doc} onDirtyChange={onDirtyChange} />
+                <FilePreview
+                  key={doc.id}
+                  doc={doc}
+                  onDirtyChange={onDirtyChange}
+                  onDocxAgentHandleChange={setDocxAgentHandle}
+                />
               ) : (
                 /* 正文排版与编辑器共用同一个类——两个视图都让 Tiptap 渲染同一份
                  Markdown，排版必须同源。这里曾经各自手抄一份，漂移出四处 */
@@ -970,6 +977,7 @@ export function DocumentPanel({
         >
           <DocChatSidebar
             doc={doc}
+            docxAgent={docxAgentHandle?.documentId === doc.id ? docxAgentHandle : null}
             draft={aiSidebar!.draft}
             onClose={() => {
               setAiSidebar((current) => (current ? { ...current, open: false } : current))

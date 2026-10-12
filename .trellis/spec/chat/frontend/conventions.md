@@ -4,6 +4,12 @@
 （`@assistant-ui/react` 的运行时 + AG-UI 客户端），宿主只提供「数据」与
 「动作」。
 
+DOCX 对话编辑仍使用这一消息运行时。`runtime/DocxInterruptBridge.tsx` 负责把
+TanStack AI 的 `RUN_FINISHED.outcome=interrupt` 转成客户端工具执行和显式
+`resume`；普通 `addToolResult` 不是这个协议的续轮入口。桥按中断 ID 去重，
+工具执行前后验证当前画布版本，停止时中止挂起的工具。历史只保留工具名与
+结果状态，详见[跨层合同](../../../shared/contract/docx-agent.md)。
+
 **动手前先读这一页。** 它讲的都是「不知道就会踩第二次」的事。
 
 ---

@@ -5,6 +5,7 @@ import { useChatPanelStyles } from '../ChatPanel.style.js'
 import { askOptionsFor, questionBefore, useMimirChatApi } from '../runtime/chat-context.js'
 import { AnswerActions } from './AnswerActions.js'
 import { CitationList } from './CitationList.js'
+import { DocxAgentHistoryNotice } from './DocxAgentHistoryNotice.js'
 import { FailureCard, StreamErrorCard } from './FailureNotice.js'
 import { MarkdownPart } from './MarkdownPart.js'
 import { AudioPart, FilePart, ImagePart, SourcePart } from './MediaParts.js'
@@ -12,7 +13,7 @@ import { ReasoningPart } from './ReasoningPart.js'
 import { ToolCallPart } from './ToolCallPart.js'
 import { StoppedNotice } from './StoppedNotice.js'
 import { TraceDisclosure } from './TraceActivity.js'
-import { useCitationsPart, useFailurePart, useTracePart } from './data-parts.js'
+import { useCitationsPart, useDocxAgentPart, useFailurePart, useTracePart } from './data-parts.js'
 
 /**
  * 消息根：一条消息的骨架。
@@ -82,6 +83,7 @@ function AssistantMessage() {
   const trace = useTracePart()
   const citations = useCitationsPart()
   const failure = useFailurePart()
+  const docxAgent = useDocxAgentPart()
   const parts = useAuiState((state) => state.message.parts.length)
   const searchOnly = useAuiState((state) =>
     state.message.parts.some(
@@ -171,6 +173,8 @@ function AssistantMessage() {
         }}
       />
 
+      {docxAgent && <DocxAgentHistoryNotice agent={docxAgent} />}
+
       <CitationList citations={citations} onOpen={api.onOpenCitation} />
 
       {/* 失败卡与「连接中断」互斥：有 `mimir.failure` part 说明服务端已经
@@ -206,7 +210,14 @@ function AssistantMessage() {
           §5.8）：失败轮的正文是错误原文，存成笔记会把一句 400 存进知识库、
           复制也只会复制报错——那时用户要的是出路，不是沉淀。有
           `mimir.failure` part（或状态是 incomplete/error）都不给 */}
-      {isLast && failure === null && status?.type !== 'incomplete' ? <AnswerActions /> : null}
+      {isLast &&
+      failure === null &&
+      status?.type !== 'incomplete' &&
+      docxAgent?.status !== 'pending' &&
+      docxAgent?.status !== 'cancelled' &&
+      docxAgent?.status !== 'failed' ? (
+        <AnswerActions />
+      ) : null}
     </MessagePrimitive.Root>
   )
 }

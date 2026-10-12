@@ -174,6 +174,26 @@ export const conversations = pgTable(
   (t) => [index('conversations_updated_at_idx').on(t.updatedAt.desc())],
 )
 
+/** Durable binding for a DOCX agent run awaiting client tool results. */
+export const docxAgentRuns = pgTable(
+  'docx_agent_runs',
+  {
+    runId: text('run_id').primaryKey(),
+    conversationId: text('conversation_id')
+      .notNull()
+      .references(() => conversations.id, { onDelete: 'cascade' }),
+    documentId: text('document_id').notNull(),
+    roundId: text('round_id').notNull(),
+    messageId: text('message_id').notNull(),
+    interruptIds: jsonb('interrupt_ids').$type<string[]>().notNull(),
+    tools: jsonb('tools').$type<import('@mimir/shared').DocxAgentToolHistory[]>().notNull(),
+    status: text('status').notNull().default('pending'),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    consumedAt: timestamp('consumed_at', { withTimezone: true }),
+  },
+  (t) => [index('docx_agent_runs_conversation_idx').on(t.conversationId, t.documentId)],
+)
+
 export const messages = pgTable(
   'messages',
   {
