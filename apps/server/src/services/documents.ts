@@ -1,5 +1,6 @@
 import { and, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
+import { extensionOf } from '@mimir/shared'
 import type {
   DocumentCounts,
   DocumentDetail,
@@ -49,6 +50,7 @@ function toSummary(row: Row, tagNames: string[]): DocumentSummary {
     url: row.url,
     // 格式与大小只在文件类上有值（见 shared/documents.ts 的「格式是属性」）
     mime: row.mime,
+    fileExtension: row.kind === 'file' ? extensionOf(row.sourceKey ?? '') || null : null,
     size: row.size,
     folder: row.folder,
     createdAt: row.createdAt.toISOString(),

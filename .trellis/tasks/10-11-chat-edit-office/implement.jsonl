@@ -10,3 +10,7 @@
 {"file":".trellis/spec/server/backend/index.md","reason":"服务端鉴权、路由与模型调用规范入口"}
 {"file":".trellis/spec/plugin-provider/backend/index.md","reason":"模型供应商适配与配置边界"}
 {"file": ".trellis/spec/server/backend/ai-service-settings.md", "reason": "通用 AI 服务设置键、迁移与连接测试合同"}
+{"file":".trellis/tasks/10-11-chat-edit-office/research/toolbar-competitors.md","reason":"DOCX 工具栏的 Office 网页版、Google Docs、GenOffice 证据与 WeKnora 适用边界"}
+{"file":".trellis/spec/office/frontend/shell/conventions.md","reason":"六格式共用外壳原语和 DOCX 专属布局边界"}
+{"file":".trellis/spec/office/frontend/shell/pitfalls.md","reason":"工具栏弹层、焦点、窄屏与快捷键已知静默故障"}
+{"file":".trellis/tasks/10-11-chat-edit-office/research/all-editor-toolbar-inventory.md","reason":"六种编辑器的现有命令盘点、竞品分工及各格式的保留风险"}

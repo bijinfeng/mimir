@@ -54,10 +54,10 @@ import {
   EditorShell,
   EditorState,
   ToolbarButton,
-  ToolbarDivider,
   ToolbarGroup,
   ToolbarLabel,
   ToolbarTabs,
+  ToolbarMenu,
   ToolbarTextField,
   useFindHotkey,
 } from '../shell/EditorShell.js'
@@ -70,10 +70,12 @@ import {
   EraserIcon,
   SaveIcon,
 } from '../shell/icons.js'
+import { CompactToolbar } from './CompactToolbar.js'
 import { statusText, useParsed, useSource } from './use-source.js'
 import { OFFICE_MIME, type EditorProps } from './types.js'
 import '../shell/shell.css'
 import './editors.css'
+import './compact-toolbar.css'
 
 export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: EditorProps) {
   const source = useSource(io, documentId)
@@ -356,6 +358,15 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
     )
   }
 
+  const switchSheet = (value: number) => {
+    setActive(value)
+    // A selection and draft belong to the previous sheet.
+    setSelected(null)
+    setDraft(null)
+    setApplyError(null)
+    setNote(null)
+  }
+
   const status = statusText({
     handle: source,
     dirty,
@@ -403,119 +414,159 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
     <EditorShell
       flush={flush}
       toolbar={
-        <>
-          {view.sheets.length > 1 && (
-            <>
-              <ToolbarTabs
-                label="工作表"
-                value={active}
-                onChange={(value) => {
-                  setActive(value)
-                  // 换表清掉选中：那个格不在这一张表了（草稿也跟着失效）
-                  setSelected(null)
-                  setDraft(null)
-                  setApplyError(null)
-                  setNote(null)
-                }}
-                items={view.sheets.map((s, index) => ({
-                  value: index,
-                  label: s.hidden ? `${s.name}（隐藏）` : s.name,
-                }))}
-              />
-              <ToolbarDivider />
-            </>
-          )}
-          <ToolbarGroup label="在当前工作表里查找">
-            <ToolbarTextField
-              label="查找内容（只在当前这张工作表里找，不区分大小写）"
-              value={query}
-              onChange={onQueryChange}
-              // 回车 = 下一个命中（与浏览器里 Ctrl+F 的习惯一致）
-              onSubmit={() => stepTo(matches, 1)}
-              // Esc = 清掉查询（选中留在原处，不把用户带到别的地方去）
-              onCancel={() => setQuery('')}
-              placeholder="查找"
-              // Ctrl+F 把焦点送到这里（findInput 挂 data-find-input 标记）
-              findInput
-            />
-            {/*
-              命中数复用查找栏那一个类（`me-find__count`）：它带固定最小宽度，
-              从「3 / 12」跳到「无匹配」时后面的按钮不会被推来推去。
-              `aria-live` 让读屏也听到「有没有找到」——这是查找唯一的反馈。
-            */}
-            <span className="me-label me-find__count" aria-live="polite">
-              {matchLabel}
-            </span>
-            <ToolbarButton
-              label="上一个命中"
-              disabled={findDisabledReason !== undefined}
-              disabledReason={findDisabledReason}
-              onClick={() => stepTo(matches, -1)}
-            >
-              上一个
-            </ToolbarButton>
-            <ToolbarButton
-              label="下一个命中"
-              disabled={findDisabledReason !== undefined}
-              disabledReason={findDisabledReason}
-              onClick={() => stepTo(matches, 1)}
-            >
-              下一个
-            </ToolbarButton>
-          </ToolbarGroup>
-          <ToolbarDivider />
-          <ToolbarGroup label="公式格">
-            <ToolbarButton
-              label="跳到上一个公式格"
-              disabled={formulaDisabledReason !== undefined}
-              disabledReason={formulaDisabledReason}
-              onClick={() => stepTo(formulas, -1)}
-            >
-              <ChevronLeftIcon />
-            </ToolbarButton>
-            <ToolbarButton
-              label="跳到下一个公式格"
-              disabled={formulaDisabledReason !== undefined}
-              disabledReason={formulaDisabledReason}
-              onClick={() => stepTo(formulas, 1)}
-            >
-              <ChevronRightIcon />
-            </ToolbarButton>
-          </ToolbarGroup>
-          <ToolbarGroup label="单元格">
-            <ToolbarButton
-              label="复制这个格的文字"
-              disabled={copyDisabledReason !== undefined}
-              disabledReason={copyDisabledReason}
-              onClick={() => void copyCell()}
-            >
-              <CopyIcon />
-            </ToolbarButton>
-            {/*
-              「清空」的 tooltip 把代价说全：新写的是内联字符串格，**原格上
-              的 `s="…"` 会一起没掉**（颜色、边框、数字格式都在那个引用里）。
-              不写的话用户只知道「内容没了」，打开 Excel 才发现格式也变了。
-            */}
-            <ToolbarButton
-              label="清空这个格（原有的颜色、边框与数字格式会一起丢掉）"
-              disabled={clearDisabledReason !== undefined}
-              disabledReason={clearDisabledReason}
-              onClick={clearCell}
-            >
-              <EraserIcon />
-            </ToolbarButton>
-          </ToolbarGroup>
-          <ToolbarDivider />
-          <ToolbarGroup label="视图">
-            <ToolbarButton
-              label="十字高亮：选中格所在的行与列"
-              active={cross}
-              onClick={() => setCross((on) => !on)}
-            >
-              <CrossHighlightIcon />
-            </ToolbarButton>
-          </ToolbarGroup>
-        </>
+        <CompactToolbar
+          overflowLabel="更多工作表工具"
+          sections={[
+            ...(view.sheets.length > 1
+              ? [
+                  {
+                    key: 'sheets',
+                    label: '工作表',
+                    minWidth: 0,
+                    content: (
+                      <>
+                        <span className="mimir-compact-toolbar__sheet-tabs">
+                          <ToolbarTabs
+                            label="工作表"
+                            value={active}
+                            onChange={switchSheet}
+                            items={view.sheets.map((s, index) => ({
+                              value: index,
+                              label: s.hidden ? `${s.name}（隐藏）` : s.name,
+                            }))}
+                          />
+                        </span>
+                        <span className="mimir-compact-toolbar__sheet-menu">
+                          <ToolbarMenu
+                            label="选择工作表"
+                            text={view.sheets[active]?.name ?? '工作表'}
+                            items={view.sheets.map((s, index) => ({
+                              key: String(index),
+                              label: s.hidden ? `${s.name}（隐藏）` : s.name,
+                              active: index === active,
+                              onSelect: () => switchSheet(index),
+                            }))}
+                          />
+                        </span>
+                      </>
+                    ),
+                  },
+                ]
+              : []),
+            {
+              key: 'find',
+              label: '查找',
+              minWidth: 0,
+              content: (
+                <ToolbarGroup label="在当前工作表里查找">
+                  <ToolbarTextField
+                    label="查找内容（只在当前这张工作表里找，不区分大小写）"
+                    value={query}
+                    onChange={onQueryChange}
+                    onSubmit={() => stepTo(matches, 1)}
+                    onCancel={() => setQuery('')}
+                    placeholder="查找"
+                    findInput
+                  />
+                </ToolbarGroup>
+              ),
+            },
+            {
+              key: 'matches',
+              label: '查找结果',
+              minWidth: 580,
+              content: (
+                <ToolbarGroup label="查找结果">
+                  <span className="me-label me-find__count" aria-live="polite">
+                    {matchLabel}
+                  </span>
+                  <ToolbarButton
+                    label="上一个命中"
+                    disabled={findDisabledReason !== undefined}
+                    disabledReason={findDisabledReason}
+                    onClick={() => stepTo(matches, -1)}
+                  >
+                    上一个
+                  </ToolbarButton>
+                  <ToolbarButton
+                    label="下一个命中"
+                    disabled={findDisabledReason !== undefined}
+                    disabledReason={findDisabledReason}
+                    onClick={() => stepTo(matches, 1)}
+                  >
+                    下一个
+                  </ToolbarButton>
+                </ToolbarGroup>
+              ),
+            },
+            {
+              key: 'formulas',
+              label: '公式格',
+              minWidth: 850,
+              content: (
+                <ToolbarGroup label="公式格">
+                  <ToolbarButton
+                    label="跳到上一个公式格"
+                    disabled={formulaDisabledReason !== undefined}
+                    disabledReason={formulaDisabledReason}
+                    onClick={() => stepTo(formulas, -1)}
+                  >
+                    <ChevronLeftIcon />
+                  </ToolbarButton>
+                  <ToolbarButton
+                    label="跳到下一个公式格"
+                    disabled={formulaDisabledReason !== undefined}
+                    disabledReason={formulaDisabledReason}
+                    onClick={() => stepTo(formulas, 1)}
+                  >
+                    <ChevronRightIcon />
+                  </ToolbarButton>
+                </ToolbarGroup>
+              ),
+            },
+            {
+              key: 'cell',
+              label: '单元格',
+              minWidth: 940,
+              content: (
+                <ToolbarGroup label="单元格">
+                  <ToolbarButton
+                    label="复制这个格的文字"
+                    disabled={copyDisabledReason !== undefined}
+                    disabledReason={copyDisabledReason}
+                    onClick={() => void copyCell()}
+                  >
+                    <CopyIcon />
+                  </ToolbarButton>
+                  <ToolbarButton
+                    label="清空这个格（原有的颜色、边框与数字格式会一起丢掉）"
+                    disabled={clearDisabledReason !== undefined}
+                    disabledReason={clearDisabledReason}
+                    onClick={clearCell}
+                  >
+                    <EraserIcon />
+                  </ToolbarButton>
+                </ToolbarGroup>
+              ),
+            },
+            {
+              key: 'view',
+              label: '视图',
+              minWidth: 1050,
+              content: (
+                <ToolbarGroup label="视图">
+                  <ToolbarButton
+                    label="十字高亮：选中格所在的行与列"
+                    active={cross}
+                    onClick={() => setCross((on) => !on)}
+                  >
+                    <CrossHighlightIcon />
+                  </ToolbarButton>
+                </ToolbarGroup>
+              ),
+            },
+          ]}
+        />
       }
       toolbarActions={
         <ToolbarButton

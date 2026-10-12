@@ -75,7 +75,7 @@ import {
 export interface EditorShellProps {
   /** 顶栏（工具条）。一般不直接放裸子元素，用下面的控件原语摆 */
   toolbar?: ReactNode
-  /** 工具条右端常驻的主操作；窄窗口滚动格式命令时仍可使用 */
+  /** 底部状态行右端常驻的主操作；沿用各编辑器传入的保存按钮 */
   toolbarActions?: ReactNode
   /**
    * 次工具条（工具条下面那一行）。查找替换栏、pptx 的幻灯片导航、xlsx 的
@@ -83,7 +83,7 @@ export interface EditorShellProps {
    *
    * **它与工具条同包在 `.mimir-editor__chrome` 里**，那个容器才是 sticky 的。
    * 让 subbar 自己再写一条 `position: sticky; top: 0` 是不行的：工具条已经占了
-   * `top: 0` 且 z-index 更高、DOM 在后，subbar 会盖住工具条右端的「保存」
+   * `top: 0` 且 z-index 更高、DOM 在后，subbar 会盖住工具条
    * （这一点实测过）。也不要给 subbar 写死 `top: 32px` 之类——工具条是
    * `flex-wrap` 的，窄窗口下会折成两行，写死的高度立刻错位。
    */
@@ -117,7 +117,7 @@ export interface EditorShellProps {
 /**
  * 外壳本体。
  *
- * 五层自上而下：`toolbar`（含右侧 `toolbarActions`）→ `subbar` → `children` → `footer` → `status`
+ * 五层自上而下：`toolbar` → `subbar` → `children` → `footer` → `status`（含右侧 `toolbarActions`）
  * （工具条与次工具条同包在一条 sticky 容器里，所以视觉上是四行）。
  * 没传的槽位不渲染——**不留空占位**：一条空的次工具条会让人以为这里本来
  * 应该有东西而没显示出来。
@@ -148,7 +148,7 @@ export function EditorShell({
   variant,
   bodySide,
 }: EditorShellProps) {
-  const hasChrome = toolbar !== undefined || toolbarActions !== undefined || subbar !== undefined
+  const hasChrome = toolbar !== undefined || subbar !== undefined
   return (
     <ConfigProvider componentSize="small">
       <div
@@ -156,12 +156,9 @@ export function EditorShell({
       >
         {hasChrome && (
           <div className="mimir-editor__chrome">
-            {(toolbar !== undefined || toolbarActions !== undefined) && (
+            {toolbar !== undefined && (
               <div className="mimir-editor__bar" role="group" aria-label="编辑工具">
                 <div className="mimir-editor__tools">{toolbar}</div>
-                {toolbarActions !== undefined && (
-                  <div className="mimir-editor__actions">{toolbarActions}</div>
-                )}
               </div>
             )}
             {subbar !== undefined && <div className="mimir-editor__subbar">{subbar}</div>}
@@ -179,7 +176,14 @@ export function EditorShell({
           <div className="mimir-editor__body">{children}</div>
         )}
         {footer !== undefined && <div className="mimir-editor__footer">{footer}</div>}
-        {status !== undefined && <div className="mimir-editor__status">{status}</div>}
+        {(status !== undefined || toolbarActions !== undefined) && (
+          <div className="mimir-editor__status">
+            {status !== undefined && <div className="mimir-editor__status-content">{status}</div>}
+            {toolbarActions !== undefined && (
+              <div className="mimir-editor__status-actions">{toolbarActions}</div>
+            )}
+          </div>
+        )}
       </div>
     </ConfigProvider>
   )
@@ -378,7 +382,7 @@ export function ToolbarDivider() {
  * 撑开剩余空间，把后面的内容推到右边。
  *
  * 只在普通工具内容或附属面板里需要弹性占位时使用。
- * 主保存动作走 `toolbarActions` 槽位，窄窗口滚动命令时保持可见。
+ * 主保存动作走 `toolbarActions` 槽位，放在底部状态行右端。
  */
 export function ToolbarSpacer() {
   return <span className="me-spacer" />
@@ -398,7 +402,7 @@ export function ToolbarLabel({ children }: { children: ReactNode }) {
  * `white-space: nowrap`——工具条上换行会把一行拆成两行，所以才这么定。但
  * 「保存会重写整个文件」「裁剪只改可视区」这类说明往往有一两百字，nowrap 会
  * 让它**一路撑出外壳**：实测 420px 宽的窗口下 footer 的 `scrollWidth` 是 2150
- * 对 `clientWidth` 418，整页横向滚动、工具条右端的「保存」被推出可视区。
+ * 对 `clientWidth` 418，整页横向滚动、操作区会被推出可视区。
  *
  * 两种文字的形状不同（一个是标签，一个是段落），所以是两个原语。
  */

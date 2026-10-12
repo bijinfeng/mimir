@@ -98,9 +98,11 @@ export const documentSummarySchema = z.object({
    * 原件的 MIME 类型，仅 `kind === 'file'`（上传的文件）有。
    *
    * 与 `size` 一起构成「格式是属性」那条规则的落点：列表的元信息行显示
-   * 「PDF · 2.4 MB」，而**筛选与徽标仍按 kind**，不按格式。
+   * 「PDF · 2.4 MB」。文件类型由当前原件后缀和 MIME 呈现，kind 仍表示来源。
    */
   mime: z.string().nullable(),
+  /** 当前原件的扩展名（不含点）；替换原件后随 sourceKey 更新，仅上传件有值。 */
+  fileExtension: z.string().nullable(),
   /** 原件字节数，用于元信息行。null 表示这条文档没有原件（笔记与抓取的资料） */
   size: z.number().int().nullable(),
   /**

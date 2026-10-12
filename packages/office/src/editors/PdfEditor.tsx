@@ -72,12 +72,13 @@ import {
   FindReplaceBar,
   ToolbarButton,
   ToolbarConfirm,
-  ToolbarDivider,
   ToolbarFileButton,
-  ToolbarGroup,
   ToolbarLabel,
   ToolbarMenu,
-  ToolbarNote,
+  ToolbarMenuFields,
+  ToolbarMenuItemRow,
+  ToolbarMenuNote,
+  ToolbarMenuSeparator,
   ToolbarNotice,
   ToolbarNumberField,
   ToolbarSelect,
@@ -85,19 +86,12 @@ import {
   type ToolbarMenuItem,
 } from '../shell/EditorShell.js'
 import {
-  BlankPageIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  CropIcon,
   FileImportIcon,
   FindIcon,
-  ReverseOrderIcon,
-  RotateCcwIcon,
-  RotateCwIcon,
   SaveIcon,
   TrashIcon,
-  ZoomInIcon,
-  ZoomOutIcon,
 } from '../shell/icons.js'
 import { statusText, useParsed, useSource } from './use-source.js'
 import { OFFICE_MIME, type EditorProps } from './types.js'
@@ -136,6 +130,7 @@ import {
 } from './pdf-text.js'
 import '../shell/shell.css'
 import './editors.css'
+import './pptx-pdf-toolbar.css'
 
 /** 画布宽度（px）。与 pptx 同一档，换文件时视觉宽度不变 */
 const FIT_WIDTH_PX = 900
@@ -838,197 +833,47 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
       保存之后那些属性就是文件本身的一部分，再写「待保存」是说假话 */
   const geometry = describeGeometry(page)
   const geometryText = geometry === null ? null : dirty ? `待保存 · ${geometry}` : geometry
+  const previousPage = () => goTo(at - 1)
+  const nextPage = () => goTo(at + 1)
+  const toggleFind = () => {
+    setNotice(null)
+    setFindOpen((open) => !open)
+  }
 
   return (
     <EditorShell
       flush={flush}
       toolbar={
-        <>
-          <ToolbarGroup label="翻页">
+        <div className="mimir-pptx-pdf-toolbar mimir-pptx-pdf-toolbar--pdf">
+          <span className="mimir-pptx-pdf-toolbar__page-nav">
             <ToolbarButton
               label="上一页"
               disabled={at === 0}
               disabledReason="已经是第一页"
-              onClick={() => goTo(at - 1)}
+              onClick={previousPage}
             >
               <ChevronLeftIcon />
             </ToolbarButton>
-            {/*
-              页码输入：取值是**连续**的，上界随文档变（1..页数），所以是输入框
-              而不是下拉或一排按钮（`ToolbarNumberField` 的说明）。
-            */}
-            <ToolbarNumberField
-              label="页码"
-              value={at + 1}
-              min={1}
-              max={layout.length}
-              suffix={`/ ${layout.length}`}
-              onCommit={(next) => goTo(next - 1)}
-            />
+          </span>
+          <ToolbarNumberField
+            label="页码"
+            value={at + 1}
+            min={1}
+            max={layout.length}
+            suffix={`/ ${layout.length}`}
+            onCommit={(next) => goTo(next - 1)}
+          />
+          <span className="mimir-pptx-pdf-toolbar__page-nav">
             <ToolbarButton
               label="下一页"
               disabled={at >= layout.length - 1}
               disabledReason="已经是最后一页"
-              onClick={() => goTo(at + 1)}
+              onClick={nextPage}
             >
               <ChevronRightIcon />
             </ToolbarButton>
-          </ToolbarGroup>
-
-          <ToolbarDivider />
-
-          <ToolbarGroup label="旋转这一页">
-            <ToolbarButton label="向左旋转 90 度" onClick={() => rotate(-90)}>
-              <RotateCcwIcon />
-            </ToolbarButton>
-            <ToolbarButton label="向右旋转 90 度" onClick={() => rotate(90)}>
-              <RotateCwIcon />
-            </ToolbarButton>
-          </ToolbarGroup>
-
-          <ToolbarGroup label="调整这一页的位置">
-            <ToolbarButton
-              label="把这一页往前挪"
-              disabled={at === 0}
-              disabledReason="已经在最前面"
-              onClick={() => move(-1)}
-            >
-              前移
-            </ToolbarButton>
-            <ToolbarButton
-              label="把这一页往后挪"
-              disabled={at >= layout.length - 1}
-              disabledReason="已经在最后面"
-              onClick={() => move(1)}
-            >
-              后移
-            </ToolbarButton>
-          </ToolbarGroup>
-
-          {/*
-            整份文档的动作进菜单：它们不常用，而且要四个按钮才能表达「全部页」
-            与「这一页」的差别——排成一排时那四个只差一个字，看着像重复的按钮。
-          */}
-          <ToolbarMenu
-            label="整份文档的操作"
-            text="整份"
-            icon={<ReverseOrderIcon />}
-            items={[
-              { key: 'rot-ccw', label: '全部页向左旋转 90 度', onSelect: () => rotateAll(-90) },
-              { key: 'rot-cw', label: '全部页向右旋转 90 度', onSelect: () => rotateAll(90) },
-              { key: 'sep', label: '', separator: true },
-              {
-                key: 'reverse',
-                label: '整份倒序（第一页与最后一页互换）',
-                onSelect: reverseOrder,
-                disabled: layout.length < 2,
-                disabledReason: '只有一页，倒序没有变化',
-              },
-            ]}
-          />
-
-          <ToolbarMenu
-            label="裁剪这一页（只改可视区，页内容一字未删）"
-            text="裁剪"
-            icon={<CropIcon />}
-            items={cropItems}
-          />
-
-          {/*
-            纸型：`null` 走 `fallbackLabel`（「原件尺寸」），**不冒充第一档**——
-            下拉里第一项是「原件尺寸」这个真的可选值，所以这里的 value 用 ''
-            表示它，避免「显示 A4 而实际没换纸型」那种假话。
-          */}
-          <ToolbarSelect<PaperKey | ''>
-            label="这一页的纸型（会按比例缩放内容）"
-            value={paperKey ?? ''}
-            options={[
-              { value: '', label: '原件尺寸' },
-              ...PAPER_KEYS.map((key) => ({
-                value: key,
-                label: `${PAPER_SIZES[key].label}（${Math.round(PAPER_SIZES[key].width)} × ${Math.round(PAPER_SIZES[key].height)} pt）`,
-              })),
-            ]}
-            onChange={paper}
-          />
-
-          <ToolbarDivider />
-
-          <ToolbarButton label="在当前页之后插入一张 A4 空白页" onClick={insertBlank}>
-            <BlankPageIcon />
-          </ToolbarButton>
-          <ToolbarFileButton
-            label="从另一份 PDF 导入页面（它的全部页面，插在当前页之后）"
-            accept="application/pdf,.pdf"
-            onPick={importPages}
-          >
-            <FileImportIcon />
-          </ToolbarFileButton>
-          {/*
-            ## 删除这一页要确认
-
-            它与左右两个按钮（插入空白页、导入页面）都是纯图标、并排一排，而
-            它的代价与它们完全不对称：**没有撤销**。docx / html / 笔记的工具条
-            都有「撤销 (Ctrl+Z)」，pdf 这条没有——用户会按同样的预期去按
-            Ctrl+Z，而那里没有（`applyPages` 只换页序，不留历史）。一次误点
-            就少一页，唯一的路是「不保存、退出、重进」。
-
-            加确认而不是加一套 history：撤销要做进进出出的栈，那是新能力
-            （PRD §5.9 的三选项是给对话与笔记定的），而这里要的是「别误触」。
-            仓里另外两处不可逆的删除（设置页的头像、供应商）用的是同一个做法
-            ——`Popconfirm` + 一句后果说明，见 `AccountSection.tsx:174`。
-
-            弹层会 portal 到 body：与 `ToolbarSelect` 同一个显式例外（`.mimir-editor`
-            是 `overflow: clip`，就地渲染会被裁掉），而 antd 的弹层自带
-            `css-var-root`，`--ant-*` 由它自己提供，深色下不会退回浅色。
-          */}
-          <ToolbarConfirm
-            title="删掉这一页？"
-            description="没有撤销，只能靠不保存退出"
-            confirmLabel="删除这一页"
-            disabled={layout.length <= 1}
-            onConfirm={removePage}
-          >
-            {/*
-              **不给 `onClick`**：这一档的点击由 `ToolbarConfirm` 提供
-              （rc-trigger 会把自己的处理器 merge 到这个子元素上），自己再挂
-              一个空处理函数只会让人以为这里还有事要做——与 `ToolbarButtonProps`
-              里那条「可以不给 onClick」是同一件事。
-            */}
-            <ToolbarButton
-              label="删除这一页"
-              disabled={layout.length <= 1}
-              disabledReason="至少要留一页"
-            >
-              <TrashIcon />
-            </ToolbarButton>
-          </ToolbarConfirm>
-
-          <ToolbarDivider />
-
-          <ToolbarButton
-            label="查找文字"
-            active={findOpen}
-            disabled={!canFind}
-            disabledReason={findReason}
-            onClick={() => {
-              setNotice(null)
-              setFindOpen((open) => !open)
-            }}
-          >
-            <FindIcon />
-          </ToolbarButton>
-
-          <ToolbarGroup label="缩放">
-            <ToolbarButton
-              label="缩小"
-              disabled={zoom <= ZOOM_MIN}
-              disabledReason={`已经到最小缩放 ${ZOOM_MIN}%`}
-              onClick={() => setZoom((value) => Math.max(ZOOM_MIN, value - ZOOM_STEP))}
-            >
-              <ZoomOutIcon />
-            </ToolbarButton>
-            {/* 缩放比例：连续取值，40–240（与按钮的两个端点一致） */}
+          </span>
+          <span className="mimir-pptx-pdf-toolbar__zoom">
             <ToolbarNumberField
               label="缩放（%）"
               value={zoom}
@@ -1037,16 +882,200 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
               suffix="%"
               onCommit={setZoom}
             />
+          </span>
+          <span className="mimir-pptx-pdf-toolbar__find">
             <ToolbarButton
-              label="放大"
-              disabled={zoom >= ZOOM_MAX}
-              disabledReason={`已经到最大缩放 ${ZOOM_MAX}%`}
-              onClick={() => setZoom((value) => Math.min(ZOOM_MAX, value + ZOOM_STEP))}
+              label="查找文字"
+              active={findOpen}
+              disabled={!canFind}
+              disabledReason={findReason}
+              onClick={toggleFind}
             >
-              <ZoomInIcon />
+              <FindIcon />
             </ToolbarButton>
-          </ToolbarGroup>
-        </>
+          </span>
+          {/* 删除保持独立确认，收纳菜单不能把它变成一步操作。 */}
+          <ToolbarConfirm
+            title="删掉这一页？"
+            description="没有撤销，只能靠不保存退出"
+            confirmLabel="删除这一页"
+            disabled={layout.length <= 1}
+            onConfirm={removePage}
+          >
+            <ToolbarButton
+              label="删除这一页"
+              disabled={layout.length <= 1}
+              disabledReason="至少要留一页"
+            >
+              <TrashIcon />
+            </ToolbarButton>
+          </ToolbarConfirm>
+          <ToolbarMenu
+            label="页面与版式操作"
+            text="页面"
+            panelWidth={330}
+            renderPanel={(close) => (
+              <div className="mimir-pptx-pdf-toolbar__panel">
+                <div className="mimir-pptx-pdf-toolbar__page-nav-menu">
+                  <ToolbarMenuItemRow
+                    item={{
+                      key: 'previous',
+                      label: '上一页',
+                      disabled: at === 0,
+                      disabledReason: '已经是第一页',
+                      onSelect: previousPage,
+                    }}
+                    close={close}
+                  />
+                  <ToolbarMenuItemRow
+                    item={{
+                      key: 'next',
+                      label: '下一页',
+                      disabled: at >= layout.length - 1,
+                      disabledReason: '已经是最后一页',
+                      onSelect: nextPage,
+                    }}
+                    close={close}
+                  />
+                  <ToolbarMenuSeparator />
+                </div>
+                <ToolbarMenuNote>旋转与页面顺序</ToolbarMenuNote>
+                <ToolbarMenuItemRow
+                  item={{ key: 'left', label: '向左旋转 90 度', onSelect: () => rotate(-90) }}
+                  close={close}
+                />
+                <ToolbarMenuItemRow
+                  item={{ key: 'right', label: '向右旋转 90 度', onSelect: () => rotate(90) }}
+                  close={close}
+                />
+                <ToolbarMenuItemRow
+                  item={{
+                    key: 'move-before',
+                    label: '把这一页往前挪',
+                    disabled: at === 0,
+                    disabledReason: '已经在最前面',
+                    onSelect: () => move(-1),
+                  }}
+                  close={close}
+                />
+                <ToolbarMenuItemRow
+                  item={{
+                    key: 'move-after',
+                    label: '把这一页往后挪',
+                    disabled: at >= layout.length - 1,
+                    disabledReason: '已经在最后面',
+                    onSelect: () => move(1),
+                  }}
+                  close={close}
+                />
+                <ToolbarMenuSeparator />
+                <ToolbarMenuNote>整份文档</ToolbarMenuNote>
+                <ToolbarMenuItemRow
+                  item={{
+                    key: 'rot-all-left',
+                    label: '全部页向左旋转 90 度',
+                    onSelect: () => rotateAll(-90),
+                  }}
+                  close={close}
+                />
+                <ToolbarMenuItemRow
+                  item={{
+                    key: 'rot-all-right',
+                    label: '全部页向右旋转 90 度',
+                    onSelect: () => rotateAll(90),
+                  }}
+                  close={close}
+                />
+                <ToolbarMenuItemRow
+                  item={{
+                    key: 'reverse',
+                    label: '整份倒序（第一页与最后一页互换）',
+                    disabled: layout.length < 2,
+                    disabledReason: '只有一页，倒序没有变化',
+                    onSelect: reverseOrder,
+                  }}
+                  close={close}
+                />
+                <ToolbarMenuSeparator />
+                <ToolbarMenuNote>
+                  裁剪只改可视区，不删除页内容；换纸型会按比例缩放内容。
+                </ToolbarMenuNote>
+                {cropItems.map((item) => (
+                  <ToolbarMenuItemRow key={item.key} item={item} close={close} />
+                ))}
+                <ToolbarMenuFields label="这一页的纸型">
+                  <ToolbarSelect<PaperKey | ''>
+                    label="这一页的纸型（会按比例缩放内容）"
+                    value={paperKey ?? ''}
+                    options={[
+                      { value: '', label: '原件尺寸' },
+                      ...PAPER_KEYS.map((key) => ({
+                        value: key,
+                        label: `${PAPER_SIZES[key].label}（${Math.round(PAPER_SIZES[key].width)} × ${Math.round(PAPER_SIZES[key].height)} pt）`,
+                      })),
+                    ]}
+                    onChange={paper}
+                  />
+                </ToolbarMenuFields>
+                <ToolbarMenuSeparator />
+                <ToolbarMenuNote>插入页面</ToolbarMenuNote>
+                <ToolbarMenuItemRow
+                  item={{
+                    key: 'insert-blank',
+                    label: '在当前页之后插入一张 A4 空白页',
+                    onSelect: insertBlank,
+                  }}
+                  close={close}
+                />
+                <ToolbarMenuFields label="从另一份 PDF 导入页面">
+                  <ToolbarFileButton
+                    label="从另一份 PDF 导入页面（它的全部页面，插在当前页之后）"
+                    accept="application/pdf,.pdf"
+                    onPick={importPages}
+                  >
+                    <FileImportIcon />
+                  </ToolbarFileButton>
+                </ToolbarMenuFields>
+                <div className="mimir-pptx-pdf-toolbar__find-menu">
+                  <ToolbarMenuSeparator />
+                  <ToolbarMenuItemRow
+                    item={{
+                      key: 'find',
+                      label: '查找文字',
+                      active: findOpen,
+                      disabled: !canFind,
+                      disabledReason: findReason,
+                      onSelect: toggleFind,
+                    }}
+                    close={close}
+                  />
+                </div>
+                <ToolbarMenuSeparator />
+                <ToolbarMenuNote>缩放</ToolbarMenuNote>
+                <ToolbarMenuItemRow
+                  item={{
+                    key: 'zoom-out',
+                    label: '缩小',
+                    disabled: zoom <= ZOOM_MIN,
+                    disabledReason: `已经到最小缩放 ${ZOOM_MIN}%`,
+                    onSelect: () => setZoom((value) => Math.max(ZOOM_MIN, value - ZOOM_STEP)),
+                  }}
+                  close={close}
+                />
+                <ToolbarMenuItemRow
+                  item={{
+                    key: 'zoom-in',
+                    label: '放大',
+                    disabled: zoom >= ZOOM_MAX,
+                    disabledReason: `已经到最大缩放 ${ZOOM_MAX}%`,
+                    onSelect: () => setZoom((value) => Math.min(ZOOM_MAX, value + ZOOM_STEP)),
+                  }}
+                  close={close}
+                />
+              </div>
+            )}
+          />
+        </div>
       }
       toolbarActions={
         <ToolbarButton
@@ -1086,17 +1115,6 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
           )
         ) : undefined
       }
-      /*
-        footer 只放两类东西，用的是外壳里两个不同的原语（`EditorShell.tsx` 的
-        `ToolbarNote` / `ToolbarNotice` 各有一段说明）：
-
-          - **临时提示**（导入失败、没有文字层）走 `ToolbarNotice`：危险色、能
-            断词的行内文字，与 docx 的同档文案同一个原语。拿 `ToolbarNote`
-            顶过一版，两边对同一档文案有两种画法
-          - **常驻说明**走 `ToolbarNote`：会折行的灰色段落。`ToolbarLabel`
-            是 nowrap 的短标签，用它写这段说明会撑破外壳（实测 420px 窗口下
-            footer 的 scrollWidth 是 2150 对 clientWidth 418）
-      */
       footer={
         notice !== null ? (
           <>
@@ -1105,17 +1123,7 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
               知道了
             </ToolbarButton>
           </>
-        ) : (
-          <ToolbarNote>
-            裁剪与纸型只作用于这一页。裁剪只改可视区：页内容一字未删，裁剪前后解码出的内容流完全相同（测过）。
-            纸型会按比例缩放内容并改纸张尺寸，两个一起写才不拉伸。画布画的始终是原件，所以保存之前裁剪用框外压暗表示、
-            纸型只在状态行里写着目标尺寸。删除、调序、旋转也一样只在保存时落到文件上——保存之前退出，原件一字未动
-            （这条是删除没有撤销时的退路）。保存会用 pdf-lib
-            重写整个文件（页面级操作是它擅长的，但字节与原件不同）；表单、签名等无法保留时会拒绝保存。
-            改文字不在本版——PDF 的文字是内容流里的绘制指令，改一个字要重排整段（那要 PDFium 的 7MB
-            WASM，见 TECH §15.12）。
-          </ToolbarNote>
-        )
+        ) : undefined
       }
       status={
         <>

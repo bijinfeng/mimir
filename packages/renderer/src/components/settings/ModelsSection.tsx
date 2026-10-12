@@ -254,10 +254,9 @@ function RoleRow({
       */}
       <div className={styles.actions}>
         <Cascader
-          /* maxWidth 与固定宽并存：420px 让四个角色在行间上下对齐（同列扫读），
-             而窄视口下内容列只有约 340px——没有 maxWidth 时控件比列宽，
-             整页横向滚动。固定的是「对齐基准」，不是「最小宽度」 */
-          style={{ width: 420, maxWidth: '100%' }}
+          /* 280px 让四个角色的选择器对齐，也为同一行的状态与测试按钮留出空间。
+             窄视口仍受内容列宽度约束，避免整页横向滚动。 */
+          style={{ width: 280, maxWidth: '100%' }}
           value={
             role.providerId !== null && role.model !== ''
               ? [role.providerId, role.model]

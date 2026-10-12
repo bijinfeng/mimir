@@ -28,6 +28,7 @@ function doc(overrides: Partial<DocumentSummary> = {}): DocumentSummary {
     path: null,
     url: null,
     mime: 'application/pdf',
+    fileExtension: 'pdf',
     size: 1024 * 1024 * 2.4,
     folder: null,
     createdAt: '2026-09-24T00:00:00.000Z',

@@ -125,6 +125,17 @@ function button(host: HTMLElement, label: string): HTMLButtonElement {
   return found
 }
 
+function menuItem(host: HTMLElement, label: string): HTMLButtonElement {
+  if (host.querySelector('.mimir-pptx-pdf-toolbar__panel') === null) {
+    click(button(host, '页面与版式操作'))
+  }
+  const found = [
+    ...host.querySelectorAll<HTMLButtonElement>('.mimir-pptx-pdf-toolbar__panel [role="menuitem"]'),
+  ].find((item) => item.textContent?.trim() === label)
+  if (found === undefined) throw new Error(`页面菜单里没有「${label}」`)
+  return found
+}
+
 function click(element: Element): void {
   act(() => {
     element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
@@ -166,7 +177,7 @@ describe('PdfEditor 工具条的控件', () => {
     if (bar === null) throw new Error('没有工具条')
 
     const buttons = [...bar.querySelectorAll('button')]
-    expect(buttons.length).toBeGreaterThan(10)
+    expect(buttons.length).toBeGreaterThan(4)
 
     const antd = buttons.filter((item) => hasClass(item, 'ant-btn'))
     /*
@@ -176,7 +187,7 @@ describe('PdfEditor 工具条的控件', () => {
      * 判据用 `aria-haspopup`，不是「名字长这样」。
      */
     const own = buttons.filter((item) => !hasClass(item, 'ant-btn'))
-    expect(own.map((item) => item.className)).toEqual(['me-btn', 'me-btn'])
+    expect(own.map((item) => item.className)).toEqual(['me-btn'])
     expect(own.every((item) => item.getAttribute('aria-haspopup') !== null)).toBe(true)
     expect(antd.length).toBe(buttons.length - own.length)
 
@@ -204,6 +215,7 @@ describe('PdfEditor 工具条的控件', () => {
     expect(numbers).toHaveLength(2)
     for (const item of numbers) expect(hasClass(item, 'ant-input-number-sm')).toBe(true)
 
+    click(button(host, '页面与版式操作'))
     const selects = [...bar.querySelectorAll('.ant-select')]
     expect(selects).toHaveLength(1)
     expect(hasClass(selects[0] as Element, 'ant-select-sm')).toBe(true)
@@ -218,8 +230,8 @@ describe('PdfEditor 工具条的控件', () => {
     // 第 1 页：往回翻与往前挪都不能点，且各自说明理由
     expect(button(host, '上一页').disabled).toBe(true)
     expect(button(host, '上一页').getAttribute('title')).toBe('已经是第一页')
-    expect(button(host, '把这一页往前挪').disabled).toBe(true)
-    expect(button(host, '把这一页往前挪').getAttribute('title')).toBe('已经在最前面')
+    expect(menuItem(host, '把这一页往前挪').disabled).toBe(true)
+    expect(menuItem(host, '把这一页往前挪').getAttribute('title')).toBe('已经在最前面')
 
     // 每一条都这样断言一遍：没有「禁用了但没写理由」的按钮
     for (const item of host.querySelectorAll<HTMLButtonElement>(
@@ -238,7 +250,7 @@ describe('PdfEditor 工具条的控件', () => {
      * 验不出禁用这一支。
      */
     const { host } = await mount(await makePdf({ pages: 1, width: 60, height: 60 }))
-    click(button(host, '裁剪这一页（只改可视区，页内容一字未删）'))
+    click(button(host, '页面与版式操作'))
 
     const items = [...host.querySelectorAll<HTMLButtonElement>('.me-menu__panel [role="menuitem"]')]
     expect(items.length).toBeGreaterThan(4)
@@ -248,7 +260,7 @@ describe('PdfEditor 工具条的控件', () => {
     expect(none?.getAttribute('aria-current')).toBe('true')
 
     // 超上限的那三档：disabled，且 title 就是原因（不是它自己的名字）
-    const over = items.filter((item) => item.disabled)
+    const over = items.filter((item) => item.disabled && item.textContent?.startsWith('四边各裁'))
     expect(over.map((item) => item.textContent)).toEqual([
       '四边各裁 20 pt',
       '四边各裁 36 pt',
@@ -311,6 +323,7 @@ describe('PdfEditor 工具条的控件', () => {
      * 任何一个」，会显示 `placeholder`）。两者的区别只有在渲染结果里才看得见
      * ——antd 的 Select 拿到空串时可能显示 placeholder 或什么都不显示。
      */
+    click(button(host, '页面与版式操作'))
     expect(selectValueText(host, label)).toBe('原件尺寸')
 
     // 换一档：下拉里选 A4，状态行与下拉本身都要跟着说 A4
@@ -327,7 +340,7 @@ describe('PdfEditor 工具条的控件', () => {
 
   it('按下时不夺焦点：mousedown 被 preventDefault（拖动选区不会因点按钮而丢）', async () => {
     const { host } = await mount(await makePdf())
-    const pressed = button(host, '向右旋转 90 度')
+    const pressed = menuItem(host, '向右旋转 90 度')
     const event = new MouseEvent('mousedown', { bubbles: true, cancelable: true })
     act(() => {
       pressed.dispatchEvent(event)
@@ -344,8 +357,7 @@ describe('PdfEditor 工具条的动作', () => {
    *
    * 它与左右两个纯图标按钮（插入空白页、导入页面）并排，代价却完全不同：这一条
    * 工具条**没有撤销**（docx / html / 笔记都有），一次误点就少一页，唯一的路
-   * 是「不保存、退出、重进」。所以要两层保护：**弹一次确认**，并**在状态行/
-   * 说明里给出退路**（保存之前原件一字未动）。这一组把两层都钉住。
+   * 是「不保存、退出、重进」。确认框须同时说明无撤销和退出退路。
    */
   it('「删除这一页」先弹确认：取消不动、确认才真的删', async () => {
     const { host } = await mount(await makePdf({ pages: 3 }))
@@ -358,8 +370,9 @@ describe('PdfEditor 工具条的动作', () => {
      */
     const popup = document.querySelector('.ant-popconfirm')
     expect(popup, '点「删除这一页」没有弹确认框').not.toBeNull()
-    // 说清代价：没有撤销
+    // 在操作点说明代价和退路，不占用画布底部的常驻说明。
     expect(popup?.textContent).toContain('没有撤销')
+    expect(popup?.textContent).toContain('不保存退出')
 
     // 取消：页数不动、也没有未保存的改动
     const cancel = [...popup!.querySelectorAll('button')].find(
@@ -393,17 +406,17 @@ describe('PdfEditor 工具条的动作', () => {
     expect(text).toContain('ToolbarConfirm')
   })
 
-  it('删除没有撤销这件事有退路：说明里写着「保存之前原件一字未动」', async () => {
+  it('默认不占用画布底部说明区域，状态与保存仍可见', async () => {
     const { host } = await mount(await makePdf({ pages: 3 }))
-    const note = host.querySelector('.mimir-editor__footer .me-note')
-    expect(note, 'PDF 的常驻说明没有渲染').not.toBeNull()
-    expect(note?.textContent).toContain('保存之前退出，原件一字未动')
+    expect(host.querySelector('.mimir-editor__footer')).toBeNull()
+    expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('/ 3 页')
+    expect(button(host, '保存到库')).toBeTruthy()
   })
 
   it('旋转 + 保存：写回的字节里那一页真的是 90 度', async () => {
     const { host, saved } = await mount(await makePdf())
 
-    click(button(host, '向右旋转 90 度'))
+    click(menuItem(host, '向右旋转 90 度'))
     // 状态行如实报告「已修改」，页面标签写着这一页的旋转角度
     expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('已修改，未保存')
     expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('旋转 90°')
@@ -431,7 +444,7 @@ describe('PdfEditor 工具条的动作', () => {
     doc.getForm().createTextField('contact').addToPage(page)
     const { host, saved } = await mount(await doc.save())
 
-    click(button(host, '向右旋转 90 度'))
+    click(menuItem(host, '向右旋转 90 度'))
     click(button(host, '保存到库'))
     await settle(() =>
       (host.querySelector('.mimir-editor__footer .me-notice')?.textContent ?? '').includes(
@@ -449,7 +462,7 @@ describe('PdfEditor 工具条的动作', () => {
   it('弹层面板就地渲染，不 portal 到 body（否则深色下会退回浅色回退值）', async () => {
     const { host } = await mount(await makePdf())
     const before = document.body.childElementCount
-    const trigger = button(host, '整份文档的操作')
+    const trigger = button(host, '页面与版式操作')
 
     click(trigger)
     expect(trigger.getAttribute('aria-expanded')).toBe('true')
@@ -471,6 +484,7 @@ describe('PdfEditor 工具条的动作', () => {
 
   it('「从另一份 PDF 导入页面」带上了正确的文件过滤条件', async () => {
     const { host } = await mount(await makePdf())
+    click(button(host, '页面与版式操作'))
     const input = host.querySelector<HTMLInputElement>('.mimir-editor__bar input[type=file]')
     expect(input).not.toBeNull()
     // 没有过滤条件的话系统选择器里什么都能选，选错了要到解析时才报错

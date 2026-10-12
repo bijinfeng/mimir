@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid'
 import { contentHash, decodeUploadedText, toExcerpt } from '../lib/text.js'
 import {
   FILE_MAX_BYTES,
+  extensionOf,
   formatBytes,
   mimeFromFilename,
   titleFromFilename,
@@ -295,6 +296,7 @@ function toUploadSummary(
     path: row.path,
     url: row.url,
     mime: row.mime,
+    fileExtension: row.kind === 'file' ? extensionOf(row.sourceKey ?? '') || null : null,
     size: row.size,
     folder: row.folder,
     createdAt: row.createdAt.toISOString(),

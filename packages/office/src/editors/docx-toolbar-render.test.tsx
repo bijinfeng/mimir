@@ -113,6 +113,23 @@ function press(host: HTMLElement, label: string): void {
   })
 }
 
+function openMoreSection(host: HTMLElement, label: string): void {
+  press(host, '更多命令')
+  const item = [...host.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')].find(
+    (button) => button.textContent === label,
+  )
+  if (item === undefined) throw new Error(`更多命令中找不到「${label}」`)
+  act(() => item.click())
+}
+
+function chooseMenuItem(host: HTMLElement, label: string): void {
+  const item = [...host.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')].find(
+    (button) => button.textContent === label,
+  )
+  if (item === undefined) throw new Error(`菜单中找不到「${label}」`)
+  act(() => item.click())
+}
+
 /** 顶层第一个某类型节点的位置 */
 function topNodeAt(editor: Editor, type: string): number {
   let found = -1
@@ -169,11 +186,45 @@ describe('DocxToolbar 渲染', () => {
   it('每个按钮都有无障碍名称（读屏念得出它是什么）', async () => {
     const { host } = await boot()
     const all = buttons(host)
-    expect(all.length).toBeGreaterThan(20)
+    expect(all.length).toBeGreaterThan(10)
     for (const button of all) {
       const name = button.getAttribute('aria-label') ?? button.textContent?.trim() ?? ''
       expect(name, `按钮没有名字：${button.outerHTML.slice(0, 120)}`).not.toBe('')
     }
+  })
+
+  it('更多菜单按任务保留插入、审阅和表格命令', async () => {
+    const { host, editor } = await boot()
+    press(host, '更多命令')
+    expect(
+      [...host.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')].map(
+        (item) => item.textContent,
+      ),
+    ).toEqual(['历史记录', '字体', '段落', '插入', '表格', '审阅', '查找'])
+
+    chooseMenuItem(host, '插入')
+    for (const label of ['插入图片', '插入链接', '插入分页符 (Ctrl+Enter)', '插入表格']) {
+      expect(host.querySelector(`button[aria-label="${label}"]`)).not.toBeNull()
+    }
+    chooseMenuItem(host, '返回全部命令')
+    chooseMenuItem(host, '审阅')
+    expect(host.querySelector('button[aria-label="修订"]')).not.toBeNull()
+    expect(host.querySelector('button[aria-label$="拼写检查"]')).not.toBeNull()
+
+    const at = topNodeAt(editor, 'docTable')
+    act(() => editor.commands.setTextSelection(at + 4))
+    chooseMenuItem(host, '返回全部命令')
+    chooseMenuItem(host, '表格')
+    const tableMenu = host.querySelector<HTMLButtonElement>(
+      '.me-menu__panel button[aria-label="表格"]',
+    )
+    expect(tableMenu).not.toBeNull()
+    act(() => tableMenu!.click())
+    expect(
+      [...host.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')].some(
+        (item) => item.textContent === '上方插入行',
+      ),
+    ).toBe(true)
   })
 
   it('禁用的按钮必须说明原因（灰着不说为什么等于让人猜）', async () => {
@@ -253,7 +304,10 @@ describe('DocxToolbar 渲染', () => {
    */
   it('中文字体 / 西文字体各自带着可见的前缀，不靠 tooltip 分', async () => {
     const { host } = await boot()
-    const group = host.querySelector('[aria-label="字体"]')
+    openMoreSection(host, '字体')
+    const group = host.querySelector(
+      '[role="group"][aria-label="字体"] .me-group[aria-label="字体"]',
+    )
     expect(group, '工具条上没有「字体」这个组').not.toBeNull()
     const visible = (group?.textContent ?? '').trim()
     expect(visible).toContain('中文')
@@ -263,7 +317,9 @@ describe('DocxToolbar 渲染', () => {
     expect(selectRoot(host, '西文字体')).not.toBeNull()
 
     // 字号那个下拉也在旁边写着它管的是什么（原先只有一个「其它」）
-    expect(host.querySelector('[aria-label="字号"]')?.textContent ?? '').toContain('字号')
+    expect(host.querySelector('[role="group"][aria-label="字号"]')?.textContent ?? '').toContain(
+      '字号',
+    )
   })
 
   it('没有直接字号时显示「（默认）」，不冒充「我选了别的字号」', async () => {
@@ -332,7 +388,8 @@ describe('DocxToolbar 渲染', () => {
     const tableMenu = (): Element | null => host.querySelector('button[aria-label="表格"]')
     editor.commands.setTextSelection(2)
     expect(tableMenu()).toBeNull()
-    // 「插入表格」永远在（它不依赖光标）
+    // 「插入表格」在具名插入菜单中始终可达（它不依赖光标）
+    openMoreSection(host, '插入')
     expect(host.querySelector('button[aria-label="插入表格"]')).not.toBeNull()
 
     // 进表格之后表格菜单才出现
@@ -389,6 +446,7 @@ describe('格式刷', () => {
     expect(editor.isActive('bold')).toBe(true)
 
     // 举起格式刷，再选目标：下一段开头两个有文字的段落
+    openMoreSection(host, '字体')
     press(host, '格式刷（先选中格式来源，再选目标）')
     const target = paras.slice(1).find((para) => para.firstIsText)
     expect(target).toBeDefined()

@@ -66,7 +66,6 @@ import { useEffect, useRef, useState } from 'react'
 import {
   EditorShell,
   ToolbarButton,
-  ToolbarDivider,
   ToolbarFileButton,
   ToolbarGroup,
   ToolbarLabel,
@@ -79,6 +78,7 @@ import {
   type ToolbarMenuItem,
   type ToolbarSelectOption,
 } from '../shell/EditorShell.js'
+import { CompactToolbar } from './CompactToolbar.js'
 import { InlineToolbar, type RewriteActionName } from './InlineToolbar.js'
 import { NoteLinkOption, NoteLinkPicker } from './NoteLinkPicker.js'
 import {
@@ -141,6 +141,7 @@ import {
 } from './markdown-format.js'
 import '../shell/shell.css'
 import './editors.css'
+import './compact-toolbar.css'
 // 类型入口（`contentType: 'markdown'` 与 `getMarkdown()` 来自它）。
 // 运行时由宿主的扩展列表提供——见 markdown-dialect.ts 里的两条要求
 import './markdown-dialect.js'
@@ -773,119 +774,128 @@ export function MarkdownToolbar({
     listItem === null ? '光标不在列表里' : '这一项已经在最外层（上面没有同级项）'
   const indentReason = listItem === null ? '光标不在列表里' : '上面没有同级项，无法再往里缩进'
 
-  /*
-   * 工具条上的**分隔线**。
-   *
-   * 这条工具条有八到十个组，而 `.mimir-editor__bar` 与 `.me-group` 的 `gap`
-   * 都是 2px——不画线的话**组与组的间隔与组内按钮的间隔一样**，整条读成一个
-   * 没有结构的图标带（实测：组与组之间 7 个间隔全是 2px，栏内一条竖线都没有）。
-   * 同壳的另外五种格式都画了（docx 5 条、xlsx 3、pptx 2、html 3、pdf 3），
-   * 笔记也保留真正的组边界，只收敛组名与工具栏的高度。
-   *
-   * **只画在真正的组边界**（而且只在**前一组确实渲染了**时才画）：分隔线
-   * 是兄弟 flex 项，画在每两个按钮之间会破坏组的边界（`ToolbarDivider` 的说明）。
-   * 所以这里跟着前一个组的条件走，不产生「两条相邻」或「行首一条」。
-   */
   return (
-    <>
-      {hasCommand(editor, 'undo') && (
-        <ToolbarGroup label="撤销与重做">
-          <ToolbarButton
-            label={`撤销 (${markdownShortcutLabel('undo')})`}
-            disabled={!on('undo')}
-            disabledReason="没有可撤销的改动"
-            onClick={() => runCommand(editor, 'undo')}
-          >
-            <UndoIcon />
-          </ToolbarButton>
-          <ToolbarButton
-            label={`重做 (${markdownShortcutLabel('redo')})`}
-            disabled={!on('redo')}
-            disabledReason="没有可重做的改动"
-            onClick={() => runCommand(editor, 'redo')}
-          >
-            <RedoIcon />
-          </ToolbarButton>
-        </ToolbarGroup>
-      )}
-
-      {/* 历史 | 样式：只有前一组真的渲染了才画（见上面「分隔线」那段） */}
-      {hasCommand(editor, 'undo') && <ToolbarDivider />}
-
-      {/*
-        段落样式用一个下拉而不是一排按钮（原先 h1/h2/h3 三个按钮 + 引用 +
-        代码块五个）。九个取值排成按钮会占掉大半条工具条，而按钮只有布尔态——
-        「现在这段是什么」得由谁亮着来表达，五个按钮就有五种可能写错。
-      */}
-      {styleItems.length > 0 && (
-        <ToolbarGroup label="段落样式">
-          <ToolbarMenu
-            label="段落样式"
-            text={style === null ? '混合' : STYLE_LABEL[style]}
-            items={styleItems}
-          />
-        </ToolbarGroup>
-      )}
-
-      {/* 样式 | 行内格式。**与上一条互补**：两个前置组各自带一条自己的尾线，
-          于是四种组合下都恰好只有「前面已经落了一个组」的那几条——样式缺席时
-          上一条补位、历史缺席时这一条补位，两者都缺席时一条也不画（行首不会
-          凭空多一条竖线） */}
-      {styleItems.length > 0 && <ToolbarDivider />}
-
-      <ToolbarGroup label="行内格式">
-        <ToolbarButton
-          label={`加粗 (${markdownShortcutLabel('bold')})`}
-          active={on('bold')}
-          disabled={!hasMark(editor, 'bold')}
-          disabledReason="这个方言没有加粗标记（bold）"
-          onClick={() => toggleMarkByName(editor, 'bold')}
-        >
-          <BoldIcon />
-        </ToolbarButton>
-        <ToolbarButton
-          label={`倾斜 (${markdownShortcutLabel('italic')})`}
-          active={on('italic')}
-          disabled={!hasMark(editor, 'italic')}
-          disabledReason="这个方言没有斜体标记（italic）"
-          onClick={() => toggleMarkByName(editor, 'italic')}
-        >
-          <ItalicIcon />
-        </ToolbarButton>
-        {/*
+    <CompactToolbar
+      overflowLabel="更多笔记工具"
+      sections={[
+        {
+          key: 'style',
+          label: '段落样式',
+          minWidth: 0,
+          enabled: styleItems.length > 0,
+          content: (
+            <>
+              {styleItems.length > 0 && (
+                <ToolbarGroup label="段落样式">
+                  <ToolbarMenu
+                    label="段落样式"
+                    text={style === null ? '混合' : STYLE_LABEL[style]}
+                    items={styleItems}
+                  />
+                </ToolbarGroup>
+              )}
+            </>
+          ),
+        },
+        {
+          key: 'basic',
+          label: '基础格式',
+          minWidth: 0,
+          content: (
+            <>
+              <ToolbarGroup label="行内格式">
+                <ToolbarButton
+                  label={`加粗 (${markdownShortcutLabel('bold')})`}
+                  active={on('bold')}
+                  disabled={!hasMark(editor, 'bold')}
+                  disabledReason="这个方言没有加粗标记（bold）"
+                  onClick={() => toggleMarkByName(editor, 'bold')}
+                >
+                  <BoldIcon />
+                </ToolbarButton>
+                <ToolbarButton
+                  label={`倾斜 (${markdownShortcutLabel('italic')})`}
+                  active={on('italic')}
+                  disabled={!hasMark(editor, 'italic')}
+                  disabledReason="这个方言没有斜体标记（italic）"
+                  onClick={() => toggleMarkByName(editor, 'italic')}
+                >
+                  <ItalicIcon />
+                </ToolbarButton>
+              </ToolbarGroup>
+            </>
+          ),
+        },
+        {
+          key: 'history',
+          label: '撤销与重做',
+          minWidth: 470,
+          content: (
+            <>
+              {hasCommand(editor, 'undo') && (
+                <ToolbarGroup label="撤销与重做">
+                  <ToolbarButton
+                    label={`撤销 (${markdownShortcutLabel('undo')})`}
+                    disabled={!on('undo')}
+                    disabledReason="没有可撤销的改动"
+                    onClick={() => runCommand(editor, 'undo')}
+                  >
+                    <UndoIcon />
+                  </ToolbarButton>
+                  <ToolbarButton
+                    label={`重做 (${markdownShortcutLabel('redo')})`}
+                    disabled={!on('redo')}
+                    disabledReason="没有可重做的改动"
+                    onClick={() => runCommand(editor, 'redo')}
+                  >
+                    <RedoIcon />
+                  </ToolbarButton>
+                </ToolbarGroup>
+              )}
+            </>
+          ),
+        },
+        {
+          key: 'more-format',
+          label: '其他字形',
+          minWidth: 600,
+          content: (
+            <>
+              <ToolbarGroup label="其他字形">
+                {/*
           下划线**不是 GFM**。`@tiptap/markdown` 把它序列化成 `++文字++`
           （实测：给两个字加下划线 → `++一段++文字`），别的 markdown 工具
           多半不认。保留它是因为 Tiptap 的 StarterKit 自带，但 label 里说清楚
           ——一个序列化出去别人认不出的标记，用的人有权知道。
         */}
-        <ToolbarButton
-          label={`下划线 (${markdownShortcutLabel('underline')})：存成 ++文字++，不是 GFM`}
-          active={on('underline')}
-          disabled={!hasMark(editor, 'underline')}
-          disabledReason="这个方言没有下划线标记（underline）"
-          onClick={() => toggleMarkByName(editor, 'underline')}
-        >
-          <UnderlineIcon />
-        </ToolbarButton>
-        <ToolbarButton
-          label="删除线"
-          active={on('strike')}
-          disabled={!hasMark(editor, 'strike')}
-          disabledReason="这个方言没有删除线标记（strike）"
-          onClick={() => toggleMarkByName(editor, 'strike')}
-        >
-          <StrikeIcon />
-        </ToolbarButton>
-        <ToolbarButton
-          label="行内代码"
-          active={on('code')}
-          disabled={!hasMark(editor, 'code')}
-          disabledReason="这个方言没有行内代码标记（code）"
-          onClick={() => toggleMarkByName(editor, 'code')}
-        >
-          <CodeIcon />
-        </ToolbarButton>
-        {/*
+                <ToolbarButton
+                  label={`下划线 (${markdownShortcutLabel('underline')})：存成 ++文字++，不是 GFM`}
+                  active={on('underline')}
+                  disabled={!hasMark(editor, 'underline')}
+                  disabledReason="这个方言没有下划线标记（underline）"
+                  onClick={() => toggleMarkByName(editor, 'underline')}
+                >
+                  <UnderlineIcon />
+                </ToolbarButton>
+                <ToolbarButton
+                  label="删除线"
+                  active={on('strike')}
+                  disabled={!hasMark(editor, 'strike')}
+                  disabledReason="这个方言没有删除线标记（strike）"
+                  onClick={() => toggleMarkByName(editor, 'strike')}
+                >
+                  <StrikeIcon />
+                </ToolbarButton>
+                <ToolbarButton
+                  label="行内代码"
+                  active={on('code')}
+                  disabled={!hasMark(editor, 'code')}
+                  disabledReason="这个方言没有行内代码标记（code）"
+                  onClick={() => toggleMarkByName(editor, 'code')}
+                >
+                  <CodeIcon />
+                </ToolbarButton>
+                {/*
           清除格式 = `unsetAllMarks`（core 命令）。它只清「可清除」的标记——
           `@tiptap/core` 支持扩展声明 `clearable: false` 来豁免
           （`index.d.ts:411` 与 `index.js:5474` 的 `nonClearableMarks`），
@@ -893,146 +903,205 @@ export function MarkdownToolbar({
           空选区上这个命令直接返回 true 而什么都不改（实测），所以可用判据是
           「选中范围内确实有标记」——否则按钮亮着、点了没反应。
         */}
-        <ToolbarButton
-          label="清除格式"
-          disabled={!on('clear')}
-          disabledReason="先选中带格式的文字"
-          onClick={() => runCommand(editor, 'unsetAllMarks')}
-        >
-          <ClearFormatIcon />
-        </ToolbarButton>
-      </ToolbarGroup>
-
-      {/* 行内格式 | 链接。这一条无条件：行内格式永远在，所以它前面一定有东西 */}
-      <ToolbarDivider />
-
-      {hasMark(editor, 'link') && (
-        <ToolbarGroup label="链接">
-          <LinkMenu
-            editor={editor}
-            linked={on('link')}
-            emptySelection={on('emptySelection')}
-            searchNotes={searchNotes}
-          />
-        </ToolbarGroup>
-      )}
-
-      {/* 链接 | 列表：链接缺席时上一条正好是「行内格式 | 列表」，不会连出两条 */}
-      {hasMark(editor, 'link') && <ToolbarDivider />}
-
-      <ToolbarGroup label="列表">
-        {hasNode(editor, 'bulletList') && (
-          <ToolbarButton
-            label="项目符号列表"
-            active={on('bullet')}
-            onClick={() => runCommand(editor, 'toggleBulletList')}
-          >
-            <BulletListIcon />
-          </ToolbarButton>
-        )}
-        {hasNode(editor, 'orderedList') && (
-          <ToolbarButton
-            label="编号列表"
-            active={on('ordered')}
-            onClick={() => runCommand(editor, 'toggleOrderedList')}
-          >
-            <OrderedListIcon />
-          </ToolbarButton>
-        )}
-        {/*
+                <ToolbarButton
+                  label="清除格式"
+                  disabled={!on('clear')}
+                  disabledReason="先选中带格式的文字"
+                  onClick={() => runCommand(editor, 'unsetAllMarks')}
+                >
+                  <ClearFormatIcon />
+                </ToolbarButton>
+              </ToolbarGroup>
+            </>
+          ),
+        },
+        {
+          key: 'link',
+          label: '链接',
+          minWidth: 360,
+          enabled: hasMark(editor, 'link'),
+          content: (
+            <>
+              {hasMark(editor, 'link') && (
+                <ToolbarGroup label="链接">
+                  <LinkMenu
+                    editor={editor}
+                    linked={on('link')}
+                    emptySelection={on('emptySelection')}
+                    searchNotes={searchNotes}
+                  />
+                </ToolbarGroup>
+              )}
+            </>
+          ),
+        },
+        {
+          key: 'lists',
+          label: '列表',
+          minWidth: 800,
+          enabled:
+            hasNode(editor, 'bulletList') ||
+            hasNode(editor, 'orderedList') ||
+            hasNode(editor, 'taskList'),
+          content: (
+            <>
+              <ToolbarGroup label="列表">
+                {hasNode(editor, 'bulletList') && (
+                  <ToolbarButton
+                    label="项目符号列表"
+                    active={on('bullet')}
+                    onClick={() => runCommand(editor, 'toggleBulletList')}
+                  >
+                    <BulletListIcon />
+                  </ToolbarButton>
+                )}
+                {hasNode(editor, 'orderedList') && (
+                  <ToolbarButton
+                    label="编号列表"
+                    active={on('ordered')}
+                    onClick={() => runCommand(editor, 'toggleOrderedList')}
+                  >
+                    <OrderedListIcon />
+                  </ToolbarButton>
+                )}
+                {/*
           任务列表：`toggleTaskList` 的作用域是**光标那一项**，所以先把整张列表
           铺开再 toggle（同一条链、一个事务）。嵌套列表上没有任何一条上游命令能
           整张转换，所以如实禁用并说明原因——见 `taskListBlockedReason`。
         */}
-        {hasNode(editor, 'taskList') && (
-          <ToolbarButton
-            label="任务列表"
-            active={on('task')}
-            disabled={taskBlockedReason !== null}
-            disabledReason={taskBlockedReason ?? undefined}
-            onClick={() => toggleWholeTaskList(editor)}
-          >
-            <TaskListIcon />
-          </ToolbarButton>
-        )}
-      </ToolbarGroup>
-
-      {/*
-        缩进只对列表项有意义，而且**任务列表与普通列表是两种节点**
-        （`taskItem` / `listItem`）——用错节点名的命令返回 false 且不报错，
-        正是「点了没反应」。节点名从状态 token 里拿（`item:taskItem`）。
-      */}
-      <ToolbarGroup label="缩进">
-        <ToolbarButton
-          label="减少缩进"
-          disabled={!on('outdent')}
-          disabledReason={outdentReason}
-          onClick={() => runCommand(editor, 'liftListItem', listItem ?? 'listItem')}
-        >
-          <OutdentIcon />
-        </ToolbarButton>
-        <ToolbarButton
-          label="增加缩进"
-          disabled={!on('indent')}
-          disabledReason={indentReason}
-          onClick={() => runCommand(editor, 'sinkListItem', listItem ?? 'listItem')}
-        >
-          <IndentIcon />
-        </ToolbarButton>
-      </ToolbarGroup>
-
-      {/* 缩进 | 插入 */}
-      <ToolbarDivider />
-
-      <ToolbarGroup label="插入">
-        {hasNode(editor, 'table') &&
-          (tableInsertable ? (
-            <InsertTableMenu editor={editor} />
-          ) : (
-            <ToolbarButton
-              label="插入表格"
-              disabled
-              disabledReason="先把光标放在一段正文里"
-              onClick={() => {}}
-            >
-              <TableIcon />
-            </ToolbarButton>
-          ))}
-        {hasNode(editor, 'image') && onPickImage !== undefined && (
-          <ToolbarFileButton label="插入图片" accept="image/*" onPick={onPickImage}>
-            <ImageIcon />
-          </ToolbarFileButton>
-        )}
-        {hasNode(editor, 'horizontalRule') && (
-          <ToolbarButton label="分隔线" onClick={() => runCommand(editor, 'setHorizontalRule')}>
-            <HorizontalRuleIcon />
-          </ToolbarButton>
-        )}
-      </ToolbarGroup>
-
-      {/* 表格操作只在表格里出现——不在表格里时这一整组没有作用对象 */}
-      {hasNode(editor, 'table') && on('table') && (
-        <ToolbarGroup label="表格">
-          <TableMenu editor={editor} state={state} />
-        </ToolbarGroup>
-      )}
-
-      {hasNode(editor, 'codeBlock') && on('codeBlock') && languages.length > 0 && (
-        <ToolbarGroup label="代码块语言">
-          <CodeLanguageSelect editor={editor} languages={languages} language={language} />
-        </ToolbarGroup>
-      )}
-
-      <ToolbarGroup label="校对">
-        <ToolbarButton
-          label={spellCheck ? '关闭拼写检查' : '打开拼写检查'}
-          active={spellCheck}
-          onClick={onToggleSpellCheck}
-        >
-          <SpellCheckIcon />
-        </ToolbarButton>
-      </ToolbarGroup>
-    </>
+                {hasNode(editor, 'taskList') && (
+                  <ToolbarButton
+                    label="任务列表"
+                    active={on('task')}
+                    disabled={taskBlockedReason !== null}
+                    disabledReason={taskBlockedReason ?? undefined}
+                    onClick={() => toggleWholeTaskList(editor)}
+                  >
+                    <TaskListIcon />
+                  </ToolbarButton>
+                )}
+              </ToolbarGroup>
+            </>
+          ),
+        },
+        {
+          key: 'indent',
+          label: '缩进',
+          minWidth: 940,
+          content: (
+            <>
+              <ToolbarGroup label="缩进">
+                <ToolbarButton
+                  label="减少缩进"
+                  disabled={!on('outdent')}
+                  disabledReason={outdentReason}
+                  onClick={() => runCommand(editor, 'liftListItem', listItem ?? 'listItem')}
+                >
+                  <OutdentIcon />
+                </ToolbarButton>
+                <ToolbarButton
+                  label="增加缩进"
+                  disabled={!on('indent')}
+                  disabledReason={indentReason}
+                  onClick={() => runCommand(editor, 'sinkListItem', listItem ?? 'listItem')}
+                >
+                  <IndentIcon />
+                </ToolbarButton>
+              </ToolbarGroup>
+            </>
+          ),
+        },
+        {
+          key: 'insert',
+          label: '插入',
+          minWidth: 1050,
+          enabled:
+            hasNode(editor, 'table') ||
+            (hasNode(editor, 'image') && onPickImage !== undefined) ||
+            hasNode(editor, 'horizontalRule'),
+          content: (
+            <>
+              <ToolbarGroup label="插入">
+                {hasNode(editor, 'table') &&
+                  (tableInsertable ? (
+                    <InsertTableMenu editor={editor} />
+                  ) : (
+                    <ToolbarButton
+                      label="插入表格"
+                      disabled
+                      disabledReason="先把光标放在一段正文里"
+                      onClick={() => {}}
+                    >
+                      <TableIcon />
+                    </ToolbarButton>
+                  ))}
+                {hasNode(editor, 'image') && onPickImage !== undefined && (
+                  <ToolbarFileButton label="插入图片" accept="image/*" onPick={onPickImage}>
+                    <ImageIcon />
+                  </ToolbarFileButton>
+                )}
+                {hasNode(editor, 'horizontalRule') && (
+                  <ToolbarButton
+                    label="分隔线"
+                    onClick={() => runCommand(editor, 'setHorizontalRule')}
+                  >
+                    <HorizontalRuleIcon />
+                  </ToolbarButton>
+                )}
+              </ToolbarGroup>
+            </>
+          ),
+        },
+        {
+          key: 'table',
+          label: '表格',
+          minWidth: 1100,
+          enabled: hasNode(editor, 'table') && on('table'),
+          content: (
+            <>
+              {hasNode(editor, 'table') && on('table') && (
+                <ToolbarGroup label="表格">
+                  <TableMenu editor={editor} state={state} />
+                </ToolbarGroup>
+              )}
+            </>
+          ),
+        },
+        {
+          key: 'language',
+          label: '代码块语言',
+          minWidth: 1100,
+          enabled: hasNode(editor, 'codeBlock') && on('codeBlock') && languages.length > 0,
+          content: (
+            <>
+              {hasNode(editor, 'codeBlock') && on('codeBlock') && languages.length > 0 && (
+                <ToolbarGroup label="代码块语言">
+                  <CodeLanguageSelect editor={editor} languages={languages} language={language} />
+                </ToolbarGroup>
+              )}
+            </>
+          ),
+        },
+        {
+          key: 'spell',
+          label: '校对',
+          minWidth: 1100,
+          content: (
+            <>
+              <ToolbarGroup label="校对">
+                <ToolbarButton
+                  label={spellCheck ? '关闭拼写检查' : '打开拼写检查'}
+                  active={spellCheck}
+                  onClick={onToggleSpellCheck}
+                >
+                  <SpellCheckIcon />
+                </ToolbarButton>
+              </ToolbarGroup>
+            </>
+          ),
+        },
+      ].filter((section) => !('enabled' in section) || section.enabled)}
+    />
   )
 }
 

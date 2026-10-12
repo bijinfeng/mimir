@@ -30,7 +30,7 @@
 
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Editor } from '@tiptap/core'
 import { MarkdownToolbar } from '@mimir/office'
 /**
@@ -60,6 +60,7 @@ afterEach(() => {
   live.length = 0
   for (const item of live) item.editor.destroy()
   live.length = 0
+  vi.unstubAllGlobals()
 })
 
 interface Harness {
@@ -162,6 +163,28 @@ const markdown = (editor: Editor): string => editor.getMarkdown().trim()
 /* ── 断言 ─────────────────────────────────────────────────────── */
 
 describe('工具条渲染', () => {
+  it('窄栏的更多菜单不列出当前没有控件的上下文组', () => {
+    let resize: ResizeObserverCallback | undefined
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: ResizeObserverCallback) {
+          resize = callback
+        }
+        observe() {}
+        disconnect() {}
+      },
+    )
+    const { host } = mount('正文\n')
+    act(() => {
+      resize?.([{ contentRect: { width: 320 } } as ResizeObserverEntry], {} as ResizeObserver)
+    })
+    const menu = openMenu(host, '更多笔记工具')
+    expect(menu.querySelector('[role="group"][aria-label="表格"]')).toBeNull()
+    expect(menu.querySelector('[role="group"][aria-label="代码块语言"]')).toBeNull()
+    expect(menu.querySelector('[role="group"][aria-label="插入"]')).not.toBeNull()
+  })
+
   it('这一批按钮都在（少一个就是「接不上」的那一种）', () => {
     const { host } = mount('正文\n')
     for (const label of [

@@ -105,8 +105,7 @@ export function excerptText(doc: DocumentSummary): string {
  * 卡片元信息行里的格式与大小：「PDF · 2.4 MB」。
  *
  * 返回 null 表示这条文档没有原件（笔记与抓取的资料），那一行不显示它。
- * 格式是**属性**，用中性文字而不是徽标（DESIGN §0.1：每加一种格式
- * 就多一个色位是说不通的）。
+ * 格式是**属性**；元信息用可读文字呈现，图标由知识库视图另行绘制。
  */
 export function formatMeta(doc: DocumentSummary): string | null {
   if (doc.kind !== 'file' || !doc.mime) return null
@@ -117,8 +116,7 @@ export function formatMeta(doc: DocumentSummary): string | null {
 /**
  * 卡片元信息行里的种类词：笔记 / 网页 / 公众号 / GitHub。
  *
- * 上传件返回 null——它的这一位是「格式」（formatLabel），由调用方画成
- * 徽标，两种身份不混在同一列。
+ * 上传件返回 null——它已由文件类型图标和当前原件后缀标识。
  */
 export function kindLabel(doc: DocumentSummary): string | null {
   if (doc.kind === 'note') return '笔记'
@@ -126,14 +124,6 @@ export function kindLabel(doc: DocumentSummary): string | null {
   if (doc.kind === 'wechat') return '公众号'
   if (doc.kind === 'github') return 'GitHub'
   return null
-}
-
-/**
- * 上传件的格式徽标（PDF / XLSX / DOCX…）。仅上传件有格式这一说。
- */
-export function formatChip(doc: DocumentSummary): string | null {
-  if (doc.kind !== 'file' || !doc.mime) return null
-  return formatLabel(doc.mime, doc.title)
 }
 
 /**

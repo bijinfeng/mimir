@@ -52,7 +52,6 @@ import {
   FindReplaceBar,
   useFindHotkey,
   ToolbarButton,
-  ToolbarDivider,
   ToolbarLabel,
   ToolbarNumberField,
   ToolbarToggleGroup,
@@ -72,6 +71,7 @@ import {
   UndoIcon,
 } from '../shell/icons.js'
 import type { FindOptions } from '../shims/ui.js'
+import { CompactToolbar } from './CompactToolbar.js'
 import { statusText, useParsed, useSource } from './use-source.js'
 import { OFFICE_MIME, type EditorProps } from './types.js'
 import {
@@ -88,6 +88,7 @@ import { instrumentForPreview } from '../../vendor/apps/html/src/renderer/previe
 import inspectorSource from '../../vendor/apps/html/src/renderer/preview/inspector.js?raw'
 import '../shell/shell.css'
 import './editors.css'
+import './compact-toolbar.css'
 
 /** 源码文件的 BOM 与换行风格 —— 保存时要原样还回去 */
 interface Envelope {
@@ -533,93 +534,123 @@ export function HtmlEditor({ documentId, io, onDirtyChange, flush = false }: Edi
     <EditorShell
       flush={flush}
       toolbar={
-        <>
-          <ToolbarButton
-            label="撤销 (Ctrl+Z)"
-            disabled={!history.canUndo}
-            disabledReason="没有可以撤销的改动了"
-            onClick={() => {
-              editorRef.current?.undo()
-              syncHistory()
-            }}
-          >
-            <UndoIcon />
-          </ToolbarButton>
-          <ToolbarButton
-            label="重做 (Ctrl+Shift+Z)"
-            disabled={!history.canRedo}
-            disabledReason="没有可以重做的改动了"
-            onClick={() => {
-              editorRef.current?.redo()
-              syncHistory()
-            }}
-          >
-            <RedoIcon />
-          </ToolbarButton>
-
-          <ToolbarDivider />
-
-          {/*
-            视图是**互斥**的三种排法，所以走 `ToolbarToggleGroup`：一个 value
-            进、一个 value 出。排成一排 `ToolbarButton` 的话「当前是哪一个」
-            会退化成三处各自读一次状态，写错一处就是两个同时亮。
-
-            它与下面那组设备之间要有一条分隔线：两组都是**三个图标**，中间
-            不画线的话连起来读像「一个六档的互斥组」（实测截图确认过），而
-            它们是两件事——一个决定看哪半边，一个决定预览多宽。
-          */}
-          <ToolbarToggleGroup
-            label="视图"
-            value={view}
-            onChange={setView}
-            options={[
-              { value: 'source', label: '只看源码', icon: <CodeIcon /> },
-              { value: 'split', label: '源码与预览分栏', icon: <SplitViewIcon /> },
-              { value: 'preview', label: '只看预览', icon: <EyeIcon /> },
-            ]}
-          />
-          <ToolbarDivider />
-          <ToolbarToggleGroup
-            label="预览设备"
-            value={device}
-            onChange={(next) => {
-              setDevice(next)
-              revealPreview()
-            }}
-            options={[
-              { value: 'desktop', label: '桌面宽度（铺满预览栏）', icon: <DeviceDesktopIcon /> },
-              { value: 'tablet', label: '平板宽度（768px）', icon: <DeviceTabletIcon /> },
-              { value: 'phone', label: '手机宽度（390px）', icon: <DevicePhoneIcon /> },
-            ]}
-          />
-          <ToolbarNumberField
-            label="预览缩放（%）"
-            value={zoom}
-            min={50}
-            max={200}
-            suffix="%"
-            onCommit={(next) => {
-              setZoom(normalizeZoom(next))
-              revealPreview()
-            }}
-          />
-
-          <ToolbarDivider />
-
-          <ToolbarButton label="查找和替换" active={findOpen} onClick={toggleFind}>
-            <FindIcon />
-          </ToolbarButton>
-          <ToolbarButton
-            label="定位到源码里选中的元素"
-            disabled={revealReason !== undefined}
-            disabledReason={revealReason}
-            onClick={() => {
-              if (activeSelected !== null) revealSid(activeSelected.sid)
-            }}
-          >
-            定位选中元素
-          </ToolbarButton>
-        </>
+        <CompactToolbar
+          overflowLabel="更多 HTML 工具"
+          sections={[
+            {
+              key: 'view',
+              label: '视图',
+              minWidth: 0,
+              content: (
+                <ToolbarToggleGroup
+                  label="视图"
+                  value={view}
+                  onChange={setView}
+                  options={[
+                    { value: 'source', label: '只看源码', icon: <CodeIcon /> },
+                    { value: 'split', label: '源码与预览分栏', icon: <SplitViewIcon /> },
+                    { value: 'preview', label: '只看预览', icon: <EyeIcon /> },
+                  ]}
+                />
+              ),
+            },
+            {
+              key: 'find',
+              label: '查找和替换',
+              minWidth: 0,
+              content: (
+                <ToolbarButton label="查找和替换" active={findOpen} onClick={toggleFind}>
+                  <FindIcon />
+                </ToolbarButton>
+              ),
+            },
+            {
+              key: 'history',
+              label: '撤销与重做',
+              minWidth: 470,
+              content: (
+                <>
+                  <ToolbarButton
+                    label="撤销 (Ctrl+Z)"
+                    disabled={!history.canUndo}
+                    disabledReason="没有可以撤销的改动了"
+                    onClick={() => {
+                      editorRef.current?.undo()
+                      syncHistory()
+                    }}
+                  >
+                    <UndoIcon />
+                  </ToolbarButton>
+                  <ToolbarButton
+                    label="重做 (Ctrl+Shift+Z)"
+                    disabled={!history.canRedo}
+                    disabledReason="没有可以重做的改动了"
+                    onClick={() => {
+                      editorRef.current?.redo()
+                      syncHistory()
+                    }}
+                  >
+                    <RedoIcon />
+                  </ToolbarButton>
+                </>
+              ),
+            },
+            {
+              key: 'preview',
+              label: '预览设备与缩放',
+              minWidth: 700,
+              content: (
+                <>
+                  <ToolbarToggleGroup
+                    label="预览设备"
+                    value={device}
+                    onChange={(next) => {
+                      setDevice(next)
+                      revealPreview()
+                    }}
+                    options={[
+                      {
+                        value: 'desktop',
+                        label: '桌面宽度（铺满预览栏）',
+                        icon: <DeviceDesktopIcon />,
+                      },
+                      { value: 'tablet', label: '平板宽度（768px）', icon: <DeviceTabletIcon /> },
+                      { value: 'phone', label: '手机宽度（390px）', icon: <DevicePhoneIcon /> },
+                    ]}
+                  />
+                  <ToolbarNumberField
+                    label="预览缩放（%）"
+                    value={zoom}
+                    min={50}
+                    max={200}
+                    suffix="%"
+                    onCommit={(next) => {
+                      setZoom(normalizeZoom(next))
+                      revealPreview()
+                    }}
+                  />
+                </>
+              ),
+            },
+            {
+              key: 'selection',
+              label: '元素定位',
+              minWidth: 950,
+              content: (
+                <ToolbarButton
+                  label="定位到源码里选中的元素"
+                  disabled={revealReason !== undefined}
+                  disabledReason={revealReason}
+                  onClick={() => {
+                    if (activeSelected !== null) revealSid(activeSelected.sid)
+                  }}
+                >
+                  定位选中元素
+                </ToolbarButton>
+              ),
+            },
+          ]}
+        />
       }
       toolbarActions={
         <ToolbarButton

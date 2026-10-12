@@ -1,24 +1,12 @@
-import { viewerFor, type Citation, type DocumentDetail, type NoteUpdate } from '@mimir/shared'
+import { viewerFor, type Citation, type NoteUpdate } from '@mimir/shared'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import {
-  App,
-  Button,
-  Dropdown,
-  Empty,
-  Input,
-  Modal,
-  Select,
-  Skeleton,
-  Tooltip,
-  Typography,
-} from 'antd'
-import { ArrowLeft, Download, Ellipsis, MessageCircle, Pencil } from 'lucide-react'
+import { App, Button, Empty, Input, Modal, Select, Skeleton, Typography } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import type { DocxAgentHandle } from '@mimir/office'
-import { StatusBadge } from './DocumentBadges'
 import { NoteEditor } from './NoteEditor'
 import { useContentStyles } from './ContentTypography.style'
 import { DocumentFooter } from './document/DocumentFooter'
+import { DocumentHeader } from './document/DocumentHeader'
 import { useStyles } from './document/DocumentPanel.style'
 import { FilePreview } from './document/FilePreview'
 import { MarkdownBody } from './document/MarkdownBody'
@@ -26,7 +14,6 @@ import { DocChatSidebar } from './document/DocChatSidebar'
 import { buildDocMenu } from './document/doc-menu'
 import { flattenFolders } from './document/folders'
 import { extractHeadings } from './document/headings'
-import { formatMeta } from './list-helpers'
 import { api } from '../lib/api'
 import { useAppShell, type AskDraft } from '../lib/app-shell-context'
 import { useNarrowViewport } from '../lib/nav-collapse'
@@ -38,10 +25,8 @@ const editorScrollPositions = new Map<string, number>()
  * 右栏：文档视图。
  *
  * 结构自上而下：
- *   工具条（路径 + 下载 + 问 AI + ⋯）
- *   返回（从对话点引用跳过来时出现）
- *   标题 + 元信息
- *   正文（笔记可编辑、上传件分两层、资料只读）
+ *   共用文档头部（返回 + 标题 + 按能力显示的动作）
+ *   正文（笔记可编辑、上传件预览原件、资料只读）
  *   页脚（来源 / 被引用）
  *
  * 「资料」是只读的（`.trellis/spec/project/product.md` §2.3）——抓来的内容不该被就地编辑，
@@ -697,118 +682,14 @@ export function DocumentPanel({
   return (
     <div className={styles.root}>
       <div className={styles.wrap}>
-        {/*
-        文件使用 Office 式单行头部（D-054）；笔记仍保留这一独立头部区域，
-        标题用紧凑的文件名样式，返回与元信息退到次级。
-        返回 · 标题 · 元信息 · 动作，四段放在 48px 里。原先它占三行（返回胶囊 / 28px 大标题 / 元信息行），
-        约 150px 的铬条压在内容之上，而文件类文档的内容（纸张、表格、幻灯片）
-        恰恰是越高越好。
-
-        返回按钮**留在头部最左**而不是收进菜单：`.trellis/spec/project/product.md` §5.5 要求
-        「回去」是显式动作（不能靠浏览器后退），而两栏布局里它是离开详情的
-        主路径。两个返回并存——「返回对话」只在从对话跳来时出现。
-
-        两个都走 `runGuarded`：这里是**离开详情的主路径**，而原先它直接
-        `navigate`，于是编辑器刚写着「已修改，未保存」的那一笔改动就这么丢了
-        （与侧栏导航不一致——那里一直有拦截）。有未保存内容时才弹守卫框，
-        干净时不留任何中间态（`lib/unsaved.tsx` 的 `runGuarded`）。
-      */}
-        <div className={`${styles.header}${doc.kind === 'note' ? ` ${styles.noteHeader}` : ''}`}>
-          {onBackToChat && (
-            <button
-              type="button"
-              className={`${styles.back}${doc.kind === 'note' ? ` ${styles.noteBack}` : ''}`}
-              aria-label="返回对话"
-              onClick={() => runGuarded(onBackToChat)}
-            >
-              <ArrowLeft size={14} />
-              <span>返回对话</span>
-            </button>
-          )}
-          {onBack && (
-            <button
-              type="button"
-              className={`${styles.back}${doc.kind === 'note' ? ` ${styles.noteBack}` : ''}`}
-              aria-label="返回知识库"
-              onClick={() => runGuarded(onBack)}
-            >
-              <ArrowLeft size={14} />
-              <span>返回库</span>
-            </button>
-          )}
-
-          {doc.kind === 'note' ? (
-            <EditableNoteTitle
-              key={doc.id}
-              title={doc.title}
-              onRename={(next) => renameTitle.mutate(next)}
-            />
-          ) : (
-            <Typography.Title level={1} className={styles.headerTitle} title={doc.title}>
-              {doc.title}
-            </Typography.Title>
-          )}
-
-          <DocHeaderMeta doc={doc} />
-
-          <div className={styles.headerActions}>
-            {/* 上传件的下载入口。它在头部常驻而不是等用户切到某一层——
-              下载是最常用的动作（PRD §5.12） */}
-            {doc.kind === 'file' && doc.sourceKey && (
-              <Button
-                type="text"
-                size="small"
-                icon={<Download size={16} />}
-                className={styles.tbBtn}
-                aria-label="下载原件"
-                href={api.documents.sourceUrl(doc.id, { download: true })}
-              >
-                下载
-              </Button>
-            )}
-
-            <Tooltip
-              title={
-                doc.body.trim() === ''
-                  ? '这篇还没有可检索的正文，问答里引用不到它'
-                  : '带这篇的上下文去主视图对话，范围自动锁到这一篇'
-              }
-            >
-              <Button
-                type="text"
-                size="small"
-                /* 14 而不是 16：这是带文字的 small 按钮（12.5px 字），
-                   16px 的图标比同排按钮里的文字大出一圈，看着压过文字
-                   （同一条头部里 `返回库` 的图标是 11px）。带文字的
-                   small 按钮在仓库里统一用 14（DESIGN §7.1 的两档之一） */
-                icon={<MessageCircle size={14} />}
-                className={styles.tbBtn}
-                aria-label="询问这篇文档"
-                onClick={() => askAi()}
-                /* 没有正文时禁用并说明原因（tooltip 里）——留一个点了没反应的
-                 按钮是最坏的一种（DESIGN §7.4） */
-                disabled={doc.body.trim() === ''}
-              >
-                问 AI
-              </Button>
-            </Tooltip>
-
-            {/*
-            「⋯」：元信息动作的出口。原先是整理条上的几项（标签 / 目录），
-            现在收在一处。它在最右端——**高频动作在左、低频在右**是工具条
-            的通用约定，而这两项都是低频的（D-054）
-          */}
-            <Dropdown trigger={['click']} menu={{ items: menu }} placement="bottomRight">
-              <Button
-                type="text"
-                size="small"
-                icon={<Ellipsis size={16} />}
-                className={styles.tbBtn}
-                aria-label="更多操作"
-              />
-            </Dropdown>
-          </div>
-        </div>
+        <DocumentHeader
+          doc={doc}
+          onBack={onBack}
+          onBackToChat={onBackToChat}
+          onRename={(next) => renameTitle.mutate(next)}
+          onAskAi={() => askAi()}
+          menu={menu}
+        />
 
         <div className={styles.scroll} ref={scrollRef}>
           <div className={styles.cols}>
@@ -1051,138 +932,6 @@ export function DocumentPanel({
           />
         )}
       </Modal>
-    </div>
-  )
-}
-
-/**
- * 头部元信息那一行。
- *
- * 它承载的是「一眼要确认的东西」，按重要性排序（从左到右）：
- *
- * | 项 | 为什么在这里 |
- * |---|---|
- * | 状态徽标 | `failed` 是**状态**，它说「这条记录坏了」——`ready` 不给徽标（DESIGN §3.7） |
- * | 来源 | 笔记、文件或资料来源；不猜测内容是否由 AI 整理 |
- * | 原始出处 | 上传件的原文件名或资料的 URL；笔记不展示内部存储路径 |
- * | 格式与大小 | 上传件才有（「PDF · 2.4 MB」）；**不是徽标**，格式是开放集合（DESIGN §3.7） |
- * | 日期 | 最后更新 |
- *
- * 标签在「⋯」菜单里编辑；笔记的目录只读展示在此，帮用户确认当前位置。
- *
- * 位置是全行唯一可省略的一项：只有它可能很长（见 `location` 样式）。
- */
-function EditableNoteTitle({
-  title,
-  onRename,
-}: {
-  title: string
-  onRename: (next: string) => void
-}) {
-  const { styles } = useStyles()
-  const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState(title)
-  const settledRef = useRef(false)
-  const editButtonRef = useRef<HTMLButtonElement>(null)
-
-  const finish = (save: boolean, restoreFocus: boolean) => {
-    if (settledRef.current) return
-    settledRef.current = true
-    setEditing(false)
-    const next = draft.trim()
-    if (save && next && next !== title) onRename(next)
-    if (restoreFocus) requestAnimationFrame(() => editButtonRef.current?.focus())
-  }
-
-  if (editing) {
-    return (
-      <Input
-        autoFocus
-        className={styles.headerTitleInput}
-        variant="underlined"
-        size="small"
-        aria-label="笔记标题"
-        maxLength={200}
-        value={draft}
-        onChange={(event) => setDraft(event.target.value)}
-        onPressEnter={(event) => {
-          event.preventDefault()
-          finish(true, true)
-        }}
-        onKeyDown={(event) => {
-          if (event.key !== 'Escape') return
-          event.preventDefault()
-          event.stopPropagation()
-          finish(false, true)
-        }}
-        onBlur={() => finish(true, false)}
-      />
-    )
-  }
-
-  return (
-    <div className={`note-title-group ${styles.noteTitleGroup}`}>
-      <Typography.Title
-        level={1}
-        className={`${styles.headerTitle} ${styles.noteTitleText}`}
-        title={title}
-      >
-        {title}
-      </Typography.Title>
-      <Button
-        ref={editButtonRef}
-        type="text"
-        size="small"
-        className={styles.headerTitleEdit}
-        aria-label="修改笔记标题（会同步重命名文件）"
-        title="修改笔记标题（会同步重命名文件）"
-        icon={<Pencil size={13} />}
-        onClick={() => {
-          settledRef.current = false
-          setDraft(title)
-          setEditing(true)
-        }}
-      />
-    </div>
-  )
-}
-
-function DocHeaderMeta({ doc }: { doc: DocumentDetail }) {
-  const { styles } = useStyles()
-  const format = formatMeta(doc)
-  /**
-   * 位置：上传件给原文件名，资料给 URL，笔记展示所属目录。
-   * 空串就不渲染——否则会留下一个孤零零的分隔点。
-   */
-  const location =
-    doc.kind === 'file'
-      ? (doc.sourceKey?.split('/').pop() ?? '')
-      : doc.kind === 'note'
-        ? (doc.folder ?? '知识库根')
-        : (doc.url ?? '')
-  const sourceLabel = {
-    note: '笔记',
-    file: '文件',
-    web: '网页',
-    wechat: '公众号',
-    github: 'GitHub',
-  }[doc.kind]
-
-  return (
-    <div className={`${styles.headerMeta}${doc.kind === 'note' ? ` ${styles.noteMeta}` : ''}`}>
-      <StatusBadge status={doc.status} />
-      {doc.kind !== 'note' && <span className={styles.originManual}>{sourceLabel}</span>}
-      {/*
-        原始出处。上传件显示用户认得的原文件名，资料可查看来源 URL。
-        空串就不渲染：否则会留下一个孤零零的分隔点（只有一个「·」）。
-      */}
-      {location !== '' && (
-        <span className={styles.location} title={location}>
-          {location}
-        </span>
-      )}
-      {format && <span className={styles.formatMeta}>{format}</span>}
-      <span>{new Date(doc.updatedAt).toLocaleDateString('zh-CN')}</span>
     </div>
   )
 }

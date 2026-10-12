@@ -22,4 +22,4 @@ Managed by Trellis. Edits outside this block are preserved; edits inside may be 
 
 ## Research reference
 
-For every research task in this project, check [WeKnora](https://weknora.weixin.qq.com/) and its [public source](https://github.com/Tencent/WeKnora) first. Record the version and concrete evidence, then explain how it applies to Mimir or why it does not. WeKnora is the project's primary comparison product.
+For every research task in this project, check [WeKnora](https://weknora.weixin.qq.com/) and its [public source](https://github.com/Tencent/WeKnora). Record the version and concrete evidence, then explain how it applies to Mimir or why it does not. Choose the main reference by domain: WeKnora for the knowledge base and Agent, Obsidian for page layout and visual style, and Office for the web, Google Docs, and GenOffice for file editing. Do not use WeKnora's Markdown editor as the primary model for Office toolbars.

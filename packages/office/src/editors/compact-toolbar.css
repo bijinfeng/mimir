@@ -1,0 +1,106 @@
+/* Only toolbars that opt in use the single-row editor-column layout. */
+.mimir-editor__tools:has(> .mimir-compact-toolbar) {
+  flex-wrap: nowrap;
+  max-height: none;
+  overflow: visible;
+}
+
+.mimir-editor__bar:has(.mimir-compact-toolbar) {
+  align-items: center;
+  min-height: 40px;
+  padding: 5px 8px;
+}
+
+.mimir-compact-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  white-space: nowrap;
+  container: compact-toolbar / inline-size;
+}
+
+.mimir-compact-toolbar__section {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  gap: 4px;
+}
+
+.mimir-compact-toolbar__section > .me-group {
+  flex-wrap: nowrap;
+  min-height: 0;
+  padding: 0;
+}
+
+.mimir-compact-toolbar__section > .me-group > .me-group__caption {
+  display: none;
+}
+
+.mimir-compact-toolbar__section .me-tabs {
+  max-width: 240px;
+}
+
+.mimir-compact-toolbar__sheet-menu {
+  display: none;
+}
+
+@container compact-toolbar (max-width: 699px) {
+  .mimir-compact-toolbar__sheet-tabs {
+    display: none;
+  }
+
+  .mimir-compact-toolbar__sheet-menu {
+    display: inline-flex;
+  }
+}
+
+.mimir-compact-toolbar__section .me-input--text {
+  width: clamp(105px, 25cqw, 180px);
+}
+
+.mimir-compact-toolbar__section .me-menu__text {
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mimir-compact-toolbar > .me-menu {
+  flex: none;
+  margin-left: auto;
+}
+
+.mimir-compact-toolbar > .me-menu > .me-menu__panel {
+  min-width: 0;
+  max-height: min(60vh, calc(100dvh - 16px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.mimir-compact-toolbar__panel .me-menu__fields {
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.mimir-compact-toolbar__panel .me-menu__fields::before {
+  content: attr(aria-label);
+  display: block;
+  width: 100%;
+  color: var(--me-text-weak, #8c8c8c);
+  font-size: var(--me-font-size-sm, 12px);
+}
+
+.mimir-compact-toolbar__panel .me-group {
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+.mimir-compact-toolbar__panel .me-group__caption {
+  width: 100%;
+}
+
+.mimir-compact-toolbar__panel .me-tabs {
+  max-width: 100%;
+  overflow-x: auto;
+}

@@ -90,7 +90,7 @@
    *
    * 这个元素是宿主布局里的 flex 子项，而 `min-width: auto` 会让它**不会缩到
    * 比内容更窄**——里面有一张 900px 的 pdf 页面（或一张宽表格），于是窄窗口下
-   * 整块外壳比视口宽、工具条右端的「保存」被推出可视区。它看起来像「工具条
+   * 整块外壳比视口宽、底部状态行右端的「保存」被推出可视区。它看起来像「工具条
    * 没折行」，其实是外壳的宽度下界。
    *
    * 为什么 `overflow: clip` 挡不住它：Chrome 只对 `hidden`/`auto`/`scroll`
@@ -128,7 +128,7 @@
  *
  * 工具条与**次工具条**（查找栏、幻灯片导航、公式栏）同包在这一层里，sticky
  * 也写在它上面。两行各自 sticky 是不行的：第二行写 `top: 0` 会与工具条重叠
- * （工具条 z-index 相同但 DOM 在后，于是右端的「保存」被盖住，实测过），
+ * （工具条 z-index 相同但 DOM 在后，于是命令被盖住，实测过），
  * 写死 `top: 32px` 也不行——工具条是 `flex-wrap` 的，窄窗口下会折成两行，
  * 折了之后写死的偏移立刻错位。
  *
@@ -152,7 +152,7 @@
  *
  * docx 的工具条有八到十个组，420px 视口下折成 **9 行 243px**（占 900px
  * 屏高的 27%）——正文只剩一小条，「工具条比内容还高」（实测发现，D-096）。
- * 只给命令区一个上限并让它自己滚：**按钮一个不少**，保存仍在右侧常驻，
+ * 只给命令区一个上限并让它自己滚：**按钮一个不少**，保存位于底部状态行，
  * 次工具条仍在下方，编辑区也不会被挤没。滚动条只在真的超高时出现
  * （`max-height` 不触发就没有滚动条）。
  *
@@ -178,17 +178,7 @@
   min-width: 0;
 }
 
-.mimir-editor__actions {
-  display: flex;
-  align-items: flex-start;
-  align-self: stretch;
-  flex: none;
-  gap: 6px;
-  padding: 3px 0 0 12px;
-  border-left: 1px solid var(--me-border, #d9d9d9);
-}
-
-/* 笔记使用连续的单行命令轨；仅命令区滚动，保存动作仍贴右。 */
+/* 笔记使用连续的单行命令轨；仅命令区滚动。 */
 .mimir-editor--note .mimir-editor__bar {
   align-items: center;
   gap: 8px;
@@ -202,11 +192,6 @@
   overflow-y: hidden;
   scrollbar-width: thin;
   white-space: nowrap;
-}
-
-.mimir-editor--note .mimir-editor__actions {
-  align-items: center;
-  padding: 0 0 0 8px;
 }
 
 .mimir-editor--note .mimir-editor__tools > .me-group {
@@ -224,7 +209,119 @@
   display: none;
 }
 
-/* 只滚动命令区，主操作留在工具条右端。次工具条也保持可见。 */
+/* The DOCX row responds to the editor column, including an open AI sidebar. */
+.mimir-editor__tools:has(> .mimir-docx-toolbar) {
+  container: docx-toolbar / inline-size;
+  flex-wrap: nowrap;
+  max-height: none;
+  overflow: visible;
+}
+
+.mimir-editor__bar:has(.mimir-docx-toolbar) {
+  align-items: center;
+  min-height: 40px;
+  padding: 5px 8px;
+}
+
+.mimir-docx-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.mimir-docx-toolbar > span,
+.mimir-docx-toolbar__categories {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  gap: 3px;
+}
+
+.mimir-docx-toolbar > .me-menu {
+  margin-left: auto;
+}
+
+/* Keep “更多” inside the editor column when the AI sidebar sits beside it. */
+.mimir-docx-toolbar > .me-menu > .me-menu__panel {
+  position: absolute;
+  top: calc(100% + 4px) !important;
+  right: 0;
+  bottom: auto !important;
+  left: auto !important;
+}
+
+.mimir-docx-toolbar > .me-menu .me-menu__panel .me-menu__panel:not(.me-color__panel) {
+  translate: -20px 0;
+}
+
+/* Fixed color palettes inside that menu open toward the document, not the AI pane. */
+@media (min-width: 501px) {
+  .mimir-docx-toolbar > .me-menu .me-color__panel {
+    translate: calc(-100% + 64px) 0;
+  }
+}
+
+.mimir-docx-toolbar > span > .me-group {
+  flex-wrap: nowrap;
+  min-height: 0;
+  padding: 0;
+}
+.mimir-docx-toolbar > span > .me-group > .me-group__caption {
+  display: none;
+}
+
+.mimir-docx-toolbar__size,
+.mimir-docx-toolbar__history,
+.mimir-docx-toolbar__find,
+.mimir-docx-toolbar__align,
+.mimir-docx-toolbar__lists,
+.mimir-docx-toolbar__categories {
+  display: none !important;
+}
+
+@container docx-toolbar (min-width: 460px) {
+  .mimir-docx-toolbar__size {
+    display: inline-flex !important;
+  }
+}
+
+@container docx-toolbar (min-width: 600px) {
+  .mimir-docx-toolbar__history,
+  .mimir-docx-toolbar__find {
+    display: inline-flex !important;
+  }
+}
+
+@container docx-toolbar (min-width: 800px) {
+  .mimir-docx-toolbar__align {
+    display: inline-flex !important;
+  }
+}
+
+@container docx-toolbar (min-width: 950px) {
+  .mimir-docx-toolbar__lists {
+    display: inline-flex !important;
+  }
+}
+
+@container docx-toolbar (min-width: 1080px) {
+  .mimir-docx-toolbar__categories {
+    display: inline-flex !important;
+  }
+}
+
+/* A color palette opened inside “更多” is wider than the shared popup estimate. */
+@media (max-width: 500px) {
+  .mimir-docx-toolbar .me-color__panel {
+    right: 8px;
+    left: auto !important;
+  }
+}
+
+/* 只滚动命令区，次工具条与底部保存入口仍保持可见。 */
 @media (max-width: 880px) {
   .mimir-editor__bar {
     gap: 8px;
@@ -235,10 +332,6 @@
     max-height: min(128px, 22vh);
     overflow-y: auto;
     scrollbar-width: thin;
-  }
-
-  .mimir-editor__actions {
-    padding-left: 8px;
   }
 
   .mimir-editor--note .mimir-editor__tools {
@@ -307,7 +400,7 @@
   background-image: linear-gradient(var(--me-bar-bg, #fafafa), var(--me-bar-bg, #fafafa));
 }
 
-/* 状态行。页码、字数、格式说明都落在这里——它是 Office 的状态栏 */
+/* 状态行。说明可换行，保存操作固定在右端，不参与说明文字的折行。 */
 .mimir-editor__status {
   position: sticky;
   bottom: 0;
@@ -317,7 +410,6 @@
   justify-content: space-between;
   gap: 12px;
   flex: none;
-  flex-wrap: wrap;
   min-height: 24px;
   padding: 3px 10px;
   border-top: 1px solid var(--me-border, #d9d9d9);
@@ -325,6 +417,30 @@
   background-image: linear-gradient(var(--me-bar-bg, #fafafa), var(--me-bar-bg, #fafafa));
   font-size: var(--me-font-size-sm, 12px);
   color: var(--me-text-weak, #8c8c8c);
+}
+
+.mimir-editor__status-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  min-width: 0;
+}
+
+/* 长状态说明（尤其 XLSX/PPTX）不能撑开外壳，把保存挤出窄屏。 */
+.mimir-editor__status-content > .me-label {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.mimir-editor__status-actions {
+  display: flex;
+  align-items: center;
+  flex: none;
+  gap: 6px;
+  margin-left: auto;
 }
 
 /* ── 工具条里的控件 ────────────────────────────────────────────── */
@@ -452,7 +568,7 @@
  * 状态行上的一次性提示（动作失败的原因）。
  *
  * 危险色、像 `.me-label` 一样是行内的一小段，但**不 nowrap**：原因是整句话
- * （「只支持 PNG / JPEG / GIF 图片」），nowrap 会把状态行撑破——而状态行是
+ * （「只支持 PNG / JPEG / GIF 图片」），nowrap 会把状态行撑破——而状态内容区是
  * `flex-wrap` 的，撑破的那一行会把右端的计数推走。断词规矩与 `.me-note` 同。
  */
 .me-notice {
@@ -1010,7 +1126,7 @@
  *
  * **宽度是同一个问题的另一条轴，而它的症状更隐蔽**：默认 `min-width: auto`
  * 让这一层不会缩到比内容（900px 的 pdf 页面、宽表格）更窄——于是窄窗口下
- * **整块外壳比视口宽**（实测 420px 窗口里外壳 932px），工具条右端的「保存」
+ * **整块外壳比视口宽**（实测 420px 窗口里外壳 932px），底部右端的「保存」
  * 被推出可视区，而那看起来像「工具条没折行」，不像布局宽度问题。
  */
 .me-scroll {

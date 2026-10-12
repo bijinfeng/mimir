@@ -322,7 +322,41 @@ export const useStyles = createStyles(({ css, token }) => ({
   cardIcon: css`
     flex: none;
     display: inline-flex;
-    color: ${token.colorTextTertiary};
+    align-items: center;
+    color: ${token.colorTextSecondary};
+
+    > [data-file-icon] {
+      display: inline-block;
+      flex: none;
+      width: 22px;
+      height: 22px;
+      background-color: currentColor;
+      mask-position: center;
+      mask-repeat: no-repeat;
+      mask-size: contain;
+      -webkit-mask-position: center;
+      -webkit-mask-repeat: no-repeat;
+      -webkit-mask-size: contain;
+    }
+
+    > [data-file-tone='document'] {
+      color: ${token.colorInfoText};
+    }
+    > [data-file-tone='table'] {
+      color: ${token.colorSuccessText};
+    }
+    > [data-file-tone='slides'] {
+      color: ${token.colorWarningText};
+    }
+    > [data-file-tone='pdf'] {
+      color: ${token.colorErrorText};
+    }
+    > [data-file-tone='code'] {
+      color: ${token.colorLink};
+    }
+    > [data-file-tone='media'] {
+      color: ${token.colorInfoText};
+    }
   `,
   /**
    * 卡片标题。它是**按钮**（键盘的打开入口）而不是纯文本——卡片本体
@@ -355,6 +389,22 @@ export const useStyles = createStyles(({ css, token }) => ({
       border-radius: 4px;
       box-shadow: 0 0 0 3px ${token.controlOutline};
     }
+  `,
+  fileName: css`
+    display: inline-flex;
+    align-items: baseline;
+    max-width: 100%;
+    min-width: 0;
+  `,
+  fileNameStem: css`
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  `,
+  fileNameExtension: css`
+    flex: none;
+    white-space: nowrap;
   `,
   chip: css`
     flex: none;

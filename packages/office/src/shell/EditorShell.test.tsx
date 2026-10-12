@@ -445,8 +445,8 @@ describe('shell.css 的静态守护', () => {
   })
 })
 
-describe('EditorShell 的次工具条', () => {
-  it('笔记变体只作用于笔记，分组名称与保存入口仍可达', () => {
+describe('EditorShell 的次工具条与保存入口', () => {
+  it('笔记变体只作用于笔记，分组名称与底部保存入口仍可达', () => {
     const toolbar = (
       <ToolbarGroup label="字符格式">
         <ToolbarButton label="加粗" />
@@ -470,11 +470,14 @@ describe('EditorShell 的次工具条', () => {
     expect(note).toContain('mimir-editor--note')
     expect(office).not.toContain('mimir-editor--note')
     expect(note).toContain('aria-label="字符格式"')
-    expect(note.indexOf('mimir-editor__tools')).toBeLessThan(note.indexOf('mimir-editor__actions'))
+    expect(note.indexOf('mimir-editor__body')).toBeLessThan(
+      note.indexOf('mimir-editor__status-actions'),
+    )
+    expect(note).not.toContain('mimir-editor__actions')
     expect(note).toContain('aria-label="立即保存"')
   })
 
-  it('保存留在独立操作区，窄窗口滚动格式命令时不会随之卷走', () => {
+  it('保存位于底部状态行，顶部工具条不再预留操作列', () => {
     const out = html(
       <EditorShell
         toolbar={
@@ -488,13 +491,79 @@ describe('EditorShell 的次工具条', () => {
       </EditorShell>,
     )
     expect(out).toContain('mimir-editor__tools')
-    expect(out).toContain('mimir-editor__actions')
-    expect(out.indexOf('mimir-editor__actions')).toBeLessThan(out.indexOf('保存到库'))
+    expect(out).not.toContain('mimir-editor__actions')
+    expect(out.indexOf('mimir-editor__body')).toBeLessThan(out.indexOf('mimir-editor__status'))
+    expect(out.indexOf('mimir-editor__status-actions')).toBeLessThan(out.indexOf('保存到库'))
     expect(out).toContain('me-group__caption')
 
     const css = readFileSync(join(here, 'shell.css'), 'utf8')
     expect(css).toMatch(/\.mimir-editor__tools\s*\{[^}]*overflow-y:\s*auto/s)
     expect(css).not.toMatch(/\.mimir-editor__chrome\s*\{[^}]*overflow-y:\s*auto/s)
+    expect(css).not.toContain('.mimir-editor__actions')
+  })
+
+  it('只传保存动作也渲染状态行，不制造空的顶部工具条', () => {
+    const onSave = vi.fn<() => void>()
+    const host = mount(
+      <EditorShell
+        toolbarActions={
+          <ToolbarButton
+            label="保存到库"
+            primary
+            disabled
+            disabledReason="没有未保存的改动"
+            onClick={onSave}
+          />
+        }
+      >
+        <div>内容</div>
+      </EditorShell>,
+    )
+
+    expect(host.querySelector('.mimir-editor__chrome')).toBeNull()
+    expect(host.querySelector('.mimir-editor__bar')).toBeNull()
+    const status = host.querySelector('.mimir-editor__status')!
+    expect(status.querySelector('.mimir-editor__status-content')).toBeNull()
+    const save = status.querySelector<HTMLButtonElement>('.mimir-editor__status-actions button')!
+    expect(save.getAttribute('aria-label')).toBe('保存到库')
+    expect(save.getAttribute('title')).toBe('没有未保存的改动')
+    expect(save.disabled).toBe(true)
+    click(save)
+    expect(onSave).not.toHaveBeenCalled()
+  })
+
+  it('底部保存入口保留原回调，状态文案与操作各在自己的分组', () => {
+    const onSave = vi.fn<() => void>()
+    const host = mount(
+      <EditorShell
+        status={<ToolbarLabel>已修改，未保存</ToolbarLabel>}
+        toolbarActions={<ToolbarButton label="保存到库" primary onClick={onSave} />}
+      >
+        <div>内容</div>
+      </EditorShell>,
+    )
+
+    const status = host.querySelector('.mimir-editor__status')!
+    expect(status.querySelector('.mimir-editor__status-content')?.textContent).toBe(
+      '已修改，未保存',
+    )
+    const save = status.querySelector<HTMLButtonElement>('.mimir-editor__status-actions button')!
+    expect(save.disabled).toBe(false)
+    click(save)
+    expect(onSave).toHaveBeenCalledOnce()
+  })
+
+  it('状态说明可换行，保存动作始终占右端独立空间', () => {
+    const css = readFileSync(join(here, 'shell.css'), 'utf8')
+    const content = /\.mimir-editor__status-content \{[^}]*\}/.exec(css)?.[0] ?? ''
+    const labels = /\.mimir-editor__status-content > \.me-label \{[^}]*\}/.exec(css)?.[0] ?? ''
+    const actions = /\.mimir-editor__status-actions \{[^}]*\}/.exec(css)?.[0] ?? ''
+    expect(content).toContain('flex-wrap: wrap')
+    expect(content).toContain('min-width: 0')
+    expect(labels).toContain('white-space: normal')
+    expect(labels).toContain('overflow-wrap: anywhere')
+    expect(actions).toContain('flex: none')
+    expect(actions).toContain('margin-left: auto')
   })
 
   it('subbar 在工具条之后、内容之前，且与工具条同包一层——两行各自 sticky 会重叠', () => {

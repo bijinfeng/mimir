@@ -10,3 +10,6 @@
 {"file":".trellis/spec/server/backend/tests.md","reason":"鉴权、外部服务失败和服务器测试要求"}
 {"file":".trellis/spec/renderer/frontend/document/index.md","reason":"文档侧栏和离开守卫回归"}
 {"file": ".trellis/spec/server/backend/ai-service-settings.md", "reason": "核对通用设置跨层合同、旧键迁移与失败行为"}
+{"file":".trellis/tasks/10-11-chat-edit-office/research/toolbar-competitors.md","reason":"核对 DOCX 单行布局、具名菜单和完整命令集的证据与验收边界"}
+{"file":".trellis/spec/office/frontend/shell/pitfalls.md","reason":"核对菜单弹层、选区、焦点、快捷键与窄屏保存可达性"}
+{"file":".trellis/tasks/10-11-chat-edit-office/research/all-editor-toolbar-inventory.md","reason":"逐项检查 Markdown、XLSX、PPTX、HTML、PDF 的命令和格式专属行为"}

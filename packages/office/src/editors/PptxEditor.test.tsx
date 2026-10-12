@@ -120,6 +120,18 @@ function button(host: HTMLElement, label: string): HTMLButtonElement {
   return found as HTMLButtonElement
 }
 
+/** 次要命令通过具名菜单执行，测试走和用户相同的打开路径。 */
+function menuItem(host: HTMLElement, label: string): HTMLButtonElement {
+  if (host.querySelector('.mimir-pptx-pdf-toolbar__panel') === null) {
+    click(button(host, '文字格式与更多'))
+  }
+  const found = [
+    ...host.querySelectorAll<HTMLButtonElement>('.mimir-pptx-pdf-toolbar__panel [role="menuitem"]'),
+  ].find((item) => item.textContent?.trim() === label)
+  if (found === undefined) throw new Error(`文字格式菜单里没有「${label}」`)
+  return found
+}
+
 function click(element: Element): void {
   act(() => {
     element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
@@ -277,7 +289,7 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
     const { host, record } = await mountEditor(load('title-layout.pptx'))
     selectOnCanvas(host, 0)
     click(button(host, '下划线（整段）'))
-    click(button(host, '删除线（整段）'))
+    click(menuItem(host, '删除线（整段）'))
     const after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
     const runs = textRunBlocks(elementXml(after, 'Title 1'))
     expect(runs[0]).toContain('u="sng"')
@@ -289,16 +301,16 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
   it('上标 / 下标：baseline="30000" 与 "-25000"，再点一次回到 0', async () => {
     const { host, record } = await mountEditor(load('title-layout.pptx'))
     selectOnCanvas(host, 0)
-    click(button(host, '上标（整段）'))
+    click(menuItem(host, '上标（整段）'))
     let after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
     expect(textRunBlocks(elementXml(after, 'Title 1'))[0]).toContain('baseline="30000"')
 
     // 取消（同一页、同一个选中）：写的是显式的 0，而不是删掉属性
-    click(button(host, '上标（整段）'))
+    click(menuItem(host, '上标（整段）'))
     after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
     expect(textRunBlocks(elementXml(after, 'Title 1'))[0]).toContain('baseline="0"')
 
-    click(button(host, '下标（整段）'))
+    click(menuItem(host, '下标（整段）'))
     after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
     expect(textRunBlocks(elementXml(after, 'Title 1'))[0]).toContain('baseline="-25000"')
   })
@@ -306,7 +318,7 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
   it('清除字形：五项一次性清零，字号与字体不动', async () => {
     const { host, record } = await mountEditor(load('formatted-text.pptx'))
     selectOnCanvas(host, 0)
-    click(button(host, '清除字形（加粗、倾斜、下划线、删除线、上下标；不动字号、字体与颜色）'))
+    click(menuItem(host, '清除字形（加粗、倾斜、下划线、删除线、上下标；不动字号、字体与颜色）'))
     const after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
     const runs = textRunBlocks(elementXml(after, 'TextBox 1'))
     expect(runs[0]).toContain('b="0"')
@@ -366,14 +378,14 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
   it('增大 / 减小字号：按每条 run 自己的值 ±2pt', async () => {
     const { host, record } = await mountEditor(load('formatted-text.pptx'))
     selectOnCanvas(host, 0)
-    click(button(host, '增大字号 2pt（整段）'))
+    click(menuItem(host, '增大字号 2pt（整段）'))
     let after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
     let runs = textRunBlocks(elementXml(after, 'TextBox 1'))
     // 28 → 30，12 → 14（两段各按自己的值走）
     expect(runs[0]).toContain('sz="3000"')
     expect(runs[1]).toContain('sz="1400"')
 
-    click(button(host, '减小字号 2pt（整段）'))
+    click(menuItem(host, '减小字号 2pt（整段）'))
     after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
     runs = textRunBlocks(elementXml(after, 'TextBox 1'))
     expect(runs[0]).toContain('sz="2800"')
@@ -384,6 +396,7 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
     const { host, record } = await mountEditor(load('title-layout.pptx'))
     selectOnCanvas(host, 0)
     // antd 的下拉要打开弹层才渲染选项，选中一项是**点它**（不是改 value 再 change）
+    click(button(host, '文字格式与更多'))
     pickSelectOption(host, '字体（整段，中英文一起换）', '微软雅黑')
 
     const after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
@@ -396,6 +409,7 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
   it('字体颜色：写 srgbClr，并把主题链接标记一起清掉', async () => {
     const { host, record } = await mountEditor(load('title-layout.pptx'))
     selectOnCanvas(host, 0)
+    click(button(host, '文字格式与更多'))
     click(button(host, '字体颜色（整段）'))
     // 面板里的色块：按 option 的 label 找
     const cell = [...host.querySelectorAll('button[aria-label]')].find(
@@ -897,7 +911,7 @@ describe('PptxEditor 的控件契约', () => {
     // 与「跨元素自定义属性 / 边框不解析」同一类限制），所以「一行同高」这一条
     // 只能进浏览器验收；这里守的是机制（尺寸档确实传到了每个控件上）
     const buttons = [...host.querySelectorAll('.ant-btn')]
-    expect(buttons.length).toBeGreaterThan(8)
+    expect(buttons.length).toBeGreaterThan(5)
     for (const item of buttons) {
       expect(item.classList.contains('ant-btn-sm'), `按钮不在 small 档：${item.className}`).toBe(
         true,
@@ -905,6 +919,7 @@ describe('PptxEditor 的控件契约', () => {
     }
 
     // 字体下拉一个、字号与跳页两个数字框、段落输入框（ToolbarTextArea）
+    click(button(host, '文字格式与更多'))
     const selects = [...host.querySelectorAll('.ant-select')]
     expect(selects).toHaveLength(1)
     expect(selects[0]?.classList.contains('ant-select-sm')).toBe(true)

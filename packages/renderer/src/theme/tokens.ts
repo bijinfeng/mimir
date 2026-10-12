@@ -330,6 +330,9 @@ export function effectiveTokens(appearance: Appearance) {
  */
 export const CONTENT_WIDTH = 760
 
+/** 工作区、文档与文档问 AI 三栏共享的头部高度。 */
+export const PANEL_HEADER_HEIGHT = 48
+
 /**
  * 左导航里一行的高度，以及它与容器左右的距离。
  *
@@ -397,8 +400,8 @@ export const NAV_NARROW_QUERY = `(max-width: ${NAV_NARROW_BREAKPOINT}px)`
 /**
  * 窗口标题栏的高度（D-094）。
  *
- * **与页面头部同档（44px）**：两处 44px 叠起来读作「上铬条 + 下铬条」，
- * 节奏一致；而桌面端合并掉侧栏那条顶栏之后，垂直空间净增为零。
+ * 桌面窗口标题栏固定为 44px；工作区、文档与问 AI 的面板头部
+ * 使用独立的 `PANEL_HEADER_HEIGHT`（48px）。
  *
  * 写在这里的原因与断点一样：这个值同时被标题栏组件（内联高度）与
  * 页面布局（主区高度的起点）读，各写一份必然漂移。

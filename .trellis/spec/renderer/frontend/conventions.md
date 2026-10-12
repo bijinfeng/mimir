@@ -119,6 +119,14 @@ office 是 `EditorIo`（取字节 / 写回），chat 是 `ChatIo`（建会话 / 
 `routes/` 下的非路由文件要用 `-` 前缀（`-foo.ts`），否则 TanStack Router
 的生成器会警告「这个文件没有导出 Route」，`pnpm dev` 时一直刷屏。
 
+### 三栏头部共用高度
+
+工作区侧栏的 `panelHeading`、文档的 `header` 和文档问 AI 侧栏的
+`aiSidebarHeader` 都读取 `src/theme/tokens.ts` 的 `PANEL_HEADER_HEIGHT`（48px），
+并保留 `flex: none` 与 1px 下边框。三栏并排时，下边框必须在同一水平线；
+窄屏侧栏覆盖文档时，返回与关闭操作仍须可达。不要在三份样式里分别写高度，
+也不要借用桌面窗口标题栏的 `TITLEBAR_HEIGHT`：那是独立的 44px 区域。
+
 
 ## 鉴权
 

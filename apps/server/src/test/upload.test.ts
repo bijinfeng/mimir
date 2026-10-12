@@ -219,6 +219,36 @@ sys.stdout.buffer.write(archive.getvalue())
     expect(detail.body.size).toBeGreaterThan(0)
   })
 
+  it('摘要中的后缀来自当前原件，上传、改名和替换后保持准确', async () => {
+    const cookie = await getAuthCookie()
+    const created = await upload(cookie, '季度报告.v2.TXT', '初版正文', 'text/plain')
+    const id = created.body.document!.id
+    expect(created.body.document).toMatchObject({ title: '季度报告.v2', fileExtension: 'txt' })
+
+    const detail = await client.get<{ title: string; fileExtension: string }>(
+      `/api/documents/${id}`,
+    )
+    expect(detail.body).toMatchObject({ title: '季度报告.v2', fileExtension: 'txt' })
+
+    await client.patch(`/api/documents/${id}`, { title: '改名后的报告.csv' })
+    const form = new FormData()
+    form.append('file', new Blob(['name,value\n一,1']), '新版.csv')
+    const replaced = await app.request(`/api/documents/${id}/file`, {
+      method: 'PUT',
+      headers: { Cookie: cookie },
+      body: form,
+    })
+    expect(replaced.status).toBe(200)
+    expect(await replaced.json()).toMatchObject({
+      document: { title: '改名后的报告.csv', fileExtension: 'csv' },
+    })
+
+    const list = await client.get<{ items: { id: string; fileExtension: string }[] }>(
+      '/api/documents?limit=100',
+    )
+    expect(list.body.items.find((item) => item.id === id)?.fileExtension).toBe('csv')
+  })
+
   it('Markdown 变成可编辑笔记（进 vault、kind=note），而不是只读副本', async () => {
     const cookie = await getAuthCookie()
     const md =

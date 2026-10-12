@@ -66,7 +66,15 @@
 
 import { EditorContent, useEditor } from '@tiptap/react'
 import type { Editor } from '@tiptap/core'
-import { useEffect, useRef, useState, useCallback, useMemo, type CSSProperties } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  useMemo,
+  type CSSProperties,
+  type ReactNode,
+} from 'react'
 import { redoDepth, undoDepth } from '@tiptap/pm/history'
 import type { Mark } from '@tiptap/pm/model'
 import type { EditorState, Transaction } from '@tiptap/pm/state'
@@ -124,7 +132,6 @@ import {
   FindReplaceBar,
   ToolbarButton,
   ToolbarColorPicker,
-  ToolbarDivider,
   ToolbarFileButton,
   ToolbarGridPicker,
   ToolbarGroup,
@@ -1318,8 +1325,8 @@ export function DocxEditor({
       }
       /*
         次工具条：查找替换栏。它**与工具条同包在 sticky 容器里**（见 shell.css）
-        ——让 subbar 自己再写一条 `position: sticky; top: 0` 会盖住工具条右端的
-        保存。没打开时不传这个槽位，不留一条空行。
+        ——让 subbar 自己再写一条 `position: sticky; top: 0` 会盖住工具条命令。
+        保存位于底部状态行。没打开时不传这个槽位，不留一条空行。
       */
       subbar={
         findOpen ? (
@@ -1375,6 +1382,64 @@ export function DocxEditor({
 }
 
 /* ── 工具条 ───────────────────────────────────────────────────── */
+
+interface DocxToolbarSection {
+  label: string
+  content: ReactNode
+  disabledReason?: string
+}
+
+/** Width-independent access to every DOCX command; the direct row only changes priority. */
+function DocxMoreMenu({ sections }: { sections: readonly DocxToolbarSection[] }) {
+  const [section, setSection] = useState<string | null>(null)
+  const panelContent = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const target =
+      section === null
+        ? panelContent.current?.querySelector<HTMLButtonElement>('[role="menuitem"]:not(:disabled)')
+        : panelContent.current?.querySelector<HTMLButtonElement>(
+            '[role="menuitem"][title="返回全部命令"]',
+          )
+    target?.focus()
+  }, [section])
+
+  return (
+    <ToolbarMenu
+      label="更多命令"
+      text="更多"
+      panelWidth={270}
+      renderPanel={() => (
+        <div ref={panelContent}>
+          {section === null ? (
+            sections.map((entry) => (
+              <ToolbarMenuItemRow
+                key={entry.label}
+                item={{
+                  key: entry.label,
+                  label: entry.label,
+                  onSelect: () => setSection(entry.label),
+                  disabled: entry.disabledReason !== undefined,
+                  disabledReason: entry.disabledReason,
+                }}
+              />
+            ))
+          ) : (
+            <>
+              <ToolbarMenuItemRow
+                item={{ key: 'back', label: '返回全部命令', onSelect: () => setSection(null) }}
+              />
+              <ToolbarMenuSeparator />
+              <ToolbarMenuFields label={section}>
+                {sections.find((entry) => entry.label === section)?.content}
+              </ToolbarMenuFields>
+            </>
+          )}
+        </div>
+      )}
+    />
+  )
+}
 
 export interface DocxToolbarProps {
   editor: Editor | null
@@ -1467,260 +1532,279 @@ export function DocxToolbar({
   }
   styleOptions.push({ value: 'quote', label: '引用' })
 
-  return (
-    <>
-      <ToolbarGroup label="历史记录">
-        <ToolbarButton
-          label="撤销 (Ctrl+Z)"
-          disabled={disabled || !state.canUndo}
-          disabledReason="没有可以撤销的改动了"
-          onClick={() => runCommand(editor, 'undo')}
-        >
-          <UndoIcon />
-        </ToolbarButton>
-        <ToolbarButton
-          label="重做 (Ctrl+Shift+Z)"
-          disabled={disabled || !state.canRedo}
-          disabledReason="没有可以重做的改动了"
-          onClick={() => runCommand(editor, 'redo')}
-        >
-          <RedoIcon />
-        </ToolbarButton>
-      </ToolbarGroup>
-
-      <ToolbarDivider />
-
+  const historyControls = (
+    <ToolbarGroup label="历史记录">
+      <ToolbarButton
+        label="撤销 (Ctrl+Z)"
+        disabled={disabled || !state.canUndo}
+        disabledReason="没有可以撤销的改动了"
+        onClick={() => runCommand(editor, 'undo')}
+      >
+        <UndoIcon />
+      </ToolbarButton>
+      <ToolbarButton
+        label="重做 (Ctrl+Shift+Z)"
+        disabled={disabled || !state.canRedo}
+        disabledReason="没有可以重做的改动了"
+        onClick={() => runCommand(editor, 'redo')}
+      >
+        <RedoIcon />
+      </ToolbarButton>
+    </ToolbarGroup>
+  )
+  const styleControl = (
+    <ToolbarSelect
+      label="段落样式"
+      value={state.style}
+      options={styleOptions}
+      fallbackLabel="自定义"
+      onChange={(value) => applyParagraphStyle(editor, value)}
+    />
+  )
+  const fontControls = (
+    <ToolbarGroup label="字体">
+      <ToolbarLabel>中文</ToolbarLabel>
       <ToolbarSelect
-        label="段落样式"
-        value={state.style}
-        options={styleOptions}
-        fallbackLabel="自定义"
-        onChange={(value) => applyParagraphStyle(editor, value)}
+        label="中文字体"
+        value={state.font ?? ''}
+        options={fontOptions(EAST_ASIA_FONTS)}
+        onChange={(value) =>
+          runCommand(editor, 'setMark', 'docTextStyle', { font: value === '' ? null : value })
+        }
       />
-
-      {/*
-        字体与字号：**两个字体下拉必须有可见的前缀**。
-
-        它们各自是「中文字体」与「西文字体」（`w:rFonts` 的 `w:eastAsia` 与
-        `w:ascii`/`w:hAnsi` —— 两个槽位），而**两个都是「（默认）」时外观完全
-        一样**：`ToolbarGroup` 只渲染 `role="group"` 与 `aria-label`，不渲染可见
-        文字，名字只到得了读屏与 hover 的 `title`（实测两个「（默认）」并排，
-        肉眼分不出哪个管哪一个）。DESIGN §0.2 要的是「状态必须能被看见」——
-        而这恰好是「看得见的状态分不出是谁的状态」。所以每项前面给两个字，
-        取 `.me-label` 那一档（12px、次要色）：组宽只多两个字，不动布局。
-      */}
-      <ToolbarGroup label="字体">
-        <ToolbarLabel>中文</ToolbarLabel>
-        <ToolbarSelect
-          label="中文字体"
-          value={state.font ?? ''}
-          options={fontOptions(EAST_ASIA_FONTS)}
-          onChange={(value) =>
-            runCommand(editor, 'setMark', 'docTextStyle', { font: value === '' ? null : value })
-          }
-        />
-        <ToolbarLabel>西文</ToolbarLabel>
-        <ToolbarSelect
-          label="西文字体"
-          value={state.fontAscii ?? ''}
-          options={fontOptions(LATIN_FONTS)}
-          onChange={(value) =>
-            runCommand(editor, 'setMark', 'docTextStyle', {
-              fontAscii: value === '' ? null : value,
-            })
-          }
-        />
-      </ToolbarGroup>
-
-      <ToolbarGroup label="字号">
-        <ToolbarLabel>字号</ToolbarLabel>
-        <ToolbarSelect
-          label="字号（磅）"
-          value={state.sizeHalfPoints === null ? null : String(state.sizeHalfPoints)}
-          options={FONT_SIZES_HALF_POINTS.map((half) => ({
-            value: String(half),
-            label: String(halfPointsToPt(half)),
-          }))}
-          fallbackLabel="其它"
-          /*
+      <ToolbarLabel>西文</ToolbarLabel>
+      <ToolbarSelect
+        label="西文字体"
+        value={state.fontAscii ?? ''}
+        options={fontOptions(LATIN_FONTS)}
+        onChange={(value) =>
+          runCommand(editor, 'setMark', 'docTextStyle', {
+            fontAscii: value === '' ? null : value,
+          })
+        }
+      />
+    </ToolbarGroup>
+  )
+  const sizeControls = (
+    <ToolbarGroup label="字号">
+      <ToolbarLabel>字号</ToolbarLabel>
+      <ToolbarSelect
+        label="字号（磅）"
+        value={state.sizeHalfPoints === null ? null : String(state.sizeHalfPoints)}
+        options={FONT_SIZES_HALF_POINTS.map((half) => ({
+          value: String(half),
+          label: String(halfPointsToPt(half)),
+        }))}
+        fallbackLabel="其它"
+        /*
             `null` 与「不在档位里」是两件事，不能共用「其它」：这一份文档上
             文字没有直接字号（继承自段落样式），显示「其它」会被读成
             「我选了别的字号」。`emptyLabel` 的说明在 `ToolbarSelect` 上。
           */
-          emptyLabel="（默认）"
-          onChange={(value) =>
-            runCommand(editor, 'setMark', 'docTextStyle', { sizeHalfPoints: Number(value) })
-          }
-        />
-        {/*
+        emptyLabel="（默认）"
+        onChange={(value) =>
+          runCommand(editor, 'setMark', 'docTextStyle', { sizeHalfPoints: Number(value) })
+        }
+      />
+      {/*
           增大 / 减小字号。**必须有兜底**：`getAttributes('docTextStyle')` 在
           文字没有直接字号时返回 `{}`（字号继承自样式/文档默认），此时
           `undefined ± 2` 是 `NaN`，而它会一路走到保存——`convert.ts` 把
           `sizeHalfPoints` 写进签名、`generate.ts:2772` 拿它生成 `w:sz`，
           于是文件里出现 `w:sz w:val="NaN"`。所以没值时**禁用**，并说明原因。
         */}
-        <ToolbarButton
-          label="减小字号"
-          disabled={disabled || state.sizeHalfPoints === null}
-          disabledReason="当前文字没有直接字号：字号继承自段落样式，先在左边选一个字号"
-          onClick={() =>
-            runCommand(editor, 'setMark', 'docTextStyle', {
-              sizeHalfPoints: (state.sizeHalfPoints ?? 0) - 2,
-            })
-          }
-        >
-          <FontShrinkIcon />
-        </ToolbarButton>
-        <ToolbarButton
-          label="增大字号"
-          disabled={disabled || state.sizeHalfPoints === null}
-          disabledReason="当前文字没有直接字号：字号继承自段落样式，先在左边选一个字号"
-          onClick={() =>
-            runCommand(editor, 'setMark', 'docTextStyle', {
-              sizeHalfPoints: (state.sizeHalfPoints ?? 0) + 2,
-            })
-          }
-        >
-          <FontGrowIcon />
-        </ToolbarButton>
-      </ToolbarGroup>
-
-      <ToolbarDivider />
-
-      <ToolbarGroup label="字符格式">
-        <ToolbarButton
-          label="加粗 (Ctrl+B)"
-          active={state.bold}
-          disabled={disabled}
-          onClick={() => toggleMarkByName(editor, 'bold')}
-        >
-          <BoldIcon />
-        </ToolbarButton>
-        <ToolbarButton
-          label="倾斜 (Ctrl+I)"
-          active={state.italic}
-          disabled={disabled}
-          onClick={() => toggleMarkByName(editor, 'italic')}
-        >
-          <ItalicIcon />
-        </ToolbarButton>
-        <ToolbarButton
-          label="下划线 (Ctrl+U)"
-          active={state.underline}
-          disabled={disabled}
-          onClick={() => toggleMarkByName(editor, 'underline')}
-        >
-          <UnderlineIcon />
-        </ToolbarButton>
-        <ToolbarButton
-          label="删除线"
-          active={state.strike}
-          disabled={disabled}
-          onClick={() => toggleMarkByName(editor, 'strike')}
-        >
-          <StrikeIcon />
-        </ToolbarButton>
-        <ToolbarButton
-          label="上标"
-          active={state.superscript}
-          disabled={disabled}
-          onClick={() =>
-            runCommand(editor, 'setMark', 'docTextStyle', {
-              vertAlign: state.superscript ? null : 'superscript',
-            })
-          }
-        >
-          <SuperscriptIcon />
-        </ToolbarButton>
-        <ToolbarButton
-          label="下标"
-          active={state.subscript}
-          disabled={disabled}
-          onClick={() =>
-            runCommand(editor, 'setMark', 'docTextStyle', {
-              vertAlign: state.subscript ? null : 'subscript',
-            })
-          }
-        >
-          <SubscriptIcon />
-        </ToolbarButton>
-        <ToolbarColorPicker
-          label="字体颜色"
-          icon={<TextColorIcon />}
-          value={state.color}
-          options={TEXT_COLORS}
-          onPick={(value) => runCommand(editor, 'setMark', 'docTextStyle', { color: value })}
-          onClear={() => runCommand(editor, 'setMark', 'docTextStyle', { color: null })}
-        />
-        <ToolbarColorPicker
-          label="文本突出显示"
-          icon={<HighlightIcon />}
-          value={state.highlight}
-          options={HIGHLIGHT_COLORS}
-          onPick={(value) => runCommand(editor, 'setMark', 'docTextStyle', { highlight: value })}
-          onClear={() => runCommand(editor, 'setMark', 'docTextStyle', { highlight: null })}
-        />
-        <ToolbarButton
-          label="清除格式"
-          disabled={disabled}
-          onClick={() => {
-            /*
-             * 两半：字符的（所有标记）与段落的（`CLEARED_PARA_ATTRS`）。
-             *
-             * `unsetAllMarks` 对**空选区直接 return**（`@tiptap/core` 的
-             * `unsetAllMarks.ts`：`if (empty) return true`）——所以光标停在一处
-             * 不选任何字时，字符那半得自己处理：清掉 storedMarks，也就是
-             * 「接下来敲的字用什么格式」。不清的话按钮看着按了、敲出来还是旧格式。
-             */
-            runCommand(editor, 'unsetAllMarks')
-            editor
-              .chain()
-              .focus()
-              .command(({ tr, dispatch }) => {
-                if (dispatch && tr.selection.empty) tr.setStoredMarks([])
-                return true
-              })
-              .run()
-            updateParagraphAttrs(editor, CLEARED_PARA_ATTRS)
-          }}
-        >
-          <ClearFormatIcon />
-        </ToolbarButton>
-        <ToolbarButton
-          label={painterArmed ? '格式刷：选中要套用的文字' : '格式刷（先选中格式来源，再选目标）'}
-          active={painterArmed}
-          disabled={disabled}
-          onClick={() => {
-            if (painterArmed) {
-              setPainterArmed(false)
-              return
-            }
-            painterSource.current = painterSourceMarks(editor)
-              .filter((mark) => (PAINTER_MARK_TYPES as readonly string[]).includes(mark.type.name))
-              .map((mark) => ({ type: mark.type.name, attrs: mark.attrs }))
-            setPainterArmed(true)
-          }}
-        >
-          <PaintFormatIcon />
-        </ToolbarButton>
-      </ToolbarGroup>
-
-      <ToolbarDivider />
-
-      <ToolbarToggleGroup
-        label="对齐方式"
-        value={state.align}
-        options={[
-          { value: 'left', label: '左对齐', icon: <AlignLeftIcon /> },
-          { value: 'center', label: '居中', icon: <AlignCenterIcon /> },
-          { value: 'right', label: '右对齐', icon: <AlignRightIcon /> },
-          { value: 'justify', label: '两端对齐', icon: <AlignJustifyIcon /> },
-        ]}
-        onChange={(value) =>
-          setSelectionAlign(editor, value as 'left' | 'center' | 'right' | 'justify')
+      <ToolbarButton
+        label="减小字号"
+        disabled={disabled || state.sizeHalfPoints === null}
+        disabledReason="当前文字没有直接字号：字号继承自段落样式，先在左边选一个字号"
+        onClick={() =>
+          runCommand(editor, 'setMark', 'docTextStyle', {
+            sizeHalfPoints: (state.sizeHalfPoints ?? 0) - 2,
+          })
         }
+      >
+        <FontShrinkIcon />
+      </ToolbarButton>
+      <ToolbarButton
+        label="增大字号"
+        disabled={disabled || state.sizeHalfPoints === null}
+        disabledReason="当前文字没有直接字号：字号继承自段落样式，先在左边选一个字号"
+        onClick={() =>
+          runCommand(editor, 'setMark', 'docTextStyle', {
+            sizeHalfPoints: (state.sizeHalfPoints ?? 0) + 2,
+          })
+        }
+      >
+        <FontGrowIcon />
+      </ToolbarButton>
+    </ToolbarGroup>
+  )
+  const basicControls = (
+    <ToolbarGroup label="字符格式">
+      <ToolbarButton
+        label="加粗 (Ctrl+B)"
+        active={state.bold}
+        disabled={disabled}
+        onClick={() => toggleMarkByName(editor, 'bold')}
+      >
+        <BoldIcon />
+      </ToolbarButton>
+      <ToolbarButton
+        label="倾斜 (Ctrl+I)"
+        active={state.italic}
+        disabled={disabled}
+        onClick={() => toggleMarkByName(editor, 'italic')}
+      >
+        <ItalicIcon />
+      </ToolbarButton>
+      <ToolbarButton
+        label="下划线 (Ctrl+U)"
+        active={state.underline}
+        disabled={disabled}
+        onClick={() => toggleMarkByName(editor, 'underline')}
+      >
+        <UnderlineIcon />
+      </ToolbarButton>
+    </ToolbarGroup>
+  )
+  const additionalFontControls = (
+    <ToolbarGroup label="其他字符格式">
+      <ToolbarButton
+        label="删除线"
+        active={state.strike}
+        disabled={disabled}
+        onClick={() => toggleMarkByName(editor, 'strike')}
+      >
+        <StrikeIcon />
+      </ToolbarButton>
+      <ToolbarButton
+        label="上标"
+        active={state.superscript}
+        disabled={disabled}
+        onClick={() =>
+          runCommand(editor, 'setMark', 'docTextStyle', {
+            vertAlign: state.superscript ? null : 'superscript',
+          })
+        }
+      >
+        <SuperscriptIcon />
+      </ToolbarButton>
+      <ToolbarButton
+        label="下标"
+        active={state.subscript}
+        disabled={disabled}
+        onClick={() =>
+          runCommand(editor, 'setMark', 'docTextStyle', {
+            vertAlign: state.subscript ? null : 'subscript',
+          })
+        }
+      >
+        <SubscriptIcon />
+      </ToolbarButton>
+      <ToolbarColorPicker
+        label="字体颜色"
+        icon={<TextColorIcon />}
+        value={state.color}
+        options={TEXT_COLORS}
+        onPick={(value) => runCommand(editor, 'setMark', 'docTextStyle', { color: value })}
+        onClear={() => runCommand(editor, 'setMark', 'docTextStyle', { color: null })}
       />
-
+      <ToolbarColorPicker
+        label="文本突出显示"
+        icon={<HighlightIcon />}
+        value={state.highlight}
+        options={HIGHLIGHT_COLORS}
+        onPick={(value) => runCommand(editor, 'setMark', 'docTextStyle', { highlight: value })}
+        onClear={() => runCommand(editor, 'setMark', 'docTextStyle', { highlight: null })}
+      />
+      <ToolbarButton
+        label="清除格式"
+        disabled={disabled}
+        onClick={() => {
+          /*
+           * 两半：字符的（所有标记）与段落的（`CLEARED_PARA_ATTRS`）。
+           *
+           * `unsetAllMarks` 对**空选区直接 return**（`@tiptap/core` 的
+           * `unsetAllMarks.ts`：`if (empty) return true`）——所以光标停在一处
+           * 不选任何字时，字符那半得自己处理：清掉 storedMarks，也就是
+           * 「接下来敲的字用什么格式」。不清的话按钮看着按了、敲出来还是旧格式。
+           */
+          runCommand(editor, 'unsetAllMarks')
+          editor
+            .chain()
+            .focus()
+            .command(({ tr, dispatch }) => {
+              if (dispatch && tr.selection.empty) tr.setStoredMarks([])
+              return true
+            })
+            .run()
+          updateParagraphAttrs(editor, CLEARED_PARA_ATTRS)
+        }}
+      >
+        <ClearFormatIcon />
+      </ToolbarButton>
+      <ToolbarButton
+        label={painterArmed ? '格式刷：选中要套用的文字' : '格式刷（先选中格式来源，再选目标）'}
+        active={painterArmed}
+        disabled={disabled}
+        onClick={() => {
+          if (painterArmed) {
+            setPainterArmed(false)
+            return
+          }
+          painterSource.current = painterSourceMarks(editor)
+            .filter((mark) => (PAINTER_MARK_TYPES as readonly string[]).includes(mark.type.name))
+            .map((mark) => ({ type: mark.type.name, attrs: mark.attrs }))
+          setPainterArmed(true)
+        }}
+      >
+        <PaintFormatIcon />
+      </ToolbarButton>
+    </ToolbarGroup>
+  )
+  const alignControls = (
+    <ToolbarToggleGroup
+      label="对齐方式"
+      value={state.align}
+      options={[
+        { value: 'left', label: '左对齐', icon: <AlignLeftIcon /> },
+        { value: 'center', label: '居中', icon: <AlignCenterIcon /> },
+        { value: 'right', label: '右对齐', icon: <AlignRightIcon /> },
+        { value: 'justify', label: '两端对齐', icon: <AlignJustifyIcon /> },
+      ]}
+      onChange={(value) =>
+        setSelectionAlign(editor, value as 'left' | 'center' | 'right' | 'justify')
+      }
+    />
+  )
+  const listControls = (
+    <ToolbarGroup label="列表与缩进">
+      <ToolbarButton
+        label="项目符号列表"
+        active={state.listKind === 'bullet'}
+        disabled={disabled}
+        onClick={() => toggleList(editor, 'bullet')}
+      >
+        <BulletListIcon />
+      </ToolbarButton>
+      <ToolbarButton
+        label="编号列表"
+        active={state.listKind === 'ordered'}
+        disabled={disabled}
+        onClick={() => toggleList(editor, 'ordered')}
+      >
+        <OrderedListIcon />
+      </ToolbarButton>
+      <ToolbarButton label="减少缩进" disabled={disabled} onClick={() => runStepIndent(editor, -1)}>
+        <OutdentIcon />
+      </ToolbarButton>
+      <ToolbarButton label="增加缩进" disabled={disabled} onClick={() => runStepIndent(editor, 1)}>
+        <IndentIcon />
+      </ToolbarButton>
+    </ToolbarGroup>
+  )
+  const paragraphControls = (
+    <>
       <ToolbarSelect
         label="行距（倍数）"
         value={state.lineSpacing === null ? null : String(state.lineSpacing)}
@@ -1739,7 +1823,6 @@ export function DocxToolbar({
           })
         }
       />
-
       <ToolbarColorPicker
         label="段落底纹"
         icon={<ParaShadingIcon />}
@@ -1757,7 +1840,6 @@ export function DocxToolbar({
           })
         }
       />
-
       <ToolbarToggleGroup
         label="文字方向"
         value={state.bidi ? 'rtl' : 'ltr'}
@@ -1767,54 +1849,37 @@ export function DocxToolbar({
         ]}
         onChange={(value) => setParagraphDirection(editor, value as 'ltr' | 'rtl')}
       />
-
       <ParagraphSpacingMenu editor={editor} state={state} disabled={disabled} />
       <LineRuleMenu editor={editor} state={state} disabled={disabled} />
-
-      <ToolbarDivider />
-
-      <ToolbarGroup label="列表与缩进">
+      {listControls}
+      <ToolbarGroup label="段落位置">
         <ToolbarButton
-          label="项目符号列表"
-          active={state.listKind === 'bullet'}
-          disabled={disabled}
-          onClick={() => toggleList(editor, 'bullet')}
+          label="上移这一段 (Alt+Shift+↑)"
+          disabled={disabled || !state.canMoveUp}
+          disabledReason="已经是第一段了"
+          onClick={() => moveBlocks(editor, -1)}
         >
-          <BulletListIcon />
+          <ArrowUpIcon />
         </ToolbarButton>
         <ToolbarButton
-          label="编号列表"
-          active={state.listKind === 'ordered'}
-          disabled={disabled}
-          onClick={() => toggleList(editor, 'ordered')}
+          label="下移这一段 (Alt+Shift+↓)"
+          disabled={disabled || !state.canMoveDown}
+          disabledReason="已经是最后一段了"
+          onClick={() => moveBlocks(editor, 1)}
         >
-          <OrderedListIcon />
-        </ToolbarButton>
-        <ToolbarButton
-          label="减少缩进"
-          disabled={disabled}
-          onClick={() => runStepIndent(editor, -1)}
-        >
-          <OutdentIcon />
-        </ToolbarButton>
-        <ToolbarButton
-          label="增加缩进"
-          disabled={disabled}
-          onClick={() => runStepIndent(editor, 1)}
-        >
-          <IndentIcon />
+          <ArrowDownIcon />
         </ToolbarButton>
       </ToolbarGroup>
-
-      <ToolbarGroup label="表格与插入">
-        <TableMenu editor={editor} table={table} />
-        <ToolbarMenu
-          label="插入表格"
-          icon={<TableIcon />}
-          renderPanel={() => <InsertTablePanel editor={editor} />}
-        />
-      </ToolbarGroup>
-
+    </>
+  )
+  const tableControls = <TableMenu editor={editor} table={table} />
+  const insertControls = (
+    <>
+      <ToolbarMenu
+        label="插入表格"
+        icon={<TableIcon />}
+        renderPanel={() => <InsertTablePanel editor={editor} />}
+      />
       <ToolbarGroup label="插入">
         <ToolbarFileButton
           label="插入图片"
@@ -1843,44 +1908,26 @@ export function DocxToolbar({
           <PageBreakIcon />
         </ToolbarButton>
       </ToolbarGroup>
-
-      <ToolbarGroup label="段落位置">
-        <ToolbarButton
-          label="上移这一段 (Alt+Shift+↑)"
-          disabled={disabled || !state.canMoveUp}
-          disabledReason="已经是第一段了"
-          onClick={() => moveBlocks(editor, -1)}
-        >
-          <ArrowUpIcon />
-        </ToolbarButton>
-        <ToolbarButton
-          label="下移这一段 (Alt+Shift+↓)"
-          disabled={disabled || !state.canMoveDown}
-          disabledReason="已经是最后一段了"
-          onClick={() => moveBlocks(editor, 1)}
-        >
-          <ArrowDownIcon />
-        </ToolbarButton>
-      </ToolbarGroup>
-
-      <ToolbarDivider />
-
-      <ToolbarButton
-        label="查找和替换 (Ctrl+F)"
-        active={findOpen}
-        disabled={disabled}
-        onClick={onToggleFind}
-      >
-        <FindIcon />
-      </ToolbarButton>
-
+    </>
+  )
+  const findControl = (
+    <ToolbarButton
+      label="查找和替换 (Ctrl+F)"
+      active={findOpen}
+      disabled={disabled}
+      onClick={onToggleFind}
+    >
+      <FindIcon />
+    </ToolbarButton>
+  )
+  const reviewControls = (
+    <>
       <ToolbarMenu
         label="修订"
         icon={<TrackChangesIcon />}
         text={state.trackChanges ? '修订中' : undefined}
         renderPanel={() => <RevisionsPanel editor={editor} enabled={state.trackChanges} />}
       />
-
       <ToolbarButton
         label={state.spellcheck ? '关闭拼写检查' : '打开拼写检查'}
         active={state.spellcheck}
@@ -1902,6 +1949,77 @@ export function DocxToolbar({
         <SpellCheckIcon />
       </ToolbarButton>
     </>
+  )
+
+  const sections = [
+    { label: '历史记录', content: historyControls },
+    {
+      label: '字体',
+      content: (
+        <>
+          {fontControls}
+          {sizeControls}
+          {additionalFontControls}
+        </>
+      ),
+    },
+    {
+      label: '段落',
+      content: (
+        <>
+          {alignControls}
+          {paragraphControls}
+        </>
+      ),
+    },
+    { label: '插入', content: insertControls },
+    {
+      label: '表格',
+      content: tableControls,
+      disabledReason: table === null ? '将光标放在表格中可编辑表格' : undefined,
+    },
+    { label: '审阅', content: reviewControls },
+    { label: '查找', content: findControl },
+  ]
+
+  return (
+    <div className="mimir-docx-toolbar" role="toolbar" aria-label="DOCX 编辑命令">
+      <span className="mimir-docx-toolbar__style">{styleControl}</span>
+      <span className="mimir-docx-toolbar__basic">{basicControls}</span>
+      <span className="mimir-docx-toolbar__size">{sizeControls}</span>
+      <span className="mimir-docx-toolbar__history">{historyControls}</span>
+      <span className="mimir-docx-toolbar__find">{findControl}</span>
+      <span className="mimir-docx-toolbar__align">{alignControls}</span>
+      <span className="mimir-docx-toolbar__lists">{listControls}</span>
+      <span className="mimir-docx-toolbar__categories">
+        <ToolbarMenu
+          label="字体"
+          text="字体"
+          renderPanel={() => (
+            <ToolbarMenuFields label="字体">{sections[1]?.content}</ToolbarMenuFields>
+          )}
+        />
+        <ToolbarMenu
+          label="段落"
+          text="段落"
+          renderPanel={() => (
+            <ToolbarMenuFields label="段落">{sections[2]?.content}</ToolbarMenuFields>
+          )}
+        />
+        <ToolbarMenu
+          label="插入"
+          text="插入"
+          renderPanel={() => <ToolbarMenuFields label="插入">{insertControls}</ToolbarMenuFields>}
+        />
+        {tableControls}
+        <ToolbarMenu
+          label="审阅"
+          text="审阅"
+          renderPanel={() => <ToolbarMenuFields label="审阅">{reviewControls}</ToolbarMenuFields>}
+        />
+      </span>
+      <DocxMoreMenu sections={sections} />
+    </div>
   )
 }
 

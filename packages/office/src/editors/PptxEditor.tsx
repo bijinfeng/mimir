@@ -73,9 +73,13 @@ import {
   FindReplaceBar,
   ToolbarButton,
   ToolbarColorPicker,
-  ToolbarDivider,
   ToolbarGroup,
   ToolbarLabel,
+  ToolbarMenu,
+  ToolbarMenuFields,
+  ToolbarMenuItemRow,
+  ToolbarMenuNote,
+  ToolbarMenuSeparator,
   ToolbarNumberField,
   ToolbarSelect,
   ToolbarSpacer,
@@ -89,14 +93,10 @@ import {
   BoldIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  ClearFormatIcon,
   EyeIcon,
   FindIcon,
   ItalicIcon,
   SaveIcon,
-  StrikeIcon,
-  SubscriptIcon,
-  SuperscriptIcon,
   UnderlineIcon,
 } from '../shell/icons.js'
 import type { FindOptions } from '../shims/ui.js'
@@ -106,6 +106,7 @@ import { statusText, useParsed, useSource } from './use-source.js'
 import { OFFICE_MIME, type EditorProps } from './types.js'
 import '../shell/shell.css'
 import './editors.css'
+import './pptx-pdf-toolbar.css'
 
 /**
  * 画布宽度（px）。渲染器按这个宽度算缩放，所以它决定文字大小与换行位置。
@@ -1048,180 +1049,216 @@ export function PptxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
     }
     setFindOpen(true)
   }
+  const toggleBold = () => applyFormat({ bold: !boldOn })
+  const toggleItalic = () => applyFormat({ italic: !italicOn })
+  const toggleUnderline = () => applyFormat({ underline: !underlineOn })
 
   return (
     <EditorShell
       flush={flush}
       toolbar={
-        <>
-          {/*
-            格式按钮**常驻**（禁用而不是消失）：工具条的样子固定下来，「现在为什么
-            不能点」由 disabledReason 说。下拉与输入框做不到禁用（`ToolbarSelect` /
-            `ToolbarNumberField` 的契约里没有 disabled），所以没有目标时它们换成一行
-            说明——那是一句为什么，不是一个假控件。
-          */}
-          <ToolbarGroup label="整段字形">
-            <ToolbarButton
-              label="加粗（整段）"
-              active={boldOn}
-              disabled={formatReason !== undefined}
-              disabledReason={formatReason}
-              onClick={() => applyFormat({ bold: !boldOn })}
-            >
-              <BoldIcon />
+        <div className="mimir-pptx-pdf-toolbar mimir-pptx-pdf-toolbar--pptx">
+          <span className="mimir-pptx-pdf-toolbar__basic">
+            <ToolbarGroup label="整段字形">
+              <ToolbarButton
+                label="加粗（整段）"
+                active={boldOn}
+                disabled={formatReason !== undefined}
+                disabledReason={formatReason}
+                onClick={toggleBold}
+              >
+                <BoldIcon />
+              </ToolbarButton>
+              <ToolbarButton
+                label="倾斜（整段）"
+                active={italicOn}
+                disabled={formatReason !== undefined}
+                disabledReason={formatReason}
+                onClick={toggleItalic}
+              >
+                <ItalicIcon />
+              </ToolbarButton>
+              <ToolbarButton
+                label="下划线（整段）"
+                active={underlineOn}
+                disabled={formatReason !== undefined}
+                disabledReason={formatReason}
+                onClick={toggleUnderline}
+              >
+                <UnderlineIcon />
+              </ToolbarButton>
+            </ToolbarGroup>
+          </span>
+          <span className="mimir-pptx-pdf-toolbar__size">
+            {hasRuns && uniformSize !== null ? (
+              <ToolbarNumberField
+                label="字号（pt，整段）"
+                value={uniformSize}
+                min={MIN_FONT_SIZE_PT}
+                max={MAX_FONT_SIZE_PT}
+                suffix="pt"
+                onCommit={(next) => applyFormat({ fontSize: next })}
+              />
+            ) : (
+              <ToolbarLabel>{hasRuns ? '多档字号' : '未选中文字'}</ToolbarLabel>
+            )}
+          </span>
+          <span className="mimir-pptx-pdf-toolbar__find">
+            <ToolbarButton label="查找和替换" active={findOpen} onClick={toggleFind}>
+              <FindIcon />
             </ToolbarButton>
-            <ToolbarButton
-              label="倾斜（整段）"
-              active={italicOn}
-              disabled={formatReason !== undefined}
-              disabledReason={formatReason}
-              onClick={() => applyFormat({ italic: !italicOn })}
-            >
-              <ItalicIcon />
-            </ToolbarButton>
-            <ToolbarButton
-              label="下划线（整段）"
-              active={underlineOn}
-              disabled={formatReason !== undefined}
-              disabledReason={formatReason}
-              onClick={() => applyFormat({ underline: !underlineOn })}
-            >
-              <UnderlineIcon />
-            </ToolbarButton>
-            <ToolbarButton
-              label="删除线（整段）"
-              active={strikeOn}
-              disabled={formatReason !== undefined}
-              disabledReason={formatReason}
-              onClick={() => applyFormat({ strike: !strikeOn })}
-            >
-              <StrikeIcon />
-            </ToolbarButton>
-          </ToolbarGroup>
-
-          <ToolbarGroup label="上标与下标">
-            <ToolbarButton
-              label="上标（整段）"
-              active={superscriptOn}
-              disabled={formatReason !== undefined}
-              disabledReason={formatReason}
-              onClick={() => applyFormat({ baseline: superscriptOn ? 0 : SUPERSCRIPT_BASELINE })}
-            >
-              <SuperscriptIcon />
-            </ToolbarButton>
-            <ToolbarButton
-              label="下标（整段）"
-              active={subscriptOn}
-              disabled={formatReason !== undefined}
-              disabledReason={formatReason}
-              onClick={() => applyFormat({ baseline: subscriptOn ? 0 : SUBSCRIPT_BASELINE })}
-            >
-              <SubscriptIcon />
-            </ToolbarButton>
-          </ToolbarGroup>
-
-          {/*
-            清除字形。**不叫「清除所有格式」**：字号、字体、颜色没有「回到继承」
-            这个表达（把 sz/solidFill 删掉又要保住主题链接，本版做不到），所以它
-            只清这五项。名字里就把这五项列出来，免得点的人和写的人理解不同。
-          */}
-          <ToolbarButton
-            label="清除字形（加粗、倾斜、下划线、删除线、上下标；不动字号、字体与颜色）"
-            disabled={formatReason !== undefined}
-            disabledReason={formatReason}
-            onClick={() =>
-              applyFormat({
-                bold: false,
-                italic: false,
-                underline: false,
-                strike: false,
-                baseline: 0,
-              })
-            }
-          >
-            <ClearFormatIcon />
-          </ToolbarButton>
-
-          <ToolbarDivider />
-
-          {hasRuns ? (
-            <>
-              <ToolbarGroup label="字号">
-                {uniformSize !== null ? (
-                  <ToolbarNumberField
-                    label="字号（pt，整段）"
-                    value={uniformSize}
-                    min={MIN_FONT_SIZE_PT}
-                    max={MAX_FONT_SIZE_PT}
-                    suffix="pt"
-                    /*
-                      与当前值相同时一个字节都不写：工具条自己先比一次（值没变就不
-                      提交），`applyEditParagraphs` 里还会再比一次（`edit-text.ts`
-                      的 `r.fontSize !== oldRun.fontSize` 才清继承标记）。
-                    */
-                    onCommit={(next) => applyFormat({ fontSize: next })}
+          </span>
+          <ToolbarMenu
+            label="文字格式与更多"
+            text="文字格式"
+            panelWidth={310}
+            renderPanel={(close) => (
+              <div className="mimir-pptx-pdf-toolbar__panel">
+                <div className="mimir-pptx-pdf-toolbar__narrow-only">
+                  <ToolbarMenuItemRow
+                    item={{
+                      key: 'bold',
+                      label: '加粗（整段）',
+                      active: boldOn,
+                      disabled: formatReason !== undefined,
+                      disabledReason: formatReason,
+                      onSelect: toggleBold,
+                    }}
+                    close={close}
                   />
+                  <ToolbarMenuItemRow
+                    item={{
+                      key: 'italic',
+                      label: '倾斜（整段）',
+                      active: italicOn,
+                      disabled: formatReason !== undefined,
+                      disabledReason: formatReason,
+                      onSelect: toggleItalic,
+                    }}
+                    close={close}
+                  />
+                  <ToolbarMenuItemRow
+                    item={{
+                      key: 'underline',
+                      label: '下划线（整段）',
+                      active: underlineOn,
+                      disabled: formatReason !== undefined,
+                      disabledReason: formatReason,
+                      onSelect: toggleUnderline,
+                    }}
+                    close={close}
+                  />
+                  <ToolbarMenuSeparator />
+                </div>
+                <ToolbarMenuItemRow
+                  item={{
+                    key: 'strike',
+                    label: '删除线（整段）',
+                    active: strikeOn,
+                    disabled: formatReason !== undefined,
+                    disabledReason: formatReason,
+                    onSelect: () => applyFormat({ strike: !strikeOn }),
+                  }}
+                  close={close}
+                />
+                <ToolbarMenuItemRow
+                  item={{
+                    key: 'superscript',
+                    label: '上标（整段）',
+                    active: superscriptOn,
+                    disabled: formatReason !== undefined,
+                    disabledReason: formatReason,
+                    onSelect: () =>
+                      applyFormat({ baseline: superscriptOn ? 0 : SUPERSCRIPT_BASELINE }),
+                  }}
+                  close={close}
+                />
+                <ToolbarMenuItemRow
+                  item={{
+                    key: 'subscript',
+                    label: '下标（整段）',
+                    active: subscriptOn,
+                    disabled: formatReason !== undefined,
+                    disabledReason: formatReason,
+                    onSelect: () => applyFormat({ baseline: subscriptOn ? 0 : SUBSCRIPT_BASELINE }),
+                  }}
+                  close={close}
+                />
+                <ToolbarMenuItemRow
+                  item={{
+                    key: 'clear',
+                    label: '清除字形（加粗、倾斜、下划线、删除线、上下标；不动字号、字体与颜色）',
+                    disabled: formatReason !== undefined,
+                    disabledReason: formatReason,
+                    onSelect: () =>
+                      applyFormat({
+                        bold: false,
+                        italic: false,
+                        underline: false,
+                        strike: false,
+                        baseline: 0,
+                      }),
+                  }}
+                  close={close}
+                />
+                <ToolbarMenuSeparator />
+                <ToolbarMenuItemRow
+                  item={{
+                    key: 'size-up',
+                    label: `增大字号 ${SIZE_STEP_PT}pt（整段）`,
+                    disabled: !canStepSize,
+                    disabledReason: sizeStepReason,
+                    onSelect: () => stepSize(SIZE_STEP_PT),
+                  }}
+                  close={close}
+                />
+                <ToolbarMenuItemRow
+                  item={{
+                    key: 'size-down',
+                    label: `减小字号 ${SIZE_STEP_PT}pt（整段）`,
+                    disabled: !canStepSize,
+                    disabledReason: sizeStepReason,
+                    onSelect: () => stepSize(-SIZE_STEP_PT),
+                  }}
+                  close={close}
+                />
+                {hasRuns ? (
+                  <ToolbarMenuFields label="字体和颜色">
+                    <ToolbarSelect
+                      label="字体（整段，中英文一起换）"
+                      value={uniformFont}
+                      options={fontOptions}
+                      fallbackLabel="多档字体"
+                      onChange={(family) => applyFormat({ fontFamily: family })}
+                    />
+                    <ToolbarColorPicker
+                      label="字体颜色（整段）"
+                      value={uniformColor}
+                      options={colorOptions}
+                      onPick={(color) => applyFormat({ color })}
+                    />
+                  </ToolbarMenuFields>
                 ) : (
-                  // 多档字号时不显示一个数字：那个数字不是文档里的值
-                  <ToolbarLabel>多档字号</ToolbarLabel>
+                  <ToolbarMenuNote>
+                    {formatReason ?? '字号、字体与颜色只作用于选中的文本框'}
+                  </ToolbarMenuNote>
                 )}
-                {/*
-                  增大 / 减小字号用 **A+ / A− 这两个文字标签**，不画 SVG 图标：
-                  这一对按钮的意思就是「比现在大一号的字」，字母 A 正是那个意思，
-                  而 icons.tsx 里没有、也不该为此造一个形状含义更弱的图标。
-                  这两个字的字号**不来自 antd 的按钮字号 token**：`children` 被
-                  `ToolbarButton` 包进 `.me-btn__icon`（那是图标字号槽，
-                  `--me-icon-size` = 13.5px），所以渲染出来略小于相邻按钮的文字
-                  （antd small 档是 14px）。视觉上无害，但机制是这一条——别按
-                  「它走 antd 字号」去推别的控件。
-                */}
-                <ToolbarButton
-                  label={`增大字号 ${SIZE_STEP_PT}pt（整段）`}
-                  disabled={!canStepSize}
-                  disabledReason={sizeStepReason}
-                  onClick={() => stepSize(SIZE_STEP_PT)}
-                >
-                  A+
-                </ToolbarButton>
-                <ToolbarButton
-                  label={`减小字号 ${SIZE_STEP_PT}pt（整段）`}
-                  disabled={!canStepSize}
-                  disabledReason={sizeStepReason}
-                  onClick={() => stepSize(-SIZE_STEP_PT)}
-                >
-                  A-
-                </ToolbarButton>
-              </ToolbarGroup>
-
-              <ToolbarSelect
-                label="字体（整段，中英文一起换）"
-                value={uniformFont}
-                options={fontOptions}
-                fallbackLabel="多档字体"
-                onChange={(family) => applyFormat({ fontFamily: family })}
-              />
-              {/*
-                字体颜色。**不给 onClear**：pptx 的 run 颜色没有「回到继承」的写法
-                （写 srgbClr 就断了主题链接），给一个「清除颜色」按钮等于承诺一件
-                做不到的事。要恢复原色就改回原来那个颜色——传同一个值不写字节。
-              */}
-              <ToolbarColorPicker
-                label="字体颜色（整段）"
-                value={uniformColor}
-                options={colorOptions}
-                onPick={(color) => applyFormat({ color })}
-              />
-            </>
-          ) : (
-            <ToolbarLabel>{formatReason ?? '字号、字体与颜色只作用于选中的文本框'}</ToolbarLabel>
-          )}
-
-          <ToolbarDivider />
-
-          <ToolbarButton label="查找和替换" active={findOpen} onClick={toggleFind}>
-            <FindIcon />
-          </ToolbarButton>
-        </>
+                <div className="mimir-pptx-pdf-toolbar__find-menu">
+                  <ToolbarMenuSeparator />
+                  <ToolbarMenuItemRow
+                    item={{
+                      key: 'find',
+                      label: '查找和替换',
+                      active: findOpen,
+                      onSelect: toggleFind,
+                    }}
+                    close={close}
+                  />
+                </div>
+              </div>
+            )}
+          />
+        </div>
       }
       toolbarActions={
         <ToolbarButton
@@ -1367,7 +1404,7 @@ export function PptxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
           )}
           {/*
             这条文字**必须短**：`.me-label` 是 `white-space: nowrap`，而状态行
-            虽然 `flex-wrap`，一个不换行的 label 自身就是宽度下限——太长会把整
+            的内容区虽然 `flex-wrap`，一个不换行的 label 自身就是宽度下限——太长会把整
             个外壳的 min-content 撑过窄窗口（实测 560px 下 598px 的文字让
             `.mimir-editor` 变成 620 宽、页面出现横向滚动）。所以这里只说最该说
             的一句，「动画与 SmartArt 不显示」是能力边界，格式的粒度写在工具条

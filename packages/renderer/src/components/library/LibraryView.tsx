@@ -7,15 +7,9 @@ import {
   Download,
   Ellipsis,
   Eye,
-  FileAudio,
-  FileArchive,
-  FileCode,
-  FileImage,
   FilePenLine,
   FilePlus2,
-  FileSpreadsheet,
   FileText,
-  FileVideo,
   FolderPlus,
   FolderUp,
   Globe,
@@ -23,7 +17,6 @@ import {
   List,
   Pencil,
   Plus,
-  Presentation,
   RefreshCw,
   Trash2,
   Upload,
@@ -42,7 +35,6 @@ import { KnowledgeBaseCreateModal } from '../KnowledgeBaseCreateModal'
 import { LoadError } from '../LoadError'
 import {
   excerptText,
-  formatChip,
   formatDate,
   kindLabel,
   readLibraryLayout,
@@ -57,6 +49,18 @@ import { useAppShell } from '../../lib/app-shell-context'
 import { useScrolled } from '../../lib/use-scrolled'
 import { useUnsaved } from '../../lib/unsaved'
 import { useStyles } from './LibraryView.style'
+import descriptionIcon from './material-symbols-rounded/description.svg?url'
+import tableChartIcon from './material-symbols-rounded/table_chart.svg?url'
+import slideshowIcon from './material-symbols-rounded/slideshow.svg?url'
+import pdfIcon from './material-symbols-rounded/picture_as_pdf.svg?url'
+import codeIcon from './material-symbols-rounded/code.svg?url'
+import notesIcon from './material-symbols-rounded/notes.svg?url'
+import imageIcon from './material-symbols-rounded/image.svg?url'
+import audioIcon from './material-symbols-rounded/audio_file.svg?url'
+import videoIcon from './material-symbols-rounded/video_file.svg?url'
+import archiveIcon from './material-symbols-rounded/folder_zip.svg?url'
+import draftIcon from './material-symbols-rounded/draft.svg?url'
+import articleIcon from './material-symbols-rounded/article.svg?url'
 
 /**
  * 知识库页：文档模式的**浏览态主区**（URL 无 `id` 时，D-079）。
@@ -647,7 +651,9 @@ export function LibraryView({ scope }: { scope: string }) {
                 onClick={() => open(doc.id)}
               >
                 <span className={styles.cardIcon}>{docIcon(doc)}</span>
-                <span className={styles.rowTitle}>{doc.title}</span>
+                <span className={styles.rowTitle}>
+                  <DocumentName doc={doc} />
+                </span>
                 <span className={styles.rowMeta} title={doc.folder ?? '知识库根'}>
                   {documentLocation(doc, folderPath)}
                   {docMetaOf(doc) ? ` · ${docMetaOf(doc)}` : ''}
@@ -798,41 +804,122 @@ function documentLocation(doc: DocumentSummary, currentFolder: string | null): s
     : doc.folder
 }
 
-/** 文档卡片右上角的格式/种类徽标 */
-function chipOf(doc: DocumentSummary): string | null {
-  return formatChip(doc) ?? kindLabel(doc)
+/** 文件已有类型图形与后缀；只给笔记和网页等资料保留来源徽标。 */
+export function chipOf(doc: DocumentSummary): string | null {
+  return doc.kind === 'file' ? null : kindLabel(doc)
 }
 
 /** 这个文档能不能在站内编辑（决定「编辑」图标出不出现） */
 function isEditable(doc: DocumentSummary): boolean {
   if (doc.kind === 'note') return true
-  const target = parseTargetFor(doc.mime, doc.title)
+  const target = parseTargetFor(doc.mime, displayDocumentTitle(doc))
   return target === 'docx' || target === 'xlsx' || target === 'pptx'
 }
 
-/** 文档的文件类型图标（中性色，不按格式配色——DESIGN §0.1） */
-function docIcon(doc: DocumentSummary): ReactNode {
-  const target = parseTargetFor(doc.mime, doc.title)
-  const mime = (doc.mime ?? '').toLowerCase()
-  if (target === 'xlsx') return <FileSpreadsheet size={16} />
-  if (target === 'pptx') return <Presentation size={16} />
-  if (target === 'docx') return <FileText size={16} />
-  if (mime.startsWith('image/')) return <FileImage size={16} />
-  if (mime.startsWith('audio/')) return <FileAudio size={16} />
-  if (mime.startsWith('video/')) return <FileVideo size={16} />
-  if (mime === 'application/zip') return <FileArchive size={16} />
-  if (
-    ['js', 'ts', 'tsx', 'jsx', 'py', 'go', 'rs', 'java', 'c', 'cpp', 'sh', 'sql', 'css'].includes(
-      extensionOfTitle(doc.title),
-    )
-  ) {
-    return <FileCode size={16} />
-  }
-  return <FileText size={16} />
+/** 标题是用户可改的；只在展示时补当前原件的扩展名，避免改名后重复拼接。 */
+export function displayDocumentTitle(doc: DocumentSummary): string {
+  if (doc.kind !== 'file' || !doc.fileExtension) return doc.title
+  const suffix = `.${doc.fileExtension}`
+  return doc.title.toLowerCase().endsWith(suffix.toLowerCase())
+    ? doc.title
+    : `${doc.title}${suffix}`
 }
 
-function extensionOfTitle(title: string): string {
-  return /\.([A-Za-z0-9]+)$/.exec(title)?.[1]?.toLowerCase() ?? ''
+/** 窄列只省略主体，保留文件后缀供用户辨认类型。 */
+function DocumentName({ doc }: { doc: DocumentSummary }) {
+  const { styles } = useStyles()
+  const fullName = displayDocumentTitle(doc)
+  const suffixLength = doc.kind === 'file' && doc.fileExtension ? doc.fileExtension.length + 1 : 0
+  return (
+    <span className={styles.fileName} title={fullName}>
+      <span className={styles.fileNameStem}>
+        {suffixLength ? fullName.slice(0, -suffixLength) : fullName}
+      </span>
+      {suffixLength > 0 && (
+        <span className={styles.fileNameExtension}>{fullName.slice(-suffixLength)}</span>
+      )}
+    </span>
+  )
+}
+
+const FILE_ICONS = {
+  document: descriptionIcon,
+  table: tableChartIcon,
+  slides: slideshowIcon,
+  pdf: pdfIcon,
+  code: codeIcon,
+  note: notesIcon,
+  image: imageIcon,
+  audio: audioIcon,
+  video: videoIcon,
+  archive: archiveIcon,
+  unknown: draftIcon,
+  text: articleIcon,
+} as const
+
+type FileIconName = keyof typeof FILE_ICONS
+type FileIconTone = 'neutral' | 'document' | 'table' | 'slides' | 'pdf' | 'code' | 'media'
+
+function fileGlyph(name: FileIconName, tone: FileIconTone = 'neutral'): ReactNode {
+  const url = `url("${FILE_ICONS[name]}")`
+  return (
+    <span
+      data-file-icon={name}
+      data-file-tone={tone}
+      aria-hidden="true"
+      style={{ maskImage: url, WebkitMaskImage: url }}
+    />
+  )
+}
+
+/** 格式各有图形，类别色来自主题 token；列表与卡片共用。 */
+export function docIcon(doc: DocumentSummary): ReactNode {
+  if (doc.kind === 'note') return fileGlyph('note')
+  if (doc.kind !== 'file') return <FileText size={20} />
+  const extension = doc.fileExtension?.toLowerCase() ?? ''
+  const mime = (doc.mime ?? '').toLowerCase()
+  const target = parseTargetFor(doc.mime, displayDocumentTitle(doc))
+  if (extension === 'pdf' || mime === 'application/pdf') return fileGlyph('pdf', 'pdf')
+  if (['doc', 'docx', 'odt', 'rtf'].includes(extension) || target === 'docx')
+    return fileGlyph('document', 'document')
+  if (['xls', 'xlsx', 'ods', 'csv'].includes(extension) || target === 'xlsx')
+    return fileGlyph('table', 'table')
+  if (['ppt', 'pptx', 'odp'].includes(extension) || target === 'pptx')
+    return fileGlyph('slides', 'slides')
+  if (['html', 'htm'].includes(extension) || target === 'html') return fileGlyph('code', 'code')
+  if (extension === 'txt' || (!extension && mime === 'text/plain')) return fileGlyph('text')
+  if (
+    ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp', 'heic'].includes(extension) ||
+    mime.startsWith('image/')
+  )
+    return fileGlyph('image', 'media')
+  if (['mp3', 'wav', 'ogg', 'flac', 'm4a', 'aac'].includes(extension) || mime.startsWith('audio/'))
+    return fileGlyph('audio', 'media')
+  if (['mp4', 'mov', 'webm', 'avi', 'mkv'].includes(extension) || mime.startsWith('video/'))
+    return fileGlyph('video', 'media')
+  if (['zip', 'rar', '7z', 'tar', 'gz'].includes(extension) || mime === 'application/zip')
+    return fileGlyph('archive')
+  if (
+    [
+      'js',
+      'ts',
+      'tsx',
+      'jsx',
+      'py',
+      'go',
+      'rs',
+      'java',
+      'c',
+      'cpp',
+      'sh',
+      'sql',
+      'css',
+      'json',
+      'xml',
+    ].includes(extension)
+  )
+    return fileGlyph('code', 'code')
+  return fileGlyph('unknown')
 }
 
 /**
@@ -971,7 +1058,7 @@ function DocCard({ doc, location, onOpen, onEdit, onReplace, onDelete }: DocCard
             onOpen()
           }}
         >
-          {doc.title}
+          <DocumentName doc={doc} />
         </button>
         {chip && <span className={styles.chip}>{chip}</span>}
         {/* 动作条统一拦一次冒泡（每个按钮自己也拦）：卡片本体是「打开」，

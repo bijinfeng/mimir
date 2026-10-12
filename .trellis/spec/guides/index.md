@@ -7,4 +7,4 @@
 - 文件类写入：核对文件先于数据库，以及重建索引能恢复；参见 [服务端规范](../server/backend/index.md)。
 - 界面同时用于浏览器和桌面端：核对 `packages/renderer` 的平台 Context 与两端入口；参见 [渲染层规范](../renderer/frontend/index.md)。
 - 改动方言相关查询：核对 SQLite 与 Postgres 两条测试路径；参见 [测试规范](../server/backend/tests.md)。
-- 任何调研任务先核对 [WeKnora](https://weknora.weixin.qq.com/) 及其[公开源码](https://github.com/Tencent/WeKnora)，记录所参考的版本、具体证据和对 Mimir 的适用性；即使课题与知识库或 Agent 无关，也简述核对后为何不适用。WeKnora 是本项目优先参考对象，不能只凭印象转述其功能。
+- 任何调研任务都核对 [WeKnora](https://weknora.weixin.qq.com/) 及其[公开源码](https://github.com/Tencent/WeKnora)，记录版本、具体证据和适用性；不相关时说明原因。按领域选主要参考：知识库与 Agent 看 WeKnora，页面布局与风格看 Obsidian，文件编辑看 Office 网页版、Google Docs、GenOffice。Office 工具栏不以 WeKnora 的 Markdown 编辑器为主要依据，也不能只凭印象转述竞品功能。

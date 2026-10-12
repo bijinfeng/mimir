@@ -1,5 +1,5 @@
 import { createStyles } from 'antd-style'
-import { FONT_SIZE, NAV_ITEM_HEIGHT, NAV_ITEM_MARGIN } from '../theme/tokens'
+import { FONT_SIZE, NAV_ITEM_HEIGHT, NAV_ITEM_MARGIN, PANEL_HEADER_HEIGHT } from '../theme/tokens'
 
 export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   nav: css`
@@ -78,7 +78,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     align-items: center;
     justify-content: space-between;
     flex: none;
-    height: 42px;
+    height: ${PANEL_HEADER_HEIGHT}px;
     padding: 0 12px 0 14px;
     border-bottom: 1px solid ${token.colorBorderSecondary};
     color: ${token.colorText};
