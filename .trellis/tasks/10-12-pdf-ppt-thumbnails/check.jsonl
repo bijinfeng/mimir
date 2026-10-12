@@ -1,0 +1,4 @@
+{"file":".trellis/spec/project/quality.md","reason":"pnpm check、文件读回与实际界面检查门槛"}
+{"file":".trellis/spec/office/engine/conventions.md","reason":"未改动条目保真和包级安全边界"}
+{"file":".trellis/spec/office/frontend/editors/pitfalls.md","reason":"现有 PDF/PPTX 静默失效案例"}
+{"file":".trellis/tasks/10-12-pdf-ppt-thumbnails/research/implementation-evidence.md","reason":"本任务的代码证据和重点回归路径"}

@@ -1,0 +1,6 @@
+{"file":".trellis/spec/project/rules.md","reason":"跨包编码和补丁保存原则"}
+{"file":".trellis/spec/project/design.md","reason":"Office 布局、主题和窄宽度行为"}
+{"file":".trellis/spec/office/engine/conventions.md","reason":"PPTX 包结构与 vendor 边界"}
+{"file":".trellis/spec/office/frontend/editors/pitfalls.md","reason":"PDF 渲染与 PPTX 保存的已知静默风险"}
+{"file":".trellis/tasks/10-12-pdf-ppt-thumbnails/research/implementation-evidence.md","reason":"当前页模型、渲染代次和 OOXML 结构证据"}
+{"file":".trellis/tasks/10-12-pdf-ppt-thumbnails/research/references.md","reason":"外部参考版本及适用性"}

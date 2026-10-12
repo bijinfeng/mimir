@@ -17,6 +17,7 @@ paths:
 ## 本目录
 
 - [conventions](./conventions.md)
+- [PDF/PPTX 页结构与缩略图契约](./page-structure.md)
 
 ## Quality Check
 

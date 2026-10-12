@@ -33,6 +33,7 @@ src/
   zip-bounds.ts    浏览器侧 OOXML 的流式解压预算；docx 进 vendor 前预检
   pptx.ts          pptx 打开：装配解析上下文 + 编辑会话（openPptxForEdit）
   pptx-save.ts     pptx 保存：元素补丁回字节（**移植自上游 index.ts**）
+  pptx-structure.ts pptx 页级结构补丁：页序、slide/rels、演示文稿关系与内容类型；安全边界见 [页结构契约](./page-structure.md)
   pptx-render.ts   pptx 渲染入口：renderSlide / renderDeck → SVG 字符串
   pptx-svg.ts      RenderSlide → SVG（**我们写的**，替上游的 Konva 适配器）
   shell/           **界面外壳**：六种编辑器共用的框架与控件（D-054）
@@ -66,6 +67,7 @@ src/
     editor-commands.ts 方言能力检测与调用
     antd-test-dom.ts  驱动 antd 下拉的测试辅助（`@mimir/office/test-dom` 导出）
   editors/         **六种编辑器**（docx / xlsx / pptx / html / markdown / pdf）
+    ThumbnailSidebar.tsx  PDF/PPTX 共用真实内容缩略图、右键菜单与键盘排序入口
     DocxEditor.tsx / XlsxEditor.tsx / PptxEditor.tsx
     PptxEditor.test.tsx pptx 工具条的按钮 → 命令（挂真组件、读保存出的 XML）
     HtmlEditor.tsx     源码 + 预览双栏（借 vendored 的 CodeMirror 与点选映射）
