@@ -114,3 +114,26 @@
 ### Status
 
 [OK] **Completed**
+
+
+## Session 5: PDF/PPTX page thumbnail navigation
+<!-- trellis-session: v=2 fp=d67edc26148a35f7 -->
+
+**Date**: 2026-10-12
+**Task**: PDF/PPTX page thumbnail navigation
+**Branch**: `codex/fnos-native-platform`
+
+### Summary
+
+Implemented content thumbnails and right-click page operations for PDF/PPTX, with safe PPTX package updates, PDF concurrent rendering, browser QA and pnpm check.
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `4f111ab` | feat(office): add PDF and PPTX page thumbnails |
+| `938ab7c` | docs(office): record page thumbnail contracts |
+
+### Status
+
+[OK] **Completed**
