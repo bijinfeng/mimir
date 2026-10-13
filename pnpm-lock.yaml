@@ -754,6 +754,9 @@ importers:
       '@uiw/react-heat-map':
         specifier: 2.3.4
         version: 2.3.4(@babel/runtime@8.0.5)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      cropperjs:
+        specifier: ^2.3.0
+        version: 2.3.0
       dayjs:
         specifier: ^1.11.23
         version: 1.11.23
@@ -1422,6 +1425,39 @@ packages:
 
   '@codemirror/view@6.43.13':
     resolution: {integrity: sha512-sihaFrUzAsYBQsL9J2t69y8nfMQGwcYmggAZsk+kjPbjYZMyuf2hU8tUNTZ+P+isb6XRr8JE22TZlJxBoVdH1A==}
+
+  '@cropper/element-canvas@2.3.0':
+    resolution: {integrity: sha512-nkK2jlwYj3FQkR6FugG1F/WzM/IicPotqx3GCHAaaBRQ4YkaiEYXDDKKZ7ApyCYktAnX7QsShXH1WE5EN1tUzA==}
+
+  '@cropper/element-crosshair@2.3.0':
+    resolution: {integrity: sha512-NY56wpxxksDzK0nJZe3PTvUxxrxYZK9/kLc8bSqA1Qbl7mO329IFnE0vVH5MgBtDw6dIqAMNtQbqdx6NHlQxNg==}
+
+  '@cropper/element-grid@2.3.0':
+    resolution: {integrity: sha512-wBvcbnfgYeTvBJMqAlEL146MELvK3zXRe3oLB+LC2FZMz9dUizruEOHqBOXrkenpGlJ+nKHbyPT5FM4g8Fp21A==}
+
+  '@cropper/element-handle@2.3.0':
+    resolution: {integrity: sha512-IP7gNjlfZ+RC9RDposEAP5r+gGF0i9LXrGRfCmHqQEh7LILr2/mYX4QWZ7pDoBEg5zerEOjVz2NrWuxiKSOPcw==}
+
+  '@cropper/element-image@2.3.0':
+    resolution: {integrity: sha512-G15tUyY3JDbn4b3KRBpbGfSkRB3q9/prk7rC6kEFzeEpqKVLGshRVNJjM98aK6Cx4TIk3383XY12OnTyo4wFag==}
+
+  '@cropper/element-selection@2.3.0':
+    resolution: {integrity: sha512-uw//GK5cdY9LiqYiY+xW18uFQrzfhN38E0NO0dO5LXfudoK81OB3F55S3410bQzwrPuZVYGOHHd/SblLltdIVA==}
+
+  '@cropper/element-shade@2.3.0':
+    resolution: {integrity: sha512-ghjquOCKqyjyBw31AJcjjtPfB4rTQt8bufWkn63DmGOqSL+JIyEB8PBWnjN5It2qpBynbl2wqO9CG/MTk3YHrg==}
+
+  '@cropper/element-viewer@2.3.0':
+    resolution: {integrity: sha512-I93yzz32j7DYPjWSNoU8GC8eX7iFsxV7oZ0inPyrafexInMFx42dSecnrlX4nelcsIvFCYNQgXDYbZG3NS7ukQ==}
+
+  '@cropper/element@2.3.0':
+    resolution: {integrity: sha512-RPY/Qj+eEvgfEyjZM/SkkQUV9/nQLC5+vktGpcjNUdUxjEAmYw0IlL+Ft5NppYSkgy9G0GgP8OLjqX0ToXuw7w==}
+
+  '@cropper/elements@2.3.0':
+    resolution: {integrity: sha512-WSsokBF3NBMj+RQk85v402/FdMbYVJ4Mi7Oz9rACd2vpzrXkbYuLarp7j2Z74jbe5dNORqOgIpAk1KCDRs8grg==}
+
+  '@cropper/utils@2.3.0':
+    resolution: {integrity: sha512-9eMNvPaE/sD8hvATNJ5ElRR7oHQcnhLRRoFEm/j/fxzNJwwdSMnXydpEq/QqkWXD1ttZqBj9IOJjUf5ThQWYvg==}
 
   '@drizzle-team/brocli@0.10.2':
     resolution: {integrity: sha512-z33Il7l5dKjUgGULTqBsQBQwckHh5AbIuxhdsIxDDiZAzBOrZO6q9ogcWC65kU382AfynTfgNumVcNIjuIua6w==}
@@ -4996,6 +5032,9 @@ packages:
   crelt@1.0.7:
     resolution: {integrity: sha512-aK6BbWfhf4U/wCcLHKPJl/xa6VkVstRaPywWtMKGwuOLc/wZTyQYuoxgvZnNsBvv7Kg3YTBQYYBCggcviQczuA==}
 
+  cropperjs@2.3.0:
+    resolution: {integrity: sha512-3Npwk6vEY/NoUsDbGqRV7LnkvHnKm5H84NSJQE3dxAyDBdFQOZY0FXLs778E3fSuFfc8KbAqWuyNLJkYp/64sQ==}
+
   cross-dirname@0.1.0:
     resolution: {integrity: sha512-+R08/oI0nl3vfPcqftZRpytksBXDzOUveBq/NBVx0sUp1axwzPQrKinNx5yd5sxPu8j1wIy8AfnVQ+5eFdha6Q==}
 
@@ -7843,6 +7882,72 @@ snapshots:
       crelt: 1.0.7
       style-mod: 4.1.4
       w3c-keyname: 2.2.8
+
+  '@cropper/element-canvas@2.3.0':
+    dependencies:
+      '@cropper/element': 2.3.0
+      '@cropper/utils': 2.3.0
+
+  '@cropper/element-crosshair@2.3.0':
+    dependencies:
+      '@cropper/element': 2.3.0
+      '@cropper/utils': 2.3.0
+
+  '@cropper/element-grid@2.3.0':
+    dependencies:
+      '@cropper/element': 2.3.0
+      '@cropper/utils': 2.3.0
+
+  '@cropper/element-handle@2.3.0':
+    dependencies:
+      '@cropper/element': 2.3.0
+      '@cropper/utils': 2.3.0
+
+  '@cropper/element-image@2.3.0':
+    dependencies:
+      '@cropper/element': 2.3.0
+      '@cropper/element-canvas': 2.3.0
+      '@cropper/utils': 2.3.0
+
+  '@cropper/element-selection@2.3.0':
+    dependencies:
+      '@cropper/element': 2.3.0
+      '@cropper/element-canvas': 2.3.0
+      '@cropper/element-image': 2.3.0
+      '@cropper/utils': 2.3.0
+
+  '@cropper/element-shade@2.3.0':
+    dependencies:
+      '@cropper/element': 2.3.0
+      '@cropper/element-canvas': 2.3.0
+      '@cropper/element-selection': 2.3.0
+      '@cropper/utils': 2.3.0
+
+  '@cropper/element-viewer@2.3.0':
+    dependencies:
+      '@cropper/element': 2.3.0
+      '@cropper/element-canvas': 2.3.0
+      '@cropper/element-image': 2.3.0
+      '@cropper/element-selection': 2.3.0
+      '@cropper/utils': 2.3.0
+
+  '@cropper/element@2.3.0':
+    dependencies:
+      '@cropper/utils': 2.3.0
+
+  '@cropper/elements@2.3.0':
+    dependencies:
+      '@cropper/element': 2.3.0
+      '@cropper/element-canvas': 2.3.0
+      '@cropper/element-crosshair': 2.3.0
+      '@cropper/element-grid': 2.3.0
+      '@cropper/element-handle': 2.3.0
+      '@cropper/element-image': 2.3.0
+      '@cropper/element-selection': 2.3.0
+      '@cropper/element-shade': 2.3.0
+      '@cropper/element-viewer': 2.3.0
+
+  '@cropper/utils@2.3.0': {}
 
   '@drizzle-team/brocli@0.10.2': {}
 
@@ -11120,6 +11225,11 @@ snapshots:
       readable-stream: 4.7.0
 
   crelt@1.0.7: {}
+
+  cropperjs@2.3.0:
+    dependencies:
+      '@cropper/elements': 2.3.0
+      '@cropper/utils': 2.3.0
 
   cross-dirname@0.1.0:
     optional: true

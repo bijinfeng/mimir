@@ -756,8 +756,12 @@ export const api = {
         body: JSON.stringify(input),
       })
     },
-    signIn(input: { email: string; password: string }) {
-      return request<{ user: unknown }>('/api/auth/sign-in/email', {
+    /**
+     * 登录。接受「用户名或邮箱」——服务端会把 identifier 解析成 email
+     * 再走 better-auth 的邮箱密码校验（见 apps/server/src/routes/auth.ts）。
+     */
+    signIn(input: { identifier: string; password: string }) {
+      return request<{ user: unknown }>('/api/auth/sign-in/identifier', {
         method: 'POST',
         body: JSON.stringify(input),
       })

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { Alert, App, Button, Form, Input, Skeleton, Typography } from 'antd'
+import type { Rule } from 'antd/es/form'
 import { createStyles } from 'antd-style'
 import { useState } from 'react'
 import { BrandMark } from '../components/BrandMark'
@@ -15,8 +16,8 @@ import { api, ApiRequestError } from '../lib/api'
  *
  * | 形态 | 何时 | 表单 |
  * |---|---|---|
- * | 首次注册 | 库里一个账号都没有 | 邮箱 + 密码 + **确认密码** |
- * | 登录 | 已有账号 | 邮箱 + 密码 |
+ * | 首次注册 | 库里一个账号都没有 | 邮箱 + 用户名（可选）+ 密码 + **确认密码** |
+ * | 登录 | 已有账号 | 用户名或邮箱 + 密码 |
  *
  * 「要不要注册」这件事**由服务端告知**（`/api/auth/setup/state`）。
  * 早期版本是「先试登录，401 就改试注册」，它的代价很具体：
@@ -48,12 +49,14 @@ export const Route = createFileRoute('/login')({
 })
 
 interface LoginValues {
-  email: string
+  identifier: string
   password: string
 }
 
-interface SignUpValues extends LoginValues {
+interface SignUpValues {
+  email: string
   name?: string
+  password: string
   confirm: string
 }
 
@@ -236,9 +239,9 @@ function LoginPage() {
     onError: (error: unknown) => {
       // 401 的原始文案是英文的 "Invalid email or password"，
       // 换成中文并说清是「哪一个可能错」——这句里两个都可能错，
-      // 不该暗示是密码错（那样用户会一直改密码而没发现是邮箱打错了）
+      // 不该暗示是密码错（那样用户会一直改密码而没发现是用户名/邮箱打错了）
       const isCredentialError = error instanceof ApiRequestError && error.status === 401
-      const text = isCredentialError ? '邮箱或密码不正确' : describeError(error)
+      const text = isCredentialError ? '用户名/邮箱或密码不正确' : describeError(error)
       // 两处都有意保留：toast 是「这次点击的结果」，提示条是「上次为什么没进去」
       setFormError(text)
       message.error(text)
@@ -341,7 +344,7 @@ function LoginPage() {
             ) : (
               <>
                 <LoginForm
-                  initialEmail={prefill?.email ?? ''}
+                  initialIdentifier={prefill?.email ?? ''}
                   initialPassword={prefill?.password ?? ''}
                   onSubmit={submit((values) => signIn.mutate(values))}
                   pending={signIn.isPending}
@@ -366,14 +369,81 @@ function LoginPage() {
   )
 }
 
-/** 日常登录：邮箱 + 密码 */
+/**
+ * 共享的「标识类」输入框——登录用的「用户名或邮箱」、注册用的「邮箱」都走它。
+ *
+ * 统一封装 `Form.Item` + `Input`，两个表单的视觉、自动填充、校验时机完全一致。
+ * `rules` 不传时默认必填；注册的可选用户名字段传自己的规则即可覆盖。
+ * `extra` 用于注册时给字段加说明文案。
+ */
+function IdentifierField({
+  name,
+  label,
+  placeholder,
+  autoComplete,
+  rules,
+  extra,
+}: {
+  name: string
+  label: string
+  placeholder: string
+  autoComplete: string
+  rules?: Rule[]
+  extra?: string
+}) {
+  return (
+    <Form.Item
+      name={name}
+      label={label}
+      extra={extra}
+      rules={rules ?? [{ required: true, message: `请输入${label}` }]}
+    >
+      <Input autoComplete={autoComplete} placeholder={placeholder} />
+    </Form.Item>
+  )
+}
+
+/**
+ * 共享的密码输入框——登录、注册、确认密码都走它。
+ *
+ * 默认必填，注册场景传入 `min` 或自定义 `rules` 覆盖。
+ * `dependencies` 用于「确认密码」随密码变化重新校验。
+ */
+function PasswordField({
+  name,
+  label,
+  placeholder,
+  autoComplete,
+  rules,
+  dependencies,
+}: {
+  name: string
+  label: string
+  placeholder: string
+  autoComplete: string
+  rules?: Rule[]
+  dependencies?: string[]
+}) {
+  return (
+    <Form.Item
+      name={name}
+      label={label}
+      dependencies={dependencies}
+      rules={rules ?? [{ required: true, message: '请输入密码' }]}
+    >
+      <Input.Password autoComplete={autoComplete} placeholder={placeholder} />
+    </Form.Item>
+  )
+}
+
+/** 日常登录：用户名或邮箱 + 密码 */
 function LoginForm({
-  initialEmail,
+  initialIdentifier,
   initialPassword,
   onSubmit,
   pending,
 }: {
-  initialEmail: string
+  initialIdentifier: string
   initialPassword: string
   onSubmit: (values: LoginValues) => void
   pending: boolean
@@ -382,19 +452,21 @@ function LoginForm({
     <Form<LoginValues>
       layout="vertical"
       requiredMark={false}
-      initialValues={{ email: initialEmail, password: initialPassword }}
+      initialValues={{ identifier: initialIdentifier, password: initialPassword }}
       onFinish={onSubmit}
     >
-      <Form.Item
-        name="email"
-        label="邮箱"
-        rules={[{ required: true, type: 'email', message: '请输入邮箱' }]}
-      >
-        <Input autoComplete="username" placeholder="me@example.com" />
-      </Form.Item>
-      <Form.Item name="password" label="密码" rules={[{ required: true, message: '请输入密码' }]}>
-        <Input.Password autoComplete="current-password" placeholder="密码" />
-      </Form.Item>
+      <IdentifierField
+        name="identifier"
+        label="用户名或邮箱"
+        placeholder="用户名或邮箱"
+        autoComplete="username"
+      />
+      <PasswordField
+        name="password"
+        label="密码"
+        placeholder="密码"
+        autoComplete="current-password"
+      />
       <Button type="primary" htmlType="submit" block loading={pending} size="large">
         登录
       </Button>
@@ -403,7 +475,10 @@ function LoginForm({
 }
 
 /**
- * 首次注册：邮箱 + 密码 + 确认密码。
+ * 首次注册：邮箱 + 用户名（可选）+ 密码 + 确认密码。
+ *
+ * 用户名留空时由服务端按邮箱前缀推导（见 login.tsx 的 signUp mutation）。
+ * 它是登录时除邮箱外的另一种凭证——单人工具里记邮箱不如记一个自己取的名字。
  *
  * 二次确认用 antd 的 `dependencies` + 自定义校验器实现——这是它处理
  * 「两个字段要相等」的标准做法，比在提交时手工比对好在**即时反馈**：
@@ -418,23 +493,33 @@ function SignUpForm({
 }) {
   return (
     <Form<SignUpValues> layout="vertical" requiredMark={false} onFinish={onSubmit}>
-      <Form.Item
+      <IdentifierField
         name="email"
         label="邮箱"
+        placeholder="admin@example.com"
+        autoComplete="email"
         rules={[{ required: true, type: 'email', message: '请输入邮箱' }]}
-      >
-        <Input autoComplete="username" placeholder="me@example.com" />
-      </Form.Item>
-      <Form.Item
+      />
+      <IdentifierField
+        name="name"
+        label="用户名（可选）"
+        placeholder="便于登录的名字"
+        autoComplete="username"
+        extra="留空将使用邮箱前缀，登录时可用用户名或邮箱"
+        rules={[{ max: 32, message: '用户名最多 32 个字符' }]}
+      />
+      <PasswordField
         name="password"
         label="密码"
+        placeholder="至少 8 位"
+        autoComplete="new-password"
         rules={[{ required: true, min: 8, message: '密码至少 8 位' }]}
-      >
-        <Input.Password autoComplete="new-password" placeholder="至少 8 位" />
-      </Form.Item>
-      <Form.Item
+      />
+      <PasswordField
         name="confirm"
         label="确认密码"
+        placeholder="再输入一次"
+        autoComplete="new-password"
         dependencies={['password']}
         rules={[
           { required: true, message: '请再输入一次密码' },
@@ -445,9 +530,7 @@ function SignUpForm({
             },
           }),
         ]}
-      >
-        <Input.Password autoComplete="new-password" placeholder="再输入一次" />
-      </Form.Item>
+      />
       <Button type="primary" htmlType="submit" block loading={pending} size="large">
         创建账号
       </Button>

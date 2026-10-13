@@ -36,6 +36,51 @@ describe('认证', () => {
     expect(res.status).toBe(200)
     expect(res.body.user.email).toBe(TEST_USER.email)
   })
+
+  it('支持用邮箱登录（/sign-in/identifier）', async () => {
+    const res = await app.request('/api/auth/sign-in/identifier', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier: TEST_USER.email, password: TEST_USER.password }),
+    })
+    expect(res.status).toBe(200)
+  })
+
+  it('支持用用户名登录（/sign-in/identifier）', async () => {
+    const res = await app.request('/api/auth/sign-in/identifier', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier: TEST_USER.name, password: TEST_USER.password }),
+    })
+    expect(res.status).toBe(200)
+  })
+
+  it('用户名或密码错误返回 401', async () => {
+    const res = await app.request('/api/auth/sign-in/identifier', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier: TEST_USER.name, password: 'wrong-password' }),
+    })
+    expect(res.status).toBe(401)
+  })
+
+  it('不存在的用户名返回 401', async () => {
+    const res = await app.request('/api/auth/sign-in/identifier', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier: 'nobody', password: TEST_USER.password }),
+    })
+    expect(res.status).toBe(401)
+  })
+
+  it('缺少参数返回 400', async () => {
+    const res = await app.request('/api/auth/sign-in/identifier', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier: TEST_USER.name }),
+    })
+    expect(res.status).toBe(400)
+  })
 })
 
 describe('笔记 CRUD 与文件落盘', () => {

@@ -20,6 +20,18 @@ Managed by Trellis. Edits outside this block are preserved; edits inside may be 
 
 <!-- TRELLIS:END -->
 
+## 测试账号
+
+统一使用以下凭据进行登录测试（与 `.env` 的 `OWNER_EMAIL` / `OWNER_PASSWORD`、`apps/server/src/test/helpers.ts` 的 `TEST_USER` 保持一致）：
+
+| 字段 | 值 |
+|---|---|
+| 邮箱 | `admin@example.com` |
+| 密码 | `12345678` |
+| 用户名 | `admin` |
+
+新增测试、验证脚本或手动验证时必须使用此账号，不要自行创建其他账号。
+
 ## Research reference
 
 For every research task in this project, check [WeKnora](https://weknora.weixin.qq.com/) and its [public source](https://github.com/Tencent/WeKnora). Record the version and concrete evidence, then explain how it applies to Mimir or why it does not. Choose the main reference by domain: WeKnora for the knowledge base and Agent, Obsidian for page layout and visual style, and Office for the web, Google Docs, and GenOffice for file editing. Do not use WeKnora's Markdown editor as the primary model for Office toolbars.

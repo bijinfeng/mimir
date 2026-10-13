@@ -12,7 +12,7 @@ it('routes JSON, multipart, downloads, and server avatar URLs through the gatewa
     const url = String(input)
     if (url.endsWith('/get-session')) {
       return Response.json({
-        user: { id: '1', email: 'owner@example.com', name: 'Owner', image: '/api/avatar?v=1' },
+        user: { id: '1', email: 'admin@example.com', name: 'Admin', image: '/api/avatar?v=1' },
       })
     }
     if (url.endsWith('/avatar')) {

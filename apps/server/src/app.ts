@@ -21,6 +21,7 @@ import { filesRoute } from './routes/files.js'
 import { exportRoute } from './routes/export.js'
 import { feedsRoute } from './routes/feeds.js'
 import { localRoute } from './routes/local.js'
+import { authRoute } from './routes/auth.js'
 import { setupRoute } from './routes/setup.js'
 import { mountStatic } from './lib/static.js'
 import { localSessionPayload, localTokenMatches } from './services/local-mode.js'
@@ -72,6 +73,12 @@ export function createApp() {
    * 与认证端点归在一起比单开一个顶层名字更自然。
    */
   app.route('/api/auth/setup', setupRoute)
+
+  /**
+   * 自定义认证端点（用户名或邮箱登录）。
+   * 同样必须在通配 `auth.handler` 之前注册——否则会被它吞掉。
+   */
+  app.route('/api/auth', authRoute)
 
   /**
    * 本地模式的会话读取（D-100）。

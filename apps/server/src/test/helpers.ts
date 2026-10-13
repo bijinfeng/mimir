@@ -3,9 +3,9 @@ import { createApp } from '../app.js'
 export const app = createApp()
 
 export const TEST_USER = {
-  email: 'owner@example.com',
-  password: 'test-password-123',
-  name: 'owner',
+  email: 'admin@example.com',
+  password: '12345678',
+  name: 'admin',
 }
 
 function readCookie(res: Response): string {

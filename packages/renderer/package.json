@@ -38,6 +38,7 @@
     "@tiptap/react": "catalog:",
     "@tiptap/starter-kit": "catalog:",
     "@uiw/react-heat-map": "2.3.4",
+    "cropperjs": "^2.3.0",
     "dayjs": "^1.11.23",
     "lowlight": "^3.3.0",
     "lucide": "^1.48.0",

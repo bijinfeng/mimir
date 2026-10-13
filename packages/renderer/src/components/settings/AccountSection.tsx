@@ -1,9 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { App, Avatar, Button, Input, Popconfirm, Upload } from 'antd'
+import { Camera, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { api, type AuthSession } from '../../lib/api'
-import { cropAvatar } from '../../lib/avatar'
+import { type CroppedAvatar } from '../../lib/avatar'
 import { LoadError } from '../LoadError'
+import { AvatarCropper } from '../AvatarCropper'
 import { Block, Panel } from './parts'
 import { useAccountStyles } from './AccountSection.style'
 import { clearSettingDraft, readSettingDraft, writeSettingDraft } from './draft-memory'
@@ -31,8 +33,10 @@ import { clearSettingDraft, readSettingDraft, writeSettingDraft } from './draft-
  * - **名称**：显式点保存。与设置页其它键一致（`SettingControl` 的注释解释了
  *   为什么不用 onBlur——真实浏览器里按 Tab 后焦点不离开，blur 不触发，
  *   于是「界面上显示新值、数据库里一行都没有」）
- * - **头像**：选中文件即上传。它没有「输入到一半」的中间状态，
- *   再要一次确认只是多一步；而上传有明确的进行中状态（按钮 loading）
+ * - **头像**：选中文件 → 可视化裁切（`AvatarCropper`）→ 确认后上传。
+ *   自动中心裁切可能截掉用户想保留的部分（人脸偏左的照片），所以让用户
+ *   自己决定取哪块。进行中状态由**本地预览**承担——裁切确认后立即显示新图，
+ *   上传完成再换成服务端版本，用户不会怀疑「点了没反应」
  *
  * ## 预览用本地 objectURL，不等服务端返回
  *
@@ -91,7 +95,18 @@ export function AccountSection() {
   )
 }
 
-/** 头像列：预览 + 上传 / 移除。上传是**选中即传**，没有二次确认 */
+/**
+ * 头像列：预览 + 右下角相机按钮（上传）+ 右上角移除按钮（hover 显现）。
+ *
+ * ## 交互设计
+ *
+ * - **点击头像**：选文件 → 弹出 `AvatarCropper` 可视化裁切 → 确认后上传
+ * - **相机图标**：仅作视觉提示，不承担点击（点击穿透到头像）
+ * - **移除按钮**：hover 头像时显现，点击弹出确认后移除
+ *
+ * 选中文件后不直接上传，而是先让用户裁切——自动中心裁切可能截掉用户想保留的
+ * 部分（比如人脸偏左的照片），可视化裁切让用户自己决定取哪块。
+ */
 function AvatarColumn({ session }: { session: AuthSession | null }) {
   const { styles: accountStyles } = useAccountStyles()
   const { message } = App.useApp()
@@ -102,14 +117,12 @@ function AvatarColumn({ session }: { session: AuthSession | null }) {
    * 留着本地 URL 会掩盖「服务端其实存的是另一张」这种问题。
    */
   const [preview, setPreview] = useState<string | null>(null)
+  /** 待裁切的文件；非 null 时渲染 `AvatarCropper` 弹窗 */
+  const [cropFile, setCropFile] = useState<File | null>(null)
 
   /**
    * 组件卸载时释放 objectURL。**不释放就会泄漏**：每个 URL 持有整个
    * Blob 的内存，而换十次头像就是十份 256×256 的位图。
-   *
-   * 用 effect 而不是在 onChange 里读到新值就释放旧的：onChange 里
-   * 那个闭包可能已经被重渲染替换掉，而 effect 的清理函数拿到的一定是
-   * 当前这一轮的 `preview`。
    */
   useEffect(() => {
     return () => {
@@ -118,8 +131,7 @@ function AvatarColumn({ session }: { session: AuthSession | null }) {
   }, [preview])
 
   const upload = useMutation({
-    mutationFn: async (file: File) => {
-      const cropped = await cropAvatar(file)
+    mutationFn: async (cropped: CroppedAvatar) => {
       setPreview(cropped.previewUrl)
       return api.avatar.upload(cropped.blob)
     },
@@ -149,27 +161,13 @@ function AvatarColumn({ session }: { session: AuthSession | null }) {
 
   return (
     <div className={accountStyles.avatarColumn}>
-      <Avatar
-        size={72}
-        src={image}
-        className={accountStyles.avatar}
-        /* 无头像时显示名称首字（antd 的默认回落行为） */
-      >
-        {session?.user.name?.slice(0, 1).toUpperCase() ?? '?'}
-      </Avatar>
-
-      <div className={accountStyles.avatarActions}>
+      <div className={accountStyles.avatarWrapper}>
         {/*
-          用 antd 的 `Upload` 而不是 `<label>` + 隐藏的原生 `<input type="file">`。
-
-          原来的写法是无脚本也能工作的经典做法，但它有一个这里很致命的
-          缺点：**原生控件不服从 token 体系**——各浏览器给它的默认样式不同，
-          深浅两套主题也管不到它。而这个项目已经因为「原生控件看起来
-          不属于这套设计」改过一次（统计页的范围选择器）。
-
-          `beforeUpload` 返回 `false` 是**刻意的**：它阻止 antd 自己发请求，
-          因为我们要先本地裁剪再上传（`cropAvatar`）。返回 `false` 之后
-          `onChange` 不会带出可用的文件列表，所以直接在这里 `mutate`。
+          整个头像都是可点击区域——点击即选文件。
+          用 antd 的 `Upload` 而不是裸 `<input type="file">`：
+          原生控件不服从 token 体系，深浅主题都管不到它。
+          `beforeUpload` 返回 `false` 是刻意的：阻止 antd 自己发请求，
+          改走我们自己的裁切 + 上传流程（`AvatarCropper`）。
         */}
         <Upload
           accept="image/png,image/jpeg,image/webp"
@@ -177,22 +175,34 @@ function AvatarColumn({ session }: { session: AuthSession | null }) {
           maxCount={1}
           disabled={upload.isPending}
           beforeUpload={(file) => {
-            upload.mutate(file)
+            setCropFile(file)
             return false
           }}
         >
-          <Button size="small" loading={upload.isPending}>
-            {image ? '更换' : '上传头像'}
-          </Button>
+          <div className={accountStyles.avatarClickable} aria-label="更换头像" role="button">
+            <Avatar
+              size={72}
+              src={image}
+              className={accountStyles.avatar}
+              /* 无头像时显示名称首字（antd 的默认回落行为） */
+            >
+              {session?.user.name?.slice(0, 1).toUpperCase() ?? '?'}
+            </Avatar>
+          </div>
         </Upload>
 
         {/*
-          「移除」要确认。
+          右下角相机图标：仅作视觉提示，不承担点击（`pointer-events: none`）。
+          点击穿透到下面的头像可点击区域，由 `Upload` 统一处理文件选择。
+        */}
+        <span className={accountStyles.cameraBtn} aria-hidden="true">
+          <Camera size={10} strokeWidth={2} />
+        </span>
 
-          头像是一次点击就没了，而它没有撤销——`type="link"` 时它与
-          「更换」长得一样显眼，误触的代价却不对称。这里两处都改：
-          按钮形态回到 `default`（它们是动作，不是链接文字），
-          删除加一层 `Popconfirm`（与供应商删除同一个做法）。
+        {/*
+          右上角移除按钮：仅在有头像且 hover 时显现。
+          用 `Popconfirm` 包一层——头像是一次点击就没了，且没有撤销，
+          需要二次确认。`data-role` 属性供样式里的 hover 选择器使用。
         */}
         {image ? (
           <Popconfirm
@@ -200,12 +210,30 @@ function AvatarColumn({ session }: { session: AuthSession | null }) {
             description="移除后显示名称首字"
             onConfirm={() => remove.mutate()}
           >
-            <Button size="small" loading={remove.isPending}>
-              移除
-            </Button>
+            <button
+              type="button"
+              className={accountStyles.removeBtn}
+              data-role="remove-avatar"
+              aria-label="移除头像"
+              title="移除头像"
+            >
+              <X size={12} strokeWidth={2.5} />
+            </button>
           </Popconfirm>
         ) : null}
       </div>
+
+      {/* 可视化裁切弹窗：选中文件后出现，确认裁切后上传 */}
+      {cropFile ? (
+        <AvatarCropper
+          file={cropFile}
+          onConfirm={(cropped) => {
+            setCropFile(null)
+            upload.mutate(cropped)
+          }}
+          onCancel={() => setCropFile(null)}
+        />
+      ) : null}
     </div>
   )
 }

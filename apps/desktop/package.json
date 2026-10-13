@@ -6,7 +6,7 @@
   "main": "dist/main/index.js",
   "scripts": {
     "build": "pnpm routes:generate && electron-vite build",
-    "build:watch": "electron-vite build --watch",
+    "build:watch": "node scripts/watch-build.mjs",
     "start": "electron .",
     "package": "electron-builder",
     "typecheck": "pnpm routes:generate && tsc --noEmit",
