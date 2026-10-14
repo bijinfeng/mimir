@@ -100,7 +100,7 @@ export function createChatIo({
     onManageModels,
     onOpenDocument,
     async cancelDocxAgentRun(conversationId, runId) {
-      await api.conversations.cancelDocxAgentRun(conversationId, runId)
+      await api.conversations.cancelDocumentAgentRun(conversationId, runId)
       invalidate([['conversation', conversationId]])
     },
     async generateDocxImage(documentId, prompt, signal) {

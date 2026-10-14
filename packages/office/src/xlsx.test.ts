@@ -128,9 +128,19 @@ describe('readXlsx 的边界', () => {
     expect(sheet.rows[0]?.cells[0]?.rowSpan).toBe(2)
   })
 
-  it('没有可显示内容时给出可读的错误（不是画一张空表）', async () => {
+  it('空工作表仍显示可编辑的 A1，且不把它计作已用内容', async () => {
     const bytes = buildXlsx({ sheetData: ['<row r="1"><c r="A1"><v></v></c></row>'] })
-    await expect(readXlsx(bytes)).rejects.toThrow(/没有可显示的内容/)
+    const sheet = (await readXlsx(bytes)).sheets[0]
+    expect(sheet?.empty).toBe(true)
+    expect(sheet?.rows[0]?.cells[0]?.text).toBe('')
+    expect(sheet?.columns).toHaveLength(1)
+  })
+
+  it('没有缓存值的公式行仍可见', async () => {
+    const bytes = buildXlsx({ sheetData: ['<row r="2"><c r="A2"><f>1+2</f></c></row>'] })
+    const sheet = (await readXlsx(bytes)).sheets[0]
+    expect(sheet?.rows[0]?.number).toBe(2)
+    expect(sheet?.rows[0]?.cells[0]?.formulaText).toBe('=1+2')
   })
 })
 

@@ -1,6 +1,6 @@
 import type { DocumentDetail } from '@mimir/shared'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { DocxAgentHandle } from '@mimir/office'
+import type { ChatDocumentAgent } from '@mimir/chat'
 import { DocxEditor, HtmlEditor, PdfEditor, PptxEditor, XlsxEditor } from '@mimir/office'
 import { App } from 'antd'
 import { useEditorThemeVars } from '../../theme/editor-theme-bridge'
@@ -33,12 +33,12 @@ export function OfficeSourceEditor({
   doc,
   kind,
   onDirtyChange,
-  onDocxAgentHandleChange,
+  onDocumentAgentHandleChange,
 }: {
   doc: DocumentDetail
   kind: 'docx' | 'xlsx' | 'pptx' | 'html' | 'pdf'
   onDirtyChange?: (dirty: boolean) => void
-  onDocxAgentHandleChange?: (handle: DocxAgentHandle | null) => void
+  onDocumentAgentHandleChange?: (handle: ChatDocumentAgent | null) => void
 }) {
   const { styles: themeVars } = useEditorThemeVars()
   const { message } = App.useApp()
@@ -154,15 +154,43 @@ export function OfficeSourceEditor({
    */
   const editor =
     kind === 'docx' ? (
-      <DocxEditor key={doc.id} flush {...props} onAgentHandleChange={onDocxAgentHandleChange} />
+      <DocxEditor key={doc.id} flush {...props} onAgentHandleChange={onDocumentAgentHandleChange} />
     ) : kind === 'xlsx' ? (
-      <XlsxEditor key={doc.id} flush {...props} />
+      <XlsxEditor
+        key={doc.id}
+        flush
+        {...props}
+        onAgentHandleChange={onDocumentAgentHandleChange}
+        hostApply={api.documents.applyXlsxOps}
+      />
     ) : kind === 'html' ? (
-      <HtmlEditor key={doc.id} flush {...props} />
+      <HtmlEditor
+        key={doc.id}
+        flush
+        {...props}
+        onAgentHandleChange={onDocumentAgentHandleChange}
+        agentServices={{
+          planPage: ({ signal, ...input }) => api.documents.planHtmlPage(doc.id, input, signal),
+          writeDocument: ({ signal, ...input }) =>
+            api.documents.writeHtmlDocument(doc.id, input, signal),
+        }}
+      />
     ) : kind === 'pdf' ? (
-      <PdfEditor key={doc.id} flush {...props} />
+      <PdfEditor
+        key={doc.id}
+        flush
+        {...props}
+        onAgentHandleChange={onDocumentAgentHandleChange}
+        hostApply={(input) => api.documents.applyPdfText({ documentId: doc.id, ...input })}
+      />
     ) : (
-      <PptxEditor key={doc.id} flush {...props} />
+      <PptxEditor
+        key={doc.id}
+        flush
+        {...props}
+        onAgentHandleChange={onDocumentAgentHandleChange}
+        hostApply={api.documents.applyPptxOps}
+      />
     )
 
   return <div className={themeVars.vars}>{editor}</div>

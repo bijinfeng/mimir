@@ -1,143 +1,126 @@
-import {
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type KeyboardEvent,
-  type ReactNode,
-} from 'react'
-import {
-  ToolbarDivider,
-  ToolbarMenu,
-  ToolbarMenuFields,
-  ToolbarMenuSeparator,
-} from '../shell/EditorShell.js'
+import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 
 export interface CompactToolbarSection {
   key: string
   label: string
-  /** Minimum editor-column width needed to keep this section in the command row. */
+  /** Kept for callers during the ribbon migration; width no longer hides commands. */
   minWidth: number
+  tab?: string
+  /** Omit commands that the current editor or document cannot provide. */
+  enabled?: boolean
   content: ReactNode
 }
 
-function CompactOverflowPanel({
+export interface CompactToolbarTab {
+  key: string
+  label: string
+}
+
+/** A visible tab strip and a horizontally scrollable command band. */
+export function CompactToolbar({
   sections,
-  close,
+  tabs,
+  activeTab: controlledTab,
+  onTabChange,
+  quickAccess,
 }: {
   sections: readonly CompactToolbarSection[]
-  close: () => void
+  tabs?: readonly CompactToolbarTab[]
+  activeTab?: string
+  onTabChange?: (key: string) => void
+  /** Actions that stay visible before the scrollable ribbon tabs. */
+  quickAccess?: ReactNode
+  /** Legacy prop retained while format toolbars migrate away from overflow menus. */
+  overflowLabel?: string
 }) {
-  const panelRef = useRef<HTMLDivElement>(null)
+  const [requestedTab, setRequestedTab] = useState<string | null>(null)
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([])
+  const id = useId()
+  const selectedTab = controlledTab ?? requestedTab
+  const activeTab = tabs?.some((tab) => tab.key === selectedTab) ? selectedTab : tabs?.[0]?.key
+  const available = sections.filter(
+    (section) =>
+      section.enabled !== false && section.content !== null && section.content !== undefined,
+  )
+  const shown = tabs
+    ? available.filter((section) => (section.tab ?? tabs[0]?.key) === activeTab)
+    : available
 
-  useLayoutEffect(() => {
-    const panel = panelRef.current?.parentElement
-    const editor = panel?.closest<HTMLElement>('.mimir-editor')
-    if (!panel || !editor) return
-    const bounds = editor.getBoundingClientRect()
-    const left = Math.max(0, bounds.left)
-    const right = Math.min(window.innerWidth, bounds.right)
-    const available = right - left - 16
-    if (available <= 0) return
-    const width = Math.min(320, available)
-    // ToolbarMenu uses viewport coordinates. Keep its panel inside the editor column.
-    panel.style.width = `${width}px`
-    panel.style.left = `${right - width - 8}px`
-    const top = Number.parseFloat(panel.style.top)
-    const bottom = Number.parseFloat(panel.style.bottom)
-    const room = Number.isFinite(top)
-      ? window.innerHeight - top - 8
-      : Number.isFinite(bottom)
-        ? window.innerHeight - bottom - 8
-        : window.innerHeight - 16
-    panel.style.maxHeight = `${Math.max(0, Math.min(window.innerHeight * 0.6, room))}px`
-  })
+  const selectTab = (key: string) => {
+    if (controlledTab === undefined) setRequestedTab(key)
+    onTabChange?.(key)
+  }
 
-  useEffect(() => {
-    // ToolbarMenu focuses its panel when opened; move focus to the first actual command.
-    queueMicrotask(() =>
-      panelRef.current
-        ?.querySelector<HTMLElement>(
-          'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
-        )
-        ?.focus(),
-    )
-  }, [])
-
-  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key !== 'Tab') return
-    const focusable = Array.from(
-      panelRef.current?.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      ) ?? [],
-    )
-    const first = focusable[0]
-    const last = focusable[focusable.length - 1]
-    event.stopPropagation()
-    if (
-      (event.shiftKey && document.activeElement === first) ||
-      (!event.shiftKey && document.activeElement === last)
-    ) {
-      event.preventDefault()
-      close()
-    }
+  const onTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (!tabs?.length) return
+    let next = index
+    if (event.key === 'ArrowRight') next = (index + 1) % tabs.length
+    else if (event.key === 'ArrowLeft') next = (index - 1 + tabs.length) % tabs.length
+    else if (event.key === 'Home') next = 0
+    else if (event.key === 'End') next = tabs.length - 1
+    else return
+    event.preventDefault()
+    selectTab(tabs[next]!.key)
+    tabRefs.current[next]?.focus()
   }
 
   return (
-    <div ref={panelRef} className="mimir-compact-toolbar__panel" onKeyDown={onKeyDown}>
-      {sections.map((section, index) => (
-        <div key={section.key}>
-          {index > 0 && <ToolbarMenuSeparator />}
-          <ToolbarMenuFields label={section.label}>{section.content}</ToolbarMenuFields>
+    <div className="mimir-compact-toolbar">
+      {(quickAccess != null || (tabs && tabs.length > 0)) && (
+        <div className="mimir-compact-toolbar__tab-row">
+          {quickAccess != null && (
+            <div className="mimir-compact-toolbar__quick-access" role="group" aria-label="快捷操作">
+              {quickAccess}
+            </div>
+          )}
+          {quickAccess != null && tabs && tabs.length > 0 && (
+            <span className="mimir-compact-toolbar__quick-divider" aria-hidden="true" />
+          )}
+          {tabs && tabs.length > 0 && (
+            <div className="mimir-compact-toolbar__tabs" role="tablist" aria-label="编辑分类">
+              {tabs.map((tab, index) => (
+                <button
+                  key={tab.key}
+                  ref={(node) => {
+                    tabRefs.current[index] = node
+                  }}
+                  className="mimir-compact-toolbar__tab"
+                  type="button"
+                  role="tab"
+                  id={`${id}-tab-${tab.key}`}
+                  aria-controls={`${id}-commands`}
+                  aria-selected={tab.key === activeTab}
+                  tabIndex={tab.key === activeTab ? 0 : -1}
+                  onClick={() => selectTab(tab.key)}
+                  onKeyDown={(event) => onTabKeyDown(event, index)}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-      ))}
-    </div>
-  )
-}
-
-/** The same control tree is mounted either in the row or in the named overflow panel. */
-export function CompactToolbar({
-  sections,
-  overflowLabel = '更多工具',
-}: {
-  sections: readonly CompactToolbarSection[]
-  overflowLabel?: string
-}) {
-  const hostRef = useRef<HTMLDivElement>(null)
-  // Keep the existing full toolbar in DOM-only test environments without layout metrics.
-  const [width, setWidth] = useState(1200)
-
-  useLayoutEffect(() => {
-    const host = hostRef.current
-    if (!host) return
-    const measured = host.getBoundingClientRect().width
-    if (measured > 0) setWidth(measured)
-    const observer = new ResizeObserver(([entry]) => {
-      if (entry && entry.contentRect.width > 0) setWidth(entry.contentRect.width)
-    })
-    observer.observe(host)
-    return () => observer.disconnect()
-  }, [])
-
-  const visible = sections.filter((section) => width >= section.minWidth)
-  const hidden = sections.filter((section) => width < section.minWidth)
-
-  return (
-    <div ref={hostRef} className="mimir-compact-toolbar">
-      {visible.map((section, index) => (
-        <span className="mimir-compact-toolbar__section" key={section.key}>
-          {index > 0 && <ToolbarDivider />}
-          {section.content}
-        </span>
-      ))}
-      {hidden.length > 0 && (
-        <ToolbarMenu
-          label={overflowLabel}
-          text="更多"
-          panelWidth={320}
-          renderPanel={(close) => <CompactOverflowPanel sections={hidden} close={close} />}
-        />
       )}
+      <div
+        className="mimir-compact-toolbar__commands"
+        id={tabs ? `${id}-commands` : undefined}
+        role={tabs ? 'tabpanel' : undefined}
+        aria-labelledby={tabs && activeTab ? `${id}-tab-${activeTab}` : undefined}
+      >
+        {shown.map((section) => (
+          <div
+            className="mimir-compact-toolbar__section"
+            key={section.key}
+            role="group"
+            aria-label={section.label}
+          >
+            <div className="mimir-compact-toolbar__controls">{section.content}</div>
+            <span className="mimir-compact-toolbar__caption" aria-hidden="true">
+              {section.label}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

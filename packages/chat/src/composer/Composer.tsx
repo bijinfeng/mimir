@@ -218,6 +218,7 @@ export interface ComposerProps {
   /** 深入 = 用推理角色回答（随消息的 runConfig 走） */
   deepReasoning: boolean
   onDeepReasoningChange: (deep: boolean) => void
+  showReasoningControl?: boolean
   focusOnMount?: boolean
   io: ChatIo
   status: ChatComposerStatus
@@ -229,6 +230,7 @@ export function Composer({
   onContextDocumentChange,
   deepReasoning,
   onDeepReasoningChange,
+  showReasoningControl = true,
   focusOnMount,
   io,
   status,
@@ -330,8 +332,10 @@ export function Composer({
               <ContextUsageChip usage={status.usage} />
             </div>
             <div className={`${styles.barGroup} ${styles.barRight}`}>
-              {/* 本轮强度与全局模型绑定贴着发送键，窄栏允许整组换行。 */}
-              <StrengthDropdown value={deepReasoning} onChange={onDeepReasoningChange} />
+              {/* 主视图可选思考强度；文档侧栏固定使用标准聊天模型。 */}
+              {showReasoningControl && (
+                <StrengthDropdown value={deepReasoning} onChange={onDeepReasoningChange} />
+              )}
               <ModelDropdown
                 deepReasoning={deepReasoning}
                 modelRoles={status.modelRoles}

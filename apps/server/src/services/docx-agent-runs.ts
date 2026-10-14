@@ -1,9 +1,16 @@
 import { and, eq, gt, isNull } from 'drizzle-orm'
-import type { DocxAgentHistory, DocxAgentToolHistory } from '@mimir/shared'
+import { documentAgentToolResultSchema } from '@mimir/shared'
+import type { DocumentAgentFormat, DocxAgentHistory, DocxAgentToolHistory } from '@mimir/shared'
 import { db } from '../db/client.js'
 import { docxAgentRuns } from '../db/schema.js'
 
 const PENDING_TTL_MS = 30 * 60 * 1000
+
+type ToolResponse = {
+  interruptId: string
+  status: 'resolved' | 'cancelled'
+  payload?: unknown
+}
 
 function sortedIds(ids: readonly string[]): string[] {
   const unique = new Set(ids)
@@ -17,6 +24,8 @@ export async function rememberDocxInterrupt(input: {
   runId: string
   conversationId: string
   documentId: string
+  format?: DocumentAgentFormat
+  version?: number
   roundId: string
   messageId: string
   interruptIds: string[]
@@ -34,6 +43,8 @@ export async function rememberDocxInterrupt(input: {
     runId: input.runId,
     conversationId: input.conversationId,
     documentId: input.documentId,
+    format: input.format ?? 'docx',
+    version: input.version ?? 0,
     roundId: input.roundId,
     messageId: input.messageId,
     interruptIds,
@@ -45,11 +56,7 @@ export async function rememberDocxInterrupt(input: {
 /** Persist only tool names and execution states; never arguments or document text. */
 export async function settleDocxInterrupt(
   runId: string,
-  responses: readonly {
-    interruptId: string
-    status: 'resolved' | 'cancelled'
-    payload?: unknown
-  }[],
+  responses: readonly ToolResponse[],
 ): Promise<void> {
   const [row] = await db.select().from(docxAgentRuns).where(eq(docxAgentRuns.runId, runId))
   if (!row) throw new Error('工具中断记录不存在')
@@ -91,6 +98,7 @@ export async function loadDocxAgentHistory(
       {
         runId: row.runId,
         documentId: row.documentId,
+        format: row.format as DocumentAgentFormat,
         status: row.status as DocxAgentHistory['status'],
         tools: row.tools,
       },
@@ -134,17 +142,26 @@ export async function cancelPendingDocxRun(
 export async function consumeDocxInterrupt(input: {
   conversationId: string
   documentId: string
+  format?: DocumentAgentFormat
+  version?: number
   roundId: string
   interruptIds: string[]
+  responses?: readonly ToolResponse[]
 }): Promise<string | null> {
   const requested = sortedIds(input.interruptIds)
   const rows = await db
-    .select({ runId: docxAgentRuns.runId, interruptIds: docxAgentRuns.interruptIds })
+    .select({
+      runId: docxAgentRuns.runId,
+      interruptIds: docxAgentRuns.interruptIds,
+      tools: docxAgentRuns.tools,
+      version: docxAgentRuns.version,
+    })
     .from(docxAgentRuns)
     .where(
       and(
         eq(docxAgentRuns.conversationId, input.conversationId),
         eq(docxAgentRuns.documentId, input.documentId),
+        eq(docxAgentRuns.format, input.format ?? 'docx'),
         eq(docxAgentRuns.roundId, input.roundId),
         isNull(docxAgentRuns.consumedAt),
         gt(docxAgentRuns.expiresAt, new Date()),
@@ -156,7 +173,43 @@ export async function consumeDocxInterrupt(input: {
   )
   if (matches.length !== 1) return null
 
-  const runId = matches[0]!.runId
+  const row = matches[0]!
+  if (input.responses) {
+    if (input.version === undefined) throw new Error('工具续轮缺少画布版本')
+    if (input.responses.length !== row.tools.length) throw new Error('工具结果数量不匹配')
+    const responses = new Map(input.responses.map((response) => [response.interruptId, response]))
+    if (responses.size !== row.tools.length) throw new Error('工具结果中断 ID 重复')
+    let expectedVersion = row.version
+    let hasCancellation = false
+    for (const tool of row.tools) {
+      const response = responses.get(tool.interruptId)
+      if (!response) throw new Error('工具结果与中断 ID 不匹配')
+      if (response.status === 'cancelled') {
+        if (response.payload !== undefined) throw new Error('已取消工具不得携带执行结果')
+        hasCancellation = true
+        continue
+      }
+      if (response.status !== 'resolved') throw new Error('工具结果状态无效')
+      const parsed = documentAgentToolResultSchema.safeParse(response.payload)
+      if (!parsed.success) throw new Error('工具执行结果无效')
+      const result = parsed.data
+      if (result.changed === true) {
+        if (result.version === undefined || result.version <= expectedVersion)
+          throw new Error('工具修改版本无效')
+        expectedVersion = result.version
+      } else if (result.version !== undefined && result.version !== expectedVersion) {
+        throw new Error('工具只读结果版本不匹配')
+      }
+    }
+    // A cancelled in-flight editor operation can leave an unsaved partial change
+    // without a resolved result. The fresh context is still sent to the model,
+    // while a lower version or an unexplained advance remains stale.
+    if (input.version !== expectedVersion && !(hasCancellation && input.version > expectedVersion))
+      return null
+  } else if (input.version !== undefined && input.version !== row.version) {
+    return null
+  }
+  const runId = row.runId
   const consumed = await db
     .update(docxAgentRuns)
     .set({ consumedAt: new Date() })

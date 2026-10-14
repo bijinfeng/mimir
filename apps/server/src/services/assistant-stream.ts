@@ -11,6 +11,8 @@ import { streamChat as streamModelChat, modelReady } from './model.js'
 import { getDocument } from './documents.js'
 import { searchOnlyAnswer } from './search-only-answer.js'
 import { streamDocxAgent } from './docx-agent-stream.js'
+import { classifyFailure } from './chat-failure.js'
+export { classifyFailure } from './chat-failure.js'
 
 /**
  * 通道名的中文标签（trace 用）。与 `assistant.ts` 同一套取值，
@@ -320,7 +322,6 @@ function errorResponse(status: number, code: string, message: string): Response 
     headers: { 'Content-Type': 'application/json' },
   })
 }
-
 export async function streamChat(requestBody: unknown): Promise<Response> {
   const parsed = await chatParamsFromRequestBody(requestBody).catch(() => null)
   if (!parsed) {
@@ -329,10 +330,12 @@ export async function streamChat(requestBody: unknown): Promise<Response> {
 
   const agentProps = parsed.forwardedProps.runConfig
   if (
+    parsed.forwardedProps.documentAgent === true ||
     parsed.forwardedProps.docxAgent === true ||
     (typeof agentProps === 'object' &&
       agentProps !== null &&
-      (agentProps as Record<string, unknown>).docxAgent === true)
+      ((agentProps as Record<string, unknown>).documentAgent === true ||
+        (agentProps as Record<string, unknown>).docxAgent === true))
   ) {
     return streamDocxAgent(parsed)
   }
@@ -614,20 +617,4 @@ async function persistAssistant(
     citations: retrieval.citations,
     failure,
   })
-}
-
-/** 把异常映射成前端能识别的失败类型。四类的区分是刻意的，见 .trellis/spec/project/product.md §5.8 */
-export function classifyFailure(error: unknown): FailureKind {
-  const message = error instanceof Error ? error.message : String(error)
-  const status = (error as { status?: number }).status
-
-  if (status === 402 || /quota|balance|insufficient|余额/i.test(message)) return 'quota'
-  if (status === 429 || /rate limit|限流/i.test(message)) return 'quota'
-  if (status === 408 || /timeout|timed out|超时/i.test(message)) return 'timeout'
-  if (/fetch failed|ENOTFOUND|ECONNREFUSED|network|不可达/i.test(message)) return 'offline'
-  if (/length|max_tokens|truncat|截断/i.test(message)) return 'truncated'
-
-  // 认不出来的当超时处理：它是最温和的一类（可重试、内容没丢），
-  // 猜错的代价最小。猜成「额度用尽」会让用户去充值，那是真的花钱
-  return 'timeout'
 }

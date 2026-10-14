@@ -47,7 +47,7 @@ export interface MimirAgentOptions {
   /** Read at request time so a newly loaded or replaced editor is never captured. */
   docxAgent?: ChatDocxAgent | null
   round: { id: string | null; version: number | null }
-  selection: { value: { from: number; to: number; text: string } | null }
+  selection: { value: unknown }
 }
 
 function queuedSelection(value: unknown): { from: number; to: number; text: string } | null {
@@ -75,6 +75,10 @@ export function createMimirAgent({
 } {
   const url = io.chatUrl ?? DEFAULT_CHAT_URL
   let activeDocxAgent = docxAgent
+  // AG-UI gives a new local thread a provisional ID before any Mimir
+  // conversation exists. Only a conversation supplied by the host or created
+  // through ChatIo can be used for a document tool continuation.
+  let activeConversationId = conversationId
 
   const agent = new HttpAgent({
     url,
@@ -103,11 +107,10 @@ export function createMimirAgent({
         forwardedProps?: Record<string, unknown>
       }
       const forwarded = input.forwardedProps ?? {}
-      const existing =
-        typeof forwarded.conversationId === 'string' ? forwarded.conversationId : input.threadId
 
       const currentDocxAgent = activeDocxAgent
       if (currentDocxAgent) {
+        const format = currentDocxAgent.format ?? 'docx'
         const previous =
           typeof forwarded.runConfig === 'object' && forwarded.runConfig !== null
             ? (forwarded.runConfig as Record<string, unknown>)
@@ -116,13 +119,17 @@ export function createMimirAgent({
         // A resume must retain the same pair; only a legacy/unprepared fresh
         // request falls back to dispatch-time capture.
         if (!Array.isArray((input as RunAgentInput & { resume?: unknown }).resume)) {
-          const preparedRound = previous.docxRoundId
-          const preparedSelection = queuedSelection(previous.docxSelection)
-          const preparedVersion = previous.docxVersion
+          const preparedRound = previous.agentRoundId ?? previous.docxRoundId
+          const preparedSelection =
+            format === 'docx'
+              ? queuedSelection(previous.agentSelection ?? previous.docxSelection)
+              : previous.agentSelection
+          const preparedVersion = previous.agentVersion ?? previous.docxVersion
           if (
             typeof preparedRound === 'string' &&
             preparedRound !== round.id &&
-            preparedSelection &&
+            preparedSelection !== undefined &&
+            preparedSelection !== null &&
             Number.isSafeInteger(preparedVersion)
           ) {
             round.id = preparedRound
@@ -134,7 +141,7 @@ export function createMimirAgent({
             round.version = currentDocxAgent.getVersion()
           }
         } else if (round.id === null || round.version === null) {
-          throw new Error('DOCX 工具续轮已失去编辑轮次，请重新提问')
+          throw new Error('文档工具续轮已失去编辑轮次，请重新提问')
         }
         if (round.version !== currentDocxAgent.getVersion())
           throw new Error('文档在本轮指令期间发生了其他修改，请重新发送指令')
@@ -147,27 +154,45 @@ export function createMimirAgent({
           ...forwarded,
           runConfig: {
             ...previous,
-            docxAgent: true,
+            documentAgent: true,
+            agentFormat: format,
             documentId: currentDocxAgent.documentId,
-            docxContext,
-            docxVersion: round.version,
-            docxRoundId: round.id,
-            docxSelection: selection.value,
+            agentContext: docxContext,
+            agentVersion: round.version,
+            agentRoundId: round.id,
+            agentSelection: selection.value,
+            ...(format === 'docx'
+              ? {
+                  docxAgent: true,
+                  docxContext,
+                  docxVersion: round.version,
+                  docxRoundId: round.id,
+                  docxSelection: selection.value,
+                }
+              : {}),
           },
         }
       }
 
-      // 已经有了：什么都不用做（只有真·新会话才建）
-      if (existing) return
-
-      const created = await io.createConversation()
-      params.agent.threadId = created.id
-      input.threadId = created.id
-      input.forwardedProps = { ...(input.forwardedProps ?? forwarded), conversationId: created.id }
-      /* 建完立刻回推：包里更新 activeId（落库查询要用）、宿主换 URL
-         （自己建的会话不重挂载对话体，否则正在接收的流会被丢掉——
-         见 `_app.chat.tsx` 的 ownedId） */
-      onConversationCreated(created.id)
+      if (!activeConversationId) {
+        const created = await io.createConversation()
+        activeConversationId = created.id
+        /* 建完立刻回推：包里更新 activeId（落库查询要用）、宿主换 URL
+           （自己建的会话不重挂载对话体，否则正在接收的流会被丢掉——
+           见 `_app.chat.tsx` 的 ownedId） */
+        onConversationCreated(created.id)
+      }
+      if (currentDocxAgent && round.version !== currentDocxAgent.getVersion()) {
+        throw new Error('文档在本轮指令期间发生了其他修改，请重新发送指令')
+      }
+      // The protocol thread and Mimir routing context must keep the same
+      // persisted ID on the first request and on every tool continuation.
+      params.agent.threadId = activeConversationId
+      input.threadId = activeConversationId
+      input.forwardedProps = {
+        ...(input.forwardedProps ?? forwarded),
+        conversationId: activeConversationId,
+      }
     },
   })
 

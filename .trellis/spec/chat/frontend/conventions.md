@@ -162,6 +162,20 @@ markdown 的节奏都变。那是一次看不见的排版改动。
 三态（加载中 / 失败 / 空）必须**如实传过来**：「读取失败」与「还没有文档」
 是两件事，混成一支会让用户以为内容没了。
 
+### 文档侧栏的思考强度入口
+
+1. **Scope / Trigger**：`DocChatSidebar` 嵌入同一个 `ChatPanel`，但窄栏不显示思考强度按钮。
+2. **Signature**：`ChatPanelProps.showReasoningControl?: boolean`；缺省为 `true`，文档侧栏显式传 `false`。
+3. **Contract**：隐藏时普通发送和快捷提问都写入标准强度（`deepReasoning: false`）；模型指示、发送与停止仍显示。主对话保持原切换入口。
+4. **Validation / Error**：即使组件曾选择“深入”后收到 `false`，也要按标准发送；模型缺失与发送失败仍走原有反馈。
+5. **Good / Base / Bad**：文档侧栏只见当前模型 / 主对话可见强度与模型 / 不可只用 CSS 隐藏按钮而继续发送 `deepReasoning: true`。
+6. **Tests**：`ChatPanel.test.tsx` 分别断言侧栏无强度按钮、主视图有按钮、侧栏请求参数为标准强度。
+7. **Wrong vs Correct**：错误是仅把 `<StrengthDropdown>` 设为 `display: none`；正确是 `showReasoningControl={false}` 同时将该入口的有效强度固定为 `false`。
+
+### 模型菜单的显示合同
+
+`ComposerMenus.tsx` 的 `ModelDropdown` 在文档侧栏和主对话共用。菜单项可见文本只显示 `modelRoles.chat` / `modelRoles.reasoning` 的模型名（缺失时显示“未配置”）；当前强度所用模型的勾选图标紧跟名称。角色与“当前使用”保留为屏幕阅读器文案，以便同名模型仍可区分。两条模型绑定项保持不可点击，全局配置由“管理模型”入口修改；这里没有会话级模型切换。`ChatPanel.test.tsx` 应断言名称、勾选相邻顺序、禁用状态和管理入口，避免调整布局时重新出现可见的角色前缀或前置勾选。
+
 ---
 
 ## 引擎的三个「与直觉不同」的地方

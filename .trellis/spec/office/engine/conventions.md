@@ -308,23 +308,23 @@ node packages/office/scripts/sync-upstream.mjs --from /tmp/genoffice --check  # 
 |---|---|
 | **大文档解析** | `parseDocx` 是同步重活，上游为它做了 worker（`parse-off-thread.ts`）。现在直接 await，大文档会卡主线程 |
 | **保存冲突** | `PUT /api/documents/:id/file` 不校验 `If-Match`。单客户端可接受，多客户端会互相覆盖 |
-| **xlsx** | **网格 + 改单元格已做**（`src/xlsx.ts` 读 + `src/xlsx-edit.ts` 写，零新增依赖）。与 docx/pptx 是**两条技术路线**：上游走 13.7K 行 Rust 侧车 + Univer，而「把表画出来、改几个格子」用不到那一层——所以这里没 vendored 任何东西。见 TECH §15.7 |
-| **xlsx 行/列增删与公式重算** | 这一版只改**现有格的内容**（不改行列结构、不重算公式）。改了被别的公式引用的格子，那边的显示值要等 Excel 打开才更新 |
-| **xlsx 改样式** | 新写的是不带 `s` 的内联字符串格，所以**覆盖（含清空）会丢掉该格原有的颜色/边框/数字格式**。实测：清空 `A2`（原 `s="7"`）写出 `<c r="A2" t="inlineStr"><is><t></t></is></c>`，同行别的格 `s="9"` 原样还在。这是能力边界，所以状态行与「清空」的 tooltip 都如实写着（TECH §15.7） |
-| **pptx 编辑** | **改文字与整段字形已做**（`src/pptx-save.ts` 补丁式保存 + `src/editors/PptxEditor.tsx` 的工具条，D-060）。**元素位置**（改框）与段落格式（项目符号/行距/对齐）未做——上游那条路走 `pptx-ops` 的 ops 层 + `setElementTransform`，依赖 `index.ts` 的整条写路径。见 TECH §15.9 |
+| **xlsx** | 网格读取沿用 `src/xlsx.ts`；本轮接入固定版 GenOffice `xlsx-gateway` 的服务端字节写路径，供部分 Agent 与手动操作共用。完整 Rust 侧车、公式重算和 Univer 网格仍未接入；已接入操作与缺口按 XLSX 格式矩阵逐项核对。见 TECH §15.7 |
+| **xlsx 行/列增删与公式重算** | 本轮服务端 GenOffice gateway 写路径已接入行列增删、合并与取消合并，以及行高和行列隐藏；公式重算仍未接入。改了被别的公式引用的格子，依赖公式的显示值要等 Excel 打开才更新。更多结构与公式操作按 XLSX 格式矩阵逐项验收 |
+| **xlsx 改样式** | 原轻量 `xlsx-edit.ts` 覆盖单元格时会丢该格 `s` 样式引用。本轮新增的服务端 GenOffice gateway 写路径对已接入的 `set_cell`、`set_formula`、`clear_cell`、`set_range` 保留原有样式索引，且未改 ZIP 条目逐字节保留；更广的格式、图表与工作簿 DSL 操作仍按格式任务矩阵逐项验收，不能把这四种操作推论为完整样式编辑。 |
+| **pptx 编辑** | 改文字与整段字形沿用 `src/pptx-save.ts` 补丁式保存；本轮对象菜单另经固定版 `pptx-ops` 宿主接入元素位置和大小、填充、轮廓与删除。段落格式、图表和其余上游操作仍按 PPTX 格式矩阵逐项验收；宿主可调用不等于手动入口或保存读回已验收。见 TECH §15.9 |
 | **pptx 格式的粒度是整段** | 界面里没有 run 级选区（能选的是元素与段落输入框），所以加粗/字号/颜色只能表达「这一整段」。标签里都写着「（整段）」 |
 | **pptx 回传格式必须逐 run** | 把一段压成「一条 run、文本是整段」会让同段其它 run 的字号/颜色被 `dominantRun` 静默顶掉（实测：`b="1" sz="3600"` 的标签变成 `sz="2400"`）。`PptxEditor.tsx` 的 `applyFormat` 逐 run 带 `srcRun`，`src/editors/PptxEditor.test.tsx` 有断言守着 |
 | **pptx 字体度量** | 用启发式（按字符类别估宽度）——**换行位置**可能与原件略有差别。要精确得接 opentype.js + vendored 字体（docx 那边有） |
-| **pdf 的文字编辑** | **查找做了**（`pdf-text.ts`：取文字层、整份文档里搜、高亮到字上，含中文），但**不能改**——`FindAdapter` 只给查找，不给 `replaceOne`/`replaceAll`（空实现点了没反应，正是这个仓库最讨厌的按钮）。改文字要拆内容流：上游那 7062 行在 Electron 主进程里、依赖 `node:fs`/`node:path`，还要 PDFium 的 7MB WASM（TECH §15.12） |
+| **pdf 的文字编辑** | 查找读文字层；新增的服务端宿主已能经固定版 GenOffice/PDFium 写入带可靠坐标的文字替换和插入，并以独立阅读器读回。手动画布只在能取得可靠页坐标时开放插入；替换缺少文字对象锚点时禁用。批注、图片、表单及其余内容工具仍按 PDF 格式矩阵验收，不能仅凭宿主函数存在就注册给模型。 |
 | **pdf 的单边裁剪** | 页面模型（`PdfCropInsets`）四边各自算，**界面上只能四边等量**（去掉扫描件黑边的常见用途；单边裁剪在旋转之后就分不清「左右」了）。要单边就补界面，模型不用改 |
 | **pdf 的选中文字** | 页面上的文字画进 canvas，选不中、复制不了。文字层只用来定位查找的高亮（那与 pdf.js 自带 textLayer 叠 DOM 是两种做法——它要和画布像素级对齐，多一层缩放维度） |
 | **html 的增量预览** | 每敲一个字预览整页重载（滚动位置回顶）。上游也这样，但要做好的话得把改动 patch 进 frame 的 DOM |
-| **html 的点选改样式** | 点选能定位到源码、能顺元素路径上下走，但**不能改样式**（上游 StylePanel 调 `ops.ts` 的 514 行操作编译器，未接） |
+| **html 的点选改样式** | 点选元素与源码共享版本；可经固定版 `HtmlOp` 原子应用快捷样式、元素属性及图片样式，失败保留原源码。图片像素裁切/去背景、延迟预览及上游完整 StylePanel 命令仍按 HTML 格式矩阵逐项验收。 |
 | **页内分栏** | 已接上游分栏切页与位置样式；复杂表格跨栏仍需真实文档复核。`pagination-geometry.test.ts` 用双栏夹具守住左右栏与纸张几何 |
 | **docx 里写不进去的几类格式** | `rawRPr` 透传那批（字符间距、大小写、字符边框、文本效果、发光、带圈）与复杂文种字体（`csFont`）：前者模板里改了保存时会被原字节覆盖，后者要按 `w:rtl` 判断、中文库里命中率极低。表格边框只给了三个预设。见 TECH §15.4.3 |
 | **列表编号分配** | 新列表沿用文档里已有的 `numId`；新建编号定义要写 `numbering.xml`（上游的 `allocateListNumId` 在 host 侧，未 vendored） |
 
-### 分页的四个静默坑（都在 `src/pagination.ts` 的注释里）
+### 分页的静默坑
 
 排查分页问题时先看 `window.__mimirPagination`（中间量）与
 `window.__mimirPagError`——分页失败的**三种原因现象相同**（都是「没有页」），
@@ -338,6 +338,7 @@ node packages/office/scripts/sync-upstream.mjs --from /tmp/genoffice --check  # 
 | 分页正常但灰带透明 | `--canvas` / `--docs-paper` 由上游 App 壳运行时注入，未 vendored |
 | 多节纸张宽度正确但高度不对 | 上页未用完的空间被放进下页上边距，末页又按容器自然高度结束；每页纸张层须按对应节的物理 `pageHeight` 绘制 |
 | 双栏段落变窄、右栏仍为空 | 分栏切页须使用会产出 `regions` 的 `sliceWithLineSplit`；段落位移依赖 `--col-dx` / `--col-dy` 的 CSS `transform`，上游 `.editor-scroll` 前缀规则会被样式裁剪器丢弃，须在受版本控制的编辑器样式保留 |
+| 表格跨页有页数，灰带却只覆盖某个单元格 | `.page-gap-table-fill` 是单元格内绝对定位层；`setPageGaps` 后须调用 `alignTableGapFills`，并以 `.doc-page` 为定位基准。只传 `.ProseMirror` 会漏掉左右纸边距；`pagination-geometry.test.ts` 断言窄列中的 fill 左边与宽度覆盖整张纸。页眉页脚条仍以 `.ProseMirror` 对齐 |
 
 样式裁剪（`trim-editor-css.mjs`）只保留 `.doc-*` / `.ProseMirror` / `.page-*` /
 `.hf-*` 前缀的规则。**加新的编辑器 UI 时如果样式不生效，先看它是不是被裁掉了**——

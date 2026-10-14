@@ -1,5 +1,6 @@
 import { useAgUiInterrupts, useAgUiSubmitInterruptResponses } from '@assistant-ui/react-ag-ui'
 import { useAuiState } from '@assistant-ui/react'
+import { documentAgentToolResultSchema } from '@mimir/shared'
 import { Button, Upload } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import type { ChatDocxAgent } from '../types.js'
@@ -9,6 +10,18 @@ type ClientInterrupt = {
   id: string
   metadata?: Record<string, unknown>
   reason: string
+}
+
+type ToolResponse = { interruptId: string; status: 'resolved'; payload: unknown }
+
+type PendingSubmission = {
+  key: string
+  documentId: string
+  format: string
+  roundId: string
+  version: number
+  responses: ToolResponse[]
+  createdDocumentId: string | null
 }
 
 function clientToolOf(interrupt: ClientInterrupt): { name: string; input: unknown } | null {
@@ -56,6 +69,9 @@ export async function executeDocxTool(
 ): Promise<unknown> {
   if (agent.getVersion() !== expectedVersion)
     throw new Error('文档已在指令发送后变化，请重新读取当前画布')
+  if ((agent.format ?? 'docx') !== 'docx') {
+    return agent.execute(tool.name, tool.input, { expectedVersion, roundId, signal })
+  }
   if (
     tool.name === 'insert_image' ||
     tool.name === 'insert_picture' ||
@@ -111,7 +127,6 @@ export async function executeDocxTool(
     revisionMode,
   )
 }
-
 export async function executeWritingTool(
   agent: ChatDocxAgent,
   input: unknown,
@@ -186,8 +201,11 @@ export function DocxInterruptBridge({
   const activeRef = useRef<{ key: string; controller: AbortController } | null>(null)
   const activeRoundRef = useRef<{ id: string; version: number } | null>(null)
   const completedRef = useRef(new Set<string>())
+  const retryingRef = useRef(false)
   const [progress, setProgress] = useState<string | null>(null)
   const [failure, setFailure] = useState<string | null>(null)
+  const [pendingSubmission, setPendingSubmission] = useState<PendingSubmission | null>(null)
+  const [retrying, setRetrying] = useState(false)
   const [undoRound, setUndoRound] = useState<string | null>(null)
   const [partialDraft, setPartialDraft] = useState<{ roundId: string; version: number } | null>(
     null,
@@ -215,7 +233,10 @@ export function DocxInterruptBridge({
 
   useEffect(() => {
     const key = `${agent.documentId}:${interrupts.map((item) => item.id).join(',')}`
-    if (interrupts.length === 0 || completedRef.current.has(key)) return
+    // RUN_FINISHED can publish interrupts before the SSE body has drained.
+    // assistant-ui rejects submitInterruptResponses while that run is still
+    // active, so wait for the runtime to finish it before executing tools.
+    if (running || interrupts.length === 0 || completedRef.current.has(key)) return
     if (activeRef.current?.key === key && !activeRef.current.controller.signal.aborted) return
 
     const controller = new AbortController()
@@ -256,7 +277,7 @@ export function DocxInterruptBridge({
         return
       }
       activeRoundRef.current = round
-      const responses: { interruptId: string; status: 'resolved'; payload: unknown }[] = []
+      const responses: ToolResponse[] = []
       let changed = false
       let batchChanged = false
       let expectedVersion = round.version
@@ -276,7 +297,7 @@ export function DocxInterruptBridge({
           if (batchChanged)
             throw new Error('同一批工具已有修改，后续操作需等模型重新读取文档后再执行')
           let result: unknown
-          if (tool.name === 'write_document') {
+          if ((agent.format ?? 'docx') === 'docx' && tool.name === 'write_document') {
             result = await executeWritingTool(
               agent,
               tool.input,
@@ -286,7 +307,7 @@ export function DocxInterruptBridge({
               writeDocxDocument,
               revisionMode,
             )
-          } else if (tool.name === 'analyze_media') {
+          } else if ((agent.format ?? 'docx') === 'docx' && tool.name === 'analyze_media') {
             if (agent.getVersion() !== expectedVersion)
               throw new Error('文档已在指令发送后变化，请重新读取当前画布')
             const args = objectInput(tool.input, 'analyze_media')
@@ -313,7 +334,7 @@ export function DocxInterruptBridge({
               version: expectedVersion,
               data: { text: analyzed.text },
             }
-          } else if (tool.name === 'create_document') {
+          } else if ((agent.format ?? 'docx') === 'docx' && tool.name === 'create_document') {
             if (agent.getVersion() !== expectedVersion)
               throw new Error('文档已在指令发送后变化，请重新读取当前画布')
             const args = objectInput(tool.input, 'create_document')
@@ -353,15 +374,21 @@ export function DocxInterruptBridge({
               fetchDocxImage,
             )
           }
-          payload = result
-          if (typeof result === 'object' && result !== null && 'changed' in result) {
-            if (result.changed === true) {
-              changed = true
-              batchChanged = true
-              if ('version' in result && typeof result.version === 'number') {
-                expectedVersion = result.version
-                advanceVersion(expectedVersion)
-              }
+          if (controller.signal.aborted) return
+          const parsedResult = documentAgentToolResultSchema.safeParse(result)
+          if (!parsedResult.success) throw new Error('编辑器返回了无效的工具结果')
+          const validatedResult = parsedResult.data
+          payload = validatedResult
+          if (validatedResult.ok === false) {
+            const reason = validatedResult.error ?? '工具未完成'
+            setFailure(`${tool.name} 执行失败：${reason}`)
+          }
+          if (validatedResult.changed === true) {
+            changed = true
+            batchChanged = true
+            if (typeof validatedResult.version === 'number') {
+              expectedVersion = validatedResult.version
+              advanceVersion(expectedVersion)
             }
           }
         } catch (error) {
@@ -377,6 +404,15 @@ export function DocxInterruptBridge({
       completedRef.current.add(key)
       if (changed) setUndoRound(round.id)
       setProgress('正在继续生成回答')
+      const submission: PendingSubmission = {
+        key,
+        documentId: agent.documentId,
+        format: agent.format ?? 'docx',
+        roundId: round.id,
+        version: expectedVersion,
+        responses,
+        createdDocumentId,
+      }
       try {
         await submitRef.current(responses)
         if (!controller.signal.aborted) setProgress(null)
@@ -384,6 +420,8 @@ export function DocxInterruptBridge({
         activeRoundRef.current = null
         if (createdDocumentId) setCreatedDocId(createdDocumentId)
       } catch (error) {
+        if (controller.signal.aborted) return
+        setPendingSubmission(submission)
         setFailure(`工具结果续轮失败：${errorText(error)}`)
         setProgress(null)
         if (activeRef.current?.key === key) activeRef.current = null
@@ -403,6 +441,7 @@ export function DocxInterruptBridge({
     analyzeDocxMedia,
     createDocxDocument,
     revisionMode,
+    running,
   ])
 
   useEffect(() => {
@@ -446,12 +485,58 @@ export function DocxInterruptBridge({
     }
   }, [agent])
 
-  if (!progress && !failure && !undoRound && !partialDraft && !mediaRequest && !createdDocId)
+  async function retrySubmission(): Promise<void> {
+    const pending = pendingSubmission
+    if (!pending || retryingRef.current || running) return
+    const round = getRound()
+    const currentKey = `${agent.documentId}:${interrupts.map((item) => item.id).join(',')}`
+    if (
+      agent.documentId !== pending.documentId ||
+      (agent.format ?? 'docx') !== pending.format ||
+      currentKey !== pending.key ||
+      round?.id !== pending.roundId ||
+      round.version !== pending.version ||
+      agent.getVersion() !== pending.version
+    ) {
+      setPendingSubmission(null)
+      setFailure('文档或画布已变化，无法续传旧工具结果，请重新发送指令')
+      return
+    }
+    retryingRef.current = true
+    setRetrying(true)
+    setFailure(null)
+    try {
+      // Reuse the computed payload. The server atomically rejects replay if
+      // the first request arrived despite the client seeing an error.
+      await submitRef.current(pending.responses)
+      setPendingSubmission(null)
+      if (pending.createdDocumentId) setCreatedDocId(pending.createdDocumentId)
+    } catch (error) {
+      setFailure(`工具结果续轮失败：${errorText(error)}`)
+    }
+    retryingRef.current = false
+    setRetrying(false)
+  }
+
+  if (
+    !progress &&
+    !failure &&
+    !pendingSubmission &&
+    !undoRound &&
+    !partialDraft &&
+    !mediaRequest &&
+    !createdDocId
+  )
     return null
   return (
     <div role="status" aria-live="polite">
       {progress && <span>{progress}</span>}
       {failure && <span>{failure}</span>}
+      {pendingSubmission && (
+        <Button size="small" loading={retrying} disabled={running} onClick={retrySubmission}>
+          重试续传工具结果
+        </Button>
+      )}
       {createdDocId && (
         <Button size="small" onClick={() => onOpenDocument?.(createdDocId)}>
           打开新文档

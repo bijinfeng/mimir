@@ -66,6 +66,7 @@ catalog:
   '@tiptap/extension-image': ^3.31.3
   '@tiptap/extension-bubble-menu': ^3.31.3
   '@tiptap/react': ^3.31.3
+  '@tiptap/suggestion': ^3.31.3
   '@tiptap/extension-placeholder': ^3.31.3
   '@tiptap/extension-table': ^3.31.3
   '@tiptap/extension-task-item': ^3.31.3
@@ -128,3 +129,6 @@ allowBuilds:
 
 # 新版本发布满一天后才允许安装。防止误装当天发布、可能被投毒的版本。
 minimumReleaseAge: 1440
+
+patchedDependencies:
+  '@assistant-ui/react-ag-ui@0.0.63': patches/@assistant-ui__react-ag-ui@0.0.63.patch

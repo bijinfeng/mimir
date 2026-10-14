@@ -22,9 +22,12 @@
 
 **五种原件格式的编辑器都走 `OfficeSourceEditor`**（docx / xlsx / pptx /
 html / pdf；markdown 是笔记，走 `NoteEditor`）。它是宿主的适配层：
-包 `EditorIo`（取字节 / 写回）、铺主题变量；DOCX 时另把当前文档绑定的
-`DocxAgentHandle` 交给同页 `DocChatSidebar`。句柄随文档切换失效，不能交给
-主视图或其他格式。跨层合同见 [DOCX 对话编辑](../../../shared/contract/docx-agent.md)。
+包 `EditorIo`（取字节 / 写回）、铺主题变量；有真实 Agent 执行器的编辑器把
+当前文档绑定的 `ChatDocumentAgent` 句柄交给同页 `DocChatSidebar`。DOCX、XLSX、
+PPTX、HTML、PDF 的执行器均经这个宿主适配层连接；各格式只开放目录中真实可执行的
+操作，未接入的上游工具仍须保持不可用。句柄随文档切换失效，不能交给
+主视图或其他文档。跨层合同见[文档 Agent 通道](../../../shared/contract/document-agent.md)，
+DOCX 专有工具见 [DOCX 对话编辑](../../../shared/contract/docx-agent.md)。
 **加第七种格式时不要新建组件**
 ——在 `viewerFor` 加一个 kind、在 `OfficeSourceEditor` 加一个分支就是全部改动。
 

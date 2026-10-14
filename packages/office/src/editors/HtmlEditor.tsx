@@ -37,12 +37,10 @@
  * | 元素路径（面包屑） | `ancestorsOf(map, sid)` + `map.bySid`；点一段就把预览滚到那个元素、源码选中它 |
  * | 定位到源码里的元素 / 保存到库 | 原有动作 |
  *
- * ## 点选是「只读的检视」，不是完整的样式编辑
+ * ## 元素编辑
  *
- * 上游的 StylePanel 能改颜色/字号/边距（它调 `ops.ts` 生成补丁）。本版只做
- * **点选 → 高亮 → 显示这是哪个元素 → 顺着元素路径上下走**：样式编辑要接
- * `document/ops.ts`（514 行的操作编译器）与整个面板，那是下一步。所以状态行
- * 如实写着「点元素可以定位到源码」，而不是画一个看着能改却改不了的面板。
+ * 预览选中的 sid 同时用于元素定位与编辑。手动元素菜单和 Agent 的 apply_ops
+ * 共用 document/ops.ts 编译器及当前源码版本，失败时整批不落地。
  */
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -72,6 +70,9 @@ import {
 } from '../shell/icons.js'
 import type { FindOptions } from '../shims/ui.js'
 import { CompactToolbar } from './CompactToolbar.js'
+import { HtmlElementMenu } from './HtmlElementMenu.js'
+import { HtmlInsertMenu } from './HtmlInsertMenu.js'
+import { HtmlAgentPrompt, type HtmlPromptRequest } from './HtmlAgentPrompt.js'
 import { statusText, useParsed, useSource } from './use-source.js'
 import { OFFICE_MIME, type EditorProps } from './types.js'
 import {
@@ -81,14 +82,33 @@ import {
 import {
   ancestorsOf,
   buildParseMap,
+  childrenOf,
+  elementCovering,
   type ParseMap,
 } from '../../vendor/apps/html/src/renderer/document/parse-map.js'
+import {
+  insertOp,
+  insertPresetHtml,
+} from '../../vendor/apps/html/src/renderer/document/insert-presets.js'
 import { instrumentForPreview } from '../../vendor/apps/html/src/renderer/preview/instrument.js'
+import { moveTarget } from '../../vendor/apps/html/src/renderer/document/move-target.js'
+import {
+  CropDialog,
+  CutoutDialog,
+  type ImageDialogLabels,
+} from '../../vendor/packages/ui/src/image-dialogs.js'
+import {
+  HtmlAgentHandle,
+  type HtmlAgentDocument,
+  type HtmlAgentHooks,
+  type HtmlAgentResult,
+} from '../agent/html-agent.js'
 // `?raw` 由打包器提供：注入脚本要**原样**塞进预览（它是字符串，不是模块）
 import inspectorSource from '../../vendor/apps/html/src/renderer/preview/inspector.js?raw'
 import '../shell/shell.css'
 import './editors.css'
 import './compact-toolbar.css'
+import '../../vendor/packages/ui/src/image-dialogs.css'
 
 /** 源码文件的 BOM 与换行风格 —— 保存时要原样还回去 */
 interface Envelope {
@@ -124,6 +144,69 @@ function serializeEnvelope(text: string, envelope: Envelope): string {
   return envelope.bom ? '\uFEFF' + out : out
 }
 
+function imageDataUrl(file: File): Promise<string> {
+  if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/svg+xml'].includes(file.type))
+    return Promise.reject(new Error('请选择 PNG、JPEG、WebP、GIF 或 SVG 图片。'))
+  if (file.size > 5 * 1024 * 1024)
+    return Promise.reject(new Error('图片超过 5 MB，无法嵌入 HTML 原件。'))
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.addEventListener('error', () => reject(new Error('读取图片失败。')))
+    reader.addEventListener('load', () => {
+      if (typeof reader.result === 'string' && reader.result.startsWith('data:image/'))
+        resolve(reader.result)
+      else reject(new Error('图片内容无效。'))
+    })
+    reader.readAsDataURL(file)
+  })
+}
+
+async function loadPictureDataUrl(src: string): Promise<string> {
+  if (/^data:image\//i.test(src)) {
+    if (src.length > 7 * 1024 * 1024) throw new Error('图片超过 5 MB，无法进行像素编辑。')
+    return src
+  }
+  if (!/^https?:\/\//i.test(src))
+    throw new Error('当前图片使用相对资源地址；请先选择本地图片或替换为可访问的 URL。')
+  let response: Response
+  try {
+    response = await fetch(src, { credentials: 'omit', mode: 'cors' })
+  } catch {
+    throw new Error('图片资源无法跨域读取；请先选择本地图片。')
+  }
+  if (!response.ok) throw new Error(`读取图片失败（HTTP ${response.status}）。`)
+  const mime = response.headers.get('content-type')?.split(';')[0]?.trim() ?? ''
+  if (!mime.startsWith('image/')) throw new Error('图片资源的类型无效。')
+  const blob = await response.blob()
+  return imageDataUrl(new File([blob], 'picture', { type: mime }))
+}
+
+const PICTURE_LABELS: ImageDialogLabels = {
+  cancel: '取消',
+  apply: '应用',
+  applying: '处理中…',
+  loading: '图片加载中…',
+  loadFailed: '图片加载失败',
+  processFailed: '像素处理失败',
+  cutoutTitle: '去除图片背景',
+  tolerance: '容差',
+  cutoutHint: (removedPct) => `已预览移除约 ${removedPct}% 的像素`,
+  cropTitle: '裁切图片',
+  cropHint: '拖动边缘或角点调整保留区域。',
+}
+
+function imageSrcAt(document: HtmlAgentDocument, sid: number): string | null {
+  const entry = document.map.bySid.get(sid)
+  if (entry?.tag !== 'img') return null
+  const startTag = document.text.slice(entry.startTag[0], entry.startTag[1])
+  return (
+    new DOMParser()
+      .parseFromString(startTag, 'text/html')
+      .querySelector('img')
+      ?.getAttribute('src') ?? null
+  )
+}
+
 /**
  * 预览的三种排法。
  *
@@ -151,6 +234,19 @@ interface SelectedElement {
   tag: string
   /** 原样的 `class` 属性（可能是好几个类名），没有时是空串 */
   className: string
+  computed?: {
+    fontWeight?: string
+    fontStyle?: string
+    fontSize?: string
+    color?: string
+    textAlign?: string
+    background?: string
+    width?: string
+    height?: string
+    transform?: string
+    objectFit?: string
+    image?: { src?: string; alt?: string; naturalWidth?: number; naturalHeight?: number }
+  }
 }
 
 /** 元素路径（面包屑）里的一段 */
@@ -183,12 +279,38 @@ function normalizeZoom(value: number): number {
   return Math.min(200, Math.max(50, Math.round(value / 10) * 10))
 }
 
-export function HtmlEditor({ documentId, io, onDirtyChange, flush = false }: EditorProps) {
+export interface HtmlAgentServices {
+  planPage: NonNullable<HtmlAgentHooks['planPage']>
+  writeDocument: NonNullable<HtmlAgentHooks['writeDocument']>
+}
+
+export function HtmlEditor({
+  documentId,
+  io,
+  onDirtyChange,
+  onAgentHandleChange,
+  agentServices,
+  flush = false,
+}: EditorProps & {
+  onAgentHandleChange?: (handle: HtmlAgentHandle | null) => void
+  agentServices?: HtmlAgentServices
+}) {
   const source = useSource(io, documentId)
   const [dirty, setDirty] = useState(false)
   const [cursor, setCursor] = useState({ line: 1, col: 1 })
   /** 预览里选中的元素（源码侧高亮、元素路径都由它驱动） */
   const [selected, setSelected] = useState<SelectedElement | null>(null)
+  const [promptRequest, setPromptRequest] = useState<HtmlPromptRequest | null>(null)
+  const [pictureDialog, setPictureDialog] = useState<{
+    kind: 'crop' | 'cutout'
+    sid: number
+    version: number
+    src: string
+    image: string
+  } | null>(null)
+  const [pictureError, setPictureError] = useState<string | null>(null)
+  const promptSerialRef = useRef(0)
+  const promptRequestRef = useRef<HtmlPromptRequest | null>(null)
   /**
    * 视图、设备、缩放。
    *
@@ -234,10 +356,26 @@ export function HtmlEditor({ documentId, io, onDirtyChange, flush = false }: Edi
    * 于是「预览到底出来了没有」只能靠 frame 主动报——检视脚本挂载时会发
    * `gx:ready`。没有这条握手的话，预览白屏与预览正在加载在界面上完全一样。
    */
-  const [previewReady, setPreviewReady] = useState(false)
+  const [previewReadyVersion, setPreviewReadyVersion] = useState<number | null>(null)
   /** 预览页面的标题（来自 `gx:ready`），用来在状态行确认渲染的是哪一份 */
   const [previewTitle, setPreviewTitle] = useState<string | null>(null)
   const editorRef = useRef<SourceEditorHandle>(null)
+  const agentRef = useRef<HtmlAgentHandle | null>(null)
+  const selectedSidRef = useRef<number | null>(null)
+  const textSelectionRef = useRef<{
+    sid: number
+    index: number
+    start: number
+    end: number
+  } | null>(null)
+  const onAgentHandleChangeRef = useRef(onAgentHandleChange)
+  const onDirtyChangeRef = useRef(onDirtyChange)
+  const agentServicesRef = useRef(agentServices)
+  useEffect(() => {
+    onAgentHandleChangeRef.current = onAgentHandleChange
+    onDirtyChangeRef.current = onDirtyChange
+    agentServicesRef.current = agentServices
+  })
   /**
    * 预览 frame。**父页碰不到它的 DOM**（opaque origin），只能 postMessage：
    * 点面包屑时要让预览也选中那一个元素，走的就是这条路（`gx:select`，
@@ -250,7 +388,7 @@ export function HtmlEditor({ documentId, io, onDirtyChange, flush = false }: Edi
    * 而编辑过程中的文本变化不会回灌编辑器（会丢光标）。
    */
   const decoded = useParsed(source.bytes, async (bytes) => {
-    const raw = new TextDecoder('utf-8', { fatal: false }).decode(bytes)
+    const raw = new TextDecoder('utf-8', { fatal: false, ignoreBOM: true }).decode(bytes)
     return parseEnvelope(raw)
   })
 
@@ -282,6 +420,7 @@ export function HtmlEditor({ documentId, io, onDirtyChange, flush = false }: Edi
   }, [decoded.value])
 
   const doc = edited ?? initial
+  const previewReady = doc !== null && previewReadyVersion === doc.version
 
   /**
    * 预览用的 HTML。
@@ -332,27 +471,75 @@ export function HtmlEditor({ documentId, io, onDirtyChange, flush = false }: Edi
     ]
   }, [activeSelected, doc])
 
+  /** CodeMirror 历史由事件同步到按钮状态，渲染期不读取命令式句柄。 */
+  const syncHistory = useCallback(() => {
+    const handle = editorRef.current
+    const next = {
+      canUndo: handle?.canUndo() ?? false,
+      canRedo: handle?.canRedo() ?? false,
+    }
+    setHistory((prev) =>
+      prev.canUndo === next.canUndo && prev.canRedo === next.canRedo ? prev : next,
+    )
+  }, [])
+
   /**
    * 预览 frame 发回来的消息（点选）。
    *
-   * 只处理 `gx:selected`：它给出用户在预览里点的是源码里的哪一段。样式相关
-   * 的几条（`computed` / `hover`）本版不用——没有可改样式的界面。
+   * 预览的直接编辑、拖拽和快捷键通过同一 HtmlOp 句柄回写源码。
    */
   useEffect(() => {
     const listener = (event: MessageEvent) => {
+      if (event.source !== frameRef.current?.contentWindow) return
       const data = event.data as {
         type?: string
+        version?: number
         title?: string
-        element?: { sid?: number; tag?: string; className?: string } | null
+        element?: {
+          sid?: number
+          tag?: string
+          className?: string
+          computed?: SelectedElement['computed']
+        } | null
+        sid?: number
+        textNodeIndex?: number
+        start?: number
+        end?: number
+        newText?: string
+        html?: string
+        command?: string
+        delta?: number
+        computed?: SelectedElement['computed']
+        styles?: Record<string, string | null>
+        position?: 'before' | 'after'
+        ref_sid?: number
       } | null
       if (!data || typeof data.type !== 'string') return
+      // The upstream inspector stamps every message with the parse-map version.
+      // srcdoc reloads can deliver a late edit from the previous page instance.
+      if (data.version !== agentRef.current?.getVersion()) return
 
       if (data.type === 'gx:ready') {
-        setPreviewReady(true)
+        setPreviewReadyVersion(data.version ?? null)
         setPreviewTitle(data.title ?? null)
+        if (selectedSidRef.current !== null)
+          frameRef.current?.contentWindow?.postMessage(
+            { type: 'gx:select', sid: selectedSidRef.current },
+            '*',
+          )
+        return
+      }
+      if (data.type === 'gx:rect') {
+        if (typeof data.sid === 'number' && data.sid === selectedSidRef.current && data.computed)
+          setSelected((current) =>
+            current !== null && current.sid === data.sid
+              ? { ...current, computed: data.computed }
+              : current,
+          )
         return
       }
       if (data.type === 'gx:select') {
+        textSelectionRef.current = null
         /**
          * 选中的元素。**`sid` 在 `element` 里**（`ElementFingerprint`），
          * 而 `element: null` 表示点到了空白处——那时要清掉选中，否则
@@ -365,31 +552,223 @@ export function HtmlEditor({ documentId, io, onDirtyChange, flush = false }: Edi
         const element = data.element
         setSelected(
           element !== null && element !== undefined && typeof element.sid === 'number'
-            ? { sid: element.sid, tag: element.tag ?? '', className: element.className ?? '' }
+            ? {
+                sid: element.sid,
+                tag: element.tag ?? '',
+                className: element.className ?? '',
+                computed: element.computed,
+              }
             : null,
         )
+        selectedSidRef.current = typeof element?.sid === 'number' ? element.sid : null
+        return
+      }
+      if (data.type === 'gx:textSelect') {
+        if (
+          Number.isSafeInteger(data.sid) &&
+          Number.isSafeInteger(data.textNodeIndex) &&
+          Number.isSafeInteger(data.start) &&
+          Number.isSafeInteger(data.end) &&
+          (data.end ?? 0) > (data.start ?? 0)
+        ) {
+          textSelectionRef.current = {
+            sid: data.sid!,
+            index: data.textNodeIndex!,
+            start: data.start!,
+            end: data.end!,
+          }
+        }
+        return
+      }
+      const handle = agentRef.current
+      if (data.type === 'gx:textEditCommit' && handle) {
+        if (
+          Number.isSafeInteger(data.sid) &&
+          Number.isSafeInteger(data.textNodeIndex) &&
+          typeof data.newText === 'string'
+        )
+          handle.applyOps(
+            [
+              {
+                op: 'set_text_node',
+                sid: data.sid!,
+                index: data.textNodeIndex!,
+                text: data.newText,
+              },
+            ],
+            { highlight: false },
+          )
+        return
+      }
+      if (data.type === 'gx:htmlEditCommit' && handle) {
+        if (Number.isSafeInteger(data.sid) && typeof data.html === 'string')
+          handle.applyOps([{ op: 'set_inner_html', sid: data.sid!, html: data.html }], {
+            highlight: false,
+          })
+        return
+      }
+      if (data.type === 'gx:resize' && handle) {
+        if (Number.isSafeInteger(data.sid) && data.sid === selectedSidRef.current && data.styles)
+          handle.applyOps([{ op: 'set_style', sid: data.sid, styles: data.styles }], {
+            highlight: false,
+          })
+        return
+      }
+      if (data.type === 'gx:moveTo' && handle) {
+        if (
+          Number.isSafeInteger(data.sid) &&
+          Number.isSafeInteger(data.ref_sid) &&
+          (data.position === 'before' || data.position === 'after')
+        )
+          handle.applyOps(
+            [{ op: 'move', sid: data.sid!, ref_sid: data.ref_sid!, position: data.position }],
+            { highlight: false },
+          )
+        return
+      }
+      if (data.type === 'gx:zoom' && typeof data.delta === 'number') {
+        setZoom((current) => normalizeZoom(current - data.delta! * 0.6))
+        return
+      }
+      if (data.type === 'gx:keyCommand' && handle) {
+        const command = data.command
+        if (command === 'undo' || command === 'redo') {
+          editorRef.current?.[command]()
+          syncHistory()
+          return
+        }
+        if (command === 'zoomReset') {
+          setZoom(100)
+          return
+        }
+        if (command === 'zoomIn' || command === 'zoomOut') {
+          setZoom((current) => normalizeZoom(current + (command === 'zoomIn' ? 10 : -10)))
+          return
+        }
+        if (command === 'escape') {
+          setSelected(null)
+          selectedSidRef.current = null
+          textSelectionRef.current = null
+          return
+        }
+        const sid = selectedSidRef.current
+        const current = handle.getDocument()
+        const entry = sid === null ? undefined : current.map.bySid.get(sid)
+        if (!entry || sid === null) return
+        if (command === 'delete') {
+          handle.applyOps([{ op: 'remove', sid }], { highlight: false })
+          setSelected(null)
+          selectedSidRef.current = null
+          return
+        }
+        if (command === 'moveUp' || command === 'moveDown') {
+          const target = moveTarget(current.map, sid, command === 'moveUp' ? -1 : 1)
+          if (target) handle.applyOps([{ op: 'move', sid, ...target }], { highlight: false })
+          return
+        }
+        if (command === 'bold' || command === 'italic') {
+          const selection = textSelectionRef.current
+          if (selection?.sid === sid)
+            handle.applyOps(
+              [
+                {
+                  op: 'wrap_text',
+                  sid,
+                  index: selection.index,
+                  start: selection.start,
+                  end: selection.end,
+                  tag: command === 'bold' ? 'strong' : 'em',
+                },
+              ],
+              { highlight: false },
+            )
+          textSelectionRef.current = null
+          return
+        }
+        let target: number | null = null
+        if (command === 'parent') target = entry.parentSid
+        if (command === 'child') target = childrenOf(current.map, sid)[0]?.sid ?? null
+        if ((command === 'next' || command === 'prev') && entry.parentSid !== null) {
+          const siblings = childrenOf(current.map, entry.parentSid)
+          const index = siblings.findIndex((item) => item.sid === sid)
+          target = siblings[index + (command === 'next' ? 1 : -1)]?.sid ?? null
+        }
+        if (target !== null) {
+          const next = current.map.bySid.get(target)
+          if (next && next.tag !== 'html' && next.tag !== 'body') {
+            selectedSidRef.current = target
+            setSelected({ sid: target, tag: next.tag, className: '' })
+            frameRef.current?.contentWindow?.postMessage({ type: 'gx:select', sid: target }, '*')
+          }
+        }
       }
     }
     window.addEventListener('message', listener)
     return () => window.removeEventListener('message', listener)
-  }, [])
+  }, [syncHistory])
 
-  /**
-   * 撤销栈的可用性，从编辑器句柄读一次。
-   *
-   * **只能在编辑器回调与事件里读 ref**（渲染期读会被 React Compiler 判违规）。
-   * 值没变就返回原对象——`setState` 因此 bail out，不会每敲一个字多一轮渲染。
-   */
-  const syncHistory = useCallback(() => {
-    const handle = editorRef.current
-    const next = {
-      canUndo: handle?.canUndo() ?? false,
-      canRedo: handle?.canRedo() ?? false,
+  useEffect(() => {
+    if (initial === null) return
+    const handle = new HtmlAgentHandle(documentId, initial.text, {
+      applyPatches: (patches, highlight) => {
+        editorRef.current?.applyPatches(patches, highlight)
+      },
+      replaceDoc: (text, highlight) => {
+        editorRef.current?.replaceDoc(text, highlight)
+      },
+      onDocument: (next: HtmlAgentDocument) => {
+        setEdited(next)
+        if (selectedSidRef.current !== null && !next.map.bySid.has(selectedSidRef.current)) {
+          selectedSidRef.current = null
+        }
+        setDirty(true)
+        onDirtyChangeRef.current?.(true)
+        syncHistory()
+      },
+      getSelectedSid: () => selectedSidRef.current,
+      askClarification: (questions) =>
+        new Promise((resolve) => {
+          const request: HtmlPromptRequest = {
+            id: ++promptSerialRef.current,
+            kind: 'questions',
+            questions,
+            resolve,
+          }
+          promptRequestRef.current = request
+          setPromptRequest(request)
+        }),
+      confirmBrief: (brief, mode) =>
+        new Promise((resolve) => {
+          const request: HtmlPromptRequest = {
+            id: ++promptSerialRef.current,
+            kind: 'brief',
+            brief,
+            mode,
+            resolve,
+          }
+          promptRequestRef.current = request
+          setPromptRequest(request)
+        }),
+      planPage: async (input) => {
+        if (!agentServicesRef.current) throw new Error('页面规划服务尚未就绪。')
+        return agentServicesRef.current.planPage(input)
+      },
+      writeDocument: async (input) => {
+        if (!agentServicesRef.current) throw new Error('页面写作服务尚未就绪。')
+        return agentServicesRef.current.writeDocument(input)
+      },
+    })
+    agentRef.current = handle
+    onAgentHandleChangeRef.current?.(handle)
+    return () => {
+      const pending = promptRequestRef.current
+      if (pending?.kind === 'questions') pending.resolve({ answers: '', cancelled: true })
+      else if (pending?.kind === 'brief') pending.resolve(null)
+      promptRequestRef.current = null
+      agentRef.current = null
+      onAgentHandleChangeRef.current?.(null)
     }
-    setHistory((prev) =>
-      prev.canUndo === next.canUndo && prev.canRedo === next.canRedo ? prev : next,
-    )
-  }, [])
+  }, [initial, documentId, syncHistory])
 
   /** 把某个元素在源码里选中（这样「预览点到哪、源码跳到哪」） */
   const revealSid = useCallback(
@@ -414,6 +793,7 @@ export function HtmlEditor({ documentId, io, onDirtyChange, flush = false }: Edi
    */
   const activateTrailItem = (item: TrailItem) => {
     setSelected({ sid: item.sid, tag: item.tag, className: item.className })
+    selectedSidRef.current = item.sid
     frameRef.current?.contentWindow?.postMessage({ type: 'gx:select', sid: item.sid }, '*')
     // 源码栏没露出来时不去「选中」——那是看不见的动作，切回来时才看到结果
     if (view !== 'preview') revealSid(item.sid)
@@ -465,11 +845,83 @@ export function HtmlEditor({ documentId, io, onDirtyChange, flush = false }: Edi
 
   const save = async () => {
     if (decoded.value === null || doc === null) return
+    const savedVersion = agentRef.current?.getVersion() ?? doc.version
     const bytes = new TextEncoder().encode(serializeEnvelope(doc.text, decoded.value.envelope))
     const ok = await source.save(bytes, { name: 'page.html', mime: OFFICE_MIME.html })
     if (!ok) return
+    // A save may finish after another manual or Agent edit. That newer canvas is still dirty.
+    if ((agentRef.current?.getVersion() ?? doc.version) !== savedVersion) return
     setDirty(false)
     onDirtyChange?.(false)
+  }
+
+  const openPictureDialog = async (kind: 'crop' | 'cutout'): Promise<HtmlAgentResult> => {
+    const handle = agentRef.current
+    const sid = selectedSidRef.current
+    if (!handle || sid === null)
+      return { ok: false, changed: false, version: 0, error: '没有选中的图片。' }
+    const current = handle.getDocument()
+    const src = imageSrcAt(current, sid)
+    if (!src)
+      return {
+        ok: false,
+        changed: false,
+        version: current.version,
+        error: '图片没有可读取的来源。',
+      }
+    try {
+      const image = await loadPictureDataUrl(src)
+      if (
+        agentRef.current !== handle ||
+        handle.getVersion() !== current.version ||
+        selectedSidRef.current !== sid ||
+        imageSrcAt(handle.getDocument(), sid) !== src
+      )
+        return {
+          ok: false,
+          changed: false,
+          version: handle.getVersion(),
+          error: '图片或文档已变化，请重新选择。',
+        }
+      setPictureError(null)
+      setPictureDialog({ kind, sid, version: current.version, src, image })
+      return { ok: true, changed: false, version: current.version, summary: '图片编辑已打开。' }
+    } catch (cause) {
+      return {
+        ok: false,
+        changed: false,
+        version: handle.getVersion(),
+        error: cause instanceof Error ? cause.message : String(cause),
+      }
+    }
+  }
+
+  const applyPicturePng = (png: string) => {
+    const dialog = pictureDialog
+    const handle = agentRef.current
+    if (!dialog || !handle) return
+    if (png.length > 7 * 1024 * 1024) {
+      setPictureError('处理后的 PNG 超过 5 MB，原件没有修改。')
+      return
+    }
+    if (
+      handle.getVersion() !== dialog.version ||
+      selectedSidRef.current !== dialog.sid ||
+      imageSrcAt(handle.getDocument(), dialog.sid) !== dialog.src
+    ) {
+      setPictureError('图片或文档已变化，处理结果没有应用。')
+      return
+    }
+    const result = handle.applyOps(
+      [{ op: 'set_attr', sid: dialog.sid, name: 'src', value: `data:image/png;base64,${png}` }],
+      { expectedVersion: dialog.version, summary: '图片像素已更新。', highlight: false },
+    )
+    if (!result.ok) {
+      setPictureError(result.error ?? '图片修改失败。')
+      return
+    }
+    setPictureDialog(null)
+    setPictureError(null)
   }
 
   const status = statusText({
@@ -535,11 +987,50 @@ export function HtmlEditor({ documentId, io, onDirtyChange, flush = false }: Edi
       flush={flush}
       toolbar={
         <CompactToolbar
-          overflowLabel="更多 HTML 工具"
+          quickAccess={
+            <>
+              <ToolbarButton
+                label={source.saving ? '保存中…' : '保存到库'}
+                disabled={!dirty || source.saving}
+                disabledReason={source.saving ? '正在保存…' : '没有未保存的改动'}
+                onClick={() => void save()}
+              >
+                <SaveIcon />
+              </ToolbarButton>
+              <ToolbarButton
+                label="撤销 (Ctrl+Z)"
+                disabled={!history.canUndo}
+                disabledReason="没有可以撤销的改动了"
+                onClick={() => {
+                  editorRef.current?.undo()
+                  syncHistory()
+                }}
+              >
+                <UndoIcon />
+              </ToolbarButton>
+              <ToolbarButton
+                label="重做 (Ctrl+Shift+Z)"
+                disabled={!history.canRedo}
+                disabledReason="没有可以重做的改动了"
+                onClick={() => {
+                  editorRef.current?.redo()
+                  syncHistory()
+                }}
+              >
+                <RedoIcon />
+              </ToolbarButton>
+            </>
+          }
+          tabs={[
+            { key: 'home', label: '开始' },
+            { key: 'insert', label: '插入' },
+            { key: 'view', label: '视图' },
+          ]}
           sections={[
             {
               key: 'view',
               label: '视图',
+              tab: 'view',
               minWidth: 0,
               content: (
                 <ToolbarToggleGroup
@@ -557,6 +1048,7 @@ export function HtmlEditor({ documentId, io, onDirtyChange, flush = false }: Edi
             {
               key: 'find',
               label: '查找和替换',
+              tab: 'home',
               minWidth: 0,
               content: (
                 <ToolbarButton label="查找和替换" active={findOpen} onClick={toggleFind}>
@@ -565,39 +1057,9 @@ export function HtmlEditor({ documentId, io, onDirtyChange, flush = false }: Edi
               ),
             },
             {
-              key: 'history',
-              label: '撤销与重做',
-              minWidth: 470,
-              content: (
-                <>
-                  <ToolbarButton
-                    label="撤销 (Ctrl+Z)"
-                    disabled={!history.canUndo}
-                    disabledReason="没有可以撤销的改动了"
-                    onClick={() => {
-                      editorRef.current?.undo()
-                      syncHistory()
-                    }}
-                  >
-                    <UndoIcon />
-                  </ToolbarButton>
-                  <ToolbarButton
-                    label="重做 (Ctrl+Shift+Z)"
-                    disabled={!history.canRedo}
-                    disabledReason="没有可以重做的改动了"
-                    onClick={() => {
-                      editorRef.current?.redo()
-                      syncHistory()
-                    }}
-                  >
-                    <RedoIcon />
-                  </ToolbarButton>
-                </>
-              ),
-            },
-            {
               key: 'preview',
               label: '预览设备与缩放',
+              tab: 'view',
               minWidth: 700,
               content: (
                 <>
@@ -633,42 +1095,157 @@ export function HtmlEditor({ documentId, io, onDirtyChange, flush = false }: Edi
               ),
             },
             {
+              key: 'insert',
+              label: '插入元素',
+              tab: 'insert',
+              minWidth: 780,
+              content: (
+                <HtmlInsertMenu
+                  onInsert={(kind, options) => {
+                    const handle = agentRef.current
+                    if (!handle)
+                      return { ok: false, changed: false, version: 0, error: '编辑器尚未就绪。' }
+                    const current = handle.getDocument()
+                    const labels = {
+                      heading: '新标题',
+                      paragraph: '新段落',
+                      listItem: '列表项',
+                      button: '按钮',
+                      sectionTitle: '章节标题',
+                      sectionBody: '章节内容',
+                      imageAlt: '',
+                      tableHeaders: Array.from(
+                        { length: options.cols ?? 3 },
+                        (_, i) => `列 ${i + 1}`,
+                      ),
+                      tableCell: '内容',
+                    }
+                    const html = insertPresetHtml(kind, labels, {
+                      imageSrc: options.url,
+                      tableBodyRows: Math.max(1, (options.rows ?? 3) - 1),
+                    })
+                    const selectedEntry =
+                      selectedSidRef.current === null
+                        ? undefined
+                        : current.map.bySid.get(selectedSidRef.current)
+                    const op = insertOp(current.map, selectedEntry, html)
+                    if (!op)
+                      return {
+                        ok: false,
+                        changed: false,
+                        version: current.version,
+                        error: '当前页面没有可插入的位置。',
+                      }
+                    return handle.applyOps([op], {
+                      expectedVersion: current.version,
+                      summary: '已插入 HTML 元素。',
+                      highlight: false,
+                    })
+                  }}
+                />
+              ),
+            },
+            {
               key: 'selection',
-              label: '元素定位',
+              label: activeSelected
+                ? `选中 <${elementLabel(activeSelected.tag, activeSelected.className)}>`
+                : '元素',
+              tab: 'home',
               minWidth: 950,
               content: (
-                <ToolbarButton
-                  label="定位到源码里选中的元素"
-                  disabled={revealReason !== undefined}
-                  disabledReason={revealReason}
-                  onClick={() => {
-                    if (activeSelected !== null) revealSid(activeSelected.sid)
-                  }}
-                >
-                  定位选中元素
-                </ToolbarButton>
+                <>
+                  <ToolbarButton
+                    label="定位到源码里选中的元素"
+                    disabled={revealReason !== undefined}
+                    disabledReason={revealReason}
+                    onClick={() => {
+                      if (activeSelected !== null) revealSid(activeSelected.sid)
+                    }}
+                  >
+                    定位选中元素
+                  </ToolbarButton>
+                  <HtmlElementMenu
+                    sid={activeSelected?.sid ?? null}
+                    tag={activeSelected?.tag ?? null}
+                    computed={activeSelected?.computed}
+                    onDuplicate={() => {
+                      const handle = agentRef.current
+                      const sid = selectedSidRef.current
+                      if (!handle || sid === null) return null
+                      const current = handle.getDocument()
+                      const entry = current.map.bySid.get(sid)
+                      if (!entry) return null
+                      const html = current.text.slice(entry.range[0], entry.range[1])
+                      return handle.applyOps(
+                        [{ op: 'insert_html', sid, position: 'after', html: `\n${html}` }],
+                        {
+                          expectedVersion: current.version,
+                          summary: '已复制元素。',
+                          highlight: false,
+                        },
+                      )
+                    }}
+                    onMove={(direction) => {
+                      const handle = agentRef.current
+                      const sid = selectedSidRef.current
+                      if (!handle || sid === null) return null
+                      const current = handle.getDocument()
+                      const target = moveTarget(current.map, sid, direction)
+                      if (!target)
+                        return {
+                          ok: false,
+                          changed: false,
+                          version: current.version,
+                          error: '元素不能继续移动。',
+                        }
+                      return handle.applyOps([{ op: 'move', sid, ...target }], {
+                        expectedVersion: current.version,
+                        summary: '已移动元素。',
+                        highlight: false,
+                      })
+                    }}
+                    onPickImage={async (file) => {
+                      const handle = agentRef.current
+                      const sid = selectedSidRef.current
+                      if (!handle || sid === null)
+                        return { ok: false, changed: false, version: 0, error: '没有选中的图片。' }
+                      const version = handle.getVersion()
+                      const entry = handle.getDocument().map.bySid.get(sid)
+                      if (entry?.tag !== 'img')
+                        return { ok: false, changed: false, version, error: '选中的元素不是图片。' }
+                      try {
+                        const url = await imageDataUrl(file)
+                        if (agentRef.current !== handle || selectedSidRef.current !== sid)
+                          return { ok: false, changed: false, version, error: '图片选择已改变。' }
+                        return handle.applyOps([{ op: 'set_attr', sid, name: 'src', value: url }], {
+                          expectedVersion: version,
+                          summary: '图片已嵌入 HTML 原件。',
+                          highlight: false,
+                        })
+                      } catch (cause) {
+                        return {
+                          ok: false,
+                          changed: false,
+                          version: handle.getVersion(),
+                          error: cause instanceof Error ? cause.message : String(cause),
+                        }
+                      }
+                    }}
+                    onOpenPicture={openPictureDialog}
+                    onApply={(ops) =>
+                      agentRef.current?.applyOps(ops, { highlight: false }) ?? {
+                        ok: false,
+                        changed: false,
+                        version: 0,
+                        error: '编辑器尚未就绪。',
+                      }
+                    }
+                  />
+                </>
               ),
             },
           ]}
         />
-      }
-      toolbarActions={
-        <ToolbarButton
-          label={source.saving ? '保存中…' : '保存到库'}
-          primary
-          disabled={!dirty || source.saving}
-          /*
-           * 禁用必须给原因（DESIGN §8.4）。`disabled` 的判据是两件事
-           * （没改动 / 正在保存），而它们**各有各的说法**：不区分的话
-           * 「保存」灰着时用户只能猜是没改还是正在写。不给这一条时
-           * `ToolbarButton` 把 `title` 留在按钮名上（实测
-           * `title === aria-label === "保存到库"`），等于什么都没说。
-           */
-          disabledReason={source.saving ? '正在保存…' : '没有未保存的改动'}
-          onClick={() => void save()}
-        >
-          <SaveIcon />
-        </ToolbarButton>
       }
       /*
         次工具条：查找栏 + 元素路径。**两条都落在这里**（`subbar` 与工具条同包
@@ -680,8 +1257,18 @@ export function HtmlEditor({ documentId, io, onDirtyChange, flush = false }: Edi
         同一种出现方式：有选中才出来。
       */
       subbar={
-        findOpen || trail.length > 0 ? (
+        findOpen || trail.length > 0 || promptRequest !== null ? (
           <>
+            {promptRequest && (
+              <HtmlAgentPrompt
+                key={promptRequest.id}
+                request={promptRequest}
+                onClose={() => {
+                  promptRequestRef.current = null
+                  setPromptRequest(null)
+                }}
+              />
+            )}
             {/*
               查找栏放在前面是有意的：它的宽度是 100%，会自己占掉一整行。
               放后面的话元素路径一打开查找就被挤下去——一行里的东西平移比
@@ -735,7 +1322,7 @@ export function HtmlEditor({ documentId, io, onDirtyChange, flush = false }: Edi
             {!previewReady
               ? '预览加载中…'
               : activeSelected === null
-                ? `预览已就绪${previewTitle ? `（${previewTitle}）` : ''}· 点一个元素可以定位到它的源码`
+                ? `预览已就绪${previewTitle ? `（${previewTitle}）` : ''}`
                 : `已选中 <${elementLabel(activeSelected.tag, activeSelected.className)}>`}
           </ToolbarLabel>
         </>
@@ -761,11 +1348,18 @@ export function HtmlEditor({ documentId, io, onDirtyChange, flush = false }: Edi
                * 文本与映射一起前进（理由见 `edited` 的说明）。
                * 用更新函数形式读 `prev`，于是「上一份 map」不必经过 ref。
                */
-              setEdited((prev) => {
-                const base = prev ?? initial
-                const version = (base?.version ?? 0) + 1
-                return { text: next, map: buildParseMap(next, version, base?.map ?? null), version }
-              })
+              const agent = agentRef.current
+              if (agent) agent.setManualText(next)
+              else
+                setEdited((prev) => {
+                  const base = prev ?? initial
+                  const version = (base?.version ?? 0) + 1
+                  return {
+                    text: next,
+                    map: buildParseMap(next, version, base?.map ?? null),
+                    version,
+                  }
+                })
               if (!dirty) {
                 setDirty(true)
                 onDirtyChange?.(true)
@@ -775,6 +1369,21 @@ export function HtmlEditor({ documentId, io, onDirtyChange, flush = false }: Edi
             }}
             onCursor={(info) => {
               setCursor(info)
+              const current = agentRef.current?.getDocument()
+              if (current) {
+                const entry = elementCovering(
+                  current.map,
+                  info.pos,
+                  Math.min(info.pos + 1, current.text.length),
+                )
+                const sid =
+                  entry && !['html', 'head', 'body'].includes(entry.tag) ? entry.sid : null
+                if (sid !== selectedSidRef.current) {
+                  selectedSidRef.current = sid
+                  setSelected(entry && sid !== null ? { sid, tag: entry.tag, className: '' } : null)
+                  frameRef.current?.contentWindow?.postMessage({ type: 'gx:select', sid }, '*')
+                }
+              }
               // 撤销/重做会改选区，所以这条回调也是刷新撤销栈可用性的时机
               syncHistory()
             }}
@@ -804,6 +1413,36 @@ export function HtmlEditor({ documentId, io, onDirtyChange, flush = false }: Edi
           </div>
         </div>
       </div>
+      {pictureDialog && (
+        <div className="mimir-html-picture-dialog">
+          {pictureDialog.kind === 'crop' ? (
+            <CropDialog
+              labels={PICTURE_LABELS}
+              image={pictureDialog.image}
+              onApply={applyPicturePng}
+              onCancel={() => {
+                setPictureDialog(null)
+                setPictureError(null)
+              }}
+            />
+          ) : (
+            <CutoutDialog
+              labels={PICTURE_LABELS}
+              image={pictureDialog.image}
+              onApply={applyPicturePng}
+              onCancel={() => {
+                setPictureDialog(null)
+                setPictureError(null)
+              }}
+            />
+          )}
+          {pictureError && (
+            <div className="mimir-html-picture-error" role="alert">
+              {pictureError}
+            </div>
+          )}
+        </div>
+      )}
     </EditorShell>
   )
 }

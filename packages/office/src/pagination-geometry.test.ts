@@ -12,6 +12,7 @@ import { sliceWithLineSplit } from '../vendor/apps/docs/src/renderer/pagination-
 import type { BlockBox } from '../vendor/apps/docs/src/renderer/pagination-types.js'
 import type { SectionInfo, SectionSettings } from '../vendor/packages/docx-engine/src/types.js'
 import { openDocx } from './docx.js'
+import { alignPageGapPaint } from './pagination.js'
 import {
   assignLiveBlockSections,
   gapMetricsForSection,
@@ -42,6 +43,44 @@ function section(lastBlockIndex: number, pageHeight: number, margin: number): Se
 }
 
 describe('live DOCX section pagination geometry', () => {
+  it('stretches a table page gap across both paper margins', () => {
+    const page = document.createElement('div')
+    page.className = 'doc-page'
+    const pm = document.createElement('div')
+    const table = document.createElement('table')
+    const body = document.createElement('tbody')
+    const gap = makeGapEl(
+      { marginTop: 96, marginBottom: 150, marginLeft: 96, marginRight: 96 },
+      'table',
+      2,
+    )
+    const cell = gap.querySelector('td')!
+    const fill = gap.querySelector<HTMLElement>('.page-gap-table-fill')!
+    body.append(gap)
+    table.append(body)
+    pm.append(table)
+    page.append(pm)
+    // The content box is inset from the paper, and the table cell starts in
+    // its right column. Both offsets must be removed from the gray band.
+    page.getBoundingClientRect = () => ({ left: 124, width: 793 }) as DOMRect
+    pm.getBoundingClientRect = () => ({ left: 212.5, width: 552.5 }) as DOMRect
+    cell.getBoundingClientRect = () => ({ left: 489 }) as DOMRect
+
+    alignPageGapPaint(pm)
+
+    // The gray band is inside this fill; a cell-local 275px width leaves most
+    // of the paper looking continuous even though the pagination gap exists.
+    expect(fill.style.left).toBe('-365px')
+    expect(fill.style.width).toBe('793px')
+    expect(fill.style.right).toBe('auto')
+
+    gap.style.setProperty('--gap-page-x', '100px')
+    gap.style.setProperty('--gap-page-w', '600px')
+    alignPageGapPaint(pm)
+    expect(fill.style.left).toBe('-265px')
+    expect(fill.style.width).toBe('600px')
+  })
+
   it('maps editor indexes across a section-break chip and uses each page size', () => {
     const pm = document.createElement('div')
     const elements = Array.from({ length: 7 }, (_, index) => {

@@ -34,7 +34,7 @@ vi.mock('../services/documents.js', async (importOriginal) => ({
   })),
 }))
 
-function body(conversationId: string, runId: string, resume?: unknown) {
+function body(conversationId: string, runId: string, resume?: unknown, version = 1) {
   return {
     threadId: conversationId,
     runId,
@@ -53,7 +53,7 @@ function body(conversationId: string, runId: string, resume?: unknown) {
         conversationId,
         documentId: 'doc-a',
         docxRoundId: 'round-a',
-        docxVersion: 1,
+        docxVersion: version,
         docxContext: { documentId: 'doc-a', version: 1, text: 'Live unsaved text' },
       },
     },
@@ -170,7 +170,64 @@ describe('DOCX agent AG-UI interrupt bridge', () => {
     const response = await streamDocxAgent(
       await chatParamsFromRequestBody(body(conversation.id, 'capability-run')),
     )
-    expect(await response.text()).toContain('当前聊天模型不支持工具调用')
+    const frames = await response.text()
+    expect(frames).toContain('当前聊天模型不支持工具调用')
+    expect(frames).toContain('mimir.failure')
+    expect(frames).toContain('TEXT_MESSAGE_CONTENT')
+    expect((await getConversation(conversation.id))?.messages.at(-1)).toMatchObject({
+      role: 'assistant',
+      failure: 'quota',
+    })
+  })
+
+  it('shows and saves a provider rejection instead of leaving a blank assistant turn', async () => {
+    const conversation = await createConversation()
+    model.stream.mockResolvedValue(
+      (async function* () {
+        yield { type: 'RUN_STARTED', runId: 'provider-run', threadId: conversation.id }
+        yield {
+          type: 'RUN_ERROR',
+          message: '403 This account only allows Codex official clients',
+        }
+      })(),
+    )
+    const response = await streamDocxAgent(
+      await chatParamsFromRequestBody(body(conversation.id, 'provider-run')),
+    )
+    const frames = await response.text()
+    expect(frames).toContain('TEXT_MESSAGE_CONTENT')
+    expect(frames).toContain('mimir.failure')
+    expect(frames).toContain('Mimir 无法调用')
+    expect(frames.indexOf('mimir.failure')).toBeLessThan(frames.indexOf('RUN_ERROR'))
+    expect((await getConversation(conversation.id))?.messages.at(-1)).toMatchObject({
+      role: 'assistant',
+      failure: 'quota',
+      text: expect.stringContaining('Mimir 无法调用'),
+    })
+  })
+
+  it('rejects a provisional thread before starting a document tool run', async () => {
+    const provisional = `thread-${crypto.randomUUID()}`
+    const request = body(provisional, `run-${crypto.randomUUID()}`)
+    const missing = await streamChat({
+      ...request,
+      forwardedProps: {
+        runConfig: { ...request.forwardedProps.runConfig, conversationId: undefined },
+      },
+    })
+    expect(missing.status).toBe(409)
+    expect(await missing.text()).toContain('文档编辑会话已不存在')
+
+    const conversation = await createConversation()
+    const mismatched = await streamChat({
+      ...request,
+      forwardedProps: {
+        runConfig: { ...request.forwardedProps.runConfig, conversationId: conversation.id },
+      },
+    })
+    expect(mismatched.status).toBe(400)
+    expect(await mismatched.text()).toContain('对话线程与编辑会话不匹配')
+    expect(model.stream).not.toHaveBeenCalled()
   })
 
   it('advertises only trusted tools and resumes with the persisted parent run', async () => {
@@ -212,7 +269,7 @@ describe('DOCX agent AG-UI interrupt bridge', () => {
       },
     ]
     const second = await streamDocxAgent(
-      await chatParamsFromRequestBody(body(conversation.id, secondRunId, resume)),
+      await chatParamsFromRequestBody(body(conversation.id, secondRunId, resume, 2)),
     )
     expect(second.status).toBe(200)
     expect(await second.text()).toContain('RUN_FINISHED')
@@ -226,7 +283,7 @@ describe('DOCX agent AG-UI interrupt bridge', () => {
       tools: [{ name: 'insert_content', status: 'completed', changed: true }],
     })
 
-    const replay = await streamChat(body(conversation.id, `run-${crypto.randomUUID()}`, resume))
+    const replay = await streamChat(body(conversation.id, `run-${crypto.randomUUID()}`, resume, 2))
     expect(replay.status).toBe(409)
     expect(model.stream).toHaveBeenCalledTimes(2)
   })
@@ -254,6 +311,175 @@ describe('DOCX agent AG-UI interrupt bridge', () => {
     expect(retry.status).toBe(200)
     await retry.text()
     expect(model.stream.mock.calls[2]?.[0].parentRunId).toBe(firstRunId)
+  })
+
+  it('preserves an SDK resume error emitted before RUN_STARTED', async () => {
+    const conversation = await createConversation()
+    const firstRunId = `run-${crypto.randomUUID()}`
+    model.stream
+      .mockResolvedValueOnce(modelEvents(firstRunId, conversation.id, true))
+      .mockResolvedValueOnce(
+        (async function* () {
+          yield {
+            type: 'RUN_ERROR',
+            code: 'unknown-interrupt',
+            message: 'Resume entry references unknown interrupt client_tool_call-1.',
+          }
+        })(),
+      )
+    const first = await streamChat(body(conversation.id, firstRunId))
+    await first.text()
+
+    const second = await streamChat(
+      body(conversation.id, `run-${crypto.randomUUID()}`, [
+        {
+          interruptId: 'client_tool_call-1',
+          status: 'resolved',
+          payload: { ok: true, changed: false, version: 1 },
+        },
+      ]),
+    )
+    expect(second.status).toBe(200)
+    const frames = await second.text()
+    const chunks = frames
+      .split('\n')
+      .filter((line) => line.startsWith('data: '))
+      .map((line) => JSON.parse(line.slice(6)) as { type: string; message?: string })
+    expect(chunks.map((chunk) => chunk.type)).toEqual([
+      'RUN_STARTED',
+      'TEXT_MESSAGE_START',
+      'TEXT_MESSAGE_CONTENT',
+      'TEXT_MESSAGE_END',
+      'CUSTOM',
+      'RUN_ERROR',
+    ])
+    expect(chunks.at(-1)?.message).toContain('unknown interrupt client_tool_call-1')
+    expect(await consumeWithAgUi(frames, conversation.id)).toEqual(['started'])
+  })
+
+  it('starts AG-UI before a resumed tool result that precedes the provider start', async () => {
+    const conversation = await createConversation()
+    const firstRunId = `run-${crypto.randomUUID()}`
+    const secondRunId = `run-${crypto.randomUUID()}`
+    model.stream
+      .mockResolvedValueOnce(modelEvents(firstRunId, conversation.id, true))
+      .mockResolvedValueOnce(
+        (async function* () {
+          yield {
+            type: 'TOOL_CALL_RESULT',
+            messageId: 'tool-result-1',
+            toolCallId: 'call-1',
+            content: '{"ok":true,"changed":false,"version":1}',
+            role: 'tool',
+          }
+          yield { type: 'RUN_STARTED', runId: secondRunId, threadId: conversation.id }
+          yield { type: 'TEXT_MESSAGE_START', messageId: 'answer-1', role: 'assistant' }
+          yield { type: 'TEXT_MESSAGE_CONTENT', messageId: 'answer-1', delta: '已读取工作簿' }
+          yield { type: 'TEXT_MESSAGE_END', messageId: 'answer-1' }
+          yield { type: 'RUN_FINISHED', runId: secondRunId, threadId: conversation.id }
+        })(),
+      )
+    const first = await streamChat(body(conversation.id, firstRunId))
+    await first.text()
+
+    const second = await streamChat(
+      body(conversation.id, secondRunId, [
+        {
+          interruptId: 'client_tool_call-1',
+          status: 'resolved',
+          payload: { ok: true, changed: false, version: 1 },
+        },
+      ]),
+    )
+    expect(second.status).toBe(200)
+    const frames = await second.text()
+    const chunks = frames
+      .split('\n')
+      .filter((line) => line.startsWith('data: '))
+      .map((line) => JSON.parse(line.slice(6)) as { type: string; delta?: string })
+    expect(chunks.map((chunk) => chunk.type)).toEqual([
+      'RUN_STARTED',
+      'TOOL_CALL_RESULT',
+      'TEXT_MESSAGE_START',
+      'TEXT_MESSAGE_CONTENT',
+      'TEXT_MESSAGE_END',
+      'RUN_FINISHED',
+    ])
+    expect(chunks.find((chunk) => chunk.type === 'TEXT_MESSAGE_CONTENT')?.delta).toBe(
+      '已读取工作簿',
+    )
+  })
+
+  it('rejects malformed or misbound tool results before model continuation without consuming the run', async () => {
+    const conversation = await createConversation()
+    const firstRunId = `run-${crypto.randomUUID()}`
+    model.stream
+      .mockResolvedValueOnce(modelEvents(firstRunId, conversation.id, true))
+      .mockResolvedValueOnce(modelEvents(`run-${crypto.randomUUID()}`, conversation.id, false))
+    const first = await streamChat(body(conversation.id, firstRunId))
+    await first.text()
+
+    for (const payload of [
+      { changed: true, version: 2 },
+      { ok: 'true' },
+      { ok: true, changed: true },
+    ]) {
+      const invalid = await streamChat(
+        body(
+          conversation.id,
+          `run-${crypto.randomUUID()}`,
+          [{ interruptId: 'client_tool_call-1', status: 'resolved', payload }],
+          2,
+        ),
+      )
+      expect(invalid.status).toBe(400)
+    }
+    const wrongInterrupt = await streamChat(
+      body(
+        conversation.id,
+        `run-${crypto.randomUUID()}`,
+        [
+          {
+            interruptId: 'client_tool_other',
+            status: 'resolved',
+            payload: { ok: true, changed: true, version: 2 },
+          },
+        ],
+        2,
+      ),
+    )
+    expect(wrongInterrupt.status).toBe(409)
+    const staleVersion = await streamChat(
+      body(
+        conversation.id,
+        `run-${crypto.randomUUID()}`,
+        [
+          {
+            interruptId: 'client_tool_call-1',
+            status: 'resolved',
+            payload: { ok: true, changed: true, version: 2 },
+          },
+        ],
+        1,
+      ),
+    )
+    expect(staleVersion.status).toBe(409)
+    expect(model.stream).toHaveBeenCalledTimes(1)
+
+    const validResume = [
+      {
+        interruptId: 'client_tool_call-1',
+        status: 'resolved',
+        payload: { ok: true, changed: true, version: 2 },
+      },
+    ]
+    const valid = await streamChat(
+      body(conversation.id, `run-${crypto.randomUUID()}`, validResume, 2),
+    )
+    expect(valid.status).toBe(200)
+    await valid.text()
+    expect(model.stream).toHaveBeenCalledTimes(2)
+    expect(model.stream.mock.calls[1]?.[0].parentRunId).toBe(firstRunId)
   })
 })
 

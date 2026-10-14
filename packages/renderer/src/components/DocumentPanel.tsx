@@ -2,7 +2,7 @@ import { viewerFor, type Citation, type NoteUpdate } from '@mimir/shared'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { App, Button, Empty, Input, Modal, Select, Skeleton, Typography } from 'antd'
 import { useEffect, useRef, useState } from 'react'
-import type { DocxAgentHandle } from '@mimir/office'
+import type { ChatDocumentAgent } from '@mimir/chat'
 import { NoteEditor } from './NoteEditor'
 import { useContentStyles } from './ContentTypography.style'
 import { DocumentFooter } from './document/DocumentFooter'
@@ -233,7 +233,7 @@ export function DocumentPanel({
     draft: AskDraft
     open: boolean
   } | null>(null)
-  const [docxAgentHandle, setDocxAgentHandle] = useState<DocxAgentHandle | null>(null)
+  const [documentAgentHandle, setDocumentAgentHandle] = useState<ChatDocumentAgent | null>(null)
   const aiTriggerRef = useRef<HTMLElement | null>(null)
   /** 侧栏里点开的、属于当前这一篇的引用：原地滚动高亮，不走导航 */
   const [sidebarCitation, setSidebarCitation] = useState<Citation | null>(null)
@@ -761,12 +761,12 @@ export function DocumentPanel({
                 <NoteEditor
                   key={doc.id}
                   document={doc}
-                  title={doc.title}
                   focusOnReady={newNoteFocusId === doc.id}
                   onFocusReady={() => requestNewNoteFocus(null)}
                   onOpenInternalNote={(id) => runGuarded(() => onOpenDocument(id))}
                   onAskAboutSelection={(passage) => askAi(passage)}
                   onDirtyChange={onDirtyChange}
+                  onDocumentAgentHandleChange={setDocumentAgentHandle}
                   {...(showOutline
                     ? {
                         bodySide: (
@@ -794,7 +794,7 @@ export function DocumentPanel({
                   key={doc.id}
                   doc={doc}
                   onDirtyChange={onDirtyChange}
-                  onDocxAgentHandleChange={setDocxAgentHandle}
+                  onDocumentAgentHandleChange={setDocumentAgentHandle}
                 />
               ) : (
                 /* 正文排版与编辑器共用同一个类——两个视图都让 Tiptap 渲染同一份
@@ -858,7 +858,7 @@ export function DocumentPanel({
         >
           <DocChatSidebar
             doc={doc}
-            docxAgent={docxAgentHandle?.documentId === doc.id ? docxAgentHandle : null}
+            documentAgent={documentAgentHandle?.documentId === doc.id ? documentAgentHandle : null}
             draft={aiSidebar!.draft}
             onClose={() => {
               setAiSidebar((current) => (current ? { ...current, open: false } : current))

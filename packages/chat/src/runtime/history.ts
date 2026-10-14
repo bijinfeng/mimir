@@ -69,7 +69,14 @@ export function toThreadMessage(message: Message): ThreadMessageLike {
       })
     }
     if (message.agent) {
-      parts.push({ type: 'data', name: 'mimir.docxAgent', data: { agent: message.agent } })
+      parts.push({
+        type: 'data',
+        name:
+          message.agent.format && message.agent.format !== 'docx'
+            ? 'mimir.documentAgent'
+            : 'mimir.docxAgent',
+        data: { agent: message.agent },
+      })
     }
   }
 

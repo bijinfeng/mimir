@@ -18,7 +18,8 @@ import type { ChatDraft, ChatPanelProps } from './types.js'
  *
  * 会话优先意味着对话是**主视图**，不是侧边面板（`.trellis/spec/project/product.md` §5.2）。
  * 它有两个宿主：对话页（860px 宽列）与文档页的「问 AI」侧栏（400px 窄栏）
- * ——差异只有 `draft`（锁范围）与 `guide`（指南模式，D-090），其余全同，
+ * ——宿主通过 `draft`（锁范围）、`guide`（空态布局）和
+ * `showReasoningControl`（文档侧栏隐藏强度）配置入口，消息运行时共用，
  * 所以是**同一个组件**而不是两份实现（D-087「复用而不是另写一套」）。
  *
  * ## 这个文件只剩四件事
@@ -40,24 +41,26 @@ export function ChatPanel({
   onOpenNote,
   io,
   docxAgent,
+  documentAgent,
   docxRevisionMode = false,
   ...rest
 }: ChatPanelProps) {
+  const activeAgent = documentAgent ?? docxAgent
   const { runtime, api, getDocxRound, advanceDocxVersion, registerToolCancel, prepareDocxSend } =
     useMimirRuntime({
       io,
       conversationId,
       onOpenCitation,
       onOpenNote,
-      docxAgent,
+      docxAgent: activeAgent,
     })
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>
       <MimirChatProvider api={api}>
-        {docxAgent && (
+        {activeAgent && (
           <DocxInterruptBridge
-            agent={docxAgent}
+            agent={activeAgent}
             getRound={getDocxRound}
             advanceVersion={advanceDocxVersion}
             registerToolCancel={registerToolCancel}
@@ -88,6 +91,7 @@ function ChatPanelBody({
   guide,
   guideActions,
   focusComposer,
+  showReasoningControl = true,
   io,
   composerStatus,
   onBeforeSubmit,
@@ -97,6 +101,7 @@ function ChatPanelBody({
   | 'guide'
   | 'guideActions'
   | 'focusComposer'
+  | 'showReasoningControl'
   | 'io'
   | 'composerStatus'
   | 'onOpenCitation'
@@ -144,8 +149,19 @@ function ChatPanelBody({
     })
     if (draft.text) aui.composer.setText(draft.text)
   }, [aui, draft])
-  /** 深入 = 用推理角色回答（这一轮的设置，随消息的 runConfig 走） */
-  const [deepReasoning, setDeepReasoning] = useState(false)
+  /** 深入 = 用推理角色回答（这一轮的设置，随消息的 runConfig 走）。 */
+  const [reasoningSelection, setReasoningSelection] = useState({
+    deep: false,
+    controlVisible: showReasoningControl,
+  })
+  if (reasoningSelection.controlVisible !== showReasoningControl) {
+    setReasoningSelection({
+      deep: showReasoningControl ? reasoningSelection.deep : false,
+      controlVisible: showReasoningControl,
+    })
+  }
+  const activeDeepReasoning = showReasoningControl ? reasoningSelection.deep : false
+  const setDeepReasoning = (deep: boolean) => setReasoningSelection({ deep, controlVisible: true })
 
   /**
    * 「一句话直接发出去」的入口——指南里的建议问题、输入框上方的快捷提问
@@ -155,7 +171,7 @@ function ChatPanelBody({
    * 服务端收到的消息与用户手打的完全一致，包括那一轮的 runConfig。
    */
   const ask = (question: string) => {
-    api.ask(question, { documentId: contextDoc?.id ?? null, deepReasoning })
+    api.ask(question, { documentId: contextDoc?.id ?? null, deepReasoning: activeDeepReasoning })
   }
 
   /**
@@ -173,8 +189,9 @@ function ChatPanelBody({
     <Composer
       contextDocument={contextDoc}
       onContextDocumentChange={setContextDoc}
-      deepReasoning={deepReasoning}
+      deepReasoning={activeDeepReasoning}
       onDeepReasoningChange={setDeepReasoning}
+      showReasoningControl={showReasoningControl}
       focusOnMount={focusComposer}
       io={io}
       status={composerStatus}

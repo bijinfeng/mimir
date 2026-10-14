@@ -1,5 +1,7 @@
 # DOCX 对话编辑合同
 
+多格式共用通道、能力查询和续轮验证见 [document-agent](./document-agent.md)；本页记录 DOCX 专有工具与旧入口兼容。
+
 ## 1. Scope / Trigger
 
 仅在已打开、已鉴权的 DOCX 文档页提供写工具。`packages/shared/src/docx-agent.ts` 与

@@ -7,19 +7,16 @@
  *
  *   - **公式格会被清掉公式**：只换 `<v>` 而留着 `<f>` 的话，Excel 打开会按
  *     公式重算、用户输入的值被悄悄丢掉。所以覆盖时把整段 `<c>` 换掉
- *   - **样式引用会被丢掉**（`s="7"`）：新写的是内联字符串格，不带 `s`
- *     ——所以覆盖之后那个格的颜色、边框、数字格式都没了。实测过：清空
- *     `A2`（原本 `s="7"`）写出来是 `<c r="A2" t="inlineStr">…`，而同一行
- *     别的格子的 `s` 原样还在。**界面必须如实说**，不能让人以为只是改了字
+ *   - **样式引用须保留**：手动编辑与 Agent 共用固定版 GenOffice 网关，
+ *     `patchCellKeepingStyle` 保留原单元格的 `s` 索引。
  *   - **新文本写成内联字符串**，绝不改 `sharedStrings.xml`——那里的一项被
  *     多个格子共用，改它会让所有引用它的格子一起变（**静默的**）
  *
- * ## 如实标注三件事
+ * ## 原件与预览的边界
  *
  *   - **不重算公式**：改了被别的公式引用的格子，那些公式的缓存值就旧了。
- *     Excel 打开会重算，我们显示的仍是旧值——状态行里写明
- *   - **覆盖会丢样式**（见上）——状态行里也写明。这是这一版的能力边界：
- *     只支持文字与数字，没有「写字但保住格式」那条路
+ *     Excel 打开会重算，我们显示的仍是旧值
+ *   - 样式索引按原件保留；格式画布目前仍只显示基础网格
  *   - 日期显示为序列号（`xlsx.ts` 的老规矩）
  *   - 图表、条件格式、透视表不画（读不出来），但**保存不会动它们**
  *
@@ -31,14 +28,16 @@
  * | 查找上一个 / 下一个 | 遍历 `view().rows[].cells[].text` → `selectCell` |
  * | 上一个 / 下一个公式格 | 遍历 `cell.formula` → `selectCell` |
  * | 复制这个格的文字 | 界面上显示的那串（`shown`，见 `copyCell`）→ 剪贴板（**失败如实报**） |
- * | 清空这个格 | `setCell(ref, '')` |
+ * | 清空这个格 | `set_cell` 覆盖为空文本 |
+ * | 填充与格式 | 与 Agent 共用 `propose_operations`，写回后重开会话 |
+ * | 行列操作 | 与 Agent 共用 `propose_operations`，写回后重开会话 |
  * | 十字高亮 | 纯界面开关，不改文档 |
  * | 保存到库 | `session.save()` 成功后 `commit()` |
  *
  * **每一项都落在内核里真有的函数上**（`xlsx-edit.ts` 的会话 + `xlsx.ts` 的
  * 模型），没有一个按钮是「先画上、以后再接」——那种按钮点了没反应也不报错，
- * 是这个仓库最讨厌的一类。做不到的那几件事（改样式、增删行列、重算公式）
- * 写在状态行里，而不是画成一个按不动的按钮。
+ * 是这个仓库最讨厌的一类。尚未接入的操作（公式重算等）
+ * 不画成一个按不动的按钮。
  *
  * ## 没选中格子时它就是一个预览
  *
@@ -47,8 +46,14 @@
  * 切到另一个模式」——而原件层本来就是给人看和改的地方。
  */
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  createXlsxAgentHandle,
+  type XlsxAgentHandle,
+  type XlsxHostApply,
+} from '../agent/xlsx-agent.js'
 import { openXlsxForEdit } from '../xlsx-edit.js'
+import { findXlsxCells } from '../xlsx-find.js'
 import type { XlsxSheet, XlsxWorkbook } from '../xlsx.js'
 import {
   EditorShell,
@@ -68,7 +73,9 @@ import {
   CopyIcon,
   CrossHighlightIcon,
   EraserIcon,
+  RedoIcon,
   SaveIcon,
+  UndoIcon,
 } from '../shell/icons.js'
 import { CompactToolbar } from './CompactToolbar.js'
 import { statusText, useParsed, useSource } from './use-source.js'
@@ -77,7 +84,17 @@ import '../shell/shell.css'
 import './editors.css'
 import './compact-toolbar.css'
 
-export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: EditorProps) {
+export function XlsxEditor({
+  documentId,
+  io,
+  onDirtyChange,
+  flush = false,
+  onAgentHandleChange,
+  hostApply,
+}: EditorProps & {
+  onAgentHandleChange?: (handle: XlsxAgentHandle | null) => void
+  hostApply?: XlsxHostApply
+}) {
   const source = useSource(io, documentId)
   const parsed = useParsed(source.bytes, openXlsxForEdit)
   const session = parsed.value
@@ -107,12 +124,11 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
    * 重置，属于自己制造的状态同步问题）。敲字时它变成字符串，提交后回到 `null`。
    */
   const [draft, setDraft] = useState<string | null>(null)
-  /** 有改过格子（保存后清掉） */
-  const [touched, setTouched] = useState(false)
   /** 写不进去的原因。就地在编辑行里说，不用弹窗打断 */
   const [applyError, setApplyError] = useState<string | null>(null)
   /** 查找串。**只在当前这张表里找**，不区分大小写（见 `findCells`） */
   const [query, setQuery] = useState('')
+  const [toolbarTab, setToolbarTab] = useState('home')
   /** 十字高亮开关（纯界面状态，文档一个字节都不动） */
   const [cross, setCross] = useState(false)
   /**
@@ -122,6 +138,44 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
    * 复制是**没有可见结果**的动作（文字进了剪贴板），不说一声就等于静默。
    */
   const [note, setNote] = useState<string | null>(null)
+  const [dirty, setDirty] = useState(false)
+
+  const agentHandleRef = useRef<XlsxAgentHandle | null>(null)
+  const selectionRef = useRef<{ sheet: number; row: number; col: number } | null>(null)
+  const hostApplyRef = useRef(hostApply)
+  const onAgentHandleChangeRef = useRef(onAgentHandleChange)
+  const onDirtyChangeRef = useRef(onDirtyChange)
+  useEffect(() => {
+    selectionRef.current = selected ? { sheet: active, ...selected } : null
+    hostApplyRef.current = hostApply
+    onAgentHandleChangeRef.current = onAgentHandleChange
+    onDirtyChangeRef.current = onDirtyChange
+  })
+  useEffect(() => {
+    if (!session || !source.bytes || !hostApplyRef.current) return
+    const handle = createXlsxAgentHandle(
+      documentId,
+      source.bytes,
+      session,
+      () => selectionRef.current,
+      (nextSession, isDirty) => {
+        setEdited({ source: source.bytes!, view: nextSession.view() })
+        setDirty(isDirty)
+        onDirtyChangeRef.current?.(isDirty)
+      },
+      (request) => {
+        if (!hostApplyRef.current) throw new Error('XLSX 宿主执行器未配置')
+        return hostApplyRef.current(request)
+      },
+    )
+    agentHandleRef.current = handle
+    onAgentHandleChangeRef.current?.(handle)
+    return () => {
+      handle.dispose()
+      if (agentHandleRef.current === handle) agentHandleRef.current = null
+      onAgentHandleChangeRef.current?.(null)
+    }
+  }, [session, source.bytes, documentId])
 
   const sheet = useMemo(() => view?.sheets[active] ?? null, [view, active])
 
@@ -143,7 +197,6 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
   const wasFormula = selectedCell?.formula === true
   /** 编辑框显示什么：改过看草稿，没改过看模型 */
   const shown = draft ?? modelText
-  const dirty = session?.isDirty() ?? false
 
   /** 这一张表里所有公式格（行主序）。「上一个 / 下一个公式格」按它走 */
   const formulas = useMemo(() => formulaCells(sheet), [sheet])
@@ -202,39 +255,72 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
    * 把一串文字写进选中的格，并把「界面状态」一起推到位。
    *
    * 「应用草稿」与「清空」是**同一件事的两种输入**（都是覆盖一个格），所以
-   * 只有这一处写入路径——两处各写一遍的话，`setEdited` / `touched` /
+   * 只有这一处写入路径——两处各写一遍的话，`setEdited` /
    * `onDirtyChange` 迟早有一处漏（而漏了的表现是「文件改了、界面说没改」）。
    */
-  const commitCell = useCallback(
-    (text: string): boolean => {
-      if (!session || !selected) return false
-      const ref = { sheet: active, row: selected.row, col: selected.col }
-      if (!session.setCell(ref, text)) {
-        setApplyError('这个格写不进去（所在的行或表不在可编辑范围内）')
+  const executeOps = useCallback(
+    async (operations: unknown[], successNote?: string): Promise<boolean> => {
+      const handle = agentHandleRef.current
+      if (!handle) return false
+      try {
+        await handle.execute(
+          'propose_operations',
+          { operations },
+          // The handle serializes local commands. A second fast click can queue
+          // before the first has advanced its version; manual actions use FIFO
+          // rather than capturing a stale version at click time.
+          {},
+        )
+        setApplyError(null)
+        setNote(successNote ?? null)
+        setDraft(null)
+        return true
+      } catch (error) {
+        setApplyError(error instanceof Error ? error.message : '这个格写不进去')
         return false
       }
-      setApplyError(null)
-      setNote(null)
-      setEdited({ source: source.bytes!, view: session.view() })
-      setDraft(null)
-      if (!touched) {
-        setTouched(true)
-        onDirtyChange?.(true)
-      }
-      return true
     },
-    [session, selected, active, touched, source.bytes, onDirtyChange],
+    [],
   )
+
+  const commitCell = useCallback(
+    async (text: string): Promise<void> => {
+      if (!selected || !view) return
+      const sheetId = view.sheets[active]?.id
+      if (!sheetId) return
+      const address = `${columnLetters(selected.col)}${selected.row}`
+      await executeOps([
+        text.startsWith('=')
+          ? { op: 'set_formula', sheetId, address, formula: text }
+          : { op: 'set_cell', sheetId, address, value: text },
+      ])
+    },
+    [selected, active, view, executeOps],
+  )
+
+  const structuralEdit = async (op: Record<string, unknown>) => {
+    if (!selected || !view) return
+    const sheetId = view.sheets[active]?.id
+    if (!sheetId) return
+    if (await executeOps([{ ...op, sheetId }])) setSelected(null)
+  }
+
+  const selectedEdit = async (op: Record<string, unknown>, successNote?: string) => {
+    if (!selected || !view) return
+    const sheetId = view.sheets[active]?.id
+    if (!sheetId) return
+    await executeOps([{ ...op, sheetId }], successNote)
+  }
 
   /** 提交草稿到模型（按回车或点「应用」） */
   const apply = () => {
     if (draft === null) return
-    commitCell(draft)
+    void commitCell(draft)
   }
 
   /** 清空选中的格：写空串（`setCell` 的既定语义，见 `xlsx-edit.ts`） */
   const clearCell = () => {
-    commitCell('')
+    void commitCell('')
   }
 
   /**
@@ -256,20 +342,15 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
   }
 
   const save = async () => {
-    if (!session) return
-    const bytes = await session.save()
+    const handle = agentHandleRef.current
+    if (!handle) return
+    const bytes = await handle.flush()
     const ok = await source.save(bytes, { name: 'workbook.xlsx', mime: OFFICE_MIME.xlsx })
     if (!ok) return
-    /**
-     * **保存成功后必须 commit**：把改过的 XML 烧回 entries、重解析模型。
-     * 不做的话第二次编辑会拿旧 XML 拼字节，第一次的改动静默回滚
-     * （两次保存都报成功）——与 pptx 同一个坑。
-     */
-    session.commit()
-    // commit 之后模型与刚写出的字节对齐了，取一份新快照（同时丢掉 edited）
-    setEdited({ source: source.bytes!, view: session.view() })
+    handle.markSaved()
+    setDirty(false)
+    setEdited({ source: source.bytes!, view: handle.currentSession().view() })
     setDraft(null)
-    setTouched(false)
     onDirtyChange?.(false)
   }
 
@@ -320,12 +401,9 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
   }, [])
 
   /**
-   * Ctrl+F 把焦点送到查找框。xlsx 的查找框**常驻**工具条，所以不需要
-   * `onReveal`——只补快捷键（其余格式的查找栏是隐藏的，要显形）。
-   * 那个框在 `toolbar` 的 JSX 里，它只在 `session` 就绪后渲染；
-   * 这个 hook 只注册监听，随时按都安全（找不到输入框时静默）。
+   * Ctrl/Cmd+F 切回包含查找框的「开始」分类，再由共享 hook 送焦点。
    */
-  useFindHotkey()
+  useFindHotkey(() => setToolbarTab('home'))
 
   if (source.loadError !== null) {
     return (
@@ -415,7 +493,31 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
       flush={flush}
       toolbar={
         <CompactToolbar
-          overflowLabel="更多工作表工具"
+          activeTab={toolbarTab}
+          onTabChange={setToolbarTab}
+          quickAccess={
+            <>
+              <ToolbarButton
+                label={source.saving ? '保存中…' : '保存到库'}
+                disabled={!dirty || source.saving}
+                disabledReason={source.saving ? '正在保存…' : '没有未保存的改动'}
+                onClick={() => void save()}
+              >
+                <SaveIcon />
+              </ToolbarButton>
+              <ToolbarButton label="撤销" disabled disabledReason="表格编辑尚不支持完整撤销历史">
+                <UndoIcon />
+              </ToolbarButton>
+              <ToolbarButton label="重做" disabled disabledReason="表格编辑尚不支持完整重做历史">
+                <RedoIcon />
+              </ToolbarButton>
+            </>
+          }
+          tabs={[
+            { key: 'home', label: '开始' },
+            { key: 'formulas', label: '公式' },
+            { key: 'view', label: '视图' },
+          ]}
           sections={[
             ...(view.sheets.length > 1
               ? [
@@ -423,6 +525,7 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
                     key: 'sheets',
                     label: '工作表',
                     minWidth: 0,
+                    tab: 'home',
                     content: (
                       <>
                         <span className="mimir-compact-toolbar__sheet-tabs">
@@ -457,6 +560,7 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
               key: 'find',
               label: '查找',
               minWidth: 0,
+              tab: 'home',
               content: (
                 <ToolbarGroup label="在当前工作表里查找">
                   <ToolbarTextField
@@ -475,6 +579,7 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
               key: 'matches',
               label: '查找结果',
               minWidth: 580,
+              tab: 'home',
               content: (
                 <ToolbarGroup label="查找结果">
                   <span className="me-label me-find__count" aria-live="polite">
@@ -503,6 +608,7 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
               key: 'formulas',
               label: '公式格',
               minWidth: 850,
+              tab: 'formulas',
               content: (
                 <ToolbarGroup label="公式格">
                   <ToolbarButton
@@ -528,6 +634,7 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
               key: 'cell',
               label: '单元格',
               minWidth: 940,
+              tab: 'home',
               content: (
                 <ToolbarGroup label="单元格">
                   <ToolbarButton
@@ -539,20 +646,135 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
                     <CopyIcon />
                   </ToolbarButton>
                   <ToolbarButton
-                    label="清空这个格（原有的颜色、边框与数字格式会一起丢掉）"
+                    label="清空这个格（保留原有格式）"
                     disabled={clearDisabledReason !== undefined}
                     disabledReason={clearDisabledReason}
                     onClick={clearCell}
                   >
                     <EraserIcon />
                   </ToolbarButton>
+                  <ToolbarMenu
+                    label="单元格操作"
+                    text="填充与格式"
+                    items={[
+                      {
+                        key: 'copy-right',
+                        label: '复制到右侧一格',
+                        disabled: !selected || selected.col >= 16_383,
+                        disabledReason: '先选中一个可向右复制的格子',
+                        onSelect: () =>
+                          void selectedEdit({
+                            op: 'copy_range',
+                            source: `${columnLetters(selected!.col)}${selected!.row}`,
+                            target: `${columnLetters(selected!.col + 1)}${selected!.row}`,
+                          }),
+                      },
+                      {
+                        key: 'fill-down',
+                        label: '向下填充三格',
+                        disabled: !selected || selected.row > 1_048_574,
+                        disabledReason: '先选中一个可向下填充的格子',
+                        onSelect: () =>
+                          void selectedEdit({
+                            op: 'fill_range',
+                            source: `${columnLetters(selected!.col)}${selected!.row}`,
+                            target: `${columnLetters(selected!.col)}${selected!.row}:${columnLetters(selected!.col)}${selected!.row + 2}`,
+                          }),
+                      },
+                      {
+                        key: 'bold',
+                        label: '当前格加粗',
+                        disabled: !selected,
+                        disabledReason: '先选中一个格子',
+                        onSelect: () =>
+                          void selectedEdit(
+                            {
+                              op: 'format_range',
+                              range: `${columnLetters(selected!.col)}${selected!.row}`,
+                              format: { bold: true },
+                            },
+                            '已写入加粗格式；基础网格暂不显示字形',
+                          ),
+                      },
+                    ]}
+                  />
                 </ToolbarGroup>
+              ),
+            },
+            {
+              key: 'structure',
+              label: '行列',
+              minWidth: 1010,
+              tab: 'home',
+              content: (
+                <ToolbarMenu
+                  label="行列操作"
+                  text="行列"
+                  items={[
+                    {
+                      key: 'insert-row',
+                      label: '在上方插入一行',
+                      disabled: !selected,
+                      disabledReason: '先选中一个格子',
+                      onSelect: () =>
+                        void structuralEdit({ op: 'insert_rows', row: selected!.row, count: 1 }),
+                    },
+                    {
+                      key: 'delete-row',
+                      label: '删除当前行',
+                      disabled: !selected,
+                      disabledReason: '先选中一个格子',
+                      onSelect: () =>
+                        void structuralEdit({ op: 'delete_rows', row: selected!.row, count: 1 }),
+                    },
+                    {
+                      key: 'insert-col',
+                      label: '在左侧插入一列',
+                      disabled: !selected,
+                      disabledReason: '先选中一个格子',
+                      onSelect: () =>
+                        void structuralEdit({
+                          op: 'insert_cols',
+                          column: columnLetters(selected!.col),
+                          count: 1,
+                        }),
+                    },
+                    {
+                      key: 'delete-col',
+                      label: '删除当前列',
+                      disabled: !selected,
+                      disabledReason: '先选中一个格子',
+                      onSelect: () =>
+                        void structuralEdit({
+                          op: 'delete_cols',
+                          column: columnLetters(selected!.col),
+                          count: 1,
+                        }),
+                    },
+                    {
+                      key: 'col-width',
+                      label: '当前列设为 180 像素宽',
+                      disabled: !selected,
+                      disabledReason: '先选中一个格子',
+                      onSelect: () =>
+                        void selectedEdit(
+                          {
+                            op: 'set_col_width',
+                            column: columnLetters(selected!.col),
+                            widthPx: 180,
+                          },
+                          '已写入列宽；基础网格暂不显示列宽',
+                        ),
+                    },
+                  ]}
+                />
               ),
             },
             {
               key: 'view',
               label: '视图',
               minWidth: 1050,
+              tab: 'view',
               content: (
                 <ToolbarGroup label="视图">
                   <ToolbarButton
@@ -567,19 +789,6 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
             },
           ]}
         />
-      }
-      toolbarActions={
-        <ToolbarButton
-          label={source.saving ? '保存中…' : '保存到库'}
-          primary
-          disabled={!dirty || source.saving}
-          // 禁用必须给原因（DESIGN §8.4）：判据是两件事（没改动 / 正在保存），
-          // 不区分的话按钮灰着时用户只能猜。其余四种格式都给了。
-          disabledReason={source.saving ? '正在保存…' : '没有未保存的改动'}
-          onClick={() => void save()}
-        >
-          <SaveIcon />
-        </ToolbarButton>
       }
       footer={
         selected ? (
@@ -614,7 +823,7 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
                 setDraft(null)
                 setApplyError(null)
               }}
-              placeholder="输入内容后回车"
+              placeholder="值或公式"
             />
             <ToolbarButton
               label="应用"
@@ -629,26 +838,16 @@ export function XlsxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
             {wasFormula && (
               <span className="me-label mimir-cell-editor__warn">
                 <AlertIcon />
-                原来是公式，改后公式会被清掉
+                原来是公式；输入普通值会覆盖它，输入 = 开头可更新公式
               </span>
             )}
           </div>
-        ) : (
-          <ToolbarLabel>点一个格子改它的内容；按回车应用，Esc 放弃</ToolbarLabel>
-        )
+        ) : undefined
       }
       status={
         <>
           <ToolbarLabel>{status}</ToolbarLabel>
-          <ToolbarLabel>
-            {applyError ?? note ?? '公式不重算：改了被引用的格，那边的显示值要等 Excel 打开才更新'}
-          </ToolbarLabel>
-          {/*
-            第二句是这一版的能力边界，**常驻**（不是出错时才说）：覆盖一个格
-            写的是不带 `s` 的内联字符串格，原来那个格的样式引用就没了。清空
-            是最容易踩的一种（内容本来就不要了，格式的丢失最不显眼）。
-          */}
-          <ToolbarLabel>清空会丢掉该格原有的颜色/边框/数字格式（覆盖也一样）</ToolbarLabel>
+          {(applyError ?? note) && <ToolbarLabel>{applyError ?? note}</ToolbarLabel>}
         </>
       }
     >
@@ -856,15 +1055,15 @@ function formulaCells(sheet: XlsxSheet | null): CellPos[] {
  */
 function findCells(sheet: XlsxSheet | null, query: string): CellPos[] {
   if (sheet === null || query === '') return []
-  const needle = query.toLowerCase()
-  const out: CellPos[] = []
-  for (const row of sheet.rows) {
-    for (const cell of row.cells) {
-      if (cell.covered === true) continue
-      if (cell.text.toLowerCase().includes(needle)) out.push({ row: row.number, col: cell.col })
-    }
-  }
-  return out
+  return findXlsxCells({ sheets: [sheet] }, { query, sheetId: sheet.id }).matches.map(
+    ({ address }) => {
+      const match = /^([A-Z]+)(\d+)$/.exec(address)!
+      return {
+        row: Number(match[2]),
+        col: [...match[1]!].reduce((n, char) => n * 26 + char.charCodeAt(0) - 64, 0) - 1,
+      }
+    },
+  )
 }
 
 /** `0` → `A`（列号 → 列字母，格子的引用要它） */

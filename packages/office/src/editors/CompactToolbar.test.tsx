@@ -4,40 +4,15 @@ import { createRoot } from 'react-dom/client'
 import { afterEach, expect, it, vi } from 'vitest'
 import { CompactToolbar } from './CompactToolbar.js'
 
-let notifyResize: ResizeObserverCallback | null = null
-
-class TestResizeObserver {
-  constructor(callback: ResizeObserverCallback) {
-    notifyResize = callback
-  }
-  observe() {}
-  disconnect() {}
-}
-
 afterEach(() => {
-  vi.unstubAllGlobals()
   vi.restoreAllMocks()
-  notifyResize = null
+  document.body.replaceChildren()
 })
 
-function rect(left: number, right: number): DOMRect {
-  return {
-    x: left,
-    y: 0,
-    left,
-    right,
-    width: right - left,
-    top: 0,
-    bottom: 30,
-    height: 30,
-    toJSON: () => ({}),
-  } as DOMRect
-}
-
-it('moves one command tree into the named overflow when the editor column narrows', async () => {
-  vi.stubGlobal('ResizeObserver', TestResizeObserver)
+it('keeps every command in the visible band when the editor column is narrow', () => {
   ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
   const host = document.createElement('div')
+  host.style.width = '320px'
   document.body.append(host)
   const root = createRoot(host)
   const action = vi.fn<() => void>()
@@ -45,96 +20,185 @@ it('moves one command tree into the named overflow when the editor column narrow
     root.render(
       <CompactToolbar
         sections={[
-          { key: 'primary', label: '常用', minWidth: 0, content: <button>常用命令</button> },
+          { key: 'find', label: '查找', minWidth: 0, content: <button>查找</button> },
           {
-            key: 'secondary',
-            label: '编辑',
-            minWidth: 500,
-            content: <button onClick={action}>编辑命令</button>,
+            key: 'cell',
+            label: '单元格',
+            minWidth: 1200,
+            content: <button onClick={action}>清空单元格</button>,
           },
         ]}
       />,
     )
   })
-  expect(host.querySelectorAll('button').length).toBe(2)
-
-  act(() => {
-    notifyResize?.([{ contentRect: { width: 320 } } as ResizeObserverEntry], {} as ResizeObserver)
-  })
-  expect(host.querySelector('button[aria-label="更多工具"]')).not.toBeNull()
-  expect(
-    [...host.querySelectorAll('button')].filter((button) => button.textContent === '编辑命令'),
-  ).toHaveLength(0)
-
-  act(() => {
-    host.querySelector<HTMLButtonElement>('button[aria-label="更多工具"]')?.click()
-  })
-  await act(async () => Promise.resolve())
-  expect(host.querySelectorAll('button').length).toBe(3)
-  const overflowAction = host.querySelector<HTMLButtonElement>('[aria-label="编辑"] button')
-  expect(overflowAction?.textContent).toBe('编辑命令')
-  expect(document.activeElement).toBe(overflowAction)
-  act(() => {
-    overflowAction?.click()
-  })
+  const command = [...host.querySelectorAll('button')].find(
+    (button) => button.textContent === '清空单元格',
+  )
+  expect(command).toBeDefined()
+  expect(host.querySelector('button[aria-label="更多工具"]')).toBeNull()
+  expect(host.querySelector('[role="group"][aria-label="单元格"]')).not.toBeNull()
+  act(() => command?.click())
   expect(action).toHaveBeenCalledOnce()
-
-  act(() => {
-    overflowAction?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }))
-  })
-  expect(host.querySelector('[role="menu"]')).toBeNull()
-  expect(document.activeElement).toBe(host.querySelector('button[aria-label="更多工具"]'))
-
-  act(() => {
-    notifyResize?.([{ contentRect: { width: 800 } } as ResizeObserverEntry], {} as ResizeObserver)
-  })
-  expect(host.querySelectorAll('button[aria-label="更多工具"]')).toHaveLength(0)
-  expect(
-    [...host.querySelectorAll('button')].filter((button) => button.textContent === '编辑命令'),
-  ).toHaveLength(1)
-
   act(() => root.unmount())
-  host.remove()
 })
 
-it.each([420, 640, 1000])('keeps the overflow panel inside a %ipx editor column', (width) => {
-  vi.stubGlobal('ResizeObserver', TestResizeObserver)
-  vi.stubGlobal('innerWidth', 1600)
-  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
-    this: HTMLElement,
-  ) {
-    if (this.classList.contains('mimir-editor')) return rect(100, 100 + width)
-    if (this.classList.contains('mimir-compact-toolbar')) return rect(100, 100 + width)
-    if (this.getAttribute('aria-label') === '更多工具')
-      return rect(100 + width - 70, 100 + width - 8)
-    return rect(0, 0)
-  })
+it('switches named ribbon tabs with click and arrow keys', () => {
   ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
   const host = document.createElement('div')
   document.body.append(host)
   const root = createRoot(host)
   act(() => {
     root.render(
-      <div className="mimir-editor">
-        <CompactToolbar
-          sections={[
-            { key: 'main', label: '常用', minWidth: 0, content: <button>常用</button> },
-            { key: 'extra', label: '附加', minWidth: 1200, content: <button>附加</button> },
-          ]}
-        />
-      </div>,
+      <CompactToolbar
+        tabs={[
+          { key: 'home', label: '开始' },
+          { key: 'insert', label: '插入' },
+        ]}
+        sections={[
+          {
+            key: 'format',
+            tab: 'home',
+            label: '文字',
+            minWidth: 0,
+            content: <button>加粗</button>,
+          },
+          {
+            key: 'table',
+            tab: 'insert',
+            label: '表格',
+            minWidth: 1200,
+            content: <button>插入表格</button>,
+          },
+        ]}
+      />,
     )
   })
-  act(() => host.querySelector<HTMLButtonElement>('button[aria-label="更多工具"]')?.click())
-  const panel = host.querySelector<HTMLElement>('.me-menu__panel')
-  expect(panel?.style.width).toBe('320px')
-  expect(panel?.style.left).toBe(`${100 + width - 328}px`)
-  expect(Number.parseFloat(panel?.style.maxHeight ?? '')).toBeLessThanOrEqual(
-    window.innerHeight * 0.6,
-  )
-  expect(Number.parseFloat(panel?.style.maxHeight ?? '')).toBeLessThanOrEqual(
-    window.innerHeight - Number.parseFloat(panel?.style.top ?? '') - 8,
-  )
+  const tabs = host.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+  expect(tabs).toHaveLength(2)
+  expect(tabs[0]?.getAttribute('aria-selected')).toBe('true')
+  expect(host.textContent).toContain('加粗')
+  expect(host.textContent).not.toContain('插入表格')
+  act(() => {
+    tabs[0]?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))
+  })
+  expect(tabs[1]?.getAttribute('aria-selected')).toBe('true')
+  expect(document.activeElement).toBe(tabs[1])
+  expect(host.textContent).toContain('插入表格')
+  expect(host.querySelector('[role="tabpanel"]')?.getAttribute('aria-labelledby')).toBe(tabs[1]?.id)
+  act(() => tabs[0]?.click())
+  expect(host.textContent).toContain('加粗')
   act(() => root.unmount())
-  host.remove()
+})
+
+it('keeps quick actions before the scrolling tabs as the active tab changes', () => {
+  ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+  const host = document.createElement('div')
+  host.style.width = '320px'
+  document.body.append(host)
+  const root = createRoot(host)
+  const save = vi.fn<() => void>()
+  act(() => {
+    root.render(
+      <CompactToolbar
+        quickAccess={<button onClick={save}>保存</button>}
+        tabs={[
+          { key: 'home', label: '开始' },
+          { key: 'insert', label: '插入' },
+        ]}
+        sections={[
+          { key: 'edit', tab: 'home', label: '编辑', minWidth: 0, content: <button>编辑</button> },
+          {
+            key: 'table',
+            tab: 'insert',
+            label: '表格',
+            minWidth: 0,
+            content: <button>插入表格</button>,
+          },
+        ]}
+      />,
+    )
+  })
+
+  const row = host.querySelector('.mimir-compact-toolbar__tab-row')
+  const actions = host.querySelector('[role="group"][aria-label="快捷操作"]')
+  const divider = host.querySelector('.mimir-compact-toolbar__quick-divider')
+  const tablist = host.querySelector('[role="tablist"]')
+  const tabs = host.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+  const button = actions?.querySelector<HTMLButtonElement>('button')
+  expect([...row!.children]).toEqual([actions, divider, tablist])
+  expect(button).not.toBeNull()
+  act(() => button?.focus())
+  expect(document.activeElement).toBe(button)
+  act(() => tabs[1]?.click())
+  expect(host.textContent).toContain('插入表格')
+  expect(actions?.contains(button ?? null)).toBe(true)
+  expect(document.activeElement).toBe(button)
+  act(() => button?.click())
+  expect(save).toHaveBeenCalledOnce()
+  act(() => root.unmount())
+})
+
+it('lets the editor reveal a controlled tab for keyboard shortcuts', () => {
+  ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+  const host = document.createElement('div')
+  document.body.append(host)
+  const root = createRoot(host)
+  const onTabChange = vi.fn<(key: string) => void>()
+  const render = (activeTab: string) =>
+    root.render(
+      <CompactToolbar
+        tabs={[
+          { key: 'home', label: '开始' },
+          { key: 'find', label: '查找' },
+        ]}
+        activeTab={activeTab}
+        onTabChange={onTabChange}
+        sections={[
+          { key: 'edit', tab: 'home', label: '编辑', minWidth: 0, content: <button>编辑</button> },
+          {
+            key: 'query',
+            tab: 'find',
+            label: '查找',
+            minWidth: 0,
+            content: <input data-find-input />,
+          },
+        ]}
+      />,
+    )
+  act(() => render('home'))
+  act(() => host.querySelectorAll<HTMLButtonElement>('[role="tab"]')[1]?.click())
+  expect(onTabChange).toHaveBeenCalledWith('find')
+  expect(host.querySelector('[data-find-input]')).toBeNull()
+  act(() => render('find'))
+  expect(host.querySelector('[data-find-input]')).not.toBeNull()
+  act(() => root.unmount())
+})
+
+it('omits unavailable and empty command groups', () => {
+  ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+  const host = document.createElement('div')
+  document.body.append(host)
+  const root = createRoot(host)
+  act(() => {
+    root.render(
+      <CompactToolbar
+        sections={[
+          { key: 'edit', label: '编辑', minWidth: 0, content: <button>编辑</button> },
+          {
+            key: 'unsupported',
+            label: '不支持',
+            minWidth: 0,
+            enabled: false,
+            content: <button>不可用</button>,
+          },
+          { key: 'unselected', label: '位置与大小', minWidth: 0, content: null },
+        ]}
+      />,
+    )
+  })
+  expect(host.querySelectorAll('[role="group"]')).toHaveLength(1)
+  expect(host.textContent).toContain('编辑')
+  expect(host.textContent).not.toContain('不支持')
+  expect(host.textContent).not.toContain('位置与大小')
+  act(() => root.unmount())
 })

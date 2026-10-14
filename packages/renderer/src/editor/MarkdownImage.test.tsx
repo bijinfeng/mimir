@@ -58,6 +58,11 @@ async function mount(
 
 /** 选一个文件喂给隐藏的 input，并把上传那条 promise 链推完 */
 async function pickFile(host: HTMLElement, name: string): Promise<HTMLInputElement> {
+  const insertTab = [...host.querySelectorAll<HTMLButtonElement>('button[role="tab"]')].find(
+    (button) => button.textContent === '插入',
+  )
+  expect(insertTab).toBeDefined()
+  act(() => insertTab!.click())
   const input = host.querySelector<HTMLInputElement>('input[type=file]')!
   Object.defineProperty(input, 'files', {
     value: [new File(['x'], name, { type: 'image/png' })],

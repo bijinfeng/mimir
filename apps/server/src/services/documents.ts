@@ -18,6 +18,7 @@ import {
   buildNotePath,
   moveNote,
   readNote,
+  readNoteFrontmatter,
   trashNote,
   writeNote,
   type VaultNote,
@@ -178,9 +179,41 @@ export async function createNote(input: NoteCreate): Promise<DocumentDetail> {
   }
 }
 
-export async function updateNote(id: string, input: NoteUpdate): Promise<DocumentDetail | null> {
+const noteUpdateLocks = new Map<string, Promise<void>>()
+
+/** Serialize writes to one note through the vault and database update together. */
+export async function updateNote(
+  id: string,
+  input: NoteUpdate,
+  options?: { precondition?: () => Promise<void>; extraFrontmatter?: Record<string, unknown> },
+): Promise<DocumentDetail | null> {
+  const previous = noteUpdateLocks.get(id) ?? Promise.resolve()
+  let release!: () => void
+  const current = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  noteUpdateLocks.set(id, current)
+  await previous
+  try {
+    await options?.precondition?.()
+    return await updateNoteUnlocked(id, input, options?.extraFrontmatter)
+  } finally {
+    release()
+    if (noteUpdateLocks.get(id) === current) noteUpdateLocks.delete(id)
+  }
+}
+
+async function updateNoteUnlocked(
+  id: string,
+  input: NoteUpdate,
+  extraOverride?: Record<string, unknown>,
+): Promise<DocumentDetail | null> {
   const existing = await getDocumentRow(id)
   if (!existing) return null
+  const extraFrontmatter =
+    existing.kind === 'note' && existing.path
+      ? (extraOverride ?? (await readNoteFrontmatter(existing.path)))
+      : undefined
 
   const title = input.title ?? existing.title
   const body = input.body ?? existing.body
@@ -216,6 +249,7 @@ export async function updateNote(id: string, input: NoteUpdate): Promise<Documen
       createdAt: existing.createdAt.toISOString(),
       updatedAt: now.toISOString(),
       path,
+      ...(extraFrontmatter ? { extraFrontmatter } : {}),
     })
   }
 

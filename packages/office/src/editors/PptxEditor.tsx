@@ -66,6 +66,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { editableElements, openPptxForEdit, textOfElement } from '../pptx.js'
+import {
+  createPptxAgentHandle,
+  type PptxAgentHandle,
+  type PptxHostApply,
+} from '../agent/pptx-agent.js'
+import { elementDurableId } from '../../vendor/packages/pptx-engine/src/identity.js'
 import { renderSlide, type PptxRenderable, type RenderedSlide } from '../pptx-render.js'
 import {
   EditorShell,
@@ -73,6 +79,7 @@ import {
   FindReplaceBar,
   ToolbarButton,
   ToolbarColorPicker,
+  ToolbarConfirm,
   ToolbarGroup,
   ToolbarLabel,
   ToolbarMenu,
@@ -83,9 +90,9 @@ import {
   ToolbarNotice,
   ToolbarNumberField,
   ToolbarSelect,
-  ToolbarSpacer,
   ToolbarTabs,
   ToolbarTextArea,
+  useFindHotkey,
   type FindReplaceAdapter,
   type ToolbarColorOption,
   type ToolbarSelectOption,
@@ -97,8 +104,10 @@ import {
   EyeIcon,
   FindIcon,
   ItalicIcon,
+  RedoIcon,
   SaveIcon,
   UnderlineIcon,
+  UndoIcon,
 } from '../shell/icons.js'
 import type { FindOptions } from '../shims/ui.js'
 import type { EditParagraph, EditRun } from '../../vendor/packages/pptx-ops/src/types.js'
@@ -106,6 +115,8 @@ import type { Paragraph, TextRun } from '../../vendor/packages/pptx-engine/src/t
 import { statusText, useParsed, useSource } from './use-source.js'
 import { ThumbnailSidebar } from './ThumbnailSidebar.js'
 import { OFFICE_MIME, type EditorProps } from './types.js'
+import { CompactToolbar } from './CompactToolbar.js'
+import './compact-toolbar.css'
 import '../shell/shell.css'
 import './editors.css'
 import './pptx-pdf-toolbar.css'
@@ -513,7 +524,17 @@ function createFindEvents() {
   }
 }
 
-export function PptxEditor({ documentId, io, onDirtyChange, flush = false }: EditorProps) {
+export function PptxEditor({
+  documentId,
+  io,
+  onDirtyChange,
+  onAgentHandleChange,
+  hostApply,
+  flush = false,
+}: EditorProps & {
+  onAgentHandleChange?: (handle: PptxAgentHandle | null) => void
+  hostApply?: PptxHostApply
+}) {
   const source = useSource(io, documentId)
   const parsed = useParsed(source.bytes, openPptxForEdit)
   const session = parsed.value
@@ -523,11 +544,14 @@ export function PptxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
   /** 有改动还没保存（保存后清掉） */
   const [dirty, setDirty] = useState(false)
   const [pageError, setPageError] = useState<string | null>(null)
+  const [manualUndoRound, setManualUndoRound] = useState<string | null>(null)
+  const agentHandleRef = useRef<PptxAgentHandle | null>(null)
   /** 画布容器：SVG 里注入 `data-element-id` 后用它做事件代理与描边 */
   const canvasRef = useRef<HTMLDivElement>(null)
 
   /** 查找栏的显隐、查询串与两个开关（栏本身是受控的） */
   const [findOpen, setFindOpen] = useState(false)
+  useFindHotkey(() => setFindOpen(true))
   const [findQuery, setFindQuery] = useState('')
   const [findOptions, setFindOptions] = useState<FindOptions>({
     matchCase: false,
@@ -599,11 +623,49 @@ export function PptxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
       onDirtyChange?.(changed)
     }
     findEvents.notify()
+    if (
+      selected &&
+      !session.slides()[active]?.elements.some((element) => element.id === selected)
+    ) {
+      setSelected(null)
+      setParagraphKeys([])
+    }
   }
   const afterEditRef = useRef(afterEdit)
   useEffect(() => {
     afterEditRef.current = afterEdit
   })
+
+  const agentSelectionRef = useRef({ slideIndex: active, elementId: selected })
+  const onAgentHandleChangeRef = useRef(onAgentHandleChange)
+  const hostApplyRef = useRef(hostApply)
+  useEffect(() => {
+    agentSelectionRef.current = { slideIndex: active, elementId: selected }
+    onAgentHandleChangeRef.current = onAgentHandleChange
+    hostApplyRef.current = hostApply
+  })
+  useEffect(() => {
+    if (!session) return
+    const handle = createPptxAgentHandle(
+      session,
+      documentId,
+      () => agentSelectionRef.current,
+      () => afterEditRef.current(),
+      hostApplyRef.current
+        ? (request) => {
+            if (!hostApplyRef.current) throw new Error('PPTX 宿主执行器未配置')
+            return hostApplyRef.current(request)
+          }
+        : undefined,
+    )
+    agentHandleRef.current = handle
+    onAgentHandleChangeRef.current?.(handle)
+    return () => {
+      handle.dispose()
+      if (agentHandleRef.current === handle) agentHandleRef.current = null
+      onAgentHandleChangeRef.current?.(null)
+    }
+  }, [session, documentId])
 
   /**
    * 当前页的**最新值**，给查找适配器的 `activate` 用。
@@ -669,6 +731,10 @@ export function PptxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
    */
   const selectedElement =
     selected === null ? null : (editable.find((element) => element.id === selected) ?? null)
+  const selectedObject =
+    selected === null
+      ? null
+      : (view?.slides()[active]?.elements.find((element) => element.id === selected) ?? null)
   /**
    * 选中元素的文字。`null` 与 `undefined` 都收成 `null`：`TextElement['text']` 是
    * 可选的，而这个组件对「没有文字」只有一种处理——按钮禁用 + 一句原因。
@@ -1082,6 +1148,45 @@ export function PptxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
     }))
   }
 
+  const runManualOp = async (op: Record<string, unknown>) => {
+    const handle = agentHandleRef.current
+    if (!handle || !session) return
+    const roundId = crypto.randomUUID()
+    const response = (await handle.execute(
+      'apply_ops',
+      { ops: [op] },
+      {
+        expectedVersion: session.version(),
+        roundId,
+      },
+    )) as { ok: boolean; error?: string }
+    if (!response.ok) {
+      setPageError(response.error ?? '幻灯片操作失败')
+      return
+    }
+    setPageError(null)
+    setManualUndoRound(roundId)
+  }
+  const objectTarget = selectedObject
+    ? { slide: active, el: elementDurableId(selectedObject) ?? selectedObject.id }
+    : null
+  const objectOrder = selectedObject
+    ? (view?.slides()[active]?.elements.findIndex((element) => element.id === selectedObject.id) ??
+      -1)
+    : -1
+  const objectCount = view?.slides()[active]?.elements.length ?? 0
+  const objectBox = selectedObject?.transform.offset
+  const setObjectBox = (field: 'x' | 'y' | 'cx' | 'cy', valuePt: number) => {
+    if (!objectTarget || !objectBox || !selectedObject) return
+    const box = { ...objectBox, [field]: Math.round(valuePt * 12700) }
+    void runManualOp({
+      op: 'setTransform',
+      target: objectTarget,
+      box,
+      rotDeg: selectedObject.transform.rot / 60000,
+    })
+  }
+
   /** 打开/关掉查找栏。关的时候连高亮一起撤——留一条描边配「没有在查找」是假话 */
   const toggleFind = () => {
     if (findOpen) {
@@ -1095,229 +1200,759 @@ export function PptxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
   const toggleItalic = () => applyFormat({ italic: !italicOn })
   const toggleUnderline = () => applyFormat({ underline: !underlineOn })
 
-  return (
-    <EditorShell
-      flush={flush}
-      toolbar={
-        <div className="mimir-pptx-pdf-toolbar mimir-pptx-pdf-toolbar--pptx">
-          <span className="mimir-pptx-pdf-toolbar__basic">
-            <ToolbarGroup label="整段字形">
-              <ToolbarButton
-                label="加粗（整段）"
-                active={boldOn}
-                disabled={formatReason !== undefined}
-                disabledReason={formatReason}
-                onClick={toggleBold}
-              >
-                <BoldIcon />
-              </ToolbarButton>
-              <ToolbarButton
-                label="倾斜（整段）"
-                active={italicOn}
-                disabled={formatReason !== undefined}
-                disabledReason={formatReason}
-                onClick={toggleItalic}
-              >
-                <ItalicIcon />
-              </ToolbarButton>
-              <ToolbarButton
-                label="下划线（整段）"
-                active={underlineOn}
-                disabled={formatReason !== undefined}
-                disabledReason={formatReason}
-                onClick={toggleUnderline}
-              >
-                <UnderlineIcon />
-              </ToolbarButton>
-            </ToolbarGroup>
-          </span>
-          <span className="mimir-pptx-pdf-toolbar__size">
-            {hasRuns && uniformSize !== null ? (
-              <ToolbarNumberField
-                label="字号（pt，整段）"
-                value={uniformSize}
-                min={MIN_FONT_SIZE_PT}
-                max={MAX_FONT_SIZE_PT}
-                suffix="pt"
-                onCommit={(next) => applyFormat({ fontSize: next })}
+  const basicToolbar = (
+    <>
+      <span className="mimir-pptx-pdf-toolbar__basic">
+        <ToolbarGroup label="整段字形">
+          <ToolbarButton
+            label="加粗（整段）"
+            active={boldOn}
+            disabled={formatReason !== undefined}
+            disabledReason={formatReason}
+            onClick={toggleBold}
+          >
+            <BoldIcon />
+          </ToolbarButton>
+          <ToolbarButton
+            label="倾斜（整段）"
+            active={italicOn}
+            disabled={formatReason !== undefined}
+            disabledReason={formatReason}
+            onClick={toggleItalic}
+          >
+            <ItalicIcon />
+          </ToolbarButton>
+          <ToolbarButton
+            label="下划线（整段）"
+            active={underlineOn}
+            disabled={formatReason !== undefined}
+            disabledReason={formatReason}
+            onClick={toggleUnderline}
+          >
+            <UnderlineIcon />
+          </ToolbarButton>
+        </ToolbarGroup>
+      </span>
+      <span className="mimir-pptx-pdf-toolbar__size">
+        {hasRuns && uniformSize !== null ? (
+          <ToolbarNumberField
+            label="字号（pt，整段）"
+            value={uniformSize}
+            min={MIN_FONT_SIZE_PT}
+            max={MAX_FONT_SIZE_PT}
+            suffix="pt"
+            onCommit={(next) => applyFormat({ fontSize: next })}
+          />
+        ) : (
+          <ToolbarLabel>{hasRuns ? '多档字号' : '未选中文字'}</ToolbarLabel>
+        )}
+      </span>
+      <span className="mimir-pptx-pdf-toolbar__find">
+        <ToolbarButton label="查找和替换" active={findOpen} onClick={toggleFind}>
+          <FindIcon />
+        </ToolbarButton>
+      </span>
+    </>
+  )
+  const textFormatMenu = (
+    <ToolbarMenu
+      label="文字格式"
+      text="文字格式"
+      panelWidth={310}
+      renderPanel={(close) => (
+        <div className="mimir-pptx-pdf-toolbar__panel">
+          <div className="mimir-pptx-pdf-toolbar__narrow-only">
+            <ToolbarMenuItemRow
+              item={{
+                key: 'bold',
+                label: '加粗（整段）',
+                active: boldOn,
+                disabled: formatReason !== undefined,
+                disabledReason: formatReason,
+                onSelect: toggleBold,
+              }}
+              close={close}
+            />
+            <ToolbarMenuItemRow
+              item={{
+                key: 'italic',
+                label: '倾斜（整段）',
+                active: italicOn,
+                disabled: formatReason !== undefined,
+                disabledReason: formatReason,
+                onSelect: toggleItalic,
+              }}
+              close={close}
+            />
+            <ToolbarMenuItemRow
+              item={{
+                key: 'underline',
+                label: '下划线（整段）',
+                active: underlineOn,
+                disabled: formatReason !== undefined,
+                disabledReason: formatReason,
+                onSelect: toggleUnderline,
+              }}
+              close={close}
+            />
+            <ToolbarMenuSeparator />
+          </div>
+          <ToolbarMenuItemRow
+            item={{
+              key: 'strike',
+              label: '删除线（整段）',
+              active: strikeOn,
+              disabled: formatReason !== undefined,
+              disabledReason: formatReason,
+              onSelect: () => applyFormat({ strike: !strikeOn }),
+            }}
+            close={close}
+          />
+          <ToolbarMenuItemRow
+            item={{
+              key: 'superscript',
+              label: '上标（整段）',
+              active: superscriptOn,
+              disabled: formatReason !== undefined,
+              disabledReason: formatReason,
+              onSelect: () => applyFormat({ baseline: superscriptOn ? 0 : SUPERSCRIPT_BASELINE }),
+            }}
+            close={close}
+          />
+          <ToolbarMenuItemRow
+            item={{
+              key: 'subscript',
+              label: '下标（整段）',
+              active: subscriptOn,
+              disabled: formatReason !== undefined,
+              disabledReason: formatReason,
+              onSelect: () => applyFormat({ baseline: subscriptOn ? 0 : SUBSCRIPT_BASELINE }),
+            }}
+            close={close}
+          />
+          <ToolbarMenuItemRow
+            item={{
+              key: 'clear',
+              label: '清除字形（加粗、倾斜、下划线、删除线、上下标；不动字号、字体与颜色）',
+              disabled: formatReason !== undefined,
+              disabledReason: formatReason,
+              onSelect: () =>
+                applyFormat({
+                  bold: false,
+                  italic: false,
+                  underline: false,
+                  strike: false,
+                  baseline: 0,
+                }),
+            }}
+            close={close}
+          />
+          <ToolbarMenuSeparator />
+          <ToolbarMenuItemRow
+            item={{
+              key: 'size-up',
+              label: `增大字号 ${SIZE_STEP_PT}pt（整段）`,
+              disabled: !canStepSize,
+              disabledReason: sizeStepReason,
+              onSelect: () => stepSize(SIZE_STEP_PT),
+            }}
+            close={close}
+          />
+          <ToolbarMenuItemRow
+            item={{
+              key: 'size-down',
+              label: `减小字号 ${SIZE_STEP_PT}pt（整段）`,
+              disabled: !canStepSize,
+              disabledReason: sizeStepReason,
+              onSelect: () => stepSize(-SIZE_STEP_PT),
+            }}
+            close={close}
+          />
+          {hasRuns ? (
+            <ToolbarMenuFields label="字体和颜色">
+              <ToolbarSelect
+                label="字体（整段，中英文一起换）"
+                value={uniformFont}
+                options={fontOptions}
+                fallbackLabel="多档字体"
+                onChange={(family) => applyFormat({ fontFamily: family })}
               />
-            ) : (
-              <ToolbarLabel>{hasRuns ? '多档字号' : '未选中文字'}</ToolbarLabel>
-            )}
-          </span>
-          <span className="mimir-pptx-pdf-toolbar__find">
-            <ToolbarButton label="查找和替换" active={findOpen} onClick={toggleFind}>
-              <FindIcon />
-            </ToolbarButton>
-          </span>
-          <ToolbarMenu
-            label="文字格式与更多"
-            text="文字格式"
-            panelWidth={310}
-            renderPanel={(close) => (
-              <div className="mimir-pptx-pdf-toolbar__panel">
-                <div className="mimir-pptx-pdf-toolbar__narrow-only">
-                  <ToolbarMenuItemRow
-                    item={{
-                      key: 'bold',
-                      label: '加粗（整段）',
-                      active: boldOn,
-                      disabled: formatReason !== undefined,
-                      disabledReason: formatReason,
-                      onSelect: toggleBold,
-                    }}
-                    close={close}
-                  />
-                  <ToolbarMenuItemRow
-                    item={{
-                      key: 'italic',
-                      label: '倾斜（整段）',
-                      active: italicOn,
-                      disabled: formatReason !== undefined,
-                      disabledReason: formatReason,
-                      onSelect: toggleItalic,
-                    }}
-                    close={close}
-                  />
-                  <ToolbarMenuItemRow
-                    item={{
-                      key: 'underline',
-                      label: '下划线（整段）',
-                      active: underlineOn,
-                      disabled: formatReason !== undefined,
-                      disabledReason: formatReason,
-                      onSelect: toggleUnderline,
-                    }}
-                    close={close}
-                  />
-                  <ToolbarMenuSeparator />
-                </div>
-                <ToolbarMenuItemRow
-                  item={{
-                    key: 'strike',
-                    label: '删除线（整段）',
-                    active: strikeOn,
-                    disabled: formatReason !== undefined,
-                    disabledReason: formatReason,
-                    onSelect: () => applyFormat({ strike: !strikeOn }),
-                  }}
-                  close={close}
+              <ToolbarColorPicker
+                label="字体颜色（整段）"
+                value={uniformColor}
+                options={colorOptions}
+                onPick={(color) => applyFormat({ color })}
+              />
+            </ToolbarMenuFields>
+          ) : (
+            <ToolbarMenuNote>
+              {formatReason ?? '字号、字体与颜色只作用于选中的文本框'}
+            </ToolbarMenuNote>
+          )}
+          <div className="mimir-pptx-pdf-toolbar__find-menu">
+            <ToolbarMenuSeparator />
+            <ToolbarMenuItemRow
+              item={{
+                key: 'find',
+                label: '查找和替换',
+                active: findOpen,
+                onSelect: toggleFind,
+              }}
+              close={close}
+            />
+          </div>
+        </div>
+      )}
+    />
+  )
+  const objectMenu = (
+    <ToolbarMenu
+      label="对象与幻灯片操作"
+      text="对象"
+      panelWidth={330}
+      renderPanel={(close) => (
+        <div className="mimir-pptx-pdf-toolbar__panel">
+          <ToolbarMenuFields label="插入">
+            <ToolbarMenuItemRow
+              item={{
+                key: 'insert-textbox',
+                label: '文本框',
+                onSelect: () =>
+                  void runManualOp({
+                    op: 'addElement',
+                    target: { slide: active },
+                    kind: 'textbox',
+                    offset: {
+                      x: Math.round(session.size.cx * 0.1),
+                      y: Math.round(session.size.cy * 0.12),
+                      cx: Math.round(session.size.cx * 0.6),
+                      cy: Math.round(session.size.cy * 0.14),
+                    },
+                    paragraphs: [{ runs: [{ text: '新文本框' }] }],
+                  }),
+              }}
+              close={close}
+            />
+            <ToolbarMenuItemRow
+              item={{
+                key: 'insert-shape',
+                label: '矩形',
+                onSelect: () =>
+                  void runManualOp({
+                    op: 'addElement',
+                    target: { slide: active },
+                    kind: 'rect',
+                    offset: {
+                      x: Math.round(session.size.cx * 0.2),
+                      y: Math.round(session.size.cy * 0.25),
+                      cx: Math.round(session.size.cx * 0.35),
+                      cy: Math.round(session.size.cy * 0.22),
+                    },
+                    fill: '#D9E8FB',
+                  }),
+              }}
+              close={close}
+            />
+          </ToolbarMenuFields>
+          <ToolbarMenuSeparator />
+          {objectTarget && selectedObject ? (
+            <>
+              <ToolbarMenuFields label="选中对象">
+                {(selectedObject.type === 'text' || selectedObject.type === 'shape') && (
+                  <>
+                    <ToolbarColorPicker
+                      label="填充颜色"
+                      value={null}
+                      options={TEXT_COLORS}
+                      onPick={(color) =>
+                        void runManualOp({ op: 'setFill', target: objectTarget, fill: color })
+                      }
+                    />
+                    <ToolbarMenuItemRow
+                      item={{
+                        key: 'no-fill',
+                        label: '无填充',
+                        onSelect: () =>
+                          void runManualOp({
+                            op: 'setFill',
+                            target: objectTarget,
+                            fill: 'none',
+                          }),
+                      }}
+                      close={close}
+                    />
+                  </>
+                )}
+                <ToolbarColorPicker
+                  label="轮廓颜色"
+                  value={null}
+                  options={TEXT_COLORS}
+                  onPick={(color) =>
+                    void runManualOp({
+                      op: 'setStroke',
+                      target: objectTarget,
+                      stroke: { color, widthEmu: 12700 },
+                    })
+                  }
                 />
                 <ToolbarMenuItemRow
                   item={{
-                    key: 'superscript',
-                    label: '上标（整段）',
-                    active: superscriptOn,
-                    disabled: formatReason !== undefined,
-                    disabledReason: formatReason,
+                    key: 'no-stroke',
+                    label: '无轮廓',
                     onSelect: () =>
-                      applyFormat({ baseline: superscriptOn ? 0 : SUPERSCRIPT_BASELINE }),
-                  }}
-                  close={close}
-                />
-                <ToolbarMenuItemRow
-                  item={{
-                    key: 'subscript',
-                    label: '下标（整段）',
-                    active: subscriptOn,
-                    disabled: formatReason !== undefined,
-                    disabledReason: formatReason,
-                    onSelect: () => applyFormat({ baseline: subscriptOn ? 0 : SUBSCRIPT_BASELINE }),
-                  }}
-                  close={close}
-                />
-                <ToolbarMenuItemRow
-                  item={{
-                    key: 'clear',
-                    label: '清除字形（加粗、倾斜、下划线、删除线、上下标；不动字号、字体与颜色）',
-                    disabled: formatReason !== undefined,
-                    disabledReason: formatReason,
-                    onSelect: () =>
-                      applyFormat({
-                        bold: false,
-                        italic: false,
-                        underline: false,
-                        strike: false,
-                        baseline: 0,
+                      void runManualOp({
+                        op: 'setStroke',
+                        target: objectTarget,
+                        stroke: null,
                       }),
                   }}
                   close={close}
                 />
-                <ToolbarMenuSeparator />
-                <ToolbarMenuItemRow
-                  item={{
-                    key: 'size-up',
-                    label: `增大字号 ${SIZE_STEP_PT}pt（整段）`,
-                    disabled: !canStepSize,
-                    disabledReason: sizeStepReason,
-                    onSelect: () => stepSize(SIZE_STEP_PT),
-                  }}
-                  close={close}
-                />
-                <ToolbarMenuItemRow
-                  item={{
-                    key: 'size-down',
-                    label: `减小字号 ${SIZE_STEP_PT}pt（整段）`,
-                    disabled: !canStepSize,
-                    disabledReason: sizeStepReason,
-                    onSelect: () => stepSize(-SIZE_STEP_PT),
-                  }}
-                  close={close}
-                />
-                {hasRuns ? (
-                  <ToolbarMenuFields label="字体和颜色">
-                    <ToolbarSelect
-                      label="字体（整段，中英文一起换）"
-                      value={uniformFont}
-                      options={fontOptions}
-                      fallbackLabel="多档字体"
-                      onChange={(family) => applyFormat({ fontFamily: family })}
-                    />
-                    <ToolbarColorPicker
-                      label="字体颜色（整段）"
-                      value={uniformColor}
-                      options={colorOptions}
-                      onPick={(color) => applyFormat({ color })}
-                    />
-                  </ToolbarMenuFields>
-                ) : (
-                  <ToolbarMenuNote>
-                    {formatReason ?? '字号、字体与颜色只作用于选中的文本框'}
-                  </ToolbarMenuNote>
-                )}
-                <div className="mimir-pptx-pdf-toolbar__find-menu">
-                  <ToolbarMenuSeparator />
-                  <ToolbarMenuItemRow
-                    item={{
-                      key: 'find',
-                      label: '查找和替换',
-                      active: findOpen,
-                      onSelect: toggleFind,
-                    }}
-                    close={close}
+              </ToolbarMenuFields>
+              {objectBox && (
+                <ToolbarMenuFields label="位置和大小（pt）">
+                  <ToolbarNumberField
+                    label="左"
+                    value={Math.round(objectBox.x / 12700)}
+                    onCommit={(value) => setObjectBox('x', value)}
                   />
-                </div>
-              </div>
-            )}
+                  <ToolbarNumberField
+                    label="上"
+                    value={Math.round(objectBox.y / 12700)}
+                    onCommit={(value) => setObjectBox('y', value)}
+                  />
+                  <ToolbarNumberField
+                    label="宽"
+                    value={Math.round(objectBox.cx / 12700)}
+                    min={1}
+                    onCommit={(value) => setObjectBox('cx', value)}
+                  />
+                  <ToolbarNumberField
+                    label="高"
+                    value={Math.round(objectBox.cy / 12700)}
+                    min={1}
+                    onCommit={(value) => setObjectBox('cy', value)}
+                  />
+                </ToolbarMenuFields>
+              )}
+              <ToolbarMenuFields label="排列与翻转">
+                {(
+                  [
+                    ['front', '置于顶层'],
+                    ['forward', '上移一层'],
+                    ['backward', '下移一层'],
+                    ['back', '置于底层'],
+                  ] as const
+                ).map(([dir, label]) => {
+                  const atExtreme =
+                    dir === 'front' || dir === 'forward'
+                      ? objectOrder >= objectCount - 1
+                      : objectOrder <= 0
+                  return (
+                    <ToolbarMenuItemRow
+                      key={dir}
+                      item={{
+                        key: `reorder-${dir}`,
+                        label,
+                        disabled: atExtreme,
+                        disabledReason: atExtreme ? '对象已在这一层的边缘' : undefined,
+                        onSelect: () =>
+                          void runManualOp({
+                            op: 'reorderElement',
+                            target: objectTarget,
+                            dir,
+                          }),
+                      }}
+                      close={close}
+                    />
+                  )
+                })}
+                <ToolbarMenuItemRow
+                  item={{
+                    key: 'flip-horizontal',
+                    label: '水平翻转',
+                    active: selectedObject.transform.flipH,
+                    onSelect: () =>
+                      void runManualOp({
+                        op: 'flipElements',
+                        target: { slide: active },
+                        els: [objectTarget.el],
+                        axis: 'h',
+                      }),
+                  }}
+                  close={close}
+                />
+                <ToolbarMenuItemRow
+                  item={{
+                    key: 'flip-vertical',
+                    label: '垂直翻转',
+                    active: selectedObject.transform.flipV,
+                    onSelect: () =>
+                      void runManualOp({
+                        op: 'flipElements',
+                        target: { slide: active },
+                        els: [objectTarget.el],
+                        axis: 'v',
+                      }),
+                  }}
+                  close={close}
+                />
+              </ToolbarMenuFields>
+              <ToolbarMenuItemRow
+                item={{
+                  key: 'delete-element',
+                  label: '删除选中对象…',
+                  onSelect: () => {
+                    if (window.confirm('删除选中的对象？'))
+                      void runManualOp({ op: 'deleteElement', target: objectTarget })
+                  },
+                }}
+                close={close}
+              />
+            </>
+          ) : (
+            <ToolbarMenuNote>未选中对象</ToolbarMenuNote>
+          )}
+          <ToolbarMenuSeparator />
+          <ToolbarMenuFields label="本页背景与放映">
+            <ToolbarColorPicker
+              label="本页背景颜色"
+              value={null}
+              options={TEXT_COLORS}
+              onPick={(color) =>
+                void runManualOp({
+                  op: 'setBackground',
+                  target: { slide: active },
+                  kind: 'solid',
+                  color,
+                })
+              }
+            />
+            <ToolbarMenuItemRow
+              item={{
+                key: 'reset-background',
+                label: '重置本页背景',
+                disabled: !view?.slides()[active]?.bgOwn,
+                disabledReason: '本页正在使用母版背景',
+                onSelect: () =>
+                  void runManualOp({
+                    op: 'setBackground',
+                    target: { slide: active },
+                    kind: 'reset',
+                  }),
+              }}
+              close={close}
+            />
+            <ToolbarMenuItemRow
+              item={{
+                key: 'toggle-hidden',
+                label: rendered?.hidden ? '在放映中显示本页' : '在放映中隐藏本页',
+                active: rendered?.hidden === true,
+                onSelect: () =>
+                  void runManualOp({
+                    op: 'setHidden',
+                    target: { slide: active },
+                    hidden: !rendered?.hidden,
+                  }),
+              }}
+              close={close}
+            />
+          </ToolbarMenuFields>
+          <ToolbarMenuSeparator />
+          <ToolbarMenuItemRow
+            item={{
+              key: 'transition-fade',
+              label: '本页淡入切换',
+              onSelect: () =>
+                void runManualOp({
+                  op: 'setTransition',
+                  target: { slide: active },
+                  kind: 'fade',
+                }),
+            }}
+            close={close}
           />
+          <ToolbarMenuItemRow
+            item={{
+              key: 'transition-none',
+              label: '本页无切换',
+              onSelect: () =>
+                void runManualOp({
+                  op: 'setTransition',
+                  target: { slide: active },
+                  kind: 'none',
+                }),
+            }}
+            close={close}
+          />
+          {manualUndoRound && (
+            <ToolbarMenuItemRow
+              item={{
+                key: 'undo-object',
+                label: '撤销上一次对象操作',
+                onSelect: () => {
+                  const undone = agentHandleRef.current?.undoRound(manualUndoRound)
+                  setManualUndoRound(null)
+                  if (!undone) setPageError('画布已发生其他修改，无法撤销这一步')
+                },
+              }}
+              close={close}
+            />
+          )}
         </div>
-      }
-      toolbarActions={
-        <ToolbarButton
-          label={source.saving ? '保存中…' : '保存到库'}
-          primary
-          disabled={!dirty || source.saving}
-          /*
-              禁用必须给原因（DESIGN §8.4）。`disabled` 的判据是两件事（没改动 /
-              正在保存），它们各有各的说法：不区分的话「保存」灰着时用户只能猜
-              是没改还是正在写。不给这一条时 `ToolbarButton` 把 `title` 留在
-              按钮名上（`title === aria-label === "保存到库"`），等于什么都没说。
-            */
-          disabledReason={source.saving ? '正在保存…' : '没有未保存的改动'}
-          onClick={() => void save()}
-        >
-          <SaveIcon />
-        </ToolbarButton>
+      )}
+    />
+  )
+
+  return (
+    <EditorShell
+      flush={flush}
+      toolbar={
+        <CompactToolbar
+          quickAccess={
+            <>
+              <ToolbarButton
+                label={source.saving ? '保存中…' : '保存到库'}
+                disabled={!dirty || source.saving}
+                disabledReason={source.saving ? '正在保存…' : '没有未保存的改动'}
+                onClick={() => void save()}
+              >
+                <SaveIcon />
+              </ToolbarButton>
+              <ToolbarButton label="撤销" disabled disabledReason="演示文稿尚不支持完整撤销历史">
+                <UndoIcon />
+              </ToolbarButton>
+              <ToolbarButton label="重做" disabled disabledReason="演示文稿尚不支持完整重做历史">
+                <RedoIcon />
+              </ToolbarButton>
+            </>
+          }
+          tabs={[
+            { key: 'home', label: '开始' },
+            { key: 'insert', label: '插入' },
+            { key: 'object', label: '对象' },
+            { key: 'slide', label: '幻灯片' },
+            { key: 'view', label: '视图' },
+          ]}
+          sections={[
+            { key: 'text', label: '字形与查找', tab: 'home', minWidth: 0, content: basicToolbar },
+            {
+              key: 'text-extra',
+              label: '字体与颜色',
+              tab: 'home',
+              minWidth: 0,
+              content: textFormatMenu,
+            },
+            {
+              key: 'insert',
+              label: '对象',
+              tab: 'insert',
+              minWidth: 0,
+              content: (
+                <ToolbarGroup label="插入对象">
+                  <ToolbarButton
+                    label="插入文本框"
+                    onClick={() =>
+                      void runManualOp({
+                        op: 'addElement',
+                        target: { slide: active },
+                        kind: 'textbox',
+                        offset: {
+                          x: Math.round(session.size.cx * 0.1),
+                          y: Math.round(session.size.cy * 0.12),
+                          cx: Math.round(session.size.cx * 0.6),
+                          cy: Math.round(session.size.cy * 0.14),
+                        },
+                        paragraphs: [{ runs: [{ text: '新文本框' }] }],
+                      })
+                    }
+                  >
+                    文本框
+                  </ToolbarButton>
+                  <ToolbarButton
+                    label="插入矩形"
+                    onClick={() =>
+                      void runManualOp({
+                        op: 'addElement',
+                        target: { slide: active },
+                        kind: 'rect',
+                        offset: {
+                          x: Math.round(session.size.cx * 0.2),
+                          y: Math.round(session.size.cy * 0.25),
+                          cx: Math.round(session.size.cx * 0.35),
+                          cy: Math.round(session.size.cy * 0.22),
+                        },
+                        fill: '#D9E8FB',
+                      })
+                    }
+                  >
+                    矩形
+                  </ToolbarButton>
+                </ToolbarGroup>
+              ),
+            },
+            {
+              key: 'object-main',
+              label: '排列',
+              tab: 'object',
+              minWidth: 0,
+              content: (
+                <ToolbarGroup label="对象排列">
+                  <ToolbarButton
+                    label="置于顶层"
+                    disabled={objectTarget === null || objectOrder >= objectCount - 1}
+                    disabledReason={objectTarget === null ? '先选中一个对象' : '对象已在顶层'}
+                    onClick={() =>
+                      objectTarget &&
+                      void runManualOp({ op: 'reorderElement', target: objectTarget, dir: 'front' })
+                    }
+                  >
+                    置顶
+                  </ToolbarButton>
+                  <ToolbarButton
+                    label="置于底层"
+                    disabled={objectTarget === null || objectOrder <= 0}
+                    disabledReason={objectTarget === null ? '先选中一个对象' : '对象已在底层'}
+                    onClick={() =>
+                      objectTarget &&
+                      void runManualOp({ op: 'reorderElement', target: objectTarget, dir: 'back' })
+                    }
+                  >
+                    置底
+                  </ToolbarButton>
+                </ToolbarGroup>
+              ),
+            },
+            {
+              key: 'object-box',
+              label: '位置与大小',
+              tab: 'object',
+              minWidth: 0,
+              content: objectBox ? (
+                <ToolbarGroup label="对象位置与大小">
+                  <ToolbarNumberField
+                    label="左"
+                    value={Math.round(objectBox.x / 12700)}
+                    onCommit={(value) => setObjectBox('x', value)}
+                  />
+                  <ToolbarNumberField
+                    label="上"
+                    value={Math.round(objectBox.y / 12700)}
+                    onCommit={(value) => setObjectBox('y', value)}
+                  />
+                  <ToolbarNumberField
+                    label="宽"
+                    value={Math.round(objectBox.cx / 12700)}
+                    min={1}
+                    onCommit={(value) => setObjectBox('cx', value)}
+                  />
+                  <ToolbarNumberField
+                    label="高"
+                    value={Math.round(objectBox.cy / 12700)}
+                    min={1}
+                    onCommit={(value) => setObjectBox('cy', value)}
+                  />
+                </ToolbarGroup>
+              ) : null,
+            },
+            {
+              key: 'object-extra',
+              label: '属性与位置',
+              tab: 'object',
+              minWidth: 0,
+              content: objectMenu,
+            },
+            {
+              key: 'slides',
+              label: '页面',
+              tab: 'slide',
+              minWidth: 0,
+              content: (
+                <ToolbarGroup label="幻灯片操作">
+                  <ToolbarButton label="新增幻灯片" onClick={() => insertPage(active)}>
+                    新建
+                  </ToolbarButton>
+                  <ToolbarButton label="复制当前幻灯片" onClick={() => duplicatePage(active)}>
+                    复制
+                  </ToolbarButton>
+                  <ToolbarConfirm
+                    title="删除当前幻灯片？"
+                    description="删除后可以通过不保存退出恢复。"
+                    confirmLabel="删除幻灯片"
+                    disabled={slideCount <= 1}
+                    onConfirm={() => deletePage(active)}
+                  >
+                    <ToolbarButton
+                      label="删除当前幻灯片"
+                      disabled={slideCount <= 1}
+                      disabledReason="至少保留一张幻灯片"
+                    >
+                      删除
+                    </ToolbarButton>
+                  </ToolbarConfirm>
+                  <ToolbarButton
+                    label={rendered.hidden ? '放映时显示本页' : '放映时隐藏本页'}
+                    active={rendered.hidden}
+                    onClick={() =>
+                      void runManualOp({
+                        op: 'setHidden',
+                        target: { slide: active },
+                        hidden: !rendered.hidden,
+                      })
+                    }
+                  >
+                    {rendered.hidden ? '显示' : '隐藏'}
+                  </ToolbarButton>
+                </ToolbarGroup>
+              ),
+            },
+            {
+              key: 'transition',
+              label: '切换',
+              tab: 'slide',
+              minWidth: 0,
+              content: (
+                <ToolbarGroup label="幻灯片切换">
+                  <ToolbarButton
+                    label="本页淡入切换"
+                    onClick={() =>
+                      void runManualOp({
+                        op: 'setTransition',
+                        target: { slide: active },
+                        kind: 'fade',
+                      })
+                    }
+                  >
+                    淡入
+                  </ToolbarButton>
+                  <ToolbarButton
+                    label="本页无切换"
+                    onClick={() =>
+                      void runManualOp({
+                        op: 'setTransition',
+                        target: { slide: active },
+                        kind: 'none',
+                      })
+                    }
+                  >
+                    无切换
+                  </ToolbarButton>
+                </ToolbarGroup>
+              ),
+            },
+            {
+              key: 'view',
+              label: '查找',
+              tab: 'view',
+              minWidth: 0,
+              content: (
+                <ToolbarButton label="查找和替换" active={findOpen} onClick={toggleFind}>
+                  <FindIcon />
+                </ToolbarButton>
+              ),
+            },
+          ]}
+        />
       }
       /*
         次工具条：幻灯片导航 + 查找栏。
@@ -1368,14 +2003,10 @@ export function PptxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
             />
           )}
 
-          {/*
-            隐藏标记：`<p:sld show="0">` 的页面在放映时被跳过（`renderSlide` 的
-            `hidden`）。**只显示不切换**——隐藏与否是这份文件在放映时的行为，
-            改它要写幻灯片自己的 show 属性，而我们的保存只打补丁、不改结构。
-          */}
+          {/* 放映隐藏状态由同一宿主操作写回 slide 的 show 属性。 */}
           {rendered.hidden && (
             <ToolbarLabel>
-              <EyeIcon /> 这一页在放映时隐藏（只读标记）
+              <EyeIcon /> 这一页在放映时隐藏
             </ToolbarLabel>
           )}
 
@@ -1395,11 +2026,7 @@ export function PptxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
         selected && paragraphs ? (
           <div className="mimir-paras">
             <div className="mimir-paras__head">
-              <ToolbarLabel>编辑这一段文字（每行一段）</ToolbarLabel>
-              <ToolbarSpacer />
-              <ToolbarLabel>
-                项目符号与行距沿用原来的；工具条上的格式作用在整个文本框（按段生效）
-              </ToolbarLabel>
+              <ToolbarLabel>文字</ToolbarLabel>
             </div>
             <div className="mimir-paras__list">
               {paragraphs.map((text, index) => (
@@ -1423,12 +2050,7 @@ export function PptxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
               ))}
             </div>
           </div>
-        ) : (
-          <ToolbarLabel>
-            点画布上的文字框或形状来改它的字
-            {editable.length === 0 && '——这一页没有可编辑的文字'}
-          </ToolbarLabel>
-        )
+        ) : undefined
       }
       status={
         <>
@@ -1450,17 +2072,6 @@ export function PptxEditor({ documentId, io, onDirtyChange, flush = false }: Edi
               {rendered.geometryFilled} 个文本框在文件里没有几何，按默认框渲染
             </ToolbarLabel>
           )}
-          {/*
-            这条文字**必须短**：`.me-label` 是 `white-space: nowrap`，而状态行
-            的内容区虽然 `flex-wrap`，一个不换行的 label 自身就是宽度下限——太长会把整
-            个外壳的 min-content 撑过窄窗口（实测 560px 下 598px 的文字让
-            `.mimir-editor` 变成 620 宽、页面出现横向滚动）。所以这里只说最该说
-            的一句，「动画与 SmartArt 不显示」是能力边界，格式的粒度写在工具条
-            的 label 与附属面板上。
-          */}
-          <ToolbarLabel>
-            格式按整个文本框生效（按段）；字体用系统里装的，动画与 SmartArt 不显示
-          </ToolbarLabel>
         </>
       }
     >

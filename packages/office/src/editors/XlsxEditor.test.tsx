@@ -33,6 +33,17 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import JSZip from 'jszip'
 import { XlsxEditor } from './XlsxEditor.js'
 import type { EditorIo, SaveTarget } from './types.js'
+import {
+  applyCellEditsToXlsx,
+  readBasicWorkbook,
+} from '../../vendor/packages/xlsx-gateway/src/gateway/xlsx-gateway.js'
+import {
+  parseAddress,
+  parseRange,
+  formatAddress,
+} from '../../vendor/packages/xlsx-gateway/src/domain/cell-address.js'
+import type { StructuralOp } from '../../vendor/packages/xlsx-gateway/src/gateway/xlsx-structure.js'
+import type { XlsxHostApply } from '../agent/xlsx-agent.js'
 
 /**
  * 夹具路径用 `import.meta.dirname` 拼，**不用 `new URL(..., import.meta.url)`**。
@@ -92,6 +103,14 @@ function click(element: Element) {
   act(() => {
     element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
   })
+}
+
+function selectRibbonTab(host: HTMLElement, label: string) {
+  const tab = [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+    (element) => element.textContent?.trim() === label,
+  )
+  if (!tab) throw new Error(`工具栏没有「${label}」分类`)
+  click(tab)
 }
 
 /** 敲一个键（回车 / Esc 的语义全在 `keydown` 上） */
@@ -190,13 +209,15 @@ function fakeIo(bytes?: Uint8Array): { io: EditorIo; saved: () => Uint8Array | n
  * 手工拼这几条 XML 就够了（夹具本身是极简结构）：新条目进 zip、workbook 加
  * 一行 `<sheet>`、rels 加一条关系。**不动 sheet1**，所以其余断言的前提不变。
  */
-async function withSecondSheet(): Promise<Uint8Array> {
+async function withSecondSheet(empty = false): Promise<Uint8Array> {
   const zip = await JSZip.loadAsync(new Uint8Array(readFileSync(FIXTURE)))
   zip.file(
     'xl/worksheets/sheet2.xml',
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
       '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
-      '<sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>第二张</t></is></c></row></sheetData>' +
+      (empty
+        ? '<sheetData/>'
+        : '<sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>第二张</t></is></c></row></sheetData>') +
       '</worksheet>',
   )
   const rels = await zip.file('xl/_rels/workbook.xml.rels')!.async('string')
@@ -218,9 +239,137 @@ async function withSecondSheet(): Promise<Uint8Array> {
   return zip.generateAsync({ type: 'uint8array' })
 }
 
+const fakeHostApply: XlsxHostApply = async ({ bytes, expectedVersion, ops }) => {
+  const workbook = await readBasicWorkbook(Buffer.from(bytes))
+  const sheets = new Map(workbook.snapshot.sheets.map((sheet) => [sheet.id, sheet]))
+  const first = ops[0] as {
+    op: string
+    sheetId: string
+    row?: number
+    count?: number
+    column?: string
+    widthPx?: number
+    source?: string
+    target?: string
+    range?: string
+  }
+  if (
+    ['insert_rows', 'delete_rows', 'insert_cols', 'delete_cols', 'set_col_width'].includes(first.op)
+  ) {
+    const sheet = sheets.get(first.sheetId)
+    if (!sheet) throw new Error('工作表已失效')
+    const column = first.column ? parseAddress(`${first.column}1`).column : undefined
+    const native: StructuralOp =
+      first.op === 'insert_rows'
+        ? { kind: 'insert-rows', index: first.row! - 1, count: first.count! }
+        : first.op === 'delete_rows'
+          ? { kind: 'remove-rows', index: first.row! - 1, count: first.count! }
+          : first.op === 'insert_cols'
+            ? { kind: 'insert-cols', index: column!, count: first.count! }
+            : first.op === 'delete_cols'
+              ? { kind: 'remove-cols', index: column!, count: first.count! }
+              : {
+                  kind: 'set-col-size',
+                  start: column!,
+                  end: column!,
+                  size: (first.widthPx! - 5) / 7,
+                }
+    const result = await applyCellEditsToXlsx(
+      Buffer.from(bytes),
+      [],
+      [
+        {
+          sheetName: sheet.name,
+          ops: [native],
+        },
+      ],
+    )
+    return {
+      bytes: new Uint8Array(result.buffer),
+      version: expectedVersion + 1,
+      changedCells: [],
+      touchedEntries: [...result.touchedEntries],
+    }
+  }
+  if (first.op === 'format_range') {
+    const sheet = sheets.get(first.sheetId)
+    if (!sheet) throw new Error('工作表已失效')
+    const bounds = parseRange(first.range!)
+    const edits = []
+    for (let row = bounds.startRow; row <= bounds.endRow; row++) {
+      for (let column = bounds.startColumn; column <= bounds.endColumn; column++) {
+        edits.push({
+          sheetName: sheet.name,
+          row,
+          column,
+          writeValue: false,
+          cell: sheet.cells[formatAddress(row, column)] ?? { value: null },
+          style: { bold: true },
+        })
+      }
+    }
+    const result = await applyCellEditsToXlsx(Buffer.from(bytes), edits)
+    return {
+      bytes: new Uint8Array(result.buffer),
+      version: expectedVersion + 1,
+      changedCells: [],
+      touchedEntries: [...result.touchedEntries],
+    }
+  }
+  if (first.op === 'copy_range' || first.op === 'fill_range') {
+    const sheet = sheets.get(first.sheetId)
+    if (!sheet) throw new Error('工作表已失效')
+    const source = parseRange(first.source!)
+    const target = parseRange(first.target!)
+    const endRow = first.op === 'copy_range' ? target.startRow : target.endRow
+    const edits = []
+    for (let row = target.startRow; row <= endRow; row++) {
+      const sourceAddress = formatAddress(source.startRow, source.startColumn)
+      edits.push({
+        sheetName: sheet.name,
+        row,
+        column: target.startColumn,
+        writeValue: true,
+        cell: sheet.cells[sourceAddress] ?? { value: null },
+      })
+    }
+    const result = await applyCellEditsToXlsx(Buffer.from(bytes), edits)
+    return {
+      bytes: new Uint8Array(result.buffer),
+      version: expectedVersion + 1,
+      changedCells: [],
+      touchedEntries: [...result.touchedEntries],
+    }
+  }
+  const edits = (
+    ops as Array<{ op: string; sheetId: string; address: string; value?: string; formula?: string }>
+  ).map((op) => {
+    const sheet = sheets.get(op.sheetId)
+    if (!sheet) throw new Error('工作表已失效')
+    const { row, column } = parseAddress(op.address)
+    return {
+      sheetName: sheet.name,
+      row,
+      column,
+      writeValue: true,
+      cell:
+        op.op === 'set_formula'
+          ? { value: null, formula: op.formula }
+          : { value: op.value ?? null },
+    }
+  })
+  const result = await applyCellEditsToXlsx(Buffer.from(bytes), edits)
+  return {
+    bytes: new Uint8Array(result.buffer),
+    version: expectedVersion + 1,
+    changedCells: edits.map((edit) => `${edit.sheetName}:${edit.row}:${edit.column}`),
+    touchedEntries: [...result.touchedEntries],
+  }
+}
+
 async function openEditor() {
   const handle = fakeIo()
-  const host = mount(<XlsxEditor documentId="doc-1" io={handle.io} />)
+  const host = mount(<XlsxEditor documentId="doc-1" io={handle.io} hostApply={fakeHostApply} />)
   await waitForTable(host)
   return { host, saved: handle.saved }
 }
@@ -228,7 +377,7 @@ async function openEditor() {
 /** 挂一棵多表的工作簿 */
 async function openMultiSheetEditor() {
   const handle = fakeIo(await withSecondSheet())
-  const host = mount(<XlsxEditor documentId="multi" io={handle.io} />)
+  const host = mount(<XlsxEditor documentId="multi" io={handle.io} hostApply={fakeHostApply} />)
   await waitForTable(host)
   return { host, saved: handle.saved }
 }
@@ -248,6 +397,12 @@ async function entryOf(bytes: Uint8Array, name: string): Promise<string | null> 
  * 等固定次数会在慢机器上变成偶发失败，而偶发失败最后总是被当成噪音忽略。
  */
 async function save(host: HTMLElement, saved: () => Uint8Array | null): Promise<void> {
+  for (let i = 0; i < 50; i += 1) {
+    if (!(byLabel(host, '保存到库') as HTMLButtonElement).disabled) break
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+  }
   click(byLabel(host, '保存到库'))
   for (let i = 0; i < 50; i += 1) {
     if (saved() !== null) return
@@ -260,7 +415,116 @@ async function save(host: HTMLElement, saved: () => Uint8Array | null): Promise<
   )
 }
 
+function structureMenuItem(host: HTMLElement, label: string): HTMLButtonElement {
+  click(byLabel(host, '行列操作'))
+  const item = [...host.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')].find(
+    (element) => element.textContent?.trim() === label,
+  )
+  if (!item) throw new Error(`行列操作菜单里没有「${label}」`)
+  return item
+}
+
+function cellMenuItem(host: HTMLElement, label: string): HTMLButtonElement {
+  click(byLabel(host, '单元格操作'))
+  const item = [...host.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')].find(
+    (element) => element.textContent?.trim() === label,
+  )
+  if (!item) throw new Error(`单元格操作菜单里没有「${label}」`)
+  return item
+}
+
+describe('xlsx 填充和格式菜单：手动操作保存为工作簿原件', () => {
+  it('复制当前格到右侧并向下填充', async () => {
+    const { host, saved } = await openEditor()
+    click(cellAt(host, 2, 0))
+    click(cellMenuItem(host, '复制到右侧一格'))
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+    click(cellMenuItem(host, '向下填充三格'))
+    await save(host, saved)
+    const sheet = (await readBasicWorkbook(Buffer.from(saved()!))).snapshot.sheets[0]
+    expect(sheet?.cells.B2?.value).toBe('姓名')
+    expect(sheet?.cells.A3?.value).toBe('姓名')
+    expect(sheet?.cells.A4?.value).toBe('姓名')
+  })
+
+  it('加粗和列宽预设经同一保存路径写入 OOXML', async () => {
+    const { host, saved } = await openEditor()
+    click(cellAt(host, 2, 0))
+    click(cellMenuItem(host, '当前格加粗'))
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+    click(structureMenuItem(host, '当前列设为 180 像素宽'))
+    await save(host, saved)
+    const sheetXml = await entryOf(saved()!, 'xl/worksheets/sheet1.xml')
+    const stylesXml = await entryOf(saved()!, 'xl/styles.xml')
+    expect(sheetXml).toMatch(/<c\b[^>]*r="A2"[^>]*s="[1-9]/)
+    expect(sheetXml).toMatch(/<col\b[^>]*min="1"[^>]*max="1"[^>]*width="25"/)
+    expect(stylesXml).toContain('<b')
+  })
+})
+
 /* ── 断言 ─────────────────────────────────────────────────────── */
+
+describe('xlsx 行列菜单：共用工作簿写入路径', () => {
+  it('在当前行上方插入一行，保存读回时 A2 移到 A3', async () => {
+    const { host, saved } = await openEditor()
+    click(cellAt(host, 2, 0))
+    click(structureMenuItem(host, '在上方插入一行'))
+    await save(host, saved)
+    const reopened = await readBasicWorkbook(Buffer.from(saved()!))
+    expect(reopened.snapshot.sheets[0]?.cells.A2?.value).toBeUndefined()
+    expect(reopened.snapshot.sheets[0]?.cells.A3?.value).toBe('姓名')
+  })
+
+  it('在当前列左侧插入一列，保存读回时 A2 移到 B2', async () => {
+    const { host, saved } = await openEditor()
+    click(cellAt(host, 2, 0))
+    click(structureMenuItem(host, '在左侧插入一列'))
+    await save(host, saved)
+    const reopened = await readBasicWorkbook(Buffer.from(saved()!))
+    expect(reopened.snapshot.sheets[0]?.cells.A2?.value).toBeUndefined()
+    expect(reopened.snapshot.sheets[0]?.cells.B2?.value).toBe('姓名')
+  })
+
+  it('删除当前行，下一行的公式移到 C2', async () => {
+    const { host, saved } = await openEditor()
+    click(cellAt(host, 2, 0))
+    click(structureMenuItem(host, '删除当前行'))
+    await save(host, saved)
+    const reopened = await readBasicWorkbook(Buffer.from(saved()!))
+    expect(reopened.snapshot.sheets[0]?.cells.C2?.formula).toBeDefined()
+    expect(reopened.snapshot.sheets[0]?.cells.A2?.value).not.toBe('姓名')
+  })
+
+  it('删除当前列，B2 的部门移到 A2', async () => {
+    const { host, saved } = await openEditor()
+    click(cellAt(host, 2, 0))
+    click(structureMenuItem(host, '删除当前列'))
+    await save(host, saved)
+    const reopened = await readBasicWorkbook(Buffer.from(saved()!))
+    expect(reopened.snapshot.sheets[0]?.cells.A2?.value).toBe('部门')
+  })
+})
+
+describe('xlsx 空工作表', () => {
+  it('页签可选且 A1 能经同一宿主写入并保存', async () => {
+    const handle = fakeIo(await withSecondSheet(true))
+    const host = mount(
+      <XlsxEditor documentId="empty-sheet" io={handle.io} hostApply={fakeHostApply} />,
+    )
+    await waitForTable(host)
+    click(host.querySelectorAll<HTMLButtonElement>('.me-tab')[1]!)
+    click(cellAt(host, 1, 0))
+    type(byLabel(host, '单元格 A1'), '空表首格')
+    click(byLabel(host, '应用'))
+    await save(host, handle.saved)
+    const reopened = await readBasicWorkbook(Buffer.from(handle.saved()!))
+    expect(reopened.snapshot.sheets[1]?.cells.A1?.value).toBe('空表首格')
+  })
+})
 
 describe('xlsx 工具条：清空这个格', () => {
   it('清空 A2 之后文件里是空的内联字符串格，共享字符串一字节没动', async () => {
@@ -275,7 +539,7 @@ describe('xlsx 工具条：清空这个格', () => {
     expect(bytes, '保存按钮点了但宿主没收到字节').not.toBeNull()
     const sheet = await entryOf(bytes!, 'xl/worksheets/sheet1.xml')
     // 这一格被换成空的内联字符串格（`setCell(ref, '')` 的既定语义）
-    expect(sheet).toContain('<c r="A2" t="inlineStr"><is><t></t></is></c>')
+    expect(sheet).toMatch(/<c r="A2" t="inlineStr"><is><t[^>]*><\/t><\/is><\/c>/)
     /*
      * 共享字符串必须原样：改它会让所有引用同一项的格子一起空掉。
      * 夹具里 A1 与 A2 都指向第 0 项（「姓名」）。
@@ -453,6 +717,7 @@ describe('xlsx 工具条：查找上一个 / 下一个', () => {
 describe('xlsx 工具条：跳到上一个 / 下一个公式格', () => {
   it('下一个公式格选中夹具里那一格公式（C3）', async () => {
     const { host } = await openEditor()
+    selectRibbonTab(host, '公式')
     click(byLabel(host, '跳到下一个公式格'))
     const cell = selectedCell(host)
     expect(cell?.getAttribute('title')).toBe('公式（显示 Excel 算好的缓存值）')
@@ -462,6 +727,7 @@ describe('xlsx 工具条：跳到上一个 / 下一个公式格', () => {
 
   it('上一个公式格从还没选中时落到最后一个公式（同一个格）', async () => {
     const { host } = await openEditor()
+    selectRibbonTab(host, '公式')
     click(byLabel(host, '跳到上一个公式格'))
     expect(host.querySelector('.mimir-cell-editor__ref')?.textContent).toBe('C3')
   })
@@ -470,6 +736,7 @@ describe('xlsx 工具条：跳到上一个 / 下一个公式格', () => {
     const { host } = await openEditor()
     click(cellAt(host, 5, 0))
     expect(host.querySelector('.mimir-cell-editor__ref')?.textContent).toBe('A5')
+    selectRibbonTab(host, '公式')
     click(byLabel(host, '跳到下一个公式格'))
     expect(host.querySelector('.mimir-cell-editor__ref')?.textContent).toBe('C3')
   })
@@ -498,23 +765,36 @@ describe('xlsx 工具条：编辑之后派生列表跟着模型走', () => {
     type(byLabel(host, '单元格 A2'), '姓名部')
     press(byLabel(host, '单元格 A2'), 'Enter')
 
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0))
-    })
+    for (
+      let i = 0;
+      i < 50 && host.querySelector('.me-find__count')?.textContent !== '1 / 4';
+      i += 1
+    )
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0))
+      })
     // A2 是第 2 行第 0 列，行主序里排在最前 → 选中它就是第 1 个命中
     expect(host.querySelector('.me-find__count')?.textContent).toBe('1 / 4')
   })
 
   it('唯一的公式格被清空之后，公式跳转按钮禁用并说明原因', async () => {
     const { host } = await openEditor()
+    selectRibbonTab(host, '公式')
     click(byLabel(host, '跳到下一个公式格'))
     expect(host.querySelector('.mimir-cell-editor__ref')?.textContent).toBe('C3')
 
     // 覆盖的语义是连公式一起清（xlsx-edit.ts 的规矩）：模型里从此没有公式格
+    selectRibbonTab(host, '开始')
     click(byLabelPrefix(host, '清空这个格'))
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0))
-    })
+    selectRibbonTab(host, '公式')
+    for (
+      let i = 0;
+      i < 50 && !(byLabel(host, '跳到上一个公式格') as HTMLButtonElement).disabled;
+      i += 1
+    )
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0))
+      })
 
     for (const label of ['跳到上一个公式格', '跳到下一个公式格']) {
       const button = byLabel(host, label) as HTMLButtonElement
@@ -532,6 +812,7 @@ describe('xlsx 工具条：十字高亮', () => {
     // 关着的时候一个都没有
     expect(host.querySelectorAll('.mimir-xlsx__cell--cross').length).toBe(0)
 
+    selectRibbonTab(host, '视图')
     const toggle = byLabel(host, '十字高亮：选中格所在的行与列')
     click(toggle)
     expect(toggle.getAttribute('aria-pressed')).toBe('true')
@@ -560,16 +841,42 @@ describe('xlsx 工具条：十字高亮', () => {
   })
 })
 
-describe('xlsx 工具条：状态行如实交代代价', () => {
-  it('「清空会丢掉格式」这句常驻在状态行上，且清空按钮的 tooltip 也写着', async () => {
+describe('xlsx 工具条：交互表达操作意图', () => {
+  it('开始分类直接呈现单元格和行列命令，空白状态不放操作教程', async () => {
     const { host } = await openEditor()
-    expect(host.querySelector('.mimir-editor__status')?.textContent).toContain(
-      '清空会丢掉该格原有的颜色/边框/数字格式',
-    )
+    expect(host.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toBe('开始')
+    expect(byLabelPrefix(host, '清空这个格')).toBeTruthy()
+    expect(byLabel(host, '单元格操作')).toBeTruthy()
+    expect(byLabel(host, '行列操作')).toBeTruthy()
+    expect(host.querySelector('.mimir-editor__footer')?.textContent ?? '').toBe('')
+    expect(host.querySelector('.mimir-editor__status')?.textContent).not.toContain('公式不重算')
+    expect(host.querySelector('.mimir-editor__status')?.textContent).not.toContain('尚未开放')
     click(cellAt(host, 2, 0))
-    expect(byLabelPrefix(host, '清空这个格').getAttribute('title')).toContain(
-      '颜色、边框与数字格式',
-    )
+    expect(byLabelPrefix(host, '清空这个格').getAttribute('title')).toContain('保留原有格式')
+  })
+
+  it('公式格被选中后才显示覆盖风险，切换分类不丢失选中格', async () => {
+    const { host } = await openEditor()
+    click(cellAt(host, 3, 2))
+    expect(host.querySelector('.mimir-cell-editor__warn')?.textContent).toContain('覆盖')
+    selectRibbonTab(host, '公式')
+    expect(host.querySelector('.mimir-cell-editor__ref')?.textContent).toBe('C3')
+  })
+
+  it('在公式分类按 Ctrl+F 会显示查找框并聚焦，选中格仍保留', async () => {
+    const { host } = await openEditor()
+    click(cellAt(host, 3, 2))
+    selectRibbonTab(host, '公式')
+    expect(host.querySelector('[data-find-input]')).toBeNull()
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'f', ctrlKey: true, bubbles: true }))
+    })
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+    expect(host.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toBe('开始')
+    expect(document.activeElement).toBe(byLabelPrefix(host, '查找内容'))
+    expect(host.querySelector('.mimir-cell-editor__ref')?.textContent).toBe('C3')
   })
 })
 
@@ -637,6 +944,7 @@ describe('xlsx 的列字母行', () => {
  * 会让人把断言删掉，那才是真的损失）。
  */
 const SHELL_NON_ANTD = [
+  '.mimir-compact-toolbar__tab', // Ribbon 分类由共享工具栏实现键盘切换与焦点管理
   '.me-tab', // ToolbarTabs：antd 的 Tabs 把页签渲染成 div，还多一个隐藏的 nav-more
   '.me-btn', // ToolbarMenu / ToolbarColorPicker 的就地弹层触发器（要 aria-haspopup/expanded）
   '.me-menu__item', // 弹层面板里的菜单项
@@ -687,6 +995,18 @@ describe('xlsx 的控件契约', () => {
 
   it('禁用的按钮必须说明原因（灰着不说为什么等于让人猜）', async () => {
     const { host } = await openEditor()
+    const quickAccess = host.querySelector('.mimir-compact-toolbar__quick-access')
+    expect(quickAccess?.querySelectorAll('button')).toHaveLength(3)
+    expect(quickAccess?.querySelector('button[aria-label="保存到库"]')).toBe(
+      byLabel(host, '保存到库'),
+    )
+    expect(host.querySelector('.mimir-editor__status button[aria-label="保存到库"]')).toBeNull()
+    expect((byLabel(host, '撤销') as HTMLButtonElement).getAttribute('title')).toBe(
+      '表格编辑尚不支持完整撤销历史',
+    )
+    expect((byLabel(host, '重做') as HTMLButtonElement).getAttribute('title')).toBe(
+      '表格编辑尚不支持完整重做历史',
+    )
     /*
      * 「保存到库」（没改动 / 正在保存）与 footer 的「应用」（格里的字还没被改过）
      * 都有一段灰着的时间，而那正是最需要解释的一档——不给原因时 `title` 落回
@@ -716,7 +1036,11 @@ describe('xlsx 的控件契约', () => {
      * 返回空串（同「跨元素自定义属性/边框不解析」那一类限制），所以
      * 「一行同高」只能靠高度的来源（small 档）来判——真正的同高要在浏览器里量。
      */
-    const buttons = [...host.querySelectorAll<HTMLButtonElement>('.mimir-editor button.ant-btn')]
+    const buttons: HTMLButtonElement[] = []
+    for (const tab of ['开始', '公式', '视图']) {
+      selectRibbonTab(host, tab)
+      buttons.push(...host.querySelectorAll<HTMLButtonElement>('.mimir-editor button.ant-btn'))
+    }
     expect(buttons.length).toBeGreaterThan(5)
     const wrong = buttons.filter((button) => !button.classList.contains('ant-btn-sm'))
     expect(

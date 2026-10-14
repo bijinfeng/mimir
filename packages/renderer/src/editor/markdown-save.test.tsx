@@ -1,6 +1,6 @@
 /** @vitest-environment happy-dom */
 import { Extension, type Editor } from '@tiptap/core'
-import { MarkdownEditor } from '@mimir/office'
+import { MarkdownEditor, type MarkdownAgentHandle } from '@mimir/office'
 import { act, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -29,6 +29,7 @@ afterEach(() => {
 async function mount(
   onSave: (body: string) => Promise<void>,
   onOpenInternalNote?: (id: string) => void,
+  onAgentHandleChange?: (handle: MarkdownAgentHandle | null) => void,
 ) {
   const host = document.createElement('div')
   document.body.append(host)
@@ -54,6 +55,7 @@ async function mount(
         initialContent="初始正文"
         onSave={onSave}
         onOpenInternalNote={onOpenInternalNote}
+        onAgentHandleChange={onAgentHandleChange}
         onDirtyChange={value.setDirty}
         onSaveHandle={(save) => value.setSave(save, 'auto')}
       />
@@ -87,6 +89,74 @@ function replaceBody(editor: Editor, body: string) {
 }
 
 describe('自动保存与离开守卫', () => {
+  it('手动查找替换使用同一正文与保存链路', async () => {
+    const writes: string[] = []
+    const view = await mount(async (body) => {
+      writes.push(body)
+    })
+    const click = (label: string) => {
+      const button = view.host.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)
+      expect(button).not.toBeNull()
+      act(() => button!.click())
+    }
+    const type = (label: string, value: string) => {
+      const input = view.host.querySelector<HTMLInputElement>(`input[aria-label="${label}"]`)
+      expect(input).not.toBeNull()
+      act(() => {
+        const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+        setter?.call(input, value)
+        input!.dispatchEvent(new Event('input', { bubbles: true }))
+      })
+    }
+    const reviewTab = [...view.host.querySelectorAll<HTMLButtonElement>('button[role="tab"]')].find(
+      (button) => button.textContent === '审阅',
+    )
+    expect(reviewTab).toBeDefined()
+    act(() => reviewTab!.click())
+    click('查找和替换 (Ctrl+F)')
+    type('查找内容', '初始')
+    type('替换为', '更新')
+    click('全部替换')
+    expect(view.editor.getMarkdown()).toBe('更新正文')
+    expect(view.unsaved.isDirty).toBe(true)
+    act(() => view.unsaved.runGuarded(() => {}))
+    await act(async () => view.unsaved.resolve('save'))
+    expect(writes).toContain('更新正文')
+  })
+
+  it('Agent 修改走与手动编辑相同的 dirty 和立即保存路径', async () => {
+    const writes: string[] = []
+    let agent: MarkdownAgentHandle | null = null
+    const view = await mount(
+      async (body) => {
+        writes.push(body)
+      },
+      undefined,
+      (handle) => {
+        agent = handle
+      },
+    )
+    expect(agent).not.toBeNull()
+    const active = agent as MarkdownAgentHandle | null
+    if (!active) throw new Error('Markdown Agent handle not mounted')
+    const result = await act(async () =>
+      active.execute(
+        'apply_ops',
+        {
+          ops: [
+            { op: 'replaceText', target: { start: 0 }, find: '初始正文', replace: 'Agent 正文' },
+          ],
+        },
+        { expectedVersion: active.getVersion() },
+      ),
+    )
+    expect(result).toMatchObject({ ok: true, changed: true })
+    expect(view.unsaved.isDirty).toBe(true)
+    act(() => view.unsaved.runGuarded(() => {}))
+    await act(async () => view.unsaved.resolve('save'))
+    expect(writes).toContain('Agent 正文')
+    expect(view.unsaved.isDirty).toBe(false)
+  })
   it('写入中继续编辑时串行保存最新正文，第二次写入完成前不离开', async () => {
     const first = deferred<void>()
     const second = deferred<void>()
@@ -158,6 +228,11 @@ it('切换拼写检查后，正文内链仍经应用导航打开', async () => {
   clickLink()
   expect(open).toHaveBeenCalledWith('stable-id')
 
+  const reviewTab = [...view.host.querySelectorAll<HTMLButtonElement>('button[role="tab"]')].find(
+    (button) => button.textContent === '审阅',
+  )
+  expect(reviewTab).toBeDefined()
+  act(() => reviewTab!.click())
   const spellCheck = view.host.querySelector<HTMLButtonElement>('button[aria-label="关闭拼写检查"]')
   expect(spellCheck).not.toBeNull()
   act(() => spellCheck!.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })))

@@ -52,8 +52,9 @@ export async function extractPdfText(data: Uint8Array, _filename?: string): Prom
   const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs')
 
   const task = getDocument({
-    // 拷贝，见上
-    data: data.slice(),
+    // Buffer 也满足 Uint8Array 类型，但 Buffer.slice() 仍返回 Buffer，
+    // pdf.js 6 会拒绝它。构造普通 Uint8Array，同时保证 worker 接手的是副本。
+    data: new Uint8Array(data),
     /**
      * 一个 worker 都不起：`getTextContent` 是纯计算，不需要渲染，
      * 所以主线程直接算最省事（起 worker 的代价在这个场景里大于收益，

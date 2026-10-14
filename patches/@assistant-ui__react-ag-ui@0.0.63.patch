@@ -1,0 +1,69 @@
+diff --git a/dist/runtime/AgUiThreadRuntimeCore.js b/dist/runtime/AgUiThreadRuntimeCore.js
+index 2649e1462fa3d7e57e9c8b023e4bf2610c3516dc..89fc20c294c3cb3226a4ccfb1dff6bdab78c672a 100644
+--- a/dist/runtime/AgUiThreadRuntimeCore.js
++++ b/dist/runtime/AgUiThreadRuntimeCore.js
+@@ -282,11 +282,22 @@ var AgUiThreadRuntimeCore = class {
+ 	* unretryable.
+ 	*/
+ 	async resumeWithResponses(messageId, resume) {
++		const interrupted = this.session.tryGetMessage(messageId)?.message;
+ 		this.clearPendingInterrupts(messageId, resume);
+-		await this.startRun(messageId, this.lastRunConfig, {
+-			entries: resume,
+-			interruptedMessageId: messageId
+-		});
++		try {
++			await this.startRun(messageId, this.lastRunConfig, {
++				entries: resume,
++				interruptedMessageId: messageId
++			});
++		} catch (error) {
++			const failedHead = this.session.headId;
++			if (interrupted && failedHead && this.session.tryGetMessage(failedHead)?.parentId === messageId) {
++				this.session.resetHead(messageId);
++				this.session.updateMessage(messageId, () => interrupted);
++				this.notifyUpdate();
++			}
++			throw error;
++		}
+ 	}
+ 	/**
+ 	* A rejected decision reaches the caller through the approval seam, and
+diff --git a/src/runtime/AgUiThreadRuntimeCore.ts b/src/runtime/AgUiThreadRuntimeCore.ts
+index 804e123297423610ae8e6f2e1cd691f6a75136d8..02164af15a6ec22dcaf8115d60741bd27398eb13 100644
+--- a/src/runtime/AgUiThreadRuntimeCore.ts
++++ b/src/runtime/AgUiThreadRuntimeCore.ts
+@@ -548,11 +548,29 @@ export class AgUiThreadRuntimeCore {
+     messageId: string,
+     resume: AgUiResumeEntry[],
+   ): Promise<void> {
++    const interrupted = this.session.tryGetMessage(messageId)?.message;
+     this.clearPendingInterrupts(messageId, resume);
+-    await this.startRun(messageId, this.lastRunConfig, {
+-      entries: resume,
+-      interruptedMessageId: messageId,
+-    });
++    try {
++      await this.startRun(messageId, this.lastRunConfig, {
++        entries: resume,
++        interruptedMessageId: messageId,
++      });
++    } catch (error) {
++      // A failed HTTP continuation must leave the original interrupt retryable.
++      // Its client tools have already executed, so callers resend the same
++      // results; the server decides atomically whether it consumed them.
++      const failedHead = this.session.headId;
++      if (
++        interrupted &&
++        failedHead &&
++        this.session.tryGetMessage(failedHead)?.parentId === messageId
++      ) {
++        this.session.resetHead(messageId);
++        this.session.updateMessage(messageId, () => interrupted);
++        this.notifyUpdate();
++      }
++      throw error;
++    }
+   }
+ 
+   /**

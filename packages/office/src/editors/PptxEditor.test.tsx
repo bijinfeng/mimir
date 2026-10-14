@@ -31,6 +31,12 @@ import { afterEach, describe, expect, it } from 'vitest'
 import JSZip from 'jszip'
 import { PptxEditor } from './PptxEditor.js'
 import { editableElements, openPptxForEdit, textOfElement } from '../pptx.js'
+import {
+  openPptx as openUpstreamPptx,
+  savePptx as saveUpstreamPptx,
+} from '../../vendor/packages/pptx-engine/src/index.js'
+import { runTxn, type Op } from '../../vendor/packages/pptx-ops/src/ops/index.js'
+import type { PptxHostApply } from '../agent/pptx-agent.js'
 import { pickSelectOption } from '../shell/antd-test-dom.js'
 import type { EditorIo } from './types.js'
 
@@ -45,6 +51,17 @@ const fixture = (name: string) => resolve(HERE, '../../tests/fixtures', name)
 
 function load(name: string): Uint8Array {
   return new Uint8Array(readFileSync(fixture(name)))
+}
+
+const upstreamHostApply: PptxHostApply = async ({ bytes, expectedVersion, ops }) => {
+  const opened = await openUpstreamPptx(bytes)
+  const transaction = runTxn(opened, { ops: ops as Op[], isolation: 'atomic' })
+  if (!transaction.applied) throw new Error(transaction.failures?.[0]?.error ?? 'PPTX 操作失败')
+  return {
+    bytes: await saveUpstreamPptx(opened),
+    records: transaction.records ?? [],
+    version: expectedVersion + 1,
+  }
 }
 
 /* ── 挂载 / 交互 ─────────────────────────────────────────────── */
@@ -84,7 +101,7 @@ async function settle(done: () => boolean): Promise<void> {
  */
 async function mountEditor(
   bytes: Uint8Array,
-  options: { record?: Recorder } = {},
+  options: { record?: Recorder; hostApply?: PptxHostApply } = {},
 ): Promise<{ host: HTMLElement; record: Recorder }> {
   const record: Recorder = options.record ?? { saved: [] }
   const io: EditorIo = {
@@ -98,7 +115,7 @@ async function mountEditor(
   const root = createRoot(host)
   ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
   await act(async () => {
-    root.render(<PptxEditor documentId="doc-1" io={io} />)
+    root.render(<PptxEditor documentId="doc-1" io={io} hostApply={options.hostApply} />)
   })
   await settle(() => host.querySelector('.mimir-pptx-slide svg') !== null)
   expect(host.querySelector('.mimir-pptx-slide svg'), '画布没有渲染出来').not.toBeNull()
@@ -113,6 +130,12 @@ async function mountEditor(
 
 /** 按无障碍名称找工具条 / 次工具条上的按钮 */
 function button(host: HTMLElement, label: string): HTMLButtonElement {
+  if (label === '对象与幻灯片操作') {
+    const tab = [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (item) => item.textContent === '对象',
+    )
+    if (tab && tab.getAttribute('aria-selected') !== 'true') click(tab)
+  }
   const found = [...host.querySelectorAll('button')].find(
     (item) => item.getAttribute('aria-label') === label,
   )
@@ -123,12 +146,23 @@ function button(host: HTMLElement, label: string): HTMLButtonElement {
 /** 次要命令通过具名菜单执行，测试走和用户相同的打开路径。 */
 function menuItem(host: HTMLElement, label: string): HTMLButtonElement {
   if (host.querySelector('.mimir-pptx-pdf-toolbar__panel') === null) {
-    click(button(host, '文字格式与更多'))
+    click(button(host, '文字格式'))
   }
   const found = [
     ...host.querySelectorAll<HTMLButtonElement>('.mimir-pptx-pdf-toolbar__panel [role="menuitem"]'),
   ].find((item) => item.textContent?.trim() === label)
   if (found === undefined) throw new Error(`文字格式菜单里没有「${label}」`)
+  return found
+}
+
+function objectMenuItem(host: HTMLElement, label: string): HTMLButtonElement {
+  if (host.querySelector('.mimir-pptx-pdf-toolbar__panel') === null) {
+    click(button(host, '对象与幻灯片操作'))
+  }
+  const found = [
+    ...host.querySelectorAll<HTMLButtonElement>('.mimir-pptx-pdf-toolbar__panel [role="menuitem"]'),
+  ].find((item) => item.textContent?.trim() === label)
+  if (!found) throw new Error(`对象菜单里没有「${label}」`)
   return found
 }
 
@@ -428,7 +462,7 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
     const { host, record } = await mountEditor(load('title-layout.pptx'))
     selectOnCanvas(host, 0)
     // antd 的下拉要打开弹层才渲染选项，选中一项是**点它**（不是改 value 再 change）
-    click(button(host, '文字格式与更多'))
+    click(button(host, '文字格式'))
     pickSelectOption(host, '字体（整段，中英文一起换）', '微软雅黑')
 
     const after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
@@ -441,7 +475,7 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
   it('字体颜色：写 srgbClr，并把主题链接标记一起清掉', async () => {
     const { host, record } = await mountEditor(load('title-layout.pptx'))
     selectOnCanvas(host, 0)
-    click(button(host, '文字格式与更多'))
+    click(button(host, '文字格式'))
     click(button(host, '字体颜色（整段）'))
     // 面板里的色块：按 option 的 label 找
     const cell = [...host.querySelectorAll('button[aria-label]')].find(
@@ -455,6 +489,102 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
     expect(sp).toContain('<a:srgbClr val="FF0000"/>')
     // 颜色是继承来的（colorInherited），改色之后不该还留着「主题色」的语义
     expect(sp).not.toContain('schemeClr')
+  })
+
+  it('手动对象填充经同一宿主操作写入未保存画布并保存重开', async () => {
+    const { host, record } = await mountEditor(load('title-layout.pptx'), {
+      hostApply: upstreamHostApply,
+    })
+    selectOnCanvas(host, 0)
+    click(button(host, '对象与幻灯片操作'))
+    click(button(host, '填充颜色'))
+    const red = [...host.querySelectorAll('button[aria-label]')].find(
+      (item) => item.getAttribute('aria-label') === '红',
+    )
+    expect(red).toBeDefined()
+    click(red!)
+    await settle(
+      () =>
+        host.querySelector<HTMLButtonElement>('button[aria-label="保存到库"]')?.disabled === false,
+    )
+    const xml = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    expect(elementXml(xml, 'Title 1')).toContain('<a:srgbClr val="FF0000"/>')
+    const reopened = await openPptxForEdit(record.saved.at(-1)!)
+    expect(reopened.slides()[0]?.elements).toHaveLength(2)
+  })
+
+  it('插入分类的直接命令写入同一画布并保存重开', async () => {
+    const { host, record } = await mountEditor(load('title-layout.pptx'), {
+      hostApply: upstreamHostApply,
+    })
+    const tab = [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (item) => item.textContent === '插入',
+    )!
+    click(tab)
+    expect(host.querySelector('button[aria-label="对象与幻灯片操作"]')).toBeNull()
+    click(button(host, '插入文本框'))
+    await settle(() => button(host, '保存到库').disabled === false)
+    await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    const reopened = await openPptxForEdit(record.saved.at(-1)!)
+    expect(reopened.slides()[0]?.elements).toHaveLength(3)
+  })
+
+  it('手动调整对象层级与翻转经 Agent 共用操作保存读回', async () => {
+    const { host, record } = await mountEditor(load('title-layout.pptx'), {
+      hostApply: upstreamHostApply,
+    })
+    selectOnCanvas(host, 0)
+    click(objectMenuItem(host, '置于顶层'))
+    await settle(
+      () =>
+        host.querySelector<HTMLButtonElement>('button[aria-label="保存到库"]')?.disabled === false,
+    )
+    const firstXml = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    expect(firstXml.indexOf('name="Title 1"')).toBeGreaterThan(
+      firstXml.indexOf('name="Subtitle 2"'),
+    )
+    const first = await openPptxForEdit(record.saved.at(-1)!)
+    expect(first.slides()[0]?.elements.at(-1)?.name).toBe('Title 1')
+
+    selectOnCanvas(host, 1)
+    click(objectMenuItem(host, '水平翻转'))
+    await settle(
+      () =>
+        host.querySelector<HTMLButtonElement>('button[aria-label="保存到库"]')?.disabled === false,
+    )
+    const flippedXml = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    expect(elementXml(flippedXml, 'Title 1')).toMatch(/flipH="1"/)
+    const reopened = await openPptxForEdit(record.saved.at(-1)!)
+    expect(
+      reopened.slides()[0]?.elements.find((item) => item.name === 'Title 1')?.transform.flipH,
+    ).toBe(true)
+  })
+
+  it('本页背景与放映隐藏共用宿主操作，保存后可独立读回', async () => {
+    const { host, record } = await mountEditor(load('title-layout.pptx'), {
+      hostApply: upstreamHostApply,
+    })
+    click(button(host, '对象与幻灯片操作'))
+    click(button(host, '本页背景颜色'))
+    const red = [...host.querySelectorAll('button[aria-label]')].find(
+      (item) => item.getAttribute('aria-label') === '红',
+    )
+    expect(red).toBeDefined()
+    click(red!)
+    await settle(
+      () =>
+        host.querySelector<HTMLButtonElement>('button[aria-label="保存到库"]')?.disabled === false,
+    )
+    const backgroundXml = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    expect(backgroundXml).toContain('FF0000')
+
+    click(objectMenuItem(host, '在放映中隐藏本页'))
+    await settle(() => host.textContent?.includes('这一页在放映时隐藏') === true)
+    const hiddenXml = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    expect(hiddenXml).toContain('show="0"')
+    expect(hiddenXml).toContain('FF0000')
+    const reopened = await openPptxForEdit(record.saved.at(-1)!)
+    expect(reopened.slides()[0]?.background).toMatchObject({ type: 'solid', color: '#FF0000' })
   })
 
   it('在两 run 的段落里改字：只动那一条，标签的加粗与字号都还在', async () => {
@@ -779,6 +909,16 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
 })
 
 describe('pptx 工具条：查找和替换', () => {
+  it('切到对象分类后仍可用 Ctrl+F 打开查找', async () => {
+    const { host } = await mountEditor(load('title-layout.pptx'))
+    const objectTab = [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (item) => item.textContent === '对象',
+    )!
+    click(objectTab)
+    act(() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'f', ctrlKey: true })))
+    expect(host.querySelector('input[data-find-input]')).not.toBeNull()
+  })
+
   it('跨页命中会被带出来，替换之后原文没了', async () => {
     const { host, record } = await mountEditor(load('upstream/01_standard_business.pptx'))
     click(button(host, '查找和替换'))
@@ -870,7 +1010,7 @@ describe('pptx 次工具条：翻页与隐藏标记', () => {
 
     const second = [...host.querySelectorAll('.me-tab')].find((tab) => tab.textContent === '2')!
     click(second)
-    expect(host.textContent).toContain('这一页在放映时隐藏（只读标记）')
+    expect(host.textContent).toContain('这一页在放映时隐藏')
     // 页数没有变（隐藏不是删除）
     expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('第 2 / 5 页')
   })
@@ -1099,7 +1239,7 @@ describe('PptxEditor 的控件契约', () => {
     }
 
     // 字体下拉一个、字号与跳页两个数字框、段落输入框（ToolbarTextArea）
-    click(button(host, '文字格式与更多'))
+    click(button(host, '文字格式'))
     const selects = [...host.querySelectorAll('.ant-select')]
     expect(selects).toHaveLength(1)
     expect(selects[0]?.classList.contains('ant-select-sm')).toBe(true)
@@ -1137,7 +1277,9 @@ describe('PptxEditor 的控件契约', () => {
      *
      * 集合相等而不是「数量相等」：多出任何一种类名都说明有人自造了一个控件。
      */
-    expect(new Set(own.map((el) => el.className))).toEqual(new Set(['me-tab', 'me-btn']))
+    expect(new Set(own.map((el) => el.className))).toEqual(
+      new Set(['me-tab', 'me-btn', 'mimir-compact-toolbar__tab']),
+    )
 
     // 输入类必须都在 antd 控件的根里（一个裸的都算绕过点）
     for (const field of host.querySelectorAll('input, select, textarea')) {
@@ -1162,6 +1304,14 @@ describe('PptxEditor 的控件契约', () => {
 
   it('禁用的按钮都带着原因（灰着而不说为什么等于让人猜）', async () => {
     const { host } = await mountEditor(load('upstream/01_standard_business.pptx'))
+    const quickAccess = host.querySelector('.mimir-compact-toolbar__quick-access')
+    expect(quickAccess?.querySelectorAll('button')).toHaveLength(3)
+    expect(quickAccess?.querySelector('button[aria-label="保存到库"]')).toBe(
+      button(host, '保存到库'),
+    )
+    expect(host.querySelector('.mimir-editor__status button[aria-label="保存到库"]')).toBeNull()
+    expect(button(host, '撤销').getAttribute('title')).toBe('演示文稿尚不支持完整撤销历史')
+    expect(button(host, '重做').getAttribute('title')).toBe('演示文稿尚不支持完整重做历史')
     // 第 1 页：往回翻不能点，且说明理由
     expect(button(host, '上一页').disabled).toBe(true)
     expect(button(host, '上一页').getAttribute('title')).toBe('已经是第一页')

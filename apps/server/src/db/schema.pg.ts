@@ -183,6 +183,8 @@ export const docxAgentRuns = pgTable(
       .notNull()
       .references(() => conversations.id, { onDelete: 'cascade' }),
     documentId: text('document_id').notNull(),
+    format: text('format').notNull().default('docx'),
+    version: integer('version').notNull().default(0),
     roundId: text('round_id').notNull(),
     messageId: text('message_id').notNull(),
     interruptIds: jsonb('interrupt_ids').$type<string[]>().notNull(),

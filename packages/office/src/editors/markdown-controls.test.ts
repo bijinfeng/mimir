@@ -98,16 +98,29 @@ describe('markdown 的控件契约（静态守护）', () => {
     expect(css, 'editors.css 里又出现了 .me-status-action 的规则').not.toMatch(/\.me-status-action/)
   })
 
-  /** Each command group keeps one source of controls while the wrapper draws boundaries. */
-  it('单行工具栏按组折叠，组边界与收纳入口由同一包装渲染', () => {
-    const editor = sourceOf('MarkdownEditor.tsx')
+  it('保存和历史留在分类左侧，命令组在分类中可见且不折入总“更多”', () => {
+    // Keep literal JSX for structure checks: sourceOf's comment stripper treats the
+    // image/* accept string as a block-comment opener and hides later sections.
+    const editor = readFileSync(join(HERE, 'MarkdownEditor.tsx'), 'utf8')
     const compact = sourceOf('CompactToolbar.tsx')
-    const groups = editor.match(/<ToolbarGroup\b/g) ?? []
-    expect(groups.length, '这条工具条的组数掉下来了（断言会失去意义）').toBeGreaterThanOrEqual(8)
-    expect(editor).toContain('overflowLabel="更多笔记工具"')
-    expect(compact).toContain('index > 0 && <ToolbarDivider />')
-    expect(compact).toContain('sections.map((section, index)')
-    expect(compact).toContain('<CompactOverflowPanel sections={hidden} close={close} />')
+    const sectionsStart = editor.lastIndexOf('sections={[')
+    expect(sectionsStart, 'MarkdownToolbar 缺少分类命令区').toBeGreaterThan(-1)
+    const commandSections = editor.slice(sectionsStart)
+    expect(editor).toMatch(/<CompactToolbar\s+quickAccess=\{[\s\S]*?\}\s+tabs=\{\[/)
+    expect(editor).toContain('{saveAction}')
+    expect(editor).toContain("onClick={() => runCommand(editor, 'undo')}")
+    expect(editor).toContain("onClick={() => runCommand(editor, 'redo')}")
+    expect(commandSections, '历史命令不应在分类命令中重复').not.toMatch(
+      /<UndoIcon\s*\/>|<RedoIcon\s*\/>/,
+    )
+    expect(editor).toContain("{ key: 'home', label: '开始' }")
+    expect(editor).toContain("{ key: 'insert', label: '插入' }")
+    expect(editor).toContain("{ key: 'review', label: '审阅' }")
+    expect(commandSections).toMatch(/key: 'basic',[\s\S]*?tab: 'home'/)
+    expect(commandSections).toMatch(/key: 'insert',[\s\S]*?tab: 'insert'/)
+    expect(commandSections).toMatch(/key: 'spell',[\s\S]*?tab: 'review'/)
+    expect(compact).toContain('role="tablist"')
+    expect(compact).not.toContain('CompactOverflowPanel')
     expect(compact).toContain('{section.content}')
   })
 })

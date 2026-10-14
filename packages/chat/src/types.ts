@@ -1,4 +1,4 @@
-import type { Citation } from '@mimir/shared'
+import type { Citation, DocumentAgentFormat } from '@mimir/shared'
 import type { ReactNode } from 'react'
 
 /**
@@ -41,12 +41,13 @@ export interface ChatComposerStatus {
   } | null
 }
 
-/** Current DOCX canvas, owned and validated by the host editor. */
-export interface ChatDocxAgent {
+/** Current canvas, owned and versioned by its editor. A missing format is legacy DOCX. */
+export interface ChatDocumentAgent {
+  format?: DocumentAgentFormat
   documentId: string
   getVersion(): number
   getContext(): unknown
-  freezeSelection(roundId?: string): { from: number; to: number; text: string }
+  freezeSelection(roundId?: string): unknown
   execute(
     tool: string,
     args: unknown,
@@ -67,6 +68,9 @@ export interface ChatDocxAgent {
   }
 }
 
+/** Kept for existing DOCX hosts while they migrate to documentAgent. */
+export type ChatDocxAgent = ChatDocumentAgent
+
 export interface ChatPanelProps {
   /**
    * 会话 id。`undefined` = 新对话（第一问时由包调 `io.createConversation` 建）。
@@ -80,6 +84,8 @@ export interface ChatPanelProps {
   draft: ChatDraft | null
   /** 新建对话时直接把焦点放进提问框；文档侧栏保持原有焦点 */
   focusComposer?: boolean
+  /** 文档侧栏隐藏思考强度；此时始终使用标准聊天模型。 */
+  showReasoningControl?: boolean
   /** 引用卡片被点击 → 跳回原文 */
   onOpenCitation: (documentId: string, citation: Citation) => void
   /** 「打开笔记」（存成笔记之后） */
@@ -116,6 +122,8 @@ export interface ChatPanelProps {
   composerStatus: ChatComposerStatus
   /** Only the current DOCX page provides a writable canvas. */
   docxAgent?: ChatDocxAgent | null
+  /** Only a registered format executor provides a writable canvas. */
+  documentAgent?: ChatDocumentAgent | null
   /** AI changes become tracked revisions only when the user enables this per-panel switch. */
   docxRevisionMode?: boolean
 }

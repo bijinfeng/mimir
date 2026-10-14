@@ -450,6 +450,13 @@ export interface PptxEditSession {
   slides(): readonly Slide[]
   /** 图片：zip 路径 → data URL（渲染用） */
   readonly media: ReadonlyMap<string, string>
+  /** Monotonic edit revision, shared by manual and Agent commands. */
+  version(): number
+  checkpoint(): PptxSessionCheckpoint
+  /** Callers must verify newer edits before restoring a round. */
+  restore(checkpoint: PptxSessionCheckpoint): void
+  /** Land a host-executed PPTX result into the same live canvas, preserving manual-save state. */
+  replaceFromHost(bytes: Uint8Array): Promise<void>
   /**
    * 改一个元素的文字。
    *
@@ -495,6 +502,17 @@ export interface PptxEditSession {
   commit(): void
 }
 
+export interface PptxSessionCheckpoint {
+  readonly sessionId: symbol
+  readonly slides: Slide[]
+  readonly pages: ReturnType<typeof readPptxPages>
+  readonly archive: PptxArchive
+  readonly baseline: ReturnType<typeof readPptxPages>
+  readonly size: SlideSize
+  readonly media: ReadonlyMap<string, string>
+  readonly hostDirty: boolean
+}
+
 function setSlideNumber(element: SlideElement, slideNumber: number): void {
   if (element.type === 'group') {
     for (const child of element.children) setSlideNumber(child, slideNumber)
@@ -509,8 +527,8 @@ function setSlideNumber(element: SlideElement, slideNumber: number): void {
 }
 
 export async function openPptxForEdit(bytes: Uint8Array): Promise<PptxEditSession> {
-  const archive = await PptxArchive.open(bytes)
-  const { size } = archive.readPresentation()
+  let archive = await PptxArchive.open(bytes)
+  let { size } = archive.readPresentation()
   const pages = readPptxPages(archive)
   let baseline = structuredClone(pages)
 
@@ -527,7 +545,10 @@ export async function openPptxForEdit(bytes: Uint8Array): Promise<PptxEditSessio
   /** 快照缓存（没改动时必须返回同一个对象，改动后置空以失效） */
   let cachedView: PptxRenderable | null = null
   let lastSavedPatch: EntryPatch | null = null
-  const media = archive.readMediaDataUrls()
+  let media: ReadonlyMap<string, string> = archive.readMediaDataUrls()
+  let hostDirty = false
+  const sessionId = Symbol('pptx-edit-session')
+  let revision = 0
 
   function requireIndex(index: number): Slide {
     const slide = slides[index]
@@ -536,6 +557,7 @@ export async function openPptxForEdit(bytes: Uint8Array): Promise<PptxEditSessio
   }
 
   function invalidate(): void {
+    revision++
     cachedView = null
     lastSavedPatch = null
     slides.forEach((slide, index) => {
@@ -546,9 +568,54 @@ export async function openPptxForEdit(bytes: Uint8Array): Promise<PptxEditSessio
   }
 
   return {
-    size,
+    get size() {
+      return size
+    },
     slides: () => slides,
-    media,
+    get media() {
+      return media
+    },
+    version: () => revision,
+    checkpoint: () => ({
+      sessionId,
+      slides: structuredClone(slides),
+      pages: structuredClone(pages),
+      archive,
+      baseline: structuredClone(baseline),
+      size: { ...size },
+      media,
+      hostDirty,
+    }),
+    restore(checkpoint) {
+      if (checkpoint.sessionId !== sessionId) throw new Error('PPTX 检查点不属于当前文档')
+      archive = checkpoint.archive
+      baseline = structuredClone(checkpoint.baseline)
+      size = { ...checkpoint.size }
+      media = checkpoint.media
+      hostDirty = checkpoint.hostDirty
+      slides.splice(0, slides.length, ...structuredClone(checkpoint.slides))
+      pages.splice(0, pages.length, ...structuredClone(checkpoint.pages))
+      invalidate()
+    },
+    async replaceFromHost(hostBytes) {
+      const nextArchive = await PptxArchive.open(hostBytes)
+      const nextPages = readPptxPages(nextArchive)
+      const nextSlides: Slide[] = []
+      for (const page of nextPages) {
+        const slide = parseSlideFromArchive(nextArchive, page.path)
+        if (!slide) throw new Error(`宿主返回了无法解析的 PPTX 幻灯片：${page.path}`)
+        nextSlides.push(slide)
+      }
+      if (!nextSlides.length) throw new Error('宿主返回了没有幻灯片的 PPTX')
+      archive = nextArchive
+      size = nextArchive.readPresentation().size
+      media = nextArchive.readMediaDataUrls()
+      pages.splice(0, pages.length, ...nextPages)
+      slides.splice(0, slides.length, ...nextSlides)
+      baseline = structuredClone(nextPages)
+      hostDirty = true
+      invalidate()
+    },
 
     view() {
       cachedView ??= { size, slides: () => slides, media }
@@ -653,7 +720,9 @@ export async function openPptxForEdit(bytes: Uint8Array): Promise<PptxEditSessio
     },
 
     hasChanges() {
-      return pageSequenceChanged(pages, baseline) || slides.some((s) => slideIsDirty(s))
+      return (
+        hostDirty || pageSequenceChanged(pages, baseline) || slides.some((s) => slideIsDirty(s))
+      )
     },
 
     async save() {
@@ -679,9 +748,11 @@ export async function openPptxForEdit(bytes: Uint8Array): Promise<PptxEditSessio
       }
       for (const [path, xml] of dirtyXml) archive.setEntry(path, xml)
       baseline = structuredClone(pages)
+      hostDirty = false
       lastSavedPatch = null
       // commit 也换了模型（元素锚点与 originalXml 都更新了），所以也要失效
       cachedView = null
+      revision++
     },
   }
 }

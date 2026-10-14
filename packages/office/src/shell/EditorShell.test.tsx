@@ -445,19 +445,15 @@ describe('shell.css 的静态守护', () => {
   })
 })
 
-describe('EditorShell 的次工具条与保存入口', () => {
-  it('笔记变体只作用于笔记，分组名称与底部保存入口仍可达', () => {
+describe('EditorShell 的次工具条与状态行', () => {
+  it('笔记变体只作用于笔记，工具分组与状态仍可达', () => {
     const toolbar = (
       <ToolbarGroup label="字符格式">
         <ToolbarButton label="加粗" />
       </ToolbarGroup>
     )
     const note = html(
-      <EditorShell
-        variant="note"
-        toolbar={toolbar}
-        toolbarActions={<ToolbarButton label="立即保存" primary />}
-      >
+      <EditorShell variant="note" toolbar={toolbar} status={<ToolbarLabel>已修改</ToolbarLabel>}>
         <div>正文</div>
       </EditorShell>,
     )
@@ -470,14 +466,11 @@ describe('EditorShell 的次工具条与保存入口', () => {
     expect(note).toContain('mimir-editor--note')
     expect(office).not.toContain('mimir-editor--note')
     expect(note).toContain('aria-label="字符格式"')
-    expect(note.indexOf('mimir-editor__body')).toBeLessThan(
-      note.indexOf('mimir-editor__status-actions'),
-    )
-    expect(note).not.toContain('mimir-editor__actions')
-    expect(note).toContain('aria-label="立即保存"')
+    expect(note.indexOf('mimir-editor__body')).toBeLessThan(note.indexOf('mimir-editor__status'))
+    expect(note).toContain('已修改')
   })
 
-  it('保存位于底部状态行，顶部工具条不再预留操作列', () => {
+  it('顶部工具条与底部状态行各自渲染，状态行没有操作列', () => {
     const out = html(
       <EditorShell
         toolbar={
@@ -485,37 +478,27 @@ describe('EditorShell 的次工具条与保存入口', () => {
             <ToolbarButton label="加粗" />
           </ToolbarGroup>
         }
-        toolbarActions={<ToolbarButton label="保存到库" primary />}
+        status={<ToolbarLabel>第 2 页</ToolbarLabel>}
       >
         <div>内容</div>
       </EditorShell>,
     )
     expect(out).toContain('mimir-editor__tools')
-    expect(out).not.toContain('mimir-editor__actions')
     expect(out.indexOf('mimir-editor__body')).toBeLessThan(out.indexOf('mimir-editor__status'))
-    expect(out.indexOf('mimir-editor__status-actions')).toBeLessThan(out.indexOf('保存到库'))
+    expect(out).toContain('mimir-editor__status-content')
+    expect(out).toContain('第 2 页')
+    expect(out).not.toContain('mimir-editor__status-actions')
     expect(out).toContain('me-group__caption')
 
     const css = readFileSync(join(here, 'shell.css'), 'utf8')
     expect(css).toMatch(/\.mimir-editor__tools\s*\{[^}]*overflow-y:\s*auto/s)
     expect(css).not.toMatch(/\.mimir-editor__chrome\s*\{[^}]*overflow-y:\s*auto/s)
-    expect(css).not.toContain('.mimir-editor__actions')
+    expect(css).not.toContain('.mimir-editor__status-actions')
   })
 
-  it('只传保存动作也渲染状态行，不制造空的顶部工具条', () => {
-    const onSave = vi.fn<() => void>()
+  it('只传状态也渲染状态行，不制造空的顶部工具条', () => {
     const host = mount(
-      <EditorShell
-        toolbarActions={
-          <ToolbarButton
-            label="保存到库"
-            primary
-            disabled
-            disabledReason="没有未保存的改动"
-            onClick={onSave}
-          />
-        }
-      >
+      <EditorShell status={<ToolbarLabel>已修改，未保存</ToolbarLabel>}>
         <div>内容</div>
       </EditorShell>,
     )
@@ -523,47 +506,48 @@ describe('EditorShell 的次工具条与保存入口', () => {
     expect(host.querySelector('.mimir-editor__chrome')).toBeNull()
     expect(host.querySelector('.mimir-editor__bar')).toBeNull()
     const status = host.querySelector('.mimir-editor__status')!
-    expect(status.querySelector('.mimir-editor__status-content')).toBeNull()
-    const save = status.querySelector<HTMLButtonElement>('.mimir-editor__status-actions button')!
-    expect(save.getAttribute('aria-label')).toBe('保存到库')
-    expect(save.getAttribute('title')).toBe('没有未保存的改动')
-    expect(save.disabled).toBe(true)
-    click(save)
-    expect(onSave).not.toHaveBeenCalled()
+    expect(status.querySelector('.mimir-editor__status-content')?.textContent).toBe(
+      '已修改，未保存',
+    )
+    expect(status.querySelector('button')).toBeNull()
   })
 
-  it('底部保存入口保留原回调，状态文案与操作各在自己的分组', () => {
-    const onSave = vi.fn<() => void>()
+  it('未传状态时不渲染空状态行或附属面板', () => {
     const host = mount(
-      <EditorShell
-        status={<ToolbarLabel>已修改，未保存</ToolbarLabel>}
-        toolbarActions={<ToolbarButton label="保存到库" primary onClick={onSave} />}
-      >
+      <EditorShell>
         <div>内容</div>
       </EditorShell>,
     )
 
-    const status = host.querySelector('.mimir-editor__status')!
-    expect(status.querySelector('.mimir-editor__status-content')?.textContent).toBe(
-      '已修改，未保存',
-    )
-    const save = status.querySelector<HTMLButtonElement>('.mimir-editor__status-actions button')!
-    expect(save.disabled).toBe(false)
-    click(save)
-    expect(onSave).toHaveBeenCalledOnce()
+    expect(host.querySelector('.mimir-editor__status')).toBeNull()
+    expect(host.querySelector('.mimir-editor__footer')).toBeNull()
+    expect(host.querySelector('.mimir-editor__body')?.textContent).toBe('内容')
   })
 
-  it('状态说明可换行，保存动作始终占右端独立空间', () => {
+  it('长状态说明可换行，计数仍保留在同一状态行', () => {
+    const out = html(
+      <EditorShell
+        status={
+          <>
+            <ToolbarLabel>文件已修改，尚未保存</ToolbarLabel>
+            <ToolbarLabel>3 张幻灯片</ToolbarLabel>
+          </>
+        }
+      >
+        <div>内容</div>
+      </EditorShell>,
+    )
+    expect(out.match(/mimir-editor__status-content/g)).toHaveLength(1)
+    expect(out).toContain('文件已修改，尚未保存')
+    expect(out).toContain('3 张幻灯片')
+
     const css = readFileSync(join(here, 'shell.css'), 'utf8')
     const content = /\.mimir-editor__status-content \{[^}]*\}/.exec(css)?.[0] ?? ''
     const labels = /\.mimir-editor__status-content > \.me-label \{[^}]*\}/.exec(css)?.[0] ?? ''
-    const actions = /\.mimir-editor__status-actions \{[^}]*\}/.exec(css)?.[0] ?? ''
     expect(content).toContain('flex-wrap: wrap')
     expect(content).toContain('min-width: 0')
     expect(labels).toContain('white-space: normal')
     expect(labels).toContain('overflow-wrap: anywhere')
-    expect(actions).toContain('flex: none')
-    expect(actions).toContain('margin-left: auto')
   })
 
   it('subbar 在工具条之后、内容之前，且与工具条同包一层——两行各自 sticky 会重叠', () => {
@@ -834,6 +818,25 @@ describe('ToolbarSelect', () => {
     // 弹层不在 host 里
     expect(host.querySelector('.ant-select-dropdown')).toBeNull()
     expect(selectRoot(host, '字号')).not.toBeNull()
+  })
+
+  it('紧凑触发器打开的选项列表至少有可读宽度', () => {
+    const host = mount(
+      <ToolbarSelect
+        label="段落样式"
+        value="p"
+        onChange={() => {}}
+        options={[
+          { value: 'p', label: '正文' },
+          { value: 'h0', label: '标题（这份文档没有标题样式）', disabled: true },
+        ]}
+      />,
+    )
+    const options = openSelect(host, '段落样式')
+    const popup = options[0]!.closest<HTMLElement>('.ant-select-dropdown')
+    expect(popup?.style.minWidth).toBe('180px')
+    expect(popup?.style.maxWidth).toBe('calc(100vw - 16px)')
+    expect(popup?.style.width).toBe('')
   })
 })
 

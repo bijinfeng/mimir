@@ -56,6 +56,17 @@ export {
   type DocxAgentExecuteOptions,
   type DocxAgentResult,
 } from './agent/docx-agent.js'
+export {
+  HtmlAgentHandle,
+  HTML_AGENT_TOOL_NAMES,
+  HTML_OP_NAMES,
+  type HtmlAgentResult,
+} from './agent/html-agent.js'
+export {
+  createMarkdownAgentHandle,
+  type MarkdownAgentHandle,
+  type MarkdownAgentServices,
+} from './agent/markdown-agent.js'
 export { usePagination } from './pagination.js'
 export { readXlsx, type XlsxCell, type XlsxSheet, type XlsxWorkbook } from './xlsx.js'
 export { openXlsxForEdit, type XlsxCellRef, type XlsxEditSession } from './xlsx-edit.js'
@@ -229,6 +240,7 @@ export {
   type MarkdownImageUpload,
   type MarkdownToolbarProps,
 } from './editors/MarkdownEditor.js'
+export { MarkdownSearchHighlight, markdownFindAdapter } from './editors/markdown-find.js'
 /**
  * markdown 方言的工具条逻辑。**导出**是有意的：宿主（`apps/web`）拿着真方言，
  * 只有它能验证这些行为（`apps/web/src/editor/markdown-toolbar.test.tsx`）。
@@ -263,8 +275,9 @@ export {
   type ListItemName,
   type ParagraphStyle,
 } from './editors/markdown-format.js'
-export { HtmlEditor } from './editors/HtmlEditor.js'
+export { HtmlEditor, type HtmlAgentServices } from './editors/HtmlEditor.js'
 export { PdfEditor } from './editors/PdfEditor.js'
+export { PdfAgentHandle, PDF_PAGE_AGENT_OPS } from './agent/pdf-agent.js'
 export {
   hasCommand,
   hasMark,
