@@ -61,44 +61,6 @@ const BASE_TOKEN = {
 
 /**
  * 浅色的颜色。每一项的用途与实测对比度见 `.trellis/spec/project/design.md` §3.3–§3.6。
- *
- * ## 颜色系统维护指南
- *
- * ### 修改颜色前的检查清单
- *
- * 1. **种子色 vs 叶子 token**：
- *    - 种子色（colorPrimary, colorSuccess 等）会被算法派生，不要直接覆盖
- *    - 只覆盖最终的叶子 token（colorPrimaryText, colorSuccessText 等）
- *    - 违反此规则会导致深色下出现灰绿、灰橙等脏色
- *
- * 2. **文字色与填充色的分离**：
- *    - 填充色：colorPrimary（按钮底、选中底）
- *    - 文字色：colorLink / colorPrimaryText（链接、选中文字）
- *    - 不要混用：colorPrimary 不能直接用在文字上
- *
- * 3. **语义色必须成对**：
- *    - 状态文字（如 colorSuccessText）必须配同语义浅底（colorSuccessBg）
- *    - 对比度要求：≥4.5:1（AA 级）
- *    - theme/design.test.ts 会守住这条线
- *
- * 4. **深色不是浅色取反**：
- *    - 每一对颜色都需要在深色下重新校准对比度
- *    - 使用 darkCalibration 函数处理深色特有的值
- *    - 参考 §3.8 的深色校准表
- *
- * 5. **链接色的特殊处理**：
- *    - 悬停/按下状态（colorLinkHover/Active）必须显式给出
- *    - 不给的话 antd 会派生出对比度不足的值（浅色 2.80:1，深色更糟）
- *    - 要求：白底和选中底上都保持可读
- *
- * ### 修改后的验证步骤
- *
- * 1. 运行 `pnpm test theme/design.test.ts` 验证对比度
- * 2. 在浅色和深色两种外观下目视检查：
- *    - 链接文字在白底和选中底上的可读性
- *    - 悬停状态的视觉反馈是否清晰
- *    - 语义色（成功/警告/错误）在对应浅底上的对比度
- * 3. 更新 design.md 中的颜色表（§3.1 表格）
  */
 const LIGHT_COLOR = {
   // ── 品牌 ──────────────────────────────────────────────
