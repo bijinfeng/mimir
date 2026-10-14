@@ -14,7 +14,7 @@ import {
   withRoleBound,
   type ModelConfigDraft,
 } from './model-config'
-import { Block, BlockDesc, Panel, Row } from './parts'
+import { BlockDesc, Panel, Row } from './parts'
 import { SettingControl } from './SettingControl'
 import { useStyles } from './settings.style'
 
@@ -113,7 +113,7 @@ export function ModelsSection() {
         onDraft={commit}
       />
 
-      <Panel title="任务分配">
+      <Panel title="任务分配" desc="为对话、摘要、嵌入等角色绑定具体模型">
         {modelConfig.providers.length === 0 ? (
           <div className={styles.block}>
             <div className={styles.blockDesc}>添加供应商后可选择模型</div>
@@ -140,43 +140,29 @@ export function ModelsSection() {
 
       <ModelServiceSettings
         title="图片生成"
-        description="配置图片生成服务，供需要生成图片的功能使用。"
         entries={settings.filter((entry) => entry.key.startsWith('model.image.'))}
       />
       <ModelServiceSettings
         title="视觉输入"
-        description="视觉模型需要支持图片输入；实际能力还取决于所选模型。"
         entries={settings.filter((entry) => entry.key === 'model.vision.enabled')}
       />
       <ModelServiceSettings
         title="音频转录"
-        description="配置音频转录服务，供需要分析语音的功能使用。"
         entries={settings.filter((entry) => entry.key.startsWith('model.transcription.'))}
       />
     </>
   )
 }
 
-function ModelServiceSettings({
-  title,
-  description,
-  entries,
-}: {
-  title: string
-  description: string
-  entries: SettingEntry[]
-}) {
+function ModelServiceSettings({ title, entries }: { title: string; entries: SettingEntry[] }) {
   if (entries.length === 0) return null
 
   return (
     <Panel title={title}>
-      <Block>
-        <BlockDesc>{description}</BlockDesc>
-      </Block>
       {entries.map((entry) => (
         <Row key={entry.key} label={entry.label}>
           <SettingControl entry={entry} secret={entry.type === 'secret'} width={320} />
-          <BlockDesc>{entry.description}</BlockDesc>
+          {entry.description ? <BlockDesc>{entry.description}</BlockDesc> : null}
         </Row>
       ))}
     </Panel>

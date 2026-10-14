@@ -63,6 +63,7 @@ export function ProviderList({
           ) : null}
         </>
       }
+      desc="添加 OpenAI、Anthropic 或自定义兼容接口"
       extra={
         providers.length > 0 ? (
           <Button
@@ -215,7 +216,7 @@ function ProviderCard({
       {expanded ? (
         <div className={styles.readonlyModels}>
           {provider.models.length === 0 ? (
-            <div className={styles.blockDesc}>这家还没有模型。进「编辑」拉取或手动添加。</div>
+            <div className={styles.blockDesc}>暂无模型。</div>
           ) : (
             provider.models.map((model) => (
               <div key={model.id} className={styles.modelRowRead}>

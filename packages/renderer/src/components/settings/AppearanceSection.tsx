@@ -41,7 +41,7 @@ export function AppearanceSection() {
   const { mode, setMode } = useThemeMode()
 
   return (
-    <Panel title="界面颜色">
+    <Panel title="界面颜色" desc="选择浅色、深色或跟随系统">
       <Row label="颜色模式">
         <div className={styles.actions}>
           <Segmented<ThemeMode>
@@ -55,7 +55,6 @@ export function AppearanceSection() {
           />
         </div>
       </Row>
-      <div className={styles.appearanceNote}>仅在当前客户端生效。</div>
     </Panel>
   )
 }

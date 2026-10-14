@@ -3,7 +3,7 @@ import { App, Button, Skeleton } from 'antd'
 import { Download, RefreshCw } from 'lucide-react'
 import { api } from '../../lib/api'
 import { LoadError } from '../LoadError'
-import { Block, BlockDesc, Note, Panel, Stats } from './parts'
+import { Block, Note, Panel, Stats } from './parts'
 import { useStyles } from './settings.style'
 
 /** 数据导出和可操作的修复入口，不展示部署路径与数据库实现。 */
@@ -26,7 +26,7 @@ export function DataSection() {
 
   return (
     <>
-      <Panel title="维护">
+      <Panel title="维护" desc="重新扫描本地文件以恢复笔记和附件">
         <Block>
           <div className={styles.actions} style={{ marginBottom: 8 }}>
             <Button
@@ -37,11 +37,10 @@ export function DataSection() {
               重新扫描本地文件
             </Button>
           </div>
-          <BlockDesc>仅找回已有的笔记和上传件，无法找回网页文章、对话和设置。</BlockDesc>
         </Block>
       </Panel>
 
-      <Panel title="导出">
+      <Panel title="导出" desc="将文档、对话和附件导出为 Markdown 或 JSON">
         {stats ? (
           <Stats
             items={[
@@ -80,11 +79,10 @@ export function DataSection() {
               导出完整记录
             </Button>
           </div>
-          <BlockDesc>完整记录不含上传原件，不能单独用于恢复全部内容。</BlockDesc>
         </Block>
-      </Panel>
 
-      <Note>导出文件不能代替完整备份。请同时备份应用数据与密钥。</Note>
+        <Note>导出文件不能代替完整备份。请同时备份应用数据与密钥。</Note>
+      </Panel>
     </>
   )
 }

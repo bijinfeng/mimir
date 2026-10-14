@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
 import { Skeleton, Table } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { api } from '../../lib/api'
@@ -114,26 +113,9 @@ export function StatsSection() {
     )
   }
 
-  if (data.totals.calls === 0 && data.totals.unknownCount === 0) {
-    return (
-      <Panel title="用量概览">
-        <div className={statsStyles.empty}>
-          还没有模型调用记录。配置模型后，在对话中提问即可查看用量。
-          <Link
-            to="/settings"
-            search={{ scope: 'all', section: 'models' }}
-            className={statsStyles.emptyLink}
-          >
-            前往模型设置
-          </Link>
-        </div>
-      </Panel>
-    )
-  }
-
   return (
     <>
-      <Panel title="用量概览 · token">
+      <Panel title="用量概览" desc="按日、周、月汇总的 token 消耗">
         <Stats
           items={[
             { label: '今日', value: formatTokens(data.totals.today) },
@@ -144,14 +126,12 @@ export function StatsSection() {
         />
       </Panel>
 
-      <Panel title="每日趋势 · token">
+      <Panel title="每日趋势" desc="按天查看 token 用量的热力分布">
         <UsageHeatmap days={data.days} thresholds={data.thresholds} timezone={data.timezone} />
       </Panel>
 
-      <Panel title="按任务">
-        {data.byRole.length === 0 ? (
-          <div className={statsStyles.empty}>还没有记录。</div>
-        ) : (
+      <Panel title="按任务" desc="按对话、摘要、嵌入等角色拆分用量">
+        {data.byRole.length > 0 ? (
           /*
             用 antd Table 而不是手写 `<table>`：表头底色、单元格内边距、
             边框与 hover 在深浅两套主题下都已经由 token 校准过，
@@ -167,7 +147,7 @@ export function StatsSection() {
             pagination={false}
             size="small"
           />
-        )}
+        ) : null}
 
         {/*
           页脚必须解释两件事，否则数字会误导：

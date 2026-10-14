@@ -75,7 +75,7 @@ export function StorageSection() {
 
   return (
     <>
-      <Panel title="文件存储">
+      <Panel title="文件存储" desc="选择文件存储后端（本地磁盘或 S3 兼容存储）">
         <Radio.Group
           className={styles.storageOptions}
           aria-label="文件存储方式"
@@ -99,9 +99,6 @@ export function StorageSection() {
                           : '未选中'}
                 </StatusBadge>
               </span>
-              {backend.status.kind === 'needs-config' ? (
-                <span className={styles.storageOptionReason}>请完成下方存储配置。</span>
-              ) : null}
             </Radio>
           ))}
         </Radio.Group>
@@ -116,6 +113,7 @@ export function StorageSection() {
       {s3Entries.length > 0 ? (
         <Panel
           title="S3 配置"
+          desc="填写 Access Key、Bucket 等参数"
           extra={
             selected === 's3' ? null : (
               <Button size="small" onClick={() => setShowS3Config((open) => !open)}>
@@ -133,7 +131,7 @@ export function StorageSection() {
                     secret={entry.type === 'secret'}
                     width={entry.type === 'boolean' ? undefined : 320}
                   />
-                  <BlockDesc>{entry.description}</BlockDesc>
+                  {entry.description ? <BlockDesc>{entry.description}</BlockDesc> : null}
                   {entry.problem ? <BlockDesc>{entry.problem}</BlockDesc> : null}
                 </Row>
               ))

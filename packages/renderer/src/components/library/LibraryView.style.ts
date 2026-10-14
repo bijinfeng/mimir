@@ -40,17 +40,17 @@ export const useStyles = createStyles(({ css, token }) => ({
 
   head: css`
     flex: none;
-    padding: 48px 0 0;
+    padding: 24px 0 0;
     max-width: 1080px;
     width: 100%;
     margin: 0 auto;
 
     @media ${NAV_NARROW_QUERY} {
-      padding-top: 28px;
+      padding-top: 20px;
     }
   `,
   kbTitle: css`
-    font-size: ${FONT_SIZE.display}px;
+    font-size: ${FONT_SIZE.pageTitle}px;
     font-weight: 600;
     line-height: 1.25;
     margin: 0;
@@ -82,10 +82,13 @@ export const useStyles = createStyles(({ css, token }) => ({
     padding: 0;
     font: inherit;
     cursor: pointer;
+    text-decoration: underline dotted;
+    text-underline-offset: 2px;
+    text-decoration-color: ${token.colorBorder};
 
     &:hover {
       color: ${token.colorLink};
-      text-decoration: underline;
+      text-decoration: underline solid;
     }
   `,
   crumbSep: css`
@@ -194,8 +197,8 @@ export const useStyles = createStyles(({ css, token }) => ({
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 10px 12px;
-    margin-top: 34px;
-    padding: 0 0 20px;
+    margin-top: 16px;
+    padding: 0 0 12px;
 
     @media (max-width: 720px) {
       margin-top: 24px;
@@ -303,7 +306,7 @@ export const useStyles = createStyles(({ css, token }) => ({
 
     &:hover {
       border-color: ${token.colorPrimaryBorder};
-      background: ${token.colorFillQuaternary};
+      background: ${token.tintHover};
     }
 
     /* 卡片本体不可聚焦（里面是标题按钮 + 动作按钮，见 DocCard 的注释），

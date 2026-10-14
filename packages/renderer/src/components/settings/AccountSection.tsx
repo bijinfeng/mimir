@@ -64,7 +64,7 @@ export function AccountSection() {
   }
 
   return (
-    <Panel title="个人资料">
+    <Panel title="个人资料" desc="修改头像、名称等基本信息">
       <Block>
         <div className={accountStyles.profile}>
           <AvatarColumn session={session ?? null} />

@@ -118,6 +118,7 @@ export function FeedsSection() {
     <>
       <Panel
         title="RSS / Atom 来源"
+        desc="订阅网站 RSS / Atom 源，自动收录新内容"
         extra={feeds.length > 0 ? <Tag>{feeds.length} 个源</Tag> : null}
       >
         <Block>
@@ -156,7 +157,6 @@ export function FeedsSection() {
               {urlError}
             </div>
           ) : null}
-          <BlockDesc>新文章会自动加入知识库。</BlockDesc>
         </Block>
         {!feedsQuery.isLoading && !feedsQuery.isError && feeds.length === 0 ? (
           <Block>

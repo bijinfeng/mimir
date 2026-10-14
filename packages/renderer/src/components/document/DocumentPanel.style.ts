@@ -63,8 +63,8 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       flex: 0 1 auto;
       min-width: 0;
       margin: 0;
-      font-size: ${FONT_SIZE.item}px;
-      font-weight: 500;
+      font-size: ${FONT_SIZE.section}px;
+      font-weight: 600;
       line-height: 1.4;
       letter-spacing: 0;
       color: ${token.colorText};
@@ -100,10 +100,10 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       width: auto;
       min-width: 120px;
       max-width: 55%;
-      height: 24px;
+      height: 28px;
       padding-inline: 0;
-      font-size: ${FONT_SIZE.item}px;
-      font-weight: 500;
+      font-size: ${FONT_SIZE.section}px;
+      font-weight: 600;
       line-height: 1.4;
       field-sizing: content;
 
@@ -215,7 +215,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     flex: 1;
     min-width: 0;
     max-width: 860px;
-    padding: 48px 50px 140px;
+    padding: 48px 50px 72px;
 
     @media ${NAV_NARROW_QUERY} {
       padding: 28px 24px 110px;
@@ -466,7 +466,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     align-self: stretch;
     padding: 28px 12px 40px;
     border-left: 1px solid ${token.colorBorderSecondary};
-    background: ${token.tintNav};
+    background: ${token.tintList};
     max-height: 100%;
     overflow-y: auto;
   `,
@@ -523,19 +523,19 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     margin: 0 0 20px;
     padding: 14px 16px;
     border-radius: ${token.borderRadius}px;
-    background: var(--ant-color-fill-quaternary);
+    background: ${token.colorFillQuaternary};
   `,
 
   aiLabel: css`
     font-size: ${FONT_SIZE.meta}px;
-    color: var(--ant-color-text-secondary);
+    color: ${token.colorTextSecondary};
     margin-bottom: 6px;
   `,
 
   aiText: css`
     font-size: ${FONT_SIZE.body}px;
     line-height: 1.7;
-    color: var(--ant-color-text);
+    color: ${token.colorText};
     white-space: pre-wrap;
   `,
 
@@ -547,9 +547,9 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   `,
 
   aiTag: css`
-    border: 1px solid var(--ant-color-border);
-    background: var(--ant-color-bg-container);
-    color: var(--ant-color-text);
+    border: 1px solid ${token.colorBorder};
+    background: ${token.colorBgContainer};
+    color: ${token.colorText};
     border-radius: 6px;
     padding: 3px 10px;
     font-size: ${FONT_SIZE.excerpt}px;
@@ -557,8 +557,8 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     font-family: inherit;
 
     &:hover {
-      border-color: var(--ant-color-primary);
-      color: var(--ant-color-primary);
+      border-color: ${token.colorPrimary};
+      color: ${token.colorPrimary};
     }
   `,
 

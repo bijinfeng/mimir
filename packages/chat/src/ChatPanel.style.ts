@@ -290,7 +290,7 @@ export const useChatPanelStyles = createStyles(({ css, token }) => ({
     color: ${token.colorLink};
   `,
   emptyTitle: css`
-    font-size: var(--mimir-chat-font-display, 24px);
+    font-size: var(--mimir-chat-font-page-title, 19px);
     font-weight: 600;
     letter-spacing: -0.025em;
     line-height: 1.3;

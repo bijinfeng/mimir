@@ -335,7 +335,7 @@ export function ProviderForm({
         />
       ) : null}
 
-      <Panel title="连接">
+      <Panel title="连接" desc="配置显示名、接口地址与认证凭据">
         <div className={styles.formRow}>
           <div className={styles.formLabel}>显示名</div>
           <div className={styles.formValue}>
@@ -453,6 +453,7 @@ export function ProviderForm({
             <span className={styles.seamTag}>{models.length} 个</span>
           </>
         }
+        desc="拉取或手动添加模型，并分配到对话、摘要等任务"
         extra={
           /*
             两个动作放标题条右端（demo 形态，用户拍板）：它们是**这一组的
@@ -469,11 +470,6 @@ export function ProviderForm({
           </>
         }
       >
-        <div className={styles.modelHint} style={{ paddingTop: 12 }}>
-          用途决定可分配的任务：<b>对话</b>可用于对话、深度思考和摘要；
-          <b>语义搜索</b>用于查找意思相近的内容。
-        </div>
-
         {pullNote ? <div className={styles.pullNote}>{pullNote}</div> : null}
 
         {models.length === 0 ? (
@@ -565,7 +561,7 @@ function PresetPanel({
   })
 
   return (
-    <Panel title="从预设开始">
+    <Panel title="从预设开始" desc="选择常用服务商模板，一键填入接口地址与模型">
       <div className={styles.presetGrid}>
         {sorted.map((preset) => (
           <Button key={preset.id} className={styles.presetCard} onClick={() => onPick(preset)}>

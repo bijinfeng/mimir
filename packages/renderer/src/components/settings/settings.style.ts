@@ -19,46 +19,47 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     height: 100%;
     min-height: 0;
     display: grid;
-    grid-template-columns: 246px minmax(0, 1fr);
+    grid-template-columns: 220px minmax(0, 1fr);
     overflow: hidden;
-    background: ${token.colorBgContainer};
+    background: ${token.colorBgLayout};
     @media ${NAV_NARROW_QUERY} {
       display: flex;
       flex-direction: column;
     }
   `,
   inner: css`
-    max-width: 730px;
+    max-width: 760px;
     margin: 0;
   `,
   sectionRail: css`
     min-height: 0;
     overflow-y: auto;
-    padding: 30px 12px;
+    padding: 24px 12px;
     background: ${token.tintNav};
+    border-right: 1px solid ${token.colorBorderSecondary};
   `,
   content: css`
     min-width: 0;
     min-height: 0;
     overflow-y: auto;
-    padding: 42px clamp(28px, 5vw, 72px) 80px;
+    padding: 40px clamp(28px, 5vw, 64px) 72px;
     @media ${NAV_NARROW_QUERY} {
       flex: 1;
-      padding: 28px 24px 64px;
+      padding: 24px 24px 64px;
     }
   `,
   mobileHead: css`
     flex: none;
-    padding: 22px 24px 18px;
+    padding: 20px 24px 16px;
     background: ${token.tintNav};
     border-bottom: 1px solid ${token.colorBorderSecondary};
   `,
 
   /* ── 页头 ───────────────────────────────────────────── */
   title: css`
-    margin: 0 16px 24px;
-    font-size: ${FONT_SIZE.pageTitle}px;
-    font-weight: 700;
+    margin: 0 10px 18px;
+    font-size: ${FONT_SIZE.section}px;
+    font-weight: 600;
     line-height: 1.4;
     color: ${token.colorText};
     @media ${NAV_NARROW_QUERY} {
@@ -66,17 +67,19 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     }
   `,
   contentTitle: css`
-    margin: 0 0 28px;
-    font-size: ${FONT_SIZE.display}px;
-    font-weight: 600;
-    line-height: 1.3;
+    margin: 0 0 6px;
+    font-size: ${FONT_SIZE.pageTitle}px;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
     color: ${token.colorText};
   `,
   lead: css`
-    margin: 0;
-    font-size: ${FONT_SIZE.note}px;
-    line-height: 1.75;
+    margin: 0 0 32px;
+    font-size: ${FONT_SIZE.body}px;
+    line-height: 1.65;
     color: ${token.colorTextSecondary};
+    max-width: 560px;
   `,
 
   /** 宽屏分区菜单。 */
@@ -88,10 +91,11 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     .${prefixCls}-menu-item {
       margin: 2px 0;
       width: 100%;
-      height: 36px;
-      line-height: 36px;
+      height: 34px;
+      line-height: 34px;
       font-size: ${FONT_SIZE.item}px;
-      border-radius: ${token.borderRadius}px;
+      border-radius: 6px;
+      padding-inline: 12px !important;
     }
   `,
 
@@ -120,56 +124,56 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     color: ${token.colorTextSecondary};
   `,
 
-  /* ── 面板：一组相关的设置项 ─────────────────────────── */
+  /* ── 面板：一张轻卡片（白底 + 细边 + 圆角） ─────────── */
   panel: css`
     background: ${token.colorBgContainer};
-    border-top: 1px solid ${token.colorBorderSecondary};
-    border-radius: 0;
+    border: 1px solid ${token.colorBorderSecondary};
+    border-radius: 10px;
     overflow: hidden;
 
     & + & {
-      margin-top: 24px;
+      margin-top: 20px;
     }
   `,
   /**
-   * 面板标题是**分组标签**，不是标题。
+   * 卡片头：标题 + 副标题在左，`extra` 动作在右。
    *
-   * 分区已经有 16px 的标题了（`sectionTitle`），面板再用同级字号会把
-   * 层级压平。所以它走 13px / 600 / 次级色——读作「这一组是什么」。
-   *
-   * 标题条与行之间不画线（D-070）：tintList 底色已经把「标题条」和
-   * 「内容行」分成两种表面，线是重复信号。
-   */
-  /**
-   * 面板标题条：**flex 行**——标题在左、`extra` 动作在右。
-   *
-   * flex 而不是块级行内文本：`extra` 里是 antd 的小按钮（24px），
-   * 需要与标题在一条中线上对齐；右对齐靠 `panelExtra` 的 `margin-left: auto`。
-   * `gap` 负责标题与接缝标识之间的间距（`seamTag` 原本的 margin-left
-   * 移到这里，两处都给会叠成 18px）。
-   *
-   * 内边距仍是 11px 16px（只有一处面板带 `extra`，44px 对 43px 的高差
-   * 看不出来；收掉的话另外十几个面板的标题条会一起矮 6px）。
-   * 标题条与内容行之间不画线（D-070）：tintList 底色已经把两种表面分开。
+   * 标题用 14px / 600 / 正文色（它是这张卡片的标题，不是分组标签），
+   * 副标题 12.5px / 三级色解释这一组是做什么的。
    */
   panelTitle: css`
     display: flex;
     align-items: center;
-    gap: 9px;
-    padding: 16px 0 10px;
-    font-size: ${FONT_SIZE.excerpt}px;
-    font-weight: 600;
-    color: ${token.colorTextSecondary};
-    background: transparent;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 20px;
+    border-bottom: 1px solid ${token.colorBorderSecondary};
   `,
-  /** 标题条右端的动作组。`margin-left: auto` 把它推到最右 */
+  panelTitleMain: css`
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  `,
+  panelTitleText: css`
+    font-size: ${FONT_SIZE.body}px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: ${token.colorText};
+  `,
+  panelDesc: css`
+    font-size: ${FONT_SIZE.note}px;
+    line-height: 1.5;
+    color: ${token.colorTextTertiary};
+  `,
+  /** 标题条右端的动作组 */
   panelExtra: css`
-    margin-left: auto;
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    flex: none;
   `,
-  /** 面板标题里的接缝标识：等宽、比标题再弱一档 */
+  /** 卡片标题里的接缝标识：等宽、比标题再弱一档 */
   seamTag: css`
     font-family: ${token.fontFamilyCode};
     font-size: ${FONT_SIZE.meta}px;
@@ -177,37 +181,31 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     color: ${token.colorTextTertiary};
   `,
 
-  /* ── 键值行 ─────────────────────────────────────────── */
+  /* ── 键值行：左标签 + 右值，卡片内水平内边距 20px ─────── */
   row: css`
-    display: flex;
-    align-items: baseline;
-    gap: 16px;
-    padding: 14px 0;
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 20px;
+    padding: 16px 20px;
+    align-items: start;
 
     & + & {
       border-top: 1px solid ${token.colorBorderSecondary};
     }
     @media (max-width: 680px) {
-      flex-direction: column;
-      gap: 3px;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 4px;
+      padding-inline: 16px;
     }
   `,
-  /* 固定标签列宽，让右侧的值对齐成一条竖线——扫读时视线不用来回跳
-     （与左导航「右侧对齐的元信息」是同一个理由，DESIGN §8.1）。
-
-     124px 保留现有表单标签的对齐空间；窄屏改为上下排列。 */
   rowLabel: css`
-    flex: none;
-    width: 124px;
-    font-size: ${FONT_SIZE.excerpt}px;
-    line-height: 1.7;
-    color: ${token.colorTextSecondary};
-    @media (max-width: 680px) {
-      width: auto;
-    }
+    font-size: ${FONT_SIZE.item}px;
+    font-weight: 500;
+    line-height: 1.6;
+    color: ${token.colorText};
+    padding-top: 4px;
   `,
   rowValue: css`
-    flex: 1;
     min-width: 0;
     font-size: ${FONT_SIZE.excerpt}px;
     line-height: 1.7;
@@ -220,7 +218,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
 
   /* ── 块：一段占满整行的内容（插件条目、说明 + 按钮） ── */
   block: css`
-    padding: 15px 0;
+    padding: 16px 20px;
 
     & + & {
       border-top: 1px solid ${token.colorBorderSecondary};
@@ -230,6 +228,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: 24px;
+    padding: 4px 20px 16px;
     @media (max-width: 600px) {
       grid-template-columns: minmax(0, 1fr);
     }
@@ -265,7 +264,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     display: flex;
     align-items: flex-start;
     margin: 0;
-    padding: 13px 16px;
+    padding: 14px 20px;
     width: 100%;
 
     & + & {
@@ -288,7 +287,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     color: ${token.colorTextSecondary};
   `,
   appearanceNote: css`
-    padding: 0 16px 13px;
+    padding: 0 20px 14px;
     font-size: ${FONT_SIZE.note}px;
     line-height: 1.7;
     color: ${token.colorTextTertiary};
@@ -302,35 +301,40 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
      （检索 / 抓取 / 插件 / 数据页）。只写下边距时，后一种情况下它会与
      上面那个面板贴在一起，看起来像面板的最后一行。 */
   note: css`
-    padding: 12px 15px;
-    margin: 14px 0;
-    background: ${token.tintNav};
-    border: 1px solid ${token.colorBorderSecondary};
-    border-radius: ${token.borderRadius}px;
+    margin: 8px 20px 20px;
     font-size: ${FONT_SIZE.note}px;
-    line-height: 1.8;
-    color: ${token.colorTextSecondary};
+    line-height: 1.7;
+    color: ${token.colorTextTertiary};
   `,
 
   /* ── 数值条：导出统计这类「几个事实」 ────────────────── */
   stats: css`
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 12px;
-    padding: 14px 16px;
+    gap: 8px;
+    padding: 8px 20px 20px;
     @media (max-width: 680px) {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   `,
+  statItem: css`
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 16px;
+    background: ${token.tintNav};
+    border: 1px solid ${token.colorBorderSecondary};
+    border-radius: 8px;
+  `,
   statLabel: css`
     font-size: ${FONT_SIZE.meta}px;
-    line-height: 1.6;
+    line-height: 1.4;
     color: ${token.colorTextTertiary};
   `,
   statValue: css`
-    font-size: ${FONT_SIZE.body}px;
-    font-weight: 500;
-    line-height: 1.5;
+    font-size: ${FONT_SIZE.pageTitle}px;
+    font-weight: 600;
+    line-height: 1.2;
     color: ${token.colorText};
     font-variant-numeric: tabular-nums;
   `,
@@ -360,7 +364,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     justify-content: space-between;
     gap: 12px;
     flex-wrap: wrap;
-    padding: 18px 16px;
+    padding: 20px;
   `,
   /**
    * 卡片：信息在左、三个动作在右上、展开入口整行在下（demo 形态）。
@@ -374,14 +378,14 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 4px 12px;
-    padding: 14px 16px;
+    padding: 16px 20px;
 
     & + & {
       border-top: 1px solid ${token.colorBorderSecondary};
     }
     @media (max-width: 680px) {
       grid-template-columns: minmax(0, 1fr);
-      padding-inline: 0;
+      padding-inline: 16px;
     }
   `,
   /** 右上角的动作组。`flex-start` 让它们贴着这一行的上缘（与名字同高） */
@@ -474,10 +478,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 8px;
-    /* 与面板里其它块同一套内边距（block 的 13px 16px）：
-       第一版漏了它，九张卡片直接贴着面板的四条边（实测网格矩形 758×189
-       而卡片起止就是面板边界），看起来像面板被压扁了 */
-    padding: 13px 16px;
+    padding: 16px 20px 20px;
   `,
   /**
    * 预设卡片。
@@ -559,11 +560,11 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     color: ${token.colorTextTertiary};
   `,
   technicalDetails: css`
-    margin: 0 16px 12px;
+    margin: 0 20px 16px;
 
     .${prefixCls}-collapse-header {
       color: ${token.colorLink} !important;
-      padding: 6px 0 !important;
+      padding: 8px 0 !important;
     }
 
     .${prefixCls}-collapse-content-box {
@@ -624,7 +625,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   formRow: css`
     display: flex;
     gap: 16px;
-    padding: 12px 16px;
+    padding: 14px 20px;
 
     & + & {
       border-top: 1px solid ${token.colorBorderSecondary};
@@ -632,7 +633,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     @media (max-width: 680px) {
       flex-direction: column;
       gap: 4px;
-      padding-inline: 0;
+      padding-inline: 16px;
     }
   `,
   formLabel: css`
@@ -669,7 +670,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   `,
   /** 表单里的说明文字（模型用途那段）。比 blockDesc 收一点，因为它连着控件 */
   modelHint: css`
-    padding: 0 16px 10px;
+    padding: 0 20px 12px;
     font-size: ${FONT_SIZE.note}px;
     line-height: 1.75;
     color: ${token.colorTextSecondary};
@@ -687,7 +688,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
    * 「上线了 / 出问题了」。
    */
   pullNote: css`
-    margin: 0 16px 10px;
+    margin: 0 20px 12px;
     padding: 8px 12px;
     border-radius: ${token.borderRadius}px;
     background: ${token.colorPrimaryBg};
@@ -704,14 +705,14 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     grid-template-columns: minmax(0, 1fr) 196px 56px 32px;
     align-items: center;
     gap: 12px;
-    padding: 10px 16px 6px;
+    padding: 10px 20px 6px;
     font-size: ${FONT_SIZE.meta}px;
     color: ${token.colorTextTertiary};
     border-bottom: 1px solid ${token.colorBorderSecondary};
     @media (max-width: 680px) {
       grid-template-columns: minmax(0, 1fr) minmax(96px, 130px) 46px 28px;
       gap: 6px;
-      padding-inline: 0;
+      padding-inline: 16px;
     }
   `,
   modelRow: css`
@@ -719,7 +720,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     grid-template-columns: minmax(0, 1fr) 196px 56px 32px;
     align-items: center;
     gap: 12px;
-    padding: 7px 16px;
+    padding: 8px 20px;
 
     & + & {
       border-top: 1px solid ${token.colorBorderSecondary};
@@ -727,7 +728,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     @media (max-width: 680px) {
       grid-template-columns: minmax(0, 1fr) minmax(96px, 130px) 46px 28px;
       gap: 6px;
-      padding-inline: 0;
+      padding-inline: 16px;
     }
   `,
   modelRowRead: css`
@@ -735,7 +736,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     grid-template-columns: minmax(0, 1fr) 196px 56px;
     align-items: center;
     gap: 12px;
-    padding: 6px 16px;
+    padding: 7px 20px;
 
     & + & {
       border-top: 1px solid ${token.colorBorderSecondary};
@@ -743,7 +744,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     @media (max-width: 680px) {
       grid-template-columns: minmax(0, 1fr) minmax(96px, 130px) 46px;
       gap: 6px;
-      padding-inline: 0;
+      padding-inline: 16px;
     }
   `,
   /**
@@ -850,9 +851,10 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     display: flex;
     gap: 8px;
     align-items: center;
-    margin-bottom: 8px;
+    margin: 0 20px 12px;
     @media (max-width: 680px) {
       flex-wrap: wrap;
+      margin-inline: 16px;
     }
 
     > *:first-child {

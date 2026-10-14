@@ -82,7 +82,7 @@ export interface JsonSettingHooks {
 export interface SettingSpec {
   key: string
   label: string
-  description: string
+  description?: string
   /** 设置页的分区，与 `?section=` 一致 */
   group: string
   type: SettingType
@@ -107,7 +107,7 @@ export interface SettingSpec {
 export const settingEntrySchema = z.object({
   key: z.string(),
   label: z.string(),
-  description: z.string(),
+  description: z.string().optional(),
   group: z.string(),
   type: settingTypeSchema,
   /** 当前生效值。秘密类恒为 `null`——见 `configured` */

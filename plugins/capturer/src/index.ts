@@ -28,7 +28,6 @@ const CAPTURE_PARAMS: SettingSpec[] = [
   {
     key: 'capture.fetchTimeoutMs',
     label: '抓取超时',
-    description: '超过设定时间仍未获取页面时停止抓取',
     group: 'capture',
     type: 'number',
     envName: 'CAPTURE_FETCH_TIMEOUT_MS',
@@ -44,7 +43,6 @@ const CAPTURE_PARAMS: SettingSpec[] = [
   {
     key: 'capture.maxBytes',
     label: '单次抓取体积上限',
-    description: '超过设定大小的页面将停止抓取',
     group: 'capture',
     type: 'number',
     envName: 'CAPTURE_MAX_BYTES',
@@ -60,7 +58,7 @@ const CAPTURE_PARAMS: SettingSpec[] = [
   {
     key: 'capture.githubToken',
     label: 'GitHub Token',
-    description: '提高 GitHub 抓取限额；密钥会加密保存',
+    description: '密钥会加密保存',
     group: 'capture',
     type: 'secret',
     envName: 'GITHUB_TOKEN',

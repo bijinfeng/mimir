@@ -73,7 +73,6 @@ const S3_PARAMS: SettingSpec[] = [
   {
     key: 'storage.s3.accessKeyId',
     label: 'Access Key ID',
-    description: '与 Secret Access Key 配套填写',
     group: 'storage',
     type: 'string',
     envName: 'S3_ACCESS_KEY_ID',
@@ -83,7 +82,6 @@ const S3_PARAMS: SettingSpec[] = [
   {
     key: 'storage.s3.secretAccessKey',
     label: 'Secret Access Key',
-    description: '与 Access Key ID 配套填写',
     group: 'storage',
     type: 'secret',
     envName: 'S3_SECRET_ACCESS_KEY',

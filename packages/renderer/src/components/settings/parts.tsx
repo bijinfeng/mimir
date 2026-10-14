@@ -10,32 +10,37 @@ import { useStatusStyles, useStyles } from './settings.style'
  */
 
 /**
- * 一组相关的设置项。`title` 是分组标签，`extra` 是标题条**右端**的动作。
+ * 一组相关的设置项（一张轻卡片）。
  *
- * `extra`（「拉取模型」/「+ 手动添加」这类）放在标题条上而不是内容区顶部：
- * 它们是**这一组的动作**，属于标题条的一部分。放进内容区会让「这一组是
- * 什么」与「能对它做什么」分成两块纵排，白白多占一行高度（demo 形态，
- * 用户拍板）。右对齐靠 `margin-left: auto`，标题是什么长度都不影响。
+ * `title` 是卡片标题，`desc` 是卡片副标题（解释这一组是做什么的），
+ * `extra` 是标题条**右端**的动作（如「+ 添加供应商」「拉取模型」）。
  *
- * `children` 可省——「预设」那个面板的全部内容（当前选的是哪家 +
- * 「重新选择」）都在标题条上，没有内容体，再塞一个空 div 会多出
- * 一段没有内容的内边距。
+ * 标题 + 副标题在左、动作在右；只有其中之一时仍渲染头部（有标题无动作、
+ * 或有动作无标题都合法）。
+ *
+ * `children` 可省——有些面板的全部内容都在标题条上，没有内容体。
  */
 export function Panel({
   title,
+  desc,
   extra,
   children,
 }: {
   title?: ReactNode
+  desc?: ReactNode
   extra?: ReactNode
   children?: ReactNode
 }) {
   const { styles } = useStyles()
+  const hasHead = title || desc || extra
   return (
     <div className={styles.panel}>
-      {title || extra ? (
+      {hasHead ? (
         <div className={styles.panelTitle}>
-          {title}
+          <div className={styles.panelTitleMain}>
+            {title ? <span className={styles.panelTitleText}>{title}</span> : null}
+            {desc ? <span className={styles.panelDesc}>{desc}</span> : null}
+          </div>
           {extra ? <span className={styles.panelExtra}>{extra}</span> : null}
         </div>
       ) : null}
@@ -110,7 +115,7 @@ export function Stats({ items }: { items: { label: string; value: string }[] }) 
   return (
     <div className={styles.stats}>
       {items.map((item) => (
-        <div key={item.label}>
+        <div key={item.label} className={styles.statItem}>
           <div className={styles.statLabel}>{item.label}</div>
           <div className={styles.statValue}>{item.value}</div>
         </div>

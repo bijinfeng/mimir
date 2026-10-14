@@ -4,7 +4,7 @@ import { Database, RefreshCw } from 'lucide-react'
 import { useState } from 'react'
 import { api } from '../../lib/api'
 import { LoadError } from '../LoadError'
-import { BlockDesc, Panel, Row } from './parts'
+import { Panel, Row } from './parts'
 import { useStyles } from './settings.style'
 
 /** 搜索状态与结果验证。检索算法的参数不在面向用户的设置中展示。 */
@@ -56,7 +56,7 @@ export function RetrievalSection() {
 
   return (
     <>
-      <Panel title="搜索内容">
+      <Panel title="搜索内容" desc="查看已收录文档并补全语义搜索索引">
         {statusQuery.isError ? (
           <div className={styles.block}>
             <LoadError
@@ -101,13 +101,12 @@ export function RetrievalSection() {
                   重新整理搜索内容
                 </Button>
               </div>
-              <BlockDesc>补全语义搜索会产生模型用量；重新整理后可能需要再次补全。</BlockDesc>
             </div>
           </>
         )}
       </Panel>
 
-      <Panel title="测试搜索">
+      <Panel title="测试搜索" desc="输入关键词验证检索结果是否符合预期">
         <div className={styles.block}>
           <Input.Search
             aria-label="测试检索词"

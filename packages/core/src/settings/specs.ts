@@ -73,7 +73,6 @@ export const CORE_SETTING_SPECS: readonly SettingSpec[] = [
   {
     key: 'retrieval.perLegLimit',
     label: '每通道候选数',
-    description: '每个检索通道参与合并的结果上限',
     group: 'retrieval',
     type: 'number',
     envName: 'RETRIEVAL_PER_LEG_LIMIT',
@@ -84,7 +83,6 @@ export const CORE_SETTING_SPECS: readonly SettingSpec[] = [
   {
     key: 'retrieval.maxChunksPerDoc',
     label: '每篇最多引用块数',
-    description: '单篇文档最多提供的引用片段数',
     group: 'retrieval',
     type: 'number',
     envName: null,
@@ -97,7 +95,7 @@ export const CORE_SETTING_SPECS: readonly SettingSpec[] = [
   {
     key: 'parser.chunk.size',
     label: '分块大小',
-    description: '每段的目标字数；修改后需重建分块',
+    description: '修改后需重建分块',
     group: 'parser',
     type: 'number',
     envName: null,
@@ -108,7 +106,7 @@ export const CORE_SETTING_SPECS: readonly SettingSpec[] = [
   {
     key: 'parser.chunk.overlap',
     label: '分块重叠',
-    description: '相邻段落的重叠字数；修改后需重建分块',
+    description: '修改后需重建分块',
     group: 'parser',
     type: 'number',
     envName: null,
@@ -121,7 +119,6 @@ export const CORE_SETTING_SPECS: readonly SettingSpec[] = [
   {
     key: 'storage.backend',
     label: '存储后端',
-    description: '切换存储不会迁移已有文件，请先完成迁移',
     group: 'storage',
     type: 'string',
     envName: 'STORAGE_BACKEND',
@@ -170,8 +167,7 @@ export const CORE_SETTING_SPECS: readonly SettingSpec[] = [
   {
     key: 'stats.timezone',
     label: '统计时区',
-    description:
-      '用量按哪个时区切天。容器默认跑 UTC——不设它的话，凌晨 0 点到 8 点的消耗会算到前一天，热力图整体左移一格且不报错',
+    description: '影响用量按哪一天统计',
     group: 'stats',
     type: 'string',
     envName: 'TZ',

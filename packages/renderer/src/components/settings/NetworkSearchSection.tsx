@@ -16,14 +16,14 @@ function BraveSettings({ entry }: { entry: SettingEntry }) {
   return (
     <Panel
       title="Brave Search"
+      desc="配置 Brave Search API 密钥，启用网络搜索"
       extra={<StatusBadge on={configured}>{configured ? '已配置' : '未配置'}</StatusBadge>}
     >
       <Row label={entry.label}>
         <SettingControl entry={entry} secret width={320} />
-        <BlockDesc>{entry.description}</BlockDesc>
+        {entry.description ? <BlockDesc>{entry.description}</BlockDesc> : null}
       </Row>
       <Block>
-        <BlockDesc>用于需要访问公开网页和图片的功能。测试会向 Brave 发起一次真实搜索。</BlockDesc>
         <Button
           size="small"
           loading={test.isPending}
@@ -69,7 +69,7 @@ export function NetworkSearchSection() {
   const brave = configQuery.data.settings.find((entry) => entry.key === BRAVE_KEY)
   if (!brave) {
     return (
-      <Panel title="网络搜索">
+      <Panel title="网络搜索" desc="让 Mimir 搜索互联网以获取最新信息">
         <Block>
           <BlockDesc>当前服务未注册网络搜索提供方。</BlockDesc>
         </Block>

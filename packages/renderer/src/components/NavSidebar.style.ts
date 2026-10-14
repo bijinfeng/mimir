@@ -18,7 +18,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     min-width: 52px;
     height: 100%;
     padding: 10px 5px 8px;
-    background: ${token.colorBgLayout};
+    background: ${token.tintNav};
     border-inline-end: 1px solid ${token.colorBorderSecondary};
   `,
   railBrand: css`
@@ -37,7 +37,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     min-width: 38px;
     padding: 0;
     color: ${token.colorTextSecondary};
-    border-radius: 9px;
+    border-radius: 6px;
     &:hover {
       color: ${token.colorLink};
     }

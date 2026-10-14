@@ -35,7 +35,6 @@ const CONFIG_KEY = 'model.config'
 const MODEL_CONFIG_PARAM: SettingSpec = {
   key: CONFIG_KEY,
   label: '模型配置',
-  description: '供应商列表与各角色绑定的模型',
   group: 'models',
   type: 'json',
   envName: null,
@@ -94,7 +93,6 @@ const DIMENSIONS_PARAM: SettingSpec = {
 const BRAVE_SEARCH_PARAM: SettingSpec = {
   key: 'search.web.brave.apiKey',
   label: 'Brave Search API 密钥',
-  description: '供网页与图片搜索使用',
   group: 'search',
   type: 'secret',
   envName: null,
@@ -106,7 +104,6 @@ const IMAGE_PARAMS: SettingSpec[] = [
   {
     key: 'model.image.apiKey',
     label: '图片生成 API 密钥',
-    description: '供图片生成使用',
     group: 'models',
     type: 'secret',
     envName: null,
@@ -116,7 +113,6 @@ const IMAGE_PARAMS: SettingSpec[] = [
   {
     key: 'model.image.baseUrl',
     label: '图片生成接口地址',
-    description: 'OpenAI Images API 兼容地址',
     group: 'models',
     type: 'string',
     envName: null,
@@ -126,7 +122,6 @@ const IMAGE_PARAMS: SettingSpec[] = [
   {
     key: 'model.image.model',
     label: '图片生成模型',
-    description: 'OpenAI 图片模型，例如 gpt-image-1',
     group: 'models',
     type: 'string',
     envName: null,
@@ -139,7 +134,7 @@ const MEDIA_PARAMS: SettingSpec[] = [
   {
     key: 'model.vision.enabled',
     label: '视觉输入',
-    description: '确认当前聊天模型支持图片输入后启用；视频由浏览器抽帧',
+    description: '需聊天模型支持图片输入',
     group: 'models',
     type: 'boolean',
     envName: null,
@@ -149,7 +144,6 @@ const MEDIA_PARAMS: SettingSpec[] = [
   {
     key: 'model.transcription.apiKey',
     label: '音频转录 API 密钥',
-    description: 'OpenAI 音频转录服务密钥',
     group: 'models',
     type: 'secret',
     envName: null,
@@ -159,7 +153,6 @@ const MEDIA_PARAMS: SettingSpec[] = [
   {
     key: 'model.transcription.baseUrl',
     label: '音频转录接口地址',
-    description: 'OpenAI Audio Transcriptions API 兼容地址',
     group: 'models',
     type: 'string',
     envName: null,
@@ -169,7 +162,6 @@ const MEDIA_PARAMS: SettingSpec[] = [
   {
     key: 'model.transcription.model',
     label: '音频转录模型',
-    description: '例如 whisper-1 或 gpt-4o-mini-transcribe',
     group: 'models',
     type: 'string',
     envName: null,

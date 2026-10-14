@@ -43,7 +43,7 @@ export function ClientSection() {
   }
 
   return (
-    <Panel title="使用方式">
+    <Panel title="使用方式" desc="在本地离线与连接服务器之间切换">
       <Row label="当前">
         {mode === undefined
           ? '读取中…'
