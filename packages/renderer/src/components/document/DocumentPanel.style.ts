@@ -82,13 +82,28 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     opacity: 0;
     color: ${token.colorTextTertiary};
     pointer-events: none;
-    transition: opacity 0.12s ease-out;
+    transition:
+      opacity 0.12s ease-out,
+      color 0.12s ease-out,
+      background 0.12s ease-out;
 
     .note-title-group:hover &,
     .note-title-group:focus-within & {
       opacity: 1;
       pointer-events: auto;
     }
+
+    /* 增强悬停反馈 */
+    &:hover {
+      color: ${token.colorPrimary};
+      background: ${token.colorFillTertiary};
+      border-radius: ${token.borderRadiusSM}px;
+    }
+
+    &:active {
+      background: ${token.colorFillSecondary};
+    }
+
     @media (hover: none) {
       opacity: 1;
       pointer-events: auto;
@@ -106,6 +121,14 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       font-weight: 600;
       line-height: 1.4;
       field-sizing: content;
+      /* 编辑状态使用主色下划线，提供清晰的视觉反馈 */
+      border-bottom-color: ${token.colorPrimary};
+
+      &:focus,
+      &:focus-within {
+        border-bottom-color: ${token.colorPrimary};
+        box-shadow: none;
+      }
 
       @media (max-width: 600px) {
         flex: 1;
