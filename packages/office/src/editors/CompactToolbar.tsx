@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 
 export interface CompactToolbarSection {
   key: string
@@ -35,6 +35,7 @@ export function CompactToolbar({
 }) {
   const [requestedTab, setRequestedTab] = useState<string | null>(null)
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([])
+  const commandsRef = useRef<HTMLDivElement | null>(null)
   const id = useId()
   const selectedTab = controlledTab ?? requestedTab
   const activeTab = tabs?.some((tab) => tab.key === selectedTab) ? selectedTab : tabs?.[0]?.key
@@ -63,6 +64,44 @@ export function CompactToolbar({
     selectTab(tabs[next]!.key)
     tabRefs.current[next]?.focus()
   }
+
+  /**
+   * 监测横向滚动位置，动态更新渐变遮罩的显示状态。
+   *
+   * 当用户滚动工具栏时：
+   * - 在起始位置：只显示右侧渐变（提示右侧有更多内容）
+   * - 在中间位置：显示两侧渐变（提示两侧都有内容）
+   * - 在结束位置：只显示左侧渐变（提示左侧有更多内容）
+   */
+  useEffect(() => {
+    const commands = commandsRef.current
+    if (!commands) return
+
+    const updateScrollState = () => {
+      const { scrollLeft, scrollWidth, clientWidth } = commands
+      const isAtStart = scrollLeft <= 1
+      const isAtEnd = scrollLeft + clientWidth >= scrollWidth - 1
+
+      if (isAtStart) {
+        commands.setAttribute('data-scroll', 'start')
+      } else if (isAtEnd) {
+        commands.setAttribute('data-scroll', 'end')
+      } else {
+        commands.setAttribute('data-scroll', 'middle')
+      }
+    }
+
+    updateScrollState()
+    commands.addEventListener('scroll', updateScrollState, { passive: true })
+
+    const resizeObserver = new ResizeObserver(updateScrollState)
+    resizeObserver.observe(commands)
+
+    return () => {
+      commands.removeEventListener('scroll', updateScrollState)
+      resizeObserver.disconnect()
+    }
+  }, [shown])
 
   return (
     <div className="mimir-compact-toolbar">
@@ -102,10 +141,12 @@ export function CompactToolbar({
         </div>
       )}
       <div
+        ref={commandsRef}
         className="mimir-compact-toolbar__commands"
         id={tabs ? `${id}-commands` : undefined}
         role={tabs ? 'tabpanel' : undefined}
         aria-labelledby={tabs && activeTab ? `${id}-tab-${activeTab}` : undefined}
+        data-scroll="start"
       >
         {shown.map((section) => (
           <div
