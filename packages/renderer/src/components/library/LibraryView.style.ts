@@ -561,6 +561,10 @@ export const useStyles = createStyles(({ css, token }) => ({
       outline: none;
     }
 
+    > :nth-child(4):not(.kb-row-menu) {
+      justify-self: start;
+    }
+
     @container (max-width: 700px) {
       grid-template-columns: 22px minmax(0, 1fr) 110px;
 

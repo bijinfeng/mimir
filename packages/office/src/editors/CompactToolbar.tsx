@@ -82,7 +82,9 @@ export function CompactToolbar({
       const isAtStart = scrollLeft <= 1
       const isAtEnd = scrollLeft + clientWidth >= scrollWidth - 1
 
-      if (isAtStart) {
+      if (scrollWidth <= clientWidth + 1) {
+        commands.setAttribute('data-scroll', 'none')
+      } else if (isAtStart) {
         commands.setAttribute('data-scroll', 'start')
       } else if (isAtEnd) {
         commands.setAttribute('data-scroll', 'end')

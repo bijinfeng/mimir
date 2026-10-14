@@ -517,9 +517,8 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   olItem: css`
     display: block;
     width: 100%;
-    padding: 5px 9px;
+    padding: 5px 11px;
     border: none;
-    border-left: 2px solid transparent;
     border-radius: ${token.borderRadiusSM}px;
     background: transparent;
     font-family: inherit;
@@ -541,7 +540,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   `,
   olItemActive: css`
     color: ${token.colorLink};
-    border-left-color: ${token.colorLink};
+    background: ${token.colorFillTertiary};
     font-weight: 600;
   `,
   /* ── 页脚：来源 / 被引用 ────────────────────────────── */

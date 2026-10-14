@@ -114,20 +114,19 @@ export function UnsavedProvider({ children }: { children: ReactNode }) {
         const ok = save ? await save() : false
         if (!ok) {
           setSaveError('保存未完成，请重试或继续编辑。')
-          return
+        } else {
+          dirtyRef.current = false
+          setDirtyState(false)
+          setPending(null)
+          current.action()
         }
-        dirtyRef.current = false
-        setDirtyState(false)
-        setPending(null)
-        current.action()
       } catch (error) {
         // 保存失败就不放行——放行了用户以为存上了，实际丢了，
         // 比不拦截更糟（.trellis/spec/project/product.md §5.9）
         setSaveError(error instanceof Error ? error.message : '保存失败，请重试。')
-      } finally {
-        savingRef.current = false
-        setSaving(false)
       }
+      savingRef.current = false
+      setSaving(false)
     })()
   }
 

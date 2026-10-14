@@ -8,6 +8,10 @@
   padding: 0 8px;
 }
 
+.mimir-editor--note .mimir-editor__bar:has(.mimir-compact-toolbar) {
+  padding: 0 4px;
+}
+
 .mimir-compact-toolbar {
   display: flex;
   flex-direction: column;
@@ -96,7 +100,9 @@
   position: sticky;
   left: 0;
   z-index: 1;
+  flex: 0 0 24px;
   width: 24px;
+  margin-right: -24px;
   height: 100%;
   background: linear-gradient(to right, var(--me-surface, #ffffff), transparent);
   pointer-events: none;
@@ -110,17 +116,23 @@
   position: sticky;
   right: 0;
   z-index: 1;
+  flex: 0 0 24px;
   width: 24px;
+  margin-left: -24px;
   height: 100%;
   background: linear-gradient(to left, var(--me-surface, #ffffff), transparent);
   pointer-events: none;
-  opacity: 1;
+  opacity: 0;
   transition: opacity 0.2s ease;
 }
 
 /* 当可以滚动时显示渐变 */
 .mimir-compact-toolbar__commands[data-scroll='start']::before {
   opacity: 0;
+}
+
+.mimir-compact-toolbar__commands[data-scroll='start']::after {
+  opacity: 1;
 }
 
 .mimir-compact-toolbar__commands[data-scroll='middle']::before,
@@ -138,8 +150,8 @@
   flex-direction: column;
   justify-content: space-between;
   gap: 2px;
-  min-height: 56px;
-  padding: 6px 10px 12px;
+  min-height: 48px;
+  padding: 4px 6px;
   border-right: 1px solid var(--me-border, #d9d9d9);
   scroll-snap-align: start;
 }
