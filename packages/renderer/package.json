@@ -18,7 +18,7 @@
     "@mimir/chat": "workspace:*",
     "@mimir/office": "workspace:*",
     "@mimir/shared": "workspace:*",
-    "@tanstack/ai": "0.55.0",
+    "@tanstack/ai": "0.68.0",
     "@tanstack/react-query": "^5.103.1",
     "@tanstack/react-router": "^1.170.38",
     "@tanstack/router-generator": "^1.167.40",

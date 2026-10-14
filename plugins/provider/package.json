@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@mimir/shared": "workspace:*",
-    "@tanstack/ai": "0.55.0",
+    "@tanstack/ai": "0.68.0",
     "@tanstack/ai-openai": "0.22.8"
   },
   "devDependencies": {
