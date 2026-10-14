@@ -206,23 +206,21 @@ describe('头像不进 vault', () => {
   })
 })
 
-describe('删除头像', () => {
-  it('先清指针再删文件，之后读不到', async () => {
+describe('头像删除操作不开放', () => {
+  it('DELETE 不会删除现有头像', async () => {
     await upload(cookie, fakeWebp(64))
 
-    const deleted = await makeClient(cookie).delete<{ ok: boolean }>('/api/avatar')
-    expect(deleted.status).toBe(200)
+    const deleted = await app.request('/api/avatar', {
+      method: 'DELETE',
+      headers: { Cookie: cookie },
+    })
+    expect(deleted.status).toBe(404)
 
     const read = await app.request('/api/avatar', { headers: { Cookie: cookie } })
-    expect(read.status).toBe(404)
+    expect(read.status).toBe(200)
 
     const files = await readdir(avatarsDir)
-    expect(files).toEqual([])
-  })
-
-  it('重复删除不报错（「没有头像」不是错误）', async () => {
-    const again = await makeClient(cookie).delete<{ ok: boolean }>('/api/avatar')
-    expect(again.status).toBe(200)
+    expect(files).toHaveLength(1)
   })
 })
 

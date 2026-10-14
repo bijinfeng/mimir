@@ -379,14 +379,33 @@ function AccountRow({
   }))
 
   const items: MenuProps['items'] = [
-    { key: 'account', icon: <User size={16} />, label: '账号资料' },
     {
-      key: 'theme',
-      icon: <Palette size={16} />,
-      label: '主题',
-      children: themeChildren,
+      type: 'group',
+      label: (
+        <div className={styles.accountMenuIdentity}>
+          <Avatar size={28} src={user.image ?? undefined} className={styles.accountAvatar}>
+            {user.name.slice(0, 1).toUpperCase()}
+          </Avatar>
+          <div className={styles.accountMenuIdentityText}>
+            <span className={styles.accountMenuName}>{user.name}</span>
+            {!localMode && user.email && (
+              <span className={styles.accountMenuEmail}>{user.email}</span>
+            )}
+          </div>
+        </div>
+      ),
+      children: [
+        { key: 'account', icon: <User size={16} />, label: '账号资料' },
+        {
+          key: 'theme',
+          icon: <Palette size={16} />,
+          label: '主题',
+          popupClassName: styles.accountMenuPopup,
+          children: themeChildren,
+        },
+        { key: 'stats', icon: <ChartColumn size={16} />, label: '数据统计' },
+      ],
     },
-    { key: 'stats', icon: <ChartColumn size={16} />, label: '数据统计' },
     // 登出只在云端模式出现（本地模式的理由见 `localMode` 的声明处）
     ...(localMode
       ? []
@@ -420,6 +439,7 @@ function AccountRow({
         trigger={['click']}
         open={accountOpen}
         placement="topRight"
+        classNames={{ root: styles.accountMenuPopup }}
         /* 关菜单时把子菜单状态一并重置：下次打开停在收起态（与 antd
            的默认行为一致），也不会留下一个「上次展开过的」子菜单 */
         onOpenChange={(open) => {

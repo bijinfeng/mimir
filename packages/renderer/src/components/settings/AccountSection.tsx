@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { App, Avatar, Button, Input, Popconfirm, Upload } from 'antd'
-import { Camera, X } from 'lucide-react'
+import { App, Avatar, Button, Input, Upload } from 'antd'
+import { Camera } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { api, type AuthSession } from '../../lib/api'
 import { type CroppedAvatar } from '../../lib/avatar'
@@ -96,13 +96,12 @@ export function AccountSection() {
 }
 
 /**
- * 头像列：预览 + 右下角相机按钮（上传）+ 右上角移除按钮（hover 显现）。
+ * 头像列：默认显示当前头像，悬停或聚焦时显示相机入口。
  *
  * ## 交互设计
  *
- * - **点击头像**：选文件 → 弹出 `AvatarCropper` 可视化裁切 → 确认后上传
- * - **相机图标**：仅作视觉提示，不承担点击（点击穿透到头像）
- * - **移除按钮**：hover 头像时显现，点击弹出确认后移除
+ * - **点击圆形入口**：选文件 → 弹出 `AvatarCropper` 可视化裁切 → 确认后上传
+ * - **相机图标**：悬停或聚焦时显现
  *
  * 选中文件后不直接上传，而是先让用户裁切——自动中心裁切可能截掉用户想保留的
  * 部分（比如人脸偏左的照片），可视化裁切让用户自己决定取哪块。
@@ -146,24 +145,13 @@ function AvatarColumn({ session }: { session: AuthSession | null }) {
     },
   })
 
-  const remove = useMutation({
-    mutationFn: api.avatar.remove,
-    onSuccess: () => {
-      message.success('已移除头像')
-      void queryClient.invalidateQueries({ queryKey: ['session'] })
-    },
-    onError: (error) => {
-      message.error(error instanceof Error ? error.message : '移除头像失败')
-    },
-  })
-
   const image = preview ?? session?.user.image ?? undefined
 
   return (
     <div className={accountStyles.avatarColumn}>
       <div className={accountStyles.avatarWrapper}>
         {/*
-          整个头像都是可点击区域——点击即选文件。
+          整个圆形入口都是可点击区域——点击即选文件。
           用 antd 的 `Upload` 而不是裸 `<input type="file">`：
           原生控件不服从 token 体系，深浅主题都管不到它。
           `beforeUpload` 返回 `false` 是刻意的：阻止 antd 自己发请求，
@@ -179,48 +167,30 @@ function AvatarColumn({ session }: { session: AuthSession | null }) {
             return false
           }}
         >
-          <div className={accountStyles.avatarClickable} aria-label="更换头像" role="button">
-            <Avatar
-              size={72}
-              src={image}
-              className={accountStyles.avatar}
-              /* 无头像时显示名称首字（antd 的默认回落行为） */
-            >
+          <div
+            className={accountStyles.avatarClickable}
+            aria-label="更换头像"
+            role="button"
+            tabIndex={upload.isPending ? -1 : 0}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                event.currentTarget.click()
+              }
+            }}
+          >
+            <Avatar size={52} src={image} className={accountStyles.avatar}>
               {session?.user.name?.slice(0, 1).toUpperCase() ?? '?'}
             </Avatar>
+            <span
+              className={accountStyles.avatarCameraOverlay}
+              data-role="avatar-camera-overlay"
+              aria-hidden="true"
+            >
+              <Camera size={21} strokeWidth={2} />
+            </span>
           </div>
         </Upload>
-
-        {/*
-          右下角相机图标：仅作视觉提示，不承担点击（`pointer-events: none`）。
-          点击穿透到下面的头像可点击区域，由 `Upload` 统一处理文件选择。
-        */}
-        <span className={accountStyles.cameraBtn} aria-hidden="true">
-          <Camera size={10} strokeWidth={2} />
-        </span>
-
-        {/*
-          右上角移除按钮：仅在有头像且 hover 时显现。
-          用 `Popconfirm` 包一层——头像是一次点击就没了，且没有撤销，
-          需要二次确认。`data-role` 属性供样式里的 hover 选择器使用。
-        */}
-        {image ? (
-          <Popconfirm
-            title="移除头像？"
-            description="移除后显示名称首字"
-            onConfirm={() => remove.mutate()}
-          >
-            <button
-              type="button"
-              className={accountStyles.removeBtn}
-              data-role="remove-avatar"
-              aria-label="移除头像"
-              title="移除头像"
-            >
-              <X size={12} strokeWidth={2.5} />
-            </button>
-          </Popconfirm>
-        ) : null}
       </div>
 
       {/* 可视化裁切弹窗：选中文件后出现，确认裁切后上传 */}

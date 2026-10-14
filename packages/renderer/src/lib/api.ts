@@ -910,9 +910,6 @@ export const api = {
       const uploaded = parsed as { image: string; mime: string; bytes: number }
       return { ...uploaded, image: serverAssetPath(uploaded.image) ?? uploaded.image }
     },
-    remove() {
-      return request<{ ok: boolean }>('/api/avatar', { method: 'DELETE' })
-    },
   },
 
   auth: {

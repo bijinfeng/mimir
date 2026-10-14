@@ -711,7 +711,7 @@ describe('样式模板里没有多余的反引号', () => {
  * 但逐字比对会把它们当成差异。抹平这一处，其余任何不同都算真分叉。
  */
 function brandPathOf(text: string): string | undefined {
-  const m = text.match(/d="([^"]*M11 7\.4[^"]*)"/)
+  const m = text.match(/d="([^"]*M7 2h18[^"]*)"/)
   return m?.[1]
     ?.replace(/\s+/g, ' ')
     .replace(/z(?=M)/g, 'z ')
@@ -723,17 +723,17 @@ describe('品牌标记', () => {
   /**
    * 标记的两条实现约束，都是**踩过才知道**的：
    *
-   * 1. 井口必须用 `fill-rule="evenodd"` 挖空，不能拿白色圆形盖上去。
+   * 1. 方框内侧必须用 `fill-rule="evenodd"` 挖空，不能拿白色圆形盖上去。
    *    白圆在白底上看着没问题，但标记放到主色按钮或深色浮层上就会露出白点。
    * 2. 颜色必须走 `currentColor`。写死 hex 的话，主题换色时 logo 不跟着走，
    *    于是它成为全站唯一一个「不服从主题」的元素——**深色模式下尤其明显**，
-   *    那口井会在深色导航上留下一个白色的洞。
+   *    方框会在深色导航上留下不该有的白色填充。
    */
   it('品牌标记是镂空的，且颜色跟随 currentColor', async () => {
     const { readFile } = await import('node:fs/promises')
     const src = await readFile('src/components/BrandMark.tsx', 'utf8')
 
-    expect(src, '井口要用 evenodd 挖空，而不是白色圆形覆盖').toContain('evenodd')
+    expect(src, '方框内侧要用 evenodd 挖空，而不是白色圆形覆盖').toContain('evenodd')
     expect(src, '颜色要走 currentColor，否则主题换色时 logo 不跟随').toContain(
       'fill="currentColor"',
     )

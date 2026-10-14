@@ -293,4 +293,98 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     text-overflow: ellipsis;
     white-space: nowrap;
   `,
+  accountMenuPopup: css`
+    &.${prefixCls}-dropdown-menu-submenu-popup {
+      overflow: hidden;
+      background: ${token.colorBgElevated};
+      border: 1px solid ${token.colorBorderSecondary};
+      border-radius: ${token.borderRadiusLG}px;
+      box-shadow: ${token.boxShadowSecondary};
+    }
+    &.${prefixCls}-dropdown-menu-submenu-popup .${prefixCls}-dropdown-menu {
+      min-width: 136px;
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+    }
+    .${prefixCls}-dropdown-menu {
+      min-width: min(212px, calc(100vw - 16px));
+      padding: 0 4px 4px;
+      background: ${token.colorBgElevated};
+      border: 1px solid ${token.colorBorderSecondary};
+      border-radius: ${token.borderRadiusLG}px;
+      box-shadow: ${token.boxShadowSecondary};
+    }
+    && .${prefixCls}-dropdown-menu-item-group-title {
+      padding: 0;
+      line-height: normal;
+    }
+    && .${prefixCls}-dropdown-menu-item-group-list {
+      margin: 3px 0 0;
+    }
+    && .${prefixCls}-dropdown-menu-item,
+    && .${prefixCls}-dropdown-menu-submenu-title {
+      display: flex;
+      align-items: center;
+      min-height: 32px;
+      padding: 5px 8px;
+      border-radius: ${token.borderRadiusSM}px;
+      color: ${token.colorText};
+      font-size: ${FONT_SIZE.item}px;
+      line-height: 1.4;
+    }
+    .${prefixCls}-dropdown-menu-item-icon {
+      display: inline-flex;
+      align-items: center;
+      color: ${token.colorTextSecondary};
+    }
+    .${prefixCls}-dropdown-menu-item-danger {
+      color: ${token.colorErrorText};
+    }
+    .${prefixCls}-dropdown-menu-item-danger .${prefixCls}-dropdown-menu-item-icon {
+      color: ${token.colorErrorText};
+    }
+    .${prefixCls}-dropdown-menu-item-active,
+    .${prefixCls}-dropdown-menu-submenu-active > .${prefixCls}-dropdown-menu-submenu-title {
+      background: ${token.colorFillTertiary};
+    }
+    .${prefixCls}-dropdown-menu-item:focus-visible,
+    .${prefixCls}-dropdown-menu-submenu-title:focus-visible {
+      outline: 2px solid ${token.colorPrimaryBorder};
+      outline-offset: -2px;
+    }
+    .${prefixCls}-dropdown-menu-item-divider {
+      margin: 3px 8px;
+      background: ${token.colorBorderSecondary};
+    }
+  `,
+  accountMenuIdentity: css`
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 8px 8px 7px;
+    border-bottom: 1px solid ${token.colorBorderSecondary};
+  `,
+  accountMenuIdentityText: css`
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 2px;
+  `,
+  accountMenuName: css`
+    overflow: hidden;
+    color: ${token.colorText};
+    font-size: ${FONT_SIZE.item}px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  `,
+  accountMenuEmail: css`
+    overflow: hidden;
+    color: ${token.colorTextTertiary};
+    font-size: ${FONT_SIZE.note}px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  `,
 }))

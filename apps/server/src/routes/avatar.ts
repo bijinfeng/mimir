@@ -4,7 +4,7 @@ import { AVATAR_MAX_BYTES, AVATAR_MIME_TYPES } from '@mimir/shared'
 import { db } from '../db/client.js'
 import { user } from '../db/schema.js'
 import { HttpError } from '../lib/http.js'
-import { readAvatar, removeAvatar, writeAvatar } from '../services/avatar.js'
+import { readAvatar, writeAvatar } from '../services/avatar.js'
 import type { AppEnv } from '../types.js'
 
 /**
@@ -116,23 +116,4 @@ avatarRoute.post('/', async (c) => {
   await db.update(user).set({ image: url, updatedAt: new Date() }).where(eq(user.id, current.id))
 
   return c.json({ image: url, mime: written.mime, bytes: data.byteLength })
-})
-
-/**
- * 删除头像。回到字母头像。
- *
- * **顺序与上传相反：先删指针，再删文件。** 看起来矛盾，其实是同一条规则：
- *
- * > 永远不要让指针存在的时候指向一个不存在的东西。
- *
- * 上传时指针晚一点出现无害；删除时指针早一点消失无害。
- * 写成两句话容易记反，写成一条规则就只有一个判断依据。
- */
-avatarRoute.delete('/', async (c) => {
-  const current = c.get('user')
-
-  await db.update(user).set({ image: null, updatedAt: new Date() }).where(eq(user.id, current.id))
-  await removeAvatar(current.id)
-
-  return c.json({ ok: true })
 })

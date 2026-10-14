@@ -79,7 +79,7 @@ export async function writeAvatar(
    *
    * 不清理的话「png → webp」会留下两个文件，而读取端按当前 `image` 里的
    * 版本去猜扩展名——猜错就是裂图。先删旧再写新，顺序与「删除」那条一致
-   * （不要让指针指向不存在的东西：这里还没有指针，所以先删是安全的）。
+   * 清理旧扩展名后再写新文件，避免同一个用户留下多份头像。
    */
   await removeAvatar(id)
 
@@ -114,7 +114,7 @@ export async function readAvatar(id: string): Promise<StoredAvatar | null> {
 }
 
 /**
- * 删除头像。文件不存在时静默通过（「没有头像」不是错误）。
+ * 清理头像文件，仅供覆盖上传时移除旧扩展名。文件不存在时静默通过。
  *
  * 这里能直接 `Promise.all` 而不必各自 catch：`remove` 的契约就是幂等的
  * （`StorageBackend` 的注释），两个后端都原生满足——本地吞掉 `ENOENT`，

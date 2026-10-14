@@ -30,12 +30,12 @@
  *
  * ## 图形来自 favicon，不在这里另抄一份
  *
- * 引号的路径**在这个脚本运行时从 `apps/web/public/favicon.svg` 读**
+ * 品牌标记的路径**在这个脚本运行时从 `apps/web/public/favicon.svg` 读**
  * （解析它的 `<path d="…">`）。两处都需要这份几何，抄一份就有两个真相源——
  * 改了一处忘了另一处，两边的图标会慢慢长得不一样，而那种差异没人会主动
  * 去比对。所以 favicon 是**唯一来源**，这里只加「底色与留白」这层
- * 桌面端特有的处理（favicon 是透明底 + 蓝字，要能在任意标签栏上活；
- * 应用图标是品牌蓝底 + 白字，要在一块方寸里立住）。
+ * 桌面端特有的处理（favicon 是透明底 + 紫字，要能在任意标签栏上活；
+ * 应用图标是品牌紫底 + 白字，要在一块方寸里立住）。
  *
  * 孔的掏空用 `fill(path, 'evenodd')`，与 favicon 的 `fill-rule="evenodd"`
  * 同一条理由：白圆覆盖方案在别的底色上会露馅。
@@ -84,11 +84,11 @@ const resources = join(here, '..', 'resources')
 /** 画布边长。各尺寸都由它缩放采样——一次几何、多档输出，不留坐标漂移 */
 const BASE = 1024
 
-/** 品牌蓝，与 `apps/web/src/theme/tokens.ts` 的 `colorPrimary` 同值 */
-const BRAND = '#1677ff'
+/** 品牌紫，与 `packages/renderer/src/theme/tokens.ts` 的浅色 `colorPrimary` 同值 */
+const BRAND = '#6e50b9'
 
 /**
- * 引号路径**从 favicon 读**，不在这个脚本里再抄一份。
+ * 标记路径**从 favicon 读**，不在这个脚本里再抄一份。
  *
  * 两个地方都需要这份几何（浏览器标签页用 SVG、桌面图标用 canvas），
  * 抄一份就有两个真相源——改了一处忘了另一处，图标与 favicon 会慢慢长得
@@ -98,9 +98,9 @@ const BRAND = '#1677ff'
  * 读不到就抛错而不是退回一个内置的默认路径：那会让「读文件失败」
  * 表现成「图标画出来了但不是最新的」，比直接失败难查得多。
  */
-async function readQuotePath(): Promise<string> {
+async function readMarkPath(): Promise<string> {
   const favicon = await readFile(join(here, '..', '..', 'web', 'public', 'favicon.svg'), 'utf8')
-  // favicon 里只有一个 <path d="…">（两个引号是**一条**路径）
+  // favicon 里只有一个 <path d="…">（方框和字形是**一条**路径）
   const match = favicon.match(/<path[^>]*\sd="([^"]+)"/)
   if (!match) {
     throw new Error('favicon.svg 里没找到 <path d="…">——图形来源变了，改这里的解析')
@@ -113,12 +113,11 @@ async function readQuotePath(): Promise<string> {
  *
  * 几何（1024 画布）：
  *  - 圆角方底铺满，圆角半径 22.4%（Apple 的 squircle 近似）
- *  - 引号缩放到画布的 56% 并居中——macOS / Windows 的惯例是艺术内容
- *    占约 80%，四周要有留白；56% 再加引号自身的形状余量，观感接近那个比例
- *  - 引号原图的视觉中心约 (16.5, 15.2)（不是 16/16：它上下不等高），
- *    用它对齐画布中心而不是用网格中心，否则会偏下一截
+ *  - 标记缩放到画布的 82% 并居中——macOS / Windows 的惯例是艺术内容
+ *    占约 80%，四周要有留白；82% 再加标记自身的留白，观感接近那个比例
+ *  - 标记在 32×32 视框中居中，按网格中心对齐
  */
-function drawIcon(size: number, quotePath: string): Buffer {
+function drawIcon(size: number, markPath: string): Buffer {
   const canvas = createCanvas(size, size)
   const ctx = canvas.getContext('2d')
 
@@ -127,13 +126,13 @@ function drawIcon(size: number, quotePath: string): Buffer {
   ctx.fillStyle = BRAND
   ctx.fill()
 
-  const scale = (size / 32) * 0.56
+  const scale = (size / 32) * 0.82
   ctx.translate(size / 2, size / 2)
   ctx.scale(scale, scale)
-  ctx.translate(-16.5, -15.2)
+  ctx.translate(-16, -16)
 
   ctx.fillStyle = '#ffffff'
-  ctx.fill(new Path2D(quotePath), 'evenodd')
+  ctx.fill(new Path2D(markPath), 'evenodd')
 
   return canvas.toBuffer('image/png')
 }
@@ -209,9 +208,9 @@ function buildIco(pngs: Map<number, Buffer>): Buffer {
 /* ── 跑 ─────────────────────────────────────────────────────── */
 
 async function main(): Promise<void> {
-  const quotePath = await readQuotePath()
+  const markPath = await readMarkPath()
   const sizes = [16, 24, 32, 48, 64, 128, 256, 512, 1024]
-  const pngs = new Map<number, Buffer>(sizes.map((size) => [size, drawIcon(size, quotePath)]))
+  const pngs = new Map<number, Buffer>(sizes.map((size) => [size, drawIcon(size, markPath)]))
 
   const icns = buildIcns(pngs)
   const ico = buildIco(pngs)

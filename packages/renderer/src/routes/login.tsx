@@ -4,6 +4,7 @@ import { Alert, App, Button, Form, Input, Skeleton, Typography } from 'antd'
 import type { Rule } from 'antd/es/form'
 import { createStyles } from 'antd-style'
 import { useState } from 'react'
+import loginNotebookLines from '../assets/login-notebook-lines-fade.png'
 import { BrandMark } from '../components/BrandMark'
 import { useDesktopBridge, useTitleBar } from '../platform'
 import { FONT_SIZE } from '../theme/tokens'
@@ -89,10 +90,12 @@ const useStyles = createStyles(({ css, token }) => ({
     }
   `,
   brandPane: css`
+    position: relative;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     min-width: 0;
+    overflow: hidden;
     padding: clamp(32px, 5vw, 72px);
     background: ${token.tintNav};
     border-right: 1px solid ${token.colorBorderSecondary};
@@ -103,6 +106,8 @@ const useStyles = createStyles(({ css, token }) => ({
     }
   `,
   brand: css`
+    position: relative;
+    z-index: 1;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -115,9 +120,23 @@ const useStyles = createStyles(({ css, token }) => ({
     letter-spacing: 0.06em;
   `,
   brandPosition: css`
+    position: relative;
+    z-index: 1;
     margin: 0;
     color: ${token.colorTextSecondary};
     font-size: ${FONT_SIZE.body}px;
+    @media (max-width: 760px) {
+      display: none;
+    }
+  `,
+  brandIllustration: css`
+    position: absolute;
+    top: 23%;
+    left: 9%;
+    width: min(720px, 155%);
+    height: auto;
+    pointer-events: none;
+    user-select: none;
     @media (max-width: 760px) {
       display: none;
     }
@@ -284,7 +303,13 @@ function LoginPage() {
               mimir
             </Typography.Title>
           </div>
-          <p className={styles.brandPosition}>知识工作区</p>
+          <img
+            className={styles.brandIllustration}
+            src={loginNotebookLines}
+            alt=""
+            aria-hidden="true"
+          />
+          <p className={styles.brandPosition}>笔记与资料，随时可查可问</p>
         </div>
 
         <main className={styles.formPane}>
