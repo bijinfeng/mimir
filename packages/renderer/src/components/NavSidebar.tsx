@@ -175,26 +175,26 @@ export function NavSidebar({
         )}
         {railButton(
           '新建对话',
-          <MessageCircle size={19} />,
+          <MessageCircle size={18} />,
           () => goChat(),
           selection.page === 'chat',
         )}
         {railButton(
           '知识库',
-          <LibraryBig size={19} />,
+          <LibraryBig size={18} />,
           () => goDocs('all'),
           selection.page === 'docs',
         )}
-        {railButton('搜索', <Search size={19} />, openPalette)}
-        {railButton('收集', <Plus size={19} />, openCapture)}
+        {railButton('搜索', <Search size={18} />, openPalette)}
+        {railButton('收集', <Plus size={18} />, openCapture)}
         <div className={styles.railSpacer} />
         {selection.page !== 'settings' &&
           railButton(
             overlayOpen ? '关闭侧边栏' : collapsed ? '展开侧边栏' : '折叠侧边栏',
-            collapsed && !overlayOpen ? <PanelLeftOpen size={19} /> : <PanelLeftClose size={19} />,
+            collapsed && !overlayOpen ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />,
             narrowViewport ? onToggleOverlay : onToggleCollapsed,
           )}
-        {railButton('设置', <Settings size={19} />, goSettings, selection.page === 'settings')}
+        {railButton('设置', <Settings size={18} />, goSettings, selection.page === 'settings')}
         <div className={styles.railFoot}>
           <AccountRow
             key={`${selection.page}:${selection.scope}:${selection.id ?? ''}`}
