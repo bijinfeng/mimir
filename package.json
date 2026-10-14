@@ -29,8 +29,8 @@
     "lint:styles": "node scripts/check-style-backticks.mjs"
   },
   "devDependencies": {
-    "oxfmt": "0.68.0",
-    "oxlint": "1.83.0"
+    "oxfmt": "0.72.0",
+    "oxlint": "1.87.0"
   },
   "engines": {
     "node": ">=22"
