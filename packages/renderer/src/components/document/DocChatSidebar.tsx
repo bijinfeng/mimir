@@ -1,5 +1,6 @@
 import { ChatPanel } from '@mimir/chat'
-import type { DocxAgentHandle } from '@mimir/office'
+import type { ChatDocumentAgent } from '@mimir/chat'
+import { documentAgentCanvasSupported, documentAgentFormatOf } from '@mimir/shared'
 import type { Citation, DocumentDetail } from '@mimir/shared'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
@@ -7,7 +8,7 @@ import { Button } from 'antd'
 import { X } from 'lucide-react'
 import { useState } from 'react'
 import { ChatThemeBridge } from '../chat/ChatThemeBridge'
-import { DocChatGuide, DocQuickAsks } from './DocChatGuide'
+import { DocQuickAsks } from './DocChatGuide'
 import { useAppShell } from '../../lib/app-shell-context'
 import { createChatIo } from '../../lib/chat-io'
 import { api } from '../../lib/api'
@@ -55,19 +56,12 @@ export interface DocChatSidebarProps {
   onClose: () => void
   /** 引用被点击。同一篇由父级原地高亮，别的文档由父级导航 */
   onOpenCitation: (documentId: string, citation: Citation) => void
-  docxAgent?: DocxAgentHandle | null
+  documentAgent?: ChatDocumentAgent | null
 }
 
-/**
- * 指南的 render-prop。
- *
- * **必须是模块级函数**，不能写成 `guide={(ask) => <DocChatGuide …/>}` 内联箭头：
- * `react(no-unstable-nested-components)` 会判它是「渲染期定义组件」，
- * React Compiler 随即跳过整个 DocChatSidebar（铁律 1 的静默退化）。
- * 这个模式与 `folder-icons.tsx` 的 `FolderGlyph` 同源。
- */
-function renderGuide(doc: DocumentDetail): ReturnType<typeof DocChatGuide> {
-  return <DocChatGuide doc={doc} />
+/** Keep the composer pinned without putting a tutorial in the empty conversation. */
+function renderEmptyGuide(): null {
+  return null
 }
 
 /** 输入框上方的快捷提问。同样必须在模块级（理由见上） */
@@ -80,21 +74,31 @@ export function DocChatSidebar({
   draft,
   onClose,
   onOpenCitation,
-  docxAgent,
+  documentAgent,
 }: DocChatSidebarProps) {
   const { styles } = useStyles()
   const [revisionMode, setRevisionMode] = useState(false)
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const { runGuarded } = useUnsaved()
-  const isDocx =
-    doc.kind === 'file' &&
-    doc.mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  const format = documentAgentFormatOf(doc)
+  const isDocx = format === 'docx' && documentAgentCanvasSupported(doc)
   const capabilities = useQuery({
     queryKey: ['docx-agent-capabilities', doc.id],
     queryFn: () => api.conversations.docxAgentCapabilities(doc.id),
-    enabled: isDocx && Boolean(docxAgent),
+    enabled: isDocx && Boolean(documentAgent),
   })
+  const documentCapabilities = useQuery({
+    queryKey: ['document-agent-capabilities', doc.id],
+    queryFn: () => api.conversations.documentAgentCapabilities(doc.id),
+    enabled: Boolean(format) && !isDocx,
+  })
+  const activeAgent =
+    documentCapabilities.data?.executorReady &&
+    documentCapabilities.data.modelReady &&
+    (documentAgent?.format ?? 'docx') === documentCapabilities.data.format
+      ? documentAgent
+      : null
   const openSettings = (section: 'models' | 'network-search') => {
     runGuarded(() => void navigate({ to: '/settings', search: { scope: 'all', section } }))
   }
@@ -137,13 +141,37 @@ export function DocChatSidebar({
       {isDocx ? (
         <DocxCapabilityStatus
           capabilities={capabilities.data}
-          loading={!docxAgent || capabilities.isPending}
+          loading={!documentAgent || capabilities.isPending}
           error={capabilities.isError}
           onRetry={() => void capabilities.refetch()}
           onSettings={openSettings}
           revisionMode={revisionMode}
           onRevisionModeChange={setRevisionMode}
         />
+      ) : format &&
+        (documentCapabilities.isError ||
+          (documentCapabilities.data &&
+            (!documentCapabilities.data.executorReady ||
+              !documentCapabilities.data.modelReady ||
+              !activeAgent))) ? (
+        <section aria-label="文档编辑能力状态" className={styles.aiSidebarStatus}>
+          {documentCapabilities.isError
+            ? '能力状态读取失败'
+            : !documentCapabilities.data?.executorReady
+              ? '当前格式暂不可编辑'
+              : !documentCapabilities.data.modelReady
+                ? '需要聊天模型'
+                : '当前画布编辑不可用'}
+          {documentCapabilities.isError ? (
+            <Button type="link" size="small" onClick={() => void documentCapabilities.refetch()}>
+              重试
+            </Button>
+          ) : documentCapabilities.data?.executorReady && !documentCapabilities.data.modelReady ? (
+            <Button type="link" size="small" onClick={() => openSettings('models')}>
+              模型设置
+            </Button>
+          ) : null}
+        </section>
       ) : null}
       {/*
         侧栏的内容边距。`--mimir-chat-gutter` 是 ChatPanel 与 Composer
@@ -162,12 +190,12 @@ export function DocChatSidebar({
             onOpenNote={(noteId) => runGuarded(() => openDocument(noteId))}
             io={io}
             composerStatus={composerStatus}
-            docxAgent={availableDocxAgent(docxAgent, capabilities.data)}
+            showReasoningControl={false}
+            docxAgent={isDocx ? availableDocxAgent(documentAgent, capabilities.data) : null}
+            documentAgent={isDocx ? null : activeAgent}
             docxRevisionMode={revisionMode}
-            /* 空态换成「指南在上、输入框固定底部」（D-090，语雀式），
-               快捷提问贴着输入框（D-093）。两个都是模块级 render 函数：
-               内联箭头会被判成渲染期定义组件（铁律 1 的静默退化） */
-            guide={() => renderGuide(doc)}
+            /* Empty conversation keeps the composer and actionable suggestions at the bottom. */
+            guide={renderEmptyGuide}
             guideActions={(ask) => renderQuickAsks(ask)}
           />
         </ChatThemeBridge>

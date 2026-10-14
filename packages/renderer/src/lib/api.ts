@@ -9,6 +9,10 @@ import type {
   DocumentCounts,
   DocumentDetail,
   DocxAgentCapabilities,
+  DocumentAgentCapabilities,
+  HtmlPageBrief,
+  HtmlPlanPageInput,
+  HtmlWriteDocumentInput,
   DocumentListQuery,
   DocumentSummary,
   ExportStats,
@@ -195,12 +199,18 @@ async function streamDocxWriting(
  * 错误外壳仍与 `request()` 一致（`{ error: { code, message } }`），
  * 所以调用方只需要 catch 一种形状——这是 `lib/api.ts` 的约定之一。
  */
-async function sendMultipart<T>(path: string, method: 'POST' | 'PUT', body: FormData): Promise<T> {
+async function sendMultipart<T>(
+  path: string,
+  method: 'POST' | 'PUT',
+  body: FormData,
+  signal?: AbortSignal,
+): Promise<T> {
   const doFetch = transport.fetchImpl ?? fetch
   const res = await doFetch(`${transport.baseUrl ?? appBasePath}${path}`, {
     method,
     credentials: 'include',
     body,
+    signal,
     headers: { ...transport.headers },
   })
 
@@ -244,6 +254,124 @@ function toQuery(params: Record<string, string | number | boolean | string[] | u
 
 export const api = {
   documents: {
+    async applyPdfText(input: {
+      documentId: string
+      bytes: Uint8Array
+      expectedVersion: number
+      kind: 'edit' | 'insert'
+      items: unknown[]
+      signal?: AbortSignal
+    }) {
+      const form = new FormData()
+      const copy = new Uint8Array(input.bytes.byteLength)
+      copy.set(input.bytes)
+      form.set('file', new File([copy], 'current.pdf', { type: 'application/pdf' }))
+      form.set('documentId', input.documentId)
+      form.set('expectedVersion', String(input.expectedVersion))
+      form.set('kind', input.kind)
+      form.set('items', JSON.stringify(input.items))
+      const response = await sendMultipart<{ bytesBase64: string; version: number }>(
+        '/api/conversations/pdf-agent/apply-text',
+        'POST',
+        form,
+        input.signal,
+      )
+      const decoded = atob(response.bytesBase64)
+      const bytes = new Uint8Array(decoded.length)
+      for (let index = 0; index < decoded.length; index++) bytes[index] = decoded.charCodeAt(index)
+      return { bytes, version: response.version }
+    },
+    async applyXlsxOps(input: {
+      documentId: string
+      bytes: Uint8Array
+      expectedVersion: number
+      ops: unknown[]
+      signal?: AbortSignal
+    }) {
+      const form = new FormData()
+      const copy = new Uint8Array(input.bytes.byteLength)
+      copy.set(input.bytes)
+      form.set(
+        'file',
+        new File([copy], 'current.xlsx', {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        }),
+      )
+      form.set('documentId', input.documentId)
+      form.set('expectedVersion', String(input.expectedVersion))
+      form.set('ops', JSON.stringify(input.ops))
+      const response = await sendMultipart<{
+        bytesBase64: string
+        version: number
+        changedCells: string[]
+        touchedEntries: string[]
+      }>('/api/conversations/xlsx-agent/apply-ops', 'POST', form, input.signal)
+      const decoded = atob(response.bytesBase64)
+      const bytes = new Uint8Array(decoded.length)
+      for (let index = 0; index < decoded.length; index++) bytes[index] = decoded.charCodeAt(index)
+      return {
+        bytes,
+        version: response.version,
+        changedCells: response.changedCells,
+        touchedEntries: response.touchedEntries,
+      }
+    },
+    async applyPptxOps(input: {
+      documentId: string
+      bytes: Uint8Array
+      expectedVersion: number
+      ops: unknown[]
+      signal?: AbortSignal
+    }) {
+      const form = new FormData()
+      const copy = new Uint8Array(input.bytes.byteLength)
+      copy.set(input.bytes)
+      form.set(
+        'file',
+        new File([copy], 'current.pptx', {
+          type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        }),
+      )
+      form.set('documentId', input.documentId)
+      form.set('expectedVersion', String(input.expectedVersion))
+      form.set('ops', JSON.stringify(input.ops))
+      const response = await sendMultipart<{
+        bytesBase64: string
+        records: unknown[]
+        version: number
+        sampleData?: boolean
+      }>('/api/conversations/pptx-agent/apply-ops', 'POST', form, input.signal)
+      const decoded = atob(response.bytesBase64)
+      const bytes = new Uint8Array(decoded.length)
+      for (let index = 0; index < decoded.length; index++) bytes[index] = decoded.charCodeAt(index)
+      return {
+        bytes,
+        records: response.records,
+        version: response.version,
+        sampleData: response.sampleData,
+      }
+    },
+    planHtmlPage(
+      documentId: string,
+      input: Omit<HtmlPlanPageInput, 'documentId'>,
+      signal?: AbortSignal,
+    ) {
+      return request<HtmlPageBrief>('/api/conversations/html-agent/plan-page', {
+        method: 'POST',
+        body: JSON.stringify({ documentId, ...input }),
+        signal,
+      })
+    },
+    writeHtmlDocument(
+      documentId: string,
+      input: Omit<HtmlWriteDocumentInput, 'documentId'>,
+      signal?: AbortSignal,
+    ) {
+      return request<{ html: string; complete: true }>(
+        '/api/conversations/html-agent/write-document',
+        { method: 'POST', body: JSON.stringify({ documentId, ...input }), signal },
+      )
+    },
     list(query: Partial<DocumentListQuery> = {}) {
       return request<{ items: DocumentSummary[] }>(
         `/api/documents${toQuery(query as Record<string, string | string[] | undefined>)}`,
@@ -405,6 +533,48 @@ export const api = {
         `/api/conversations/docx-agent/capabilities?documentId=${encodeURIComponent(documentId)}`,
       )
     },
+    documentAgentCapabilities(documentId: string) {
+      return request<DocumentAgentCapabilities>(
+        `/api/conversations/document-agent/capabilities?documentId=${encodeURIComponent(documentId)}`,
+      )
+    },
+    fetchMarkdownImage(documentId: string, url: string, signal?: AbortSignal) {
+      return request<{ dataUrl: string; mimeType: string }>(
+        '/api/conversations/markdown-agent/fetch-image',
+        { method: 'POST', body: JSON.stringify({ documentId, url }), signal },
+      )
+    },
+    generateMarkdownImage(documentId: string, prompt: string, signal?: AbortSignal) {
+      return request<{ dataUrl: string; mimeType: string }>(
+        '/api/conversations/markdown-agent/generate-image',
+        { method: 'POST', body: JSON.stringify({ documentId, prompt }), signal },
+      )
+    },
+    writeMarkdownDocument(
+      documentId: string,
+      input: { plan: string; title?: string; context?: string },
+      signal?: AbortSignal,
+    ) {
+      return request<{ markdown: string }>('/api/conversations/markdown-agent/write-document', {
+        method: 'POST',
+        body: JSON.stringify({ documentId, ...input }),
+        signal,
+      })
+    },
+    readMarkdownFrontmatter(documentId: string) {
+      return request<{ yaml: string }>(
+        `/api/conversations/markdown-agent/frontmatter?documentId=${encodeURIComponent(documentId)}`,
+      )
+    },
+    updateMarkdownFrontmatter(documentId: string, yaml: string, expectedYaml: string) {
+      return request<DocumentDetail & { yaml: string }>(
+        '/api/conversations/markdown-agent/frontmatter',
+        {
+          method: 'PUT',
+          body: JSON.stringify({ documentId, yaml, expectedYaml }),
+        },
+      )
+    },
     generateDocxImage(documentId: string, prompt: string, signal?: AbortSignal) {
       return request<{ dataUrl: string; mimeType: string }>(
         '/api/conversations/docx-agent/generate-image',
@@ -472,6 +642,12 @@ export const api = {
     cancelDocxAgentRun(conversationId: string, runId: string) {
       return request<{ ok: true }>(
         `/api/conversations/${encodeURIComponent(conversationId)}/docx-agent/${encodeURIComponent(runId)}/cancel`,
+        { method: 'POST' },
+      )
+    },
+    cancelDocumentAgentRun(conversationId: string, runId: string) {
+      return request<{ ok: true }>(
+        `/api/conversations/${encodeURIComponent(conversationId)}/document-agent/${encodeURIComponent(runId)}/cancel`,
         { method: 'POST' },
       )
     },

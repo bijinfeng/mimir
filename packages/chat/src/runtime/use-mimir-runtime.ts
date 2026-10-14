@@ -75,7 +75,7 @@ export function useMimirRuntime({
     version: null,
   }))
   const [selection] = useState<{
-    value: { from: number; to: number; text: string } | null
+    value: unknown
   }>(() => ({ value: null }))
   const toolCancelRef = useRef<(() => void) | null>(null)
   const [agentBinding] = useState(() =>
@@ -155,11 +155,17 @@ export function useMimirRuntime({
   function docxRunConfig(current: Record<string, unknown>): Record<string, unknown> {
     if (!docxAgent) return current
     const roundId = crypto.randomUUID()
+    const format = docxAgent.format ?? 'docx'
+    const frozen = docxAgent.freezeSelection(roundId)
+    const version = docxAgent.getVersion()
     return {
       ...current,
-      docxRoundId: roundId,
-      docxSelection: docxAgent.freezeSelection(roundId),
-      docxVersion: docxAgent.getVersion(),
+      agentRoundId: roundId,
+      agentSelection: frozen,
+      agentVersion: version,
+      ...(format === 'docx'
+        ? { docxRoundId: roundId, docxSelection: frozen, docxVersion: version }
+        : {}),
     }
   }
 

@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react'
 import type { DocumentDetail } from '@mimir/shared'
+import type { ChatDocumentAgent } from '@mimir/chat'
 import { useQueryClient } from '@tanstack/react-query'
 import { App } from 'antd'
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 import { MarkdownEditor } from '@mimir/office'
 import { useContentStyles } from './ContentTypography.style'
 import { createExtensions } from '../editor/extensions'
@@ -41,8 +42,6 @@ import { useEditorThemeVars } from '../theme/editor-theme-bridge'
 
 interface Props {
   document: DocumentDetail
-  /** 标题由面板编辑，保存正文时要带上它 */
-  title: string
   /** 「就这段提问」：把选中的话带进对话 */
   onAskAboutSelection?: (passage: string) => void
   /** 有未保存改动时上报。宿主用它武装离开前的拦截 */
@@ -54,17 +53,18 @@ interface Props {
   onFocusReady?: () => void
   /** 打开正文中的稳定 ID 内链，由面板负责导航守卫与返回位置 */
   onOpenInternalNote?: (id: string) => void
+  onDocumentAgentHandleChange?: (handle: ChatDocumentAgent | null) => void
 }
 
 export function NoteEditor({
   document: doc,
-  title,
   onAskAboutSelection,
   onDirtyChange,
   bodySide,
   focusOnReady,
   onFocusReady,
   onOpenInternalNote,
+  onDocumentAgentHandleChange,
 }: Props) {
   const { styles: contentStyles } = useContentStyles()
   const { styles: themeVars } = useEditorThemeVars()
@@ -101,7 +101,7 @@ export function NoteEditor({
   const onSave = useCallback(
     async (body: string) => {
       try {
-        const updated = await api.documents.update(doc.id, { title, body })
+        const updated = await api.documents.update(doc.id, { body })
         void queryClient.invalidateQueries({ queryKey: ['documents'] })
         void queryClient.setQueryData(['document', updated.id], updated)
       } catch (error) {
@@ -111,7 +111,7 @@ export function NoteEditor({
         throw error
       }
     },
-    [doc.id, title, queryClient, message],
+    [doc.id, queryClient, message],
   )
 
   /**
@@ -180,6 +180,37 @@ export function NoteEditor({
     [doc.id],
   )
 
+  const agentServices = useMemo(
+    () => ({
+      fetchImage: (url: string, signal?: AbortSignal) =>
+        api.conversations.fetchMarkdownImage(doc.id, url, signal),
+      generateImage: (prompt: string, signal?: AbortSignal) =>
+        api.conversations.generateMarkdownImage(doc.id, prompt, signal),
+      uploadImage,
+      async writeDocument(
+        input: { plan: string; title?: string; context?: string },
+        signal?: AbortSignal,
+      ) {
+        const result = await api.conversations.writeMarkdownDocument(doc.id, input, signal)
+        return result.markdown
+      },
+      async readFrontmatter() {
+        return (await api.conversations.readMarkdownFrontmatter(doc.id)).yaml
+      },
+      async writeFrontmatter(yaml: string, expectedYaml: string) {
+        const updated = await api.conversations.updateMarkdownFrontmatter(
+          doc.id,
+          yaml,
+          expectedYaml,
+        )
+        queryClient.setQueryData(['document', updated.id], updated)
+        void queryClient.invalidateQueries({ queryKey: ['documents'] })
+        return updated.yaml
+      },
+    }),
+    [doc.id, queryClient, uploadImage],
+  )
+
   return (
     <div className={themeVars.vars}>
       <MarkdownEditor
@@ -199,6 +230,8 @@ export function NoteEditor({
         {...(bodySide !== undefined ? { bodySide } : {})}
         onRewrite={onRewrite}
         onUploadImage={uploadImage}
+        agentServices={agentServices}
+        onAgentHandleChange={onDocumentAgentHandleChange}
       />
     </div>
   )

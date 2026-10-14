@@ -86,6 +86,7 @@ const SHELL_NON_ANTD = [
   '.me-btn', // ToolbarMenu 的触发器（链接、表格那几个）
   '.me-menu__item', // 弹层面板里的菜单项
   '.me-tab', // ToolbarTabs：antd 的 Tabs 把页签渲染成 div，还多一个 nav-more
+  '.mimir-compact-toolbar__tab', // 编辑分类页签：共享工具栏处理键盘切换和选中态
   '.me-color__cell', // 颜色面板里的色块
   /*
    * `ToolbarFileButton`（插入图片）里 rc-upload 的那个隐藏 input。它**自己没有
@@ -96,6 +97,22 @@ const SHELL_NON_ANTD = [
 ] as const
 
 describe('markdown 的控件契约（渲染层）', () => {
+  it('立即保存和历史按钮位于分类左侧，保存状态留在底部', async () => {
+    const host = await mount()
+    const quickAccess = host.querySelector('.mimir-compact-toolbar__quick-access')
+    expect(quickAccess).not.toBeNull()
+    expect(
+      [...quickAccess!.querySelectorAll('button')].map((button) =>
+        button.getAttribute('aria-label'),
+      ),
+    ).toEqual(['立即保存', '撤销 (Ctrl+Z)', '重做 (Ctrl+Shift+Z)'])
+    expect(quickAccess!.querySelector('button[aria-label="立即保存"]')?.getAttribute('title')).toBe(
+      '没有未保存的改动',
+    )
+    expect(host.querySelector('.mimir-editor__status button[aria-label="立即保存"]')).toBeNull()
+    expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('2 字')
+  })
+
   it('没有绕过点：每个原生控件都来自 antd（白名单之外）', async () => {
     const host = await mount()
     const all = [
@@ -226,6 +243,11 @@ describe('markdown 的控件契约（渲染层）', () => {
      * 命令 → `onUpdate` → 标脏 + 起防抖。happy-dom 里造不出真的输入事件
      * （`MarkdownEditor.test.tsx` 顶部记着这条），所以只能从工具条这头进。
      */
+    const insertTab = [...host.querySelectorAll<HTMLButtonElement>('button[role="tab"]')].find(
+      (button) => button.textContent === '插入',
+    )
+    expect(insertTab).toBeDefined()
+    press(insertTab!)
     const rule = host.querySelector<HTMLButtonElement>('button[aria-label="分隔线"]')
     expect(rule, '工具条上没有「分隔线」——这条测试需要一个能改文档的按钮').not.toBeNull()
     act(() => {

@@ -24,6 +24,7 @@ import type { HeaderFooter } from '../vendor/packages/docx-engine/src/types.js'
 import { BlockIndex } from '../vendor/apps/docs/src/renderer/pagination-index.js'
 import {
   alignGapHfStrips,
+  alignTableGapFills,
   setPageGaps,
   type PageGapSpec,
 } from '../vendor/apps/docs/src/renderer/editor/pagination-gaps.js'
@@ -179,6 +180,13 @@ function posFromAnchor(
   } catch {
     return undefined
   }
+}
+
+/** Table gaps paint through a cell-local fill. Align it to the page box, not
+ * the ProseMirror content box, so the gray band also crosses both page margins. */
+export function alignPageGapPaint(pm: HTMLElement): void {
+  alignTableGapFills(pm.closest<HTMLElement>('.doc-page') ?? pm, 1)
+  alignGapHfStrips(pm, 0, 1)
 }
 
 export function usePagination({
@@ -667,7 +675,7 @@ export function usePagination({
       }
 
       setPageGaps(ctx.editor.view, gaps)
-      alignGapHfStrips(pm, 0, 1)
+      alignPageGapPaint(pm)
       if (wrap) {
         const firstBox = sectionPageBox(sections[0]!.settings)
         const mixedPaper = sections.some((section) => {

@@ -118,6 +118,12 @@ async function mount(bytes: Uint8Array): Promise<Harness> {
 }
 
 function button(host: HTMLElement, label: string): HTMLButtonElement {
+  if (label === '页面与版式操作') {
+    const tab = [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (item) => item.textContent === '页面',
+    )
+    if (tab && tab.getAttribute('aria-selected') !== 'true') click(tab)
+  }
   const found = [...host.querySelectorAll('button')].find(
     (item) => item.getAttribute('aria-label') === label,
   )
@@ -187,8 +193,14 @@ describe('PdfEditor 工具条的控件', () => {
      * 判据用 `aria-haspopup`，不是「名字长这样」。
      */
     const own = buttons.filter((item) => !hasClass(item, 'ant-btn'))
-    expect(own.map((item) => item.className)).toEqual(['me-btn'])
-    expect(own.every((item) => item.getAttribute('aria-haspopup') !== null)).toBe(true)
+    expect(new Set(own.map((item) => item.className))).toEqual(
+      new Set(['mimir-compact-toolbar__tab']),
+    )
+    expect(
+      own
+        .filter((item) => hasClass(item, 'me-btn'))
+        .every((item) => item.getAttribute('aria-haspopup') !== null),
+    ).toBe(true)
     expect(antd.length).toBe(buttons.length - own.length)
 
     /*
@@ -455,10 +467,24 @@ describe('PdfEditor 工具条的动作', () => {
     expect(button(host, '保存到库')).toBeTruthy()
   })
 
+  it('切到页面分类后仍可用 Ctrl+F 打开查找', async () => {
+    const { host } = await mount(await makePdf())
+    const pageTab = [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (item) => item.textContent === '页面',
+    )!
+    click(pageTab)
+    act(() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'f', ctrlKey: true })))
+    expect(host.querySelector('.mimir-editor__subbar')).not.toBeNull()
+  })
+
   it('旋转 + 保存：写回的字节里那一页真的是 90 度', async () => {
     const { host, saved } = await mount(await makePdf())
 
-    click(menuItem(host, '向右旋转 90 度'))
+    const pageTab = [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (item) => item.textContent === '页面',
+    )!
+    click(pageTab)
+    click(button(host, '向右旋转 90 度'))
     // 状态行如实报告「已修改」，页面标签写着这一页的旋转角度
     expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('已修改，未保存')
     expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('旋转 90°')

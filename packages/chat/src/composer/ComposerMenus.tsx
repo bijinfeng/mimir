@@ -88,6 +88,32 @@ const useStyles = createStyles(({ css, token }) => ({
     white-space: nowrap;
     text-overflow: ellipsis;
   `,
+  modelMenuRow: css`
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: min(240px, calc(100vw - 96px));
+  `,
+  modelMenuName: css`
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  `,
+  modelMenuCheck: css`
+    flex: none;
+  `,
+  visuallyHidden: css`
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  `,
 }))
 
 export function AddContextDropdown({
@@ -186,6 +212,20 @@ export function ModelDropdown({
   const chatModel = modelRoles.chat
   const deepModel = modelRoles.reasoning
   const activeKey = deepReasoning ? 'reasoning' : 'chat'
+  const modelOption = (name: string | undefined, role: string, selected: boolean) => (
+    <span className={styles.modelMenuRow}>
+      <span className={styles.visuallyHidden}>{role}：</span>
+      <span className={styles.modelMenuName} title={name || '未配置'}>
+        {name || '未配置'}
+      </span>
+      {selected && (
+        <>
+          <Check size={16} className={styles.modelMenuCheck} aria-hidden="true" />
+          <span className={styles.visuallyHidden}>当前使用</span>
+        </>
+      )}
+    </span>
+  )
   return (
     <Dropdown
       trigger={['click']}
@@ -193,14 +233,12 @@ export function ModelDropdown({
         items: [
           {
             key: 'chat',
-            icon: activeKey === 'chat' ? <Check size={16} /> : undefined,
-            label: `对话模型：${chatModel || '未配置'}`,
+            label: modelOption(chatModel, '对话模型', activeKey === 'chat'),
             disabled: true,
           },
           {
             key: 'reasoning',
-            icon: activeKey === 'reasoning' ? <Check size={16} /> : undefined,
-            label: `深度思考模型：${deepModel || '未配置'}`,
+            label: modelOption(deepModel, '深度思考模型', activeKey === 'reasoning'),
             disabled: true,
           },
           { type: 'divider' },

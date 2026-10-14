@@ -53,6 +53,8 @@ export interface VaultNote {
   updatedAt: string
   /** 相对 vault 根目录的路径，如 2026/09/hello-world-a1b2c3d4.md */
   path: string
+  /** User-defined YAML keys that are not part of Mimir's indexed metadata. */
+  extraFrontmatter?: Record<string, unknown>
 }
 
 export interface NoteFrontmatter {
@@ -63,6 +65,21 @@ export interface NoteFrontmatter {
   folder?: string | null
   createdAt: string
   updatedAt: string
+}
+
+const SYSTEM_FRONTMATTER_KEYS = new Set([
+  'id',
+  'title',
+  'tags',
+  'status',
+  'folder',
+  'createdAt',
+  'updatedAt',
+])
+export function extraNoteFrontmatter(data: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(data).filter(([key]) => !SYSTEM_FRONTMATTER_KEYS.has(key)),
+  )
 }
 
 /**
@@ -117,7 +134,8 @@ export function buildNotePath(title: string, id: string, date = new Date()): str
 }
 
 export async function writeNote(note: VaultNote): Promise<void> {
-  const frontmatter: NoteFrontmatter = {
+  const frontmatter: NoteFrontmatter & Record<string, unknown> = {
+    ...extraNoteFrontmatter(note.extraFrontmatter ?? {}),
     id: note.id,
     title: note.title,
     tags: note.tags,
@@ -131,6 +149,12 @@ export async function writeNote(note: VaultNote): Promise<void> {
 
   const file = matter.stringify(`\n${note.body.trim()}\n`, frontmatter)
   await activeStorage().write(toStorageKey(note.path), file)
+}
+
+/** Return the complete YAML map so later note saves can preserve custom fields. */
+export async function readNoteFrontmatter(vaultPath: string): Promise<Record<string, unknown>> {
+  const raw = Buffer.from(await activeStorage().read(toStorageKey(vaultPath))).toString('utf8')
+  return matter(raw).data as Record<string, unknown>
 }
 
 export async function readNote(vaultPath: string): Promise<VaultNote> {

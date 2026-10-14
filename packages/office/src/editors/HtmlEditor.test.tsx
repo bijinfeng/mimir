@@ -31,7 +31,9 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, describe, expect, it } from 'vitest'
 import { HtmlEditor } from './HtmlEditor.js'
+import type { HtmlAgentHandle } from '../agent/html-agent.js'
 import type { EditorIo } from './types.js'
+import { pickSelectOption } from '../shell/antd-test-dom.js'
 
 /** 一份最小的页面：够 `SourceEditor` 起来、够预览脚本握手 */
 const PAGE = `<!doctype html>
@@ -96,13 +98,33 @@ function press(element: Element): void {
 }
 
 describe('HtmlEditor 工具条的控件契约', () => {
+  it('保存与源码历史固定在分类左侧，状态栏只显示状态', async () => {
+    const host = await boot()
+    const quickAccess = host.querySelector('.mimir-compact-toolbar__quick-access')
+    expect(quickAccess).not.toBeNull()
+    expect(
+      [...quickAccess!.querySelectorAll('button')].map((button) =>
+        button.getAttribute('aria-label'),
+      ),
+    ).toEqual(['保存到库', '撤销 (Ctrl+Z)', '重做 (Ctrl+Shift+Z)'])
+    expect(host.querySelector('.mimir-editor__status button[aria-label="保存到库"]')).toBeNull()
+    expect(host.querySelector('[role="group"][aria-label="撤销与重做"]')).toBeNull()
+    expect(quickAccess!.querySelector('button[aria-label="保存到库"]')?.getAttribute('title')).toBe(
+      '没有未保存的改动',
+    )
+  })
+
   it('没有绕过点：每个原生控件都来自 antd', async () => {
     const host = await boot()
     const all = controls(host)
     // 非空前提：一棵空树上「零个绕过点」是句废话
-    expect(all.length).toBeGreaterThan(10)
+    expect(all.length).toBeGreaterThan(8)
     const bypass = all
       .filter((element) => ![...element.classList].some((name) => name.startsWith('ant-')))
+      // ToolbarMenu is the shell's deliberate popup-trigger exception.
+      .filter((element) => !element.matches('.me-menu > .me-btn'))
+      // The ribbon tabs use native buttons for the ARIA tab keyboard model.
+      .filter((element) => !element.matches('.mimir-compact-toolbar__tab'))
       .map((element) => `<${element.tagName.toLowerCase()} class="${element.className}">`)
     expect(bypass, `这些控件绕过了外壳的原语：${JSON.stringify(bypass)}`).toEqual([])
   })
@@ -129,6 +151,9 @@ describe('HtmlEditor 工具条的控件契约', () => {
       '这些按钮不在 small 档',
     ).toEqual([])
 
+    // The View tab owns both preview controls; Home keeps element actions visible.
+    press([...host.querySelectorAll('[role="tab"]')].find((tab) => tab.textContent === '视图')!)
+
     const segmented = [...host.querySelectorAll<HTMLElement>('.ant-segmented')]
     expect(segmented.length).toBe(2)
     for (const group of segmented) expect(group.classList.contains('ant-segmented-sm')).toBe(true)
@@ -151,7 +176,7 @@ describe('HtmlEditor 工具条的控件契约', () => {
      * `.me-input` 挂回 antd 控件上」唯一能兑现的地方——栏关着的时候树里
      * `.ant-input` 一个都没有，这条断言会空转（它曾经就是这样通过的）。
      */
-    press(host.querySelector<HTMLButtonElement>('[aria-label="查找和替换"]')!)
+    press(host.querySelector<HTMLButtonElement>('button[aria-label="查找和替换"]')!)
     expect(
       host.querySelectorAll('.ant-input').length,
       '查找栏没打开，这条断言在空转',
@@ -159,6 +184,7 @@ describe('HtmlEditor 工具条的控件契约', () => {
     expect(host.querySelectorAll('.ant-btn.me-btn').length).toBe(0)
     expect(host.querySelectorAll('.ant-input.me-input').length).toBe(0)
     // `.me-input--num` 是**给 InputNumber 的**（宽度），它没有 height/底色，可以留
+    press([...host.querySelectorAll('[role="tab"]')].find((tab) => tab.textContent === '视图')!)
     expect(host.querySelectorAll('.ant-input-number.me-input--num').length).toBe(1)
   })
 
@@ -169,7 +195,7 @@ describe('HtmlEditor 工具条的控件契约', () => {
      * 全部替换）也会禁用，而这条断言原来跑在栏关着的时候——那几个按钮不在树上，
      * 于是「禁用必须给原因」在查找栏那一半从来没被守过（实测漏掉四个）。
      */
-    press(host.querySelector<HTMLButtonElement>('[aria-label="查找和替换"]')!)
+    press(host.querySelector<HTMLButtonElement>('button[aria-label="查找和替换"]')!)
     let disabledCount = 0
     for (const button of host.querySelectorAll<HTMLButtonElement>('button')) {
       if (!button.disabled) continue
@@ -186,7 +212,7 @@ describe('HtmlEditor 工具条的控件契约', () => {
 
   it('查找按钮是按下态，且查找栏就地渲染（不 portal 到 body）', async () => {
     const host = await boot()
-    const findButton = host.querySelector<HTMLButtonElement>('[aria-label="查找和替换"]')
+    const findButton = host.querySelector<HTMLButtonElement>('button[aria-label="查找和替换"]')
     expect(findButton).not.toBeNull()
     expect(findButton!.getAttribute('aria-pressed')).toBe('false')
 
@@ -198,4 +224,521 @@ describe('HtmlEditor 工具条的控件契约', () => {
     // 就地渲染：整页的元素数一个不增（antd 的 Dropdown / Select 会 +1）
     expect(document.body.childElementCount).toBe(bodyChildrenBefore)
   })
+
+  it('分类切换保留可执行命令，状态栏不常驻预览操作教程', async () => {
+    const host = await boot()
+    expect([...host.querySelectorAll('[role="tab"]')].map((tab) => tab.textContent)).toEqual([
+      '开始',
+      '插入',
+      '视图',
+    ])
+    expect(host.querySelector('[aria-label="元素编辑"]')).not.toBeNull()
+    expect(host.querySelector('.mimir-editor__status')?.textContent).not.toContain('点一个元素')
+    press([...host.querySelectorAll('[role="tab"]')].find((tab) => tab.textContent === '插入')!)
+    expect(host.querySelector('[aria-label="插入 HTML 元素"]')).not.toBeNull()
+    expect(host.querySelector('[aria-label="元素编辑"]')).toBeNull()
+  })
+})
+
+it('Agent 改动在源码和预览可见，保存恢复 BOM/CRLF 且不写入预览映射', async () => {
+  const original = '\uFEFF<!doctype html>\r\n<html><body><p>Hello</p></body></html>\r\n'
+  let saved: Uint8Array | null = null
+  let agent: HtmlAgentHandle | null = null
+  const host = document.createElement('div')
+  document.body.append(host)
+  const root = createRoot(host)
+  ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+  await act(async () => {
+    root.render(
+      <HtmlEditor
+        documentId="agent-html"
+        io={{
+          load: async () => new TextEncoder().encode(original),
+          save: async (bytes) => {
+            saved = bytes
+          },
+        }}
+        onAgentHandleChange={(handle) => {
+          agent = handle
+        }}
+      />,
+    )
+  })
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  })
+  expect(agent).not.toBeNull()
+  const handle = agent as HtmlAgentHandle | null
+  if (!handle) throw new Error('HTML Agent 句柄未挂载')
+  const sid = handle.getDocument().map.elements.find((entry) => entry.tag === 'p')?.sid
+  if (sid === undefined) throw new Error('测试段落未解析')
+  await act(async () => {
+    expect(
+      (
+        await handle.execute(
+          'apply_ops',
+          { ops: [{ op: 'set_text', sid, text: 'Changed' }] },
+          { expectedVersion: 1 },
+        )
+      ).ok,
+    ).toBe(true)
+  })
+  expect(host.querySelector('.cm-content')?.textContent).toContain('Changed')
+  expect(host.querySelector('iframe')?.getAttribute('srcdoc')).toContain('Changed')
+  const frame = host.querySelector('iframe')!
+  act(() => {
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: {
+          type: 'gx:select',
+          version: handle.getVersion(),
+          element: { sid, tag: 'p', className: '' },
+        },
+        source: frame.contentWindow,
+      }),
+    )
+  })
+  press(host.querySelector<HTMLButtonElement>('[aria-label="元素编辑"]')!)
+  const field = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="内容"]')!
+  act(() => {
+    const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
+    setter!.call(field, 'Manual')
+    field.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+  press(host.querySelector<HTMLButtonElement>('[aria-label="应用元素编辑"]')!)
+  expect(handle.getDocument().text).toContain('<p>Manual</p>')
+  press(host.querySelector<HTMLButtonElement>('[aria-label="保存到库"]')!)
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  })
+  expect(saved).not.toBeNull()
+  const output = new TextDecoder('utf-8', { ignoreBOM: true }).decode(saved!)
+  expect(output).toContain('\r\n')
+  expect(output.startsWith('\uFEFF')).toBe(true)
+  expect(output).toContain('<p>Manual</p>')
+  expect(output).not.toContain('data-sid')
+  let answer: Promise<Awaited<ReturnType<HtmlAgentHandle['execute']>>> | null = null
+  act(() => {
+    answer = handle.execute('ask_clarification', {
+      questions: [{ id: 'audience', label: '面向谁', options: ['读者'] }],
+    })
+  })
+  expect(host.querySelector('[aria-label="页面创建前的问题"]')).not.toBeNull()
+  press(host.querySelector<HTMLButtonElement>('[aria-label="提交页面选择"]')!)
+  expect((await answer!)?.data).toEqual({ answers: '面向谁: 由 AI 决定' })
+  act(() => root.unmount())
+  host.remove()
+})
+
+it('手动插入使用当前选中元素定位，保存重开仍是同一份源码', async () => {
+  let saved: Uint8Array | null = null
+  let agent: HtmlAgentHandle | null = null
+  const host = document.createElement('div')
+  document.body.append(host)
+  const root = createRoot(host)
+  await act(async () => {
+    root.render(
+      <HtmlEditor
+        documentId="insert-html"
+        io={{
+          load: async () => new TextEncoder().encode(PAGE),
+          save: async (bytes) => {
+            saved = bytes
+          },
+        }}
+        onAgentHandleChange={(handle) => {
+          agent = handle
+        }}
+      />,
+    )
+  })
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  })
+  const handle = agent as HtmlAgentHandle | null
+  if (!handle) throw new Error('HTML Agent 句柄未挂载')
+  const sid = handle.getDocument().map.elements.find((entry) => entry.tag === 'p')?.sid
+  if (sid === undefined) throw new Error('测试段落未解析')
+  const frame = host.querySelector('iframe')!
+  act(() => {
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: {
+          type: 'gx:select',
+          version: handle.getVersion(),
+          element: { sid, tag: 'p', className: '' },
+        },
+        source: frame.contentWindow,
+      }),
+    )
+  })
+  press([...host.querySelectorAll('[role="tab"]')].find((tab) => tab.textContent === '插入')!)
+  press(host.querySelector<HTMLButtonElement>('[aria-label="插入 HTML 元素"]')!)
+  press(host.querySelector<HTMLButtonElement>('[aria-label="插入所选 HTML 元素"]')!)
+  const text = handle.getDocument().text
+  expect(text).toContain('<p>正文</p>\n<h2>新标题</h2>')
+  expect(host.querySelector('.cm-content')?.textContent).toContain('新标题')
+  expect(frame.getAttribute('srcdoc')).toContain('新标题')
+  press(host.querySelector<HTMLButtonElement>('[aria-label="保存到库"]')!)
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  })
+  expect(new TextDecoder().decode(saved!)).toBe(text)
+  expect(new TextDecoder().decode(saved!)).not.toContain('data-sid')
+  act(() => root.unmount())
+  host.remove()
+})
+
+it.each([
+  { name: '段落', markup: '<p>新段落</p>' },
+  { name: '列表', markup: '<ul>\n  <li>列表项</li>' },
+  { name: '按钮', markup: '<button type="button">按钮</button>' },
+  { name: '图片 URL', markup: '<img src="https://example.com/picture.png"' },
+  { name: '表格', markup: '<table style="width: 100%; border-collapse: collapse;">' },
+  { name: '章节', markup: '<section style="padding: 32px 24px;">' },
+  { name: '分隔线', markup: '<hr>' },
+])('手动插入预设 $name 写入当前画布并保存同一份源码', async ({ name, markup }) => {
+  let saved: Uint8Array | null = null
+  let agent: HtmlAgentHandle | null = null
+  const host = document.createElement('div')
+  document.body.append(host)
+  const root = createRoot(host)
+  await act(async () => {
+    root.render(
+      <HtmlEditor
+        documentId={`insert-${name}`}
+        io={{
+          load: async () => new TextEncoder().encode(PAGE),
+          save: async (bytes) => {
+            saved = bytes
+          },
+        }}
+        onAgentHandleChange={(handle) => {
+          agent = handle
+        }}
+      />,
+    )
+  })
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  })
+  const handle = agent as HtmlAgentHandle | null
+  if (!handle) throw new Error('HTML Agent 句柄未挂载')
+  const sid = handle.getDocument().map.elements.find((entry) => entry.tag === 'p')?.sid
+  if (sid === undefined) throw new Error('测试段落未解析')
+  const frame = host.querySelector('iframe')!
+  act(() => {
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: {
+          type: 'gx:select',
+          version: handle.getVersion(),
+          element: { sid, tag: 'p', className: '' },
+        },
+        source: frame.contentWindow,
+      }),
+    )
+  })
+  press([...host.querySelectorAll('[role="tab"]')].find((tab) => tab.textContent === '插入')!)
+  press(host.querySelector<HTMLButtonElement>('[aria-label="插入 HTML 元素"]')!)
+  pickSelectOption(host, '插入元素', name)
+  if (name === '图片 URL') {
+    const field = host.querySelector<HTMLInputElement>('[aria-label="图片 URL"]')!
+    act(() => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(
+        field,
+        'https://example.com/picture.png',
+      )
+      field.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+  }
+  if (name === '表格') {
+    for (const [label, value] of [
+      ['表格行数', '2'],
+      ['表格列数', '4'],
+    ]) {
+      const field = host.querySelector<HTMLInputElement>(`[aria-label="${label}"]`)!
+      act(() => {
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(
+          field,
+          value,
+        )
+        field.dispatchEvent(new Event('input', { bubbles: true }))
+      })
+    }
+  }
+  press(host.querySelector<HTMLButtonElement>('[aria-label="插入所选 HTML 元素"]')!)
+  const text = handle.getDocument().text
+  expect(text).toContain(`<p>正文</p>\n${markup}`)
+  expect([
+    (text.match(/<tr>/g) ?? []).length,
+    (text.match(/<th /g) ?? []).length,
+    (text.match(/<td /g) ?? []).length,
+  ]).toEqual(name === '表格' ? [2, 4, 4] : [0, 0, 0])
+  const tag = markup.match(/^<([a-z]+)/)?.[1]
+  if (!tag) throw new Error('预设标记没有 HTML 标签')
+  expect(frame.getAttribute('srcdoc')).toMatch(new RegExp(`<${tag}[^>]*data-sid=`))
+  press(host.querySelector<HTMLButtonElement>('[aria-label="保存到库"]')!)
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  })
+  const reopened = new TextDecoder().decode(saved!)
+  expect(reopened).toBe(text)
+  expect(reopened).not.toContain('data-sid')
+  act(() => root.unmount())
+  host.remove()
+})
+
+it('手动快捷格式和复制共用 Agent 操作，保存字节可重新解析', async () => {
+  let saved: Uint8Array | null = null
+  let agent: HtmlAgentHandle | null = null
+  const host = document.createElement('div')
+  document.body.append(host)
+  const root = createRoot(host)
+  await act(async () => {
+    root.render(
+      <HtmlEditor
+        documentId="quick-html"
+        io={{
+          load: async () => new TextEncoder().encode(PAGE),
+          save: async (bytes) => {
+            saved = bytes
+          },
+        }}
+        onAgentHandleChange={(handle) => {
+          agent = handle
+        }}
+      />,
+    )
+  })
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  })
+  const handle = agent as HtmlAgentHandle | null
+  if (!handle) throw new Error('HTML Agent 句柄未挂载')
+  const sid = handle.getDocument().map.elements.find((entry) => entry.tag === 'p')?.sid
+  if (sid === undefined) throw new Error('测试段落未解析')
+  act(() => {
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: {
+          type: 'gx:select',
+          version: handle.getVersion(),
+          element: { sid, tag: 'p', className: '', computed: { fontWeight: '400' } },
+        },
+        source: host.querySelector('iframe')!.contentWindow,
+      }),
+    )
+  })
+  press(host.querySelector<HTMLButtonElement>('[aria-label="元素编辑"]')!)
+  press(host.querySelector<HTMLButtonElement>('[aria-label="加粗或取消加粗"]')!)
+  expect(handle.getDocument().text).toContain('<p style="font-weight: 700">正文</p>')
+  press(host.querySelector<HTMLButtonElement>('[aria-label="复制选中元素"]')!)
+  expect(handle.getDocument().text.match(/正文<\/p>/g)).toHaveLength(2)
+  press(host.querySelector<HTMLButtonElement>('[aria-label="保存到库"]')!)
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  })
+  const reopened = new TextDecoder().decode(saved!)
+  expect(reopened).toBe(handle.getDocument().text)
+  expect(reopened).not.toContain('data-sid')
+  act(() => root.unmount())
+  host.remove()
+})
+
+it('保存进行中继续编辑时保留未保存状态', async () => {
+  let agent: HtmlAgentHandle | null = null
+  let finishSave: (() => void) | null = null
+  const dirtyChanges: boolean[] = []
+  const host = document.createElement('div')
+  document.body.append(host)
+  const root = createRoot(host)
+  await act(async () => {
+    root.render(
+      <HtmlEditor
+        documentId="save-race-html"
+        io={{
+          load: async () => new TextEncoder().encode(PAGE),
+          save: async () =>
+            new Promise<void>((resolve) => {
+              finishSave = resolve
+            }),
+        }}
+        onDirtyChange={(value) => dirtyChanges.push(value)}
+        onAgentHandleChange={(handle) => {
+          agent = handle
+        }}
+      />,
+    )
+  })
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  })
+  const handle = agent as HtmlAgentHandle | null
+  if (!handle) throw new Error('HTML Agent 句柄未挂载')
+  const sid = handle.getDocument().map.elements.find((entry) => entry.tag === 'p')?.sid
+  if (sid === undefined) throw new Error('测试段落未解析')
+  await act(async () => {
+    await handle.execute('apply_ops', { ops: [{ op: 'set_text', sid, text: '保存前' }] })
+  })
+  press(host.querySelector<HTMLButtonElement>('[aria-label="保存到库"]')!)
+  expect(finishSave).not.toBeNull()
+  await act(async () => {
+    await handle.execute('apply_ops', { ops: [{ op: 'set_text', sid, text: '保存后新增' }] })
+  })
+  await act(async () => {
+    finishSave?.()
+  })
+  expect(host.textContent).toContain('已修改，未保存')
+  expect(dirtyChanges.at(-1)).toBe(true)
+  act(() => root.unmount())
+  host.remove()
+})
+
+it('预览内直接编辑与尺寸消息写回同一源码画布', async () => {
+  let agent: HtmlAgentHandle | null = null
+  const host = document.createElement('div')
+  document.body.append(host)
+  const root = createRoot(host)
+  await act(async () => {
+    root.render(
+      <HtmlEditor
+        documentId="preview-edit-html"
+        io={{ load: async () => new TextEncoder().encode(PAGE), save: async () => {} }}
+        onAgentHandleChange={(handle) => {
+          agent = handle
+        }}
+      />,
+    )
+  })
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  })
+  const handle = agent as HtmlAgentHandle | null
+  if (!handle) throw new Error('HTML Agent 句柄未挂载')
+  const sid = handle.getDocument().map.elements.find((entry) => entry.tag === 'p')?.sid
+  if (sid === undefined) throw new Error('测试段落未解析')
+  const send = (data: Record<string, unknown>) =>
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          data: { ...data, version: handle.getVersion() },
+          source: host.querySelector('iframe')!.contentWindow,
+        }),
+      )
+    })
+  send({ type: 'gx:select', element: { sid, tag: 'p', className: '' } })
+  send({ type: 'gx:textEditCommit', sid, textNodeIndex: 0, newText: '预览改写' })
+  const beforeLateMessage = handle.getDocument().text
+  act(() => {
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: {
+          type: 'gx:textEditCommit',
+          version: handle.getVersion() - 1,
+          sid,
+          textNodeIndex: 0,
+          newText: '旧预览覆盖',
+        },
+        source: host.querySelector('iframe')!.contentWindow,
+      }),
+    )
+  })
+  expect(handle.getDocument().text).toBe(beforeLateMessage)
+  send({ type: 'gx:resize', sid, styles: { width: '280px' } })
+  expect(handle.getDocument().text).toContain('<p style="width: 280px">预览改写</p>')
+  expect(host.querySelector('.cm-content')?.textContent).toContain('预览改写')
+  expect(host.querySelector('iframe')?.getAttribute('srcdoc')).toContain('width: 280px')
+  act(() => root.unmount())
+  host.remove()
+})
+
+it('元素上移遵守同级顺序，图片旋转写入保存字节', async () => {
+  const page =
+    '<!doctype html><html><body><div><h1>标题</h1><p>段落</p></div><img src="old.png"></body></html>'
+  let saved: Uint8Array | null = null
+  let agent: HtmlAgentHandle | null = null
+  const host = document.createElement('div')
+  document.body.append(host)
+  const root = createRoot(host)
+  await act(async () => {
+    root.render(
+      <HtmlEditor
+        documentId="move-image-html"
+        io={{
+          load: async () => new TextEncoder().encode(page),
+          save: async (bytes) => {
+            saved = bytes
+          },
+        }}
+        onAgentHandleChange={(handle) => {
+          agent = handle
+        }}
+      />,
+    )
+  })
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  })
+  const handle = agent as HtmlAgentHandle | null
+  if (!handle) throw new Error('HTML Agent 句柄未挂载')
+  const select = (tag: string, computed: Record<string, string> = {}) => {
+    const sid = handle.getDocument().map.elements.find((entry) => entry.tag === tag)?.sid
+    if (sid === undefined) throw new Error(`${tag} 未解析`)
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          data: {
+            type: 'gx:select',
+            version: handle.getVersion(),
+            element: { sid, tag, className: '', computed },
+          },
+          source: host.querySelector('iframe')!.contentWindow,
+        }),
+      )
+    })
+  }
+  select('p')
+  press(host.querySelector<HTMLButtonElement>('[aria-label="元素编辑"]')!)
+  press(host.querySelector<HTMLButtonElement>('[aria-label="元素上移"]')!)
+  expect(handle.getDocument().text).toContain('<p>段落</p><h1>标题</h1>')
+  select('img', { transform: '', width: '200px', height: '100px' })
+  press(host.querySelector<HTMLButtonElement>('[aria-label="图片向右旋转 90 度"]')!)
+  expect(handle.getDocument().text).toContain('transform: rotate(90deg)')
+  press(host.querySelector<HTMLButtonElement>('[aria-label="锁定图片宽高比例"]')!)
+  const widthInput = host.querySelector<HTMLInputElement>('input[aria-label="宽度"]')!
+  act(() => {
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+    setter!.call(widthInput, '300px')
+    widthInput.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+  press(host.querySelector<HTMLButtonElement>('[aria-label="设置宽度"]')!)
+  expect(handle.getDocument().text).toContain('width: 300px')
+  expect(handle.getDocument().text).toContain('height: 150px')
+  const cssField = host.querySelector<HTMLTextAreaElement>(
+    'textarea[aria-label="自定义 CSS 声明"]',
+  )!
+  act(() => {
+    const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
+    setter!.call(cssField, 'opacity: 0.7; border-radius: 8px')
+    cssField.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+  press(host.querySelector<HTMLButtonElement>('[aria-label="应用自定义 CSS"]')!)
+  expect(handle.getDocument().text).toContain('opacity: 0.7')
+  expect(handle.getDocument().text).toContain('border-radius: 8px')
+  const altInput = host.querySelector<HTMLInputElement>('input[aria-label="图片替代文字"]')!
+  act(() => {
+    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+    setter!.call(altInput, '示意图')
+    altInput.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+  press(host.querySelector<HTMLButtonElement>('[aria-label="设置图片替代文字"]')!)
+  expect(handle.getDocument().text).toContain('alt="示意图"')
+  press(host.querySelector<HTMLButtonElement>('[aria-label="保存到库"]')!)
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  })
+  expect(new TextDecoder().decode(saved!)).toBe(handle.getDocument().text)
+  act(() => root.unmount())
+  host.remove()
 })

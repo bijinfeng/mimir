@@ -124,6 +124,14 @@ function click(element: Element): void {
   })
 }
 
+function selectTab(host: HTMLElement, label: string): void {
+  const tab = [...host.querySelectorAll<HTMLElement>('[role="tab"]')].find(
+    (item) => item.textContent === label,
+  )
+  if (!tab) throw new Error(`没有「${label}」分类`)
+  click(tab)
+}
+
 /** 打开某个 `ToolbarMenu` 的面板并返回面板里的按钮 */
 function openMenu(host: HTMLElement, label: string): HTMLElement {
   click(button(host, label))
@@ -163,26 +171,25 @@ const markdown = (editor: Editor): string => editor.getMarkdown().trim()
 /* ── 断言 ─────────────────────────────────────────────────────── */
 
 describe('工具条渲染', () => {
-  it('窄栏的更多菜单不列出当前没有控件的上下文组', () => {
-    let resize: ResizeObserverCallback | undefined
-    vi.stubGlobal(
-      'ResizeObserver',
-      class {
-        constructor(callback: ResizeObserverCallback) {
-          resize = callback
-        }
-        observe() {}
-        disconnect() {}
-      },
-    )
+  it('块操作菜单复用与 Agent 相同的结构操作', () => {
+    const { host, editor } = mount('Alpha\n\nBeta')
+    cursorAt(editor, 'Alpha')
+    selectTab(host, '笔记')
+    pickMenuItem(host, '块操作', '复制块')
+    expect(markdown(editor)).toContain('Alpha\n\nAlpha')
+  })
+  it('常用命令在分类中可见；未选中上下文不显示额外分类', () => {
     const { host } = mount('正文\n')
-    act(() => {
-      resize?.([{ contentRect: { width: 320 } } as ResizeObserverEntry], {} as ResizeObserver)
-    })
-    const menu = openMenu(host, '更多笔记工具')
-    expect(menu.querySelector('[role="group"][aria-label="表格"]')).toBeNull()
-    expect(menu.querySelector('[role="group"][aria-label="代码块语言"]')).toBeNull()
-    expect(menu.querySelector('[role="group"][aria-label="插入"]')).not.toBeNull()
+    expect(host.querySelector('[aria-label="更多笔记工具"]')).toBeNull()
+    expect([...host.querySelectorAll('[role="tab"]')].map((tab) => tab.textContent)).toEqual([
+      '开始',
+      '插入',
+      '笔记',
+      '审阅',
+    ])
+    selectTab(host, '插入')
+    expect(host.querySelector('[role="group"][aria-label="插入"]')).not.toBeNull()
+    expect(hasButton(host, '插入表格')).toBe(true)
   })
 
   it('这一批按钮都在（少一个就是「接不上」的那一种）', () => {
@@ -200,8 +207,6 @@ describe('工具条渲染', () => {
       '任务列表',
       '减少缩进',
       '增加缩进',
-      '插入表格',
-      '分隔线',
     ]) {
       expect(hasButton(host, label), `缺按钮：${label}`).toBe(true)
     }
@@ -209,6 +214,9 @@ describe('工具条渲染', () => {
     const styleTrigger = host.querySelector('button[aria-label="段落样式"]')
     expect(styleTrigger?.getAttribute('aria-haspopup')).toBe('menu')
     expect(hasButton(host, '链接')).toBe(true)
+    selectTab(host, '插入')
+    expect(hasButton(host, '插入表格')).toBe(true)
+    expect(hasButton(host, '分隔线')).toBe(true)
   })
 
   /**
@@ -226,16 +234,47 @@ describe('工具条渲染', () => {
 
   it('「插入图片」只在宿主给了上传通道时出现', () => {
     const without = mount('正文\n')
+    selectTab(without.host, '插入')
     expect(hasButton(without.host, '插入图片')).toBe(false)
     const withUpload = mount('正文\n', { withImageUpload: true })
+    selectTab(withUpload.host, '插入')
     expect(hasButton(withUpload.host, '插入图片')).toBe(true)
     expect(withUpload.host.querySelector('input[type=file]')).not.toBeNull()
   })
 })
 
 describe('撤销与重做', () => {
+  it('编辑器尚未就绪时保留快捷区位置并禁用历史命令', () => {
+    const host = document.createElement('div')
+    document.body.append(host)
+    const root = createRoot(host)
+    act(() => {
+      root.render(
+        <MarkdownToolbar
+          editor={null}
+          saveAction={<button disabled>立即保存</button>}
+          spellCheck={false}
+          onToggleSpellCheck={() => {}}
+        />,
+      )
+    })
+    const buttons = host.querySelectorAll<HTMLButtonElement>(
+      '.mimir-compact-toolbar__quick-access button',
+    )
+    expect([...buttons].map((item) => item.getAttribute('aria-label') ?? item.textContent)).toEqual(
+      ['立即保存', '撤销 (Ctrl+Z)', '重做 (Ctrl+Shift+Z)'],
+    )
+    expect([...buttons].every((item) => item.disabled)).toBe(true)
+    act(() => root.unmount())
+    host.remove()
+  })
+
   it('没有历史时禁用，并给出原因（不是灰着让人猜）', () => {
     const { host } = mount('正文\n')
+    const quickAccess = host.querySelector('.mimir-compact-toolbar__quick-access')
+    expect(quickAccess?.querySelector('button[aria-label="撤销 (Ctrl+Z)"]')).not.toBeNull()
+    expect(quickAccess?.querySelector('button[aria-label="重做 (Ctrl+Shift+Z)"]')).not.toBeNull()
+    expect(host.querySelector('[role="group"][aria-label="撤销与重做"]')).toBeNull()
     const undo = button(host, '撤销 (Ctrl+Z)')
     expect(undo.disabled).toBe(true)
     expect(undo.title).toBe('没有可撤销的改动')
@@ -388,6 +427,7 @@ describe('表格', () => {
   it('插入表格：面板里填行列，插进去的是带表头的表格', () => {
     const { host, editor } = mount('正文\n')
     cursorAt(editor, '正文')
+    selectTab(host, '插入')
     const panel = openMenu(host, '插入表格')
     const rowInput = panel.querySelector<HTMLInputElement>('[aria-label="行数"]')!
     const colInput = panel.querySelector<HTMLInputElement>('[aria-label="列数"]')!
@@ -418,6 +458,7 @@ describe('表格', () => {
     expect(hasButton(host, '表格')).toBe(false)
 
     cursorAt(editor, '1')
+    selectTab(host, '表格')
     expect(hasButton(host, '表格')).toBe(true)
     const panel = openMenu(host, '表格')
     click(
@@ -436,6 +477,21 @@ describe('表格', () => {
     const { host } = mount('正文\n')
     expect(hasButton(host, '表格')).toBe(false)
   })
+
+  it('表格菜单切换第一行表头并写入同一张表', () => {
+    const { host, editor } = mount('| a | b |\n| --- | --- |\n| 1 | 2 |')
+    cursorAt(editor, '1')
+    selectTab(host, '表格')
+    const table = editor.state.doc.firstChild!
+    expect(table.child(0).child(0).type.name).toBe('tableHeader')
+    const panel = openMenu(host, '表格')
+    click(
+      [...panel.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')].find((item) =>
+        item.textContent?.includes('第一行设为表头'),
+      )!,
+    )
+    expect(editor.state.doc.firstChild!.child(0).child(0).type.name).toBe('tableCell')
+  })
 })
 
 describe('代码块语言', () => {
@@ -445,6 +501,7 @@ describe('代码块语言', () => {
     expect(host.querySelector('[aria-label="代码块语言"]')).toBeNull()
 
     cursorAt(editor, '码')
+    selectTab(host, '代码块')
     expect(selectRoot(host, '代码块语言')).not.toBeNull()
     /*
      * 没选语言时显示的是「自动识别」这个档（`value: ''` 是一档真实取值，
@@ -498,6 +555,7 @@ describe('拼写检查', () => {
     act(() => {
       root.render(<MarkdownToolbar editor={editor} spellCheck onToggleSpellCheck={() => {}} />)
     })
+    selectTab(host, '审阅')
     expect(hasButton(host, '关闭拼写检查')).toBe(true)
     expect(editor.view.dom.getAttribute('spellcheck')).toBe('true')
     // 方法真的存在（`setOptions` → `view.setProps`），属性会跟着变

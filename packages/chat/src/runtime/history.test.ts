@@ -127,6 +127,20 @@ describe('history：Message → ThreadMessageLike', () => {
     expect(parts.find((part) => part.name === 'mimir.docxAgent')?.data).toEqual({ agent })
     expect(JSON.stringify(parts)).not.toContain('文档正文')
   })
+
+  it('其他格式历史使用通用数据事件，保留格式并兼容旧 DOCX 事件', () => {
+    const agent = {
+      runId: 'r2',
+      documentId: 'sheet-1',
+      format: 'xlsx' as const,
+      status: 'failed' as const,
+      tools: [{ interruptId: 'client_tool_1', name: 'fake_write', status: 'failed' as const }],
+    }
+    const message = toThreadMessage(storedMessage({ id: 'a3', role: 'assistant', text: '', agent }))
+    const parts = message.content as unknown as { type: string; name?: string; data?: unknown }[]
+    expect(parts.find((part) => part.name === 'mimir.documentAgent')?.data).toEqual({ agent })
+    expect(parts.some((part) => part.name === 'mimir.docxAgent')).toBe(false)
+  })
 })
 
 describe('history：适配器', () => {

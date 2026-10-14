@@ -1,10 +1,10 @@
-import type { DocxAgentHandle } from '@mimir/office'
+import type { ChatDocumentAgent } from '@mimir/chat'
 import type { DocxAgentCapabilities } from '@mimir/shared'
 
 /** Until a chat model is ready, document questions use the existing search path. */
 export function availableDocxAgent(
-  agent: DocxAgentHandle | null | undefined,
+  agent: ChatDocumentAgent | null | undefined,
   capabilities: DocxAgentCapabilities | undefined,
-): DocxAgentHandle | null {
+): ChatDocumentAgent | null {
   return capabilities?.modelReady ? (agent ?? null) : null
 }

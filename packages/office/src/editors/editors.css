@@ -238,9 +238,8 @@
 
 /* ── docx：纸张滚动区 ──────────────────────────────────────────── */
 
-/* 上游的编辑器样式给 `.editor-scroll` 定了内边距与纸张间距，
-   这里只把「工作台底色」接上我们的 token（见 DocxEditor 的注释：
-   上游那两个变量由它的 App 壳运行时注入，我们没 vendored 那个壳） */
+/* 上游工作台的 `.editor-scroll` 留白规则没有进入裁剪后的样式。
+   底色与纸张阴影由 Mimir 提供，首尾留白放在纸张外层，避免改变分页的纸张尺寸。 */
 .mimir-docx-scroll {
   background: var(--me-stage-bg, #f5f5f5);
   --canvas: var(--me-stage-bg, #f5f5f5);
@@ -260,6 +259,11 @@
    * 独立的画布），docx 的纸用卡片档。回退值带一点中性灰，脱离宿主也不会没影。
    */
   --docs-page-shadow: var(--me-page-shadow, 0 1px 2px rgb(0 0 0 / 5%), 0 2px 4px rgb(0 0 0 / 3%));
+}
+
+/* 留白属于滚动内容，末页滚到底时也能看到工作台；不参与正文分页几何。 */
+.mimir-docx-scroll > .editor-scroll {
+  padding-block: 24px;
 }
 
 /* The upstream selector starts with .editor-scroll, so trim-editor-css drops it.
@@ -287,6 +291,16 @@
 }
 
 .mimir-docx-scroll .search-hit-active {
+  background: var(--me-accent, #6e50b9);
+  color: #fff;
+}
+
+.mimir-markdown-scroll .search-hit {
+  background: var(--me-accent-bg, #e4dcf7);
+  border-radius: 2px;
+}
+
+.mimir-markdown-scroll .search-hit-active {
   background: var(--me-accent, #6e50b9);
   color: #fff;
 }
@@ -339,6 +353,19 @@
 .mimir-markdown-body .ProseMirror {
   min-height: 46vh;
   outline: none;
+}
+
+.mimir-markdown-slash {
+  z-index: 80;
+  width: 216px;
+  max-height: min(320px, 60vh);
+  overflow-y: auto;
+}
+
+.mimir-markdown-slash__empty {
+  padding: 8px 12px;
+  color: var(--me-muted);
+  font-size: 12px;
 }
 
 /*
@@ -526,6 +553,79 @@
   font-size: 11px;
 }
 
+.mimir-html-op-panel {
+  display: grid;
+  gap: 8px;
+  min-width: 320px;
+  max-width: 380px;
+  padding: 8px;
+}
+
+.mimir-html-op-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 6px;
+}
+
+.mimir-html-op-row .me-field {
+  flex: 1 1 150px;
+}
+
+.mimir-html-picture-dialog {
+  --color-bg-overlay: rgb(0 0 0 / 50%);
+  --border-strong: var(--me-border, #d9d9d9);
+  --surface: var(--me-surface, #fff);
+  --shadow-modal-strong: var(--me-shadow, 0 8px 28px rgb(0 0 0 / 20%));
+  --text: var(--me-text, #262626);
+  --text-dim: var(--me-text-weak, #777);
+  --accent: var(--me-accent, #7159b5);
+  --color-bg-page: var(--me-surface, #fff);
+  --color-bg-subtle: var(--me-hover, #f3f3f3);
+  --color-border-default: var(--me-border, #d9d9d9);
+  --color-btn-primary: var(--me-accent, #7159b5);
+  --color-btn-primary-hover: var(--me-accent-hover, #5f48a0);
+  --color-btn-primary-text: #fff;
+  --color-error: var(--me-danger, #d4380d);
+  --color-text-primary: var(--me-text, #262626);
+}
+
+.mimir-html-picture-error {
+  position: fixed;
+  z-index: 51;
+  right: 24px;
+  bottom: 24px;
+  max-width: min(440px, calc(100vw - 48px));
+  padding: 10px 14px;
+  border: 1px solid var(--me-danger, #d4380d);
+  border-radius: var(--me-radius, 8px);
+  background: var(--me-surface, #fff);
+  color: var(--me-danger, #d4380d);
+  box-shadow: var(--me-shadow, 0 6px 16px rgb(0 0 0 / 12%));
+}
+
+.mimir-html-op-panel .me-input--text,
+.mimir-html-op-panel .me-input--textarea {
+  width: 100%;
+}
+
+.mimir-html-agent-prompt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--me-border, #d9d9d9);
+  background: var(--me-surface, #fff);
+}
+
+.mimir-html-agent-prompt > div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 /* 窄屏：上下叠放。左右分栏在 700px 左右时两边都只剩一条，谁都看不清 */
 @media (max-width: 1100px) {
   .mimir-html-split {
@@ -549,6 +649,17 @@
   align-items: flex-start;
   padding: 16px;
   background: var(--me-stage-bg, #f5f5f5);
+}
+
+.mimir-pdf-insert-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+}
+
+.mimir-pdf-sheet--pick > .mimir-pdf-page {
+  cursor: crosshair;
 }
 
 /*

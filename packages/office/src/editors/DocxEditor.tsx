@@ -192,6 +192,8 @@ import {
 import { hasNode, runCommand, toggleMarkByName } from '../shell/editor-commands.js'
 import { docxFindAdapter } from './docx-find.js'
 import { statusText, useParsed, useSource } from './use-source.js'
+import { CompactToolbar } from './CompactToolbar.js'
+import './compact-toolbar.css'
 import { OFFICE_MIME, type EditorProps } from './types.js'
 import {
   createDocxAgentHandle,
@@ -1298,6 +1300,22 @@ export function DocxEditor({
           <DocxToolbar
             editor={editor}
             disabled={session === null}
+            saveAction={
+              <ToolbarButton
+                label={source.saving ? '保存中…' : '保存到库'}
+                disabled={session === null || !dirty || source.saving}
+                disabledReason={
+                  session === null
+                    ? '文档还没读完'
+                    : source.saving
+                      ? '正在保存…'
+                      : '没有未保存的改动'
+                }
+                onClick={() => void save()}
+              >
+                <SaveIcon />
+              </ToolbarButton>
+            }
             headingLevels={session?.headingLevels ?? NO_LEVELS}
             findOpen={findOpen}
             onToggleFind={() => setFindOpen((open) => !open)}
@@ -1305,28 +1323,10 @@ export function DocxEditor({
           />
         </>
       }
-      toolbarActions={
-        <ToolbarButton
-          label={source.saving ? '保存中…' : '保存到库'}
-          primary
-          disabled={session === null || !dirty || source.saving}
-          /*
-              禁用必须给原因（DESIGN §8.4）。判据是三件事（还没解析出来 / 没改动 /
-              正在保存），各有各的说法：不区分的话按钮灰着时用户只能猜。其余四种
-              格式都给了（pptx / html / markdown / pdf），这里是漏掉的一处。
-            */
-          disabledReason={
-            session === null ? '文档还没读完' : source.saving ? '正在保存…' : '没有未保存的改动'
-          }
-          onClick={() => void save()}
-        >
-          <SaveIcon />
-        </ToolbarButton>
-      }
       /*
         次工具条：查找替换栏。它**与工具条同包在 sticky 容器里**（见 shell.css）
         ——让 subbar 自己再写一条 `position: sticky; top: 0` 会盖住工具条命令。
-        保存位于底部状态行。没打开时不传这个槽位，不留一条空行。
+        没打开时不传这个槽位，不留一条空行。
       */
       subbar={
         findOpen ? (
@@ -1383,67 +1383,10 @@ export function DocxEditor({
 
 /* ── 工具条 ───────────────────────────────────────────────────── */
 
-interface DocxToolbarSection {
-  label: string
-  content: ReactNode
-  disabledReason?: string
-}
-
-/** Width-independent access to every DOCX command; the direct row only changes priority. */
-function DocxMoreMenu({ sections }: { sections: readonly DocxToolbarSection[] }) {
-  const [section, setSection] = useState<string | null>(null)
-  const panelContent = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const target =
-      section === null
-        ? panelContent.current?.querySelector<HTMLButtonElement>('[role="menuitem"]:not(:disabled)')
-        : panelContent.current?.querySelector<HTMLButtonElement>(
-            '[role="menuitem"][title="返回全部命令"]',
-          )
-    target?.focus()
-  }, [section])
-
-  return (
-    <ToolbarMenu
-      label="更多命令"
-      text="更多"
-      panelWidth={270}
-      renderPanel={() => (
-        <div ref={panelContent}>
-          {section === null ? (
-            sections.map((entry) => (
-              <ToolbarMenuItemRow
-                key={entry.label}
-                item={{
-                  key: entry.label,
-                  label: entry.label,
-                  onSelect: () => setSection(entry.label),
-                  disabled: entry.disabledReason !== undefined,
-                  disabledReason: entry.disabledReason,
-                }}
-              />
-            ))
-          ) : (
-            <>
-              <ToolbarMenuItemRow
-                item={{ key: 'back', label: '返回全部命令', onSelect: () => setSection(null) }}
-              />
-              <ToolbarMenuSeparator />
-              <ToolbarMenuFields label={section}>
-                {sections.find((entry) => entry.label === section)?.content}
-              </ToolbarMenuFields>
-            </>
-          )}
-        </div>
-      )}
-    />
-  )
-}
-
 export interface DocxToolbarProps {
   editor: Editor | null
   disabled: boolean
+  saveAction?: ReactNode
   headingLevels: readonly number[]
   findOpen: boolean
   onToggleFind: () => void
@@ -1463,6 +1406,7 @@ export interface DocxToolbarProps {
 export function DocxToolbar({
   editor,
   disabled,
+  saveAction,
   headingLevels,
   findOpen,
   onToggleFind,
@@ -1517,7 +1461,24 @@ export function DocxToolbar({
     }
   }, [editor, painterArmed])
 
-  if (!editor) return null
+  if (!editor) {
+    return saveAction ? (
+      <CompactToolbar
+        sections={[]}
+        quickAccess={
+          <>
+            {saveAction}
+            <ToolbarButton label="撤销 (Ctrl+Z)" disabled disabledReason="文档还没读完">
+              <UndoIcon />
+            </ToolbarButton>
+            <ToolbarButton label="重做 (Ctrl+Shift+Z)" disabled disabledReason="文档还没读完">
+              <RedoIcon />
+            </ToolbarButton>
+          </>
+        }
+      />
+    ) : null
+  }
 
   const table = tableInfo(editor)
 
@@ -1533,7 +1494,7 @@ export function DocxToolbar({
   styleOptions.push({ value: 'quote', label: '引用' })
 
   const historyControls = (
-    <ToolbarGroup label="历史记录">
+    <>
       <ToolbarButton
         label="撤销 (Ctrl+Z)"
         disabled={disabled || !state.canUndo}
@@ -1550,7 +1511,7 @@ export function DocxToolbar({
       >
         <RedoIcon />
       </ToolbarButton>
-    </ToolbarGroup>
+    </>
   )
   const styleControl = (
     <ToolbarSelect
@@ -1851,7 +1812,6 @@ export function DocxToolbar({
       />
       <ParagraphSpacingMenu editor={editor} state={state} disabled={disabled} />
       <LineRuleMenu editor={editor} state={state} disabled={disabled} />
-      {listControls}
       <ToolbarGroup label="段落位置">
         <ToolbarButton
           label="上移这一段 (Alt+Shift+↑)"
@@ -1872,7 +1832,13 @@ export function DocxToolbar({
       </ToolbarGroup>
     </>
   )
-  const tableControls = <TableMenu editor={editor} table={table} />
+  const tableControls = table ? (
+    <TableMenu editor={editor} table={table} />
+  ) : (
+    <ToolbarButton label="表格操作" disabled disabledReason="将光标放在表格中可编辑表格">
+      <TableIcon />
+    </ToolbarButton>
+  )
   const insertControls = (
     <>
       <ToolbarMenu
@@ -1951,75 +1917,49 @@ export function DocxToolbar({
     </>
   )
 
-  const sections = [
-    { label: '历史记录', content: historyControls },
-    {
-      label: '字体',
-      content: (
-        <>
-          {fontControls}
-          {sizeControls}
-          {additionalFontControls}
-        </>
-      ),
-    },
-    {
-      label: '段落',
-      content: (
-        <>
-          {alignControls}
-          {paragraphControls}
-        </>
-      ),
-    },
-    { label: '插入', content: insertControls },
-    {
-      label: '表格',
-      content: tableControls,
-      disabledReason: table === null ? '将光标放在表格中可编辑表格' : undefined,
-    },
-    { label: '审阅', content: reviewControls },
-    { label: '查找', content: findControl },
-  ]
-
   return (
-    <div className="mimir-docx-toolbar" role="toolbar" aria-label="DOCX 编辑命令">
-      <span className="mimir-docx-toolbar__style">{styleControl}</span>
-      <span className="mimir-docx-toolbar__basic">{basicControls}</span>
-      <span className="mimir-docx-toolbar__size">{sizeControls}</span>
-      <span className="mimir-docx-toolbar__history">{historyControls}</span>
-      <span className="mimir-docx-toolbar__find">{findControl}</span>
-      <span className="mimir-docx-toolbar__align">{alignControls}</span>
-      <span className="mimir-docx-toolbar__lists">{listControls}</span>
-      <span className="mimir-docx-toolbar__categories">
-        <ToolbarMenu
-          label="字体"
-          text="字体"
-          renderPanel={() => (
-            <ToolbarMenuFields label="字体">{sections[1]?.content}</ToolbarMenuFields>
-          )}
-        />
-        <ToolbarMenu
-          label="段落"
-          text="段落"
-          renderPanel={() => (
-            <ToolbarMenuFields label="段落">{sections[2]?.content}</ToolbarMenuFields>
-          )}
-        />
-        <ToolbarMenu
-          label="插入"
-          text="插入"
-          renderPanel={() => <ToolbarMenuFields label="插入">{insertControls}</ToolbarMenuFields>}
-        />
-        {tableControls}
-        <ToolbarMenu
-          label="审阅"
-          text="审阅"
-          renderPanel={() => <ToolbarMenuFields label="审阅">{reviewControls}</ToolbarMenuFields>}
-        />
-      </span>
-      <DocxMoreMenu sections={sections} />
-    </div>
+    <CompactToolbar
+      quickAccess={
+        <>
+          {saveAction}
+          {historyControls}
+        </>
+      }
+      tabs={[
+        { key: 'home', label: '开始' },
+        { key: 'insert', label: '插入' },
+        { key: 'layout', label: '布局' },
+        { key: 'review', label: '审阅' },
+        { key: 'table', label: '表格' },
+        { key: 'view', label: '视图' },
+      ]}
+      sections={[
+        { key: 'style', label: '样式', tab: 'home', minWidth: 0, content: styleControl },
+        { key: 'font', label: '字体选择', tab: 'home', minWidth: 0, content: fontControls },
+        { key: 'size', label: '字级', tab: 'home', minWidth: 0, content: sizeControls },
+        { key: 'marks', label: '常用字形', tab: 'home', minWidth: 0, content: basicControls },
+        {
+          key: 'font-extra',
+          label: '更多字形',
+          tab: 'home',
+          minWidth: 0,
+          content: additionalFontControls,
+        },
+        { key: 'alignment', label: '对齐', tab: 'home', minWidth: 0, content: alignControls },
+        { key: 'lists', label: '项目符号', tab: 'home', minWidth: 0, content: listControls },
+        {
+          key: 'insert',
+          label: '表格、图片与链接',
+          tab: 'insert',
+          minWidth: 0,
+          content: insertControls,
+        },
+        { key: 'paragraph', label: '段落', tab: 'layout', minWidth: 0, content: paragraphControls },
+        { key: 'review', label: '修订与拼写', tab: 'review', minWidth: 0, content: reviewControls },
+        { key: 'table', label: '表格操作', tab: 'table', minWidth: 0, content: tableControls },
+        { key: 'find', label: '查找与替换', tab: 'view', minWidth: 0, content: findControl },
+      ]}
+    />
   )
 }
 

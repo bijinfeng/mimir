@@ -75,8 +75,6 @@ import {
 export interface EditorShellProps {
   /** 顶栏（工具条）。一般不直接放裸子元素，用下面的控件原语摆 */
   toolbar?: ReactNode
-  /** 底部状态行右端常驻的主操作；沿用各编辑器传入的保存按钮 */
-  toolbarActions?: ReactNode
   /**
    * 次工具条（工具条下面那一行）。查找替换栏、pptx 的幻灯片导航、xlsx 的
    * 公式栏都落在这里。
@@ -117,7 +115,7 @@ export interface EditorShellProps {
 /**
  * 外壳本体。
  *
- * 五层自上而下：`toolbar` → `subbar` → `children` → `footer` → `status`（含右侧 `toolbarActions`）
+ * 五层自上而下：`toolbar` → `subbar` → `children` → `footer` → `status`
  * （工具条与次工具条同包在一条 sticky 容器里，所以视觉上是四行）。
  * 没传的槽位不渲染——**不留空占位**：一条空的次工具条会让人以为这里本来
  * 应该有东西而没显示出来。
@@ -139,7 +137,6 @@ export interface EditorShellProps {
  */
 export function EditorShell({
   toolbar,
-  toolbarActions,
   subbar,
   children,
   footer,
@@ -176,12 +173,9 @@ export function EditorShell({
           <div className="mimir-editor__body">{children}</div>
         )}
         {footer !== undefined && <div className="mimir-editor__footer">{footer}</div>}
-        {(status !== undefined || toolbarActions !== undefined) && (
+        {status !== undefined && (
           <div className="mimir-editor__status">
-            {status !== undefined && <div className="mimir-editor__status-content">{status}</div>}
-            {toolbarActions !== undefined && (
-              <div className="mimir-editor__status-actions">{toolbarActions}</div>
-            )}
+            <div className="mimir-editor__status-content">{status}</div>
           </div>
         )}
       </div>
@@ -382,7 +376,6 @@ export function ToolbarDivider() {
  * 撑开剩余空间，把后面的内容推到右边。
  *
  * 只在普通工具内容或附属面板里需要弹性占位时使用。
- * 主保存动作走 `toolbarActions` 槽位，放在底部状态行右端。
  */
 export function ToolbarSpacer() {
   return <span className="me-spacer" />
@@ -670,6 +663,9 @@ export interface ToolbarSelectProps<T extends string> {
  *     会直接红（实测 9 个下拉 → 9 个 "down"）。
  *  3. **`title` 要一起给**：工具条上唯一的悬停说明就是它，漏了就只剩读屏
  *     知道这是什么。
+ *  4. **选项列表不跟随触发器变窄**：Ribbon 里的「正文」「等线」等触发器
+ *     只有六十几像素；默认的 `popupMatchSelectWidth` 会让弹层同宽，把选项截成
+ *     「标…」「微…」。弹层按内容展开，并保留一个可读的最小宽度。
  *
  * ## 下拉弹层会 portal 到 body（**这一条是显式例外**）
  *
@@ -702,6 +698,8 @@ export function ToolbarSelect<T extends string>({
       aria-label={label}
       title={label}
       virtual={false}
+      popupMatchSelectWidth={false}
+      styles={{ popup: { root: { minWidth: 180, maxWidth: 'calc(100vw - 16px)' } } }}
       // 值不在选项里时把 value 交给 placeholder——**不要传原值当 value**：
       // antd 会把原值原样显示出来，而不在档位里时那往往是一个内部单位
       // （docx 的字号存半磅，直接显示 22 而用户填的是 11 磅）

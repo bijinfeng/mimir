@@ -139,6 +139,97 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       }
     }
   `,
+  /* Only the document header's organization menu. The popup is portalled to body,
+     so its class belongs on Dropdown rather than on the header subtree. */
+  docMenu: css`
+    .${prefixCls}-dropdown-menu {
+      min-width: min(232px, calc(100vw - 16px));
+      max-width: min(320px, calc(100vw - 16px));
+      padding: 6px;
+      border: 1px solid ${token.colorBorderSecondary};
+      border-radius: ${token.borderRadiusLG}px;
+      box-shadow: ${token.boxShadowSecondary};
+    }
+
+    .${prefixCls}-dropdown-menu-item,
+    .${prefixCls}-dropdown-menu-submenu-title {
+      min-height: 38px;
+      padding: 7px 10px;
+      border-radius: ${token.borderRadiusSM}px;
+      color: ${token.colorText};
+      font-size: ${FONT_SIZE.item}px;
+      line-height: 1.4;
+    }
+
+    .${prefixCls}-dropdown-menu-item-icon {
+      display: inline-flex;
+      align-items: center;
+      color: ${token.colorTextSecondary};
+    }
+
+    .${prefixCls}-dropdown-menu-item .${prefixCls}-dropdown-menu-title-content {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .${prefixCls}-dropdown-menu-item-active,
+    .${prefixCls}-dropdown-menu-submenu-active > .${prefixCls}-dropdown-menu-submenu-title {
+      background: ${token.colorFillTertiary};
+    }
+
+    .${prefixCls}-dropdown-menu-item:focus-visible,
+    .${prefixCls}-dropdown-menu-submenu-title:focus-visible {
+      outline: 2px solid ${token.colorPrimaryBorder};
+      outline-offset: -2px;
+    }
+
+    .${prefixCls}-dropdown-menu-item-divider {
+      margin: 6px 8px 3px;
+      background: ${token.colorBorderSecondary};
+    }
+
+    .${prefixCls}-dropdown-menu-item-group-title {
+      padding: 5px 10px 4px;
+      color: ${token.colorTextTertiary};
+      font-size: ${FONT_SIZE.note}px;
+    }
+
+    [data-doc-menu-row] {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      max-width: 170px;
+      gap: 2px;
+    }
+
+    [data-doc-menu-row='tags'] {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    [data-doc-menu-detail] {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: ${token.colorTextTertiary};
+      font-size: ${FONT_SIZE.note}px;
+    }
+
+    [data-doc-menu-group] {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    [data-doc-menu-cost] {
+      color: ${token.colorTextSecondary};
+      font-size: ${FONT_SIZE.note}px;
+      font-weight: 400;
+    }
+  `,
   /* Same quiet, borderless back action for notes, files and read-only documents. */
   back: css`
     display: inline-flex;
@@ -274,92 +365,6 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
    * （transition 让它滑出），里面的内容保持挂载——流式进行中关掉再打开，
    * 回答还在继续。内层固定 400px，折起时内容不被压扁。
    */
-  /* ── 侧栏空态的使用指南（D-090）────────────────────────── */
-
-  /*
-   * 横向内边距由 `--mimir-chat-gutter` 提供（ChatPanel 的 inner），
-   * 这里只管纵向节奏——两处都加会在侧栏里叠出双倍左缩进。
-   *
-   * 顶部给 0：滚动区自己已经有 24px 上边距，再加上这里的 16px 就是
-   * 从面板顶到问候语之间空 88px（48 头部 + 24 + 16）——在 400px 宽的
-   * 面板里那是很显眼的一段空白。底部留 8，与滚动区的 16 合成 24。
-   */
-  guide: css`
-    padding: 0 0 8px;
-  `,
-
-  guideHello: css`
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: ${FONT_SIZE.body}px;
-    font-weight: 600;
-    color: ${token.colorText};
-    margin-bottom: 8px;
-  `,
-
-  guideLead: css`
-    margin: 0 0 16px;
-    font-size: ${FONT_SIZE.note}px;
-    line-height: 1.75;
-    color: ${token.colorTextSecondary};
-  `,
-
-  /**
-   * 能力清单的卡片。底色比面板浅一档（fill 档而不是容器色）——
-   * 它是一块「说明」，与聊天内容区分开；不用警示色，这里没有异常。
-   */
-  guideCard: css`
-    padding: 16px 18px;
-    border: 1px solid ${token.colorBorderSecondary};
-    border-radius: ${token.borderRadius}px;
-    background: ${token.colorFillQuaternary};
-    margin-bottom: 16px;
-  `,
-
-  guideCardTitle: css`
-    font-size: ${FONT_SIZE.note}px;
-    font-weight: 600;
-    color: ${token.colorText};
-    margin-bottom: 8px;
-  `,
-
-  guideList: css`
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-
-    li {
-      display: grid;
-      grid-template-columns: 2px 1fr;
-      column-gap: 12px;
-      font-size: ${FONT_SIZE.note}px;
-      line-height: 1.6;
-    }
-
-    b {
-      color: ${token.colorText};
-      font-weight: 600;
-    }
-  `,
-
-  /** 每个要点前的细色条，与工作区选中态使用同一语义色。 */
-  guideDot: css`
-    width: 2px;
-    height: 100%;
-    border-radius: 2px;
-    background: ${token.colorLink};
-  `,
-
-  /** 要点的第二行说明。与标题同一格（第二列），自然换行 */
-  guideItemDesc: css`
-    grid-column: 2;
-    color: ${token.colorTextTertiary};
-  `,
-
   /**
    * 快捷提问：一排可点的胶囊，点一下直接发出。
    *
@@ -453,6 +458,14 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     font-size: ${FONT_SIZE.note}px;
     font-weight: 600;
     color: ${token.colorTextSecondary};
+  `,
+
+  aiSidebarStatus: css`
+    flex: none;
+    padding: 10px 16px;
+    border-bottom: 1px solid ${token.colorBorderSecondary};
+    color: ${token.colorTextSecondary};
+    font-size: ${FONT_SIZE.note}px;
   `,
 
   aiSidebarBody: css`

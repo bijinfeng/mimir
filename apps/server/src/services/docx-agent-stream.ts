@@ -1,14 +1,13 @@
 import { maxIterations, toServerSentEventsResponse } from '@tanstack/ai'
 import type { StreamChunk } from '@tanstack/ai'
 import {
-  DOCX_BRAVE_TOOLS,
-  DOCX_LOCAL_TOOLS,
-  DOCX_IMAGE_TOOLS,
-  DOCX_MEDIA_TOOLS,
-  DOCX_CLIENT_TOOL_OUTPUT_SCHEMA,
-  EVENT_CONVERSATION,
+  documentAgentCanvasSupported,
+  documentAgentRoundSchema,
+  EVENT_FAILURE,
 } from '@mimir/shared'
-import { appendMessage, createConversation, ensureTitle, getConversation } from './conversations.js'
+import type { FailureKind } from '@mimir/shared'
+import { classifyFailure } from './chat-failure.js'
+import { appendMessage, ensureTitle, getConversation } from './conversations.js'
 import {
   consumeDocxInterrupt,
   releaseDocxInterrupt,
@@ -16,19 +15,12 @@ import {
   settleDocxInterrupt,
 } from './docx-agent-runs.js'
 import { getDocument } from './documents.js'
-import { braveImageSearch, braveSearchReady, braveWebSearch } from './docx-brave-search.js'
-import { docxImageReady } from './docx-image-generation.js'
-import { docxMediaReadiness } from './docx-media-analysis.js'
+import { documentAgentCatalog } from './document-agent-catalog.js'
+import type { DocumentAgentCatalog } from './document-agent-catalog.js'
+import { documentAgentFormatOf } from './document-agent-format.js'
 import { modelReady, streamChat as streamModelChat } from './model.js'
-import type { ModelCallOptions } from './model.js'
 
 type ParsedRun = Awaited<ReturnType<typeof import('@tanstack/ai').chatParamsFromRequestBody>>
-
-const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-const SYSTEM_PROMPT = `你是 Mimir 的 DOCX 文档编辑助手。只能用提供的工具读取和修改当前打开的文档。
-开始编辑前读取当前画布；画布可能有尚未保存的改动。用户选区以本轮冻结的选区为准。
-每次工具结果以真实成功或失败为准。工具失败、取消或未执行时，不得声称已经修改文档。
-编辑只更新画布，用户需要手动保存。回答要简洁，并说明实际修改了什么。`
 
 function fail(status: number, code: string, message: string): Response {
   return new Response(JSON.stringify({ error: { code, message } }), {
@@ -38,6 +30,8 @@ function fail(status: number, code: string, message: string): Response {
 }
 
 function modelCapabilityError(message: string): string {
+  if (/This account only allows Codex official clients/i.test(message))
+    return '当前模型账号只允许 Codex 官方客户端，Mimir 无法调用。请在模型设置中改用允许第三方客户端的凭据'
   if (
     /(tool|function).*(not supported|unsupported|does not support|not available|不支持)|(?:not supported|unsupported|does not support).*(tool|function)/i.test(
       message,
@@ -97,55 +91,55 @@ function clientInterrupts(chunk: StreamChunk): Array<{ id: string; name: string 
   return tools.every((tool): tool is { id: string; name: string } => tool !== null) ? tools : null
 }
 
-/** Dedicated TanStack-owned AG-UI lifecycle for the DOCX agent. */
-export async function streamDocxAgent(parsed: ParsedRun): Promise<Response> {
+/** TanStack-owned AG-UI lifecycle shared by registered document editors. */
+export async function streamDocxAgent(
+  parsed: ParsedRun,
+  catalogForFormat: (
+    format: DocumentAgentCatalog['format'],
+  ) => Promise<DocumentAgentCatalog | null> = documentAgentCatalog,
+): Promise<Response> {
   const props = propsOf(parsed)
-  const documentId = props.documentId
   const conversationProp = props.conversationId
-  const roundId = props.docxRoundId
-  const version = props.docxVersion
-  const context = props.docxContext
+  const legacy = props.docxAgent === true && props.documentAgent !== true
+  const parsedRound = documentAgentRoundSchema.safeParse({
+    format: legacy ? 'docx' : props.agentFormat,
+    documentId: props.documentId,
+    roundId: legacy ? props.docxRoundId : props.agentRoundId,
+    version: legacy ? props.docxVersion : props.agentVersion,
+    context: legacy ? props.docxContext : props.agentContext,
+  })
   const question = questionOf(parsed.messages)
 
-  if (
-    typeof documentId !== 'string' ||
-    typeof roundId !== 'string' ||
-    roundId.length < 1 ||
-    roundId.length > 100 ||
-    !Number.isSafeInteger(version) ||
-    (version as number) < 0 ||
-    typeof context !== 'object' ||
-    context === null
-  ) {
-    return fail(400, 'DOCX_AGENT_INVALID', '缺少当前 DOCX 画布上下文')
-  }
-  const docxDocumentId = documentId as string
-  const docxRoundId = roundId as string
+  if (!parsedRound.success) return fail(400, 'DOCUMENT_AGENT_INVALID', '缺少当前文档画布上下文')
+  const { documentId, format, roundId, version, context } = parsedRound.data
   const contextText = JSON.stringify(context)
   if (contextText.length > 100_000)
     return fail(413, 'DOCX_AGENT_CONTEXT_TOO_LARGE', '文档上下文超过本轮限制')
   if (parsed.messages.length > 100)
     return fail(413, 'DOCX_AGENT_HISTORY_TOO_LARGE', '对话历史超过本轮限制')
 
-  const document = await getDocument(docxDocumentId)
-  if (!document || document.kind !== 'file' || document.mime !== DOCX_MIME) {
-    return fail(404, 'DOCX_NOT_FOUND', '当前文档不是可编辑的 DOCX 文件')
-  }
+  const document = await getDocument(documentId)
+  if (!document || documentAgentFormatOf(document) !== format)
+    return fail(404, 'DOCUMENT_AGENT_NOT_FOUND', '当前文档格式与编辑会话不匹配')
+  if (!documentAgentCanvasSupported(document))
+    return fail(422, 'DOCUMENT_AGENT_UNAVAILABLE', '当前文件没有可执行编辑工具的画布')
+  const catalog = await catalogForFormat(format)
+  if (!catalog) return fail(422, 'DOCUMENT_AGENT_UNAVAILABLE', '当前格式尚未接入 Agent 编辑器')
+  const activeCatalog = catalog
   if (!(await modelReady('chat'))) return fail(422, 'MODEL_NOT_READY', '请先配置可用的聊天模型')
 
   const resume = parsed.resume
   const resuming = Array.isArray(resume) && resume.length > 0
   if (!resuming && !question) return fail(400, 'INVALID_INPUT', '没有找到用户消息')
 
-  let conversationId: string
-  let isNew = false
-  if (typeof conversationProp === 'string' && (await getConversation(conversationProp))) {
-    conversationId = conversationProp
-  } else if (resuming) {
-    return fail(409, 'DOCX_AGENT_STALE', '续轮的对话已不存在')
-  } else {
-    conversationId = (await createConversation()).id
-    isNew = true
+  // Tool runs can resume in another HTTP request. Require the persisted
+  // conversation up front so a provisional AG-UI thread cannot orphan one.
+  if (typeof conversationProp !== 'string' || !(await getConversation(conversationProp))) {
+    return fail(409, 'DOCX_AGENT_STALE', '文档编辑会话已不存在，请重新提问')
+  }
+  const conversationId = conversationProp
+  if (parsed.threadId !== conversationId) {
+    return fail(400, 'DOCX_AGENT_RESUME_INVALID', '对话线程与编辑会话不匹配')
   }
 
   let parentRunId: string | undefined
@@ -156,9 +150,12 @@ export async function streamDocxAgent(parsed: ParsedRun): Promise<Response> {
       parentRunId =
         (await consumeDocxInterrupt({
           conversationId,
-          documentId: docxDocumentId,
-          roundId: docxRoundId,
+          documentId,
+          format,
+          version,
+          roundId,
           interruptIds: ids,
+          responses: resume,
         })) ?? undefined
     } catch {
       return fail(400, 'DOCX_AGENT_RESUME_INVALID', '工具续轮参数无效')
@@ -168,50 +165,6 @@ export async function streamDocxAgent(parsed: ParsedRun): Promise<Response> {
     await ensureTitle(conversationId, question)
     await appendMessage({ conversationId, role: 'user', text: question.slice(0, 8_000) })
   }
-
-  const mediaReady = await docxMediaReadiness()
-  const mediaKinds = [
-    ...(mediaReady.vision ? ['image', 'video'] : []),
-    ...(mediaReady.audio ? ['audio'] : []),
-  ]
-  const tools = [
-    ...DOCX_LOCAL_TOOLS.map((tool) => ({
-      name: tool.name,
-      description: tool.description,
-      inputSchema: tool.inputSchema,
-      outputSchema: DOCX_CLIENT_TOOL_OUTPUT_SCHEMA,
-    })),
-    ...((await docxImageReady())
-      ? DOCX_IMAGE_TOOLS.map((tool) => ({
-          name: tool.name,
-          description: tool.description,
-          inputSchema: tool.inputSchema,
-          outputSchema: DOCX_CLIENT_TOOL_OUTPUT_SCHEMA,
-        }))
-      : []),
-    ...(mediaKinds.length
-      ? DOCX_MEDIA_TOOLS.map((tool) => ({
-          name: tool.name,
-          description: tool.description,
-          inputSchema: {
-            ...tool.inputSchema,
-            properties: {
-              ...tool.inputSchema.properties,
-              kind: { type: 'string', enum: mediaKinds },
-            },
-          },
-          outputSchema: DOCX_CLIENT_TOOL_OUTPUT_SCHEMA,
-        }))
-      : []),
-    ...((await braveSearchReady())
-      ? DOCX_BRAVE_TOOLS.map((tool) => ({
-          name: tool.name,
-          description: tool.description,
-          inputSchema: tool.inputSchema,
-          execute: tool.name === 'web_search' ? braveWebSearch : braveImageSearch,
-        }))
-      : []),
-  ] as unknown as NonNullable<ModelCallOptions['tools']>
 
   let stream: Awaited<ReturnType<typeof streamModelChat>>
   try {
@@ -225,11 +178,11 @@ export async function streamDocxAgent(parsed: ParsedRun): Promise<Response> {
       ...(parentRunId ? { parentRunId } : {}),
       ...(resuming ? { resume } : {}),
       agentLoopStrategy: maxIterations(12),
-      tools,
+      tools: activeCatalog.tools,
       messages: parsed.messages,
       systemPrompts: [
-        SYSTEM_PROMPT,
-        `当前 DOCX：${document.title}（${document.id}）\n画布版本：${version}\n当前画布：${contextText}`,
+        activeCatalog.systemPrompt,
+        `当前 ${format.toUpperCase()}：${document.title}（${document.id}）\n画布版本：${version}\n当前画布：${contextText}`,
       ],
     })
   } catch (error) {
@@ -241,29 +194,36 @@ export async function streamDocxAgent(parsed: ParsedRun): Promise<Response> {
 
   async function* events(): AsyncGenerator<StreamChunk> {
     let answer = ''
-    let started = false
     let interrupted = false
+    // A resumed TanStack tool turn may emit tool-result or middleware chunks
+    // before its provider's RUN_STARTED. Own the AG-UI lifecycle at this HTTP
+    // boundary so every response starts correctly, regardless of SDK order.
+    yield { type: 'RUN_STARTED', runId: parsed.runId, threadId: conversationId } as StreamChunk
     for await (const chunk of stream) {
-      if (chunk.type === 'RUN_STARTED') {
-        started = true
-        yield chunk
-        if (isNew) {
-          yield {
-            type: 'CUSTOM',
-            name: EVENT_CONVERSATION,
-            value: { conversationId },
-          } as StreamChunk
-        }
-        continue
-      }
-      if (!started) throw new Error('DOCX agent 模型流缺少 RUN_STARTED')
+      if (chunk.type === 'RUN_STARTED') continue
       if (chunk.type === 'RUN_ERROR') {
-        yield { ...chunk, message: modelCapabilityError(chunk.message) }
-        continue
+        const message = modelCapabilityError(chunk.message)
+        const failure: FailureKind = /只允许 Codex 官方客户端|不支持工具调用/.test(message)
+          ? 'quota'
+          : classifyFailure(new Error(message))
+        if (!answer.trim()) {
+          const messageId = `${parsed.runId}-model-error`
+          yield { type: 'TEXT_MESSAGE_START', messageId, role: 'assistant' } as StreamChunk
+          yield { type: 'TEXT_MESSAGE_CONTENT', messageId, delta: message } as StreamChunk
+          yield { type: 'TEXT_MESSAGE_END', messageId } as StreamChunk
+        }
+        await appendMessage({ conversationId, role: 'assistant', text: answer || message, failure })
+        yield { type: 'CUSTOM', name: EVENT_FAILURE, value: { failure, message } } as StreamChunk
+        yield { ...chunk, message }
+        return
       }
       if (chunk.type === 'TEXT_MESSAGE_CONTENT') answer += chunk.delta
       const clientTools = clientInterrupts(chunk)
       if (clientTools !== null) {
+        if (clientTools.some((tool) => !activeCatalog.clientToolNames.has(tool.name))) {
+          yield { type: 'RUN_ERROR', message: '模型请求了当前文档不允许的编辑工具' } as StreamChunk
+          return
+        }
         const message = await appendMessage({
           conversationId,
           role: 'assistant',
@@ -272,8 +232,10 @@ export async function streamDocxAgent(parsed: ParsedRun): Promise<Response> {
         await rememberDocxInterrupt({
           runId: parsed.runId,
           conversationId,
-          documentId: docxDocumentId,
-          roundId: docxRoundId,
+          documentId,
+          format,
+          version,
+          roundId,
           messageId: message.id,
           interruptIds: clientTools.map((tool) => tool.id),
           tools: clientTools.map((tool) => ({

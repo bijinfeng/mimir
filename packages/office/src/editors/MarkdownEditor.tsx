@@ -59,21 +59,38 @@
  * 改一下就掉级）。取舍记在 `.trellis/spec/project/decisions.md` 的 D-059。
  */
 
-import type { Editor, Extensions } from '@tiptap/core'
-import type { ReactNode } from 'react'
+import type { Editor, Extensions, Range } from '@tiptap/core'
+import {
+  createMarkdownAgentHandle,
+  type MarkdownAgentHandle,
+  type MarkdownAgentServices,
+} from '../agent/markdown-agent.js'
+import { blockIndexRange, moveSelectedBlocks, uiOp } from '../agent/markdown-ops.js'
+import { markdownFindAdapter } from './markdown-find.js'
+import {
+  MarkdownSlash,
+  type MarkdownSlashController,
+  type MarkdownSlashState,
+} from './markdown-slash.js'
+import type { FindOptions } from '../shims/ui.js'
+import type { Dispatch, ReactNode, SetStateAction } from 'react'
 import { EditorContent, useEditor, useEditorState } from '@tiptap/react'
 import { useEffect, useRef, useState } from 'react'
 import {
   EditorShell,
+  FindReplaceBar,
   ToolbarButton,
   ToolbarFileButton,
   ToolbarGroup,
   ToolbarLabel,
   ToolbarMenu,
+  ToolbarMenuItemRow,
   ToolbarNumberField,
   ToolbarSelect,
   ToolbarTextButton,
+  ToolbarTextArea,
   ToolbarTextField,
+  useFindHotkey,
   useToolbarState,
   type ToolbarMenuItem,
   type ToolbarSelectOption,
@@ -96,6 +113,7 @@ import {
   CodeIcon,
   HorizontalRuleIcon,
   ImageIcon,
+  FindIcon,
   IndentIcon,
   ItalicIcon,
   LinkIcon,
@@ -115,6 +133,7 @@ import {
   hasMark,
   hasNode,
   runCommand,
+  runCommandChain,
   toggleMarkByName,
 } from '../shell/editor-commands.js'
 import {
@@ -148,6 +167,115 @@ import './markdown-dialect.js'
 
 /** 防抖窗口。连续敲字期间不发请求 */
 const SAVE_DEBOUNCE_MS = 900
+
+/** A transient picker for the slash command; cancel leaves the note untouched. */
+function chooseSlashImage(onPick: (file: File) => void, onCancel: () => void): void {
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = 'image/*'
+  input.hidden = true
+  document.body.append(input)
+  const cleanup = () => input.remove()
+  input.addEventListener(
+    'change',
+    () => {
+      const file = input.files?.[0]
+      cleanup()
+      if (file) onPick(file)
+      else onCancel()
+    },
+    { once: true },
+  )
+  input.addEventListener(
+    'cancel',
+    () => {
+      cleanup()
+      onCancel()
+    },
+    { once: true },
+  )
+  try {
+    input.click()
+  } catch (cause) {
+    cleanup()
+    throw cause
+  }
+}
+
+async function uploadMarkdownImage(
+  editor: Editor,
+  file: File,
+  upload: (file: File) => Promise<MarkdownImageUpload>,
+  setActionError: (message: string | null) => void,
+  slash?: { range: Range; stillCurrent: () => boolean },
+): Promise<void> {
+  setActionError(null)
+  try {
+    const uploaded = await upload(file)
+    if (editor.isDestroyed || (slash && !slash.stillCurrent())) {
+      setActionError('图片已上传，但笔记内容已变化；请在当前位置重新插入')
+      return
+    }
+    const attributes = { src: uploaded.url, alt: uploaded.name }
+    const inserted = slash
+      ? runCommandChain(editor, [
+          { name: 'deleteRange', args: [slash.range] },
+          { name: 'setImage', args: [attributes] },
+        ])
+      : runCommand(editor, 'setImage', attributes)
+    if (!inserted) setActionError('这个方言没有图片命令，插图没有生效')
+  } catch (cause) {
+    const reason = cause instanceof Error ? cause.message : String(cause)
+    setActionError(`插图失败：${reason}（图片没有插入）`)
+  }
+}
+
+function createSlashController(
+  documentId: string,
+  setState: Dispatch<SetStateAction<{ documentId: string; state: MarkdownSlashState } | null>>,
+  setSelection: Dispatch<SetStateAction<number>>,
+): MarkdownSlashController {
+  let currentState: MarkdownSlashState | null = null
+  let selected = 0
+  const show = (next: MarkdownSlashState) => {
+    currentState = next
+    selected = 0
+    setSelection(0)
+    setState({ documentId, state: next })
+  }
+  return {
+    open: show,
+    update: show,
+    close: () => {
+      currentState = null
+      selected = 0
+      setState(null)
+    },
+    keyDown: (event) => {
+      const current = currentState
+      if (!current) return false
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        const count = current.items.length
+        const next =
+          count === 0 ? 0 : (selected + (event.key === 'ArrowDown' ? 1 : -1) + count) % count
+        selected = next
+        setSelection(next)
+        return true
+      }
+      if (event.key === 'Enter') {
+        const item = current.items[selected]
+        if (item) current.command(item)
+        return true
+      }
+      if (event.key === 'Escape') {
+        currentState = null
+        setState(null)
+        return true
+      }
+      return false
+    },
+  }
+}
 
 /** 段落样式下拉的文案。九个取值，照上游 GenOffice 的 Ribbon（`Ribbon.tsx:58-69`） */
 const STYLE_LABEL: Record<ParagraphStyle, string> = {
@@ -265,6 +393,9 @@ export interface MarkdownEditorProps {
    * 笔记膨胀十倍，而且没有任何东西在守它。
    */
   onUploadImage?: (file: File) => Promise<MarkdownImageUpload>
+  /** Agent tools operate on this same live Tiptap canvas. */
+  onAgentHandleChange?: (handle: MarkdownAgentHandle | null) => void
+  agentServices?: MarkdownAgentServices
   /** 贴边模式：编辑器已经在面板里，不要再套一层外框 */
   flush?: boolean
 }
@@ -288,6 +419,8 @@ export function MarkdownEditor({
   rewriting,
   bodySide,
   onUploadImage,
+  onAgentHandleChange,
+  agentServices,
   flush = false,
 }: MarkdownEditorProps) {
   const [state, setState] = useState<SaveState>('idle')
@@ -295,6 +428,18 @@ export function MarkdownEditor({
   /** 插图这类**工具条动作**的失败。与保存失败分开：两者的处置完全不同 */
   const [actionError, setActionError] = useState<string | null>(null)
   const [dirty, setDirty] = useState(false)
+  const [findOpen, setFindOpen] = useState(false)
+  const [slashUi, setSlashState] = useState<{
+    documentId: string
+    state: MarkdownSlashState
+  } | null>(null)
+  const [slashSelection, setSlashSelection] = useState(0)
+  const slashState = slashUi?.documentId === documentId ? slashUi.state : null
+  const [findQuery, setFindQuery] = useState('')
+  const [findOptions, setFindOptions] = useState<FindOptions>({
+    matchCase: false,
+    wholeWord: false,
+  })
   /**
    * 拼写检查。
    *
@@ -310,6 +455,15 @@ export function MarkdownEditor({
   const changeVersionRef = useRef(0)
   const savedVersionRef = useRef(0)
   const saveFlightRef = useRef<Promise<boolean> | null>(null)
+  const agentHandleRef = useRef<MarkdownAgentHandle | null>(null)
+  const agentCallbackRef = useRef(onAgentHandleChange)
+  const agentServicesRef = useRef(agentServices)
+  const onDirtyChangeRef = useRef(onDirtyChange)
+  useEffect(() => {
+    agentCallbackRef.current = onAgentHandleChange
+    agentServicesRef.current = agentServices
+    onDirtyChangeRef.current = onDirtyChange
+  })
   const [pickerResult, setPickerResult] = useState<{
     token: string
     items: Array<{ id: string; title: string }>
@@ -359,7 +513,36 @@ export function MarkdownEditor({
 
   const editor = useEditor(
     {
-      extensions,
+      extensions: [
+        ...extensions,
+        MarkdownSlash.configure({
+          controller: createSlashController(documentId, setSlashState, setSlashSelection),
+          imageUploadEnabled: () => onUploadImage !== undefined,
+          onImageRequest: (slashEditor, range) => {
+            if (!onUploadImage) return
+            const sourceDoc = slashEditor.state.doc
+            const query = sourceDoc.textBetween(range.from, range.to)
+            try {
+              chooseSlashImage(
+                (file) => {
+                  void uploadMarkdownImage(slashEditor, file, onUploadImage, setActionError, {
+                    range,
+                    // A picker can outlive an unrelated user or Agent edit.
+                    // Never use stale offsets to insert into a changed document.
+                    stillCurrent: () =>
+                      slashEditor.state.doc === sourceDoc &&
+                      slashEditor.state.doc.textBetween(range.from, range.to) === query,
+                  })
+                },
+                () => slashEditor.commands.focus(),
+              )
+            } catch (cause) {
+              const reason = cause instanceof Error ? cause.message : String(cause)
+              setActionError(`无法打开图片选择器：${reason}`)
+            }
+          },
+        }),
+      ],
       content: snapshot.body,
       contentType: 'markdown',
       editable: true,
@@ -432,6 +615,8 @@ export function MarkdownEditor({
      */
     [snapshot],
   )
+  const findAdapter = editor ? markdownFindAdapter(editor) : null
+  useFindHotkey(() => setFindOpen(true))
 
   const wikiToken = useToolbarState(editor, wikiMatchAtCaret)
   const wikiMatch = wikiToken ? (JSON.parse(wikiToken) as WikiMatch) : null
@@ -502,6 +687,7 @@ export function MarkdownEditor({
         try {
           await onSaveRef.current(markdown)
           savedVersionRef.current = version
+          agentHandleRef.current?.markSaved()
         } catch (cause) {
           setState('error')
           setError(cause instanceof Error ? cause.message : String(cause))
@@ -527,6 +713,27 @@ export function MarkdownEditor({
   useEffect(() => {
     saveNowRef.current = saveNow
   })
+
+  useEffect(() => {
+    if (!editor) return
+    const handle = createMarkdownAgentHandle(editor, documentId, {
+      isDirty: () => dirtyRef.current,
+      onDirtyChange: (next) => {
+        dirtyRef.current = next
+        setDirty(next)
+        onDirtyChangeRef.current?.(next)
+      },
+      ...(agentServicesRef.current ? { services: agentServicesRef.current } : {}),
+      flushBody: () => saveNowRef.current(),
+    })
+    agentHandleRef.current = handle
+    agentCallbackRef.current?.(handle)
+    return () => {
+      handle.dispose()
+      if (agentHandleRef.current === handle) agentHandleRef.current = null
+      agentCallbackRef.current?.(null)
+    }
+  }, [editor, documentId])
 
   /** 把「立即保存」交给宿主，供「保存并离开」用。卸载时撤回 */
   useEffect(() => {
@@ -566,16 +773,7 @@ export function MarkdownEditor({
    */
   const insertImage = async (file: File) => {
     if (onUploadImage === undefined || editor === null) return
-    setActionError(null)
-    try {
-      const uploaded = await onUploadImage(file)
-      if (!runCommand(editor, 'setImage', { src: uploaded.url, alt: uploaded.name })) {
-        setActionError('这个方言没有图片节点，插图没有生效')
-      }
-    } catch (cause) {
-      const reason = cause instanceof Error ? cause.message : String(cause)
-      setActionError(`插图失败：${reason}（图片没有插入）`)
-    }
+    await uploadMarkdownImage(editor, file, onUploadImage, setActionError)
   }
 
   /**
@@ -630,33 +828,47 @@ export function MarkdownEditor({
         <>
           <MarkdownToolbar
             editor={editor}
+            saveAction={
+              <ToolbarButton
+                label={
+                  state === 'saving'
+                    ? '正在保存…'
+                    : state === 'saved'
+                      ? '已保存'
+                      : state === 'error'
+                        ? '重试保存'
+                        : '立即保存'
+                }
+                disabled={!dirty || state === 'saving'}
+                disabledReason={state === 'saving' ? '正在保存，请稍候' : '没有未保存的改动'}
+                onClick={() => void saveNowRef.current()}
+              >
+                <SaveIcon />
+              </ToolbarButton>
+            }
             spellCheck={spellCheck}
             onToggleSpellCheck={toggleSpellCheck}
             searchNotes={searchNotes}
             onPickImage={onUploadImage === undefined ? undefined : (file) => void insertImage(file)}
+            frontmatter={agentServices}
+            findOpen={findOpen}
+            onToggleFind={() => setFindOpen((current) => !current)}
           />
         </>
       }
-      toolbarActions={
-        <ToolbarButton
-          label={
-            state === 'saving'
-              ? '正在保存…'
-              : state === 'saved'
-                ? '已保存'
-                : state === 'error'
-                  ? '重试保存'
-                  : '立即保存'
-          }
-          primary
-          disabled={!dirty || state === 'saving'}
-          disabledReason={state === 'saving' ? '正在保存，请稍候' : '没有未保存的改动'}
-          onClick={() => void saveNowRef.current()}
-        >
-          <SaveIcon />
-        </ToolbarButton>
-      }
       {...(bodySide !== undefined ? { bodySide } : {})}
+      subbar={
+        findOpen ? (
+          <FindReplaceBar
+            adapter={findAdapter}
+            query={findQuery}
+            onQueryChange={setFindQuery}
+            options={findOptions}
+            onOptionsChange={setFindOptions}
+            onClose={() => setFindOpen(false)}
+          />
+        ) : undefined
+      }
       status={
         <>
           {/*
@@ -691,6 +903,34 @@ export function MarkdownEditor({
           onPick={pickNote}
         />
       )}
+      {slashState?.rect && (
+        <div
+          className="mimir-markdown-slash me-menu__panel"
+          role="menu"
+          aria-label="插入内容"
+          style={{
+            position: 'fixed',
+            top: Math.min(slashState.rect.bottom + 4, window.innerHeight - 320),
+            left: Math.max(8, Math.min(slashState.rect.left, window.innerWidth - 224)),
+          }}
+        >
+          {slashState.items.length === 0 ? (
+            <div className="mimir-markdown-slash__empty">没有匹配的命令</div>
+          ) : (
+            slashState.items.map((item, index) => (
+              <ToolbarMenuItemRow
+                key={item.id}
+                item={{
+                  key: item.id,
+                  label: item.label,
+                  active: index === slashSelection,
+                  onSelect: () => slashState.command(item),
+                }}
+              />
+            ))
+          )}
+        </div>
+      )}
       <div className="me-scroll mimir-markdown-scroll">
         <div className={contentClassName}>
           {/* EditorContent 负责把编辑器挂进 React 树，并在卸载时清理 */}
@@ -712,11 +952,15 @@ function CharCount({ editor }: { editor: Editor | null }) {
 
 export interface MarkdownToolbarProps {
   editor: Editor | null
+  saveAction?: ReactNode
   spellCheck: boolean
   onToggleSpellCheck: () => void
   searchNotes?: (query: string) => Promise<Array<{ id: string; title: string }>>
   /** 「插入图片」：不给就不渲染那个按钮（没有上传通道时它没有能做的事） */
   onPickImage?: ((file: File) => void) | undefined
+  frontmatter?: Pick<MarkdownAgentServices, 'readFrontmatter' | 'writeFrontmatter'>
+  findOpen?: boolean
+  onToggleFind?: () => void
 }
 
 /**
@@ -735,14 +979,43 @@ export interface MarkdownToolbarProps {
  */
 export function MarkdownToolbar({
   editor,
+  saveAction,
   spellCheck,
   onToggleSpellCheck,
   searchNotes,
   onPickImage,
+  frontmatter,
+  findOpen = false,
+  onToggleFind,
 }: MarkdownToolbarProps) {
   const state = useToolbarState(editor, toolbarStateOf)
 
-  if (!editor) return null
+  if (!editor) {
+    return saveAction ? (
+      <CompactToolbar
+        sections={[]}
+        quickAccess={
+          <>
+            {saveAction}
+            <ToolbarButton
+              label={`撤销 (${markdownShortcutLabel('undo')})`}
+              disabled
+              disabledReason="编辑器尚未就绪"
+            >
+              <UndoIcon />
+            </ToolbarButton>
+            <ToolbarButton
+              label={`重做 (${markdownShortcutLabel('redo')})`}
+              disabled
+              disabledReason="编辑器尚未就绪"
+            >
+              <RedoIcon />
+            </ToolbarButton>
+          </>
+        }
+      />
+    ) : null
+  }
 
   const on = (token: string): boolean => toolbarHas(state, token)
   const style = styleFromToolbarState(state)
@@ -766,6 +1039,11 @@ export function MarkdownToolbar({
   const languages = codeLanguageOptions(editor)
   const language = currentCodeLanguage(editor)
   const tableInsertable = canInsertTable(editor)
+  const selectedBlocks = blockIndexRange(
+    editor.state.doc,
+    editor.state.selection.from,
+    editor.state.selection.to,
+  )
   /** 嵌套列表上整张转换没有可靠的做法，禁用并说明（见 `taskListToggleBlockedReason`） */
   const taskBlockedReason = taskListToggleBlockedReason(editor)
 
@@ -776,11 +1054,58 @@ export function MarkdownToolbar({
 
   return (
     <CompactToolbar
-      overflowLabel="更多笔记工具"
+      quickAccess={
+        <>
+          {saveAction}
+          {hasCommand(editor, 'undo') && (
+            <>
+              <ToolbarButton
+                label={`撤销 (${markdownShortcutLabel('undo')})`}
+                disabled={!on('undo')}
+                disabledReason="没有可撤销的改动"
+                onClick={() => runCommand(editor, 'undo')}
+              >
+                <UndoIcon />
+              </ToolbarButton>
+              <ToolbarButton
+                label={`重做 (${markdownShortcutLabel('redo')})`}
+                disabled={!on('redo')}
+                disabledReason="没有可重做的改动"
+                onClick={() => runCommand(editor, 'redo')}
+              >
+                <RedoIcon />
+              </ToolbarButton>
+            </>
+          )}
+        </>
+      }
+      tabs={[
+        { key: 'home', label: '开始' },
+        { key: 'insert', label: '插入' },
+        { key: 'note', label: '笔记' },
+        { key: 'review', label: '审阅' },
+        ...(hasNode(editor, 'table') && on('table') ? [{ key: 'table', label: '表格' }] : []),
+        ...(hasNode(editor, 'codeBlock') && on('codeBlock') && languages.length > 0
+          ? [{ key: 'code', label: '代码块' }]
+          : []),
+      ]}
       sections={[
+        {
+          key: 'find',
+          label: '查找和替换',
+          tab: 'review',
+          minWidth: 0,
+          enabled: onToggleFind !== undefined,
+          content: onToggleFind ? (
+            <ToolbarButton label="查找和替换 (Ctrl+F)" active={findOpen} onClick={onToggleFind}>
+              <FindIcon />
+            </ToolbarButton>
+          ) : null,
+        },
         {
           key: 'style',
           label: '段落样式',
+          tab: 'home',
           minWidth: 0,
           enabled: styleItems.length > 0,
           content: (
@@ -800,6 +1125,7 @@ export function MarkdownToolbar({
         {
           key: 'basic',
           label: '基础格式',
+          tab: 'home',
           minWidth: 0,
           content: (
             <>
@@ -827,37 +1153,9 @@ export function MarkdownToolbar({
           ),
         },
         {
-          key: 'history',
-          label: '撤销与重做',
-          minWidth: 470,
-          content: (
-            <>
-              {hasCommand(editor, 'undo') && (
-                <ToolbarGroup label="撤销与重做">
-                  <ToolbarButton
-                    label={`撤销 (${markdownShortcutLabel('undo')})`}
-                    disabled={!on('undo')}
-                    disabledReason="没有可撤销的改动"
-                    onClick={() => runCommand(editor, 'undo')}
-                  >
-                    <UndoIcon />
-                  </ToolbarButton>
-                  <ToolbarButton
-                    label={`重做 (${markdownShortcutLabel('redo')})`}
-                    disabled={!on('redo')}
-                    disabledReason="没有可重做的改动"
-                    onClick={() => runCommand(editor, 'redo')}
-                  >
-                    <RedoIcon />
-                  </ToolbarButton>
-                </ToolbarGroup>
-              )}
-            </>
-          ),
-        },
-        {
           key: 'more-format',
           label: '其他字形',
+          tab: 'home',
           minWidth: 600,
           content: (
             <>
@@ -918,6 +1216,7 @@ export function MarkdownToolbar({
         {
           key: 'link',
           label: '链接',
+          tab: 'home',
           minWidth: 360,
           enabled: hasMark(editor, 'link'),
           content: (
@@ -938,6 +1237,7 @@ export function MarkdownToolbar({
         {
           key: 'lists',
           label: '列表',
+          tab: 'home',
           minWidth: 800,
           enabled:
             hasNode(editor, 'bulletList') ||
@@ -987,6 +1287,7 @@ export function MarkdownToolbar({
         {
           key: 'indent',
           label: '缩进',
+          tab: 'home',
           minWidth: 940,
           content: (
             <>
@@ -1014,6 +1315,7 @@ export function MarkdownToolbar({
         {
           key: 'insert',
           label: '插入',
+          tab: 'insert',
           minWidth: 1050,
           enabled:
             hasNode(editor, 'table') ||
@@ -1055,6 +1357,7 @@ export function MarkdownToolbar({
         {
           key: 'table',
           label: '表格',
+          tab: 'table',
           minWidth: 1100,
           enabled: hasNode(editor, 'table') && on('table'),
           content: (
@@ -1070,6 +1373,7 @@ export function MarkdownToolbar({
         {
           key: 'language',
           label: '代码块语言',
+          tab: 'code',
           minWidth: 1100,
           enabled: hasNode(editor, 'codeBlock') && on('codeBlock') && languages.length > 0,
           content: (
@@ -1083,8 +1387,68 @@ export function MarkdownToolbar({
           ),
         },
         {
+          key: 'blocks',
+          label: '块操作',
+          tab: 'note',
+          minWidth: 1150,
+          content: (
+            <ToolbarGroup label="块操作">
+              <ToolbarMenu
+                label="块操作"
+                text="块操作"
+                items={[
+                  {
+                    key: 'up',
+                    label: '上移块',
+                    disabled: selectedBlocks.startIndex === 0,
+                    disabledReason: '已经是第一个块',
+                    onSelect: () => moveSelectedBlocks(editor, -1),
+                  },
+                  {
+                    key: 'down',
+                    label: '下移块',
+                    disabled: selectedBlocks.endIndex >= editor.state.doc.childCount - 1,
+                    disabledReason: '已经是最后一个块',
+                    onSelect: () => moveSelectedBlocks(editor, 1),
+                  },
+                  {
+                    key: 'duplicate',
+                    label: '复制块',
+                    onSelect: () => uiOp(editor, { op: 'duplicateBlocks', target: 'selection' }),
+                  },
+                  {
+                    key: 'delete',
+                    label: '删除块',
+                    onSelect: () => uiOp(editor, { op: 'deleteBlocks', target: 'selection' }),
+                  },
+                ]}
+              />
+            </ToolbarGroup>
+          ),
+        },
+        {
+          key: 'frontmatter',
+          label: '属性',
+          tab: 'note',
+          minWidth: 1220,
+          enabled: frontmatter !== undefined,
+          content: frontmatter ? (
+            <ToolbarGroup label="笔记属性">
+              <ToolbarMenu
+                label="笔记属性"
+                text="属性"
+                panelWidth={360}
+                renderPanel={(close) => (
+                  <FrontmatterPanel frontmatter={frontmatter} close={close} />
+                )}
+              />
+            </ToolbarGroup>
+          ) : null,
+        },
+        {
           key: 'spell',
           label: '校对',
+          tab: 'review',
           minWidth: 1100,
           content: (
             <>
@@ -1102,6 +1466,69 @@ export function MarkdownToolbar({
         },
       ].filter((section) => !('enabled' in section) || section.enabled)}
     />
+  )
+}
+
+function FrontmatterPanel({
+  frontmatter,
+  close,
+}: {
+  frontmatter: Pick<MarkdownAgentServices, 'readFrontmatter' | 'writeFrontmatter'>
+  close: () => void
+}) {
+  const [draft, setDraft] = useState('')
+  const [baseline, setBaseline] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  useEffect(() => {
+    let live = true
+    void frontmatter.readFrontmatter().then(
+      (yaml) => {
+        if (live) {
+          setDraft(yaml)
+          setBaseline(yaml)
+          setLoading(false)
+        }
+      },
+      (cause) => {
+        if (live) {
+          setError(cause instanceof Error ? cause.message : String(cause))
+          setLoading(false)
+        }
+      },
+    )
+    return () => {
+      live = false
+    }
+  }, [frontmatter])
+  return (
+    <div className="me-menu__fields">
+      <ToolbarTextArea
+        label="笔记属性 YAML"
+        value={draft}
+        onChange={setDraft}
+        placeholder={loading ? '正在读取…' : 'title: …'}
+        rows={7}
+      />
+      {error ? <div role="alert">{error}</div> : null}
+      <ToolbarMenuItemRow
+        item={{
+          key: 'save',
+          label: saving ? '正在保存…' : '保存笔记属性',
+          disabled: loading || saving,
+          disabledReason: loading ? '正在读取笔记属性' : '正在保存笔记属性',
+          onSelect: () => {
+            setSaving(true)
+            setError(null)
+            void frontmatter.writeFrontmatter(draft, baseline).then(close, (cause) => {
+              setError(cause instanceof Error ? cause.message : String(cause))
+              setSaving(false)
+            })
+          },
+        }}
+      />
+    </div>
   )
 }
 

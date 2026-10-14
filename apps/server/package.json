@@ -19,6 +19,7 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@embedpdf/pdfium": "2.15.1",
     "@hono/node-server": "^2.1.1",
     "@mimir/core": "workspace:*",
     "@mimir/plugin-capturer": "workspace:*",
@@ -38,11 +39,13 @@
     "better-sqlite3": "^13.0.3",
     "drizzle-orm": "^0.45.2",
     "gray-matter": "^4.0.3",
+    "harfbuzzjs": "0.10.3",
     "hono": "^4.13.8",
     "jszip": "^3.10.2",
     "linkedom": "^0.18.13",
     "nanoid": "^6.0.1",
     "pdf-lib": "catalog:",
+    "pdfjs-dist": "catalog:",
     "postgres": "^3.4.9",
     "sqlite-vec": "0.1.9",
     "turndown": "^7.2.4",

@@ -1,10 +1,12 @@
 import type { DocumentDetail } from '@mimir/shared'
+import type { MenuProps } from 'antd'
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { describe, expect, it, vi } from 'vitest'
 import { MimirProvider } from '../../theme/MimirProvider'
 import { UnsavedProvider, useUnsaved } from '../../lib/unsaved'
 import { DocumentHeader } from './DocumentHeader'
+import { buildDocMenu } from './doc-menu'
 
 const baseDoc: DocumentDetail = {
   id: 'doc-1',
@@ -39,7 +41,11 @@ function DirtyControl() {
   )
 }
 
-async function renderHeader(doc: DocumentDetail, onBack = vi.fn<() => void>()) {
+async function renderHeader(
+  doc: DocumentDetail,
+  onBack = vi.fn<() => void>(),
+  menu: MenuProps['items'] = [],
+) {
   const host = document.createElement('div')
   document.body.append(host)
   const root = createRoot(host)
@@ -55,7 +61,7 @@ async function renderHeader(doc: DocumentDetail, onBack = vi.fn<() => void>()) {
             onBack={onBack}
             onRename={onRename}
             onAskAi={onAskAi}
-            menu={[]}
+            menu={menu}
           />
           <DirtyControl />
         </UnsavedProvider>
@@ -111,6 +117,57 @@ describe('共用文档头部', () => {
     await click('[aria-label="返回知识库"]')
     expect(view.onBack).not.toHaveBeenCalled()
     expect(view.host.querySelector('[data-pending="yes"]')).not.toBeNull()
+    await view.unmount()
+  })
+
+  it('更多操作显示当前目录和 AI 用量，菜单动作仍可执行', async () => {
+    const doc = { ...baseDoc, folder: '开始使用/产品文档', tags: ['已读'] }
+    const onSetTags = vi.fn<(tags: string[]) => void>()
+    const onSetFolder = vi.fn<(folder: string) => void>()
+    const onSummary = vi.fn<() => void>()
+    const longFolder = '开始使用/产品文档/一个名称很长的项目/第二级目录/第三级目录'
+    const menu = buildDocMenu({
+      doc,
+      folders: [doc.folder, longFolder],
+      onSetTags,
+      onSetFolder,
+      onSummary,
+    })
+    const view = await renderHeader(doc, undefined, menu)
+
+    await act(async () => {
+      view.host.querySelector<HTMLButtonElement>('[aria-label="更多操作"]')?.click()
+    })
+
+    const popup = document.body.querySelector('[role="menu"]')
+    expect(popup?.querySelector('[data-doc-menu-row="folder"]')?.getAttribute('title')).toBe(
+      '开始使用/产品文档',
+    )
+    expect(popup?.querySelector('[data-doc-menu-group]')?.textContent).toContain('产生用量')
+
+    const folderItem = popup?.querySelector<HTMLElement>('[data-doc-menu-row="folder"]')
+    await act(async () => {
+      folderItem?.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }))
+      await new Promise((resolve) => setTimeout(resolve, 200))
+    })
+    const subMenu = Array.from(document.body.querySelectorAll<HTMLElement>('[role="menu"]')).find(
+      (element) => element !== popup && element.textContent?.includes(longFolder),
+    )
+    const scopeClass = Array.from(popup?.parentElement?.classList ?? []).find((name) =>
+      name.startsWith('acss-'),
+    )
+    expect(scopeClass).toBeDefined()
+    expect(subMenu?.parentElement?.classList.contains(scopeClass ?? '')).toBe(true)
+    expect(subMenu?.querySelector(`[title="${longFolder}"]`)).not.toBeNull()
+
+    await act(async () => {
+      Array.from(popup?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [])
+        .find((item) => item.textContent?.includes('AI 摘要'))
+        ?.click()
+    })
+    expect(onSummary).toHaveBeenCalledOnce()
+    expect(onSetTags).not.toHaveBeenCalled()
+    expect(onSetFolder).not.toHaveBeenCalled()
     await view.unmount()
   })
 })

@@ -101,7 +101,10 @@ export function useFailurePart(): { kind: FailureKind; detail: string } | null {
 export function useDocxAgentPart(): DocxAgentHistory | null {
   const data = useAuiState((state) => {
     for (const part of state.message.parts) {
-      if (part.type === 'data' && part.name === 'mimir.docxAgent') {
+      if (
+        part.type === 'data' &&
+        (part.name === 'mimir.documentAgent' || part.name === 'mimir.docxAgent')
+      ) {
         return part.data as { agent?: DocxAgentHistory }
       }
     }

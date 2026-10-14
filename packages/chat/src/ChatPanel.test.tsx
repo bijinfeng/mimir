@@ -1,6 +1,7 @@
 import { createServer } from 'node:http'
 import type { Server } from 'node:http'
 import { act, createElement } from 'react'
+import type { ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import type { Root } from 'react-dom/client'
 import { afterAll, afterEach, describe, expect, it } from 'vitest'
@@ -233,6 +234,8 @@ async function mount(
   draft: ChatDraft | null = null,
   docxAgent?: ChatDocxAgent,
   conversationId?: string,
+  showReasoningControl?: boolean,
+  guideActions?: (ask: (question: string) => void) => ReactNode,
 ) {
   const container = document.createElement('div')
   document.body.appendChild(container)
@@ -246,7 +249,11 @@ async function mount(
         onOpenNote: () => {},
         io,
         composerStatus: EMPTY_STATUS,
-        docxAgent,
+        showReasoningControl,
+        ...(guideActions ? { guide: () => null, guideActions } : {}),
+        ...(docxAgent?.format && docxAgent.format !== 'docx'
+          ? { documentAgent: docxAgent }
+          : { docxAgent }),
       }),
     )
   })
@@ -296,6 +303,493 @@ async function send(container: HTMLElement) {
     await new Promise((resolve) => setTimeout(resolve, 60))
   })
 }
+
+describe('ChatPanel：文档侧栏输入控制', () => {
+  it('隐藏思考强度后仍显示聊天模型和发送按钮，发送不启用深入思考', async () => {
+    const requests: Record<string, unknown>[] = []
+    const server = createServer(async (req, res) => {
+      const chunks: Uint8Array[] = []
+      for await (const chunk of req) chunks.push(chunk as Uint8Array)
+      requests.push(JSON.parse(Buffer.concat(chunks).toString('utf8')) as Record<string, unknown>)
+      res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' })
+      for (const frame of successFrames()) res.write(frame)
+      res.end()
+    })
+    servers.push({ server, drain: () => {} })
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
+    const address = server.address()
+    const port = typeof address === 'object' && address ? address.port : 0
+    const container = await mount(
+      makeIo(`http://127.0.0.1:${port}/api/chat`),
+      null,
+      undefined,
+      undefined,
+      false,
+    )
+
+    expect(container.querySelector('[aria-label^="思考强度："]')).toBeNull()
+    expect(container.querySelector('[aria-label="当前全局模型：test-chat"]')).not.toBeNull()
+    expect(container.querySelector('[aria-label="发送"]')).not.toBeNull()
+
+    await type(container, '总结当前文档')
+    await send(container)
+    await waitFor(container, () => requests.length === 1, '侧栏请求')
+    const forwarded = requests[0]?.forwardedProps as
+      | { runConfig?: Record<string, unknown> }
+      | undefined
+    expect(forwarded?.runConfig?.deepReasoning).toBeUndefined()
+  })
+
+  it('主视图仍显示思考强度控制', async () => {
+    const container = await mount(makeIo('/api/chat'))
+    expect(container.querySelector('[aria-label="思考强度：标准"]')).not.toBeNull()
+  })
+
+  it('模型菜单只显示名称，当前模型的勾选紧跟名称且绑定项不可切换', async () => {
+    const container = await mount(makeIo('/api/chat'))
+    const trigger = container.querySelector<HTMLButtonElement>(
+      '[aria-label="当前全局模型：test-chat"]',
+    )
+    await act(async () => trigger?.click())
+
+    const chatName = document.querySelector<HTMLElement>('[role="menuitem"] [title="test-chat"]')
+    const reasoningName = document.querySelector<HTMLElement>(
+      '[role="menuitem"] [title="test-reasoning"]',
+    )
+    const chatItem = chatName?.closest('[role="menuitem"]')
+    const reasoningItem = reasoningName?.closest('[role="menuitem"]')
+    expect(chatName?.textContent).toBe('test-chat')
+    expect(reasoningName?.textContent).toBe('test-reasoning')
+    expect(chatName?.nextElementSibling?.tagName.toLowerCase()).toBe('svg')
+    expect(reasoningName?.nextElementSibling).toBeNull()
+    expect(chatItem?.getAttribute('aria-disabled')).toBe('true')
+    expect(reasoningItem?.getAttribute('aria-disabled')).toBe('true')
+    expect(chatItem?.textContent).toContain('当前使用')
+    expect(
+      [...document.querySelectorAll('[role="menuitem"]')].some((item) =>
+        item.textContent?.includes('管理模型'),
+      ),
+    ).toBe(true)
+  })
+
+  it('未配置模型时仍可区分两种全局绑定及当前使用项', async () => {
+    const io = makeIo('/api/chat')
+    await mount(io)
+    const root = mounted?.root
+    if (!root) throw new Error('对话面板尚未挂载')
+    await act(async () =>
+      root.render(
+        createElement(ChatPanel, {
+          conversationId: undefined,
+          draft: null,
+          onOpenCitation: () => {},
+          onOpenNote: () => {},
+          io,
+          composerStatus: { ...EMPTY_STATUS, modelRoles: {} },
+        }),
+      ),
+    )
+    const trigger = mounted?.container.querySelector<HTMLButtonElement>(
+      '[aria-label="当前全局模型：未配置"]',
+    )
+    await act(async () => trigger?.click())
+
+    const names = [...document.querySelectorAll<HTMLElement>('[role="menuitem"] [title="未配置"]')]
+    expect(names).toHaveLength(2)
+    expect(names[0]?.parentElement?.textContent).toContain('对话模型：未配置当前使用')
+    expect(names[1]?.parentElement?.textContent).toContain('深度思考模型：未配置')
+    expect(names[0]?.nextElementSibling?.tagName.toLowerCase()).toBe('svg')
+    expect(names[1]?.nextElementSibling).toBeNull()
+  })
+
+  it('隐藏思考强度后，快捷提问也使用标准强度', async () => {
+    const requests: Record<string, unknown>[] = []
+    const server = createServer(async (req, res) => {
+      const chunks: Uint8Array[] = []
+      for await (const chunk of req) chunks.push(chunk as Uint8Array)
+      requests.push(JSON.parse(Buffer.concat(chunks).toString('utf8')) as Record<string, unknown>)
+      res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' })
+      for (const frame of successFrames()) res.write(frame)
+      res.end()
+    })
+    servers.push({ server, drain: () => {} })
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
+    const address = server.address()
+    const port = typeof address === 'object' && address ? address.port : 0
+    const container = await mount(
+      makeIo(`http://127.0.0.1:${port}/api/chat`),
+      null,
+      undefined,
+      undefined,
+      false,
+      (ask) => <button onClick={() => ask('速读本文')}>速读本文</button>,
+    )
+
+    const askButton = [...container.querySelectorAll('button')].find(
+      (button) => button.textContent === '速读本文',
+    )
+    expect(askButton).toBeDefined()
+    await act(async () => {
+      askButton?.click()
+    })
+    await waitFor(container, () => requests.length === 1, '快捷提问请求')
+    const forwarded = requests[0]?.forwardedProps as
+      | { runConfig?: Record<string, unknown> }
+      | undefined
+    expect(forwarded?.runConfig?.deepReasoning).toBeUndefined()
+  })
+
+  it('由主视图切到隐藏强度后，重新显示时恢复标准强度', async () => {
+    const requests: Record<string, unknown>[] = []
+    const server = createServer(async (req, res) => {
+      const chunks: Uint8Array[] = []
+      for await (const chunk of req) chunks.push(chunk as Uint8Array)
+      requests.push(JSON.parse(Buffer.concat(chunks).toString('utf8')) as Record<string, unknown>)
+      res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' })
+      for (const frame of successFrames()) res.write(frame)
+      res.end()
+    })
+    servers.push({ server, drain: () => {} })
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
+    const address = server.address()
+    const port = typeof address === 'object' && address ? address.port : 0
+    const io = makeIo(`http://127.0.0.1:${port}/api/chat`)
+    const container = await mount(io)
+    const trigger = container.querySelector<HTMLButtonElement>('[aria-label="思考强度：标准"]')
+    expect(trigger).not.toBeNull()
+    await act(async () => {
+      trigger?.click()
+    })
+    const deepOption = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
+      (item) => item.textContent?.includes('深入（推理模型）'),
+    )
+    expect(deepOption).toBeDefined()
+    await act(async () => {
+      deepOption?.click()
+    })
+    expect(container.querySelector('[aria-label="思考强度：深入"]')).not.toBeNull()
+
+    const root = mounted?.root
+    if (!root) throw new Error('对话面板尚未挂载')
+    const renderWithControl = (showReasoningControl: boolean) =>
+      createElement(ChatPanel, {
+        conversationId: undefined,
+        draft: null,
+        onOpenCitation: () => {},
+        onOpenNote: () => {},
+        io,
+        composerStatus: EMPTY_STATUS,
+        showReasoningControl,
+      })
+    await act(async () => root.render(renderWithControl(false)))
+    expect(container.querySelector('[aria-label^="思考强度："]')).toBeNull()
+    expect(container.querySelector('[aria-label="当前全局模型：test-chat"]')).not.toBeNull()
+    await type(container, '标准强度回答')
+    await send(container)
+    await waitFor(container, () => requests.length === 1, '切换后的发送请求')
+    const forwarded = requests[0]?.forwardedProps as
+      | { runConfig?: Record<string, unknown> }
+      | undefined
+    expect(forwarded?.runConfig?.deepReasoning).toBeUndefined()
+    await act(async () => root.render(renderWithControl(true)))
+    expect(container.querySelector('[aria-label="思考强度：标准"]')).not.toBeNull()
+  })
+})
+
+describe('ChatPanel：共用格式工具续轮', () => {
+  it.each([
+    { changedBeforeRetry: false, label: '画布未变' },
+    { changedBeforeRetry: true, label: '画布被人工修改' },
+  ])('续轮失败后重试：$label', async ({ changedBeforeRetry }) => {
+    const requests: Record<string, unknown>[] = []
+    let executions = 0
+    let version = 1
+    const server = createServer(async (req, res) => {
+      const chunks: Uint8Array[] = []
+      for await (const chunk of req) chunks.push(chunk as Uint8Array)
+      const body = JSON.parse(Buffer.concat(chunks).toString('utf8')) as Record<string, unknown>
+      requests.push(body)
+      const runId = typeof body.runId === 'string' ? body.runId : 'unknown'
+      if (requests.length === 2) {
+        res.writeHead(503, { 'Content-Type': 'text/plain' })
+        res.end('temporary resume failure')
+        return
+      }
+      res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' })
+      res.write(F({ type: 'RUN_STARTED', runId, threadId: 'c1' }))
+      if (requests.length === 1) {
+        res.write(F({ type: 'TOOL_CALL_START', toolCallId: 'retry-1', toolCallName: 'fake_read' }))
+        res.write(F({ type: 'TOOL_CALL_ARGS', toolCallId: 'retry-1', delta: '{}' }))
+        res.write(F({ type: 'TOOL_CALL_END', toolCallId: 'retry-1' }))
+        res.write(
+          F({
+            type: 'RUN_FINISHED',
+            runId,
+            threadId: 'c1',
+            outcome: {
+              type: 'interrupt',
+              interrupts: [
+                {
+                  id: 'client_tool_retry-1',
+                  reason: 'tanstack:client_tool_execution',
+                  metadata: { kind: 'client_tool', toolName: 'fake_read', input: {} },
+                },
+              ],
+            },
+          }),
+        )
+      } else {
+        res.write(F({ type: 'TEXT_MESSAGE_START', messageId: 'a2', role: 'assistant' }))
+        res.write(F({ type: 'TEXT_MESSAGE_CONTENT', messageId: 'a2', delta: '续轮成功' }))
+        res.write(F({ type: 'TEXT_MESSAGE_END', messageId: 'a2' }))
+        res.write(F({ type: 'RUN_FINISHED', runId, threadId: 'c1' }))
+      }
+      res.end()
+    })
+    servers.push({ server, drain: () => {} })
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
+    const address = server.address()
+    const port = typeof address === 'object' && address ? address.port : 0
+    const agent: ChatDocxAgent = {
+      format: 'xlsx',
+      documentId: 'd1',
+      getVersion: () => version,
+      getContext: () => ({ sheet: 'Sheet1' }),
+      freezeSelection: () => ({ sheet: 'Sheet1', range: 'A1' }),
+      execute: async () => {
+        executions++
+        return { ok: true, changed: false, version: 1, summary: '读取完成' }
+      },
+      undoRound: () => true,
+    }
+    const container = await mount(
+      makeIo(`http://127.0.0.1:${port}/api/chat`),
+      { documentId: 'd1' },
+      agent,
+    )
+    await type(container, '读取单元格')
+    await send(container)
+    await waitFor(container, () => requests.length === 2, '首次工具续轮请求')
+    await waitFor(container, () => textOf(container).includes('重试续传工具结果'), '重试按钮')
+    expect(executions).toBe(1)
+    const retry = [...container.querySelectorAll('button')].find((button) =>
+      button.textContent?.includes('重试续传工具结果'),
+    )
+    if (!retry) throw new Error('未找到续轮重试按钮')
+    if (changedBeforeRetry) version++
+    await act(async () => retry.click())
+    await waitFor(
+      container,
+      () => textOf(container).includes(changedBeforeRetry ? '无法续传旧工具结果' : '续轮成功'),
+      changedBeforeRetry ? '过期拒绝' : '重试后的回答',
+    )
+    expect(requests).toHaveLength(changedBeforeRetry ? 2 : 3)
+    expect(requests[2]?.resume).toEqual(changedBeforeRetry ? undefined : requests[1]?.resume)
+    expect(executions).toBe(1)
+  })
+
+  it('把假格式的选区与画布送到模型，将真实失败结果续轮且不误用 DOCX 字段', async () => {
+    const requests: Record<string, unknown>[] = []
+    let executions = 0
+    let conversationsCreated = 0
+    const server = createServer(async (req, res) => {
+      const chunks: Uint8Array[] = []
+      for await (const chunk of req) chunks.push(chunk as Uint8Array)
+      const body = JSON.parse(Buffer.concat(chunks).toString('utf8')) as Record<string, unknown>
+      requests.push(body)
+      res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' })
+      const runId = typeof body.runId === 'string' ? body.runId : 'unknown'
+      if (requests.length === 1) {
+        res.write(F({ type: 'RUN_STARTED', runId, threadId: 'c1' }))
+        res.write(
+          F({
+            type: 'TOOL_CALL_START',
+            toolCallId: 'fake-1',
+            toolCallName: 'fake_write',
+            parentMessageId: 'a1',
+          }),
+        )
+        res.write(F({ type: 'TOOL_CALL_ARGS', toolCallId: 'fake-1', delta: '{}' }))
+        res.write(F({ type: 'TOOL_CALL_END', toolCallId: 'fake-1' }))
+        res.write(
+          F({
+            type: 'RUN_FINISHED',
+            runId,
+            threadId: 'c1',
+            outcome: {
+              type: 'interrupt',
+              interrupts: [
+                {
+                  id: 'client_tool_fake-1',
+                  reason: 'tanstack:client_tool_execution',
+                  toolCallId: 'fake-1',
+                  metadata: { kind: 'client_tool', toolName: 'fake_write', input: { value: 2 } },
+                },
+              ],
+            },
+          }),
+        )
+      } else {
+        res.write(F({ type: 'RUN_STARTED', runId, threadId: 'c1' }))
+        res.write(F({ type: 'TEXT_MESSAGE_START', messageId: 'a2', role: 'assistant' }))
+        res.write(F({ type: 'TEXT_MESSAGE_CONTENT', messageId: 'a2', delta: '写入未完成' }))
+        res.write(F({ type: 'TEXT_MESSAGE_END', messageId: 'a2' }))
+        res.write(F({ type: 'RUN_FINISHED', runId, threadId: 'c1' }))
+      }
+      res.end()
+    })
+    servers.push({ server, drain: () => {} })
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
+    const address = server.address()
+    const port = typeof address === 'object' && address ? address.port : 0
+    const agent: ChatDocxAgent = {
+      format: 'xlsx',
+      documentId: 'd1',
+      getVersion: () => 3,
+      getContext: () => ({ sheet: 'Sheet1', unsaved: true }),
+      freezeSelection: () => ({ sheet: 'Sheet1', range: 'A1' }),
+      execute: async () => {
+        executions += 1
+        return { ok: false, changed: false, error: '画布版本已变化' }
+      },
+      undoRound: () => true,
+    }
+    const container = await mount(
+      makeIo(`http://127.0.0.1:${port}/api/chat`, {
+        createConversation: async () => {
+          conversationsCreated += 1
+          return { id: 'c1' }
+        },
+      }),
+      { documentId: 'd1' },
+      agent,
+    )
+    await type(container, '写入 A1')
+    await send(container)
+    await waitFor(container, () => requests.length === 2, '假格式工具续轮请求')
+    await waitFor(container, () => textOf(container).includes('写入未完成'), '续轮回答')
+    expect(executions).toBe(1)
+    const firstRequest = requests[0]
+    const secondRequest = requests[1]
+    if (!firstRequest || !secondRequest) throw new Error('缺少工具轮次请求')
+    expect(conversationsCreated).toBe(1)
+    expect(firstRequest).toMatchObject({
+      threadId: 'c1',
+      forwardedProps: { conversationId: 'c1' },
+    })
+    expect(secondRequest).toMatchObject({
+      threadId: 'c1',
+      forwardedProps: { conversationId: 'c1' },
+    })
+    const firstConfig = (firstRequest.forwardedProps as { runConfig: Record<string, unknown> })
+      .runConfig
+    const secondConfig = (secondRequest.forwardedProps as { runConfig: Record<string, unknown> })
+      .runConfig
+    expect(firstConfig).toMatchObject({
+      documentAgent: true,
+      agentFormat: 'xlsx',
+      agentVersion: 3,
+      agentSelection: { sheet: 'Sheet1', range: 'A1' },
+      agentContext: { sheet: 'Sheet1', unsaved: true },
+    })
+    expect(firstConfig.docxAgent).toBeUndefined()
+    expect(secondConfig.agentRoundId).toBe(firstConfig.agentRoundId)
+    expect(secondRequest.resume).toEqual([
+      {
+        interruptId: 'client_tool_fake-1',
+        status: 'resolved',
+        payload: { ok: false, changed: false, error: '画布版本已变化' },
+      },
+    ])
+  })
+
+  it('等中断流彻底结束后才提交工具结果续轮', async () => {
+    const requests: Record<string, unknown>[] = []
+    let firstResponse: { end: () => void } | null = null
+    let executions = 0
+    const server = createServer(async (req, res) => {
+      const chunks: Uint8Array[] = []
+      for await (const chunk of req) chunks.push(chunk as Uint8Array)
+      const body = JSON.parse(Buffer.concat(chunks).toString('utf8')) as Record<string, unknown>
+      requests.push(body)
+      const runId = typeof body.runId === 'string' ? body.runId : 'unknown'
+      res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' })
+      res.write(F({ type: 'RUN_STARTED', runId, threadId: 'c1' }))
+      if (requests.length === 1) {
+        res.write(
+          F({
+            type: 'TOOL_CALL_START',
+            toolCallId: 'read-1',
+            toolCallName: 'fake_read',
+            parentMessageId: 'a1',
+          }),
+        )
+        res.write(F({ type: 'TOOL_CALL_ARGS', toolCallId: 'read-1', delta: '{}' }))
+        res.write(F({ type: 'TOOL_CALL_END', toolCallId: 'read-1' }))
+        res.write(
+          F({
+            type: 'RUN_FINISHED',
+            runId,
+            threadId: 'c1',
+            outcome: {
+              type: 'interrupt',
+              interrupts: [
+                {
+                  id: 'client_tool_read-1',
+                  reason: 'tanstack:client_tool_execution',
+                  toolCallId: 'read-1',
+                  metadata: { kind: 'client_tool', toolName: 'fake_read', input: {} },
+                },
+              ],
+            },
+          }),
+        )
+        // The browser has received RUN_FINISHED, but the HTTP body remains
+        // open while the server finishes accounting and persistence.
+        firstResponse = res
+      } else {
+        res.write(F({ type: 'TEXT_MESSAGE_START', messageId: 'a2', role: 'assistant' }))
+        res.write(F({ type: 'TEXT_MESSAGE_CONTENT', messageId: 'a2', delta: '读取完成' }))
+        res.write(F({ type: 'TEXT_MESSAGE_END', messageId: 'a2' }))
+        res.write(F({ type: 'RUN_FINISHED', runId, threadId: 'c1' }))
+        res.end()
+      }
+    })
+    servers.push({ server, drain: () => firstResponse?.end() })
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
+    const address = server.address()
+    const port = typeof address === 'object' && address ? address.port : 0
+    const agent: ChatDocxAgent = {
+      format: 'xlsx',
+      documentId: 'd1',
+      getVersion: () => 1,
+      getContext: () => ({ sheet: 'Sheet1' }),
+      freezeSelection: () => ({ sheet: 'Sheet1', range: 'A1' }),
+      execute: async () => {
+        executions += 1
+        return { ok: true, changed: false, version: 1, summary: '读取完成' }
+      },
+      undoRound: () => true,
+    }
+    const container = await mount(
+      makeIo(`http://127.0.0.1:${port}/api/chat`),
+      { documentId: 'd1' },
+      agent,
+    )
+    await type(container, '读取工作簿')
+    await send(container)
+    await waitFor(container, () => firstResponse !== null, '中断帧已发出')
+    await waitFor(container, () => textOf(container).includes('fake_read'), '工具卡已显示')
+    expect(requests).toHaveLength(1)
+    expect(executions).toBe(0)
+
+    const responseToFinish = firstResponse as { end: () => void } | null
+    responseToFinish?.end()
+    await waitFor(container, () => requests.length === 2, '流关闭后的工具续轮')
+    await waitFor(container, () => textOf(container).includes('读取完成'), '续轮结果')
+    expect(executions).toBe(1)
+  })
+})
 
 describe('ChatPanel：DOCX 客户端工具续轮', () => {
   it('把当前画布与冻结选区送出，工具只执行一次并用 raw result 续轮', async () => {

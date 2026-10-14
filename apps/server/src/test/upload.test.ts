@@ -823,6 +823,24 @@ async function makePdf(lines: string[][]): Promise<Uint8Array> {
 }
 
 describe('上传：PDF 的文本提取', () => {
+  it('本地存储返回 Buffer 时，重新扫描仍能提取 PDF 正文', async () => {
+    const cookie = await getAuthCookie()
+    const bytes = await makePdf([['Reindex PDF marker QuokkaBuffer.']])
+    const uploaded = await upload(cookie, '重扫.pdf', bytes, 'application/pdf')
+    expect(uploaded.status).toBe(201)
+    expect(uploaded.body.parseError).toBeFalsy()
+
+    const id = uploaded.body.document!.id
+    const [before] = await db.select().from(documents).where(eq(documents.id, id))
+    expect(before?.body).toContain('QuokkaBuffer')
+    expect(Buffer.isBuffer(await activeStorage().read(before!.sourceKey!))).toBe(true)
+
+    await reindexVault()
+    const [after] = await db.select().from(documents).where(eq(documents.id, id))
+    expect(after?.parseError).toBeNull()
+    expect(after?.body).toContain('QuokkaBuffer')
+  })
+
   it('正文里的文字能被搜到（说明提取真的发生了）', async () => {
     const cookie = await getAuthCookie()
     const bytes = await makePdf([

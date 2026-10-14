@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { documentKindSchema } from './documents.js'
+import { documentAgentFormatSchema } from './document-agent.js'
 
 /**
  * 对话。
@@ -75,6 +76,8 @@ export const docxAgentToolHistorySchema = z.object({
 export const docxAgentHistorySchema = z.object({
   runId: z.string(),
   documentId: z.string(),
+  /** Old DOCX histories have no format field. */
+  format: documentAgentFormatSchema.optional(),
   status: z.enum(['pending', 'completed', 'failed', 'cancelled']),
   tools: z.array(docxAgentToolHistorySchema),
 })

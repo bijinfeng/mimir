@@ -227,6 +227,9 @@ catalogs:
     '@tiptap/starter-kit':
       specifier: ^3.31.3
       version: 3.31.3
+    '@tiptap/suggestion':
+      specifier: ^3.31.3
+      version: 3.31.4
     '@types/node':
       specifier: ^26.6.2
       version: 26.6.2
@@ -269,6 +272,9 @@ catalogs:
     zod:
       specifier: ^4.6.5
       version: 4.6.5
+
+patchedDependencies:
+  '@assistant-ui/react-ag-ui@0.0.63': d908fe98d532bbb76a67c910afd55cb7d9d2390f635fefe1b68a975f810fce0d
 
 importers:
 
@@ -356,6 +362,9 @@ importers:
 
   apps/server:
     dependencies:
+      '@embedpdf/pdfium':
+        specifier: 2.15.1
+        version: 2.15.1
       '@hono/node-server':
         specifier: ^2.1.1
         version: 2.1.1(hono@4.13.8)
@@ -413,6 +422,9 @@ importers:
       gray-matter:
         specifier: ^4.0.3
         version: 4.0.3
+      harfbuzzjs:
+        specifier: 0.10.3
+        version: 0.10.3
       hono:
         specifier: ^4.13.8
         version: 4.13.8
@@ -428,6 +440,9 @@ importers:
       pdf-lib:
         specifier: 'catalog:'
         version: 1.17.1
+      pdfjs-dist:
+        specifier: 'catalog:'
+        version: 6.3.289
       postgres:
         specifier: ^3.4.9
         version: 3.4.9
@@ -531,7 +546,7 @@ importers:
         version: 0.15.23(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(use-sync-external-store@1.7.0(react@19.3.0))
       '@assistant-ui/react-ag-ui':
         specifier: 0.0.63
-        version: 0.0.63(@assistant-ui/react@0.15.23(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(use-sync-external-store@1.7.0(react@19.3.0)))(@assistant-ui/tap@0.9.20(@types/react@19.3.0)(react@19.3.0))(@types/react@19.3.0)(assistant-cloud@0.2.4)(react@19.3.0)(zod@4.6.5)
+        version: 0.0.63(patch_hash=d908fe98d532bbb76a67c910afd55cb7d9d2390f635fefe1b68a975f810fce0d)(@assistant-ui/react@0.15.23(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(use-sync-external-store@1.7.0(react@19.3.0)))(@assistant-ui/tap@0.9.20(@types/react@19.3.0)(react@19.3.0))(@types/react@19.3.0)(assistant-cloud@0.2.4)(react@19.3.0)(zod@4.6.5)
       '@mimir/shared':
         specifier: workspace:*
         version: link:../shared
@@ -612,12 +627,21 @@ importers:
       '@codemirror/view':
         specifier: 'catalog:'
         version: 6.43.13
+      '@embedpdf/pdfium':
+        specifier: 2.15.1
+        version: 2.15.1
       '@lezer/highlight':
         specifier: 'catalog:'
         version: 1.2.4
       '@tiptap/core':
         specifier: 'catalog:'
         version: 3.31.3(@tiptap/pm@3.31.3)
+      '@tiptap/extension-table':
+        specifier: 'catalog:'
+        version: 3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3)
+      '@tiptap/extension-task-list':
+        specifier: 'catalog:'
+        version: 3.31.3(@tiptap/extension-list@3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3))
       '@tiptap/extensions':
         specifier: 'catalog:'
         version: 3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3)
@@ -630,18 +654,30 @@ importers:
       '@tiptap/react':
         specifier: 'catalog:'
         version: 3.31.3(@floating-ui/dom@1.8.0)(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      '@tiptap/starter-kit':
+        specifier: 'catalog:'
+        version: 3.31.3
+      '@tiptap/suggestion':
+        specifier: 'catalog:'
+        version: 3.31.4(@floating-ui/dom@1.8.0)(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3)
       bidi-js:
         specifier: 'catalog:'
         version: 1.1.0
       fast-xml-parser:
         specifier: ^5.3.4
         version: 5.11.1
+      harfbuzzjs:
+        specifier: 0.10.3
+        version: 0.10.3
       jszip:
         specifier: ^3.10.1
         version: 3.10.2
       lucide-react:
         specifier: ^1.48.0
         version: 1.48.0(react@19.3.0)
+      numfmt:
+        specifier: ^3.2.6
+        version: 3.2.6
       parse5:
         specifier: 'catalog:'
         version: 7.3.0
@@ -654,6 +690,9 @@ importers:
       utif2:
         specifier: ^4.1.0
         version: 4.1.0
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.5
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -1469,6 +1508,9 @@ packages:
     resolution: {integrity: sha512-dfZeox66AvdPtb2lD8OsIIQh12Tp0GNCRUDfBHIKGpbmopZto2/A8nSpYYLoedPIHpqkeblZ/k8OV0Gy7PYuyQ==}
     engines: {node: '>=14.14'}
     hasBin: true
+
+  '@embedpdf/pdfium@2.15.1':
+    resolution: {integrity: sha512-qDH4gEkGSQT0iM+07Hpm3LyvoB7PEFbW3Qyk6+LPkEYLJYfHagkHM1OzYlDq2EDOhJRguykTkzdMOT3/w27x5Q==}
 
   '@emotion/babel-plugin@11.13.5':
     resolution: {integrity: sha512-pxHCpT2ex+0q+HH91/zsdHkw/lXd468DIN2zvfvLtPKLLMo6gQj7oLObq8PhkrxOZb/gGCq03S3Z7PDhS8pduQ==}
@@ -4315,6 +4357,13 @@ packages:
   '@tiptap/starter-kit@3.31.3':
     resolution: {integrity: sha512-WKof9RewdmGHvWJ1wn0/HVNG2mV+HOgVRyJkKekuM9fgr6BZAAH/xZsWE1eon+94JnQ+KtK2ThydXQM/qc6b2A==}
 
+  '@tiptap/suggestion@3.31.4':
+    resolution: {integrity: sha512-J9WWMQDAzZOlF9VSdLohpxgrwlB1NscqvNhOPoS3WjwrzQqLj+FAvcchfJQcnybF5mYOtftFZexpOzOt1MqjUA==}
+    peerDependencies:
+      '@floating-ui/dom': ^1.0.0
+      '@tiptap/core': 3.31.4
+      '@tiptap/pm': 3.31.4
+
   '@types/archiver@8.0.0':
     resolution: {integrity: sha512-YpXPbEuv9+eUIPPQWUPahj3cvs9isWRuF+J4z+KbdYVDO3rWorWQFxUVHnwPu2AgKwvgpki5F2VMX0Xx+mX45A==}
 
@@ -5511,6 +5560,9 @@ packages:
     resolution: {integrity: sha512-x/RzkpWO40bTjIoT30iQtt64FLLmH/iRcUCN2X//bLx7H3ifkdfPXyqsro/OYtqzIAhiLMMA7mmiOR9C3NOKjQ==}
     engines: {node: '>=20.0.0'}
 
+  harfbuzzjs@0.10.3:
+    resolution: {integrity: sha512-GJnLUrgLMadlMYrBGEXwYEimObbysy3prWT4HyPpFQERvgTU/OZ+ReUlEPOum6w4RBtFXzXiCCmECOr4sz3qwQ==}
+
   has-flag@4.0.0:
     resolution: {integrity: sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ==}
     engines: {node: '>=8'}
@@ -5975,6 +6027,9 @@ packages:
   nth-check@3.0.1:
     resolution: {integrity: sha512-GX0gsdbGVCgnRgbeGaubfjpBXyYRWOOCVeYh08bSQvDZqxz5ndXs1OTfAt/h36G1xvI94YIspsI0sVFqAV9+RQ==}
     engines: {node: '>=20.19.0'}
+
+  numfmt@3.2.6:
+    resolution: {integrity: sha512-MXc2KP3j+2usdHTY5/ENUc2S+3BRF/cJqnR6RHeq6LBqKoIZOAQ62DQw974nnaZOencbfkmkTPyTmMnlkCpjzg==}
 
   object-keys@1.1.1:
     resolution: {integrity: sha512-NuAESUOUMrlIXOfHKzD6bpPu3tYt3xvjNdRIQ+FeT0lNb4K8WR70CaDxhuNguS2XG+GjkyMwOzsN5ZktImfhLA==}
@@ -7062,7 +7117,7 @@ snapshots:
       - ioredis
       - redis
 
-  '@assistant-ui/react-ag-ui@0.0.63(@assistant-ui/react@0.15.23(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(use-sync-external-store@1.7.0(react@19.3.0)))(@assistant-ui/tap@0.9.20(@types/react@19.3.0)(react@19.3.0))(@types/react@19.3.0)(assistant-cloud@0.2.4)(react@19.3.0)(zod@4.6.5)':
+  '@assistant-ui/react-ag-ui@0.0.63(patch_hash=d908fe98d532bbb76a67c910afd55cb7d9d2390f635fefe1b68a975f810fce0d)(@assistant-ui/react@0.15.23(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(use-sync-external-store@1.7.0(react@19.3.0)))(@assistant-ui/tap@0.9.20(@types/react@19.3.0)(react@19.3.0))(@types/react@19.3.0)(assistant-cloud@0.2.4)(react@19.3.0)(zod@4.6.5)':
     dependencies:
       '@ag-ui/client': 0.0.59
       '@assistant-ui/core': 0.3.22(@assistant-ui/store@0.3.16(@assistant-ui/tap@0.9.20(@types/react@19.3.0)(react@19.3.0))(@types/react@19.3.0)(react@19.3.0))(@assistant-ui/tap@0.9.20(@types/react@19.3.0)(react@19.3.0))(@types/react@19.3.0)(assistant-cloud@0.2.4)(react@19.3.0)
@@ -7939,6 +7994,8 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
     optional: true
+
+  '@embedpdf/pdfium@2.15.1': {}
 
   '@emotion/babel-plugin@11.13.5(supports-color@7.2.0)':
     dependencies:
@@ -10456,6 +10513,12 @@ snapshots:
       '@tiptap/extensions': 3.31.3(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3)
       '@tiptap/pm': 3.31.3
 
+  '@tiptap/suggestion@3.31.4(@floating-ui/dom@1.8.0)(@tiptap/core@3.31.3(@tiptap/pm@3.31.3))(@tiptap/pm@3.31.3)':
+    dependencies:
+      '@floating-ui/dom': 1.8.0
+      '@tiptap/core': 3.31.3(@tiptap/pm@3.31.3)
+      '@tiptap/pm': 3.31.3
+
   '@types/archiver@8.0.0':
     dependencies:
       '@types/node': 26.6.2
@@ -11691,6 +11754,8 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
+  harfbuzzjs@0.10.3: {}
+
   has-flag@4.0.0: {}
 
   has-property-descriptors@1.0.2:
@@ -12065,6 +12130,8 @@ snapshots:
   nth-check@3.0.1:
     dependencies:
       boolbase: 2.0.0
+
+  numfmt@3.2.6: {}
 
   object-keys@1.1.1:
     optional: true

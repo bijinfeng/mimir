@@ -1,0 +1,8 @@
+{"file": ".trellis/spec/guides/index.md", "reason": "10-13-html-agent-manual: 质量检查时核对项目契约及边界"}
+{"file": ".trellis/spec/project/quality.md", "reason": "10-13-html-agent-manual: 质量检查时核对项目契约及边界"}
+{"file": ".trellis/spec/office/engine/conventions.md", "reason": "10-13-html-agent-manual: 质量检查时核对项目契约及边界"}
+{"file": ".trellis/spec/office/frontend/editors/pitfalls.md", "reason": "10-13-html-agent-manual: 质量检查时核对项目契约及边界"}
+{"file": ".trellis/spec/shared/contract/index.md", "reason": "10-13-html-agent-manual: 质量检查时核对项目契约及边界"}
+{"file": ".trellis/tasks/10-12-multi-format-agent-edit/research/genoffice-five-format-inventory.md", "reason": "10-13-html-agent-manual: 质量检查时核对上游能力与运行证据"}
+{"file": ".trellis/tasks/10-12-multi-format-agent-edit/research/reference-check.md", "reason": "10-13-html-agent-manual: 质量检查时核对上游能力与运行证据"}
+{"file": ".trellis/tasks/10-12-multi-format-agent-edit/research/genoffice-manual-entrypoints.md", "reason": "核对固定版本 GenOffice 手动命令入口并追踪真实执行与两端验收"}

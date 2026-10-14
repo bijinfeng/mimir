@@ -90,7 +90,7 @@
    *
    * 这个元素是宿主布局里的 flex 子项，而 `min-width: auto` 会让它**不会缩到
    * 比内容更窄**——里面有一张 900px 的 pdf 页面（或一张宽表格），于是窄窗口下
-   * 整块外壳比视口宽、底部状态行右端的「保存」被推出可视区。它看起来像「工具条
+   * 整块外壳比视口宽、顶部快捷操作与底部状态被推出可视区。它看起来像「工具条
    * 没折行」，其实是外壳的宽度下界。
    *
    * 为什么 `overflow: clip` 挡不住它：Chrome 只对 `hidden`/`auto`/`scroll`
@@ -143,18 +143,15 @@
   z-index: 2;
   flex: none;
   border-bottom: 1px solid var(--me-border, #d9d9d9);
+  /* A slightly clearer edge separates the ribbon from the canvas in both themes. */
+  border-bottom-color: color-mix(in srgb, var(--me-border, #d9d9d9) 88%, var(--me-text, #262626));
   background-color: var(--me-surface, #fff);
   background-image: linear-gradient(var(--me-bar-bg, #fafafa), var(--me-bar-bg, #fafafa));
 }
 
 /*
- * 窄屏：命令区折行后的高度上限。
- *
- * docx 的工具条有八到十个组，420px 视口下折成 **9 行 243px**（占 900px
- * 屏高的 27%）——正文只剩一小条，「工具条比内容还高」（实测发现，D-096）。
- * 只给命令区一个上限并让它自己滚：**按钮一个不少**，保存位于底部状态行，
- * 次工具条仍在下方，编辑区也不会被挤没。滚动条只在真的超高时出现
- * （`max-height` 不触发就没有滚动条）。
+ * 窄屏：常规工具条的高度上限。六格式分类工具栏各自横向滚动命令区，
+ * 不按宽度隐藏按钮；这里仍约束未采用分类条的工具区高度。
  *
  * 断点与宿主应用的窄屏断点同值（880px，`packages/renderer/src/theme/tokens.ts` 的
  * `NAV_NARROW_QUERY`）——这个包不认识宿主的断点常量，值写在这里并注明出处：
@@ -209,119 +206,7 @@
   display: none;
 }
 
-/* The DOCX row responds to the editor column, including an open AI sidebar. */
-.mimir-editor__tools:has(> .mimir-docx-toolbar) {
-  container: docx-toolbar / inline-size;
-  flex-wrap: nowrap;
-  max-height: none;
-  overflow: visible;
-}
-
-.mimir-editor__bar:has(.mimir-docx-toolbar) {
-  align-items: center;
-  min-height: 40px;
-  padding: 5px 8px;
-}
-
-.mimir-docx-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  width: 100%;
-  min-width: 0;
-  white-space: nowrap;
-}
-
-.mimir-docx-toolbar > span,
-.mimir-docx-toolbar__categories {
-  display: inline-flex;
-  align-items: center;
-  flex: none;
-  gap: 3px;
-}
-
-.mimir-docx-toolbar > .me-menu {
-  margin-left: auto;
-}
-
-/* Keep “更多” inside the editor column when the AI sidebar sits beside it. */
-.mimir-docx-toolbar > .me-menu > .me-menu__panel {
-  position: absolute;
-  top: calc(100% + 4px) !important;
-  right: 0;
-  bottom: auto !important;
-  left: auto !important;
-}
-
-.mimir-docx-toolbar > .me-menu .me-menu__panel .me-menu__panel:not(.me-color__panel) {
-  translate: -20px 0;
-}
-
-/* Fixed color palettes inside that menu open toward the document, not the AI pane. */
-@media (min-width: 501px) {
-  .mimir-docx-toolbar > .me-menu .me-color__panel {
-    translate: calc(-100% + 64px) 0;
-  }
-}
-
-.mimir-docx-toolbar > span > .me-group {
-  flex-wrap: nowrap;
-  min-height: 0;
-  padding: 0;
-}
-.mimir-docx-toolbar > span > .me-group > .me-group__caption {
-  display: none;
-}
-
-.mimir-docx-toolbar__size,
-.mimir-docx-toolbar__history,
-.mimir-docx-toolbar__find,
-.mimir-docx-toolbar__align,
-.mimir-docx-toolbar__lists,
-.mimir-docx-toolbar__categories {
-  display: none !important;
-}
-
-@container docx-toolbar (min-width: 460px) {
-  .mimir-docx-toolbar__size {
-    display: inline-flex !important;
-  }
-}
-
-@container docx-toolbar (min-width: 600px) {
-  .mimir-docx-toolbar__history,
-  .mimir-docx-toolbar__find {
-    display: inline-flex !important;
-  }
-}
-
-@container docx-toolbar (min-width: 800px) {
-  .mimir-docx-toolbar__align {
-    display: inline-flex !important;
-  }
-}
-
-@container docx-toolbar (min-width: 950px) {
-  .mimir-docx-toolbar__lists {
-    display: inline-flex !important;
-  }
-}
-
-@container docx-toolbar (min-width: 1080px) {
-  .mimir-docx-toolbar__categories {
-    display: inline-flex !important;
-  }
-}
-
-/* A color palette opened inside “更多” is wider than the shared popup estimate. */
-@media (max-width: 500px) {
-  .mimir-docx-toolbar .me-color__panel {
-    right: 8px;
-    left: auto !important;
-  }
-}
-
-/* 只滚动命令区，次工具条与底部保存入口仍保持可见。 */
+/* 只滚动命令区，次工具条仍保持可见。 */
 @media (max-width: 880px) {
   .mimir-editor__bar {
     gap: 8px;
@@ -400,7 +285,7 @@
   background-image: linear-gradient(var(--me-bar-bg, #fafafa), var(--me-bar-bg, #fafafa));
 }
 
-/* 状态行。说明可换行，保存操作固定在右端，不参与说明文字的折行。 */
+/* 状态行。说明与计数可以换行，保存操作在顶部 Ribbon 快捷区。 */
 .mimir-editor__status {
   position: sticky;
   bottom: 0;
@@ -429,18 +314,10 @@
   min-width: 0;
 }
 
-/* 长状态说明（尤其 XLSX/PPTX）不能撑开外壳，把保存挤出窄屏。 */
+/* 长状态说明（尤其 XLSX/PPTX）不能撑开外壳。 */
 .mimir-editor__status-content > .me-label {
   white-space: normal;
   overflow-wrap: anywhere;
-}
-
-.mimir-editor__status-actions {
-  display: flex;
-  align-items: center;
-  flex: none;
-  gap: 6px;
-  margin-left: auto;
 }
 
 /* ── 工具条里的控件 ────────────────────────────────────────────── */
@@ -1126,8 +1003,8 @@
  *
  * **宽度是同一个问题的另一条轴，而它的症状更隐蔽**：默认 `min-width: auto`
  * 让这一层不会缩到比内容（900px 的 pdf 页面、宽表格）更窄——于是窄窗口下
- * **整块外壳比视口宽**（实测 420px 窗口里外壳 932px），底部右端的「保存」
- * 被推出可视区，而那看起来像「工具条没折行」，不像布局宽度问题。
+ * **整块外壳比视口宽**（实测 420px 窗口里外壳 932px），顶部快捷保存和
+ * 底部状态都会被推出可视区，而那看起来像工具条问题，不像布局宽度问题。
  */
 .me-scroll {
   flex: 1;

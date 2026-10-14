@@ -33,5 +33,6 @@ export type {
   ChatDraft,
   ChatIo,
   ChatDocxAgent,
+  ChatDocumentAgent,
 } from './types.js'
 export type { MimirChatApi } from './runtime/chat-context.js'

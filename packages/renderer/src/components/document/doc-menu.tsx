@@ -1,5 +1,6 @@
 import type { DocumentDetail } from '@mimir/shared'
 import type { MenuProps } from 'antd'
+import { FileText, Folder, Sparkles, Tags } from 'lucide-react'
 
 /**
  * 文档工具条上的「⋯」菜单。
@@ -103,7 +104,13 @@ export function buildDocMenu(options: DocMenuOptions): MenuProps['items'] {
 
   items.push({
     key: 'tags',
-    label: doc.tags.length > 0 ? `标签（${doc.tags.length}）` : '标签',
+    icon: <Tags size={15} aria-hidden="true" />,
+    label: (
+      <span data-doc-menu-row="tags">
+        <span>标签</span>
+        {doc.tags.length > 0 && <span data-doc-menu-detail>{doc.tags.length}</span>}
+      </span>
+    ),
     children: tagChildren,
   })
 
@@ -114,10 +121,11 @@ export function buildDocMenu(options: DocMenuOptions): MenuProps['items'] {
       ? [
           ...folders.map((path) =>
             path === doc.folder
-              ? { key: `folder:${path}`, label: `${path}（当前）`, disabled: true }
+              ? { key: `folder:${path}`, label: `${path}（当前）`, title: path, disabled: true }
               : {
                   key: `folder:${path}`,
                   label: path,
+                  title: path,
                   onClick: () => options.onSetFolder(path),
                 },
           ),
@@ -136,7 +144,13 @@ export function buildDocMenu(options: DocMenuOptions): MenuProps['items'] {
 
   items.push({
     key: 'folder',
-    label: doc.folder ? `目录（${doc.folder}）` : '归入目录',
+    icon: <Folder size={15} aria-hidden="true" />,
+    label: (
+      <span data-doc-menu-row="folder" title={doc.folder || undefined}>
+        <span>目录</span>
+        {doc.folder && <span data-doc-menu-detail>{doc.folder}</span>}
+      </span>
+    ),
     children: folderChildren,
   })
 
@@ -157,6 +171,7 @@ export function buildDocMenu(options: DocMenuOptions): MenuProps['items'] {
     if (options.onAiTags) {
       aiChildren.push({
         key: 'ai-tags',
+        icon: <Sparkles size={15} aria-hidden="true" />,
         label: options.aiBusy ? 'AI 正在读…' : 'AI 建议标签',
         disabled: !hasBody || options.aiBusy === true,
         onClick: options.onAiTags,
@@ -165,6 +180,7 @@ export function buildDocMenu(options: DocMenuOptions): MenuProps['items'] {
     if (options.onSummary) {
       aiChildren.push({
         key: 'ai-summary',
+        icon: <FileText size={15} aria-hidden="true" />,
         label: options.aiBusy ? 'AI 正在读…' : 'AI 摘要',
         disabled: !hasBody || options.aiBusy === true,
         onClick: options.onSummary,
@@ -173,7 +189,16 @@ export function buildDocMenu(options: DocMenuOptions): MenuProps['items'] {
 
     if (aiChildren.length > 0) {
       items.push({ type: 'divider' })
-      items.push({ type: 'group', label: 'AI（会产生用量）', children: aiChildren })
+      items.push({
+        type: 'group',
+        label: (
+          <span data-doc-menu-group>
+            <span>AI</span>
+            <span data-doc-menu-cost>产生用量</span>
+          </span>
+        ),
+        children: aiChildren,
+      })
     }
   }
 

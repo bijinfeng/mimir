@@ -1,67 +1,12 @@
 /**
- * PDF 原件的编辑器：页面级操作 + 文字层查找。
+ * PDF 画布：pdf.js 渲染与文字层、pdf-lib 页面结构、宿主 PDFium 内容流写入。
+ * 页面模型是 `PdfPageRef`；手动命令与 Agent 页面操作共用它。点击页面插字
+ * 由 pdf.js viewport 换算到 PDF 坐标，再经鉴权宿主返回真实字节。内容字节在
+ * 保存前保留为工作副本，画布和文字索引立即切换到该副本；保存成功才更新基线。
  *
- * ## 能做到什么、做不到什么（D-056，如实写在界面上）
- *
- * | 能做 | 做不到（本版） |
- * |---|---|
- * | 渲染每一页（pdf.js，含中文 cmaps） | **改文字内容**：PDF 的文字是内容流里的绘制指令，改一个字要重排那一段（上游用 PDFium 的 WASM 做，7062 行在 Electron 主进程） |
- * | 旋转（这一页 / 全部页）、删除、调序、倒序 | 删掉一段文字并让后面的文字上移 |
- * | 插入空白页、从别的 PDF 导入页面 | 改字体、颜色、字号 |
- * | 裁剪（只改可视区）、换纸型（缩放内容） | 编辑矢量图形 |
- * | **查找文字**（含中文）并高亮到字上 | 替换文字——查找的适配器只给 `FindAdapter`，不给 `replaceOne`/`replaceAll`（`EditorShell.tsx` 的注释说明了为什么那两个是可选的：空实现点了没反应） |
- *
- * **为什么页面级先行**：PDF 与另外三种格式有一个根本区别——它不是「结构化
- * 文档」而是「一叠页面指令」。页面级操作（旋转、删除、重排、裁剪）是**纯结构
- * 改动**，用 pdf-lib（MIT、纯 JS）就能做对，而且做出来的文件在任何阅读器里
- * 都对。文字编辑则要拆内容流（PDFium / qpdf 那一类），代价与风险都高出两个
- * 数量级。
- *
- * **这条边界是上游的镜像**：它用 PDFium 的 WASM 做成文本替换，但那 7062 行
- * 写着 Electron 的主进程与 Node API。搬进浏览器要重写跨进程那一段，而且
- * PDFium 的 WASM 是 7MB——那是另一件工程（见 `.trellis/spec/project/architecture.md` §16 的「仍未做」）。
- *
- * ## 三份库的分工是刻意的
- *
- * ```
- * pdf.js   读：画页面（pdf-render.ts）、取文字层（pdf-text.ts）
- * pdf-lib  写：页面结构（pdf-pages.ts 的 buildPdfBytes）
- * ```
- *
- * 反过来（用一个库做两件事）两头都做不好——pdf.js 没有写 API，pdf-lib 的渲染
- * 能力很弱。`pdf-render.ts` 与 `pdf-text.ts` **共用同一份文档缓存**（按字节的
- * 身份），否则同一份 PDF 会被解析两遍（各持一个 worker 侧的对象树）。
- *
- * ## 保存是**整体重建**，不是补丁
- *
- * 这一点与 docx/xlsx/pptx 不同，必须说清：pdf-lib 用「加载 → 改结构 → 序列化」
- * 的模型，它**不保留**原始字节里那些它没理解的东西（增量更新的对象、
- * 线性化提示、未引用的对象）。所以保存后的文件会比原件小、内容逐字节不同。
- *
- * 页面编辑的边界：
- *   - **页面级操作是它擅长的**：页对象、字体、图像流能随页面搬运；书签目录不在此列
- *   - 未编辑时**不保存**——判据是**页面结构与原件是否逐页相同**（`isPristine`），
- *     不是「有没有操作过」：转过去再转回来仍然是原样，那时按钮就该是灰的，
- *     否则「什么都没改」也会把整份文件重写一遍
- *   - 常见文档信息显式复制；有额外 Catalog 结构时拒绝写回，不静默丢表单等数据
- *   - 界面上如实写着「保存会重写整个文件」，用户下载原件可以对比
- *
- * ## 一页改了什么，都记在 `PdfPageRef` 上
- *
- * 页面模型（来源 / 旋转 / 裁剪 / 纸型）与它的几何在 `pdf-pages.ts`，那里没有
- * 一行 JSX——所以它测得动（`pdf-pages.test.ts` 用 pdf-lib 读回产出物逐页断言，
- * 再用 pdf.js 读回文字位置验证几何）。这个文件只负责「界面把哪些动作交给它」
- * 与「当前页长什么样」。
- *
- * ## 画布画的是**原件**
- *
- * 裁剪与纸型是「保存后才生效」的改动，而画布上那一页来自原件字节。所以：
- *
- *   - 裁剪用一层**待生效框**表达（框外压暗），而不是把画面裁掉
- *   - 纸型只在状态行写着目标尺寸——改画布尺寸会让画面与文字层、命中高亮
- *     各说各话（它们是同一套坐标，见 `pdf-text.ts`）
- *
- * 保存之后这些改动就是原件了（`source.reload()` 重新读字节），画布随之改变。
+ * 文字替换仍需可靠的原文对象/矩形选择，目前画布没有此选区，所以查找栏只读。
+ * 页面裁剪和纸型在保存前仍是待生效结构，画布不提前改几何。页面重建会重写
+ * PDF，含未知 Catalog 结构的原件由 `buildPdfBytes` 拒绝写回。
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
@@ -82,6 +27,8 @@ import {
   ToolbarNotice,
   ToolbarNumberField,
   ToolbarSelect,
+  ToolbarTextField,
+  useFindHotkey,
   type FindAdapter,
   type ToolbarMenuItem,
 } from '../shell/EditorShell.js'
@@ -90,8 +37,10 @@ import {
   ChevronRightIcon,
   FileImportIcon,
   FindIcon,
+  RedoIcon,
   SaveIcon,
   TrashIcon,
+  UndoIcon,
 } from '../shell/icons.js'
 import { statusText, useParsed, useSource } from './use-source.js'
 import { OFFICE_MIME, type EditorProps } from './types.js'
@@ -135,6 +84,14 @@ import {
   type PdfTextIndex,
 } from './pdf-text.js'
 import { ThumbnailSidebar } from './ThumbnailSidebar.js'
+import {
+  PdfAgentHandle,
+  type PdfAgentSnapshot,
+  type PdfAgentTextInsert,
+  type PdfPendingTextInsert,
+} from '../agent/pdf-agent.js'
+import { CompactToolbar } from './CompactToolbar.js'
+import './compact-toolbar.css'
 import '../shell/shell.css'
 import './editors.css'
 import './pptx-pdf-toolbar.css'
@@ -149,6 +106,47 @@ const ZOOM_STEP = 20
 
 /** 没有导入页时的空表。**模块级常量**：每次渲染新建一个 Map 会让下游的依赖比较永远不等 */
 const NO_IMPORTS: ReadonlyMap<string, Uint8Array> = new Map()
+
+export interface PdfHostApply {
+  (request: {
+    bytes: Uint8Array
+    expectedVersion: number
+    kind: 'edit' | 'insert'
+    items: unknown[]
+    signal?: AbortSignal
+  }): Promise<{ bytes: Uint8Array; version: number }>
+}
+
+interface PdfWorkingBytes {
+  source: Uint8Array
+  bytes: Uint8Array
+}
+
+interface PdfSavedBaseline {
+  documentId: string
+  source: Uint8Array
+  bytes: Uint8Array
+}
+
+interface PdfPendingTextState {
+  documentId: string
+  source: Uint8Array
+  /** Bytes before the first pending insertion, including earlier page edits. */
+  base: Uint8Array
+  inserts: readonly PdfPendingTextInsert[]
+}
+
+function samePendingInsert(left: PdfPendingTextInsert, right: PdfPendingTextInsert): boolean {
+  return (
+    left.id === right.id &&
+    left.pageIndex === right.pageIndex &&
+    left.x === right.x &&
+    left.y === right.y &&
+    left.text === right.text &&
+    left.fontSize === right.fontSize &&
+    left.color.every((value, index) => value === right.color[index])
+  )
+}
 
 /**
  * 一次改动：新的页面结构、导入的字节，以及**它是为哪一份字节做的**。
@@ -172,8 +170,8 @@ interface PdfEdit {
    *
    * ## 为什么必须有这一项（保存之后才看得出来的两个错）
    *
-   * 保存成功后 `source.reload()` 是一个来回的异步：在新字节到之前，
-   * `source.bytes` 还是**旧**的那一份。于是：
+   * 保存成功后，加载时的 `source.bytes` 仍是旧字节；工作副本承接刚保存的
+   * 字节。后续页面改动必须相对刚保存的结构比较。否则：
    *
    *   - 「有没有改动」若只比旧的原件，**保存完仍会显示有改动**（真浏览器里
    *     实测到：字节已经写出 2075 字节，状态行还挂着「已修改，未保存」）
@@ -265,8 +263,48 @@ function pageKey(ref: PdfPageRef): string {
   return `${where}@${ref.rotation}`
 }
 
-export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: EditorProps) {
+export function PdfEditor({
+  documentId,
+  io,
+  onDirtyChange,
+  onAgentHandleChange,
+  hostApply,
+  flush = false,
+}: EditorProps & {
+  onAgentHandleChange?: (handle: PdfAgentHandle | null) => void
+  hostApply?: PdfHostApply
+}) {
   const source = useSource(io, documentId)
+  const [working, setWorking] = useState<PdfWorkingBytes | null>(null)
+  const activeWorking = working?.source === source.bytes ? working : null
+  const currentBytes = activeWorking?.bytes ?? source.bytes
+  const [savedBaseline, setSavedBaseline] = useState<PdfSavedBaseline | null>(null)
+  const activeSavedBaseline =
+    savedBaseline?.documentId === documentId && savedBaseline.source === source.bytes
+      ? savedBaseline
+      : null
+  const savedBytes = activeSavedBaseline?.bytes ?? source.bytes
+  const [pendingText, setPendingText] = useState<PdfPendingTextState | null>(null)
+  const activePendingText =
+    pendingText?.documentId === documentId && pendingText.source === source.bytes
+      ? pendingText
+      : null
+  const [insertMode, setInsertMode] = useState(false)
+  const [insertPoint, setInsertPoint] = useState<{ page: number; origin: [number, number] } | null>(
+    null,
+  )
+  const [insertText, setInsertText] = useState('')
+  const [pendingEditorOpen, setPendingEditorOpen] = useState(false)
+  const [selectedPendingId, setSelectedPendingId] = useState<string | null>(null)
+  const [pendingDraft, setPendingDraft] = useState<{
+    id: string
+    text: string
+    x: number
+    y: number
+    fontSize: number
+    color: string
+  } | null>(null)
+  const [contentBusy, setContentBusy] = useState(false)
   /**
    * 当前页号，以及**它是哪一份文档的页号**。
    *
@@ -284,6 +322,7 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
   const [edit, setEdit] = useState<PdfEdit | null>(null)
   /** 查找栏开着吗，以及它的三个受控值（栏本身是受控的） */
   const [findOpen, setFindOpen] = useState(false)
+  useFindHotkey(() => setFindOpen(true))
   const [findQuery, setFindQuery] = useState('')
   const [findOptions, setFindOptions] = useState<FindOptions>({
     matchCase: false,
@@ -296,12 +335,57 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
    * 索引记下它对应的 `key`——与 `patch`/`loaded` 同一条思路：比较身份，而不是
    * 用一个 effect 去清空。
    */
-  const [textIndex, setTextIndex] = useState<{ key: string; index: PdfTextIndex } | null>(null)
+  const [textIndex, setTextIndex] = useState<{
+    bytes: Uint8Array
+    key: string
+    index: PdfTextIndex
+  } | null>(null)
   /** 扫描进度（`null` 表示还没报过进度）。大文档扫起来要几秒，得让人看见在动 */
   const [scan, setScan] = useState<{ done: number; total: number } | null>(null)
   const [highlightStore] = useState(createHighlightStore)
   const highlight = useSyncExternalStore(highlightStore.subscribe, highlightStore.getSnapshot)
   const canvasRef = useRef<HTMLDivElement>(null)
+  const agentRef = useRef<PdfAgentHandle | null>(null)
+  const agentSnapshotRef = useRef<PdfAgentSnapshot | null>(null)
+  const agentApplyRef = useRef<(pages: PdfPageRef[]) => void>(() => {})
+  const agentGoToRef = useRef<(index: number) => void>(() => {})
+  const agentTextRef = useRef<() => Promise<PdfTextIndex>>(() =>
+    Promise.reject(new Error('PDF 文字层未就绪')),
+  )
+  const agentInsertRef = useRef<
+    (
+      input: PdfAgentTextInsert,
+      version: number,
+      signal?: AbortSignal,
+    ) => Promise<PdfPendingTextInsert>
+  >(() => Promise.reject(new Error('PDF 文字写入尚未就绪')))
+  const agentPendingRef = useRef<PdfPendingTextState | null>(null)
+  const pageMutationVersionRef = useRef(0)
+  const savedBaselineRef = useRef<PdfSavedBaseline | null>(null)
+  const savingPendingRef = useRef<{
+    documentId: string
+    source: Uint8Array
+    workingBytes: Uint8Array
+    edit: PdfEdit | null
+    bytes: Uint8Array
+    inserts: readonly PdfPendingTextInsert[]
+  } | null>(null)
+  const agentReplaceRef = useRef<
+    (
+      inserts: readonly PdfPendingTextInsert[],
+      version: number,
+      signal?: AbortSignal,
+    ) => Promise<void>
+  >(() => Promise.reject(new Error('PDF 文字写入尚未就绪')))
+  const agentCaptureRef = useRef<() => unknown>(() => null)
+  const agentRestoreRef = useRef<(state: unknown) => void>(() => {})
+  const agentContentReady = hostApply !== undefined
+  const contentAbortRef = useRef<AbortController | null>(null)
+  useEffect(() => () => contentAbortRef.current?.abort(), [])
+  const onAgentHandleChangeRef = useRef(onAgentHandleChange)
+  useEffect(() => {
+    onAgentHandleChangeRef.current = onAgentHandleChange
+  }, [onAgentHandleChange])
 
   /**
    * 打开文档：读每页的可视区尺寸与旋转（一次 pdf-lib 加载）。
@@ -310,7 +394,7 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
    * `readPdfPages` 取的是 **CropBox** 而不是 MediaBox——用户看到的是 CropBox
    * 那一块，取 MediaBox 会让界面上的尺寸比实际大一圈。
    */
-  const opened = useParsed(source.bytes, readPdfPages)
+  const opened = useParsed(currentBytes, readPdfPages)
 
   /** 打开时的页面结构（没有任何改动时的页序） */
   const original = useMemo<PdfPageRef[] | null>(() => {
@@ -323,10 +407,11 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
       paper: null,
     }))
   }, [opened.value])
+  const ready = original !== null
 
   /** 当前的改动（属于这一份字节才作数） */
   const settled =
-    edit !== null && source.bytes !== null && edit.bytes === source.bytes ? edit : null
+    edit !== null && currentBytes !== null && edit.bytes === currentBytes ? edit : null
 
   /**
    * 当前页序与旋转：有改动时用改动，否则用解析出来的原样。
@@ -337,8 +422,8 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
   const layout = useMemo<PdfPageRef[]>(() => settled?.pages ?? original ?? [], [settled, original])
   const imports = settled?.imports ?? NO_IMPORTS
   const retainedSources = useMemo(
-    () => [source.bytes, ...imports.values()],
-    [source.bytes, imports],
+    () => [currentBytes, ...imports.values()],
+    [currentBytes, imports],
   )
   useEffect(() => retainPdfDocuments(retainedSources), [retainedSources])
   useEffect(() => () => retainPdfDocuments([]), [])
@@ -385,19 +470,19 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
   )
 
   const sameAsFile = settled === null ? true : matchesFile(settled.pages, settled.file)
-  const dirty = settled !== null && !sameAsFile
+  const contentDirty = activeWorking !== null && activeWorking.bytes !== savedBytes
+  const dirty = contentDirty || (settled !== null && !sameAsFile)
 
   /**
    * 状态行左侧。
    *
-   * ## 为什么要自己带一个 `saved`，而不是用 `useSource.saveCount`
+   * ## 为什么保存字节要有独立基线，而不是只用 `useSource.saveCount`
    *
    * 两件事叠在一起会让状态行**卡在「已修改，未保存」**（真浏览器里实测到的：
    * 字节已经写出 2075 字节，状态行还说没保存）：
    *
-   *   1. 这里的 `dirty` 是**算出来的**（页面结构与原件是否逐页相同），不是
-   *      显式的 state。保存完成后 `source.reload()` 要等一个来回才拿到新字节；
-   *      在那之前改动仍挂在旧的 `bytes` 上，`dirty` 还是真
+   *   1. 这里的 `dirty` 是**算出来的**（内容字节与页面结构对磁盘基线），不是
+   *      显式的 state。若仍用加载时的旧字节作基线，保存后会继续显示未保存
    *   2. `statusText` 里 `dirty` 的优先级高于 `saveCount`
    *
    * 而 `saveCount` 本身也不能直接用来判「已保存」：它的语义是「打开以来保存过
@@ -405,15 +490,17 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
    * 挂着未保存的改动，比不说更坏（与 `isPristine` 那条注释是同一个理由：真相
    * 只能有一个）。
    *
-   * 所以判据是**当前结构与磁盘上那份是否相同**（`sameAsFile`）：保存完就是
-   * 相同（`saveCount` 报 1 → 「已保存」），再改一笔就不相同了（`dirty` 先命中，
-   * 报「已修改，未保存」）。
+   * 所以内容字节比较 `savedBytes`，页结构比较 `sameAsFile`。保存后再插入
+   * 并删除文字，会回到刚保存的字节，而不是误拿打开时的原件当基线。
    */
   const status = statusText({
     // `dirty` 在 `statusText` 里优先级更高，所以这两个不会同时生效
-    handle: { ...source, saveCount: settled !== null && sameAsFile ? 1 : 0 },
+    handle: {
+      ...source,
+      saveCount: activeSavedBaseline !== null || (settled !== null && sameAsFile) ? 1 : 0,
+    },
     dirty,
-    idle: layout.length > 0 ? `第 ${at + 1} / ${layout.length} 页 · ${zoom}%` : '读取中…',
+    idle: layout.length > 0 ? `${zoom}%` : '读取中…',
   })
 
   /**
@@ -422,10 +509,18 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
    * 顺带报给宿主的脏标记：`onDirtyChange` 在这里算——**在事件里**算才有两个
    * 端点（改回原样也要报 `false`）。放在渲染期算就得用 effect 转发。
    */
-  const applyPages = (pages: PdfPageRef[], nextImports = imports) => {
+  const applyPages = (pages: PdfPageRef[], nextImports = imports, fromAgent = false) => {
+    // A structural edit changes the page coordinate system. The already rendered
+    // text stays in the working bytes; its temporary object ids can no longer be
+    // safely replayed against the earlier base.
+    if (agentPendingRef.current !== null) {
+      agentPendingRef.current = null
+      setPendingText(null)
+    }
     // 抓住这一份字节（下面在闭包里用；`source.bytes` 是属性访问，TS 收窄不过去）
-    const bytes = source.bytes
+    const bytes = fromAgent ? (agentSnapshotRef.current?.bytes ?? currentBytes) : currentBytes
     if (bytes === null) return
+    pageMutationVersionRef.current++
     // `file` 要一起带上：它是「磁盘上那份」的基线，改一笔不该把它丢掉
     setEdit((prev) => ({
       bytes,
@@ -441,7 +536,16 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
      * 已经灰了——两处说法不一致。基线就是 `settled.file`（保存过）或打开时
      * 的原件，两者都在手边，所以能算准。
      */
-    onDirtyChange?.(!matchesFile(pages, settled?.file ?? null))
+    const pageDirty = !matchesFile(pages, settled?.file ?? null)
+    onDirtyChange?.(pageDirty || contentDirty)
+    if (agentSnapshotRef.current?.bytes === bytes) {
+      agentSnapshotRef.current = {
+        ...agentSnapshotRef.current,
+        pages,
+        dirty: pageDirty || contentDirty,
+      }
+    }
+    if (!fromAgent) agentRef.current?.markManualChange()
   }
 
   /** 改**当前页**。按页序下标定位（不是按原页号——导入的页会与原页号撞上） */
@@ -551,7 +655,7 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
    * 裁剪与换纸型，那需要它的 `base`。原件里没有它的信息，只能现在读。
    */
   const importPages = async (file: File) => {
-    if (source.bytes === null) return
+    if (currentBytes === null) return
     setNotice(null)
     try {
       const bytes = new Uint8Array(await file.arrayBuffer())
@@ -601,42 +705,184 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
   }
 
   const save = async () => {
-    if (settled === null || source.bytes === null) return
+    if (currentBytes === null || !dirty || source.saving || contentBusy) return
     setNotice(null)
+    const handle = agentRef.current
+    const version = handle?.getVersion()
+    const pageMutationVersion = pageMutationVersionRef.current
     let bytes: Uint8Array
     try {
-      bytes = await buildPdfBytes({
-        bytes: source.bytes,
-        layout: settled.pages,
-        imports: settled.imports,
-      })
+      bytes =
+        settled === null || sameAsFile
+          ? currentBytes
+          : await buildPdfBytes({
+              bytes: currentBytes,
+              layout: settled.pages,
+              imports: settled.imports,
+            })
     } catch (cause) {
       setNotice(`未保存：${messageOf(cause)}`)
       return
     }
+    if (handle !== agentRef.current || version !== handle?.getVersion()) {
+      setNotice('画布已变化，请重新保存当前内容')
+      return
+    }
+    const sourceIdentity = source.bytes!
+    const pendingAtSave = activePendingText
+    savingPendingRef.current = {
+      documentId,
+      source: sourceIdentity,
+      workingBytes: currentBytes,
+      edit: settled,
+      bytes,
+      inserts: pendingAtSave?.inserts ?? [],
+    }
     const ok = await source.save(bytes, { name: 'document.pdf', mime: OFFICE_MIME.pdf })
+    savingPendingRef.current = null
     if (!ok) return
-    /**
-     * 让编辑器回到「以刚写出的字节为准」。
-     *
-     * 与 pptx/xlsx 的 `commit()` 同一个理由：不做的话下一次保存会从**旧字节**
-     * 重建，把这一次的改动静默回滚（两次保存都「成功」）。PDF 这边多一步
-     * 重新加载——`useSource` 的 `reload()` 会重新取原件，于是 `source.bytes`
-     * 换新，`layout` 也随之从新字节派生（改动与导入的字节都随之作废，
-     * 因为它们的键是旧字节）。
-     */
-    /**
-     * 把**刚写出的结构**记成「磁盘上那份」的基线（理由见 `PdfEdit.file`）。
-     * 用更新函数读 `prev`：保存是异步的，期间用户可能又改了一笔——那一笔在
-     * `pages` 里，而基线必须是写出的那一份，不读 `prev` 就会把两者搞混。
-     */
-    setEdit((prev) =>
-      prev === null || prev.bytes !== source.bytes
-        ? prev
-        : { ...prev, file: { pages: settled.pages, imports: settled.imports } },
+    const baseline = { documentId, source: sourceIdentity, bytes }
+    savedBaselineRef.current = baseline
+    setSavedBaseline(baseline)
+    const changedDuringSave = handle !== agentRef.current || version !== handle?.getVersion()
+    if (!changedDuringSave) {
+      // The saved bytes become the live canvas, including content and page edits.
+      setWorking({ source: source.bytes!, bytes })
+      setEdit(null)
+      setPendingText(null)
+      agentPendingRef.current = null
+      agentSnapshotRef.current = null
+      handle?.markManualChange()
+      onDirtyChange?.(false)
+    } else {
+      const pendingNow = agentPendingRef.current
+      const pageUnchanged = pageMutationVersionRef.current === pageMutationVersion
+      let restoredSavedBytes = false
+      if (
+        pageUnchanged &&
+        pendingAtSave !== null &&
+        pendingNow?.documentId === documentId &&
+        pendingNow.source === sourceIdentity &&
+        pendingNow.base === pendingAtSave.base &&
+        pendingNow.inserts.length >= pendingAtSave.inserts.length &&
+        pendingAtSave.inserts.every((insert, index) =>
+          samePendingInsert(insert, pendingNow.inserts[index]!),
+        )
+      ) {
+        // The save committed the old prefix. Later inserts now replay on the
+        // exact bytes that reached disk, so deleting them can return cleanly.
+        const remaining = pendingNow.inserts.slice(pendingAtSave.inserts.length)
+        const rebased =
+          remaining.length > 0 ? { ...pendingNow, base: bytes, inserts: remaining } : null
+        agentPendingRef.current = rebased
+        setPendingText(rebased)
+        if (remaining.length === 0) restoredSavedBytes = true
+      }
+      if (
+        pageUnchanged &&
+        pendingAtSave === null &&
+        pendingNow === null &&
+        agentSnapshotRef.current?.bytes === bytes
+      )
+        restoredSavedBytes = true
+      if (restoredSavedBytes) {
+        setWorking({ source: sourceIdentity, bytes })
+        setEdit(null)
+        agentSnapshotRef.current = agentSnapshotRef.current
+          ? { ...agentSnapshotRef.current, bytes, dirty: false }
+          : null
+        onDirtyChange?.(false)
+        return
+      }
+      // A later edit stays pending; the new on-disk baseline is the saved layout.
+      // A content edit may complete while the older save is in flight. Only
+      // the exact bytes written by that save can become the disk baseline.
+      setEdit((prev) =>
+        prev?.bytes === currentBytes && settled !== null
+          ? { ...prev, file: { pages: settled.pages, imports: settled.imports } }
+          : prev,
+      )
+      onDirtyChange?.(true)
+    }
+  }
+
+  const insertAtPoint = async () => {
+    if (
+      !hostApply ||
+      !insertPoint ||
+      insertPoint.page !== at ||
+      !insertText.trim() ||
+      currentBytes === null ||
+      contentBusy
     )
-    onDirtyChange?.(false)
-    void source.reload()
+      return
+    const handle = agentRef.current
+    const expectedVersion = handle?.getVersion()
+    if (!handle || expectedVersion === undefined) return
+    setNotice(null)
+    const result = await handle.execute(
+      'insert_text',
+      { page: insertPoint.page + 1, origin: insertPoint.origin, text: insertText, font_size: 12 },
+      { expectedVersion, manual: true },
+    )
+    if (result.ok) {
+      setInsertPoint(null)
+      setInsertText('')
+      setInsertMode(false)
+    } else {
+      setNotice(`插入文字失败：${result.error ?? '未知错误'}`)
+    }
+  }
+
+  const pendingInserts = activePendingText?.inserts ?? []
+  const selectedPending =
+    pendingInserts.find((insert) => insert.id === selectedPendingId) ?? pendingInserts[0] ?? null
+  const pendingValues =
+    selectedPending === null
+      ? null
+      : pendingDraft?.id === selectedPending.id
+        ? pendingDraft
+        : {
+            id: selectedPending.id,
+            text: selectedPending.text,
+            x: selectedPending.x,
+            y: selectedPending.y,
+            fontSize: selectedPending.fontSize,
+            color: `#${selectedPending.color
+              .map((channel) =>
+                Math.round(channel * 255)
+                  .toString(16)
+                  .padStart(2, '0'),
+              )
+              .join('')}`,
+          }
+  const changePending = async (
+    tool: 'edit_inserted_text' | 'move_inserted_text' | 'delete_inserted_text',
+  ) => {
+    const handle = agentRef.current
+    if (!handle || !pendingValues) return
+    const args =
+      tool === 'edit_inserted_text'
+        ? {
+            id: pendingValues.id,
+            text: pendingValues.text,
+            font_size: pendingValues.fontSize,
+            color: pendingValues.color,
+          }
+        : tool === 'move_inserted_text'
+          ? { id: pendingValues.id, x: pendingValues.x, y: pendingValues.y }
+          : { id: pendingValues.id }
+    setNotice(null)
+    const result = await handle.execute(tool, args, {
+      expectedVersion: handle.getVersion(),
+      manual: true,
+    })
+    if (result.ok) {
+      setPendingDraft(null)
+      if (tool === 'delete_inserted_text') setSelectedPendingId(null)
+    } else {
+      setNotice(`修改文字失败：${result.error ?? '未知错误'}`)
+    }
   }
 
   /**
@@ -658,16 +904,262 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
   const textSources = useMemo(
     () =>
       layout.map((ref) => {
-        const from = sourceOf(ref, source.bytes, imports)
+        const from = sourceOf(ref, currentBytes, imports)
         return { bytes: from.bytes, index: from.index, rotation: ref.rotation }
       }),
-    [layout, source.bytes, imports],
+    [layout, currentBytes, imports],
   )
 
   useEffect(() => {
-    if (!findOpen || source.bytes === null) return
+    agentSnapshotRef.current =
+      currentBytes === null || original === null
+        ? null
+        : { bytes: currentBytes, pages: layout, activePage: at, dirty }
+    agentApplyRef.current = (pages) => applyPages(pages, imports, true)
+    agentGoToRef.current = (next) => {
+      const snapshot = agentSnapshotRef.current
+      if (snapshot && next >= 0 && next < snapshot.pages.length)
+        agentSnapshotRef.current = { ...snapshot, activePage: next }
+      goTo(next)
+    }
+    agentTextRef.current = () =>
+      buildPdfTextIndex(
+        (agentSnapshotRef.current?.pages ?? []).map((ref) => {
+          const from = sourceOf(ref, agentSnapshotRef.current?.bytes ?? currentBytes, imports)
+          return { bytes: from.bytes, index: from.index, rotation: ref.rotation }
+        }),
+        loadPdfDocument,
+      )
+    agentCaptureRef.current = () => ({
+      working: activeWorking,
+      edit: settled,
+      snapshot: agentSnapshotRef.current,
+      pending: agentPendingRef.current,
+    })
+    agentRestoreRef.current = (state) => {
+      const before = state as {
+        working: PdfWorkingBytes | null
+        edit: PdfEdit | null
+        snapshot: PdfAgentSnapshot | null
+        pending: PdfPendingTextState | null
+      }
+      setWorking(before.working)
+      setEdit(before.edit)
+      setPendingText(before.pending)
+      agentPendingRef.current = before.pending
+      agentSnapshotRef.current = before.snapshot
+      onDirtyChange?.(before.snapshot?.dirty ?? false)
+    }
+    agentPendingRef.current = activePendingText
+    const writePendingInserts = async (
+      base: Uint8Array,
+      inserts: readonly PdfPendingTextInsert[],
+      expectedVersion: number,
+      signal?: AbortSignal,
+    ) => {
+      if (!hostApply || currentBytes === null || source.bytes === null)
+        throw new Error('PDF 文字宿主执行器尚未就绪')
+      const handle = agentRef.current
+      if (!handle || handle.documentId !== documentId || handle.getVersion() !== expectedVersion)
+        throw new Error('PDF 画布已变化，文字结果未应用')
+      if (contentAbortRef.current !== null) throw new Error('已有 PDF 文字操作正在执行')
+      const controller = new AbortController()
+      const abort = () => controller.abort()
+      signal?.addEventListener('abort', abort, { once: true })
+      if (signal?.aborted) controller.abort()
+      contentAbortRef.current = controller
+      setContentBusy(true)
+      try {
+        if (inserts.length > 30) throw new Error('一次最多保留 30 段待保存文字')
+        const pdf = inserts.length > 0 ? await loadPdfDocument(base) : null
+        const items = await Promise.all(
+          inserts.map(async (insert) => {
+            const targetPage = await pdf!.getPage(insert.pageIndex + 1)
+            const viewport = targetPage.getViewport({ scale: 1 })
+            if (
+              insert.x < 0 ||
+              insert.y < 0 ||
+              insert.x > viewport.width ||
+              insert.y + insert.fontSize > viewport.height
+            )
+              throw new Error(`文字 ${insert.id} 的位置超出页面范围`)
+            return {
+              pageIndex: insert.pageIndex,
+              origin: viewport.convertToPdfPoint(insert.x, insert.y + insert.fontSize),
+              text: insert.text,
+              fontSize: insert.fontSize,
+              color: insert.color,
+            }
+          }),
+        )
+        if (
+          controller.signal.aborted ||
+          agentRef.current !== handle ||
+          handle.getVersion() !== expectedVersion
+        )
+          throw new Error('PDF 画布已变化，文字结果未应用')
+        const applied =
+          inserts.length === 0
+            ? { bytes: base, version: expectedVersion + 1 }
+            : await hostApply({
+                bytes: base,
+                expectedVersion,
+                kind: 'insert',
+                items,
+                signal: controller.signal,
+              })
+        if (
+          controller.signal.aborted ||
+          agentRef.current !== handle ||
+          handle.getVersion() !== expectedVersion
+        )
+          throw new Error('PDF 画布已变化，文字结果未应用')
+        if (applied.version !== expectedVersion + 1) throw new Error('PDF 宿主返回了错误的画布版本')
+        const entries = await readPdfPages(applied.bytes)
+        if (
+          controller.signal.aborted ||
+          agentRef.current !== handle ||
+          handle.getVersion() !== expectedVersion
+        )
+          throw new Error('PDF 画布已变化，文字结果未应用')
+        const pages: PdfPageRef[] = entries.map((entry, index) => ({
+          origin: { kind: 'original', index },
+          rotation: entry.rotation,
+          base: { width: entry.width, height: entry.height },
+          crop: null,
+          paper: null,
+        }))
+        const nextPending =
+          inserts.length === 0 ? null : { documentId, source: source.bytes, base, inserts }
+        agentPendingRef.current = nextPending
+        setPendingText(nextPending)
+        const recorded = savedBaselineRef.current
+        const baselineBytes =
+          recorded?.documentId === documentId && recorded.source === source.bytes
+            ? recorded.bytes
+            : source.bytes
+        const pendingDirty = applied.bytes !== baselineBytes
+        setWorking(
+          applied.bytes === source.bytes && baselineBytes === source.bytes
+            ? null
+            : { source: source.bytes, bytes: applied.bytes },
+        )
+        setEdit(null)
+        agentSnapshotRef.current = {
+          bytes: applied.bytes,
+          pages,
+          activePage: Math.min(at, pages.length - 1),
+          dirty: pendingDirty,
+        }
+        onDirtyChange?.(pendingDirty)
+      } finally {
+        signal?.removeEventListener('abort', abort)
+        if (contentAbortRef.current === controller) contentAbortRef.current = null
+        setContentBusy(false)
+      }
+    }
+    agentInsertRef.current = async (input, expectedVersion, signal) => {
+      if (currentBytes === null || source.bytes === null) throw new Error('PDF 原件尚未读取完成')
+      const pending = agentPendingRef.current
+      const liveBytes = agentSnapshotRef.current?.bytes ?? currentBytes
+      const currentEdit = liveBytes === currentBytes ? settled : null
+      const saving = savingPendingRef.current
+      const base =
+        pending?.documentId === documentId && pending.source === source.bytes
+          ? pending.base
+          : saving?.documentId === documentId &&
+              saving.source === source.bytes &&
+              saving.workingBytes === liveBytes &&
+              saving.edit === currentEdit
+            ? saving.bytes
+            : currentEdit === null || sameAsFile
+              ? liveBytes
+              : await buildPdfBytes({
+                  bytes: liveBytes,
+                  layout: currentEdit.pages,
+                  imports: currentEdit.imports,
+                })
+      const pdf = await loadPdfDocument(base)
+      const viewport = (await pdf.getPage(input.pageIndex + 1)).getViewport({ scale: 1 })
+      const point = input.origin
+        ? viewport.convertToViewportPoint(...input.origin)
+        : [input.x, (input.y ?? NaN) + input.fontSize]
+      const inserted: PdfPendingTextInsert = {
+        id: `T${crypto.randomUUID()}`,
+        pageIndex: input.pageIndex,
+        x: point[0]!,
+        y: point[1]! - input.fontSize,
+        text: input.text,
+        fontSize: input.fontSize,
+        color: input.color,
+      }
+      await writePendingInserts(
+        base,
+        [...(pending?.inserts ?? []), inserted],
+        expectedVersion,
+        signal,
+      )
+      return inserted
+    }
+    agentReplaceRef.current = async (inserts, expectedVersion, signal) => {
+      const pending = agentPendingRef.current
+      if (!pending || pending.documentId !== documentId || pending.source !== source.bytes)
+        throw new Error('待保存文字已失效')
+      const saving = savingPendingRef.current
+      if (
+        saving?.documentId === documentId &&
+        saving.source === source.bytes &&
+        saving.inserts.some((insert) => {
+          const next = inserts.find((candidate) => candidate.id === insert.id)
+          return next === undefined || !samePendingInsert(insert, next)
+        })
+      )
+        throw new Error('这段文字正在保存，请稍后再修改')
+      await writePendingInserts(pending.base, inserts, expectedVersion, signal)
+    }
+  })
+
+  useEffect(() => {
+    if (source.bytes === null || !ready || !agentContentReady) return
+    const handle = new PdfAgentHandle(documentId, {
+      snapshot: () => agentSnapshotRef.current,
+      applyPages: (pages) => agentApplyRef.current(pages),
+      gotoPage: (index) => agentGoToRef.current(index),
+      textIndex: () => agentTextRef.current(),
+      insertText: (input, version, signal) => agentInsertRef.current(input, version, signal),
+      pendingTextInserts: () => agentPendingRef.current?.inserts ?? [],
+      replaceTextInserts: (inserts, version, signal) =>
+        agentReplaceRef.current(inserts, version, signal),
+      captureState: () => agentCaptureRef.current(),
+      restoreState: (state) => agentRestoreRef.current(state),
+    })
+    agentRef.current = handle
+    onAgentHandleChangeRef.current?.(handle)
+    return () => {
+      handle.dispose()
+      if (agentRef.current === handle) agentRef.current = null
+      onAgentHandleChangeRef.current?.(null)
+    }
+  }, [
+    documentId,
+    source.bytes,
+    ready,
+    agentContentReady,
+    agentSnapshotRef,
+    agentApplyRef,
+    agentGoToRef,
+    agentTextRef,
+    agentInsertRef,
+    agentPendingRef,
+    agentReplaceRef,
+    agentCaptureRef,
+    agentRestoreRef,
+  ])
+
+  useEffect(() => {
+    if (!findOpen || currentBytes === null) return
     // 这一份页序已经扫过了
-    if (textIndex !== null && textIndex.key === textKey) return
+    if (textIndex !== null && textIndex.bytes === currentBytes && textIndex.key === textKey) return
     let cancelled = false
     void (async () => {
       try {
@@ -676,7 +1168,7 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
         })
         if (cancelled) return
         setScan(null)
-        setTextIndex({ key: textKey, index })
+        setTextIndex({ bytes: currentBytes, key: textKey, index })
         /**
          * 一页文字都没有 = 扫描件。**如实说，而不是打开一条永远搜不到的栏**：
          * 栏上会显示「无匹配」，那看起来像搜索坏了。同时把它关掉并说明原因，
@@ -696,17 +1188,18 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
     return () => {
       cancelled = true
     }
-  }, [findOpen, source.bytes, textIndex, textKey, textSources])
+  }, [findOpen, currentBytes, textIndex, textKey, textSources])
 
   /**
    * 查找的适配器。**只实现 `FindAdapter`**——没有 `replaceOne` / `replaceAll`，
-   * 于是 `FindReplaceBar` 不渲染替换区（改文字要 PDFium 的 WASM，见文件顶部）。
+   * 于是 `FindReplaceBar` 不渲染替换区；现有文字层没有可信的对象选区与 PDF 矩形。
    *
    * 用一个 `useMemo` 固定引用：栏的 effect 依赖 `adapter`，每次渲染换一个新
    * 对象会让它每次渲染都重扫一遍（而重扫发布会触发渲染——一个死循环）。
    */
   const findAdapter = useMemo<FindAdapter | null>(() => {
-    if (textIndex === null || textIndex.key !== textKey) return null
+    if (textIndex === null || textIndex.bytes !== currentBytes || textIndex.key !== textKey)
+      return null
     const text = textIndex.index
     /** 上一次的查询。同样的查询复用同一份结果——`publish` 靠引用判「没变」 */
     let last: {
@@ -747,7 +1240,7 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
         highlightStore.publish(NO_HIGHLIGHT)
       },
     }
-  }, [textIndex, textKey, highlightStore, goTo])
+  }, [textIndex, textKey, currentBytes, highlightStore, goTo])
 
   if (source.loadError !== null) {
     return (
@@ -820,9 +1313,14 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
   /* ── 工具条上那几个「什么时候不能点」的判据 ──────────────────── */
 
   const canFind =
-    textIndex !== null && textIndex.key === textKey ? textIndex.index.pagesWithText > 0 : true
+    textIndex !== null && textIndex.bytes === currentBytes && textIndex.key === textKey
+      ? textIndex.index.pagesWithText > 0
+      : true
   const findReason =
-    textIndex !== null && textIndex.key === textKey && textIndex.index.pagesWithText === 0
+    textIndex !== null &&
+    textIndex.bytes === currentBytes &&
+    textIndex.key === textKey &&
+    textIndex.index.pagesWithText === 0
       ? '这份 PDF 没有文字层（扫描件），搜不到内容'
       : undefined
   const cropLimit = maxCropInset(page.base)
@@ -873,254 +1371,431 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
     setNotice(null)
     setFindOpen((open) => !open)
   }
+  const canInsertText = hostApply !== undefined && page.crop === null && page.paper === null
+  const insertReason =
+    hostApply === undefined ? 'PDF 文字执行器尚未连接' : '请先保存当前页的裁剪或纸型，再插入文字'
+
+  const navigationToolbar = (
+    <>
+      <span className="mimir-pptx-pdf-toolbar__page-nav">
+        <ToolbarButton
+          label="上一页"
+          disabled={at === 0}
+          disabledReason="已经是第一页"
+          onClick={previousPage}
+        >
+          <ChevronLeftIcon />
+        </ToolbarButton>
+      </span>
+      <ToolbarNumberField
+        label="页码"
+        value={at + 1}
+        min={1}
+        max={layout.length}
+        suffix={`/ ${layout.length}`}
+        onCommit={(next) => goTo(next - 1)}
+      />
+      <span className="mimir-pptx-pdf-toolbar__page-nav">
+        <ToolbarButton
+          label="下一页"
+          disabled={at >= layout.length - 1}
+          disabledReason="已经是最后一页"
+          onClick={nextPage}
+        >
+          <ChevronRightIcon />
+        </ToolbarButton>
+      </span>
+      <span className="mimir-pptx-pdf-toolbar__zoom">
+        <ToolbarNumberField
+          label="缩放（%）"
+          value={zoom}
+          min={ZOOM_MIN}
+          max={ZOOM_MAX}
+          suffix="%"
+          onCommit={setZoom}
+        />
+      </span>
+      <span className="mimir-pptx-pdf-toolbar__find">
+        <ToolbarButton
+          label="查找文字"
+          active={findOpen}
+          disabled={!canFind}
+          disabledReason={findReason}
+          onClick={toggleFind}
+        >
+          <FindIcon />
+        </ToolbarButton>
+      </span>
+      {/* 删除保持独立确认，收纳菜单不能把它变成一步操作。 */}
+      <ToolbarConfirm
+        title="删掉这一页？"
+        description="没有撤销，只能靠不保存退出"
+        confirmLabel="删除这一页"
+        disabled={layout.length <= 1}
+        onConfirm={removePage}
+      >
+        <ToolbarButton
+          label="删除这一页"
+          disabled={layout.length <= 1}
+          disabledReason="至少要留一页"
+        >
+          <TrashIcon />
+        </ToolbarButton>
+      </ToolbarConfirm>
+    </>
+  )
+  const pageMenu = (
+    <ToolbarMenu
+      label="页面与版式操作"
+      text="页面"
+      panelWidth={330}
+      renderPanel={(close) => (
+        <div className="mimir-pptx-pdf-toolbar__panel">
+          <div className="mimir-pptx-pdf-toolbar__page-nav-menu">
+            <ToolbarMenuItemRow
+              item={{
+                key: 'previous',
+                label: '上一页',
+                disabled: at === 0,
+                disabledReason: '已经是第一页',
+                onSelect: previousPage,
+              }}
+              close={close}
+            />
+            <ToolbarMenuItemRow
+              item={{
+                key: 'next',
+                label: '下一页',
+                disabled: at >= layout.length - 1,
+                disabledReason: '已经是最后一页',
+                onSelect: nextPage,
+              }}
+              close={close}
+            />
+            <ToolbarMenuSeparator />
+          </div>
+          <ToolbarMenuNote>旋转与页面顺序</ToolbarMenuNote>
+          <ToolbarMenuItemRow
+            item={{ key: 'left', label: '向左旋转 90 度', onSelect: () => rotate(-90) }}
+            close={close}
+          />
+          <ToolbarMenuItemRow
+            item={{ key: 'right', label: '向右旋转 90 度', onSelect: () => rotate(90) }}
+            close={close}
+          />
+          <ToolbarMenuItemRow
+            item={{
+              key: 'move-before',
+              label: '把这一页往前挪',
+              disabled: at === 0,
+              disabledReason: '已经在最前面',
+              onSelect: () => move(-1),
+            }}
+            close={close}
+          />
+          <ToolbarMenuItemRow
+            item={{
+              key: 'move-after',
+              label: '把这一页往后挪',
+              disabled: at >= layout.length - 1,
+              disabledReason: '已经在最后面',
+              onSelect: () => move(1),
+            }}
+            close={close}
+          />
+          <ToolbarMenuSeparator />
+          <ToolbarMenuNote>整份文档</ToolbarMenuNote>
+          <ToolbarMenuItemRow
+            item={{
+              key: 'rot-all-left',
+              label: '全部页向左旋转 90 度',
+              onSelect: () => rotateAll(-90),
+            }}
+            close={close}
+          />
+          <ToolbarMenuItemRow
+            item={{
+              key: 'rot-all-right',
+              label: '全部页向右旋转 90 度',
+              onSelect: () => rotateAll(90),
+            }}
+            close={close}
+          />
+          <ToolbarMenuItemRow
+            item={{
+              key: 'reverse',
+              label: '整份倒序（第一页与最后一页互换）',
+              disabled: layout.length < 2,
+              disabledReason: '只有一页，倒序没有变化',
+              onSelect: reverseOrder,
+            }}
+            close={close}
+          />
+          <ToolbarMenuSeparator />
+          <ToolbarMenuNote>裁剪只改可视区，不删除页内容；换纸型会按比例缩放内容。</ToolbarMenuNote>
+          {cropItems.map((item) => (
+            <ToolbarMenuItemRow key={item.key} item={item} close={close} />
+          ))}
+          <ToolbarMenuFields label="这一页的纸型">
+            <ToolbarSelect<PaperKey | ''>
+              label="这一页的纸型（会按比例缩放内容）"
+              value={paperKey ?? ''}
+              options={[
+                { value: '', label: '原件尺寸' },
+                ...PAPER_KEYS.map((key) => ({
+                  value: key,
+                  label: `${PAPER_SIZES[key].label}（${Math.round(PAPER_SIZES[key].width)} × ${Math.round(PAPER_SIZES[key].height)} pt）`,
+                })),
+              ]}
+              onChange={paper}
+            />
+          </ToolbarMenuFields>
+          <ToolbarMenuSeparator />
+          <ToolbarMenuNote>插入页面</ToolbarMenuNote>
+          <ToolbarMenuItemRow
+            item={{
+              key: 'insert-text',
+              label: '点击页面位置插入文字',
+              active: insertMode,
+              disabled: !canInsertText || contentBusy,
+              disabledReason: contentBusy ? '文字正在写入' : insertReason,
+              onSelect: () => {
+                setInsertMode((value) => !value)
+                setInsertPoint(null)
+                setNotice(null)
+              },
+            }}
+            close={close}
+          />
+          <ToolbarMenuItemRow
+            item={{
+              key: 'insert-blank',
+              label: '在当前页之后插入一张 A4 空白页',
+              onSelect: insertBlank,
+            }}
+            close={close}
+          />
+          <ToolbarMenuFields label="从另一份 PDF 导入页面">
+            <ToolbarFileButton
+              label="从另一份 PDF 导入页面（它的全部页面，插在当前页之后）"
+              accept="application/pdf,.pdf"
+              onPick={importPages}
+            >
+              <FileImportIcon />
+            </ToolbarFileButton>
+          </ToolbarMenuFields>
+          <div className="mimir-pptx-pdf-toolbar__find-menu">
+            <ToolbarMenuSeparator />
+            <ToolbarMenuItemRow
+              item={{
+                key: 'find',
+                label: '查找文字',
+                active: findOpen,
+                disabled: !canFind,
+                disabledReason: findReason,
+                onSelect: toggleFind,
+              }}
+              close={close}
+            />
+          </div>
+          <ToolbarMenuSeparator />
+          <ToolbarMenuNote>缩放</ToolbarMenuNote>
+          <ToolbarMenuItemRow
+            item={{
+              key: 'zoom-out',
+              label: '缩小',
+              disabled: zoom <= ZOOM_MIN,
+              disabledReason: `已经到最小缩放 ${ZOOM_MIN}%`,
+              onSelect: () => setZoom((value) => Math.max(ZOOM_MIN, value - ZOOM_STEP)),
+            }}
+            close={close}
+          />
+          <ToolbarMenuItemRow
+            item={{
+              key: 'zoom-in',
+              label: '放大',
+              disabled: zoom >= ZOOM_MAX,
+              disabledReason: `已经到最大缩放 ${ZOOM_MAX}%`,
+              onSelect: () => setZoom((value) => Math.min(ZOOM_MAX, value + ZOOM_STEP)),
+            }}
+            close={close}
+          />
+        </div>
+      )}
+    />
+  )
 
   return (
     <EditorShell
       flush={flush}
       toolbar={
-        <div className="mimir-pptx-pdf-toolbar mimir-pptx-pdf-toolbar--pdf">
-          <span className="mimir-pptx-pdf-toolbar__page-nav">
-            <ToolbarButton
-              label="上一页"
-              disabled={at === 0}
-              disabledReason="已经是第一页"
-              onClick={previousPage}
-            >
-              <ChevronLeftIcon />
-            </ToolbarButton>
-          </span>
-          <ToolbarNumberField
-            label="页码"
-            value={at + 1}
-            min={1}
-            max={layout.length}
-            suffix={`/ ${layout.length}`}
-            onCommit={(next) => goTo(next - 1)}
-          />
-          <span className="mimir-pptx-pdf-toolbar__page-nav">
-            <ToolbarButton
-              label="下一页"
-              disabled={at >= layout.length - 1}
-              disabledReason="已经是最后一页"
-              onClick={nextPage}
-            >
-              <ChevronRightIcon />
-            </ToolbarButton>
-          </span>
-          <span className="mimir-pptx-pdf-toolbar__zoom">
-            <ToolbarNumberField
-              label="缩放（%）"
-              value={zoom}
-              min={ZOOM_MIN}
-              max={ZOOM_MAX}
-              suffix="%"
-              onCommit={setZoom}
-            />
-          </span>
-          <span className="mimir-pptx-pdf-toolbar__find">
-            <ToolbarButton
-              label="查找文字"
-              active={findOpen}
-              disabled={!canFind}
-              disabledReason={findReason}
-              onClick={toggleFind}
-            >
-              <FindIcon />
-            </ToolbarButton>
-          </span>
-          {/* 删除保持独立确认，收纳菜单不能把它变成一步操作。 */}
-          <ToolbarConfirm
-            title="删掉这一页？"
-            description="没有撤销，只能靠不保存退出"
-            confirmLabel="删除这一页"
-            disabled={layout.length <= 1}
-            onConfirm={removePage}
-          >
-            <ToolbarButton
-              label="删除这一页"
-              disabled={layout.length <= 1}
-              disabledReason="至少要留一页"
-            >
-              <TrashIcon />
-            </ToolbarButton>
-          </ToolbarConfirm>
-          <ToolbarMenu
-            label="页面与版式操作"
-            text="页面"
-            panelWidth={330}
-            renderPanel={(close) => (
-              <div className="mimir-pptx-pdf-toolbar__panel">
-                <div className="mimir-pptx-pdf-toolbar__page-nav-menu">
-                  <ToolbarMenuItemRow
-                    item={{
-                      key: 'previous',
-                      label: '上一页',
-                      disabled: at === 0,
-                      disabledReason: '已经是第一页',
-                      onSelect: previousPage,
+        <CompactToolbar
+          quickAccess={
+            <>
+              <ToolbarButton
+                label={source.saving ? '保存中…' : '保存到库'}
+                disabled={!dirty || source.saving || contentBusy}
+                disabledReason={
+                  contentBusy ? '文字正在写入' : source.saving ? '正在保存' : '没有改动，不用保存'
+                }
+                onClick={() => void save()}
+              >
+                <SaveIcon />
+              </ToolbarButton>
+              <ToolbarButton label="撤销" disabled disabledReason="PDF 编辑尚不支持完整撤销历史">
+                <UndoIcon />
+              </ToolbarButton>
+              <ToolbarButton label="重做" disabled disabledReason="PDF 编辑尚不支持完整重做历史">
+                <RedoIcon />
+              </ToolbarButton>
+            </>
+          }
+          tabs={[
+            { key: 'home', label: '开始' },
+            { key: 'edit', label: '编辑' },
+            { key: 'page', label: '页面' },
+            { key: 'view', label: '视图' },
+          ]}
+          sections={[
+            {
+              key: 'navigation',
+              label: '导航与查找',
+              tab: 'home',
+              minWidth: 0,
+              content: navigationToolbar,
+            },
+            {
+              key: 'insert-text',
+              label: '文字',
+              tab: 'edit',
+              minWidth: 0,
+              content: (
+                <>
+                  <ToolbarButton
+                    label="插入文字"
+                    active={insertMode}
+                    disabled={!canInsertText || contentBusy}
+                    disabledReason={contentBusy ? '文字正在写入' : insertReason}
+                    onClick={() => {
+                      setInsertMode((value) => !value)
+                      setInsertPoint(null)
+                      setNotice(null)
                     }}
-                    close={close}
-                  />
-                  <ToolbarMenuItemRow
-                    item={{
-                      key: 'next',
-                      label: '下一页',
-                      disabled: at >= layout.length - 1,
-                      disabledReason: '已经是最后一页',
-                      onSelect: nextPage,
-                    }}
-                    close={close}
-                  />
-                  <ToolbarMenuSeparator />
-                </div>
-                <ToolbarMenuNote>旋转与页面顺序</ToolbarMenuNote>
-                <ToolbarMenuItemRow
-                  item={{ key: 'left', label: '向左旋转 90 度', onSelect: () => rotate(-90) }}
-                  close={close}
-                />
-                <ToolbarMenuItemRow
-                  item={{ key: 'right', label: '向右旋转 90 度', onSelect: () => rotate(90) }}
-                  close={close}
-                />
-                <ToolbarMenuItemRow
-                  item={{
-                    key: 'move-before',
-                    label: '把这一页往前挪',
-                    disabled: at === 0,
-                    disabledReason: '已经在最前面',
-                    onSelect: () => move(-1),
-                  }}
-                  close={close}
-                />
-                <ToolbarMenuItemRow
-                  item={{
-                    key: 'move-after',
-                    label: '把这一页往后挪',
-                    disabled: at >= layout.length - 1,
-                    disabledReason: '已经在最后面',
-                    onSelect: () => move(1),
-                  }}
-                  close={close}
-                />
-                <ToolbarMenuSeparator />
-                <ToolbarMenuNote>整份文档</ToolbarMenuNote>
-                <ToolbarMenuItemRow
-                  item={{
-                    key: 'rot-all-left',
-                    label: '全部页向左旋转 90 度',
-                    onSelect: () => rotateAll(-90),
-                  }}
-                  close={close}
-                />
-                <ToolbarMenuItemRow
-                  item={{
-                    key: 'rot-all-right',
-                    label: '全部页向右旋转 90 度',
-                    onSelect: () => rotateAll(90),
-                  }}
-                  close={close}
-                />
-                <ToolbarMenuItemRow
-                  item={{
-                    key: 'reverse',
-                    label: '整份倒序（第一页与最后一页互换）',
-                    disabled: layout.length < 2,
-                    disabledReason: '只有一页，倒序没有变化',
-                    onSelect: reverseOrder,
-                  }}
-                  close={close}
-                />
-                <ToolbarMenuSeparator />
-                <ToolbarMenuNote>
-                  裁剪只改可视区，不删除页内容；换纸型会按比例缩放内容。
-                </ToolbarMenuNote>
-                {cropItems.map((item) => (
-                  <ToolbarMenuItemRow key={item.key} item={item} close={close} />
-                ))}
-                <ToolbarMenuFields label="这一页的纸型">
-                  <ToolbarSelect<PaperKey | ''>
-                    label="这一页的纸型（会按比例缩放内容）"
-                    value={paperKey ?? ''}
-                    options={[
-                      { value: '', label: '原件尺寸' },
-                      ...PAPER_KEYS.map((key) => ({
-                        value: key,
-                        label: `${PAPER_SIZES[key].label}（${Math.round(PAPER_SIZES[key].width)} × ${Math.round(PAPER_SIZES[key].height)} pt）`,
-                      })),
-                    ]}
-                    onChange={paper}
-                  />
-                </ToolbarMenuFields>
-                <ToolbarMenuSeparator />
-                <ToolbarMenuNote>插入页面</ToolbarMenuNote>
-                <ToolbarMenuItemRow
-                  item={{
-                    key: 'insert-blank',
-                    label: '在当前页之后插入一张 A4 空白页',
-                    onSelect: insertBlank,
-                  }}
-                  close={close}
-                />
-                <ToolbarMenuFields label="从另一份 PDF 导入页面">
+                  >
+                    插入文字
+                  </ToolbarButton>
+                  <ToolbarButton
+                    label="编辑待保存文字"
+                    active={pendingEditorOpen}
+                    disabled={pendingInserts.length === 0 || contentBusy}
+                    disabledReason={contentBusy ? '文字正在写入' : '当前没有待保存的插入文字'}
+                    onClick={() => setPendingEditorOpen((value) => !value)}
+                  >
+                    编辑插字
+                  </ToolbarButton>
+                </>
+              ),
+            },
+            {
+              key: 'page-rotate',
+              label: '旋转',
+              tab: 'page',
+              minWidth: 0,
+              content: (
+                <>
+                  <ToolbarButton label="向左旋转 90 度" onClick={() => rotate(-90)}>
+                    向左旋转
+                  </ToolbarButton>
+                  <ToolbarButton label="向右旋转 90 度" onClick={() => rotate(90)}>
+                    向右旋转
+                  </ToolbarButton>
+                </>
+              ),
+            },
+            {
+              key: 'page-order',
+              label: '顺序',
+              tab: 'page',
+              minWidth: 0,
+              content: (
+                <>
+                  <ToolbarButton
+                    label="上一页位置"
+                    disabled={at === 0}
+                    disabledReason="已经在最前面"
+                    onClick={() => move(-1)}
+                  >
+                    前移
+                  </ToolbarButton>
+                  <ToolbarButton
+                    label="下一页位置"
+                    disabled={at >= layout.length - 1}
+                    disabledReason="已经在最后面"
+                    onClick={() => move(1)}
+                  >
+                    后移
+                  </ToolbarButton>
+                  <ToolbarButton label="插入空白页" onClick={insertBlank}>
+                    空白页
+                  </ToolbarButton>
                   <ToolbarFileButton
-                    label="从另一份 PDF 导入页面（它的全部页面，插在当前页之后）"
+                    label="从 PDF 导入页面"
                     accept="application/pdf,.pdf"
                     onPick={importPages}
                   >
                     <FileImportIcon />
                   </ToolbarFileButton>
-                </ToolbarMenuFields>
-                <div className="mimir-pptx-pdf-toolbar__find-menu">
-                  <ToolbarMenuSeparator />
-                  <ToolbarMenuItemRow
-                    item={{
-                      key: 'find',
-                      label: '查找文字',
-                      active: findOpen,
-                      disabled: !canFind,
-                      disabledReason: findReason,
-                      onSelect: toggleFind,
-                    }}
-                    close={close}
-                  />
-                </div>
-                <ToolbarMenuSeparator />
-                <ToolbarMenuNote>缩放</ToolbarMenuNote>
-                <ToolbarMenuItemRow
-                  item={{
-                    key: 'zoom-out',
-                    label: '缩小',
-                    disabled: zoom <= ZOOM_MIN,
-                    disabledReason: `已经到最小缩放 ${ZOOM_MIN}%`,
-                    onSelect: () => setZoom((value) => Math.max(ZOOM_MIN, value - ZOOM_STEP)),
-                  }}
-                  close={close}
+                </>
+              ),
+            },
+            {
+              key: 'page-layout',
+              label: '裁剪与纸型',
+              tab: 'page',
+              minWidth: 0,
+              content: pageMenu,
+            },
+            {
+              key: 'page-delete',
+              label: '删除',
+              tab: 'page',
+              minWidth: 0,
+              content: (
+                <ToolbarConfirm
+                  title="删掉这一页？"
+                  description="没有撤销，只能靠不保存退出"
+                  confirmLabel="删除这一页"
+                  disabled={layout.length <= 1}
+                  onConfirm={removePage}
+                >
+                  <ToolbarButton
+                    label="删除这一页"
+                    disabled={layout.length <= 1}
+                    disabledReason="至少要留一页"
+                  >
+                    <TrashIcon />
+                  </ToolbarButton>
+                </ToolbarConfirm>
+              ),
+            },
+            {
+              key: 'view',
+              label: '缩放',
+              tab: 'view',
+              minWidth: 0,
+              content: (
+                <ToolbarNumberField
+                  label="缩放（%）"
+                  value={zoom}
+                  min={ZOOM_MIN}
+                  max={ZOOM_MAX}
+                  suffix="%"
+                  onCommit={setZoom}
                 />
-                <ToolbarMenuItemRow
-                  item={{
-                    key: 'zoom-in',
-                    label: '放大',
-                    disabled: zoom >= ZOOM_MAX,
-                    disabledReason: `已经到最大缩放 ${ZOOM_MAX}%`,
-                    onSelect: () => setZoom((value) => Math.min(ZOOM_MAX, value + ZOOM_STEP)),
-                  }}
-                  close={close}
-                />
-              </div>
-            )}
-          />
-        </div>
-      }
-      toolbarActions={
-        <ToolbarButton
-          label={source.saving ? '保存中…' : '保存到库'}
-          primary
-          disabled={!dirty || source.saving}
-          disabledReason={source.saving ? '正在保存' : '没有改动，不用保存'}
-          onClick={() => void save()}
-        >
-          <SaveIcon />
-        </ToolbarButton>
+              ),
+            },
+          ]}
+        />
       }
       /*
         次工具条：查找栏。它排在这里（而不是工具条里）的原因是**它有自己的
@@ -1129,7 +1804,105 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
         说假话。
       */
       subbar={
-        findOpen ? (
+        insertMode ? (
+          <div className="mimir-pdf-insert-bar">
+            <ToolbarLabel>
+              {insertPoint === null || insertPoint.page !== at
+                ? '未选择位置'
+                : `第 ${at + 1} 页 · X ${Math.round(insertPoint.origin[0])} / Y ${Math.round(insertPoint.origin[1])} pt`}
+            </ToolbarLabel>
+            <ToolbarTextField
+              label="要插入的文字"
+              value={insertText}
+              onChange={setInsertText}
+              onSubmit={() => void insertAtPoint()}
+              placeholder="输入文字"
+            />
+            <ToolbarButton
+              label={contentBusy ? '写入中…' : '插入文字'}
+              disabled={contentBusy || insertPoint?.page !== at || !insertText.trim()}
+              onClick={() => void insertAtPoint()}
+            >
+              插入
+            </ToolbarButton>
+            <ToolbarButton label="取消插入文字" onClick={() => setInsertMode(false)}>
+              取消
+            </ToolbarButton>
+          </div>
+        ) : pendingEditorOpen && pendingValues !== null ? (
+          <div className="mimir-pdf-insert-bar">
+            <ToolbarSelect<string>
+              label="待保存文字"
+              value={pendingValues.id}
+              options={pendingInserts.map((insert) => ({
+                value: insert.id,
+                label: `第 ${insert.pageIndex + 1} 页 · ${insert.text.slice(0, 24)}`,
+              }))}
+              onChange={(id) => {
+                setSelectedPendingId(id)
+                setPendingDraft(null)
+              }}
+            />
+            <ToolbarTextField
+              label="插入文字内容"
+              value={pendingValues.text}
+              onChange={(text) => setPendingDraft({ ...pendingValues, text })}
+            />
+            <ToolbarNumberField
+              label="文字 X 坐标"
+              value={Math.round(pendingValues.x)}
+              min={0}
+              max={10000}
+              onCommit={(x) => setPendingDraft({ ...pendingValues, x })}
+            />
+            <ToolbarNumberField
+              label="文字 Y 坐标"
+              value={Math.round(pendingValues.y)}
+              min={0}
+              max={10000}
+              onCommit={(y) => setPendingDraft({ ...pendingValues, y })}
+            />
+            <ToolbarNumberField
+              label="文字字号"
+              value={pendingValues.fontSize}
+              min={1}
+              max={500}
+              onCommit={(fontSize) => setPendingDraft({ ...pendingValues, fontSize })}
+            />
+            <ToolbarTextField
+              label="文字颜色"
+              value={pendingValues.color}
+              onChange={(color) => setPendingDraft({ ...pendingValues, color })}
+            />
+            <ToolbarButton
+              label="更新插入文字"
+              disabled={contentBusy}
+              onClick={() => void changePending('edit_inserted_text')}
+            >
+              更新
+            </ToolbarButton>
+            <ToolbarButton
+              label="移动插入文字"
+              disabled={contentBusy}
+              onClick={() => void changePending('move_inserted_text')}
+            >
+              移动
+            </ToolbarButton>
+            <ToolbarConfirm
+              title="删除这段待保存文字？"
+              description="删除后仍可在保存前重新插入"
+              confirmLabel="删除文字"
+              onConfirm={() => void changePending('delete_inserted_text')}
+            >
+              <ToolbarButton label="删除插入文字" disabled={contentBusy}>
+                删除
+              </ToolbarButton>
+            </ToolbarConfirm>
+            <ToolbarButton label="关闭插入文字编辑" onClick={() => setPendingEditorOpen(false)}>
+              关闭
+            </ToolbarButton>
+          </div>
+        ) : findOpen ? (
           findAdapter !== null ? (
             <FindReplaceBar
               adapter={findAdapter}
@@ -1180,7 +1953,7 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
         renderThumbnail={(index: number) => {
           const ref = layout[index]
           return ref === undefined ? null : (
-            <PdfThumbnail bytes={source.bytes} page={ref} imports={imports} />
+            <PdfThumbnail bytes={currentBytes} page={ref} imports={imports} />
           )
         }}
         noun="页"
@@ -1190,12 +1963,22 @@ export function PdfEditor({ documentId, io, onDirtyChange, flush = false }: Edit
             <EditorState tone="error">渲染失败：{renderError}</EditorState>
           ) : (
             <PdfSheet
-              bytes={source.bytes}
+              bytes={currentBytes}
               page={page}
               imports={imports}
               zoom={zoom}
-              highlight={{ matches: highlight.matches, at: highlight.at, page: at }}
+              highlight={{
+                matches:
+                  textIndex?.bytes === currentBytes && textIndex.key === textKey
+                    ? highlight.matches
+                    : [],
+                at: highlight.at,
+                page: at,
+              }}
               onError={setRenderError}
+              onPickPoint={
+                insertMode ? (origin) => setInsertPoint({ page: at, origin }) : undefined
+              }
             />
           )}
         </div>
@@ -1315,6 +2098,7 @@ function PdfSheet({
   zoom,
   highlight,
   onError,
+  onPickPoint,
 }: {
   bytes: Uint8Array | null
   page: PdfPageRef
@@ -1322,6 +2106,7 @@ function PdfSheet({
   zoom: number
   highlight: { matches: readonly PdfMatch[]; at: number; page: number }
   onError: (message: string | null) => void
+  onPickPoint?: (origin: [number, number]) => void
 }) {
   const from = sourceOf(page, bytes, imports)
   /**
@@ -1356,13 +2141,14 @@ function PdfSheet({
     .filter(({ match }) => match.page === highlight.page)
 
   return (
-    <div className="mimir-pdf-sheet">
+    <div className={`mimir-pdf-sheet${onPickPoint ? ' mimir-pdf-sheet--pick' : ''}`}>
       <PdfCanvas
         bytes={from.bytes}
         pageIndex={from.index}
         rotation={page.rotation}
         width={width}
         onError={onError}
+        onPickPoint={onPickPoint}
       />
       {hits.map(({ match, index }) =>
         /*
@@ -1463,12 +2249,14 @@ function PdfCanvas({
   rotation,
   width,
   onError,
+  onPickPoint,
 }: {
   bytes: Uint8Array
   pageIndex: number
   rotation: number
   width: number
   onError: (message: string | null) => void
+  onPickPoint?: (origin: [number, number]) => void
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const handleRef = useRef<PdfRenderHandle | null>(null)
@@ -1522,5 +2310,28 @@ function PdfCanvas({
     }
   }, [bytes, pageIndex, rotation, width])
 
-  return <canvas ref={canvasRef} className="mimir-pdf-page" />
+  const pickPoint = async (event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!onPickPoint) return
+    const rect = event.currentTarget.getBoundingClientRect()
+    if (rect.width <= 0 || rect.height <= 0) return
+    const localX = event.clientX - rect.left
+    const localY = event.clientY - rect.top
+    try {
+      const doc = await loadPdfDocument(bytes)
+      const page = await doc.getPage(pageIndex + 1)
+      const base = page.getViewport({ scale: 1, rotation })
+      const viewport = page.getViewport({ scale: width / base.width, rotation })
+      const [x, y] = viewport.convertToPdfPoint(
+        (localX * viewport.width) / rect.width,
+        (localY * viewport.height) / rect.height,
+      )
+      onPickPoint([x, y])
+    } catch (cause) {
+      onError(messageOf(cause))
+    }
+  }
+
+  return (
+    <canvas ref={canvasRef} className="mimir-pdf-page" onClick={(event) => void pickPoint(event)} />
+  )
 }

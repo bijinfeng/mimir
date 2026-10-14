@@ -39,7 +39,7 @@
  */
 import { execFileSync } from 'node:child_process'
 import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises'
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -80,6 +80,20 @@ const EXTRA_FILES = MANIFEST.extraFiles ?? []
  */
 const REWRITES = [
   {
+    /** PDF IPC 的 AI 类型仅描述上游 Electron 壳，不在 Mimir 执行路径。 */
+    match: /from\s+['"]@genoffice\/ai-provider['"]/g,
+    to: '../src/shims/pdf-app-types.js',
+    onlyWhen: (vendorRel) => vendorRel === 'apps/pdf/src/shared/ipc.ts',
+    reason: 'PDF 宿主只消费 IPC 中的写入数据结构；AI 流走 Mimir 自己的合同',
+  },
+  {
+    /** PDF 的 WASM 资产由 Mimir 服务端的 npm 依赖提供。 */
+    match: /from\s+['"]\.\/wasm-path['"]/g,
+    to: '../src/shims/pdf-wasm-path.js',
+    onlyWhen: (vendorRel) => vendorRel.startsWith('apps/pdf/src/main/'),
+    reason: '上游只认识 Electron resourcesPath；Mimir 两端通过服务端依赖解析 WASM',
+  },
+  {
     /**
      * i18n：上游引 `@genoffice/i18n`（198 行的 createI18n 工具）+ 渲染层的
      * 字符串表（20 种语言 × 3 组 ≈ 1.5 MB、60 个文件）。mimir 只需要编辑器
@@ -111,12 +125,14 @@ const REWRITES = [
   },
   {
     /**
-     * `@genoffice/pptx-engine` 的**类型导入** → `src/shims/pptx-engine-types.ts`。
+     * 浏览器侧 `@genoffice/pptx-engine` 导入 → `src/shims/pptx-engine-types.ts`。
+     * pptx-ops/src/ops 下的完整操作注册表必须使用 vendored 引擎，只有
+     * 服务端会导入这组文件。
      *
      * 这一条必须在下面那条 `byPkg` 规则**之前**，否则 `byPkg` 会先把它改写成
      * 引擎的 `index.ts`，从而把整条写路径（insert/generate/media-insert/
      * slide-transfer/sections，约 10K 行，带 `node:zlib` 与 `Buffer`）拉进
-     * 闭包。渲染层用到这些符号全是 `import type`，运行时不需要任何代码。
+     * 闭包。渲染层只需类型，顶层 edit-text 还使用 shim 的 encodeRunLink。
      *
      * 只替**裸包名**（`@genoffice/pptx-engine`）。子路径导入是**真代码**，
      * 必须照常走 byPkg：`./table-grid`、`./identity`、`./background-promote`
@@ -124,8 +140,9 @@ const REWRITES = [
      */
     match: /from\s+['"]@genoffice\/pptx-engine['"]/g,
     to: '../src/shims/pptx-engine-types.js',
+    onlyWhen: (vendorRel) => !vendorRel.startsWith('packages/pptx-ops/src/ops/'),
     reason:
-      '渲染层对引擎的裸包名导入全是 import type；指向 index 会把带 node:zlib/Buffer 的写路径拉进浏览器闭包',
+      '浏览器预览与 edit-text 不能指向带 node:zlib/Buffer 的引擎 index；仅服务端 pptx-ops/src/ops 保留完整写路径',
   },
   {
     /**
@@ -194,8 +211,6 @@ const SKIP_PACKAGES = [
   '@genoffice/pipelines',
   '@genoffice/pdf2docx',
   '@genoffice/html2docx',
-  '@genoffice/font-metrics',
-  '@genoffice/xlsx-gateway',
 ]
 
 /**
@@ -211,6 +226,7 @@ function applyRewrites(text, vendorRel) {
   let out = text
   for (const rule of REWRITES) {
     if (!rule.reason) throw new Error('REWRITES 里每一条都必须写理由')
+    if (rule.onlyWhen && !rule.onlyWhen(vendorRel)) continue
     // replace 的回调签名是 (match, p1, p2, …, offset, string)
     out = out.replace(rule.match, (match, p1, p2) => {
       if (rule.byPkg && SKIP_PACKAGES.some((p) => p === `@genoffice/${p1}`)) return match
@@ -223,7 +239,7 @@ function applyRewrites(text, vendorRel) {
     })
   }
   // 横幅幂等：已经有就不再叠加（同一文件重复同步不会长出第二份）
-  if (!out.startsWith('// @ts-nocheck')) out = BANNER + out
+  if (!vendorRel.endsWith('.md') && !out.startsWith('// @ts-nocheck')) out = BANNER + out
   return out
 }
 
@@ -369,7 +385,7 @@ function resolveSpecIn(repo, spec, fromFile) {
     `${stem}.ts`,
     `${stem}.tsx`,
   ]) {
-    if (existsSync(cand) && !cand.endsWith('/')) return cand
+    if (existsSync(cand) && statSync(cand).isFile()) return cand
   }
   return null
 }

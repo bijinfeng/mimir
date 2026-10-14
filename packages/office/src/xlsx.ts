@@ -44,6 +44,8 @@ export interface XlsxCell {
   col: number
   /** 这个格是公式（显示的是缓存值） */
   formula?: boolean
+  /** Excel formula source, including the leading '='; cached text remains in text. */
+  formulaText?: string
   /** 数字右对齐、文本左对齐——对齐方式是最省力的可读性提升 */
   numeric?: boolean
   /** 跨列 / 跨行（合并单元格，1 表示不跨） */
@@ -72,6 +74,8 @@ export interface XlsxColumn {
 }
 
 export interface XlsxSheet {
+  /** Stable OOXML sheet id, matching GenOffice's `sheet-N` DSL target. */
+  id: string
   /** 工作表名，来自 `workbook.xml`（Excel 里页签上的那个名字） */
   name: string
   /**
@@ -87,6 +91,8 @@ export interface XlsxSheet {
    * 会让用户以为文件里没有它（「不静默」这条规矩）。
    */
   hidden?: boolean
+  /** Empty sheets still need an editable A1 grid cell; it is not used content. */
+  empty?: boolean
   rows: XlsxRow[]
   columns: XlsxColumn[]
 }
@@ -122,16 +128,17 @@ export async function readXlsxArchive(zip: BoundedZip): Promise<XlsxWorkbook> {
   for (const ref of await listSheets(zip)) {
     const xml = await zip.readText(ref.entry)
     if (!xml) continue
-    const sheet = parseSheet(xml, shared, ref.name, ref.entry)
+    const sheet = parseSheet(xml, shared, ref.id, ref.name, ref.entry)
     if (ref.hidden) sheet.hidden = true
-    if (sheet.rows.length > 0) sheets.push(sheet)
+    sheets.push(sheet)
   }
 
-  if (sheets.length === 0) throw new Error('这份表格里没有可显示的内容（可能是空表或全是图表）')
+  if (sheets.length === 0) throw new Error('这份表格里没有可读取的工作表')
   return { sheets }
 }
 
 interface SheetRef {
+  id: string
   /** zip 里的路径，如 `xl/worksheets/sheet1.xml` */
   entry: string
   /** Excel 页签上的名字 */
@@ -181,7 +188,14 @@ async function listSheets(zip: BoundedZip): Promise<SheetRef[]> {
        * 那不是网格，交给它只会得到一张空表。
        */
       if (!entry || !/^xl\/worksheets\/.+\.xml$/.test(entry)) continue
-      refs.push({ entry, name: name || fallbackName(entry), hidden: state !== '' })
+      const sheetId = /\bsheetId="(\d+)"/.exec(attrs)?.[1]
+      if (!sheetId) continue
+      refs.push({
+        id: `sheet-${sheetId}`,
+        entry,
+        name: name || fallbackName(entry),
+        hidden: state !== '',
+      })
     }
     if (refs.length > 0) return refs
   }
@@ -190,7 +204,12 @@ async function listSheets(zip: BoundedZip): Promise<SheetRef[]> {
     .list('xl/worksheets/')
     .filter((name) => /^xl\/worksheets\/sheet\d+\.xml$/.test(name))
     .toSorted((a, b) => sheetIndex(a) - sheetIndex(b))
-    .map((entry) => ({ entry, name: fallbackName(entry), hidden: false }))
+    .map((entry) => ({
+      id: `sheet-${sheetIndex(entry)}`,
+      entry,
+      name: fallbackName(entry),
+      hidden: false,
+    }))
 }
 
 /** rels 里的 Target 可能是相对 `xl/` 的（`worksheets/sheet1.xml`）也可能是绝对路径 */
@@ -232,7 +251,13 @@ async function readSharedStrings(zip: BoundedZip): Promise<string[]> {
   return out
 }
 
-function parseSheet(xml: string, shared: string[], name: string, entry: string): XlsxSheet {
+function parseSheet(
+  xml: string,
+  shared: string[],
+  id: string,
+  name: string,
+  entry: string,
+): XlsxSheet {
   const rows: XlsxRow[] = []
   /** 上一个出现过的行号。`r` 是可选属性，缺了要按 Excel 的规矩顺延 */
   let lastNumber = 0
@@ -258,8 +283,8 @@ function parseSheet(xml: string, shared: string[], name: string, entry: string):
       cells.push(cellOf(cellAttrs, inner, shared, cells.length))
     }
 
-    // 整行全空的行不输出（Excel 常在数据下方保留大量空行）
-    if (!cells.some((cell) => cell.text !== '')) continue
+    // 未缓存结果的公式仍是内容；不能把公式行当作空行隐藏。
+    if (!cells.some((cell) => cell.text !== '' || cell.formula)) continue
 
     const ht = Number(/ht="([\d.]+)"/.exec(attrs)?.[1] ?? NaN)
     rows.push({
@@ -286,7 +311,17 @@ function parseSheet(xml: string, shared: string[], name: string, entry: string):
     padded.push({ number: row.number, height: row.height, cells })
   }
 
-  return { name, entry, rows: padded, columns: readColWidths(xml, width) }
+  if (padded.length === 0) {
+    return {
+      id,
+      name,
+      entry,
+      empty: true,
+      rows: [{ number: 1, height: DEFAULT_ROW_HEIGHT, cells: [emptyCell(0)] }],
+      columns: readColWidths(xml, 1),
+    }
+  }
+  return { id, name, entry, rows: padded, columns: readColWidths(xml, width) }
 }
 
 function emptyCell(col: number): XlsxCell {
@@ -312,11 +347,19 @@ function columnOf(letters: string): number {
 function cellOf(attrs: string, inner: string, shared: string[], col: number): XlsxCell {
   const type = /t="([^"]+)"/.exec(attrs)?.[1] ?? ''
   const isFormula = /<f\b/.test(inner)
+  const formulaSource = /<f\b[^>]*>([\s\S]*?)<\/f>/.exec(inner)?.[1]
+  const formulaText = formulaSource === undefined ? undefined : `=${decodeXml(formulaSource)}`
 
   if (type === 's') {
     const index = Number(/<v>([\s\S]*?)<\/v>/.exec(inner)?.[1]?.trim() ?? '')
     const text = Number.isInteger(index) ? (shared[index] ?? '') : ''
-    return { text, col, colSpan: 1, rowSpan: 1, ...(isFormula ? { formula: true } : {}) }
+    return {
+      text,
+      col,
+      colSpan: 1,
+      rowSpan: 1,
+      ...(isFormula ? { formula: true, formulaText } : {}),
+    }
   }
 
   if (type === 'inlineStr') {
@@ -338,7 +381,7 @@ function cellOf(attrs: string, inner: string, shared: string[], col: number): Xl
     numeric,
     colSpan: 1,
     rowSpan: 1,
-    ...(isFormula ? { formula: true } : {}),
+    ...(isFormula ? { formula: true, formulaText } : {}),
   }
 }
 

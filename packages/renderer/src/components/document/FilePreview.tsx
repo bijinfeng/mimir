@@ -14,7 +14,7 @@ import { OfficeSourceEditor } from './OfficeSourceEditor'
 import { useContentStyles } from '../ContentTypography.style'
 import { api } from '../../lib/api'
 import { FONT_SIZE } from '../../theme/tokens'
-import type { DocxAgentHandle } from '@mimir/office'
+import type { ChatDocumentAgent } from '@mimir/chat'
 
 /**
  * 文件类文档的预览区（`.trellis/spec/project/design.md` §8.16）。
@@ -59,12 +59,12 @@ import type { DocxAgentHandle } from '@mimir/office'
 export function FilePreview({
   doc,
   onDirtyChange,
-  onDocxAgentHandleChange,
+  onDocumentAgentHandleChange,
 }: {
   doc: DocumentDetail
   /** 原件编辑器有未保存改动时上报（宿主用它拦截离开） */
   onDirtyChange?: ((dirty: boolean) => void) | undefined
-  onDocxAgentHandleChange?: ((handle: DocxAgentHandle | null) => void) | undefined
+  onDocumentAgentHandleChange?: ((handle: ChatDocumentAgent | null) => void) | undefined
 }) {
   const { styles } = useStyles()
   const { styles: contentStyles } = useContentStyles()
@@ -240,7 +240,7 @@ export function FilePreview({
           doc={doc}
           kind={kind}
           onDirtyChange={onDirtyChange}
-          onDocxAgentHandleChange={kind === 'docx' ? onDocxAgentHandleChange : undefined}
+          onDocumentAgentHandleChange={onDocumentAgentHandleChange}
         />
       )
     }
@@ -253,7 +253,15 @@ export function FilePreview({
       也就没法在它上面做编辑。
     */
     if (viewer === 'pdf') {
-      return <OfficeSourceEditor key={doc.id} doc={doc} kind="pdf" onDirtyChange={onDirtyChange} />
+      return (
+        <OfficeSourceEditor
+          key={doc.id}
+          doc={doc}
+          kind="pdf"
+          onDirtyChange={onDirtyChange}
+          onDocumentAgentHandleChange={onDocumentAgentHandleChange}
+        />
+      )
     }
 
     if (viewer === 'image') {

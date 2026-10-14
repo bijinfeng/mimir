@@ -1,0 +1,33 @@
+{
+  "id": "multi-format-agent-edit",
+  "name": "multi-format-agent-edit",
+  "title": "接入五种格式的 Agent 对话编辑",
+  "description": "将当前文档页的 Agent 编辑能力扩展到 XLSX、PPTX、Markdown、HTML 和 PDF",
+  "status": "in_progress",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "jfbi",
+  "assignee": "jfbi",
+  "createdAt": "2026-10-12",
+  "completedAt": null,
+  "branch": "codex/multi-format-agent-edit",
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "10-13-format-agent-core",
+    "10-13-xlsx-agent-manual",
+    "10-13-pptx-agent-manual",
+    "10-13-markdown-agent-manual",
+    "10-13-html-agent-manual",
+    "10-13-pdf-agent-manual"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}

@@ -105,4 +105,32 @@ describe('DOCX 工具中断的持久续轮绑定', () => {
       tools: [{ status: 'failed' }],
     })
   })
+
+  it('allows a cancelled in-flight tool to leave a newer unsaved canvas without replay', async () => {
+    const conversation = await createConversation()
+    const runId = `run-${crypto.randomUUID()}`
+    const input = {
+      runId,
+      conversationId: conversation.id,
+      documentId: 'doc-a',
+      roundId: crypto.randomUUID(),
+      version: 1,
+      messageId: crypto.randomUUID(),
+      interruptIds: ['client_tool_partial'],
+      tools: [
+        { interruptId: 'client_tool_partial', name: 'insert_content', status: 'pending' as const },
+      ],
+    }
+    await rememberDocxInterrupt(input)
+    const claim = {
+      conversationId: input.conversationId,
+      documentId: input.documentId,
+      roundId: input.roundId,
+      version: 2,
+      interruptIds: input.interruptIds,
+      responses: [{ interruptId: 'client_tool_partial', status: 'cancelled' as const }],
+    }
+    expect(await consumeDocxInterrupt(claim)).toBe(runId)
+    expect(await consumeDocxInterrupt(claim)).toBeNull()
+  })
 })

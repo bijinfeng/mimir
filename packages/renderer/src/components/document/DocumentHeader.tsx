@@ -27,6 +27,13 @@ export function DocumentHeader({
 }: DocumentHeaderProps) {
   const { styles } = useStyles()
   const { runGuarded } = useUnsaved()
+  // Ant Design portals submenu popups outside the root dropdown. Give those
+  // popups the same scoped class so their rows keep the document-menu styling.
+  const styledMenu = menu?.map((item) =>
+    item && 'children' in item && item.type !== 'group'
+      ? { ...item, popupClassName: styles.docMenu }
+      : item,
+  )
 
   return (
     <div className={styles.header}>
@@ -96,7 +103,12 @@ export function DocumentHeader({
             问 AI
           </Button>
         </Tooltip>
-        <Dropdown trigger={['click']} menu={{ items: menu }} placement="bottomRight">
+        <Dropdown
+          trigger={['click']}
+          menu={{ items: styledMenu }}
+          placement="bottomRight"
+          classNames={{ root: styles.docMenu }}
+        >
           <Button
             type="text"
             size="small"

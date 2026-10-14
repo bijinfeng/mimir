@@ -113,21 +113,18 @@ function press(host: HTMLElement, label: string): void {
   })
 }
 
-function openMoreSection(host: HTMLElement, label: string): void {
-  press(host, '更多命令')
-  const item = [...host.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')].find(
+function selectTab(host: HTMLElement, label: string): void {
+  const tab = [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
     (button) => button.textContent === label,
   )
-  if (item === undefined) throw new Error(`更多命令中找不到「${label}」`)
-  act(() => item.click())
+  if (tab === undefined) throw new Error(`找不到「${label}」分类`)
+  act(() => tab.click())
 }
 
-function chooseMenuItem(host: HTMLElement, label: string): void {
-  const item = [...host.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')].find(
-    (button) => button.textContent === label,
-  )
-  if (item === undefined) throw new Error(`菜单中找不到「${label}」`)
-  act(() => item.click())
+function openMoreSection(host: HTMLElement, label: string): void {
+  const tab =
+    ({ 字体: '开始', 插入: '插入', 表格: '表格' } as Record<string, string>)[label] ?? label
+  selectTab(host, tab)
 }
 
 /** 顶层第一个某类型节点的位置 */
@@ -140,6 +137,20 @@ function topNodeAt(editor: Editor, type: string): number {
 }
 
 describe('DocxToolbar 渲染', () => {
+  it('切换分类后仍能用左侧撤销与重做恢复真实文档', async () => {
+    const { host, editor } = await boot()
+    const original = editor.state.doc.textContent
+    act(() => {
+      editor.commands.insertContentAt(1, '快捷历史')
+    })
+    expect(editor.state.doc.textContent).not.toBe(original)
+    selectTab(host, '插入')
+    press(host, '撤销 (Ctrl+Z)')
+    expect(editor.state.doc.textContent).toBe(original)
+    press(host, '重做 (Ctrl+Shift+Z)')
+    expect(editor.state.doc.textContent).not.toBe(original)
+  })
+
   it('无障碍名称不重复（两个同名控件读屏分不出是哪个）', async () => {
     const { host } = await boot()
     /*
@@ -193,31 +204,29 @@ describe('DocxToolbar 渲染', () => {
     }
   })
 
-  it('更多菜单按任务保留插入、审阅和表格命令', async () => {
+  it('可见分类按任务保留插入、审阅和表格命令', async () => {
     const { host, editor } = await boot()
-    press(host, '更多命令')
-    expect(
-      [...host.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')].map(
-        (item) => item.textContent,
-      ),
-    ).toEqual(['历史记录', '字体', '段落', '插入', '表格', '审阅', '查找'])
-
-    chooseMenuItem(host, '插入')
+    expect([...host.querySelectorAll('[role="tab"]')].map((item) => item.textContent)).toEqual([
+      '开始',
+      '插入',
+      '布局',
+      '审阅',
+      '表格',
+      '视图',
+    ])
+    expect(host.querySelector('button[aria-label="更多命令"]')).toBeNull()
+    selectTab(host, '插入')
     for (const label of ['插入图片', '插入链接', '插入分页符 (Ctrl+Enter)', '插入表格']) {
       expect(host.querySelector(`button[aria-label="${label}"]`)).not.toBeNull()
     }
-    chooseMenuItem(host, '返回全部命令')
-    chooseMenuItem(host, '审阅')
+    selectTab(host, '审阅')
     expect(host.querySelector('button[aria-label="修订"]')).not.toBeNull()
     expect(host.querySelector('button[aria-label$="拼写检查"]')).not.toBeNull()
 
     const at = topNodeAt(editor, 'docTable')
     act(() => editor.commands.setTextSelection(at + 4))
-    chooseMenuItem(host, '返回全部命令')
-    chooseMenuItem(host, '表格')
-    const tableMenu = host.querySelector<HTMLButtonElement>(
-      '.me-menu__panel button[aria-label="表格"]',
-    )
+    selectTab(host, '表格')
+    const tableMenu = host.querySelector<HTMLButtonElement>('button[aria-label="表格"]')
     expect(tableMenu).not.toBeNull()
     act(() => tableMenu!.click())
     expect(
@@ -306,7 +315,7 @@ describe('DocxToolbar 渲染', () => {
     const { host } = await boot()
     openMoreSection(host, '字体')
     const group = host.querySelector(
-      '[role="group"][aria-label="字体"] .me-group[aria-label="字体"]',
+      '[role="group"][aria-label="字体选择"] .me-group[aria-label="字体"]',
     )
     expect(group, '工具条上没有「字体」这个组').not.toBeNull()
     const visible = (group?.textContent ?? '').trim()
@@ -317,7 +326,7 @@ describe('DocxToolbar 渲染', () => {
     expect(selectRoot(host, '西文字体')).not.toBeNull()
 
     // 字号那个下拉也在旁边写着它管的是什么（原先只有一个「其它」）
-    expect(host.querySelector('[role="group"][aria-label="字号"]')?.textContent ?? '').toContain(
+    expect(host.querySelector('[role="group"][aria-label="字级"]')?.textContent ?? '').toContain(
       '字号',
     )
   })
@@ -387,7 +396,11 @@ describe('DocxToolbar 渲染', () => {
     const { host, editor } = await boot()
     const tableMenu = (): Element | null => host.querySelector('button[aria-label="表格"]')
     editor.commands.setTextSelection(2)
+    selectTab(host, '表格')
     expect(tableMenu()).toBeNull()
+    expect(host.querySelector('button[aria-label="表格操作"]')?.getAttribute('title')).toContain(
+      '将光标放在表格中',
+    )
     // 「插入表格」在具名插入菜单中始终可达（它不依赖光标）
     openMoreSection(host, '插入')
     expect(host.querySelector('button[aria-label="插入表格"]')).not.toBeNull()
@@ -401,6 +414,7 @@ describe('DocxToolbar 渲染', () => {
     act(() => {
       editor.commands.setTextSelection(tableAt + 4)
     })
+    selectTab(host, '表格')
     expect(tableMenu()).not.toBeNull()
   })
 })
@@ -482,6 +496,7 @@ describe('表格菜单的面板', () => {
     act(() => {
       editor.commands.setTextSelection(at + 4)
     })
+    selectTab(host, '表格')
     press(host, '表格')
     const panel = host.querySelector('.me-menu__panel')
     if (panel === null) throw new Error('表格菜单没有展开')
@@ -576,12 +591,35 @@ describe('表格菜单的面板', () => {
 /**
  * 整棵 `DocxEditor`（含保存按钮）的禁用契约。
  *
- * 它比 `DocxToolbar` 那一组多一件事：**保存按钮在工具条上、但不在
- * `DocxToolbar` 里**（它由 `DocxEditor` 渲染，见 `DocxEditor.tsx` 那个
- * `<ToolbarSpacer />` 之后的按钮）。所以上面那组「禁用必须给原因」的断言
- * 扫不到它——而它正是「没改动 / 正在保存」这两档灰着的常客。
+ * 保存由 `DocxEditor` 提供给工具条最左侧的快捷操作区；状态行只保留状态。
  */
 describe('DocxEditor 的保存按钮', () => {
+  it('读取期间固定显示三项快捷操作，并禁用历史命令', async () => {
+    const io: EditorIo = {
+      load: () => new Promise<Uint8Array>(() => {}),
+      save: async () => {},
+    }
+    const host = document.createElement('div')
+    document.body.append(host)
+    const root = createRoot(host)
+    await act(async () => root.render(<DocxEditor documentId="loading-shortcuts" io={io} />))
+    mounted.push({
+      unmount: () => {
+        act(() => root.unmount())
+        host.remove()
+      },
+    })
+    const quickButtons = host.querySelectorAll<HTMLButtonElement>(
+      '.mimir-compact-toolbar__quick-access button',
+    )
+    expect([...quickButtons].map((button) => button.getAttribute('aria-label'))).toEqual([
+      '保存到库',
+      '撤销 (Ctrl+Z)',
+      '重做 (Ctrl+Shift+Z)',
+    ])
+    expect([...quickButtons].every((button) => button.disabled)).toBe(true)
+  })
+
   it('没改动时禁用并说明原因（与其余四种格式措辞一致）', async () => {
     const io: EditorIo = {
       load: async () => new Uint8Array(readFileSync(FIXTURE)),
@@ -616,5 +654,13 @@ describe('DocxEditor 的保存按钮', () => {
     expect(save, '保存按钮没挂出来（工具条没起来）').not.toBeNull()
     expect(save!.disabled).toBe(true)
     expect(save!.getAttribute('title')).toBe('没有未保存的改动')
+    const quickAccess = host.querySelector('.mimir-compact-toolbar__quick-access')
+    expect(quickAccess?.querySelector('button[aria-label="保存到库"]')).toBe(save)
+    expect(host.querySelector('.mimir-editor__status button[aria-label="保存到库"]')).toBeNull()
+    expect(
+      [...quickAccess!.querySelectorAll('button')].map((button) =>
+        button.getAttribute('aria-label'),
+      ),
+    ).toEqual(['保存到库', '撤销 (Ctrl+Z)', '重做 (Ctrl+Shift+Z)'])
   })
 })
