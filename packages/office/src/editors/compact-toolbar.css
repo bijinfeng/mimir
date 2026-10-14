@@ -48,7 +48,6 @@
   min-width: 0;
   overflow-x: auto;
   scrollbar-width: thin;
-  scroll-behavior: smooth;
 }
 
 .mimir-compact-toolbar__tab {
@@ -85,51 +84,6 @@
   overflow-y: hidden;
   scrollbar-width: thin;
   white-space: nowrap;
-  scroll-behavior: smooth;
-  scroll-snap-type: x proximity;
-  position: relative;
-}
-
-/* 渐变遮罩：提示左侧有更多内容 */
-.mimir-compact-toolbar__commands::before {
-  content: '';
-  position: sticky;
-  left: 0;
-  z-index: 1;
-  width: 24px;
-  height: 100%;
-  background: linear-gradient(to right, var(--me-surface, #ffffff), transparent);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-/* 渐变遮罩：提示右侧有更多内容 */
-.mimir-compact-toolbar__commands::after {
-  content: '';
-  position: sticky;
-  right: 0;
-  z-index: 1;
-  width: 24px;
-  height: 100%;
-  background: linear-gradient(to left, var(--me-surface, #ffffff), transparent);
-  pointer-events: none;
-  opacity: 1;
-  transition: opacity 0.2s ease;
-}
-
-/* 当可以滚动时显示渐变 */
-.mimir-compact-toolbar__commands[data-scroll='start']::before {
-  opacity: 0;
-}
-
-.mimir-compact-toolbar__commands[data-scroll='middle']::before,
-.mimir-compact-toolbar__commands[data-scroll='middle']::after {
-  opacity: 1;
-}
-
-.mimir-compact-toolbar__commands[data-scroll='end']::after {
-  opacity: 0;
 }
 
 .mimir-compact-toolbar__section {
@@ -141,7 +95,6 @@
   min-height: 56px;
   padding: 6px 10px 12px;
   border-right: 1px solid var(--me-border, #d9d9d9);
-  scroll-snap-align: start;
 }
 
 .mimir-compact-toolbar__controls,

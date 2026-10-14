@@ -270,7 +270,6 @@ export function DocumentPanel({
     onSuccess: (updated) => {
       void queryClient.setQueryData(['document', updated.id], updated)
       void queryClient.invalidateQueries({ queryKey: ['documents'] })
-      message.success('标题已更新')
     },
     onError: (error: unknown) => message.error(error instanceof Error ? error.message : '改名失败'),
   })
