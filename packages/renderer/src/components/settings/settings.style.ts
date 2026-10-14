@@ -192,7 +192,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     & + & {
       border-top: 1px solid ${token.colorBorderSecondary};
     }
-    @media (max-width: 680px) {
+    @media (max-width: 780px) {
       grid-template-columns: minmax(0, 1fr);
       gap: 4px;
       padding-inline: 16px;
