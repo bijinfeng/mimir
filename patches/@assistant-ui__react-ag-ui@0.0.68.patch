@@ -1,8 +1,7 @@
 diff --git a/dist/runtime/AgUiThreadRuntimeCore.js b/dist/runtime/AgUiThreadRuntimeCore.js
-index 2649e1462fa3d7e57e9c8b023e4bf2610c3516dc..89fc20c294c3cb3226a4ccfb1dff6bdab78c672a 100644
 --- a/dist/runtime/AgUiThreadRuntimeCore.js
 +++ b/dist/runtime/AgUiThreadRuntimeCore.js
-@@ -282,11 +282,22 @@ var AgUiThreadRuntimeCore = class {
+@@ -349,11 +349,22 @@
  	* unretryable.
  	*/
  	async resumeWithResponses(messageId, resume) {
@@ -22,7 +21,7 @@ index 2649e1462fa3d7e57e9c8b023e4bf2610c3516dc..89fc20c294c3cb3226a4ccfb1dff6bda
 +			if (interrupted && failedHead && this.session.tryGetMessage(failedHead)?.parentId === messageId) {
 +				this.session.resetHead(messageId);
 +				this.session.updateMessage(messageId, () => interrupted);
-+				this.notifyUpdate();
++				this.publishUpdate();
 +			}
 +			throw error;
 +		}
@@ -30,10 +29,9 @@ index 2649e1462fa3d7e57e9c8b023e4bf2610c3516dc..89fc20c294c3cb3226a4ccfb1dff6bda
  	/**
  	* A rejected decision reaches the caller through the approval seam, and
 diff --git a/src/runtime/AgUiThreadRuntimeCore.ts b/src/runtime/AgUiThreadRuntimeCore.ts
-index 804e123297423610ae8e6f2e1cd691f6a75136d8..02164af15a6ec22dcaf8115d60741bd27398eb13 100644
 --- a/src/runtime/AgUiThreadRuntimeCore.ts
 +++ b/src/runtime/AgUiThreadRuntimeCore.ts
-@@ -548,11 +548,29 @@ export class AgUiThreadRuntimeCore {
+@@ -640,11 +640,29 @@
      messageId: string,
      resume: AgUiResumeEntry[],
    ): Promise<void> {
@@ -60,7 +58,7 @@ index 804e123297423610ae8e6f2e1cd691f6a75136d8..02164af15a6ec22dcaf8115d60741bd2
 +      ) {
 +        this.session.resetHead(messageId);
 +        this.session.updateMessage(messageId, () => interrupted);
-+        this.notifyUpdate();
++        this.publishUpdate();
 +      }
 +      throw error;
 +    }

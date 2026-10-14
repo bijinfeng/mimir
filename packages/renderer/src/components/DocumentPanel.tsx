@@ -111,16 +111,20 @@ export function DocumentPanel({
       const inner = scrollRef.current?.querySelector<HTMLElement>('.me-scroll')
       const scroller = docKind === 'note' ? inner : (inner ?? scrollRef.current)
       if (!scroller) {
-        if (++attempts < 20) timer = window.setTimeout(attach, 100)
+        attempts += 1
+        if (attempts < 20) timer = window.setTimeout(attach, 100)
         return
       }
       const saved = editorScrollPositions.get(documentId)
       if (saved !== undefined) {
         scroller.scrollTop = saved
         // 编辑器壳先出现、正文后排版；高度尚不足时等正文就绪再恢复。
-        if (scroller.scrollTop < saved - 2 && ++attempts < 20) {
-          timer = window.setTimeout(attach, 100)
-          return
+        if (scroller.scrollTop < saved - 2) {
+          attempts += 1
+          if (attempts < 20) {
+            timer = window.setTimeout(attach, 100)
+            return
+          }
         }
       }
       const track = () => editorScrollPositions.set(documentId, scroller.scrollTop)
@@ -351,14 +355,13 @@ export function DocumentPanel({
       if (!result.usedModel) {
         // 没配模型时**如实说**，不显示一段像摘要的说明文字（见 ai-text.ts）
         message.warning(result.text)
-        return
+      } else {
+        setAiSummary({ documentId, text: result.text, model: result.model })
       }
-      setAiSummary({ documentId, text: result.text, model: result.model })
     } catch (error) {
       message.error(error instanceof Error ? error.message : '生成摘要失败')
-    } finally {
-      setAiSummaryLoading(false)
     }
+    setAiSummaryLoading(false)
   }
 
   /**
@@ -374,23 +377,20 @@ export function DocumentPanel({
       const result = await api.documents.suggestedTagsAi(documentId)
       if (!result.usedModel) {
         message.warning('AI 标签建议需要先配置模型（设置 › 模型 › 任务分配）')
-        return
-      }
-      if (result.tags.length === 0) {
+      } else if (result.tags.length === 0) {
         message.info('AI 没有给出新的标签')
-        return
+      } else {
+        /**
+         * 摆成按钮让用户点（与统计版建议标签的交互一致）。
+         * 用一个 keys 数组当 message 的 key 前缀，重复点同一批标签不会
+         * 叠出一堆一模一样的提示。
+         */
+        setAiTags({ documentId, tags: result.tags })
       }
-      /**
-       * 摆成按钮让用户点（与统计版建议标签的交互一致）。
-       * 用一个 keys 数组当 message 的 key 前缀，重复点同一批标签不会
-       * 叠出一堆一模一样的提示。
-       */
-      setAiTags({ documentId, tags: result.tags })
     } catch (error) {
       message.error(error instanceof Error ? error.message : 'AI 建议标签失败')
-    } finally {
-      setAiSummaryLoading(false)
     }
+    setAiSummaryLoading(false)
   }
 
   /** 目录列表与建议标签：只有打开「⋯」菜单才需要，但 antd 的菜单要一次给全 */

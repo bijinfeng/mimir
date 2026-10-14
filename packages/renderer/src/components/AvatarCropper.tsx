@@ -182,9 +182,8 @@ export function AvatarCropper({ file, onConfirm, onCancel }: AvatarCropperProps)
       onConfirm(cropped)
     } catch (error) {
       message.error(error instanceof Error ? error.message : '裁切失败')
-    } finally {
-      setSubmitting(false)
     }
+    setSubmitting(false)
   }
 
   return (

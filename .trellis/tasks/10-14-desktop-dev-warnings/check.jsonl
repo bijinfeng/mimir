@@ -1,0 +1,6 @@
+{"file":".trellis/spec/project/quality.md","reason":"required repository validation gate"}
+{"file":".trellis/spec/project/rules.md","reason":"verify diagnostics are fixed without suppression"}
+{"file":".trellis/spec/desktop/runtime/index.md","reason":"desktop build and runtime checks"}
+{"file":".trellis/spec/chat/frontend/conventions.md","reason":"Agent interrupt semantics for regression review"}
+{"file":".trellis/spec/office/engine/conventions.md","reason":"vendor and document rendering constraints"}
+{"file":".trellis/tasks/10-14-desktop-dev-warnings/research/warning-inventory.md","reason":"compare post-fix log against baseline inventory"}

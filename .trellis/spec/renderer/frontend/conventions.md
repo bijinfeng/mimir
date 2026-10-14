@@ -86,6 +86,22 @@ export type Platform =
 路由漏生成是某一页 404，pdf.js 资产漏拷是中文 PDF 整段空白，且都只在那一个
 平台上出现。
 
+GenOffice 的 `fonts.css` 仍引用 `@genoffice/ui/fonts/Carlito-*.ttf`，而 UI 包未进入
+vendor 闭包。两端 Vite 配置都要从本预设取 `genofficeFontAlias`，并用
+`rendererPlugins` 将随字体分发的 OFL 许可写入产物。字体文件在
+`packages/office/src/fonts/`，不得用度量不相容的字体代替：DOCX 换行与分页会偏移。
+
+React 插件的 `exclude` 会同时跳过 vendor 的 **TypeScript/JSX 转换**，导致
+`protected-render.ts` 的类型导入在打包时被误判为缺失导出。只排除 vendor 的
+React Compiler 编译时，在 `compiler.sources` 传 `projectReactSources`：
+
+```ts
+react({ compiler: { logDiagnostics: true, sources: projectReactSources } })
+```
+
+`sources` 是 OXC 支持的文件名子串数组，不能传函数；要保持它覆盖 Web、桌面和
+项目自有 React 包的源码，同时不包含 `packages/office/vendor/`。
+
 ---
 
 ## 这一层的结构

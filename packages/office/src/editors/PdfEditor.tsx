@@ -148,6 +148,15 @@ function samePendingInsert(left: PdfPendingTextInsert, right: PdfPendingTextInse
   )
 }
 
+/** Keep operation cleanup on every success and failure path without a finalizer in a component. */
+async function runWithCleanup<T>(run: () => Promise<T>, cleanup: () => void): Promise<T> {
+  try {
+    return await run()
+  } finally {
+    cleanup()
+  }
+}
+
 /**
  * 一次改动：新的页面结构、导入的字节，以及**它是为哪一份字节做的**。
  *
@@ -957,7 +966,8 @@ export function PdfEditor({
       expectedVersion: number,
       signal?: AbortSignal,
     ) => {
-      if (!hostApply || currentBytes === null || source.bytes === null)
+      const sourceBytes = source.bytes
+      if (!hostApply || currentBytes === null || sourceBytes === null)
         throw new Error('PDF 文字宿主执行器尚未就绪')
       const handle = agentRef.current
       if (!handle || handle.documentId !== documentId || handle.getVersion() !== expectedVersion)
@@ -969,94 +979,98 @@ export function PdfEditor({
       if (signal?.aborted) controller.abort()
       contentAbortRef.current = controller
       setContentBusy(true)
-      try {
-        if (inserts.length > 30) throw new Error('一次最多保留 30 段待保存文字')
-        const pdf = inserts.length > 0 ? await loadPdfDocument(base) : null
-        const items = await Promise.all(
-          inserts.map(async (insert) => {
-            const targetPage = await pdf!.getPage(insert.pageIndex + 1)
-            const viewport = targetPage.getViewport({ scale: 1 })
-            if (
-              insert.x < 0 ||
-              insert.y < 0 ||
-              insert.x > viewport.width ||
-              insert.y + insert.fontSize > viewport.height
-            )
-              throw new Error(`文字 ${insert.id} 的位置超出页面范围`)
-            return {
-              pageIndex: insert.pageIndex,
-              origin: viewport.convertToPdfPoint(insert.x, insert.y + insert.fontSize),
-              text: insert.text,
-              fontSize: insert.fontSize,
-              color: insert.color,
-            }
-          }),
-        )
-        if (
-          controller.signal.aborted ||
-          agentRef.current !== handle ||
-          handle.getVersion() !== expectedVersion
-        )
-          throw new Error('PDF 画布已变化，文字结果未应用')
-        const applied =
-          inserts.length === 0
-            ? { bytes: base, version: expectedVersion + 1 }
-            : await hostApply({
-                bytes: base,
-                expectedVersion,
-                kind: 'insert',
-                items,
-                signal: controller.signal,
-              })
-        if (
-          controller.signal.aborted ||
-          agentRef.current !== handle ||
-          handle.getVersion() !== expectedVersion
-        )
-          throw new Error('PDF 画布已变化，文字结果未应用')
-        if (applied.version !== expectedVersion + 1) throw new Error('PDF 宿主返回了错误的画布版本')
-        const entries = await readPdfPages(applied.bytes)
-        if (
-          controller.signal.aborted ||
-          agentRef.current !== handle ||
-          handle.getVersion() !== expectedVersion
-        )
-          throw new Error('PDF 画布已变化，文字结果未应用')
-        const pages: PdfPageRef[] = entries.map((entry, index) => ({
-          origin: { kind: 'original', index },
-          rotation: entry.rotation,
-          base: { width: entry.width, height: entry.height },
-          crop: null,
-          paper: null,
-        }))
-        const nextPending =
-          inserts.length === 0 ? null : { documentId, source: source.bytes, base, inserts }
-        agentPendingRef.current = nextPending
-        setPendingText(nextPending)
-        const recorded = savedBaselineRef.current
-        const baselineBytes =
-          recorded?.documentId === documentId && recorded.source === source.bytes
-            ? recorded.bytes
-            : source.bytes
-        const pendingDirty = applied.bytes !== baselineBytes
-        setWorking(
-          applied.bytes === source.bytes && baselineBytes === source.bytes
-            ? null
-            : { source: source.bytes, bytes: applied.bytes },
-        )
-        setEdit(null)
-        agentSnapshotRef.current = {
-          bytes: applied.bytes,
-          pages,
-          activePage: Math.min(at, pages.length - 1),
-          dirty: pendingDirty,
-        }
-        onDirtyChange?.(pendingDirty)
-      } finally {
-        signal?.removeEventListener('abort', abort)
-        if (contentAbortRef.current === controller) contentAbortRef.current = null
-        setContentBusy(false)
-      }
+      await runWithCleanup(
+        async () => {
+          if (inserts.length > 30) throw new Error('一次最多保留 30 段待保存文字')
+          const pdf = inserts.length > 0 ? await loadPdfDocument(base) : null
+          const items = await Promise.all(
+            inserts.map(async (insert) => {
+              const targetPage = await pdf!.getPage(insert.pageIndex + 1)
+              const viewport = targetPage.getViewport({ scale: 1 })
+              if (
+                insert.x < 0 ||
+                insert.y < 0 ||
+                insert.x > viewport.width ||
+                insert.y + insert.fontSize > viewport.height
+              )
+                throw new Error(`文字 ${insert.id} 的位置超出页面范围`)
+              return {
+                pageIndex: insert.pageIndex,
+                origin: viewport.convertToPdfPoint(insert.x, insert.y + insert.fontSize),
+                text: insert.text,
+                fontSize: insert.fontSize,
+                color: insert.color,
+              }
+            }),
+          )
+          if (
+            controller.signal.aborted ||
+            agentRef.current !== handle ||
+            handle.getVersion() !== expectedVersion
+          )
+            throw new Error('PDF 画布已变化，文字结果未应用')
+          const applied =
+            inserts.length === 0
+              ? { bytes: base, version: expectedVersion + 1 }
+              : await hostApply({
+                  bytes: base,
+                  expectedVersion,
+                  kind: 'insert',
+                  items,
+                  signal: controller.signal,
+                })
+          if (
+            controller.signal.aborted ||
+            agentRef.current !== handle ||
+            handle.getVersion() !== expectedVersion
+          )
+            throw new Error('PDF 画布已变化，文字结果未应用')
+          if (applied.version !== expectedVersion + 1)
+            throw new Error('PDF 宿主返回了错误的画布版本')
+          const entries = await readPdfPages(applied.bytes)
+          if (
+            controller.signal.aborted ||
+            agentRef.current !== handle ||
+            handle.getVersion() !== expectedVersion
+          )
+            throw new Error('PDF 画布已变化，文字结果未应用')
+          const pages: PdfPageRef[] = entries.map((entry, index) => ({
+            origin: { kind: 'original', index },
+            rotation: entry.rotation,
+            base: { width: entry.width, height: entry.height },
+            crop: null,
+            paper: null,
+          }))
+          const nextPending =
+            inserts.length === 0 ? null : { documentId, source: sourceBytes, base, inserts }
+          agentPendingRef.current = nextPending
+          setPendingText(nextPending)
+          const recorded = savedBaselineRef.current
+          const baselineBytes =
+            recorded?.documentId === documentId && recorded.source === sourceBytes
+              ? recorded.bytes
+              : sourceBytes
+          const pendingDirty = applied.bytes !== baselineBytes
+          setWorking(
+            applied.bytes === sourceBytes && baselineBytes === sourceBytes
+              ? null
+              : { source: sourceBytes, bytes: applied.bytes },
+          )
+          setEdit(null)
+          agentSnapshotRef.current = {
+            bytes: applied.bytes,
+            pages,
+            activePage: Math.min(at, pages.length - 1),
+            dirty: pendingDirty,
+          }
+          onDirtyChange?.(pendingDirty)
+        },
+        () => {
+          signal?.removeEventListener('abort', abort)
+          if (contentAbortRef.current === controller) contentAbortRef.current = null
+          setContentBusy(false)
+        },
+      )
     }
     agentInsertRef.current = async (input, expectedVersion, signal) => {
       if (currentBytes === null || source.bytes === null) throw new Error('PDF 原件尚未读取完成')

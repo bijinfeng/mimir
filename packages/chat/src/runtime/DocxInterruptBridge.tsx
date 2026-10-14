@@ -1,6 +1,7 @@
 import { useAgUiInterrupts, useAgUiSubmitInterruptResponses } from '@assistant-ui/react-ag-ui'
 import { useAuiState } from '@assistant-ui/react'
 import { documentAgentToolResultSchema } from '@mimir/shared'
+import type { DocumentAgentToolResult } from '@mimir/shared'
 import { Button, Upload } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import type { ChatDocxAgent } from '../types.js'
@@ -161,6 +162,147 @@ export async function executeWritingTool(
   }
 }
 
+type BridgeToolOptions = {
+  agent: ChatDocxAgent
+  tool: { name: string; input: unknown }
+  roundId: string
+  expectedVersion: number
+  signal: AbortSignal
+  batchChanged: boolean
+  revisionMode: boolean
+  generateDocxImage?: ChatIo['generateDocxImage']
+  fetchDocxImage?: ChatIo['fetchDocxImage']
+  writeDocxDocument?: ChatIo['writeDocxDocument']
+  analyzeDocxMedia?: ChatIo['analyzeDocxMedia']
+  createDocxDocument?: ChatIo['createDocxDocument']
+  requestMediaSource: (
+    kind: 'image' | 'audio' | 'video',
+  ) => Promise<File | { dataUrl: string; mimeType: string }>
+  setProgress: (progress: string) => void
+  onCreatedDocument: (documentId: string) => void
+}
+
+/** Keep tool validation and thrown errors outside the React component's control flow. */
+async function executeBridgeTool({
+  agent,
+  tool,
+  roundId,
+  expectedVersion,
+  signal,
+  batchChanged,
+  revisionMode,
+  generateDocxImage,
+  fetchDocxImage,
+  writeDocxDocument,
+  analyzeDocxMedia,
+  createDocxDocument,
+  requestMediaSource,
+  setProgress,
+  onCreatedDocument,
+}: BridgeToolOptions): Promise<DocumentAgentToolResult> {
+  if (batchChanged) throw new Error('同一批工具已有修改，后续操作需等模型重新读取文档后再执行')
+
+  let result: unknown
+  if ((agent.format ?? 'docx') === 'docx' && tool.name === 'write_document') {
+    result = await executeWritingTool(
+      agent,
+      tool.input,
+      roundId,
+      expectedVersion,
+      signal,
+      writeDocxDocument,
+      revisionMode,
+    )
+  } else if ((agent.format ?? 'docx') === 'docx' && tool.name === 'analyze_media') {
+    if (agent.getVersion() !== expectedVersion)
+      throw new Error('文档已在指令发送后变化，请重新读取当前画布')
+    const args = objectInput(tool.input, 'analyze_media')
+    const kind = args.kind
+    const instruction = args.instruction
+    if (kind !== 'image' && kind !== 'audio' && kind !== 'video') throw new Error('媒体类型无效')
+    if (typeof instruction !== 'string' || !instruction.trim()) throw new Error('分析要求不能为空')
+    if (!analyzeDocxMedia) throw new Error('媒体分析服务未接入')
+    setProgress('请选择要分析的媒体文件')
+    const source = await requestMediaSource(kind)
+    if (agent.getVersion() !== expectedVersion)
+      throw new Error('选择媒体期间文档已变化，请重新发送指令')
+    setProgress('正在分析媒体')
+    const analyzed = await analyzeDocxMedia(
+      { documentId: agent.documentId, instruction, kind, source },
+      signal,
+    )
+    result = {
+      ok: true,
+      summary: '媒体分析完成',
+      changed: false,
+      version: expectedVersion,
+      data: { text: analyzed.text },
+    }
+  } else if ((agent.format ?? 'docx') === 'docx' && tool.name === 'create_document') {
+    if (agent.getVersion() !== expectedVersion)
+      throw new Error('文档已在指令发送后变化，请重新读取当前画布')
+    const args = objectInput(tool.input, 'create_document')
+    const { title, format, content } = args
+    if (typeof title !== 'string' || !title.trim() || typeof content !== 'string')
+      throw new Error('新文件标题或内容无效')
+    if (format !== 'docx' && format !== 'pdf' && format !== 'md' && format !== 'html')
+      throw new Error('新文件格式无效')
+    if (!createDocxDocument) throw new Error('新文件创建服务未接入')
+    const created = await createDocxDocument(
+      { documentId: agent.documentId, title, format, content },
+      signal,
+    )
+    onCreatedDocument(created.documentId)
+    result = {
+      ok: true,
+      summary: created.parseError
+        ? `文件已保存，但解析或索引失败：${created.parseError}`
+        : `已创建并保存 ${created.title}`,
+      changed: false,
+      version: expectedVersion,
+      data: {
+        documentId: created.documentId,
+        format: created.format,
+        parseError: created.parseError,
+      },
+    }
+  } else {
+    result = await executeDocxTool(
+      agent,
+      tool,
+      roundId,
+      expectedVersion,
+      signal,
+      generateDocxImage,
+      revisionMode,
+      fetchDocxImage,
+    )
+  }
+  const parsedResult = documentAgentToolResultSchema.safeParse(result)
+  if (!parsedResult.success) throw new Error('编辑器返回了无效的工具结果')
+  return parsedResult.data
+}
+
+async function commitInterruptedDraft(
+  agent: ChatDocxAgent,
+  roundId: string,
+  version: number,
+  revisionMode: boolean,
+): Promise<unknown> {
+  try {
+    if (!agent.commitDraft) throw new Error('当前编辑器无法提交草稿')
+    agent.setRevisionMode?.(revisionMode)
+    return await agent.commitDraft(roundId, { expectedVersion: version })
+  } finally {
+    agent.setRevisionMode?.(false)
+  }
+}
+
+async function undoValidatedRound(agent: ChatDocxAgent, roundId: string): Promise<void> {
+  const undone = await agent.undoRound(roundId)
+  if (undone === false) throw new Error('画布已有后续修改，无法安全回退')
+}
+
 /**
  * TanStack's client tool completes with RUN_FINISHED/outcome=interrupt. assistant-ui's
  * ordinary addToolResult path resumes a different AG-UI state, so these requests
@@ -294,90 +436,26 @@ export function DocxInterruptBridge({
         setProgress(`正在执行 ${tool.name}`)
         let payload: unknown
         try {
-          if (batchChanged)
-            throw new Error('同一批工具已有修改，后续操作需等模型重新读取文档后再执行')
-          let result: unknown
-          if ((agent.format ?? 'docx') === 'docx' && tool.name === 'write_document') {
-            result = await executeWritingTool(
-              agent,
-              tool.input,
-              round.id,
-              expectedVersion,
-              controller.signal,
-              writeDocxDocument,
-              revisionMode,
-            )
-          } else if ((agent.format ?? 'docx') === 'docx' && tool.name === 'analyze_media') {
-            if (agent.getVersion() !== expectedVersion)
-              throw new Error('文档已在指令发送后变化，请重新读取当前画布')
-            const args = objectInput(tool.input, 'analyze_media')
-            const kind = args.kind
-            const instruction = args.instruction
-            if (kind !== 'image' && kind !== 'audio' && kind !== 'video')
-              throw new Error('媒体类型无效')
-            if (typeof instruction !== 'string' || !instruction.trim())
-              throw new Error('分析要求不能为空')
-            if (!analyzeDocxMedia) throw new Error('媒体分析服务未接入')
-            setProgress('请选择要分析的媒体文件')
-            const source = await requestMediaSource(kind)
-            if (agent.getVersion() !== expectedVersion)
-              throw new Error('选择媒体期间文档已变化，请重新发送指令')
-            setProgress('正在分析媒体')
-            const analyzed = await analyzeDocxMedia(
-              { documentId: agent.documentId, instruction, kind, source },
-              controller.signal,
-            )
-            result = {
-              ok: true,
-              summary: '媒体分析完成',
-              changed: false,
-              version: expectedVersion,
-              data: { text: analyzed.text },
-            }
-          } else if ((agent.format ?? 'docx') === 'docx' && tool.name === 'create_document') {
-            if (agent.getVersion() !== expectedVersion)
-              throw new Error('文档已在指令发送后变化，请重新读取当前画布')
-            const args = objectInput(tool.input, 'create_document')
-            const { title, format, content } = args
-            if (typeof title !== 'string' || !title.trim() || typeof content !== 'string')
-              throw new Error('新文件标题或内容无效')
-            if (format !== 'docx' && format !== 'pdf' && format !== 'md' && format !== 'html')
-              throw new Error('新文件格式无效')
-            if (!createDocxDocument) throw new Error('新文件创建服务未接入')
-            const created = await createDocxDocument(
-              { documentId: agent.documentId, title, format, content },
-              controller.signal,
-            )
-            createdDocumentId = created.documentId
-            result = {
-              ok: true,
-              summary: created.parseError
-                ? `文件已保存，但解析或索引失败：${created.parseError}`
-                : `已创建并保存 ${created.title}`,
-              changed: false,
-              version: expectedVersion,
-              data: {
-                documentId: created.documentId,
-                format: created.format,
-                parseError: created.parseError,
-              },
-            }
-          } else {
-            result = await executeDocxTool(
-              agent,
-              tool,
-              round.id,
-              expectedVersion,
-              controller.signal,
-              generateDocxImage,
-              revisionMode,
-              fetchDocxImage,
-            )
-          }
+          const validatedResult = await executeBridgeTool({
+            agent,
+            tool,
+            roundId: round.id,
+            expectedVersion,
+            signal: controller.signal,
+            batchChanged,
+            revisionMode,
+            generateDocxImage,
+            fetchDocxImage,
+            writeDocxDocument,
+            analyzeDocxMedia,
+            createDocxDocument,
+            requestMediaSource,
+            setProgress,
+            onCreatedDocument: (documentId) => {
+              createdDocumentId = documentId
+            },
+          })
           if (controller.signal.aborted) return
-          const parsedResult = documentAgentToolResultSchema.safeParse(result)
-          if (!parsedResult.success) throw new Error('编辑器返回了无效的工具结果')
-          const validatedResult = parsedResult.data
           payload = validatedResult
           if (validatedResult.ok === false) {
             const reason = validatedResult.error ?? '工具未完成'
@@ -589,11 +667,12 @@ export function DocxInterruptBridge({
             size="small"
             onClick={async () => {
               try {
-                if (!agent.commitDraft) throw new Error('当前编辑器无法提交草稿')
-                agent.setRevisionMode?.(revisionMode)
-                const result = await agent.commitDraft(partialDraft.roundId, {
-                  expectedVersion: partialDraft.version,
-                })
+                const result = await commitInterruptedDraft(
+                  agent,
+                  partialDraft.roundId,
+                  partialDraft.version,
+                  revisionMode,
+                )
                 if (
                   typeof result === 'object' &&
                   result !== null &&
@@ -606,8 +685,6 @@ export function DocxInterruptBridge({
                 setFailure(null)
               } catch (error) {
                 setFailure(`保留草稿失败：${errorText(error)}`)
-              } finally {
-                agent.setRevisionMode?.(false)
               }
             }}
           >
@@ -630,8 +707,7 @@ export function DocxInterruptBridge({
           size="small"
           onClick={async () => {
             try {
-              const undone = await agent.undoRound(undoRound)
-              if (undone === false) throw new Error('画布已有后续修改，无法安全回退')
+              await undoValidatedRound(agent, undoRound)
               setUndoRound(null)
               setFailure(null)
             } catch (error) {

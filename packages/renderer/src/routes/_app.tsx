@@ -246,7 +246,8 @@ function AppShell() {
 
   const gridClass = navCollapsed ? styles.appCollapsed : styles.app
 
-  const openDocument = (id: string, scope = search.scope) => {
+  const currentScope = search.scope
+  const openDocument = (id: string, scope = currentScope) => {
     setCameFromChat(false)
     void navigate({ to: '/docs', search: { scope, id } })
   }

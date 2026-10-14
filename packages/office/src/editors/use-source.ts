@@ -127,12 +127,12 @@ export function useSource(io: EditorIo, documentId: string): SourceHandle {
     try {
       await ioRef.current.save(next, target)
       setSaveCount((n) => n + 1)
+      setSaving(false)
       return true
     } catch (cause) {
       setSaveError(messageOf(cause))
-      return false
-    } finally {
       setSaving(false)
+      return false
     }
     /**
      * 空依赖：保存做的事（写字节 + 记状态）不依赖任何渲染期变量——

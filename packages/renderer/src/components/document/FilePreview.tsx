@@ -104,91 +104,6 @@ export function FilePreview({
           ? '这种格式的正文提取将在后续版本支持，所以它暂时搜不到——原件可以正常查看'
           : '这个文件里没有可提取的文字，所以它暂时搜不到'
 
-  return (
-    <div className={styles.wrap}>
-      {extractNote !== null && !showsBody && <div className={styles.note}>{extractNote}</div>}
-
-      {showsSource ? (
-        renderSource()
-      ) : showsBody ? (
-        <>
-          {/*
-            文本类文件的正文是**原样文本**，不是 Markdown。
-            csv / json 里有大量换行与井号，走 Markdown 渲染会把换行折叠、
-            把 `#` 当标题——那是主动把内容显示错。所以按 mime 分派：
-            只有从 HTML / markdown / Office 提取出来的才走 Markdown 渲染
-          */}
-          {extractNote !== null && <div className={styles.note}>{extractNote}</div>}
-          {isPlainText(doc.mime) ? (
-            <pre className={styles.plain}>{doc.body}</pre>
-          ) : (
-            /* 正文排版与编辑器共用同一个类——两个视图都渲染同一份 Markdown，
-               排版必须同源（见 components/ContentTypography.style.ts 的说明） */
-            <div className={contentStyles.content}>
-              <MarkdownBody body={doc.body} headings={[]} />
-            </div>
-          )}
-
-          {/*
-            从 Office 提取的正文要说明「这是提取的结果」——
-            版式与原件不同（表格线、字体、页眉页脚都不还原），
-            不说的话用户会拿它跟 Word 比对，然后以为渲染坏了。
-
-            只有**看不到原件**时才会走到这里（如旧版 .doc 没有浏览器内
-            查看器）：能看到原件时，那个原件本身就是答案
-          */}
-          {isExtracted(doc.mime) && (
-            <div className={styles.note}>
-              以上文字是从原件里提取的，版式与原件不同（不含字体、页眉页脚与图片位置）。
-            </div>
-          )}
-        </>
-      ) : hasSource ? (
-        /*
-          「有原件、但没有查看器也没有正文」的降级态（`归档资料.zip` 就是）。
-
-          **它必须带一个主按钮。** DESIGN §8.16 给这一档的规定是「图标 +
-          「{格式} 没有在线预览」+ 主按钮『下载原件』」，而第一版只有一个
-          antd `Empty`：整屏（x 204–1440、y 80–866）没有第二个可点元素，
-          唯一的出口是 44px 头部最右端那个「下载」——而提示语正说着
-          「可以下载查看」（实测整页可点的只有侧栏 9 项加头部四个按钮）。
-          说得出下一步却不给入口，比不说更让人以为坏了。
-
-          形状与 `renderSource()` 里那张降级卡片**同一张**：两处说的是
-          同一件事（这个格式没有在线预览），按钮文案也必须是同一句
-          ——两处各写一套的话，同一件事在界面上会有两种说法。
-        */
-        <div className={styles.card}>
-          <File className={styles.cardIcon} size={22} />
-          <div className={styles.cardText}>
-            <Typography.Text strong>
-              {doc.parseError !== null
-                ? `提取正文失败：${doc.parseError}`
-                : `${formatLabel(doc.mime, doc.title)} 没有在线预览`}
-            </Typography.Text>
-            <div className={styles.cardHint}>原件已经保存，可以下载查看</div>
-          </div>
-          <Button type="primary" href={api.documents.sourceUrl(doc.id, { download: true })}>
-            下载原件
-          </Button>
-        </div>
-      ) : (
-        /* 没有原件的记录：**不给下载按钮**——没有东西可下，点了只会得到
-           一个 404，那正是 DESIGN §7.4 说的假动作 */
-        <Empty
-          image={<File className={styles.bigIcon} size={34} />}
-          description={
-            <span>
-              {doc.parseError !== null
-                ? `提取正文失败：${doc.parseError}`
-                : `${formatLabel(doc.mime, doc.title)} 没有在线预览`}
-            </span>
-          }
-        />
-      )}
-    </div>
-  )
-
   function renderSource() {
     if (!hasSource) return null
 
@@ -303,6 +218,91 @@ export function FilePreview({
       <video className={styles.media} src={url} controls onError={() => setFailedFor(doc.id)} />
     )
   }
+
+  return (
+    <div className={styles.wrap}>
+      {extractNote !== null && !showsBody && <div className={styles.note}>{extractNote}</div>}
+
+      {showsSource ? (
+        renderSource()
+      ) : showsBody ? (
+        <>
+          {/*
+            文本类文件的正文是**原样文本**，不是 Markdown。
+            csv / json 里有大量换行与井号，走 Markdown 渲染会把换行折叠、
+            把 `#` 当标题——那是主动把内容显示错。所以按 mime 分派：
+            只有从 HTML / markdown / Office 提取出来的才走 Markdown 渲染
+          */}
+          {extractNote !== null && <div className={styles.note}>{extractNote}</div>}
+          {isPlainText(doc.mime) ? (
+            <pre className={styles.plain}>{doc.body}</pre>
+          ) : (
+            /* 正文排版与编辑器共用同一个类——两个视图都渲染同一份 Markdown，
+               排版必须同源（见 components/ContentTypography.style.ts 的说明） */
+            <div className={contentStyles.content}>
+              <MarkdownBody body={doc.body} headings={[]} />
+            </div>
+          )}
+
+          {/*
+            从 Office 提取的正文要说明「这是提取的结果」——
+            版式与原件不同（表格线、字体、页眉页脚都不还原），
+            不说的话用户会拿它跟 Word 比对，然后以为渲染坏了。
+
+            只有**看不到原件**时才会走到这里（如旧版 .doc 没有浏览器内
+            查看器）：能看到原件时，那个原件本身就是答案
+          */}
+          {isExtracted(doc.mime) && (
+            <div className={styles.note}>
+              以上文字是从原件里提取的，版式与原件不同（不含字体、页眉页脚与图片位置）。
+            </div>
+          )}
+        </>
+      ) : hasSource ? (
+        /*
+          「有原件、但没有查看器也没有正文」的降级态（`归档资料.zip` 就是）。
+
+          **它必须带一个主按钮。** DESIGN §8.16 给这一档的规定是「图标 +
+          「{格式} 没有在线预览」+ 主按钮『下载原件』」，而第一版只有一个
+          antd `Empty`：整屏（x 204–1440、y 80–866）没有第二个可点元素，
+          唯一的出口是 44px 头部最右端那个「下载」——而提示语正说着
+          「可以下载查看」（实测整页可点的只有侧栏 9 项加头部四个按钮）。
+          说得出下一步却不给入口，比不说更让人以为坏了。
+
+          形状与 `renderSource()` 里那张降级卡片**同一张**：两处说的是
+          同一件事（这个格式没有在线预览），按钮文案也必须是同一句
+          ——两处各写一套的话，同一件事在界面上会有两种说法。
+        */
+        <div className={styles.card}>
+          <File className={styles.cardIcon} size={22} />
+          <div className={styles.cardText}>
+            <Typography.Text strong>
+              {doc.parseError !== null
+                ? `提取正文失败：${doc.parseError}`
+                : `${formatLabel(doc.mime, doc.title)} 没有在线预览`}
+            </Typography.Text>
+            <div className={styles.cardHint}>原件已经保存，可以下载查看</div>
+          </div>
+          <Button type="primary" href={api.documents.sourceUrl(doc.id, { download: true })}>
+            下载原件
+          </Button>
+        </div>
+      ) : (
+        /* 没有原件的记录：**不给下载按钮**——没有东西可下，点了只会得到
+           一个 404，那正是 DESIGN §7.4 说的假动作 */
+        <Empty
+          image={<File className={styles.bigIcon} size={34} />}
+          description={
+            <span>
+              {doc.parseError !== null
+                ? `提取正文失败：${doc.parseError}`
+                : `${formatLabel(doc.mime, doc.title)} 没有在线预览`}
+            </span>
+          }
+        />
+      )}
+    </div>
+  )
 }
 
 /** 原样文本：`.txt` / `.csv` / `.json` / 代码……按 UTF-8 读出来就是它的内容 */

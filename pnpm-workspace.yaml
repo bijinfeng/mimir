@@ -6,6 +6,9 @@ packages:
   # 想 import apps/server 的东西会直接解析失败，而不是靠人记得别这么做。
   - plugins/*
 
+patchedDependencies:
+  '@assistant-ui/react-ag-ui@0.0.68': patches/@assistant-ui__react-ag-ui@0.0.68.patch
+
 # ── 依赖版本集中管理 ──
 #
 # 进 catalog 的两类东西：

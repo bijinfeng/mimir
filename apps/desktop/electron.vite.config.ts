@@ -1,5 +1,9 @@
 import { resolve } from 'node:path'
-import { rendererPlugins } from '@mimir/renderer/vite-preset'
+import {
+  genofficeFontAlias,
+  projectReactSources,
+  rendererPlugins,
+} from '@mimir/renderer/vite-preset'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'electron-vite'
 import { rendererAlias } from './renderer-alias.ts'
@@ -96,9 +100,9 @@ export default defineConfig({
          * React Compiler。**两个平台都必须开**：它是构建期的自动记忆化，
          * 关掉的症状是「组件没变快」而不是报错（`.trellis/spec/project/rules.md` 铁律 1）。
          */
-        compiler: { logDiagnostics: true },
+        compiler: { logDiagnostics: true, sources: projectReactSources },
       }),
     ],
-    resolve: { alias: rendererAlias },
+    resolve: { alias: { ...rendererAlias, ...genofficeFontAlias } },
   },
 })

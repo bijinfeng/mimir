@@ -1,5 +1,9 @@
 import { resolve } from 'node:path'
-import { rendererPlugins } from '@mimir/renderer/vite-preset'
+import {
+  genofficeFontAlias,
+  projectReactSources,
+  rendererPlugins,
+} from '@mimir/renderer/vite-preset'
 import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv } from 'vite'
 import { alias } from './alias.ts'
@@ -52,10 +56,10 @@ export default defineConfig(({ mode }) => {
          *
          * 目标 React 19，自带 runtime，不需要 react-compiler-runtime。
          */
-        compiler: { logDiagnostics: true },
+        compiler: { logDiagnostics: true, sources: projectReactSources },
       }),
     ],
-    resolve: { alias },
+    resolve: { alias: { ...alias, ...genofficeFontAlias } },
     server: {
       port: 5173,
       // 开发时前端在 5173、后端在 3000，代理掉跨源与 cookie 的麻烦。

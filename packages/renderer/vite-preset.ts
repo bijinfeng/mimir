@@ -1,10 +1,37 @@
 import { createRequire } from 'node:module'
-import { copyFile, cp, mkdir, readdir, rm } from 'node:fs/promises'
-import { dirname, join } from 'node:path'
+import { copyFile, cp, mkdir, readFile, readdir, rm } from 'node:fs/promises'
+import { dirname, join, resolve } from 'node:path'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import type { Plugin, PluginOption } from 'vite'
 // @ts-expect-error -- .mjs 无类型声明：它要能被 node 直接跑（见那个文件的说明）
 import { routeGeneratorConfig } from './route-config.mjs'
+
+/** Resolve the font URLs retained in GenOffice's vendored CSS on both hosts. */
+export const genofficeFontAlias = {
+  '@genoffice/ui/fonts': resolve(import.meta.dirname, '../office/src/fonts'),
+}
+
+/** OXC accepts filename substrings here; vendor still receives its TS/JSX transform. */
+export const projectReactSources = [
+  resolve(import.meta.dirname, '../../apps'),
+  resolve(import.meta.dirname, './src'),
+  resolve(import.meta.dirname, '../chat/src'),
+  resolve(import.meta.dirname, '../office/src'),
+]
+
+/** The emitted Carlito faces need their OFL notice in distributable output. */
+export function emitCarlitoLicense(): Plugin {
+  return {
+    name: 'mimir:emit-carlito-license',
+    async generateBundle() {
+      this.emitFile({
+        type: 'asset',
+        fileName: 'fonts/Carlito-LICENSE-OFL.txt',
+        source: await readFile(join(genofficeFontAlias['@genoffice/ui/fonts'], 'LICENSE-OFL.txt')),
+      })
+    },
+  }
+}
 
 /**
  * 渲染层的构建预设（D-103）。
@@ -122,6 +149,7 @@ export function rendererPlugins(options: RendererPluginOptions): PluginOption[] 
      * 请求就会 404，而刷新后反而正常，属于最难查的一类）。
      */
     copyPdfjsAssets(publicDir),
+    emitCarlitoLicense(),
     /**
      * 文件路由。**配置来自 `route-config.mjs`**——那一份同时被
      * `generate-routes.mjs` 用（typecheck 之前要先有路由树，而插件那时还没跑）。

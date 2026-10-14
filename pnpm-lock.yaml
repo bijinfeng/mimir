@@ -273,6 +273,9 @@ catalogs:
       specifier: ^4.6.5
       version: 4.6.7
 
+patchedDependencies:
+  '@assistant-ui/react-ag-ui@0.0.68': cf28b5b961f54b0ada401eb01fc29489be363f20749a1d07a76725944d113df3
+
 importers:
 
   .:
@@ -543,7 +546,7 @@ importers:
         version: 0.15.28(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(use-sync-external-store@1.7.0(react@19.3.0))
       '@assistant-ui/react-ag-ui':
         specifier: 0.0.68
-        version: 0.0.68(@assistant-ui/react@0.15.28(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(use-sync-external-store@1.7.0(react@19.3.0)))(@assistant-ui/tap@0.9.23(@types/react@19.3.0)(react@19.3.0))(@types/react@19.3.0)(assistant-cloud@0.2.7)(react@19.3.0)(zod@4.6.7)
+        version: 0.0.68(patch_hash=cf28b5b961f54b0ada401eb01fc29489be363f20749a1d07a76725944d113df3)(@assistant-ui/react@0.15.28(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(use-sync-external-store@1.7.0(react@19.3.0)))(@assistant-ui/tap@0.9.23(@types/react@19.3.0)(react@19.3.0))(@types/react@19.3.0)(assistant-cloud@0.2.7)(react@19.3.0)(zod@4.6.7)
       '@mimir/shared':
         specifier: workspace:*
         version: link:../shared
@@ -6918,7 +6921,7 @@ snapshots:
       - ioredis
       - redis
 
-  '@assistant-ui/react-ag-ui@0.0.68(@assistant-ui/react@0.15.28(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(use-sync-external-store@1.7.0(react@19.3.0)))(@assistant-ui/tap@0.9.23(@types/react@19.3.0)(react@19.3.0))(@types/react@19.3.0)(assistant-cloud@0.2.7)(react@19.3.0)(zod@4.6.7)':
+  '@assistant-ui/react-ag-ui@0.0.68(patch_hash=cf28b5b961f54b0ada401eb01fc29489be363f20749a1d07a76725944d113df3)(@assistant-ui/react@0.15.28(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(use-sync-external-store@1.7.0(react@19.3.0)))(@assistant-ui/tap@0.9.23(@types/react@19.3.0)(react@19.3.0))(@types/react@19.3.0)(assistant-cloud@0.2.7)(react@19.3.0)(zod@4.6.7)':
     dependencies:
       '@ag-ui/client': 0.0.59
       '@assistant-ui/core': 0.3.27(@assistant-ui/store@0.3.19(@assistant-ui/tap@0.9.23(@types/react@19.3.0)(react@19.3.0))(@types/react@19.3.0)(react@19.3.0))(@assistant-ui/tap@0.9.23(@types/react@19.3.0)(react@19.3.0))(@types/react@19.3.0)(assistant-cloud@0.2.7)(react@19.3.0)

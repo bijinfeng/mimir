@@ -1,0 +1,9 @@
+{"file":".trellis/spec/project/rules.md","reason":"React Compiler, immutable vendor, and contract update boundaries"}
+{"file":".trellis/spec/desktop/runtime/index.md","reason":"desktop build and startup ownership"}
+{"file":".trellis/spec/desktop/runtime/conventions.md","reason":"three-target build, watch, and same-origin host invariants"}
+{"file":".trellis/spec/renderer/frontend/index.md","reason":"shared renderer rules for Web and desktop"}
+{"file":".trellis/spec/renderer/frontend/document/index.md","reason":"read-only Markdown and file preview changes"}
+{"file":".trellis/spec/chat/frontend/conventions.md","reason":"Agent interrupt, draft, and React Compiler behavior"}
+{"file":".trellis/spec/office/engine/conventions.md","reason":"vendor immutability and font rendering constraints"}
+{"file":".trellis/spec/office/frontend/editors/index.md","reason":"Office editor load/save and PDF changes"}
+{"file":".trellis/tasks/10-14-desktop-dev-warnings/research/warning-inventory.md","reason":"reproduced warning counts, paths, and asset evidence"}
