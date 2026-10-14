@@ -1,0 +1,16 @@
+{
+  "project_id": "4e859dd8-7268-4388-95c9-e4c44267e1be",
+  "project_title": "Mimir",
+  "resources": [
+    {
+      "id": "35c47d0b-d3ef-45e0-ac5b-ae817979abbb",
+      "resource_type": "local_directory",
+      "resource_ref": {
+        "label": "mimir",
+        "daemon_id": "01a1380c-520e-7674-836f-220ed6311fa2",
+        "local_path": "/Users/admin/Desktop/mimir",
+        "execution_mode": "worktree"
+      }
+    }
+  ]
+}

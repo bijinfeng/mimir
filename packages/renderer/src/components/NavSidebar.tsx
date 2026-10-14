@@ -388,8 +388,10 @@ function AccountRow({
           </Avatar>
           <div className={styles.accountMenuIdentityText}>
             <span className={styles.accountMenuName}>{user.name}</span>
-            {!localMode && user.email && (
-              <span className={styles.accountMenuEmail}>{user.email}</span>
+            {localMode ? (
+              <span className={styles.accountMenuEmail}>本地用户</span>
+            ) : (
+              user.email && <span className={styles.accountMenuEmail}>{user.email}</span>
             )}
           </div>
         </div>
