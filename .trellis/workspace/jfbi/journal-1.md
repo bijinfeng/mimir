@@ -137,3 +137,26 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+
+## Session 6: 全站界面打磨与跨端验收
+<!-- trellis-session: v=2 fp=632f94a262312b0f -->
+
+**Date**: 2026-10-15
+**Task**: 全站界面打磨与跨端验收
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+按现行蓝色设计系统打磨桌面首次设置、共享搜索与收集、对话和设置、六格式 Office 共用工具栏；修复窄窗 PPTX/PDF 缩略图遮挡并以隔离 Electron 复查。Office 383 项、桌面 13 项和上传回归通过；Web/桌面构建及相关类型检查通过。深色 Office、真实模型引用和网页登录实机验证限制见归档走查。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `8670637` | fix(ui): polish app pages and office editors |
+| `dfd44db` | docs: record all-pages polish verification |
+
+### Status
+
+[OK] **Completed**
