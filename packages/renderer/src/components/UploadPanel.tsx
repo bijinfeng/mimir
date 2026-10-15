@@ -34,6 +34,7 @@ import { FONT_SIZE } from '../theme/tokens'
  */
 export interface UploadPanelProps {
   onUploaded: (documentId: string) => void
+  onBusyChange?: (busy: boolean) => void
   /** 归入的目录。从知识库页唤起时带当前路径；不带 = 库根 */
   folder?: string | null
   /** 用文件夹选择器（webkitdirectory），按相对子路径展开成目录树 */
@@ -66,7 +67,7 @@ function targetFolderFor(file: File, folder?: string | null): string | undefined
   return folder ? `${folder}/${dir}` : dir
 }
 
-export function UploadPanel({ onUploaded, folder, directory }: UploadPanelProps) {
+export function UploadPanel({ onUploaded, onBusyChange, folder, directory }: UploadPanelProps) {
   const { styles } = useStyles()
   const [rows, setRows] = useState<UploadRow[]>([])
   const [busy, setBusy] = useState(false)
@@ -79,6 +80,7 @@ export function UploadPanel({ onUploaded, folder, directory }: UploadPanelProps)
    */
   async function uploadAll(files: File[]) {
     setBusy(true)
+    onBusyChange?.(true)
 
     const initial: UploadRow[] = files.map((file, index) => ({
       key: `${file.name}-${index}`,
@@ -148,6 +150,7 @@ export function UploadPanel({ onUploaded, folder, directory }: UploadPanelProps)
     }
 
     setBusy(false)
+    onBusyChange?.(false)
   }
 
   /** 打开第一个成功的文档——用户刚传的通常是它，而失败的那些会留在列表上看得到 */
@@ -215,7 +218,7 @@ export function UploadPanel({ onUploaded, folder, directory }: UploadPanelProps)
         />
       )}
 
-      {firstDone?.documentId && (
+      {allDone && firstDone?.documentId && (
         <div className={styles.actions}>
           <Button type="primary" onClick={() => onUploaded(firstDone.documentId!)}>
             打开《<Typography.Text>{firstDone.name}</Typography.Text>》

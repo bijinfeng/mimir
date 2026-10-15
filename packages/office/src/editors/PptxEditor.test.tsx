@@ -1119,10 +1119,14 @@ describe('pptx 缩略图与页级操作', () => {
   it('缩略图栏可收起并重新打开，单页不能删除', async () => {
     const { host } = await mountEditor(load('upstream/01_standard_business.pptx'))
     expect(host.querySelectorAll('.mimir-page-browser__menu-button')).toHaveLength(0)
+    expect(host.querySelector('.mimir-page-browser')?.getAttribute('data-open')).toBe('auto')
     click(button(host, '收起缩略图'))
     expect(host.querySelector('.mimir-page-browser__sidebar')?.hasAttribute('hidden')).toBe(true)
     click(button(host, '显示缩略图'))
     expect(host.querySelector('.mimir-page-browser__sidebar')?.hasAttribute('hidden')).toBe(false)
+    expect(host.querySelector('.mimir-page-browser')?.getAttribute('data-open')).toBe('open')
+    click(button(host, '第 1 幻灯片'))
+    expect(host.querySelector('.mimir-page-browser')?.getAttribute('data-open')).toBe('auto')
     const first = host.querySelector('.mimir-page-browser__item') as HTMLElement
     expect(first.getAttribute('draggable')).toBe('true')
 

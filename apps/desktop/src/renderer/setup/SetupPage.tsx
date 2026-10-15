@@ -55,6 +55,10 @@ export function SetupPage() {
    * 没有桥时无需等待：那一屏只有一句话要说。
    */
   const [loaded, setLoaded] = useState(modeApi === undefined)
+  const [loadFailure, setLoadFailure] = useState(false)
+  const [readCurrent, setReadCurrent] = useState<
+    (() => Promise<DesktopModeState | null>) | undefined
+  >(() => (modeApi ? () => modeApi.get() : undefined))
   /** 用户当前选择。默认本地——它是「不需要任何准备就能开始」的那一个 */
   const [choice, setChoice] = useState<'local' | 'cloud'>('local')
   const [cloudUrl, setCloudUrl] = useState('')
@@ -65,23 +69,29 @@ export function SetupPage() {
   const urlRef = useRef<InputRef>(null)
 
   useEffect(() => {
-    if (!modeApi) return
+    if (!readCurrent) return
 
     let alive = true
-    void modeApi.get().then((state) => {
-      if (!alive) return
-      if (state) {
-        setCurrent(state)
-        setChoice(state.mode)
-        if (state.mode === 'cloud') setCloudUrl(state.cloudUrl)
-      }
-      setLoaded(true)
-    })
+    void readCurrent()
+      .then((state) => {
+        if (!alive) return
+        if (state) {
+          setCurrent(state)
+          setChoice(state.mode)
+          if (state.mode === 'cloud') setCloudUrl(state.cloudUrl)
+        }
+        setLoaded(true)
+      })
+      .catch(() => {
+        if (!alive) return
+        setLoadFailure(true)
+        setLoaded(true)
+      })
 
     return () => {
       alive = false
     }
-  }, [modeApi])
+  }, [readCurrent])
 
   /** 选了「连接服务器」就把焦点送进地址框——那是此刻唯一要做的事 */
   useEffect(() => {
@@ -156,105 +166,138 @@ export function SetupPage() {
         <div className={styles.formPane}>
           <div className={styles.formContent}>
             <Typography.Title level={2} className={styles.heading}>
-              {isSwitch ? '切换使用方式' : '选择使用方式'}
+              {loadFailure ? '无法读取使用方式' : isSwitch ? '切换使用方式' : '选择使用方式'}
             </Typography.Title>
 
-            <Typography.Paragraph type="secondary" className={styles.lead}>
-              {isSwitch
-                ? '切换后可随时换回；本地数据不会被删除。'
-                : '选择资料存放的位置。之后可在设置中更改。'}
-            </Typography.Paragraph>
-
-            {error !== null && (
-              <Alert type="error" showIcon title={error} style={{ marginBottom: 16 }} />
-            )}
-
-            <div className={styles.options} role="group">
-              <button
-                type="button"
-                className={styles.option}
-                aria-pressed={choice === 'local'}
-                disabled={pending}
-                onClick={() => {
-                  setChoice('local')
-                  setFailure(null)
-                }}
-              >
-                <Laptop size={20} aria-hidden="true" />
-                <span className={styles.optionText}>
-                  <span className={styles.optionName}>本地使用</span>
-                  <span className={styles.optionDesc}>资料保存在此设备，可离线使用。</span>
-                </span>
-              </button>
-
-              <button
-                type="button"
-                className={styles.option}
-                aria-pressed={choice === 'cloud'}
-                disabled={pending}
-                onClick={() => {
-                  setChoice('cloud')
-                  setFailure(null)
-                }}
-              >
-                <Cloud size={20} aria-hidden="true" />
-                <span className={styles.optionText}>
-                  <span className={styles.optionName}>连接服务器</span>
-                  <span className={styles.optionDesc}>连接你自己的服务器，在多台设备上使用。</span>
-                </span>
-              </button>
-            </div>
-
-            {choice === 'cloud' && (
-              <div className={styles.field}>
-                <Typography.Text>服务器地址</Typography.Text>
-                <Input
-                  ref={urlRef}
-                  type="url"
-                  value={cloudUrl}
-                  placeholder="https://mimir.example.com"
-                  autoComplete="off"
-                  spellCheck={false}
-                  disabled={pending}
-                  onChange={(event) => setCloudUrl(event.target.value)}
-                  onPressEnter={() => void submit()}
-                  style={{ marginTop: 6 }}
+            {loadFailure ? (
+              <>
+                <Alert
+                  type="error"
+                  showIcon
+                  title="暂时无法读取当前配置，请重试。"
+                  style={{ marginBottom: 16 }}
                 />
-                <Typography.Paragraph type="secondary" style={{ marginTop: 6, marginBottom: 0 }}>
-                  输入你的 mimir 服务器地址。
-                </Typography.Paragraph>
-              </div>
-            )}
-
-            <div className={styles.row}>
-              <Button
-                type="primary"
-                loading={pending}
-                disabled={modeApi === undefined || (choice === 'cloud' && cloudUrl.trim() === '')}
-                onClick={() => void submit()}
-              >
-                {isSwitch ? '切换' : '开始使用'}
-              </Button>
-
-              {canCancel && (
-                /**
-                 * 「返回，不改」走 `activate()` 而不是自己拼地址——宿主那边会顺带
-                 * 把本机令牌重新注入（本地模式下这是必须的一步），
-                 * 地址归一化也只有一处。
-                 */
                 <Button
-                  disabled={pending}
+                  type="primary"
                   onClick={() => {
-                    setNote('正在返回…')
-                    desktopBridge?.mode.activate()
+                    setLoadFailure(false)
+                    setLoaded(false)
+                    setReadCurrent(() => (modeApi ? () => modeApi.get() : undefined))
                   }}
                 >
-                  返回，不改
+                  重试
                 </Button>
-              )}
+              </>
+            ) : (
+              <>
+                <Typography.Paragraph type="secondary" className={styles.lead}>
+                  {isSwitch
+                    ? '切换后可随时换回；本地数据不会被删除。'
+                    : '选择资料存放的位置。之后可在设置中更改。'}
+                </Typography.Paragraph>
 
-              {note !== null && <Typography.Text type="secondary">{note}</Typography.Text>}
-            </div>
+                {error !== null && (
+                  <Alert type="error" showIcon title={error} style={{ marginBottom: 16 }} />
+                )}
+
+                <div className={styles.options} role="group" aria-label="使用方式">
+                  <button
+                    type="button"
+                    className={styles.option}
+                    aria-pressed={choice === 'local'}
+                    disabled={pending}
+                    onClick={() => {
+                      setChoice('local')
+                      setFailure(null)
+                    }}
+                  >
+                    <Laptop size={20} aria-hidden="true" />
+                    <span className={styles.optionText}>
+                      <span className={styles.optionName}>本地使用</span>
+                      <span className={styles.optionDesc}>资料保存在此设备，可离线使用。</span>
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className={styles.option}
+                    aria-pressed={choice === 'cloud'}
+                    disabled={pending}
+                    onClick={() => {
+                      setChoice('cloud')
+                      setFailure(null)
+                    }}
+                  >
+                    <Cloud size={20} aria-hidden="true" />
+                    <span className={styles.optionText}>
+                      <span className={styles.optionName}>连接服务器</span>
+                      <span className={styles.optionDesc}>
+                        连接你自己的服务器，在多台设备上使用。
+                      </span>
+                    </span>
+                  </button>
+                </div>
+
+                {choice === 'cloud' && (
+                  <div className={styles.field}>
+                    <Typography.Text>
+                      <label htmlFor="mimir-server-url">服务器地址</label>
+                    </Typography.Text>
+                    <Input
+                      id="mimir-server-url"
+                      ref={urlRef}
+                      type="url"
+                      value={cloudUrl}
+                      placeholder="https://mimir.example.com"
+                      autoComplete="off"
+                      spellCheck={false}
+                      disabled={pending}
+                      onChange={(event) => setCloudUrl(event.target.value)}
+                      onPressEnter={() => void submit()}
+                      style={{ marginTop: 6 }}
+                    />
+                    <Typography.Paragraph
+                      type="secondary"
+                      style={{ marginTop: 6, marginBottom: 0 }}
+                    >
+                      输入你的 mimir 服务器地址。
+                    </Typography.Paragraph>
+                  </div>
+                )}
+
+                <div className={styles.row}>
+                  <Button
+                    type="primary"
+                    loading={pending}
+                    disabled={
+                      modeApi === undefined || (choice === 'cloud' && cloudUrl.trim() === '')
+                    }
+                    onClick={() => void submit()}
+                  >
+                    {isSwitch ? '切换' : '开始使用'}
+                  </Button>
+
+                  {canCancel && (
+                    /**
+                     * 「返回，不改」走 `activate()` 而不是自己拼地址——宿主那边会顺带
+                     * 把本机令牌重新注入（本地模式下这是必须的一步），
+                     * 地址归一化也只有一处。
+                     */
+                    <Button
+                      disabled={pending}
+                      onClick={() => {
+                        setNote('正在返回…')
+                        desktopBridge?.mode.activate()
+                      }}
+                    >
+                      返回，不改
+                    </Button>
+                  )}
+
+                  {note !== null && <Typography.Text type="secondary">{note}</Typography.Text>}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

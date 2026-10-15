@@ -18,6 +18,10 @@ export const useAccountStyles = createStyles(({ css, token }) => ({
     display: flex;
     gap: 20px;
     align-items: flex-start;
+    @media (max-width: 520px) {
+      flex-direction: column;
+      gap: 14px;
+    }
   `,
   avatarColumn: css`
     flex: none;
@@ -68,6 +72,7 @@ export const useAccountStyles = createStyles(({ css, token }) => ({
   profileBody: css`
     flex: 1;
     min-width: 0;
+    width: 100%;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -77,11 +82,20 @@ export const useAccountStyles = createStyles(({ css, token }) => ({
     align-items: center;
     gap: 9px;
     min-width: 0;
+    @media (max-width: 520px) {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 7px 9px;
+      > :first-child {
+        grid-column: 1 / -1;
+      }
+    }
   `,
   emailRow: css`
     display: flex;
     align-items: center;
     gap: 9px;
+    min-width: 0;
   `,
   /**
    * 「名称」与「邮箱」共用同一个标签列宽。
@@ -98,10 +112,16 @@ export const useAccountStyles = createStyles(({ css, token }) => ({
   emailValue: css`
     font-size: ${FONT_SIZE.excerpt}px;
     color: ${token.colorText};
+    min-width: 0;
+    overflow-wrap: anywhere;
   `,
   nameInput: css`
     min-width: 0;
     max-width: 260px;
+    width: 100%;
+    @media (max-width: 520px) {
+      max-width: none;
+    }
   `,
   accountFooter: css`
     display: flex;

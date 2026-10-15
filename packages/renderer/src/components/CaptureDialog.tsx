@@ -2,11 +2,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Input, Modal, Segmented } from 'antd'
 import { createStyles } from 'antd-style'
 import { Check, LoaderCircle, X } from 'lucide-react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { CaptureStage, CaptureStageResult, DetectedSource } from '@mimir/shared'
 import { detectSource } from '@mimir/shared'
 import { UploadPanel } from './UploadPanel'
-import { api } from '../lib/api'
+import { api, ApiRequestError } from '../lib/api'
 import { FONT_SIZE } from '../theme/tokens'
 
 /**
@@ -203,7 +203,9 @@ export function CaptureDialog({
   /* 惰性初始化只读一次 prop：本组件随应用壳常驻，key 由调用方按次更换 */
   const [tab, setTab] = useState<'url' | 'upload'>(initialTab ?? 'url')
   const [stages, setStages] = useState<CaptureStageResult[]>([])
-  const [failure, setFailure] = useState<{ message: string; stage?: string } | null>(null)
+  const [failure, setFailure] = useState<{ message: string; stage?: CaptureStage } | null>(null)
+  const [uploadBusy, setUploadBusy] = useState(false)
+  const successTimer = useRef<number | null>(null)
 
   /**
    * 来源识别在**前端本地做**，不走接口。
@@ -228,26 +230,40 @@ export function CaptureDialog({
 
       if (result.documentId) {
         // 留一点时间让阶段列表走完，否则用户看不到「提取正文」这些步骤
-        window.setTimeout(() => {
+        successTimer.current = window.setTimeout(() => {
+          successTimer.current = null
           reset()
           onCaptured(result.documentId!)
         }, 260)
       }
     },
     onError: (error: unknown) => {
+      const detailStage =
+        error instanceof ApiRequestError &&
+        error.details &&
+        typeof error.details === 'object' &&
+        'stage' in error.details
+          ? error.details.stage
+          : undefined
       setFailure({
         message: error instanceof Error ? error.message : '抓取失败',
+        stage: STAGE_ORDER.find((stage) => stage === detailStage),
       })
     },
   })
 
   const reset = () => {
+    if (successTimer.current !== null) {
+      window.clearTimeout(successTimer.current)
+      successTimer.current = null
+    }
     setUrl('')
     setStages([])
     setFailure(null)
   }
 
   const close = () => {
+    if (capture.isPending || uploadBusy) return
     reset()
     onClose()
   }
@@ -264,19 +280,25 @@ export function CaptureDialog({
     return { stage, result: done }
   })
   const running = capture.isPending
+  const busy = running || uploadBusy
 
   return (
     <Modal
       open={open}
       onCancel={close}
       afterClose={onAfterClose}
+      closable={!busy}
+      maskClosable={!busy}
+      keyboard={!busy}
       /* 落点进标题：从知识库页唤起时，对话框一眼能看出「收进哪里」 */
       title={folder ? `收进「${folder}」` : '收进知识库根'}
       width={540}
       destroyOnHidden
       footer={
         <div className={styles.footer}>
-          <Button onClick={close}>{tab === 'upload' ? '关闭' : '取消'}</Button>
+          <Button onClick={close} disabled={busy}>
+            {tab === 'upload' ? '关闭' : '取消'}
+          </Button>
           {/* 上传页签的「行动按钮」在面板里（每行一个结果，按钮要说清打开哪一个），
               所以这里不重复放一个「上传」——它也不知道该上传什么 */}
           {tab === 'url' && (
@@ -308,6 +330,7 @@ export function CaptureDialog({
         <UploadPanel
           folder={folder}
           directory={directory}
+          onBusyChange={setUploadBusy}
           onUploaded={(documentId) => {
             close()
             onCaptured(documentId)
@@ -345,7 +368,7 @@ export function CaptureDialog({
             <div className={styles.hint}>支持网页、公众号文章、GitHub 仓库</div>
           )}
 
-          {(running || stages.length > 0) && (
+          {(running || stages.length > 0 || failure?.stage) && (
             <div className={styles.stages}>
               {stageStates.map(({ stage, result }) => {
                 // 已完成的阶段之后的第一个阶段就是正在跑的那个
@@ -361,7 +384,9 @@ export function CaptureDialog({
                  * 整棵树被 error boundary 接走，连成功后的 toast 都到不了）。
                  * `false` / `undefined` 没有问题，只有 `null` 会。
                  */
-                const failed = Boolean(failure) && index === doneCount
+                const failed =
+                  Boolean(failure) &&
+                  (failure?.stage ? stage === failure.stage : index === doneCount)
 
                 return (
                   <div key={stage} className={cx(styles.stage, isRunning && styles.stageActive)}>
@@ -400,6 +425,12 @@ export function CaptureDialog({
                   <span className={styles.hint}>
                     公众号可能限制抓取。请稍后重试，或在浏览器扩展中收集。
                   </span>
+                ) : failure.stage === 'fetch' ? (
+                  <span className={styles.hint}>
+                    未能获取页面。请检查链接是否可访问，然后重试。
+                  </span>
+                ) : failure.stage === 'extract' ? (
+                  <span className={styles.hint}>页面已获取，但未能提取正文。请稍后重试。</span>
                 ) : undefined
               }
             />

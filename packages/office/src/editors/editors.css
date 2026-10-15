@@ -96,14 +96,14 @@
  */
 .mimir-xlsx__cell--cross,
 .mimir-xlsx__gutter--cross {
-  background: color-mix(in srgb, var(--me-accent, #6e50b9) 10%, var(--me-surface, #fff));
+  background: color-mix(in srgb, var(--me-accent, #245b9e) 10%, var(--me-surface, #fff));
 }
 
 /* 选中的格子用主色描边（outline 不占布局，不会把表格挤动一格） */
 .mimir-xlsx__cell--on {
-  outline: 2px solid var(--me-accent, #6e50b9);
+  outline: 2px solid var(--me-accent, #245b9e);
   outline-offset: -2px;
-  background: var(--me-accent-bg, #e4dcf7);
+  background: var(--me-accent-bg, #e4eefb);
 }
 
 /* 单元格编辑行（内容下方的附属面板） */
@@ -198,7 +198,7 @@
 
 /* 选中的元素：SVG 里那一个是它，加一圈主色描边 */
 .mimir-pptx-slide [data-element-id].mimir-pptx-selected {
-  outline: 2px solid var(--me-accent, #6e50b9);
+  outline: 2px solid var(--me-accent, #245b9e);
   outline-offset: 1px;
 }
 
@@ -286,22 +286,22 @@
  * 别处（html 的 CodeMirror 那套）撞上，限在 docx 的滚动区里更稳妥。
  */
 .mimir-docx-scroll .search-hit {
-  background: var(--me-accent-bg, #e4dcf7);
+  background: var(--me-accent-bg, #e4eefb);
   border-radius: 2px;
 }
 
 .mimir-docx-scroll .search-hit-active {
-  background: var(--me-accent, #6e50b9);
+  background: var(--me-accent, #245b9e);
   color: #fff;
 }
 
 .mimir-markdown-scroll .search-hit {
-  background: var(--me-accent-bg, #e4dcf7);
+  background: var(--me-accent-bg, #e4eefb);
   border-radius: 2px;
 }
 
 .mimir-markdown-scroll .search-hit-active {
-  background: var(--me-accent, #6e50b9);
+  background: var(--me-accent, #245b9e);
   color: #fff;
 }
 
@@ -448,11 +448,11 @@
 
 /* 查找高亮（`source/cm-find.ts` 里的两个类名，配色由我们给） */
 .mimir-html-cm .search-hit {
-  background: var(--me-accent-bg, #e4dcf7);
+  background: var(--me-accent-bg, #e4eefb);
 }
 
 .mimir-html-cm .search-hit-active {
-  background: var(--me-accent, #6e50b9);
+  background: var(--me-accent, #245b9e);
   color: #fff;
 }
 

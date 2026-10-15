@@ -145,6 +145,50 @@ describe('选择页', () => {
     await view.unmount()
   })
 
+  it('读取当前模式失败时不误判为首次启动，并可重试', async () => {
+    const { bridge } = makeBridge({ current: { mode: 'local' } })
+    let attempts = 0
+    bridge.mode.get = async () => {
+      attempts += 1
+      if (attempts === 1) throw new Error('IPC 暂时不可用')
+      return { mode: 'local' }
+    }
+    const { SetupPage, MimirProvider } = await loadPage(bridge)
+    const view = await render(MimirProvider, createElement(SetupPage))
+
+    expect(view.text()).toContain('无法读取使用方式')
+    expect(view.button('开始使用')).toBeUndefined()
+    expect(view.button('切换')).toBeUndefined()
+    const retry = [...view.host.querySelectorAll('button')].find(
+      (button) => button.textContent?.replace(/\s/g, '') === '重试',
+    )
+    expect(retry).toBeDefined()
+
+    await act(async () => {
+      retry?.click()
+      await Promise.resolve()
+    })
+
+    expect(attempts).toBe(2)
+    expect(view.text()).toContain('切换使用方式')
+    expect(view.button('返回，不改')).toBeDefined()
+
+    await view.unmount()
+  })
+
+  it('服务器地址有可读标签', async () => {
+    const { bridge } = makeBridge({ current: null })
+    const { SetupPage, MimirProvider } = await loadPage(bridge)
+    const view = await render(MimirProvider, createElement(SetupPage))
+
+    await act(async () => view.button('连接服务器')?.click())
+
+    const input = view.host.querySelector<HTMLInputElement>('input[type="url"]')
+    expect(input?.labels?.[0]?.textContent).toBe('服务器地址')
+
+    await view.unmount()
+  })
+
   it('choose() 失败时显示原话，且不导航', async () => {
     const { bridge, calls } = makeBridge({
       current: null,

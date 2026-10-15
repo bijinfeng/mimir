@@ -78,9 +78,13 @@ it('switches named ribbon tabs with click and arrow keys', () => {
   expect(tabs[0]?.getAttribute('aria-selected')).toBe('true')
   expect(host.textContent).toContain('加粗')
   expect(host.textContent).not.toContain('插入表格')
+  const commands = host.querySelector<HTMLElement>('.mimir-compact-toolbar__commands')
+  if (!commands) throw new Error('缺少命令滚动区')
+  commands.scrollLeft = 180
   act(() => {
     tabs[0]?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))
   })
+  expect(commands.scrollLeft).toBe(0)
   expect(tabs[1]?.getAttribute('aria-selected')).toBe('true')
   expect(document.activeElement).toBe(tabs[1])
   expect(host.textContent).toContain('插入表格')

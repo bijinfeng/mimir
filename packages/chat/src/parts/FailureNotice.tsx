@@ -151,7 +151,7 @@ export function FailureCard({
   const ui = FAILURE_UI[failure]
 
   return (
-    <div className={styles.box}>
+    <div className={styles.box} role="alert">
       <div className={styles.head}>{ui.title}</div>
       <div className={styles.detail}>{detail || ui.detail}</div>
       <div className={styles.actions}>
@@ -233,7 +233,7 @@ export function StreamErrorCard({
   const { styles } = useStyles()
 
   return (
-    <div className={styles.box}>
+    <div className={styles.box} role="alert">
       <div className={styles.head}>连接中断</div>
       <div className={styles.detail}>{detail}</div>
       <div className={styles.actions}>

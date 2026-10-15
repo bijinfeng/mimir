@@ -146,6 +146,11 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
     &:hover {
       background: ${token.colorFillQuaternary};
     }
+
+    &:focus-visible {
+      outline: 2px solid ${token.colorPrimaryBorder};
+      outline-offset: -2px;
+    }
   `,
   /**
    * 高亮项用**三重线索**（DESIGN §8.1 的导航项同款）：底色 + 字色 + 字重。
@@ -261,6 +266,15 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
     border-radius: 4px;
     background: ${token.colorFillQuaternary};
     margin-right: 4px;
+  `,
+  srOnly: css`
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   `,
 }))
 
@@ -445,7 +459,9 @@ function PaletteBody({
         }
       })
 
-  const documentsFirst = !value.trim()
+  // A document query should open a matching hit on Enter. Matching commands
+  // remain available below the results.
+  const documentsFirst = !value.trim() || documents.length > 0
   const items = documentsFirst ? [...documents, ...commands] : [...commands, ...documents]
   const commandStart = documentsFirst ? documents.length : 0
   const documentStart = documentsFirst ? 0 : commands.length
@@ -485,6 +501,9 @@ function PaletteBody({
       if (items.length > 0) setActiveIndex((index) => Math.max(0, index - 1))
     } else if (event.key === 'Enter') {
       event.preventDefault()
+      // While results are pending, Enter must not run a matching command that
+      // is only temporarily first in the list.
+      if (shouldSearch && searchQuery.isFetching) return
       const item = items[activeIndex]
       if (item) {
         item.run()
@@ -516,7 +535,7 @@ function PaletteBody({
   )
   const documentSection = documents.length > 0 && (
     <>
-      <div className={styles.sectionLabel}>{documentsFirst ? '最近打开的笔记' : '匹配的文档'}</div>
+      <div className={styles.sectionLabel}>{value.trim() ? '匹配的文档' : '最近打开的笔记'}</div>
       {documents.map((item, index) => (
         <PaletteRow
           key={item.key}
@@ -533,6 +552,7 @@ function PaletteBody({
   return (
     <Modal
       open
+      title={<span className={styles.srOnly}>搜索文档与操作</span>}
       onCancel={onClose}
       footer={null}
       closable={false}
@@ -541,6 +561,7 @@ function PaletteBody({
       destroyOnHidden
       /* 内容首尾通栏，圆角与表面层次由全局 Modal token 控制。 */
       styles={{
+        header: { marginBottom: 0 },
         body: { padding: 0 },
         container: { padding: 0, overflow: 'hidden' },
       }}
@@ -563,6 +584,9 @@ function PaletteBody({
             onChange={(event) => handleChange(event.target.value)}
             onKeyDown={handleKeyDown}
           />
+          <span className={styles.srOnly} role="status" aria-live="polite">
+            {activeItem ? `当前选择：${activeItem.title}` : '没有可选择的结果'}
+          </span>
         </div>
 
         {items.length > 0 && (

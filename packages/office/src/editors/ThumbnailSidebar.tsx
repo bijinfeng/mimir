@@ -242,7 +242,9 @@ export function ThumbnailSidebar({
   children,
 }: ThumbnailSidebarProps) {
   const scrollRoot = useRef<HTMLDivElement>(null)
-  const [open, setOpen] = useState(true)
+  // `auto` keeps the rail beside a wide canvas and hides it over a narrow one.
+  // Explicit choices remain available until a page is selected.
+  const [open, setOpen] = useState<'auto' | 'open' | 'closed'>('auto')
   const [dragIndex, setDragIndex] = useState<number | null>(null)
   const [dropAt, setDropAt] = useState<number | null>(null)
   const onDragStart = (index: number, event: DragEvent<HTMLDivElement>) => {
@@ -272,7 +274,11 @@ export function ThumbnailSidebar({
   }
   return (
     <div className="mimir-page-browser" data-open={open}>
-      <aside className="mimir-page-browser__sidebar" aria-label={`${noun}缩略图`} hidden={!open}>
+      <aside
+        className="mimir-page-browser__sidebar"
+        aria-label={`${noun}缩略图`}
+        hidden={open === 'closed'}
+      >
         <div className="mimir-page-browser__header">
           <span>{noun}缩略图</span>
           <Button
@@ -289,7 +295,7 @@ export function ThumbnailSidebar({
             aria-label="收起缩略图"
             title="收起缩略图"
             icon={<ChevronLeft size={16} aria-hidden="true" />}
-            onClick={() => setOpen(false)}
+            onClick={() => setOpen('closed')}
           />
         </div>
         <div ref={scrollRoot} className="mimir-page-browser__list">
@@ -303,7 +309,10 @@ export function ThumbnailSidebar({
               noun={noun}
               scrollRoot={scrollRoot}
               renderThumbnail={renderThumbnail}
-              onSelect={onSelect}
+              onSelect={(selectedIndex) => {
+                onSelect(selectedIndex)
+                setOpen('auto')
+              }}
               onInsert={onInsert}
               onDuplicate={onDuplicate}
               onDelete={onDelete}
@@ -319,15 +328,16 @@ export function ThumbnailSidebar({
         </div>
       </aside>
       <div className="mimir-page-browser__canvas">
-        {!open && (
+        {open !== 'open' && (
           <Button
             size="small"
             type="text"
             className="mimir-page-browser__reopen"
+            data-auto={open === 'auto'}
             aria-label="显示缩略图"
             title="显示缩略图"
             icon={<ChevronRight size={16} aria-hidden="true" />}
-            onClick={() => setOpen(true)}
+            onClick={() => setOpen('open')}
           />
         )}
         {children}

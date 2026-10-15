@@ -366,7 +366,7 @@
 /* 焦点环与禁用态。**不能跟着 `.me-btn` 一起删**：这两个触发按钮没有 antd
    的样式兜底，删掉之后键盘用户按 Tab 走到「段落样式」上什么都不显示 */
 .me-btn:focus-visible {
-  outline: 2px solid var(--me-accent, #6e50b9);
+  outline: 2px solid var(--me-accent, #245b9e);
   outline-offset: 1px;
 }
 
@@ -388,8 +388,8 @@
  */
 .me-tb[aria-pressed='true'],
 .me-tb[aria-pressed='true']:hover:not(:disabled) {
-  border-color: var(--me-accent, #6e50b9);
-  background: var(--me-accent-bg, #e4dcf7);
+  border-color: var(--me-accent, #245b9e);
+  background: var(--me-accent-bg, #e4eefb);
   /*
    * 文字色走 `--me-accent-text`（= colorLink），不是 `--me-accent`。
    *
@@ -398,7 +398,7 @@
    * 激活态全都偏难认。链接色在同一个底上是 5.50 / 6.17。
    * 回退值也换成链接色，脱离宿主时保持一致。
    */
-  color: var(--me-accent-text, #543b9a);
+  color: var(--me-accent-text, #1d4f8b);
 }
 
 /* 按钮里的图标字形。字号是**图标尺寸**，不是文本字号——所以单列一个变量，
@@ -660,7 +660,7 @@
 }
 
 .me-note-link-picker__item:focus-visible {
-  outline: 2px solid var(--me-accent-border, #6e50b9);
+  outline: 2px solid var(--me-accent-border, #245b9e);
   outline-offset: -2px;
 }
 
@@ -721,7 +721,7 @@
 }
 
 .me-menu__item:focus-visible {
-  outline: 2px solid var(--me-accent, #6e50b9);
+  outline: 2px solid var(--me-accent, #245b9e);
   outline-offset: -2px;
 }
 
@@ -735,7 +735,7 @@
    文字色同 `.me-tb` 那条：主色是填充角色，当 12px 文字用不达标
    （实测浅色 4.10:1、深色 3.50:1）——走 --me-accent-text（colorLink） */
 .me-menu__item[aria-current='true'] {
-  color: var(--me-accent-text, #543b9a);
+  color: var(--me-accent-text, #1d4f8b);
   font-weight: 600;
 }
 
@@ -825,12 +825,12 @@
 }
 
 .me-table-grid__cell:hover {
-  border-color: var(--me-accent, #6e50b9);
-  background: var(--me-accent-bg, #e4dcf7);
+  border-color: var(--me-accent, #245b9e);
+  background: var(--me-accent-bg, #e4eefb);
 }
 
 .me-table-grid__cell:focus-visible {
-  outline: 2px solid var(--me-accent, #6e50b9);
+  outline: 2px solid var(--me-accent, #245b9e);
   outline-offset: 1px;
 }
 
@@ -858,17 +858,17 @@
 }
 
 .me-color__cell:hover:not(:disabled) {
-  border-color: var(--me-accent, #6e50b9);
+  border-color: var(--me-accent, #245b9e);
 }
 
 .me-color__cell:focus-visible {
-  outline: 2px solid var(--me-accent, #6e50b9);
+  outline: 2px solid var(--me-accent, #245b9e);
   outline-offset: 1px;
 }
 
 .me-color__cell[aria-pressed='true'] {
-  border-color: var(--me-accent, #6e50b9);
-  box-shadow: 0 0 0 1px var(--me-accent, #6e50b9) inset;
+  border-color: var(--me-accent, #245b9e);
+  box-shadow: 0 0 0 1px var(--me-accent, #245b9e) inset;
 }
 
 .me-color__cell--clear {

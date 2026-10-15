@@ -36,6 +36,7 @@ export function CompactToolbar({
   const [requestedTab, setRequestedTab] = useState<string | null>(null)
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([])
   const commandsRef = useRef<HTMLDivElement | null>(null)
+  const lastTabRef = useRef<string | null | undefined>(undefined)
   const id = useId()
   const selectedTab = controlledTab ?? requestedTab
   const activeTab = tabs?.some((tab) => tab.key === selectedTab) ? selectedTab : tabs?.[0]?.key
@@ -77,6 +78,11 @@ export function CompactToolbar({
     const commands = commandsRef.current
     if (!commands) return
 
+    // A new category starts at its first command; carrying over the previous
+    // category's offset can make the selected category look empty.
+    if (lastTabRef.current !== activeTab) commands.scrollLeft = 0
+    lastTabRef.current = activeTab
+
     const updateScrollState = () => {
       const { scrollLeft, scrollWidth, clientWidth } = commands
       const isAtStart = scrollLeft <= 1
@@ -103,7 +109,7 @@ export function CompactToolbar({
       commands.removeEventListener('scroll', updateScrollState)
       resizeObserver.disconnect()
     }
-  }, [shown])
+  })
 
   return (
     <div className="mimir-compact-toolbar">

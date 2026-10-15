@@ -58,6 +58,13 @@ const useStyles = createStyles(({ css, token }) => ({
     color: ${token.colorTextSecondary};
     transition: color 0.15s ease-out;
 
+    &:not(button) {
+      cursor: default;
+      &:hover {
+        color: ${token.colorTextSecondary};
+      }
+    }
+
     &:hover,
     &:focus-visible {
       color: ${token.colorText};
@@ -200,11 +207,11 @@ export function TraceDisclosure({
      streaming 相位的同款——label 微光，内容暂时为空） */
   if (live && trace === null) {
     return (
-      <div className={`${styles.root} ${kf.hold}`}>
-        <button type="button" className={styles.trigger} aria-expanded={false}>
+      <div className={`${styles.root} ${kf.hold}`} role="status">
+        <div className={styles.trigger}>
           <Brain className={styles.triggerIcon} aria-hidden />
           <span className={`${styles.label} ${styles.shimmer}`}>正在检索知识库…</span>
-        </button>
+        </div>
       </div>
     )
   }

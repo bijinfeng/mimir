@@ -39,6 +39,8 @@ describe('TraceDisclosure', () => {
   it('live 且还没有 trace 时是「正在检索知识库」', () => {
     const html = renderToString(createElement(TraceDisclosure, { trace: null, live: true }))
     expect(html).toContain('正在检索知识库')
+    expect(html).toContain('role="status"')
+    expect(html).not.toContain('<button')
   })
 
   it('有 trace 时摘要给服务端的真实数字', () => {
@@ -151,6 +153,7 @@ describe('FailureCard', () => {
       }),
     )
     expect(quota).toContain('模型请求受限')
+    expect(quota).toContain('role="alert"')
     expect(quota).toContain('只检索，不调模型')
     /* 「换一个模型」「去充值」没有实现——按钮保留（PRD §5.8 要求说清
        「还能做什么」），但真的禁用 */
