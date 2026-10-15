@@ -1,0 +1,12 @@
+{"file": ".trellis/spec/project/rules.md", "reason": "跨包不可违反规则与文档边界"}
+{"file": ".trellis/spec/renderer/frontend/conventions.md", "reason": "共享工作区组件与样式约定"}
+{"file": ".trellis/spec/renderer/frontend/theme/conventions.md", "reason": "浅深主题与 token 约定"}
+{"file": ".trellis/spec/chat/frontend/conventions.md", "reason": "对话组件与状态表达"}
+{"file": ".trellis/spec/office/frontend/shell/conventions.md", "reason": "Office 外壳与工具区约定"}
+{"file": ".trellis/spec/office/frontend/editors/conventions.md", "reason": "各格式编辑界面约定"}
+{"file": ".trellis/spec/desktop/runtime/conventions.md", "reason": "桌面首次设置与窗口约定"}
+{"file": ".trellis/spec/web/frontend/conventions.md", "reason": "网页壳与构建约定"}
+{"file": ".trellis/tasks/10-15-all-pages-polish/research/reference-check.md", "reason": "竞品版本、领域边界与适用性证据"}
+{"file": ".trellis/spec/project/design.md", "reason": "现行视觉与交互契约"}
+{"file": ".trellis/spec/renderer/frontend/document/conventions.md", "reason": "文档阅读与引用定位约定"}
+{"file": ".trellis/spec/renderer/frontend/editor/conventions.md", "reason": "文档编辑与保存界面约定"}

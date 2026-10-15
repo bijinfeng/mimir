@@ -32,6 +32,7 @@
 | PDF 高亮纵向压扁，或缩放后画面变形 | 高亮纸层与 canvas 的 CSS 盒必须同尺寸：纸层不要被 flex stretch；页面不要用 `max-width: 100%` 单独夹宽度，放大时让工作台横向滚动 |
 | PDF 放大后左侧内容滚不到 | `justify-content: center` 会裁掉溢出方向的起始边；用子项 `margin-inline: auto` 居中 |
 | 窄窗口下 PDF 工具条右端消失 | 编辑器是 flex 子项，默认 `min-width: auto` 会被宽画布撑住；外壳要有 `min-width: 0`，`overflow: clip` 不能替代 |
+| 窄窗口下 PPTX/PDF 标题或正文被缩略图挡住 | `ThumbnailSidebar` 在容器 ≤650px 时把 164px 侧栏绝对定位到画布上；若初始状态仍是展开，打开文档就会覆盖页面左侧。默认用 `auto`：宽容器显示侧栏，窄容器隐藏并保留展开按钮。显式展开后选页恢复 `auto`，否则遮挡会一直留在画布上。要在约 588px 的真实 Electron 窗口检查两种格式的默认页、展开及选页，不能只看 DOM 里有缩略图。 |
 | HTML 切到预览再回来，中间改的内容丢了 | 视图切换不能条件渲染源码编辑器：卸载会丢 CodeMirror 实例与历史，重挂只读打开时的 `initialText`；两个栏位始终挂载，只切 `hidden` |
 | HTML 的 `hidden` 属性看似无效 | 作者样式里的 `display: flex` 胜过浏览器默认的 `[hidden]`；用 `.mimir-html-split > [hidden] { display: none }` 明确覆盖 |
 | HTML 放大后变成手机布局 | `zoom` 会缩小内部布局尺寸；宿主宽度要用 `calc(100% * var(--html-preview-zoom))` 补偿，并设 `flex: none` |
