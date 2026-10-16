@@ -2,7 +2,7 @@
 
 固定 GenOffice 版本：`480548fd55f1be3593ee0d8e316a734751d58309`。上游源码临时副本来自父任务调研，目录 `/tmp/mimir-genoffice-pinned/`；工具清单以 `apps/slides/src/renderer/ai/slides-skill.ts`，操作以 `packages/pptx-ops/src/prompts/ops/*.md` 为准。Mimir 执行证据是 `packages/office/src/agent/pptx-agent.test.ts`（3 例）及原有 `PptxEditor.test.tsx`、`pptx-structure.test.ts`。`packages/office/src/agent/pptx-agent.ts` 的 7 项浏览器本地操作与 `apps/server/src/services/pptx-agent-host.ts` 的固定上游 `runTxn` 共存；后者接受 61 项 AI-callable 操作，但目前只有代表性操作经过真实原件读回。
 
-状态说明：「本地已验」= 本地执行和聚焦测试覆盖；「宿主可调用，未逐项验」= 固定版 runTxn 已接通但该操作尚无独立保存读回证据。浏览器与桌面共用 HTTP 路由，新增对象层级/翻转/背景/隐藏命令尚未分别实测。非 AI-callable 操作仍被宿主拒绝。
+状态说明：「本地已验」= 本地执行和聚焦测试覆盖；「宿主可调用，未逐项验」= 固定版 runTxn 已接通但该操作尚无独立保存读回证据。浏览器与桌面共用 HTTP 路由，新增对象层级/翻转/背景/隐藏命令尚未分别实测。非 AI-callable 操作仍被宿主拒绝。表格单元格手动编辑已通过组件与宿主保存读回。图表手动插入要求用户逐项填写类别和有限数值，固定声明 `dataSource:'user'`，只支持单系列柱状/折线/饼图；现有图表编辑仍未接。不能通过新增后删除模拟编辑，因为会改变图表身份、层级和关系。
 
 ## 顶层 Agent 工具（17）
 
@@ -41,7 +41,7 @@
 | `element/setConnectorEndpoints` | 是 | 是 | 未接/未逐项验 | 宿主可调用：固定版 runTxn；未逐项验 | 共用 HTTP；两端 E2E 待验 | 仅 setFill 有独立宿主保存读回；本项未逐项验 |
 | `element/flipElements` | 是 | 是 | 对象菜单：水平/垂直翻转，显示当前状态 | 固定版 runTxn；与 Agent 共用 `apply_ops` | 共用 HTTP；两端 E2E 待验 | 组件测试点水平翻转，保存 OOXML `flipH` 并重开读回；垂直方向待逐项验 |
 | `element/setPictureSrcRect` | 是 | 是 | 未接/未逐项验 | 宿主可调用：固定版 runTxn；未逐项验 | 共用 HTTP；两端 E2E 待验 | 仅 setFill 有独立宿主保存读回；本项未逐项验 |
-| `element/setPictureOpacity` | 是 | 是 | 未接/未逐项验 | 宿主可调用：固定版 runTxn；未逐项验 | 共用 HTTP；两端 E2E 待验 | 仅 setFill 有独立宿主保存读回；本项未逐项验 |
+| `element/setPictureOpacity` | 是 | 是 | 选中图片菜单：100/75/50/25% | 固定版 runTxn；与 Agent 共用 `apply_ops` | 共用 HTTP；两端 E2E 待验 | 组件测试点 50%，SVG 立即更新；保存含 `<a:alphaModFix>` 并重开读回；宿主不可用及失败保持原画布 |
 | `element/reorderElement` | 是 | 是 | 对象菜单：顶层/底层/前后一级，边界禁用 | 固定版 runTxn；与 Agent 共用 `apply_ops` | 共用 HTTP；两端 E2E 待验 | 组件测试点置于顶层，保存 XML 顺序并重开读回；其他方向待逐项验 |
 | `element/groupElements` | 是 | 是 | 未接/未逐项验 | 宿主可调用：固定版 runTxn；未逐项验 | 共用 HTTP；两端 E2E 待验 | 仅 setFill 有独立宿主保存读回；本项未逐项验 |
 | `element/ungroupElement` | 是 | 是 | 未接/未逐项验 | 宿主可调用：固定版 runTxn；未逐项验 | 共用 HTTP；两端 E2E 待验 | 仅 setFill 有独立宿主保存读回；本项未逐项验 |
@@ -57,15 +57,15 @@
 | `element/setImageFill` | 否（上游标记） | 是 | 未接/未逐项验 | 未接：执行器缺失 | 未可达 | 不注册可执行；调用明确失败 |
 | `insert/addElement` | 是 | 是 | 对象菜单：文本框/矩形 | 宿主可调用：固定版 runTxn；未逐项验 | 共用 HTTP；两端 E2E 待验 | 手动命令已接；本项保存读回/两端待验 |
 | `insert/addConnector` | 是 | 是 | 未接/未逐项验 | 宿主可调用：固定版 runTxn；未逐项验 | 共用 HTTP；两端 E2E 待验 | 仅 setFill 有独立宿主保存读回；本项未逐项验 |
-| `insert/addPicture` | 否（上游标记） | 是 | 未接/未逐项验 | 未接：执行器缺失 | 未可达 | 不注册可执行；调用明确失败 |
-| `insert/replacePicture` | 否（上游标记） | 是 | 未接/未逐项验 | 未接：执行器缺失 | 未可达 | 不注册可执行；调用明确失败 |
-| `insert/addTable` | 是 | 是 | 未接/未逐项验 | 宿主可调用：固定版 runTxn；未逐项验 | 共用 HTTP；两端 E2E 待验 | 仅 setFill 有独立宿主保存读回；本项未逐项验 |
-| `insert/addChart` | 是 | 是 | 未接/未逐项验 | 宿主可调用：固定版 runTxn；未逐项验 | 共用 HTTP；两端 E2E 待验 | 仅 setFill 有独立宿主保存读回；本项未逐项验 |
+| `insert/addPicture` | 否（上游标记） | 是 | 插入工具栏：本地 PNG/JPEG 文件 | 独立手动媒体路由调用固定版 runTxn；Agent `apply_ops` 仍拒绝图片字节操作 | 共用 HTTP；两端 E2E 待验 | 组件测试 SVG、保存媒体与重开；宿主测试 PNG/JPEG、尺寸比例与 multipart；失败保持原画布 |
+| `insert/replacePicture` | 否（上游标记） | 是 | 选中图片菜单：替换本地 PNG/JPEG | 独立手动媒体路由调用固定版 runTxn；Agent `apply_ops` 仍拒绝图片字节操作 | 共用 HTTP；两端 E2E 待验 | 组件测试 SVG 更新、保存媒体及重开；宿主测试旧对象锚点失效与媒体字节读回 |
+| `insert/addTable` | 是 | 是 | 插入工具栏：6×6 尺寸网格 | 固定版 runTxn；与 Agent 共用 `apply_ops` | 共用 HTTP；两端 E2E 待验 | 组件测试点 2×3、SVG 显示、保存原生 `<a:tbl>` 并重开；宿主不可用及失败保持原画布 |
+| `insert/addChart` | 是 | 是 | 插入工具栏：用户明确输入的单系列柱状/折线/饼图 | 固定版 runTxn；与 Agent 共用 `apply_ops`，手动声明 `dataSource:'user'` | 共用 HTTP；两端 E2E 待验 | 组件测试数据校验、SVG 可见、原生图表与数据读回、二次保存保留；宿主测试图表原件读回和无来源拒绝；失败不改画布及输入 |
 | `insert/addSmartArt` | 是 | 是 | 未接/未逐项验 | 宿主可调用：固定版 runTxn；未逐项验 | 共用 HTTP；两端 E2E 待验 | 仅 setFill 有独立宿主保存读回；本项未逐项验 |
 | `insert/addMedia` | 否（上游标记） | 是 | 未接/未逐项验 | 未接：执行器缺失 | 未可达 | 不注册可执行；调用明确失败 |
 | `insert/addModel3d` | 否（上游标记） | 是 | 未接/未逐项验 | 未接：执行器缺失 | 未可达 | 不注册可执行；调用明确失败 |
 | `insert/pasteElements` | 否（上游标记） | 是 | 未接/未逐项验 | 未接：执行器缺失 | 未可达 | 不注册可执行；调用明确失败 |
-| `table/setTableCell` | 是 | 是 | 未接/未逐项验 | 宿主可调用：固定版 runTxn；未逐项验 | 共用 HTTP；两端 E2E 待验 | 仅 setFill 有独立宿主保存读回；本项未逐项验 |
+| `table/setTableCell` | 是 | 是 | 选中表格的对象菜单：按行、列、段落编辑现有文字 | 固定版 runTxn；与 Agent 共用 `apply_ops` | 共用 HTTP；两端 E2E 待验 | 组件测试当前值/禁用原因、SVG 更新、混合格式多段多 run 保存重开；宿主测试独立读回与主题保真；失败保留原画布及草稿 |
 | `table/tableMerge` | 是 | 是 | 未接/未逐项验 | 宿主可调用：固定版 runTxn；未逐项验 | 共用 HTTP；两端 E2E 待验 | 仅 setFill 有独立宿主保存读回；本项未逐项验 |
 | `table/tableStructure` | 是 | 是 | 未接/未逐项验 | 宿主可调用：固定版 runTxn；未逐项验 | 共用 HTTP；两端 E2E 待验 | 仅 setFill 有独立宿主保存读回；本项未逐项验 |
 | `table/setTableRowHeight` | 是 | 是 | 未接/未逐项验 | 宿主可调用：固定版 runTxn；未逐项验 | 共用 HTTP；两端 E2E 待验 | 仅 setFill 有独立宿主保存读回；本项未逐项验 |
@@ -123,7 +123,7 @@
 | `onToggleAi` | 视图/交互 | 待追踪/未接 | 待追踪 App 回调和原件读回 |
 | `onAiPreset` | 提示/生成 | 待追踪/未接 | 待追踪 App 回调和原件读回 |
 | `onPickShape` | 编辑候选，待追踪 | 对象菜单：矩形（部分） | 真实菜单组件测试仅覆盖填充；其余读回及两端待验 |
-| `onInsertImage` | 编辑候选，待追踪 | 待追踪/未接 | 待追踪 App 回调和原件读回 |
+| `onInsertImage` | 编辑候选，待追踪 | 插入工具栏：本地 PNG/JPEG；独立手动媒体路由 | 组件与宿主保存读回；两端 E2E 待验 |
 | `onFormatBackground` | 编辑候选，待追踪 | 对象菜单：纯色/重置（部分） | 组件测试纯色保存读回；渐变/图片待验，两端待验 |
 | `onApplyTheme` | 编辑候选，待追踪 | 待追踪/未接 | 待追踪 App 回调和原件读回 |
 | `onAddSlide` | 编辑候选，待追踪 | 新增页 | 聚焦测试或既有编辑器测试；两端 E2E 待验 |
@@ -149,7 +149,7 @@
 | `onResetLayout` | 编辑候选，待追踪 | 待追踪/未接 | 待追踪 App 回调和原件读回 |
 | `onSlideSize` | 编辑候选，待追踪 | 待追踪/未接 | 待追踪 App 回调和原件读回 |
 | `onParagraphFormat` | 编辑候选，待追踪 | 待追踪/未接 | 待追踪 App 回调和原件读回 |
-| `onInsertTable` | 编辑候选，待追踪 | 待追踪/未接 | 待追踪 App 回调和原件读回 |
+| `onInsertTable` | 编辑候选，待追踪 | 插入工具栏：6×6 尺寸网格，调用共用 `addTable` | 组件保存原生表格并重开；两端 E2E 待验 |
 | `onTransition` | 编辑候选，待追踪 | 对象菜单：淡入/无切换（部分） | 真实菜单组件测试仅覆盖填充；其余读回及两端待验 |
 | `onApplyAnimation` | 编辑候选，待追踪 | 待追踪/未接 | 待追踪 App 回调和原件读回 |
 | `onAnimHoverPreview` | 视图/交互 | 待追踪/未接 | 待追踪 App 回调和原件读回 |
@@ -178,7 +178,7 @@
 | `onToggleComments` | 视图/交互 | 待追踪/未接 | 待追踪 App 回调和原件读回 |
 | `onNewComment` | 编辑候选，待追踪 | 待追踪/未接 | 待追踪 App 回调和原件读回 |
 | `onInsertIcon` | 编辑候选，待追踪 | 待追踪/未接 | 待追踪 App 回调和原件读回 |
-| `onInsertChart` | 编辑候选，待追踪 | 待追踪/未接 | 待追踪 App 回调和原件读回 |
+| `onInsertChart` | 编辑候选，待追踪 | 插入工具栏：用户输入类别、系列名称和数值 | 单系列原生图表经 SVG、OOXML 保存重开及二次保存测试；两端 E2E 待验 |
 | `onInsertSmartArt` | 编辑候选，待追踪 | 待追踪/未接 | 待追踪 App 回调和原件读回 |
 | `onInsertWordArt` | 编辑候选，待追踪 | 待追踪/未接 | 待追踪 App 回调和原件读回 |
 | `onInsertField` | 编辑候选，待追踪 | 待追踪/未接 | 待追踪 App 回调和原件读回 |
@@ -195,12 +195,12 @@
 | `onShapeFill` | 编辑候选，待追踪 | 对象菜单：填充（部分） | 真实菜单组件测试仅覆盖填充；其余读回及两端待验 |
 | `onShapeFillImage` | 编辑候选，待追踪 | 待追踪/未接 | 待追踪 App 回调和原件读回 |
 | `onPictureCrop` | 编辑候选，待追踪 | 待追踪/未接 | 待追踪 App 回调和原件读回 |
-| `onPictureOpacity` | 编辑候选，待追踪 | 待追踪/未接 | 待追踪 App 回调和原件读回 |
+| `onPictureOpacity` | 编辑候选，待追踪 | 选中图片菜单：100/75/50/25% | 组件点 50% 后 SVG 更新，保存 `<a:alphaModFix>` 并重开；两端 E2E 待验 |
 | `onPictureCutout` | 编辑候选，待追踪 | 待追踪/未接 | 待追踪 App 回调和原件读回 |
-| `onPictureReplace` | 编辑候选，待追踪 | 待追踪/未接 | 待追踪 App 回调和原件读回 |
+| `onPictureReplace` | 编辑候选，待追踪 | 选中图片菜单：替换本地 PNG/JPEG | 独立手动媒体路由经宿主保存读回；两端 E2E 待验 |
 | `onPictureRotate` | 编辑候选，待追踪 | 待追踪/未接 | 待追踪 App 回调和原件读回 |
 | `onEditTableStyle` | 编辑候选，待追踪 | 待追踪/未接 | 待追踪 App 回调和原件读回 |
-| `onEditChart` | 编辑候选，待追踪 | 待追踪/未接 | 待追踪 App 回调和原件读回 |
+| `onEditChart` | 编辑候选，待追踪 | 未接 | 上游 `edit_chart` 未注册；`setChart` 非 AI-callable，当前共用 `apply_ops` 宿主拒绝；须建受控编辑接缝并验证身份、层级与关系保真 |
 | `onOpenChartDataDialog` | 文件/外部 | 待追踪/未接 | 待追踪 App 回调和原件读回 |
 | `onArrange` | 编辑候选，待追踪 | 对象菜单：位置、大小、层级（部分） | 组件测试层级保存读回；其他排列项及两端待验 |
 | `onFlip` | 编辑候选，待追踪 | 对象菜单：水平/垂直翻转 | 组件测试水平翻转保存读回；垂直及两端待验 |

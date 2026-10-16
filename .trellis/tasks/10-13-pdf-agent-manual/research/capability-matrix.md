@@ -1,12 +1,12 @@
 # PDF 固定版 GenOffice 能力与验收矩阵
 
-核对日期：2026-10-13。固定上游：`genspark-ai/genoffice@480548fd55f1be3593ee0d8e316a734751d58309`。来源链接逐行指向该 commit。WeKnora `v0.8.2` 的证据和适用性见父任务 `research/reference-check.md`；PDF 编辑的主要参考是 GenOffice。
+核对日期：2026-10-16。固定上游：`genspark-ai/genoffice@480548fd55f1be3593ee0d8e316a734751d58309`。来源链接逐行指向该 commit。WeKnora `v0.8.3` 的站点、源码及适用性证据见 `.trellis/tasks/10-16-genoffice-editor-capability-audit/research/toolbar-assessment.md`；PDF 编辑的主要参考是 GenOffice。
 
 状态说明：`现有` 仅指 Mimir 手动页面编辑器；`待接` 尚未注册 PDF Agent 工具。`pdf-pages.ts` 的保存为整体重建，遇未知 Catalog 键拒绝写回。下表逐项列能力与缺口，不能将工具目录当成功能验收。
 
-截至 2026-10-13，本轮实际开放给 Agent 的有 `read_pages`、`search_text`、`goto_page`、`insert_text`、`list_inserted_text`、`edit_inserted_text`、`move_inserted_text`、`delete_inserted_text` 的有限参数子集，以及 `apply_ops` 的三种页面操作。手动入口的点击定位插入、待保存插字选择/内容/字号/颜色/位置修改和 Agent 共用画布句柄；每次修改从插字前字节经服务端 GenOffice PDFium 重放整批插字，由 pdf.js 独立读回。保存后临时 ID 失效；页结构操作会将当前插字固定在工作副本并使临时 ID 失效，字节仍待用户保存，此点尚未与上游的任意交替编辑完全对齐。`insert_text` 暂只支持页号、文字、页面坐标、字号和颜色；上游的锚点、最大宽度、字重、斜体、对齐等参数仍未接。宿主已有文字替换执行器，但画布缺少可信的原文字对象/矩形选区，尚未开放手动替换与 Agent 替换工具。批注、图像、表单及其余目录项仍未实现。浏览器与桌面共用鉴权 HTTP 与编辑器组件；真实模型及三种运行方式的插字 Agent 实测仍待进行，不能把代码路径相同写成端到端验收通过。
+截至 2026-10-16，本轮实际开放给 Agent 的有 `read_pages`、`search_text`、`goto_page`、`insert_text`、`list_inserted_text`、`edit_inserted_text`、`move_inserted_text`、`delete_inserted_text` 的有限参数子集，以及 `apply_ops` 的三种页面操作。手动入口的点击定位插入、待保存插字选择/内容/字号/颜色/位置修改和 Agent 共用画布句柄；每次修改从插字前字节经服务端 GenOffice PDFium 重放整批插字，由 pdf.js 独立读回。保存后临时 ID 失效；页结构操作会将当前插字固定在工作副本并使临时 ID 失效，字节仍待用户保存，此点尚未与上游的任意交替编辑完全对齐。`insert_text` 暂只支持页号、文字、页面坐标、字号和颜色；上游的锚点、最大宽度、字重、斜体、对齐等参数仍未接。手动「定位原文」现在只对一个完整、唯一且非重叠的 pdf.js 文字项开放核验；服务端再确认对应唯一 PDFium 文字对象及原件 SHA-256 后才显示替换控件。写入仍由 GenOffice PDFium 执行，返回字节经 pdf.js 读回后才更新画布；失败不改工作副本。Agent `edit_text` 尚未注册。手动高亮、下划线、删除线已沿完整唯一文字项定位接通真实 PDF 注释写入；固定版 GenOffice 的标注外观与对象形状移植到宿主，因为上游聚合写入器依赖未同步的 Electron 图像模块。宿主按 SHA-256 重核对象，比较写前写后的 pdf.js 注释数，返回实际字节；组件显示即时叠层并经保存重开读回。Agent `markup_text` 尚未注册，批注回复、图像、表单及其余目录项仍未实现。浏览器与桌面共用鉴权 HTTP 与编辑器组件；真实模型及三种运行方式的插字 Agent、手动替换实机验收仍待进行，不能把代码路径相同写成端到端验收通过。
 
-验证证据：此前 Office 定向 6 个测试文件 73 项、server PDF 宿主与路由 2 文件 7 项通过；本次额外 Office Agent/组件 2 文件 10 项和 server PDF 目录/宿主 2 文件 7 项通过，Office/server 类型检查通过。真实 PDFium 批量插入→改文/移动→删除的重放结果由 pdf.js 独立读回；组件回归覆盖手动改文→Agent 列出/移动→保存→pdf.js 读回，也覆盖保存 B→再插入 C→删除 C 回到干净的 B、旧插字保存进行中新增插字后删除，以及只保存页面改动 B 时并发插字再删除，后两者均回到实际写出的 B 字节。保存期间修改正被写入的旧插字会明确拒绝；页面保存的异步序列化期间画布版本变化则拒绝旧保存。此前 `pnpm deploy --prod` 到独立临时目录后两份 WASM 都存在，且部署产物执行 PDFium 插字输出可由 pdf-lib 重开。中文字体、扫描件 OCR、批注线程、图片、表单、签名以及复杂 Catalog 尚未达到本任务验收线。
+验证证据：此前 Office 定向 6 个测试文件 73 项、server PDF 宿主与路由 2 文件 7 项通过；本次额外 Office Agent/组件 2 文件 10 项和 server PDF 目录/宿主 2 文件 7 项通过，Office/server 类型检查通过。2026-10-16 的替换回归中，Office PDF 聚焦 3 文件 44 项、server PDF 宿主与路由 2 文件 11 项通过，Office/server/renderer 类型检查及目标 Oxlint、Ant Design lint 通过。真实 PDFium 批量插入→改文/移动→删除的重放结果由 pdf.js 独立读回；组件回归覆盖手动改文→Agent 列出/移动→保存→pdf.js 读回，也覆盖保存 B→再插入 C→删除 C 回到干净的 B、旧插字保存进行中新增插字后删除，以及只保存页面改动 B 时并发插字再删除，后两者均回到实际写出的 B 字节。替换组件回归覆盖点选→对象核验→PDFium 写入→即时画布字节→保存→pdf.js 重开，并覆盖宿主失败、过期字节、部分文字和重叠项拒绝。保存期间修改正被写入的旧插字会明确拒绝；页面保存的异步序列化期间画布版本变化则拒绝旧保存。此前 `pnpm deploy --prod` 到独立临时目录后两份 WASM 都存在，且部署产物执行 PDFium 插字输出可由 pdf-lib 重开。本轮标注宿主 7 项和 PDF 内容组件 8 项通过；高亮组件回归覆盖写入失败仍干净、即时叠层、保存后 pdf.js 注释读回，宿主还验证三种注释和过期字节拒绝。中文字体、扫描件 OCR、批注线程、图片、表单、签名以及复杂 Catalog 尚未达到本任务验收线。
 
 ## 顶层 Agent 工具（45）
 
@@ -15,14 +15,14 @@
 | [`read_pages`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/renderer/ai/tools.ts#L230) | 否 | 是 | 查找文字层 | 已接 | pdf.js 文字层 | 共享 PDF 画布，两端同路径 | Agent 句柄测试通过 | 无文字层返回空页文字；版本变化拒绝旧结果 |
 | [`search_text`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/renderer/ai/tools.ts#L246) | 否 | 是 | 查找栏 | 已接 | pdf.js 文字层 | 共享 PDF 画布，两端同路径 | 文字索引与 Agent 测试通过 | 空查询、版本变化明确拒绝 |
 | [`goto_page`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/renderer/ai/tools.ts#L258) | 否 | 是 | 页导航 | 已接 | pdf.js 文字层 | 共享 PDF 画布，两端同路径 | 页号上下文即时同步测试通过 | 越界页号拒绝 |
-| [`markup_text`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/renderer/ai/tools.ts#L267) | 是 | 是 | 无 | 待接 | 待接 GenOffice/PDFium 宿主 | 待验证 | 未验证 | 不暴露；执行器/读回未就绪 |
+| [`markup_text`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/renderer/ai/tools.ts#L267) | 是 | 是 | 完整唯一原文可高亮/下划线/删除线 | 未开放 | 固定版 GenOffice 标注外观/对象形状的宿主移植 | 手动经鉴权 HTTP；Agent 未接 | 宿主三种标注经 pdf.js 注释读回；组件高亮保存重开 | 过期 SHA、歧义文字、未知 Catalog 拒绝；上游任意文字范围与 Agent 尚未接 |
 | [`read_annotations`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/renderer/ai/tools.ts#L294) | 否 | 是 | 无 | 待接 | pdf.js 文字层 | 待验证 | 未验证 | 不暴露；执行器/读回未就绪 |
 | [`add_note`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/renderer/ai/tools.ts#L306) | 是 | 是 | 无 | 待接 | 待接 GenOffice/PDFium 宿主 | 待验证 | 未验证 | 不暴露；执行器/读回未就绪 |
 | [`reply_note`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/renderer/ai/tools.ts#L329) | 是 | 是 | 无 | 待接 | 待接 GenOffice/PDFium 宿主 | 待验证 | 未验证 | 不暴露；执行器/读回未就绪 |
 | [`edit_note`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/renderer/ai/tools.ts#L343) | 是 | 是 | 无 | 待接 | 待接 GenOffice/PDFium 宿主 | 待验证 | 未验证 | 不暴露；执行器/读回未就绪 |
 | [`delete_markup`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/renderer/ai/tools.ts#L360) | 是 | 是 | 无 | 待接 | 待接 GenOffice/PDFium 宿主 | 待验证 | 未验证 | 不暴露；执行器/读回未就绪 |
 | [`delete_note`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/renderer/ai/tools.ts#L382) | 是 | 是 | 无 | 待接 | 待接 GenOffice/PDFium 宿主 | 待验证 | 未验证 | 不暴露；执行器/读回未就绪 |
-| [`edit_text`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/renderer/ai/tools.ts#L395) | 是 | 是 | 无 | 未开放 | PDFium 宿主写入已验证；缺可信对象选区 | HTTP 宿主可供两端，实机未验收 | 宿主替换→pdf.js 读回通过 | 旧文字不匹配与复杂 Catalog 拒写 |
+| [`edit_text`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/renderer/ai/tools.ts#L395) | 是 | 是 | 点选完整原文→核验→替换（有限条件） | 未开放 | pdf.js 文字项＋PDFium 唯一对象核验→鉴权宿主替换 | 共享 HTTP/组件，两端实机未验收 | 组件保存→pdf.js 重开；宿主独立读回通过 | 过期 SHA、部分/重叠文字、复杂 Catalog 与写后不一致拒绝；Agent 未注册 |
 | [`edit_block`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/renderer/ai/tools.ts#L432) | 是 | 是 | 无 | 待接 | 待接 GenOffice/PDFium 宿主 | 待验证 | 未验证 | PDFium/字体/文字定位未验收 |
 | [`move_text_block`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/renderer/ai/tools.ts#L476) | 是 | 是 | 无 | 待接 | 待接 GenOffice/PDFium 宿主 | 待验证 | 未验证 | PDFium/字体/文字定位未验收 |
 | [`insert_text`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/renderer/ai/tools.ts#L498) | 是 | 是 | 点击画布定位并插入 | 已接有限参数子集 | 共用 `PdfAgentHandle` → 鉴权 PDFium 宿主 | 共享 HTTP 宿主，三端 Agent 实机未验收 | 组件回归覆盖手动旋转→Agent 插字→保存→pdf.js 读回；手动独立原件读回 | 版本/取消/文档身份校验；上游其他参数未接，复杂 Catalog 拒写 |
@@ -64,7 +64,7 @@
 
 | 操作和上游源码 | 改原件 | `apply_ops` 可调用 | Mimir 手动 | Mimir Agent | 共用执行器 | 两端可达 | 原件读回 | 失败状态 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| [`addMarkup`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/shared/op-docs.ts#L21) | 是 | 否 | 无 | 待接 | 待接 GenOffice 执行器 | 待验证 | 未验证 | 不暴露直到真实执行与回读通过 |
+| [`addMarkup`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/shared/op-docs.ts#L21) | 是 | 否 | 完整唯一原文三种标注 | 不经 `apply_ops` 暴露 | 固定版 GenOffice 标注写入逻辑移植 | 手动已接；Agent 未接 | 三种注释宿主读回，高亮组件保存读回 | 不能标任意范围；复杂 Catalog 拒写 |
 | [`removeMarkup`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/shared/op-docs.ts#L26) | 是 | 是 | 无 | 待接 | 待接 GenOffice 执行器 | 待验证 | 未验证 | 不暴露直到真实执行与回读通过 |
 | [`deleteSavedAnnot`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/shared/op-docs.ts#L32) | 是 | 否 | 无 | 待接 | 待接 GenOffice 执行器 | 待验证 | 未验证 | 不暴露直到真实执行与回读通过 |
 | [`editSavedNote`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/shared/op-docs.ts#L37) | 是 | 否 | 无 | 待接 | 待接 GenOffice 执行器 | 待验证 | 未验证 | 不暴露直到真实执行与回读通过 |
@@ -73,7 +73,7 @@
 | [`setNoteContents`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/shared/op-docs.ts#L52) | 是 | 是 | 无 | 待接 | 待接 GenOffice 执行器 | 待验证 | 未验证 | 不暴露直到真实执行与回读通过 |
 | [`moveDrawing`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/shared/op-docs.ts#L58) | 是 | 否 | 无 | 待接 | 待接 GenOffice 执行器 | 待验证 | 未验证 | 不暴露直到真实执行与回读通过 |
 | [`setDrawingRect`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/shared/op-docs.ts#L63) | 是 | 否 | 无 | 待接 | 待接 GenOffice 执行器 | 待验证 | 未验证 | 不暴露直到真实执行与回读通过 |
-| [`putTextEdit`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/shared/op-docs.ts#L70) | 是 | 否 | 无 | 待接 | 待接 GenOffice 执行器 | 待验证 | 未验证 | 不暴露直到真实执行与回读通过 |
+| [`putTextEdit`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/shared/op-docs.ts#L70) | 是 | 否 | 完整原文对象替换（有限条件） | 待接 | 手动入口经 GenOffice PDFium 宿主；非上游操作树原样接入 | 共享 HTTP/组件，两端实机未验收 | 组件保存→pdf.js 重开 | 非完整/唯一对象拒绝；Agent 不经 `apply_ops` 暴露 |
 | [`removeTextEdit`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/shared/op-docs.ts#L75) | 是 | 否 | 无 | 待接 | 待接 GenOffice 执行器 | 待验证 | 未验证 | 不暴露直到真实执行与回读通过 |
 | [`addTextInsert`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/shared/op-docs.ts#L80) | 是 | 否 | 点击画布定位并插入 | 专用 `insert_text` 有限参数子集已接 | 共用 `PdfAgentHandle` → PDFium 宿主；待保存 ID 可继续编辑 | 共享 HTTP 宿主，三端 Agent 实机未验收 | 组件回归经 pdf.js 读回；手动两次保存读回 | 宿主跳过或版本变化时不应用；其他参数未接 |
 | [`removeTextInsert`](https://github.com/genspark-ai/genoffice/blob/480548fd55f1be3593ee0d8e316a734751d58309/apps/pdf/src/shared/op-docs.ts#L85) | 是 | 是 | 删除待保存插字 | 专用 `delete_inserted_text` 已接；`apply_ops` 未接 | 当前画布待保存列表→PDFium 重放 | 共享 HTTP，三端实机未验收 | 删除后原字节/文字层读回 | `apply_ops` 未开放该项；页结构操作后 ID 失效 |
@@ -95,8 +95,8 @@
 
 | 上游入口 | 命令与写路径 | Mimir 状态 | 读回 |
 | --- | --- | --- | --- |
-| `renderer/App.tsx:6000–6090, 6500–6560` | 编辑/插入文字和图片，`main/text-edit.ts`、`image-edit.ts` | 点击定位插入文字及待保存插字内容/字号/颜色/位置/删除已接；拖拽、对齐、替换原文与图片未接 | 插字手动改文→Agent 移动→保存由 pdf.js 读回；原文替换/图片未验证 |
-| `renderer/App.tsx:6380–6490, 8200–8260` | 高亮、批注回复、绘图、涂黑、签名，`main/save-pdf.ts`、`redaction.ts` | 未接 | 未验证 |
+| `renderer/App.tsx:6000–6090, 6500–6560` | 编辑/插入文字和图片，`main/text-edit.ts`、`image-edit.ts` | 点击定位插入文字及待保存插字内容/字号/颜色/位置/删除已接；完整唯一对象替换已接，拖拽、对齐、图片未接 | 插字手动改文→Agent 移动→保存由 pdf.js 读回；替换经组件保存→pdf.js 重开，图片未验证 |
+| `renderer/App.tsx:6380–6490, 8200–8260` | 高亮、批注回复、绘图、涂黑、签名，`main/save-pdf.ts`、`redaction.ts` | 完整唯一原文的高亮/下划线/删除线已接；回复/绘图/涂黑/签名未接 | 标注三型宿主 pdf.js 读回，高亮组件保存重开 |
 | `renderer/App.tsx:6560–6685`, `FormLayer.tsx:60–190` | 静态表单标记和 AcroForm 字段，`main/save-pdf.ts` | 未接 | 未验证 |
 | `renderer/App.tsx:6690–6855` | 旋转、删除、抽取、插入、替换、裁剪、纸型、倒序、拆分、合并 | 旋转/删除/插入/裁剪/纸型/倒序/移动已接；余项未接 | 页面几何部分测试 |
 | `renderer/App.tsx:6290–6350, 8420–8470` | 查找、打印、导出图像、属性和图片浮动操作 | 查找已接；余项未接 | 未验证 |
