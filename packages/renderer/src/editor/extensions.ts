@@ -8,6 +8,7 @@ import { Markdown } from '@tiptap/markdown'
 import StarterKit from '@tiptap/starter-kit'
 import { common, createLowlight } from 'lowlight'
 import { MarkdownSearchHighlight } from '@mimir/office'
+import { MathBlock } from './math-block'
 
 const lowlight = createLowlight(common)
 
@@ -42,6 +43,7 @@ export function createExtensions(options: { placeholder?: string } = {}) {
       placeholder: options.placeholder ?? '开始写点什么…',
     }),
     Markdown,
+    MathBlock,
     MarkdownSearchHighlight,
   ]
 }

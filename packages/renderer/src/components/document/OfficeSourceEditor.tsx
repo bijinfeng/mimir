@@ -182,6 +182,8 @@ export function OfficeSourceEditor({
         {...props}
         onAgentHandleChange={onDocumentAgentHandleChange}
         hostApply={(input) => api.documents.applyPdfText({ documentId: doc.id, ...input })}
+        hostInspect={(input) => api.documents.inspectPdfText({ documentId: doc.id, ...input })}
+        hostMarkup={(input) => api.documents.applyPdfMarkup({ documentId: doc.id, ...input })}
       />
     ) : (
       <PptxEditor
@@ -190,6 +192,7 @@ export function OfficeSourceEditor({
         {...props}
         onAgentHandleChange={onDocumentAgentHandleChange}
         hostApply={api.documents.applyPptxOps}
+        hostPicture={api.documents.applyPptxPicture}
       />
     )
 

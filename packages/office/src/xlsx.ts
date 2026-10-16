@@ -46,6 +46,10 @@ export interface XlsxCell {
   formula?: boolean
   /** Excel formula source, including the leading '='; cached text remains in text. */
   formulaText?: string
+  /** Whether the file contains a visible cached result; never recalculated here. */
+  formulaCache?: 'cached' | 'missing'
+  /** Basic font weight resolved from the cell's style index. */
+  bold?: boolean
   /** 数字右对齐、文本左对齐——对齐方式是最省力的可读性提升 */
   numeric?: boolean
   /** 跨列 / 跨行（合并单元格，1 表示不跨） */
@@ -53,6 +57,8 @@ export interface XlsxCell {
   rowSpan: number
   /** 被合并覆盖掉的格（渲染时跳过） */
   covered?: boolean
+  /** 原件中的精确合并范围；只在左上角锚点存在。 */
+  mergeRef?: string
 }
 
 export interface XlsxRow {
@@ -123,12 +129,13 @@ export async function readXlsx(bytes: Uint8Array): Promise<XlsxWorkbook> {
 /** 编辑路径复用同一份已解压的 XML 与预算，不重复加载 ZIP。 */
 export async function readXlsxArchive(zip: BoundedZip): Promise<XlsxWorkbook> {
   const shared = await readSharedStrings(zip)
+  const boldStyles = readBoldStyles(await zip.readText('xl/styles.xml'))
 
   const sheets: XlsxSheet[] = []
   for (const ref of await listSheets(zip)) {
     const xml = await zip.readText(ref.entry)
     if (!xml) continue
-    const sheet = parseSheet(xml, shared, ref.id, ref.name, ref.entry)
+    const sheet = parseSheet(xml, shared, boldStyles, ref.id, ref.name, ref.entry)
     if (ref.hidden) sheet.hidden = true
     sheets.push(sheet)
   }
@@ -251,9 +258,29 @@ async function readSharedStrings(zip: BoundedZip): Promise<string[]> {
   return out
 }
 
+/** Resolve only the font weight the grid can faithfully show. Style indexes are
+ * indexes into cellXfs, not fonts; reading a cell's `s` as a font id is wrong. */
+function readBoldStyles(xml: string | null): boolean[] {
+  if (!xml) return []
+  const fontsSection = /<fonts\b[^>]*>([\s\S]*?)<\/fonts>/.exec(xml)?.[1] ?? ''
+  const xfsSection = /<cellXfs\b[^>]*>([\s\S]*?)<\/cellXfs>/.exec(xml)?.[1] ?? ''
+  const fonts = [...fontsSection.matchAll(/<font\b[^>]*\/>|<font\b[^>]*>[\s\S]*?<\/font>/g)]
+  const boldFonts = fonts.map(([font]) => {
+    const mark = /<b\b([^>]*)\/?>(?:<\/b>)?/.exec(font)
+    if (!mark) return false
+    const value = /\bval="([^"]+)"/.exec(mark[1] ?? '')?.[1]
+    return value !== '0' && value !== 'false' && value !== 'off'
+  })
+  return [...xfsSection.matchAll(/<xf\b[^>]*\/>|<xf\b[^>]*>[\s\S]*?<\/xf>/g)].map(([xf]) => {
+    const fontId = Number(/\bfontId="(\d+)"/.exec(xf)?.[1] ?? 0)
+    return boldFonts[fontId] === true
+  })
+}
+
 function parseSheet(
   xml: string,
   shared: string[],
+  boldStyles: boolean[],
   id: string,
   name: string,
   entry: string,
@@ -280,7 +307,7 @@ function parseSheet(
       if (column >= 0) {
         for (let i = cells.length; i < column; i += 1) cells.push(emptyCell(i))
       }
-      cells.push(cellOf(cellAttrs, inner, shared, cells.length))
+      cells.push(cellOf(cellAttrs, inner, shared, boldStyles, cells.length))
     }
 
     // 未缓存结果的公式仍是内容；不能把公式行当作空行隐藏。
@@ -344,11 +371,29 @@ function columnOf(letters: string): number {
  *
  * 公式格（`<f>`）额外标注：显示的是 Excel 算好的缓存值，我们没有重算能力。
  */
-function cellOf(attrs: string, inner: string, shared: string[], col: number): XlsxCell {
+function cellOf(
+  attrs: string,
+  inner: string,
+  shared: string[],
+  boldStyles: boolean[],
+  col: number,
+): XlsxCell {
   const type = /t="([^"]+)"/.exec(attrs)?.[1] ?? ''
   const isFormula = /<f\b/.test(inner)
   const formulaSource = /<f\b[^>]*>([\s\S]*?)<\/f>/.exec(inner)?.[1]
   const formulaText = formulaSource === undefined ? undefined : `=${decodeXml(formulaSource)}`
+  const styleIndex = Number(/\bs="(\d+)"/.exec(attrs)?.[1] ?? 0)
+  const bold = boldStyles[styleIndex] === true
+  const cachedValue = /<v\b[^>]*>([\s\S]*?)<\/v>/.exec(inner)?.[1]
+  const formulaCache: XlsxCell['formulaCache'] = isFormula
+    ? cachedValue?.trim()
+      ? 'cached'
+      : 'missing'
+    : undefined
+  const appearance = {
+    ...(bold ? { bold: true } : {}),
+    ...(formulaCache ? { formulaCache } : {}),
+  }
 
   if (type === 's') {
     const index = Number(/<v>([\s\S]*?)<\/v>/.exec(inner)?.[1]?.trim() ?? '')
@@ -358,6 +403,7 @@ function cellOf(attrs: string, inner: string, shared: string[], col: number): Xl
       col,
       colSpan: 1,
       rowSpan: 1,
+      ...appearance,
       ...(isFormula ? { formula: true, formulaText } : {}),
     }
   }
@@ -366,7 +412,7 @@ function cellOf(attrs: string, inner: string, shared: string[], col: number): Xl
     const parts = [...inner.matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g)].map((m) =>
       decodeXml(m[1] ?? ''),
     )
-    return { text: parts.join(''), col, colSpan: 1, rowSpan: 1 }
+    return { text: parts.join(''), col, colSpan: 1, rowSpan: 1, ...appearance }
   }
 
   const value = decodeXml(/<v>([\s\S]*?)<\/v>/.exec(inner)?.[1] ?? '')
@@ -381,6 +427,7 @@ function cellOf(attrs: string, inner: string, shared: string[], col: number): Xl
     numeric,
     colSpan: 1,
     rowSpan: 1,
+    ...appearance,
     ...(isFormula ? { formula: true, formulaText } : {}),
   }
 }
@@ -419,6 +466,7 @@ function applyMerges(xml: string, rows: XlsxRow[]): number {
 
     anchor.colSpan = end.col - start.col + 1
     anchor.rowSpan = endRow - startRow + 1
+    anchor.mergeRef = `${merge[1]}:${merge[2]}`
     for (let r = startRow; r <= endRow; r += 1) {
       for (let c = start.col; c <= end.col; c += 1) {
         if (r === startRow && c === start.col) continue

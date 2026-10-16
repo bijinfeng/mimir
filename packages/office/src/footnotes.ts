@@ -205,16 +205,28 @@ export function pageFootnotesOf(ctx: FootnoteContext, slices: PageSlice[]): Page
   }
 
   for (const box of ctx.blocks) {
-    if (box.docxIndex === undefined || box.docxIndex === null) continue
-    const block = ctx.blockByDocxIndex.get(box.docxIndex)
-    if (!block) continue
-    const ids = blockNoteScanRuns(block)
-      .filter((run) => run.noteRef?.kind === 'footnote')
-      .map((run) => run.noteRef!.id)
+    const block = box.docxIndex === undefined ? undefined : ctx.blockByDocxIndex.get(box.docxIndex)
+    // The live canvas is authoritative for an unsaved new paragraph (it has no
+    // docxIndex) and for refs added/undone in an existing paragraph. The parsed
+    // runs remain a fallback for geometry-only callers without an element.
+    const ids = box.el
+      ? Array.from(
+          box.el.querySelectorAll<HTMLElement>('sup.doc-note-ref[data-note-kind="footnote"]'),
+        )
+          .filter((element) => !element.closest('.page-gap, .page-float-host, .page-repeat-header'))
+          .map((element) => element.dataset.noteRef)
+          .filter((id): id is string => !!id)
+      : block
+        ? blockNoteScanRuns(block)
+            .filter((run) => run.noteRef?.kind === 'footnote')
+            .map((run) => run.noteRef!.id)
+        : []
     if (ids.length === 0) continue
 
     const section =
-      ctx.sections.find((s) => box.docxIndex! <= s.lastBlockIndex)?.settings ??
+      (box.section === undefined ? undefined : ctx.sections[box.section]?.settings) ??
+      ctx.sections.find((s) => box.docxIndex !== undefined && box.docxIndex <= s.lastBlockIndex)
+        ?.settings ??
       ctx.sections[0]?.settings
     if (!section) continue
 

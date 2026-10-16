@@ -80,7 +80,9 @@ import {
   ToolbarButton,
   ToolbarColorPicker,
   ToolbarConfirm,
+  ToolbarFileButton,
   ToolbarGroup,
+  ToolbarGridPicker,
   ToolbarLabel,
   ToolbarMenu,
   ToolbarMenuFields,
@@ -92,6 +94,7 @@ import {
   ToolbarSelect,
   ToolbarTabs,
   ToolbarTextArea,
+  ToolbarTextField,
   useFindHotkey,
   type FindReplaceAdapter,
   type ToolbarColorOption,
@@ -111,7 +114,11 @@ import {
 } from '../shell/icons.js'
 import type { FindOptions } from '../shims/ui.js'
 import type { EditParagraph, EditRun } from '../../vendor/packages/pptx-ops/src/types.js'
-import type { Paragraph, TextRun } from '../../vendor/packages/pptx-engine/src/types.js'
+import type {
+  Paragraph,
+  TableElement,
+  TextRun,
+} from '../../vendor/packages/pptx-engine/src/types.js'
 import { statusText, useParsed, useSource } from './use-source.js'
 import { ThumbnailSidebar } from './ThumbnailSidebar.js'
 import { OFFICE_MIME, type EditorProps } from './types.js'
@@ -127,6 +134,284 @@ import './pptx-pdf-toolbar.css'
  */
 const FIT_WIDTH_PX = 960
 const THUMBNAIL_WIDTH_PX = 136
+const TABLE_GRID_SIZE = 6
+const tableCellLabel = (row: number, column: number) => `插入 ${row} 行 ${column} 列表格`
+const PICTURE_OPACITIES = [100, 75, 50, 25] as const
+
+/** Keep all unaffected table paragraphs and runs when changing one cell paragraph. */
+function TableCellControls({
+  table,
+  target,
+  apply,
+}: {
+  table: TableElement
+  target: { slide: number; el: string }
+  apply: (op: Record<string, unknown>) => Promise<boolean>
+}) {
+  const [row, setRow] = useState('0')
+  const [col, setCol] = useState('0')
+  const [paragraphIndex, setParagraphIndex] = useState('0')
+  const [draft, setDraft] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const draftRevision = useRef(0)
+  const rowIndex = Math.min(Number(row), table.rows.length - 1)
+  const colIndex = Math.min(Number(col), (table.rows[rowIndex]?.length ?? 1) - 1)
+  const cell = table.rows[rowIndex]?.[colIndex]
+  const paragraphs = cell?.text?.paragraphs ?? []
+  const selectedIndex = Math.min(Number(paragraphIndex), Math.max(0, paragraphs.length - 1))
+  const currentText = paragraphs[selectedIndex]?.runs.map((run) => run.text).join('') ?? ''
+  const nextText = draft ?? currentText
+  const unavailable = cell?.merged ? '合并区域的占位格不能直接编辑，请选择左上角单元格' : undefined
+
+  const submit = async () => {
+    if (!cell || unavailable || busy || nextText === currentText) return
+    const edited: EditParagraph[] = paragraphs.length
+      ? paragraphs.map((paragraph, index) => {
+          const runs: EditRun[] = paragraph.runs.map((run, runIndex) => ({
+            text: run.text,
+            srcRun: runIndex,
+          }))
+          if (index !== selectedIndex) return { runs, srcPara: index }
+          const narrowed = editParagraphRuns(
+            runs.map((run) => run.text),
+            nextText,
+          )
+          return {
+            runs: narrowed
+              ? narrowed.texts.map((text, runIndex) => ({ text, srcRun: runIndex }))
+              : [{ text: nextText }],
+            srcPara: index,
+          }
+        })
+      : [{ runs: [{ text: nextText }] }]
+    const submittedRevision = draftRevision.current
+    setBusy(true)
+    try {
+      const applied = await apply({
+        op: 'setTableCell',
+        target,
+        row: rowIndex,
+        col: colIndex,
+        paragraphs: edited,
+      })
+      if (applied && draftRevision.current === submittedRevision) setDraft(null)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <ToolbarMenuFields label="表格单元格">
+      <ToolbarSelect
+        label="行"
+        value={String(rowIndex)}
+        options={table.rows.map((_, index) => ({
+          value: String(index),
+          label: `第 ${index + 1} 行`,
+        }))}
+        onChange={(value) => {
+          draftRevision.current += 1
+          setRow(value)
+          setCol('0')
+          setParagraphIndex('0')
+          setDraft(null)
+        }}
+      />
+      <ToolbarSelect
+        label="列"
+        value={String(colIndex)}
+        options={(table.rows[rowIndex] ?? []).map((_, index) => ({
+          value: String(index),
+          label: `第 ${index + 1} 列`,
+        }))}
+        onChange={(value) => {
+          draftRevision.current += 1
+          setCol(value)
+          setParagraphIndex('0')
+          setDraft(null)
+        }}
+      />
+      {paragraphs.length > 1 && (
+        <ToolbarSelect
+          label="段落"
+          value={String(selectedIndex)}
+          options={paragraphs.map((_, index) => ({
+            value: String(index),
+            label: `第 ${index + 1} 段`,
+          }))}
+          onChange={(value) => {
+            draftRevision.current += 1
+            setParagraphIndex(value)
+            setDraft(null)
+          }}
+        />
+      )}
+      <ToolbarTextArea
+        label="单元格文字"
+        value={nextText}
+        rows={2}
+        onChange={(value) => {
+          draftRevision.current += 1
+          setDraft(value)
+        }}
+      />
+      <ToolbarButton
+        label="应用单元格文字"
+        disabled={Boolean(unavailable) || busy || nextText === currentText}
+        disabledReason={unavailable ?? (busy ? '正在修改表格' : '文字没有变化')}
+        onClick={() => void submit()}
+      >
+        应用
+      </ToolbarButton>
+    </ToolbarMenuFields>
+  )
+}
+
+type ManualChartKind = 'bar' | 'line' | 'pie'
+const MANUAL_CHART_KINDS: readonly ToolbarSelectOption<ManualChartKind>[] = [
+  { value: 'bar', label: '柱状图' },
+  { value: 'line', label: '折线图' },
+  { value: 'pie', label: '饼图' },
+]
+
+/** Only user-entered, finite figures reach addChart; this panel never supplies sample data. */
+function ChartInsertControls({
+  slide,
+  width,
+  height,
+  apply,
+  close,
+}: {
+  slide: number
+  width: number
+  height: number
+  apply: (op: Record<string, unknown>) => Promise<boolean>
+  close: () => void
+}) {
+  const [kind, setKind] = useState<ManualChartKind>('bar')
+  const [title, setTitle] = useState('')
+  const [seriesName, setSeriesName] = useState('')
+  const [categoryText, setCategoryText] = useState('')
+  const [valueText, setValueText] = useState('')
+  const [busy, setBusy] = useState(false)
+  const draftRevision = useRef(0)
+  const categories = categoryText.trim()
+    ? categoryText
+        .trim()
+        .split(/\r?\n/)
+        .map((item) => item.trim())
+    : []
+  const rawValues = valueText.trim()
+    ? valueText
+        .trim()
+        .split(/\r?\n/)
+        .map((item) => item.trim())
+    : []
+  const numberPattern = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i
+  const values = rawValues.map(Number)
+  const reason =
+    categories.length === 0
+      ? '请填写类别，每行一项'
+      : categories.length > 50 || categories.some((item) => !item || item.length > 80)
+        ? '类别须为 1–50 项，且每项不超过 80 个字符'
+        : !seriesName.trim() || seriesName.trim().length > 80
+          ? '请填写不超过 80 个字符的系列名称'
+          : title.length > 120
+            ? '图表标题不能超过 120 个字符'
+            : rawValues.length !== categories.length
+              ? '数值行数必须与类别行数相同'
+              : rawValues.some(
+                    (item, index) => !numberPattern.test(item) || !Number.isFinite(values[index]),
+                  )
+                ? '每行须为一个有限数值，不要填单位或千位分隔符'
+                : kind === 'pie' &&
+                    (values.some((value) => value < 0) || !values.some((value) => value > 0))
+                  ? '饼图数值不能为负，且至少有一项大于零'
+                  : undefined
+
+  const submit = async () => {
+    if (reason || busy) return
+    const submittedRevision = draftRevision.current
+    setBusy(true)
+    try {
+      const applied = await apply({
+        op: 'addChart',
+        target: { slide },
+        kind,
+        title: title.trim() || undefined,
+        categories,
+        series: [{ name: seriesName.trim(), values }],
+        dataSource: 'user',
+        offset: {
+          x: Math.round(width * 0.1),
+          y: Math.round(height * 0.18),
+          cx: Math.round(width * 0.8),
+          cy: Math.round(height * 0.62),
+        },
+      })
+      if (applied && draftRevision.current === submittedRevision) close()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <ToolbarMenuFields label="插入图表（用户数据）">
+      <ToolbarMenuNote>数据来源：你在此输入的数值。当前每次插入一个数据系列。</ToolbarMenuNote>
+      <ToolbarSelect
+        label="图表类型"
+        value={kind}
+        options={MANUAL_CHART_KINDS}
+        onChange={(value) => {
+          draftRevision.current += 1
+          setKind(value)
+        }}
+      />
+      <ToolbarTextField
+        label="图表标题（可选）"
+        value={title}
+        onChange={(value) => {
+          draftRevision.current += 1
+          setTitle(value)
+        }}
+      />
+      <ToolbarTextField
+        label="数据系列名称"
+        value={seriesName}
+        onChange={(value) => {
+          draftRevision.current += 1
+          setSeriesName(value)
+        }}
+      />
+      <ToolbarTextArea
+        label="图表类别（每行一项）"
+        rows={3}
+        value={categoryText}
+        onChange={(value) => {
+          draftRevision.current += 1
+          setCategoryText(value)
+        }}
+      />
+      <ToolbarTextArea
+        label="图表数值（每行一项）"
+        rows={3}
+        value={valueText}
+        onChange={(value) => {
+          draftRevision.current += 1
+          setValueText(value)
+        }}
+      />
+      <ToolbarButton
+        label="按输入数据插入图表"
+        disabled={Boolean(reason) || busy}
+        disabledReason={busy ? '正在插入图表' : reason}
+        onClick={() => void submit()}
+      >
+        插入图表
+      </ToolbarButton>
+    </ToolbarMenuFields>
+  )
+}
 
 function PptxThumbnail({ deck, index }: { deck: PptxRenderable; index: number }) {
   const rendered = useMemo(
@@ -530,10 +815,20 @@ export function PptxEditor({
   onDirtyChange,
   onAgentHandleChange,
   hostApply,
+  hostPicture,
   flush = false,
 }: EditorProps & {
   onAgentHandleChange?: (handle: PptxAgentHandle | null) => void
   hostApply?: PptxHostApply
+  hostPicture?: (request: {
+    documentId: string
+    bytes: Uint8Array
+    expectedVersion: number
+    imageBytes: Uint8Array
+    slide: number
+    action: 'insert' | 'replace'
+    elementId?: string
+  }) => Promise<{ bytes: Uint8Array; version: number }>
 }) {
   const source = useSource(io, documentId)
   const parsed = useParsed(source.bytes, openPptxForEdit)
@@ -545,6 +840,7 @@ export function PptxEditor({
   const [dirty, setDirty] = useState(false)
   const [pageError, setPageError] = useState<string | null>(null)
   const [manualUndoRound, setManualUndoRound] = useState<string | null>(null)
+  const [pictureBusy, setPictureBusy] = useState(false)
   const agentHandleRef = useRef<PptxAgentHandle | null>(null)
   /** 画布容器：SVG 里注入 `data-element-id` 后用它做事件代理与描边 */
   const canvasRef = useRef<HTMLDivElement>(null)
@@ -1150,7 +1446,7 @@ export function PptxEditor({
 
   const runManualOp = async (op: Record<string, unknown>) => {
     const handle = agentHandleRef.current
-    if (!handle || !session) return
+    if (!handle || !session) return false
     const roundId = crypto.randomUUID()
     const response = (await handle.execute(
       'apply_ops',
@@ -1162,10 +1458,63 @@ export function PptxEditor({
     )) as { ok: boolean; error?: string }
     if (!response.ok) {
       setPageError(response.error ?? '幻灯片操作失败')
-      return
+      return false
     }
     setPageError(null)
     setManualUndoRound(roundId)
+    return true
+  }
+  const insertTable = (rows: number, cols: number) =>
+    runManualOp({
+      op: 'addTable',
+      target: { slide: active },
+      rows,
+      cols,
+      offset: {
+        x: Math.round(session.size.cx * 0.12),
+        y: Math.round(session.size.cy * 0.2),
+        cx: Math.round(session.size.cx * 0.76),
+        cy: Math.round(session.size.cy * 0.12 * rows),
+      },
+    })
+  const applyLocalPicture = async (file: File, action: 'insert' | 'replace') => {
+    if (!hostPicture || !session || pictureBusy) return
+    if (file.size === 0 || file.size > 8 * 1024 * 1024) {
+      setPageError('图片必须是小于 8 MiB 的 PNG 或 JPEG')
+      return
+    }
+    const elementId =
+      action === 'replace' && selectedObject?.type === 'picture'
+        ? (elementDurableId(selectedObject) ?? selectedObject.id)
+        : undefined
+    if (action === 'replace' && !elementId) {
+      setPageError('请先在画布上选中要替换的图片')
+      return
+    }
+    const expectedVersion = session.version()
+    setPictureBusy(true)
+    setPageError(null)
+    try {
+      const response = await hostPicture({
+        documentId,
+        bytes: await session.save(),
+        expectedVersion,
+        imageBytes: new Uint8Array(await file.arrayBuffer()),
+        slide: active,
+        action,
+        ...(elementId ? { elementId } : {}),
+      })
+      if (session.version() !== expectedVersion)
+        throw new Error('图片处理期间画布已变化，请重新操作')
+      if (response.version !== expectedVersion + 1) throw new Error('图片宿主返回的画布版本无效')
+      await session.replaceFromHost(response.bytes)
+      setManualUndoRound(null)
+      afterEditRef.current()
+    } catch (cause) {
+      setPageError(cause instanceof Error ? cause.message : '图片操作失败')
+    } finally {
+      setPictureBusy(false)
+    }
   }
   const objectTarget = selectedObject
     ? { slide: active, el: elementDurableId(selectedObject) ?? selectedObject.id }
@@ -1457,7 +1806,59 @@ export function PptxEditor({
           <ToolbarMenuSeparator />
           {objectTarget && selectedObject ? (
             <>
+              {selectedObject.type === 'table' &&
+                (hostApply ? (
+                  <TableCellControls
+                    key={objectTarget.el}
+                    table={selectedObject}
+                    target={objectTarget}
+                    apply={runManualOp}
+                  />
+                ) : (
+                  <ToolbarMenuNote>当前未连接 PPTX 宿主，无法编辑表格单元格</ToolbarMenuNote>
+                ))}
               <ToolbarMenuFields label="选中对象">
+                {selectedObject.type === 'picture' && (
+                  <>
+                    {hostPicture ? (
+                      <ToolbarFileButton
+                        label="替换选中图片"
+                        accept="image/png,image/jpeg"
+                        disabled={pictureBusy}
+                        onPick={(file) => applyLocalPicture(file, 'replace')}
+                      />
+                    ) : (
+                      <ToolbarMenuNote>当前未连接 PPTX 图片宿主，无法替换图片</ToolbarMenuNote>
+                    )}
+                    <ToolbarMenuNote>
+                      图片不透明度：{Math.round((selectedObject.opacity ?? 1) * 100)}%
+                    </ToolbarMenuNote>
+                    {PICTURE_OPACITIES.map((percent) => {
+                      const current = Math.round((selectedObject.opacity ?? 1) * 100) === percent
+                      return (
+                        <ToolbarMenuItemRow
+                          key={percent}
+                          item={{
+                            key: `picture-opacity-${percent}`,
+                            label: `图片不透明度 ${percent}%`,
+                            active: current,
+                            disabled: !hostApply || current,
+                            disabledReason: !hostApply
+                              ? '当前未连接 PPTX 宿主，无法调整图片'
+                              : '已是当前不透明度',
+                            onSelect: () =>
+                              void runManualOp({
+                                op: 'setPictureOpacity',
+                                target: objectTarget,
+                                opacity: percent / 100,
+                              }),
+                          }}
+                          close={close}
+                        />
+                      )
+                    })}
+                  </>
+                )}
                 {(selectedObject.type === 'text' || selectedObject.type === 'shape') && (
                   <>
                     <ToolbarColorPicker
@@ -1788,6 +2189,65 @@ export function PptxEditor({
                   >
                     矩形
                   </ToolbarButton>
+                  <ToolbarMenu
+                    label="插入表格"
+                    text="表格"
+                    panelWidth={190}
+                    renderPanel={(close) =>
+                      hostApply ? (
+                        <ToolbarMenuFields label="选择表格大小">
+                          <ToolbarGridPicker
+                            label="插入表格的大小"
+                            rows={TABLE_GRID_SIZE}
+                            columns={TABLE_GRID_SIZE}
+                            cellLabel={tableCellLabel}
+                            onPick={(rows, cols) => {
+                              close()
+                              void insertTable(rows, cols)
+                            }}
+                          />
+                        </ToolbarMenuFields>
+                      ) : (
+                        <ToolbarMenuNote>当前未连接 PPTX 宿主，无法插入表格</ToolbarMenuNote>
+                      )
+                    }
+                  />
+                  <ToolbarMenu
+                    label="插入图表"
+                    text="图表"
+                    panelWidth={340}
+                    renderPanel={(close) =>
+                      hostApply ? (
+                        <ChartInsertControls
+                          slide={active}
+                          width={session.size.cx}
+                          height={session.size.cy}
+                          apply={runManualOp}
+                          close={close}
+                        />
+                      ) : (
+                        <ToolbarMenuNote>当前未连接 PPTX 宿主，无法插入图表</ToolbarMenuNote>
+                      )
+                    }
+                  />
+                  {hostPicture ? (
+                    <ToolbarFileButton
+                      label="插入图片"
+                      accept="image/png,image/jpeg"
+                      disabled={pictureBusy}
+                      onPick={(file) => applyLocalPicture(file, 'insert')}
+                    >
+                      图片
+                    </ToolbarFileButton>
+                  ) : (
+                    <ToolbarButton
+                      label="插入图片"
+                      disabled
+                      disabledReason="当前未连接 PPTX 图片宿主"
+                    >
+                      图片
+                    </ToolbarButton>
+                  )}
                 </ToolbarGroup>
               ),
             },

@@ -49,7 +49,7 @@ describe('XLSX host executor', () => {
       properties: {
         operations: {
           items: {
-            required: ['op', 'sheetId'],
+            required: ['op'],
             properties: {
               op: { enum: expect.arrayContaining(['set_cell', 'format_range']) },
               sheetId: { type: 'string' },
@@ -61,8 +61,140 @@ describe('XLSX host executor', () => {
       },
     })
     expect(JSON.stringify(tool?.inputSchema)).not.toContain('add_chart')
+    expect(JSON.stringify(tool?.inputSchema)).toContain('rename_sheet')
+    expect(JSON.stringify(tool?.inputSchema)).toContain('add_sheet')
     expect(tool?.description).toContain('"op":"set_cell"')
     expect(tool?.description).toContain('"address":"B3"')
+  })
+
+  it('adds a blank selectable sheet and keeps it after editing A1 and saving twice', async () => {
+    const input = load()
+    const first = await applyXlsxOpsOnHost({
+      documentId: 'xlsx-1',
+      bytes: input,
+      expectedVersion: 0,
+      ops: [{ op: 'add_sheet', name: '新增表' }],
+    })
+    const reopened = await readBasicWorkbook(Buffer.from(first.bytes))
+    expect(reopened.snapshot.sheets.map((sheet) => sheet.name)).toEqual(['数据', '新增表'])
+    const added = reopened.snapshot.sheets[1]!
+    expect(added.id).not.toBe(reopened.snapshot.sheets[0]?.id)
+    expect(added.cells.A1?.value ?? null).toBeNull()
+    const savedZip = await JSZip.loadAsync(first.bytes)
+    const originalZip = await JSZip.loadAsync(input)
+    for (const path of Object.keys(originalZip.files)) {
+      if (first.touchedEntries.includes(path)) continue
+      expect(await savedZip.file(path)?.async('uint8array')).toEqual(
+        await originalZip.file(path)?.async('uint8array'),
+      )
+    }
+    const second = await applyXlsxOpsOnHost({
+      documentId: 'xlsx-1',
+      bytes: first.bytes,
+      expectedVersion: 1,
+      ops: [{ op: 'set_cell', sheetId: added.id, address: 'A1', value: '可编辑' }],
+    })
+    const twice = await readBasicWorkbook(Buffer.from(second.bytes))
+    expect(twice.snapshot.sheets.map((sheet) => sheet.name)).toEqual(['数据', '新增表'])
+    expect(twice.snapshot.sheets[1]?.cells.A1?.value).toBe('可编辑')
+    expect(twice.snapshot.sheets[0]?.cells.A2?.value).toBe('姓名')
+  })
+
+  it('refuses duplicate names and unsupported custom grid sizes before adding a sheet', async () => {
+    const bytes = load()
+    for (const [op, reason] of [
+      [{ op: 'add_sheet', name: '' }, '参数无效'],
+      [{ op: 'add_sheet', name: '无效/名称' }, '参数无效'],
+      [{ op: 'add_sheet', name: '数据' }, '已被使用'],
+      [{ op: 'add_sheet', name: '新表', rows: 10 }, '不支持指定网格行列数'],
+    ] as const) {
+      await expect(
+        applyXlsxOpsOnHost({ documentId: 'xlsx-1', bytes, expectedVersion: 0, ops: [op] }),
+      ).rejects.toThrow(reason)
+      expect(bytes).toEqual(load())
+    }
+  })
+
+  it('renames a sheet, rewrites cross-sheet formulas and preserves unrelated parts', async () => {
+    const zip = await JSZip.loadAsync(load())
+    const workbook = await zip.file('xl/workbook.xml')!.async('string')
+    const rels = await zip.file('xl/_rels/workbook.xml.rels')!.async('string')
+    zip.file(
+      'xl/workbook.xml',
+      workbook.replace(
+        '</sheets>',
+        '<sheet name="汇总" sheetId="2" r:id="rId3" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"/></sheets>',
+      ),
+    )
+    zip.file(
+      'xl/_rels/workbook.xml.rels',
+      rels.replace(
+        '</Relationships>',
+        '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/></Relationships>',
+      ),
+    )
+    zip.file(
+      'xl/worksheets/sheet2.xml',
+      '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData><row r="1"><c r="A1"><f>数据!C3</f><v>1001</v></c></row></sheetData></worksheet>',
+    )
+    const input = await zip.generateAsync({ type: 'uint8array' })
+    await expect(
+      applyXlsxOpsOnHost({
+        documentId: 'xlsx-1',
+        bytes: input,
+        expectedVersion: 0,
+        ops: [{ op: 'rename_sheet', sheetId: 'sheet-1', name: '汇总' }],
+      }),
+    ).rejects.toThrow('已被使用')
+    const first = await applyXlsxOpsOnHost({
+      documentId: 'xlsx-1',
+      bytes: input,
+      expectedVersion: 0,
+      ops: [{ op: 'rename_sheet', sheetId: 'sheet-1', name: '新数据' }],
+    })
+    expect(first.version).toBe(1)
+    expect(first.changedCells).toEqual([])
+    expect(first.touchedEntries).toContain('xl/workbook.xml')
+    expect(first.touchedEntries).toContain('xl/worksheets/sheet2.xml')
+    const reopened = await readBasicWorkbook(Buffer.from(first.bytes))
+    expect(reopened.snapshot.sheets.map((sheet) => sheet.name)).toEqual(['新数据', '汇总'])
+    expect(reopened.snapshot.sheets[1]?.cells.A1?.formula).toBe("='新数据'!C3")
+    const second = await applyXlsxOpsOnHost({
+      documentId: 'xlsx-1',
+      bytes: first.bytes,
+      expectedVersion: 1,
+      ops: [{ op: 'set_cell', sheetId: 'sheet-1', address: 'A2', value: '再次保存' }],
+    })
+    const twice = await readBasicWorkbook(Buffer.from(second.bytes))
+    expect(twice.snapshot.sheets[0]?.name).toBe('新数据')
+    expect(twice.snapshot.sheets[0]?.cells.A2?.value).toBe('再次保存')
+    expect(twice.snapshot.sheets[1]?.cells.A1?.formula).toBe("='新数据'!C3")
+    const saved = await JSZip.loadAsync(first.bytes)
+    for (const path of Object.keys(zip.files)) {
+      if (first.touchedEntries.includes(path)) continue
+      expect(await saved.file(path)?.async('uint8array')).toEqual(
+        await zip.file(path)?.async('uint8array'),
+      )
+    }
+  })
+
+  it('rejects invalid or duplicate sheet names before changing the input', async () => {
+    const bytes = load()
+    for (const [name, reason] of [
+      ['', '参数无效'],
+      ['bad/name', '参数无效'],
+      ['数据', '没有变化'],
+    ]) {
+      await expect(
+        applyXlsxOpsOnHost({
+          documentId: 'xlsx-1',
+          bytes,
+          expectedVersion: 0,
+          ops: [{ op: 'rename_sheet', sheetId: 'sheet-1', name }],
+        }),
+      ).rejects.toThrow(reason)
+      expect(bytes).toEqual(load())
+    }
   })
 
   it('reports a missing op or required set_cell field before changing bytes', async () => {

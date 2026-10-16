@@ -783,6 +783,8 @@
   color: var(--me-text-weak, #8c8c8c);
   font-size: var(--me-font-size-sm, 12px);
   line-height: 1.5;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 /*

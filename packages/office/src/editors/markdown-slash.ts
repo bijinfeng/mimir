@@ -30,6 +30,13 @@ export interface MarkdownSlashController {
   close(): void
 }
 
+/** Shared by the ribbon and slash menu so both insert the same dialect node. */
+export const INSERT_MATH_BLOCK: MdOp = {
+  op: 'insertContent',
+  after: 'selection',
+  markdown: '$$\nx^2 + y^2 = z^2\n$$',
+}
+
 const ITEMS: MarkdownSlashItem[] = [
   {
     id: 'paragraph',
@@ -107,6 +114,13 @@ const ITEMS: MarkdownSlashItem[] = [
     keywords: ['divider', 'rule'],
     node: 'horizontalRule',
     op: { op: 'insertHorizontalRule', after: 'selection' },
+  },
+  {
+    id: 'math',
+    label: '数学公式',
+    keywords: ['math', 'latex', 'formula', '公式'],
+    node: 'mathBlock',
+    op: INSERT_MATH_BLOCK,
   },
   {
     id: 'image',

@@ -1,5 +1,5 @@
 /** @vitest-environment happy-dom */
-import { Extension, type Editor } from '@tiptap/core'
+import { Editor, Extension } from '@tiptap/core'
 import { MarkdownEditor, type MarkdownAgentHandle } from '@mimir/office'
 import { act, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
@@ -89,6 +89,46 @@ function replaceBody(editor: Editor, body: string) {
 }
 
 describe('自动保存与离开守卫', () => {
+  it('工具栏插入公式后标脏、保存，并在重开时仍渲染数学节点', async () => {
+    const writes: string[] = []
+    const view = await mount(async (body) => {
+      writes.push(body)
+    })
+    const insertTab = [...view.host.querySelectorAll<HTMLButtonElement>('button[role="tab"]')].find(
+      (button) => button.textContent === '插入',
+    )
+    expect(insertTab).toBeDefined()
+    act(() => insertTab!.click())
+    const insert = view.host.querySelector<HTMLButtonElement>('button[aria-label="数学公式"]')
+    expect(insert).not.toBeNull()
+    act(() => insert!.click())
+    expect(
+      view.editor.state.doc
+        .toJSON()
+        .content?.some((node: { type: string }) => node.type === 'mathBlock'),
+    ).toBe(true)
+    expect(view.unsaved.isDirty).toBe(true)
+    act(() => view.unsaved.runGuarded(() => {}))
+    await act(async () => view.unsaved.resolve('save'))
+    expect(writes.at(-1)).toContain('$$\nx^2 + y^2 = z^2\n$$')
+    const reopened = new Editor({
+      element: document.createElement('div'),
+      extensions: createExtensions(),
+      content: writes.at(-1),
+      contentType: 'markdown',
+    })
+    try {
+      expect(
+        reopened.state.doc
+          .toJSON()
+          .content?.some((node: { type: string }) => node.type === 'mathBlock'),
+      ).toBe(true)
+      expect(reopened.view.dom.querySelector('.katex')).not.toBeNull()
+    } finally {
+      reopened.destroy()
+    }
+  })
+
   it('手动查找替换使用同一正文与保存链路', async () => {
     const writes: string[] = []
     const view = await mount(async (body) => {

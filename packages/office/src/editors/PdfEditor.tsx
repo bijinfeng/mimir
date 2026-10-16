@@ -4,7 +4,7 @@
  * 由 pdf.js viewport 换算到 PDF 坐标，再经鉴权宿主返回真实字节。内容字节在
  * 保存前保留为工作副本，画布和文字索引立即切换到该副本；保存成功才更新基线。
  *
- * 文字替换仍需可靠的原文对象/矩形选择，目前画布没有此选区，所以查找栏只读。
+ * 原文整段可点选并由宿主核验后替换或标注；查找命中的子串未核验，查找栏仍只读。
  * 页面裁剪和纸型在保存前仍是待生效结构，画布不提前改几何。页面重建会重写
  * PDF，含未知 Catalog 结构的原件由 `buildPdfBytes` 拒绝写回。
  */
@@ -78,10 +78,12 @@ import {
 } from './pdf-pages.js'
 import {
   buildPdfTextIndex,
+  pickPdfTextRun,
   searchPdfText,
   type PdfMatch,
   type PdfRect,
   type PdfTextIndex,
+  type PdfTextRun,
 } from './pdf-text.js'
 import { ThumbnailSidebar } from './ThumbnailSidebar.js'
 import {
@@ -113,6 +115,35 @@ export interface PdfHostApply {
     expectedVersion: number
     kind: 'edit' | 'insert'
     items: unknown[]
+    signal?: AbortSignal
+  }): Promise<{ bytes: Uint8Array; version: number }>
+}
+
+export interface PdfInspectedTextTarget {
+  sha256: string
+  pageIndex: number
+  objectIndex: number
+  text: string
+  bounds: [number, number, number, number]
+}
+
+export interface PdfHostInspect {
+  (request: {
+    bytes: Uint8Array
+    probe: {
+      pageIndex: number
+      rect: [number, number, number, number]
+      oldText: string
+    }
+    signal?: AbortSignal
+  }): Promise<PdfInspectedTextTarget>
+}
+
+export interface PdfHostMarkup {
+  (request: {
+    bytes: Uint8Array
+    expectedVersion: number
+    markup: { target: PdfInspectedTextTarget; type: 'highlight' | 'underline' | 'strikeout' }
     signal?: AbortSignal
   }): Promise<{ bytes: Uint8Array; version: number }>
 }
@@ -278,10 +309,14 @@ export function PdfEditor({
   onDirtyChange,
   onAgentHandleChange,
   hostApply,
+  hostInspect,
+  hostMarkup,
   flush = false,
 }: EditorProps & {
   onAgentHandleChange?: (handle: PdfAgentHandle | null) => void
   hostApply?: PdfHostApply
+  hostInspect?: PdfHostInspect
+  hostMarkup?: PdfHostMarkup
 }) {
   const source = useSource(io, documentId)
   const [working, setWorking] = useState<PdfWorkingBytes | null>(null)
@@ -304,6 +339,22 @@ export function PdfEditor({
   )
   const [insertText, setInsertText] = useState('')
   const [pendingEditorOpen, setPendingEditorOpen] = useState(false)
+  const [selectTextMode, setSelectTextMode] = useState(false)
+  const [selectedText, setSelectedText] = useState<{
+    bytes: Uint8Array
+    key: string
+    run: PdfTextRun
+    target?: PdfInspectedTextTarget
+  } | null>(null)
+  const [inspectingText, setInspectingText] = useState(false)
+  const [replacementDraft, setReplacementDraft] = useState('')
+  const [markupFeedback, setMarkupFeedback] = useState<{
+    bytes: Uint8Array
+    key: string
+    run: PdfTextRun
+    type: 'highlight' | 'underline' | 'strikeout'
+  } | null>(null)
+  const inspectRequestRef = useRef(0)
   const [selectedPendingId, setSelectedPendingId] = useState<string | null>(null)
   const [pendingDraft, setPendingDraft] = useState<{
     id: string
@@ -1171,7 +1222,7 @@ export function PdfEditor({
   ])
 
   useEffect(() => {
-    if (!findOpen || currentBytes === null) return
+    if ((!findOpen && !selectTextMode) || currentBytes === null) return
     // 这一份页序已经扫过了
     if (textIndex !== null && textIndex.bytes === currentBytes && textIndex.key === textKey) return
     let cancelled = false
@@ -1190,7 +1241,11 @@ export function PdfEditor({
          */
         if (index.pagesWithText === 0) {
           setFindOpen(false)
-          setNotice('这份 PDF 没有文字层（可能是扫描件），搜不到内容')
+          setNotice(
+            selectTextMode
+              ? '这份 PDF 没有文字层（可能是扫描件），无法定位原文'
+              : '这份 PDF 没有文字层（可能是扫描件），搜不到内容',
+          )
         }
       } catch (cause) {
         if (cancelled) return
@@ -1202,11 +1257,211 @@ export function PdfEditor({
     return () => {
       cancelled = true
     }
-  }, [findOpen, currentBytes, textIndex, textKey, textSources])
+  }, [findOpen, selectTextMode, currentBytes, textIndex, textKey, textSources])
+
+  const activeSelectedText =
+    selectedText?.bytes === currentBytes && selectedText.key === textKey ? selectedText.run : null
+  const verifiedSelection =
+    selectedText?.bytes === currentBytes && selectedText.key === textKey
+      ? selectedText.target
+      : undefined
+  const pickText = async (x: number, y: number) => {
+    if (textIndex?.bytes !== currentBytes || textIndex.key !== textKey) return
+    const request = ++inspectRequestRef.current
+    const run = pickPdfTextRun(textIndex.index, at, x, y)
+    if (run === null) {
+      setSelectedText(null)
+      setNotice('这里没有可单独定位的整段原文；重叠文字也不能安全点选')
+      return
+    }
+    setSelectedText({ bytes: currentBytes!, key: textKey, run })
+    setReplacementDraft('')
+    setNotice(null)
+    if (!hostInspect || currentBytes === null) return
+    const version = agentRef.current?.getVersion()
+    setInspectingText(true)
+    try {
+      const target = await hostInspect({
+        bytes: currentBytes,
+        probe: { pageIndex: run.page, rect: [...run.pdfRect], oldText: run.text },
+      })
+      if (
+        request !== inspectRequestRef.current ||
+        agentRef.current?.getVersion() !== version ||
+        agentSnapshotRef.current?.bytes !== currentBytes
+      )
+        return
+      setSelectedText({ bytes: currentBytes, key: textKey, run, target })
+    } catch (cause) {
+      if (request === inspectRequestRef.current)
+        setNotice(`原文对象未通过核验：${messageOf(cause)}`)
+    } finally {
+      if (request === inspectRequestRef.current) setInspectingText(false)
+    }
+  }
+
+  const markupSelectedOriginal = async (type: 'highlight' | 'underline' | 'strikeout') => {
+    const run = activeSelectedText
+    const target = verifiedSelection
+    const handle = agentRef.current
+    const sourceBytes = source.bytes
+    const base = currentBytes
+    if (!run || !target || !hostMarkup || !handle || !sourceBytes || !base) return
+    if (settled !== null || pendingInserts.length > 0 || source.saving) {
+      setNotice('请先保存当前页面或插字改动，再标注原文')
+      return
+    }
+    if (contentAbortRef.current !== null) return
+    const expectedVersion = handle.getVersion()
+    const controller = new AbortController()
+    contentAbortRef.current = controller
+    setContentBusy(true)
+    setNotice(null)
+    try {
+      const applied = await hostMarkup({
+        bytes: base,
+        expectedVersion,
+        markup: { target, type },
+        signal: controller.signal,
+      })
+      if (
+        controller.signal.aborted ||
+        agentRef.current !== handle ||
+        handle.getVersion() !== expectedVersion ||
+        agentSnapshotRef.current?.bytes !== base
+      )
+        throw new Error('PDF 画布已变化，标注结果未应用')
+      if (applied.version !== expectedVersion + 1) throw new Error('PDF 宿主返回了错误的画布版本')
+      const entries = await readPdfPages(applied.bytes)
+      const pages: PdfPageRef[] = entries.map((entry, index) => ({
+        origin: { kind: 'original', index },
+        rotation: entry.rotation,
+        base: { width: entry.width, height: entry.height },
+        crop: null,
+        paper: null,
+      }))
+      if (
+        controller.signal.aborted ||
+        agentRef.current !== handle ||
+        handle.getVersion() !== expectedVersion ||
+        agentSnapshotRef.current?.bytes !== base
+      )
+        throw new Error('PDF 画布已变化，标注结果未应用')
+      setWorking({ source: sourceBytes, bytes: applied.bytes })
+      setEdit(null)
+      setMarkupFeedback({ bytes: applied.bytes, key: textKey, run, type })
+      setSelectedText(null)
+      agentSnapshotRef.current = {
+        bytes: applied.bytes,
+        pages,
+        activePage: Math.min(at, pages.length - 1),
+        dirty: true,
+      }
+      handle.markManualChange()
+      onDirtyChange?.(true)
+    } catch (cause) {
+      setNotice(`标注原文失败：${messageOf(cause)}`)
+    } finally {
+      if (contentAbortRef.current === controller) contentAbortRef.current = null
+      setContentBusy(false)
+    }
+  }
+
+  const replaceSelectedOriginal = async () => {
+    const run = activeSelectedText
+    const target = verifiedSelection
+    const handle = agentRef.current
+    const sourceBytes = source.bytes
+    const base = currentBytes
+    const nextText = replacementDraft
+    if (!run || !target || !hostApply || !handle || !sourceBytes || !base) return
+    if (!nextText.trim() || nextText.length > 10_000 || nextText === run.text) return
+    if (nextText.includes(run.text)) {
+      setNotice('替换结果包含原文，无法确认旧对象已移除')
+      return
+    }
+    if (settled !== null || pendingInserts.length > 0 || source.saving) {
+      setNotice('请先保存当前页面或插字改动，再替换原文')
+      return
+    }
+    if (contentAbortRef.current !== null) return
+    const expectedVersion = handle.getVersion()
+    const controller = new AbortController()
+    contentAbortRef.current = controller
+    setContentBusy(true)
+    setNotice(null)
+    try {
+      const applied = await hostApply({
+        bytes: base,
+        expectedVersion,
+        kind: 'edit',
+        items: [
+          {
+            pageIndex: run.page,
+            rect: [...run.pdfRect],
+            oldText: run.text,
+            newText: nextText,
+            fontSize: run.fontSizeHint,
+            target,
+          },
+        ],
+        signal: controller.signal,
+      })
+      if (
+        controller.signal.aborted ||
+        agentRef.current !== handle ||
+        handle.getVersion() !== expectedVersion ||
+        agentSnapshotRef.current?.bytes !== base
+      )
+        throw new Error('PDF 画布已变化，替换结果未应用')
+      if (applied.version !== expectedVersion + 1) throw new Error('PDF 宿主返回了错误的画布版本')
+      const entries = await readPdfPages(applied.bytes)
+      const nextIndex = await buildPdfTextIndex(
+        entries.map((entry, index) => ({ bytes: applied.bytes, index, rotation: entry.rotation })),
+        loadPdfDocument,
+      )
+      const pageText = nextIndex.pages[run.page]?.text ?? ''
+      if (pageText.includes(run.text) || !pageText.includes(nextText))
+        throw new Error('PDF 画布读回与替换结果不一致，未应用')
+      if (
+        controller.signal.aborted ||
+        agentRef.current !== handle ||
+        handle.getVersion() !== expectedVersion ||
+        agentSnapshotRef.current?.bytes !== base
+      )
+        throw new Error('PDF 画布已变化，替换结果未应用')
+      const pages: PdfPageRef[] = entries.map((entry, index) => ({
+        origin: { kind: 'original', index },
+        rotation: entry.rotation,
+        base: { width: entry.width, height: entry.height },
+        crop: null,
+        paper: null,
+      }))
+      setWorking({ source: sourceBytes, bytes: applied.bytes })
+      setEdit(null)
+      setSelectedText(null)
+      setSelectTextMode(false)
+      setReplacementDraft('')
+      agentSnapshotRef.current = {
+        bytes: applied.bytes,
+        pages,
+        activePage: Math.min(at, pages.length - 1),
+        dirty: true,
+      }
+      handle.markManualChange()
+      onDirtyChange?.(true)
+    } catch (cause) {
+      setNotice(`替换原文失败：${messageOf(cause)}`)
+    } finally {
+      if (contentAbortRef.current === controller) contentAbortRef.current = null
+      setContentBusy(false)
+    }
+  }
 
   /**
    * 查找的适配器。**只实现 `FindAdapter`**——没有 `replaceOne` / `replaceAll`，
-   * 于是 `FindReplaceBar` 不渲染替换区；现有文字层没有可信的对象选区与 PDF 矩形。
+   * 于是 `FindReplaceBar` 不渲染替换区；查找命中的子串没有经过完整
+   * PDF 文字对象核验。原文替换只从画布点选后走宿主核验入口。
    *
    * 用一个 `useMemo` 固定引用：栏的 effect 依赖 `adapter`，每次渲染换一个新
    * 对象会让它每次渲染都重扫一遍（而重扫发布会触发渲染——一个死循环）。
@@ -1707,6 +1962,23 @@ export function PdfEditor({
                   >
                     编辑插字
                   </ToolbarButton>
+                  <ToolbarButton
+                    label="定位原文"
+                    active={selectTextMode}
+                    disabled={!ready || contentBusy}
+                    disabledReason={contentBusy ? '文字正在写入' : 'PDF 尚未读取完成'}
+                    onClick={() => {
+                      setSelectTextMode((value) => !value)
+                      inspectRequestRef.current++
+                      setInspectingText(false)
+                      setInsertMode(false)
+                      setSelectedText(null)
+                      setReplacementDraft('')
+                      setNotice(null)
+                    }}
+                  >
+                    定位／标注原文
+                  </ToolbarButton>
                 </>
               ),
             },
@@ -1818,7 +2090,89 @@ export function PdfEditor({
         说假话。
       */
       subbar={
-        insertMode ? (
+        selectTextMode ? (
+          <div className="mimir-pdf-insert-bar">
+            <ToolbarLabel>
+              {textIndex?.bytes !== currentBytes || textIndex.key !== textKey
+                ? scan === null
+                  ? '正在读取原文位置…'
+                  : `正在读取原文位置… ${scan.done} / ${scan.total} 页`
+                : textIndex.index.pagesWithText === 0
+                  ? '这份 PDF 没有可点选的文字层'
+                  : activeSelectedText === null
+                    ? '点选页面上的一整段原文，以核对内容和位置'
+                    : `${selectedText?.target === undefined ? (inspectingText ? '正在核验原文对象' : '只读定位') : '已核验原文对象'} · 第 ${activeSelectedText.page + 1} 页：${activeSelectedText.text.slice(0, 120)}`}
+            </ToolbarLabel>
+            {verifiedSelection !== undefined && activeSelectedText !== null && (
+              <>
+                {(['highlight', 'underline', 'strikeout'] as const).map((type) => (
+                  <ToolbarButton
+                    key={type}
+                    label={
+                      type === 'highlight'
+                        ? '高亮原文'
+                        : type === 'underline'
+                          ? '下划线标注'
+                          : '删除线标注'
+                    }
+                    disabled={
+                      contentBusy ||
+                      source.saving ||
+                      settled !== null ||
+                      pendingInserts.length > 0 ||
+                      !hostMarkup
+                    }
+                    disabledReason={
+                      !hostMarkup
+                        ? 'PDF 标注执行器尚未连接'
+                        : contentBusy
+                          ? '内容正在写入'
+                          : source.saving
+                            ? '正在保存'
+                            : '请先保存当前页面或插字改动'
+                    }
+                    onClick={() => void markupSelectedOriginal(type)}
+                  >
+                    {type === 'highlight' ? '高亮' : type === 'underline' ? '下划线' : '删除线'}
+                  </ToolbarButton>
+                ))}
+                <ToolbarTextField
+                  label="替换为"
+                  value={replacementDraft}
+                  onChange={setReplacementDraft}
+                  placeholder="输入新文字"
+                />
+                <ToolbarButton
+                  label="替换原文"
+                  disabled={
+                    !replacementDraft.trim() ||
+                    replacementDraft === activeSelectedText.text ||
+                    replacementDraft.includes(activeSelectedText.text) ||
+                    replacementDraft.length > 10_000 ||
+                    contentBusy ||
+                    source.saving ||
+                    settled !== null ||
+                    pendingInserts.length > 0
+                  }
+                  disabledReason={
+                    contentBusy
+                      ? '文字正在写入'
+                      : source.saving
+                        ? '正在保存'
+                        : settled !== null || pendingInserts.length > 0
+                          ? '请先保存当前页面或插字改动'
+                          : replacementDraft.includes(activeSelectedText.text)
+                            ? '替换结果不能包含原文'
+                            : '请输入不同于原文的新文字'
+                  }
+                  onClick={() => void replaceSelectedOriginal()}
+                >
+                  替换原文
+                </ToolbarButton>
+              </>
+            )}
+          </div>
+        ) : insertMode ? (
           <div className="mimir-pdf-insert-bar">
             <ToolbarLabel>
               {insertPoint === null || insertPoint.page !== at
@@ -1989,9 +2343,22 @@ export function PdfEditor({
                 at: highlight.at,
                 page: at,
               }}
+              selectedText={activeSelectedText?.page === at ? activeSelectedText : null}
+              markupFeedback={
+                markupFeedback?.bytes === currentBytes &&
+                markupFeedback.key === textKey &&
+                markupFeedback.run.page === at
+                  ? markupFeedback
+                  : null
+              }
               onError={setRenderError}
               onPickPoint={
                 insertMode ? (origin) => setInsertPoint({ page: at, origin }) : undefined
+              }
+              onPickText={
+                selectTextMode && textIndex?.bytes === currentBytes && textIndex.key === textKey
+                  ? pickText
+                  : undefined
               }
             />
           )}
@@ -2111,16 +2478,22 @@ function PdfSheet({
   imports,
   zoom,
   highlight,
+  selectedText,
+  markupFeedback,
   onError,
   onPickPoint,
+  onPickText,
 }: {
   bytes: Uint8Array | null
   page: PdfPageRef
   imports: ReadonlyMap<string, Uint8Array>
   zoom: number
   highlight: { matches: readonly PdfMatch[]; at: number; page: number }
+  selectedText: PdfTextRun | null
+  markupFeedback: { run: PdfTextRun; type: 'highlight' | 'underline' | 'strikeout' } | null
   onError: (message: string | null) => void
   onPickPoint?: (origin: [number, number]) => void
+  onPickText?: (x: number, y: number) => void
 }) {
   const from = sourceOf(page, bytes, imports)
   /**
@@ -2155,7 +2528,7 @@ function PdfSheet({
     .filter(({ match }) => match.page === highlight.page)
 
   return (
-    <div className={`mimir-pdf-sheet${onPickPoint ? ' mimir-pdf-sheet--pick' : ''}`}>
+    <div className={`mimir-pdf-sheet${onPickPoint || onPickText ? ' mimir-pdf-sheet--pick' : ''}`}>
       <PdfCanvas
         bytes={from.bytes}
         pageIndex={from.index}
@@ -2163,7 +2536,33 @@ function PdfSheet({
         width={width}
         onError={onError}
         onPickPoint={onPickPoint}
+        onPickText={onPickText}
       />
+      {selectedText !== null && (
+        <span
+          className="mimir-pdf-hit"
+          data-active="true"
+          style={hitStyle(selectedText.rect)}
+          aria-hidden="true"
+        />
+      )}
+      {markupFeedback !== null && (
+        <span
+          className="mimir-pdf-hit"
+          data-markup={markupFeedback.type}
+          style={{
+            ...hitStyle(markupFeedback.run.rect),
+            background:
+              markupFeedback.type === 'highlight'
+                ? 'rgba(255, 210, 47, 0.35)'
+                : markupFeedback.type === 'strikeout'
+                  ? 'linear-gradient(to bottom, transparent 48%, #d54b37 48%, #d54b37 52%, transparent 52%)'
+                  : 'transparent',
+            borderBottom: markupFeedback.type === 'underline' ? '2px solid #d54b37' : undefined,
+          }}
+          aria-hidden="true"
+        />
+      )}
       {hits.map(({ match, index }) =>
         /*
           一处命中可能有**多个矩形**（跨行、或者 PDF 把一个词拆成几段）。
@@ -2264,6 +2663,7 @@ function PdfCanvas({
   width,
   onError,
   onPickPoint,
+  onPickText,
 }: {
   bytes: Uint8Array
   pageIndex: number
@@ -2271,6 +2671,7 @@ function PdfCanvas({
   width: number
   onError: (message: string | null) => void
   onPickPoint?: (origin: [number, number]) => void
+  onPickText?: (x: number, y: number) => void
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const handleRef = useRef<PdfRenderHandle | null>(null)
@@ -2325,11 +2726,16 @@ function PdfCanvas({
   }, [bytes, pageIndex, rotation, width])
 
   const pickPoint = async (event: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!onPickPoint) return
+    if (!onPickPoint && !onPickText) return
     const rect = event.currentTarget.getBoundingClientRect()
     if (rect.width <= 0 || rect.height <= 0) return
     const localX = event.clientX - rect.left
     const localY = event.clientY - rect.top
+    if (onPickText) {
+      onPickText(localX / rect.width, localY / rect.height)
+      return
+    }
+    if (!onPickPoint) return
     try {
       const doc = await loadPdfDocument(bytes)
       const page = await doc.getPage(pageIndex + 1)

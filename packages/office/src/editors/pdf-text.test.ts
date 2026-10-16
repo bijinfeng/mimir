@@ -13,7 +13,13 @@
 import { PDFDocument, StandardFonts } from 'pdf-lib'
 import { getDocument, type PDFDocumentProxy } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import { describe, expect, it } from 'vitest'
-import { buildPdfTextIndex, searchPdfText, type PdfMatch, type PdfTextSource } from './pdf-text.js'
+import {
+  buildPdfTextIndex,
+  pickPdfTextRun,
+  searchPdfText,
+  type PdfMatch,
+  type PdfTextSource,
+} from './pdf-text.js'
 
 /**
  * 造一份**中文** PDF（Type0/Identity-H 的 CID 字体，不内嵌，靠 ToUnicode 映射）。
@@ -138,6 +144,41 @@ describe('buildPdfTextIndex', () => {
 })
 
 describe('矩形：与画面同一套坐标', () => {
+  it('点选只返回整段原文和 PDF 用户空间矩形，不使用搜索子串的近似裁切', async () => {
+    const bytes = await makePdf([{ text: 'Hello World', width: 300, height: 400 }])
+    const index = await indexOf([sourceOf(bytes)])
+    const search = searchPdfText(index, 'World', NO_OPTIONS)[0]!.rects[0]!
+    expect(search.insetLeft).toBeGreaterThan(0)
+    const run = pickPdfTextRun(index, 0, search.x + search.width / 2, search.y + search.height / 2)
+    expect(run?.text).toBe('Hello World')
+    expect(run?.rect.insetLeft).toBeUndefined()
+    expect(run?.pdfRect[0]).toBeCloseTo(50, 3)
+    expect(run?.pdfRect[1]).toBeGreaterThan(290)
+    expect(run?.pdfRect[3]).toBeGreaterThan(300)
+    expect(run?.fontSizeHint).toBeGreaterThan(0)
+  })
+
+  it('旋转后点选仍指向原始 PDF 坐标；页外与重叠文字不产生候选', async () => {
+    const bytes = await makePdf([{ text: 'Turn me', width: 300, height: 400 }])
+    const index = await indexOf([sourceOf(bytes, 0, 90)])
+    const rect = searchPdfText(index, 'Turn me', NO_OPTIONS)[0]!.rects[0]!
+    const run = pickPdfTextRun(index, 0, rect.x + rect.width / 2, rect.y + rect.height / 2)
+    expect(run?.pdfRect[0]).toBeCloseTo(50, 3)
+    expect(pickPdfTextRun(index, 0, -0.1, 0.5)).toBeNull()
+    expect(pickPdfTextRun(index, 1, rect.x, rect.y)).toBeNull()
+
+    const doc = await PDFDocument.create()
+    const font = await doc.embedFont(StandardFonts.Helvetica)
+    const page = doc.addPage([300, 400])
+    page.drawText('double', { x: 50, y: 300, size: 12, font })
+    page.drawText('double', { x: 50, y: 300, size: 12, font })
+    const doubled = await indexOf([sourceOf(await doc.save())])
+    const overlap = searchPdfText(doubled, 'double', NO_OPTIONS)[0]!.rects[0]!
+    expect(
+      pickPdfTextRun(doubled, 0, overlap.x + overlap.width / 2, overlap.y + overlap.height / 2),
+    ).toBeNull()
+  })
+
   it('不旋转时，命中矩形落在文字实际占的位置上', async () => {
     // 300×400 的页，文字画在 (50, 300)，12pt
     const bytes = await makePdf([{ text: 'Hello', width: 300, height: 400 }])
@@ -253,8 +294,20 @@ describe('搜索', () => {
         {
           page: 0,
           chunks: [
-            { text: '这是组件\n', rect: { x: 0, y: 0, width: 0.5, height: 0.05 } },
-            { text: '性能优化的说明', rect: { x: 0, y: 0.05, width: 0.4, height: 0.05 } },
+            {
+              text: '这是组件\n',
+              sourceText: '这是组件',
+              pdfRect: [0, 0, 1, 1] as const,
+              fontSizeHint: 12,
+              rect: { x: 0, y: 0, width: 0.5, height: 0.05 },
+            },
+            {
+              text: '性能优化的说明',
+              sourceText: '性能优化的说明',
+              pdfRect: [0, 0, 1, 1] as const,
+              fontSizeHint: 12,
+              rect: { x: 0, y: 0.05, width: 0.4, height: 0.05 },
+            },
           ],
           text: '这是组件\n性能优化的说明',
           starts: [0, 5],
@@ -283,8 +336,20 @@ describe('搜索', () => {
         {
           page: 0,
           chunks: [
-            { text: '尾巴\n', rect: { x: 0, y: 0, width: 0.1, height: 0.05 } },
-            { text: '开头', rect: { x: 0, y: 0.05, width: 0.1, height: 0.05 } },
+            {
+              text: '尾巴\n',
+              sourceText: '尾巴',
+              pdfRect: [0, 0, 1, 1] as const,
+              fontSizeHint: 12,
+              rect: { x: 0, y: 0, width: 0.1, height: 0.05 },
+            },
+            {
+              text: '开头',
+              sourceText: '开头',
+              pdfRect: [0, 0, 1, 1] as const,
+              fontSizeHint: 12,
+              rect: { x: 0, y: 0.05, width: 0.1, height: 0.05 },
+            },
           ],
           text: '尾巴\n开头',
           starts: [0, 3],

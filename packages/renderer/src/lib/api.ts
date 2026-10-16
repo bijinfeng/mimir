@@ -27,6 +27,10 @@ import type {
   NoteLookupItem,
   NoteUpdate,
   ProbeResult,
+  PdfTextProbe,
+  PdfTextTarget,
+  PdfMarkupInput,
+  PptxManualPictureFields,
   RuntimeConfig,
   SaveNoteInput,
   SearchQueryInput,
@@ -254,6 +258,51 @@ function toQuery(params: Record<string, string | number | boolean | string[] | u
 
 export const api = {
   documents: {
+    async inspectPdfText(input: {
+      documentId: string
+      bytes: Uint8Array
+      probe: PdfTextProbe
+      signal?: AbortSignal
+    }): Promise<PdfTextTarget> {
+      const form = new FormData()
+      const copy = new Uint8Array(input.bytes.byteLength)
+      copy.set(input.bytes)
+      form.set('file', new File([copy], 'current.pdf', { type: 'application/pdf' }))
+      form.set('documentId', input.documentId)
+      form.set('probe', JSON.stringify(input.probe))
+      const response = await sendMultipart<{ target: PdfTextTarget }>(
+        '/api/conversations/pdf-agent/inspect-text',
+        'POST',
+        form,
+        input.signal,
+      )
+      return response.target
+    },
+    async applyPdfMarkup(input: {
+      documentId: string
+      bytes: Uint8Array
+      expectedVersion: number
+      markup: PdfMarkupInput
+      signal?: AbortSignal
+    }) {
+      const form = new FormData()
+      const copy = new Uint8Array(input.bytes.byteLength)
+      copy.set(input.bytes)
+      form.set('file', new File([copy], 'current.pdf', { type: 'application/pdf' }))
+      form.set('documentId', input.documentId)
+      form.set('expectedVersion', String(input.expectedVersion))
+      form.set('markup', JSON.stringify(input.markup))
+      const response = await sendMultipart<{ bytesBase64: string; version: number }>(
+        '/api/conversations/pdf-agent/apply-markup',
+        'POST',
+        form,
+        input.signal,
+      )
+      const decoded = atob(response.bytesBase64)
+      const bytes = new Uint8Array(decoded.length)
+      for (let index = 0; index < decoded.length; index++) bytes[index] = decoded.charCodeAt(index)
+      return { bytes, version: response.version }
+    },
     async applyPdfText(input: {
       documentId: string
       bytes: Uint8Array
@@ -350,6 +399,34 @@ export const api = {
         version: response.version,
         sampleData: response.sampleData,
       }
+    },
+    async applyPptxPicture(input: {
+      documentId: string
+      bytes: Uint8Array
+      expectedVersion: number
+      imageBytes: Uint8Array
+      slide: number
+      action: PptxManualPictureFields['action']
+      elementId?: string
+      signal?: AbortSignal
+    }) {
+      const form = new FormData()
+      form.set('file', new File([new Uint8Array(input.bytes)], 'current.pptx'))
+      form.set('image', new File([new Uint8Array(input.imageBytes)], 'picture'))
+      form.set('documentId', input.documentId)
+      form.set('expectedVersion', String(input.expectedVersion))
+      form.set('slide', String(input.slide))
+      form.set('action', input.action)
+      if (input.elementId) form.set('elementId', input.elementId)
+      const response = await sendMultipart<{
+        bytesBase64: string
+        records: unknown[]
+        version: number
+      }>('/api/conversations/pptx-agent/manual-picture', 'POST', form, input.signal)
+      const decoded = atob(response.bytesBase64)
+      const bytes = new Uint8Array(decoded.length)
+      for (let index = 0; index < decoded.length; index++) bytes[index] = decoded.charCodeAt(index)
+      return { bytes, records: response.records, version: response.version }
     },
     planHtmlPage(
       documentId: string,

@@ -11,8 +11,9 @@ const value = { type: ['string', 'number', 'boolean', 'null'] }
 
 const operationSchema = {
   type: 'object',
-  required: ['op', 'sheetId'],
-  description: '使用 op 指定操作，不使用 type；sheetId 从 get_workbook_context 取得。',
+  required: ['op'],
+  description:
+    '使用 op 指定操作，不使用 type；除 add_sheet 外，sheetId 从 get_workbook_context 取得。',
   properties: {
     op: {
       type: 'string',
@@ -35,6 +36,8 @@ const operationSchema = {
         'set_col_width',
         'set_rows_hidden',
         'set_cols_hidden',
+        'rename_sheet',
+        'add_sheet',
       ],
     },
     sheetId: {
@@ -94,6 +97,7 @@ const operationSchema = {
     heightPoints: { type: 'number', minimum: 2, maximum: 409, description: '行高，单位磅' },
     widthPx: { type: 'number', minimum: 10, maximum: 2000, description: '列宽，单位像素' },
     hidden: { type: 'boolean' },
+    name: { type: 'string', minLength: 1, maxLength: 31, description: '新的工作表名称' },
   },
 } as const
 
@@ -143,7 +147,7 @@ const tools = [
   {
     name: 'propose_operations',
     description:
-      '修改当前未保存的 XLSX。operations 中每项使用 op，不使用 type。例：{"operations":[{"op":"set_cell","sheetId":"sheet-1","address":"B3","value":"Agent验收"}]}。必填字段：set_cell=address,value；set_formula=address,formula；clear_cell=address；set_range=start（或 range）,values；clear_range/format_range/merge_cells/unmerge_cells=range（format_range 另需 format，如 {"bold":true}）；fill_range/copy_range=source,target；insert_rows/delete_rows/set_row_height/set_rows_hidden=row（插入/删除另需 count，高度另需 heightPoints，隐藏另需 hidden）；insert_cols/delete_cols/set_col_width/set_cols_hidden=column（插入/删除另需 count，宽度另需 widthPx，隐藏另需 hidden）。以上均另需 op,sheetId。范围写入最多 2000 格；copy_range 不支持筛选变体。填充/复制、行列、合并及尺寸操作须单独提交。其他上游操作尚未接入。先读取工作表和目标格。',
+      '修改当前未保存的 XLSX。operations 中每项使用 op，不使用 type。例：{"operations":[{"op":"set_cell","sheetId":"sheet-1","address":"B3","value":"Agent验收"}]}。必填字段：set_cell=address,value；set_formula=address,formula；clear_cell=address；set_range=start（或 range）,values；clear_range/format_range/merge_cells/unmerge_cells=range（format_range 另需 format，如 {"bold":true}）；fill_range/copy_range=source,target；insert_rows/delete_rows/set_row_height/set_rows_hidden=row（插入/删除另需 count，高度另需 heightPoints，隐藏另需 hidden）；insert_cols/delete_cols/set_col_width/set_cols_hidden=column（插入/删除另需 count，宽度另需 widthPx，隐藏另需 hidden）；rename_sheet=name；add_sheet=name（不支持自定 rows/columns）。除 add_sheet 外，以上均需 sheetId。范围写入最多 2000 格；copy_range 不支持筛选变体。填充/复制、行列、合并、尺寸及工作表管理操作须单独提交。其他上游操作尚未接入。先读取工作表和目标格。',
     inputSchema: {
       type: 'object',
       required: ['operations'],

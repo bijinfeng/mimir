@@ -269,6 +269,19 @@ function elementLabel(tag: string, className: string): string {
   return first === '' ? tag : `${tag}.${first}`
 }
 
+/** Read an opening tag without mistaking text inside another quoted attribute for `style`. */
+function hasInlineStyle(startTag: string): boolean {
+  const tagName = /^<[^\s/>]+/.exec(startTag)
+  if (!tagName) return false
+  const attributes = /(\s+)([^\s"'<>/=]+)(?:\s*=\s*("[^"]*"|'[^']*'|[^\s"'=<>`]+))?/gy
+  attributes.lastIndex = tagName[0].length
+  let match: RegExpExecArray | null
+  while ((match = attributes.exec(startTag))) {
+    if (match[2]?.toLowerCase() === 'style') return true
+  }
+  return false
+}
+
 /**
  * 缩放吸附：夹到 `[50, 200]` 并取到 10 的倍数。
  *
@@ -445,6 +458,12 @@ export function HtmlEditor({
     if (selected === null || doc === null) return null
     return doc.map.bySid.has(selected.sid) ? selected : null
   }, [selected, doc])
+
+  const selectedHasInlineStyle = useMemo(() => {
+    if (!activeSelected || !doc) return false
+    const entry = doc.map.bySid.get(activeSelected.sid)
+    return entry ? hasInlineStyle(doc.text.slice(entry.startTag[0], entry.startTag[1])) : false
+  }, [activeSelected, doc])
 
   /**
    * 元素路径：从根到选中元素。
@@ -1163,6 +1182,32 @@ export function HtmlEditor({
                     }}
                   >
                     定位选中元素
+                  </ToolbarButton>
+                  <ToolbarButton
+                    label="清除选中元素的行内样式"
+                    disabled={!selectedHasInlineStyle}
+                    disabledReason={
+                      activeSelected === null ? '先在预览里点一个元素' : '选中元素没有行内样式'
+                    }
+                    onClick={() => {
+                      const handle = agentRef.current
+                      const sid = selectedSidRef.current
+                      if (!handle || sid === null) return
+                      const current = handle.getDocument()
+                      const entry = current.map.bySid.get(sid)
+                      if (
+                        !entry ||
+                        !hasInlineStyle(current.text.slice(entry.startTag[0], entry.startTag[1]))
+                      )
+                        return
+                      handle.applyOps([{ op: 'set_attr', sid, name: 'style', value: null }], {
+                        expectedVersion: current.version,
+                        summary: '已清除元素行内样式。',
+                        highlight: false,
+                      })
+                    }}
+                  >
+                    清除行内样式
                   </ToolbarButton>
                   <HtmlElementMenu
                     sid={activeSelected?.sid ?? null}

@@ -9,7 +9,10 @@ import {
   paperWidthPx,
   sectionGeoms,
 } from '../../vendor/apps/docs/src/renderer/pagination-sections.js'
+import type { BlockBox } from '../../vendor/apps/docs/src/renderer/pagination-types.js'
 import { openDocx } from '../docx.js'
+import { assignLiveNoteBands, lastPageNoteMinHeight, liveFootnoteBlocks } from '../pagination.js'
+import { pageFootnotesOf } from '../footnotes.js'
 import { DOCX_AGENT_OP_NAMES, createDocxAgentHandle, docxAgentLiveSections } from './docx-agent.js'
 import type { SaveOptions } from '../../vendor/packages/docx-engine/src/patch.js'
 
@@ -201,6 +204,102 @@ describe('DOCX agent live editor handle', () => {
     const reopened = await openDocx(saved)
     expect(reopened.footnotes.parsed.endnotes.find((note) => note.id === id)?.text).toBe(
       'Agent endnote',
+    )
+    handle.dispose()
+    editor.destroy()
+  })
+
+  it('inserts at an exact captured position and rejects a stale cursor', async () => {
+    const { session, editor, handle, saveOptions } = await setup()
+    let blockIndex = -1
+    let start = -1
+    editor.state.doc.forEach((node, from, index) => {
+      if (blockIndex < 0 && node.type.name === 'docParagraph' && node.textContent.length > 4) {
+        blockIndex = index
+        start = from
+      }
+    })
+    expect(blockIndex).toBeGreaterThanOrEqual(0)
+    const position = start + 3
+    const version = handle.getVersion()
+    const inserted = await handle.execute(
+      'insert_footnote',
+      { blockIndex, position, text: 'Exact cursor note' },
+      { expectedVersion: version },
+    )
+    const id = (inserted.data as { id: string }).id
+    expect(editor.state.doc.nodeAt(position)?.type.name).toBe('docNoteRef')
+    const projected = liveFootnoteBlocks(editor, session.footnotes.blockByDocxIndex)
+    expect(projected.referenced.has(`footnote:${id}`)).toBe(true)
+    const saved = await session.save(editor.getJSON() as never, saveOptions.current)
+    expect(
+      (await openDocx(saved)).footnotes.parsed.footnotes.find((note) => note.id === id)?.text,
+    ).toBe('Exact cursor note')
+
+    editor.commands.insertContentAt(position, 'changed')
+    await expect(
+      handle.execute(
+        'insert_endnote',
+        { blockIndex, position, text: 'Stale note' },
+        { expectedVersion: version },
+      ),
+    ).rejects.toThrow('请重新读取')
+    expect(saveOptions.current.endnotes).toBeUndefined()
+    handle.dispose()
+    editor.destroy()
+  })
+
+  it('projects a note from a new unsaved paragraph and reopens it after save', async () => {
+    const { session, editor, handle, saveOptions } = await setup()
+    await handle.execute('insert_content', {
+      html: '<p>New paragraph for a live note</p>',
+      afterBlockIndex: -1,
+    })
+    expect(editor.state.doc.child(0)?.attrs.docxIndex).toBeNull()
+    const inserted = await handle.execute('insert_footnote', {
+      blockIndex: 0,
+      position: 4,
+      text: 'New paragraph note body',
+    })
+    const id = (inserted.data as { id: string }).id
+    const live = liveFootnoteBlocks(editor, session.footnotes.blockByDocxIndex)
+    expect(live.referenced.has(`footnote:${id}`)).toBe(true)
+    const el = editor.view.dom.querySelector<HTMLElement>('p:has(sup.doc-note-ref)')
+    expect(el).not.toBeNull()
+    const box: BlockBox = { top: 0, height: 30, el: el!, section: 0 }
+    const ref = el!.querySelector<HTMLElement>('sup.doc-note-ref')!
+    vi.spyOn(el!, 'getBoundingClientRect').mockReturnValue({ top: 100 } as DOMRect)
+    vi.spyOn(ref, 'getBoundingClientRect').mockReturnValue({ top: 130 } as DOMRect)
+    assignLiveNoteBands([box])
+    expect(box.noteBands).toEqual([{ offset: 30, height: 0 }])
+    const context = {
+      parsed: session.footnotes.parsed,
+      footnotes: saveOptions.current.footnotes!,
+      blocks: [box],
+      blockByDocxIndex: live.blocks,
+      sections: session.sections,
+    }
+    const firstPage = pageFootnotesOf(context, [{ start: 0, end: 100, section: 0 }])
+    expect(firstPage[0]?.map((item) => item.text)).toContain('New paragraph note body')
+
+    const secondPage = pageFootnotesOf({ ...context, blocks: [{ ...box, top: 20 }] }, [
+      { start: 0, end: 40, section: 0 },
+      { start: 40, end: 100, section: 0 },
+    ])
+    expect(secondPage[0]).toHaveLength(0)
+    expect(secondPage[1]?.map((item) => item.text)).toContain('New paragraph note body')
+    const noteHeight = secondPage[1]!.reduce((sum, note) => sum + note.height, 8)
+    const required = lastPageNoteMinHeight(990, noteHeight, 96)
+    expect(required).toBeGreaterThan(1056)
+    expect(required - 96 - noteHeight).toBeGreaterThanOrEqual(998)
+
+    const saved = await session.save(editor.getJSON() as never, saveOptions.current)
+    const reopened = await openDocx(saved)
+    expect(reopened.footnotes.parsed.footnotes.find((note) => note.id === id)?.text).toBe(
+      'New paragraph note body',
+    )
+    expect(reopened.sections.map((section) => section.settings.pageHeight)).toEqual(
+      session.sections.map((section) => section.settings.pageHeight),
     )
     handle.dispose()
     editor.destroy()

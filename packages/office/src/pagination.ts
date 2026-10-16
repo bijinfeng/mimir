@@ -5,7 +5,10 @@ import {
   sectionPageBox,
 } from '../vendor/apps/docs/src/renderer/pagination-sections.js'
 import { setColumnLayout } from '../vendor/apps/docs/src/renderer/editor/column-layout.js'
-import { measureBlocks } from '../vendor/apps/docs/src/renderer/pagination-measure.js'
+import {
+  measureBlocks,
+  noteRefOffsets,
+} from '../vendor/apps/docs/src/renderer/pagination-measure.js'
 import {
   anchorElement,
   lineStartAnchor,
@@ -25,11 +28,13 @@ import { BlockIndex } from '../vendor/apps/docs/src/renderer/pagination-index.js
 import {
   alignGapHfStrips,
   alignTableGapFills,
+  pageFramesFromGaps,
   setPageGaps,
   type PageGapSpec,
 } from '../vendor/apps/docs/src/renderer/editor/pagination-gaps.js'
 import type { BlockBox, PageSlice } from '../vendor/apps/docs/src/renderer/pagination-types.js'
 import type { SectionInfo } from '../vendor/packages/docx-engine/src/types.js'
+import type { Block } from '../vendor/packages/docx-engine/src/types.js'
 import type { DocxSession } from './docx.js'
 import {
   assignLiveBlockSections,
@@ -59,19 +64,11 @@ import {
  * ——于是连续流看起来就是一页一页的纸。**它不改文档内容**（装饰器不落库、
  * 不进历史），所以保存路径完全不受影响。
  *
- * ## 这一版做到哪里
+ * ## 当前边界
  *
- * 只做**块级分页**（Word 里最常见的形态）：一个块（段落/标题/表格）放不下就
- * 整块推到下一页，并插入页间隙。
- *
- * 上游的完整实现还有四类特例，这里都没有：
- *   - **块内断行**：段落太长时在行边界切开（要 `lineOffsets` 与孤行控制）
- *   - **拆表**：表格跨页时按行切、重复表头
- *   - **页眉页脚 / 脚注**：每页渲染页眉、页脚、脚注区
- *   - **分栏**：页内多栏的容量按「栏数 × 栏高」算
- *
- * 少这四类的后果是**视觉**上的：长段落会整块下移而不是从中间断开的自然
- * 效果；带页眉脚与脚注的文档在页面边界上看不到它们。不影响编辑与保存。
+ * 段落、表格、分栏和页眉页脚沿用上游切片与画布几何；脚注根据当前画布引用
+ * 分配到页底。末页放不下脚注时延长画布纸张以避免覆盖正文，尚不等同于
+ * Word 按固定纸高重新分页。分页仅影响显示，不改 DOCX 保存字节。
  *
  * ## 什么时候重算
  *
@@ -119,6 +116,50 @@ export interface PaginationOptions {
   footnotes?: DocxSession['footnotes'] | null | undefined
   /** 总页数回传（界面可以显示「第 x / 共 y 页」） */
   onPaged?: (pageCount: number) => void
+}
+
+/** Reflect the current ProseMirror references, including unsaved insertions and undo. */
+export function liveFootnoteBlocks(
+  editor: Editor,
+  original: DocxSession['footnotes']['blockByDocxIndex'],
+): { blocks: Map<number, Block>; referenced: Set<string> } {
+  const blocks = new Map<number, Block>()
+  const referenced = new Set<string>()
+  editor.state.doc.forEach((node) => {
+    const runs: NonNullable<Block['runs']> = []
+    node.descendants((child) => {
+      if (child.type.name !== 'docNoteRef') return
+      const kind = child.attrs.kind
+      const id = String(child.attrs.id)
+      if (kind !== 'footnote' && kind !== 'endnote') return
+      runs.push({ text: '', noteRef: { kind, id } })
+      referenced.add(`${kind}:${id}`)
+    })
+    const index = node.attrs.docxIndex
+    if (!Number.isSafeInteger(index)) return
+    const source = original.get(index as number)
+    if (!source) return
+    blocks.set(index as number, { ...source, runs, table: undefined })
+  })
+  return { blocks, referenced }
+}
+
+/** Match each visible footnote reference to its live line, including new paragraphs. */
+export function assignLiveNoteBands(blocks: BlockBox[]): void {
+  for (const block of blocks) {
+    if (!block.el) continue
+    const offsets = noteRefOffsets(block.el, 1)
+    if (offsets.length > 0) block.noteBands = offsets.map((offset) => ({ offset, height: 0 }))
+  }
+}
+
+/** Grow the last paper when its body would otherwise cover the footnote area. */
+export function lastPageNoteMinHeight(
+  bodyBottom: number,
+  noteHeight: number,
+  bottomMargin: number,
+): number {
+  return Math.ceil(bodyBottom + noteHeight + bottomMargin + 8)
 }
 
 /**
@@ -241,6 +282,7 @@ export function usePagination({
       const pageEl = pm.closest<HTMLElement>('.doc-page')
       const wrap = pm.closest<HTMLElement>('.page-wrap')
       lastWrap = wrap
+      pageEl?.style.removeProperty('min-height')
 
       /**
        * origin = **内容区顶部**的屏幕 Y。
@@ -259,11 +301,13 @@ export function usePagination({
       let measured = measureBlocks(pm, origin, 1)
       let blocks = measured.blocks as BlockBox[]
       assignLiveBlockSections(pm, blocks, sections)
+      assignLiveNoteBands(blocks)
       // Width decorations rewrap later sections before their vertical positions are measured.
       setColumnLayout(ctx.editor.view, liveColumnPlacements(blocks, [], sections, geoms))
       measured = measureBlocks(pm, origin, 1)
       blocks = measured.blocks as BlockBox[]
       assignLiveBlockSections(pm, blocks, sections)
+      assignLiveNoteBands(blocks)
       if (blocks.length === 0) {
         pageEl?.classList.remove('measuring-columns')
         onPaged?.(1)
@@ -282,6 +326,7 @@ export function usePagination({
           measured = measureBlocks(pm, origin, 1)
           blocks = measured.blocks as BlockBox[]
           assignLiveBlockSections(pm, blocks, sections)
+          assignLiveNoteBands(blocks)
           const refined = sliceWithLineSplit(blocks, geoms, measured.totalHeight, 1)
           const stable =
             refined.length === slices.length &&
@@ -344,14 +389,20 @@ export function usePagination({
        * 逐页脚注。分配**必须在切片之后**：它把「引用所在的内容流坐标」
        * 换算成页号，段落跨页时每条脚注跟着自己的引用走（Word 语义）。
        */
+      const liveNotes = footnotes
+        ? liveFootnoteBlocks(ctx.editor, footnotes.blockByDocxIndex)
+        : null
+      const noteDefinitions = footnotes?.parsed.footnotes.filter((note) =>
+        liveNotes?.referenced.has(`footnote:${note.id}`),
+      )
       const noteItems =
-        footnotes && footnotes.parsed.footnotes.length > 0
+        footnotes && liveNotes && noteDefinitions && noteDefinitions.length > 0
           ? pageFootnotesOf(
               {
                 parsed: footnotes.parsed,
-                footnotes: footnotes.parsed.footnotes,
+                footnotes: noteDefinitions,
                 blocks,
-                blockByDocxIndex: footnotes.blockByDocxIndex,
+                blockByDocxIndex: liveNotes.blocks,
                 sections,
               },
               slices,
@@ -677,6 +728,20 @@ export function usePagination({
       setPageGaps(ctx.editor.view, gaps)
       alignPageGapPaint(pm)
       if (wrap) {
+        const finalNotes = noteItems[slices.length - 1] ?? []
+        if (pageEl && finalNotes.length > 0) {
+          const settings = sections[slices[slices.length - 1]?.section ?? 0]?.settings
+          if (settings) {
+            const pageRect = pageEl.getBoundingClientRect()
+            const bodyBottom = pm.getBoundingClientRect().bottom - pageRect.top
+            const required = lastPageNoteMinHeight(
+              bodyBottom,
+              notesAreaHeight(finalNotes),
+              hfStripGeom(settings).marginBottom,
+            )
+            if (required > pageRect.height) pageEl.style.minHeight = `${required}px`
+          }
+        }
         const firstBox = sectionPageBox(sections[0]!.settings)
         const mixedPaper = sections.some((section) => {
           const box = sectionPageBox(section.settings)
@@ -687,6 +752,62 @@ export function usePagination({
         })
         wrap.classList.toggle('paper-mixed', mixedPaper)
         syncSectionPageSheets(wrap, sections, slices, mixedPaper)
+        // Page-gap widgets can paint only boundaries between pages. Paint the
+        // first header, final footer, and final-page notes on the paper itself.
+        const previous = wrap.querySelector(':scope > .mimir-edge-hf')
+        previous?.remove()
+        const frames = pageFramesFromGaps(wrap, 1)
+        const firstHeader = hfFor(0, 'header')
+        const lastIndex = slices.length - 1
+        const lastFooter = hfFor(lastIndex, 'footer')
+        const lastNotes = noteItems[lastIndex] ?? []
+        if (
+          (firstHeader && hfHasVisibleContent(firstHeader)) ||
+          (lastFooter && hfHasVisibleContent(lastFooter)) ||
+          lastNotes.length > 0
+        ) {
+          const layer = document.createElement('div')
+          layer.className = 'mimir-edge-hf'
+          layer.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:2'
+          const add = (kind: 'header' | 'footer', value: HeaderFooter, index: number) => {
+            const pageFrame = frames[index]
+            const section = sections[slices[index]?.section ?? 0]
+            if (!pageFrame || !section) return
+            const geom = hfStripGeom(section.settings)
+            const el = makeGapHfEl({
+              kind,
+              value,
+              pageNo: pageNos[index] ?? index + 1,
+              pageTotal: slices.length,
+              geom,
+            })
+            el.style.left = `${pageFrame.left + geom.marginLeft}px`
+            el.style.transform = 'none'
+            el.style.width = `${geom.pageW - geom.marginLeft - geom.marginRight}px`
+            if (kind === 'header') {
+              el.style.top = `${pageFrame.top + geom.headerStripTop}px`
+            } else {
+              // The final paper can grow beyond the nominal page height while
+              // layout settles; pin its footer to the actual paper edge.
+              el.style.bottom = `${geom.footerDist}px`
+            }
+            layer.append(el)
+          }
+          if (firstHeader && hfHasVisibleContent(firstHeader)) add('header', firstHeader, 0)
+          if (lastFooter && hfHasVisibleContent(lastFooter)) add('footer', lastFooter, lastIndex)
+          if (lastNotes.length > 0) {
+            const pageFrame = frames[lastIndex]
+            const section = sections[slices[lastIndex]?.section ?? 0]
+            if (pageFrame && section) {
+              const geom = hfStripGeom(section.settings)
+              const notes = makeGapNotesEl(lastNotes, sectionContentWidth(section))
+              notes.style.left = `${pageFrame.left + geom.marginLeft}px`
+              notes.style.top = `${pageFrame.bottom - geom.marginBottom - notesAreaHeight(lastNotes)}px`
+              layer.append(notes)
+            }
+          }
+          wrap.append(layer)
+        }
       }
       onPaged?.(slices.length)
     }
@@ -766,6 +887,7 @@ export function usePagination({
       if (editor) editor.off('update', onUpdate)
       if (!editor?.isDestroyed && editor?.view?.dom) setPageGaps(editor.view, [])
       if (lastWrap) {
+        lastWrap.querySelector(':scope > .mimir-edge-hf')?.remove()
         syncSectionPageSheets(lastWrap, sections, [], false)
         lastWrap.classList.remove('paper-mixed')
       }

@@ -76,7 +76,7 @@ import {
   type ReactNode,
 } from 'react'
 import { redoDepth, undoDepth } from '@tiptap/pm/history'
-import type { Mark } from '@tiptap/pm/model'
+import type { Mark, Node as ProseMirrorNode } from '@tiptap/pm/model'
 import type { EditorState, Transaction } from '@tiptap/pm/state'
 import {
   CellSelection,
@@ -145,6 +145,7 @@ import {
   ToolbarNumberField,
   ToolbarSelect,
   ToolbarTextField,
+  ToolbarTextArea,
   ToolbarToggleGroup,
   useFindHotkey,
   useToolbarState,
@@ -193,6 +194,7 @@ import { hasNode, runCommand, toggleMarkByName } from '../shell/editor-commands.
 import { docxFindAdapter } from './docx-find.js'
 import { statusText, useParsed, useSource } from './use-source.js'
 import { CompactToolbar } from './CompactToolbar.js'
+import { PAGE_MARK, TOTAL_PAGES_MARK } from '../../vendor/packages/docx-engine/src/types.js'
 import './compact-toolbar.css'
 import { OFFICE_MIME, type EditorProps } from './types.js'
 import {
@@ -220,6 +222,95 @@ const NO_LEVELS: readonly number[] = []
 /** 带可逆编号的段落块。**顺序就是「谁更具体」**——判定当前块类型时先查前面的 */
 const PARA_NODE_TYPES = ['docHeading', 'docListItem', 'docParagraph'] as const
 type ParaNodeName = (typeof PARA_NODE_TYPES)[number]
+
+export function resolveDocxCommentTarget(
+  doc: ProseMirrorNode,
+  from: number,
+  to: number,
+): { index: number; text: string; selected: string } | null {
+  const selected = from === to ? '' : doc.textBetween(from, to, '')
+  const targets: { index: number; text: string }[] = []
+  doc.forEach((node, start, index) => {
+    if (!PARA_NODE_TYPES.includes(node.type.name as ParaNodeName)) return
+    const contentFrom = start + 1
+    const contentTo = start + node.nodeSize - 1
+    if (selected) {
+      if (contentFrom >= to || contentTo <= from) return
+      const overlap = doc.textBetween(Math.max(from, contentFrom), Math.min(to, contentTo), '')
+      if (overlap) targets.push({ index, text: node.textContent })
+    } else if (from >= start && from <= start + node.nodeSize) {
+      targets.push({ index, text: node.textContent })
+    }
+  })
+  const target = targets.length === 1 ? targets[0] : undefined
+  if (!target || (selected && !target.text.includes(selected))) return null
+  return { ...target, selected }
+}
+
+function saveOptionsWithLiveComments(
+  doc: ProseMirrorNode,
+  session: DocxSession,
+  options: DocxSaveOptions,
+): DocxSaveOptions {
+  if (!options.comments) return options
+  const originalIds = new Set(session.footnotes.parsed.comments.map((item) => item.id))
+  const anchoredIds = new Set<string>()
+  doc.descendants((node) => {
+    if (!node.isText) return
+    for (const mark of node.marks) {
+      if (mark.type.name !== 'comment') continue
+      for (const id of String(mark.attrs.ids).split(/\s+/).filter(Boolean)) anchoredIds.add(id)
+    }
+  })
+  const comments = options.comments.filter((item) => {
+    const rootId = item.parentId ?? item.id
+    return originalIds.has(rootId) || anchoredIds.has(rootId)
+  })
+  return comments.length === options.comments.length ? options : { ...options, comments }
+}
+
+function saveOptionsWithLiveNotes(
+  doc: ProseMirrorNode,
+  session: DocxSession,
+  options: DocxSaveOptions,
+): DocxSaveOptions {
+  if (!options.footnotes && !options.endnotes) return options
+  const referenced = new Set<string>()
+  doc.descendants((node) => {
+    if (node.type.name === 'docNoteRef')
+      referenced.add(`${String(node.attrs.kind)}:${String(node.attrs.id)}`)
+  })
+  const original = session.footnotes.parsed
+  const clean = (kind: 'footnote' | 'endnote', list: NonNullable<DocxSaveOptions['footnotes']>) => {
+    const originalIds = new Set(
+      (kind === 'footnote' ? original.footnotes : original.endnotes).map((note) => note.id),
+    )
+    return list.filter((note) => originalIds.has(note.id) || referenced.has(`${kind}:${note.id}`))
+  }
+  const footnotes = options.footnotes && clean('footnote', options.footnotes)
+  const endnotes = options.endnotes && clean('endnote', options.endnotes)
+  if (
+    footnotes?.length === options.footnotes?.length &&
+    endnotes?.length === options.endnotes?.length
+  )
+    return options
+  return { ...options, ...(footnotes ? { footnotes } : {}), ...(endnotes ? { endnotes } : {}) }
+}
+
+export function resolveDocxNoteTarget(
+  doc: ProseMirrorNode,
+  from: number,
+  to: number,
+): { blockIndex: number; position: number } | null {
+  let target: { blockIndex: number; position: number } | null = null
+  doc.forEach((node, start, blockIndex) => {
+    if (!PARA_NODE_TYPES.includes(node.type.name as ParaNodeName)) return
+    if (from >= start + 1 && to <= start + node.nodeSize - 1) {
+      target = { blockIndex, position: to }
+    }
+  })
+  return target
+}
 
 /** 插图后不超过正文宽度（上游 Ribbon 的同一个常量：US Letter 的正文宽） */
 const MAX_IMAGE_WIDTH_PX = 620
@@ -1209,6 +1300,15 @@ export function DocxEditor({
     const options = saveOptionsSnapshot.session === session ? saveOptionsSnapshot.options : {}
     return docxAgentLiveSections(editor, session, options)
   }, [session, editor, saveOptionsSnapshot])
+  const liveFootnotes = useMemo(() => {
+    if (!session) return null
+    const options = saveOptionsSnapshot.session === session ? saveOptionsSnapshot.options : {}
+    if (!options.footnotes) return session.footnotes
+    return {
+      ...session.footnotes,
+      parsed: { ...session.footnotes.parsed, footnotes: options.footnotes },
+    }
+  }, [session, saveOptionsSnapshot])
   const pageStyle = useMemo(() => {
     const first = liveSections[0]?.settings
     if (!first) return undefined
@@ -1235,7 +1335,7 @@ export function DocxEditor({
      */
     sections: liveSections,
     headerFooter: liveHeaderFooter,
-    footnotes: session?.footnotes ?? null,
+    footnotes: liveFootnotes,
     onPaged: handlePaged,
   })
 
@@ -1243,12 +1343,22 @@ export function DocxEditor({
     if (!session || !editor) return
     const savingHandle = agentHandleRef.current
     const savingVersion = savingHandle?.getVersion()
-    const bytes = await session.save(editor.getJSON() as never, saveOptionsRef.current)
+    const options = saveOptionsWithLiveNotes(
+      editor.state.doc,
+      session,
+      saveOptionsWithLiveComments(editor.state.doc, session, saveOptionsRef.current),
+    )
+    if (options !== saveOptionsRef.current) {
+      saveOptionsRef.current = options
+      setSaveOptionsSnapshot({ session, options: structuredClone(options) })
+    }
+    const bytes = await session.save(editor.getJSON() as never, options)
     const ok = await source.save(bytes, { name: 'document.docx', mime: OFFICE_MIME.docx })
     if (!ok) return
     if (agentHandleRef.current !== savingHandle) return
     savingHandle?.markSaved()
     if (savingVersion !== savingHandle?.getVersion()) return
+    setNotice('')
     const pendingDraft = savingHandle?.hasPendingDraft() ?? false
     dirtyRef.current = pendingDraft
     setDirty(pendingDraft)
@@ -1320,6 +1430,87 @@ export function DocxEditor({
             findOpen={findOpen}
             onToggleFind={() => setFindOpen((open) => !open)}
             onNotice={setNotice}
+            headerText={liveHeaderFooter?.header?.text ?? ''}
+            footerText={liveHeaderFooter?.footer?.text ?? ''}
+            onSetHeaderFooter={async (kind, text) => {
+              const handle = agentHandleRef.current
+              if (!handle) {
+                setNotice('文档还没读完，请稍后再试')
+                return false
+              }
+              try {
+                const result = await handle.execute('set_header_footer', { kind, text })
+                setNotice(result.summary)
+                return true
+              } catch (cause) {
+                setNotice(cause instanceof Error ? cause.message : String(cause))
+                return false
+              }
+            }}
+            noteVersion={() => agentHandleRef.current?.getVersion() ?? -1}
+            onInsertNote={async (kind, text, selection) => {
+              const handle = agentHandleRef.current
+              if (!handle || !editor || handle.documentId !== documentId) {
+                setNotice('文档还没读完，请稍后再试')
+                return false
+              }
+              if (editor.state.doc !== selection.doc) {
+                setNotice('正文已变化，请重新定位注释位置')
+                return false
+              }
+              const target = resolveDocxNoteTarget(selection.doc, selection.from, selection.to)
+              if (!target) {
+                setNotice('只能在同一段落的文字中插入脚注或尾注')
+                return false
+              }
+              try {
+                const result = await handle.execute(
+                  kind === 'footnote' ? 'insert_footnote' : 'insert_endnote',
+                  { ...target, text },
+                  { expectedVersion: selection.version },
+                )
+                setNotice(result.summary)
+                return true
+              } catch (cause) {
+                setNotice(cause instanceof Error ? cause.message : String(cause))
+                return false
+              }
+            }}
+            onAddComment={async (comment, selection) => {
+              const handle = agentHandleRef.current
+              if (!handle || !editor) {
+                setNotice('文档还没读完，请稍后再试')
+                return false
+              }
+              if (editor.state.doc !== selection.doc) {
+                setNotice('正文已变化，请重新选择文字后添加批注')
+                return false
+              }
+              const { from, to } = selection
+              const target = resolveDocxCommentTarget(editor.state.doc, from, to)
+              if (!target) {
+                setNotice('一次只能给同一段文字添加批注')
+                return false
+              }
+              const { selected } = target
+              if (selected && target.text.indexOf(selected) !== target.text.lastIndexOf(selected)) {
+                setNotice('选中文字在本段重复，请选一段更具体的文字再添加批注')
+                return false
+              }
+              try {
+                const result = await handle.execute('add_comment', {
+                  blockIndex: target.index,
+                  comment,
+                  author: '用户',
+                  ...(selected ? { text: selected } : {}),
+                })
+                setNotice(result.summary)
+                return true
+              } catch (cause) {
+                setNotice(cause instanceof Error ? cause.message : String(cause))
+                return false
+              }
+            }}
           />
         </>
       }
@@ -1391,6 +1582,19 @@ export interface DocxToolbarProps {
   findOpen: boolean
   onToggleFind: () => void
   onNotice: (text: string) => void
+  headerText?: string
+  footerText?: string
+  onSetHeaderFooter?: (kind: 'header' | 'footer', text: string) => Promise<boolean>
+  noteVersion?: () => number
+  onInsertNote?: (
+    kind: 'footnote' | 'endnote',
+    text: string,
+    selection: { from: number; to: number; doc: ProseMirrorNode; version: number },
+  ) => Promise<boolean>
+  onAddComment?: (
+    comment: string,
+    selection: { from: number; to: number; doc: ProseMirrorNode },
+  ) => Promise<boolean>
 }
 
 /**
@@ -1411,6 +1615,12 @@ export function DocxToolbar({
   findOpen,
   onToggleFind,
   onNotice,
+  headerText = '',
+  footerText = '',
+  onSetHeaderFooter,
+  noteVersion,
+  onInsertNote,
+  onAddComment,
 }: DocxToolbarProps) {
   const raw = useToolbarState(editor, (instance) => JSON.stringify(readSnapshot(instance)))
   const state: DocxSnapshot = raw === '' ? EMPTY_SNAPSHOT : (JSON.parse(raw) as DocxSnapshot)
@@ -1847,6 +2057,31 @@ export function DocxToolbar({
         renderPanel={() => <InsertTablePanel editor={editor} />}
       />
       <ToolbarGroup label="插入">
+        {onInsertNote && noteVersion ? (
+          <>
+            {(['footnote', 'endnote'] as const).map((kind) => (
+              <ToolbarMenu
+                key={kind}
+                label={kind === 'footnote' ? '插入脚注' : '插入尾注'}
+                text={kind === 'footnote' ? '脚注' : '尾注'}
+                panelWidth={280}
+                renderPanel={(close) => (
+                  <NotePanel
+                    editor={editor}
+                    kind={kind}
+                    version={noteVersion()}
+                    onApply={onInsertNote}
+                    onDone={close}
+                  />
+                )}
+              />
+            ))}
+          </>
+        ) : (
+          <ToolbarButton label="插入脚注或尾注" disabled disabledReason="文档还没读完">
+            注释
+          </ToolbarButton>
+        )}
         <ToolbarFileButton
           label="插入图片"
           accept="image/png,image/jpeg,image/gif"
@@ -1886,8 +2121,41 @@ export function DocxToolbar({
       <FindIcon />
     </ToolbarButton>
   )
+  const headerFooterControl = onSetHeaderFooter ? (
+    <ToolbarMenu
+      label="页眉和页脚"
+      text="页眉页脚"
+      panelWidth={300}
+      renderPanel={(close) => (
+        <HeaderFooterPanel
+          headerText={headerText}
+          footerText={footerText}
+          onApply={onSetHeaderFooter}
+          onDone={close}
+        />
+      )}
+    />
+  ) : (
+    <ToolbarButton label="页眉和页脚" disabled disabledReason="文档还没读完">
+      页眉页脚
+    </ToolbarButton>
+  )
   const reviewControls = (
     <>
+      {onAddComment && editor ? (
+        <ToolbarMenu
+          label="添加批注"
+          text="批注"
+          panelWidth={280}
+          renderPanel={(close) => (
+            <CommentPanel editor={editor} onApply={onAddComment} onDone={close} />
+          )}
+        />
+      ) : (
+        <ToolbarButton label="添加批注" disabled disabledReason="文档还没读完">
+          批注
+        </ToolbarButton>
+      )}
       <ToolbarMenu
         label="修订"
         icon={<TrackChangesIcon />}
@@ -1955,11 +2223,198 @@ export function DocxToolbar({
           content: insertControls,
         },
         { key: 'paragraph', label: '段落', tab: 'layout', minWidth: 0, content: paragraphControls },
+        {
+          key: 'header-footer',
+          label: '页眉和页脚',
+          tab: 'layout',
+          minWidth: 0,
+          content: headerFooterControl,
+        },
         { key: 'review', label: '修订与拼写', tab: 'review', minWidth: 0, content: reviewControls },
         { key: 'table', label: '表格操作', tab: 'table', minWidth: 0, content: tableControls },
         { key: 'find', label: '查找与替换', tab: 'view', minWidth: 0, content: findControl },
       ]}
     />
+  )
+}
+
+function headerFooterFieldText(text: string): string {
+  return text.replaceAll(PAGE_MARK, '{PAGE}').replaceAll(TOTAL_PAGES_MARK, '{NUMPAGES}')
+}
+
+function NotePanel({
+  editor,
+  kind,
+  version,
+  onApply,
+  onDone,
+}: {
+  editor: Editor
+  kind: 'footnote' | 'endnote'
+  version: number
+  onApply: (
+    kind: 'footnote' | 'endnote',
+    text: string,
+    selection: { from: number; to: number; doc: ProseMirrorNode; version: number },
+  ) => Promise<boolean>
+  onDone: () => void
+}) {
+  const [selection] = useState(() => ({
+    from: editor.state.selection.from,
+    to: editor.state.selection.to,
+    doc: editor.state.doc,
+    version,
+  }))
+  const [content, setContent] = useState('')
+  const [busy, setBusy] = useState(false)
+  const label = kind === 'footnote' ? '脚注' : '尾注'
+  const apply = async () => {
+    if (busy || !content.trim()) return
+    setBusy(true)
+    try {
+      if (await onApply(kind, content.trim(), selection)) onDone()
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <ToolbarMenuFields label={`插入${label}`}>
+      <ToolbarMenuNote>注释将插入到打开面板时的光标或选中文字末尾。</ToolbarMenuNote>
+      <span className="me-label">内容</span>
+      <ToolbarTextArea
+        label={`${label}内容`}
+        value={content}
+        onChange={setContent}
+        rows={3}
+        placeholder={`输入${label}正文`}
+      />
+      <ToolbarButton
+        label={`添加${label}到文档`}
+        disabled={busy || !content.trim()}
+        disabledReason={busy ? '正在写入文档' : `请先输入${label}内容`}
+        onClick={() => void apply()}
+      >
+        {busy ? '写入中…' : `添加${label}`}
+      </ToolbarButton>
+    </ToolbarMenuFields>
+  )
+}
+
+function CommentPanel({
+  editor,
+  onApply,
+  onDone,
+}: {
+  editor: Editor
+  onApply: (
+    comment: string,
+    selection: { from: number; to: number; doc: ProseMirrorNode },
+  ) => Promise<boolean>
+  onDone: () => void
+}) {
+  const [selection] = useState(() => ({
+    from: editor.state.selection.from,
+    to: editor.state.selection.to,
+    doc: editor.state.doc,
+  }))
+  const [comment, setComment] = useState('')
+  const [busy, setBusy] = useState(false)
+  const selected = selection.doc.textBetween(selection.from, selection.to, '')
+
+  const apply = async () => {
+    if (busy || !comment.trim()) return
+    setBusy(true)
+    try {
+      if (await onApply(comment.trim(), selection)) onDone()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <ToolbarMenuFields label="添加批注">
+      <ToolbarMenuNote>
+        {selected ? `批注所选文字：${selected.slice(0, 80)}` : '未选中文字时，批注当前段落。'}
+      </ToolbarMenuNote>
+      <span className="me-label">内容</span>
+      <ToolbarTextArea
+        label="批注内容"
+        value={comment}
+        onChange={setComment}
+        rows={3}
+        placeholder="输入批注"
+      />
+      <ToolbarButton
+        label="添加批注到文档"
+        disabled={busy || !comment.trim()}
+        disabledReason={busy ? '正在写入文档' : '请先输入批注内容'}
+        onClick={() => void apply()}
+      >
+        {busy ? '写入中…' : '添加批注'}
+      </ToolbarButton>
+    </ToolbarMenuFields>
+  )
+}
+
+function HeaderFooterPanel({
+  headerText,
+  footerText,
+  onApply,
+  onDone,
+}: {
+  headerText: string
+  footerText: string
+  onApply: (kind: 'header' | 'footer', text: string) => Promise<boolean>
+  onDone: () => void
+}) {
+  const [kind, setKind] = useState<'header' | 'footer'>('header')
+  const [header, setHeader] = useState(() => headerFooterFieldText(headerText))
+  const [footer, setFooter] = useState(() => headerFooterFieldText(footerText))
+  const [busy, setBusy] = useState(false)
+  const value = kind === 'header' ? header : footer
+
+  const apply = async () => {
+    if (busy) return
+    setBusy(true)
+    try {
+      if (await onApply(kind, value)) onDone()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <ToolbarMenuFields label="页眉和页脚">
+      <span className="me-label">位置</span>
+      <ToolbarSelect
+        label="编辑位置"
+        value={kind}
+        options={[
+          { value: 'header', label: '页眉' },
+          { value: 'footer', label: '页脚' },
+        ]}
+        onChange={(next) => setKind(next as 'header' | 'footer')}
+      />
+      <span className="me-label">内容</span>
+      <ToolbarTextArea
+        label={`${kind === 'header' ? '页眉' : '页脚'}内容`}
+        value={value}
+        rows={3}
+        onChange={kind === 'header' ? setHeader : setFooter}
+        placeholder="输入文字，页码用 {PAGE}"
+      />
+      <ToolbarMenuNote>
+        页码用 {'{PAGE}'}，总页数用 {'{NUMPAGES}'}；留空可清除文字。
+      </ToolbarMenuNote>
+      <ToolbarButton
+        label={`应用${kind === 'header' ? '页眉' : '页脚'}`}
+        disabled={busy}
+        disabledReason="正在写入文档"
+        onClick={() => void apply()}
+      >
+        {busy ? '写入中…' : '应用'}
+      </ToolbarButton>
+    </ToolbarMenuFields>
   )
 }
 

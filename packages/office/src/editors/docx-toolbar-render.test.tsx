@@ -24,7 +24,12 @@ import { EditorContent, useEditor } from '@tiptap/react'
 import { editorExtensions } from '../../vendor/apps/docs/src/renderer/editor/extensions.js'
 import { openSelect, selectRoot, selectValueText } from '../shell/antd-test-dom.js'
 import { openDocx } from '../docx.js'
-import { DocxEditor, DocxToolbar } from './DocxEditor.js'
+import {
+  DocxEditor,
+  DocxToolbar,
+  resolveDocxCommentTarget,
+  resolveDocxNoteTarget,
+} from './DocxEditor.js'
 import type { EditorIo } from './types.js'
 
 const FIXTURE = join(
@@ -137,6 +142,32 @@ function topNodeAt(editor: Editor, type: string): number {
 }
 
 describe('DocxToolbar 渲染', () => {
+  it('批注定位接受段落边界的单段选字，拒绝跨段选字', async () => {
+    const { editor } = await boot()
+    const doc = editor.state.doc
+    const paragraphStart = doc.child(0)!.nodeSize
+    expect(resolveDocxCommentTarget(doc, paragraphStart, paragraphStart + 5)).toMatchObject({
+      index: 1,
+      selected: '普通段落',
+    })
+    expect(resolveDocxCommentTarget(doc, 1, paragraphStart + 5)).toBeNull()
+  })
+
+  it('脚注定位保留段中光标或单段选字末端，拒绝跨段', async () => {
+    const { editor } = await boot()
+    const doc = editor.state.doc
+    const secondStart = doc.child(0)!.nodeSize
+    expect(resolveDocxNoteTarget(doc, secondStart + 3, secondStart + 3)).toEqual({
+      blockIndex: 1,
+      position: secondStart + 3,
+    })
+    expect(resolveDocxNoteTarget(doc, secondStart + 1, secondStart + 5)).toEqual({
+      blockIndex: 1,
+      position: secondStart + 5,
+    })
+    expect(resolveDocxNoteTarget(doc, 1, secondStart + 5)).toBeNull()
+  })
+
   it('切换分类后仍能用左侧撤销与重做恢复真实文档', async () => {
     const { host, editor } = await boot()
     const original = editor.state.doc.textContent
@@ -594,6 +625,213 @@ describe('表格菜单的面板', () => {
  * 保存由 `DocxEditor` 提供给工具条最左侧的快捷操作区；状态行只保留状态。
  */
 describe('DocxEditor 的保存按钮', () => {
+  it('插入脚注、尾注并保存重开；撤销新脚注后不保存孤立定义', async () => {
+    let saved: Uint8Array | null = null
+    const io: EditorIo = {
+      load: async () => new Uint8Array(readFileSync(FIXTURE)),
+      save: async (bytes) => {
+        saved = bytes
+      },
+    }
+    const host = document.createElement('div')
+    document.body.append(host)
+    const root = createRoot(host)
+    ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+    await act(async () => root.render(<DocxEditor documentId="note-menu" io={io} />))
+    mounted.push({
+      unmount: () => {
+        act(() => root.unmount())
+        host.remove()
+      },
+    })
+    for (let i = 0; i < 50; i += 1) {
+      if (
+        host.querySelector('button[aria-label="保存到库"]')?.getAttribute('title') ===
+        '没有未保存的改动'
+      )
+        break
+      await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
+    }
+    const add = async (kind: '脚注' | '尾注', content: string) => {
+      selectTab(host, '插入')
+      press(host, `插入${kind}`)
+      const field = host.querySelector<HTMLTextAreaElement>(`textarea[aria-label="${kind}内容"]`)
+      expect(field).not.toBeNull()
+      act(() => {
+        const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
+        setter!.call(field, content)
+        field!.dispatchEvent(new Event('input', { bubbles: true }))
+      })
+      await act(async () => {
+        host.querySelector<HTMLButtonElement>(`button[aria-label="添加${kind}到文档"]`)!.click()
+        await new Promise((resolve) => setTimeout(resolve, 0))
+      })
+    }
+    await add('脚注', '未保存脚注正文')
+    expect(host.querySelector('sup.doc-note-ref[data-note-kind="footnote"]')).not.toBeNull()
+    expect(host.textContent).toContain('已插入脚注')
+    const save = host.querySelector<HTMLButtonElement>('button[aria-label="保存到库"]')!
+    await act(async () => save.click())
+    for (let i = 0; i < 50; i += 1) {
+      if (saved !== null) break
+      await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
+    }
+    expect(saved).not.toBeNull()
+    expect((await openDocx(saved!)).footnotes.parsed.footnotes.map((note) => note.text)).toContain(
+      '未保存脚注正文',
+    )
+
+    await add('尾注', '未保存尾注正文')
+    saved = null
+    await act(async () => save.click())
+    for (let i = 0; i < 50; i += 1) {
+      if (saved !== null) break
+      await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
+    }
+    expect((await openDocx(saved!)).footnotes.parsed.endnotes.map((note) => note.text)).toContain(
+      '未保存尾注正文',
+    )
+
+    await add('脚注', '随后撤销的脚注')
+    press(host, '撤销 (Ctrl+Z)')
+    saved = null
+    await act(async () => save.click())
+    for (let i = 0; i < 50; i += 1) {
+      if (saved !== null) break
+      await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
+    }
+    const afterUndo = await openDocx(saved!)
+    expect(afterUndo.footnotes.parsed.footnotes.map((note) => note.text)).not.toContain(
+      '随后撤销的脚注',
+    )
+    expect(afterUndo.footnotes.parsed.endnotes.map((note) => note.text)).toContain('未保存尾注正文')
+  })
+  it('审阅菜单给当前段落添加批注，画布显示且保存重开仍在', async () => {
+    let saved: Uint8Array | null = null
+    const io: EditorIo = {
+      load: async () => new Uint8Array(readFileSync(FIXTURE)),
+      save: async (bytes) => {
+        saved = bytes
+      },
+    }
+    const host = document.createElement('div')
+    document.body.append(host)
+    const root = createRoot(host)
+    ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+    await act(async () => root.render(<DocxEditor documentId="comment-menu" io={io} />))
+    mounted.push({
+      unmount: () => {
+        act(() => root.unmount())
+        host.remove()
+      },
+    })
+    for (let i = 0; i < 50; i += 1) {
+      if (
+        host.querySelector('button[aria-label="保存到库"]')?.getAttribute('title') ===
+        '没有未保存的改动'
+      )
+        break
+      await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
+    }
+
+    selectTab(host, '审阅')
+    press(host, '添加批注')
+    expect(host.textContent).toContain('未选中文字时，批注当前段落')
+    const apply = host.querySelector<HTMLButtonElement>('button[aria-label="添加批注到文档"]')
+    expect(apply?.disabled).toBe(true)
+    expect(apply?.title).toBe('请先输入批注内容')
+    const field = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="批注内容"]')
+    expect(field).not.toBeNull()
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
+      setter!.call(field, '手动批注内容')
+      field!.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    await act(async () => {
+      host.querySelector<HTMLButtonElement>('button[aria-label="添加批注到文档"]')!.click()
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+    expect(host.querySelector('[data-comment-ids]')).not.toBeNull()
+    const save = host.querySelector<HTMLButtonElement>('button[aria-label="保存到库"]')
+    expect(save?.disabled).toBe(false)
+    await act(async () => save!.click())
+    for (let i = 0; i < 50; i += 1) {
+      if (saved !== null) break
+      await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
+    }
+    expect(saved).not.toBeNull()
+    const reopened = await openDocx(saved!)
+    expect(reopened.footnotes.parsed.comments.map((item) => item.text)).toContain('手动批注内容')
+
+    press(host, '撤销 (Ctrl+Z)')
+    expect(host.querySelector('[data-comment-ids]')).toBeNull()
+    saved = null
+    await act(async () => save!.click())
+    for (let i = 0; i < 50; i += 1) {
+      if (saved !== null) break
+      await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
+    }
+    expect(saved).not.toBeNull()
+    const afterUndo = await openDocx(saved!)
+    expect(afterUndo.footnotes.parsed.comments.map((item) => item.text)).not.toContain(
+      '手动批注内容',
+    )
+  })
+
+  it('布局菜单写入页眉，画布显示且保存重开仍在', async () => {
+    let saved: Uint8Array | null = null
+    const io: EditorIo = {
+      load: async () => new Uint8Array(readFileSync(FIXTURE)),
+      save: async (bytes) => {
+        saved = bytes
+      },
+    }
+    const host = document.createElement('div')
+    document.body.append(host)
+    const root = createRoot(host)
+    ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+    await act(async () => root.render(<DocxEditor documentId="header-menu" io={io} />))
+    mounted.push({
+      unmount: () => {
+        act(() => root.unmount())
+        host.remove()
+      },
+    })
+    for (let i = 0; i < 50; i += 1) {
+      if (
+        host.querySelector('button[aria-label="保存到库"]')?.getAttribute('title') ===
+        '没有未保存的改动'
+      )
+        break
+      await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
+    }
+
+    selectTab(host, '布局')
+    press(host, '页眉和页脚')
+    const field = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="页眉内容"]')
+    expect(field).not.toBeNull()
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
+      setter!.call(field, '手动页眉 {PAGE}')
+      field!.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    await act(async () => {
+      host.querySelector<HTMLButtonElement>('button[aria-label="应用页眉"]')!.click()
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+    const save = host.querySelector<HTMLButtonElement>('button[aria-label="保存到库"]')
+    expect(save?.disabled).toBe(false)
+    await act(async () => save!.click())
+    for (let i = 0; i < 50; i += 1) {
+      if (saved !== null) break
+      await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
+    }
+    expect(saved).not.toBeNull()
+    const reopened = await openDocx(saved!)
+    expect(reopened.headerFooter.header?.text).toContain('手动页眉')
+    expect(reopened.headerFooter.header?.hasPageNumber).toBe(true)
+  })
+
   it('读取期间固定显示三项快捷操作，并禁用历史命令', async () => {
     const io: EditorIo = {
       load: () => new Promise<Uint8Array>(() => {}),

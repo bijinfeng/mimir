@@ -68,6 +68,7 @@ import {
 import { blockIndexRange, moveSelectedBlocks, uiOp } from '../agent/markdown-ops.js'
 import { markdownFindAdapter } from './markdown-find.js'
 import {
+  INSERT_MATH_BLOCK,
   MarkdownSlash,
   type MarkdownSlashController,
   type MarkdownSlashState,
@@ -1320,7 +1321,8 @@ export function MarkdownToolbar({
           enabled:
             hasNode(editor, 'table') ||
             (hasNode(editor, 'image') && onPickImage !== undefined) ||
-            hasNode(editor, 'horizontalRule'),
+            hasNode(editor, 'horizontalRule') ||
+            hasNode(editor, 'mathBlock'),
           content: (
             <>
               <ToolbarGroup label="插入">
@@ -1348,6 +1350,11 @@ export function MarkdownToolbar({
                     onClick={() => runCommand(editor, 'setHorizontalRule')}
                   >
                     <HorizontalRuleIcon />
+                  </ToolbarButton>
+                )}
+                {hasNode(editor, 'mathBlock') && (
+                  <ToolbarButton label="数学公式" onClick={() => uiOp(editor, INSERT_MATH_BLOCK)}>
+                    <CodeIcon />
                   </ToolbarButton>
                 )}
               </ToolbarGroup>

@@ -9,34 +9,48 @@ import type { PdfAgentHandle } from '../agent/pdf-agent.js'
 import type { EditorIo } from './types.js'
 import type { PdfHostApply } from './PdfEditor.js'
 
+const { pdfTextMode } = vi.hoisted(() => ({
+  pdfTextMode: { real: false, rendered: [] as Uint8Array[] },
+}))
+
 vi.mock('./pdf-render.js', () => ({
   cancelPdfRender: () => {},
   retainPdfDocuments: () => {},
-  renderPdfPages: async () => ({ dispose: () => {} }),
-  loadPdfDocument: async () => ({
-    getPage: async () => ({
-      getViewport: ({ scale }: { scale: number }) => ({
-        width: 300 * scale,
-        height: 400 * scale,
-        convertToPdfPoint: (x: number, y: number) => [x / scale, 400 - y / scale],
-        convertToViewportPoint: (x: number, y: number) => [x * scale, (400 - y) * scale],
-      }),
-    }),
-  }),
+  renderPdfPages: async (options: { bytes: Uint8Array }) => {
+    pdfTextMode.rendered.push(options.bytes)
+    return { dispose: () => {} }
+  },
+  loadPdfDocument: async (bytes: Uint8Array) =>
+    pdfTextMode.real
+      ? (await import('pdfjs-dist/legacy/build/pdf.mjs')).getDocument({ data: bytes.slice() })
+          .promise
+      : {
+          getPage: async () => ({
+            getViewport: ({ scale }: { scale: number }) => ({
+              width: 300 * scale,
+              height: 400 * scale,
+              convertToPdfPoint: (x: number, y: number) => [x / scale, 400 - y / scale],
+              convertToViewportPoint: (x: number, y: number) => [x * scale, (400 - y) * scale],
+            }),
+          }),
+        },
 }))
 
 import { PdfEditor } from './PdfEditor.js'
 
 const mounted: Array<() => void> = []
 afterEach(() => {
+  pdfTextMode.real = false
+  pdfTextMode.rendered.length = 0
   for (const unmount of mounted) unmount()
   mounted.length = 0
 })
 
 async function settle(done: () => boolean): Promise<void> {
-  for (let i = 0; i < 80 && !done(); i += 1)
+  const deadline = Date.now() + 3000
+  while (!done() && Date.now() < deadline)
     await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 2))
+      await new Promise((resolve) => setTimeout(resolve, 10))
     })
   expect(done()).toBe(true)
 }
@@ -65,6 +79,232 @@ async function click(element: Element, options: MouseEventInit = {}): Promise<vo
 }
 
 describe('PDF manual content canvas', () => {
+  it('marks a verified original run on canvas, saves the annotation, and keeps failures clean', async () => {
+    pdfTextMode.real = true
+    const pdf = await PDFDocument.create()
+    const font = await pdf.embedFont(StandardFonts.Helvetica)
+    pdf.addPage([300, 400]).drawText('ORIGINAL', { x: 40, y: 300, size: 12, font })
+    const original = await pdf.save()
+    const saved: Uint8Array[] = []
+    let fail = true
+    const host = document.createElement('div')
+    document.body.append(host)
+    const root = createRoot(host)
+    ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+    await act(async () => {
+      root.render(
+        <PdfEditor
+          documentId="pdf-markup-original"
+          io={{
+            load: async () => original,
+            save: async (bytes) => {
+              saved.push(bytes)
+            },
+          }}
+          hostInspect={async ({ bytes, probe }) => {
+            const service = await import('../../../../apps/server/src/services/pdf-agent-host.js')
+            return service.inspectPdfTextTarget(bytes, probe)
+          }}
+          hostMarkup={async (input) => {
+            if (fail) throw new Error('标注写入被拒绝')
+            const service = await import('../../../../apps/server/src/services/pdf-agent-host.js')
+            const bytes = await service.applyPdfVerifiedMarkup(input.bytes, input.markup)
+            return { bytes, version: input.expectedVersion + 1 }
+          }}
+          hostApply={async () => {
+            throw new Error('此测试不执行插字')
+          }}
+        />,
+      )
+    })
+    mounted.push(() => {
+      act(() => root.unmount())
+      host.remove()
+    })
+    await settle(() => host.querySelector('.mimir-pdf-sheet .mimir-pdf-page') !== null)
+    const editTab = [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (item) => item.textContent === '编辑',
+    )!
+    await click(editTab)
+    await click(button(host, '定位原文'))
+    await settle(() => host.textContent?.includes('点选页面上的一整段原文') ?? false)
+    const canvas = host.querySelector<HTMLCanvasElement>('.mimir-pdf-sheet .mimir-pdf-page')!
+    canvas.getBoundingClientRect = () => new DOMRect(0, 0, 300, 400)
+    await click(canvas, { clientX: 50, clientY: 94 })
+    await settle(() => host.textContent?.includes('已核验原文对象') ?? false)
+    await click(button(host, '高亮原文'))
+    await settle(() => host.textContent?.includes('标注原文失败：标注写入被拒绝') ?? false)
+    expect(button(host, '保存到库').disabled).toBe(true)
+    expect(host.querySelector('[data-markup="highlight"]')).toBeNull()
+    fail = false
+    await click(button(host, '高亮原文'))
+    await settle(() => host.querySelector('[data-markup="highlight"]') !== null)
+    expect(button(host, '保存到库').disabled).toBe(false)
+    await click(button(host, '保存到库'))
+    await settle(() => saved.length === 1)
+    const task = getDocument({ data: saved[0]!.slice() })
+    try {
+      const page = await (await task.promise).getPage(1)
+      expect((await page.getAnnotations()).some((item) => item.subtype === 'Highlight')).toBe(true)
+    } finally {
+      await task.destroy()
+    }
+  })
+
+  it('replaces a host-verified original run, updates canvas bytes, saves and reopens', async () => {
+    pdfTextMode.real = true
+    const pdf = await PDFDocument.create()
+    const font = await pdf.embedFont(StandardFonts.Helvetica)
+    pdf.addPage([300, 400]).drawText('ORIGINAL', { x: 40, y: 300, size: 12, font })
+    const original = await pdf.save()
+    const saved: Uint8Array[] = []
+    let appliedBytes: Uint8Array | null = null
+    const host = document.createElement('div')
+    document.body.append(host)
+    const root = createRoot(host)
+    ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+    await act(async () => {
+      root.render(
+        <PdfEditor
+          documentId="pdf-replace-original"
+          io={{
+            load: async () => original,
+            save: async (bytes) => {
+              saved.push(bytes)
+            },
+          }}
+          hostInspect={async ({ bytes, probe }) => {
+            const service = await import('../../../../apps/server/src/services/pdf-agent-host.js')
+            return service.inspectPdfTextTarget(bytes, probe)
+          }}
+          hostApply={async (input) => {
+            const service = await import('../../../../apps/server/src/services/pdf-agent-host.js')
+            const edit = input.items[0] as Parameters<
+              typeof service.applyPdfVerifiedTextEdit
+            >[1] & {
+              target: Parameters<typeof service.applyPdfVerifiedTextEdit>[2]
+            }
+            appliedBytes = await service.applyPdfVerifiedTextEdit(input.bytes, edit, edit.target)
+            return { bytes: appliedBytes, version: input.expectedVersion + 1 }
+          }}
+        />,
+      )
+    })
+    mounted.push(() => {
+      act(() => root.unmount())
+      host.remove()
+    })
+    await settle(() => host.querySelector('.mimir-pdf-sheet .mimir-pdf-page') !== null)
+    const editTab = [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (item) => item.textContent === '编辑',
+    )!
+    await click(editTab)
+    await click(button(host, '定位原文'))
+    await settle(() => host.textContent?.includes('点选页面上的一整段原文') ?? false)
+    const canvas = host.querySelector<HTMLCanvasElement>('.mimir-pdf-sheet .mimir-pdf-page')!
+    canvas.getBoundingClientRect = () => new DOMRect(0, 0, 300, 400)
+    await click(canvas, { clientX: 50, clientY: 94 })
+    await settle(() => host.textContent?.includes('已核验原文对象') ?? false)
+    const field = host.querySelector<HTMLInputElement>('input[aria-label="替换为"]')!
+    expect(field).not.toBeNull()
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(
+        field,
+        'REVISED',
+      )
+      field.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    await click(button(host, '替换原文'))
+    await settle(() => appliedBytes !== null && !button(host, '保存到库').disabled)
+    expect(pdfTextMode.rendered).toContain(appliedBytes)
+    expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('已修改，未保存')
+    await click(button(host, '保存到库'))
+    await settle(() => saved.length === 1)
+    expect(saved[0]).toEqual(appliedBytes)
+    const task = getDocument({ data: saved[0]!.slice() })
+    const reopened = await task.promise
+    const text = (await (await reopened.getPage(1)).getTextContent()).items
+      .map((item) => ('str' in item ? item.str : ''))
+      .join('')
+    expect(text).toContain('REVISED')
+    expect(text).not.toContain('ORIGINAL')
+    await task.destroy()
+  })
+
+  it('pins a clicked original run to a host identity and keeps rejected targets read-only', async () => {
+    pdfTextMode.real = true
+    const pdf = await PDFDocument.create()
+    const font = await pdf.embedFont(StandardFonts.Helvetica)
+    pdf.addPage([300, 400]).drawText('ORIGINAL', { x: 40, y: 300, size: 12, font })
+    const original = await pdf.save()
+    const probes: Array<{ oldText: string; rect: number[] }> = []
+    let reject = false
+    const host = document.createElement('div')
+    document.body.append(host)
+    const root = createRoot(host)
+    ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+    await act(async () => {
+      root.render(
+        <PdfEditor
+          documentId="pdf-inspect"
+          io={{ load: async () => original, save: async () => {} }}
+          hostInspect={async ({ probe }) => {
+            probes.push(probe)
+            if (reject) throw new Error('对象有歧义')
+            return {
+              sha256: 'a'.repeat(64),
+              pageIndex: 0,
+              objectIndex: 1,
+              text: 'ORIGINAL',
+              bounds: [40, 299, 100, 312],
+            }
+          }}
+          hostApply={async () => {
+            throw new Error('写入被拒绝')
+          }}
+        />,
+      )
+    })
+    mounted.push(() => {
+      act(() => root.unmount())
+      host.remove()
+    })
+    await settle(() => host.querySelector('.mimir-pdf-page') !== null)
+    const editTab = [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (item) => item.textContent === '编辑',
+    )!
+    await click(editTab)
+    await click(button(host, '定位原文'))
+    await settle(() => host.textContent?.includes('点选页面上的一整段原文') ?? false)
+    const canvas = host.querySelector<HTMLCanvasElement>('.mimir-pdf-sheet .mimir-pdf-page')!
+    canvas.getBoundingClientRect = () => new DOMRect(0, 0, 300, 400)
+    await click(canvas, { clientX: 50, clientY: 94 })
+    expect(probes).toHaveLength(1)
+    await settle(() => host.textContent?.includes('已核验原文对象') ?? false)
+    expect(probes[0]?.oldText).toBe('ORIGINAL')
+    expect(probes[0]?.rect[0]).toBeCloseTo(40)
+    expect(probes[0]?.rect[2]).toBeGreaterThan(97)
+
+    const field = host.querySelector<HTMLInputElement>('input[aria-label="替换为"]')!
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(
+        field,
+        'REVISED',
+      )
+      field.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    await click(button(host, '替换原文'))
+    await settle(() => host.textContent?.includes('替换原文失败：写入被拒绝') ?? false)
+    expect(button(host, '保存到库').disabled).toBe(true)
+    expect(pdfTextMode.rendered).toContain(original)
+
+    reject = true
+    await click(canvas, { clientX: 50, clientY: 94 })
+    await settle(() => host.textContent?.includes('原文对象未通过核验') ?? false)
+    expect(host.textContent).toContain('只读定位')
+    expect(host.textContent).not.toContain('已核验原文对象')
+  })
+
   it('lets the Agent insert into a manually rotated canvas and saves readable bytes', async () => {
     const pdf = await PDFDocument.create()
     pdf.addPage([300, 400])

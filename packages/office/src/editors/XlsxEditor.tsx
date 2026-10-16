@@ -15,8 +15,8 @@
  * ## 原件与预览的边界
  *
  *   - **不重算公式**：改了被别的公式引用的格子，那些公式的缓存值就旧了。
- *     Excel 打开会重算，我们显示的仍是旧值
- *   - 样式索引按原件保留；格式画布目前仍只显示基础网格
+ *     Excel 打开会重算；网格把缓存结果与无缓存公式明确标出
+ *   - 样式索引按原件保留；基础网格显示已解析的加粗字形
  *   - 日期显示为序列号（`xlsx.ts` 的老规矩）
  *   - 图表、条件格式、透视表不画（读不出来），但**保存不会动它们**
  *
@@ -128,6 +128,10 @@ export function XlsxEditor({
   const [applyError, setApplyError] = useState<string | null>(null)
   /** 查找串。**只在当前这张表里找**，不区分大小写（见 `findCells`） */
   const [query, setQuery] = useState('')
+  /** Explicit A1 range for manual formatting; cleared when the sheet changes. */
+  const [rangeInput, setRangeInput] = useState('')
+  const [sheetNameDraft, setSheetNameDraft] = useState<string | null>(null)
+  const [newSheetName, setNewSheetName] = useState('')
   const [toolbarTab, setToolbarTab] = useState('home')
   /** 十字高亮开关（纯界面状态，文档一个字节都不动） */
   const [cross, setCross] = useState(false)
@@ -141,6 +145,7 @@ export function XlsxEditor({
   const [dirty, setDirty] = useState(false)
 
   const agentHandleRef = useRef<XlsxAgentHandle | null>(null)
+  const addSheetRequestRef = useRef(0)
   const selectionRef = useRef<{ sheet: number; row: number; col: number } | null>(null)
   const hostApplyRef = useRef(hostApply)
   const onAgentHandleChangeRef = useRef(onAgentHandleChange)
@@ -345,8 +350,12 @@ export function XlsxEditor({
     const handle = agentHandleRef.current
     if (!handle) return
     const bytes = await handle.flush()
+    const savingVersion = handle.getVersion()
     const ok = await source.save(bytes, { name: 'workbook.xlsx', mime: OFFICE_MIME.xlsx })
     if (!ok) return
+    // A manual or Agent edit may complete while the host writes these bytes.
+    // That newer version is still unsaved and must keep the save action enabled.
+    if (agentHandleRef.current !== handle || handle.getVersion() !== savingVersion) return
     handle.markSaved()
     setDirty(false)
     setEdited({ source: source.bytes!, view: handle.currentSession().view() })
@@ -441,6 +450,8 @@ export function XlsxEditor({
     // A selection and draft belong to the previous sheet.
     setSelected(null)
     setDraft(null)
+    setRangeInput('')
+    setSheetNameDraft(null)
     setApplyError(null)
     setNote(null)
   }
@@ -450,6 +461,113 @@ export function XlsxEditor({
     dirty,
     idle: `${view.sheets.length} 张表`,
   })
+  const actionRange = parseActionRange(rangeInput)
+  const nextSheetName = sheetNameDraft ?? sheet.name
+  const sheetNameDisabledReason = sheetNameIssue(nextSheetName, sheet, view)
+  const newSheetDisabledReason = newSheetIssue(newSheetName, view)
+  const renameSheet = () => {
+    if (sheetNameDisabledReason) {
+      setApplyError(sheetNameDisabledReason)
+      return
+    }
+    void (async () => {
+      if (
+        await executeOps(
+          [{ op: 'rename_sheet', sheetId: sheet.id, name: nextSheetName }],
+          `已将工作表「${sheet.name}」改名为「${nextSheetName}」`,
+        )
+      )
+        setSheetNameDraft(null)
+    })()
+  }
+  const addSheet = () => {
+    if (newSheetDisabledReason) {
+      setApplyError(newSheetDisabledReason)
+      return
+    }
+    const requestedName = newSheetName
+    const requestNumber = ++addSheetRequestRef.current
+    void (async () => {
+      if (
+        await executeOps(
+          [{ op: 'add_sheet', name: requestedName }],
+          `已新增工作表「${requestedName}」`,
+        )
+      ) {
+        const sheets = agentHandleRef.current?.currentSession().view().sheets
+        const createdIndex = sheets?.findIndex((item) => item.name === requestedName) ?? -1
+        if (requestNumber === addSheetRequestRef.current && createdIndex >= 0) {
+          setActive(createdIndex)
+          setSelected(null)
+          setDraft(null)
+          setRangeInput('')
+          setSheetNameDraft(null)
+        }
+        setNewSheetName((current) => (current === requestedName ? '' : current))
+      }
+    })()
+  }
+  const visibleRangeCells = actionRange.target
+    ? sheet.rows.reduce(
+        (count, row) =>
+          count +
+          (row.number >= actionRange.target!.startRow && row.number <= actionRange.target!.endRow
+            ? row.cells.filter(
+                (cell) =>
+                  cell.col >= actionRange.target!.startCol &&
+                  cell.col <= actionRange.target!.endCol &&
+                  cell.covered !== true,
+              ).length
+            : 0),
+        0,
+      )
+    : 0
+  const rangeDisabledReason = actionRange.target
+    ? visibleRangeCells === 0
+      ? '当前网格未显示该范围，无法核对结果'
+      : undefined
+    : actionRange.reason
+  const mergeDisabledReason = actionRange.target
+    ? mergeRangeIssue(sheet, actionRange.target)
+    : actionRange.reason
+  const unmergeDisabledReason = actionRange.target
+    ? sheet.rows.find((row) => row.number === actionRange.target!.startRow)?.cells[
+        actionRange.target.startCol
+      ]?.mergeRef === actionRange.target.range
+      ? undefined
+      : '输入现有合并区域的完整范围'
+    : actionRange.reason
+  const applyRangeBold = () => {
+    if (rangeDisabledReason || !actionRange.target) {
+      setApplyError(rangeDisabledReason ?? '范围无效')
+      return
+    }
+    const total =
+      (actionRange.target.endRow - actionRange.target.startRow + 1) *
+      (actionRange.target.endCol - actionRange.target.startCol + 1)
+    void executeOps(
+      [
+        {
+          op: 'format_range',
+          sheetId: sheet.id,
+          range: actionRange.target.range,
+          format: { bold: true },
+        },
+      ],
+      `已将 ${actionRange.target.range} 设为加粗${visibleRangeCells < total ? '；部分格不在当前网格中' : ''}`,
+    )
+  }
+  const applyRangeStructure = (op: 'merge_cells' | 'unmerge_cells') => {
+    const reason = op === 'merge_cells' ? mergeDisabledReason : unmergeDisabledReason
+    if (reason || !actionRange.target) {
+      setApplyError(reason ?? '范围无效')
+      return
+    }
+    void executeOps(
+      [{ op, sheetId: sheet.id, range: actionRange.target.range }],
+      `${op === 'merge_cells' ? '已合并' : '已取消合并'} ${actionRange.target.range}`,
+    )
+  }
 
   /**
    * 按钮禁用时显示的原因。**三个来源各不相同**，所以在这里算一次：
@@ -556,6 +674,53 @@ export function XlsxEditor({
                   },
                 ]
               : []),
+            {
+              key: 'sheet-name',
+              label: '工作表名称',
+              minWidth: 0,
+              tab: 'home',
+              content: (
+                <ToolbarGroup label="当前工作表名称">
+                  <ToolbarTextField
+                    label="工作表名称（最多 31 个字符）"
+                    value={nextSheetName}
+                    onChange={(value) => {
+                      setSheetNameDraft(value)
+                      setApplyError(null)
+                    }}
+                    onSubmit={renameSheet}
+                    onCancel={() => setSheetNameDraft(null)}
+                  />
+                  <ToolbarButton
+                    label="重命名当前工作表"
+                    disabled={sheetNameDisabledReason !== undefined}
+                    disabledReason={sheetNameDisabledReason}
+                    onClick={renameSheet}
+                  >
+                    改名
+                  </ToolbarButton>
+                  <ToolbarTextField
+                    label="新工作表名称（最多 31 个字符）"
+                    value={newSheetName}
+                    onChange={(value) => {
+                      setNewSheetName(value)
+                      setApplyError(null)
+                    }}
+                    onSubmit={addSheet}
+                    onCancel={() => setNewSheetName('')}
+                    placeholder="新工作表"
+                  />
+                  <ToolbarButton
+                    label="新增工作表"
+                    disabled={newSheetDisabledReason !== undefined}
+                    disabledReason={newSheetDisabledReason}
+                    onClick={addSheet}
+                  >
+                    新增
+                  </ToolbarButton>
+                </ToolbarGroup>
+              ),
+            },
             {
               key: 'find',
               label: '查找',
@@ -693,7 +858,7 @@ export function XlsxEditor({
                               range: `${columnLetters(selected!.col)}${selected!.row}`,
                               format: { bold: true },
                             },
-                            '已写入加粗格式；基础网格暂不显示字形',
+                            '已应用加粗格式',
                           ),
                       },
                     ]}
@@ -763,11 +928,59 @@ export function XlsxEditor({
                             column: columnLetters(selected!.col),
                             widthPx: 180,
                           },
-                          '已写入列宽；基础网格暂不显示列宽',
+                          '已调整列宽',
                         ),
                     },
                   ]}
                 />
+              ),
+            },
+            {
+              key: 'range-actions',
+              label: '范围操作',
+              minWidth: 1020,
+              tab: 'home',
+              content: (
+                <ToolbarGroup label="当前工作表的范围操作">
+                  <ToolbarTextField
+                    label="操作范围（A1 或 A1:B5）"
+                    value={rangeInput}
+                    onChange={(value) => {
+                      setRangeInput(value)
+                      setApplyError(null)
+                      setNote(null)
+                    }}
+                    onCancel={() => {
+                      setRangeInput('')
+                      setNote(null)
+                    }}
+                    placeholder="A1:B5"
+                  />
+                  <ToolbarButton
+                    label="范围加粗"
+                    disabled={rangeDisabledReason !== undefined}
+                    disabledReason={rangeDisabledReason}
+                    onClick={applyRangeBold}
+                  >
+                    加粗
+                  </ToolbarButton>
+                  <ToolbarButton
+                    label="合并范围"
+                    disabled={mergeDisabledReason !== undefined}
+                    disabledReason={mergeDisabledReason}
+                    onClick={() => applyRangeStructure('merge_cells')}
+                  >
+                    合并
+                  </ToolbarButton>
+                  <ToolbarButton
+                    label="取消合并范围"
+                    disabled={unmergeDisabledReason !== undefined}
+                    disabledReason={unmergeDisabledReason}
+                    onClick={() => applyRangeStructure('unmerge_cells')}
+                  >
+                    取消合并
+                  </ToolbarButton>
+                </ToolbarGroup>
               ),
             },
             {
@@ -838,7 +1051,10 @@ export function XlsxEditor({
             {wasFormula && (
               <span className="me-label mimir-cell-editor__warn">
                 <AlertIcon />
-                原来是公式；输入普通值会覆盖它，输入 = 开头可更新公式
+                {selectedCell?.formulaCache === 'cached'
+                  ? '当前结果是文件中的缓存，尚未重算，可能已过期。'
+                  : '当前公式没有可显示的缓存结果，尚未重算。'}
+                输入普通值会覆盖公式，输入 = 开头可更新公式
               </span>
             )}
           </div>
@@ -857,8 +1073,14 @@ export function XlsxEditor({
           渲染的 key 用**文件里的行列号**（格子的 `col`、行的 `number`）——
           由解析器给出，不是 `map` 的下标（`xlsx.ts` 顶部讲了为什么）。
         */}
-        <table className="mimir-xlsx">
+        <table
+          className="mimir-xlsx"
+          style={{
+            width: `${34 + sheet.columns.reduce((sum, column) => sum + column.width, 0)}px`,
+          }}
+        >
           <colgroup>
+            <col style={{ width: '34px' }} />
             {sheet.columns.map((column) => (
               <col key={`col-${column.col}`} style={{ width: `${column.width}px` }} />
             ))}
@@ -937,12 +1159,26 @@ export function XlsxEditor({
                         className={[
                           'mimir-xlsx__cell',
                           cell.numeric === true ? 'mimir-xlsx__cell--num' : '',
+                          cell.bold === true ? 'mimir-xlsx__cell--bold' : '',
+                          actionRange.target &&
+                          row.number >= actionRange.target.startRow &&
+                          row.number <= actionRange.target.endRow &&
+                          cell.col >= actionRange.target.startCol &&
+                          cell.col <= actionRange.target.endCol
+                            ? 'mimir-xlsx__cell--range'
+                            : '',
                           crossOn ? 'mimir-xlsx__cell--cross' : '',
                           isSelected ? 'mimir-xlsx__cell--on' : '',
                         ]
                           .filter((name) => name !== '')
                           .join(' ')}
-                        title={cell.formula ? '公式（显示 Excel 算好的缓存值）' : undefined}
+                        title={
+                          cell.formula
+                            ? cell.formulaCache === 'cached'
+                              ? '公式：文件中的缓存结果，当前编辑器未重算，可能已过期'
+                              : '公式：没有可显示的缓存结果，当前编辑器未重算'
+                            : undefined
+                        }
                         /*
                          * **白名单：这个格子是画布，不是控件。**
                          *
@@ -966,7 +1202,19 @@ export function XlsxEditor({
                         onClick={() => selectCell(row.number, cell.col)}
                       >
                         {/* 选中的格子显示草稿（实时预览），其余显示模型里的值 */}
-                        {isSelected ? shown : cell.text}
+                        {cell.formula &&
+                        cell.formulaCache === 'missing' &&
+                        !cell.text &&
+                        (!isSelected || draft === null)
+                          ? '未计算'
+                          : isSelected
+                            ? shown
+                            : cell.text}
+                        {cell.formula && !(isSelected && draft !== null) && (
+                          <span className="mimir-xlsx__formula-tag">
+                            {cell.formulaCache === 'cached' ? '缓存' : '无结果'}
+                          </span>
+                        )}
                       </td>
                     )
                   })}
@@ -989,6 +1237,86 @@ export function XlsxEditor({
 interface CellPos {
   row: number
   col: number
+}
+
+interface ActionRangeTarget {
+  range: string
+  startRow: number
+  endRow: number
+  startCol: number
+  endCol: number
+}
+
+function sheetNameIssue(
+  name: string,
+  sheet: XlsxSheet,
+  workbook: XlsxWorkbook,
+): string | undefined {
+  if (name === sheet.name) return '工作表名称没有变化'
+  if (!name.trim()) return '工作表名称不能为空'
+  if (name.length > 31) return '工作表名称最多 31 个字符'
+  if (/[\\/?*[\]:]/.test(name)) return '工作表名称不能包含 \\ / ? * [ ] :'
+  if (name.startsWith("'") || name.endsWith("'")) return '工作表名称不能以单引号开头或结尾'
+  if (
+    workbook.sheets.some(
+      (other) =>
+        other.id !== sheet.id && other.name.toLocaleLowerCase() === name.toLocaleLowerCase(),
+    )
+  )
+    return '已有同名工作表'
+  return undefined
+}
+
+function newSheetIssue(name: string, workbook: XlsxWorkbook): string | undefined {
+  if (!name.trim()) return '输入新工作表名称'
+  if (name.length > 31) return '工作表名称最多 31 个字符'
+  if (/[\\/?*[\]:]/.test(name)) return '工作表名称不能包含 \\ / ? * [ ] :'
+  if (name.startsWith("'") || name.endsWith("'")) return '工作表名称不能以单引号开头或结尾'
+  if (workbook.sheets.some((sheet) => sheet.name.toLocaleLowerCase() === name.toLocaleLowerCase()))
+    return '已有同名工作表'
+  return undefined
+}
+
+/** Keep manual range actions within the host's 2,000-cell budget. */
+function parseActionRange(input: string): { target: ActionRangeTarget | null; reason: string } {
+  const range = input.trim().toUpperCase()
+  if (!range) return { target: null, reason: '输入 A1 或 A1:B5 格式的范围' }
+  const match = /^([A-Z]{1,3})([1-9]\d{0,6})(?::([A-Z]{1,3})([1-9]\d{0,6}))?$/.exec(range)
+  if (!match) return { target: null, reason: '范围须为 A1 或 A1:B5 格式' }
+  const startCol = [...match[1]!].reduce((n, char) => n * 26 + char.charCodeAt(0) - 64, 0) - 1
+  const endCol = match[3]
+    ? [...match[3]].reduce((n, char) => n * 26 + char.charCodeAt(0) - 64, 0) - 1
+    : startCol
+  const startRow = Number(match[2])
+  const endRow = Number(match[4] ?? match[2])
+  if (endCol > 16_383 || endRow > 1_048_576)
+    return { target: null, reason: '范围超出 XLSX 工作表边界' }
+  if (startCol > endCol || startRow > endRow)
+    return { target: null, reason: '范围终点须在起点的右下方' }
+  if ((endCol - startCol + 1) * (endRow - startRow + 1) > 2_000)
+    return { target: null, reason: '一次最多操作 2000 个格子' }
+  return { target: { range, startRow, endRow, startCol, endCol }, reason: '' }
+}
+
+/** The host preserves covered cells, so only merge visibly empty targets. */
+function mergeRangeIssue(sheet: XlsxSheet, target: ActionRangeTarget): string | undefined {
+  if (target.startRow === target.endRow && target.startCol === target.endCol)
+    return '至少选择两个格子才能合并'
+  if (target.endCol >= sheet.columns.length) return '合并范围须完整显示在当前网格中'
+  const rows = sheet.rows.filter(
+    (row) => row.number >= target.startRow && row.number <= target.endRow,
+  )
+  if (rows.length !== target.endRow - target.startRow + 1) return '合并范围须完整显示在当前网格中'
+  for (const row of rows) {
+    for (let col = target.startCol; col <= target.endCol; col += 1) {
+      const cell = row.cells[col]
+      if (!cell || cell.covered || cell.mergeRef) return '范围与现有合并区域重叠，先取消原有合并'
+      if (row.number === target.startRow && col === target.startCol) continue
+      if (cell.text !== '' || cell.formula === true)
+        return '合并会隐藏其他格的内容；请先清空这些格子'
+    }
+  }
+  return undefined
 }
 
 /**

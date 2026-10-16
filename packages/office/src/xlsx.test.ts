@@ -47,6 +47,7 @@ describe('readXlsx', () => {
   it('合并单元格：左上角跨距 + 其余格标记 covered（不删格以免错位）', async () => {
     const sheet = await loadSheet()
     expect(cell(sheet, 0, 0)?.colSpan).toBe(3)
+    expect(cell(sheet, 0, 0)?.mergeRef).toBe('A1:C1')
     expect(cell(sheet, 0, 1)?.covered).toBe(true)
     expect(cell(sheet, 0, 2)?.covered).toBe(true)
   })
@@ -75,6 +76,7 @@ describe('readXlsx', () => {
     expect(numericCell?.numeric).toBe(true)
     const formulaCell = sheet.rows.flatMap((row) => row.cells).find((c) => c.text === '1001')
     expect(formulaCell?.formula).toBe(true)
+    expect(formulaCell?.formulaCache).toBe('cached')
   })
 
   it('列宽与行高按 xlsx 单位近似换算', async () => {
@@ -141,6 +143,24 @@ describe('readXlsx 的边界', () => {
     const sheet = (await readXlsx(bytes)).sheets[0]
     expect(sheet?.rows[0]?.number).toBe(2)
     expect(sheet?.rows[0]?.cells[0]?.formulaText).toBe('=1+2')
+    expect(sheet?.rows[0]?.cells[0]?.formulaCache).toBe('missing')
+  })
+
+  it('cellXfs 的样式索引通过 fontId 显示加粗，不把 s 当成字体索引', async () => {
+    const sheet = (
+      await readXlsx(
+        buildXlsx({
+          sheetData: [
+            '<row r="1"><c r="A1" s="2" t="inlineStr"><is><t>粗体</t></is></c><c r="B1" s="1" t="inlineStr"><is><t>常规</t></is></c></row>',
+          ],
+          styles:
+            '<styleSheet><fonts count="2"><font/><font><b/></font></fonts>' +
+            '<cellXfs count="3"><xf fontId="0"/><xf fontId="0"/><xf fontId="1"/></cellXfs></styleSheet>',
+        }),
+      )
+    ).sheets[0]
+    expect(sheet?.rows[0]?.cells[0]?.bold).toBe(true)
+    expect(sheet?.rows[0]?.cells[1]?.bold).toBeUndefined()
   })
 })
 
@@ -233,10 +253,12 @@ function buildXlsx(input: {
   sheetData: string[]
   mergeCells?: string[]
   sheets?: { name: string; sheetData: string[]; hidden?: boolean; entry?: string }[]
+  styles?: string
 }): Uint8Array {
   const entries: { name: string; text: string }[] = [
     { name: '[Content_Types].xml', text: '<?xml version="1.0"?><Types/>' },
   ]
+  if (input.styles) entries.push({ name: 'xl/styles.xml', text: input.styles })
 
   const list = input.sheets ?? [{ name: '工作表 1', sheetData: input.sheetData }]
   for (const [index, sheet] of list.entries()) {

@@ -268,6 +268,40 @@ export const useContentStyles = createStyles(({ css, token }) => ({
       border-radius: 6px;
     }
 
+    .mimir-math-block {
+      margin: 14px 0;
+      padding: 12px 16px;
+      border: 1px solid ${token.colorBorderSecondary};
+      border-radius: ${token.borderRadius}px;
+      background: ${token.colorFillQuaternary};
+    }
+
+    .mimir-math-block__preview {
+      overflow-x: auto;
+      min-height: 1.5em;
+    }
+
+    .mimir-math-block__error {
+      white-space: pre-wrap;
+      font-family: ${token.fontFamilyCode};
+      color: ${token.colorError};
+    }
+
+    .mimir-math-block__source {
+      display: block;
+      width: 100%;
+      min-height: 3em;
+      margin-top: 8px;
+      padding: 6px 8px;
+      resize: vertical;
+      font: inherit;
+      font-family: ${token.fontFamilyCode};
+      color: ${token.colorText};
+      background: transparent;
+      border: 1px solid ${token.colorBorder};
+      border-radius: ${token.borderRadiusSM}px;
+    }
+
     hr {
       border: none;
       border-top: 1px solid ${token.colorBorderSecondary};

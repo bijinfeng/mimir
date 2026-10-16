@@ -6,6 +6,7 @@ import {
   type Node as PmNode,
 } from '@tiptap/pm/model'
 import type { Transaction } from '@tiptap/pm/state'
+import { closeHistory } from '@tiptap/pm/history'
 import type { SaveOptions } from '../../vendor/packages/docx-engine/src/patch.js'
 import type { StyleUpsert } from '../../vendor/packages/docx-engine/src/style-upsert.js'
 import type {
@@ -1161,13 +1162,21 @@ export function createDocxAgentHandle(
           if (!['docParagraph', 'docHeading', 'docListItem'].includes(block.node.type.name)) {
             throw new Error('只能在可编辑段落中插入注释')
           }
+          // A toolbar panel captures the exact cursor/selection endpoint before
+          // taking focus. Agent callers retain afterText / paragraph-end semantics.
           const at =
-            args.afterText === undefined
-              ? block.to - 1
-              : anchorRange(editor, blockIndex, asString(args.afterText, 'afterText')).to
+            args.position !== undefined
+              ? asIndex(args.position, 'position')
+              : args.afterText === undefined
+                ? block.to - 1
+                : anchorRange(editor, blockIndex, asString(args.afterText, 'afterText')).to
+          if (at < block.from + 1 || at > block.to - 1)
+            throw new Error('注释位置已不在目标段落，请重新定位')
           const list = notes(kind)
           const id = nextNumericId(list)
+          if (!options.saveOptions) throw new Error('当前编辑器没有 DOCX 附加结构保存状态')
           beforeWrite(roundId)
+          editor.view.dispatch(closeHistory(editor.state.tr))
           if (
             !editor.commands.insertContentAt(at, {
               type: 'docNoteRef',
@@ -1176,6 +1185,7 @@ export function createDocxAgentHandle(
           ) {
             throw new Error('编辑器拒绝插入注释引用')
           }
+          editor.view.dispatch(closeHistory(editor.state.tr))
           updateSaveOptions(
             { [kind === 'footnote' ? 'footnotes' : 'endnotes']: [...list, { id, text }] },
             roundId,

@@ -546,6 +546,83 @@ it('手动快捷格式和复制共用 Agent 操作，保存字节可重新解析
   host.remove()
 })
 
+it('清除选中元素行内样式经共用操作写入源码、预览和重开的原件', async () => {
+  const original =
+    '\uFEFF<!doctype html>\r\n<html><body><p title="style=keep" style="color: red; font-weight: 700">正文</p></body></html>\r\n'
+  let saved: Uint8Array | null = null
+  let agent: HtmlAgentHandle | null = null
+  const io: EditorIo = {
+    load: async () => saved ?? new TextEncoder().encode(original),
+    save: async (bytes) => {
+      saved = bytes
+    },
+  }
+  const host = document.createElement('div')
+  document.body.append(host)
+  const root = createRoot(host)
+  await act(async () => {
+    root.render(
+      <HtmlEditor
+        documentId="reset-style"
+        io={io}
+        onAgentHandleChange={(handle) => {
+          agent = handle
+        }}
+      />,
+    )
+  })
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  })
+  const handle = agent as HtmlAgentHandle | null
+  if (!handle) throw new Error('HTML Agent 句柄未挂载')
+  const sid = handle.getDocument().map.elements.find((entry) => entry.tag === 'p')?.sid
+  if (sid === undefined) throw new Error('测试段落未解析')
+  const reset = () =>
+    host.querySelector<HTMLButtonElement>('[aria-label="清除选中元素的行内样式"]')!
+  expect(reset().disabled).toBe(true)
+  expect(reset().getAttribute('title')).toBe('先在预览里点一个元素')
+  act(() => {
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: {
+          type: 'gx:select',
+          version: handle.getVersion(),
+          element: { sid, tag: 'p', className: '' },
+        },
+        source: host.querySelector('iframe')!.contentWindow,
+      }),
+    )
+  })
+  expect(reset().disabled).toBe(false)
+  press(reset())
+  expect(handle.getDocument().text).toContain('<p title="style=keep">正文</p>')
+  expect(handle.getDocument().text).not.toContain('font-weight: 700')
+  expect(host.querySelector('iframe')?.getAttribute('srcdoc')).toContain('<p title="style=keep"')
+  expect(reset().disabled).toBe(true)
+  expect(reset().getAttribute('title')).toBe('选中元素没有行内样式')
+  press(host.querySelector<HTMLButtonElement>('[aria-label="保存到库"]')!)
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  })
+  const output = new TextDecoder('utf-8', { ignoreBOM: true }).decode(saved!)
+  expect(output).toBe(
+    '\uFEFF<!doctype html>\r\n<html><body><p title="style=keep">正文</p></body></html>\r\n',
+  )
+  act(() => root.unmount())
+  const reopened = createRoot(host)
+  await act(async () => {
+    reopened.render(<HtmlEditor documentId="reset-style-reopen" io={io} />)
+  })
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  })
+  expect(host.querySelector('iframe')?.getAttribute('srcdoc')).toContain('<p title="style=keep"')
+  expect(host.querySelector('iframe')?.getAttribute('srcdoc')).not.toContain('font-weight: 700')
+  act(() => reopened.unmount())
+  host.remove()
+})
+
 it('保存进行中继续编辑时保留未保存状态', async () => {
   let agent: HtmlAgentHandle | null = null
   let finishSave: (() => void) | null = null

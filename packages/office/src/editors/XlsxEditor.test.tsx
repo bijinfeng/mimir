@@ -99,6 +99,27 @@ async function waitForTable(host: HTMLElement): Promise<void> {
   throw new Error(`表格没渲染出来。界面现在是：${host.textContent ?? ''}`)
 }
 
+async function waitForGrid(host: HTMLElement, ready: () => boolean): Promise<void> {
+  const deadline = Date.now() + 3_000
+  while (Date.now() < deadline) {
+    if (ready()) return
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 5))
+    })
+  }
+  if (ready()) return
+  throw new Error(
+    `网格没有更新。状态：${host.querySelector('.mimir-editor__status')?.textContent ?? ''}；工作表：${[
+      ...host.querySelectorAll('.mimir-compact-toolbar__sheet-tabs .me-tab'),
+    ]
+      .map(
+        (tab) =>
+          `${tab.textContent ?? ''}${tab.getAttribute('aria-selected') === 'true' ? '（当前）' : ''}`,
+      )
+      .join('、')}`,
+  )
+}
+
 function click(element: Element) {
   act(() => {
     element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
@@ -252,28 +273,75 @@ const fakeHostApply: XlsxHostApply = async ({ bytes, expectedVersion, ops }) => 
     source?: string
     target?: string
     range?: string
+    name?: string
+  }
+  if (first.op === 'rename_sheet') {
+    const sheet = sheets.get(first.sheetId)
+    if (!sheet || !first.name) throw new Error('工作表改名参数无效')
+    const result = await applyCellEditsToXlsx(Buffer.from(bytes), [], [], [], {
+      renames: [{ sheetName: sheet.name, newName: first.name }],
+      additions: [],
+      removals: [],
+      order: workbook.snapshot.sheets.map((item) =>
+        item.id === sheet.id ? first.name! : item.name,
+      ),
+    })
+    return {
+      bytes: new Uint8Array(result.buffer),
+      version: expectedVersion + 1,
+      changedCells: [],
+      touchedEntries: [...result.touchedEntries],
+    }
+  }
+  if (first.op === 'add_sheet') {
+    if (!first.name) throw new Error('缺少新工作表名称')
+    const result = await applyCellEditsToXlsx(Buffer.from(bytes), [], [], [], {
+      renames: [],
+      additions: [{ name: first.name }],
+      removals: [],
+      order: [...workbook.snapshot.sheets.map((item) => item.name), first.name],
+    })
+    return {
+      bytes: new Uint8Array(result.buffer),
+      version: expectedVersion + 1,
+      changedCells: [],
+      touchedEntries: [...result.touchedEntries],
+    }
   }
   if (
-    ['insert_rows', 'delete_rows', 'insert_cols', 'delete_cols', 'set_col_width'].includes(first.op)
+    [
+      'insert_rows',
+      'delete_rows',
+      'insert_cols',
+      'delete_cols',
+      'set_col_width',
+      'merge_cells',
+      'unmerge_cells',
+    ].includes(first.op)
   ) {
     const sheet = sheets.get(first.sheetId)
     if (!sheet) throw new Error('工作表已失效')
     const column = first.column ? parseAddress(`${first.column}1`).column : undefined
     const native: StructuralOp =
-      first.op === 'insert_rows'
-        ? { kind: 'insert-rows', index: first.row! - 1, count: first.count! }
-        : first.op === 'delete_rows'
-          ? { kind: 'remove-rows', index: first.row! - 1, count: first.count! }
-          : first.op === 'insert_cols'
-            ? { kind: 'insert-cols', index: column!, count: first.count! }
-            : first.op === 'delete_cols'
-              ? { kind: 'remove-cols', index: column!, count: first.count! }
-              : {
-                  kind: 'set-col-size',
-                  start: column!,
-                  end: column!,
-                  size: (first.widthPx! - 5) / 7,
-                }
+      first.op === 'merge_cells' || first.op === 'unmerge_cells'
+        ? {
+            kind: first.op === 'merge_cells' ? 'merge-cells' : 'unmerge-cells',
+            range: parseRange(first.range!),
+          }
+        : first.op === 'insert_rows'
+          ? { kind: 'insert-rows', index: first.row! - 1, count: first.count! }
+          : first.op === 'delete_rows'
+            ? { kind: 'remove-rows', index: first.row! - 1, count: first.count! }
+            : first.op === 'insert_cols'
+              ? { kind: 'insert-cols', index: column!, count: first.count! }
+              : first.op === 'delete_cols'
+                ? { kind: 'remove-cols', index: column!, count: first.count! }
+                : {
+                    kind: 'set-col-size',
+                    start: column!,
+                    end: column!,
+                    size: (first.widthPx! - 5) / 7,
+                  }
     const result = await applyCellEditsToXlsx(
       Buffer.from(bytes),
       [],
@@ -415,6 +483,49 @@ async function save(host: HTMLElement, saved: () => Uint8Array | null): Promise<
   )
 }
 
+it('keeps a later edit unsaved when an older workbook save finishes', async () => {
+  const persisted: Uint8Array[] = []
+  let firstStarted = false
+  let finishFirst: () => void = vi.fn<() => void>()
+  const io: EditorIo = {
+    load: async () => new Uint8Array(readFileSync(FIXTURE)),
+    save: async (bytes) => {
+      if (persisted.length === 0) {
+        firstStarted = true
+        await new Promise<void>((resolve) => {
+          finishFirst = resolve
+        })
+      }
+      persisted.push(bytes)
+    },
+  }
+  const host = mount(<XlsxEditor documentId="save-race" io={io} hostApply={fakeHostApply} />)
+  await waitForTable(host)
+  click(cellAt(host, 2, 0))
+  type(byLabel(host, '单元格 A2'), '先保存')
+  press(byLabel(host, '单元格 A2'), 'Enter')
+  await waitForGrid(host, () => cellAt(host, 2, 0).textContent === '先保存')
+  await waitForGrid(host, () => !(byLabel(host, '保存到库') as HTMLButtonElement).disabled)
+  click(byLabel(host, '保存到库'))
+  await waitForGrid(host, () => firstStarted)
+
+  click(cellAt(host, 2, 1))
+  type(byLabel(host, '单元格 B2'), '保存中又编辑')
+  press(byLabel(host, '单元格 B2'), 'Enter')
+  await waitForGrid(host, () => cellAt(host, 2, 1).textContent === '保存中又编辑')
+  await act(async () => finishFirst())
+  await waitForGrid(host, () => persisted.length === 1)
+  await waitForGrid(host, () => !(byLabel(host, '保存到库') as HTMLButtonElement).disabled)
+
+  click(byLabel(host, '保存到库'))
+  await waitForGrid(host, () => persisted.length === 2)
+  const first = (await readBasicWorkbook(Buffer.from(persisted[0]!))).snapshot.sheets[0]!
+  const second = (await readBasicWorkbook(Buffer.from(persisted[1]!))).snapshot.sheets[0]!
+  expect(first.cells.A2?.value).toBe('先保存')
+  expect(first.cells.B2?.value).toBe('部门')
+  expect(second.cells.B2?.value).toBe('保存中又编辑')
+})
+
 function structureMenuItem(host: HTMLElement, label: string): HTMLButtonElement {
   click(byLabel(host, '行列操作'))
   const item = [...host.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')].find(
@@ -449,20 +560,234 @@ describe('xlsx 填充和格式菜单：手动操作保存为工作簿原件', ()
     expect(sheet?.cells.A4?.value).toBe('姓名')
   })
 
-  it('加粗和列宽预设经同一保存路径写入 OOXML', async () => {
+  it('加粗和列宽在当前网格可见，保存重开后仍可见', async () => {
     const { host, saved } = await openEditor()
     click(cellAt(host, 2, 0))
     click(cellMenuItem(host, '当前格加粗'))
-    await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0))
-    })
+    await waitForGrid(host, () => cellAt(host, 2, 0).classList.contains('mimir-xlsx__cell--bold'))
+    expect(cellAt(host, 2, 0).classList.contains('mimir-xlsx__cell--bold')).toBe(true)
     click(structureMenuItem(host, '当前列设为 180 像素宽'))
+    await waitForGrid(
+      host,
+      () =>
+        host.querySelectorAll<HTMLTableColElement>('.mimir-xlsx col')[1]?.style.width === '180px',
+    )
+    const columns = host.querySelectorAll<HTMLTableColElement>('.mimir-xlsx col')
+    expect(columns[0]?.style.width).toBe('34px')
+    expect(columns[1]?.style.width).toBe('180px')
+    expect(host.querySelector<HTMLTableElement>('.mimir-xlsx')?.style.width).toBe('364px')
     await save(host, saved)
     const sheetXml = await entryOf(saved()!, 'xl/worksheets/sheet1.xml')
     const stylesXml = await entryOf(saved()!, 'xl/styles.xml')
     expect(sheetXml).toMatch(/<c\b[^>]*r="A2"[^>]*s="[1-9]/)
     expect(sheetXml).toMatch(/<col\b[^>]*min="1"[^>]*max="1"[^>]*width="25"/)
     expect(stylesXml).toContain('<b')
+    const reopenedHandle = fakeIo(saved()!)
+    const reopenedHost = mount(
+      <XlsxEditor documentId="reopened" io={reopenedHandle.io} hostApply={fakeHostApply} />,
+    )
+    await waitForTable(reopenedHost)
+    expect(cellAt(reopenedHost, 2, 0).classList.contains('mimir-xlsx__cell--bold')).toBe(true)
+    expect(
+      reopenedHost.querySelectorAll<HTMLTableColElement>('.mimir-xlsx col')[1]?.style.width,
+    ).toBe('180px')
+    expect(reopenedHost.querySelector<HTMLTableElement>('.mimir-xlsx')?.style.width).toBe('364px')
+  })
+
+  it('工具栏按 A1 范围预览并加粗多格，保存重开后保留且不影响范围外格', async () => {
+    const { host, saved } = await openEditor()
+    const input = byLabel(host, '操作范围（A1 或 A1:B5）')
+    const button = byLabel(host, '范围加粗') as HTMLButtonElement
+    type(input, 'A2:B10000')
+    expect(button.disabled).toBe(true)
+    expect(button.getAttribute('title')).toBe('一次最多操作 2000 个格子')
+    type(input, 'Z2')
+    expect(button.disabled).toBe(true)
+    expect(button.getAttribute('title')).toBe('当前网格未显示该范围，无法核对结果')
+
+    type(input, 'a2:b2')
+    expect(button.disabled).toBe(false)
+    expect(cellAt(host, 2, 0).classList.contains('mimir-xlsx__cell--range')).toBe(true)
+    expect(cellAt(host, 2, 1).classList.contains('mimir-xlsx__cell--range')).toBe(true)
+    expect(cellAt(host, 2, 2).classList.contains('mimir-xlsx__cell--range')).toBe(false)
+    click(button)
+    await waitForGrid(host, () =>
+      [0, 1].every((col) => cellAt(host, 2, col).classList.contains('mimir-xlsx__cell--bold')),
+    )
+    expect(cellAt(host, 2, 2).classList.contains('mimir-xlsx__cell--bold')).toBe(false)
+
+    await save(host, saved)
+    const sheetXml = await entryOf(saved()!, 'xl/worksheets/sheet1.xml')
+    expect(sheetXml).toMatch(/<c\b[^>]*r="A2"[^>]*s="[1-9]/)
+    expect(sheetXml).toMatch(/<c\b[^>]*r="B2"[^>]*s="[1-9]/)
+    const reopenedIo = fakeIo(saved()!)
+    const reopened = mount(
+      <XlsxEditor documentId="range-reopened" io={reopenedIo.io} hostApply={fakeHostApply} />,
+    )
+    await waitForTable(reopened)
+    expect(cellAt(reopened, 2, 0).classList.contains('mimir-xlsx__cell--bold')).toBe(true)
+    expect(cellAt(reopened, 2, 1).classList.contains('mimir-xlsx__cell--bold')).toBe(true)
+    expect(cellAt(reopened, 2, 2).classList.contains('mimir-xlsx__cell--bold')).toBe(false)
+  })
+})
+
+describe('xlsx 范围合并：手动入口与结构写回', () => {
+  it('拒绝隐藏有内容的格子，现有合并只允许按完整范围取消', async () => {
+    const { host } = await openEditor()
+    const input = byLabel(host, '操作范围（A1 或 A1:B5）')
+    type(input, 'A2:B2')
+    expect((byLabel(host, '合并范围') as HTMLButtonElement).disabled).toBe(true)
+    expect(byLabel(host, '合并范围').getAttribute('title')).toContain('隐藏其他格的内容')
+    type(input, 'A1:B1')
+    expect((byLabel(host, '取消合并范围') as HTMLButtonElement).disabled).toBe(true)
+    type(input, 'A1:C1')
+    expect((byLabel(host, '取消合并范围') as HTMLButtonElement).disabled).toBe(false)
+  })
+
+  it('合并空目标并取消合并，两个保存循环均能重开读回', async () => {
+    const zip = await JSZip.loadAsync(new Uint8Array(readFileSync(FIXTURE)))
+    const xml = await zip.file('xl/worksheets/sheet1.xml')!.async('string')
+    zip.file(
+      'xl/worksheets/sheet1.xml',
+      xml.replace('<c r="B2" t="s"><v>1</v></c>', '<c r="B2" t="inlineStr"><is><t></t></is></c>'),
+    )
+    const handle = fakeIo(await zip.generateAsync({ type: 'uint8array' }))
+    const host = mount(<XlsxEditor documentId="merge" io={handle.io} hostApply={fakeHostApply} />)
+    await waitForTable(host)
+    type(byLabel(host, '操作范围（A1 或 A1:B5）'), 'A2:B2')
+    expect((byLabel(host, '合并范围') as HTMLButtonElement).disabled).toBe(false)
+    click(byLabel(host, '合并范围'))
+    await waitForGrid(host, () => cellAt(host, 2, 0).colSpan === 2)
+    expect(cellAt(host, 2, 0).textContent).toContain('姓名')
+    await save(host, handle.saved)
+    expect(await entryOf(handle.saved()!, 'xl/worksheets/sheet1.xml')).toContain(
+      '<mergeCell ref="A2:B2"/>',
+    )
+
+    const reopenedIo = fakeIo(handle.saved()!)
+    const reopened = mount(
+      <XlsxEditor documentId="unmerge" io={reopenedIo.io} hostApply={fakeHostApply} />,
+    )
+    await waitForTable(reopened)
+    expect(cellAt(reopened, 2, 0).colSpan).toBe(2)
+    type(byLabel(reopened, '操作范围（A1 或 A1:B5）'), 'A2:B2')
+    click(byLabel(reopened, '取消合并范围'))
+    await waitForGrid(reopened, () => cellAt(reopened, 2, 0).colSpan === 1)
+    expect(cellAt(reopened, 2, 1).textContent).toBe('')
+    await save(reopened, reopenedIo.saved)
+    expect(await entryOf(reopenedIo.saved()!, 'xl/worksheets/sheet1.xml')).not.toContain(
+      '<mergeCell ref="A2:B2"/>',
+    )
+
+    const secondIo = fakeIo(reopenedIo.saved()!)
+    const second = mount(
+      <XlsxEditor documentId="unmerged-reopened" io={secondIo.io} hostApply={fakeHostApply} />,
+    )
+    await waitForTable(second)
+    expect(cellAt(second, 2, 0).colSpan).toBe(1)
+    expect(cellAt(second, 2, 1).textContent).toBe('')
+  })
+})
+
+describe('xlsx 工作表管理：改名与保存', () => {
+  it('显示名称校验原因，改名后页签即时更新并能保存重开', async () => {
+    const { host, saved } = await openMultiSheetEditor()
+    const input = byLabel(host, '工作表名称（最多 31 个字符）')
+    const button = byLabel(host, '重命名当前工作表') as HTMLButtonElement
+    expect(button.disabled).toBe(true)
+    expect(button.getAttribute('title')).toBe('工作表名称没有变化')
+    type(input, '第二张')
+    expect(button.disabled).toBe(true)
+    expect(button.getAttribute('title')).toBe('已有同名工作表')
+    type(input, '无效/名称')
+    expect(button.disabled).toBe(true)
+    expect(button.getAttribute('title')).toContain('不能包含')
+    type(input, '新数据')
+    expect(button.disabled).toBe(false)
+    click(button)
+    await waitForGrid(host, () =>
+      [...host.querySelectorAll('.mimir-compact-toolbar__sheet-tabs .me-tab')].some(
+        (tab) => tab.textContent?.trim() === '新数据',
+      ),
+    )
+    expect((byLabel(host, '工作表名称（最多 31 个字符）') as HTMLInputElement).value).toBe('新数据')
+    expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('未保存')
+    await save(host, saved)
+    expect(await entryOf(saved()!, 'xl/workbook.xml')).toContain('name="新数据"')
+    const reopenedIo = fakeIo(saved()!)
+    const reopened = mount(
+      <XlsxEditor documentId="renamed" io={reopenedIo.io} hostApply={fakeHostApply} />,
+    )
+    await waitForTable(reopened)
+    expect(
+      [...reopened.querySelectorAll('.mimir-compact-toolbar__sheet-tabs .me-tab')].map((tab) =>
+        tab.textContent?.trim(),
+      ),
+    ).toEqual(['新数据', '第二张'])
+  })
+
+  it('新增工作表后可选中新页签、编辑空 A1，保存重开仍存在', async () => {
+    const { host, saved } = await openEditor()
+    const input = byLabel(host, '新工作表名称（最多 31 个字符）')
+    const button = byLabel(host, '新增工作表') as HTMLButtonElement
+    expect(button.disabled).toBe(true)
+    expect(button.getAttribute('title')).toBe('输入新工作表名称')
+    type(input, '数据')
+    expect(button.disabled).toBe(true)
+    expect(button.getAttribute('title')).toBe('已有同名工作表')
+    type(input, '计划')
+    expect(button.disabled).toBe(false)
+    click(button)
+    await waitForGrid(host, () =>
+      [...host.querySelectorAll('.mimir-compact-toolbar__sheet-tabs .me-tab')].some(
+        (tab) => tab.textContent?.trim() === '计划',
+      ),
+    )
+    expect(cellAt(host, 1, 0).textContent).toBe('')
+    click(cellAt(host, 1, 0))
+    type(byLabel(host, '单元格 A1'), '新表首格')
+    click(byLabel(host, '应用'))
+    await waitForGrid(host, () => cellAt(host, 1, 0).textContent?.includes('新表首格') === true)
+    await save(host, saved)
+    const reopenedIo = fakeIo(saved()!)
+    const reopened = mount(
+      <XlsxEditor documentId="added-sheet" io={reopenedIo.io} hostApply={fakeHostApply} />,
+    )
+    await waitForTable(reopened)
+    expect(
+      [...reopened.querySelectorAll('.mimir-compact-toolbar__sheet-tabs .me-tab')].map((tab) =>
+        tab.textContent?.trim(),
+      ),
+    ).toEqual(['数据', '计划'])
+    click(reopened.querySelectorAll<HTMLButtonElement>('.me-tab')[1]!)
+    expect(cellAt(reopened, 1, 0).textContent).toBe('新表首格')
+  })
+
+  it('连续新增两张工作表时选中最后创建的页签', async () => {
+    const source = fakeIo()
+    const host = mount(
+      <XlsxEditor documentId="add-twice" io={source.io} hostApply={fakeHostApply} />,
+    )
+    await waitForTable(host)
+    const input = byLabel(host, '新工作表名称（最多 31 个字符）')
+    type(input, '第一张')
+    click(byLabel(host, '新增工作表'))
+    type(input, '第二张')
+    click(byLabel(host, '新增工作表'))
+    await waitForGrid(
+      host,
+      () =>
+        host.querySelectorAll('.mimir-compact-toolbar__sheet-tabs .me-tab').length === 3 &&
+        host.querySelector('.mimir-compact-toolbar__sheet-tabs [aria-selected="true"]')
+          ?.textContent === '第二张',
+    )
+    await save(host, source.saved)
+    const reopened = await readBasicWorkbook(Buffer.from(source.saved()!))
+    expect(reopened.snapshot.sheets.map((sheet) => sheet.name)).toEqual([
+      '数据',
+      '第一张',
+      '第二张',
+    ])
   })
 })
 
@@ -715,12 +1040,35 @@ describe('xlsx 工具条：查找上一个 / 下一个', () => {
 })
 
 describe('xlsx 工具条：跳到上一个 / 下一个公式格', () => {
+  it('无缓存公式直接显示未计算状态，避免空格被误认作空值', async () => {
+    const zip = await JSZip.loadAsync(new Uint8Array(readFileSync(FIXTURE)))
+    const xml = await zip.file('xl/worksheets/sheet1.xml')!.async('string')
+    zip.file(
+      'xl/worksheets/sheet1.xml',
+      xml.replace('<f>SUM(1,2)</f><v>1001</v>', '<f>SUM(1,2)</f>'),
+    )
+    const handle = fakeIo(await zip.generateAsync({ type: 'uint8array' }))
+    const host = mount(
+      <XlsxEditor documentId="no-cache" io={handle.io} hostApply={fakeHostApply} />,
+    )
+    await waitForTable(host)
+    const cell = cellAt(host, 3, 2)
+    expect(cell.textContent).toContain('未计算')
+    expect(cell.querySelector('.mimir-xlsx__formula-tag')?.textContent).toBe('无结果')
+    click(cell)
+    expect(host.querySelector('.mimir-cell-editor__warn')?.textContent).toContain(
+      '没有可显示的缓存结果',
+    )
+  })
+
   it('下一个公式格选中夹具里那一格公式（C3）', async () => {
     const { host } = await openEditor()
     selectRibbonTab(host, '公式')
     click(byLabel(host, '跳到下一个公式格'))
     const cell = selectedCell(host)
-    expect(cell?.getAttribute('title')).toBe('公式（显示 Excel 算好的缓存值）')
+    expect(cell?.getAttribute('title')).toContain('缓存结果，当前编辑器未重算')
+    expect(cell?.querySelector('.mimir-xlsx__formula-tag')?.textContent).toBe('缓存')
+    expect(host.querySelector('.mimir-cell-editor__warn')?.textContent).toContain('可能已过期')
     // 单元格编辑行里的引用证明它是 C3
     expect(host.querySelector('.mimir-cell-editor__ref')?.textContent).toBe('C3')
   })

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { existsSync } from 'node:fs'
 import { PDFDocument, PDFName, StandardFonts } from 'pdf-lib'
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
@@ -10,6 +11,9 @@ import {
 import {
   applyPdfTextEdits,
   applyPdfTextInserts,
+  applyPdfVerifiedTextEdit,
+  applyPdfVerifiedMarkup,
+  inspectPdfTextTarget,
   pdfAgentAssetPaths,
 } from '../services/pdf-agent-host.js'
 
@@ -32,6 +36,74 @@ async function readText(bytes: Uint8Array): Promise<string> {
 }
 
 describe('PDF content writer host', () => {
+  it('writes a real highlight annotation, reads it back, and preserves bytes on failure', async () => {
+    const bytes = await fixture()
+    const target = await inspectPdfTextTarget(bytes, {
+      pageIndex: 0,
+      rect: [35, 295, 125, 316],
+      oldText: 'ORIGINAL',
+    })
+    let marked: Uint8Array | null = null
+    for (const [type, subtype] of [
+      ['highlight', 'Highlight'],
+      ['underline', 'Underline'],
+      ['strikeout', 'StrikeOut'],
+    ] as const) {
+      const result = await applyPdfVerifiedMarkup(bytes, { target, type })
+      const task = getDocument({ data: result.slice() })
+      try {
+        const page = await (await task.promise).getPage(1)
+        expect((await page.getAnnotations()).some((item) => item.subtype === subtype)).toBe(true)
+      } finally {
+        await task.destroy()
+      }
+      expect(await readText(result)).toContain('ORIGINAL')
+      marked = result
+    }
+    expect(await readText(bytes)).toContain('ORIGINAL')
+    await expect(applyPdfVerifiedMarkup(marked!, { target, type: 'underline' })).rejects.toThrow(
+      '原件已变化',
+    )
+    const complex = await PDFDocument.load(bytes)
+    complex.catalog.set(PDFName.of('AcroForm'), complex.context.obj({ Fields: [] }))
+    const complexBytes = await complex.save()
+    await expect(
+      applyPdfVerifiedMarkup(complexBytes, {
+        target: { ...target, sha256: createHash('sha256').update(complexBytes).digest('hex') },
+        type: 'highlight',
+      }),
+    ).rejects.toThrow('文档结构')
+  })
+
+  it('pins one PDFium text object to exact bytes and rejects stale or ambiguous targets', async () => {
+    const bytes = await fixture()
+    const probe = {
+      pageIndex: 0,
+      rect: [35, 295, 125, 316] as [number, number, number, number],
+      oldText: 'ORIGINAL',
+    }
+    const target = await inspectPdfTextTarget(bytes, probe)
+    expect(target).toMatchObject({ pageIndex: 0, text: 'ORIGINAL' })
+    expect(target.sha256).toMatch(/^[a-f0-9]{64}$/)
+    const edit = { ...probe, newText: 'REVISED', fontSize: 12 }
+    const result = await applyPdfVerifiedTextEdit(bytes, edit, target)
+    expect(await readText(result)).toContain('REVISED')
+    expect(await readText(bytes)).toContain('ORIGINAL')
+    await expect(applyPdfVerifiedTextEdit(result, edit, target)).rejects.toThrow('原件已变化')
+    await expect(inspectPdfTextTarget(bytes, { ...probe, oldText: 'ORIG' })).rejects.toThrow(
+      '不是唯一完整文字项',
+    )
+
+    const doubled = await PDFDocument.create()
+    const font = await doubled.embedFont(StandardFonts.Helvetica)
+    const page = doubled.addPage([300, 400])
+    page.drawText('ORIGINAL', { x: 40, y: 300, size: 12, font })
+    page.drawText('ORIGINAL', { x: 40, y: 300, size: 12, font })
+    await expect(inspectPdfTextTarget(await doubled.save(), probe)).rejects.toThrow(
+      '不是唯一完整文字项',
+    )
+  })
+
   it('resolves production WASM resources', () => {
     const assets = pdfAgentAssetPaths()
     expect(existsSync(assets.pdfium)).toBe(true)

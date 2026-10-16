@@ -63,6 +63,39 @@ const upstreamHostApply: PptxHostApply = async ({ bytes, expectedVersion, ops })
     version: expectedVersion + 1,
   }
 }
+type HostPicture = NonNullable<Parameters<typeof PptxEditor>[0]['hostPicture']>
+const upstreamHostPicture: HostPicture = async (request) => {
+  const opened = await openUpstreamPptx(request.bytes)
+  const op: Op =
+    request.action === 'insert'
+      ? {
+          op: 'addPicture',
+          target: { slide: request.slide },
+          bytes: request.imageBytes,
+          ext: 'png',
+          offset: { x: 914400, y: 1371600, cx: 5486400, cy: 2743200 },
+        }
+      : {
+          op: 'replacePicture',
+          target: { slide: request.slide, el: request.elementId },
+          bytes: request.imageBytes,
+          ext: 'png',
+        }
+  const transaction = runTxn(opened, { ops: [op], isolation: 'atomic' })
+  if (!transaction.applied) throw new Error(transaction.failures?.[0]?.error ?? '图片操作失败')
+  return { bytes: await saveUpstreamPptx(opened), version: request.expectedVersion + 1 }
+}
+
+async function imageBytes(): Promise<Uint8Array> {
+  const zip = await JSZip.loadAsync(load('image-deck.pptx'))
+  return zip.file('ppt/media/image1.png')!.async('uint8array')
+}
+const ONE_PIXEL_PNG = new Uint8Array(
+  Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X9WQAAAAASUVORK5CYII=',
+    'base64',
+  ),
+)
 
 /* ── 挂载 / 交互 ─────────────────────────────────────────────── */
 
@@ -101,7 +134,7 @@ async function settle(done: () => boolean): Promise<void> {
  */
 async function mountEditor(
   bytes: Uint8Array,
-  options: { record?: Recorder; hostApply?: PptxHostApply } = {},
+  options: { record?: Recorder; hostApply?: PptxHostApply; hostPicture?: HostPicture } = {},
 ): Promise<{ host: HTMLElement; record: Recorder }> {
   const record: Recorder = options.record ?? { saved: [] }
   const io: EditorIo = {
@@ -115,7 +148,14 @@ async function mountEditor(
   const root = createRoot(host)
   ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
   await act(async () => {
-    root.render(<PptxEditor documentId="doc-1" io={io} hostApply={options.hostApply} />)
+    root.render(
+      <PptxEditor
+        documentId="doc-1"
+        io={io}
+        hostApply={options.hostApply}
+        hostPicture={options.hostPicture}
+      />,
+    )
   })
   await settle(() => host.querySelector('.mimir-pptx-slide svg') !== null)
   expect(host.querySelector('.mimir-pptx-slide svg'), '画布没有渲染出来').not.toBeNull()
@@ -169,6 +209,31 @@ function objectMenuItem(host: HTMLElement, label: string): HTMLButtonElement {
 function click(element: Element): void {
   act(() => {
     element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
+  })
+}
+
+function typeInField(host: HTMLElement, label: string, value: string): void {
+  const field = [
+    ...host.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('input, textarea'),
+  ].find((item) => item.getAttribute('aria-label') === label)
+  if (!field) throw new Error(`没有名为「${label}」的输入框`)
+  act(() => {
+    const owner = field instanceof HTMLTextAreaElement ? HTMLTextAreaElement : HTMLInputElement
+    const setter = Object.getOwnPropertyDescriptor(owner.prototype, 'value')?.set
+    setter!.call(field, value)
+    field.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+}
+
+async function pickImage(host: HTMLElement, label: string, bytes: Uint8Array): Promise<void> {
+  const trigger = button(host, label)
+  const input = trigger.closest('.me-file')?.querySelector<HTMLInputElement>('input[type="file"]')
+  if (!input) throw new Error(`没有「${label}」的文件输入`)
+  const file = new File([new Uint8Array(bytes)], 'picture.png', { type: 'image/png' })
+  Object.defineProperty(input, 'files', { configurable: true, value: [file] })
+  await act(async () => {
+    input.dispatchEvent(new Event('change', { bubbles: true }))
+    await new Promise((tick) => setTimeout(tick, 0))
   })
 }
 
@@ -276,6 +341,52 @@ async function twoRunUpstreamDeck(): Promise<Uint8Array> {
   expect(twoRun).not.toBe(slide)
   zip.file('ppt/slides/slide3.xml', twoRun)
   return zip.generateAsync({ type: 'uint8array' })
+}
+
+async function tableWithFormattedParagraphs(): Promise<Uint8Array> {
+  const opened = await openUpstreamPptx(load('title-layout.pptx'))
+  const inserted = runTxn(opened, {
+    ops: [
+      {
+        op: 'addTable',
+        target: { slide: 0 },
+        rows: 2,
+        cols: 2,
+        offset: { x: 914400, y: 1371600, cx: 5486400, cy: 1371600 },
+      },
+    ],
+    isolation: 'atomic',
+  })
+  expect(inserted.applied).toBe(true)
+  const table = opened.deck.slides[0]?.elements.find((element) => element.type === 'table')
+  if (!table) throw new Error('表格夹具创建失败')
+  const prepared = runTxn(opened, {
+    ops: [
+      {
+        op: 'setTableCell',
+        target: { slide: 0, el: table.id },
+        row: 0,
+        col: 0,
+        paragraphs: [
+          {
+            runs: [
+              { text: 'Key ', bold: true },
+              { text: 'Results', color: '#C0392B' },
+            ],
+          },
+          {
+            runs: [
+              { text: 'Keep ', italic: true },
+              { text: 'second', color: '#008800' },
+            ],
+          },
+        ],
+      },
+    ],
+    isolation: 'atomic',
+  })
+  expect(prepared.applied).toBe(true)
+  return saveUpstreamPptx(opened)
 }
 
 /** 用「跳到第几页」输入框翻到某一页（走 `ToolbarNumberField` 的契约：回车提交） */
@@ -527,6 +638,484 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
     await saveAndRead(host, record, 'ppt/slides/slide1.xml')
     const reopened = await openPptxForEdit(record.saved.at(-1)!)
     expect(reopened.slides()[0]?.elements).toHaveLength(3)
+  })
+
+  it('插入表格在画布可见，并以原生表格保存重开', async () => {
+    const { host, record } = await mountEditor(load('title-layout.pptx'), {
+      hostApply: upstreamHostApply,
+    })
+    const tab = [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (item) => item.textContent === '插入',
+    )!
+    click(tab)
+    click(button(host, '插入表格'))
+    click(button(host, '插入 2 行 3 列表格'))
+    await settle(() => host.querySelector('[data-element-kind="table"]') !== null)
+    const visibleTable = host.querySelector('[data-element-kind="table"]')
+    expect(visibleTable).not.toBeNull()
+    expect(visibleTable?.querySelector('rect, line, text')).not.toBeNull()
+    expect(button(host, '保存到库').disabled).toBe(false)
+
+    const xml = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    expect(xml).toContain('<a:tbl>')
+    const reopened = await openPptxForEdit(record.saved.at(-1)!)
+    const table = reopened.slides()[0]?.elements.find((element) => element.type === 'table')
+    expect(table?.type).toBe('table')
+    if (table?.type !== 'table') throw new Error('保存后没有原生表格')
+    expect(table.rows).toHaveLength(2)
+    expect(table.rows[0]).toHaveLength(3)
+  })
+
+  it('图表工具栏只用明确输入的用户数据，画布显示并保存原生图表', async () => {
+    const input = load('title-layout.pptx')
+    const observedOps: unknown[] = []
+    const { host, record } = await mountEditor(input, {
+      hostApply: async (request) => {
+        observedOps.push(request.ops[0])
+        return upstreamHostApply(request)
+      },
+    })
+    const tab = [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (item) => item.textContent === '插入',
+    )!
+    click(tab)
+    click(button(host, '插入图表'))
+    expect(host.textContent).toContain('数据来源：你在此输入的数值')
+    expect(button(host, '按输入数据插入图表').disabled).toBe(true)
+    expect(button(host, '按输入数据插入图表').title).toContain('请填写类别')
+    typeInField(host, '数据系列名称', '收入')
+    typeInField(host, '图表类别（每行一项）', 'Q1\nQ2')
+    typeInField(host, '图表数值（每行一项）', '12')
+    expect(button(host, '按输入数据插入图表').disabled).toBe(true)
+    expect(button(host, '按输入数据插入图表').title).toContain('数值行数必须与类别行数相同')
+    typeInField(host, '图表数值（每行一项）', '12\n18')
+    expect(button(host, '按输入数据插入图表').disabled).toBe(false)
+    click(button(host, '按输入数据插入图表'))
+    await settle(() => host.querySelector('.mimir-pptx-slide [data-element-kind="chart"]') !== null)
+    expect(observedOps).toEqual([
+      expect.objectContaining({
+        op: 'addChart',
+        dataSource: 'user',
+        categories: ['Q1', 'Q2'],
+        series: [{ name: '收入', values: [12, 18] }],
+      }),
+    ])
+    const chartNode = host.querySelector('.mimir-pptx-slide [data-element-kind="chart"]')
+    expect(chartNode).not.toBeNull()
+    expect(chartNode?.querySelector('rect, path, polyline')).not.toBeNull()
+    expect(button(host, '保存到库').disabled).toBe(false)
+    const xml = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    expect(xml).toContain('<c:chart')
+    const savedZip = await JSZip.loadAsync(record.saved.at(-1)!)
+    const chartPath = Object.keys(savedZip.files).find((path) =>
+      /^ppt\/charts\/chart\d+\.xml$/.test(path),
+    )
+    expect(chartPath).toBeDefined()
+    const chartXml = await savedZip.file(chartPath!)!.async('string')
+    expect(chartXml).toContain('Q1')
+    expect(chartXml).toContain('Q2')
+    expect(chartXml).toContain('12')
+    expect(chartXml).toContain('18')
+    const sourceZip = await JSZip.loadAsync(input)
+    expect(await savedZip.file('ppt/theme/theme1.xml')?.async('uint8array')).toEqual(
+      await sourceZip.file('ppt/theme/theme1.xml')?.async('uint8array'),
+    )
+    const reopened = await openPptxForEdit(record.saved.at(-1)!)
+    const chart = reopened.slides()[0]?.elements.find((element) => element.type === 'chart')
+    if (chart?.type !== 'chart') throw new Error('重开后图表丢失')
+    expect(chart.chart.categories).toEqual(['Q1', 'Q2'])
+    expect(chart.chart.series[0]?.values).toEqual([12, 18])
+
+    const slideTab = [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (item) => item.textContent === '幻灯片',
+    )!
+    click(slideTab)
+    click(button(host, '放映时隐藏本页'))
+    await settle(() => button(host, '保存到库').disabled === false)
+    const secondXml = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    expect(secondXml).toContain('<c:chart')
+    const reopenedTwice = await openPptxForEdit(record.saved.at(-1)!)
+    const retained = reopenedTwice.slides()[0]?.elements.find((element) => element.type === 'chart')
+    expect(retained?.type === 'chart' ? retained.chart.series[0]?.values : null).toEqual([12, 18])
+  })
+
+  it('图表宿主不可用和无效数值均不能写入', async () => {
+    const unavailable = await mountEditor(load('title-layout.pptx'))
+    const tab = [...unavailable.host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (item) => item.textContent === '插入',
+    )!
+    click(tab)
+    click(button(unavailable.host, '插入图表'))
+    expect(unavailable.host.textContent).toContain('当前未连接 PPTX 宿主，无法插入图表')
+    expect(unavailable.host.querySelector('button[aria-label="按输入数据插入图表"]')).toBeNull()
+
+    const { host } = await mountEditor(load('title-layout.pptx'), { hostApply: upstreamHostApply })
+    const insertTab = [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (item) => item.textContent === '插入',
+    )!
+    click(insertTab)
+    click(button(host, '插入图表'))
+    typeInField(host, '数据系列名称', '收入')
+    typeInField(host, '图表类别（每行一项）', 'Q1')
+    typeInField(host, '图表数值（每行一项）', 'Infinity')
+    expect(button(host, '按输入数据插入图表').disabled).toBe(true)
+    expect(button(host, '按输入数据插入图表').title).toContain('有限数值')
+    pickSelectOption(host, '图表类型', '饼图')
+    typeInField(host, '图表数值（每行一项）', '-1')
+    expect(button(host, '按输入数据插入图表').title).toContain('饼图数值不能为负')
+    expect(host.querySelector('[data-element-kind="chart"]')).toBeNull()
+    expect(button(host, '保存到库').disabled).toBe(true)
+  })
+
+  it.each([
+    ['折线图', 'line'],
+    ['饼图', 'pie'],
+  ] as const)('图表类型 %s 写入原生图表', async (label, kind) => {
+    const { host, record } = await mountEditor(load('title-layout.pptx'), {
+      hostApply: upstreamHostApply,
+    })
+    const tab = [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (item) => item.textContent === '插入',
+    )!
+    click(tab)
+    click(button(host, '插入图表'))
+    pickSelectOption(host, '图表类型', label)
+    typeInField(host, '数据系列名称', '占比')
+    typeInField(host, '图表类别（每行一项）', '甲\n乙')
+    typeInField(host, '图表数值（每行一项）', '25\n75')
+    click(button(host, '按输入数据插入图表'))
+    await settle(() => host.querySelector('[data-element-kind="chart"]') !== null)
+    expect(host.querySelector('[data-element-kind="chart"]')).not.toBeNull()
+    await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    const reopened = await openPptxForEdit(record.saved.at(-1)!)
+    const chart = reopened.slides()[0]?.elements.find((element) => element.type === 'chart')
+    expect(chart?.type === 'chart' ? chart.chart.kind : null).toBe(kind)
+  })
+
+  it('图表宿主失败时保留输入和原画布', async () => {
+    const { host, record } = await mountEditor(load('title-layout.pptx'), {
+      hostApply: async () => {
+        throw new Error('图表写入失败，请重试')
+      },
+    })
+    const tab = [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (item) => item.textContent === '插入',
+    )!
+    click(tab)
+    click(button(host, '插入图表'))
+    typeInField(host, '数据系列名称', '收入')
+    typeInField(host, '图表类别（每行一项）', 'Q1')
+    typeInField(host, '图表数值（每行一项）', '12')
+    click(button(host, '按输入数据插入图表'))
+    await settle(() => host.textContent?.includes('图表写入失败，请重试') === true)
+    expect(host.querySelector('[data-element-kind="chart"]')).toBeNull()
+    expect(host.querySelector<HTMLInputElement>('input[aria-label="数据系列名称"]')?.value).toBe(
+      '收入',
+    )
+    expect(
+      host.querySelector<HTMLTextAreaElement>('textarea[aria-label="图表数值（每行一项）"]')?.value,
+    ).toBe('12')
+    expect(button(host, '保存到库').disabled).toBe(true)
+    expect(record.saved).toHaveLength(0)
+  })
+
+  it('对象工具栏编辑现有单元格：显示当前值，保留其他段落和 run 并保存重开', async () => {
+    const { host, record } = await mountEditor(await tableWithFormattedParagraphs(), {
+      hostApply: upstreamHostApply,
+    })
+    const tableNode = host.querySelector('.mimir-pptx-slide [data-element-kind="table"]')
+    expect(tableNode).not.toBeNull()
+    click(tableNode!)
+    click(button(host, '对象与幻灯片操作'))
+    const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="单元格文字"]')
+    expect(area?.value).toBe('Key Results')
+    expect(button(host, '应用单元格文字').disabled).toBe(true)
+    expect(button(host, '应用单元格文字').title).toContain('文字没有变化')
+    pickSelectOption(host, '段落', '第 2 段')
+    const second = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="单元格文字"]')!
+    expect(second.value).toBe('Keep second')
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
+      setter!.call(second, 'Keep updated')
+      second.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    expect(button(host, '应用单元格文字').disabled).toBe(false)
+    click(button(host, '应用单元格文字'))
+    await settle(
+      () =>
+        host.querySelector('[data-element-kind="table"]')?.textContent?.includes('updated') ===
+        true,
+    )
+    expect(host.querySelector('[data-element-kind="table"]')?.textContent).toContain('Keep updated')
+    const xml = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    expect(xml).toContain('<a:t>Keep </a:t>')
+    expect(xml).toContain('<a:t>updated</a:t>')
+    const reopened = await openPptxForEdit(record.saved.at(-1)!)
+    const table = reopened.slides()[0]?.elements.find((element) => element.type === 'table')
+    if (table?.type !== 'table') throw new Error('重开后表格丢失')
+    const paragraphs = table.rows[0]?.[0]?.text?.paragraphs
+    expect(paragraphs).toHaveLength(2)
+    expect(paragraphs?.[0]?.runs.map((run) => run.text)).toEqual(['Key ', 'Results'])
+    expect(paragraphs?.[1]?.runs.map((run) => run.text)).toEqual(['Keep ', 'updated'])
+    expect(paragraphs?.[0]?.runs[0]?.bold).toBe(true)
+    expect(paragraphs?.[0]?.runs[1]?.color).toBe('#C0392B')
+    expect(paragraphs?.[1]?.runs[0]?.italic).toBe(true)
+    expect(paragraphs?.[1]?.runs[1]?.color).toBe('#008800')
+  })
+
+  it('单元格提交成功后清除草稿，撤销时显示恢复后的当前文字', async () => {
+    const { host } = await mountEditor(await tableWithFormattedParagraphs(), {
+      hostApply: upstreamHostApply,
+    })
+    click(host.querySelector('.mimir-pptx-slide [data-element-kind="table"]')!)
+    click(button(host, '对象与幻灯片操作'))
+    const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="单元格文字"]')!
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
+      setter!.call(area, 'Changed')
+      area.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    click(button(host, '应用单元格文字'))
+    await settle(
+      () =>
+        host.querySelector('[data-element-kind="table"]')?.textContent?.includes('Changed') ===
+        true,
+    )
+    click(objectMenuItem(host, '撤销上一次对象操作'))
+    await settle(
+      () =>
+        host.querySelector('[data-element-kind="table"]')?.textContent?.includes('Key Results') ===
+        true,
+    )
+    click(host.querySelector('.mimir-pptx-slide [data-element-kind="table"]')!)
+    click(button(host, '对象与幻灯片操作'))
+    expect(
+      host.querySelector<HTMLTextAreaElement>('textarea[aria-label="单元格文字"]')?.value,
+    ).toBe('Key Results')
+    expect(host.querySelector('[data-element-kind="table"]')?.textContent).toContain('Key Results')
+  })
+
+  it('表格未连接宿主时说明原因，宿主失败时保留原单元格和草稿', async () => {
+    const bytes = await tableWithFormattedParagraphs()
+    const unavailable = await mountEditor(bytes)
+    click(unavailable.host.querySelector('.mimir-pptx-slide [data-element-kind="table"]')!)
+    click(button(unavailable.host, '对象与幻灯片操作'))
+    expect(unavailable.host.textContent).toContain('当前未连接 PPTX 宿主，无法编辑表格单元格')
+    expect(unavailable.host.querySelector('textarea[aria-label="单元格文字"]')).toBeNull()
+
+    const { host } = await mountEditor(bytes, {
+      hostApply: async () => {
+        throw new Error('表格写入失败，请重试')
+      },
+    })
+    click(host.querySelector('.mimir-pptx-slide [data-element-kind="table"]')!)
+    click(button(host, '对象与幻灯片操作'))
+    const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="单元格文字"]')!
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
+      setter!.call(area, 'Changed')
+      area.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    click(button(host, '应用单元格文字'))
+    await settle(() => host.textContent?.includes('表格写入失败，请重试') === true)
+    expect(host.querySelector('[data-element-kind="table"]')?.textContent).toContain('Key Results')
+    expect(area.value).toBe('Changed')
+    expect(button(host, '保存到库').disabled).toBe(true)
+  })
+
+  it('行列选择只写目标单元格', async () => {
+    const { host, record } = await mountEditor(await tableWithFormattedParagraphs(), {
+      hostApply: upstreamHostApply,
+    })
+    click(host.querySelector('.mimir-pptx-slide [data-element-kind="table"]')!)
+    click(button(host, '对象与幻灯片操作'))
+    pickSelectOption(host, '行', '第 2 行')
+    pickSelectOption(host, '列', '第 2 列')
+    const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="单元格文字"]')!
+    expect(area.value).toBe('')
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
+      setter!.call(area, 'Bottom right')
+      area.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    click(button(host, '应用单元格文字'))
+    await settle(
+      () =>
+        host.querySelector('[data-element-kind="table"]')?.textContent?.includes('Bottom right') ===
+        true,
+    )
+    await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    const reopened = await openPptxForEdit(record.saved.at(-1)!)
+    const table = reopened.slides()[0]?.elements.find((element) => element.type === 'table')
+    if (table?.type !== 'table') throw new Error('重开后表格丢失')
+    expect(table.rows[1]?.[1]?.text?.paragraphs[0]?.runs[0]?.text).toBe('Bottom right')
+    expect(table.rows[0]?.[0]?.text?.paragraphs[0]?.runs.map((run) => run.text)).toEqual([
+      'Key ',
+      'Results',
+    ])
+  })
+
+  it('表格宿主不可用时给出原因，不展示可点击的尺寸网格', async () => {
+    const { host } = await mountEditor(load('title-layout.pptx'))
+    const tab = [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (item) => item.textContent === '插入',
+    )!
+    click(tab)
+    click(button(host, '插入表格'))
+    expect(host.textContent).toContain('当前未连接 PPTX 宿主，无法插入表格')
+    expect(host.querySelector('[aria-label="插入 2 行 3 列表格"]')).toBeNull()
+  })
+
+  it('插入表格失败时保留原画布并显示宿主原因', async () => {
+    const { host } = await mountEditor(load('title-layout.pptx'), {
+      hostApply: async () => {
+        throw new Error('表格插入失败，请重试')
+      },
+    })
+    const tab = [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (item) => item.textContent === '插入',
+    )!
+    click(tab)
+    click(button(host, '插入表格'))
+    click(button(host, '插入 2 行 3 列表格'))
+    await settle(() => host.textContent?.includes('表格插入失败，请重试') === true)
+    expect(host.textContent).toContain('表格插入失败，请重试')
+    expect(host.querySelector('[data-element-kind="table"]')).toBeNull()
+    expect(button(host, '保存到库').disabled).toBe(true)
+  })
+
+  it('图片不透明度在画布立即更新，并保存重开', async () => {
+    const { host, record } = await mountEditor(load('image-deck.pptx'), {
+      hostApply: upstreamHostApply,
+    })
+    const picture = host.querySelector('.mimir-pptx-slide [data-element-kind="picture"]')
+    expect(picture).not.toBeNull()
+    click(picture!)
+    click(objectMenuItem(host, '图片不透明度 50%'))
+    await settle(
+      () =>
+        host.querySelector('[data-element-kind="picture"] image')?.getAttribute('opacity') ===
+        '0.5',
+    )
+    expect(host.querySelector('[data-element-kind="picture"] image')?.getAttribute('opacity')).toBe(
+      '0.5',
+    )
+
+    const xml = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    expect(xml).toContain('<a:alphaModFix amt="50000"/>')
+    const reopened = await openPptxForEdit(record.saved.at(-1)!)
+    const savedPicture = reopened
+      .slides()[0]
+      ?.elements.find((element) => element.type === 'picture')
+    expect(savedPicture?.type === 'picture' ? savedPicture.opacity : null).toBe(0.5)
+  })
+
+  it('图片宿主不可用时禁用操作并说明原因', async () => {
+    const { host } = await mountEditor(load('image-deck.pptx'))
+    const picture = host.querySelector('.mimir-pptx-slide [data-element-kind="picture"]')
+    expect(picture).not.toBeNull()
+    click(picture!)
+    const item = objectMenuItem(host, '图片不透明度 50%')
+    expect(item.disabled).toBe(true)
+    expect(item.getAttribute('title')).toContain('当前未连接 PPTX 宿主')
+  })
+
+  it('图片修改失败时保持当前透明度并显示原因', async () => {
+    const { host } = await mountEditor(load('image-deck.pptx'), {
+      hostApply: async () => {
+        throw new Error('图片修改失败，请重试')
+      },
+    })
+    const picture = host.querySelector('.mimir-pptx-slide [data-element-kind="picture"]')
+    expect(picture).not.toBeNull()
+    click(picture!)
+    click(objectMenuItem(host, '图片不透明度 50%'))
+    await settle(() => host.textContent?.includes('图片修改失败，请重试') === true)
+    expect(host.textContent).toContain('图片修改失败，请重试')
+    expect(
+      host.querySelector('[data-element-kind="picture"] image')?.getAttribute('opacity'),
+    ).toBeNull()
+    expect(button(host, '保存到库').disabled).toBe(true)
+  })
+
+  it('本地 PNG 从插入工具栏写入画布、原生媒体与保存重开', async () => {
+    const { host, record } = await mountEditor(load('title-layout.pptx'), {
+      hostPicture: upstreamHostPicture,
+    })
+    const tab = [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (item) => item.textContent === '插入',
+    )!
+    click(tab)
+    await pickImage(host, '插入图片', await imageBytes())
+    await settle(
+      () => host.querySelector('.mimir-pptx-slide [data-element-kind="picture"] image') !== null,
+    )
+    expect(
+      host.querySelector('.mimir-pptx-slide [data-element-kind="picture"] image'),
+    ).not.toBeNull()
+    const xml = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    expect(xml).toContain('<p:pic>')
+    const zip = await JSZip.loadAsync(record.saved.at(-1)!)
+    expect(zip.file('ppt/media/image1.png')).not.toBeNull()
+    const reopened = await openPptxForEdit(record.saved.at(-1)!)
+    expect(reopened.slides()[0]?.elements.some((element) => element.type === 'picture')).toBe(true)
+  })
+
+  it('替换选中图片后画布与保存文件均更新', async () => {
+    const { host, record } = await mountEditor(load('image-deck.pptx'), {
+      hostPicture: upstreamHostPicture,
+    })
+    const picture = host.querySelector('.mimir-pptx-slide [data-element-kind="picture"]')
+    expect(picture).not.toBeNull()
+    const beforeImage = picture?.querySelector('image')?.getAttribute('href')
+    click(picture!)
+    click(button(host, '对象与幻灯片操作'))
+    await pickImage(host, '替换选中图片', ONE_PIXEL_PNG)
+    await settle(
+      () =>
+        host
+          .querySelector('.mimir-pptx-slide [data-element-kind="picture"] image')
+          ?.getAttribute('href') !== beforeImage,
+    )
+    expect(
+      host
+        .querySelector('.mimir-pptx-slide [data-element-kind="picture"] image')
+        ?.getAttribute('href'),
+    ).not.toBe(beforeImage)
+    const xml = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    expect(xml).toContain('<p:pic>')
+    const reopened = await openPptxForEdit(record.saved.at(-1)!)
+    const savedPicture = reopened
+      .slides()[0]
+      ?.elements.find((element) => element.type === 'picture')
+    expect(savedPicture?.type).toBe('picture')
+    if (savedPicture?.type !== 'picture') throw new Error('保存后没有图片')
+    const zip = await JSZip.loadAsync(record.saved.at(-1)!)
+    expect(await zip.file(savedPicture.mediaRef)?.async('uint8array')).toEqual(ONE_PIXEL_PNG)
+  })
+
+  it('图片宿主不可用与失败时不把画布标脏', async () => {
+    const absent = await mountEditor(load('title-layout.pptx'))
+    const tab = [...absent.host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (item) => item.textContent === '插入',
+    )!
+    click(tab)
+    expect(button(absent.host, '插入图片').disabled).toBe(true)
+    expect(button(absent.host, '插入图片').title).toContain('未连接 PPTX 图片宿主')
+
+    const failed = await mountEditor(load('title-layout.pptx'), {
+      hostPicture: async () => {
+        throw new Error('图片写入失败，请重试')
+      },
+    })
+    const failedTab = [...failed.host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (item) => item.textContent === '插入',
+    )!
+    click(failedTab)
+    await pickImage(failed.host, '插入图片', await imageBytes())
+    await settle(() => failed.host.textContent?.includes('图片写入失败，请重试') === true)
+    expect(failed.host.querySelector('.mimir-pptx-slide [data-element-kind="picture"]')).toBeNull()
+    expect(button(failed.host, '保存到库').disabled).toBe(true)
   })
 
   it('手动调整对象层级与翻转经 Agent 共用操作保存读回', async () => {

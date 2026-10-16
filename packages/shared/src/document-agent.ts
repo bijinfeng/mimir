@@ -6,6 +6,17 @@ import { viewerFor } from './files.js'
 export const documentAgentFormatSchema = z.enum(['docx', 'xlsx', 'pptx', 'markdown', 'html', 'pdf'])
 export type DocumentAgentFormat = z.infer<typeof documentAgentFormatSchema>
 
+/** Multipart local image command. Media bytes and the current PPTX are separate file fields. */
+export const PPTX_IMAGE_MAX_BYTES = 8 * 1024 * 1024
+export const pptxManualPictureFieldsSchema = z.object({
+  documentId: z.string().min(1).max(200),
+  expectedVersion: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().nonnegative()),
+  slide: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().nonnegative()),
+  action: z.enum(['insert', 'replace']),
+  elementId: z.string().min(1).max(200).optional(),
+})
+export type PptxManualPictureFields = z.output<typeof pptxManualPictureFieldsSchema>
+
 /** Both UI and host use the persisted MIME and active source extension. */
 export function documentAgentFormatOf(
   document: Pick<DocumentDetail, 'kind' | 'mime' | 'fileExtension'>,

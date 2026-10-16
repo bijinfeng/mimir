@@ -4,6 +4,11 @@ import {
   askInputSchema,
   htmlPlanPageInputSchema,
   htmlWriteDocumentInputSchema,
+  pptxManualPictureFieldsSchema,
+  PPTX_IMAGE_MAX_BYTES,
+  pdfTextProbeSchema,
+  pdfTextTargetSchema,
+  pdfMarkupInputSchema,
   saveNoteInputSchema,
 } from '@mimir/shared'
 import { HttpError, parseInput } from '../lib/http.js'
@@ -25,9 +30,14 @@ import {
   updateMarkdownFrontmatter,
 } from '../services/markdown-agent-frontmatter.js'
 import { planHtmlPage, writeHtmlDocument } from '../services/html-agent-writing.js'
-import { applyPptxOpsOnHost } from '../services/pptx-agent-host.js'
+import { applyPptxManualPictureOnHost, applyPptxOpsOnHost } from '../services/pptx-agent-host.js'
 import { applyXlsxOpsOnHost } from '../services/xlsx-agent-host.js'
-import { applyPdfTextEdits, applyPdfTextInserts } from '../services/pdf-agent-host.js'
+import {
+  applyPdfTextInserts,
+  applyPdfVerifiedTextEdit,
+  applyPdfVerifiedMarkup,
+  inspectPdfTextTarget,
+} from '../services/pdf-agent-host.js'
 import { documentAgentFormatOf } from '../services/document-agent-format.js'
 import { readUploadForm } from '../lib/multipart.js'
 import { MAX_ZIP_INPUT_BYTES } from '../../../../packages/office/src/zip-bounds.js'
@@ -132,6 +142,46 @@ conversationsRoute.post('/pptx-agent/apply-ops', async (c) => {
   }
 })
 
+conversationsRoute.post('/pptx-agent/manual-picture', async (c) => {
+  const form = await readUploadForm(
+    c.req.raw,
+    MAX_ZIP_INPUT_BYTES + PPTX_IMAGE_MAX_BYTES + 1024 * 1024,
+  )
+  const file = form.get('file')
+  const image = form.get('image')
+  if (!(file instanceof File) || file.size > MAX_ZIP_INPUT_BYTES)
+    throw new HttpError(413, 'PPTX_INPUT_TOO_LARGE', 'PPTX 原件超过 50 MiB 上限')
+  if (!(image instanceof File) || image.size > PPTX_IMAGE_MAX_BYTES)
+    throw new HttpError(413, 'PPTX_IMAGE_TOO_LARGE', '图片超过 8 MiB 上限')
+  const values = pptxManualPictureFieldsSchema.safeParse({
+    documentId: form.get('documentId'),
+    expectedVersion: form.get('expectedVersion'),
+    slide: form.get('slide'),
+    action: form.get('action'),
+    elementId: form.get('elementId') ?? undefined,
+  })
+  if (!values.success) throw new HttpError(400, 'INVALID_INPUT', 'PPTX 图片参数无效')
+  try {
+    const result = await applyPptxManualPictureOnHost({
+      ...values.data,
+      bytes: new Uint8Array(await file.arrayBuffer()),
+      imageBytes: new Uint8Array(await image.arrayBuffer()),
+      signal: c.req.raw.signal,
+    })
+    return c.json({
+      bytesBase64: Buffer.from(result.bytes).toString('base64'),
+      records: result.records,
+      version: result.version,
+    })
+  } catch (error) {
+    throw new HttpError(
+      400,
+      'PPTX_PICTURE_FAILED',
+      error instanceof Error ? error.message : 'PPTX 图片操作失败',
+    )
+  }
+})
+
 conversationsRoute.post('/xlsx-agent/apply-ops', async (c) => {
   const form = await readUploadForm(c.req.raw)
   const file = form.get('file')
@@ -197,6 +247,7 @@ const pdfTextEdit = z.object({
   oldText: z.string().min(1).max(10_000),
   newText: z.string().max(10_000),
   fontSize: z.number().finite().positive().max(500),
+  target: pdfTextTargetSchema.optional(),
 })
 const pdfTextInsert = z.object({
   pageIndex: z.number().int().nonnegative(),
@@ -208,6 +259,82 @@ const pdfTextInsert = z.object({
     z.number().finite().min(0).max(1),
     z.number().finite().min(0).max(1),
   ]),
+})
+
+conversationsRoute.post('/pdf-agent/apply-markup', async (c) => {
+  const form = await readUploadForm(c.req.raw)
+  const file = form.get('file')
+  if (!(file instanceof File) || file.size > 50 * 1024 * 1024)
+    throw new HttpError(413, 'PDF_INPUT_TOO_LARGE', 'PDF 原件超过 50 MiB 上限')
+  const fields = z
+    .object({
+      documentId: z.string().min(1).max(200),
+      expectedVersion: z
+        .string()
+        .regex(/^\d+$/)
+        .transform(Number)
+        .pipe(z.number().int().nonnegative()),
+    })
+    .safeParse({ documentId: form.get('documentId'), expectedVersion: form.get('expectedVersion') })
+  if (!fields.success) throw new HttpError(400, 'INVALID_INPUT', 'PDF 标注参数无效')
+  const document = await getDocument(fields.data.documentId)
+  if (!document || documentAgentFormatOf(document) !== 'pdf')
+    throw new HttpError(404, 'PDF_NOT_FOUND', '当前文档不是可编辑 PDF')
+  let raw: unknown
+  try {
+    raw = JSON.parse(String(form.get('markup')))
+  } catch {
+    throw new HttpError(400, 'INVALID_INPUT', 'PDF 标注不是有效 JSON')
+  }
+  const markup = pdfMarkupInputSchema.safeParse(raw)
+  if (!markup.success) throw new HttpError(400, 'INVALID_INPUT', 'PDF 标注内容无效')
+  try {
+    const result = await applyPdfVerifiedMarkup(
+      new Uint8Array(await file.arrayBuffer()),
+      markup.data,
+    )
+    return c.json({
+      bytesBase64: Buffer.from(result).toString('base64'),
+      version: fields.data.expectedVersion + 1,
+    })
+  } catch (error) {
+    throw new HttpError(
+      400,
+      'PDF_MARKUP_FAILED',
+      error instanceof Error ? error.message : 'PDF 标注失败',
+    )
+  }
+})
+
+conversationsRoute.post('/pdf-agent/inspect-text', async (c) => {
+  const form = await readUploadForm(c.req.raw)
+  const file = form.get('file')
+  if (!(file instanceof File) || file.size > 50 * 1024 * 1024)
+    throw new HttpError(413, 'PDF_INPUT_TOO_LARGE', 'PDF 原件超过 50 MiB 上限')
+  const documentId = z.string().min(1).max(200).safeParse(form.get('documentId'))
+  if (!documentId.success) throw new HttpError(400, 'INVALID_INPUT', 'PDF 文档标识无效')
+  const document = await getDocument(documentId.data)
+  if (!document || documentAgentFormatOf(document) !== 'pdf')
+    throw new HttpError(404, 'PDF_NOT_FOUND', '当前文档不是可编辑 PDF')
+  let raw: unknown
+  try {
+    raw = JSON.parse(String(form.get('probe')))
+  } catch {
+    throw new HttpError(400, 'INVALID_INPUT', 'PDF 原文定位参数不是有效 JSON')
+  }
+  const probe = pdfTextProbeSchema.safeParse(raw)
+  if (!probe.success) throw new HttpError(400, 'INVALID_INPUT', 'PDF 原文定位参数无效')
+  try {
+    return c.json({
+      target: await inspectPdfTextTarget(new Uint8Array(await file.arrayBuffer()), probe.data),
+    })
+  } catch (error) {
+    throw new HttpError(
+      400,
+      'PDF_TEXT_INSPECT_FAILED',
+      error instanceof Error ? error.message : 'PDF 原文定位失败',
+    )
+  }
 })
 
 conversationsRoute.post('/pdf-agent/apply-text', async (c) => {
@@ -250,10 +377,15 @@ conversationsRoute.post('/pdf-agent/apply-text', async (c) => {
   if (!items.success) throw new HttpError(400, 'INVALID_INPUT', 'PDF 文字操作列表无效')
   try {
     const bytes = new Uint8Array(await file.arrayBuffer())
-    const result =
-      values.data.kind === 'edit'
-        ? await applyPdfTextEdits(bytes, items.data as z.infer<typeof pdfTextEdit>[])
-        : await applyPdfTextInserts(bytes, items.data as z.infer<typeof pdfTextInsert>[])
+    let result: Uint8Array
+    if (values.data.kind === 'edit') {
+      const edits = items.data as z.infer<typeof pdfTextEdit>[]
+      if (edits.length !== 1 || edits[0]?.target === undefined)
+        throw new Error('替换原文需要先核验一段完整文字对象')
+      result = await applyPdfVerifiedTextEdit(bytes, edits[0], edits[0].target)
+    } else {
+      result = await applyPdfTextInserts(bytes, items.data as z.infer<typeof pdfTextInsert>[])
+    }
     return c.json({
       bytesBase64: Buffer.from(result).toString('base64'),
       version: values.data.expectedVersion + 1,

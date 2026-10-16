@@ -5,9 +5,10 @@
  *
  * | 做 | 不做 |
  * |---|---|
- * | 用 pdf.js 的 `getTextContent()` 取出每页的文字与位置 | **改文字**——那要拆内容流（PDFium 的 7MB WASM，见 TECH §15.12） |
+ * | 用 pdf.js 的 `getTextContent()` 取出每页的文字与位置 | **改文字**——那要 PDFium 确认内容流对象并写回 |
  * | 在整份文档里找一个串，报出共几处、当前第几处 | 正则、通配符 |
- * | 把命中换算成**页面比例矩形**，画在 canvas 上 | 选中文字、复制文字 |
+ * | 把命中换算成**页面比例矩形**，画在 canvas 上 | 拖拽任意字符选区、复制文字 |
+ * | 点选一个完整文字项并保留其 PDF 用户空间矩形 | 仅凭近似查找高亮进行文字替换 |
  *
  * ## 为什么矩形是「比例」而不是像素
  *
@@ -65,6 +66,21 @@ export interface PdfRect {
 interface TextChunk {
   text: string
   rect: PdfRect
+  /** Unmodified pdf.js item text; unlike `text`, it never includes an EOL separator. */
+  sourceText: string
+  /** Full item bounds in PDF user space. Search highlight insets are never used here. */
+  pdfRect: readonly [number, number, number, number]
+  fontSizeHint: number
+}
+
+/** A single complete pdf.js text item selected from the rendered page. */
+export interface PdfTextRun {
+  page: number
+  text: string
+  rect: PdfRect
+  pdfRect: readonly [number, number, number, number]
+  /** pdf.js reported height; the PDFium writer must verify the actual object. */
+  fontSizeHint: number
 }
 
 /** 一页的文字层：拼好的整页文本 + 每段在里面的下标 + 每段的矩形 */
@@ -128,6 +144,8 @@ interface RawPage {
 
 interface RawChunk {
   text: string
+  sourceText: string
+  fontSizeHint: number
   /** 这一段的四个角（PDF 用户空间，y 向上） */
   corners: readonly { x: number; y: number }[]
 }
@@ -194,6 +212,8 @@ async function rawPageOf(
     chunks.push({
       // `hasEOL` 的段后面补一个换行：跨行的串不该被当成连在一起
       text: item.hasEOL ? `${item.str}\n` : item.str,
+      sourceText: item.str,
+      fontSizeHint: item.height,
       corners,
     })
   }
@@ -252,8 +272,13 @@ function project(raw: RawPage, viewport: Viewport): TextChunk[] {
     const ys = points.map((point) => point[1] as number)
     const left = Math.min(...xs)
     const top = Math.min(...ys)
+    const pdfXs = chunk.corners.map((corner) => corner.x)
+    const pdfYs = chunk.corners.map((corner) => corner.y)
     chunks.push({
       text: chunk.text,
+      sourceText: chunk.sourceText,
+      pdfRect: [Math.min(...pdfXs), Math.min(...pdfYs), Math.max(...pdfXs), Math.max(...pdfYs)],
+      fontSizeHint: chunk.fontSizeHint,
       rect: {
         x: left / width,
         y: top / height,
@@ -263,6 +288,42 @@ function project(raw: RawPage, viewport: Viewport): TextChunk[] {
     })
   }
   return chunks
+}
+
+/**
+ * Pick only a complete, unambiguous text item. A search substring's proportional
+ * highlight is useful for finding words but must never become an edit rectangle.
+ * Overlapping items have no safe click target until the host distinguishes objects.
+ */
+export function pickPdfTextRun(
+  index: PdfTextIndex,
+  page: number,
+  x: number,
+  y: number,
+): PdfTextRun | null {
+  if (!Number.isFinite(x) || !Number.isFinite(y) || x < 0 || y < 0 || x > 1 || y > 1) return null
+  const matches =
+    index.pages[page]?.chunks.filter((chunk) => {
+      const rect = chunk.rect
+      return (
+        chunk.sourceText.trim().length > 0 &&
+        rect.width > 0 &&
+        rect.height > 0 &&
+        x >= rect.x &&
+        x <= rect.x + rect.width &&
+        y >= rect.y &&
+        y <= rect.y + rect.height
+      )
+    }) ?? []
+  if (matches.length !== 1) return null
+  const match = matches[0]!
+  return {
+    page,
+    text: match.sourceText,
+    rect: match.rect,
+    pdfRect: match.pdfRect,
+    fontSizeHint: match.fontSizeHint,
+  }
 }
 
 /** 一段文字的四个角（PDF 用户空间）。取不到方向时返回 null */

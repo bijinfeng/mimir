@@ -22,6 +22,10 @@ import {
 } from '../../../../packages/office/vendor/packages/xlsx-gateway/src/domain/workbook-dsl.js'
 import type { CellState } from '../../../../packages/office/vendor/packages/xlsx-gateway/src/domain/workbook.types.js'
 import type { WorkbookStyleEdit } from '../../../../packages/office/vendor/packages/xlsx-gateway/src/shared/edit-schemas.js'
+import {
+  validateSheetName,
+  type SheetEditPlan,
+} from '../../../../packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-sheets.js'
 import { BoundedZip, MAX_ZIP_INPUT_BYTES } from '../../../../packages/office/src/zip-bounds.js'
 import { documentAgentFormatOf } from './document-agent-format.js'
 import { getDocument } from './documents.js'
@@ -70,6 +74,8 @@ const SUPPORTED_OPS = new Set([
   'set_col_width',
   'set_rows_hidden',
   'set_cols_hidden',
+  'rename_sheet',
+  'add_sheet',
 ])
 
 function styleFromFormat(format: CellFormatPatch): WorkbookStyleEdit {
@@ -192,10 +198,30 @@ export async function applyXlsxOpsOnHost(request: XlsxHostRequest): Promise<Xlsx
   const sheets = new Map(before.snapshot.sheets.map((sheet) => [sheet.id, sheet]))
   const edits = new Map<string, CellEdit>()
   const structuralOps: Array<{ sheetName: string; ops: StructuralOp[] }> = []
+  let sheetPlan: SheetEditPlan | undefined
   const expanded = expandToPrimitiveOps(parsed)
   if (expanded.length > MAX_MATERIALIZED_CELLS) throw new Error('XLSX 操作展开超过 2000 个单元格')
   for (const op of expanded) {
     if (op.op !== 'set_cell' && op.op !== 'set_formula' && op.op !== 'clear_cell') {
+      if (op.op === 'add_sheet') {
+        validateSheetName(op.name)
+        if (!op.name.trim()) throw new Error('工作表名称不能为空')
+        if (op.rows !== undefined || op.columns !== undefined)
+          throw new Error('新增工作表暂不支持指定网格行列数')
+        if (
+          before.snapshot.sheets.some(
+            (existing) => existing.name.toLocaleLowerCase() === op.name.toLocaleLowerCase(),
+          )
+        )
+          throw new Error(`工作表名称「${op.name}」已被使用`)
+        sheetPlan = {
+          renames: [],
+          additions: [{ name: op.name }],
+          removals: [],
+          order: [...before.snapshot.sheets.map((item) => item.name), op.name],
+        }
+        continue
+      }
       if (!('sheetId' in op)) throw new Error(`XLSX 操作 ${op.op} 缺少工作表 ID`)
       const sheet = sheets.get(op.sheetId)
       if (!sheet) throw new Error(`工作表 ${op.sheetId} 已失效，请重新读取工作簿`)
@@ -214,6 +240,26 @@ export async function applyXlsxOpsOnHost(request: XlsxHostRequest): Promise<Xlsx
             style: { ...existing?.style, ...style },
           })
         })
+        continue
+      }
+      if (op.op === 'rename_sheet') {
+        validateSheetName(op.name)
+        if (!op.name.trim()) throw new Error('工作表名称不能为空')
+        if (op.name === sheet.name) throw new Error('工作表名称没有变化')
+        if (
+          before.snapshot.sheets.some(
+            (other) =>
+              other.id !== sheet.id &&
+              other.name.toLocaleLowerCase() === op.name.toLocaleLowerCase(),
+          )
+        )
+          throw new Error(`工作表名称「${op.name}」已被使用`)
+        sheetPlan = {
+          renames: [{ sheetName: sheet.name, newName: op.name }],
+          additions: [],
+          removals: [],
+          order: before.snapshot.sheets.map((item) => (item.id === sheet.id ? op.name : item.name)),
+        }
         continue
       }
       if (op.op === 'fill_range' || op.op === 'copy_range') {
@@ -349,14 +395,42 @@ export async function applyXlsxOpsOnHost(request: XlsxHostRequest): Promise<Xlsx
       style: edits.get(`${op.sheetId}:${op.address}`)?.style,
     })
   }
-  if (edits.size === 0 && structuralOps.length === 0)
+  if (edits.size === 0 && structuralOps.length === 0 && !sheetPlan)
     throw new Error('XLSX 操作没有生成可写入的变更')
   checkSignal(signal)
-  const mutation = await applyCellEditsToXlsx(source, [...edits.values()], structuralOps)
+  const mutation = await applyCellEditsToXlsx(
+    source,
+    [...edits.values()],
+    structuralOps,
+    [],
+    sheetPlan,
+  )
   assertOnlyTouchedEntriesChanged(mutation)
   checkSignal(signal)
   const after = await readBasicWorkbook(mutation.buffer)
   const afterSheets = new Map(after.snapshot.sheets.map((sheet) => [sheet.name, sheet]))
+  if (sheetPlan) {
+    const rename = sheetPlan.renames[0]
+    if (rename) {
+      const original = before.snapshot.sheets.find((item) => item.name === rename.sheetName)
+      const renamed = after.snapshot.sheets.find((item) => item.id === original?.id)
+      if (
+        renamed?.name !== rename.newName ||
+        after.snapshot.sheets.length !== before.snapshot.sheets.length
+      )
+        throw new Error('工作表改名保存后读回不一致')
+    }
+    const addition = sheetPlan.additions[0]
+    if (addition) {
+      const added = after.snapshot.sheets.at(-1)
+      if (
+        after.snapshot.sheets.length !== before.snapshot.sheets.length + 1 ||
+        added?.name !== addition.name ||
+        before.snapshot.sheets.some((item) => item.id === added.id)
+      )
+        throw new Error('新增工作表保存后读回不一致')
+    }
+  }
   for (const [key, edit] of edits) {
     const address = key.split(':').at(-1)
     if (!address) throw new Error('XLSX 读回时丢失单元格地址')

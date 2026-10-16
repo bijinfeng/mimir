@@ -177,6 +177,21 @@ describe('PdfEditor.tsx 的静态守护', () => {
 /* ── 渲染结果：控件确实来自 antd，且是 small 档 ───────────────── */
 
 describe('PdfEditor 工具条的控件', () => {
+  it('定位原文进入只读模式；工具栏不提供未验收的替换动作', async () => {
+    const { host } = await mount(await makePdf({ pages: 1 }))
+    const editTab = [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (item) => item.textContent === '编辑',
+    )
+    expect(editTab).toBeDefined()
+    click(editTab!)
+    click(button(host, '定位原文'))
+    expect(button(host, '定位原文').getAttribute('aria-pressed')).toBe('true')
+    expect(host.textContent).toContain('正在读取原文位置')
+    expect(
+      [...host.querySelectorAll('button')].some((item) => item.textContent?.includes('替换原文')),
+    ).toBe(false)
+  })
+
   it('按钮都是 antd 的；手写的只有两个就地弹层触发器', async () => {
     const { host } = await mount(await makePdf())
     const bar = host.querySelector('.mimir-editor__bar')
