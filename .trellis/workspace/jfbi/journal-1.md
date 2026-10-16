@@ -160,3 +160,26 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+
+## Session 7: 六格式工具栏补全与验证
+<!-- trellis-session: v=2 fp=da926568d70976d2 -->
+
+**Date**: 2026-10-16
+**Task**: 六格式工具栏补全与验证
+**Branch**: `codex/fnos-native-platform`
+
+### Summary
+
+补全 DOCX 页眉页脚、批注和脚注尾注，XLSX 可见范围格式、合并和工作表新增改名，PPTX 表格及图表插入，PDF 核验原文替换与标注，HTML 清除行内样式，Markdown 数学块；修复 XLSX 保存期间编辑的 dirty 竞态。Office 579、相关服务端 46、Renderer 340 项通过，四包类型检查与定向 lint/格式通过。全局 pnpm check 被无关 Impeccable 脚本 lint 错误阻断。按用户确认提交实现与报告，保留 46 项无关工作区改动。六格式完整覆盖及桌面实测尚未完成，相关任务保持进行中。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `a35886e` | feat(office): extend six-format editor toolbar actions |
+| `7ba52b4` | docs(office): record toolbar coverage and limits |
+
+### Status
+
+[OK] **Completed**

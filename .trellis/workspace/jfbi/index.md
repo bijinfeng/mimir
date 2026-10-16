@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 6
-- **Last Active**: 2026-10-15
+- **Total Sessions**: 7
+- **Last Active**: 2026-10-16
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~162 | Active |
+| `journal-1.md` | ~185 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 7 | 2026-10-16 | 六格式工具栏补全与验证 | `a35886e`, `7ba52b4` | `codex/fnos-native-platform` |
 | 6 | 2026-10-15 | 全站界面打磨与跨端验收 | `8670637`, `dfd44db` | `codex/all-pages-polish` |
 | 5 | 2026-10-12 | PDF/PPTX page thumbnail navigation | `4f111ab`, `938ab7c` | `codex/fnos-native-platform` |
 | 4 | 2026-10-11 | 第二轮 UI 审查问题整改 | `c151a95`, `5d679be` | `codex/ui-review-round-2` |
