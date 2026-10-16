@@ -1,7 +1,6 @@
 import type {
   RenderFill,
   RenderNode,
-  RenderShadow,
   RenderSlide,
   RenderStroke,
   RenderTextLayout,
@@ -12,6 +11,7 @@ import type {
   TableRenderNode,
   ChartRenderNode,
   ChipRenderNode,
+  ArrowEndRender,
 } from '../vendor/packages/pptx-render/src/render-tree.js'
 import { patternGrid } from '../vendor/packages/pptx-render/src/pattern-fills.js'
 
@@ -70,7 +70,8 @@ function n(value: number): string {
 
 /** 唯一 id 计数器（渐变/图案/裁剪都要 id，同一页里不能重名） */
 let uid = 0
-const nextId = (prefix: string): string => `${prefix}${(uid += 1)}`
+let namespace = ''
+const nextId = (prefix: string): string => `${namespace}${prefix}${(uid += 1)}`
 
 /** 把 `#RRGGBBAA` 拆成 `#RRGGBB` + `fill-opacity`（SVG 不认 8 位十六进制色） */
 function paint(color: string): { color: string; opacity: number } {
@@ -209,7 +210,7 @@ function strokeAttrs(stroke: RenderStroke | undefined): { defs: string; attrs: s
 
   const p = paint(stroke.color)
   const parts = [`stroke="${attr(p.color)}"`, `stroke-width="${n(stroke.widthPx)}"`]
-  if (p.opacity < 1) parts.push(`stroke-opacity="${n(p.opacity)}"`)
+  if (!stroke.gradient && p.opacity < 1) parts.push(`stroke-opacity="${n(p.opacity)}"`)
   if (stroke.cap) parts.push(`stroke-linecap="${attr(stroke.cap)}"`)
   if (stroke.join) parts.push(`stroke-linejoin="${attr(stroke.join)}"`)
   if (stroke.dash?.length) parts.push(`stroke-dasharray="${stroke.dash.map(n).join(' ')}"`)
@@ -219,7 +220,7 @@ function strokeAttrs(stroke: RenderStroke | undefined): { defs: string; attrs: s
     const stops = stroke.gradient.stops
       .map((s) => {
         const sp = paint(s.color)
-        return `<stop offset="${n(s.pos)}" stop-color="${attr(sp.color)}"/>`
+        return `<stop offset="${n(s.pos)}" stop-color="${attr(sp.color)}"${sp.opacity < 1 ? ` stop-opacity="${n(sp.opacity)}"` : ''}/>`
       })
       .join('')
     const rad = ((stroke.gradient.angleDeg ?? 0) * Math.PI) / 180
@@ -234,6 +235,43 @@ function strokeAttrs(stroke: RenderStroke | undefined): { defs: string; attrs: s
   return { defs: '', attrs: parts.join(' ') }
 }
 
+/** Endpoint sizes are already in local px; SVG follows the actual path tangent, including curves. */
+function connectorMarker(
+  end: ArrowEndRender | undefined,
+  stroke: RenderStroke | undefined,
+  strokeAttributes: string,
+): { defs: string; id?: string } {
+  if (!end || !stroke || stroke.widthPx <= 0) return { defs: '' }
+  const id = nextId('arrow')
+  const w = end.widthPx / 2
+  const l = end.lengthPx
+  // Reuse the resolved stroke paint (including gradient/alpha), without dashing the arrowhead.
+  const color = /stroke="([^"]+)"/.exec(strokeAttributes)?.[1] ?? 'none'
+  // Gradient color is only its first-stop fallback, not an extra overall alpha.
+  const opacity = stroke.gradient ? 1 : paint(stroke.color).opacity
+  const fill = `fill="${color}"${opacity < 1 ? ` fill-opacity="${n(opacity)}"` : ''}`
+  let body: string
+  if (end.type === 'oval') {
+    body = `<ellipse cx="0" cy="0" rx="${n(l / 2)}" ry="${n(w)}" ${fill}/>`
+  } else if (end.type === 'arrow') {
+    const solidStroke = strokeAttributes.replace(/ stroke-dasharray="[^"]*"/, '')
+    body = `<path d="M ${n(-l)} ${n(-w)} L 0 0 L ${n(-l)} ${n(w)}" fill="none" ${solidStroke}/>`
+  } else {
+    const rear =
+      end.type === 'diamond'
+        ? `L ${n(-l / 2)} ${n(-w)} L ${n(-l)} 0 L ${n(-l / 2)} ${n(w)}`
+        : end.type === 'stealth'
+          ? `L ${n(-l)} ${n(-w)} L ${n(-l * 0.65)} 0 L ${n(-l)} ${n(w)}`
+          : `L ${n(-l)} ${n(-w)} L ${n(-l)} ${n(w)}`
+    body = `<path d="M 0 0 ${rear} Z" ${fill}/>`
+  }
+  return {
+    id,
+    // refX/refY put the arrow tip at the endpoint; start arrows face away from the path.
+    defs: `<marker id="${id}" markerUnits="userSpaceOnUse" markerWidth="${n(l)}" markerHeight="${n(end.widthPx)}" refX="0" refY="0" orient="auto-start-reverse" overflow="visible">${body}</marker>`,
+  }
+}
+
 /**
  * 阴影 → SVG 滤镜。
  *
@@ -241,24 +279,61 @@ function strokeAttrs(stroke: RenderStroke | undefined): { defs: string; attrs: s
  * 是给编辑器读的原始值，因为距离为 0 时偏移会丢掉方向）。所以这里直接用
  * 偏移量，不去碰角度。
  */
-function shadowDefs(shadow: RenderShadow | undefined): { defs: string; attrs: string } {
-  if (!shadow) return { defs: '', attrs: '' }
-  const id = nextId('shadow')
-  const p = paint(shadow.color)
-  /**
-   * 内阴影：SVG 的滤镜没有真正的 inset 阴影（要 feComposite 拼，
-   * 而 OOXML 的内阴影还带缩放/倾斜参数，拼不出来就画错的）。折中是：
-   * **不画内阴影**，只画外阴影——少画一层比画一层错的好。
-   */
-  if (shadow.inner) return { defs: '', attrs: '' }
+/** SVG approximations share one filter so combining effects does not overwrite a prior filter. */
+function objectEffects(
+  node: ShapeRenderNode | PictureRenderNode,
+  body: string,
+): { defs: string; body: string } {
+  let defs = ''
+  const steps: string[] = []
+  const merge: string[] = []
+  if (node.glow) {
+    const p = paint(node.glow.color)
+    steps.push(
+      `<feGaussianBlur in="SourceAlpha" stdDeviation="${n(node.glow.blurPx / 2)}" result="glowBlur"/><feFlood flood-color="${attr(p.color)}" flood-opacity="${n(p.opacity)}" result="glowColor"/><feComposite in="glowColor" in2="glowBlur" operator="in" result="glow"/>`,
+    )
+    merge.push('<feMergeNode in="glow"/>')
+  }
+  if (node.shadow && !node.shadow.inner) {
+    const p = paint(node.shadow.color)
+    steps.push(
+      `<feGaussianBlur in="SourceAlpha" stdDeviation="${n(node.shadow.blurPx / 2)}" result="shadowBlur"/><feOffset in="shadowBlur" dx="${n(node.shadow.offsetX)}" dy="${n(node.shadow.offsetY)}" result="shadowOffset"/><feFlood flood-color="${attr(p.color)}" flood-opacity="${n(p.opacity)}" result="shadowColor"/><feComposite in="shadowColor" in2="shadowOffset" operator="in" result="shadow"/>`,
+    )
+    merge.push('<feMergeNode in="shadow"/>')
+  }
+  let source = 'SourceGraphic'
+  if (node.softEdgePx) {
+    steps.push(
+      `<feGaussianBlur in="SourceAlpha" stdDeviation="${n(node.softEdgePx / 2)}" result="softAlpha"/><feComposite in="SourceGraphic" in2="softAlpha" operator="in" result="softSource"/>`,
+    )
+    source = 'softSource'
+  }
+  merge.push(`<feMergeNode in="${source}"/>`)
+  if (node.shadow?.inner) {
+    const p = paint(node.shadow.color)
+    steps.push(
+      `<feComponentTransfer in="SourceAlpha" result="inverseAlpha"><feFuncA type="table" tableValues="1 0"/></feComponentTransfer><feGaussianBlur in="inverseAlpha" stdDeviation="${n(node.shadow.blurPx / 2)}" result="innerBlur"/><feOffset in="innerBlur" dx="${n(node.shadow.offsetX)}" dy="${n(node.shadow.offsetY)}" result="innerOffset"/><feComposite in="innerOffset" in2="SourceAlpha" operator="in" result="innerClip"/><feFlood flood-color="${attr(p.color)}" flood-opacity="${n(p.opacity)}" result="innerColor"/><feComposite in="innerColor" in2="innerClip" operator="in" result="innerShadow"/>`,
+    )
+    merge.push('<feMergeNode in="innerShadow"/>')
+  }
+  let filter = ''
+  if (steps.length) {
+    const id = nextId('effects')
+    defs += `<filter id="${id}" x="-100%" y="-100%" width="300%" height="300%" color-interpolation-filters="sRGB">${steps.join('')}<feMerge>${merge.join('')}</feMerge></filter>`
+    filter = ` filter="url(#${id})"`
+  }
+  if (!node.reflection) return { defs, body: `<g${filter}>${body}</g>` }
+  const id = nextId('reflectionSource'),
+    gradient = nextId('reflectionFade'),
+    mask = nextId('reflectionMask'),
+    blur = nextId('reflectionBlur')
+  const { w, h } = node.box
+  const top = h + node.reflection.distPx
+  const end = top + h * node.reflection.endPos
+  defs += `<linearGradient id="${gradient}" gradientUnits="userSpaceOnUse" x1="0" y1="${n(top)}" x2="0" y2="${n(Math.max(top + 0.01, end))}"><stop offset="0" stop-color="white" stop-opacity="${n(node.reflection.startAlpha)}"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient><mask id="${mask}" maskUnits="userSpaceOnUse" x="${n(-w)}" y="${n(top)}" width="${n(w * 3)}" height="${n(h)}"><rect x="${n(-w)}" y="${n(top)}" width="${n(w * 3)}" height="${n(h)}" fill="url(#${gradient})"/></mask><filter id="${blur}"><feGaussianBlur stdDeviation="${n(node.reflection.blurPx / 2)}"/></filter>`
   return {
-    defs:
-      `<filter id="${id}" x="-30%" y="-30%" width="160%" height="160%">` +
-      `<feDropShadow dx="${n(shadow.offsetX)}" dy="${n(shadow.offsetY)}" ` +
-      `stdDeviation="${n(shadow.blurPx / 2)}" ` +
-      `flood-color="${attr(p.color)}" flood-opacity="${n(p.opacity)}"/>` +
-      `</filter>`,
-    attrs: `filter="url(#${id})"`,
+    defs,
+    body: `<g id="${id}"${filter}>${body}</g><g mask="url(#${mask})"><use href="#${id}" transform="translate(0 ${n(h * 2 + node.reflection.distPx)}) scale(1 -1)" filter="url(#${blur})"/></g>`,
   }
 }
 
@@ -323,7 +398,13 @@ function textLayout(
   if (!layout || layout.lines.length === 0) return ''
 
   const parts: string[] = []
+  let paragraph = -1
   for (const line of layout.lines) {
+    if (paragraph < 0 || line.paraStart !== false) {
+      if (paragraph >= 0) parts.push('</g>')
+      paragraph++
+      parts.push(`<g data-pptx-paragraph="${paragraph}">`)
+    }
     /** 当前累积的样式段 */
     let group: GlyphRun[] = []
     /** 上一个 run 的右边界（用来判断能不能接着合） */
@@ -367,6 +448,7 @@ function textLayout(
     }
     flush()
   }
+  if (paragraph >= 0) parts.push('</g>')
   return parts.join('')
 }
 
@@ -388,6 +470,13 @@ function textEl(group: readonly GlyphRun[], offsetX: number, offsetY: number): s
   if (p.opacity < 1) attrs.push(`fill-opacity="${n(p.opacity)}"`)
   if (head.bold) attrs.push('font-weight="700"')
   if (head.italic) attrs.push('font-style="italic"')
+  if (head.outline)
+    attrs.push(
+      `stroke="${attr(paint(head.outline.color).color)}"`,
+      `stroke-width="${n(head.outline.widthPx)}"`,
+      'paint-order="stroke fill"',
+      'stroke-linejoin="round"',
+    )
   if (head.rtl) attrs.push('direction="rtl"')
 
   /**
@@ -432,10 +521,9 @@ function shapeNode(node: ShapeRenderNode): { defs: string; body: string } {
   const { x, y, w, h } = node.box
   const fill = fillAttrs(node.fill)
   const stroke = strokeAttrs(node.stroke)
-  const shadow = shadowDefs(node.shadow)
-  const defs = fill.defs + stroke.defs + shadow.defs
+  let defs = fill.defs + stroke.defs
 
-  const common = [fill.attrs, stroke.attrs, shadow.attrs, `transform="${transformAttr(node.box)}"`]
+  const common = [fill.attrs, stroke.attrs, `transform="${transformAttr(node.box)}"`]
     .filter(Boolean)
     .join(' ')
 
@@ -450,15 +538,27 @@ function shapeNode(node: ShapeRenderNode): { defs: string; body: string } {
       if (bez && bez.length >= 6) {
         for (let i = 0; i + 5 < bez.length; i += 6) {
           d.push(
-            `C ${n(pts[0]! + bez[i]!)} ${n(pts[1]! + bez[i + 1]!)} ${n(pts[0]! + bez[i + 2]!)} ${n(pts[1]! + bez[i + 3]!)} ${n(pts[0]! + bez[i + 4]!)} ${n(pts[1]! + bez[i + 5]!)}`,
+            `C ${n(bez[i]!)} ${n(bez[i + 1]!)} ${n(bez[i + 2]!)} ${n(bez[i + 3]!)} ${n(bez[i + 4]!)} ${n(bez[i + 5]!)}`,
           )
         }
       } else {
         for (let i = 2; i + 1 < pts.length; i += 2) d.push(`L ${n(pts[i]!)} ${n(pts[i + 1]!)}`)
       }
     }
-    // 直线没有填充（fill 会把它连成一块），强制 none
-    shape = `<path d="${d.join(' ')}" fill="none" ${stroke.attrs}${shadow.attrs ? ` ${shadow.attrs}` : ''}/>`
+    const head = connectorMarker(
+      pts.length >= 4 ? node.line.headEnd : undefined,
+      node.stroke,
+      stroke.attrs,
+    )
+    const tail = connectorMarker(
+      pts.length >= 4 ? node.line.tailEnd : undefined,
+      node.stroke,
+      stroke.attrs,
+    )
+    defs += head.defs + tail.defs
+    const markers = `${head.id ? ` marker-start="url(#${head.id})"` : ''}${tail.id ? ` marker-end="url(#${tail.id})"` : ''}`
+    // Flips are baked into points by the render tree; box rotation still applies to the whole path.
+    shape = `<path d="${d.join(' ')}" fill="none" ${stroke.attrs}${markers} transform="${transformAttr(node.box)}"/>`
   } else if (node.pathData || node.fillPathData || node.strokePathData) {
     // 自定义几何 / 弧类预设：主路径填充+描边，另有 fill-only 与 stroke-only 子路径
     const parts: string[] = []
@@ -485,7 +585,9 @@ function shapeNode(node: ShapeRenderNode): { defs: string; body: string } {
 
   // 形状自带的文字画在几何之上（PowerPoint 的 z 序就是这样）
   const text = textLayout(node.text, 0, 0)
-  const body = `<g ${elementTag(node)} transform="translate(${n(x)} ${n(y)})">${shape}${text}</g>`
+  const effects = objectEffects(node, shape + text)
+  defs += effects.defs
+  const body = `<g ${elementTag(node)} transform="translate(${n(x)} ${n(y)})">${effects.body}</g>`
   return { defs, body }
 }
 
@@ -543,9 +645,8 @@ function transformAttr(box: {
 /** 图片节点 */
 function pictureNode(node: PictureRenderNode): { defs: string; body: string } {
   const { x, y, w, h } = node.box
-  const shadow = shadowDefs(node.shadow)
   const parts: string[] = []
-  let defs = shadow.defs
+  let defs = ''
 
   // 背景色（OLE 预览的白底、元文件的透明底）先铺一层
   if (node.bgColor)
@@ -560,15 +661,17 @@ function pictureNode(node: PictureRenderNode): { defs: string; body: string } {
      * `viewBox` 表达同一个意思——viewBox 是原图坐标系里的可见矩形。
      */
     if (srcRect) {
-      const vbX = srcRect.l * 100
-      const vbY = srcRect.t * 100
-      const vbW = (1 - srcRect.l - srcRect.r) * 100
-      const vbH = (1 - srcRect.t - srcRect.b) * 100
-      if (vbW > 0 && vbH > 0) {
-        imgAttrs.push(`viewBox="${n(vbX)} ${n(vbY)} ${n(vbW)} ${n(vbH)}"`)
-        // viewBox 是原图坐标，缩放方式要和 img 尺寸对齐
-        imgAttrs.push(`preserveAspectRatio="none"`)
-        imgAttrs.push(`width="${n(w)}"`, `height="${n(h)}"`)
+      const remainingW = 1 - srcRect.l - srcRect.r,
+        remainingH = 1 - srcRect.t - srcRect.b
+      if (remainingW > 0 && remainingH > 0) {
+        imgAttrs.splice(1)
+        imgAttrs.push(
+          `x="${n((-w * srcRect.l) / remainingW)}"`,
+          `y="${n((-h * srcRect.t) / remainingH)}"`,
+          `width="${n(w / remainingW)}"`,
+          `height="${n(h / remainingH)}"`,
+          'preserveAspectRatio="none"',
+        )
       }
     }
 
@@ -614,11 +717,35 @@ function pictureNode(node: PictureRenderNode): { defs: string; body: string } {
     )
   }
 
+  if (node.media) {
+    const badge = Math.min(w, h) * 0.22
+    const cx = w / 2,
+      cy = h / 2
+    parts.push(
+      `<g aria-label="${node.media === 'video' ? '视频' : '音频'}"><circle cx="${n(cx)}" cy="${n(cy)}" r="${n(badge)}" fill="#15171ccc"/>`,
+    )
+    if (node.media === 'video')
+      parts.push(
+        `<path d="M ${n(cx - badge * 0.3)} ${n(cy - badge * 0.55)} L ${n(cx + badge * 0.6)} ${n(cy)} L ${n(cx - badge * 0.3)} ${n(cy + badge * 0.55)} Z" fill="white"/>`,
+      )
+    else
+      parts.push(
+        `<g transform="translate(${n(cx - badge * 0.6)} ${n(cy - badge * 0.6)}) scale(${n(badge / 20)})" stroke="white" fill="none" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"><path d="M 4 9 L 9 9 L 16 3 L 16 21 L 9 15 L 4 15 Z"/><path d="M 20 7 Q 25 12 20 17"/></g>`,
+      )
+    parts.push('</g>')
+  }
+  let content = parts.join('')
+  if (node.srcRect) {
+    const clip = nextId('cropFrame')
+    defs += `<clipPath id="${clip}"><rect width="${n(w)}" height="${n(h)}"/></clipPath>`
+    content = `<g clip-path="url(#${clip})">${content}</g>`
+  }
+  const effects = objectEffects(node, content)
+  defs += effects.defs
   const t = transformAttr(node.box)
-  const wrap = t ? ` transform="${t}"` : ''
   return {
     defs,
-    body: `<g ${elementTag(node)}${wrap}><g transform="translate(${n(x)} ${n(y)})">${parts.join('')}</g></g>`,
+    body: `<g ${elementTag(node)} transform="translate(${n(x)} ${n(y)})"><g${t ? ` transform="${t}"` : ''}>${effects.body}</g></g>`,
   }
 }
 
@@ -894,8 +1021,12 @@ function backgroundEl(
  * 产出的是**完整可用**的 `<svg>`（含 `xmlns`），可以直接塞进 React 的
  * `dangerouslySetInnerHTML`，也可以单独存成 `.svg` 文件。
  */
-export function renderSlideToSvg(slide: RenderSlide): string {
+export function renderSlideToSvg(slide: RenderSlide, idPrefix = ''): string {
   uid = 0
+  // Encode each code point so caller namespaces stay unique and safe in SVG URL fragments.
+  namespace = idPrefix
+    ? `pptx-${Array.from(idPrefix, (character) => character.codePointAt(0)!.toString(16)).join('-')}-`
+    : ''
   const bg = backgroundEl(slide.background, slide.widthPx, slide.heightPx)
   const nodes = renderNodes(slide.nodes)
   const defs = bg.defs + nodes.defs

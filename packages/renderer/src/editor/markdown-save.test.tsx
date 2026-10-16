@@ -30,6 +30,10 @@ async function mount(
   onSave: (body: string) => Promise<void>,
   onOpenInternalNote?: (id: string) => void,
   onAgentHandleChange?: (handle: MarkdownAgentHandle | null) => void,
+  manual: {
+    onExportMarkdown?: (markdown: string) => Promise<void>
+    onAiPreset?: (instruction: string) => void
+  } = {},
 ) {
   const host = document.createElement('div')
   document.body.append(host)
@@ -54,6 +58,7 @@ async function mount(
         extensions={[...createExtensions(), capture]}
         initialContent="初始正文"
         onSave={onSave}
+        {...manual}
         onOpenInternalNote={onOpenInternalNote}
         onAgentHandleChange={onAgentHandleChange}
         onDirtyChange={value.setDirty}
@@ -89,6 +94,125 @@ function replaceBody(editor: Editor, body: string) {
 }
 
 describe('自动保存与离开守卫', () => {
+  it('导出读取当前未保存正文，下载完成后仍保留编辑和 dirty', async () => {
+    const completed = deferred<void>()
+    const exported: string[] = []
+    const view = await mount(async () => {}, undefined, undefined, {
+      onExportMarkdown: (body) => {
+        exported.push(body)
+        return completed.promise
+      },
+    })
+    replaceBody(view.editor, '未保存的正文')
+    const tab = [...view.host.querySelectorAll<HTMLButtonElement>('button[role="tab"]')].find(
+      (button) => button.textContent === '笔记',
+    )!
+    act(() => tab.click())
+    const button = view.host.querySelector<HTMLButtonElement>('button[aria-label="导出 Markdown"]')!
+    act(() => button.click())
+    expect(exported).toEqual(['未保存的正文'])
+    expect(
+      view.host.querySelector('button[aria-label="正在导出 Markdown…"]')?.hasAttribute('disabled'),
+    ).toBe(true)
+    replaceBody(view.editor, '导出期间继续修改')
+    await act(async () => completed.resolve())
+    expect(view.editor.getMarkdown()).toBe('导出期间继续修改')
+    expect(view.unsaved.isDirty).toBe(true)
+  })
+
+  it('三个 AI 预设只预填真实侧栏，保留正文并按当前选区选择指令', async () => {
+    const instructions: string[] = []
+    const view = await mount(async () => {}, undefined, undefined, {
+      onAiPreset: (instruction) => {
+        instructions.push(instruction)
+      },
+    })
+    const tab = [...view.host.querySelectorAll<HTMLButtonElement>('button[role="tab"]')].find(
+      (button) => button.textContent === '审阅',
+    )!
+    act(() => tab.click())
+    const click = (label: string) => {
+      const button = view.host.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)!
+      expect(button.disabled).toBe(false)
+      act(() => button.click())
+    }
+    click('问 AI：总结全文')
+    click('问 AI：润色')
+    expect(instructions[0]).toContain('这篇文档')
+    expect(instructions[1]).toContain('全文')
+    act(() => view.editor.commands.setTextSelection({ from: 1, to: 3 }))
+    click('问 AI：润色')
+    click('问 AI：整理排版')
+    expect(instructions[2]).toContain('当前选中的内容')
+    expect(instructions[3]).toContain('当前选中内容')
+    expect(view.editor.getMarkdown()).toBe('初始正文')
+    expect(view.unsaved.isDirty).toBe(false)
+  })
+
+  it.each([
+    ['插入 Mermaid 图表', 'mermaid', 'flowchart LR'],
+    ['插入 WaveDrom 时序图', 'wavedrom', "name: 'clk'"],
+  ])('工具栏%s与 Agent 交替编辑后保存并重开同一图形代码块', async (label, language, source) => {
+    const writes: string[] = []
+    let agent: MarkdownAgentHandle | null = null
+    const view = await mount(
+      async (body) => {
+        writes.push(body)
+      },
+      undefined,
+      (handle) => {
+        agent = handle
+      },
+    )
+    const insertTab = [...view.host.querySelectorAll<HTMLButtonElement>('button[role="tab"]')].find(
+      (button) => button.textContent === '插入',
+    )!
+    act(() => insertTab.click())
+    const insert = view.host.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)!
+    expect(insert).not.toBeNull()
+    act(() => insert.click())
+    expect(view.editor.getMarkdown()).toContain(`\`\`\`${language}\n`)
+    const handle = agent as MarkdownAgentHandle | null
+    if (!handle) throw new Error('Agent handle missing')
+    const output = await act(async () =>
+      handle.execute(
+        'apply_ops',
+        {
+          ops: [
+            {
+              op: 'replaceText',
+              target: { start: 1 },
+              find: source,
+              replace: language === 'mermaid' ? 'flowchart TB' : "name: 'clock'",
+            },
+          ],
+        },
+        { expectedVersion: handle.getVersion() },
+      ),
+    )
+    expect(output).toMatchObject({ ok: true, changed: true })
+    expect(view.unsaved.isDirty).toBe(true)
+    act(() => view.unsaved.runGuarded(() => {}))
+    await act(async () => view.unsaved.resolve('save'))
+    expect(view.unsaved.isDirty).toBe(false)
+    const reopened = new Editor({
+      element: document.createElement('div'),
+      extensions: createExtensions(),
+      content: writes.at(-1),
+      contentType: 'markdown',
+    })
+    try {
+      expect(reopened.state.doc.child(1).type.name).toBe('codeBlock')
+      expect(reopened.state.doc.child(1).attrs.language).toBe(language)
+      expect(reopened.getMarkdown()).toBe(writes.at(-1))
+      expect(reopened.state.doc.child(1).textContent).toContain(
+        language === 'mermaid' ? 'flowchart TB' : "name: 'clock'",
+      )
+    } finally {
+      reopened.destroy()
+    }
+  })
+
   it('工具栏插入公式后标脏、保存，并在重开时仍渲染数学节点', async () => {
     const writes: string[] = []
     const view = await mount(async (body) => {

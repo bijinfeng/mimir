@@ -1,0 +1,32 @@
+.mimir-pptx-text-range {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.mimir-pptx-text-range__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--me-text);
+}
+
+.mimir-pptx-text-range__head label {
+  font-weight: 500;
+}
+
+.mimir-pptx-text-range__head span,
+.mimir-pptx-text-range__hint {
+  color: var(--me-text-weak);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.mimir-pptx-text-range__error {
+  color: var(--ant-color-error);
+  font-size: 12px;
+}

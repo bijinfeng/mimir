@@ -1,0 +1,73 @@
+.mimir-pptx-inspector__body[data-panel='缩放导航'] {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+.mimir-pptx-zoom {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.mimir-pptx-zoom__content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 12px;
+}
+.mimir-pptx-zoom__list {
+  display: grid;
+  gap: 4px;
+  max-height: 280px;
+  overflow: auto;
+  min-width: 0;
+}
+.mimir-pptx-zoom__list .me-tb {
+  height: auto;
+  min-height: 44px;
+  justify-content: flex-start;
+  text-align: left;
+}
+.mimir-pptx-zoom__entry {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  width: 100%;
+}
+.mimir-pptx-zoom__entry-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mimir-pptx-zoom__entry-detail {
+  color: var(--me-muted);
+  font-size: var(--me-font-size-sm, 12px);
+  font-weight: normal;
+}
+.mimir-pptx-zoom__preview {
+  width: 100%;
+  overflow: hidden;
+  background: var(--me-stage-bg);
+  border: 1px solid var(--me-border);
+}
+.mimir-pptx-zoom__preview svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.mimir-pptx-zoom__actions {
+  flex-shrink: 0;
+  padding: 12px;
+  border-top: 1px solid var(--me-border);
+  display: grid;
+  gap: 8px;
+  background: var(--me-surface);
+}

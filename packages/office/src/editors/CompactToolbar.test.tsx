@@ -9,7 +9,7 @@ afterEach(() => {
   document.body.replaceChildren()
 })
 
-it('keeps every command in the visible band when the editor column is narrow', () => {
+it('keeps commands directly available before layout measurements are available', () => {
   ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
   const host = document.createElement('div')
   host.style.width = '320px'
@@ -204,5 +204,149 @@ it('omits unavailable and empty command groups', () => {
   expect(host.textContent).toContain('编辑')
   expect(host.textContent).not.toContain('不支持')
   expect(host.textContent).not.toContain('位置与大小')
+  act(() => root.unmount())
+})
+
+it('collapses right groups into named menus according to actual editor width without duplicating commands', async () => {
+  ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+  let width = 300
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+    this: HTMLElement,
+  ) {
+    if (this.classList.contains('mimir-compact-toolbar__commands'))
+      return DOMRect.fromRect({ width, height: 56 })
+    if (this.dataset.sectionKey)
+      return DOMRect.fromRect({ width: this.hasAttribute('data-collapsed') ? 72 : 150, height: 56 })
+    return DOMRect.fromRect({ width: 100, height: 32 })
+  })
+  const host = document.createElement('div')
+  document.body.append(host)
+  const root = createRoot(host),
+    action = vi.fn<() => void>()
+  const render = () =>
+    root.render(
+      <CompactToolbar
+        sections={[
+          { key: 'font', label: '字体', minWidth: 0, content: <button>字体命令</button> },
+          { key: 'paragraph', label: '段落', minWidth: 0, content: <button>段落命令</button> },
+          {
+            key: 'format',
+            label: '文字格式',
+            minWidth: 0,
+            content: <button onClick={action}>清除格式</button>,
+          },
+        ]}
+      />,
+    )
+  act(render)
+  expect(host.querySelector('[data-section-key=font]')?.hasAttribute('data-collapsed')).toBe(false)
+  expect(host.querySelectorAll('[data-collapsed]')).toHaveLength(2)
+  expect(host.querySelector('button[aria-label="更多工具"]')).toBeNull()
+  act(() => host.querySelector<HTMLButtonElement>('button[aria-label="文字格式"]')!.click())
+  await act(async () => new Promise((resolve) => setTimeout(resolve, 0)))
+  const commands = Array.from(host.querySelectorAll('button')).filter(
+    (button) => button.textContent === '清除格式',
+  )
+  expect(commands).toHaveLength(1)
+  act(() => commands[0]!.click())
+  expect(action).toHaveBeenCalledOnce()
+  width = 600
+  act(render)
+  expect(host.querySelectorAll('[data-collapsed]')).toHaveLength(0)
+  expect(
+    Array.from(host.querySelectorAll('button')).filter(
+      (button) => button.textContent === '清除格式',
+    ),
+  ).toHaveLength(1)
+  act(() => root.unmount())
+})
+
+it('reveals a collapsed find group and focuses its only input for Cmd+F', async () => {
+  ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+    this: HTMLElement,
+  ) {
+    return DOMRect.fromRect({
+      width: this.classList.contains('mimir-compact-toolbar__commands') ? 160 : 200,
+      height: 56,
+    })
+  })
+  const host = document.createElement('div')
+  // Hidden/embedded browsers may never run animation-frame callbacks.
+  vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation(() => 1)
+  document.body.append(host)
+  const root = createRoot(host)
+  act(() =>
+    root.render(
+      <CompactToolbar
+        sections={[
+          { key: 'font', label: '字体', minWidth: 0, content: <button>字体命令</button> },
+          {
+            key: 'query',
+            label: '查找与替换',
+            minWidth: 0,
+            content: <input data-find-input aria-label="查找文字" />,
+          },
+        ]}
+      />,
+    ),
+  )
+  expect(host.querySelector('input')).toBeNull()
+  await act(async () => {
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'f', metaKey: true, bubbles: true }))
+    await new Promise((resolve) => setTimeout(resolve, 60))
+  })
+  const input = host.querySelector('input')
+  expect(input).not.toBeNull()
+  // Deferred focus follows menu mounting without depending on a frame.
+  await act(async () => new Promise((resolve) => setTimeout(resolve, 40)))
+  expect(document.activeElement).toBe(input)
+  act(() => root.unmount())
+})
+
+it('keeps named groups readable and limits overflow to the command row when all seven groups cannot fit', () => {
+  ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+  let width = 352
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+    this: HTMLElement,
+  ) {
+    return DOMRect.fromRect({
+      width: this.classList.contains('mimir-compact-toolbar__commands') ? width : 150,
+      height: 56,
+    })
+  })
+  const host = document.createElement('div')
+  document.body.append(host)
+  const root = createRoot(host)
+  const labels = ['图片', '图表', '音视频', '动态字段', '形状库', '公式', '导入']
+  const render = () =>
+    root.render(
+      <CompactToolbar
+        sections={labels.map((label, index) => ({
+          key: String(index),
+          label,
+          minWidth: 150,
+          content: <button>{label}命令</button>,
+        }))}
+      />,
+    )
+  act(render)
+  expect(host.querySelectorAll('[data-collapsed]')).toHaveLength(7)
+  expect(
+    host.querySelector('.mimir-compact-toolbar__commands')?.hasAttribute('data-overflow'),
+  ).toBe(true)
+  expect(
+    [...host.querySelectorAll<HTMLButtonElement>('button[aria-haspopup="menu"]')].map((button) =>
+      button.getAttribute('aria-label'),
+    ),
+  ).toEqual(labels)
+  const commands = host.querySelector<HTMLElement>('.mimir-compact-toolbar__commands')!
+  commands.scrollLeft = 120
+  act(render)
+  expect(commands.scrollLeft).toBe(120)
+  width = 1100
+  act(render)
+  expect(host.querySelector('[data-overflow]')).toBeNull()
+  expect(host.querySelector('[data-collapsed]')).toBeNull()
   act(() => root.unmount())
 })

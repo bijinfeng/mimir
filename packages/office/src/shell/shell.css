@@ -247,6 +247,8 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  /* Canvas decorations stay below ribbon popups, regardless of their local z-index. */
+  isolation: isolate;
 }
 
 /* 贴边模式（编辑器已在面板里、无外框）时，body 自己也不再有外层容器托底，
@@ -775,6 +777,73 @@
   flex-direction: column;
   gap: 6px;
   padding: 4px 6px 6px;
+}
+
+/* Explicit property forms keep field names visible without widening ribbon controls. */
+.me-property-form {
+  min-width: 0;
+  padding: 8px;
+  container-type: inline-size;
+}
+
+.me-property-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  min-width: 0;
+}
+
+.me-property-group + .me-property-group {
+  margin-top: 20px;
+}
+
+.me-property-group > :not(.me-property-field),
+.me-property-field[data-multiline] {
+  grid-column: 1 / -1;
+}
+
+.me-property-group__title {
+  margin: 0 0 4px;
+  color: var(--me-text);
+  font-size: var(--me-font-size, 13px);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.me-property-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.me-property-field__label {
+  color: var(--me-text);
+  font-size: var(--me-font-size-sm, 12px);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.me-property-field__control,
+.me-property-field__control > *,
+.me-property-field__control .me-input--num {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.me-property-form[data-columns='1'] .me-property-group {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.me-property-group .me-menu__note {
+  margin: 0;
+}
+
+@container (max-width: 230px) {
+  .me-property-group {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* 面板里的一句说明（说清这个开关是干什么的、或为什么某项给不了） */

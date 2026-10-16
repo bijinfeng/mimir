@@ -1,0 +1,22 @@
+.mimir-html-presentation {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  background: var(--me-bg, #fff);
+}
+.mimir-html-presentation__bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--me-border, #ddd);
+}
+.mimir-html-presentation > iframe {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  border: 0;
+  background: white;
+}

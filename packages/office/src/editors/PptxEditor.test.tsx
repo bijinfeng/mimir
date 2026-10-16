@@ -1,3 +1,4 @@
+import { applyPptxManualAnimation } from '../../../../apps/server/src/services/pptx-manual-animation.js'
 /**
  * @vitest-environment happy-dom
  *
@@ -27,7 +28,7 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import JSZip from 'jszip'
 import { PptxEditor } from './PptxEditor.js'
 import { editableElements, openPptxForEdit, textOfElement } from '../pptx.js'
@@ -36,8 +37,9 @@ import {
   savePptx as saveUpstreamPptx,
 } from '../../vendor/packages/pptx-engine/src/index.js'
 import { runTxn, type Op } from '../../vendor/packages/pptx-ops/src/ops/index.js'
+import { getSlideAnimations } from '../../vendor/packages/pptx-engine/src/animation.js'
 import type { PptxHostApply } from '../agent/pptx-agent.js'
-import { pickSelectOption } from '../shell/antd-test-dom.js'
+import { openSelect, pickSelectOption, selectValueText } from '../shell/antd-test-dom.js'
 import type { EditorIo } from './types.js'
 
 /**
@@ -53,7 +55,9 @@ function load(name: string): Uint8Array {
   return new Uint8Array(readFileSync(fixture(name)))
 }
 
-const upstreamHostApply: PptxHostApply = async ({ bytes, expectedVersion, ops }) => {
+const upstreamHostApply: PptxHostApply = async (request) => {
+  if (request.action === 'manual_animation') return applyPptxManualAnimation(request)
+  const { bytes, expectedVersion, ops } = request
   const opened = await openUpstreamPptx(bytes)
   const transaction = runTxn(opened, { ops: ops as Op[], isolation: 'atomic' })
   if (!transaction.applied) throw new Error(transaction.failures?.[0]?.error ?? 'PPTX 操作失败')
@@ -104,6 +108,7 @@ const mounted: { unmount: () => void }[] = []
 afterEach(() => {
   for (const item of mounted) item.unmount()
   mounted.length = 0
+  vi.restoreAllMocks()
 })
 
 /** 写回时收到的字节（保存按钮按下去才有内容） */
@@ -210,6 +215,14 @@ function click(element: Element): void {
   act(() => {
     element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
   })
+}
+
+function tableTab(host: HTMLElement, label: string) {
+  const tab = [
+    ...host.querySelectorAll<HTMLButtonElement>('[aria-label="表格编辑分类"] [role="tab"]'),
+  ].find((item) => item.textContent === label)
+  if (!tab) throw new Error(`没有表格分类${label}`)
+  click(tab)
 }
 
 function typeInField(host: HTMLElement, label: string, value: string): void {
@@ -416,9 +429,9 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
     const { host, record } = await mountEditor(load('formatted-text.pptx'))
     // 夹具的第一个元素是「加粗大字 / 斜体小字」两段（`formatted-text.pptx`）
     selectOnCanvas(host, 0)
-    expect(button(host, '加粗（整段）').getAttribute('aria-pressed')).toBe('false')
+    expect(button(host, '加粗（整框）').getAttribute('aria-pressed')).toBe('false')
 
-    click(button(host, '加粗（整段）'))
+    click(button(host, '加粗（整框）'))
     const after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
     const runs = textRunBlocks(elementXml(after, 'TextBox 1'))
     // 两段都真的加粗了
@@ -434,12 +447,12 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
   it('加粗再点一次：整段取消（写 b="0" 而不是删属性）', async () => {
     const { host, record } = await mountEditor(load('formatted-text.pptx'))
     selectOnCanvas(host, 0)
-    click(button(host, '加粗（整段）'))
+    click(button(host, '加粗（整框）'))
     await saveAndRead(host, record, 'ppt/slides/slide1.xml')
     // 现在两段都是加粗的 → 按钮亮着
-    expect(button(host, '加粗（整段）').getAttribute('aria-pressed')).toBe('true')
+    expect(button(host, '加粗（整框）').getAttribute('aria-pressed')).toBe('true')
 
-    click(button(host, '加粗（整段）'))
+    click(button(host, '加粗（整框）'))
     const after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
     const runs = textRunBlocks(elementXml(after, 'TextBox 1'))
     // `b="0"` 是**显式取消**（覆盖母版/版式继承来的加粗），不是删掉属性
@@ -450,7 +463,7 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
   it('倾斜整段：i="1"，同段的字号与颜色不受影响', async () => {
     const { host, record } = await mountEditor(load('formatted-text.pptx'))
     selectOnCanvas(host, 0)
-    click(button(host, '倾斜（整段）'))
+    click(button(host, '倾斜（整框）'))
     const after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
     const runs = textRunBlocks(elementXml(after, 'TextBox 1'))
     expect(runs.filter((item) => item.includes('i="1"')).length).toBe(2)
@@ -465,8 +478,8 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
     // `patchRun` 的「注入一个 rPr」分支，正好是另一条代码路径
     const { host, record } = await mountEditor(load('title-layout.pptx'))
     selectOnCanvas(host, 0)
-    click(button(host, '下划线（整段）'))
-    click(menuItem(host, '删除线（整段）'))
+    click(button(host, '下划线（整框）'))
+    click(menuItem(host, '删除线（整框）'))
     const after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
     const runs = textRunBlocks(elementXml(after, 'Title 1'))
     expect(runs[0]).toContain('u="sng"')
@@ -478,16 +491,16 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
   it('上标 / 下标：baseline="30000" 与 "-25000"，再点一次回到 0', async () => {
     const { host, record } = await mountEditor(load('title-layout.pptx'))
     selectOnCanvas(host, 0)
-    click(menuItem(host, '上标（整段）'))
+    click(menuItem(host, '上标（整框）'))
     let after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
     expect(textRunBlocks(elementXml(after, 'Title 1'))[0]).toContain('baseline="30000"')
 
     // 取消（同一页、同一个选中）：写的是显式的 0，而不是删掉属性
-    click(menuItem(host, '上标（整段）'))
+    click(menuItem(host, '上标（整框）'))
     after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
     expect(textRunBlocks(elementXml(after, 'Title 1'))[0]).toContain('baseline="0"')
 
-    click(menuItem(host, '下标（整段）'))
+    click(menuItem(host, '下标（整框）'))
     after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
     expect(textRunBlocks(elementXml(after, 'Title 1'))[0]).toContain('baseline="-25000"')
   })
@@ -518,7 +531,7 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
     const { host } = await mountEditor(load('formatted-text.pptx'))
     selectOnCanvas(host, 0)
     // 两段是 28pt 与 12pt → 没有「当前字号」这回事
-    expect(host.querySelector('input[aria-label="字号（pt，整段）"]')).toBeNull()
+    expect(host.querySelector('input[aria-label="字号（pt，整框）"]')).toBeNull()
     expect(host.textContent).toContain('多档字号')
   })
 
@@ -526,7 +539,7 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
     const { host, record } = await mountEditor(load('title-layout.pptx'))
     // 第二个元素是正文占位符，两段都是 32pt（继承自版式）
     selectOnCanvas(host, 1)
-    const field = host.querySelector<HTMLInputElement>('input[aria-label="字号（pt，整段）"]')
+    const field = host.querySelector<HTMLInputElement>('input[aria-label="字号（pt，整框）"]')
     expect(field, '两段字号一致时应当显示输入框').not.toBeNull()
     expect(field!.value).toBe('32')
 
@@ -555,14 +568,14 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
   it('增大 / 减小字号：按每条 run 自己的值 ±2pt', async () => {
     const { host, record } = await mountEditor(load('formatted-text.pptx'))
     selectOnCanvas(host, 0)
-    click(menuItem(host, '增大字号 2pt（整段）'))
+    click(menuItem(host, '增大字号 2pt（整框）'))
     let after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
     let runs = textRunBlocks(elementXml(after, 'TextBox 1'))
     // 28 → 30，12 → 14（两段各按自己的值走）
     expect(runs[0]).toContain('sz="3000"')
     expect(runs[1]).toContain('sz="1400"')
 
-    click(menuItem(host, '减小字号 2pt（整段）'))
+    click(menuItem(host, '减小字号 2pt（整框）'))
     after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
     runs = textRunBlocks(elementXml(after, 'TextBox 1'))
     expect(runs[0]).toContain('sz="2800"')
@@ -574,7 +587,7 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
     selectOnCanvas(host, 0)
     // antd 的下拉要打开弹层才渲染选项，选中一项是**点它**（不是改 value 再 change）
     click(button(host, '文字格式'))
-    pickSelectOption(host, '字体（整段，中英文一起换）', '微软雅黑')
+    pickSelectOption(host, '字体（整框，中英文一起换）', '微软雅黑')
 
     const after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
     const sp = elementXml(after, 'Title 1')
@@ -587,7 +600,7 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
     const { host, record } = await mountEditor(load('title-layout.pptx'))
     selectOnCanvas(host, 0)
     click(button(host, '文字格式'))
-    click(button(host, '字体颜色（整段）'))
+    click(button(host, '字体颜色（整框）'))
     // 面板里的色块：按 option 的 label 找
     const cell = [...host.querySelectorAll('button[aria-label]')].find(
       (item) => item.getAttribute('aria-label') === '红',
@@ -600,6 +613,419 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
     expect(sp).toContain('<a:srgbClr val="FF0000"/>')
     // 颜色是继承来的（colorInherited），改色之后不该还留着「主题色」的语义
     expect(sp).not.toContain('schemeClr')
+  })
+
+  it('编辑现有多系列图表显示在画布并保存重开，其他系列保留', async () => {
+    const opened = await openUpstreamPptx(load('title-layout.pptx'))
+    expect(
+      runTxn(opened, {
+        ops: [
+          {
+            op: 'addChart',
+            target: { slide: 0 },
+            kind: 'bar',
+            title: '原图表',
+            categories: ['Q1', 'Q2'],
+            series: [
+              { name: '收入', values: [12, 18] },
+              { name: '成本', values: [3, 5] },
+            ],
+            offset: { x: 914400, y: 1371600, cx: 5486400, cy: 2743200 },
+          },
+        ],
+        isolation: 'atomic',
+      }).applied,
+    ).toBe(true)
+    const requests: Parameters<PptxHostApply>[0][] = []
+    const { host, record } = await mountEditor(await saveUpstreamPptx(opened), {
+      hostApply: async (request) => {
+        requests.push(request)
+        return upstreamHostApply(request)
+      },
+    })
+    click(host.querySelector('.mimir-pptx-slide [data-element-kind="chart"]')!)
+    click(button(host, '对象与幻灯片操作'))
+    click(objectMenuItem(host, '编辑图表'))
+    typeInField(host, '图表标题', '季度收入')
+    click([...host.querySelectorAll('[role="tab"]')].find((item) => item.textContent === '数据')!)
+    typeInField(host, '系列 1 数值（每行一项）', '20\n30')
+    click(button(host, '应用图表修改'))
+    await settle(
+      () => host.querySelector('.mimir-pptx-slide')?.textContent?.includes('季度收入') === true,
+    )
+    expect(requests.at(-1)?.action).toBe('edit_chart')
+    await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    const reopened = await openPptxForEdit(record.saved.at(-1)!)
+    const chart = reopened.slides()[0]!.elements.find((item) => item.type === 'chart')
+    expect(chart?.type === 'chart' ? chart.chart.series.map((item) => item.values) : null).toEqual([
+      [20, 30],
+      [3, 5],
+    ])
+    expect(chart?.type === 'chart' ? chart.chart.title : null).toBe('季度收入')
+    await reopened.save()
+    reopened.commit()
+    const again = await openPptxForEdit(await reopened.save())
+    expect(again.slides()[0]!.elements.find((item) => item.type === 'chart')?.type).toBe('chart')
+  })
+
+  it('图表修改失败保留输入且不标脏，未确认的导入图表不执行', async () => {
+    const opened = await openUpstreamPptx(load('title-layout.pptx'))
+    runTxn(opened, {
+      ops: [
+        {
+          op: 'addChart',
+          target: { slide: 0 },
+          kind: 'line',
+          categories: ['Q1'],
+          series: [{ name: '收入', values: [12] }],
+          offset: { x: 914400, y: 1371600, cx: 5486400, cy: 2743200 },
+        },
+      ],
+      isolation: 'atomic',
+    })
+    const zip = await JSZip.loadAsync(await saveUpstreamPptx(opened))
+    const xml = await zip.file('ppt/slides/slide1.xml')!.async('string')
+    zip.file('ppt/slides/slide1.xml', xml.replace('descr="aislides-chart"', 'descr="imported"'))
+    const hostApply = vi.fn<PptxHostApply>(async () => {
+      throw new Error('图表服务暂不可用')
+    })
+    const { host } = await mountEditor(await zip.generateAsync({ type: 'uint8array' }), {
+      hostApply,
+    })
+    click(host.querySelector('.mimir-pptx-slide [data-element-kind="chart"]')!)
+    click(button(host, '对象与幻灯片操作'))
+    click(objectMenuItem(host, '编辑图表'))
+    typeInField(host, '图表标题', '保留草稿')
+    const confirm = vi.fn<() => boolean>(() => false)
+    vi.stubGlobal('confirm', confirm)
+    click(button(host, '应用图表修改'))
+    expect(hostApply).not.toHaveBeenCalled()
+    confirm.mockReturnValue(true)
+    click(button(host, '应用图表修改'))
+    await settle(() => host.textContent?.includes('图表服务暂不可用') === true)
+    expect(host.querySelector<HTMLInputElement>('input[aria-label="图表标题"]')?.value).toBe(
+      '保留草稿',
+    )
+    expect(button(host, '保存到库').disabled).toBe(true)
+    vi.unstubAllGlobals()
+  })
+
+  it('讲稿、换页时间和动画顺序有当前状态并保存重开', async () => {
+    const { host, record } = await mountEditor(load('title-layout.pptx'), {
+      hostApply: upstreamHostApply,
+    })
+    selectOnCanvas(host, 0)
+    click(
+      host.querySelector('[role=tab][data-tab-key=slide]') ??
+        Array.from(host.querySelectorAll('[role=tab]')).find(
+          (tab) => tab.textContent === '幻灯片',
+        )!,
+    )
+    click(button(host, '备注与放映'))
+    click(
+      Array.from(host.querySelectorAll('[role=tab]')).find((tab) => tab.textContent === '备注')!,
+    )
+    typeInField(host, '演讲者备注', '第一段讲稿\n第二段 & 细节')
+    click(button(host, '应用演讲者备注'))
+    await settle(() => host.textContent?.includes('已应用幻灯片修改') === true)
+    expect(
+      host.querySelector<HTMLTextAreaElement>('textarea[aria-label="演讲者备注"]')?.value,
+    ).toBe('第一段讲稿\n第二段 & 细节')
+    click(
+      Array.from(host.querySelectorAll('[role=tab]')).find((tab) => tab.textContent === '切换')!,
+    )
+    typeInField(host, '自动换页秒数', '8')
+    act(() =>
+      host
+        .querySelector<HTMLInputElement>('input[aria-label="自动换页秒数"]')!
+        .dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })),
+    )
+    await settle(() => host.textContent?.includes('当前 8 秒后自动换页') === true)
+    expect(await saveAndRead(host, record, 'ppt/slides/slide1.xml')).toContain('advTm="8000"')
+    click(
+      Array.from(host.querySelectorAll('[role=tab]')).find((tab) => tab.textContent === '效果')!,
+    )
+    click(button(host, '为选中对象添加动画'))
+    await settle(() => host.textContent?.includes('共 1 个动画') === true)
+    await settle(() => !button(host, '为选中对象添加动画').disabled)
+    pickSelectOption(host, '新增动画效果', '旋转')
+    click(button(host, '为选中对象添加动画'))
+    await settle(() => host.textContent?.includes('共 2 个动画') === true)
+    click(
+      Array.from(host.querySelectorAll('[role=tab]')).find((tab) => tab.textContent === '时间线')!,
+    )
+    expect(host.textContent).toContain('共 2 个动画')
+    click(button(host, '上移动画 2'))
+    await settle(() => !button(host, '删除动画 1').disabled)
+    const xml = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    expect(xml).toContain('advTm="8000"')
+    expect(xml).toContain('<p:timing>')
+    const reopened = await openPptxForEdit(record.saved.at(-1)!)
+    expect(reopened.notes(0)).toBe('第一段讲稿\n第二段 & 细节')
+    expect(getSlideAnimations(reopened.slides()[0]!).map((item) => item.effect)).toEqual([
+      'spin',
+      'fade',
+    ])
+    click(button(host, '删除动画 1'))
+    await settle(() => host.textContent?.includes('共 1 个动画') === true)
+    await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    const latest = await openPptxForEdit(record.saved.at(-1)!)
+    expect(latest.notes(0)).toBe('第一段讲稿\n第二段 & 细节')
+    expect(getSlideAnimations(latest.slides()[0]!).map((item) => item.effect)).toEqual(['fade'])
+  })
+
+  it('窄栏表格先关闭内层选择，再关闭面板并回焦到属性与位置组', async () => {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+      this: HTMLElement,
+    ) {
+      if (this.classList.contains('mimir-compact-toolbar__commands'))
+        return DOMRect.fromRect({ width: 420, height: 56 })
+      if (this.dataset.sectionKey)
+        return DOMRect.fromRect({
+          width: this.hasAttribute('data-collapsed') ? 72 : 300,
+          height: 56,
+        })
+      return DOMRect.fromRect({ width: 100, height: 32 })
+    })
+    const { host } = await mountEditor(await tableWithFormattedParagraphs(), {
+      hostApply: upstreamHostApply,
+    })
+    click(host.querySelector('.mimir-pptx-slide [data-element-kind="table"]')!)
+    click(
+      [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+        (item) => item.textContent === '对象',
+      )!,
+    )
+    const group = button(host, '属性与位置')
+    click(group)
+    click(objectMenuItem(host, '编辑表格'))
+    const row = host.querySelector<HTMLInputElement>('input[aria-label="行"]')!
+    act(() => {
+      row.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+      row.focus()
+    })
+    expect(host.querySelector('button[aria-label="对象与幻灯片操作"]')).toBeNull()
+    openSelect(host, '行')
+    const escape = async () =>
+      act(async () => {
+        row.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            key: 'Escape',
+            keyCode: 27,
+            which: 27,
+            bubbles: true,
+            cancelable: true,
+          }),
+        )
+        await new Promise((finish) => setTimeout(finish, 0))
+      })
+    await escape()
+    expect(host.querySelector('[aria-label="编辑表格面板"]')).not.toBeNull()
+    expect(row.getAttribute('aria-expanded')).toBe('false')
+    await escape()
+    expect(host.querySelector('[aria-label="编辑表格面板"]')).toBeNull()
+    expect(document.activeElement).toBe(group)
+  })
+
+  it('位置尺寸宿主处理期间禁用重复提交与保存，完成后四项均保存到原件', async () => {
+    const releases: (() => void)[] = []
+    const delayedHost = vi.fn<PptxHostApply>(async (request) => {
+      await new Promise<void>((finish) => releases.push(finish))
+      return upstreamHostApply(request)
+    })
+    const { host, record } = await mountEditor(await tableWithFormattedParagraphs(), {
+      hostApply: delayedHost,
+    })
+    click(host.querySelector('.mimir-pptx-slide [data-element-kind="table"]')!)
+    click(
+      [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+        (item) => item.textContent === '对象',
+      )!,
+    )
+    for (const [index, [label, value]] of [
+      ['左', '650'],
+      ['上', '300'],
+      ['宽', '110'],
+      ['高', '110'],
+    ].entries()) {
+      typeInField(host, label!, value!)
+      act(() =>
+        host
+          .querySelector<HTMLInputElement>(`input[aria-label="${label}"]`)!
+          .dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })),
+      )
+      await settle(() => releases.length > index)
+      for (const field of ['左', '上', '宽', '高'])
+        expect(host.querySelector<HTMLInputElement>(`input[aria-label="${field}"]`)!.disabled).toBe(
+          true,
+        )
+      expect(button(host, '保存到库').disabled).toBe(true)
+      expect(button(host, '撤销').disabled).toBe(true)
+      expect(host.textContent).toContain('正在应用修改')
+      click(button(host, '保存到库'))
+      expect(record.saved).toHaveLength(0)
+      expect(delayedHost).toHaveBeenCalledTimes(index + 1)
+      await act(async () => releases[index]!())
+      await settle(() => !host.querySelector<HTMLInputElement>('input[aria-label="左"]')!.disabled)
+    }
+    await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    const reopened = await openPptxForEdit(record.saved.at(-1)!)
+    const table = reopened.slides()[0]!.elements.find((item) => item.type === 'table')!
+    expect(table.transform.offset).toEqual({
+      x: 650 * 12700,
+      y: 300 * 12700,
+      cx: 110 * 12700,
+      cy: 110 * 12700,
+    })
+  })
+
+  it('同tick重复位置提交明确拒绝，宿主失败后可重试且不保存半成品', async () => {
+    let rejectHost!: (reason: Error) => void
+    const pending = new Promise<never>((_, reject) => {
+      rejectHost = reject
+    })
+    const hostApply = vi
+      .fn<PptxHostApply>()
+      .mockImplementationOnce(() => pending)
+      .mockImplementation(upstreamHostApply)
+    const { host, record } = await mountEditor(await tableWithFormattedParagraphs(), { hostApply })
+    click(host.querySelector('.mimir-pptx-slide [data-element-kind="table"]')!)
+    click(
+      [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+        (item) => item.textContent === '对象',
+      )!,
+    )
+    const initialY = host.querySelector<HTMLInputElement>('input[aria-label="上"]')!.value
+    typeInField(host, '左', '650')
+    typeInField(host, '上', '300')
+    act(() => {
+      for (const label of ['左', '上'])
+        host
+          .querySelector<HTMLInputElement>(`input[aria-label="${label}"]`)!
+          .dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    })
+    await settle(() => hostApply.mock.calls.length > 0)
+    expect(hostApply).toHaveBeenCalledOnce()
+    expect(host.textContent).toContain('正在处理文档，请稍后重试')
+    expect(record.saved).toHaveLength(0)
+    await act(async () => rejectHost(new Error('测试宿主失败')))
+    await settle(() => !host.querySelector<HTMLInputElement>('input[aria-label="左"]')!.disabled)
+    expect(host.textContent).toContain('测试宿主失败')
+    expect(host.querySelector<HTMLInputElement>('input[aria-label="上"]')!.value).toBe(initialY)
+    expect(button(host, '保存到库').disabled).toBe(true)
+    typeInField(host, '上', '300')
+    act(() =>
+      host
+        .querySelector<HTMLInputElement>('input[aria-label="上"]')!
+        .dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })),
+    )
+    await settle(() => !host.querySelector<HTMLInputElement>('input[aria-label="左"]')!.disabled)
+    expect(hostApply).toHaveBeenCalledTimes(2)
+    expect(host.querySelector<HTMLInputElement>('input[aria-label="上"]')!.value).toBe('300')
+  })
+
+  it('图库来源分类切走后关闭面板回焦到当前Ribbon分类', async () => {
+    const { host } = await mountEditor(load('title-layout.pptx'), { hostApply: upstreamHostApply })
+    const ribbonTab = (label: string) =>
+      [
+        ...host.querySelectorAll<HTMLButtonElement>('.mimir-compact-toolbar__tabs [role="tab"]'),
+      ].find((item) => item.textContent === label)!
+    click(ribbonTab('插入'))
+    click(button(host, '形状库'))
+    click(ribbonTab('对象'))
+    const panel = host.querySelector<HTMLElement>('[aria-label="形状库面板"]')!
+    act(() => {
+      panel.focus()
+      panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    })
+    expect(host.querySelector('[aria-label="形状库面板"]')).toBeNull()
+    expect(document.activeElement).toBe(ribbonTab('对象'))
+  })
+
+  it('表格应用预设保留分类与行列，撤销重做丢弃旧版本草稿', async () => {
+    const { host } = await mountEditor(await tableWithFormattedParagraphs(), {
+      hostApply: upstreamHostApply,
+    })
+    click(host.querySelector('.mimir-pptx-slide [data-element-kind="table"]')!)
+    click(objectMenuItem(host, '编辑表格'))
+    pickSelectOption(host, '行', '第 2 行')
+    pickSelectOption(host, '列', '第 2 列')
+    const panel = host.querySelector('.mimir-pptx-table-editor')
+    tableTab(host, '样式')
+    click(button(host, '表格样式：蓝色交替行'))
+    click(button(host, '应用表格样式'))
+    await settle(() => panel?.getAttribute('aria-busy') === 'false')
+    expect(host.querySelector('.mimir-pptx-table-editor')).toBe(panel)
+    expect(host.querySelector('[aria-label="表格样式"]')).not.toBeNull()
+    expect(selectValueText(host, '行')).toBe('第 2 行')
+    expect(selectValueText(host, '列')).toBe('第 2 列')
+    tableTab(host, '内容')
+    const currentText = host.querySelector<HTMLTextAreaElement>(
+      'textarea[aria-label="单元格文字"]',
+    )!.value
+    typeInField(host, '单元格文字', 'Old source draft')
+    tableTab(host, '样式')
+    pickSelectOption(host, '表格方向', '从右到左')
+    click(button(host, '撤销'))
+    await settle(() => button(host, '表格样式：蓝色交替行').getAttribute('aria-pressed') !== 'true')
+    expect(selectValueText(host, '表格方向')).toBe('从左到右')
+    expect(button(host, '应用表格样式').disabled).toBe(true)
+    tableTab(host, '内容')
+    expect(
+      host.querySelector<HTMLTextAreaElement>('textarea[aria-label="单元格文字"]')!.value,
+    ).toBe(currentText)
+    click(button(host, '重做'))
+    await settle(() => button(host, '重做').disabled)
+    expect(
+      host.querySelector<HTMLTextAreaElement>('textarea[aria-label="单元格文字"]')!.value,
+    ).toBe(currentText)
+    tableTab(host, '样式')
+    expect(button(host, '表格样式：蓝色交替行').getAttribute('aria-pressed')).toBe('true')
+    expect(button(host, '应用表格样式').disabled).toBe(true)
+    expect(selectValueText(host, '行')).toBe('第 2 行')
+    expect(selectValueText(host, '列')).toBe('第 2 列')
+  })
+
+  it('表格插入行、行高、对齐和交替行采用原生表格并保存重开', async () => {
+    const { host, record } = await mountEditor(await tableWithFormattedParagraphs(), {
+      hostApply: upstreamHostApply,
+    })
+    click(host.querySelector('.mimir-pptx-slide [data-element-kind="table"]')!)
+    click(button(host, '对象与幻灯片操作'))
+    click(objectMenuItem(host, '编辑表格'))
+    tableTab(host, '布局')
+    click(button(host, '在当前行后插入行'))
+    await settle(() => !button(host, '在当前行后插入行').disabled)
+    typeInField(host, '当前行高（pt）', '64')
+    act(() =>
+      host
+        .querySelector<HTMLInputElement>('input[aria-label="当前行高（pt）"]')!
+        .dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })),
+    )
+    await settle(() => !button(host, '在当前行后插入行').disabled)
+    pickSelectOption(host, '单元格垂直对齐', '底端')
+    await settle(() => !button(host, '在当前行后插入行').disabled)
+    tableTab(host, '样式')
+    const wasBanded = button(host, '表格交替行').getAttribute('aria-pressed') === 'true'
+    click(button(host, '表格交替行'))
+    click(button(host, '应用表格样式'))
+    await settle(
+      () =>
+        button(host, '应用表格样式').disabled &&
+        host.querySelector('.mimir-pptx-table-editor')?.getAttribute('aria-busy') === 'false',
+    )
+    await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    const reopened = await openPptxForEdit(record.saved.at(-1)!)
+    const table = reopened.slides()[0]!.elements.find((item) => item.type === 'table')
+    if (table?.type !== 'table') throw new Error('表格丢失')
+    expect(table.rows).toHaveLength(3)
+    expect(table.rowHeights[0]).toBe(64 * 12700)
+    expect(table.rows[0]?.[0]?.text?.anchor).toBe('bottom')
+    expect(table.styleFlags?.bandRow).toBe(!wasBanded)
+    expect(table.rows[0]?.[0]?.text?.paragraphs[0]?.runs.map((item) => item.text)).toEqual([
+      'Key ',
+      'Results',
+    ])
   })
 
   it('手动对象填充经同一宿主操作写入未保存画布并保存重开', async () => {
@@ -827,6 +1253,7 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
     expect(tableNode).not.toBeNull()
     click(tableNode!)
     click(button(host, '对象与幻灯片操作'))
+    click(objectMenuItem(host, '编辑表格'))
     const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="单元格文字"]')
     expect(area?.value).toBe('Key Results')
     expect(button(host, '应用单元格文字').disabled).toBe(true)
@@ -869,6 +1296,7 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
     })
     click(host.querySelector('.mimir-pptx-slide [data-element-kind="table"]')!)
     click(button(host, '对象与幻灯片操作'))
+    click(objectMenuItem(host, '编辑表格'))
     const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="单元格文字"]')!
     act(() => {
       const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
@@ -889,6 +1317,7 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
     )
     click(host.querySelector('.mimir-pptx-slide [data-element-kind="table"]')!)
     click(button(host, '对象与幻灯片操作'))
+    click(objectMenuItem(host, '编辑表格'))
     expect(
       host.querySelector<HTMLTextAreaElement>('textarea[aria-label="单元格文字"]')?.value,
     ).toBe('Key Results')
@@ -900,6 +1329,7 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
     const unavailable = await mountEditor(bytes)
     click(unavailable.host.querySelector('.mimir-pptx-slide [data-element-kind="table"]')!)
     click(button(unavailable.host, '对象与幻灯片操作'))
+    click(objectMenuItem(unavailable.host, '编辑表格'))
     expect(unavailable.host.textContent).toContain('当前未连接 PPTX 宿主，无法编辑表格单元格')
     expect(unavailable.host.querySelector('textarea[aria-label="单元格文字"]')).toBeNull()
 
@@ -910,6 +1340,7 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
     })
     click(host.querySelector('.mimir-pptx-slide [data-element-kind="table"]')!)
     click(button(host, '对象与幻灯片操作'))
+    click(objectMenuItem(host, '编辑表格'))
     const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="单元格文字"]')!
     act(() => {
       const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
@@ -929,6 +1360,7 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
     })
     click(host.querySelector('.mimir-pptx-slide [data-element-kind="table"]')!)
     click(button(host, '对象与幻灯片操作'))
+    click(objectMenuItem(host, '编辑表格'))
     pickSelectOption(host, '行', '第 2 行')
     pickSelectOption(host, '列', '第 2 列')
     const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="单元格文字"]')!
@@ -1193,7 +1625,7 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
     click(label)
 
     // 第一个段落输入框里是「Key Results」——只把正文那半句改掉
-    const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="第 1 段"]')!
+    const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="文本框文字"]')!
     expect(area.value).toBe('Key Results')
     act(() => {
       const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
@@ -1231,7 +1663,7 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
     expect(label).toBeDefined()
     click(label)
 
-    const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="第 1 段"]')!
+    const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="文本框文字"]')!
     expect(area.value).toBe('Key Results')
     act(() => {
       const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
@@ -1267,7 +1699,7 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
     expect(label).toBeDefined()
     click(label)
 
-    const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="第 1 段"]')!
+    const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="文本框文字"]')!
     act(() => {
       const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
       setter!.call(area, '※Key Results')
@@ -1301,7 +1733,7 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
     expect(label).toBeDefined()
     click(label)
 
-    const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="第 1 段"]')!
+    const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="文本框文字"]')!
     act(() => {
       const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
       setter!.call(area, 'Key ·Results')
@@ -1340,11 +1772,11 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
 
     const { host, record } = await mountEditor(await zip.generateAsync({ type: 'uint8array' }))
     selectOnCanvas(host, 0)
-    const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="第 1 段"]')!
-    expect(area.value).toBe('加粗\n大字')
+    const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="文本框文字"]')!
+    expect(area.value).toBe('加粗\n大字\n斜体小字')
     act(() => {
       const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
-      setter!.call(area, '加粗\nX大字')
+      setter!.call(area, '加粗\nX大字\n斜体小字')
       area.dispatchEvent(new Event('input', { bubbles: true }))
     })
 
@@ -1383,7 +1815,7 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
     expect(label).toBeDefined()
     click(label)
 
-    const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="第 1 段"]')!
+    const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="文本框文字"]')!
     act(() => {
       const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
       setter!.call(area, '全新标题')
@@ -1411,7 +1843,7 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
     expect(label, '第 3 页上应当有那个两 run 的文本框').toBeDefined()
     click(label)
 
-    click(button(host, '倾斜（整段）'))
+    click(button(host, '倾斜（整框）'))
     const after = await saveAndRead(host, record, 'ppt/slides/slide3.xml')
     const runs = textRunBlocks(elementXml(after, 'TextBox 2'))
     // 两条 run 都还在，各自保留自己的字号与颜色
@@ -1431,10 +1863,10 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
   it('文字编辑仍然工作，且不会把格式清掉', async () => {
     const { host, record } = await mountEditor(load('formatted-text.pptx'))
     const id = selectOnCanvas(host, 0)
-    const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="第 1 段"]')!
+    const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="文本框文字"]')!
     act(() => {
       const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
-      setter?.call(area, '改过的第一段')
+      setter?.call(area, '改过的第一段\n斜体小字')
       area.dispatchEvent(new Event('input', { bubbles: true }))
     })
     const after = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
@@ -1471,14 +1903,14 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
 
     const { host, record } = await mountEditor(await zip.generateAsync({ type: 'uint8array' }))
     selectOnCanvas(host, 0)
-    const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="第 1 段"]')!
+    const area = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="文本框文字"]')!
     // 换行在框里读得到——它没有被消毒掉（这是这一条断言的前提）
-    expect(area.value).toBe('加粗\n大字')
+    expect(area.value).toBe('加粗\n大字\n斜体小字')
 
     act(() => {
       const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
       // 只改第二行的两个字：改动落在倒数第一条 run 内
-      setter?.call(area, '加粗\n小字')
+      setter?.call(area, '加粗\n小字\n斜体小字')
       area.dispatchEvent(new Event('input', { bubbles: true }))
     })
 
@@ -1797,23 +2229,19 @@ describe('PptxEditor 的控件契约', () => {
     expect(source).not.toMatch(/from\s+'antd'/)
   })
 
-  it('段落输入框是 antd 的多行输入，不是自绘的 textarea', async () => {
+  it('完整文本框用一个 antd 多行输入，真实选区可以跨段', async () => {
     const { host } = await mountEditor(load('formatted-text.pptx'))
     selectOnCanvas(host, 0)
-    const areas = [...host.querySelectorAll<HTMLTextAreaElement>('textarea[aria-label^="第 "]')]
-    // 夹具的第一个元素是两段 → 两个框（少了说明面板没渲染出来，断言会在空树上通过）
-    expect(areas).toHaveLength(2)
-    for (const area of areas) {
-      // `ant-input` 是 antd Input/TextArea 的类；small 档由 EditorShell 那层
-      // `ConfigProvider componentSize="small"` 给，调用点自己不用写
-      expect(area.classList.contains('ant-input')).toBe(true)
-      expect(area.classList.contains('ant-input-sm'), `不在 small 档：${area.className}`).toBe(true)
-      // `rows={1}` 是「初始一行」，**不是**单行输入框：段落里的软换行 `<a:br/>`
-      // 只有真的 textarea 才保得住（单行 `Input` 会在值消毒时把 `\n` 删掉）
-      expect(area.getAttribute('rows')).toBe('1')
-      expect(area.getAttribute('placeholder')).toBeTruthy()
-      expect(area.getAttribute('title')).toBe(area.getAttribute('aria-label'))
-    }
+    const areas = [
+      ...host.querySelectorAll<HTMLTextAreaElement>('textarea[aria-label="文本框文字"]'),
+    ]
+    expect(areas).toHaveLength(1)
+    const area = areas[0]!
+    expect(area.classList.contains('ant-input')).toBe(true)
+    expect(area.classList.contains('ant-input-sm')).toBe(true)
+    expect(area.value).toBe('加粗大字\n斜体小字')
+    expect(area.getAttribute('aria-describedby')).toBeTruthy()
+    expect(host.textContent).toContain('整个文本框')
   })
 
   it('控件都落在 small 档（EditorShell 那层 ConfigProvider 盖到了这棵子树）', async () => {
@@ -1903,8 +2331,8 @@ describe('PptxEditor 的控件契约', () => {
       button(host, '保存到库'),
     )
     expect(host.querySelector('.mimir-editor__status button[aria-label="保存到库"]')).toBeNull()
-    expect(button(host, '撤销').getAttribute('title')).toBe('演示文稿尚不支持完整撤销历史')
-    expect(button(host, '重做').getAttribute('title')).toBe('演示文稿尚不支持完整重做历史')
+    expect(button(host, '撤销').getAttribute('title')).toBe('没有可撤销的修改')
+    expect(button(host, '重做').getAttribute('title')).toBe('没有可重做的修改')
     // 第 1 页：往回翻不能点，且说明理由
     expect(button(host, '上一页').disabled).toBe(true)
     expect(button(host, '上一页').getAttribute('title')).toBe('已经是第一页')

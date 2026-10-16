@@ -185,7 +185,7 @@ export async function openXlsxForEdit(bytes: Uint8Array): Promise<XlsxEditSessio
        * 只需要变到「有依赖 keyed 在的那一层」。没改动时仍返回同一个对象
        * （`cached ??=` 不动），所以它照样能当 React 依赖。
        */
-      cached ??= { sheets: workbook.sheets.map((sheet) => ({ ...sheet })) }
+      cached ??= { ...workbook, sheets: workbook.sheets.map((sheet) => ({ ...sheet })) }
       return cached
     },
 

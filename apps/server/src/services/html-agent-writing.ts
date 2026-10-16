@@ -1,3 +1,4 @@
+import type { HtmlWriteStreamEvent } from '@mimir/shared'
 import { getDocument } from './documents.js'
 import { documentAgentFormatOf } from './document-agent-format.js'
 import { callChat, modelReady, streamChat } from './model.js'
@@ -90,9 +91,9 @@ export async function planHtmlPage(input: HtmlPagePlanInput): Promise<HtmlPageBr
 }
 
 /** Generate a complete HTML document. The editor applies it only after version and user confirmation checks. */
-export async function writeHtmlDocument(
+export async function* streamHtmlDocument(
   input: HtmlPageWriteInput,
-): Promise<{ html: string; complete: true }> {
+): AsyncGenerator<HtmlWriteStreamEvent> {
   await requireHtml(input.documentId)
   if (input.kind === 'design' && !input.brief) throw new Error('设计页面需要已确认的提纲')
   if (input.kind === 'content' && !input.plan?.trim()) throw new Error('长文写作需要写作计划')
@@ -122,6 +123,7 @@ export async function writeHtmlDocument(
     if (chunk.type !== 'TEXT_MESSAGE_CONTENT') continue
     html += chunk.delta
     if (html.length > PAGE_LIMIT) throw new Error('页面超出 200000 字符限制，未写入画布')
+    yield { type: 'delta', text: chunk.delta }
   }
   const start = html.search(/<!doctype\s|<html[\s>]/i)
   if (start > 0) html = html.slice(start)
@@ -130,5 +132,15 @@ export async function writeHtmlDocument(
   html = html.slice(0, end + 7).trim()
   if (!/<html[\s>]/i.test(html) || !/<body[\s>]/i.test(html))
     throw new Error('页面生成结果不是完整 HTML，画布未修改')
-  return { html, complete: true }
+  yield { type: 'done', html, complete: true }
+}
+
+/** JSON compatibility path; streaming clients consume streamHtmlDocument directly. */
+export async function writeHtmlDocument(
+  input: HtmlPageWriteInput,
+): Promise<{ html: string; complete: true }> {
+  for await (const event of streamHtmlDocument(input)) {
+    if (event.type === 'done') return { html: event.html, complete: true }
+  }
+  throw new Error('页面生成未完成，画布未修改')
 }

@@ -11,8 +11,9 @@ import { sectionGeoms } from '../vendor/apps/docs/src/renderer/pagination-sectio
 import { sliceWithLineSplit } from '../vendor/apps/docs/src/renderer/pagination-lines.js'
 import type { BlockBox } from '../vendor/apps/docs/src/renderer/pagination-types.js'
 import type { SectionInfo, SectionSettings } from '../vendor/packages/docx-engine/src/types.js'
+import { FOOTNOTE_SEPARATOR_H } from './footnotes.js'
 import { openDocx } from './docx.js'
-import { alignPageGapPaint } from './pagination.js'
+import { alignPageGapPaint, makePageImageClip, reserveLiveFootnotes } from './pagination.js'
 import {
   assignLiveBlockSections,
   gapMetricsForSection,
@@ -43,6 +44,93 @@ function section(lastBlockIndex: number, pageHeight: number, margin: number): Se
 }
 
 describe('live DOCX section pagination geometry', () => {
+  it('keeps footnotes in the text column when the containing endnote gap bleeds across the paper', () => {
+    const pm = document.createElement('div')
+    const gap = document.createElement('div')
+    gap.className = 'page-gap mimir-endnote-gap'
+    const notes = document.createElement('div')
+    notes.className = 'page-gap-notes'
+    notes.dataset.paperX = '0'
+    gap.append(notes)
+    pm.append(gap)
+    pm.getBoundingClientRect = () => DOMRect.fromRect({ x: 364, width: 480 })
+    gap.getBoundingClientRect = () => DOMRect.fromRect({ x: 304, width: 600 })
+    Object.defineProperty(notes, 'offsetParent', { value: gap })
+    alignPageGapPaint(pm)
+    expect(parseFloat(notes.style.left)).toBe(60)
+    expect(gap.getBoundingClientRect().width).toBe(600)
+  })
+  it('repaginates fixed-height paper before laying footnotes out, reserving their height only once', async () => {
+    const session = await openDocx(
+      new Uint8Array(
+        readFileSync(
+          join(
+            import.meta.dirname,
+            '../vendor/apps/docs/tests/pagination-corpus/docx/06-with-footnotes.docx',
+          ),
+        ),
+      ),
+    )
+    const sections = [section(2, 2100, 300)] // 140px paper, 20px top/bottom, 100px body.
+    const geoms = sectionGeoms(sections)
+    const elements = [
+      document.createElement('p'),
+      document.createElement('p'),
+      document.createElement('p'),
+    ]
+    elements[1]!.innerHTML =
+      '<span>reference</span><sup class="doc-note-ref" data-note-kind="footnote" data-note-ref="fixed">1</sup>'
+    const blocks: BlockBox[] = elements.map((el, index) => ({
+      el,
+      section: 0,
+      top: index * 40,
+      height: index === 2 ? 5 : 40,
+    }))
+    expect(sliceWithLineSplit(blocks, geoms, 85, 1)).toHaveLength(1)
+    reserveLiveFootnotes(
+      {
+        parsed: session.footnotes.parsed,
+        footnotes: [{ id: 'fixed', text: 'A short note' }],
+        blocks,
+        blockByDocxIndex: new Map(),
+        sections,
+      },
+      geoms,
+    )
+    expect(blocks[1]!.footnoteExtraPx).toBeGreaterThan(0)
+    const slices = sliceWithLineSplit(blocks, geoms, 85, 1)
+    expect(slices).toHaveLength(2)
+    expect(slices[1]!.start).toBe(40)
+    const noteArea = blocks[1]!.footnoteExtraPx! + FOOTNOTE_SEPARATOR_H
+    const metrics = gapMetricsForSection(slices[0]!, slices[1]!, sections, geoms, 0)
+    expect(20 + (slices[0]!.end - slices[0]!.start) + metrics.marginBottom).toBe(140)
+    const nextMetrics = gapMetricsForSection(
+      slices[1]!,
+      { start: 85, end: 85, section: 0 },
+      sections,
+      geoms,
+      noteArea,
+    )
+    expect(20 + 45 + nextMetrics.marginBottom).toBe(140)
+    expect(sections[0]!.settings.pageHeight).toBe(2100)
+  })
+
+  it('clips floating watermark paint to each paper without clipping the editable canvas', () => {
+    const frame = { left: 40, top: 1140, width: 740, bottom: 1956 }
+    const clip = makePageImageClip(frame)
+    const image = document.createElement('img')
+    image.style.cssText =
+      'position:absolute;top:500px;height:700px;z-index:-1;transform:rotate(-45deg)'
+    clip.append(image)
+    expect(clip.style.left).toBe('40px')
+    expect(clip.style.top).toBe('1140px')
+    expect(clip.style.width).toBe('740px')
+    expect(clip.style.height).toBe('816px')
+    expect(clip.style.overflow).toBe('hidden')
+    expect(clip.style.pointerEvents).toBe('none')
+    expect(image.style.zIndex).toBe('-1')
+    expect(makePageImageClip({ ...frame, top: 0, bottom: 1000 }).style.height).toBe('1000px')
+  })
   it('stretches a table page gap across both paper margins', () => {
     const page = document.createElement('div')
     page.className = 'doc-page'
@@ -110,7 +198,7 @@ describe('live DOCX section pagination geometry', () => {
 
     const metrics = gapMetricsForSection(slices[0]!, slices[1]!, sections, geoms, 12)
     expect(metrics.marginTop).toBeCloseTo(20)
-    expect(metrics.marginBottom).toBeCloseTo(30 + 40 + 12)
+    expect(metrics.marginBottom).toBeCloseTo(30 + 40)
     expect(metrics.marginLeft).toBeCloseTo(20)
     expect(metrics.pageWidth).toBeCloseTo(600)
     expect(metrics.sectionMarginTop).toBeCloseTo(20)

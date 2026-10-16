@@ -11,7 +11,25 @@
 - `POST /api/chat`：`forwardedProps.runConfig` 中的 `documentAgent=true`、`agentFormat`、`documentId`、`agentRoundId`、`agentVersion`、`agentContext` 由服务端解析，并按已鉴权文档验证；旧 DOCX 字段仍兼容。
 - `POST /api/conversations/:id/document-agent/:runId/cancel`：取消未消费的当前工具轮；旧 DOCX 路由暂留兼容。
 - `POST /api/conversations/html-agent/{plan-page,write-document}`：按已鉴权 HTML 文档产生规划或完整页面草稿，草稿经当前画布版本与人工确认后才应用；请求形状在 `htmlPlanPageInputSchema`、`htmlWriteDocumentInputSchema`。
-- `POST /api/conversations/pptx-agent/apply-ops`：接收当前未保存 PPTX 字节、文档 ID、画布版本及操作批次，由服务宿主运行固定上游操作并返回新字节、记录及版本；只接受已鉴权 PPTX 文档，不自动保存原件。
+- `POST /api/conversations/markdown-agent/write-document?stream=1`：按共享 `markdownWriteDocumentInputSchema` 接收计划；NDJSON 逐段返回 `delta`，真实模型完成后才发 `done {markdown,complete:true}`，断流或取消不可伪称完成。临时草稿不进入笔记正文/自动保存；停止或失败后用户可保留部分/丢弃，应用仍须原画布版本一致。外部取消和切文档丢弃挂起选择。
+- `POST /api/conversations/document-agent/create-document`：DOCX/PDF/XLSX 来源按 `documentAgentCreateInputSchema` 创建 DOCX/PDF/Markdown/HTML；Markdown和完整HTML保留源内容，经统一上传/解析/索引后返回新文档ID，不修改源画布。
+- DOCX/PDF 创建输入为受限 HTML：保留标题、段落、嵌套列表、引用、代码、行内字形/颜色/超链接及合法合并表格。DOCX 公式写原生 OMML；PDF 当前明确拒绝公式，普通长表格按页续排，超过一页的跨行合并组明确拒绝。未支持的标签、属性、样式和非法合并在上传前报错，不静默提取纯文本。Markdown 与完整 HTML 不经过此转换。
+- 列表按原始子节点顺序展开，父项只编号一次，嵌套列表后的段落作为同层续段；前置嵌套列表仍保留空父项标记。单元格与引用的对齐/字形继承到段落，显式子值优先。固定表格生成器不写`TableParagraph.styleId`，创建适配层保留生成的`tcPr`/合并结构并逐格复用段落生成器，保留单元格标题和链接；不能手改vendor。PDF目前拒绝`text-align:justify`，不能静默按left输出。
+- `POST /api/conversations/document-agent/create-file`：XLSX 来源按 `documentAgentCreateFileFieldsSchema` 和 file multipart 上传当前单表的显示值导出（xlsx/csv），不携带公式和格式；浏览器从当前未保存画布导出，上传前重验版本。字节仅供宿主上传，不返回模型。旧 DOCX create-document JSON 路由保留兼容。
+- `POST /api/conversations/pptx-agent/apply-ops`：接收当前未保存 PPTX 字节、文档 ID、画布版本及操作批次，由服务宿主运行固定上游操作并返回新字节、记录及版本；只接受已鉴权 PPTX 文档，不自动保存原件。通用 `apply_ops` 保留固定版 AI 操作白名单；现有图表走严格单项 `edit_chart`，已有动画时间走手动专用 `edit_animation`（`seq`、开始方式及持续/延迟毫秒）。动画动作由宿主读取当前 timing 并仅修改该项参数，客户端不能提交原始 XML、任意效果或整条时间线。
+- PPTX宿主服务动作返回`{bytes,records,version,changed,data?}`：只读的规划/模板列表/复制保持版本，只有`changed:true`才重解析画布、推进一次版本和进入撤销历史。下载/生成/重解析前后均核对取消信号与当前版本；迟到结果不能覆盖手动修改。风格模板存于既有存储的`templates/pptx/{sha256(name)}.json`，不把模型凭据或原件嵌入模板。
+- 同一PPTX端点的手动`manual_asset`动作由`pptxManualAssetSchema`校验，提供原生对象/整页复制、剪切、粘贴。复制数据只由固定引擎从当前未保存字节生成；客户端只能提交服务端opaque ref，不能提交OOXML、部件路径或parts。ref在当前Mimir窗口可复用15分钟，宿主最多保留12项、总64 MiB，重启失效；粘贴须再次确认源文件仍可访问。此动作不注册为模型工具，也不承诺PowerPoint系统剪贴板互通。
+- 同一PPTX端点的手动`manual_ink`动作按`pptxManualInkSchema`接收单个`add/erase/clear`操作；新增笔迹保存为透明PNG图片和`aislides-ink`前缀、v1矢量`descr`，不宣称为PowerPoint InkML。擦除/清除仅允许当前页前缀及可解码元数据均匹配的笔迹图片，混入普通图片时整批拒绝。每笔沿当前版本/取消信号和原子历史路径写入；此动作不注册为模型工具。
+- 同一PPTX端点的手动`manual_fill`动作按`pptxManualFillSchema`接收形状持久ID或当前背景页，source仅允许固定八种纹理ID+匹配固定版SHA-256的PNG，或当前目标已解析的原生图片填充。浏览器不能提交任意mediaPath、XML或通用操作；宿主从当前文档取资源。背景`allSlides`在一次原子事务内应用到实际全部页，一次版本和历史；前端纹理读取、页/目标/版本变化与卸载须阻止迟到提交。此动作不注册模型工具，不放宽`apply_ops`白名单。严格`copy-current-background {slide,allSlides:true}`从当前原件沿slide→layout→master读取背景，保留复杂渐变/原生颜色变换；bgRef物化、源scheme基色跨主题固定、内部图片关系重映射，继承背景在目标页物化为本地背景。外部或失效图片关系拒绝，全部页仍一次版本/历史。
+
+- 同一PPTX端点的手动`manual_zoom`按`pptxManualZoomSchema`接收slide/section/summary和目标页PNG快照；客户端不传XML、版式或分节路径。源页/节和摘要布局由服务端当前原件解析，原生picture+内部slide跳转及摘要分节在一次原子操作内写入，沿当前版本/取消/历史链，不注册模型工具。每批至多24目标、单PNG base64 1,400,000字符、总7,500,000字符，PNG尺寸至多1280×1280；该HTTP ops外壳至多8,000,000字符，其他action仍1,000,000字符。快照从当前未保存画布生成，取消或版本失效拒绝迟到提交。
+- 同一PPTX端点的`manual_animation`按`pptxManualAnimationSchema`接收`transition-all {slide}`或`animation {slide,elementId,operation:replace|add|remove,...}`。自动逐段从原件真实段落生成、全部页从当前原生切换读取，在一个私有事务内完成；至多5000动画项，HTTP仍为普通1,000,000字符。输入不能携带presetXml或任意XML。当前版本/取消/历史沿同一宿主，手动动作不进入模型目录，模型apply_ops保持50条限制。
+- 同一PPTX端点的`manual_shape`按`pptxManualShapeSchema`接收固定109种kind、slide、整数EMU offset和仅连接线允许的flipH/flipV；不接收XML或新增对象ID。私有原件事务完成addElement后再解析真实新增durableId做方向翻转，一次响应/版本/撤销。画布点击/拖绘使用渲染坐标到EMU映射，预览不写；换页/版本/关闭/取消拒绝迟到结果。
+- 同一PPTX端点的`manual_paragraph`按`pptxManualParagraphSchema`接收slide、持久el、唯一非空paraIndices及严格format字段；范围必须由当前原件验证。直接复用engine局部段落适配，不把忽略paraIndices的通用DSL当成局部操作。图片符号只接受至多512 KiB/400万像素的真实PNG/JPEG，不接受关系ID或XML；落包与格式写入一次发布，未选段落/未知原件XML保留。无变化返回原bytes/原version/空records。
+- `manual_shape`与`manual_paragraph`仅手动UI动作，不注册模型工具；沿普通1,000,000字符HTTP ops外壳、已有鉴权/ZIP预算、版本/取消/历史合同。模型apply_ops的50条门槛不变。
+
+
+- `POST /api/conversations/pptx-agent/manual-asset`：multipart的`file`为当前PPTX（至多50 MiB），`asset`为用户所选文件（至多32 MiB），可选`poster`为真实PNG（至多8 MiB）；`input`按`pptxManualUploadSchema`校验。媒体扩展名、MIME及签名须一致；图片MIME与PNG/JPEG真实内容一致，空MIME或octet-stream可按签名判断。媒体插入写原生Office双关系与封面，当前画布显示媒体标识并提供本地播放，外链媒体不自动请求。源PPTX整批导入先做ZIP预检、页码去重与范围校验，当前仅接受相同页面尺寸。宿主只回字节，仍由现有手动保存写回原件。
 - `GET/PUT /api/conversations/markdown-agent/frontmatter`：读取与写入笔记属性。PUT 必须携带 `expectedYaml` 基线；过期返回 409，系统 `id/createdAt/updatedAt` 不可编辑，自定义 YAML 字段随普通正文保存保留在 vault。
 - `ChatDocumentAgent`：`{ format?, documentId, getVersion, getContext, freezeSelection, execute, undoRound }`；`format` 省略仅兼容旧 DOCX 句柄。
 - `docx_agent_runs`：原表保留，PostgreSQL 与 SQLite 均增加 `format`、`version`，旧行按 DOCX 解释。该表存关联 ID、工具名、状态和时限，不存原件正文或工具参数。

@@ -308,12 +308,12 @@ node packages/office/scripts/sync-upstream.mjs --from /tmp/genoffice --check  # 
 |---|---|
 | **大文档解析** | `parseDocx` 是同步重活，上游为它做了 worker（`parse-off-thread.ts`）。现在直接 await，大文档会卡主线程 |
 | **保存冲突** | `PUT /api/documents/:id/file` 不校验 `If-Match`。单客户端可接受，多客户端会互相覆盖 |
-| **xlsx** | 网格读取沿用 `src/xlsx.ts`；本轮接入固定版 GenOffice `xlsx-gateway` 的服务端字节写路径，供部分 Agent 与手动操作共用。完整 Rust 侧车、公式重算和 Univer 网格仍未接入；已接入操作与缺口按 XLSX 格式矩阵逐项核对。见 TECH §15.7 |
-| **xlsx 行/列增删与公式重算** | 本轮服务端 GenOffice gateway 写路径已接入行列增删、合并与取消合并，以及行高和行列隐藏；公式重算仍未接入。改了被别的公式引用的格子，依赖公式的显示值要等 Excel 打开才更新。更多结构与公式操作按 XLSX 格式矩阵逐项验收 |
-| **xlsx 改样式** | 原轻量 `xlsx-edit.ts` 覆盖单元格时会丢该格 `s` 样式引用。本轮新增的服务端 GenOffice gateway 写路径对已接入的 `set_cell`、`set_formula`、`clear_cell`、`set_range` 保留原有样式索引，且未改 ZIP 条目逐字节保留；更广的格式、图表与工作簿 DSL 操作仍按格式任务矩阵逐项验收，不能把这四种操作推论为完整样式编辑。 |
+| **xlsx** | 网格读取沿用 `src/xlsx.ts`；固定版 GenOffice gateway 的服务端字节写路径供部分 Agent 与手动操作共用。显式 WASM 重算仅补原件公式缓存；完整会话、自动重算和 Univer 网格仍未接入。已接入操作与缺口按 XLSX 格式矩阵逐项核对。见 TECH §15.7 与 [XLSX 宿主合同](../../../shared/contract/xlsx-agent.md) |
+| **xlsx 行/列增删与公式重算** | gateway 已接行列增删、合并与取消合并、行高和行列隐藏。普通编辑后公式显示仍是缓存；显式重算用隔离 worker 计算并交叉校验原始缓存类型，源公式/样式/未触及部件保留。1904、共享数组、外链、未支持函数及超预算须拒绝，不发布部分结果。更多结构与计算语义按格式矩阵逐项验收 |
+| **xlsx 改样式** | 原轻量 `xlsx-edit.ts` 覆盖单元格时会丢该格 `s` 样式引用。当前 gateway 的内容写入保留样式；`format_range` 修改目标格与 `styles.xml`，网格解析字体、纯色填充、边框、对齐及明确数字格式。图案/渐变、完整条件格式、图表与工作簿 DSL 操作仍按格式矩阵验收，不能由基础样式推论为全部格式编辑。 |
 | **pptx 编辑** | 改文字与整段字形沿用 `src/pptx-save.ts` 补丁式保存；本轮对象菜单另经固定版 `pptx-ops` 宿主接入元素位置和大小、填充、轮廓与删除。段落格式、图表和其余上游操作仍按 PPTX 格式矩阵逐项验收；宿主可调用不等于手动入口或保存读回已验收。见 TECH §15.9 |
-| **pptx 格式的粒度是整段** | 界面里没有 run 级选区（能选的是元素与段落输入框），所以加粗/字号/颜色只能表达「这一整段」。标签里都写着「（整段）」 |
-| **pptx 回传格式必须逐 run** | 把一段压成「一条 run、文本是整段」会让同段其它 run 的字号/颜色被 `dominantRun` 静默顶掉（实测：`b="1" sz="3600"` 的标签变成 `sz="2400"`）。`PptxEditor.tsx` 的 `applyFormat` 逐 run 带 `srcRun`，`src/editors/PptxEditor.test.tsx` 有断言守着 |
+| **pptx 文字范围与插入点** | 单个原生 textarea 跨段选择；null 为整框、非空范围只格式化选中文字、折叠光标仅保存 pending marks，输入时才写 session。选区/marks 绑定文档、slide path、元素与版本；外部改动使其失效。不能用字符数字表单冒充真实选择。 |
+| **pptx 范围编辑保真** | `pptx-text-range` 用身份绑定来源元信息交给 setText 专属分支，在 clone 上按原 XML 外科 patch；保留未知 rPr/pPr/endParaRPr、超链接关系、软换行、field GUID。普通 Agent 的 EditParagraph 合同不接受客户端 XML；仅 srcRun 映射不足以证明拆 run 后保真。范围专项及 Editor 原文字回归同时守住。 |
 | **pptx 字体度量** | 用启发式（按字符类别估宽度）——**换行位置**可能与原件略有差别。要精确得接 opentype.js + vendored 字体（docx 那边有） |
 | **pdf 的文字编辑** | 查找读文字层；新增的服务端宿主已能经固定版 GenOffice/PDFium 写入带可靠坐标的文字替换和插入，并以独立阅读器读回。手动画布只在能取得可靠页坐标时开放插入；替换缺少文字对象锚点时禁用。批注、图片、表单及其余内容工具仍按 PDF 格式矩阵验收，不能仅凭宿主函数存在就注册给模型。 |
 | **pdf 的单边裁剪** | 页面模型（`PdfCropInsets`）四边各自算，**界面上只能四边等量**（去掉扫描件黑边的常见用途；单边裁剪在旋转之后就分不清「左右」了）。要单边就补界面，模型不用改 |
@@ -353,6 +353,14 @@ node packages/office/scripts/sync-upstream.mjs --from /tmp/genoffice --check  # 
 | 形状旋转后位置偏 | OOXML 的 rot 绕**框中心**；翻转后坐标系回到左上角，旋转中心要相应还原 |
 | 合并相邻 run 后间距不对 | 同格式的两个 run 位置接不上（中间有空档）时**不能合**——合了就被浏览器按自然排版重排 |
 | 幻灯片空白（背景也没了） | 占位符的位置可能在**母版**（幻灯片与版式里都是空 `<p:spPr/>`）。两级上溯链断在任何一级都会让内容叠在 (0,0)。`src/pptx.test.ts` 有一条测试专门断言这个 |
+
+### DOCX 图表、样式与注释视图合同
+
+`docx-chart-save.ts` 接收 `pmDocToSavePlan().chartPatches`，同时补丁原生图表缓存与 `externalData` 关系指向的嵌入 XLSX 引用格；按公式解析表名和横/竖范围，不假定 Sheet1 或 A/B 列。外部/损坏/缺失引用及同格冲突写入须拒绝，未引用格、样式和 ZIP 部件保留；该路径不重算其他公式缓存。
+
+`docx-styles.ts` 从原 styles.xml 合并待保存定义后重新解析；沿 `doc-style-css` 生成当前编辑器作用域样式，同一解析结果供列表存储、分页与注释使用。宿主手动 `apply_style` 与模型工具目录分离；创建/更新定义验证类型、basedOn/next 引用和循环。
+
+脚注预留按实际引用行和富文本 DOM 测量，纸张高度固定；超长脚注由 `docx-footnote-flow.ts` 按安全行边界切片，续页仅属视图，不改保存正文。尾注用 `docx-endnotes.ts` 按各节 `sectEnd`/`docEnd` 渲染只读流内 widget；同锚点的多个续页在 PM 装饰器及尾注内部直接 DOM 两条路径都必须保持来源次序。编号 paint 不改源属性。复杂编号/分栏/混合纸张组合仍须实际视觉验收。
 
 ### 保存与编辑的静默坑
 

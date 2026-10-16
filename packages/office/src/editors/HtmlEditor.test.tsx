@@ -299,6 +299,11 @@ it('Agent 改动在源码和预览可见，保存恢复 BOM/CRLF 且不写入预
     )
   })
   press(host.querySelector<HTMLButtonElement>('[aria-label="元素编辑"]')!)
+  press(
+    [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (tab) => tab.textContent === '内容与结构',
+    )!,
+  )
   const field = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="内容"]')!
   act(() => {
     const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
@@ -533,6 +538,11 @@ it('手动快捷格式和复制共用 Agent 操作，保存字节可重新解析
   press(host.querySelector<HTMLButtonElement>('[aria-label="元素编辑"]')!)
   press(host.querySelector<HTMLButtonElement>('[aria-label="加粗或取消加粗"]')!)
   expect(handle.getDocument().text).toContain('<p style="font-weight: 700">正文</p>')
+  press(
+    [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (tab) => tab.textContent === '内容与结构',
+    )!,
+  )
   press(host.querySelector<HTMLButtonElement>('[aria-label="复制选中元素"]')!)
   expect(handle.getDocument().text.match(/正文<\/p>/g)).toHaveLength(2)
   press(host.querySelector<HTMLButtonElement>('[aria-label="保存到库"]')!)
@@ -777,6 +787,11 @@ it('元素上移遵守同级顺序，图片旋转写入保存字节', async () =
   }
   select('p')
   press(host.querySelector<HTMLButtonElement>('[aria-label="元素编辑"]')!)
+  press(
+    [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (tab) => tab.textContent === '内容与结构',
+    )!,
+  )
   press(host.querySelector<HTMLButtonElement>('[aria-label="元素上移"]')!)
   expect(handle.getDocument().text).toContain('<p>段落</p><h1>标题</h1>')
   select('img', { transform: '', width: '200px', height: '100px' })
@@ -792,6 +807,12 @@ it('元素上移遵守同级顺序，图片旋转写入保存字节', async () =
   press(host.querySelector<HTMLButtonElement>('[aria-label="设置宽度"]')!)
   expect(handle.getDocument().text).toContain('width: 300px')
   expect(handle.getDocument().text).toContain('height: 150px')
+  expect(host.querySelector<HTMLInputElement>('input[aria-label="高度"]')!.value).toBe('150px')
+  press(
+    [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (tab) => tab.textContent === 'CSS',
+    )!,
+  )
   const cssField = host.querySelector<HTMLTextAreaElement>(
     'textarea[aria-label="自定义 CSS 声明"]',
   )!
@@ -803,6 +824,11 @@ it('元素上移遵守同级顺序，图片旋转写入保存字节', async () =
   press(host.querySelector<HTMLButtonElement>('[aria-label="应用自定义 CSS"]')!)
   expect(handle.getDocument().text).toContain('opacity: 0.7')
   expect(handle.getDocument().text).toContain('border-radius: 8px')
+  press(
+    [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+      (tab) => tab.textContent === '图片',
+    )!,
+  )
   const altInput = host.querySelector<HTMLInputElement>('input[aria-label="图片替代文字"]')!
   act(() => {
     const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set

@@ -1,6 +1,9 @@
+import { exportXlsxDisplayedSheet } from '../xlsx-export.js'
 import { openXlsxForEdit, type XlsxEditSession } from '../xlsx-edit.js'
+import { inspectXlsx } from './xlsx-inspect.js'
 import { findXlsxCells } from '../xlsx-find.js'
 import type { XlsxCell, XlsxSheet, XlsxWorkbook } from '../xlsx.js'
+import type { XlsxHostAction, XlsxRecalculation } from '@mimir/shared'
 
 export interface XlsxHostApply {
   (request: {
@@ -8,12 +11,15 @@ export interface XlsxHostApply {
     bytes: Uint8Array
     expectedVersion: number
     ops: unknown[]
+    imageFile?: File
+    action?: XlsxHostAction
     signal?: AbortSignal
   }): Promise<{
     bytes: Uint8Array
     version: number
     changedCells: string[]
     touchedEntries: string[]
+    recalculation?: XlsxRecalculation
   }>
 }
 
@@ -26,9 +32,13 @@ export interface XlsxAgentHandle {
   execute(
     tool: string,
     args: unknown,
-    options: { expectedVersion?: number; roundId?: string; signal?: AbortSignal },
+    options: { expectedVersion?: number; roundId?: string; signal?: AbortSignal; imageFile?: File },
   ): Promise<unknown>
   undoRound(roundId: string): Promise<boolean>
+  history(): { undo: number; redo: number }
+  undo(): Promise<boolean>
+  redo(): Promise<boolean>
+  exportSheet(format: 'xlsx' | 'csv', sheetId?: string): ReturnType<typeof exportXlsxDisplayedSheet>
   currentBytes(): Uint8Array
   flush(): Promise<Uint8Array>
   currentSession(): XlsxEditSession
@@ -37,8 +47,14 @@ export interface XlsxAgentHandle {
   dispose(): void
 }
 
-type Selection = { sheet: number; row: number; col: number } | null
-type Snapshot = { bytes: Uint8Array; version: number; dirty: boolean; lastVersion: number }
+type Selection = { sheet: number; row: number; col: number; range?: string } | null
+type Snapshot = {
+  bytes: Uint8Array
+  version: number
+  dirty: boolean
+  lastVersion: number
+  recalculation?: XlsxRecalculation
+}
 
 function object(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value))
@@ -70,8 +86,8 @@ function range(value: unknown): {
   const endCol = columnIndex(match[3] ?? match[1]!)
   if (startRow > endRow || startCol > endCol || endRow > 1_048_576 || endCol > 16_383)
     throw new Error('range 超出工作表边界')
-  if ((endRow - startRow + 1) * (endCol - startCol + 1) > 1_000)
-    throw new Error('单次最多读取 1000 个格子')
+  if ((endRow - startRow + 1) * (endCol - startCol + 1) > 2_000)
+    throw new Error('单次最多读取 2000 个格子')
   return { startRow, startCol, endRow, endCol }
 }
 
@@ -104,14 +120,63 @@ export function createXlsxAgentHandle(
   initialBytes: Uint8Array,
   initialSession: XlsxEditSession,
   selection: () => Selection,
-  onChange: (session: XlsxEditSession, dirty: boolean) => void,
+  onChange: (session: XlsxEditSession, dirty: boolean, recalculation?: XlsxRecalculation) => void,
   hostApply: XlsxHostApply,
+  onSelect?: (selection: { sheet: number; row: number; col: number; range: string }) => void,
+  onBusyChange?: (busy: boolean) => void,
 ): XlsxAgentHandle {
   let bytes: Uint8Array = initialBytes.slice()
   let session = initialSession
   let version = 0
   let dirty = false
+  let recalculation: XlsxRecalculation | undefined
   let disposed = false
+  let savedBytes = initialBytes.slice()
+  const undoStack: Snapshot[] = [],
+    redoStack: Snapshot[] = []
+  const capture = (): Snapshot => ({
+    bytes: bytes.slice(),
+    version,
+    dirty,
+    lastVersion: version,
+    recalculation,
+  })
+  const remember = (stack: Snapshot[], snapshot: Snapshot) => {
+    stack.push(snapshot)
+    while (
+      stack.length > 50 ||
+      stack.reduce((n, item) => n + item.bytes.length, 0) > 64 * 1024 * 1024
+    )
+      stack.shift()
+  }
+  const replay = (from: Snapshot[], to: Snapshot[]) => {
+    const task = pending.then(async () => {
+      if (disposed || !from.length) return false
+      onBusyChange?.(true)
+      try {
+        const snapshot = from.at(-1)!
+        const restored = await openXlsxForEdit(snapshot.bytes)
+        if (disposed) return false
+        remember(to, capture())
+        from.pop()
+        bytes = snapshot.bytes.slice()
+        session = restored
+        version++
+        recalculation = snapshot.recalculation
+        dirty =
+          bytes.length !== savedBytes.length ||
+          bytes.some((byte, index) => byte !== savedBytes[index])
+        rounds.clear()
+        frozen.clear()
+        onChange(session, dirty, recalculation)
+        return true
+      } finally {
+        onBusyChange?.(false)
+      }
+    })
+    pending = task.catch(() => undefined)
+    return task
+  }
   const rounds = new Map<string, Snapshot>()
   const frozen = new Map<string, Selection>()
   let pending: Promise<unknown> = Promise.resolve()
@@ -127,24 +192,35 @@ export function createXlsxAgentHandle(
         id: sheet.id,
         name: sheet.name,
         hidden: sheet.hidden === true,
-        usedRows: sheet.empty ? 0 : sheet.rows.length,
+        usedRows: sheet.empty
+          ? 0
+          : sheet.rows.reduce((maximum, row) => Math.max(maximum, row.number), 0),
         usedColumns: sheet.empty ? 0 : sheet.columns.length,
+        charts: (sheet.visuals ?? [])
+          .filter((v) => v.kind === 'chart')
+          .map((v) => ({ chartPath: v.chartPath, title: v.name })),
+        tables: (sheet.tables ?? []).map((t) => ({ name: t.name, range: t.range })),
+        pivots: (sheet.pivots ?? []).map((p) => ({ name: p.name, range: p.definition.outputRef })),
       })),
       selection: selected
         ? {
             sheetId: workbook.sheets[selected.sheet]?.id,
             address: `${columnLetters(selected.col)}${selected.row}`,
+            range: selected.range,
           }
         : null,
       dirty,
-      limitations: ['公式缓存尚未由 Rust sidecar 重算；图表、透视与大部分工作簿操作尚未开放'],
+      recalculation,
+      limitations: [
+        '普通写入不自动重算；可单独调用propose_operations并传operations:[]和recalculate:true。图表数据和透视刷新使用当前缓存；修改源数据后需显式刷新图表数据或透视表',
+      ],
     }
   }
 
   const run = async (
     tool: string,
     args: unknown,
-    options: { expectedVersion?: number; roundId?: string; signal?: AbortSignal },
+    options: { expectedVersion?: number; roundId?: string; signal?: AbortSignal; imageFile?: File },
   ): Promise<unknown> => {
     if (disposed) throw new Error('XLSX 画布已关闭')
     if (options.expectedVersion !== undefined && options.expectedVersion !== version)
@@ -155,6 +231,8 @@ export function createXlsxAgentHandle(
     const workbook = session.view()
     if (tool === 'get_workbook_context')
       return { ok: true, changed: false, version, data: context(selected) }
+    const inspection = await inspectXlsx(tool, input, workbook, bytes, selected?.sheet ?? 0)
+    if (inspection !== undefined) return { ok: true, changed: false, version, data: inspection }
     if (tool === 'find_cells') {
       const query = typeof input.query === 'string' ? input.query.trim() : ''
       const errorsOnly = input.errors_only === true
@@ -195,7 +273,7 @@ export function createXlsxAgentHandle(
           matches,
           truncated,
           incompleteSheets: [],
-          note: '公式格的 text 是原件或当前画布中的缓存显示值，尚未重新计算',
+          note: '公式格的text取当前缓存；普通写入不自动重算，可读取上下文中的recalculation状态',
         },
       }
     }
@@ -241,6 +319,12 @@ export function createXlsxAgentHandle(
     if (tool === 'select_range') {
       const sheet = sheetOf(workbook, input.sheetId, selected?.sheet ?? 0)
       const bounds = range(input.range)
+      onSelect?.({
+        sheet: workbook.sheets.indexOf(sheet),
+        row: bounds.startRow,
+        col: bounds.startCol,
+        range: String(input.range),
+      })
       return {
         ok: true,
         changed: false,
@@ -253,32 +337,40 @@ export function createXlsxAgentHandle(
       }
     }
     if (tool !== 'propose_operations') throw new Error(`XLSX 工具 ${tool} 尚未接入`)
+    if (input.recalculate !== undefined && typeof input.recalculate !== 'boolean')
+      throw new Error('recalculate必须是布尔值')
     if (
       !Array.isArray(input.operations) ||
-      input.operations.length < 1 ||
+      (input.recalculate === true ? input.operations.length !== 0 : input.operations.length < 1) ||
       input.operations.length > 50
     )
-      throw new Error('operations 必须包含 1–50 项')
-    const prior = { bytes: bytes.slice(), version, dirty, lastVersion: version + 1 }
+      throw new Error('operations 必须包含 1–50 项；重算须单独提交空operations和recalculate=true')
+    const prior = { bytes: bytes.slice(), version, dirty, lastVersion: version + 1, recalculation }
     const result = await hostApply({
       documentId,
       bytes: bytes.slice(),
       expectedVersion: version,
       ops: input.operations,
+      action: input.recalculate === true ? 'recalculate_formulas' : 'apply_ops',
       signal: options.signal,
+      imageFile: options.imageFile,
     })
     if (disposed || options.signal?.aborted) throw new Error('XLSX 操作已取消')
     if (result.version !== version + 1) throw new Error('XLSX 宿主返回了错误的画布版本')
     const nextSession = await openXlsxForEdit(result.bytes)
+    if (disposed || options.signal?.aborted) throw new Error('XLSX 操作已取消')
     if (options.roundId) {
       const first = rounds.get(options.roundId)
       rounds.set(options.roundId, first ? { ...first, lastVersion: result.version } : prior)
     }
+    remember(undoStack, prior)
+    redoStack.length = 0
     bytes = result.bytes.slice()
     session = nextSession
     version = result.version
     dirty = true
-    onChange(session, dirty)
+    recalculation = result.recalculation
+    onChange(session, dirty, recalculation)
     return {
       ok: true,
       changed: true,
@@ -287,7 +379,11 @@ export function createXlsxAgentHandle(
         result.changedCells.length > 0
           ? `已修改 ${result.changedCells.length} 个格子`
           : `已执行 ${input.operations.length} 项工作簿操作`,
-      data: { changedCells: result.changedCells, touchedEntries: result.touchedEntries },
+      data: {
+        changedCells: result.changedCells,
+        touchedEntries: result.touchedEntries,
+        recalculation: result.recalculation,
+      },
     }
   }
 
@@ -302,23 +398,45 @@ export function createXlsxAgentHandle(
       return context(value)
     },
     execute(tool, args, options) {
-      const task = pending.then(() => run(tool, args, options))
+      const task = pending.then(async () => {
+        onBusyChange?.(true)
+        try {
+          return await run(tool, args, options)
+        } finally {
+          onBusyChange?.(false)
+        }
+      })
       pending = task.catch(() => undefined)
       return task
     },
+    history: () => ({ undo: undoStack.length, redo: redoStack.length }),
+    undo: () => replay(undoStack, redoStack),
+    redo: () => replay(redoStack, undoStack),
     async undoRound(roundId) {
       await pending
       const snapshot = rounds.get(roundId)
       if (!snapshot || disposed || snapshot.lastVersion !== version) return false
       const restored = await openXlsxForEdit(snapshot.bytes)
+      if (disposed || snapshot.lastVersion !== version) return false
       bytes = snapshot.bytes
       session = restored
       version += 1
       dirty = snapshot.dirty
+      recalculation = snapshot.recalculation
+      undoStack.length = 0
+      redoStack.length = 0
       rounds.delete(roundId)
       frozen.delete(roundId)
-      onChange(session, dirty)
+      onChange(session, dirty, recalculation)
       return true
+    },
+    async exportSheet(format, sheetId) {
+      await pending
+      if (disposed) throw new Error('XLSX画布已关闭')
+      return exportXlsxDisplayedSheet(
+        sheetOf(session.view(), sheetId, selection()?.sheet ?? 0),
+        format,
+      )
     },
     currentBytes: () => bytes.slice(),
     async flush() {
@@ -329,10 +447,13 @@ export function createXlsxAgentHandle(
     isDirty: () => dirty,
     markSaved: () => {
       dirty = false
+      savedBytes = bytes.slice()
       rounds.clear()
     },
     dispose() {
       disposed = true
+      undoStack.length = 0
+      redoStack.length = 0
       rounds.clear()
       frozen.clear()
     },

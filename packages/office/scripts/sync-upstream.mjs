@@ -80,6 +80,24 @@ const EXTRA_FILES = MANIFEST.extraFiles ?? []
  */
 const REWRITES = [
   {
+    match: /from\s+['"]@genoffice\/pptx-render['"]/g,
+    to: 'packages/pptx-render/src/render-tree.js',
+    onlyWhen: (vendorRel) => vendorRel === 'packages/pipelines/src/slides/layout-audit.ts',
+    reason: '布局审计只导入 RenderSlide/RenderNode 类型；直指数据类型以保持浏览器闭包自封闭',
+  },
+  {
+    match: /from\s+['"]\.\.\/\.\.\/shared\/ipc['"]/g,
+    to: 'packages/pptx-ops/src/types.js',
+    onlyWhen: (vendorRel) => vendorRel === 'apps/slides/src/renderer/ai/layout-script.ts',
+    reason: '安全编辑脚本只使用 EditParagraph 类型；避免带入 Electron IPC 和应用层闭包',
+  },
+  {
+    match: /from\s+['"]electron['"]/g,
+    to: '../src/shims/pdf-native-image.js',
+    onlyWhen: (vendorRel) => vendorRel === 'apps/pdf/src/main/image-edit.ts',
+    reason: 'PDF image-edit仅借nativeImage位图编解码；由服务端受限PNG/JPEG端口替代Electron',
+  },
+  {
     /** PDF IPC 的 AI 类型仅描述上游 Electron 壳，不在 Mimir 执行路径。 */
     match: /from\s+['"]@genoffice\/ai-provider['"]/g,
     to: '../src/shims/pdf-app-types.js',
@@ -246,7 +264,13 @@ function applyRewrites(text, vendorRel) {
 function parseArgs() {
   const args = process.argv.slice(2)
   const from = args.includes('--from') ? args[args.indexOf('--from') + 1] : null
-  return { from, check: args.includes('--check') }
+  const entries = args.flatMap((arg, i) => (arg === '--entry' ? [args[i + 1]] : []))
+  const assets = args.flatMap((arg, i) => (arg === '--asset' ? [args[i + 1]] : []))
+  if (entries.some((entry) => !entry || entry.startsWith('--') || entry.includes('..')))
+    throw new Error('--entry 必须是上游内的相对文件路径')
+  if (assets.some((asset) => !asset || asset.startsWith('--') || asset.includes('..')))
+    throw new Error('--asset 必须是清单内的资源文件路径')
+  return { from, check: args.includes('--check'), entries, assets }
 }
 
 function gitHead(repo) {
@@ -391,7 +415,8 @@ function resolveSpecIn(repo, spec, fromFile) {
 }
 
 async function main() {
-  const { from, check } = parseArgs()
+  const { from, check, entries, assets } = parseArgs()
+  MANIFEST.entries = [...new Set([...MANIFEST.entries, ...entries])]
   if (!from || !existsSync(from)) {
     console.error(
       '用法：node packages/office/scripts/sync-upstream.mjs --from /path/to/genoffice [--check]',
@@ -401,6 +426,32 @@ async function main() {
 
   const head = gitHead(from)
   console.log(`上游 commit: ${head}`)
+  // 精确资源同步不重算闭包、不清理 vendor，也不改版本/时间戳。
+  if (assets.length) {
+    if (entries.length) throw new Error('--asset 不能与 --entry 同时使用')
+    if (head !== MANIFEST.commit) throw new Error('--asset 要求上游 commit 与清单完全一致')
+    const selected = [...new Set(assets)].map((name) => {
+      const asset = MANIFEST.assets.find((item) => item.from === name)
+      if (!asset || !statSync(join(from, asset.from)).isFile())
+        throw new Error(`--asset 只能选择清单内的单个资源文件：${name}`)
+      return asset
+    })
+    for (const asset of selected) {
+      const dst = join(pkgRoot, 'vendor', asset.to)
+      const expected = await readFile(join(from, asset.from))
+      const actual = existsSync(dst) ? await readFile(dst) : null
+      if (actual?.equals(expected)) continue
+      if (check) {
+        console.log(`资源不同：${asset.from}`)
+        process.exitCode = 1
+      } else {
+        await mkdir(dirname(dst), { recursive: true })
+        await writeFile(dst, expected)
+        console.log(`资源 ${asset.from} → vendor/${asset.to}`)
+      }
+    }
+    return
+  }
   if (check && head === MANIFEST.commit) {
     console.log('与清单记录的 commit 相同，仍逐个文件核对内容……')
   }
@@ -458,11 +509,17 @@ async function main() {
   const expectedContent = async (rel) => {
     const raw = applyRewrites(await readFile(join(from, rel), 'utf8'), rel)
     try {
-      return execFileSync('npx', ['oxfmt', '--stdin-filepath', rel], {
-        input: raw,
-        encoding: 'utf8',
-        stdio: ['pipe', 'pipe', 'ignore'],
-      })
+      // Use the installed repository formatter. npx can attempt a registry lookup
+      // once per file and stall a fully local, fixed-version synchronization.
+      return execFileSync(
+        resolve(pkgRoot, '../../node_modules/.bin/oxfmt'),
+        ['--stdin-filepath', rel],
+        {
+          input: raw,
+          encoding: 'utf8',
+          stdio: ['pipe', 'pipe', 'ignore'],
+        },
+      )
     } catch {
       return raw
     }
@@ -508,13 +565,13 @@ async function main() {
     void asset // 资源目录整体拷贝，不参与逐文件清理
   }
   async function pruneVendor(dir) {
-    let entries
+    let directoryEntries
     try {
-      entries = await readdir(dir, { withFileTypes: true })
+      directoryEntries = await readdir(dir, { withFileTypes: true })
     } catch {
       return
     }
-    for (const entry of entries) {
+    for (const entry of directoryEntries) {
       const full = join(dir, entry.name)
       if (entry.isDirectory()) {
         // 资源目录（字体等）由 assets 管理，跳过

@@ -27,7 +27,15 @@ footer={notice ? <ToolbarNotice>{notice}</ToolbarNotice> : undefined}
 1. **范围**：六种编辑器共用 `CompactToolbar` 的标签行；`EditorShell` 仍提供底部状态槽，不从底部复制第二个保存按钮。
 2. **签名**：`CompactToolbar({ quickAccess?: ReactNode, tabs?, sections, activeTab?, onTabChange? })`。格式编辑器将 `ToolbarButton` 放入 `quickAccess`，共享组件只布局，不执行格式操作。
 3. **行为**：快捷操作固定在 `.mimir-compact-toolbar__quick-access`；`.mimir-compact-toolbar__tabs` 单独横向滚动，标签的左右/Home/End 键导航不变。保存沿用各格式的 dirty、加载中和保存中判据及回调；历史按钮只调用当前画布的真实撤销栈。
-4. **禁用与错误**：没有未保存修改或正在保存时禁用保存并给原因。DOCX、HTML、Markdown 用实际历史深度控制撤销/重做；XLSX、PPTX、PDF 尚无完整手动历史时禁用并说明原因。Agent 的 `undoRound` 和 PPTX 单对象回退不能绑定到通用撤销按钮。
-5. **用例**：改动后保存写回同一原件；干净文档保存禁用；尚无历史的格式即使发生过 Agent 写入也不显示可用的全局重做。
+4. **禁用与错误**：没有未保存修改或正在保存时禁用保存并给原因。DOCX、HTML、Markdown 用实际历史深度控制撤销/重做；XLSX、PPTX、PDF 使用各自真实画布/工作字节历史栈，同样按历史深度及执行中状态控制可用性。Agent 的 `undoRound` 和 PPTX 单对象回退不能绑定到通用撤销按钮。
+5. **用例**：改动后保存写回同一原件；干净文档保存禁用；无真实redo记录时，即使发生过Agent写入也不显示可用的全局重做；验证手动/Agent修改、撤销重做与保存基线交错后仍对应当前画布。
 6. **测试**：断言快捷区位于标签前、窄栏下不随标签滚走、标签键盘导航仍可用；各格式点保存后核对 dirty 与保存读回，检查禁用原因及无底部重复按钮；有历史的格式各测一次撤销和重做。
 7. **错误做法与正确做法**：不要用 `undoRound` 填补全局历史，也不要另造保存回调；把现有 `ToolbarButton` 与回调移入 `quickAccess`，由格式引擎决定可用状态。
+
+## 属性表单与文档区层级
+
+长属性表单使用 `ToolbarPropertyForm({ columns?: 1 | 2, children })`；内部的 `ToolbarMenuFields` 显示真实分组标题，选择、数字、文本、多行和颜色控件显示可见字段名。数字标签注明单位；不靠 placeholder 或无障碍名称代替可见标签。上下文外的 Ribbon 控件保持紧凑布局。表单只控制布局，控件的高度、边框和交互由现有 antd 与 shell 原语负责。
+
+持续编辑的长表单放文档区侧面板，短操作使用紧凑弹层。侧面板有标题、关闭和内部滚动；窄栏覆盖模式按实际编辑区宽度判定。打开后聚焦面板，Escape 关闭并返回触发器；异步读取期间关闭也应在完成后恢复焦点，但不能抢走用户后来选中的控件。颜色值以当前色块表达，任意色输入保留在相关颜色操作内。
+
+`.mimir-editor__body` 通过 `isolation: isolate` 限制画布装饰的局部 z-index，保证页眉线、水印等不透过 Ribbon 弹层。实际验收同时检查宽区、问 AI 后的中栏与约 420px 窄视口，确认弹层不被画布遮挡、字段可达且保存行为不变。

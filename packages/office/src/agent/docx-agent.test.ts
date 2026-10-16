@@ -11,8 +11,8 @@ import {
 } from '../../vendor/apps/docs/src/renderer/pagination-sections.js'
 import type { BlockBox } from '../../vendor/apps/docs/src/renderer/pagination-types.js'
 import { openDocx } from '../docx.js'
-import { assignLiveNoteBands, lastPageNoteMinHeight, liveFootnoteBlocks } from '../pagination.js'
-import { pageFootnotesOf } from '../footnotes.js'
+import { assignLiveNoteBands, reserveLiveFootnotes, liveFootnoteBlocks } from '../pagination.js'
+import { FOOTNOTE_SEPARATOR_H, pageFootnotesOf } from '../footnotes.js'
 import { DOCX_AGENT_OP_NAMES, createDocxAgentHandle, docxAgentLiveSections } from './docx-agent.js'
 import type { SaveOptions } from '../../vendor/packages/docx-engine/src/patch.js'
 
@@ -288,10 +288,11 @@ describe('DOCX agent live editor handle', () => {
     ])
     expect(secondPage[0]).toHaveLength(0)
     expect(secondPage[1]?.map((item) => item.text)).toContain('New paragraph note body')
-    const noteHeight = secondPage[1]!.reduce((sum, note) => sum + note.height, 8)
-    const required = lastPageNoteMinHeight(990, noteHeight, 96)
-    expect(required).toBeGreaterThan(1056)
-    expect(required - 96 - noteHeight).toBeGreaterThanOrEqual(998)
+    const noteHeight = secondPage[1]!.reduce((sum, note) => sum + note.height, FOOTNOTE_SEPARATOR_H)
+    reserveLiveFootnotes(context, sectionGeoms(session.sections))
+    expect(box.footnoteExtraPx).toBe(noteHeight - FOOTNOTE_SEPARATOR_H)
+    expect(box.height).toBeCloseTo(30 + noteHeight - FOOTNOTE_SEPARATOR_H)
+    expect(box.noteBands?.[0]?.height).toBe(noteHeight - FOOTNOTE_SEPARATOR_H)
 
     const saved = await session.save(editor.getJSON() as never, saveOptions.current)
     const reopened = await openDocx(saved)
@@ -595,6 +596,65 @@ describe('DOCX agent live editor handle', () => {
     expect(reopened.headerFooter.titlePg).toBe(true)
     expect(handle.undoRound('page-round')).toBe(true)
     expect(saveOptions.current.section).toBeUndefined()
+    handle.dispose()
+    editor.destroy()
+  })
+
+  it('edits note text across styled runs and paragraphs without losing surrounding formats', async () => {
+    const initial = await setup()
+    const block = initial.handle
+      .getContext()
+      .blocks.find((item) => item.type === 'docParagraph' && item.text.length > 0)!
+    const inserted = await initial.handle.execute('insert_endnote', {
+      blockIndex: block.index,
+      text: '前缀跨格式\n下一段后缀',
+    })
+    const id = (inserted.data as { id: string }).id
+    initial.saveOptions.current.endnotes = initial.saveOptions.current.endnotes!.map((note) =>
+      note.id === id
+        ? Object.assign({}, note, {
+            richParas: [
+              [
+                { text: '前缀跨', bold: true },
+                { text: '格式', italic: true },
+              ],
+              [
+                { text: '下一段', color: 'C00000' },
+                { text: '后缀', underline: true },
+              ],
+            ],
+          })
+        : note,
+    )
+    const first = await initial.session.save(
+      initial.editor.getJSON() as never,
+      initial.saveOptions.current,
+    )
+    initial.handle.dispose()
+    initial.editor.destroy()
+    const { session, editor, handle, saveOptions } = await setup(first)
+    await handle.execute('edit_note', {
+      kind: 'endnote',
+      id,
+      find: '跨格式\n下一段',
+      replace: '新文字\n新段落',
+    })
+    const edited = saveOptions.current.endnotes!.find((note) => note.id === id)!
+    expect(edited.text).toBe('前缀新文字\n新段落后缀')
+    expect(edited.richParas![0]![0]).toMatchObject({ text: '前缀', bold: true })
+    expect(edited.richParas![1]!.at(-1)).toMatchObject({ text: '后缀', underline: true })
+    const saved = await session.save(editor.getJSON() as never, saveOptions.current)
+    const reopened = await openDocx(saved)
+    expect(reopened.footnotes.parsed.endnotes.find((note) => note.id === id)?.text).toBe(
+      edited.text,
+    )
+    const second = await reopened.save(reopened.content)
+    expect(
+      (await openDocx(second)).footnotes.parsed.endnotes
+        .find((note) => note.id === id)
+        ?.richParas?.at(-1)
+        ?.at(-1)?.underline,
+    ).toBe(true)
     handle.dispose()
     editor.destroy()
   })

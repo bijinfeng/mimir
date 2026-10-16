@@ -67,8 +67,12 @@ import {
 } from '../agent/markdown-agent.js'
 import { blockIndexRange, moveSelectedBlocks, uiOp } from '../agent/markdown-ops.js'
 import { markdownFindAdapter } from './markdown-find.js'
+import { MarkdownWritingPreview, useMarkdownWriting } from './MarkdownWritingPreview.js'
 import {
   INSERT_MATH_BLOCK,
+  INSERT_MERMAID_BLOCK,
+  INSERT_WAVEDROM_BLOCK,
+  hasDiagramRenderer,
   MarkdownSlash,
   type MarkdownSlashController,
   type MarkdownSlashState,
@@ -348,6 +352,10 @@ export interface MarkdownEditorProps {
   contentClassName?: string
   /** 保存。抛出的 Error 的 message 会显示在状态行上 */
   onSave: (markdown: string) => Promise<void>
+  /** Export the current live body; the host chooses a filename and handles download. */
+  onExportMarkdown?: ((markdown: string) => Promise<void>) | undefined
+  /** Open the existing AI composer with an instruction; does not start a model request. */
+  onAiPreset?: ((instruction: string) => void) | undefined
   /** 有没有未保存的改动（宿主用它武装离开前的拦截） */
   onDirtyChange?: (dirty: boolean) => void
   /**
@@ -409,6 +417,8 @@ export function MarkdownEditor({
   initialContent,
   contentClassName,
   onSave,
+  onExportMarkdown,
+  onAiPreset,
   onDirtyChange,
   onSaveHandle,
   focusOnReady = false,
@@ -428,6 +438,7 @@ export function MarkdownEditor({
   const [error, setError] = useState<string | null>(null)
   /** 插图这类**工具条动作**的失败。与保存失败分开：两者的处置完全不同 */
   const [actionError, setActionError] = useState<string | null>(null)
+  const [exporting, setExporting] = useState(false)
   const [dirty, setDirty] = useState(false)
   const [findOpen, setFindOpen] = useState(false)
   const [slashUi, setSlashState] = useState<{
@@ -715,6 +726,13 @@ export function MarkdownEditor({
     saveNowRef.current = saveNow
   })
 
+  const { draft: writingDraft, writeDocument: writeDraft } = useMarkdownWriting(
+    agentServicesRef,
+    agentHandleRef,
+    editor,
+    documentId,
+  )
+
   useEffect(() => {
     if (!editor) return
     const handle = createMarkdownAgentHandle(editor, documentId, {
@@ -724,7 +742,9 @@ export function MarkdownEditor({
         setDirty(next)
         onDirtyChangeRef.current?.(next)
       },
-      ...(agentServicesRef.current ? { services: agentServicesRef.current } : {}),
+      ...(agentServicesRef.current
+        ? { services: { ...agentServicesRef.current, writeDocument: writeDraft } }
+        : {}),
       flushBody: () => saveNowRef.current(),
     })
     agentHandleRef.current = handle
@@ -734,7 +754,7 @@ export function MarkdownEditor({
       if (agentHandleRef.current === handle) agentHandleRef.current = null
       agentCallbackRef.current?.(null)
     }
-  }, [editor, documentId])
+  }, [editor, documentId, writeDraft])
 
   /** 把「立即保存」交给宿主，供「保存并离开」用。卸载时撤回 */
   useEffect(() => {
@@ -854,6 +874,25 @@ export function MarkdownEditor({
             frontmatter={agentServices}
             findOpen={findOpen}
             onToggleFind={() => setFindOpen((current) => !current)}
+            onAiPreset={onAiPreset}
+            onExportMarkdown={
+              onExportMarkdown
+                ? async () => {
+                    if (!editor || exporting) return
+                    const markdown = editor.getMarkdown()
+                    setExporting(true)
+                    setActionError(null)
+                    try {
+                      await onExportMarkdown(markdown)
+                    } catch (cause) {
+                      setActionError(cause instanceof Error ? cause.message : '导出 Markdown 失败')
+                    } finally {
+                      setExporting(false)
+                    }
+                  }
+                : undefined
+            }
+            exporting={exporting}
           />
         </>
       }
@@ -933,6 +972,7 @@ export function MarkdownEditor({
         </div>
       )}
       <div className="me-scroll mimir-markdown-scroll">
+        {writingDraft && <MarkdownWritingPreview draft={writingDraft} editor={editor} />}
         <div className={contentClassName}>
           {/* EditorContent 负责把编辑器挂进 React 树，并在卸载时清理 */}
           <EditorContent editor={editor} className="mimir-markdown-body" />
@@ -962,6 +1002,9 @@ export interface MarkdownToolbarProps {
   frontmatter?: Pick<MarkdownAgentServices, 'readFrontmatter' | 'writeFrontmatter'>
   findOpen?: boolean
   onToggleFind?: () => void
+  onExportMarkdown?: (() => Promise<void>) | undefined
+  exporting?: boolean
+  onAiPreset?: ((instruction: string) => void) | undefined
 }
 
 /**
@@ -988,8 +1031,15 @@ export function MarkdownToolbar({
   frontmatter,
   findOpen = false,
   onToggleFind,
+  onExportMarkdown,
+  exporting = false,
+  onAiPreset,
 }: MarkdownToolbarProps) {
   const state = useToolbarState(editor, toolbarStateOf)
+  const emptyDocument = useEditorState({
+    editor,
+    selector: ({ editor: instance }) => instance?.isEmpty ?? true,
+  })
 
   if (!editor) {
     return saveAction ? (
@@ -1091,6 +1141,65 @@ export function MarkdownToolbar({
           : []),
       ]}
       sections={[
+        {
+          key: 'export',
+          label: '导出',
+          tab: 'note',
+          minWidth: 1100,
+          enabled: onExportMarkdown !== undefined,
+          content: (
+            <ToolbarGroup label="导出当前内容">
+              <ToolbarButton
+                label={exporting ? '正在导出 Markdown…' : '导出 Markdown'}
+                disabled={exporting}
+                disabledReason="正在准备下载，请稍候"
+                onClick={() => void onExportMarkdown?.()}
+              >
+                导出 Markdown
+              </ToolbarButton>
+              <ToolbarLabel>当前正文与已保存属性</ToolbarLabel>
+            </ToolbarGroup>
+          ),
+        },
+        {
+          key: 'ai',
+          label: 'AI',
+          tab: 'review',
+          minWidth: 1100,
+          content: (
+            <ToolbarGroup label="问 AI">
+              {[
+                {
+                  key: 'summary',
+                  label: '问 AI：总结全文',
+                  instruction: '总结这篇文档的主要内容和要点',
+                },
+                {
+                  key: 'polish',
+                  label: '问 AI：润色',
+                  instruction: on('emptySelection')
+                    ? '润色全文，使表达更清晰流畅'
+                    : '润色当前选中的内容，使表达更清晰流畅',
+                },
+                {
+                  key: 'tidy',
+                  label: '问 AI：整理排版',
+                  instruction: `整理${on('emptySelection') ? '全文' : '当前选中内容'}排版：修正标题层级、统一列表格式、去除多余的加粗和斜体、清理多余空行；只调整格式，不要改动任何文字内容`,
+                },
+              ].map((preset) => (
+                <ToolbarButton
+                  key={preset.key}
+                  label={preset.label}
+                  disabled={!onAiPreset || (emptyDocument ?? true)}
+                  disabledReason={!onAiPreset ? '当前宿主没有接入 AI 侧栏' : '先输入正文'}
+                  onClick={() => onAiPreset?.(preset.instruction)}
+                >
+                  {preset.label.replace('问 AI：', '')}
+                </ToolbarButton>
+              ))}
+            </ToolbarGroup>
+          ),
+        },
         {
           key: 'find',
           label: '查找和替换',
@@ -1355,6 +1464,22 @@ export function MarkdownToolbar({
                 {hasNode(editor, 'mathBlock') && (
                   <ToolbarButton label="数学公式" onClick={() => uiOp(editor, INSERT_MATH_BLOCK)}>
                     <CodeIcon />
+                  </ToolbarButton>
+                )}
+                {hasDiagramRenderer(editor, 'mermaid') && (
+                  <ToolbarButton
+                    label="插入 Mermaid 图表"
+                    onClick={() => uiOp(editor, INSERT_MERMAID_BLOCK)}
+                  >
+                    Mermaid
+                  </ToolbarButton>
+                )}
+                {hasDiagramRenderer(editor, 'wavedrom') && (
+                  <ToolbarButton
+                    label="插入 WaveDrom 时序图"
+                    onClick={() => uiOp(editor, INSERT_WAVEDROM_BLOCK)}
+                  >
+                    WaveDrom
                   </ToolbarButton>
                 )}
               </ToolbarGroup>

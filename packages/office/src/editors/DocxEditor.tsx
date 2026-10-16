@@ -40,22 +40,11 @@
  * `numId` 沿用文档里已有的同类列表（新建编号定义要写 `numbering.xml`，
  * 那件事在保存路径上，本版没做）。
  *
- * ## 「引用」是直接段落格式，不是 Word 的样式
+ * ## 样式与直接格式
  *
- * 上游的样式画廊写 `styleId`（`w:pStyle`），而**按 styleId 的 CSS 来自
- * `doc-style-css.ts`——那个文件没有 vendored**（它跟着上游的 App 壳，
- * 样式表由它在运行时注入）。所以在这里写 `styleId='Quote'` 的结果是：
- * 文件里多了一个 `w:pStyle`，画布上**一个字都不变**——正是这个仓库最不
- * 接受的那类静默失效。
- *
- * 所以「引用」落成**直接段落格式**：左缩进 0.25 英寸 + 左侧一条 2pt 边线
- * （颜色 `BFBFBF`）。它们三个都在 schema 里、画布会画（`extensions.ts` 的
- * `blockAttrs` 读 `indentLeft`/`borders`）、保存会写
- * （`generate.ts:1211-1239` 的 `w:pBdr` / `w:ind`）——而 `清除格式` 清的正是
- * 这几项，所以它可进可出。取舍见 `.trellis/spec/project/decisions.md` D-062。
- *
- * 同理**不提供**「表格样式」（`tblStyleId`）与「六边」（`tblLook`）：那两个
- * 属性在画布上只渲染成 `data-tbl-style`（没有规则命中它），改了也是只改 XML。
+ * 原有「引用」快捷键继续使用直接段落格式。文档样式管理使用原生 styleId，
+ * doc-style-css 根据原件与待保存定义生成作用于当前编辑器的 CSS；字符与表格
+ * 样式也有相同画布反馈。更改样式后同时更新列表样式存储和分页测量。
  *
  * ## 数字的单位
  *
@@ -64,6 +53,20 @@
  * 存进去的单位不对不会报错，只会在 Word 里变成离谱的间距。
  */
 
+import {
+  DocxChartControls,
+  DocxTextboxControls,
+  DocxPageControls,
+  DocxWatermarkControls,
+  DocxCommentControls,
+  DocxNoteControls,
+  type DocxAdvancedContext,
+} from './DocxAdvancedControls.js'
+import { DocxStyleControls } from './DocxStyleControls.js'
+import { liveDocxStyleState } from '../docx-styles.js'
+import { docStyleCss } from '../../vendor/apps/docs/src/renderer/doc-style-css.js'
+import './docx-tools.css'
+import { withLiveWatermark } from '../docx-live.js'
 import { EditorContent, useEditor } from '@tiptap/react'
 import type { Editor } from '@tiptap/core'
 import {
@@ -72,6 +75,10 @@ import {
   useState,
   useCallback,
   useMemo,
+  useId,
+  cloneElement,
+  createElement,
+  type ReactElement,
   type CSSProperties,
   type ReactNode,
 } from 'react'
@@ -162,6 +169,7 @@ import {
   ArrowUpIcon,
   BoldIcon,
   BulletListIcon,
+  CloseIcon,
   ClearFormatIcon,
   FindIcon,
   FontGrowIcon,
@@ -743,6 +751,21 @@ function setTrackChangesEnabled(editor: Editor, enabled: boolean): void {
   refreshToolbar(editor)
 }
 
+function syncListStyleStorage(editor: Editor, parsed: DocxSession['footnotes']['parsed']): void {
+  if (editor.isDestroyed || !editor.storage.listNumbering) return
+  editor.storage.listNumbering.styles = parsed.styles
+  editor.storage.listNumbering.docDefaults = parsed.docDefaults
+  editor.storage.listNumbering.defs = new Map(parsed.numbering)
+  editor.view.dispatch(editor.state.tr.setMeta('addToHistory', false))
+}
+
+function advancedPanel(
+  Controls: (props: { context: DocxAdvancedContext }) => ReactNode,
+  context: DocxAdvancedContext,
+): ReactElement<{ context: DocxAdvancedContext }> {
+  return createElement(Controls, { context })
+}
+
 /* ── 命令 ─────────────────────────────────────────────────────── */
 
 /**
@@ -1127,6 +1150,31 @@ export function DocxEditor({
   const parsed = useParsed(source.bytes, openDocx)
   const session = parsed.value
   const [pageCount, setPageCount] = useState(1)
+  const styleScope = useId().replace(/[^a-zA-Z0-9_-]/g, '')
+  const [inspectorState, setInspector] = useState<{
+    session: DocxSession | null
+    label: string
+    content: ReactElement<{ context: DocxAdvancedContext }>
+  } | null>(null)
+  const inspector = inspectorState?.session === session ? inspectorState : null
+  const inspectorRef = useRef<HTMLElement>(null)
+  const inspectorTrigger = useRef<{ focus: () => void } | null>(null)
+  const closeInspector = () => {
+    setInspector(null)
+    inspectorTrigger.current?.focus()
+  }
+  useEffect(() => {
+    if (inspector) inspectorRef.current?.focus()
+  }, [inspector])
+  const [styleState, setStyleState] = useState<{
+    session: DocxSession
+    parsed: DocxSession['footnotes']['parsed']
+  } | null>(null)
+  const [manualStructureRound, setManualStructureRound] = useState<{
+    session: DocxSession
+    documentId: string
+    id: string
+  } | null>(null)
   /** 有改动还没保存。保存成功了才清掉 */
   const [dirty, setDirty] = useState(false)
   const dirtyRef = useRef(false)
@@ -1263,52 +1311,92 @@ export function DocxEditor({
   const liveHeaderFooter = useMemo(() => {
     if (!session) return null
     const current = saveOptionsSnapshot.session === session ? saveOptionsSnapshot.options : {}
-    const part = (value: DocxSaveOptions['header']) =>
+    const part = (
+      value: DocxSaveOptions['header'],
+      original: DocxSession['headerFooter']['header'],
+    ) =>
       value === undefined
         ? null
         : {
             text: value.text,
             hasPageNumber: value.pageNumber ?? false,
             paras: value.paras ?? [],
+            images: original?.images,
           }
-    return {
-      ...session.headerFooter,
-      header: current.header === undefined ? session.headerFooter.header : part(current.header),
-      footer: current.footer === undefined ? session.headerFooter.footer : part(current.footer),
-      headerFirst:
-        current.headerFirst === undefined
-          ? session.headerFooter.headerFirst
-          : part(current.headerFirst),
-      footerFirst:
-        current.footerFirst === undefined
-          ? session.headerFooter.footerFirst
-          : part(current.footerFirst),
-      headerEven:
-        current.headerEven === undefined
-          ? session.headerFooter.headerEven
-          : part(current.headerEven),
-      footerEven:
-        current.footerEven === undefined
-          ? session.headerFooter.footerEven
-          : part(current.footerEven),
-      titlePg: current.titlePg ?? session.headerFooter.titlePg,
-      evenAndOdd: current.evenAndOddHeaders ?? session.headerFooter.evenAndOdd,
-    }
-  }, [session, saveOptionsSnapshot])
+    return withLiveWatermark(
+      {
+        ...session.headerFooter,
+        header:
+          current.header === undefined
+            ? session.headerFooter.header
+            : part(current.header, session.headerFooter.header),
+        footer:
+          current.footer === undefined
+            ? session.headerFooter.footer
+            : part(current.footer, session.headerFooter.footer),
+        headerFirst:
+          current.headerFirst === undefined
+            ? session.headerFooter.headerFirst
+            : part(current.headerFirst, session.headerFooter.headerFirst),
+        footerFirst:
+          current.footerFirst === undefined
+            ? session.headerFooter.footerFirst
+            : part(current.footerFirst, session.headerFooter.footerFirst),
+        headerEven:
+          current.headerEven === undefined
+            ? session.headerFooter.headerEven
+            : part(current.headerEven, session.headerFooter.headerEven),
+        footerEven:
+          current.footerEven === undefined
+            ? session.headerFooter.footerEven
+            : part(current.footerEven, session.headerFooter.footerEven),
+        titlePg: current.titlePg ?? session.headerFooter.titlePg,
+        evenAndOdd: current.evenAndOddHeaders ?? session.headerFooter.evenAndOdd,
+      },
+      current.watermark,
+      editor ? docxAgentLiveSections(editor, session, current) : session.sections,
+    )
+  }, [session, saveOptionsSnapshot, editor])
   const liveSections = useMemo(() => {
     if (!session || !editor) return NO_SECTIONS
     const options = saveOptionsSnapshot.session === session ? saveOptionsSnapshot.options : {}
     return docxAgentLiveSections(editor, session, options)
   }, [session, editor, saveOptionsSnapshot])
+  useEffect(() => {
+    if (!session) return
+    let active = true
+    const options = saveOptionsSnapshot.session === session ? saveOptionsSnapshot.options : {}
+    liveDocxStyleState(session, options)
+      .then((value) => {
+        if (active) setStyleState({ session, parsed: value })
+      })
+      .catch((cause) => {
+        if (active) setNotice(`样式预览失败：${String(cause)}`)
+      })
+    return () => {
+      active = false
+    }
+  }, [session, saveOptionsSnapshot])
+  const resolvedStyles =
+    session && styleState?.session === session ? styleState.parsed : session?.footnotes.parsed
+  useEffect(() => {
+    if (editor && resolvedStyles) syncListStyleStorage(editor, resolvedStyles)
+  }, [editor, resolvedStyles])
+  const documentStyleCss = resolvedStyles
+    ? docStyleCss({ ...resolvedStyles, extras: session!.extras })
+    : ''
   const liveFootnotes = useMemo(() => {
     if (!session) return null
     const options = saveOptionsSnapshot.session === session ? saveOptionsSnapshot.options : {}
-    if (!options.footnotes) return session.footnotes
     return {
       ...session.footnotes,
-      parsed: { ...session.footnotes.parsed, footnotes: options.footnotes },
+      parsed: {
+        ...(resolvedStyles ?? session.footnotes.parsed),
+        footnotes: options.footnotes ?? session.footnotes.parsed.footnotes,
+        endnotes: options.endnotes ?? session.footnotes.parsed.endnotes,
+      },
     }
-  }, [session, saveOptionsSnapshot])
+  }, [session, saveOptionsSnapshot, resolvedStyles])
   const pageStyle = useMemo(() => {
     const first = liveSections[0]?.settings
     if (!first) return undefined
@@ -1356,8 +1444,9 @@ export function DocxEditor({
     const ok = await source.save(bytes, { name: 'document.docx', mime: OFFICE_MIME.docx })
     if (!ok) return
     if (agentHandleRef.current !== savingHandle) return
-    savingHandle?.markSaved()
     if (savingVersion !== savingHandle?.getVersion()) return
+    savingHandle?.markSaved()
+    setManualStructureRound(null)
     setNotice('')
     const pendingDraft = savingHandle?.hasPendingDraft() ?? false
     dirtyRef.current = pendingDraft
@@ -1408,6 +1497,16 @@ export function DocxEditor({
       toolbar={
         <>
           <DocxToolbar
+            key={documentId}
+            onOpenInspector={(label, content, trigger) => {
+              inspectorTrigger.current = trigger
+              setInspector((current) =>
+                current?.session === session && current.label === label
+                  ? null
+                  : { session, label, content },
+              )
+            }}
+            inspectorLabel={inspector?.label}
             editor={editor}
             disabled={session === null}
             saveAction={
@@ -1447,6 +1546,49 @@ export function DocxEditor({
                 return false
               }
             }}
+            advanced={
+              session
+                ? {
+                    session,
+                    options:
+                      saveOptionsSnapshot.session === session ? saveOptionsSnapshot.options : {},
+                    sections: liveSections,
+                    execute: async (tool, args, expectedVersion) => {
+                      const handle = agentHandleRef.current
+                      if (!handle || handle.documentId !== documentId || editor?.isDestroyed) {
+                        setNotice('当前文档已关闭，请重新打开操作面板')
+                        return null
+                      }
+                      const roundId = `manual-structure-${crypto.randomUUID()}`
+                      try {
+                        const result = await handle.execute(tool, args, {
+                          ...(expectedVersion >= 0 ? { expectedVersion } : {}),
+                          roundId,
+                        })
+                        if (result.changed) {
+                          setManualStructureRound({ session, documentId, id: roundId })
+                          setNotice(result.summary)
+                        }
+                        return result
+                      } catch (cause) {
+                        setNotice(cause instanceof Error ? cause.message : String(cause))
+                        return null
+                      }
+                    },
+                  }
+                : undefined
+            }
+            onUndoStructure={
+              manualStructureRound?.session === session &&
+              manualStructureRound?.documentId === documentId
+                ? () => {
+                    const undone = agentHandleRef.current?.undoRound(manualStructureRound.id)
+                    setManualStructureRound(null)
+                    if (undone) setInspector(null)
+                    if (!undone) setNotice('文档已发生其他修改，无法撤销这一步')
+                  }
+                : undefined
+            }
             noteVersion={() => agentHandleRef.current?.getVersion() ?? -1}
             onInsertNote={async (kind, text, selection) => {
               const handle = agentHandleRef.current
@@ -1556,17 +1698,52 @@ export function DocxEditor({
         浅色下**绝不能挂**：那些规则同样会把颜色改掉（浅色纸上的
         孪生值是另一套）。
       */}
-      <div
-        ref={scrollRef}
-        className={`me-scroll mimir-docx-scroll${appearance === 'dark' ? ' page-dark' : ''}`}
-      >
-        <div ref={containerRef} className="editor-scroll mimir-office">
-          <div className="page-wrap" style={pageStyle}>
-            <div className="doc-page">
-              <EditorContent editor={editor} />
+      <div className="mimir-docx-workspace" data-docx-style-scope={styleScope}>
+        <style>{`@scope ([data-docx-style-scope="${styleScope}"]) { ${documentStyleCss} }`}</style>
+        <div
+          ref={scrollRef}
+          className={`me-scroll mimir-docx-scroll${appearance === 'dark' ? ' page-dark' : ''}`}
+        >
+          <div ref={containerRef} className="editor-scroll mimir-office">
+            <div className="page-wrap" style={pageStyle}>
+              <div className="doc-page">
+                <EditorContent editor={editor} />
+              </div>
             </div>
           </div>
         </div>
+        {inspector && (
+          <aside
+            ref={inspectorRef}
+            className="mimir-docx-inspector"
+            tabIndex={-1}
+            aria-label={`${inspector.label}面板`}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') {
+                event.stopPropagation()
+                closeInspector()
+              }
+            }}
+          >
+            <div className="mimir-docx-inspector__head">
+              <h2>{inspector.label}</h2>
+              <ToolbarButton label="关闭文档属性面板" onClick={closeInspector}>
+                <CloseIcon />
+              </ToolbarButton>
+            </div>
+            <div className="mimir-docx-inspector__body" key={inspector.label}>
+              {cloneElement(inspector.content, {
+                context: {
+                  ...inspector.content.props.context,
+                  options:
+                    saveOptionsSnapshot.session === session ? saveOptionsSnapshot.options : {},
+                  sections: liveSections,
+                  version: inspector.content.props.context.version,
+                },
+              })}
+            </div>
+          </aside>
+        )}
       </div>
     </EditorShell>
   )
@@ -1585,6 +1762,14 @@ export interface DocxToolbarProps {
   headerText?: string
   footerText?: string
   onSetHeaderFooter?: (kind: 'header' | 'footer', text: string) => Promise<boolean>
+  advanced?: Omit<DocxAdvancedContext, 'editor' | 'version'>
+  inspectorLabel?: string
+  onOpenInspector?: (
+    label: string,
+    content: ReactElement<{ context: DocxAdvancedContext }>,
+    trigger: { focus: () => void } | null,
+  ) => void
+  onUndoStructure?: () => void
   noteVersion?: () => number
   onInsertNote?: (
     kind: 'footnote' | 'endnote',
@@ -1618,10 +1803,15 @@ export function DocxToolbar({
   headerText = '',
   footerText = '',
   onSetHeaderFooter,
+  advanced,
+  inspectorLabel,
+  onOpenInspector,
+  onUndoStructure,
   noteVersion,
   onInsertNote,
   onAddComment,
 }: DocxToolbarProps) {
+  const panelTriggers = useRef(new Map<string, { focus: () => void }>())
   const raw = useToolbarState(editor, (instance) => JSON.stringify(readSnapshot(instance)))
   const state: DocxSnapshot = raw === '' ? EMPTY_SNAPSHOT : (JSON.parse(raw) as DocxSnapshot)
 
@@ -2049,8 +2239,45 @@ export function DocxToolbar({
       <TableIcon />
     </ToolbarButton>
   )
+  const advancedMenu = (
+    label: string,
+    Controls: (props: { context: DocxAdvancedContext }) => ReactNode,
+  ) =>
+    advanced && editor && noteVersion ? (
+      onOpenInspector ? (
+        <ToolbarButton
+          label={label}
+          active={inspectorLabel === label}
+          ref={(node) => {
+            if (node) panelTriggers.current.set(label, node)
+            else panelTriggers.current.delete(label)
+          }}
+          onClick={() => {
+            const content = advancedPanel(Controls, { ...advanced, editor, version: noteVersion() })
+            onOpenInspector(label, content, panelTriggers.current.get(label) ?? null)
+          }}
+        >
+          {label}
+        </ToolbarButton>
+      ) : (
+        <ToolbarMenu
+          label={label}
+          text={label}
+          panelWidth={330}
+          renderPanel={() =>
+            advancedPanel(Controls, { ...advanced, editor, version: noteVersion() })
+          }
+        />
+      )
+    ) : (
+      <ToolbarButton label={label} disabled disabledReason="文档还没读完">
+        {label}
+      </ToolbarButton>
+    )
   const insertControls = (
     <>
+      {advancedMenu('图表', DocxChartControls)}
+      {advancedMenu('文本框', DocxTextboxControls)}
       <ToolbarMenu
         label="插入表格"
         icon={<TableIcon />}
@@ -2142,6 +2369,8 @@ export function DocxToolbar({
   )
   const reviewControls = (
     <>
+      {advancedMenu('管理批注', DocxCommentControls)}
+      {advancedMenu('管理脚注与尾注', DocxNoteControls)}
       {onAddComment && editor ? (
         <ToolbarMenu
           label="添加批注"
@@ -2202,7 +2431,18 @@ export function DocxToolbar({
         { key: 'view', label: '视图' },
       ]}
       sections={[
-        { key: 'style', label: '样式', tab: 'home', minWidth: 0, content: styleControl },
+        {
+          key: 'style',
+          label: '样式',
+          tab: 'home',
+          minWidth: 0,
+          content: (
+            <>
+              {styleControl}
+              {advancedMenu('管理样式', DocxStyleControls)}
+            </>
+          ),
+        },
         { key: 'font', label: '字体选择', tab: 'home', minWidth: 0, content: fontControls },
         { key: 'size', label: '字级', tab: 'home', minWidth: 0, content: sizeControls },
         { key: 'marks', label: '常用字形', tab: 'home', minWidth: 0, content: basicControls },
@@ -2223,6 +2463,36 @@ export function DocxToolbar({
           content: insertControls,
         },
         { key: 'paragraph', label: '段落', tab: 'layout', minWidth: 0, content: paragraphControls },
+        {
+          key: 'page-setup',
+          label: '页面与节',
+          tab: 'layout',
+          minWidth: 0,
+          content: advancedMenu('页面与节', DocxPageControls),
+        },
+        {
+          key: 'watermark',
+          label: '水印',
+          tab: 'layout',
+          minWidth: 0,
+          content: advancedMenu('水印', DocxWatermarkControls),
+        },
+        {
+          key: 'undo-structure',
+          label: '撤销结构操作',
+          tab: 'review',
+          minWidth: 0,
+          content: (
+            <ToolbarButton
+              label="撤销上次结构操作"
+              disabled={!onUndoStructure}
+              disabledReason="没有可撤销的结构操作"
+              onClick={onUndoStructure}
+            >
+              撤销结构操作
+            </ToolbarButton>
+          ),
+        },
         {
           key: 'header-footer',
           label: '页眉和页脚',

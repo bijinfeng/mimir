@@ -1,3 +1,20 @@
+import {
+  pptxAnimationTimingOpSchema,
+  pptxChartEditOpSchema,
+  type PptxHostAction,
+  PPTX_SERVICE_ACTIONS,
+  pptxClarificationSchema,
+  pptxDeckPlanSchema,
+  pptxManualAssetSchema,
+  pptxManualInkSchema,
+  pptxManualFillSchema,
+  pptxManualZoomSchema,
+  pptxManualAnimationSchema,
+  pptxManualShapeSchema,
+  pptxManualParagraphSchema,
+  type PptxClarification,
+} from '@mimir/shared'
+import { getSlideAnimations } from '../../vendor/packages/pptx-engine/src/animation.js'
 import type { EditParagraph, EditRun } from '../../vendor/packages/pptx-ops/src/types.js'
 import { OP_DOCS, opGuide, opGuideCatalog } from '../../vendor/packages/pptx-ops/src/op-docs.js'
 import {
@@ -11,6 +28,7 @@ import {
   type PptxEditSession,
   type PptxSessionCheckpoint,
 } from '../pptx.js'
+import { compilePptxSlideScript, auditPptxSlide } from './pptx-script.js'
 
 /** The small set backed by Mimir's existing, patch-preserving PPTX executor. */
 export const PPTX_EXECUTABLE_OPS = [
@@ -47,12 +65,15 @@ export interface PptxHostApply {
     bytes: Uint8Array
     expectedVersion: number
     ops: unknown[]
+    action?: PptxHostAction
     signal?: AbortSignal
   }): Promise<{
     bytes: Uint8Array
     records: unknown[]
     version: number
     sampleData?: boolean
+    changed?: boolean
+    data?: unknown
   }>
 }
 
@@ -330,10 +351,13 @@ export function createPptxAgentHandle(
   currentSelection: () => { slideIndex: number; elementId: string | null },
   onChange: () => void,
   hostApply?: PptxHostApply,
+  askClarification?: (input: PptxClarification, signal: AbortSignal) => Promise<unknown>,
 ): PptxAgentHandle {
   let disposed = false
+  const lifetime = new AbortController()
   const selections = new Map<string, Record<string, unknown>>()
   const rounds = new Map<string, { before: PptxSessionCheckpoint; latestVersion: number }>()
+  let lastPlan: { core_hook: string; style: string; pages: unknown[] } | null = null
   const result = (partial: Omit<AgentResult, 'version'>): AgentResult => ({
     ...partial,
     version: session.version(),
@@ -385,6 +409,103 @@ export function createPptxAgentHandle(
         assertActive(options.signal)
         if (options.expectedVersion !== undefined && options.expectedVersion !== session.version())
           throw new Error('画布版本已变化，请重新读取')
+        if (tool === 'ask_clarification') {
+          if (!askClarification) throw new Error('当前环境未接入演示需求问卷')
+          const version = session.version()
+          const signal = options.signal
+            ? AbortSignal.any([options.signal, lifetime.signal])
+            : lifetime.signal
+          const data = await askClarification(pptxClarificationSchema.parse(args), signal)
+          assertActive(signal)
+          if (version !== session.version()) throw new Error('等待选择期间画布已变化，请重新读取')
+          return result({ ok: true, changed: false, data })
+        }
+        if (tool === 'plan_deck') {
+          lastPlan = pptxDeckPlanSchema.parse(args)
+          return result({
+            ok: true,
+            changed: false,
+            data: lastPlan,
+            summary: `已规划${lastPlan.pages.length}页演示文稿`,
+          })
+        }
+        if (
+          tool === 'manual_asset' ||
+          tool === 'manual_ink' ||
+          tool === 'manual_fill' ||
+          tool === 'manual_zoom' ||
+          tool === 'manual_animation' ||
+          tool === 'manual_shape' ||
+          tool === 'manual_paragraph' ||
+          PPTX_SERVICE_ACTIONS.includes(tool as (typeof PPTX_SERVICE_ACTIONS)[number])
+        ) {
+          if (!hostApply) throw new Error('当前未接入 PPTX 宿主执行器')
+          const version = session.version(),
+            before = session.checkpoint()
+          const signal = options.signal
+            ? AbortSignal.any([options.signal, lifetime.signal])
+            : lifetime.signal
+          let input = record(args)
+          if (tool === 'manual_asset') input = pptxManualAssetSchema.parse(args)
+          if (tool === 'manual_ink') input = pptxManualInkSchema.parse(args)
+          if (tool === 'manual_fill') input = pptxManualFillSchema.parse(args)
+          if (tool === 'manual_zoom') input = pptxManualZoomSchema.parse(args)
+          if (tool === 'manual_animation') input = pptxManualAnimationSchema.parse(args)
+          if (tool === 'manual_shape') input = pptxManualShapeSchema.parse(args)
+          if (tool === 'manual_paragraph') input = pptxManualParagraphSchema.parse(args)
+          if (tool === 'save_style_template') {
+            if (!lastPlan?.style) throw new Error('请先规划或生成演示文稿，再保存其样式')
+            input = { ...input, style: lastPlan.style, topic: lastPlan.core_hook }
+          }
+          if (tool === 'regenerate_slide' && lastPlan?.style && !input.style)
+            input = { ...input, style: lastPlan.style }
+          const response = await hostApply({
+            documentId,
+            bytes: await session.save(),
+            expectedVersion: version,
+            action: tool as PptxHostAction,
+            ops: [input],
+            signal,
+          })
+          assertActive(signal)
+          if (session.version() !== version) throw new Error('宿主处理期间画布已变化，请重新读取')
+          const changed = response.changed === true
+          if (response.version !== version + (changed ? 1 : 0))
+            throw new Error('宿主返回的画布版本无效')
+          if (changed) {
+            await session.replaceFromHost(response.bytes, version, signal)
+            assertActive(signal)
+            if (options.roundId) {
+              const existing = rounds.get(options.roundId)
+              rounds.set(options.roundId, {
+                before: existing?.before ?? before,
+                latestVersion: session.version(),
+              })
+            }
+            onChange()
+          }
+          const data = response.data
+          if (
+            tool === 'generate_deck' &&
+            data &&
+            typeof data === 'object' &&
+            'style' in data &&
+            typeof data.style === 'string'
+          )
+            lastPlan = {
+              style: data.style,
+              core_hook: 'topic' in data ? String(data.topic) : '',
+              pages: [],
+            }
+          return result({
+            ok: true,
+            changed,
+            data,
+            summary: changed
+              ? `已应用${tool}${response.sampleData ? '（含示例数据）' : ''}`
+              : `已完成${tool}`,
+          })
+        }
         if (tool === 'read_slide') {
           const input = record(args)
           const frozen = options.roundId ? selections.get(options.roundId) : undefined
@@ -401,9 +522,18 @@ export function createPptxAgentHandle(
               index,
               id: slideDurableId(slide),
               path: slide.path,
+              notes: session.notes(index),
+              animations: getSlideAnimations(slide),
               elements: slide.elements.map((element) => ({
                 id: elementDurableId(element) ?? element.id,
                 type: element.type,
+                transform: element.transform,
+                chart: element.type === 'chart' ? element.chart : undefined,
+                requiresImportConfirmation:
+                  element.type === 'chart' ? element.descr !== 'aislides-chart' : undefined,
+                rows: element.type === 'table' ? element.rows : undefined,
+                colWidths: element.type === 'table' ? element.colWidths : undefined,
+                rowHeights: element.type === 'table' ? element.rowHeights : undefined,
                 text:
                   textOfElement(element)?.paragraphs.map((para) => ({
                     runs: para.runs.map((run) => ({
@@ -434,8 +564,44 @@ export function createPptxAgentHandle(
                 : { group, guide },
           })
         }
-        if (tool !== 'apply_ops') throw new Error(`PPTX 工具 ${tool} 尚未接入；不会修改文档`)
-        const input = record(args)
+        if (
+          tool !== 'apply_ops' &&
+          tool !== 'edit_chart' &&
+          tool !== 'edit_animation' &&
+          tool !== 'execute_slide_script'
+        )
+          throw new Error(`PPTX 工具 ${tool} 尚未接入；不会修改文档`)
+        const rawInput = record(args)
+        const script =
+          tool === 'execute_slide_script'
+            ? compilePptxSlideScript(
+                session,
+                slideIndex(rawInput.slideIndex, session),
+                rawInput.code,
+              )
+            : null
+        if (script && script.ops.length === 0)
+          return result({
+            ok: true,
+            changed: false,
+            data: {
+              logs: script.logs,
+              returned: script.returned,
+              elements: script.elements,
+              layoutAudit: auditPptxSlide(session, Number(rawInput.slideIndex)),
+            },
+          })
+        const input = script
+          ? { ops: script.ops }
+          : tool === 'edit_chart'
+            ? { ops: [pptxChartEditOpSchema.parse({ ...rawInput, op: 'setChart' })] }
+            : tool === 'edit_animation'
+              ? {
+                  ops: [
+                    pptxAnimationTimingOpSchema.parse({ ...rawInput, op: 'editAnimationTiming' }),
+                  ],
+                }
+              : rawInput
         if (!Array.isArray(input.ops) || input.ops.length < 1 || input.ops.length > 50)
           throw new Error('ops 必须包含 1–50 项')
         assertXmlSafe(input.ops)
@@ -444,25 +610,32 @@ export function createPptxAgentHandle(
         const roundId = options.roundId
         const newRound = roundId && !rounds.has(roundId) ? batch : null
         const summaries: string[] = []
-        const needsHost = input.ops.some(
-          (op) =>
-            !PPTX_EXECUTABLE_OPS.includes(record(op).op as (typeof PPTX_EXECUTABLE_OPS)[number]),
-        )
+        const needsHost =
+          Boolean(script) ||
+          input.ops.some(
+            (op) =>
+              !PPTX_EXECUTABLE_OPS.includes(record(op).op as (typeof PPTX_EXECUTABLE_OPS)[number]),
+          )
         if (needsHost) {
           if (!hostApply) throw new Error('此 PPTX 操作需要宿主执行器，当前未接入；不会修改文档')
           const expectedVersion = session.version()
+          const signal = options.signal
+            ? AbortSignal.any([options.signal, lifetime.signal])
+            : lifetime.signal
           const response = await hostApply({
             documentId,
             bytes: await session.save(),
             expectedVersion,
             ops: hostedOps(input.ops, session),
-            signal: options.signal,
+            ...(tool === 'edit_chart' || tool === 'edit_animation' ? { action: tool } : {}),
+            signal,
           })
           assertActive(options.signal)
           if (session.version() !== expectedVersion)
             throw new Error('宿主处理期间画布已变化，请重新读取')
           if (response.version !== expectedVersion + 1) throw new Error('宿主返回的画布版本无效')
-          await session.replaceFromHost(response.bytes)
+          await session.replaceFromHost(response.bytes, expectedVersion, signal)
+          assertActive(signal)
           summaries.push(`宿主执行 ${response.records.length} 项 PPTX 操作`)
           if (response.sampleData) summaries.push('图表含示例数据，必须向用户说明它不是实际数据')
         } else {
@@ -485,7 +658,20 @@ export function createPptxAgentHandle(
           })
         }
         onChange()
-        return result({ ok: true, changed: true, summary: summaries.join('；') })
+        return result({
+          ok: true,
+          changed: true,
+          summary: summaries.join('；'),
+          ...(script
+            ? {
+                data: {
+                  logs: script.logs,
+                  returned: script.returned,
+                  layoutAudit: auditPptxSlide(session, Number(rawInput.slideIndex)),
+                },
+              }
+            : {}),
+        })
       } catch (cause) {
         return result({
           ok: false,
@@ -504,6 +690,7 @@ export function createPptxAgentHandle(
     },
     dispose() {
       disposed = true
+      lifetime.abort()
       rounds.clear()
       selections.clear()
     },

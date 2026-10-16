@@ -1,4 +1,5 @@
 import type { Slide, SlideSize, TextElement } from '../vendor/packages/pptx-engine/src/types.js'
+import type { PptxLink } from './pptx-metadata.js'
 import { renderSlideToSvg } from './pptx-svg.js'
 import {
   buildRenderSlide,
@@ -29,6 +30,7 @@ import type { HeuristicMetrics } from '../vendor/packages/pptx-render/src/metric
 
 /** 能被渲染的东西：只读 `PptxDeck` 与 `PptxEditSession` 都满足它 */
 export interface PptxRenderable {
+  links?(slideIndex: number): ReadonlyMap<string, PptxLink>
   readonly size: SlideSize
   /** 当前幻灯片。**是函数**——编辑会话的模型会随保存变化 */
   slides(): readonly Slide[]
@@ -39,6 +41,8 @@ export interface PptxRenderable {
 export interface RenderPptxOptions {
   /** 画布宽度（px）。所有几何按它算 scale */
   fitWidthPx: number
+  /** Stable namespace for each inline SVG instance (canvas, thumbnail, presentation). */
+  svgIdPrefix?: string
   /**
    * 字体度量。不传用上游的启发式（按字符类别估宽度）——**够用且确定**，
    * 而精确度量要 opentype.js 读字体文件（mimir 没接，见 TECH §15.8）。
@@ -145,6 +149,9 @@ export interface RenderedSlide {
  * 渲染一页。`deck.media` 直接接给上游的 `MediaResolver`（它要的正是
  * `zip 路径 → data URL` 这个形状）。
  */
+const escapeAttr = (value: string) =>
+  value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
 export function renderSlide(
   deck: PptxRenderable,
   index: number,
@@ -164,8 +171,24 @@ export function renderSlide(
     slideNo: index + 1,
   })
 
+  let svg = renderSlideToSvg(tree, `${options.svgIdPrefix ?? 'deck'}-slide-${index}`)
+
+  const links = deck.links?.(index)
+  const badges: string[] = []
+  for (const [id, link] of links ?? []) {
+    svg = svg.replace(
+      `data-element-id="${escapeAttr(id)}"`,
+      `data-element-id="${escapeAttr(id)}" data-pptx-link="${escapeAttr(JSON.stringify(link))}"`,
+    )
+    const node = tree.nodes.find((item) => item.sourceId === id)
+    if (node)
+      badges.push(
+        `<svg x="${node.box.x + node.box.w - 16}" y="${node.box.y + 2}" width="14" height="14" viewBox="0 0 16 16" pointer-events="none"><title>对象包含超链接</title><path d="M6 10l4-4M5 7 3 9a3 3 0 0 0 4 4l2-2M7 5l2-2a3 3 0 0 1 4 4l-2 2" fill="none" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+      )
+  }
+  if (badges.length) svg = svg.replace('</svg>', `${badges.join('')}</svg>`)
   return {
-    svg: renderSlideToSvg(tree),
+    svg,
     widthPx: tree.widthPx,
     heightPx: tree.heightPx,
     hidden: tree.hidden === true,

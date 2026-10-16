@@ -132,3 +132,7 @@ allowBuilds:
 
 # 新版本发布满一天后才允许安装。防止误装当天发布、可能被投毒的版本。
 minimumReleaseAge: 1440
+# User-approved 2026-10-16: exact official XLSX engine for typed formula
+# recalculation; all other packages and versions retain the 24-hour gate.
+minimumReleaseAgeExclude:
+  - '@ironcalc/wasm-xlsx@0.9.0'

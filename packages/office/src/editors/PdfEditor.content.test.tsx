@@ -1,5 +1,7 @@
 // @vitest-environment happy-dom
 
+import { ConfigProvider } from 'antd'
+import { openSelect } from '../shell/antd-test-dom.js'
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { PDFDocument, StandardFonts } from 'pdf-lib'
@@ -79,6 +81,301 @@ async function click(element: Element, options: MouseEventInit = {}): Promise<vo
 }
 
 describe('PDF manual content canvas', () => {
+  it('shares real note threads between toolbar and Agent, saves twice and deletes from actual controls', async () => {
+    pdfTextMode.real = true
+    const pdf = await PDFDocument.create()
+    const font = await pdf.embedFont(StandardFonts.Helvetica)
+    pdf.addPage([300, 400]).drawText('ORIGINAL', { x: 40, y: 300, size: 12, font })
+    const original = await pdf.save()
+    const saved: Uint8Array[] = []
+    let handle: PdfAgentHandle | null = null
+    const host = document.createElement('div')
+    host.style.width = '691px'
+    document.body.append(host)
+    const root = createRoot(host)
+    ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+    await act(async () =>
+      root.render(
+        <ConfigProvider componentSize="small">
+          <PdfEditor
+            documentId="pdf-notes"
+            io={{
+              load: async () => original,
+              save: async (bytes) => {
+                saved.push(bytes)
+              },
+            }}
+            onAgentHandleChange={(next) => {
+              handle = next
+            }}
+            hostInspect={async ({ bytes, probe }) =>
+              (
+                await import('../../../../apps/server/src/services/pdf-agent-host.js')
+              ).inspectPdfTextTarget(bytes, probe)
+            }
+            hostMarkup={async ({ bytes, markup, expectedVersion }) => ({
+              bytes: await (
+                await import('../../../../apps/server/src/services/pdf-agent-host.js')
+              ).applyPdfVerifiedMarkup(bytes, markup),
+              version: expectedVersion + 1,
+            })}
+            hostApply={async () => {
+              throw new Error('not used')
+            }}
+            hostAnnotations={async ({ bytes, operation, sha256, expectedVersion }) => {
+              const service =
+                await import('../../../../apps/server/src/services/pdf-annotations.js')
+              const result = await service.applyPdfAnnotationOperation(
+                bytes,
+                operation,
+                sha256,
+                (operation.op === 'add_note' || operation.op === 'reply_note') &&
+                  operation.authorship === 'user'
+                  ? 'admin'
+                  : 'AI Assistant',
+              )
+              return {
+                bytes: operation.op === 'read' ? undefined : result.bytes,
+                annotations: result.annotations,
+                version: expectedVersion + (operation.op === 'read' ? 0 : 1),
+              }
+            }}
+          />
+        </ConfigProvider>,
+      ),
+    )
+    mounted.push(() => {
+      act(() => root.unmount())
+      host.remove()
+    })
+    await settle(() => handle !== null)
+    await click(
+      [...host.querySelectorAll('[role="tab"]')].find((item) => item.textContent === '编辑')!,
+    )
+    await click(button(host, '便笺与标注'))
+    await settle(() => !button(host, '刷新批注').disabled)
+    const panel = host.querySelector('[aria-label="PDF 批注面板"]')!
+    expect(panel.closest('[aria-label="PDF 属性工具"]')).not.toBeNull()
+    expect(panel.closest('.mimir-editor__subbar')).toBeNull()
+    expect(panel.querySelector('textarea')?.getAttribute('rows')).toBe('2')
+    expect(button(host, '关闭批注面板').closest('.mimir-pdf-inspector__header')).not.toBeNull()
+    expect(button(host, '添加便笺').closest('.mimir-pdf-annotations__actions')).not.toBeNull()
+    expect(button(host, '添加便笺').classList.contains('ant-btn-variant-solid')).toBe(true)
+    expect(host.querySelector('[aria-label="回复便笺"]')).toBeNull()
+    expect(host.querySelector('[aria-label="修改批注内容"]')).toBeNull()
+    expect(host.querySelector('[aria-label="删除所选批注"]')).toBeNull()
+    const confirmDelete = async () => {
+      await click(button(host, '删除所选批注'))
+      const confirm = [
+        ...document.querySelectorAll<HTMLButtonElement>('.ant-popconfirm button'),
+      ].find((entry) => entry.textContent === '删除批注')
+      expect(confirm).toBeDefined()
+      await click(confirm!)
+    }
+    const inputNote = async (value: string) => {
+      await act(async () => {
+        const input = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="批注内容"]')!
+        Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(
+          input,
+          value,
+        )
+        input.dispatchEvent(new Event('input', { bubbles: true }))
+      })
+    }
+    const initialHandle = handle
+    await inputNote('手动便笺')
+    await click(button(host, '添加便笺'))
+    await settle(() => host.textContent?.includes('admin：手动便笺') ?? false)
+    expect(panel.querySelector('[aria-label="本页批注与回复"]')?.textContent).toContain(
+      'admin：手动便笺',
+    )
+    expect(handle).toBe(initialHandle)
+    expect(host.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toBe('编辑')
+    let result: Awaited<ReturnType<PdfAgentHandle['execute']>> | undefined
+    await act(async () => {
+      result = await handle!.execute('read_annotations', {})
+    })
+    const rootId = (result!.data as { annotations: Array<{ id: string }> }).annotations[0]!.id
+    expect(result!.changed).toBe(false)
+    const options = openSelect(host, '选择批注')
+    await click(options.find((option) => option.textContent === '便笺：手动便笺')!)
+    await inputNote('手动回复')
+    await click(button(host, '回复便笺'))
+    await settle(() => host.textContent?.includes('admin：手动回复') ?? false)
+    await click(button(host, '保存到库'))
+    await settle(() => saved.length === 1 && button(host, '保存到库').disabled)
+    const versionAfterSave = handle!.getVersion()
+    await act(async () => {
+      result = await handle!.execute(
+        'edit_note',
+        { page: 1, note_id: rootId, text: 'Agent 修改便笺' },
+        { expectedVersion: handle!.getVersion(), roundId: 'note-round' },
+      )
+    })
+    expect(result!.ok).toBe(true)
+    expect(handle).toBe(initialHandle)
+    expect(host.querySelector('[role="tab"][aria-selected="true"]')?.textContent).toBe('编辑')
+    expect(button(host, '保存到库').disabled).toBe(false)
+    expect(handle!.getVersion()).toBe(versionAfterSave + 1)
+    await act(async () => {
+      expect(handle!.undoRound('note-round')).toBe(true)
+    })
+    expect(handle).toBe(initialHandle)
+    expect(button(host, '保存到库').disabled).toBe(true)
+    await act(async () => {
+      result = await handle!.execute(
+        'edit_note',
+        { page: 1, note_id: rootId, text: 'Agent 修改便笺' },
+        { expectedVersion: handle!.getVersion(), roundId: 'note-round' },
+      )
+    })
+    expect(result!.ok).toBe(true)
+
+    await click(button(host, '刷新批注'))
+    await settle(() => host.textContent?.includes('admin：Agent 修改便笺') ?? false)
+    const nextOptions = openSelect(host, '选择批注')
+    await click(nextOptions.find((option) => option.textContent === '便笺：Agent 修改便笺')!)
+    await inputNote('手动再次修改')
+    await click(button(host, '修改批注内容'))
+    await settle(() => host.textContent?.includes('admin：手动再次修改') ?? false)
+    expect(handle!.undoRound('note-round')).toBe(false)
+    await click(button(host, '保存到库'))
+    await settle(() => saved.length === 2 && button(host, '保存到库').disabled)
+    const { readPdfAnnotations } =
+      await import('../../../../apps/server/src/services/pdf-annotations.js')
+    const read = await readPdfAnnotations(saved[1]!)
+    expect(read.annotations).toMatchObject([
+      { id: rootId, text: '手动再次修改' },
+      { parentId: rootId, text: '手动回复' },
+    ])
+    const task = getDocument({ data: saved[1]!.slice() })
+    try {
+      expect(
+        (await (await (await task.promise).getPage(1)).getAnnotations()).map(
+          (entry) => entry.contentsObj.str,
+        ),
+      ).toEqual(['手动再次修改', '手动回复'])
+    } finally {
+      await task.destroy()
+    }
+    await confirmDelete()
+    await settle(() => !host.textContent?.includes('admin：手动再次修改'))
+    await act(async () => {
+      result = await handle!.execute('read_annotations', {})
+    })
+    expect((result!.data as { annotations: unknown[] }).annotations).toEqual([])
+    expect(button(host, '保存到库').disabled).toBe(false)
+    await act(async () => {
+      result = await handle!.execute('markup_text', {
+        page: 1,
+        text: 'ORIGINAL',
+        type: 'highlight',
+      })
+    })
+    expect(result!.ok).toBe(true)
+    await click(button(host, '刷新批注'))
+    await settle(() => !button(host, '刷新批注').disabled)
+    const markOptions = openSelect(host, '选择批注')
+    await click(markOptions.find((option) => option.textContent?.startsWith('highlight：'))!)
+    expect(button(host, '修改批注内容').disabled).toBe(true)
+    await confirmDelete()
+    await settle(() => !button(host, '刷新批注').disabled)
+    await act(async () => {
+      result = await handle!.execute('read_annotations', {})
+    })
+    expect((result!.data as { annotations: unknown[] }).annotations).toEqual([])
+  })
+
+  it('rejects cancelled or stale annotation results before publishing bytes and preserves dirty manual edits', async () => {
+    const pdf = await PDFDocument.create()
+    pdf.addPage([300, 400])
+    const original = await pdf.save()
+    let handle: PdfAgentHandle | null = null
+    let release: (() => void) | undefined
+    let started = false
+    const host = document.createElement('div')
+    document.body.append(host)
+    const root = createRoot(host)
+    ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+    await act(async () =>
+      root.render(
+        <PdfEditor
+          documentId="pdf-notes-cancel"
+          io={{ load: async () => original, save: async () => {} }}
+          onAgentHandleChange={(next) => {
+            handle = next
+          }}
+          hostApply={async () => {
+            throw new Error('not used')
+          }}
+          hostAnnotations={async ({ bytes, operation, sha256, expectedVersion }) => {
+            if (operation.op !== 'read') {
+              started = true
+              await new Promise<void>((resolve) => {
+                release = resolve
+              })
+            }
+            const service = await import('../../../../apps/server/src/services/pdf-annotations.js')
+            const result = await service.applyPdfAnnotationOperation(
+              bytes,
+              operation,
+              sha256,
+              (operation.op === 'add_note' || operation.op === 'reply_note') &&
+                operation.authorship === 'user'
+                ? 'admin'
+                : 'AI Assistant',
+            )
+            return {
+              bytes: operation.op === 'read' ? undefined : result.bytes,
+              annotations: result.annotations,
+              version: expectedVersion + (operation.op === 'read' ? 0 : 1),
+            }
+          }}
+        />,
+      ),
+    )
+    mounted.push(() => {
+      act(() => root.unmount())
+      host.remove()
+    })
+    await settle(() => handle !== null)
+    const controller = new AbortController()
+    let pending: ReturnType<PdfAgentHandle['execute']> | undefined
+    await act(async () => {
+      pending = handle!.execute(
+        'add_note',
+        { page: 1, text: 'cancelled', x: 20, y: 20 },
+        { signal: controller.signal },
+      )
+    })
+    await settle(() => started)
+    controller.abort()
+    let result: Awaited<ReturnType<PdfAgentHandle['execute']>> | undefined
+    await act(async () => {
+      release!()
+      result = await pending!
+    })
+    expect(result!.ok).toBe(false)
+    expect(button(host, '保存到库').disabled).toBe(true)
+    expect(pdfTextMode.rendered.at(-1)).toBe(original)
+    started = false
+    await act(async () => {
+      pending = handle!.execute('add_note', { page: 1, text: 'stale', x: 20, y: 20 })
+    })
+    await settle(() => started)
+    await act(async () => {
+      await handle!.execute('apply_ops', { ops: [{ op: 'rotatePages', pages: [1], dir: 90 }] })
+    })
+    await act(async () => {
+      release!()
+      result = await pending!
+    })
+    expect(result!.ok).toBe(false)
+    expect(handle!.getContext()).toMatchObject({ dirty: true, pageRotations: [90] })
+    expect(button(host, '保存到库').disabled).toBe(false)
+    expect(pdfTextMode.rendered.at(-1)).toBe(original)
+  })
+
   it('marks a verified original run on canvas, saves the annotation, and keeps failures clean', async () => {
     pdfTextMode.real = true
     const pdf = await PDFDocument.create()
@@ -356,8 +653,8 @@ describe('PDF manual content canvas', () => {
       button(host, '保存到库'),
     )
     expect(host.querySelector('.mimir-editor__status button[aria-label="保存到库"]')).toBeNull()
-    expect(button(host, '撤销').getAttribute('title')).toBe('PDF 编辑尚不支持完整撤销历史')
-    expect(button(host, '重做').getAttribute('title')).toBe('PDF 编辑尚不支持完整重做历史')
+    expect(button(host, '撤销').getAttribute('title')).toBe('没有可撤销的编辑')
+    expect(button(host, '重做').getAttribute('title')).toBe('没有可重做的编辑')
     await click(button(host, '页面与版式操作'))
     const rotate = [...host.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')].find(
       (item) => item.textContent?.trim() === '向右旋转 90 度',

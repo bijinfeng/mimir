@@ -1,4 +1,9 @@
-import type { Message } from '@mimir/shared'
+import type {
+  Message,
+  DocumentAgentCreateInput,
+  DocumentAgentCreateFileFields,
+  DocumentAgentCreatedDocument,
+} from '@mimir/shared'
 
 /**
  * 宿主注入的**动作**面（对话包 → 宿主）。
@@ -102,14 +107,10 @@ export interface ChatIo {
   ) => Promise<{ text: string }>
   /** Persist a newly created file and return its knowledge-base document ID. */
   createDocxDocument?: (
-    input: {
-      documentId: string
-      title: string
-      format: 'docx' | 'pdf' | 'md' | 'html'
-      content: string
-    },
+    input: DocumentAgentCreateInput | (DocumentAgentCreateFileFields & { file: File }),
     signal: AbortSignal,
-  ) => Promise<{ documentId: string; title: string; format: string; parseError: string | null }>
+  ) => Promise<DocumentAgentCreatedDocument>
+
   /**
    * 流式问答的地址。默认 `DEFAULT_CHAT_URL`（在构建的公开路径下）。
    *

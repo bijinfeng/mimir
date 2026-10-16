@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import JSZip from 'jszip'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { editableElements, openPptxForEdit, textOfElement } from '../pptx.js'
 import { createPptxAgentHandle } from './pptx-agent.js'
 
@@ -138,6 +138,21 @@ describe('PPTX Agent canvas', () => {
     expect(session.slides()).toHaveLength(2)
   })
 
+  it('rejects a host replacement if a manual edit occurs during archive parsing', async () => {
+    const session = await openPptxForEdit(load())
+    const { id } = firstText(session)
+    const expectedVersion = session.version()
+    const pending = session.replaceFromHost(load(), expectedVersion)
+    session.setText(0, id, [{ srcPara: 0, runs: [{ text: '不能覆盖的人工修改', srcRun: 0 }] }])
+    await expect(pending).rejects.toThrow('宿主解析期间画布已变化')
+    expect(firstText(session).text).toBe('不能覆盖的人工修改')
+    const controller = new AbortController()
+    const aborted = session.replaceFromHost(load(), session.version(), controller.signal)
+    controller.abort()
+    await expect(aborted).rejects.toThrow('已取消')
+    expect(firstText(session).text).toBe('不能覆盖的人工修改')
+  })
+
   it('lands host bytes into the unsaved canvas and can undo the hosted round', async () => {
     const session = await openPptxForEdit(load())
     const { id, text } = firstText(session)
@@ -176,5 +191,57 @@ describe('PPTX Agent canvas', () => {
     expect(firstText(await openPptxForEdit(await session.save())).text).toContain('宿主已修改')
     expect(handle.undoRound('host')).toBe(true)
     expect(firstText(session).text).toBe(text)
+  })
+
+  it('cancels hosted replacement when the handle is disposed during parsing', async () => {
+    const session = await openPptxForEdit(load())
+    const id = firstText(session).id
+    const changed = vi.fn<() => void>()
+    const handle = createPptxAgentHandle(
+      session,
+      'doc-1',
+      () => ({ slideIndex: 0, elementId: id }),
+      changed,
+      async ({ bytes, expectedVersion }) => ({ bytes, version: expectedVersion + 1, records: [] }),
+    )
+    let entered!: () => void
+    let release!: () => void
+    const parsing = new Promise<void>((resolve) => {
+      entered = resolve
+    })
+    const gate = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const replace = session.replaceFromHost.bind(session)
+    const parser = vi.spyOn(session, 'replaceFromHost').mockImplementationOnce(async (...args) => {
+      entered()
+      await gate
+      await replace(...args)
+    })
+    try {
+      const pending = handle.execute(
+        'apply_ops',
+        {
+          ops: [
+            { op: 'setParagraphFormat', target: { slide: 0, el: id }, format: { align: 'center' } },
+          ],
+        },
+        {},
+      )
+      await parsing
+      handle.dispose()
+      release()
+      expect(await pending).toMatchObject({
+        ok: false,
+        changed: false,
+        error: expect.stringContaining('取消'),
+      })
+      expect(changed).not.toHaveBeenCalled()
+      expect(session.version()).toBe(0)
+    } finally {
+      release()
+      parser.mockRestore()
+      handle.dispose()
+    }
   })
 })

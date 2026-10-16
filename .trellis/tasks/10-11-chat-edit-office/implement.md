@@ -32,6 +32,17 @@
 
 ## 验证命令与实际效果
 
+### 2026-10-16 用户追加的样式与交互门槛
+
+用户在真实 PDF 交互表单截图中明确否决全宽堆叠表单。新增能力必须同时完成视觉和交互验收，不能以执行器或组件测试通过替代成品界面。
+
+- PDF 表单、图片和批注采用文档区右侧紧凑 Inspector；窄编辑区改覆盖式面板，内容内部滚动，保留文档上下文。
+- 面板有清晰标题、可理解的字段标签和辅助信息、合理控件宽度、明确主操作；刷新/关闭使用既有图标系统和可访问名称。
+- 字段选择与页码联动；只读、无字段、加载、失败、未修改、应用成功均有明确反馈；重复页号去重。
+- XLSX、PPTX、DOCX、HTML 本轮新增面板一并复查层级、分组、当前值、关闭/键盘行为和窄栏表现。工具按任务放入相应 Ribbon 分类，避免持续堆到“开始”一行。
+- 沿用当前产品字体、主题 token 和 antd 组件体系。短暂操作用紧凑弹层，持久编辑用侧面板；禁止裸表单横铺整页或用任意嵌套卡片补救层级。
+- 用真实页面截图同时检查宽区与问 AI 中栏/窄区，集中修复后复验一次；将截图、具体执行和保存重开记录到对应能力矩阵。
+
 - `pnpm --filter @mimir/office test`：工具执行、OOXML 补丁、保存重开与回退。
 - `pnpm --filter @mimir/chat test`、`pnpm --filter @mimir/renderer test`：AG-UI 工具事件、侧栏、旧问答回归与交互。
 - `pnpm --filter @mimir/server test`、`pnpm --filter @mimir/plugin-provider test`：鉴权、配置/密钥、服务适配、失败分类、用量。
@@ -49,3 +60,92 @@
 
 - Trellis 规划摘要经用户在摘要之后明确批准；再运行 `task.py start`。
 - `implement.jsonl`、`check.jsonl` 有真实 spec/research 路径；不把 `/tmp/genoffice-source` 当作持久任务材料。
+
+### 当前补全：Markdown 真实流式草稿
+
+最小缺口：Markdown `write_document` 等服务端积攒全文后才返回，用户看不到进度，也不能在中断后选择保留部分内容。沿用 HTML 的 NDJSON 草稿路径，服务端、共享 schema、Renderer API 和 Office 草稿组件分别负责生成、合同、传输和临时展示；正文仅在完成或用户选择保留后经原有版本守卫写入。预期改动限于 markdown-agent-writing、conversations 路由、document-agent schema、api/NoteEditor、MarkdownEditor 与独立草稿组件及针对性测试。保留当前保存、方言和整轮回退实现；不引入第二条持久化路径。
+
+### 当前补全：跨格式新文件创建
+
+当前四格式生成服务和桥仅允许DOCX来源，且把Markdown/完整HTML扁平化为段落；固定上游PDF/XLSX也有create_document，XLSX导出指定工作表显示值。沿既有上传/索引、ChatIo与新文件链接路径扩展来源和multipart单表导出，不改当前画布。共享schema统一文字创建/表格导出字段；服务保留md/html源文本，XLSX句柄提供当前未保存表的值导出，桥负责版本和取消校验。DOCX/PDF复杂格式保真仍独立记录，未验证前不宣称完整。
+
+### 当前补全：PPTX 手动素材上传接缝
+
+媒体、图片填充/背景与导入幻灯片需要用户选取的二进制文件。共享 schema 与 PPTX 服务/界面由 PPTX implement 代理维护；根会话只接 conversations multipart 路由、Renderer API 和 OfficeSourceEditor prop。请求在解析前按原件50MiB、素材32MiB、可选海报8MiB及1MiB边界预算限制；服务负责文档鉴权、类型/签名/解码、取消与原件补丁。沿现有画布版本门控和手动保存，不接收任意本机路径或原始XML；GLB待真实预览能力具备后再接入。
+
+### 2026-10-16 命令带窄栏纠正
+
+真实 DOCX 690px 编辑中栏的开始分类出现长命令带裁切。根据用户追加样式门槛，共用 CompactToolbar 改按实际编辑区宽度逐组压缩为各自具名菜单：从右侧低频组开始，保留分类、高频直接控件和所有组入口；不以水平滚动或总“更多”承载命令。控件只挂载一份，查找快捷键需在折叠时仍打开对应输入。690px 与 420px 的六格式实际布局、弹层和查找焦点由主会话验收，不以组件测试替代。
+
+### 2026-10-16 DOCX 本轮收尾
+
+原生图表保存同步嵌入工作簿引用格；新增原生段落/字符/表格样式管理与作用域实时CSS；脚注固定纸高、超长富文本续页与节尾/文末尾注视图；高级工具320px Inspector、窄栏覆盖、关闭/Escape/焦点返回与样式底部动作；共用Ribbon实际宽度具名分组折叠及折叠查找快捷键。9文件88/88、定向lint与diff检查通过；Office tsc此前通过，最终重跑被并行新增PptxAssetControls.tsx类型错误阻断，已通知主会话/PPTX所有者。真实浏览器已确认675px命令带无横滚、超长脚注顺序和600px灰带；最后的脚注左右缩进与420px/六格式视觉由主会话接续。详情与未验组合见research/docx-manual-capability-matrix.md，不勾选全部能力完成。
+
+### 后续补全：剩余本地工具与交互
+
+上一批新增工具与样式修正已通过定向检查和实际文件读回，整体对标仍未完成。继续按现行矩阵逐项消除本地能力缺口：PDF页面抽取/插入/替换/拆合、绘图/静态表单/水印/页眉页脚/属性及输出；XLSX剪切与引用迁移、格式刷/清除格式、自动尺寸、分级/组合、填充与剩余日常编辑；PPTX输出/打印、视图辅助、图标、图片去背景、格式刷、母版/动画及媒体剩余工具。各格式实现代理负责自身editor、服务、共享格式schema、测试和矩阵，根会话负责跨格式HTTP/API接缝、真实浏览器验收与独立检查调度。不得修改其他格式或手改vendor；需要新vendor文件时只更新固定commit同步清单并执行同步。长编辑采用既有右侧Inspector，短动作具名菜单，避免把新表单堆入Ribbon。每项需实际生效、保存重开、失败状态和窄栏可达性；结构不支持时明确列出缺口，不能用入口数量或保守拒绝替代最终对标。
+
+### PDF 剩余本地工具执行边界
+
+新增共享严格 local operation 合同、pdf-local 宿主与客户端执行桥；页面抽取/拆分/拼版/选页替换及导入、矢量绘图/静态勾叉、可替换水印/六槽页眉页脚、metadata/书签与当前工作副本输出。宿主保留原文档对象结构、不写存储；中文文字复用既有表单字体子集适配。UI沿既有PDF右Inspector并保留当前值、失败反馈和关闭回焦。根会话维护multipart/API接缝及实机验收，代理不改共用壳/vendor。
+
+### 后续补全：新文档富内容生成
+
+已确认`docx-create-document.ts`将DOCX/PDF的restricted HTML扁平化，表格/行内字形/链接被丢弃；固定上游create_document明确沿insert_content的HTML语义。最小修复在创建字节服务及独立rich转换适配，不改入库/索引/导航/旧md完整html保留路径。DOCX优先复用vendored blank/generate等引擎API，PDF保留富文本/表格的实际版式并以独立读取器和真实渲染验证。实现代理仅负责服务与专项测试/矩阵，不改跨格式路由/Editor/当前PDF/PPTX/XLSX，也不手改vendor；无法保真的语法需明确拒绝或记录真实边界，不能继续静默扁平化。既有100k输入与字体缺字/创建失败清理门槛保持。
+
+### PDF 单页几何与页面复制保存补全
+
+变更边界：shared PDF local schema、pdf-local及独立page-layout适配、Office工作副本构建/Editor和专项测试；移动PdfLocalPanel输出块。复用严格Catalog守卫、当前手动菜单和既有历史，不改shell/routes/font adapter/vendor。先以本地临时字节追加已选普通来源页，再保留原对象执行最终布局；纸型缩放内容及annotation并用MediaBox原点居中。回归须覆盖form+watermark+outline混合、复制控件可再填、导入/裁剪/纸型保存两次及保存后撤销重做，失败保留画布。实机交由主会话，不将单元测试等同真实浏览器。
+
+PDF本轮已接保留结构layout与统一工作副本；旧导入即时local执行、失败不落pending，输出置顶/220px结果滚动，Inspector按未保存布局读属性。pdf-local15/15、Office7文件62/62、Office tsc通过，目标lint最后复查中。主会话实机裁10pt+A5+复制保存成功，独立下载发现水印临时Page残留后，统一local save增加flush+root GC，组件已核3可视=3间接Page；修复后实机下载由主会话接续。checker负责复制绘图ID稳定/归一角度最终复核。详细限制和验收见10-13-pdf-agent-manual矩阵；不勾选整体任务完成。
+
+### 下一PDF切片：带书签AcroForm继续填写
+
+当前local混批已用显式Catalog守卫验证原生Outlines+普通AcroForm，但表单Inspector/Agent的普通setFormValue仍走旧严格表单路由。后续复用已验证local preserving适配，使手动/Agent字段写共享当前工作字节、字段快照、版本/停止与历史，不扩旧全局白名单；补书签+watermark+duplicate后继续填/清空、保存两次及撤销重做。先待本片checker/主会话真实历史复验结束，不在当前HMR期间改此接缝。
+
+
+### 带原生书签表单的显式保留适配
+
+最小缺口是表单Inspector/Agent普通字段写仍拒绝已由local保留的Outlines。抽出pdf-local原有Catalog守卫至pdf-preserving-guard，不改允许项；新增pdf-preserving-forms显式adapter，纯字段复用原writer，含页面批次复用local已验证书签映射/删除清理，再返回同字段快照。旧applyPdfFormOperation默认严格路径不变；根会话切换forms路由并负责HTTP回归。此次先改server服务/测试，不改Editor、不动page-layout绘图ID；覆盖原生GoTo书签、连续中文/选项填写、页面后再填、控件/原文保留、dryRun/原子拒绝及签名/未知Catalog。
+
+
+带书签表单服务适配+pending页面表单接缝已实现：preserving与旧forms两文件10/10；PDF八文件65/65、Office/server tsc及目标lint/format通过。root负责forms HTTP route并已独立构建成功，checker路由9/9；新read背景刷新不占Agent写锁，字段cache绑定bytes/layout，成功写一次history。UI已冻结交root实机Outlines+pending裁剪+填写+保存/undo/redo；checker另外修local dryRun假设属性误缓存，不由本代理改动。
+
+
+### 自有绘图随页面几何保持可编辑
+
+最小gap：页面Rotate/CropBox/等比纸型会自然变换绘图内容流，但MimirDrawings仍为旧显示空间坐标，现用拒绝阻止后续update错位。修改仅限shared drawing schema、pdf-local/page-layout、独立pdf-drawing-geometry及专项服务/Office回归、必要Inspector坐标min/朝向回显；不改routes/vendor/其他格式。用旧显示左上pt→原PDF用户空间→纸型等比scale→新显示左上pt映射所有bbox角和ink点，线宽同比缩放；保留drawing ID并复用复制避碰。现shape需可选局部rotation四分之一周（默认0）以精确保留line/arrow/check朝向；crop后页外路径需signed x/y，绝不clamp或矩形近似。派生几何只验证finite/positive，资源预算仍500对象/2000点/1000页/50MiB，不让原用户侧0.25pt/14400上限拒绝缩放后的真实缓存。
+
+固定GenOffice HEAD已核480548fd55f1be3593ee0d8e316a734751d58309；save-pdf.ts333–418将Ink paths、rect/ellipse、from/to line/arrow保留实际几何，644–670纸型scaleContent+scaleAnnotations。Mimir采用显示空间缓存与用户空间转换，不照搬其annotation存储。2026-10-16再取WeKnora v0.8.3 definitions.go成功：工具仍属知识检索/wiki/sandbox，非PDF绘图/页面变换模型；站点HEAD本次20s超时，沿已记录上轮200证据，不把超时写成功。
+
+回归先比较几何变换后的旧流和按缓存重新绘制的真实光栅像素，覆盖0/90/180/270、非零CropBox、非对称arrow/check与ink折线、边缘裁剪及A5；再pending→两次保存→update/delete、复制稳定ID/调序/undo。成功后冻结交root实机，checker独立复核；未完成前不删矩阵旧限制。
+
+
+绘图几何切片已实现并冻结UI：pdf-drawing-geometry统一local/page-layout坐标，shared支持局部rotation/arrowHeadLength与signed/finite派生几何，Inspector回显派生坐标/方向并将草稿绑定当前源绘图。server几何6+local15共21/21；Office PDF八文件49/49，追加同页裁剪后坐标即时刷新与undo回显后local14/14再通过；Office/server tsc、目标Oxlint/Oxfmt/Antd lint、diff检查通过。逐形四旋转真实光栅像素交并比>97%，覆盖offset CropBox/A5、边缘裁剪、超旧限派生几何、复制调序和update/delete；pending→保存两次→再次编辑/undo/redo组件通过。合同§10及PDF矩阵已替换旧几何拒绝边界。根会话接真实浏览器与独立checker，不将组件或服务验证当实机/模型验收。
+
+### 2026-10-16 PPTX 四工作区视图
+
+实施范围：PptxWorkspaceViews.tsx、pptx-workspace-views.css、PptxViewControls.tsx、PptxEditor.tsx及独立workspace-views组件集成测试。模式隔离到documentId；普通沿原ThumbnailSidebar，大纲与同一stage组合，浏览多选原序排序，阅读在当前工作区适配宽高。编辑器唯一整合者同时接入各自负责代理产出的填充/背景Inspector与绘图tab/overlay，不修改它们的实现文件。
+
+目标验证：纯切视图不dirty/增版本；大纲改字即时同步并保存重开；排序save→undo/save→redo/save原生页序；浏览范围/全选/Enter；阅读局部键盘/Escape回焦；绘图异步请求切阅读后signal abort且迟到changed:true不改版本/dirty/history。宽屏/420实机由主会话统一验收，单元测试不记作实机。整体任务保持未完成，不归档或提交。
+
+### 2026-10-16 PPTX 绘图原生保存接缝
+
+最小缺口是没有笔迹采样、预设、可重开的笔迹元数据和只作用于笔迹的橡皮擦。实现范围为独立PPTX ink helper/控件/Canvas/样式/测试，加shared `manual_ink`合同、Agent action arm及server专属adapter/dispatch；Editor整合归views所有者，不改vendor、渲染器和其他格式。沿固定上游透明PNG `p:pic`+`descr` v1矢量点列、atomic addPicture/deleteElement及现有字节/版本/保存/历史合同。服务5/5、Office定向15/15、server tsc与目标lint/format通过；实拖、宽/420px和下载重开由根会话接续，不宣称整体补全完成。详情在PPTX ribbon-local-audit末段。
+
+
+### 2026-10-16 后续PPTX工具完整性切片
+
+按固定96回调清单继续三条独立实施线：从头/自定义子集/排练计时放映，Slide/Section/Summary Zoom，当前复杂背景保真应用全部。根会话统一Editor/shared导出/action/route接线。另补已存在引擎的无layout参数setSlideLayout重置入口：行为位于原生resetSlideLayout，移除占位符explicit transform，保留文字和其它对象，不以重新套用当前layout替代。仅改DeckControls与其Editor整合回归，验证默认几何、undo/redo/两次保存及未改theme/master/layout。全部新工具仍按紧凑Ribbon/右Inspector/固定操作/420宽/当前值/取消版本守卫验收，不修改vendor。
+
+本片浏览器收口：Show具名列表持久化/path定位及回焦，真实排练13/5秒advTm保存→undo/save→redo/save逐entry恢复；Slide/Section/Summary Zoom实际PNG640px/内部关系/新增摘要页/原生sections；复杂路径4stops/alpha50000/tileRect复制五页及原件undo/redo；标题54→84pt后reset移除显式xfrm且保留文字/其他对象。最终新Show/Zoom primary按钮重复文案已修为图标+单一label；1280/420×880目视、固定footer、分层Escape/回焦通过。Web/Server build exit0，专项门禁与全仓既存lint限制详见审计连续日志；整体目标仍in_progress，不提交或归档。后续仍有动画hover/预览/gallery/自动逐段与transition全部、rich cursor字形、拖绘/组内多选、输出/讲义等缺口。
+
+### 2026-10-17 PPTX 动画、富文本与输出剩余工具
+
+下一切片按当前真实矩阵继续：动画gallery替换/追加/清除、五路径预设、逐段拆分、hover与编辑画布预览、切换全部；文字从元素整段格式扩至真实字符范围，同时保留未选范围与原run；输出当前工作PPTX副本、讲义/备注打印。行为分别归独立动画控件/预览适配、字符范围适配/编辑控件、输出构建与Inspector；根会话唯一修改PptxEditor整合三条接口，worker不互改Editor。沿原setText/runTxn/专属manual动作、版本/取消/保存/历史，禁止手改vendor或放宽模型白名单。文字范围必须真实可选/当前态，不能用字符数字表单替代；动画预览不dirty、不保存演示态；输出只读快照且pending/过期结果不得下载旧文稿。实现者先核对固定上游及WeKnora参考，记录证据与适用边界，再写自身实现与专项测试。根会话完成跨接缝、独立checker、实际浏览器宽420与保存下载，保留全目标未完成状态。
+
+本片最终实机收口（2026-10-17）：真实Q3选区加粗/斜体与caret pending、未保存PPTX副本及undo/save/redo/save原生entry闭环通过；三段淡入+圆形路径、Gallery替换与聚焦预览Escape、六页fade/advTm保留通过；讲义3张/纸完整420预览，修掉iframe1px内滚动且固定footer。Office/Server/Shared tsc与独立checker、HTTP route4/4、目标lint/format/diff通过；最后+16高度后组件4/4和Web build exit0。实际截图/下载/逐项边界在审计连续日志2026-10-17段，96回调矩阵已同步。系统打印/Desktop用户自验、真实模型未配未验，全仓既存lint阻断不冒报通过。整体仍in_progress，不提交/暂存/归档。
+
+### 下一PPTX切片：主题图库、段落范围与拖绘
+
+在已冻结的动画/字符范围/输出基础上继续现行96回调矩阵：固定GenOffice八主题可见预览与原生theme应用；真实字符选区映射到段落范围、对齐/方向/列表详细参数；形状图库点击/拖绘在画布确定几何。三个实现边界分别为DeckControls/主题纯数据、ObjectControls/段落纯适配、ShapeGallery/插入Canvas纯适配；root唯一整合PptxEditor，不能互改。沿现有runTxn/版本取消和原生保存，不改vendor或通用模型限额。宽/420样式、当前态、固定动作与分层Escape为共同门槛。各实现定向验证后独立checker，root做实际浏览器/下载。整体不提交或归档。

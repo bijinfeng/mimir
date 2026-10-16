@@ -194,15 +194,21 @@ export const DOCX_MEDIA_TOOLS = [
 export const DOCX_CREATE_TOOLS = [
   {
     name: 'create_document',
-    description: 'Create a new DOCX, PDF, Markdown, or HTML file in the knowledge base.',
+    description:
+      'Create a new file in the knowledge base without modifying the current document. DOCX/PDF content is simple HTML; md is Markdown source; html is a complete standalone HTML page. type defaults to docx.',
     inputSchema: {
       type: 'object',
       properties: {
         title: { type: 'string' },
-        format: { type: 'string', enum: ['docx', 'pdf', 'md', 'html'] },
+        type: { type: 'string', enum: ['docx', 'pdf', 'md', 'html'] },
+        format: {
+          type: 'string',
+          enum: ['docx', 'pdf', 'md', 'html'],
+          description: 'Legacy alias for type.',
+        },
         content: { type: 'string' },
       },
-      required: ['title', 'format', 'content'],
+      required: ['title', 'content'],
     },
   },
 ] as const

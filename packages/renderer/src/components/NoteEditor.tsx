@@ -8,6 +8,7 @@ import { MarkdownEditor } from '@mimir/office'
 import { useContentStyles } from './ContentTypography.style'
 import { createExtensions } from '../editor/extensions'
 import { api } from '../lib/api'
+import { downloadMarkdownNote } from '../lib/markdown-export'
 import { useUnsaved } from '../lib/unsaved'
 import { useEditorThemeVars } from '../theme/editor-theme-bridge'
 
@@ -44,6 +45,7 @@ interface Props {
   document: DocumentDetail
   /** 「就这段提问」：把选中的话带进对话 */
   onAskAboutSelection?: (passage: string) => void
+  onAiPreset?: (instruction: string) => void
   /** 有未保存改动时上报。宿主用它武装离开前的拦截 */
   onDirtyChange?: ((dirty: boolean) => void) | undefined
   /** 编辑区右侧的固定列（大纲）。透传给编辑器外壳的 bodySide */
@@ -59,6 +61,7 @@ interface Props {
 export function NoteEditor({
   document: doc,
   onAskAboutSelection,
+  onAiPreset,
   onDirtyChange,
   bodySide,
   focusOnReady,
@@ -190,8 +193,9 @@ export function NoteEditor({
       async writeDocument(
         input: { plan: string; title?: string; context?: string },
         signal?: AbortSignal,
+        onDelta?: (text: string) => void,
       ) {
-        const result = await api.conversations.writeMarkdownDocument(doc.id, input, signal)
+        const result = await api.conversations.writeMarkdownDocument(doc.id, input, signal, onDelta)
         return result.markdown
       },
       async readFrontmatter() {
@@ -219,6 +223,11 @@ export function NoteEditor({
         initialContent={doc.body}
         contentClassName={contentStyles.content}
         onSave={onSave}
+        onExportMarkdown={async (markdown) => {
+          const { yaml } = await api.conversations.readMarkdownFrontmatter(doc.id)
+          downloadMarkdownNote(doc.title, markdown, yaml)
+        }}
+        onAiPreset={onAiPreset}
         onDirtyChange={reportDirty}
         onSaveHandle={registerAutoSave}
         focusOnReady={focusOnReady}

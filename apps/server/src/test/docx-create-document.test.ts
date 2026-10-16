@@ -2,7 +2,10 @@ import JSZip from 'jszip'
 import { PDFDocument } from 'pdf-lib'
 import { describe, expect, it } from 'vitest'
 import { readUpload } from '../lib/uploads.js'
-import { createDocxAgentDocument } from '../services/docx-create-document.js'
+import {
+  createDocxAgentDocument,
+  createDocumentAgentDocument,
+} from '../services/docx-create-document.js'
 import { getDocument } from '../services/documents.js'
 import { uploadFile } from '../services/upload.js'
 import { app, getAuthCookie } from './helpers.js'
@@ -37,7 +40,10 @@ describe('DOCX agent create_document', () => {
         documentId,
         format,
         title: `新建${format}`,
-        content: '# 标题\n第一段中文文档',
+        content:
+          format === 'html'
+            ? '<!doctype html><html lang="zh-CN"><head><title>标题</title></head><body><h1>标题</h1><p>第一段中文文档</p></body></html>'
+            : '# 标题\n第一段中文文档',
       })
       expect(created.format).toBe(format)
       expect(created.parseError).toBeNull()
@@ -107,4 +113,75 @@ describe('DOCX agent create_document', () => {
     expect(created.status).toBe(201)
     expect(await created.json()).toMatchObject({ format: 'md', parseError: null })
   })
+})
+
+it('preserves raw Markdown and full HTML, including tables, styles and metadata', async () => {
+  const documentId = await sourceDocx()
+  const markdown =
+    '# 标题\n\n| A | B |\n| --- | --- |\n| **粗体** | [链接](https://example.com) |\n'
+  const md = await createDocumentAgentDocument({
+    documentId,
+    title: '原样Markdown',
+    format: 'md',
+    content: markdown,
+  })
+  expect((await getDocument(md.documentId))?.body).toBe(markdown.trimEnd())
+  const html =
+    '<!doctype html><html lang="zh-CN"><head><title>完整页面</title><style>body {color: #123456}</style></head><body><table><tr><td><strong>数据</strong></td></tr></table></body></html>'
+  const created = await createDocumentAgentDocument({
+    documentId,
+    title: '完整HTML',
+    format: 'html',
+    content: html,
+  })
+  const saved = await getDocument(created.documentId)
+  expect(new TextDecoder().decode(await readUpload(saved!.sourceKey!))).toBe(html)
+  expect((await getDocument(documentId))?.body).toContain('源文档')
+})
+
+it('supports the PDF source context through the common authenticated creation endpoint', async () => {
+  const pdf = await PDFDocument.create()
+  pdf.addPage()
+  const source = await uploadFile({ filename: '来源.pdf', data: await pdf.save() })
+  const response = await app.request('/api/conversations/document-agent/create-document', {
+    method: 'POST',
+    headers: { Cookie: await getAuthCookie(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      documentId: source.document.id,
+      title: '提取结果',
+      format: 'md',
+      content: '# 新文档\n\nPDF摘要',
+    }),
+  })
+  expect(response.status).toBe(201)
+  const created = (await response.json()) as { documentId: string; format: string }
+  expect(created.format).toBe('md')
+  expect((await getDocument(created.documentId))?.body).toContain('PDF摘要')
+})
+
+it('stores rich DOCX/PDF output and indexes table contents without modifying the source', async () => {
+  const documentId = await sourceDocx()
+  const content =
+    '<h1>创建报告</h1><p><strong>重要结论</strong> <a href="https://example.com">报告链接</a></p><table><tr><th>指标</th><th>数值</th></tr><tr><td><em>营业收入</em></td><td>120 万元</td></tr></table>'
+  let richXml = '',
+    pdfPageCount = 0
+  for (const format of ['docx', 'pdf'] as const) {
+    const created = await createDocumentAgentDocument({
+      documentId,
+      title: `富内容${format}`,
+      format,
+      content,
+    })
+    const saved = await getDocument(created.documentId)
+    expect(saved?.body).toContain('营业收入')
+    expect(saved?.body).toContain('120 万元')
+    const bytes = await readUpload(saved!.sourceKey!)
+    if (format === 'docx') {
+      richXml = await (await JSZip.loadAsync(bytes)).file('word/document.xml')!.async('string')
+    } else pdfPageCount = (await PDFDocument.load(bytes)).getPageCount()
+  }
+  expect(richXml).toContain('<w:tbl>')
+  expect(richXml).toContain('<w:hyperlink')
+  expect(pdfPageCount).toBe(1)
+  expect((await getDocument(documentId))?.body).toContain('源文档')
 })

@@ -1,4 +1,3 @@
-import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import Image from '@tiptap/extension-image'
 import Placeholder from '@tiptap/extension-placeholder'
 import { Table, TableCell, TableHeader, TableRow } from '@tiptap/extension-table'
@@ -9,6 +8,7 @@ import StarterKit from '@tiptap/starter-kit'
 import { common, createLowlight } from 'lowlight'
 import { MarkdownSearchHighlight } from '@mimir/office'
 import { MathBlock } from './math-block'
+import { DiagramCodeBlock } from './diagram-code-block'
 
 const lowlight = createLowlight(common)
 
@@ -31,7 +31,7 @@ export function createExtensions(options: { placeholder?: string } = {}) {
         HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' },
       },
     }),
-    CodeBlockLowlight.configure({ lowlight }),
+    DiagramCodeBlock.configure({ lowlight }),
     Image,
     Table.configure({ resizable: false }),
     TableRow,

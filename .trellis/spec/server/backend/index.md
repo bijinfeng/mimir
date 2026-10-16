@@ -20,6 +20,8 @@ paths:
 - [pitfalls](./pitfalls.md)
 
 - [API 路由](./api-routes.md)
+- [PDF 原文与批注宿主合同](../../shared/contract/pdf-agent.md)
+- [XLSX 编辑与公式重算宿主合同](../../shared/contract/xlsx-agent.md)
 - [鉴权](./auth.md)
 - [日志和错误](./logging.md)
 - [测试](./tests.md)

@@ -243,15 +243,15 @@ export function DocumentPanel({
   const [sidebarCitation, setSidebarCitation] = useState<Citation | null>(null)
 
   /** 打开侧栏。「就这段提问」把选中内容带引号预填进输入框（范围同样锁这一篇） */
-  const askAi = (passage?: string) => {
+  const askAi = (passage?: string, instruction?: string) => {
     if (!documentId) return
     aiTriggerRef.current = document.activeElement as HTMLElement | null
     setAiSidebar({
       docId: documentId,
       draft: {
-        text: passage
-          ? `关于这篇里这段：\n> ${passage.replace(/\n+/g, ' ').slice(0, 200)}\n\n`
-          : '',
+        text:
+          instruction ??
+          (passage ? `关于这篇里这段：\n> ${passage.replace(/\n+/g, ' ').slice(0, 200)}\n\n` : ''),
         documentId,
       },
       open: true,
@@ -766,6 +766,7 @@ export function DocumentPanel({
                   onFocusReady={() => requestNewNoteFocus(null)}
                   onOpenInternalNote={(id) => runGuarded(() => onOpenDocument(id))}
                   onAskAboutSelection={(passage) => askAi(passage)}
+                  onAiPreset={(instruction) => askAi(undefined, instruction)}
                   onDirtyChange={onDirtyChange}
                   onDocumentAgentHandleChange={setDocumentAgentHandle}
                   {...(showOutline
@@ -792,6 +793,7 @@ export function DocumentPanel({
                 />
               ) : doc.kind === 'file' ? (
                 <FilePreview
+                  onAiPreset={(instruction) => askAi(undefined, instruction)}
                   key={doc.id}
                   doc={doc}
                   onDirtyChange={onDirtyChange}

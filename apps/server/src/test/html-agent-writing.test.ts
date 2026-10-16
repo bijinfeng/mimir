@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { planHtmlPage, writeHtmlDocument } from '../services/html-agent-writing.js'
+import {
+  planHtmlPage,
+  writeHtmlDocument,
+  streamHtmlDocument,
+} from '../services/html-agent-writing.js'
 
 const mocks = vi.hoisted(() => ({
   call: vi.fn<() => Promise<string>>(),
@@ -77,5 +81,47 @@ describe('HTML page writer service', () => {
       writeHtmlDocument({ documentId: 'html-1', kind: 'content', instruction: 'Guide' }),
     ).rejects.toThrow('写作计划')
     expect(mocks.stream).not.toHaveBeenCalled()
+  })
+  it('yields model content before completion, then validates the final page', async () => {
+    let release!: () => void
+    const gate = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    mocks.stream.mockResolvedValue(
+      (async function* () {
+        yield { type: 'TEXT_MESSAGE_CONTENT', delta: '<!doctype html><html><body>第一段' }
+        await gate
+        yield { type: 'TEXT_MESSAGE_CONTENT', delta: '第二段</body></html>' }
+      })(),
+    )
+    const writing = streamHtmlDocument({
+      documentId: 'html-1',
+      kind: 'content',
+      instruction: 'Guide',
+      plan: 'Guide',
+    })
+    expect((await writing.next()).value).toEqual({
+      type: 'delta',
+      text: '<!doctype html><html><body>第一段',
+    })
+    release()
+    expect((await writing.next()).value).toEqual({ type: 'delta', text: '第二段</body></html>' })
+    expect((await writing.next()).value).toMatchObject({
+      type: 'done',
+      complete: true,
+      html: expect.stringContaining('第一段第二段'),
+    })
+    expect((await writing.next()).done).toBe(true)
+  })
+  it('exposes already-produced partial text before reporting an incomplete page', async () => {
+    mocks.stream.mockResolvedValue(chunks('<html><body>部分'))
+    const writing = streamHtmlDocument({
+      documentId: 'html-1',
+      kind: 'content',
+      instruction: 'Guide',
+      plan: 'Guide',
+    })
+    expect((await writing.next()).value).toEqual({ type: 'delta', text: '<html><body>部分' })
+    await expect(writing.next()).rejects.toThrow('未完成')
   })
 })

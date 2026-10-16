@@ -1,9 +1,15 @@
+import {
+  createLineRectsCache,
+  lineBreakBoundaries,
+} from '../vendor/apps/docs/src/renderer/pagination-lines.js'
+import { noteNumbering } from './docx-note-numbering.js'
 import type { PageNoteItem } from '../vendor/apps/docs/src/renderer/pagination-types.js'
 import type { NoteKind } from '../vendor/packages/docx-engine/src/notes.js'
 import type { NoteInfo, NoteRun } from '../vendor/packages/docx-engine/src/types.js'
 import {
   cssFontFamily,
   noteLineHeightPx,
+  FOOTNOTE_SEPARATOR_H,
   noteRunStyle,
   resolveNoteStyle,
 } from '../vendor/apps/docs/src/renderer/line-metrics.js'
@@ -96,7 +102,7 @@ function measureNoteHeightDom(
   lineHeightPx: number,
   fontSizePt: number,
   fontFamily?: string,
-): number | null {
+): { height: number; breakOffsets: number[] } | null {
   if (typeof document === 'undefined' || !document.body || widthPx <= 0) return null
   if (!noteMeasureHost || !noteMeasureHost.isConnected) {
     noteMeasureHost = document.createElement('div')
@@ -115,7 +121,9 @@ function measureNoteHeightDom(
   appendNoteRuns(row, entry, kind)
   host.append(row)
   const height = row.getBoundingClientRect().height
-  return height > 0 ? height : null
+  return height > 0
+    ? { height, breakOffsets: lineBreakBoundaries(createLineRectsCache()(row, 1)) }
+    : null
 }
 
 /**
@@ -126,13 +134,13 @@ function measureNoteHeightDom(
  */
 function appendNoteRuns(
   row: HTMLElement,
-  entry: Omit<PageNoteItem, 'height' | 'id'>,
+  entry: Omit<PageNoteItem, 'height' | 'id'> & { markText?: string },
   kind: NoteKind,
 ): void {
   // `noRefMark` 为真时不画编号：Word 里脚注正文可以没有自引用标记
   if (!entry.noRefMark) {
     const sup = document.createElement('sup')
-    sup.textContent = noteMarkText(kind, entry.no)
+    sup.textContent = entry.markText ?? noteMarkText(kind, entry.no)
     row.append(sup)
   }
   if (entry.richParas) {
@@ -161,6 +169,7 @@ function appendNoteRuns(
   } else {
     const span = document.createElement('span')
     span.textContent = entry.text
+    span.style.whiteSpace = 'pre-wrap'
     row.append(span)
   }
 }
@@ -187,12 +196,13 @@ export interface FootnoteContext {
  * 同一个段落里的多个脚注各自跟着自己的引用行走——`noteBands` 给了每个
  * 引用的行偏移，用它在切片里定位页号。
  */
-export function pageFootnotesOf(ctx: FootnoteContext, slices: PageSlice[]): PageNoteItem[][] {
-  const out: PageNoteItem[][] = slices.map(() => [])
+export function pageFootnotesOf(ctx: FootnoteContext, slices: PageSlice[]): NoteFragment[][] {
+  const out: NoteFragment[][] = slices.map(() => [])
   if (ctx.footnotes.length === 0) return out
 
   const noteStyleOf = makeNoteStyleOf(ctx.parsed)
-  const noOf = new Map(ctx.footnotes.map((f, i) => [f.id, i + 1]))
+  const numbering = noteNumbering('footnote', ctx.parsed.footnoteProps)
+  const seen = new Set<string>()
 
   /** 某个内容流坐标落在第几页（1 起） */
   const pageAt = (y: number): number => {
@@ -233,7 +243,8 @@ export function pageFootnotesOf(ctx: FootnoteContext, slices: PageSlice[]): Page
     for (let ri = 0; ri < ids.length; ri += 1) {
       const id = ids[ri]!
       const note = ctx.footnotes.find((f) => f.id === id)
-      if (!note) continue
+      if (!note || seen.has(id)) continue
+      seen.add(id)
 
       /**
        * 这一条脚注落在哪一页。
@@ -247,7 +258,11 @@ export function pageFootnotesOf(ctx: FootnoteContext, slices: PageSlice[]): Page
         ? pageAt(box.top + (box.spaceBeforePx ?? 0) + band.offset)
         : pageAt(box.top + 0.5)
 
-      const no = noOf.get(id) ?? 0
+      const sectionIndex = Math.max(
+        0,
+        ctx.sections.findIndex((item) => item.settings === section),
+      )
+      const number = numbering(id, sectionIndex, page - 1, section.footnotePr)
       const style = noteStyleOf(note)
       const contentW = twipsToPx(section.pageWidth - section.marginLeft - section.marginRight)
       const lineHeightPx = noteLineHeightPx(section.docGrid, style)
@@ -255,7 +270,7 @@ export function pageFootnotesOf(ctx: FootnoteContext, slices: PageSlice[]): Page
       const fontFamily = style.fontFamily ? cssFontFamily(style.fontFamily) : undefined
 
       const entry = {
-        no,
+        ...number,
         text: note.text,
         ...(note.richParas ? { richParas: note.richParas } : {}),
         ...(note.noRefMark ? { noRefMark: true as const } : {}),
@@ -267,8 +282,16 @@ export function pageFootnotesOf(ctx: FootnoteContext, slices: PageSlice[]): Page
        * 互相覆盖的案例），而预留高度小于实际渲染高度时会叠在一起。
        * 离屏测量要求有 document（SSR/测试环境没有），所以保留估算作为退路。
        */
+      const measured = measureNoteHeightDom(
+        entry,
+        'footnote',
+        contentW,
+        lineHeightPx,
+        fontSizePt,
+        fontFamily,
+      )
       const height =
-        measureNoteHeightDom(entry, 'footnote', contentW, lineHeightPx, fontSizePt, fontFamily) ??
+        measured?.height ??
         estimateFootnoteHeight(
           note.text,
           contentW,
@@ -282,6 +305,7 @@ export function pageFootnotesOf(ctx: FootnoteContext, slices: PageSlice[]): Page
         ...entry,
         id,
         height,
+        ...(measured?.breakOffsets.length ? { breakOffsets: measured.breakOffsets } : {}),
         lineHeightPx,
         fontSizePt,
         ...(fontFamily ? { fontFamily } : {}),
@@ -291,13 +315,23 @@ export function pageFootnotesOf(ctx: FootnoteContext, slices: PageSlice[]): Page
   return out
 }
 
+export interface NoteFragment extends PageNoteItem {
+  markText?: string
+  breakOffsets?: number[]
+  clipTop?: number
+  fullHeight?: number
+}
+
 /**
  * 把一页的脚注画成页底区块。
  *
  * 返回的元素挂到页间隙上（`PageGapSpec.notes`）——间隙的高度已经按
  * `noteBands` 预留过，所以这里画进去的内容正好填满那块空间。
  */
-export function makeGapNotesEl(items: PageNoteItem[], widthPx: number): HTMLElement {
+export function makeGapNotesEl(
+  items: (NoteFragment & { kind?: NoteKind })[],
+  widthPx: number,
+): HTMLElement {
   const wrap = document.createElement('div')
   wrap.className = 'page-gap-notes'
   wrap.style.width = `${widthPx}px`
@@ -311,16 +345,56 @@ export function makeGapNotesEl(items: PageNoteItem[], widthPx: number): HTMLElem
     if (item.lineHeightPx) row.style.lineHeight = `${item.lineHeightPx}px`
     if (item.fontSizePt) row.style.fontSize = `${item.fontSizePt}pt`
     if (item.fontFamily) row.style.fontFamily = item.fontFamily
-    appendNoteRuns(row, item, 'footnote')
+    row.dataset.noteKind = item.kind ?? 'footnote'
+    row.dataset.noteId = item.id
+    if (item.fullHeight !== undefined) {
+      row.style.height = `${item.height}px`
+      row.style.overflow = 'hidden'
+      const content = document.createElement('div')
+      content.style.transform = `translateY(-${item.clipTop ?? 0}px)`
+      appendNoteRuns(content, item, item.kind ?? 'footnote')
+      if (item.clipTop) {
+        content.setAttribute('aria-hidden', 'true')
+        row.setAttribute('aria-label', `脚注 ${item.no} 续`)
+        row.dataset.noteContinuation = 'true'
+      }
+      row.append(content)
+    } else appendNoteRuns(row, item, item.kind ?? 'footnote')
     wrap.append(row)
   }
   return wrap
 }
 
 /** 页底脚注区的高度（含与正文之间的分隔线） */
-export const FOOTNOTE_SEPARATOR_H = 8
+export { FOOTNOTE_SEPARATOR_H }
 
 export function notesAreaHeight(items: PageNoteItem[]): number {
   if (items.length === 0) return 0
   return items.reduce((sum, item) => sum + item.height, 0) + FOOTNOTE_SEPARATOR_H
+}
+
+/** Endnote rows are displayed in an in-flow decoration at their section/document end. */
+export function endnoteItems(
+  parsed: ParsedDoc,
+  notes: NoteInfo[],
+  settings: SectionSettings,
+): (PageNoteItem & { kind: 'endnote' })[] {
+  const styleOf = makeNoteStyleOf(parsed)
+  const width = twipsToPx(settings.pageWidth - settings.marginLeft - settings.marginRight)
+  return notes.map((note, index) => {
+    const style = styleOf(note)
+    const lineHeightPx = noteLineHeightPx(settings.docGrid, style)
+    const fontSizePt = style.sizeHalfPoints ? style.sizeHalfPoints / 2 : 10
+    const fontFamily = style.fontFamily ? cssFontFamily(style.fontFamily) : undefined
+    const entry = {
+      no: index + 1,
+      text: note.text,
+      ...(note.richParas ? { richParas: note.richParas } : {}),
+      ...(note.noRefMark ? { noRefMark: true as const } : {}),
+    }
+    const height =
+      measureNoteHeightDom(entry, 'endnote', width, lineHeightPx, fontSizePt, fontFamily)?.height ??
+      estimateFootnoteHeight(note.text, width, settings.docGrid, undefined, style, note.richParas)
+    return { ...entry, kind: 'endnote', id: note.id, height, lineHeightPx, fontSizePt, fontFamily }
+  })
 }

@@ -23,7 +23,7 @@
 
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { act } from 'react'
+import { act, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -959,6 +959,37 @@ describe('ToolbarToggleGroup', () => {
 describe('ToolbarNumberField', () => {
   const props = { label: '页码', min: 1, max: 10, onCommit: () => {} }
 
+  it.each([false, true])(
+    'commits an active number draft before the first apply click (textButton=%s)',
+    (textButton) => {
+      const apply = vi.fn<(value: number) => void>()
+      function Form() {
+        const [value, setNumber] = useState(80)
+        return (
+          <>
+            <ToolbarNumberField label="横坐标" value={value} onCommit={setNumber} />
+            {textButton ? (
+              <ToolbarTextButton label="应用" onClick={() => apply(value)} />
+            ) : (
+              <ToolbarButton label="应用" onClick={() => apply(value)}>
+                应用
+              </ToolbarButton>
+            )}
+          </>
+        )
+      }
+      const host = mount(<Form />)
+      const input = host.querySelector('input')!
+      act(() => input.focus())
+      setValue(input, '110')
+      const button = host.querySelector('button')!
+      mouseDown(button)
+      click(button)
+      expect(apply).toHaveBeenCalledExactlyOnceWith(110)
+      expect(input.value).toBe('110')
+    },
+  )
+
   it('回车提交，并夹到 [min, max]', () => {
     const onCommit = vi.fn<(value: number) => void>()
     const host = mount(<ToolbarNumberField {...props} value={3} onCommit={onCommit} />)
@@ -1638,6 +1669,76 @@ describe('ToolbarMenuItemRow', () => {
  * 现在判据是「事件从哪来」，不是「容器挂了哪个类名」——所以两条都测。
  */
 describe('ToolbarMenu 面板里的表单控件', () => {
+  it('Escape closes only the innermost menu and returns focus to its surviving trigger', () => {
+    const host = mount(
+      <ToolbarMenu
+        label="字体组"
+        renderPanel={() => <ToolbarMenu label="文字颜色" items={[{ key: 'red', label: '红色' }]} />}
+      />,
+    )
+    const outerTrigger = host.querySelector('button')!
+    click(outerTrigger)
+    const innerTrigger = host.querySelector<HTMLButtonElement>('button[aria-label="文字颜色"]')!
+    click(innerTrigger)
+    const innerPanel = host.querySelector('[role="menu"][aria-label="文字颜色"]')!
+    press(innerPanel, 'Escape')
+    expect(host.querySelector('[role="menu"][aria-label="文字颜色"]')).toBeNull()
+    const outerPanel = host.querySelector('[role="menu"][aria-label="字体组"]')
+    expect(outerPanel).not.toBeNull()
+    expect(document.activeElement).toBe(innerTrigger)
+    press(innerTrigger, 'Escape')
+    expect(host.querySelector('[role="menu"]')).toBeNull()
+    expect(document.activeElement).toBe(outerTrigger)
+  })
+
+  it('Tab enters a custom command panel, traverses its controls and exits at its last control', () => {
+    const host = mount(
+      <ToolbarMenu
+        label="字体"
+        renderPanel={() => (
+          <>
+            <button disabled>不可用</button>
+            <button>加粗</button>
+            <input aria-label="字号" />
+            <button>清除格式</button>
+          </>
+        )}
+      />,
+    )
+    const trigger = host.querySelector('button')!
+    click(trigger)
+    const panel = host.querySelector('[role="menu"]')!
+    press(panel, 'Tab')
+    const buttons = panel.querySelectorAll('button')
+    expect(document.activeElement).toBe(buttons[1])
+    const middleTab = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true })
+    act(() => buttons[1]!.dispatchEvent(middleTab))
+    expect(middleTab.defaultPrevented).toBe(false)
+    expect(host.querySelector('[role="menu"]')).toBe(panel)
+    act(() => buttons[2]!.focus())
+    press(buttons[2]!, 'Tab')
+    expect(host.querySelector('[role="menu"]')).toBeNull()
+    expect(document.activeElement).toBe(trigger)
+  })
+
+  it('arrow keys can enter a custom panel with ordinary toolbar buttons', () => {
+    const host = mount(
+      <ToolbarMenu
+        label="字体"
+        renderPanel={() => (
+          <>
+            <button>加粗</button>
+            <button>清除格式</button>
+          </>
+        )}
+      />,
+    )
+    click(host.querySelector('button')!)
+    const panel = host.querySelector('[role="menu"]')!
+    press(panel, 'ArrowDown')
+    expect(document.activeElement).toBe(panel.querySelector('button'))
+  })
+
   it('来自输入框的方向键不被菜单吃掉（数字框的上下键是改数）', () => {
     const host = mount(<ToolbarMenu label="插入" renderPanel={() => <input aria-label="行数" />} />)
     click(host.querySelector('button')!)
@@ -1899,5 +2000,69 @@ describe('ToolbarTextButton', () => {
     // 继承：`.me-text-btn` 写的是 `color: inherit`
     const css = readFileSync(join(here, 'shell.css'), 'utf8')
     expect(/\.me-text-btn \{[^}]*color: inherit/.test(css)).toBe(true)
+  })
+})
+
+describe('异步操作中的工具栏禁用', () => {
+  it('下拉、数字输入和两种调色板表达原因并拒绝交互', () => {
+    const change = vi.fn<(value: string) => void>()
+    const commit = vi.fn<(value: number) => void>()
+    const host = mount(
+      <>
+        <ToolbarSelect
+          label="忙碌下拉"
+          value="a"
+          options={[{ value: 'a', label: 'A' }]}
+          onChange={change}
+          disabled
+          disabledReason="正在保存"
+        />
+        <ToolbarNumberField
+          label="忙碌数字"
+          value={1}
+          onCommit={commit}
+          disabled
+          disabledReason="正在保存"
+          step={0.5}
+        />
+        <ToolbarColorPicker
+          label="忙碌颜色"
+          value={null}
+          options={[{ value: '#FF0000', label: '红色', swatch: '#FF0000' }]}
+          onPick={change}
+          disabled
+          disabledReason="正在保存"
+        />
+        <ToolbarColorPicker
+          label="忙碌内联颜色"
+          value={null}
+          options={[{ value: '#000000', label: '黑色', swatch: '#000000' }]}
+          onPick={change}
+          inline
+          disabled
+          disabledReason="正在保存"
+        />
+      </>,
+    )
+    const number = host.querySelector<HTMLInputElement>('input[aria-label="忙碌数字"]')!
+    expect(number.disabled).toBe(true)
+    expect(number.title).toBe('正在保存')
+    setValue(number, '3')
+    press(number, 'Enter')
+    expect(commit).not.toHaveBeenCalled()
+    expect(host.querySelector<HTMLInputElement>('input[aria-label="忙碌下拉"]')?.disabled).toBe(
+      true,
+    )
+    const color = host.querySelector<HTMLButtonElement>('button[aria-label="忙碌颜色"]')!
+    const inline = host.querySelector<HTMLButtonElement>('button[aria-label="黑色"]')!
+    expect(color.disabled).toBe(true)
+    expect(inline.disabled).toBe(true)
+    expect(inline.title).toBe('正在保存')
+    act(() => {
+      color.click()
+      inline.click()
+    })
+    expect(change).not.toHaveBeenCalled()
+    expect(host.querySelector('.me-color__panel')).toBeNull()
   })
 })

@@ -1,0 +1,128 @@
+.mimir-pptx-animation {
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--me-text);
+}
+.mimir-pptx-animation__header {
+  flex: none;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--me-border);
+}
+.mimir-pptx-animation__header .me-tabs {
+  display: flex;
+}
+.mimir-pptx-animation__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 12px;
+  scrollbar-color: var(--me-border) transparent;
+}
+.mimir-pptx-animation__footer {
+  flex: none;
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border-top: 1px solid var(--me-border);
+  background: var(--me-surface);
+}
+.mimir-pptx-animation__body:has(> .mimir-pptx-animation-gallery) {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.mimir-pptx-animation-gallery {
+  min-height: 0;
+  overflow: auto;
+  padding: 12px;
+  scrollbar-color: var(--me-border) transparent;
+}
+.mimir-pptx-animation-gallery__hint {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--me-text-weak);
+  margin: 8px 0;
+}
+.mimir-pptx-animation-gallery h4 {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 18px 0 8px;
+}
+.mimir-pptx-animation-gallery h4 span {
+  font-weight: 400;
+  color: var(--me-text-weak);
+  font-size: 11px;
+}
+.mimir-pptx-animation-gallery__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.mimir-pptx-animation-gallery .mimir-pptx-animation-gallery__effect {
+  width: 100%;
+  height: auto;
+  min-height: 54px;
+  padding: 8px 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12px;
+  line-height: 1.25;
+  white-space: normal;
+}
+.mimir-pptx-animation-gallery__effect svg {
+  flex: none;
+}
+.mimir-pptx-animation-gallery__effect[aria-pressed='true'] {
+  color: var(--me-accent);
+  border-color: var(--me-accent);
+  background: var(--me-accent-bg);
+}
+.mimir-pptx-animation-gallery__none {
+  width: 100%;
+}
+.mimir-pptx-animation-gallery__advanced {
+  margin-top: 18px;
+  padding-top: 12px;
+  border-top: 1px solid var(--me-border);
+}
+.mimir-pptx-animation-gallery__advanced summary {
+  cursor: pointer;
+  padding: 4px 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.mimir-pptx-animation__error {
+  color: var(--me-danger);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 8px 0 0;
+}
+.mimir-pptx-inspector__body[data-panel='备注与放映'] {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.mimir-pptx-animation__summary {
+  margin-right: auto;
+  color: var(--me-text-weak);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  align-self: center;
+}

@@ -1,0 +1,56 @@
+.mimir-pptx-shape-insert-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+.mimir-pptx-shape-insert-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: auto;
+  touch-action: none;
+  cursor: crosshair;
+}
+.mimir-pptx-shape-insert-canvas:focus-visible {
+  outline: 2px solid var(--me-accent);
+  outline-offset: -2px;
+}
+.mimir-pptx-shape-insert-preview {
+  fill: var(--me-accent);
+  fill-opacity: 0.1;
+  stroke: var(--me-accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 3;
+  stroke-linejoin: round;
+}
+.mimir-pptx-shape-insert-preview path,
+.mimir-pptx-shape-insert-preview rect {
+  vector-effect: non-scaling-stroke;
+}
+.mimir-pptx-shape-insert-feedback {
+  position: absolute;
+  inset-inline: 8px;
+  bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: fit-content;
+  max-width: calc(100% - 16px);
+  margin-inline: auto;
+  padding: 6px 8px;
+  color: var(--me-text);
+  background: var(--me-surface);
+  border: 1px solid var(--me-border);
+  border-radius: var(--me-radius, 4px);
+  font-size: var(--me-font-size-sm, 12px);
+  pointer-events: auto;
+}
+.mimir-pptx-shape-insert-feedback > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.mimir-pptx-shape-insert-feedback > .me-tb {
+  flex-shrink: 0;
+}

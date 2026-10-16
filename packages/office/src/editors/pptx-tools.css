@@ -1,0 +1,392 @@
+.mimir-pptx-workspace {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  container-type: inline-size;
+  container-name: mimir-pptx-workspace;
+}
+.mimir-pptx-workspace > .mimir-page-browser {
+  flex: 1;
+  min-width: 0;
+}
+.mimir-pptx-inspector {
+  width: 340px;
+  max-width: 40%;
+  flex-shrink: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-inline-start: 1px solid var(--me-border);
+  background: var(--me-surface);
+  color: var(--me-text);
+}
+.mimir-pptx-inspector__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--me-border);
+  gap: 12px;
+}
+.mimir-pptx-inspector__head h2 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+}
+.mimir-pptx-inspector__body {
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 12px;
+  min-height: 0;
+}
+.mimir-pptx-inspector__body[data-panel='公式']
+  .me-property-group:first-child
+  > .me-property-group__title {
+  display: none;
+}
+.mimir-pptx-tool-popover {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+.mimir-pptx-control-panel .me-menu__note {
+  margin: 0;
+  color: var(--me-text-secondary, var(--me-text));
+  opacity: 0.8;
+}
+.mimir-pptx-workspace .mimir-pptx-slide svg {
+  max-width: 100%;
+  height: auto;
+}
+@container mimir-pptx-workspace (max-width: 800px) {
+  .mimir-pptx-inspector {
+    position: absolute;
+    inset: 0 0 0 auto;
+    z-index: 12;
+    width: 340px;
+    max-width: calc(100% - 32px);
+    box-shadow: var(--me-shadow);
+  }
+}
+
+.mimir-pptx-control-panel[aria-busy='true'] {
+  pointer-events: none;
+  opacity: 0.65;
+}
+
+.mimir-pptx-theme-color-value {
+  font-size: var(--me-font-size-sm, 12px);
+  font-variant-numeric: tabular-nums;
+}
+
+.mimir-pptx-path-preview {
+  display: block;
+  width: 100%;
+  max-height: 180px;
+  aspect-ratio: 1;
+  border: 1px solid var(--me-border);
+  background: var(--me-bg);
+  border-radius: 6px;
+}
+.mimir-pptx-equation-preview,
+.mimir-pptx-diagram-preview {
+  width: 100%;
+  min-width: 0;
+  max-height: 190px;
+  padding: 12px;
+  border: 1px solid var(--me-border);
+  border-radius: var(--me-radius);
+  background: var(--me-bg);
+  box-sizing: border-box;
+}
+.mimir-pptx-equation-preview {
+  overflow: auto;
+  text-align: center;
+  font-size: 22px;
+}
+.mimir-pptx-clipboard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ant-padding-xs, 8px);
+}
+.mimir-pptx-media-preview,
+.mimir-pptx-asset-preview {
+  display: block;
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+  border-radius: var(--ant-border-radius, 6px);
+  background: var(--me-canvas);
+}
+.mimir-pptx-asset-preview svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.mimir-pptx-workspace .mimir-pptx-stage {
+  justify-content: flex-start;
+}
+.mimir-pptx-stage.has-ruler {
+  padding: 38px;
+}
+.mimir-pptx-sheet {
+  position: relative;
+  flex-shrink: 0;
+  margin-inline: auto;
+}
+.mimir-pptx-view-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.mimir-pptx-view-overlay line {
+  vector-effect: non-scaling-stroke;
+  stroke-width: 1;
+}
+.mimir-pptx-gridlines {
+  stroke: var(--me-text-secondary, var(--me-text));
+  opacity: 0.25;
+  stroke-dasharray: 2 3;
+}
+.mimir-pptx-center-guides {
+  stroke: var(--me-accent);
+  stroke-dasharray: 6 4;
+}
+.mimir-pptx-ruler {
+  position: absolute;
+  background: var(--me-surface);
+  color: var(--me-text);
+  fill: currentColor;
+  pointer-events: none;
+  font-size: 10px;
+}
+.mimir-pptx-ruler line {
+  stroke: var(--me-border);
+  stroke-width: 1;
+}
+.mimir-pptx-ruler--horizontal {
+  left: 0;
+  top: -24px;
+  height: 22px;
+  width: 100%;
+}
+.mimir-pptx-ruler--vertical {
+  top: 0;
+  left: -24px;
+  width: 22px;
+  height: 100%;
+}
+.mimir-pptx-icon-gallery {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--ant-padding-xxs, 4px);
+}
+.mimir-pptx-icon-preview {
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+  background: var(--me-bg);
+  border-radius: var(--me-radius);
+}
+.mimir-pptx-cutout-preview {
+  background: var(--me-canvas);
+  border: 1px solid var(--me-border);
+  min-height: 100px;
+  display: flex;
+  justify-content: center;
+}
+.mimir-pptx-cutout-preview img {
+  max-width: 100%;
+  max-height: 240px;
+  object-fit: contain;
+}
+.mimir-pptx-model-preview {
+  display: block;
+  width: 100%;
+  height: 220px;
+  background: var(--me-canvas);
+  border-radius: var(--me-radius);
+}
+
+.mimir-pptx-model-actions {
+  position: sticky;
+  bottom: -12px;
+  z-index: 1;
+  padding-block: 10px;
+  background: var(--me-surface);
+}
+.mimir-pptx-model-actions > .me-tb {
+  width: 100%;
+}
+.mimir-pptx-recording-status {
+  margin: 0;
+  color: var(--me-text);
+  font-variant-numeric: tabular-nums;
+}
+.mimir-pptx-chart-palette {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.mimir-pptx-chart-palette > span {
+  width: 24px;
+  height: 16px;
+  border-radius: 2px;
+  border: 1px solid var(--me-border);
+}
+.mimir-pptx-inspector__body[data-panel='编辑图表'] {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+}
+.mimir-pptx-chart-editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.mimir-pptx-chart-tabs {
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--me-border);
+  padding: 4px 12px 0;
+}
+.mimir-pptx-chart-tabs .me-tabs {
+  display: flex;
+  width: 100%;
+}
+.mimir-pptx-chart-tabs .me-tab {
+  flex: 1;
+}
+.mimir-pptx-chart-editor__content {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  flex: 1;
+  padding: 12px;
+}
+.mimir-pptx-chart-editor__actions {
+  flex-shrink: 0;
+  padding: 10px 12px;
+  border-top: 1px solid var(--me-border);
+  background: var(--me-surface);
+}
+.mimir-pptx-chart-editor__actions > .me-tb {
+  width: 100%;
+}
+
+/* Table editing keeps the current cell and the apply action outside long tool stacks. */
+.mimir-pptx-inspector__body[data-panel='编辑表格'] {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+}
+.mimir-pptx-table-editor {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.mimir-pptx-table-tabs {
+  flex-shrink: 0;
+  padding: 4px 12px 0;
+  border-bottom: 1px solid var(--me-border);
+}
+.mimir-pptx-table-tabs .me-tabs {
+  display: flex;
+  width: 100%;
+}
+.mimir-pptx-table-tabs .me-tab {
+  flex: 1;
+}
+.mimir-pptx-table-editor__content {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 12px;
+}
+.mimir-pptx-table-editor__actions {
+  flex-shrink: 0;
+  padding: 10px 12px;
+  border-top: 1px solid var(--me-border);
+  background: var(--me-surface);
+}
+.mimir-pptx-table-editor__actions > .me-tb {
+  width: 100%;
+}
+.mimir-pptx-table-gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  min-width: 0;
+}
+.mimir-pptx-table-gallery > .me-tb {
+  height: auto;
+  min-width: 0;
+  padding-block: 8px;
+}
+.mimir-pptx-table-gallery > .me-tb > span {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 5px;
+  white-space: normal;
+}
+.mimir-pptx-table-gallery > .me-tb[aria-pressed='true'] {
+  outline: 2px solid var(--me-accent);
+  outline-offset: -2px;
+}
+.mimir-pptx-table-swatch {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px !important;
+  width: 72px;
+  align-self: center;
+}
+.mimir-pptx-table-swatch > span {
+  height: 9px;
+  border: 1px solid;
+}
+
+.mimir-pptx-table-editor__content > .me-property-form {
+  padding: 0;
+}
+.mimir-pptx-table-editor__content .me-property-group + .me-property-group {
+  margin-top: 14px;
+}
+.mimir-pptx-table-cell-selector {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  min-width: 0;
+}
+.mimir-pptx-table-swatch > span {
+  height: 7px;
+}
+
+.mimir-pptx-table-flags {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+}
+.mimir-pptx-table-gallery .me-btn__icon {
+  font-size: var(--me-font-size-sm, 12px);
+  line-height: 1.4;
+}

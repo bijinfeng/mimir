@@ -1,5 +1,7 @@
 import { readFileSync } from 'node:fs'
 import JSZip from 'jszip'
+import { Hono } from 'hono'
+import { HttpError } from '../lib/http.js'
 import { describe, expect, it, vi } from 'vitest'
 import { pptxManualPictureFieldsSchema, PPTX_IMAGE_MAX_BYTES } from '@mimir/shared'
 
@@ -15,6 +17,7 @@ vi.mock('../services/documents.js', () => ({
       : null,
 }))
 
+import { getSlideAnimations } from '../../../../packages/office/vendor/packages/pptx-engine/src/animation.js'
 import { applyPptxManualPictureOnHost, applyPptxOpsOnHost } from '../services/pptx-agent-host.js'
 import { conversationsRoute } from '../routes/conversations.js'
 import {
@@ -54,6 +57,239 @@ const ONE_PIXEL_PNG = new Uint8Array(
 )
 
 describe('PPTX host executor', () => {
+  it('edits existing animation timing through the manual action, rejects raw XML and preserves untouched parts twice', async () => {
+    const opened = await openPptx(load())
+    const element = opened.deck.slides[0]!.elements.find((item) => item.type === 'text')!
+    const inserted = await applyPptxOpsOnHost({
+      documentId: 'pptx-1',
+      bytes: load(),
+      expectedVersion: 0,
+      ops: [
+        {
+          op: 'addAnimation',
+          target: { slide: 0, el: elementDurableId(element)! },
+          effect: 'fade',
+          trigger: 'onClick',
+          durationMs: 500,
+          delayMs: 0,
+        },
+      ],
+    })
+    const timing = { op: 'editAnimationTiming', target: { slide: 0 }, seq: 0, durationMs: 900 }
+    await expect(
+      applyPptxOpsOnHost({
+        documentId: 'pptx-1',
+        bytes: inserted.bytes,
+        expectedVersion: 1,
+        ops: [timing],
+      }),
+    ).rejects.toThrow('不对 Agent 开放')
+    await expect(
+      applyPptxOpsOnHost({
+        documentId: 'pptx-1',
+        bytes: inserted.bytes,
+        expectedVersion: 1,
+        action: 'edit_animation',
+        ops: [{ ...timing, presetXml: '<p:timing/>' }],
+      }),
+    ).rejects.toThrow(/Unrecognized key/)
+    const first = await applyPptxOpsOnHost({
+      documentId: 'pptx-1',
+      bytes: inserted.bytes,
+      expectedVersion: 1,
+      action: 'edit_animation',
+      ops: [timing],
+    })
+    const second = await applyPptxOpsOnHost({
+      documentId: 'pptx-1',
+      bytes: first.bytes,
+      expectedVersion: 2,
+      action: 'edit_animation',
+      ops: [{ ...timing, durationMs: undefined, delayMs: 200, trigger: 'afterPrev' }],
+    })
+    expect(getSlideAnimations((await openPptx(second.bytes)).deck.slides[0]!)[0]).toMatchObject({
+      effect: 'fade',
+      durationMs: 900,
+      delayMs: 200,
+      trigger: 'afterPrev',
+    })
+    const before = await JSZip.loadAsync(inserted.bytes),
+      after = await JSZip.loadAsync(second.bytes)
+    expect(await after.file('ppt/slides/slide1.xml')!.async('string')).toContain('dur="900"')
+    expect(await after.file('ppt/theme/theme1.xml')!.async('uint8array')).toEqual(
+      await before.file('ppt/theme/theme1.xml')!.async('uint8array'),
+    )
+    await expect(
+      applyPptxOpsOnHost({
+        documentId: 'pptx-1',
+        bytes: second.bytes,
+        expectedVersion: 3,
+        action: 'edit_animation',
+        ops: [{ ...timing, seq: 999 }],
+      }),
+    ).rejects.toThrow('动画已失效')
+  })
+
+  it('edits an existing multi-series chart through the isolated action and preserves unrelated parts', async () => {
+    const inserted = await applyPptxOpsOnHost({
+      documentId: 'pptx-1',
+      bytes: load(),
+      expectedVersion: 0,
+      ops: [
+        {
+          op: 'addChart',
+          target: { slide: 0 },
+          kind: 'bar',
+          categories: ['Q1', 'Q2'],
+          series: [
+            { name: '收入', values: [12, 18] },
+            { name: '成本', values: [4, 9] },
+          ],
+          dataSource: 'user',
+          offset: { x: 914400, y: 1371600, cx: 5486400, cy: 2743200 },
+        },
+      ],
+    })
+    const before = await openPptx(inserted.bytes)
+    const chart = before.deck.slides[0]!.elements.find((item) => item.type === 'chart')!
+    const op = {
+      op: 'setChart',
+      target: { slide: 0, el: elementDurableId(chart)! },
+      patch: {
+        title: '季度收入',
+        series: [
+          { name: '收入', values: [20, 30] },
+          { name: '成本', values: [5, 11] },
+        ],
+      },
+      dataSource: 'user',
+    }
+    await expect(
+      applyPptxOpsOnHost({
+        documentId: 'pptx-1',
+        bytes: inserted.bytes,
+        expectedVersion: 1,
+        ops: [op],
+      }),
+    ).rejects.toThrow('不对 Agent 开放')
+    const edited = await applyPptxOpsOnHost({
+      documentId: 'pptx-1',
+      bytes: inserted.bytes,
+      expectedVersion: 1,
+      action: 'edit_chart',
+      ops: [op],
+    })
+    const reopened = await openPptx(edited.bytes)
+    const result = reopened.deck.slides[0]!.elements.find((item) => item.type === 'chart')
+    if (result?.type !== 'chart') throw new Error('图表丢失')
+    expect(result.chart.title).toBe('季度收入')
+    expect(result.chart.series.map((item) => item.values)).toEqual([
+      [20, 30],
+      [5, 11],
+    ])
+    const inputZip = await JSZip.loadAsync(inserted.bytes)
+    const outputZip = await JSZip.loadAsync(edited.bytes)
+    expect(await outputZip.file('ppt/theme/theme1.xml')!.async('uint8array')).toEqual(
+      await inputZip.file('ppt/theme/theme1.xml')!.async('uint8array'),
+    )
+    const frame = await outputZip.file('ppt/slides/slide1.xml')!.async('string')
+    expect(frame).toContain('<c:chart')
+    expect(edited.version).toBe(2)
+    await expect(
+      applyPptxOpsOnHost({
+        documentId: 'pptx-1',
+        bytes: inserted.bytes,
+        expectedVersion: 1,
+        action: 'edit_chart',
+        ops: [{ ...op, patch: { series: [{ name: 'invalid', values: [1] }] } }],
+      }),
+    ).rejects.toThrow('数量必须与类别一致')
+    await expect(
+      applyPptxOpsOnHost({
+        documentId: 'pptx-1',
+        bytes: inserted.bytes,
+        expectedVersion: 1,
+        action: 'edit_chart',
+        ops: [{ ...op, op: 'deleteElement' }],
+      }),
+    ).rejects.toThrow(/setChart/)
+    await expect(
+      applyPptxOpsOnHost({
+        documentId: 'pptx-1',
+        bytes: inserted.bytes,
+        expectedVersion: 1,
+        action: 'edit_chart',
+        ops: [{ ...op, dataSource: undefined }],
+      }),
+    ).rejects.toThrow('dataSource')
+  })
+
+  it('requires confirmation before rebuilding imported charts and rejects unknown route actions', async () => {
+    const inserted = await applyPptxOpsOnHost({
+      documentId: 'pptx-1',
+      bytes: load(),
+      expectedVersion: 0,
+      ops: [
+        {
+          op: 'addChart',
+          target: { slide: 0 },
+          kind: 'line',
+          categories: ['A'],
+          series: [{ name: '数据', values: [2] }],
+          dataSource: 'user',
+          offset: { x: 914400, y: 1371600, cx: 5486400, cy: 2743200 },
+        },
+      ],
+    })
+    const zip = await JSZip.loadAsync(inserted.bytes)
+    const xml = await zip.file('ppt/slides/slide1.xml')!.async('string')
+    zip.file('ppt/slides/slide1.xml', xml.replace('descr="aislides-chart"', 'descr="imported"'))
+    const bytes = await zip.generateAsync({ type: 'uint8array' })
+    const chart = (await openPptx(bytes)).deck.slides[0]!.elements.find(
+      (item) => item.type === 'chart',
+    )!
+    const op = {
+      op: 'setChart',
+      target: { slide: 0, el: elementDurableId(chart)! },
+      patch: { title: '新标题' },
+    }
+    await expect(
+      applyPptxOpsOnHost({
+        documentId: 'pptx-1',
+        bytes,
+        expectedVersion: 1,
+        action: 'edit_chart',
+        ops: [op],
+      }),
+    ).rejects.toThrow('请确认')
+    const edited = await applyPptxOpsOnHost({
+      documentId: 'pptx-1',
+      bytes,
+      expectedVersion: 1,
+      action: 'edit_chart',
+      ops: [{ ...op, confirmImport: true }],
+    })
+    expect(edited.records).toHaveLength(1)
+    const form = new FormData()
+    form.set('file', new File([new Uint8Array(bytes)], 'current.pptx'))
+    form.set('documentId', 'pptx-1')
+    form.set('expectedVersion', '1')
+    form.set('ops', JSON.stringify([op]))
+    form.set('action', 'arbitrary')
+    const app = new Hono()
+      .route('/', conversationsRoute)
+      .onError((error, c) =>
+        c.json({ error: error.message }, error instanceof HttpError ? error.status : 500),
+      )
+    expect(
+      (await app.request('/pptx-agent/apply-ops', { method: 'POST', body: form })).status,
+    ).toBe(400)
+    form.set('action', 'edit_chart')
+    form.set('ops', JSON.stringify([{ ...op, confirmImport: true }]))
+    const response = await app.request('/pptx-agent/apply-ops', { method: 'POST', body: form })
+    expect(response.status).toBe(200)
+  })
+
   it('inserts and replaces a local PNG through the separate manual media path', async () => {
     const imageBytes = await pngBytes()
     const inserted = await applyPptxManualPictureOnHost({

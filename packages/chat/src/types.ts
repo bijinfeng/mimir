@@ -54,6 +54,11 @@ export interface ChatDocumentAgent {
     options: { expectedVersion?: number; roundId?: string; signal?: AbortSignal },
   ): Promise<unknown>
   undoRound(roundId: string): boolean | void | Promise<boolean | void>
+  /** XLSX exports the current sheet's displayed values without mutating its canvas. */
+  exportSheet?(
+    format: 'xlsx' | 'csv',
+    sheetId?: string,
+  ): Promise<{ bytes: Uint8Array; mimeType: string; fileName: string }>
   setRevisionMode?(enabled: boolean): void
   beginDraft?(roundId: string): void
   appendDraft?(roundId: string, delta: string): void

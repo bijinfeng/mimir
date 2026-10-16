@@ -50,6 +50,7 @@ import {
   FindReplaceBar,
   useFindHotkey,
   ToolbarButton,
+  ToolbarMenu,
   ToolbarLabel,
   ToolbarNumberField,
   ToolbarToggleGroup,
@@ -71,6 +72,9 @@ import {
 import type { FindOptions } from '../shims/ui.js'
 import { CompactToolbar } from './CompactToolbar.js'
 import { HtmlElementMenu } from './HtmlElementMenu.js'
+import { HtmlWritingPreview, useHtmlWriting } from './HtmlWritingPreview.js'
+import { HtmlPresentation } from './HtmlPresentation.js'
+import { downloadHtml, openHtmlPresentation } from './html-output.js'
 import { HtmlInsertMenu } from './HtmlInsertMenu.js'
 import { HtmlAgentPrompt, type HtmlPromptRequest } from './HtmlAgentPrompt.js'
 import { statusText, useParsed, useSource } from './use-source.js'
@@ -90,6 +94,8 @@ import {
   insertOp,
   insertPresetHtml,
 } from '../../vendor/apps/html/src/renderer/document/insert-presets.js'
+import { compileOps } from '../../vendor/apps/html/src/renderer/document/ops.js'
+import { applyPatches as applyHtmlPatches } from '../../vendor/apps/html/src/renderer/document/patch.js'
 import { instrumentForPreview } from '../../vendor/apps/html/src/renderer/preview/instrument.js'
 import { moveTarget } from '../../vendor/apps/html/src/renderer/document/move-target.js'
 import {
@@ -108,6 +114,7 @@ import inspectorSource from '../../vendor/apps/html/src/renderer/preview/inspect
 import '../shell/shell.css'
 import './editors.css'
 import './compact-toolbar.css'
+import './html-inspector.css'
 import '../../vendor/packages/ui/src/image-dialogs.css'
 
 /** 源码文件的 BOM 与换行风格 —— 保存时要原样还回去 */
@@ -303,13 +310,20 @@ export function HtmlEditor({
   onDirtyChange,
   onAgentHandleChange,
   agentServices,
+  onAiPreset,
   flush = false,
 }: EditorProps & {
   onAgentHandleChange?: (handle: HtmlAgentHandle | null) => void
   agentServices?: HtmlAgentServices
+  onAiPreset?: ((instruction: string) => void) | undefined
 }) {
   const source = useSource(io, documentId)
+  const [elementInspectorDocument, setElementInspectorDocument] = useState<string | null>(null)
+  const elementInspectorTrigger = useRef<HTMLButtonElement | null>(null)
   const [dirty, setDirty] = useState(false)
+  const [presenting, setPresenting] = useState(false)
+  const [actionError, setActionError] = useState<string | null>(null)
+  const closePresentation = useCallback(() => setPresenting(false), [])
   const [cursor, setCursor] = useState({ line: 1, col: 1 })
   /** 预览里选中的元素（源码侧高亮、元素路径都由它驱动） */
   const [selected, setSelected] = useState<SelectedElement | null>(null)
@@ -384,6 +398,17 @@ export function HtmlEditor({
   const onAgentHandleChangeRef = useRef(onAgentHandleChange)
   const onDirtyChangeRef = useRef(onDirtyChange)
   const agentServicesRef = useRef(agentServices)
+  const { draft: writingDraft, writeDocument: writeDraft } = useHtmlWriting(
+    agentServicesRef,
+    agentRef,
+  )
+  const writeDocument = useCallback<NonNullable<HtmlAgentHooks['writeDocument']>>(
+    (input) => {
+      setView((current) => (current === 'source' ? 'split' : current))
+      return writeDraft(input)
+    },
+    [writeDraft],
+  )
   useEffect(() => {
     onAgentHandleChangeRef.current = onAgentHandleChange
     onDirtyChangeRef.current = onDirtyChange
@@ -425,6 +450,24 @@ export function HtmlEditor({
    * 前进：React 的数据流只允许在事件或 effect 里改 state，而这里正好是事件。
    */
   const [edited, setEdited] = useState<EditedDoc | null>(null)
+  const [cssPreview, setCssPreview] = useState<{
+    text: string
+    version: number
+    sid: number
+  } | null>(null)
+  const previewCss = useCallback((sid: number, styles: Record<string, string> | null) => {
+    if (!styles) return setCssPreview(null)
+    const handle = agentRef.current
+    if (!handle || sid !== selectedSidRef.current) return
+    const current = handle.getDocument()
+    const compiled = compileOps(current.text, current.map, [{ op: 'set_style', sid, styles }])
+    if (compiled.errors.length) return
+    setCssPreview({
+      text: applyHtmlPatches(current.text, compiled.patches),
+      version: current.version,
+      sid,
+    })
+  }, [])
 
   /** 首次载入（还没编辑过）时的文档——纯派生，不碰 ref */
   const initial = useMemo<EditedDoc | null>(() => {
@@ -443,8 +486,16 @@ export function HtmlEditor({
    */
   const previewHtml = useMemo(() => {
     if (doc === null) return null
+    if (writingDraft?.version === doc.version) return writingDraft.html
+    if (cssPreview && cssPreview.version === doc.version && cssPreview.sid === selected?.sid) {
+      return instrumentForPreview(
+        cssPreview.text,
+        buildParseMap(cssPreview.text, doc.version, doc.map),
+        inspectorSource,
+      )
+    }
     return instrumentForPreview(doc.text, doc.map, inspectorSource)
-  }, [doc])
+  }, [doc, cssPreview, selected?.sid, writingDraft])
 
   /**
    * 选中的元素**在当前的映射里**还活着吗。
@@ -772,10 +823,7 @@ export function HtmlEditor({
         if (!agentServicesRef.current) throw new Error('页面规划服务尚未就绪。')
         return agentServicesRef.current.planPage(input)
       },
-      writeDocument: async (input) => {
-        if (!agentServicesRef.current) throw new Error('页面写作服务尚未就绪。')
-        return agentServicesRef.current.writeDocument(input)
-      },
+      writeDocument,
     })
     agentRef.current = handle
     onAgentHandleChangeRef.current?.(handle)
@@ -787,7 +835,7 @@ export function HtmlEditor({
       agentRef.current = null
       onAgentHandleChangeRef.current?.(null)
     }
-  }, [initial, documentId, syncHistory])
+  }, [initial, documentId, syncHistory, writeDocument])
 
   /** 把某个元素在源码里选中（这样「预览点到哪、源码跳到哪」） */
   const revealSid = useCallback(
@@ -1047,6 +1095,85 @@ export function HtmlEditor({
           ]}
           sections={[
             {
+              key: 'output',
+              label: 'HTML 输出',
+              tab: 'view',
+              minWidth: 0,
+              content: (
+                <>
+                  <ToolbarButton label="演示页面" onClick={() => setPresenting(true)}>
+                    演示
+                  </ToolbarButton>
+                  <ToolbarButton
+                    label="在新窗口演示"
+                    onClick={() => {
+                      setActionError(null)
+                      if (!openHtmlPresentation(agentRef.current?.getDocument().text ?? doc.text))
+                        setActionError('演示窗口被浏览器阻止，请允许弹出窗口后重试。')
+                    }}
+                  >
+                    新窗口
+                  </ToolbarButton>
+                  <ToolbarButton
+                    label="导出 HTML"
+                    onClick={() => {
+                      if (decoded.value)
+                        downloadHtml(
+                          serializeEnvelope(
+                            agentRef.current?.getDocument().text ?? doc.text,
+                            decoded.value.envelope,
+                          ),
+                        )
+                    }}
+                  >
+                    导出 HTML
+                  </ToolbarButton>
+                </>
+              ),
+            },
+            {
+              key: 'ai',
+              label: '问 AI',
+              tab: 'home',
+              minWidth: 0,
+              content: (
+                <ToolbarMenu
+                  label="问 AI"
+                  text="问 AI"
+                  items={[
+                    {
+                      key: 'restyle',
+                      label: '问 AI：美化页面',
+                      onSelect: () =>
+                        onAiPreset?.(
+                          '美化当前 HTML 页面：保留所有事实和正文，改善视觉层级、排版、间距与响应式布局。先读取当前源码，再应用修改。',
+                        ),
+                      disabled: !onAiPreset,
+                      disabledReason: '当前宿主没有接入 AI 侧栏',
+                    },
+                    ...['极简', '杂志排版', '科技', '活泼', '深色'].map((theme) => ({
+                      key: `theme-${theme}`,
+                      label: `问 AI：${theme}主题`,
+                      onSelect: () =>
+                        onAiPreset?.(
+                          `将当前 HTML 页面的视觉主题调整为${theme}风格，统一配色、字体与间距；保留所有正文和事实，先读取当前源码再应用修改。`,
+                        ),
+                      disabled: !onAiPreset,
+                      disabledReason: '当前宿主没有接入 AI 侧栏',
+                    })),
+                    {
+                      key: 'summarize',
+                      label: '问 AI：总结页面',
+                      onSelect: () =>
+                        onAiPreset?.('阅读当前 HTML 页面，概括主要内容与关键结论，在对话中回答。'),
+                      disabled: !onAiPreset,
+                      disabledReason: '当前宿主没有接入 AI 侧栏',
+                    },
+                  ]}
+                />
+              ),
+            },
+            {
               key: 'view',
               label: '视图',
               tab: 'view',
@@ -1209,83 +1336,18 @@ export function HtmlEditor({
                   >
                     清除行内样式
                   </ToolbarButton>
-                  <HtmlElementMenu
-                    sid={activeSelected?.sid ?? null}
-                    tag={activeSelected?.tag ?? null}
-                    computed={activeSelected?.computed}
-                    onDuplicate={() => {
-                      const handle = agentRef.current
-                      const sid = selectedSidRef.current
-                      if (!handle || sid === null) return null
-                      const current = handle.getDocument()
-                      const entry = current.map.bySid.get(sid)
-                      if (!entry) return null
-                      const html = current.text.slice(entry.range[0], entry.range[1])
-                      return handle.applyOps(
-                        [{ op: 'insert_html', sid, position: 'after', html: `\n${html}` }],
-                        {
-                          expectedVersion: current.version,
-                          summary: '已复制元素。',
-                          highlight: false,
-                        },
+                  <ToolbarButton
+                    ref={elementInspectorTrigger}
+                    label="元素编辑"
+                    active={elementInspectorDocument === documentId}
+                    onClick={() => {
+                      setElementInspectorDocument((current) =>
+                        current === documentId ? null : documentId,
                       )
                     }}
-                    onMove={(direction) => {
-                      const handle = agentRef.current
-                      const sid = selectedSidRef.current
-                      if (!handle || sid === null) return null
-                      const current = handle.getDocument()
-                      const target = moveTarget(current.map, sid, direction)
-                      if (!target)
-                        return {
-                          ok: false,
-                          changed: false,
-                          version: current.version,
-                          error: '元素不能继续移动。',
-                        }
-                      return handle.applyOps([{ op: 'move', sid, ...target }], {
-                        expectedVersion: current.version,
-                        summary: '已移动元素。',
-                        highlight: false,
-                      })
-                    }}
-                    onPickImage={async (file) => {
-                      const handle = agentRef.current
-                      const sid = selectedSidRef.current
-                      if (!handle || sid === null)
-                        return { ok: false, changed: false, version: 0, error: '没有选中的图片。' }
-                      const version = handle.getVersion()
-                      const entry = handle.getDocument().map.bySid.get(sid)
-                      if (entry?.tag !== 'img')
-                        return { ok: false, changed: false, version, error: '选中的元素不是图片。' }
-                      try {
-                        const url = await imageDataUrl(file)
-                        if (agentRef.current !== handle || selectedSidRef.current !== sid)
-                          return { ok: false, changed: false, version, error: '图片选择已改变。' }
-                        return handle.applyOps([{ op: 'set_attr', sid, name: 'src', value: url }], {
-                          expectedVersion: version,
-                          summary: '图片已嵌入 HTML 原件。',
-                          highlight: false,
-                        })
-                      } catch (cause) {
-                        return {
-                          ok: false,
-                          changed: false,
-                          version: handle.getVersion(),
-                          error: cause instanceof Error ? cause.message : String(cause),
-                        }
-                      }
-                    }}
-                    onOpenPicture={openPictureDialog}
-                    onApply={(ops) =>
-                      agentRef.current?.applyOps(ops, { highlight: false }) ?? {
-                        ok: false,
-                        changed: false,
-                        version: 0,
-                        error: '编辑器尚未就绪。',
-                      }
-                    }
-                  />
+                  >
+                    编辑元素
+                  </ToolbarButton>
                 </>
               ),
             },
@@ -1302,8 +1364,16 @@ export function HtmlEditor({
         同一种出现方式：有选中才出来。
       */
       subbar={
-        findOpen || trail.length > 0 || promptRequest !== null ? (
+        findOpen ||
+        trail.length > 0 ||
+        promptRequest !== null ||
+        actionError !== null ||
+        writingDraft !== null ? (
           <>
+            {writingDraft && (
+              <HtmlWritingPreview draft={writingDraft} currentVersion={doc.version} />
+            )}
+            {actionError && <div role="alert">{actionError}</div>}
             {promptRequest && (
               <HtmlAgentPrompt
                 key={promptRequest.id}
@@ -1382,82 +1452,194 @@ export function HtmlEditor({
         CodeMirror 的实例与编辑历史，重新挂载读的是刚打开文件时的文本——
         那是静默丢内容，理由写在 `view` 的说明里。
       */}
-      <div className="mimir-html-split">
-        <div className="mimir-html-source" hidden={view === 'preview'}>
-          <SourceEditor
-            ref={editorRef}
-            initialText={initial?.text ?? doc.text}
-            className="mimir-html-cm"
-            onChange={(next) => {
-              /**
-               * 文本与映射一起前进（理由见 `edited` 的说明）。
-               * 用更新函数形式读 `prev`，于是「上一份 map」不必经过 ref。
-               */
-              const agent = agentRef.current
-              if (agent) agent.setManualText(next)
-              else
-                setEdited((prev) => {
-                  const base = prev ?? initial
-                  const version = (base?.version ?? 0) + 1
-                  return {
-                    text: next,
-                    map: buildParseMap(next, version, base?.map ?? null),
-                    version,
-                  }
-                })
-              if (!dirty) {
-                setDirty(true)
-                onDirtyChange?.(true)
-              }
-              // 敲键、替换、撤销都会走到这里（撤销也改文档）
-              syncHistory()
-            }}
-            onCursor={(info) => {
-              setCursor(info)
-              const current = agentRef.current?.getDocument()
-              if (current) {
-                const entry = elementCovering(
-                  current.map,
-                  info.pos,
-                  Math.min(info.pos + 1, current.text.length),
-                )
-                const sid =
-                  entry && !['html', 'head', 'body'].includes(entry.tag) ? entry.sid : null
-                if (sid !== selectedSidRef.current) {
-                  selectedSidRef.current = sid
-                  setSelected(entry && sid !== null ? { sid, tag: entry.tag, className: '' } : null)
-                  frameRef.current?.contentWindow?.postMessage({ type: 'gx:select', sid }, '*')
+      <div className="mimir-html-workspace">
+        <div className="mimir-html-split">
+          <div className="mimir-html-source" hidden={view === 'preview'}>
+            <SourceEditor
+              ref={editorRef}
+              initialText={initial?.text ?? doc.text}
+              className="mimir-html-cm"
+              onChange={(next) => {
+                /**
+                 * 文本与映射一起前进（理由见 `edited` 的说明）。
+                 * 用更新函数形式读 `prev`，于是「上一份 map」不必经过 ref。
+                 */
+                const agent = agentRef.current
+                if (agent) agent.setManualText(next)
+                else
+                  setEdited((prev) => {
+                    const base = prev ?? initial
+                    const version = (base?.version ?? 0) + 1
+                    return {
+                      text: next,
+                      map: buildParseMap(next, version, base?.map ?? null),
+                      version,
+                    }
+                  })
+                if (!dirty) {
+                  setDirty(true)
+                  onDirtyChange?.(true)
                 }
-              }
-              // 撤销/重做会改选区，所以这条回调也是刷新撤销栈可用性的时机
-              syncHistory()
-            }}
-          />
-        </div>
-        {/*
+                // 敲键、替换、撤销都会走到这里（撤销也改文档）
+                syncHistory()
+              }}
+              onCursor={(info) => {
+                setCursor(info)
+                const current = agentRef.current?.getDocument()
+                if (current) {
+                  const entry = elementCovering(
+                    current.map,
+                    info.pos,
+                    Math.min(info.pos + 1, current.text.length),
+                  )
+                  const sid =
+                    entry && !['html', 'head', 'body'].includes(entry.tag) ? entry.sid : null
+                  if (sid !== selectedSidRef.current) {
+                    selectedSidRef.current = sid
+                    setSelected(
+                      entry && sid !== null ? { sid, tag: entry.tag, className: '' } : null,
+                    )
+                    frameRef.current?.contentWindow?.postMessage({ type: 'gx:select', sid }, '*')
+                  }
+                }
+                // 撤销/重做会改选区，所以这条回调也是刷新撤销栈可用性的时机
+                syncHistory()
+              }}
+            />
+          </div>
+          {/*
           预览一侧。宿主层负责**宽度**（设备档位）与**缩放**：上游
           `PreviewFrame` 也把 `zoom` 加在这一层（frame 自己不该知道这些）。
         */}
-        <div className="mimir-html-preview-pane" hidden={view === 'source'}>
-          <div className="mimir-html-preview-host" data-device={device} style={previewHostStyle}>
-            <iframe
-              ref={frameRef}
-              className="mimir-html-preview"
-              title="预览"
-              srcDoc={previewHtml ?? ''}
-              /*
+          <div className="mimir-html-preview-pane" hidden={view === 'source'}>
+            <div className="mimir-html-preview-host" data-device={device} style={previewHostStyle}>
+              <iframe
+                ref={frameRef}
+                className="mimir-html-preview"
+                title="预览"
+                srcDoc={previewHtml ?? ''}
+                /*
                 **不给 `allow-same-origin`**：给了它，frame 里的脚本就能碰宿主页的
                 cookie 与 localStorage（srcdoc 是同源的），等于让被编辑的页面拿到
                 mimir 的登录态。不给的话它在 opaque origin 里跑，拿不到任何东西。
                 `allow-scripts` 必须给——真实页面大量依赖 CDN 脚本，禁掉就只剩
                 一片空白（与上游同一条判断）。
               */
-              sandbox="allow-scripts allow-forms allow-popups allow-modals"
-              referrerPolicy="no-referrer"
-            />
+                sandbox="allow-scripts allow-forms allow-popups allow-modals"
+                referrerPolicy="no-referrer"
+              />
+            </div>
           </div>
         </div>
+        {elementInspectorDocument === documentId && (
+          <HtmlElementMenu
+            key={documentId}
+            version={doc.version}
+            triggerRef={elementInspectorTrigger}
+            onClose={() => setElementInspectorDocument(null)}
+            targets={doc.map.elements
+              .filter(
+                (entry) =>
+                  entry.sid !== activeSelected?.sid &&
+                  !['html', 'head', 'body'].includes(entry.tag) &&
+                  !(
+                    activeSelected &&
+                    ancestorsOf(doc.map, entry.sid).some(
+                      (ancestor) => ancestor.sid === activeSelected.sid,
+                    )
+                  ),
+              )
+              .map((entry) => ({
+                value: String(entry.sid),
+                label: `${entry.path} — ${
+                  doc.text
+                    .slice(entry.inner[0], entry.inner[1])
+                    .replace(/<[^>]*>/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim()
+                    .slice(0, 42) || entry.tag
+                }`,
+              }))}
+            onPreviewCss={previewCss}
+            sid={activeSelected?.sid ?? null}
+            tag={activeSelected?.tag ?? null}
+            computed={activeSelected?.computed}
+            onDuplicate={() => {
+              const handle = agentRef.current
+              const sid = selectedSidRef.current
+              if (!handle || sid === null) return null
+              const current = handle.getDocument()
+              const entry = current.map.bySid.get(sid)
+              if (!entry) return null
+              const html = current.text.slice(entry.range[0], entry.range[1])
+              return handle.applyOps(
+                [{ op: 'insert_html', sid, position: 'after', html: `\n${html}` }],
+                {
+                  expectedVersion: current.version,
+                  summary: '已复制元素。',
+                  highlight: false,
+                },
+              )
+            }}
+            onMove={(direction) => {
+              const handle = agentRef.current
+              const sid = selectedSidRef.current
+              if (!handle || sid === null) return null
+              const current = handle.getDocument()
+              const target = moveTarget(current.map, sid, direction)
+              if (!target)
+                return {
+                  ok: false,
+                  changed: false,
+                  version: current.version,
+                  error: '元素不能继续移动。',
+                }
+              return handle.applyOps([{ op: 'move', sid, ...target }], {
+                expectedVersion: current.version,
+                summary: '已移动元素。',
+                highlight: false,
+              })
+            }}
+            onPickImage={async (file) => {
+              const handle = agentRef.current
+              const sid = selectedSidRef.current
+              if (!handle || sid === null)
+                return { ok: false, changed: false, version: 0, error: '没有选中的图片。' }
+              const version = handle.getVersion()
+              const entry = handle.getDocument().map.bySid.get(sid)
+              if (entry?.tag !== 'img')
+                return { ok: false, changed: false, version, error: '选中的元素不是图片。' }
+              try {
+                const url = await imageDataUrl(file)
+                if (agentRef.current !== handle || selectedSidRef.current !== sid)
+                  return { ok: false, changed: false, version, error: '图片选择已改变。' }
+                return handle.applyOps([{ op: 'set_attr', sid, name: 'src', value: url }], {
+                  expectedVersion: version,
+                  summary: '图片已嵌入 HTML 原件。',
+                  highlight: false,
+                })
+              } catch (cause) {
+                return {
+                  ok: false,
+                  changed: false,
+                  version: handle.getVersion(),
+                  error: cause instanceof Error ? cause.message : String(cause),
+                }
+              }
+            }}
+            onOpenPicture={openPictureDialog}
+            onApply={(ops, expectedVersion) =>
+              agentRef.current?.applyOps(ops, { highlight: false, expectedVersion }) ?? {
+                ok: false,
+                changed: false,
+                version: 0,
+                error: '编辑器尚未就绪。',
+              }
+            }
+          />
+        )}
       </div>
+      {presenting && <HtmlPresentation html={doc.text} onClose={closePresentation} />}
       {pictureDialog && (
         <div className="mimir-html-picture-dialog">
           {pictureDialog.kind === 'crop' ? (

@@ -47,8 +47,13 @@
  * `useToolbarPopup`：一份定位 + 键盘 + 关闭的实现，三处抄一遍必然漂移。
  */
 
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
-import type { ComponentProps, KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react'
+import { createContext, useContext, useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import type {
+  ComponentProps,
+  KeyboardEvent as ReactKeyboardEvent,
+  MouseEvent as ReactMouseEvent,
+  ReactNode,
+} from 'react'
 import { useEditorState } from '@tiptap/react'
 import type { Editor } from '@tiptap/core'
 import {
@@ -71,6 +76,44 @@ import {
   ChevronRightIcon,
   CloseIcon,
 } from './icons.js'
+
+const PropertyFormContext = createContext(false)
+
+/** Property panels show labels; ribbon controls keep their compact layout. */
+export function ToolbarPropertyForm({
+  children,
+  columns = 2,
+}: {
+  children: ReactNode
+  columns?: 1 | 2
+}) {
+  return (
+    <PropertyFormContext value={true}>
+      <div className="me-property-form" data-columns={columns}>
+        {children}
+      </div>
+    </PropertyFormContext>
+  )
+}
+
+function ToolbarPropertyField({
+  label,
+  children,
+  multiline = false,
+}: {
+  label: string
+  children: ReactNode
+  multiline?: boolean
+}) {
+  const visible = useContext(PropertyFormContext)
+  if (!visible) return children
+  return (
+    <div className="me-property-field" data-multiline={multiline || undefined}>
+      <span className="me-property-field__label">{label}</span>
+      <div className="me-property-field__control">{children}</div>
+    </div>
+  )
+}
 
 export interface EditorShellProps {
   /** 顶栏（工具条）。一般不直接放裸子元素，用下面的控件原语摆 */
@@ -287,6 +330,13 @@ export interface ToolbarButtonProps {
  * 空格**（`<Button>替换</Button>` 的 textContent 是 "替 换"），而工具条上有
  * 两处按 textContent 认文案的断言。
  */
+/** Flush pending form drafts before the click while keeping document selections intact. */
+function preserveEditorSelection(event: ReactMouseEvent<HTMLElement>) {
+  const focused = event.currentTarget.ownerDocument.activeElement
+  if (focused instanceof HTMLElement && focused.matches('input, textarea, select')) focused.blur()
+  event.preventDefault()
+}
+
 export function ToolbarButton({
   label,
   children,
@@ -325,7 +375,7 @@ export function ToolbarButton({
       aria-label={label}
       aria-pressed={active}
       disabled={disabled}
-      onMouseDown={(event) => event.preventDefault()}
+      onMouseDown={preserveEditorSelection}
       onClick={onClick}
     >
       {children !== undefined && <span className="me-btn__icon">{children}</span>}
@@ -599,7 +649,7 @@ export function ToolbarTextButton({
       title={disabled && disabledReason !== undefined ? disabledReason : label}
       aria-label={label}
       disabled={disabled}
-      onMouseDown={(event) => event.preventDefault()}
+      onMouseDown={preserveEditorSelection}
       onClick={onClick}
     >
       {label}
@@ -617,6 +667,8 @@ export interface ToolbarSelectOption<T extends string> {
 export interface ToolbarSelectProps<T extends string> {
   /** 这组取值是什么（读屏用）。如「字号」「段落样式」 */
   label: string
+  disabled?: boolean
+  disabledReason?: string
   /**
    * 当前值。**`null` 表示「不是选项里的任何一个」**（混合选区、光标在
    * 两种格式之间）——那不是错误状态，所以有一个单独的显示（见 `fallbackLabel`）。
@@ -686,6 +738,8 @@ export interface ToolbarSelectProps<T extends string> {
  */
 export function ToolbarSelect<T extends string>({
   label,
+  disabled = false,
+  disabledReason,
   value,
   options,
   onChange,
@@ -694,27 +748,32 @@ export function ToolbarSelect<T extends string>({
 }: ToolbarSelectProps<T>) {
   const known = value !== null && options.some((option) => option.value === value)
   return (
-    <Select
-      aria-label={label}
-      title={label}
-      virtual={false}
-      popupMatchSelectWidth={false}
-      styles={{ popup: { root: { minWidth: 180, maxWidth: 'calc(100vw - 16px)' } } }}
-      // 值不在选项里时把 value 交给 placeholder——**不要传原值当 value**：
-      // antd 会把原值原样显示出来，而不在档位里时那往往是一个内部单位
-      // （docx 的字号存半磅，直接显示 22 而用户填的是 11 磅）
-      value={known ? value : null}
-      // 两种「不是档位里的值」各有各的说法：`null` 是「这里没有直接取值」，
-      // 其余是「有一个具体的值，只是不在预设档位里」（见 `emptyLabel` 的说明）
-      placeholder={value === null ? (emptyLabel ?? fallbackLabel) : `${value}（${fallbackLabel}）`}
-      suffixIcon={<ChevronDownIcon />}
-      options={options.map((option) => ({
-        value: option.value,
-        label: option.label,
-        disabled: option.disabled === true,
-      }))}
-      onChange={(next) => onChange(next as T)}
-    />
+    <ToolbarPropertyField label={label}>
+      <Select
+        aria-label={label}
+        title={disabled && disabledReason ? disabledReason : label}
+        disabled={disabled}
+        virtual={false}
+        popupMatchSelectWidth={false}
+        styles={{ popup: { root: { minWidth: 180, maxWidth: 'calc(100vw - 16px)' } } }}
+        // 值不在选项里时把 value 交给 placeholder——**不要传原值当 value**：
+        // antd 会把原值原样显示出来，而不在档位里时那往往是一个内部单位
+        // （docx 的字号存半磅，直接显示 22 而用户填的是 11 磅）
+        value={known ? value : null}
+        // 两种「不是档位里的值」各有各的说法：`null` 是「这里没有直接取值」，
+        // 其余是「有一个具体的值，只是不在预设档位里」（见 `emptyLabel` 的说明）
+        placeholder={
+          value === null ? (emptyLabel ?? fallbackLabel) : `${value}（${fallbackLabel}）`
+        }
+        suffixIcon={<ChevronDownIcon />}
+        options={options.map((option) => ({
+          value: option.value,
+          label: option.label,
+          disabled: option.disabled === true,
+        }))}
+        onChange={(next) => onChange(next as T)}
+      />
+    </ToolbarPropertyField>
   )
 }
 
@@ -804,10 +863,13 @@ export function ToolbarToggleGroup<T extends string>({
 export interface ToolbarNumberFieldProps {
   /** 这是什么（读屏用）。如「页码」「字号」 */
   label: string
+  disabled?: boolean
+  disabledReason?: string
   value: number
   onCommit: (value: number) => void
   min?: number
   max?: number
+  step?: number
   /** 跟在输入后面的单位（`pt`、`页`） */
   suffix?: string
 }
@@ -853,16 +915,19 @@ export interface ToolbarNumberFieldProps {
  */
 export function ToolbarNumberField({
   label,
+  disabled = false,
+  disabledReason,
   value,
   onCommit,
   min,
   max,
+  step,
   suffix,
 }: ToolbarNumberFieldProps) {
   const [draft, setDraft] = useState<string | null>(null)
 
   const commit = () => {
-    if (draft === null) return
+    if (disabled || draft === null) return
     setDraft(null)
     const text = draft.trim()
     const parsed = Number(text)
@@ -883,31 +948,35 @@ export function ToolbarNumberField({
   }
 
   return (
-    <span className="me-field">
-      {/*
+    <ToolbarPropertyField label={label}>
+      <span className="me-field">
+        {/*
         **`stringMode`**：值按字符串进出。作用是让草稿里的中间态原样留着——
         输入框清空时显示空（不是跳回外部值）、输入 `abc` 时显示 `abc`（不是
         被解析器吃掉半个），而夹区间与格式化留给提交那一刻。这正好对上
         「草稿 `string | null`」那套语义，也让 min/max 能跟着草稿类型走。
       */}
-      <InputNumber<string>
-        className="me-input--num"
-        aria-label={label}
-        title={label}
-        stringMode
-        value={draft ?? String(value)}
-        min={min === undefined ? undefined : String(min)}
-        max={max === undefined ? undefined : String(max)}
-        controls={false}
-        onInput={onInput}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') commit()
-          if (event.key === 'Escape') setDraft(null)
-        }}
-        onBlur={commit}
-      />
-      {suffix !== undefined && <span className="me-field__suffix">{suffix}</span>}
-    </span>
+        <InputNumber<string>
+          className="me-input--num"
+          aria-label={label}
+          title={disabled && disabledReason ? disabledReason : label}
+          stringMode
+          value={draft ?? String(value)}
+          min={min === undefined ? undefined : String(min)}
+          max={max === undefined ? undefined : String(max)}
+          disabled={disabled}
+          step={step === undefined ? undefined : String(step)}
+          controls={false}
+          onInput={onInput}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') commit()
+            if (event.key === 'Escape') setDraft(null)
+          }}
+          onBlur={commit}
+        />
+        {suffix !== undefined && <span className="me-field__suffix">{suffix}</span>}
+      </span>
+    </ToolbarPropertyField>
   )
 }
 
@@ -959,22 +1028,24 @@ export function ToolbarTextField({
   findInput = false,
 }: ToolbarTextFieldProps) {
   return (
-    <Input
-      className="me-input--text"
-      type="text"
-      aria-label={label}
-      title={label}
-      placeholder={placeholder}
-      value={value}
-      {...(findInput ? { 'data-find-input': true } : {})}
-      // 查找框 / 链接地址被拼写检查划红线是纯噪音
-      spellCheck={false}
-      onChange={(event) => onChange(event.target.value)}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter') onSubmit?.()
-        if (event.key === 'Escape') onCancel?.()
-      }}
-    />
+    <ToolbarPropertyField label={label}>
+      <Input
+        className="me-input--text"
+        type="text"
+        aria-label={label}
+        title={label}
+        placeholder={placeholder}
+        value={value}
+        {...(findInput ? { 'data-find-input': true } : {})}
+        // 查找框 / 链接地址被拼写检查划红线是纯噪音
+        spellCheck={false}
+        onChange={(event) => onChange(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') onSubmit?.()
+          if (event.key === 'Escape') onCancel?.()
+        }}
+      />
+    </ToolbarPropertyField>
   )
 }
 
@@ -1085,14 +1156,16 @@ export function ToolbarTextArea({
   rows = 1,
 }: ToolbarTextAreaProps) {
   return (
-    <Input.TextArea
-      rows={rows}
-      aria-label={label}
-      title={label}
-      placeholder={placeholder}
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-    />
+    <ToolbarPropertyField label={label} multiline>
+      <Input.TextArea
+        rows={rows}
+        aria-label={label}
+        title={label}
+        placeholder={placeholder}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </ToolbarPropertyField>
   )
 }
 
@@ -1276,7 +1349,11 @@ function useToolbarPopup(panelWidth = POPUP_MIN_WIDTH) {
     }
     const onKeyDown = (event: KeyboardEvent) => {
       // Escape 关闭并**还焦点**：焦点留在被卸载的元素上会让键盘用户掉到 body
-      if (event.key === 'Escape') dismiss(true)
+      if (event.key !== 'Escape') return
+      const nearestMenu =
+        event.target instanceof Element ? event.target.closest('[role="menu"]') : null
+      if (nearestMenu && nearestMenu !== panelRef.current) return
+      dismiss(true)
     }
     const onScroll = (event: Event) => {
       const target = event.target as Node | null
@@ -1441,8 +1518,14 @@ export function ToolbarMenuSeparator() {
  * （按事件来源判断，表单控件里的一律不抢）。
  */
 export function ToolbarMenuFields({ label, children }: { label: string; children: ReactNode }) {
+  const propertyForm = useContext(PropertyFormContext)
   return (
-    <div className="me-menu__fields" role="group" aria-label={label}>
+    <div
+      className={propertyForm ? 'me-property-group' : 'me-menu__fields'}
+      role="group"
+      aria-label={label}
+    >
+      {propertyForm && <h3 className="me-property-group__title">{label}</h3>}
       {children}
     </div>
   )
@@ -1499,6 +1582,40 @@ export function ToolbarMenu({
   }
 
   const onPanelKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (renderPanel !== undefined) {
+      // Collapsed ribbon groups contain ordinary controls as well as menuitems.
+      const target = event.target as HTMLElement
+      if (target.closest('[role="menu"]') !== event.currentTarget) return
+      const controls = Array.from(
+        event.currentTarget.querySelectorAll<HTMLElement>(
+          'button, input:not([type="hidden"]), select, textarea, [tabindex]',
+        ),
+      ).filter(
+        (control) =>
+          control.tabIndex >= 0 &&
+          !control.matches(':disabled, [aria-disabled="true"]') &&
+          !control.closest('[hidden], [aria-hidden="true"]'),
+      )
+      const atPanel = target === event.currentTarget
+      const enterWithArrow =
+        atPanel &&
+        enabledItems().length === 0 &&
+        ['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)
+      if ((atPanel && event.key === 'Tab' && !event.shiftKey) || enterWithArrow) {
+        const last = event.key === 'ArrowUp' || event.key === 'End'
+        const control = last ? controls.at(-1) : controls[0]
+        if (control) {
+          event.preventDefault()
+          control.focus()
+          return
+        }
+      }
+      if (event.key === 'Tab') {
+        const edge = event.shiftKey ? controls[0] : controls.at(-1)
+        if (atPanel || target === edge) close()
+        return
+      }
+    }
     /*
      * **表单控件里的按键归它们自己**：数字框的上下键是改数、下拉的上下键是换档、
      * Home/End 在输入框里是回到行首行尾。抢过来的话控件看着还在、就是按不动。
@@ -1606,6 +1723,8 @@ export interface ToolbarColorOption {
 export interface ToolbarColorPickerProps {
   /** 这是什么（读屏用）。如「字体颜色」「突出显示」 */
   label: string
+  disabled?: boolean
+  disabledReason?: string
   /** 当前值。`null` = **没有设置**（不是「默认色」） */
   value: string | null
   options: readonly ToolbarColorOption[]
@@ -1656,6 +1775,8 @@ function ToolbarColorGrid({
   onPick,
   onClear,
   clearLabel = '清除颜色',
+  disabled = false,
+  disabledReason,
   onPicked,
 }: {
   label: string
@@ -1664,6 +1785,8 @@ function ToolbarColorGrid({
   onPick: (value: string) => void
   onClear?: () => void
   clearLabel?: string
+  disabled?: boolean
+  disabledReason?: string
   onPicked?: () => void
 }) {
   return (
@@ -1672,8 +1795,9 @@ function ToolbarColorGrid({
         <button
           key={option.value}
           type="button"
+          disabled={disabled}
           className="me-color__cell"
-          title={option.label}
+          title={disabled && disabledReason ? disabledReason : option.label}
           aria-label={option.label}
           /*
            * 选中的那一档。**这是网格上唯一的「当前值」表达**——原来只有
@@ -1693,8 +1817,9 @@ function ToolbarColorGrid({
       {onClear !== undefined && (
         <button
           type="button"
+          disabled={disabled}
           className="me-color__cell me-color__cell--clear"
-          title={clearLabel}
+          title={disabled && disabledReason ? disabledReason : clearLabel}
           aria-label={clearLabel}
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => {
@@ -1726,6 +1851,8 @@ function ToolbarColorGrid({
  */
 export function ToolbarColorPicker({
   label,
+  disabled = false,
+  disabledReason,
   value,
   options,
   onPick,
@@ -1745,6 +1872,8 @@ export function ToolbarColorPicker({
       onPick={onPick}
       onClear={onClear}
       clearLabel={clearLabel}
+      disabled={disabled}
+      disabledReason={disabledReason}
       /*
        * 弹层里选完要关；内联形态**不关**——它没有自己的弹层可关，`close` 是
        * 调用方的 `ToolbarMenu` 的那个（关掉整个表格菜单会让人没法连着改几个
@@ -1755,58 +1884,61 @@ export function ToolbarColorPicker({
   )
 
   // 内联：不渲染触发器、不开 popup，只是把那排色块交出去
-  if (inline) return grid
+  if (inline) return <ToolbarPropertyField label={label}>{grid}</ToolbarPropertyField>
 
   return (
-    <span className="me-menu">
-      <button
-        ref={triggerRef}
-        type="button"
-        className="me-btn"
-        title={label}
-        aria-label={label}
-        aria-haspopup="true"
-        aria-expanded={open}
-        onMouseDown={(event) => event.preventDefault()}
-        onClick={toggle}
-      >
-        {icon !== undefined && <span className="me-btn__icon">{icon}</span>}
-        <span className="me-btn__icon">
-          {current === undefined ? (
-            // 没设置（或值不在选项里）时画一条斜线，**不能**显示成第一个颜色
-            <span className="me-color__swatch me-color__swatch--none" />
-          ) : (
-            <span className="me-color__swatch" style={{ background: current.swatch }} />
-          )}
-        </span>
-        <span className="me-btn__icon me-menu__caret">
-          <ChevronDownIcon />
-        </span>
-      </button>
-      {open && position !== null && (
-        <div
-          ref={panelRef}
-          className="me-menu__panel me-color__panel"
-          /*
-           * **面板这一层不带 `role` / `aria-label`**：语义（`role="group"` +
-           * 名字）在那排色块自己的 `ToolbarColorGrid` 上。两层都挂同一个名字
-           * 会让读屏把「突出显示」念两遍，而定位于那个名字的辅助软件会命中
-           * 外面这层不可点的容器。
-           */
-          tabIndex={-1}
-          onKeyDown={(event) => {
-            if (event.key === 'Tab') close()
-          }}
-          style={
-            position.bottom === undefined
-              ? { top: position.top, left: position.left }
-              : { bottom: position.bottom, left: position.left }
-          }
+    <ToolbarPropertyField label={label}>
+      <span className="me-menu">
+        <button
+          ref={triggerRef}
+          type="button"
+          className="me-btn"
+          title={disabled && disabledReason ? disabledReason : label}
+          aria-label={label}
+          disabled={disabled}
+          aria-haspopup="true"
+          aria-expanded={open}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={toggle}
         >
-          {grid}
-        </div>
-      )}
-    </span>
+          {icon !== undefined && <span className="me-btn__icon">{icon}</span>}
+          <span className="me-btn__icon">
+            {current === undefined ? (
+              // 没设置（或值不在选项里）时画一条斜线，**不能**显示成第一个颜色
+              <span className="me-color__swatch me-color__swatch--none" />
+            ) : (
+              <span className="me-color__swatch" style={{ background: current.swatch }} />
+            )}
+          </span>
+          <span className="me-btn__icon me-menu__caret">
+            <ChevronDownIcon />
+          </span>
+        </button>
+        {open && position !== null && (
+          <div
+            ref={panelRef}
+            className="me-menu__panel me-color__panel"
+            /*
+             * **面板这一层不带 `role` / `aria-label`**：语义（`role="group"` +
+             * 名字）在那排色块自己的 `ToolbarColorGrid` 上。两层都挂同一个名字
+             * 会让读屏把「突出显示」念两遍，而定位于那个名字的辅助软件会命中
+             * 外面这层不可点的容器。
+             */
+            tabIndex={-1}
+            onKeyDown={(event) => {
+              if (event.key === 'Tab') close()
+            }}
+            style={
+              position.bottom === undefined
+                ? { top: position.top, left: position.left }
+                : { bottom: position.bottom, left: position.left }
+            }
+          >
+            {grid}
+          </div>
+        )}
+      </span>
+    </ToolbarPropertyField>
   )
 }
 

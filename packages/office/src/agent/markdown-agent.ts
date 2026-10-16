@@ -30,7 +30,8 @@ export interface MarkdownAgentServices {
   writeDocument(
     input: { plan: string; title?: string; context?: string },
     signal?: AbortSignal,
-  ): Promise<string>
+    onDelta?: (text: string) => void,
+  ): Promise<string | { markdown: string; keptPartial: true }>
   readFrontmatter(): Promise<string>
   writeFrontmatter(yaml: string, expectedYaml: string): Promise<string>
 }
@@ -358,7 +359,7 @@ export function createMarkdownAgentHandle(
               : integer(args.afterIndex, 'afterIndex', -1, editor.state.doc.childCount - 1)
           if (!isBlank(editor) && after === null && args.replaceDocument !== true)
             throw new Error('已有正文需要 afterIndex，整篇重写需要 replaceDocument=true')
-          const markdown = await options.services.writeDocument(
+          const written = await options.services.writeDocument(
             {
               plan,
               ...(typeof args.title === 'string' ? { title: args.title.slice(0, 160) } : {}),
@@ -368,6 +369,7 @@ export function createMarkdownAgentHandle(
             },
             execution.signal,
           )
+          const markdown = typeof written === 'string' ? written : written.markdown
           live(execution.signal)
           if (version !== before) throw new Error('写作期间笔记已被修改，新内容未插入')
           if (!markdown.trim()) throw new Error('写作服务没有返回正文')
@@ -384,7 +386,12 @@ export function createMarkdownAgentHandle(
           const first = applied.results[0]
           if (!first?.ok) throw new Error(first?.error ?? '写入失败')
           finishWrite(roundId)
-          return result('已写入长文', before, { characters: markdown.length })
+          if (typeof written !== 'string') editor.commands.focus()
+          return result(
+            typeof written === 'string' ? '已写入长文' : '已按选择保留部分草稿；正文尚未完成',
+            before,
+            { characters: markdown.length, complete: typeof written === 'string' },
+          )
         }
         throw new Error(`不支持的笔记工具：${tool}`)
       } catch (error) {

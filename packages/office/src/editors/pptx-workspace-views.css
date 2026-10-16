@@ -1,0 +1,182 @@
+.mimir-pptx-outline-workspace,
+.mimir-pptx-sorter,
+.mimir-pptx-reading {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+.mimir-pptx-outline-workspace {
+  display: flex;
+}
+.mimir-pptx-outline {
+  flex: 0 0 240px;
+  min-width: 0;
+  overflow: auto;
+  border-inline-end: 1px solid var(--me-border);
+  background: var(--me-surface);
+  padding: 8px;
+}
+.mimir-pptx-outline-item.ant-btn {
+  width: 100%;
+  height: auto;
+  min-height: 48px;
+  justify-content: flex-start;
+  align-items: flex-start;
+  padding: 10px 8px;
+  text-align: start;
+  white-space: normal;
+  color: var(--me-text);
+}
+.mimir-pptx-outline-item.ant-btn[aria-current='page'] {
+  background: var(--me-hover);
+  outline: 1px solid var(--me-accent);
+  outline-offset: -1px;
+}
+.mimir-pptx-outline-number {
+  flex: 0 0 22px;
+  color: var(--me-text-weak, var(--me-text));
+  font-variant-numeric: tabular-nums;
+}
+.mimir-pptx-outline-text {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.mimir-pptx-outline-text strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+.mimir-pptx-outline-text > span {
+  font-size: 12px;
+  white-space: pre-wrap;
+  color: var(--me-text-weak, var(--me-text));
+}
+.mimir-pptx-sorter,
+.mimir-pptx-reading {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--me-stage-bg, #f2f5f9);
+}
+.mimir-pptx-view-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  background: var(--me-surface);
+  border-bottom: 1px solid var(--me-border);
+}
+.mimir-pptx-sorter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
+  align-content: start;
+  gap: 20px;
+  overflow: auto;
+  padding: 20px;
+}
+.mimir-pptx-sorter-item.ant-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  width: 100%;
+  height: auto;
+  min-width: 0;
+  padding: 6px;
+  color: var(--me-text);
+  border: 1px solid transparent;
+}
+.mimir-pptx-sorter-item.ant-btn[aria-selected='true'] {
+  background: var(--me-hover);
+  border-color: var(--me-accent);
+}
+.mimir-pptx-sorter-item.ant-btn.is-current {
+  outline: 2px solid var(--me-accent);
+  outline-offset: 2px;
+}
+.mimir-pptx-sorter-item.ant-btn.drop-before {
+  border-inline-start: 3px solid var(--me-accent);
+}
+.mimir-pptx-sorter-item.ant-btn.drop-after {
+  border-inline-end: 3px solid var(--me-accent);
+}
+.mimir-pptx-sorter-item .mimir-pptx-view-preview {
+  outline: 1px solid var(--me-border);
+  background: var(--me-surface);
+}
+.mimir-pptx-view-preview {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  line-height: 0;
+}
+.mimir-pptx-view-preview svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.mimir-pptx-sorter-caption {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  max-width: 100%;
+  font-size: 12px;
+}
+.mimir-pptx-sorter-caption > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mimir-pptx-sorter-caption > span:first-child {
+  font-variant-numeric: tabular-nums;
+}
+.mimir-pptx-reading-stage {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  padding: 20px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  container-type: size;
+}
+.mimir-pptx-reading-slide.ant-btn {
+  display: block;
+  width: min(100cqw, calc(100cqh * var(--reading-factor)));
+  max-width: 100%;
+  aspect-ratio: var(--reading-ratio);
+  height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+}
+.mimir-pptx-reading .mimir-pptx-view-actions {
+  justify-content: center;
+  border-top: 1px solid var(--me-border);
+  border-bottom: 0;
+}
+@container mimir-pptx-workspace (max-width: 650px) {
+  .mimir-pptx-outline-workspace {
+    flex-direction: column;
+  }
+  .mimir-pptx-outline {
+    flex: 0 0 auto;
+    max-height: 180px;
+    border-inline-end: 0;
+    border-bottom: 1px solid var(--me-border);
+  }
+  .mimir-pptx-sorter-grid {
+    gap: 12px;
+    padding: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .mimir-pptx-reading-stage {
+    padding: 12px;
+  }
+}

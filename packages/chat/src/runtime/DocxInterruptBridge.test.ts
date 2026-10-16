@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { ChatDocxAgent } from '../types.js'
 import type { ChatIo } from './io.js'
-import { executeDocxTool, executeWritingTool } from './DocxInterruptBridge.js'
+import { executeDocxTool, executeWritingTool, executeBridgeTool } from './DocxInterruptBridge.js'
 
 function handle(version: () => number, execute: ChatDocxAgent['execute']): ChatDocxAgent {
   return {
@@ -178,5 +178,128 @@ describe('DOCX 流式写作草稿', () => {
     ).rejects.toThrow('连接中断')
     expect(agent.getDraft?.('round-write')).toBe('半截草稿')
     expect(agent.commitDraft).not.toHaveBeenCalled()
+  })
+})
+
+function createToolOptions(agent: ChatDocxAgent, input: unknown) {
+  const created = vi.fn<(id: string) => void>()
+  const create = vi.fn<NonNullable<ChatIo['createDocxDocument']>>(async (request) => ({
+    documentId: 'new-doc',
+    title: request.title,
+    format: request.format,
+    parseError: null,
+  }))
+  return {
+    agent,
+    tool: { name: 'create_document', input },
+    roundId: 'create-round',
+    expectedVersion: 3,
+    signal: new AbortController().signal,
+    batchChanged: false,
+    revisionMode: false,
+    createDocxDocument: create,
+    requestMediaSource: async () => {
+      throw new Error('unused')
+    },
+    setProgress: () => {},
+    onCreatedDocument: created,
+  }
+}
+describe('cross-format new document bridge', () => {
+  it('uses the fixed upstream PDF default and preserves raw content without editing the canvas', async () => {
+    const execute = vi.fn<ChatDocxAgent['execute']>()
+    const value = createToolOptions(
+      { ...handle(() => 3, execute), format: 'pdf' },
+      { title: '报告', content: '<p><strong>内容</strong></p>' },
+    )
+    expect(await executeBridgeTool(value)).toMatchObject({
+      ok: true,
+      changed: false,
+      version: 3,
+      data: { format: 'pdf', documentId: 'new-doc' },
+    })
+    expect(value.createDocxDocument).toHaveBeenCalledWith(
+      {
+        documentId: 'doc-1',
+        title: '报告',
+        format: 'pdf',
+        content: '<p><strong>内容</strong></p>',
+      },
+      expect.any(AbortSignal),
+    )
+    expect(execute).not.toHaveBeenCalled()
+    expect(value.onCreatedDocument).toHaveBeenCalledWith('new-doc')
+  })
+  it('exports the current worksheet values as a file without leaking bytes into model output', async () => {
+    const exportSheet = vi.fn<NonNullable<ChatDocxAgent['exportSheet']>>(async () => ({
+      bytes: new Uint8Array([65, 44, 66]),
+      mimeType: 'text/csv',
+      fileName: '工作表.csv',
+    }))
+    const value = createToolOptions(
+      {
+        ...handle(
+          () => 3,
+          async () => ({}),
+        ),
+        format: 'xlsx',
+        exportSheet,
+      },
+      { type: 'csv', sheetId: 'sheet-2' },
+    )
+    const result = await executeBridgeTool(value)
+    expect(exportSheet).toHaveBeenCalledWith('csv', 'sheet-2')
+    expect(value.createDocxDocument.mock.calls[0]?.[0]).toMatchObject({
+      format: 'csv',
+      title: '工作表',
+      file: expect.any(File),
+    })
+    expect(JSON.stringify(result)).not.toContain('65,44,66')
+    expect(result).toMatchObject({ ok: true, changed: false })
+  })
+  it('rejects stale exports before uploading and rejects content for worksheet exports', async () => {
+    let version = 3
+    const agent: ChatDocxAgent = {
+      ...handle(
+        () => version,
+        async () => ({}),
+      ),
+      format: 'xlsx',
+      exportSheet: async () => {
+        version++
+        return {
+          bytes: new Uint8Array([1]),
+          fileName: 'A.xlsx',
+          mimeType: 'application/octet-stream',
+        }
+      },
+    }
+    const value = createToolOptions(agent, {})
+    await expect(executeBridgeTool(value)).rejects.toThrow('导出期间文档已变化')
+    expect(value.createDocxDocument).not.toHaveBeenCalled()
+    version = 3
+    await expect(
+      executeBridgeTool(createToolOptions(agent, { content: 'new data' })),
+    ).rejects.toThrow('不接受 content')
+  })
+  it('does not navigate after cancellation while the newly created file remains accessible', async () => {
+    const controller = new AbortController()
+    const value = createToolOptions(
+      {
+        ...handle(
+          () => 3,
+          async () => ({}),
+        ),
+        format: 'pdf',
+      },
+      { title: '新文件', content: '<p>内容</p>' },
+    )
+    value.signal = controller.signal
+    value.createDocxDocument.mockImplementation(async () => {
+      controller.abort()
+      return { documentId: 'new-doc', title: '新文件', format: 'pdf', parseError: null }
+    })
+    await expect(executeBridgeTool(value)).rejects.toThrow('已保存到知识库')
+    expect(value.onCreatedDocument).not.toHaveBeenCalled()
   })
 })

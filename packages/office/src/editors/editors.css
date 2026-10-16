@@ -31,7 +31,8 @@
   min-width: 34px;
   padding: 2px 6px;
   border: 1px solid var(--me-border, #d9d9d9);
-  background: var(--me-bar-bg, #fafafa);
+  background-color: var(--me-surface, #fff);
+  background-image: linear-gradient(var(--me-bar-bg, #fafafa), var(--me-bar-bg, #fafafa));
   color: var(--me-text-weak, #8c8c8c);
   font-weight: normal;
   text-align: center;
@@ -53,7 +54,8 @@
   min-width: 34px;
   padding: 2px 6px;
   border: 1px solid var(--me-border, #d9d9d9);
-  background: var(--me-bar-bg, #fafafa);
+  background-color: var(--me-surface, #fff);
+  background-image: linear-gradient(var(--me-bar-bg, #fafafa), var(--me-bar-bg, #fafafa));
   color: var(--me-text-weak, #8c8c8c);
   font-weight: normal;
   text-align: center;
@@ -71,8 +73,10 @@
   background: var(--me-surface, #fff);
   color: var(--me-text, #262626);
   vertical-align: top;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
   cursor: cell;
 }
 
@@ -682,6 +686,211 @@
   padding: 6px 10px;
 }
 
+.mimir-pdf-workspace {
+  display: flex;
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  container: pdf-workspace / inline-size;
+}
+
+.mimir-pdf-workspace__canvas {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.mimir-pdf-inspector {
+  box-sizing: border-box;
+  flex: 0 0 300px;
+  width: 300px;
+  max-width: 100%;
+  min-height: 0;
+  background-color: var(--me-surface, #fff);
+  background-image: linear-gradient(var(--me-bar-bg, #fafafa), var(--me-bar-bg, #fafafa));
+  color: var(--me-text, #262626);
+  z-index: 3;
+  outline: none;
+}
+
+.mimir-pdf-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.mimir-pdf-inspector__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex: none;
+  padding: 16px 16px 12px;
+}
+
+.mimir-pdf-inspector__header h2 {
+  margin: 0 0 4px;
+  font: inherit;
+  font-weight: 600;
+}
+
+.mimir-pdf-inspector__header-actions {
+  display: flex;
+  flex: none;
+  gap: 4px;
+}
+
+.mimir-pdf-inspector__header-actions button {
+  min-width: 28px;
+  min-height: 28px;
+}
+
+.mimir-pdf-inspector__content {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 20px;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: auto;
+  padding: 4px 16px 16px;
+  scrollbar-gutter: stable;
+}
+
+.mimir-pdf-inspector__control {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+  font-size: var(--me-font-size-sm, 12px);
+}
+
+.mimir-pdf-inspector__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: end;
+  gap: 12px 8px;
+}
+
+.mimir-pdf-inspector__grid .me-number {
+  max-width: 100%;
+}
+
+.mimir-pdf-inspector__section-title {
+  margin: 4px 0 -12px;
+  font: inherit;
+  font-weight: 600;
+}
+
+.mimir-pdf-inspector__control > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.mimir-pdf-inspector__field {
+  display: grid;
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+
+.mimir-pdf-inspector__field-title {
+  font-weight: 600;
+}
+
+.mimir-pdf-inspector__meta,
+.mimir-pdf-inspector__hint,
+.mimir-pdf-inspector__empty {
+  margin: 0;
+  color: var(--me-text-weak, #595959);
+  font-size: var(--me-font-size-sm, 12px);
+  line-height: 1.6;
+}
+
+.mimir-pdf-inspector__footer {
+  display: grid;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.mimir-pdf-inspector__footer > button {
+  min-height: 32px;
+}
+
+.mimir-pdf-inspector__hint svg {
+  display: inline;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+.mimir-pdf-inspector__error {
+  margin: 0;
+  color: var(--ant-color-error, #c53030);
+  font-size: var(--me-font-size-sm, 12px);
+  overflow-wrap: anywhere;
+}
+
+@container pdf-workspace (max-width: 900px) {
+  .mimir-pdf-inspector {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    box-shadow: var(--ant-box-shadow-secondary, -4px 0 16px rgb(0 0 0 / 10%));
+  }
+}
+
+.mimir-pdf-annotations {
+  box-sizing: border-box;
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  align-content: start;
+}
+
+.mimir-pdf-annotations__header,
+.mimir-pdf-annotations__actions,
+.mimir-pdf-annotations__context-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.mimir-pdf-annotations__selection {
+  display: grid;
+  min-width: 0;
+}
+
+.mimir-pdf-annotations__selection > * {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.mimir-pdf-annotations__context-actions {
+  flex-basis: 100%;
+  gap: 4px;
+}
+
+.mimir-pdf-annotations__actions > * {
+  flex-shrink: 0;
+}
+
+.mimir-pdf-annotations__threads {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
 .mimir-pdf-sheet--pick > .mimir-pdf-page {
   cursor: crosshair;
 }
@@ -802,4 +1011,50 @@
   border: 1px solid #faad14;
   box-shadow: 0 0 0 9999px rgb(0 0 0 / 28%);
   pointer-events: none;
+}
+
+.mimir-markdown-writing {
+  margin: 16px auto;
+  width: min(760px, calc(100% - 32px));
+  border: 1px solid var(--me-border);
+  border-radius: var(--me-radius);
+  background: var(--me-surface);
+  color: var(--me-text);
+  overflow: hidden;
+}
+.mimir-markdown-writing__header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--me-border);
+}
+.mimir-markdown-writing h3 {
+  margin: 0 0 4px;
+  font: inherit;
+  font-weight: 600;
+}
+.mimir-markdown-writing p {
+  margin: 0;
+}
+.mimir-markdown-writing__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.mimir-markdown-writing__warning {
+  padding: 12px 16px;
+  color: var(--me-danger);
+}
+.mimir-markdown-writing pre {
+  margin: 0;
+  padding: 16px;
+  max-height: 320px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  line-height: 1.7;
 }

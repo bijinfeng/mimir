@@ -67,3 +67,20 @@ DOCX 画布当前状态 + 冻结选区
 - **TanStack AI 接缝**：安装包源码提供内建 agent loop、client tool 中断/续轮、`generateImage` 与多模态输入，但 Mimir 的模型包装尚未暴露工具参数，问答流还会剥掉 `RUN_FINISHED.outcome`。将读取/写入/续轮及多轮用量的端到端实验放在实施第一步，实验结果决定具体适配位置，产品行为与工具范围不变。
 - **浏览器运行时选择**：现有 assistant-ui + AG-UI 对检索问答合理，对 TanStack client-tool interrupt 尚不完整。首个实验必须覆盖 `outcome`/`resume`/`parentRunId`、工具只执行一次、结果/错误续轮、停止、排队和历史重载；协议桥失败时迁到 TanStack React 并补齐既有交互。36 工具的输入/输出合同须单一来源，避免两端定义漂移。
 - **外部供应商**：参考供应商与模型可能有地区、额度或输入格式限制。配置页应检测各能力，给出明确状态；测试要区分适配器契约测试与真实凭据的效果验证。
+
+### PDF 保留结构的手动页面工作副本
+
+旧单页裁剪/纸型、复制和导入的页面引用已能预览，但在含AcroForm/Outlines的原件上回落整体重建。新增严格`apply_page_layout`本地合同：现有页引用或空白尺寸、绝对旋转、相对源CropBox的四边内缩和目标纸型；服务保留Catalog和原页面对象，重复页复制控件并绑定同一个原字段。水印/页码按新页面重绘。自有绘图保留既有图层与复制后的独立ID；含可编辑绘图页面的裁剪/纸型/旋转组合须明确拒绝，直到缓存能表达该几何变换。标签树迁移、签名、活动动作继续拒绝；来源含AcroForm的导入沿既有明确拒绝，不复制悬空Widget。
+
+Office统一工作副本物化函数先按用户已选来源追加导入页，再以layout恢复最终页序/几何；只返回临时字节，操作成功或手动保存后才发布。当前未保存页面变更可供本地工具继续操作，不隐式持久化。源选择/失败/取消/版本过期不得改变dirty/history。旧纸型和裁剪菜单保持幂等档位，保存后undo/redo保留历史。输出置于300px Inspector顶部并随生成结果回到可见位置。
+
+
+### 带原生书签表单的显式保留适配
+
+最小缺口是表单Inspector/Agent普通字段写仍拒绝已由local保留的Outlines。抽出pdf-local原有Catalog守卫至pdf-preserving-guard，不改允许项；新增pdf-preserving-forms显式adapter，纯字段复用原writer，含页面批次复用local已验证书签映射/删除清理，再返回同字段快照。旧applyPdfFormOperation默认严格路径不变；根会话切换forms路由并负责HTTP回归。此次先改server服务/测试，不改Editor、不动page-layout绘图ID；覆盖原生GoTo书签、连续中文/选项填写、页面后再填、控件/原文保留、dryRun/原子拒绝及签名/未知Catalog。
+
+### 2026-10-16 PPTX 文稿视图与新 Inspector 集成边界
+
+PPTX当前仅有普通编辑画布与全屏放映，补齐固定GenOffice的普通/大纲/幻灯片浏览/阅读四种工作区视图。新增PptxWorkspaceViews及局部CSS；PptxViewControls提供四个短标签当前态入口，Editor只持有文档绑定模式及整合原编辑stage。大纲按真实文本提取标题/正文并导航，旁边仍为原可编辑画布；≤650px编辑容器将大纲置顶保留画布。浏览采用持久slide.path多选、Shift范围、Ctrl/Cmd全选、拖拽边界及前后移动，双击/Enter回普通编辑。阅读在应用内按可用宽高与原件比例适配，局部方向键/Home/End/PageUp/PageDown翻页，Escape回普通并恢复真实可见入口（折叠时回来源组）。视图/导航不写session、不dirty。
+
+排序生成一次apply_ops(moveSlide)批次，复用既有受控PPTX句柄、版本校验、原子执行及单次history；moveSlide已属本地可执行操作，因此不误要求网络宿主。新增填充/背景Inspector与绘图组件仅在Editor整合：长编辑内容留在右侧原Inspector、底部动作固定；填充草稿key绑定页/持久目标，单调version清旧草稿。异步面板应用同时重验页码/选中目标；绘图捕获expectedVersion和取消signal，切阅读/浏览卸载画布后取消迟到结果，不污染新视图或undo。保留既有缩略图开关、原保存/放映路径、vendor与SVG渲染。

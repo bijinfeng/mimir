@@ -1,0 +1,112 @@
+.mimir-pptx-show {
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--me-text);
+}
+.mimir-pptx-show__body {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 12px;
+  scrollbar-color: var(--me-border) transparent;
+}
+.mimir-pptx-show__name {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.mimir-pptx-show__actions,
+.mimir-pptx-show__footer,
+.mimir-pptx-show__order {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.mimir-pptx-show__footer {
+  flex: none;
+  justify-content: flex-end;
+  padding: 10px 12px;
+  border-top: 1px solid var(--me-border);
+  background: var(--me-surface);
+}
+.mimir-pptx-show h3 {
+  font: inherit;
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+.mimir-pptx-show h3 span,
+.mimir-pptx-show p {
+  color: var(--me-text-weak);
+  font-weight: 400;
+}
+.mimir-pptx-show p {
+  margin: 0 0 10px;
+  line-height: 1.5;
+}
+.mimir-pptx-show__slides,
+.mimir-pptx-show__rehearsal {
+  margin-top: 18px;
+}
+.mimir-pptx-show__rehearsal {
+  margin-top: 0;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--me-border);
+}
+.mimir-pptx-show ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.mimir-pptx-show li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 36px;
+  padding-block: 4px;
+  border-bottom: 1px solid var(--me-border);
+}
+.mimir-pptx-show__order,
+.mimir-pptx-show__timings {
+  font-variant-numeric: tabular-nums;
+}
+.mimir-pptx-show__slide-label {
+  overflow-wrap: anywhere;
+}
+.mimir-pptx-show__order {
+  flex-wrap: nowrap;
+  flex: none;
+}
+.mimir-pptx-show__timings {
+  max-height: 180px;
+  overflow: auto;
+}
+.mimir-pptx-show .mimir-pptx-show__error {
+  color: var(--me-danger);
+}
+.mimir-pptx-inspector__body[data-panel='自定义放映与排练'] {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
+.mimir-pptx-show__slide-label small {
+  display: block;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--me-text-weak);
+  font-size: inherit;
+}

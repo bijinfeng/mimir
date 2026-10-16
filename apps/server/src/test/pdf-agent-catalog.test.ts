@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { pdfImageTools } from '../services/pdf-image-catalog.js'
 import { pdfAgentAssetPaths } from '../services/pdf-agent-host.js'
 import { pdfAgentCatalog } from '../services/pdf-agent-catalog.js'
 
@@ -22,6 +23,10 @@ describe('PDF Agent tool readiness', () => {
     expect(catalog.clientToolNames.has('move_inserted_text')).toBe(true)
     expect(catalog.clientToolNames.has('delete_inserted_text')).toBe(true)
     expect(catalog.tools.some((tool) => tool.name === 'insert_text')).toBe(true)
+    for (const tool of pdfImageTools) {
+      expect(catalog.clientToolNames.has(tool.name)).toBe(true)
+      expect(catalog.tools.some((entry) => entry.name === tool.name)).toBe(true)
+    }
     expect(catalog.unavailableTools).toEqual([])
   })
 
@@ -31,10 +36,20 @@ describe('PDF Agent tool readiness', () => {
     })
     const catalog = pdfAgentCatalog()
     expect(catalog.clientToolNames.has('insert_text')).toBe(false)
+    for (const tool of pdfImageTools) expect(catalog.clientToolNames.has(tool.name)).toBe(false)
     expect(catalog.tools.some((tool) => tool.name === 'insert_text')).toBe(false)
     expect(catalog.clientToolNames.has('apply_ops')).toBe(true)
     expect(catalog.unavailableTools).toEqual(
       [
+        ...pdfImageTools.map((tool) => tool.name),
+        'edit_text',
+        'markup_text',
+        'read_annotations',
+        'add_note',
+        'reply_note',
+        'edit_note',
+        'delete_note',
+        'delete_markup',
         'insert_text',
         'list_inserted_text',
         'edit_inserted_text',

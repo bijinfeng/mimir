@@ -1,3 +1,5 @@
+import { PDF_LOCAL_TOOLS } from './pdf-local-agent.js'
+import { PDF_CONTENT_TOOLS } from './pdf-content-agent.js'
 import { searchPdfText, type PdfTextIndex } from '../editors/pdf-text.js'
 import { withRotation, type PdfPageRef } from '../editors/pdf-pages.js'
 
@@ -27,6 +29,13 @@ export interface PdfAgentHooks {
     expectedVersion: number,
     signal?: AbortSignal,
   ): Promise<void>
+  contentTool?(
+    tool: string,
+    args: Record<string, unknown>,
+    version: number,
+    signal?: AbortSignal,
+    manual?: boolean,
+  ): Promise<{ changed: boolean; data?: unknown }>
   captureState(): unknown
   restoreState(state: unknown): void
 }
@@ -243,6 +252,46 @@ export class PdfAgentHandle {
         })
       }
 
+      if (
+        (PDF_CONTENT_TOOLS as readonly string[]).includes(tool) ||
+        (PDF_LOCAL_TOOLS as readonly string[]).includes(tool) ||
+        (tool === 'apply_ops' &&
+          Array.isArray(input.ops) &&
+          input.ops.some(
+            (op) =>
+              op && typeof op === 'object' && (op.op === 'setFormValue' || op.op === 'setMetadata'),
+          ))
+      ) {
+        if (!this.hooks.contentTool) throw new Error('PDF 内容执行器尚未连接')
+        const startingVersion = this.version
+        const checkpoint = options.roundId ? this.rounds.get(options.roundId) : undefined
+        const beforeState = checkpoint ? undefined : this.hooks.captureState()
+        const result = await this.hooks.contentTool(
+          tool,
+          input,
+          startingVersion,
+          options.signal,
+          options.manual,
+        )
+        if (this.disposed || options.signal?.aborted || this.version !== startingVersion)
+          throw new Error('PDF 画布已变化，结果未应用')
+        if (result.changed) {
+          if (options.roundId && !checkpoint)
+            this.rounds.set(options.roundId, { beforeState, afterVersion: startingVersion + 1 })
+          this.version++
+          if (checkpoint) checkpoint.afterVersion = this.version
+          this.textCache = null
+          if (options.manual) this.rounds.clear()
+        }
+        return this.result(
+          true,
+          result.changed,
+          result.changed ? '已更新 PDF 画布，尚未保存' : undefined,
+          undefined,
+          result.data,
+        )
+      }
+
       if (tool === 'insert_text') {
         const pageIndex = pageNumber(input.page, snapshot.pages.length)
         if (input.origin !== undefined && !options.manual)
@@ -393,11 +442,14 @@ export class PdfAgentHandle {
       if (tool === 'apply_ops') {
         if (!Array.isArray(input.ops) || input.ops.length < 1 || input.ops.length > 30)
           throw new Error('PDF 页面操作批次必须包含 1–30 项')
+        if (input.dry_run !== undefined && typeof input.dry_run !== 'boolean')
+          throw new Error('dry_run 必须是布尔值')
         let pages = [...snapshot.pages]
         for (const raw of input.ops) pages = applyPageOp(pages, raw)
         if (options.signal?.aborted) throw new Error('操作已取消')
         if (options.expectedVersion !== undefined && options.expectedVersion !== this.version)
           throw new Error('PDF 画布版本已变化，请重新读取')
+        if (input.dry_run === true) return this.result(true, false, '页面操作预检通过')
         if (options.roundId && !this.rounds.has(options.roundId))
           this.rounds.set(options.roundId, {
             beforeState: this.hooks.captureState(),

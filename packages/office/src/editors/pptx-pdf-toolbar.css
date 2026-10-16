@@ -10,3 +10,54 @@
 .mimir-pptx-pdf-toolbar__find-menu {
   display: none;
 }
+
+.mimir-pdf-local-tabs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 4px;
+  flex: none;
+  padding: 0 16px 12px;
+  border-bottom: 1px solid var(--me-border);
+}
+.mimir-pdf-local-tabs .ant-btn {
+  width: 100%;
+  min-height: 32px;
+  justify-content: center;
+}
+.mimir-pdf-local-panel .mimir-pdf-inspector__content {
+  padding-top: 16px;
+}
+.mimir-pdf-local-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.mimir-pdf-local-group .mimir-pdf-inspector__section-title {
+  margin: 0 0 2px;
+}
+.mimir-pdf-local-panel .mimir-pdf-inspector__content .ant-btn {
+  min-height: 32px;
+}
+.mimir-pdf-local-actions,
+.mimir-pdf-local-outputs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.mimir-pdf-local-outputs {
+  flex: none;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.mimir-pdf-local-actions .ant-btn {
+  flex: 1 1 auto;
+}
+.mimir-pdf-local-outputs button {
+  flex: none;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

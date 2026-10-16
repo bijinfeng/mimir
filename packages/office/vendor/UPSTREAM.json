@@ -15,7 +15,7 @@
   "upstream": "https://github.com/genspark-ai/genoffice",
   "license": "Apache-2.0",
   "commit": "480548fd55f1be3593ee0d8e316a734751d58309",
-  "syncedAt": "2026-10-13T06:18:59.414Z",
+  "syncedAt": "2026-10-16T11:39:20.376Z",
   "entries": [
     "apps/docs/src/renderer/editor/extensions.ts",
     "apps/docs/src/renderer/editor/convert.ts",
@@ -50,7 +50,16 @@
     "apps/html/src/renderer/document/image-style.ts",
     "apps/html/src/renderer/document/move-target.ts",
     "packages/ui/src/image-dialogs.tsx",
-    "packages/ui/src/cutout.ts"
+    "packages/ui/src/cutout.ts",
+    "apps/pdf/src/main/image-edit.ts",
+    "apps/pdf/src/renderer/image-bake.ts",
+    "apps/slides/src/renderer/ai/layout-script.ts",
+    "packages/xlsx-gateway/src/domain/pivot-layout.ts",
+    "packages/xlsx-gateway/src/domain/pivot-engine.ts",
+    "apps/docs/src/renderer/doc-style-css.ts",
+    "packages/pipelines/src/slides/layout-audit.ts",
+    "packages/xlsx-gateway/src/domain/flash-fill.ts",
+    "apps/slides/src/renderer/cutout.ts"
   ],
   "skipPackages": [
     "@genoffice/ui",
@@ -66,6 +75,46 @@
     "@genoffice/html2docx"
   ],
   "assets": [
+    {
+      "from": "apps/slides/src/renderer/assets/textures/paper.png",
+      "to": "apps/slides/src/renderer/assets/textures/paper.png",
+      "why": "固定 GenOffice Apache-2.0 形状/背景纹理原图；保留像素与原生平铺填充"
+    },
+    {
+      "from": "apps/slides/src/renderer/assets/textures/canvas.png",
+      "to": "apps/slides/src/renderer/assets/textures/canvas.png",
+      "why": "固定 GenOffice Apache-2.0 形状/背景纹理原图；保留像素与原生平铺填充"
+    },
+    {
+      "from": "apps/slides/src/renderer/assets/textures/wood.png",
+      "to": "apps/slides/src/renderer/assets/textures/wood.png",
+      "why": "固定 GenOffice Apache-2.0 形状/背景纹理原图；保留像素与原生平铺填充"
+    },
+    {
+      "from": "apps/slides/src/renderer/assets/textures/marble.png",
+      "to": "apps/slides/src/renderer/assets/textures/marble.png",
+      "why": "固定 GenOffice Apache-2.0 形状/背景纹理原图；保留像素与原生平铺填充"
+    },
+    {
+      "from": "apps/slides/src/renderer/assets/textures/granite.png",
+      "to": "apps/slides/src/renderer/assets/textures/granite.png",
+      "why": "固定 GenOffice Apache-2.0 形状/背景纹理原图；保留像素与原生平铺填充"
+    },
+    {
+      "from": "apps/slides/src/renderer/assets/textures/denim.png",
+      "to": "apps/slides/src/renderer/assets/textures/denim.png",
+      "why": "固定 GenOffice Apache-2.0 形状/背景纹理原图；保留像素与原生平铺填充"
+    },
+    {
+      "from": "apps/slides/src/renderer/assets/textures/cork.png",
+      "to": "apps/slides/src/renderer/assets/textures/cork.png",
+      "why": "固定 GenOffice Apache-2.0 形状/背景纹理原图；保留像素与原生平铺填充"
+    },
+    {
+      "from": "apps/slides/src/renderer/assets/textures/parchment.png",
+      "to": "apps/slides/src/renderer/assets/textures/parchment.png",
+      "why": "固定 GenOffice Apache-2.0 形状/背景纹理原图；保留像素与原生平铺填充"
+    },
     {
       "from": "apps/docs/src/renderer/fonts",
       "to": "apps/docs/src/renderer/fonts",
@@ -85,6 +134,7 @@
   "files": [
     "apps/docs/src/renderer/doc-bytes.ts",
     "apps/docs/src/renderer/doc-state.ts",
+    "apps/docs/src/renderer/doc-style-css.ts",
     "apps/docs/src/renderer/dom-range.ts",
     "apps/docs/src/renderer/editor/active-editor.ts",
     "apps/docs/src/renderer/editor/ai-queue-anchors.ts",
@@ -164,14 +214,21 @@
     "apps/pdf/src/main/font-cmap.ts",
     "apps/pdf/src/main/font-locate.ts",
     "apps/pdf/src/main/font-subset.ts",
+    "apps/pdf/src/main/image-edit.ts",
     "apps/pdf/src/main/read-text.ts",
     "apps/pdf/src/main/redaction.ts",
     "apps/pdf/src/main/save-pdf.ts",
     "apps/pdf/src/main/text-edit.ts",
+    "apps/pdf/src/renderer/cutout.ts",
+    "apps/pdf/src/renderer/image-bake.ts",
     "apps/pdf/src/shared/ipc.ts",
     "apps/pdf/src/shared/op-docs.ts",
     "apps/pdf/src/shared/radicals.ts",
     "apps/pdf/src/shared/x-layers.ts",
+    "apps/slides/src/renderer/ai/bounded-regex.ts",
+    "apps/slides/src/renderer/ai/layout-script-interpreter.ts",
+    "apps/slides/src/renderer/ai/layout-script.ts",
+    "apps/slides/src/renderer/cutout.ts",
     "packages/docx-engine/src/alt-chunk.ts",
     "packages/docx-engine/src/blank.ts",
     "packages/docx-engine/src/byte-stream.ts",
@@ -222,6 +279,7 @@
     "packages/font-metrics/src/index.ts",
     "packages/font-metrics/src/metrics.ts",
     "packages/font-metrics/src/sfnt.ts",
+    "packages/pipelines/src/slides/layout-audit.ts",
     "packages/pptx-engine/src/align.ts",
     "packages/pptx-engine/src/animation.ts",
     "packages/pptx-engine/src/background-promote.ts",
@@ -303,9 +361,12 @@
     "packages/ui/src/image-dialogs.tsx",
     "packages/xlsx-gateway/src/domain/cell-address.ts",
     "packages/xlsx-gateway/src/domain/chart-visual.ts",
+    "packages/xlsx-gateway/src/domain/flash-fill.ts",
+    "packages/xlsx-gateway/src/domain/pivot-engine.ts",
     "packages/xlsx-gateway/src/domain/pivot-filters.ts",
     "packages/xlsx-gateway/src/domain/pivot-formula.ts",
     "packages/xlsx-gateway/src/domain/pivot-grouping.ts",
+    "packages/xlsx-gateway/src/domain/pivot-layout.ts",
     "packages/xlsx-gateway/src/domain/sort-range.ts",
     "packages/xlsx-gateway/src/domain/style-color.ts",
     "packages/xlsx-gateway/src/domain/workbook-dsl.ts",

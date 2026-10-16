@@ -88,6 +88,11 @@ export class PptxArchive {
     return new PptxArchive(entries, fnv1a(bytes))
   }
 
+  /** Entries are replaced on writes; copy the map so later commits cannot change a checkpoint. */
+  snapshot(): PptxArchive {
+    return new PptxArchive(new Map(this.entries), this.fingerprint)
+  }
+
   has(path: string): boolean {
     return this.entries.has(path)
   }

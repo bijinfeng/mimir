@@ -1,0 +1,65 @@
+.mimir-pptx-inspector__body[data-panel='段落与文本框'] {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+.mimir-pptx-paragraph {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+.mimir-pptx-paragraph__tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--me-border);
+}
+.mimir-pptx-paragraph__content {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  padding: 12px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.mimir-pptx-paragraph__pair,
+.mimir-pptx-paragraph__buttons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+.mimir-pptx-paragraph__gallery {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  width: 100%;
+}
+.mimir-pptx-paragraph__gallery .me-tb {
+  font-size: var(--me-font-size-lg, 16px);
+  min-width: 0;
+  padding-inline: 2px;
+}
+.mimir-pptx-paragraph__actions {
+  display: grid;
+  flex-shrink: 0;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--me-border);
+  background: var(--me-surface);
+}
+.mimir-pptx-paragraph__actions p[role='alert'] {
+  margin: 0;
+  color: var(--me-danger);
+  font-size: var(--me-font-size-sm, 12px);
+  overflow-wrap: anywhere;
+}

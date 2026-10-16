@@ -1,4 +1,13 @@
-import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from 'react'
+import { ToolbarMenu } from '../shell/EditorShell.js'
 
 export interface CompactToolbarSection {
   key: string
@@ -16,7 +25,7 @@ export interface CompactToolbarTab {
   label: string
 }
 
-/** A visible tab strip and a horizontally scrollable command band. */
+/** Visible categories; groups collapse individually to named menus when the editor column narrows. */
 export function CompactToolbar({
   sections,
   tabs,
@@ -36,7 +45,10 @@ export function CompactToolbar({
   const [requestedTab, setRequestedTab] = useState<string | null>(null)
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([])
   const commandsRef = useRef<HTMLDivElement | null>(null)
-  const lastTabRef = useRef<string | null | undefined>(undefined)
+  const widths = useRef(new Map<string, number>())
+  const findGroups = useRef(new Set<string>())
+  const [collapsed, setCollapsed] = useState<string[]>([])
+  const [commandOverflow, setCommandOverflow] = useState(false)
   const id = useId()
   const selectedTab = controlledTab ?? requestedTab
   const activeTab = tabs?.some((tab) => tab.key === selectedTab) ? selectedTab : tabs?.[0]?.key
@@ -47,6 +59,7 @@ export function CompactToolbar({
   const shown = tabs
     ? available.filter((section) => (section.tab ?? tabs[0]?.key) === activeTab)
     : available
+  const lastTab = useRef(activeTab)
 
   const selectTab = (key: string) => {
     if (controlledTab === undefined) setRequestedTab(key)
@@ -66,50 +79,90 @@ export function CompactToolbar({
     tabRefs.current[next]?.focus()
   }
 
-  /**
-   * 监测横向滚动位置，动态更新渐变遮罩的显示状态。
-   *
-   * 当用户滚动工具栏时：
-   * - 在起始位置：只显示右侧渐变（提示右侧有更多内容）
-   * - 在中间位置：显示两侧渐变（提示两侧都有内容）
-   * - 在结束位置：只显示左侧渐变（提示左侧有更多内容）
-   */
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (lastTab.current !== activeTab) {
+      if (commandsRef.current) commandsRef.current.scrollLeft = 0
+      lastTab.current = activeTab
+    }
+  }, [activeTab])
+
+  useLayoutEffect(() => {
     const commands = commandsRef.current
     if (!commands) return
-
-    // A new category starts at its first command; carrying over the previous
-    // category's offset can make the selected category look empty.
-    if (lastTabRef.current !== activeTab) commands.scrollLeft = 0
-    lastTabRef.current = activeTab
-
-    const updateScrollState = () => {
-      const { scrollLeft, scrollWidth, clientWidth } = commands
-      const isAtStart = scrollLeft <= 1
-      const isAtEnd = scrollLeft + clientWidth >= scrollWidth - 1
-
-      if (scrollWidth <= clientWidth + 1) {
-        commands.setAttribute('data-scroll', 'none')
-      } else if (isAtStart) {
-        commands.setAttribute('data-scroll', 'start')
-      } else if (isAtEnd) {
-        commands.setAttribute('data-scroll', 'end')
-      } else {
-        commands.setAttribute('data-scroll', 'middle')
+    const measure = () => {
+      const availableWidth = commands.clientWidth || commands.getBoundingClientRect().width
+      if (availableWidth <= 0) return
+      // Preserve readable names even when every group has to collapse.
+      const buttonWidth = 72
+      for (const section of commands.querySelectorAll<HTMLElement>('[data-section-key]')) {
+        const key = section.dataset.sectionKey!
+        if (!section.hasAttribute('data-collapsed')) {
+          const width = section.getBoundingClientRect().width || section.scrollWidth
+          if (width > 0) widths.current.set(key, width)
+          if (section.querySelector('[data-find-input]')) findGroups.current.add(key)
+        }
       }
+      const costs = shown.map((section) => widths.current.get(section.key) ?? section.minWidth)
+      let total = costs.reduce((sum, cost) => sum + cost, 0)
+      const next: string[] = []
+      for (let index = shown.length - 1; index >= 0 && total > availableWidth + 0.5; index--) {
+        const section = shown[index]!
+        if (costs[index]! <= buttonWidth) continue
+        next.push(section.key)
+        total -= costs[index]! - buttonWidth
+      }
+      setCommandOverflow(total > availableWidth + 0.5)
+      setCollapsed((previous) =>
+        previous.length === next.length && previous.every((key, index) => key === next[index])
+          ? previous
+          : next,
+      )
     }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(commands)
+    for (const section of commands.children) observer.observe(section)
+    return () => observer.disconnect()
+  }, [shown])
 
-    updateScrollState()
-    commands.addEventListener('scroll', updateScrollState, { passive: true })
-
-    const resizeObserver = new ResizeObserver(updateScrollState)
-    resizeObserver.observe(commands)
-
+  // The format host changes the active category on Ctrl/Cmd+F. If its input is
+  // in a collapsed group, reveal that group's sole instance before focusing it.
+  useEffect(() => {
+    let revealTimer: ReturnType<typeof setTimeout> | undefined,
+      focusTimer: ReturnType<typeof setTimeout> | undefined
+    const revealFind = (event: globalThis.KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== 'f' || event.altKey)
+        return
+      clearTimeout(revealTimer)
+      clearTimeout(focusTimer)
+      // Hidden webviews may stop delivering animation frames.
+      revealTimer = setTimeout(() => {
+        const commands = commandsRef.current
+        const direct = commands?.querySelector<HTMLInputElement>('[data-find-input]')
+        if (direct) return
+        const group = Array.from(
+          commands?.querySelectorAll<HTMLElement>('[data-collapsed]') ?? [],
+        ).find(
+          (section) =>
+            findGroups.current.has(section.dataset.sectionKey!) ||
+            section.getAttribute('aria-label')?.includes('查找'),
+        )
+        if (!group) return
+        group.querySelector<HTMLButtonElement>('button[aria-haspopup="menu"]')?.click()
+        focusTimer = setTimeout(() => {
+          const panel = group.querySelector<HTMLInputElement>('[data-find-input]')
+          panel?.focus()
+          panel?.select()
+        }, 0)
+      }, 0)
+    }
+    document.addEventListener('keydown', revealFind, true)
     return () => {
-      commands.removeEventListener('scroll', updateScrollState)
-      resizeObserver.disconnect()
+      document.removeEventListener('keydown', revealFind, true)
+      clearTimeout(revealTimer)
+      clearTimeout(focusTimer)
     }
-  })
+  }, [])
 
   return (
     <div className="mimir-compact-toolbar">
@@ -154,7 +207,7 @@ export function CompactToolbar({
         id={tabs ? `${id}-commands` : undefined}
         role={tabs ? 'tabpanel' : undefined}
         aria-labelledby={tabs && activeTab ? `${id}-tab-${activeTab}` : undefined}
-        data-scroll="start"
+        data-overflow={commandOverflow ? '' : undefined}
       >
         {shown.map((section) => (
           <div
@@ -162,11 +215,26 @@ export function CompactToolbar({
             key={section.key}
             role="group"
             aria-label={section.label}
+            data-section-key={section.key}
+            data-collapsed={collapsed.includes(section.key) ? '' : undefined}
           >
-            <div className="mimir-compact-toolbar__controls">{section.content}</div>
-            <span className="mimir-compact-toolbar__caption" aria-hidden="true">
-              {section.label}
-            </span>
+            {collapsed.includes(section.key) ? (
+              <ToolbarMenu
+                label={section.label}
+                text={section.label}
+                panelWidth={320}
+                renderPanel={() => (
+                  <div className="mimir-compact-toolbar__panel">{section.content}</div>
+                )}
+              />
+            ) : (
+              <>
+                <div className="mimir-compact-toolbar__controls">{section.content}</div>
+                <span className="mimir-compact-toolbar__caption" aria-hidden="true">
+                  {section.label}
+                </span>
+              </>
+            )}
           </div>
         ))}
       </div>

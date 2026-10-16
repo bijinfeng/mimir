@@ -1,0 +1,125 @@
+.mimir-pptx-shape-editor {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.mimir-pptx-shape-editor__tabs {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--me-border);
+}
+.mimir-pptx-shape-editor__content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px;
+}
+.mimir-pptx-shape-editor__content > .me-property-field {
+  margin-block: 8px;
+}
+.mimir-pptx-shape-group {
+  margin-block: 16px;
+}
+.mimir-pptx-shape-group h3 {
+  margin: 0 0 8px;
+  font-size: var(--me-font-size-sm, 12px);
+  font-weight: 600;
+  color: var(--me-text);
+}
+.mimir-pptx-shape-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  min-width: 0;
+}
+.mimir-pptx-shape-grid > .mimir-pptx-shape-cell {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  min-height: 70px;
+  min-width: 0;
+  padding: 6px 3px;
+  gap: 3px;
+}
+.mimir-pptx-shape-cell .mimir-pptx-shape-cell__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+.mimir-pptx-shape-cell__content > svg {
+  flex-shrink: 0;
+}
+.mimir-pptx-shape-cell .mimir-pptx-shape-cell__label {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+  font-size: var(--me-font-size-sm, 12px);
+  line-height: 1.35;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+.mimir-pptx-shape-cell:focus-visible {
+  outline: 2px solid var(--me-accent);
+  outline-offset: 2px;
+}
+.mimir-pptx-shape-editor__actions {
+  flex-shrink: 0;
+  padding: 10px 12px;
+  border-top: 1px solid var(--me-border);
+  background: var(--me-surface);
+}
+.mimir-pptx-shape-editor__selection {
+  margin-bottom: 8px;
+  font-size: var(--me-font-size-sm, 12px);
+  overflow-wrap: anywhere;
+}
+.mimir-pptx-shape-editor__buttons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.mimir-pptx-shape-editor__actions > .me-tb {
+  width: 100%;
+}
+.mimir-pptx-shape-editor__status {
+  font-size: var(--me-font-size-sm, 12px);
+  color: var(--me-text-weak);
+}
+.mimir-pptx-shape-editor__status:not(:empty) {
+  margin-top: 8px;
+}
+.mimir-pptx-inspector__body[data-panel='形状库'] {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+}
+.mimir-pptx-shape-editor__tabs .me-tabs {
+  display: flex;
+}
+.mimir-pptx-shape-editor__tabs .me-tab {
+  flex: 1;
+}
+
+.mimir-pptx-shape-editor__insertion {
+  display: grid;
+  gap: 8px;
+}
+.mimir-pptx-shape-editor__insertion > .me-tb {
+  width: 100%;
+}

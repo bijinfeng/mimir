@@ -82,7 +82,8 @@ export interface HtmlAgentHooks {
     plan?: string
     context?: string
     signal?: AbortSignal
-  }): Promise<{ html: string; complete: true }>
+    onDelta?: (text: string) => void
+  }): Promise<{ html: string; complete: boolean; keptPartial?: boolean }>
 }
 
 const object = (value: unknown): value is Record<string, unknown> =>
@@ -206,7 +207,7 @@ export class HtmlAgentHandle {
   }
   async commitDraft(
     roundId: string,
-    options: { expectedVersion?: number } = {},
+    options: { expectedVersion?: number; allowPartial?: boolean } = {},
   ): Promise<HtmlAgentResult> {
     const draft = this.drafts.get(roundId)
     if (!draft) return this.result(false, false, undefined, '没有可提交的 HTML 草稿。')
@@ -216,7 +217,10 @@ export class HtmlAgentHandle {
     )
       return this.result(false, false, undefined, '文档已改变，草稿未应用。')
     const html = draft.text.trim()
-    if (!/<!doctype\s|<html[\s>]/i.test(html) || !/<\/html>\s*$/i.test(html))
+    if (
+      !options.allowPartial &&
+      (!/<!doctype\s|<html[\s>]/i.test(html) || !/<\/html>\s*$/i.test(html))
+    )
       return this.result(false, false, undefined, 'HTML 草稿不完整，画布未修改。')
     this.drafts.delete(roundId)
     if (html === this.doc.text) return this.result(true, false, '页面没有变化。')
@@ -225,7 +229,13 @@ export class HtmlAgentHandle {
     this.hooks.replaceDoc(html, true)
     this.setDocument(html)
     this.snapshots.get(roundId)!.afterVersion = this.doc.version
-    return this.result(true, true, '完整 HTML 页面已写入画布，请手动保存。')
+    return this.result(
+      true,
+      true,
+      options.allowPartial
+        ? '用户已保留部分 HTML 草稿，页面尚不完整；请检查后手动保存。'
+        : '完整 HTML 页面已写入画布，请手动保存。',
+    )
   }
   private setDocument(text: string): void {
     const version = this.doc.version + 1
@@ -438,12 +448,15 @@ export class HtmlAgentHandle {
         })
         if (options.signal?.aborted)
           return this.result(false, false, undefined, '页面写作已取消，画布未修改。')
-        if (!written.complete)
+        if (!written.complete && !written.keptPartial)
           return this.result(false, false, undefined, '页面生成未完成，画布未修改。')
         const roundId = options.roundId ?? `page-${version}`
         this.beginDraft(roundId)
         this.appendDraft(roundId, written.html)
-        const result = await this.commitDraft(roundId, { expectedVersion: version })
+        const result = await this.commitDraft(roundId, {
+          expectedVersion: version,
+          allowPartial: !written.complete && written.keptPartial,
+        })
         if (!result.ok) this.discardDraft(roundId)
         return result
       } catch (error) {
@@ -472,12 +485,15 @@ export class HtmlAgentHandle {
         })
         if (options.signal?.aborted)
           return this.result(false, false, undefined, '页面写作已取消，画布未修改。')
-        if (!written.complete)
+        if (!written.complete && !written.keptPartial)
           return this.result(false, false, undefined, '页面生成未完成，画布未修改。')
         const roundId = options.roundId ?? `document-${version}`
         this.beginDraft(roundId)
         this.appendDraft(roundId, written.html)
-        const result = await this.commitDraft(roundId, { expectedVersion: version })
+        const result = await this.commitDraft(roundId, {
+          expectedVersion: version,
+          allowPartial: !written.complete && written.keptPartial,
+        })
         if (!result.ok) this.discardDraft(roundId)
         return result
       } catch (error) {

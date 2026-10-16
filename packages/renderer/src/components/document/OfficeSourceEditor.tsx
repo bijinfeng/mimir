@@ -34,8 +34,10 @@ export function OfficeSourceEditor({
   kind,
   onDirtyChange,
   onDocumentAgentHandleChange,
+  onAiPreset,
 }: {
   doc: DocumentDetail
+  onAiPreset?: ((instruction: string) => void) | undefined
   kind: 'docx' | 'xlsx' | 'pptx' | 'html' | 'pdf'
   onDirtyChange?: (dirty: boolean) => void
   onDocumentAgentHandleChange?: (handle: ChatDocumentAgent | null) => void
@@ -165,14 +167,15 @@ export function OfficeSourceEditor({
       />
     ) : kind === 'html' ? (
       <HtmlEditor
+        onAiPreset={onAiPreset}
         key={doc.id}
         flush
         {...props}
         onAgentHandleChange={onDocumentAgentHandleChange}
         agentServices={{
           planPage: ({ signal, ...input }) => api.documents.planHtmlPage(doc.id, input, signal),
-          writeDocument: ({ signal, ...input }) =>
-            api.documents.writeHtmlDocument(doc.id, input, signal),
+          writeDocument: ({ signal, onDelta, ...input }) =>
+            api.documents.writeHtmlDocument(doc.id, input, signal, onDelta),
         }}
       />
     ) : kind === 'pdf' ? (
@@ -183,6 +186,10 @@ export function OfficeSourceEditor({
         onAgentHandleChange={onDocumentAgentHandleChange}
         hostApply={(input) => api.documents.applyPdfText({ documentId: doc.id, ...input })}
         hostInspect={(input) => api.documents.inspectPdfText({ documentId: doc.id, ...input })}
+        hostImages={(input) => api.documents.pdfImages({ documentId: doc.id, ...input })}
+        hostLocal={(input) => api.documents.pdfLocal({ documentId: doc.id, ...input })}
+        hostForms={(input) => api.documents.pdfForms({ documentId: doc.id, ...input })}
+        hostAnnotations={(input) => api.documents.pdfAnnotations({ documentId: doc.id, ...input })}
         hostMarkup={(input) => api.documents.applyPdfMarkup({ documentId: doc.id, ...input })}
       />
     ) : (
@@ -193,6 +200,7 @@ export function OfficeSourceEditor({
         onAgentHandleChange={onDocumentAgentHandleChange}
         hostApply={api.documents.applyPptxOps}
         hostPicture={api.documents.applyPptxPicture}
+        hostAsset={api.documents.applyPptxManualAsset}
       />
     )
 

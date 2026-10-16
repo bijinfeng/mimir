@@ -1,3 +1,4 @@
+import { replaceNoteText } from './docx-note-edit.js'
 import type { Editor } from '@tiptap/core'
 import {
   DOMParser as PmDOMParser,
@@ -8,7 +9,10 @@ import {
 import type { Transaction } from '@tiptap/pm/state'
 import { closeHistory } from '@tiptap/pm/history'
 import type { SaveOptions } from '../../vendor/packages/docx-engine/src/patch.js'
-import type { StyleUpsert } from '../../vendor/packages/docx-engine/src/style-upsert.js'
+import {
+  pendingHeadingLevel,
+  type StyleUpsert,
+} from '../../vendor/packages/docx-engine/src/style-upsert.js'
 import type {
   ChartDisplay,
   CommentInfo,
@@ -1063,6 +1067,32 @@ export function createDocxAgentHandle(
           updateSaveOptions({ comments: [...list, item] }, roundId)
           return result(`已添加批注 ${id}，尚未保存到库`, true, { id, anchor })
         }
+        // Manual toolbar action; deliberately absent from the model tool catalog.
+        if (tool === 'edit_comment') {
+          allowedKeys(args, ['id', 'text', 'done'], tool)
+          const id = asString(args.id, 'id')
+          const list = comments()
+          if (!list.some((item) => item.id === id)) throw new Error(`找不到批注 ${id}，请重新读取`)
+          const text = args.text === undefined ? undefined : asString(args.text, 'text').trim()
+          if (text !== undefined && !text) throw new Error('批注内容不能为空')
+          if (args.done !== undefined && typeof args.done !== 'boolean')
+            throw new Error('done 必须是布尔值')
+          if (text === undefined && args.done === undefined) throw new Error('没有要修改的批注内容')
+          updateSaveOptions(
+            {
+              comments: list.map((item) =>
+                item.id === id
+                  ? Object.assign({}, item, {
+                      ...(text === undefined ? {} : { text }),
+                      ...(args.done === undefined ? {} : { done: args.done === true }),
+                    })
+                  : item,
+              ),
+            },
+            roundId,
+          )
+          return result('批注已更新，尚未保存到库', true)
+        }
         if (tool === 'reply_comment') {
           const parentId = asString(args.parentId, 'parentId')
           const body = asString(args.text, 'text').trim()
@@ -1079,7 +1109,7 @@ export function createDocxAgentHandle(
                 {
                   id,
                   parentId: rootId,
-                  author: 'AI',
+                  author: args.author === undefined ? 'AI' : asString(args.author, 'author'),
                   date: new Date().toISOString(),
                   text: body,
                 },
@@ -1247,43 +1277,7 @@ export function createDocxAgentHandle(
             )
           const { kind, note } = matching[0]!
           const list = notes(kind)
-          const caseSensitive = args.matchCase !== false
-          const includes = (value: string) =>
-            caseSensitive
-              ? value.includes(find)
-              : value.toLocaleLowerCase().includes(find.toLocaleLowerCase())
-          if (!includes(note.text)) throw new Error('注释中没有匹配文字')
-          let edited: NoteInfo
-          if (note.richParas?.length) {
-            let changed = false
-            const richParas = note.richParas.map((para) =>
-              para.map((run) => {
-                const at = caseSensitive
-                  ? run.text.indexOf(find)
-                  : run.text.toLocaleLowerCase().indexOf(find.toLocaleLowerCase())
-                if (at < 0) return run
-                changed = true
-                return {
-                  ...run,
-                  text: run.text.slice(0, at) + replacement + run.text.slice(at + find.length),
-                }
-              }),
-            )
-            if (!changed) throw new Error('匹配文字跨越富文本片段，无法保留原格式')
-            edited = {
-              ...note,
-              richParas,
-              text: richParas.map((para) => para.map((run) => run.text).join('')).join('\n'),
-            }
-          } else {
-            const at = caseSensitive
-              ? note.text.indexOf(find)
-              : note.text.toLocaleLowerCase().indexOf(find.toLocaleLowerCase())
-            edited = {
-              ...note,
-              text: note.text.slice(0, at) + replacement + note.text.slice(at + find.length),
-            }
-          }
+          const edited = replaceNoteText(note, find, replacement, args.matchCase !== false)
           updateSaveOptions(
             {
               [kind === 'footnote' ? 'footnotes' : 'endnotes']: list.map((item) =>
@@ -1481,10 +1475,107 @@ export function createDocxAgentHandle(
           }
           return result(`已列出 ${map.size} 个样式`, false, [...map.values()])
         }
+        // Host-only named manual command; not part of the model's 36-tool catalog.
+        if (tool === 'apply_style') {
+          allowedKeys(args, ['styleId', 'fromBlockIndex', 'toBlockIndex', 'from', 'to'], tool)
+          const styleId = asString(args.styleId, 'styleId')
+          const pending = options.saveOptions?.current.styleUpserts?.find(
+            (item) => item.styleId === styleId,
+          )
+          const original = options.session?.footnotes.parsed.styles.get(styleId)
+          if (!pending && !original) throw new Error('样式不存在，请先保存样式定义')
+          const type = pending?.type ?? original?.type ?? 'paragraph'
+          const tr = editor.state.tr
+          if (type === 'character') {
+            const from = asIndex(args.from, 'from'),
+              to = asIndex(args.to, 'to')
+            if (from < 0 || to <= from || to > editor.state.doc.content.size)
+              throw new Error('请先选中要应用字符样式的文字')
+            const mark = editor.schema.marks.docTextStyle
+            if (!mark) throw new Error('编辑器缺少字符样式')
+            // Keep direct text formatting and other docTextStyle attributes.
+            editor.state.doc.nodesBetween(from, to, (node, pos) => {
+              if (!node.isText) return
+              const old = node.marks.find((item) => item.type === mark)
+              if (old?.attrs.styleId === styleId) return
+              tr.addMark(
+                Math.max(from, pos),
+                Math.min(to, pos + node.nodeSize),
+                mark.create({ ...old?.attrs, styleId }),
+              )
+            })
+          } else {
+            const start = asIndex(args.fromBlockIndex, 'fromBlockIndex')
+            const end =
+              args.toBlockIndex === undefined ? start : asIndex(args.toBlockIndex, 'toBlockIndex')
+            if (start < 0 || end < start || end >= editor.state.doc.childCount)
+              throw new Error('样式应用范围无效')
+            const targets = Array.from({ length: end - start + 1 }, (_, i) =>
+              blockAt(editor, start + i),
+            )
+            if (type === 'table' && targets.some((item) => item.node.type.name !== 'docTable'))
+              throw new Error('将光标放在原生表格中以应用表格样式')
+            if (
+              type === 'paragraph' &&
+              targets.some(
+                (item) =>
+                  !['docParagraph', 'docHeading', 'docListItem'].includes(item.node.type.name),
+              )
+            )
+              throw new Error('段落样式只能应用到正文、标题或列表')
+            const key = type === 'table' ? 'tblStyleId' : 'styleId'
+            const level = pendingHeadingLevel(
+              styleId,
+              (id) =>
+                options.saveOptions?.current.styleUpserts?.find((item) => item.styleId === id),
+              (id) => options.session?.footnotes.parsed.styles.get(id),
+            )
+            for (const target of targets) {
+              const nextType =
+                type !== 'paragraph' || target.node.type.name === 'docListItem'
+                  ? target.node.type
+                  : level
+                    ? editor.schema.nodes.docHeading
+                    : editor.schema.nodes.docParagraph
+              const attrs = { ...target.node.attrs, [key]: styleId, ...(level ? { level } : {}) }
+              if (
+                target.node.attrs[key] !== styleId ||
+                nextType !== target.node.type ||
+                (level && target.node.attrs.level !== level)
+              )
+                tr.setNodeMarkup(target.from, nextType, attrs)
+            }
+          }
+          if (!tr.docChanged) return result('选区样式未变化', false)
+          beforeWrite(roundId)
+          editor.view.dispatch(tr)
+          afterWrite(roundId)
+          return result('样式已应用，尚未保存到库', true)
+        }
         if (tool === 'define_style') {
+          allowedKeys(
+            args,
+            ['styleId', 'name', 'type', 'basedOn', 'next', 'quickFormat', 'paragraph', 'run'],
+            tool,
+          )
           const styleId = asString(args.styleId, 'styleId')
           if (!/^[A-Za-z0-9_-]{1,64}$/.test(styleId))
             throw new Error('styleId 只能含字母、数字、-、_，长度 1–64')
+          const currentStyle =
+            options.saveOptions?.current.styleUpserts?.find((item) => item.styleId === styleId) ??
+            options.session?.footnotes.parsed.styles.get(styleId)
+          if (args.type !== undefined && currentStyle?.type && args.type !== currentStyle.type)
+            throw new Error('不能更改现有样式的类型')
+          const styleType = currentStyle?.type ?? args.type ?? 'paragraph'
+          for (const key of ['basedOn', 'next'] as const) {
+            if (args[key] === undefined || args[key] === null) continue
+            const id = asString(args[key], key)
+            const target =
+              options.saveOptions?.current.styleUpserts?.find((item) => item.styleId === id) ??
+              options.session?.footnotes.parsed.styles.get(id)
+            if (!target || (target.type ?? 'paragraph') !== styleType)
+              throw new Error(`${key} 必须是文档中同类型的样式`)
+          }
           const upsert: StyleUpsert = { styleId }
           if (args.name !== undefined) upsert.name = asString(args.name, 'name')
           if (args.type !== undefined) {
@@ -1615,8 +1706,31 @@ export function createDocxAgentHandle(
             upsert.rPr = rPr
           }
           const existing = options.saveOptions?.current.styleUpserts ?? []
+          const previous = existing.find((item) => item.styleId === styleId)
+          const merged: StyleUpsert = {
+            ...previous,
+            ...upsert,
+            ...(previous?.pPr || upsert.pPr ? { pPr: { ...previous?.pPr, ...upsert.pPr } } : {}),
+            ...(previous?.rPr || upsert.rPr ? { rPr: { ...previous?.rPr, ...upsert.rPr } } : {}),
+          }
+          const parents = new Map(
+            [...(options.session?.footnotes.parsed.styles ?? new Map())].map(([id, style]) => [
+              id,
+              style.basedOn,
+            ]),
+          )
+          for (const item of existing)
+            if (item.basedOn !== undefined) parents.set(item.styleId, item.basedOn ?? undefined)
+          if (merged.basedOn !== undefined) parents.set(styleId, merged.basedOn ?? undefined)
+          const visited = new Set<string>([styleId])
+          let parent = parents.get(styleId)
+          while (parent) {
+            if (visited.has(parent)) throw new Error('样式不能循环继承，请选择其他基础样式')
+            visited.add(parent)
+            parent = parents.get(parent)
+          }
           updateSaveOptions(
-            { styleUpserts: [...existing.filter((item) => item.styleId !== styleId), upsert] },
+            { styleUpserts: [...existing.filter((item) => item.styleId !== styleId), merged] },
             roundId,
           )
           return result(`已定义样式 ${styleId}，尚未保存到库`, true)

@@ -268,6 +268,7 @@ export const useContentStyles = createStyles(({ css, token }) => ({
       border-radius: 6px;
     }
 
+    .mimir-diagram,
     .mimir-math-block {
       margin: 14px 0;
       padding: 12px 16px;
@@ -279,6 +280,27 @@ export const useContentStyles = createStyles(({ css, token }) => ({
     .mimir-math-block__preview {
       overflow-x: auto;
       min-height: 1.5em;
+    }
+
+    .mimir-diagram__preview {
+      overflow-x: auto;
+      min-height: 1.5em;
+
+      img {
+        display: block;
+        height: auto;
+        margin: 0 auto;
+        background: ${token.colorBgContainer};
+      }
+    }
+
+    .mimir-diagram__error {
+      white-space: pre-wrap;
+      color: ${token.colorError};
+    }
+
+    .mimir-diagram pre {
+      margin-bottom: 0;
     }
 
     .mimir-math-block__error {

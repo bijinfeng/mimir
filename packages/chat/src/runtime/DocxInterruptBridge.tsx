@@ -183,7 +183,7 @@ type BridgeToolOptions = {
 }
 
 /** Keep tool validation and thrown errors outside the React component's control flow. */
-async function executeBridgeTool({
+export async function executeBridgeTool({
   agent,
   tool,
   roundId,
@@ -238,20 +238,58 @@ async function executeBridgeTool({
       version: expectedVersion,
       data: { text: analyzed.text },
     }
-  } else if ((agent.format ?? 'docx') === 'docx' && tool.name === 'create_document') {
+  } else if (tool.name === 'create_document') {
     if (agent.getVersion() !== expectedVersion)
       throw new Error('文档已在指令发送后变化，请重新读取当前画布')
     const args = objectInput(tool.input, 'create_document')
-    const { title, format, content } = args
-    if (typeof title !== 'string' || !title.trim() || typeof content !== 'string')
-      throw new Error('新文件标题或内容无效')
-    if (format !== 'docx' && format !== 'pdf' && format !== 'md' && format !== 'html')
-      throw new Error('新文件格式无效')
+    const sourceFormat = agent.format ?? 'docx'
+    const format =
+      args.type ??
+      args.format ??
+      (sourceFormat === 'pdf' ? 'pdf' : sourceFormat === 'xlsx' ? 'xlsx' : 'docx')
+    if (args.type !== undefined && args.format !== undefined && args.type !== args.format)
+      throw new Error('type 与 format 不一致')
     if (!createDocxDocument) throw new Error('新文件创建服务未接入')
-    const created = await createDocxDocument(
-      { documentId: agent.documentId, title, format, content },
-      signal,
-    )
+    let created
+    if (format === 'xlsx' || format === 'csv') {
+      if (sourceFormat !== 'xlsx' || !agent.exportSheet) throw new Error('当前文档不能导出工作表')
+      if (args.content !== undefined && (typeof args.content !== 'string' || args.content.trim()))
+        throw new Error('xlsx/csv 导出使用当前工作表，不接受 content')
+      if (args.sheetId !== undefined && typeof args.sheetId !== 'string')
+        throw new Error('sheetId 必须是工作表 ID')
+      const exported = await agent.exportSheet(format, args.sheetId as string | undefined)
+      if (signal.aborted || agent.getVersion() !== expectedVersion)
+        throw new Error('导出期间文档已变化或操作已停止')
+      const title =
+        typeof args.title === 'string' && args.title.trim()
+          ? args.title.trim()
+          : exported.fileName.replace(/\.(xlsx|csv)$/i, '')
+      const copy = new Uint8Array(exported.bytes)
+      created = await createDocxDocument(
+        {
+          documentId: agent.documentId,
+          title,
+          format,
+          file: new File([copy], exported.fileName, { type: exported.mimeType }),
+        },
+        signal,
+      )
+    } else {
+      if (format !== 'docx' && format !== 'pdf' && format !== 'md' && format !== 'html')
+        throw new Error('新文件格式无效')
+      if (
+        typeof args.title !== 'string' ||
+        !args.title.trim() ||
+        typeof args.content !== 'string' ||
+        !args.content.trim()
+      )
+        throw new Error('新文件标题或内容无效')
+      created = await createDocxDocument(
+        { documentId: agent.documentId, title: args.title, format, content: args.content },
+        signal,
+      )
+    }
+    if (signal.aborted) throw new Error(`创建操作已停止；新文件 ${created.title} 已保存到知识库`)
     onCreatedDocument(created.documentId)
     result = {
       ok: true,

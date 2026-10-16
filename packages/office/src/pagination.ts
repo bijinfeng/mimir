@@ -2,6 +2,7 @@ import { useEffect, type RefObject } from 'react'
 import type { Editor } from '@tiptap/core'
 import {
   sectionGeoms,
+  effectiveTopPx,
   sectionPageBox,
 } from '../vendor/apps/docs/src/renderer/pagination-sections.js'
 import { setColumnLayout } from '../vendor/apps/docs/src/renderer/editor/column-layout.js'
@@ -14,23 +15,48 @@ import {
   lineStartAnchor,
   nextLineAnchor,
   sliceWithLineSplit,
+  applyRowNotes,
+  fillLineBoxes,
   type LineAnchor,
 } from '../vendor/apps/docs/src/renderer/pagination-lines.js'
 import {
   hfHasVisibleContent,
   hfStripGeom,
+  makeHfFloatImgEl,
+  hfReservedHeightPx,
   makeGapHfEl,
 } from '../vendor/apps/docs/src/renderer/editor/hf-dom.js'
 import { pageNumbers } from '../vendor/apps/docs/src/renderer/pagination-hf.js'
-import { makeGapNotesEl, notesAreaHeight, pageFootnotesOf } from './footnotes.js'
-import type { HeaderFooter } from '../vendor/packages/docx-engine/src/types.js'
+import {
+  makeGapNotesEl,
+  notesAreaHeight,
+  pageFootnotesOf,
+  FOOTNOTE_SEPARATOR_H,
+  type FootnoteContext,
+} from './footnotes.js'
+import {
+  orderedContinuationGaps,
+  clearContinuationGaps,
+  insertOrderedEndnoteGap,
+} from './docx-footnote-gaps.js'
+import { paintNoteNumbers } from './docx-note-numbering.js'
+import { paginateFootnoteContinuations } from './docx-footnote-flow.js'
+import {
+  clearEndnoteDecorations,
+  clearEndnoteGaps,
+  liveEndnoteGroups,
+  syncEndnoteDecorations,
+} from './docx-endnotes.js'
+import type { HeaderFooter, HfImage } from '../vendor/packages/docx-engine/src/types.js'
 import { BlockIndex } from '../vendor/apps/docs/src/renderer/pagination-index.js'
 import {
+  makeGapEl,
   alignGapHfStrips,
   alignTableGapFills,
   pageFramesFromGaps,
   setPageGaps,
   type PageGapSpec,
+  type PageFrame,
 } from '../vendor/apps/docs/src/renderer/editor/pagination-gaps.js'
 import type { BlockBox, PageSlice } from '../vendor/apps/docs/src/renderer/pagination-types.js'
 import type { SectionInfo } from '../vendor/packages/docx-engine/src/types.js'
@@ -46,6 +72,22 @@ import {
   sectionTextLeftOffset,
   syncSectionPageSheets,
 } from './pagination-geometry.js'
+
+/** Clip only floating header/footer paint; the editable paper keeps its overflow. */
+export function makePageImageClip(frame: PageFrame): HTMLDivElement {
+  const clip = document.createElement('div')
+  clip.className = 'mimir-page-image-clip'
+  Object.assign(clip.style, {
+    position: 'absolute',
+    left: `${frame.left}px`,
+    top: `${frame.top}px`,
+    width: `${frame.width}px`,
+    height: `${Math.max(0, frame.bottom - frame.top)}px`,
+    overflow: 'hidden',
+    pointerEvents: 'none',
+  })
+  return clip
+}
 
 /**
  * 把连续流切成「纸张页面」（分页视图）。
@@ -67,8 +109,8 @@ import {
  * ## 当前边界
  *
  * 段落、表格、分栏和页眉页脚沿用上游切片与画布几何；脚注根据当前画布引用
- * 分配到页底。末页放不下脚注时延长画布纸张以避免覆盖正文，尚不等同于
- * Word 按固定纸高重新分页。分页仅影响显示，不改 DOCX 保存字节。
+ * 分配到页底，并在切片前把实测高度交给引用行的容量模型。正文据此按固定
+ * 纸高回流。分页仅影响显示，不改 DOCX 保存字节。
  *
  * ## 什么时候重算
  *
@@ -153,13 +195,58 @@ export function assignLiveNoteBands(blocks: BlockBox[]): void {
   }
 }
 
-/** Grow the last paper when its body would otherwise cover the footnote area. */
-export function lastPageNoteMinHeight(
-  bodyBottom: number,
-  noteHeight: number,
-  bottomMargin: number,
-): number {
-  return Math.ceil(bodyBottom + noteHeight + bottomMargin + 8)
+/** Charge the measured note to its actual reference line before the fixed-paper slicer runs. */
+export function reserveLiveFootnotes(
+  context: FootnoteContext,
+  geoms: ReturnType<typeof sectionGeoms>,
+): void {
+  const blocks = context.blocks as BlockBox[]
+  const items = pageFootnotesOf(context, [{ start: 0, end: Infinity, section: 0 }]).flat()
+  const heights = new Map(items.map((item) => [item.id, item.height]))
+  const bandsByBlock = new Map<BlockBox, { heightPx: number }[]>()
+  for (const block of blocks) {
+    const refs = block.el
+      ? Array.from(
+          block.el.querySelectorAll<HTMLElement>('sup.doc-note-ref[data-note-kind="footnote"]'),
+        ).filter((ref) => !ref.closest('.page-gap, .page-float-host, .page-repeat-header'))
+      : []
+    const offsets = block.el ? noteRefOffsets(block.el, 1) : []
+    if (!refs.length || offsets.length !== refs.length) continue
+    const capacity = Math.max(
+      16,
+      (geoms[block.section ?? 0]?.contentHeight ?? 800) - FOOTNOTE_SEPARATOR_H - 48,
+    )
+    const charged = new Map<number, number>()
+    const bands = refs.map((ref, index) => {
+      const offset = offsets[index]!,
+        line = Math.round(offset)
+      const used = charged.get(line) ?? 0
+      const height = Math.min(
+        heights.get(ref.dataset.noteRef ?? '') ?? 0,
+        Math.max(0, capacity - used),
+      )
+      charged.set(line, used + height)
+      return { offset, height }
+    })
+    const extra = bands.reduce((sum, band) => sum + band.height, 0)
+    if (!extra) continue
+    block.noteBands = bands
+    block.footnoteExtraPx = extra
+    block.height += extra
+    bandsByBlock.set(
+      block,
+      bands.map((band) => ({ heightPx: band.height })),
+    )
+  }
+  // Tables need row-level charges too. Fill once before slicing so unsaved
+  // tables without a source docxIndex use the same per-row mechanism.
+  for (const [block, bands] of bandsByBlock) {
+    fillLineBoxes([block], geoms, 1, [
+      { start: -1, end: block.top, section: block.section ?? 0 },
+      { start: block.top, end: Infinity, section: block.section ?? 0 },
+    ])
+    if (block.el && block.tableRows) applyRowNotes(block.el, block.tableRows, bands)
+  }
 }
 
 /**
@@ -177,14 +264,24 @@ function hfText(v: HeaderFooter | null): string {
  *
  * 判据与上游 `hfFromPart` 一致：文字、页码域、段落、图片全空才算「没有」。
  */
+function contentKey(value: unknown): string {
+  const text = JSON.stringify(value)
+  let hash = 2166136261
+  for (let index = 0; index < text.length; index++)
+    hash = Math.imul(hash ^ text.charCodeAt(index), 16777619)
+  return `${text.length}:${hash >>> 0}`
+}
+
 function toHeaderFooter(part: {
   text: string
   hasPageNumber: boolean
   paras: unknown[]
-}): HeaderFooter {
+  images?: HfImage[]
+}): HeaderFooter & { images?: HfImage[] } {
   return {
     text: part.text,
     pageNumber: part.hasPageNumber,
+    images: part.images,
     ...(part.paras.length > 0 ? { paras: part.paras as HeaderFooter['paras'] } : {}),
   }
 }
@@ -277,6 +374,14 @@ export function usePagination({
        * 不清的症状是「页数越编辑越多」。
        */
       setPageGaps(ctx.editor.view, [])
+      orderedContinuationGaps(ctx.editor, [])
+      clearEndnoteGaps(pm)
+      if (footnotes)
+        syncEndnoteDecorations(
+          ctx.editor,
+          liveEndnoteGroups(ctx.editor, footnotes.parsed, sections),
+          sections,
+        )
 
       const geoms = sectionGeoms(sections)
       const pageEl = pm.closest<HTMLElement>('.doc-page')
@@ -297,6 +402,26 @@ export function usePagination({
        */
       const origin = pm.getBoundingClientRect().top
 
+      const liveNotes = footnotes
+        ? liveFootnoteBlocks(ctx.editor, footnotes.blockByDocxIndex)
+        : null
+      const noteDefinitions = footnotes?.parsed.footnotes.filter((note) =>
+        liveNotes?.referenced.has(`footnote:${note.id}`),
+      )
+      const reserveNotes = (measuredBlocks: BlockBox[]) => {
+        if (!footnotes || !liveNotes || !noteDefinitions?.length) return
+        reserveLiveFootnotes(
+          {
+            parsed: footnotes.parsed,
+            footnotes: noteDefinitions,
+            blocks: measuredBlocks,
+            blockByDocxIndex: liveNotes.blocks,
+            sections,
+          },
+          geoms,
+        )
+      }
+
       pageEl?.classList.add('measuring-columns')
       let measured = measureBlocks(pm, origin, 1)
       let blocks = measured.blocks as BlockBox[]
@@ -314,6 +439,8 @@ export function usePagination({
         return
       }
 
+      reserveNotes(blocks)
+
       // The F2 slicer emits column regions and fills line boundaries to a fixed point.
       let slices: PageSlice[] = sliceWithLineSplit(blocks, geoms, measured.totalHeight, 1)
 
@@ -327,6 +454,7 @@ export function usePagination({
           blocks = measured.blocks as BlockBox[]
           assignLiveBlockSections(pm, blocks, sections)
           assignLiveNoteBands(blocks)
+          reserveNotes(blocks)
           const refined = sliceWithLineSplit(blocks, geoms, measured.totalHeight, 1)
           const stable =
             refined.length === slices.length &&
@@ -354,6 +482,32 @@ export function usePagination({
       }
       pageEl?.classList.remove('measuring-columns')
 
+      const initialNoteItems =
+        footnotes && liveNotes && noteDefinitions && noteDefinitions.length > 0
+          ? pageFootnotesOf(
+              {
+                parsed: footnotes.parsed,
+                footnotes: noteDefinitions,
+                blocks,
+                blockByDocxIndex: liveNotes.blocks,
+                sections,
+              },
+              slices,
+            )
+          : []
+
+      const markers = new Map<string, string>()
+      for (const item of initialNoteItems.flat())
+        if (item.markText) markers.set(`footnote:${item.id}`, item.markText)
+      if (footnotes)
+        for (const group of liveEndnoteGroups(ctx.editor, footnotes.parsed, sections))
+          for (const item of group.items)
+            if (item.markText) markers.set(`endnote:${item.id}`, item.markText)
+      paintNoteNumbers(ctx.editor, markers)
+      const continuedNotes = paginateFootnoteContinuations(slices, initialNoteItems, geoms)
+      slices = continuedNotes.slices
+      const noteItems = continuedNotes.notes
+
       // 按 slice 起点找锚定块，为每个分页点插一个页间隙
       const blockIndex = new BlockIndex(blocks)
       const pmRect = pm.getBoundingClientRect()
@@ -369,7 +523,19 @@ export function usePagination({
         return sectionTextLeftOffset(sections, slices[pageIndex]?.section ?? 0)
       }
       const hf = headerFooter ?? null
-      const hfFor = (pageIdx: number, kind: 'header' | 'footer'): HeaderFooter | null => {
+      const imageKeys = new WeakMap<HfImage[], string>()
+      const imageKey = (images: HfImage[] | undefined) => {
+        if (!images) return ''
+        const previous = imageKeys.get(images)
+        if (previous) return previous
+        const next = contentKey(images)
+        imageKeys.set(images, next)
+        return next
+      }
+      const hfFor = (
+        pageIdx: number,
+        kind: 'header' | 'footer',
+      ): (HeaderFooter & { images?: HfImage[] }) | null => {
         if (!hf) return null
         // 首页不同（w:titlePg）优先；其次奇偶页（w:evenAndOddHeaders）
         if (hf.titlePg && pageIdx === 0) {
@@ -389,25 +555,6 @@ export function usePagination({
        * 逐页脚注。分配**必须在切片之后**：它把「引用所在的内容流坐标」
        * 换算成页号，段落跨页时每条脚注跟着自己的引用走（Word 语义）。
        */
-      const liveNotes = footnotes
-        ? liveFootnoteBlocks(ctx.editor, footnotes.blockByDocxIndex)
-        : null
-      const noteDefinitions = footnotes?.parsed.footnotes.filter((note) =>
-        liveNotes?.referenced.has(`footnote:${note.id}`),
-      )
-      const noteItems =
-        footnotes && liveNotes && noteDefinitions && noteDefinitions.length > 0
-          ? pageFootnotesOf(
-              {
-                parsed: footnotes.parsed,
-                footnotes: noteDefinitions,
-                blocks,
-                blockByDocxIndex: liveNotes.blocks,
-                sections,
-              },
-              slices,
-            )
-          : []
 
       /** 某页脚注区的高度（没有脚注为 0）：分页点要把它从正文里让出来 */
       const notesHeightFor = (pageIdx: number): number => notesAreaHeight(noteItems[pageIdx] ?? [])
@@ -420,7 +567,13 @@ export function usePagination({
           items,
           sectionContentWidth(sections[slices[pageIdx]?.section ?? 0]!),
         )
-        el.style.top = `${pageUnusedHeight(slices[pageIdx]!, geoms) + 5}px`
+        // The gap bleeds to the paper edge. Its note column retains this page's text inset.
+        el.dataset.paperX = String(sectionTextLeftOffset(sections, slices[pageIdx]?.section ?? 0))
+        const settings = sections[slices[pageIdx]?.section ?? 0]!.settings
+        const beneath =
+          (settings.footnotePr?.pos ?? footnotes?.parsed.footnoteProps?.pos) === 'beneathText' &&
+          !slices[pageIdx]?.regions
+        el.style.top = `${beneath ? 0 : Math.max(0, pageUnusedHeight(slices[pageIdx]!, geoms) - notesHeightFor(pageIdx))}px`
         return el
       }
       /**
@@ -450,10 +603,11 @@ export function usePagination({
         const total = slices.length
 
         const prevFooter = hfFor(page - 1, 'footer')
-        if (prevFooter && hfHasVisibleContent(prevFooter)) {
+        if (prevFooter && hfHasVisibleContent(prevFooter, prevFooter.images)) {
           const el = makeGapHfEl({
             kind: 'footer',
             value: prevFooter,
+            images: prevFooter.images?.filter((image) => !image.floating),
             pageNo: pageNos[page - 1] ?? page,
             pageTotal: total,
             geom: prevGeom,
@@ -462,10 +616,11 @@ export function usePagination({
           els.push(el)
         }
         const nextHeader = hfFor(page, 'header')
-        if (nextHeader && hfHasVisibleContent(nextHeader)) {
+        if (nextHeader && hfHasVisibleContent(nextHeader, nextHeader.images)) {
           const el = makeGapHfEl({
             kind: 'header',
             value: nextHeader,
+            images: nextHeader.images?.filter((image) => !image.floating),
             pageNo: pageNos[page] ?? page + 1,
             pageTotal: total,
             geom: nextGeom,
@@ -480,13 +635,12 @@ export function usePagination({
          * 不预留的话脚注画在页底、正文照旧排到页底，两者**重叠**——
          * 实测症状是「脚注文字压在正文上」。
          */
-        const notesH = notesAreaHeight(notesItems)
         const notesProps =
           notes && notesItems.length > 0
             ? {
                 notes,
                 // key 覆盖条数、内容与总高度：脚注文字改了而元素没重建会显示旧内容
-                notesKey: `${notesItems.length}:${Math.round(notesH)}:${notesItems.map((n) => n.text).join('|').length}`,
+                notesKey: contentKey(notesItems),
               }
             : {}
         if (els.length === 0) return notesProps
@@ -496,17 +650,64 @@ export function usePagination({
           total,
           hfText(prevFooter),
           hfText(nextHeader),
+          imageKey(prevFooter?.images),
+          imageKey(nextHeader?.images),
         ].join('·')
         return { hfEls: els, hfKey: key, ...notesProps }
       }
 
       const gaps: PageGapSpec[] = []
+      const endnoteGapTails = new Map<HTMLElement, Map<number, HTMLElement>>()
       for (let page = 1; page < slices.length; page += 1) {
         const slice = slices[page]!
         const prev = slices[page - 1]!
         // 未用完的正文高度属于上一张纸，必须落在灰带之前。
         const metrics = gapMetricsForSection(prev, slice, sections, geoms, notesHeightFor(page - 1))
         const pullUp = pageColumnPullUp(prev)
+        if (slice.start === slice.end && slice.start >= measured.totalHeight - 0.5) {
+          gaps.push({
+            pos: ctx.editor.state.doc.content.size,
+            kind: 'inline',
+            boundaryY: slice.start,
+            metrics,
+            ...hfPropsFor(page),
+          })
+          continue
+        }
+
+        // Endnote widget DOM is read-only and has no PM positions inside it.
+        // Insert its visual gaps directly at the measured line anchor; the
+        // widget ignores DOM mutations and the serialized document is intact.
+        const noteOwner = blockIndex.containing(slice.start)
+        const noteBlock = blockIndex.firstAtTop(slice.start)
+        const noteEl = (noteBlock >= 0 ? blocks[noteBlock] : noteOwner)?.el
+        if (noteEl?.classList.contains('mimir-docx-endnotes')) {
+          const offset = slice.start - (noteBlock >= 0 ? blocks[noteBlock]!.top : noteOwner!.top)
+          const rect = noteEl.getBoundingClientRect()
+          const gap = makeGapEl(
+            {
+              ...metrics,
+              marginLeft: rect.left - pmRect.left + metrics.sectionMarginLeft,
+              marginRight: pmRect.right - rect.right + metrics.sectionMarginRight,
+            },
+            'inline',
+          )
+          gap.classList.add('mimir-endnote-gap')
+          const props = hfPropsFor(page)
+          for (const el of props.hfEls ?? []) gap.append(el)
+          if (props.notes) gap.append(props.notes)
+          insertOrderedEndnoteGap(
+            noteEl,
+            offset,
+            gap,
+            () =>
+              offset < 0.5
+                ? null
+                : (lineStartAnchor(noteEl, offset, 1) ?? nextLineAnchor(noteEl, offset, 1)),
+            endnoteGapTails,
+          )
+          continue
+        }
 
         /**
          * 先看这个分页点是不是**块内**的（长段落在中间被切开）。
@@ -586,11 +787,13 @@ export function usePagination({
                   0,
                 )
                 const repeatSpec =
-                  slice.repeatHeader ??
-                  (headerRowsInBlock.length > 0 &&
-                  headerHeightFromBlock < (geoms[slice.section]?.contentHeight ?? 0)
-                    ? { top: ownerForTable.top, height: headerHeightFromBlock }
-                    : null)
+                  slice.start === slice.end
+                    ? null
+                    : (slice.repeatHeader ??
+                      (headerRowsInBlock.length > 0 &&
+                      headerHeightFromBlock < (geoms[slice.section]?.contentHeight ?? 0)
+                        ? { top: ownerForTable.top, height: headerHeightFromBlock }
+                        : null))
 
                 let repeatHeaderEls: HTMLElement[] | undefined
                 let repeatHeaderKey: string | undefined
@@ -722,26 +925,12 @@ export function usePagination({
         blockCount: blocks.length,
         blockTops: blocks.slice(0, 6).map((b) => Math.round(b.top)),
         sliceStarts: slices.map((sl) => Math.round(sl.start)),
-        anchored: gaps.length,
+        anchored: gaps.length + pm.querySelectorAll('.mimir-endnote-gap').length,
       }
 
-      setPageGaps(ctx.editor.view, gaps)
+      setPageGaps(ctx.editor.view, orderedContinuationGaps(ctx.editor, gaps))
       alignPageGapPaint(pm)
       if (wrap) {
-        const finalNotes = noteItems[slices.length - 1] ?? []
-        if (pageEl && finalNotes.length > 0) {
-          const settings = sections[slices[slices.length - 1]?.section ?? 0]?.settings
-          if (settings) {
-            const pageRect = pageEl.getBoundingClientRect()
-            const bodyBottom = pm.getBoundingClientRect().bottom - pageRect.top
-            const required = lastPageNoteMinHeight(
-              bodyBottom,
-              notesAreaHeight(finalNotes),
-              hfStripGeom(settings).marginBottom,
-            )
-            if (required > pageRect.height) pageEl.style.minHeight = `${required}px`
-          }
-        }
         const firstBox = sectionPageBox(sections[0]!.settings)
         const mixedPaper = sections.some((section) => {
           const box = sectionPageBox(section.settings)
@@ -750,26 +939,49 @@ export function usePagination({
             Math.abs(box.height - firstBox.height) > 0.5
           )
         })
+        // The last paper has the same physical height as every preceding one.
+        // Its body is often short after a note-driven break; natural content
+        // height must not collapse the page or move its note/footer upwards.
+        if (pageEl) {
+          const frames = pageFramesFromGaps(wrap, 1)
+          const lastFrame = frames[slices.length - 1]
+          const settings = sections[slices[slices.length - 1]?.section ?? 0]?.settings
+          if (lastFrame && settings) {
+            const offset = pageEl.getBoundingClientRect().top - wrap.getBoundingClientRect().top
+            const fixed = lastFrame.top + sectionPageBox(settings).height - offset
+            pageEl.style.minHeight = `${Math.max(fixed, parseFloat(pageEl.style.minHeight) || 0)}px`
+          }
+        }
         wrap.classList.toggle('paper-mixed', mixedPaper)
         syncSectionPageSheets(wrap, sections, slices, mixedPaper)
         // Page-gap widgets can paint only boundaries between pages. Paint the
         // first header, final footer, and final-page notes on the paper itself.
         const previous = wrap.querySelector(':scope > .mimir-edge-hf')
         previous?.remove()
+        pageEl?.querySelector(':scope > .mimir-page-images')?.remove()
         const frames = pageFramesFromGaps(wrap, 1)
         const firstHeader = hfFor(0, 'header')
         const lastIndex = slices.length - 1
         const lastFooter = hfFor(lastIndex, 'footer')
         const lastNotes = noteItems[lastIndex] ?? []
         if (
-          (firstHeader && hfHasVisibleContent(firstHeader)) ||
-          (lastFooter && hfHasVisibleContent(lastFooter)) ||
-          lastNotes.length > 0
+          (firstHeader && hfHasVisibleContent(firstHeader, firstHeader.images)) ||
+          (lastFooter && hfHasVisibleContent(lastFooter, lastFooter.images)) ||
+          lastNotes.length > 0 ||
+          slices.some(
+            (_, index) =>
+              hfFor(index, 'header')?.images?.some((image) => image.floating) ||
+              hfFor(index, 'footer')?.images?.some((image) => image.floating),
+          )
         ) {
           const layer = document.createElement('div')
           layer.className = 'mimir-edge-hf'
           layer.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:2'
-          const add = (kind: 'header' | 'footer', value: HeaderFooter, index: number) => {
+          const add = (
+            kind: 'header' | 'footer',
+            value: HeaderFooter & { images?: HfImage[] },
+            index: number,
+          ) => {
             const pageFrame = frames[index]
             const section = sections[slices[index]?.section ?? 0]
             if (!pageFrame || !section) return
@@ -777,6 +989,7 @@ export function usePagination({
             const el = makeGapHfEl({
               kind,
               value,
+              images: value.images?.filter((image) => !image.floating),
               pageNo: pageNos[index] ?? index + 1,
               pageTotal: slices.length,
               geom,
@@ -793,8 +1006,10 @@ export function usePagination({
             }
             layer.append(el)
           }
-          if (firstHeader && hfHasVisibleContent(firstHeader)) add('header', firstHeader, 0)
-          if (lastFooter && hfHasVisibleContent(lastFooter)) add('footer', lastFooter, lastIndex)
+          if (firstHeader && hfHasVisibleContent(firstHeader, firstHeader.images))
+            add('header', firstHeader, 0)
+          if (lastFooter && hfHasVisibleContent(lastFooter, lastFooter.images))
+            add('footer', lastFooter, lastIndex)
           if (lastNotes.length > 0) {
             const pageFrame = frames[lastIndex]
             const section = sections[slices[lastIndex]?.section ?? 0]
@@ -802,10 +1017,60 @@ export function usePagination({
               const geom = hfStripGeom(section.settings)
               const notes = makeGapNotesEl(lastNotes, sectionContentWidth(section))
               notes.style.left = `${pageFrame.left + geom.marginLeft}px`
-              notes.style.top = `${pageFrame.bottom - geom.marginBottom - notesAreaHeight(lastNotes)}px`
+              const beneath =
+                (section.settings.footnotePr?.pos ?? footnotes?.parsed.footnoteProps?.pos) ===
+                  'beneathText' && !slices[lastIndex]?.regions
+              const bottom = pageFrame.bottom - geom.marginBottom - notesAreaHeight(lastNotes)
+              const textEnd =
+                pageFrame.top +
+                effectiveTopPx(section.settings, 0) +
+                (slices[lastIndex]!.physHeight ?? slices[lastIndex]!.end - slices[lastIndex]!.start)
+              notes.style.top = `${beneath ? Math.min(textEnd, bottom) : bottom}px`
               layer.append(notes)
             }
           }
+          const imageLayer = document.createElement('div')
+          imageLayer.className = 'mimir-page-images'
+          imageLayer.style.cssText = 'position:absolute;inset:0;pointer-events:none'
+          slices.forEach((slice, index) => {
+            const imageFrame = frames[index]
+            const settings = sections[slice.section ?? 0]?.settings
+            if (!imageFrame || !settings) return
+            const geom = hfStripGeom(settings)
+            const pageClip = makePageImageClip(imageFrame)
+            for (const kind of ['header', 'footer'] as const) {
+              const part = hfFor(index, kind)
+              const paraOriginY =
+                kind === 'header'
+                  ? geom.headerStripTop
+                  : geom.pageH -
+                    geom.footerDist -
+                    hfReservedHeightPx(
+                      'footer',
+                      part,
+                      geom.pageW - geom.marginLeft - geom.marginRight,
+                      part?.images,
+                    )
+              for (const image of part?.images?.filter((item) => item.floating) ?? []) {
+                const el = makeHfFloatImgEl(
+                  image,
+                  {
+                    ...geom,
+                    headerDist: (settings.headerDist ?? 720) / 15,
+                    sectMarginTop: geom.marginTop,
+                    paraOriginY,
+                  },
+                  'lead',
+                )
+                el.style.left = `${parseFloat(el.style.left) + geom.marginLeft}px`
+                el.style.top = `${parseFloat(el.style.top) + geom.marginTop}px`
+                el.dataset.page = String(index + 1)
+                pageClip.append(el)
+              }
+            }
+            if (pageClip.childElementCount) imageLayer.append(pageClip)
+          })
+          if (imageLayer.childElementCount) pageEl?.append(imageLayer)
           wrap.append(layer)
         }
       }
@@ -885,9 +1150,14 @@ export function usePagination({
       window.clearInterval(retry)
       observer.disconnect()
       if (editor) editor.off('update', onUpdate)
-      if (!editor?.isDestroyed && editor?.view?.dom) setPageGaps(editor.view, [])
+      if (!editor?.isDestroyed && editor?.view?.dom) {
+        setPageGaps(editor.view, [])
+        clearEndnoteDecorations(editor)
+        clearContinuationGaps(editor)
+      }
       if (lastWrap) {
         lastWrap.querySelector(':scope > .mimir-edge-hf')?.remove()
+        lastWrap.querySelector('.mimir-page-images')?.remove()
         syncSectionPageSheets(lastWrap, sections, [], false)
         lastWrap.classList.remove('paper-mixed')
       }

@@ -4,11 +4,22 @@ import {
   askInputSchema,
   htmlPlanPageInputSchema,
   htmlWriteDocumentInputSchema,
+  markdownWriteDocumentInputSchema,
+  documentAgentCreateInputSchema,
+  documentAgentCreateFileFieldsSchema,
   pptxManualPictureFieldsSchema,
+  pptxManualUploadSchema,
+  pptxHostActionSchema,
+  xlsxHostActionSchema,
   PPTX_IMAGE_MAX_BYTES,
+  PPTX_ASSET_MAX_BYTES,
   pdfTextProbeSchema,
   pdfTextTargetSchema,
   pdfMarkupInputSchema,
+  pdfAnnotationOperationSchema,
+  pdfFormOperationSchema,
+  pdfImageOperationSchema,
+  pdfLocalOperationSchema,
   saveNoteInputSchema,
 } from '@mimir/shared'
 import { HttpError, parseInput } from '../lib/http.js'
@@ -20,17 +31,32 @@ import { documentAgentCapabilities } from '../services/document-agent-capabiliti
 import { generateDocxImage } from '../services/docx-image-generation.js'
 import { streamDocxWriting } from '../services/docx-writing.js'
 import { analyzeDocxMedia, DocxMediaInputError } from '../services/docx-media-analysis.js'
-import { createDocxAgentDocument } from '../services/docx-create-document.js'
+import {
+  createDocxAgentDocument,
+  createDocumentAgentDocument,
+  createDocumentAgentFile,
+} from '../services/docx-create-document.js'
 import { fetchDocxImage } from '../services/docx-image-fetch.js'
 import { getDocument } from '../services/documents.js'
-import { writeMarkdownDocument } from '../services/markdown-agent-writing.js'
+import {
+  writeMarkdownDocument,
+  streamMarkdownDocument,
+} from '../services/markdown-agent-writing.js'
 import {
   MarkdownFrontmatterConflictError,
   readMarkdownFrontmatter,
   updateMarkdownFrontmatter,
 } from '../services/markdown-agent-frontmatter.js'
-import { planHtmlPage, writeHtmlDocument } from '../services/html-agent-writing.js'
-import { applyPptxManualPictureOnHost, applyPptxOpsOnHost } from '../services/pptx-agent-host.js'
+import {
+  planHtmlPage,
+  writeHtmlDocument,
+  streamHtmlDocument,
+} from '../services/html-agent-writing.js'
+import {
+  applyPptxManualPictureOnHost,
+  applyPptxManualUploadOnHost,
+  applyPptxOpsOnHost,
+} from '../services/pptx-agent-host.js'
 import { applyXlsxOpsOnHost } from '../services/xlsx-agent-host.js'
 import {
   applyPdfTextInserts,
@@ -38,6 +64,10 @@ import {
   applyPdfVerifiedMarkup,
   inspectPdfTextTarget,
 } from '../services/pdf-agent-host.js'
+import { applyPdfImageOperation } from '../services/pdf-images.js'
+import { applyPdfLocalOperation } from '../services/pdf-local.js'
+import { applyPreservingPdfFormOperation } from '../services/pdf-preserving-forms.js'
+import { applyPdfAnnotationOperation } from '../services/pdf-annotations.js'
 import { documentAgentFormatOf } from '../services/document-agent-format.js'
 import { readUploadForm } from '../lib/multipart.js'
 import { MAX_ZIP_INPUT_BYTES } from '../../../../packages/office/src/zip-bounds.js'
@@ -79,6 +109,54 @@ conversationsRoute.post('/html-agent/plan-page', async (c) => {
 
 conversationsRoute.post('/html-agent/write-document', async (c) => {
   const input = await parseInput(c, 'json', htmlWriteDocumentInputSchema)
+  if (c.req.query('stream') === '1') {
+    const controller = new AbortController()
+    const abort = () => controller.abort()
+    c.req.raw.signal.addEventListener('abort', abort, { once: true })
+    if (c.req.raw.signal.aborted) controller.abort()
+    let cancelled = false
+    const encoder = new TextEncoder()
+    const events = streamHtmlDocument({ ...input, signal: controller.signal })
+    return new Response(
+      new ReadableStream<Uint8Array>({
+        async pull(stream) {
+          try {
+            const event = await events.next()
+            if (cancelled) return
+            if (event.done) {
+              c.req.raw.signal.removeEventListener('abort', abort)
+              stream.close()
+            } else stream.enqueue(encoder.encode(JSON.stringify(event.value) + '\n'))
+          } catch (error) {
+            if (cancelled) return
+            c.req.raw.signal.removeEventListener('abort', abort)
+            stream.enqueue(
+              encoder.encode(
+                JSON.stringify({
+                  type: 'error',
+                  message: error instanceof Error ? error.message.slice(0, 2000) : '页面写作失败',
+                }) + '\n',
+              ),
+            )
+            stream.close()
+          }
+        },
+        async cancel() {
+          cancelled = true
+          controller.abort()
+          c.req.raw.signal.removeEventListener('abort', abort)
+          await events.return(undefined)
+        },
+      }),
+      {
+        headers: {
+          'Content-Type': 'application/x-ndjson; charset=utf-8',
+          'Cache-Control': 'no-cache',
+          'X-Accel-Buffering': 'no',
+        },
+      },
+    )
+  }
   try {
     return c.json(await writeHtmlDocument({ ...input, signal: c.req.raw.signal }))
   } catch (error) {
@@ -103,12 +181,18 @@ conversationsRoute.post('/pptx-agent/apply-ops', async (c) => {
         .regex(/^\d+$/)
         .transform(Number)
         .pipe(z.number().int().nonnegative()),
-      ops: z.string().max(1_000_000),
+      ops: z.string().max(8_000_000),
+      action: pptxHostActionSchema.default('apply_ops'),
+    })
+    .superRefine((input, ctx) => {
+      if (input.action !== 'manual_zoom' && input.ops.length > 1_000_000)
+        ctx.addIssue({ code: 'custom', path: ['ops'], message: 'PPTX 操作参数过大' })
     })
     .safeParse({
       documentId: form.get('documentId'),
       expectedVersion: form.get('expectedVersion'),
       ops: form.get('ops'),
+      action: form.get('action') ?? undefined,
     })
   if (!values.success) throw new HttpError(400, 'INVALID_INPUT', 'PPTX 操作参数无效')
   let ops: unknown
@@ -125,6 +209,7 @@ conversationsRoute.post('/pptx-agent/apply-ops', async (c) => {
       bytes: new Uint8Array(await file.arrayBuffer()),
       expectedVersion: values.data.expectedVersion,
       ops,
+      action: values.data.action,
       signal: c.req.raw.signal,
     })
     return c.json({
@@ -132,6 +217,8 @@ conversationsRoute.post('/pptx-agent/apply-ops', async (c) => {
       records: result.records,
       version: result.version,
       sampleData: result.sampleData,
+      changed: result.changed,
+      data: result.data,
     })
   } catch (error) {
     throw new HttpError(
@@ -182,11 +269,90 @@ conversationsRoute.post('/pptx-agent/manual-picture', async (c) => {
   }
 })
 
+conversationsRoute.post('/pptx-agent/manual-asset', async (c) => {
+  const form = await readUploadForm(
+    c.req.raw,
+    MAX_ZIP_INPUT_BYTES + PPTX_ASSET_MAX_BYTES + PPTX_IMAGE_MAX_BYTES + 1024 * 1024,
+  )
+  const file = form.get('file')
+  const asset = form.get('asset')
+  const poster = form.get('poster')
+  if (!(file instanceof File) || file.size === 0 || file.size > MAX_ZIP_INPUT_BYTES)
+    throw new HttpError(413, 'PPTX_INPUT_TOO_LARGE', 'PPTX 原件为空或超过 50 MiB 上限')
+  if (!(asset instanceof File) || asset.size === 0 || asset.size > PPTX_ASSET_MAX_BYTES)
+    throw new HttpError(413, 'PPTX_ASSET_TOO_LARGE', '素材为空或超过 32 MiB 上限')
+  if (
+    poster !== null &&
+    (!(poster instanceof File) || poster.size === 0 || poster.size > PPTX_IMAGE_MAX_BYTES)
+  )
+    throw new HttpError(413, 'PPTX_POSTER_TOO_LARGE', '海报为空或超过 8 MiB 上限')
+  if (poster instanceof File && poster.type !== 'image/png')
+    throw new HttpError(400, 'PPTX_POSTER_INVALID', '请选择 PNG 海报')
+  const fields = z
+    .object({
+      documentId: z.string().min(1).max(200),
+      expectedVersion: z
+        .string()
+        .regex(/^\d+$/)
+        .transform(Number)
+        .pipe(z.number().int().nonnegative()),
+      input: z.string().max(100_000),
+    })
+    .safeParse({
+      documentId: form.get('documentId'),
+      expectedVersion: form.get('expectedVersion'),
+      input: form.get('input'),
+    })
+  if (!fields.success) throw new HttpError(400, 'INVALID_INPUT', 'PPTX 素材参数无效')
+  let rawInput: unknown
+  try {
+    rawInput = JSON.parse(fields.data.input)
+  } catch {
+    throw new HttpError(400, 'INVALID_INPUT', 'PPTX 素材操作不是有效 JSON')
+  }
+  const input = pptxManualUploadSchema.safeParse(rawInput)
+  if (!input.success) throw new HttpError(400, 'INVALID_INPUT', 'PPTX 素材操作参数无效')
+  try {
+    const result = await applyPptxManualUploadOnHost({
+      documentId: fields.data.documentId,
+      expectedVersion: fields.data.expectedVersion,
+      bytes: new Uint8Array(await file.arrayBuffer()),
+      input: input.data,
+      assetBytes: new Uint8Array(await asset.arrayBuffer()),
+      assetName: asset.name,
+      assetMime: asset.type,
+      posterBytes: poster instanceof File ? new Uint8Array(await poster.arrayBuffer()) : undefined,
+      signal: c.req.raw.signal,
+    })
+    return c.json({
+      bytesBase64: Buffer.from(result.bytes).toString('base64'),
+      version: result.version,
+      records: result.records,
+      data: result.data,
+    })
+  } catch (error) {
+    throw new HttpError(
+      400,
+      'PPTX_ASSET_FAILED',
+      error instanceof Error ? error.message : 'PPTX 素材操作失败',
+    )
+  }
+})
+
 conversationsRoute.post('/xlsx-agent/apply-ops', async (c) => {
-  const form = await readUploadForm(c.req.raw)
+  const imageMaxBytes = 8 * 1024 * 1024
+  const form = await readUploadForm(c.req.raw, MAX_ZIP_INPUT_BYTES + imageMaxBytes + 1024 * 1024)
   const file = form.get('file')
   if (!(file instanceof File) || file.size > MAX_ZIP_INPUT_BYTES)
     throw new HttpError(413, 'XLSX_INPUT_TOO_LARGE', 'XLSX 原件超过 50 MiB 上限')
+  const image = form.get('imageBlob')
+  if (
+    image !== null &&
+    (!(image instanceof File) || image.size === 0 || image.size > imageMaxBytes)
+  )
+    throw new HttpError(413, 'XLSX_IMAGE_TOO_LARGE', '图片为空或超过 8 MiB 上限')
+  if (image instanceof File && !['image/png', 'image/jpeg'].includes(image.type))
+    throw new HttpError(400, 'XLSX_IMAGE_INVALID', '请选择 PNG 或 JPEG 图片')
   const values = z
     .object({
       documentId: z.string().min(1).max(200),
@@ -196,11 +362,13 @@ conversationsRoute.post('/xlsx-agent/apply-ops', async (c) => {
         .transform(Number)
         .pipe(z.number().int().nonnegative()),
       ops: z.string().max(1_000_000),
+      action: xlsxHostActionSchema,
     })
     .safeParse({
       documentId: form.get('documentId'),
       expectedVersion: form.get('expectedVersion'),
       ops: form.get('ops'),
+      action: form.get('action') ?? 'apply_ops',
     })
   if (!values.success) throw new HttpError(400, 'INVALID_INPUT', 'XLSX 操作参数无效')
   let ops: unknown
@@ -209,7 +377,11 @@ conversationsRoute.post('/xlsx-agent/apply-ops', async (c) => {
   } catch {
     throw new HttpError(400, 'INVALID_INPUT', 'XLSX 操作不是有效 JSON')
   }
-  if (!Array.isArray(ops) || ops.length < 1 || ops.length > 50)
+  if (
+    !Array.isArray(ops) ||
+    ops.length > 50 ||
+    (values.data.action === 'apply_ops' ? ops.length < 1 : ops.length !== 0)
+  )
     throw new HttpError(400, 'INVALID_INPUT', 'XLSX 操作批次必须包含 1–50 项')
   try {
     const result = await applyXlsxOpsOnHost({
@@ -217,6 +389,11 @@ conversationsRoute.post('/xlsx-agent/apply-ops', async (c) => {
       bytes: new Uint8Array(await file.arrayBuffer()),
       expectedVersion: values.data.expectedVersion,
       ops,
+      action: values.data.action,
+      image:
+        image instanceof File
+          ? { bytes: new Uint8Array(await image.arrayBuffer()), mimeType: image.type }
+          : undefined,
       signal: c.req.raw.signal,
     })
     return c.json({
@@ -224,6 +401,7 @@ conversationsRoute.post('/xlsx-agent/apply-ops', async (c) => {
       version: result.version,
       changedCells: result.changedCells,
       touchedEntries: result.touchedEntries,
+      recalculation: result.recalculation,
     })
   } catch (error) {
     throw new HttpError(
@@ -248,6 +426,17 @@ const pdfTextEdit = z.object({
   newText: z.string().max(10_000),
   fontSize: z.number().finite().positive().max(500),
   target: pdfTextTargetSchema.optional(),
+  newFontSize: z.number().finite().positive().max(500).optional(),
+  newColor: z
+    .tuple([
+      z.number().int().min(0).max(255),
+      z.number().int().min(0).max(255),
+      z.number().int().min(0).max(255),
+    ])
+    .optional(),
+  newFont: z.enum(['arial', 'times', 'courier']).optional(),
+  newBold: z.boolean().optional(),
+  newItalic: z.boolean().optional(),
 })
 const pdfTextInsert = z.object({
   pageIndex: z.number().int().nonnegative(),
@@ -259,6 +448,244 @@ const pdfTextInsert = z.object({
     z.number().finite().min(0).max(1),
     z.number().finite().min(0).max(1),
   ]),
+})
+
+conversationsRoute.post('/pdf-agent/local', async (c) => {
+  const maxFileBytes = 50 * 1024 * 1024
+  const form = await readUploadForm(c.req.raw, 2 * maxFileBytes + 1024 * 1024)
+  const file = form.get('file')
+  const asset = form.get('asset')
+  if (!(file instanceof File) || file.size === 0 || file.size > maxFileBytes)
+    throw new HttpError(413, 'PDF_INPUT_TOO_LARGE', 'PDF 原件应为 1 字节至 50 MiB')
+  if (asset !== null && (!(asset instanceof File) || asset.size === 0 || asset.size > maxFileBytes))
+    throw new HttpError(413, 'PDF_INPUT_TOO_LARGE', '导入 PDF 应为 1 字节至 50 MiB')
+  const fields = z
+    .object({
+      documentId: z.string().min(1).max(200),
+      expectedVersion: z
+        .string()
+        .regex(/^\d+$/)
+        .transform(Number)
+        .pipe(
+          z
+            .number()
+            .int()
+            .min(0)
+            .max(Number.MAX_SAFE_INTEGER - 1),
+        ),
+    })
+    .safeParse({ documentId: form.get('documentId'), expectedVersion: form.get('expectedVersion') })
+  if (!fields.success) throw new HttpError(400, 'INVALID_INPUT', 'PDF 操作参数无效')
+  const document = await getDocument(fields.data.documentId)
+  if (!document || documentAgentFormatOf(document) !== 'pdf')
+    throw new HttpError(404, 'PDF_NOT_FOUND', '当前文档不是可编辑 PDF')
+  let raw: unknown
+  try {
+    raw = JSON.parse(String(form.get('operation')))
+  } catch {
+    throw new HttpError(400, 'INVALID_INPUT', 'PDF 操作不是有效 JSON')
+  }
+  const operation = pdfLocalOperationSchema.safeParse(raw)
+  if (!operation.success) throw new HttpError(400, 'INVALID_INPUT', 'PDF 操作内容无效')
+  const needsAsset = operation.data.op === 'import_pages' || operation.data.op === 'replace_pages'
+  if (needsAsset !== asset instanceof File)
+    throw new HttpError(
+      400,
+      'INVALID_INPUT',
+      needsAsset ? '请选择导入 PDF' : '此操作不接受导入文件',
+    )
+  try {
+    const result = await applyPdfLocalOperation(
+      new Uint8Array(await file.arrayBuffer()),
+      operation.data,
+      asset instanceof File ? new Uint8Array(await asset.arrayBuffer()) : undefined,
+    )
+    c.req.raw.signal.throwIfAborted()
+    return c.json({
+      bytesBase64: result.bytes ? Buffer.from(result.bytes).toString('base64') : undefined,
+      outputs: result.outputs?.map((output) => ({
+        name: output.name,
+        bytesBase64: Buffer.from(output.bytes).toString('base64'),
+      })),
+      info: result.info,
+      version: fields.data.expectedVersion + (result.bytes ? 1 : 0),
+    })
+  } catch (error) {
+    throw new HttpError(
+      400,
+      'PDF_LOCAL_FAILED',
+      error instanceof Error ? error.message : 'PDF 操作失败',
+    )
+  }
+})
+
+conversationsRoute.post('/pdf-agent/images', async (c) => {
+  const form = await readUploadForm(c.req.raw)
+  const file = form.get('file')
+  if (!(file instanceof File) || file.size > 50 * 1024 * 1024)
+    throw new HttpError(413, 'PDF_INPUT_TOO_LARGE', 'PDF 原件超过 50 MiB 上限')
+  const fields = z
+    .object({
+      documentId: z.string().min(1).max(200),
+      expectedVersion: z
+        .string()
+        .regex(/^\d+$/)
+        .transform(Number)
+        .pipe(z.number().int().nonnegative()),
+      sha256: z
+        .string()
+        .regex(/^[a-f0-9]{64}$/)
+        .optional(),
+    })
+    .safeParse({
+      documentId: form.get('documentId'),
+      expectedVersion: form.get('expectedVersion'),
+      sha256: form.get('sha256') ?? undefined,
+    })
+  if (!fields.success) throw new HttpError(400, 'INVALID_INPUT', 'PDF 图片参数无效')
+  const document = await getDocument(fields.data.documentId)
+  if (!document || documentAgentFormatOf(document) !== 'pdf')
+    throw new HttpError(404, 'PDF_NOT_FOUND', '当前文档不是可编辑 PDF')
+  let raw: unknown
+  try {
+    raw = JSON.parse(String(form.get('operation')))
+  } catch {
+    throw new HttpError(400, 'INVALID_INPUT', 'PDF 图片不是有效 JSON')
+  }
+  const operation = pdfImageOperationSchema.safeParse(raw)
+  if (!operation.success) throw new HttpError(400, 'INVALID_INPUT', 'PDF 图片内容无效')
+  try {
+    const result = await applyPdfImageOperation(
+      new Uint8Array(await file.arrayBuffer()),
+      operation.data,
+    )
+    return c.json({
+      bytesBase64: result.bytes ? Buffer.from(result.bytes).toString('base64') : undefined,
+      images: result.images,
+      version: fields.data.expectedVersion + (result.bytes ? 1 : 0),
+    })
+  } catch (error) {
+    throw new HttpError(
+      400,
+      'PDF_IMAGE_FAILED',
+      error instanceof Error ? error.message : 'PDF 图片失败',
+    )
+  }
+})
+
+conversationsRoute.post('/pdf-agent/forms', async (c) => {
+  const form = await readUploadForm(c.req.raw)
+  const file = form.get('file')
+  if (!(file instanceof File) || file.size > 50 * 1024 * 1024)
+    throw new HttpError(413, 'PDF_INPUT_TOO_LARGE', 'PDF 原件超过 50 MiB 上限')
+  const fields = z
+    .object({
+      documentId: z.string().min(1).max(200),
+      expectedVersion: z
+        .string()
+        .regex(/^\d+$/)
+        .transform(Number)
+        .pipe(z.number().int().nonnegative()),
+      sha256: z
+        .string()
+        .regex(/^[a-f0-9]{64}$/)
+        .optional(),
+    })
+    .safeParse({
+      documentId: form.get('documentId'),
+      expectedVersion: form.get('expectedVersion'),
+      sha256: form.get('sha256') ?? undefined,
+    })
+  if (!fields.success) throw new HttpError(400, 'INVALID_INPUT', 'PDF 表单参数无效')
+  const document = await getDocument(fields.data.documentId)
+  if (!document || documentAgentFormatOf(document) !== 'pdf')
+    throw new HttpError(404, 'PDF_NOT_FOUND', '当前文档不是可编辑 PDF')
+  let raw: unknown
+  try {
+    raw = JSON.parse(String(form.get('operation')))
+  } catch {
+    throw new HttpError(400, 'INVALID_INPUT', 'PDF 表单不是有效 JSON')
+  }
+  const operation = pdfFormOperationSchema.safeParse(raw)
+  if (!operation.success) throw new HttpError(400, 'INVALID_INPUT', 'PDF 表单内容无效')
+  try {
+    const result = await applyPreservingPdfFormOperation(
+      new Uint8Array(await file.arrayBuffer()),
+      operation.data,
+      fields.data.sha256,
+    )
+    return c.json({
+      bytesBase64: result.bytes ? Buffer.from(result.bytes).toString('base64') : undefined,
+      forms: result.forms,
+      version: fields.data.expectedVersion + (result.bytes ? 1 : 0),
+    })
+  } catch (error) {
+    throw new HttpError(
+      400,
+      'PDF_FORM_FAILED',
+      error instanceof Error ? error.message : 'PDF 表单失败',
+    )
+  }
+})
+
+conversationsRoute.post('/pdf-agent/annotations', async (c) => {
+  const form = await readUploadForm(c.req.raw)
+  const file = form.get('file')
+  if (!(file instanceof File) || file.size > 50 * 1024 * 1024)
+    throw new HttpError(413, 'PDF_INPUT_TOO_LARGE', 'PDF 原件超过 50 MiB 上限')
+  const fields = z
+    .object({
+      documentId: z.string().min(1).max(200),
+      expectedVersion: z
+        .string()
+        .regex(/^\d+$/)
+        .transform(Number)
+        .pipe(z.number().int().nonnegative()),
+      sha256: z
+        .string()
+        .regex(/^[a-f0-9]{64}$/)
+        .optional(),
+    })
+    .safeParse({
+      documentId: form.get('documentId'),
+      expectedVersion: form.get('expectedVersion'),
+      sha256: form.get('sha256') ?? undefined,
+    })
+  if (!fields.success) throw new HttpError(400, 'INVALID_INPUT', 'PDF 批注参数无效')
+  const document = await getDocument(fields.data.documentId)
+  if (!document || documentAgentFormatOf(document) !== 'pdf')
+    throw new HttpError(404, 'PDF_NOT_FOUND', '当前文档不是可编辑 PDF')
+  let raw: unknown
+  try {
+    raw = JSON.parse(String(form.get('operation')))
+  } catch {
+    throw new HttpError(400, 'INVALID_INPUT', 'PDF 批注不是有效 JSON')
+  }
+  const operation = pdfAnnotationOperationSchema.safeParse(raw)
+  if (!operation.success) throw new HttpError(400, 'INVALID_INPUT', 'PDF 批注内容无效')
+  try {
+    const result = await applyPdfAnnotationOperation(
+      new Uint8Array(await file.arrayBuffer()),
+      operation.data,
+      fields.data.sha256,
+      (operation.data.op === 'add_note' || operation.data.op === 'reply_note') &&
+        operation.data.authorship === 'user'
+        ? c.get('user').name
+        : 'AI Assistant',
+    )
+    return c.json({
+      bytesBase64:
+        operation.data.op === 'read' ? undefined : Buffer.from(result.bytes).toString('base64'),
+      annotations: result.annotations,
+      version: fields.data.expectedVersion + (operation.data.op === 'read' ? 0 : 1),
+    })
+  } catch (error) {
+    throw new HttpError(
+      400,
+      'PDF_ANNOTATION_FAILED',
+      error instanceof Error ? error.message : 'PDF 批注失败',
+    )
+  }
 })
 
 conversationsRoute.post('/pdf-agent/apply-markup', async (c) => {
@@ -446,16 +873,56 @@ conversationsRoute.post('/markdown-agent/generate-image', async (c) => {
 })
 
 conversationsRoute.post('/markdown-agent/write-document', async (c) => {
-  const input = await parseInput(
-    c,
-    'json',
-    markdownDocumentId.extend({
-      plan: z.string().trim().min(1).max(8_000),
-      title: z.string().max(160).optional(),
-      context: z.string().max(20_000).optional(),
-    }),
-  )
+  const input = await parseInput(c, 'json', markdownWriteDocumentInputSchema)
   await requireMarkdownNote(input.documentId)
+  if (c.req.query('stream') === '1') {
+    const controller = new AbortController()
+    const abort = () => controller.abort()
+    c.req.raw.signal.addEventListener('abort', abort, { once: true })
+    if (c.req.raw.signal.aborted) controller.abort()
+    let cancelled = false
+    const encoder = new TextEncoder()
+    const events = streamMarkdownDocument({ ...input, signal: controller.signal })
+    return new Response(
+      new ReadableStream<Uint8Array>({
+        async pull(stream) {
+          try {
+            const event = await events.next()
+            if (cancelled) return
+            if (event.done) {
+              c.req.raw.signal.removeEventListener('abort', abort)
+              stream.close()
+            } else stream.enqueue(encoder.encode(JSON.stringify(event.value) + '\n'))
+          } catch (error) {
+            if (cancelled) return
+            c.req.raw.signal.removeEventListener('abort', abort)
+            stream.enqueue(
+              encoder.encode(
+                JSON.stringify({
+                  type: 'error',
+                  message: error instanceof Error ? error.message.slice(0, 2000) : '长文写作失败',
+                }) + '\n',
+              ),
+            )
+            stream.close()
+          }
+        },
+        async cancel() {
+          cancelled = true
+          controller.abort()
+          c.req.raw.signal.removeEventListener('abort', abort)
+          await events.return(undefined)
+        },
+      }),
+      {
+        headers: {
+          'Content-Type': 'application/x-ndjson; charset=utf-8',
+          'Cache-Control': 'no-cache',
+          'X-Accel-Buffering': 'no',
+        },
+      },
+    )
+  }
   try {
     return c.json({ markdown: await writeMarkdownDocument({ ...input, signal: c.req.raw.signal }) })
   } catch (error) {
@@ -593,6 +1060,47 @@ conversationsRoute.post('/docx-agent/analyze-media', async (c) => {
       500,
       'DOCX_MEDIA_FAILED',
       error instanceof Error ? error.message : '媒体分析失败',
+    )
+  }
+})
+
+conversationsRoute.post('/document-agent/create-document', async (c) => {
+  const input = await parseInput(c, 'json', documentAgentCreateInputSchema)
+  try {
+    return c.json(await createDocumentAgentDocument(input), 201)
+  } catch (error) {
+    throw new HttpError(
+      400,
+      'DOCUMENT_CREATE_FAILED',
+      error instanceof Error ? error.message : '新文档创建失败',
+    )
+  }
+})
+
+conversationsRoute.post('/document-agent/create-file', async (c) => {
+  const form = await readUploadForm(c.req.raw)
+  const input = documentAgentCreateFileFieldsSchema.safeParse({
+    documentId: form.get('documentId'),
+    title: form.get('title'),
+    format: form.get('format'),
+  })
+  if (!input.success) throw new HttpError(400, 'INVALID_INPUT', '新文件参数无效')
+  const file = form.get('file')
+  if (!(file instanceof File) || file.size === 0 || file.size > MAX_ZIP_INPUT_BYTES)
+    throw new HttpError(413, 'DOCUMENT_CREATE_TOO_LARGE', '新文件为空或超过 50 MiB 上限')
+  try {
+    return c.json(
+      await createDocumentAgentFile({
+        ...input.data,
+        bytes: new Uint8Array(await file.arrayBuffer()),
+      }),
+      201,
+    )
+  } catch (error) {
+    throw new HttpError(
+      400,
+      'DOCUMENT_CREATE_FAILED',
+      error instanceof Error ? error.message : '新文件创建失败',
     )
   }
 })

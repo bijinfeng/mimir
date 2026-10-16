@@ -29,7 +29,8 @@ describe('DOCX agent create_document failure cleanup', () => {
         documentId: source.document.id,
         title,
         format: 'html',
-        content: '正文',
+        content:
+          '<!doctype html><html><head><title>测试</title></head><body><p>正文</p></body></html>',
       }),
     ).rejects.toThrow('新文档解析失败：模拟解析失败')
 

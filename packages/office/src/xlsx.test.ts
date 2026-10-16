@@ -89,6 +89,33 @@ describe('readXlsx', () => {
 })
 
 describe('readXlsx 的边界', () => {
+  it.each([
+    [undefined, '1900-01-01'],
+    ['0', '1900-01-01'],
+    ['false', '1900-01-01'],
+    ['1', '1904-01-02'],
+    ['true', '1904-01-02'],
+  ])('同一日期序列按 workbookPr date1904=%s 显示为 %s，保留原值', async (date1904, text) => {
+    const sheet = (
+      await readXlsx(
+        buildXlsx({
+          sheetData: [],
+          date1904,
+          sheets: [
+            {
+              name: '日期',
+              sheetData: ['<row r="1"><c r="A1" s="1"><v>1</v></c><c r="B1"><v>1</v></c></row>'],
+            },
+          ],
+          styles:
+            '<styleSheet><numFmts><numFmt numFmtId="164" formatCode="yyyy-mm-dd"/></numFmts><cellXfs><xf numFmtId="0"/><xf numFmtId="164"/></cellXfs></styleSheet>',
+        }),
+      )
+    ).sheets[0]!
+    expect(sheet.rows[0]?.cells[0]).toMatchObject({ text, rawText: '1' })
+    expect(sheet.rows[0]?.cells[1]).toMatchObject({ text: '1', rawText: '1' })
+  })
+
   it('中间空格的 <c> 被 Excel 省略时，列不左移', async () => {
     const wb = await readXlsx(
       buildXlsx({
@@ -144,6 +171,35 @@ describe('readXlsx 的边界', () => {
     expect(sheet?.rows[0]?.number).toBe(2)
     expect(sheet?.rows[0]?.cells[0]?.formulaText).toBe('=1+2')
     expect(sheet?.rows[0]?.cells[0]?.formulaCache).toBe('missing')
+  })
+
+  it('does not invent FALSE for a boolean formula whose cache is missing', async () => {
+    const bytes = buildXlsx({ sheetData: ['<row r="1"><c r="A1" t="b"><f>TRUE()</f></c></row>'] })
+    const entry = (await readXlsx(bytes)).sheets[0]!.rows[0]!.cells[0]!
+    expect(entry.formulaCache).toBe('missing')
+    expect(entry.text).toBe('')
+    expect(entry.boolean).toBeUndefined()
+  })
+
+  it('distinguishes typed empty and whitespace text caches from missing numeric caches', async () => {
+    const sheet = (
+      await readXlsx(
+        buildXlsx({
+          sheetData: [
+            '<row r="1"><c r="A1" t="str"><f>""</f><v></v></c><c r="B1" t="str"><f>""</f><v/></c><c r="C1" t="str"><f>" "</f><v> </v></c><c r="D1"><f>1+2</f><v/></c><c r="E1" t="str"><f>""</f></c></row>',
+          ],
+        }),
+      )
+    ).sheets[0]!
+    expect(sheet.rows[0]!.cells.map((entry) => entry.formulaCache)).toEqual([
+      'cached',
+      'cached',
+      'cached',
+      'missing',
+      'missing',
+    ])
+    expect(sheet.rows[0]!.cells[0]!.text).toBe('')
+    expect(sheet.rows[0]!.cells[2]!.text).toBe(' ')
   })
 
   it('cellXfs 的样式索引通过 fontId 显示加粗，不把 s 当成字体索引', async () => {
@@ -254,6 +310,7 @@ function buildXlsx(input: {
   mergeCells?: string[]
   sheets?: { name: string; sheetData: string[]; hidden?: boolean; entry?: string }[]
   styles?: string
+  date1904?: string
 }): Uint8Array {
   const entries: { name: string; text: string }[] = [
     { name: '[Content_Types].xml', text: '<?xml version="1.0"?><Types/>' },
@@ -271,7 +328,7 @@ function buildXlsx(input: {
   if (input.sheets) {
     entries.push({
       name: 'xl/workbook.xml',
-      text: `<?xml version="1.0"?><workbook><sheets>${input.sheets
+      text: `<?xml version="1.0"?><workbook>${input.date1904 === undefined ? '' : `<workbookPr date1904="${input.date1904}"/>`}<sheets>${input.sheets
         .map((sheet, index) => {
           const state = sheet.hidden ? ' state="hidden"' : ''
           return `<sheet name="${sheet.name}" sheetId="${index + 1}" r:id="rId${index + 1}"${state}/>`

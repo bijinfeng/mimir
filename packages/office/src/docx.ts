@@ -6,13 +6,14 @@ import {
 } from '../vendor/packages/docx-engine/src/index.js'
 import type { HfPartInfo, ParsedDoc } from '../vendor/packages/docx-engine/src/types.js'
 import type { SaveOptions } from '../vendor/packages/docx-engine/src/patch.js'
-import type { Block, SectionInfo } from '../vendor/packages/docx-engine/src/types.js'
+import type { ChartDisplay, Block, SectionInfo } from '../vendor/packages/docx-engine/src/types.js'
 import {
   blocksToPmDoc,
   pmDocOptions,
   pmDocToSavePlan,
 } from '../vendor/apps/docs/src/renderer/editor/convert.js'
 import { BoundedZip } from './zip-bounds.js'
+import { docxChartSaveOptions } from './docx-chart-save.js'
 
 /**
  * 编辑器文档的类型。
@@ -178,10 +179,21 @@ export async function openDocx(bytes: Uint8Array): Promise<DocxSession> {
     },
     async save(edited: PmDocJson, options: SaveOptions = {}): Promise<Uint8Array> {
       const plan = pmDocToSavePlan(edited, parsed.blocks)
+      // Upstream omits a title delta when the original chart had no title.
+      // A user can still add one; carry it to the same surgical part patch.
+      for (const node of edited.content ?? []) {
+        const attrs = node.attrs as { docxIndex?: number; chartDisplay?: ChartDisplay } | undefined
+        const current = attrs?.chartDisplay
+        const original = parsed.blocks.find(block => block.docxIndex === attrs?.docxIndex)?.chartDisplay
+        if (!current?.partPath || !original || current.title === original.title) continue
+        const patch = plan.chartPatches.find(item => item.partPath === current.partPath)
+        if (patch) patch.patch.title = current.title ?? ''
+        else plan.chartPatches.push({ partPath: current.partPath, patch: { title: current.title ?? '' } })
+      }
       return saveDocx(
         { ...parsed, extras: parsed.extras } as never,
         plan.saveBlocks as never,
-        options,
+        await docxChartSaveOptions(bytes, plan.chartPatches, options),
       )
     },
   }

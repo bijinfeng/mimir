@@ -9,6 +9,8 @@
 | 工具条不粘（滚走了） | `.mimir-editor` 用了 `overflow: hidden`——它会让元素成为滚动容器，里面的 `sticky` 相对它定位而它与内容同高。要用 `overflow: clip` |
 | **窄窗口下快捷保存或状态行被裁掉** | 宽度链缺了一环：`.mimir-editor` 是 flex 子项，`min-width: auto` 让它不会缩到比内容更窄（里面有一张 900px 的 pdf 页面），于是整块外壳比视口宽（实测 420px 窗口里量出 932px）。它看起来像「顶部操作或底部状态被裁掉」，其实是外壳的宽度下界。`min-width: 0` 即可——注意 `overflow: clip` **挡不住**它（Chrome 只对 `hidden`/`auto`/`scroll` 把自动最小尺寸算作 0），而 `clip` 又是 sticky 那条必需的 |
 | **工具条标签写了快捷键但它不存在** | docx 的「查找和替换 (Ctrl+F)」曾只弹浏览器自带的页面查找——**按钮上的标签是一份承诺**，写着就得真有。修法是外壳的 `useFindHotkey` + 查找框统一挂 `data-find-input`（标记不看类名/aria——那两样会被无关调整改掉，而改掉的那一刻快捷键静默失效） |
+| 折叠分组打开后键盘进不了控件，或 Escape 关闭子菜单后焦点丢失 | 自定义面板内是普通按钮/输入框，不能只按 menuitem 导航或在首次 Tab 时关闭；应允许进入和遍历真实可用控件。嵌套组菜单的 Escape 只由最近一级菜单处理，保持父菜单和子触发器存在。查找展开与聚焦沿用 setTimeout，不能依赖隐藏 webview 可能停发的动画帧。 |
+| 属性数字框显示新值，直接点“应用”却保存旧值 | 动作按钮无条件 preventDefault 会阻止数字框失焦，而数字框在失焦/Enter 才提交草稿。按钮 mousedown 须先对当前原生表单输入框显式 blur，再保护正文选区；用独立 mousedown→click 序列检查首击取得最新值，不能只测输入框 blur 或第二次点击。 |
 | 菜单面板里的下拉「点一档什么也不会发生」 | 面板里的 antd `Select` 打开后弹层 **portal 到 body**，而关面板的 `pointerdown`（capture）只认「面板或触发按钮内部」——按下瞬间面板被关、选项随面板卸载，之后的 `click` 落空，界面不报错。`useToolbarPopup` 的 `insidePanel()` 要用 antd 自己写的 `aria-controls` / `aria-owns` 把「面板里控件拥有的弹层」也算作面板内（`EditorShell.tsx`）。**测试也要按真序列驱动**（pointerdown → click）：只派发 click 时 React 会批处理，`onChange` 照样发出，这个 bug 会被测成通过 |
 | Ribbon 里的 Select 能展开，却只看到字体名的第一个字 | 默认 `popupMatchSelectWidth` 把 body portal 的弹层压成触发器宽度（DOCX 字体触发器实测约 63px），选项被省略。`ToolbarSelect` 的触发器保持紧凑，弹层单独设置 `popupMatchSelectWidth={false}` 和可读的最小宽度；检查真实弹层宽、完整选项文字和窄栏边界，不能只断言 DOM 有选项 |
 | 图标档的按钮读屏只念「单选按钮 1 of 3」 | antd `Segmented` 把 `title` 挂在内层 label 的 div 上，而可聚焦的是 `<input type=radio>`——两者不关联，`title` 在这里根本不当名称用（真 Chromium 的 AX 树实测 `name: ""`）。文字要用 `.me-sr-only`（`clip-path`，**不是** `display:none`）塞进 label 元素里 |

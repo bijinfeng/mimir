@@ -425,8 +425,7 @@ describe('PdfEditor 工具条的动作', () => {
    * 「删除这一页」**必须问一句**。
    *
    * 它与左右两个纯图标按钮（插入空白页、导入页面）并排，代价却完全不同：这一条
-   * 工具条**没有撤销**（docx / html / 笔记都有），一次误点就少一页，唯一的路
-   * 是「不保存、退出、重进」。确认框须同时说明无撤销和退出退路。
+   * 仍需确认当前目标；确认框说明撤销与原件只在保存后改变。
    */
   it('「删除这一页」先弹确认：取消不动、确认才真的删', async () => {
     const { host } = await mount(await makePdf({ pages: 3 }))
@@ -440,8 +439,8 @@ describe('PdfEditor 工具条的动作', () => {
     const popup = document.querySelector('.ant-popconfirm')
     expect(popup, '点「删除这一页」没有弹确认框').not.toBeNull()
     // 在操作点说明代价和退路，不占用画布底部的常驻说明。
-    expect(popup?.textContent).toContain('没有撤销')
-    expect(popup?.textContent).toContain('不保存退出')
+    expect(popup?.textContent).toContain('可撤销')
+    expect(popup?.textContent).toContain('保存前不会改变库中的原件')
 
     // 取消：页数不动、也没有未保存的改动
     const cancel = [...popup!.querySelectorAll('button')].find(

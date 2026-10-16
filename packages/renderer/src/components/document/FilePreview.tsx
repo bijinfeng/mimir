@@ -60,8 +60,10 @@ export function FilePreview({
   doc,
   onDirtyChange,
   onDocumentAgentHandleChange,
+  onAiPreset,
 }: {
   doc: DocumentDetail
+  onAiPreset?: ((instruction: string) => void) | undefined
   /** 原件编辑器有未保存改动时上报（宿主用它拦截离开） */
   onDirtyChange?: ((dirty: boolean) => void) | undefined
   onDocumentAgentHandleChange?: ((handle: ChatDocumentAgent | null) => void) | undefined
@@ -151,6 +153,7 @@ export function FilePreview({
               : 'html'
       return (
         <OfficeSourceEditor
+          onAiPreset={onAiPreset}
           key={doc.id}
           doc={doc}
           kind={kind}

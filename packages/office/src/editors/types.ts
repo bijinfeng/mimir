@@ -14,6 +14,20 @@
  * 的写法在这里不行：编辑器需要一个原因才能给出下一步。
  */
 
+import type { PptxManualUpload } from '@mimir/shared'
+
+export interface PptxHostAsset {
+  (request: {
+    documentId: string
+    bytes: Uint8Array
+    expectedVersion: number
+    input: PptxManualUpload
+    assetFile: File
+    posterFile?: File
+    signal?: AbortSignal
+  }): Promise<{ bytes: Uint8Array; version: number; data?: unknown }>
+}
+
 export interface SaveTarget {
   /** 文件名（含扩展名）。服务端可能用它推断类型 */
   name: string

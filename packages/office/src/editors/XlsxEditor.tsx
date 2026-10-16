@@ -1,3 +1,10 @@
+import { XlsxManualControls } from './XlsxManualControls.js'
+import { XlsxClipboardControls } from './XlsxClipboardControls.js'
+import { XlsxFindControls } from './XlsxFindControls.js'
+import { xlsxCellEffects } from '../xlsx-cell-effects.js'
+import { XlsxSparkline } from './XlsxSparkline.js'
+import { XlsxObjectControls } from './XlsxObjectControls.js'
+import { XlsxObjectLayer, xlsxVisualBox } from './XlsxObjectLayer.js'
 /**
  * xlsx 的网格编辑器（预览 + 改单元格）。
  *
@@ -14,11 +21,11 @@
  *
  * ## 原件与预览的边界
  *
- *   - **不重算公式**：改了被别的公式引用的格子，那些公式的缓存值就旧了。
- *     Excel 打开会重算；网格把缓存结果与无缓存公式明确标出
- *   - 样式索引按原件保留；基础网格显示已解析的加粗字形
- *   - 日期显示为序列号（`xlsx.ts` 的老规矩）
- *   - 图表、条件格式、透视表不画（读不出来），但**保存不会动它们**
+ *   - 普通写入不自动重算公式：可通过“公式 → 重新计算”显式刷新缓存。
+ *     网格把缓存结果与无缓存公式明确标出
+ *   - 样式索引按原件保留；网格显示已解析的字体、颜色、数字格式和对齐
+ *   - 数值按明确的数字格式显示；编辑框保留原始数值
+ *   - 图表、图片、形状和条件格式有真实画布，透视结果为已汇总单元格
  *
  * ## 工具条上每一项落到哪
  *
@@ -36,7 +43,7 @@
  *
  * **每一项都落在内核里真有的函数上**（`xlsx-edit.ts` 的会话 + `xlsx.ts` 的
  * 模型），没有一个按钮是「先画上、以后再接」——那种按钮点了没反应也不报错，
- * 是这个仓库最讨厌的一类。尚未接入的操作（公式重算等）
+ * 是这个仓库最讨厌的一类。尚未接入的操作
  * 不画成一个按不动的按钮。
  *
  * ## 没选中格子时它就是一个预览
@@ -46,7 +53,7 @@
  * 切到另一个模式」——而原件层本来就是给人看和改的地方。
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   createXlsxAgentHandle,
   type XlsxAgentHandle,
@@ -54,7 +61,8 @@ import {
 } from '../agent/xlsx-agent.js'
 import { openXlsxForEdit } from '../xlsx-edit.js'
 import { findXlsxCells } from '../xlsx-find.js'
-import type { XlsxSheet, XlsxWorkbook } from '../xlsx.js'
+import type { XlsxCell, XlsxSheet, XlsxWorkbook } from '../xlsx.js'
+import type { XlsxRecalculation } from '@mimir/shared'
 import {
   EditorShell,
   EditorState,
@@ -63,7 +71,9 @@ import {
   ToolbarLabel,
   ToolbarTabs,
   ToolbarMenu,
+  ToolbarConfirm,
   ToolbarTextField,
+  ToolbarSelect,
   useFindHotkey,
 } from '../shell/EditorShell.js'
 import {
@@ -77,7 +87,14 @@ import {
   SaveIcon,
   UndoIcon,
 } from '../shell/icons.js'
-import { CompactToolbar } from './CompactToolbar.js'
+import { CompactToolbar, type CompactToolbarSection } from './CompactToolbar.js'
+import { XlsxFormatControls } from './XlsxFormatControls.js'
+import { XlsxDataControls } from './XlsxDataControls.js'
+import { XlsxRangeControls } from './XlsxRangeControls.js'
+import { XlsxPropertyControls } from './XlsxPropertyControls.js'
+import { XlsxCellFeatureControls } from './XlsxCellFeatureControls.js'
+import { parseXlsxInput } from '../xlsx-input.js'
+import { XlsxInspectControls } from './XlsxInspectControls.js'
 import { statusText, useParsed, useSource } from './use-source.js'
 import { OFFICE_MIME, type EditorProps } from './types.js'
 import '../shell/shell.css'
@@ -110,11 +127,43 @@ export function XlsxEditor({
    * `edited` 只是为了让「改了之后的快照」有个地方落：它同样绑着「哪一份字节」，
    * 换文件时自然作废。
    */
-  const [edited, setEdited] = useState<{ source: Uint8Array; view: XlsxWorkbook } | null>(null)
+  const [edited, setEdited] = useState<{
+    source: Uint8Array
+    view: XlsxWorkbook
+    recalculation?: XlsxRecalculation
+  } | null>(null)
   const view = edited?.source === source.bytes ? edited.view : (session?.view() ?? null)
+  const recalculated = edited?.source === source.bytes && edited?.recalculation !== undefined
 
-  const [active, setActive] = useState(0)
+  const [activeSelection, setActiveSelection] = useState<{
+    source: Uint8Array
+    index: number
+  } | null>(null)
+  const active =
+    activeSelection?.source === source.bytes
+      ? Math.min(activeSelection.index, Math.max(0, (view?.sheets.length ?? 1) - 1))
+      : (view?.activeSheet ?? 0)
+  const setActive = (index: number) => {
+    if (source.bytes) setActiveSelection({ source: source.bytes, index })
+  }
   /** 选中的格子。列号 0 开始，行号是 Excel 的 1 开始 */
+  const dragStart = useRef<{ row: number; col: number; pointerId: number } | null>(null)
+  useEffect(() => {
+    const stopDrag = (event: Event) => {
+      if ('pointerId' in event && event.pointerId !== dragStart.current?.pointerId) return
+      dragStart.current = null
+    }
+    document.addEventListener('pointerup', stopDrag)
+    document.addEventListener('pointercancel', stopDrag)
+    window.addEventListener('blur', stopDrag)
+    return () => {
+      document.removeEventListener('pointerup', stopDrag)
+      document.removeEventListener('pointercancel', stopDrag)
+      window.removeEventListener('blur', stopDrag)
+    }
+  }, [])
+  const keyboardAnchor = useRef<{ row: number; col: number } | null>(null)
+  const [selectedObject, setSelectedObject] = useState('')
   const [selected, setSelected] = useState<{ row: number; col: number } | null>(null)
   /**
    * 编辑框里的草稿。
@@ -132,9 +181,17 @@ export function XlsxEditor({
   const [rangeInput, setRangeInput] = useState('')
   const [sheetNameDraft, setSheetNameDraft] = useState<string | null>(null)
   const [newSheetName, setNewSheetName] = useState('')
+  const [gridHeaderHeight, setGridHeaderHeight] = useState(26)
+  const gridHeaderRef = useCallback((node: HTMLTableSectionElement | null) => {
+    if (!node) return
+    const height = node.getBoundingClientRect().height
+    if (height > 0) setGridHeaderHeight(height)
+  }, [])
   const [toolbarTab, setToolbarTab] = useState('home')
   /** 十字高亮开关（纯界面状态，文档一个字节都不动） */
   const [cross, setCross] = useState(false)
+  const [zoom, setZoom] = useState('100'),
+    [showFormulas, setShowFormulas] = useState(false)
   /**
    * 「刚做完一件事」的提示（复制成功/失败）。下一个动作就清掉。
    *
@@ -143,15 +200,21 @@ export function XlsxEditor({
    */
   const [note, setNote] = useState<string | null>(null)
   const [dirty, setDirty] = useState(false)
+  const [hostBusy, setHostBusy] = useState(false)
+  const [history, setHistory] = useState({ undo: 0, redo: 0 })
 
   const agentHandleRef = useRef<XlsxAgentHandle | null>(null)
   const addSheetRequestRef = useRef(0)
-  const selectionRef = useRef<{ sheet: number; row: number; col: number } | null>(null)
+  const selectionRef = useRef<{ sheet: number; row: number; col: number; range?: string } | null>(
+    null,
+  )
   const hostApplyRef = useRef(hostApply)
   const onAgentHandleChangeRef = useRef(onAgentHandleChange)
   const onDirtyChangeRef = useRef(onDirtyChange)
   useEffect(() => {
-    selectionRef.current = selected ? { sheet: active, ...selected } : null
+    selectionRef.current = selected
+      ? { sheet: active, ...selected, range: rangeInput || undefined }
+      : null
     hostApplyRef.current = hostApply
     onAgentHandleChangeRef.current = onAgentHandleChange
     onDirtyChangeRef.current = onDirtyChange
@@ -163,17 +226,26 @@ export function XlsxEditor({
       source.bytes,
       session,
       () => selectionRef.current,
-      (nextSession, isDirty) => {
-        setEdited({ source: source.bytes!, view: nextSession.view() })
+      (nextSession, isDirty, recalculation) => {
+        setEdited({ source: source.bytes!, view: nextSession.view(), recalculation })
         setDirty(isDirty)
         onDirtyChangeRef.current?.(isDirty)
+        setHistory(handle.history())
       },
       (request) => {
         if (!hostApplyRef.current) throw new Error('XLSX 宿主执行器未配置')
         return hostApplyRef.current(request)
       },
+      (target) => {
+        setActiveSelection({ source: source.bytes!, index: target.sheet })
+        setSelected({ row: target.row, col: target.col })
+        setRangeInput(target.range)
+        setDraft(null)
+      },
+      setHostBusy,
     )
     agentHandleRef.current = handle
+    setHistory(handle.history())
     onAgentHandleChangeRef.current?.(handle)
     return () => {
       handle.dispose()
@@ -183,6 +255,10 @@ export function XlsxEditor({
   }, [session, source.bytes, documentId])
 
   const sheet = useMemo(() => view?.sheets[active] ?? null, [view, active])
+  const cellEffects = useMemo(
+    () => (sheet && view ? xlsxCellEffects(sheet, view) : new Map()),
+    [sheet, view],
+  )
 
   /**
    * 选中的格子在**当前模型**里的那个对象。
@@ -198,7 +274,7 @@ export function XlsxEditor({
     return row?.cells[selected.col] ?? null
   }, [sheet, selected])
 
-  const modelText = selectedCell?.text ?? ''
+  const modelText = selectedCell?.formulaText ?? selectedCell?.rawText ?? selectedCell?.text ?? ''
   const wasFormula = selectedCell?.formula === true
   /** 编辑框显示什么：改过看草稿，没改过看模型 */
   const shown = draft ?? modelText
@@ -264,7 +340,7 @@ export function XlsxEditor({
    * `onDirtyChange` 迟早有一处漏（而漏了的表现是「文件改了、界面说没改」）。
    */
   const executeOps = useCallback(
-    async (operations: unknown[], successNote?: string): Promise<boolean> => {
+    async (operations: unknown[], successNote?: string, imageFile?: File): Promise<boolean> => {
       const handle = agentHandleRef.current
       if (!handle) return false
       try {
@@ -274,7 +350,7 @@ export function XlsxEditor({
           // The handle serializes local commands. A second fast click can queue
           // before the first has advanced its version; manual actions use FIFO
           // rather than capturing a stale version at click time.
-          {},
+          { imageFile },
         )
         setApplyError(null)
         setNote(successNote ?? null)
@@ -297,7 +373,7 @@ export function XlsxEditor({
       await executeOps([
         text.startsWith('=')
           ? { op: 'set_formula', sheetId, address, formula: text }
-          : { op: 'set_cell', sheetId, address, value: text },
+          : { op: 'set_cell', sheetId, address, value: parseXlsxInput(text) },
       ])
     },
     [selected, active, view, executeOps],
@@ -358,8 +434,13 @@ export function XlsxEditor({
     if (agentHandleRef.current !== handle || handle.getVersion() !== savingVersion) return
     handle.markSaved()
     setDirty(false)
-    setEdited({ source: source.bytes!, view: handle.currentSession().view() })
+    setEdited((current) => ({
+      ...(current?.source === source.bytes ? current : {}),
+      source: source.bytes!,
+      view: handle.currentSession().view(),
+    }))
     setDraft(null)
+    setNote(null)
     onDirtyChange?.(false)
   }
 
@@ -456,13 +537,84 @@ export function XlsxEditor({
     setNote(null)
   }
 
+  const freezeRows = sheet.extras?.frozenRows ?? 0,
+    freezeColumns = sheet.extras?.frozenColumns ?? 0
+  const frozenStyle = (row: number, col: number) => {
+    const freezeRow = row > 0 && row <= freezeRows,
+      freezeCol = col >= 0 && col < freezeColumns
+    if (!freezeRow && !freezeCol) return {}
+    return {
+      position: 'sticky' as const,
+      ...(freezeRow
+        ? {
+            top:
+              gridHeaderHeight +
+              sheet.rows
+                .filter((r) => !r.hidden && r.number < row)
+                .reduce((sum, r) => sum + r.height, 0),
+          }
+        : {}),
+      ...(freezeCol
+        ? {
+            left:
+              34 +
+              sheet.columns
+                .filter((c) => !c.hidden && c.col < col)
+                .reduce((sum, c) => sum + c.width, 0),
+          }
+        : {}),
+      zIndex: freezeRow && freezeCol ? 4 : 2,
+    }
+  }
+  const openLink = (target: string) => {
+    if (/^https?:\/\/|^mailto:/i.test(target)) {
+      window.open(target, '_blank', 'noopener,noreferrer')
+      return
+    }
+    if (!target.startsWith('#')) {
+      setApplyError('链接地址不受支持')
+      return
+    }
+    const match = /^(?:'((?:[^']|'')+)'|([^!]+))!([A-Z]+[1-9]\d*)$/i.exec(target.slice(1))
+    const sheetName = match?.[1]?.replaceAll("''", "'") ?? match?.[2]
+    const index = view.sheets.findIndex((item) => item.name === sheetName)
+    const cell = match ? parseActionRange(match[3]!) : null
+    if (index < 0 || !cell?.target) {
+      setApplyError('内部链接须指向现有工作表中的单元格，例如 #工作表!A1')
+      return
+    }
+    switchSheet(index)
+    setSelected({ row: cell.target.startRow, col: cell.target.startCol })
+  }
+
   const status = statusText({
     handle: source,
     dirty,
     idle: `${view.sheets.length} 张表`,
   })
   const actionRange = parseActionRange(rangeInput)
+  const formatRange =
+    actionRange.target?.range ??
+    (!rangeInput.trim() && selected ? `${columnLetters(selected.col)}${selected.row}` : '')
+  const formatCells: XlsxCell[] = actionRange.target
+    ? sheet.rows.flatMap((row) =>
+        row.number >= actionRange.target!.startRow && row.number <= actionRange.target!.endRow
+          ? row.cells.filter(
+              (cell) =>
+                cell.col >= actionRange.target!.startCol &&
+                cell.col <= actionRange.target!.endCol &&
+                !cell.covered,
+            )
+          : [],
+      )
+    : !rangeInput.trim() && selectedCell
+      ? [selectedCell]
+      : []
   const nextSheetName = sheetNameDraft ?? sheet.name
+  const lastVisibleSheet = !sheet.hidden && view.sheets.filter((item) => !item.hidden).length <= 1
+  const hideSheetDisabledReason = lastVisibleSheet ? '至少保留一张可见工作表' : undefined
+  const deleteSheetDisabledReason =
+    view.sheets.length <= 1 ? '不能删除最后一张工作表' : hideSheetDisabledReason
   const sheetNameDisabledReason = sheetNameIssue(nextSheetName, sheet, view)
   const newSheetDisabledReason = newSheetIssue(newSheetName, view)
   const renameSheet = () => {
@@ -537,26 +689,6 @@ export function XlsxEditor({
       ? undefined
       : '输入现有合并区域的完整范围'
     : actionRange.reason
-  const applyRangeBold = () => {
-    if (rangeDisabledReason || !actionRange.target) {
-      setApplyError(rangeDisabledReason ?? '范围无效')
-      return
-    }
-    const total =
-      (actionRange.target.endRow - actionRange.target.startRow + 1) *
-      (actionRange.target.endCol - actionRange.target.startCol + 1)
-    void executeOps(
-      [
-        {
-          op: 'format_range',
-          sheetId: sheet.id,
-          range: actionRange.target.range,
-          format: { bold: true },
-        },
-      ],
-      `已将 ${actionRange.target.range} 设为加粗${visibleRangeCells < total ? '；部分格不在当前网格中' : ''}`,
-    )
-  }
   const applyRangeStructure = (op: 'merge_cells' | 'unmerge_cells') => {
     const reason = op === 'merge_cells' ? mergeDisabledReason : unmergeDisabledReason
     if (reason || !actionRange.target) {
@@ -606,6 +738,15 @@ export function XlsxEditor({
           ? `${activeMatch + 1} / ${matches.length}`
           : `共 ${matches.length} 个`
 
+  const changeHistory = async (action: 'undo' | 'redo') => {
+    try {
+      await agentHandleRef.current?.[action]()
+      setDraft(null)
+      setApplyError(null)
+    } catch (error) {
+      setApplyError(error instanceof Error ? error.message : '无法恢复编辑历史')
+    }
+  }
   return (
     <EditorShell
       flush={flush}
@@ -623,20 +764,98 @@ export function XlsxEditor({
               >
                 <SaveIcon />
               </ToolbarButton>
-              <ToolbarButton label="撤销" disabled disabledReason="表格编辑尚不支持完整撤销历史">
+              <ToolbarButton
+                label="撤销"
+                disabled={!history.undo || hostBusy || source.saving}
+                disabledReason={hostBusy || source.saving ? '正在处理工作簿' : '没有可撤销的编辑'}
+                onClick={() => void changeHistory('undo')}
+              >
                 <UndoIcon />
               </ToolbarButton>
-              <ToolbarButton label="重做" disabled disabledReason="表格编辑尚不支持完整重做历史">
+              <ToolbarButton
+                label="重做"
+                disabled={!history.redo || hostBusy || source.saving}
+                disabledReason={hostBusy || source.saving ? '正在处理工作簿' : '没有可重做的编辑'}
+                onClick={() => void changeHistory('redo')}
+              >
                 <RedoIcon />
               </ToolbarButton>
             </>
           }
           tabs={[
             { key: 'home', label: '开始' },
+            { key: 'insert', label: '插入' },
+            { key: 'data', label: '数据' },
+            { key: 'layout', label: '布局' },
             { key: 'formulas', label: '公式' },
+            { key: 'review', label: '审阅' },
             { key: 'view', label: '视图' },
           ]}
-          sections={[
+          sections={mergeXlsxToolbarSections([
+            ...(['home', 'data', 'layout'] as const).map((group) => ({
+              key: `manual-${group}`,
+              label: group === 'home' ? '剪切与格式刷' : group === 'data' ? '填充' : '尺寸与分级',
+              tab: group,
+              minWidth: 0,
+              content: (
+                <XlsxManualControls
+                  key={`${documentId}:${group}`}
+                  group={group}
+                  workbook={view}
+                  sheet={sheet}
+                  range={formatRange}
+                  busy={hostBusy || source.saving || !!sheet.extras?.protected}
+                  onOperation={(op) => executeOps([{ ...op, sheetId: sheet.id }])}
+                />
+              ),
+            })),
+            {
+              key: 'clipboard',
+              label: '剪贴板与导入',
+              tab: 'home',
+              minWidth: 0,
+              content: (
+                <XlsxClipboardControls
+                  key={documentId + sheet.id}
+                  sheet={sheet}
+                  range={formatRange}
+                  busy={hostBusy || source.saving || !!sheet.extras?.protected}
+                  onOperation={(op) => executeOps([{ ...op, sheetId: sheet.id }])}
+                />
+              ),
+            },
+            {
+              key: 'objects',
+              label: '对象与表格',
+              minWidth: 0,
+              tab: 'insert',
+              content: (
+                <XlsxObjectControls
+                  sheet={sheet}
+                  range={formatRange}
+                  busy={hostBusy || source.saving || !!sheet.extras?.protected}
+                  selectedId={selectedObject}
+                  onSelect={setSelectedObject}
+                  onImage={(file, anchorCell) =>
+                    executeOps(
+                      [{ op: 'add_image', sheetId: sheet.id, path: 'upload', anchorCell }],
+                      '已插入图片',
+                      file,
+                    )
+                  }
+                  onOperation={(op) =>
+                    executeOps([
+                      {
+                        ...op,
+                        ...(!['edit_chart', 'edit_shape', 'delete_visual'].includes(String(op.op))
+                          ? { sheetId: sheet.id }
+                          : {}),
+                      },
+                    ])
+                  }
+                />
+              ),
+            },
             ...(view.sheets.length > 1
               ? [
                   {
@@ -722,12 +941,273 @@ export function XlsxEditor({
               ),
             },
             {
+              key: 'sheet-manage',
+              label: '工作表管理',
+              minWidth: 0,
+              tab: 'home',
+              content: (
+                <ToolbarGroup label="工作表管理">
+                  <ToolbarMenu
+                    label="工作表管理"
+                    text="工作表管理"
+                    items={[
+                      {
+                        key: 'duplicate',
+                        label: '复制当前工作表',
+                        onSelect: () =>
+                          void executeOps([{ op: 'duplicate_sheet', sheetId: sheet.id }]),
+                      },
+                      {
+                        key: 'left',
+                        label: '工作表左移',
+                        disabled: active === 0,
+                        disabledReason: '已经是第一张工作表',
+                        onSelect: () =>
+                          void executeOps([
+                            { op: 'move_sheet', sheetId: sheet.id, position: active },
+                          ]).then((ok) => {
+                            if (ok) switchSheet(active - 1)
+                          }),
+                      },
+                      {
+                        key: 'right',
+                        label: '工作表右移',
+                        disabled: active === view.sheets.length - 1,
+                        disabledReason: '已经是最后一张工作表',
+                        onSelect: () =>
+                          void executeOps([
+                            { op: 'move_sheet', sheetId: sheet.id, position: active + 2 },
+                          ]).then((ok) => {
+                            if (ok) switchSheet(active + 1)
+                          }),
+                      },
+                      {
+                        key: 'hidden',
+                        label: sheet.hidden ? '取消隐藏当前工作表' : '隐藏当前工作表',
+                        disabled: hideSheetDisabledReason !== undefined,
+                        disabledReason: hideSheetDisabledReason,
+                        onSelect: () =>
+                          void executeOps([
+                            { op: 'set_sheet_hidden', sheetId: sheet.id, hidden: !sheet.hidden },
+                          ]).then((ok) => {
+                            if (!ok || sheet.hidden) return
+                            const visible = view.sheets
+                              .map((item, index) => ({ item, index }))
+                              .filter(({ item, index }) => index !== active && !item.hidden)
+                              .toSorted(
+                                (a, b) => Math.abs(a.index - active) - Math.abs(b.index - active),
+                              )[0]
+                            if (visible) switchSheet(visible.index)
+                          }),
+                      },
+                    ]}
+                  />
+                  <ToolbarConfirm
+                    title="删除当前工作表？"
+                    description="整张工作表的内容会删除，可通过撤销恢复。其他工作表仍引用它时会拒绝删除。"
+                    confirmLabel="删除工作表"
+                    disabled={deleteSheetDisabledReason !== undefined}
+                    onConfirm={() =>
+                      void executeOps([{ op: 'delete_sheet', sheetId: sheet.id }]).then((ok) => {
+                        if (ok) switchSheet(Math.max(0, active - 1))
+                      })
+                    }
+                  >
+                    <ToolbarButton
+                      label="删除当前工作表"
+                      disabled={deleteSheetDisabledReason !== undefined}
+                      disabledReason={deleteSheetDisabledReason}
+                    >
+                      删除表
+                    </ToolbarButton>
+                  </ToolbarConfirm>
+                </ToolbarGroup>
+              ),
+            },
+            {
+              key: 'recalculate',
+              label: '公式计算',
+              minWidth: 0,
+              tab: 'formulas',
+              content: (
+                <ToolbarButton
+                  label="重新计算公式"
+                  disabled={hostBusy || source.saving || !hostApply}
+                  disabledReason={
+                    hostBusy ? '正在执行工作簿操作' : source.saving ? '正在保存' : '公式宿主不可用'
+                  }
+                  onClick={() => {
+                    const handle = agentHandleRef.current
+                    if (!handle) return
+                    void handle
+                      .execute('propose_operations', { operations: [], recalculate: true }, {})
+                      .then(() => {
+                        setApplyError(null)
+                        setNote('公式缓存已重新计算；保存后写入原件')
+                      })
+                      .catch((error: unknown) =>
+                        setApplyError(error instanceof Error ? error.message : String(error)),
+                      )
+                  }}
+                >
+                  重新计算
+                </ToolbarButton>
+              ),
+            },
+            {
+              key: 'inspect',
+              label: '数据检查',
+              minWidth: 0,
+              tab: 'formulas',
+              content: (
+                <XlsxInspectControls
+                  key={`${sheet.id}:${formatRange}`}
+                  range={formatRange}
+                  address={formatRange.split(':')[0] ?? ''}
+                  inspect={async (tool, args) => {
+                    const handle = agentHandleRef.current
+                    if (!handle) throw new Error('工作簿尚未打开')
+                    return handle.execute(tool, { ...args, sheetId: sheet.id }, {})
+                  }}
+                />
+              ),
+            },
+            {
+              key: 'data',
+              label: '排序与筛选',
+              minWidth: 0,
+              tab: 'data',
+              content: (
+                <XlsxDataControls
+                  key={`${sheet.id}:${formatRange}`}
+                  range={formatRange}
+                  filterRange={sheet.filterRange}
+                  busy={hostBusy || source.saving || !!sheet.extras?.protected}
+                  column={columnLetters(actionRange.target?.startCol ?? selected?.col ?? 0)}
+                  onOperation={(op) => void executeOps([{ ...op, sheetId: sheet.id }])}
+                />
+              ),
+            },
+            {
+              key: 'range-content',
+              label: '范围内容',
+              minWidth: 0,
+              tab: 'data',
+              content: (
+                <XlsxRangeControls
+                  group="data"
+                  key={`${sheet.id}:${formatRange}`}
+                  range={formatRange}
+                  sheet={sheet}
+                  sheets={view.sheets}
+                  busy={hostBusy || source.saving || !!sheet.extras?.protected}
+                  onOperation={(op) => executeOps([{ ...op, sheetId: sheet.id }])}
+                />
+              ),
+            },
+            {
+              key: 'row-column-layout',
+              label: '行列',
+              minWidth: 0,
+              tab: 'layout',
+              content: (
+                <XlsxRangeControls
+                  group="layout"
+                  key={`${sheet.id}:${formatRange}`}
+                  range={formatRange}
+                  sheet={sheet}
+                  sheets={view.sheets}
+                  busy={hostBusy || source.saving}
+                  onOperation={(op) => executeOps([{ ...op, sheetId: sheet.id }])}
+                />
+              ),
+            },
+            {
+              key: 'cell-features',
+              label: '链接与审阅',
+              minWidth: 0,
+              tab: 'review',
+              content: (
+                <XlsxCellFeatureControls
+                  key={`${sheet.id}:${selected?.row}:${selected?.col}`}
+                  address={selected ? `${columnLetters(selected.col)}${selected.row}` : null}
+                  sheet={sheet}
+                  busy={hostBusy || source.saving}
+                  onOperation={(op) => executeOps([{ ...op, sheetId: sheet.id }])}
+                  onOpenLink={openLink}
+                />
+              ),
+            },
+            ...(
+              [
+                { key: 'data-rules', tab: 'data', label: '数据规则', group: 'rules' },
+                { key: 'name-manager', tab: 'formulas', label: '命名范围', group: 'names' },
+                { key: 'print-setup', tab: 'layout', label: '打印布局', group: 'print' },
+                { key: 'freeze-panes', tab: 'view', label: '冻结窗格', group: 'freeze' },
+              ] as const
+            ).map((item) => ({
+              key: item.key,
+              tab: item.tab,
+              label: item.label,
+              minWidth: 0,
+              content: (
+                <XlsxPropertyControls
+                  key={`${sheet.id}:${formatRange}`}
+                  group={item.group}
+                  range={formatRange}
+                  sheet={sheet}
+                  workbook={view}
+                  busy={hostBusy || source.saving}
+                  onOperation={(op) =>
+                    executeOps([
+                      { ...op, ...(item.group === 'names' ? {} : { sheetId: sheet.id }) },
+                    ])
+                  }
+                />
+              ),
+            })),
+            {
+              key: 'formats',
+              label: '字体与对齐',
+              minWidth: 0,
+              tab: 'home',
+              content: (
+                <XlsxFormatControls
+                  key={`${sheet.id}:${formatRange}`}
+                  cells={formatCells}
+                  busy={hostBusy || source.saving || !!sheet.extras?.protected}
+                  disabledReason={rangeInput.trim() ? rangeDisabledReason : undefined}
+                  range={formatRange}
+                  onFormat={(format) =>
+                    void executeOps([
+                      { op: 'format_range', sheetId: sheet.id, range: formatRange, format },
+                    ])
+                  }
+                />
+              ),
+            },
+            {
               key: 'find',
               label: '查找',
               minWidth: 0,
               tab: 'home',
               content: (
                 <ToolbarGroup label="在当前工作表里查找">
+                  <XlsxFindControls
+                    sheetId={sheet.id}
+                    inspect={async (args) => {
+                      const handle = agentHandleRef.current
+                      if (!handle) throw new Error('工作簿尚未打开')
+                      return handle.execute('find_cells', args, {})
+                    }}
+                    onSelect={(match) => {
+                      void agentHandleRef.current?.execute(
+                        'select_range',
+                        { sheetId: match.sheetId, range: match.address },
+                        {},
+                      )
+                    }}
+                  />
                   <ToolbarTextField
                     label="查找内容（只在当前这张工作表里找，不区分大小写）"
                     value={query}
@@ -942,28 +1422,6 @@ export function XlsxEditor({
               tab: 'home',
               content: (
                 <ToolbarGroup label="当前工作表的范围操作">
-                  <ToolbarTextField
-                    label="操作范围（A1 或 A1:B5）"
-                    value={rangeInput}
-                    onChange={(value) => {
-                      setRangeInput(value)
-                      setApplyError(null)
-                      setNote(null)
-                    }}
-                    onCancel={() => {
-                      setRangeInput('')
-                      setNote(null)
-                    }}
-                    placeholder="A1:B5"
-                  />
-                  <ToolbarButton
-                    label="范围加粗"
-                    disabled={rangeDisabledReason !== undefined}
-                    disabledReason={rangeDisabledReason}
-                    onClick={applyRangeBold}
-                  >
-                    加粗
-                  </ToolbarButton>
                   <ToolbarButton
                     label="合并范围"
                     disabled={mergeDisabledReason !== undefined}
@@ -990,6 +1448,22 @@ export function XlsxEditor({
               tab: 'view',
               content: (
                 <ToolbarGroup label="视图">
+                  <ToolbarSelect
+                    label="工作表缩放"
+                    value={zoom}
+                    onChange={setZoom}
+                    options={['50', '75', '100', '125', '150', '200'].map((v) => ({
+                      value: v,
+                      label: v + '%',
+                    }))}
+                  />
+                  <ToolbarButton
+                    label="显示公式"
+                    active={showFormulas}
+                    onClick={() => setShowFormulas((on) => !on)}
+                  >
+                    显示公式
+                  </ToolbarButton>
                   <ToolbarButton
                     label="十字高亮：选中格所在的行与列"
                     active={cross}
@@ -1000,8 +1474,28 @@ export function XlsxEditor({
                 </ToolbarGroup>
               ),
             },
-          ]}
+          ])}
         />
+      }
+      subbar={
+        <ToolbarGroup label="当前操作范围">
+          <ToolbarLabel>范围</ToolbarLabel>{' '}
+          <ToolbarTextField
+            label="操作范围（A1 或 A1:B5）"
+            value={rangeInput}
+            onChange={(value) => {
+              setRangeInput(value)
+              setApplyError(null)
+              setNote(null)
+            }}
+            onCancel={() => {
+              setRangeInput('')
+              setNote(null)
+            }}
+            placeholder="A1:B5"
+          />
+          <ToolbarLabel>{sheet.extras?.protected ? '工作表已保护' : ''}</ToolbarLabel>
+        </ToolbarGroup>
       }
       footer={
         selected ? (
@@ -1027,23 +1521,30 @@ export function XlsxEditor({
               的提示（`applyError`）。Esc 是「放弃这次输入」，那条提示也得一起
               收掉——否则换一个格它还挂在屏幕上说着上一个格的事。
             */}
-            <ToolbarTextField
-              label={`单元格 ${columnLetters(selected.col)}${selected.row}`}
-              value={shown}
-              onChange={(value) => setDraft(value)}
-              onSubmit={apply}
-              onCancel={() => {
-                setDraft(null)
-                setApplyError(null)
-              }}
-              placeholder="值或公式"
-            />
+            <fieldset
+              className="mimir-xlsx-cell-input"
+              disabled={hostBusy || source.saving || sheet.extras?.protected}
+            >
+              <ToolbarTextField
+                label={`单元格 ${columnLetters(selected.col)}${selected.row}`}
+                value={shown}
+                onChange={(value) => setDraft(value)}
+                onSubmit={apply}
+                onCancel={() => {
+                  setDraft(null)
+                  setApplyError(null)
+                }}
+                placeholder="值或公式"
+              />
+            </fieldset>
             <ToolbarButton
               label="应用"
-              disabled={draft === null}
+              disabled={draft === null || hostBusy || source.saving || sheet.extras?.protected}
               // 禁用必须给原因（DESIGN §8.4）：`draft === null` 是「格里的字还没被
               // 改过」，正是最需要解释的一档——按钮刚出现就是灰的，用户会以为坏了
-              disabledReason="没有改动，不用应用"
+              disabledReason={
+                sheet.extras?.protected ? '工作表已保护，请先取消保护' : '没有改动，不用应用'
+              }
               onClick={apply}
             >
               应用
@@ -1051,9 +1552,11 @@ export function XlsxEditor({
             {wasFormula && (
               <span className="me-label mimir-cell-editor__warn">
                 <AlertIcon />
-                {selectedCell?.formulaCache === 'cached'
-                  ? '当前结果是文件中的缓存，尚未重算，可能已过期。'
-                  : '当前公式没有可显示的缓存结果，尚未重算。'}
+                {recalculated
+                  ? '已按当前工作簿重新计算缓存。'
+                  : selectedCell?.formulaCache === 'cached'
+                    ? '当前结果是文件中的缓存，尚未重算，可能已过期。'
+                    : '当前公式没有可显示的缓存结果，尚未重算。'}
                 输入普通值会覆盖公式，输入 = 开头可更新公式
               </span>
             )}
@@ -1069,23 +1572,53 @@ export function XlsxEditor({
     >
       {applyError !== null && <div className="mimir-apply-error">{applyError}</div>}
       <div className="me-scroll mimir-xlsx-wrap">
-        {/*
+        <div
+          className="mimir-xlsx-stage"
+          style={{
+            zoom: Number(zoom) / 100,
+            minWidth: Math.max(
+              34 + sheet.columns.reduce((n, c) => n + (c.hidden ? 0 : c.width), 0),
+              ...(sheet.visuals ?? []).map((v) => {
+                const b = xlsxVisualBox(sheet, v)
+                return b.left + b.width + 16
+              }),
+            ),
+            minHeight: Math.max(
+              24 + sheet.rows.reduce((n, r) => n + (r.hidden ? 0 : r.height), 0),
+              ...(sheet.visuals ?? []).map((v) => {
+                const b = xlsxVisualBox(sheet, v)
+                return b.top + b.height + 16
+              }),
+            ),
+          }}
+        >
+          {/*
           渲染的 key 用**文件里的行列号**（格子的 `col`、行的 `number`）——
           由解析器给出，不是 `map` 的下标（`xlsx.ts` 顶部讲了为什么）。
         */}
-        <table
-          className="mimir-xlsx"
-          style={{
-            width: `${34 + sheet.columns.reduce((sum, column) => sum + column.width, 0)}px`,
-          }}
-        >
-          <colgroup>
-            <col style={{ width: '34px' }} />
-            {sheet.columns.map((column) => (
-              <col key={`col-${column.col}`} style={{ width: `${column.width}px` }} />
-            ))}
-          </colgroup>
-          {/*
+          <table
+            role="grid"
+            className="mimir-xlsx"
+            aria-label={`工作表：${sheet.name}`}
+            onPointerUp={() => {
+              dragStart.current = null
+            }}
+            onPointerLeave={(event) => {
+              if (event.buttons === 0) dragStart.current = null
+            }}
+            style={{
+              width: `${34 + sheet.columns.reduce((sum, column) => sum + column.width, 0)}px`,
+            }}
+          >
+            <colgroup>
+              <col style={{ width: '34px' }} />
+              {sheet.columns
+                .filter((column) => !column.hidden)
+                .map((column) => (
+                  <col key={`col-${column.col}`} style={{ width: `${column.width}px` }} />
+                ))}
+            </colgroup>
+            {/*
             ## 列字母行
 
             没有它，「C3」这个引用**在屏幕上找不到落点**：附属面板与工具条
@@ -1099,130 +1632,444 @@ export function XlsxEditor({
             选中列的高亮与行号栏**对称**：行号栏亮的是「我在看哪一行」，列头亮
             的是「我在看哪一列」——十字高亮本来就是这两条线上的判断。
           */}
-          <thead>
-            <tr>
-              {/*
+            <thead ref={gridHeaderRef}>
+              <tr>
+                {/*
                 左上角那个交角格：行号栏与列头都是 sticky，它们的交叉点必须
                 自己占一格，否则第一条列字母会被行号栏压住。空内容 + 无表头
                 语义（它是装饰，不是数据）
               */}
-              <th className="mimir-xlsx__gutter mimir-xlsx__corner" aria-hidden="true" />
-              {sheet.columns.map((column) => (
                 <th
-                  key={`colhead-${column.col}`}
-                  scope="col"
-                  className={
-                    cross && selected?.col === column.col
-                      ? 'mimir-xlsx__colhead mimir-xlsx__colhead--cross'
-                      : 'mimir-xlsx__colhead'
-                  }
-                >
-                  {columnLetters(column.col)}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {sheet.rows.map((row) => {
-              /** 十字高亮：选中格所在的整行（连行号格） */
-              const rowOn = cross && selected?.row === row.number
-              return (
-                <tr key={`row-${row.number}`} style={{ height: `${row.height}px` }}>
-                  <th
-                    className={
-                      rowOn ? 'mimir-xlsx__gutter mimir-xlsx__gutter--cross' : 'mimir-xlsx__gutter'
-                    }
-                  >
-                    {row.number}
-                  </th>
-                  {row.cells.map((cell) => {
-                    if (cell.covered) return null
-                    const isSelected = selected?.row === row.number && selected?.col === cell.col
-                    /**
-                     * 十字高亮：选中格所在的**整行或整列**。
-                     *
-                     * 两个条件都要——只判列的话看起来像「高亮了一竖条」，
-                     * 与「我在看哪一行」这个目的一半都没达成（行号格亮着、
-                     * 行里的内容不亮，反而更乱）。
-                     */
-                    const crossOn = cross && (rowOn || selected?.col === cell.col)
-                    return (
-                      <td
-                        key={`cell-${cell.col}`}
-                        colSpan={cell.colSpan}
-                        rowSpan={cell.rowSpan}
-                        /*
+                  style={{ zIndex: 6, top: 0 }}
+                  className="mimir-xlsx__gutter mimir-xlsx__corner"
+                  aria-hidden="true"
+                />
+                {sheet.columns
+                  .filter((column) => !column.hidden)
+                  .map((column) => (
+                    <th
+                      key={`colhead-${column.col}`}
+                      scope="col"
+                      style={
+                        column.col < freezeColumns
+                          ? {
+                              left:
+                                34 +
+                                sheet.columns
+                                  .filter((c) => !c.hidden && c.col < column.col)
+                                  .reduce((sum, c) => sum + c.width, 0),
+                              zIndex: 5,
+                            }
+                          : undefined
+                      }
+                      className={
+                        cross && selected?.col === column.col
+                          ? 'mimir-xlsx__colhead mimir-xlsx__colhead--cross'
+                          : 'mimir-xlsx__colhead'
+                      }
+                    >
+                      {columnLetters(column.col)}
+                    </th>
+                  ))}
+              </tr>
+            </thead>
+            <tbody>
+              {sheet.rows
+                .filter((row) => !row.hidden)
+                .map((row) => {
+                  /** 十字高亮：选中格所在的整行（连行号格） */
+                  const rowOn = cross && selected?.row === row.number
+                  return (
+                    <tr key={`row-${row.number}`} style={{ height: `${row.height}px` }}>
+                      <th
+                        style={
+                          row.number <= freezeRows
+                            ? {
+                                top:
+                                  gridHeaderHeight +
+                                  sheet.rows
+                                    .filter((r) => !r.hidden && r.number < row.number)
+                                    .reduce((sum, r) => sum + r.height, 0),
+                                zIndex: 5,
+                              }
+                            : undefined
+                        }
+                        className={
+                          rowOn
+                            ? 'mimir-xlsx__gutter mimir-xlsx__gutter--cross'
+                            : 'mimir-xlsx__gutter'
+                        }
+                      >
+                        {row.number}
+                      </th>
+                      {row.cells.map((cell) => {
+                        if (cell.covered || sheet.columns[cell.col]?.hidden) return null
+                        const isSelected =
+                          selected?.row === row.number && selected?.col === cell.col
+                        /**
+                         * 十字高亮：选中格所在的**整行或整列**。
+                         *
+                         * 两个条件都要——只判列的话看起来像「高亮了一竖条」，
+                         * 与「我在看哪一行」这个目的一半都没达成（行号格亮着、
+                         * 行里的内容不亮，反而更乱）。
+                         */
+                        const crossOn = cross && (rowOn || selected?.col === cell.col)
+                        return (
+                          <td
+                            key={`cell-${cell.col}`}
+                            style={{
+                              ...frozenStyle(row.number, cell.col),
+                              fontFamily: cell.format?.fontFamily,
+                              fontSize: cell.format?.fontSize
+                                ? `${cell.format.fontSize}pt`
+                                : undefined,
+                              fontWeight:
+                                (cellEffects.get(`${row.number}:${cell.col}`)?.format?.bold ??
+                                cell.format?.bold)
+                                  ? 700
+                                  : undefined,
+                              fontStyle:
+                                (cellEffects.get(`${row.number}:${cell.col}`)?.format?.italic ??
+                                cell.format?.italic)
+                                  ? 'italic'
+                                  : undefined,
+                              color:
+                                cellEffects.get(`${row.number}:${cell.col}`)?.format?.fontColor ??
+                                cell.format?.fontColor,
+                              backgroundColor:
+                                cellEffects.get(`${row.number}:${cell.col}`)?.format?.fillColor ??
+                                cell.format?.fillColor,
+                              textDecoration:
+                                [
+                                  cell.format?.underline ||
+                                  sheet.extras?.hyperlinks[
+                                    `${columnLetters(cell.col)}${row.number}`
+                                  ]
+                                    ? 'underline'
+                                    : '',
+                                  cell.format?.strikethrough ? 'line-through' : '',
+                                ]
+                                  .filter(Boolean)
+                                  .join(' ') || undefined,
+                              textAlign: cell.format?.horizontalAlign,
+                              verticalAlign:
+                                cell.format?.verticalAlign === 'center'
+                                  ? 'middle'
+                                  : cell.format?.verticalAlign,
+                              whiteSpace: cell.format?.wrapText ? 'pre-wrap' : undefined,
+                              overflowWrap: cell.format?.wrapText ? 'anywhere' : undefined,
+                              paddingLeft: cell.format?.indent
+                                ? `${cell.format.indent * 3}ch`
+                                : undefined,
+                              writingMode:
+                                cell.format?.textRotation === 'vertical'
+                                  ? 'vertical-rl'
+                                  : undefined,
+                              borderTop:
+                                cellEffects.get(`${row.number}:${cell.col}`)?.format?.borders
+                                  ?.top ?? cell.format?.borders?.top,
+                              borderBottom:
+                                cellEffects.get(`${row.number}:${cell.col}`)?.format?.borders
+                                  ?.bottom ?? cell.format?.borders?.bottom,
+                              borderLeft:
+                                cellEffects.get(`${row.number}:${cell.col}`)?.format?.borders
+                                  ?.left ?? cell.format?.borders?.left,
+                              borderRight:
+                                cellEffects.get(`${row.number}:${cell.col}`)?.format?.borders
+                                  ?.right ?? cell.format?.borders?.right,
+                            }}
+                            colSpan={cell.colSpan}
+                            rowSpan={cell.rowSpan}
+                            /*
                           选中的格把 ref 让给 `scrollIntoView`：查找与公式跳转
                           都只改选中，而格子可能在滚动区外（理由见那个函数）。
                         */
-                        ref={isSelected ? scrollIntoView : undefined}
-                        className={[
-                          'mimir-xlsx__cell',
-                          cell.numeric === true ? 'mimir-xlsx__cell--num' : '',
-                          cell.bold === true ? 'mimir-xlsx__cell--bold' : '',
-                          actionRange.target &&
-                          row.number >= actionRange.target.startRow &&
-                          row.number <= actionRange.target.endRow &&
-                          cell.col >= actionRange.target.startCol &&
-                          cell.col <= actionRange.target.endCol
-                            ? 'mimir-xlsx__cell--range'
-                            : '',
-                          crossOn ? 'mimir-xlsx__cell--cross' : '',
-                          isSelected ? 'mimir-xlsx__cell--on' : '',
-                        ]
-                          .filter((name) => name !== '')
-                          .join(' ')}
-                        title={
-                          cell.formula
-                            ? cell.formulaCache === 'cached'
-                              ? '公式：文件中的缓存结果，当前编辑器未重算，可能已过期'
-                              : '公式：没有可显示的缓存结果，当前编辑器未重算'
-                            : undefined
-                        }
-                        /*
-                         * **白名单：这个格子是画布，不是控件。**
-                         *
-                         * 它有 `onClick` 但不是按钮——它是表格网格本身（每一格
-                         * 都要能点着选中，用 `ToolbarButton` 会变成「一个格子里
-                         * 嵌一个按钮」，行列的对齐、合并单元格的 `colSpan` 与
-                         * 十字高亮全都建立在 `<td>` 上）。全仓库「交互元素不走
-                         * 原语」的合法例外只有两处：这里是 xlsx 的网格，另一处
-                         * 是 pptx 那片 SVG 画布（`PptxEditor.tsx` 的
-                         * `.mimir-pptx-slide`）。
-                         *
-                         * 代价照实记：它不是键盘可达的（网格没有 roving tabindex，
-                         * 键盘用户走工具条的「上一个 / 下一个命中」「公式格跳转」
-                         * 那两组按钮换选中格）。这是**有意接受**的边界，不是漏了
-                         * ——真要做完整键盘导航得给网格一套 2D 焦点模型，那是另一件
-                         * 事；而现在**已经有**键盘路径，只是不在网格上。
-                         *
-                         * 别的地方新增这种写法之前先问：它是不是画布？不是就说明
-                         * 它该走原语。
-                         */
-                        onClick={() => selectCell(row.number, cell.col)}
-                      >
-                        {/* 选中的格子显示草稿（实时预览），其余显示模型里的值 */}
-                        {cell.formula &&
-                        cell.formulaCache === 'missing' &&
-                        !cell.text &&
-                        (!isSelected || draft === null)
-                          ? '未计算'
-                          : isSelected
-                            ? shown
-                            : cell.text}
-                        {cell.formula && !(isSelected && draft !== null) && (
-                          <span className="mimir-xlsx__formula-tag">
-                            {cell.formulaCache === 'cached' ? '缓存' : '无结果'}
-                          </span>
-                        )}
-                      </td>
-                    )
-                  })}
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+                            ref={isSelected ? scrollIntoView : undefined}
+                            className={[
+                              'mimir-xlsx__cell',
+                              cell.numeric === true ? 'mimir-xlsx__cell--num' : '',
+                              cell.bold === true ? 'mimir-xlsx__cell--bold' : '',
+                              actionRange.target &&
+                              row.number >= actionRange.target.startRow &&
+                              row.number <= actionRange.target.endRow &&
+                              cell.col >= actionRange.target.startCol &&
+                              cell.col <= actionRange.target.endCol
+                                ? 'mimir-xlsx__cell--range'
+                                : '',
+                              crossOn ? 'mimir-xlsx__cell--cross' : '',
+                              isSelected ? 'mimir-xlsx__cell--on' : '',
+                            ]
+                              .filter((name) => name !== '')
+                              .join(' ')}
+                            title={
+                              [
+                                ...(cellEffects
+                                  .get(`${row.number}:${cell.col}`)
+                                  ?.warnings?.filter((w: string) => w !== 'stop') ?? []),
+                                sheet.extras?.hyperlinks[`${columnLetters(cell.col)}${row.number}`],
+                                sheet.extras?.notes[`${columnLetters(cell.col)}${row.number}`]
+                                  ?.text,
+                                cell.formula
+                                  ? recalculated
+                                    ? '公式：已按当前工作簿重新计算的缓存结果'
+                                    : cell.formulaCache === 'cached'
+                                      ? '公式：文件中的缓存结果，当前编辑器未重算，可能已过期'
+                                      : '公式：没有可显示的缓存结果，当前编辑器未重算'
+                                  : undefined,
+                              ]
+                                .filter(Boolean)
+                                .join('\n') || undefined
+                            }
+                            /*
+                             * **白名单：这个格子是画布，不是控件。**
+                             *
+                             * 它有 `onClick` 但不是按钮——它是表格网格本身（每一格
+                             * 都要能点着选中，用 `ToolbarButton` 会变成「一个格子里
+                             * 嵌一个按钮」，行列的对齐、合并单元格的 `colSpan` 与
+                             * 十字高亮全都建立在 `<td>` 上）。全仓库「交互元素不走
+                             * 原语」的合法例外只有两处：这里是 xlsx 的网格，另一处
+                             * 是 pptx 那片 SVG 画布（`PptxEditor.tsx` 的
+                             * `.mimir-pptx-slide`）。
+                             *
+                             * 网格使用 roving tabindex 与二维键盘导航，合并格跳至
+                             * 下一个可见锚点；工具栏查找和公式跳转沿用同一选区。
+                             *
+                             * 别的地方新增这种写法之前先问：它是不是画布？不是就说明
+                             * 它该走原语。
+                             */
+                            tabIndex={
+                              isSelected ||
+                              (!selected &&
+                                row === sheet.rows.find((r) => !r.hidden) &&
+                                cell.col === sheet.columns.find((c) => !c.hidden)?.col)
+                                ? 0
+                                : -1
+                            }
+                            aria-selected={isSelected}
+                            data-grid-row={row.number}
+                            data-grid-column={cell.col}
+                            onPointerDown={(event) => {
+                              if (event.button !== 0 || dragStart.current) return
+                              dragStart.current = {
+                                row: row.number,
+                                col: cell.col,
+                                pointerId: event.pointerId,
+                              }
+                              keyboardAnchor.current = null
+                              setRangeInput('')
+                              selectCell(row.number, cell.col)
+                            }}
+                            onPointerEnter={(event) => {
+                              const start = dragStart.current
+                              if (
+                                !start ||
+                                event.buttons !== 1 ||
+                                event.pointerId !== start.pointerId
+                              )
+                                return
+                              setRangeInput(
+                                `${columnLetters(Math.min(start.col, cell.col))}${Math.min(start.row, row.number)}:${columnLetters(Math.max(start.col, cell.col))}${Math.max(start.row, row.number)}`,
+                              )
+                            }}
+                            onClick={(event) => {
+                              if (event.detail === 0) selectCell(row.number, cell.col)
+                            }}
+                            onKeyDown={(event) => {
+                              const navigation = [
+                                'ArrowUp',
+                                'ArrowDown',
+                                'ArrowLeft',
+                                'ArrowRight',
+                                'Home',
+                                'End',
+                                'PageUp',
+                                'PageDown',
+                                'Tab',
+                                'Enter',
+                              ]
+                              if (!navigation.includes(event.key)) {
+                                if (event.key === 'Escape') {
+                                  setRangeInput('')
+                                  keyboardAnchor.current = null
+                                }
+                                return
+                              }
+                              event.preventDefault()
+                              const rows = sheet.rows.filter((r) => !r.hidden),
+                                columns = sheet.columns.filter((c) => !c.hidden),
+                                ri = rows.findIndex((r) => r.number === row.number),
+                                ci = columns.findIndex((c) => c.col === cell.col)
+                              const dr =
+                                event.key === 'ArrowUp'
+                                  ? -1
+                                  : ['ArrowDown', 'Enter'].includes(event.key)
+                                    ? event.key === 'Enter' && event.shiftKey
+                                      ? -1
+                                      : 1
+                                    : event.key === 'PageUp'
+                                      ? -20
+                                      : event.key === 'PageDown'
+                                        ? 20
+                                        : 0
+                              const dc =
+                                event.key === 'ArrowLeft'
+                                  ? -1
+                                  : event.key === 'ArrowRight'
+                                    ? 1
+                                    : event.key === 'Tab'
+                                      ? event.shiftKey
+                                        ? -1
+                                        : 1
+                                      : 0
+                              const merge = cell.mergeRef
+                                ? parseActionRange(cell.mergeRef).target
+                                : null
+                              let tr =
+                                  rows[
+                                    Math.max(
+                                      0,
+                                      Math.min(
+                                        rows.length - 1,
+                                        dr === 1 && merge
+                                          ? Math.max(
+                                              ri,
+                                              rows.findIndex((r) => r.number > merge.endRow),
+                                            )
+                                          : ri + dr,
+                                      ),
+                                    )
+                                  ]!,
+                                tc =
+                                  columns[
+                                    Math.max(
+                                      0,
+                                      Math.min(
+                                        columns.length - 1,
+                                        dc === 1 && merge
+                                          ? Math.max(
+                                              ci,
+                                              columns.findIndex((c) => c.col > merge.endCol),
+                                            )
+                                          : ci + dc,
+                                      ),
+                                    )
+                                  ]!
+                              if (event.key === 'Home' || event.key === 'End') {
+                                tc = event.key === 'Home' ? columns[0]! : columns.at(-1)!
+                                if (event.ctrlKey || event.metaKey)
+                                  tr = event.key === 'Home' ? rows[0]! : rows.at(-1)!
+                              }
+                              const target = tr.cells[tc.col]
+                              if (target?.covered) {
+                                const anchor = rows
+                                  .flatMap((r) =>
+                                    r.cells
+                                      .filter((c) => {
+                                        const bounds = c.mergeRef
+                                          ? parseActionRange(c.mergeRef).target
+                                          : null
+                                        return (
+                                          bounds &&
+                                          tr.number >= bounds.startRow &&
+                                          tr.number <= bounds.endRow &&
+                                          tc.col >= bounds.startCol &&
+                                          tc.col <= bounds.endCol
+                                        )
+                                      })
+                                      .map((c) => ({
+                                        row: r,
+                                        column: columns.find((col) => col.col === c.col)!,
+                                      })),
+                                  )
+                                  .at(0)
+                                if (anchor) {
+                                  tr = anchor.row
+                                  tc = anchor.column
+                                }
+                              }
+                              if (event.shiftKey && event.key !== 'Tab' && event.key !== 'Enter') {
+                                keyboardAnchor.current ??= { row: row.number, col: cell.col }
+                                const a = keyboardAnchor.current
+                                setRangeInput(
+                                  `${columnLetters(Math.min(a.col, tc.col))}${Math.min(a.row, tr.number)}:${columnLetters(Math.max(a.col, tc.col))}${Math.max(a.row, tr.number)}`,
+                                )
+                              } else {
+                                keyboardAnchor.current = null
+                                setRangeInput('')
+                              }
+                              selectCell(tr.number, tc.col)
+                              const table = event.currentTarget.closest('table')
+                              requestAnimationFrame(() =>
+                                table
+                                  ?.querySelector<HTMLElement>(
+                                    `[data-grid-row="${tr.number}"][data-grid-column="${tc.col}"]`,
+                                  )
+                                  ?.focus(),
+                              )
+                            }}
+                          >
+                            {cellEffects.get(`${row.number}:${cell.col}`)?.bar &&
+                              (() => {
+                                const bar = cellEffects.get(`${row.number}:${cell.col}`)!.bar!
+                                return (
+                                  <span
+                                    className="mimir-xlsx-data-bar"
+                                    aria-label="条件格式数据条"
+                                    style={{
+                                      insetInlineStart: `${bar.start}%`,
+                                      width: `${bar.end - bar.start}%`,
+                                      background: bar.color,
+                                    }}
+                                  />
+                                )
+                              })()}
+                            {cellEffects.get(`${row.number}:${cell.col}`)?.sparkline && (
+                              <XlsxSparkline
+                                {...cellEffects.get(`${row.number}:${cell.col}`)!.sparkline!}
+                              />
+                            )}
+                            {/* 选中的格子显示草稿（实时预览），其余显示模型里的值 */}
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                transform:
+                                  typeof cell.format?.textRotation === 'number' &&
+                                  cell.format.textRotation
+                                    ? `rotate(${-cell.format.textRotation}deg)`
+                                    : undefined,
+                              }}
+                            >
+                              {cell.formula &&
+                              cell.formulaCache === 'missing' &&
+                              !cell.text &&
+                              (!isSelected || draft === null)
+                                ? '未计算'
+                                : isSelected && draft !== null
+                                  ? draft
+                                  : showFormulas && cell.formulaText
+                                    ? cell.formulaText
+                                    : cell.text}
+                            </span>
+                            {sheet.extras?.notes[`${columnLetters(cell.col)}${row.number}`] && (
+                              <span className="mimir-xlsx__note-tag" aria-label="有批注">
+                                批注
+                              </span>
+                            )}
+                            {cell.formula && !(isSelected && draft !== null) && (
+                              <span className="mimir-xlsx__formula-tag">
+                                {cell.formulaCache === 'cached' ? '缓存' : '无结果'}
+                              </span>
+                            )}
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  )
+                })}
+            </tbody>
+          </table>
+          <XlsxObjectLayer sheet={sheet} selectedId={selectedObject} onSelect={setSelectedObject} />
+        </div>
       </div>
     </EditorShell>
   )
@@ -1404,4 +2251,33 @@ function columnLetters(col: number): string {
     n = Math.floor((n - 1) / 26)
   }
   return out
+}
+
+/** Keep task-related controls in one Ribbon group; the shared shell owns width folding. */
+function mergeXlsxToolbarSections(sections: CompactToolbarSection[]): CompactToolbarSection[] {
+  const groups = [
+    { key: 'formats', label: '格式', members: ['formats'] },
+    { key: 'clipboard', label: '剪贴板', members: ['manual-home', 'clipboard'] },
+    { key: 'sheets', label: '工作表', members: ['sheets', 'sheet-name', 'sheet-manage'] },
+    { key: 'cell', label: '单元格', members: ['cell', 'structure', 'range-actions'] },
+    { key: 'find', label: '查找', members: ['find', 'matches'] },
+  ]
+  return [
+    ...groups.map((group) => ({
+      key: group.key,
+      label: group.label,
+      tab: 'home',
+      minWidth: 0,
+      content: (
+        <>
+          {group.members
+            .flatMap((key) => sections.filter((section) => section.key === key))
+            .map((section) => (
+              <Fragment key={section.key}>{section.content}</Fragment>
+            ))}
+        </>
+      ),
+    })),
+    ...sections.filter((section) => section.tab !== 'home'),
+  ]
 }

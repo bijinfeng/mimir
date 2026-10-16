@@ -40,12 +40,16 @@
     "@uiw/react-heat-map": "2.3.4",
     "cropperjs": "^2.3.0",
     "dayjs": "^1.11.23",
+    "dompurify": "^3.4.17",
+    "json5": "^2.2.3",
     "katex": "^0.19.0",
     "lowlight": "^3.3.0",
     "lucide": "^1.48.0",
     "lucide-react": "^1.48.0",
+    "mermaid": "^11.17.2",
     "morphicons": "^1.7.1",
-    "pdfjs-dist": "catalog:"
+    "pdfjs-dist": "catalog:",
+    "wavedrom": "^3.7.0"
   },
   "devDependencies": {
     "@tanstack/router-cli": "1.167.38",
@@ -56,6 +60,7 @@
     "antd": "catalog:",
     "antd-style": "catalog:",
     "happy-dom": "catalog:",
+    "jsdom": "^28.1.0",
     "react": "catalog:",
     "react-dom": "catalog:",
     "typescript": "catalog:",

@@ -1,3 +1,10 @@
+import { XMLParser } from 'fast-xml-parser'
+import {
+  readPptxMetadata,
+  readPptxLink,
+  type PptxMetadata,
+  type PptxLink,
+} from './pptx-metadata.js'
 import type { SlideSize } from '../vendor/packages/pptx-engine/src/types.js'
 import type { Slide } from '../vendor/packages/pptx-engine/src/types.js'
 import {
@@ -12,7 +19,14 @@ import {
 } from '../vendor/packages/pptx-engine/src/placeholder.js'
 import { parseTheme, parseClrMap } from '../vendor/packages/pptx-engine/src/theme.js'
 import { PptxArchive, relsPathFor, resolveTarget } from './pptx-archive.js'
-import { buildPptxBytes, commitSaved, patchSlideXml, slideIsDirty } from './pptx-save.js'
+import {
+  buildPptxBytes,
+  commitSaved,
+  patchSlideXml,
+  patchedElementXml,
+  slideIsDirty,
+} from './pptx-save.js'
+import { preparePptxTextRangeEdit } from './pptx-text-range.js'
 import {
   allocatePptxPage,
   assertNoIncomingSlideReferences,
@@ -61,6 +75,7 @@ import type {
 
 /** 打开后的演示文稿 */
 export interface PptxDeck {
+  links(slideIndex: number): ReadonlyMap<string, PptxLink>
   /** 画布尺寸（EMU）——渲染时按它算宽高比 */
   readonly size: SlideSize
   /** 幻灯片。**是函数**——编辑会话保存后模型会变，与编辑入口保持同一形状
@@ -97,6 +112,13 @@ export async function openPptx(bytes: Uint8Array): Promise<PptxDeck> {
     size,
     slides: () => slides,
     fingerprint: archive.fingerprint,
+    links: (index) =>
+      new Map(
+        (slides[index]?.elements ?? []).flatMap((element) => {
+          const link = readPptxLink(archive, slides, index, element)
+          return link ? [[element.id, link] as const] : []
+        }),
+      ),
     media: archive.readMediaDataUrls(),
   }
 }
@@ -445,18 +467,23 @@ function buildDecorations(
  * 的编辑，而它已经是补丁式的（见 `pptx-save.ts`）。
  */
 export interface PptxEditSession {
+  metadata(slideIndex: number): PptxMetadata
+  link(slideIndex: number, element: SlideElement): PptxLink | null
+  /** Current speaker notes from the active archive, including unsaved hosted edits. */
+  notes(slideIndex: number): string
   readonly size: SlideSize
   /** 当前模型（编辑后会被替换，所以每次读都用 `slides()`） */
   slides(): readonly Slide[]
   /** 图片：zip 路径 → data URL（渲染用） */
   readonly media: ReadonlyMap<string, string>
   /** Monotonic edit revision, shared by manual and Agent commands. */
+  mediaPart(path: string): Uint8Array | null
   version(): number
   checkpoint(): PptxSessionCheckpoint
   /** Callers must verify newer edits before restoring a round. */
-  restore(checkpoint: PptxSessionCheckpoint): void
+  restore(checkpoint: PptxSessionCheckpoint, options?: { forceDirty?: boolean }): void
   /** Land a host-executed PPTX result into the same live canvas, preserving manual-save state. */
-  replaceFromHost(bytes: Uint8Array): Promise<void>
+  replaceFromHost(bytes: Uint8Array, expectedVersion?: number, signal?: AbortSignal): Promise<void>
   /**
    * 改一个元素的文字。
    *
@@ -572,32 +599,75 @@ export async function openPptxForEdit(bytes: Uint8Array): Promise<PptxEditSessio
       return size
     },
     slides: () => slides,
+    metadata: (index) => readPptxMetadata(archive, slides, index),
+    link: (index, element) => readPptxLink(archive, slides, index, element),
+    notes(index) {
+      const slide = slides[index]
+      if (!slide) return ''
+      const rel = [...archive.readRels(slide.path).values()].find((item) =>
+        item.type.endsWith('/notesSlide'),
+      )
+      const xml = rel ? archive.readText(resolveTarget(slide.path, rel.target)) : null
+      if (!xml) return ''
+      const parser = new XMLParser({
+        ignoreAttributes: false,
+        attributeNamePrefix: '@_',
+        ignoreDeclaration: true,
+        parseTagValue: false,
+        trimValues: false,
+        isArray: (name) => ['p:sp', 'a:p', 'a:r', 'a:fld'].includes(name),
+      })
+      const parsed = parser.parse(xml)
+      type NotesRun = { 'a:t'?: string | { '#text'?: string } }
+      type NotesParagraph = { 'a:r'?: NotesRun[] }
+      type NotesShape = {
+        'p:nvSpPr'?: { 'p:nvPr'?: { 'p:ph'?: { '@_type'?: string } } }
+        'p:txBody'?: { 'a:p'?: NotesParagraph[] }
+      }
+      const shapes: NotesShape[] = parsed?.['p:notes']?.['p:cSld']?.['p:spTree']?.['p:sp'] ?? []
+      const body = shapes.find(
+        (shape) => shape['p:nvSpPr']?.['p:nvPr']?.['p:ph']?.['@_type'] === 'body',
+      )
+      const lines: string[] = (body?.['p:txBody']?.['a:p'] ?? []).map((para) =>
+        (para['a:r'] ?? [])
+          .map((run) =>
+            typeof run['a:t'] === 'object' ? (run['a:t']?.['#text'] ?? '') : (run['a:t'] ?? ''),
+          )
+          .join(''),
+      )
+      while (lines.at(-1) === '') lines.pop()
+      return lines.join('\n')
+    },
     get media() {
       return media
+    },
+    mediaPart(path) {
+      if (!/^ppt\/media\/[^/]+$/.test(path)) return null
+      return archive.entries.get(path)?.slice() ?? null
     },
     version: () => revision,
     checkpoint: () => ({
       sessionId,
       slides: structuredClone(slides),
       pages: structuredClone(pages),
-      archive,
+      archive: archive.snapshot(),
       baseline: structuredClone(baseline),
       size: { ...size },
       media,
       hostDirty,
     }),
-    restore(checkpoint) {
+    restore(checkpoint, options) {
       if (checkpoint.sessionId !== sessionId) throw new Error('PPTX 检查点不属于当前文档')
-      archive = checkpoint.archive
+      archive = checkpoint.archive.snapshot()
       baseline = structuredClone(checkpoint.baseline)
       size = { ...checkpoint.size }
       media = checkpoint.media
-      hostDirty = checkpoint.hostDirty
+      hostDirty = options?.forceDirty || checkpoint.hostDirty
       slides.splice(0, slides.length, ...structuredClone(checkpoint.slides))
       pages.splice(0, pages.length, ...structuredClone(checkpoint.pages))
       invalidate()
     },
-    async replaceFromHost(hostBytes) {
+    async replaceFromHost(hostBytes, expectedVersion, signal) {
       const nextArchive = await PptxArchive.open(hostBytes)
       const nextPages = readPptxPages(nextArchive)
       const nextSlides: Slide[] = []
@@ -607,6 +677,9 @@ export async function openPptxForEdit(bytes: Uint8Array): Promise<PptxEditSessio
         nextSlides.push(slide)
       }
       if (!nextSlides.length) throw new Error('宿主返回了没有幻灯片的 PPTX')
+      if (signal?.aborted) throw new Error('PPTX 操作已取消；文档未修改')
+      if (expectedVersion !== undefined && revision !== expectedVersion)
+        throw new Error('宿主解析期间画布已变化，请重新读取')
       archive = nextArchive
       size = nextArchive.readPresentation().size
       media = nextArchive.readMediaDataUrls()
@@ -618,7 +691,18 @@ export async function openPptxForEdit(bytes: Uint8Array): Promise<PptxEditSessio
     },
 
     view() {
-      cachedView ??= { size, slides: () => slides, media }
+      cachedView ??= {
+        size,
+        slides: () => slides,
+        media,
+        links: (index) =>
+          new Map(
+            (slides[index]?.elements ?? []).flatMap((element) => {
+              const link = readPptxLink(archive, slides, index, element)
+              return link ? [[element.id, link] as const] : []
+            }),
+          ),
+      }
       return cachedView
     },
 
@@ -631,6 +715,24 @@ export async function openPptxForEdit(bytes: Uint8Array): Promise<PptxEditSessio
       const text = (el as { text?: { paragraphs: Paragraph[] } }).text
       if (!text) return false
 
+      const prepared = preparePptxTextRangeEdit(el as TextElement, paragraphs, () =>
+        patchedElementXml(structuredClone(el)),
+      )
+      if (prepared) {
+        if (prepared.xml === el.anchor.originalXml && !el.dirty) return false
+        // A structural run rebuild would discard unmodeled XML. The range adapter
+        // publishes its surgical working anchor only after the whole edit validates.
+        text.paragraphs = prepared.paragraphs
+        el.anchor.originalXml = prepared.xml
+        delete el.dirty
+        delete el.dirtyPPr
+        delete el.dirtyTransform
+        delete el.dirtyFill
+        delete el.dirtyStroke
+        slide.structureDirty = true
+        invalidate()
+        return true
+      }
       text.paragraphs = applyEditParagraphs(text.paragraphs, paragraphs)
       /**
        * 标脏 → 保存时这个元素的 XML 会被 `patchTextElementXml` 外科式重写

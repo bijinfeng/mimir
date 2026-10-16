@@ -1,77 +1,63 @@
 /**
- * pptx 的幻灯片编辑器（渲染 + 改文字 + 改 run 级格式 + 查找替换）。
- *
- * ## 只有这一个组件（原 `PptxPreview` 已被它取代）
- *
- * 只读预览与编辑渲染的是**同一份模型**（`pptx-render.ts` 的 `renderSlide`）。
- * 分开两个组件的话，只读那个不加载 archive（保存要用），界面会变成
- * 「预览看一遍、想改一个字要切到另一个模式」——而 pptx 的原件层本来
- * 就是给人看和改的地方。
- *
- * ## 渲染是 SVG，不是 canvas
- *
- * 上游的 `render-tree.ts` 顶部写着「Konva is just a thin adapter」——保真逻辑
- * （坐标、换行、继承）全在纯数据层，换适配器是它的设计允许的。
- * **为什么换**：canvas 里的文字选不中、搜不到、读屏读不到，而对着幻灯片
- * 复制一句话是很自然的动作。SVG 的 `<text>` 三者都有。
- *
- * ## 编辑的粒度是**段落**；格式的粒度是**整段**（不是半句话）
- *
- * 实测（真实 pptx）：一个段落里通常只有**一个 run**，文本是整段。所以
- * 「编辑一个文本框」在界面层就是「每段一个输入框」，模型层由 vendored 的
- * `applyEditParagraphs` 做映射（未被编辑的字号/字体/颜色/项目符号从原 run
- * 继承）。
- *
- * 界面里**没有 run 级选区**（能选的是画布上的元素与段落输入框），所以工具条
- * 上的加粗/字号/颜色只能表达「这一整段」。标签因此都写着「（整段）」，状态行
- * 也把这条边界说清楚——不写的话，用户会以为能只加粗半句话。
- *
- * ## run 的结构**一条都不压平**（改文字与改格式两条路都要守）
- *
- * 最直觉的写法是「每段回传一条 run，文本是整段拼起来的」——那是
- * `EditParagraph` 允许的形状。**但在这个界面上是错的**：实测一份「加粗标签 +
- * 普通正文」的段落（两个 run：`sz=3600 b=1` 与 `sz=2400` 红字），那样回传之后
- * 段落被压成**一条** run，取的是 `dominantRun`（文字最多的那条）的格式——
- * 标签的加粗与字号被静默丢掉（那一版写出的 XML 里只剩 `sz="2400"`）。而保存
- * 成功、文件能打开、文字也对，只有格式悄悄错了。
- *
- * 两条路都是同一件事：
- *
- * | 动作 | 怎么保住其余 run |
- * |---|---|
- * | 工具条改格式（`applyFormat`） | 逐 run 回传：每条带自己的 `srcRun` 与原文，格式项**追加**上去 |
- * | 段落输入框改文字（`editParagraphRuns`） | 取新旧文本的公共前后缀，**只改真正变动的那条 run**；跨多条时才整段重写 |
- *
- * 于是 `applyEditParagraphs` 按 run 对齐，`pptx-engine/src/generate.ts` 的
- * `patchRunProps` 只给该改的那几项写字节，兄弟 run 的字号、颜色、字体一个都不
- * 动。段落级的东西（项目符号、行距、对齐）由 `srcPara` 继承，同一条路。
- *
- * ## 哪些格式能改、哪些不能（如实写在界面上）
- *
- * | 能改（本版） | 做不到（本版） |
- * |---|---|
- * | 加粗 / 倾斜 / 下划线 / 删除线（整段） | 元素位置与大小（拖动改框） |
- * | 上标 / 下标（整段） | 项目符号、行距、对齐（一律沿用原件） |
- * | 字号 / 字体 / 字体颜色（整段） | 动画、SmartArt、OLE 的编辑 |
- * | 清除这五项字形 | **字号/字体/颜色没有「回到继承」的表达**，所以「清除字形」不碰它们 |
- *
- * ## 查找和替换的作用域是**整份演示文稿**
- *
- * 匹配按「幻灯片 + 元素 + 段落」三级算（`editableElements` → `textOfElement`
- * → `paragraphs`），命中的元素被**整体描边**（琥珀色）并把那一页带出来——
- * 高亮画在渲染出的 SVG 上，而一次只画一页，所以跨页的命中要跟着翻页。替换
- * 回传的每一段都带 `srcPara`、每条 run 都带 `srcRun`，否则那一段的格式会被
- * 冲掉（见 `applyEditParagraphs` 的开头）。
+ * Current-workbook PPTX editor. Rendering, manual tools and Agent writes share one
+ * patch-preserving session and history. Native text selection spans paragraphs;
+ * range edits preserve source run XML and collapsed carets hold typing marks.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
 import { editableElements, openPptxForEdit, textOfElement } from '../pptx.js'
+import { PptxClipboardControls } from './PptxClipboardControls.js'
+import { PptxOutputControls } from './PptxOutputControls.js'
+import { PptxTextRangeEditor, type PptxTextSelectionEvent } from './PptxTextRangeEditor.js'
+import {
+  formatPptxTextRange,
+  pptxSelectionRuns,
+  type PptxTextSelection,
+} from '../pptx-text-range.js'
+import { PptxAnimationPreview, type PptxAnimationPreviewRequest } from './PptxAnimationPreview.js'
+import { PptxZoomControls } from './PptxZoomControls.js'
+import {
+  PptxShowControls,
+  type PptxShowRequest,
+  type PptxRehearsalResult,
+} from './PptxShowControls.js'
+import { PptxIconControls, PptxCutoutControls } from './PptxPictureTools.js'
+import { capturePptxBrush, pptxBrushOps, type PptxBrush } from '../pptx-format-brush.js'
+import { PptxMasterControls } from './PptxMasterControls.js'
+import { PptxModelControls } from './PptxModelControls.js'
+import { PptxShapeFillControls, PptxBackgroundControls } from './PptxFillControls.js'
+import { PptxInkControls, usePptxInkSettings } from './PptxInkControls.js'
+import { PptxInkCanvas } from './PptxInkCanvas.js'
+import { PptxShapeInsertCanvas } from './PptxShapeInsertCanvas.js'
+import { inkNodesOf } from '../pptx-ink.js'
+import type { PptxManualInk, PptxManualShape } from '@mimir/shared'
+import {
+  PptxWorkspaceViews,
+  pptxSlideMoveOps,
+  type PptxWorkspaceMode,
+} from './PptxWorkspaceViews.js'
+import {
+  PptxViewControls,
+  PptxViewOverlay,
+  PptxWorkspaceModeControls,
+  defaultPptxView,
+} from './PptxViewControls.js'
+import type { PptxManualAsset, PptxManualUpload } from '@mimir/shared'
+import {
+  PptxMediaControls,
+  PptxImageFillControls,
+  PptxImportControls,
+  PptxMediaPlayer,
+} from './PptxAssetControls.js'
 import {
   createPptxAgentHandle,
   type PptxAgentHandle,
   type PptxHostApply,
 } from '../agent/pptx-agent.js'
-import { elementDurableId } from '../../vendor/packages/pptx-engine/src/identity.js'
+import {
+  elementDurableId,
+  matchesElementRef,
+} from '../../vendor/packages/pptx-engine/src/identity.js'
 import { renderSlide, type PptxRenderable, type RenderedSlide } from '../pptx-render.js'
 import {
   EditorShell,
@@ -114,15 +100,41 @@ import {
 } from '../shell/icons.js'
 import type { FindOptions } from '../shims/ui.js'
 import type { EditParagraph, EditRun } from '../../vendor/packages/pptx-ops/src/types.js'
-import type {
-  Paragraph,
-  TableElement,
-  TextRun,
-} from '../../vendor/packages/pptx-engine/src/types.js'
+import type { Paragraph, TextRun } from '../../vendor/packages/pptx-engine/src/types.js'
 import { statusText, useParsed, useSource } from './use-source.js'
 import { ThumbnailSidebar } from './ThumbnailSidebar.js'
-import { OFFICE_MIME, type EditorProps } from './types.js'
+import { OFFICE_MIME, type EditorProps, type PptxHostAsset } from './types.js'
 import { CompactToolbar } from './CompactToolbar.js'
+import { ChartEditControls, SlidePlaybackControls } from './PptxAdvancedControls.js'
+import { PptxTableControls } from './PptxTableControls.js'
+import { PptxShapeGallery } from './PptxShapeGallery.js'
+import { PptxScreenRecordControls } from './PptxScreenRecordControls.js'
+import {
+  PptxParagraphControls,
+  PptxFreeformControls,
+  PptxConnectorControls,
+  PptxPictureControls,
+  PptxEffectsControls,
+  PptxLinkControls,
+  PptxArrangeControls,
+} from './PptxObjectControls.js'
+import {
+  PptxPageControls,
+  PptxThemeControls,
+  PptxHeaderFooterControls,
+  PptxReviewControls,
+} from './PptxDeckControls.js'
+import { PptxPresentation } from './PptxPresentation.js'
+import { PptxHistory } from '../pptx-history.js'
+import { PptxClarificationControls } from './PptxClarificationControls.js'
+import {
+  PptxEquationControls,
+  PptxDiagramControls,
+  PptxWordArtControls,
+  PptxFieldControls,
+} from './PptxInsertControls.js'
+import type { PptxClarification } from '@mimir/shared'
+import './pptx-tools.css'
 import './compact-toolbar.css'
 import '../shell/shell.css'
 import './editors.css'
@@ -137,135 +149,6 @@ const THUMBNAIL_WIDTH_PX = 136
 const TABLE_GRID_SIZE = 6
 const tableCellLabel = (row: number, column: number) => `插入 ${row} 行 ${column} 列表格`
 const PICTURE_OPACITIES = [100, 75, 50, 25] as const
-
-/** Keep all unaffected table paragraphs and runs when changing one cell paragraph. */
-function TableCellControls({
-  table,
-  target,
-  apply,
-}: {
-  table: TableElement
-  target: { slide: number; el: string }
-  apply: (op: Record<string, unknown>) => Promise<boolean>
-}) {
-  const [row, setRow] = useState('0')
-  const [col, setCol] = useState('0')
-  const [paragraphIndex, setParagraphIndex] = useState('0')
-  const [draft, setDraft] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
-  const draftRevision = useRef(0)
-  const rowIndex = Math.min(Number(row), table.rows.length - 1)
-  const colIndex = Math.min(Number(col), (table.rows[rowIndex]?.length ?? 1) - 1)
-  const cell = table.rows[rowIndex]?.[colIndex]
-  const paragraphs = cell?.text?.paragraphs ?? []
-  const selectedIndex = Math.min(Number(paragraphIndex), Math.max(0, paragraphs.length - 1))
-  const currentText = paragraphs[selectedIndex]?.runs.map((run) => run.text).join('') ?? ''
-  const nextText = draft ?? currentText
-  const unavailable = cell?.merged ? '合并区域的占位格不能直接编辑，请选择左上角单元格' : undefined
-
-  const submit = async () => {
-    if (!cell || unavailable || busy || nextText === currentText) return
-    const edited: EditParagraph[] = paragraphs.length
-      ? paragraphs.map((paragraph, index) => {
-          const runs: EditRun[] = paragraph.runs.map((run, runIndex) => ({
-            text: run.text,
-            srcRun: runIndex,
-          }))
-          if (index !== selectedIndex) return { runs, srcPara: index }
-          const narrowed = editParagraphRuns(
-            runs.map((run) => run.text),
-            nextText,
-          )
-          return {
-            runs: narrowed
-              ? narrowed.texts.map((text, runIndex) => ({ text, srcRun: runIndex }))
-              : [{ text: nextText }],
-            srcPara: index,
-          }
-        })
-      : [{ runs: [{ text: nextText }] }]
-    const submittedRevision = draftRevision.current
-    setBusy(true)
-    try {
-      const applied = await apply({
-        op: 'setTableCell',
-        target,
-        row: rowIndex,
-        col: colIndex,
-        paragraphs: edited,
-      })
-      if (applied && draftRevision.current === submittedRevision) setDraft(null)
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  return (
-    <ToolbarMenuFields label="表格单元格">
-      <ToolbarSelect
-        label="行"
-        value={String(rowIndex)}
-        options={table.rows.map((_, index) => ({
-          value: String(index),
-          label: `第 ${index + 1} 行`,
-        }))}
-        onChange={(value) => {
-          draftRevision.current += 1
-          setRow(value)
-          setCol('0')
-          setParagraphIndex('0')
-          setDraft(null)
-        }}
-      />
-      <ToolbarSelect
-        label="列"
-        value={String(colIndex)}
-        options={(table.rows[rowIndex] ?? []).map((_, index) => ({
-          value: String(index),
-          label: `第 ${index + 1} 列`,
-        }))}
-        onChange={(value) => {
-          draftRevision.current += 1
-          setCol(value)
-          setParagraphIndex('0')
-          setDraft(null)
-        }}
-      />
-      {paragraphs.length > 1 && (
-        <ToolbarSelect
-          label="段落"
-          value={String(selectedIndex)}
-          options={paragraphs.map((_, index) => ({
-            value: String(index),
-            label: `第 ${index + 1} 段`,
-          }))}
-          onChange={(value) => {
-            draftRevision.current += 1
-            setParagraphIndex(value)
-            setDraft(null)
-          }}
-        />
-      )}
-      <ToolbarTextArea
-        label="单元格文字"
-        value={nextText}
-        rows={2}
-        onChange={(value) => {
-          draftRevision.current += 1
-          setDraft(value)
-        }}
-      />
-      <ToolbarButton
-        label="应用单元格文字"
-        disabled={Boolean(unavailable) || busy || nextText === currentText}
-        disabledReason={unavailable ?? (busy ? '正在修改表格' : '文字没有变化')}
-        onClick={() => void submit()}
-      >
-        应用
-      </ToolbarButton>
-    </ToolbarMenuFields>
-  )
-}
 
 type ManualChartKind = 'bar' | 'line' | 'pie'
 const MANUAL_CHART_KINDS: readonly ToolbarSelectOption<ManualChartKind>[] = [
@@ -414,9 +297,10 @@ function ChartInsertControls({
 }
 
 function PptxThumbnail({ deck, index }: { deck: PptxRenderable; index: number }) {
+  const svgIdPrefix = useId()
   const rendered = useMemo(
-    () => renderSlide(deck, index, { fitWidthPx: THUMBNAIL_WIDTH_PX }),
-    [deck, index],
+    () => renderSlide(deck, index, { fitWidthPx: THUMBNAIL_WIDTH_PX, svgIdPrefix }),
+    [deck, index, svgIdPrefix],
   )
   return rendered ? <span dangerouslySetInnerHTML={{ __html: rendered.svg }} /> : null
 }
@@ -530,16 +414,6 @@ interface PptxMatch {
 }
 
 /* ── 纯函数：文本与匹配 ─────────────────────────────────────────── */
-
-/**
- * 软换行哨兵：解析把 `<a:br/>` 变成一条 `text === '\n'` 的 run（`parse.ts`）。
- *
- * 它**必须原样回传**：`patchTextElementXml` 按「位置对齐」判断能不能走外科式
- * 补丁，哨兵被改掉就退化成整段重建。
- */
-function isSoftBreak(run: TextRun): boolean {
-  return run.text === '\n' && run.field === undefined
-}
 
 /** 一段的纯文本。查找与「当前值」都按它算 */
 function paragraphText(paragraph: Paragraph): string {
@@ -816,10 +690,12 @@ export function PptxEditor({
   onAgentHandleChange,
   hostApply,
   hostPicture,
+  hostAsset,
   flush = false,
 }: EditorProps & {
   onAgentHandleChange?: (handle: PptxAgentHandle | null) => void
   hostApply?: PptxHostApply
+  hostAsset?: PptxHostAsset
   hostPicture?: (request: {
     documentId: string
     bytes: Uint8Array
@@ -830,17 +706,171 @@ export function PptxEditor({
     elementId?: string
   }) => Promise<{ bytes: Uint8Array; version: number }>
 }) {
+  const svgIdPrefix = useId()
   const source = useSource(io, documentId)
   const parsed = useParsed(source.bytes, openPptxForEdit)
   const session = parsed.value
+  const history = useMemo(() => (session ? new PptxHistory(session) : null), [session])
   const [active, setActive] = useState(0)
-  /** 选中的元素 id（选中后才能改它的文字与格式） */
-  const [selected, setSelected] = useState<string | null>(null)
+  const [viewSettings, setViewSettings] = useState(defaultPptxView)
+  const [workspaceView, setWorkspaceView] = useState<{
+    documentId: string
+    mode: PptxWorkspaceMode
+  } | null>(null)
+  const workspaceMode = workspaceView?.documentId === documentId ? workspaceView.mode : 'normal'
+  const [formatBrush, setFormatBrush] = useState<PptxBrush | null>(null)
+  const [brushContinuous, setBrushContinuous] = useState(false)
+  const brushApplyRef = useRef<(id: string) => void>(() => {})
+  /** Native identity survives host reparsing, which allocates new runtime element IDs. */
+  const [selectedTarget, setSelectedTarget] = useState<{
+    source: Uint8Array
+    documentId: string
+    slidePath: string
+    elementRef: string
+  } | null>(null)
+  const [textRange, setTextRange] = useState<{
+    targetKey: string
+    version: number
+    selection: PptxTextSelection | null
+    pendingFormat?: RunFormat
+  } | null>(null)
+  const [playbackSection, setPlaybackSection] = useState<{
+    documentId: string
+    value: 'effects' | 'timeline' | 'transition' | 'notes'
+  } | null>(null)
+  const [animationPreview, setAnimationPreview] = useState<{
+    documentId: string
+    path: string
+    version: number
+    selected: string | null
+    request: PptxAnimationPreviewRequest
+  } | null>(null)
+  const [shapeInsert, setShapeInsert] = useState<{
+    documentId: string
+    path: string
+    version: number
+    kind: PptxManualShape['kind']
+  } | null>(null)
   /** 有改动还没保存（保存后清掉） */
   const [dirty, setDirty] = useState(false)
   const [pageError, setPageError] = useState<string | null>(null)
+  const [pageStatus, setPageStatus] = useState<string | null>(null)
+  useEffect(() => {
+    if (!formatBrush) return
+    const cancel = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setFormatBrush(null)
+        setPageStatus('已退出格式刷')
+      }
+    }
+    window.addEventListener('keydown', cancel)
+    return () => window.removeEventListener('keydown', cancel)
+  }, [formatBrush])
   const [manualUndoRound, setManualUndoRound] = useState<string | null>(null)
   const [pictureBusy, setPictureBusy] = useState(false)
+  const [manualBusy, setManualBusy] = useState(false)
+  const [inkBusy, setInkBusy] = useState(false)
+  const [shapeBusy, setShapeBusy] = useState(false)
+  const ink = usePptxInkSettings()
+  const manualPending = useRef(false)
+  const editingBusy = manualBusy || pictureBusy || source.saving || inkBusy || shapeBusy
+  const withManualWrite = async <T,>(
+    work: () => Promise<T>,
+    pendingStatus = '正在应用修改…',
+  ): Promise<T | undefined> => {
+    if (manualPending.current || pictureBusy || source.saving) {
+      setPageError('正在处理文档，请稍后重试')
+      return undefined
+    }
+    // Lock synchronously, before React paints disabled controls or host work awaits.
+    manualPending.current = true
+    setManualBusy(true)
+    setPageError(null)
+    const previousStatus = pageStatus
+    setPageStatus(pendingStatus)
+    try {
+      return await work()
+    } finally {
+      manualPending.current = false
+      setManualBusy(false)
+      setPageStatus((current) => (current === pendingStatus ? previousStatus : current))
+    }
+  }
+  const assetAbort = useRef<AbortController | null>(null)
+  useEffect(() => {
+    if (!session || !documentId) return
+    return () => {
+      assetAbort.current?.abort()
+    }
+  }, [session, documentId])
+  const [inspector, setInspector] = useState<string | null>(null)
+  const [clarification, setClarification] = useState<{
+    input: PptxClarification
+    finish: (value: unknown) => void
+  } | null>(null)
+  const cancelClarification = useRef<(() => void) | null>(null)
+  const inspectorRef = useRef<HTMLElement>(null)
+  const presentationTriggerRef = useRef<HTMLButtonElement>(null)
+  const presenterTriggerRef = useRef<HTMLButtonElement>(null)
+  const inspectorTriggers = useRef(new Map<string, { focus: () => void }>())
+  const inspectorSections = useRef(new Map<string, string>())
+  useEffect(() => {
+    if (inspector) inspectorRef.current?.focus()
+  }, [inspector])
+  const closeInspector = () => {
+    assetAbort.current?.abort()
+    if (inspector === '演示需求') cancelClarification.current?.()
+    setInspector(null)
+    if (inspector) {
+      inspectorTriggers.current.get(inspector)?.focus()
+      const focused = document.activeElement
+      if (focused === document.body || inspectorRef.current?.contains(focused)) {
+        // A collapsed group's inner opener is unmounted when its menu closes.
+        const section = inspectorSections.current.get(inspector)
+        const group = Array.from(
+          inspectorRef.current
+            ?.closest('.mimir-editor')
+            ?.querySelectorAll<HTMLElement>('[data-section-key]') ?? [],
+        ).find((element) => element.dataset.sectionKey === section)
+        group?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus()
+        if (
+          document.activeElement === document.body ||
+          inspectorRef.current?.contains(document.activeElement)
+        )
+          inspectorRef.current
+            ?.closest('.mimir-editor')
+            ?.querySelector<HTMLButtonElement>(
+              '.mimir-compact-toolbar__tabs [aria-selected="true"]',
+            )
+            ?.focus()
+      }
+    }
+  }
+  const [presentation, setPresentation] = useState<
+    | (PptxShowRequest & {
+        documentId: string
+        mode: 'slides' | 'presenter'
+      })
+    | null
+  >(null)
+  const [rehearsal, setRehearsal] = useState<{
+    documentId: string
+    result: PptxRehearsalResult
+  } | null>(null)
+  const presentationReturnRef = useRef<HTMLButtonElement | null>(null)
+  const fromStartTriggerRef = useRef<HTMLButtonElement | null>(null)
+  const presenterStartTriggerRef = useRef<HTMLButtonElement | null>(null)
+  const startPresentation = (request: PptxShowRequest, trigger?: HTMLButtonElement | null) => {
+    presentationReturnRef.current =
+      trigger ??
+      (document.activeElement instanceof HTMLButtonElement &&
+      inspectorRef.current?.contains(document.activeElement)
+        ? document.activeElement
+        : request.presenter
+          ? presenterTriggerRef.current
+          : presentationTriggerRef.current)
+    setPresentation({ ...request, documentId, mode: request.presenter ? 'presenter' : 'slides' })
+  }
   const agentHandleRef = useRef<PptxAgentHandle | null>(null)
   /** 画布容器：SVG 里注入 `data-element-id` 后用它做事件代理与描边 */
   const canvasRef = useRef<HTMLDivElement>(null)
@@ -871,28 +901,58 @@ export function PptxEditor({
    * 所以换文件时它自然作废。没改过时直接用 `session.view()`（同一个对象，
    * 不会让下游重算）。
    */
-  const [edited, setEdited] = useState<{ source: Uint8Array; view: PptxRenderable } | null>(null)
-  const view = edited?.source === source.bytes ? edited.view : (session?.view() ?? null)
+  const [edited, setEdited] = useState<{
+    source: Uint8Array
+    view: PptxRenderable
+    version: number
+  } | null>(null)
+  const initialView = useMemo(
+    () => (session ? { view: session.view(), version: session.version() } : null),
+    [session],
+  )
+  // A host reparse mutates the session before its accepted onChange publishes it.
+  // Keep control identities on the published revision during that interval.
+  const published = edited?.source === source.bytes ? edited : initialView
+  const view = published?.view ?? null
+  const viewVersion = published?.version ?? 0
 
-  /**
-   * 段落输入框的稳定 key。
-   *
-   * **不用下标**（React 规则禁止，而且段落增删后会复用错位的输入框状态），
-   * **也不用内容**（每敲一个字 key 就变 → React 卸载重建 textarea → 光标跳走）。
-   * 所以给每段造一个**在编辑期间稳定**的 id：选中元素时按当时的段数生成。
-   */
-  const [paragraphKeys, setParagraphKeys] = useState<string[]>([])
-
-  /** 当前页的可编辑元素 */
-  const editable = useMemo(() => {
-    const slide = view?.slides()[active]
-    return slide ? editableElements(slide) : []
-  }, [view, active])
+  const selectedSlide = view?.slides()[active]
+  const selectedObject =
+    selectedTarget?.source === source.bytes &&
+    selectedTarget?.documentId === documentId &&
+    selectedTarget?.slidePath === selectedSlide?.path
+      ? (selectedSlide?.elements.find((element) =>
+          matchesElementRef(element, selectedTarget.elementRef),
+        ) ?? null)
+      : null
+  const selected = selectedObject?.id ?? null
+  // A first native write may add a creationId. Keep the original cNvPr alias
+  // for this selection; matchesElementRef continues to resolve it afterwards.
+  const selectedElementRef = selectedObject
+    ? (selectedTarget?.elementRef ?? elementDurableId(selectedObject) ?? selectedObject.id)
+    : null
+  const setSelected = useCallback(
+    (id: string | null) => {
+      const slide = session?.slides()[active]
+      const element = id ? slide?.elements.find((item) => item.id === id) : null
+      setSelectedTarget(
+        element && slide && source.bytes
+          ? {
+              source: source.bytes,
+              documentId,
+              slidePath: slide.path,
+              elementRef: elementDurableId(element) ?? element.id,
+            }
+          : null,
+      )
+    },
+    [session, active, source.bytes, documentId],
+  )
 
   const rendered = useMemo<RenderedSlide | null>(() => {
     if (!view) return null
-    return renderSlide(view, active, { fitWidthPx: FIT_WIDTH_PX })
-  }, [view, active])
+    return renderSlide(view, active, { fitWidthPx: FIT_WIDTH_PX, svgIdPrefix })
+  }, [view, active, svgIdPrefix])
 
   const slideCount = view?.slides().length ?? 0
   const thumbnailPages = useMemo(
@@ -910,27 +970,63 @@ export function PptxEditor({
    * 注册的 effect 只依赖真正是输入的东西。ref 的更新 effect 声明在渲染
    * **之前**——顺序反了 React Compiler 会判违规。
    */
+  const selectedDurableRef = useRef<string | null>(null)
+  useEffect(() => {
+    selectedDurableRef.current = selectedElementRef
+  }, [selectedElementRef])
   const afterEdit = () => {
     if (session === null || source.bytes === null) return
-    setEdited({ source: source.bytes, view: session.view() })
+    history?.record()
+    setEdited({ source: source.bytes, view: session.view(), version: session.version() })
     const changed = session.hasChanges()
     if (changed !== dirty) {
       setDirty(changed)
       onDirtyChange?.(changed)
     }
     findEvents.notify()
+    const activeSlide = session.slides()[active]
     if (
-      selected &&
-      !session.slides()[active]?.elements.some((element) => element.id === selected)
-    ) {
-      setSelected(null)
-      setParagraphKeys([])
-    }
+      selectedTarget &&
+      !activeSlide?.elements.some((element) =>
+        matchesElementRef(element, selectedTarget.elementRef),
+      )
+    )
+      setSelectedTarget(null)
   }
   const afterEditRef = useRef(afterEdit)
   useEffect(() => {
     afterEditRef.current = afterEdit
   })
+
+  useEffect(() => {
+    const keydown = (event: KeyboardEvent) => {
+      const target = event.target
+      const root = canvasRef.current?.closest('.mimir-editor')
+      if (
+        !session ||
+        !(target instanceof Node) ||
+        !root?.contains(target) ||
+        !(event.ctrlKey || event.metaKey) ||
+        event.altKey ||
+        editingBusy ||
+        (target instanceof Element &&
+          target.closest('input,textarea,[contenteditable="true"],[role="combobox"]'))
+      )
+        return
+      const key = event.key.toLowerCase(),
+        undo = key === 'z' && !event.shiftKey,
+        redo = key === 'y' || (key === 'z' && event.shiftKey)
+      if (!undo && !redo) return
+      const changed = undo ? history?.undo() : history?.redo()
+      if (!changed) return
+      event.preventDefault()
+      setActive((current) => Math.min(current, session.slides().length - 1))
+      setManualUndoRound(null)
+      afterEditRef.current()
+    }
+    window.addEventListener('keydown', keydown)
+    return () => window.removeEventListener('keydown', keydown)
+  }, [history, session, editingBusy])
 
   const agentSelectionRef = useRef({ slideIndex: active, elementId: selected })
   const onAgentHandleChangeRef = useRef(onAgentHandleChange)
@@ -953,6 +1049,29 @@ export function PptxEditor({
             return hostApplyRef.current(request)
           }
         : undefined,
+      (input, signal) =>
+        new Promise((resolve, reject) => {
+          cancelClarification.current?.()
+          const focused =
+            document.activeElement instanceof HTMLElement ? document.activeElement : null
+          let finished = false
+          const finish = (value?: unknown) => {
+            if (finished) return
+            finished = true
+            signal.removeEventListener('abort', onAbort)
+            cancelClarification.current = null
+            setClarification(null)
+            setInspector((current) => (current === '演示需求' ? null : current))
+            focused?.focus()
+            if (value === undefined) reject(new Error('演示需求选择已取消'))
+            else resolve({ answers: value })
+          }
+          const onAbort = () => finish()
+          signal.addEventListener('abort', onAbort, { once: true })
+          cancelClarification.current = onAbort
+          setClarification({ input, finish })
+          setInspector('演示需求')
+        }),
     )
     agentHandleRef.current = handle
     onAgentHandleChangeRef.current?.(handle)
@@ -961,7 +1080,7 @@ export function PptxEditor({
       if (agentHandleRef.current === handle) agentHandleRef.current = null
       onAgentHandleChangeRef.current?.(null)
     }
-  }, [session, documentId])
+  }, [session, documentId, agentSelectionRef, hostApplyRef, onAgentHandleChangeRef])
 
   /**
    * 当前页的**最新值**，给查找适配器的 `activate` 用。
@@ -988,8 +1107,7 @@ export function PptxEditor({
   const goTo = useCallback((index: number) => {
     setActive(index)
     // 换页要清掉选中：那个元素不在这一页了
-    setSelected(null)
-    setParagraphKeys([])
+    setSelectedTarget(null)
   }, [])
 
   const editPage = (operation: () => number) => {
@@ -1025,100 +1143,60 @@ export function PptxEditor({
    * 缓存就会踩「对象没变、里面的东西变了」——那类缓存失效是静默的。这里每次
    * 渲染重新读一遍，代价是几十次属性访问。
    */
-  const selectedElement =
-    selected === null ? null : (editable.find((element) => element.id === selected) ?? null)
-  const selectedObject =
-    selected === null
-      ? null
-      : (view?.slides()[active]?.elements.find((element) => element.id === selected) ?? null)
   /**
    * 选中元素的文字。`null` 与 `undefined` 都收成 `null`：`TextElement['text']` 是
    * 可选的，而这个组件对「没有文字」只有一种处理——按钮禁用 + 一句原因。
    */
-  const selectedText = (selectedElement === null ? null : textOfElement(selectedElement)) ?? null
+  const selectedText = (selectedObject === null ? null : textOfElement(selectedObject)) ?? null
 
-  /** 选中的元素现在有哪些段落（每段把它的 run 拼起来——界面按段落编辑） */
-  const paragraphs = selectedText?.paragraphs.map((paragraph) => paragraphText(paragraph)) ?? null
-
-  /**
-   * 格式工具条要看的那些 run。
-   *
-   * **排除软换行哨兵**：它是排版用的记号，不是可见文字——把它算进「当前值」
-   * 会让一个正常的文本框因为换行处的取值不同而显示「多档」。
-   */
-  const formatRuns =
-    selectedText?.paragraphs.flatMap((paragraph) =>
-      paragraph.runs.filter((run) => !isSoftBreak(run)),
-    ) ?? []
-
-  /**
-   * 改一段文字。
-   *
-   * 两条都要做对：
-   *
-   *  1. **没被改的那些段落原样回传**（每条 run 带自己的 `srcRun`）。原先的写法
-   *     是「所有段落都压成一条 run」——于是改第 1 段会顺手把第 2 段的 run 结构
-   *     也压平，同段其它 run 的格式被静默顶掉（理由见 `editParagraphRuns`）
-   *  2. 被改的那一段**优先只改真正变动的那条 run**（`editParagraphRuns`），
-   *     跨多条时才整段重写
-   *
-   * `srcPara` 把这段指回**原始段落**——`applyEditParagraphs` 靠它继承那一段
-   * 未被编辑的属性（项目符号、行距、run 的字号与字体）。不给的话按位置匹配，
-   * 段落增删时就会串味。
-   */
-  const setParagraph = (index: number, value: string) => {
-    if (!session || !selected || !paragraphs || selectedText === null) return
-    const next: EditParagraph[] = selectedText.paragraphs.map((paragraph, paraIndex) => {
-      const runs: EditRun[] = paragraph.runs.map((run, runIndex) => ({
-        text: run.text,
-        srcRun: runIndex,
-      }))
-      if (paraIndex !== index) return { runs, srcPara: paraIndex }
-      const narrowed = editParagraphRuns(
-        runs.map((run) => run.text),
-        value,
+  const textTargetKey = `${documentId}:${view?.slides()[active]?.path ?? active}:${selectedElementRef ?? ''}`
+  const currentRange =
+    textRange?.targetKey === textTargetKey && textRange.version === viewVersion ? textRange : null
+  const textSelection = currentRange?.selection ?? null
+  const pendingFormat = currentRange?.pendingFormat
+  const formatRuns = selectedText
+    ? pptxSelectionRuns(selectedText.paragraphs, textSelection).map((run) =>
+        textSelection?.start === textSelection?.end && textSelection !== null
+          ? Object.assign({}, run, pendingFormat)
+          : run,
       )
-      /*
-       * 只改动了一条 run（含纯插入）→ 那条换新文本、其余原样（格式都保住）；
-       * 跨了多条 → 回传整段一条 run。**不带 srcRun**：`applyEditParagraphs` 对
-       * 「未带 srcRun 的单 run 替换多 run 段落」取 `dominantRun`（正文那条）的
-       * 格式，重写的新文字跟着正文走——这是上游写明的语义（「a rewrite of the
-       * whole paragraph is not a rewrite of its label」）。带 srcRun 会绕开它、
-       * 钉死在第一条上，还会把域 run 的身份（幻灯片编号那种）摊到新文字上。
-       */
-      if (narrowed === null) return { runs: [{ text: value }], srcPara: paraIndex }
-      return {
-        runs: narrowed.texts.map((text, runIndex) => ({ text, srcRun: runIndex })),
-        srcPara: paraIndex,
-      }
-    })
-    if (!session.setText(active, selected, next)) return
-    afterEditRef.current()
+    : []
+  const acceptTextEvent = (event: PptxTextSelectionEvent) =>
+    !!session &&
+    !editingBusy &&
+    !manualPending.current &&
+    event.targetKey === textTargetKey &&
+    event.version === session.version() &&
+    activeRef.current === active
+  const selectTextRange = (event: PptxTextSelectionEvent) => {
+    if (!acceptTextEvent(event)) return
+    const sameCaret =
+      currentRange?.selection?.start === event.selection?.start &&
+      currentRange?.selection?.end === event.selection?.end &&
+      event.selection !== null
+    setTextRange({ ...event, pendingFormat: sameCaret ? pendingFormat : undefined })
   }
-
-  /**
-   * 把一份格式写到**选中元素的每一条 run**上。
-   *
-   * 逐 run 回传（每条带自己的 `srcRun` 与原文）——理由见文件头：压成「每段一条
-   * run」会把同段其它 run 的字号/颜色静默丢掉。格式项是**追加**上去的，而
-   * `applyEditParagraphs` 里写着「传与当前相同的值什么都不写」，所以点一个已经
-   * 生效的按钮不会改字节。
-   *
-   * `format` 给函数时按 run 现算（增大/减小字号要读每条 run 自己的值）。
-   */
+  const editTextRange = (next: EditParagraph[], event: PptxTextSelectionEvent) => {
+    if (!session || !selected || !acceptTextEvent(event)) return
+    if (session.setText(active, selected, next)) afterEditRef.current()
+    setTextRange({ ...event, version: session.version(), pendingFormat })
+  }
   const applyFormat = (format: RunFormat | ((run: TextRun) => RunFormat)) => {
-    if (!session || !selected || selectedText === null) return
-    const resolve = typeof format === 'function' ? format : () => format
-    const next: EditParagraph[] = selectedText.paragraphs.map((paragraph, paraIndex) => ({
-      runs: paragraph.runs.map((run, runIndex) => ({
-        text: run.text,
-        srcRun: runIndex,
-        ...resolve(run),
-      })),
-      srcPara: paraIndex,
-    }))
+    if (!session || !selected || !selectedText || editingBusy || manualPending.current) return
+    if (textSelection && textSelection.start === textSelection.end) {
+      const marks = typeof format === 'function' ? format(formatRuns[0] ?? { text: '' }) : format
+      setTextRange({
+        targetKey: textTargetKey,
+        version: session.version(),
+        selection: textSelection,
+        pendingFormat: { ...pendingFormat, ...marks },
+      })
+      return
+    }
+    const next = formatPptxTextRange(selectedText.paragraphs, textSelection, format)
     if (!session.setText(active, selected, next)) return
     afterEditRef.current()
+    setTextRange({ targetKey: textTargetKey, version: session.version(), selection: textSelection })
   }
 
   /**
@@ -1252,23 +1330,48 @@ export function PptxEditor({
    * 字符串，每次编辑后整体换掉，逐个绑会全部失效。代理挂在容器上，由
    * `closest('[data-element-id]')` 找最近的元素——渲染器给每个节点写了这个属性。
    */
+  useEffect(() => {
+    brushApplyRef.current = (id: string) => {
+      const handle = agentHandleRef.current
+      const element = session?.slides()[active]?.elements.find((item) => item.id === id)
+      if (!handle || !session || !element || !formatBrush) return
+      try {
+        void handle
+          .execute(
+            'apply_ops',
+            { ops: pptxBrushOps(formatBrush, element, active) },
+            { expectedVersion: session.version(), roundId: crypto.randomUUID() },
+          )
+          .then((raw) => {
+            const result = raw as { ok: boolean; error?: string }
+            if (!result.ok) {
+              setPageError(result.error ?? '格式刷失败')
+              return
+            }
+            setPageError(null)
+            setPageStatus('已应用对象格式')
+            if (!brushContinuous) setFormatBrush(null)
+          })
+      } catch (cause) {
+        setPageError(cause instanceof Error ? cause.message : '格式刷失败')
+      }
+    }
+  }, [session, active, formatBrush, brushContinuous])
+
   const onClickCanvas = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
+      event.preventDefault()
       const target = event.target as Element | null
       const hit = target?.closest('[data-element-id]')
       const id = hit?.getAttribute('data-element-id') ?? null
+      if (id && formatBrush) {
+        brushApplyRef.current(id)
+        return
+      }
       setSelected(id)
-      /**
-       * 段落的稳定 key 在这里生成（而不是在 effect 里跟着段落数变）：点选是
-       * 一个**动作**，动作里改 state 是正常的数据流；用 effect 同步派生 state
-       * 反而会多一次渲染，并且要处理「该不该重置」的边界。
-       */
-      const slide = view?.slides()[active]
-      const el = slide ? editableElements(slide).find((e) => e.id === id) : undefined
-      const count = el ? (textOfElement(el)?.paragraphs.length ?? 0) : 0
-      setParagraphKeys(Array.from({ length: count }, () => crypto.randomUUID()))
+      setTextRange(null)
     },
-    [view, active],
+    [formatBrush, setSelected],
   )
 
   /** 当前 SVG（空串 = 还没渲染出来）。用它当 effect 的依赖，见下面的描边 */
@@ -1330,18 +1433,26 @@ export function PptxEditor({
 
   const save = async () => {
     if (!session) return
-    const bytes = await session.save()
-    const ok = await source.save(bytes, { name: 'slides.pptx', mime: OFFICE_MIME.pptx })
-    if (!ok) return
-    /**
-     * **保存成功后必须 commit**：把新 XML 烧回元素锚点。不做的话第二次编辑
-     * 会拿旧锚点拼字节，第一次的改动被静默回滚（保存本身还是成功）。
-     */
-    session.commit()
-    // commit 之后模型与刚写出的字节对齐了，取一份新快照（同时丢掉 edited）
-    setEdited({ source: source.bytes!, view: session.view() })
-    setDirty(false)
-    onDirtyChange?.(false)
+    await withManualWrite(async () => {
+      const savedVersion = session.version()
+      const bytes = await session.save()
+      const ok = await source.save(bytes, { name: 'slides.pptx', mime: OFFICE_MIME.pptx })
+      if (!ok) return
+      if (session.version() !== savedVersion) {
+        setPageStatus('已保存操作开始时的版本')
+        return
+      }
+      /**
+       * **保存成功后必须 commit**：把新 XML 烧回元素锚点。不做的话第二次编辑
+       * 会拿旧锚点拼字节，第一次的改动被静默回滚（保存本身还是成功）。
+       */
+      session.commit()
+      history?.synchronize()
+      // commit 之后模型与刚写出的字节对齐了，取一份新快照（同时丢掉 edited）
+      setEdited({ source: source.bytes!, view: session.view(), version: session.version() })
+      setDirty(false)
+      onDirtyChange?.(false)
+    }, '正在保存…')
   }
 
   if (source.loadError !== null) {
@@ -1434,6 +1545,11 @@ export function PptxEditor({
     selected === null ? '先在画布上点一个文字框或形状' : hasRuns ? undefined : '这个元素里没有文字'
 
   /** 增大/减小字号要**每条 run** 都读得到具体值（继承来的也算解析得出；读不到就禁用） */
+  const formatScope = textSelection
+    ? textSelection.start === textSelection.end
+      ? '插入点'
+      : '选中文字'
+    : '整框'
   const canStepSize = hasRuns && formatRuns.every((run) => Number.isFinite(run.fontSize))
   const sizeStepReason =
     formatReason ?? (canStepSize ? undefined : '有文字的字号取不到具体值，只能先用字号框设一个')
@@ -1444,25 +1560,108 @@ export function PptxEditor({
     }))
   }
 
-  const runManualOp = async (op: Record<string, unknown>) => {
+  const runManualTool = async (
+    tool:
+      | 'apply_ops'
+      | 'edit_chart'
+      | 'edit_animation'
+      | 'manual_ink'
+      | 'manual_fill'
+      | 'manual_zoom'
+      | 'manual_animation'
+      | 'manual_shape'
+      | 'manual_paragraph',
+    args: Record<string, unknown>,
+    options?: { expectedVersion: number; signal: AbortSignal },
+  ) => {
     const handle = agentHandleRef.current
-    if (!handle || !session) return false
+    if (!handle || !session || handle.documentId !== documentId) return false
     const roundId = crypto.randomUUID()
-    const response = (await handle.execute(
-      'apply_ops',
-      { ops: [op] },
-      {
-        expectedVersion: session.version(),
+    const response = (await withManualWrite(() =>
+      handle.execute(tool, args, {
+        expectedVersion: options?.expectedVersion ?? session.version(),
         roundId,
-      },
-    )) as { ok: boolean; error?: string }
+        signal: options?.signal,
+      }),
+    )) as { ok: boolean; changed?: boolean; error?: string } | undefined
+    if (!response) return false
+    // The handle checks cancellation before committing. A version-driven panel
+    // unmount may abort its signal after that commit; retain the successful fact.
+    if (options?.signal.aborted) return response.ok
     if (!response.ok) {
       setPageError(response.error ?? '幻灯片操作失败')
       return false
     }
     setPageError(null)
-    setManualUndoRound(roundId)
+    setPageStatus('已应用幻灯片修改')
+    if (response.changed) setManualUndoRound(roundId)
     return true
+  }
+  const runManualOp = (op: Record<string, unknown>) => runManualTool('apply_ops', { ops: [op] })
+  const runInk = (input: PptxManualInk, expectedVersion: number, signal: AbortSignal) => {
+    if (signal.aborted || input.slide !== activeRef.current) return Promise.resolve(false)
+    return runManualTool('manual_ink', input, { expectedVersion, signal })
+  }
+  const changeWorkspaceMode = (mode: PptxWorkspaceMode) => {
+    ink.setTool('select')
+    setShapeInsert(null)
+    setWorkspaceView({ documentId, mode })
+    setSelected(null)
+
+    setInspector(null)
+    if (mode === 'normal')
+      requestAnimationFrame(() => {
+        const editor = canvasRef.current?.closest('.mimir-editor')
+        const trigger =
+          editor?.querySelector<HTMLButtonElement>('[aria-label="普通视图"]') ??
+          editor?.querySelector<HTMLButtonElement>(
+            '[data-section-key="workspace-view"] button:not(:disabled)',
+          ) ??
+          editor?.querySelector<HTMLButtonElement>(
+            '.mimir-compact-toolbar__tabs [aria-selected="true"]',
+          )
+        if (document.activeElement === document.body || editor?.contains(document.activeElement))
+          trigger?.focus()
+      })
+  }
+  const reorderWorkspaceSlides = async (paths: string[], boundary: number) => {
+    const before = session.slides().map((slide) => slide.path)
+    const activePath = before[active]
+    const ops = pptxSlideMoveOps(before, paths, boundary)
+    if (!ops.length) return false
+    const handle = agentHandleRef.current
+    const applied = await runManualTool('apply_ops', { ops })
+    if (applied && agentHandleRef.current === handle && activeRef.current === active) {
+      const index = session.slides().findIndex((slide) => slide.path === activePath)
+      if (index >= 0) goTo(index)
+    }
+    return applied
+  }
+
+  const runClipboard = async (input: PptxManualAsset) => {
+    const handle = agentHandleRef.current
+    if (!handle || !session) return null
+    const roundId = crypto.randomUUID()
+    const response = (await withManualWrite(() =>
+      handle.execute('manual_asset', input, {
+        expectedVersion: session.version(),
+        roundId,
+      }),
+    )) as
+      | { ok: boolean; changed?: boolean; data?: Record<string, unknown>; error?: string }
+      | undefined
+    if (!response) return null
+    if (!response.ok) {
+      setPageError(response.error ?? '复制粘贴失败，请重新复制')
+      return null
+    }
+    setPageError(null)
+    if (response.changed) {
+      setManualUndoRound(roundId)
+      if (typeof response.data?.slideIndex === 'number') goTo(response.data.slideIndex)
+      else setActive((current) => Math.min(current, session.slides().length - 1))
+    }
+    return response.data ?? {}
   }
   const insertTable = (rows: number, cols: number) =>
     runManualOp({
@@ -1507,7 +1706,7 @@ export function PptxEditor({
       if (session.version() !== expectedVersion)
         throw new Error('图片处理期间画布已变化，请重新操作')
       if (response.version !== expectedVersion + 1) throw new Error('图片宿主返回的画布版本无效')
-      await session.replaceFromHost(response.bytes)
+      await session.replaceFromHost(response.bytes, expectedVersion)
       setManualUndoRound(null)
       afterEditRef.current()
     } catch (cause) {
@@ -1516,9 +1715,66 @@ export function PptxEditor({
       setPictureBusy(false)
     }
   }
-  const objectTarget = selectedObject
-    ? { slide: active, el: elementDurableId(selectedObject) ?? selectedObject.id }
-    : null
+  const objectTarget = selectedObject ? { slide: active, el: selectedElementRef! } : null
+  const applyLocalAsset = async (input: PptxManualUpload, assetFile: File, posterFile?: File) => {
+    if (!hostAsset || !session || assetAbort.current) return false
+    const expectedVersion = session.version()
+    const controller = new AbortController()
+    assetAbort.current = controller
+    setPictureBusy(true)
+    setPageError(null)
+    setPageStatus('正在处理素材…')
+    try {
+      const bytes = await session.save()
+      if (controller.signal.aborted || session.version() !== expectedVersion)
+        throw new Error('画布已变化或操作已取消，请重新操作')
+      const response = await hostAsset({
+        documentId,
+        bytes,
+        expectedVersion,
+        input,
+        assetFile,
+        ...(posterFile ? { posterFile } : {}),
+        signal: controller.signal,
+      })
+      if (controller.signal.aborted) throw new Error('素材操作已取消，文档未修改')
+      if (session.version() !== expectedVersion)
+        throw new Error('素材处理期间画布已变化，请重新操作')
+      if (response.version !== expectedVersion + 1) throw new Error('素材宿主返回的画布版本无效')
+      await session.replaceFromHost(response.bytes, expectedVersion, controller.signal)
+      setManualUndoRound(null)
+      afterEditRef.current()
+      const data = response.data as { slideIndex?: number; elementId?: string } | undefined
+      if (typeof data?.slideIndex === 'number') goTo(data.slideIndex)
+      if ((input.kind === 'media' || input.kind === 'model3d') && data?.elementId) {
+        const mediaSlide = session.slides()[input.slide]
+        const element = mediaSlide?.elements.find((item) =>
+          matchesElementRef(item, data.elementId!),
+        )
+        if (element) {
+          setSelected(element.id)
+          setInspector(input.kind === 'model3d' ? '3D 预览' : '媒体播放')
+        }
+      }
+      setPageStatus(
+        input.kind === 'import_slides'
+          ? '已导入幻灯片'
+          : input.kind === 'media'
+            ? input.mediaKind === 'audio'
+              ? '已插入音频'
+              : '已插入视频'
+            : '已应用素材',
+      )
+      return true
+    } catch (cause) {
+      setPageError(cause instanceof Error ? cause.message : '素材操作失败')
+      setPageStatus(null)
+      return false
+    } finally {
+      if (assetAbort.current === controller) assetAbort.current = null
+      setPictureBusy(false)
+    }
+  }
   const objectOrder = selectedObject
     ? (view?.slides()[active]?.elements.findIndex((element) => element.id === selectedObject.id) ??
       -1)
@@ -1552,9 +1808,9 @@ export function PptxEditor({
   const basicToolbar = (
     <>
       <span className="mimir-pptx-pdf-toolbar__basic">
-        <ToolbarGroup label="整段字形">
+        <ToolbarGroup label="文字格式">
           <ToolbarButton
-            label="加粗（整段）"
+            label={`加粗（${formatScope}）`}
             active={boldOn}
             disabled={formatReason !== undefined}
             disabledReason={formatReason}
@@ -1563,7 +1819,7 @@ export function PptxEditor({
             <BoldIcon />
           </ToolbarButton>
           <ToolbarButton
-            label="倾斜（整段）"
+            label={`倾斜（${formatScope}）`}
             active={italicOn}
             disabled={formatReason !== undefined}
             disabledReason={formatReason}
@@ -1572,7 +1828,7 @@ export function PptxEditor({
             <ItalicIcon />
           </ToolbarButton>
           <ToolbarButton
-            label="下划线（整段）"
+            label={`下划线（${formatScope}）`}
             active={underlineOn}
             disabled={formatReason !== undefined}
             disabledReason={formatReason}
@@ -1585,7 +1841,7 @@ export function PptxEditor({
       <span className="mimir-pptx-pdf-toolbar__size">
         {hasRuns && uniformSize !== null ? (
           <ToolbarNumberField
-            label="字号（pt，整段）"
+            label={`字号（pt，${formatScope}）`}
             value={uniformSize}
             min={MIN_FONT_SIZE_PT}
             max={MAX_FONT_SIZE_PT}
@@ -1614,7 +1870,7 @@ export function PptxEditor({
             <ToolbarMenuItemRow
               item={{
                 key: 'bold',
-                label: '加粗（整段）',
+                label: `加粗（${formatScope}）`,
                 active: boldOn,
                 disabled: formatReason !== undefined,
                 disabledReason: formatReason,
@@ -1625,7 +1881,7 @@ export function PptxEditor({
             <ToolbarMenuItemRow
               item={{
                 key: 'italic',
-                label: '倾斜（整段）',
+                label: `倾斜（${formatScope}）`,
                 active: italicOn,
                 disabled: formatReason !== undefined,
                 disabledReason: formatReason,
@@ -1636,7 +1892,7 @@ export function PptxEditor({
             <ToolbarMenuItemRow
               item={{
                 key: 'underline',
-                label: '下划线（整段）',
+                label: `下划线（${formatScope}）`,
                 active: underlineOn,
                 disabled: formatReason !== undefined,
                 disabledReason: formatReason,
@@ -1649,7 +1905,7 @@ export function PptxEditor({
           <ToolbarMenuItemRow
             item={{
               key: 'strike',
-              label: '删除线（整段）',
+              label: `删除线（${formatScope}）`,
               active: strikeOn,
               disabled: formatReason !== undefined,
               disabledReason: formatReason,
@@ -1660,7 +1916,7 @@ export function PptxEditor({
           <ToolbarMenuItemRow
             item={{
               key: 'superscript',
-              label: '上标（整段）',
+              label: `上标（${formatScope}）`,
               active: superscriptOn,
               disabled: formatReason !== undefined,
               disabledReason: formatReason,
@@ -1671,7 +1927,7 @@ export function PptxEditor({
           <ToolbarMenuItemRow
             item={{
               key: 'subscript',
-              label: '下标（整段）',
+              label: `下标（${formatScope}）`,
               active: subscriptOn,
               disabled: formatReason !== undefined,
               disabledReason: formatReason,
@@ -1700,7 +1956,7 @@ export function PptxEditor({
           <ToolbarMenuItemRow
             item={{
               key: 'size-up',
-              label: `增大字号 ${SIZE_STEP_PT}pt（整段）`,
+              label: `增大字号 ${SIZE_STEP_PT}pt（${formatScope}）`,
               disabled: !canStepSize,
               disabledReason: sizeStepReason,
               onSelect: () => stepSize(SIZE_STEP_PT),
@@ -1710,7 +1966,7 @@ export function PptxEditor({
           <ToolbarMenuItemRow
             item={{
               key: 'size-down',
-              label: `减小字号 ${SIZE_STEP_PT}pt（整段）`,
+              label: `减小字号 ${SIZE_STEP_PT}pt（${formatScope}）`,
               disabled: !canStepSize,
               disabledReason: sizeStepReason,
               onSelect: () => stepSize(-SIZE_STEP_PT),
@@ -1720,14 +1976,14 @@ export function PptxEditor({
           {hasRuns ? (
             <ToolbarMenuFields label="字体和颜色">
               <ToolbarSelect
-                label="字体（整段，中英文一起换）"
+                label={`字体（${formatScope}，中英文一起换）`}
                 value={uniformFont}
                 options={fontOptions}
                 fallbackLabel="多档字体"
                 onChange={(family) => applyFormat({ fontFamily: family })}
               />
               <ToolbarColorPicker
-                label="字体颜色（整段）"
+                label={`字体颜色（${formatScope}）`}
                 value={uniformColor}
                 options={colorOptions}
                 onPick={(color) => applyFormat({ color })}
@@ -1806,17 +2062,54 @@ export function PptxEditor({
           <ToolbarMenuSeparator />
           {objectTarget && selectedObject ? (
             <>
-              {selectedObject.type === 'table' &&
-                (hostApply ? (
-                  <TableCellControls
-                    key={objectTarget.el}
-                    table={selectedObject}
-                    target={objectTarget}
-                    apply={runManualOp}
-                  />
-                ) : (
-                  <ToolbarMenuNote>当前未连接 PPTX 宿主，无法编辑表格单元格</ToolbarMenuNote>
-                ))}
+              {selectedObject.type === 'chart' && (
+                <ToolbarMenuItemRow
+                  item={{
+                    key: 'chart-editor',
+                    label: '编辑图表',
+                    onSelect: () => {
+                      inspectorSections.current.set('编辑图表', 'object-extra')
+                      inspectorTriggers.current.set('编辑图表', {
+                        focus: () =>
+                          canvasRef.current
+                            ?.closest('.mimir-editor')
+                            ?.querySelector<HTMLButtonElement>(
+                              'button[aria-label="对象与幻灯片操作"]',
+                            )
+                            ?.focus(),
+                      })
+                      assetAbort.current?.abort()
+                      cancelClarification.current?.()
+                      setInspector('编辑图表')
+                    },
+                  }}
+                  close={close}
+                />
+              )}
+              {selectedObject.type === 'table' && (
+                <ToolbarMenuItemRow
+                  item={{
+                    key: 'table-editor',
+                    label: '编辑表格',
+                    onSelect: () => {
+                      inspectorSections.current.set('编辑表格', 'object-extra')
+                      inspectorTriggers.current.set('编辑表格', {
+                        focus: () =>
+                          canvasRef.current
+                            ?.closest('.mimir-editor')
+                            ?.querySelector<HTMLButtonElement>(
+                              'button[aria-label="对象与幻灯片操作"]',
+                            )
+                            ?.focus(),
+                      })
+                      assetAbort.current?.abort()
+                      cancelClarification.current?.()
+                      setInspector('编辑表格')
+                    },
+                  }}
+                  close={close}
+                />
+              )}
               <ToolbarMenuFields label="选中对象">
                 {selectedObject.type === 'picture' && (
                   <>
@@ -1826,7 +2119,9 @@ export function PptxEditor({
                         accept="image/png,image/jpeg"
                         disabled={pictureBusy}
                         onPick={(file) => applyLocalPicture(file, 'replace')}
-                      />
+                      >
+                        替换选中图片
+                      </ToolbarFileButton>
                     ) : (
                       <ToolbarMenuNote>当前未连接 PPTX 图片宿主，无法替换图片</ToolbarMenuNote>
                     )}
@@ -1914,22 +2209,30 @@ export function PptxEditor({
                 <ToolbarMenuFields label="位置和大小（pt）">
                   <ToolbarNumberField
                     label="左"
+                    disabled={editingBusy}
+                    disabledReason="正在应用修改，请稍后重试"
                     value={Math.round(objectBox.x / 12700)}
                     onCommit={(value) => setObjectBox('x', value)}
                   />
                   <ToolbarNumberField
                     label="上"
+                    disabled={editingBusy}
+                    disabledReason="正在应用修改，请稍后重试"
                     value={Math.round(objectBox.y / 12700)}
                     onCommit={(value) => setObjectBox('y', value)}
                   />
                   <ToolbarNumberField
                     label="宽"
+                    disabled={editingBusy}
+                    disabledReason="正在应用修改，请稍后重试"
                     value={Math.round(objectBox.cx / 12700)}
                     min={1}
                     onCommit={(value) => setObjectBox('cx', value)}
                   />
                   <ToolbarNumberField
                     label="高"
+                    disabled={editingBusy}
+                    disabledReason="正在应用修改，请稍后重试"
                     value={Math.round(objectBox.cy / 12700)}
                     min={1}
                     onCommit={(value) => setObjectBox('cy', value)}
@@ -2060,37 +2363,13 @@ export function PptxEditor({
             />
           </ToolbarMenuFields>
           <ToolbarMenuSeparator />
-          <ToolbarMenuItemRow
-            item={{
-              key: 'transition-fade',
-              label: '本页淡入切换',
-              onSelect: () =>
-                void runManualOp({
-                  op: 'setTransition',
-                  target: { slide: active },
-                  kind: 'fade',
-                }),
-            }}
-            close={close}
-          />
-          <ToolbarMenuItemRow
-            item={{
-              key: 'transition-none',
-              label: '本页无切换',
-              onSelect: () =>
-                void runManualOp({
-                  op: 'setTransition',
-                  target: { slide: active },
-                  kind: 'none',
-                }),
-            }}
-            close={close}
-          />
           {manualUndoRound && (
             <ToolbarMenuItemRow
               item={{
                 key: 'undo-object',
                 label: '撤销上一次对象操作',
+                disabled: editingBusy,
+                disabledReason: '正在应用修改，请稍后重试',
                 onSelect: () => {
                   const undone = agentHandleRef.current?.undoRound(manualUndoRound)
                   setManualUndoRound(null)
@@ -2105,449 +2384,275 @@ export function PptxEditor({
     />
   )
 
-  return (
-    <EditorShell
-      flush={flush}
-      toolbar={
-        <CompactToolbar
-          quickAccess={
-            <>
-              <ToolbarButton
-                label={source.saving ? '保存中…' : '保存到库'}
-                disabled={!dirty || source.saving}
-                disabledReason={source.saving ? '正在保存…' : '没有未保存的改动'}
-                onClick={() => void save()}
-              >
-                <SaveIcon />
-              </ToolbarButton>
-              <ToolbarButton label="撤销" disabled disabledReason="演示文稿尚不支持完整撤销历史">
-                <UndoIcon />
-              </ToolbarButton>
-              <ToolbarButton label="重做" disabled disabledReason="演示文稿尚不支持完整重做历史">
-                <RedoIcon />
-              </ToolbarButton>
-            </>
+  const metadata = session.metadata(active)
+  const panelVersion = viewVersion
+  const panelKey = `${active}:${selected}:${panelVersion}`
+  const panelSelectionChanged = (ops: Record<string, unknown>[]) =>
+    ops.some((op) => {
+      const target = op.target
+      return (
+        target !== null &&
+        typeof target === 'object' &&
+        'el' in target &&
+        typeof target.el === 'string'
+      )
+    }) && selectedDurableRef.current !== objectTarget?.el
+  const applyPanelOp = async (op: Record<string, unknown>) => {
+    if (
+      session.version() !== panelVersion ||
+      activeRef.current !== active ||
+      panelSelectionChanged([op])
+    ) {
+      setPageError('画布已变化，请重新打开工具面板')
+      return false
+    }
+    return runManualOp(op)
+  }
+  const applyPanelOps = async (ops: Record<string, unknown>[]) => {
+    if (
+      session.version() !== panelVersion ||
+      activeRef.current !== active ||
+      panelSelectionChanged(ops)
+    ) {
+      setPageError('画布已变化，请重新打开工具面板')
+      return false
+    }
+    const handle = agentHandleRef.current,
+      beforeSelection = selectedDurableRef.current,
+      inserting = ops.length === 1 && ops[0]?.op === 'addElement',
+      beforeIds = new Set(
+        session.slides()[active]?.elements.map((item) => elementDurableId(item) ?? item.id),
+      )
+    const applied = await runManualTool('apply_ops', { ops })
+    if (
+      applied &&
+      inserting &&
+      agentHandleRef.current === handle &&
+      activeRef.current === active &&
+      session.version() === panelVersion + 1 &&
+      selectedDurableRef.current === beforeSelection
+    ) {
+      const slide = session.slides()[active]
+      const added = slide?.elements.filter(
+        (item) => !beforeIds.has(elementDurableId(item) ?? item.id),
+      )
+      if (added?.length === 1) {
+        setSelected(added[0]!.id)
+      }
+    }
+    return applied
+  }
+  const applyPanelFill = async (input: import('@mimir/shared').PptxManualFill) => {
+    if (
+      session.version() !== panelVersion ||
+      activeRef.current !== active ||
+      input.slide !== active ||
+      (input.kind === 'shape' && selectedDurableRef.current !== input.elementId)
+    ) {
+      setPageError('画布已变化，请重新打开工具面板')
+      return false
+    }
+    return runManualTool('manual_fill', input)
+  }
+  const applyPanelAsset = async (input: PptxManualUpload, file: File, poster?: File) => {
+    if (
+      session.version() !== panelVersion ||
+      activeRef.current !== active ||
+      (objectTarget && selectedDurableRef.current !== objectTarget.el)
+    ) {
+      setPageError('画布已变化，请重新打开工具面板')
+      return false
+    }
+    return applyLocalAsset(input, file, poster)
+  }
+  const inspectorPanels: Record<string, ReactNode> = {}
+  if (selectedObject?.type === 'table' && objectTarget)
+    inspectorPanels['编辑表格'] = hostApply ? (
+      <PptxTableControls
+        table={selectedObject}
+        version={panelVersion}
+        target={objectTarget}
+        apply={applyPanelOp}
+        editParagraphRuns={editParagraphRuns}
+        colors={TEXT_COLORS}
+      />
+    ) : (
+      <ToolbarMenuNote>当前未连接 PPTX 宿主，无法编辑表格单元格</ToolbarMenuNote>
+    )
+  if (selectedObject?.type === 'chart' && objectTarget)
+    inspectorPanels['编辑图表'] = hostApply ? (
+      <ChartEditControls
+        chart={selectedObject}
+        target={objectTarget}
+        apply={(args) => {
+          if (session.version() !== panelVersion) {
+            setPageError('画布已变化，请重新打开工具面板')
+            return Promise.resolve(false)
           }
-          tabs={[
-            { key: 'home', label: '开始' },
-            { key: 'insert', label: '插入' },
-            { key: 'object', label: '对象' },
-            { key: 'slide', label: '幻灯片' },
-            { key: 'view', label: '视图' },
-          ]}
-          sections={[
-            { key: 'text', label: '字形与查找', tab: 'home', minWidth: 0, content: basicToolbar },
-            {
-              key: 'text-extra',
-              label: '字体与颜色',
-              tab: 'home',
-              minWidth: 0,
-              content: textFormatMenu,
-            },
-            {
-              key: 'insert',
-              label: '对象',
-              tab: 'insert',
-              minWidth: 0,
-              content: (
-                <ToolbarGroup label="插入对象">
-                  <ToolbarButton
-                    label="插入文本框"
-                    onClick={() =>
-                      void runManualOp({
-                        op: 'addElement',
-                        target: { slide: active },
-                        kind: 'textbox',
-                        offset: {
-                          x: Math.round(session.size.cx * 0.1),
-                          y: Math.round(session.size.cy * 0.12),
-                          cx: Math.round(session.size.cx * 0.6),
-                          cy: Math.round(session.size.cy * 0.14),
-                        },
-                        paragraphs: [{ runs: [{ text: '新文本框' }] }],
-                      })
-                    }
-                  >
-                    文本框
-                  </ToolbarButton>
-                  <ToolbarButton
-                    label="插入矩形"
-                    onClick={() =>
-                      void runManualOp({
-                        op: 'addElement',
-                        target: { slide: active },
-                        kind: 'rect',
-                        offset: {
-                          x: Math.round(session.size.cx * 0.2),
-                          y: Math.round(session.size.cy * 0.25),
-                          cx: Math.round(session.size.cx * 0.35),
-                          cy: Math.round(session.size.cy * 0.22),
-                        },
-                        fill: '#D9E8FB',
-                      })
-                    }
-                  >
-                    矩形
-                  </ToolbarButton>
-                  <ToolbarMenu
-                    label="插入表格"
-                    text="表格"
-                    panelWidth={190}
-                    renderPanel={(close) =>
-                      hostApply ? (
-                        <ToolbarMenuFields label="选择表格大小">
-                          <ToolbarGridPicker
-                            label="插入表格的大小"
-                            rows={TABLE_GRID_SIZE}
-                            columns={TABLE_GRID_SIZE}
-                            cellLabel={tableCellLabel}
-                            onPick={(rows, cols) => {
-                              close()
-                              void insertTable(rows, cols)
-                            }}
-                          />
-                        </ToolbarMenuFields>
-                      ) : (
-                        <ToolbarMenuNote>当前未连接 PPTX 宿主，无法插入表格</ToolbarMenuNote>
-                      )
-                    }
-                  />
-                  <ToolbarMenu
-                    label="插入图表"
-                    text="图表"
-                    panelWidth={340}
-                    renderPanel={(close) =>
-                      hostApply ? (
-                        <ChartInsertControls
-                          slide={active}
-                          width={session.size.cx}
-                          height={session.size.cy}
-                          apply={runManualOp}
-                          close={close}
-                        />
-                      ) : (
-                        <ToolbarMenuNote>当前未连接 PPTX 宿主，无法插入图表</ToolbarMenuNote>
-                      )
-                    }
-                  />
-                  {hostPicture ? (
-                    <ToolbarFileButton
-                      label="插入图片"
-                      accept="image/png,image/jpeg"
-                      disabled={pictureBusy}
-                      onPick={(file) => applyLocalPicture(file, 'insert')}
-                    >
-                      图片
-                    </ToolbarFileButton>
-                  ) : (
-                    <ToolbarButton
-                      label="插入图片"
-                      disabled
-                      disabledReason="当前未连接 PPTX 图片宿主"
-                    >
-                      图片
-                    </ToolbarButton>
-                  )}
-                </ToolbarGroup>
-              ),
-            },
-            {
-              key: 'object-main',
-              label: '排列',
-              tab: 'object',
-              minWidth: 0,
-              content: (
-                <ToolbarGroup label="对象排列">
-                  <ToolbarButton
-                    label="置于顶层"
-                    disabled={objectTarget === null || objectOrder >= objectCount - 1}
-                    disabledReason={objectTarget === null ? '先选中一个对象' : '对象已在顶层'}
-                    onClick={() =>
-                      objectTarget &&
-                      void runManualOp({ op: 'reorderElement', target: objectTarget, dir: 'front' })
-                    }
-                  >
-                    置顶
-                  </ToolbarButton>
-                  <ToolbarButton
-                    label="置于底层"
-                    disabled={objectTarget === null || objectOrder <= 0}
-                    disabledReason={objectTarget === null ? '先选中一个对象' : '对象已在底层'}
-                    onClick={() =>
-                      objectTarget &&
-                      void runManualOp({ op: 'reorderElement', target: objectTarget, dir: 'back' })
-                    }
-                  >
-                    置底
-                  </ToolbarButton>
-                </ToolbarGroup>
-              ),
-            },
-            {
-              key: 'object-box',
-              label: '位置与大小',
-              tab: 'object',
-              minWidth: 0,
-              content: objectBox ? (
-                <ToolbarGroup label="对象位置与大小">
-                  <ToolbarNumberField
-                    label="左"
-                    value={Math.round(objectBox.x / 12700)}
-                    onCommit={(value) => setObjectBox('x', value)}
-                  />
-                  <ToolbarNumberField
-                    label="上"
-                    value={Math.round(objectBox.y / 12700)}
-                    onCommit={(value) => setObjectBox('y', value)}
-                  />
-                  <ToolbarNumberField
-                    label="宽"
-                    value={Math.round(objectBox.cx / 12700)}
-                    min={1}
-                    onCommit={(value) => setObjectBox('cx', value)}
-                  />
-                  <ToolbarNumberField
-                    label="高"
-                    value={Math.round(objectBox.cy / 12700)}
-                    min={1}
-                    onCommit={(value) => setObjectBox('cy', value)}
-                  />
-                </ToolbarGroup>
-              ) : null,
-            },
-            {
-              key: 'object-extra',
-              label: '属性与位置',
-              tab: 'object',
-              minWidth: 0,
-              content: objectMenu,
-            },
-            {
-              key: 'slides',
-              label: '页面',
-              tab: 'slide',
-              minWidth: 0,
-              content: (
-                <ToolbarGroup label="幻灯片操作">
-                  <ToolbarButton label="新增幻灯片" onClick={() => insertPage(active)}>
-                    新建
-                  </ToolbarButton>
-                  <ToolbarButton label="复制当前幻灯片" onClick={() => duplicatePage(active)}>
-                    复制
-                  </ToolbarButton>
-                  <ToolbarConfirm
-                    title="删除当前幻灯片？"
-                    description="删除后可以通过不保存退出恢复。"
-                    confirmLabel="删除幻灯片"
-                    disabled={slideCount <= 1}
-                    onConfirm={() => deletePage(active)}
-                  >
-                    <ToolbarButton
-                      label="删除当前幻灯片"
-                      disabled={slideCount <= 1}
-                      disabledReason="至少保留一张幻灯片"
-                    >
-                      删除
-                    </ToolbarButton>
-                  </ToolbarConfirm>
-                  <ToolbarButton
-                    label={rendered.hidden ? '放映时显示本页' : '放映时隐藏本页'}
-                    active={rendered.hidden}
-                    onClick={() =>
-                      void runManualOp({
-                        op: 'setHidden',
-                        target: { slide: active },
-                        hidden: !rendered.hidden,
-                      })
-                    }
-                  >
-                    {rendered.hidden ? '显示' : '隐藏'}
-                  </ToolbarButton>
-                </ToolbarGroup>
-              ),
-            },
-            {
-              key: 'transition',
-              label: '切换',
-              tab: 'slide',
-              minWidth: 0,
-              content: (
-                <ToolbarGroup label="幻灯片切换">
-                  <ToolbarButton
-                    label="本页淡入切换"
-                    onClick={() =>
-                      void runManualOp({
-                        op: 'setTransition',
-                        target: { slide: active },
-                        kind: 'fade',
-                      })
-                    }
-                  >
-                    淡入
-                  </ToolbarButton>
-                  <ToolbarButton
-                    label="本页无切换"
-                    onClick={() =>
-                      void runManualOp({
-                        op: 'setTransition',
-                        target: { slide: active },
-                        kind: 'none',
-                      })
-                    }
-                  >
-                    无切换
-                  </ToolbarButton>
-                </ToolbarGroup>
-              ),
-            },
-            {
-              key: 'view',
-              label: '查找',
-              tab: 'view',
-              minWidth: 0,
-              content: (
-                <ToolbarButton label="查找和替换" active={findOpen} onClick={toggleFind}>
-                  <FindIcon />
-                </ToolbarButton>
-              ),
-            },
-          ]}
-        />
-      }
-      /*
-        次工具条：幻灯片导航 + 查找栏。
-
-        **导航挪到这里**（原先在工具条上）：页签的数量跟着页数长，30 页的演示
-        文稿会把工具条挤成好几行；而次工具条是真正吸顶的那一层，`.me-tabs` 自己
-        横滚（`overflow-x: auto` 让它的自动最小宽度是 0），窄窗口下也不会撑破外壳。
-      */
-      subbar={
-        <>
-          <ToolbarGroup label="翻页">
-            <ToolbarButton
-              label="上一页"
-              disabled={active === 0}
-              disabledReason="已经是第一页"
-              onClick={() => goTo(active - 1)}
-            >
-              <ChevronLeftIcon />
-            </ToolbarButton>
-            <ToolbarButton
-              label="下一页"
-              disabled={active >= slideCount - 1}
-              disabledReason="已经是最后一页"
-              onClick={() => goTo(active + 1)}
-            >
-              <ChevronRightIcon />
-            </ToolbarButton>
-            {/* 跳到第 N 页：取值是 1..页数，页数打开文件才知道，所以是输入框不是下拉 */}
-            <ToolbarNumberField
-              label="跳到第几页"
-              value={active + 1}
-              min={1}
-              max={slideCount}
-              suffix="页"
-              onCommit={(next) => goTo(next - 1)}
-            />
-          </ToolbarGroup>
-
-          {slideCount > 1 && (
-            <ToolbarTabs
-              label="幻灯片"
-              value={active}
-              onChange={goTo}
-              items={Array.from({ length: slideCount }, (_, i) => ({
-                value: i,
-                label: `${i + 1}`,
-              }))}
-            />
-          )}
-
-          {/* 放映隐藏状态由同一宿主操作写回 slide 的 show 属性。 */}
-          {rendered.hidden && (
-            <ToolbarLabel>
-              <EyeIcon /> 这一页在放映时隐藏
-            </ToolbarLabel>
-          )}
-
-          {findOpen && (
-            <FindReplaceBar
-              adapter={findAdapter}
-              query={findQuery}
-              onQueryChange={setFindQuery}
-              options={findOptions}
-              onOptionsChange={setFindOptions}
-              onClose={toggleFind}
-            />
-          )}
-        </>
-      }
-      footer={
-        selected && paragraphs ? (
-          <div className="mimir-paras">
-            <div className="mimir-paras__head">
-              <ToolbarLabel>文字</ToolbarLabel>
-            </div>
-            <div className="mimir-paras__list">
-              {paragraphs.map((text, index) => (
-                /*
-                  走外壳的 `ToolbarTextArea`（antd `Input.TextArea`），不再自绘：
-                  上一版这里是裸 `<textarea className="mimir-paras__item">`，那一套
-                  自写的高度（26px，比工具条控件矮一档）、字号（正文档 13px 而非
-                  工具条控件的 12px）与焦点环就是「同一排三种高度 / 三种焦点环」
-                  的来源，只是它一个人占了三种。**必须仍是 textarea**：段落里可能
-                  有软换行（`<a:br/>` 在模型里是一条 `text === '\n'` 的 run），
-                  单行 `Input` 会在值消毒时把 `\n` 静默删掉。
-                */
-                <ToolbarTextArea
-                  key={paragraphKeys[index] ?? `pending-${index}`}
-                  label={`第 ${index + 1} 段`}
-                  rows={1}
-                  value={text}
-                  placeholder={`第 ${index + 1} 段`}
-                  onChange={(next) => setParagraph(index, next)}
-                />
-              ))}
-            </div>
+          return runManualTool('edit_chart', args)
+        }}
+      />
+    ) : (
+      <ToolbarMenuNote>当前未连接 PPTX 宿主，无法编辑图表</ToolbarMenuNote>
+    )
+  if (clarification)
+    inspectorPanels['演示需求'] = (
+      <PptxClarificationControls input={clarification.input} complete={clarification.finish} />
+    )
+  const advancedMenu = (label: string, content: ReactNode, reason?: string) => {
+    const body =
+      !hostApply && label !== '导出与打印' ? (
+        <ToolbarMenuNote>当前未连接 PPTX 宿主</ToolbarMenuNote>
+      ) : reason ? (
+        <ToolbarMenuNote>{reason}</ToolbarMenuNote>
+      ) : (
+        content
+      )
+    if (
+      [
+        '段落与文本框',
+        '形状库',
+        '对齐与组合',
+        '主题',
+        '分节与批注',
+        '编辑顶点',
+        '公式',
+        '图示',
+        '音视频',
+        '屏幕录制',
+        '图片填充',
+        '形状填充',
+        '设置背景',
+        '导入幻灯片',
+        '媒体播放',
+        '备注与放映',
+        '自定义放映与排练',
+        '缩放导航',
+        '导出与打印',
+        '图标',
+        '图片去背景',
+        '母版编辑',
+        '3D 模型',
+        '3D 预览',
+      ].includes(label)
+    ) {
+      inspectorPanels[label] = body
+      return (
+        <ToolbarButton
+          label={label}
+          active={inspector === label}
+          ref={(node) => {
+            if (node) inspectorTriggers.current.set(label, node)
+            else inspectorTriggers.current.delete(label)
+          }}
+          onClick={() => {
+            if (inspector === label) closeInspector()
+            else {
+              const trigger = inspectorTriggers.current.get(label)
+              const section =
+                trigger instanceof HTMLElement
+                  ? trigger.closest<HTMLElement>('[data-section-key]')?.dataset.sectionKey
+                  : undefined
+              if (section) inspectorSections.current.set(label, section)
+              assetAbort.current?.abort()
+              cancelClarification.current?.()
+              setInspector(label)
+            }
+          }}
+        >
+          {label}
+        </ToolbarButton>
+      )
+    }
+    return (
+      <ToolbarMenu
+        label={label}
+        text={label}
+        panelWidth={350}
+        renderPanel={() => (
+          <div className="mimir-pptx-tool-popover" key={panelKey}>
+            {body}
           </div>
-        ) : undefined
-      }
-      status={
-        <>
-          <ToolbarLabel>{status}</ToolbarLabel>
-          {dirty && (
-            <ToolbarLabel>
-              第 {active + 1} / {slideCount} 页
-            </ToolbarLabel>
-          )}
-          {pageError && <ToolbarNotice>{pageError}</ToolbarNotice>}
-          {/*
-            缺几何的文本框如实说明（DESIGN §0.2）。**这一条不是可选的**：那些
-            框是按幻灯片比例补出来的（`pptx-render.ts` 的 `withFallbackGeometry`），
-            用户看到的版式不是文件里的版式——不说的话他会以为这就是原件的样子，
-            然后在 PowerPoint 里发现位置完全不同。短句，理由与下面那条相同。
-          */}
-          {rendered.geometryFilled > 0 && (
-            <ToolbarLabel>
-              {rendered.geometryFilled} 个文本框在文件里没有几何，按默认框渲染
-            </ToolbarLabel>
-          )}
-        </>
-      }
-    >
-      <ThumbnailSidebar
-        pages={thumbnailPages}
-        activeIndex={active}
-        noun="幻灯片"
-        onSelect={goTo}
-        onInsert={insertPage}
-        onDuplicate={duplicatePage}
-        onDelete={deletePage}
-        onMove={movePage}
-        renderThumbnail={(index) => <PptxThumbnail deck={view} index={index} />}
+        )}
+      />
+    )
+  }
+
+  const restoreShapeFocus = () => {
+    const editor = canvasRef.current?.closest('.mimir-editor')
+    const focus = document.activeElement
+    if (
+      focus !== document.body &&
+      !editor?.querySelector('.mimir-pptx-shape-insert-layer')?.contains(focus)
+    )
+      return
+    requestAnimationFrame(() => {
+      const trigger =
+        editor?.querySelector<HTMLButtonElement>(
+          '[data-section-key="shape-library"] button[aria-label="形状库"]',
+        ) ??
+        editor?.querySelector<HTMLButtonElement>(
+          '[data-section-key="shape-library"] button:not(:disabled)',
+        )
+      trigger?.focus()
+    })
+  }
+  const exitShapeInsert = () => {
+    setShapeInsert(null)
+    restoreShapeFocus()
+  }
+  const shapeKind =
+    shapeInsert?.documentId === documentId &&
+    shapeInsert.path === view.slides()[active]!.path &&
+    shapeInsert.version === panelVersion &&
+    (workspaceMode === 'normal' || workspaceMode === 'outline')
+      ? shapeInsert.kind
+      : null
+  const applyDrawShape = async (
+    input: PptxManualShape,
+    expectedVersion: number,
+    signal: AbortSignal,
+  ) => {
+    if (
+      signal.aborted ||
+      input.slide !== activeRef.current ||
+      session.version() !== expectedVersion
+    )
+      return false
+    const before = new Set(
+      session.slides()[active]!.elements.map((item) => elementDurableId(item) ?? item.id),
+    )
+    const applied = await runManualTool('manual_shape', input, { expectedVersion, signal })
+    if (
+      applied &&
+      activeRef.current === active &&
+      session.version() === expectedVersion + 1 &&
+      agentHandleRef.current?.documentId === documentId
+    ) {
+      const currentSlide = session.slides()[active]!
+      const added = currentSlide.elements.filter(
+        (item) => !before.has(elementDurableId(item) ?? item.id),
+      )
+      if (added.length === 1) setSelected(added[0]!.id)
+      setShapeInsert(null)
+      restoreShapeFocus()
+    }
+    return applied
+  }
+
+  const workspaceStage = (
+    <div className={`me-scroll mimir-pptx-stage${viewSettings.ruler ? ' has-ruler' : ''}`}>
+      <div
+        className="mimir-pptx-sheet"
+        style={{
+          width:
+            viewSettings.zoom === 'fit'
+              ? FIT_WIDTH_PX
+              : (FIT_WIDTH_PX * Number(viewSettings.zoom)) / 100,
+          maxWidth: viewSettings.zoom === 'fit' ? '100%' : 'none',
+        }}
       >
-        <div className="me-scroll mimir-pptx-stage">
-          {/*
+        {/*
           ## 白名单：本文件里**唯一**可点而不经过原语元素的元素
 
           工具条上的交互元素一律走外壳的 antd 原语（D-064）。这里是一个
@@ -2569,11 +2674,11 @@ export function PptxEditor({
           要补上键盘选元素，得给画布自己做一层「元素列表 + 方向键」，那是新
           功能，不是这次迁移的范围。
         */}
-          <div
-            ref={canvasRef}
-            className="mimir-pptx-slide"
-            onClick={onClickCanvas}
-            /*
+        <div
+          ref={canvasRef}
+          className="mimir-pptx-slide"
+          onClick={onClickCanvas}
+          /*
             注入渲染好的 SVG。**为什么用 dangerouslySetInnerHTML 而不是 React
             元素**：渲染器是纯函数（绘制列表 → 字符串），产物要能脱离 React
             单独用（存成 .svg、在测试里比对字符串、将来做导出）。重写成 React
@@ -2581,10 +2686,1393 @@ export function PptxEditor({
             XML（`pptx-svg.ts` 有转义与可解析性测试），不是用户可控的 HTML。
             **点选靠 data-element-id 属性**——渲染器给每个元素节点写了它。
           */
-            dangerouslySetInnerHTML={{ __html: rendered.svg }}
+          dangerouslySetInnerHTML={{ __html: rendered.svg }}
+        />
+        <PptxAnimationPreview
+          host={canvasRef}
+          slide={view.slides()[active]!}
+          version={session.version()}
+          selectionKey={textTargetKey}
+          onEnd={() => setAnimationPreview(null)}
+          request={
+            inspector === '备注与放映' &&
+            animationPreview?.documentId === documentId &&
+            animationPreview.path === view.slides()[active]!.path &&
+            animationPreview.version === session.version() &&
+            animationPreview.selected === selected
+              ? animationPreview.request
+              : null
+          }
+        />
+        <PptxViewOverlay size={view.size} settings={viewSettings} />
+        <PptxShapeInsertCanvas
+          documentId={documentId}
+          slideKey={view.slides()[active]!.path}
+          slide={active}
+          version={panelVersion}
+          kind={shapeKind}
+          width={rendered.widthPx}
+          height={rendered.heightPx}
+          slideWidth={session.size.cx}
+          slideHeight={session.size.cy}
+          disabled={
+            (manualBusy && !shapeBusy) || pictureBusy || source.saving || inkBusy || !hostApply
+          }
+          apply={applyDrawShape}
+          onExit={exitShapeInsert}
+          onBusy={setShapeBusy}
+        />
+        <PptxInkCanvas
+          key={`${documentId}:${active}`}
+          slide={active}
+          version={session.version()}
+          tree={rendered.tree}
+          width={rendered.widthPx}
+          height={rendered.heightPx}
+          tool={ink.tool}
+          preset={ink.presets[ink.selectedPreset]!}
+          disabled={editingBusy || !hostApply}
+          apply={runInk}
+          onExit={() => ink.setTool('select')}
+          onBusy={setInkBusy}
+        />
+      </div>
+    </div>
+  )
+
+  return (
+    <>
+      <EditorShell
+        flush={flush}
+        toolbar={
+          <CompactToolbar
+            quickAccess={
+              <>
+                <ToolbarButton
+                  label={source.saving ? '保存中…' : '保存到库'}
+                  disabled={!dirty || editingBusy}
+                  disabledReason={editingBusy ? '正在处理文档，请稍后重试' : '没有未保存的改动'}
+                  onClick={() => void save()}
+                >
+                  <SaveIcon />
+                </ToolbarButton>
+                <ToolbarButton
+                  label="撤销"
+                  disabled={!history?.canUndo || editingBusy}
+                  disabledReason={editingBusy ? '正在处理文档' : '没有可撤销的修改'}
+                  onClick={() => {
+                    if (history?.undo()) {
+                      setActive(Math.min(active, session.slides().length - 1))
+                      setManualUndoRound(null)
+                      afterEditRef.current()
+                    }
+                  }}
+                >
+                  <UndoIcon />
+                </ToolbarButton>
+                <ToolbarButton
+                  label="重做"
+                  disabled={!history?.canRedo || editingBusy}
+                  disabledReason={editingBusy ? '正在处理文档' : '没有可重做的修改'}
+                  onClick={() => {
+                    if (history?.redo()) {
+                      setActive(Math.min(active, session.slides().length - 1))
+                      setManualUndoRound(null)
+                      afterEditRef.current()
+                    }
+                  }}
+                >
+                  <RedoIcon />
+                </ToolbarButton>
+              </>
+            }
+            tabs={[
+              { key: 'home', label: '开始' },
+              { key: 'insert', label: '插入' },
+              { key: 'object', label: '对象' },
+              { key: 'draw', label: '绘图' },
+              { key: 'slide', label: '幻灯片' },
+              { key: 'view', label: '视图' },
+            ]}
+            sections={[
+              {
+                key: 'clipboard',
+                label: '剪贴板',
+                tab: 'home',
+                minWidth: 0,
+                content: advancedMenu(
+                  '剪贴板',
+                  <PptxClipboardControls
+                    slide={active}
+                    elementId={objectTarget?.el ?? null}
+                    slideCount={session.slides().length}
+                    execute={runClipboard}
+                  />,
+                ),
+              },
+              { key: 'text', label: '字形与查找', tab: 'home', minWidth: 0, content: basicToolbar },
+              {
+                key: 'format-brush',
+                label: '格式刷',
+                tab: 'home',
+                minWidth: 0,
+                content: (
+                  <ToolbarMenu
+                    label="格式刷"
+                    text="格式刷"
+                    panelWidth={280}
+                    renderPanel={() => (
+                      <ToolbarMenuFields label="对象格式刷">
+                        <ToolbarMenuNote>
+                          从选中对象复制纯色填充、边框及首段字体与对齐。图片仅接收边框；文字内容保持不变。
+                        </ToolbarMenuNote>
+                        <ToolbarSelect
+                          label="使用方式"
+                          value={brushContinuous ? 'continuous' : 'once'}
+                          options={[
+                            { value: 'once', label: '使用一次' },
+                            { value: 'continuous', label: '连续使用' },
+                          ]}
+                          onChange={(value) => setBrushContinuous(value === 'continuous')}
+                        />
+                        <ToolbarButton
+                          label="复制选中对象格式"
+                          disabled={!selectedObject || !hostApply}
+                          disabledReason="先选择文字、形状或图片"
+                          onClick={() => {
+                            const node = rendered.tree.nodes.find(
+                              (item) => item.sourceId === selectedObject?.id,
+                            )
+                            const brush = node
+                              ? capturePptxBrush(node, view.size.cx / 12700 / rendered.widthPx)
+                              : null
+                            if (!brush) {
+                              setPageError('格式刷支持文字、形状和图片')
+                              return
+                            }
+                            setFormatBrush(brush)
+                            setPageStatus('已复制格式；点击目标对象应用，Esc 退出')
+                          }}
+                        >
+                          复制选中对象格式
+                        </ToolbarButton>
+                        <ToolbarButton
+                          label="应用到选中对象"
+                          disabled={!formatBrush || !selectedObject}
+                          onClick={() => {
+                            if (selectedObject) brushApplyRef.current(selectedObject.id)
+                          }}
+                        >
+                          应用到选中对象
+                        </ToolbarButton>
+                        <ToolbarButton
+                          label="退出格式刷"
+                          disabled={!formatBrush}
+                          onClick={() => {
+                            setFormatBrush(null)
+                            setPageStatus('已退出格式刷')
+                          }}
+                        >
+                          退出格式刷
+                        </ToolbarButton>
+                      </ToolbarMenuFields>
+                    )}
+                  />
+                ),
+              },
+              {
+                key: 'paragraph-advanced',
+                label: '段落与文本框',
+                tab: 'home',
+                minWidth: 0,
+                content: advancedMenu(
+                  '段落与文本框',
+                  selectedText && objectTarget ? (
+                    <PptxParagraphControls
+                      text={selectedText}
+                      target={objectTarget}
+                      selection={textSelection}
+                      version={panelVersion}
+                      applyParagraphFormat={async (format, paraIndices, signal) => {
+                        if (
+                          signal.aborted ||
+                          session.version() !== panelVersion ||
+                          activeRef.current !== active ||
+                          selectedDurableRef.current !== objectTarget.el
+                        )
+                          return false
+                        const changed = await runManualTool(
+                          'manual_paragraph',
+                          { ...objectTarget, paraIndices, format },
+                          { expectedVersion: panelVersion, signal },
+                        )
+                        if (
+                          changed &&
+                          activeRef.current === active &&
+                          selectedDurableRef.current === objectTarget.el &&
+                          session.version() === panelVersion + 1
+                        ) {
+                          setTextRange({
+                            targetKey: textTargetKey,
+                            version: session.version(),
+                            selection: textSelection,
+                          })
+                        }
+                        return changed
+                      }}
+                      apply={applyPanelOp}
+                    />
+                  ) : null,
+                  !selectedText || !objectTarget ? '先选择带文字的对象' : undefined,
+                ),
+              },
+
+              {
+                key: 'text-extra',
+                label: '字体与颜色',
+                tab: 'home',
+                minWidth: 0,
+                content: textFormatMenu,
+              },
+              {
+                key: 'insert',
+                label: '对象',
+                tab: 'insert',
+                minWidth: 0,
+                content: (
+                  <ToolbarGroup label="插入对象">
+                    <ToolbarButton
+                      label="插入文本框"
+                      onClick={() =>
+                        void runManualOp({
+                          op: 'addElement',
+                          target: { slide: active },
+                          kind: 'textbox',
+                          offset: {
+                            x: Math.round(session.size.cx * 0.1),
+                            y: Math.round(session.size.cy * 0.12),
+                            cx: Math.round(session.size.cx * 0.6),
+                            cy: Math.round(session.size.cy * 0.14),
+                          },
+                          paragraphs: [{ runs: [{ text: '新文本框' }] }],
+                        })
+                      }
+                    >
+                      文本框
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="插入矩形"
+                      onClick={() =>
+                        void runManualOp({
+                          op: 'addElement',
+                          target: { slide: active },
+                          kind: 'rect',
+                          offset: {
+                            x: Math.round(session.size.cx * 0.2),
+                            y: Math.round(session.size.cy * 0.25),
+                            cx: Math.round(session.size.cx * 0.35),
+                            cy: Math.round(session.size.cy * 0.22),
+                          },
+                          fill: '#D9E8FB',
+                        })
+                      }
+                    >
+                      矩形
+                    </ToolbarButton>
+                    <ToolbarMenu
+                      label="插入表格"
+                      text="表格"
+                      panelWidth={190}
+                      renderPanel={(close) =>
+                        hostApply ? (
+                          <ToolbarMenuFields label="选择表格大小">
+                            <ToolbarGridPicker
+                              label="插入表格的大小"
+                              rows={TABLE_GRID_SIZE}
+                              columns={TABLE_GRID_SIZE}
+                              cellLabel={tableCellLabel}
+                              onPick={(rows, cols) => {
+                                close()
+                                void insertTable(rows, cols)
+                              }}
+                            />
+                          </ToolbarMenuFields>
+                        ) : (
+                          <ToolbarMenuNote>当前未连接 PPTX 宿主，无法插入表格</ToolbarMenuNote>
+                        )
+                      }
+                    />
+                    <ToolbarMenu
+                      label="插入图表"
+                      text="图表"
+                      panelWidth={340}
+                      renderPanel={(close) =>
+                        hostApply ? (
+                          <ChartInsertControls
+                            slide={active}
+                            width={session.size.cx}
+                            height={session.size.cy}
+                            apply={runManualOp}
+                            close={close}
+                          />
+                        ) : (
+                          <ToolbarMenuNote>当前未连接 PPTX 宿主，无法插入图表</ToolbarMenuNote>
+                        )
+                      }
+                    />
+                    {hostPicture ? (
+                      <ToolbarFileButton
+                        label="插入图片"
+                        accept="image/png,image/jpeg"
+                        disabled={pictureBusy}
+                        onPick={(file) => applyLocalPicture(file, 'insert')}
+                      >
+                        图片
+                      </ToolbarFileButton>
+                    ) : (
+                      <ToolbarButton
+                        label="插入图片"
+                        disabled
+                        disabledReason="当前未连接 PPTX 图片宿主"
+                      >
+                        图片
+                      </ToolbarButton>
+                    )}
+                  </ToolbarGroup>
+                ),
+              },
+              {
+                key: 'equation',
+                label: '公式',
+                tab: 'insert',
+                minWidth: 0,
+                content: advancedMenu(
+                  '公式',
+                  <PptxEquationControls
+                    slide={active}
+                    width={session.size.cx}
+                    height={session.size.cy}
+                    target={
+                      selectedObject?.type === 'text' || selectedObject?.type === 'shape'
+                        ? objectTarget
+                        : null
+                    }
+                    apply={applyPanelOp}
+                  />,
+                ),
+              },
+              {
+                key: 'media-insert',
+                label: '音视频',
+                tab: 'insert',
+                minWidth: 0,
+                content: advancedMenu(
+                  '音视频',
+                  <PptxMediaControls slide={active} upload={applyPanelAsset} />,
+                  !hostAsset ? '当前未连接素材宿主' : undefined,
+                ),
+              },
+              {
+                key: 'screen-recording',
+                label: '录屏',
+                tab: 'insert',
+                minWidth: 0,
+                content: advancedMenu(
+                  '屏幕录制',
+                  <PptxScreenRecordControls slide={active} upload={applyPanelAsset} />,
+                  !hostAsset ? '当前未连接素材宿主' : undefined,
+                ),
+              },
+              {
+                key: 'image-fill',
+                label: '图片填充',
+                tab: 'object',
+                minWidth: 0,
+                content: advancedMenu(
+                  '图片填充',
+                  <PptxImageFillControls
+                    slide={active}
+                    elementId={
+                      selectedObject?.type === 'shape' || selectedObject?.type === 'text'
+                        ? (objectTarget?.el ?? null)
+                        : null
+                    }
+                    upload={applyPanelAsset}
+                  />,
+                  !hostAsset ? '当前未连接素材宿主' : undefined,
+                ),
+              },
+              {
+                key: 'shape-fill',
+                label: '形状填充',
+                tab: 'object',
+                minWidth: 0,
+                content: advancedMenu(
+                  '形状填充',
+                  <PptxShapeFillControls
+                    element={selectedObject ?? null}
+                    target={objectTarget}
+                    version={panelVersion}
+                    applyOps={applyPanelOps}
+                    applyFill={applyPanelFill}
+                    media={view.media}
+                  />,
+                  selectedObject?.type === 'shape' || selectedObject?.type === 'text'
+                    ? undefined
+                    : '请选择形状或文本框',
+                ),
+              },
+              {
+                key: 'background-fill',
+                label: '背景',
+                tab: 'slide',
+                minWidth: 0,
+                content: advancedMenu(
+                  '设置背景',
+                  <PptxBackgroundControls
+                    slide={view.slides()[active]!}
+                    slideIndex={active}
+                    slideCount={slideCount}
+                    version={panelVersion}
+                    applyOps={applyPanelOps}
+                    applyFill={applyPanelFill}
+                    media={view.media}
+                  />,
+                ),
+              },
+              {
+                key: 'drawing',
+                label: '绘图',
+                tab: 'draw',
+                minWidth: 0,
+                content: (
+                  <PptxInkControls
+                    {...ink}
+                    setTool={(tool) => {
+                      if (
+                        tool !== 'select' &&
+                        (workspaceMode === 'reading' || workspaceMode === 'sorter')
+                      )
+                        changeWorkspaceMode('normal')
+                      ink.setTool(tool)
+                    }}
+                    selectPreset={(index) => {
+                      if (workspaceMode === 'reading' || workspaceMode === 'sorter')
+                        changeWorkspaceMode('normal')
+                      ink.selectPreset(index)
+                    }}
+                    updatePreset={(patch) => {
+                      if (workspaceMode === 'reading' || workspaceMode === 'sorter')
+                        changeWorkspaceMode('normal')
+                      ink.updatePreset(patch)
+                    }}
+                    count={inkNodesOf(rendered.tree).length}
+                    disabled={editingBusy || !hostApply}
+                    clear={() => runManualTool('manual_ink', { kind: 'clear', slide: active })}
+                  />
+                ),
+              },
+              {
+                key: 'slide-import',
+                label: '导入',
+                tab: 'slide',
+                minWidth: 0,
+                content: advancedMenu(
+                  '导入幻灯片',
+                  <PptxImportControls afterIndex={active} upload={applyPanelAsset} />,
+                  !hostAsset ? '当前未连接素材宿主' : undefined,
+                ),
+              },
+              ...(selectedObject?.type === 'picture' && selectedObject.media
+                ? [
+                    {
+                      key: 'media-playback',
+                      label: '媒体播放',
+                      tab: 'object',
+                      minWidth: 0,
+                      content: advancedMenu(
+                        '媒体播放',
+                        <PptxMediaPlayer
+                          session={session}
+                          element={selectedObject}
+                          version={panelVersion}
+                        />,
+                      ),
+                    },
+                  ]
+                : []),
+              {
+                key: 'diagram',
+                label: '图示',
+                tab: 'insert',
+                minWidth: 0,
+                content: advancedMenu(
+                  '图示',
+                  <PptxDiagramControls
+                    slide={active}
+                    width={session.size.cx}
+                    height={session.size.cy}
+                    apply={applyPanelOp}
+                  />,
+                ),
+              },
+              {
+                key: 'wordart',
+                label: '艺术字',
+                tab: 'insert',
+                minWidth: 0,
+                content: advancedMenu(
+                  '艺术字',
+                  <PptxWordArtControls
+                    slide={active}
+                    width={session.size.cx}
+                    height={session.size.cy}
+                    apply={applyPanelOp}
+                  />,
+                ),
+              },
+              {
+                key: 'dynamic-field',
+                label: '动态字段',
+                tab: 'insert',
+                minWidth: 0,
+                content: advancedMenu(
+                  '动态字段',
+                  <PptxFieldControls
+                    slide={active}
+                    width={session.size.cx}
+                    height={session.size.cy}
+                    apply={applyPanelOp}
+                  />,
+                ),
+              },
+              {
+                key: 'shape-library',
+                label: '形状库',
+                tab: 'insert',
+                minWidth: 0,
+                content: advancedMenu(
+                  '形状库',
+                  <PptxShapeGallery
+                    version={panelVersion}
+                    target={objectTarget}
+                    element={selectedObject}
+                    slide={active}
+                    width={session.size.cx}
+                    height={session.size.cy}
+                    applyOps={applyPanelOps}
+                    onDrawShape={(kind) => {
+                      ink.setTool('select')
+                      setFormatBrush(null)
+                      closeInspector()
+                      setShapeInsert({
+                        documentId,
+                        path: view.slides()[active]!.path,
+                        version: panelVersion,
+                        kind,
+                      })
+                    }}
+                  />,
+                ),
+              },
+              {
+                key: 'object-arrange-advanced',
+                label: '对齐与组合',
+                tab: 'object',
+                minWidth: 0,
+                content: advancedMenu(
+                  '对齐与组合',
+                  <PptxArrangeControls
+                    elements={view.slides()[active]!.elements}
+                    slide={active}
+                    selected={selected}
+                    apply={applyPanelOp}
+                  />,
+                ),
+              },
+              {
+                key: 'object-effects',
+                label: '效果',
+                tab: 'object',
+                minWidth: 0,
+                content: advancedMenu(
+                  '对象效果',
+                  selectedObject && objectTarget ? (
+                    <PptxEffectsControls
+                      element={selectedObject}
+                      target={objectTarget}
+                      apply={applyPanelOp}
+                    />
+                  ) : null,
+                  !selectedObject ? '先选择对象' : undefined,
+                ),
+              },
+              {
+                key: 'object-link',
+                label: '链接',
+                tab: 'object',
+                minWidth: 0,
+                content: advancedMenu(
+                  '对象链接',
+                  selectedObject && objectTarget ? (
+                    <PptxLinkControls
+                      link={session.link(active, selectedObject)}
+                      target={objectTarget}
+                      count={slideCount}
+                      apply={applyPanelOp}
+                    />
+                  ) : null,
+                  !selectedObject ? '先选择对象' : undefined,
+                ),
+              },
+              {
+                key: 'picture-crop',
+                label: '图片裁切',
+                tab: 'object',
+                minWidth: 0,
+                content:
+                  selectedObject?.type === 'picture' && objectTarget
+                    ? advancedMenu(
+                        '图片裁切',
+                        <PptxPictureControls
+                          element={selectedObject}
+                          target={objectTarget}
+                          apply={applyPanelOp}
+                        />,
+                      )
+                    : null,
+              },
+              {
+                key: 'object-freeform',
+                label: '编辑顶点',
+                tab: 'object',
+                minWidth: 0,
+                content:
+                  selectedObject &&
+                  objectTarget &&
+                  (selectedObject.type === 'shape' || selectedObject.type === 'text')
+                    ? advancedMenu(
+                        '编辑顶点',
+                        <PptxFreeformControls
+                          element={selectedObject}
+                          target={objectTarget}
+                          apply={applyPanelOp}
+                        />,
+                        selectedObject.presetGeometry || selectedObject.customGeometry
+                          ? undefined
+                          : '当前文本框没有形状轮廓；请先在形状库中设置形状，再编辑顶点',
+                      )
+                    : null,
+              },
+              {
+                key: 'connector-endpoints',
+                label: '连接线端点',
+                tab: 'object',
+                minWidth: 0,
+                content:
+                  selectedObject &&
+                  objectTarget &&
+                  /<(?:p:)?cxnSp\b/.test(selectedObject.anchor.originalXml)
+                    ? advancedMenu(
+                        '连接线端点',
+                        <PptxConnectorControls
+                          element={selectedObject}
+                          elements={view.slides()[active]!.elements}
+                          target={objectTarget}
+                          apply={applyPanelOp}
+                        />,
+                      )
+                    : null,
+              },
+              {
+                key: 'object-main',
+                label: '排列',
+                tab: 'object',
+                minWidth: 0,
+                content: (
+                  <ToolbarGroup label="对象排列">
+                    <ToolbarButton
+                      label="置于顶层"
+                      disabled={objectTarget === null || objectOrder >= objectCount - 1}
+                      disabledReason={objectTarget === null ? '先选中一个对象' : '对象已在顶层'}
+                      onClick={() =>
+                        objectTarget &&
+                        void runManualOp({
+                          op: 'reorderElement',
+                          target: objectTarget,
+                          dir: 'front',
+                        })
+                      }
+                    >
+                      置顶
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="置于底层"
+                      disabled={objectTarget === null || objectOrder <= 0}
+                      disabledReason={objectTarget === null ? '先选中一个对象' : '对象已在底层'}
+                      onClick={() =>
+                        objectTarget &&
+                        void runManualOp({
+                          op: 'reorderElement',
+                          target: objectTarget,
+                          dir: 'back',
+                        })
+                      }
+                    >
+                      置底
+                    </ToolbarButton>
+                  </ToolbarGroup>
+                ),
+              },
+              {
+                key: 'object-box',
+                label: '位置与大小',
+                tab: 'object',
+                minWidth: 0,
+                content: objectBox ? (
+                  <ToolbarGroup label="对象位置与大小">
+                    <ToolbarNumberField
+                      label="左"
+                      disabled={editingBusy}
+                      disabledReason="正在应用修改，请稍后重试"
+                      value={Math.round(objectBox.x / 12700)}
+                      onCommit={(value) => setObjectBox('x', value)}
+                    />
+                    <ToolbarNumberField
+                      label="上"
+                      disabled={editingBusy}
+                      disabledReason="正在应用修改，请稍后重试"
+                      value={Math.round(objectBox.y / 12700)}
+                      onCommit={(value) => setObjectBox('y', value)}
+                    />
+                    <ToolbarNumberField
+                      label="宽"
+                      disabled={editingBusy}
+                      disabledReason="正在应用修改，请稍后重试"
+                      value={Math.round(objectBox.cx / 12700)}
+                      min={1}
+                      onCommit={(value) => setObjectBox('cx', value)}
+                    />
+                    <ToolbarNumberField
+                      label="高"
+                      disabled={editingBusy}
+                      disabledReason="正在应用修改，请稍后重试"
+                      value={Math.round(objectBox.cy / 12700)}
+                      min={1}
+                      onCommit={(value) => setObjectBox('cy', value)}
+                    />
+                  </ToolbarGroup>
+                ) : null,
+              },
+              {
+                key: 'object-extra',
+                label: '属性与位置',
+                tab: 'object',
+                minWidth: 0,
+                content: objectMenu,
+              },
+              {
+                key: 'slides',
+                label: '页面',
+                tab: 'slide',
+                minWidth: 0,
+                content: (
+                  <ToolbarGroup label="幻灯片操作">
+                    <ToolbarButton label="新增幻灯片" onClick={() => insertPage(active)}>
+                      新建
+                    </ToolbarButton>
+                    <ToolbarButton label="复制当前幻灯片" onClick={() => duplicatePage(active)}>
+                      复制
+                    </ToolbarButton>
+                    <ToolbarConfirm
+                      title="删除当前幻灯片？"
+                      description="删除后可以通过不保存退出恢复。"
+                      confirmLabel="删除幻灯片"
+                      disabled={slideCount <= 1}
+                      onConfirm={() => deletePage(active)}
+                    >
+                      <ToolbarButton
+                        label="删除当前幻灯片"
+                        disabled={slideCount <= 1}
+                        disabledReason="至少保留一张幻灯片"
+                      >
+                        删除
+                      </ToolbarButton>
+                    </ToolbarConfirm>
+                    <ToolbarButton
+                      label={rendered.hidden ? '放映时显示本页' : '放映时隐藏本页'}
+                      active={rendered.hidden}
+                      onClick={() =>
+                        void runManualOp({
+                          op: 'setHidden',
+                          target: { slide: active },
+                          hidden: !rendered.hidden,
+                        })
+                      }
+                    >
+                      {rendered.hidden ? '显示' : '隐藏'}
+                    </ToolbarButton>
+                  </ToolbarGroup>
+                ),
+              },
+              {
+                key: 'page-layout',
+                label: '尺寸与版式',
+                tab: 'slide',
+                minWidth: 0,
+                content: advancedMenu(
+                  '尺寸与版式',
+                  <PptxPageControls
+                    size={session.size}
+                    slide={view.slides()[active]!}
+                    index={active}
+                    metadata={metadata}
+                    apply={applyPanelOp}
+                  />,
+                ),
+              },
+              {
+                key: 'deck-theme',
+                label: '主题',
+                tab: 'slide',
+                minWidth: 0,
+                content: advancedMenu(
+                  '主题',
+                  <PptxThemeControls metadata={metadata} apply={applyPanelOp} />,
+                ),
+              },
+              {
+                key: 'deck-footer',
+                label: '页脚',
+                tab: 'slide',
+                minWidth: 0,
+                content: advancedMenu(
+                  '页脚与页码',
+                  <PptxHeaderFooterControls slide={view.slides()[active]!} apply={applyPanelOp} />,
+                ),
+              },
+              {
+                key: 'deck-review',
+                label: '分节与批注',
+                tab: 'slide',
+                minWidth: 0,
+                content: advancedMenu(
+                  '分节与批注',
+                  <PptxReviewControls
+                    metadata={metadata}
+                    index={active}
+                    count={slideCount}
+                    apply={applyPanelOp}
+                  />,
+                ),
+              },
+              {
+                key: 'presentation',
+                label: '放映',
+                tab: 'slide',
+                minWidth: 0,
+                content: (
+                  <ToolbarGroup label="播放演示文稿">
+                    <ToolbarButton
+                      label="从头放映"
+                      ref={fromStartTriggerRef}
+                      onClick={() =>
+                        startPresentation(
+                          {
+                            start: Math.max(
+                              0,
+                              view
+                                .slides()
+                                .findIndex((slide) => !/\bshow="0"/.test(slide.bodyPrefix)),
+                            ),
+                          },
+                          fromStartTriggerRef.current,
+                        )
+                      }
+                    >
+                      从头放映
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="从当前页放映"
+                      ref={presentationTriggerRef}
+                      onClick={() =>
+                        startPresentation({ start: active }, presentationTriggerRef.current)
+                      }
+                    >
+                      放映
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="演讲者视图"
+                      ref={presenterTriggerRef}
+                      onClick={() =>
+                        startPresentation(
+                          { start: active, presenter: true },
+                          presenterTriggerRef.current,
+                        )
+                      }
+                    >
+                      演讲者视图
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="从头演讲者视图"
+                      ref={presenterStartTriggerRef}
+                      onClick={() =>
+                        startPresentation(
+                          {
+                            start: Math.max(
+                              0,
+                              view
+                                .slides()
+                                .findIndex((slide) => !/\bshow="0"/.test(slide.bodyPrefix)),
+                            ),
+                            presenter: true,
+                          },
+                          presenterStartTriggerRef.current,
+                        )
+                      }
+                    >
+                      从头演讲
+                    </ToolbarButton>
+                    {advancedMenu(
+                      '自定义放映与排练',
+                      <PptxShowControls
+                        documentId={documentId}
+                        slides={view.slides()}
+                        version={panelVersion}
+                        pending={editingBusy}
+                        rehearsal={rehearsal?.documentId === documentId ? rehearsal.result : null}
+                        onDismissRehearsal={() => setRehearsal(null)}
+                        onStart={startPresentation}
+                        apply={applyPanelOps}
+                      />,
+                    )}
+                  </ToolbarGroup>
+                ),
+              },
+              {
+                key: 'zoom-navigation',
+                label: '缩放导航',
+                tab: 'insert',
+                minWidth: 0,
+                content: advancedMenu(
+                  '缩放导航',
+                  <PptxZoomControls
+                    deck={view}
+                    sections={metadata.sections}
+                    slideIndex={active}
+                    version={panelVersion}
+                    disabled={editingBusy}
+                    applyZoom={async (input, signal) => {
+                      if (
+                        signal.aborted ||
+                        activeRef.current !== active ||
+                        session.version() !== panelVersion
+                      ) {
+                        setPageError('画布已变化，请重新打开缩放导航')
+                        return false
+                      }
+                      const applied = await runManualTool('manual_zoom', input, {
+                        expectedVersion: panelVersion,
+                        signal,
+                      })
+                      if (
+                        applied &&
+                        input.mode === 'summary' &&
+                        activeRef.current === active &&
+                        session.version() === panelVersion + 1 &&
+                        agentHandleRef.current?.documentId === documentId
+                      ) {
+                        setActive(Math.min(...input.targets.map((target) => target.slide)))
+                        setSelected(null)
+                      }
+                      return applied
+                    }}
+                  />,
+                ),
+              },
+              {
+                key: 'playback',
+                label: '备注与放映',
+                tab: 'slide',
+                minWidth: 0,
+                content: advancedMenu(
+                  '备注与放映',
+                  <SlidePlaybackControls
+                    key={`${documentId}:${active}:${selected}:${session.version()}`}
+                    initialSection={
+                      playbackSection?.documentId === documentId ? playbackSection.value : 'effects'
+                    }
+                    onSectionChange={(value) => setPlaybackSection({ documentId, value })}
+                    editTiming={(patch) => runManualTool('edit_animation', patch)}
+                    editStyle={async (input) => (await runClipboard(input)) !== null}
+                    slide={view.slides()[active]!}
+                    index={active}
+                    notes={session.notes(active)}
+                    slideCount={slideCount}
+                    previewing={
+                      inspector === '备注与放映' &&
+                      animationPreview?.version === panelVersion &&
+                      animationPreview.selected === selected &&
+                      animationPreview.path === view.slides()[active]!.path
+                    }
+                    applyBatch={(ops) => runManualTool('apply_ops', { ops })}
+                    applyAnimation={(input, signal) =>
+                      runManualTool('manual_animation', input, {
+                        expectedVersion: panelVersion,
+                        signal,
+                      })
+                    }
+                    onPreview={(request) =>
+                      setAnimationPreview(
+                        request
+                          ? {
+                              documentId,
+                              path: view.slides()[active]!.path,
+                              version: panelVersion,
+                              selected,
+                              request,
+                            }
+                          : null,
+                      )
+                    }
+                    target={objectTarget}
+                    apply={runManualOp}
+                  />,
+                ),
+              },
+              {
+                key: 'icons',
+                label: '图标',
+                tab: 'insert',
+                minWidth: 0,
+                content: advancedMenu(
+                  '图标',
+                  <PptxIconControls slide={active} upload={applyPanelAsset} />,
+                ),
+              },
+              {
+                key: 'cutout',
+                label: '图片去背景',
+                tab: 'object',
+                minWidth: 0,
+                content: advancedMenu(
+                  '图片去背景',
+                  selectedObject?.type === 'picture' && objectTarget ? (
+                    <PptxCutoutControls
+                      slide={active}
+                      elementId={objectTarget.el}
+                      source={
+                        view.media.get(selectedObject.mediaRef) ?? selectedObject.dataUrl ?? ''
+                      }
+                      upload={applyPanelAsset}
+                    />
+                  ) : null,
+                  selectedObject?.type !== 'picture' || selectedObject.media
+                    ? '请选择普通图片；音视频封面不支持去背景'
+                    : undefined,
+                ),
+              },
+              {
+                key: 'model3d',
+                label: '3D 模型',
+                tab: 'insert',
+                minWidth: 0,
+                content: advancedMenu(
+                  '3D 模型',
+                  <PptxModelControls slide={active} upload={applyPanelAsset} />,
+                ),
+              },
+              {
+                key: 'model3d-preview',
+                label: '3D 预览',
+                tab: 'object',
+                minWidth: 0,
+                content: advancedMenu(
+                  '3D 预览',
+                  selectedObject?.descr?.startsWith('aislides-3d:') ? (
+                    <PptxModelControls
+                      slide={active}
+                      upload={applyPanelAsset}
+                      existing={{
+                        bytes:
+                          session.mediaPart(selectedObject.descr.slice('aislides-3d:'.length)) ??
+                          new Uint8Array(),
+                        name: '模型.glb',
+                      }}
+                    />
+                  ) : null,
+                  selectedObject?.descr?.startsWith('aislides-3d:')
+                    ? undefined
+                    : '请选择已嵌入的 3D 模型',
+                ),
+              },
+              {
+                key: 'master-edit',
+                label: '母版编辑',
+                tab: 'view',
+                minWidth: 0,
+                content: advancedMenu('母版编辑', <PptxMasterControls execute={runClipboard} />),
+              },
+              {
+                key: 'output',
+                label: '导出与打印',
+                tab: 'view',
+                minWidth: 0,
+                content: advancedMenu(
+                  '导出与打印',
+                  <PptxOutputControls
+                    deck={view}
+                    active={active}
+                    documentId={documentId}
+                    version={panelVersion}
+                    notes={(index) => session.notes(index)}
+                    isCurrent={() =>
+                      agentHandleRef.current?.documentId === documentId &&
+                      agentHandleRef.current?.getVersion() === panelVersion
+                    }
+                    saveCopy={async ({ signal }) => {
+                      const handle = agentHandleRef.current
+                      const bytes = await withManualWrite(async () => {
+                        signal.throwIfAborted()
+                        if (
+                          !handle ||
+                          handle.documentId !== documentId ||
+                          session.version() !== panelVersion
+                        )
+                          throw new Error('文稿已变化，请重新打开导出与打印')
+                        const result = await session.save()
+                        signal.throwIfAborted()
+                        if (agentHandleRef.current !== handle || session.version() !== panelVersion)
+                          throw new Error('文稿已变化，请重新打开导出与打印')
+                        return result
+                      }, '正在生成 PPTX 副本…')
+                      if (!bytes) throw new Error('正在处理文档，请稍后重试')
+                      return bytes
+                    }}
+                  />,
+                ),
+              },
+              {
+                key: 'workspace-view',
+                label: '演示文稿视图',
+                tab: 'view',
+                minWidth: 0,
+                content: (
+                  <PptxWorkspaceModeControls mode={workspaceMode} change={changeWorkspaceMode} />
+                ),
+              },
+              {
+                key: 'canvas-view',
+                label: '画布视图',
+                tab: 'view',
+                minWidth: 0,
+                content: <PptxViewControls value={viewSettings} change={setViewSettings} />,
+              },
+              {
+                key: 'view',
+                label: '查找',
+                tab: 'view',
+                minWidth: 0,
+                content: (
+                  <ToolbarButton label="查找和替换" active={findOpen} onClick={toggleFind}>
+                    <FindIcon />
+                  </ToolbarButton>
+                ),
+              },
+            ]}
           />
+        }
+        /*
+        次工具条：幻灯片导航 + 查找栏。
+
+        **导航挪到这里**（原先在工具条上）：页签的数量跟着页数长，30 页的演示
+        文稿会把工具条挤成好几行；而次工具条是真正吸顶的那一层，`.me-tabs` 自己
+        横滚（`overflow-x: auto` 让它的自动最小宽度是 0），窄窗口下也不会撑破外壳。
+      */
+        subbar={
+          <>
+            <ToolbarGroup label="翻页">
+              <ToolbarButton
+                label="上一页"
+                disabled={active === 0}
+                disabledReason="已经是第一页"
+                onClick={() => goTo(active - 1)}
+              >
+                <ChevronLeftIcon />
+              </ToolbarButton>
+              <ToolbarButton
+                label="下一页"
+                disabled={active >= slideCount - 1}
+                disabledReason="已经是最后一页"
+                onClick={() => goTo(active + 1)}
+              >
+                <ChevronRightIcon />
+              </ToolbarButton>
+              {/* 跳到第 N 页：取值是 1..页数，页数打开文件才知道，所以是输入框不是下拉 */}
+              <ToolbarNumberField
+                label="跳到第几页"
+                value={active + 1}
+                min={1}
+                max={slideCount}
+                suffix="页"
+                onCommit={(next) => goTo(next - 1)}
+              />
+            </ToolbarGroup>
+
+            {slideCount > 1 && (
+              <ToolbarTabs
+                label="幻灯片"
+                value={active}
+                onChange={goTo}
+                items={Array.from({ length: slideCount }, (_, i) => ({
+                  value: i,
+                  label: `${i + 1}`,
+                }))}
+              />
+            )}
+
+            {/* 放映隐藏状态由同一宿主操作写回 slide 的 show 属性。 */}
+            {rendered.hidden && (
+              <ToolbarLabel>
+                <EyeIcon /> 这一页在放映时隐藏
+              </ToolbarLabel>
+            )}
+
+            {findOpen && (
+              <FindReplaceBar
+                adapter={findAdapter}
+                query={findQuery}
+                onQueryChange={setFindQuery}
+                options={findOptions}
+                onOptionsChange={setFindOptions}
+                onClose={toggleFind}
+              />
+            )}
+          </>
+        }
+        footer={
+          selected && selectedText ? (
+            <PptxTextRangeEditor
+              paragraphs={selectedText.paragraphs}
+              targetKey={textTargetKey}
+              version={viewVersion}
+              disabled={editingBusy}
+              selection={textSelection}
+              pendingFormat={pendingFormat}
+              onSelectionChange={selectTextRange}
+              onEdit={editTextRange}
+            />
+          ) : undefined
+        }
+        status={
+          <>
+            <ToolbarLabel>{status}</ToolbarLabel>
+            {dirty && (
+              <ToolbarLabel>
+                第 {active + 1} / {slideCount} 页
+              </ToolbarLabel>
+            )}
+            {!inspector && pageError && <ToolbarNotice>{pageError}</ToolbarNotice>}
+            {!inspector && !pageError && pageStatus && <span role="status">{pageStatus}</span>}
+            {/*
+            缺几何的文本框如实说明（DESIGN §0.2）。**这一条不是可选的**：那些
+            框是按幻灯片比例补出来的（`pptx-render.ts` 的 `withFallbackGeometry`），
+            用户看到的版式不是文件里的版式——不说的话他会以为这就是原件的样子，
+            然后在 PowerPoint 里发现位置完全不同。短句，理由与下面那条相同。
+          */}
+            {rendered.geometryFilled > 0 && (
+              <ToolbarLabel>
+                {rendered.geometryFilled} 个文本框在文件里没有几何，按默认框渲染
+              </ToolbarLabel>
+            )}
+          </>
+        }
+      >
+        <div className="mimir-pptx-workspace">
+          <PptxWorkspaceViews
+            key={`${documentId}:${workspaceMode}`}
+            mode={workspaceMode}
+            deck={view}
+            active={active}
+            busy={editingBusy}
+            onSelect={goTo}
+            onMode={changeWorkspaceMode}
+            onReorder={reorderWorkspaceSlides}
+            normal={
+              <ThumbnailSidebar
+                pages={thumbnailPages}
+                activeIndex={active}
+                noun="幻灯片"
+                onSelect={goTo}
+                onInsert={insertPage}
+                onDuplicate={duplicatePage}
+                onDelete={deletePage}
+                onMove={movePage}
+                renderThumbnail={(index) => <PptxThumbnail deck={view} index={index} />}
+              >
+                {workspaceStage}
+              </ThumbnailSidebar>
+            }
+          >
+            {workspaceStage}
+          </PptxWorkspaceViews>
+          {inspector && (
+            <aside
+              ref={inspectorRef}
+              tabIndex={-1}
+              className="mimir-pptx-inspector"
+              aria-label={`${inspector}面板`}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape' && !event.defaultPrevented) {
+                  event.stopPropagation()
+                  closeInspector()
+                }
+              }}
+            >
+              <div className="mimir-pptx-inspector__head">
+                <h2>{inspector}</h2>
+                <ToolbarButton label="关闭幻灯片属性面板" onClick={closeInspector}>
+                  关闭
+                </ToolbarButton>
+              </div>
+              <div
+                className="mimir-pptx-inspector__body"
+                data-panel={inspector}
+                key={
+                  inspector === '形状库'
+                    ? `${active}:shape-library`
+                    : inspector === '设置背景'
+                      ? `${active}:background`
+                      : inspector === '编辑表格' ||
+                          inspector === '形状填充' ||
+                          inspector === '段落与文本框'
+                        ? `${active}:${objectTarget?.el ?? selected}`
+                        : panelKey
+                }
+              >
+                {inspectorPanels[inspector]}
+                {pageError && <ToolbarNotice>{pageError}</ToolbarNotice>}
+                {!pageError && pageStatus && <span role="status">{pageStatus}</span>}
+              </div>
+            </aside>
+          )}
         </div>
-      </ThumbnailSidebar>
-    </EditorShell>
+      </EditorShell>
+      {presentation?.documentId === documentId && (
+        <PptxPresentation
+          session={session}
+          start={presentation.start}
+          slideIndices={presentation.slideIndices}
+          rehearse={presentation.rehearse}
+          onRehearsal={(result) => {
+            setRehearsal({ documentId, result })
+            setInspector('自定义放映与排练')
+          }}
+          presenter={presentation.mode === 'presenter'}
+          triggerRef={presentationReturnRef}
+          onClose={() => setPresentation(null)}
+        />
+      )}
+    </>
   )
 }

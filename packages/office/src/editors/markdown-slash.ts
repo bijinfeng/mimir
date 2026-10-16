@@ -15,6 +15,7 @@ export interface MarkdownSlashItem {
   keywords: string[]
   op?: MdOp
   node: string
+  diagramLanguage?: 'mermaid' | 'wavedrom'
 }
 
 export interface MarkdownSlashState {
@@ -35,6 +36,29 @@ export const INSERT_MATH_BLOCK: MdOp = {
   op: 'insertContent',
   after: 'selection',
   markdown: '$$\nx^2 + y^2 = z^2\n$$',
+}
+
+export const INSERT_MERMAID_BLOCK: MdOp = {
+  op: 'insertContent',
+  after: 'selection',
+  markdown:
+    '```mermaid\nflowchart LR\n    A[Start] --> B{Decision}\n    B -->|Yes| C[Done]\n    B -->|No| A\n```',
+}
+
+export const INSERT_WAVEDROM_BLOCK: MdOp = {
+  op: 'insertContent',
+  after: 'selection',
+  markdown:
+    "```wavedrom\n{ signal: [\n  { name: 'clk', wave: 'p.....' },\n  { name: 'data', wave: 'x.345x', data: ['head', 'body', 'tail'] },\n  { name: 'req', wave: '0.1..0' },\n]}\n```",
+}
+
+export function hasDiagramRenderer(editor: Editor, language: 'mermaid' | 'wavedrom'): boolean {
+  const storage = editor.storage as unknown as Record<
+    string,
+    { diagramLanguages?: unknown } | undefined
+  >
+  const languages = storage.codeBlock?.diagramLanguages
+  return Array.isArray(languages) && languages.includes(language)
 }
 
 const ITEMS: MarkdownSlashItem[] = [
@@ -123,6 +147,22 @@ const ITEMS: MarkdownSlashItem[] = [
     op: INSERT_MATH_BLOCK,
   },
   {
+    id: 'diagram',
+    label: 'Mermaid 图表',
+    keywords: ['mermaid', 'chart', 'flowchart', 'graph', '流程图'],
+    node: 'codeBlock',
+    diagramLanguage: 'mermaid',
+    op: INSERT_MERMAID_BLOCK,
+  },
+  {
+    id: 'waveform',
+    label: 'WaveDrom 时序图',
+    keywords: ['wavedrom', 'timing', 'waveform', 'signal', 'clock', '波形'],
+    node: 'codeBlock',
+    diagramLanguage: 'wavedrom',
+    op: INSERT_WAVEDROM_BLOCK,
+  },
+  {
     id: 'image',
     label: '图片',
     keywords: ['image', 'upload', '插入图片'],
@@ -139,6 +179,7 @@ export function markdownSlashItems(
   return ITEMS.filter(
     (item) =>
       editor.schema.nodes[item.node] &&
+      (!item.diagramLanguage || hasDiagramRenderer(editor, item.diagramLanguage)) &&
       (item.id !== 'image' || (imageUploadEnabled && hasCommand(editor, 'setImage'))) &&
       (!normalized ||
         item.id.includes(normalized) ||

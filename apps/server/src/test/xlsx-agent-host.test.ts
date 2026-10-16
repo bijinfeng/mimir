@@ -25,7 +25,7 @@ const fixture = new URL(
 const load = () => new Uint8Array(readFileSync(fixture))
 
 describe('XLSX host executor', () => {
-  it('registers the pinned find_cells read contract without exposing read_formats', () => {
+  it('registers the pinned find_cells and newly implemented inspection contracts', () => {
     const catalog = xlsxAgentCatalog()
     const tool = catalog.tools.find((entry) => entry.name === 'find_cells')
     expect(catalog.clientToolNames.has('find_cells')).toBe(true)
@@ -39,7 +39,7 @@ describe('XLSX host executor', () => {
         max_results: { maximum: 200 },
       },
     })
-    expect(catalog.clientToolNames.has('read_formats')).toBe(false)
+    expect(catalog.clientToolNames.has('read_formats')).toBe(true)
   })
 
   it('shows the model the supported op discriminator and concrete set_cell fields', () => {
@@ -60,7 +60,7 @@ describe('XLSX host executor', () => {
         },
       },
     })
-    expect(JSON.stringify(tool?.inputSchema)).not.toContain('add_chart')
+    expect(JSON.stringify(tool?.inputSchema)).toContain('add_chart')
     expect(JSON.stringify(tool?.inputSchema)).toContain('rename_sheet')
     expect(JSON.stringify(tool?.inputSchema)).toContain('add_sheet')
     expect(tool?.description).toContain('"op":"set_cell"')
@@ -362,7 +362,7 @@ describe('XLSX host executor', () => {
         documentId: 'xlsx-1',
         bytes,
         expectedVersion: 0,
-        ops: [{ op: 'add_chart', sheetId: 'sheet-1', chartType: 'bar', dataRange: 'A1:B2' }],
+        ops: [{ op: 'unknown_operation', sheetId: 'sheet-1' }],
       }),
     ).rejects.toThrow('尚未接入')
     await expect(
@@ -395,11 +395,11 @@ describe('XLSX host executor', () => {
             source: 'A2',
             target: 'D2',
             filterColumn: 'A',
-            filterValues: ['姓名'],
+            filterValues: ['没有这行'],
           },
         ],
       }),
-    ).rejects.toThrow('筛选条件')
+    ).rejects.toThrow('没有匹配行')
     await expect(
       applyXlsxOpsOnHost({
         documentId: 'xlsx-1',
@@ -410,5 +410,211 @@ describe('XLSX host executor', () => {
         ],
       }),
     ).rejects.toThrow('最多 2000 个格子')
+  })
+})
+
+async function rangeFixture() {
+  const zip = await JSZip.loadAsync(load())
+  zip.file(
+    'xl/worksheets/sheet1.xml',
+    '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>键</t></is></c><c r="B1" t="inlineStr"><is><t>公式</t></is></c><c r="D1"><v>10</v></c></row><row r="2" ht="30"><c r="A2" s="1"><v>2</v></c><c r="B2" s="1"><f>A2+$D$1</f><v>12</v></c><c r="C2" t="inlineStr"><is><r><rPr><b/></rPr><t>乙</t></r><r><t>富文本</t></r></is></c><c r="D2" t="inlineStr"><is><t>范围外</t></is></c></row><row r="3"><c r="A3" s="0"><v>1</v></c><c r="B3" s="0"><f>A3+$D$1</f><v>11</v></c><c r="C3" t="inlineStr"><is><t>甲</t></is></c></row></sheetData></worksheet>',
+  )
+  return zip.generateAsync({ type: 'uint8array' })
+}
+const execute = (bytes: Uint8Array, op: unknown, expectedVersion = 0) =>
+  applyXlsxOpsOnHost({ documentId: 'xlsx-1', bytes, expectedVersion, ops: [op] })
+
+describe('XLSX worksheet and range data commands', () => {
+  it('sorts complete styled cells and rich text, translates formulas, keeps headers and outside cells', async () => {
+    const bytes = await rangeFixture()
+    const sorted = await execute(bytes, {
+      op: 'sort_range',
+      sheetId: 'sheet-1',
+      range: 'A1:C3',
+      byColumn: 'A',
+      order: 'asc',
+      hasHeader: true,
+    })
+    const zip = await JSZip.loadAsync(sorted.bytes)
+    const xml = await zip.file('xl/worksheets/sheet1.xml')!.async('string')
+    expect(xml).toContain('<c r="A2" s="0"><v>1</v></c>')
+    expect(xml).toContain('<c r="A3" s="1"><v>2</v></c>')
+    expect(xml).toContain('<c r="B2" s="0"><f>A2+$D$1</f><v>11</v></c>')
+    expect(xml).toContain('<c r="B3" s="1"><f>A3+$D$1</f><v>12</v></c>')
+    expect(xml).toContain(
+      '<c r="C3" t="inlineStr"><is><r><rPr><b/></rPr><t>乙</t></r><r><t>富文本</t></r></is></c>',
+    )
+    expect(xml).toContain('<c r="D2" t="inlineStr"><is><t>范围外</t></is></c>')
+    expect(xml).toContain('<row r="2" ht="30">')
+    const read = await readBasicWorkbook(Buffer.from(sorted.bytes))
+    expect(read.snapshot.sheets[0]?.cells.A2?.value).toBe(1)
+    expect(read.snapshot.sheets[0]?.cells.B2?.formula).toBe('=A2+$D$1')
+    const prior = await JSZip.loadAsync(bytes)
+    for (const path of Object.keys(prior.files).filter(
+      (entryPath) => !sorted.touchedEntries.includes(entryPath),
+    )) {
+      expect(await zip.file(path)?.async('uint8array')).toEqual(
+        await prior.file(path)?.async('uint8array'),
+      )
+    }
+    const reversed = await execute(
+      sorted.bytes,
+      {
+        op: 'sort_range',
+        sheetId: 'sheet-1',
+        range: 'A1:C3',
+        byColumn: 'A',
+        order: 'desc',
+        hasHeader: true,
+      },
+      1,
+    )
+    const twice = await JSZip.loadAsync(reversed.bytes)
+    expect(await twice.file('xl/worksheets/sheet1.xml')!.async('string')).toContain(
+      '<c r="A2" s="1"><v>2</v></c>',
+    )
+  })
+
+  it('sets and combines value filter criteria and restores row visibility when cleared', async () => {
+    const bytes = await rangeFixture()
+    const enabled = await execute(bytes, { op: 'set_filter', sheetId: 'sheet-1', range: 'A1:C3' })
+    const filtered = await execute(
+      enabled.bytes,
+      { op: 'set_filter_criteria', sheetId: 'sheet-1', column: 'A', values: ['1'] },
+      1,
+    )
+    const zip = await JSZip.loadAsync(filtered.bytes)
+    const xml = await zip.file('xl/worksheets/sheet1.xml')!.async('string')
+    expect(xml).toContain(
+      '<autoFilter ref="A1:C3"><filterColumn colId="0"><filters><filter val="1"/></filters></filterColumn></autoFilter>',
+    )
+    expect(xml).toMatch(/<row\b[^>]*r="2"[^>]*hidden="1"/)
+    expect(xml).not.toMatch(/<row\b[^>]*r="3"[^>]*hidden="1"/)
+    const clearedColumn = await execute(
+      filtered.bytes,
+      { op: 'set_filter_criteria', sheetId: 'sheet-1', column: 'A', values: null },
+      2,
+    )
+    const cleared = await execute(
+      clearedColumn.bytes,
+      { op: 'clear_filter', sheetId: 'sheet-1' },
+      3,
+    )
+    const lastZip = await JSZip.loadAsync(cleared.bytes)
+    const last = await lastZip.file('xl/worksheets/sheet1.xml')!.async('string')
+    expect(last).not.toContain('autoFilter')
+    expect(last).not.toContain('hidden="1"')
+    expect(last).toContain('<f>A2+$D$1</f><v>12</v>')
+  })
+
+  it('copies, moves, hides and deletes worksheets through the original package gateway', async () => {
+    const bytes = await rangeFixture()
+    await expect(
+      execute(bytes, { op: 'set_sheet_hidden', sheetId: 'sheet-1', hidden: true }),
+    ).rejects.toThrow('visible')
+    const copied = await execute(bytes, { op: 'duplicate_sheet', sheetId: 'sheet-1', name: '副本' })
+    const read = await readBasicWorkbook(Buffer.from(copied.bytes))
+    const id = read.snapshot.sheets[1]!.id
+    expect(read.snapshot.sheets[1]?.cells.B2?.formula).toBe('=A2+$D$1')
+    const moved = await execute(copied.bytes, { op: 'move_sheet', sheetId: id, position: 1 }, 1)
+    expect(
+      (await readBasicWorkbook(Buffer.from(moved.bytes))).snapshot.sheets.map(
+        (sheet) => sheet.name,
+      ),
+    ).toEqual(['副本', '数据'])
+    const hidden = await execute(
+      moved.bytes,
+      { op: 'set_sheet_hidden', sheetId: id, hidden: true },
+      2,
+    )
+    expect(
+      await (await JSZip.loadAsync(hidden.bytes)).file('xl/workbook.xml')!.async('string'),
+    ).toMatch(/<sheet\b[^>]*state="hidden"[^>]*name="副本"/)
+    const removed = await execute(hidden.bytes, { op: 'delete_sheet', sheetId: id }, 3)
+    expect(
+      (await readBasicWorkbook(Buffer.from(removed.bytes))).snapshot.sheets.map(
+        (sheet) => sheet.name,
+      ),
+    ).toEqual(['数据'])
+  })
+
+  it('replaces only raw text cells and keeps formulas and numbers typed', async () => {
+    const bytes = await rangeFixture()
+    const result = await execute(bytes, {
+      op: 'find_replace',
+      sheetId: 'sheet-1',
+      range: 'A1:D3',
+      find: '范围',
+      replace: '更改',
+    })
+    const read = await readBasicWorkbook(Buffer.from(result.bytes))
+    expect(read.snapshot.sheets[0]?.cells.D2?.value).toBe('更改外')
+    expect(read.snapshot.sheets[0]?.cells.B2?.formula).toBe('=A2+$D$1')
+    const xml = await (
+      await JSZip.loadAsync(result.bytes)
+    )
+      .file('xl/worksheets/sheet1.xml')!
+      .async('string')
+    expect(xml).toContain('<c r="A2" s="1"><v>2</v></c>')
+  })
+})
+
+describe('XLSX sort preflight and cached-key safety', () => {
+  it('refuses shared/array formulas and address-bound structures before returning mutated bytes', async () => {
+    const original = load()
+    for (const body of [
+      '<sheetData><row r="1"><c r="A1"><v>2</v></c><c r="B1"><f t="shared" si="0" ref="B1:B2">A1+1</f><v>3</v></c></row><row r="2"><c r="A2"><v>1</v></c><c r="B2"><f t="shared" si="0"/><v>2</v></c></row></sheetData>',
+      '<sheetData><row r="1"><c r="A1"><v>2</v></c><c r="B1"><f t="array" ref="B1:B2">A1:A2+1</f><v>3</v></c></row><row r="2"><c r="A2"><v>1</v></c></row></sheetData>',
+      ...[
+        'mergeCells',
+        'hyperlinks',
+        'legacyDrawing',
+        'tableParts',
+        'conditionalFormatting',
+        'dataValidations',
+        'autoFilter',
+      ].map(
+        (feature) =>
+          `<sheetData><row r="1"><c r="A1"><v>2</v></c></row><row r="2"><c r="A2"><v>1</v></c></row></sheetData><${feature}/>`,
+      ),
+    ]) {
+      const zip = await JSZip.loadAsync(original)
+      zip.file(
+        'xl/worksheets/sheet1.xml',
+        `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">${body}</worksheet>`,
+      )
+      const bytes = await zip.generateAsync({ type: 'uint8array' })
+      const prior = bytes.slice()
+      await expect(
+        applyXlsxOpsOnHost({
+          documentId: 'xlsx-1',
+          bytes,
+          expectedVersion: 0,
+          ops: [
+            { op: 'sort_range', sheetId: 'sheet-1', range: 'A1:B2', byColumn: 'A', order: 'asc' },
+          ],
+        }),
+      ).rejects.toThrow(/共享\/数组公式|排序需同时迁移对应结构/)
+      expect(bytes).toEqual(prior)
+    }
+  })
+
+  it('refuses a formula sort key without a cached result', async () => {
+    const zip = await JSZip.loadAsync(load())
+    zip.file(
+      'xl/worksheets/sheet1.xml',
+      '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData><row r="1"><c r="A1"><f>1+1</f></c></row><row r="2"><c r="A2"><v>1</v></c></row></sheetData></worksheet>',
+    )
+    const bytes = await zip.generateAsync({ type: 'uint8array' })
+    await expect(
+      applyXlsxOpsOnHost({
+        documentId: 'xlsx-1',
+        bytes,
+        expectedVersion: 0,
+        ops: [
+          { op: 'sort_range', sheetId: 'sheet-1', range: 'A1:A2', byColumn: 'A', order: 'asc' },
+        ],
+      }),
+    ).rejects.toThrow('排序键公式无缓存结果')
   })
 })

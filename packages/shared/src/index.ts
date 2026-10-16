@@ -17,6 +17,7 @@ export * from './local.js'
 export * from './docx-agent.js'
 export * from './document-agent.js'
 export * from './pdf-agent.js'
+export * from './xlsx-agent.js'
 
 /** 统一的 API 响应外壳，前端 api client 依赖它做错误处理 */
 export interface ApiError {
@@ -26,3 +27,12 @@ export interface ApiError {
     details?: unknown
   }
 }
+export * from './pptx-agent.js'
+export * from './pptx-ink.js'
+
+export * from './pptx-fill.js'
+export * from './pptx-zoom.js'
+
+export * from './pptx-animation.js'
+export * from './pptx-shape.js'
+export * from './pptx-paragraph.js'

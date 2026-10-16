@@ -10,6 +10,12 @@ import type {
   DocumentDetail,
   DocxAgentCapabilities,
   DocumentAgentCapabilities,
+  DocumentAgentCreateInput,
+  DocumentAgentCreateFileFields,
+  DocumentAgentCreatedDocument,
+  PptxHostAction,
+  XlsxHostAction,
+  XlsxRecalculation,
   HtmlPageBrief,
   HtmlPlanPageInput,
   HtmlWriteDocumentInput,
@@ -30,7 +36,16 @@ import type {
   PdfTextProbe,
   PdfTextTarget,
   PdfMarkupInput,
+  PdfAnnotationOperation,
+  PdfFormOperation,
+  PdfImageOperation,
+  PdfLocalOperation,
+  PdfLocalInfo,
+  PdfImageSnapshot,
+  PdfFormSnapshot,
+  PdfAnnotationSnapshot,
   PptxManualPictureFields,
+  PptxManualUpload,
   RuntimeConfig,
   SaveNoteInput,
   SearchQueryInput,
@@ -40,6 +55,8 @@ import type {
   UpdateSettingsResponse,
   UsageStats,
 } from '@mimir/shared'
+import { streamHtmlWriting } from './html-writing-stream'
+import { streamMarkdownWriting } from './markdown-writing-stream'
 import { appBasePath, appPath, serverAssetPath } from './app-path'
 
 /**
@@ -256,8 +273,137 @@ function toQuery(params: Record<string, string | number | boolean | string[] | u
   return qs ? `?${qs}` : ''
 }
 
+function decodeOfficeBytes(value: string): Uint8Array {
+  return Uint8Array.from(atob(value), (char) => char.charCodeAt(0))
+}
+
 export const api = {
   documents: {
+    async pdfLocal(input: {
+      documentId: string
+      bytes: Uint8Array
+      expectedVersion: number
+      operation: PdfLocalOperation
+      assetFile?: File
+      signal?: AbortSignal
+    }): Promise<{
+      bytes?: Uint8Array
+      version: number
+      outputs?: Array<{ name: string; bytes: Uint8Array }>
+      info?: PdfLocalInfo
+    }> {
+      const form = new FormData()
+      form.set(
+        'file',
+        new File([new Uint8Array(input.bytes)], 'current.pdf', { type: 'application/pdf' }),
+      )
+      form.set('documentId', input.documentId)
+      form.set('expectedVersion', String(input.expectedVersion))
+      form.set('operation', JSON.stringify(input.operation))
+      if (input.assetFile) form.set('asset', input.assetFile)
+      const response = await sendMultipart<{
+        bytesBase64?: string
+        version: number
+        outputs?: Array<{ name: string; bytesBase64: string }>
+        info?: PdfLocalInfo
+      }>('/api/conversations/pdf-agent/local', 'POST', form, input.signal)
+      return {
+        bytes: response.bytesBase64 ? decodeOfficeBytes(response.bytesBase64) : undefined,
+        version: response.version,
+        outputs: response.outputs?.map((output) => ({
+          name: output.name,
+          bytes: decodeOfficeBytes(output.bytesBase64),
+        })),
+        info: response.info,
+      }
+    },
+    async pdfImages(input: {
+      documentId: string
+      bytes: Uint8Array
+      expectedVersion: number
+      operation: PdfImageOperation
+      sha256?: string
+      signal?: AbortSignal
+    }): Promise<{ bytes?: Uint8Array; version: number; images: PdfImageSnapshot }> {
+      const form = new FormData()
+      const copy = new Uint8Array(input.bytes.byteLength)
+      copy.set(input.bytes)
+      form.set('file', new File([copy], 'current.pdf', { type: 'application/pdf' }))
+      form.set('documentId', input.documentId)
+      form.set('expectedVersion', String(input.expectedVersion))
+      form.set('operation', JSON.stringify(input.operation))
+      if (input.sha256) form.set('sha256', input.sha256)
+      const response = await sendMultipart<{
+        bytesBase64?: string
+        version: number
+        images: PdfImageSnapshot
+      }>('/api/conversations/pdf-agent/images', 'POST', form, input.signal)
+      return {
+        bytes: response.bytesBase64
+          ? Uint8Array.from(atob(response.bytesBase64), (char) => char.charCodeAt(0))
+          : undefined,
+        version: response.version,
+        images: response.images,
+      }
+    },
+    async pdfForms(input: {
+      documentId: string
+      bytes: Uint8Array
+      expectedVersion: number
+      operation: PdfFormOperation
+      sha256?: string
+      signal?: AbortSignal
+    }): Promise<{ bytes?: Uint8Array; version: number; forms: PdfFormSnapshot }> {
+      const form = new FormData()
+      const copy = new Uint8Array(input.bytes.byteLength)
+      copy.set(input.bytes)
+      form.set('file', new File([copy], 'current.pdf', { type: 'application/pdf' }))
+      form.set('documentId', input.documentId)
+      form.set('expectedVersion', String(input.expectedVersion))
+      form.set('operation', JSON.stringify(input.operation))
+      if (input.sha256) form.set('sha256', input.sha256)
+      const response = await sendMultipart<{
+        bytesBase64?: string
+        version: number
+        forms: PdfFormSnapshot
+      }>('/api/conversations/pdf-agent/forms', 'POST', form, input.signal)
+      return {
+        bytes: response.bytesBase64
+          ? Uint8Array.from(atob(response.bytesBase64), (char) => char.charCodeAt(0))
+          : undefined,
+        version: response.version,
+        forms: response.forms,
+      }
+    },
+    async pdfAnnotations(input: {
+      documentId: string
+      bytes: Uint8Array
+      expectedVersion: number
+      operation: PdfAnnotationOperation
+      sha256?: string
+      signal?: AbortSignal
+    }): Promise<{ bytes?: Uint8Array; version: number; annotations: PdfAnnotationSnapshot }> {
+      const form = new FormData()
+      const copy = new Uint8Array(input.bytes.byteLength)
+      copy.set(input.bytes)
+      form.set('file', new File([copy], 'current.pdf', { type: 'application/pdf' }))
+      form.set('documentId', input.documentId)
+      form.set('expectedVersion', String(input.expectedVersion))
+      form.set('operation', JSON.stringify(input.operation))
+      if (input.sha256) form.set('sha256', input.sha256)
+      const response = await sendMultipart<{
+        bytesBase64?: string
+        version: number
+        annotations: PdfAnnotationSnapshot
+      }>('/api/conversations/pdf-agent/annotations', 'POST', form, input.signal)
+      return {
+        bytes: response.bytesBase64
+          ? Uint8Array.from(atob(response.bytesBase64), (char) => char.charCodeAt(0))
+          : undefined,
+        version: response.version,
+        annotations: response.annotations,
+      }
+    },
     async inspectPdfText(input: {
       documentId: string
       bytes: Uint8Array
@@ -335,6 +481,8 @@ export const api = {
       bytes: Uint8Array
       expectedVersion: number
       ops: unknown[]
+      action?: XlsxHostAction
+      imageFile?: File
       signal?: AbortSignal
     }) {
       const form = new FormData()
@@ -349,11 +497,14 @@ export const api = {
       form.set('documentId', input.documentId)
       form.set('expectedVersion', String(input.expectedVersion))
       form.set('ops', JSON.stringify(input.ops))
+      form.set('action', input.action ?? 'apply_ops')
+      if (input.imageFile) form.set('imageBlob', input.imageFile)
       const response = await sendMultipart<{
         bytesBase64: string
         version: number
         changedCells: string[]
         touchedEntries: string[]
+        recalculation?: XlsxRecalculation
       }>('/api/conversations/xlsx-agent/apply-ops', 'POST', form, input.signal)
       const decoded = atob(response.bytesBase64)
       const bytes = new Uint8Array(decoded.length)
@@ -363,6 +514,7 @@ export const api = {
         version: response.version,
         changedCells: response.changedCells,
         touchedEntries: response.touchedEntries,
+        recalculation: response.recalculation,
       }
     },
     async applyPptxOps(input: {
@@ -370,6 +522,7 @@ export const api = {
       bytes: Uint8Array
       expectedVersion: number
       ops: unknown[]
+      action?: PptxHostAction
       signal?: AbortSignal
     }) {
       const form = new FormData()
@@ -384,11 +537,14 @@ export const api = {
       form.set('documentId', input.documentId)
       form.set('expectedVersion', String(input.expectedVersion))
       form.set('ops', JSON.stringify(input.ops))
+      if (input.action) form.set('action', input.action)
       const response = await sendMultipart<{
         bytesBase64: string
         records: unknown[]
         version: number
         sampleData?: boolean
+        changed?: boolean
+        data?: unknown
       }>('/api/conversations/pptx-agent/apply-ops', 'POST', form, input.signal)
       const decoded = atob(response.bytesBase64)
       const bytes = new Uint8Array(decoded.length)
@@ -398,7 +554,34 @@ export const api = {
         records: response.records,
         version: response.version,
         sampleData: response.sampleData,
+        changed: response.changed,
+        data: response.data,
       }
+    },
+    async applyPptxManualAsset(input: {
+      documentId: string
+      bytes: Uint8Array
+      expectedVersion: number
+      input: PptxManualUpload
+      assetFile: File
+      posterFile?: File
+      signal?: AbortSignal
+    }) {
+      const form = new FormData()
+      form.set('file', new File([new Uint8Array(input.bytes)], 'current.pptx'))
+      form.set('asset', input.assetFile)
+      if (input.posterFile) form.set('poster', input.posterFile)
+      form.set('documentId', input.documentId)
+      form.set('expectedVersion', String(input.expectedVersion))
+      form.set('input', JSON.stringify(input.input))
+      const response = await sendMultipart<{
+        bytesBase64: string
+        records: unknown[]
+        version: number
+        data?: unknown
+      }>('/api/conversations/pptx-agent/manual-asset', 'POST', form, input.signal)
+      const bytes = Uint8Array.from(atob(response.bytesBase64), (char) => char.charCodeAt(0))
+      return { bytes, records: response.records, version: response.version, data: response.data }
     },
     async applyPptxPicture(input: {
       documentId: string
@@ -443,11 +626,9 @@ export const api = {
       documentId: string,
       input: Omit<HtmlWriteDocumentInput, 'documentId'>,
       signal?: AbortSignal,
+      onDelta?: (text: string) => void,
     ) {
-      return request<{ html: string; complete: true }>(
-        '/api/conversations/html-agent/write-document',
-        { method: 'POST', body: JSON.stringify({ documentId, ...input }), signal },
-      )
+      return streamHtmlWriting(transport, { documentId, ...input }, signal, onDelta)
     },
     list(query: Partial<DocumentListQuery> = {}) {
       return request<{ items: DocumentSummary[] }>(
@@ -631,12 +812,9 @@ export const api = {
       documentId: string,
       input: { plan: string; title?: string; context?: string },
       signal?: AbortSignal,
+      onDelta?: (text: string) => void,
     ) {
-      return request<{ markdown: string }>('/api/conversations/markdown-agent/write-document', {
-        method: 'POST',
-        body: JSON.stringify({ documentId, ...input }),
-        signal,
-      })
+      return streamMarkdownWriting(transport, { documentId, ...input }, signal, onDelta)
     },
     readMarkdownFrontmatter(documentId: string) {
       return request<{ yaml: string }>(
@@ -681,24 +859,30 @@ export const api = {
       })
     },
     createDocxDocument(
-      input: {
-        documentId: string
-        title: string
-        format: 'docx' | 'pdf' | 'md' | 'html'
-        content: string
-      },
+      input: DocumentAgentCreateInput | (DocumentAgentCreateFileFields & { file: File }),
       signal?: AbortSignal,
     ) {
-      return request<{
-        documentId: string
-        title: string
-        format: string
-        parseError: string | null
-      }>('/api/conversations/docx-agent/create-document', {
-        method: 'POST',
-        body: JSON.stringify(input),
-        signal,
-      })
+      if ('file' in input) {
+        const form = new FormData()
+        form.set('documentId', input.documentId)
+        form.set('title', input.title)
+        form.set('format', input.format)
+        form.set('file', input.file)
+        return sendMultipart<DocumentAgentCreatedDocument>(
+          '/api/conversations/document-agent/create-file',
+          'POST',
+          form,
+          signal,
+        )
+      }
+      return request<DocumentAgentCreatedDocument>(
+        '/api/conversations/document-agent/create-document',
+        {
+          method: 'POST',
+          body: JSON.stringify(input),
+          signal,
+        },
+      )
     },
     create() {
       return request<ConversationSummary>('/api/conversations', { method: 'POST' })

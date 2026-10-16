@@ -31,13 +31,21 @@ export function assignLiveBlockSections(
     if (
       child.classList.contains('page-gap') ||
       child.classList.contains('page-float-host') ||
-      child.classList.contains('page-float-carry')
+      child.classList.contains('page-float-carry') ||
+      child.classList.contains('mimir-docx-endnotes')
     )
       continue
     indexes.set(child, index++)
   }
   let previous = 0
   for (const block of blocks) {
+    const endnoteSection = block.el?.dataset.endnoteSection
+    if (endnoteSection !== undefined) {
+      block.section = Math.max(0, Math.min(sections.length - 1, Number(endnoteSection)))
+      block.isEndnotes = true
+      block.widowControl = false
+      continue
+    }
     const editorIndex = block.el ? indexes.get(block.el) : undefined
     if (editorIndex !== undefined) {
       const found = sections.findIndex((section) => editorIndex <= section.lastBlockIndex)
@@ -74,7 +82,7 @@ export function gapMetricsForSection(
   const top = effectiveTopPx(nextSettings, 0)
   return {
     marginTop: top,
-    marginBottom: effectiveBottomPx(prevSettings, 0) + remaining + notesHeight,
+    marginBottom: effectiveBottomPx(prevSettings, 0) + Math.max(remaining, notesHeight),
     marginLeft,
     marginRight,
     sectionMarginLeft: marginLeft,

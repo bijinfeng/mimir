@@ -85,75 +85,14 @@
   gap: 0;
   width: 100%;
   min-width: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-width: thin;
+  overflow: hidden;
   white-space: nowrap;
-  scroll-behavior: smooth;
-  scroll-snap-type: x proximity;
   position: relative;
 }
 
-/* 渐变遮罩：提示左侧有更多内容 */
-.mimir-compact-toolbar__commands::before {
-  content: '';
-  position: sticky;
-  left: 0;
-  z-index: 1;
-  flex: 0 0 24px;
-  width: 24px;
-  margin-right: -24px;
-  height: 100%;
-  background: linear-gradient(to right, var(--me-surface, #ffffff), transparent);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-/* 渐变遮罩：提示右侧有更多内容 */
-.mimir-compact-toolbar__commands::after {
-  content: '';
-  position: sticky;
-  right: 0;
-  z-index: 1;
-  flex: 0 0 24px;
-  width: 24px;
-  margin-left: -24px;
-  height: 100%;
-  background: linear-gradient(to left, var(--me-surface, #ffffff), transparent);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-/* 当可以滚动时显示渐变 */
-.mimir-compact-toolbar__commands[data-scroll='start']::before {
-  opacity: 0;
-}
-
-.mimir-compact-toolbar__commands[data-scroll='start']::after {
-  opacity: 1;
-}
-
-.mimir-compact-toolbar__commands[data-scroll='middle']::before,
-.mimir-compact-toolbar__commands[data-scroll='middle']::after {
-  opacity: 1;
-}
-
-.mimir-compact-toolbar__commands[data-scroll='end']::after {
-  opacity: 0;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .mimir-compact-toolbar__tabs,
-  .mimir-compact-toolbar__commands {
-    scroll-behavior: auto;
-  }
-
-  .mimir-compact-toolbar__commands::before,
-  .mimir-compact-toolbar__commands::after {
-    transition: none;
-  }
+.mimir-compact-toolbar__commands[data-overflow] {
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 .mimir-compact-toolbar__section {
@@ -218,4 +157,57 @@
   max-width: 100px;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.mimir-compact-toolbar__section[data-collapsed] {
+  box-sizing: border-box;
+  flex: 0 0 72px;
+  width: 72px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 2px;
+  justify-content: center;
+}
+.mimir-compact-toolbar__section[data-collapsed] > .me-menu,
+.mimir-compact-toolbar__section[data-collapsed] > .me-menu > .me-btn {
+  width: 100%;
+  min-width: 0;
+}
+.mimir-compact-toolbar__section[data-collapsed] > .me-menu > .me-btn {
+  min-height: 48px;
+  height: 100%;
+  padding: 2px;
+  flex-direction: column;
+  gap: 0;
+}
+.mimir-compact-toolbar__section[data-collapsed] .me-menu__text {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 15px;
+  text-align: center;
+}
+.mimir-compact-toolbar__section[data-collapsed] > .me-menu > .me-btn > .me-menu__caret {
+  height: 10px;
+}
+.mimir-compact-toolbar__panel,
+.mimir-compact-toolbar__panel > .me-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+}
+.mimir-compact-toolbar__panel > .me-group {
+  width: 100%;
+  padding: 4px;
+}
+.mimir-compact-toolbar__panel .me-group__caption {
+  display: none;
+}
+.mimir-compact-toolbar__panel > .me-menu__fields {
+  flex-basis: 100%;
 }

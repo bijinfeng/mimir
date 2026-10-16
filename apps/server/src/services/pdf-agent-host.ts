@@ -1,8 +1,8 @@
-import { createHash } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { existsSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
-import { PDFArray, PDFDocument, PDFName } from 'pdf-lib'
+import { PDFArray, PDFDocument, PDFName, PDFString } from 'pdf-lib'
 import type { PdfMarkupInput, PdfTextProbe, PdfTextTarget } from '@mimir/shared'
 import type {
   TextEditInput,
@@ -158,7 +158,7 @@ export async function applyPdfVerifiedTextEdit(
     throw new Error('PDF 原文标识与编辑内容不一致')
   if (edit.newText.includes(edit.oldText))
     throw new Error('替换结果包含原文，暂不能确认旧对象已被移除')
-  if (!edit.newText.trim()) throw new Error('替换文字不能为空')
+  if (edit.newText !== '' && !edit.newText.trim()) throw new Error('替换文字不能仅含空白')
   const current = await inspectPdfTextTarget(bytes, {
     pageIndex: edit.pageIndex,
     rect: edit.rect,
@@ -172,7 +172,7 @@ export async function applyPdfVerifiedTextEdit(
     const before = await beforeTask.promise
     const content = await (await before.getPage(edit.pageIndex + 1)).getTextContent()
     const pageText = content.items.map((item) => ('str' in item ? item.str : '')).join('')
-    if (pageText.includes(edit.newText))
+    if (edit.newText && pageText.includes(edit.newText))
       throw new Error('页面已有相同替换文字，暂不能独立确认本次写入')
   } finally {
     await beforeTask.destroy()
@@ -264,6 +264,7 @@ export async function applyPdfVerifiedMarkup(
       C: color,
       F: 4,
       T: 'Mimir',
+      NM: PDFString.of(`M${randomUUID()}`),
       P: page.ref,
       AP: { N: apRef },
     }),
@@ -296,7 +297,7 @@ export function initializePdfAgentHost(): void {
 }
 
 /** A content-stream rewrite can invalidate signatures or structures we cannot verify. */
-async function assertSafeToRewrite(bytes: Uint8Array): Promise<void> {
+export async function assertSafeToRewrite(bytes: Uint8Array): Promise<void> {
   const pdf = await PDFDocument.load(bytes, { ignoreEncryption: true, updateMetadata: false })
   if (pdf.isEncrypted) throw new Error('这份 PDF 已加密，未写回原件')
   const unknown = pdf.catalog
