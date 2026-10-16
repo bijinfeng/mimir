@@ -1,0 +1,121 @@
+- link "Obsidian Help logo":
+  - /url: https://obsidian.md/help/Home
+- button "English":
+  - generic: English
+- textbox "Search page or heading..."
+- generic: Getting started
+- generic: Import notes
+- generic: User interface
+- link "Appearance":
+  - /url: https://obsidian.md/help/appearance
+- link "Drag and drop":
+  - /url: https://obsidian.md/help/drag-and-drop
+- link "Hotkeys":
+  - /url: https://obsidian.md/help/hotkeys
+- link "Language settings":
+  - /url: https://obsidian.md/help/language
+- link "More options menu":
+  - /url: https://obsidian.md/help/more-options-menu
+- link "Pop-out windows":
+  - /url: https://obsidian.md/help/pop-out-windows
+- link "Ribbon":
+  - /url: https://obsidian.md/help/ribbon
+- link "Settings":
+  - /url: https://obsidian.md/help/settings
+- link "Sidebar":
+  - /url: https://obsidian.md/help/sidebar
+- link "Status bar":
+  - /url: https://obsidian.md/help/status-bar
+- link "Tabs":
+  - /url: https://obsidian.md/help/tabs
+- link "Workspace" [active]:
+  - /url: https://obsidian.md/help/workspace
+- generic: Editing and formatting
+- generic: Linking notes and files
+- generic: Files and folders
+- generic: Plugins
+- generic: Bases
+- generic: Obsidian Publish
+- generic: Obsidian Sync
+- generic: Obsidian Web Clipper
+- generic: Extending Obsidian
+- generic: Contributing to Obsidian
+- generic: Licenses and payment
+- generic: Teams
+- generic: Obsidian
+- link "Help and support":
+  - /url: https://obsidian.md/help/resources
+- link "Home":
+  - /url: https://obsidian.md/help/
+- heading "Workspace" [level=1]
+- paragraph: The workspace is the main container for all the components that make up the Obsidian interface. It consists of different elements arranged around your notes, allowing you to customize how you view and interact with your content.
+- heading "Desktop" [level=2]
+- paragraph: "In the Obsidian desktop app the workspace includes:"
+- list:
+  - link "Ribbon":
+    - /url: https://obsidian.md/help/ribbon
+  - text: running vertically on the left side of the app
+  - link "Sidebar":
+    - /url: https://obsidian.md/help/sidebar
+    - text: Sidebars
+  - text: on the left and right side (can be collapsed)
+  - list:
+    - link "Sidebar > Tab groups":
+      - /url: https://obsidian.md/help/sidebar#Tab groups
+      - text: Sidebar tab groups
+    - text: (can be split vertically)
+    - link "Sidebar > Tabs":
+      - /url: https://obsidian.md/help/sidebar#Tabs
+      - text: Sidebar tabs
+  - link "Tabs > Organize your tabs and windows":
+    - /url: https://obsidian.md/help/tabs#Organize your tabs and windows
+    - text: Tab groups
+  - text: in the central content area (can be split vertically or horizontally)
+  - list:
+    - link "Tabs":
+      - /url: https://obsidian.md/help/tabs
+    - link "More options menu":
+      - /url: https://obsidian.md/help/more-options-menu
+    - text: in the upper-right corner of each note
+  - link "Status bar":
+    - /url: https://obsidian.md/help/status-bar
+  - text: in the bottom right corner
+- heading "Mobile" [level=2]
+- paragraph: "In the Obsidian mobile app the workspace includes:"
+- list:
+  - link "Tabs":
+    - /url: https://obsidian.md/help/tabs
+  - text: managed from the tab counter in the
+  - link "Mobile app > Navigation bar":
+    - /url: https://obsidian.md/help/mobile#Navigation bar
+    - text: Navigation bar
+  - link "More options menu > Mobile":
+    - /url: https://obsidian.md/help/more-options-menu#Mobile
+    - text: More options menu
+  - text: for the active note
+  - link "Sidebar":
+    - /url: https://obsidian.md/help/sidebar
+    - text: Sidebars
+  - text: (opened using left and right swipe gestures)
+  - link "Mobile app > Navigation bar":
+    - /url: https://obsidian.md/help/mobile#Navigation bar
+    - text: Navigation bar
+  - text: at the bottom of the screen
+  - link "Ribbon":
+    - /url: https://obsidian.md/help/ribbon
+    - text: Ribbon menu
+  - text: in the Navigation bar (contains customizable actions)
+  - link "Mobile app":
+    - /url: https://obsidian.md/help/mobile
+    - text: Editor toolbar
+  - text: above the keyboard when editing
+- generic: Workspace
+- button "Close page":
+- generic: Interactive graph
+- button "Expand":
+- button "Global Graph":
+- generic: On this page
+- generic: Desktop
+- generic: Mobile
+- link "Powered by Obsidian Publish":
+  - /url: https://publish.obsidian.md

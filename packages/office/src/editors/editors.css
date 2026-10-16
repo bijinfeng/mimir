@@ -118,20 +118,20 @@
  */
 .mimir-xlsx__cell--cross,
 .mimir-xlsx__gutter--cross {
-  background: color-mix(in srgb, var(--me-accent, #245b9e) 10%, var(--me-surface, #fff));
+  background: color-mix(in srgb, var(--me-accent, #00834d) 10%, var(--me-surface, #fff));
 }
 
 /* The A1 range field previews its target before the user applies formatting. */
 .mimir-xlsx__cell--range {
-  background: color-mix(in srgb, var(--me-accent, #245b9e) 16%, var(--me-surface, #fff));
-  box-shadow: inset 0 0 0 1px var(--me-accent, #245b9e);
+  background: color-mix(in srgb, var(--me-accent, #00834d) 16%, var(--me-surface, #fff));
+  box-shadow: inset 0 0 0 1px var(--me-accent, #00834d);
 }
 
 /* 选中的格子用主色描边（outline 不占布局，不会把表格挤动一格） */
 .mimir-xlsx__cell--on {
-  outline: 2px solid var(--me-accent, #245b9e);
+  outline: 2px solid var(--me-accent-border, #00834d);
   outline-offset: -2px;
-  background: var(--me-accent-bg, #e4eefb);
+  background: var(--me-accent-bg, #e6f4ec);
 }
 
 /* 单元格编辑行（内容下方的附属面板） */
@@ -226,7 +226,7 @@
 
 /* 选中的元素：SVG 里那一个是它，加一圈主色描边 */
 .mimir-pptx-slide [data-element-id].mimir-pptx-selected {
-  outline: 2px solid var(--me-accent, #245b9e);
+  outline: 2px solid var(--me-accent-border, #00834d);
   outline-offset: 1px;
 }
 
@@ -314,22 +314,22 @@
  * 别处（html 的 CodeMirror 那套）撞上，限在 docx 的滚动区里更稳妥。
  */
 .mimir-docx-scroll .search-hit {
-  background: var(--me-accent-bg, #e4eefb);
+  background: var(--me-accent-bg, #e6f4ec);
   border-radius: 2px;
 }
 
 .mimir-docx-scroll .search-hit-active {
-  background: var(--me-accent, #245b9e);
+  background: var(--me-accent, #00834d);
   color: #fff;
 }
 
 .mimir-markdown-scroll .search-hit {
-  background: var(--me-accent-bg, #e4eefb);
+  background: var(--me-accent-bg, #e6f4ec);
   border-radius: 2px;
 }
 
 .mimir-markdown-scroll .search-hit-active {
-  background: var(--me-accent, #245b9e);
+  background: var(--me-accent, #00834d);
   color: #fff;
 }
 
@@ -373,9 +373,21 @@
  * 这样它们与上面 44px 的文档头部对齐。
  */
 .mimir-markdown-body {
-  max-width: var(--me-content-width, 760px);
+  box-sizing: border-box;
+  max-width: calc(var(--me-content-width, 760px) + 96px);
   margin: 0 auto;
-  padding: 18px 20px 48px;
+  padding: 40px 48px 64px;
+}
+
+.mimir-markdown-scroll {
+  container-type: inline-size;
+  container-name: markdown-reading;
+}
+
+@container markdown-reading (max-width: 620px) {
+  .mimir-markdown-body {
+    padding: 28px 16px 64px;
+  }
 }
 
 .mimir-markdown-body .ProseMirror {
@@ -392,7 +404,7 @@
 
 .mimir-markdown-slash__empty {
   padding: 8px 12px;
-  color: var(--me-muted);
+  color: var(--me-text-weak, #6b6b6b);
   font-size: 12px;
 }
 
@@ -412,7 +424,7 @@
 .mimir-markdown-body .ProseMirror:focus {
   outline-style: var(--mimir-focus-ring-style, none);
   outline-width: 2px;
-  outline-color: var(--me-accent-border, #a993d5);
+  outline-color: var(--me-accent-border, #00834d);
   outline-offset: 3px;
   border-radius: 4px;
 }
@@ -476,11 +488,11 @@
 
 /* 查找高亮（`source/cm-find.ts` 里的两个类名，配色由我们给） */
 .mimir-html-cm .search-hit {
-  background: var(--me-accent-bg, #e4eefb);
+  background: var(--me-accent-bg, #e6f4ec);
 }
 
 .mimir-html-cm .search-hit-active {
-  background: var(--me-accent, #245b9e);
+  background: var(--me-accent, #00834d);
   color: #fff;
 }
 
@@ -607,12 +619,12 @@
   --shadow-modal-strong: var(--me-shadow, 0 8px 28px rgb(0 0 0 / 20%));
   --text: var(--me-text, #262626);
   --text-dim: var(--me-text-weak, #777);
-  --accent: var(--me-accent, #7159b5);
+  --accent: var(--me-accent, #00834d);
   --color-bg-page: var(--me-surface, #fff);
   --color-bg-subtle: var(--me-hover, #f3f3f3);
   --color-border-default: var(--me-border, #d9d9d9);
-  --color-btn-primary: var(--me-accent, #7159b5);
-  --color-btn-primary-hover: var(--me-accent-hover, #5f48a0);
+  --color-btn-primary: var(--me-accent, #00834d);
+  --color-btn-primary-hover: var(--ant-color-primary-hover, #007846);
   --color-btn-primary-text: #fff;
   --color-error: var(--me-danger, #d4380d);
   --color-text-primary: var(--me-text, #262626);

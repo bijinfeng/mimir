@@ -172,7 +172,7 @@ function createWindow(url: string, surface: WindowSurface): BrowserWindow {
     height: 900,
     // 与前端主题的底色一致，避免加载瞬间的白/黑闪烁方向错误。
     // 选择页与深色系统同理——底色跟系统走（页面本身也按 prefers-color-scheme 渲染）
-    backgroundColor: nativeTheme.shouldUseDarkColors ? '#0b0c0e' : '#ffffff',
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#18191a' : '#ffffff',
     ...windowChromeOptions(surface),
     autoHideMenuBar: surface !== 'cloud',
     ...(icon === undefined ? {} : { icon }),

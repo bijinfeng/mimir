@@ -34,8 +34,8 @@
  * （解析它的 `<path d="…">`）。两处都需要这份几何，抄一份就有两个真相源——
  * 改了一处忘了另一处，两边的图标会慢慢长得不一样，而那种差异没人会主动
  * 去比对。所以 favicon 是**唯一来源**，这里只加「底色与留白」这层
- * 桌面端特有的处理（favicon 是透明底 + 紫字，要能在任意标签栏上活；
- * 应用图标是品牌紫底 + 白字，要在一块方寸里立住）。
+ * 桌面端特有的处理（favicon 是透明底 + 绿色标记，要能在任意标签栏上活；
+ * 应用图标是品牌绿色底 + 白字，要在一块方寸里立住）。
  *
  * 孔的掏空用 `fill(path, 'evenodd')`，与 favicon 的 `fill-rule="evenodd"`
  * 同一条理由：白圆覆盖方案在别的底色上会露馅。
@@ -84,8 +84,8 @@ const resources = join(here, '..', 'resources')
 /** 画布边长。各尺寸都由它缩放采样——一次几何、多档输出，不留坐标漂移 */
 const BASE = 1024
 
-/** 品牌紫，与 `packages/renderer/src/theme/tokens.ts` 的浅色 `colorPrimary` 同值 */
-const BRAND = '#6e50b9'
+/** 品牌绿色，与 `packages/renderer/src/theme/tokens.ts` 的浅色 `colorPrimary` 同值 */
+const BRAND = '#00834d'
 
 /**
  * 标记路径**从 favicon 读**，不在这个脚本里再抄一份。

@@ -45,7 +45,7 @@ export const useChatPanelStyles = createStyles(({ css, token }) => ({
     min-width: 0;
     display: flex;
     flex-direction: column;
-    background: ${token.colorBgContainer};
+    background: ${token.surfaceContent ?? token.colorBgContainer};
   `,
   /* 滚动区的外壳。**必须有这一层**：「回到底部」按钮要浮在滚动区右下角，
      而它不能放进滚动容器里——那样它会跟着内容滚走 */
@@ -109,7 +109,7 @@ export const useChatPanelStyles = createStyles(({ css, token }) => ({
       border-color: ${token.colorBorder};
     }
     &:focus-visible {
-      outline: 1px solid ${token.colorPrimaryBorder};
+      outline: 2px solid ${token.colorPrimaryBorder};
       outline-offset: 2px;
     }
 
@@ -122,7 +122,7 @@ export const useChatPanelStyles = createStyles(({ css, token }) => ({
      Composer 里——显形开关（滚动容器的 scrollTop）归面板管 */
   composerLine: css`
     border-top: 1px solid transparent;
-    background: ${token.colorBgContainer};
+    background: ${token.surfaceContent ?? token.colorBgContainer};
     transition: border-color 0.2s ease-out;
 
     &[data-scrolled] {

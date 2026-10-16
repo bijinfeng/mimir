@@ -3,6 +3,7 @@ import type { DocumentSummary } from '@mimir/shared'
 import {
   excerptText,
   formatMeta,
+  formatLibraryRowDetail,
   readLibraryLayout,
   scopeParams,
   writeLibraryLayout,
@@ -79,6 +80,18 @@ describe('列表项的第二行（摘要）', () => {
   it('笔记与抓取的资料为空时如实说「还没有内容」——那是真的出了问题', () => {
     expect(excerptText(doc({ kind: 'note', mime: null, size: null }))).toBe('（还没有内容）')
     expect(excerptText(doc({ kind: 'web', mime: null, size: null }))).toBe('（还没有内容）')
+  })
+})
+
+describe('知识库列表的详情列', () => {
+  it('当前目录优先显示内容，其他目录保留位置', () => {
+    expect(formatLibraryRowDetail('当前目录', '笔记摘要')).toBe('笔记摘要')
+    expect(formatLibraryRowDetail('项目/资料', '2.4 MB')).toBe('项目/资料 · 2.4 MB')
+    expect(formatLibraryRowDetail('当前目录', '')).toBe('')
+  })
+
+  it('长摘要限制到 80 个字符，避免读屏朗读整篇正文', () => {
+    expect(formatLibraryRowDetail('当前目录', '知'.repeat(90))).toBe(`${'知'.repeat(80)}…`)
   })
 })
 

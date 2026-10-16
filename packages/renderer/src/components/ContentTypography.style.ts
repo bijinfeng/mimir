@@ -1,5 +1,5 @@
 import { createStyles } from 'antd-style'
-import { FONT_SIZE } from '../theme/tokens'
+import { FONT_SIZE, READING_LINE_HEIGHT } from '../theme/tokens'
 
 /**
  * 正文排版 —— **编辑器与只读视图共用的一份**。
@@ -29,10 +29,11 @@ import { FONT_SIZE } from '../theme/tokens'
  */
 export const useContentStyles = createStyles(({ css, token }) => ({
   content: css`
-    font-size: ${FONT_SIZE.body}px;
-    /* 中文正文比拉丁文需要更多行距：界面 1.57，正文 1.75 */
-    line-height: 1.75;
+    font-size: ${FONT_SIZE.reading}px;
+    line-height: ${READING_LINE_HEIGHT};
     color: ${token.colorText};
+    overflow-wrap: anywhere;
+    caret-color: ${token.colorLink};
 
     h1 {
       font-size: ${FONT_SIZE.display}px;
@@ -179,7 +180,7 @@ export const useContentStyles = createStyles(({ css, token }) => ({
 
     li {
       margin: 5px 0;
-      line-height: 1.7;
+      line-height: inherit;
     }
 
     /*
@@ -205,8 +206,8 @@ export const useContentStyles = createStyles(({ css, token }) => ({
 
         > label {
           flex: none;
-          /* 与首行文字的光学中线对齐（正文 14px/1.7，行盒约 24px） */
-          margin-top: 4px;
+          /* 对齐阅读正文首行的中线。 */
+          margin-top: 7px;
           user-select: none;
           cursor: pointer;
         }

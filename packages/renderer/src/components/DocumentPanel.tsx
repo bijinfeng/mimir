@@ -778,6 +778,7 @@ export function DocumentPanel({
                               <button
                                 key={heading.id}
                                 type="button"
+                                aria-current={activeHeading === heading.id ? 'location' : undefined}
                                 className={`${styles.olItem} ${heading.level === 3 ? styles.olItemLv3 : ''} ${
                                   activeHeading === heading.id ? styles.olItemActive : ''
                                 }`}
@@ -827,6 +828,7 @@ export function DocumentPanel({
                   <button
                     key={heading.id}
                     type="button"
+                    aria-current={activeHeading === heading.id ? 'location' : undefined}
                     className={`${styles.olItem} ${heading.level === 3 ? styles.olItemLv3 : ''} ${
                       activeHeading === heading.id ? styles.olItemActive : ''
                     }`}

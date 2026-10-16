@@ -1,5 +1,5 @@
 import { createStyles } from 'antd-style'
-import { FONT_SIZE, NAV_NARROW_QUERY, PANEL_HEADER_HEIGHT } from '../../theme/tokens'
+import { CONTENT_WIDTH, FONT_SIZE, NAV_NARROW_QUERY, PANEL_HEADER_HEIGHT } from '../../theme/tokens'
 
 /**
  * 文档视图的样式。
@@ -21,7 +21,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     display: flex;
     min-width: 0;
     overflow: hidden;
-    background: ${token.colorBgContainer};
+    background: ${token.surfaceContent};
   `,
   wrap: css`
     flex: 1;
@@ -29,7 +29,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     height: 100%;
     display: flex;
     flex-direction: column;
-    background: ${token.colorBgContainer};
+    background: ${token.surfaceContent};
   `,
   /** All document kinds use the compact Markdown note header. */
   header: css`
@@ -328,15 +328,15 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   inner: css`
     flex: 1;
     min-width: 0;
-    max-width: 860px;
-    padding: 48px 50px 72px;
+    max-width: ${CONTENT_WIDTH + 96}px;
+    padding: 40px 48px 72px;
 
     @media ${NAV_NARROW_QUERY} {
-      padding: 28px 24px 110px;
+      padding: 28px 16px 64px;
     }
 
     @media (max-width: 600px) {
-      padding-inline: 18px;
+      padding-inline: 16px;
     }
   `,
   /**
@@ -378,7 +378,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     height: 100%;
     padding: 6px 0 24px 10px;
     /* 浮层浮在滚动内容之上，底必须不透明——否则滚动的文字从大纲字缝里透出来 */
-    background: ${token.colorBgContainer};
+    background: ${token.surfaceContent};
   `,
 
   /* ── 问 AI 侧栏（D-087）────────────────────────────────── */
@@ -417,6 +417,11 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       border-color: ${token.colorPrimary};
       color: ${token.colorLink};
     }
+
+    &:focus-visible {
+      outline: 2px solid ${token.focusRing};
+      outline-offset: 2px;
+    }
   `,
 
   aiSidebar: css`
@@ -428,10 +433,14 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       width 0.22s ease-out,
       border-color 0.22s ease-out;
 
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
+
     &[data-open] {
       width: 400px;
       border-left-color: ${token.colorBorderSecondary};
-      background: ${token.colorBgContainer};
+      background: ${token.surfaceContent};
     }
 
     /* 编辑区不足 480px 时才覆盖；宽度足够时保持真正的三栏布局，
@@ -502,9 +511,13 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     align-self: stretch;
     padding: 28px 12px 40px;
     border-left: 1px solid ${token.colorBorderSecondary};
-    background: ${token.tintList};
+    background: ${token.surfaceContent};
     max-height: 100%;
     overflow-y: auto;
+
+    @media ${NAV_NARROW_QUERY} {
+      display: none;
+    }
   `,
   outlineTitle: css`
     font-size: ${FONT_SIZE.badge}px;
@@ -534,13 +547,18 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     &:hover {
       background: ${token.colorFillTertiary};
     }
+
+    &:focus-visible {
+      outline: 2px solid ${token.focusRing};
+      outline-offset: -2px;
+    }
   `,
   olItemLv3: css`
     padding-left: 20px;
   `,
   olItemActive: css`
-    color: ${token.colorLink};
-    background: ${token.colorFillTertiary};
+    color: ${token.navSelectedText};
+    background: ${token.navSelectedBg};
     font-weight: 600;
   `,
   /* ── 页脚：来源 / 被引用 ────────────────────────────── */

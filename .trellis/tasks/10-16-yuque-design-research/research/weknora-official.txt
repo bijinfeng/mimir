@@ -1,0 +1,410 @@
+- link "跳至正文":
+  - /url: "#main"
+- banner:
+  - link "WeKnora 首页":
+    - /url: /
+    - img "WeKnora"
+  - navigation "主导航":
+    - link "产品能力":
+      - /url: /#capabilities
+    - link "v0.8.3 NEW":
+      - /url: /#release
+      - text: v0.8.3
+      - generic: NEW
+    - link "生态集成":
+      - /url: /#ecosystem
+    - link "企业部署":
+      - /url: /#enterprise
+    - link "文档":
+      - /url: /docs/
+    - link "模型评测":
+      - /url: /docs/models
+    - button "模型评测栏目":
+  - switch "切换到浅色" [checked]:
+  - link "GitHub":
+    - /url: https://github.com/Tencent/WeKnora
+    - generic: GitHub
+- main:
+  - region "帮你找到答案， 并将知识付诸实践。":
+    - link "v0.8.3 画廊 · 多模态 Embedding · Wiki 图谱 · 原文引用":
+      - /url: "#release"
+      - generic: v0.8.3
+      - text: 画廊 · 多模态 Embedding · Wiki 图谱 · 原文引用
+    - heading "帮你找到答案， 并将知识付诸实践。" [level=1]:
+      - text: 帮你找到答案，
+      - emphasis: 并将知识付诸实践。
+    - paragraph: TENCENT OPEN SOURCE · WEKNORA
+    - paragraph:
+      - text: 腾讯开源的企业级知识管理框架。
+      - text: 汇集团队资料，用于知识问答、任务执行和 Wiki 整理。
+    - link "开始使用":
+      - /url: "#get-started"
+      - text: 开始使用
+    - link "GitHub":
+      - /url: https://github.com/Tencent/WeKnora
+      - text: GitHub
+    - paragraph: RAG 问答 / Agent 推理 / 自动 Wiki
+    - figure "知识问答、Agent 推理与 Wiki 整理 README 产品视频 · 英文旁白 / 中英字幕":
+      - text: 产品演示
+      - generic: /
+      - text: PRODUCT FILM
+      - text: 02:25
+      - generic: /
+      - text: 1080P
+      - generic "WeKnora 产品介绍，英文旁白，中英字幕"
+      - button "播放 WeKnora 产品介绍视频，2 分 25 秒":
+        - generic: WeKnora 产品演示
+        - generic: 播放产品介绍 · 2 分 25 秒
+      - generic: 知识问答、Agent 推理与 Wiki 整理
+      - link "README 产品视频 · 英文旁白 / 中英字幕":
+        - /url: https://github.com/user-attachments/assets/2819598d-3140-4623-814a-8162a22b653c
+        - text: README 产品视频 · 英文旁白 / 中英字幕
+    - text: 腾讯开源 · MIT License
+    - text: 支持私有化部署
+    - text: 自由选择模型与存储
+  - region "知识问答、任务执行与自动 Wiki":
+    - paragraph: 01 / KNOWLEDGE AT WORK
+    - heading "知识问答、任务执行与自动 Wiki" [level=2]
+    - paragraph:
+      - text: 查询资料用 RAG，处理多步任务用 Agent，
+      - text: 整理知识用 Wiki。三种能力共享同一知识库。
+    - article:
+      - generic: 01 / RAG
+      - heading "回答有据可查" [level=3]
+      - paragraph: 结合语义与关键词检索查找相关资料，回答附带来源引用，可打开原文核对。
+      - list:
+        - listitem: 混合检索
+        - listitem: 多模态解析
+        - listitem: 原文引用
+      - link "了解 RAG":
+        - /url: /docs/03-features/05-retrieval-engines.html
+        - text: 了解 RAG
+    - article:
+      - generic: 02 / AGENT
+      - heading "用知识和工具完成任务" [level=3]
+      - paragraph: 检索资料、调用 MCP 工具与技能，在沙箱或本机浏览器中完成任务。保留长期记忆，对话中可追加要求、分叉或回滚。
+      - list:
+        - listitem: 多步推理
+        - listitem: 技能与沙箱
+        - listitem: 本机浏览器
+        - listitem: MCP 工具
+        - listitem: 长期记忆
+      - link "了解 Agent":
+        - /url: /docs/03-features/07-agent.html
+        - text: 了解 Agent
+    - article:
+      - generic: 03 / WIKI
+      - heading "把文档整理成 Wiki" [level=3]
+      - paragraph: 从原始文档生成相互链接的 Wiki 页面与知识图谱，支持浏览、编辑和版本回滚。
+      - list:
+        - listitem: 自动组织
+        - listitem: 知识图谱
+        - listitem: 版本回滚
+      - link "了解 Wiki":
+        - /url: "#wiki"
+        - text: 了解 Wiki
+  - region "图文检索、原文核对与知识组织":
+    - paragraph: 02 / INTRODUCING v0.8.3
+    - heading "图文检索、原文核对与知识组织" [level=2]
+    - link "查看版本说明":
+      - /url: /docs/07-releases/v0.8.3.html
+      - text: 查看版本说明
+    - generic "v0.8.3 功能":
+      - heading "画廊 文档图片，集中浏览" [level=3]:
+        - button "画廊 文档图片，集中浏览" [pressed]:
+          - text: 画廊
+          - generic: 文档图片，集中浏览
+      - paragraph: 集中浏览文档图片，按来源、描述和图片属性筛选，查看原图与出处。
+      - generic "画廊截图":
+        - button "浏览图片" [pressed]:
+          - text: 浏览图片
+        - button "查看详情":
+          - text: 查看详情
+      - link "了解更多":
+        - /url: /docs/03-features/02-knowledge-base.html#image-gallery
+        - text: 了解更多
+      - heading "多模态 Embedding 文字与图片，共同检索" [level=3]:
+        - button "多模态 Embedding 文字与图片，共同检索":
+          - text: 多模态 Embedding
+          - generic: 文字与图片，共同检索
+      - paragraph:
+        - text: 让图片、图表与文字共同参与知识检索，用自然语言查找相关内容。支持
+        - link "腾讯 WeMM-Embedding GitHub 仓库（新窗口）":
+          - /url: https://github.com/Tencent/WeMM-Embedding
+          - text: 腾讯 WeMM-Embedding
+        - text: 、Qwen3-VL-Embedding 等模型。
+      - link "了解更多":
+        - /url: /docs/03-features/02-knowledge-base.html#multimodal-embedding
+        - text: 了解更多
+      - heading "Wiki 图谱 知识关系，按主题展开" [level=3]:
+        - button "Wiki 图谱 知识关系，按主题展开":
+          - text: Wiki 图谱
+          - generic: 知识关系，按主题展开
+      - paragraph: 关联页面按主题分组，在全图与分组之间切换，沿关系找到值得继续阅读的内容。
+      - link "了解更多":
+        - /url: /docs/03-features/14-wiki.html#wiki-graph
+        - text: 了解更多
+      - heading "原文引用定位 从回答，回到原文" [level=3]:
+        - button "原文引用定位 从回答，回到原文":
+          - text: 原文引用定位
+          - generic: 从回答，回到原文
+      - paragraph: 点击回答中的引用，在原始文档中定位对应段落，对照上下文核对答案。
+      - link "了解更多":
+        - /url: /docs/03-features/18-chat-experience.html#查看回答与来源
+        - text: 了解更多
+    - figure:
+      - text: 画廊
+      - emphasis: · 浏览图片
+      - link "查看画廊原图（新窗口）":
+        - /url: /docs/_home/product/kb-image-gallery.png
+        - text: 查看原图
+      - img "知识库画廊：图片瀑布流与来源文档筛选"
+    - generic: 本次更新还包括
+    - link "附件按需读取":
+      - /url: /docs/03-features/18-chat-experience.html
+      - text: 附件按需读取
+    - link "平台用户管理":
+      - /url: /docs/03-features/20-platform-admin.html
+      - text: 平台用户管理
+    - link "Seafile 数据源":
+      - /url: /docs/03-features/25-seafile.html
+      - text: Seafile 数据源
+    - link "Docker 交互终端":
+      - /url: /docs/03-features/22-skills-sandbox.html
+      - text: Docker 交互终端
+  - region "让智能体操作你自己的浏览器":
+    - paragraph: 03 / YOUR LOCAL BROWSER
+    - heading "让智能体操作你自己的浏览器" [level=2]
+    - link "连接本机浏览器":
+      - /url: /docs/05-clients/09-local-browser.html
+      - text: 连接本机浏览器
+    - generic "本机浏览器 功能":
+      - heading "执行任务 在自己的浏览器里完成任务" [level=3]:
+        - button "执行任务 在自己的浏览器里完成任务" [pressed]:
+          - text: 执行任务
+          - generic: 在自己的浏览器里完成任务
+      - paragraph: 让智能体打开网页、查询信息、填写表单。任务过程实时可见，可随时暂停；遇到登录或验证码时由你接手，完成后继续。
+      - link "了解更多":
+        - /url: /docs/05-clients/09-local-browser.html
+        - text: 了解更多
+      - heading "连接扩展 连接 Chrome 或 Edge，开始使用" [level=3]:
+        - button "连接扩展 连接 Chrome 或 Edge，开始使用":
+          - text: 连接扩展
+          - generic: 连接 Chrome 或 Edge，开始使用
+      - paragraph: 安装腾讯开源的 BrowserSkill 扩展，在工具箱中连接本机浏览器，查看连接状态，再将网页操作交给智能体。
+      - link "了解更多":
+        - /url: /docs/05-clients/09-local-browser.html
+        - text: 了解更多
+      - link "BrowserSkill":
+        - /url: https://github.com/Tencent/BrowserSkill
+        - text: BrowserSkill
+    - figure:
+      - text: 执行任务
+      - link "查看执行任务原图（新窗口）":
+        - /url: /docs/_home/product/local-browser-task.png
+        - text: 查看原图
+      - img "智能体操作本机浏览器，对话中显示任务预览与暂停控制"
+  - region "智能体可以运行技能，也能生成文件。":
+    - paragraph: 04 / SKILLS & SANDBOX
+    - heading "智能体可以运行技能，也能生成文件。" [level=2]
+    - link "了解技能与沙箱":
+      - /url: /docs/03-features/22-skills-sandbox.html
+      - text: 了解技能与沙箱
+    - generic "技能与沙箱 功能":
+      - heading "会话级沙箱 在同一沙箱中继续执行任务" [level=3]:
+        - button "会话级沙箱 在同一沙箱中继续执行任务" [pressed]:
+          - text: 会话级沙箱
+          - generic: 在同一沙箱中继续执行任务
+      - paragraph: 支持 Docker、E2B、Cube。同一会话的多轮任务共用一个工作区，生成的文件可预览和下载；macOS Lite 还可绑定本机项目目录。
+      - link "了解更多":
+        - /url: /docs/03-features/22-skills-sandbox.html
+        - text: 了解更多
+      - heading "图形桌面与终端 打开桌面和终端，看清每一步" [level=3]:
+        - button "图形桌面与终端 打开桌面和终端，看清每一步":
+          - text: 图形桌面与终端
+          - generic: 打开桌面和终端，看清每一步
+      - paragraph: 在对话旁连接 Docker、E2B 或 Cube 的交互终端；使用 E2B、Cube 的桌面模板时，还可打开图形桌面并亲自操作。
+      - generic "图形桌面与终端截图":
+        - button "图形桌面":
+          - text: 图形桌面
+        - button "交互终端":
+          - text: 交互终端
+      - link "了解更多":
+        - /url: /docs/03-features/22-skills-sandbox.html
+        - text: 了解更多
+      - heading "技能目录 安装、管理和复用技能" [level=3]:
+        - button "技能目录 安装、管理和复用技能":
+          - text: 技能目录
+          - generic: 安装、管理和复用技能
+      - paragraph: 从 ClawHub、SkillHub、Git 或 ZIP 安装技能，在空间内管理和复用；macOS Lite 也支持安装并运行本机技能。
+      - link "了解更多":
+        - /url: /docs/03-features/22-skills-sandbox.html
+        - text: 了解更多
+    - figure:
+      - text: 会话级沙箱
+      - link "查看会话级沙箱原图（新窗口）":
+        - /url: /docs/_home/product/skill-sandbox-chat.png
+        - text: 查看原图
+      - img "WeKnora 实际界面：智能体根据知识库生成 Word 文档，并在对话旁打开产物预览"
+  - region "把文档整理成可浏览的 Wiki。":
+    - paragraph: 05 / AUTOMATIC WIKI
+    - heading "把文档整理成可浏览的 Wiki。" [level=2]
+    - link "了解 Wiki 的使用方式":
+      - /url: /docs/03-features/14-wiki.html
+      - text: 了解 Wiki 的使用方式
+    - generic "Wiki 功能":
+      - heading "知识图谱 从整体关系，聚焦一组页面" [level=3]:
+        - button "知识图谱 从整体关系，聚焦一组页面" [pressed]:
+          - text: 知识图谱
+          - generic: 从整体关系，聚焦一组页面
+      - paragraph: 关联页面分组展示，配上主题说明。聚焦感兴趣的分组，沿链接阅读相关内容，随时返回全图。
+      - link "了解更多":
+        - /url: /docs/03-features/14-wiki.html#wiki-graph
+        - text: 了解更多
+      - heading "页面浏览 按主题整理，保留出处" [level=3]:
+        - button "页面浏览 按主题整理，保留出处":
+          - text: 页面浏览
+          - generic: 按主题整理，保留出处
+      - paragraph: 开启 Wiki 后，从知识库文档中提取人物、产品和概念，生成带来源引用的页面，按目录浏览。
+      - heading "版本历史 随时编辑，改动可回溯" [level=3]:
+        - button "版本历史 随时编辑，改动可回溯":
+          - text: 版本历史
+          - generic: 随时编辑，改动可回溯
+      - paragraph: 直接修订页面，也可让智能体协助维护。查看版本差异，必要时恢复到历史内容。
+    - figure:
+      - text: 知识图谱
+      - link "查看知识图谱原图（新窗口）":
+        - /url: /docs/_home/product/wiki-graph-groups.png
+        - text: 查看原图
+      - img "Wiki 图谱：关联页面分组、主题说明和分组聚焦入口"
+  - region "数据源与工具集成":
+    - paragraph: 06 / INTEGRATIONS
+    - heading "数据源与工具集成" [level=2]
+    - paragraph:
+      - text: 同步飞书、Confluence、GitLab 等平台的资料，
+      - text: 通过 IM、浏览器插件、MCP Server 或 API 查询和使用。
+    - heading "导入与同步资料" [level=3]
+    - paragraph: 上传文件、导入网页，或连接外部数据源。
+    - text: PDF / Office
+    - text: 飞书
+    - text: Confluence
+    - text: 钉钉文档
+    - text: GitLab
+    - text: 腾讯 IMA
+    - text: Notion
+    - text: 语雀
+    - text: RSS
+    - text: Seafile
+    - link "数据源集成":
+      - /url: /docs/03-features/10-datasource.html
+      - text: 数据源集成
+    - img "WeKnora"
+    - generic: 团队知识库与智能体
+    - generic: 理解 · 检索 · 推理 · 行动
+    - heading "在常用工具中访问" [level=3]
+    - paragraph: 支持 IM 问答、浏览器插件、MCP 客户端和开发工具集成。
+    - text: 企业微信
+    - text: 飞书
+    - text: 钉钉
+    - text: Slack
+    - text: Telegram
+    - text: Chrome
+    - text: BrowserSkill
+    - text: MCP Server
+    - text: API
+    - text: CLI
+    - text: DeepSeek Harness
+    - link "客户端与渠道":
+      - /url: /docs/03-features/12-im-integration.html
+      - text: 客户端与渠道
+    - heading "通过 MCP Server 共享知识" [level=4]
+    - paragraph: 让 Claude、Cursor 等 AI 工具连接团队知识库，直接检索资料和提问。
+    - link "配置 MCP 端点":
+      - /url: /docs/03-features/08-mcp.html
+      - text: 配置 MCP 端点
+    - text: 模型由你选择 · 内置 30 家厂商
+    - link "查看全部":
+      - /url: /docs/03-features/06-models.html
+      - text: 查看全部
+    - paragraph:
+      - text: OpenAI
+    - paragraph:
+      - text: Claude
+    - paragraph:
+      - text: Gemini
+    - paragraph:
+      - text: DeepSeek
+    - paragraph:
+      - text: Qwen
+    - paragraph:
+      - text: 混元
+    - paragraph:
+      - text: 智谱
+    - paragraph:
+      - text: Kimi
+    - paragraph:
+      - text: 火山引擎
+    - paragraph:
+      - text: MiniMax
+    - paragraph:
+      - text: Ollama
+    - paragraph:
+      - text: LiteLLM
+  - region "私有化部署， 按团队需要管理权限。":
+    - paragraph: 07 / BUILT FOR YOUR TEAM
+    - heading "私有化部署， 按团队需要管理权限。" [level=2]:
+      - text: 私有化部署，
+      - text: 按团队需要管理权限。
+    - paragraph:
+      - text: 配置数据存储与成员权限，
+      - text: 查看操作记录和任务运行状态。
+    - article:
+      - heading "部署与存储" [level=3]
+      - paragraph: 支持 Docker、Kubernetes 与 Helm，也提供 Lite 单机版和桌面应用。模型、向量数据库和存储后端可按需替换，支持本地推理。
+    - article:
+      - heading "空间与资源权限" [level=3]
+      - paragraph: 多空间隔离与四级角色矩阵。API Key 按能力和知识库限定范围，支持 OIDC 身份集成，可限制服务只访问白名单域名。
+    - article:
+      - heading "审计与运行监控" [level=3]
+      - paragraph: 空间审计日志、运行时任务队列面板与 Langfuse 追踪，帮助团队定位问题、管理运行状态。
+  - region "选择适合你的使用方式。":
+    - paragraph: GET STARTED
+    - heading "选择适合你的使用方式。" [level=2]
+    - article:
+      - img "微信对话开放平台 Logo"
+      - generic: 在线使用
+      - heading "微信对话开放平台" [level=3]
+      - paragraph: 在线管理知识库，将问答服务接入公众号、小程序等微信场景。
+      - link "进入平台":
+        - /url: https://chatbot.weixin.qq.com/login
+        - text: 进入平台
+    - article:
+      - img "腾讯云 Logo"
+      - generic: 云端部署
+      - heading "腾讯云轻量应用服务器" [level=3]
+      - paragraph: 通过应用模板部署 WeKnora，在自己的云服务器上运行。
+      - link "前往腾讯云部署":
+        - /url: https://mc.tencent.com/s69nKCVz
+        - text: 前往腾讯云部署
+    - article:
+      - img "WeKnora"
+      - generic: 自行部署
+      - heading "部署到自己的环境" [level=3]
+      - paragraph: 使用 Docker 或 Kubernetes 部署，自行配置模型、存储和网络。
+      - link "查看部署文档":
+        - /url: /docs/01-getting-started/02-installation.html
+        - text: 查看部署文档
+- contentinfo:
+  - link "WeKnora 首页":
+    - /url: /
+    - img "WeKnora"
+  - paragraph: Tencent Open Source · MIT License
+  - navigation "页脚导航":
+    - link "文档":
+      - /url: /docs/
+    - link "GitHub":
+      - /url: https://github.com/Tencent/WeKnora
+      - text: GitHub
+    - link "更新日志":
+      - /url: https://github.com/Tencent/WeKnora/blob/main/CHANGELOG.md
+- alert

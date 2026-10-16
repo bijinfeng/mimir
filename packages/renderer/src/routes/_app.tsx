@@ -22,7 +22,7 @@ import { useUnsaved } from '../lib/unsaved'
 import { useIsDesktop, useTitleBar } from '../platform'
 import { NAV_NARROW_QUERY } from '../theme/tokens'
 
-/** 常驻功能栏、可折叠任务侧栏和主工作区共用这一层，切换页面时导航不会重挂载。 */
+/** 统一工作区导航与主区共用这一层，切换页面时导航不会重挂载。 */
 
 export interface AppSearch {
   /** all / folder:<path> / tag:<name>（来源、收件箱与归档都不再是浏览维度） */
@@ -76,15 +76,12 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
   app: css`
     display: grid;
-    grid-template-columns: 294px minmax(0, 1fr);
+    grid-template-columns: 256px minmax(0, 1fr);
     flex: 1;
     min-height: 0;
     overflow: hidden;
     background: ${token.colorBgLayout};
 
-    @media (max-width: 1100px) {
-      grid-template-columns: 266px minmax(0, 1fr);
-    }
     @media ${NAV_NARROW_QUERY} {
       grid-template-columns: 52px minmax(0, 1fr);
     }
@@ -109,13 +106,6 @@ const useStyles = createStyles(({ css, token }) => ({
     min-height: 0;
     overflow: hidden;
     background: ${token.colorBgContainer};
-  `,
-  overlayBackdrop: css`
-    position: fixed;
-    inset: 0;
-    z-index: 29;
-    border: 0;
-    background: ${token.colorBgMask};
   `,
 }))
 
@@ -197,8 +187,8 @@ function AppShell() {
    * 侧边栏折叠。
    *
    * **状态放在这里而不是 `NavSidebar` 内部**：折叠要改的是外层的
-   * `grid-template-columns`（左列 200px → 48px），而网格属于这一层。
-   * 放在栏内的话，栏自己收窄了、网格没变，只会留下一片空的 200px。
+   * `grid-template-columns`（左列 256px → 52px），而网格属于这一层。
+   * 放在栏内的话，栏自己收窄了、网格没变，只会留下一片空的 256px。
    *
    * 持久化到 `localStorage`：折叠是**长期偏好**，不是临时动作。
    * 每次刷新都弹回去会让人反复去点它——而这个按钮的价值就在于点一次
@@ -212,16 +202,15 @@ function AppShell() {
    * 窄屏（≤880px）下**强制折叠**，与用户偏好取或。
    *
    * 关键在于它不只是改网格宽度（那是 `@media` 已经在做的），而是让
-   * `NavSidebar` **真的按折叠态渲染**。原先两者脱节：CSS 把左列压到 48px，
+   * `NavSidebar` **真的按折叠态渲染**。原先两者脱节：CSS 把左列压到 52px，
    * 而栏内的标签、目录树、品牌名仍按展开态渲染——实测窄屏下「知识库」
    * 竖成一列、品牌名与折叠开关叠在一起、目录树歪掉。
    *
    * 偏好不被覆盖（`navCollapsedPref` 原样保留）：窗口变宽后回到用户选的形态。
-   * 窄屏下那个开关也一并收起——这个宽度下折叠不是可选状态，点了也不会展开，
-   * 留着它只会让人以为按钮坏了。
+   * 窄屏下开关打开临时导航抽屉，关闭后回到紧凑栏；不回写长期偏好。
    */
   const narrowViewport = useForcedNavCollapse()
-  const navCollapsed = isSettings || navCollapsedPref || narrowViewport
+  const navCollapsed = navCollapsedPref || narrowViewport
 
   const isDesktop = useIsDesktop()
 
@@ -240,7 +229,7 @@ function AppShell() {
    */
   const titleBar = useTitleBar({
     collapsed: navCollapsed,
-    showToggle: !narrowViewport && !isSettings,
+    showToggle: !narrowViewport,
     onToggleCollapsed: toggleNavCollapsed,
   })
 
@@ -290,7 +279,6 @@ function AppShell() {
         event.preventDefault()
         setPaletteOpen((open) => !open)
       }
-      if (event.key === 'Escape') setOverlayOpen(false)
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
@@ -321,15 +309,6 @@ function AppShell() {
         {titleBar}
 
         <div className={gridClass}>
-          {overlayOpen && narrowViewport && !isSettings && (
-            <button
-              type="button"
-              className={styles.overlayBackdrop}
-              aria-label="关闭侧边栏"
-              tabIndex={-1}
-              onClick={() => setOverlayOpen(false)}
-            />
-          )}
           <div className={styles.nav}>
             <NavSidebar
               selection={{
@@ -340,7 +319,7 @@ function AppShell() {
               onOpenPalette={() => setPaletteOpen(true)}
               onOpenCapture={() => openCapture()}
               collapsed={navCollapsed}
-              overlayOpen={overlayOpen && narrowViewport && !isSettings}
+              overlayOpen={overlayOpen && narrowViewport}
               narrowViewport={narrowViewport}
               onToggleOverlay={() => setOverlayOpen((open) => !open)}
               onCloseOverlay={() => setOverlayOpen(false)}
@@ -353,7 +332,7 @@ function AppShell() {
             />
           </div>
 
-          <div className={styles.main} inert={overlayOpen && narrowViewport && !isSettings}>
+          <div className={styles.main} inert={overlayOpen && narrowViewport}>
             <Outlet />
           </div>
         </div>

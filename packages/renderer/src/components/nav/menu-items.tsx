@@ -84,6 +84,7 @@ export function buildActions(): MenuItem[] {
 export function buildConversations(
   conversations: ConversationSummary[],
   limit: number,
+  activeId?: string,
 ): MenuItem[] {
   return [
     {
@@ -92,6 +93,7 @@ export function buildConversations(
       label: '对话',
       children: conversations.slice(0, limit).map((conversation) => ({
         key: `conv:${conversation.id}`,
+        'aria-current': conversation.id === activeId ? 'page' : undefined,
         icon: <MessageCircle size={16} />,
         label: conversation.title || '新对话',
         // 相对时间：翻会话时想知道的是「多久以前问的」

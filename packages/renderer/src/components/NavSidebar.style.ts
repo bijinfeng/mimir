@@ -8,26 +8,26 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     min-width: 0;
     height: 100%;
     background: ${token.tintNav};
+    border-inline-end: 1px solid ${token.colorBorderSecondary};
   `,
   rail: css`
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 5px;
-    width: 52px;
-    min-width: 52px;
+    width: 100%;
+    min-width: 0;
     height: 100%;
     padding: 10px 5px 8px;
     background: ${token.tintNav};
-    border-inline-end: 1px solid ${token.colorBorderSecondary};
   `,
   railBrand: css`
     display: grid;
     place-items: center;
     width: 38px;
     height: 38px;
-    margin-bottom: 13px;
-    color: ${token.colorLink};
+    margin-bottom: 4px;
+    color: ${token.navSelectedText};
   `,
   railButton: css`
     display: grid;
@@ -39,14 +39,18 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     color: ${token.colorTextSecondary};
     border-radius: 6px;
     &:hover {
-      color: ${token.colorLink};
+      color: ${token.navSelectedText};
     }
   `,
   railActive: css`
-    color: ${token.colorLink};
-    background: ${token.colorPrimaryBg};
-    &:hover {
-      background: ${token.colorPrimaryBg};
+    && {
+      color: ${token.navSelectedText};
+      background: ${token.navSelectedBg};
+      font-weight: 600;
+    }
+    &&:hover {
+      color: ${token.navSelectedText};
+      background: ${token.navSelectedBg};
     }
   `,
   railSpacer: css`
@@ -62,16 +66,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     min-width: 0;
     min-height: 0;
     background: ${token.tintNav};
-    border-inline-end: 1px solid ${token.colorBorderSecondary};
-  `,
-  panelOverlay: css`
-    position: absolute;
-    z-index: 20;
-    top: 0;
-    bottom: 0;
-    left: 52px;
-    width: min(242px, calc(100vw - 52px));
-    box-shadow: ${token.boxShadowSecondary};
+    height: 100%;
   `,
   panelHeading: css`
     display: flex;
@@ -79,11 +74,44 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     justify-content: space-between;
     flex: none;
     height: ${PANEL_HEADER_HEIGHT}px;
-    padding: 0 12px 0 14px;
+    padding: 0 8px 0 16px;
     border-bottom: 1px solid ${token.colorBorderSecondary};
     color: ${token.colorText};
     font-size: ${FONT_SIZE.item}px;
     font-weight: 600;
+  `,
+  brand: css`
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: ${FONT_SIZE.section}px;
+    font-weight: 600;
+    color: ${token.colorText};
+  `,
+  primaryActions: css`
+    display: grid;
+    gap: 4px;
+    flex: none;
+    padding: 12px 8px;
+    border-bottom: 1px solid ${token.colorBorderSecondary};
+  `,
+  primaryButton: css`
+    justify-content: flex-start;
+    gap: 8px;
+    height: 36px;
+    padding-inline: 12px;
+    color: ${token.colorTextSecondary};
+    text-align: left;
+  `,
+  searchButton: css`
+    justify-content: flex-start;
+    height: 36px;
+    margin-bottom: 4px;
+    padding-inline: 12px;
+    color: ${token.colorTextSecondary};
+    background: ${token.colorBgContainer};
+    border-color: ${token.colorBorderSecondary};
+    box-shadow: none;
   `,
   body: css`
     flex: 1;
@@ -107,8 +135,8 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     text-align: left;
 
     &:focus-visible {
-      outline: 2px solid ${token.colorPrimaryBorder};
-      outline-offset: -2px;
+      outline: 2px solid ${token.focusRing};
+      outline-offset: 2px;
     }
   `,
   recentList: css`
@@ -137,17 +165,17 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       white-space: nowrap;
     }
     &[aria-current='page'] {
-      color: ${token.colorLink};
-      background: ${token.colorPrimaryBg};
-      font-weight: 500;
+      color: ${token.navSelectedText};
+      background: ${token.navSelectedBg};
+      font-weight: 600;
     }
     &&[aria-current='page']:hover {
-      color: ${token.colorLink};
-      background: ${token.colorPrimaryBgHover};
+      color: ${token.navSelectedText};
+      background: ${token.navSelectedBg};
     }
     &:focus-visible {
-      outline: 2px solid ${token.colorPrimaryBorder};
-      outline-offset: -2px;
+      outline: 2px solid ${token.focusRing};
+      outline-offset: 2px;
     }
   `,
   recentEmpty: css`
@@ -198,9 +226,9 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       font-weight: 600;
     }
     .${prefixCls}-menu-item-selected {
-      background: ${token.colorPrimaryBg} !important;
-      color: ${token.colorLink} !important;
-      font-weight: 500;
+      background: ${token.navSelectedBg} !important;
+      color: ${token.navSelectedText} !important;
+      font-weight: 600;
     }
     .${prefixCls}-menu-item-selected::after {
       display: none;
@@ -216,7 +244,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       font-variant-numeric: tabular-nums;
     }
     .${prefixCls}-menu-item-selected .${prefixCls}-menu-item-extra {
-      color: ${token.colorLink};
+      color: ${token.navSelectedText};
     }
   `,
   treeGroup: css`
@@ -232,7 +260,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   accountRow: css`
     display: flex;
     align-items: center;
-    padding: 2px 6px 3px 0;
+    padding: 8px 8px 8px 0;
   `,
   accountRowCollapsed: css`
     flex-direction: column;
@@ -267,22 +295,22 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   `,
   accountAvatar: css`
     flex: none;
-    background: ${token.colorPrimaryBg};
-    color: ${token.colorLink};
+    background: ${token.navSelectedBg};
+    color: ${token.navSelectedText};
     font-size: ${FONT_SIZE.badge}px;
     font-weight: 600;
   `,
   accountSettings: css`
     flex: none;
-    width: 26px;
-    height: 26px;
-    min-width: 26px;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
     padding: 0;
     color: ${token.colorTextTertiary};
   `,
   accountSettingsActive: css`
-    color: ${token.colorLink};
-    background: ${token.colorPrimaryBg};
+    color: ${token.navSelectedText};
+    background: ${token.navSelectedBg};
   `,
   accountName: css`
     min-width: 0;
@@ -350,8 +378,8 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     }
     .${prefixCls}-dropdown-menu-item:focus-visible,
     .${prefixCls}-dropdown-menu-submenu-title:focus-visible {
-      outline: 2px solid ${token.colorPrimaryBorder};
-      outline-offset: -2px;
+      outline: 2px solid ${token.focusRing};
+      outline-offset: 2px;
     }
     .${prefixCls}-dropdown-menu-item-divider {
       margin: 3px 8px;

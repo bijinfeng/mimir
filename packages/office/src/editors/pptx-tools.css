@@ -53,8 +53,7 @@
 }
 .mimir-pptx-control-panel .me-menu__note {
   margin: 0;
-  color: var(--me-text-secondary, var(--me-text));
-  opacity: 0.8;
+  color: var(--me-text-weak, #6b6b6b);
 }
 .mimir-pptx-workspace .mimir-pptx-slide svg {
   max-width: 100%;
@@ -87,7 +86,7 @@
   max-height: 180px;
   aspect-ratio: 1;
   border: 1px solid var(--me-border);
-  background: var(--me-bg);
+  background: var(--me-surface, #fff);
   border-radius: 6px;
 }
 .mimir-pptx-equation-preview,
@@ -98,13 +97,17 @@
   padding: 12px;
   border: 1px solid var(--me-border);
   border-radius: var(--me-radius);
-  background: var(--me-bg);
+  background: var(--me-surface, #fff);
   box-sizing: border-box;
 }
 .mimir-pptx-equation-preview {
   overflow: auto;
   text-align: center;
   font-size: 22px;
+}
+/* Artwork previews retain their document colors and white paper in both themes. */
+.mimir-pptx-diagram-preview {
+  background: #fff;
 }
 .mimir-pptx-clipboard-actions {
   display: flex;
@@ -118,7 +121,7 @@
   max-height: 220px;
   object-fit: contain;
   border-radius: var(--ant-border-radius, 6px);
-  background: var(--me-canvas);
+  background: var(--me-stage-bg, #f7f8f8);
 }
 .mimir-pptx-asset-preview svg {
   display: block;
@@ -148,7 +151,7 @@
   stroke-width: 1;
 }
 .mimir-pptx-gridlines {
-  stroke: var(--me-text-secondary, var(--me-text));
+  stroke: var(--me-text-weak, #6b6b6b);
   opacity: 0.25;
   stroke-dasharray: 2 3;
 }
@@ -189,11 +192,11 @@
   display: flex;
   justify-content: center;
   padding: 16px;
-  background: var(--me-bg);
+  background: #fff;
   border-radius: var(--me-radius);
 }
 .mimir-pptx-cutout-preview {
-  background: var(--me-canvas);
+  background: var(--me-stage-bg, #f7f8f8);
   border: 1px solid var(--me-border);
   min-height: 100px;
   display: flex;
@@ -208,7 +211,7 @@
   display: block;
   width: 100%;
   height: 220px;
-  background: var(--me-canvas);
+  background: var(--me-stage-bg, #f7f8f8);
   border-radius: var(--me-radius);
 }
 

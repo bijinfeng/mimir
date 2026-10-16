@@ -9,8 +9,10 @@
 
 ## 字号：走阶梯，不要写字面量
 
-`theme/tokens.ts` 的 `FONT_SIZE` 是**唯一**的字号来源，九档、每档对应一个
-角色（`body` / `item` / `excerpt` / `note` / `meta` / `badge` …）。
+`theme/tokens.ts` 的 `FONT_SIZE` 是**唯一**的字号来源，每档对应一个
+角色（`body` / `reading` / `item` / `excerpt` / `note` / `meta` / `badge` …）。
+`body=14` 用于界面，`reading=15` 与 `READING_LINE_HEIGHT=1.9` 用于连续阅读，
+不要靠全局放大 UI 字号改变文档排版。控件圆角种子为 6px。
 
 ```ts
 // ✗ 随手写一个值 —— 全仓曾散落过 11 个不同的 font-size
@@ -44,8 +46,10 @@ font-size: ${FONT_SIZE.excerpt}px;
 1. **需要两套值的东西用 `useAppearance()` 分支**（如徽标色对），
    而不是在样式里散落 `appearance === 'dark' ? … : …` 判断。
    样式层拿 token 就够，`customTokenFor(appearance)` 已经按外观选好了
-2. **深色不得弱于浅色。** 深色最常见的退化是「看着还行就用」，
-   而单看深色的截图判断不出来——`design.test.ts` 有一条跨外观逐项比较
+2. **两套外观守同等可读性下限。** 普通文字 ≥4.5:1、正文 ≥7:1、
+   焦点及关键输入边界 ≥3:1。新中性主题不再要求深色每项比值大于浅色，
+   也不要求五种表面互不相同；`design.test.ts` 分别检查实际组合，
+   保留 provider / DOM / CSS 变量守卫。
 3. **与 seed 同名的 token 覆盖会被 antd 丢掉**（`colorLink`、`colorPrimary`
    这些）。需要精确控制时用 `tokens.ts` 的校准层，那是一个
    `MappingAlgorithm`，跑在算法链最后。**浅色下这条看不出来**，
@@ -54,5 +58,20 @@ font-size: ${FONT_SIZE.excerpt}px;
 外观状态在 `theme/appearance.ts`，它把结果写到 `html` 的 `data-theme` 与
 `color-scheme` 上。`index.html` 里有一段**等价的内联脚本**先跑一遍，
 覆盖「脚本执行到样式注入」那段空白——改判断逻辑时两处必须一起改。
+
+## 应用表面、导航与语义状态
+
+主内容使用 `surfaceContent`（白 / `#18191a`），卡片和输入用 `colorBgContainer`
+（白 / `#202225`）。导航与列表共用辅助面；浅色主面、卡片、浮层可以共用白色。
+装饰性分隔线取 `colorBorderSecondary`，不能把 ≥3:1 的输入边界用作每条列表分隔线。
+
+导航当前项使用 `navSelectedBg` / `navSelectedText`（中性灰底与正文色）并保留
+字重、`aria-current`。`colorPrimaryBg` 仍为绿色语义浅底，供引用定位、编辑器按下态
+与真实状态使用；不要为导航灰底全局覆盖它。
+
+主按钮填充 `#00834d`、hover `#007846`、pressed `#006b3e`；浅色链接 `#007a45`，
+深色链接及焦点 `#6bdaa5`。自定义焦点用 `focusRing`，2px 环和2px offset。
+Chat 继续继承宿主颜色，Office 通过 `editor-theme-bridge.ts` 的 `--me-*` 与
+已有 `--ant-*` 继承；不增加第二份 provider，也不更换文档内容调色板。
 
 ---

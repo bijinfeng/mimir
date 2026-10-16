@@ -40,14 +40,14 @@ type BadgeSpec = { label: string } & Record<Appearance, ColorPair>
 const STATUS_STYLE: Partial<Record<DocumentStatus, BadgeSpec>> = {
   ready: {
     label: '就绪',
-    light: { fg: '#137333', bg: '#e6f4ea' },
-    dark: { fg: '#6cc24a', bg: '#162312' },
+    light: { fg: '#007a45', bg: '#e8f5ee' },
+    dark: { fg: '#6bdaa5', bg: '#173a2a' },
   },
   /* 与 §3.7 表里的「抓取失败」同值：两处表达的是同一件事（内容没取到） */
   failed: {
     label: '提取失败',
-    light: { fg: '#c5221f', bg: '#fef7f6' },
-    dark: { fg: '#ff8f8a', bg: '#2f1b1c' },
+    light: { fg: '#b42318', bg: '#fef0ee' },
+    dark: { fg: '#ffb4ab', bg: '#3b2221' },
   },
 }
 

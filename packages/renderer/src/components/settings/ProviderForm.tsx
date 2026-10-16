@@ -337,7 +337,9 @@ export function ProviderForm({
 
       <Panel title="连接" desc="配置显示名、接口地址与认证凭据">
         <div className={styles.formRow}>
-          <div className={styles.formLabel}>显示名</div>
+          <label className={styles.formLabel} htmlFor={fieldId('name')}>
+            显示名
+          </label>
           <div className={styles.formValue}>
             <Input
               id={fieldId('name')}
@@ -347,7 +349,7 @@ export function ProviderForm({
                 setErrors((current) => ({ ...current, name: '' }))
                 markDirty()
               }}
-              style={{ width: 220 }}
+              style={{ width: 300, maxWidth: '100%' }}
               placeholder="比如 DeepSeek"
               aria-label="显示名"
               aria-invalid={Boolean(errors.name)}
@@ -362,7 +364,9 @@ export function ProviderForm({
         </div>
 
         <div className={styles.formRow}>
-          <div className={styles.formLabel}>接口地址</div>
+          <label className={styles.formLabel} htmlFor={fieldId('baseUrl')}>
+            接口地址
+          </label>
           <div className={styles.formValue}>
             <Input
               id={fieldId('baseUrl')}
@@ -387,7 +391,9 @@ export function ProviderForm({
         </div>
 
         <div className={styles.formRow}>
-          <div className={styles.formLabel}>API 密钥</div>
+          <label className={styles.formLabel} htmlFor={fieldId('key')}>
+            API 密钥
+          </label>
           <div className={styles.formValue}>
             <Input.Password
               id={fieldId('key')}
@@ -398,7 +404,7 @@ export function ProviderForm({
                 if (event.target.value.trim() !== '') setKeyCleared(false)
                 markDirty()
               }}
-              style={{ width: 260 }}
+              style={{ width: 300, maxWidth: '100%' }}
               placeholder={
                 keyCleared
                   ? '保存后将清除密钥'

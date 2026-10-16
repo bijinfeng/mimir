@@ -1,5 +1,5 @@
 import { createStyles } from 'antd-style'
-import { FONT_SIZE, NAV_NARROW_QUERY } from '../../theme/tokens'
+import { FONT_SIZE, NAV_NARROW_QUERY, PANEL_HEADER_HEIGHT } from '../../theme/tokens'
 
 /**
  * 知识库页（浏览态主区）的样式（D-079，形态对齐用户给的目标稿）。
@@ -30,7 +30,7 @@ export const useStyles = createStyles(({ css, token }) => ({
     min-height: 0;
     display: flex;
     flex-direction: column;
-    padding: 0 clamp(20px, 4vw, 64px);
+    padding: 0 clamp(24px, 3.2vw, 48px);
     background: ${token.colorBgContainer};
 
     @media (max-width: 600px) {
@@ -38,9 +38,38 @@ export const useStyles = createStyles(({ css, token }) => ({
     }
   `,
 
+  topBar: css`
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+    height: ${PANEL_HEADER_HEIGHT}px;
+    margin-inline: calc(-1 * clamp(24px, 3.2vw, 48px));
+    padding-inline: clamp(24px, 3.2vw, 48px);
+    border-bottom: 1px solid ${token.colorBorderSecondary};
+    color: ${token.colorTextTertiary};
+    font-size: ${FONT_SIZE.item}px;
+    > span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    > svg {
+      flex: none;
+    }
+    @media (max-width: 600px) {
+      margin-inline: -16px;
+      padding-inline: 16px;
+    }
+  `,
+  topBarCurrent: css`
+    color: ${token.colorText};
+    font-weight: 500;
+  `,
   head: css`
     flex: none;
-    padding: 24px 0 0;
+    padding: 28px 0 0;
     max-width: 1080px;
     width: 100%;
     margin: 0 auto;
@@ -197,8 +226,9 @@ export const useStyles = createStyles(({ css, token }) => ({
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 10px 12px;
-    margin-top: 16px;
-    padding: 0 0 12px;
+    margin-top: 24px;
+    padding: 0 0 20px;
+    border-bottom: 1px solid ${token.colorBorderSecondary};
 
     @media (max-width: 720px) {
       margin-top: 24px;
@@ -215,11 +245,6 @@ export const useStyles = createStyles(({ css, token }) => ({
     align-items: center;
     flex-wrap: wrap;
     gap: 8px;
-
-    @media (max-width: 720px) {
-      order: 3;
-      flex-basis: 100%;
-    }
   `,
   toolbarPrimary: css`
     flex: none;
@@ -285,15 +310,16 @@ export const useStyles = createStyles(({ css, token }) => ({
     margin: 0 auto;
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
-    gap: 12px;
+    gap: 16px;
     align-content: start;
   `,
   card: css`
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding: 12px 14px 10px;
+    gap: 12px;
+    min-height: 118px;
+    padding: 16px;
     border: 1px solid ${token.colorBorderSecondary};
     border-radius: ${token.borderRadius}px;
     background: ${token.colorBgContainer};
@@ -312,8 +338,7 @@ export const useStyles = createStyles(({ css, token }) => ({
     /* 卡片本体不可聚焦（里面是标题按钮 + 动作按钮，见 DocCard 的注释），
        所以这里没有 &:focus-visible——键盘线索由标题按钮自己的焦点环给 */
     &:focus-within {
-      border-color: ${token.colorPrimaryBorder};
-      box-shadow: 0 0 0 3px ${token.controlOutline};
+      border-color: ${token.focusRing};
     }
   `,
   cardTop: css`
@@ -382,15 +407,10 @@ export const useStyles = createStyles(({ css, token }) => ({
     text-overflow: ellipsis;
     cursor: pointer;
 
-    /* 焦点环的宽度**与卡片自己那条一致（3px）**：标题聚焦时卡片会因
-       focus-within 也画一条 3px；两处 2/3 混用时两层环的粗细对不上，
-       看起来像没对齐。全站的自定义元素统一走 DESIGN §7.2 的 3px；
-       侧栏那几行是 **inset** 环——那是另一个约束（栏体 overflow-y: auto
-       会裁掉外扩的环），见 FolderSection 的 rowBtn */
     &:focus-visible {
-      outline: none;
-      border-radius: 4px;
-      box-shadow: 0 0 0 3px ${token.controlOutline};
+      outline: 2px solid ${token.focusRing};
+      outline-offset: 2px;
+      border-radius: ${token.borderRadiusSM}px;
     }
   `,
   fileName: css`
@@ -436,7 +456,7 @@ export const useStyles = createStyles(({ css, token }) => ({
     display: flex;
     align-items: center;
     gap: 2px;
-    opacity: 0;
+    opacity: 1;
     transition: opacity 0.12s ease-out;
     margin-inline-end: -6px;
 
@@ -452,15 +472,10 @@ export const useStyles = createStyles(({ css, token }) => ({
     }
   `,
   cardActionDirect: css`
-    @media (hover: none), (max-width: 600px) {
-      display: none;
-    }
+    display: none;
   `,
   cardActionMore: css`
-    display: none;
-    @media (hover: none), (max-width: 600px) {
-      display: inline-flex;
-    }
+    display: inline-flex;
   `,
   cardMeta: css`
     font-size: ${FONT_SIZE.note}px;
@@ -474,7 +489,9 @@ export const useStyles = createStyles(({ css, token }) => ({
     align-items: baseline;
     justify-content: space-between;
     gap: 8px;
-    margin-top: 4px;
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid ${token.colorBorderSecondary};
   `,
   cardTime: css`
     flex: none;
@@ -487,7 +504,8 @@ export const useStyles = createStyles(({ css, token }) => ({
   /**
    * 列表是一张**表**：行与表头共用同一套列宽（网格），所以列一定对齐。
    *
-   * 五个列位：图标 / 名称 / 详情 / 状态 / 时间。表头只是同一网格的另一行
+   * 常态四个列位：图标 / 名称 / 详情 / 时间。出现提取失败时才加状态列。
+   * 表头只是同一网格的另一行
    * （`listHead`），列宽由这一处定义——不用 flex 的理由就在这里：
    * 内容长度不同的行在 flex 下会各自算出不同的列宽，表头对不上任何一行
    * （实测旧版 meta 是 `flex: 0 1 auto`，每行宽度都不一样）。
@@ -503,7 +521,7 @@ export const useStyles = createStyles(({ css, token }) => ({
   `,
   listHead: css`
     display: grid;
-    grid-template-columns: 22px minmax(0, 1fr) minmax(0, 260px) 76px 116px;
+    grid-template-columns: 22px minmax(0, 1fr) minmax(0, 320px) 116px;
     align-items: center;
     gap: 10px;
     padding: 0 12px 10px;
@@ -515,17 +533,49 @@ export const useStyles = createStyles(({ css, token }) => ({
     border-bottom: 1px solid ${token.colorBorderSecondary};
     margin-bottom: 4px;
 
+    > :nth-child(4) {
+      display: none;
+    }
+
+    > :last-child {
+      grid-column: 4;
+    }
+
+    &[data-has-status] {
+      grid-template-columns: 22px minmax(0, 1fr) minmax(0, 260px) 76px 116px;
+
+      > :nth-child(4) {
+        display: block;
+      }
+
+      > :last-child {
+        grid-column: 5;
+      }
+    }
+
     @container (max-width: 700px) {
       grid-template-columns: 22px minmax(0, 1fr) 110px;
+
+      &[data-has-status] {
+        grid-template-columns: 22px minmax(0, 1fr) 110px;
+      }
 
       > :nth-child(3),
       > :nth-child(4) {
         display: none;
       }
+
+      > :last-child {
+        grid-column: 3;
+      }
     }
 
     @container (max-width: 480px) {
       grid-template-columns: 22px minmax(0, 1fr) 32px;
+
+      &[data-has-status] {
+        grid-template-columns: 22px minmax(0, 1fr) 32px;
+      }
 
       > :last-child {
         display: none;
@@ -534,7 +584,7 @@ export const useStyles = createStyles(({ css, token }) => ({
   `,
   row: css`
     display: grid;
-    grid-template-columns: 22px minmax(0, 1fr) minmax(0, 260px) 76px 116px;
+    grid-template-columns: 22px minmax(0, 1fr) minmax(0, 320px) 116px;
     align-items: center;
     gap: 10px;
     width: 100%;
@@ -556,26 +606,33 @@ export const useStyles = createStyles(({ css, token }) => ({
     }
 
     &:focus-visible {
-      border-color: ${token.colorPrimaryBorder};
-      box-shadow: 0 0 0 3px ${token.controlOutline};
-      outline: none;
+      border-color: ${token.focusRing};
+      outline: 2px solid ${token.focusRing};
+      outline-offset: 2px;
     }
 
-    > :nth-child(4):not(.kb-row-menu) {
-      justify-self: start;
+    &[data-has-status] {
+      grid-template-columns: 22px minmax(0, 1fr) minmax(0, 260px) 76px 116px;
     }
 
     @container (max-width: 700px) {
       grid-template-columns: 22px minmax(0, 1fr) 110px;
 
-      > :nth-child(3),
-      > :nth-child(4):not(.kb-row-menu) {
+      &[data-has-status] {
+        grid-template-columns: 22px minmax(0, 1fr) 110px;
+      }
+
+      > :nth-child(3) {
         display: none;
       }
     }
 
     @container (max-width: 480px) {
       grid-template-columns: 22px minmax(0, 1fr) 32px;
+
+      &[data-has-status] {
+        grid-template-columns: 22px minmax(0, 1fr) 32px;
+      }
 
       > :last-child:not(.kb-row-menu) {
         display: none;
@@ -584,12 +641,20 @@ export const useStyles = createStyles(({ css, token }) => ({
   `,
   /** 行尾的 ⋯（文件夹行）：占时间列、贴右缘，与文档行的时间同一列位 */
   rowMenuCell: css`
-    grid-column: 5;
+    grid-column: 4;
     justify-self: end;
     display: inline-flex;
 
+    .kb-row[data-has-status] & {
+      grid-column: 5;
+    }
+
     @container (max-width: 700px) {
       grid-column: 3;
+
+      .kb-row[data-has-status] & {
+        grid-column: 3;
+      }
     }
   `,
   /**
@@ -611,11 +676,10 @@ export const useStyles = createStyles(({ css, token }) => ({
     overflow: hidden;
     text-overflow: ellipsis;
 
-    /* 宽度与行自己那条（row 的 3px）一致，理由见 cardTitle 那一段 */
     &:focus-visible {
-      outline: none;
-      border-radius: 4px;
-      box-shadow: 0 0 0 3px ${token.controlOutline};
+      outline: 2px solid ${token.focusRing};
+      outline-offset: 2px;
+      border-radius: ${token.borderRadiusSM}px;
     }
   `,
   /**
@@ -633,10 +697,47 @@ export const useStyles = createStyles(({ css, token }) => ({
     overflow: hidden;
     text-overflow: ellipsis;
   `,
+  rowStatus: css`
+    display: none;
+    justify-self: start;
+
+    .kb-row[data-has-status] & {
+      display: inline-flex;
+    }
+
+    @container (max-width: 700px) {
+      .kb-row[data-has-status] & {
+        display: none;
+      }
+
+      .kb-row[data-has-status] &[data-failed] {
+        display: inline-flex;
+        grid-column: 2;
+        grid-row: 2;
+      }
+    }
+  `,
   rowTime: css`
+    grid-column: 4;
     font-size: ${FONT_SIZE.badge}px;
     color: ${token.colorTextTertiary};
     font-variant-numeric: tabular-nums;
+
+    .kb-row[data-has-status] & {
+      grid-column: 5;
+    }
+
+    @container (max-width: 700px) {
+      grid-column: 3;
+
+      .kb-row[data-has-status] & {
+        grid-column: 3;
+      }
+    }
+
+    @container (max-width: 480px) {
+      display: none;
+    }
   `,
 
   /* 空态与加载 */

@@ -1,0 +1,11 @@
+{"file": ".trellis/spec/project/rules.md", "reason": "项目边界、参考产品与调研证据规则"}
+{"file": ".trellis/spec/project/design.md", "reason": "现行设计规范；经确认的迁移需要同步更新而非绕过质量约束"}
+{"file": ".trellis/spec/renderer/frontend/conventions.md", "reason": "共享 Web/Desktop 外壳、主题 provider 和包边界"}
+{"file": ".trellis/spec/renderer/frontend/theme/conventions.md", "reason": "主题角色、字体阶梯、深浅模式与校准"}
+{"file": ".trellis/spec/renderer/frontend/theme/pitfalls.md", "reason": "首帧外观、CSS 变量、主题继承易错点"}
+{"file": ".trellis/spec/chat/frontend/conventions.md", "reason": "Chat 继承宿主主题，主视图与文档侧栏一致"}
+{"file": ".trellis/spec/office/frontend/shell/conventions.md", "reason": "Office 外壳、工具栏状态与能力保持"}
+{"file": ".trellis/spec/desktop/runtime/conventions.md", "reason": "桌面标题栏、独立首启与加载底色"}
+{"file": ".trellis/tasks/10-16-yuque-design-research/research/yuque-design-study.md", "reason": "语雀采样、当前截图、竞品版本与适配边界"}
+{"file": ".trellis/tasks/10-16-yuque-design-research/research/migration-code-map.md", "reason": "导航覆盖、Office 旧变量、首帧底色与测试消费链"}
+{"file": ".trellis/tasks/10-16-yuque-design-research/research/appearance-responsive-contract.md", "reason": "经规划收敛的浅深角色、交互状态、390px与880px适配及对比度校准边界"}

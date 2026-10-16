@@ -64,24 +64,12 @@ export const GlobalStyles = createGlobalStyle`
     color: ${(p) => p.theme.colorErrorText};
   }
 
-  /*
-   * 密码可见性开关（Input.Password 右端那颗眼睛）自己的焦点环。
-   *
-   * 它是 role="button" + tabindex="0" 的元素，键盘能 Tab 到，但 antd 没给它
-   * 焦点样式——实测 Tab 到它时是浏览器默认的 outline: rgb(16,16,16) auto 1px，
-   * 紧贴字形的小黑方框，与同页其它可聚焦元素的蓝色环不是一套语言
-   * （.trellis/spec/project/design.md §7.2：焦点必须可见，自定义的可聚焦元素补项目自己的环；
-   * 登录按钮实测是 3px 的蓝环、输入框是主色光晕）。
-   *
-   * 用 token.controlOutline 而不是字面量 rgba(22,119,255,.1)：它是 antd 按
-   * 当前主色与底色算好的半透明主色，深色下自动换成更亮的一档（写死的
-   * rgba 在深色下几乎不可见，Composer 的注释记的就是这件事）。
-   */
+  /* The password visibility control is keyboard-focusable but has no antd ring. */
   .${(p) => p.theme.prefixCls}-input-password-icon:focus-visible {
-    outline: none;
-    border-radius: 4px;
-    box-shadow: 0 0 0 3px ${(p) => p.theme.controlOutline};
-    color: ${(p) => p.theme.colorPrimary};
+    outline: 2px solid ${(p) => p.theme.focusRing};
+    outline-offset: 2px;
+    border-radius: ${(p) => p.theme.borderRadius}px;
+    color: ${(p) => p.theme.colorLink};
   }
 
   /*

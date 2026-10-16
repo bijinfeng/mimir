@@ -1,0 +1,116 @@
+[
+  {
+    "items": [
+      {
+        "bg": "rgba(0, 0, 0, 0)",
+        "borderBottom": "0px none rgb(38, 38, 38)",
+        "borderRight": "0px none rgb(38, 38, 38)",
+        "class": "",
+        "color": "rgb(38, 38, 38)",
+        "fontSize": "15px",
+        "lineHeight": "30px",
+        "radius": "0px",
+        "rect": {
+          "h": 30,
+          "w": 750,
+          "x": 335,
+          "y": 138
+        },
+        "text": "Hi，欢迎来到语雀～"
+      }
+    ],
+    "selector": "#ubcbc0272"
+  },
+  {
+    "items": [
+      {
+        "bg": "rgba(0, 0, 0, 0)",
+        "borderBottom": "0px none rgb(38, 38, 38)",
+        "borderRight": "0px none rgb(38, 38, 38)",
+        "class": "",
+        "color": "rgb(38, 38, 38)",
+        "fontSize": "15px",
+        "lineHeight": "30px",
+        "radius": "0px",
+        "rect": {
+          "h": 60,
+          "w": 750,
+          "x": 335,
+          "y": 168
+        },
+        "text": "语雀文档是一个给个人和团队提供的写好文档的工具，我们希望每个人都可以快速、舒适的"
+      }
+    ],
+    "selector": "#u20af3ab1"
+  },
+  {
+    "items": [
+      {
+        "bg": "rgb(239, 240, 240)",
+        "borderBottom": "1px solid rgb(239, 240, 240)",
+        "borderRight": "1px solid rgb(239, 240, 240)",
+        "class": "catalogTreeItem-module_content_Tae8T catalogTreeItem-module_selected_uB-Um active",
+        "color": "rgb(38, 38, 38)",
+        "fontSize": "14px",
+        "lineHeight": "22.001px",
+        "radius": "6px",
+        "rect": {
+          "h": 34,
+          "w": 243,
+          "x": 8,
+          "y": 260
+        },
+        "text": "💡 1 分钟玩转语雀文档"
+      }
+    ],
+    "selector": "nav a.active"
+  },
+  {
+    "items": [
+      {
+        "bg": "rgb(255, 255, 255)",
+        "borderBottom": "0px none rgb(38, 38, 38)",
+        "borderRight": "0px none rgb(38, 38, 38)",
+        "class": "ReaderLayout-module_asideWrapper_ji7KA ReaderLayout-module_onlyTocAside_U9Gnn",
+        "color": "rgb(38, 38, 38)",
+        "fontSize": "14px",
+        "lineHeight": "22.001px",
+        "radius": "0px",
+        "rect": {
+          "h": 1000,
+          "w": 259,
+          "x": 0,
+          "y": 0
+        },
+        "text": "语雀语雀：知识构建与分享搜索⌘ + J首页目录新手必读：语雀新手塔💡 1 分钟"
+      }
+    ],
+    "selector": "[class*=\"asideWrapper\"]"
+  },
+  {
+    "items": [],
+    "selector": "[class*=\"headerWrapper\"]"
+  },
+  {
+    "items": [
+      {
+        "bg": "rgba(0, 0, 0, 0)",
+        "borderBottom": "0px none rgb(38, 38, 38)",
+        "borderRight": "0px none rgb(38, 38, 38)",
+        "class": "index-module_articleTitle_X2MXY doc-article-title",
+        "color": "rgb(38, 38, 38)",
+        "fontSize": "36px",
+        "lineHeight": "50.004px",
+        "radius": "0px",
+        "rect": {
+          "h": 50,
+          "w": 366.671875,
+          "x": 335,
+          "y": 76
+        },
+        "text": "💡 1 分钟玩转语雀文档"
+      }
+    ],
+    "selector": "[class*=\"articleTitle\"]"
+  }
+]

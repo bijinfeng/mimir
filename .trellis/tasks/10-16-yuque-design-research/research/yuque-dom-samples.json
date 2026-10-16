@@ -1,0 +1,337 @@
+[
+  {
+    "elements": [
+      {
+        "grandparent": {
+          "bg": "rgba(0, 0, 0, 0)",
+          "border": "rgb(38, 38, 38)",
+          "class": "DocReader-module_title_JP0rL",
+          "color": "rgb(38, 38, 38)",
+          "font": "\"Chinese Quote\", -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+          "line": "22.001px",
+          "padding": "0px",
+          "radius": "0px",
+          "rect": {
+            "h": 50,
+            "w": 750,
+            "x": 335,
+            "y": 76
+          },
+          "size": "14px",
+          "tag": "DIV",
+          "text": "💡 1 分钟玩转语雀文档",
+          "weight": "400"
+        },
+        "parent": {
+          "bg": "rgba(0, 0, 0, 0)",
+          "border": "rgb(38, 38, 38)",
+          "class": "",
+          "color": "rgb(38, 38, 38)",
+          "font": "\"Chinese Quote\", -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+          "line": "22.001px",
+          "padding": "0px",
+          "radius": "0px",
+          "rect": {
+            "h": 50,
+            "w": 366.671875,
+            "x": 335,
+            "y": 76
+          },
+          "size": "14px",
+          "tag": "SPAN",
+          "text": "💡 1 分钟玩转语雀文档",
+          "weight": "400"
+        },
+        "self": {
+          "bg": "rgba(0, 0, 0, 0)",
+          "border": "rgb(38, 38, 38)",
+          "class": "index-module_articleTitle_X2MXY doc-article-title",
+          "color": "rgb(38, 38, 38)",
+          "font": "\"Chinese Quote\", \"Segoe UI\", Roboto, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Helvetica Neue\", Helvetica, Arial, sans-serif, \"Apple Color Emoji\"",
+          "line": "50.004px",
+          "padding": "0px",
+          "radius": "0px",
+          "rect": {
+            "h": 50,
+            "w": 366.671875,
+            "x": 335,
+            "y": 76
+          },
+          "size": "36px",
+          "tag": "H1",
+          "text": "💡 1 分钟玩转语雀文档",
+          "weight": "700"
+        }
+      }
+    ],
+    "selector": "h1#article-title"
+  },
+  {
+    "elements": [
+      {
+        "grandparent": {
+          "bg": "rgba(0, 0, 0, 0)",
+          "border": "rgb(38, 38, 38)",
+          "class": "DocReader-module_content_4pRCP ",
+          "color": "rgb(38, 38, 38)",
+          "font": "\"Chinese Quote\", -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+          "line": "22.001px",
+          "padding": "0px",
+          "radius": "0px",
+          "rect": {
+            "h": 7902.015625,
+            "w": 1181,
+            "x": 259,
+            "y": 76
+          },
+          "size": "14px",
+          "tag": "DIV",
+          "text": "💡 1 分钟玩转语雀文档返回文档Hi，欢迎来到语雀～语雀文档是一个给个人和团队提供的写好",
+          "weight": "400"
+        },
+        "parent": {
+          "bg": "rgba(0, 0, 0, 0)",
+          "border": "rgb(38, 38, 38)",
+          "class": "",
+          "color": "rgb(38, 38, 38)",
+          "font": "\"Chinese Quote\", -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+          "line": "22.001px",
+          "padding": "0px",
+          "radius": "0px",
+          "rect": {
+            "h": 7840.015625,
+            "w": 1181,
+            "x": 259,
+            "y": 138
+          },
+          "size": "14px",
+          "tag": "DIV",
+          "text": "返回文档Hi，欢迎来到语雀～语雀文档是一个给个人和团队提供的写好文档的工具，我们希望每个人",
+          "weight": "400"
+        },
+        "self": {
+          "bg": "rgba(0, 0, 0, 0)",
+          "border": "rgb(38, 38, 38)",
+          "class": "article-content",
+          "color": "rgb(38, 38, 38)",
+          "font": "\"Chinese Quote\", -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+          "line": "22.001px",
+          "padding": "0px",
+          "radius": "0px",
+          "rect": {
+            "h": 7840.015625,
+            "w": 1181,
+            "x": 259,
+            "y": 138
+          },
+          "size": "14px",
+          "tag": "ARTICLE",
+          "text": "返回文档Hi，欢迎来到语雀～语雀文档是一个给个人和团队提供的写好文档的工具，我们希望每个人",
+          "weight": "400"
+        }
+      }
+    ],
+    "selector": "article"
+  },
+  {
+    "elements": [
+      {
+        "grandparent": {
+          "bg": "rgb(255, 255, 255)",
+          "border": "rgb(38, 38, 38)",
+          "class": "ReaderLayout-module_asideWrapper_ji7KA ReaderLayout-module_onlyTocAside_U9Gnn",
+          "color": "rgb(38, 38, 38)",
+          "font": "\"Chinese Quote\", -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+          "line": "22.001px",
+          "padding": "0px",
+          "radius": "0px",
+          "rect": {
+            "h": 1000,
+            "w": 259,
+            "x": 0,
+            "y": 0
+          },
+          "size": "14px",
+          "tag": "DIV",
+          "text": "语雀语雀：知识构建与分享搜索⌘ + J首页目录新手必读：语雀新手塔💡 1 分钟玩转语雀文",
+          "weight": "400"
+        },
+        "parent": {
+          "bg": "rgb(255, 255, 255)",
+          "border": "rgb(38, 38, 38)",
+          "class": "ReaderLayout-module_aside_7atvV",
+          "color": "rgb(38, 38, 38)",
+          "font": "\"Chinese Quote\", -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+          "line": "22.001px",
+          "padding": "0px",
+          "radius": "0px",
+          "rect": {
+            "h": 1000,
+            "w": 259,
+            "x": 0,
+            "y": 0
+          },
+          "size": "14px",
+          "tag": "DIV",
+          "text": "语雀语雀：知识构建与分享搜索⌘ + J首页目录新手必读：语雀新手塔💡 1 分钟玩转语雀文",
+          "weight": "400"
+        },
+        "self": {
+          "bg": "rgba(0, 0, 0, 0)",
+          "border": "rgb(38, 38, 38)",
+          "class": "ReaderLayout-module_asideNav_Y03Oe",
+          "color": "rgb(38, 38, 38)",
+          "font": "\"Chinese Quote\", -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+          "line": "22.001px",
+          "padding": "0px",
+          "radius": "0px",
+          "rect": {
+            "h": 922,
+            "w": 259,
+            "x": 0,
+            "y": 110
+          },
+          "size": "14px",
+          "tag": "NAV",
+          "text": "搜索⌘ + J首页目录新手必读：语雀新手塔💡 1 分钟玩转语雀文档一文看懂语雀权限（个人",
+          "weight": "400"
+        }
+      }
+    ],
+    "selector": "nav"
+  },
+  {
+    "elements": [
+      {
+        "grandparent": {
+          "bg": "rgba(0, 0, 0, 0)",
+          "border": "rgb(38, 38, 38)",
+          "class": "header-action",
+          "color": "rgb(38, 38, 38)",
+          "font": "\"Chinese Quote\", -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+          "line": "22.001px",
+          "padding": "0px 16px 0px 0px",
+          "radius": "0px",
+          "rect": {
+            "h": 51,
+            "w": 313.125,
+            "x": 1111.875,
+            "y": 0
+          },
+          "size": "14px",
+          "tag": "DIV",
+          "text": "MD免费使用",
+          "weight": "400"
+        },
+        "parent": {
+          "bg": "rgba(0, 0, 0, 0)",
+          "border": "rgb(38, 38, 38)",
+          "class": "ViewerHeader-module_offlineLargeSpaceButton_9TqVy",
+          "color": "rgb(38, 38, 38)",
+          "font": "\"Chinese Quote\", -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+          "line": "22.001px",
+          "padding": "0px",
+          "radius": "0px",
+          "rect": {
+            "h": 32,
+            "w": 89.125,
+            "x": 1247.875,
+            "y": 9.5
+          },
+          "size": "14px",
+          "tag": "DIV",
+          "text": "免费使用",
+          "weight": "400"
+        },
+        "self": {
+          "bg": "rgb(0, 185, 107)",
+          "border": "rgb(0, 185, 107)",
+          "class": "ant-btn ant-btn-primary",
+          "color": "rgb(255, 255, 255)",
+          "font": "\"Chinese Quote\", -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+          "line": "30px",
+          "padding": "0.01px 15px 4px",
+          "radius": "6px",
+          "rect": {
+            "h": 32,
+            "w": 89.125,
+            "x": 1247.875,
+            "y": 9.5
+          },
+          "size": "14px",
+          "tag": "A",
+          "text": "免费使用",
+          "weight": "500"
+        }
+      }
+    ],
+    "selector": "a[href^=\"/login?goto=\"]"
+  },
+  {
+    "elements": [
+      {
+        "grandparent": {
+          "bg": "rgba(0, 0, 0, 0)",
+          "border": "rgb(38, 38, 38)",
+          "class": "",
+          "color": "rgb(38, 38, 38)",
+          "font": "\"Chinese Quote\", -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+          "line": "22.001px",
+          "padding": "0px",
+          "radius": "0px",
+          "rect": {
+            "h": 288,
+            "w": 259,
+            "x": 0,
+            "y": 223
+          },
+          "size": "14px",
+          "tag": "DIV",
+          "text": "新手必读：语雀新手塔💡 1 分钟玩转语雀文档一文看懂语雀权限（个人版）语雀基础介绍怎么使",
+          "weight": "400"
+        },
+        "parent": {
+          "bg": "rgba(0, 0, 0, 0)",
+          "border": "rgb(38, 38, 38)",
+          "class": "catalogTreeItem-module_CatalogItem_qUomU",
+          "color": "rgb(38, 38, 38)",
+          "font": "\"Chinese Quote\", -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+          "line": "22.001px",
+          "padding": "0px 8px",
+          "radius": "0px",
+          "rect": {
+            "h": 36,
+            "w": 259,
+            "x": 0,
+            "y": 259
+          },
+          "size": "14px",
+          "tag": "DIV",
+          "text": "💡 1 分钟玩转语雀文档",
+          "weight": "400"
+        },
+        "self": {
+          "bg": "rgb(239, 240, 240)",
+          "border": "rgb(239, 240, 240)",
+          "class": "catalogTreeItem-module_content_Tae8T catalogTreeItem-module_selected_uB-Um active",
+          "color": "rgb(38, 38, 38)",
+          "font": "\"Chinese Quote\", -apple-system, \"system-ui\", \"Segoe UI\", Roboto, \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", \"Helvetica Neue\", Helvetica, Arial, sans-serif",
+          "line": "22.001px",
+          "padding": "0px 6px 0px 0px",
+          "radius": "6px",
+          "rect": {
+            "h": 34,
+            "w": 243,
+            "x": 8,
+            "y": 260
+          },
+          "size": "14px",
+          "tag": "A",
+          "text": "💡 1 分钟玩转语雀文档",
+          "weight": "700"
+        }
+      }
+    ],
+    "selector": "a[href=\"/yuque/ng1qth/iaxgag\"]"
+  }
+]

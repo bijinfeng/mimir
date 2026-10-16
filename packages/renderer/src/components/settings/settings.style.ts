@@ -6,7 +6,7 @@ import { FONT_SIZE, NAV_NARROW_QUERY } from '../../theme/tokens'
  *
  * 设置只展示用户能理解的状态和可执行操作；部署与实现细节留在服务端配置中。
  *
- * 宽屏采用 246px 分区栏和最多 730px 的正文列；窄屏用 Select 定位分区。
+ * 宽屏采用独立分区栏和最多 760px 的正文列；窄屏用 Select 定位分区。
  *
  * ## 为什么面板自己画边框，而不是用 `Card`
  *
@@ -19,40 +19,43 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     height: 100%;
     min-height: 0;
     display: grid;
-    grid-template-columns: 220px minmax(0, 1fr);
+    grid-template-columns: 176px minmax(0, 1fr);
     overflow: hidden;
-    background: ${token.colorBgLayout};
+    background: ${token.surfaceContent};
     @media ${NAV_NARROW_QUERY} {
       display: flex;
       flex-direction: column;
     }
   `,
   inner: css`
+    min-width: 0;
     max-width: 760px;
     margin: 0;
   `,
   sectionRail: css`
     min-height: 0;
     overflow-y: auto;
-    padding: 24px 12px;
-    background: ${token.tintNav};
+    padding: 28px 16px;
+    background: ${token.surfaceContent};
     border-right: 1px solid ${token.colorBorderSecondary};
   `,
   content: css`
+    container-type: inline-size;
+    container-name: settings-content;
     min-width: 0;
     min-height: 0;
     overflow-y: auto;
+    overscroll-behavior: contain;
     padding: 40px clamp(28px, 5vw, 64px) 72px;
     @media ${NAV_NARROW_QUERY} {
       flex: 1;
-      padding: 24px 24px 64px;
+      padding: 24px 16px 64px;
     }
   `,
   mobileHead: css`
     flex: none;
-    padding: 20px 24px 16px;
-    background: ${token.tintNav};
-    border-bottom: 1px solid ${token.colorBorderSecondary};
+    padding: 24px 16px 0;
+    background: ${token.surfaceContent};
   `,
 
   /* ── 页头 ───────────────────────────────────────────── */
@@ -67,7 +70,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     }
   `,
   contentTitle: css`
-    margin: 0 0 6px;
+    margin: 0 0 24px;
     font-size: ${FONT_SIZE.pageTitle}px;
     font-weight: 700;
     line-height: 1.25;
@@ -96,6 +99,12 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       font-size: ${FONT_SIZE.item}px;
       border-radius: 6px;
       padding-inline: 12px !important;
+    }
+
+    .${prefixCls}-menu-item-selected {
+      color: ${token.navSelectedText};
+      background: ${token.navSelectedBg};
+      font-weight: 600;
     }
   `,
 
@@ -128,7 +137,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   panel: css`
     background: ${token.colorBgContainer};
     border: 1px solid ${token.colorBorderSecondary};
-    border-radius: 10px;
+    border-radius: ${token.borderRadius}px;
     overflow: hidden;
 
     & + & {
@@ -148,6 +157,12 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     gap: 16px;
     padding: 16px 20px;
     border-bottom: 1px solid ${token.colorBorderSecondary};
+
+    @container settings-content (max-width: 620px) {
+      flex-wrap: wrap;
+      gap: 10px;
+      padding-inline: 16px;
+    }
   `,
   panelTitleMain: css`
     display: flex;
@@ -172,6 +187,8 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     align-items: center;
     gap: 8px;
     flex: none;
+    flex-wrap: wrap;
+    max-width: 100%;
   `,
   /** 卡片标题里的接缝标识：等宽、比标题再弱一档 */
   seamTag: css`
@@ -184,7 +201,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   /* ── 键值行：左标签 + 右值，卡片内水平内边距 20px ─────── */
   row: css`
     display: grid;
-    grid-template-columns: 150px 1fr;
+    grid-template-columns: 150px minmax(0, 1fr);
     gap: 20px;
     padding: 16px 20px;
     align-items: start;
@@ -192,7 +209,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     & + & {
       border-top: 1px solid ${token.colorBorderSecondary};
     }
-    @media (max-width: 780px) {
+    @container settings-content (max-width: 620px) {
       grid-template-columns: minmax(0, 1fr);
       gap: 4px;
       padding-inline: 16px;
@@ -427,6 +444,11 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     &:hover {
       text-decoration: underline;
     }
+
+    &:focus-visible {
+      outline: 2px solid ${token.focusRing};
+      outline-offset: 2px;
+    }
   `,
   /** 一行里的字段并排：显示名 + 密钥状态 */
   providerHead: css`
@@ -476,7 +498,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   /* ── 预设选择器 ─────────────────────────────────────── */
   presetGrid: css`
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr));
     gap: 8px;
     padding: 16px 20px 20px;
   `,
@@ -630,7 +652,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     & + & {
       border-top: 1px solid ${token.colorBorderSecondary};
     }
-    @media (max-width: 680px) {
+    @container settings-content (max-width: 620px) {
       flex-direction: column;
       gap: 4px;
       padding-inline: 16px;
@@ -642,7 +664,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     font-size: ${FONT_SIZE.excerpt}px;
     line-height: 32px;
     color: ${token.colorTextSecondary};
-    @media (max-width: 680px) {
+    @container settings-content (max-width: 620px) {
       width: auto;
       line-height: 1.5;
     }
@@ -654,10 +676,15 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     flex-wrap: wrap;
     align-items: center;
     gap: 10px;
+
+    > * {
+      max-width: 100%;
+    }
   `,
   formError: css`
     flex-basis: 100%;
-    font-size: ${FONT_SIZE.badge}px;
+    grid-column: 1 / -1;
+    font-size: ${FONT_SIZE.note}px;
     line-height: 1.7;
     color: ${token.colorErrorText};
   `,
@@ -709,10 +736,8 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     font-size: ${FONT_SIZE.meta}px;
     color: ${token.colorTextTertiary};
     border-bottom: 1px solid ${token.colorBorderSecondary};
-    @media (max-width: 680px) {
-      grid-template-columns: minmax(0, 1fr) minmax(96px, 130px) 46px 28px;
-      gap: 6px;
-      padding-inline: 16px;
+    @container settings-content (max-width: 620px) {
+      display: none;
     }
   `,
   modelRow: css`
@@ -725,10 +750,29 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     & + & {
       border-top: 1px solid ${token.colorBorderSecondary};
     }
-    @media (max-width: 680px) {
-      grid-template-columns: minmax(0, 1fr) minmax(96px, 130px) 46px 28px;
-      gap: 6px;
-      padding-inline: 16px;
+    @container settings-content (max-width: 620px) {
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      margin: 12px 16px;
+      padding: 12px;
+      border: 1px solid ${token.colorBorderSecondary};
+      border-radius: ${token.borderRadius}px;
+      background: ${token.tintNav};
+
+      > :nth-child(2) {
+        grid-column: 1 / -1;
+        grid-row: 2;
+      }
+
+      > :nth-child(3) {
+        grid-column: 1 / -1;
+        grid-row: 3;
+      }
+
+      > :nth-child(4) {
+        grid-column: 2;
+        grid-row: 1;
+      }
     }
   `,
   modelRowRead: css`
@@ -741,9 +785,9 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     & + & {
       border-top: 1px solid ${token.colorBorderSecondary};
     }
-    @media (max-width: 680px) {
-      grid-template-columns: minmax(0, 1fr) minmax(96px, 130px) 46px;
-      gap: 6px;
+    @container settings-content (max-width: 620px) {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 8px;
       padding-inline: 16px;
     }
   `,
@@ -757,6 +801,10 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
    */
   modelRowFlash: css`
     animation: mimir-model-flash 2.6s ease-out both;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
 
     @keyframes mimir-model-flash {
       0% {
@@ -817,6 +865,15 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
 
     &:hover {
       border-color: ${token.colorTextQuaternary};
+    }
+
+    &:focus-visible {
+      outline: 2px solid ${token.focusRing};
+      outline-offset: 2px;
+    }
+
+    @media (pointer: coarse) {
+      min-height: 40px;
     }
   `,
   chipOn: css`

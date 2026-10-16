@@ -1,0 +1,344 @@
+{
+  "body": {
+    "bg": "rgba(0, 0, 0, 0)",
+    "border": "0px none rgb(38, 38, 38)",
+    "class": "with-miniapp-code ReaderLayout-module_higherBackTop_S8jNN",
+    "color": "rgb(38, 38, 38)",
+    "line": "22.001px",
+    "padding": "0px",
+    "radius": "0px",
+    "rect": {
+      "h": 1000,
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "size": "14px",
+    "tag": "BODY",
+    "text": "6\n                        ⌥\n                    \n ",
+    "weight": "400"
+  },
+  "samples": [
+    {
+      "parent": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(38, 38, 38)",
+        "class": "BookOverview-module_bookHead_Rmm-4",
+        "color": "rgb(38, 38, 38)",
+        "line": "22.001px",
+        "padding": "0px",
+        "radius": "0px",
+        "rect": {
+          "h": 48,
+          "w": 960,
+          "x": 369.5,
+          "y": 96
+        },
+        "size": "14px",
+        "tag": "DIV",
+        "text": "语雀：知识构建与分享收藏",
+        "weight": "400"
+      },
+      "self": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(38, 38, 38)",
+        "class": "BookOverview-module_bookTitle_HMwxO",
+        "color": "rgb(38, 38, 38)",
+        "line": "22.001px",
+        "padding": "0px",
+        "radius": "0px",
+        "rect": {
+          "h": 44,
+          "w": 339.640625,
+          "x": 369.5,
+          "y": 98
+        },
+        "size": "14px",
+        "tag": "DIV",
+        "text": "语雀：知识构建与分享",
+        "weight": "400"
+      }
+    },
+    {
+      "parent": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(38, 38, 38)",
+        "class": "BookOverview-module_bookTitle_HMwxO",
+        "color": "rgb(38, 38, 38)",
+        "line": "22.001px",
+        "padding": "0px",
+        "radius": "0px",
+        "rect": {
+          "h": 44,
+          "w": 339.640625,
+          "x": 369.5,
+          "y": 98
+        },
+        "size": "14px",
+        "tag": "DIV",
+        "text": "语雀：知识构建与分享",
+        "weight": "400"
+      },
+      "self": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(38, 38, 38)",
+        "class": "BookOverview-module_bookName_Awos7",
+        "color": "rgb(38, 38, 38)",
+        "line": "44.002px",
+        "padding": "0px",
+        "radius": "0px",
+        "rect": {
+          "h": 44,
+          "w": 283.640625,
+          "x": 425.5,
+          "y": 98
+        },
+        "size": "28px",
+        "tag": "SPAN",
+        "text": "语雀：知识构建与分享",
+        "weight": "700"
+      }
+    },
+    {
+      "parent": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(38, 38, 38)",
+        "class": "catalogTreeItem-module_CatalogItem_qUomU",
+        "color": "rgb(38, 38, 38)",
+        "line": "22.001px",
+        "padding": "0px 8px",
+        "radius": "0px",
+        "rect": {
+          "h": 36,
+          "w": 960,
+          "x": 369.5,
+          "y": 350.640625
+        },
+        "size": "14px",
+        "tag": "DIV",
+        "text": "💡 1 分钟玩转语雀文档2024-04-18 12:00",
+        "weight": "400"
+      },
+      "self": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "border": "1px solid rgba(0, 0, 0, 0)",
+        "class": "catalogTreeItem-module_content_Tae8T catalogTreeItem-module_content_BVZYg",
+        "color": "rgb(38, 38, 38)",
+        "line": "22.001px",
+        "padding": "0px 6px 0px 0px",
+        "radius": "6px",
+        "rect": {
+          "h": 34,
+          "w": 944,
+          "x": 377.5,
+          "y": 351.640625
+        },
+        "size": "14px",
+        "tag": "A",
+        "text": "💡 1 分钟玩转语雀文档2024-04-18 12:00",
+        "weight": "400"
+      }
+    },
+    {
+      "parent": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "border": "",
+        "class": "ReaderLayout-module_asideHead_CeUVc",
+        "color": "rgb(38, 38, 38)",
+        "line": "22.001px",
+        "padding": "0px 0px 12px",
+        "radius": "0px",
+        "rect": {
+          "h": 94,
+          "w": 239,
+          "x": 10,
+          "y": 0
+        },
+        "size": "14px",
+        "tag": "DIV",
+        "text": "语雀语雀：知识构建与分享",
+        "weight": "400"
+      },
+      "self": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(38, 38, 38)",
+        "class": "ReaderLayout-module_bookInfo_RwVBc",
+        "color": "rgb(38, 38, 38)",
+        "line": "22.001px",
+        "padding": "0px",
+        "radius": "0px",
+        "rect": {
+          "h": 36,
+          "w": 239,
+          "x": 10,
+          "y": 45
+        },
+        "size": "14px",
+        "tag": "DIV",
+        "text": "语雀：知识构建与分享",
+        "weight": "400"
+      }
+    },
+    {
+      "parent": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(38, 38, 38)",
+        "class": "ReaderLayout-module_bookInfo_RwVBc",
+        "color": "rgb(38, 38, 38)",
+        "line": "22.001px",
+        "padding": "0px",
+        "radius": "0px",
+        "rect": {
+          "h": 36,
+          "w": 239,
+          "x": 10,
+          "y": 45
+        },
+        "size": "14px",
+        "tag": "DIV",
+        "text": "语雀：知识构建与分享",
+        "weight": "400"
+      },
+      "self": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(38, 38, 38)",
+        "class": "ReaderLayout-module_bookName_5Guj8",
+        "color": "rgb(38, 38, 38)",
+        "line": "22px",
+        "padding": "0px 10px 0px 0px",
+        "radius": "6px",
+        "rect": {
+          "h": 36,
+          "w": 239,
+          "x": 10,
+          "y": 45
+        },
+        "size": "16px",
+        "tag": "DIV",
+        "text": "语雀：知识构建与分享",
+        "weight": "700"
+      }
+    },
+    {
+      "parent": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(38, 38, 38)",
+        "class": "ReaderLayout-module_bookName_5Guj8",
+        "color": "rgb(38, 38, 38)",
+        "line": "22px",
+        "padding": "0px 10px 0px 0px",
+        "radius": "6px",
+        "rect": {
+          "h": 36,
+          "w": 239,
+          "x": 10,
+          "y": 45
+        },
+        "size": "16px",
+        "tag": "DIV",
+        "text": "语雀：知识构建与分享",
+        "weight": "700"
+      },
+      "self": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(38, 38, 38)",
+        "class": "ReaderLayout-module_bookName_5Guj8",
+        "color": "rgb(38, 38, 38)",
+        "line": "22px",
+        "padding": "0px 10px 0px 0px",
+        "radius": "6px",
+        "rect": {
+          "h": 36,
+          "w": 195,
+          "x": 44,
+          "y": 45
+        },
+        "size": "16px",
+        "tag": "DIV",
+        "text": "语雀：知识构建与分享",
+        "weight": "700"
+      }
+    },
+    {
+      "parent": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(38, 38, 38)",
+        "class": "ReaderLayout-module_bookName_5Guj8",
+        "color": "rgb(38, 38, 38)",
+        "line": "22px",
+        "padding": "0px 10px 0px 0px",
+        "radius": "6px",
+        "rect": {
+          "h": 36,
+          "w": 195,
+          "x": 44,
+          "y": 45
+        },
+        "size": "16px",
+        "tag": "DIV",
+        "text": "语雀：知识构建与分享",
+        "weight": "700"
+      },
+      "self": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(38, 38, 38)",
+        "class": "ReaderLayout-module_text_UHXAw",
+        "color": "rgb(38, 38, 38)",
+        "line": "22px",
+        "padding": "0px",
+        "radius": "0px",
+        "rect": {
+          "h": 22,
+          "w": 153,
+          "x": 44,
+          "y": 52
+        },
+        "size": "16px",
+        "tag": "SPAN",
+        "text": "语雀：知识构建与分享",
+        "weight": "700"
+      }
+    },
+    {
+      "parent": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "border": "0px none rgb(38, 38, 38)",
+        "class": "catalogTreeItem-module_CatalogItem_qUomU",
+        "color": "rgb(38, 38, 38)",
+        "line": "22.001px",
+        "padding": "0px 8px",
+        "radius": "0px",
+        "rect": {
+          "h": 36,
+          "w": 259,
+          "x": 0,
+          "y": 259
+        },
+        "size": "14px",
+        "tag": "DIV",
+        "text": "💡 1 分钟玩转语雀文档",
+        "weight": "400"
+      },
+      "self": {
+        "bg": "rgba(0, 0, 0, 0)",
+        "border": "1px solid rgba(0, 0, 0, 0)",
+        "class": "catalogTreeItem-module_content_Tae8T",
+        "color": "rgb(38, 38, 38)",
+        "line": "22.001px",
+        "padding": "0px 6px 0px 0px",
+        "radius": "6px",
+        "rect": {
+          "h": 34,
+          "w": 243,
+          "x": 8,
+          "y": 260
+        },
+        "size": "14px",
+        "tag": "A",
+        "text": "💡 1 分钟玩转语雀文档",
+        "weight": "400"
+      }
+    }
+  ],
+  "url": "https://www.yuque.com/yuque/ng1qth"
+}

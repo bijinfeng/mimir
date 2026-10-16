@@ -1,0 +1,334 @@
+{
+  "screen": {
+    "designSystem": {
+      "designSystem": {
+        "displayName": "Serene Knowledge Base",
+        "styleGuidelines": "## Brand & Style\n\nThis design system embodies a quiet, utilitarian, and distraction-free document environment. Targeted at autonomous thinkers, independent researchers, and solo knowledge architects, the aesthetic prioritizes deep legibility, mental calm, and long-form intellectual focus over engagement-driven ornamentation.\n\nThe core visual style is a disciplined Modern Document Minimalism:\n- Flat, paper-like surfaces with absolute avoidance of gradients, skeuomorphic shading, or decorative 3D iconography.\n- High editorial clarity informed by contemporary East Asian and Swiss document layouts.\n- Absolute silence regarding collaborative affordances: no activity counters, team avatars, or sharing prompts.\n- Pure informational hierarchy where structure and subtle hairline boundaries guide the eye.\n\n## Layout & Spacing\n\nThe workspace implements an asymmetric multi-pane architecture:\n- **Left Navigation Rail / Sidebar:** Exactly `256px` fixed width, full-height, pinned to the left viewport boundary. It hosts the workspace header, index trees, and quick search.\n- **Central Document Workspace:** Responsive, max-width constrained to `820px` for document reading and writing, auto-centered within the remaining viewport canvas.\n- **Outline / Right Meta Inspector (Optional):** Fixed `220px` right column for nested document outlines (`TOC`).\n\n### Grid & Alignment\n- Grids for card listings (e.g., knowledge bases, book index) use an adaptive auto-fill layout: `repeat(auto-fill, minmax(300px, 1fr))` with a rigid `16px` gap.\n- Breakpoints:\n  - **Desktop (>= 1024px):** Persistent 256px sidebar, open reading pane.\n  - **Tablet (768px - 1023px):** Sidebar collapses to a 48px mini icon rail or slide-over drawer; main canvas takes remaining space.\n  - **Mobile (< 768px):** Off-canvas slide drawer for sidebar; document reader margins drop to `16px` padding with cards stacking in a single column.\n\n## Elevation & Depth\n\nThis system operates entirely without atmospheric drop shadows, blurry glows, or layered elevation z-indexes:\n\n- **Flat Border Enclosure:** Depth and separation are achieved exclusively through hairline `1px solid #e8e8e8` rules.\n- **Tonal Contrast:** Canvas hierarchy is communicated via solid surface shifts (`#ffffff` main vs. `#f7f8f8` sidebar).\n- **Overlays & Modals:** When dialogs or dropdown menus appear, they utilize a crisp `1px solid #e8e8e8` perimeter on a `#ffffff` background with no blur filters. A single restrained modal backdrop of `rgba(0, 0, 0, 0.15)` without backdrop-filter blur ensures absolute visual clarity.\n\n## Components\n\n### Sidebar Navigation Rows\n- **Dimensions:** Fixed height of `36px`, full width minus `8px` horizontal margin padding.\n- **States:** \n  - *Default:* `#f7f8f8` background, `#262626` text, 14px typography.\n  - *Hover:* `#eff0f0` background, `#262626` text.\n  - *Active / Selected:* `#eff0f0` background, `#262626` text with `font-weight: 600`. Absolutely no green fill or green tint on sidebar selections.\n- **Iconography:** Monochromatic `16px` stroke icons in `#595959`.\n\n### Document Cards\n- **Dimensions:** Compact target size of `~310px × 118px`.\n- **Styling:** `#ffffff` surface, `1px solid #e8e8e8` perimeter, `6px` border radius, `16px` internal padding. Zero drop shadows.\n- **Hover:** Border color darkens slightly to `#d9d9d9`; surface stays `#ffffff`.\n- **Internal Elements:**\n  - *Top Row:* Monoline outline document type icon (`16px`, `#595959`) alongside an ellipsis trigger (`#737373`).\n  - *Middle:* Document Title in `15px` Semi-bold (`#262626`), truncated to 1 line, followed by a 1-line snippet in `13px` (`#595959`).\n  - *Bottom:* Minimal metadata (e.g., \"Updated 2h ago\") in `12px` (`#737373`).\n\n### Buttons\n- **Primary:** Solid `#00834d` background, `#ffffff` text, `6px` border radius, no border. Hover transitions to `#007a45`. Height: `32px` (compact) or `36px` (regular).\n- **Secondary / Default:** `#ffffff` background, `1px solid #e8e8e8` border, `#262626` text. Hover state switches background to `#f7f8f8` with border remaining `#e8e8e8`.\n- **Ghost:** Transparent background, `#595959` text; `#eff0f0` background on hover.\n\n### Inputs & Search Bars\n- **Styling:** `#ffffff` background, `1px solid #e8e8e8`, `6px` border-radius, `14px` text size, `8px 12px` padding.\n- **Focus:** Sharp border color change to `#00834d` with a `1px` subtle outline or ring (`rgba(0, 131, 77, 0.2)`). No large diffuse halos.\n- **Sidebar Search:** `#ffffff` surface inside the `#f7f8f8` sidebar to create a clean, recessed search input with `32px` height.\n\n### Checkboxes & Radios\n- **Dimensions:** `16px × 16px` box with `3px` radius.\n- **Unchecked:** `1px solid #d9d9d9` border, `#ffffff` surface.\n- **Checked:** `#00834d` solid fill, white checkmark glyph.\n\n### Document Breadcrumbs & Headers\n- **Breadcrumbs:** `13px` height, `#737373` text, separated by hairline slashes (`/`). Current active document label transitions to `#262626`.\n- **TOC Anchor Navigation:** Nested lists with a left `1px solid #e8e8e8` guide rule. Active section highlights text in `#00834d` with a matching `2px` left border marker.",
+        "theme": {
+          "bodyFont": "INTER",
+          "bodyFontFamily": "Inter",
+          "colorMode": "LIGHT",
+          "colorVariant": "FIDELITY",
+          "customColor": "#00834d",
+          "designMd": "---\nname: Serene Knowledge Base\ncolors:\n  surface: '#fcf9f8'\n  surface-dim: '#dcd9d9'\n  surface-bright: '#fcf9f8'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#f6f3f2'\n  surface-container: '#f0eded'\n  surface-container-high: '#eae7e7'\n  surface-container-highest: '#e4e2e1'\n  on-surface: '#1b1c1c'\n  on-surface-variant: '#3e4941'\n  inverse-surface: '#303030'\n  inverse-on-surface: '#f3f0ef'\n  outline: '#6e7a70'\n  outline-variant: '#bdcabe'\n  surface-tint: '#006d3f'\n  primary: '#00673c'\n  on-primary: '#ffffff'\n  primary-container: '#00834d'\n  on-primary-container: '#e4ffe9'\n  inverse-primary: '#73db9c'\n  secondary: '#006d3d'\n  on-secondary: '#ffffff'\n  secondary-container: '#91f4b3'\n  on-secondary-container: '#007240'\n  tertiary: '#5a5a5a'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#727272'\n  on-tertiary-container: '#faf8f8'\n  error: '#ba1a1a'\n  on-error: '#ffffff'\n  error-container: '#ffdad6'\n  on-error-container: '#93000a'\n  primary-fixed: '#8ff8b6'\n  primary-fixed-dim: '#73db9c'\n  on-primary-fixed: '#00210f'\n  on-primary-fixed-variant: '#00522e'\n  secondary-fixed: '#94f7b6'\n  secondary-fixed-dim: '#78da9b'\n  on-secondary-fixed: '#00210f'\n  on-secondary-fixed-variant: '#00522d'\n  tertiary-fixed: '#e4e2e2'\n  tertiary-fixed-dim: '#c7c6c6'\n  on-tertiary-fixed: '#1b1c1c'\n  on-tertiary-fixed-variant: '#464747'\n  background: '#fcf9f8'\n  on-background: '#1b1c1c'\n  surface-variant: '#e4e2e1'\ntypography:\n  display:\n    fontFamily: Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft\n      YaHei', sans-serif\n    fontSize: 28px\n    fontWeight: '600'\n    lineHeight: 36px\n    letterSpacing: -0.01em\n  headline-lg:\n    fontFamily: Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft\n      YaHei', sans-serif\n    fontSize: 22px\n    fontWeight: '600'\n    lineHeight: 30px\n    letterSpacing: -0.01em\n  headline-md:\n    fontFamily: Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft\n      YaHei', sans-serif\n    fontSize: 18px\n    fontWeight: '600'\n    lineHeight: 26px\n  headline-sm:\n    fontFamily: Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft\n      YaHei', sans-serif\n    fontSize: 16px\n    fontWeight: '600'\n    lineHeight: 24px\n  body-lg:\n    fontFamily: Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft\n      YaHei', sans-serif\n    fontSize: 15px\n    fontWeight: '400'\n    lineHeight: 24px\n  body-md:\n    fontFamily: Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft\n      YaHei', sans-serif\n    fontSize: 14px\n    fontWeight: '400'\n    lineHeight: 22px\n  body-sm:\n    fontFamily: Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft\n      YaHei', sans-serif\n    fontSize: 13px\n    fontWeight: '400'\n    lineHeight: 20px\n  label-md:\n    fontFamily: Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft\n      YaHei', sans-serif\n    fontSize: 14px\n    fontWeight: '500'\n    lineHeight: 20px\n  label-sm:\n    fontFamily: Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft\n      YaHei', sans-serif\n    fontSize: 12px\n    fontWeight: '500'\n    lineHeight: 16px\n  caption:\n    fontFamily: Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft\n      YaHei', sans-serif\n    fontSize: 12px\n    fontWeight: '400'\n    lineHeight: 16px\n  code:\n    fontFamily: '''JetBrains Mono'', SFMono-Regular, Consolas, monospace'\n    fontSize: 13px\n    fontWeight: '400'\n    lineHeight: 20px\nrounded:\n  sm: 0.125rem\n  DEFAULT: 0.25rem\n  md: 0.375rem\n  lg: 0.5rem\n  xl: 0.75rem\n  full: 9999px\nspacing:\n  gutter: 1rem\n  gutter-sm: 0.75rem\n  gutter-lg: 1.5rem\n  margin: 1.5rem\n  margin-mobile: 1rem\n  space-xs: 0.25rem\n  space-sm: 0.5rem\n  space-md: 1rem\n  space-lg: 1.5rem\n  space-xl: 2rem\n---\n\n## Brand & Style\n\nThis design system embodies a quiet, utilitarian, and distraction-free document environment. Targeted at autonomous thinkers, independent researchers, and solo knowledge architects, the aesthetic prioritizes deep legibility, mental calm, and long-form intellectual focus over engagement-driven ornamentation.\n\nThe core visual style is a disciplined Modern Document Minimalism:\n- Flat, paper-like surfaces with absolute avoidance of gradients, skeuomorphic shading, or decorative 3D iconography.\n- High editorial clarity informed by contemporary East Asian and Swiss document layouts.\n- Absolute silence regarding collaborative affordances: no activity counters, team avatars, or sharing prompts.\n- Pure informational hierarchy where structure and subtle hairline boundaries guide the eye.\n\n## Colors\n\nThe palette is restrained, clinical, and quiet. Color is used strictly to signal actionable primary focus or document state, never for decorative visual fill.\n\n### Surface & Canvas\n- **Main Canvas (`#ffffff`):** Pure white surface reserved for reading, writing, and document editing.\n- **Sidebar & Navigation (`#f7f8f8`):** Quiet pale gray anchoring navigational trees, metadata columns, and nested shelves.\n- **Active / Hover Wash (`#eff0f0`):** Soft, neutral gray for selected list rows and secondary interactive states without color tinting.\n\n### Borders & Dividing Lines\n- **Hairline Border (`#e8e8e8`):** Uniform 1px neutral rule separating frames, cards, table headers, and split panes.\n\n### Typography & Text\n- **Primary Text (`#262626`):** Deep charcoal delivering decisive contrast without the harshness of pure black.\n- **Secondary Text (`#595959`):** Medium charcoal for supporting subtext, nested table of contents, and field labels.\n- **Meta / Placeholder Text (`#737373`):** Neutral gray for timestamps, breadcrumb delimiters, word counts, and empty states.\n\n### Accents & Interactivity\n- **Primary Brand / Action (`#00834d`):** Disciplined forest green reserved for main creation triggers, toggled switches, and focus outlines.\n- **Interactive Link (`#007a45`):** High-readability inline green for hyperlinks, document cross-references, and active inline tags.\n\n## Typography\n\nThe type stack is designed for bilingual reading clarity, pairing clean Latin grotesque metrics with native system CJK renderings (`-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif`).\n\n- **Headings:** Document titles cap at `28px` with compact line heights to prevent loose, floating banners. Subheadings descend hierarchically down to `16px`.\n- **UI Base & Reading Body:** The standard UI operates at `14px` (`body-md`), ensuring high density with generous horizontal whitespace. Extended reading content can flex to `15px` (`body-lg`) with `1.6` line-height ratio.\n- **Weights:** Restricted strictly to Regular (`400`), Medium (`500`), and Semi-bold (`600`). Bold (`700`+) is avoided to preserve document lightness.\n\n## Layout & Spacing\n\nThe workspace implements an asymmetric multi-pane architecture:\n- **Left Navigation Rail / Sidebar:** Exactly `256px` fixed width, full-height, pinned to the left viewport boundary. It hosts the workspace header, index trees, and quick search.\n- **Central Document Workspace:** Responsive, max-width constrained to `820px` for document reading and writing, auto-centered within the remaining viewport canvas.\n- **Outline / Right Meta Inspector (Optional):** Fixed `220px` right column for nested document outlines (`TOC`).\n\n### Grid & Alignment\n- Grids for card listings (e.g., knowledge bases, book index) use an adaptive auto-fill layout: `repeat(auto-fill, minmax(300px, 1fr))` with a rigid `16px` gap.\n- Breakpoints:\n  - **Desktop (>= 1024px):** Persistent 256px sidebar, open reading pane.\n  - **Tablet (768px - 1023px):** Sidebar collapses to a 48px mini icon rail or slide-over drawer; main canvas takes remaining space.\n  - **Mobile (< 768px):** Off-canvas slide drawer for sidebar; document reader margins drop to `16px` padding with cards stacking in a single column.\n\n## Elevation & Depth\n\nThis system operates entirely without atmospheric drop shadows, blurry glows, or layered elevation z-indexes:\n\n- **Flat Border Enclosure:** Depth and separation are achieved exclusively through hairline `1px solid #e8e8e8` rules.\n- **Tonal Contrast:** Canvas hierarchy is communicated via solid surface shifts (`#ffffff` main vs. `#f7f8f8` sidebar).\n- **Overlays & Modals:** When dialogs or dropdown menus appear, they utilize a crisp `1px solid #e8e8e8` perimeter on a `#ffffff` background with no blur filters. A single restrained modal backdrop of `rgba(0, 0, 0, 0.15)` without backdrop-filter blur ensures absolute visual clarity.\n\n## Shapes\n\nVisual structures maintain an exact, quiet geometry:\n- **Uniform Radius:** All interactive components—including document cards, buttons, text inputs, search fields, and popovers—are strictly set to `6px` radius (`0.375rem`).\n- **Inner Controls:** Checkboxes and micro badges follow `4px` radius to maintain proportional relationship with surrounding text.\n- **No Pill Radii:** Never use pill (`9999px`) styling; all containers must preserve architectural rectangularity.\n\n## Components\n\n### Sidebar Navigation Rows\n- **Dimensions:** Fixed height of `36px`, full width minus `8px` horizontal margin padding.\n- **States:** \n  - *Default:* `#f7f8f8` background, `#262626` text, 14px typography.\n  - *Hover:* `#eff0f0` background, `#262626` text.\n  - *Active / Selected:* `#eff0f0` background, `#262626` text with `font-weight: 600`. Absolutely no green fill or green tint on sidebar selections.\n- **Iconography:** Monochromatic `16px` stroke icons in `#595959`.\n\n### Document Cards\n- **Dimensions:** Compact target size of `~310px × 118px`.\n- **Styling:** `#ffffff` surface, `1px solid #e8e8e8` perimeter, `6px` border radius, `16px` internal padding. Zero drop shadows.\n- **Hover:** Border color darkens slightly to `#d9d9d9`; surface stays `#ffffff`.\n- **Internal Elements:**\n  - *Top Row:* Monoline outline document type icon (`16px`, `#595959`) alongside an ellipsis trigger (`#737373`).\n  - *Middle:* Document Title in `15px` Semi-bold (`#262626`), truncated to 1 line, followed by a 1-line snippet in `13px` (`#595959`).\n  - *Bottom:* Minimal metadata (e.g., \"Updated 2h ago\") in `12px` (`#737373`).\n\n### Buttons\n- **Primary:** Solid `#00834d` background, `#ffffff` text, `6px` border radius, no border. Hover transitions to `#007a45`. Height: `32px` (compact) or `36px` (regular).\n- **Secondary / Default:** `#ffffff` background, `1px solid #e8e8e8` border, `#262626` text. Hover state switches background to `#f7f8f8` with border remaining `#e8e8e8`.\n- **Ghost:** Transparent background, `#595959` text; `#eff0f0` background on hover.\n\n### Inputs & Search Bars\n- **Styling:** `#ffffff` background, `1px solid #e8e8e8`, `6px` border-radius, `14px` text size, `8px 12px` padding.\n- **Focus:** Sharp border color change to `#00834d` with a `1px` subtle outline or ring (`rgba(0, 131, 77, 0.2)`). No large diffuse halos.\n- **Sidebar Search:** `#ffffff` surface inside the `#f7f8f8` sidebar to create a clean, recessed search input with `32px` height.\n\n### Checkboxes & Radios\n- **Dimensions:** `16px × 16px` box with `3px` radius.\n- **Unchecked:** `1px solid #d9d9d9` border, `#ffffff` surface.\n- **Checked:** `#00834d` solid fill, white checkmark glyph.\n\n### Document Breadcrumbs & Headers\n- **Breadcrumbs:** `13px` height, `#737373` text, separated by hairline slashes (`/`). Current active document label transitions to `#262626`.\n- **TOC Anchor Navigation:** Nested lists with a left `1px solid #e8e8e8` guide rule. Active section highlights text in `#00834d` with a matching `2px` left border marker.",
+          "font": "INTER",
+          "headlineFont": "INTER",
+          "headlineFontFamily": "Inter",
+          "labelFont": "INTER",
+          "labelFontFamily": "Inter",
+          "namedColors": {
+            "background": "#fcf9f8",
+            "error": "#ba1a1a",
+            "error_container": "#ffdad6",
+            "inverse_on_surface": "#f3f0ef",
+            "inverse_primary": "#73db9c",
+            "inverse_surface": "#303030",
+            "on_background": "#1b1c1c",
+            "on_error": "#ffffff",
+            "on_error_container": "#93000a",
+            "on_primary": "#ffffff",
+            "on_primary_container": "#e4ffe9",
+            "on_primary_fixed": "#00210f",
+            "on_primary_fixed_variant": "#00522e",
+            "on_secondary": "#ffffff",
+            "on_secondary_container": "#007240",
+            "on_secondary_fixed": "#00210f",
+            "on_secondary_fixed_variant": "#00522d",
+            "on_surface": "#1b1c1c",
+            "on_surface_variant": "#3e4941",
+            "on_tertiary": "#ffffff",
+            "on_tertiary_container": "#faf8f8",
+            "on_tertiary_fixed": "#1b1c1c",
+            "on_tertiary_fixed_variant": "#464747",
+            "outline": "#6e7a70",
+            "outline_variant": "#bdcabe",
+            "primary": "#00673c",
+            "primary_container": "#00834d",
+            "primary_fixed": "#8ff8b6",
+            "primary_fixed_dim": "#73db9c",
+            "secondary": "#006d3d",
+            "secondary_container": "#91f4b3",
+            "secondary_fixed": "#94f7b6",
+            "secondary_fixed_dim": "#78da9b",
+            "surface": "#fcf9f8",
+            "surface_bright": "#fcf9f8",
+            "surface_container": "#f0eded",
+            "surface_container_high": "#eae7e7",
+            "surface_container_highest": "#e4e2e1",
+            "surface_container_low": "#f6f3f2",
+            "surface_container_lowest": "#ffffff",
+            "surface_dim": "#dcd9d9",
+            "surface_tint": "#006d3f",
+            "surface_variant": "#e4e2e1",
+            "tertiary": "#5a5a5a",
+            "tertiary_container": "#727272",
+            "tertiary_fixed": "#e4e2e2",
+            "tertiary_fixed_dim": "#c7c6c6"
+          },
+          "overrideNeutralColor": "#262626",
+          "overridePrimaryColor": "#00834d",
+          "overrideSecondaryColor": "#007a45",
+          "overrideTertiaryColor": "#595959",
+          "roundness": "ROUND_FOUR",
+          "spacing": {
+            "gutter": "1rem",
+            "gutter-lg": "1.5rem",
+            "gutter-sm": "0.75rem",
+            "margin": "1.5rem",
+            "margin-mobile": "1rem",
+            "space-lg": "1.5rem",
+            "space-md": "1rem",
+            "space-sm": "0.5rem",
+            "space-xl": "2rem",
+            "space-xs": "0.25rem"
+          },
+          "spacingScale": 2,
+          "typography": {
+            "body-lg": {
+              "fontFamily": "Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif",
+              "fontSize": "15px",
+              "fontWeight": "400",
+              "lineHeight": "24px"
+            },
+            "body-md": {
+              "fontFamily": "Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif",
+              "fontSize": "14px",
+              "fontWeight": "400",
+              "lineHeight": "22px"
+            },
+            "body-sm": {
+              "fontFamily": "Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif",
+              "fontSize": "13px",
+              "fontWeight": "400",
+              "lineHeight": "20px"
+            },
+            "caption": {
+              "fontFamily": "Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif",
+              "fontSize": "12px",
+              "fontWeight": "400",
+              "lineHeight": "16px"
+            },
+            "code": {
+              "fontFamily": "'JetBrains Mono', SFMono-Regular, Consolas, monospace",
+              "fontSize": "13px",
+              "fontWeight": "400",
+              "lineHeight": "20px"
+            },
+            "display": {
+              "fontFamily": "Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif",
+              "fontSize": "28px",
+              "fontWeight": "600",
+              "letterSpacing": "-0.01em",
+              "lineHeight": "36px"
+            },
+            "headline-lg": {
+              "fontFamily": "Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif",
+              "fontSize": "22px",
+              "fontWeight": "600",
+              "letterSpacing": "-0.01em",
+              "lineHeight": "30px"
+            },
+            "headline-md": {
+              "fontFamily": "Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif",
+              "fontSize": "18px",
+              "fontWeight": "600",
+              "lineHeight": "26px"
+            },
+            "headline-sm": {
+              "fontFamily": "Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif",
+              "fontSize": "16px",
+              "fontWeight": "600",
+              "lineHeight": "24px"
+            },
+            "label-md": {
+              "fontFamily": "Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif",
+              "fontSize": "14px",
+              "fontWeight": "500",
+              "lineHeight": "20px"
+            },
+            "label-sm": {
+              "fontFamily": "Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif",
+              "fontSize": "12px",
+              "fontWeight": "500",
+              "lineHeight": "16px"
+            }
+          }
+        }
+      },
+      "name": "assets/dd62c185d6c34373b3a7ea9b6abb7bba",
+      "version": "1"
+    },
+    "deviceType": "DESKTOP",
+    "generatedBy": "figaro_agent",
+    "height": "2048",
+    "htmlCode": {
+      "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzdkMzVjNDMyOWZkNDQ1MmNiNTRjNTcwNGE0MTFiZGVjEgsSBxD_r5GXvhkYAZIBIwoKcHJvamVjdF9pZBIVQhM5Mzg1NDk4OTE3MjU4NDUxMzg4&filename=&opi=96797242",
+      "mimeType": "text/html",
+      "name": "projects/9385498917258451388/files/a6de19b1d628436c9dea18ea1f301272"
+    },
+    "id": "2880e7632755462f8bee405230ba9820",
+    "name": "projects/9385498917258451388/screens/2880e7632755462f8bee405230ba9820",
+    "prompt": "Design ONE desktop UI screen (1440x1000) for Mimir, a single-user self-hosted knowledge workspace (知识库详情页).\nFollow strict Yuque-inspired quiet document reader and knowledge base visual specifications:\n\n[Layout Specifications]\n- Canvas/Viewport: 1440px wide, 1000px high, crisp desktop layout.\n- Overall background: White #ffffff. Subtle lines: 1px solid #e8e8e8 everywhere.\n- Controls radius: strictly 6px (buttons, input boxes, cards, pills).\n- Typography font stack: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif.\n- Text colors: Primary #262626, Secondary #595959, Meta/Tertiary #737373.\n- Colors: Primary green #00834d (white text), link green #007a45. No gradients, no shadows (flat subtle border 1px #e8e8e8).\n- Absolutely NO team sharing, collaboration avatars, public publishing buttons, statistics/analytics cards, or decorative 3D illustrations. Strictly Chinese copy.\n\n[Left Sidebar: Single unified 256px full height]\n- Width: exactly 256px, background: #f7f8f8, border-right: 1px solid #e8e8e8, box-sizing: border-box, display: flex flex-col.\n- Header: Top padding 18px 16px. Mimir wordmark with small neutral outlined book icon (no mascot) + right collapse sidebar toggle icon button.\n- Search row (36px high): neutral search input with subtle magnifying glass icon and right ⌘K keyboard shortcut badge.\n- Main navigation rows (36px high each, px-3, 6px radius, font 14px):\n  * \"知识库\" (Selected state: neutral background #eff0f0, bold dark text #262626, NOT green tinted, with small folder/library outline icon).\n  * \"新建对话\" (with chat/spark outline icon).\n  * \"收集\" (with inbox/bookmark outline icon).\n- Section Header: \"知识库\" with a small hoverable + icon on right.\n  * Sub-items (nested 36px rows, indent):\n    - \"产品与设计\" (Selected sub-item: bg #e8ece9 or subtle neutral #eff0f0 with bold text #262626, count badge '12' on right).\n    - \"学习笔记\" (normal, count badge '8').\n    - \"个人资料\" (normal, count badge '6').\n- Section Header: \"对话\"\n  * Sub-items:\n    - \"设计规范整理\"\n    - \"上周阅读回顾\"\n- Section Header: \"最近笔记\"\n  * Sub-items:\n    - \"从这里开始\"\n    - \"知识整理方法\"\n- Bottom footer (pinned at bottom, border-top 1px solid #e8e8e8, p-3):\n  * User profile: \"admin\" (single user avatar with 'A' or outline user icon)\n  * \"设置\" row with gear outline icon.\n\n[Main Content Area]\n- Inset: Left padding 56px, right padding 48px, top padding 36px.\n- Breadcrumb: \"知识库\" / \"产品与设计\" in 14px subtle gray (#737373 / #595959).\n- Title block (around y110):\n  * Title: \"产品与设计\" in 28px bold, color #262626.\n  * Description: \"收集产品思考、设计参考与日常笔记。\" in 14px, #595959, mt-2.\n  * Metadata bar: \"12 个文档 · 知识库 ID: K7A2P9\" with a small outline copy icon beside it.\n- Action Toolbar (around y230, border-b 1px solid #e8e8e8 pb-4 mb-4 flex items-center justify-between):\n  * Left side buttons:\n    - Primary Button: \"+ 添加文档\" (background #00834d, text #ffffff, px-3.5 py-1.5, 6px radius, 14px font, hover: #007242).\n    - Neutral Button: \"+ 新建文件\" (bg #ffffff, border 1px solid #e8e8e8, text #262626, px-3 py-1.5, 6px radius).\n    - Neutral Button: \"新建文件夹\" (with folder outline icon, bg #ffffff, border 1px solid #e8e8e8, text #262626, px-3 py-1.5, 6px radius).\n  * Right side:\n    - Segmented view toggle: List icon and Card grid icon, with \"卡片\" (card) active and selected with subtle #eff0f0 bg.\n- Sub-header line:\n  * Left: \"文档\" (font 14px font-medium text #262626).\n  * Right: subtle helper text \"可拖入文件上传，单个文件不超过 50 MB\" in 13px #737373.\n\n[3-Column Document Card Grid]\n- Grid layout: exactly 3 columns, 3 rows (9 cards total), gap 16px.\n- Card styling: compact dimensions (~310px width x 118px height), background #ffffff, border 1px solid #e8e8e8, 6px border radius, p-3.5 flex flex-col justify-between, hover:border-[#bfbfbf] transition-colors, NO shadow.\n- Inside each card:\n  * Top row: Small outline format icon (folder, note, pdf, docx, xlsx, pptx, html) + Title (14px font-medium #262626, truncate or readable) + right-side subtle three-dot '···' menu trigger.\n  * Middle row: metadata \"当前目录 · {size}\" in 12px #737373.\n  * Bottom row: left status tag (\"文件夹\" for folder; \"就绪\" in subtle light green text #00834d for files) + right timestamp \"10月17日 09:30\" in 12px #737373.\n- The 9 Cards precisely:\n  1. Title: \"设计参考\" | Type: folder | Meta: \"当前目录 · 4 个文档\" | Status: \"文件夹\" | Date: \"10月17日 09:30\"\n  2. Title: \"从这里开始\" | Type: note | Meta: \"当前目录 · 2.4 KB\" | Status: \"就绪\" | Date: \"10月17日 09:30\"\n  3. Title: \"知识整理方法\" | Type: note | Meta: \"当前目录 · 4.1 KB\" | Status: \"就绪\" | Date: \"10月17日 09:30\"\n  4. Title: \"设计系统参考.pdf\" | Type: PDF | Meta: \"当前目录 · 1.8 MB\" | Status: \"就绪\" | Date: \"10月17日 09:30\"\n  5. Title: \"产品规划.docx\" | Type: Word | Meta: \"当前目录 · 328 KB\" | Status: \"就绪\" | Date: \"10月17日 09:30\"\n  6. Title: \"阅读清单.xlsx\" | Type: Excel | Meta: \"当前目录 · 46 KB\" | Status: \"就绪\" | Date: \"10月17日 09:30\"\n  7. Title: \"交互复盘.pptx\" | Type: PowerPoint | Meta: \"当前目录 · 2.3 MB\" | Status: \"就绪\" | Date: \"10月17日 09:30\"\n  8. Title: \"页面结构.html\" | Type: HTML | Meta: \"当前目录 · 12 KB\" | Status: \"就绪\" | Date: \"10月17日 09:30\"\n  9. Title: \"研究记录\" | Type: note | Meta: \"当前目录 · 6.8 KB\" | Status: \"就绪\" | Date: \"10月17日 09:30\"\n\n- Bottom spacing: Roomy clean white space at bottom, balanced layout for 1440x1000 screen.",
+    "screenMetadata": {
+      "agentType": "PRO_AGENT",
+      "status": "COMPLETE"
+    },
+    "screenType": "DESIGN",
+    "screenshot": {
+      "downloadUrl": "https://lh3.googleusercontent.com/aida/AEtjO1UH6-cewB-la5zsEHs1e1ZOucXaXxt88KbjhegBxk-UXUptbG1OY-VQc4UARmG62Vuvr1__vnzyrZX760oLGuwgyS4YVFGqfeT9tcn3VVI2_Jj2fdynUsgeqwRMDAKz2z2gIhsRwJBM-SZHOXvYCVbclyIcSdbwwjCUR7ai3S3qUeBCFKfR841mMqwJYpehLXEqmL_uKHjI8PiSdZ9ODi9Oqx8zKpiNhM6NouCP9-sI-PvsYYSn9-XVNkY",
+      "name": "projects/9385498917258451388/files/cac3e2a12b1848f2a0da1f1b0fd60f2d"
+    },
+    "theme": {
+      "bodyFont": "INTER",
+      "bodyFontFamily": "Inter",
+      "colorMode": "LIGHT",
+      "colorVariant": "FIDELITY",
+      "customColor": "#00834d",
+      "font": "INTER",
+      "headlineFont": "INTER",
+      "headlineFontFamily": "Inter",
+      "labelFont": "INTER",
+      "labelFontFamily": "Inter",
+      "namedColors": {
+        "background": "#fcf9f8",
+        "error": "#ba1a1a",
+        "error_container": "#ffdad6",
+        "inverse_on_surface": "#f3f0ef",
+        "inverse_primary": "#73db9c",
+        "inverse_surface": "#303030",
+        "on_background": "#1b1c1c",
+        "on_error": "#ffffff",
+        "on_error_container": "#93000a",
+        "on_primary": "#ffffff",
+        "on_primary_container": "#e4ffe9",
+        "on_primary_fixed": "#00210f",
+        "on_primary_fixed_variant": "#00522e",
+        "on_secondary": "#ffffff",
+        "on_secondary_container": "#007240",
+        "on_secondary_fixed": "#00210f",
+        "on_secondary_fixed_variant": "#00522d",
+        "on_surface": "#1b1c1c",
+        "on_surface_variant": "#3e4941",
+        "on_tertiary": "#ffffff",
+        "on_tertiary_container": "#faf8f8",
+        "on_tertiary_fixed": "#1b1c1c",
+        "on_tertiary_fixed_variant": "#464747",
+        "outline": "#6e7a70",
+        "outline_variant": "#bdcabe",
+        "primary": "#00673c",
+        "primary_container": "#00834d",
+        "primary_fixed": "#8ff8b6",
+        "primary_fixed_dim": "#73db9c",
+        "secondary": "#006d3d",
+        "secondary_container": "#91f4b3",
+        "secondary_fixed": "#94f7b6",
+        "secondary_fixed_dim": "#78da9b",
+        "surface": "#fcf9f8",
+        "surface_bright": "#fcf9f8",
+        "surface_container": "#f0eded",
+        "surface_container_high": "#eae7e7",
+        "surface_container_highest": "#e4e2e1",
+        "surface_container_low": "#f6f3f2",
+        "surface_container_lowest": "#ffffff",
+        "surface_dim": "#dcd9d9",
+        "surface_tint": "#006d3f",
+        "surface_variant": "#e4e2e1",
+        "tertiary": "#5a5a5a",
+        "tertiary_container": "#727272",
+        "tertiary_fixed": "#e4e2e2",
+        "tertiary_fixed_dim": "#c7c6c6"
+      },
+      "overrideNeutralColor": "#262626",
+      "overridePrimaryColor": "#00834d",
+      "overrideSecondaryColor": "#007a45",
+      "overrideTertiaryColor": "#595959",
+      "roundness": "ROUND_FOUR",
+      "spacing": {
+        "gutter": "1rem",
+        "gutter-lg": "1.5rem",
+        "gutter-sm": "0.75rem",
+        "margin": "1.5rem",
+        "margin-mobile": "1rem",
+        "space-lg": "1.5rem",
+        "space-md": "1rem",
+        "space-sm": "0.5rem",
+        "space-xl": "2rem",
+        "space-xs": "0.25rem"
+      },
+      "spacingScale": 2,
+      "typography": {
+        "body-lg": {
+          "fontFamily": "Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif",
+          "fontSize": "15px",
+          "fontWeight": "400",
+          "lineHeight": "24px"
+        },
+        "body-md": {
+          "fontFamily": "Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif",
+          "fontSize": "14px",
+          "fontWeight": "400",
+          "lineHeight": "22px"
+        },
+        "body-sm": {
+          "fontFamily": "Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif",
+          "fontSize": "13px",
+          "fontWeight": "400",
+          "lineHeight": "20px"
+        },
+        "caption": {
+          "fontFamily": "Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif",
+          "fontSize": "12px",
+          "fontWeight": "400",
+          "lineHeight": "16px"
+        },
+        "code": {
+          "fontFamily": "'JetBrains Mono', SFMono-Regular, Consolas, monospace",
+          "fontSize": "13px",
+          "fontWeight": "400",
+          "lineHeight": "20px"
+        },
+        "display": {
+          "fontFamily": "Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif",
+          "fontSize": "28px",
+          "fontWeight": "600",
+          "letterSpacing": "-0.01em",
+          "lineHeight": "36px"
+        },
+        "headline-lg": {
+          "fontFamily": "Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif",
+          "fontSize": "22px",
+          "fontWeight": "600",
+          "letterSpacing": "-0.01em",
+          "lineHeight": "30px"
+        },
+        "headline-md": {
+          "fontFamily": "Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif",
+          "fontSize": "18px",
+          "fontWeight": "600",
+          "lineHeight": "26px"
+        },
+        "headline-sm": {
+          "fontFamily": "Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif",
+          "fontSize": "16px",
+          "fontWeight": "600",
+          "lineHeight": "24px"
+        },
+        "label-md": {
+          "fontFamily": "Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif",
+          "fontSize": "14px",
+          "fontWeight": "500",
+          "lineHeight": "20px"
+        },
+        "label-sm": {
+          "fontFamily": "Inter, -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif",
+          "fontSize": "12px",
+          "fontWeight": "500",
+          "lineHeight": "16px"
+        }
+      }
+    },
+    "title": "Mimir - 知识库详情 (产品与设计)",
+    "width": "2560"
+  },
+  "prompt": "Create ONE desktop UI design screen, 1440x1000, for Mimir, a Chinese single-user self-hosted knowledge workspace. This is a static design research draft, not product implementation. Screen: knowledge base details. Design grounded in Yuque public knowledge-library/reader observations: neutral white surfaces, quiet pale gray sidebar, restrained green actions, charcoal typography, subtle lines, no gradients, no illustrations, no large decorative icons, no dashboard statistic cards. Faithful understated document-workspace feeling. Use Simplified Chinese copy with crisp typography: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif. Body UI 14px, headings 28px, secondary text #595959 / meta #737373. Primary text #262626. Background white #fff; auxiliary #f7f8f8; selected nav #eff0f0 with dark bold text, not green tinted. Primary white-text buttons #00834d, link green #007a45. Control radius exactly 6px, restrained 1px #e8e8e8 borders. Consistent 36px sidebar rows.\n\nSingle unified 256px left sidebar full height, no second icon rail. Top Mimir wordmark (use small neutral outlined book mark, not invented mascot) and collapse control. Nav rows 搜索 with ⌘K hint, 知识库 selected gray, 新建对话, 收集. Below section 知识库 with plus icon: 产品与设计 selected / 12, 学习笔记 / 8, 个人资料 / 6. Below 对话: 设计规范整理, 上周阅读回顾. Below 最近笔记: 从这里开始, 知识整理方法. Bottom account admin and 设置 gear. Small neutral outline icons from a consistent established icon family.\n\nMain content left inset 56px, right inset 48px. Breadcrumb 知识库 / 产品与设计. At y110 title 产品与设计, description 收集产品思考、设计参考与日常笔记。, metadata 12 个文档 · 知识库 ID: K7A2P9 with copy icon. Toolbar at y230: one green primary + 添加文档, neutral + 新建文件, neutral folder 新建文件夹. Far right list/card segmented toggle, 卡片 selected. Preserve card-view preference. Small content section 文档 below toolbar, right subtle helper 可拖入文件上传，单个文件不超过 50 MB.\n\n3-column document card grid, 3 rows, each compact ~310x118px, 16px gaps, 6px corner, pale borders, no shadows. Each card has small outline format icon, fully readable title, metadata 当前目录 · size, lower row state 就绪 (subtle light green small text) and timestamp in gray. Cards: 设计参考 (folder, 4 个文档), 从这里开始 (note, 2.4 KB), 知识整理方法 (note, 4.1 KB), 设计系统参考.pdf (PDF 1.8 MB), 产品规划.docx (Word 328 KB), 阅读清单.xlsx (Excel 46 KB), 交互复盘.pptx (PowerPoint 2.3 MB), 页面结构.html (HTML 12 KB), 研究记录 (note 6.8 KB). Folder card has 文件夹 instead of 就绪. Date format 10月17日 09:30. Leave roomy lower white space; show 12 个文档 under grid only if needed, avoid duplicated counts. No collaboration avatars, teams, share actions, public publishing, illustrations, English placeholder copy or fake device chrome. This screen establishes the design system for subsequent document and settings screens."
+}

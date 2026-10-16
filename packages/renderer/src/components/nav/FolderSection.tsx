@@ -68,7 +68,7 @@ const useStyles = createStyles(({ css, token }) => ({
     color: ${token.colorTextTertiary};
     &:hover,
     &:focus-visible {
-      color: ${token.colorLink};
+      color: ${token.navSelectedText};
     }
   `,
   /**
@@ -127,8 +127,9 @@ const useRowStyles = createStyles(({ css, token, prefixCls }) => ({
     }
 
     &[data-current='page'] {
-      background: ${token.colorPrimaryBg};
-      color: ${token.colorLink};
+      background: ${token.navSelectedBg};
+      color: ${token.navSelectedText};
+      font-weight: 600;
     }
     &[data-current='location'] {
       color: ${token.colorText};
@@ -152,8 +153,8 @@ const useRowStyles = createStyles(({ css, token, prefixCls }) => ({
     cursor: pointer;
 
     &:focus-visible {
-      outline: none;
-      box-shadow: inset 0 0 0 1px ${token.colorPrimaryBorder};
+      outline: 2px solid ${token.focusRing};
+      outline-offset: 2px;
       border-radius: 6px;
     }
   `,

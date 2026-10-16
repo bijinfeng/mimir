@@ -101,6 +101,13 @@ export function excerptText(doc: DocumentSummary): string {
   return '原件已保存，可下载查看'
 }
 
+/** 列表摘要优先显示内容；当前目录已由页头说明，限制长度避免读屏念完整正文。 */
+export function formatLibraryRowDetail(location: string, meta: string): string {
+  const codepoints = Array.from(meta)
+  const excerpt = codepoints.length > 80 ? `${codepoints.slice(0, 80).join('').trimEnd()}…` : meta
+  return [location === '当前目录' ? '' : location, excerpt].filter(Boolean).join(' · ')
+}
+
 /**
  * 卡片元信息行里的格式与大小：「PDF · 2.4 MB」。
  *

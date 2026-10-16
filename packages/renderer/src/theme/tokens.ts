@@ -2,317 +2,130 @@ import { theme } from 'antd'
 import type { MappingAlgorithm, ThemeConfig } from 'antd'
 import type { Appearance } from './appearance'
 
-/**
- * mimir 的设计 token —— 代码侧的唯一真相来源。规范与实测对比度见 `.trellis/spec/project/design.md`。
- *
- * ## 两种外观，共用一份形状
- *
- * 颜色分浅色 / 深色两套，**形状与字体只有一份**（`BASE_TOKEN`）。分成两个
- * 独立的 ThemeConfig 会把圆角与字体栈也抄成两份，而那种抄写不会报错——
- * 深色下的圆角悄悄变成 antd 默认的 6px 就是这样发生的。
- *
- * 深色不是「把浅色反过来」，它是**另一套校准过的值**：每一对的对比度都重算过，
- * `design.test.ts` 用同一组阈值守住两边（见 §11 与那份测试）。
- *
- * ## 三条不是随手定的规则，改动前先读
- *
- * 1. **不换种子色，只覆盖叶子 token。**
- *    拿原型的深绿 / 深橙 / 深红去替换 `colorSuccess` 这类种子，antd 会按
- *    「假定种子是亮色」的算法派生底色，实测得到 `colorSuccessBg = #a8b3aa`
- *    这种灰绿脏色。所以种子保持 antd 默认，只覆盖真正要改的叶子。
- *
- * 2. **文字色与填充色分开。**
- *    选中项的文字走 `colorLink`，按钮与选中底走 `colorPrimary`。
- *
- * 3. **语义色必须成对使用。**
- *    状态文字配同语义浅底。antd 默认那套是不达标的：实测 successText on
- *    successBg 只有 2.21:1，warning 1.83:1，error 2.99:1。下面覆盖的值
- *    全部 ≥ 4.5:1，`theme/design.test.ts` 会守住这条线。
- */
-
-/**
- * 字体栈 —— 全项目唯一的定义处。
- *
- * antd 默认栈到 `Roboto` 就结束了，在 Linux 服务器上的浏览器里会一路落到
- * `sans-serif`，中文可能渲染成点阵字体。这里在系统 UI 字体后补中文兜底。
- *
- * 它同时是 antd token（`fontFamily`）和文档级样式（`styles/global.ts` 的 body）
- * 的值来源——两处写两份字体栈，必然有一天不一致。
- */
+/** Shared Web/Desktop theme. UI actions and neutral navigation use separate roles. */
 export const FONT_SANS =
   "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif"
-
-/** 等宽只用于行内代码、代码块、文件路径、插件 seam 标识 */
 export const FONT_MONO = "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace"
 
-/**
- * 与外观无关的那部分：形状与字体。
- *
- * 两种外观必须给出**同一个值**，所以它们在这里定义一次。
- * 深色漏掉 `borderRadius` 时不会报错——antd 会回落到默认的 6px，
- * 表现只是「深色下的圆角好像小一点」，没人会去查。
- */
+/** Shape and UI typography are shared by both appearances. Reading has its own role below. */
 const BASE_TOKEN = {
-  borderRadius: 8,
+  borderRadius: 6,
+  borderRadiusSM: 6,
+  borderRadiusLG: 6,
   fontSize: 14,
   fontFamily: FONT_SANS,
   fontFamilyCode: FONT_MONO,
+  controlOutlineWidth: 2,
+  lineWidthFocus: 2,
 } as const
 
-/**
- * 浅色的颜色。每一项的用途与实测对比度见 `.trellis/spec/project/design.md` §3.3–§3.6。
- *
- * ## 颜色系统维护指南
- *
- * ### 修改颜色前的检查清单
- *
- * 1. **种子色 vs 叶子 token**：
- *    - 种子色（colorPrimary, colorSuccess 等）会被算法派生，不要直接覆盖
- *    - 只覆盖最终的叶子 token（colorPrimaryText, colorSuccessText 等）
- *    - 违反此规则会导致深色下出现灰绿、灰橙等脏色
- *
- * 2. **文字色与填充色的分离**：
- *    - 填充色：colorPrimary（按钮底、选中底）
- *    - 文字色：colorLink / colorPrimaryText（链接、选中文字）
- *    - 不要混用：colorPrimary 不能直接用在文字上
- *
- * 3. **语义色必须成对**：
- *    - 状态文字（如 colorSuccessText）必须配同语义浅底（colorSuccessBg）
- *    - 对比度要求：≥4.5:1（AA 级）
- *    - theme/design.test.ts 会守住这条线
- *
- * 4. **深色不是浅色取反**：
- *    - 每一对颜色都需要在深色下重新校准对比度
- *    - 使用 darkCalibration 函数处理深色特有的值
- *    - 参考 §3.8 的深色校准表
- *
- * 5. **链接色的特殊处理**：
- *    - 悬停/按下状态（colorLinkHover/Active）必须显式给出
- *    - 不给的话 antd 会派生出对比度不足的值（浅色 2.80:1，深色更糟）
- *    - 要求：白底和选中底上都保持可读
- *
- * ### 修改后的验证步骤
- *
- * 1. 运行 `pnpm test theme/design.test.ts` 验证对比度
- * 2. 在浅色和深色两种外观下目视检查：
- *    - 链接文字在白底和选中底上的可读性
- *    - 悬停状态的视觉反馈是否清晰
- *    - 语义色（成功/警告/错误）在对应浅底上的对比度
- * 3. 更新 design.md 中的颜色表（§3.1 表格）
- */
 const LIGHT_COLOR = {
-  // ── 品牌 ──────────────────────────────────────────────
-  colorPrimary: '#6e50b9',
-  colorPrimaryBg: '#e4dcf7',
-  colorPrimaryBgHover: '#dcd1f3',
-  colorPrimaryBorder: '#a993d5',
-  colorPrimaryBorderHover: '#987dc9',
-  colorPrimaryHover: '#7658b2',
-  colorPrimaryActive: '#5b409d',
-  colorPrimaryText: '#543b9a',
-  colorPrimaryTextHover: '#4a318d',
-  colorPrimaryTextActive: '#40277e',
-  colorLink: '#543b9a',
-  /**
-   * 悬停/按下的链接色。
-   *
-   * **必须显式给**：不给的话 antd 从种子派生出 `#579df2`（悬停）——
-   * 它在白底上只有 **2.80:1**，鼠标一放上去链接就淡到快看不见
-   * （深色那边更糟，见 `darkCalibration`）。这两个键不是种子名，
-   * 写进来会被保留（`formatToken` 只删与种子同名的键）。
-   *
-   * 当前紫色值需在白底与选中底上保持可读，测试守住这两种组合。
-   */
-  colorLinkHover: '#4a318d',
-  colorLinkActive: '#40277e',
-
-  // ── 文字阶 ────────────────────────────────────────────
-  colorTextBase: '#27262a',
-  // 次要正文：摘要、表单标签、引用原文（三种内容底 5.47–5.91:1）
-  colorTextSecondary: '#605c67',
-  // 元信息：时间戳、路径、计数（三种内容底 4.63–5.00:1）
-  colorTextTertiary: '#68636f',
-  // 占位符与禁用态：不承载信息，允许低于 4.5
-  colorTextQuaternary: '#88838e',
-
-  // ── 语义色对：浅底 + 同色深阶文字 ─────────────────────
-  colorSuccessBg: '#e6f4ea',
-  colorSuccessText: '#137333',
+  colorPrimary: '#00834d',
+  // Semantic selection (citations/editor pressed states), never neutral navigation.
+  colorPrimaryBg: '#e8f5ee',
+  colorPrimaryBgHover: '#d8eddf',
+  colorPrimaryBorder: '#00834d',
+  colorPrimaryBorderHover: '#007846',
+  colorPrimaryHover: '#007846',
+  colorPrimaryActive: '#006b3e',
+  colorPrimaryText: '#007a45',
+  colorPrimaryTextHover: '#006b3e',
+  colorPrimaryTextActive: '#005b35',
+  colorLink: '#007a45',
+  colorLinkHover: '#006b3e',
+  colorLinkActive: '#005b35',
+  controlOutline: '#00834d',
+  colorTextBase: '#262626',
+  colorText: '#262626',
+  colorTextSecondary: '#595959',
+  colorTextTertiary: '#6b6b6b',
+  colorTextQuaternary: '#808080',
+  colorSuccessBg: '#e8f5ee',
+  colorSuccessText: '#007a45',
   colorWarningBg: '#fff3e0',
-  colorWarningText: '#b45309',
-  colorErrorBg: '#fef7f6',
-  colorErrorText: '#c5221f',
+  colorWarningText: '#8a5700',
+  colorErrorBg: '#fef0ee',
+  colorErrorText: '#b42318',
   colorInfoBg: '#e8f0fe',
   colorInfoText: '#1a56c4',
-
-  // ── 表面 ──────────────────────────────────────────────
-  colorBgLayout: '#e7e7ea',
+  colorBgLayout: '#ffffff',
   colorBgContainer: '#ffffff',
   colorBgElevated: '#ffffff',
-  colorBorder: '#d9d7df',
-  colorBorderSecondary: '#e4e2e8',
+  colorBorder: '#8a8a8a',
+  colorBorderSecondary: '#e8e8e8',
 } as const
 
-/**
- * 深色的链接色。
- *
- * **它不能写在 `DARK_COLOR` 里**，理由见 `darkCalibration` 的注释：
- * 与 seed 同名的键会被算法重算，直接传会被丢掉。
- */
-const DARK_LINK = '#ddcaff'
-
-/**
- * 深色的颜色。
- *
- * 取值来自 antd 深色算法的实际派生值再加校准（`.trellis/spec/project/design.md` §3.8 有表）：
- * 文字阶与语义色对在深色下**比浅色更松**（深色底上文字的对比度天然更高），
- * 所以这里的值是按「≥ 浅色现状」而不是「随便挑一个好看的」定的。
- */
+const DARK_LINK = '#6bdaa5'
 const DARK_COLOR = {
-  // ── 表面 ──────────────────────────────────────────────
-  // 与浅色同序：布局底 < 导航底 < 列表底 < 容器底（见 customToken.ts）
-  colorBgLayout: '#141416',
-  colorBgContainer: '#29292d',
-  colorBgElevated: '#34343a',
-  colorBorder: '#514d58',
-  colorBorderSecondary: '#3b3941',
-
-  // ── 文字阶 ────────────────────────────────────────────
-  // 深色的四级也是同一色的四档透明度，但档位必须拉开：
-  // antd 深色默认的 0.45 / 0.25 在容器底上只有 4.54 / 2.25
-  colorTextSecondary: 'rgba(255,255,255,0.76)',
-  colorTextTertiary: 'rgba(255,255,255,0.66)',
-  colorTextQuaternary: 'rgba(255,255,255,0.48)',
-
-  /**
-   * 主色浅底与描边。
-   *
-   * 深色算法把 `colorPrimaryBg` 与 `colorPrimaryBorder` 设成**同一个值**
-   * 而它们承担的是两种角色：前者是「选中项的底」，后者是
-   * 「焦点环 / 选中项的描边」。同值意味着焦点环在选中项上完全看不见
-   * （实测 1.00:1）。只校准描边这一半。
-   */
-  colorPrimaryBorder: '#ab90e9',
-
-  // ── 语义色对：深底 + 亮阶文字 ─────────────────────────
-  colorSuccessBg: '#162312',
-  colorSuccessText: '#6cc24a',
-  colorWarningBg: '#2b2111',
-  colorWarningText: '#e0a830',
-  colorErrorBg: '#2c1618',
-  colorErrorText: '#ff9295',
-  colorInfoBg: '#111a2c',
-  colorInfoText: '#9bbcff',
+  colorBgLayout: '#18191a',
+  colorBgContainer: '#202225',
+  colorBgElevated: '#26282b',
+  colorBorder: '#686e76',
+  colorBorderSecondary: '#3b3e43',
+  colorText: '#eceeef',
+  colorTextSecondary: '#b3b6bb',
+  colorTextTertiary: '#969ba2',
+  colorTextQuaternary: '#858a91',
+  colorPrimaryBorder: DARK_LINK,
+  controlOutline: DARK_LINK,
+  colorSuccessBg: '#173a2a',
+  colorSuccessText: DARK_LINK,
+  colorWarningBg: '#352a17',
+  colorWarningText: '#f3c46d',
+  colorErrorBg: '#3b2221',
+  colorErrorText: '#ffb4ab',
+  colorInfoBg: '#192b43',
+  colorInfoText: '#9fc0ff',
 } as const
 
 /**
- * 深色的校准层 —— **在算法之后**修正几个被算法重算的 token。
- *
- * ## 为什么需要它
- *
- * antd 的 `formatToken` 会把与**种子同名**的覆盖值从最终结果里删掉：
- * 那些键（`colorPrimary`、`colorLink`、`colorSuccess` …）只被当作算法的
- * 输入，最终值由算法重新派生。
- *
- * 浅色下这一点**看不出来**：`@ant-design/colors` 的浅色色阶把输入色放在
- * 第 6 阶，而 `colorLink` 恰好取第 6 阶，于是 `colorLink: '#0958d9'` 看着
- * 就像「直接生效了」。深色色阶不是这样——输入 `#0958d9` 派生出的
- * `#4b93dc` 系颜色在选中底上只有 3.97:1；而 antd 深色**自带**的
- * `colorLink`（`#1668dc`）在容器底上只有 3.50:1。两侧都不达 AA。
- *
- * 所以深色必须给最终值。`MappingAlgorithm` 在算法链的最后运行，
- * 它写进去的值不会再被改写。
- *
- * 链接色在深色下的实测：容器底 8.74:1、浮层底 7.87:1、选中底 6.17:1
- * ——三处都在 4.5 以上（`design.test.ts` 会守）。
+ * Seed names are recomputed by antd. Calibrate after darkAlgorithm so green
+ * white-text buttons and links retain their separate, measured contrast roles.
+ * antd-style provides the base algorithm; do not add darkAlgorithm twice.
  */
 const darkCalibration: MappingAlgorithm = (seedToken, mapToken) => ({
-  // 第二个参数按类型是可选的（`DerivativeFunc` 的签名如此）。生产路径上
-  // antd-style 一定会把基础算法的结果传进来；这里兜一层是为了让这个函数
-  // 单独拿出来算也得到同一套值——否则它会静默算出一份少了 darkAlgorithm
-  // 的 token，而那种偏差不会报错。
   ...(mapToken ?? theme.darkAlgorithm(seedToken)),
-  colorPrimary: '#694ca8',
-  colorPrimaryBg: '#443958',
-  colorPrimaryBgHover: '#514365',
-  colorPrimaryBorderHover: '#c1a7f1',
-  colorPrimaryHover: '#7658b2',
-  colorPrimaryActive: '#573b94',
+  colorPrimary: '#00834d',
+  colorPrimaryBg: '#173a2a',
+  colorPrimaryBgHover: '#204b36',
+  colorPrimaryBorderHover: '#89e4ba',
+  colorPrimaryHover: '#007846',
+  colorPrimaryActive: '#006b3e',
   colorPrimaryText: DARK_LINK,
-  colorPrimaryTextHover: '#eadfff',
-  colorPrimaryTextActive: '#c6aff8',
+  colorPrimaryTextHover: '#89e4ba',
+  colorPrimaryTextActive: '#aaedce',
   colorLink: DARK_LINK,
-  /**
-   * 悬停 / 按下的链接色，**必须一起校准**。
-   *
-   * 只写 `colorLink` 的那一版留下了一个洞：hover / active 由算法从
-   * **旧种子**派生，深色下得到 `#15417e`（容器底 **1.80:1**）与
-   * `#1554ad`（2.51:1）——比常态的 8.74:1 弱五倍，鼠标放上去链接就像
-   * 被禁用了。深色里「更亮 = 更强」，所以两档都比常态更亮：
-   * hover `#a5d0ff` 11.29:1、active `#c6e2ff` 13.58:1（容器底实算）。
-   */
-  colorLinkHover: '#ddcffd',
-  colorLinkActive: '#eee7ff',
+  colorLinkHover: '#89e4ba',
+  colorLinkActive: '#aaedce',
 })
 
-/**
- * 组件级 token —— 只放「全局 token 表达不了」的那几个角色。
- *
- * ## 为什么 Tabs 的选中色必须单独给
- *
- * antd 的 `itemSelectedColor` 默认取 `colorPrimary`
- * （`es/tabs/style/index.js` 的 `prepareComponentToken`），而 `colorPrimary`
- * 承担的是**填充**角色（按钮底、选中项底）——按 §3.5 的推论，「不要把它
- * 直接用在文字上」。同一排里**未选中**的标签走 `colorText`，于是
- * **强调关系是反的**：
- *
- * | | 选中项 | 未选中项 | 容器底 |
- * |---|---|---|---|
- * | 浅色（实测） | `#1677ff` 4.10:1 | `rgba(31,35,41,.88)` 10.89:1 | `#ffffff` |
- * | 深色（实测） | `#1668dc` 3.50:1 | `rgba(255,255,255,.85)` 13.23:1 | `#141618` |
- *
- * 两处都低于 AA（13.5px 正文），深色还比浅色更弱——与 §3.8 的跨外观
- * 不回归规则相反，单看深色截图看不出来（「当前在哪一区」只是整排里最暗的
- * 那一个，像被禁用）。
- *
- * 修法与 §3.5 同一条：**强调的文字用 `colorLink`，强调的填充用
- * `colorPrimary`**。所以只换文字色；ink bar（下划线）是填充角色，
- * 仍由 antd 取 `colorPrimary`，不动。
- *
- * ## 为什么两套外观各写一次显式取值
- *
- * 组件 token 是**最终值**：`getComponentToken` 把它直接并进结果，不参与
- * 算法派生、也不受 `formatToken` 删同名键的影响。所以这里不能写
- * `colorLink` 这个 token 名，只能写字面值——两边各自引用本外观的链接色
- * 常量（浅色从 `LIGHT_COLOR.colorLink` 取，深色从 `DARK_LINK` 取），改链接色时两处
- * 一起跟着走，不会漂移成两套强调色。
- */
 const COMPONENT_TOKEN: Record<Appearance, ThemeConfig['components']> = {
   light: {
     Tabs: { itemSelectedColor: LIGHT_COLOR.colorLink },
-    Menu: { itemSelectedColor: LIGHT_COLOR.colorLink },
+    Menu: {
+      itemSelectedColor: '#262626',
+      itemSelectedBg: '#eff0f0',
+      itemHoverBg: '#e9ebeb',
+      itemActiveBg: '#eff0f0',
+    },
   },
   dark: {
     Tabs: { itemSelectedColor: DARK_LINK },
-    Menu: { itemSelectedColor: DARK_LINK },
+    Menu: {
+      itemSelectedColor: '#eceeef',
+      itemSelectedBg: '#303235',
+      itemHoverBg: '#303235',
+      itemActiveBg: '#303235',
+    },
   },
 }
 
 export const mimirTheme: ThemeConfig = {
-  // key 固定成 mimir：注入的变量类名稳定（.mimir），换主题时不会整页重算变量名
   cssVar: { key: 'mimir' },
   token: { ...BASE_TOKEN, ...LIGHT_COLOR },
   components: COMPONENT_TOKEN.light,
 }
 
-/**
- * 深色主题。
- *
- * `algorithm` 这里**只放校准层**，不放 `darkAlgorithm`——基础算法由
- * antd-style 按当前 appearance 自动补（`AntdProvider` 会把
- * `[基础算法, ...本配置的算法]` 串起来，见 `algorithmFor` 的注释）。
- * 自己再写一遍 `darkAlgorithm` 会让它跑两次。
- */
 export const mimirDarkTheme: ThemeConfig = {
   cssVar: { key: 'mimir' },
   token: { ...BASE_TOKEN, ...DARK_COLOR },
@@ -363,8 +176,7 @@ export function effectiveTokens(appearance: Appearance) {
 /**
  * 内容列宽度。
  *
- * 文档正文与设置页共用同一个 measure —— 同一份规范里不该有两个「内容列宽度」。
- * 760px 对应约 11-12 个中文字符的舒适行宽（14px 字号）。
+ * 文档阅读列以 760px 为起点；设置表单与 Office 画布按自身任务布局。
  */
 export const CONTENT_WIDTH = 760
 
@@ -453,8 +265,10 @@ export const FONT_SIZE = {
   pageTitle: 19,
   /** 小节标题：正文 H3、卡片标题、空态标题 */
   section: 16,
-  /** 界面正文：按钮、输入、对话正文、正文段落 */
+  /** 界面正文：按钮、输入、对话正文 */
   body: 14,
+  /** 文档连续阅读正文；与界面控件字号独立 */
+  reading: 15,
   /** 列表项标题、导航项 —— 比正文略小，因为它们是**被扫读**的 */
   item: 13.5,
   /** 摘要、表格、代码 —— 连续阅读的次级内容 */
@@ -466,3 +280,6 @@ export const FONT_SIZE = {
   /** 徽标、计数 —— 有底色衬托，允许更小（DESIGN §4.2 的下限是 10.5） */
   badge: 11.5,
 } as const
+
+/** Reading rhythm, independent of compact UI controls. */
+export const READING_LINE_HEIGHT = 1.9

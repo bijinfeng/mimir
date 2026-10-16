@@ -25,7 +25,7 @@ src/
   EmptyStage.tsx        主视图空态的问候语
   ChatHostVars.tsx      宿主填主题变量的兜底层（字号八档 + gutter）
   ChatPanel.style.ts    面板级样式（字号走 var(--mimir-chat-font-*)）
-  custom-token.d.ts     这个包消费的宿主自定义 token（tintList / tintHover / inlineCodeFg）
+  custom-token.d.ts     这个包消费的宿主自定义 token（tintList / tintHover / inlineCodeFg / surfaceContent）
   runtime/
     io.ts               宿主动作面（ChatIo）与它的默认实现（全抛错）
     agent.ts            HttpAgent 的包装：建会话 + 参数注入
@@ -62,6 +62,11 @@ src/
 - 字号来自宿主的 `FONT_SIZE`（`packages/renderer/src/theme/tokens.ts`）——包不认识
   宿主，写死数字会让「同一角色在不同页面用不同值」重新长出来
 - 回退值**不是装饰**：不挂也能渲染（包内测试与独立预览靠它）
+
+颜色仍继承同一宿主 provider。主消息面与输入区外层用宿主 `surfaceContent`
+（缺失时回退 `colorBgContainer`），输入盒和菜单继续用各自容器角色；深色主面
+`#18191a` 与输入盒 `#202225` 分开。`ChatThemeBridge` 只传字号与 gutter，
+不得为换色额外增加 Chat provider 或把颜色另抄进桥。
 
 CSS 自定义属性**只在声明它的元素及其子树上生效**。挂错位置的表现是
 「样式全都退回回退值」——界面能用、字号差半个像素，**不报错**。

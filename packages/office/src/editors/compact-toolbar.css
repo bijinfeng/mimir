@@ -68,14 +68,14 @@
 }
 
 .mimir-compact-toolbar__tab[aria-selected='true'] {
-  border-bottom-color: var(--ant-color-primary, #1677ff);
-  color: var(--me-accent-text, #1d4f8b);
+  border-bottom-color: var(--ant-color-primary, #00834d);
+  color: var(--me-accent-text, #007a45);
   font-weight: 600;
 }
 
 .mimir-compact-toolbar__tab:focus-visible,
 .mimir-compact-toolbar__commands:focus-visible {
-  outline: 2px solid var(--ant-color-primary, #1677ff);
+  outline: 2px solid var(--me-accent-border, #00834d);
   outline-offset: -2px;
 }
 

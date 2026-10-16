@@ -49,36 +49,21 @@ export const useEditorThemeVars = createStyles(({ css, token }) => ({
     --me-text-weak: ${token.colorTextTertiary};
     --me-border: ${token.colorBorderSecondary};
     /* 工具条与状态行用第四层填充：它比容器底暗一档，能托住控件而不抢内容 */
-    --me-bar-bg: ${token.colorFillQuaternary};
-    --me-surface: ${token.colorBgContainer};
+    --me-bar-bg: ${token.tintNav};
+    --me-surface: ${token.surfaceContent};
     --me-hover: ${token.colorFillTertiary};
     --me-accent: ${token.colorPrimary};
-    /**
-     * 强调的**文字**角色。
-     *
-     * --me-accent 是 colorPrimary，它承担填充与描边（按钮底、选中底、
-     * 边框、焦点环）；把它当文字用是 DESIGN §3.5 明令禁止的那一条——
-     * 实测工具条按下态浅色 3.66:1、深色 **2.47:1**（#1668dc on #15325b），
-     * 菜单「当前值」浅色 4.10:1、深色 3.50:1。
-     *
-     * 所以文字那一档另给 colorLink（它本来就是「强调文字」的角色，
-     * 校准过：浅色 6.16:1、深色 8.74:1，落在 accent 底上是 5.50 / 6.17）。
-     * 消费点只有两处，都在 shell.css：.me-tb[aria-pressed='true']
-     * 与 .me-menu__item[aria-current='true']。
-     *
-     * 这段注释里不能出现反引号——它在 createStyles 的模板串里会终止字符串
-     * （check-style-backticks 守着；实测已经踩过一次）。
-     */
+    /* Pressed/menu text uses readable link green, independently of button fill. */
     --me-accent-text: ${token.colorLink};
     /* 激活态底色。用 antd 派生的浅阶而不是 colorPrimaryBg 的字面值——
        品牌色改了它自动跟着走 */
     --me-accent-bg: ${token.colorPrimaryBg};
-    /* 焦点环描边。用派生阶而不是主色——正文区很大，主色的环比内容本身抢眼 */
+    /* Calibrated focus ring, readable on the content and semantic selected surfaces. */
     --me-accent-border: ${token.colorPrimaryBorder};
     --me-danger: ${token.colorErrorText};
     --me-danger-bg: ${token.colorErrorBg};
     /* 工作台（纸张与幻灯片之外的底）：比容器底暗，让「纸」浮起来 */
-    --me-stage-bg: ${token.colorFillQuaternary};
+    --me-stage-bg: ${token.tintList};
     /* 浮层阴影（菜单、颜色面板，以及 pptx 幻灯片与 pdf 页面这两块「大画布」） */
     --me-shadow: ${token.boxShadowSecondary};
     /* 纸张阴影（docx 的 .doc-page）。**单列一档**：DESIGN §5.3 的 secondary
@@ -94,6 +79,7 @@ export const useEditorThemeVars = createStyles(({ css, token }) => ({
     --me-font: ${FONT_SANS};
     --me-font-mono: ${FONT_MONO};
     --me-font-size: ${FONT_SIZE.body}px;
+    --me-reading-font-size: ${FONT_SIZE.reading}px;
     --me-font-size-sm: ${FONT_SIZE.note}px;
     /* 图标字形，非文本。跟着正文字号走一档 */
     --me-icon-size: ${FONT_SIZE.item}px;

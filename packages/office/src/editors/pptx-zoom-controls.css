@@ -48,7 +48,7 @@
   white-space: nowrap;
 }
 .mimir-pptx-zoom__entry-detail {
-  color: var(--me-muted);
+  color: var(--me-text-weak, #6b6b6b);
   font-size: var(--me-font-size-sm, 12px);
   font-weight: normal;
 }

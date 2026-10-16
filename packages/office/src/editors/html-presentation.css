@@ -4,7 +4,7 @@
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  background: var(--me-bg, #fff);
+  background: var(--me-surface, #fff);
 }
 .mimir-html-presentation__bar {
   display: flex;

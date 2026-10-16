@@ -4,6 +4,8 @@ import { App, Button, Dropdown, Empty, Input, Modal, Segmented, Skeleton, Toolti
 import type { MenuProps } from 'antd'
 import {
   Copy,
+  ChevronDown,
+  ChevronRight,
   Download,
   Ellipsis,
   Eye,
@@ -36,6 +38,7 @@ import { LoadError } from '../LoadError'
 import {
   excerptText,
   formatDate,
+  formatLibraryRowDetail,
   kindLabel,
   readLibraryLayout,
   scopeParams,
@@ -48,6 +51,7 @@ import { api } from '../../lib/api'
 import { useAppShell } from '../../lib/app-shell-context'
 import { useScrolled } from '../../lib/use-scrolled'
 import { useUnsaved } from '../../lib/unsaved'
+import { useNarrowViewport } from '../../lib/nav-collapse'
 import { useStyles } from './LibraryView.style'
 import descriptionIcon from './material-symbols-rounded/description.svg?url'
 import tableChartIcon from './material-symbols-rounded/table_chart.svg?url'
@@ -91,6 +95,7 @@ import articleIcon from './material-symbols-rounded/article.svg?url'
  */
 export function LibraryView({ scope }: { scope: string }) {
   const { styles } = useStyles()
+  const narrowViewport = useNarrowViewport()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { openDocument, openCapture, requestNewNoteFocus } = useAppShell()
@@ -374,6 +379,7 @@ export function LibraryView({ scope }: { scope: string }) {
 
   const showKbChrome = folderPath !== null
   const showSectionHint = folderPath !== null
+  const hasFailedDocuments = items.some((doc) => doc.status === 'failed')
 
   return (
     <div
@@ -404,6 +410,13 @@ export function LibraryView({ scope }: { scope: string }) {
     >
       {dragging && <div className={styles.dropOverlay}>松开即上传到这个知识库</div>}
 
+      {showKbChrome && (
+        <div className={styles.topBar} aria-label="知识库位置">
+          <span>知识库</span>
+          <ChevronRight size={14} aria-hidden />
+          <span className={styles.topBarCurrent}>{kbTitle}</span>
+        </div>
+      )}
       <div className={styles.head}>
         {showKbChrome ? (
           <>
@@ -451,20 +464,44 @@ export function LibraryView({ scope }: { scope: string }) {
           <div className={styles.toolbarActions}>
             {/* 带文字标签的 Segmented：纯图标档的可及名称问题（AGENTS 坑表）
                 在这里靠「文字就在标签里」直接绕开 */}
-            {showKbChrome && (
-              <>
-                <Button
-                  icon={<FolderPlus size={16} />}
-                  onClick={() => setFolderDialogOpen(true)}
-                  disabled={!currentNode}
+            {showKbChrome &&
+              (narrowViewport ? (
+                <Dropdown
+                  trigger={['click']}
+                  menu={{
+                    items: [
+                      { key: 'file', label: '新建文件', icon: <FilePlus2 size={16} /> },
+                      {
+                        key: 'folder',
+                        label: '新建文件夹',
+                        icon: <FolderPlus size={16} />,
+                        disabled: !currentNode,
+                      },
+                    ],
+                    onClick: ({ key }) => {
+                      if (key === 'file') void createNote()
+                      if (key === 'folder') setFolderDialogOpen(true)
+                    },
+                  }}
                 >
-                  新建文件夹
-                </Button>
-                <Button icon={<FilePlus2 size={16} />} onClick={() => void createNote()}>
-                  新建文件
-                </Button>
-              </>
-            )}
+                  <Button icon={<ChevronDown size={15} />} iconPlacement="end">
+                    新建
+                  </Button>
+                </Dropdown>
+              ) : (
+                <>
+                  <Button icon={<FilePlus2 size={16} />} onClick={() => void createNote()}>
+                    新建文件
+                  </Button>
+                  <Button
+                    icon={<FolderPlus size={16} />}
+                    onClick={() => setFolderDialogOpen(true)}
+                    disabled={!currentNode}
+                  >
+                    新建文件夹
+                  </Button>
+                </>
+              ))}
           </div>
           <Segmented
             className={styles.layoutSwitch}
@@ -607,7 +644,11 @@ export function LibraryView({ scope }: { scope: string }) {
             {/* 表头。`aria-hidden`：每行的可及名称已经是完整的一句话
                 （「检索设计说明 PDF 1.4 KB 就绪 2026/09/29 12:54」），
                 列标签对读屏是重复信息；它服务的是「用眼睛扫列」这件事 */}
-            <div className={styles.listHead} aria-hidden="true">
+            <div
+              className={styles.listHead}
+              data-has-status={hasFailedDocuments || undefined}
+              aria-hidden="true"
+            >
               <span />
               <span>名称</span>
               <span>详情</span>
@@ -618,6 +659,7 @@ export function LibraryView({ scope }: { scope: string }) {
               <div
                 key={folder.path}
                 className={`kb-row ${styles.row}`}
+                data-has-status={hasFailedDocuments || undefined}
                 onClick={() => goFolder(folder.path)}
               >
                 <span className={styles.cardIcon}>
@@ -648,17 +690,25 @@ export function LibraryView({ scope }: { scope: string }) {
                 key={doc.id}
                 type="button"
                 className={`kb-row ${styles.row}`}
+                data-has-status={hasFailedDocuments || undefined}
                 onClick={() => open(doc.id)}
               >
                 <span className={styles.cardIcon}>{docIcon(doc)}</span>
                 <span className={styles.rowTitle}>
                   <DocumentName doc={doc} />
                 </span>
-                <span className={styles.rowMeta} title={doc.folder ?? '知识库根'}>
-                  {documentLocation(doc, folderPath)}
-                  {docMetaOf(doc) ? ` · ${docMetaOf(doc)}` : ''}
+                <span
+                  className={styles.rowMeta}
+                  title={formatLibraryRowDetail(documentLocation(doc, folderPath), docMetaOf(doc))}
+                >
+                  {formatLibraryRowDetail(documentLocation(doc, folderPath), docMetaOf(doc))}
                 </span>
-                <StatusBadge status={doc.status} showReady />
+                <span
+                  className={styles.rowStatus}
+                  data-failed={doc.status === 'failed' || undefined}
+                >
+                  <StatusBadge status={doc.status} />
+                </span>
                 <span className={styles.rowTime}>
                   {doc.updatedAt ? formatDate(doc.updatedAt) : ''}
                 </span>

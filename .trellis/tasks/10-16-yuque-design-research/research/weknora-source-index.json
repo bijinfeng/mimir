@@ -1,0 +1,26 @@
+{
+  "ref": "3e22822c1d2397be730c458c7539d0eb8c113a24",
+  "paths": [
+    "frontend/src/assets/theme/styleGuard.test.mjs",
+    "frontend/src/assets/theme/tdesign-overrides.less",
+    "frontend/src/assets/theme/theme.css",
+    "frontend/src/components/KnowledgeBaseSelector.vue",
+    "frontend/src/components/SessionSidebarRow.vue",
+    "frontend/src/components/sessionSidebarBuckets.test.ts",
+    "frontend/src/components/sessionSidebarBuckets.ts",
+    "frontend/src/components/sessionSidebarSourceFilter.test.ts",
+    "frontend/src/components/sessionSidebarSourceFilter.ts",
+    "frontend/src/composables/useTheme.ts",
+    "frontend/src/hooks/useKnowledgeBase.ts",
+    "frontend/src/hooks/useKnowledgeBaseCreationNavigation.ts",
+    "frontend/src/stores/uiSidebar.test.ts",
+    "frontend/src/utils/sidebarWidth.ts",
+    "frontend/src/views/chat/components/tool-results/KnowledgeBaseList.vue",
+    "frontend/src/views/knowledge/KnowledgeBase.vue",
+    "frontend/src/views/knowledge/KnowledgeBaseEditorModal.test.mjs",
+    "frontend/src/views/knowledge/KnowledgeBaseEditorModal.vue",
+    "frontend/src/views/knowledge/KnowledgeBaseList.vue",
+    "frontend/src/views/knowledge/KnowledgeBaseReferenceNavigation.test.ts",
+    "frontend/src/views/knowledge/settings/KnowledgeBaseActivitySettings.vue"
+  ]
+}

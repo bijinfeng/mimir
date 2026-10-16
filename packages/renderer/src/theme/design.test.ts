@@ -9,11 +9,14 @@ import { setThemeMode } from './appearance'
 import type { Appearance } from './appearance'
 import { mimirCustomToken, mimirDarkCustomToken, customTokenFor } from './customToken'
 import { MimirProvider } from './MimirProvider'
+import { useEditorThemeVars } from './editor-theme-bridge'
 import {
   algorithmFor,
   CONTENT_WIDTH,
   FONT_MONO,
   FONT_SANS,
+  FONT_SIZE,
+  READING_LINE_HEIGHT,
   effectiveTokens,
   mimirDarkTheme,
   NAV_NARROW_BREAKPOINT,
@@ -260,19 +263,11 @@ describe('对比度底线', () => {
     ).toBeGreaterThanOrEqual(3)
   })
 
-  it.each(APPEARANCES)('主按钮上的白字 %s下不低于浅色的既有基线', (appearance) => {
-    /**
-     * 4.10:1 是**浅色既有的、已被记录的取值**（DESIGN §3.5 那行
-     * 「白字 on 主色填充 4.10:1」），它按「大字号/非文本」那一档被接受。
-     *
-     * 这里不把门槛提到 4.5——那等于顺手改掉一个已评审过的决定，而深色
-     * 并不需要它。要守的是**不回归**：深色不得低于这个基线（实测 5.19）。
-     */
+  it.each(APPEARANCES)('主按钮白字在三种状态 %s下 ≥ 4.5:1', (appearance) => {
     const token = tokenOf(appearance)
-    const value = contrast('#ffffff', String(token.colorPrimary))
-    expect(value, `${NAMES[appearance]}：主按钮白字的对比度低于既有基线`).toBeGreaterThanOrEqual(
-      contrast('#ffffff', '#1677ff'),
-    )
+    for (const color of [token.colorPrimary, token.colorPrimaryHover, token.colorPrimaryActive]) {
+      expect(contrast('#ffffff', String(color))).toBeGreaterThanOrEqual(4.5)
+    }
   })
 
   it.each(APPEARANCES)('主按钮悬停态与主色文字 %s下保持可读', (appearance) => {
@@ -288,29 +283,8 @@ describe('对比度底线', () => {
 })
 
 describe('非文本对比度：焦点环与描边', () => {
-  /**
-   * 焦点环是「键盘用户能不能看见自己在哪」的线索（DESIGN §7.2），
-   * 所以它按**非文本**标准衡量。
-   *
-   * ## 为什么这里用「不得弱于浅色」而不是绝对的 3:1
-   *
-   * antd 画的焦点环是 `3px solid colorPrimaryBorder`（它的 `genFocusOutline`），
-   * 而浅色的 `colorPrimaryBorder` 是 antd 派生的 `#91caff`——它在白底上
-   * 只有 **1.74:1**。这是既有的、规范里认过的基线（§7.2 只要求「焦点可见」，
-   * 没有承诺非文本的 3:1）。
-   *
-   * 临时把门槛提到 3:1 会让浅色也红，而修法只能是顺手改掉一个已评审的
-   * 决定——那超出了这次改动的范围。所以守**不回归**：深色不得弱于浅色，
-   * 同时两套外观下环都必须与底**可分辨**（>1.5，防「环与底同值」这种
-   * 彻底看不见的情况）。
-   *
-   * 深色确实踩过那个坑：antd 的深色算法把 `colorPrimaryBg` 与
-   * `colorPrimaryBorder` 设成**同一个值**（`#15325b`），同值意味着焦点环
-   * 落在选中项上完全看不见（实测 1.00:1）。深色因此单独校准了描边这一半。
-   */
-  const LIGHT_RING_ON_CONTAINER = contrast('#91caff', '#ffffff')
-  const LIGHT_RING_ON_PRIMARY_BG = contrast('#91caff', '#e6f4ff')
-
+  // Absolute limits apply equally to each appearance; approved colors need not
+  // reproduce the previous blue palette's per-pair contrast ratios.
   it.each(APPEARANCES)('焦点环与它所在的底可分辨 %s下', (appearance) => {
     const token = tokenOf(appearance)
     const ring = String(token.colorPrimaryBorder)
@@ -322,51 +296,35 @@ describe('非文本对比度：焦点环与描边', () => {
       expect(
         contrast(ring, background),
         `${NAMES[appearance]}：焦点环在${surface}上几乎看不见`,
-      ).toBeGreaterThan(1.5)
+      ).toBeGreaterThanOrEqual(3)
     }
   })
 
-  it('深色的焦点环不比浅色弱', () => {
-    /**
-     * 跨外观的不回归规则。
-     *
-     * 浅色的环是 antd 派生的淡蓝（`#91caff`），压在深色底上会是「深蓝环
-     * 压深蓝底」——照搬浅色的取值就会掉进这个坑，而它看起来只是「焦点
-     * 不太明显」，不会有人去查。所以显式拿浅色的两处基线比。
-     */
-    const darkRing = String(darkToken.colorPrimaryBorder)
-    expect(
-      contrast(darkRing, String(darkToken.colorBgContainer)),
-      '深色焦点环比浅色还弱',
-    ).toBeGreaterThanOrEqual(LIGHT_RING_ON_CONTAINER)
-    expect(
-      contrast(darkRing, String(darkToken.colorPrimaryBg)),
-      '深色焦点环在选中底上比浅色还弱',
-    ).toBeGreaterThanOrEqual(LIGHT_RING_ON_PRIMARY_BG)
+  it.each(APPEARANCES)('输入与未选控件边界 %s下 ≥ 3:1', (appearance) => {
+    const token = tokenOf(appearance)
+    const custom = customTokenFor(appearance)
+    for (const background of [
+      custom.surfaceContent,
+      custom.tintNav,
+      String(token.colorBgContainer),
+    ]) {
+      expect(contrast(String(token.colorBorder), background)).toBeGreaterThanOrEqual(3)
+      expect(contrast(custom.focusRing, background)).toBeGreaterThanOrEqual(3)
+    }
+    expect(contrast(custom.focusRing, custom.navSelectedBg)).toBeGreaterThanOrEqual(3)
   })
 
-  it('深色的全部文字阶与语义色文字都不弱于浅色（跨外观不回归）', () => {
-    // 深色最常见的退化是「看着还行就用」：某些组合悄悄比浅色更弱，
-    // 而单看深色的截图判断不出来。这条逐项比一遍
-    const container = {
-      light: String(lightToken.colorBgContainer),
-      dark: String(darkToken.colorBgContainer),
-    }
-    const pairs = [
-      ['文字-2', 'colorTextSecondary'],
-      ['文字-3', 'colorTextTertiary'],
-      ['链接色', 'colorLink'],
-      ['成功文字', 'colorSuccessText'],
-      ['警告文字', 'colorWarningText'],
-      ['错误文字', 'colorErrorText'],
-      ['信息文字', 'colorInfoText'],
-    ] as const
-
-    for (const [name, key] of pairs) {
-      expect(
-        contrastOn(String(darkToken[key]), container.dark),
-        `深色的${name}在容器底上比浅色弱`,
-      ).toBeGreaterThanOrEqual(contrastOn(String(lightToken[key]), container.light))
+  it.each(APPEARANCES)('主面 / 卡片 / 浮层 / 导航选中上的各级文字 %s下均满足 AA', (appearance) => {
+    const token = tokenOf(appearance)
+    const custom = customTokenFor(appearance)
+    for (const background of [
+      custom.surfaceContent,
+      custom.navSelectedBg,
+      String(token.colorBgElevated),
+    ]) {
+      for (const color of [token.colorText, token.colorTextSecondary, token.colorTextTertiary]) {
+        expect(contrastOn(String(color), background)).toBeGreaterThanOrEqual(4.5)
+      }
     }
   })
 
@@ -385,28 +343,11 @@ describe('非文本对比度：焦点环与描边', () => {
     expect(contrast(String(token.colorBorder), container)).toBeGreaterThanOrEqual(1.3)
   })
 
-  it.each(APPEARANCES)('列底与容器底、布局底能分开 %s下', (appearance) => {
-    /**
-     * 三层表面模型（DESIGN §3.6）：列底靠**明度差**与内容区分开，
-     * 而不是靠边框。
-     *
-     * 阈值刻意低（1.02 / 1.04）：这个差本来就是「几乎看不见的一层冷色」，
-     * 规范明说它「用来分隔而不加边框」。要拦的是**同值**（那时两栏会糊成
-     * 一整片，而看起来只是「有点闷」），不是要求它像边框一样清楚。
-     * 实测：浅色 1.025 / 1.055，深色 1.027 / 1.051。
-     */
-    const token = tokenOf(appearance)
+  it.each(APPEARANCES)('辅助表面与主内容可辨，导航与列表共享一套中性表面 %s下', (appearance) => {
     const custom = customTokenFor(appearance)
-    expect(
-      contrast(custom.tintList, String(token.colorBgContainer)),
-      `${NAMES[appearance]}：列表底与容器底几乎同色`,
-    ).toBeGreaterThan(1.02)
-    expect(
-      contrast(custom.tintList, String(token.colorBgLayout)),
-      `${NAMES[appearance]}：列表底与布局底几乎同色`,
-    ).toBeGreaterThan(1.04)
-    // 两个列底也要能区分：它们相邻（左栏导航 / 中栏列表），同值会让两栏连成一片
-    expect(custom.tintList, `${NAMES[appearance]}：两个列底完全相同`).not.toBe(custom.tintNav)
+    expect(contrast(custom.tintList, custom.surfaceContent)).toBeGreaterThan(1.04)
+    expect(custom.tintNav).toBe(custom.tintList)
+    expect(contrast(custom.navSelectedBg, custom.tintNav)).toBeGreaterThan(1.05)
   })
 })
 
@@ -446,7 +387,7 @@ describe('关键值真的覆盖了 antd 默认', () => {
     expect(ours).not.toBe(String(antdDarkDefault.colorLink))
     // 校准层里写死的那个值，逐字比对——改了取值而忘了改这里会红，
     // 那正是「文档与代码各说各话」的入口（DESIGN §3.8 有同一张表）
-    expect(ours).toBe('#ddcaff')
+    expect(ours).toBe('#6bdaa5')
   })
 
   it('深色主题把校准层挂在 algorithm 上（不是定义了一个没人用的函数）', () => {
@@ -474,9 +415,9 @@ describe('关键值真的覆盖了 antd 默认', () => {
     )
   })
 
-  it('品牌与形状保持既有决定', () => {
-    expect(lightToken.colorPrimary).toBe('#6e50b9')
-    expect(lightToken.borderRadius).toBe(8)
+  it('品牌与形状采用已批准的绿色与6px控件', () => {
+    expect(lightToken.colorPrimary).toBe('#00834d')
+    expect(lightToken.borderRadius).toBe(6)
     expect(lightToken.fontSize).toBe(14)
   })
 
@@ -491,6 +432,13 @@ describe('关键值真的覆盖了 antd 默认', () => {
     }
   })
 })
+
+function selectedTabContrast(appearance: Appearance) {
+  return contrastOn(
+    String(themeConfigFor(appearance).components?.Tabs?.itemSelectedColor),
+    String(tokenOf(appearance).colorBgContainer),
+  )
+}
 
 describe('设置页分区标签的选中色（antd Tabs）', () => {
   /**
@@ -509,7 +457,7 @@ describe('设置页分区标签的选中色（antd Tabs）', () => {
     expect(
       tabs?.itemSelectedColor,
       `${NAMES[appearance]}：Tabs 没有组件级选中色（会退回 colorPrimary）`,
-    ).toBe(appearance === 'dark' ? '#ddcaff' : '#543b9a')
+    ).toBe(appearance === 'dark' ? '#6bdaa5' : '#007a45')
     // 与 colorPrimary 同值就是没覆盖上——那正是要拦的退化
     expect(tabs?.itemSelectedColor).not.toBe(String(tokenOf(appearance).colorPrimary))
   })
@@ -525,27 +473,20 @@ describe('设置页分区标签的选中色（antd Tabs）', () => {
   it('深色的选中标签不比浅色弱（跨外观不回归）', () => {
     // §3.8 的不回归规则。这条在本条发现里是**反过来**的：修之前
     // 深色 3.50 弱于浅色 4.10，而单看深色截图判断不出来。
-    const selectedOf = (appearance: Appearance) =>
-      contrastOn(
-        String(themeConfigFor(appearance).components?.Tabs?.itemSelectedColor),
-        String(tokenOf(appearance).colorBgContainer),
-      )
-    expect(selectedOf('dark'), '深色的选中标签比浅色还弱').toBeGreaterThanOrEqual(
-      selectedOf('light'),
+    expect(selectedTabContrast('dark'), '深色的选中标签比浅色还弱').toBeGreaterThanOrEqual(
+      selectedTabContrast('light'),
     )
   })
 })
 
-describe('设置分区菜单的选中文字', () => {
-  it.each(APPEARANCES)('%s 下选中文字在选中底上可读', (appearance) => {
-    const color = themeConfigFor(appearance).components?.Menu?.itemSelectedColor
-    expect(color, `${NAMES[appearance]}：Menu 选中文字不能退回填充主色`).toBe(
-      String(tokenOf(appearance).colorLink),
-    )
-    expect(
-      contrastOn(String(color), String(tokenOf(appearance).colorPrimaryBg)),
-      `${NAMES[appearance]}：设置分区选中文字对比度不足`,
-    ).toBeGreaterThanOrEqual(4.5)
+describe('导航与语义选中分开', () => {
+  it.each(APPEARANCES)('%s 下导航选中是中性且可读，语义选中保留绿色', (appearance) => {
+    const menu = themeConfigFor(appearance).components?.Menu
+    const custom = customTokenFor(appearance)
+    expect(menu?.itemSelectedColor).toBe(custom.navSelectedText)
+    expect(menu?.itemSelectedBg).toBe(custom.navSelectedBg)
+    expect(contrast(custom.navSelectedText, custom.navSelectedBg)).toBeGreaterThanOrEqual(7)
+    expect(custom.navSelectedBg).not.toBe(tokenOf(appearance).colorPrimaryBg)
   })
 })
 
@@ -763,6 +704,13 @@ describe('品牌标记', () => {
 })
 
 describe('字体栈只有一处定义', () => {
+  it('阅读排版独立于紧凑界面字号', () => {
+    expect(FONT_SIZE.body).toBe(14)
+    expect(FONT_SIZE.reading).toBe(15)
+    expect(FONT_SIZE.reading * READING_LINE_HEIGHT).toBeGreaterThanOrEqual(27)
+    expect(FONT_SIZE.reading * READING_LINE_HEIGHT).toBeLessThanOrEqual(30)
+  })
+
   it('token 里的字体栈来自 tokens.ts 的常量', () => {
     // 字体栈曾经定义在 global.css、由 tokens.ts 用 var(--mimir-font-sans) 引用。
     // 改用 antd-style 后 customToken 能直接承载它，于是改成真常量：
@@ -1151,6 +1099,20 @@ function Probe() {
   )
 }
 
+function OfficeNoteProbe({ css }: { css: string }) {
+  const { styles } = useEditorThemeVars()
+  return createElement(
+    'div',
+    { className: styles.vars },
+    createElement('style', null, css),
+    createElement(
+      'div',
+      { className: 'mimir-pptx-control-panel' },
+      createElement('p', { className: 'me-menu__note' }, '动画顺序和时间保存在文件中'),
+    ),
+  )
+}
+
 /**
  * 当前注入的 token 变量块。
  *
@@ -1206,12 +1168,34 @@ afterEach(async () => {
 })
 
 describe('cssVar 运行时确实注入了变量', () => {
+  it.each(APPEARANCES)('Office 面板说明在 %s 下连同透明度仍达到 AA', async (appearance) => {
+    const { readFile } = await import('node:fs/promises')
+    const { URL: NodeURL } = await import('node:url')
+    const css = await readFile(
+      new NodeURL('../../../office/src/editors/pptx-tools.css', import.meta.url),
+      'utf8',
+    )
+    const { host, unmount } = await renderApp(createElement(OfficeNoteProbe, { css }))
+    try {
+      await switchAppearance(appearance)
+      const note = host.querySelector('.me-menu__note')!
+      const rendered = getComputedStyle(note)
+      const [red, green, blue, alpha] = parse(rendered.color)
+      const effectiveColor = `rgba(${red},${green},${blue},${alpha * Number(rendered.opacity || 1)})`
+      expect(
+        contrastOn(effectiveColor, customTokenFor(appearance).surfaceContent),
+      ).toBeGreaterThanOrEqual(4.5)
+    } finally {
+      await unmount()
+    }
+  })
+
   it('浅色下 --ant-* 变量带着 mimir 的覆盖值出现', async () => {
     const { host, css, unmount } = await renderApp()
 
     // 这些变量是内容排版与列底色的依赖：它们必须真的存在
-    expect(css).toMatch(/--ant-color-text-tertiary:\s*#68636f/i)
-    expect(css).toMatch(/--ant-color-success-text:\s*#137333/i)
+    expect(css).toMatch(/--ant-color-text-tertiary:\s*#6b6b6b/i)
+    expect(css).toMatch(/--ant-color-success-text:\s*#007a45/i)
     expect(css).toMatch(/--ant-font-family:/i)
 
     // cssVar 的作用域挂在 antd 组件子树上，plain div 拿不到——
@@ -1283,7 +1267,7 @@ describe('cssVar 运行时确实注入了变量', () => {
     // 所有引用变量的地方会静默失效——所以在这里守一条。
     const { host, css, unmount } = await renderApp()
 
-    expect(css).toMatch(/--ant-color-text-tertiary:\s*#68636f/i)
+    expect(css).toMatch(/--ant-color-text-tertiary:\s*#6b6b6b/i)
     expect(host.querySelector('.ant-app')?.className).toContain('mimir')
 
     await unmount()
@@ -1296,9 +1280,9 @@ describe('主题真的接通了', () => {
     // 断言覆盖值 + 变量类名两件事，才能区分「接通了」和「antd 默认恰好也是这个色」。
     const { host, css, unmount } = await renderApp()
 
-    expect(css).toContain('--ant-color-primary:#6e50b9')
-    expect(css).toContain('--ant-color-link:#543b9a')
-    expect(css).toContain('--ant-border-radius:8px')
+    expect(css).toContain('--ant-color-primary:#00834d')
+    expect(css).toContain('--ant-color-link:#007a45')
+    expect(css).toContain('--ant-border-radius:6px')
     expect(host.querySelector('.ant-app')?.className).toContain('mimir')
 
     await unmount()
@@ -1312,6 +1296,29 @@ describe('主题真的接通了', () => {
     const { host, unmount } = await renderApp(createElement(Empty))
 
     expect(host.textContent).toContain('暂无数据')
+    await unmount()
+  })
+})
+
+describe('中性导航的真实渲染', () => {
+  it('Menu 的选中表面与文字随宿主切换，不回退品牌选中色', async () => {
+    const { Menu } = await import('antd')
+    const { host, unmount } = await renderApp(
+      createElement(Menu, {
+        selectedKeys: ['library'],
+        items: [{ key: 'library', label: '知识库' }],
+      }),
+    )
+    for (const appearance of APPEARANCES) {
+      await switchAppearance(appearance)
+      const custom = customTokenFor(appearance)
+      const selected = host.querySelector('.ant-menu-item-selected')
+      expect(selected).not.toBeNull()
+      expect(readTokenVars()).toContain(`--ant-menu-item-selected-bg:${custom.navSelectedBg}`)
+      expect(readTokenVars()).toContain(`--ant-menu-item-selected-color:${custom.navSelectedText}`)
+      const rendered = getComputedStyle(selected as Element)
+      expect(contrastOn(rendered.color, rendered.backgroundColor)).toBeGreaterThanOrEqual(7)
+    }
     await unmount()
   })
 })
@@ -1340,9 +1347,9 @@ describe('外观切换真的生效', () => {
     expect(after.length, '变量块不该有第二份').toBe(1)
 
     const darkVars = [...after].map((style) => style.textContent ?? '').join('\n')
-    expect(darkVars).toMatch(/--ant-color-bg-container:\s*#29292d/i)
-    expect(darkVars).toMatch(/--ant-color-link:\s*#ddcaff/i)
-    expect(darkVars).toMatch(/--ant-color-text-tertiary:\s*rgba\(255,\s*255,\s*255,\s*0?\.66\)/i)
+    expect(darkVars).toMatch(/--ant-color-bg-container:\s*#202225/i)
+    expect(darkVars).toMatch(/--ant-color-link:\s*#6bdaa5/i)
+    expect(darkVars).toMatch(/--ant-color-text-tertiary:\s*#969ba2/i)
     // 浅色那套值必须已经不在了——否则就是「两套色混在一起」，最难查的一种
     expect(darkVars).not.toContain('--ant-color-bg-container:#ffffff')
 
@@ -1382,7 +1389,7 @@ describe('外观切换真的生效', () => {
     const block = document.querySelector('style[data-token-hash="mimir"]')?.textContent ?? ''
 
     expect(block).toMatch(/--ant-color-bg-container:\s*#ffffff/i)
-    expect(block).not.toContain('--ant-color-bg-container:#29292d')
+    expect(block).not.toContain('--ant-color-bg-container:#202225')
 
     await unmount()
   })
@@ -1407,16 +1414,16 @@ describe('外观切换真的生效', () => {
     )
 
     expect(readTokenVars(), '浅色下 Tabs 变量没有注册').toMatch(
-      /--ant-tabs-item-selected-color:#543b9a/i,
+      /--ant-tabs-item-selected-color:#007a45/i,
     )
     // 选中项必须真的画成那个色：变量注册了但选择器没用上，界面还是旧色
     // （jsdom 会把 var() 解出来，但不把 hex 规范化成 rgb——两种写法都要认）
     const selected = host.querySelector('.ant-tabs-tab-active .ant-tabs-tab-btn')
-    expect(['#543b9a', 'rgb(84, 59, 154)']).toContain(getComputedStyle(selected as Element).color)
+    expect(['#007a45', 'rgb(0, 122, 69)']).toContain(getComputedStyle(selected as Element).color)
 
     await switchAppearance('dark')
     expect(readTokenVars(), '深色下 Tabs 变量没跟着换').toMatch(
-      /--ant-tabs-item-selected-color:#ddcaff/i,
+      /--ant-tabs-item-selected-color:#6bdaa5/i,
     )
 
     await unmount()

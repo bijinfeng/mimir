@@ -1,10 +1,10 @@
 /**
  * 这个包消费的宿主自定义 token。
  *
- * `tintList` / `tintHover` / `inlineCodeFg` 是 mimir 自己的语义
+ * `tintList` / `tintHover` / `inlineCodeFg` / `surfaceContent` 是宿主提供的语义
  * （antd 的 token 体系里没有「列表列的底色」「引用块的悬停底」「行内代码的
  * 字色」），它们的**值**由宿主的 `ThemeProvider`（`customToken.ts`）按外观
- * 填进来——包这边只声明「我用这三个」，与宿主那边的 `declare module` 合并。
+ * 填进来——包这边只声明「我用这些」，与宿主那边的 `declare module` 合并。
  *
  * ## 为什么要在这里再声明一遍
  *
@@ -19,7 +19,7 @@
  *
  * ## 为什么不引更多
  *
- * 只声明**这个包用到的**三个。多写等于承诺，而承诺的兑现方在宿主那边——
+ * 只声明**这个包实际使用的角色**。多写等于承诺，而承诺的兑现方在宿主那边——
  * 写下但宿主没填的表现是 `undefined` 传进 CSS（样式静默失效）。
  *
  * ## 这个文件必须是一个**模块**
@@ -28,16 +28,18 @@
  * `declare module 'antd-style'` 不是「增强」而是**重新声明整个模块**——
  * `antd-style` 的所有导出（`createStyles` 等）都会消失。症状是满屏的
  * `Module '"antd-style"' has no exported member 'createStyles'`，
- * 而它与我们真正想加的那三个 token 一点关系都没有。
+ * 而它与我们真正想加的自定义 token 一点关系都没有。
  *
  * 用一个**真实的**导出而不是 `export {}`：后者会命中
  * `unicorn(require-module-specifiers)`（空导出列表），而 `export type`
  * 同样能让它成为模块——两全。
  */
-export type ChatCustomTokens = 'tintList' | 'tintHover' | 'inlineCodeFg'
+export type ChatCustomTokens = 'tintList' | 'tintHover' | 'inlineCodeFg' | 'surfaceContent'
 
 declare module 'antd-style' {
   export interface CustomToken {
+    /** Main workspace surface; independent from card/input surfaces in dark mode. */
+    surfaceContent: string
     /** 第四层表面：引用块 / 出处条的底 */
     tintList: string
     /** 引用块悬停时的底（与 tintList 拉开 ≥1.08:1，宿主的守门测试管着） */

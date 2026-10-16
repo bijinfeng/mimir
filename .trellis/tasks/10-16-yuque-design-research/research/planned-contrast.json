@@ -1,0 +1,227 @@
+{
+  "method": "WCAG sRGB relative luminance; proposed solid colors only, not runtime screenshots",
+  "pairs": [
+    {
+      "mode": "light",
+      "fg": "#262626",
+      "bg": "#ffffff",
+      "contrast": 15.134
+    },
+    {
+      "mode": "light",
+      "fg": "#262626",
+      "bg": "#f7f8f8",
+      "contrast": 14.224
+    },
+    {
+      "mode": "light",
+      "fg": "#262626",
+      "bg": "#eff0f0",
+      "contrast": 13.254
+    },
+    {
+      "mode": "light",
+      "fg": "#595959",
+      "bg": "#ffffff",
+      "contrast": 7.005
+    },
+    {
+      "mode": "light",
+      "fg": "#595959",
+      "bg": "#f7f8f8",
+      "contrast": 6.584
+    },
+    {
+      "mode": "light",
+      "fg": "#595959",
+      "bg": "#eff0f0",
+      "contrast": 6.135
+    },
+    {
+      "mode": "light",
+      "fg": "#737373",
+      "bg": "#ffffff",
+      "contrast": 4.742
+    },
+    {
+      "mode": "light",
+      "fg": "#737373",
+      "bg": "#f7f8f8",
+      "contrast": 4.457
+    },
+    {
+      "mode": "light",
+      "fg": "#737373",
+      "bg": "#eff0f0",
+      "contrast": 4.153
+    },
+    {
+      "mode": "light",
+      "fg": "#6b6b6b",
+      "bg": "#ffffff",
+      "contrast": 5.329
+    },
+    {
+      "mode": "light",
+      "fg": "#6b6b6b",
+      "bg": "#f7f8f8",
+      "contrast": 5.009
+    },
+    {
+      "mode": "light",
+      "fg": "#6b6b6b",
+      "bg": "#eff0f0",
+      "contrast": 4.667
+    },
+    {
+      "mode": "light",
+      "fg": "#007a45",
+      "bg": "#ffffff",
+      "contrast": 5.427
+    },
+    {
+      "mode": "light",
+      "fg": "#007a45",
+      "bg": "#f7f8f8",
+      "contrast": 5.1
+    },
+    {
+      "mode": "light",
+      "fg": "#007a45",
+      "bg": "#eff0f0",
+      "contrast": 4.753
+    },
+    {
+      "mode": "dark",
+      "fg": "#eceeef",
+      "bg": "#18191a",
+      "contrast": 15.126
+    },
+    {
+      "mode": "dark",
+      "fg": "#eceeef",
+      "bg": "#1f2022",
+      "contrast": 14.009
+    },
+    {
+      "mode": "dark",
+      "fg": "#eceeef",
+      "bg": "#202225",
+      "contrast": 13.701
+    },
+    {
+      "mode": "dark",
+      "fg": "#eceeef",
+      "bg": "#303235",
+      "contrast": 11.047
+    },
+    {
+      "mode": "dark",
+      "fg": "#b3b6bb",
+      "bg": "#18191a",
+      "contrast": 8.656
+    },
+    {
+      "mode": "dark",
+      "fg": "#b3b6bb",
+      "bg": "#1f2022",
+      "contrast": 8.017
+    },
+    {
+      "mode": "dark",
+      "fg": "#b3b6bb",
+      "bg": "#202225",
+      "contrast": 7.841
+    },
+    {
+      "mode": "dark",
+      "fg": "#b3b6bb",
+      "bg": "#303235",
+      "contrast": 6.322
+    },
+    {
+      "mode": "dark",
+      "fg": "#969ba2",
+      "bg": "#18191a",
+      "contrast": 6.294
+    },
+    {
+      "mode": "dark",
+      "fg": "#969ba2",
+      "bg": "#1f2022",
+      "contrast": 5.829
+    },
+    {
+      "mode": "dark",
+      "fg": "#969ba2",
+      "bg": "#202225",
+      "contrast": 5.7
+    },
+    {
+      "mode": "dark",
+      "fg": "#969ba2",
+      "bg": "#303235",
+      "contrast": 4.596
+    },
+    {
+      "mode": "dark",
+      "fg": "#6bdaa5",
+      "bg": "#18191a",
+      "contrast": 10.226
+    },
+    {
+      "mode": "dark",
+      "fg": "#6bdaa5",
+      "bg": "#1f2022",
+      "contrast": 9.47
+    },
+    {
+      "mode": "dark",
+      "fg": "#6bdaa5",
+      "bg": "#202225",
+      "contrast": 9.262
+    },
+    {
+      "mode": "dark",
+      "fg": "#6bdaa5",
+      "bg": "#303235",
+      "contrast": 7.468
+    },
+    {
+      "role": "primary white text",
+      "fg": "#ffffff",
+      "bg": "#00834d",
+      "contrast": 4.824
+    },
+    {
+      "role": "primary white text",
+      "fg": "#ffffff",
+      "bg": "#007846",
+      "contrast": 5.563
+    },
+    {
+      "role": "primary white text",
+      "fg": "#ffffff",
+      "bg": "#006b3e",
+      "contrast": 6.619
+    },
+    {
+      "role": "dark input border",
+      "fg": "#686e76",
+      "bg": "#18191a",
+      "contrast": 3.421
+    },
+    {
+      "role": "dark input border",
+      "fg": "#686e76",
+      "bg": "#1f2022",
+      "contrast": 3.168
+    },
+    {
+      "role": "dark input border",
+      "fg": "#686e76",
+      "bg": "#202225",
+      "contrast": 3.099
+    }
+  ]
+}

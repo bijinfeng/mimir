@@ -47,8 +47,8 @@
   user-select: none;
 }
 .mimir-page-browser__item[data-active='true'] {
-  background: var(--me-accent-bg, #e4eefb);
-  border-color: var(--me-accent, #245b9e);
+  background: var(--me-accent-bg, #e6f4ec);
+  border-color: var(--me-accent, #00834d);
 }
 .mimir-page-browser__item[data-dragging='true'] {
   opacity: 0.45;
@@ -61,7 +61,7 @@
   right: 0;
   height: 3px;
   border-radius: 3px;
-  background: var(--me-accent, #245b9e);
+  background: var(--me-accent, #00834d);
 }
 .mimir-page-browser__item[data-drop-before='true']::before {
   top: -5px;
@@ -78,7 +78,7 @@
   cursor: pointer;
 }
 .mimir-page-browser__preview-button:focus-visible {
-  outline: 2px solid var(--me-accent, #245b9e);
+  outline: 2px solid var(--me-accent-border, #00834d);
   outline-offset: 2px;
 }
 .mimir-page-browser__preview {
@@ -110,7 +110,7 @@
   font-variant-numeric: tabular-nums;
 }
 .mimir-page-browser__item[data-active='true'] .mimir-page-browser__number {
-  color: var(--me-accent-text, #1d4f8b);
+  color: var(--me-accent-text, #007a45);
   font-weight: 600;
 }
 .mimir-page-browser__canvas {
