@@ -1,0 +1,1263 @@
+{
+  "snapshotHead": "6cffa1d91c83cc2f7ee858aeacea463c887456ed",
+  "gate": "pnpm check exit 0; 4231 passed / 2 existing skipped; 1714 product/config files unchanged during gate",
+  "paths": [
+    {
+      "status": " D",
+      "path": ".agents/skills/frontend-design/LICENSE.txt",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " D",
+      "path": ".agents/skills/frontend-design/SKILL.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " D",
+      "path": ".claude/skills/frontend-design",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": ".codex/hooks.json",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": ".gitignore",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": ".oxfmtrc.json",
+      "classification": "current-task"
+    },
+    {
+      "status": " M",
+      "path": ".oxlintrc.json",
+      "classification": "current-task"
+    },
+    {
+      "status": " D",
+      "path": ".trae/skills/frontend-design",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " D",
+      "path": ".trae/skills/ui-animation",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " D",
+      "path": ".trae/skills/ui-ux-pro-max",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " D",
+      "path": ".trae/skills/web-design-guidelines",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": ".trellis/spec/office/engine/conventions.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": ".trellis/spec/office/frontend/editors/conventions.md",
+      "classification": "current-task-hunk-only",
+      "hunk": "only first toolbar paragraph hunk"
+    },
+    {
+      "status": " M",
+      "path": ".trellis/spec/project/quality.md",
+      "classification": "current-task"
+    },
+    {
+      "status": " M",
+      "path": ".trellis/spec/shared/contract/xlsx-agent.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": ".trellis/tasks/10-11-chat-edit-office/implement.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/docx-manual-capability-matrix.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/editor-remaining-tools-current-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/toolbar-pdf-image-browser-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/xlsx-pivot-next-plan-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": ".trellis/tasks/10-16-yuque-design-research/implement.md",
+      "classification": "current-task"
+    },
+    {
+      "status": " M",
+      "path": ".trellis/tasks/10-16-yuque-design-research/prd.md",
+      "classification": "current-task"
+    },
+    {
+      "status": " M",
+      "path": ".trellis/tasks/10-16-yuque-design-research/verification/completion-audit.md",
+      "classification": "current-task"
+    },
+    {
+      "status": " M",
+      "path": ".trellis/tasks/10-16-yuque-design-research/verification/polish-final-visual-review.md",
+      "classification": "current-task"
+    },
+    {
+      "status": " M",
+      "path": ".trellis/tasks/10-16-yuque-design-research/verification/quality-remediation-proposal.md",
+      "classification": "current-task"
+    },
+    {
+      "status": " D",
+      "path": ".zcode/plans/plan-sess_9b220fb8-0eaa-439f-ac2e-9631ac54946a.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " D",
+      "path": ".zcode/skills/frontend-design",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " D",
+      "path": ".zcode/skills/ui-animation",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " D",
+      "path": ".zcode/skills/ui-ux-pro-max",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " D",
+      "path": ".zcode/skills/web-design-guidelines",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "apps/server/src/routes/conversations.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "apps/server/src/services/xlsx-agent-data.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "apps/server/src/services/xlsx-agent-host.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "apps/server/src/services/xlsx-agent-range.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "apps/server/src/services/xlsx-manual-ops.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "apps/server/src/test/pdf-preserving-forms.test.ts",
+      "classification": "current-task"
+    },
+    {
+      "status": " M",
+      "path": "apps/server/src/test/xlsx-agent-host.test.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "apps/server/src/test/xlsx-agent-range.test.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "apps/web/index.html",
+      "classification": "current-task"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/agent/docx-agent.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/agent/xlsx-agent.test.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/agent/xlsx-agent.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/docx-protected-comments.test.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/docx-protected-comments.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/docx-protection.test.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/docx-protection.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/docx-table-save.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/docx.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/CompactToolbar.test.tsx",
+      "classification": "current-task"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/CompactToolbar.tsx",
+      "classification": "current-task"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/DocxAdvancedControls.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/DocxEditor.protection.test.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/DocxEditor.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/DocxProtectionControls.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/DocxTableDesignControls.test.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/DocxTableDesignControls.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/PdfEditor.external-images.test.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/PdfEditor.images.test.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/PdfEditor.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/PdfImagePanel.test.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/PdfImagePanel.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/PptxEditor.test.tsx",
+      "classification": "current-task"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/PptxTableControls.test.tsx",
+      "classification": "current-task"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/XlsxDataControls.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/XlsxEditor.pivot.test.tsx",
+      "classification": "current-task-hunk-only",
+      "hunk": "only wait helper hunk"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/XlsxEditor.test.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/XlsxEditor.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/XlsxObjectControls.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/XlsxObjectLayer.test.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/XlsxObjectLayer.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/XlsxPivotControls.test.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/XlsxPivotControls.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/XlsxShapeGallery.check.test.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/XlsxShapeGallery.test.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/XlsxVisualProperties.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/compact-toolbar.css",
+      "classification": "current-task"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/docx-comment-controls.css",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/docx-protection.css",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/docx-protection.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/docx-table-design.css",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/docx-table-design.test.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/docx-table-design.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/docx-toolbar-render.test.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/editors.css",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/xlsx-pivot-controls.css",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/xlsx-pivot-controls.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/xlsx-shape-gallery.test.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/editors/xlsx-tools.css",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/pagination-geometry.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/pagination.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/xlsx-cell-effects.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/xlsx-sheet-features.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/src/xlsx-visuals.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/vendor/apps/docs/tests/pagination-corpus/docx/01-simple-english.docx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/vendor/apps/docs/tests/pagination-corpus/docx/05-long-table.docx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/vendor/apps/docs/tests/pagination-corpus/docx/08-multi-section-paper.docx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/vendor/apps/docs/tests/pagination-corpus/docx/22-two-columns.docx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/office/vendor/apps/docs/tests/pagination-corpus/docx/kitchen-sink.docx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/renderer/src/lib/api.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "packages/renderer/src/theme/appearance.test.ts",
+      "classification": "current-task"
+    },
+    {
+      "status": " M",
+      "path": "packages/renderer/src/theme/appearance.ts",
+      "classification": "current-task"
+    },
+    {
+      "status": " M",
+      "path": "packages/shared/src/xlsx-agent.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " M",
+      "path": "pnpm-workspace.yaml",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": " D",
+      "path": "skills/frontend-design",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".agents/skills/impeccable/",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".claude/agents/",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".claude/settings.local.json",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".claude/skills/impeccable/",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".github/agents/",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".github/hooks/",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".github/skills/",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".impeccable/",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".pnpm-store/",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/all-tools-completion-ledger-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/docx-encryption-browser-library-review-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/docx-encryption-editor-integration-plan-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/docx-encryption-privacy-followup-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/docx-encryption-server-index-plan-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/docx-forced-tracking-check-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/docx-forced-tracking-fixes-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/docx-forced-tracking-implementation-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/docx-privacy-check-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/docx-privacy-implementation-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/docx-privacy-ui-check-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/docx-privacy-ui-followup-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/docx-privacy-ui-implementation-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/docx-protected-anchors-implementation-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/docx-protected-anchors-independent-check-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/docx-protected-forms-implementation-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/docx-protected-forms-independent-check-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/docx-protection-password-next-plan-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/docx-table-position-check-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/docx-table-position-implementation-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/docx-table-section-position-check-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/docx-table-section-position-implementation-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/docx-w1-password-check-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/docx-w1-password-implementation-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/docx-w2-protection-settings-check-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/docx-w2-protection-settings-implementation-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/generate-xlsx-validation-fixture-20261017.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/pdf-image-current-task-check-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/pdf-image-current-task-followup-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/pdf-image-current-task-implementation-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/toolbar-docx-forms-browser-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/toolbar-docx-protected-anchors-browser-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/toolbar-docx-table-position-browser-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/toolbar-docx-table-position-preflight-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/toolbar-docx-w1-password-browser-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/toolbar-docx-w2-browser-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/toolbar-xlsx-pivot-layout-browser-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/toolbar-xlsx-preview-browser-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/toolbar-xlsx-validation-browser-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/xlsx-manage-inspector-check-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/xlsx-manage-inspector-followup-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/xlsx-manage-inspector-implementation-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/xlsx-multilevel-sort-check-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/xlsx-multilevel-sort-implementation-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/xlsx-pivot-edit-plan-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/xlsx-pivot-layout-implementation-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/xlsx-pivot-layout-independent-check-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/xlsx-preview-range-next-review-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/xlsx-range-disjoint-check-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/xlsx-range-disjoint-implementation-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/xlsx-range-r2a-boundary-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/xlsx-range-sort-followup-plan-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/xlsx-range-structure-migration-plan-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/xlsx-shape-preview-check-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/xlsx-shape-preview-implementation-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/xlsx-validation-check-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/xlsx-validation-implementation-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/xlsx-validation-integration-check-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-11-chat-edit-office/research/xlsx-validation-interactions-next-plan-20261017.md",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-16-yuque-design-research/verification/commit-plan.md",
+      "classification": "current-task"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-16-yuque-design-research/verification/commit-review-manifest.json",
+      "classification": "current-task"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-16-yuque-design-research/verification/docx-gate-remediation.md",
+      "classification": "current-task"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-16-yuque-design-research/verification/editor-gate-remediation.md",
+      "classification": "current-task"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-16-yuque-design-research/verification/final-browser-evidence.json",
+      "classification": "current-task"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-16-yuque-design-research/verification/final-desktop-note-light.png",
+      "classification": "current-task"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-16-yuque-design-research/verification/final-mobile-note-light.png",
+      "classification": "current-task"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-16-yuque-design-research/verification/final-mobile-toolbar.png",
+      "classification": "current-task"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-16-yuque-design-research/verification/final-quality-check.md",
+      "classification": "current-task"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-16-yuque-design-research/verification/quality-remediation-result.md",
+      "classification": "current-task"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-16-yuque-design-research/verification/server-pdf-gate-remediation.md",
+      "classification": "current-task"
+    },
+    {
+      "status": "??",
+      "path": ".trellis/tasks/10-17-wechat-miniapp-research/",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "apps/desktop/.impeccable/",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "apps/server/src/services/xlsx-pivot-layout-edit.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "apps/server/src/services/xlsx-range-features.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "apps/server/src/services/xlsx-range-structures.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "apps/server/src/services/xlsx-rule-footprint.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "apps/server/src/services/xlsx-validation-consent.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "apps/server/src/services/xlsx-validation-options.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "apps/server/src/test/xlsx-multilevel-sort.test.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "apps/server/src/test/xlsx-pivot-layout-edit.test.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "apps/server/src/test/xlsx-range-disjoint.test.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "apps/server/src/test/xlsx-range-structures.test.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "apps/server/src/test/xlsx-rule-footprint.test.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "apps/server/src/test/xlsx-validation-host.test.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "apps/server/src/test/xlsx-validation-route.test.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "apps/web/.impeccable/",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/docx-floating-table-layout.test.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/docx-floating-table-layout.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/docx-forced-tracking-fixture.test-helper.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/docx-forced-tracking.test.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/docx-forced-tracking.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/docx-privacy-state.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/docx-privacy.test.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/docx-privacy.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/docx-protected-anchors-fixture.test-helper.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/docx-protected-anchors.test.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/docx-protected-forms-fixture.test-helper.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/docx-protected-forms.test.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/docx-protected-forms.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/docx-protection-password-crypto.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/docx-protection-password-fixture.test-helper.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/docx-protection-password-native.test.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/docx-protection-password-test-helper.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/docx-protection-password.test.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/docx-protection-password.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/docx-protection-password.worker.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/docx-protection-settings.test.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/docx-protection-settings.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/editors/DocxEditor.password.test.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/editors/DocxEditor.privacy.test.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/editors/DocxEditor.protection-settings.test.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/editors/DocxPrivacyControls.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/editors/DocxProtectionSettingsControls.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/editors/XlsxDataControls.test.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/editors/XlsxEditor.sort.test.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/editors/XlsxEditor.validation.test.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/editors/XlsxObjectManagement.test.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/editors/XlsxObjectManagement.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/editors/XlsxShapePreview.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/editors/XlsxValidationDropdown.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/editors/XlsxValidationOptionsControls.tsx",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/editors/docx-forced-tracking.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/editors/docx-form-controls.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/editors/docx-privacy.css",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/editors/docx-privacy.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/editors/use-xlsx-cell-input.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/editors/xlsx-data-controls.css",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/editors/xlsx-object-management.css",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/editors/xlsx-shape-preview.css",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/editors/xlsx-validation-test-fixture.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/editors/xlsx-validation.css",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/xlsx-pivot-editability.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/xlsx-shape-preview-fixture.test-helper.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/xlsx-shape-preview.test.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/xlsx-shape-preview.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/xlsx-validation-list.test.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/office/src/xlsx-validation-list.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    },
+    {
+      "status": "??",
+      "path": "packages/renderer/src/lib/xlsx-validation-api.test.ts",
+      "classification": "mixed-or-parallel-not-staged"
+    }
+  ]
+}

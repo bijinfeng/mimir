@@ -8,7 +8,7 @@
       不需要 .ico 兜底——所有当前浏览器都支持 SVG favicon（Safari 14+/2020 起）。
     -->
     <link rel="icon" type="image/svg+xml" href="%BASE_URL%favicon.svg" />
-    <meta name="theme-color" content="#1677ff" />
+    <meta name="theme-color" content="#ffffff" />
     <title>mimir</title>
     <!--
       首帧外观。**放在这里而不是 React 里**：React 挂载前浏览器会先按默认
@@ -41,7 +41,9 @@
         var root = document.documentElement
         root.dataset.theme = appearance
         root.style.colorScheme = appearance
-        root.style.background = appearance === 'dark' ? '#18191a' : '#ffffff'
+        var surface = appearance === 'dark' ? '#18191a' : '#ffffff'
+        root.style.background = surface
+        document.querySelector('meta[name="theme-color"]').content = surface
       })()
     </script>
   </head>

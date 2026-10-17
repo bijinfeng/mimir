@@ -352,7 +352,7 @@ it('keeps named groups readable and limits overflow to the command row when all 
 })
 
 it.each([338, 390, 432])(
-  'keeps six groups readable in a %ipx column with accurate overflow and the last command usable',
+  'fits six readable groups in a %ipx column without scrolling and keeps the last command usable',
   async (width) => {
     ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
@@ -382,9 +382,10 @@ it.each([338, 390, 432])(
     )
     const commands = host.querySelector<HTMLElement>('.mimir-compact-toolbar__commands')!
     const collapsedWidth = Number.parseInt(commands.style.getPropertyValue('--compact-group-width'))
-    expect(collapsedWidth).toBe(72)
-    expect(collapsedWidth * labels.length).toBeGreaterThanOrEqual(width)
-    expect(commands.hasAttribute('data-overflow')).toBe(collapsedWidth * labels.length > width)
+    expect(collapsedWidth).toBeGreaterThanOrEqual(44)
+    expect(collapsedWidth).toBeLessThanOrEqual(72)
+    expect(collapsedWidth * labels.length).toBeLessThanOrEqual(width)
+    expect(commands.hasAttribute('data-overflow')).toBe(false)
     expect(host.querySelectorAll('[data-collapsed]')).toHaveLength(6)
     expect(
       [...commands.querySelectorAll('button[aria-haspopup="menu"]')].map((button) =>

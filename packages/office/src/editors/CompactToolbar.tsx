@@ -94,8 +94,9 @@ export function CompactToolbar({
     const measure = () => {
       const availableWidth = commands.clientWidth || commands.getBoundingClientRect().width
       if (availableWidth <= 0) return
-      // Keep labels readable; if every group is collapsed, only this row scrolls.
-      const buttonWidth = 72
+      // Share the actual width budget with CSS; retain a 44px touch target.
+      // Only columns narrower than all minimum targets need local scrolling.
+      const buttonWidth = Math.max(44, Math.min(72, Math.floor(availableWidth / shown.length)))
       commands.style.setProperty('--compact-group-width', `${buttonWidth}px`)
       for (const section of commands.querySelectorAll<HTMLElement>('[data-section-key]')) {
         const key = section.dataset.sectionKey!

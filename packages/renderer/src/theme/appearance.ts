@@ -123,6 +123,9 @@ function syncDocument(): void {
   const root = document.documentElement
   root.dataset.theme = appearance
   root.style.colorScheme = appearance
+  // The browser chrome follows the resolved preference, including manual overrides.
+  const themeColor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+  if (themeColor) themeColor.content = appearance === 'dark' ? '#18191a' : '#ffffff'
 }
 
 function emit(): void {

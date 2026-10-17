@@ -167,4 +167,26 @@ describe('外观状态', () => {
     appearance.setThemeMode('dark')
     expect(document.documentElement.style.colorScheme).toBe('dark')
   })
+
+  it('浏览器栏颜色跟随实际外观，包括覆盖系统偏好与恢复自动跟随', async () => {
+    const meta = document.createElement('meta')
+    meta.name = 'theme-color'
+    meta.content = '#ffffff'
+    document.head.append(meta)
+    try {
+      const system = installMatchMedia(false)
+      localStorage.setItem('mimir.appearance', 'dark')
+      const appearance = await freshImport()
+      expect(meta.content).toBe('#18191a')
+
+      appearance.setThemeMode('auto')
+      expect(meta.content).toBe('#ffffff')
+      system.setSystemDark(true)
+      expect(meta.content).toBe('#18191a')
+      appearance.setThemeMode('light')
+      expect(meta.content).toBe('#ffffff')
+    } finally {
+      meta.remove()
+    }
+  })
 })

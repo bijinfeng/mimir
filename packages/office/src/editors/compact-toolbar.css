@@ -196,9 +196,8 @@
 }
 .mimir-compact-toolbar__section[data-collapsed] .me-menu__text {
   max-width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow-wrap: anywhere;
   line-height: 15px;
   text-align: center;
 }

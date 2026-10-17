@@ -1,0 +1,94 @@
+{
+  "date": "2026-10-17",
+  "runtime": "fresh Vite localhost:5174; existing test admin account; source after final checker repair",
+  "mobile": {
+    "viewport": 390,
+    "documentScrollWidth": 390,
+    "toolbarClientWidth": 338,
+    "toolbarScrollWidth": 338,
+    "panelClientWidth": 314,
+    "panelScrollWidth": 314,
+    "groups": [
+      {
+        "name": "段落样式",
+        "clientWidth": 51,
+        "scrollWidth": 51,
+        "left": 64,
+        "right": 116
+      },
+      {
+        "name": "基础格式",
+        "clientWidth": 51,
+        "scrollWidth": 51,
+        "left": 116,
+        "right": 168
+      },
+      {
+        "name": "其他字形",
+        "clientWidth": 51,
+        "scrollWidth": 51,
+        "left": 168,
+        "right": 220
+      },
+      {
+        "name": "链接",
+        "clientWidth": 51,
+        "scrollWidth": 51,
+        "left": 220,
+        "right": 272
+      },
+      {
+        "name": "列表",
+        "clientWidth": 51,
+        "scrollWidth": 51,
+        "left": 272,
+        "right": 324
+      },
+      {
+        "name": "缩进",
+        "clientWidth": 51,
+        "scrollWidth": 51,
+        "left": 324,
+        "right": 376
+      }
+    ],
+    "lastGroup": "缩进 menu opened; both commands present, disabled correctly with no editor selection",
+    "screenshots": [
+      "final-mobile-toolbar.png",
+      "final-mobile-note-light.png"
+    ]
+  },
+  "wide": {
+    "viewport": 1280,
+    "documentScrollWidth": 1280,
+    "toolbarClientWidth": 1024,
+    "toolbarScrollWidth": 1024,
+    "screenshot": "final-desktop-note-light.png"
+  },
+  "themeColor": {
+    "manualLight": {
+      "theme": "light",
+      "meta": "#ffffff"
+    },
+    "system": {
+      "theme": "light",
+      "meta": "#ffffff"
+    },
+    "manualDark": {
+      "theme": "dark",
+      "meta": "#18191a"
+    }
+  },
+  "cleanup": "restored entry dark theme; reset viewport; closed own temporary verification tab; original tabs left intact",
+  "desktopBuild": {
+    "command": "pnpm --filter @mimir/desktop build",
+    "exitCode": 0,
+    "log": "/tmp/mimir-yuque-final-desktop-build.log",
+    "notes": "Existing third-party eval and mixed dynamic/static-import warnings remain non-fatal.",
+    "latestCommand": "pnpm --filter @mimir/desktop build",
+    "latestExitCode": 0,
+    "latestLog": "/tmp/mimir-yuque-stable-desktop-build.log",
+    "latestNote": "Repeated after Office owners settled, before stable full gate; shared UI source unchanged since screenshots."
+  },
+  "supersedes": "Earlier toolbar screenshots cannot prove current source; this record verifies restored adaptive source."
+}
