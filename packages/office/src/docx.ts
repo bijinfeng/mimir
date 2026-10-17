@@ -7,13 +7,22 @@ import {
 import type { HfPartInfo, ParsedDoc } from '../vendor/packages/docx-engine/src/types.js'
 import type { SaveOptions } from '../vendor/packages/docx-engine/src/patch.js'
 import type { ChartDisplay, Block, SectionInfo } from '../vendor/packages/docx-engine/src/types.js'
-import {
-  blocksToPmDoc,
-  pmDocOptions,
-  pmDocToSavePlan,
-} from '../vendor/apps/docs/src/renderer/editor/convert.js'
+import { blocksToPmDoc, pmDocOptions } from '../vendor/apps/docs/src/renderer/editor/convert.js'
 import { BoundedZip } from './zip-bounds.js'
+import { createProtectedComments } from './docx-protected-comments.js'
+import {
+  createDocxProtection,
+  readDocxProtectionSettings,
+  type DocxProtectionController,
+} from './docx-protection.js'
+import { initializeDocxInk, docxInkSaveOptions, preserveDocxInk } from './docx-ink-save.js'
 import { docxChartSaveOptions } from './docx-chart-save.js'
+import { docxImageSaveBaselines } from './docx-image-save.js'
+import { docxListSavePlan } from './docx-list-plan.js'
+import { docxOutlineSavePlan } from './docx-outline-save.js'
+import { docxListSaveOptions, docxListSaveResult } from './docx-list-save.js'
+import { docxReferenceSaveOptions } from './docx-reference-save.js'
+import { docxDesignSaveOptions, docxDesignSavePlan, liveDocxTheme } from './docx-design-save.js'
 
 /**
  * 编辑器文档的类型。
@@ -26,6 +35,7 @@ import { docxChartSaveOptions } from './docx-chart-save.js'
  */
 export interface PmDocJson {
   type: string
+  attrs?: Record<string, unknown>
   content?: PmDocJson[]
   text?: string
   [key: string]: unknown
@@ -55,6 +65,8 @@ export interface PmDocJson {
 
 /** 打开后的会话。`content` 给 Tiptap，`save` 把编辑结果写回字节 */
 export interface DocxSession {
+  /** 原件保护策略独立于可公开访问的 parsed；所有受支持写入必须检查它。 */
+  readonly protection: DocxProtectionController
   /** 原始字节（保存时作为基底——未改动的条目从它复制） */
   readonly originalBytes: Uint8Array
   /** 解析出的原始块（保存时的对照基准，不要在外部改它） */
@@ -130,7 +142,14 @@ export interface DocxSession {
  * 接进产品时要考虑 worker，否则大文档会卡住主线程。
  */
 export async function openDocx(bytes: Uint8Array): Promise<DocxSession> {
-  await (await BoundedZip.open(bytes)).preflightAll()
+  if (
+    [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1].every((value, index) => bytes[index] === value)
+  )
+    throw new Error(
+      '该文件为 OLE 复合容器，可能是加密 DOCX；暂不支持解密，请在 Office 中另存为未加密 DOCX',
+    )
+  const archive = await BoundedZip.open(bytes)
+  await archive.preflightAll()
   const parsed = await parseDocx(bytes)
 
   /**
@@ -151,7 +170,19 @@ export async function openDocx(bytes: Uint8Array): Promise<DocxSession> {
     pmDocOptions(parsed),
   ) as unknown as PmDocJson
 
-  return {
+  await initializeDocxInk(content, parsed, bytes)
+
+  const protectionSettings = await readDocxProtectionSettings(archive)
+  const protectedComments = await createProtectedComments(archive, bytes)
+  const protection = createDocxProtection(
+    protectionSettings.xml,
+    content,
+    protectionSettings.path,
+    protectedComments,
+  )
+  const protectedOriginal = bytes.slice()
+  const session: DocxSession = {
+    protection,
     originalBytes: bytes,
     blocks: parsed.blocks,
     extras: parsed.extras,
@@ -168,7 +199,7 @@ export async function openDocx(bytes: Uint8Array): Promise<DocxSession> {
       evenAndOdd: parsed.evenAndOddHeaders ?? false,
     },
     content,
-    comments: parsed.comments,
+    comments: protection.readComments() ?? parsed.comments,
     footnotes: {
       parsed,
       blockByDocxIndex: new Map(
@@ -178,25 +209,62 @@ export async function openDocx(bytes: Uint8Array): Promise<DocxSession> {
       ),
     },
     async save(edited: PmDocJson, options: SaveOptions = {}): Promise<Uint8Array> {
-      const plan = pmDocToSavePlan(edited, parsed.blocks)
+      protection.assertSave(edited, options)
+      if (!protection.getAccess().writable) {
+        if (protection.getAccess().commentsOnly && options.comments !== undefined)
+          return protectedComments.save(options.comments)
+        return protectedOriginal.slice()
+      }
+      const plan = docxListSavePlan(edited, content, docxImageSaveBaselines(edited, parsed.blocks))
+      docxOutlineSavePlan(edited, content, parsed.blocks, plan, parsed.headingStyleIds)
+      docxDesignSavePlan(edited, plan, session)
+      options = docxInkSaveOptions(
+        edited,
+        content,
+        parsed,
+        plan,
+        docxDesignSaveOptions(edited, options, session),
+      )
+      if (options.themeFonts || options.themeColors || options.pageColor !== undefined)
+        await liveDocxTheme(session, options)
       // Upstream omits a title delta when the original chart had no title.
       // A user can still add one; carry it to the same surgical part patch.
       for (const node of edited.content ?? []) {
         const attrs = node.attrs as { docxIndex?: number; chartDisplay?: ChartDisplay } | undefined
         const current = attrs?.chartDisplay
-        const original = parsed.blocks.find(block => block.docxIndex === attrs?.docxIndex)?.chartDisplay
+        const original = parsed.blocks.find(
+          (block) => block.docxIndex === attrs?.docxIndex,
+        )?.chartDisplay
         if (!current?.partPath || !original || current.title === original.title) continue
-        const patch = plan.chartPatches.find(item => item.partPath === current.partPath)
+        const patch = plan.chartPatches.find((item) => item.partPath === current.partPath)
         if (patch) patch.patch.title = current.title ?? ''
-        else plan.chartPatches.push({ partPath: current.partPath, patch: { title: current.title ?? '' } })
+        else
+          plan.chartPatches.push({
+            partPath: current.partPath,
+            patch: { title: current.title ?? '' },
+          })
       }
-      return saveDocx(
+      const saved = await saveDocx(
         { ...parsed, extras: parsed.extras } as never,
         plan.saveBlocks as never,
-        await docxChartSaveOptions(bytes, plan.chartPatches, options),
+        await docxChartSaveOptions(
+          bytes,
+          plan.chartPatches,
+          await docxReferenceSaveOptions(bytes, edited, docxListSaveOptions(edited, options)),
+        ),
+      )
+      return docxListSaveResult(
+        await preserveDocxInk(saved, bytes, edited, content, parsed, plan, options),
+        edited,
       )
     },
   }
+  Object.defineProperty(session, 'protection', {
+    value: protection,
+    writable: false,
+    configurable: false,
+  })
+  return session
 }
 
 /**

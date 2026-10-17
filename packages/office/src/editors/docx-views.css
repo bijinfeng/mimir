@@ -1,0 +1,154 @@
+.mimir-docx-reading-bar {
+  width: 100%;
+  min-width: 0;
+}
+.mimir-docx-reading-bar > * {
+  flex-shrink: 0;
+}
+.mimir-docx-navigation {
+  max-width: 320px;
+}
+.mimir-docx-navigation > .mimir-docx-inspector__body {
+  flex: 1;
+}
+.mimir-docx-outline__actions {
+  display: flex;
+  flex: none;
+  justify-content: flex-end;
+  padding: 12px;
+  border-top: 1px solid var(--me-border);
+}
+.mimir-docx-navigation li[data-current='true'] .me-tb {
+  background: var(--me-accent-bg);
+  color: var(--me-accent-text);
+}
+.mimir-docx-navigation li .me-btn__icon {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+.mimir-docx-navigation li .me-btn__icon > span:last-child {
+  min-width: 0;
+}
+.mimir-docx-navigation li small {
+  display: block;
+  margin-top: 3px;
+  color: var(--me-text-muted);
+  font-size: 11px;
+  font-weight: 400;
+}
+.mimir-docx-outline__level {
+  flex: none;
+  width: 12px;
+  color: var(--me-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.mimir-docx-outline__target {
+  display: grid;
+  gap: 12px;
+  padding-top: 4px;
+  margin-top: 16px;
+  border-top: 1px solid var(--me-border);
+}
+.mimir-docx-outline__target h3,
+.mimir-docx-outline__target p {
+  margin: 0;
+}
+.mimir-docx-outline__target h3 {
+  margin-top: 12px;
+}
+.mimir-docx-outline__title {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+.mimir-docx-outline__meta {
+  font-size: 12px;
+  color: var(--me-text-muted);
+  line-height: 1.6;
+}
+.mimir-docx-outline__target .me-select {
+  width: 100%;
+  min-width: 0;
+}
+.mimir-docx-navigation h3 {
+  margin: 20px 0 12px;
+  font-size: 13px;
+}
+.mimir-docx-navigation ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mimir-docx-navigation li {
+  margin-block: 4px;
+}
+.mimir-docx-navigation li .me-tb {
+  justify-content: flex-start;
+  width: 100%;
+  height: auto;
+  text-align: start;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.mimir-docx-navigation__empty {
+  color: var(--me-text-muted);
+  line-height: 1.6;
+}
+.mimir-docx-page-navigation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mimir-docx-page-navigation .ant-input-number {
+  width: 68px;
+}
+.mimir-docx-scroll .doc-zoom {
+  margin-inline: auto;
+  flex: none;
+}
+.mimir-docx-scroll[data-docx-layout='web'] > .editor-scroll {
+  padding: 16px;
+}
+.mimir-docx-scroll[data-docx-layout='web'] .page-wrap {
+  width: var(--docx-web-width);
+  min-height: 0;
+}
+.mimir-docx-scroll[data-docx-layout='web'] .doc-page {
+  width: 100%;
+  min-height: 0;
+  padding: 20px 24px;
+  box-shadow: none;
+  column-count: auto;
+  column-gap: normal;
+}
+.mimir-docx-scroll[data-docx-layout='web'] .mimir-docx-page-borders {
+  display: none;
+}
+.mimir-docx-scroll[data-docx-layout='web'] .doc-page .page-break-before::before,
+.mimir-docx-scroll[data-docx-layout='web'] .doc-page .doc-li.page-break-before::after {
+  display: none;
+}
+.mimir-docx-scroll[data-docx-reading='true'] .img-resize-handle,
+.mimir-docx-scroll[data-docx-reading='true'] .box-resize-handle,
+.mimir-docx-scroll[data-docx-reading='true'] .doc-table-handle {
+  display: none;
+}
+
+.mimir-docx-edit-toolbar {
+  width: 100%;
+  min-width: 0;
+}
+.mimir-docx-edit-toolbar[hidden] {
+  display: none;
+}
+.mimir-docx-navigation li .me-btn__icon {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.mimir-docx-scroll[data-docx-layout='web'] .doc-page {
+  --section-content-w: calc(var(--docx-web-width) - 48px);
+  --doc-content-w: calc(var(--docx-web-width) - 48px);
+}

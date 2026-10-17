@@ -230,3 +230,8 @@ server生产构建及`pnpm deploy --prod`到`/private/tmp/mimir-pdf-image-produc
 ### 绘图实机与撤销回显闭环
 
 root真实第3页箭头→右转90→裁10pt→A5→保存，改色前后下载(8)/(9)严格仅color变化，坐标/尺寸/线宽/朝向/头长/稳定ID均精确保留。撤销下载(10)蓝色正确，却发现旧红草稿复活；修复为源身份变化永久清空草稿，同源刷新保留正常输入。local最终18/18与独立检查通过。实机修后redo红→undo蓝→redo红→保存→reload并选择同一箭头，颜色和精简数值正确，下载(11)与(9)缓存deepEqual、3页4字段保留。最终图`pdf-drawing-inspector-saved-final.png`。真实浏览器证据只覆盖该变换组合和改色/历史，不扩写为手势绘图或全部PDF工具完备。
+
+
+### 2026-10-17 后续工具栏切片当前入口
+
+跨任务后续实施已完成原文整段/部分文字原生重写、outputs-only真涂黑副本、页面图像导出、真实画布绘图、原子批次剩余操作，以及手动视觉签名S1。现行缺口见 `../../10-11-chat-edit-office/research/editor-remaining-tools-current-20261017.md`，签名实际证据见同目录 toolbar-pdf-signature-browser-20261017.md 与 pdf-signature-check-20261017.md，不以旧未接清单覆盖后续实现。手写/输入/PNG/JPEG、Rotate90/180+offsetCrop、save/reopen/transform/delete/undo精确，以及四签名+表单+外来Ink/书签保留均实证；最终420表单菜单/固定footer、签名primary白字/显式center已修并实查。视觉签名不是数字证书，OCR和证书仍未接。最后Office177文件1844/1844、Server default90文件737/737+local10+fnos4+backup2、Webbuild均通过。真实模型未验，Desktop用户自行验收，整体未标工具完备。

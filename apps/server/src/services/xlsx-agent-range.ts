@@ -21,7 +21,9 @@ import {
 import { translateSharedFormula } from '../../../../packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-structure.js'
 import { readXlsx } from '../../../../packages/office/src/xlsx.js'
 import { decodeXlsxXml } from '../../../../packages/office/src/xlsx-format.js'
+import { xlsxAttribute } from '../../../../packages/office/src/xlsx-sheet-features.js'
 import type { XlsxHostResult } from './xlsx-agent-host.js'
+import { materializeXlsxCellStyle, xlsxRangeStyles } from './xlsx-range-styles.js'
 
 const CELL = /<c\b[^>]*\/>|<c\b[^>]*>[\s\S]*?<\/c>/g
 const ROW = /<row\b([^>]*?)(?:\/>|>([\s\S]*?)<\/row>)/g
@@ -94,29 +96,41 @@ export function replaceCells(xml: string, incoming: Map<string, string>): string
     )
     return `<row${attrs}>${sorted.map(([, cell]) => cell).join('')}${body.replace(CELL, '')}</row>`
   }
+  let previousRow = 0
   let body = (data[1] ?? '').replace(ROW, (full, attrs: string, content: string | undefined) => {
-    const row = Number(attribute(attrs, 'r'))
+    const declared = Number(xlsxAttribute(attrs, 'r') ?? NaN)
+    const explicit = Number.isInteger(declared) && declared > 0
+    const row = explicit ? declared : previousRow + 1
+    previousRow = row
     const edits = byRow.get(row)
     if (!edits) return full
     byRow.delete(row)
-    return write(attrs, content ?? '', edits)
+    // Stabilize the touched implicit row, keeping all its other attributes and
+    // every untouched row's original XML intact.
+    const targetAttrs = explicit
+      ? attrs
+      : attrs.replace(/\sr=(?:"[^"]*"|'[^']*')/, '') + ` r="${row}"`
+    return write(targetAttrs, content ?? '', edits)
   })
   for (const [row, edits] of [...byRow].toSorted(([a], [b]) => a - b)) {
-    const next = [...body.matchAll(/<row\b[^>]*\br="(\d+)"/g)].find(
-      (match) => Number(match[1]) > row,
-    )
+    let previous = 0
+    const next = [...body.matchAll(ROW)].find((match) => {
+      const declared = Number(xlsxAttribute(match[1] ?? '', 'r') ?? NaN)
+      const number = Number.isInteger(declared) && declared > 0 ? declared : previous + 1
+      previous = number
+      return number > row
+    })
     const added = write(` r="${row}"`, '', edits)
     body = next ? body.slice(0, next.index) + added + body.slice(next.index) : body + added
   }
   let result = xml.replace(data[0], `<sheetData>${body}</sheetData>`)
-  const oldDimension = /<dimension\b[^>]*\bref="([^"]*)"[^>]*\/>/.exec(result)
-  const points = [...cellMap(result).keys(), ...(oldDimension?.[1]?.split(':') ?? [])].map(
-    parseAddress,
-  )
+  const oldDimension = /<dimension\b[^>]*?(?:\/>|>[\s\S]*?<\/dimension>)/.exec(result)?.[0]
+  const oldRange = oldDimension ? xlsxAttribute(oldDimension, 'ref') : undefined
+  const points = [...cellMap(result).keys(), ...(oldRange?.split(':') ?? [])].map(parseAddress)
   const lastRow = Math.max(0, ...points.map((point) => point.row))
   const lastColumn = Math.max(0, ...points.map((point) => point.column))
   const dimension = `<dimension ref="A1:${formatAddress(lastRow, lastColumn)}"/>`
-  if (oldDimension) result = result.replace(oldDimension[0], dimension)
+  if (oldDimension) result = result.replace(oldDimension, dimension)
   else result = result.replace(/<worksheet\b[^>]*>/, (open) => open + dimension)
   return result
 }
@@ -166,6 +180,7 @@ export async function applyXlsxRangeOperation(
     }
     if (!writes.size) throw new Error('范围内没有可转换的公式')
   } else {
+    const styleAt = xlsxRangeStyles(sourceXml, originalCells)
     // These structures have separate anchors/parts. Do not copy values while
     // silently omitting or overwriting their associated semantics.
     const sourceBounds = parseRange(op.source)
@@ -219,31 +234,30 @@ export async function applyXlsxRangeOperation(
         const sourceColumn = sourceBounds.startColumn + ((column - bounds.startColumn) % width)
         const from = formatAddress(sourceRow, sourceColumn),
           to = formatAddress(row, column)
-        let cell = originalCells.get(from) ?? ''
-        if (cell) {
-          if (op.op === 'copy_range' && op.filterColumn) cell = freezeFormula(cell, from)
-          else
-            cell = cell.replace(
-              /(<f\b[^>]*>)([\s\S]*?)(<\/f>)/,
-              (_all, open: string, formula: string, close: string) => {
-                const translated = translateSharedFormula(
-                  decodeXlsxXml(formula),
-                  row - sourceRow,
-                  column - sourceColumn,
-                )
-                if (translated === null) throw new Error(`${from} 公式平移超出边界`)
-                return (
-                  open +
-                  translated
-                    .replaceAll('&', '&amp;')
-                    .replaceAll('<', '&lt;')
-                    .replaceAll('>', '&gt;') +
-                  close
-                )
-              },
-            )
-          cell = cell.replace(/\br="[^"]*"/, `r="${to}"`)
-        }
+        let cell = originalCells.get(from) ?? `<c r="${from}"/>`
+        if (op.op === 'copy_range' && op.filterColumn) cell = freezeFormula(cell, from)
+        else
+          cell = cell.replace(
+            /(<f\b[^>]*>)([\s\S]*?)(<\/f>)/,
+            (_all, open: string, formula: string, close: string) => {
+              const translated = translateSharedFormula(
+                decodeXlsxXml(formula),
+                row - sourceRow,
+                column - sourceColumn,
+              )
+              if (translated === null) throw new Error(`${from} 公式平移超出边界`)
+              return (
+                open +
+                translated
+                  .replaceAll('&', '&amp;')
+                  .replaceAll('<', '&lt;')
+                  .replaceAll('>', '&gt;') +
+                close
+              )
+            },
+          )
+        cell = cell.replace(/\br="[^"]*"/, `r="${to}"`)
+        cell = materializeXlsxCellStyle(cell, styleAt(sourceRow, sourceColumn))
         writes.set(to, cell)
       }
   }

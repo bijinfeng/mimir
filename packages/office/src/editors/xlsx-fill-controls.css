@@ -1,0 +1,92 @@
+.mimir-editor__body:has(> .mimir-xlsx-inspector) {
+  position: relative;
+  container: xlsx-workspace / inline-size;
+}
+.mimir-editor__body:has(> .mimir-xlsx-inspector) > .me-scroll {
+  margin-inline-end: 320px;
+}
+.mimir-xlsx-fill__content {
+  flex: 1;
+}
+.mimir-xlsx-fill__hex {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+.mimir-xlsx-fill__range {
+  margin: 0 0 4px;
+  color: var(--me-muted);
+  font-size: 12px;
+}
+.mimir-xlsx-fill__current {
+  margin: 0 0 12px;
+  overflow-wrap: anywhere;
+}
+.mimir-xlsx-fill__preview {
+  height: 72px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--me-border);
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+.mimir-xlsx-fill__preview span {
+  background: #fff;
+  color: #222;
+  padding: 2px 6px;
+  border-radius: 2px;
+  font-size: 16px;
+}
+.mimir-xlsx-fill__stops {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+.mimir-xlsx-fill__stops h3 {
+  margin: 4px 0 0;
+  font: inherit;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+}
+.mimir-xlsx-fill__stops h3 span {
+  color: var(--me-muted);
+  font-weight: 400;
+}
+.mimir-xlsx-fill__stop {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--me-border);
+  border-radius: 4px;
+  min-width: 0;
+}
+.mimir-xlsx-fill__stop-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.mimir-xlsx-fill__stop-heading strong {
+  font-weight: 500;
+}
+.mimir-xlsx-fill__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--me-border);
+  flex-shrink: 0;
+}
+.mimir-xlsx-fill__feedback {
+  margin: 12px 0 0;
+  overflow-wrap: anywhere;
+}
+@container xlsx-workspace (max-width: 800px) {
+  .mimir-editor__body:has(> .mimir-xlsx-inspector) > .me-scroll {
+    margin-inline-end: 0;
+  }
+  .mimir-xlsx-fill {
+    max-width: calc(100% - 32px);
+  }
+}

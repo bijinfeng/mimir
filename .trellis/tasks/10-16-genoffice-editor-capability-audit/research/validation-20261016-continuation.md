@@ -353,3 +353,73 @@ PPTX checker追加实机样式修复：Show/Zoom三主按钮原children短文字
 - 窄屏截图注意：IAB默认截图可能输出缩放画面，fullPage偶发无法捕获；采用CUA截图clip=(0,0,420,880)获取真实尺寸。CDP仅用于临时viewport，最终清除，不修改页面DOM。
 - 独立checker本批最初11文件去重92项全部通过，三包tsc/目标lint/format/Antd/styles/diff通过；真实浏览器发现的范围竞态另追加修复，最终数字待冻结后更新。Web/server冻结前build exit0日志`/tmp/mimir-pptx-batch-final-{web,server}-build.log`，最终Editor修复后须重建Web；已有eval/混合import警告及全仓既存技能lint阻断保持。
 - 整体任务继续in_progress，不提交、暂存、归档或宣称全部工具已齐。
+
+
+#### 本批最终复验与范围问题收口
+
+- 上述“范围修复中”已收口。根因有三层：host reparse原地更换数组/runtime ID；首次原生写ensureCreationId把e_cNvPr alias升级为GUID；保存commit再推进revision。选择状态现绑定source+documentId+slidePath+初选elementRef，key/目标/守卫保留首次alias并通过matchesElementRef解析；UI使用accepted afterEdit发布的viewVersion。成功save仅同handle/页/目标/原range且无版本变化时重绑range+pendingFormat。失败保存/版本变化/换对象不恢复旧范围。
+- 最终真实浏览器：连续第二段RTL→编号3保存(35)只变slide2.xml，pPr rtl=1/algn=r/buAutoNum arabicPeriod startAt3；其他三段pPr原样。最终冻结后再LTR→左对齐→保存(36)，面板仍第2段/15字符；保存后继续编号5→保存(37)，仍同范围。undo/save(38)与(36)全部ZIP entry相同；redo/save(39)与(37)全部ZIP entry相同；37vs36仅slide2.xml变化。初次试验受热更新/临时标签清理影响的中间操作不当作历史通过证据，最终20号保留标签上的完整链独立验完。
+- 主题最终再次选择Office，草稿不dirty，应用/save(32)；undo/save(33)与原(31)逐entry相同；redo/save(34)与(32)逐entry相同。当前保存原件恢复Office，主题全部参数和其他原件结构保留。
+- 截图最终有效：主题宽1280×720/窄420×880；形状宽1280×720/窄420×880；段落列表正常窗口957×873/窄420×880，分别pptx-theme-gallery-final-{wide,420}.png、pptx-shape-draw-final-{wide,420}.png、pptx-paragraph-list-final-{wide,420}.png，目录沿本报告。段落420的body.scrollWidth=420，应用按钮left256.5/right408/bottom686.23，位于文字编辑区之上，面板content单独滚动。当前第2段、数字编号5、已选15字符与固定footer目视正确。下拉框Escape先关闭，第二Escape关闭Inspector并回真实BUTTON“段落与文本框”。
+- 独立checker后续5文件最初120/120，再补换目标取消及save范围/插入点/失败保存/版本变化/换目标，最终同5文件125/125；selection-tools最新10/10。与首批92项重叠，不累计成一个全量数字。Office最终typecheck、两目标Oxlint/Oxfmt、Editor Antd、diff check均exit0；server/shared先前冻结tsc通过。本批最终Web build日志/tmp/mimir-pptx-batch-final-web-build.log已消费exit0；Server未再改，/tmp/mimir-pptx-batch-final-server-build.log exit0。第三方eval/混合import警告及全仓既存技能lint阻断保持。
+- 96回调矩阵已同步15/18/31/32/41及参数表。临时viewport已清除，当前PPTX与仍存PDF/DOCX/HTML四标签重新markHandoff；旧XLSX/PDF图片临时标签已被浏览器会话清理，不虚报仍保留六标签。测试文档仍在专用知识库，未删除。整体目标仍in_progress；本片代码/界面验收完成，不提交、暂存或归档。
+
+最终附记：root收尾重跑全树git diff --check时，工作区并行变更的packages/renderer/src/components/NavSidebar.tsx:312出现EOF空行，exit2；该文件不属本片，未修改。随后本片Office/Shared/Server/spec/task路径的限定diff check通过；先前checker全树通过只代表当时快照，不当作当前全树通过。
+
+
+### 2026-10-17 PPTX 图片裁切 / 轮廓 / 完整图标 / 十二图表 / AI草稿浏览器收口
+
+- 用户已再次明确只完成代码与浏览器；Desktop由用户自行验收，无模型配置不验真实Agent。固定GenOffice仍为480548fd55f1be3593ee0d8e316a734751d58309；上游图标实际28项，不是全Lucide库。WeKnora固定v0.8.3/3e22822c1d2397be730c458c7539d0eb8c113a24沿既有源码/站点证据，仅知识库与Agent权限参考，无Office裁切/Ribbon模型；本批没有把旧站点探测写成新成功。
+- 图标真实浏览器：搜索rocket→火箭、颜色#4472C4、96pt插入并保存下载01_standard_business (40).pptx。独立Python读取image14.png为512×512 RGBA，透明217515像素、不透明42782像素均(68,114,196,255)；native picture ext1219200×1219200EMU。固定上游图形body独立比较28/28一致。最早一次开发热更新丢失未保存插入，未作为成功证据；后来使用5180生产预览稳定验收。
+- 图片外观：当前图标设37%不透明、右转90°，画布键盘沿屏幕方向裁左10.416%；(41)原生alphaModFix37000、rot5400000、srcRect l10416、框宽1092203/高1219200且偏移同步，保留像素比例。undo/save(42)恢复框与srcRect、保留37%/90°；redo/save(43)与(41)所有ZIP entry相同，仅目标slide1.xml在裁切前后不同。Escape取消回到真实Ribbon图片裁切BUTTON。
+- 轮廓：当前无轮廓→显示轮廓→#4472C480、2.75pt、长双点划线→明确应用/save(44)。native ln w34925/alpha50196/lgDashDotDot；undo/save(45)与(43)逐entry相同，redo/save(46)与(44)逐entry相同。完整11线型/端点/连接/复合参数的当前值与草稿保真由专项测试覆盖，组内/多对象仍列缺口。
+- 图表：真实菜单完整十二类；组合图输入营收12/20/16与目标15/18/22，类别一月/二月/三月，save(47)独立读取chart2.xml含barChart和lineChart两个系列，数值/名称完整。普通单系列及十二类由组件原生保存测试覆盖，不伪造业务示例数据。组合图要求两个用户系列避免原生退化成单柱图。
+- 最终真实指针验收：第5页logo从左手柄(1122,218)拖到(1136,218)，保留79%，在420px点击应用并保存(48)。native slide3.xml srcRect l20994、off x10496343/y228600、ext790057×600000；undo/save(49)与(47)所有ZIP entry相同，redo/save(50)与(48)所有entry相同，前后仅slide3.xml不同。
+- 视觉和交互实机发现三项并修复：轮廓controls类名与大纲工作区同名，窄屏继承max-height180px；三新Inspector body默认flex row导致状态文本横挤表单；轮廓/插入图表没启用PropertyForm导致可见标签缺失。现隔离outline-controls命名，纵向布局和固定footer，可见字段/分组；裁切浮条原在小幻灯片内遮挡手柄，现放画布下方并预留120px。最终420实测sheet bottom407、feedback top415/bottom508.28，body.scrollWidth420，拖动手柄完整可见。没有通过隐藏字段或缩字号规避。
+- 最终截图目录/Users/admin/.codex/visualizations/2026/10/16/01a142b8-e543-7780-8181-44e1e0f94f51：pptx-icons28-final-{wide,420}.png、pptx-outline-final-{wide,420}.png、pptx-chart-insert-final-{wide,420}.png、pptx-picture-final-wide.png、pptx-crop-final-{wide,420}.png、pptx-ai-draft-final-wide.png。截图PNG后缀的浏览器JPEG字节在交付前统一转为真实PNG。界面保留既有视觉系统，固定主操作、内部滚动、具名标签；窄屏分层工具组沿宿主展开后进入Inspector。
+- AI：开始有美化/事实核查/生成配图，幻灯片有拼写与八语言翻译。真实浏览器八语言菜单及美化草稿已验；最终第5页草稿为自然中文+页面标识s_3/当前未保存画布要求，已移除文档ID/原始path/版本/API JSON；不会自动发送。现onAiPreset是文字草稿通路，无截图附件管道，提示不等于宿主强制冻结目标；未配置模型不能声称真实执行通过。
+- 门禁：独立checker首批8文件199/199；真实浏览器修复后3文件130/130含missing-media真实ZIP、可见标签与裁切取消/history；AI2文件18/18，均为重叠切片不累计成单次数字。Office tsc、目标lint/format/Antd/styles/diff通过，最终Web build exit0日志/tmp/mimir-pptx-final-layout-build.log。全仓pnpm check实际仍失败：480项bundled Impeccable脚本lint及并行ProviderForm未用Select；不记全仓绿。意外整包中断输出的旧打印断言/图表慢保存等待已限定复核：仅更新2测试，打印走真实文稿与当前输出模式，图表等待实际宿主Promise而非40ms；最终2文件19/19、无act warning，Office tsc及目标门禁通过。不把中断运行当全量通过。
+- 文档保留专用知识库11项，最终主文稿保存含本批图标、轮廓、双系列图表及logo裁切。96回调表已同步14/70/71/82/83/86/87。整体目标继续in_progress，不提交、暂存、归档或宣称全部工具完成。下一批仍有多对象统一字形/段落/样式/填充/轮廓、画布框选和组内对象、广泛图片格式/拖放/系统剪贴板、独立新批注聚焦、AI截图附件及六格式最新清单去陈旧化。
+
+本批收尾：临时viewport已清除，PPTX20（稳定生产预览5180）、DOCX9、HTML19重新markHandoff；当前7是设置，未虚报保留PDF/XLSX页。截图均已转真实PNG，主文稿clean保存。
+### 2026-10-17 PPTX 统一多选与组合成员浏览器最终收口
+
+- 当前用户只验代码和浏览器；Desktop自行验收，无模型配置不宣称真实Agent执行。固定GenOffice480548fd55f1be3593ee0d8e316a734751d58309；沿本片研究中的WeKnora v0.8.3/3e22822c1d2397be730c458c7539d0eb8c113a24权限参考，不拿其Markdown编辑器作为Office工具栏样式。
+- 画布、对象树、排列共用持久ID集合；真实Agenda空白拖选3对象且保存仍禁用，⌘追加选择2项。组首击选整组，第二击/Alt进入直接成员；父组和子项不会重复作用。字体/字号/B/I/U/颜色显示共同值或混合值，批量操作走单次原子事务。
+- 下载01_standard_business (51).pptx为基线；52仅slide1.xml变化，Title1两run与Subtitle2均b=1，Q3原i=1保留。undo/save53所有ZIP entry等于51；redo/save54等于52。
+- 55原生组合仅slide2.xml变化。组合直接成员纯色E8F1FF、轮廓4472C4/1.75pt及两文本框各段居中57仅改slide2.xml；原cap=flat保留，原生ln w22225。undo58=56，redo59=57，恢复60=56，均独立Python比较全部ZIP entries。
+- 实机快速输入发现逐键请求/等待禁用丢字，改为本地“成员文字草稿→应用/取消”，输入期间无宿主请求。明确提示保存不含未应用草稿，失败保留可重试。应用Financial results 2027并save61，其他Product updates/Roadmap、原第2段RTL0/alignl/buAutoNum arabicPeriod/startAt5完整保留；undo62=60，redo63=61。64保存Financial results 2027 Q4，保存前后caret25保持；重新聚焦追加!到26位置正确，随后取消草稿，原件64无!。
+- 实机保存光标和最后Escape发现后均补回归。最后生产Web构建reload，打开subbar Inspector→选Title1→Escape，DOM确认panel=false、activeElement aria-label为“打开对象选择与格式”，回真实入口按钮。未以默认activeElement猜测入口。
+- 320px右Inspector、内部独立滚动和固定操作；字形三列/字号颜色两列、空选区只给指导。实际1280×880与420×880目视通过，420的document clientWidth/scrollWidth均420，footer bottom831.359px。截图目录/Users/admin/.codex/visualizations/2026/10/16/01a142b8-e543-7780-8181-44e1e0f94f51：pptx-multiselect-group-final-{wide,420}.png、pptx-multiselect-format-final-{wide,420}.png，已转真实PNG。临时viewport清除，PPTX20/DOCX9/HTML19保留handoff。
+- 独立9文件124/124，追加Editor9+Group5共2文件14/14，数字重叠不累计。Office tsc、目标lint/format/styles/diff通过；最新Web build exit0，日志/tmp/mimir-pptx-global-selection-web-build.log。独立复核见research/pptx-global-selection-check-20261017.md。全仓pnpm check确实失败480项bundled Impeccable脚本lint，日志/tmp/mimir-pptx-global-check-full-final.log；未擅改忽略配置或称全仓绿。
+- 本片仍不覆盖深层组合写入、组内几何、完整多对象段落/复杂填充/高级轮廓批量、广泛图片格式/拖放/系统剪贴板、新批注自动聚焦和AI截图附件。六格式整体目标继续in_progress，不提交/暂存/归档。
+
+### 2026-10-17 PPTX 详细选择工具浏览器收口
+
+- 最终Web生产构建exit0：/tmp/mimir-pptx-selection-detail-final-build.log，含既存React Compiler/PDF混合import警告，不宣称warning-free。用户只验代码/浏览器，模型无配置未执行，Desktop用户自行验收。
+- Group5组合含两文字与connector。批量格式“段落”先填125%/段前4pt/段后6pt/LTR，转“列表”设编号7/90%/12pt/#4472C4，原子一次应用并save(65)。独立ZIP回读4段lnSpc125000、spcBef400/spcAft600、rtl0、buAutoNum arabicPeriod startAt7、buSzPct90000/indent-152400/4472C4。跨页签草稿保留。
+- 同组3对象轮廓设dashDot/圆头/圆角/双线，save(66)；原生ln cap=rnd cmpd=dbl、prstDash=dashDot、round。undo/save(67)全部ZIP entry等于(65)，redo/save(68)等于(66)。单改细节生成轮廓默认黑1pt的无原轮廓对象，当前回显与原生一致；不宣称无轮廓对象保持无轮廓。
+- 选择Content Placeholder2→“位置与形状”，明确父组合局部坐标。水平42pt、旋转15°、水平翻转save(69)，原生rot900000/flipH1/off252983,3730177；原生保持旋转中心后的回显19.9199/293.7147。只改slide2.xml，该child以外每个父组子XML不变。undo/save(70)=(68)，redo/save(71)=(69)，均全部ZIP entry相同。
+- 幻灯片→分节与批注→新建批注自动聚焦textarea；添加“批量工具与组内坐标浏览器验收。”成功清草稿/回输入。随后输入下一条未提交文字，save(72)后草稿保留；原生comment1.xml只含已添加一条，关系与commentAuthors有效。Escape回实际折叠来源“分节与批注”；CtrlAltM从对象选择按钮进入、Escape回同按钮。原ISO时间可读性差，改zh-CN年月日时分并保留dateTime原值；最终reload显示2026/10/17 03:01。
+- 一轮宽1280与420×880目视及日期修后一轮确认，320px Inspector/内部滚动/固定主操作通过；420无横溢出、footer bottom841.359px，下部复合线Select实际可打开/首Escape关闭。截图目录/Users/admin/.codex/visualizations/2026/10/16/01a142b8-e543-7780-8181-44e1e0f94f51：pptx-detail-{outline,geometry,comment}-{wide,420}.png，另outline-420-scrolled.png；全部转为真实PNG。临时viewport清除，PPTX20/DOCX9/HTML19再次handoff。
+- 独立9文件58/58、真实Agent handle→host2/2、旧专项5/5，末次批注14/14为重叠复查；Office/Server tsc、目标lint/format/styles通过。旧Table固定35ms竞态改等真实发布，旧crop测试改实际overlay隔离+对象树pending锁定+显式取消，生产未放宽。checker研究见10-11-chat-edit-office/research/pptx-selection-detail-check-20261017.md。
+- 本片图片符号批量、复杂填充/32样式批量、深层组合、广泛图像/剪贴板等未齐；裸Agent group flip持久化缺口进入下一宿主修复，不以UI batch成功替代。全仓pnpm check既存480项技能脚本lint仍失败。整体继续in_progress，不提交/暂存/归档。
+
+### 2026-10-17 PPTX 复杂批量外观与裸组内翻转收口
+
+- 统一选择新增外观→填充/组合样式：2–16色标渐变、透明度/角度/路径、32组合预设、八固定纹理及每对象原图平铺/拉伸。连接线没有可编辑fill，UI与宿主共用能力判断：Group5两文字参与填充、三对象仍参与stroke。草稿未提交不dirty，图片草稿与普通格式互斥，只有一个固定底部应用。
+- 实机(75)两shape原生3色标0/50000/100000、AA44CC alpha50196、lin ang2100000；connector无gradFill。紫色虚线(76)两shape白填充、三stroke7030A0/dash，保留原宽12700/cap rnd/cmpd dbl与connector箭头；只改slide2.xml。undo/save(77)全部ZIP entry等于(75)，redo/save(78)等于(76)。
+- 木纹(79)两shape均引用image10.png，SHA256=1f3735b67b527e90dbef8e9cc6632a1779a88019050fb87ebf77bc218c8410b8，原件已有该media，未复制新文件。当前图拉伸(80)仍保持同hash、改stretch；宿主合并重复同资源relationship，只变slide2.xml及其rels。undo/save(81)全部ZIP entry等于(79)，redo/save(82)等于(80)。首次“只应改变slide XML”的独立断言过严，已核是等价关系去重，未把该断言失败当生产故障或冒报通过。
+- shared selection manual_fill明确1–200 targets/直接父group，字符串与实际对象双层去重，整个选择预验后一次txn；current逐对象读取各自media，结果只返回一条compact记录。裸group flipElements由同名同步registry包装在原txn内flush补偿child transform，finally恢复原定义，后接ungroup/duplicate亦可持久化；不改vendor或模型白名单。
+- 浏览器发现四列样式按钮内图标/色名同行挤成单字竖排，修复真实内层tile为上下排、名称单行，纹理共用。最终生产构建后1280/420×880目视通过，内部滚动和固定footer可达。截图为pptx-appearance-{gradient,styles,texture}-{wide,420}.png，目录/Users/admin/.codex/visualizations/2026/10/16/01a142b8-e543-7780-8181-44e1e0f94f51，已转真实PNG；临时viewport已清除。
+- 独立完整检查Office69/69、server15/15；connector补充Office35/35、server4/4，均重叠不累计。Office/Server/Shared tsc、目标lint/format/Antd/styles/diff通过；最终Web build exit0，/tmp/mimir-selection-appearance-web-build.log。真实模型未配、Desktop用户自验；全仓pnpm check既存480项bundled技能lint仍失败。整体in_progress，不提交/暂存/归档。
+
+
+### 2026-10-17 表格设计、画布绘图、透视与规划界面收口
+
+- DOCX：5表格预设、六look/10边框范围/四边距/AutoFit已接。真实4×3表应用蓝条纹只改document.xml、12格文字保留，undo/redo全部ZIP entry精确恢复。最终look为3列×2行，320px Inspector/固定footer/420无整页横溢出/Escape回真实入口通过；浮动定位仍未接。
+- PDF：真实自由笔6点新增、移动、8手柄缩放、连续两次草稿拖移已验；两次拖移一次应用，保存→单步撤销→重做原始字节精确恢复，AcroForm前两页各5annotations和第三页原arrow保留。旧精确数值默认折叠，最终宽/420截图通过，仅支持自有绘图手势。
+- XLSX：高级透视新建支持多values/aggs、报告字段、分组/筛选，已有定义只读+刷新。实机发现自闭合cell吞后继，修复row/c；独立检查另修shared-si空项错序，非vendor。真实原生两部门470/440、总计910；源新增研发部/2028后刷新470/280/260、总计1010，新建和刷新历史均全ZIP entry精确恢复。最终构建reload结果仍正确；无edit_pivot/跨表新建，Excel刷新分组存在已明示边界。
+- HTML：实际Checkbox.Group多选数组、停止/切源/过期结果守卫，47/47；真实组件示例数据harness在宽/420提交与brief编辑通过，无模型调用。目录固定footer最终420按钮bottom841.359，Ribbon最后AI组真实展开、72px局部横滚且无整页溢出通过。
+- 独立DOCX/PDF77/77；XLSX最终Office61/61、Server14/14；相关两包tsc/目标lint/format/styles/diff通过。最终Web build exit0：/tmp/mimir-toolbar-final-accepted-web-build-20261017.log；既有构建警告和全仓480项技能lint阻断均未冒称消失。
+- 完整证据、native文件名及截图见 `10-11-chat-edit-office/research/toolbar-browser-acceptance-20261017-final.md`；当前缺口矩阵已同步，整体继续in_progress。未暂存/提交/归档，Desktop用户自验，真实模型未配置未验。

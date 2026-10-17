@@ -1,29 +1,15 @@
-import { presetPath, presetPolygon } from '../../vendor/packages/pptx-render/src/preset-geometry.js'
+import { useLayoutEffect, useRef, useState } from 'react'
+import { xlsxShapePreview } from './xlsx-shape-gallery.js'
+import {
+  measureXlsxGrid,
+  sameXlsxGridMetrics,
+  xlsxVisualBox,
+  type XlsxGridMetrics,
+} from './xlsx-object-layout.js'
 import type { XlsxSheet } from '../xlsx.js'
 import type { XlsxVisual } from '../xlsx-visuals.js'
-export function xlsxVisualBox(sheet: XlsxSheet, visual: XlsxVisual) {
-  const a = visual.anchor
-  const x = (col: number, off: number) =>
-    34 +
-    Array.from({ length: Math.min(col, 200) }, (_, c) =>
-      sheet.columns.find((item) => item.col === c),
-    ).reduce((n, item) => n + (item?.hidden ? 0 : (item?.width ?? 64)), 0) +
-    off / 9525
-  const y = (row: number, off: number) =>
-    24 +
-    Array.from({ length: Math.min(row, 1000) }, (_, r) =>
-      sheet.rows.find((item) => item.number === r + 1),
-    ).reduce((n, item) => n + (item?.hidden ? 0 : (item?.height ?? 20)), 0) +
-    off / 9525
-  const left = x(a.fromColumn, a.fromColumnOffset),
-    top = y(a.fromRow, a.fromRowOffset)
-  return {
-    left,
-    top,
-    width: Math.max(24, x(a.toColumn, a.toColumnOffset) - left),
-    height: Math.max(24, y(a.toRow, a.toRowOffset) - top),
-  }
-}
+import './xlsx-shape-gallery.css'
+export { xlsxVisualBox } from './xlsx-object-layout.js'
 export function XlsxObjectLayer({
   sheet,
   selectedId,
@@ -33,36 +19,68 @@ export function XlsxObjectLayer({
   selectedId: string
   onSelect: (id: string) => void
 }) {
+  const layer = useRef<HTMLDivElement>(null),
+    [layout, setLayout] = useState<{ sheet: XlsxSheet; metrics: XlsxGridMetrics | null } | null>(
+      null,
+    )
+  useLayoutEffect(() => {
+    if (!sheet.visuals?.length) return
+    const stage = layer.current?.parentElement,
+      table = stage?.querySelector<HTMLTableElement>(':scope > table.mimir-xlsx')
+    if (!stage || !table) return
+    const measure = () => {
+      const metrics = measureXlsxGrid(stage, table, sheet)
+      setLayout((before) =>
+        before?.sheet === sheet && sameXlsxGridMetrics(before.metrics, metrics)
+          ? before
+          : { sheet, metrics },
+      )
+    }
+    measure()
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure)
+    observer?.observe(table)
+    for (const row of table.rows) observer?.observe(row)
+    for (const column of table.querySelectorAll('col')) observer?.observe(column)
+    const zoomObserver = new MutationObserver(measure)
+    zoomObserver.observe(stage, { attributes: true, attributeFilter: ['style'] })
+    window.addEventListener('resize', measure)
+    return () => {
+      observer?.disconnect()
+      zoomObserver.disconnect()
+      window.removeEventListener('resize', measure)
+    }
+  }, [sheet])
+  const metrics = layout?.sheet === sheet ? layout.metrics : null
   return (
-    <div className="mimir-xlsx-objects" aria-label="工作表对象">
-      {(sheet.visuals ?? []).map((v) => (
-        <button
-          type="button"
-          key={v.id}
-          className={`mimir-xlsx-object${selectedId === v.id ? ' mimir-xlsx-object--selected' : ''}`}
-          aria-label={`选择${v.kind === 'chart' ? '图表' : v.kind === 'image' ? '图片' : '形状'}：${v.name}`}
-          aria-pressed={selectedId === v.id}
-          onClick={() => onSelect(v.id)}
-          style={xlsxVisualBox(sheet, v)}
-        >
-          {v.kind === 'chart' && v.svg ? (
-            <span
-              className="mimir-xlsx-object__chart"
-              dangerouslySetInnerHTML={{ __html: v.svg }}
-            />
-          ) : v.kind === 'image' && v.image ? (
-            <img src={v.image} alt={v.name} draggable={false} />
-          ) : v.kind === 'shape' ? (
-            <XlsxShape
-              visual={v}
-              width={xlsxVisualBox(sheet, v).width}
-              height={xlsxVisualBox(sheet, v).height}
-            />
-          ) : (
-            <span>{v.name}（暂不支持预览）</span>
-          )}
-        </button>
-      ))}
+    <div ref={layer} className="mimir-xlsx-objects" aria-label="工作表对象">
+      {(sheet.visuals ?? []).map((v) => {
+        const box = xlsxVisualBox(sheet, v, metrics)
+        if (box.width <= 0 || box.height <= 0) return null
+        return (
+          <button
+            type="button"
+            key={v.id}
+            className={`mimir-xlsx-object${selectedId === v.id ? ' mimir-xlsx-object--selected' : ''}`}
+            aria-label={`选择${v.kind === 'chart' ? '图表' : v.kind === 'image' ? '图片' : '形状'}：${v.name}`}
+            aria-pressed={selectedId === v.id}
+            onClick={() => onSelect(v.id)}
+            style={box}
+          >
+            {v.kind === 'chart' && v.svg ? (
+              <span
+                className="mimir-xlsx-object__chart"
+                dangerouslySetInnerHTML={{ __html: v.svg }}
+              />
+            ) : v.kind === 'image' && v.image ? (
+              <img src={v.image} alt={v.name} draggable={false} />
+            ) : v.kind === 'shape' ? (
+              <XlsxShape visual={v} width={box.width} height={box.height} />
+            ) : (
+              <span>{v.name}（暂不支持预览）</span>
+            )}
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -76,36 +94,21 @@ function XlsxShape({
   width: number
   height: number
 }) {
-  const path = presetPath(visual.shapeType, width, height),
-    polygon = presetPolygon(visual.shapeType, width, height)
+  const path = xlsxShapePreview(visual.shapeType, width, height)
   const fill = visual.fillColor ? '#' + visual.fillColor : '#4472C4'
+  if (!path)
+    return (
+      <span className="mimir-xlsx-shape-limited">
+        <span>形状预览有限</span>
+        <span>{visual.text || visual.name}</span>
+      </span>
+    )
   return (
     <span className="mimir-xlsx-object__shape">
       <svg viewBox={`0 0 ${width} ${height}`} aria-hidden="true" preserveAspectRatio="none">
-        {path ? (
-          <>
-            {path.path && <path d={path.path} fill={fill} stroke={fill} />}
-            {path.fillPath && <path d={path.fillPath} fill={fill} />}
-            {path.strokePath && <path d={path.strokePath} fill="none" stroke={fill} />}
-          </>
-        ) : polygon ? (
-          <polygon
-            points={Array.from(
-              { length: polygon.length / 2 },
-              (_, i) => `${polygon[i * 2]},${polygon[i * 2 + 1]}`,
-            ).join(' ')}
-            fill={fill}
-          />
-        ) : visual.shapeType === 'ellipse' ? (
-          <ellipse cx={width / 2} cy={height / 2} rx={width / 2} ry={height / 2} fill={fill} />
-        ) : (
-          <rect
-            width={width}
-            height={height}
-            rx={visual.shapeType === 'roundRect' ? Math.min(width, height) * 0.15 : 0}
-            fill={fill}
-          />
-        )}
+        {path.path && <path d={path.path} fill={fill} stroke={fill} />}
+        {path.fillPath && <path d={path.fillPath} fill={fill} />}
+        {path.strokePath && <path d={path.strokePath} fill="none" stroke={fill} />}
       </svg>
       <span>{visual.text}</span>
     </span>

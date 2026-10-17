@@ -80,7 +80,11 @@ const opFields = {
   pageBreakBefore: { type: 'boolean' },
   shadingFill: { type: ['string', 'null'] },
   borders: { type: ['string', 'null'] },
-  level: { type: 'integer', description: 'Heading 0–6; outline 0–9' },
+  level: {
+    type: 'integer',
+    description:
+      'Heading 0–9 (requires an existing native heading style for levels 1–9); outline 0–9',
+  },
   kind: { type: 'string', enum: ['bullet', 'number'] },
   widthPx: { type: ['number', 'null'] },
   heightPx: { type: ['number', 'null'] },

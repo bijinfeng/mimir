@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Bold, Italic, Underline } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { Bold, Italic, Underline, PaintBucket } from 'lucide-react'
 import type { XlsxCell } from '../xlsx.js'
 import type { XlsxCellFormat } from '../xlsx-format.js'
 import {
@@ -31,13 +31,16 @@ export function XlsxFormatControls({
   busy,
   disabledReason,
   onFormat,
+  onOpenFill,
 }: {
   cells: XlsxCell[]
   range: string
   busy?: boolean
   disabledReason?: string
   onFormat: (patch: Record<string, unknown>) => void
+  onOpenFill?: (trigger: HTMLButtonElement) => void
 }) {
+  const fillTrigger = useRef<HTMLButtonElement>(null)
   const [fontDraft, setFontDraft] = useState<string | null>(null)
   const [sizeDraft, setSizeDraft] = useState<string | null>(null)
   const [numberDraft, setNumberDraft] = useState<string | null>(null)
@@ -67,6 +70,20 @@ export function XlsxFormatControls({
     )
   return (
     <>
+      {onOpenFill && (
+        <ToolbarButton
+          ref={fillTrigger}
+          label="范围填充"
+          disabled={busy || !!disabledReason}
+          disabledReason={disabledReason}
+          onClick={() => {
+            if (fillTrigger.current) onOpenFill(fillTrigger.current)
+          }}
+        >
+          <PaintBucket size={16} />
+          <span>填充</span>
+        </ToolbarButton>
+      )}
       {(
         [
           { key: 'bold', label: '加粗', Icon: Bold },

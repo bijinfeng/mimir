@@ -23,7 +23,9 @@
 
 属性类（CF/DV/命名范围/打印/冻结/迷你图）经同一宿主单项提交。CF默认追加保留原规则，清除扩展规则须拒绝；DV只替换/删除精确原范围，部分重叠拒绝。命名范围保留未改名称原XML，只管理普通工作簿级名称；只读快照须携带definedNames。打印设置只提交改动字段，不能因编辑纸张方向静默重置缩放或页边距。冻结写回pane且影响实际网格。CF使用有预算的安全条件解释器，无eval；色阶/数据条与迷你图从真实源值绘制。复杂条件公式无法求值时标注未支持。DV在单格、范围、清空及查找替换的写前/写后位置并集逐格校验，违规整批拒绝；添加规则时不拦截原件已有无效值。导入warning/info规则当前严格处理，尚未实现Excel的警告后继续交互，不得声称完全兼容。
 
-55个固定DSL操作均已有执行入口，各参数及拒绝边界以任务矩阵为准。对象/结构化表/透视操作单项提交；无sheetId的edit_chart/edit_shape/delete_visual也要按对象所属表检查保护。表格结构插删实际影响整行/整列，至少保留一数据行和一列；计算列/汇总行复杂调整拒绝。透视输出拒绝覆盖现有内容、合并格、源区、其他透视、结构化表及数据验证；源公式无缓存拒绝。新增成员刷新须同步原生definition/cache与网格，不得只扩大location；自定义数值格式/总计/ext元数据、值行布局和已选报告筛选超出重建能力时拒绝，保留原件。
+55个固定DSL操作均已有执行入口，各参数及拒绝边界以任务矩阵为准。对象/结构化表/透视操作单项提交；无sheetId的edit_chart/edit_shape/delete_visual也要按对象所属表检查保护。表格结构插删实际影响整行/整列，至少保留一数据行和一列；计算列/汇总行复杂调整拒绝。透视输出拒绝覆盖现有内容、合并格、同表源区、其他透视、结构化表及数据验证；源公式无缓存拒绝。新增成员刷新须同步原生definition/cache与网格，不得只扩大location；自定义数值格式/总计、未知ext元数据、值行布局和已选报告筛选超出重建能力时拒绝，保留原件。仅固定原生writer生成的唯一完整`{AIO-PIVOT-GROUPINGS}`扩展、合法且无附加键的分组JSON与解析定义逐字段一致时，可沿现有布局重建；其他XML或JSON元数据仍拒绝。该私有分组可在Mimir中刷新，在Excel自行刷新可能退回原始维度，不声称标准OOXML分组兼容。
+
+手动透视Inspector按“字段／汇总／筛选”分区，内部滚动与固定单一应用入口。新建支持有序行列、多汇总值及显示方式/数值格式、日期或数值分组、标签或按汇总值筛选、报告筛选字段，沿单项`add_pivot`提交；有列字段时只允许一个汇总值。新建可从当前工作簿按持久ID选择来源表，输出固定当前表并只读回显名称；跨表坐标重叠允许，同表重叠仍拒绝。来源切换不写文档，保留名称、源范围和输出位置，重新提取行/汇总默认字段并清除旧列、报告筛选、分组和筛选规则。隐藏来源可见并标识，保护来源不可选且全宿主仍核来源与目标保护。现有透视从原生definition直接只读显示，刷新作用于当前表全部透视表；没有`edit_pivot`，不得将缺少numFmt等原生元数据的读取模型转换为可编辑草稿后重建。报告筛选保存全部项，当前网格不提供报告筛选项选择。草稿绑定已发布快照及文档/表，源身份变化永久清空；关闭/切上下文须取消pending，失败保留草稿。复合Select显式禁用，同tick重复提交只执行一次，成功沿完整字节历史和手动保存。执行前按活工作簿核来源/目标ID与版本，父级不得覆盖来源ID；自身已接受发布用请求signal关联，保留来源/配置及成功状态，不能当外部变化取消自身。外部快照/当前输出/上下文变化仍单调取消旧请求，A→B→A不复活。
 
 `history(): {undo:number,redo:number}`、`undo():Promise<boolean>`、`redo():Promise<boolean>`沿同一FIFO恢复完整工作簿字节、单调推进版本和重开会话。每方向最多50步及64MiB，保存记录实际字节基线；undo/redo比较该基线决定dirty，重做回已保存字节应为clean。新编辑清redo；手动历史恢复清除旧Agent轮次快照，整轮撤销也清普通历史，避免跨路径覆盖后续编辑。dispose丢弃历史并拒绝迟到结果。
 
@@ -78,4 +80,53 @@
 - `set_outline`：行列分组/取消一层/折叠/展开，保存outlineLevel、sheetFormatPr最大层级和summary collapsed；最多7层。预览读取真实层级/隐藏状态，列无显式width时也不能漏掉hidden。与已有筛选或复杂原件组合仍需独立验收。
 - `flash_fill`：采用固定上游纯函数，左侧最多6列、前3个示例的原始值（非格式化显示值）推断拼接和固定文字，仅写空目标为inlineStr，已有值和公式原XML保持。选单格时从起点沿紧邻左列连续非空值向下探测，含起点最多1000行且不越过工作表尾；0和false是非空，遇空立即停止。显式范围最多2000格。不会把以`=`开头的输出转公式；未支持子串或大小写推断。四向填充共用原fill_range，等差序列按前两格数字生成。
 
-手动剪切/格式刷源与当前不可变工作簿快照绑定；工作簿快照更新后需重选，提示说明文档已更新，不推断源范围本身发生变化；选区/表切换不使源失效。扩展使用具名320px短菜单，保留选中源和待应用反馈；完整对象编辑继续右侧Inspector。
+格式刷源与当前不可变工作簿快照绑定；工作簿快照更新后需重选，选区/表切换不使源失效。范围复制/剪切由下述 Editor-owned 剪贴板统一持有，不再另存一份剪切源。
+
+## 结构化范围剪贴板与基础样式（2026-10-17）
+
+### 1. Scope / Trigger
+
+同一文档的普通矩形原生复制/剪切、受限外部HTML/plain导入，以及网格基础行列继承格式读取；不承诺任意Excel复杂关联结构迁移或OS互操作。
+
+### 2. Signatures
+
+`createXlsxClipboard()` 持有 `{documentId, handle, version, bytes, sheetId, range, kind, id, plain, html}`；内部提交 `handle.execute('propose_operations', {operations:[{op:'copy_range'|'move_range', sheetId:targetSheet, sourceSheetId, source, target:anchor}]}, {expectedVersion,signal})`。沿原apply-ops协议，不新增Agent DSL。
+
+### 3. Contracts
+
+- copy/cut只冻结，不改dirty/history；源跨表/范围变化保留，版本/文档/句柄/原件身份变更失效。一次paste一次原件事务与历史，成功消耗缓存并要求重新复制；失败保留源。关闭Inspector停止异步，grid Escape取消范围。
+- 网格自身copy/cut/paste事件写/读HTML+plain，文字输入不被抢；只有匹配当前内存marker才走原生。已知失效marker拒绝，不猜plain相等、不静默降级剪切。
+- 外部HTML单普通table、文字按literal（`=`不执行公式）、基础显式CSS；HTML/plain ≤1MiB、500行/100列/2000格，HTML解析深度24/15000节点、一次≤50操作。复杂格式明确报错，用户主动values-only才省略格式。plain沿既有标量/公式推断。
+- 基础cellXfs索引为显式c.s（含0）→customFormat=1/true的row.s→column.style→0；最后带style的重叠列声明生效，width-only不清前值。显示补洞/稀疏行/对象补格也沿此规则；copy/fill/move物化目标索引，空洞显式0阻止目标继承，不烘焙主题/rich runs。
+- 自有共享replaceCells识别省略row.r的previous+1身份及单双引号，触碰隐式行才补r；插入保持行序、dimension唯一并保留原范围。原生cellMap对单引号c.r仍明确拒绝；不据只读支持宣称所有writer已支持。
+
+### 4. Validation & Error Matrix
+
+| 条件 | 必须行为 |
+| --- | --- |
+| pending时切文档/原件身份（即使同版本）/目标，或新输入stage | abort旧操作，迟到结果不覆盖新草稿 |
+| stale/未知内部marker、错handle/version、重复提交 | 拒绝，原件和历史不变 |
+| 无Clipboard API/权限失败 | 如实提示；仅具名工作簿内粘贴可用缓存 |
+| 不支持HTML/CSS、合并/多表/图片/链接、超预算 | 整批拒绝，不只写值或部分格式 |
+| 保护/共享数组/结构关联等原host守卫 | 保持拒绝，cut不先copy再clear |
+
+### 5. Good / Base / Bad Cases
+
+Good：数据!A1:C3→目标!D8保留行列样式，跨表剪切迁移绝对引用，save/undo/redo全entry恢复。Base：HTML导出只表示网格已解析基础格式。Bad：将源缺s解释成0，或迟到读取覆盖用户新输入。
+
+### 6. Tests Required
+
+`xlsx-clipboard.test.ts`、`XlsxEditor.clipboard.test.tsx`覆盖原件历史、marker、取消/重载/新草稿、scope和原生事件；`xlsx-inherited-styles.test.ts`及server `xlsx-range-styles.test.ts`覆盖日期/空洞/overlap/implicit row/dimension与ZIP。真实浏览器1280/420检查320px滚动、固定主操作、可见导入标题、当前源目标和live焦点；模拟ClipboardEvent不能冒充真实浏览器或OS互操作。
+
+### 7. Wrong vs Correct
+
+错误：仅比版本，在同版本原件重载后让旧read恢复；只给非primary FileButton传aria label，界面出现空白按钮。正确：source identity也abort；显式可见图标/文字、短分区标题，关闭后从仍连接的Editor查找可见入口。
+
+## 原生范围填充（2026-10-17）
+
+- `format_range.format.fill` 保持固定 GenOffice DSL：`{pattern,fg,bg?}`（PATTERN_TYPES 全部18项，含solid）或 `{gradient:{type?:linear|path,angle?,left?,right?,top?,bottom?,stops}}`（2–10个 position/color）。颜色接受 #RRGGBB、主题 shorthand 和 theme/tint 对象；保存主题引用，不烘焙 RGB。
+- 省略 fill 保留原件；`fill:null` 明确清除，写 fillId=0/applyFill=1 以阻止父 cellStyleXf 重新继承。相同操作 fill 优先于 fillColor；同批后一个 fillColor 可替换前一个 fill。字体等其他格式操作也须保留原有填充继承标记。
+- 宿主原生序列化后由 `xlsx-fill-styles.ts` 从原 xf 派生，替换实际改动类别，保留 xfId/quotePrefix/pivotButton、保护、alignment 未改属性及未知扩展；仍执行 touched-entry inventory 检查，不扩大 ZIP 白名单。原生格式路径可按既有约定追加 workbook calcPr 重算标记。
+- `read_formats` 的 `format.fill` 返回 spec、direct/inherited 来源、unsupported 提示。索引色/未知色型不可伪装成可编辑 RGB；原件 RGB 非零 tint 也标为 unsupported，因原生 DSL 仅能在主题引用上保留 tint，不可静默丢弃或烘焙。省略 fill 的其他格式操作须保留这类原 XML。CSS/SVG 预览只在显示边缘派生，不进入 Agent 数据。画布按 CF > 显式 rich fill > table 样式显示；清除填充可露出 table/CF 底色，不改这些层。
+- 开始页紧凑“填充”入口打开320px Inspector；与对象 Inspector 互斥，窄栏保留32px画布上下文。Inspector与草稿持久挂在Editor body，不能由会随宽度折叠重挂的Ribbon分组拥有；宽窄切换保留同一面板、草稿和在途请求。Escape关闭后优先回当前填充入口，原入口已卸载则回可用的具名“格式”分组。表单内部滚动、底部Apply固定。显示当前/混合/继承值，支持任意HEX输入、主题及明暗、图案、线性角度、路径四边、2–10色标。无效色值阻止提交；失败保留草稿，切源/切范围/关闭/切对象面板取消在途请求，旧A→B→A草稿不复活。
+- 代表性门禁：`xlsx-fill.test.ts`、`xlsx-fill-layers.test.ts`、`XlsxFillControls.test.tsx`、`XlsxEditor.fill.test.tsx`、server `xlsx-fill-host.test.ts`。原生ZIP独立读回，连续两次保存，历史撤销/重做后保存恢复完整条目，保护与非法参数整批拒绝。

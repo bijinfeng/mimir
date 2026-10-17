@@ -1,9 +1,11 @@
 import { XlsxManualControls } from './XlsxManualControls.js'
-import { XlsxClipboardControls } from './XlsxClipboardControls.js'
+import { XlsxClipboardControls, type XlsxClipboardControlsHandle } from './XlsxClipboardControls.js'
+import { createXlsxClipboard, type ClipboardContext } from '../xlsx-clipboard.js'
 import { XlsxFindControls } from './XlsxFindControls.js'
 import { xlsxCellEffects } from '../xlsx-cell-effects.js'
 import { XlsxSparkline } from './XlsxSparkline.js'
 import { XlsxObjectControls } from './XlsxObjectControls.js'
+import { XlsxFillControls, type XlsxFillControlsHandle } from './XlsxFillControls.js'
 import { XlsxObjectLayer, xlsxVisualBox } from './XlsxObjectLayer.js'
 /**
  * xlsx 的网格编辑器（预览 + 改单元格）。
@@ -53,7 +55,16 @@ import { XlsxObjectLayer, xlsxVisualBox } from './XlsxObjectLayer.js'
  * 切到另一个模式」——而原件层本来就是给人看和改的地方。
  */
 
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react'
 import {
   createXlsxAgentHandle,
   type XlsxAgentHandle,
@@ -89,6 +100,7 @@ import {
 } from '../shell/icons.js'
 import { CompactToolbar, type CompactToolbarSection } from './CompactToolbar.js'
 import { XlsxFormatControls } from './XlsxFormatControls.js'
+import { xlsxFillBackground } from '../xlsx-fill.js'
 import { XlsxDataControls } from './XlsxDataControls.js'
 import { XlsxRangeControls } from './XlsxRangeControls.js'
 import { XlsxPropertyControls } from './XlsxPropertyControls.js'
@@ -130,9 +142,18 @@ export function XlsxEditor({
   const [edited, setEdited] = useState<{
     source: Uint8Array
     view: XlsxWorkbook
+    version: number
     recalculation?: XlsxRecalculation
+    pivotSignal?: AbortSignal
   } | null>(null)
   const view = edited?.source === source.bytes ? edited.view : (session?.view() ?? null)
+  const publishedVersion = edited?.source === source.bytes ? edited.version : 0
+  const [activeInspector, setActiveInspector] = useState<string | null>(null)
+  const fillInspector = useRef<XlsxFillControlsHandle>(null)
+  const clipboardInspector = useRef<XlsxClipboardControlsHandle>(null)
+  const clipboardTrigger = useRef<HTMLButtonElement>(null)
+  const [clipboard] = useState(createXlsxClipboard)
+  const clipboardState = useSyncExternalStore(clipboard.subscribe, clipboard.getSnapshot)
   const recalculated = edited?.source === source.bytes && edited?.recalculation !== undefined
 
   const [activeSelection, setActiveSelection] = useState<{
@@ -204,6 +225,11 @@ export function XlsxEditor({
   const [history, setHistory] = useState({ undo: 0, redo: 0 })
 
   const agentHandleRef = useRef<XlsxAgentHandle | null>(null)
+  const pivotRequest = useRef<{
+    handle: XlsxAgentHandle
+    version: number
+    signal: AbortSignal
+  } | null>(null)
   const addSheetRequestRef = useRef(0)
   const selectionRef = useRef<{ sheet: number; row: number; col: number; range?: string } | null>(
     null,
@@ -227,7 +253,17 @@ export function XlsxEditor({
       session,
       () => selectionRef.current,
       (nextSession, isDirty, recalculation) => {
-        setEdited({ source: source.bytes!, view: nextSession.view(), recalculation })
+        setEdited({
+          source: source.bytes!,
+          view: nextSession.view(),
+          version: handle.getVersion(),
+          recalculation,
+          pivotSignal:
+            pivotRequest.current?.handle === handle &&
+            pivotRequest.current.version + 1 === handle.getVersion()
+              ? pivotRequest.current.signal
+              : undefined,
+        })
         setDirty(isDirty)
         onDirtyChangeRef.current?.(isDirty)
         setHistory(handle.history())
@@ -259,6 +295,16 @@ export function XlsxEditor({
     () => (sheet && view ? xlsxCellEffects(sheet, view) : new Map()),
     [sheet, view],
   )
+
+  const actionRange = parseActionRange(rangeInput)
+  const formatRange =
+    actionRange.target?.range ??
+    (!rangeInput.trim() && selected ? `${columnLetters(selected.col)}${selected.row}` : '')
+  const clipboardContextKey = JSON.stringify([documentId, sheet?.id, formatRange])
+  useLayoutEffect(() => {
+    clipboard.sync(clipboardContextKey, documentId, publishedVersion, source.bytes)
+  }, [clipboard, clipboardContextKey, documentId, publishedVersion, source.bytes])
+  useEffect(() => () => clipboard.cancel(), [clipboard])
 
   /**
    * 选中的格子在**当前模型**里的那个对象。
@@ -412,6 +458,7 @@ export function XlsxEditor({
    * 用户只会觉得「复制错了」。有草稿时它与「应用后会长什么样」也完全一致。
    */
   const copyCell = async () => {
+    clipboard.cancel()
     if (selected === null) return
     const ref = `${columnLetters(selected.col)}${selected.row}`
     try {
@@ -438,6 +485,7 @@ export function XlsxEditor({
       ...(current?.source === source.bytes ? current : {}),
       source: source.bytes!,
       view: handle.currentSession().view(),
+      version: savingVersion,
     }))
     setDraft(null)
     setNote(null)
@@ -592,10 +640,30 @@ export function XlsxEditor({
     dirty,
     idle: `${view.sheets.length} 张表`,
   })
-  const actionRange = parseActionRange(rangeInput)
-  const formatRange =
-    actionRange.target?.range ??
-    (!rangeInput.trim() && selected ? `${columnLetters(selected.col)}${selected.row}` : '')
+  const clipboardContext = (): ClipboardContext => {
+    const handle = agentHandleRef.current
+    if (!handle || !sheet) throw new Error('工作簿尚未就绪')
+    return {
+      documentId,
+      handle,
+      sheet,
+      range: formatRange,
+      version: publishedVersion,
+      blocked:
+        hostBusy || source.saving
+          ? '正在处理工作簿'
+          : draft !== null
+            ? '请先提交或取消当前单元格输入'
+            : undefined,
+    }
+  }
+  const withClipboardContext = (action: (context: ClipboardContext) => void) => {
+    try {
+      action(clipboardContext())
+    } catch (error) {
+      clipboard.error(error instanceof Error ? error.message : '工作簿尚未就绪')
+    }
+  }
   const formatCells: XlsxCell[] = actionRange.target
     ? sheet.rows.flatMap((row) =>
         row.number >= actionRange.target!.startRow && row.number <= actionRange.target!.endRow
@@ -794,7 +862,7 @@ export function XlsxEditor({
           sections={mergeXlsxToolbarSections([
             ...(['home', 'data', 'layout'] as const).map((group) => ({
               key: `manual-${group}`,
-              label: group === 'home' ? '剪切与格式刷' : group === 'data' ? '填充' : '尺寸与分级',
+              label: group === 'home' ? '格式刷' : group === 'data' ? '填充' : '尺寸与分级',
               tab: group,
               minWidth: 0,
               content: (
@@ -815,13 +883,18 @@ export function XlsxEditor({
               tab: 'home',
               minWidth: 0,
               content: (
-                <XlsxClipboardControls
-                  key={documentId + sheet.id}
-                  sheet={sheet}
-                  range={formatRange}
-                  busy={hostBusy || source.saving || !!sheet.extras?.protected}
-                  onOperation={(op) => executeOps([{ ...op, sheetId: sheet.id }])}
-                />
+                <ToolbarButton
+                  ref={clipboardTrigger}
+                  label="范围剪贴板"
+                  active={activeInspector === 'clipboard'}
+                  onClick={() => {
+                    if (clipboardTrigger.current)
+                      clipboardInspector.current?.open(clipboardTrigger.current)
+                  }}
+                >
+                  <CopyIcon />
+                  <span>剪贴板</span>
+                </ToolbarButton>
               ),
             },
             {
@@ -831,8 +904,56 @@ export function XlsxEditor({
               tab: 'insert',
               content: (
                 <XlsxObjectControls
+                  inspector={activeInspector}
+                  onInspectorOpen={() => setActiveInspector('objects')}
                   sheet={sheet}
                   range={formatRange}
+                  sourceKey={view}
+                  sheets={view.sheets}
+                  acceptedPivotSignal={
+                    edited?.source === source.bytes ? edited.pivotSignal : undefined
+                  }
+                  contextKey={JSON.stringify([documentId, sheet.id])}
+                  onPivotOperation={async (op, { signal }) => {
+                    const handle = agentHandleRef.current
+                    if (!handle || signal.aborted || handle.documentId !== documentId) return false
+                    const operation =
+                      op.op === 'add_pivot' || op.op === 'refresh_pivot'
+                        ? op
+                        : { ...op, sheetId: sheet.id }
+                    const liveSheets = handle.currentSession().view().sheets
+                    if (
+                      handle.getVersion() !== publishedVersion ||
+                      !liveSheets.some((item) => item.id === operation.sheetId)
+                    )
+                      throw new Error('来源工作表或画布版本已变化，请重新确认配置')
+                    if (
+                      (operation.op === 'add_pivot'
+                        ? (operation.targetSheetId ?? operation.sheetId)
+                        : operation.sheetId) !== sheet.id ||
+                      !liveSheets.some((item) => item.id === sheet.id)
+                    )
+                      throw new Error('输出工作表已变化，请重新打开透视工具')
+                    const request = { handle, version: publishedVersion, signal }
+                    pivotRequest.current = request
+                    try {
+                      await handle.execute(
+                        'propose_operations',
+                        { operations: [operation] },
+                        { expectedVersion: publishedVersion, signal },
+                      )
+                      setApplyError(null)
+                      setNote(null)
+                      setDraft(null)
+                      return true
+                    } catch (error) {
+                      if (!signal.aborted)
+                        setApplyError(error instanceof Error ? error.message : '透视操作未应用')
+                      throw error
+                    } finally {
+                      if (pivotRequest.current === request) pivotRequest.current = null
+                    }
+                  }}
                   busy={hostBusy || source.saving || !!sheet.extras?.protected}
                   selectedId={selectedObject}
                   onSelect={setSelectedObject}
@@ -1183,6 +1304,7 @@ export function XlsxEditor({
                       { op: 'format_range', sheetId: sheet.id, range: formatRange, format },
                     ])
                   }
+                  onOpenFill={(trigger) => fillInspector.current?.open(trigger)}
                 />
               ),
             },
@@ -1566,10 +1688,58 @@ export function XlsxEditor({
       status={
         <>
           <ToolbarLabel>{status}</ToolbarLabel>
-          {(applyError ?? note) && <ToolbarLabel>{applyError ?? note}</ToolbarLabel>}
+          {(applyError || clipboardState.error || note || clipboardState.message) && (
+            <ToolbarLabel>
+              {applyError || clipboardState.error || note || clipboardState.message}
+            </ToolbarLabel>
+          )}
         </>
       }
     >
+      <XlsxClipboardControls
+        ref={clipboardInspector}
+        controller={clipboard}
+        context={clipboardContext}
+        inspector={activeInspector}
+        onInspectorOpen={() => setActiveInspector('clipboard')}
+        onInspectorClose={() => setActiveInspector(null)}
+      />
+      <XlsxFillControls
+        ref={fillInspector}
+        hideTrigger
+        cells={formatCells}
+        range={formatRange}
+        busy={hostBusy || source.saving || !!sheet.extras?.protected}
+        disabledReason={rangeInput.trim() ? rangeDisabledReason : undefined}
+        palette={view.themePalette}
+        sourceKey={view}
+        contextKey={JSON.stringify([documentId, sheet.id, formatRange])}
+        inspector={activeInspector}
+        onInspectorOpen={() => setActiveInspector('fill')}
+        onApply={async (fill, { signal }) => {
+          const handle = agentHandleRef.current
+          if (!handle || signal.aborted || handle.documentId !== documentId) return false
+          try {
+            await handle.execute(
+              'propose_operations',
+              {
+                operations: [
+                  { op: 'format_range', sheetId: sheet.id, range: formatRange, format: { fill } },
+                ],
+              },
+              { expectedVersion: publishedVersion, signal },
+            )
+            setApplyError(null)
+            setNote(null)
+            setDraft(null)
+            return true
+          } catch (error) {
+            if (!signal.aborted)
+              setApplyError(error instanceof Error ? error.message : '填充未应用')
+            return false
+          }
+        }}
+      />
       {applyError !== null && <div className="mimir-apply-error">{applyError}</div>}
       <div className="me-scroll mimir-xlsx-wrap">
         <div
@@ -1600,6 +1770,50 @@ export function XlsxEditor({
             role="grid"
             className="mimir-xlsx"
             aria-label={`工作表：${sheet.name}`}
+            onCopy={(event) => {
+              if (
+                !(event.target instanceof Element) ||
+                !event.target.closest('td') ||
+                event.target.closest('input,textarea,[contenteditable]')
+              )
+                return
+              event.preventDefault()
+              withClipboardContext((context) => {
+                void clipboard.copy(context, 'copy', event.clipboardData)
+              })
+            }}
+            onCut={(event) => {
+              if (
+                !(event.target instanceof Element) ||
+                !event.target.closest('td') ||
+                event.target.closest('input,textarea,[contenteditable]')
+              )
+                return
+              event.preventDefault()
+              withClipboardContext((context) => {
+                void clipboard.copy(context, 'cut', event.clipboardData)
+              })
+            }}
+            onPaste={(event) => {
+              if (
+                !(event.target instanceof Element) ||
+                !event.target.closest('td') ||
+                event.target.closest('input,textarea,[contenteditable]')
+              )
+                return
+              event.preventDefault()
+              const grid = event.currentTarget
+              const payload = {
+                plain: event.clipboardData.getData('text/plain'),
+                html: event.clipboardData.getData('text/html'),
+              }
+              withClipboardContext((context) => {
+                void clipboard.apply(context, payload).then(() => {
+                  if (clipboard.getSnapshot().error && grid.isConnected)
+                    clipboardInspector.current?.open(grid)
+                })
+              })
+            }}
             onPointerUp={() => {
               dragStart.current = null
             }}
@@ -1736,8 +1950,9 @@ export function XlsxEditor({
                               color:
                                 cellEffects.get(`${row.number}:${cell.col}`)?.format?.fontColor ??
                                 cell.format?.fontColor,
-                              backgroundColor:
+                              background:
                                 cellEffects.get(`${row.number}:${cell.col}`)?.format?.fillColor ??
+                                xlsxFillBackground(cell.format?.fill?.spec, view.themePalette) ??
                                 cell.format?.fillColor,
                               textDecoration:
                                 [
@@ -1874,6 +2089,22 @@ export function XlsxEditor({
                             onClick={(event) => {
                               if (event.detail === 0) selectCell(row.number, cell.col)
                             }}
+                            data-clipboard-source={
+                              clipboardState.capture?.sheetId === sheet.id &&
+                              !clipboardState.stale &&
+                              (() => {
+                                const area = parseActionRange(clipboardState.capture.range).target
+                                return (
+                                  !!area &&
+                                  row.number >= area.startRow &&
+                                  row.number <= area.endRow &&
+                                  cell.col >= area.startCol &&
+                                  cell.col <= area.endCol
+                                )
+                              })()
+                                ? clipboardState.capture.kind
+                                : undefined
+                            }
                             onKeyDown={(event) => {
                               const navigation = [
                                 'ArrowUp',
@@ -1889,6 +2120,7 @@ export function XlsxEditor({
                               ]
                               if (!navigation.includes(event.key)) {
                                 if (event.key === 'Escape') {
+                                  clipboard.cancel()
                                   setRangeInput('')
                                   keyboardAnchor.current = null
                                 }

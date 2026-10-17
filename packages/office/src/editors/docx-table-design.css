@@ -1,0 +1,78 @@
+.mimir-docx-inspector__body:has(> .mimir-docx-table-design) {
+  display: flex;
+  flex: 1;
+  padding: 0;
+  overflow: hidden;
+}
+.mimir-docx-table-design {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  color: var(--me-text);
+}
+.mimir-docx-table-design__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 12px;
+}
+.mimir-docx-table-design__fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.mimir-docx-table-design__look-grid,
+.mimir-docx-table-design__border-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.mimir-docx-table-design__look-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.mimir-docx-table-design__look-grid > *,
+.mimir-docx-table-design__border-grid > * {
+  min-width: 0;
+}
+.mimir-docx-table-design__actions {
+  flex-shrink: 0;
+  padding: 12px;
+  background: var(--me-surface);
+  border-top: 1px solid var(--me-border);
+}
+.mimir-docx-table-design__actions p {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.mimir-docx-table-design__actions [role='alert'] {
+  color: var(--me-danger);
+}
+.mimir-docx-table-design__buttons {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.mimir-docx-table-design__preview {
+  margin: 0;
+}
+.mimir-docx-table-design__preview table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  color: #000;
+}
+.mimir-docx-table-design__preview td {
+  border: 1px solid;
+  padding: 5px 8px;
+}
+.mimir-docx-table-design__preview figcaption {
+  margin-top: 6px;
+  color: var(--me-text-weak);
+  font-size: 12px;
+}

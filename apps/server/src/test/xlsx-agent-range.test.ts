@@ -116,10 +116,10 @@ describe('raw XLSX ranges', () => {
       filterValues: ['42'],
     })
     const text = await xml(result.bytes)
-    expect(text).toContain('<c r="B4"><v>42</v></c>')
-    expect(text).toContain('<c r="C4" t="b"><v>1</v></c>')
-    expect(text).toContain('<c r="D4" t="str"><v></v></c>')
-    expect(text).toContain('<c r="E4" t="e"><v>#DIV/0!</v></c>')
+    expect(text).toContain('<c r="B4" s="0"><v>42</v></c>')
+    expect(text).toContain('<c r="C4" t="b" s="0"><v>1</v></c>')
+    expect(text).toContain('<c r="D4" t="str" s="0"><v></v></c>')
+    expect(text).toContain('<c r="E4" t="e" s="0"><v>#DIV/0!</v></c>')
     expect(text).not.toMatch(/<c r="[B-E]4"[^>]*><f>/)
   })
   it('freezes only formulas, retaining number, boolean, empty string and error types and all styles', async () => {
@@ -146,9 +146,9 @@ describe('raw XLSX ranges', () => {
       filterValues: ['姓名'],
     })
     const text = await xml(result.bytes)
-    expect(text).toContain('<c r="B4"><v>42</v></c>')
-    expect(text).toContain('<c r="C4" t="b"><v>1</v></c>')
-    expect(text).toContain('<c r="B5"><v>2</v></c>')
+    expect(text).toContain('<c r="B4" s="0"><v>42</v></c>')
+    expect(text).toContain('<c r="C4" t="b" s="0"><v>1</v></c>')
+    expect(text).toContain('<c r="B5" s="0"><v>2</v></c>')
     expect(text).not.toContain('<f>A4')
   })
   it('copies across sheets into self-closing sheetData and extends dimensions', async () => {

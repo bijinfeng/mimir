@@ -1,0 +1,78 @@
+.mimir-docx-inspector__body:has(> .mimir-docx-references) {
+  display: flex;
+  flex: 1;
+  padding: 0;
+  overflow: hidden;
+}
+.mimir-docx-references {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  color: var(--me-text);
+}
+.mimir-docx-references__scroll {
+  flex: 1;
+  min-height: 0;
+  padding: 12px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.mimir-docx-references__fields {
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+.mimir-docx-references__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.mimir-docx-references__source-tools {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+}
+.mimir-docx-references__row .me-btn__icon {
+  gap: 6px;
+  font-size: var(--me-font-size-sm, 12px);
+}
+.mimir-docx-references__sample {
+  margin: 0;
+  padding: 12px;
+  background: var(--me-stage-bg);
+  line-height: 1.65;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.mimir-docx-references__preview {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.mimir-docx-references__preview li + li {
+  margin-top: 8px;
+}
+.mimir-docx-references__actions {
+  display: grid;
+  flex-shrink: 0;
+  justify-items: end;
+  padding: 12px;
+  border-top: 1px solid var(--me-border);
+  background: var(--me-surface);
+}
+.mimir-docx-references__actions p {
+  justify-self: stretch;
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.mimir-docx-references__error {
+  color: var(--me-danger);
+}

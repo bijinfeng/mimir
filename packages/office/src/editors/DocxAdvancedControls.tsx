@@ -9,6 +9,7 @@ import type { SaveOptions } from '../../vendor/packages/docx-engine/src/patch.js
 import type { ChartDisplay } from '../../vendor/packages/docx-engine/src/types.js'
 import type { DocxSession } from '../docx.js'
 import type { DocxAgentResult } from '../agent/docx-agent.js'
+import './docx-comment-controls.css'
 import {
   ToolbarButton,
   ToolbarConfirm,
@@ -834,13 +835,22 @@ export function DocxWatermarkControls({ context }: { context: DocxAdvancedContex
 export function DocxCommentControls({ context }: { context: DocxAdvancedContext }) {
   const [items, setItems] = useState(
     () =>
-      structuredClone(context.options.comments ?? context.session.comments ?? []) as CommentInfo[],
+      structuredClone(
+        context.options.comments ??
+          context.session.protection.readComments() ??
+          context.session.comments ??
+          [],
+      ) as CommentInfo[],
   )
   const [selected, setSelected] = useState(items[0]?.id ?? '')
   const [reply, setReply] = useState('')
   const [body, setBody] = useState(items[0]?.text ?? '')
   const { busy, run } = useDocxAction(context)
   const current = items.find((item) => item.id === selected)
+  const protection = context.session.protection
+  const access = protection.getCommentAccess(selected)
+  const rootAccess = protection.getCommentAccess(current?.parentId ?? selected)
+  const resolved = !!items.find((item) => item.id === (current?.parentId ?? selected))?.done
   const change = async (tool: string, args: Record<string, unknown>) => {
     if (!(await run(tool, args))) return
     if (tool === 'edit_comment')
@@ -872,101 +882,148 @@ export function DocxCommentControls({ context }: { context: DocxAdvancedContext 
     }
   }
   return (
-    <DocxControlForm busy={busy}>
-      <ToolbarMenuFields label="管理批注">
-        {items.length === 0 ? (
-          <ToolbarMenuNote>当前没有批注。选择正文后使用“添加批注”。</ToolbarMenuNote>
-        ) : (
-          <>
-            <ToolbarSelect
-              disabled={busy}
-              disabledReason="正在应用修改"
-              label="选择批注"
-              value={selected}
-              options={[
-                { value: '', label: '选择一条批注' },
-                ...items.map((item) => ({
-                  value: item.id,
-                  label: `${item.parentId ? '回复 · ' : ''}${item.author ?? ''}：${item.text.slice(0, 32)}`,
-                })),
-              ]}
-              onChange={(value) => {
-                setSelected(value)
-                setBody(items.find((item) => item.id === value)?.text ?? '')
-              }}
-            />
-            {current && (
+    <div className="mimir-docx-comments" aria-busy={busy}>
+      <div className="mimir-docx-comments__body">
+        <ToolbarPropertyForm columns={1}>
+          <ToolbarMenuFields label="当前讨论">
+            {protection.getAccess().commentsOnly && (
+              <ToolbarMenuNote>
+                仅批注 · 正文只读。修改后请保存到库；可通过“撤销结构操作”回退上一步。
+              </ToolbarMenuNote>
+            )}
+            {items.length === 0 ? (
+              <ToolbarMenuNote>
+                {protection.getAccess().writable
+                  ? '当前没有批注。选择正文后使用“添加批注”。'
+                  : '当前没有可管理的已有讨论。受保护原件新增批注尚未支持。'}
+              </ToolbarMenuNote>
+            ) : (
               <>
-                <ToolbarMenuNote>
-                  {items.find((item) => item.id === (current.parentId ?? selected))?.done
-                    ? '已解决'
-                    : '未解决'}{' '}
-                  · {current.text}
-                </ToolbarMenuNote>
-                <ToolbarTextArea label="批注正文" value={body} onChange={setBody} rows={3} />
-                <ToolbarButton
-                  label="保存批注修改"
-                  disabled={busy || !body.trim() || body === current.text}
-                  disabledReason="请输入不同的批注内容"
-                  onClick={() => void change('edit_comment', { id: selected, text: body })}
-                >
-                  修改批注
-                </ToolbarButton>
-                {items.find((item) => item.id === (current.parentId ?? selected))?.done && (
-                  <ToolbarButton
-                    label="重新打开批注讨论"
-                    disabled={busy}
-                    disabledReason="正在应用修改"
-                    onClick={() =>
-                      void change('edit_comment', { id: current.parentId ?? selected, done: false })
-                    }
-                  >
-                    重新打开讨论
-                  </ToolbarButton>
+                <ToolbarSelect
+                  disabled={busy}
+                  disabledReason="正在应用修改"
+                  label="选择批注"
+                  value={selected}
+                  options={[
+                    { value: '', label: '选择一条批注' },
+                    ...items.map((item) => ({
+                      value: item.id,
+                      label: `${item.parentId ? '回复 · ' : ''}${item.author ?? ''}：${item.text.slice(0, 32)}`,
+                    })),
+                  ]}
+                  onChange={(value) => {
+                    setSelected(value)
+                    setBody(items.find((item) => item.id === value)?.text ?? '')
+                    setReply('')
+                  }}
+                />
+                {current && (
+                  <>
+                    <ToolbarMenuNote>
+                      {items.find((item) => item.id === (current.parentId ?? selected))?.done
+                        ? '已解决'
+                        : '未解决'}{' '}
+                      · {current.text}
+                    </ToolbarMenuNote>
+                    <fieldset
+                      className="mimir-docx-comments__field"
+                      disabled={!!access.editText || busy}
+                      title={access.editText ?? undefined}
+                    >
+                      <ToolbarTextArea label="批注正文" value={body} onChange={setBody} rows={3} />
+                    </fieldset>
+                    <fieldset
+                      className="mimir-docx-comments__field"
+                      disabled={!!rootAccess.reply || busy}
+                      title={rootAccess.reply ?? undefined}
+                    >
+                      <ToolbarTextArea
+                        label="批注回复"
+                        value={reply}
+                        onChange={setReply}
+                        rows={3}
+                      />
+                    </fieldset>
+                  </>
                 )}
-                <ToolbarTextArea label="批注回复" value={reply} onChange={setReply} rows={3} />
-                <ToolbarButton
-                  label="回复当前批注"
-                  disabled={busy || !reply.trim()}
-                  disabledReason="请输入回复内容"
-                  onClick={() =>
-                    void change('reply_comment', {
-                      parentId: selected,
-                      text: reply,
-                      author: '用户',
-                    })
-                  }
-                >
-                  回复
-                </ToolbarButton>
-                <ToolbarButton
-                  label="解决当前批注"
-                  disabled={
-                    busy || !!items.find((item) => item.id === (current.parentId ?? selected))?.done
-                  }
-                  disabledReason="这条讨论已解决"
-                  onClick={() => void change('resolve_comment', { id: selected })}
-                >
-                  解决讨论
-                </ToolbarButton>
-                <ToolbarConfirm
-                  title="删除这条批注及其回复？"
-                  description="保存前可通过撤销结构操作恢复。"
-                  confirmLabel="删除批注"
-                  onConfirm={() =>
-                    void change('delete_comment', { id: selected, withReplies: true })
-                  }
-                >
-                  <ToolbarButton label="删除当前批注" disabled={busy}>
-                    删除批注
-                  </ToolbarButton>
-                </ToolbarConfirm>
               </>
             )}
-          </>
+          </ToolbarMenuFields>
+        </ToolbarPropertyForm>
+        {current && (access.editText || rootAccess.reply) && (
+          <ToolbarMenuNote>{access.editText ?? rootAccess.reply}</ToolbarMenuNote>
         )}
-      </ToolbarMenuFields>
-    </DocxControlForm>
+      </div>
+      {current && (
+        <div className="mimir-docx-comments__actions">
+          <div className="mimir-docx-comments__write-actions">
+            {' '}
+            <ToolbarButton
+              label="保存批注修改"
+              primary
+              disabled={!!access.editText || busy || !body.trim() || body === current.text}
+              disabledReason={access.editText ?? (busy ? '正在应用修改' : '请输入不同的批注内容')}
+              onClick={() => void change('edit_comment', { id: selected, text: body })}
+            />
+            <ToolbarButton
+              label="回复当前批注"
+              disabled={!!rootAccess.reply || busy || !reply.trim()}
+              disabledReason={rootAccess.reply ?? (busy ? '正在应用修改' : '请输入回复内容')}
+              onClick={() =>
+                void change('reply_comment', {
+                  parentId: selected,
+                  text: reply,
+                  author: '用户',
+                })
+              }
+            >
+              回复
+            </ToolbarButton>
+          </div>
+          <div className="mimir-docx-comments__discussion-actions">
+            {' '}
+            {resolved && (
+              <ToolbarButton
+                label="重新打开批注讨论"
+                disabled={!!rootAccess.reopen || busy}
+                disabledReason={rootAccess.reopen ?? '正在应用修改'}
+                onClick={() =>
+                  void change('edit_comment', { id: current.parentId ?? selected, done: false })
+                }
+              >
+                重新打开讨论
+              </ToolbarButton>
+            )}
+            <ToolbarButton
+              label="解决当前批注"
+              disabled={
+                !!rootAccess.resolve ||
+                busy ||
+                !!items.find((item) => item.id === (current.parentId ?? selected))?.done
+              }
+              disabledReason={rootAccess.resolve ?? (busy ? '正在应用修改' : '这条讨论已解决')}
+              onClick={() => void change('resolve_comment', { id: selected })}
+            >
+              解决讨论
+            </ToolbarButton>
+            <ToolbarConfirm
+              title="删除这条批注及其回复？"
+              description="保存前可通过撤销结构操作恢复。"
+              confirmLabel="删除批注"
+              onConfirm={() => void change('delete_comment', { id: selected, withReplies: true })}
+            >
+              <ToolbarButton
+                label="删除当前批注"
+                disabled={!!access.delete || busy}
+                disabledReason={access.delete ?? '正在应用修改'}
+              >
+                删除批注
+              </ToolbarButton>
+            </ToolbarConfirm>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 

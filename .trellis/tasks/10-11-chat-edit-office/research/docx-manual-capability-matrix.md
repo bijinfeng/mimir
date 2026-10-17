@@ -40,3 +40,22 @@
 ## 2026-10-16 脚注缩进最终真实复验
 
 root刷新真实文档nQJjWOaUbAe0mwKn后，纸张x304/width600，四个带data-paper-x的脚注区x364/width480，实际左右边距均60px。滚动到长脚注第二续片，截图`docx-footnote-indent-final.png`可见1–11后顺接12–24，再顺接25起内容；脚注不再贴纸边，固定纸张与整纸灰带保持。保存按钮禁用、未改原件。此证据关闭上述脚注缩进“待刷新量测”条目；复杂多栏/编号与真实桌面等原有验收边界保留。AX仍读取各裁剪续片的完整脚注文本，不能据视觉结果宣称读屏逐片语义已验收。
+
+## 2026-10-17 图片上下文与目录增量
+
+图片格式上下文及插入入口接尺寸/比例、旋转翻转、环绕对齐、替换、四边百分比裁切、边缘连通颜色去背景；真实预览后显式应用，冻结PM目标/版本。raw HTTP已验240×160→120×80裁切与去背景alpha0，crop保存/撤销保存/重做保存逐ZIP entry精确恢复。原生旧图片缺xfrm由私有save adapter补最小结构后走native patch，不改vendor或无因重建。明确custom属性完整Editor history回归通过。
+
+插入→目录预览真实标题与位置，原生TOC\o1-2/\h/\z/\u保存并history逐entry恢复。页码明确由Word更新；既有目录更新、拖裁切手柄未实现。图片320px Inspector宽/420样式通过，目录主操作已补固定footer，等待统一构建后420复验。完整证据见docx-pptx-toolbar-browser-20261017.md，独立33/33与footer8/8为重叠证据。Desktop用户自验、模型无配置不验，整体未完成。
+
+
+## 2026-10-17 当前状态入口（覆盖历史待接）
+
+本矩阵前文包含逐轮历史状态。现行剩余缺口以 `editor-remaining-tools-current-20261017.md` 的当前表为准；详细列表/大小写/设计/绘图/引用/安全TOC更新、视图/当前副本、对比/拆分、标题大纲和保护P0均已有后续独立检查与真实宽/420浏览器/原生保存。最新报告为 toolbar-docx-compare-split-browser-20261017.md、toolbar-docx-protection-browser-20261017.md、toolbar-docx-outline-browser-20261017.md；早先“拆分/可编辑大纲/保护对比未实现”不再是现状。保护已有讨论C1仍在实施，forms/密码/强制修订及复杂图表/图片拖裁切等边界保留。最后统一全Office177文件1844/1844、Webbuild exit0；无模型/Desktop用户自验，整体in_progress。
+
+
+### 2026-10-17 C1与透视来源浏览器验收
+
+C1已有讨论编辑/回复/解决/重开已最终构建实查，正文/设置及非comments部件精确；空态/复杂讨论/现代扩展/修改密码拒写、唯一primary与420×500/Escape已验。XLSX跨表来源Select→汇总A1:B5真实总计150，保存/reload/刷新及UndoRedo全部ZIP条目精确，源/第三表/customXml保持；420固定footer裁切修复已验。报告research/toolbar-docx-protected-comments-browser-20261017.md与toolbar-xlsx-pivot-source-browser-20261017.md。Web最终构建exit0。独立C1 134/134、XLSX Office31/31/host11/11及types/static通过。全Office首轮1868/1869的PPTX等待同步问题已确定性复现并修，91/91通过，最终全套重跑中。整体仍in_progress，后续边界不冒称已齐，无模型/用户自验Desktop、不提交暂存归档删件。
+
+
+最终统一门禁补记（2026-10-17）：全Office **178文件1869/1869，exit0**，日志 `/tmp/mimir-office-full-c1-pivot-source-final-20261017.log`（143.52s）。先前1868/1869失败保留为历史；PPTX仅测试同步修复，生产未改。最终Web构建 `/tmp/mimir-toolbar-c1-pivot-source-web-20261017.log` exit0；此后只改PPTX测试/spec/报告，无需重建生产。Server沿前次最终default737/local10/fnos4/backup2全绿，本片生产未改，新增跨表宿主专项11/11。无模型/Desktop自验、全仓480技能lint基线与整体in_progress边界不变；本轮未暂存、提交、归档或删除测试文件。

@@ -38,6 +38,31 @@ describe('readXlsx', () => {
     expect(cell(sheet, 1, 2)?.text).toBe('工号')
   })
 
+  it.each(['/>', ' />', '\n/>'])(
+    'shared string blanks ending %j retain their exact indexes before, between and after text entries',
+    async (end) => {
+      const values = ['', '技术部', '', '', '市场部', '']
+      const sheet = (
+        await readXlsx(
+          zipStore([
+            {
+              name: 'xl/sharedStrings.xml',
+              text: `<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><si${end}<si><t>技术部</t></si><si${end}<si${end}<si><r><t>市场</t></r><r><t>部</t></r></si><si${end}</sst>`,
+            },
+            {
+              name: 'xl/worksheets/sheet1.xml',
+              text: worksheetXml([
+                `<row r="1">${values.map((_, index) => `<c r="${String.fromCharCode(65 + index)}1" t="s"><v>${index}</v></c>`).join('')}</row>`,
+              ]),
+            },
+          ]),
+        )
+      ).sheets[0]!
+      expect(sheet.rows[0]!.cells.map((entry) => entry.text)).toEqual(values)
+      expect(sheet.rows[0]!.cells.map((entry) => entry.col)).toEqual([0, 1, 2, 3, 4, 5])
+    },
+  )
+
   it('XML 实体被解码（不是显示 &amp; 字面量）', async () => {
     const sheet = await loadSheet()
     const found = sheet.rows.flatMap((row) => row.cells).find((c) => c.text.includes('市场部'))
@@ -128,6 +153,106 @@ describe('readXlsx 的边界', () => {
     expect(cells.map((c) => c.text)).toEqual(['左', '', '右'])
     expect(cells.map((c) => c.col)).toEqual([0, 1, 2])
   })
+
+  it.each([
+    ['inline text', ' t="inlineStr"', '<is><t>市场部</t></is>', { text: '市场部' }],
+    ['number', '', '<v>180</v>', { text: '180', numeric: true, rawText: '180' }],
+    [
+      'cached formula',
+      '',
+      '<f>SUM(1,2)</f><v>3</v>',
+      { text: '3', numeric: true, formula: true, formulaText: '=SUM(1,2)', formulaCache: 'cached' },
+    ],
+    [
+      'uncached formula',
+      '',
+      '<f>1+2</f>',
+      { text: '', formula: true, formulaText: '=1+2', formulaCache: 'missing' },
+    ],
+  ])(
+    'self-closing blank cells do not consume following %s or move its value into a styled blank',
+    async (_label, attributes, content, expected) => {
+      const sheet = (
+        await readXlsx(
+          buildXlsx({
+            sheetData: [
+              `<row r="5"><c r="A5"/><c r="B5" s="1" /><c r="C5"${attributes}>${content}</c><c r="D5"/></row>`,
+            ],
+            styles:
+              '<styleSheet><fonts count="2"><font/><font><b/></font></fonts><cellXfs count="2"><xf fontId="0"/><xf fontId="1"/></cellXfs></styleSheet>',
+          }),
+        )
+      ).sheets[0]!
+      expect(sheet.rows.map((row) => row.number)).toEqual([5])
+      expect(sheet.rows[0]!.cells.map((entry) => entry.col)).toEqual([0, 1, 2, 3])
+      expect(sheet.rows[0]!.cells[0]).toMatchObject({ text: '', col: 0 })
+      expect(sheet.rows[0]!.cells[1]).toMatchObject({ text: '', col: 1, bold: true })
+      expect(sheet.rows[0]!.cells[0]!.formula).toBeUndefined()
+      expect(sheet.rows[0]!.cells[1]!.formula).toBeUndefined()
+      expect(sheet.rows[0]!.cells[2]).toMatchObject({ ...expected, col: 2 })
+      expect(sheet.rows[0]!.cells[3]).toMatchObject({ text: '', col: 3 })
+    },
+  )
+
+  it('self-closing rows preserve outline metadata and advance implicit row numbering without consuming the following row', async () => {
+    const sheet = (
+      await readXlsx(
+        buildXlsx({
+          sheetData: [
+            '<row r="3" outlineLevel="1" hidden="1"/>',
+            '<row><c r="B4" t="inlineStr"><is><t>下一行</t></is></c></row>',
+            '<row />',
+            '<row><c><v>6</v></c></row>',
+          ],
+        }),
+      )
+    ).sheets[0]!
+    expect(sheet.rows.map((row) => row.number)).toEqual([3, 4, 6])
+    expect(sheet.rows[0]!.hidden).toBe(true)
+    expect(sheet.rows[0]!.cells.every((entry) => entry.text === '')).toBe(true)
+    expect(sheet.rows[1]!.cells.map((entry) => entry.text)).toEqual(['', '下一行'])
+    expect(sheet.rows[2]!.cells[0]).toMatchObject({ text: '6', numeric: true })
+  })
+
+  it.each(['/>', ' />', '\n/>'])(
+    'self-closing rows/cells ending %j are equivalent to paired blanks with mixed explicit and implicit coordinates',
+    async (end) => {
+      const data = [
+        `<row r="8"${end}`,
+        `<row${end}`,
+        `<row><c r="B10"${end}<c${end}<c><v>42</v></c><c r="G10"${end}<c t="inlineStr"><is><t>尾列</t></is></c></row>`,
+        `<row${end}`,
+        '<row><c><f>1+2</f><v>3</v></c></row>',
+      ]
+      const actual = (await readXlsx(buildXlsx({ sheetData: data }))).sheets[0]!
+      const paired = (
+        await readXlsx(
+          buildXlsx({
+            sheetData: data.map((row) => row.replace(/<(row|c)\b([^>]*?)\s*\/>/g, '<$1$2></$1>')),
+          }),
+        )
+      ).sheets[0]!
+      expect(actual).toEqual(paired)
+      expect(actual.rows.map((row) => row.number)).toEqual([10, 12])
+      expect(actual.rows[0]!.cells.map((entry) => entry.text)).toEqual([
+        '',
+        '',
+        '',
+        '42',
+        '',
+        '',
+        '',
+        '尾列',
+      ])
+      expect(actual.rows[0]!.cells.map((entry) => entry.col)).toEqual([0, 1, 2, 3, 4, 5, 6, 7])
+      expect(actual.rows[1]!.cells[0]).toMatchObject({
+        col: 0,
+        text: '3',
+        formulaText: '=1+2',
+        formulaCache: 'cached',
+      })
+    },
+  )
 
   it('合并区域决定表宽（跨过的空格子 Excel 不写 <c>）', async () => {
     // 只有一行、且合并把表撑到 3 列：只看行宽会把 C 列整个丢掉

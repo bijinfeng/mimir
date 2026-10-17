@@ -46,7 +46,7 @@ it('genuinely moves raw cells and retargets relative/absolute/range dependents; 
     target: 'B2',
   })
   const text = await xml(moved.bytes)
-  expect(text).toContain('<c r="B2"><v>12</v></c>')
+  expect(text).toContain('<c r="B2" s="0"><v>12</v></c>')
   expect(text).toContain('<f>B2+$B$2+SUM(B2:B3)+"A1"</f>')
   expect(text).toContain('<f>C2+A4</f>')
   expect(text).not.toContain('r="A1"')
@@ -423,7 +423,7 @@ it('cut outside a structured table preserves the table and original formula refe
     table.version,
   )
   expect((await readXlsx(result.bytes)).sheets[0]!.tables![0]!.name).toBe('SourceData')
-  expect(await xml(result.bytes)).toContain('<c r="F1"><f>B1+A4</f><v>42</v></c>')
+  expect(await xml(result.bytes)).toContain('<c r="F1" s="0"><f>B1+A4</f><v>42</v></c>')
   const before = await JSZip.loadAsync(table.bytes),
     after = await JSZip.loadAsync(result.bytes)
   for (const path of Object.keys(before.files).filter(

@@ -62,6 +62,7 @@ import type { BlockBox, PageSlice } from '../vendor/apps/docs/src/renderer/pagin
 import type { SectionInfo } from '../vendor/packages/docx-engine/src/types.js'
 import type { Block } from '../vendor/packages/docx-engine/src/types.js'
 import type { DocxSession } from './docx.js'
+import { withDocxUnscaledLayout } from './editors/docx-view.js'
 import {
   assignLiveBlockSections,
   gapMetricsForSection,
@@ -119,6 +120,10 @@ export function makePageImageClip(frame: PageFrame): HTMLDivElement {
  */
 export interface PaginationOptions {
   editor: Editor | null
+  /** Continuous views must remove all print-only layout, without editing the document. */
+  enabled?: boolean
+  /** Remeasure after a display zoom change; all layout work still uses 100% pixels. */
+  scale?: number
   /** 滚动容器（`measureBlocks` 要它的顶部作原点） */
   scrollRef: RefObject<HTMLElement | null>
   /**
@@ -327,8 +332,31 @@ export function alignPageGapPaint(pm: HTMLElement): void {
   alignGapHfStrips(pm, 0, 1)
 }
 
+export function clearDocxPagination(
+  editor: Editor | null,
+  container: HTMLElement | null,
+  sections: SectionInfo[],
+): void {
+  if (editor && !editor.isDestroyed && editor.view?.dom) {
+    setPageGaps(editor.view, [])
+    clearEndnoteDecorations(editor)
+    clearContinuationGaps(editor)
+    setColumnLayout(editor.view, [])
+  }
+  const wrap = container?.querySelector<HTMLElement>('.page-wrap')
+  if (!wrap) return
+  wrap.querySelector(':scope > .mimir-edge-hf')?.remove()
+  wrap.querySelector('.mimir-page-images')?.remove()
+  wrap.querySelector('.doc-page')?.classList.remove('measuring-columns')
+  wrap.querySelector<HTMLElement>('.doc-page')?.style.removeProperty('min-height')
+  syncSectionPageSheets(wrap, sections, [], false)
+  wrap.classList.remove('paper-mixed')
+}
+
 export function usePagination({
   editor,
+  enabled = true,
+  scale = 1,
   scrollRef,
   containerRef,
   sections,
@@ -337,12 +365,16 @@ export function usePagination({
   onPaged,
 }: PaginationOptions): void {
   useEffect(() => {
+    const container = containerRef.current
+    if (!enabled) {
+      clearDocxPagination(editor, container, sections)
+      return
+    }
     const scroll = scrollRef.current
     if (!scroll) return
 
     let frame = 0
     let disposed = false
-    let lastWrap: HTMLElement | null = null
 
     /**
      * 就绪检查放在**每次调度时**做，而不是 effect 开头 early return。
@@ -361,7 +393,7 @@ export function usePagination({
     }
 
     /** 一次完整的分页 pass。所有前置条件在 ready() 里统一把关 */
-    function paginateOnce(): void {
+    function paginateOnce(): number | undefined {
       const ctx = ready()
       if (!ctx) return
       const { pm } = ctx
@@ -386,7 +418,6 @@ export function usePagination({
       const geoms = sectionGeoms(sections)
       const pageEl = pm.closest<HTMLElement>('.doc-page')
       const wrap = pm.closest<HTMLElement>('.page-wrap')
-      lastWrap = wrap
       pageEl?.style.removeProperty('min-height')
 
       /**
@@ -1074,7 +1105,7 @@ export function usePagination({
           wrap.append(layer)
         }
       }
-      onPaged?.(slices.length)
+      return slices.length
     }
 
     /**
@@ -1103,7 +1134,11 @@ export function usePagination({
       frame = window.setTimeout(() => {
         frame = 0
         try {
-          paginateOnce()
+          const count =
+            scale === 1
+              ? paginateOnce()
+              : withDocxUnscaledLayout(containerRef.current, paginateOnce)
+          if (count !== undefined) onPaged?.(count)
         } catch (error) {
           containerRef.current?.querySelector('.doc-page')?.classList.remove('measuring-columns')
           // 分页失败是**静默**的（界面只显示「共 1 页」，不报错），
@@ -1150,17 +1185,7 @@ export function usePagination({
       window.clearInterval(retry)
       observer.disconnect()
       if (editor) editor.off('update', onUpdate)
-      if (!editor?.isDestroyed && editor?.view?.dom) {
-        setPageGaps(editor.view, [])
-        clearEndnoteDecorations(editor)
-        clearContinuationGaps(editor)
-      }
-      if (lastWrap) {
-        lastWrap.querySelector(':scope > .mimir-edge-hf')?.remove()
-        lastWrap.querySelector('.mimir-page-images')?.remove()
-        syncSectionPageSheets(lastWrap, sections, [], false)
-        lastWrap.classList.remove('paper-mixed')
-      }
+      clearDocxPagination(editor, container, sections)
     }
-  }, [editor, scrollRef, containerRef, sections, headerFooter, footnotes, onPaged])
+  }, [editor, enabled, scale, scrollRef, containerRef, sections, headerFooter, footnotes, onPaged])
 }

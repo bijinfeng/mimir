@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { parseRange } from '../../vendor/packages/xlsx-gateway/src/domain/cell-address.js'
-import { Paintbrush, Scissors } from 'lucide-react'
+import { Paintbrush } from 'lucide-react'
 import type { XlsxWorkbook, XlsxSheet } from '../xlsx.js'
 import { xlsxFillOperation, xlsxAutoSizes, xlsxFormatPaintRange } from '../xlsx-manual.js'
 import {
@@ -17,7 +17,7 @@ type Capture = {
   sheetId: string
   name: string
   range: string
-  kind: 'cut' | 'format'
+  kind: 'format'
 }
 export function XlsxManualControls({
   group,
@@ -43,7 +43,6 @@ export function XlsxManualControls({
     try {
       const ok = await onOperation(op)
       setMessage(ok ? '已应用' : '未应用，请查看编辑器错误说明')
-      if (ok && op.op === 'move_range') setCapture(null)
     } catch (error) {
       setMessage(error instanceof Error ? error.message : '操作失败')
     }
@@ -60,8 +59,7 @@ export function XlsxManualControls({
   const maxLevel = Math.max(0, ...levels.map((outline) => outline.level))
   const blocked = busy || !!rangeIssue,
     stale = capture?.workbook !== workbook
-  const staleReason =
-    capture?.kind === 'format' ? '文档已更新，请重新拾取格式' : '文档已更新，请重新选择范围'
+  const staleReason = '文档已更新，请重新拾取格式'
   let paintTarget = '',
     paintIssue = ''
   if (capture?.kind === 'format' && !rangeIssue) {
@@ -74,13 +72,9 @@ export function XlsxManualControls({
   return (
     <ToolbarMenu
       label={
-        group === 'home'
-          ? '剪切、格式刷与清除格式'
-          : group === 'data'
-            ? '填充与闪填'
-            : '自动尺寸与分级'
+        group === 'home' ? '格式刷与清除格式' : group === 'data' ? '填充与闪填' : '自动尺寸与分级'
       }
-      text={group === 'home' ? '剪切与格式刷' : group === 'data' ? '填充' : '尺寸与分级'}
+      text={group === 'home' ? '格式刷' : group === 'data' ? '填充' : '尺寸与分级'}
       panelWidth={320}
       renderPanel={() => (
         <ToolbarPropertyForm columns={1}>
@@ -88,29 +82,11 @@ export function XlsxManualControls({
             <fieldset disabled={busy} aria-busy={busy}>
               {group === 'home' && (
                 <>
-                  <ToolbarMenuFields label="剪切与格式刷">
+                  <ToolbarMenuFields label="格式刷">
                     <ToolbarMenuNote>
-                      先记下源范围，再选择目标范围应用。剪切会移动内容和格式，并更新工作簿公式引用。
+                      先拾取源范围的格式，再选择目标应用。内容和公式保持。
                     </ToolbarMenuNote>
                     <div className="mimir-xlsx-tools__actions">
-                      <ToolbarButton
-                        label="剪切所选范围"
-                        disabled={blocked}
-                        disabledReason="先选择源范围"
-                        onClick={() => {
-                          setCapture({
-                            workbook,
-                            sheetId: sheet.id,
-                            name: sheet.name,
-                            range,
-                            kind: 'cut',
-                          })
-                          setMessage('已记下剪切范围，选择目标后粘贴')
-                        }}
-                      >
-                        <Scissors size={14} />
-                        剪切
-                      </ToolbarButton>
                       <ToolbarButton
                         label="拾取所选范围格式"
                         disabled={blocked}
@@ -133,8 +109,7 @@ export function XlsxManualControls({
                     {capture && (
                       <>
                         <ToolbarMenuNote>
-                          {capture.kind === 'cut' ? '剪切源' : '格式源'}：{capture.name}!
-                          {capture.range}
+                          格式源：{capture.name}!{capture.range}
                           {stale ? `；${staleReason}` : ''}
                         </ToolbarMenuNote>
                         {capture.kind === 'format' && (
@@ -146,28 +121,19 @@ export function XlsxManualControls({
                         )}
                         <div className="mimir-xlsx-tools__actions">
                           <ToolbarButton
-                            label={capture.kind === 'cut' ? '粘贴剪切范围' : '应用格式刷到所选范围'}
+                            label="应用格式刷到所选范围"
                             primary
                             disabled={blocked || stale || !!paintIssue}
                             disabledReason={
                               stale ? staleReason : paintIssue || rangeIssue || undefined
                             }
                             onClick={() =>
-                              void apply(
-                                capture.kind === 'cut'
-                                  ? {
-                                      op: 'move_range',
-                                      sourceSheetId: capture.sheetId,
-                                      source: capture.range,
-                                      target: range.split(':')[0],
-                                    }
-                                  : {
-                                      op: 'copy_format',
-                                      sourceSheetId: capture.sheetId,
-                                      source: capture.range,
-                                      range,
-                                    },
-                              )
+                              void apply({
+                                op: 'copy_format',
+                                sourceSheetId: capture.sheetId,
+                                source: capture.range,
+                                range,
+                              })
                             }
                           />
                           <ToolbarButton

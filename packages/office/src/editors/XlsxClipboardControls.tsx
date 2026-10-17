@@ -1,175 +1,291 @@
-import { useEffect, useRef, useState } from 'react'
-import type { XlsxSheet } from '../xlsx.js'
-import { parseXlsxDelimited } from '../xlsx-delimited.js'
-import { parseRange } from '../../vendor/packages/xlsx-gateway/src/domain/cell-address.js'
+import {
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type Ref,
+} from 'react'
+import { createPortal } from 'react-dom'
+import { Clipboard, Copy, Scissors, Upload, X } from 'lucide-react'
+import type { ClipboardContext, XlsxClipboardController } from '../xlsx-clipboard.js'
 import {
   ToolbarButton,
   ToolbarFileButton,
-  ToolbarMenu,
   ToolbarMenuFields,
   ToolbarMenuNote,
-  ToolbarPropertyForm,
-  ToolbarSelect,
   ToolbarTextArea,
+  ToolbarSelect,
 } from '../shell/EditorShell.js'
-const quoteTsv = (s: string) => (/[\t\r\n"]/.test(s) ? '"' + s.replaceAll('"', '""') + '"' : s)
+import './xlsx-clipboard-controls.css'
+
+export interface XlsxClipboardControlsHandle {
+  open: (trigger: HTMLElement) => void
+}
 export function XlsxClipboardControls({
-  sheet,
-  range,
-  busy,
-  onOperation,
+  ref,
+  controller,
+  context,
+  inspector,
+  onInspectorOpen,
+  onInspectorClose,
 }: {
-  sheet: XlsxSheet
-  range: string
-  busy: boolean
-  onOperation: (op: Record<string, unknown>) => Promise<boolean>
+  ref?: Ref<XlsxClipboardControlsHandle>
+  controller: XlsxClipboardController
+  context: () => ClipboardContext
+  inspector: string | null
+  onInspectorOpen: () => void
+  onInspectorClose: () => void
 }) {
-  const [content, setContent] = useState(''),
-    [delimiter, setDelimiter] = useState('\t'),
-    [message, setMessage] = useState('')
-  const requestScope = useRef<{ live: boolean }>({ live: true })
+  const state = useSyncExternalStore(controller.subscribe, controller.getSnapshot),
+    trigger = useRef<HTMLElement | null>(null),
+    panel = useRef<HTMLElement>(null)
+  const [container, setContainer] = useState<HTMLElement | null>(null)
+  const close = () => {
+    controller.stop()
+    setContainer(null)
+    onInspectorClose()
+  }
+  const open = (button: HTMLElement) => {
+    trigger.current = button.matches('table')
+      ? (button.querySelector<HTMLElement>('td[tabindex="0"]') ?? button)
+      : button
+    onInspectorOpen()
+    setContainer(
+      button.closest('.mimir-editor')?.querySelector<HTMLElement>('.mimir-editor__body') ??
+        button.parentElement,
+    )
+  }
+  useImperativeHandle(ref, () => ({ open }))
+  if (container && inspector !== 'clipboard') setContainer(null)
+  useEffect(() => () => controller.stop(), [controller])
   useEffect(() => {
-    const scope = { live: true }
-    requestScope.current = scope
+    if (!container) return
+    const node = panel.current,
+      entry = trigger.current,
+      section = entry?.closest<HTMLElement>('[data-section-key]')?.dataset.sectionKey,
+      editor = container.closest('.mimir-editor')
+    node?.focus()
     return () => {
-      scope.live = false
+      controller.stop()
+      const active = document.activeElement
+      if (active === document.body || active === node || node?.contains(active)) {
+        const group = Array.from(
+          editor?.querySelectorAll<HTMLElement>('[data-section-key]') ?? [],
+        ).find((element) => element.dataset.sectionKey === section)
+        const destination = entry?.isConnected
+          ? entry
+          : (editor?.querySelector<HTMLButtonElement>('button[aria-label="范围剪贴板"]') ??
+            group?.querySelector<HTMLButtonElement>('button:not(:disabled)') ??
+            editor?.querySelector<HTMLButtonElement>(
+              '.mimir-compact-toolbar__tabs [aria-selected="true"]',
+            ))
+        destination?.focus()
+      }
     }
-  }, [])
-  let values: (string | number | boolean)[][] = [],
+  }, [container, controller])
+  if (!container) return null
+  let current: ClipboardContext | null = null,
     issue = ''
   try {
-    values = parseXlsxDelimited(content, delimiter === 'csv' ? ',' : '\t')
+    current = context()
   } catch (error) {
-    issue = error instanceof Error ? error.message : '无法读取内容'
+    issue = error instanceof Error ? error.message : '请选择范围'
   }
-  const apply = async () => {
+  const blocked = state.busy || !!issue || !!current?.blocked
+  const invoke = (action: (ctx: ClipboardContext) => void | Promise<void>) => {
     try {
-      const b = parseRange(range)
-      if (b.startRow + values.length > 1048576 || b.startColumn + (values[0]?.length ?? 0) > 16384)
-        throw new Error('导入内容超出工作表边界')
-      const ok = await onOperation({ op: 'set_range', start: range.split(':')[0], values })
-      setMessage(ok ? '已应用' : '未写入，请查看编辑器错误说明')
+      const ctx = context()
+      void action(ctx)
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : '写入失败')
+      controller.error(error instanceof Error ? error.message : '请选择范围')
     }
   }
-  const copy = async () => {
-    try {
-      const b = parseRange(range)
-      if ((b.endRow - b.startRow + 1) * (b.endColumn - b.startColumn + 1) > 2000)
-        throw new Error('复制最多2000格')
-      const text = Array.from({ length: b.endRow - b.startRow + 1 }, (_, r) =>
-        Array.from({ length: b.endColumn - b.startColumn + 1 }, (_cell, c) =>
-          quoteTsv(
-            sheet.rows.find((row) => row.number === b.startRow + r + 1)?.cells[b.startColumn + c]
-              ?.text ?? '',
-          ),
-        ).join('\t'),
-      ).join('\r\n')
-      await navigator.clipboard.writeText(text)
-      setMessage('已复制范围的显示值')
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : '复制失败')
-    }
-  }
-  return (
-    <ToolbarMenu
-      label="范围剪贴板与CSV导入"
-      text="粘贴与导入"
-      panelWidth={360}
-      renderPanel={() => (
-        <ToolbarPropertyForm columns={1}>
-          <div className="mimir-xlsx-tools">
-            <ToolbarMenuFields label="范围剪贴板">
-              <ToolbarMenuNote>从 {range || '所选单元格'} 开始写入，最多2000格。</ToolbarMenuNote>
-              <div className="mimir-xlsx-tools__actions">
+  return createPortal(
+    <aside
+      ref={panel}
+      tabIndex={-1}
+      aria-label="范围剪贴板"
+      className="mimir-xlsx-inspector mimir-xlsx-clipboard"
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') {
+          event.stopPropagation()
+          close()
+        }
+      }}
+    >
+      <header className="mimir-xlsx-inspector__header">
+        <h2>剪贴板</h2>
+        <ToolbarButton label="关闭剪贴板" onClick={close}>
+          <X size={16} />
+        </ToolbarButton>
+      </header>
+      <div className="mimir-xlsx-inspector__content mimir-xlsx-clipboard__content">
+        <p className="mimir-xlsx-clipboard__target">
+          目标：{current ? `${current.sheet.name}!${current.range || '未选范围'}` : issue}
+        </p>
+        <ToolbarMenuFields label="工作簿内范围">
+          <h3 className="mimir-xlsx-clipboard__section-title">内部范围</h3>
+          <ToolbarMenuNote>含隐藏行；单格目标按源大小展开，暂不重复平铺。</ToolbarMenuNote>
+          <div className="mimir-xlsx-clipboard__actions">
+            <ToolbarButton
+              label="复制所选范围"
+              disabled={blocked}
+              disabledReason={issue || current?.blocked}
+              onClick={() => invoke((ctx) => controller.copy(ctx, 'copy'))}
+            >
+              <Copy size={14} />
+              复制
+            </ToolbarButton>
+            <ToolbarButton
+              label="剪切所选范围"
+              disabled={blocked || !!current?.sheet.extras?.protected}
+              disabledReason={
+                current?.sheet.extras?.protected ? '剪切源工作表已保护' : issue || current?.blocked
+              }
+              onClick={() => invoke((ctx) => controller.copy(ctx, 'cut'))}
+            >
+              <Scissors size={14} />
+              剪切
+            </ToolbarButton>
+          </div>
+          {state.capture ? (
+            <>
+              <div className="mimir-xlsx-clipboard__source-row">
+                <p className="mimir-xlsx-clipboard__source">
+                  {state.capture.kind === 'cut' ? '剪切源' : '复制源'}：{state.capture.sheetName}!
+                  {state.capture.range}
+                  {state.stale ? '（已失效，请重新复制）' : ''}
+                </p>
                 <ToolbarButton
-                  label="复制范围显示值"
-                  disabled={!range}
-                  disabledReason="先选择范围"
-                  onClick={() => void copy()}
+                  label="取消复制或剪切"
+                  disabled={state.busy}
+                  onClick={() => controller.cancel()}
                 >
-                  复制显示值
-                </ToolbarButton>
-                <ToolbarButton
-                  label="读取剪贴板"
-                  disabled={busy || !navigator.clipboard?.readText}
-                  disabledReason="此地址不允许读取剪贴板，可粘贴到下方输入框"
-                  onClick={() => {
-                    const scope = requestScope.current
-                    void navigator.clipboard
-                      ?.readText()
-                      .then((text) => {
-                        if (!scope.live) return
-                        setDelimiter('\t')
-                        setContent(text)
-                        setMessage('内容已载入，确认后写入')
-                      })
-                      .catch((error: unknown) => {
-                        if (!scope.live) return
-                        setMessage(
-                          error instanceof Error ? error.message : '请直接粘贴到下方输入框',
-                        )
-                      })
-                  }}
-                >
-                  读取剪贴板
+                  取消范围
                 </ToolbarButton>
               </div>
-              <ToolbarFileButton
-                label="选择CSV或TSV文件"
-                accept=".csv,.tsv,text/csv,text/tab-separated-values"
-                disabled={busy}
-                onPick={async (file) => {
-                  const scope = requestScope.current
-                  try {
-                    if (file.size > 1024 * 1024) throw new Error('请选择不超过1MiB的文本文件')
-                    const text = await file.text()
-                    if (!scope.live) return
-                    setDelimiter(/\.tsv$/i.test(file.name) ? '\t' : 'csv')
-                    setContent(text)
-                    setMessage(`已载入 ${file.name}，确认后写入`)
-                  } catch (error) {
-                    if (scope.live)
-                      setMessage(error instanceof Error ? error.message : '文件读取失败')
+              {state.payload && (
+                <ToolbarButton
+                  label="粘贴工作簿内范围"
+                  disabled={blocked || state.stale || !!current?.sheet.extras?.protected}
+                  disabledReason={
+                    state.stale
+                      ? '工作簿已更新，请重新复制'
+                      : current?.sheet.extras?.protected
+                        ? '目标工作表已保护'
+                        : issue || current?.blocked
                   }
-                }}
-              />
+                  onClick={() => invoke((ctx) => controller.apply(ctx, null))}
+                >
+                  粘贴工作簿内范围
+                </ToolbarButton>
+              )}
+            </>
+          ) : (
+            <ToolbarMenuNote>网格 Ctrl/Cmd+C、X、V。内部粘贴保留原生公式与格式。</ToolbarMenuNote>
+          )}
+        </ToolbarMenuFields>
+        <ToolbarMenuFields label="系统剪贴板与导入">
+          <h3 className="mimir-xlsx-clipboard__section-title">外部内容</h3>
+          <ToolbarButton
+            label="读取系统剪贴板"
+            disabled={blocked}
+            disabledReason={issue || current?.blocked}
+            onClick={() => invoke((ctx) => controller.read(ctx))}
+          >
+            <Clipboard size={14} />
+            读取系统剪贴板
+          </ToolbarButton>
+          <ToolbarFileButton
+            label="选择CSV或TSV文件"
+            accept=".csv,.tsv,text/csv,text/tab-separated-values"
+            disabled={blocked}
+            onPick={(file) =>
+              invoke((ctx) =>
+                controller.read(ctx, async () => {
+                  if (file.size > 1024 * 1024) throw new Error('请选择不超过1MiB的文本文件')
+                  return {
+                    plain: await file.text(),
+                    html: '',
+                    delimiter: /\.tsv$/i.test(file.name) ? '\t' : ',',
+                  }
+                }),
+              )
+            }
+          >
+            <Upload size={14} />
+            导入 CSV / TSV
+          </ToolbarFileButton>
+          {state.payload?.html ? (
+            <ToolbarMenuNote>
+              已读取HTML表格。文字按原文写入，不执行公式；只应用明确声明的基础格式。
+            </ToolbarMenuNote>
+          ) : (
+            <>
               <ToolbarSelect
                 label="内容分隔方式"
-                value={delimiter}
-                onChange={setDelimiter}
+                value={state.payload?.delimiter ?? '\t'}
+                disabled={state.busy}
+                onChange={(value) =>
+                  controller.stage({
+                    plain: state.payload?.plain ?? '',
+                    html: '',
+                    delimiter: value as ',' | '\t',
+                  })
+                }
                 options={[
-                  { value: '\t', label: '制表符（电子表格复制）' },
-                  { value: 'csv', label: '逗号（CSV）' },
+                  { value: '\t', label: '制表符（表格）' },
+                  { value: ',', label: '逗号（CSV）' },
                 ]}
               />
               <ToolbarTextArea
                 label="待写入的表格内容"
-                value={content}
-                onChange={setContent}
+                value={state.payload?.plain ?? ''}
+                onChange={(plain) =>
+                  controller.stage({ plain, html: '', delimiter: state.payload?.delimiter })
+                }
                 rows={5}
               />
-              {content && (
-                <ToolbarMenuNote>
-                  {issue ||
-                    `${values.length}行 × ${values[0]?.length ?? 0}列；以等号开头的内容将写为公式。`}
-                </ToolbarMenuNote>
-              )}
-              <ToolbarButton
-                label="将内容写入当前范围"
-                primary
-                disabled={busy || !range || !content || !!issue}
-                disabledReason={issue || '选择范围并准备内容'}
-                onClick={() => void apply()}
-              />
-            </ToolbarMenuFields>
-            <div role="status" className="mimir-xlsx-tools__feedback">
-              {message}
-            </div>
-          </div>
-        </ToolbarPropertyForm>
-      )}
-    />
+              <ToolbarMenuNote>
+                最多2000格。纯文本识别数字、布尔及等号公式；单引号开头按文本解释。
+              </ToolbarMenuNote>
+            </>
+          )}
+          {state.payload?.html && (
+            <ToolbarButton
+              label="仅粘贴显示值"
+              disabled={blocked || !!current?.sheet.extras?.protected}
+              onClick={() => invoke((ctx) => controller.apply(ctx, state.payload, true))}
+            >
+              仅粘贴显示值
+            </ToolbarButton>
+          )}
+        </ToolbarMenuFields>
+        <p className="mimir-xlsx-clipboard__feedback" role={state.error ? 'alert' : 'status'}>
+          {state.error || state.message || '支持系统HTML与显示值；内部原生范围只在本工作簿内有效。'}
+        </p>
+      </div>
+      <footer className="mimir-xlsx-clipboard__footer">
+        <ToolbarButton
+          label={state.capture && !state.payload ? '粘贴工作簿内范围' : '粘贴已读取内容'}
+          primary
+          disabled={
+            blocked ||
+            (!state.payload && (!state.capture || state.stale)) ||
+            !!current?.sheet.extras?.protected
+          }
+          disabledReason={
+            current?.sheet.extras?.protected
+              ? '目标工作表已保护'
+              : !state.payload && state.stale
+                ? '工作簿已更新，请重新复制'
+                : issue || current?.blocked || '先复制范围、读取系统剪贴板或输入内容'
+          }
+          onClick={() => invoke((ctx) => controller.apply(ctx, state.payload))}
+        />
+      </footer>
+    </aside>,
+    container,
   )
 }

@@ -8,6 +8,7 @@ import type { SaveOptions } from '../vendor/packages/docx-engine/src/patch.js'
 import type { ParsedDoc } from '../vendor/packages/docx-engine/src/types.js'
 import type { DocxSession } from './docx.js'
 import { BoundedZip } from './zip-bounds.js'
+import { liveDocxTheme } from './docx-design-save.js'
 
 const originalXml = new WeakMap<DocxSession, Promise<string>>()
 /** Parse the same surgical style XML as save so basedOn inheritance and null resets stay identical. */
@@ -15,7 +16,13 @@ export async function liveDocxStyleState(
   session: DocxSession,
   options: SaveOptions,
 ): Promise<ParsedDoc> {
-  if (!options.styleUpserts?.length && !options.defaultFonts) return session.footnotes.parsed
+  if (
+    !options.styleUpserts?.length &&
+    !options.defaultFonts &&
+    !options.themeFonts &&
+    !options.themeColors
+  )
+    return session.footnotes.parsed
   let source = originalXml.get(session)
   if (!source) {
     source = BoundedZip.open(session.originalBytes)
@@ -40,6 +47,7 @@ export async function liveDocxStyleState(
   if (options.defaultFonts) xml = mergeDefaultFontsXml(xml, options.defaultFonts)
   const zip = new JSZip().file('word/styles.xml', xml)
   const parsed = session.footnotes.parsed
-  const styles = await parseStyles(zip, parsed.themeColors, parsed.themeFonts)
-  return { ...parsed, ...styles }
+  const theme = await liveDocxTheme(session, options)
+  const styles = await parseStyles(zip, theme.colors, theme.fonts)
+  return { ...parsed, ...styles, themeColors: theme.colors, themeFonts: theme.fonts }
 }

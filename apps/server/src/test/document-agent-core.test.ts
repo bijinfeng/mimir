@@ -112,10 +112,18 @@ describe('shared document agent lifecycle', () => {
     expect(model.stream).toHaveBeenCalledOnce()
     const options = model.stream.mock.calls[0]?.[0] as { tools: { name: string }[] }
     expect(options.tools.map((tool) => tool.name)).toEqual([
+      'create_document',
       'get_workbook_context',
       'read_range',
       'read_cells',
       'find_cells',
+      'aggregate_range',
+      'load_guide',
+      'read_formats',
+      'read_sheet_features',
+      'select_range',
+      'trace_precedents',
+      'trace_dependents',
       'propose_operations',
     ])
   })
@@ -130,10 +138,18 @@ describe('shared document agent lifecycle', () => {
       documentId: 'xlsx-a',
       executorReady: true,
       availableTools: [
+        'create_document',
         'get_workbook_context',
         'read_range',
         'read_cells',
         'find_cells',
+        'aggregate_range',
+        'load_guide',
+        'read_formats',
+        'read_sheet_features',
+        'select_range',
+        'trace_precedents',
+        'trace_dependents',
         'propose_operations',
       ],
     })

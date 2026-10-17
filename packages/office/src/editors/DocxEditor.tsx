@@ -37,8 +37,8 @@
  * 「段落 + `w:numPr`」形状）。所以 `toggleList('bulletList', 'listItem')`
  * 在这里没有对应节点，调了无效，正确做法是改节点类型与属性。
  *
- * `numId` 沿用文档里已有的同类列表（新建编号定义要写 `numbering.xml`，
- * 那件事在保存路径上，本版没做）。
+ * `numId` 可沿用原生定义；列表库与详细设置追加定义到 `numbering.xml`。
+ * 定义元数据与段落变更同属一个 ProseMirror 事务，保存和撤销保持一致。
  *
  * ## 样式与直接格式
  *
@@ -62,7 +62,56 @@ import {
   DocxNoteControls,
   type DocxAdvancedContext,
 } from './DocxAdvancedControls.js'
+import { DocxListControls } from './DocxListControls.js'
+import { DocxCaseControls } from './DocxCaseControls.js'
+import {
+  DocxLayoutControls,
+  DocxZoomControls,
+  DocxNavigationControl,
+  DocxSplitControl,
+  DocxReadingControls,
+  type DocxViewControlsProps,
+} from './DocxViewControls.js'
+import { DocxViewPanel } from './DocxViewPanel.js'
+import { DocxCompareControls } from './DocxCompareControls.js'
+import { DocxProtectionControls } from './DocxProtectionControls.js'
+import { DocxProtectionExtension } from './docx-protection.js'
+import { DocxSplitView } from './DocxSplitView.js'
+import {
+  docxFitZoom,
+  docxHeadings,
+  installDocxScaledTableResize,
+  type DocxLayout,
+  type DocxZoomMode,
+} from './docx-view.js'
+import './docx-views.css'
+import { DocxInkExtension, createInkController, type InkController } from './docx-ink.js'
+import { DocxInkRibbon, DocxInkControls } from './DocxInkControls.js'
+import { DocxInkOverlay } from './DocxInkOverlay.js'
+import { docxInkUnavailable } from '../docx-ink-save.js'
+import { DocxCaseExtension } from './docx-case.js'
+import { Download } from 'lucide-react'
+import { downloadDocxSnapshot } from './docx-output.js'
+import { DocxThemeControls, DocxPageBackgroundControls } from './DocxDesignControls.js'
+import { DocxDesignExtension, docxDesignSections } from './docx-design.js'
+import { DocxDesignPreview, DocxThemePreviewExtension } from './DocxDesignPreview.js'
+import { DESIGN_ATTR, docxDesignSaveOptions } from '../docx-design-save.js'
+import { DocxListsExtension, syncDocxListDefinitions, toggleDocxList } from './docx-lists.js'
 import { DocxStyleControls } from './DocxStyleControls.js'
+import { DocxImageControls } from './DocxImageControls.js'
+import { DocxTocControls } from './DocxTocControls.js'
+import {
+  DocxReferencesControls,
+  DocxCaptionControls,
+  DocxCitationControls,
+  DocxIndexControls,
+  DocxFieldControls,
+} from './DocxReferencesControls.js'
+import { DocxReferencesExtension } from './docx-references.js'
+import { DocxTableDesignControls } from './DocxTableDesignControls.js'
+import { DocxTableDesignPreview } from './DocxTableDesignPreview.js'
+import { DocxTableDesignExtension, selectedDocxTable } from './docx-table-design.js'
+import { selectedDocxImage } from './docx-image.js'
 import { liveDocxStyleState } from '../docx-styles.js'
 import { docStyleCss } from '../../vendor/apps/docs/src/renderer/doc-style-css.js'
 import './docx-tools.css'
@@ -76,6 +125,7 @@ import {
   useCallback,
   useMemo,
   useId,
+  useSyncExternalStore,
   cloneElement,
   createElement,
   type ReactElement,
@@ -223,7 +273,25 @@ import '../../vendor/apps/docs/src/renderer/fonts/fonts.css'
 import './editors.css'
 
 /** 文档未加载时的空分段（模块级常量：保证 hook 的依赖引用稳定） */
+const NO_PROTECTION_SUBSCRIBE = () => () => {}
+const UNPROTECTED_ACCESS = {
+  commentsOnly: false,
+  writable: true,
+  reason: null,
+  epoch: 0,
+  recommendedChoice: false,
+}
+const NO_PROTECTION_ACCESS = () => UNPROTECTED_ACCESS
 const NO_SECTIONS: SectionInfo[] = []
+const DOCX_EDITOR_EXTENSIONS = [
+  ...editorExtensions,
+  DocxTableDesignExtension,
+  DocxReferencesExtension,
+  DocxListsExtension,
+  DocxDesignExtension,
+  DocxInkExtension,
+  DocxThemePreviewExtension,
+]
 /** 文档没有标题样式时的空级别表（同上：引用要稳定） */
 const NO_LEVELS: readonly number[] = []
 
@@ -260,7 +328,7 @@ function saveOptionsWithLiveComments(
   session: DocxSession,
   options: DocxSaveOptions,
 ): DocxSaveOptions {
-  if (!options.comments) return options
+  if (!options.comments || session.protection.getAccess().commentsOnly) return options
   const originalIds = new Set(session.footnotes.parsed.comments.map((item) => item.id))
   const anchoredIds = new Set<string>()
   doc.descendants((node) => {
@@ -558,6 +626,7 @@ const fontOptions = (names: readonly string[]): ToolbarSelectOption<string>[] =>
  * 交给 `useToolbarState`——它按值比较，字符串最省也最不容易出意外。
  */
 interface DocxSnapshot {
+  inImage: boolean
   bold: boolean
   italic: boolean
   underline: boolean
@@ -595,6 +664,7 @@ interface DocxSnapshot {
 
 /** 编辑器还没就绪时的空快照（形状必须与 `readSnapshot` 完全一致） */
 const EMPTY_SNAPSHOT: DocxSnapshot = {
+  inImage: false,
   bold: false,
   italic: false,
   underline: false,
@@ -674,6 +744,7 @@ function readSnapshot(editor: Editor): DocxSnapshot {
     trackChanges?: { enabled?: boolean }
   }
   return {
+    inImage: selectedDocxImage(editor) !== null,
     bold: editor.isActive('bold'),
     italic: editor.isActive('italic'),
     underline: editor.isActive('underline'),
@@ -755,13 +826,26 @@ function syncListStyleStorage(editor: Editor, parsed: DocxSession['footnotes']['
   if (editor.isDestroyed || !editor.storage.listNumbering) return
   editor.storage.listNumbering.styles = parsed.styles
   editor.storage.listNumbering.docDefaults = parsed.docDefaults
-  editor.storage.listNumbering.defs = new Map(parsed.numbering)
+  syncDocxListDefinitions(editor, parsed.numbering)
   editor.view.dispatch(editor.state.tr.setMeta('addToHistory', false))
+}
+
+function DocxCompareInspector({ context }: { context: DocxAdvancedContext }) {
+  const compare = (context as DocxAdvancedContext & { compare: { getVersion: () => number } })
+    .compare
+  return <DocxCompareControls context={context} getVersion={compare.getVersion} />
+}
+
+function DocxInkInspector({ context }: { context: DocxAdvancedContext }) {
+  const ink = (
+    context as DocxAdvancedContext & { ink: { controller: InkController; reason: string | null } }
+  ).ink
+  return <DocxInkControls context={context} controller={ink.controller} reason={ink.reason} />
 }
 
 function advancedPanel(
   Controls: (props: { context: DocxAdvancedContext }) => ReactNode,
-  context: DocxAdvancedContext,
+  context: DocxAdvancedContext & { compare?: { getVersion: () => number } },
 ): ReactElement<{ context: DocxAdvancedContext }> {
   return createElement(Controls, { context })
 }
@@ -872,46 +956,6 @@ export function applyParagraphStyle(editor: Editor, key: string): void {
   else runCommand(editor, 'setNode', 'docHeading', { ...clear, level: Number(key.slice(1)) || 1 })
 }
 
-/** 切换光标所在块的列表类型（两种列表 + 取消） */
-function toggleList(editor: Editor, kind: 'bullet' | 'ordered'): void {
-  const { $from } = editor.state.selection
-  const node = $from.parent
-  if (node.type.name === 'docListItem') {
-    const current = asString(node.attrs.kind) ?? 'bullet'
-    if (current === kind) {
-      runCommand(editor, 'setNode', 'docParagraph', { ...node.attrs, kind: null, numId: null })
-    } else {
-      runCommand(editor, 'updateAttributes', 'docListItem', { kind })
-    }
-    return
-  }
-  runCommand(editor, 'setNode', 'docListItem', {
-    ...node.attrs,
-    kind,
-    numId: findExistingNumId(editor, kind),
-    ilvl: 0,
-  })
-}
-
-/**
- * 文档里第一个同类列表项的 `numId`（没有则 null）。
- *
- * 沿用而不是新建：新建编号定义要往 `numbering.xml` 里加一段，而那是保存路径
- * 上的活（本版没做，见文件顶部）。沿用已有的定义，编号至少是连着的。
- */
-function findExistingNumId(editor: Editor, kind: 'bullet' | 'ordered'): string | null {
-  let found: string | null = null
-  editor.state.doc.descendants((node) => {
-    if (found !== null) return false
-    if (node.type.name !== 'docListItem') return true
-    if ((asString(node.attrs.kind) ?? 'bullet') !== kind) return true
-    const id = asString(node.attrs.numId)
-    if (id !== null) found = id
-    return found === null
-  })
-  return found
-}
-
 /** 插入一个 n×m 的表格。**边框必须给**——不给的话新表保存前是看不见的（上游同一条） */
 function insertTable(editor: Editor, rows: number, cols: number): void {
   const line = { style: 'single', szEighths: 4, color: 'auto' }
@@ -991,7 +1035,11 @@ export function columnWidthsTwips(editor: Editor, rect: TableRect): number[] | n
   if (totalTwips === null) {
     const dom = editor.view.nodeDOM(rect.tableStart - 1)
     const measured = dom instanceof HTMLElement ? dom.getBoundingClientRect().width : 0
-    if (measured > 0) totalTwips = pxToTwips(measured)
+    if (measured > 0) {
+      const zoom = editor.view.dom.closest<HTMLElement>('.doc-zoom')
+      const scale = zoom ? Number.parseFloat(getComputedStyle(zoom).zoom) || 1 : 1
+      totalTwips = pxToTwips(measured / scale)
+    }
   }
   if (totalTwips === null) return null
 
@@ -1149,7 +1197,24 @@ export function DocxEditor({
   /** 解析。结果与「哪一份字节」绑在一起（见 useParsed 的说明） */
   const parsed = useParsed(source.bytes, openDocx)
   const session = parsed.value
+  const protectionAccess = useSyncExternalStore(
+    session?.protection.subscribe ?? NO_PROTECTION_SUBSCRIBE,
+    session?.protection.getAccess ?? NO_PROTECTION_ACCESS,
+  )
+  const protectionReason = protectionAccess.reason
   const [pageCount, setPageCount] = useState(1)
+  const [layout, setLayout] = useState<DocxLayout>('print')
+  const [reading, setReading] = useState(false)
+  const [splitSession, setSplitSession] = useState<DocxSession | null>(null)
+  const split = session !== null && splitSession === session
+  const splitTrigger = useRef<{ focus: () => void } | null>(null)
+  const readingRef = useRef(false)
+  const [zoomMode, setZoomMode] = useState<DocxZoomMode>('manual')
+  const [manualZoom, setManualZoom] = useState(1)
+  const [viewport, setViewport] = useState({ width: 0, height: 0 })
+  const [navigation, setNavigation] = useState(false)
+  const navigationTrigger = useRef<{ focus: () => void } | null>(null)
+  const returnNavigationFocus = useRef(false)
   const styleScope = useId().replace(/[^a-zA-Z0-9_-]/g, '')
   const [inspectorState, setInspector] = useState<{
     session: DocxSession | null
@@ -1159,12 +1224,17 @@ export function DocxEditor({
   const inspector = inspectorState?.session === session ? inspectorState : null
   const inspectorRef = useRef<HTMLElement>(null)
   const inspectorTrigger = useRef<{ focus: () => void } | null>(null)
+  const returnInspectorFocus = useRef(false)
   const closeInspector = () => {
+    returnInspectorFocus.current = true
     setInspector(null)
-    inspectorTrigger.current?.focus()
   }
   useEffect(() => {
     if (inspector) inspectorRef.current?.focus()
+    else if (returnInspectorFocus.current) {
+      returnInspectorFocus.current = false
+      inspectorTrigger.current?.focus()
+    }
   }, [inspector])
   const [styleState, setStyleState] = useState<{
     session: DocxSession
@@ -1181,6 +1251,12 @@ export function DocxEditor({
   const onDirtyChangeRef = useRef(onDirtyChange)
   const onAgentHandleChangeRef = useRef(onAgentHandleChange)
   const agentHandleRef = useRef<DocxAgentHandle | null>(null)
+  const [outlineHandle, setOutlineHandle] = useState<DocxAgentHandle | null>(null)
+  const exportRequest = useRef<DocxAgentHandle | null>(null)
+  const [exportJob, setExportJob] = useState<{
+    session: DocxSession
+    documentId: string
+  } | null>(null)
   const saveOptionsRef = useRef<DocxSaveOptions>({})
   const [saveOptionsSnapshot, setSaveOptionsSnapshot] = useState<{
     session: DocxSession | null
@@ -1255,18 +1331,25 @@ export function DocxEditor({
     return () => scroller.removeEventListener('scroll', syncCurrentPage)
   }, [syncCurrentPage])
 
-  /**
-   * Ctrl+F 打开查找栏（工具条标签上写着这个快捷键，就得真的能用——见
-   * `useFindHotkey` 的说明）。只负责「显示」，焦点归那个 hook 管。
-   */
-  const openFind = useCallback(() => setFindOpen(true), [])
-  useFindHotkey(openFind)
-
+  const extensions = useMemo(
+    () => [
+      ...DOCX_EDITOR_EXTENSIONS,
+      DocxProtectionExtension.configure({
+        controller: session?.protection ?? null,
+        onBlocked: setNotice,
+      }),
+      DocxCaseExtension.configure({
+        onResult: (result) => setNotice(result.message),
+        onError: setNotice,
+      }),
+    ],
+    [session],
+  )
   const editor = useEditor(
     {
-      extensions: editorExtensions,
+      extensions,
       content: session?.content,
-      editable: true,
+      editable: protectionAccess.writable,
       /**
        * `spellcheck` 写成**显式属性**。
        *
@@ -1275,7 +1358,22 @@ export function DocxEditor({
        * 属性与显示就只有一个真相（开关本身见 `ToggleSpellcheck`）。
        */
       editorProps: { attributes: { spellcheck: 'true' } },
-      onUpdate: () => {
+      onCreate: () => {
+        readingRef.current = false
+        setReading(false)
+        setLayout('print')
+        setNavigation(false)
+        setZoomMode('manual')
+        setManualZoom(1)
+      },
+      onUpdate: ({ editor: instance }) => {
+        // setEditable uses emitUpdate=false. Only a real write exits this presentation mode.
+        if (readingRef.current) {
+          readingRef.current = false
+          setReading(false)
+          instance.setEditable(session?.protection.getAccess().writable ?? false, false)
+          setNotice('已退出阅读模式以显示文档修改')
+        }
         dirtyRef.current = true
         setDirty(true)
         onDirtyChangeRef.current?.(true)
@@ -1283,10 +1381,103 @@ export function DocxEditor({
     },
     [session],
   )
+  const exitReadingForWrite = useCallback(() => {
+    if (!readingRef.current || !session?.protection.getAccess().writable) return
+    readingRef.current = false
+    setReading(false)
+    editor?.setEditable(session?.protection.getAccess().writable ?? false, false)
+    setNotice('已退出阅读模式以编辑文档')
+  }, [editor, session])
+  const changeReading = useCallback(
+    (next: boolean) => {
+      readingRef.current = next
+      setReading(next)
+      editor?.setEditable(!next && (session?.protection.getAccess().writable ?? false), false)
+      if (next) {
+        setInspector(null)
+        setFindOpen(false)
+      }
+    },
+    [editor, session],
+  )
+  useEffect(() => {
+    editor?.setEditable(!reading && protectionAccess.writable, false)
+  }, [editor, reading, protectionAccess.writable])
+  // The existing find bar includes replace commands, so reveal it in editing view.
+  const openFind = useCallback(() => {
+    changeReading(false)
+    setFindOpen(true)
+  }, [changeReading])
+  useFindHotkey(openFind)
+  useEffect(() => {
+    const scroll = scrollRef.current
+    if (!scroll) return
+    const measure = () =>
+      setViewport((current) => {
+        const next = { width: scroll.clientWidth, height: scroll.clientHeight }
+        return current.width === next.width && current.height === next.height ? current : next
+      })
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(scroll)
+    return () => observer.disconnect()
+  }, [])
+  useEffect(() => {
+    if (navigation || !returnNavigationFocus.current) return
+    returnNavigationFocus.current = false
+    navigationTrigger.current?.focus()
+  }, [navigation])
+  const closeNavigation = () => {
+    returnNavigationFocus.current = true
+    setNavigation(false)
+  }
+  useEffect(() => {
+    if (!reading) return
+    const escape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.defaultPrevented) return
+      if (
+        event.target instanceof Element &&
+        event.target.closest('[data-toolbar-popup], .mimir-docx-inspector')
+      )
+        return
+      changeReading(false)
+      editor?.view.dom.focus()
+    }
+    const shell = containerRef.current?.closest('.mimir-editor')
+    shell?.addEventListener('keydown', escape as EventListener)
+    return () => shell?.removeEventListener('keydown', escape as EventListener)
+  }, [reading, changeReading, editor])
+  const subscribeDoc = useCallback(
+    (notify: () => void) => {
+      editor?.on('transaction', notify)
+      return () => {
+        editor?.off('transaction', notify)
+      }
+    },
+    [editor],
+  )
+  const readDoc = useCallback(() => editor?.state.doc ?? null, [editor])
+  const liveDoc = useSyncExternalStore(subscribeDoc, readDoc)
+  const inkController = useMemo(() => createInkController(session), [session])
+  const inkReason =
+    protectionReason ??
+    (session ? docxInkUnavailable(session.content, session.footnotes.parsed) : null)
+  useEffect(() => {
+    if (reading || !protectionAccess.writable)
+      inkController.update({ enabled: false, selected: null })
+  }, [reading, inkController, protectionAccess.writable])
+  const designState = liveDoc?.attrs[DESIGN_ATTR]
+  const designOptions = useMemo(() => {
+    const options = saveOptionsSnapshot.session === session ? saveOptionsSnapshot.options : {}
+    // Only design attrs belong to these save options, not the text being typed.
+    return session
+      ? docxDesignSaveOptions({ attrs: { [DESIGN_ATTR]: designState } }, options, session)
+      : options
+  }, [session, saveOptionsSnapshot, designState])
 
   useEffect(() => {
     if (!editor || !session) return
-    const handle = createDocxAgentHandle(editor, documentId, {
+    const nativeHandle = createDocxAgentHandle(editor, documentId, {
       isDirty: () => dirtyRef.current,
       headingLevels: session.headingLevels,
       session,
@@ -1299,14 +1490,44 @@ export function DocxEditor({
         onDirtyChangeRef.current?.(next)
       },
     })
+    // Keep one published handle for the entire editor/session. Reading never disposes it.
+    const readTools = new Set([
+      'get_document_context',
+      'read_blocks',
+      'read_revisions',
+      'read_comments',
+      'read_notes',
+      'list_styles',
+    ])
+    const handle: DocxAgentHandle = {
+      ...nativeHandle,
+      execute: (tool, args, options) => {
+        if (!readTools.has(tool)) exitReadingForWrite()
+        return nativeHandle.execute(tool, args, options)
+      },
+      beginDraft: (round) => {
+        exitReadingForWrite()
+        nativeHandle.beginDraft(round)
+      },
+      commitDraft: (round, options) => {
+        exitReadingForWrite()
+        return nativeHandle.commitDraft(round, options)
+      },
+      undoRound: (round) => {
+        exitReadingForWrite()
+        return nativeHandle.undoRound(round)
+      },
+    }
     agentHandleRef.current = handle
+    setOutlineHandle(handle)
     onAgentHandleChangeRef.current?.(handle)
     return () => {
       handle.dispose()
       if (agentHandleRef.current === handle) agentHandleRef.current = null
+      setOutlineHandle((current) => (current === handle ? null : current))
       onAgentHandleChangeRef.current?.(null)
     }
-  }, [editor, session, documentId])
+  }, [editor, session, documentId, exitReadingForWrite])
 
   const liveHeaderFooter = useMemo(() => {
     if (!session) return null
@@ -1358,15 +1579,14 @@ export function DocxEditor({
     )
   }, [session, saveOptionsSnapshot, editor])
   const liveSections = useMemo(() => {
-    if (!session || !editor) return NO_SECTIONS
+    if (!session || !editor || !liveDoc) return NO_SECTIONS
     const options = saveOptionsSnapshot.session === session ? saveOptionsSnapshot.options : {}
-    return docxAgentLiveSections(editor, session, options)
-  }, [session, editor, saveOptionsSnapshot])
+    return docxDesignSections(liveDoc, docxAgentLiveSections(editor, session, options))
+  }, [session, editor, saveOptionsSnapshot, liveDoc])
   useEffect(() => {
     if (!session) return
     let active = true
-    const options = saveOptionsSnapshot.session === session ? saveOptionsSnapshot.options : {}
-    liveDocxStyleState(session, options)
+    liveDocxStyleState(session, designOptions)
       .then((value) => {
         if (active) setStyleState({ session, parsed: value })
       })
@@ -1376,7 +1596,7 @@ export function DocxEditor({
     return () => {
       active = false
     }
-  }, [session, saveOptionsSnapshot])
+  }, [session, designOptions])
   const resolvedStyles =
     session && styleState?.session === session ? styleState.parsed : session?.footnotes.parsed
   useEffect(() => {
@@ -1409,12 +1629,119 @@ export function DocxEditor({
     } as CSSProperties
   }, [liveSections])
 
+  const firstPaper = liveSections[0]
+    ? sectionPageBox(liveSections[0].settings)
+    : { width: 816, height: 1056 }
+  const paper = {
+    width: liveSections.length ? paperWidthPx(liveSections) : 816,
+    height: firstPaper.height,
+  }
+  const zoom =
+    zoomMode === 'manual' || viewport.width <= 0
+      ? manualZoom
+      : docxFitZoom(zoomMode, viewport, paper)
+  const zoomRef = useRef(zoom)
+  useEffect(() => {
+    zoomRef.current = zoom
+  }, [zoom])
+  useEffect(
+    () => (editor ? installDocxScaledTableResize(editor, () => zoomRef.current) : undefined),
+    [editor],
+  )
+  const viewControls: DocxViewControlsProps = {
+    layout,
+    reading,
+    zoom,
+    zoomMode,
+    navigation,
+    split,
+    onSplit: () => {
+      if (split) {
+        setSplitSession(null)
+        splitTrigger.current?.focus()
+      } else {
+        const shell = containerRef.current?.closest('.mimir-editor')
+        const origin = [
+          ...(shell?.querySelectorAll<HTMLButtonElement>('[aria-label="拆分视图"]') ?? []),
+        ].find((button) => !button.closest('[hidden]'))
+        const sectionKey = origin?.closest<HTMLElement>('[data-section-key]')?.dataset.sectionKey
+        origin
+          ?.closest<HTMLElement>('[data-section-key]')
+          ?.querySelector<HTMLButtonElement>(':scope > .me-menu > button[aria-expanded="true"]')
+          ?.click()
+        splitTrigger.current = {
+          focus: () => {
+            const trigger =
+              [
+                ...(shell?.querySelectorAll<HTMLButtonElement>('[aria-label="拆分视图"]') ?? []),
+              ].find((button) => !button.closest('[hidden]')) ??
+              [...(shell?.querySelectorAll<HTMLElement>('[data-section-key]') ?? [])]
+                .find((section) => section.dataset.sectionKey === sectionKey)
+                ?.querySelector<HTMLButtonElement>(':scope > .me-menu > button') ??
+              shell?.querySelector<HTMLButtonElement>('[role="tab"][aria-selected="true"]')
+            if (trigger) trigger.focus()
+            else editor?.view.dom.focus()
+          },
+        }
+        setSplitSession(session)
+      }
+    },
+    disabled: session === null,
+    onLayout: (next) => {
+      changeReading(false)
+      setLayout(next)
+    },
+    onReading: changeReading,
+    onZoom: (next) => {
+      if (typeof next === 'number') {
+        setManualZoom(next)
+        setZoomMode('manual')
+      } else {
+        setLayout('print')
+        setZoomMode(next)
+      }
+    },
+    onNavigation: () => {
+      if (navigation) closeNavigation()
+      else {
+        setInspector(null)
+        const shell = containerRef.current?.closest('.mimir-editor')
+        navigationTrigger.current = {
+          focus: () => {
+            const trigger = [
+              ...(shell?.querySelectorAll<HTMLButtonElement>(
+                '[aria-label="文档导航"], [data-section-key="document-navigation"] > button, [data-section-key="reading-navigation"] > button',
+              ) ?? []),
+            ].find((button) => !button.closest('[hidden]'))
+            if (trigger) trigger.focus()
+            else editor?.view.dom.focus()
+          },
+        }
+        setNavigation(true)
+      }
+    },
+  }
+  const jumpPage = (requested: number) => {
+    const page = Math.max(1, Math.min(pageCount, Math.round(requested)))
+    const scroll = scrollRef.current
+    if (!scroll) return
+    const target =
+      page === 1
+        ? containerRef.current?.querySelector('.page-wrap')
+        : scroll.querySelectorAll('.page-gap')[page - 2]
+    if (!target) return
+    scroll.scrollTop += target.getBoundingClientRect().top - scroll.getBoundingClientRect().top
+    syncCurrentPage()
+  }
+
   /**
    * 分页：把连续流切成纸张（`src/pagination.ts`）。它插的是**装饰器**，
    * 不改文档内容——所以保存路径完全不受影响。
    */
   usePagination({
     editor,
+    enabled: layout === 'print',
+    scale: zoom,
     scrollRef,
     containerRef,
     /**
@@ -1440,7 +1767,13 @@ export function DocxEditor({
       saveOptionsRef.current = options
       setSaveOptionsSnapshot({ session, options: structuredClone(options) })
     }
-    const bytes = await session.save(editor.getJSON() as never, options)
+    let bytes: Uint8Array
+    try {
+      bytes = await session.save(editor.getJSON() as never, options)
+    } catch (cause) {
+      setNotice(cause instanceof Error ? cause.message : String(cause))
+      return
+    }
     const ok = await source.save(bytes, { name: 'document.docx', mime: OFFICE_MIME.docx })
     if (!ok) return
     if (agentHandleRef.current !== savingHandle) return
@@ -1454,19 +1787,62 @@ export function DocxEditor({
     onDirtyChange?.(pendingDraft)
   }
 
+  const exportSnapshot = async () => {
+    const handle = agentHandleRef.current
+    if (!session || !editor || !handle) return
+    if (exportRequest.current === handle) return
+    if (handle.hasPendingDraft()) {
+      setNotice('请先保留或丢弃 AI 草稿，再导出副本')
+      return
+    }
+    exportRequest.current = handle
+    const job = { session, documentId }
+    setExportJob(job)
+    const version = handle.getVersion()
+    try {
+      const options = structuredClone(
+        saveOptionsWithLiveNotes(
+          editor.state.doc,
+          session,
+          saveOptionsWithLiveComments(editor.state.doc, session, saveOptionsRef.current),
+        ),
+      )
+      const bytes = await session.save(editor.getJSON() as never, options)
+      if (agentHandleRef.current !== handle) return
+      if (handle.getVersion() !== version || handle.hasPendingDraft()) {
+        setNotice('文档已变化，请重新导出副本')
+        return
+      }
+      downloadDocxSnapshot(bytes)
+      setNotice('已导出当前副本')
+    } catch (cause) {
+      if (agentHandleRef.current === handle)
+        setNotice(`导出失败：${cause instanceof Error ? cause.message : String(cause)}`)
+    } finally {
+      if (exportRequest.current === handle) exportRequest.current = null
+      setExportJob((current) => (current === job ? null : current))
+    }
+  }
+
   const status = statusText({
     handle: source,
     dirty,
     // 页码跟随滚动。`min` 只是防越界：分页重排的那一帧里 gap 数量与
     // pageCount 可能差一，显示越界页码比慢半拍更难看
-    idle: session ? `第 ${Math.min(currentPage, pageCount)} / 共 ${pageCount} 页` : '读取中…',
+    idle: session
+      ? `${protectionAccess.commentsOnly ? '仅批注 · 正文只读 · ' : protectionReason ? '原件只读 · ' : reading ? '阅读 · ' : ''}${layout === 'print' ? `第 ${Math.min(currentPage, pageCount)} / 共 ${pageCount} 页` : 'Web 布局'} · ${Math.round(zoom * 100)}%`
+      : '读取中…',
   })
 
   /**
    * 查找/替换的适配器。按编辑器实例缓存（见 `docxFindAdapter` 的说明），
    * 所以这里每次渲染调用它是幂等的——不会因为新建对象而让那条栏每帧重扫。
    */
-  const findAdapter = editor === null ? null : docxFindAdapter(editor)
+  const editableFindAdapter = editor === null ? null : docxFindAdapter(editor)
+  const findAdapter =
+    !protectionAccess.writable && editableFindAdapter
+      ? { ...editableFindAdapter, replaceOne: undefined, replaceAll: undefined }
+      : editableFindAdapter
 
   if (source.loadError !== null) {
     return (
@@ -1496,164 +1872,200 @@ export function DocxEditor({
       flush={flush}
       toolbar={
         <>
-          <DocxToolbar
-            key={documentId}
-            onOpenInspector={(label, content, trigger) => {
-              inspectorTrigger.current = trigger
-              setInspector((current) =>
-                current?.session === session && current.label === label
-                  ? null
-                  : { session, label, content },
-              )
-            }}
-            inspectorLabel={inspector?.label}
-            editor={editor}
-            disabled={session === null}
-            saveAction={
-              <ToolbarButton
-                label={source.saving ? '保存中…' : '保存到库'}
-                disabled={session === null || !dirty || source.saving}
-                disabledReason={
-                  session === null
-                    ? '文档还没读完'
-                    : source.saving
-                      ? '正在保存…'
-                      : '没有未保存的改动'
-                }
-                onClick={() => void save()}
-              >
-                <SaveIcon />
-              </ToolbarButton>
-            }
-            headingLevels={session?.headingLevels ?? NO_LEVELS}
-            findOpen={findOpen}
-            onToggleFind={() => setFindOpen((open) => !open)}
-            onNotice={setNotice}
-            headerText={liveHeaderFooter?.header?.text ?? ''}
-            footerText={liveHeaderFooter?.footer?.text ?? ''}
-            onSetHeaderFooter={async (kind, text) => {
-              const handle = agentHandleRef.current
-              if (!handle) {
-                setNotice('文档还没读完，请稍后再试')
-                return false
-              }
-              try {
-                const result = await handle.execute('set_header_footer', { kind, text })
-                setNotice(result.summary)
-                return true
-              } catch (cause) {
-                setNotice(cause instanceof Error ? cause.message : String(cause))
-                return false
-              }
-            }}
-            advanced={
-              session
-                ? {
-                    session,
-                    options:
-                      saveOptionsSnapshot.session === session ? saveOptionsSnapshot.options : {},
-                    sections: liveSections,
-                    execute: async (tool, args, expectedVersion) => {
-                      const handle = agentHandleRef.current
-                      if (!handle || handle.documentId !== documentId || editor?.isDestroyed) {
-                        setNotice('当前文档已关闭，请重新打开操作面板')
-                        return null
-                      }
-                      const roundId = `manual-structure-${crypto.randomUUID()}`
-                      try {
-                        const result = await handle.execute(tool, args, {
-                          ...(expectedVersion >= 0 ? { expectedVersion } : {}),
-                          roundId,
-                        })
-                        if (result.changed) {
-                          setManualStructureRound({ session, documentId, id: roundId })
-                          setNotice(result.summary)
-                        }
-                        return result
-                      } catch (cause) {
-                        setNotice(cause instanceof Error ? cause.message : String(cause))
-                        return null
-                      }
-                    },
-                  }
-                : undefined
-            }
-            onUndoStructure={
-              manualStructureRound?.session === session &&
-              manualStructureRound?.documentId === documentId
-                ? () => {
-                    const undone = agentHandleRef.current?.undoRound(manualStructureRound.id)
-                    setManualStructureRound(null)
-                    if (undone) setInspector(null)
-                    if (!undone) setNotice('文档已发生其他修改，无法撤销这一步')
-                  }
-                : undefined
-            }
-            noteVersion={() => agentHandleRef.current?.getVersion() ?? -1}
-            onInsertNote={async (kind, text, selection) => {
-              const handle = agentHandleRef.current
-              if (!handle || !editor || handle.documentId !== documentId) {
-                setNotice('文档还没读完，请稍后再试')
-                return false
-              }
-              if (editor.state.doc !== selection.doc) {
-                setNotice('正文已变化，请重新定位注释位置')
-                return false
-              }
-              const target = resolveDocxNoteTarget(selection.doc, selection.from, selection.to)
-              if (!target) {
-                setNotice('只能在同一段落的文字中插入脚注或尾注')
-                return false
-              }
-              try {
-                const result = await handle.execute(
-                  kind === 'footnote' ? 'insert_footnote' : 'insert_endnote',
-                  { ...target, text },
-                  { expectedVersion: selection.version },
+          <div className="mimir-docx-edit-toolbar" hidden={reading}>
+            <DocxToolbar
+              key={documentId}
+              viewControls={viewControls}
+              inkController={inkController}
+              inkReason={inkReason}
+              onOpenInspector={(label, content, trigger) => {
+                setNavigation(false)
+                inspectorTrigger.current = trigger
+                setInspector((current) =>
+                  current?.session === session && current.label === label
+                    ? null
+                    : { session, label, content },
                 )
-                setNotice(result.summary)
-                return true
-              } catch (cause) {
-                setNotice(cause instanceof Error ? cause.message : String(cause))
-                return false
+              }}
+              inspectorLabel={inspector?.label}
+              editor={editor}
+              disabled={session === null || !protectionAccess.writable}
+              protectionReason={protectionReason}
+              onExportSnapshot={() => void exportSnapshot()}
+              exporting={exportJob?.session === session && exportJob?.documentId === documentId}
+              saveAction={
+                <ToolbarButton
+                  label={source.saving ? '保存中…' : '保存到库'}
+                  disabled={session === null || !dirty || source.saving}
+                  disabledReason={
+                    session === null
+                      ? '文档还没读完'
+                      : source.saving
+                        ? '正在保存…'
+                        : '没有未保存的改动'
+                  }
+                  onClick={() => void save()}
+                >
+                  <SaveIcon />
+                </ToolbarButton>
               }
-            }}
-            onAddComment={async (comment, selection) => {
-              const handle = agentHandleRef.current
-              if (!handle || !editor) {
-                setNotice('文档还没读完，请稍后再试')
-                return false
+              headingLevels={session?.headingLevels ?? NO_LEVELS}
+              findOpen={findOpen}
+              onToggleFind={() => setFindOpen((open) => !open)}
+              onNotice={setNotice}
+              headerText={liveHeaderFooter?.header?.text ?? ''}
+              footerText={liveHeaderFooter?.footer?.text ?? ''}
+              onSetHeaderFooter={async (kind, text) => {
+                const handle = agentHandleRef.current
+                if (!handle) {
+                  setNotice('文档还没读完，请稍后再试')
+                  return false
+                }
+                try {
+                  const result = await handle.execute('set_header_footer', { kind, text })
+                  setNotice(result.summary)
+                  return true
+                } catch (cause) {
+                  setNotice(cause instanceof Error ? cause.message : String(cause))
+                  return false
+                }
+              }}
+              advanced={
+                session
+                  ? {
+                      session,
+                      options:
+                        saveOptionsSnapshot.session === session ? saveOptionsSnapshot.options : {},
+                      sections: liveSections,
+                      execute: async (tool, args, expectedVersion) => {
+                        const handle = agentHandleRef.current
+                        if (!handle || handle.documentId !== documentId || editor?.isDestroyed) {
+                          setNotice('当前文档已关闭，请重新打开操作面板')
+                          return null
+                        }
+                        const roundId = `manual-structure-${crypto.randomUUID()}`
+                        try {
+                          const result = await handle.execute(tool, args, {
+                            ...(expectedVersion >= 0 ? { expectedVersion } : {}),
+                            roundId,
+                          })
+                          if (result.changed) {
+                            setManualStructureRound({ session, documentId, id: roundId })
+                            setNotice(result.summary)
+                          }
+                          return result
+                        } catch (cause) {
+                          setNotice(cause instanceof Error ? cause.message : String(cause))
+                          return null
+                        }
+                      },
+                    }
+                  : undefined
               }
-              if (editor.state.doc !== selection.doc) {
-                setNotice('正文已变化，请重新选择文字后添加批注')
-                return false
+              onUndoStructure={
+                manualStructureRound?.session === session &&
+                manualStructureRound?.documentId === documentId
+                  ? () => {
+                      const undone = agentHandleRef.current?.undoRound(manualStructureRound.id)
+                      setManualStructureRound(null)
+                      if (undone) setInspector(null)
+                      if (!undone) setNotice('文档已发生其他修改，无法撤销这一步')
+                    }
+                  : undefined
               }
-              const { from, to } = selection
-              const target = resolveDocxCommentTarget(editor.state.doc, from, to)
-              if (!target) {
-                setNotice('一次只能给同一段文字添加批注')
-                return false
+              noteVersion={() => agentHandleRef.current?.getVersion() ?? -1}
+              onInsertNote={async (kind, text, selection) => {
+                const handle = agentHandleRef.current
+                if (!handle || !editor || handle.documentId !== documentId) {
+                  setNotice('文档还没读完，请稍后再试')
+                  return false
+                }
+                if (editor.state.doc !== selection.doc) {
+                  setNotice('正文已变化，请重新定位注释位置')
+                  return false
+                }
+                const target = resolveDocxNoteTarget(selection.doc, selection.from, selection.to)
+                if (!target) {
+                  setNotice('只能在同一段落的文字中插入脚注或尾注')
+                  return false
+                }
+                try {
+                  const result = await handle.execute(
+                    kind === 'footnote' ? 'insert_footnote' : 'insert_endnote',
+                    { ...target, text },
+                    { expectedVersion: selection.version },
+                  )
+                  setNotice(result.summary)
+                  return true
+                } catch (cause) {
+                  setNotice(cause instanceof Error ? cause.message : String(cause))
+                  return false
+                }
+              }}
+              onAddComment={async (comment, selection) => {
+                const handle = agentHandleRef.current
+                if (!handle || !editor) {
+                  setNotice('文档还没读完，请稍后再试')
+                  return false
+                }
+                if (editor.state.doc !== selection.doc) {
+                  setNotice('正文已变化，请重新选择文字后添加批注')
+                  return false
+                }
+                const { from, to } = selection
+                const target = resolveDocxCommentTarget(editor.state.doc, from, to)
+                if (!target) {
+                  setNotice('一次只能给同一段文字添加批注')
+                  return false
+                }
+                const { selected } = target
+                if (
+                  selected &&
+                  target.text.indexOf(selected) !== target.text.lastIndexOf(selected)
+                ) {
+                  setNotice('选中文字在本段重复，请选一段更具体的文字再添加批注')
+                  return false
+                }
+                try {
+                  const result = await handle.execute('add_comment', {
+                    blockIndex: target.index,
+                    comment,
+                    author: '用户',
+                    ...(selected ? { text: selected } : {}),
+                  })
+                  setNotice(result.summary)
+                  return true
+                } catch (cause) {
+                  setNotice(cause instanceof Error ? cause.message : String(cause))
+                  return false
+                }
+              }}
+            />
+          </div>
+          {reading && (
+            <DocxReadingControls
+              {...viewControls}
+              saveAction={
+                <ToolbarButton
+                  label={source.saving ? '保存中…' : '保存到库'}
+                  disabled={session === null || !dirty || source.saving}
+                  onClick={() => void save()}
+                >
+                  <SaveIcon />
+                </ToolbarButton>
               }
-              const { selected } = target
-              if (selected && target.text.indexOf(selected) !== target.text.lastIndexOf(selected)) {
-                setNotice('选中文字在本段重复，请选一段更具体的文字再添加批注')
-                return false
+              exportAction={
+                <ToolbarButton
+                  label="导出当前 DOCX 副本"
+                  disabled={session === null || exportJob?.session === session}
+                  onClick={() => void exportSnapshot()}
+                >
+                  <Download size={14} />
+                  导出副本
+                </ToolbarButton>
               }
-              try {
-                const result = await handle.execute('add_comment', {
-                  blockIndex: target.index,
-                  comment,
-                  author: '用户',
-                  ...(selected ? { text: selected } : {}),
-                })
-                setNotice(result.summary)
-                return true
-              } catch (cause) {
-                setNotice(cause instanceof Error ? cause.message : String(cause))
-                return false
-              }
-            }}
-          />
+            />
+          )}
         </>
       }
       /*
@@ -1662,7 +2074,7 @@ export function DocxEditor({
         没打开时不传这个槽位，不留一条空行。
       */
       subbar={
-        findOpen ? (
+        findOpen && !reading ? (
           <FindReplaceBar
             adapter={findAdapter}
             query={findQuery}
@@ -1682,6 +2094,18 @@ export function DocxEditor({
             写法分叉。状态行是 flex + space-between，一长句原因不能 nowrap。
           */}
           {notice !== null && notice !== '' && <ToolbarNotice>{notice}</ToolbarNotice>}
+          {protectionReason && (
+            <ToolbarLabel>
+              {protectionAccess.recommendedChoice
+                ? '建议只读 · 审阅中可选择继续编辑'
+                : protectionAccess.commentsOnly
+                  ? '仅批注 · 正文只读'
+                  : '原件保护 · 仅只读保留'}
+            </ToolbarLabel>
+          )}
+          {inkReason && inkReason !== protectionReason && (
+            <ToolbarNotice>{inkReason}</ToolbarNotice>
+          )}
           {session && (
             <ToolbarLabel>{session.blocks.filter((b) => !b.hidden).length} 个块</ToolbarLabel>
           )}
@@ -1700,18 +2124,104 @@ export function DocxEditor({
       */}
       <div className="mimir-docx-workspace" data-docx-style-scope={styleScope}>
         <style>{`@scope ([data-docx-style-scope="${styleScope}"]) { ${documentStyleCss} }`}</style>
-        <div
-          ref={scrollRef}
-          className={`me-scroll mimir-docx-scroll${appearance === 'dark' ? ' page-dark' : ''}`}
-        >
-          <div ref={containerRef} className="editor-scroll mimir-office">
-            <div className="page-wrap" style={pageStyle}>
-              <div className="doc-page">
-                <EditorContent editor={editor} />
+        {editor && session && resolvedStyles && (
+          <DocxDesignPreview
+            editor={editor}
+            session={session}
+            options={designOptions}
+            sections={liveSections}
+            fonts={resolvedStyles.themeFonts}
+            colors={resolvedStyles.themeColors}
+            dark={appearance === 'dark'}
+            onError={setNotice}
+          />
+        )}
+        {editor && session && resolvedStyles && (
+          <DocxTableDesignPreview
+            editor={editor}
+            session={session}
+            styles={resolvedStyles.styles}
+            scope={styleScope}
+            onError={setNotice}
+          />
+        )}
+        <div className="mimir-docx-document-stack">
+          <div
+            ref={scrollRef}
+            data-docx-layout={layout}
+            data-docx-reading={reading}
+            className={`me-scroll mimir-docx-scroll${appearance === 'dark' ? ' page-dark' : ''}`}
+          >
+            <div ref={containerRef} className="editor-scroll mimir-office">
+              <div
+                className="page-wrap doc-zoom"
+                style={
+                  {
+                    ...pageStyle,
+                    zoom,
+                    '--docx-web-width': `${Math.max(1, viewport.width - 32) / zoom}px`,
+                  } as CSSProperties
+                }
+              >
+                <div className="doc-page">
+                  <EditorContent editor={editor} />
+                </div>
+                {editor && liveDoc && (
+                  <DocxInkOverlay
+                    editor={editor}
+                    controller={inkController}
+                    doc={liveDoc}
+                    zoom={zoom}
+                    reading={reading}
+                    reason={inkReason}
+                    onError={setNotice}
+                  />
+                )}
               </div>
             </div>
           </div>
+          {split && (
+            <DocxSplitView
+              key={documentId}
+              doc={liveDoc?.toJSON() ?? null}
+              numbering={editor?.storage.listNumbering.defs}
+              onClose={() => {
+                setSplitSession(null)
+                splitTrigger.current?.focus()
+              }}
+            />
+          )}
         </div>
+        {navigation && editor && session && (
+          <DocxViewPanel
+            headings={docxHeadings(liveDoc, resolvedStyles?.styles)}
+            context={{ documentId, editor, session, handle: outlineHandle }}
+            page={Math.min(currentPage, pageCount)}
+            pages={pageCount}
+            paginated={layout === 'print'}
+            onPage={jumpPage}
+            onClose={closeNavigation}
+            onHeading={(position) => {
+              if (!editor) return
+              editor.commands.setTextSelection(position + 1)
+              const target = editor.view.nodeDOM(position)
+              if (target instanceof HTMLElement) target.scrollIntoView({ block: 'start' })
+            }}
+            onEditHeading={(position) => {
+              session.protection.assertWrite()
+              exitReadingForWrite()
+              // Editing must keep focus in the unique live editor, including overlay widths.
+              if ((scrollRef.current?.closest('.mimir-docx-workspace')?.clientWidth ?? 0) <= 800) {
+                returnNavigationFocus.current = false
+                setNavigation(false)
+              }
+              editor.commands.setTextSelection(position + 1)
+              const target = editor.view.nodeDOM(position)
+              if (target instanceof HTMLElement) target.scrollIntoView({ block: 'start' })
+              editor.view.dom.focus({ preventScroll: true })
+            }}
+          />
+        )}
         {inspector && (
           <aside
             ref={inspectorRef}
@@ -1755,6 +2265,12 @@ export interface DocxToolbarProps {
   editor: Editor | null
   disabled: boolean
   saveAction?: ReactNode
+  viewControls?: DocxViewControlsProps
+  inkController?: InkController
+  protectionReason?: string | null
+  inkReason?: string | null
+  onExportSnapshot?: () => void
+  exporting?: boolean
   headingLevels: readonly number[]
   findOpen: boolean
   onToggleFind: () => void
@@ -1796,6 +2312,12 @@ export function DocxToolbar({
   editor,
   disabled,
   saveAction,
+  viewControls,
+  inkController,
+  inkReason = null,
+  protectionReason = null,
+  onExportSnapshot,
+  exporting = false,
   headingLevels,
   findOpen,
   onToggleFind,
@@ -2030,6 +2552,12 @@ export function DocxToolbar({
   )
   const additionalFontControls = (
     <ToolbarGroup label="其他字符格式">
+      <DocxCaseControls
+        editor={editor}
+        disabled={disabled}
+        onResult={(result) => onNotice(result.message)}
+        onError={onNotice}
+      />
       <ToolbarButton
         label="删除线"
         active={state.strike}
@@ -2144,7 +2672,7 @@ export function DocxToolbar({
         label="项目符号列表"
         active={state.listKind === 'bullet'}
         disabled={disabled}
-        onClick={() => toggleList(editor, 'bullet')}
+        onClick={() => toggleDocxList(editor, 'bullet')}
       >
         <BulletListIcon />
       </ToolbarButton>
@@ -2152,7 +2680,7 @@ export function DocxToolbar({
         label="编号列表"
         active={state.listKind === 'ordered'}
         disabled={disabled}
-        onClick={() => toggleList(editor, 'ordered')}
+        onClick={() => toggleDocxList(editor, 'ordered')}
       >
         <OrderedListIcon />
       </ToolbarButton>
@@ -2232,29 +2760,88 @@ export function DocxToolbar({
       </ToolbarGroup>
     </>
   )
-  const tableControls = table ? (
-    <TableMenu editor={editor} table={table} />
-  ) : (
-    <ToolbarButton label="表格操作" disabled disabledReason="将光标放在表格中可编辑表格">
-      <TableIcon />
-    </ToolbarButton>
-  )
+  const tableControls =
+    table && !disabled ? (
+      <TableMenu editor={editor} table={table} />
+    ) : (
+      <ToolbarButton label="表格操作" disabled disabledReason="将光标放在表格中可编辑表格">
+        <TableIcon />
+      </ToolbarButton>
+    )
   const advancedMenu = (
     label: string,
     Controls: (props: { context: DocxAdvancedContext }) => ReactNode,
+    disabledReason?: string,
   ) =>
-    advanced && editor && noteVersion ? (
+    advanced && editor && noteVersion && !disabledReason ? (
       onOpenInspector ? (
         <ToolbarButton
           label={label}
+          disabled={
+            (disabled && !['对比文档', '文档保护', '管理批注'].includes(label)) || !!disabledReason
+          }
+          disabledReason={disabledReason ?? protectionReason ?? undefined}
           active={inspectorLabel === label}
           ref={(node) => {
             if (node) panelTriggers.current.set(label, node)
             else panelTriggers.current.delete(label)
           }}
           onClick={() => {
-            const content = advancedPanel(Controls, { ...advanced, editor, version: noteVersion() })
-            onOpenInspector(label, content, panelTriggers.current.get(label) ?? null)
+            const context = {
+              ...advanced,
+              editor,
+              version: noteVersion(),
+              compare: { getVersion: noteVersion },
+              ...(inkController ? { ink: { controller: inkController, reason: inkReason } } : {}),
+            }
+            const content = advancedPanel(Controls, context)
+            const originShell = editor.view.dom.closest('.mimir-editor')
+            const origin = Array.from(
+              originShell?.querySelectorAll<HTMLButtonElement>('button[aria-label]') ?? [],
+            ).find((button) => button.getAttribute('aria-label') === label)
+            const sectionKey =
+              origin?.closest<HTMLElement>('[data-section-key]')?.dataset.sectionKey
+            if (
+              sectionKey === 'ink-tools' ||
+              sectionKey === 'document-compare' ||
+              sectionKey === 'document-protection' ||
+              label === '管理批注'
+            )
+              origin
+                ?.closest<HTMLElement>('[data-section-key]')
+                ?.querySelector<HTMLButtonElement>(
+                  ':scope > .me-menu > button[aria-haspopup="menu"][aria-expanded="true"]',
+                )
+                ?.click()
+            // Ribbon layout can remount its controls while the Inspector opens/closes.
+            // Resolve the mounted trigger after closing instead of retaining its old node.
+            onOpenInspector(label, content, {
+              focus: () => {
+                const shell = editor.view.dom.closest('.mimir-editor')
+                const trigger = Array.from(
+                  shell?.querySelectorAll<HTMLButtonElement>('button[aria-label]') ?? [],
+                ).find((button) => button.getAttribute('aria-label') === label)
+                // Resolve the native button too: antd's imperative handle can be absent
+                // during a Ribbon remount or in a non-layout test environment.
+                if (trigger) trigger.focus()
+                else {
+                  const section = Array.from(
+                    shell?.querySelectorAll<HTMLElement>('[data-section-key]') ?? [],
+                  ).find((group) => group.dataset.sectionKey === sectionKey)
+                  const collapsedTrigger = section?.querySelector<HTMLButtonElement>(
+                    'button[aria-haspopup="menu"]',
+                  )
+                  if (collapsedTrigger) collapsedTrigger.focus()
+                  else if (section) panelTriggers.current.get(label)?.focus()
+                  else
+                    shell
+                      ?.querySelector<HTMLButtonElement>(
+                        '.mimir-compact-toolbar__tabs [role="tab"][aria-selected="true"]',
+                      )
+                      ?.focus()
+                }
+              },
+            })
           }}
         >
           {label}
@@ -2265,12 +2852,18 @@ export function DocxToolbar({
           text={label}
           panelWidth={330}
           renderPanel={() =>
-            advancedPanel(Controls, { ...advanced, editor, version: noteVersion() })
+            advancedPanel(Controls, {
+              ...advanced,
+              editor,
+              version: noteVersion(),
+              compare: { getVersion: noteVersion },
+              ...(inkController ? { ink: { controller: inkController, reason: inkReason } } : {}),
+            })
           }
         />
       )
     ) : (
-      <ToolbarButton label={label} disabled disabledReason="文档还没读完">
+      <ToolbarButton label={label} disabled disabledReason={disabledReason ?? '文档还没读完'}>
         {label}
       </ToolbarButton>
     )
@@ -2278,13 +2871,25 @@ export function DocxToolbar({
     <>
       {advancedMenu('图表', DocxChartControls)}
       {advancedMenu('文本框', DocxTextboxControls)}
-      <ToolbarMenu
-        label="插入表格"
-        icon={<TableIcon />}
-        renderPanel={() => <InsertTablePanel editor={editor} />}
-      />
+      {advancedMenu('目录', DocxTocControls)}
+      {advancedMenu(
+        '图片格式',
+        DocxImageControls,
+        state.inImage ? undefined : '请先在正文中选中一张图片',
+      )}
+      {protectionReason ? (
+        <ToolbarButton label="插入表格" disabled disabledReason={protectionReason}>
+          <TableIcon />
+        </ToolbarButton>
+      ) : (
+        <ToolbarMenu
+          label="插入表格"
+          icon={<TableIcon />}
+          renderPanel={() => <InsertTablePanel editor={editor} />}
+        />
+      )}
       <ToolbarGroup label="插入">
-        {onInsertNote && noteVersion ? (
+        {onInsertNote && noteVersion && !protectionReason ? (
           <>
             {(['footnote', 'endnote'] as const).map((kind) => (
               <ToolbarMenu
@@ -2323,11 +2928,19 @@ export function DocxToolbar({
         >
           <ImageIcon />
         </ToolbarFileButton>
-        <ToolbarMenu
-          label="插入链接"
-          icon={<LinkIcon />}
-          renderPanel={(close) => <LinkPanel editor={editor} current={state.link} onDone={close} />}
-        />
+        {protectionReason ? (
+          <ToolbarButton label="插入链接" disabled disabledReason={protectionReason}>
+            <LinkIcon />
+          </ToolbarButton>
+        ) : (
+          <ToolbarMenu
+            label="插入链接"
+            icon={<LinkIcon />}
+            renderPanel={(close) => (
+              <LinkPanel editor={editor} current={state.link} onDone={close} />
+            )}
+          />
+        )}
         <ToolbarButton
           label="插入分页符 (Ctrl+Enter)"
           disabled={disabled}
@@ -2342,36 +2955,37 @@ export function DocxToolbar({
     <ToolbarButton
       label="查找和替换 (Ctrl+F)"
       active={findOpen}
-      disabled={disabled}
+      disabled={disabled && !protectionReason}
       onClick={onToggleFind}
     >
       <FindIcon />
     </ToolbarButton>
   )
-  const headerFooterControl = onSetHeaderFooter ? (
-    <ToolbarMenu
-      label="页眉和页脚"
-      text="页眉页脚"
-      panelWidth={300}
-      renderPanel={(close) => (
-        <HeaderFooterPanel
-          headerText={headerText}
-          footerText={footerText}
-          onApply={onSetHeaderFooter}
-          onDone={close}
-        />
-      )}
-    />
-  ) : (
-    <ToolbarButton label="页眉和页脚" disabled disabledReason="文档还没读完">
-      页眉页脚
-    </ToolbarButton>
-  )
+  const headerFooterControl =
+    onSetHeaderFooter && !disabled ? (
+      <ToolbarMenu
+        label="页眉和页脚"
+        text="页眉页脚"
+        panelWidth={300}
+        renderPanel={(close) => (
+          <HeaderFooterPanel
+            headerText={headerText}
+            footerText={footerText}
+            onApply={onSetHeaderFooter}
+            onDone={close}
+          />
+        )}
+      />
+    ) : (
+      <ToolbarButton label="页眉和页脚" disabled disabledReason="文档还没读完">
+        页眉页脚
+      </ToolbarButton>
+    )
   const reviewControls = (
     <>
       {advancedMenu('管理批注', DocxCommentControls)}
       {advancedMenu('管理脚注与尾注', DocxNoteControls)}
-      {onAddComment && editor ? (
+      {onAddComment && editor && !disabled ? (
         <ToolbarMenu
           label="添加批注"
           text="批注"
@@ -2381,7 +2995,11 @@ export function DocxToolbar({
           )}
         />
       ) : (
-        <ToolbarButton label="添加批注" disabled disabledReason="文档还没读完">
+        <ToolbarButton
+          label="添加批注"
+          disabled
+          disabledReason={protectionReason ?? '文档还没读完'}
+        >
           批注
         </ToolbarButton>
       )}
@@ -2389,7 +3007,13 @@ export function DocxToolbar({
         label="修订"
         icon={<TrackChangesIcon />}
         text={state.trackChanges ? '修订中' : undefined}
-        renderPanel={() => <RevisionsPanel editor={editor} enabled={state.trackChanges} />}
+        renderPanel={() => (
+          <RevisionsPanel
+            editor={editor}
+            enabled={state.trackChanges}
+            protectionReason={protectionReason}
+          />
+        )}
       />
       <ToolbarButton
         label={state.spellcheck ? '关闭拼写检查' : '打开拼写检查'}
@@ -2425,12 +3049,34 @@ export function DocxToolbar({
       tabs={[
         { key: 'home', label: '开始' },
         { key: 'insert', label: '插入' },
+        ...(state.inImage ? [{ key: 'picture', label: '图片格式' }] : []),
+        { key: 'design', label: '设计' },
+        { key: 'draw', label: '绘图' },
         { key: 'layout', label: '布局' },
+        { key: 'references', label: '引用' },
         { key: 'review', label: '审阅' },
         { key: 'table', label: '表格' },
         { key: 'view', label: '视图' },
       ]}
       sections={[
+        ...(inkController
+          ? [
+              {
+                key: 'ink-tools',
+                label: '墨迹',
+                tab: 'draw',
+                minWidth: 0,
+                content: (
+                  <DocxInkRibbon
+                    controller={inkController}
+                    disabled={disabled}
+                    reason={inkReason}
+                    settings={advancedMenu('笔迹设置', DocxInkInspector)}
+                  />
+                ),
+              },
+            ]
+          : []),
         {
           key: 'style',
           label: '样式',
@@ -2454,7 +3100,18 @@ export function DocxToolbar({
           content: additionalFontControls,
         },
         { key: 'alignment', label: '对齐', tab: 'home', minWidth: 0, content: alignControls },
-        { key: 'lists', label: '项目符号', tab: 'home', minWidth: 0, content: listControls },
+        {
+          key: 'lists',
+          label: '列表',
+          tab: 'home',
+          minWidth: 0,
+          content: (
+            <>
+              {listControls}
+              {advancedMenu('列表设置', DocxListControls)}
+            </>
+          ),
+        },
         {
           key: 'insert',
           label: '表格、图片与链接',
@@ -2462,7 +3119,67 @@ export function DocxToolbar({
           minWidth: 0,
           content: insertControls,
         },
+        {
+          key: 'picture-tools',
+          label: '调整选中图片',
+          tab: 'picture',
+          minWidth: 0,
+          content: advancedMenu(
+            '图片格式',
+            DocxImageControls,
+            state.inImage ? undefined : '请先在正文中选中一张图片',
+          ),
+        },
+        {
+          key: 'references-toc',
+          label: '目录',
+          tab: 'references',
+          minWidth: 0,
+          content: advancedMenu('目录与更新', DocxReferencesControls),
+        },
+        {
+          key: 'references-caption',
+          label: '题注',
+          tab: 'references',
+          minWidth: 0,
+          content: advancedMenu('题注', DocxCaptionControls),
+        },
+        {
+          key: 'references-citation',
+          label: '引文与书目',
+          tab: 'references',
+          minWidth: 0,
+          content: advancedMenu('引文与来源', DocxCitationControls),
+        },
+        {
+          key: 'references-index',
+          label: '索引',
+          tab: 'references',
+          minWidth: 0,
+          content: advancedMenu('索引', DocxIndexControls),
+        },
+        {
+          key: 'references-field',
+          label: '域',
+          tab: 'references',
+          minWidth: 0,
+          content: advancedMenu('原生域', DocxFieldControls),
+        },
         { key: 'paragraph', label: '段落', tab: 'layout', minWidth: 0, content: paragraphControls },
+        {
+          key: 'design-theme',
+          label: '文档格式',
+          tab: 'design',
+          minWidth: 0,
+          content: advancedMenu('主题与字体', DocxThemeControls),
+        },
+        {
+          key: 'design-background',
+          label: '页面背景',
+          tab: 'design',
+          minWidth: 0,
+          content: advancedMenu('页面颜色与边框', DocxPageBackgroundControls),
+        },
         {
           key: 'page-setup',
           label: '页面与节',
@@ -2500,9 +3217,87 @@ export function DocxToolbar({
           minWidth: 0,
           content: headerFooterControl,
         },
+        {
+          key: 'document-compare',
+          label: '文档对比',
+          tab: 'review',
+          minWidth: 0,
+          content: advancedMenu('对比文档', DocxCompareInspector),
+        },
+        {
+          key: 'document-protection',
+          label: '保护',
+          tab: 'review',
+          minWidth: 0,
+          content: advancedMenu('文档保护', DocxProtectionControls),
+        },
         { key: 'review', label: '修订与拼写', tab: 'review', minWidth: 0, content: reviewControls },
         { key: 'table', label: '表格操作', tab: 'table', minWidth: 0, content: tableControls },
+        {
+          key: 'table-design',
+          label: '表格设计',
+          tab: 'table',
+          minWidth: 0,
+          content: advancedMenu(
+            '表格设计与属性',
+            DocxTableDesignControls,
+            editor && selectedDocxTable(editor) ? undefined : '请先选择表格或将光标放在表格内',
+          ),
+        },
+        ...(viewControls
+          ? [
+              {
+                key: 'document-view',
+                label: '文档视图',
+                tab: 'view',
+                minWidth: 0,
+                content: <DocxLayoutControls {...viewControls} />,
+              },
+              {
+                key: 'document-zoom',
+                label: '显示比例',
+                tab: 'view',
+                minWidth: 0,
+                content: <DocxZoomControls {...viewControls} />,
+              },
+              {
+                key: 'document-split',
+                label: '拆分',
+                tab: 'view',
+                minWidth: 0,
+                content: <DocxSplitControl {...viewControls} />,
+              },
+              {
+                key: 'document-navigation',
+                label: '导航',
+                tab: 'view',
+                minWidth: 0,
+                content: <DocxNavigationControl {...viewControls} />,
+              },
+            ]
+          : []),
         { key: 'find', label: '查找与替换', tab: 'view', minWidth: 0, content: findControl },
+        ...(onExportSnapshot
+          ? [
+              {
+                key: 'export-current',
+                label: '导出',
+                tab: 'view',
+                minWidth: 0,
+                content: (
+                  <ToolbarButton
+                    label="导出当前 DOCX 副本"
+                    disabled={(disabled && !protectionReason) || exporting}
+                    disabledReason={exporting ? '正在生成副本…' : '文档还没读完'}
+                    onClick={onExportSnapshot}
+                  >
+                    <Download size={14} />
+                    {exporting ? '生成中…' : '导出副本'}
+                  </ToolbarButton>
+                ),
+              },
+            ]
+          : []),
       ]}
     />
   )
@@ -2729,6 +3524,12 @@ function ParagraphSpacingMenu({
   state: DocxSnapshot
   disabled: boolean
 }) {
+  if (disabled)
+    return (
+      <ToolbarButton label="段落间距与缩进" disabled disabledReason="当前文档不允许修改段落格式">
+        段落间距与缩进
+      </ToolbarButton>
+    )
   return (
     <ToolbarMenu
       label="段落间距与缩进"
@@ -2802,6 +3603,12 @@ function LineRuleMenu({
   state: DocxSnapshot
   disabled: boolean
 }) {
+  if (disabled)
+    return (
+      <ToolbarButton label="固定行距" disabled disabledReason="当前文档不允许修改段落格式">
+        固定行距
+      </ToolbarButton>
+    )
   return (
     <ToolbarMenu
       label="固定行距"
@@ -3246,14 +4053,6 @@ function TableMenu({ editor, table }: { editor: Editor; table: TableInfo | null 
                 })
               }
             />
-
-            {/*
-              这两项**故意不给控件**。理由与「引用」不用 styleId 同源：
-              `tblStyleId` 在画布上只渲染成 `data-tbl-style`（没有任何规则命中
-              它——样式 CSS 来自未 vendored 的 docStyleCss），`tblLook` 连渲染
-              都没有。改了只动 XML、屏幕不变，正是这个仓库最讨厌的一类按钮。
-            */}
-            <ToolbarLabel>表格样式、六边：这份文档没有可用的样式表，改了画布不动</ToolbarLabel>
           </ToolbarMenuFields>
         </>
       )}
@@ -3269,7 +4068,15 @@ function TableMenu({ editor, table }: { editor: Editor; table: TableInfo | null 
  * 收集修订是一次**全文遍历**，所以它写在面板里而不是工具条的快照里：面板只在
  * 展开时挂载，不展开就一次都不走。挂在快照里的话每敲一个字都要把整篇扫一遍。
  */
-function RevisionsPanel({ editor, enabled }: { editor: Editor; enabled: boolean }) {
+function RevisionsPanel({
+  editor,
+  enabled,
+  protectionReason = null,
+}: {
+  editor: Editor
+  enabled: boolean
+  protectionReason?: string | null
+}) {
   /*
    * 收集修订是一次**全文遍历**。放在这个面板里（而不是工具条的快照里）是有意
    * 的：面板只在展开时挂载，不展开就一次都不走——挂在快照里的话每敲一个字都会
@@ -3292,6 +4099,8 @@ function RevisionsPanel({ editor, enabled }: { editor: Editor; enabled: boolean 
       <ToolbarMenuItemRow
         item={{
           key: 'track',
+          disabled: !!protectionReason,
+          disabledReason: protectionReason ?? undefined,
           label: on ? '关闭修订' : '打开修订',
           active: on,
           onSelect: () => setTrackChangesEnabled(editor, !on),
@@ -3330,13 +4139,14 @@ function RevisionsPanel({ editor, enabled }: { editor: Editor; enabled: boolean 
             key: label,
             label,
             onSelect: run,
-            disabled: none,
-            disabledReason: '文档里没有修订',
+            disabled: none || (!!protectionReason && !['上一处', '下一处'].includes(label)),
+            disabledReason: protectionReason ?? '文档里没有修订',
           }}
         />
       ))}
       <ToolbarMenuNote>
-        {enabled ? '打开状态下输入的文字与删除都会记成修订' : '关闭状态下编辑不留修订记录'}
+        {protectionReason ??
+          (enabled ? '打开状态下输入的文字与删除都会记成修订' : '关闭状态下编辑不留修订记录')}
       </ToolbarMenuNote>
     </>
   )

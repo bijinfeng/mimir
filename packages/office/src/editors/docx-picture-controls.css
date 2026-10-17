@@ -1,0 +1,120 @@
+.mimir-docx-inspector__body:has(> .mimir-docx-picture-tools, > .mimir-docx-toc-tools) {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  padding: 0;
+}
+.mimir-docx-picture-tools,
+.mimir-docx-toc-tools {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  color: var(--me-text);
+}
+.mimir-docx-picture-tools__scroll,
+.mimir-docx-toc-tools__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 12px;
+}
+.mimir-docx-picture-tools__fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.mimir-docx-picture-tools .me-field > .me-input--num {
+  flex: 1 1 0%;
+  width: 0;
+}
+.mimir-docx-picture-tools .me-field__suffix {
+  flex-shrink: 0;
+}
+.mimir-docx-picture-tools__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.mimir-docx-picture-tools__actions,
+.mimir-docx-toc-tools__actions {
+  flex-shrink: 0;
+  padding: 12px;
+  background: var(--me-surface);
+  border-top: 1px solid var(--me-border);
+}
+.mimir-docx-picture-tools__actions > .mimir-docx-picture-tools__row {
+  justify-content: flex-end;
+}
+.mimir-docx-picture-tools__actions p,
+.mimir-docx-toc-tools__actions p {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.mimir-docx-toc-tools__actions {
+  display: grid;
+  justify-items: end;
+}
+.mimir-docx-toc-tools__actions p {
+  justify-self: stretch;
+}
+.mimir-docx-picture-tools__error {
+  color: var(--me-danger);
+  font-size: 12px;
+}
+.mimir-docx-picture-preview {
+  margin: 0 0 16px;
+}
+.mimir-docx-picture-preview__stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100px;
+  max-height: 220px;
+  padding: 20px;
+  overflow: hidden;
+  background: var(--me-stage-bg);
+  border-radius: 6px;
+}
+.mimir-docx-picture-preview__image {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  max-width: 100%;
+}
+.mimir-docx-picture-preview__image img {
+  display: block;
+  max-width: 100%;
+  max-height: 180px;
+  object-fit: contain;
+}
+.mimir-docx-picture-preview__crop {
+  position: absolute;
+  border: 1px solid var(--me-accent);
+  box-shadow: 0 0 0 250px rgb(0 0 0 / 45%);
+  pointer-events: none;
+}
+.mimir-docx-picture-preview figcaption {
+  margin-top: 8px;
+  color: var(--me-text-weak);
+  font-size: 12px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.mimir-docx-toc-preview {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--me-text);
+}
+.mimir-docx-toc-preview li {
+  overflow-wrap: anywhere;
+}

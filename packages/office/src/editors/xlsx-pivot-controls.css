@@ -1,0 +1,138 @@
+.mimir-xlsx-inspector__content[data-mode='pivot'] {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+.mimir-xlsx-inspector__content[data-mode='pivot'] > .me-property-form,
+.mimir-xlsx-inspector__content[data-mode='pivot'] .mimir-xlsx-tools,
+.mimir-xlsx-inspector__content[data-mode='pivot'] .mimir-xlsx-tools > fieldset,
+.mimir-xlsx-pivot {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+.mimir-xlsx-inspector__content[data-mode='pivot'] .mimir-xlsx-tools {
+  gap: 0;
+}
+.mimir-xlsx-inspector__content[data-mode='pivot'] .mimir-xlsx-tools > .me-tabs {
+  margin: 0;
+  padding: 0 12px 8px;
+  flex-shrink: 0;
+}
+.mimir-xlsx-pivot {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.mimir-xlsx-pivot__navigation {
+  display: grid;
+  gap: 8px;
+  padding: 8px 12px 0;
+  flex-shrink: 0;
+}
+.mimir-xlsx-inspector .mimir-xlsx-pivot__navigation > .me-tabs {
+  margin: 0;
+}
+.mimir-xlsx-pivot__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.mimir-xlsx-pivot__configuration {
+  padding: 12px;
+}
+.mimir-xlsx-pivot__configuration > .me-property-group + .me-property-group {
+  margin-top: 16px;
+}
+.mimir-xlsx-pivot__axis {
+  display: flex;
+  align-items: end;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.mimir-xlsx-pivot__axis > .me-property-field {
+  flex: 1;
+  min-width: 0;
+}
+.mimir-xlsx-pivot__row-actions {
+  display: flex;
+  gap: 2px;
+}
+.mimir-xlsx-pivot .me-btn__icon {
+  gap: 5px;
+}
+.mimir-xlsx-pivot__entry {
+  border-block-end: 1px solid var(--me-border);
+  padding-block: 8px;
+}
+.mimir-xlsx-pivot__entry summary {
+  cursor: pointer;
+  font-size: var(--me-font-size-sm, 12px);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.mimir-xlsx-pivot__entry summary:focus-visible {
+  outline: 2px solid var(--me-accent);
+  outline-offset: 2px;
+}
+.mimir-xlsx-pivot__entry-fields {
+  display: grid;
+  gap: 8px;
+  padding-block: 10px 4px;
+}
+.mimir-xlsx-pivot__footer {
+  display: grid;
+  flex-shrink: 0;
+  gap: 8px;
+  padding: 12px;
+  border-block-start: 1px solid var(--me-border);
+  background: var(--me-surface);
+}
+.mimir-xlsx-pivot__footer p {
+  margin: 0;
+  font-size: var(--me-font-size-sm, 12px);
+  overflow-wrap: anywhere;
+}
+.mimir-xlsx-pivot__footer [role='alert'] {
+  color: var(--me-danger);
+}
+.mimir-xlsx-pivot__readback {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 8px;
+  margin: 0;
+  font-size: var(--me-font-size-sm, 12px);
+}
+.mimir-xlsx-pivot__readback dt {
+  color: var(--me-text-weak);
+}
+.mimir-xlsx-pivot__readback dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.mimir-xlsx-pivot__native-item {
+  display: grid;
+  gap: 4px;
+  padding-block: 8px;
+  font-size: var(--me-font-size-sm, 12px);
+  overflow-wrap: anywhere;
+}
+.mimir-xlsx-pivot__source .ant-select {
+  min-width: 0;
+  max-width: 100%;
+}
+.mimir-xlsx-pivot__source .ant-select-content {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.mimir-xlsx-pivot__source-issue {
+  margin: 0;
+  color: var(--me-danger);
+  font-size: var(--me-font-size-sm, 12px);
+  overflow-wrap: anywhere;
+}

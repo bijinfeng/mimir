@@ -32,6 +32,56 @@ import type { XlsxHostResult } from './xlsx-agent-host.js'
 import { BoundedZip } from '../../../../packages/office/src/zip-bounds.js'
 import { xlsxAttribute } from '../../../../packages/office/src/xlsx-sheet-features.js'
 export const XLSX_PIVOT_OPS = new Set(['add_pivot', 'refresh_pivot'])
+/** Only the pinned writer's complete grouping extension is modeled by relayout.
+ * Any additional XML/JSON metadata must retain the existing fail-closed guard. */
+function hasUnmodeledExtensions(xml: string, definition: PivotDefinition): boolean {
+  const openings = [...xml.matchAll(/<(?:\w+:)?extLst\b/g)]
+  if (!openings.length) return false
+  if (openings.length !== 1) return true
+  const block =
+    /<extLst><ext uri="\{AIO-PIVOT-GROUPINGS\}" xmlns:aio="urn:aioffice:pivot"><aio:aioPivotGroupings v="[^"]*"\/><\/ext><\/extLst>/.exec(
+      xml,
+    )?.[0]
+  if (!block) return true
+  const expected = new Map(
+    definition.fields.flatMap((field, fieldIndex) =>
+      field.grouping ? [[fieldIndex, field.grouping] as const] : [],
+    ),
+  )
+  try {
+    const entries: unknown = JSON.parse(
+      xlsxAttribute(block.match(/<aio:aioPivotGroupings\b[^>]*\/>/)?.[0] ?? '', 'v') ?? '',
+    )
+    if (!Array.isArray(entries) || !entries.length || entries.length !== expected.size) return true
+    const seen = new Set<number>()
+    for (const entry of entries) {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return true
+      const { fieldIndex, ...grouping } = entry as Record<string, unknown>
+      if (typeof fieldIndex !== 'number' || !Number.isInteger(fieldIndex) || seen.has(fieldIndex))
+        return true
+      seen.add(fieldIndex)
+      const native = expected.get(fieldIndex)
+      if (!native) return true
+      const keys =
+        grouping.kind === 'date'
+          ? ['kind', 'dateUnit']
+          : ['kind', 'rangeStep', ...(grouping.rangeStart === undefined ? [] : ['rangeStart'])]
+      if (
+        Object.keys(grouping).length !== keys.length ||
+        Object.keys(grouping).some((key) => !keys.includes(key))
+      )
+        return true
+      if (
+        Object.keys(native).length !== keys.length ||
+        keys.some((key) => grouping[key] !== (native as unknown as Record<string, unknown>)[key])
+      )
+        return true
+    }
+    return false
+  } catch {
+    return true
+  }
+}
 function bounds(ref: string) {
   const b = parseRange(ref)
   if (b.endRow >= 1048576 || b.endColumn >= 16384 || rangeCellCount(b) > 2000)
@@ -212,7 +262,7 @@ export async function applyXlsxPivotOperation(
         // layout does not model must not be silently reset during growth.
         if (
           /\b(?:rowGrandTotals|colGrandTotals)="(?:0|false)"/.test(original) ||
-          /<extLst\b/.test(original)
+          hasUnmodeledExtensions(original, def)
         )
           throw new Error('此透视表含自定义总计或扩展属性，暂不支持自动扩展')
         const dataFields = [...original.matchAll(/<dataField\b[^>]*>/g)]

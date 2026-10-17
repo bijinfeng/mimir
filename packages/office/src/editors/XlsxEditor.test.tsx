@@ -519,10 +519,11 @@ describe('xlsx 对象面板与历史操作', () => {
       ),
     ).toEqual(['formats', 'clipboard', 'sheets', 'cell', 'find'])
     type(byLabel(host, '操作范围（A1 或 A1:B5）'), 'C3')
-    click(byLabel(host, '剪切、格式刷与清除格式'))
+    click(byLabel(host, '范围剪贴板'))
     click(byLabel(host, '剪切所选范围'))
+    await waitForGrid(host, () => !byLabel(host, '剪切所选范围').hasAttribute('disabled'))
     type(byLabel(host, '操作范围（A1 或 A1:B5）'), 'D4')
-    click(byLabel(host, '粘贴剪切范围'))
+    click(byLabel(host, '粘贴工作簿内范围'))
     await waitForGrid(
       host,
       () =>
@@ -538,7 +539,9 @@ describe('xlsx 对象面板与历史操作', () => {
       (await readBasicWorkbook(Buffer.from(saved()!))).snapshot.sheets[0]!.cells.C3?.formula,
     ).toBeUndefined()
     await waitForGrid(host, () => !host.querySelector('fieldset[aria-busy="true"]'))
+    click(byLabel(host, '关闭剪贴板'))
     type(byLabel(host, '操作范围（A1 或 A1:B5）'), 'A2')
+    click(byLabel(host, '格式刷与清除格式'))
     click(byLabel(host, '拾取所选范围格式'))
     type(byLabel(host, '操作范围（A1 或 A1:B5）'), 'A3')
     click(byLabel(host, '应用格式刷到所选范围'))
@@ -553,7 +556,7 @@ describe('xlsx 对象面板与历史操作', () => {
       (await readXlsx(saved()!)).sheets[0]!.rows.find((row) => row.number === 3)!.cells[0]!.format
         ?.bold,
     ).toBeFalsy()
-    press(byLabel(host, '剪切、格式刷与清除格式'), 'Escape')
+    press(byLabel(host, '格式刷与清除格式'), 'Escape')
     selectRibbonTab(host, '布局')
     type(byLabel(host, '操作范围（A1 或 A1:B5）'), 'A3:B4')
     click(byLabel(host, '自动尺寸与分级'))
@@ -725,16 +728,18 @@ describe('xlsx 对象面板与历史操作', () => {
   it('粘贴先预览待应用，写入数字/布尔/公式；撤销和重做准确更新保存基线', async () => {
     const { host, saved } = await openEditor()
     type(byLabel(host, '操作范围（A1 或 A1:B5）'), 'A3')
-    click(byLabel(host, '范围剪贴板与CSV导入'))
+    click(byLabel(host, '范围剪贴板'))
     type(byLabel(host, '待写入的表格内容'), '12\tTRUE\t=2+3')
     expect(cellAt(host, 3, 0).textContent).toBe('张三')
-    click(byLabel(host, '将内容写入当前范围'))
+    click(byLabel(host, '粘贴已读取内容'))
     await waitForGrid(host, () => cellAt(host, 3, 0).textContent === '12')
     expect(cellAt(host, 3, 1).textContent).toBe('TRUE')
     await save(host, saved)
     await waitForGrid(
       host,
-      () => host.querySelector('.mimir-xlsx-tools__feedback')?.textContent === '已应用',
+      () =>
+        host.querySelector('.mimir-xlsx-clipboard__feedback')?.textContent?.includes('已粘贴') ===
+        true,
     )
     expect(host.textContent).not.toContain('保存后写入原件')
     click(byLabel(host, '撤销'))

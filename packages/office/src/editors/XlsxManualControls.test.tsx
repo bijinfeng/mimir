@@ -54,20 +54,10 @@ async function click(node: HTMLElement) {
     node.click()
   })
 }
-it('shows named cut and format actions and applies the captured source to a newly selected target', async () => {
+it('keeps format capture independent from the Editor clipboard', async () => {
   const app = mount('home')
-  await click(button(app.host, '剪切、格式刷与清除格式'))
-  await click(button(app.host, '剪切所选范围'))
+  await click(button(app.host, '格式刷与清除格式'))
   app.render('C2')
-  const paste = button(app.host, '粘贴剪切范围')
-  expect(paste.textContent).toBe('粘贴剪切范围')
-  await click(paste)
-  expect(app.onOperation).toHaveBeenLastCalledWith({
-    op: 'move_range',
-    sourceSheetId: 'sheet-1',
-    source: 'A1:A3',
-    target: 'C2',
-  })
   await click(button(app.host, '拾取所选范围格式'))
   app.render('D2:D4')
   const paint = button(app.host, '应用格式刷到所选范围')
@@ -95,7 +85,7 @@ it('shows a visible fill action that submits the directional operation', async (
 it('previews the actual expanded format target and disables an overflowing target', async () => {
   const app = mount('home')
   app.render('A1:B3')
-  await click(button(app.host, '剪切、格式刷与清除格式'))
+  await click(button(app.host, '格式刷与清除格式'))
   await click(button(app.host, '拾取所选范围格式'))
   app.render('D5')
   expect(app.host.textContent).toContain('应用到：数据!D5:E7')
@@ -107,7 +97,7 @@ it('previews the actual expanded format target and disables an overflowing targe
 })
 it('rejects invalid selections and describes a changed workbook without claiming the source was edited', async () => {
   const app = mount('home')
-  await click(button(app.host, '剪切、格式刷与清除格式'))
+  await click(button(app.host, '格式刷与清除格式'))
   await click(button(app.host, '拾取所选范围格式'))
   app.render('not-a-range')
   expect(app.host.textContent).toContain('先选择有效范围')
@@ -121,7 +111,7 @@ it('rejects invalid selections and describes a changed workbook without claiming
 it('keeps the format capture available for retry after the host refuses an operation', async () => {
   const app = mount('home')
   app.onOperation.mockResolvedValueOnce(false)
-  await click(button(app.host, '剪切、格式刷与清除格式'))
+  await click(button(app.host, '格式刷与清除格式'))
   await click(button(app.host, '拾取所选范围格式'))
   app.render('D5')
   await click(button(app.host, '应用格式刷到所选范围'))

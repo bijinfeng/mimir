@@ -13,6 +13,32 @@ DOCX 对话编辑是这层适配的扩展：`src/agent/docx-agent.ts` 持有可�
 
 **动手前先读这一页。** 它讲的都是「不知道就会毁掉几个月工作」的事。
 
+### DOCX 原件保护 P0
+
+保护策略必须从原件 settings XML及其document relationship读取，独立于公开parsed、编辑器editable和SaveOptions。启用readOnly/comments/forms/trackedChanges的原件，在受限写路径未被逐项证明前一律只读保留；未知/旧式/损坏凭据、无法判定的节点/关系不当作无保护。推荐只读仅在没有其他限制时，经用户明确选择开放本次会话，重开不继承；策略epoch改变应使旧Agent预期版本失效。密码/hash/salt不进入Agent上下文。
+
+关系读取必须验证 OPC 元素命名空间、直接子节点和明确的 transitional/strict settings 关系类型；不能先去前缀再把未知或嵌套关系当成缺省路径。保护节点属性按各自节点区分，重复展开名和将编辑限制属性放进 writeProtection 等异常配置均须保守拒绝，不能因属性被忽略而开放推荐选择。
+
+原生session.save是最后防线：只读仅接受真实no-op，允许schema挂载默认值差异后返回私有原件字节；拒绝正文/附加结构及protection/writeProtection/settings或其关系直接覆盖。公开content/parsed/originalBytes变化不能放宽策略。PM事务、NodeView DOM入口、Agent附加写、草稿与整轮恢复均检查同一策略；只禁工具栏不算保护。P0不提供核验/设置/移除密码或加密，不把readonly保留称四模式受限编辑完整支持。
+
+### DOCX 原件保护 P1-C1：已有讨论
+
+仅原件确认 enforced comments、原生关系及讨论身份可证明且无修改密码门时，开放已有讨论文字、回复、解决和重开；主正文仍 writable=false。已识别的编辑限制 hash 不要求批注操作先核验密码；含修改密码或无法判定的 writeProtection 保持只读。新增根、删除根/回复、forms、密码管理及强制修订不属于 C1。
+
+资格与保存均以私有原件及原生模型为准：检查 comments/扩展的命名空间、关系及 ContentType；document 的非批注内部关系不能同时指向目标批注部件。所有段落 paraId 必须合法且全局唯一，不能只检查每条讨论的末段。未知现代线程语义保守拒绝；已支持讨论也按目标复杂内容给出独立拒绝原因。读入及最终保存最多1000条，单会话追加最多100条，不能生成重开即不再支持的结果。
+
+最终 session.save 必须确认完整 PM 未变、附加参数只有合法 comments 差量，原身份/作者/日期/parent/paraId 不变。文字仅补 w:t 内文，解决仅补 done，回复局部追加必要原生节点/关系/类型；不走正文或 vendor 全量批注重建。插入属性须复用正确 namespace 前缀或分配未占用前缀，不得重绑原件未知属性的前缀。无变化及撤销归原返回整份私有原件字节，其他非目标 ZIP 部件精确保留。受保护批注的 Agent 结构撤销只恢复 SaveOptions，校验版本/保护 epoch/正文且不得 setContent；普通正文 Cmd+Z 不代替该历史。
+
+### DOCX 标题层级保存
+
+setHeadingLevel支持原件真实样式0–9，写入目标原生styleId以使画布CSS与重开一致；编号标题不转换为普通docHeading。固定上游rawPPr结构判定不包含显式outlineOnly级别，Mimir在list保存计划后以docxOutlineSavePlan仅修正实际变更的pStyle/outlineLvl，保留未知pPr及其余正文/部件。属性补丁须识别单双引号及等号空白，并保留同节点的未知属性，不能因原始写法不同重建整个属性节点。显式大纲改正文写outlineLvl9以取消继承标题；不改vendor，不将原始pPr整体重建。回归必须包含既有显式大纲2→3、7–9真实样式、未知段落属性、第二次保存与undo/no-op非目录ZIP条目精确。
+
+标题与列表互转涉及 docListItem 时，由列表保存计划保留 pStyle/numPr；大纲补丁不能仅凭节点类型变化就接管列表生成的原生 XML 块或强制要求 generated。实际标题层级命令仍拒绝编号目标，须同时回归标题→列表的真实保存、连续修改和完整 ZIP undo/redo。
+
+### DOCX 墨迹保存
+
+实际vendor合同为 `SaveOptions.inks?: NewInkImage[]`：undefined保留原墨迹，显式数组全层重写。未操作墨迹但正文再生成时，自有适配须按最终SaveBlock可靠映射恢复原run、关系、媒体及per-part内容类型声明，保留未知payload与XML原字节；不以重新序列化等价XML冒充原件保真。只有严格识别且资源独占的v1墨迹才可编辑，未知/opaque/共享及复杂定位明确禁写。新墨迹向量和透明PNG同步生成，普通段落column/paragraph锚定；段落删除/移动/撤销与原生保存映射必须一致。必需回归含正文编辑后的原墨迹保留、PNG Override/格式化rels精确、显式删除/重开与history。
+
 ---
 
 ## 目录形状
@@ -60,8 +86,11 @@ src/
                       **正文画布是可点而不经原语的两处例外**（pptx 的 SVG 画布、
                       xlsx 的 `<td>` 网格）：被点的是画布里注入的节点、动作随点
                       在哪而变，换成 `ToolbarButton` 没有意义。它们是**显式白
-                      名单**，新增第三处要先想清键盘路径（`PptxEditor.tsx` 里
-                      画布那段注释是存档）
+                      名单**，新增例外要先明确键盘路径。PPTX 的
+                      `PptxSelectionControls` 对象列表另有一处限定例外：
+                      原生 button 承载 listbox 的 role=option、aria-selected
+                      与修饰键事件；Arrow/Home/End 移焦、Shift 连选、Ctrl/⌘
+                      加选及全选，深层组合禁用并说明原因。普通工具按钮仍走原语。
     shell.css         外壳样式：布局、弹层、非 antd 的元素（主题值走 --me-*）
     icons.tsx         工具条图标（自绘 SVG，不依赖图标库）
     editor-commands.ts 方言能力检测与调用
@@ -136,6 +165,14 @@ scripts/
 
 还有一条隐含契约：**`save()` 成功后必须 `commit()`**。不 commit 的话
 第二次编辑会拿旧锚点拼字节、把上一次的改动静默回滚（两次保存都「成功」）。
+
+### PPTX 图片原件与显示副本
+
+本地图片来源由 `shared/pptx-image.ts` 按真实内容统一验证 PNG/JPEG/GIF/BMP/WebP/标准 TIFF，原件扩展名和字节不得被显示转换替代。GIF/WebP 动画保留原文件；去背景输出明确为静态 PNG。JPEG 仅在显示副本中将 EXIF 方向中性化，保持 PowerPoint 原像素坐标。
+
+TIFF 当前仅接受通过条/瓦片完整性、颜色/样本组合及解码预算检查的未压缩或 PackBits 页面，选择面积最大的安全页显示 PNG，原件保留所有页面。不能仅凭 IFD 尺寸放行其他编码：UTIF 的 Deflate/JPEG 会按内部压缩流另行分配，CCITT/LZW 对畸形输入缺少可靠分配/终止守卫；新增编码前须有受限解码证明。传给 UTIF 的选页副本只保留图像 tag，防止私有相机 tag 绕开 Compression 校验并切换解码器。
+
+`preparePptxDisplayMedia` 在打开、编辑会话初始化及宿主替换时先准备显示媒体。宿主替换必须在全部异步准备后重新检查取消信号与版本，再一次发布 archive、media、尺寸和页面模型；迟到结果不得改 archive 或制造 history。
 
 ---
 
@@ -368,3 +405,9 @@ node packages/office/scripts/sync-upstream.mjs --from /tmp/genoffice --check  # 
 样式 id、pdf 的 cmaps 与并发渲染——**见 [编辑器坑表](../frontend/editors/pitfalls.md)**
 （与编辑器代码同目录，最近者优先）。外壳（工具条 / 高度链 / 弹层）的坑在
 [外壳坑表](../frontend/shell/pitfalls.md)。
+
+### PPTX 宿主组内翻转的同步事务
+
+固定原生 `flipElements` 会更新直接组成员的模型，但未把成员transform补回父组合XML。服务端 `pptx-group-flip.ts` 的 `runPptxHostTxn` 在原事务范围同步包装同名OpDef，原生apply完成后用 `editGroupChildTransform` 刷新实际模型；不新增操作名、不改原生records、校验、快照或原子回滚。顶层flip直接沿原行为。
+
+此包装安装、runTxn、finally恢复之间不得出现await或Promise。registry是共享状态，只有整个调用保持同步，其他请求才不会在定义替换期间插入执行；finally必须连runTxn快照异常也恢复原定义。不要改成按请求保留替换定义或异步包装。`apps/server/src/test/pptx-group-flip-host.test.ts`覆盖并发宿主、快照异常、后续原生操作失败回滚，以及flip后立即ungroup/duplicateSlide的同批次持久化。Office几何专项还须断言bare host flip已保存，不能继续把旧未持久化诊断当正确预期。

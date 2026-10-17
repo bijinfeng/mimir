@@ -1,4 +1,10 @@
 import * as numfmt from 'numfmt'
+import {
+  readXlsxFillViews,
+  readXlsxThemePalette,
+  resolveStyleColor,
+  type XlsxFillView,
+} from './xlsx-fill.js'
 
 export interface XlsxCellFormat {
   bold?: boolean
@@ -9,6 +15,7 @@ export interface XlsxCellFormat {
   fontSize?: number
   fontColor?: string
   fillColor?: string
+  fill?: XlsxFillView
   horizontalAlign?: 'left' | 'center' | 'right'
   verticalAlign?: 'top' | 'center' | 'bottom'
   wrapText?: boolean
@@ -115,16 +122,17 @@ export function readXlsxFormats(xml: string | null, themeXml: string | null): Xl
     return mark !== undefined && !['0', 'false', 'off', 'none'].includes(attr(mark, 'val') ?? '')
   }
   const fonts = elements(section(xml, 'fonts'), 'font')
-  const fills = elements(section(xml, 'fills'), 'fill')
+  const fills = readXlsxFillViews(xml)
+  const palette = readXlsxThemePalette(themeXml)
   const borders = elements(section(xml, 'borders'), 'border')
   const formats = { ...BUILTIN_FORMATS }
   for (const part of elements(section(xml, 'numFmts'), 'numFmt')) {
     const code = attr(part, 'formatCode')
     if (code !== undefined) formats[Number(attr(part, 'numFmtId'))] = decodeXlsxXml(code)
   }
-  return elements(section(xml, 'cellXfs'), 'xf').map((xf) => {
+  return elements(section(xml, 'cellXfs'), 'xf').map((xf, index) => {
     const font = fonts[Number(attr(xf, 'fontId') ?? 0)] ?? ''
-    const fill = fills[Number(attr(xf, 'fillId') ?? 0)] ?? ''
+    const fill = fills[index]
     const border = borders[Number(attr(xf, 'borderId') ?? 0)] ?? ''
     const alignment = elements(xf, 'alignment')[0] ?? ''
     const horizontal = attr(alignment, 'horizontal')
@@ -147,9 +155,10 @@ export function readXlsxFormats(xml: string | null, themeXml: string | null): Xl
       fontFamily: decodeXlsxXml(attr(elements(font, 'name')[0] ?? '', 'val') ?? '') || undefined,
       fontSize: Number.isFinite(fontSize) && fontSize > 0 ? fontSize : undefined,
       fontColor: color(elements(font, 'color')[0] ?? ''),
+      fill,
       fillColor:
-        attr(elements(fill, 'patternFill')[0] ?? '', 'patternType') === 'solid'
-          ? color(elements(fill, 'fgColor')[0] ?? '')
+        fill?.spec && 'pattern' in fill.spec && fill.spec.pattern === 'solid'
+          ? resolveStyleColor(fill.spec.fg, palette)
           : undefined,
       horizontalAlign: ['left', 'center', 'right'].includes(horizontal ?? '')
         ? (horizontal as XlsxCellFormat['horizontalAlign'])

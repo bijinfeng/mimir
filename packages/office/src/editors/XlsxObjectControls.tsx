@@ -1,3 +1,5 @@
+import { XlsxPivotControls } from './XlsxPivotControls.js'
+import { XlsxShapeGallery } from './XlsxShapeGallery.js'
 import { XlsxVisualProperties } from './XlsxVisualProperties.js'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
@@ -13,21 +15,35 @@ import {
   ToolbarSelect,
   ToolbarTabs,
   ToolbarTextField,
-  ToolbarTextArea,
-  ToolbarColorPicker,
   ToolbarNumberField,
 } from '../shell/EditorShell.js'
-import { XLSX_COLORS } from './XlsxFormatControls.js'
 export function XlsxObjectControls({
   sheet,
+  sheets,
+  acceptedPivotSignal,
   range,
   busy,
   selectedId,
   onSelect,
   onOperation,
   onImage,
+  sourceKey,
+  contextKey,
+  onPivotOperation,
+  inspector,
+  onInspectorOpen,
 }: {
   sheet: XlsxSheet
+  sheets?: readonly XlsxSheet[]
+  acceptedPivotSignal?: AbortSignal
+  sourceKey: unknown
+  contextKey: string
+  inspector?: string | null
+  onInspectorOpen?: () => void
+  onPivotOperation: (
+    op: Record<string, unknown>,
+    options: { signal: AbortSignal },
+  ) => Promise<boolean>
   range: string
   busy: boolean
   selectedId: string
@@ -39,26 +55,28 @@ export function XlsxObjectControls({
     panel = useRef<HTMLElement>(null)
   const [container, setContainer] = useState<HTMLElement | null>(null)
   const close = () => setContainer(null)
+  if (container && inspector && inspector !== 'objects') setContainer(null)
   useEffect(() => {
     if (!container) return
     container.classList.add('mimir-xlsx-inspector-host')
     const currentPanel = panel.current,
-      currentTrigger = trigger.current
+      currentTrigger = trigger.current,
+      triggerGroup = currentTrigger?.closest('[data-section-key]')
     currentPanel?.focus()
     return () => {
       container.classList.remove('mimir-xlsx-inspector-host')
       const active = document.activeElement
       if (active === document.body || active === currentPanel || currentPanel?.contains(active))
-        currentTrigger?.focus()
+        (
+          (currentTrigger?.isConnected ? currentTrigger : null) ??
+          triggerGroup?.querySelector<HTMLButtonElement>('button[aria-haspopup="menu"]')
+        )?.focus()
     }
   }, [container])
   const [mode, setMode] = useState('chart'),
     [kind, setKind] = useState('column'),
     [anchor, setAnchor] = useState(''),
     [title, setTitle] = useState(''),
-    [shape, setShape] = useState('rect'),
-    [fill, setFill] = useState('#4472C4'),
-    [text, setText] = useState(''),
     [url, setUrl] = useState(''),
     [tableName, setTableName] = useState(''),
     [tableStyle, setTableStyle] = useState('TableStyleMedium2'),
@@ -67,13 +85,7 @@ export function XlsxObjectControls({
   const [tableAction, setTableAction] = useState('add_table_row'),
     [position, setPosition] = useState(1),
     [count, setCount] = useState(1),
-    [columnName, setColumnName] = useState(''),
-    [rowFields, setRowFields] = useState(''),
-    [columnField, setColumnField] = useState(''),
-    [valueField, setValueField] = useState(''),
-    [aggregation, setAggregation] = useState('sum'),
-    [pivotTarget, setPivotTarget] = useState(''),
-    [pivotName, setPivotName] = useState('')
+    [columnName, setColumnName] = useState('')
   const visual = sheet.visuals?.find((v) => v.id === selectedId),
     [selectedTable, setSelectedTable] = useState('')
   const apply = async (op: Record<string, unknown>) => {
@@ -93,6 +105,7 @@ export function XlsxObjectControls({
         onClick={() => {
           if (container) close()
           else {
+            onInspectorOpen?.()
             setMode(selectedId ? 'edit' : 'chart')
             setContainer(
               trigger.current
@@ -124,7 +137,7 @@ export function XlsxObjectControls({
                 <X size={16} />
               </ToolbarButton>
             </header>
-            <div className="mimir-xlsx-inspector__content">
+            <div className="mimir-xlsx-inspector__content" data-mode={mode}>
               <ToolbarPropertyForm columns={1}>
                 <div className="mimir-xlsx-tools">
                   <ToolbarTabs
@@ -141,10 +154,10 @@ export function XlsxObjectControls({
                     ]}
                   />
                   <fieldset disabled={busy}>
-                    {mode !== 'edit' && (
+                    {mode !== 'edit' && mode !== 'pivot' && mode !== 'shape' && (
                       <ToolbarMenuNote>当前数据范围：{range || '未选择'}</ToolbarMenuNote>
                     )}
-                    {['chart', 'shape', 'image'].includes(mode) && (
+                    {['chart', 'image'].includes(mode) && (
                       <ToolbarMenuFields label="位置">
                         <ToolbarTextField
                           label="左上角单元格"
@@ -198,43 +211,13 @@ export function XlsxObjectControls({
                       </ToolbarMenuFields>
                     )}
                     {mode === 'shape' && (
-                      <ToolbarMenuFields label="形状与文字">
-                        <ToolbarSelect
-                          label="形状类型"
-                          value={shape}
-                          onChange={setShape}
-                          options={[
-                            ['rect', '矩形'],
-                            ['roundRect', '圆角矩形'],
-                            ['ellipse', '椭圆'],
-                            ['triangle', '三角形'],
-                            ['diamond', '菱形'],
-                            ['textbox', '文本框'],
-                          ].map(([value, label]) => ({ value: value!, label: label! }))}
-                        />
-                        <ToolbarTextArea label="形状文字" value={text} onChange={setText} />
-                        <ToolbarColorPicker
-                          label="形状填充"
-                          value={fill}
-                          options={XLSX_COLORS}
-                          onPick={setFill}
-                        />
-                        <ToolbarButton
-                          label="插入形状"
-                          primary
-                          disabled={!anchor}
-                          disabledReason="填写对象左上角"
-                          onClick={() =>
-                            void apply({
-                              op: 'add_shape',
-                              shapeType: shape,
-                              anchorCell: anchor,
-                              text,
-                              fillColor: fill,
-                            })
-                          }
-                        />
-                      </ToolbarMenuFields>
+                      <XlsxShapeGallery
+                        range={range}
+                        sourceKey={sourceKey}
+                        contextKey={contextKey}
+                        busy={busy}
+                        onOperation={onPivotOperation}
+                      />
                     )}
                     {mode === 'image' && (
                       <ToolbarMenuFields label="插入图片">
@@ -331,95 +314,16 @@ export function XlsxObjectControls({
                       </ToolbarMenuFields>
                     )}
                     {mode === 'pivot' && (
-                      <ToolbarMenuFields label="数据透视表">
-                        <ToolbarMenuNote>
-                          当前{sheet.pivots?.length ?? 0}
-                          张透视表。第一行须为字段标题；按当前数值或公式缓存汇总。
-                        </ToolbarMenuNote>
-                        <ToolbarTextField
-                          label="透视名称（留空自动）"
-                          value={pivotName}
-                          onChange={setPivotName}
-                        />
-                        <ToolbarTextField
-                          label="输出左上角（空白区域，如I1）"
-                          value={pivotTarget}
-                          onChange={(v) => setPivotTarget(v.toUpperCase())}
-                        />
-                        <ToolbarTextField
-                          label="行字段（多个字段用逗号分隔）"
-                          value={rowFields}
-                          onChange={setRowFields}
-                          placeholder="区域,部门"
-                        />
-                        <ToolbarTextField
-                          label="列字段（可选，多个用逗号分隔）"
-                          value={columnField}
-                          onChange={setColumnField}
-                          placeholder="季度"
-                        />
-                        <ToolbarTextField
-                          label="值字段"
-                          value={valueField}
-                          onChange={setValueField}
-                          placeholder="销售额"
-                        />
-                        <ToolbarSelect
-                          label="汇总方式"
-                          value={aggregation}
-                          onChange={setAggregation}
-                          options={[
-                            ['sum', '求和'],
-                            ['count', '计数'],
-                            ['average', '平均值'],
-                            ['max', '最大值'],
-                            ['min', '最小值'],
-                          ].map(([value, label]) => ({ value: value!, label: label! }))}
-                        />
-                        <ToolbarButton
-                          label="创建数据透视表"
-                          primary
-                          disabled={
-                            !range || !pivotTarget || !rowFields.trim() || !valueField.trim()
-                          }
-                          disabledReason="选择源范围并填写输出位置、行字段和值字段"
-                          onClick={() =>
-                            void apply({
-                              op: 'add_pivot',
-                              sourceRange: range,
-                              targetCell: pivotTarget,
-                              rowFields: rowFields
-                                .split(/[,，]/)
-                                .map((s) => s.trim())
-                                .filter(Boolean),
-                              ...(columnField.trim()
-                                ? {
-                                    columnField: columnField
-                                      .split(/[,，]/)
-                                      .map((s) => s.trim())
-                                      .filter(Boolean),
-                                  }
-                                : {}),
-                              values: [{ field: valueField.trim(), agg: aggregation }],
-                              ...(pivotName ? { name: pivotName } : {}),
-                            })
-                          }
-                        />
-                        <ToolbarButton
-                          label="刷新当前表全部透视表"
-                          disabled={!sheet.pivots?.length}
-                          disabledReason="当前表没有透视表"
-                          onClick={() => void apply({ op: 'refresh_pivot' })}
-                        >
-                          刷新透视表
-                        </ToolbarButton>
-                        {sheet.pivots?.map((p) => (
-                          <ToolbarMenuNote key={p.path}>
-                            {p.name} · {p.definition.outputRef} ← {p.definition.sourceSheet}!
-                            {p.definition.sourceRef}
-                          </ToolbarMenuNote>
-                        ))}
-                      </ToolbarMenuFields>
+                      <XlsxPivotControls
+                        sheets={sheets}
+                        acceptedSignal={acceptedPivotSignal}
+                        sheet={sheet}
+                        range={range}
+                        sourceKey={sourceKey}
+                        contextKey={contextKey}
+                        busy={busy}
+                        onOperation={onPivotOperation}
+                      />
                     )}
                     {mode === 'edit' && (
                       <>
@@ -436,11 +340,19 @@ export function XlsxObjectControls({
                             }))}
                           />
                           {visual && (
-                            <XlsxVisualProperties
-                              key={visual.id + visual.name + visual.text + visual.fillColor}
-                              visual={visual}
-                              onApply={apply}
-                            />
+                            <>
+                              {visual.kind === 'shape' && (
+                                <ToolbarMenuNote>
+                                  当前显示预设轮廓；原件的复杂填充、旋转和文字样式预览有限，请在
+                                  Excel 中核对。
+                                </ToolbarMenuNote>
+                              )}
+                              <XlsxVisualProperties
+                                key={visual.id + visual.name + visual.text + visual.fillColor}
+                                visual={visual}
+                                onApply={apply}
+                              />
+                            </>
                           )}
                           <ToolbarConfirm
                             title="删除所选对象？"
@@ -556,9 +468,11 @@ export function XlsxObjectControls({
                       </>
                     )}
                   </fieldset>
-                  <div className="mimir-xlsx-tools__feedback" role="status">
-                    {busy ? '正在应用…' : feedback}
-                  </div>
+                  {mode !== 'pivot' && mode !== 'shape' && (
+                    <div className="mimir-xlsx-tools__feedback" role="status">
+                      {busy ? '正在应用…' : feedback}
+                    </div>
+                  )}
                 </div>
               </ToolbarPropertyForm>
             </div>

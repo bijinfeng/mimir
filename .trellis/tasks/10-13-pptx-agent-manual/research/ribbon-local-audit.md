@@ -20,11 +20,11 @@
 | 7. `onExportPdf` · Props:325 | App:3135；file-actions:200 renderSlidesToPdfPages→宿主导出 | 已接有边界 | X 导出与打印→PDF | 栅格PDF可选页与分辨率；媒体/动画不可交互，文字不可选 |
 | 8. `onPrint` · Props:326 | App:3136；components/PrintDialog 打印选项与预览 | 浏览器预览已验 | X 导出与打印→打印 | full/notes/讲义2/3/6、A4纵横向/细边框、已应用备注与首页实际版面；实机6页/3张讲义为2纸，420px完整预览无iframe内滚动。字体/SVG图片解码及取消/过期回归通过；系统打印窗口由用户Desktop验收 |
 | 9. `onExportImages` · Props:328 | App:3137；file-actions:146 可见页PNG | 已接 | X PNG/SVG/多页ZIP | 静态未保存画布；导出范围/分辨率；二进制测试 |
-| 10. `onFormat` · Props:329 | App:3138；style-actions:28 光标execCommand、字号增减 | 已接有边界 | E 文字格式→真实字符范围/插入点/整框 | B/I/U/删除线/上下标/清除/增减字号作用于真实选区；折叠光标仅pending marks，输入才写。实机只加粗Q3并独立XML读回，选区斜体副本及history通过；多对象统一文字格式仍未齐 |
+| 10. `onFormat` · Props:329 | App:3138；style-actions:28 光标execCommand、字号增减 | 已接有边界 | E 文字格式→真实字符范围/插入点/整框 | B/I/U/删除线/上下标/清除/增减字号作用于真实选区；折叠光标仅pending marks，输入才写。实机只加粗Q3并独立XML读回，选区斜体副本及history通过；统一多选/直接组成员已接Home字形控件，原子格式和真实双对象加粗history通过 |
 | 11. `onZoom` · Props:331 | App:3140；previewZoom 预设缩放 | 已接 | V 适应宽度、50–200% | 纯视图不标脏；按文档区实际宽度 |
 | 12. `onToggleThumbs` · Props:333 | App:3142；App setShowThumbs | 已接 | 画布侧“收起缩略图”/“显示缩略图” | root真实浏览器已反复收起/展开；视图操作不写原件 |
 | 13. `onToggleAi` · Props:335 | App:3144；App toggleAi→右侧AI面板 | 已接宿主差异 | 宿主问AI | 沿当前文档ChatPanel与PPTX Agent |
-| 14. `onAiPreset` · Props:338 | App:3145；pushAiPreset(...autoRun=true)，可附页截图 | 部分 | 可在问AI输入同类要求；无对应Ribbon快捷命令 | 美化/事实核查/配图/拼写/八语言翻译预设及附页截图未接成手动入口 |
+| 14. `onAiPreset` · Props:338 | App:3145；pushAiPreset(...autoRun=true)，可附页截图 | 部分，草稿入口已接 | 开始→美化本页/事实核查/生成配图；幻灯片→拼写/八语言翻译 | 已接可编辑问AI草稿及稳定页定位提示，真实浏览器入口/八语言已验；无模型未验执行。截图附件管道与上游autoRun仍有差异，提示不等于宿主强制冻结目标 |
 | 15. `onPickShape` · Props:340 | App:3146；insert-actions:36/73 进入点击/拖绘模式 | 已接，本地已验 | S 形状库→在画布绘制所选形状，保留默认位置直接插入 | 109项/7类、真实点击/拖绘、Shift约束与取消；实机反向箭头原生flipH/V、单次undo/save/redo/save逐entry一致；420无横溢出且Escape回形状库BUTTON |
 | 16. `onInsertImage` · Props:342 | App:3147；insert-actions:93 文件选择→addImage | 已接有边界 | E 插入图片，PNG/JPEG→专用图片宿主 | 真实组件/原生媒体字节读回；上游其它图片格式未全部覆盖 |
 | 17. `onFormatBackground` · Props:344 | App:3148；style-actions:270 editBackground；BgFormatPane | 已接 | 幻灯片→设置背景Inspector | 纯色/双色渐变/八纹理/原图片拉伸平铺、隐藏背景图形、重置、atomic全部应用；复杂原背景保真复制已实机下载/undo/redo验证，详见2026-10-16续记 |
@@ -38,20 +38,20 @@
 | 25. `onPaste` · Props:365 | App:3170；clipboard-actions pasteClipboard | 已接有边界 | C 保留源格式/目标主题 | 持久ref/目标校验；跨应用原生粘贴未齐 |
 | 26. `onFormatBrushClick` · Props:371 | App:3173；clipboard-actions:229–315 单次复制/应用格式 | 已接有边界 | F 复制格式/应用到所选，单次 | 填充/描边/字体/对齐原生写入；固定上游format-brush.ts:49本身也不复制渐变/图片填充；复杂效果均在范围外 |
 | 27. `onFormatBrushDoubleClick` · Props:373 | App:3174；clipboard-actions:229–315 连续格式刷 | 已接有边界 | F 显式连续模式，Escape退出 | 无需依赖隐式双击；复制范围同上 |
-| 28. `onTextColor` · Props:375 | App:3175；style-actions 选区foreColor/overlay | 已接有边界 | E 字体颜色→真实选区/插入点/整框 | 共用formatPptxTextRange保未选run和原XML；组件原生范围/保真回归通过；多对象统一颜色未齐 |
-| 29. `onFontFamily` · Props:388 | App:3215；style-actions:35 选区或所有选中元素字体 | 已接有边界 | E 字体→真实选区/插入点/整框 | 选择范围内中英文字体，pending caret marks和混合当前值；保留未选run字形/链接/field/未知rPr。多对象文字统一修改仍未齐 |
-| 30. `onFontSize` · Props:389 | App:3216；style-actions:52 选区字号或整对象setElementFont | 已接有边界 | E 字号/增减→真实选区/插入点/整框 | 范围字号、混合状态及caret pending marks经同一适配；组件含原生run双保存；多对象字号仍未齐 |
-| 31. `onAlign` · Props:391 | App:3176；style-actions:88 光标或全选对象段落对齐 | 部分 | O 段落与文本框四向对齐→setParagraphFormat | 当前文本框所有段落；无光标局部段落对齐 |
-| 32. `onDirection` · Props:393 | App:3208；style-actions onDirection→rtl | 部分 | O 文字基础方向LTR/RTL | 整框段落rtl；光标局部未齐 |
-| 33. `onStrike` · Props:395 | App:3177；style-actions onTextToggle strike | 已接有边界 | E 删除线→真实选区/插入点/整框 | 真实字符范围和未选run保真，collapsed caret仅pending；多对象统一格式仍未齐 |
-| 34. `onTextToggle` · Props:397 | App:3178；style-actions:114 B/I/U，若全开则关 | 已接有边界 | E B/I/U→真实选区/插入点/整框及当前状态 | 实机Home+ShiftRight选择Q3后加粗，只有Q3原生b=1；caret末尾加粗不dirty；Q3斜体副本/undo/save/redo/save逐entry闭环通过，多对象语义未齐 |
-| 35. `onElementTextColor` · Props:399 | App:3179；style-actions:142 selected sourceIds setElementFont | 已接有边界 | E 字体颜色→真实选区/插入点/整框 | 单文本框选区字形格式已接，范围保真回归通过；上游多对象sourceIds批量颜色仍未齐 |
+| 28. `onTextColor` · Props:375 | App:3175；style-actions 选区foreColor/overlay | 已接有边界 | E 字体颜色→真实选区/插入点/整框 | 共用formatPptxTextRange保未选run和原XML；组件原生范围/保真回归通过；多对象/组合直接成员颜色已接统一选择与Home/Inspector |
+| 29. `onFontFamily` · Props:388 | App:3215；style-actions:35 选区或所有选中元素字体 | 已接有边界 | E 字体→真实选区/插入点/整框 | 选择范围内中英文字体，pending caret marks和混合当前值；保留未选run字形/链接/field/未知rPr。多对象/组合直接成员统一字体已沿Home聚合run接入，原生专项覆盖 |
+| 30. `onFontSize` · Props:389 | App:3216；style-actions:52 选区字号或整对象setElementFont | 已接有边界 | E 字号/增减→真实选区/插入点/整框 | 范围字号、混合状态及caret pending marks经同一适配；组件含原生run双保存；多对象/组合直接成员字号与增减已沿Home保留各run适配接入 |
+| 31. `onAlign` · Props:391 | App:3176；style-actions:88 光标或全选对象段落对齐 | 已接有边界 | O 段落与文本框→四向对齐，真实选区/光标段/整框 | 专属manual_paragraph明确paraIndices；实机仅第2段右对齐/左对齐、连续操作及保存后范围保持；统一多选Inspector补全段落对齐；真实整组两文字成员各段ctr保存读回 |
+| 32. `onDirection` · Props:393 | App:3208；style-actions onDirection→rtl | 已接有边界 | O 段落与文本框→文字基础方向LTR/RTL | 多对象/组合直接成员同一原子事务支持RTL/LTR；实机整组4段rtl=0保存(65)读回 |
+| 33. `onStrike` · Props:395 | App:3177；style-actions onTextToggle strike | 已接有边界 | E 删除线→真实选区/插入点/整框 | 真实字符范围和未选run保真，collapsed caret仅pending；Home聚合run支持多对象/组合直接成员，真实范围路径保持 |
+| 34. `onTextToggle` · Props:397 | App:3178；style-actions:114 B/I/U，若全开则关 | 已接有边界 | E B/I/U→真实选区/插入点/整框及当前状态 | 实机Home+ShiftRight选择Q3后加粗，只有Q3原生b=1；caret末尾加粗不dirty；Q3斜体副本/undo/save/redo/save逐entry闭环通过，多对象统一选择后Home B/I/U及原生history通过 |
+| 35. `onElementTextColor` · Props:399 | App:3179；style-actions:142 selected sourceIds setElementFont | 已接有边界 | E 字体颜色→真实选区/插入点/整框 | 单文本框选区字形格式已接，范围保真回归通过；统一持久ID多选/组合直接成员沿Home和Inspector提供批量颜色 |
 | 36. `onFindReplace` · Props:401 | App:3180；App setFindOpen | 已接 | E 查找和替换，跨页定位 | 真实组件文字更新/高亮/替换回归 |
 | 37. `onToggleAnimByParagraph` · Props:404 | App:3182；App state animByParagraph→添加时拆段 | 已接，本地已验 | 备注与放映→效果→按段落依次播放 | 实机Agenda三段淡入生成3项，下载(26)原生pgRg目标0/1/2；60段服务读回/双保存，单段沿上游整对象语义 |
 | 38. `onSetLayout` · Props:406 | App:3183；slide-actions setSlideLayoutAt(current,path) | 已接 | D 尺寸与版式→应用当前页版式 | 真实原件layout；原生保存读回 |
 | 39. `onResetLayout` · Props:407 | App:3186；slide-actions setSlideLayoutAt(current)→重置占位符 | 已接 | 尺寸与版式→重置本页占位符位置 | 无layout参数调用原生resetSlideLayout；标题54→84pt后reset移除explicit xfrm、文字及非占位符对象保留，原件下载已验 |
 | 40. `onSlideSize` · Props:409 | App:3187；App slidesApi.setSlideSize cx/cy | 已接 | D 幻灯片宽/高与明确应用 | 原生presentation尺寸/双保存 |
-| 41. `onParagraphFormat` · Props:412 | App:3207；style-actions:190 bullet/number/blip/spacing/indent | 部分 | O 列表无/字符/数字，字符输入，行距/段前后/缩进 | 数字编号numType/startAt、图片符号上传、bullet字体/悬挂/尺寸/颜色未齐；光标选区未齐 |
+| 41. `onParagraphFormat` · Props:412 | App:3207；style-actions:190 bullet/number/blip/spacing/indent | 已接有边界 | O 段落/列表/文本框三分类Inspector，局部paraIndices明确应用 | 统一多选/直接组成员补全非图片列表、方向/间距/级别；实机4段125%/段前4pt/段后6pt、编号7/90%/12pt/#4472C4保存(65)；批量图片符号替换仍未齐 |
 | 42. `onInsertTable` · Props:427 | App:3217；insert-actions:106 rows/cols→addTable | 已接 | E 插入表格6×6网格→addTable | 原生table；组件/双保存 |
 | 43. `onTransition` · Props:431 | App:3219；animation-actions applyTransition(kind,all) | 已接，本地已验 | 备注与放映→切换→将本页切换应用全部 | 实机下载(26)六页均native fade，原slide1 advTm13000和slide4 advTm5000保留；55页/changed:false不增版本回归通过 |
 | 44. `onApplyAnimation` · Props:440 | App:3228；animation-actions applyAnimation 替换已有/none移除 | 已接，本地已验 | 效果图库点击替换/无动画清除 | 实机标题淡入→弹跳后当前1项且保存；与追加语义独立，清除/未知preset XML/默认时长及双保存回归通过 |
@@ -79,9 +79,9 @@
 | 66. `onToggleGuides` · Props:492 | App:3261；App setShowGuides | 已接 | V 参考线 | 中心十字overlay，不写入或导出 |
 | 67. `onToggleNotes` · Props:495 | App:3263；App setShowNotes，下方原生notes pane | 已接交互差异 | A 备注与放映→演讲者备注 | 当前页可读写原生notes；持续Inspector取代下方面板 |
 | 68. `onToggleComments` · Props:498 | App:3265；App openComments(false) | 已接交互差异 | D 分节与批注→本页批注列表 | 原生读取/新增/删除；宿主Inspector取代专用侧栏 |
-| 69. `onNewComment` · Props:500 | App:3266；App openComments(true)并focus | 已接有边界 | D 新批注→添加本页批注 | 新增原生批注已接；没有单独自动聚焦的新建批注快捷按钮 |
-| 70. `onInsertIcon` · Props:505 | App:3268；insert-actions:129 SVG图标栅格PNG | 已接有边界 | I 图标Inspector24个Lucide、颜色/尺寸/预览 | 真实透明PNG原生picture；完整上游图标库数量未齐 |
-| 71. `onInsertChart` · Props:507 | App:3269；insert-actions:167 12类型+示例数据 | 部分 | E 图表插入→用户输入单系列类别/数值 | 用户数据原生写入；插入入口只暴露bar/line/pie三类，12类型可在编辑图表更改；不自动伪造示例业务数据 |
+| 69. `onNewComment` · Props:500 | App:3266；App openComments(true)并focus | 已接，本地已验 | D 新批注→添加本页批注 | 独立新建批注入口与Ctrl/⌘+Alt+M自动聚焦；添加清草稿、保存保留下一条草稿、Escape回实际来源；实机(72)原生批注与宽/420通过 |
+| 70. `onInsertIcon` · Props:505 | App:3268；insert-actions:129 SVG图标栅格PNG | 已接，本地已验 | 图标Inspector完整28项固定上游图形/分类/中英检索/键盘/颜色/尺寸 | 图形body与固定上游28/28相同；实机蓝色火箭96pt保存下载，透明PNG512×512、42782纯色不透明像素为#4472C4，原生picture宽高1219200EMU |
+| 71. `onInsertChart` · Props:507 | App:3269；insert-actions:167 12类型+示例数据 | 已接，本地已验 | 插入图表Inspector十二类，用户输入类别/数值及双系列组合图 | 十二类组件原生保存读回；实机组合图下载(47)含barChart+lineChart，营收12/20/16与目标15/18/22；具名字段/固定底部操作/420通过，不生成虚构业务数据 |
 | 72. `onInsertSmartArt` · Props:509 | App:3270；insert-actions:190 addSmartArt形状组合 | 已接有边界 | I 图示7布局→原生可编辑组合 | 和固定上游一样非原生SmartArt数据模型 |
 | 73. `onInsertWordArt` · Props:511 | App:3271；insert-actions:211 预设文字/填充/描边 | 已接 | I 艺术字12预设与预览 | 原生文字；非完整WordArt变形编辑器 |
 | 74. `onInsertField` · Props:513 | App:3272；insert-actions:249 datetime/slidenum | 已接 | I 动态字段→日期/页码 | 原生a:fld；PowerPoint刷新，双保存 |
@@ -92,21 +92,21 @@
 | 79. `onInsertMedia` · Props:528 | App:3280；insert-actions:380 系统选择音频/视频→原生关系 | 已接有边界 | M 音视频→本地预览/封面/明确插入/播放器 | 32MiB；真实WAV/WebM二进制与原生video/audio/media关系双保存 |
 | 80. `onInsertModel3d` · Props:530 | App:3281；insert-actions:433 GLB+poster placeholder | 已接有边界 | M 3D模型→真实GLB预览、视角封面；对象3D预览 | 原件精确GLB附件+PNG；非PowerPoint原生am3d，与固定上游占位语义一致 |
 | 81. `onToggleScreenRecord` · Props:533 | App:3283；insert-actions:444 getDisplayMedia→WebM→addMediaBytes | 已接待系统验收 | R 插入→屏幕录制→选择/停止/预览/明确插入 | 静音、32MiB/10分钟、关闭停止全部track、迟到授权丢弃；录屏6例生命周期/组件测试，实际系统chooser待人工 |
-| 82. `onPictureCrop` · Props:551 | App:3425；picture-edit-actions startCrop→交互拖裁切 | 部分 | O 图片裁切Inspector四边百分比/重置 | 原生srcRect；没有画布拖裁切手柄 |
-| 83. `onPictureOpacity` · Props:555 | App:3430；App editPictureOpacity(opacity) | 已接 | E 图片100/75/50/25% | 原生alphaModFix读回；连续任意数值入口未齐 |
+| 82. `onPictureCrop` · Props:551 | App:3425；picture-edit-actions startCrop→交互拖裁切 | 已接有边界 | 图片裁切Inspector→画布八手柄/键盘微调/恢复/应用/取消 | 实机旋转90°图片裁去左10.416%，原生srcRect+box保持源比例；save→undo/save→redo/save逐entry恢复。仅顶层普通图片，媒体/复杂3D/缺失源明确禁用；组内另列 |
+| 83. `onPictureOpacity` · Props:555 | App:3430；App editPictureOpacity(opacity) | 已接，本地已验 | 图片外观→任意0–100%数值 | 实机37%保存下载原生alphaModFix amt37000，当前态37；保留裁切和旋转 |
 | 84. `onPictureCutout` · Props:557 | App:3427；picture-edit-actions startCutout容差预览/应用 | 已接有边界 | M 图片去背景→原图/结果/容差/替换 | 固定版边缘泛洪算法；非语义前景分割，保留裁切 |
 | 85. `onPictureReplace` · Props:559 | App:3428；picture-edit-actions replacePicture | 已接有边界 | E 替换选中图片PNG/JPEG | 对象身份/裁切保持；其它源格式与系统拖放未齐 |
-| 86. `onPictureRotate` · Props:561 | App:3429；picture-edit-actions rotateSelected±90 | 已接交互差异 | O 图片旋转角度任意数值 | 原生rot；无专用左右90°快捷按钮 |
-| 87. `onPictureStroke` · Props:565 | App:3292；App 遍历shape/picture/group child→editStroke | 部分 | E 对象轮廓→颜色与清除 | 单对象；完整dash/宽度/组成员批量语义未齐 |
-| 88. `onChangeShape` · Props:567 | App:3315；App changeShape(prst,groupId) | 部分 | S 形状库→完整图库/更改选中形状/几何调节 | 104种预设几何可更改；5线条alias仅插入，排除从连接线更改；单个顶层对象，组内/多对象语义仍未齐 |
-| 89. `onShapeStyle` · Props:569 | App:3329；App 顺序editFill+editStroke，保留宽度 | 部分 | S 形状库→组合样式，32预设/4行具名预览→单次atomic setFill+setStroke | 保留真实边框宽度，当前匹配/自定义状态及版本草稿；单个形状/文本框，组成员与多对象批量未齐 |
-| 90. `onShapeFill` · Props:571 | App:3369；App editFill solid/none/gradient，组透一层 | 部分 | E 单对象形状填充Inspector | 纯色/无填充、多色标渐变和八固定纹理/原图片模式已接并实机原生下载；多对象与组内批量语义仍未齐 |
-| 91. `onShapeFillImage` · Props:574 | App:3390；stretch/tile+内置texture | 已接有边界 | 形状填充/设置背景→八固定纹理、当前图片拉伸/平铺 | 专用manual_fill受控原图链；真实wood SHA/背景paper all及history已验；多对象另列 |
+| 86. `onPictureRotate` · Props:561 | App:3429；picture-edit-actions rotateSelected±90 | 已接，本地已验 | 图片外观→任意角度及左右90°快捷按钮 | 实机向右90°原生rot5400000；裁切键盘按屏幕方向变换，取消回实际Ribbon按钮 |
+| 87. `onPictureStroke` · Props:565 | App:3292；App 遍历shape/picture/group child→editStroke | 已接，本地已验 | 对象轮廓Inspector→宽度/颜色alpha/11线型/端点/连接/复合线条 | 单对象完整参数及统一多选/直接组成员批量均接；实机3对象dashDot/rnd/round/dbl保存(66)，undo(67)=(65)、redo(68)=(66)全ZIP相同；未改箭头/渐变保留专项通过 |
+| 88. `onChangeShape` · Props:567 | App:3315；App changeShape(prst,groupId) | 部分 | S 形状库→完整图库/更改选中形状/几何调节 | 104非线条预设可更改，5线条alias仅插入；统一位置与形状Inspector支持单个顶层/直接组成员，父组合局部坐标明确；组内42pt/15°/水平flip实机(69)及history通过，多对象几何预设仍未齐 |
+| 89. `onShapeStyle` · Props:569 | App:3329；App顺序editFill+editStroke，保留宽度 | 已接有边界 | 单对象形状库与统一选择→外观→组合样式，32预设 | 顶层/直接组成员批量一次事务，保留宽度/端点/箭头；connector仅stroke；实机76/77/78完整history，深层写入未齐 |
+| 90. `onShapeFill` · Props:571 | App:3369；solid/none/gradient，组透一层 | 已接有边界 | 单对象与统一选择→外观→填充 | 顶层/直接组成员纯色/无填充/2–16色标渐变/八纹理及current图模式已接；实机75三stop/alpha/角度，connector明确不参与fill；深层组未齐 |
+| 91. `onShapeFillImage` · Props:574 | App:3390；stretch/tile+texture | 已接有边界 | 单对象、背景和统一选择→八纹理/各自当前图片模式 | 专用selection manual_fill严格目标/原图/hash/一次事务，实机79木纹与80/81/82原生history，媒体去重；任意上传/深层目标仍另列 |
 | 92. `onEditTableStyle` · Props:578 | App:3436；style-actions:311 editTableStyle→重选对象 | 本地已验 | E 对象→编辑表格Inspector→内容/布局/样式；8preset、rtl、目标格/全表底纹、all/none宽色及6flags | 新12例组件→原生runTxn→双保存XML；完整Editor67例。root真实8预设/RTL/目标格格式/保存历史/下载XML及420回焦已通过；固定上游仅all/none，其余四边框非对标要求 |
 | 93. `onEditChart` · Props:584 | App:3439；style-actions:334 editChart→重选对象 | 已接有边界 | A 对象→编辑图表Inspector：样式/配色/数据 | 12类型、10预设(非柱隐藏2)、4palette+theme、legend/labels/grid/axis/gap/hole/series/point；6实际UI→原生双保存测试；高级原件转换需确认 |
 | 94. `onOpenChartDataDialog` · Props:586 | App:3440；style-actions:352 getChartData→ChartDataDialog | 已接交互差异 | A 编辑图表→数据分类 | ≤200类别/20系列、系列增删、单系列编辑、单独切换行列；失败跨分类保草稿，底部应用常驻 |
-| 95. `onArrange` · Props:588 | App:3441；arrange-actions alignSelected：6对齐+2分布 | 已接有边界 | O 多对象排列→参照/对齐/分布/组合 | 多选列表显式选对象，非画布框选；原生几何/双保存 |
-| 96. `onFlip` · Props:600 | App:3442；arrange-actions flipSelected(h/v) | 已接 | E 对象→水平/垂直翻转 | 原生flipH/flipV；组件/原生保存 |
+| 95. `onArrange` · Props:588 | App:3441；arrange-actions alignSelected：6对齐+2分布 | 已接有边界 | O 多对象排列→参照/对齐/分布/组合 | 画布修饰键/空白框选、键盘及对象树共用持久ID集合，排列共用选择；原生几何/双保存与实际框选3对象已验 |
+| 96. `onFlip` · Props:600 | App:3442；arrange-actions flipSelected | 已接有边界 | 对象水平/垂直翻转与直接组成员几何 | 裸Agent group flip宿主同步flush已修，真实10/10与geometry5/5验证，flip后ungroup/duplicate可持久化；深层组未齐 |
 
 ## 子菜单参数专项（不由96总数替代）
 
@@ -117,7 +117,7 @@
 | 形状图库/样式 | ShapeGalleryContent + ribbon-shared:101–139；8accent×4行=32样式 | 完整109项/7分类与32组合预设已接右Inspector，具名搜索/预览/方向键roving与固定底部动作；当前几何/样式或自定义状态可见。点击/拖绘与Shift约束已接并实际保存、历史及420取消回焦通过；组内/多对象批量仍单列缺口。 |
 | 填充/纹理 | Ribbon ShapeFillPopover支持solid/none/gradient；745–754八种texture+上传 | 已接多色标形状渐变、八渐变预设、八原纹理、原图片stretch/tile及背景双色渐变/隐藏图形/重置/atomic全部；复杂原背景完整复制到全部已实现并有真实原件/历史证据。 |
 | 表格设计 | Ribbon:385–427八样式；2690–2815 firstRow/bandRow/rtl、整表或活动格底纹、边框**all/none**和宽度/颜色；vendor TableStyleEdit/table-ops也仅all/none | 已接8样式缩略gallery、RTL、6flags、显式逻辑行列活动格/全表底纹和all/none宽色；内容/布局/样式三分类Inspector，可见label、当前值、并排行列、固定底部提交、键盘分类/关闭回焦。12例组件原生双保存与Editor67回归通过；浏览器待父会话记录。此前outer/inner/horizontal/vertical对标缺口为误判，撤回；这些只是可选扩展。 |
-| 段落 | Props:410–427 char/number/blip、numType/startAt、bulletFont/hang/size/color、行距/段前后/缩进 | 四向对齐、字符/数字/none、字符自定、行距/间距/缩进/rtl已接；数字细分/起始值/图片符号、bullet样式参数未齐，编辑当前框所有段落。 |
+| 段落 | Props:410–427 char/number/blip、numType/startAt、bulletFont/hang/size/color、行距/段前后/缩进 | 真实选区/光标段/整框、四向对齐/rtl/间距/层级；9种编号和起始值、符号字符/字体/大小/颜色/悬挂、PNG/JPEG图片符号已接。固定footer明确应用、混合值仅改所编字段；真实连续apply及save后范围保持、原生仅第2段与历史闭环通过。 |
 | 动画与切换 | Ribbon:257–322 gallery、5路径预设、悬停/整页preview、应用全部、时间线 | 原生效果/时间线保留；图库替换/none、独立追加、自动逐段、五路径、hover/focus与编辑画布preview、切换全部代码已接，native与组件专项见20261017研究，实际浏览器由根会话补证。未知效果近似、完整媒体时间线及旧放映复杂路径仍单列边界。 |
 | 绘图 | Ribbon:208–253，10色、笔宽1/2/3.5/5、荧光宽6/10/16、eraser/clear、预设持久化 | 编辑画布真实pointer采样、透明PNG+相对点列metadata、整笔擦除/清空/预设已接；真实实拖/保存/reload/undo已验，非InkML。 |
 | 放映/视图 | show-actions:20/36/48/63/78/92；App:1980四视图 | 从头/当前/单窗演讲者、自定义列表、真实排练确认advTm、隐藏页和普通/大纲/排序/阅读四视图已接；浏览器与原生保存证据见续记。独立双屏与复杂动画播放保留边界。 |
@@ -291,3 +291,67 @@ root逐项应用8预设，每项当前样式/选中态与样式分类保留正�
 当前矩阵已替换早期“无字符选区/动画gallery待实机/输出待下载”状态。完整来源、实现及独立checker见主任务research/pptx-animation-20261017.md、pptx-text-range-20261017.md、pptx-output-20261017.md、pptx-batch-check-20261017.md；实机原生下载、420px视觉和最终构建见审计validation-20261016-continuation.md的同日段落。原生副本不清dirty或history；打印已验浏览器完整首页预览，系统打印由用户自行验收；未配置模型不作为已验。
 
 仍未关闭的具体项包括：AI预设快捷命令、形状拖绘、主题gallery、多对象/组内文字与形状格式、局部段落对齐/方向和bullet细节、图片拖裁切等。不能以96入口都有路径代替参数与行为完整性。
+
+
+### 2026-10-17 主题 / 局部段落 / 拖绘最终收口
+
+主题八预设与拖绘已更新第15/18行，局部段落和列表第31/32/41行及参数表同步。实机首次应用、保存commit后连续局部操作均保持第2段/15字符；真实原件首次补creationId和host重解析中间刷新回归已修。主题save32→undo/save33→redo/save34、形状29→undo/save30→redo/save31、局部编号37→undo/save38→redo/save39均经独立ZIP entry比较恢复一致。正常宽屏和420px固定footer/当前值、分层Escape/真实BUTTON回焦通过，详情见横向审计连续日志。最新检查5文件125/125、三包typecheck（Office最终再跑）及目标门禁、Web/Server build通过。组内/多对象、AI预设、画布拖裁切、图表插入类型等现存边界保持；不因本批完成而宣称全部96回调完全对齐。
+
+
+### 2026-10-17 PPTX 图片裁切 / 轮廓 / 完整图标 / 十二图表 / AI草稿浏览器收口
+
+- 用户已再次明确只完成代码与浏览器；Desktop由用户自行验收，无模型配置不验真实Agent。固定GenOffice仍为480548fd55f1be3593ee0d8e316a734751d58309；上游图标实际28项，不是全Lucide库。WeKnora固定v0.8.3/3e22822c1d2397be730c458c7539d0eb8c113a24沿既有源码/站点证据，仅知识库与Agent权限参考，无Office裁切/Ribbon模型；本批没有把旧站点探测写成新成功。
+- 图标真实浏览器：搜索rocket→火箭、颜色#4472C4、96pt插入并保存下载01_standard_business (40).pptx。独立Python读取image14.png为512×512 RGBA，透明217515像素、不透明42782像素均(68,114,196,255)；native picture ext1219200×1219200EMU。固定上游图形body独立比较28/28一致。最早一次开发热更新丢失未保存插入，未作为成功证据；后来使用5180生产预览稳定验收。
+- 图片外观：当前图标设37%不透明、右转90°，画布键盘沿屏幕方向裁左10.416%；(41)原生alphaModFix37000、rot5400000、srcRect l10416、框宽1092203/高1219200且偏移同步，保留像素比例。undo/save(42)恢复框与srcRect、保留37%/90°；redo/save(43)与(41)所有ZIP entry相同，仅目标slide1.xml在裁切前后不同。Escape取消回到真实Ribbon图片裁切BUTTON。
+- 轮廓：当前无轮廓→显示轮廓→#4472C480、2.75pt、长双点划线→明确应用/save(44)。native ln w34925/alpha50196/lgDashDotDot；undo/save(45)与(43)逐entry相同，redo/save(46)与(44)逐entry相同。完整11线型/端点/连接/复合参数的当前值与草稿保真由专项测试覆盖，组内/多对象仍列缺口。
+- 图表：真实菜单完整十二类；组合图输入营收12/20/16与目标15/18/22，类别一月/二月/三月，save(47)独立读取chart2.xml含barChart和lineChart两个系列，数值/名称完整。普通单系列及十二类由组件原生保存测试覆盖，不伪造业务示例数据。组合图要求两个用户系列避免原生退化成单柱图。
+- 最终真实指针验收：第5页logo从左手柄(1122,218)拖到(1136,218)，保留79%，在420px点击应用并保存(48)。native slide3.xml srcRect l20994、off x10496343/y228600、ext790057×600000；undo/save(49)与(47)所有ZIP entry相同，redo/save(50)与(48)所有entry相同，前后仅slide3.xml不同。
+- 视觉和交互实机发现三项并修复：轮廓controls类名与大纲工作区同名，窄屏继承max-height180px；三新Inspector body默认flex row导致状态文本横挤表单；轮廓/插入图表没启用PropertyForm导致可见标签缺失。现隔离outline-controls命名，纵向布局和固定footer，可见字段/分组；裁切浮条原在小幻灯片内遮挡手柄，现放画布下方并预留120px。最终420实测sheet bottom407、feedback top415/bottom508.28，body.scrollWidth420，拖动手柄完整可见。没有通过隐藏字段或缩字号规避。
+- 最终截图目录/Users/admin/.codex/visualizations/2026/10/16/01a142b8-e543-7780-8181-44e1e0f94f51：pptx-icons28-final-{wide,420}.png、pptx-outline-final-{wide,420}.png、pptx-chart-insert-final-{wide,420}.png、pptx-picture-final-wide.png、pptx-crop-final-{wide,420}.png、pptx-ai-draft-final-wide.png。截图PNG后缀的浏览器JPEG字节在交付前统一转为真实PNG。界面保留既有视觉系统，固定主操作、内部滚动、具名标签；窄屏分层工具组沿宿主展开后进入Inspector。
+- AI：开始有美化/事实核查/生成配图，幻灯片有拼写与八语言翻译。真实浏览器八语言菜单及美化草稿已验；最终第5页草稿为自然中文+页面标识s_3/当前未保存画布要求，已移除文档ID/原始path/版本/API JSON；不会自动发送。现onAiPreset是文字草稿通路，无截图附件管道，提示不等于宿主强制冻结目标；未配置模型不能声称真实执行通过。
+- 门禁：独立checker首批8文件199/199；真实浏览器修复后3文件130/130含missing-media真实ZIP、可见标签与裁切取消/history；AI2文件18/18，均为重叠切片不累计成单次数字。Office tsc、目标lint/format/Antd/styles/diff通过，最终Web build exit0日志/tmp/mimir-pptx-final-layout-build.log。全仓pnpm check实际仍失败：480项bundled Impeccable脚本lint及并行ProviderForm未用Select；不记全仓绿。意外整包中断输出的旧打印断言/图表慢保存等待已限定复核：仅更新2测试，打印走真实文稿与当前输出模式，图表等待实际宿主Promise而非40ms；最终2文件19/19、无act warning，Office tsc及目标门禁通过。不把中断运行当全量通过。
+- 文档保留专用知识库11项，最终主文稿保存含本批图标、轮廓、双系列图表及logo裁切。96回调表已同步14/70/71/82/83/86/87。整体目标继续in_progress，不提交、暂存、归档或宣称全部工具完成。下一批仍有多对象统一字形/段落/样式/填充/轮廓、画布框选和组内对象、广泛图片格式/拖放/系统剪贴板、独立新批注聚焦、AI截图附件及六格式最新清单去陈旧化。
+
+本批收尾：临时viewport已清除，PPTX20（稳定生产预览5180）、DOCX9、HTML19重新markHandoff；当前7是设置，未虚报保留PDF/XLSX页。截图均已转真实PNG，主文稿clean保存。
+
+### 2026-10-17 统一多选、组成员和交互验收
+
+- 当前画布新增Shift/Ctrl/⌘追加选择、空白区域指针框选、Esc取消、焦点画布左右键与全选。对象树与排列共享同一源字节/页路径/持久ID集合，父组与成员不会同时重复作用；第一次原生GUID升级后原cNvPr别名、焦点和Shift锚点保持。真实Agenda空白拖选3对象，高亮3个且保存仍禁用。
+- Home字形控件聚合所选文字run，批量B/I/U、字号、字体、颜色等保留未改run参数；Inspector显示混合值、各操作真正作用数量，统一明确应用字形/段落对齐/纯色填充/轮廓颜色宽度。原生一次事务/一次历史，不把多个本地选择表单各自当作全局多选。组合只扩一层，深层结构可读而写入明确禁用。
+- 实机双对象加粗：下载51为基线，52仅slide1.xml改变，Title1两个run与Subtitle2均b=1；undo/save53逐entry等于51，redo/save54等于52。三对象原生组合55仅slide2.xml改变。组合直接成员填充E8F1FF、轮廓4472C4/1.75pt及两个文字各段居中57仅slide2.xml变化；undo58等于56，redo59等于57。测试完恢复60等于56。
+- 首轮真实连续输入发现逐键宿主等待禁用导致丢字，已改为独立“成员文字草稿→应用/取消”。快速输入不发请求、不锁textarea，明确提示保存不包含未应用草稿；一次apply基于原始段落/run来源形成setText。实机Financial results后输入2027完整、画布仅在apply后更新，save61保持组合、编号和其他内容。源/目标/版本变化丢弃旧草稿，失败保留重试，迟到结果与外部焦点守卫由专项覆盖。
+- 样式：320px右Inspector，内部滚动/固定底部操作，字形三列、字号颜色两列、空选区不展示整片禁用字段；真实420宽scrollWidth=420且操作区底部831px内可达。截图与最终代码/门禁见横向连续日志。本片不宣称深层组合、组内几何/图形预设、复杂填充批量或全部段落参数已齐。
+### 2026-10-17 PPTX 统一多选与组合成员浏览器最终收口
+
+- 当前用户只验代码和浏览器；Desktop自行验收，无模型配置不宣称真实Agent执行。固定GenOffice480548fd55f1be3593ee0d8e316a734751d58309；沿本片研究中的WeKnora v0.8.3/3e22822c1d2397be730c458c7539d0eb8c113a24权限参考，不拿其Markdown编辑器作为Office工具栏样式。
+- 画布、对象树、排列共用持久ID集合；真实Agenda空白拖选3对象且保存仍禁用，⌘追加选择2项。组首击选整组，第二击/Alt进入直接成员；父组和子项不会重复作用。字体/字号/B/I/U/颜色显示共同值或混合值，批量操作走单次原子事务。
+- 下载01_standard_business (51).pptx为基线；52仅slide1.xml变化，Title1两run与Subtitle2均b=1，Q3原i=1保留。undo/save53所有ZIP entry等于51；redo/save54等于52。
+- 55原生组合仅slide2.xml变化。组合直接成员纯色E8F1FF、轮廓4472C4/1.75pt及两文本框各段居中57仅改slide2.xml；原cap=flat保留，原生ln w22225。undo58=56，redo59=57，恢复60=56，均独立Python比较全部ZIP entries。
+- 实机快速输入发现逐键请求/等待禁用丢字，改为本地“成员文字草稿→应用/取消”，输入期间无宿主请求。明确提示保存不含未应用草稿，失败保留可重试。应用Financial results 2027并save61，其他Product updates/Roadmap、原第2段RTL0/alignl/buAutoNum arabicPeriod/startAt5完整保留；undo62=60，redo63=61。64保存Financial results 2027 Q4，保存前后caret25保持；重新聚焦追加!到26位置正确，随后取消草稿，原件64无!。
+- 实机保存光标和最后Escape发现后均补回归。最后生产Web构建reload，打开subbar Inspector→选Title1→Escape，DOM确认panel=false、activeElement aria-label为“打开对象选择与格式”，回真实入口按钮。未以默认activeElement猜测入口。
+- 320px右Inspector、内部独立滚动和固定操作；字形三列/字号颜色两列、空选区只给指导。实际1280×880与420×880目视通过，420的document clientWidth/scrollWidth均420，footer bottom831.359px。截图目录/Users/admin/.codex/visualizations/2026/10/16/01a142b8-e543-7780-8181-44e1e0f94f51：pptx-multiselect-group-final-{wide,420}.png、pptx-multiselect-format-final-{wide,420}.png，已转真实PNG。临时viewport清除，PPTX20/DOCX9/HTML19保留handoff。
+- 独立9文件124/124，追加Editor9+Group5共2文件14/14，数字重叠不累计。Office tsc、目标lint/format/styles/diff通过；最新Web build exit0，日志/tmp/mimir-pptx-global-selection-web-build.log。独立复核见research/pptx-global-selection-check-20261017.md。全仓pnpm check确实失败480项bundled Impeccable脚本lint，日志/tmp/mimir-pptx-global-check-full-final.log；未擅改忽略配置或称全仓绿。
+- 本片仍不覆盖深层组合写入、组内几何、完整多对象段落/复杂填充/高级轮廓批量、广泛图片格式/拖放/系统剪贴板、新批注自动聚焦和AI截图附件。六格式整体目标继续in_progress，不提交/暂存/归档。
+
+### 2026-10-17 详细批量格式、组成员几何与新批注
+
+- 详细段落/列表/轮廓放在统一选择的四个局部页签；跨页签同一草稿与一次原子应用，未编辑字段保留。直接组成员位置/尺寸/旋转/翻转/非线条预设在“位置与形状”，明确父组合局部坐标，未改EMU不取整。
+- 实机下载(65)4段均125000行距/段前400/段后600/rtl0，buAutoNum arabicPeriod startAt7、buSzPct90000、indent-152400、色4472C4。轮廓(66)原生dashDot/rnd/round/dbl；undo(67)=(65)、redo(68)=(66)全部ZIP entry一致。
+- 组内Content Placeholder 2设水平42pt/15°/水平翻转，原生(69)rot900000/flipH1/局部off252983,3730177；native保持旋转中心补偿后的坐标回显19.9199/293.7147，其他兄弟与父变换XML不变，仅slide2.xml变化。undo(70)=(68)、redo(71)=(69)全部ZIP entry相同。
+- 独立新批注及快捷键自动聚焦已实机；添加后清空并回输入、下一条草稿保存仍保留。下载(72)原生comment1.xml与关系有效，只含已添加文字。Escape菜单入口回“分节与批注”，快捷键来源回“打开对象选择与格式”。时间改本地年月日时分，保留time.dateTime原值。
+- 宽1280和420×880目视通过，420无横溢出，固定应用footer bottom841.359px。截图pptx-detail-{outline,geometry,comment}-{wide,420}.png，详见横向连续日志。独立9文件58/58、真实host2/2、旧专项5/5，最终批注14/14是重叠复查；两包tsc/目标lint/format/styles与最终Web构建通过。全仓check既存480技能脚本错误仍未通过。
+- 边界：批量图片符号替换、复杂填充/组合样式批量和深层组合未齐；通用Agent裸group flip持久化问题已交下一宿主切片实际修复，本片仅几何UI原子batch可保存。真实模型未配，Desktop用户自验。整体in_progress。
+
+### 2026-10-17 PPTX 复杂批量外观与裸组内翻转收口
+
+- 统一选择新增外观→填充/组合样式：2–16色标渐变、透明度/角度/路径、32组合预设、八固定纹理及每对象原图平铺/拉伸。连接线没有可编辑fill，UI与宿主共用能力判断：Group5两文字参与填充、三对象仍参与stroke。草稿未提交不dirty，图片草稿与普通格式互斥，只有一个固定底部应用。
+- 实机(75)两shape原生3色标0/50000/100000、AA44CC alpha50196、lin ang2100000；connector无gradFill。紫色虚线(76)两shape白填充、三stroke7030A0/dash，保留原宽12700/cap rnd/cmpd dbl与connector箭头；只改slide2.xml。undo/save(77)全部ZIP entry等于(75)，redo/save(78)等于(76)。
+- 木纹(79)两shape均引用image10.png，SHA256=1f3735b67b527e90dbef8e9cc6632a1779a88019050fb87ebf77bc218c8410b8，原件已有该media，未复制新文件。当前图拉伸(80)仍保持同hash、改stretch；宿主合并重复同资源relationship，只变slide2.xml及其rels。undo/save(81)全部ZIP entry等于(79)，redo/save(82)等于(80)。首次“只应改变slide XML”的独立断言过严，已核是等价关系去重，未把该断言失败当生产故障或冒报通过。
+- shared selection manual_fill明确1–200 targets/直接父group，字符串与实际对象双层去重，整个选择预验后一次txn；current逐对象读取各自media，结果只返回一条compact记录。裸group flipElements由同名同步registry包装在原txn内flush补偿child transform，finally恢复原定义，后接ungroup/duplicate亦可持久化；不改vendor或模型白名单。
+- 浏览器发现四列样式按钮内图标/色名同行挤成单字竖排，修复真实内层tile为上下排、名称单行，纹理共用。最终生产构建后1280/420×880目视通过，内部滚动和固定footer可达。截图为pptx-appearance-{gradient,styles,texture}-{wide,420}.png，目录/Users/admin/.codex/visualizations/2026/10/16/01a142b8-e543-7780-8181-44e1e0f94f51，已转真实PNG；临时viewport已清除。
+- 独立完整检查Office69/69、server15/15；connector补充Office35/35、server4/4，均重叠不累计。Office/Server/Shared tsc、目标lint/format/Antd/styles/diff通过；最终Web build exit0，/tmp/mimir-selection-appearance-web-build.log。真实模型未配、Desktop用户自验；全仓pnpm check既存480项bundled技能lint仍失败。整体in_progress，不提交/暂存/归档。
+
+### 2026-10-17 统一选择内部剪贴板实机
+
+- 对象树选择同一组合Title1/Content Placeholder2，copy不dirty；paste自动回选独立两成员组合，保留父chOff/chExt并稍微错开。cut原组两文本后connector仍在，剪切ref跨保存/undo/redo仍可paste。raw HTTP `/tmp/pptx-clipboard-{baseline,paste,undo,redo,cut,cut-undo,cut-redo,cut-paste}.pptx`，copy/paste与cut两条history均所有ZIP entry精确恢复。只改预期slide2.xml；未以Downloads名推断原生页序。
+- 320pxInspector/固定粘贴footer，宽1280与420真实PNG目视，Escape回实际剪贴板按钮；窄屏Ribbon文字预算另修72px单行，待最终新build复验。独立Office30/30、server11/11及三包tsc，详见chat-edit-office/research/docx-pptx-toolbar-browser-20261017.md。系统剪贴板/外部图片/深层组和附着引用仍明确边界，全目标in_progress。

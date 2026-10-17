@@ -1,0 +1,192 @@
+.mimir-docx-inspector__body:has(> .mimir-docx-design) {
+  display: flex;
+  flex: 1;
+  padding: 0;
+  overflow: hidden;
+}
+.mimir-docx-design {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  color: var(--me-text);
+}
+.mimir-docx-design__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 12px;
+}
+.mimir-docx-design fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.mimir-docx-design__wide,
+.mimir-docx-design__themes,
+.mimir-docx-design__colors,
+.mimir-docx-design__current,
+.mimir-docx-design__page-colors {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+.mimir-docx-design__themes,
+.mimir-docx-design__colors {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.mimir-docx-design__themes > button,
+.mimir-docx-design__colors > button {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--me-border);
+  border-radius: 4px;
+  background: var(--me-surface);
+  color: var(--me-text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+  min-width: 0;
+}
+.mimir-docx-design__themes > button:hover:not(:disabled),
+.mimir-docx-design__colors > button:hover:not(:disabled) {
+  background: var(--me-hover);
+}
+.mimir-docx-design button[aria-pressed='true'] {
+  border-color: var(--me-accent);
+  outline: 1px solid var(--me-accent);
+  outline-offset: -1px;
+}
+.mimir-docx-design button:focus-visible {
+  outline: 2px solid var(--me-accent);
+  outline-offset: 2px;
+}
+.mimir-docx-design button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+.mimir-docx-design__theme-type {
+  font-size: 24px;
+  line-height: 1.15;
+}
+.mimir-docx-design__palette {
+  display: flex;
+  height: 8px;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 2px;
+}
+.mimir-docx-design__palette > i {
+  flex: 1;
+  min-width: 0;
+}
+.mimir-docx-design__current {
+  margin: 0;
+  color: var(--me-text-weak);
+  font-size: 12px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.mimir-docx-design__sample {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  background: #ffffff;
+  color: #222222;
+  border: 1px solid var(--me-border);
+  border-radius: 4px;
+  overflow-wrap: anywhere;
+}
+.mimir-docx-design__sample > strong {
+  font-size: 18px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+.mimir-docx-design__sample > span {
+  font-size: 13px;
+}
+.mimir-docx-design__page-colors {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 5px;
+}
+.mimir-docx-design__page-colors > button {
+  height: 26px;
+  border: 1px solid var(--me-border);
+  border-radius: 3px;
+  cursor: pointer;
+}
+.mimir-docx-design__paper-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+  background: var(--me-bar-bg);
+  border-radius: 4px;
+}
+.mimir-docx-design__paper {
+  width: 126px;
+  height: 168px;
+  padding: 14px;
+  border: 1px solid var(--me-border);
+}
+.mimir-docx-design__paper > div {
+  height: 100%;
+  padding: 18px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.mimir-docx-design__paper i {
+  height: 2px;
+  background: #777777;
+  opacity: 0.5;
+}
+.mimir-docx-design__paper i:last-child {
+  width: 65%;
+}
+.mimir-docx-design__actions {
+  flex: none;
+  padding: 12px;
+  border-top: 1px solid var(--me-border);
+  background: var(--me-surface);
+}
+.mimir-docx-design__actions p {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: var(--me-text-weak);
+  line-height: 1.5;
+}
+.mimir-docx-design__actions [role='alert'] {
+  color: var(--me-danger);
+}
+.mimir-docx-design__buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.mimir-docx-design .me-btn__icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.mimir-docx-page-borders {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+}
+.mimir-docx-page-border {
+  position: absolute;
+  box-sizing: border-box;
+  pointer-events: none;
+}

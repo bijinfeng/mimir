@@ -1,6 +1,10 @@
 import { DOCX_CLIENT_TOOL_OUTPUT_SCHEMA } from '@mimir/shared'
 import type { DocumentAgentCatalog } from './document-agent-catalog.js'
 import type { ModelCallOptions } from './model.js'
+import {
+  PATTERN_TYPES,
+  THEME_SLOT_NAMES,
+} from '../../../../packages/office/vendor/packages/xlsx-gateway/src/domain/style-color.js'
 
 const address = { type: 'string', pattern: '^[A-Z]{1,3}[1-9][0-9]{0,6}$' }
 const range = {
@@ -8,6 +12,71 @@ const range = {
   pattern: '^[A-Z]{1,3}[1-9][0-9]{0,6}(:[A-Z]{1,3}[1-9][0-9]{0,6})?$',
 }
 const value = { type: ['string', 'number', 'boolean', 'null'] }
+const fillColorSchema = {
+  anyOf: [
+    { type: 'string', description: '#RRGGBB or theme shorthand, e.g. accent1+40%' },
+    {
+      type: 'object',
+      required: ['theme'],
+      properties: {
+        theme: {
+          anyOf: [
+            { type: 'integer', minimum: 0, maximum: 11 },
+            { type: 'string', enum: THEME_SLOT_NAMES },
+          ],
+        },
+        tint: { type: 'number', minimum: -1, maximum: 1 },
+      },
+    },
+  ],
+}
+const fillSchema = {
+  anyOf: [
+    { type: 'null' },
+    {
+      type: 'object',
+      required: ['pattern', 'fg'],
+      properties: {
+        pattern: { type: 'string', enum: PATTERN_TYPES },
+        fg: fillColorSchema,
+        bg: fillColorSchema,
+      },
+    },
+    {
+      type: 'object',
+      required: ['gradient'],
+      properties: {
+        gradient: {
+          type: 'object',
+          required: ['stops'],
+          properties: {
+            type: { type: 'string', enum: ['linear', 'path'] },
+            angle: { type: 'number', minimum: 0, maximum: 360 },
+            ...Object.fromEntries(
+              ['left', 'right', 'top', 'bottom'].map((edge) => [
+                edge,
+                { type: 'number', minimum: 0, maximum: 1 },
+              ]),
+            ),
+            stops: {
+              type: 'array',
+              minItems: 2,
+              maxItems: 10,
+              items: {
+                type: 'object',
+                required: ['position', 'color'],
+                properties: {
+                  position: { type: 'number', minimum: 0, maximum: 1 },
+                  color: fillColorSchema,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  ],
+}
 
 const operationSchema = {
   type: 'object',
@@ -353,7 +422,8 @@ const operationSchema = {
     format: {
       type: 'object',
       minProperties: 1,
-      description: '至少一个格式字段。颜色建议使用 #RRGGBB；图案/渐变填充暂不可用。',
+      description:
+        '至少一个格式字段。fill支持图案和渐变，颜色支持主题及tint；fill:null清除，省略保持，同操作fill优先于fillColor。',
       properties: {
         bold: { type: 'boolean' },
         italic: { type: 'boolean' },
@@ -362,7 +432,8 @@ const operationSchema = {
         fontFamily: { type: 'string' },
         fontSize: { type: 'number', minimum: 1, maximum: 409 },
         fontColor: { type: 'string', pattern: '^#[0-9A-Fa-f]{6}$' },
-        fillColor: { type: 'string', pattern: '^#[0-9A-Fa-f]{6}$' },
+        fillColor: { anyOf: [...fillColorSchema.anyOf, { type: 'null' }] },
+        fill: fillSchema,
         numberFormat: { type: 'string' },
         horizontalAlign: { type: 'string', enum: ['left', 'center', 'right'] },
         verticalAlign: { type: 'string', enum: ['top', 'center', 'bottom'] },

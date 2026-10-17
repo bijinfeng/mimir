@@ -1,0 +1,48 @@
+.mimir-docx-inspector__body:has(> .mimir-docx-protection) {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+.mimir-docx-protection {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  max-height: 100%;
+  font-size: 13px;
+}
+.mimir-docx-protection__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  overflow-wrap: anywhere;
+  padding: 12px;
+  display: grid;
+  align-content: start;
+  gap: 16px;
+}
+.mimir-docx-protection__values {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 8px 12px;
+  margin: 0;
+}
+.mimir-docx-protection__values dt {
+  color: var(--me-text-weak);
+}
+.mimir-docx-protection__values dd {
+  margin: 0;
+}
+.mimir-docx-protection__body p {
+  margin: 0;
+  line-height: 1.6;
+}
+.mimir-docx-protection__actions {
+  flex: none;
+  padding: 10px 12px;
+  border-top: 1px solid var(--me-border);
+}

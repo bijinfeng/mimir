@@ -153,6 +153,8 @@ export interface DocxAgentHandle {
 
 type JsonObject = Record<string, unknown>
 type Round = {
+  protectionEpoch?: number
+  commentsOnly?: boolean
   content: ReturnType<Editor['getJSON']>
   saveOptions: SaveOptions
   lastVersion: number
@@ -693,8 +695,13 @@ export function createDocxAgentHandle(
     version,
     ...(data === undefined ? {} : { data }),
   })
-  const beforeWrite = (roundId?: string) => {
-    if (revisionMode && revisionRestore === null) {
+  const assertWrite = () => options.session?.protection.assertWrite()
+  const unsubscribeProtection = options.session?.protection.subscribe(() => {
+    version += 1
+  })
+  const beforeWrite = (roundId?: string, commentsOnly = false) => {
+    if (!commentsOnly) assertWrite()
+    if (!commentsOnly && revisionMode && revisionRestore === null) {
       const storage = trackStorage()
       if (!storage) throw new Error('当前编辑器不支持 AI 修订')
       revisionRestore = storage.enabled === true
@@ -706,6 +713,8 @@ export function createDocxAgentHandle(
         saveOptions: structuredClone(options.saveOptions?.current ?? {}),
         lastVersion: version,
         dirtyBefore: options.isDirty(),
+        protectionEpoch: options.session?.protection.getAccess().epoch,
+        commentsOnly: options.session?.protection.getAccess().commentsOnly === true,
       })
   }
   const afterWrite = (roundId?: string) => {
@@ -718,18 +727,34 @@ export function createDocxAgentHandle(
     }
     options.onDirtyChange(true)
   }
-  const updateSaveOptions = (patch: Partial<SaveOptions>, roundId?: string) => {
+  const updateSaveOptions = (
+    patch: Partial<SaveOptions>,
+    roundId?: string,
+    commentMutation = false,
+  ) => {
     const state = options.saveOptions
     if (!state) throw new Error('当前编辑器没有 DOCX 附加结构保存状态')
-    beforeWrite(roundId)
+    const commentsOnly = options.session?.protection.getAccess().commentsOnly === true
+    if (commentsOnly) {
+      if (!commentMutation || Object.keys(patch).some((key) => key !== 'comments')) assertWrite()
+      options.session!.protection.assertCommentMutation(editor.getJSON(), {
+        ...state.current,
+        ...patch,
+      })
+    }
+    beforeWrite(roundId, commentsOnly)
     state.current = { ...state.current, ...patch }
     version += 1
     options.onSaveOptionsChange?.()
     afterWrite(roundId)
+    return true
   }
   const comments = (): CommentInfo[] =>
     structuredClone(
-      options.saveOptions?.current.comments ?? options.session?.footnotes.parsed.comments ?? [],
+      options.saveOptions?.current.comments ??
+        options.session?.protection.readComments() ??
+        options.session?.footnotes.parsed.comments ??
+        [],
     )
   const notes = (kind: 'footnote' | 'endnote'): NoteInfo[] =>
     structuredClone(
@@ -809,6 +834,7 @@ export function createDocxAgentHandle(
     },
     beginDraft(roundId) {
       live()
+      assertWrite()
       if (!roundId || drafts.has(roundId)) throw new Error('草稿轮次无效或已经开始')
       if (drafts.size === 0) draftBaseline = { dirty: options.isDirty(), version }
       const element = document.createElement('div')
@@ -823,6 +849,7 @@ export function createDocxAgentHandle(
     },
     appendDraft(roundId, delta) {
       live()
+      assertWrite()
       const draft = drafts.get(roundId)
       if (!draft) throw new Error('草稿不存在或已结束')
       if (typeof delta !== 'string') throw new Error('草稿片段必须是字符串')
@@ -840,6 +867,7 @@ export function createDocxAgentHandle(
     },
     async commitDraft(roundId, commitOptions = {}) {
       live()
+      assertWrite()
       const draft = drafts.get(roundId)
       if (!draft) throw new Error('草稿不存在或已结束')
       if (!draft.text.trim()) throw new Error('草稿为空，无法保留')
@@ -873,19 +901,18 @@ export function createDocxAgentHandle(
           throw new Error(`文档已从版本 ${expectedVersion} 改为 ${version}，请重新读取后再操作`)
         }
         const args = asObject(input, `${tool} 参数`)
-        const readTools = [
+        const readTools = new Set<string>([
           'get_document_context',
           'read_blocks',
           'read_revisions',
           'read_comments',
           'read_notes',
           'list_styles',
-        ]
-        if (
-          roundSelection &&
-          !readTools.includes(tool) &&
-          roundSelection.writeVersion !== version
-        ) {
+        ])
+        const commentsOnly = options.session?.protection.getAccess().commentsOnly === true
+        const commentTool = ['edit_comment', 'reply_comment', 'resolve_comment'].includes(tool)
+        if (!readTools.has(tool) && !(commentsOnly && commentTool)) assertWrite()
+        if (roundSelection && !readTools.has(tool) && roundSelection.writeVersion !== version) {
           throw new Error('发送后文档发生其他编辑，请重新读取当前画布后再执行写入')
         }
         if (tool === 'get_document_context') {
@@ -1078,6 +1105,22 @@ export function createDocxAgentHandle(
           if (args.done !== undefined && typeof args.done !== 'boolean')
             throw new Error('done 必须是布尔值')
           if (text === undefined && args.done === undefined) throw new Error('没有要修改的批注内容')
+          if (commentsOnly) {
+            const access = options.session!.protection.getCommentAccess(id)
+            const reason =
+              text !== undefined
+                ? access.editText
+                : args.done === true
+                  ? access.resolve
+                  : access.reopen
+            if (reason) throw new Error(reason)
+          }
+          const target = list.find((item) => item.id === id)!
+          if (
+            (text === undefined || text === target.text) &&
+            (args.done === undefined || !!args.done === !!target.done)
+          )
+            return result('批注没有产生实际修改')
           updateSaveOptions(
             {
               comments: list.map((item) =>
@@ -1090,10 +1133,12 @@ export function createDocxAgentHandle(
               ),
             },
             roundId,
+            true,
           )
           return result('批注已更新，尚未保存到库', true)
         }
         if (tool === 'reply_comment') {
+          allowedKeys(args, ['parentId', 'text', 'author'], tool)
           const parentId = asString(args.parentId, 'parentId')
           const body = asString(args.text, 'text').trim()
           if (!body) throw new Error('回复内容不能为空')
@@ -1101,6 +1146,10 @@ export function createDocxAgentHandle(
           const parent = list.find((item) => item.id === parentId)
           if (!parent) throw new Error(`找不到批注 ${parentId}，请重新读取`)
           const rootId = parent.parentId ?? parent.id
+          if (commentsOnly) {
+            const reason = options.session!.protection.getCommentAccess(rootId).reply
+            if (reason) throw new Error(reason)
+          }
           const id = nextNumericId(list)
           updateSaveOptions(
             {
@@ -1116,18 +1165,26 @@ export function createDocxAgentHandle(
               ],
             },
             roundId,
+            true,
           )
           return result(`已回复批注 ${rootId}，尚未保存到库`, true, { id })
         }
         if (tool === 'resolve_comment') {
+          allowedKeys(args, ['id'], tool)
           const id = asString(args.id, 'id')
           const list = comments()
           const target = list.find((item) => item.id === id)
           if (!target) throw new Error(`找不到批注 ${id}，请重新读取`)
           const rootId = target.parentId ?? target.id
+          if (commentsOnly) {
+            const reason = options.session!.protection.getCommentAccess(rootId).resolve
+            if (reason) throw new Error(reason)
+          }
+          if (list.find((c) => c.id === rootId)?.done) return result('这条讨论已解决')
           updateSaveOptions(
             { comments: list.map((item) => (item.id === rootId ? { ...item, done: true } : item)) },
             roundId,
+            true,
           )
           return result(`批注 ${rootId} 已解决，尚未保存到库`, true)
         }
@@ -2327,8 +2384,9 @@ export function createDocxAgentHandle(
               editor,
               op,
               index,
-              options.headingLevels,
+              options.headingLevels ?? options.session?.headingLevels,
               roundSelection?.selection ?? frozen ?? selectionOf(editor),
+              options.session?.footnotes.parsed.headingStyleIds,
             ),
           )
           if (
@@ -2367,9 +2425,23 @@ export function createDocxAgentHandle(
     },
     undoRound(roundId) {
       live()
+      const protection = options.session?.protection
+      if (!protection?.getAccess().commentsOnly) assertWrite()
       const round = rounds.get(roundId)
       if (!round || round.lastVersion !== version) return false
-      if (!editor.commands.setContent(round.content)) return false
+      if (protection?.getAccess().commentsOnly) {
+        if (
+          !round.commentsOnly ||
+          round.protectionEpoch !== protection.getAccess().epoch ||
+          JSON.stringify(round.content) !== JSON.stringify(editor.getJSON())
+        )
+          return false
+        protection.assertCommentMutation(editor.getJSON(), round.saveOptions)
+        version += 1
+      } else {
+        assertWrite()
+        if (!editor.commands.setContent(round.content)) return false
+      }
       if (options.saveOptions) {
         options.saveOptions.current = structuredClone(round.saveOptions)
         options.onSaveOptionsChange?.()
@@ -2388,6 +2460,7 @@ export function createDocxAgentHandle(
       if (disposed) return
       disposed = true
       editor.off('transaction', onTransaction)
+      unsubscribeProtection?.()
       rounds.clear()
       frozen = null
       frozenVersion = null
@@ -2627,6 +2700,7 @@ function planOp(
   index: number,
   headingLevels?: readonly number[],
   selection?: DocxAgentSelection,
+  headingStyleIds?: ReadonlyMap<number, string>,
 ): OpPlan {
   const op = asObject(input, `ops[${index}]`)
   const name = asString(op.op, `ops[${index}].op`)
@@ -2917,6 +2991,12 @@ function planOp(
       summary: `设置 ${blocks.length} 个块的大纲级别`,
       apply(tr) {
         for (const block of blocks) {
+          if (
+            block.node.type.name === 'docHeading' &&
+            block.node.attrs.outlineOnly &&
+            block.node.attrs.level === level
+          )
+            continue
           if (level === 0)
             tr.setNodeMarkup(block.from, editor.schema.nodes.docParagraph, {
               ...block.node.attrs,
@@ -2936,7 +3016,9 @@ function planOp(
   if (name === 'setHeadingLevel') {
     allowedKeys(op, ['op', 'target', 'level'], name)
     const level = asIndex(op.level, 'level')
-    if (level < 0 || level > 6) throw new Error('level 必须为 0–6')
+    if (level < 0 || level > 9) throw new Error('level 必须为 0–9')
+    if (blocks.some((block) => block.node.type.name === 'docListItem'))
+      throw new Error('编号标题请通过列表与样式工具调整层级')
     if (level > 0 && headingLevels && !headingLevels.includes(level)) {
       throw new Error(`文档没有 Heading${level} 样式，不能可靠保存此标题级别`)
     }
@@ -2945,12 +3027,21 @@ function planOp(
     return {
       summary: `设置 ${blocks.length} 个块的标题级别为 ${level}`,
       apply(tr) {
-        for (const block of blocks)
+        for (const block of blocks) {
+          if (
+            block.node.type === type &&
+            Number(block.node.attrs.level ?? 0) === level &&
+            !block.node.attrs.outlineOnly &&
+            (level > 0 || block.node.attrs.styleId == null)
+          )
+            continue
           tr.setNodeMarkup(block.from, type, {
             ...block.node.attrs,
-            ...(level ? { level } : {}),
-            styleId: null,
+            level: level || null,
+            outlineOnly: null,
+            styleId: level ? (headingStyleIds?.get(level) ?? null) : null,
           })
+        }
       },
     }
   }

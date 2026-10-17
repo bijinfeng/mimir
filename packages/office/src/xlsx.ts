@@ -1,6 +1,7 @@
 import { readXlsxCfRules } from './xlsx-cell-effects.js'
 import { readXlsxObjects, type XlsxVisual, type XlsxTable, type XlsxPivot } from './xlsx-visuals.js'
 import { BoundedZip } from './zip-bounds.js'
+import { readXlsxThemePalette } from './xlsx-fill.js'
 import { readXlsxSheetExtras, type XlsxSheetExtras, xlsxAttribute } from './xlsx-sheet-features.js'
 import {
   decodeXlsxXml,
@@ -128,6 +129,7 @@ export interface XlsxSheet {
 }
 
 export interface XlsxWorkbook {
+  themePalette?: string[]
   sheets: XlsxSheet[]
   /** Visible workbookView activeTab, falling back to the first visible sheet. */
   activeSheet?: number
@@ -160,16 +162,15 @@ export async function readXlsxArchive(zip: BoundedZip): Promise<XlsxWorkbook> {
   const date1904 = /\bdate1904\s*=\s*["'](?:1|true)["']/.test(
     /<(?:\w+:)?workbookPr\b([^>]*)/.exec(workbook ?? '')?.[1] ?? '',
   )
-  const formats = readXlsxFormats(
-    await zip.readText('xl/styles.xml'),
-    await zip.readText('xl/theme/theme1.xml'),
-  )
+  const themeXml = await zip.readText('xl/theme/theme1.xml')
+  const formats = readXlsxFormats(await zip.readText('xl/styles.xml'), themeXml)
 
   const sheets: XlsxSheet[] = []
   for (const ref of await listSheets(zip)) {
     const xml = await zip.readText(ref.entry)
     if (!xml) continue
-    const sheet = parseSheet(xml, shared, formats, ref.id, ref.name, ref.entry, date1904)
+    const styles = readSheetStyles(xml)
+    const sheet = parseSheet(xml, shared, formats, styles, ref.id, ref.name, ref.entry, date1904)
     sheet.outlines = [...xml.matchAll(/<(row|col)\b[^>]*>/g)].flatMap(([tag, kind]) => {
       const level = Number(xlsxAttribute(tag, 'outlineLevel') ?? 0),
         collapsed = /^(?:1|true)$/.test(xlsxAttribute(tag, 'collapsed') ?? '')
@@ -220,7 +221,8 @@ export async function readXlsxArchive(zip: BoundedZip): Promise<XlsxWorkbook> {
       }
       sheet.rows.sort((a, b) => a.number - b.number)
       for (const row of sheet.rows)
-        for (let col = row.cells.length; col < width; col++) row.cells.push(emptyCell(col))
+        for (let col = row.cells.length; col < width; col++)
+          row.cells.push(emptyCell(col, formats[styles.at(row.number, col)]))
       // Added blank rows must participate in existing merge spans as well.
       applyMerges(xml, sheet.rows)
     }
@@ -242,6 +244,7 @@ export async function readXlsxArchive(zip: BoundedZip): Promise<XlsxWorkbook> {
         )
   return {
     sheets,
+    themePalette: readXlsxThemePalette(themeXml),
     activeSheet,
     definedNames: [
       ...(workbook ?? '').matchAll(/<definedName\b([^>]*)>([\s\S]*?)<\/definedName>/g),
@@ -359,22 +362,76 @@ async function readSharedStrings(zip: BoundedZip): Promise<string[]> {
    * 17 就是这个数组的下标。
    */
   const out: string[] = []
-  for (const si of xml.matchAll(/<si\b[^>]*>([\s\S]*?)<\/si>/g)) {
+  // Empty entries occupy their original indexes, including before/between text.
+  // Decide at the opening tag so <si/> cannot consume a later </si>.
+  for (const si of xml.matchAll(/<si\b[^>]*?(?:\/>|>([\s\S]*?)<\/si>)/g)) {
     const parts = [...(si[1] ?? '').matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g)].map((m) =>
       decodeXml(m[1] ?? ''),
     )
     out.push(parts.join(''))
   }
-  // 自闭合的 <si/> 也要占位，否则后续下标整体前移
-  const selfClosing = (xml.match(/<si\b[^>]*\/>/g) ?? []).length
-  for (let i = 0; i < selfClosing; i += 1) out.push('')
   return out
+}
+
+function rowNumber(attrs: string, previous: number): number {
+  const declared = Number(xlsxAttribute(attrs, 'r') ?? NaN)
+  return Number.isInteger(declared) && declared > 0 ? declared : previous + 1
+}
+
+function styleIndexOf(attrs: string, key: string): number | undefined {
+  const value = xlsxAttribute(attrs, key)
+  if (value === undefined || !/^\d+$/.test(value)) return undefined
+  const number = Number(value)
+  return Number.isSafeInteger(number) ? number : undefined
+}
+
+/** Keep inherited cellXfs indexes; do not flatten formats into the source XML. */
+function readSheetStyles(xml: string) {
+  const rows = new Map<number, number>()
+  let previous = 0
+  for (const [, attrs = ''] of xml.matchAll(/<row\b([^>]*)>/g)) {
+    const number = rowNumber(attrs, previous)
+    previous = number
+    const style = styleIndexOf(attrs, 's')
+    if (style !== undefined && /^(?:1|true)$/.test(xlsxAttribute(attrs, 'customFormat') ?? ''))
+      rows.set(number, style)
+  }
+  const spans = [...xml.matchAll(/<col\b([^>]*)>/g)].flatMap(([, attrs = '']) => {
+    const start = styleIndexOf(attrs, 'min'),
+      end = styleIndexOf(attrs, 'max'),
+      style = styleIndexOf(attrs, 'style')
+    return start !== undefined &&
+      start > 0 &&
+      end !== undefined &&
+      end >= start &&
+      style !== undefined
+      ? [{ start: start - 1, end: end - 1, style }]
+      : []
+  })
+  // Resolve only columns actually materialized by the existing grid budget.
+  const columns = new Map<number, number>()
+  const columnStyle = (column: number): number => {
+    const cached = columns.get(column)
+    if (cached !== undefined) return cached
+    let style = 0
+    // GenOffice createColumnData/inheritedWrapLookup: last styled span wins;
+    // a width-only span does not erase the previously declared style.
+    for (const span of spans) if (column >= span.start && column <= span.end) style = span.style
+    columns.set(column, style)
+    return style
+  }
+  return {
+    rows,
+    at: (row: number, column: number, attrs = ''): number =>
+      styleIndexOf(attrs, 's') ?? rows.get(row) ?? columnStyle(column),
+  }
 }
 
 function parseSheet(
   xml: string,
   shared: string[],
   formats: XlsxCellFormat[],
+  styles: ReturnType<typeof readSheetStyles>,
   id: string,
   name: string,
   entry: string,
@@ -384,40 +441,53 @@ function parseSheet(
   /** 上一个出现过的行号。`r` 是可选属性，缺了要按 Excel 的规矩顺延 */
   let lastNumber = 0
 
-  for (const row of xml.matchAll(/<row\b([^>]*)>([\s\S]*?)<\/row>/g)) {
+  // Decide self-closing vs paired at the opening tag. A paired-first alternative
+  // can swallow the next row/cell's closing tag and silently move its contents.
+  for (const row of xml.matchAll(/<row\b([^>]*?)(?:\/>|>([\s\S]*?)<\/row>)/g)) {
     const attrs = row[1] ?? ''
-    const declared = Number(/r="(\d+)"/.exec(attrs)?.[1] ?? NaN)
-    const number = Number.isInteger(declared) ? declared : lastNumber + 1
+    const number = rowNumber(attrs, lastNumber)
     lastNumber = number
 
     const cells: XlsxCell[] = []
-    for (const cell of (row[2] ?? '').matchAll(/<c\b([^>]*)>([\s\S]*?)<\/c>|<c\b([^>]*)\/>/g)) {
-      const cellAttrs = cell[1] ?? cell[3] ?? ''
+    for (const cell of (row[2] ?? '').matchAll(/<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)) {
+      const cellAttrs = cell[1] ?? ''
       const inner = cell[2] ?? ''
       /**
        * 空单元格要**补占位**：Excel 会整个跳过空格的 `<c>`，按顺序填会让
        * 整行向左错位。`r="C3"` 里的列字母给了真实位置。
        */
-      const column = columnOf(/r="([A-Z]+)\d+"/.exec(cellAttrs)?.[1] ?? '')
+      const column = columnOf(/^([A-Z]+)\d+$/.exec(xlsxAttribute(cellAttrs, 'r') ?? '')?.[1] ?? '')
       if (column >= 0) {
-        for (let i = cells.length; i < column; i += 1) cells.push(emptyCell(i))
+        for (let i = cells.length; i < column; i += 1)
+          cells.push(emptyCell(i, formats[styles.at(number, i)]))
       }
-      cells.push(cellOf(cellAttrs, inner, shared, formats, cells.length, date1904))
+      cells.push(
+        cellOf(
+          cellAttrs,
+          inner,
+          shared,
+          formats,
+          cells.length,
+          date1904,
+          styles.at(number, cells.length, cellAttrs),
+        ),
+      )
     }
 
     // 未缓存结果的公式仍是内容；不能把公式行当作空行隐藏。
     if (
       !cells.some((cell) => cell.text !== '' || cell.formula || cell.format) &&
+      !styles.rows.has(number) &&
       !/outlineLevel=|collapsed=/.test(attrs)
     )
       continue
 
-    const ht = Number(/ht="([\d.]+)"/.exec(attrs)?.[1] ?? NaN)
+    const ht = Number(xlsxAttribute(attrs, 'ht') ?? NaN)
     rows.push({
       number,
       height: Number.isFinite(ht) ? rowHeightToPx(ht) : DEFAULT_ROW_HEIGHT,
       cells,
-      hidden: /\bhidden="(?:1|true)"/.test(attrs),
+      hidden: /^(?:1|true)$/.test(xlsxAttribute(attrs, 'hidden') ?? ''),
     })
   }
 
@@ -429,13 +499,18 @@ function parseSheet(
    * Excel 就不写它们的 `<c>`，只看行宽会把表截成 1 列，而格子上还挂着
    * `colSpan="3"`（表格会散架，且是静默的）。
    */
-  const width = Math.max(0, mergedMaxCol + 1, ...rows.map((row) => row.cells.length))
+  const width = Math.max(
+    rows.length ? 1 : 0,
+    mergedMaxCol + 1,
+    ...rows.map((row) => row.cells.length),
+  )
 
   /* 补齐到等宽：表格的每一行必须有同样多的格子，否则列会错位 */
   const padded: XlsxRow[] = []
   for (const row of rows) {
     const cells = [...row.cells]
-    for (let i = cells.length; i < width; i += 1) cells.push(emptyCell(i))
+    for (let i = cells.length; i < width; i += 1)
+      cells.push(emptyCell(i, formats[styles.at(row.number, i)]))
     padded.push({ ...row, cells })
   }
 
@@ -446,15 +521,24 @@ function parseSheet(
       entry,
       empty: true,
       filterRange,
-      rows: [{ number: 1, height: DEFAULT_ROW_HEIGHT, cells: [emptyCell(0)] }],
+      rows: [
+        { number: 1, height: DEFAULT_ROW_HEIGHT, cells: [emptyCell(0, formats[styles.at(1, 0)])] },
+      ],
       columns: readColWidths(xml, 1),
     }
   }
   return { id, name, entry, filterRange, rows: padded, columns: readColWidths(xml, width) }
 }
 
-function emptyCell(col: number): XlsxCell {
-  return { text: '', col, colSpan: 1, rowSpan: 1 }
+function emptyCell(col: number, format?: XlsxCellFormat): XlsxCell {
+  return {
+    text: '',
+    col,
+    colSpan: 1,
+    rowSpan: 1,
+    ...(format ? { format } : {}),
+    ...(format?.bold ? { bold: true } : {}),
+  }
 }
 
 /** `A` → 0，`B` → 1，`AA` → 26。没有引用时返回 -1（按出现顺序追加） */
@@ -480,12 +564,12 @@ function cellOf(
   formats: XlsxCellFormat[],
   col: number,
   date1904: boolean,
+  styleIndex: number,
 ): XlsxCell {
-  const type = /t="([^"]+)"/.exec(attrs)?.[1] ?? ''
+  const type = xlsxAttribute(attrs, 't') ?? ''
   const isFormula = /<f\b/.test(inner)
   const formulaSource = /<f\b[^>]*>([\s\S]*?)<\/f>/.exec(inner)?.[1]
   const formulaText = formulaSource === undefined ? undefined : `=${decodeXml(formulaSource)}`
-  const styleIndex = Number(/\bs="(\d+)"/.exec(attrs)?.[1] ?? 0)
   const format = formats[styleIndex]
   const bold = format?.bold === true
   const cache = /<v\b[^>]*?(?:\/>|>([\s\S]*?)<\/v>)/.exec(inner)
@@ -613,16 +697,16 @@ function readColWidths(xml: string, count: number): XlsxColumn[] {
     width: DEFAULT_COL_WIDTH,
   }))
 
-  for (const col of xml.matchAll(/<col\b[^>]*\/>/g)) {
+  for (const col of xml.matchAll(/<col\b[^>]*>/g)) {
     const attrs = col[0]
-    const min = Number(/min="(\d+)"/.exec(attrs)?.[1] ?? 1)
-    const max = Number(/max="(\d+)"/.exec(attrs)?.[1] ?? min)
-    const width = Number(/width="([\d.]+)"/.exec(attrs)?.[1] ?? NaN)
+    const min = Number(xlsxAttribute(attrs, 'min') ?? 1)
+    const max = Number(xlsxAttribute(attrs, 'max') ?? min)
+    const width = Number(xlsxAttribute(attrs, 'width') ?? NaN)
     for (let i = min - 1; i < Math.min(max, count); i += 1) {
       const target = columns[i]
       if (target) {
-        if (Number.isFinite(width)) target.width = colWidthToPx(width)
-        target.hidden = /\bhidden="(?:1|true)"/.test(attrs)
+        if (Number.isFinite(width) && width >= 0) target.width = colWidthToPx(width)
+        target.hidden = /^(?:1|true)$/.test(xlsxAttribute(attrs, 'hidden') ?? '')
       }
     }
   }

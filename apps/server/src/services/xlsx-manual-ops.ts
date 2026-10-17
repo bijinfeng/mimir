@@ -34,6 +34,7 @@ import {
   assertCopyFeatures,
 } from './xlsx-agent-range.js'
 import type { XlsxHostResult } from './xlsx-agent-host.js'
+import { materializeXlsxCellStyle, xlsxRangeStyles } from './xlsx-range-styles.js'
 
 type Area = ReturnType<typeof parseRange>
 const escape = (s: string) =>
@@ -58,7 +59,7 @@ const positions = (a: Area) =>
   })
 const attribute = (xml: string, key: string, value: string) =>
   xml
-    .replace(new RegExp(`\\s${key}="[^"]*"`), '')
+    .replace(new RegExp(`\\s${key}=(?:"[^"]*"|'[^']*')`), '')
     .replace(/\/?>(?![\s\S])/, (end) => ` ${key}="${value}"${end}`)
 
 /** Move references, including absolute references, rather than translating formulas as copy does. */
@@ -314,21 +315,7 @@ export async function applyXlsxManualOperation(
         /<si\b[^>]*>([\s\S]*?)<\/si>/g,
       ),
     ].map((m) => m[1]!)
-    const styleAt = (row: number, column: number) => {
-      const explicit = attr(sourceCells.get(formatAddress(row, column)) ?? '', 's')
-      if (explicit !== undefined) return explicit
-      const rowTag =
-        [...sourceXml.matchAll(/<row\b[^>]*>/g)].find(
-          ([tag]) => Number(attr(tag, 'r')) === row + 1,
-        )?.[0] ?? ''
-      if (attr(rowTag, 's') !== undefined) return attr(rowTag, 's')!
-      const col =
-        [...sourceXml.matchAll(/<col\b[^>]*>/g)].find(
-          ([tag]) =>
-            column + 1 >= Number(attr(tag, 'min')) && column + 1 <= Number(attr(tag, 'max')),
-        )?.[0] ?? ''
-      return attr(col, 'style') ?? '0'
-    }
+    const styleAt = xlsxRangeStyles(sourceXml, sourceCells)
     for (const { row, column } of positions(area)) {
       const address = formatAddress(row, column),
         raw = cells.get(address) ?? `<c r="${address}"/>`
@@ -391,6 +378,7 @@ export async function applyXlsxManualOperation(
     if (sheet.id === sourceSheet.id && dr === 0 && dc === 0) throw new Error('目标与剪切源相同')
     const sourceXml = (await zip.readText(sourceSheet.entry))!,
       sourceCells = cellMap(sourceXml)
+    const styleAt = xlsxRangeStyles(sourceXml, sourceCells)
     const checkParts = (candidateSheet: XlsxSheet, area: Area) => {
       if (
         candidateSheet.tables?.some((table) => intersects(parseRange(table.range), area)) ||
@@ -426,16 +414,15 @@ export async function applyXlsxManualOperation(
     for (const { row, column } of positions(source)) {
       const from = formatAddress(row, column),
         to = formatAddress(row + dr, column + dc)
-      let raw = sourceCells.get(from) ?? ''
-      if (raw) {
-        raw = raw.replace(/\br="[^"]*"/, `r="${to}"`)
-        if (sourceSheet.id !== sheet.id)
-          raw = raw.replace(
-            /(<f\b[^>]*>)([\s\S]*?)(<\/f>)/g,
-            (_a, open: string, body: string, close: string) =>
-              open + escape(qualifyMovedFormula(decodeXlsxXml(body), sourceSheet.name)) + close,
-          )
-      }
+      let raw = sourceCells.get(from) ?? `<c r="${from}"/>`
+      raw = raw.replace(/\br="[^"]*"/, `r="${to}"`)
+      if (sourceSheet.id !== sheet.id)
+        raw = raw.replace(
+          /(<f\b[^>]*>)([\s\S]*?)(<\/f>)/g,
+          (_a, open: string, body: string, close: string) =>
+            open + escape(qualifyMovedFormula(decodeXlsxXml(body), sourceSheet.name)) + close,
+        )
+      raw = materializeXlsxCellStyle(raw, styleAt(row, column))
       edits.set(to, raw)
       changedCells.push(`${sheet.id}:${to}`, `${sourceSheet.id}:${from}`)
     }

@@ -214,7 +214,7 @@ export function xlsxTableCellFormat(
     if (table.firstColumn && c === b.startColumn) apply('firstHeaderCell')
     if (table.lastColumn && c === b.endColumn) apply('lastHeaderCell')
   } else if (r > b.endRow - totals) apply('totalRow')
-  if (cell.format?.fillColor) delete output.fillColor
+  if (cell.format?.fillColor || cell.format?.fill?.spec) delete output.fillColor
   if (cell.format?.fontColor && cell.format.fontColor.toUpperCase() !== '#000000')
     delete output.fontColor
   if (output.borders) output.borders = { ...output.borders, ...cell.format?.borders }

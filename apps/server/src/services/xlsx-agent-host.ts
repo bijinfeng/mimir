@@ -3,6 +3,8 @@ import {
   xlsxScalar,
 } from '../../../../packages/office/src/xlsx-cell-effects.js'
 import type { XlsxWorkbook } from '../../../../packages/office/src/xlsx.js'
+import { preserveXlsxFillStyles } from './xlsx-fill-styles.js'
+import { normalizeStyleColor } from '../../../../packages/office/vendor/packages/xlsx-gateway/src/domain/style-color.js'
 import { applyXlsxPivotOperation, XLSX_PIVOT_OPS } from './xlsx-agent-pivots.js'
 import { applyXlsxTableOperation, XLSX_TABLE_OPS } from './xlsx-agent-tables.js'
 import { applyXlsxObjectOperation, XLSX_OBJECT_OPS } from './xlsx-agent-objects.js'
@@ -155,7 +157,37 @@ function styleFromFormat(format: CellFormatPatch): WorkbookStyleEdit {
       style[key] = value
       continue
     }
-    if (key === 'fill') throw new Error('format_range 的图案和渐变填充尚未接入；可使用 fillColor')
+    if (key === 'fill') {
+      const fill = value as CellFormatPatch['fill']
+      style.fill =
+        fill === null
+          ? null
+          : fill && 'gradient' in fill
+            ? {
+                gradient: {
+                  ...fill.gradient,
+                  stops: fill.gradient.stops.map((stop) => ({
+                    position: stop.position,
+                    color: normalizeStyleColor(stop.color),
+                  })),
+                },
+              }
+            : fill
+              ? {
+                  pattern: fill.pattern,
+                  fg: normalizeStyleColor(fill.fg),
+                  ...(fill.bg === undefined ? {} : { bg: normalizeStyleColor(fill.bg) }),
+                }
+              : undefined
+      continue
+    }
+    if (key === 'fillColor' || key === 'fontColor') {
+      style[key] =
+        value === null
+          ? null
+          : normalizeStyleColor(value as NonNullable<CellFormatPatch['fillColor']>)
+      continue
+    }
     if (
       value === null &&
       ['bold', 'italic', 'underline', 'strikethrough', 'wrapText'].includes(key)
@@ -464,7 +496,13 @@ export async function applyXlsxOpsOnHost(request: XlsxHostRequest): Promise<Xlsx
             column,
             writeValue: existing?.writeValue ?? false,
             cell: existing?.cell ?? sheet.cells[address] ?? { value: null },
-            style: { ...existing?.style, ...style },
+            style: {
+              ...existing?.style,
+              ...(style.fill === undefined && style.fillColor !== undefined
+                ? { fill: undefined }
+                : {}),
+              ...style,
+            },
           })
         })
         continue
@@ -584,12 +622,18 @@ export async function applyXlsxOpsOnHost(request: XlsxHostRequest): Promise<Xlsx
   if (edits.size === 0 && structuralOps.length === 0 && !sheetPlan)
     throw new Error('XLSX 操作没有生成可写入的变更')
   checkSignal(signal)
-  const mutation = await applyCellEditsToXlsx(
+  const nativeMutation = await applyCellEditsToXlsx(
     source,
     [...edits.values()],
     structuralOps,
     [],
     sheetPlan,
+  )
+  const mutation = await preserveXlsxFillStyles(
+    source,
+    nativeMutation,
+    [...edits.values()],
+    preview.sheets,
   )
   assertOnlyTouchedEntriesChanged(mutation)
   checkSignal(signal)

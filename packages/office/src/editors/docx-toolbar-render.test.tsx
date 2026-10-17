@@ -31,6 +31,7 @@ import {
   resolveDocxNoteTarget,
 } from './DocxEditor.js'
 import type { EditorIo } from './types.js'
+import { DocxListsExtension, docxListDefinitions, syncDocxListDefinitions } from './docx-lists.js'
 
 const FIXTURE = join(
   import.meta.dirname,
@@ -38,6 +39,7 @@ const FIXTURE = join(
 )
 
 const mounted: { unmount: () => void }[] = []
+const TOOLBAR_EXTENSIONS = [...editorExtensions, DocxListsExtension]
 
 afterEach(() => {
   for (const item of mounted) item.unmount()
@@ -54,7 +56,7 @@ afterEach(() => {
  */
 function Harness({ onReady }: { onReady: (editor: Editor) => void }) {
   const editor = useEditor({
-    extensions: editorExtensions,
+    extensions: TOOLBAR_EXTENSIONS,
     content: contentJson as never,
     editorProps: { attributes: { spellcheck: 'true' } },
   })
@@ -102,6 +104,13 @@ async function boot(): Promise<{ host: HTMLElement; editor: Editor }> {
     },
   })
   if (editor === null) throw new Error('编辑器没起来')
+  // Mirror DocxEditor's native numbering setup: toolbar list commands require
+  // both the root metadata extension and the parsed definitions, not just nodes.
+  const ready: Editor = editor
+  act(() => {
+    syncDocxListDefinitions(ready, session.footnotes.parsed.numbering)
+    ready.view.dispatch(ready.state.tr.setMeta('addToHistory', false))
+  })
   return { host, editor }
 }
 
@@ -240,7 +249,10 @@ describe('DocxToolbar 渲染', () => {
     expect([...host.querySelectorAll('[role="tab"]')].map((item) => item.textContent)).toEqual([
       '开始',
       '插入',
+      '设计',
+      '绘图',
       '布局',
+      '引用',
       '审阅',
       '表格',
       '视图',
@@ -421,6 +433,10 @@ describe('DocxToolbar 渲染', () => {
     })
     expect(editor.isActive('docListItem')).toBe(true)
     expect(editor.getAttributes('docListItem').kind).toBe('bullet')
+    expect(
+      docxListDefinitions(editor).get(String(editor.getAttributes('docListItem').numId))?.levels[0]
+        ?.numFmt,
+    ).toBe('bullet')
   })
 
   it('表格菜单在光标不在表格里时不出现', async () => {

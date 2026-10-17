@@ -134,6 +134,15 @@ async function settle(done: () => boolean): Promise<void> {
   }
 }
 
+async function waitForPlayback(check: () => void): Promise<void> {
+  await vi.waitFor(async () => {
+    await act(async () => {
+      await new Promise((tick) => setTimeout(tick, 0))
+    })
+    check()
+  })
+}
+
 /**
  * 挂载编辑器并等到它渲染出 SVG。
  *
@@ -730,9 +739,33 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
   })
 
   it('讲稿、换页时间和动画顺序有当前状态并保存重开', async () => {
-    const { host, record } = await mountEditor(load('title-layout.pptx'), {
-      hostApply: upstreamHostApply,
+    let animationRequests = 0
+    let secondAnimationReady = false
+    let secondNativeAnimationCount: number | null = null
+    let releaseSecondAnimation!: () => void
+    const pendingSecondAnimation = new Promise<void>((resolvePending) => {
+      releaseSecondAnimation = resolvePending
     })
+    const { host, record } = await mountEditor(load('title-layout.pptx'), {
+      hostApply: async (request) => {
+        const response = await upstreamHostApply(request)
+        if (request.action === 'manual_animation' && ++animationRequests === 2) {
+          const native = await openPptxForEdit(response.bytes)
+          secondNativeAnimationCount = getSlideAnimations(native.slides()[0]!).length
+          secondAnimationReady = true
+          await pendingSecondAnimation
+        }
+        return response
+      },
+    })
+    const waitForAnimations = async (count: number) =>
+      waitForPlayback(() => {
+        expect(host.querySelector('.mimir-pptx-animation__header')?.textContent).toContain(
+          `共 ${count} 个动画`,
+        )
+        expect(host.querySelector('.mimir-pptx-animation')?.getAttribute('aria-busy')).toBe('false')
+        expect(button(host, '保存到库').disabled).toBe(false)
+      })
     selectOnCanvas(host, 0)
     click(
       host.querySelector('[role=tab][data-tab-key=slide]') ??
@@ -765,17 +798,29 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
       Array.from(host.querySelectorAll('[role=tab]')).find((tab) => tab.textContent === '效果')!,
     )
     click(button(host, '为选中对象添加动画'))
-    await settle(() => host.textContent?.includes('共 1 个动画') === true)
-    await settle(() => !button(host, '为选中对象添加动画').disabled)
+    await waitForAnimations(1)
+    expect(button(host, '为选中对象添加动画').disabled).toBe(false)
     pickSelectOption(host, '新增动画效果', '旋转')
     click(button(host, '为选中对象添加动画'))
-    await settle(() => host.textContent?.includes('共 2 个动画') === true)
+    // Hold an actual two-animation host result before acceptance. The old settle
+    // silently exhausted its polling budget and continued with this pending UI.
+    await waitForPlayback(() => expect(secondAnimationReady).toBe(true))
+    expect(secondNativeAnimationCount).toBe(2)
+    expect(button(host, '为选中对象添加动画').disabled).toBe(true)
+    expect(button(host, '保存到库').disabled).toBe(true)
     click(
       Array.from(host.querySelectorAll('[role=tab]')).find((tab) => tab.textContent === '时间线')!,
     )
+    expect(host.querySelector('.mimir-pptx-animation__header')?.textContent).toContain(
+      '共 1 个动画',
+    )
+    expect(host.querySelector('.mimir-pptx-animation')?.getAttribute('aria-busy')).toBe('true')
+    await act(async () => releaseSecondAnimation())
+    await waitForAnimations(2)
     expect(host.textContent).toContain('共 2 个动画')
     click(button(host, '上移动画 2'))
-    await settle(() => !button(host, '删除动画 1').disabled)
+    await waitForAnimations(2)
+    expect(button(host, '删除动画 1').disabled).toBe(false)
     const xml = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
     expect(xml).toContain('advTm="8000"')
     expect(xml).toContain('<p:timing>')
@@ -786,7 +831,7 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
       'fade',
     ])
     click(button(host, '删除动画 1'))
-    await settle(() => host.textContent?.includes('共 1 个动画') === true)
+    await waitForAnimations(1)
     await saveAndRead(host, record, 'ppt/slides/slide1.xml')
     const latest = await openPptxForEdit(record.saved.at(-1)!)
     expect(latest.notes(0)).toBe('第一段讲稿\n第二段 & 细节')
