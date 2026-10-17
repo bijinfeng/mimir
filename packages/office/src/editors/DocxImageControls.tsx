@@ -10,6 +10,9 @@ import {
 } from '../shell/EditorShell.js'
 import { CropIcon, ImageIcon } from '../shell/icons.js'
 import type { DocxAdvancedContext } from './DocxAdvancedControls.js'
+import { NodeSelection } from '@tiptap/pm/state'
+import { docxCropPixels } from './docx-image-crop.js'
+import { DocxImageCropPreview } from './DocxImageCropPreview.js'
 import type { PmDocJson } from '../docx.js'
 import { docxImageSaveBaselines } from '../docx-image-save.js'
 import {
@@ -47,18 +50,59 @@ export function DocxImageControls({ context }: { context: DocxAdvancedContext })
   const [keepRatio, setKeepRatio] = useState(true)
   const [mode, setMode] = useState<'crop' | 'cutout' | null>(null)
   const [insets, setInsets] = useState(ZERO_CROP)
+  const [sourceSize, setSourceSize] = useState({ width: 0, height: 0 })
   const [tolerance, setTolerance] = useState(30)
   const [busy, setBusy] = useState(false)
   const [stale, setStale] = useState(false)
   const [error, setError] = useState('')
   const [status, setStatus] = useState('')
   const pending = useRef<AbortController | null>(null)
+  const tools = useRef<HTMLDivElement>(null)
+  const cropOrigin = useRef(ZERO_CROP)
+  const applying = useRef(false)
+  const focusCropEntry = useRef(false)
+  useEffect(() => {
+    if (!mode && focusCropEntry.current) {
+      focusCropEntry.current = false
+      tools.current?.querySelector<HTMLButtonElement>('button[aria-label="裁切选中图片"]')?.focus()
+    }
+  }, [mode])
+  const initialOptions = useRef(JSON.stringify(context.options))
+  const initialIdentity = useRef({ editor: context.editor, session: context.session })
+  const optionsKey = JSON.stringify(context.options)
+  useEffect(() => {
+    if (
+      optionsKey !== initialOptions.current ||
+      context.editor !== initialIdentity.current.editor ||
+      context.session !== initialIdentity.current.session
+    ) {
+      pending.current?.abort()
+      setBusy(false)
+      setStale(true)
+    }
+  }, [optionsKey, context.editor, context.session])
   useEffect(() => () => pending.current?.abort(), [])
   useEffect(() => {
-    const check = () => setStale(!!target && context.editor.state.doc !== target.doc)
+    const check = () => {
+      if (applying.current) return
+      const selection = context.editor.state.selection
+      if (
+        target &&
+        (!context.editor.isEditable ||
+          context.editor.state.doc !== target.doc ||
+          !(selection instanceof NodeSelection) ||
+          selection.from !== target.pos)
+      ) {
+        pending.current?.abort()
+        setBusy(false)
+        setStale(true)
+      }
+    }
     context.editor.on('transaction', check)
+    context.editor.on('update', check)
     return () => {
       context.editor.off('transaction', check)
+      context.editor.off('update', check)
     }
   }, [context.editor, target])
   if (!target || !draft)
@@ -70,6 +114,11 @@ export function DocxImageControls({ context }: { context: DocxAdvancedContext })
     setDraft((value) => value && { ...value, ...patch })
     setError('')
     setStatus('')
+  }
+  const leavePixels = () => {
+    setMode(null)
+    setError('')
+    focusCropEntry.current = true
   }
   const abort = () => {
     pending.current?.abort()
@@ -85,6 +134,22 @@ export function DocxImageControls({ context }: { context: DocxAdvancedContext })
     setStatus('')
     try {
       assertDocxImageTarget(context.editor, target)
+      let sameCrop = Object.keys(insets).every(
+        (key) =>
+          Math.abs(
+            insets[key as keyof DocxImageInsets] - cropOrigin.current[key as keyof DocxImageInsets],
+          ) < 1e-9,
+      )
+      if (mode === 'crop' && sourceSize.width > 0 && sourceSize.height > 0) {
+        sameCrop =
+          JSON.stringify(docxCropPixels(insets, sourceSize.width, sourceSize.height)) ===
+          JSON.stringify(docxCropPixels(cropOrigin.current, sourceSize.width, sourceSize.height))
+      }
+      if (!file && mode === 'crop' && sameCrop) {
+        if (dirty) submit(draft)
+        leavePixels()
+        return
+      }
       let result: { dataUrl: string; width: number; height: number }
       if (file) {
         const dataUrl = await readDocxImageFile(file, controller.signal)
@@ -100,10 +165,20 @@ export function DocxImageControls({ context }: { context: DocxAdvancedContext })
       }
       if (controller.signal.aborted) return
       assertDocxImageTarget(context.editor, target)
-      change({ replacement: result.dataUrl, height: (draft.width * result.height) / result.width })
-      setMode(null)
+      const nextDraft = {
+        ...draft,
+        replacement: result.dataUrl,
+        height: (draft.width * result.height) / result.width,
+      }
+      if (!file && mode === 'crop') {
+        submit(nextDraft)
+        leavePixels()
+      } else {
+        change(nextDraft)
+        setMode(null)
+        setStatus('预览已更新，点击应用写入文档。')
+      }
       setInsets(ZERO_CROP)
-      setStatus('预览已更新，点击应用写入文档。')
     } catch (cause) {
       if (!controller.signal.aborted)
         setError(cause instanceof Error ? cause.message : '处理图片失败，请重试')
@@ -114,8 +189,8 @@ export function DocxImageControls({ context }: { context: DocxAdvancedContext })
       }
     }
   }
-  const submit = () => {
-    if (locked) return
+  const submit = (value: DocxImageDraft = draft) => {
+    if (stale) return
     try {
       assertDocxImageTarget(context.editor, target)
       // Preflight native transform structure before publishing the transaction.
@@ -128,14 +203,15 @@ export function DocxImageControls({ context }: { context: DocxAdvancedContext })
           attrs.docxIndex === target.node.attrs.docxIndex
         ) {
           Object.assign(attrs, {
-            imageRotDeg: draft.rotation,
-            imageFlipH: draft.flipH,
-            imageFlipV: draft.flipV,
+            imageRotDeg: value.rotation,
+            imageFlipH: value.flipH,
+            imageFlipV: value.flipV,
           })
         }
       }
       docxImageSaveBaselines(snapshot, context.session.blocks)
-      const next = applyDocxImageDraft(context.editor, target, draft)
+      applying.current = true
+      const next = applyDocxImageDraft(context.editor, target, value)
       setTarget(next)
       setDraft(docxImageDraft(next))
       setStale(false)
@@ -143,9 +219,13 @@ export function DocxImageControls({ context }: { context: DocxAdvancedContext })
       setStatus(next === target ? '图片没有变化。' : '已应用图片修改，可撤销或保存到库。')
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '应用图片修改失败')
+      throw cause
+    } finally {
+      applying.current = false
     }
   }
   const startPixels = (kind: 'crop' | 'cutout') => {
+    setSourceSize({ width: 0, height: 0 })
     setMode(kind)
     setError('')
     setStatus('')
@@ -155,11 +235,12 @@ export function DocxImageControls({ context }: { context: DocxAdvancedContext })
       r: number
       b: number
     } | null
-    setInsets(
+    const initial =
       !draft.replacement && crop
         ? { left: crop.l * 100, top: crop.t * 100, right: crop.r * 100, bottom: crop.b * 100 }
-        : ZERO_CROP,
-    )
+        : ZERO_CROP
+    cropOrigin.current = initial
+    setInsets(initial)
   }
   const invalidCrop = insets.left + insets.right >= 100 || insets.top + insets.bottom >= 100
   const previewScale = Math.min(1, 160 / Math.max(draft.width, draft.height, 1))
@@ -188,11 +269,33 @@ export function DocxImageControls({ context }: { context: DocxAdvancedContext })
     })
   }
   return (
-    <div className="mimir-docx-picture-tools">
+    <div
+      ref={tools}
+      className="mimir-docx-picture-tools"
+      onKeyDown={(event) => {
+        if (event.key === 'Escape' && (mode || busy)) {
+          event.preventDefault()
+          event.stopPropagation()
+          if (busy) abort()
+          else leavePixels()
+        }
+      }}
+    >
       <div className="mimir-docx-picture-tools__scroll">
         <figure className="mimir-docx-picture-preview">
           <div className="mimir-docx-picture-preview__stage">
-            {source ? (
+            {mode === 'crop' && source ? (
+              <DocxImageCropPreview
+                source={source}
+                insets={insets}
+                disabled={locked}
+                onSize={setSourceSize}
+                onChange={(value) => {
+                  setInsets(value)
+                  setError('')
+                }}
+              />
+            ) : source ? (
               <div
                 className="mimir-docx-picture-preview__image"
                 style={
@@ -207,17 +310,6 @@ export function DocxImageControls({ context }: { context: DocxAdvancedContext })
                 }
               >
                 <img src={source} alt="选中图片的编辑预览" draggable={false} style={sourceStyle} />
-                {mode === 'crop' && !invalidCrop && (
-                  <div
-                    className="mimir-docx-picture-preview__crop"
-                    style={{
-                      left: `${insets.left}%`,
-                      top: `${insets.top}%`,
-                      right: `${insets.right}%`,
-                      bottom: `${insets.bottom}%`,
-                    }}
-                  />
-                )}
               </div>
             ) : (
               <ToolbarMenuNote>这张图片没有可读取的预览。</ToolbarMenuNote>
@@ -235,6 +327,13 @@ export function DocxImageControls({ context }: { context: DocxAdvancedContext })
               <ToolbarMenuFields label={mode === 'crop' ? '裁切图片' : '去除背景'}>
                 {mode === 'crop' ? (
                   <>
+                    {!draft.replacement &&
+                      target.node.attrs.imageFillRect &&
+                      !target.node.attrs.imageCrop && (
+                        <ToolbarMenuNote>
+                          原图包含填充偏移；此处按完整原图裁切，应用后替换填充偏移。
+                        </ToolbarMenuNote>
+                      )}
                     {(
                       [
                         ['left', '左侧裁去'],
@@ -246,16 +345,34 @@ export function DocxImageControls({ context }: { context: DocxAdvancedContext })
                       <ToolbarNumberField
                         key={key}
                         label={label}
-                        value={insets[key]}
+                        value={Number(insets[key].toFixed(6))}
                         min={0}
-                        max={99}
-                        step={1}
+                        max={
+                          100 -
+                          (key === 'left'
+                            ? insets.right
+                            : key === 'right'
+                              ? insets.left
+                              : key === 'top'
+                                ? insets.bottom
+                                : insets.top) -
+                          (key === 'left' || key === 'right'
+                            ? sourceSize.width
+                              ? 100 / sourceSize.width
+                              : 0.000001
+                            : sourceSize.height
+                              ? 100 / sourceSize.height
+                              : 0.000001)
+                        }
+                        step={0.1}
                         suffix="%"
                         disabled={locked}
                         onCommit={(value) => setInsets((current) => ({ ...current, [key]: value }))}
                       />
                     ))}
-                    <ToolbarMenuNote>按原始图片裁切，旋转和翻转继续保留。</ToolbarMenuNote>
+                    <ToolbarMenuNote>
+                      拖动边界或亮框；方向键微调，Shift 加速。裁切生成 PNG，GIF 仅保留当前静态帧。
+                    </ToolbarMenuNote>
                   </>
                 ) : (
                   <>
@@ -424,17 +541,11 @@ export function DocxImageControls({ context }: { context: DocxAdvancedContext })
             </ToolbarButton>
           ) : mode ? (
             <>
-              <ToolbarButton
-                label="取消图片像素调整"
-                onClick={() => {
-                  setMode(null)
-                  setError('')
-                }}
-              >
+              <ToolbarButton label="取消图片像素调整" onClick={leavePixels}>
                 返回
               </ToolbarButton>
               <ToolbarButton
-                label={mode === 'crop' ? '预览图片裁切' : '预览图片去背景'}
+                label={mode === 'crop' ? '应用图片裁切' : '预览图片去背景'}
                 primary
                 disabled={locked || (mode === 'crop' && invalidCrop)}
                 onClick={() => void prepare()}
@@ -458,7 +569,13 @@ export function DocxImageControls({ context }: { context: DocxAdvancedContext })
                 primary
                 disabled={locked || !dirty}
                 disabledReason={stale ? '文档已变化，请重新打开面板' : '请先修改图片属性'}
-                onClick={submit}
+                onClick={() => {
+                  try {
+                    submit()
+                  } catch {
+                    /* Error stays in the Inspector. */
+                  }
+                }}
               />
             </>
           )}

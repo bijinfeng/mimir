@@ -94,12 +94,7 @@
   max-height: 180px;
   object-fit: contain;
 }
-.mimir-docx-picture-preview__crop {
-  position: absolute;
-  border: 1px solid var(--me-accent);
-  box-shadow: 0 0 0 250px rgb(0 0 0 / 45%);
-  pointer-events: none;
-}
+
 .mimir-docx-picture-preview figcaption {
   margin-top: 8px;
   color: var(--me-text-weak);
@@ -117,4 +112,102 @@
 }
 .mimir-docx-toc-preview li {
   overflow-wrap: anywhere;
+}
+
+.mimir-docx-crop {
+  position: relative;
+  flex: none;
+  margin: 0 auto;
+  touch-action: none;
+}
+.mimir-docx-crop > img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.mimir-docx-crop__region {
+  position: absolute;
+  border: 1px solid var(--me-accent);
+  box-shadow: 0 0 0 250px rgb(0 0 0 / 45%);
+}
+.mimir-docx-crop__handle {
+  position: absolute;
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--me-accent);
+  touch-action: none;
+}
+.mimir-docx-crop__handle:not(.mimir-docx-crop__handle--move)::after {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  background: var(--me-surface);
+  border: 1px solid currentColor;
+}
+.mimir-docx-crop__handle:focus-visible {
+  outline: 2px solid var(--me-accent);
+  outline-offset: 1px;
+}
+.mimir-docx-crop__handle--move {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  cursor: move;
+}
+.mimir-docx-crop__handle--n {
+  left: 50%;
+  top: 0;
+  transform: translate(-50%, -50%);
+  cursor: ns-resize;
+}
+.mimir-docx-crop__handle--s {
+  left: 50%;
+  top: 100%;
+  transform: translate(-50%, -50%);
+  cursor: ns-resize;
+}
+.mimir-docx-crop__handle--e {
+  left: 100%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  cursor: ew-resize;
+}
+.mimir-docx-crop__handle--w {
+  left: 0;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  cursor: ew-resize;
+}
+.mimir-docx-crop__handle--nw {
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+  cursor: nwse-resize;
+}
+.mimir-docx-crop__handle--ne {
+  left: 100%;
+  top: 0;
+  transform: translate(-50%, -50%);
+  cursor: nesw-resize;
+}
+.mimir-docx-crop__handle--sw {
+  left: 0;
+  top: 100%;
+  transform: translate(-50%, -50%);
+  cursor: nesw-resize;
+}
+.mimir-docx-crop__handle--se {
+  left: 100%;
+  top: 100%;
+  transform: translate(-50%, -50%);
+  cursor: nwse-resize;
+}
+.mimir-docx-picture-tools__actions p {
+  max-height: 4.5em;
+  overflow: auto;
 }

@@ -2,6 +2,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { Editor } from '@tiptap/core'
+import { Plugin } from '@tiptap/pm/state'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import JSZip from 'jszip'
 import { editorExtensions } from '../../vendor/apps/docs/src/renderer/editor/extensions.js'
@@ -72,6 +73,8 @@ describe('DOCX manual native image adapter', () => {
       applyDocxImageDraft(editor, target, { ...docxImageDraft(target), rotation: 90 }),
     ).toThrow('文档已变化')
     expect(editor.getJSON()).toEqual(afterEdit)
+    editor.setEditable(false)
+    expect(() => assertDocxImageTarget(editor, target)).toThrow('保护状态')
     editor.destroy()
     expect(() => assertDocxImageTarget(editor, target)).toThrow('文档已关闭')
   })
@@ -216,6 +219,94 @@ describe('DOCX manual native image adapter', () => {
     expect(await entries(await session.save(editor.getJSON() as never))).toEqual(replaced)
   })
 
+  it('a protection filter rejecting the image transaction returns an error and does not create history or a fake target', async () => {
+    const { editor, target, session, bytes } = await setup()
+    const rejectImage = new Plugin({ filterTransaction: (tr) => !tr.docChanged })
+    editor.registerPlugin(rejectImage)
+    expect(() =>
+      applyDocxImageDraft(editor, target, { ...docxImageDraft(target), rotation: 90 }),
+    ).toThrow('未被编辑器接受')
+    expect(editor.state.doc).toBe(target.doc)
+    expect(editor.commands.undo()).toBe(false)
+    expect(await session.save(editor.getJSON() as never)).toEqual(bytes)
+  })
+
+  it.each(['inline', 'front'])(
+    'native %s crop replacement preserves transform and every unrelated ZIP payload through save/undo/redo',
+    async (wrap) => {
+      const zip = await JSZip.loadAsync(new Uint8Array(readFileSync(FIXTURE)))
+      let xml = await zip.file('word/document.xml')!.async('string')
+      xml = xml.replace(
+        '</pic:blipFill>',
+        '<a:srcRect l="10000" t="5000" r="15000" b="20000"/></pic:blipFill>',
+      )
+      xml = xml.replace(
+        '</pic:pic>',
+        '<pic:spPr><a:xfrm rot="1800000" flipH="1" data-crop-qa="keep"><a:off x="0" y="0"/><a:ext cx="914400" cy="914400"/></a:xfrm></pic:spPr></pic:pic>',
+      )
+      if (wrap === 'front')
+        xml = xml
+          .replace(
+            '<wp:inline>',
+            '<wp:anchor distT="0" distB="0" distL="0" distR="0" simplePos="0" relativeHeight="251658240" behindDoc="0" locked="0" layoutInCell="1" allowOverlap="1"><wp:simplePos x="0" y="0"/><wp:positionH relativeFrom="margin"><wp:posOffset>0</wp:posOffset></wp:positionH><wp:positionV relativeFrom="paragraph"><wp:posOffset>0</wp:posOffset></wp:positionV>',
+          )
+          .replace('</wp:inline>', '<wp:wrapNone/></wp:anchor>')
+      zip.file('word/document.xml', xml)
+      zip.file('customXml/crop-sentinel.xml', '<sentinel keep="true">中文</sentinel>')
+      const source = await zip.generateAsync({ type: 'uint8array' })
+      const { editor, target, session } = await setup(source)
+      expect(target.node.attrs).toMatchObject({
+        imageCrop: { l: 0.1, t: 0.05, r: 0.15, b: 0.2 },
+        imageRotDeg: 30,
+        imageFlipH: true,
+      })
+      const originalWrap = target.node.attrs.imageWrap
+      const next = applyDocxImageDraft(editor, target, {
+        ...docxImageDraft(target),
+        replacement: PNG,
+        height: 64,
+      })
+      expect(next.node.attrs).toMatchObject({
+        imageCrop: null,
+        imageFillRect: null,
+        imageRotDeg: 30,
+        imageFlipH: true,
+        imageWrap: originalWrap,
+      })
+      const first = await session.save(editor.getJSON() as never)
+      const reopened = await openDocx(first)
+      expect(image(reopened)).toMatchObject({
+        imageWidthPx: 96,
+        imageHeightPx: 64,
+        imageRotDeg: 30,
+        imageFlipH: true,
+      })
+      expect(image(reopened).imageCrop).toBeUndefined()
+      const firstEntries = await entries(first)
+      const sourceEntries = await entries(source)
+      for (const name of Object.keys(sourceEntries)) {
+        if (
+          [
+            'word/document.xml',
+            'word/_rels/document.xml.rels',
+            '[Content_Types].xml',
+            'word/media/image1.png',
+          ].includes(name)
+        )
+          continue
+        expect(firstEntries[name]).toEqual(sourceEntries[name])
+      }
+      expect(new TextDecoder().decode(firstEntries['word/document.xml'])).toContain(
+        'data-crop-qa="keep"',
+      )
+      expect(await entries(await session.save(editor.getJSON() as never))).toEqual(firstEntries)
+      editor.commands.undo()
+      expect(await session.save(editor.getJSON() as never)).toEqual(source)
+      editor.commands.redo()
+      expect(await entries(await session.save(editor.getJSON() as never))).toEqual(firstEntries)
+    },
+  )
+
   it('new unsaved pictures update genImage and retain flip/rotation on reopen', async () => {
     const { editor, session } = await setup()
     const pos = editor.state.doc.content.size
@@ -321,13 +412,13 @@ function canvasStub() {
   vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue(PNG)
   return context
 }
-function decodePending() {
+function decodePending(width = 2, height = 2) {
   let pending: HTMLImageElement | null = null
   vi.spyOn(globalThis, 'Image').mockImplementation(function () {
     pending = document.createElement('img')
     Object.defineProperties(pending, {
-      naturalWidth: { value: 2 },
-      naturalHeight: { value: 2 },
+      naturalWidth: { value: width },
+      naturalHeight: { value: height },
       src: { value: '', writable: true },
     })
     return pending
@@ -356,6 +447,22 @@ describe('DOCX image pixel preview cancellation and output', () => {
     expect(ctx.putImageData).toHaveBeenCalled()
     expect(ctx.putImageData.mock.calls[0]![0].data[3]).toBe(0)
   })
+  it.each(['image/png', 'image/jpeg', 'image/gif'])(
+    'full-resolution %s cropping selects exact lower-right pixels and retains PNG encoding contract',
+    async (mime) => {
+      const ctx = canvasStub()
+      const pending = decodePending(240, 160)
+      const crop = processDocxImage(
+        PNG.replace('image/png', mime),
+        { kind: 'crop', insets: { left: 50, top: 50, right: 0, bottom: 0 } },
+        new AbortController().signal,
+      )
+      pending().dispatchEvent(new Event('load'))
+      expect(await crop).toEqual({ dataUrl: PNG, width: 120, height: 80 })
+      expect(ctx.drawImage).toHaveBeenLastCalledWith(pending(), 120, 80, 120, 80, 0, 0, 120, 80)
+      expect(HTMLCanvasElement.prototype.toDataURL).toHaveBeenCalledWith('image/png')
+    },
+  )
   it('decode cancellation, invalid crop, malformed input and decode failure do not create output', async () => {
     const ctx = canvasStub()
     const pending = decodePending()

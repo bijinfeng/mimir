@@ -5,6 +5,7 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { ConfigProvider } from 'antd'
 import { Editor } from '@tiptap/core'
+import { Plugin } from '@tiptap/pm/state'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import JSZip from 'jszip'
 import { editorExtensions } from '../../vendor/apps/docs/src/renderer/editor/extensions.js'
@@ -42,8 +43,22 @@ afterEach(() => {
   mocked.process.mockReset()
 })
 
-async function boot(kind: 'image' | 'toc' | 'toolbar' = 'image', noHeadings = false) {
-  const bytes = new Uint8Array(readFileSync(FIXTURE))
+async function boot(
+  kind: 'image' | 'toc' | 'toolbar' = 'image',
+  noHeadings = false,
+  imageAttrs?: Record<string, unknown>,
+) {
+  const fixtureZip = await JSZip.loadAsync(new Uint8Array(readFileSync(FIXTURE)))
+  fixtureZip.file(
+    'word/media/image1.png',
+    Uint8Array.from(
+      atob(
+        'iVBORw0KGgoAAAANSUhEUgAAAPAAAACgCAYAAAAy2+FlAAAEGElEQVR4nO3csXEYVxBEQQaBSBgEgqCtQBQZw6HNDKASfFi4Kgz2tbFntjWvvnc/Xl5e3pxz3/N+/P/5+/r62PH2vNffvx473pYn4IC3PECegHkCznoCDnjLA+QJmCfgrCfggLc8QJ6AeQLOegIOeMsD5AmYJ+CsJ+CAtzxAnoB5As56Ag54ywPkCZgn4Kwn4IC3PECegHkCznoCDnjLA+QJmCfgrCfggLc8QJ6AeQLOeu8BO+e+53mBA97yC8J74AVeHyBPwDwBZ73lAfIEzBNw1hNwwFseIE/APAFnPQEHvOUB8gTME3DWE3DAWx4gT8A8AWc9AQe85QHyBMwTcNYTcMBbHiBPwDwBZz0BB7zlAfIEzBNw1hNwwFseIE/APAFnPQEHvOUB8h4I2Dn3Pc8LHPCWXxDeAy/w+gB5AuYJOOstD5AnYJ6As56AA97yAHkC5gk46wk44C0PkCdgnoCznoAD3vIAeQLmCTjrCTjgLQ+QJ2CegLOegAPe8gB5AuYJOOsJOOAtD5AnYJ6As56AA97yAHkC5gk46wk44C0PkPdAwM6573le4IC3/ILwHniB1wfIEzBPwFlveYA8AfMEnPUEHPCWB8gTME/AWU/AAW95gDwB8wSc9QQc8JYHyBMwT8BZT8ABb3mAPAHzBJz1BBzwlgfIEzBPwFlPwAFveYA8AfMEnPUEHPCWB8gTME/AWU/AAW95gLzPB/yvO31v7u69B/z398/Hjjfnvf38589jx9vyBHzfmx4gT8A8AWc9Ad/3pgfIEzBPwFlPwPe96QHyBMwTcNYT8H1veoA8AfMEnPUEfN+bHiBPwDwBZz0B3/emB8gTME/AWU/A973pAfIEzBNw1hPwfW96gDwB8wSc9QR835seIE/APAFnvfeA3en78v82Of/E4nmBeR+9wOMD5AmYJ+CsNz1AnoB5As56Ar7vTQ+QJ2CegLOegO970wPkCZgn4Kwn4Pve9AB5AuYJOOsJ+L43PUCegHkCznoCvu9ND5AnYJ6As56A73vTA+QJmCfgrCfg+970AHkC5gk46wn4vjc9QN4DAbvT9+X/bXL+icXzAvM+eoHHB8gTME/AWW96gDwB8wSc9QR835seIE/APAFnPQHf96YHyBMwT8BZT8D3vekB8gTME3DWE/B9b3qAPAHzBJz1BHzfmx4gT8A8AWc9Ad/3pgfIEzBPwFlPwPe96QHyBMwTcNYT8H1veoC8BwJ2p+/L/9vk/BOL5wXmffQCjw+QJ2CegLPe9AB5AuYJOOsJ+L43PUCegHkCznoCvu9ND5AnYJ6As56A73vTA+QJmCfgrCfg+970AHkC5gk46wn4vjc9QJ6AeQLOegK+700PkCdgnoCznoDve9MD5AmYJ+CsJ+D73vQAeZ+7/wA9VoS5LWxMlQAAAABJRU5ErkJggg==',
+      ),
+      (char) => char.charCodeAt(0),
+    ),
+  )
+  const bytes = await fixtureZip.generateAsync({ type: 'uint8array' })
   const session = await openDocx(bytes)
   const editor = new Editor({
     element: document.createElement('div'),
@@ -59,8 +74,16 @@ async function boot(kind: 'image' | 'toc' | 'toolbar' = 'image', noHeadings = fa
   editor.state.doc.forEach((node, offset) => {
     if (node.attrs.blockType === 'image') pos = offset
   })
-  if (kind === 'image') editor.commands.setNodeSelection(pos)
-  else editor.commands.setTextSelection(1)
+  if (kind === 'image') {
+    editor.commands.setNodeSelection(pos)
+    if (imageAttrs)
+      editor.view.dispatch(
+        editor.state.tr.setNodeMarkup(pos, undefined, {
+          ...editor.state.doc.nodeAt(pos)!.attrs,
+          ...imageAttrs,
+        }),
+      )
+  } else editor.commands.setTextSelection(1)
   const handle = createDocxAgentHandle(editor, 'manual-picture', {
     session,
     saveOptions: { current: {} },
@@ -123,7 +146,7 @@ async function boot(kind: 'image' | 'toc' | 'toolbar' = 'image', noHeadings = fa
     handle.dispose()
     editor.destroy()
   })
-  return { host, editor, session, bytes, execute, context, handle, unmount, pos }
+  return { host, editor, session, bytes, execute, context, handle, unmount, pos, render }
 }
 function button(host: HTMLElement, label: string) {
   const result = host.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)
@@ -205,26 +228,28 @@ describe('DOCX compact picture Inspector', () => {
     expect(editor.getJSON()).toEqual(original)
   })
 
-  it('prepares real executor output as draft only; cancelling/unmounting/stale edits reject late pixels', async () => {
-    const { host, editor, session } = await boot()
+  it('applies crop once; cutout preparation remains draft-only and cancellation rejects late pixels', async () => {
+    const { host, editor, session, bytes, handle } = await boot()
     const original = editor.state.doc
+    const version = handle.getVersion()
     mocked.process.mockResolvedValueOnce({ dataUrl: PNG, width: 50, height: 25 })
     await press(host, '裁切选中图片')
-    expect(button(host, '预览图片裁切').textContent).toBe('预览图片裁切')
+    expect(button(host, '应用图片裁切').textContent).toBe('应用图片裁切')
     type(host, '左侧裁去', '25')
-    await press(host, '预览图片裁切')
+    await press(host, '应用图片裁切')
     expect(mocked.process).toHaveBeenLastCalledWith(
       expect.stringContaining('data:image/'),
       { kind: 'crop', insets: { left: 25, right: 0, top: 0, bottom: 0 } },
       expect.any(AbortSignal),
     )
-    expect(editor.state.doc).toBe(original)
-    await press(host, '应用图片格式')
+    expect(editor.state.doc).not.toBe(original)
+    expect(button(host, '应用图片格式').disabled).toBe(true)
     expect(
       (await openDocx(await session.save(editor.getJSON() as never))).blocks.find(
         (node) => node.type === 'image',
       ),
     ).toMatchObject({ imageWidthPx: 96, imageHeightPx: 48 })
+    const cropped = await parts(await session.save(editor.getJSON() as never))
     const saved = editor.state.doc
     let resolve: ((output: { dataUrl: string; width: number; height: number }) => void) | undefined
     mocked.process.mockImplementationOnce(
@@ -241,6 +266,15 @@ describe('DOCX compact picture Inspector', () => {
     await act(async () => resolve?.({ dataUrl: PNG, width: 1, height: 1 }))
     expect(editor.state.doc).toBe(saved)
     expect(button(host, '预览图片去背景')).toBeDefined()
+    expect(handle.getVersion()).toBe(version + 1)
+    act(() => {
+      editor.commands.undo()
+    })
+    expect(await session.save(editor.getJSON() as never)).toEqual(bytes)
+    act(() => {
+      editor.commands.redo()
+    })
+    expect(await parts(await session.save(editor.getJSON() as never))).toEqual(cropped)
   })
 
   it('rejects other edits while asynchronous image work is running, and aborts on close', async () => {
@@ -263,7 +297,7 @@ describe('DOCX compact picture Inspector', () => {
     expect(host.textContent).toContain('文档已变化')
     expect(editor.getJSON()).toEqual(edited)
     unmount()
-    expect(signal.aborted).toBe(false)
+    expect(signal.aborted).toBe(true)
     const another = await boot()
     mocked.process.mockImplementationOnce(() => new Promise(() => {}))
     await press(another.host, '去除选中图片背景')
@@ -271,6 +305,104 @@ describe('DOCX compact picture Inspector', () => {
     const pendingSignal = mocked.process.mock.calls.at(-1)![2]
     another.unmount()
     expect(pendingSignal.aborted).toBe(true)
+  })
+  it('opening/full-region apply and Escape are no-op; native crop defaults survive untouched', async () => {
+    const { host, editor, bytes, session } = await boot()
+    const original = editor.state.doc
+    await press(host, '裁切选中图片')
+    await press(host, '应用图片裁切')
+    expect(mocked.process).not.toHaveBeenCalled()
+    expect(editor.state.doc).toBe(original)
+    expect(await session.save(editor.getJSON() as never)).toEqual(bytes)
+    await press(host, '裁切选中图片')
+    type(host, '左侧裁去', '25')
+    act(() =>
+      host
+        .querySelector('input')!
+        .dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })),
+    )
+    expect(button(host, '裁切选中图片')).toBeDefined()
+    expect(document.activeElement).toBe(button(host, '裁切选中图片'))
+    expect(editor.state.doc).toBe(original)
+  })
+
+  it('selection change during decode aborts without publishing', async () => {
+    const { host, editor, handle } = await boot()
+    let resolve: ((output: { dataUrl: string; width: number; height: number }) => void) | undefined
+    mocked.process.mockImplementationOnce(
+      () =>
+        new Promise((done) => {
+          resolve = done
+        }),
+    )
+    await press(host, '裁切选中图片')
+    type(host, '左侧裁去', '25')
+    await press(host, '应用图片裁切')
+    const version = handle.getVersion()
+    const signal = mocked.process.mock.calls.at(-1)![2]
+    act(() => editor.commands.setTextSelection(1))
+    expect(signal.aborted).toBe(true)
+    await act(async () => resolve?.({ dataUrl: PNG, width: 120, height: 80 }))
+    expect(handle.getVersion()).toBe(version)
+    expect(host.textContent).toContain('文档已变化')
+  })
+  it('shows real native crop percentages and preserves rotation/flip when the region is untouched', async () => {
+    const { host, editor } = await boot('image', false, {
+      imageCrop: { l: 0.1, t: 0.05, r: 0.15, b: 0.2 },
+      imageRotDeg: 30,
+      imageFlipH: true,
+    })
+    const before = editor.state.doc
+    await press(host, '裁切选中图片')
+    for (const [label, value] of [
+      ['左侧裁去', '10'],
+      ['顶部裁去', '5'],
+      ['右侧裁去', '15'],
+      ['底部裁去', '20'],
+    ]) {
+      expect(
+        Number(host.querySelector<HTMLInputElement>(`input[aria-label="${label}"]`)!.value),
+      ).toBe(Number(value))
+    }
+    await press(host, '应用图片裁切')
+    expect(editor.state.doc).toBe(before)
+    expect(mocked.process).not.toHaveBeenCalled()
+  })
+
+  it('keeps rejected crop draft editable and reports failure rather than successful application', async () => {
+    const { host, editor } = await boot()
+    editor.registerPlugin(new Plugin({ filterTransaction: (tr) => !tr.docChanged }))
+    const before = editor.state.doc
+    mocked.process.mockResolvedValueOnce({ dataUrl: PNG, width: 120, height: 80 })
+    await press(host, '裁切选中图片')
+    type(host, '左侧裁去', '25')
+    await press(host, '应用图片裁切')
+    expect(editor.state.doc).toBe(before)
+    expect(host.textContent).toContain('未被编辑器接受')
+    expect(button(host, '应用图片裁切').disabled).toBe(false)
+    expect(host.textContent).not.toContain('已应用图片修改')
+  })
+  it('source options changing during decode cancel the late result before any publication', async () => {
+    const { host, editor, handle, context, render } = await boot()
+    let resolve: ((output: { dataUrl: string; width: number; height: number }) => void) | undefined
+    mocked.process.mockImplementationOnce(
+      () =>
+        new Promise((done) => {
+          resolve = done
+        }),
+    )
+    await press(host, '裁切选中图片')
+    type(host, '左侧裁去', '25')
+    await press(host, '应用图片裁切')
+    const version = handle.getVersion()
+    const before = editor.state.doc
+    const signal = mocked.process.mock.calls.at(-1)![2]
+    context.options = { ...context.options, comments: [] }
+    await render()
+    expect(signal.aborted).toBe(true)
+    await act(async () => resolve?.({ dataUrl: PNG, width: 120, height: 80 }))
+    expect(editor.state.doc).toBe(before)
+    expect(handle.getVersion()).toBe(version)
   })
 })
 

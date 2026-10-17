@@ -2,6 +2,7 @@ import type { Editor } from '@tiptap/core'
 import type { Node as PmNode } from '@tiptap/pm/model'
 import { closeHistory } from '@tiptap/pm/history'
 import { NodeSelection } from '@tiptap/pm/state'
+import { docxCropPixels } from './docx-image-crop.js'
 import { removeBackground } from '../../vendor/packages/ui/src/cutout.js'
 
 export const DOCX_IMAGE_PX_PER_CM = 96 / 2.54
@@ -68,6 +69,7 @@ function pictureData(dataUrl: string) {
 }
 export function assertDocxImageTarget(editor: Editor, target: DocxImageTarget): void {
   if (editor.isDestroyed) throw new Error('文档已关闭，请重新打开图片面板')
+  if (!editor.isEditable) throw new Error('文档当前不允许修改图片，请检查保护状态')
   if (editor.state.doc !== target.doc || editor.state.doc.nodeAt(target.pos) !== target.node)
     throw new Error('文档已变化，请重新选择图片并打开面板')
 }
@@ -140,6 +142,8 @@ export function applyDocxImageDraft(
   const next = target.node.type.create(attrs, target.node.content, target.node.marks)
   if (next.eq(target.node)) return target
   editor.view.dispatch(closeHistory(editor.state.tr).setNodeMarkup(target.pos, undefined, attrs))
+  if (editor.state.doc === target.doc || !editor.state.doc.nodeAt(target.pos)?.eq(next))
+    throw new Error('图片修改未被编辑器接受，请重新检查文档保护状态')
   editor.view.dispatch(closeHistory(editor.state.tr).setMeta('addToHistory', false))
   return { doc: editor.state.doc, pos: target.pos, node: editor.state.doc.nodeAt(target.pos)! }
 }
@@ -220,19 +224,7 @@ export async function processDocxImage(
   let width = w
   let height = h
   if (operation.kind === 'crop') {
-    const { left, top, right, bottom } = operation.insets
-    if (
-      !Object.values(operation.insets).every(
-        (value) => Number.isFinite(value) && value >= 0 && value < 100,
-      ) ||
-      left + right >= 100 ||
-      top + bottom >= 100
-    )
-      throw new Error('裁切后必须保留图片区域')
-    x = Math.min(w - 1, Math.round((w * left) / 100))
-    y = Math.min(h - 1, Math.round((h * top) / 100))
-    width = Math.min(w - x, Math.max(1, Math.round(w * (1 - (left + right) / 100))))
-    height = Math.min(h - y, Math.max(1, Math.round(h * (1 - (top + bottom) / 100))))
+    ;({ x, y, width, height } = docxCropPixels(operation.insets, w, h))
   } else if (
     !Number.isFinite(operation.tolerance) ||
     operation.tolerance < 0 ||

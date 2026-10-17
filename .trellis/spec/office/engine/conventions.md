@@ -29,6 +29,12 @@ DOCX 对话编辑是这层适配的扩展：`src/agent/docx-agent.ts` 持有可�
 
 最终 session.save 必须确认完整 PM 未变、附加参数只有合法 comments 差量，原身份/作者/日期/parent/paraId 不变。文字仅补 w:t 内文，解决仅补 done，回复局部追加必要原生节点/关系/类型；不走正文或 vendor 全量批注重建。插入属性须复用正确 namespace 前缀或分配未占用前缀，不得重绑原件未知属性的前缀。无变化及撤销归原返回整份私有原件字节，其他非目标 ZIP 部件精确保留。受保护批注的 Agent 结构撤销只恢复 SaveOptions，校验版本/保护 epoch/正文且不得 setContent；普通正文 Cmd+Z 不代替该历史。
 
+### DOCX 图片预览裁切
+
+八把手与移动保留区域使用实际原图 content rect 换算，保留区最小为一个源像素；所有 pointer 生命周期事件都须匹配活动 pointerId。数字与手势共享同一源图 insets 草稿，拖动和预览不写文档，固定主动作处理后只提交一次 PM 事务。绑定原 session、PM doc/node/selection 与附加 options，每个异步步骤后复核，过滤拒绝不得发布成功。
+
+未改变源像素边界的原生裁切初值或全图 no-op 不重编码、不制造 dirty。真实像素加工输出 PNG，GIF 变为静态图；只在实际替换后清旧 crop/fill，保留宽度、旋转、翻转及环绕，新高度按输出像素比计算。它不是保留原图的非破坏 srcRect 编辑。
+
 ### DOCX 标题层级保存
 
 setHeadingLevel支持原件真实样式0–9，写入目标原生styleId以使画布CSS与重开一致；编号标题不转换为普通docHeading。固定上游rawPPr结构判定不包含显式outlineOnly级别，Mimir在list保存计划后以docxOutlineSavePlan仅修正实际变更的pStyle/outlineLvl，保留未知pPr及其余正文/部件。属性补丁须识别单双引号及等号空白，并保留同节点的未知属性，不能因原始写法不同重建整个属性节点。显式大纲改正文写outlineLvl9以取消继承标题；不改vendor，不将原始pPr整体重建。回归必须包含既有显式大纲2→3、7–9真实样式、未知段落属性、第二次保存与undo/no-op非目录ZIP条目精确。
