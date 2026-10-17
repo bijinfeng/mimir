@@ -273,7 +273,7 @@ describe('PPTX local asset upload', () => {
         'video.mp4',
         'video/mp4',
       ),
-    ).rejects.toThrow('一致')
+    ).rejects.toThrow('媒体文件无效')
     await expect(
       upload(
         bytes,

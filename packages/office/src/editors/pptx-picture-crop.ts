@@ -1,8 +1,15 @@
-import type { PictureElement, EmuRect } from '../../vendor/packages/pptx-engine/src/types.js'
+import type {
+  PictureElement,
+  EmuRect,
+  GroupElement,
+} from '../../vendor/packages/pptx-engine/src/types.js'
 import {
   flatCameraMirror,
   inPlaneRotationDeg,
 } from '../../vendor/packages/pptx-render/src/scene3d.js'
+
+import { pptxPicturePlacement } from '../pptx-picture-placement.js'
+import { applyPptxMatrix, pptxMatrixSvg, type PptxMatrix } from '../pptx-group-placement.js'
 
 export type PictureCropRect = { l: number; t: number; r: number; b: number }
 export type PictureCropPoint = { x: number; y: number }
@@ -21,6 +28,9 @@ export type PictureCropGeometry = {
   frame: PictureCropFrame
   scaleX: number
   scaleY: number
+  matrix: PptxMatrix
+  inverse: PptxMatrix
+  nativeMatrix: PptxMatrix
 }
 export const PICTURE_CROP_HANDLES: readonly PictureCropHandle[] = [
   'nw',
@@ -39,8 +49,9 @@ const zeroCrop = { l: 0, t: 0, r: 0, b: 0 }
 export function pptxPictureCropUnavailableReason(
   element: PictureElement,
   viewport: PictureCropViewport,
+  parent?: GroupElement,
 ): string | undefined {
-  if (element.media) return '音频和视频封面不支持图片裁切'
+  if (element.media && parent) return '组内音视频封面暂不支持画布裁切'
   const { offset, rot } = element.transform
   if (
     ![
@@ -79,62 +90,35 @@ export function pptxPictureCropUnavailableReason(
 export function pptxPictureCropGeometry(
   element: PictureElement,
   viewport: PictureCropViewport,
+  parent?: GroupElement,
 ): PictureCropGeometry | null {
-  if (pptxPictureCropUnavailableReason(element, viewport)) return null
-  const scaleX = viewport.width / viewport.slideWidth,
-    scaleY = viewport.height / viewport.slideHeight,
-    transform = element.transform,
-    offset = transform.offset,
-    mirror = element.scene3d && flatCameraMirror(element.scene3d),
-    w = offset.cx * scaleX,
-    h = offset.cy * scaleY,
-    crop = element.srcRect ?? zeroCrop,
-    fullW = w / (1 - crop.l - crop.r),
+  if (pptxPictureCropUnavailableReason(element, viewport, parent)) return null
+  const placed = pptxPicturePlacement(element, viewport, parent)
+  if (!placed) return null
+  const { w, h } = placed.box,
+    crop = element.srcRect ?? zeroCrop
+  const fullW = w / (1 - crop.l - crop.r),
     fullH = h / (1 - crop.t - crop.b)
   return {
-    box: {
-      x: offset.x * scaleX,
-      y: offset.y * scaleY,
-      w,
-      h,
-      rotationDeg: transform.rot / 60000 + (mirror?.rotationDeg ?? 0),
-      flipH: transform.flipH !== !!mirror?.flipH,
-      flipV: transform.flipV !== !!mirror?.flipV,
-    },
+    ...placed,
     full: { x: -crop.l * fullW, y: -crop.t * fullH, w: fullW, h: fullH },
     frame: { x: 0, y: 0, w, h },
-    scaleX,
-    scaleY,
   }
 }
-/** Centered flip AFTER rotation, matching pptx-svg transformAttr (including flat cameras). */
 export function pictureCropToSlide(
   geometry: PictureCropGeometry,
   local: PictureCropPoint,
 ): PictureCropPoint {
-  const b = geometry.box,
-    angle = (b.rotationDeg * Math.PI) / 180,
-    dx = local.x - b.w / 2,
-    dy = local.y - b.h / 2,
-    x = Math.cos(angle) * dx - Math.sin(angle) * dy,
-    y = Math.sin(angle) * dx + Math.cos(angle) * dy
-  return { x: b.x + b.w / 2 + (b.flipH ? -x : x), y: b.y + b.h / 2 + (b.flipV ? -y : y) }
+  return applyPptxMatrix(geometry.matrix, local)
 }
 export function pictureCropToLocal(
   geometry: PictureCropGeometry,
   point: PictureCropPoint,
 ): PictureCropPoint {
-  const b = geometry.box,
-    angle = (-b.rotationDeg * Math.PI) / 180,
-    dx = (point.x - b.x - b.w / 2) * (b.flipH ? -1 : 1),
-    dy = (point.y - b.y - b.h / 2) * (b.flipV ? -1 : 1)
-  return {
-    x: Math.cos(angle) * dx - Math.sin(angle) * dy + b.w / 2,
-    y: Math.sin(angle) * dx + Math.cos(angle) * dy + b.h / 2,
-  }
+  return applyPptxMatrix(geometry.inverse, point)
 }
-export function pictureCropTransform({ box: b }: PictureCropGeometry): string {
-  return `translate(${b.x + b.w / 2} ${b.y + b.h / 2}) scale(${b.flipH ? -1 : 1} ${b.flipV ? -1 : 1}) rotate(${b.rotationDeg}) translate(${-b.w / 2} ${-b.h / 2})`
+export function pictureCropTransform(geometry: PictureCropGeometry): string {
+  return pptxMatrixSvg(geometry.matrix)
 }
 export function pictureCropHandlePoint(
   frame: PictureCropFrame,
@@ -177,7 +161,10 @@ export function pictureCropCommit(
       r: roundCropFraction((full.x + full.w - frame.x - frame.w) / full.w),
       b: roundCropFraction((full.y + full.h - frame.y - frame.h) / full.h),
     },
-    center = pictureCropToSlide(geometry, { x: frame.x + frame.w / 2, y: frame.y + frame.h / 2 })
+    center = applyPptxMatrix(geometry.nativeMatrix, {
+      x: frame.x + frame.w / 2,
+      y: frame.y + frame.h / 2,
+    })
   return {
     srcRect: Object.values(srcRect).every((v) => v === 0) ? null : srcRect,
     box: {

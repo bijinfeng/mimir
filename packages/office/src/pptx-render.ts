@@ -171,7 +171,7 @@ export function renderSlide(
     slideNo: index + 1,
   })
 
-  let svg = renderSlideToSvg(tree, `${options.svgIdPrefix ?? 'deck'}-slide-${index}`)
+  let svg = renderSlideToSvg(tree, `${options.svgIdPrefix ?? 'deck'}-slide-${index}`, slide)
 
   const links = deck.links?.(index)
   const badges: string[] = []

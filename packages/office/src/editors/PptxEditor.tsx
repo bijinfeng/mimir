@@ -50,6 +50,7 @@ import {
   pptxSelectionOp,
   pptxSelectionText,
 } from './pptx-selection.js'
+import { pptxGroupPictureCropReason } from '../pptx-group-picture-crop-guard.js'
 import { pptxPictureCropUnavailableReason } from './pptx-picture-crop.js'
 import { PptxOutlineControls, pptxElementStroke, pptxOutlineOp } from './PptxOutlineControls.js'
 import {
@@ -864,6 +865,9 @@ export function PptxEditor({
     documentId: string
     path: string
     elementRef: string
+    group?: string
+    source: Uint8Array | null
+    workspace: PptxWorkspaceMode
     version: number
   } | null>(null)
   const ink = usePptxInkSettings()
@@ -914,6 +918,7 @@ export function PptxEditor({
   } | null>(null)
   const cancelClarification = useRef<(() => void) | null>(null)
   const inspectorRef = useRef<HTMLElement>(null)
+  const groupCropReturnFocus = useRef(false)
   const selectionInspectorTriggerRef = useRef<HTMLButtonElement>(null)
   const commentReturnRef = useRef<HTMLElement | null>(null)
   const presentationTriggerRef = useRef<HTMLButtonElement>(null)
@@ -927,6 +932,16 @@ export function PptxEditor({
         ?.focus()
     else if (inspector) inspectorRef.current?.focus()
   }, [inspector])
+  useEffect(() => {
+    if (!groupCropReturnFocus.current || editingBusy || inspector !== '组合图片') return
+    const entry = inspectorRef.current?.querySelector<HTMLButtonElement>(
+      'button[aria-label="在画布裁切组合图片"]',
+    )
+    if (!entry || entry.disabled) return
+    groupCropReturnFocus.current = false
+    const focus = document.activeElement
+    if (focus === document.body || focus === inspectorRef.current) entry.focus()
+  }, [editingBusy, inspector])
   const closeInspector = () => {
     assetAbort.current?.abort()
     panelWriteAbort.current?.controller.abort()
@@ -1047,6 +1062,22 @@ export function PptxEditor({
     !singleContext.element.media
       ? { ...singleContext, group: singleContext.group, element: singleContext.element }
       : null
+  const groupPictureParent =
+    groupPictureContext &&
+    selectedSlide?.elements.find((element) => matchesElementRef(element, groupPictureContext.group))
+  // Forget invalidated drafts so returning to the same durable reference does
+  // not revive an abandoned crop. React permits this guarded own-state reset.
+  if (
+    pictureCrop &&
+    (pictureCrop.documentId !== documentId ||
+      pictureCrop.source !== source.bytes ||
+      pictureCrop.workspace !== workspaceMode ||
+      pictureCrop.path !== selectedSlide?.path ||
+      pictureCrop.version !== viewVersion ||
+      pictureCrop.elementRef !== (pictureCrop.group ? groupPictureContext?.ref : selectedRefs[0]) ||
+      pictureCrop.group !== groupPictureContext?.group)
+  )
+    setPictureCrop(null)
   const selectedObject = singleContext?.depth === 0 ? singleContext.element : null
   const selected = selectedObject?.id ?? null
   const selectedElementRef = selectedObject ? (selectedRefs[0] ?? null) : null
@@ -2902,7 +2933,12 @@ export function PptxEditor({
       if (panelWriteAbort.current === pending) panelWriteAbort.current = null
     }
   }
-  const applyPanelAsset = async (input: PptxManualUpload, file: File, poster?: File) => {
+  const applyPanelAsset = async (
+    input: PptxManualUpload,
+    file: File,
+    poster?: File,
+    signal?: AbortSignal,
+  ) => {
     if (
       session.version() !== panelVersion ||
       activeRef.current !== active ||
@@ -2911,7 +2947,7 @@ export function PptxEditor({
       setPageError('画布已变化，请重新打开工具面板')
       return false
     }
-    return applyLocalAsset(input, file, poster)
+    return applyLocalAsset(input, file, poster, signal)
   }
   const inspectorPanels: Record<string, ReactNode> = {}
   if (groupPictureContext) {
@@ -2949,6 +2985,41 @@ export function PptxEditor({
         }
         disabled={editingBusy || !hostApply}
         canUpload={!!hostAsset}
+        cropUnavailableReason={
+          groupPictureParent?.type === 'group'
+            ? (pptxGroupPictureCropReason(
+                selectedSlide!,
+                groupPictureParent,
+                groupPictureContext.element,
+              ) ??
+              pptxPictureCropUnavailableReason(groupPictureContext.element, {
+                width: rendered.widthPx,
+                height: rendered.heightPx,
+                slideWidth: session.size.cx,
+                slideHeight: session.size.cy,
+              }) ??
+              (!(
+                view.media.get(groupPictureContext.element.mediaRef) ??
+                groupPictureContext.element.dataUrl
+              )
+                ? '图片源未加载，请重新打开文档后重试'
+                : undefined))
+            : '父组合已失效，请重新选择图片'
+        }
+        onStartCrop={() => {
+          setShapeInsert(null)
+          ink.setTool('select')
+          setPictureCrop({
+            documentId,
+            path: selectedSlide!.path,
+            elementRef: target.elementId,
+            group: target.group,
+            source: source.bytes,
+            workspace: workspaceMode,
+            version: panelVersion,
+          })
+          closeInspector()
+        }}
         apply={async (input: PptxManualPicture, signal: AbortSignal) => {
           if (!validGroupPictureBinding(signal)) return false
           if (panelWriteAbort.current && !panelWriteAbort.current.controller.signal.aborted)
@@ -3199,18 +3270,33 @@ export function PptxEditor({
     return applied
   }
 
+  const cropElement = pictureCrop?.group ? groupPictureContext?.element : selectedObject
+  const cropRef = pictureCrop?.group ? groupPictureContext?.ref : objectTarget?.el
   const cropTarget =
-    selectedObject?.type === 'picture' &&
-    objectTarget &&
+    cropElement?.type === 'picture' &&
+    cropRef &&
     pictureCrop?.documentId === documentId &&
+    pictureCrop.source === source.bytes &&
+    pictureCrop.workspace === workspaceMode &&
     pictureCrop.path === view.slides()[active]!.path &&
-    pictureCrop.elementRef === objectTarget.el &&
+    pictureCrop.elementRef === cropRef &&
+    pictureCrop.group === groupPictureContext?.group &&
     pictureCrop.version === panelVersion &&
     (workspaceMode === 'normal' || workspaceMode === 'outline')
-      ? { element: selectedObject, target: objectTarget }
+      ? {
+          element: cropElement,
+          target: { slide: active, el: cropRef },
+          group: pictureCrop.group,
+          parent: groupPictureParent?.type === 'group' ? groupPictureParent : undefined,
+        }
       : null
   const exitPictureCrop = () => {
+    const wasGroup = !!pictureCrop?.group
     setPictureCrop(null)
+    if (wasGroup) {
+      groupCropReturnFocus.current = true
+      setInspector('组合图片')
+    }
     requestAnimationFrame(() => {
       const editor = canvasRef.current?.closest('.mimir-editor')
       const focus = document.activeElement
@@ -3219,6 +3305,10 @@ export function PptxEditor({
         !editor?.querySelector('.mimir-pptx-picture-crop-layer')?.contains(focus)
       )
         return
+      if (wasGroup) {
+        editor?.querySelector<HTMLButtonElement>('button[aria-label="在画布裁切组合图片"]')?.focus()
+        return
+      }
       inspectorTriggers.current.get('图片裁切')?.focus()
       if (document.activeElement === document.body)
         editor
@@ -3321,6 +3411,8 @@ export function PptxEditor({
             slideKey={view.slides()[active]!.path}
             version={panelVersion}
             element={cropTarget.element}
+            parent={cropTarget.parent}
+            groupRef={cropTarget.group}
             target={cropTarget.target}
             imageHref={view.media.get(cropTarget.element.mediaRef)}
             width={rendered.widthPx}
@@ -3340,21 +3432,31 @@ export function PptxEditor({
                 signal.aborted ||
                 session.version() !== expectedVersion ||
                 activeRef.current !== active ||
-                selectedDurableRef.current !== cropTarget.target.el
+                (cropTarget.group
+                  ? selectionBindingRef.current !== selectionBinding
+                  : selectedDurableRef.current !== cropTarget.target.el)
               )
                 return false
               const changed = await runManualTool(
-                'apply_ops',
-                {
-                  ops: [
-                    {
-                      op: 'setPictureSrcRect',
-                      target: cropTarget.target,
+                cropTarget.group ? 'manual_picture' : 'apply_ops',
+                cropTarget.group
+                  ? {
+                      slide: active,
+                      group: cropTarget.group,
+                      elementId: cropTarget.target.el,
                       srcRect,
-                      ...(box ? { box } : {}),
+                      box,
+                    }
+                  : {
+                      ops: [
+                        {
+                          op: 'setPictureSrcRect',
+                          target: cropTarget.target,
+                          srcRect,
+                          ...(box ? { box } : {}),
+                        },
+                      ],
                     },
-                  ],
-                },
                 { expectedVersion, signal },
               )
               if (changed) exitPictureCrop()
@@ -3785,7 +3887,11 @@ export function PptxEditor({
                 minWidth: 0,
                 content: advancedMenu(
                   '音视频',
-                  <PptxMediaControls slide={active} upload={applyPanelAsset} />,
+                  <PptxMediaControls
+                    key={`${documentId}:${selectedSlide?.path}:${panelVersion}`}
+                    slide={active}
+                    upload={applyPanelAsset}
+                  />,
                   !hostAsset ? '当前未连接素材宿主' : undefined,
                 ),
               },
@@ -3910,6 +4016,7 @@ export function PptxEditor({
                       content: advancedMenu(
                         '媒体播放',
                         <PptxMediaPlayer
+                          key={`${documentId}:${selectedSlide?.path}:${selectedElementRef}:${panelVersion}`}
                           session={session}
                           element={selectedObject}
                           version={panelVersion}
@@ -4109,6 +4216,8 @@ export function PptxEditor({
                               documentId,
                               path: view.slides()[active]!.path,
                               elementRef: objectTarget.el,
+                              source: source.bytes,
+                              workspace: workspaceMode,
                               version: panelVersion,
                             })
                             closeInspector()

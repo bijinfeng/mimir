@@ -18,7 +18,17 @@ export const pptxManualPictureSchema = z
     elementId: z.string().min(1).max(300),
     opacity: z.number().finite().min(0).max(1).optional(),
     srcRect: pptxPictureCropSchema.nullable().optional(),
+    box: z
+      .object({
+        x: z.number().int().min(-2147483648).max(2147483647),
+        y: z.number().int().min(-2147483648).max(2147483647),
+        cx: z.number().int().min(1).max(2147483647),
+        cy: z.number().int().min(1).max(2147483647),
+      })
+      .strict()
+      .optional(),
   })
   .strict()
+  .refine((input) => !input.box || input.srcRect !== undefined, '位置与大小须随裁切范围同时提交')
   .refine((input) => input.opacity !== undefined || input.srcRect !== undefined, '请先调整图片')
 export type PptxManualPicture = z.infer<typeof pptxManualPictureSchema>

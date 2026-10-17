@@ -13,7 +13,8 @@
   min-width: 0;
 }
 .mimir-pptx-inspector {
-  width: 340px;
+  box-sizing: border-box;
+  width: 320px;
   max-width: 40%;
   flex-shrink: 0;
   min-height: 0;
@@ -64,7 +65,7 @@
     position: absolute;
     inset: 0 0 0 auto;
     z-index: 12;
-    width: 340px;
+    width: 320px;
     max-width: calc(100% - 32px);
     box-shadow: var(--me-shadow);
   }
@@ -448,4 +449,58 @@
 .mimir-pptx-table-gallery .me-btn__icon {
   font-size: var(--me-font-size-sm, 12px);
   line-height: 1.4;
+}
+
+.mimir-pptx-inspector__body[data-panel='音视频'] {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+.mimir-pptx-media-insert {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.mimir-pptx-media-insert__body {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 12px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--me-border) transparent;
+}
+.mimir-pptx-media-insert__body .me-property-group__title {
+  display: none;
+}
+.mimir-pptx-media-insert__body [role='status'],
+.mimir-pptx-media-insert__body [role='alert'] {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.mimir-pptx-media-insert__body [role='status'] {
+  color: var(--me-text-weak);
+}
+.mimir-pptx-media-insert__body [role='alert'] {
+  color: var(--me-danger);
+}
+.mimir-pptx-media-insert__footer {
+  display: flex;
+  flex-shrink: 0;
+  padding: 12px;
+  border-top: 1px solid var(--me-border);
+  background: var(--me-surface);
+}
+.mimir-pptx-media-insert__footer > .me-tb {
+  width: 100%;
 }

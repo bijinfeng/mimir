@@ -2,9 +2,14 @@
   position: absolute;
   inset: 0;
   z-index: 4;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   pointer-events: none;
 }
 .mimir-pptx-picture-crop-canvas {
+  grid-row: 1 / -1;
+  grid-column: 1;
   display: block;
   width: 100%;
   height: 100%;
@@ -59,13 +64,16 @@
 .mimir-pptx-picture-crop-handle[aria-disabled='true'] {
   cursor: wait;
 }
-.mimir-pptx-sheet:has(.mimir-pptx-picture-crop-layer) {
-  margin-block-end: 120px;
-}
 .mimir-pptx-picture-crop-feedback {
-  position: absolute;
+  /* Share the full-slide grid area so sticky can move throughout the slide,
+     instead of being constrained to an action-height row below the canvas. */
+  position: sticky;
+  grid-row: 1 / -1;
+  grid-column: 1;
+  align-self: end;
   inset-inline: 8px;
-  top: calc(100% + 8px);
+  top: auto;
+  bottom: 8px;
   display: flex;
   align-items: center;
   justify-content: space-between;

@@ -20,121 +20,16 @@ import {
 } from '../shell/EditorShell.js'
 import { PptxControlPanel } from './PptxControlPanel.js'
 
-export type PptxUpload = (input: PptxManualUpload, file: File, poster?: File) => Promise<boolean>
-type LocalFile = { file: File; url: string }
-function useFilePreview() {
-  const [selected, setSelected] = useState<LocalFile | null>(null)
-  useEffect(
-    () => () => {
-      if (selected) URL.revokeObjectURL(selected.url)
-    },
-    [selected],
-  )
-  return { selected, select: (file: File) => setSelected({ file, url: URL.createObjectURL(file) }) }
-}
+export type PptxUpload = (
+  input: PptxManualUpload,
+  file: File,
+  poster?: File,
+  signal?: AbortSignal,
+) => Promise<boolean>
 function assetNote(file: File) {
   return `${file.name} · ${(file.size / 1024 / 1024).toFixed(1)} MiB`
 }
-async function videoPoster(video: HTMLVideoElement | null): Promise<File | undefined> {
-  if (!video || video.readyState < 2 || !video.videoWidth) return undefined
-  const canvas = document.createElement('canvas')
-  const ratio = Math.min(1, 1280 / video.videoWidth)
-  canvas.width = Math.round(video.videoWidth * ratio)
-  canvas.height = Math.round(video.videoHeight * ratio)
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return undefined
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'))
-  return blob ? new File([blob], 'video-poster.png', { type: 'image/png' }) : undefined
-}
-export function PptxMediaControls({ slide, upload }: { slide: number; upload: PptxUpload }) {
-  const { selected, select } = useFilePreview()
-  const [kind, setKind] = useState('video')
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
-  const video = useRef<HTMLVideoElement>(null)
-  const pending = useRef(false)
-  const choose = (file: File) => {
-    select(file)
-    setError('')
-  }
-  return (
-    <PptxControlPanel busy={busy}>
-      <ToolbarMenuFields label="本地音视频">
-        <ToolbarSelect
-          label="媒体类型"
-          value={kind}
-          options={[
-            { value: 'video', label: '视频（MP4 / WebM）' },
-            { value: 'audio', label: '音频（MP3 / WAV / Ogg）' },
-          ]}
-          onChange={setKind}
-        />
-        <ToolbarFileButton
-          label="选择音视频文件"
-          accept={kind === 'video' ? '.mp4,.webm' : '.mp3,.wav,.ogg'}
-          onPick={choose}
-        >
-          选择文件
-        </ToolbarFileButton>
-        {selected && <ToolbarMenuNote>{assetNote(selected.file)}</ToolbarMenuNote>}
-        {selected &&
-          (kind === 'video' ? (
-            <video
-              className="mimir-pptx-media-preview"
-              ref={video}
-              src={selected.url}
-              controls
-              preload="metadata"
-              onError={() => setError('浏览器无法预览此视频编码，可换用H.264的MP4或WebM。')}
-            />
-          ) : (
-            <audio
-              className="mimir-pptx-media-preview"
-              src={selected.url}
-              controls
-              preload="metadata"
-              onError={() => setError('浏览器无法预览此音频，请换用MP3、WAV或Ogg。')}
-            />
-          ))}
-        {error && <ToolbarMenuNote>{error}</ToolbarMenuNote>}
-        <ToolbarMenuNote>
-          不超过32 MiB。视频以当前预览画面作封面；插入后选择媒体，可在播放面板试听或播放。
-        </ToolbarMenuNote>
-      </ToolbarMenuFields>
-      <ToolbarButton
-        primary
-        label="插入音视频"
-        disabled={
-          !selected ||
-          selected.file.size > PPTX_ASSET_MAX_BYTES ||
-          selected.file.size === 0 ||
-          !!error
-        }
-        disabledReason={error || '请选择不超过32 MiB的有效音视频文件'}
-        onClick={() => {
-          void (async () => {
-            if (!selected || pending.current) return
-            pending.current = true
-            setBusy(true)
-            try {
-              await upload(
-                { kind: 'media', slide, mediaKind: kind as 'video' | 'audio' },
-                selected.file,
-                kind === 'video' ? await videoPoster(video.current) : undefined,
-              )
-            } catch (cause) {
-              setError(cause instanceof Error ? cause.message : '媒体准备失败，请重新选择文件')
-            } finally {
-              pending.current = false
-              setBusy(false)
-            }
-          })()
-        }}
-      />
-    </PptxControlPanel>
-  )
-}
+export { PptxMediaControls } from './PptxMediaControls.js'
 
 export function PptxImageFillControls({
   slide,
@@ -163,6 +58,7 @@ export function PptxImageFillControls({
           <ToolbarMenuFields label="图片填充">
             <ToolbarSelect
               label="填充位置"
+              disabled={busy}
               value={destination}
               options={[
                 { value: 'shape', label: '所选形状或文本框' },
@@ -192,6 +88,7 @@ export function PptxImageFillControls({
             )}
             <ToolbarSelect
               label="填充方式"
+              disabled={busy}
               value={mode}
               options={[
                 { value: 'stretch', label: '拉伸填满' },
@@ -379,6 +276,7 @@ export function PptxMediaPlayer({
 }) {
   const media = element.media
   const [error, setError] = useState('')
+  const player = useRef<HTMLMediaElement | null>(null)
   const source = useMemo(() => {
     if (session.version() !== version) return null
     if (!media?.target || media.external) return null
@@ -389,7 +287,9 @@ export function PptxMediaPlayer({
       {
         mp4: 'video/mp4',
         webm: 'video/webm',
-        mov: 'video/quicktime',
+        mov: 'video/mp4',
+        m4v: 'video/mp4',
+        avi: 'video/x-msvideo',
         mp3: 'audio/mpeg',
         wav: 'audio/wav',
         m4a: 'audio/mp4',
@@ -403,6 +303,15 @@ export function PptxMediaPlayer({
       binary += String.fromCharCode(...bytes.subarray(i, i + 8192))
     return `data:${mime};base64,${btoa(binary)}`
   }, [session, media, version])
+  useEffect(() => {
+    if (!source) return
+    const node = player.current
+    return () => {
+      node?.pause()
+      node?.removeAttribute('src')
+      node?.load()
+    }
+  }, [source])
   return (
     <PptxControlPanel busy={false}>
       <ToolbarMenuFields label={media?.kind === 'audio' ? '音频播放' : '视频播放'}>
@@ -411,6 +320,10 @@ export function PptxMediaPlayer({
           media?.kind === 'audio' ? (
             <audio
               className="mimir-pptx-media-preview"
+              ref={(node) => {
+                player.current = node
+              }}
+              key={source}
               src={source}
               controls
               onError={() => setError('浏览器不支持此音频编码，可下载原件后使用PowerPoint播放。')}
@@ -418,6 +331,10 @@ export function PptxMediaPlayer({
           ) : (
             <video
               className="mimir-pptx-media-preview"
+              ref={(node) => {
+                player.current = node
+              }}
+              key={source}
               src={source}
               controls
               onError={() => setError('浏览器不支持此视频编码，可下载原件后使用PowerPoint播放。')}

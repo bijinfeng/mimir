@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Check, ImagePlus, RotateCcw } from 'lucide-react'
+import { Check, Crop, ImagePlus, RotateCcw } from 'lucide-react'
 import {
   PPTX_PICTURE_ACCEPT,
   PPTX_PICTURE_FORMATS,
@@ -36,6 +36,8 @@ export interface PptxGroupPictureControlsProps {
   source: string
   disabled?: boolean
   canUpload?: boolean
+  onStartCrop?: () => void
+  cropUnavailableReason?: string
   apply: (input: PptxManualPicture, signal: AbortSignal) => Promise<boolean>
   upload: (input: PptxManualUpload, file: File, signal: AbortSignal) => Promise<boolean>
 }
@@ -47,6 +49,8 @@ export function PptxGroupPictureControls({
   source,
   disabled = false,
   canUpload = true,
+  onStartCrop,
+  cropUnavailableReason,
   apply,
   upload,
 }: PptxGroupPictureControlsProps) {
@@ -348,7 +352,21 @@ export function PptxGroupPictureControls({
                 重置裁切
               </ToolbarButton>
               {!validCrop && <p role="alert">对边裁切之和须小于 100%，请保留可见区域</p>}
-              <ToolbarMenuNote>修改后点击应用。组内图片暂不支持画布拖动裁切。</ToolbarMenuNote>
+              {onStartCrop && (
+                <ToolbarButton
+                  label="在画布裁切组合图片"
+                  disabled={locked || !!cropUnavailableReason || appearanceDirty || numericDraft}
+                  disabledReason={cropUnavailableReason ?? '请先应用或取消当前参数草稿'}
+                  onClick={onStartCrop}
+                >
+                  <Crop size={14} />
+                  在画布裁切
+                </ToolbarButton>
+              )}
+              {cropUnavailableReason && <ToolbarMenuNote>{cropUnavailableReason}</ToolbarMenuNote>}
+              <ToolbarMenuNote>
+                数值裁切保留原框；画布裁切同时调整图片边框，可向外恢复原图。
+              </ToolbarMenuNote>
             </>
           )}
           {tab === 'replace' && (

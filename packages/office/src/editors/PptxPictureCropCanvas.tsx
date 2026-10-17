@@ -1,6 +1,10 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import { Check, Crop, RotateCcw, X } from 'lucide-react'
-import type { EmuRect, PictureElement } from '../../vendor/packages/pptx-engine/src/types.js'
+import type {
+  EmuRect,
+  PictureElement,
+  GroupElement,
+} from '../../vendor/packages/pptx-engine/src/types.js'
 import { ToolbarButton } from '../shell/EditorShell.js'
 import {
   PICTURE_CROP_HANDLES,
@@ -26,6 +30,8 @@ export interface PptxPictureCropCanvasProps extends PictureCropViewport {
   slideKey: string
   version: number
   element: PictureElement
+  parent?: GroupElement
+  groupRef?: string
   target: { slide: number; el: string }
   imageHref?: string
   disabled: boolean
@@ -49,11 +55,13 @@ const handleLabels: Record<PictureCropHandle, string> = {
   w: '左',
 }
 export function PptxPictureCropCanvas(props: PptxPictureCropCanvasProps) {
-  const geometry = pptxPictureCropGeometry(props.element, props)
+  const geometry = pptxPictureCropGeometry(props.element, props, props.parent)
   if (!geometry)
     return (
       <div className="mimir-pptx-picture-crop-feedback" role="alert">
-        <span>{pptxPictureCropUnavailableReason(props.element, props)}</span>
+        <span>
+          {pptxPictureCropUnavailableReason(props.element, props) ?? '组合定位无效，请重新选择图片'}
+        </span>
         <ToolbarButton label="关闭图片拖动裁切" onClick={props.onExit}>
           <X size={14} />
           关闭
@@ -62,7 +70,7 @@ export function PptxPictureCropCanvas(props: PptxPictureCropCanvasProps) {
     )
   return (
     <PictureCropGesture
-      key={`${props.documentId}:${props.slideKey}:${props.target.slide}:${props.target.el}:${props.version}:${props.width}:${props.height}:${props.disabled}`}
+      key={`${props.documentId}:${props.slideKey}:${props.target.slide}:${props.target.el}:${props.groupRef ?? ''}:${props.version}:${props.width}:${props.height}:${props.disabled}`}
       {...props}
       geometry={geometry}
     />
@@ -85,6 +93,8 @@ function PictureCropGesture(props: PptxPictureCropCanvasProps & { geometry: Pict
     callbacks = useRef({ onExit, onBusy }),
     [frame, setFrame] = useState(geometry.frame),
     [busy, setBusy] = useState(false),
+    [posterReady, setPosterReady] = useState(!props.element.media),
+    [posterFailed, setPosterFailed] = useState(false),
     [error, setError] = useState('')
   useEffect(() => {
     callbacks.current = { onExit, onBusy }
@@ -143,7 +153,7 @@ function PictureCropGesture(props: PptxPictureCropCanvasProps & { geometry: Pict
     Math.abs(frame.w - geometry.frame.w) > 0.001 ||
     Math.abs(frame.h - geometry.frame.h) > 0.001
   const submit = async () => {
-    if (closed.current || disabled || pending.current || !changed) return
+    if (closed.current || disabled || pending.current || !changed || !posterReady) return
     drag.current = null
     const controller = new AbortController()
     pending.current = controller
@@ -280,6 +290,15 @@ function PictureCropGesture(props: PptxPictureCropCanvasProps & { geometry: Pict
                 height={full.h}
                 preserveAspectRatio="none"
                 opacity=".3"
+                onLoad={() => {
+                  setPosterReady(true)
+                  setPosterFailed(false)
+                }}
+                onError={() => {
+                  if (!props.element.media) return
+                  setPosterReady(false)
+                  setPosterFailed(true)
+                }}
               />
               <image
                 href={imageHref}
@@ -370,8 +389,15 @@ function PictureCropGesture(props: PptxPictureCropCanvasProps & { geometry: Pict
             <Crop size={14} />
             图片裁切<span>{retained}%</span>
           </span>
-          <span id={`${clipId}-help`} role={error ? 'alert' : 'status'}>
-            {error || (busy ? '正在应用裁切…' : '拖动边缘；方向键微调，Shift加速')}
+          <span id={`${clipId}-help`} role={error || posterFailed ? 'alert' : 'status'}>
+            {posterFailed
+              ? '媒体封面无法读取，不能裁切；原音视频已保留'
+              : error ||
+                (!posterReady
+                  ? '正在读取媒体封面…'
+                  : busy
+                    ? '正在应用裁切…'
+                    : '拖动边缘；方向键微调，Shift加速')}
           </span>
         </div>
         <div className="mimir-pptx-picture-crop-actions">
@@ -394,8 +420,10 @@ function PictureCropGesture(props: PptxPictureCropCanvasProps & { geometry: Pict
           <ToolbarButton
             label="应用拖动裁切"
             primary
-            disabled={disabled || busy || !changed}
-            disabledReason={busy ? '正在应用裁切' : '请先拖动裁切边缘'}
+            disabled={disabled || busy || !changed || !posterReady}
+            disabledReason={
+              !posterReady ? '需要可读取的媒体封面' : busy ? '正在应用裁切' : '请先拖动裁切边缘'
+            }
             onClick={() => void submit()}
           >
             <Check size={14} />

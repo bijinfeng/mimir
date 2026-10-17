@@ -13,7 +13,15 @@ import type {
   ChipRenderNode,
   ArrowEndRender,
 } from '../vendor/packages/pptx-render/src/render-tree.js'
+import type { Slide, SlideElement, GroupElement } from '../vendor/packages/pptx-engine/src/types.js'
+import { pptxPicturePlacement } from './pptx-picture-placement.js'
 import { patternGrid } from '../vendor/packages/pptx-render/src/pattern-fills.js'
+import {
+  composePptxMatrices,
+  pptxGroupMatrix,
+  pptxMatrixSvg,
+  type PptxMatrix,
+} from './pptx-group-placement.js'
 
 /**
  * 把 `RenderSlide`（上游的**纯数据**绘制列表）画成 SVG。
@@ -643,7 +651,16 @@ function transformAttr(box: {
 }
 
 /** 图片节点 */
-function pictureNode(node: PictureRenderNode): { defs: string; body: string } {
+type PictureSourceContext = {
+  elements?: readonly SlideElement[]
+  parent?: GroupElement
+  emuScale: number
+  childScale?: { x: number; y: number }
+}
+function pictureNode(
+  node: PictureRenderNode,
+  context: PictureSourceContext,
+): { defs: string; body: string } {
   const { x, y, w, h } = node.box
   const parts: string[] = []
   let defs = ''
@@ -742,19 +759,81 @@ function pictureNode(node: PictureRenderNode): { defs: string; body: string } {
   }
   const effects = objectEffects(node, content)
   defs += effects.defs
-  const t = transformAttr(node.box)
+  const candidates = context.elements?.filter((element) => element.id === node.sourceId) ?? []
+  const source =
+    candidates.length === 1 && candidates[0]?.type === 'picture' ? candidates[0] : undefined
+  const placement =
+    source &&
+    pptxPicturePlacement(
+      source,
+      {
+        width: context.emuScale,
+        height: context.emuScale,
+        slideWidth: 1,
+        slideHeight: 1,
+      },
+      context.parent,
+    )
+  // Pictures need S·R·F from their original source, not R applied to an already
+  // anisotropically scaled box. Draw content/clip/effects in their existing box,
+  // then map that box into native picture-local pixels and the parent's chOff scale.
+  let localMatrix = placement?.localMatrix
+  if (placement && context.parent && context.childScale) {
+    // A nested group's placed box already includes ancestor scaling. Its actual
+    // child mapping may therefore differ from the raw native parent's ext/chExt.
+    const child = context.parent.childOffset ?? context.parent.transform.offset
+    const { x: sx, y: sy } = context.childScale
+    localMatrix = composePptxMatrices(
+      [sx, 0, 0, sy, -child.x * context.emuScale * sx, -child.y * context.emuScale * sy],
+      placement.nativeMatrix,
+    )
+  }
+  let matrix: PptxMatrix | null =
+    placement && localMatrix
+      ? composePptxMatrices(localMatrix, [placement.box.w / w, 0, 0, placement.box.h / h, 0, 0])
+      : pptxGroupMatrix(node.box)
+  if (!placement && context.childScale) {
+    const sx = context.childScale.x,
+      sy = context.childScale.y
+    const quarter = sx !== sy && Math.abs((((node.box.rotationDeg % 180) + 180) % 180) - 90) < 0.5
+    const rawW = w / (quarter ? sy : sx),
+      rawH = h / (quarter ? sx : sy)
+    const raw = pptxGroupMatrix({ ...node.box, x: 0, y: 0, w: rawW, h: rawH })
+    if (raw)
+      matrix = composePptxMatrices(
+        [sx, 0, 0, sy, x + w / 2 - (rawW * sx) / 2, y + h / 2 - (rawH * sy) / 2],
+        composePptxMatrices(raw, [rawW / w, 0, 0, rawH / h, 0, 0]),
+      )
+  }
   return {
     defs,
-    body: `<g ${elementTag(node)} transform="translate(${n(x)} ${n(y)})"><g${t ? ` transform="${t}"` : ''}>${effects.body}</g></g>`,
+    body: `<g ${elementTag(node)} transform="${matrix ? pptxMatrixSvg(matrix) : `translate(${n(x)} ${n(y)})`}">${effects.body}</g>`,
   }
 }
 
 /** 组合节点：children 的坐标已经是**相对父框**的（上游注释说明） */
-function groupNode(node: GroupRenderNode): { defs: string; body: string } {
-  const inner = renderNodes(node.children)
+function groupNode(
+  node: GroupRenderNode,
+  context: PictureSourceContext,
+): { defs: string; body: string } {
+  const matches = context.elements?.filter((element) => element.id === node.sourceId) ?? []
+  const source = matches.length === 1 && matches[0]?.type === 'group' ? matches[0] : undefined
+  const inner = renderNodes(node.children, {
+    elements: source?.children,
+    parent: source,
+    emuScale: context.emuScale,
+    childScale: { x: node.childScaleX ?? 1, y: node.childScaleY ?? 1 },
+  })
+  const matrix = pptxGroupMatrix(node.box)
+  // buildGroup already applied childScaleX/Y. Only the parent's centered rotation
+  // and flip remain; retain the existing translation-only markup for identity groups.
+  const transform =
+    matrix && (node.box.rotationDeg || node.box.flipH || node.box.flipV)
+      ? pptxMatrixSvg(matrix)
+      : `translate(${n(node.box.x)} ${n(node.box.y)})`
   return {
     defs: inner.defs,
-    body: `<g ${elementTag(node)} transform="translate(${n(node.box.x)} ${n(node.box.y)})">${inner.body}</g>`,
+    body: `<g ${elementTag(node)} transform="${transform}">${inner.body}</g>`,
   }
 }
 
@@ -962,7 +1041,10 @@ function chipNode(node: ChipRenderNode): string {
   )
 }
 
-function renderNodes(nodes: readonly RenderNode[]): { defs: string; body: string } {
+function renderNodes(
+  nodes: readonly RenderNode[],
+  context: PictureSourceContext,
+): { defs: string; body: string } {
   const defs: string[] = []
   const body: string[] = []
 
@@ -980,11 +1062,11 @@ function renderNodes(nodes: readonly RenderNode[]): { defs: string; body: string
       defs.push(r.defs)
       body.push(r.body)
     } else if (node.type === 'picture') {
-      const r = pictureNode(node)
+      const r = pictureNode(node, context)
       defs.push(r.defs)
       body.push(r.body)
     } else if (node.type === 'group') {
-      const r = groupNode(node)
+      const r = groupNode(node, context)
       defs.push(r.defs)
       body.push(r.body)
     } else if (node.type === 'table') {
@@ -1021,14 +1103,17 @@ function backgroundEl(
  * 产出的是**完整可用**的 `<svg>`（含 `xmlns`），可以直接塞进 React 的
  * `dangerouslySetInnerHTML`，也可以单独存成 `.svg` 文件。
  */
-export function renderSlideToSvg(slide: RenderSlide, idPrefix = ''): string {
+export function renderSlideToSvg(slide: RenderSlide, idPrefix = '', source?: Slide): string {
   uid = 0
   // Encode each code point so caller namespaces stay unique and safe in SVG URL fragments.
   namespace = idPrefix
     ? `pptx-${Array.from(idPrefix, (character) => character.codePointAt(0)!.toString(16)).join('-')}-`
     : ''
   const bg = backgroundEl(slide.background, slide.widthPx, slide.heightPx)
-  const nodes = renderNodes(slide.nodes)
+  const nodes = renderNodes(slide.nodes, {
+    elements: source?.elements,
+    emuScale: (slide.scale * 96) / 914400,
+  })
   const defs = bg.defs + nodes.defs
 
   return [

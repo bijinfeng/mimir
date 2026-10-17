@@ -1,5 +1,6 @@
+import { pptxGroupPictureCropReason } from './pptx-group-picture-crop-guard.js'
 import type { PptxImageExtension } from '@mimir/shared'
-import type { PptxManualPicture } from '@mimir/shared'
+import { pptxManualPictureSchema, type PptxManualPicture } from '@mimir/shared'
 import {
   addImageMediaAndRel,
   cleanupSupersededSlideResources,
@@ -66,9 +67,54 @@ function publishPictureXml(
 }
 
 export function editPptxGroupPicture(slide: Slide, input: PptxManualPicture): boolean {
+  input = pptxManualPictureSchema.parse(input)
   const resolved = resolvePptxGroupPicture(slide, input)
   let xml = resolved.xml
-  if (input.srcRect !== undefined) xml = patchPictureSrcRect(xml, input.srcRect)
+  if (input.box) {
+    const reason = pptxGroupPictureCropReason(
+      slide,
+      resolved.parent,
+      resolved.picture,
+      resolved.xml,
+    )
+    if (reason) throw new Error(reason)
+    const old = resolved.picture.transform.offset
+    if (Object.entries(input.box).some(([key, value]) => value !== old[key as keyof typeof old])) {
+      let xfrm = xml.match(/<a:xfrm\b[^>]*>[\s\S]*?<\/a:xfrm>/)![0]
+      const originalXfrm = xfrm
+      const patch = (tag: string, values: Record<string, number>) => {
+        xfrm = xfrm.replace(new RegExp(`<a:${tag}\\b[^>]*\\/?>`), (token) => {
+          for (const [key, value] of Object.entries(values)) {
+            const attr = new RegExp(`(\\s${key}\\s*=\\s*)(["'])(.*?)\\2`)
+            if (!attr.test(token)) throw new Error('图片原生定位属性不完整，未应用裁切')
+            token = token.replace(
+              attr,
+              (_match, prefix: string, quote: string) => `${prefix}${quote}${value}${quote}`,
+            )
+          }
+          return token
+        })
+      }
+      patch('off', { x: input.box.x, y: input.box.y })
+      patch('ext', { cx: input.box.cx, cy: input.box.cy })
+      xml = xml.replace(originalXfrm, xfrm)
+    }
+  }
+  const currentCrop = resolved.picture.srcRect ?? null
+  const cropChanged =
+    input.srcRect !== undefined &&
+    JSON.stringify(
+      input.srcRect && {
+        l: input.srcRect.l,
+        t: input.srcRect.t,
+        r: input.srcRect.r,
+        b: input.srcRect.b,
+      },
+    ) !==
+      JSON.stringify(
+        currentCrop && { l: currentCrop.l, t: currentCrop.t, r: currentCrop.r, b: currentCrop.b },
+      )
+  if (cropChanged) xml = patchPictureSrcRect(xml, input.srcRect!)
   if (input.opacity !== undefined)
     xml = xml.replace(/<a:blip\b[^>]*(?:\/>|>[\s\S]*?<\/a:blip>)/, (blip) => {
       const clean = blip.replace(
@@ -83,6 +129,8 @@ export function editPptxGroupPicture(slide: Slide, input: PptxManualPicture): bo
     })
   if (xml === resolved.xml) return false
   publishPictureXml(slide, resolved, xml)
+  if (input.box)
+    resolved.picture.transform = { ...resolved.picture.transform, offset: { ...input.box } }
   if (input.srcRect !== undefined) resolved.picture.srcRect = input.srcRect ?? undefined
   if (input.opacity !== undefined)
     resolved.picture.opacity = input.opacity === 1 ? undefined : input.opacity

@@ -1,5 +1,8 @@
 /** @vitest-environment happy-dom */
 import { act } from 'react'
+import { readFileSync } from 'node:fs'
+import { dirname, resolve as resolvePath } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { createRoot } from 'react-dom/client'
 import { afterEach, expect, it, vi } from 'vitest'
 import type { PictureElement } from '../../vendor/packages/pptx-engine/src/types.js'
@@ -119,6 +122,51 @@ async function settle() {
     await Promise.resolve()
   })
 }
+it('anchors the crop actions to the scrollport bottom within the overlay instead of below the entire slide', () => {
+  const style = document.createElement('style')
+  style.textContent = readFileSync(
+    resolvePath(dirname(fileURLToPath(import.meta.url)), 'pptx-picture-crop.css'),
+    'utf8',
+  )
+  document.head.append(style)
+  cleanups.push(() => style.remove())
+  const { host } = mount()
+  const layer = host.querySelector<HTMLElement>('.mimir-pptx-picture-crop-layer')!,
+    feedback = host.querySelector<HTMLElement>('.mimir-pptx-picture-crop-feedback')!,
+    canvas = host.querySelector<SVGSVGElement>('.mimir-pptx-picture-crop-canvas')!
+  expect(getComputedStyle(layer).display).toBe('grid')
+  expect(getComputedStyle(canvas).gridRow).toBe('1 / -1')
+  expect(getComputedStyle(feedback).position).toBe('sticky')
+  expect(getComputedStyle(feedback).gridRow).toBe('1 / -1')
+  expect(getComputedStyle(feedback).alignSelf).toBe('end')
+  expect(getComputedStyle(feedback).top).toBe('auto')
+  expect(getComputedStyle(feedback).bottom).toBe('8px')
+  expect(feedback.contains(button(host, '应用拖动裁切'))).toBe(true)
+  expect(feedback.contains(button(host, '取消图片拖动裁切'))).toBe(true)
+})
+it('only applies a media poster crop after the actual image loads and rejects an unreadable poster', async () => {
+  const { host, getProps, render } = mount()
+  const element: PictureElement = {
+    ...getProps().element,
+    media: { kind: 'video', target: 'ppt/media/video1.mov' },
+  }
+  render({ element, version: 4 })
+  key(host, 'ArrowRight', 'w')
+  expect(button(host, '应用拖动裁切').disabled).toBe(true)
+  key(host, 'Enter')
+  await settle()
+  expect(getProps().apply).not.toHaveBeenCalled()
+  act(() => host.querySelector('image')!.dispatchEvent(new Event('error')))
+  expect(host.querySelector('[role="alert"]')?.textContent).toContain('封面无法读取')
+  expect(button(host, '应用拖动裁切').disabled).toBe(true)
+  render({ version: 5 })
+  act(() => host.querySelector('image')!.dispatchEvent(new Event('load')))
+  key(host, 'ArrowRight', 'w')
+  expect(button(host, '应用拖动裁切').disabled).toBe(false)
+  click(host, '应用拖动裁切')
+  await settle()
+  expect(getProps().apply).toHaveBeenCalledOnce()
+})
 it('has eight keyboard grips and a live ghost preview; scaled drag drafts only until explicit apply, committing frame and crop once', async () => {
   const { host, getProps } = mount()
   expect(host.querySelectorAll('[data-crop-handle]')).toHaveLength(8)
@@ -171,8 +219,8 @@ it('maps screen-right keyboard movement through a rotated/flipped local coordina
       transform: { ...getProps().element.transform, rot: 90 * 60000, flipH: true },
     },
   })
-  // For this transform local bottom edge moves toward screen right. Left arrow trims bottom.
-  key(host, 'ArrowLeft', 's', true)
+  // Native R·F: local bottom edge points screen-left. Right arrow trims bottom.
+  key(host, 'ArrowRight', 's', true)
   expect(
     Number(host.querySelector('.mimir-pptx-picture-crop-frame')?.getAttribute('height')),
   ).toBeCloseTo(190)
@@ -200,7 +248,16 @@ it('Escape cancels before the parent Inspector listener, aborts pending and igno
   expect(getProps().onExit).toHaveBeenCalledTimes(1)
   expect(host.querySelector('[role="alert"]')).toBeNull()
 })
-it.each(['documentId', 'slideKey', 'target', 'version', 'disabled'] as const)(
+it.each([
+  'documentId',
+  'slideKey',
+  'target',
+  'groupRef',
+  'width',
+  'height',
+  'version',
+  'disabled',
+] as const)(
   'aborts a pending apply when %s changes and never closes a new target from late results',
   async (field) => {
     let resolve!: (accepted: boolean) => void
@@ -220,9 +277,15 @@ it.each(['documentId', 'slideKey', 'target', 'version', 'disabled'] as const)(
           ? { slideKey: 'slide2.xml' }
           : field === 'target'
             ? { target: { slide: 0, el: 'other' } }
-            : field === 'version'
-              ? { version: 4 }
-              : { disabled: true },
+            : field === 'groupRef'
+              ? { groupRef: 'other-group' }
+              : field === 'width'
+                ? { width: 480 }
+                : field === 'height'
+                  ? { height: 270 }
+                  : field === 'version'
+                    ? { version: 4 }
+                    : { disabled: true },
     )
     expect(apply.mock.calls[0]![2].aborted).toBe(true)
     await act(async () => resolve(true))
@@ -266,4 +329,68 @@ it('does not reset drafts or abort its own request for a callback identity reren
   await act(async () => resolve(true))
   expect(nextExit).toHaveBeenCalledTimes(1)
   expect(nextBusy).toHaveBeenLastCalledWith(false)
+})
+
+// Independent raw EMU projection: child R37·flipV, parent scale1.5×2,
+// then parent R90·flipH. The rendered surface is480×270 over960×720.
+const groupFixtureScreen = (x: number, y: number) => {
+  const rad = (37 * Math.PI) / 180,
+    dx = x - 600000,
+    dy = -(y - 400000)
+  const nativeX = 2600000 + Math.cos(rad) * dx - Math.sin(rad) * dy
+  const nativeY = 1000000 + Math.sin(rad) * dx + Math.cos(rad) * dy
+  const gx = (nativeX - 200000) * 1.5 - 3000000
+  const gy = (nativeY - 100000) * 2 - 1500000
+  return { x: 20 + ((4200000 - gy) / 9525) * 0.5, y: 10 + ((2200000 - gx) / 9525) * 0.375 }
+}
+
+it('drags a grouped grip through scaled, rotated, flipped native coordinates without writing until apply', async () => {
+  const original = mount().getProps().element
+  const element = {
+    ...original,
+    transform: {
+      ...original.transform,
+      offset: { x: 2000000, y: 600000, cx: 1200000, cy: 800000 },
+      rot: 37 * 60000,
+      flipV: true,
+    },
+  }
+  const parent = {
+    type: 'group',
+    id: 'group',
+    anchor: { originalXml: '', range: [0, 0] },
+    transform: {
+      offset: { x: 1200000, y: 700000, cx: 6000000, cy: 3000000 },
+      rot: 90 * 60000,
+      flipH: true,
+      flipV: false,
+    },
+    childOffset: { x: 200000, y: 100000, cx: 4000000, cy: 1500000 },
+    children: [element],
+  } as NonNullable<PptxPictureCropCanvasProps['parent']>
+  const { host, getProps } = mount({
+    element,
+    parent,
+    groupRef: 'group-ref',
+    target: { slide: 0, el: 'child-ref' },
+    height: 720,
+    slideHeight: 6858000,
+  })
+  const start = groupFixtureScreen(0, 400000),
+    end = groupFixtureScreen(120000, 400000)
+  pointer(host, 'pointerdown', start.x, start.y, 'w')
+  pointer(host, 'pointermove', end.x, end.y)
+  pointer(host, 'pointerup', end.x, end.y)
+  expect(
+    Number(host.querySelector('.mimir-pptx-picture-crop-frame')?.getAttribute('x')),
+  ).toBeCloseTo(120000 / 9525)
+  expect(getProps().apply).not.toHaveBeenCalled()
+  click(host, '应用拖动裁切')
+  await settle()
+  expect(getProps().apply).toHaveBeenCalledExactlyOnceWith(
+    { l: 0.1, t: 0, r: 0, b: 0 },
+    3,
+    expect.any(AbortSignal),
+    { x: 2107918, y: 636109, cx: 1080000, cy: 800000 },
+  )
 })

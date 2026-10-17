@@ -449,3 +449,37 @@ it.each([
   expect(opened.archive.entries).toEqual(before)
   expect(resolved.parent.anchor.originalXml).toBe(originalXml)
 })
+
+it('manual crop atomically publishes native box+srcRect and preserves all other ZIP entries; invalid frame is rejected', async () => {
+  const opened = await openPptx(bytes),
+    slide = opened.deck.slides[0]!
+  const original = resolvePptxGroupPicture(slide, target)
+  const box = {
+    ...original.picture.transform.offset,
+    x: original.picture.transform.offset.x + 50000,
+    cx: original.picture.transform.offset.cx - 100000,
+  }
+  const result = await host([{ ...target, box, srcRect: { l: 0.2, r: 0.2, t: 0.1, b: 0.1 } }])
+  expect(result.changed).toBe(true)
+  expect(result.version).toBe(5)
+  expect(result.records).toHaveLength(1)
+  const after = await openPptx(result.bytes),
+    resolved = resolvePptxGroupPicture(after.deck.slides[0]!, target)
+  expect(resolved.picture.transform.offset).toEqual(box)
+  expect(resolved.picture.srcRect).toEqual({ l: 0.2, r: 0.2, t: 0.1, b: 0.1 })
+  expect(resolved.parent.anchor.originalXml.replace(resolved.xml, 'TARGET')).toBe(
+    original.parent.anchor.originalXml.replace(original.xml, 'TARGET'),
+  )
+  const old = await entries(bytes),
+    next = await entries(result.bytes)
+  expect(Object.keys(old).filter((path) => Buffer.compare(old[path]!, next[path]!))).toEqual([
+    slide.path,
+  ])
+  const noop = await host([{ ...target, box, srcRect: resolved.picture.srcRect }], result.bytes)
+  expect(noop.bytes).toBe(result.bytes)
+  expect(noop.records).toHaveLength(0)
+  await expect(host([{ ...target, box }])).rejects.toThrow('位置与大小须随裁切范围同时提交')
+  await expect(host([{ ...target, srcRect: null, box: { ...box, cx: 0 } }])).rejects.toThrow(
+    'Too small',
+  )
+})

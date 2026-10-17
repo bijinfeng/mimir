@@ -127,6 +127,9 @@ describe('PPTX 工作区视图', () => {
       const body = app.host.querySelector<HTMLElement>(
         `.mimir-pptx-inspector__body[data-panel="${panel}"]`,
       )!
+      const inspector = body.closest<HTMLElement>('.mimir-pptx-inspector')!
+      expect(getComputedStyle(inspector).width).toBe('320px')
+      expect(getComputedStyle(inspector).boxSizing).toBe('border-box')
       const editor = body.querySelector<HTMLElement>('.mimir-pptx-fill-editor')!
       const content = editor.querySelector<HTMLElement>('.mimir-pptx-fill-editor__content')!
       const actions = editor.querySelector<HTMLElement>('.mimir-pptx-fill-editor__actions')!

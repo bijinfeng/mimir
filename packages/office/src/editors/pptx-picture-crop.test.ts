@@ -115,7 +115,7 @@ describe.each([0, 30, 90, 180, 270])('rotation %s', (rotation) => {
     },
   )
 })
-it('folds flat 3D camera mirrors exactly like the renderer and rejects actual projected scenes/media/invalid geometry', () => {
+it('folds flat 3D camera mirrors exactly like the renderer and rejects actual projected scenes/invalid geometry while allowing native media posters', () => {
   const element = picture()
   element.scene3d = {
     cameraPreset: 'orthographicFront',
@@ -132,7 +132,8 @@ it('folds flat 3D camera mirrors exactly like the renderer and rejects actual pr
   expect(pptxPictureCropUnavailableReason(element, viewport)).toContain('三维')
   delete element.scene3d
   element.media = { kind: 'video' }
-  expect(pptxPictureCropUnavailableReason(element, viewport)).toContain('封面')
+  expect(pptxPictureCropUnavailableReason(element, viewport)).toBeUndefined()
+  expect(pptxPictureCropGeometry(element, viewport)).not.toBeNull()
   delete element.media
   expect(pptxPictureCropGeometry(element, { ...viewport, width: NaN })).toBeNull()
   element.srcRect = { l: 0.5, r: 0.5, t: 0, b: 0 }

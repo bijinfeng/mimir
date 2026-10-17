@@ -7,6 +7,12 @@ import { createRoot } from 'react-dom/client'
 import { afterEach, expect, it, vi } from 'vitest'
 import { PptxImageFillControls, type PptxUpload } from './PptxAssetControls.js'
 import { readPptxImageInfo } from '@mimir/shared'
+import {
+  pickSelectOption,
+  pressMouseDown,
+  selectRoot,
+  selectValueText,
+} from '../shell/antd-test-dom.js'
 const rootDirectory = resolvePath(
   dirname(fileURLToPath(import.meta.url)),
   '../../tests/fixtures/pptx-images',
@@ -85,6 +91,33 @@ it.each(['gif', 'bmp', 'webp'])(
     expect(view.upload.mock.calls[0]![1]).toBe(file)
   },
 )
+it('blocks actual fill dropdown interactions during upload and allows new choices after it settles', async () => {
+  const view = await mount()
+  let finish!: (result: boolean) => void
+  view.upload.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve
+      }),
+  )
+  await view.choose(new File([source('picture.gif')], 'photo.gif', { type: 'image/gif' }))
+  act(() => view.apply().click())
+  expect(view.upload).toHaveBeenCalledOnce()
+  for (const label of ['填充位置', '填充方式']) {
+    const select = selectRoot(view.host, label)
+    pressMouseDown(select.querySelector('.ant-select-content') ?? select)
+    expect(select.querySelector('[aria-expanded="true"]')).toBeNull()
+    expect(select.classList.contains('ant-select-disabled')).toBe(true)
+  }
+  expect(selectValueText(view.host, '填充位置')).toBe('所选形状或文本框')
+  expect(selectValueText(view.host, '填充方式')).toBe('拉伸填满')
+  await act(async () => finish(false))
+  pickSelectOption(view.host, '填充位置', '当前幻灯片背景')
+  pickSelectOption(view.host, '填充方式', '平铺')
+  await act(async () => view.apply().click())
+  expect(view.upload).toHaveBeenCalledTimes(2)
+  expect(view.upload.mock.calls[1]![0]).toEqual({ kind: 'image_background', slide: 0, tile: true })
+})
 it('previews the largest actual TIFF page as PNG, states the policy and keeps TIFF for upload', async () => {
   const view = await mount(),
     pixels: unknown[] = []

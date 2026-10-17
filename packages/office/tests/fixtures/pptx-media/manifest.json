@@ -1,0 +1,347 @@
+{
+  "generator": "ffmpeg version 7.1 Copyright (c) 2000-2024 the FFmpeg developers",
+  "content": "Locally generated FFmpeg testsrc2 and 440Hz sine; no third-party content.",
+  "files": [
+    {
+      "name": "landscape.mp4",
+      "bytes": 12905,
+      "sha256": "03ffa8ee5278aca5bcaa52197d93a635249b3bf595c61c4c5a296f65bd931117",
+      "durationSecondsReported": 0.6,
+      "dimensions": "320x180",
+      "decodeExitCode": 0,
+      "streams": [
+        "Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(progressive), 320x180 [SAR 1:1 DAR 16:9], 159 kb/s, 10 fps, 10 tbr, 10240 tbn (default)",
+        "Stream #0:0(und): Video: wrapped_avframe, yuv420p(progressive), 320x180 [SAR 1:1 DAR 16:9], q=2-31, 200 kb/s, 10 fps, 10 tbn (default)"
+      ],
+      "arguments": [
+        "-f",
+        "lavfi",
+        "-i",
+        "testsrc2=size=320x180:rate=10:duration=0.6",
+        "-an",
+        "-c:v",
+        "libx264",
+        "-threads",
+        "1",
+        "-preset",
+        "veryfast",
+        "-pix_fmt",
+        "yuv420p",
+        "-movflags",
+        "+faststart",
+        "-f",
+        "mp4"
+      ]
+    },
+    {
+      "name": "landscape.mov",
+      "bytes": 12852,
+      "sha256": "41e43d312b1361a8266f8e1d56348186a58f6b7fd350e97466e08bf81699aa0a",
+      "durationSecondsReported": 0.6,
+      "dimensions": "320x180",
+      "decodeExitCode": 0,
+      "streams": [
+        "Stream #0:0[0x1]: Video: h264 (High) (avc1 / 0x31637661), yuv420p(progressive), 320x180 [SAR 1:1 DAR 16:9], 159 kb/s, 10 fps, 10 tbr, 10240 tbn (default)",
+        "Stream #0:0: Video: wrapped_avframe, yuv420p(progressive), 320x180 [SAR 1:1 DAR 16:9], q=2-31, 200 kb/s, 10 fps, 10 tbn (default)"
+      ],
+      "arguments": [
+        "-f",
+        "lavfi",
+        "-i",
+        "testsrc2=size=320x180:rate=10:duration=0.6",
+        "-an",
+        "-c:v",
+        "libx264",
+        "-threads",
+        "1",
+        "-preset",
+        "veryfast",
+        "-pix_fmt",
+        "yuv420p",
+        "-movflags",
+        "+faststart",
+        "-f",
+        "mov"
+      ]
+    },
+    {
+      "name": "portrait.m4v",
+      "bytes": 13484,
+      "sha256": "6de939664aee2f29a0cb1fc327fae10e64c0a2e2bbd98aee35074bf7cb533ca6",
+      "durationSecondsReported": 0.6,
+      "dimensions": "180x320",
+      "decodeExitCode": 0,
+      "streams": [
+        "Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(progressive), 180x320 [SAR 1:1 DAR 9:16], 167 kb/s, 10 fps, 10 tbr, 10240 tbn (default)",
+        "Stream #0:0(und): Video: wrapped_avframe, yuv420p(progressive), 180x320 [SAR 1:1 DAR 9:16], q=2-31, 200 kb/s, 10 fps, 10 tbn (default)"
+      ],
+      "arguments": [
+        "-f",
+        "lavfi",
+        "-i",
+        "testsrc2=size=180x320:rate=10:duration=0.6",
+        "-an",
+        "-c:v",
+        "libx264",
+        "-threads",
+        "1",
+        "-preset",
+        "veryfast",
+        "-pix_fmt",
+        "yuv420p",
+        "-movflags",
+        "+faststart",
+        "-brand",
+        "M4V ",
+        "-f",
+        "mp4"
+      ]
+    },
+    {
+      "name": "landscape.avi",
+      "bytes": 41116,
+      "sha256": "f9cc6c9e2022ded41ee050895cc892fa043edbdb9ba082574411d61d78c174d9",
+      "durationSecondsReported": 0.6,
+      "dimensions": "320x180",
+      "decodeExitCode": 0,
+      "streams": [
+        "Stream #0:0: Video: mjpeg (Baseline) (MJPG / 0x47504A4D), yuvj420p(pc, bt470bg/unknown/unknown), 320x180 [SAR 1:1 DAR 16:9], 10 fps, 10 tbr, 10 tbn",
+        "Stream #0:0: Video: wrapped_avframe, yuvj420p(pc, bt470bg/unknown/unknown, progressive), 320x180 [SAR 1:1 DAR 16:9], q=2-31, 200 kb/s, 10 fps, 10 tbn"
+      ],
+      "arguments": [
+        "-f",
+        "lavfi",
+        "-i",
+        "testsrc2=size=320x180:rate=10:duration=0.6",
+        "-an",
+        "-c:v",
+        "mjpeg",
+        "-threads",
+        "1",
+        "-q:v",
+        "8",
+        "-pix_fmt",
+        "yuvj420p",
+        "-f",
+        "avi"
+      ]
+    },
+    {
+      "name": "landscape.webm",
+      "bytes": 10681,
+      "sha256": "2e9cfb683bdc77dfbc1fb7768abec216982dba86211d32e6bf21f70f1de345ef",
+      "durationSecondsReported": 0.6,
+      "dimensions": "320x180",
+      "decodeExitCode": 0,
+      "streams": [
+        "Stream #0:0: Video: vp8, yuv420p(tv, progressive), 320x180, SAR 1:1 DAR 16:9, 10 fps, 10 tbr, 1k tbn",
+        "Stream #0:0: Video: wrapped_avframe, yuv420p(tv, bt470bg/unknown/unknown, progressive), 320x180 [SAR 1:1 DAR 16:9], q=2-31, 200 kb/s, 10 fps, 10 tbn"
+      ],
+      "arguments": [
+        "-f",
+        "lavfi",
+        "-i",
+        "testsrc2=size=320x180:rate=10:duration=0.6",
+        "-an",
+        "-c:v",
+        "libvpx",
+        "-threads",
+        "1",
+        "-b:v",
+        "100k",
+        "-f",
+        "webm"
+      ]
+    },
+    {
+      "name": "tone.m4a",
+      "bytes": 6432,
+      "sha256": "ace72d6e0a56b3783e69174ca557140cb7ab45a764d9be30f686c39fd79cb0ff",
+      "durationSecondsReported": 0.6,
+      "dimensions": null,
+      "decodeExitCode": 0,
+      "streams": [
+        "Stream #0:0[0x1](und): Audio: aac (LC) (mp4a / 0x6134706D), 44100 Hz, mono, fltp, 70 kb/s (default)",
+        "Stream #0:0(und): Audio: pcm_s16le, 44100 Hz, mono, s16, 705 kb/s (default)"
+      ],
+      "arguments": [
+        "-f",
+        "lavfi",
+        "-i",
+        "sine=frequency=440:sample_rate=44100:duration=0.6",
+        "-c:a",
+        "aac",
+        "-threads",
+        "1",
+        "-f",
+        "ipod"
+      ]
+    },
+    {
+      "name": "tone.aac",
+      "bytes": 5707,
+      "sha256": "570729b23fa3a640a08e0f2e7956f8a06e38c4013252f91451e77b9cf9d7e4f5",
+      "durationSecondsReported": 0.63,
+      "dimensions": null,
+      "decodeExitCode": 0,
+      "streams": [
+        "Stream #0:0: Audio: aac (LC), 44100 Hz, mono, fltp, 72 kb/s",
+        "Stream #0:0: Audio: pcm_s16le, 44100 Hz, mono, s16, 705 kb/s"
+      ],
+      "arguments": [
+        "-f",
+        "lavfi",
+        "-i",
+        "sine=frequency=440:sample_rate=44100:duration=0.6",
+        "-c:a",
+        "aac",
+        "-threads",
+        "1",
+        "-f",
+        "adts"
+      ]
+    },
+    {
+      "name": "tone.mp3",
+      "bytes": 5241,
+      "sha256": "c5142835c3cfb538b18a70c98dc3e7c1ebe7bed3f3dd32e7c8af3e37109b4663",
+      "durationSecondsReported": 0.63,
+      "dimensions": null,
+      "decodeExitCode": 0,
+      "streams": [
+        "Stream #0:0: Audio: mp3 (mp3float), 44100 Hz, mono, fltp, 64 kb/s",
+        "Stream #0:0: Audio: pcm_s16le, 44100 Hz, mono, s16, 705 kb/s"
+      ],
+      "arguments": [
+        "-f",
+        "lavfi",
+        "-i",
+        "sine=frequency=440:sample_rate=44100:duration=0.6",
+        "-c:a",
+        "libmp3lame",
+        "-threads",
+        "1",
+        "-f",
+        "mp3"
+      ]
+    },
+    {
+      "name": "tone.wav",
+      "bytes": 52998,
+      "sha256": "552d3eccca32105cf09bcd521140cf01d342e2e1937d8d3bd214893c85fa847c",
+      "durationSecondsReported": 0.6,
+      "dimensions": null,
+      "decodeExitCode": 0,
+      "streams": [
+        "Stream #0:0: Audio: pcm_s16le ([1][0][0][0] / 0x0001), 44100 Hz, mono, s16, 705 kb/s",
+        "Stream #0:0: Audio: pcm_s16le, 44100 Hz, mono, s16, 705 kb/s"
+      ],
+      "arguments": [
+        "-f",
+        "lavfi",
+        "-i",
+        "sine=frequency=440:sample_rate=44100:duration=0.6",
+        "-c:a",
+        "pcm_s16le",
+        "-threads",
+        "1",
+        "-f",
+        "wav"
+      ]
+    },
+    {
+      "name": "tone.ogg",
+      "bytes": 4644,
+      "sha256": "4c2c8899795fb2183ddcf400fdc88891755536457d5672fccce46b5eb9579206",
+      "durationSecondsReported": 0.6,
+      "dimensions": null,
+      "decodeExitCode": 0,
+      "streams": [
+        "Stream #0:0: Audio: vorbis, 44100 Hz, mono, fltp, 80 kb/s",
+        "Stream #0:0: Audio: pcm_s16le, 44100 Hz, mono, s16, 705 kb/s"
+      ],
+      "arguments": [
+        "-f",
+        "lavfi",
+        "-i",
+        "sine=frequency=440:sample_rate=44100:duration=0.6",
+        "-c:a",
+        "libvorbis",
+        "-threads",
+        "1",
+        "-f",
+        "ogg"
+      ]
+    },
+    {
+      "name": "alac.mov",
+      "bytes": 24099,
+      "sha256": "25252f854cb6d6c9e6ce1db5f7627c795a2e84a9fcd0f396c0f956074b131f45",
+      "durationSecondsReported": 0.6,
+      "dimensions": "320x180",
+      "decodeExitCode": 0,
+      "streams": [
+        "Stream #0:0[0x1]: Video: h264 (High) (avc1 / 0x31637661), yuv420p(progressive), 320x180 [SAR 1:1 DAR 16:9], 159 kb/s, 10 fps, 10 tbr, 10240 tbn (default)",
+        "Stream #0:1[0x2]: Audio: alac (alac / 0x63616C61), 44100 Hz, mono, s16p, 140 kb/s (default)",
+        "Stream #0:0: Video: wrapped_avframe, yuv420p(progressive), 320x180 [SAR 1:1 DAR 16:9], q=2-31, 200 kb/s, 10 fps, 10 tbn (default)",
+        "Stream #0:1: Audio: pcm_s16le, 44100 Hz, mono, s16, 705 kb/s (default)"
+      ],
+      "arguments": [
+        "-f",
+        "lavfi",
+        "-i",
+        "testsrc2=size=320x180:rate=10:duration=0.6",
+        "-f",
+        "lavfi",
+        "-i",
+        "sine=frequency=440:sample_rate=44100:duration=0.6",
+        "-c:v",
+        "libx264",
+        "-pix_fmt",
+        "yuv420p",
+        "-preset",
+        "veryfast",
+        "-c:a",
+        "alac",
+        "-threads",
+        "1",
+        "-shortest",
+        "-movflags",
+        "+faststart",
+        "-f",
+        "mov"
+      ]
+    },
+    {
+      "name": "fragmented.mp4",
+      "bytes": 12972,
+      "sha256": "19cf71f63fdb2c34621d27eca8169fa34e58889b025836d813618c700c0f0832",
+      "durationSecondsReported": 0.6,
+      "dimensions": "320x180",
+      "decodeExitCode": 0,
+      "streams": [
+        "Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(progressive), 320x180 [SAR 1:1 DAR 16:9], 159 kb/s, 10 fps, 10 tbr, 10240 tbn (default)",
+        "Stream #0:0(und): Video: wrapped_avframe, yuv420p(progressive), 320x180 [SAR 1:1 DAR 16:9], q=2-31, 200 kb/s, 10 fps, 10 tbn (default)"
+      ],
+      "arguments": [
+        "-f",
+        "lavfi",
+        "-i",
+        "testsrc2=size=320x180:rate=10:duration=0.6",
+        "-an",
+        "-c:v",
+        "libx264",
+        "-pix_fmt",
+        "yuv420p",
+        "-preset",
+        "veryfast",
+        "-threads",
+        "1",
+        "-movflags",
+        "+frag_keyframe+empty_moov+default_base_moof",
+        "-f",
+        "mp4"
+      ]
+    }
+  ]
+}

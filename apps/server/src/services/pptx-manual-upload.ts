@@ -17,6 +17,8 @@ import {
 } from '../../../../packages/office/vendor/packages/pptx-ops/src/ops/index.js'
 import { BoundedZip } from '../../../../packages/office/src/zip-bounds.js'
 import { validatePptxGlb } from '../../../../packages/office/src/pptx-glb.js'
+import { inspectPptxMedia } from '../../../../packages/office/src/pptx-media-info.js'
+import { pptxMediaFrame } from '../../../../packages/office/src/pptx-media-frame.js'
 import {
   resolvePptxGroupPicture,
   replacePptxGroupPicture,
@@ -25,43 +27,6 @@ import type { PptxHostResult, PptxManualUploadRequest } from './pptx-agent-host.
 
 const cancel = (signal?: AbortSignal) => {
   if (signal?.aborted) throw new Error('素材操作已取消，文档未修改')
-}
-function mediaExt(bytes: Uint8Array, name: string, mime: string, kind: 'audio' | 'video'): string {
-  const ext = name.split('.').at(-1)?.toLowerCase()
-  const ascii = (at: number, text: string) =>
-    text.split('').every((char, i) => bytes[at + i] === char.charCodeAt(0))
-  const formats: Record<string, { kind: 'audio' | 'video'; mime: string[]; valid: boolean }> = {
-    mp4: { kind: 'video', mime: ['video/mp4'], valid: bytes.length >= 12 && ascii(4, 'ftyp') },
-    webm: {
-      kind: 'video',
-      mime: ['video/webm'],
-      valid: bytes[0] === 0x1a && bytes[1] === 0x45 && bytes[2] === 0xdf && bytes[3] === 0xa3,
-    },
-    mp3: {
-      kind: 'audio',
-      mime: ['audio/mpeg', 'audio/mp3'],
-      valid: ascii(0, 'ID3') || (bytes[0] === 0xff && ((bytes[1] ?? 0) & 0xe0) === 0xe0),
-    },
-    wav: {
-      kind: 'audio',
-      mime: ['audio/wav', 'audio/x-wav', 'audio/wave'],
-      valid: ascii(0, 'RIFF') && ascii(8, 'WAVE'),
-    },
-    ogg: { kind: 'audio', mime: ['audio/ogg', 'application/ogg'], valid: ascii(0, 'OggS') },
-  }
-  const format = ext ? formats[ext] : undefined
-  if (
-    !format ||
-    !format.valid ||
-    format.kind !== kind ||
-    (mime && mime !== 'application/octet-stream' && !format.mime.includes(mime.toLowerCase()))
-  )
-    throw new Error(
-      kind === 'video'
-        ? '请选择格式、MIME和内容一致的MP4或WebM视频'
-        : '请选择格式、MIME和内容一致的MP3、WAV或Ogg音频',
-    )
-  return ext!
 }
 type ImageInfo = (
   bytes: Uint8Array,
@@ -134,7 +99,7 @@ export async function applyPptxUpload(
         elementId: element ? elementDurableId(element) : added.elementId,
       }
     } else if (input.kind === 'media') {
-      const ext = mediaExt(
+      const mediaInfo = inspectPptxMedia(
         request.assetBytes,
         request.assetName,
         request.assetMime,
@@ -144,23 +109,21 @@ export async function applyPptxUpload(
         ? { bytes: request.posterBytes, ext: imageInfo(request.posterBytes).ext }
         : undefined
       if (poster && poster.ext !== 'png') throw new Error('视频封面须为真实PNG图片')
-      const audio = input.mediaKind === 'audio'
-      const width = Math.round(opened.deck.size.cx * (audio ? 0.25 : 0.65)),
-        height = Math.round(opened.deck.size.cy * (audio ? 0.2 : 0.6))
+      const placement = pptxMediaFrame(
+        input.mediaKind,
+        { width: opened.deck.size.cx, height: opened.deck.size.cy },
+        mediaInfo.naturalSize,
+        input.center,
+      )
       const added = addMedia(opened, input.slide, {
         kind: input.mediaKind,
-        ext,
+        ext: mediaInfo.ext,
         bytes: request.assetBytes,
         name: [...request.assetName]
           .filter((char) => char.codePointAt(0)! >= 32)
           .join('')
           .slice(0, 180),
-        offset: {
-          x: Math.round((opened.deck.size.cx - width) / 2),
-          y: Math.round((opened.deck.size.cy - height) / 2),
-          cx: width,
-          cy: height,
-        },
+        offset: placement.box,
         ...(poster ? { poster } : {}),
       })
       if (!added) throw new Error('媒体无法嵌入，文档未修改')
@@ -169,6 +132,9 @@ export async function applyPptxUpload(
         elementId: element ? (elementDurableId(element) ?? element.id) : added.elementId,
         slideIndex: input.slide,
         mediaKind: input.mediaKind,
+        naturalSize: mediaInfo.naturalSize,
+        fallback: placement.fallback,
+        ...(mediaInfo.previewWarning ? { previewWarning: mediaInfo.previewWarning } : {}),
       }
     } else {
       const info = imageInfo(request.assetBytes)

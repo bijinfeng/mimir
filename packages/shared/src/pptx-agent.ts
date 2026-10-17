@@ -151,6 +151,10 @@ export const pptxManualUploadSchema = z.discriminatedUnion('kind', [
       kind: z.literal('media'),
       slide: clipboardSlide,
       mediaKind: z.enum(['video', 'audio']),
+      center: z
+        .object({ x: z.number().finite().min(0).max(1), y: z.number().finite().min(0).max(1) })
+        .strict()
+        .optional(),
     })
     .strict(),
   z

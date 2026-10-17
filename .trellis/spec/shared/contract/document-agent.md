@@ -31,6 +31,9 @@
 
 
 - `POST /api/conversations/pptx-agent/manual-asset`：multipart的`file`为当前PPTX（至多50 MiB），`asset`为用户所选文件（至多32 MiB），可选`poster`为真实PNG（至多8 MiB）；`input`按`pptxManualUploadSchema`校验。媒体扩展名、MIME及签名须一致；图片MIME与PNG/JPEG真实内容一致，空MIME或octet-stream可按签名判断。媒体插入写原生Office双关系与封面，当前画布显示媒体标识并提供本地播放，外链媒体不自动请求。源PPTX整批导入先做ZIP预检、页码去重与范围校验，当前仅接受相同页面尺寸。宿主只回字节，仍由现有手动保存写回原件。
+- 手动音视频接受MP4/WebM/MOV/M4V/AVI和MP3/WAV/Ogg/M4A/AAC，由共享浏览器安全helper校验有界容器/轨道/采样，含普通及分片MP4。媒体自然尺寸由宿主从真实字节读取，按固定上游1px=12700EMU、只缩小至整页可容纳；未知视频尺寸明确16:9回退，音频为64pt方形。私有可选`center:{x,y}`为严格有限[0,1]坐标，浏览器不能声明自然尺寸。MOV/M4V预览使用video/mp4，原后缀、原生ContentType与媒体字节保留；合法但浏览器不支持的编码只警告，不把预览错误当无效文件。面板读文件、封面最多3秒捕获及上传均绑定当前页/文档/版本和取消，迟到结果零发布；播放/音量/seek不进入文档状态。
+  普通MP4必须核完整stsc映射和stsz逐块采样范围（而非只核stco起点）；WebM须含实际视频Block/SimpleBlock且TrackNumber属于已声明轨道，四种lace与BlockGroup按帧边界有界验证。空cluster/越界chunk不能当合法媒体。
+- 顶层音视频图片允许沿现有`setPictureSrcRect`一次提交封面crop+frame，仅在真实封面可读时开放画布应用；音视频关系、全部rId、媒体和timing保持。组内媒体封面、媒体替换和去背景继续拒绝；此手动范围不增加公开Agent工具或trim/loop/autoplay持久字段。
 - `GET/PUT /api/conversations/markdown-agent/frontmatter`：读取与写入笔记属性。PUT 必须携带 `expectedYaml` 基线；过期返回 409，系统 `id/createdAt/updatedAt` 不可编辑，自定义 YAML 字段随普通正文保存保留在 vault。
 - `ChatDocumentAgent`：`{ format?, documentId, getVersion, getContext, freezeSelection, execute, undoRound }`；`format` 省略仅兼容旧 DOCX 句柄。
 - `docx_agent_runs`：原表保留，PostgreSQL 与 SQLite 均增加 `format`、`version`，旧行按 DOCX 解释。该表存关联 ID、工具名、状态和时限，不存原件正文或工具参数。

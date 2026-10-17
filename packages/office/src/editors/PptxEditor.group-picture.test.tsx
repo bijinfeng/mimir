@@ -307,3 +307,131 @@ it('changing pages aborts a pending group asset replacement and ignores its late
   expect(button(view.host, '撤销').disabled).toBe(true)
   expect(view.getHandle().freezeSelection()).toMatchObject({ slideIndex: 1 })
 })
+
+it('crops a direct group picture with one native crop+box action, saves, undoes/redoes, and rebinds a second crop', async () => {
+  const apply = vi.fn<PptxHostApply>(applyPptxOpsOnHost),
+    view = await mount(apply)
+  expect(button(view.host, '在画布裁切组合图片').disabled).toBe(false)
+  click(button(view.host, '在画布裁切组合图片'))
+  const key = (value: string) =>
+    act(() =>
+      view.host.querySelector('[data-crop-handle="w"]')!.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: value,
+          shiftKey: true,
+          bubbles: true,
+          cancelable: true,
+        }),
+      ),
+    )
+  expect(view.host.querySelectorAll('[data-crop-handle]')).toHaveLength(8)
+  expect(view.host.querySelector('[aria-label="组合图片面板"]')).toBeNull()
+  key('ArrowRight')
+  expect(view.getHandle().getVersion()).toBe(0)
+  click(button(view.host, '应用拖动裁切'))
+  await settle(
+    () =>
+      view.getHandle().getVersion() === 1 &&
+      !!view.host.querySelector('[aria-label="组合图片面板"]'),
+  )
+  expect(apply).toHaveBeenCalledTimes(1)
+  expect(apply.mock.calls[0]![0]).toMatchObject({
+    action: 'manual_picture',
+    ops: [
+      {
+        ...view.target,
+        srcRect: expect.any(Object),
+        box: expect.objectContaining({ x: expect.any(Number), cx: expect.any(Number) }),
+      },
+    ],
+  })
+  expect(view.getHandle().freezeSelection()).toMatchObject({
+    elementId: view.target.elementId,
+    groupId: view.target.group,
+  })
+  const after = await save(view)
+  click(button(view.host, '撤销'))
+  expect(await entries(await save(view))).toEqual(await entries(view.bytes))
+  click(button(view.host, '重做'))
+  expect(await entries(await save(view))).toEqual(await entries(after))
+  const beforeSecondCrop = view.getHandle().getVersion()
+  click(button(view.host, '在画布裁切组合图片'))
+  key('ArrowLeft')
+  click(button(view.host, '应用拖动裁切'))
+  await settle(
+    () =>
+      apply.mock.calls.length === 2 && !view.host.querySelector('.mimir-pptx-picture-crop-layer'),
+  )
+  expect(view.getHandle().getVersion()).toBe(beforeSecondCrop + 1)
+})
+
+it('Escape aborts a pending group canvas crop and restores the real crop entry without publishing a late host result', async () => {
+  let release!: () => void, arrived!: () => void
+  const gate = new Promise<void>((resolve) => {
+      release = resolve
+    }),
+    ready = new Promise<void>((resolve) => {
+      arrived = resolve
+    })
+  const apply = vi.fn<PptxHostApply>(async (request) => {
+    const response = await applyPptxOpsOnHost(request)
+    arrived()
+    await gate
+    return response
+  })
+  const view = await mount(apply)
+  click(button(view.host, '在画布裁切组合图片'))
+  act(() =>
+    view.host.querySelector('[data-crop-handle="w"]')!.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'ArrowRight',
+        shiftKey: true,
+        bubbles: true,
+        cancelable: true,
+      }),
+    ),
+  )
+  click(button(view.host, '应用拖动裁切'))
+  await act(async () => ready)
+  act(() =>
+    view.host
+      .querySelector('.mimir-pptx-picture-crop-canvas')!
+      .dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+      ),
+  )
+  expect(apply.mock.calls[0]![0].signal?.aborted).toBe(true)
+  await act(async () => release())
+  await settle(
+    () =>
+      !!view.host.querySelector('[aria-label="在画布裁切组合图片"]') &&
+      !button(view.host, '在画布裁切组合图片').disabled,
+  )
+  expect(view.getHandle().getVersion()).toBe(0)
+  expect(button(view.host, '保存到库').disabled).toBe(true)
+  expect(button(view.host, '撤销').disabled).toBe(true)
+  await settle(() => document.activeElement === button(view.host, '在画布裁切组合图片'))
+})
+
+it('page navigation cancels group crop drafts and does not revive them on return', async () => {
+  const apply = vi.fn<PptxHostApply>(applyPptxOpsOnHost),
+    view = await mount(apply)
+  click(button(view.host, '在画布裁切组合图片'))
+  act(() =>
+    view.host.querySelector('[data-crop-handle="w"]')!.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'ArrowRight',
+        shiftKey: true,
+        bubbles: true,
+        cancelable: true,
+      }),
+    ),
+  )
+  click(button(view.host, '下一页'))
+  expect(view.host.querySelector('.mimir-pptx-picture-crop-layer')).toBeNull()
+  click(button(view.host, '上一页'))
+  expect(view.host.querySelector('.mimir-pptx-picture-crop-layer')).toBeNull()
+  expect(apply).not.toHaveBeenCalled()
+  expect(view.getHandle().getVersion()).toBe(0)
+  expect(button(view.host, '保存到库').disabled).toBe(true)
+})

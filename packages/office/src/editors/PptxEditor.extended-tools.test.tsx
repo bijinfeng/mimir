@@ -442,11 +442,9 @@ describe('PPTX extended named toolbar tools', () => {
       hostAsset,
     })
     menu(host, '音视频', '插入')
-    pick(host, '媒体类型', '音频（MP3 / WAV / Ogg）')
-    const bytes = new Uint8Array(48)
-    bytes.set(new TextEncoder().encode('RIFF'), 0)
-    bytes.set(new TextEncoder().encode('WAVE'), 8)
-    const file = new File([bytes], filename, { type: 'audio/wav' })
+    pick(host, '媒体类型', '音频')
+    const bytes = load('pptx-media/tone.wav')
+    const file = new File([bytes.slice().buffer], filename, { type: 'audio/wav' })
     const input = host.querySelector<HTMLInputElement>('input[type="file"]')!
     await act(async () => {
       Object.defineProperty(input, 'files', { configurable: true, value: [file] })
@@ -484,6 +482,71 @@ describe('PPTX extended named toolbar tools', () => {
       'a:audioFile',
     )
   })
+  it.each(['video', 'audio'] as const)(
+    'edits only the native %s poster through the actual canvas, cancels cleanly and saves one history step with exact AV/relationship undo and redo',
+    async (kind) => {
+      const opened = await openUpstreamPptx(load('title-layout.pptx')),
+        imageZip = await JSZip.loadAsync(load('image-deck.pptx')),
+        poster = await imageZip.file('ppt/media/image1.png')!.async('uint8array')
+      addMedia(opened, 0, {
+        kind,
+        ext: kind === 'video' ? 'mov' : 'm4a',
+        bytes: load(`pptx-media/${kind === 'video' ? 'landscape.mov' : 'tone.m4a'}`),
+        poster: { bytes: poster, ext: 'png' },
+        offset: { x: 1000000, y: 1000000, cx: 4000000, cy: 2250000 },
+      })
+      const baseline = await saveUpstreamPptx(opened),
+        hostApply = vi.fn<PptxHostApply>(upstreamHostApply),
+        { host, record } = await mountEditor(baseline, { hostApply })
+      startPictureCrop(host)
+      cropKey(host, 'ArrowRight', 'w', true)
+      expect(button(host, '应用拖动裁切').disabled).toBe(true)
+      cropKey(host, 'Escape')
+      expect(handles.get(host)!.getVersion()).toBe(0)
+      expect(hostApply).not.toHaveBeenCalled()
+      startPictureCrop(host)
+      act(() =>
+        host
+          .querySelector('.mimir-pptx-picture-crop-canvas image')!
+          .dispatchEvent(new Event('load')),
+      )
+      cropKey(host, 'ArrowRight', 'w', true)
+      await change(host, () => click(button(host, '应用拖动裁切')))
+      expect(handles.get(host)!.getVersion()).toBe(1)
+      expect(hostApply).toHaveBeenCalledOnce()
+      expect(hostApply.mock.calls[0]![0].ops).toHaveLength(1)
+      await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+      const cropped = record.saved.at(-1)!,
+        [beforeZip, afterZip] = await Promise.all([
+          JSZip.loadAsync(baseline),
+          JSZip.loadAsync(cropped),
+        ])
+      for (const entryPath of Object.keys(beforeZip.files).filter(
+        (name) => !beforeZip.files[name]!.dir && name !== 'ppt/slides/slide1.xml',
+      ))
+        expect(await afterZip.file(entryPath)!.async('uint8array')).toEqual(
+          await beforeZip.file(entryPath)!.async('uint8array'),
+        )
+      const beforePicture = (await openPptxForEdit(baseline))
+          .slides()[0]!
+          .elements.find((e) => e.type === 'picture')!,
+        afterPicture = (await openPptxForEdit(cropped))
+          .slides()[0]!
+          .elements.find((e) => e.type === 'picture')!
+      if (beforePicture.type !== 'picture' || afterPicture.type !== 'picture')
+        throw new Error('media missing')
+      expect(afterPicture.media).toEqual(beforePicture.media)
+      expect(afterPicture.srcRect!.l).toBeGreaterThan(0)
+      await settle(() => button(host, '保存到库').disabled)
+      await change(host, () => click(button(host, '撤销')))
+      await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+      await expectSameArchive(record.saved.at(-1)!, baseline)
+      await settle(() => button(host, '保存到库').disabled)
+      await change(host, () => click(button(host, '重做')))
+      await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+      await expectSameArchive(record.saved.at(-1)!, cropped)
+    },
+  )
   it('undo and redo include manual and hosted changes after saving and via keyboard', async () => {
     const { host, record } = await mountEditor(load('title-layout.pptx'), {
       hostApply: upstreamHostApply,
