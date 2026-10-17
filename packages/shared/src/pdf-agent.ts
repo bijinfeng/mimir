@@ -122,12 +122,63 @@ export interface PdfTextBlockSnapshot {
   blocks: PdfPageTextBlock[]
 }
 
-export const pdfMarkupInputSchema = z.object({
-  target: pdfTextTargetSchema,
-  type: z.enum(['highlight', 'underline', 'strikeout']),
-})
-
+const markupType = z.enum(['highlight', 'underline', 'strikeout'])
+const markupHexColor = z.string().regex(/^#[a-fA-F0-9]{6}$/)
+export const pdfMarkupInputSchema = z.union([
+  z
+    .object({ target: pdfTextTargetSchema, type: markupType, color: markupHexColor.optional() })
+    .strict(),
+  z
+    .object({
+      pageIndex: z.number().int().nonnegative(),
+      text: z.string().min(1).max(10000),
+      type: markupType,
+      all: z.boolean().optional(),
+      color: markupHexColor.optional(),
+    })
+    .strict(),
+])
 export type PdfMarkupInput = z.infer<typeof pdfMarkupInputSchema>
+
+export const pdfInsertLayoutInputSchema = z
+  .object({
+    pageIndex: z.number().int().nonnegative(),
+    text: z
+      .string()
+      .min(1)
+      .max(10000)
+      .refine((text) => !!text.trim()),
+    fontSize: z.number().finite().positive().max(500),
+    color: z.tuple([z.number().min(0).max(1), z.number().min(0).max(1), z.number().min(0).max(1)]),
+    font: z.enum(['arial', 'times', 'courier']).optional(),
+    bold: z.boolean().optional(),
+    italic: z.boolean().optional(),
+    align: z.enum(['left', 'center', 'right']).optional(),
+    maxWidth: z.number().finite().positive().max(14400).optional(),
+    x: z.number().finite().nonnegative().max(14400).optional(),
+    y: z.number().finite().nonnegative().max(14400).optional(),
+    anchorText: z.string().min(1).max(10000).optional(),
+    placement: z.enum(['right', 'below', 'above']).optional(),
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    if (
+      (value.x === undefined) !== (value.y === undefined) ||
+      (value.anchorText !== undefined && value.x !== undefined) ||
+      (value.placement !== undefined && value.anchorText === undefined)
+    )
+      ctx.addIssue({ code: 'custom', message: '坐标须成对提供，且不能与文字锚点混用' })
+  })
+export type PdfInsertLayoutInput = z.infer<typeof pdfInsertLayoutInputSchema>
+export interface PdfInsertLayout extends PdfInsertLayoutInput {
+  x: number
+  y: number
+  wrappedText: string
+  lineLeading: number
+  lineXOffsets: number[]
+  width: number
+  height: number
+}
 
 const noteText = z
   .string()
@@ -596,3 +647,66 @@ export interface PdfLocalInfo {
   signatures?: PdfVisualSignature[]
   signatureIssues?: Array<{ page: number; reason: string }>
 }
+
+/** External preparation is read-only; native insertion is a separate operation. */
+export const PDF_IMAGE_ASPECT_RATIOS = [
+  '1:1',
+  '4:3',
+  '16:9',
+  '9:16',
+  '3:4',
+  '2:3',
+  '3:2',
+  'auto',
+] as const
+export const pdfAssetOperationSchema = z.discriminatedUnion('op', [
+  z
+    .object({
+      op: z.literal('image_search'),
+      query: z.string().trim().min(1).max(500),
+      max_results: z.number().int().min(1).max(10).default(8),
+    })
+    .strict(),
+  z
+    .object({
+      op: z.literal('generate_image'),
+      prompt: z.string().trim().min(1).max(2000),
+      aspect_ratio: z.enum(PDF_IMAGE_ASPECT_RATIOS).default('auto'),
+    })
+    .strict(),
+])
+export type PdfAssetOperation = z.infer<typeof pdfAssetOperationSchema>
+export type PdfImageAspectRatio = (typeof PDF_IMAGE_ASPECT_RATIOS)[number]
+export const pdfAssetScopeSchema = z.object({
+  documentId: z.string().min(1).max(200),
+  assetSessionId: z.uuid(),
+})
+export const pdfAssetRequestSchema = pdfAssetScopeSchema
+  .extend({
+    expectedVersion: z
+      .number()
+      .int()
+      .nonnegative()
+      .max(Number.MAX_SAFE_INTEGER - 1),
+    operation: pdfAssetOperationSchema,
+  })
+  .strict()
+export const pdfAssetPreviewSchema = pdfAssetScopeSchema
+  .extend({ url: z.string().max(200) })
+  .strict()
+export type PdfAssetReadiness = {
+  image_search: { available: boolean; reason?: string }
+  generate_image: { available: boolean; reason?: string }
+}
+export type PdfPreparedImage = {
+  url: string
+  mimeType: 'image/png' | 'image/jpeg'
+  width: number
+  height: number
+  requestedRatio: PdfImageAspectRatio
+  actualRatio: number
+  expiresAt: number
+}
+export type PdfAssetData =
+  | { results: { title: string; url: string; description: string; imageUrl?: string }[] }
+  | PdfPreparedImage

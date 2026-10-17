@@ -74,4 +74,29 @@ describe('DOCX image generation', () => {
     expect(state.record).toHaveBeenCalledTimes(2)
     expect(state.record).toHaveBeenLastCalledWith(expect.objectContaining({ ok: false }))
   })
+  it('maps PDF aspect requests to actual provider sizes and forwards cancellation without changing defaults', async () => {
+    const png = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]).toString('base64')
+    state.generate.mockResolvedValue({ images: [{ b64Json: png }] })
+    const signal = new AbortController().signal
+    await generateDocxImage('diagram', 'pdf-1', { aspectRatio: '16:9', signal })
+    expect(state.generate).toHaveBeenLastCalledWith(
+      expect.objectContaining({ size: '1536x1024', abortSignal: signal }),
+    )
+    state.model = 'dall-e-3'
+    await generateDocxImage('diagram', 'pdf-1', { aspectRatio: '9:16' })
+    expect(state.generate).toHaveBeenLastCalledWith(expect.objectContaining({ size: '1024x1792' }))
+    state.model = 'dall-e-2'
+    const count = state.generate.mock.calls.length
+    await expect(generateDocxImage('diagram', 'pdf-1', { aspectRatio: '4:3' })).rejects.toThrow(
+      '仅支持正方形',
+    )
+    expect(state.generate).toHaveBeenCalledTimes(count)
+    await generateDocxImage('diagram', 'docx-1')
+    expect(state.generate.mock.calls.at(-1)![0]).not.toHaveProperty('size')
+    const canceled = new AbortController()
+    canceled.abort()
+    await expect(
+      generateDocxImage('diagram', 'pdf-1', { signal: canceled.signal }),
+    ).rejects.toMatchObject({ name: 'AbortError' })
+  })
 })

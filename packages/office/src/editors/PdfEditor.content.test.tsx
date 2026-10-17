@@ -9,42 +9,75 @@ import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { PdfAgentHandle } from '../agent/pdf-agent.js'
 import type { EditorIo } from './types.js'
+import { layoutPdfTextInsert } from '../../../../apps/server/src/services/pdf-insert-layout.js'
 import type { PdfHostApply } from './PdfEditor.js'
 
 const { pdfTextMode } = vi.hoisted(() => ({
-  pdfTextMode: { real: false, rendered: [] as Uint8Array[] },
+  pdfTextMode: {
+    real: false,
+    lifecycle: false,
+    afterLoad: null as
+      | ((
+          doc: import('pdfjs-dist/legacy/build/pdf.mjs').PDFDocumentProxy,
+        ) => Promise<import('pdfjs-dist/legacy/build/pdf.mjs').PDFDocumentProxy>)
+      | null,
+    rendered: [] as Uint8Array[],
+  },
 }))
 
-vi.mock('./pdf-render.js', () => ({
-  cancelPdfRender: () => {},
-  retainPdfDocuments: () => {},
-  renderPdfPages: async (options: { bytes: Uint8Array }) => {
-    pdfTextMode.rendered.push(options.bytes)
-    return { dispose: () => {} }
-  },
-  loadPdfDocument: async (bytes: Uint8Array) =>
-    pdfTextMode.real
-      ? (await import('pdfjs-dist/legacy/build/pdf.mjs')).getDocument({ data: bytes.slice() })
-          .promise
-      : {
-          getPage: async () => ({
-            getViewport: ({ scale }: { scale: number }) => ({
-              width: 300 * scale,
-              height: 400 * scale,
-              convertToPdfPoint: (x: number, y: number) => [x / scale, 400 - y / scale],
-              convertToViewportPoint: (x: number, y: number) => [x * scale, (400 - y) * scale],
-            }),
-          }),
-        },
+vi.mock('pdfjs-dist/legacy/build/pdf.worker.min.mjs?worker&url', async () => ({
+  default: (await import('node:module'))
+    .createRequire(import.meta.url)
+    .resolve('pdfjs-dist/legacy/build/pdf.worker.mjs'),
 }))
+
+vi.mock('./pdf-render.js', async () => {
+  const renderer = await vi.importActual<typeof import('./pdf-render.js')>('./pdf-render.js')
+  return {
+    awaitPdfTask: renderer.awaitPdfTask,
+    retainPdfDocument: (bytes: Uint8Array) =>
+      pdfTextMode.lifecycle ? renderer.retainPdfDocument(bytes) : () => {},
+    cancelPdfRender: () => {},
+    retainPdfDocuments: (bytes: readonly (Uint8Array | null)[]) => {
+      if (pdfTextMode.lifecycle) renderer.retainPdfDocuments(bytes)
+    },
+    renderPdfPages: async (options: { bytes: Uint8Array }) => {
+      pdfTextMode.rendered.push(options.bytes)
+      return { dispose: () => {} }
+    },
+    loadPdfDocument: async (bytes: Uint8Array) => {
+      if (pdfTextMode.lifecycle) {
+        const doc = await renderer.loadPdfDocument(bytes)
+        const afterLoad = pdfTextMode.afterLoad
+        pdfTextMode.afterLoad = null
+        return afterLoad ? afterLoad(doc) : doc
+      }
+      return pdfTextMode.real
+        ? (await import('pdfjs-dist/legacy/build/pdf.mjs')).getDocument({ data: bytes.slice() })
+            .promise
+        : {
+            getPage: async () => ({
+              getViewport: ({ scale }: { scale: number }) => ({
+                width: 300 * scale,
+                height: 400 * scale,
+                convertToPdfPoint: (x: number, y: number) => [x / scale, 400 - y / scale],
+                convertToViewportPoint: (x: number, y: number) => [x * scale, (400 - y) * scale],
+              }),
+            }),
+          }
+    },
+  }
+})
 
 import { PdfEditor } from './PdfEditor.js'
 
 const mounted: Array<() => void> = []
 afterEach(() => {
-  pdfTextMode.real = false
-  pdfTextMode.rendered.length = 0
   for (const unmount of mounted) unmount()
+  pdfTextMode.lifecycle = false
+  pdfTextMode.real = false
+  pdfTextMode.afterLoad = null
+  pdfTextMode.rendered.length = 0
   mounted.length = 0
 })
 
@@ -79,6 +112,21 @@ async function click(element: Element, options: MouseEventInit = {}): Promise<vo
     await new Promise((resolve) => setTimeout(resolve, 0))
   })
 }
+
+const withTextLayout =
+  (apply: PdfHostApply): PdfHostApply =>
+  async (input) =>
+    input.kind === 'layout'
+      ? {
+          bytes: input.bytes,
+          version: input.expectedVersion,
+          layouts: await Promise.all(
+            input.items.map((item) =>
+              layoutPdfTextInsert(input.bytes, item as Parameters<typeof layoutPdfTextInsert>[1]),
+            ),
+          ),
+        }
+      : apply(input)
 
 describe('PDF manual content canvas', () => {
   it('shares real note threads between toolbar and Agent, saves twice and deletes from actual controls', async () => {
@@ -429,13 +477,13 @@ describe('PDF manual content canvas', () => {
     canvas.getBoundingClientRect = () => new DOMRect(0, 0, 300, 400)
     await click(canvas, { clientX: 50, clientY: 94 })
     await settle(() => host.textContent?.includes('已核验原文对象') ?? false)
-    await click(button(host, '高亮原文'))
+    await click(button(host, '添加标注'))
     await settle(() => host.textContent?.includes('标注原文失败：标注写入被拒绝') ?? false)
     expect(button(host, '保存到库').disabled).toBe(true)
     expect(host.querySelector('[data-markup="highlight"]')).toBeNull()
     fail = false
-    await click(button(host, '高亮原文'))
-    await settle(() => host.querySelector('[data-markup="highlight"]') !== null)
+    await click(button(host, '添加标注'))
+    await settle(() => host.textContent?.includes('已添加 1 处标注') === true)
     expect(button(host, '保存到库').disabled).toBe(false)
     await click(button(host, '保存到库'))
     await settle(() => saved.length === 1)
@@ -623,6 +671,7 @@ describe('PDF manual content canvas', () => {
     const host = document.createElement('div')
     document.body.append(host)
     const root = createRoot(host)
+    pdfTextMode.lifecycle = true
     ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
     await act(async () => {
       root.render(
@@ -634,7 +683,7 @@ describe('PDF manual content canvas', () => {
               saved.push(bytes)
             },
           }}
-          hostApply={hostApply}
+          hostApply={withTextLayout(hostApply)}
           onDirtyChange={(value) => dirtyStates.push(value)}
           onAgentHandleChange={(value) => {
             agent = value
@@ -675,9 +724,11 @@ describe('PDF manual content canvas', () => {
     )!
     await click(editTab)
     await click(button(host, '编辑待保存文字'))
-    const pendingField = host.querySelector<HTMLInputElement>('input[aria-label="插入文字内容"]')!
+    const pendingField = host.querySelector<HTMLInputElement>(
+      'textarea[aria-label="插入文字内容"]',
+    )!
     await act(async () => {
-      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
       setter!.call(pendingField, 'MANUAL FINAL')
       pendingField.dispatchEvent(new Event('input', { bubbles: true }))
     })
@@ -755,7 +806,7 @@ describe('PDF manual content canvas', () => {
     const root = createRoot(host)
     ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
     await act(async () => {
-      root.render(<PdfEditor documentId="pdf-1" io={io} hostApply={hostApply} />)
+      root.render(<PdfEditor documentId="pdf-1" io={io} hostApply={withTextLayout(hostApply)} />)
     })
     mounted.push(() => {
       act(() => root.unmount())
@@ -789,16 +840,18 @@ describe('PDF manual content canvas', () => {
     })
     await click(canvas, { clientX: 60, clientY: 100 })
     await settle(
-      () => host.querySelector('.mimir-pdf-insert-bar')?.textContent?.includes('X 60') === true,
+      () =>
+        host.querySelector('.mimir-pdf-insert-bar')?.textContent?.includes('已选择纸面位置') ===
+        true,
     )
-    const field = host.querySelector<HTMLInputElement>('input[aria-label="要插入的文字"]')!
+    const field = host.querySelector<HTMLInputElement>('textarea[aria-label="要插入的文字"]')!
     await act(async () => {
-      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
       setter!.call(field, 'INSERTED')
       field.dispatchEvent(new Event('input', { bubbles: true }))
     })
-    expect(button(host, '插入文字').disabled).toBe(false)
-    await click(button(host, '插入文字'))
+    expect(button(host, '插入到页面').disabled).toBe(false)
+    await click(button(host, '插入到页面'))
     await settle(() => hostInput !== null && hostOutput !== null)
     expect((await PDFDocument.load(hostInput!.bytes)).getPage(0).getRotation().angle).toBe(90)
     expect(hostInput!.items).toMatchObject([{ pageIndex: 0, text: 'INSERTED' }])
@@ -853,7 +906,7 @@ describe('PDF manual content canvas', () => {
               saved.push(bytes)
             },
           }}
-          hostApply={hostApply}
+          hostApply={withTextLayout(hostApply)}
         />,
       )
     })
@@ -881,14 +934,19 @@ describe('PDF manual content canvas', () => {
     })
     await click(canvas, { clientX: 60, clientY: 100 })
     await settle(
-      () => host.querySelector('.mimir-pdf-insert-bar')?.textContent?.includes('X 60') === true,
+      () =>
+        host.querySelector('.mimir-pdf-insert-bar')?.textContent?.includes('已选择纸面位置') ===
+        true,
     )
-    const field = host.querySelector<HTMLInputElement>('input[aria-label="要插入的文字"]')!
+    const field = host.querySelector<HTMLInputElement>('textarea[aria-label="要插入的文字"]')!
     await act(async () => {
-      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(field, 'LATE')
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(
+        field,
+        'LATE',
+      )
       field.dispatchEvent(new Event('input', { bubbles: true }))
     })
-    await click(button(host, '插入文字'))
+    await click(button(host, '插入到页面'))
     await settle(() => request !== null)
     await click(button(host, '页面与版式操作'))
     const rotate = [...host.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')].find(
@@ -940,7 +998,7 @@ describe('PDF manual content canvas', () => {
                 })
             },
           }}
-          hostApply={hostApply}
+          hostApply={withTextLayout(hostApply)}
           onDirtyChange={(value) => dirtyStates.push(value)}
           onAgentHandleChange={(value) => {
             agent = value
@@ -974,15 +1032,15 @@ describe('PDF manual content canvas', () => {
       })
       await click(canvas, { clientX: 60, clientY: 100 })
       await settle(() => host.querySelector('.mimir-pdf-insert-bar') !== null)
-      const field = host.querySelector<HTMLInputElement>('input[aria-label="要插入的文字"]')!
+      const field = host.querySelector<HTMLInputElement>('textarea[aria-label="要插入的文字"]')!
       await act(async () => {
-        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(
+        Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(
           field,
           value,
         )
         field.dispatchEvent(new Event('input', { bubbles: true }))
       })
-      await click(button(host, '插入文字'))
+      await click(button(host, '插入到页面'))
       await settle(() => host.querySelector('.mimir-pdf-insert-bar') === null)
     }
 
@@ -1047,7 +1105,7 @@ describe('PDF manual content canvas', () => {
               })
             },
           }}
-          hostApply={hostApply}
+          hostApply={withTextLayout(hostApply)}
           onDirtyChange={(value) => dirtyStates.push(value)}
           onAgentHandleChange={(value) => {
             agent = value
@@ -1083,5 +1141,364 @@ describe('PDF manual content canvas', () => {
     expect(dirtyStates.at(-1)).toBe(false)
     expect(saved).toHaveLength(1)
     expect((await PDFDocument.load(saved[0]!)).getPage(0).getRotation().angle).toBe(90)
+  })
+})
+
+describe('PDF native text layout persistence', () => {
+  it.each([
+    ['load', 'cancel'],
+    ['page', 'cancel'],
+    ['load', 'source'],
+    ['page', 'source'],
+  ] as const)(
+    'settles an Editor %s wait on %s before a late proxy result',
+    async (phase, action) => {
+      ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+      pdfTextMode.lifecycle = true
+      const pdf = await PDFDocument.create()
+      pdf.addPage([300, 400])
+      const original = await pdf.save()
+      const other = await PDFDocument.create()
+      other.addPage([320, 420])
+      const replacement = await other.save()
+      let agent: PdfAgentHandle | null = null
+      const hostApply = vi.fn<PdfHostApply>(async () => {
+        throw new Error('a cancelled read must never reach native insertion')
+      })
+      const save = vi.fn<EditorIo['save']>(async () => {})
+      const host = document.createElement('div')
+      document.body.append(host)
+      const root = createRoot(host)
+      const render = (documentId: string, bytes: Uint8Array) => (
+        <PdfEditor
+          documentId={documentId}
+          io={{ load: async () => bytes, save }}
+          hostApply={hostApply}
+          onAgentHandleChange={(value) => {
+            agent = value
+          }}
+        />
+      )
+      await act(async () => root.render(render('lifecycle-original', original)))
+      mounted.push(() => {
+        act(() => root.unmount())
+        host.remove()
+      })
+      await settle(() => agent !== null && host.querySelector('.mimir-pdf-page') !== null)
+      await click(
+        [...host.querySelectorAll('[role="tab"]')].find((tab) => tab.textContent === '编辑')!,
+      )
+      let resume!: () => void
+      let entered = false
+      const gate = new Promise<void>((resolve) => {
+        resume = resolve
+      })
+      pdfTextMode.afterLoad = async (doc) => {
+        if (phase === 'load') {
+          entered = true
+          await gate
+        } else {
+          const actual = doc.getPage.bind(doc)
+          const spy = vi.spyOn(doc, 'getPage').mockImplementationOnce(async (pageNumber) => {
+            const page = await actual(pageNumber)
+            entered = true
+            await gate
+            spy.mockRestore()
+            return page
+          })
+        }
+        return doc
+      }
+      const controller = new AbortController()
+      const originalHandle = agent!
+      const version = originalHandle.getVersion()
+      let run!: ReturnType<PdfAgentHandle['execute']>
+      await act(async () => {
+        run = originalHandle.execute(
+          'insert_text',
+          { page: 1, text: 'must never be inserted', x: 20, y: 20 },
+          { signal: controller.signal },
+        )
+      })
+      await settle(() => entered)
+      expect(button(host, '插入文字').disabled).toBe(true)
+      let completed = false
+      let result: Awaited<typeof run> | undefined
+      void run.then((value) => {
+        result = value
+        completed = true
+      })
+      if (action === 'cancel') await act(async () => controller.abort())
+      else await act(async () => root.render(render('lifecycle-replacement', replacement)))
+      // The request and its busy state must settle while the transport remains pending.
+      await settle(
+        () =>
+          completed &&
+          agent !== null &&
+          agent.documentId ===
+            (action === 'cancel' ? 'lifecycle-original' : 'lifecycle-replacement'),
+      )
+      if (action === 'source')
+        await click(
+          [...host.querySelectorAll('[role="tab"]')].find((tab) => tab.textContent === '编辑')!,
+        )
+      await settle(() => !button(host, '插入文字').disabled)
+      expect(result).toMatchObject({ ok: false, changed: false })
+      expect(originalHandle.getVersion()).toBe(version)
+      const currentHandle = agent!
+      const currentVersion = currentHandle.getVersion()
+      await act(async () => {
+        resume()
+        await gate
+      })
+      expect(hostApply).not.toHaveBeenCalled()
+      expect(save).not.toHaveBeenCalled()
+      expect(currentHandle.getVersion()).toBe(currentVersion)
+      expect(currentHandle.getContext()).toMatchObject({ dirty: false })
+      expect((await currentHandle.execute('list_inserted_text', {})).data).toEqual({ inserts: [] })
+      expect(button(host, '保存到库').disabled).toBe(true)
+      expect(button(host, '撤销').disabled).toBe(true)
+      expect(button(host, '重做').disabled).toBe(true)
+      expect(pdfTextMode.rendered.at(-1)).toBe(action === 'cancel' ? original : replacement)
+    },
+  )
+
+  it('keeps Chinese wrapping/font/align through edits, batch survivors, history and two saves', async () => {
+    ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+    pdfTextMode.real = true
+    pdfTextMode.lifecycle = true
+    const pdf = await PDFDocument.create()
+    pdf.addPage([500, 600])
+    const original = await pdf.save()
+    const saved: Uint8Array[] = []
+    let agent: PdfAgentHandle | null = null
+    const native = await import('../../../../apps/server/src/services/pdf-agent-host.js')
+    const local = await import('../../../../apps/server/src/services/pdf-local.js')
+    const host = document.createElement('div')
+    document.body.append(host)
+    const root = createRoot(host)
+    await act(async () =>
+      root.render(
+        <PdfEditor
+          documentId="pdf-text-native-layout"
+          io={{
+            load: async () => original,
+            save: async (bytes) => {
+              saved.push(bytes)
+            },
+          }}
+          onAgentHandleChange={(value) => {
+            agent = value
+          }}
+          hostApply={withTextLayout(async (input) => ({
+            bytes: await native.applyPdfTextInserts(
+              input.bytes,
+              input.items as Parameters<typeof native.applyPdfTextInserts>[1],
+            ),
+            version: input.expectedVersion + 1,
+          }))}
+          hostLocal={async (input) => {
+            const result = await local.applyPdfLocalOperation(
+              input.bytes,
+              input.operation,
+              undefined,
+              input.signal,
+            )
+            return { ...result, version: input.expectedVersion + (result.bytes ? 1 : 0) }
+          }}
+        />,
+      ),
+    )
+    mounted.push(() => {
+      act(() => root.unmount())
+      host.remove()
+    })
+    await settle(() => agent !== null)
+    const execute = async (tool: string, args: Record<string, unknown>) => {
+      let result!: Awaited<ReturnType<PdfAgentHandle['execute']>>
+      await act(async () => {
+        let timer: ReturnType<typeof setTimeout> | undefined
+        try {
+          result = await Promise.race([
+            agent!.execute(tool, args),
+            new Promise<never>((_, reject) => {
+              timer = setTimeout(
+                () => reject(new Error(`PDF lifecycle request ${tool} did not settle`)),
+                3000,
+              )
+            }),
+          ])
+        } finally {
+          clearTimeout(timer)
+        }
+      })
+      return result
+    }
+    expect(
+      await execute('insert_text', {
+        page: 1,
+        text: '第一段中文用于真实字体换行和保存测试 English one',
+        max_width: 150,
+        align: 'right',
+        font: 'times',
+        bold: true,
+        italic: true,
+        color: '#123456',
+      }),
+    ).toMatchObject({ ok: true, changed: true })
+    let listed = (await execute('list_inserted_text', {})).data as {
+      inserts: {
+        id: string
+        text: string
+        wrapped_text: string
+        align: string
+        max_width: number
+        font: string
+        bold: boolean
+        italic: boolean
+      }[]
+    }
+    expect(listed.inserts[0]).toMatchObject({
+      align: 'right',
+      font: 'times',
+      bold: true,
+      italic: true,
+      max_width: 150,
+    })
+    expect(listed.inserts[0]!.wrapped_text).toContain('\n')
+    const id = listed.inserts[0]!.id
+    const beforeOverflow = agent!.getVersion()
+    expect(await execute('move_inserted_text', { id, x: 490 })).toMatchObject({
+      ok: false,
+      changed: false,
+      version: beforeOverflow,
+    })
+    expect(await execute('move_inserted_text', { id, y: 570 })).toMatchObject({
+      ok: false,
+      changed: false,
+      version: beforeOverflow,
+    })
+    expect(await execute('move_inserted_text', { id, dx: 8, dy: 5 })).toMatchObject({
+      ok: true,
+      changed: true,
+    })
+    expect(await execute('edit_inserted_text', { id, max_width: 130 })).toMatchObject({
+      ok: true,
+      changed: true,
+    })
+    expect(await execute('edit_inserted_text', { id, align: 'center' })).toMatchObject({
+      ok: true,
+      changed: true,
+    })
+    const version = agent!.getVersion()
+    expect(await execute('edit_inserted_text', { id })).toMatchObject({
+      ok: true,
+      changed: false,
+      version,
+    })
+    expect(await execute('edit_inserted_text', { id, align: 'center' })).toMatchObject({
+      ok: true,
+      changed: false,
+      version,
+    })
+    await click(
+      [...host.querySelectorAll('[role="tab"]')].find((item) => item.textContent === '编辑')!,
+    )
+    await click(button(host, '编辑待保存文字'))
+    const pendingInput = host.querySelector<HTMLTextAreaElement>(
+      'textarea[aria-label="插入文字内容"]',
+    )!
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(
+        pendingInput,
+        'STALE DRAFT',
+      )
+      pendingInput.dispatchEvent(new Event('input', { bubbles: true }))
+      pendingInput.dispatchEvent(new Event('change', { bubbles: true }))
+    })
+    expect(
+      host.querySelector<HTMLTextAreaElement>('textarea[aria-label="插入文字内容"]')!.value,
+    ).toBe('STALE DRAFT')
+    await click(button(host, '撤销'))
+    expect(
+      host.querySelector<HTMLTextAreaElement>('textarea[aria-label="插入文字内容"]')!.value,
+    ).toBe(listed.inserts[0]!.text)
+    await click(button(host, '重做'))
+    expect(
+      host.querySelector<HTMLTextAreaElement>('textarea[aria-label="插入文字内容"]')!.value,
+    ).toBe(listed.inserts[0]!.text)
+    await click(button(host, '关闭文字面板'))
+    await click(button(host, '保存到库'))
+    await settle(() => saved.length === 1)
+    expect(await execute('insert_text', { page: 1, text: 'REMOVE', x: 20, y: 400 })).toMatchObject({
+      ok: true,
+    })
+    expect(
+      await execute('insert_text', {
+        page: 1,
+        text: '第二次保存的中文段落 English survivor',
+        x: 240,
+        y: 240,
+        max_width: 180,
+        align: 'right',
+        font: 'courier',
+        bold: true,
+        color: '#123456',
+      }),
+    ).toMatchObject({ ok: true })
+    listed = (await execute('list_inserted_text', {})).data as typeof listed
+    const survivor = listed.inserts[1]!
+    expect(
+      await execute('apply_ops', {
+        ops: [
+          { op: 'removeTextInsert', id: listed.inserts[0]!.id },
+          { op: 'setMetadata', metadata: { title: 'text parameters' } },
+        ],
+      }),
+    ).toMatchObject({ ok: true, changed: true })
+    expect(((await execute('list_inserted_text', {})).data as typeof listed).inserts).toMatchObject(
+      [
+        {
+          id: survivor.id,
+          align: 'right',
+          font: 'courier',
+          bold: true,
+          max_width: 180,
+          wrapped_text: survivor.wrapped_text,
+        },
+      ],
+    )
+    await click(button(host, '撤销'))
+    expect(((await execute('list_inserted_text', {})).data as typeof listed).inserts).toHaveLength(
+      2,
+    )
+    await click(button(host, '重做'))
+    expect(((await execute('list_inserted_text', {})).data as typeof listed).inserts).toHaveLength(
+      1,
+    )
+    await click(button(host, '保存到库'))
+    await settle(() => saved.length === 2)
+    const task = getDocument({ data: saved[1]!.slice() })
+    try {
+      const content = await (await (await task.promise).getPage(1)).getTextContent()
+      const text = content.items
+        .map((item) => ('str' in item ? item.str : ''))
+        .join('')
+        .replace(/\s/g, '')
+      expect(text).toContain('第一段中文用于真实字体换行和保存测试Englishone')
+      expect(text).toContain('第二次保存的中文段落Englishsurvivor')
+      expect(text).not.toContain('REMOVE')
+    } finally {
+      await task.destroy()
+    }
+    expect((await PDFDocument.load(saved[1]!)).getTitle()).toBe('text parameters')
+    await click(button(host, '撤销'))
+    await click(button(host, '保存到库'))
+    await settle(() => saved.length === 3)
+    expect((await PDFDocument.load(saved[2]!)).getTitle()).not.toBe('text parameters')
+    await click(button(host, '重做'))
+    await click(button(host, '保存到库'))
+    await settle(() => saved.length === 4)
+    expect(saved[3]).toEqual(saved[1])
   })
 })

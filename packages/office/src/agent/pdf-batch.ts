@@ -8,7 +8,7 @@ import type { PdfPendingTextInsert } from './pdf-agent.js'
 import type { PdfHostAnnotations } from './pdf-content-agent.js'
 import type { PdfHostLocal } from './pdf-local-agent.js'
 import type { PdfHostApply } from '../editors/PdfEditor.js'
-import { loadPdfDocument } from '../editors/pdf-render.js'
+import { awaitPdfTask, loadPdfDocument, retainPdfDocument } from '../editors/pdf-render.js'
 import { readPdfPages } from '../editors/pdf-pages.js'
 
 export interface PdfPendingTextState {
@@ -42,62 +42,88 @@ export async function replayPdfPendingText({
   if (inserts.length > 30) throw new Error('一次最多保留 30 段待保存文字')
   if (!inserts.length) return base
   if (!apply) throw new Error('PDF 文字宿主执行器尚未就绪')
-  const pdf = await loadPdfDocument(base)
-  assertCurrent()
-  const items = []
-  for (const insert of inserts) {
-    const page = await pdf.getPage(insert.pageIndex + 1)
+  const release = retainPdfDocument(base)
+  try {
+    const pdf = await awaitPdfTask(loadPdfDocument(base), signal)
     assertCurrent()
-    const viewport = page.getViewport({ scale: 1 })
-    if (
-      ![insert.x, insert.y, insert.fontSize].every(Number.isFinite) ||
-      insert.fontSize <= 0 ||
-      insert.fontSize > 500 ||
-      insert.x < 0 ||
-      insert.y < 0 ||
-      insert.x > viewport.width ||
-      insert.y + insert.fontSize > viewport.height
-    )
-      throw new Error(`文字 ${insert.id} 的位置超出页面范围`)
-    items.push({
-      pageIndex: insert.pageIndex,
-      origin: viewport.convertToPdfPoint(insert.x, insert.y + insert.fontSize),
-      text: insert.text,
-      fontSize: insert.fontSize,
-      color: insert.color,
+    const items = []
+    for (const insert of inserts) {
+      const page = await awaitPdfTask(pdf.getPage(insert.pageIndex + 1), signal)
+      assertCurrent()
+      const viewport = page.getViewport({ scale: 1 })
+      const width = insert.width ?? 0,
+        height = insert.height ?? insert.fontSize
+      if (
+        ![insert.x, insert.y, insert.fontSize, width, height].every(Number.isFinite) ||
+        insert.fontSize <= 0 ||
+        insert.fontSize > 500 ||
+        width < 0 ||
+        height <= 0 ||
+        insert.x < 0 ||
+        insert.y < 0 ||
+        insert.x + width > viewport.width + 0.01 ||
+        insert.y + height > viewport.height + 0.01
+      )
+        throw new Error(`文字 ${insert.id} 的位置超出页面范围`)
+      items.push({
+        pageIndex: insert.pageIndex,
+        origin: viewport.convertToPdfPoint(insert.x, insert.y + insert.fontSize),
+        text: insert.wrappedText ?? insert.text,
+        font: insert.font,
+        bold: insert.bold,
+        italic: insert.italic,
+        align: insert.align,
+        lineLeading: insert.lineLeading,
+        lineXOffsets: insert.lineXOffsets,
+        rotate: viewport.rotation,
+        fontSize: insert.fontSize,
+        color: insert.color,
+      })
+    }
+    assertCurrent()
+    const response = await apply({
+      bytes: base,
+      expectedVersion: version,
+      kind: 'insert',
+      items,
+      signal,
     })
-  }
-  assertCurrent()
-  const response = await apply({
-    bytes: base,
-    expectedVersion: version,
-    kind: 'insert',
-    items,
-    signal,
-  })
-  assertCurrent()
-  if (response.version !== version + 1 || !response.bytes?.length)
-    throw new Error('PDF 文字宿主返回了错误的画布版本或字节')
-  return response.bytes
-}
-
-async function geometry(bytes: Uint8Array, assertCurrent: () => void) {
-  const pdf = await loadPdfDocument(bytes)
-  assertCurrent()
-  const result: number[][] = []
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i)
     assertCurrent()
-    const v = page.getViewport({ scale: 1 })
-    result.push([page.rotate, page.userUnit, ...page.view, v.width, v.height, ...v.transform])
+    if (response.version !== version + 1 || !response.bytes?.length)
+      throw new Error('PDF 文字宿主返回了错误的画布版本或字节')
+    return response.bytes
+  } finally {
+    release()
   }
-  return result
 }
 
-async function assertSameGeometry(a: Uint8Array, b: Uint8Array, assertCurrent: () => void) {
+async function geometry(bytes: Uint8Array, assertCurrent: () => void, signal?: AbortSignal) {
+  const release = retainPdfDocument(bytes)
+  try {
+    const pdf = await awaitPdfTask(loadPdfDocument(bytes), signal)
+    assertCurrent()
+    const result: number[][] = []
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await awaitPdfTask(pdf.getPage(i), signal)
+      assertCurrent()
+      const v = page.getViewport({ scale: 1 })
+      result.push([page.rotate, page.userUnit, ...page.view, v.width, v.height, ...v.transform])
+    }
+    return result
+  } finally {
+    release()
+  }
+}
+
+async function assertSameGeometry(
+  a: Uint8Array,
+  b: Uint8Array,
+  assertCurrent: () => void,
+  signal?: AbortSignal,
+) {
   if (a === b) return
-  const before = await geometry(a, assertCurrent)
-  const after = await geometry(b, assertCurrent)
+  const before = await geometry(a, assertCurrent, signal)
+  const after = await geometry(b, assertCurrent, signal)
   if (
     before.length !== after.length ||
     before.some(
@@ -223,9 +249,9 @@ export async function buildPdfBatchCandidate({
   }
   const nextBase = candidate
   if (!pageOps && pending) {
-    await assertSameGeometry(base0, candidate, assertCurrent)
+    await assertSameGeometry(base0, candidate, assertCurrent, signal)
     candidate = await replay(candidate)
-    await assertSameGeometry(nextBase, candidate, assertCurrent)
+    await assertSameGeometry(nextBase, candidate, assertCurrent, signal)
     if (targets.length) {
       const before = await readAnnotations(nextBase)
       const after = await readAnnotations(candidate)

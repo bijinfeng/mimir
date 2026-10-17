@@ -1,4 +1,9 @@
-import { pdfBatchArgsSchema } from '@mimir/shared'
+import {
+  pdfBatchArgsSchema,
+  pdfAssetOperationSchema,
+  pdfInsertLayoutInputSchema,
+} from '@mimir/shared'
+import { PDF_EXTERNAL_IMAGE_TOOLS } from './pdf-asset-agent.js'
 import { PDF_LOCAL_TOOLS } from './pdf-local-agent.js'
 import { PDF_CONTENT_TOOLS } from './pdf-content-agent.js'
 import { searchPdfText, type PdfTextIndex } from '../editors/pdf-text.js'
@@ -30,6 +35,11 @@ export interface PdfAgentHooks {
     expectedVersion: number,
     signal?: AbortSignal,
   ): Promise<void>
+  assetTool?(
+    operation: import('@mimir/shared').PdfAssetOperation,
+    version: number,
+    signal: AbortSignal,
+  ): Promise<unknown>
   contentTool?(
     tool: string,
     args: Record<string, unknown>,
@@ -49,6 +59,18 @@ export interface PdfAgentTextInsert {
   text: string
   fontSize: number
   color: [number, number, number]
+  font?: 'arial' | 'times' | 'courier'
+  bold?: boolean
+  italic?: boolean
+  align?: 'left' | 'center' | 'right'
+  maxWidth?: number
+  anchorText?: string
+  placement?: 'right' | 'below' | 'above'
+  width?: number
+  height?: number
+  wrappedText?: string
+  lineLeading?: number
+  lineXOffsets?: number[]
 }
 
 /** A block added since the last save. Coordinates use the displayed page's top-left. */
@@ -60,6 +82,18 @@ export interface PdfPendingTextInsert {
   text: string
   fontSize: number
   color: [number, number, number]
+  font?: 'arial' | 'times' | 'courier'
+  bold?: boolean
+  italic?: boolean
+  align?: 'left' | 'center' | 'right'
+  maxWidth?: number
+  anchorText?: string
+  placement?: 'right' | 'below' | 'above'
+  width?: number
+  height?: number
+  wrappedText?: string
+  lineLeading?: number
+  lineXOffsets?: number[]
 }
 
 interface AgentResult {
@@ -122,6 +156,11 @@ export class PdfAgentHandle {
   readonly format = 'pdf'
   private version = 1
   private disposed = false
+  private readonly assetRequests = new Set<AbortController>()
+  private abortAssets() {
+    for (const request of this.assetRequests) request.abort()
+    this.assetRequests.clear()
+  }
   private textCache: { version: number; value: Promise<PdfTextIndex> } | null = null
   private readonly rounds = new Map<string, { beforeState: unknown; afterVersion: number }>()
 
@@ -153,6 +192,7 @@ export class PdfAgentHandle {
 
   markManualChange(): void {
     if (this.disposed) return
+    this.abortAssets()
     this.version++
     this.textCache = null
     // A manual edit must never be removed by an earlier Agent round rollback.
@@ -160,6 +200,7 @@ export class PdfAgentHandle {
   }
 
   dispose(): void {
+    this.abortAssets()
     this.disposed = true
     this.rounds.clear()
     this.textCache = null
@@ -202,6 +243,26 @@ export class PdfAgentHandle {
       const input: Record<string, unknown> =
         tool === 'apply_ops' ? pdfBatchArgsSchema.parse(args) : record(args)
 
+      if ((PDF_EXTERNAL_IMAGE_TOOLS as readonly string[]).includes(tool)) {
+        if (!this.hooks.assetTool) throw new Error('PDF 图片素材宿主未连接')
+        if ('op' in input) throw new Error('图片素材参数包含未知字段 op')
+        const operation = pdfAssetOperationSchema.parse({ ...input, op: tool })
+        const version = this.version
+        const controller = new AbortController()
+        const abort = () => controller.abort()
+        options.signal?.addEventListener('abort', abort, { once: true })
+        this.assetRequests.add(controller)
+        try {
+          const data = await this.hooks.assetTool(operation, version, controller.signal)
+          if (this.disposed || controller.signal.aborted || this.version !== version)
+            throw new Error('PDF 画布已变化，图片素材结果未应用')
+          return this.result(true, false, undefined, undefined, data)
+        } finally {
+          options.signal?.removeEventListener('abort', abort)
+          this.assetRequests.delete(controller)
+        }
+      }
+
       if (tool === 'goto_page') {
         const page = pageNumber(input.page, snapshot.pages.length)
         this.hooks.gotoPage(page)
@@ -220,6 +281,21 @@ export class PdfAgentHandle {
             y: insert.y,
             text: insert.text,
             font_size: insert.fontSize,
+            color: `#${insert.color
+              .map((channel) =>
+                Math.round(channel * 255)
+                  .toString(16)
+                  .padStart(2, '0'),
+              )
+              .join('')}`,
+            font: insert.font,
+            bold: insert.bold,
+            italic: insert.italic,
+            align: insert.align ?? 'left',
+            max_width: insert.maxWidth,
+            wrapped_text: insert.wrappedText ?? insert.text,
+            line_leading: insert.lineLeading,
+            line_x_offsets: insert.lineXOffsets,
           }))
         return this.result(true, false, undefined, undefined, { inserts })
       }
@@ -292,6 +368,7 @@ export class PdfAgentHandle {
         if (result.changed) {
           if (options.roundId && !checkpoint)
             this.rounds.set(options.roundId, { beforeState, afterVersion: startingVersion + 1 })
+          this.abortAssets()
           this.version++
           if (checkpoint) checkpoint.afterVersion = this.version
           this.textCache = null
@@ -309,7 +386,12 @@ export class PdfAgentHandle {
       if (tool === 'insert_text') {
         const pageIndex = pageNumber(input.page, snapshot.pages.length)
         if (input.origin !== undefined && !options.manual)
-          throw new Error('Agent 插入文字须提供页面左上角起算的 x/y 坐标')
+          throw new Error('Agent 不能提供内部原生坐标 origin')
+        if (
+          input.origin !== undefined &&
+          (input.x !== undefined || input.y !== undefined || input.anchor_text !== undefined)
+        )
+          throw new Error('origin 不能与显示坐标或文字锚点混用')
         if (typeof input.text !== 'string' || !input.text.trim() || input.text.length > 10_000)
           throw new Error('text 必须是 1–10000 字符的文字')
         const origin =
@@ -318,14 +400,7 @@ export class PdfAgentHandle {
           input.origin.every((value) => typeof value === 'number' && Number.isFinite(value))
             ? (input.origin as [number, number])
             : undefined
-        if (
-          !origin &&
-          (typeof input.x !== 'number' ||
-            !Number.isFinite(input.x) ||
-            typeof input.y !== 'number' ||
-            !Number.isFinite(input.y))
-        )
-          throw new Error('x/y 必须是页面左上角起算的有限坐标')
+        if (input.origin !== undefined && !origin) throw new Error('内部原生坐标 origin 无效')
         const fontSize = input.font_size === undefined ? 14 : input.font_size
         if (
           typeof fontSize !== 'number' ||
@@ -342,19 +417,26 @@ export class PdfAgentHandle {
           number,
           number,
         ]
+        const layout = pdfInsertLayoutInputSchema.parse({
+          pageIndex,
+          text: input.text,
+          fontSize,
+          color,
+          x: origin ? undefined : input.x,
+          y: origin ? undefined : input.y,
+          anchorText: input.anchor_text,
+          placement: input.placement,
+          maxWidth: input.max_width,
+          align: input.align,
+          font: input.font,
+          bold: input.bold,
+          italic: input.italic,
+        })
         const startingVersion = this.version
         const checkpoint = options.roundId ? this.rounds.get(options.roundId) : undefined
         const beforeState = checkpoint ? undefined : this.hooks.captureState()
         const inserted = await this.hooks.insertText(
-          {
-            pageIndex,
-            x: origin ? undefined : (input.x as number),
-            y: origin ? undefined : (input.y as number),
-            origin,
-            text: input.text,
-            fontSize,
-            color,
-          },
+          { ...layout, origin },
           startingVersion,
           options.signal,
         )
@@ -362,6 +444,7 @@ export class PdfAgentHandle {
           throw new Error('PDF 画布已变化，插入结果未应用')
         if (options.roundId && !checkpoint)
           this.rounds.set(options.roundId, { beforeState, afterVersion: startingVersion + 1 })
+        this.abortAssets()
         this.version++
         if (checkpoint) checkpoint.afterVersion = this.version
         this.textCache = null
@@ -387,11 +470,20 @@ export class PdfAgentHandle {
           next = inserts.filter((insert) => insert.id !== input.id)
         } else if (tool === 'edit_inserted_text') {
           if (
-            input.text === undefined &&
-            input.font_size === undefined &&
-            input.color === undefined
+            [
+              'text',
+              'font_size',
+              'color',
+              'align',
+              'font',
+              'bold',
+              'italic',
+              'max_width',
+              'x',
+              'y',
+            ].every((key) => input[key] === undefined)
           )
-            throw new Error('请至少提供 text、font_size 或 color')
+            return this.result(true, false)
           const nextText = input.text === undefined ? current.text : input.text
           if (typeof nextText !== 'string' || !nextText.trim() || nextText.length > 10_000)
             throw new Error('text 必须是 1–10000 字符的文字')
@@ -416,7 +508,38 @@ export class PdfAgentHandle {
                   (offset) => parseInt(colorValue.slice(offset, offset + 2), 16) / 255,
                 ) as [number, number, number])
           next = [...inserts]
-          next[position] = { ...current, text: nextText, fontSize, color }
+          const format = pdfInsertLayoutInputSchema.parse({
+            pageIndex: current.pageIndex,
+            text: nextText,
+            fontSize,
+            color,
+            x: input.x ?? current.x,
+            y: input.y ?? current.y,
+            font: input.font === null && options.manual ? undefined : (input.font ?? current.font),
+            bold: input.bold ?? current.bold,
+            italic: input.italic ?? current.italic,
+            align: input.align ?? current.align,
+            maxWidth:
+              input.max_width === 0 && options.manual
+                ? undefined
+                : (input.max_width ?? current.maxWidth),
+          })
+          next[position] = {
+            ...current,
+            ...format,
+            wrappedText: undefined,
+            lineLeading: undefined,
+            lineXOffsets: undefined,
+          }
+          if (
+            ['text', 'fontSize', 'x', 'y', 'font', 'bold', 'italic', 'align', 'maxWidth'].every(
+              (key) =>
+                current[key as keyof PdfPendingTextInsert] ===
+                next[position]![key as keyof PdfPendingTextInsert],
+            ) &&
+            current.color.every((channel, i) => channel === color[i])
+          )
+            return this.result(true, false)
         } else {
           const absolute = input.x !== undefined || input.y !== undefined
           const relative = input.dx !== undefined || input.dy !== undefined
@@ -432,6 +555,7 @@ export class PdfAgentHandle {
             : current.y + ((input.dy as number | undefined) ?? 0)
           if (x < 0 || y < 0) throw new Error('插入位置不能超出页面左上角')
           next = [...inserts]
+          if (x === current.x && y === current.y) return this.result(true, false)
           next[position] = { ...current, x, y }
         }
         const startingVersion = this.version
@@ -442,6 +566,7 @@ export class PdfAgentHandle {
           throw new Error('PDF 画布已变化，插字修改未应用')
         if (options.roundId && !checkpoint)
           this.rounds.set(options.roundId, { beforeState, afterVersion: startingVersion + 1 })
+        this.abortAssets()
         this.version++
         if (checkpoint) checkpoint.afterVersion = this.version
         this.textCache = null
@@ -470,6 +595,7 @@ export class PdfAgentHandle {
             afterVersion: this.version + 1,
           })
         this.hooks.applyPages(pages)
+        this.abortAssets()
         this.version++
         const checkpoint = options.roundId ? this.rounds.get(options.roundId) : undefined
         if (checkpoint) checkpoint.afterVersion = this.version
@@ -492,6 +618,7 @@ export class PdfAgentHandle {
     if (!checkpoint || this.disposed || checkpoint.afterVersion !== this.version) return false
     this.rounds.delete(roundId)
     this.hooks.restoreState(checkpoint.beforeState)
+    this.abortAssets()
     this.version++
     this.textCache = null
     return true

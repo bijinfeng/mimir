@@ -1,3 +1,6 @@
+import { PdfPendingTextOverlay } from './PdfPendingTextOverlay.js'
+import { PdfTextMarkupPanel } from './PdfTextMarkupPanel.js'
+import { PdfTextInsertPanel, type PdfInsertDraft } from './PdfTextInsertPanel.js'
 /**
  * PDF 画布：pdf.js 渲染与文字层、pdf-lib 页面结构、宿主 PDFium 内容流写入。
  * 页面模型是 `PdfPageRef`；手动命令与 Agent 页面操作共用它。点击页面插字
@@ -43,12 +46,19 @@ import {
   TrashIcon,
   UndoIcon,
 } from '../shell/icons.js'
+import { PdfOcrControls } from './PdfOcrControls.js'
+import { PdfOcrOverlay } from './PdfOcrOverlay.js'
+import { usePdfOcr } from './use-pdf-ocr.js'
+import { searchPdfOcr } from './pdf-ocr.js'
+import { ScanText } from 'lucide-react'
 import { statusText, useParsed, useSource } from './use-source.js'
 import { OFFICE_MIME, type EditorProps } from './types.js'
 import type { FindOptions } from '../shims/ui.js'
 import {
+  awaitPdfTask,
   cancelPdfRender,
   loadPdfDocument,
+  retainPdfDocument,
   renderPdfPages,
   retainPdfDocuments,
   type PdfRenderHandle,
@@ -98,6 +108,11 @@ import {
   type PdfHostForms,
   type PdfHostBlocks,
 } from '../agent/pdf-content-agent.js'
+import type {
+  PdfHostAssets,
+  PdfHostAssetReadiness,
+  PdfHostAssetPreview,
+} from '../agent/pdf-asset-agent.js'
 import type { PdfHostImages } from '../agent/pdf-image-agent.js'
 import {
   PDF_LOCAL_TOOLS,
@@ -149,10 +164,14 @@ export interface PdfHostApply {
   (request: {
     bytes: Uint8Array
     expectedVersion: number
-    kind: 'edit' | 'insert'
+    kind: 'edit' | 'insert' | 'layout'
     items: unknown[]
     signal?: AbortSignal
-  }): Promise<{ bytes: Uint8Array; version: number }>
+  }): Promise<{
+    bytes: Uint8Array
+    version: number
+    layouts?: import('@mimir/shared').PdfInsertLayout[]
+  }>
 }
 
 export interface PdfInspectedTextTarget {
@@ -179,9 +198,9 @@ export interface PdfHostMarkup {
   (request: {
     bytes: Uint8Array
     expectedVersion: number
-    markup: { target: PdfInspectedTextTarget; type: 'highlight' | 'underline' | 'strikeout' }
+    markup: import('@mimir/shared').PdfMarkupInput
     signal?: AbortSignal
-  }): Promise<{ bytes: Uint8Array; version: number }>
+  }): Promise<{ bytes: Uint8Array; version: number; count?: number }>
 }
 
 interface PdfWorkingBytes {
@@ -205,6 +224,14 @@ function samePendingInsert(left: PdfPendingTextInsert, right: PdfPendingTextInse
     left.y === right.y &&
     left.text === right.text &&
     left.fontSize === right.fontSize &&
+    left.font === right.font &&
+    left.bold === right.bold &&
+    left.italic === right.italic &&
+    left.align === right.align &&
+    left.maxWidth === right.maxWidth &&
+    left.wrappedText === right.wrappedText &&
+    left.lineLeading === right.lineLeading &&
+    JSON.stringify(left.lineXOffsets) === JSON.stringify(right.lineXOffsets) &&
     left.color.every((value, index) => value === right.color[index])
   )
 }
@@ -344,6 +371,10 @@ export function PdfEditor({
   hostAnnotations,
   hostForms,
   hostImages,
+  hostAssets,
+  hostAssetReadiness,
+  hostAssetPreview,
+  onAssetSettings,
   hostBlocks,
   hostLocal,
   flush = false,
@@ -354,11 +385,19 @@ export function PdfEditor({
   hostMarkup?: PdfHostMarkup
   hostAnnotations?: PdfHostAnnotations
   hostForms?: PdfHostForms
+  hostAssets?: PdfHostAssets
+  hostAssetReadiness?: PdfHostAssetReadiness
+  hostAssetPreview?: PdfHostAssetPreview
+  onAssetSettings?(kind: 'search' | 'generate'): void
   hostImages?: PdfHostImages
   hostBlocks?: PdfHostBlocks
   hostLocal?: PdfHostLocal
 }) {
   const source = useSource(io, documentId)
+  const assetSessionId = useMemo(
+    () => ({ documentId, source: source.bytes, id: crypto.randomUUID() }),
+    [documentId, source.bytes],
+  ).id
   const [working, setWorking] = useState<PdfWorkingBytes | null>(null)
   const activeWorking = working?.source === source.bytes ? working : null
   const currentBytes = activeWorking?.bytes ?? source.bytes
@@ -388,6 +427,18 @@ export function PdfEditor({
     null,
   )
   const [insertText, setInsertText] = useState('')
+  const [insertFormat, setInsertFormat] = useState<Omit<PdfInsertDraft, 'text'>>({
+    fontSize: 12,
+    color: '#000000',
+    font: '',
+    bold: false,
+    italic: false,
+    align: 'left',
+    maxWidth: 0,
+  })
+  const textInsertTriggerRef = useRef<HTMLButtonElement | null>(null)
+  const pendingTriggerRef = useRef<HTMLButtonElement | null>(null)
+  const textSelectionTriggerRef = useRef<HTMLButtonElement | null>(null)
   const [pendingEditorOpen, setPendingEditorOpen] = useState(false)
   const [selectTextMode, setSelectTextMode] = useState(false)
   const [selectedText, setSelectedText] = useState<{
@@ -397,22 +448,27 @@ export function PdfEditor({
     target?: PdfInspectedTextTarget
   } | null>(null)
   const [inspectingText, setInspectingText] = useState(false)
-  const [replacementDraft, setReplacementDraft] = useState('')
-  const [markupFeedback, setMarkupFeedback] = useState<{
-    bytes: Uint8Array
-    key: string
-    run: PdfTextRun
-    type: 'highlight' | 'underline' | 'strikeout'
+  const [markupSelection, setMarkupSelection] = useState<{
+    source: Uint8Array
+    page: number
+    text: string
   } | null>(null)
+  const [replacementDraft, setReplacementDraft] = useState('')
   const inspectRequestRef = useRef(0)
   const [selectedPendingId, setSelectedPendingId] = useState<string | null>(null)
   const [pendingDraft, setPendingDraft] = useState<{
     id: string
+    epoch: number
     text: string
     x: number
     y: number
     fontSize: number
     color: string
+    font: PdfInsertDraft['font']
+    bold: boolean
+    italic: boolean
+    align: PdfInsertDraft['align']
+    maxWidth: number
   } | null>(null)
   const [contentBusy, setContentBusy] = useState(false)
   const [assetRequest, setAssetRequest] = useState<{
@@ -438,6 +494,9 @@ export function PdfEditor({
     editor: Element | null
     sectionKey: string
   } | null>(null)
+  const [ocrOpen, setOcrOpen] = useState(false)
+  const [ocrSelection, setOcrSelection] = useState<object | null>(null)
+  const ocrTriggerRef = useRef<HTMLButtonElement>(null)
   const [imagesOpen, setImagesOpen] = useState(false)
   const [imageExportOpen, setImageExportOpen] = useState(false)
   const [redactionOpen, setRedactionOpenState] = useState(false)
@@ -585,9 +644,34 @@ export function PdfEditor({
       manual?: boolean,
     ) => Promise<{ changed: boolean; data?: unknown }>
   >(() => Promise.reject(new Error('PDF 内容执行器未就绪')))
+  const agentAssetRef = useRef<
+    NonNullable<import('../agent/pdf-agent.js').PdfAgentHooks['assetTool']>
+  >(() => Promise.reject(new Error('PDF 图片素材宿主未连接')))
+  useEffect(() => {
+    agentAssetRef.current = async (operation, version, signal) => {
+      if (!hostAssets) throw new Error('PDF 图片素材宿主未连接')
+      const handle = agentRef.current
+      const response = await hostAssets({
+        assetSessionId,
+        operation,
+        expectedVersion: version,
+        signal,
+      })
+      if (
+        signal.aborted ||
+        !handle ||
+        agentRef.current !== handle ||
+        handle.getVersion() !== version ||
+        response.version !== version
+      )
+        throw new Error('PDF 画布已变化，图片素材结果未应用')
+      return response.data
+    }
+  }, [hostAssets, assetSessionId])
   const agentCaptureRef = useRef<() => unknown>(() => null)
   const agentRestoreRef = useRef<(state: unknown) => void>(() => {})
   const agentContentReady =
+    hostAssets !== undefined ||
     hostApply !== undefined ||
     hostForms !== undefined ||
     hostImages !== undefined ||
@@ -647,8 +731,8 @@ export function PdfEditor({
     [documentId, currentBytes, layout, historyVersion],
   )
   const retainedSources = useMemo(
-    () => [currentBytes, ...imports.values()],
-    [currentBytes, imports],
+    () => [currentBytes, activePendingText?.base ?? null, ...imports.values()],
+    [currentBytes, activePendingText?.base, imports],
   )
   useEffect(() => retainPdfDocuments(retainedSources), [retainedSources])
   useEffect(() => () => retainPdfDocuments([]), [])
@@ -1073,22 +1157,32 @@ export function PdfEditor({
   }
 
   const insertAtPoint = async () => {
-    if (
-      !hostApply ||
-      !insertPoint ||
-      insertPoint.page !== at ||
-      !insertText.trim() ||
-      currentBytes === null ||
-      contentBusy
-    )
-      return
+    if (!hostApply || !insertText.trim() || currentBytes === null || contentBusy) return
     const handle = agentRef.current
     const expectedVersion = handle?.getVersion()
     if (!handle || expectedVersion === undefined) return
     setNotice(null)
     const result = await handle.execute(
       'insert_text',
-      { page: insertPoint.page + 1, origin: insertPoint.origin, text: insertText, font_size: 12 },
+      {
+        page: at + 1,
+        origin:
+          insertFormat.x === undefined
+            ? insertPoint?.page === at
+              ? insertPoint.origin
+              : undefined
+            : undefined,
+        x: insertFormat.x,
+        y: insertFormat.y,
+        text: insertText,
+        font_size: insertFormat.fontSize,
+        color: insertFormat.color,
+        font: insertFormat.font || undefined,
+        bold: insertFormat.bold,
+        italic: insertFormat.italic,
+        align: insertFormat.align,
+        max_width: insertFormat.maxWidth || undefined,
+      },
       { expectedVersion, manual: true },
     )
     if (result.ok) {
@@ -1106,7 +1200,7 @@ export function PdfEditor({
   const pendingValues =
     selectedPending === null
       ? null
-      : pendingDraft?.id === selectedPending.id
+      : pendingDraft?.id === selectedPending.id && pendingDraft.epoch === historyVersion
         ? pendingDraft
         : {
             id: selectedPending.id,
@@ -1114,6 +1208,11 @@ export function PdfEditor({
             x: selectedPending.x,
             y: selectedPending.y,
             fontSize: selectedPending.fontSize,
+            font: selectedPending.font ?? ('' as const),
+            bold: selectedPending.bold ?? false,
+            italic: selectedPending.italic ?? false,
+            align: selectedPending.align ?? 'left',
+            maxWidth: selectedPending.maxWidth ?? 0,
             color: `#${selectedPending.color
               .map((channel) =>
                 Math.round(channel * 255)
@@ -1134,6 +1233,13 @@ export function PdfEditor({
             text: pendingValues.text,
             font_size: pendingValues.fontSize,
             color: pendingValues.color,
+            x: pendingValues.x,
+            y: pendingValues.y,
+            font: pendingValues.font || null,
+            bold: pendingValues.bold,
+            italic: pendingValues.italic,
+            align: pendingValues.align,
+            max_width: pendingValues.maxWidth,
           }
         : tool === 'move_inserted_text'
           ? { id: pendingValues.id, x: pendingValues.x, y: pendingValues.y }
@@ -1175,6 +1281,37 @@ export function PdfEditor({
       }),
     [layout, currentBytes, imports],
   )
+
+  const ocrIdentity = useMemo(() => ({ documentId, currentBytes }), [documentId, currentBytes])
+  const ocr = usePdfOcr(
+    ocrIdentity,
+    textSources,
+    loadPdfDocument,
+    (import.meta as ImportMeta & { env: { BASE_URL: string } }).env.BASE_URL,
+  )
+  const ocrBlocked = !!(
+    localMode ||
+    imagesOpen ||
+    formsOpen ||
+    annotationsOpen ||
+    blocksOpen ||
+    redactionOpen ||
+    imageExportOpen ||
+    insertMode ||
+    selectTextMode ||
+    pendingEditorOpen
+  )
+  // Reset presentation state with its conflicting mode, before children render.
+  if (ocrBlocked && (ocrOpen || ocrSelection !== null)) {
+    setOcrOpen(false)
+    setOcrSelection(null)
+  }
+  const ocrShown = ocrOpen && !ocrBlocked
+  const ocrSelectionShown = ocrSelection === ocrIdentity && !ocrBlocked
+  const ocrPage = ocr.pages.find((item) => item.page === at)
+  useEffect(() => {
+    if (ocrBlocked) ocr.session.stop()
+  }, [ocrBlocked, ocr.session])
 
   useEffect(() => {
     batchLiveRef.current = {
@@ -1239,6 +1376,7 @@ export function PdfEditor({
       inserts: readonly PdfPendingTextInsert[],
       expectedVersion: number,
       signal?: AbortSignal,
+      reservedController?: AbortController,
     ) => {
       redactionRequestRef.current?.abort()
       const sourceBytes = source.bytes
@@ -1247,8 +1385,9 @@ export function PdfEditor({
       const handle = agentRef.current
       if (!handle || handle.documentId !== documentId || handle.getVersion() !== expectedVersion)
         throw new Error('PDF 画布已变化，文字结果未应用')
-      if (contentAbortRef.current !== null) throw new Error('已有 PDF 文字操作正在执行')
-      const controller = new AbortController()
+      if (contentAbortRef.current !== null && contentAbortRef.current !== reservedController)
+        throw new Error('已有 PDF 文字操作正在执行')
+      const controller = reservedController ?? new AbortController()
       const abort = () => controller.abort()
       signal?.addEventListener('abort', abort, { once: true })
       if (signal?.aborted) controller.abort()
@@ -1264,10 +1403,49 @@ export function PdfEditor({
             )
               throw new Error('PDF 画布已变化，文字结果未应用')
           }
+          const resolved: PdfPendingTextInsert[] = []
+          for (const insert of inserts) {
+            if (
+              insert.wrappedText !== undefined ||
+              (insert.font === undefined &&
+                insert.bold === undefined &&
+                insert.italic === undefined &&
+                insert.align === undefined &&
+                insert.maxWidth === undefined)
+            ) {
+              resolved.push(insert)
+              continue
+            }
+            const response = await hostApply({
+              bytes: base,
+              expectedVersion,
+              kind: 'layout',
+              signal: controller.signal,
+              items: [
+                {
+                  pageIndex: insert.pageIndex,
+                  x: insert.x,
+                  y: insert.y,
+                  text: insert.text,
+                  fontSize: insert.fontSize,
+                  color: insert.color,
+                  font: insert.font,
+                  bold: insert.bold,
+                  italic: insert.italic,
+                  align: insert.align,
+                  maxWidth: insert.maxWidth,
+                },
+              ],
+            })
+            assertCurrent()
+            if (response.version !== expectedVersion || response.layouts?.length !== 1)
+              throw new Error('PDF 插字排版响应无效')
+            resolved.push({ ...insert, ...response.layouts[0]! })
+          }
           const applied = {
             bytes: await replayPdfPendingText({
               base,
-              inserts,
+              inserts: resolved,
               version: expectedVersion,
               apply: hostApply,
               assertCurrent,
@@ -1289,7 +1467,9 @@ export function PdfEditor({
             paper: null,
           }))
           const nextPending =
-            inserts.length === 0 ? null : { documentId, source: sourceBytes, base, inserts }
+            inserts.length === 0
+              ? null
+              : { documentId, source: sourceBytes, base, inserts: resolved }
           agentPendingRef.current = nextPending
           setPendingText(nextPending)
           const recorded = savedBaselineRef.current
@@ -1315,56 +1495,125 @@ export function PdfEditor({
         },
       )
     }
-    agentInsertRef.current = async (input, expectedVersion, signal) => {
-      redactionRequestRef.current?.abort()
-      if (currentBytes === null || source.bytes === null) throw new Error('PDF 原件尚未读取完成')
-      const pending = agentPendingRef.current
-      const liveBytes = agentSnapshotRef.current?.bytes ?? currentBytes
-      const currentEdit = liveBytes === currentBytes ? settled : null
-      const saving = savingPendingRef.current
-      const base =
-        pending?.documentId === documentId && pending.source === source.bytes
-          ? pending.base
-          : saving?.documentId === documentId &&
-              saving.source === source.bytes &&
-              saving.workingBytes === liveBytes &&
-              saving.edit === currentEdit
-            ? saving.bytes
-            : currentEdit === null || sameAsFile
-              ? liveBytes
-              : await buildPdfWorkingCopy({
-                  bytes: liveBytes,
-                  layout: currentEdit.pages,
-                  imports: currentEdit.imports,
-                  host: hostLocal,
-                  version: expectedVersion,
-                  signal,
-                  assertCurrent: () => {
-                    if (signal?.aborted || agentRef.current?.getVersion() !== expectedVersion)
-                      throw new Error('PDF 画布已变化，结果未应用')
-                  },
-                })
-      const pdf = await loadPdfDocument(base)
-      const viewport = (await pdf.getPage(input.pageIndex + 1)).getViewport({ scale: 1 })
-      const point = input.origin
-        ? viewport.convertToViewportPoint(...input.origin)
-        : [input.x, (input.y ?? NaN) + input.fontSize]
-      const inserted: PdfPendingTextInsert = {
-        id: `T${crypto.randomUUID()}`,
-        pageIndex: input.pageIndex,
-        x: point[0]!,
-        y: point[1]! - input.fontSize,
-        text: input.text,
-        fontSize: input.fontSize,
-        color: input.color,
-      }
-      await writePendingInserts(
-        base,
-        [...(pending?.inserts ?? []), inserted],
-        expectedVersion,
-        signal,
+    agentInsertRef.current = async (input, expectedVersion, externalSignal) => {
+      if (contentAbortRef.current) throw new Error('已有 PDF 文字操作正在执行')
+      const controller = new AbortController()
+      const abort = () => controller.abort()
+      externalSignal?.addEventListener('abort', abort, { once: true })
+      if (externalSignal?.aborted) controller.abort()
+      contentAbortRef.current = controller
+      setContentBusy(true)
+      let releaseDocument: (() => void) | undefined
+      return runWithCleanup(
+        async () => {
+          const signal = controller.signal
+          redactionRequestRef.current?.abort()
+          if (currentBytes === null || source.bytes === null)
+            throw new Error('PDF 原件尚未读取完成')
+          const pending = agentPendingRef.current
+          const liveBytes = agentSnapshotRef.current?.bytes ?? currentBytes
+          const currentEdit = liveBytes === currentBytes ? settled : null
+          const saving = savingPendingRef.current
+          const base =
+            pending?.documentId === documentId && pending.source === source.bytes
+              ? pending.base
+              : saving?.documentId === documentId &&
+                  saving.source === source.bytes &&
+                  saving.workingBytes === liveBytes &&
+                  saving.edit === currentEdit
+                ? saving.bytes
+                : currentEdit === null || sameAsFile
+                  ? liveBytes
+                  : await buildPdfWorkingCopy({
+                      bytes: liveBytes,
+                      layout: currentEdit.pages,
+                      imports: currentEdit.imports,
+                      host: hostLocal,
+                      version: expectedVersion,
+                      signal,
+                      assertCurrent: () => {
+                        if (signal?.aborted || agentRef.current?.getVersion() !== expectedVersion)
+                          throw new Error('PDF 画布已变化，结果未应用')
+                      },
+                    })
+          releaseDocument = retainPdfDocument(base)
+          const pdf = await awaitPdfTask(loadPdfDocument(base), signal)
+          const sourcePage = await awaitPdfTask(pdf.getPage(input.pageIndex + 1), signal)
+          signal.throwIfAborted()
+          const viewport = sourcePage.getViewport({ scale: 1 })
+          const point = input.origin
+            ? viewport.convertToViewportPoint(...input.origin)
+            : [input.x, input.y === undefined ? undefined : input.y + input.fontSize]
+          let resolved: import('@mimir/shared').PdfInsertLayout | undefined
+          if (
+            input.anchorText !== undefined ||
+            point[0] === undefined ||
+            point[1] === undefined ||
+            input.font !== undefined ||
+            input.bold !== undefined ||
+            input.italic !== undefined ||
+            input.align !== undefined ||
+            input.maxWidth !== undefined
+          ) {
+            if (!hostApply) throw new Error('PDF 文字宿主尚未连接')
+            const response = await hostApply({
+              bytes: input.anchorText !== undefined && pending ? liveBytes : base,
+              expectedVersion,
+              kind: 'layout',
+              signal,
+              items: [
+                {
+                  pageIndex: input.pageIndex,
+                  x: point[0],
+                  y: point[1] === undefined ? undefined : point[1] - input.fontSize,
+                  text: input.text,
+                  fontSize: input.fontSize,
+                  color: input.color,
+                  font: input.font,
+                  bold: input.bold,
+                  italic: input.italic,
+                  align: input.align,
+                  maxWidth: input.maxWidth,
+                  anchorText: input.anchorText,
+                  placement: input.placement,
+                },
+              ],
+            })
+            if (signal?.aborted || agentRef.current?.getVersion() !== expectedVersion)
+              throw new Error('PDF 画布已变化，结果未应用')
+            if (response.version !== expectedVersion || response.layouts?.length !== 1)
+              throw new Error('PDF 插字排版响应无效')
+            resolved = response.layouts[0]!
+          }
+          const inserted: PdfPendingTextInsert = {
+            ...input,
+            ...resolved,
+            id: `T${crypto.randomUUID()}`,
+            pageIndex: input.pageIndex,
+            x: resolved?.x ?? point[0]!,
+            y: resolved?.y ?? point[1]! - input.fontSize,
+            text: input.text,
+            fontSize: input.fontSize,
+            color: input.color,
+            anchorText: undefined,
+            placement: undefined,
+          }
+          await writePendingInserts(
+            base,
+            [...(pending?.inserts ?? []), inserted],
+            expectedVersion,
+            signal,
+            controller,
+          )
+          return inserted
+        },
+        () => {
+          releaseDocument?.()
+          externalSignal?.removeEventListener('abort', abort)
+          if (contentAbortRef.current === controller) contentAbortRef.current = null
+          setContentBusy(false)
+        },
       )
-      return inserted
     }
     agentContentRef.current = async (tool, args, expectedVersion, signal, manual) => {
       redactionRequestRef.current?.abort()
@@ -1425,6 +1674,7 @@ export function PdfEditor({
       }
       contentAbortRef.current = controller
       setContentBusy(true)
+      let releaseDocument: (() => void) | undefined
       return runWithCleanup(
         async () => {
           assertCurrent()
@@ -1442,6 +1692,7 @@ export function PdfEditor({
               signal: controller.signal,
             })
           }
+          releaseDocument = retainPdfDocument(base)
           assertCurrent()
           if (atomicBatch) {
             if (
@@ -1512,13 +1763,16 @@ export function PdfEditor({
                   const materializedBytes = base
                   const index =
                     materializedBytes !== snapshotBytes
-                      ? await buildPdfTextIndex(
-                          (await readPdfPages(materializedBytes)).map((entry, sourceIndex) => ({
-                            bytes: materializedBytes,
-                            index: sourceIndex,
-                            rotation: entry.rotation,
-                          })),
-                          loadPdfDocument,
+                      ? await awaitPdfTask(
+                          buildPdfTextIndex(
+                            (await readPdfPages(materializedBytes)).map((entry, sourceIndex) => ({
+                              bytes: materializedBytes,
+                              index: sourceIndex,
+                              rotation: entry.rotation,
+                            })),
+                            loadPdfDocument,
+                          ),
+                          controller.signal,
                         )
                       : await agentTextRef.current()
                   assertCurrent()
@@ -1626,7 +1880,9 @@ export function PdfEditor({
                 markup: hostMarkup,
                 annotations: hostAnnotations,
                 forms: hostForms,
-                images: hostImages,
+                images: hostImages
+                  ? (input) => hostImages({ ...input, assetSessionId })
+                  : undefined,
                 blocks: hostBlocks,
                 signal: controller.signal,
               })
@@ -1665,6 +1921,7 @@ export function PdfEditor({
           return { changed: true, data: result.data }
         },
         () => {
+          releaseDocument?.()
           signal?.removeEventListener('abort', abort)
           if (contentAbortRef.current === controller) contentAbortRef.current = null
           setContentBusy(false)
@@ -1760,6 +2017,7 @@ export function PdfEditor({
       pendingTextInserts: () => agentPendingRef.current?.inserts ?? [],
       replaceTextInserts: (inserts, version, signal) =>
         agentReplaceRef.current(inserts, version, signal),
+      assetTool: (operation, version, signal) => agentAssetRef.current(operation, version, signal),
       contentTool: (tool, args, version, signal, manual) =>
         agentContentRef.current(tool, args, version, signal, manual),
       captureState: () => agentCaptureRef.current(),
@@ -1848,12 +2106,12 @@ export function PdfEditor({
          * 栏上会显示「无匹配」，那看起来像搜索坏了。同时把它关掉并说明原因，
          * 「查找」按钮此后也是灰的（`findReason`）。
          */
-        if (index.pagesWithText === 0) {
+        if (index.pagesWithText === 0 && !ocr.pages.some((item) => item.text.trim())) {
           setFindOpen(false)
           setNotice(
             selectTextMode || blocksShown
               ? '这份 PDF 没有文字层（可能是扫描件），无法定位原文'
-              : '这份 PDF 没有文字层（可能是扫描件），搜不到内容',
+              : '扫描页尚无文字；可在“视图 → 识别扫描文字”中进行本地识别',
           )
         }
       } catch (cause) {
@@ -1866,7 +2124,16 @@ export function PdfEditor({
     return () => {
       cancelled = true
     }
-  }, [findOpen, selectTextMode, blocksShown, currentBytes, textIndex, textKey, textSources])
+  }, [
+    findOpen,
+    selectTextMode,
+    blocksShown,
+    currentBytes,
+    textIndex,
+    textKey,
+    textSources,
+    ocr.pages,
+  ])
 
   const activeSelectedText =
     selectedText?.bytes === currentBytes && selectedText.key === textKey ? selectedText.run : null
@@ -1884,6 +2151,7 @@ export function PdfEditor({
       return
     }
     setSelectedText({ bytes: currentBytes!, key: textKey, run })
+    if (source.bytes) setMarkupSelection({ source: source.bytes, page: at, text: run.text })
     setReplacementDraft('')
     setNotice(null)
     if (!hostInspect || currentBytes === null) return
@@ -2233,13 +2501,6 @@ export function PdfEditor({
       便笺与标注
     </ToolbarButton>
   )
-  const markupSelectedOriginal = async (type: 'highlight' | 'underline' | 'strikeout') => {
-    const run = activeSelectedText
-    if (!run || !verifiedSelection) return
-    await runManualContentTool('markup_text', { page: run.page + 1, text: run.text, type })
-    const bytes = agentSnapshotRef.current?.bytes
-    if (bytes && bytes !== currentBytes) setMarkupFeedback({ bytes, key: textKey, run, type })
-  }
   const replaceSelectedOriginal = async () => {
     const run = activeSelectedText
     if (!run || !verifiedSelection) return
@@ -2278,7 +2539,10 @@ export function PdfEditor({
       ) {
         return last.matches
       }
-      const matches = searchPdfText(text, query, { matchCase, wholeWord })
+      const matches = [
+        ...searchPdfText(text, query, { matchCase, wholeWord }),
+        ...searchPdfOcr(ocr.pages, query, { matchCase, wholeWord }),
+      ].toSorted((a, b) => a.page - b.page)
       last = { query, matchCase, wholeWord, matches }
       return matches
     }
@@ -2301,7 +2565,7 @@ export function PdfEditor({
         highlightStore.publish(NO_HIGHLIGHT)
       },
     }
-  }, [textIndex, textKey, currentBytes, highlightStore, goTo])
+  }, [textIndex, textKey, currentBytes, highlightStore, goTo, ocr.pages])
 
   if (source.loadError !== null) {
     return (
@@ -2375,14 +2639,15 @@ export function PdfEditor({
 
   const canFind =
     textIndex !== null && textIndex.bytes === currentBytes && textIndex.key === textKey
-      ? textIndex.index.pagesWithText > 0
+      ? textIndex.index.pagesWithText > 0 || ocr.pages.some((item) => item.text.trim())
       : true
   const findReason =
     textIndex !== null &&
     textIndex.bytes === currentBytes &&
     textIndex.key === textKey &&
-    textIndex.index.pagesWithText === 0
-      ? '这份 PDF 没有文字层（扫描件），搜不到内容'
+    textIndex.index.pagesWithText === 0 &&
+    !ocr.pages.some((item) => item.text.trim())
+      ? '扫描页尚无文字；可在“视图 → 识别扫描文字”中进行本地识别'
       : undefined
   const cropLimit = maxCropInset(page.base)
   const currentInset = page.crop === null ? 0 : Math.round(page.crop.left)
@@ -2624,6 +2889,13 @@ export function PdfEditor({
                 setAnnotationsOpen(false)
                 setRedactionOpen(false)
                 setInsertMode((value) => !value)
+                setSelectTextMode(false)
+                setPendingEditorOpen(false)
+                setImagesOpen(false)
+                setFormsOpen(false)
+                setLocalMode(null)
+                setImageExportOpen(false)
+                setOcrOpen(false)
                 setInsertPoint(null)
                 setNotice(null)
               },
@@ -2689,33 +2961,49 @@ export function PdfEditor({
   )
 
   const closeInspector = () => {
+    if (insertMode || pendingEditorOpen || selectTextMode) contentAbortRef.current?.abort()
+    setInsertMode(false)
+    setPendingEditorOpen(false)
+    setSelectTextMode(false)
+    setOcrOpen(false)
+    setOcrSelection(null)
+    ocr.session.stop()
     assetRequest?.cancel()
     if (contentBusy) {
       deferredInspectorFocus.current = {
         documentId,
         editor: document.activeElement?.closest('.mimir-editor') ?? null,
-        sectionKey: signatureEnabled
-          ? 'visual-signature'
-          : localMode
-            ? 'document-tools'
-            : blocksShown
-              ? 'text-blocks'
-              : imagesOpen
-                ? 'images'
-                : formsOpen
-                  ? 'forms'
-                  : 'annotations',
-        trigger: (signatureEnabled
-          ? signatureTriggerRef
-          : localMode
-            ? localTriggerRef
-            : blocksShown
-              ? blocksTriggerRef
-              : imagesOpen
-                ? imagesTriggerRef
-                : formsOpen
-                  ? formsTriggerRef
-                  : annotationsTriggerRef
+        sectionKey:
+          insertMode || pendingEditorOpen || selectTextMode
+            ? 'insert-text'
+            : signatureEnabled
+              ? 'visual-signature'
+              : localMode
+                ? 'document-tools'
+                : blocksShown
+                  ? 'text-blocks'
+                  : imagesOpen
+                    ? 'images'
+                    : formsOpen
+                      ? 'forms'
+                      : 'annotations',
+        trigger: (insertMode
+          ? textInsertTriggerRef
+          : pendingEditorOpen
+            ? pendingTriggerRef
+            : selectTextMode
+              ? textSelectionTriggerRef
+              : signatureEnabled
+                ? signatureTriggerRef
+                : localMode
+                  ? localTriggerRef
+                  : blocksShown
+                    ? blocksTriggerRef
+                    : imagesOpen
+                      ? imagesTriggerRef
+                      : formsOpen
+                        ? formsTriggerRef
+                        : annotationsTriggerRef
         ).current,
       }
     }
@@ -2727,9 +3015,103 @@ export function PdfEditor({
     setLocalMode(null)
     setImageExportOpen(false)
   }
+  const exitOcrSelection = () => {
+    setOcrSelection(null)
+    focusPdfInspectorTrigger(
+      ocrTriggerRef.current,
+      canvasRef.current?.closest('.mimir-editor') ?? null,
+      'local-ocr',
+    )
+  }
   const imageExportShown =
     imageExportOpen && !assetRequest && !localMode && !imagesOpen && !formsOpen && !annotationsOpen
-  const inspectorPanel = redactionShown ? (
+  const markupSourceText =
+    markupSelection?.source === source.bytes && markupSelection.page === at
+      ? markupSelection.text
+      : ''
+  const textPanel = insertMode ? (
+    <PdfTextInsertPanel
+      key={`insert:${documentId}:${at}`}
+      page={at + 1}
+      value={{ text: insertText, ...insertFormat }}
+      onChange={({ text, ...format }) => {
+        setInsertText(text)
+        setInsertFormat(format)
+      }}
+      busy={contentBusy}
+      error={notice}
+      onApply={() => void insertAtPoint()}
+      onClose={closeInspector}
+    />
+  ) : pendingEditorOpen && pendingValues ? (
+    <PdfTextInsertPanel
+      key={`pending:${documentId}:${pendingValues.id}`}
+      page={(selectedPending?.pageIndex ?? at) + 1}
+      value={pendingValues}
+      selectedId={pendingValues.id}
+      options={pendingInserts.map((insert) => ({
+        value: insert.id,
+        label: `第 ${insert.pageIndex + 1} 页 · ${insert.text.slice(0, 24)}`,
+      }))}
+      onSelect={(id) => {
+        setSelectedPendingId(id)
+        setPendingDraft(null)
+      }}
+      onChange={(value) =>
+        setPendingDraft({
+          ...pendingValues,
+          ...value,
+          epoch: historyVersion,
+          x: value.x ?? pendingValues.x,
+          y: value.y ?? pendingValues.y,
+        })
+      }
+      busy={contentBusy}
+      error={notice}
+      onApply={() => void changePending('edit_inserted_text')}
+      onDelete={() => void changePending('delete_inserted_text')}
+      onClose={closeInspector}
+    />
+  ) : selectTextMode ? (
+    <PdfTextMarkupPanel
+      key={`markup:${documentId}:${at}:${markupSourceText}`}
+      selectedText={markupSourceText}
+      page={at + 1}
+      getVersion={getBlockVersion}
+      busy={contentBusy || source.saving}
+      blocked={
+        settled !== null || pendingInserts.length
+          ? '请先保存当前页面或插字改动'
+          : !hostMarkup
+            ? 'PDF 标注宿主未连接'
+            : undefined
+      }
+      onApply={(args, version, signal) =>
+        runManualContentTool('markup_text', args, version, signal)
+      }
+      onClose={closeInspector}
+    />
+  ) : null
+  const inspectorPanel = ocrShown ? (
+    <PdfOcrControls
+      state={ocr.state}
+      activePage={at}
+      currentText={ocrPage?.text ?? ''}
+      blocked={contentBusy || source.saving ? 'PDF 正在处理，请完成后重试' : undefined}
+      onStart={(scope) => void ocr.session.start(textSources, at, scope)}
+      onStop={ocr.session.stop}
+      onClear={() => {
+        ocr.session.clear()
+        setOcrSelection(null)
+      }}
+      onClose={closeInspector}
+      onSelect={() => {
+        ocr.session.stop()
+        setOcrOpen(false)
+        setOcrSelection(ocrIdentity)
+      }}
+    />
+  ) : redactionShown ? (
     redaction.panel
   ) : assetRequest ? (
     <PdfLocalAssetRequest
@@ -2766,13 +3148,18 @@ export function PdfEditor({
     />
   ) : imagesOpen ? (
     <PdfImagePanel
-      sourceKey={`${documentId}:${imageList?.snapshot.sha256}`}
+      sourceKey={assetSessionId}
+      contextVersion={historyVersion}
+      assetSessionId={assetSessionId}
+      hostAssetReadiness={hostAssetReadiness}
+      hostAssetPreview={hostAssetPreview}
+      onAssetSettings={onAssetSettings}
       snapshot={imageList?.bytes === currentBytes ? imageList.snapshot : undefined}
       page={at + 1}
       selected={imageSelection}
       busy={contentBusy}
       onSelect={setImageSelection}
-      onAction={(tool, args, version) => runManualContentTool(tool, args, version)}
+      onAction={(tool, args, version, signal) => runManualContentTool(tool, args, version, signal)}
       error={notice}
       onClose={() => closeInspector()}
       getVersion={() => agentRef.current?.getVersion() ?? 0}
@@ -2998,7 +3385,10 @@ export function PdfEditor({
         return bytes
       }}
     />
-  ) : null
+  ) : (
+    textPanel
+  )
+  const textToolsVisible = inspectorPanel === textPanel && textPanel !== null
   return (
     <EditorShell
       flush={flush}
@@ -3042,6 +3432,38 @@ export function PdfEditor({
             { key: 'view', label: '视图' },
           ]}
           sections={[
+            {
+              key: 'local-ocr',
+              label: '扫描文字',
+              tab: 'view',
+              minWidth: 0,
+              content: (
+                <ToolbarButton
+                  ref={ocrTriggerRef}
+                  label="识别扫描文字"
+                  active={ocrShown}
+                  disabled={!ready || contentBusy || source.saving}
+                  disabledReason="PDF 尚未就绪或正在处理"
+                  onClick={() => {
+                    setBlocksOpen(false)
+                    setRedactionOpen(false)
+                    setImagesOpen(false)
+                    setFormsOpen(false)
+                    setAnnotationsOpen(false)
+                    setImageExportOpen(false)
+                    setLocalMode(null)
+                    setInsertMode(false)
+                    setSelectTextMode(false)
+                    setPendingEditorOpen(false)
+                    setOcrSelection(null)
+                    if (ocrShown) ocr.session.stop()
+                    setOcrOpen(!ocrShown)
+                  }}
+                >
+                  <ScanText size={16} />
+                </ToolbarButton>
+              ),
+            },
             {
               key: 'redaction-copy',
               label: '涂黑副本',
@@ -3182,6 +3604,7 @@ export function PdfEditor({
                 <>
                   <ToolbarButton
                     label="插入文字"
+                    ref={textInsertTriggerRef}
                     active={insertMode}
                     disabled={!canInsertText || contentBusy}
                     disabledReason={contentBusy ? '文字正在写入' : insertReason}
@@ -3190,7 +3613,15 @@ export function PdfEditor({
                       setRedactionOpen(false)
                       setAnnotationsOpen(false)
                       setInsertMode((value) => !value)
+                      setSelectTextMode(false)
+                      setPendingEditorOpen(false)
+                      setImagesOpen(false)
+                      setFormsOpen(false)
+                      setLocalMode(null)
+                      setImageExportOpen(false)
+                      setOcrOpen(false)
                       setInsertPoint(null)
+                      setInsertFormat((format) => ({ ...format, x: undefined, y: undefined }))
                       setNotice(null)
                     }}
                   >
@@ -3198,18 +3629,29 @@ export function PdfEditor({
                   </ToolbarButton>
                   <ToolbarButton
                     label="编辑待保存文字"
+                    ref={pendingTriggerRef}
                     active={pendingEditorOpen}
                     disabled={pendingInserts.length === 0 || contentBusy}
                     disabledReason={contentBusy ? '文字正在写入' : '当前没有待保存的插入文字'}
                     onClick={() => {
                       setRedactionOpen(false)
                       setPendingEditorOpen((value) => !value)
+                      setSelectTextMode(false)
+                      setInsertMode(false)
+                      setBlocksOpen(false)
+                      setAnnotationsOpen(false)
+                      setImagesOpen(false)
+                      setFormsOpen(false)
+                      setLocalMode(null)
+                      setImageExportOpen(false)
+                      setOcrOpen(false)
                     }}
                   >
                     编辑插字
                   </ToolbarButton>
                   <ToolbarButton
                     label="定位原文"
+                    ref={textSelectionTriggerRef}
                     active={selectTextMode}
                     disabled={!ready || contentBusy}
                     disabledReason={contentBusy ? '文字正在写入' : 'PDF 尚未读取完成'}
@@ -3409,7 +3851,16 @@ export function PdfEditor({
         说假话。
       */
       subbar={
-        selectTextMode ? (
+        ocrSelectionShown ? (
+          <div className="mimir-pdf-insert-bar">
+            <ToolbarLabel>
+              临时 OCR 文字 · 可拖选复制，识别可能有误；查找包含已识别页面
+            </ToolbarLabel>
+            <ToolbarButton label="退出识别选字" onClick={exitOcrSelection}>
+              退出选字
+            </ToolbarButton>
+          </div>
+        ) : selectTextMode && textToolsVisible ? (
           <div className="mimir-pdf-insert-bar">
             <ToolbarLabel>
               {textIndex?.bytes !== currentBytes || textIndex.key !== textKey
@@ -3424,37 +3875,6 @@ export function PdfEditor({
             </ToolbarLabel>
             {verifiedSelection !== undefined && activeSelectedText !== null && (
               <>
-                {(['highlight', 'underline', 'strikeout'] as const).map((type) => (
-                  <ToolbarButton
-                    key={type}
-                    label={
-                      type === 'highlight'
-                        ? '高亮原文'
-                        : type === 'underline'
-                          ? '下划线标注'
-                          : '删除线标注'
-                    }
-                    disabled={
-                      contentBusy ||
-                      source.saving ||
-                      settled !== null ||
-                      pendingInserts.length > 0 ||
-                      !hostMarkup
-                    }
-                    disabledReason={
-                      !hostMarkup
-                        ? 'PDF 标注执行器尚未连接'
-                        : contentBusy
-                          ? '内容正在写入'
-                          : source.saving
-                            ? '正在保存'
-                            : '请先保存当前页面或插字改动'
-                    }
-                    onClick={() => void markupSelectedOriginal(type)}
-                  >
-                    {type === 'highlight' ? '高亮' : type === 'underline' ? '下划线' : '删除线'}
-                  </ToolbarButton>
-                ))}
                 <ToolbarConfirm
                   title="删除这段原文？"
                   description="删除后保留原来的空白位置，保存前可放弃保存退出。"
@@ -3515,103 +3935,13 @@ export function PdfEditor({
               </>
             )}
           </div>
-        ) : insertMode ? (
+        ) : insertMode && textToolsVisible ? (
           <div className="mimir-pdf-insert-bar">
             <ToolbarLabel>
-              {insertPoint === null || insertPoint.page !== at
-                ? '未选择位置'
-                : `第 ${at + 1} 页 · X ${Math.round(insertPoint.origin[0])} / Y ${Math.round(insertPoint.origin[1])} pt`}
+              {insertPoint?.page === at
+                ? '已选择纸面位置'
+                : '可点击纸面定位，也可直接在顶部居中插入'}
             </ToolbarLabel>
-            <ToolbarTextField
-              label="要插入的文字"
-              value={insertText}
-              onChange={setInsertText}
-              onSubmit={() => void insertAtPoint()}
-              placeholder="输入文字"
-            />
-            <ToolbarButton
-              label={contentBusy ? '写入中…' : '插入文字'}
-              disabled={contentBusy || insertPoint?.page !== at || !insertText.trim()}
-              onClick={() => void insertAtPoint()}
-            >
-              插入
-            </ToolbarButton>
-            <ToolbarButton label="取消插入文字" onClick={() => setInsertMode(false)}>
-              取消
-            </ToolbarButton>
-          </div>
-        ) : pendingEditorOpen && pendingValues !== null ? (
-          <div className="mimir-pdf-insert-bar">
-            <ToolbarSelect<string>
-              label="待保存文字"
-              value={pendingValues.id}
-              options={pendingInserts.map((insert) => ({
-                value: insert.id,
-                label: `第 ${insert.pageIndex + 1} 页 · ${insert.text.slice(0, 24)}`,
-              }))}
-              onChange={(id) => {
-                setSelectedPendingId(id)
-                setPendingDraft(null)
-              }}
-            />
-            <ToolbarTextField
-              label="插入文字内容"
-              value={pendingValues.text}
-              onChange={(text) => setPendingDraft({ ...pendingValues, text })}
-            />
-            <ToolbarNumberField
-              label="文字 X 坐标"
-              value={Math.round(pendingValues.x)}
-              min={0}
-              max={10000}
-              onCommit={(x) => setPendingDraft({ ...pendingValues, x })}
-            />
-            <ToolbarNumberField
-              label="文字 Y 坐标"
-              value={Math.round(pendingValues.y)}
-              min={0}
-              max={10000}
-              onCommit={(y) => setPendingDraft({ ...pendingValues, y })}
-            />
-            <ToolbarNumberField
-              label="文字字号"
-              value={pendingValues.fontSize}
-              min={1}
-              max={500}
-              onCommit={(fontSize) => setPendingDraft({ ...pendingValues, fontSize })}
-            />
-            <ToolbarTextField
-              label="文字颜色"
-              value={pendingValues.color}
-              onChange={(color) => setPendingDraft({ ...pendingValues, color })}
-            />
-            <ToolbarButton
-              label="更新插入文字"
-              disabled={contentBusy}
-              onClick={() => void changePending('edit_inserted_text')}
-            >
-              更新
-            </ToolbarButton>
-            <ToolbarButton
-              label="移动插入文字"
-              disabled={contentBusy}
-              onClick={() => void changePending('move_inserted_text')}
-            >
-              移动
-            </ToolbarButton>
-            <ToolbarConfirm
-              title="删除这段待保存文字？"
-              description="删除后仍可在保存前重新插入"
-              confirmLabel="删除文字"
-              onConfirm={() => void changePending('delete_inserted_text')}
-            >
-              <ToolbarButton label="删除插入文字" disabled={contentBusy}>
-                删除
-              </ToolbarButton>
-            </ToolbarConfirm>
-            <ToolbarButton label="关闭插入文字编辑" onClick={() => setPendingEditorOpen(false)}>
-              关闭
-            </ToolbarButton>
           </div>
         ) : findOpen ? (
           findAdapter !== null ? (
@@ -3702,6 +4032,11 @@ export function PdfEditor({
                         ? signature.overlay
                         : drawing.overlay
                   }
+                  readOnlyOverlay={
+                    ocrSelectionShown && ocrPage ? (
+                      <PdfOcrOverlay page={ocrPage} onExit={exitOcrSelection} />
+                    ) : undefined
+                  }
                   zoom={zoom}
                   highlight={{
                     matches:
@@ -3731,17 +4066,51 @@ export function PdfEditor({
                         }
                       : undefined
                   })()}
-                  markupFeedback={
-                    markupFeedback?.bytes === currentBytes &&
-                    markupFeedback.key === textKey &&
-                    markupFeedback.run.page === at
-                      ? markupFeedback
-                      : null
+                  textOverlay={
+                    pendingEditorOpen &&
+                    textToolsVisible &&
+                    selectedPending?.pageIndex === at &&
+                    selectedPending.width &&
+                    selectedPending.height &&
+                    !contentBusy &&
+                    !source.saving ? (
+                      <PdfPendingTextOverlay
+                        key={`${selectedPending.id}:${historyVersion}`}
+                        insert={
+                          selectedPending as PdfPendingTextInsert & {
+                            width: number
+                            height: number
+                          }
+                        }
+                        size={displaySize(page)}
+                        onCommit={({ x, y, width }) => {
+                          const handle = agentRef.current
+                          if (handle)
+                            void runManualContentTool(
+                              'edit_inserted_text',
+                              { id: selectedPending.id, x, y, max_width: width },
+                              handle.getVersion(),
+                            )
+                        }}
+                      />
+                    ) : undefined
                   }
                   onError={setRenderError}
                   onPickPoint={
-                    !redactionShown && !drawingEnabled && !signatureEnabled && insertMode
-                      ? (origin) => setInsertPoint({ page: at, origin })
+                    !redactionShown &&
+                    !drawingEnabled &&
+                    !signatureEnabled &&
+                    insertMode &&
+                    textToolsVisible
+                      ? (origin, display) => {
+                          setInsertPoint({ page: at, origin })
+                          if (display)
+                            setInsertFormat((format) => ({
+                              ...format,
+                              x: display[0],
+                              y: Math.max(0, display[1] - format.fontSize),
+                            }))
+                        }
                       : undefined
                   }
                   onPickText={
@@ -3751,6 +4120,7 @@ export function PdfEditor({
                           !drawingEnabled &&
                           !signatureEnabled &&
                           selectTextMode &&
+                          textToolsVisible &&
                           textIndex?.bytes === currentBytes &&
                           textIndex.key === textKey
                         ? pickText
@@ -3765,21 +4135,25 @@ export function PdfEditor({
         {inspectorPanel && (
           <PdfInspector
             fallbackSectionKey={
-              redactionShown
-                ? 'redaction-copy'
-                : imageExportShown
-                  ? 'page-images'
-                  : blocksShown
-                    ? 'text-blocks'
-                    : signatureEnabled
-                      ? 'visual-signature'
-                      : localMode
-                        ? 'document-tools'
-                        : imagesOpen
-                          ? 'images'
-                          : formsOpen
-                            ? 'forms'
-                            : 'annotations'
+              ocrShown
+                ? 'local-ocr'
+                : redactionShown
+                  ? 'redaction-copy'
+                  : imageExportShown
+                    ? 'page-images'
+                    : blocksShown
+                      ? 'text-blocks'
+                      : signatureEnabled
+                        ? 'visual-signature'
+                        : localMode
+                          ? 'document-tools'
+                          : imagesOpen
+                            ? 'images'
+                            : formsOpen
+                              ? 'forms'
+                              : textPanel
+                                ? 'insert-text'
+                                : 'annotations'
             }
             onClose={closeInspector}
             onEscape={() => {
@@ -3788,21 +4162,29 @@ export function PdfEditor({
               else closeInspector()
             }}
             triggerRef={
-              redactionShown
-                ? redactionTriggerRef
-                : imageExportShown
-                  ? imageExportTriggerRef
-                  : blocksShown
-                    ? blocksTriggerRef
-                    : signatureEnabled
-                      ? signatureTriggerRef
-                      : localMode
-                        ? localTriggerRef
-                        : imagesOpen
-                          ? imagesTriggerRef
-                          : formsOpen
-                            ? formsTriggerRef
-                            : annotationsTriggerRef
+              ocrShown
+                ? ocrTriggerRef
+                : redactionShown
+                  ? redactionTriggerRef
+                  : imageExportShown
+                    ? imageExportTriggerRef
+                    : blocksShown
+                      ? blocksTriggerRef
+                      : signatureEnabled
+                        ? signatureTriggerRef
+                        : localMode
+                          ? localTriggerRef
+                          : imagesOpen
+                            ? imagesTriggerRef
+                            : formsOpen
+                              ? formsTriggerRef
+                              : textPanel
+                                ? insertMode
+                                  ? textInsertTriggerRef
+                                  : selectTextMode
+                                    ? textSelectionTriggerRef
+                                    : pendingTriggerRef
+                                : annotationsTriggerRef
             }
           >
             {inspectorPanel}
@@ -3925,9 +4307,10 @@ function PdfSheet({
   highlight,
   selectedText,
   blockSelection,
-  markupFeedback,
   imageSelection,
   drawingOverlay,
+  readOnlyOverlay,
+  textOverlay,
   onError,
   onPickPoint,
   onPickText,
@@ -3939,11 +4322,12 @@ function PdfSheet({
   highlight: { matches: readonly PdfMatch[]; at: number; page: number }
   imageSelection?: PdfRect
   drawingOverlay?: ReactNode
+  readOnlyOverlay?: ReactNode
+  textOverlay?: ReactNode
   selectedText: PdfTextRun | null
   blockSelection?: PdfRect
-  markupFeedback: { run: PdfTextRun; type: 'highlight' | 'underline' | 'strikeout' } | null
   onError: (message: string | null) => void
-  onPickPoint?: (origin: [number, number]) => void
+  onPickPoint?: (origin: [number, number], display?: [number, number]) => void
   onPickText?: (x: number, y: number) => void
 }) {
   const [rendered, setRendered] = useState<{
@@ -4026,23 +4410,6 @@ function PdfSheet({
           aria-hidden="true"
         />
       )}
-      {markupFeedback !== null && (
-        <span
-          className="mimir-pdf-hit"
-          data-markup={markupFeedback.type}
-          style={{
-            ...hitStyle(markupFeedback.run.rect),
-            background:
-              markupFeedback.type === 'highlight'
-                ? 'rgba(255, 210, 47, 0.35)'
-                : markupFeedback.type === 'strikeout'
-                  ? 'linear-gradient(to bottom, transparent 48%, #d54b37 48%, #d54b37 52%, transparent 52%)'
-                  : 'transparent',
-            borderBottom: markupFeedback.type === 'underline' ? '2px solid #d54b37' : undefined,
-          }}
-          aria-hidden="true"
-        />
-      )}
       {hits.map(({ match, index }) =>
         /*
           一处命中可能有**多个矩形**（跨行、或者 PDF 把一个词拆成几段）。
@@ -4067,7 +4434,17 @@ function PdfSheet({
         rendered.index === from.index &&
         rendered.rotation === page.rotation &&
         rendered.width === width &&
+        readOnlyOverlay}
+      {rendered?.bytes === from.bytes &&
+        rendered.index === from.index &&
+        rendered.rotation === page.rotation &&
+        rendered.width === width &&
         drawingOverlay}
+      {rendered?.bytes === from.bytes &&
+        rendered.index === from.index &&
+        rendered.rotation === page.rotation &&
+        rendered.width === width &&
+        textOverlay}
     </div>
   )
 }
@@ -4157,7 +4534,7 @@ function PdfCanvas({
   width: number
   onError: (message: string | null) => void
   onRendered?(): void
-  onPickPoint?: (origin: [number, number]) => void
+  onPickPoint?: (origin: [number, number], display?: [number, number]) => void
   onPickText?: (x: number, y: number) => void
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -4235,7 +4612,10 @@ function PdfCanvas({
         (localX * viewport.width) / rect.width,
         (localY * viewport.height) / rect.height,
       )
-      onPickPoint([x, y])
+      onPickPoint(
+        [x, y],
+        [(localX / rect.width) * base.width, (localY / rect.height) * base.height],
+      )
     } catch (cause) {
       onError(messageOf(cause))
     }

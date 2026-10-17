@@ -1,8 +1,14 @@
-import { DOCX_CLIENT_TOOL_OUTPUT_SCHEMA, DOCX_CREATE_TOOLS } from '@mimir/shared'
+import {
+  DOCX_CLIENT_TOOL_OUTPUT_SCHEMA,
+  DOCX_CREATE_TOOLS,
+  pdfAssetOperationSchema,
+} from '@mimir/shared'
 import type { DocumentAgentCatalog } from './document-agent-catalog.js'
 import type { ModelCallOptions } from './model.js'
 import { pdfLocalTools } from './pdf-local-catalog.js'
 import { pdfImageTools } from './pdf-image-catalog.js'
+import { z } from 'zod'
+import { pdfAssetReadiness } from './pdf-external-assets.js'
 import { pdfAgentAssetPaths } from './pdf-agent-host.js'
 
 const contentToolNames = [
@@ -108,11 +114,13 @@ const contentTools = [
   {
     name: 'markup_text',
     description:
-      '为页面中唯一完整的文字项添加高亮、下划线或删除线批注；部分或重复原文会拒绝。先保存页面或插字改动。',
+      '按页面原文片段添加高亮、下划线或删除线。支持部分、跨行与重复匹配；默认第一处，all=true当前页全部，color=#RRGGBB。按原生字形精确定位，不拆连字；扫描OCR不作写入目标。先保存页面或插字改动。',
     inputSchema: {
       type: 'object',
       required: ['page', 'text', 'type'],
       properties: {
+        all: { type: 'boolean' },
+        color: { type: 'string', pattern: '^#[0-9a-fA-F]{6}$' },
         page,
         text,
         type: { type: 'string', enum: ['highlight', 'underline', 'strikeout'] },
@@ -217,15 +225,22 @@ const tools = [
   {
     name: 'insert_text',
     description:
-      '在当前未保存 PDF 的指定页面插入可搜索的文字。page 从 1 开始；x/y 是页面显示方向左上角起算的 pt 坐标，必须显式提供。只能插入新文字，不能替换已有文字。',
+      '在当前未保存 PDF 的指定页面插入可搜索的文字。page 从 1 开始；x/y 是页面显示方向左上角起算的 pt 坐标，可省略以在页面顶部居中。anchor_text+placement可定位唯一原文片段；不能与x/y混用。max_width按实际字体换行，align控制行对齐。只能插入新文字，不能替换已有文字。',
     inputSchema: {
       type: 'object',
-      required: ['page', 'text', 'x', 'y'],
+      required: ['page', 'text'],
       properties: {
         page: { type: 'integer', minimum: 1 },
         text: { type: 'string', minLength: 1, maxLength: 10000 },
+        anchor_text: { type: 'string', minLength: 1, maxLength: 10000 },
+        placement: { type: 'string', enum: ['right', 'below', 'above'] },
         x: { type: 'number', minimum: 0 },
         y: { type: 'number', minimum: 0 },
+        align: { type: 'string', enum: ['left', 'center', 'right'] },
+        font: { type: 'string', enum: ['arial', 'times', 'courier'] },
+        bold: { type: 'boolean' },
+        italic: { type: 'boolean' },
+        max_width: { type: 'number', exclusiveMinimum: 0, maximum: 14400 },
         font_size: { type: 'number', exclusiveMinimum: 0, maximum: 500 },
         color: { type: 'string', pattern: '^#[0-9a-fA-F]{6}$' },
       },
@@ -239,13 +254,18 @@ const tools = [
   {
     name: 'edit_inserted_text',
     description:
-      '修改尚未保存的插入文字。先用 list_inserted_text 取得 id；当前支持文字、字号和颜色。',
+      '修改尚未保存的插入文字。先用 list_inserted_text 取得 id；支持文字、字号、颜色、字体、粗斜体、对齐及换行宽度。',
     inputSchema: {
       type: 'object',
       required: ['id'],
       properties: {
         id: { type: 'string' },
         text: { type: 'string', minLength: 1, maxLength: 10000 },
+        align: { type: 'string', enum: ['left', 'center', 'right'] },
+        font: { type: 'string', enum: ['arial', 'times', 'courier'] },
+        bold: { type: 'boolean' },
+        italic: { type: 'boolean' },
+        max_width: { type: 'number', exclusiveMinimum: 0, maximum: 14400 },
         font_size: { type: 'number', exclusiveMinimum: 0, maximum: 500 },
         color: { type: 'string', pattern: '^#[0-9a-fA-F]{6}$' },
       },
@@ -382,7 +402,23 @@ const tools = [
   Object.assign(tool, { outputSchema: DOCX_CLIENT_TOOL_OUTPUT_SCHEMA }),
 ) as unknown as NonNullable<ModelCallOptions['tools']>
 
-export function pdfAgentCatalog(): DocumentAgentCatalog {
+export async function pdfAgentCatalog(): Promise<DocumentAgentCatalog> {
+  const readiness = await pdfAssetReadiness()
+  const externalTools = pdfAssetOperationSchema.options
+    .map((schema) => {
+      const { op, ...shape } = schema.shape
+      const name = op.value
+      return {
+        name,
+        description:
+          name === 'image_search'
+            ? '搜索真实图片，默认8项；返回 imageUrl，随后用insert_image/replace_image。搜索不会插入或保存。'
+            : '生成 PNG/JPEG，返回仅属于当前文档会话且20分钟有效的引用；随后用insert_image/replace_image。比例映射到模型支持尺寸，结果包含实际宽高；不会自动插入或保存。',
+        inputSchema: z.toJSONSchema(z.object(shape).strict()),
+        outputSchema: DOCX_CLIENT_TOOL_OUTPUT_SCHEMA,
+      }
+    })
+    .filter((tool) => readiness[tool.name].available)
   let textInsertReady = true
   try {
     pdfAgentAssetPaths()
@@ -405,9 +441,10 @@ export function pdfAgentCatalog(): DocumentAgentCatalog {
   return {
     format: 'pdf',
     systemPrompt:
-      '你是 Mimir 的 PDF 编辑助手。先读取当前画布和list_text_blocks：move_text_block整体移动原文；edit_block用唯一paragraph_text重写整段并按原宽重排、向下增长、不推动其他内容；edit_text用old_text及1起occurrence替换部分或重复原文，按页面阅读顺序计数且不重排整段。空new_text真实删除对应原文。仅可核验完整目标可写，Form、clip、AcroForm及未知Catalog拒绝；模型不得传内部target绕过定位。粗斜体false需真实普通字面可核验，不能以保留冒称取消。便笺、回复和文字标注使用持久化批注id。表单先list_form_fields后用apply_ops setFormValue，字段类型由宿主核验。图片先list_page_images后使用专用工具；URL仅支持PNG/JPEG，模型不能使用本地路径。插入文字在保存或页结构操作后不再是待编辑对象。失败、取消或版本冲突时不得声称已修改。改动只更新画布，用户手动保存。',
-    tools: availableTools,
+      '你是 Mimir 的 PDF 编辑助手。先读取当前画布和list_text_blocks：move_text_block整体移动原文；edit_block用唯一paragraph_text重写整段并按原宽重排、向下增长、不推动其他内容；edit_text用old_text及1起occurrence替换部分或重复原文，按页面阅读顺序计数且不重排整段。空new_text真实删除对应原文。仅可核验完整目标可写，Form、clip、AcroForm及未知Catalog拒绝；模型不得传内部target绕过定位。粗斜体false需真实普通字面可核验，不能以保留冒称取消。便笺、回复和文字标注使用持久化批注id。表单先list_form_fields后用apply_ops setFormValue，字段类型由宿主核验。图片先list_page_images后使用专用工具；image_search/generate_image仅准备素材，不改画布；生成引用20分钟有效且绑定当前会话，随后insert_image或replace_image才能插入。requestedRatio映射到模型支持尺寸，以实际宽高为准。URL仅支持PNG/JPEG或本会话生成引用，模型不能使用本地路径。插入文字在保存或页结构操作后不再是待编辑对象。失败、取消或版本冲突时不得声称已修改。改动只更新画布，用户手动保存。',
+    tools: [...availableTools, ...externalTools] as DocumentAgentCatalog['tools'],
     clientToolNames: new Set([
+      ...externalTools.map((tool) => tool.name),
       'read_pages',
       'search_text',
       'goto_page',
@@ -426,15 +463,20 @@ export function pdfAgentCatalog(): DocumentAgentCatalog {
       'create_document',
       ...pdfLocalTools.map((tool) => tool.name),
     ]),
-    unavailableTools: textInsertReady
-      ? []
-      : [
-          ...contentToolNames,
-          'insert_text',
-          'list_inserted_text',
-          'edit_inserted_text',
-          'move_inserted_text',
-          'delete_inserted_text',
-        ].map((name) => ({ name, reason: 'PDF 编辑资源缺失：PDFium 或 HarfBuzz WASM 未打包' })),
+    unavailableTools: [
+      ...Object.entries(readiness)
+        .filter(([, state]) => !state.available)
+        .map(([name, state]) => ({ name, reason: state.reason! })),
+      ...(textInsertReady
+        ? []
+        : [
+            ...contentToolNames,
+            'insert_text',
+            'list_inserted_text',
+            'edit_inserted_text',
+            'move_inserted_text',
+            'delete_inserted_text',
+          ].map((name) => ({ name, reason: 'PDF 编辑资源缺失：PDFium 或 HarfBuzz WASM 未打包' }))),
+    ],
   }
 }

@@ -1,0 +1,56 @@
+.mimir-pdf-ocr-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+.mimir-pdf-ocr-panel > .mimir-pdf-inspector__footer {
+  flex: none;
+  margin: 0;
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--me-border);
+}
+.mimir-pdf-ocr-panel > .mimir-pdf-inspector__footer > [role='alert'] {
+  max-height: 4.5em;
+  overflow: auto;
+  overflow-wrap: anywhere;
+}
+.mimir-pdf-ocr-scope {
+  display: grid;
+  gap: 8px;
+}
+.mimir-pdf-ocr-preview {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  line-height: 1.6;
+  margin: 0;
+  max-height: 220px;
+  overflow: auto;
+  user-select: text;
+}
+.mimir-pdf-ocr-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.mimir-pdf-ocr-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+  user-select: text;
+  cursor: text;
+}
+.mimir-pdf-ocr-overlay > text {
+  fill: transparent;
+  white-space: pre;
+  font-family: sans-serif;
+  pointer-events: all;
+}
+.mimir-pdf-ocr-overlay > text::selection {
+  fill: transparent;
+  background: color-mix(in srgb, var(--me-accent, #1677ff) 32%, transparent);
+}

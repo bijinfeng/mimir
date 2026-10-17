@@ -106,7 +106,7 @@ it('authenticates complete-block reads/writes; versions advance once and actual 
     expect(await original()).toEqual(data)
   }
   expect((await request(edited, operation)).status).toBe(400)
-  const catalog = pdfAgentCatalog()
+  const catalog = await pdfAgentCatalog()
   for (const name of ['list_text_blocks', 'move_text_block']) {
     expect(catalog.clientToolNames.has(name)).toBe(true)
     expect(catalog.tools.some((tool) => tool.name === name)).toBe(true)

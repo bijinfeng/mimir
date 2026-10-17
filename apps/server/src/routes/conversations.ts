@@ -1,3 +1,4 @@
+import { layoutPdfTextInsert } from '../services/pdf-insert-layout.js'
 import { Hono } from 'hono'
 import { z } from 'zod'
 import {
@@ -17,9 +18,12 @@ import {
   pdfTextTargetSchema,
   pdfTextBlockOperationSchema,
   pdfMarkupInputSchema,
+  pdfInsertLayoutInputSchema,
   pdfAnnotationOperationSchema,
   pdfFormOperationSchema,
   pdfImageOperationSchema,
+  pdfAssetRequestSchema,
+  pdfAssetPreviewSchema,
   pdfLocalOperationSchema,
   saveNoteInputSchema,
 } from '@mimir/shared'
@@ -62,10 +66,15 @@ import { applyXlsxOpsOnHost } from '../services/xlsx-agent-host.js'
 import {
   applyPdfTextInserts,
   applyPdfVerifiedTextEdit,
-  applyPdfVerifiedMarkup,
+  applyPdfMarkupWithCount,
   inspectPdfTextTarget,
   applyPdfTextBlockOperation,
 } from '../services/pdf-agent-host.js'
+import {
+  pdfAssetReadiness,
+  preparePdfAsset,
+  pdfAssetRegistry,
+} from '../services/pdf-external-assets.js'
 import { applyPdfImageOperation } from '../services/pdf-images.js'
 import { applyPdfLocalOperation } from '../services/pdf-local.js'
 import { applyPreservingPdfFormOperation } from '../services/pdf-preserving-forms.js'
@@ -441,6 +450,13 @@ const pdfTextEdit = z.object({
   newItalic: z.boolean().optional(),
 })
 const pdfTextInsert = z.object({
+  font: z.enum(['arial', 'times', 'courier']).optional(),
+  bold: z.boolean().optional(),
+  italic: z.boolean().optional(),
+  align: z.enum(['left', 'center', 'right']).optional(),
+  lineLeading: z.number().finite().positive().max(1000).optional(),
+  lineXOffsets: z.array(z.number().finite().nonnegative().max(14400)).max(10000).optional(),
+  rotate: z.union([z.literal(0), z.literal(90), z.literal(180), z.literal(270)]).optional(),
   pageIndex: z.number().int().nonnegative(),
   origin: pdfPoint,
   text: z.string().min(1).max(10_000),
@@ -576,6 +592,99 @@ conversationsRoute.post('/pdf-agent/text-blocks', async (c) => {
   }
 })
 
+async function requirePdf(documentId: string) {
+  const document = await getDocument(documentId)
+  if (!document || documentAgentFormatOf(document) !== 'pdf')
+    throw new HttpError(404, 'PDF_NOT_FOUND', '当前文档不是可编辑 PDF')
+}
+async function pdfAssetJson(request: Request): Promise<unknown> {
+  // Count streaming bytes as well as Content-Length before JSON parsing.
+  const reader = request.body?.getReader()
+  if (!reader) throw new HttpError(400, 'INVALID_INPUT', 'PDF 图片素材参数缺失')
+  const parts: Uint8Array[] = []
+  let size = 0
+  try {
+    while (true) {
+      const item = await reader.read()
+      if (item.done) break
+      size += item.value.length
+      if (size > 16 * 1024) {
+        await reader.cancel()
+        throw new HttpError(413, 'PDF_ASSET_INPUT_TOO_LARGE', 'PDF 图片素材参数超过16KiB')
+      }
+      parts.push(item.value)
+    }
+    return JSON.parse(Buffer.concat(parts).toString('utf8')) as unknown
+  } catch (error) {
+    if (error instanceof HttpError) throw error
+    throw new HttpError(400, 'INVALID_INPUT', 'PDF 图片素材参数不是有效 JSON')
+  }
+}
+conversationsRoute.get('/pdf-agent/assets', async (c) => {
+  const { documentId } = await parseInput(
+    c,
+    'query',
+    z.object({ documentId: z.string().min(1).max(200) }),
+  )
+  await requirePdf(documentId)
+  return c.json(await pdfAssetReadiness())
+})
+conversationsRoute.post('/pdf-agent/assets', async (c) => {
+  const parsed = pdfAssetRequestSchema.safeParse(await pdfAssetJson(c.req.raw))
+  if (!parsed.success) throw new HttpError(400, 'INVALID_INPUT', 'PDF 图片素材参数无效')
+  const input = parsed.data
+  await requirePdf(input.documentId)
+  try {
+    const data = await preparePdfAsset(
+      {
+        principal: c.get('user').id,
+        documentId: input.documentId,
+        assetSessionId: input.assetSessionId,
+      },
+      input.operation,
+      c.req.raw.signal,
+    )
+    c.req.raw.signal.throwIfAborted()
+    return c.json({ version: input.expectedVersion, data })
+  } catch (error) {
+    throw new HttpError(
+      400,
+      'PDF_ASSET_FAILED',
+      error instanceof Error ? error.message : 'PDF 图片素材准备失败',
+    )
+  }
+})
+conversationsRoute.post('/pdf-agent/assets/preview', async (c) => {
+  const parsed = pdfAssetPreviewSchema.safeParse(await pdfAssetJson(c.req.raw))
+  if (!parsed.success) throw new HttpError(400, 'INVALID_INPUT', 'PDF 图片预览参数无效')
+  const input = parsed.data
+  await requirePdf(input.documentId)
+  try {
+    c.req.raw.signal.throwIfAborted()
+    const image = pdfAssetRegistry.resolve(
+      {
+        principal: c.get('user').id,
+        documentId: input.documentId,
+        assetSessionId: input.assetSessionId,
+      },
+      input.url,
+    )
+    return new Response(new Uint8Array(image.bytes), {
+      headers: {
+        'Content-Type': image.mimeType,
+        'Cache-Control': 'no-store',
+        'X-Content-Type-Options': 'nosniff',
+      },
+    })
+  } catch (error) {
+    throw new HttpError(
+      400,
+      'PDF_ASSET_FAILED',
+      error instanceof Error ? error.message : '图片预览已过期',
+    )
+  }
+})
+
 conversationsRoute.post('/pdf-agent/images', async (c) => {
   const form = await readUploadForm(c.req.raw)
   const file = form.get('file')
@@ -588,7 +697,14 @@ conversationsRoute.post('/pdf-agent/images', async (c) => {
         .string()
         .regex(/^\d+$/)
         .transform(Number)
-        .pipe(z.number().int().nonnegative()),
+        .pipe(
+          z
+            .number()
+            .int()
+            .nonnegative()
+            .max(Number.MAX_SAFE_INTEGER - 1),
+        ),
+      assetSessionId: z.uuid().optional(),
       sha256: z
         .string()
         .regex(/^[a-f0-9]{64}$/)
@@ -597,6 +713,7 @@ conversationsRoute.post('/pdf-agent/images', async (c) => {
     .safeParse({
       documentId: form.get('documentId'),
       expectedVersion: form.get('expectedVersion'),
+      assetSessionId: form.get('assetSessionId') ?? undefined,
       sha256: form.get('sha256') ?? undefined,
     })
   if (!fields.success) throw new HttpError(400, 'INVALID_INPUT', 'PDF 图片参数无效')
@@ -612,9 +729,28 @@ conversationsRoute.post('/pdf-agent/images', async (c) => {
   const operation = pdfImageOperationSchema.safeParse(raw)
   if (!operation.success) throw new HttpError(400, 'INVALID_INPUT', 'PDF 图片内容无效')
   try {
+    c.req.raw.signal.throwIfAborted()
+    let nativeOperation = operation.data
+    if (
+      (nativeOperation.op === 'insert_image' || nativeOperation.op === 'replace_image') &&
+      nativeOperation.url?.startsWith('mimir-generated:')
+    ) {
+      if (!fields.data.assetSessionId) throw new Error('生成图片缺少当前文档会话，请重新生成')
+      const image = pdfAssetRegistry.resolve(
+        {
+          principal: c.get('user').id,
+          documentId: fields.data.documentId,
+          assetSessionId: fields.data.assetSessionId,
+        },
+        nativeOperation.url,
+      )
+      const { url: _url, ...rest } = nativeOperation
+      nativeOperation = { ...rest, image: Buffer.from(image.bytes).toString('base64') }
+    }
     const result = await applyPdfImageOperation(
       new Uint8Array(await file.arrayBuffer()),
-      operation.data,
+      nativeOperation,
+      c.req.raw.signal,
     )
     return c.json({
       bytesBase64: result.bytes ? Buffer.from(result.bytes).toString('base64') : undefined,
@@ -773,13 +909,14 @@ conversationsRoute.post('/pdf-agent/apply-markup', async (c) => {
   const markup = pdfMarkupInputSchema.safeParse(raw)
   if (!markup.success) throw new HttpError(400, 'INVALID_INPUT', 'PDF 标注内容无效')
   try {
-    const result = await applyPdfVerifiedMarkup(
+    const result = await applyPdfMarkupWithCount(
       new Uint8Array(await file.arrayBuffer()),
       markup.data,
     )
     return c.json({
-      bytesBase64: Buffer.from(result).toString('base64'),
+      bytesBase64: Buffer.from(result.bytes).toString('base64'),
       version: fields.data.expectedVersion + 1,
+      count: result.count,
     })
   } catch (error) {
     throw new HttpError(
@@ -834,7 +971,7 @@ conversationsRoute.post('/pdf-agent/apply-text', async (c) => {
         .regex(/^\d+$/)
         .transform(Number)
         .pipe(z.number().int().nonnegative()),
-      kind: z.enum(['edit', 'insert']),
+      kind: z.enum(['edit', 'insert', 'layout']),
       items: z.string().max(1_000_000),
     })
     .safeParse({
@@ -854,13 +991,29 @@ conversationsRoute.post('/pdf-agent/apply-text', async (c) => {
     throw new HttpError(400, 'INVALID_INPUT', 'PDF 文字操作不是有效 JSON')
   }
   const items = z
-    .array(values.data.kind === 'edit' ? pdfTextEdit : pdfTextInsert)
+    .array(
+      values.data.kind === 'edit'
+        ? pdfTextEdit
+        : values.data.kind === 'layout'
+          ? pdfInsertLayoutInputSchema
+          : pdfTextInsert,
+    )
     .min(1)
     .max(30)
     .safeParse(raw)
   if (!items.success) throw new HttpError(400, 'INVALID_INPUT', 'PDF 文字操作列表无效')
   try {
     const bytes = new Uint8Array(await file.arrayBuffer())
+    if (values.data.kind === 'layout') {
+      const layouts = []
+      for (const item of items.data as z.infer<typeof pdfInsertLayoutInputSchema>[])
+        layouts.push(await layoutPdfTextInsert(bytes, item))
+      return c.json({
+        bytesBase64: Buffer.from(bytes).toString('base64'),
+        version: values.data.expectedVersion,
+        layouts,
+      })
+    }
     let result: Uint8Array
     if (values.data.kind === 'edit') {
       const edits = items.data as z.infer<typeof pdfTextEdit>[]

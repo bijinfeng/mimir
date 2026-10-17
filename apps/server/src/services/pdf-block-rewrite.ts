@@ -176,7 +176,7 @@ function remainingObjects(
       : a.matrix[4] - b.matrix[4],
   )
 }
-function wrappedText(
+export function wrapPdfMeasuredText(
   text: string,
   measured: { text: string; advances: number[]; spaceAdvance: number }[],
   width: number,
@@ -389,7 +389,7 @@ export async function writePdfNativeBlockRewrite(
         target.pageIndex,
         remaining.map((o) => o.objectIndex),
       ),
-      next = wrappedText(logical, measured, layout.width)
+      next = wrapPdfMeasuredText(logical, measured, layout.width)
     if (next.text === plan.text && (align === 'left' || near(next.widths, plan.widths))) break
     if (pass === 3) throw new Error('实际字体重排未收敛，未写入')
     plan = next

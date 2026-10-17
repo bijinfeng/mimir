@@ -26,20 +26,18 @@ function boundsNear(a: readonly number[], b: readonly number[]): boolean {
   )
 }
 
-async function countMatchingMarkup(
+async function markupRectangles(
   bytes: Uint8Array,
   pageIndex: number,
   subtype: string,
-  rect: readonly number[],
-): Promise<number> {
+): Promise<number[][]> {
   const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs')
   const task = getDocument({ data: bytes.slice() })
   try {
     const page = await (await task.promise).getPage(pageIndex + 1)
-    const annotations = await page.getAnnotations()
-    return annotations.filter(
-      (annotation) => annotation.subtype === subtype && boundsNear(annotation.rect, rect),
-    ).length
+    return (await page.getAnnotations())
+      .filter((annotation) => annotation.subtype === subtype)
+      .map((annotation) => annotation.rect)
   } finally {
     await task.destroy()
   }
@@ -193,96 +191,131 @@ export async function applyPdfVerifiedTextEdit(
   return result
 }
 
-/** Add one GenOffice text-markup annotation only after the selected object is rechecked. */
+/** Resolve every occurrence before adding annotations to one private object graph. */
+export async function applyPdfMarkupWithCount(
+  bytes: Uint8Array,
+  input: PdfMarkupInput,
+): Promise<{ bytes: Uint8Array; count: number }> {
+  await assertSafeToRewrite(bytes)
+  const { matchPdfTextGlyphs } = await import('./pdf-text-glyphs.js')
+  const pageIndex = 'target' in input ? input.target.pageIndex : input.pageIndex
+  if ('target' in input) {
+    const target = input.target
+    if (digest(bytes) !== target.sha256) throw new Error('PDF 原件已变化，请重新定位原文')
+    const current = await inspectPdfTextTarget(bytes, {
+      pageIndex,
+      rect: target.bounds,
+      oldText: target.text,
+    })
+    if (current.objectIndex !== target.objectIndex || !boundsNear(current.bounds, target.bounds))
+      throw new Error('PDF 原文对象已变化，请重新定位')
+  }
+  const matches = await matchPdfTextGlyphs(
+    bytes,
+    pageIndex,
+    'target' in input ? input.target.text : input.text,
+    'target' in input || ('all' in input && input.all),
+  )
+  // A verified whole object can share its text with part of an earlier object.
+  // Keep the legacy target path bound to the object that was actually verified.
+  const hits =
+    'target' in input
+      ? matches.filter(({ bounds }) =>
+          bounds.every((value, index) =>
+            index < 2
+              ? value >= input.target.bounds[index]! - 0.5
+              : value <= input.target.bounds[index]! + 0.5,
+          ),
+        )
+      : matches
+  if ('target' in input && hits.length !== 1)
+    throw new Error('核验原文字形不能唯一定位，请重新选择')
+  const pdfDoc = await PDFDocument.load(bytes.slice(), { updateMetadata: false })
+  const page = pdfDoc.getPage(pageIndex),
+    type = input.type
+  if (!page) throw new Error('原文页号已失效')
+  const subtype = type === 'strikeout' ? 'StrikeOut' : type[0]!.toUpperCase() + type.slice(1)
+  const beforeRects = await markupRectangles(bytes, pageIndex, subtype)
+  for (const hit of hits) {
+    const rect = hit.bounds
+    const color = input.color
+      ? [1, 3, 5].map((at) => parseInt(input.color!.slice(at, at + 2), 16) / 255)
+      : type === 'highlight'
+        ? [1, 0.88, 0.3]
+        : [0.9, 0.32, 0.24]
+    const ops: string[] = []
+    for (const [glyphIndex, [left, bottom, right, top]] of hit.boxes.entries()) {
+      if (type === 'highlight') {
+        ops.push(
+          '/GsM gs',
+          `${color.join(' ')} rg`,
+          `${roundPdf(left)} ${roundPdf(bottom)} ${roundPdf(right - left)} ${roundPdf(top - bottom)} re f`,
+        )
+      } else {
+        const quad = hit.quads[glyphIndex]!
+        const height = Math.hypot(quad[0]! - quad[4]!, quad[1]! - quad[5]!)
+        const thickness = Math.max(0.8, roundPdf(height * 0.06)),
+          fraction = type === 'underline' ? 0.08 : 0.46
+        const x1 = quad[4]! + (quad[0]! - quad[4]!) * fraction,
+          y1 = quad[5]! + (quad[1]! - quad[5]!) * fraction
+        const x2 = quad[6]! + (quad[2]! - quad[6]!) * fraction,
+          y2 = quad[7]! + (quad[3]! - quad[7]!) * fraction
+        ops.push(
+          `${color.join(' ')} RG`,
+          `${thickness} w`,
+          `${roundPdf(x1)} ${roundPdf(y1)} m ${roundPdf(x2)} ${roundPdf(y2)} l S`,
+        )
+      }
+    }
+    // This is the fixed GenOffice save-pdf.ts markup appearance and annotation shape.
+    // Its aggregate writer imports Electron-only image modules, so the host ports this
+    // one operation without loading that unavailable dependency graph.
+    const apRef = pdfDoc.context.register(
+      pdfDoc.context.stream(ops.join('\n'), {
+        Type: 'XObject',
+        Subtype: 'Form',
+        BBox: rect,
+        Resources:
+          type === 'highlight'
+            ? { ExtGState: { GsM: { Type: 'ExtGState', BM: 'Multiply', ca: 1 } } }
+            : {},
+      }),
+    )
+    const annotation = pdfDoc.context.register(
+      pdfDoc.context.obj({
+        Type: 'Annot',
+        Subtype:
+          type === 'strikeout' ? 'StrikeOut' : type === 'highlight' ? 'Highlight' : 'Underline',
+        Rect: rect,
+        QuadPoints: hit.quads.flat(),
+        C: color,
+        F: 4,
+        T: 'Mimir',
+        NM: PDFString.of(`M${randomUUID()}`),
+        P: page.ref,
+        AP: { N: apRef },
+      }),
+    )
+    const annots = page.node.lookupMaybe(PDFName.of('Annots'), PDFArray)
+    if (annots) annots.push(annotation)
+    else page.node.set(PDFName.of('Annots'), pdfDoc.context.obj([annotation]))
+  }
+  const result = await pdfDoc.save()
+  const afterRects = await markupRectangles(result, pageIndex, subtype)
+  for (const hit of hits) {
+    const previous = beforeRects.filter((rect) => boundsNear(rect, hit.bounds)).length
+    const expected = hits.filter((other) => boundsNear(other.bounds, hit.bounds)).length
+    if (afterRects.filter((rect) => boundsNear(rect, hit.bounds)).length !== previous + expected)
+      throw new Error('PDF 批注未通过独立读回，结果未写入')
+  }
+  return { bytes: result, count: hits.length }
+}
+
 export async function applyPdfVerifiedMarkup(
   bytes: Uint8Array,
   input: PdfMarkupInput,
 ): Promise<Uint8Array> {
-  const { target, type } = input
-  if (digest(bytes) !== target.sha256) throw new Error('PDF 原件已变化，请重新定位原文')
-  const current = await inspectPdfTextTarget(bytes, {
-    pageIndex: target.pageIndex,
-    rect: target.bounds,
-    oldText: target.text,
-  })
-  if (current.objectIndex !== target.objectIndex || !boundsNear(current.bounds, target.bounds))
-    throw new Error('PDF 原文对象已变化，请重新定位')
-  const [left, bottom, right, top] = target.bounds
-  const expectedSubtype =
-    type === 'strikeout' ? 'StrikeOut' : type[0]!.toUpperCase() + type.slice(1)
-  const beforeCount = await countMatchingMarkup(
-    bytes,
-    target.pageIndex,
-    expectedSubtype,
-    target.bounds,
-  )
-  const pdfDoc = await PDFDocument.load(bytes.slice(), { updateMetadata: false })
-  const page = pdfDoc.getPage(target.pageIndex)
-  if (!page) throw new Error('原文页号已失效')
-  const color = type === 'highlight' ? [1, 0.88, 0.3] : [0.9, 0.32, 0.24]
-  const rect = [left, bottom, right, top]
-  const rotation = ((page.getRotation().angle % 360) + 360) % 360
-  const ops: string[] = []
-  if (type === 'highlight') {
-    ops.push(
-      '/GsM gs',
-      `${color.join(' ')} rg`,
-      `${roundPdf(left)} ${roundPdf(bottom)} ${roundPdf(right - left)} ${roundPdf(top - bottom)} re f`,
-    )
-  } else {
-    const height = rotation % 180 === 0 ? top - bottom : right - left
-    const thickness = Math.max(0.8, roundPdf(height * 0.06))
-    const fraction = type === 'underline' ? 0.08 : 0.46
-    ops.push(`${color.join(' ')} RG`, `${thickness} w`)
-    if (rotation === 90 || rotation === 270) {
-      const x = rotation === 90 ? right - height * fraction : left + height * fraction
-      ops.push(`${roundPdf(x)} ${roundPdf(bottom)} m ${roundPdf(x)} ${roundPdf(top)} l S`)
-    } else {
-      const y = rotation === 180 ? top - height * fraction : bottom + height * fraction
-      ops.push(`${roundPdf(left)} ${roundPdf(y)} m ${roundPdf(right)} ${roundPdf(y)} l S`)
-    }
-  }
-  // This is the fixed GenOffice save-pdf.ts markup appearance and annotation shape.
-  // Its aggregate writer imports Electron-only image modules, so the host ports this
-  // one operation without loading that unavailable dependency graph.
-  const apRef = pdfDoc.context.register(
-    pdfDoc.context.stream(ops.join('\n'), {
-      Type: 'XObject',
-      Subtype: 'Form',
-      BBox: rect,
-      Resources:
-        type === 'highlight'
-          ? { ExtGState: { GsM: { Type: 'ExtGState', BM: 'Multiply', ca: 1 } } }
-          : {},
-    }),
-  )
-  const annotation = pdfDoc.context.register(
-    pdfDoc.context.obj({
-      Type: 'Annot',
-      Subtype:
-        type === 'strikeout' ? 'StrikeOut' : type === 'highlight' ? 'Highlight' : 'Underline',
-      Rect: rect,
-      QuadPoints: [left, top, right, top, left, bottom, right, bottom],
-      C: color,
-      F: 4,
-      T: 'Mimir',
-      NM: PDFString.of(`M${randomUUID()}`),
-      P: page.ref,
-      AP: { N: apRef },
-    }),
-  )
-  const annots = page.node.lookupMaybe(PDFName.of('Annots'), PDFArray)
-  if (annots) annots.push(annotation)
-  else page.node.set(PDFName.of('Annots'), pdfDoc.context.obj([annotation]))
-  const result = await pdfDoc.save()
-  const afterCount = await countMatchingMarkup(
-    result,
-    target.pageIndex,
-    expectedSubtype,
-    target.bounds,
-  )
-  if (afterCount <= beforeCount) throw new Error('PDF 批注未通过独立读回，结果未写入')
-  return result
+  return (await applyPdfMarkupWithCount(bytes, input)).bytes
 }
 
 /** Resolve from server production dependencies, including a pnpm deploy checkout. */
@@ -347,7 +380,13 @@ export async function applyPdfTextInserts(
   initializePdfAgentHost()
   const { applyTextInserts, verifyTextEdits } =
     await import('../../../../packages/office/vendor/apps/pdf/src/main/text-edit.js')
-  const result = await applyTextInserts(bytes.slice(), [...inserts])
+  const result = await applyTextInserts(
+    bytes.slice(),
+    inserts.map((insert) => ({
+      ...insert,
+      color: insert.color.map((channel) => Math.round(channel * 255)) as [number, number, number],
+    })),
+  )
   assertNoSkips(result.skipped)
   const failures = await verifyTextEdits(
     result.bytes,

@@ -1,6 +1,7 @@
 import { PDF_IMAGE_TOOLS, executePdfImageTool, type PdfHostImages } from './pdf-image-agent.js'
 import {
   pdfAnnotationOperationSchema,
+  pdfMarkupInputSchema,
   pdfFormOperationSchema,
   pdfTextBlockOperationSchema,
   pdfTextBlockTargetSchema,
@@ -225,7 +226,22 @@ export async function executePdfContentTool(input: {
       throw new Error('原文不是唯一完整文字项，请重新读取；暂不支持部分或重复原文')
     return chunks[0]!
   }
-  if (tool === 'edit_text' || tool === 'markup_text') {
+  if (tool === 'markup_text') {
+    if (!input.markup) throw new Error('PDF 标注宿主未连接')
+    const markup = pdfMarkupInputSchema.parse({
+      pageIndex: page,
+      text: args.text,
+      type: args.type,
+      all: args.all,
+      color: args.color,
+    })
+    const result = await input.markup({ bytes, expectedVersion: version, markup, signal })
+    if (signal?.aborted) throw new Error('操作已取消')
+    if (!result.bytes || result.version !== version + 1)
+      throw new Error('PDF 宿主返回了错误的画布版本')
+    return { bytes: result.bytes, data: { count: result.count } }
+  }
+  if (tool === 'edit_text') {
     const chunk = await wholeRun(tool === 'edit_text' ? args.old_text : args.text)
     if (!input.inspect) throw new Error('PDF 原文核验宿主未连接')
     if (args.occurrence !== undefined && args.occurrence !== 1)
@@ -237,20 +253,6 @@ export async function executePdfContentTool(input: {
       signal,
     })
     if (signal?.aborted) throw new Error('操作已取消')
-    if (tool === 'markup_text') {
-      if (!input.markup) throw new Error('PDF 标注宿主未连接')
-      if (!['highlight', 'underline', 'strikeout'].includes(String(args.type)))
-        throw new Error('标注类型无效')
-      if (args.color !== undefined) throw new Error('暂不支持自定义标注颜色')
-      const result = await input.markup({
-        bytes,
-        expectedVersion: version,
-        markup: { target, type: args.type as 'highlight' | 'underline' | 'strikeout' },
-        signal,
-      })
-      if (result.version !== version + 1) throw new Error('PDF 宿主返回了错误的画布版本')
-      return { bytes: result.bytes }
-    }
     if (!input.apply) throw new Error('PDF 文字宿主未连接')
     if (
       typeof args.new_text !== 'string' ||

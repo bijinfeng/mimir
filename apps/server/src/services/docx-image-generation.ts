@@ -1,3 +1,4 @@
+import type { PdfImageAspectRatio } from '@mimir/shared'
 import { generateImage } from '@tanstack/ai'
 import { docxImageAdapter, docxImageConfiguration } from '@mimir/plugin-provider'
 import { assemble } from '../plugins/host.js'
@@ -28,7 +29,9 @@ function imageMime(bytes: Buffer): string {
 export async function generateDocxImage(
   prompt: string,
   documentId: string,
+  options: { signal?: AbortSignal; aspectRatio?: PdfImageAspectRatio } = {},
 ): Promise<{ dataUrl: string; mimeType: string }> {
+  options.signal?.throwIfAborted()
   if (!prompt.trim() || prompt.length > 2_000)
     throw new Error('图片描述不能为空且不能超过 2000 字符')
   const issues = await migrateAiServiceSettings()
@@ -36,6 +39,24 @@ export async function generateDocxImage(
   if (issue) throw new Error(issue.message)
   const config = await docxImageAdapter(assemble().settings)
   if (!config) throw new Error('请先配置图片生成 API 密钥')
+  options.signal?.throwIfAborted()
+  const ratio = options.aspectRatio
+  const landscape = ratio && ['4:3', '16:9', '3:2'].includes(ratio)
+  const portrait = ratio && ['9:16', '3:4', '2:3'].includes(ratio)
+  if (config.model === 'dall-e-2' && (landscape || portrait))
+    throw new Error('当前 DALL-E 2 仅支持正方形图片，请选择 1:1 或自动')
+  const size =
+    !ratio || ratio === 'auto'
+      ? undefined
+      : ratio === '1:1'
+        ? '1024x1024'
+        : config.model === 'dall-e-3'
+          ? landscape
+            ? '1792x1024'
+            : '1024x1792'
+          : landscape
+            ? '1536x1024'
+            : '1024x1536'
   const startedAt = performance.now()
   let usage: unknown
   let ok = false
@@ -44,11 +65,14 @@ export async function generateDocxImage(
       adapter: config.adapter,
       prompt: prompt.trim(),
       numberOfImages: 1,
+      ...(size ? { size } : {}),
+      ...(options.signal ? { abortSignal: options.signal } : {}),
       ...(config.model.startsWith('dall-e')
         ? { modelOptions: { response_format: 'b64_json' as const } }
         : {}),
       timeout: 60_000,
     })
+    options.signal?.throwIfAborted()
     usage = result.usage
     const image = result.images[0]
     // Do not fetch a provider URL here: it can be transient or point into a private network.

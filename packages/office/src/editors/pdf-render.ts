@@ -95,9 +95,13 @@ interface CachedDoc {
  */
 const cached = new Map<Uint8Array, CachedDoc>()
 /** 多个缩略图会同时要同一份字节；解析进行中也要共用一笔 loading task。 */
-const loading = new Map<Uint8Array, Promise<PDFDocumentProxy>>()
+const loading = new Map<
+  Uint8Array,
+  { promise: Promise<PDFDocumentProxy>; task: CachedDoc['task'] }
+>()
 let retainedBytes: Set<Uint8Array> | null = null
-const imageExportUsers = new Map<Uint8Array, number>()
+const documentUsers = new Map<Uint8Array, number>()
+const releasedDuringLoad = new WeakSet<Uint8Array>()
 
 /**
  * 还有多少笔渲染在用这些文档。
@@ -114,7 +118,7 @@ export function retainPdfDocuments(keep: readonly (Uint8Array | null)[]): void {
   const alive = new Set(keep.filter((bytes): bytes is Uint8Array => bytes !== null))
   retainedBytes = alive
   for (const [bytes, entry] of cached) {
-    if (alive.has(bytes) || imageExportUsers.has(bytes)) continue
+    if (alive.has(bytes) || documentUsers.has(bytes)) continue
     cached.delete(bytes)
     pending.push(entry)
   }
@@ -124,6 +128,13 @@ export function retainPdfDocuments(keep: readonly (Uint8Array | null)[]): void {
 /** 收掉待销毁的（渲染中就不动它——见 `activeRenders`） */
 function collect(): void {
   if (activeRenders > 0) return
+  for (const [bytes, entry] of loading) {
+    if (!releasedDuringLoad.has(bytes) || retainedBytes?.has(bytes) || documentUsers.has(bytes))
+      continue
+    loading.delete(bytes)
+    releasedDuringLoad.delete(bytes)
+    void entry.task.destroy()
+  }
   while (pending.length > 0) {
     const entry = pending.pop()
     if (entry !== undefined) void entry.task.destroy()
@@ -155,7 +166,7 @@ export async function loadPdfDocument(bytes: Uint8Array): Promise<PDFDocumentPro
   const hit = cached.get(bytes)
   if (hit !== undefined) return hit.doc
   const inFlight = loading.get(bytes)
-  if (inFlight !== undefined) return inFlight
+  if (inFlight !== undefined) return inFlight.promise
 
   ensureWorker()
   const task = getDocument({
@@ -177,9 +188,16 @@ export async function loadPdfDocument(bytes: Uint8Array): Promise<PDFDocumentPro
 
   const promise = task.promise.then(
     (doc) => {
-      loading.delete(bytes)
+      const current = loading.get(bytes)?.task === task
+      if (current) loading.delete(bytes)
       const entry: CachedDoc = { bytes, doc, task }
-      if (retainedBytes !== null && !retainedBytes.has(bytes) && !imageExportUsers.has(bytes)) {
+      const released = current && releasedDuringLoad.delete(bytes)
+      if (
+        !current ||
+        ((retainedBytes !== null || released) &&
+          !retainedBytes?.has(bytes) &&
+          !documentUsers.has(bytes))
+      ) {
         pending.push(entry)
         collect()
       } else {
@@ -188,11 +206,17 @@ export async function loadPdfDocument(bytes: Uint8Array): Promise<PDFDocumentPro
       return doc
     },
     (cause: unknown) => {
-      loading.delete(bytes)
+      // A rejected loading promise does not release pdf.js's worker/transport.
+      // This task owns those resources even if a newer same-bytes load exists.
+      void task.destroy()
+      if (loading.get(bytes)?.task === task) {
+        loading.delete(bytes)
+        releasedDuringLoad.delete(bytes)
+      }
       throw cause
     },
   )
-  loading.set(bytes, promise)
+  loading.set(bytes, { promise, task })
   return promise
 }
 
@@ -351,20 +375,25 @@ export async function renderPdfPages(options: RenderPdfOptions): Promise<PdfRend
   }
 }
 
-/** Keep one parsed workcopy for a whole image batch without changing the live viewer's sources. */
-export function retainPdfImageExport(bytes: Uint8Array): () => void {
-  imageExportUsers.set(bytes, (imageExportUsers.get(bytes) ?? 0) + 1)
+/** Pin a request workcopy without replacing the live viewer's source set. */
+export function retainPdfDocument(bytes: Uint8Array): () => void {
+  releasedDuringLoad.delete(bytes)
+  documentUsers.set(bytes, (documentUsers.get(bytes) ?? 0) + 1)
   let released = false
   return () => {
     if (released) return
     released = true
-    const users = (imageExportUsers.get(bytes) ?? 1) - 1
+    const users = (documentUsers.get(bytes) ?? 1) - 1
     if (users > 0) {
-      imageExportUsers.set(bytes, users)
+      documentUsers.set(bytes, users)
       return
     }
-    imageExportUsers.delete(bytes)
+    documentUsers.delete(bytes)
     if (retainedBytes?.has(bytes)) return
+    if (loading.has(bytes)) {
+      releasedDuringLoad.add(bytes)
+      collect()
+    }
     const entry = cached.get(bytes)
     if (entry) {
       cached.delete(bytes)
@@ -372,6 +401,32 @@ export function retainPdfImageExport(bytes: Uint8Array): () => void {
       collect()
     }
   }
+}
+
+/** Backwards-compatible image batch lease. */
+export const retainPdfImageExport = retainPdfDocument
+
+/** Cancel this reader without cancelling another reader's loading/page task. */
+export function awaitPdfTask<T>(task: Promise<T>, signal?: AbortSignal): Promise<T> {
+  if (!signal) return task
+  return new Promise<T>((resolve, reject) => {
+    const abort = () => {
+      signal.removeEventListener('abort', abort)
+      reject(signal.reason)
+    }
+    if (signal.aborted) abort()
+    else signal.addEventListener('abort', abort, { once: true })
+    task.then(
+      (value) => {
+        signal.removeEventListener('abort', abort)
+        resolve(value)
+      },
+      (cause: unknown) => {
+        signal.removeEventListener('abort', abort)
+        reject(cause)
+      },
+    )
+  })
 }
 
 /** Raster output has a fixed DPI, independent of the screen's zoom and DPR. */

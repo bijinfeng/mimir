@@ -2,12 +2,12 @@
 
 ## 1. Scope / Trigger
 
-适用于 PDF 原文替换/删除、文字标注、便笺线程、交互表单、图片，以及手动工具栏和 Agent 的共同执行路径。浏览器与桌面共享 renderer，经鉴权 HTTP 调用服务宿主。真涂黑仅有§13的本地副本输出合同，不开放为 Agent 写入；普通页面视觉签名见§15，数字证书签名及外部图片搜索/生成等能力仍须分别验证。全格式续轮规则仍见 [document-agent](./document-agent.md)。
+适用于 PDF 原文替换/删除、文字标注、便笺线程、交互表单、图片，以及手动工具栏和 Agent 的共同执行路径。浏览器与桌面共享 renderer，经鉴权 HTTP 调用服务宿主。真涂黑仅有§13的本地副本输出合同，不开放为 Agent 写入；普通页面视觉签名见§15，外部图片搜索/生成见§16；数字证书能力另行界定。全格式续轮规则仍见 [document-agent](./document-agent.md)。
 
 ## 2. Signatures
 
 - `POST /api/conversations/pdf-agent/inspect-text`：multipart `file`、`documentId`、JSON `probe: PdfTextProbe`；返回 `{ target: PdfTextTarget }`。
-- `POST /api/conversations/pdf-agent/apply-text`：multipart `file`、`documentId`、`expectedVersion`、`kind: 'edit'|'insert'`、JSON `items`；原文编辑要求单项、已核验 `target`。
+- `POST /api/conversations/pdf-agent/apply-text`：multipart `file`、`documentId`、`expectedVersion`、`kind: 'edit'|'insert'|'layout'`、JSON `items`；原文编辑要求单项、已核验 `target`。
 - `POST /api/conversations/pdf-agent/apply-markup`：multipart `file`、`documentId`、`expectedVersion`、JSON `markup: PdfMarkupInput`。
 - `POST /api/conversations/pdf-agent/annotations`：multipart `file`、`documentId`、`expectedVersion`、JSON `operation: PdfAnnotationOperation`；写操作另需 `sha256`。
 - `applyPdfAnnotationOperation(bytes, operation, expectedSha256?, author = 'AI Assistant')`：服务层只返回字节与批注快照，不写存储。
@@ -38,7 +38,7 @@
 
 ### 写入和画布边界
 
-原文编辑与标注仅开放完整、唯一、无重叠的 pdf.js 文字项，并再核验唯一 PDFium 对象、bounds、原文字和原件 SHA。`edit_text.new_text=''` 是删除；非空替换不能包含原文，且须能独立读回。字号/颜色/三类字体/粗斜体按真实写入字段传递。任意子串、重复命中、`markup_text.all:true` 和自定义标注颜色仍拒绝。便笺 `anchor_text` 在同一执行器定位唯一完整项后转坐标，不能与 x/y 混用。
+旧 `apply-text` 原文编辑仅开放完整、唯一、无重叠的 pdf.js 文字项，并再核验唯一 PDFium 对象、bounds、原文字和原件 SHA。语义文字标注另见§17。`edit_text.new_text=''` 是删除；非空替换不能包含原文，且须能独立读回。字号/颜色/三类字体/粗斜体按真实写入字段传递。原文整项编辑仍拒绝任意子串与重复目标；`markup_text` 支持原文片段、全部匹配和自定义颜色。便笺 `anchor_text` 在同一执行器定位唯一完整项后转坐标，不能与 x/y 混用。
 
 写入前仍调用 `assertSafeToRewrite`，拒绝加密及未知 Catalog 结构。宿主只生成新字节；PDF-lib 和独立 pdf.js 读回确认后，客户端再核对句柄、文档、画布版本、原字节身份与 signal，才发布工作副本、推进版本和 dirty。原文/批注工具在页面结构或插字未保存时仍须先保存；表单与local工具的临时工作副本例外见第8、10节。文件持久化仍由既有保存按钮负责；失败、取消和冲突不更换工作副本。
 
@@ -194,7 +194,7 @@ Wrong：用白框盖掉原文后按新位置绘制缓存文字，或只检查页
 
 ### Scope / Trigger
 
-与§11的完整原生对象核验共用`text-blocks`宿主。`edit_block`重写整段并按原宽度重排；`edit_text`可替换部分原文及指定重复匹配，不重排整段。两者真实移除/重建原生文字，空新文字真实删除，无白框覆盖。旧`apply-text`兼容入口及`markup_text`的唯一完整文字项限制保持。
+与§11的完整原生对象核验共用`text-blocks`宿主。`edit_block`重写整段并按原宽度重排；`edit_text`可替换部分原文及指定重复匹配，不重排整段。两者真实移除/重建原生文字，空新文字真实删除，无白框覆盖。旧`apply-text`原文编辑兼容入口保持唯一完整文字项限制；语义`markup_text`按§17真实字形定位。
 
 ### Signatures
 
@@ -321,3 +321,31 @@ hash是可重算的公开完整性元数据，不能替代native白名单：Ink�
 签名面板在320px Inspector内部滚动，准备后关闭面板进入纸面定位，点击或键盘居中放置，拖动/等比缩放/精确坐标均为本地草稿；明确应用只写一次版本和历史，取消不写。切页、换源、页面布局/版本/保存身份变化作废草稿及迟到结果。普通表单、外来批注和原生书签保留；无删页的页面布局保留原Outlines对象图与XYZ/C/F，不能无条件重建成Fit。
 
 `pdf-visual-signatures.test.ts`须验证真实Ink/Stamp及alpha、四Rotate/offsetCrop、移动/删除/重开/篡改、纸型缩放与复制身份、表单/书签保留及签名/标签/未知结构拒绝；`PdfEditor.signature.test.tsx`验证一次提交、连续拖动/缩放、保存/撤销/重做、取消/迟到及折叠菜单关闭回焦。独立PDF.js像素与Poppler目视另记证据。真实浏览器手写、中文字体和导入图片交互、420×500面板及输出须另验；组件测试不代表浏览器或Desktop通过。
+
+
+## 16. 外部图片准备与私有引用
+
+`GET /api/conversations/pdf-agent/assets?documentId=...` 返回独立的 `image_search` / `generate_image` 配置可用性和设置原因；已配置不等于真实服务健康。`POST` 同路径严格 JSON `{documentId,assetSessionId,expectedVersion,operation}`，累计字节先限16KiB再解析。assetSessionId为每次加载源的UUID，expectedVersion为安全非负整数且留加一空间。PDF格式及账号沿现有鉴权检查。operation只有`image_search({query,max_results?})`和`generate_image({prompt,aspect_ratio?})`；未知键拒绝。搜索数量1–10、默认8，比例为1:1/4:3/16:9/9:16/3:4/2:3/3:2/auto，默认auto。
+
+两个工具为客户端纯读：单独assetTool分支不读PDFium、不物化待生效页面/插字、不captureState、不建整轮checkpoint，不改bytes/dirty/history/版本或保存基线。响应仅`{version:expectedVersion,data}`，不返回PDF字节。停止、卸载、换源及任何手动或Agent版本推进会取消请求；忽略signal的迟到宿主结果仍拒绝。模型目录以真实Brave和图片配置分别门控；原生图片写入的WASM/结构条件独立成立。
+
+生成沿统一图片适配及用量入口，透传SDK abortSignal；Brave和受限远程下载也透传调用signal并保留既有超时/SSRF约束。gpt-image横/竖向请求映射1536×1024/1024×1536，DALL-E3映射1792×1024/1024×1792，1:1为1024×1024；auto保持默认。DALL-E2非正方形明确拒绝。结果返回requestedRatio及真实解码width/height/actualRatio，不承诺精确任意比例。生成必须通过PNG/JPEG完整解码与8MiB/8192边/1600万像素限制；不把WebP冒称可插入。
+
+生成返回`mimir-generated://UUID`私有引用，模块内registry绑定真实principal、PDF documentId和源会话，20分钟TTL、全局8项/64MiB、单principal+源会话4项FIFO预算，过期/驱逐移除。字节双向克隆，失败插入不消费引用，可在有效期内重试。没有公开GET/静态资源地址。多进程未共享registry时明确提示引用不可用并重新生成，不承诺分布式持久性。
+
+手动预览用鉴权`POST /pdf-agent/assets/preview`，严格`{documentId,assetSessionId,url}`及相同身份核验，仅返回no-store、nosniff PNG/JPEG。Agent结果不携带base64。Inspector用Blob URL展示并在替换/卸载释放。实际insert_image/replace_image仍走原图片multipart；额外assetSessionId是可信传输字段，不放进原生几何操作。路由精确解析私有引用后转本地base64新对象；普通URL继续走受限HTTP(S)下载，不放宽协议或私网访问。
+
+现有320px图片Inspector新增上传/搜索/生成来源切换，选择结果/生成只准备素材，单个固定底部主按钮才插入或替换；替换保留位置尺寸层次。配置状态、等待/取消、失败、空结果和当前选择可见。长内容内部滚动，Escape沿现有Inspector回焦路径，模型配置跳转经过宿主未保存守卫。浏览器420×500/宽屏验收另记，不由组件DOM测试替代。
+
+`pdf-external-assets.test.ts`覆盖严格参数/数量映射/独立readiness、原件不变、完整解码、实际尺寸、取消、registry作用域/克隆/TTL/FIFO及真实native插入替换独立PDF.js读回。`pdf-external-assets-route.test.ts`覆盖鉴权/格式/16KiB/严格字段/原件库存不变、私有预览和native引用解析；真实本地Node HTTP断连验证传到provider mock的signal。`pdf-asset-agent.test.ts`覆盖pending页面/插字纯读且零checkpoint、停止/释放/版本取消。`PdfEditor.external-images.test.tsx`覆盖真实原生宿主、预览不dirty、单主操作、保存/撤销精确原始字节/重做、未配置/空结果/关闭迟到。provider mock不证明真实生成或真实Agent模型续轮，Desktop由用户验收。
+
+
+## 17. 语义文字标注与插字排版
+
+`apply-markup`接受严格联合：旧`{target,type,color?}`或`{pageIndex,text,type,all?,color?}`；`type`限highlight/underline/strikeout，颜色`#RRGGBB`，默认首处、all为当前页全部非重叠匹配。返回新字节、请求版本+1及实际`count`。同一次当前工作字节的PDFium源codepoint、真实glyph box、角度与baseline用于匹配；NFKC及空白折叠以实际源字形边界回映，不能拆分扩长连字或UTF-16配对。原生页面Rotate在私有只读载入上临时归0以稳定阅读序，输出仍保留原件Rotate/CropBox。相同baseline的连续实际命中字形合成行quad，跨行多quad；不按run长度比例切矩形。仅四分之一周轴向文字可精确标注，倾斜文字、命中带裁切路径的文字对象、未知字形位置与无命中明确拒绝；不能为被遮挡原文创建完整字形标注。单页200000字符，线性匹配，单次至多200处/10000命中字形；全部核验后同一pdf-lib图追加与序列化一次。Catalog安全守卫保持，原正文/字体/图片内容流保留；独立PDF.js读回数量后才发布。
+
+`apply-text kind=layout`是只读准备：items使用`PdfInsertLayoutInput`（pageIndex/text/fontSize/color、可选font/bold/italic/align/maxWidth、成对x/y或anchorText/placement）。返回原始字节、原请求版本及`layouts`，不写库存或新增画布历史。无坐标默认真实显示页顶部36pt、按实际宽度水平居中；anchorText须唯一真实片段，placement为right（默认）/below/above，间距6pt，不能与坐标混用。用丢弃的真实PDFium字体探针测量advance，再生成wrappedText/lineLeading/lineXOffsets；CJK沿原字体覆盖回退，不宣称所选西文字体覆盖中文。宽度、整块高度与位置须在显示页面内，源至多50MiB/1000页。
+
+`insert`真实writer透传font/bold/italic/align/lineLeading/lineXOffsets/rotate；HTTP颜色0–1在宿主转换为PDFium0–255。逻辑text与实际wrappedText、字体属性、换行宽度、行距及偏移都属于pending T的工作副本状态，capture/restore/history、保存期间重放、编辑/删除和apply_ops幸存T全部保留。移动及批次重放也须核验已知排版width/height，不能只检查首行fontSize。旧pending读取默认为自动字体/左对齐，省略全部编辑属性及相同编辑/移动不增加版本。修改文字或格式后从同一raw base重新计算；布局准备和最终写入由同一取消/版本控制器覆盖。失败、关闭、换源、迟到结果不发布，保存期间继续插字仍沿既有基线重放合同。
+
+手动插字、待保存文字编辑与语义标注复用320px Inspector，内部滚动内容、固定底部单一primary与有界错误；点击纸面定位保留。已知真实排版尺寸的T可在纸面拖移、拖宽度手柄或键盘移动/调宽；只预览轮廓，结束后一次原生重排与一次history。文字编辑草稿绑定当前history epoch，撤销、重做或外部写后不得继续覆盖新当前值。手势捕获单指针，坐标按实际纸面DOM尺寸换算，仅所属指针的取消或capture丢失结束手势，Escape/失焦/pointercancel不发布；宽度重排超页时保留原件与草稿错误。真实420×500、纸面手势、保存重开由浏览器另验，组件与native测试不能替代浏览器通过。

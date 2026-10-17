@@ -1,5 +1,5 @@
 import { createRequire } from 'node:module'
-import { copyFile, cp, mkdir, readFile, readdir, rm } from 'node:fs/promises'
+import { copyFile, cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import type { Plugin, PluginOption } from 'vite'
@@ -109,6 +109,54 @@ export function copyPdfjsAssets(publicDir: string): Plugin {
   }
 }
 
+/** Only the portable LSTM core and best_int language data; no CDN fallback or full tessdata directories. */
+export function copyPdfOcrAssets(publicDir: string): Plugin {
+  return {
+    name: 'mimir:copy-pdf-ocr-assets',
+    async buildStart() {
+      const require = createRequire(import.meta.url)
+      const rootOf = (name: string) => dirname(require.resolve(`${name}/package.json`))
+      const target = join(publicDir, 'pdf-ocr')
+      await rm(target, { recursive: true, force: true })
+      await mkdir(join(target, 'lang'), { recursive: true })
+      await copyFile(
+        join(rootOf('tesseract.js'), 'dist/worker.min.js'),
+        join(target, 'worker.min.js'),
+      )
+      await copyFile(
+        join(rootOf('tesseract.js'), 'LICENSE.md'),
+        join(target, 'LICENSE-tesseract.js.txt'),
+      )
+      const core = rootOf('tesseract.js-core')
+      // The .wasm.js builds embed another base64 copy of the whole WASM. Use the
+      // portable external-WASM LSTM pair instead of shipping duplicate variants.
+      for (const extension of ['js', 'wasm'])
+        await copyFile(
+          join(core, `tesseract-core-lstm.${extension}`),
+          join(target, `tesseract-core-lstm.${extension}`),
+        )
+      await copyFile(join(core, 'LICENSE'), join(target, 'LICENSE-tesseract.js-core.txt'))
+      for (const language of ['eng', 'chi_sim']) {
+        const root = rootOf(`@tesseract.js-data/${language}`)
+        await copyFile(
+          join(root, `4.0.0_best_int/${language}.traineddata.gz`),
+          join(target, 'lang', `${language}.traineddata.gz`),
+        )
+        // These packages ship license metadata but no separate LICENSE file; preserve their full notices.
+        await writeFile(
+          join(target, `NOTICE-${language}.txt`),
+          `${await readFile(join(root, 'package.json'), 'utf8')}\n\n${await readFile(join(root, 'README.md'), 'utf8')}\n`,
+        )
+      }
+      await copyFile(
+        new URL('./licenses/tessdata-Apache-2.0.txt', import.meta.url),
+        join(target, 'LICENSE-tessdata-Apache-2.0.txt'),
+      )
+      this.info?.('本地 OCR 资产已就绪（中英语言、LSTM WASM、许可；无需 CDN）')
+    },
+  }
+}
+
 export interface RendererPluginOptions {
   /** 使用方的 `public/` 绝对路径（pdf.js 资产拷到它下面） */
   publicDir: string
@@ -149,6 +197,7 @@ export function rendererPlugins(options: RendererPluginOptions): PluginOption[] 
      * 请求就会 404，而刷新后反而正常，属于最难查的一类）。
      */
     copyPdfjsAssets(publicDir),
+    copyPdfOcrAssets(publicDir),
     emitCarlitoLicense(),
     /**
      * 文件路由。**配置来自 `route-config.mjs`**——那一份同时被

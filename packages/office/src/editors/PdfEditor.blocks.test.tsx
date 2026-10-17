@@ -12,6 +12,8 @@ import { readPdfNativeBlockObjects } from '../../../../apps/server/src/services/
 import { applyPdfLocalOperation } from '../../../../apps/server/src/services/pdf-local.js'
 const parsing = vi.hoisted(() => ({ tasks: new Map<Uint8Array, ReturnType<typeof getDocument>>() }))
 vi.mock('./pdf-render.js', () => ({
+  retainPdfDocument: () => () => {},
+  awaitPdfTask: <T,>(task: Promise<T>) => task,
   cancelPdfRender() {},
   retainPdfDocuments() {},
   renderPdfPages: async () => ({ dispose() {} }),

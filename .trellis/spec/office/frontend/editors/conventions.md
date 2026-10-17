@@ -97,6 +97,14 @@ comments-only 原件只开放具名“管理批注”面板，不能通配解禁
 
 PM列宽拖拽的clientX差需按CSSzoom转换，命中坐标保持真实屏幕值。cell.colwidth更新后，自有表格extension在同一事务链同步适用的widthPx/colWidthsPct，否则vendor renderHTML仍使用旧表宽/colgroup，模型变化但实际画面不变。固定绝对宽表保存同步tblGrid和tblW；不要为修固定表强制改变原件window/contents/百分比AutoFit或浮动坐标。必需回归含150%真实手势、视觉增宽、下载原生宽度、单步undo及无操作导出精确。
 
+### PDF 本地临时 OCR
+
+显式识别只供当前打开会话复制与查找，不写 PDF、知识库、保存基线、dirty、版本或 history；关闭文档或换源销毁 worker 与临时文字。原生文字索引仍是 PDFium 原文编辑、段落、标注与涂黑的唯一文字目标来源，OCR 不进入这些可写身份或 Agent 的 `read_pages`。结果绑定不可变源字节与来源页，调序、导入及旋转按真实来源重投影；真实字/词框经同次 PDF.js viewport 四角转换，不按字符串长度估算字宽。纸面复制按选区端点对应的原文字偏移提取逻辑片段；不能直接使用 SVG 的 selection.toString()，其逐字元素会被浏览器插入虚假换行。
+
+采用同源固定版本 Tesseract worker、LSTM WASM 与 eng/chi_sim 语言资产；浏览器与 Desktop 共用 renderer preset 复制及许可，路径遵循 BASE_URL，无默认 CDN 或文档文字缓存。初始化和识别阶段均须真实终止底层 worker、结算挂起 promise；迟到结果不能复活。单 worker 串行，每次最多50页/10分钟/100,000字符，单页120秒、最长边2048与4,194,304像素。原生文字、空白识别结果与已识别来源计跳过，不将空白页计入可用结果。
+
+OCR 沿320px Inspector完整高度链，body内部滚动、单一底部开始/重试/停止动作，长错误独立有界滚动。识别范围用有名称的Radio组且各选项保持独立label。进入纸面选字或关闭入口必须先停止扫描并保留已完成结果；选字层聚焦时preventScroll，Escape退出并回可见入口，不能隐藏运行中的唯一停止控件。识别结果、复制/搜索、窄屏420×500与真实本地WASM/静态资产另作浏览器验收，组件Canvas mock不代表浏览器通过。
+
 ### PDF 涂黑副本与焦点
 
 涂黑区域仅为临时画布草稿，按真实PDF.js viewport做四Rotate/offsetCrop坐标换算；只在干净且无待提交页面/文字修改时进入。通过私有`redact_copy`导出同version、唯一规范outputs，不发布工作bytes、不改库/dirty/history。导出冻结源/布局/句柄/版本/区域，保存、页切换、工具与源变化取消，失败保留区域；关闭清除草稿不允许身份A→B→A复活。宿主真移除和结构拒绝见shared PDF合同§13，普通绘图覆盖不等于涂黑。

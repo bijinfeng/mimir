@@ -15,6 +15,8 @@ const state = vi.hoisted(() => ({
   tasks: [] as PDFDocumentLoadingTask[],
 }))
 vi.mock('./pdf-render.js', () => ({
+  retainPdfDocument: () => () => {},
+  awaitPdfTask: <T,>(task: Promise<T>) => task,
   cancelPdfRender() {},
   retainPdfDocuments() {},
   renderPdfPages: async ({ bytes }: { bytes: Uint8Array }) => {

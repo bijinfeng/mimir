@@ -19,6 +19,7 @@ export const PDF_IMAGE_TOOLS = [
 export interface PdfHostImages {
   (input: {
     bytes: Uint8Array
+    assetSessionId?: string
     expectedVersion: number
     operation: PdfImageOperation
     signal?: AbortSignal

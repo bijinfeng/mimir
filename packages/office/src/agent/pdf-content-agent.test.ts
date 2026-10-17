@@ -128,7 +128,7 @@ describe('PDF Agent content contracts against real bytes', () => {
     expect((deleted.data as { annotations: unknown[] }).annotations).toEqual([])
   })
 
-  it('rejects partial or duplicate targets and invalid upstream parameters without modifying bytes', async () => {
+  it('supports semantic markup while rejecting unsafe edits and invalid parameters without modifying bytes', async () => {
     const base = await fixture()
     const before = base.slice()
     await expect(
@@ -137,12 +137,13 @@ describe('PDF Agent content contracts against real bytes', () => {
     await expect(
       run(base, 'edit_text', { page: 1, old_text: 'ORIGINAL', new_text: 'no', font_size: NaN }),
     ).rejects.toThrow('字号')
+    expect(
+      (await run(base, 'markup_text', { page: 1, text: 'ORIG', type: 'highlight', all: true }))
+        .bytes,
+    ).toBeDefined()
     await expect(
-      run(base, 'markup_text', { page: 1, text: 'ORIGINAL', type: 'highlight', all: true }),
-    ).rejects.toThrow('批量')
-    await expect(
-      run(base, 'markup_text', { page: 1, text: 'ORIGINAL', type: 'highlight', color: '#000000' }),
-    ).rejects.toThrow('自定义')
+      run(base, 'markup_text', { page: 1, text: 'ORIGINAL', type: 'highlight', color: '#bad' }),
+    ).rejects.toThrow('color')
     await expect(
       run(base, 'add_note', { page: 1, text: 'no', anchor_text: 'ORIGINAL', x: 20, y: 20 }),
     ).rejects.toThrow('混用')

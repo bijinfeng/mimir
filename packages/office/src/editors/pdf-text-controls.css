@@ -1,0 +1,57 @@
+.mimir-pdf-text-controls__style {
+  display: flex;
+  gap: 8px;
+}
+.mimir-pdf-text-controls__footer {
+  flex: none;
+  border-top: 1px solid var(--me-border);
+  padding: 12px 16px 16px;
+}
+.mimir-pdf-text-controls__footer > [role='alert'],
+.mimir-pdf-text-controls__footer > [role='status'] {
+  max-height: 4.5em;
+  overflow: auto;
+  margin: 0 0 8px;
+}
+.mimir-pdf-text-controls__actions {
+  display: flex;
+  gap: 8px;
+}
+.mimir-pdf-text-controls__actions > :last-child {
+  flex: 1;
+}
+.mimir-pdf-text-controls .me-input--text {
+  width: 100%;
+}
+.mimir-pdf-text-gesture {
+  position: absolute;
+  border: 1px solid var(--me-accent);
+  background: transparent;
+  cursor: move;
+  touch-action: none;
+}
+.mimir-pdf-text-gesture:focus-visible {
+  outline: 2px solid var(--me-accent);
+  outline-offset: 3px;
+}
+.mimir-pdf-text-gesture__resize {
+  position: absolute;
+  right: -12px;
+  bottom: -12px;
+  width: 24px;
+  height: 24px;
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+.mimir-pdf-text-gesture__resize::after {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border: 1px solid var(--me-accent);
+  background: var(--me-surface);
+}
+.mimir-pdf-text-gesture__resize:focus-visible {
+  outline: 2px solid var(--me-accent);
+  outline-offset: 1px;
+}

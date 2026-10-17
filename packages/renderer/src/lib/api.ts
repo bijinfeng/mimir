@@ -42,6 +42,9 @@ import type {
   PdfAnnotationOperation,
   PdfFormOperation,
   PdfImageOperation,
+  PdfAssetOperation,
+  PdfAssetData,
+  PdfAssetReadiness,
   PdfLocalOperation,
   PdfLocalInfo,
   PdfImageSnapshot,
@@ -353,11 +356,54 @@ export const api = {
         target: response.target,
       }
     },
+    pdfAssetReadiness(documentId: string, signal?: AbortSignal) {
+      return request<PdfAssetReadiness>(
+        `/api/conversations/pdf-agent/assets?documentId=${encodeURIComponent(documentId)}`,
+        { signal },
+      )
+    },
+    pdfAssets(input: {
+      documentId: string
+      assetSessionId: string
+      expectedVersion: number
+      operation: PdfAssetOperation
+      signal?: AbortSignal
+    }) {
+      const { signal, ...body } = input
+      return request<{ version: number; data: PdfAssetData }>(
+        '/api/conversations/pdf-agent/assets',
+        { method: 'POST', body: JSON.stringify(body), signal },
+      )
+    },
+    async pdfAssetPreview(input: {
+      documentId: string
+      assetSessionId: string
+      url: string
+      signal?: AbortSignal
+    }): Promise<Blob> {
+      const { signal, ...body } = input
+      const response = await (transport.fetchImpl ?? fetch)(
+        `${transport.baseUrl ?? appBasePath}/api/conversations/pdf-agent/assets/preview`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json', ...transport.headers },
+          body: JSON.stringify(body),
+          signal,
+        },
+      )
+      if (!response.ok) {
+        const error = (await response.json()) as ApiError
+        throw new Error(error.error?.message ?? '图片预览失败，请重新生成')
+      }
+      return response.blob()
+    },
     async pdfImages(input: {
       documentId: string
       bytes: Uint8Array
       expectedVersion: number
       operation: PdfImageOperation
+      assetSessionId?: string
       sha256?: string
       signal?: AbortSignal
     }): Promise<{ bytes?: Uint8Array; version: number; images: PdfImageSnapshot }> {
@@ -366,6 +412,7 @@ export const api = {
       copy.set(input.bytes)
       form.set('file', new File([copy], 'current.pdf', { type: 'application/pdf' }))
       form.set('documentId', input.documentId)
+      if (input.assetSessionId) form.set('assetSessionId', input.assetSessionId)
       form.set('expectedVersion', String(input.expectedVersion))
       form.set('operation', JSON.stringify(input.operation))
       if (input.sha256) form.set('sha256', input.sha256)
@@ -474,22 +521,21 @@ export const api = {
       form.set('documentId', input.documentId)
       form.set('expectedVersion', String(input.expectedVersion))
       form.set('markup', JSON.stringify(input.markup))
-      const response = await sendMultipart<{ bytesBase64: string; version: number }>(
-        '/api/conversations/pdf-agent/apply-markup',
-        'POST',
-        form,
-        input.signal,
-      )
+      const response = await sendMultipart<{
+        bytesBase64: string
+        version: number
+        count?: number
+      }>('/api/conversations/pdf-agent/apply-markup', 'POST', form, input.signal)
       const decoded = atob(response.bytesBase64)
       const bytes = new Uint8Array(decoded.length)
       for (let index = 0; index < decoded.length; index++) bytes[index] = decoded.charCodeAt(index)
-      return { bytes, version: response.version }
+      return { bytes, version: response.version, count: response.count }
     },
     async applyPdfText(input: {
       documentId: string
       bytes: Uint8Array
       expectedVersion: number
-      kind: 'edit' | 'insert'
+      kind: 'edit' | 'insert' | 'layout'
       items: unknown[]
       signal?: AbortSignal
     }) {
@@ -501,16 +547,15 @@ export const api = {
       form.set('expectedVersion', String(input.expectedVersion))
       form.set('kind', input.kind)
       form.set('items', JSON.stringify(input.items))
-      const response = await sendMultipart<{ bytesBase64: string; version: number }>(
-        '/api/conversations/pdf-agent/apply-text',
-        'POST',
-        form,
-        input.signal,
-      )
+      const response = await sendMultipart<{
+        bytesBase64: string
+        version: number
+        layouts?: import('@mimir/shared').PdfInsertLayout[]
+      }>('/api/conversations/pdf-agent/apply-text', 'POST', form, input.signal)
       const decoded = atob(response.bytesBase64)
       const bytes = new Uint8Array(decoded.length)
       for (let index = 0; index < decoded.length; index++) bytes[index] = decoded.charCodeAt(index)
-      return { bytes, version: response.version }
+      return { bytes, version: response.version, layouts: response.layouts }
     },
     async applyXlsxOps(input: {
       documentId: string

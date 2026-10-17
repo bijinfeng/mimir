@@ -247,9 +247,12 @@ function rectOf(
     Math.max(a[1]!, b[1]!),
   ]
 }
-async function sourceOf(op: { image?: string; url?: string }): Promise<string> {
+async function sourceOf(
+  op: { image?: string; url?: string },
+  signal?: AbortSignal,
+): Promise<string> {
   if (!!op.image === !!op.url) throw new Error('须且只能提供一份图片或URL')
-  const base64 = op.image ?? (await fetchDocxImage(op.url!)).dataUrl.split(',')[1]!
+  const base64 = op.image ?? (await fetchDocxImage(op.url!, signal)).dataUrl.split(',')[1]!
   if (!/^[A-Za-z0-9+/]+={0,2}$/.test(base64)) throw new Error('图片Base64无效')
   // Decode and normalize before entering PDFium; this enforces size/pixel/MIME budgets.
   return encodePdfPng(decodePdfImage(Buffer.from(base64, 'base64'))).toString('base64')
@@ -356,27 +359,34 @@ const layer = (value?: 'above_text' | 'below_text') =>
 export async function applyPdfImageOperation(
   bytes: Uint8Array,
   raw: PdfImageOperation,
+  signal?: AbortSignal,
 ): Promise<{ bytes?: Uint8Array; images: PdfImageSnapshot }> {
+  signal?.throwIfAborted()
   const op = pdfImageOperationSchema.parse(raw)
   if (op.op === 'read') {
     const snapshot = await readPdfImages(bytes)
+    signal?.throwIfAborted()
     if (op.pageIndex !== undefined) {
       await geometry(bytes, op.pageIndex)
+      signal?.throwIfAborted()
       snapshot.images = snapshot.images.filter((item) => item.page === op.pageIndex! + 1)
     }
     return { images: snapshot }
   }
   await assertSafeToRewrite(bytes)
+  signal?.throwIfAborted()
   initialize()
   const before = await readPdfImages(bytes)
+  signal?.throwIfAborted()
   let edit: ImageEditInput | undefined, result: Uint8Array | undefined
   let expectedRect: [number, number, number, number] | undefined
   const item = 'target' in op ? await confirm(bytes, op.target) : undefined
   const pageIndex = item?.target.pageIndex ?? ('pageIndex' in op ? op.pageIndex : 0)
   const viewport = await geometry(bytes, pageIndex)
+  signal?.throwIfAborted()
   if (op.op === 'insert_image') {
     if (before.unsupportedPages.includes(pageIndex + 1)) throw new Error('嵌套图片页面暂不能插图')
-    const image = await sourceOf(op),
+    const image = await sourceOf(op, signal),
       decoded = decodePdfImage(Buffer.from(image, 'base64'))
     const width =
       op.width ??
@@ -422,7 +432,7 @@ export async function applyPdfImageOperation(
       pageIndex,
       oldRect: [...op.target.bounds],
       rect: expectedRect,
-      image: await sourceOf(op),
+      image: await sourceOf(op, signal),
     }
   } else if (op.op === 'transform_image' || op.op === 'rotate_image') {
     let x = item!.x,
@@ -463,6 +473,7 @@ export async function applyPdfImageOperation(
   } else {
     const extracted = await pixelsOf(bytes, op.target),
       image = extracted.pixels
+    signal?.throwIfAborted()
     const angle = (Math.atan2(extracted.matrix[1]!, extracted.matrix[0]!) * 180) / Math.PI
     const rotation = (((viewport.rotation - Math.round(angle / 90) * 90) % 360) + 360) % 360
     if (
@@ -519,11 +530,13 @@ export async function applyPdfImageOperation(
       image: encodePdfPng(pixels).toString('base64'),
     }
   }
+  signal?.throwIfAborted()
   if (edit) {
     const applied = await applyImageEdits(bytes.slice(), [edit])
     if (applied.skipped.length) throw new Error(`PDF图片未写入：${applied.skipped[0]!.reason}`)
     result = applied.bytes
   }
+  signal?.throwIfAborted()
   if (!result) throw new Error('PDF图片操作没有产生字节')
   let after = await readPdfImages(result)
   if (item?.opacity !== undefined && op.op !== 'set_image_opacity' && op.op !== 'delete_image') {
@@ -579,5 +592,6 @@ export async function applyPdfImageOperation(
   } finally {
     await task.destroy()
   }
+  signal?.throwIfAborted()
   return { bytes: result, images: after }
 }

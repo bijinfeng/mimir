@@ -8,6 +8,8 @@ import type { PdfHostLocal } from '../agent/pdf-local-agent.js'
 import type { PdfAgentHandle } from '../agent/pdf-agent.js'
 const rendering = vi.hoisted(() => ({ gate: null as Promise<void> | null }))
 vi.mock('./pdf-render.js', () => ({
+  retainPdfDocument: () => () => {},
+  awaitPdfTask: <T,>(task: Promise<T>) => task,
   cancelPdfRender() {},
   retainPdfDocuments() {},
   renderPdfPages: async () => {

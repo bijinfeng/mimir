@@ -7,6 +7,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { PdfAgentHandle } from '../agent/pdf-agent.js'
 import { openSelect } from '../shell/antd-test-dom.js'
 vi.mock('./pdf-render.js', () => ({
+  retainPdfDocument: () => () => {},
+  awaitPdfTask: <T,>(task: Promise<T>) => task,
+  loadPdfDocument: vi.fn<typeof import('./pdf-render.js').loadPdfDocument>(),
   cancelPdfRender() {},
   retainPdfDocuments() {},
   renderPdfPages: async () => ({ dispose() {} }),

@@ -46,9 +46,15 @@ function text(value: unknown, limit: number): string {
   return typeof value === 'string' ? value.slice(0, limit) : ''
 }
 
-async function braveFetch(kind: 'web' | 'images', input: unknown): Promise<unknown> {
+async function braveFetch(
+  kind: 'web' | 'images',
+  input: unknown,
+  signal?: AbortSignal,
+): Promise<unknown> {
+  signal?.throwIfAborted()
   const { query, maxResults } = inputOf(input)
   const apiKey = await key()
+  signal?.throwIfAborted()
   const url = new URL(`${BRAVE_BASE}/${kind}/search`)
   url.searchParams.set('q', query)
   url.searchParams.set('count', String(maxResults))
@@ -56,16 +62,21 @@ async function braveFetch(kind: 'web' | 'images', input: unknown): Promise<unkno
   try {
     response = await fetch(url, {
       headers: { Accept: 'application/json', 'X-Subscription-Token': apiKey },
-      signal: AbortSignal.timeout(10_000),
+      signal: signal
+        ? AbortSignal.any([signal, AbortSignal.timeout(10_000)])
+        : AbortSignal.timeout(10_000),
     })
   } catch (error) {
+    signal?.throwIfAborted()
     throw new Error('Brave Search 连接失败或超时', { cause: error })
   }
   if (response.status === 401 || response.status === 403)
     throw new Error('Brave Search 密钥无效或权限不足')
   if (response.status === 429) throw new Error('Brave Search 请求额度或速率已用尽')
   if (!response.ok) throw new Error(`Brave Search 返回 HTTP ${response.status}`)
-  return response.json()
+  const data: unknown = await response.json()
+  signal?.throwIfAborted()
+  return data
 }
 
 /** Real Brave Search API responses, normalized to a small model-safe result. */
@@ -83,8 +94,11 @@ export async function braveWebSearch(input: unknown): Promise<{ results: BraveRe
   }
 }
 
-export async function braveImageSearch(input: unknown): Promise<{ results: BraveResult[] }> {
-  const raw = (await braveFetch('images', input)) as { results?: unknown }
+export async function braveImageSearch(
+  input: unknown,
+  signal?: AbortSignal,
+): Promise<{ results: BraveResult[] }> {
+  const raw = (await braveFetch('images', input, signal)) as { results?: unknown }
   const entries = Array.isArray(raw.results) ? raw.results : []
   return {
     results: entries.flatMap((entry): BraveResult[] => {

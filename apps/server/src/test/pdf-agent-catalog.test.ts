@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { pdfAssetReadiness } from '../services/pdf-external-assets.js'
 import { pdfImageTools } from '../services/pdf-image-catalog.js'
 import { pdfAgentAssetPaths } from '../services/pdf-agent-host.js'
 import { pdfAgentCatalog } from '../services/pdf-agent-catalog.js'
@@ -7,16 +8,25 @@ vi.mock('../services/pdf-agent-host.js', () => ({
   pdfAgentAssetPaths: vi.fn<() => { pdfium: string; harfbuzz: string }>(),
 }))
 
+vi.mock('../services/pdf-external-assets.js', () => ({
+  pdfAssetReadiness: vi.fn<typeof pdfAssetReadiness>(),
+}))
+const readiness = vi.mocked(pdfAssetReadiness)
+
 const assetPaths = vi.mocked(pdfAgentAssetPaths)
 
 describe('PDF Agent tool readiness', () => {
   beforeEach(() => {
+    readiness.mockResolvedValue({
+      image_search: { available: true },
+      generate_image: { available: true },
+    })
     assetPaths.mockReset()
     assetPaths.mockReturnValue({ pdfium: '/test/pdfium.wasm', harfbuzz: '/test/hb-subset.wasm' })
   })
 
-  it('advertises text insertion when both PDF editing assets are available', () => {
-    const catalog = pdfAgentCatalog()
+  it('advertises text insertion when both PDF editing assets are available', async () => {
+    const catalog = await pdfAgentCatalog()
     expect(catalog.clientToolNames.has('insert_text')).toBe(true)
     expect(catalog.clientToolNames.has('list_inserted_text')).toBe(true)
     expect(catalog.clientToolNames.has('edit_inserted_text')).toBe(true)
@@ -30,8 +40,8 @@ describe('PDF Agent tool readiness', () => {
     expect(catalog.unavailableTools).toEqual([])
   })
 
-  it('advertises only strict batch operations with actual annotation and pending text IDs', () => {
-    const batch = pdfAgentCatalog().tools.find((tool) => tool.name === 'apply_ops')!
+  it('advertises only strict batch operations with actual annotation and pending text IDs', async () => {
+    const batch = (await pdfAgentCatalog()).tools.find((tool) => tool.name === 'apply_ops')!
     const schema = batch.inputSchema as {
       additionalProperties: boolean
       properties: {
@@ -67,11 +77,11 @@ describe('PDF Agent tool readiness', () => {
     ).toBe(false)
   })
 
-  it('keeps page tools but withholds text insertion when assets are missing', () => {
+  it('keeps page tools but withholds text insertion when assets are missing', async () => {
     assetPaths.mockImplementation(() => {
       throw new Error('missing asset')
     })
-    const catalog = pdfAgentCatalog()
+    const catalog = await pdfAgentCatalog()
     expect(catalog.clientToolNames.has('insert_text')).toBe(false)
     for (const tool of pdfImageTools) expect(catalog.clientToolNames.has(tool.name)).toBe(false)
     expect(catalog.tools.some((tool) => tool.name === 'insert_text')).toBe(false)
@@ -100,5 +110,36 @@ describe('PDF Agent tool readiness', () => {
         reason: 'PDF 编辑资源缺失：PDFium 或 HarfBuzz WASM 未打包',
       })),
     )
+  })
+  it('gates search/generation independently with strict upstream arguments and unavailable reasons', async () => {
+    readiness.mockResolvedValue({
+      image_search: { available: false, reason: 'Brave设置不可用' },
+      generate_image: { available: true },
+    })
+    const catalog = await pdfAgentCatalog()
+    expect(catalog.clientToolNames.has('image_search')).toBe(false)
+    expect(catalog.clientToolNames.has('generate_image')).toBe(true)
+    expect(catalog.tools.find((tool) => tool.name === 'generate_image')?.inputSchema).toMatchObject(
+      {
+        additionalProperties: false,
+        properties: {
+          aspect_ratio: { enum: ['1:1', '4:3', '16:9', '9:16', '3:4', '2:3', '3:2', 'auto'] },
+        },
+      },
+    )
+    expect(catalog.unavailableTools).toContainEqual({
+      name: 'image_search',
+      reason: 'Brave设置不可用',
+    })
+    readiness.mockResolvedValue({
+      image_search: { available: true },
+      generate_image: { available: false, reason: '图片模型设置不可用' },
+    })
+    const search = await pdfAgentCatalog()
+    expect(search.clientToolNames.has('generate_image')).toBe(false)
+    expect(search.tools.find((tool) => tool.name === 'image_search')?.inputSchema).toMatchObject({
+      additionalProperties: false,
+      properties: { max_results: { minimum: 1, maximum: 10, default: 8 } },
+    })
   })
 })

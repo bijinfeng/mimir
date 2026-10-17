@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { PDFDocument } from 'pdf-lib'
 import type { PDFDocumentLoadingTask } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import { pdfAtomicBatchFixture } from '../../../../apps/server/src/test/pdf-atomic-batch-fixture.js'
@@ -9,21 +9,21 @@ import type { PdfHostApply } from '../editors/PdfEditor.js'
 import type { PdfHostLocal } from './pdf-local-agent.js'
 import type { PdfHostAnnotations } from './pdf-content-agent.js'
 const state = vi.hoisted(() => ({ tasks: [] as PDFDocumentLoadingTask[] }))
-vi.mock('../editors/pdf-render.js', () => ({
-  loadPdfDocument: async (bytes: Uint8Array) => {
-    const task = (await import('pdfjs-dist/legacy/build/pdf.mjs')).getDocument({
-      data: bytes.slice(),
-    })
-    state.tasks.push(task)
-    return task.promise
-  },
+vi.mock('pdfjs-dist/legacy/build/pdf.worker.min.mjs?worker&url', async () => ({
+  default: (await import('node:module'))
+    .createRequire(import.meta.url)
+    .resolve('pdfjs-dist/legacy/build/pdf.worker.mjs'),
 }))
+import { retainPdfDocuments } from '../editors/pdf-render.js'
+beforeEach(() => retainPdfDocuments([]))
+
 import {
   buildPdfBatchCandidate as build,
   replayPdfPendingText,
   type PdfPendingTextState,
 } from './pdf-batch.js'
 afterEach(async () => {
+  retainPdfDocuments([])
   await Promise.all(state.tasks.splice(0).map((task) => task.destroy()))
 })
 const apply: PdfHostApply = async ({ bytes, items, expectedVersion }) => ({

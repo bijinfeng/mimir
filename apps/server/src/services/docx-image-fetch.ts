@@ -62,11 +62,13 @@ function parseUrl(raw: string): URL {
   return url
 }
 
-async function oneHop(url: URL): Promise<IncomingMessage> {
+async function oneHop(url: URL, signal?: AbortSignal): Promise<IncomingMessage> {
+  signal?.throwIfAborted()
   const hostname = url.hostname.replace(/^\[|\]$/g, '')
   const candidates = isIP(hostname)
     ? [{ address: hostname, family: isIP(hostname) }]
     : await lookup(hostname, { all: true, verbatim: true })
+  signal?.throwIfAborted()
   if (!candidates.length || candidates.some((candidate) => !publicImageAddress(candidate.address)))
     throw new Error('图片地址解析到私网或保留地址')
   const pinned = candidates[0]!
@@ -76,6 +78,7 @@ async function oneHop(url: URL): Promise<IncomingMessage> {
       url,
       {
         method: 'GET',
+        signal,
         timeout: 10_000,
         headers: { Accept: 'image/png,image/jpeg,image/gif,image/webp' },
         lookup: (_hostname, _options, callback) => callback(null, pinned.address, pinned.family),
@@ -117,11 +120,13 @@ async function readBounded(response: IncomingMessage): Promise<Buffer> {
 
 export async function fetchDocxImage(
   rawUrl: string,
+  signal?: AbortSignal,
 ): Promise<{ dataUrl: string; mimeType: string }> {
+  signal?.throwIfAborted()
   if (rawUrl.length > 2_000) throw new Error('图片地址过长')
   let url = parseUrl(rawUrl)
   for (let hop = 0; hop < 4; hop++) {
-    const response = await oneHop(url)
+    const response = await oneHop(url, signal)
     const status = response.statusCode ?? 0
     if ([301, 302, 303, 307, 308].includes(status)) {
       const location = response.headers.location
@@ -143,6 +148,7 @@ export async function fetchDocxImage(
       throw new Error('远程资源的 MIME 不是支持的图片类型')
     }
     const bytes = await readBounded(response)
+    signal?.throwIfAborted()
     const mimeType = imageMime(bytes)
     if (mimeType !== type) throw new Error('远程图片内容与 MIME 不符')
     return { dataUrl: `data:${mimeType};base64,${bytes.toString('base64')}`, mimeType }

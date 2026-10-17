@@ -38,6 +38,7 @@ PM `filterTransaction` 拒绝修改仍挡不住 vendor 图片缩放/浮动拖动
 | 中文 PDF 整段文字空白（不是乱码） | pdf.js 的 cmaps 没加载到。它按**原始文件名**取（`cmaps/Adobe-GB1-0.bcmap`），所以两端构建都须把资产原样复制到各自的 `public/pdfjs/`；带哈希的产物目录里没有这些名字，404 后内容就是空白（TECH §15.12） |
 | PDF 写入批注后工具栏跳回“开始”，Agent 版本回到初始值或本轮撤销失效 | `useParsed(currentBytes)` 对新字节短暂返回 null，卸载工具栏并使 ready=false，导致 Agent handle dispose/recreate。宿主返回后已经 `readPdfPages` 核验的工作字节必须把同字节 `structure` 一起放进 `PdfWorkingBytes`；渲染优先取它，保存、插字重放和 undo 快照也须携带结构。不能用旧字节的结构兜底，或只控制 toolbar 分类来掩盖句柄重建。组件须断言分类、handle 对象身份、版本单调及成功 undoRound 都保留。 |
 | PDF 界面全白且无报错 | 并发渲染。第一版用「取消上一次」防并发，而 StrictMode 挂载两次会让两次都没画。要用**代次**（`src/editors/pdf-render.ts`） |
+| PDF 插字首次成功，移动或改宽度后永久忙碌，关闭面板也无法恢复 | 插字底稿不再等于当前工作字节，若被 viewer 缓存回收，已销毁的 pdf.js transport 的 getPage 可能永不结算。viewer 保留活动 pending.base；尚未发布的物化/批次字节用独立引用计数 pin，finally 释放，不覆盖 viewer keep 或保留全部历史。load/getPage 等待可按请求取消，但不能销毁其他持有者的任务；加载失败也须销毁自身 loading task，旧任务完成/失败不能覆盖同字节新任务。回归使用真实缓存与原生 Editor 保存/history，另以可控 transport 验证取消和释放竞争。 |
 | 预览过一次之后保存的 PDF 是 0 字节 | `getDocument` 把字节 transfer 给 worker 了。要传 `bytes.slice()` |
 | PDF 页面改动后表单、书签或标题丢失 | `copyPages` 只搬页对象，不搬文档级 Catalog/Info。标准 Info 字段要显式复制；Catalog 有额外结构或 Info 有自定义字段时先拒绝写回，并让界面解释原因（TECH §15.12） |
 | PDF 高亮纵向压扁，或缩放后画面变形 | 高亮纸层与 canvas 的 CSS 盒必须同尺寸：纸层不要被 flex stretch；页面不要用 `max-width: 100%` 单独夹宽度，放大时让工作台横向滚动 |

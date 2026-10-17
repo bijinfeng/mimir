@@ -81,4 +81,24 @@ describe('Brave DOCX search adapter', () => {
     })
     await expect(braveImageSearch({ query: 'office' })).rejects.toThrow('额度或速率')
   })
+  it('composes caller cancellation into the live Brave request and keeps cancellation classified', async () => {
+    const controller = new AbortController()
+    let started!: () => void
+    const ready = new Promise<void>((resolve) => {
+      started = resolve
+    })
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(async (_url, options) => {
+      const signal = options!.signal!
+      started()
+      return new Promise((_resolve, reject) =>
+        signal.addEventListener('abort', () => reject(signal.reason), { once: true }),
+      )
+    })
+    vi.stubGlobal('fetch', fetcher)
+    const pending = braveImageSearch({ query: 'office', maxResults: 2 }, controller.signal)
+    await ready
+    controller.abort()
+    await expect(pending).rejects.toMatchObject({ name: 'AbortError' })
+    expect(fetcher.mock.calls[0]![1]!.signal!.aborted).toBe(true)
+  })
 })

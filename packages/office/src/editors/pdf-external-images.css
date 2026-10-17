@@ -1,0 +1,98 @@
+.mimir-pdf-image-source {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+}
+.mimir-pdf-image-source__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.mimir-pdf-image-source__results {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.mimir-pdf-image-source__result {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-width: 0;
+  padding: 6px;
+  border: 1px solid var(--me-border);
+  border-radius: var(--me-radius, 6px);
+  color: var(--me-text);
+  background: var(--me-surface);
+  text-align: start;
+  cursor: pointer;
+  font: inherit;
+}
+.mimir-pdf-image-source__result[aria-pressed='true'] {
+  border-color: var(--me-accent, #00834d);
+  background: var(--me-accent-bg, #e6f4ec);
+}
+.mimir-pdf-image-source__result:focus-visible {
+  outline: 2px solid var(--me-accent, #00834d);
+  outline-offset: 2px;
+}
+.mimir-pdf-image-source__result img {
+  display: block;
+  width: 100%;
+  height: 88px;
+  object-fit: contain;
+}
+.mimir-pdf-image-source__result span {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
+  font-size: var(--me-font-size-sm, 12px);
+  line-height: 1.5;
+}
+.mimir-pdf-image-source__preview {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  min-width: 0;
+}
+.mimir-pdf-image-source__preview img {
+  display: block;
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+}
+.mimir-pdf-image-source__preview figcaption {
+  color: var(--me-text-weak);
+  font-size: var(--me-font-size-sm, 12px);
+}
+.mimir-pdf-image-panel > .mimir-pdf-inspector__footer {
+  flex: none;
+  margin: 0;
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--me-border);
+}
+
+.mimir-pdf-image-panel > .mimir-pdf-inspector__content {
+  min-height: 0;
+  overflow: auto;
+}
+.mimir-pdf-image-panel .mimir-pdf-inspector__error,
+.mimir-pdf-image-panel .mimir-pdf-inspector__hint,
+.mimir-pdf-image-panel figcaption {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.mimir-pdf-image-upload {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+}
+.mimir-pdf-image-upload .mimir-pdf-image-source__preview img {
+  max-height: 140px;
+}
+.mimir-pdf-image-panel > .mimir-pdf-inspector__footer > .ant-btn {
+  white-space: normal;
+  height: auto;
+  min-height: 32px;
+}

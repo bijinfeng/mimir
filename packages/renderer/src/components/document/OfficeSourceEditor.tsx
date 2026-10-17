@@ -1,3 +1,4 @@
+import { useNavigate } from '@tanstack/react-router'
 import type { PptxAiSnapshotDraft } from '@mimir/office'
 import type { DocumentDetail } from '@mimir/shared'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -47,7 +48,8 @@ export function OfficeSourceEditor({
 }) {
   const { styles: themeVars } = useEditorThemeVars()
   const { message } = App.useApp()
-  const { setDirty, setSave } = useUnsaved()
+  const { setDirty, setSave, runGuarded } = useUnsaved()
+  const navigate = useNavigate()
   const appearance = useAppearance()
 
   /**
@@ -190,6 +192,22 @@ export function OfficeSourceEditor({
         hostApply={(input) => api.documents.applyPdfText({ documentId: doc.id, ...input })}
         hostInspect={(input) => api.documents.inspectPdfText({ documentId: doc.id, ...input })}
         hostBlocks={(input) => api.documents.pdfTextBlocks({ documentId: doc.id, ...input })}
+        onAssetSettings={(assetKind) =>
+          runGuarded(() => {
+            void navigate({
+              to: '/settings',
+              search: {
+                scope: 'all',
+                section: assetKind === 'search' ? 'network-search' : 'models',
+              },
+            })
+          })
+        }
+        hostAssets={(input) => api.documents.pdfAssets({ documentId: doc.id, ...input })}
+        hostAssetReadiness={(signal) => api.documents.pdfAssetReadiness(doc.id, signal)}
+        hostAssetPreview={(input) =>
+          api.documents.pdfAssetPreview({ documentId: doc.id, ...input })
+        }
         hostImages={(input) => api.documents.pdfImages({ documentId: doc.id, ...input })}
         hostLocal={(input) => api.documents.pdfLocal({ documentId: doc.id, ...input })}
         hostForms={(input) => api.documents.pdfForms({ documentId: doc.id, ...input })}

@@ -8,6 +8,9 @@ import type { PdfLocalInfo } from '@mimir/shared'
 import type { PdfAgentHandle } from '../agent/pdf-agent.js'
 import { applyPdfLocalOperation } from '../../../../apps/server/src/services/pdf-local.js'
 vi.mock('./pdf-render.js', () => ({
+  retainPdfDocument: () => () => {},
+  awaitPdfTask: <T,>(task: Promise<T>) => task,
+  loadPdfDocument: vi.fn<typeof import('./pdf-render.js').loadPdfDocument>(),
   cancelPdfRender() {},
   retainPdfDocuments() {},
   renderPdfPages: async () => ({ dispose() {} }),

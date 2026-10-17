@@ -381,13 +381,13 @@ describe('PDF Agent authenticated text host route', () => {
     expect(new Uint8Array(await original.arrayBuffer())).toEqual(bytes)
   })
 
-  it('offers only the executable text insert shape from the upstream tool family', () => {
-    const catalog = pdfAgentCatalog()
+  it('offers only the executable text insert shape from the upstream tool family', async () => {
+    const catalog = await pdfAgentCatalog()
     expect(catalog.clientToolNames.has('insert_text')).toBe(true)
     expect(catalog.clientToolNames.has('edit_text')).toBe(true)
     const insert = catalog.tools.find((tool) => tool.name === 'insert_text')
     expect(insert?.inputSchema).toMatchObject({
-      required: ['page', 'text', 'x', 'y'],
+      required: ['page', 'text'],
       properties: { page: { minimum: 1 }, text: { maxLength: 10000 } },
     })
   })
@@ -480,5 +480,104 @@ describe('PDF Agent authenticated text host route', () => {
       body: formFor(await fixture(), 'missing-document'),
     })
     expect(response.status).toBe(404)
+  })
+})
+
+describe('PDF semantic text host parameters', () => {
+  it('authenticates current working bytes, validates layout/markup and never persists preparation', async () => {
+    const bytes = await fixture(),
+      upload = new FormData()
+    upload.set('file', pdfFile(bytes))
+    const response = await app.request('/api/documents/files', {
+      method: 'POST',
+      headers: { Cookie: cookie },
+      body: upload,
+    })
+    const id = ((await response.json()) as { document: { id: string } }).document.id
+    const make = (path: 'apply-text' | 'apply-markup', value: unknown, documentId = id) => {
+      const form = new FormData()
+      form.set('file', pdfFile(bytes))
+      form.set('documentId', documentId)
+      form.set('expectedVersion', '8')
+      if (path === 'apply-text') {
+        form.set('kind', 'layout')
+        form.set('items', JSON.stringify([value]))
+      } else form.set('markup', JSON.stringify(value))
+      return form
+    }
+    const layout = {
+      pageIndex: 0,
+      text: 'Inserted paragraph wraps inside the page',
+      fontSize: 12,
+      color: [0, 0, 0],
+      maxWidth: 80,
+      align: 'right',
+    }
+    const path = '/api/conversations/pdf-agent/apply-text'
+    expect(
+      (await app.request(path, { method: 'POST', body: make('apply-text', layout) })).status,
+    ).toBe(401)
+    expect(
+      (
+        await app.request(path, {
+          method: 'POST',
+          headers: { Cookie: cookie },
+          body: make('apply-text', layout, 'missing'),
+        })
+      ).status,
+    ).toBe(404)
+    expect(
+      (
+        await app.request(path, {
+          method: 'POST',
+          headers: { Cookie: cookie },
+          body: make('apply-text', { ...layout, x: 4 }),
+        })
+      ).status,
+    ).toBe(400)
+    const prepared = await app.request(path, {
+      method: 'POST',
+      headers: { Cookie: cookie },
+      body: make('apply-text', layout),
+    })
+    expect(prepared.status).toBe(200)
+    const result = (await prepared.json()) as {
+      bytesBase64: string
+      version: number
+      layouts: { wrappedText: string; lineXOffsets: number[] }[]
+    }
+    expect(result.version).toBe(8)
+    expect(Buffer.from(result.bytesBase64, 'base64')).toEqual(Buffer.from(bytes))
+    expect(result.layouts[0]!.wrappedText).toContain('\n')
+    expect(result.layouts[0]!.lineXOffsets.some((x) => x > 0)).toBe(true)
+    const markup = { pageIndex: 0, text: 'ORIG', type: 'underline', all: true, color: '#123456' }
+    const marked = await app.request('/api/conversations/pdf-agent/apply-markup', {
+      method: 'POST',
+      headers: { Cookie: cookie },
+      body: make('apply-markup', markup),
+    })
+    expect(marked.status).toBe(200)
+    expect(await marked.json()).toMatchObject({ version: 9, count: 1 })
+    expect(
+      (
+        await app.request('/api/conversations/pdf-agent/apply-markup', {
+          method: 'POST',
+          headers: { Cookie: cookie },
+          body: make('apply-markup', { ...markup, color: 'red' }),
+        })
+      ).status,
+    ).toBe(400)
+    expect(
+      (
+        await app.request('/api/conversations/pdf-agent/apply-markup', {
+          method: 'POST',
+          headers: { Cookie: cookie },
+          body: make('apply-markup', { ...markup, text: 'missing' }),
+        })
+      ).status,
+    ).toBe(400)
+    const stored = await app.request(`/api/documents/${id}/file`, { headers: { Cookie: cookie } })
+    expect(stored.status).toBe(200)
+    expect(Buffer.from(await stored.arrayBuffer())).toEqual(Buffer.from(bytes))
   })
 })

@@ -7,6 +7,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { PdfAgentHandle } from '../agent/pdf-agent.js'
 import { openSelect } from '../shell/antd-test-dom.js'
 vi.mock('./pdf-render.js', () => ({
+  retainPdfDocument: () => () => {},
+  awaitPdfTask: <T,>(task: Promise<T>) => task,
+  loadPdfDocument: vi.fn<typeof import('./pdf-render.js').loadPdfDocument>(),
   cancelPdfRender() {},
   retainPdfDocuments() {},
   renderPdfPages: async () => ({ dispose() {} }),
@@ -116,9 +119,13 @@ describe('PDF image Inspector and real working bytes', () => {
     )
     expect(host.querySelector('[data-image-selected="true"]')).not.toBeNull()
     expect(panel.textContent).toContain('宽度 · pt')
+    await click(
+      openSelect(host, 'PDF图片操作').find((option) => option.textContent === '不透明度')!,
+    )
     expect(panel.textContent).toContain('目标不透明度 · %')
     expect(panel.textContent).toContain('当前不透明度未读取')
-    await click(button(host, '水平翻转图片'))
+    await click(openSelect(host, 'PDF图片操作').find((option) => option.textContent === '翻转')!)
+    await click(button(host, '翻转所选PDF图片'))
     await settle(() => !button(host, '刷新PDF图片').disabled)
     expect(host.querySelector('[role="status"]')?.textContent ?? host.textContent).toContain(
       '已应用到文档',
@@ -175,7 +182,7 @@ describe('PDF image Inspector and real working bytes', () => {
     vi.spyOn(FileReader.prototype, 'readAsDataURL').mockImplementation(function (this: FileReader) {
       reads.push(this)
     })
-    const input = button(host, '插入PDF图片')
+    const input = button(host, '选择PDF图片文件')
       .closest('.ant-upload')!
       .querySelector('input[type="file"]')!
     Object.defineProperty(input, 'files', {
@@ -186,6 +193,8 @@ describe('PDF image Inspector and real working bytes', () => {
       input.dispatchEvent(new Event('change', { bubbles: true }))
       await new Promise((resolve) => setTimeout(resolve, 0))
     })
+    expect(reads).toHaveLength(0)
+    await click(button(host, '插入PDF图片'))
     expect(reads).toHaveLength(1)
     await act(async () => {
       expect((await handle.execute('rotate_image', { page: 1, image_number: 1 })).ok).toBe(true)
