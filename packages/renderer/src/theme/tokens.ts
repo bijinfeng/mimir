@@ -101,6 +101,7 @@ const darkCalibration: MappingAlgorithm = (seedToken, mapToken) => ({
 
 const COMPONENT_TOKEN: Record<Appearance, ThemeConfig['components']> = {
   light: {
+    Button: { defaultBorderColor: LIGHT_COLOR.colorBorderSecondary, defaultShadow: 'none' },
     Tabs: { itemSelectedColor: LIGHT_COLOR.colorLink },
     Menu: {
       itemSelectedColor: '#262626',
@@ -110,6 +111,7 @@ const COMPONENT_TOKEN: Record<Appearance, ThemeConfig['components']> = {
     },
   },
   dark: {
+    Button: { defaultBorderColor: DARK_COLOR.colorBorderSecondary, defaultShadow: 'none' },
     Tabs: { itemSelectedColor: DARK_LINK },
     Menu: {
       itemSelectedColor: '#eceeef',
@@ -193,7 +195,7 @@ export const PANEL_HEADER_HEIGHT = 48
  *
  * 数字放在这里之后，菜单项与账号行引用同一个常量，不会各自漂移。
  */
-export const NAV_ITEM_HEIGHT = 30
+export const NAV_ITEM_HEIGHT = 36
 export const NAV_ITEM_MARGIN = 6
 
 /**
@@ -259,11 +261,13 @@ export const NAV_NARROW_QUERY = `(max-width: ${NAV_NARROW_BREAKPOINT}px)`
 export const TITLEBAR_HEIGHT = 44
 
 export const FONT_SIZE = {
-  /** 文档标题（编辑器 H1）。全界面最大的一档 */
+  /** 文档阅读标题与知识库身份标题。 */
   display: 28,
-  /** 页面标题：正文 H2、设置页 H1 */
+  /** 设置页与供应商表单标题；高于字段，低于文档阅读标题。 */
+  settingsTitle: 22,
+  /** 正文 H2、其他页面标题 */
   pageTitle: 19,
-  /** 小节标题：正文 H3、卡片标题、空态标题 */
+  /** 小节标题：正文 H3、空态标题 */
   section: 16,
   /** 界面正文：按钮、输入、对话正文 */
   body: 14,

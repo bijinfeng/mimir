@@ -7,12 +7,10 @@ import { useRecentDocuments } from '../../lib/recent-documents'
 export function RecentNotes({
   userId,
   activeId,
-  onBeforeOpen,
   onOpenDocument,
 }: {
   userId?: string
   activeId?: string
-  onBeforeOpen: () => void
   onOpenDocument: (id: string, scope: string) => void
 }) {
   const { styles } = useStyles()
@@ -48,8 +46,8 @@ export function RecentNotes({
                   className={styles.recentItem}
                   aria-current={activeId === doc.id ? 'page' : undefined}
                   title={`${doc.title} · ${doc.folder ?? '知识库根'}`}
-                  onClick={() => {
-                    onBeforeOpen()
+                  onClick={(event) => {
+                    event.currentTarget.focus()
                     onOpenDocument(doc.id, doc.folder ? `folder:${doc.folder}` : 'all')
                   }}
                 >

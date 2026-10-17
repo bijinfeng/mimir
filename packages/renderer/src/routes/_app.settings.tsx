@@ -186,9 +186,11 @@ function SettingsPage() {
       )}
       <main className={styles.content}>
         <div className={styles.inner}>
-          <h2 className={styles.contentTitle}>
-            {sections.find((item) => item.key === section)?.label}
-          </h2>
+          {section !== 'models' ? (
+            <h2 className={styles.contentTitle}>
+              {sections.find((item) => item.key === section)?.label}
+            </h2>
+          ) : null}
           <SectionBody section={section} />
         </div>
       </main>

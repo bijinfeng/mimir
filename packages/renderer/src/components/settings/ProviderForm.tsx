@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
-import { App, Button, Input, Tooltip } from 'antd'
+import { App, Button, Input, Select, Tooltip, type SelectProps } from 'antd'
 import { ArrowLeft, X } from 'lucide-react'
 import { useState } from 'react'
 import {
@@ -125,7 +125,11 @@ export function ProviderForm({
   const [errors, setErrors] = useState<Record<string, string>>({})
   const fieldId = (field: string) => `provider-${editing?.id ?? 'new'}-${field}`
   const focusError = (field: string) => {
-    requestAnimationFrame(() => document.getElementById(fieldId(field))?.focus())
+    requestAnimationFrame(() => {
+      const modelIndex = /^model(\d+)$/.exec(field)?.[1]
+      const row = modelIndex === undefined ? undefined : rows[Number(modelIndex)]
+      document.getElementById(fieldId(row ? `model-${row.key}` : field))?.focus()
+    })
   }
 
   /** 已存的密钥状态。编辑时来自实例；本次填的密钥由 `keyDraft` 表达 */
@@ -194,8 +198,16 @@ export function ProviderForm({
 
   const addManualModel = () => {
     // 已有一行空的手动行就停在那里，不再叠第二行
-    const hasEmptyRow = models.some((model) => model.source === 'manual' && model.id.trim() === '')
-    if (hasEmptyRow) return
+    const emptyRow = rows.find((row) => row.model.source === 'manual' && row.model.id.trim() === '')
+    if (emptyRow) {
+      requestAnimationFrame(() => {
+        const input = document.getElementById(fieldId(`model-${emptyRow.key}`))
+        input?.scrollIntoView({ block: 'nearest', behavior: 'instant' })
+        input?.focus({ preventScroll: true })
+      })
+      message.info('先填写这行的模型 ID')
+      return
+    }
     setRows([...rows, { key: rowKey(), model: { id: '', source: 'manual', purposes: ['chat'] } }])
     markDirty()
   }
@@ -255,6 +267,11 @@ export function ProviderForm({
       )
     }
     markDirty()
+    requestAnimationFrame(() => {
+      const input = document.getElementById(fieldId('name'))
+      input?.scrollIntoView({ block: 'nearest', behavior: 'instant' })
+      input?.focus({ preventScroll: true })
+    })
   }
 
   const tryBack = () => {
@@ -319,13 +336,14 @@ export function ProviderForm({
 
   return (
     <>
+      <div className={styles.settingsPath}>设置 / 模型</div>
       <div className={styles.formBar}>
         <Button type="text" size="small" icon={<ArrowLeft size={14} />} onClick={tryBack}>
           返回供应商列表
         </Button>
       </div>
 
-      <h2 className={styles.sectionTitle}>{isCreate ? '新建供应商' : '编辑供应商'}</h2>
+      <h2 className={styles.providerFormTitle}>{isCreate ? '新建供应商' : '编辑供应商'}</h2>
       {isCreate ? (
         <PresetPanel
           presets={presets}
@@ -335,7 +353,7 @@ export function ProviderForm({
         />
       ) : null}
 
-      <Panel title="连接" desc="配置显示名、接口地址与认证凭据">
+      <Panel className={styles.formPanel} title="连接" desc="配置显示名、接口地址与认证凭据">
         <div className={styles.formRow}>
           <label className={styles.formLabel} htmlFor={fieldId('name')}>
             显示名
@@ -453,6 +471,7 @@ export function ProviderForm({
       </Panel>
 
       <Panel
+        className={styles.formPanel}
         title={
           <>
             模型与用途
@@ -497,7 +516,7 @@ export function ProviderForm({
                 index={index}
                 flash={flashIds.includes(row.model.id)}
                 error={errors[`model${index}`]}
-                inputId={fieldId(`model${index}`)}
+                inputId={fieldId(`model-${row.key}`)}
                 errorId={fieldId(`model${index}-error`)}
                 onRename={(value) => {
                   patchRow(index, { id: value })
@@ -537,53 +556,47 @@ function PresetPanel({
 }) {
   const { styles } = useStyles()
 
-  if (picked) {
-    return (
-      <Panel
-        title={
-          <>
-            预设
-            <span className={styles.seamTag}>{picked.name}</span>
-          </>
-        }
-        /*
-          「重新选择」是**链接样式**、在标题条右端（用户拍板，与「查看模型」
-          同一形态）：它不改变这一组的任何值，只是**回到上一层**（重新挑一个
-          预设）——与「模型与用途」那两个动作（真的往这组里加东西）性质不同。
-          做成同款按钮会让「导航动作」与「数据动作」看起来一样重。
-        */
-        extra={
-          <button type="button" className={styles.expanderLink} onClick={onReset}>
-            重新选择
-          </button>
-        }
-      />
-    )
-  }
-
   const sorted = [...presets].toSorted((a, b) => {
     if (a.popular !== b.popular) return a.popular ? -1 : 1
     return a.name.localeCompare(b.name)
   })
 
   return (
-    <Panel title="从预设开始" desc="选择常用服务商模板，一键填入接口地址与模型">
-      <div className={styles.presetGrid}>
-        {sorted.map((preset) => (
-          <Button key={preset.id} className={styles.presetCard} onClick={() => onPick(preset)}>
-            <span className={styles.presetBody}>
-              <span className={styles.presetName}>
-                {preset.name}
-                {preset.popular ? <span className={styles.presetTag}>常用</span> : null}
-              </span>
-              <span className={styles.presetUrl}>{preset.baseUrl || '需要自己填地址'}</span>
-            </span>
-          </Button>
-        ))}
-      </div>
-    </Panel>
+    <div className={styles.presetPicker}>
+      <label htmlFor="provider-preset">从预设开始</label>
+      <Select
+        id="provider-preset"
+        aria-label="供应商预设"
+        className={styles.presetSelect}
+        placeholder="选择预设，或直接填写"
+        allowClear
+        value={picked?.id}
+        showSearch={{ optionFilterProp: 'searchLabel' }}
+        onChange={(value) => {
+          const preset = presets.find((item) => item.id === value)
+          if (preset) onPick(preset)
+          else onReset()
+        }}
+        options={sorted.map((preset) => ({
+          value: preset.id,
+          label: preset.name,
+          searchLabel: `${preset.name} ${preset.baseUrl}`,
+          url: preset.baseUrl,
+          bodyClassName: styles.presetBody,
+          urlClassName: styles.presetUrl,
+        }))}
+        optionRender={renderPresetOption}
+      />
+    </div>
   )
 }
+
+const renderPresetOption: SelectProps['optionRender'] = (option) => (
+  <span className={option.data.bodyClassName}>
+    <span>{option.label}</span>
+    <span className={option.data.urlClassName}>{option.data.url || '需要自己填写接口地址'}</span>
+  </span>
+)
 
 /* ── 模型行 ───────────────────────────────────────────── */
 
@@ -695,7 +708,14 @@ function KeyState({
   const { styles } = useStyles()
 
   if (keyCleared) return <span className={styles.pending}>保存后清除</span>
-  if (hasKey || keyDraft.trim() !== '') return <span className={styles.okBadge}>已配置密钥</span>
+  if (keyDraft.trim() !== '') {
+    return (
+      <span className={styles.pending} role="status">
+        {hasKey ? '密钥已修改，待保存' : '密钥待保存'}
+      </span>
+    )
+  }
+  if (hasKey) return <span className={styles.okBadge}>已配置密钥</span>
   return <span className={styles.pending}>未配置密钥</span>
 }
 

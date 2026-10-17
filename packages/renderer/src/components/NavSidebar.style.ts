@@ -1,5 +1,11 @@
 import { createStyles } from 'antd-style'
-import { FONT_SIZE, NAV_ITEM_HEIGHT, NAV_ITEM_MARGIN, PANEL_HEADER_HEIGHT } from '../theme/tokens'
+import {
+  FONT_SIZE,
+  NAV_ITEM_HEIGHT,
+  NAV_ITEM_MARGIN,
+  NAV_NARROW_QUERY,
+  PANEL_HEADER_HEIGHT,
+} from '../theme/tokens'
 
 export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   nav: css`
@@ -18,7 +24,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     width: 100%;
     min-width: 0;
     height: 100%;
-    padding: 10px 5px 8px;
+    padding: 10px 3px 8px;
     background: ${token.tintNav};
   `,
   railBrand: css`
@@ -38,6 +44,11 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     padding: 0;
     color: ${token.colorTextSecondary};
     border-radius: 6px;
+    @media (pointer: coarse), ${NAV_NARROW_QUERY} {
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+    }
     &:hover {
       color: ${token.navSelectedText};
     }
@@ -77,7 +88,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     padding: 0 8px 0 16px;
     border-bottom: 1px solid ${token.colorBorderSecondary};
     color: ${token.colorText};
-    font-size: ${FONT_SIZE.item}px;
+    font-size: ${FONT_SIZE.body}px;
     font-weight: 600;
   `,
   brand: css`
@@ -100,6 +111,9 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     gap: 8px;
     height: 36px;
     padding-inline: 12px;
+    @media (pointer: coarse), ${NAV_NARROW_QUERY} {
+      height: 44px;
+    }
     color: ${token.colorTextSecondary};
     text-align: left;
   `,
@@ -112,6 +126,28 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     background: ${token.colorBgContainer};
     border-color: ${token.colorBorderSecondary};
     box-shadow: none;
+    @media (pointer: coarse), ${NAV_NARROW_QUERY} {
+      height: 44px;
+    }
+  `,
+  searchLabel: css`
+    min-width: 0;
+    flex: 1;
+    text-align: left;
+  `,
+  searchShortcut: css`
+    flex: none;
+    padding: 1px 5px;
+    border: 1px solid ${token.colorBorderSecondary};
+    border-radius: 4px;
+    color: ${token.colorTextTertiary};
+    background: ${token.tintNav};
+    font-family: inherit;
+    font-size: ${FONT_SIZE.meta}px;
+    line-height: 1.5;
+    @media (pointer: coarse), ${NAV_NARROW_QUERY} {
+      display: none;
+    }
   `,
   body: css`
     flex: 1;
@@ -131,8 +167,11 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     padding: 0 8px;
     color: ${token.colorTextTertiary};
     font-size: ${FONT_SIZE.note}px;
-    font-weight: 600;
+    font-weight: 400;
     text-align: left;
+    @media (pointer: coarse), ${NAV_NARROW_QUERY} {
+      height: 44px;
+    }
 
     &:focus-visible {
       outline: 2px solid ${token.focusRing};
@@ -150,8 +189,11 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     gap: 8px;
     width: 100%;
     height: ${NAV_ITEM_HEIGHT}px;
+    @media (pointer: coarse), ${NAV_NARROW_QUERY} {
+      height: 44px;
+    }
     padding: 0 8px;
-    font-size: ${FONT_SIZE.item}px;
+    font-size: ${FONT_SIZE.body}px;
     text-align: left;
     color: ${token.colorTextSecondary};
     > svg {
@@ -193,7 +235,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   menu: css`
     background: transparent;
     border-inline-end: none !important;
-    font-size: ${FONT_SIZE.item}px;
+    font-size: ${FONT_SIZE.body}px;
 
     .${prefixCls}-menu-item,
     .${prefixCls}-menu-submenu-title {
@@ -204,6 +246,10 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       padding-inline: 8px !important;
       border-radius: 6px;
       color: ${token.colorTextSecondary};
+      @media (pointer: coarse), ${NAV_NARROW_QUERY} {
+        height: 44px;
+        line-height: 44px;
+      }
     }
     .${prefixCls}-menu-item:hover {
       background: ${token.tintHover};
@@ -223,7 +269,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       padding: 0 8px !important;
       color: ${token.colorTextTertiary};
       font-size: ${FONT_SIZE.note}px;
-      font-weight: 600;
+      font-weight: 400;
     }
     .${prefixCls}-menu-item-selected {
       background: ${token.navSelectedBg} !important;
@@ -259,23 +305,32 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   `,
   accountRow: css`
     display: flex;
-    align-items: center;
-    padding: 8px 8px 8px 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    padding: 8px;
+    border-top: 1px solid ${token.colorBorderSecondary};
   `,
   accountRowCollapsed: css`
     flex-direction: column;
+    align-items: center;
     gap: 4px;
     width: 100%;
     padding: 4px 0 5px;
+    border-top: 0;
   `,
   account: css`
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    flex: 1;
+    flex: none;
     gap: 8px;
+    width: 100%;
     height: ${NAV_ITEM_HEIGHT}px;
-    margin: 1px ${NAV_ITEM_MARGIN}px 4px;
+    @media (pointer: coarse), ${NAV_NARROW_QUERY} {
+      height: 44px;
+    }
+    margin: 0;
     padding: 0 8px;
     border: 1px solid transparent;
     border-radius: 6px;
@@ -292,6 +347,10 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     height: 38px;
     margin: 0;
     padding: 0;
+    @media (pointer: coarse), ${NAV_NARROW_QUERY} {
+      width: 44px;
+      height: 44px;
+    }
   `,
   accountAvatar: css`
     flex: none;
@@ -302,11 +361,21 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   `,
   accountSettings: css`
     flex: none;
-    width: 36px;
-    height: 36px;
-    min-width: 36px;
-    padding: 0;
-    color: ${token.colorTextTertiary};
+    justify-content: flex-start;
+    gap: 8px;
+    width: 100%;
+    height: ${NAV_ITEM_HEIGHT}px;
+    padding: 0 8px;
+    color: ${token.colorTextSecondary};
+    font-size: ${FONT_SIZE.body}px;
+    .${prefixCls}-btn-icon {
+      display: inline-flex;
+      justify-content: center;
+      width: 26px;
+    }
+    @media (pointer: coarse), ${NAV_NARROW_QUERY} {
+      height: 44px;
+    }
   `,
   accountSettingsActive: css`
     color: ${token.navSelectedText};
@@ -316,7 +385,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     min-width: 0;
     overflow: hidden;
     color: ${token.colorText};
-    font-size: ${FONT_SIZE.item}px;
+    font-size: ${FONT_SIZE.body}px;
     font-weight: 500;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -358,7 +427,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       padding: 5px 8px;
       border-radius: ${token.borderRadiusSM}px;
       color: ${token.colorText};
-      font-size: ${FONT_SIZE.item}px;
+      font-size: ${FONT_SIZE.body}px;
       line-height: 1.4;
     }
     .${prefixCls}-dropdown-menu-item-icon {
@@ -403,7 +472,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   accountMenuName: css`
     overflow: hidden;
     color: ${token.colorText};
-    font-size: ${FONT_SIZE.item}px;
+    font-size: ${FONT_SIZE.body}px;
     font-weight: 600;
     text-overflow: ellipsis;
     white-space: nowrap;

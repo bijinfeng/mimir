@@ -1,0 +1,105 @@
+{
+  "date": "2026-10-17",
+  "account": "admin@example.com",
+  "surfaces": {
+    "wide": [
+      1280,
+      1024
+    ],
+    "mobile": [
+      390,
+      844
+    ]
+  },
+  "library": {
+    "titlePx": 28,
+    "moreEnter": "opens menu",
+    "cardSpace": "opens HTML document",
+    "mobilePageScrollWidth": 390
+  },
+  "navigation": {
+    "mobileRailHeights": [
+      44,
+      44,
+      44,
+      44,
+      44,
+      44,
+      44
+    ],
+    "shiftTabFromClose": "设置",
+    "tabFromSettings": "关闭侧边栏",
+    "afterEscapeFocus": "展开侧边栏",
+    "afterEscapeBodyOverflow": "visible"
+  },
+  "document": {
+    "h1Count": 1,
+    "h1Px": 28,
+    "titleEscape": "unchanged, focus returns to rename",
+    "mobileCommandAvailable": 314,
+    "mobileCommandScrollWidth": 314,
+    "mobileGroupWidths": [
+      52,
+      52,
+      52,
+      52,
+      52,
+      52
+    ],
+    "mobileCommandOverflow": false,
+    "saveDisplay": "已保存 (loaded persisted document)"
+  },
+  "breakpoints": [
+    {
+      "width": 879,
+      "pageScrollWidth": 879,
+      "navWidth": 52,
+      "commandWidth": 803,
+      "commandScrollWidth": 803
+    },
+    {
+      "width": 880,
+      "pageScrollWidth": 880,
+      "navWidth": 52,
+      "commandWidth": 804,
+      "commandScrollWidth": 804
+    },
+    {
+      "width": 881,
+      "pageScrollWidth": 881,
+      "navWidth": 256,
+      "commandWidth": 601,
+      "commandScrollWidth": 601
+    }
+  ],
+  "provider": {
+    "settingsTitlePx": 22,
+    "formTitlePx": 22,
+    "presetSearch": "OpenAI keyboard selection filled name, URL and 3 preset models",
+    "repeatManualAdd": "one manual input, focus model4, info message",
+    "draftSecret": "密钥待保存",
+    "testDraftOutcome": "cancelled, no provider saved"
+  },
+  "desktop": {
+    "build": "pass",
+    "smoke": "12 checks pass; local startup, first setup, cloud bridge isolation",
+    "visual": "current source build opened with disposable local userData; seeded note rendered; library/document captures; process stopped",
+    "finalBuild": "pass after AccountRow submenu fix; /tmp/mimir-yuque-polish-desktop-menu-build.log"
+  },
+  "themeSubmenu": {
+    "result": "fixed and confirmed in real browser",
+    "choices": [
+      "深色",
+      "跟随系统",
+      "浅色"
+    ],
+    "afterSelection": "submenu hidden; requested theme active; focus admin，账号菜单",
+    "mobile": "dark/light also verified at 390px, page width 390"
+  },
+  "cleanup": {
+    "theme": "light",
+    "viewportOverride": "reset",
+    "providerDraft": "discarded; no provider or secret saved",
+    "desktop": "disposable smoke process stopped and temporary userData removed"
+  }
+}

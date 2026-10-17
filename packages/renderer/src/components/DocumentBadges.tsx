@@ -64,18 +64,18 @@ export const BADGE_COLORS: Record<Appearance, Record<string, ColorPair>> = {
 }
 
 /** 色对随 props 变化，所以走 createStyles 的第二个入参而不是内联 style */
-const useStyles = createStyles(({ css }, props: { fg: string; bg: string }) => ({
+const useStyles = createStyles(({ css }, props: { fg: string; bg: string; quiet?: boolean }) => ({
   badge: css`
     display: inline-flex;
     align-items: center;
     flex: none;
-    font-size: ${FONT_SIZE.badge}px;
-    font-weight: 600;
+    font-size: ${props.quiet ? FONT_SIZE.meta : FONT_SIZE.badge}px;
+    font-weight: ${props.quiet ? 400 : 600};
     line-height: 1.6;
-    letter-spacing: 0.02em;
+    letter-spacing: ${props.quiet ? 'normal' : '0.02em'};
     color: ${props.fg};
-    background: ${props.bg};
-    padding: 1px 6px;
+    background: ${props.quiet ? 'transparent' : props.bg};
+    padding: ${props.quiet ? '0' : '1px 6px'};
     border-radius: 4px;
   `,
 }))
@@ -85,10 +85,11 @@ interface BadgeProps {
   bg: string
   children: ReactNode
   style?: CSSProperties
+  quiet?: boolean
 }
 
-function Badge({ fg, bg, children, style }: BadgeProps) {
-  const { styles } = useStyles({ fg, bg })
+function Badge({ fg, bg, children, style, quiet }: BadgeProps) {
+  const { styles } = useStyles({ fg, bg, quiet })
   return (
     <span className={styles.badge} style={style}>
       {children}
@@ -109,10 +110,13 @@ export function StatusBadge({
   status,
   style,
   showReady,
+  quiet,
 }: {
   status: DocumentStatus
   style?: CSSProperties
   showReady?: boolean
+  /** Library cards can show the routine ready state as unobtrusive text. Errors retain a badge. */
+  quiet?: boolean
 }) {
   const appearance = useAppearance()
   if (status === 'ready' && !showReady) return null
@@ -120,7 +124,7 @@ export function StatusBadge({
   if (!item) return null
   const pair = item[appearance]
   return (
-    <Badge fg={pair.fg} bg={pair.bg} style={style}>
+    <Badge fg={pair.fg} bg={pair.bg} style={style} quiet={quiet && status === 'ready'}>
       {item.label}
     </Badge>
   )

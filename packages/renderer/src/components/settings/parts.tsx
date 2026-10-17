@@ -25,18 +25,20 @@ export function Panel({
   desc,
   extra,
   children,
+  className,
 }: {
   title?: ReactNode
   desc?: ReactNode
   extra?: ReactNode
   children?: ReactNode
+  className?: string
 }) {
   const { styles } = useStyles()
   const hasHead = title || desc || extra
   return (
-    <div className={styles.panel}>
+    <div className={`${styles.panel} ${className ?? ''}`}>
       {hasHead ? (
-        <div className={styles.panelTitle}>
+        <div className={styles.panelTitle} data-panel-heading>
           <div className={styles.panelTitleMain}>
             {title ? <span className={styles.panelTitleText}>{title}</span> : null}
             {desc ? <span className={styles.panelDesc}>{desc}</span> : null}

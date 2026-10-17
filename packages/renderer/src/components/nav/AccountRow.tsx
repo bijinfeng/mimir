@@ -137,10 +137,15 @@ export function AccountRow({
          都得靠可及名称补回来。文案取「账号菜单」而不是逐项列举——
          菜单在三到四项之间（账号资料 / 主题 / 数据统计 / 登出，本地模式
          下没有最后一项），列全了又长又漏得快 */
-      aria-label={collapsed ? `${user.name}，账号菜单` : undefined}
+      aria-label={`${user.name}，账号菜单`}
       ref={accountTriggerRef}
     >
-      <Avatar size={26} src={user.image ?? undefined} className={styles.accountAvatar}>
+      <Avatar
+        aria-hidden="true"
+        size={26}
+        src={user.image ?? undefined}
+        className={styles.accountAvatar}
+      >
         {user.name.slice(0, 1).toUpperCase()}
       </Avatar>
       {collapsed ? null : <span className={styles.accountName}>{user.name}</span>}
@@ -152,6 +157,7 @@ export function AccountRow({
       <Dropdown
         trigger={['click']}
         open={accountOpen}
+        destroyOnHidden
         placement="topRight"
         classNames={{ root: styles.accountMenuPopup }}
         /* 关菜单时把子菜单状态一并重置：下次打开停在收起态（与 antd
@@ -177,7 +183,6 @@ export function AccountRow({
             选择同一步，就不存在那个窗口。
           */
           onClick: ({ key }) => {
-            setAccountOpen(false)
             if (key.startsWith('theme:')) {
               /*
                 用 `flushSync` **同步**收起子菜单，再切主题。
@@ -190,8 +195,10 @@ export function AccountRow({
                 flushSync（见其 `triggerOpenKeys` 的 forceFlush 分支）。
               */
               flushSync(() => setThemeOpen(false))
+              setAccountOpen(false)
               return setMode(key.slice('theme:'.length) as ThemeMode)
             }
+            setAccountOpen(false)
             if (key === 'account') return onOpenAccount()
             if (key === 'stats') return onOpenStats()
             if (key === 'signout') return void api.auth.signOutAndLeave()
@@ -232,10 +239,15 @@ export function AccountRow({
             size="small"
             icon={<Settings size={16} />}
             className={`${styles.accountSettings} ${settingsActive ? styles.accountSettingsActive : ''}`}
-            onClick={onOpenSettings}
+            onClick={(event) => {
+              event.currentTarget.focus()
+              onOpenSettings()
+            }}
             aria-label="设置"
             aria-current={settingsActive ? 'page' : undefined}
-          />
+          >
+            {!collapsed && '设置'}
+          </Button>
         </Tooltip>
       )}
     </div>

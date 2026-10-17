@@ -63,7 +63,7 @@ export function NavSidebar({
 }: NavSidebarProps) {
   const { styles } = useStyles()
   const navigate = useNavigate()
-  const { runGuarded } = useUnsaved()
+  const { runGuarded, pending } = useUnsaved()
   const foldersQuery = useQuery({ queryKey: ['folders'], queryFn: api.folders.list })
   const conversationsQuery = useQuery({
     queryKey: ['conversations'],
@@ -80,24 +80,31 @@ export function NavSidebar({
     restoreOverlayFocusRef.current = true
     onCloseOverlay()
   }
-  const goDocs = (scope: string) => {
-    closeAfterAction()
-    runGuarded(() => void navigate({ to: '/docs', search: { scope } }))
-  }
-  const goChat = (id?: string) => {
-    closeAfterAction()
-    runGuarded(
-      () => void navigate({ to: '/chat', search: id ? { scope: 'all', id } : { scope: 'all' } }),
-    )
-  }
-  const goSettingsSection = (section: 'account' | 'stats') => {
-    closeAfterAction()
-    runGuarded(() => void navigate({ to: '/settings', search: { scope: 'all', section } }))
-  }
-  const goSettings = () => {
-    closeAfterAction()
-    runGuarded(() => void navigate({ to: '/settings', search: { scope: 'all' } }))
-  }
+  const goDocs = (scope: string) =>
+    runGuarded(() => {
+      closeAfterAction()
+      void navigate({ to: '/docs', search: { scope } })
+    })
+  const goChat = (id?: string) =>
+    runGuarded(() => {
+      closeAfterAction()
+      void navigate({ to: '/chat', search: id ? { scope: 'all', id } : { scope: 'all' } })
+    })
+  const goSettingsSection = (section: 'account' | 'stats') =>
+    runGuarded(() => {
+      closeAfterAction()
+      void navigate({ to: '/settings', search: { scope: 'all', section } })
+    })
+  const goSettings = () =>
+    runGuarded(() => {
+      closeAfterAction()
+      void navigate({ to: '/settings', search: { scope: 'all' } })
+    })
+  const openRecent = (id: string, scope: string) =>
+    runGuarded(() => {
+      closeAfterAction()
+      onOpenDocument(id, scope)
+    })
   const openPalette = () => {
     closeAfterAction()
     onOpenPalette()
@@ -148,7 +155,31 @@ export function NavSidebar({
   }
 
   const workspace = (
-    <div className={styles.panel}>
+    <div
+      className={styles.panel}
+      onKeyDown={(event) => {
+        if (!narrowViewport || !overlayOpen || pending || event.key !== 'Tab') return
+        const nodes = [
+          ...event.currentTarget.querySelectorAll<HTMLElement>(
+            'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]',
+          ),
+        ].filter(
+          (node) =>
+            node.tabIndex >= 0 &&
+            node.getClientRects().length > 0 &&
+            !node.closest('[inert], [hidden]'),
+        )
+        const first = nodes[0]
+        const last = nodes.at(-1)
+        if (event.shiftKey && document.activeElement === first && last) {
+          event.preventDefault()
+          last.focus()
+        } else if (!event.shiftKey && document.activeElement === last && first) {
+          event.preventDefault()
+          first.focus()
+        }
+      }}
+    >
       <div className={styles.panelHeading}>
         <span className={styles.brand}>
           {!hideTopBar && <BrandMark size={22} title={null} />}
@@ -167,7 +198,12 @@ export function NavSidebar({
       </div>
       <div className={styles.primaryActions}>
         <Button className={styles.searchButton} icon={<Search size={17} />} onClick={openPalette}>
-          搜索
+          <span className={styles.searchLabel}>快速搜索…</span>
+          <kbd className={styles.searchShortcut} aria-hidden="true">
+            {typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
+              ? '⌘ K'
+              : 'Ctrl K'}
+          </kbd>
         </Button>
         <NavigationAction
           label="知识库"
@@ -211,12 +247,7 @@ export function NavSidebar({
           conversations.length === 0 && (
             <p className={styles.conversationEmpty}>暂无对话，点上方“新建对话”</p>
           )}
-        <RecentNotes
-          userId={userId}
-          activeId={selection.id}
-          onBeforeOpen={closeAfterAction}
-          onOpenDocument={onOpenDocument}
-        />
+        <RecentNotes userId={userId} activeId={selection.id} onOpenDocument={openRecent} />
       </div>
       <div className={styles.foot} data-scrolled={bodyScrolled || undefined}>
         <AccountRow
@@ -298,12 +329,12 @@ export function NavSidebar({
           placement="left"
           size="min(280px, 100vw)"
           closable={false}
-          keyboard
-          mask={{ closable: true }}
-          focusable={{ trap: true, focusTriggerAfterClose: false }}
+          keyboard={!pending}
+          mask={{ closable: !pending }}
+          focusable={{ trap: !pending, focusTriggerAfterClose: false }}
           onClose={dismissOverlay}
           afterOpenChange={(open) => {
-            if (open) overlayCloseRef.current?.focus()
+            if (open && !pending) overlayCloseRef.current?.focus()
             else if (restoreOverlayFocusRef.current) overlayTriggerRef.current?.focus()
           }}
           styles={{ header: { display: 'none' }, body: { padding: 0, overflow: 'hidden' } }}

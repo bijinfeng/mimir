@@ -16,9 +16,8 @@ import { useEditorThemeVars } from '../theme/editor-theme-bridge'
  * 笔记的正文编辑器。
  *
  * **只负责正文，不负责标题。** 标题是文档级元数据（它决定文件名，见
- * `lib/vault.ts` 的 `buildNotePath`），由 `DocumentPanel` 用 antd 的
- * `Typography.Title editable` 就地编辑。曾经两处都渲染标题，页面上就出现了
- * 两个一模一样的 h1。
+ * `lib/vault.ts` 的 `buildNotePath`），由 `DocumentPanel` 通过 contentHeader
+ * 注入唯一的 DocumentTitle，放在正文滚动列、Markdown 可编辑区域之外。
  *
  * ## 与另外三种编辑器的关系（D-054）
  *
@@ -50,6 +49,8 @@ interface Props {
   onDirtyChange?: ((dirty: boolean) => void) | undefined
   /** 编辑区右侧的固定列（大纲）。透传给编辑器外壳的 bodySide */
   bodySide?: ReactNode
+  contentHeader?: ReactNode
+  onSaveStateChange?: ((state: NoteSaveState) => void) | undefined
   /** 新建笔记的一次性正文聚焦请求 */
   focusOnReady?: boolean
   onFocusReady?: () => void
@@ -58,12 +59,16 @@ interface Props {
   onDocumentAgentHandleChange?: (handle: ChatDocumentAgent | null) => void
 }
 
+export type NoteSaveState = 'idle' | 'pending' | 'saving' | 'saved' | 'error'
+
 export function NoteEditor({
   document: doc,
   onAskAboutSelection,
   onAiPreset,
   onDirtyChange,
   bodySide,
+  contentHeader,
+  onSaveStateChange,
   focusOnReady,
   onFocusReady,
   onOpenInternalNote,
@@ -222,6 +227,8 @@ export function NoteEditor({
         extensions={createExtensions()}
         initialContent={doc.body}
         contentClassName={contentStyles.content}
+        contentHeader={contentHeader}
+        onSaveStateChange={onSaveStateChange}
         onSave={onSave}
         onExportMarkdown={async (markdown) => {
           const { yaml } = await api.conversations.readMarkdownFrontmatter(doc.id)

@@ -28,7 +28,7 @@ export function NavigationAction({
       aria-current={active ? 'page' : undefined}
       ref={buttonRef}
       onClick={(event) => {
-        if (compact && label === '展开侧边栏') event.currentTarget.focus()
+        event.currentTarget.focus()
         onClick()
       }}
     >

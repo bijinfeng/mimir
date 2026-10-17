@@ -61,7 +61,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   /* ── 页头 ───────────────────────────────────────────── */
   title: css`
     margin: 0 10px 18px;
-    font-size: ${FONT_SIZE.section}px;
+    font-size: ${FONT_SIZE.settingsTitle}px;
     font-weight: 600;
     line-height: 1.4;
     color: ${token.colorText};
@@ -71,7 +71,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   `,
   contentTitle: css`
     margin: 0 0 24px;
-    font-size: ${FONT_SIZE.pageTitle}px;
+    font-size: ${FONT_SIZE.settingsTitle}px;
     font-weight: 700;
     line-height: 1.25;
     letter-spacing: -0.02em;
@@ -644,13 +644,49 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     /* 返回按钮贴左，不要 antd Button 的内边距把它推进去 */
     margin-left: -7px;
   `,
+  providerFormTitle: css`
+    margin: 0 0 24px;
+    font-size: ${FONT_SIZE.settingsTitle}px;
+    font-weight: 650;
+    line-height: 1.4;
+    color: ${token.colorText};
+  `,
+  settingsPath: css`
+    margin-bottom: 16px;
+    font-size: ${FONT_SIZE.item}px;
+    color: ${token.colorTextTertiary};
+    @media ${NAV_NARROW_QUERY} { display: none; }
+  `,
+  formPanel: css`
+    > [data-panel-heading] {
+      border-bottom: none;
+      padding-bottom: 12px;
+    }
+  `,
+  presetPicker: css`
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    font-size: ${FONT_SIZE.item}px;
+    color: ${token.colorTextSecondary};
+    @container settings-content (max-width: 620px) {
+      align-items: stretch;
+      flex-direction: column;
+      gap: 6px;
+    }
+  `,
+  presetSelect: css`
+    width: min(100%, 320px);
+    min-width: 0;
+  `,
   formRow: css`
     display: flex;
     gap: 16px;
-    padding: 14px 20px;
+    padding: 10px 20px;
 
-    & + & {
-      border-top: 1px solid ${token.colorBorderSecondary};
+    &:last-child {
+      padding-bottom: 24px;
     }
     @container settings-content (max-width: 620px) {
       flex-direction: column;
@@ -757,7 +793,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       padding: 12px;
       border: 1px solid ${token.colorBorderSecondary};
       border-radius: ${token.borderRadius}px;
-      background: ${token.tintNav};
+      background: transparent;
 
       > :nth-child(2) {
         grid-column: 1 / -1;

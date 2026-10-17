@@ -58,6 +58,12 @@ export const useStyles = createStyles(({ css, token }) => ({
     > svg {
       flex: none;
     }
+    @media ${NAV_NARROW_QUERY} {
+      height: 36px;
+      border-bottom: 0;
+      > svg { display: none; }
+      > span:last-child { display: none; }
+    }
     @media (max-width: 600px) {
       margin-inline: -16px;
       padding-inline: 16px;
@@ -75,11 +81,11 @@ export const useStyles = createStyles(({ css, token }) => ({
     margin: 0 auto;
 
     @media ${NAV_NARROW_QUERY} {
-      padding-top: 20px;
+      padding-top: 8px;
     }
   `,
   kbTitle: css`
-    font-size: ${FONT_SIZE.pageTitle}px;
+    font-size: ${FONT_SIZE.display}px;
     font-weight: 600;
     line-height: 1.25;
     margin: 0;
@@ -87,10 +93,14 @@ export const useStyles = createStyles(({ css, token }) => ({
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    @media ${NAV_NARROW_QUERY} {
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
   `,
   kbDesc: css`
     margin: 8px 0 0;
-    font-size: ${FONT_SIZE.excerpt}px;
+    font-size: ${FONT_SIZE.body}px;
     color: ${token.colorTextSecondary};
     line-height: 1.6;
   `,
@@ -253,6 +263,7 @@ export const useStyles = createStyles(({ css, token }) => ({
   layoutSwitch: css`
     order: 2;
     margin-left: auto;
+    flex: none;
 
     @media (max-width: 720px) {
       order: 1;
@@ -267,7 +278,7 @@ export const useStyles = createStyles(({ css, token }) => ({
    */
   sectionHead: css`
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     gap: 16px;
     margin: 14px 0 10px;
@@ -284,7 +295,7 @@ export const useStyles = createStyles(({ css, token }) => ({
     align-items: baseline;
     gap: 6px;
     flex: none;
-    font-size: ${FONT_SIZE.item}px;
+    font-size: ${FONT_SIZE.body}px;
     font-weight: 600;
     color: ${token.colorText};
   `,
@@ -331,8 +342,8 @@ export const useStyles = createStyles(({ css, token }) => ({
       box-shadow 0.12s ease-out;
 
     &:hover {
-      border-color: ${token.colorPrimaryBorder};
-      background: ${token.tintHover};
+      border-color: ${token.colorBorder};
+      background: ${token.colorFillQuaternary};
     }
 
     /* 卡片本体不可聚焦（里面是标题按钮 + 动作按钮，见 DocCard 的注释），
@@ -346,6 +357,11 @@ export const useStyles = createStyles(({ css, token }) => ({
     align-items: center;
     gap: 8px;
     min-width: 0;
+    min-height: 20px;
+    padding-inline-end: 24px;
+    @media (pointer: coarse), ${NAV_NARROW_QUERY} {
+      padding-inline-end: 32px;
+    }
   `,
   cardIcon: css`
     flex: none;
@@ -398,8 +414,8 @@ export const useStyles = createStyles(({ css, token }) => ({
     border: none;
     background: none;
     font-family: inherit;
-    font-size: ${FONT_SIZE.item}px;
-    font-weight: 600;
+    font-size: ${FONT_SIZE.body}px;
+    font-weight: 500;
     color: ${token.colorText};
     text-align: left;
     white-space: nowrap;
@@ -459,6 +475,24 @@ export const useStyles = createStyles(({ css, token }) => ({
     opacity: 1;
     transition: opacity 0.12s ease-out;
     margin-inline-end: -6px;
+    .kb-card & {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      margin: 0;
+    }
+    > button,
+    > a {
+      width: 32px;
+      height: 32px;
+      min-width: 32px;
+      padding: 0;
+      @media (pointer: coarse), ${NAV_NARROW_QUERY} {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+      }
+    }
 
     .kb-card:hover &,
     .kb-card:focus-within &,

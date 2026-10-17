@@ -9,7 +9,7 @@ import { KnowledgeBaseCreateModal } from '../KnowledgeBaseCreateModal'
 import { api } from '../../lib/api'
 import { FolderGlyph } from './folder-icons'
 import { isDescendantOf, joinPath, nameOf, parentOf } from './folder-ops'
-import { FONT_SIZE, NAV_ITEM_HEIGHT } from '../../theme/tokens'
+import { FONT_SIZE, NAV_ITEM_HEIGHT, NAV_NARROW_QUERY } from '../../theme/tokens'
 
 /**
  * 左导航的知识库分区：**平铺的知识库列表** + 增删改（D-079）。
@@ -52,10 +52,13 @@ const useStyles = createStyles(({ css, token }) => ({
     margin-top: 10px;
     padding: 0 2px 0 8px;
     border-radius: 6px;
+    @media (pointer: coarse), ${NAV_NARROW_QUERY} {
+      height: 44px;
+    }
   `,
   headTitle: css`
     font-size: ${FONT_SIZE.note}px;
-    font-weight: 600;
+    font-weight: 400;
     color: ${token.colorTextTertiary};
   `,
   headAdd: css`
@@ -66,6 +69,11 @@ const useStyles = createStyles(({ css, token }) => ({
     min-width: 28px;
     padding: 0;
     color: ${token.colorTextTertiary};
+    @media (pointer: coarse), ${NAV_NARROW_QUERY} {
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+    }
     &:hover,
     &:focus-visible {
       color: ${token.navSelectedText};
@@ -121,6 +129,10 @@ const useRowStyles = createStyles(({ css, token, prefixCls }) => ({
     border-radius: 6px;
     color: ${token.colorTextSecondary};
     transition: background 0.12s ease-out;
+    font-size: ${FONT_SIZE.body}px;
+    @media (pointer: coarse), ${NAV_NARROW_QUERY} {
+      height: 44px;
+    }
 
     &:hover {
       background: ${token.colorBgTextHover};
@@ -181,7 +193,7 @@ const useRowStyles = createStyles(({ css, token, prefixCls }) => ({
     .row[data-menu-open='true'] & {
       opacity: 0;
     }
-    @media (hover: none) {
+    @media (hover: none), ${NAV_NARROW_QUERY} {
       opacity: 0;
     }
   `,
@@ -190,6 +202,10 @@ const useRowStyles = createStyles(({ css, token, prefixCls }) => ({
     flex: none;
     width: 28px;
     height: 28px;
+    @media (pointer: coarse), ${NAV_NARROW_QUERY} {
+      width: 44px;
+      height: 44px;
+    }
   `,
   /* 数字和 ⋯ 共用右端位置；键盘聚焦、菜单展开时也显示操作。 */
   rowOps: css`
@@ -210,9 +226,14 @@ const useRowStyles = createStyles(({ css, token, prefixCls }) => ({
       opacity: 1;
       pointer-events: auto;
     }
-    @media (hover: none) {
+    @media (hover: none), ${NAV_NARROW_QUERY} {
       opacity: 1;
       pointer-events: auto;
+    }
+    @media (pointer: coarse), ${NAV_NARROW_QUERY} {
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
     }
   `,
   rowMenu: css`
@@ -221,6 +242,9 @@ const useRowStyles = createStyles(({ css, token, prefixCls }) => ({
     }
     .${prefixCls}-dropdown-menu-item {
       min-height: 30px;
+      @media (pointer: coarse), ${NAV_NARROW_QUERY} {
+        min-height: 44px;
+      }
     }
   `,
 }))

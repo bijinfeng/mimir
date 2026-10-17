@@ -1,7 +1,10 @@
 import type { DocumentSummary } from '@mimir/shared'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
-import { chipOf, displayDocumentTitle, docIcon } from './LibraryView'
+import { act } from 'react'
+import { createRoot } from 'react-dom/client'
+import { MimirProvider } from '../../theme/MimirProvider'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { chipOf, displayDocumentTitle, docIcon, DocCard } from './LibraryView'
 
 const baseFile: DocumentSummary = {
   id: 'file-1',
@@ -59,5 +62,91 @@ describe('知识库文件名和类型图标', () => {
     expect(chipOf(baseFile)).toBeNull()
     expect(chipOf({ ...baseFile, kind: 'note' })).toBe('笔记')
     expect(chipOf({ ...baseFile, kind: 'web' })).toBe('网页')
+  })
+})
+
+let cardRoot: ReturnType<typeof createRoot> | undefined
+let cardHost: HTMLDivElement | undefined
+
+afterEach(async () => {
+  if (cardRoot) await act(async () => cardRoot!.unmount())
+  cardRoot = undefined
+  cardHost?.remove()
+  cardHost = undefined
+})
+
+async function mountCard() {
+  ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+  cardHost = document.createElement('div')
+  document.body.append(cardHost)
+  cardRoot = createRoot(cardHost)
+  const open = vi.fn<() => void>()
+  const replace = vi.fn<() => void>()
+  const remove = vi.fn<() => void>()
+  await act(async () =>
+    cardRoot!.render(
+      <MimirProvider>
+        <DocCard
+          doc={baseFile}
+          location="当前目录"
+          onOpen={open}
+          onEdit={open}
+          onReplace={replace}
+          onDelete={remove}
+        />
+      </MimirProvider>,
+    ),
+  )
+  return { host: cardHost, open, replace, remove }
+}
+
+async function press(node: HTMLElement) {
+  await act(async () => {
+    node.click()
+    await new Promise((resolve) => setTimeout(resolve, 40))
+  })
+}
+
+describe('知识库卡片操作', () => {
+  it('单击卡片空白与摘要都打开一次，标题保留原生按钮键盘入口', async () => {
+    const { host, open } = await mountCard()
+    const card = host.querySelector<HTMLElement>('.kb-card')!
+    await press(card)
+    expect(open).toHaveBeenCalledTimes(1)
+    await press(
+      [...card.querySelectorAll('span')].find((node) => node.textContent === '当前目录 · 128 B')!,
+    )
+    expect(open).toHaveBeenCalledTimes(2)
+    const title = [...card.querySelectorAll<HTMLButtonElement>('button')].find(
+      (node) => node.textContent === '报告.pdf',
+    )!
+    expect(title.type).toBe('button')
+    expect(title.tabIndex).toBe(0)
+    title.focus()
+    expect(document.activeElement).toBe(title)
+    await press(title)
+    expect(open).toHaveBeenCalledTimes(3)
+  })
+
+  it('更多菜单及下载不打开卡片，Escape回到更多按钮', async () => {
+    const { host, open } = await mountCard()
+    const more = host.querySelector<HTMLButtonElement>('[aria-label="报告 的更多操作"]')!
+    await press(more)
+    expect(open).not.toHaveBeenCalled()
+    const download = [...document.querySelectorAll<HTMLAnchorElement>('[role="menuitem"] a')].find(
+      (node) => node.textContent === '下载原件',
+    )!
+    expect(download.getAttribute('href')).toContain('/api/documents/file-1/file?download=1')
+    download.addEventListener('click', (event) => event.preventDefault())
+    await press(download)
+    expect(open).not.toHaveBeenCalled()
+    await press(more)
+    await act(async () =>
+      document.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', keyCode: 27, bubbles: true }),
+      ),
+    )
+    expect(document.activeElement).toBe(more)
+    expect(open).not.toHaveBeenCalled()
   })
 })

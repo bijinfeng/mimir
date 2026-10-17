@@ -73,6 +73,95 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       text-overflow: ellipsis;
     }
   `,
+  headerPath: css`
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+    color: ${token.colorTextTertiary};
+    font-size: ${FONT_SIZE.item}px;
+  `,
+  headerFolder: css`
+    flex: 0 1 auto;
+    max-width: 32%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    @media ${NAV_NARROW_QUERY} {
+      display: none;
+      & + span { display: none; }
+    }
+  `,
+  headerPathCurrent: css`
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: ${token.colorTextSecondary};
+    font-weight: 500;
+  `,
+  saveStatus: css`
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding-inline: 6px;
+    color: ${token.colorTextTertiary};
+    font-size: ${FONT_SIZE.meta}px;
+    white-space: nowrap;
+    &[data-save-state='error'] {
+      color: ${token.colorErrorText};
+    }
+    &[data-save-state='saving'] svg {
+      animation: mimir-save-spin 1s linear infinite;
+    }
+    @keyframes mimir-save-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      &[data-save-state='saving'] svg {
+        animation: none;
+      }
+    }
+  `,
+  noteHeading: css`
+    margin-bottom: 28px;
+  `,
+  noteTitleGroup: css`
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    min-width: 0;
+  `,
+  noteTitle: css`
+    &&.${prefixCls}-typography {
+      flex: 0 1 auto;
+      min-width: 0;
+      margin: 0 0 10px;
+      font-size: ${FONT_SIZE.display}px;
+      font-weight: 700;
+      line-height: 1.35;
+      color: ${token.colorText};
+      overflow-wrap: anywhere;
+    }
+  `,
+  noteTitleInput: css`
+    &&.${prefixCls}-input {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 0;
+      font-size: ${FONT_SIZE.display}px;
+      font-weight: 700;
+      line-height: 1.35;
+      border-bottom-color: ${token.focusRing};
+    }
+  `,
+  noteUpdated: css`
+    font-size: ${FONT_SIZE.meta}px;
+    line-height: 1.7;
+    color: ${token.colorTextTertiary};
+  `,
   headerTitleEdit: css`
     flex: none;
     width: 24px;
@@ -104,7 +193,10 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       background: ${token.colorFillSecondary};
     }
 
-    @media (hover: none) {
+    @media (hover: none), (pointer: coarse), ${NAV_NARROW_QUERY} {
+      width: 40px;
+      min-width: 40px;
+      height: 40px;
       opacity: 1;
       pointer-events: auto;
     }
@@ -280,13 +372,19 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     }
 
     @media (max-width: 500px) {
-      width: 28px;
+      width: 40px;
+      height: 40px;
       justify-content: center;
       padding: 0;
 
       span {
         display: none;
       }
+    }
+
+    @media (pointer: coarse) {
+      min-width: 40px;
+      min-height: 40px;
     }
   `,
 
@@ -558,7 +656,8 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   `,
   olItemActive: css`
     color: ${token.navSelectedText};
-    background: ${token.navSelectedBg};
+    background: transparent;
+    box-shadow: inset 2px 0 ${token.colorText};
     font-weight: 600;
   `,
   /* ── 页脚：来源 / 被引用 ────────────────────────────── */

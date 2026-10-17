@@ -4,10 +4,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { App, Button, Empty, Input, Modal, Select, Skeleton, Typography } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import type { ChatDocumentAgent } from '@mimir/chat'
-import { NoteEditor } from './NoteEditor'
+import { NoteEditor, type NoteSaveState } from './NoteEditor'
 import { useContentStyles } from './ContentTypography.style'
 import { DocumentFooter } from './document/DocumentFooter'
 import { DocumentHeader } from './document/DocumentHeader'
+import { DocumentTitle } from './document/DocumentTitle'
 import { useStyles } from './document/DocumentPanel.style'
 import { FilePreview } from './document/FilePreview'
 import { MarkdownBody } from './document/MarkdownBody'
@@ -84,6 +85,16 @@ export function DocumentPanel({
   })
 
   const doc = docQuery.data
+  const [noteSave, setNoteSave] = useState<{ id: string | undefined; state: NoteSaveState } | null>(
+    null,
+  )
+  const reportNoteSaveState = (state: NoteSaveState) => {
+    setNoteSave((current) =>
+      current !== null && current.id === documentId && current.state === state
+        ? current
+        : { id: documentId, state },
+    )
+  }
   const docKind = doc?.kind
   const [command, setCommand] = useState<'rename' | 'move' | 'search' | null>(null)
   const [commandValue, setCommandValue] = useState('')
@@ -698,7 +709,9 @@ export function DocumentPanel({
           doc={doc}
           onBack={onBack}
           onBackToChat={onBackToChat}
-          onRename={(next) => renameTitle.mutate(next)}
+          noteSaveState={
+            renameTitle.isPending ? 'saving' : noteSave?.id === doc.id ? noteSave.state : 'idle'
+          }
           onAskAi={() => askAi()}
           menu={menu}
         />
@@ -773,6 +786,15 @@ export function DocumentPanel({
                 <NoteEditor
                   key={doc.id}
                   document={doc}
+                  contentHeader={
+                    <DocumentTitle
+                      key={doc.id}
+                      title={doc.title}
+                      updatedAt={doc.updatedAt}
+                      onRename={(next) => renameTitle.mutate(next)}
+                    />
+                  }
+                  onSaveStateChange={reportNoteSaveState}
                   focusOnReady={newNoteFocusId === doc.id}
                   onFocusReady={() => requestNewNoteFocus(null)}
                   onOpenInternalNote={(id) => runGuarded(() => onOpenDocument(id))}

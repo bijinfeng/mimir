@@ -350,6 +350,8 @@ export interface MarkdownEditorProps {
   initialContent: string
   /** 正文排版类。与只读视图共用同一个（宿主注入） */
   contentClassName?: string
+  /** Host metadata above the editable body, within the same reading scroll area. */
+  contentHeader?: ReactNode
   /** 保存。抛出的 Error 的 message 会显示在状态行上 */
   onSave: (markdown: string) => Promise<void>
   /** Export the current live body; the host chooses a filename and handles download. */
@@ -358,6 +360,10 @@ export interface MarkdownEditorProps {
   onAiPreset?: ((instruction: string) => void) | undefined
   /** 有没有未保存的改动（宿主用它武装离开前的拦截） */
   onDirtyChange?: (dirty: boolean) => void
+  /** Actual save lifecycle; pending includes the debounce interval. */
+  onSaveStateChange?:
+    | ((state: 'idle' | 'pending' | 'saving' | 'saved' | 'error') => void)
+    | undefined
   /**
    * 把「立即保存」交给宿主，供「保存并离开」调用。卸载时传 null。
    *
@@ -409,17 +415,19 @@ export interface MarkdownEditorProps {
   flush?: boolean
 }
 
-type SaveState = 'idle' | 'saving' | 'saved' | 'error'
+type SaveState = 'idle' | 'pending' | 'saving' | 'saved' | 'error'
 
 export function MarkdownEditor({
   documentId,
   extensions,
   initialContent,
   contentClassName,
+  contentHeader,
   onSave,
   onExportMarkdown,
   onAiPreset,
   onDirtyChange,
+  onSaveStateChange,
   onSaveHandle,
   focusOnReady = false,
   onFocusReady,
@@ -435,6 +443,9 @@ export function MarkdownEditor({
   flush = false,
 }: MarkdownEditorProps) {
   const [state, setState] = useState<SaveState>('idle')
+  useEffect(() => {
+    onSaveStateChange?.(state)
+  }, [state, onSaveStateChange])
   const [error, setError] = useState<string | null>(null)
   /** 插图这类**工具条动作**的失败。与保存失败分开：两者的处置完全不同 */
   const [actionError, setActionError] = useState<string | null>(null)
@@ -612,7 +623,7 @@ export function MarkdownEditor({
         dirtyRef.current = true
         setDirty(true)
         onDirtyChange?.(true)
-        setState('saving')
+        setState(saveFlightRef.current ? 'saving' : 'pending')
         setError(null)
 
         // 防抖：连续敲字期间不发请求。到点后走与「重试」同一条路径，
@@ -740,6 +751,7 @@ export function MarkdownEditor({
       onDirtyChange: (next) => {
         dirtyRef.current = next
         setDirty(next)
+        if (next) setState(saveFlightRef.current ? 'saving' : 'pending')
         onDirtyChangeRef.current?.(next)
       },
       ...(agentServicesRef.current
@@ -974,8 +986,11 @@ export function MarkdownEditor({
       <div className="me-scroll mimir-markdown-scroll">
         {writingDraft && <MarkdownWritingPreview draft={writingDraft} editor={editor} />}
         <div className={contentClassName}>
-          {/* EditorContent 负责把编辑器挂进 React 树，并在卸载时清理 */}
-          <EditorContent editor={editor} className="mimir-markdown-body" />
+          <div className="mimir-markdown-body">
+            {contentHeader}
+            {/* EditorContent 负责把编辑器挂进 React 树，并在卸载时清理 */}
+            <EditorContent editor={editor} />
+          </div>
         </div>
       </div>
     </EditorShell>

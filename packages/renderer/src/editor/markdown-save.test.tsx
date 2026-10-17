@@ -1,7 +1,7 @@
 /** @vitest-environment happy-dom */
 import { Editor, Extension } from '@tiptap/core'
 import { MarkdownEditor, type MarkdownAgentHandle } from '@mimir/office'
-import { act, useEffect } from 'react'
+import { act, useEffect, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useUnsaved, UnsavedProvider } from '../lib/unsaved.js'
@@ -33,6 +33,8 @@ async function mount(
   manual: {
     onExportMarkdown?: (markdown: string) => Promise<void>
     onAiPreset?: (instruction: string) => void
+    contentHeader?: ReactNode
+    onSaveStateChange?: (state: 'idle' | 'pending' | 'saving' | 'saved' | 'error') => void
   } = {},
 ) {
   const host = document.createElement('div')
@@ -94,6 +96,49 @@ function replaceBody(editor: Editor, body: string) {
 }
 
 describe('自动保存与离开守卫', () => {
+  it('标题位于正文外，保存状态区分待保存、实际写入与失败重试', async () => {
+    const first = deferred<void>()
+    const retry = deferred<void>()
+    const states: string[] = []
+    const writes: string[] = []
+    const view = await mount(
+      (body) => {
+        writes.push(body)
+        return writes.length === 1 ? first.promise : retry.promise
+      },
+      undefined,
+      undefined,
+      {
+        contentHeader: <h1>文档元数据标题</h1>,
+        onSaveStateChange: (state) => states.push(state),
+      },
+    )
+    const heading = view.host.querySelector('h1')!
+    expect(heading.closest('.ProseMirror')).toBeNull()
+    expect(view.editor.getMarkdown()).toBe('初始正文')
+    expect(states.at(-1)).toBe('idle')
+    replaceBody(view.editor, '需要写入的正文')
+    expect(states.at(-1)).toBe('pending')
+    expect(writes).toEqual([])
+    const clickSave = (label: string) => {
+      const button = view.host.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)!
+      expect(button.disabled).toBe(false)
+      act(() => button.click())
+    }
+    clickSave('立即保存')
+    expect(states.at(-1)).toBe('saving')
+    expect(writes).toEqual(['需要写入的正文'])
+    await act(async () => first.reject(new Error('磁盘写入失败')))
+    expect(states.at(-1)).toBe('error')
+    expect(view.unsaved.isDirty).toBe(true)
+    clickSave('重试保存')
+    expect(states.at(-1)).toBe('saving')
+    await act(async () => retry.resolve())
+    expect(states.at(-1)).toBe('saved')
+    expect(view.unsaved.isDirty).toBe(false)
+    expect(writes).toEqual(['需要写入的正文', '需要写入的正文'])
+  })
+
   it('导出读取当前未保存正文，下载完成后仍保留编辑和 dirty', async () => {
     const completed = deferred<void>()
     const exported: string[] = []

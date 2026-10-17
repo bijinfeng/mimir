@@ -328,7 +328,7 @@ function AppShell() {
               hideTopBar={isDesktop}
               onToggleCollapsed={toggleNavCollapsed}
               userId={userId}
-              onOpenDocument={(id, scope) => runGuarded(() => openDocument(id, scope))}
+              onOpenDocument={openDocument}
             />
           </div>
 

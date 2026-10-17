@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { MimirProvider } from '../../theme/MimirProvider'
 import { UnsavedProvider, useUnsaved } from '../../lib/unsaved'
 import { DocumentHeader } from './DocumentHeader'
+import { DocumentTitle } from './DocumentTitle'
 import { buildDocMenu } from './doc-menu'
 
 const baseDoc: DocumentDetail = {
@@ -59,10 +60,13 @@ async function renderHeader(
           <DocumentHeader
             doc={doc}
             onBack={onBack}
-            onRename={onRename}
+            noteSaveState="idle"
             onAskAi={onAskAi}
             menu={menu}
           />
+          {doc.kind === 'note' ? (
+            <DocumentTitle title={doc.title} updatedAt={doc.updatedAt} onRename={onRename} />
+          ) : null}
           <DirtyControl />
         </UnsavedProvider>
       </MimirProvider>,
@@ -96,10 +100,19 @@ describe('共用文档头部', () => {
       expect(Boolean(view.host.querySelector('[aria-label^="修改笔记标题"]'))).toBe(
         doc.kind === 'note',
       )
-      expect(view.host.textContent).not.toContain('2026')
       expect(view.host.textContent).not.toContain('DOCX')
       await view.unmount()
     }
+  })
+
+  it('笔记路径不重复主标题，画布标题显示真实更新时间和保存反馈', async () => {
+    const view = await renderHeader(baseDoc)
+    expect(
+      view.host.querySelector('[aria-label="文档路径"]')?.parentElement?.querySelector('h1'),
+    ).toBeNull()
+    expect(view.host.querySelector('time')?.getAttribute('datetime')).toBe(baseDoc.updatedAt)
+    expect(view.host.querySelector('[role="status"]')?.textContent).toBe('已保存')
+    await view.unmount()
   })
 
   it('返回仍经过未保存守卫，问 AI 与笔记改名入口仍可用', async () => {
@@ -117,6 +130,32 @@ describe('共用文档头部', () => {
     await click('[aria-label="返回知识库"]')
     expect(view.onBack).not.toHaveBeenCalled()
     expect(view.host.querySelector('[data-pending="yes"]')).not.toBeNull()
+    await view.unmount()
+  })
+
+  it('标题 Enter 只提交一次，Escape 取消并把焦点返回改名按钮', async () => {
+    const view = await renderHeader(baseDoc)
+    const edit = async (text: string, key: string) => {
+      await act(async () =>
+        view.host.querySelector<HTMLButtonElement>('[aria-label^="修改笔记标题"]')!.click(),
+      )
+      const input = view.host.querySelector<HTMLInputElement>('[aria-label="笔记标题"]')!
+      await act(async () => {
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, text)
+        input.dispatchEvent(new Event('input', { bubbles: true }))
+      })
+      await act(async () =>
+        input.dispatchEvent(new KeyboardEvent('keydown', { key, code: key, bubbles: true })),
+      )
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+      expect(view.host.querySelector('[aria-label="笔记标题"]')).toBeNull()
+      expect(document.activeElement).toBe(view.host.querySelector('[aria-label^="修改笔记标题"]'))
+    }
+    await edit(' 新标题 ', 'Enter')
+    expect(view.onRename).toHaveBeenCalledExactlyOnceWith('新标题')
+    await edit('放弃的标题', 'Escape')
+    expect(view.onRename).toHaveBeenCalledTimes(1)
+    expect(view.host.querySelector('h1')?.textContent).toBe(baseDoc.title)
     await view.unmount()
   })
 

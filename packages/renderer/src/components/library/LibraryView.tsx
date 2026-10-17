@@ -381,6 +381,18 @@ export function LibraryView({ scope }: { scope: string }) {
   const showSectionHint = folderPath !== null
   const hasFailedDocuments = items.some((doc) => doc.status === 'failed')
 
+  const layoutControl = (
+    <Segmented
+      className={styles.layoutSwitch}
+      value={layout}
+      onChange={(value) => switchLayout(value as LibraryLayout)}
+      options={[
+        { value: 'list', icon: <List size={16} />, label: '列表' },
+        { value: 'card', icon: <LayoutGrid size={16} />, label: '卡片' },
+      ]}
+    />
+  )
+
   return (
     <div
       className={styles.page}
@@ -420,7 +432,9 @@ export function LibraryView({ scope }: { scope: string }) {
       <div className={styles.head}>
         {showKbChrome ? (
           <>
-            <h1 className={styles.kbTitle}>{kbTitle}</h1>
+            <h1 className={styles.kbTitle} title={kbTitle}>
+              {kbTitle}
+            </h1>
             {kbDesc && <p className={styles.kbDesc}>{kbDesc}</p>}
             <div className={styles.metaRow}>
               <span>{listQuery.isLoading ? '正在读取文档' : `${items.length} 个文档`}</span>
@@ -503,15 +517,7 @@ export function LibraryView({ scope }: { scope: string }) {
                 </>
               ))}
           </div>
-          <Segmented
-            className={styles.layoutSwitch}
-            value={layout}
-            onChange={(value) => switchLayout(value as LibraryLayout)}
-            options={[
-              { value: 'list', icon: <List size={16} />, label: '列表' },
-              { value: 'card', icon: <LayoutGrid size={16} />, label: '卡片' },
-            ]}
-          />
+          {!narrowViewport && layoutControl}
         </div>
 
         {/*
@@ -557,7 +563,8 @@ export function LibraryView({ scope }: { scope: string }) {
               '文档'
             )}
           </span>
-          {showSectionHint && (
+          {narrowViewport && layoutControl}
+          {showSectionHint && !narrowViewport && (
             <span className={styles.sectionHint}>
               可拖入文件上传，单文件不超过 {formatBytes(FILE_MAX_BYTES)}
             </span>
@@ -1091,7 +1098,7 @@ interface DocCardProps {
  * 打开入口），鼠标点卡片任意位置也能打开；动作按钮是它的兄弟。
  * 这与文件管理器（Finder / Google Drive）的卡片同构。
  */
-function DocCard({ doc, location, onOpen, onEdit, onReplace, onDelete }: DocCardProps) {
+export function DocCard({ doc, location, onOpen, onEdit, onReplace, onDelete }: DocCardProps) {
   const { styles } = useStyles()
   const chip = chipOf(doc)
   const isFile = doc.kind === 'file'
@@ -1211,7 +1218,7 @@ function DocCard({ doc, location, onOpen, onEdit, onReplace, onDelete }: DocCard
         {docMetaOf(doc) ? ` · ${docMetaOf(doc)}` : ''}
       </span>
       <span className={styles.cardFoot}>
-        <StatusBadge status={doc.status} showReady />
+        <StatusBadge status={doc.status} showReady quiet />
         <span className={styles.cardTime}>{doc.updatedAt ? formatDate(doc.updatedAt) : ''}</span>
       </span>
     </div>
