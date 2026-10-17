@@ -219,7 +219,8 @@ it('reads actual existing native fields, grouped values and filters without a lo
   const base = await props(),
     ui = mount({ ...base, sheet: (await readXlsx(native.bytes)).sheets[0]! })
   pickSelectOption(ui.host, '透视表', '原生透视')
-  expect(ui.host.textContent).toContain('已有透视表为只读配置')
+  expect(ui.host.textContent).toContain('现有配置来自原件')
+  expect(button(ui.host, '编辑布局').disabled).toBe(true)
   expect(ui.host.textContent).toContain('渠道：全部项')
   expect(ui.host.querySelector('input[aria-label="源数据范围"]')).toBeNull()
   tab(ui.host, '汇总')
@@ -345,4 +346,145 @@ it('clears obsolete fields and displays the real invalid range issue after selec
   )
   expect(button(ui.host, '创建数据透视表').disabled).toBe(true)
   expect(base.onOperation).not.toHaveBeenCalled()
+})
+
+it('seeds existing layout from native values, applies one strict edit and cancels draft with Escape', async () => {
+  const fixture = await xlsxCrossSheetPivotFixture()
+  const native = await applyXlsxPivotOperation(
+    fixture.bytes,
+    {
+      op: 'add_pivot',
+      sheetId: fixture.source.id,
+      targetSheetId: fixture.sheet.id,
+      sourceRange: 'A1:F6',
+      targetCell: 'A1',
+      rowFields: ['部门', '区域'],
+      values: [
+        { field: '金额', agg: 'average' },
+        { field: '成本', agg: 'max' },
+      ],
+      name: '真实已有透视',
+    },
+    0,
+  )
+  const workbook = await readXlsx(native.bytes),
+    sheet = workbook.sheets[1]!
+  const { inspectXlsxPivotLayout } = await import('../xlsx-pivot-editability.js')
+  const execute = vi.fn<XlsxPivotControlsProps['onOperation']>().mockResolvedValue(true)
+  const base: XlsxPivotControlsProps = {
+    sheet,
+    sheets: workbook.sheets,
+    range: 'A1:F6',
+    contextKey: 'existing',
+    sourceKey: native.bytes,
+    busy: false,
+    onOperation: execute,
+    readLayoutEligibility: (path) => inspectXlsxPivotLayout(native.bytes, sheet.id, path),
+  }
+  const ui = mount(base)
+  pickSelectOption(ui.host, '透视表', '真实已有透视')
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 80))
+  })
+  expect(button(ui.host, '编辑布局').disabled).toBe(false)
+  click(ui.host, '编辑布局')
+  expect(selectValueText(ui.host, '行字段 1')).toBe('部门')
+  expect(selectValueText(ui.host, '行字段 2')).toBe('区域')
+  expect(button(ui.host, '应用布局').disabled).toBe(true)
+  expect(ui.host.querySelector('[aria-label="来源工作表"]')).toBeNull()
+  tab(ui.host, '汇总')
+  expect(selectValueText(ui.host, '汇总方式 1')).toBe('平均值')
+  expect(selectValueText(ui.host, '汇总方式 2')).toBe('最大值')
+  expect(ui.host.querySelector('[aria-label="数字格式 1"]')).toBeNull()
+  expect(ui.host.querySelector('[aria-label="显示方式 1"]')).toBeNull()
+  pickSelectOption(ui.host, '汇总方式 1', '求和')
+  expect(button(ui.host, '应用布局').disabled).toBe(false)
+  click(ui.host, '应用布局')
+  await act(async () => {
+    await Promise.resolve()
+  })
+  expect(execute).toHaveBeenCalledTimes(1)
+  expect(execute.mock.calls[0]![0]).toEqual({
+    op: 'edit_pivot_layout',
+    sheetId: sheet.id,
+    pivotPath: sheet.pivots![0]!.path,
+    rowFields: ['部门', '区域'],
+    columnFields: [],
+    values: [
+      { field: '金额', agg: 'sum' },
+      { field: '成本', agg: 'max' },
+    ],
+  })
+  expect(ui.host.textContent).toContain('布局已应用')
+  click(ui.host, '编辑布局')
+  act(() =>
+    ui.host
+      .querySelector('.mimir-xlsx-pivot')!
+      .dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })),
+  )
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 25))
+  })
+  expect(ui.host.querySelector('[aria-label="应用布局"]')).toBeNull()
+  expect(document.activeElement).toBe(button(ui.host, '编辑布局'))
+  expect(execute).toHaveBeenCalledTimes(1)
+})
+
+it('discards late eligibility on object roundtrip and aborts a pending layout edit when cancelled', async () => {
+  const base = await props()
+  const native = await applyXlsxPivotOperation(
+    (await xlsxPivotFixture()).bytes,
+    {
+      op: 'add_pivot',
+      sheetId: base.sheet.id,
+      sourceRange: 'A1:F6',
+      targetCell: 'I1',
+      rowFields: ['区域'],
+      values: [{ field: '金额', agg: 'sum' }],
+      name: '异步已有透视',
+    },
+    0,
+  )
+  const workbook = await readXlsx(native.bytes),
+    sheet = workbook.sheets[0]!,
+    pivot = sheet.pivots![0]!
+  const { inspectXlsxPivotLayout } = await import('../xlsx-pivot-editability.js')
+  const state = await inspectXlsxPivotLayout(native.bytes, sheet.id, pivot.path)
+  const reads: {
+    signal: AbortSignal
+    finish: (result: Awaited<ReturnType<typeof inspectXlsxPivotLayout>>) => void
+  }[] = []
+  let finish!: (ok: boolean) => void
+  const execute = vi.fn<XlsxPivotControlsProps['onOperation']>(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve
+      }),
+  )
+  const ui = mount({
+    ...base,
+    sheet,
+    sheets: workbook.sheets,
+    onOperation: execute,
+    readLayoutEligibility: (_path, signal) =>
+      new Promise((resolve) => reads.push({ signal, finish: resolve })),
+  })
+  pickSelectOption(ui.host, '透视表', pivot.name)
+  expect(reads).toHaveLength(1)
+  pickSelectOption(ui.host, '透视表', '新建透视表')
+  pickSelectOption(ui.host, '透视表', pivot.name)
+  expect(reads[0]!.signal.aborted).toBe(true)
+  await act(async () => reads[0]!.finish(state))
+  expect(button(ui.host, '编辑布局').disabled).toBe(true)
+  await act(async () => reads[1]!.finish(state))
+  click(ui.host, '编辑布局')
+  tab(ui.host, '汇总')
+  pickSelectOption(ui.host, '汇总方式 1', '平均值')
+  click(ui.host, '应用布局')
+  const signal = execute.mock.calls[0]![1].signal
+  click(ui.host, '取消编辑')
+  expect(signal.aborted).toBe(true)
+  await act(async () => finish(true))
+  expect(ui.host.textContent).not.toContain('布局已应用')
+  expect(ui.host.querySelector('[aria-label="应用布局"]')).toBeNull()
 })

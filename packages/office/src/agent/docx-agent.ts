@@ -1,3 +1,4 @@
+import { FORCED_TRACKING_REASON } from '../docx-forced-tracking.js'
 import { replaceNoteText } from './docx-note-edit.js'
 import type { Editor } from '@tiptap/core'
 import {
@@ -36,6 +37,7 @@ import type { SectionInfo, SectionSettings } from '../../vendor/packages/docx-en
 import {
   applyRevisions,
   collectRevisions,
+  TRACK_IGNORE,
 } from '../../vendor/apps/docs/src/renderer/editor/revisions.js'
 
 /** GenOffice DOCX tool names at 480548fd55f1be3593ee0d8e316a734751d58309. */
@@ -112,6 +114,7 @@ export interface DocxAgentContext {
   selection: DocxAgentSelection
   blocks: DocxAgentBlock[]
   text: string
+  editingRestriction?: string
 }
 export interface DocxAgentResult {
   ok: true
@@ -675,9 +678,14 @@ export function createDocxAgentHandle(
   const trackStorage = () =>
     (editor.storage as unknown as { trackChanges?: { enabled?: boolean } }).trackChanges
   const restoreRevision = () => {
-    if (revisionRestore === null) return
+    if (revisionRestore === null) {
+      if (options.session?.protection.getAccess().mandatoryTracking && trackStorage())
+        trackStorage()!.enabled = true
+      return
+    }
     const storage = trackStorage()
-    if (storage) storage.enabled = revisionRestore
+    if (storage)
+      storage.enabled = options.session?.protection.getAccess().mandatoryTracking || revisionRestore
     revisionRestore = null
   }
   const onTransaction = ({ transaction }: { transaction: { docChanged: boolean } }) => {
@@ -701,6 +709,15 @@ export function createDocxAgentHandle(
   })
   const beforeWrite = (roundId?: string, commentsOnly = false) => {
     if (!commentsOnly) assertWrite()
+    if (options.session?.protection.getAccess().mandatoryTracking) {
+      if (
+        !editor.state.plugins.some((plugin) =>
+          (plugin as unknown as { key: string }).key.startsWith('mimirForcedTracking'),
+        )
+      )
+        throw new Error('当前编辑器未挂载强制修订守卫，未修改文档')
+      if (trackStorage()) trackStorage()!.enabled = true
+    }
     if (!commentsOnly && revisionMode && revisionRestore === null) {
       const storage = trackStorage()
       if (!storage) throw new Error('当前编辑器不支持 AI 修订')
@@ -727,6 +744,42 @@ export function createDocxAgentHandle(
     }
     options.onDirtyChange(true)
   }
+  const forcedText = (html: string) => {
+    const host = document.createElement('div')
+    host.innerHTML = html
+    // DOMParser can discard block CSS/attributes before schema comparison.
+    // Only plain paragraph wrappers and supported inline elements carry text intent here.
+    for (const element of host.querySelectorAll('*')) {
+      if (
+        !['P', 'SPAN', 'STRONG', 'B', 'EM', 'I', 'U', 'S', 'STRIKE'].includes(element.tagName) ||
+        (element.tagName === 'P' && element.attributes.length > 0)
+      )
+        throw new Error(FORCED_TRACKING_REASON)
+    }
+    const parsed = PmDOMParser.fromSchema(editor.schema).parse(host)
+    const paragraph = editor.schema.nodes.docParagraph!.create()
+    if (parsed.childCount !== 1 || !parsed.firstChild?.hasMarkup(paragraph.type, paragraph.attrs))
+      throw new Error(FORCED_TRACKING_REASON)
+    const content = parsed.firstChild.content
+    content.forEach((node) => {
+      if (!node.isText) throw new Error(FORCED_TRACKING_REASON)
+    })
+    return content
+  }
+  const publishTrackedText = (tr: Transaction, roundId?: string) => {
+    if (!tr.docChanged || tr.doc.eq(editor.state.doc)) return false
+    const before = editor.state.doc,
+      hadRound = roundId ? rounds.has(roundId) : false
+    beforeWrite(roundId)
+    editor.view.dispatch(tr)
+    if (before.eq(editor.state.doc)) {
+      if (roundId && !hadRound) rounds.delete(roundId)
+      throw new Error(FORCED_TRACKING_REASON)
+    }
+    options.session!.protection.assertSave(editor.getJSON(), options.saveOptions?.current ?? {})
+    afterWrite(roundId)
+    return true
+  }
   const updateSaveOptions = (
     patch: Partial<SaveOptions>,
     roundId?: string,
@@ -749,6 +802,33 @@ export function createDocxAgentHandle(
     afterWrite(roundId)
     return true
   }
+  // Validate the entire PM + metadata pair before dispatch. A rejected PM
+  // transaction must not publish an orphan comment or manufacture history/dirty.
+  const publishCommentTransaction = (tr: Transaction, list: CommentInfo[], roundId?: string) => {
+    const state = options.saveOptions
+    if (!state) throw new Error('当前编辑器没有 DOCX 附加结构保存状态')
+    const protection = options.session?.protection
+    const commentsOnly = protection?.getAccess().commentsOnly === true
+    const next = { ...state.current, comments: list }
+    if (commentsOnly) protection!.assertCommentMutation(tr.doc.toJSON(), next)
+    const hadRound = roundId ? rounds.has(roundId) : false
+    beforeWrite(roundId, commentsOnly)
+    const publish = () => {
+      if (tr.docChanged) editor.view.dispatch(tr)
+      return editor.state.doc.eq(tr.doc)
+    }
+    const accepted = commentsOnly
+      ? protection!.runCommentTransaction(tr.doc.toJSON(), next, publish)
+      : publish()
+    if (!accepted) {
+      if (roundId && !hadRound) rounds.delete(roundId)
+      throw new Error('批注事务未被编辑器接受，请重新选择后再试')
+    }
+    state.current = next
+    if (!tr.docChanged) version += 1
+    options.onSaveOptionsChange?.()
+    afterWrite(roundId)
+  }
   const comments = (): CommentInfo[] =>
     structuredClone(
       options.saveOptions?.current.comments ??
@@ -756,6 +836,10 @@ export function createDocxAgentHandle(
         options.session?.footnotes.parsed.comments ??
         [],
     )
+  // Deleted original IDs remain reserved: the protected native writer treats
+  // them as immutable identities, including their original author/date/parent.
+  const nextCommentId = (list: CommentInfo[]): string =>
+    nextNumericId([...list, ...(options.session?.protection.readComments() ?? [])])
   const notes = (kind: 'footnote' | 'endnote'): NoteInfo[] =>
     structuredClone(
       (kind === 'footnote'
@@ -785,6 +869,9 @@ export function createDocxAgentHandle(
         selection: frozen ?? selectionOf(editor),
         blocks,
         text: editor.state.doc.textBetween(0, editor.state.doc.content.size, '\n'),
+        ...(options.session?.protection.getAccess().mandatoryTracking
+          ? { editingRestriction: FORCED_TRACKING_REASON }
+          : {}),
       }
     },
     readImage(blockIndex) {
@@ -830,11 +917,15 @@ export function createDocxAgentHandle(
     },
     setRevisionMode(enabled) {
       live()
+      if (!enabled && options.session?.protection.getAccess().mandatoryTracking)
+        throw new Error(FORCED_TRACKING_REASON)
       revisionMode = enabled
     },
     beginDraft(roundId) {
       live()
       assertWrite()
+      if (options.session?.protection.getAccess().mandatoryTracking)
+        throw new Error(FORCED_TRACKING_REASON)
       if (!roundId || drafts.has(roundId)) throw new Error('草稿轮次无效或已经开始')
       if (drafts.size === 0) draftBaseline = { dirty: options.isDirty(), version }
       const element = document.createElement('div')
@@ -909,8 +1000,30 @@ export function createDocxAgentHandle(
           'read_notes',
           'list_styles',
         ])
+        const mandatoryTracking = options.session?.protection.getAccess().mandatoryTracking === true
+        if (
+          mandatoryTracking &&
+          !readTools.has(tool) &&
+          !['insert_content', 'replace_selection', 'replace_blocks', 'apply_ops'].includes(tool)
+        )
+          throw new Error(FORCED_TRACKING_REASON)
+        if (
+          mandatoryTracking &&
+          tool === 'apply_ops' &&
+          (!Array.isArray(args.ops) ||
+            args.ops.some(
+              (op) => !op || typeof op !== 'object' || (op as JsonObject).op !== 'findReplace',
+            ))
+        )
+          throw new Error(FORCED_TRACKING_REASON)
         const commentsOnly = options.session?.protection.getAccess().commentsOnly === true
-        const commentTool = ['edit_comment', 'reply_comment', 'resolve_comment'].includes(tool)
+        const commentTool = [
+          'edit_comment',
+          'reply_comment',
+          'resolve_comment',
+          'add_comment',
+          'delete_comment',
+        ].includes(tool)
         if (!readTools.has(tool) && !(commentsOnly && commentTool)) assertWrite()
         if (roundSelection && !readTools.has(tool) && roundSelection.writeVersion !== version) {
           throw new Error('发送后文档发生其他编辑，请重新读取当前画布后再执行写入')
@@ -1062,6 +1175,15 @@ export function createDocxAgentHandle(
           )
         }
         if (tool === 'add_comment') {
+          allowedKeys(
+            args,
+            ['blockIndex', 'comment', 'text', 'occurrence', 'author', 'initials'],
+            tool,
+          )
+          if (commentsOnly) {
+            const reason = options.session!.protection.getCommentAccess('').add
+            if (reason) throw new Error(reason)
+          }
           const blockIndex = asIndex(args.blockIndex, 'blockIndex')
           const body = asString(args.comment, 'comment').trim()
           if (!body) throw new Error('批注内容不能为空')
@@ -1077,7 +1199,7 @@ export function createDocxAgentHandle(
           })
           if (overlaps) throw new Error('锚点已包含其他批注，不能覆盖其标记')
           const list = comments()
-          const id = nextNumericId(list)
+          const id = nextCommentId(list)
           const item: CommentInfo = {
             id,
             text: body,
@@ -1087,11 +1209,11 @@ export function createDocxAgentHandle(
               : { initials: asString(args.initials, 'initials') }),
             date: new Date().toISOString(),
           }
-          beforeWrite(roundId)
-          editor.view.dispatch(
+          publishCommentTransaction(
             editor.state.tr.addMark(anchor.from, anchor.to, markType.create({ ids: id })),
+            [...list, item],
+            roundId,
           )
-          updateSaveOptions({ comments: [...list, item] }, roundId)
           return result(`已添加批注 ${id}，尚未保存到库`, true, { id, anchor })
         }
         // Manual toolbar action; deliberately absent from the model tool catalog.
@@ -1150,7 +1272,7 @@ export function createDocxAgentHandle(
             const reason = options.session!.protection.getCommentAccess(rootId).reply
             if (reason) throw new Error(reason)
           }
-          const id = nextNumericId(list)
+          const id = nextCommentId(list)
           updateSaveOptions(
             {
               comments: [
@@ -1189,10 +1311,17 @@ export function createDocxAgentHandle(
           return result(`批注 ${rootId} 已解决，尚未保存到库`, true)
         }
         if (tool === 'delete_comment') {
+          allowedKeys(args, ['id', 'withReplies'], tool)
+          if (args.withReplies !== undefined && typeof args.withReplies !== 'boolean')
+            throw new Error('withReplies 必须是布尔值')
           const id = asString(args.id, 'id')
           const list = comments()
           const target = list.find((item) => item.id === id)
           if (!target) throw new Error(`找不到批注 ${id}，请重新读取`)
+          if (commentsOnly) {
+            const reason = options.session!.protection.getCommentAccess(id).delete
+            if (reason) throw new Error(reason)
+          }
           const replies = list.filter((item) => item.parentId === id)
           if (replies.length && args.withReplies !== true)
             throw new Error('批注有回复；删除整条讨论需 withReplies: true')
@@ -1216,9 +1345,11 @@ export function createDocxAgentHandle(
               if (remaining.length)
                 tr.addMark(pos, pos + node.nodeSize, markType.create({ ids: remaining.join(' ') }))
             })
-          beforeWrite(roundId)
-          if (tr.docChanged) editor.view.dispatch(tr)
-          updateSaveOptions({ comments: list.filter((item) => !deleted.has(item.id)) }, roundId)
+          publishCommentTransaction(
+            tr,
+            list.filter((item) => !deleted.has(item.id)),
+            roundId,
+          )
           return result(`已删除 ${deleted.size} 条批注，尚未保存到库`, true)
         }
         if (tool === 'read_notes') {
@@ -2330,6 +2461,16 @@ export function createDocxAgentHandle(
               : after === -1
                 ? 0
                 : blockAt(editor, after).to
+          if (mandatoryTracking) {
+            const changed = publishTrackedText(
+              editor.state.tr.replaceWith(at, at, forcedText(html)),
+              roundId,
+            )
+            return result(
+              changed ? '文字已作为修订插入，尚未保存到库' : '操作没有产生实际修改',
+              changed,
+            )
+          }
           beforeWrite(roundId)
           if (!editor.commands.insertContentAt(at, html)) throw new Error('编辑器拒绝插入内容')
           afterWrite(roundId)
@@ -2342,6 +2483,18 @@ export function createDocxAgentHandle(
           if (end < start || !html.trim()) throw new Error('替换范围或内容无效')
           const from = blockAt(editor, start).from
           const to = blockAt(editor, end).to
+          if (mandatoryTracking) {
+            if (start !== end) throw new Error(FORCED_TRACKING_REASON)
+            const block = blockAt(editor, start)
+            const changed = publishTrackedText(
+              editor.state.tr.replaceWith(block.from + 1, block.to - 1, forcedText(html)),
+              roundId,
+            )
+            return result(
+              changed ? '段内文字已作为修订替换，尚未保存到库' : '操作没有产生实际修改',
+              changed,
+            )
+          }
           const nodes = replacementNodes(editor, start, end, html)
           if (!nodes.length) throw new Error('替换内容不能解析为文档块')
           beforeWrite(roundId)
@@ -2366,6 +2519,16 @@ export function createDocxAgentHandle(
             editor.state.doc.resolve(sel.from).parent !== editor.state.doc.resolve(sel.to).parent
           ) {
             throw new Error('选区跨越多个块，请改用 replace_blocks')
+          }
+          if (mandatoryTracking) {
+            const changed = publishTrackedText(
+              editor.state.tr.replaceWith(sel.from, sel.to, forcedText(html)),
+              roundId,
+            )
+            return result(
+              changed ? '选中文字已作为修订替换，尚未保存到库' : '操作没有产生实际修改',
+              changed,
+            )
           }
           beforeWrite(roundId)
           if (!editor.commands.insertContentAt({ from: sel.from, to: sel.to }, html))
@@ -2406,6 +2569,13 @@ export function createDocxAgentHandle(
           const tr = editor.state.tr
           for (const plan of plans) plan.apply(tr)
           if (!tr.docChanged) return result('操作没有产生实际修改', false)
+          if (mandatoryTracking) {
+            const changed = publishTrackedText(tr, roundId)
+            return result(
+              changed ? '文字替换已记为修订，尚未保存到库' : '操作没有产生实际修改',
+              changed,
+            )
+          }
           beforeWrite(roundId)
           editor.view.dispatch(tr)
           afterWrite(roundId)
@@ -2430,14 +2600,36 @@ export function createDocxAgentHandle(
       const round = rounds.get(roundId)
       if (!round || round.lastVersion !== version) return false
       if (protection?.getAccess().commentsOnly) {
-        if (
-          !round.commentsOnly ||
-          round.protectionEpoch !== protection.getAccess().epoch ||
-          JSON.stringify(round.content) !== JSON.stringify(editor.getJSON())
-        )
+        if (!round.commentsOnly || round.protectionEpoch !== protection.getAccess().epoch)
           return false
-        protection.assertCommentMutation(editor.getJSON(), round.saveOptions)
-        version += 1
+        protection.assertCommentMutation(round.content, round.saveOptions)
+        const target = editor.schema.nodeFromJSON(round.content)
+        if (editor.state.doc.eq(target)) version += 1
+        else {
+          const tr = editor.state.tr.replaceWith(0, editor.state.doc.content.size, target.content)
+          const accepted = protection.runCommentTransaction(
+            round.content,
+            round.saveOptions,
+            () => {
+              editor.view.dispatch(tr)
+              return editor.state.doc.eq(target)
+            },
+          )
+          if (!accepted) return false
+        }
+      } else if (protection?.getAccess().mandatoryTracking) {
+        if (round.protectionEpoch !== protection.getAccess().epoch) return false
+        const target = editor.schema.nodeFromJSON(round.content)
+        const restored = protection.trackingPolicy()!.restore(round.content, () => {
+          editor.view.dispatch(
+            editor.state.tr
+              .replaceWith(0, editor.state.doc.content.size, target.content)
+              .setMeta(TRACK_IGNORE, true),
+          )
+          return editor.state.doc.eq(target)
+        })
+        if (!restored) return false
+        restoreRevision()
       } else {
         assertWrite()
         if (!editor.commands.setContent(round.content)) return false

@@ -60,6 +60,24 @@ TanStack AI 负责 `RUN_FINISHED.outcome → client_tool_* → resume → parent
 
 服务端在落库和模型调用前校验 PPTX image part：仅 user 内嵌真实 PNG，每轮至多 1 张、请求历史至多 4 张、每张 5 MiB/全部 20 MiB，尺寸至多 1280×1920、2457600 像素；不抓取远程 URL。视觉未配置返回 `VISION_NOT_READY`，非法图片返回 `PPTX_SNAPSHOT_INVALID`；普通 RAG 带图返回 `IMAGE_AGENT_REQUIRED`，不得吞图退回文字。截图只在当前侧栏有界内存中保留，数据库历史仍只落文字，刷新后不承诺图片/绑定恢复。
 
+### Agent 媒体参数与原附件
+
+`agent-media.ts`统一图片比例、PPTX生成参数与已前处理的分析请求。DOCX/Markdown/PPTX的`aspectRatio`贯穿到同一图片服务；它是供应商支持的离散尺寸选择，不能宣称任意精确比例。PPTX的`referenceImageUrls`最多4张，受控抓取后以原图片bytes的SDK ImagePart发送；GPT Image提供编辑和`transparentBackground`，DALL-E明确拒绝这两项。透明输出仅接受经有界解码证实存在透明像素的PNG，不以prompt替代alpha。
+
+`attachment://<原文件名>`通过现有对话媒体选择器显式选择原文件。文件名只作当前请求别名，不能含路径；附件bytes由私有执行options经已鉴权PPTX multipart的`attachment`字段送出，不从模型JSON读附件bytes。请求内最多4张PNG/JPEG，每张8 MiB、合计16 MiB，仍受现有整请求预算；同名附件拒绝歧义。无需新的持久化或全局临时store，附件不入知识库。选择、读取、服务和原生重解析前后均验证文档句柄、版本与取消信号；切源不能复用旧附件请求。
+
+`POST /api/conversations/document-agent/analyze-media`按`agentMediaAnalysisInputSchema`只接受已鉴权DOCX/PPTX；旧docx路径兼容。音频由用户选择原文件，经既有有界转录再分析。PPTX原视频限制32 MiB/120秒，本地取10%/35%/65%/90%四个时间点的画面、缩至1280×720包络；默认结果仅称`visual_frames_only`。显式`includeAudio:true`才提取浏览器可解码音轨为有界单声道WAV并要求转录配置，失败明确报错，不降级声称已分析声音。音轨解码15秒超时；停止后丢弃迟到解码结果。模型工具结果包含原文件名和实际分析范围，原视频不上传/入索引。转录和视觉SDK均沿统一模型接缝并接收取消信号。
+
+### PPTX 逐页生成与部分保留
+
+`generate_deck` 通过同一已鉴权 multipart `POST /api/conversations/pptx-agent/apply-ops?stream=1` 接收 `generationId`、当前 `documentId`、`expectedVersion` 与未保存原件；其他动作继续原 JSON 响应。流采用严格 NDJSON `progress/checkpoint/done/error`，共享定义位于 `pptx-deck-progress.ts`。`generationId/total/insertMode/originalPages` 全程一致，checkpoint 的完成数必须连续递增，`done` 只引用最后完整候选且完成数等于计划页数。
+
+页只有完成原生事务、媒体及裁切、ZIP 保存、有界 ZIP 验证和原生重开/页数验证后才计完成并发送 checkpoint。`PptxDeckProgressListener(progress, candidate?)` 必须被逐次 await；服务端每次等待消费产生背压，最多保留一个排队事件。最新候选替换旧候选，正常终局不重复传 ZIP。预算为单候选 50 MiB、累计实际 UTF-8 wire 256 MiB（服务端预留 8 KiB 错误终局）、单行 `ceil(50 MiB / 3) * 4 + 20000` 字符、250 个普通事件、80 页及 10 分钟；预算失败不允许部分保留，错误终局可额外占一条事件。
+
+renderer 必须增量严格解码 UTF-8、逐行验证 schema 和连续页序，并等到完整终局及流结束才认可结果。截断、无换行终局、终局后事件、身份/计划变化及超限都不允许保留；只有明确可恢复的服务端错误终局且已有完整 checkpoint，才可提供部分保留。传输失败不应自动视为可恢复。
+
+Office 临时原生预览独立于当前编辑会话，不写 dirty/version/history/library。Inspector 的“停止生成”只取消当前传输；源会话/Agent 轮取消、切源、版本变化、卸载与丢弃仍使候选永久失效，包括 A→B→A 返回同一源。停止或可恢复后页失败时，仅最后完整候选可由用户明确“保留已完成 N 页”；零完成不提供保留。保留或全部成功均返回既有 host result，经原 handle 的唯一发布、round checkpoint 和单次 history 写入。部分结果明确返回 `keptPartial/completed/missing/failedPages/notGenerated/stopped/failure`，不能伪称全部完成；原件在发布前保持完整。追加预览只浏览新增页，面板沿 320px Inspector、内部滚动及固定单一主动作，丢弃/Escape 清草稿并回焦。
+
 ## 4. Validation & Error Matrix
 
 | 条件 | 结果 |

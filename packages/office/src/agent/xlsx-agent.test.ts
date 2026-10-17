@@ -339,3 +339,91 @@ describe('XLSX inspection tools over the active unsaved canvas', () => {
     handle.dispose()
   })
 })
+
+describe('XLSX host identity result', () => {
+  it('keeps clean state, session, round and undo/redo history for an exact native no-op', async () => {
+    const bytes = load(),
+      session = await openXlsxForEdit(bytes),
+      changed = vi.fn<() => void>()
+    let noop = false
+    const handle = createXlsxAgentHandle(
+      'xlsx-1',
+      bytes,
+      session,
+      () => null,
+      changed,
+      async (request) => ({
+        bytes: request.bytes,
+        version: request.expectedVersion + (noop ? 0 : 1),
+        changedCells: [],
+        touchedEntries: [],
+      }),
+    )
+    await handle.execute('propose_operations', { operations: [{}] }, {})
+    await handle.undo()
+    const before = {
+      version: handle.getVersion(),
+      history: handle.history(),
+      session: handle.currentSession(),
+      bytes: handle.currentBytes(),
+      dirty: handle.isDirty(),
+    }
+    changed.mockClear()
+    noop = true
+    const result = await handle.execute(
+      'propose_operations',
+      { operations: [{}] },
+      { roundId: 'identity' },
+    )
+    expect(result).toMatchObject({ ok: true, changed: false, version: before.version })
+    expect(handle.getVersion()).toBe(before.version)
+    expect(handle.history()).toEqual(before.history)
+    expect(handle.currentSession()).toBe(before.session)
+    expect(handle.currentBytes()).toEqual(before.bytes)
+    expect(handle.isDirty()).toBe(before.dirty)
+    expect(changed).not.toHaveBeenCalled()
+    expect(await handle.undoRound('identity')).toBe(false)
+    handle.dispose()
+  })
+  it.each(['bytes', 'changedCells', 'touchedEntries', 'recalculation', 'recalculate'] as const)(
+    'rejects same-version %s mutation claims without publishing',
+    async (kind) => {
+      const bytes = load(),
+        changed = vi.fn<() => void>()
+      const handle = createXlsxAgentHandle(
+        'xlsx-1',
+        bytes,
+        await openXlsxForEdit(bytes),
+        () => null,
+        changed,
+        async (request) => ({
+          bytes: kind === 'bytes' ? new Uint8Array([...request.bytes, 0]) : request.bytes,
+          version: request.expectedVersion,
+          changedCells: kind === 'changedCells' ? ['sheet-1:A1'] : [],
+          touchedEntries: kind === 'touchedEntries' ? ['xl/workbook.xml'] : [],
+          recalculation:
+            kind === 'recalculation'
+              ? {
+                  engine: 'ironcalc-wasm-xlsx',
+                  engineVersion: '0.9.0',
+                  formulaCount: 1,
+                  warnings: [],
+                }
+              : undefined,
+        }),
+      )
+      await expect(
+        handle.execute(
+          'propose_operations',
+          { operations: kind === 'recalculate' ? [] : [{}], recalculate: kind === 'recalculate' },
+          {},
+        ),
+      ).rejects.toThrow('错误的画布版本')
+      expect(handle.getVersion()).toBe(0)
+      expect(handle.history()).toEqual({ undo: 0, redo: 0 })
+      expect(handle.currentBytes()).toEqual(bytes)
+      expect(changed).not.toHaveBeenCalled()
+      handle.dispose()
+    },
+  )
+})

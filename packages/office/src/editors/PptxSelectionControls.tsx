@@ -7,7 +7,7 @@ import {
   type KeyboardEvent,
 } from 'react'
 import { Check, Layers, RotateCcw } from 'lucide-react'
-import type { PptxManualFill } from '@mimir/shared'
+import { PPTX_PARAGRAPH_IMAGE_MAX_BYTES, type PptxManualFill } from '@mimir/shared'
 import type { SlideElement } from '../../vendor/packages/pptx-engine/src/types.js'
 import { elementCNvPrId } from '../../vendor/packages/pptx-engine/src/identity.js'
 import {
@@ -176,11 +176,22 @@ function SelectionEditor({
   const [size, setSize] = useState<string | null>(null)
   const [width, setWidth] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [readingImage, setReadingImage] = useState(false)
+  const [imageName, setImageName] = useState('')
+  const imageReader = useRef<FileReader | null>(null)
   const [error, setError] = useState('')
   const [status, setStatus] = useState('')
   const pending = useRef<AbortController | null>(null)
-  useEffect(() => () => pending.current?.abort(), [])
-  const locked = disabled || busy
+  useEffect(
+    () => () => {
+      pending.current?.abort()
+      const reader = imageReader.current
+      imageReader.current = null
+      reader?.abort()
+    },
+    [],
+  )
+  const locked = disabled || busy || readingImage
   const formatDirty =
     Object.entries(draft).some(([key, value]) =>
       (key === 'paragraph' || key === 'outline') && value && typeof value === 'object'
@@ -194,6 +205,61 @@ function SelectionEditor({
     setDraft((current) => ({ ...current, ...patch }))
     setError('')
     setStatus('')
+  }
+  const pickBulletImage = (file?: File) => {
+    if (!file || locked) return
+    change({ paragraph: { ...draft.paragraph, bullet: 'blip', bulletImage: undefined } })
+    setImageName('')
+    if (
+      !['image/png', 'image/jpeg'].includes(file.type) ||
+      !file.size ||
+      file.size > PPTX_PARAGRAPH_IMAGE_MAX_BYTES
+    ) {
+      setError('请选择512 KiB以内的PNG或JPEG图片')
+      return
+    }
+    const reader = new FileReader()
+    imageReader.current = reader
+    setReadingImage(true)
+    const failed = () => {
+      if (imageReader.current !== reader) return
+      imageReader.current = null
+      setReadingImage(false)
+      setError('图片读取失败，请重新选择PNG或JPEG')
+    }
+    reader.addEventListener('error', failed, { once: true })
+    reader.addEventListener('abort', failed, { once: true })
+    reader.addEventListener(
+      'load',
+      () => {
+        if (imageReader.current !== reader) return
+        imageReader.current = null
+        setReadingImage(false)
+        const base64 = String(reader.result).split(',')[1]
+        if (!base64) {
+          setError('图片读取失败，请重新选择PNG或JPEG')
+          return
+        }
+        change({
+          paragraph: {
+            ...draft.paragraph,
+            bullet: 'blip',
+            bulletChar: undefined,
+            bulletFont: undefined,
+            numType: undefined,
+            startAt: undefined,
+            bulletImage: { ext: file.type === 'image/png' ? 'png' : 'jpg', base64 },
+          },
+        })
+        setImageName(file.name)
+      },
+      { once: true },
+    )
+    try {
+      reader.readAsDataURL(file)
+    } catch {
+      failed()
+    }
   }
   const choose = (ref: string, event: Pick<MouseEvent, 'ctrlKey' | 'metaKey' | 'shiftKey'>) => {
     if (locked) return
@@ -244,6 +310,7 @@ function SelectionEditor({
   const reset = () => {
     setDraft({})
     setImageFill(null)
+    setImageName('')
     setSize(null)
     setWidth(null)
     setError('')
@@ -620,6 +687,8 @@ function SelectionEditor({
                       ),
                     })
                   }
+                  imageName={imageName}
+                  onPickImage={pickBulletImage}
                   disabled={locked || !textTargets.length}
                   lists={tab === 'list'}
                 />
@@ -668,6 +737,7 @@ function SelectionEditor({
       <div className="mimir-pptx-selection-controls__actions">
         {error && <p role="alert">{error}</p>}
         {status && <ToolbarMenuNote>{status}</ToolbarMenuNote>}
+        {readingImage && <ToolbarMenuNote>正在读取图片…</ToolbarMenuNote>}
         <ToolbarButton
           label={
             imageFill

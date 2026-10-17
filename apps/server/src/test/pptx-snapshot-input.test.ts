@@ -90,7 +90,8 @@ it('passes the PNG bytes through to the configured vision model and reports the 
   expect(response.status).toBe(200)
   const modelInput = state.stream.mock.calls[0]![0] as { messages: unknown }
   expect(modelInput.messages).toEqual(input.messages)
-  expect(await documentAgentCapabilities('pptx-1')).toMatchObject({ mediaKinds: ['image'] })
+  // Video uses extracted visual frames; audio still requires the separate transcription service.
+  expect((await documentAgentCapabilities('pptx-1'))?.mediaKinds).toEqual(['image', 'video'])
   await response.text()
 })
 it('rejects disabled vision before persisting the question or calling the model; ordinary text is unchanged', async () => {

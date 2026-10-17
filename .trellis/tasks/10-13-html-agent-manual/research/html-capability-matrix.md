@@ -1,5 +1,12 @@
 # HTML 能力矩阵与执行证据
 
+> 2026-10-17 最终补齐状态（覆盖本文历史待办时点）
+>
+> HTML：现行6工具/13实际原生操作、丰富brief/多选/备选/redo/user_edited/meta pin及工具栏/Inspector已验；restyle/extract pin是元数据确认，不冒称已自动改CSS。最终审计未确认新增漏接参数。
+>
+> 总范围与逐项证据见 `10-11-chat-edit-office/research/all-tools-final-scope-independent-check-20261017.md`；最终源码质量门见同目录 `final-quality-check-20261017.md`（root第三轮原样pnpm check：4606通过/2既有跳过、exit0，最终Web构建exit0，1764输入起止不变；不沿用旧4231）。用户已选代码/浏览器优先：真实provider未配置，新密码和Desktop自行验收；旧“待两端/待Desktop”不构成本轮新增阻断。明确支持子集与原生复杂结构拒绝仍保留，不宣传任意Office原件全兼容。
+
+
 核对日期：2026-10-13。上游固定为 `genspark-ai/genoffice@480548fd55f1be3593ee0d8e316a734751d58309`；Mimir vendor 清单同 commit。上游来源：`apps/html/src/renderer/ai/tools.ts`、`document/{ops,insert-presets}.ts`、`components/{Ribbon,FloatToolbar,StylePanel}.tsx` 及其 `App.tsx` 回调。Mimir 实现：`packages/office/src/agent/html-agent.ts`、`editors/{HtmlEditor,HtmlElementMenu,HtmlInsertMenu,HtmlAgentPrompt}.tsx`、`apps/server/src/services/html-agent-{catalog,writing}.ts`。本页的「两端」指浏览器和桌面使用相同的 renderer/HTTP 服务代码；尚未完成两端的实际界面验收。
 
 ## Agent 顶层工具

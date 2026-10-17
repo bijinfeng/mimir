@@ -21,6 +21,32 @@ DOCX 对话编辑是这层适配的扩展：`src/agent/docx-agent.ts` 持有可�
 
 原生session.save是最后防线：只读仅接受真实no-op，允许schema挂载默认值差异后返回私有原件字节；拒绝正文/附加结构及protection/writeProtection/settings或其关系直接覆盖。公开content/parsed/originalBytes变化不能放宽策略。PM事务、NodeView DOM入口、Agent附加写、草稿与整轮恢复均检查同一策略；只禁工具栏不算保护。P0不提供核验/设置/移除密码或加密，不把readonly保留称四模式受限编辑完整支持。
 
+### DOCX 原件保护 W1：会话修改密码
+
+writeProtection 与 documentProtection 凭据按节点保存在私有 WeakMap；公开 native/access/Agent 上下文只暴露能力摘要，不能含 hash、salt 或密码。修改密码验证仅解除当前会话的 writeProtection 门，不解除原件编辑模式。支持的 comments/forms 能力在核验后动态开放，正文保持只读；未知凭据、未支持的限制与设置写入仍拒绝。
+
+SID14 的 SHA512 验证仅在每请求专用 module Worker 内执行：UTF16LE 保留代理对，h0=SHA512(salt||password)，hi=SHA512(previous||LE32(i))。原件缺省 spin100000，明确0有效；格式错误、不安全整数或大于1000000不能缺省/钳制。hash 恰64字节，salt1–64字节，base64必须规范；密码最多1024个UTF16码元。主线程禁止重复digest；30秒、取消、Worker错误、面板卸载、源切换都终止Worker并结算请求。
+
+控制器固定凭据身份、epoch和活动请求，await后复核；不接受公开成功布尔值或注入核验器。错误/取消/晚到响应不改变access、文档、history或dirty。成功仅更新会话快照与epoch，使旧Agent预期版本失效；原件保护设置仍精确保留。未经实际编辑的保存返回完整原件字节；实际正文/受限编辑走已有最终守卫。原生异步保存最终返回前复核入口保护epoch与完整保存权限，重新验证后也不能复活旧保存；Editor写盘前另核当前session/source/handle与保护epoch，普通同文档继续编辑仍沿既有版本/dirty规则处理。Editor cleanup同时绑定session和documentId，A→B→A与重新打开必须重新验证；Inspector也绑定documentId，不能泄漏旧源草稿。
+
+320px保护侧栏使用Antd密码输入和标准显隐，清错随输入、Enter验证、Escape取消清空并交由Inspector关闭/恢复焦点；固定页脚单一主动作“验证并继续编辑”，验证中可取消。明文仅短期保留于面板状态和Worker请求，不进Agent/API/日志/存储。W1不包含修改/创建/移除保护设置、强制修订和整文件加密。
+
+### DOCX 原件保护 W2：原生设置与停止
+
+编辑限制四模式、建议只读、修改密码与限制密码的保留/替换/清除必须由私有 controller 准备并验证。空新密码不代表清除；已有修改密码先按 W1 验证，停止或改变带密码的 documentProtection 另核对应原生凭据。未知/损坏配置保持原件并拒绝变更。新凭据只在可终止 Worker 中按随机16字节盐与100000次SHA512生成；核验、计算、取消及失败不发布文档。
+
+PM只记录不透明的保护历史身份，实际XML/hash/salt和已经验证的内容/附加参数候选留在controller内。保护事务只允许切换已授权身份且正文不变，普通Agent操作不得构造新候选；Undo/Redo恢复对应策略，保存后仍保留这段PM历史。每次await后复核request、epoch和来源，拒绝/抛错的发布者不得留下可重放身份。密码明文不进历史、Agent或持久化存储。
+
+设置使用namespace-aware span补丁，只触碰实际Word保护节点和属性，跟随原生settings relationship；缺部件时先验证并原子创建合法part、relationship与ContentType。写前预检和最终写出均校验；最终合并只覆盖授权保护节点，保留同次内容写入产生的其他settings变化与目标外ZIP条目。停止forms/comments后，已接受的受限改动仍优先走原生保留writer，不能仅因新策略可编辑而重新生成未知段落/讨论结构。
+
+新限制立即阻止未授权写入；若启用forms/comments之前已有普通正文或附加结构修改，受限适配仍以原件为基准，当前副本保守只读，保存重开后才能填写/批注。不能只比正文指纹而忽略候选附加参数，否则会开放最终保存拒绝的受限操作。trackedChanges设置可原生写入，强制记录行为由独立T实现；W2阶段该模式保持只读。整文件打开密码与元数据清理分别属于E/P，不以W2设置支持冒充完成。
+
+### DOCX P：个人信息与已保存清理基线
+
+个人信息设置从私有原件的实际 settings relationship 和命名空间读取，最终保存对原生包执行唯一清理；关闭 vendor 的提前 scrub。仅处理明确支持的作者、修订/批注署名、公司等已知元数据，不承诺清除正文、自定义属性/XML或二进制中的身份信息。原始XML须验证合法字符、单次实体解码、真实namespace和关系；公开parsed/originalBytes或SaveOptions不能改变私有原件与保护资格。
+
+候选仅以本session私有WeakMap绑定返回Uint8Array身份。只有该候选成功写入库后才能ACK并推进单调metadata scrub floor；生成、导出、失败、复制字节、其他session与重复ACK均不能推进。成功清理后关闭设置仍写出off原生标记，但不得从初次打开的原件恢复旧姓名。floor推进前的未清理候选须在finalizer及发布前拒绝；旧同源IO成功仍确认实际已写快照，新源IO不得改变当前源基线。四类保护最终按真实包差量拒绝未经授权清理；canonical仅豁免自有根合法boolean，同名子节点属性、未知根属性和畸形值不豁免。
+
 ### DOCX 原件保护 P1-C1：已有讨论
 
 仅原件确认 enforced comments、原生关系及讨论身份可证明且无修改密码门时，开放已有讨论文字、回复、解决和重开；主正文仍 writable=false。已识别的编辑限制 hash 不要求批注操作先核验密码；含修改密码或无法判定的 writeProtection 保持只读。新增根、删除根/回复、forms、密码管理及强制修订不属于 C1。
@@ -28,6 +54,22 @@ DOCX 对话编辑是这层适配的扩展：`src/agent/docx-agent.ts` 持有可�
 资格与保存均以私有原件及原生模型为准：检查 comments/扩展的命名空间、关系及 ContentType；document 的非批注内部关系不能同时指向目标批注部件。所有段落 paraId 必须合法且全局唯一，不能只检查每条讨论的末段。未知现代线程语义保守拒绝；已支持讨论也按目标复杂内容给出独立拒绝原因。读入及最终保存最多1000条，单会话追加最多100条，不能生成重开即不再支持的结果。
 
 最终 session.save 必须确认完整 PM 未变、附加参数只有合法 comments 差量，原身份/作者/日期/parent/paraId 不变。文字仅补 w:t 内文，解决仅补 done，回复局部追加必要原生节点/关系/类型；不走正文或 vendor 全量批注重建。插入属性须复用正确 namespace 前缀或分配未占用前缀，不得重绑原件未知属性的前缀。无变化及撤销归原返回整份私有原件字节，其他非目标 ZIP 部件精确保留。受保护批注的 Agent 结构撤销只恢复 SaveOptions，校验版本/保护 epoch/正文且不得 setContent；普通正文 Cmd+Z 不代替该历史。
+
+### DOCX 原件保护 P1-C2：受限批注锚点
+
+C2 在相同 comments-only 资格下允许可证明普通单段的新增根批注、根讨论含回复删除，以及单独删除回复；正文仍不可输入或改格式。私有原件按 paragraph/run/w:t 映射完整 UTF-16 边界，不能拆开码点或凭相同文字推断段落身份。顶层 SDT/altChunk 展开会改变 docxIndex，当前及其后不能证明原生段落身份时明确拒绝新增或删除锚点，已有讨论仍保留。复杂超链接、字段、跨段等目标按资格拒绝，不转换成普通段落。
+
+最终保存及 PM guard 只允许准确授权的 comment marks 差量；移除这些 mark 后的完整规范化 PM Fragment 必须相同，不能忽略其他 marks、节点或属性。controller 对同一事务同步核 PM 与 comments metadata，任何 PM filter 拒绝都不得发布 metadata、版本、dirty 或结构 round。新增根的 ID 分配必须保留私有原件所有 ID，包括已删除项；不能复用旧身份使作者、日期或父子关系校验错认。
+
+native 保存只精确插删目标命名空间与 ID 的锚节点，必要时按真实文本边界拆 run 并保留原 rPr、未知属性及扩展；删除回复不改 document.xml，删除根只去该根三个锚节点及指定讨论。首次评论只创建必要 comments/扩展部件、关系和类型。未改 ZIP 部件精确不变，撤销归原时返回原件；C2 结构撤销同步恢复已验证的 PM comment marks 和 metadata，不得以全量正文 setContent 绕过保护。结构 round 仅在当前未保存版本有效；保存后清除是现有合同，不能称为通用 Cmd+Z/Redo 或保存后历史。
+
+### DOCX 原件保护 P1-F：原生复选框
+
+forms-only 的正文仍 writable=false；仅开放私有原件可证明的 legacy FORMCHECKBOX 与 SDT checkbox。身份按原生 occurrence 与真实 PM nodeSize 映射，不依赖控件名称、SDT ID 或同形文字。禁用、锁定、数据绑定、冲突类型、未知 Word 行为及无法证明的复杂容器保持只读；外部命名空间 opaque 扩展原样保留。
+
+PM guard 比较完整规范化状态，仅允许目标 checked/glyph 的准确差量，不能由 marks、history meta 或普通方框获得权限。鼠标命中从 glyph 两端向内部取 coords；键盘通过原生按钮 Space 切换。保存从私有原件只补目标 checked/glyph，正文、settings、其他控件及非目标 ZIP 条目精确保留；无变化或撤销归原返回整件原始 bytes。
+
+forms 使用 PM 历史，可保存后 Undo/Redo；不要套用批注结构 round 的保存清除规则。保存基线须绑定同一 session 与实际保存快照的 forms 指纹，并发保存期间的填写/撤销不能被误标为干净。正文编辑、非法属性或附加 SaveOptions 仍由 session.save 拒绝。
 
 ### DOCX 图片预览裁切
 
@@ -180,6 +222,12 @@ TIFF 当前仅接受通过条/瓦片完整性、颜色/样本组合及解码预�
 
 `preparePptxDisplayMedia` 在打开、编辑会话初始化及宿主替换时先准备显示媒体。宿主替换必须在全部异步准备后重新检查取消信号与版本，再一次发布 archive、media、尺寸和页面模型；迟到结果不得改 archive 或制造 history。
 
+### PPTX 批量图片项目符号
+
+顶层文本框/含文字形状及顶层组合的直接文字成员可共同设置图片符号；深层组、无文字或失效目标须整批拒绝，不能过滤后只改部分。选图仅是绑定当前来源、页、版本和选择的本地草稿，关闭或身份变化须终止读取；唯一固定主动作生成逐目标 `setParagraphFormat` 操作，经同一宿主 candidate 发布和历史记录。
+
+图片限制为512 KiB、400万像素以内的真实PNG/JPEG；通用 `apply_ops` 的图片符号必须在 native txn 前校验整个批次的 schema、目标、内容格式和完整解码，不能只验证扩展名或 base64 字符串。原生每目标段落的 blip、slide relationship 和媒体须对应原图字节，保留未知段落属性、非目标对象及其他 ZIP 部件；取消、版本或选择变化后的迟到 candidate 不得发布。已存在的图片符号只调大小等细节时继续保留各对象原图，不要求重新选图。
+
 ---
 
 ## 三条不能违反的规矩
@@ -268,6 +316,12 @@ TIFF 当前仅接受通过条/瓦片完整性、颜色/样本组合及解码预�
   「点一档什么也不会发生」，界面不报错）。**测试要按 pointerdown → click 的
   真序列驱动**：只派发 click 时 React 会批处理，`onChange` 照样发出，这个
   bug 会被测成通过（`EditorShell.test.tsx` 那条「面板里的下拉」就是样板）
+
+### 浏览器 Worker 的依赖导出回归
+
+加密 Worker 的边界测试须用实际生产浏览器 bundler 打包 `docx-encryption.worker.ts`，再以 `.mjs` ESM Worker 执行；断言 `require` 不存在，并移除 `Buffer`、`process`。Node 直接加载 CommonJS 依赖，或把浏览器产物存成 `.js` 后在 Node 的 CommonJS 上下文加载，都会让 `cfb` 的额外 `typeof require` 导出条件误过，掩盖真实浏览器的 `utils.cfb_new` 缺失。不能为通过测试向生产注入全局 shim。
+
+`docx-encryption-bundle.test.ts` 必须覆盖外部 Standard/Agile 原件解密、修改正文、生产 Worker 写出 Agile、另一个 Worker 解密后与预期原生 ZIP 全字节相等；新写产物另用独立实现验证密码和 HMAC。只检查导出存在、打开成功或 no-op 原件精确不能证明实际保存可用。
 
 ### 4. 保存必须走补丁路径
 

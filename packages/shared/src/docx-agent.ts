@@ -1,3 +1,5 @@
+import { agentImageAspectRatioSchema } from './agent-media.js'
+import { z } from 'zod'
 /**
  * DOCX agent wire contract, pinned to GenOffice commit
  * 480548fd55f1be3593ee0d8e316a734751d58309.
@@ -85,6 +87,7 @@ export const DOCX_IMAGE_TOOLS = [
       type: 'object',
       properties: {
         prompt: { type: 'string' },
+        aspectRatio: z.toJSONSchema(agentImageAspectRatioSchema),
         afterBlockIndex: { type: 'integer' },
         maxWidthPx: { type: 'integer' },
       },

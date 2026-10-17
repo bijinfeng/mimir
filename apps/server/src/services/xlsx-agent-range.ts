@@ -22,8 +22,17 @@ import { translateSharedFormula } from '../../../../packages/office/vendor/packa
 import { readXlsx } from '../../../../packages/office/src/xlsx.js'
 import { decodeXlsxXml } from '../../../../packages/office/src/xlsx-format.js'
 import { xlsxAttribute } from '../../../../packages/office/src/xlsx-sheet-features.js'
+import { BoundedZip } from '../../../../packages/office/src/zip-bounds.js'
+import { assertXlsxRangeFeatures, assertXlsxSheetWritable } from './xlsx-range-features.js'
 import type { XlsxHostResult } from './xlsx-agent-host.js'
 import { materializeXlsxCellStyle, xlsxRangeStyles } from './xlsx-range-styles.js'
+import { planXlsxRangeStructures, rewriteXlsxRangeFormulas } from './xlsx-range-structures.js'
+import {
+  bindXlsxRangeValidation,
+  planXlsxRangeRules,
+  xlsxNativeRuleReaders,
+  type XlsxRangeRulePlan,
+} from './xlsx-range-rules.js'
 
 const CELL = /<c\b[^>]*\/>|<c\b[^>]*>[\s\S]*?<\/c>/g
 const ROW = /<row\b([^>]*?)(?:\/>|>([\s\S]*?)<\/row>)/g
@@ -49,31 +58,6 @@ function freezeFormula(xml: string, address: string): string {
 export function assertOrdinaryFormulas(xml: string): void {
   if (/<f\b[^>]*(?:\bt=|\bref=|\bsi=)/.test(xml) || /<c\b[^>]*\bcm=/.test(xml))
     throw new Error('共享、数组或溢出公式尚不支持此范围操作')
-}
-export function assertCopyFeatures(
-  xml: string,
-  bounds: ReturnType<typeof parseRange>,
-  allowDisjointParts = false,
-): void {
-  if (/<[\w.-]+:(?:conditionalFormatting|dataValidation)\b/.test(xml))
-    throw new Error('工作表含扩展条件格式或数据验证，尚不支持保真复制')
-  if (!allowDisjointParts && /<(?:legacyDrawing|tableParts)\b/.test(xml))
-    throw new Error('源或目标工作表含批注或表格，尚不支持保真复制')
-  for (const [element] of xml.matchAll(
-    /<(?:mergeCell|hyperlink|conditionalFormatting|dataValidation)\b[^>]*>/g,
-  )) {
-    const ranges = attribute(element, 'ref') ?? attribute(element, 'sqref') ?? ''
-    for (const range of ranges.trim().split(/\s+/).filter(Boolean)) {
-      const feature = parseRange(range)
-      if (
-        bounds.startRow <= feature.endRow &&
-        bounds.endRow >= feature.startRow &&
-        bounds.startColumn <= feature.endColumn &&
-        bounds.endColumn >= feature.startColumn
-      )
-        throw new Error('复制范围与合并、链接或条件/验证规则相交，尚不支持保真复制')
-    }
-  }
 }
 export function replaceCells(xml: string, incoming: Map<string, string>): string {
   const data = /<sheetData\b[^>]*\/>|<sheetData\b[^>]*>([\s\S]*?)<\/sheetData>/.exec(xml)
@@ -158,11 +142,14 @@ export async function applyXlsxRangeOperation(
   const archive = await createBufferEntrySource(Buffer.from(bytes))
   const targetXml = await archive.readText(target.entry)
   const sourceXml = source.id === target.id ? targetXml : await archive.readText(source.entry)
-  if (/<sheetProtection\b/.test(targetXml)) throw new Error('工作表已保护，请先取消保护')
+  assertXlsxSheetWritable(targetXml)
   assertOrdinaryFormulas(targetXml)
   assertOrdinaryFormulas(sourceXml)
   const originalCells = cellMap(sourceXml)
   const writes = new Map<string, string>()
+  const structureReplacements = new Map<string, string>()
+  let rulePlan: XlsxRangeRulePlan | undefined
+  let ruleTarget: { entry: string; bounds: ReturnType<typeof parseRange> } | undefined
   if (op.op === 'convert_to_values') {
     const bounds = parseRange(op.range)
     if (rangeCellCount(bounds) > MAX_CELLS) throw new Error('范围操作最多2000格')
@@ -225,8 +212,65 @@ export async function applyXlsxRangeOperation(
       bounds.endColumn >= 16_384
     )
       throw new Error('目标超出2000格或工作表边界')
-    assertCopyFeatures(sourceXml, sourceBounds)
-    assertCopyFeatures(targetXml, bounds)
+    const featureZip = await BoundedZip.open(bytes)
+    const structurePlan =
+      op.op === 'copy_range' && !op.filterColumn
+        ? await planXlsxRangeStructures(
+            featureZip,
+            { entry: source.entry, xml: sourceXml, bounds: sourceBounds },
+            { entry: target.entry, xml: targetXml, bounds },
+            false,
+          )
+        : undefined
+    for (const [path, text] of structurePlan?.replacements ?? [])
+      structureReplacements.set(path, text)
+    if (structurePlan) {
+      ruleTarget = { entry: target.entry, bounds }
+      rulePlan = planXlsxRangeRules(
+        {
+          sheets: [
+            { entry: source.entry, name: source.name, xml: sourceXml },
+            ...(source.entry === target.entry
+              ? []
+              : [{ entry: target.entry, name: target.name, xml: targetXml }]),
+          ],
+          source: { entry: source.entry, bounds: sourceBounds },
+          target: ruleTarget,
+          move: false,
+          stylesXml: (await featureZip.readText('xl/styles.xml')) ?? undefined,
+          candidateBases: structureReplacements,
+        },
+        xlsxNativeRuleReaders(),
+      )
+      for (const [path, text] of rulePlan.replacements) structureReplacements.set(path, text)
+    }
+    if (source.entry === target.entry)
+      await assertXlsxRangeFeatures(
+        featureZip,
+        source.entry,
+        sourceXml,
+        [sourceBounds, bounds],
+        structurePlan?.permit,
+        rulePlan?.permit,
+      )
+    else {
+      await assertXlsxRangeFeatures(
+        featureZip,
+        source.entry,
+        sourceXml,
+        [sourceBounds],
+        structurePlan?.permit,
+        rulePlan?.permit,
+      )
+      await assertXlsxRangeFeatures(
+        featureZip,
+        target.entry,
+        targetXml,
+        [bounds],
+        structurePlan?.permit,
+        rulePlan?.permit,
+      )
+    }
     const width = sourceBounds.endColumn - sourceBounds.startColumn + 1
     for (let row = bounds.startRow; row <= bounds.endRow; row++)
       for (let column = bounds.startColumn; column <= bounds.endColumn; column++) {
@@ -237,40 +281,48 @@ export async function applyXlsxRangeOperation(
         let cell = originalCells.get(from) ?? `<c r="${from}"/>`
         if (op.op === 'copy_range' && op.filterColumn) cell = freezeFormula(cell, from)
         else
-          cell = cell.replace(
-            /(<f\b[^>]*>)([\s\S]*?)(<\/f>)/,
-            (_all, open: string, formula: string, close: string) => {
-              const translated = translateSharedFormula(
-                decodeXlsxXml(formula),
-                row - sourceRow,
-                column - sourceColumn,
-              )
-              if (translated === null) throw new Error(`${from} 公式平移超出边界`)
-              return (
-                open +
-                translated
-                  .replaceAll('&', '&amp;')
-                  .replaceAll('<', '&lt;')
-                  .replaceAll('>', '&gt;') +
-                close
-              )
-            },
-          )
+          cell = rewriteXlsxRangeFormulas(cell, ['f'], (formula) => {
+            const translated = translateSharedFormula(
+              formula,
+              row - sourceRow,
+              column - sourceColumn,
+            )
+            if (translated === null) throw new Error(`${from} 公式平移超出边界`)
+            return translated
+          })
         cell = cell.replace(/\br="[^"]*"/, `r="${to}"`)
         cell = materializeXlsxCellStyle(cell, styleAt(sourceRow, sourceColumn))
         writes.set(to, cell)
       }
   }
-  const updated = replaceCells(targetXml, writes)
+  const updated = replaceCells(structureReplacements.get(target.entry) ?? targetXml, writes)
+  if (updated === targetXml && !structureReplacements.size)
+    return { bytes, version, changedCells: [], touchedEntries: [] }
   const overlay = {
     ...archive,
     readText: async (path: string) => (path === target.entry ? updated : archive.readText(path)),
   }
   const plan = await planCellEditsToXlsx(overlay, [], [{ sheetName: target.name, ops: [] }])
-  const result = await assembleWithJsZip(Buffer.from(bytes), plan)
+  const replaced = new Map(plan.replaced),
+    added = new Map(plan.added)
+  for (const [path, text] of structureReplacements) {
+    if (path === target.entry) continue
+    if (await archive.has(path)) replaced.set(path, text)
+    else added.set(path, text)
+  }
+  const mutationPlan = {
+    ...plan,
+    replaced,
+    added,
+    touchedEntries: [...new Set([...plan.touchedEntries, ...structureReplacements.keys()])],
+    addedEntries: [...new Set([...plan.addedEntries, ...added.keys()])],
+  }
+  const result = await assembleWithJsZip(Buffer.from(bytes), mutationPlan)
   assertOnlyTouchedEntriesChanged(result)
+  const resultBytes = new Uint8Array(result.buffer)
+  if (rulePlan && ruleTarget) bindXlsxRangeValidation(resultBytes, rulePlan, ruleTarget)
   return {
-    bytes: new Uint8Array(result.buffer),
+    bytes: resultBytes,
     version: version + 1,
     changedCells: [...writes.keys()].map((address) => `${target.id}:${address}`),
     touchedEntries: [...result.touchedEntries],

@@ -19,11 +19,12 @@ export function evaluateXlsxPredicate(
   cell: (row: number, column: number) => PredicateScalar,
   deltaRow = 0,
   deltaColumn = 0,
+  qualifiedCell?: (sheet: string, row: number, column: number) => PredicateScalar,
 ): PredicateScalar {
   const source = formula.replace(/^=/, ''),
     tokens: string[] = []
   const lexer =
-    /\s*("(?:[^"]|"")*"|\$?[A-Z]{1,3}\$?[1-9]\d{0,6}(?::\$?[A-Z]{1,3}\$?[1-9]\d{0,6})?|(?:\d+(?:\.\d*)?|\.\d+)(?:[Ee][+-]?\d+)?|[A-Z_][A-Z0-9_.]*|<>|<=|>=|[+\-*/^&=<>(),;%])/iy
+    /\s*("(?:[^"]|"")*"|(?:(?:'(?:[^']|'')+'|[\p{L}_][\p{L}\p{N}_.]*)!)?\$?[A-Z]{1,3}\$?[1-9]\d{0,6}(?::\$?[A-Z]{1,3}\$?[1-9]\d{0,6})?|(?:\d+(?:\.\d*)?|\.\d+)(?:[Ee][+-]?\d+)?|[A-Z_][A-Z0-9_.]*|<>|<=|>=|[+\-*/^&=<>(),;%])/iuy
   let at = 0
   while (at < source.length) {
     lexer.lastIndex = at
@@ -58,17 +59,24 @@ export function evaluateXlsxPredicate(
     '^': 5,
   }
   const reference = (token: string): PredicateValue => {
-    const [a, b] = token.toUpperCase().split(':'),
+    const qualifier = /^(?:'((?:[^']|'')+)'|([^!]+))!(.+)$/.exec(token)
+    const read = qualifier
+      ? (row: number, column: number) => {
+          if (!qualifiedCell) throw new Error('条件公式工作表引用无法可靠读取')
+          return qualifiedCell(qualifier[1]?.replaceAll("''", "'") ?? qualifier[2]!, row, column)
+        }
+      : cell
+    const [a, b] = (qualifier?.[3] ?? token).toUpperCase().split(':'),
       start = shiftedReference(a!, deltaRow, deltaColumn),
       end = shiftedReference(b ?? a!, deltaRow, deltaColumn)
     if (Math.min(start.row, start.column) < 0 || end.row >= 1048576 || end.column >= 16384)
       throw new Error('条件公式引用越界')
-    if (!b) return cell(start.row, start.column)
+    if (!b) return read(start.row, start.column)
     if ((end.row - start.row + 1) * (end.column - start.column + 1) > 2000)
       throw new Error('条件公式引用超过2000格')
     const values = []
     for (let r = start.row; r <= end.row; r++)
-      for (let c = start.column; c <= end.column; c++) values.push(cell(r, c))
+      for (let c = start.column; c <= end.column; c++) values.push(read(r, c))
     return values
   }
   const call = (name: string, args: PredicateValue[]): PredicateScalar => {
@@ -124,7 +132,8 @@ export function evaluateXlsxPredicate(
       if (tokens[index++] !== ')') throw new Error('条件公式括号不匹配')
     } else if (token.startsWith('"')) left = token.slice(1, -1).replaceAll('""', '"')
     else if (/^\d|^\./.test(token)) left = Number(token)
-    else if (/^\$?[A-Z]{1,3}\$?\d/i.test(token)) left = reference(token)
+    else if (/^(?:(?:'(?:[^']|'')+'|[\p{L}_][\p{L}\p{N}_.]*)!)?\$?[A-Z]{1,3}\$?\d/iu.test(token))
+      left = reference(token)
     else if (token.toUpperCase() === 'TRUE' || token.toUpperCase() === 'FALSE')
       left = token.toUpperCase() === 'TRUE'
     else {

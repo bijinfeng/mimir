@@ -404,14 +404,20 @@ describe('protected comments live handle', () => {
     })
     const baseline = editor.getJSON(),
       setContent = vi.spyOn(editor.commands, 'setContent')
-    await expect(handle.execute('add_comment', { blockIndex: 0, comment: 'bad' })).rejects.toThrow(
-      /原件|批注|保护/,
+    // C2 allows a supported ordinary paragraph while C1 options-only history stays exact.
+    await handle.execute(
+      'add_comment',
+      { blockIndex: 0, comment: '新增后撤销' },
+      { roundId: 'add' },
     )
+    expect(handle.undoRound('add')).toBe(true)
+    dirty.mockClear()
+    const initialVersion = handle.getVersion()
     await expect(handle.execute('delete_comment', { id: '0' })).rejects.toThrow(/原件|批注|保护/)
     await expect(handle.execute('set_page_setup', { pageWidth: 700 })).rejects.toThrow(
       /原件|批注|保护/,
     )
-    expect(handle.getVersion()).toBe(0)
+    expect(handle.getVersion()).toBe(initialVersion)
     expect(dirty).not.toHaveBeenCalled()
     const noOp = await handle.execute(
       'edit_comment',
@@ -423,18 +429,22 @@ describe('protected comments live handle', () => {
     const result = await handle.execute(
       'edit_comment',
       { id: '0', text: '富格式  中文更新 Link' },
-      { roundId: 'edit', expectedVersion: 0 },
+      { roundId: 'edit', expectedVersion: initialVersion },
     )
-    expect(result).toMatchObject({ changed: true, version: 1 })
+    expect(result).toMatchObject({ changed: true, version: initialVersion + 1 })
     expect(editor.getJSON()).toEqual(baseline)
     editor.commands.insertContent('blocked')
     expect(editor.getJSON()).toEqual(baseline)
     expect(handle.undoRound('edit')).toBe(true)
     expect(setContent).not.toHaveBeenCalled()
-    expect(handle.getVersion()).toBe(2)
+    expect(handle.getVersion()).toBe(initialVersion + 2)
     expect(await session.save(editor.getJSON(), saveOptions.current)).toEqual(bytes)
     await expect(
-      handle.execute('reply_comment', { parentId: '0', text: 'late' }, { expectedVersion: 1 }),
+      handle.execute(
+        'reply_comment',
+        { parentId: '0', text: 'late' },
+        { expectedVersion: initialVersion + 1 },
+      ),
     ).rejects.toThrow(/版本/)
     const reply = await handle.execute(
       'reply_comment',

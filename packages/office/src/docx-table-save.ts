@@ -26,6 +26,9 @@ const TABLE_KEYS = [
   'tblFloatEdited',
   'tblFloatXTwips',
   'tblFloatYTwips',
+  'tblFloatXSpec',
+  'tblFloatYSpec',
+  'tblFloatWidthPx',
   'tblFloatHorzAnchor',
   'tblFloatVertAnchor',
   'tblFloatDistance',
@@ -149,6 +152,129 @@ function mapChildren(xml: string, name: string, map: (xml: string, index: number
   }
   return out + xml.slice(cursor)
 }
+function positionAttributes(tag: string) {
+  return [...tag.slice(0, tag.indexOf('>') + 1).matchAll(/\s+([\w:.-]+)\s*=\s*(["'])(.*?)\2/g)]
+}
+function positionBindings(parent: Record<string, string>, tag: string) {
+  const namespaces = { ...parent }
+  for (const match of positionAttributes(tag))
+    if (match[1]!.startsWith('xmlns:')) namespaces[match[1]!.slice(6)] = match[3]!
+  return namespaces
+}
+/** Imported positioning must be interpretable before the UI offers numeric editing. */
+export function docxTablePositionIssue(xml: string): string | null {
+  const pr = child(xml, 'w:tblPr')
+  if (!pr) return null
+  const word = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
+  const strictWord = 'http://purl.oclc.org/ooxml/wordprocessingml/main'
+  const namespaces = positionBindings(positionBindings({ w: word }, xml), pr)
+  const isWord = (uri: string | undefined) => uri === word || uri === strictWord
+  if (!isWord(namespaces.w)) return '原件定位命名空间无法可靠映射，暂不能编辑定位'
+  for (const item of splitXmlChildren(inner(pr))) {
+    if (item.name.split(':').at(-1) !== 'tblpPr') continue
+    const localNamespaces = positionBindings(namespaces, item.xml)
+    const prefix = item.name.split(':')[0]!
+    if (item.name !== 'w:tblpPr') {
+      if (!localNamespaces[prefix] || isWord(localNamespaces[prefix]))
+        return '原件使用尚不能映射的定位命名空间别名，暂不能编辑定位'
+      continue
+    }
+    if (!isWord(localNamespaces.w)) return '原件定位命名空间无法可靠映射，暂不能编辑定位'
+    for (const match of positionAttributes(item.xml)) {
+      const name = match[1]!
+      if (name.startsWith('xmlns:') || !name.includes(':') || name.startsWith('w:')) continue
+      const uri = localNamespaces[name.split(':')[0]!]
+      // The fixed native parser only interprets literal w: attributes. An alias
+      // must not be shown as zero or patched into duplicate native attributes.
+      if (!uri || isWord(uri)) return '原件使用尚不能映射的定位属性命名空间，暂不能编辑定位'
+    }
+  }
+  const positions = splitXmlChildren(inner(pr)).filter((item) => item.name === 'w:tblpPr')
+  if (positions.length > 1) return '原件含多个表格定位节点，暂不能编辑定位'
+  const position = positions[0]?.xml
+  if (!position) return null
+  if (!/^<w:tblpPr\b[^>]*(?:\/\s*>|>(?:\s|<!--[\s\S]*?-->)*<\/w:tblpPr>)$/.test(position))
+    return '原件含复杂表格定位内容，暂不能编辑定位'
+  const seen = new Set<string>()
+  const known: Record<string, RegExp> = {
+    tblpX: /^-?\d+$/,
+    tblpY: /^-?\d+$/,
+    leftFromText: /^\d+$/,
+    rightFromText: /^\d+$/,
+    topFromText: /^\d+$/,
+    bottomFromText: /^\d+$/,
+    horzAnchor: /^(page|margin|text)$/,
+    vertAnchor: /^(page|margin|text)$/,
+    tblpXSpec: /^(left|center|right|inside|outside)$/,
+    tblpYSpec: /^(top|center|bottom|inside|outside)$/,
+  }
+  for (const match of position
+    .slice(0, position.indexOf('>') + 1)
+    .matchAll(/\s+w:([\w.-]+)\s*=\s*(["'])(.*?)\2/g)) {
+    const name = match[1]!,
+      value = match[3]!
+    if (
+      seen.has(name) ||
+      !known[name]?.test(value) ||
+      (/^-?\d+$/.test(value) &&
+        (!Number.isSafeInteger(Number(value)) || Math.abs(Number(value)) > 31680))
+    )
+      return '原件含无法解释的表格定位属性，暂不能编辑定位'
+    seen.add(name)
+  }
+  return null
+}
+function positionAttribute(xml: string, name: string, value: unknown) {
+  const attribute = new RegExp(`(\\s+w:${name}\\s*=\\s*)(["'])[^"']*\\2`)
+  if (value == null) return xml.replace(attribute, '')
+  const escaped = escapeXmlAttr(String(value))
+  return attribute.test(xml)
+    ? xml.replace(attribute, (_match, prefix, quote) => `${prefix}${quote}${escaped}${quote}`)
+    : xml.replace(/(\/?>)/, ` w:${name}="${escaped}"$1`)
+}
+function patchPosition(pr: string, current: Json, baseline: Json): string {
+  const attrs = current.attrs!,
+    base = baseline.attrs!
+  const floatSide = attrs.tblFloat ?? (attrs.tblFloatSuppressed ? attrs.tblFloatSource : null)
+  const baseSide = base.tblFloat ?? (base.tblFloatSuppressed ? base.tblFloatSource : null)
+  if (
+    Boolean(floatSide && floatSide !== 'none') === Boolean(baseSide && baseSide !== 'none') &&
+    [
+      'tblFloatXTwips',
+      'tblFloatYTwips',
+      'tblFloatXSpec',
+      'tblFloatYSpec',
+      'tblFloatHorzAnchor',
+      'tblFloatVertAnchor',
+      'tblFloatDistance',
+    ].every((key) => equal(attrs[key], base[key]))
+  )
+    return pr
+  const issue = docxTablePositionIssue(`<w:tbl>${pr}</w:tbl>`)
+  if (issue) throw new Error(issue)
+  if (!floatSide || floatSide === 'none') return setChild(pr, 'w:tblpPr', null, 'w:tblPr')
+  let position = child(pr, 'w:tblpPr') ?? '<w:tblpPr/>'
+  const fresh = !child(pr, 'w:tblpPr')
+  for (const [key, name] of [
+    ['tblFloatXTwips', 'tblpX'],
+    ['tblFloatYTwips', 'tblpY'],
+    ['tblFloatXSpec', 'tblpXSpec'],
+    ['tblFloatYSpec', 'tblpYSpec'],
+    ['tblFloatHorzAnchor', 'horzAnchor'],
+    ['tblFloatVertAnchor', 'vertAnchor'],
+  ]) {
+    if (fresh || !equal(attrs[key!], base[key!]))
+      position = positionAttribute(position, name!, attrs[key!])
+  }
+  for (const side of ['top', 'bottom', 'left', 'right']) {
+    const value = (attrs.tblFloatDistance as Record<string, number> | null)?.[side]
+    const previous = (base.tblFloatDistance as Record<string, number> | null)?.[side]
+    if (fresh || !equal(value, previous))
+      position = positionAttribute(position, `${side}FromText`, value)
+  }
+  // tblOverlap is independent of a coordinate edit. Preserve it, including never-overlap.
+  return setChild(pr, 'w:tblpPr', position, 'w:tblPr')
+}
 /** Reuse native text/structure plans, but keep table-design deltas out of a full table rebuild. */
 export function docxTableSavePlan(
   edited: PmDocJson,
@@ -156,7 +282,7 @@ export function docxTableSavePlan(
   blocks: readonly Block[],
 ) {
   const clean = structuredClone(edited) as Json
-  const tables: { current: Json; baseline: Json }[] = []
+  const tables: { current: Json; baseline: Json; positionOnly?: boolean }[] = []
   for (const table of clean.content ?? []) {
     if (table.type !== 'docTable' || table.attrs?.docxIndex == null) continue
     const baseline = original.content?.find(
@@ -164,8 +290,16 @@ export function docxTableSavePlan(
         n.type === 'docTable' &&
         (n.attrs as Record<string, unknown>)?.docxIndex === table.attrs?.docxIndex,
     ) as Json | undefined
-    if (!baseline || !sameGrid(table, baseline)) continue
+    if (!baseline) continue
     const current = structuredClone(table)
+    if (!sameGrid(table, baseline)) {
+      const keys = TABLE_KEYS.filter((key) => key.startsWith('tblFloat'))
+      if (keys.some((key) => !equal(table.attrs?.[key], baseline.attrs?.[key]))) {
+        for (const key of keys) table.attrs![key] = baseline.attrs?.[key]
+        tables.push({ current, baseline, positionOnly: true })
+      }
+      continue
+    }
     let changed = false
     for (const key of TABLE_KEYS) {
       if (!equal(table.attrs?.[key], baseline.attrs?.[key])) changed = true
@@ -183,7 +317,7 @@ export function docxTableSavePlan(
     if (changed) tables.push({ current, baseline })
   }
   const plan = pmDocToSavePlan(clean, [...blocks])
-  for (const { current, baseline } of tables) {
+  for (const { current, baseline, positionOnly } of tables) {
     const index = Number(current.attrs!.docxIndex)
     const at = plan.saveBlockIndexByDocx.get(index)
     if (at === undefined) continue
@@ -196,6 +330,15 @@ export function docxTableSavePlan(
           : undefined
     if (!inputXml) throw new Error('无法保真保存表格设计，请重新打开文档')
     let xml: string = inputXml
+    if (positionOnly) {
+      const pr = child(xml, 'w:tblPr') ?? '<w:tblPr></w:tblPr>'
+      plan.saveBlocks[at] = {
+        ...block,
+        kind: 'xml',
+        xml: setChild(xml, 'w:tblPr', patchPosition(pr, current, baseline), 'w:tbl'),
+      }
+      continue
+    }
     const model = pmTableToModel(current)
     const generated = generateTableModelXml(model, xml)
     const beforePr = child(xml, 'w:tblPr') ?? '<w:tblPr></w:tblPr>'
@@ -211,12 +354,17 @@ export function docxTableSavePlan(
         ['tblAutoFit', 'tblAutoFitEdited', 'tblFixedLayout', 'widthPx', 'widthPct'],
         ['w:tblW', 'w:tblLayout'],
       ],
-      [TABLE_KEYS.filter((key) => key.startsWith('tblFloat')), ['w:tblpPr', 'w:tblOverlap']],
     ]
     for (const [keys, names] of properties)
       if (keys.some((key) => !equal(current.attrs?.[key], baseline.attrs?.[key])))
         for (const name of names)
           patchedPr = setChild(patchedPr, name, child(afterPr, name) ?? null, 'w:tblPr')
+    if (
+      TABLE_KEYS.filter((key) => key.startsWith('tblFloat')).some(
+        (key) => !equal(current.attrs?.[key], baseline.attrs?.[key]),
+      )
+    )
+      patchedPr = patchPosition(patchedPr, current, baseline)
     // Native drag changes the fixed grid without an AutoFit command. The native
     // generator intentionally retains tblW unless AutoFit was explicitly edited.
     if (

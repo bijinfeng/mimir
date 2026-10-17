@@ -1,6 +1,6 @@
 import type { ChatIo } from '@mimir/chat'
 import { api } from './api'
-import { prepareDocxMedia } from './docx-media'
+import { prepareDocxMedia, preparePptxVideo } from './docx-media'
 import { mediaImageData, officeImageData } from './docx-image'
 
 /**
@@ -103,9 +103,9 @@ export function createChatIo({
       await api.conversations.cancelDocumentAgentRun(conversationId, runId)
       invalidate([['conversation', conversationId]])
     },
-    async generateDocxImage(documentId, prompt, signal) {
+    async generateDocxImage(documentId, prompt, signal, aspectRatio) {
       return officeImageData(
-        await api.conversations.generateDocxImage(documentId, prompt, signal),
+        await api.conversations.generateDocxImage(documentId, prompt, signal, aspectRatio),
         signal,
       )
     },
@@ -120,8 +120,13 @@ export function createChatIo({
     },
     async analyzeDocxMedia(input, signal) {
       let media: { mimeType: string; data: string }[]
+      let audio: { mimeType: string; data: string } | undefined
       if (input.source instanceof File) {
-        media = await prepareDocxMedia(input.source, input.kind, signal)
+        if (input.kind === 'video' && input.includeAudio !== undefined) {
+          const prepared = await preparePptxVideo(input.source, input.includeAudio, signal)
+          media = prepared.media
+          audio = prepared.audio
+        } else media = await prepareDocxMedia(input.source, input.kind, signal)
       } else {
         const image = await mediaImageData(input.source, signal)
         if (!image.dataUrl.startsWith(`data:${image.mimeType};base64,`))
@@ -135,6 +140,7 @@ export function createChatIo({
           instruction: input.instruction,
           kind: input.kind,
           media,
+          ...(audio ? { audio } : {}),
         },
         signal,
       )

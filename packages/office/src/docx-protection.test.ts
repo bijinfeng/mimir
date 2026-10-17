@@ -45,15 +45,24 @@ async function fixture(node: string) {
 }
 describe('native DOCX protection policy', () => {
   it.each(['readOnly', 'comments', 'forms', 'trackedChanges'])(
-    'honors enforced %s without pretending restricted writes are supported',
+    'honors enforced %s and exposes only implemented restricted policy',
     (mode) => {
       const policy = createDocxProtection(
         settings(`<w:documentProtection w:edit="${mode}" w:enforcement="true"/>`),
         { type: 'doc' },
       )
       expect(policy.native).toMatchObject({ mode, enforced: true, credentials: 'none' })
-      expect(policy.getAccess().writable).toBe(false)
-      expect(() => policy.assertWrite()).toThrow(/原件/)
+      expect(policy.getAccess().writable).toBe(mode === 'trackedChanges')
+      expect(policy.getAccess().mandatoryTracking).toBe(mode === 'trackedChanges')
+      const failure = (() => {
+        try {
+          policy.assertWrite()
+          return ''
+        } catch (cause) {
+          return String(cause)
+        }
+      })()
+      expect(failure).toMatch(mode === 'trackedChanges' ? /^$/ : /原件/)
       expect(() => policy.continueRecommendedEditing()).toThrow(/不允许/)
     },
   )
@@ -157,7 +166,7 @@ describe('native session final save guard', () => {
         content: [{ type: 'text', text: 'public mutation' }],
       })
       session.originalBytes.fill(0)
-      await expect(session.save(changed)).rejects.toThrow(/原件/)
+      await expect(session.save(changed)).rejects.toThrow(/原件|强制修订/)
       for (const options of [
         { protection: null },
         { writeProtection: null },
@@ -166,7 +175,7 @@ describe('native session final save guard', () => {
         ...(mode === 'comments' ? [] : [{ comments: [] }]),
         { titlePg: true },
       ]) {
-        await expect(session.save(baseline, options)).rejects.toThrow(/原件|保护/)
+        await expect(session.save(baseline, options)).rejects.toThrow(/原件|保护|强制修订/)
       }
       expect(await session.save(baseline)).toEqual(expected)
     },

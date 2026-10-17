@@ -8,7 +8,10 @@ import type {
   CellBorder,
   CellBorders,
   TableLook,
+  SectionInfo,
 } from '../../vendor/packages/docx-engine/src/types.js'
+
+import { docxTablePositionIssue } from '../docx-table-save.js'
 
 export const TABLE_LOOK: TableLook = {
   firstRow: true,
@@ -164,6 +167,65 @@ export interface TableDesignDraft {
   align: 'left' | 'center' | 'right'
   autoFit: 'fixed' | 'contents' | 'window'
   margins: Record<'top' | 'bottom' | 'left' | 'right', number>
+  position: TablePositionDraft
+}
+export interface TablePositionDraft {
+  wrap: 'none' | 'left' | 'right'
+  x: number
+  y: number
+  xSpec: string | null
+  xEdited: boolean
+  ySpec: string | null
+  distance: Record<'top' | 'bottom' | 'left' | 'right', number>
+}
+export interface TablePositionContext {
+  sourceXml?: string
+  contentWidthPx: number
+}
+export const TABLE_TWIPS_PER_CM = 1440 / 2.54
+export function tablePositionContext(
+  target: TableDesignTarget,
+  sections: SectionInfo[],
+  sourceXml?: string,
+): TablePositionContext {
+  const index = Number(target.node.attrs.docxIndex)
+  const section = sections.find(
+    (item) => index >= item.firstBlockIndex && index <= item.lastBlockIndex,
+  )?.settings
+  const contentWidthPx = section
+    ? (section.pageWidth - section.marginLeft - section.marginRight) / 15
+    : NaN
+  return { sourceXml, contentWidthPx }
+}
+function measuredTableWidth(editor: Editor, target: TableDesignTarget): number {
+  const attrs = target.node.attrs
+  if (Number(attrs.widthPx) > 0) return Number(attrs.widthPx)
+  if (Number(attrs.tblFloatWidthPx) > 0) return Number(attrs.tblFloatWidthPx)
+  const element = editor.view.nodeDOM(target.pos)
+  if (!(element instanceof HTMLElement)) return 0
+  const zoomElement = element.closest('.doc-zoom')
+  const zoom = zoomElement ? Number.parseFloat(getComputedStyle(zoomElement).zoom || '1') || 1 : 1
+  return element.getBoundingClientRect().width / zoom
+}
+/** Keep raw twips in the draft. Only a user edit converts the displayed centimetres. */
+function positionDraft(target: TableDesignTarget): TablePositionDraft {
+  const attrs = target.node.attrs
+  const side = attrs.tblFloatSource ?? attrs.tblFloat
+  const distance = attrs.tblFloatDistance as Record<string, number> | null
+  return {
+    wrap: side === 'left' || side === 'right' ? side : 'none',
+    x: attrs.tblFloatXTwips ?? 0,
+    y: attrs.tblFloatYTwips ?? 0,
+    xEdited: false,
+    xSpec: attrs.tblFloatXSpec ?? null,
+    ySpec: attrs.tblFloatYSpec ?? null,
+    distance: {
+      top: distance?.top ?? 0,
+      bottom: distance?.bottom ?? 0,
+      left: distance?.left ?? 0,
+      right: distance?.right ?? 0,
+    },
+  }
 }
 export interface TableBorderDraft {
   scope: 'table' | 'selection'
@@ -204,6 +266,7 @@ export function tableDesignDraft(target: TableDesignTarget): TableDesignDraft {
   const attrs = target.node.attrs
   const margins = attrs.cellMar as Record<string, number> | null
   return {
+    position: positionDraft(target),
     styleId: String(attrs.tblStyleId ?? ''),
     look: { ...TABLE_LOOK, ...attrs.tblLook },
     align: attrs.tblAlign === 'center' || attrs.tblAlign === 'right' ? attrs.tblAlign : 'left',
@@ -251,11 +314,13 @@ export function applyDocxTableDesign(
   draft: TableDesignDraft,
   presetId: string | null,
   border: TableBorderDraft | null,
+  positionContext?: TablePositionContext,
 ): TableDesignTarget {
   if (
     editor.isDestroyed ||
     editor.state.doc !== target.doc ||
-    editor.state.doc.nodeAt(target.pos) !== target.node
+    editor.state.doc.nodeAt(target.pos) !== target.node ||
+    selectedDocxTable(editor)?.pos !== target.pos
   )
     throw new Error('文档已变化，请重新选择表格并打开面板')
   if (
@@ -295,6 +360,24 @@ export function applyDocxTableDesign(
   )
     throw new Error('请检查边框颜色和线宽')
   const original = tableDesignDraft(target)
+  const positionChanged = JSON.stringify(draft.position) !== JSON.stringify(original.position)
+  const p = draft.position
+  if (positionChanged) {
+    if (!positionContext || (!positionContext.sourceXml && target.node.attrs.docxIndex != null))
+      throw new Error('无法确认原件表格定位，请重新打开文档')
+    const issue = positionContext.sourceXml
+      ? docxTablePositionIssue(positionContext.sourceXml)
+      : null
+    if (issue) throw new Error(issue)
+    if (
+      !['none', 'left', 'right'].includes(p.wrap) ||
+      ![p.x, p.y].every((v) => Number.isSafeInteger(v) && Math.abs(v) <= 31680) ||
+      Object.values(p.distance).some((v) => !Number.isSafeInteger(v) || v < 0 || v > 31680) ||
+      (p.xSpec !== null && !['left', 'center', 'right', 'inside', 'outside'].includes(p.xSpec)) ||
+      (p.ySpec !== null && !['top', 'center', 'bottom', 'inside', 'outside'].includes(p.ySpec))
+    )
+      throw new Error('请检查表格位置和距正文数值')
+  }
   const preset = TABLE_PRESETS.find((item) => item.id === presetId)
   const attrs = { ...target.node.attrs }
   if (draft.styleId !== original.styleId || preset)
@@ -349,6 +432,77 @@ export function applyDocxTableDesign(
         patchCell(pos, { colwidth: widths.slice(rect.left, rect.right) })
       }
     }
+  }
+  if (positionChanged || (draft.autoFit !== original.autoFit && p.wrap !== 'none')) {
+    const fresh = original.position.wrap === 'none'
+    if (p.wrap === 'none') {
+      Object.assign(attrs, {
+        tblFloat: null,
+        tblFloatSource: null,
+        tblFloatSuppressed: false,
+        tblFloatXTwips: null,
+        tblFloatYTwips: null,
+        tblFloatXSpec: null,
+        tblFloatYSpec: null,
+        tblFloatHorzAnchor: null,
+        tblFloatVertAnchor: null,
+        tblFloatDistance: null,
+        tblFloatWidthPx: null,
+      })
+    } else {
+      let x = p.x
+      const width =
+        draft.autoFit === 'window'
+          ? positionContext?.contentWidthPx
+          : measuredTableWidth(editor, target)
+      const newRightPreset = p.wrap === 'right' && original.position.wrap !== 'right' && !p.xEdited
+      if (newRightPreset) {
+        if (
+          !(
+            Number.isFinite(width) &&
+            width! > 0 &&
+            Number.isFinite(positionContext?.contentWidthPx)
+          )
+        )
+          throw new Error('无法确定当前节或表格宽度，请先设置列宽')
+        x = Math.max(0, Math.round((positionContext!.contentWidthPx - width!) * 15))
+      }
+      let minimumHeight = 0
+      target.node.forEach((row) => {
+        minimumHeight += Math.max(Number(row.attrs.heightTwips) || 0, 240)
+      })
+      const xSpec = p.wrap !== original.position.wrap && !p.xEdited ? p.wrap : p.xSpec
+      // Native OOXML has no separate side flag: use the same inference as reopen.
+      const side =
+        xSpec === 'right' || xSpec === 'outside' || (!xSpec && x > 4680) ? 'right' : 'left'
+      const horizontalAnchor = attrs.tblFloatHorzAnchor ?? (fresh ? 'margin' : null)
+      const verticalAnchor = attrs.tblFloatVertAnchor ?? (fresh ? 'margin' : null)
+      const distance = { ...target.node.attrs.tblFloatDistance }
+      for (const edge of ['top', 'bottom', 'left', 'right'] as const)
+        if (p.distance[edge] !== original.position.distance[edge]) distance[edge] = p.distance[edge]
+      const span = (horizontalAnchor === 'page' ? 0 : x) + (width ?? 0) * 15 + (distance.right ?? 0)
+      const noSideRoom =
+        (verticalAnchor ?? 'text') === 'text' &&
+        x <= (horizontalAnchor === 'page' ? 1440 : 720) &&
+        Number.isFinite(positionContext?.contentWidthPx) &&
+        span > positionContext!.contentWidthPx * 15 - 1440
+      const suppressed = minimumHeight > 12960 || noSideRoom
+      Object.assign(attrs, {
+        tblFloatSuppressed: suppressed,
+        tblFloat: suppressed ? null : side,
+        tblFloatSource: side,
+        tblFloatXTwips: x,
+        tblFloatYTwips: p.y,
+        tblFloatXSpec: xSpec,
+        tblFloatYSpec: p.ySpec,
+        tblFloatHorzAnchor: horizontalAnchor,
+        tblFloatVertAnchor: verticalAnchor,
+        tblFloatWidthPx: Number.isFinite(width) && width! > 0 ? width : attrs.tblFloatWidthPx,
+      })
+      // Do not materialize absent distances merely because another field was edited.
+      attrs.tblFloatDistance = Object.keys(distance).length ? distance : null
+    }
+    attrs.tblFloatEdited = true
   }
   if (preset)
     target.node.forEach((row, rowOffset, ri) =>
@@ -405,7 +559,9 @@ export function applyDocxTableDesign(
   }
   tr = tr.setNodeMarkup(target.pos, undefined, attrs)
   if (tr.doc.eq(editor.state.doc)) return target
+  const expected = tr.doc
   editor.view.dispatch(tr)
+  if (!editor.state.doc.eq(expected)) throw new Error('表格修改未获允许，请重新选择表格')
   editor.view.dispatch(closeHistory(editor.state.tr).setMeta('addToHistory', false))
   return { ...target, doc: editor.state.doc, node: editor.state.doc.nodeAt(target.pos)! }
 }

@@ -1,7 +1,10 @@
 import { PPTX_PARAGRAPH_NUMBER_TYPES } from '@mimir/shared'
+import { useRef } from 'react'
+import { ImagePlus } from 'lucide-react'
 import type { Paragraph, SlideElement } from '../../vendor/packages/pptx-engine/src/types.js'
 import {
   ToolbarMenuFields,
+  ToolbarButton,
   ToolbarMenuNote,
   ToolbarSelect,
   ToolbarTextField,
@@ -41,13 +44,18 @@ export function PptxSelectionParagraphFields({
   onChange,
   disabled,
   lists,
+  imageName,
+  onPickImage,
 }: {
   paragraphs: readonly Paragraph[]
   draft: Record<string, unknown>
   onChange: (patch: Record<string, unknown>) => void
   disabled: boolean
   lists: boolean
+  imageName: string
+  onPickImage: (file?: File) => void
 }) {
+  const imageInput = useRef<HTMLInputElement>(null)
   const current = <T,>(read: (paragraph: Paragraph) => T) => pptxMixedValue(paragraphs.map(read))
   const text = (field: string, read: (paragraph: Paragraph) => string | number | undefined) => {
     const value = current(read)
@@ -183,11 +191,12 @@ export function PptxSelectionParagraphFields({
                 { value: 'none', label: '无符号或编号' },
                 { value: 'char', label: '字符符号' },
                 { value: 'number', label: '自动编号' },
-                { value: 'blip', label: '原件图片符号', disabled: true },
+                { value: 'blip', label: '图片符号' },
               ]}
               onChange={(value) =>
                 onChange({
                   bullet: value,
+                  bulletImage: undefined,
                   bulletChar: undefined,
                   bulletFont: undefined,
                   numType: undefined,
@@ -241,11 +250,35 @@ export function PptxSelectionParagraphFields({
                 />
               </div>
             )}
-            {bullet === 'blip' && (
-              <ToolbarMenuNote>
-                保留原件图片符号。本批量面板暂不替换图片；仍可调整下方大小、颜色和悬挂缩进。
-              </ToolbarMenuNote>
-            )}
+            <input
+              ref={imageInput}
+              hidden
+              type="file"
+              accept="image/png,image/jpeg"
+              aria-label="批量图片项目符号文件"
+              disabled={disabled}
+              onChange={(event) => {
+                onPickImage(event.currentTarget.files?.[0])
+                event.currentTarget.value = ''
+              }}
+            />
+            <ToolbarButton
+              label="选择批量图片项目符号"
+              disabled={disabled}
+              onClick={() => imageInput.current?.click()}
+            >
+              <ImagePlus size={15} />
+              {bullet === 'blip' ? '替换图片符号' : '使用图片符号'}
+            </ToolbarButton>
+            <ToolbarMenuNote>
+              {draft.bulletImage && imageName
+                ? `待应用：${imageName}`
+                : draft.bullet === 'blip'
+                  ? '请选择PNG或JPEG图片，再应用到全部所选文本。'
+                  : bullet === 'blip'
+                    ? `当前图片${current((p) => p.bullet?.mediaRef) === null ? '混合' : '相同'}；未替换时保留各对象原图片。`
+                    : 'PNG或JPEG，最多512 KiB；选图后点击“应用对象格式”。'}
+            </ToolbarMenuNote>
             {bullet === 'none' && (
               <ToolbarMenuNote>
                 选择符号或编号后可调整细节；移除列表同时收回原有悬挂缩进。

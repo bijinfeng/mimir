@@ -51,6 +51,62 @@ const operations = [
 ] as const
 type Operation = (typeof operations)[number]['value']
 
+function ExternalImageApply({
+  disabled,
+  operation,
+  page,
+  imageNumber,
+  url,
+  getVersion,
+  onAction,
+}: {
+  disabled: boolean
+  operation: 'insert' | 'replace'
+  page: number
+  imageNumber?: number
+  url?: string
+  getVersion(): number
+  onAction: PdfAssetAction
+}) {
+  const [version] = useState(getVersion)
+  const [pending, setPending] = useState(false)
+  const request = useRef<AbortController | null>(null)
+  const alive = useRef(true)
+  useEffect(() => {
+    alive.current = true
+    return () => {
+      alive.current = false
+      request.current?.abort()
+    }
+  }, [])
+  const apply = async () => {
+    if (disabled || !url || request.current || version !== getVersion()) return
+    const controller = new AbortController()
+    request.current = controller
+    setPending(true)
+    try {
+      await onAction(
+        operation === 'replace' ? 'replace_image' : 'insert_image',
+        operation === 'replace'
+          ? { page, image_number: imageNumber, url }
+          : { page, url, width: 180 },
+        version,
+        controller.signal,
+      )
+    } finally {
+      if (request.current === controller) {
+        request.current = null
+        if (alive.current) setPending(false)
+      }
+    }
+  }
+  return (
+    <Button type="primary" block loading={pending} disabled={disabled} onClick={() => void apply()}>
+      {operation === 'replace' ? '替换所选图片' : '插入所选图片'}
+    </Button>
+  )
+}
+
 function ImageControls({
   image,
   page,
@@ -58,6 +114,7 @@ function ImageControls({
   onAction,
   getVersion,
   children,
+  operation,
 }: {
   image?: PdfPageImage
   page: number
@@ -65,9 +122,9 @@ function ImageControls({
   onAction: PdfAssetAction
   getVersion(): number
   children: ReactNode
+  operation: Operation
 }) {
   const [boundVersion] = useState(getVersion)
-  const [operation, setOperation] = useState<Operation>(image ? 'transform' : 'insert')
   const initial = {
     x: image?.x ?? 40,
     y: image?.y ?? 40,
@@ -284,25 +341,6 @@ function ImageControls({
             {error}
           </p>
         )}
-        <div className="mimir-pdf-inspector__control">
-          <span>操作</span>
-          <ToolbarSelect
-            label="PDF图片操作"
-            value={operation}
-            disabled={busy || pending}
-            options={operations.map((item) => ({
-              value: item.value,
-              label: item.label,
-              disabled: item.value !== 'insert' && !image,
-            }))}
-            onChange={(value) => {
-              setOperation(value)
-              setMaterial(null)
-              setDraft(initial)
-              setError(null)
-            }}
-          />
-        </div>
         {operation !== 'insert' && image?.reason && (
           <p className="mimir-pdf-inspector__hint">{image.reason}</p>
         )}
@@ -469,6 +507,7 @@ export function PdfImagePanel({
   hostAssetPreview,
   onAssetSettings,
   error: hostError,
+  onRefresh,
 }: {
   sourceKey: string
   contextVersion: number
@@ -481,13 +520,24 @@ export function PdfImagePanel({
   selected: number | null
   busy: boolean
   onSelect(number: number | null): void
+  onRefresh?(): void
   onAction: PdfAssetAction
   error?: string | null
   onClose(): void
   getVersion(): number
 }) {
+  const targetKey = `${sourceKey}:${page}:${selected}`
+  const [task, setTask] = useState<{ key: string; operation: Operation }>({
+    key: targetKey,
+    operation: selected === null ? 'insert' : 'transform',
+  })
+  if (task.key !== targetKey)
+    setTask({ key: targetKey, operation: selected === null ? 'insert' : 'transform' })
+  const operation =
+    task.key === targetKey ? task.operation : selected === null ? 'insert' : 'transform'
+  const requiresMaterial = operation === 'insert' || operation === 'replace'
   const [source, setSource] = useState<PdfImageSource>('upload')
-  const identity = `${sourceKey}:${page}:${selected}:${source}`
+  const identity = `${targetKey}:${operation}:${source}`
   const externalKey = `${identity}:${contextVersion}`
   const [external, setExternal] = useState<{
     key: string
@@ -539,13 +589,20 @@ export function PdfImagePanel({
           {feedback}
         </p>
       )}
-      {!snapshot && busy && <Skeleton title={false} paragraph={{ rows: 3 }} />}
+      {!snapshot &&
+        (busy ? (
+          <Skeleton title={false} paragraph={{ rows: 3 }} />
+        ) : (
+          <p className="mimir-pdf-inspector__hint" role="status">
+            图片列表尚未读取，请刷新后选择目标。
+          </p>
+        ))}
       <div className="mimir-pdf-inspector__control">
         <span>目标</span>
         <ToolbarSelect
           label="选择PDF图片"
           value={image ? String(image.image_number) : ''}
-          disabled={busy}
+          disabled={busy || !snapshot}
           options={[
             { value: '', label: '插入新图片' },
             ...images.map((item) => ({
@@ -556,7 +613,26 @@ export function PdfImagePanel({
           onChange={(value) => onSelect(value ? Number(value) : null)}
         />
       </div>
-      {source !== 'upload' && image?.reason && (
+      <div className="mimir-pdf-inspector__control">
+        <span>操作</span>
+        <ToolbarSelect
+          label="PDF图片操作"
+          value={operation}
+          disabled={busy || !snapshot}
+          options={operations.map((item) => ({
+            value: item.value,
+            label: item.label,
+            disabled: item.value !== 'insert' && !image,
+          }))}
+          onChange={(value) => {
+            setTask({ key: targetKey, operation: value })
+            setSource('upload')
+            setError(null)
+            setFeedback(null)
+          }}
+        />
+      </div>
+      {requiresMaterial && source !== 'upload' && image?.reason && (
         <p className="mimir-pdf-inspector__hint">{image.reason}</p>
       )}
       {snapshot?.unsupportedPages.includes(page) && (
@@ -565,19 +641,21 @@ export function PdfImagePanel({
       {!images.length && snapshot && (
         <p className="mimir-pdf-inspector__hint">本页没有图片，可上传 PNG 或 JPEG 插入。</p>
       )}
-      <PdfExternalImageSource
-        key={externalKey}
-        source={source}
-        onSource={setSource}
-        getVersion={getVersion}
-        assetSessionId={assetSessionId}
-        readinessHost={hostAssetReadiness}
-        previewHost={hostAssetPreview}
-        onSettings={onAssetSettings}
-        onSelection={(selection) => setExternal({ key: externalKey, selection })}
-        onAction={onAction}
-        busy={busy}
-      />
+      {requiresMaterial && (
+        <PdfExternalImageSource
+          key={externalKey}
+          source={source}
+          onSource={setSource}
+          getVersion={getVersion}
+          assetSessionId={assetSessionId}
+          readinessHost={hostAssetReadiness}
+          previewHost={hostAssetPreview}
+          onSettings={onAssetSettings}
+          onSelection={(selection) => setExternal({ key: externalKey, selection })}
+          onAction={onAction}
+          busy={busy || !snapshot}
+        />
+      )}
     </>
   )
   return (
@@ -589,19 +667,20 @@ export function PdfImagePanel({
     >
       <PdfInspectorHeader
         title="图片"
-        detail={`第 ${page} 页 · ${images.length} 张图片`}
+        detail={`第 ${page} 页 · ${snapshot ? `${images.length} 张图片` : busy ? '正在读取图片…' : '图片列表未读取'}`}
         busy={busy}
         refreshLabel="刷新PDF图片"
         closeLabel="关闭PDF图片面板"
-        onRefresh={() => void perform('list_page_images', {})}
+        onRefresh={() => (onRefresh ? onRefresh() : void perform('list_page_images', {}))}
         onClose={onClose}
       />
-      {source === 'upload' ? (
+      {!requiresMaterial || source === 'upload' ? (
         <ImageControls
           key={`${externalKey}:${snapshot?.sha256 ?? 'loading'}`}
+          operation={operation}
           image={image}
           page={page}
-          busy={busy}
+          busy={busy || !snapshot}
           onAction={perform}
           getVersion={getVersion}
         >
@@ -610,25 +689,20 @@ export function PdfImagePanel({
       ) : (
         <div className="mimir-pdf-inspector__content">{common}</div>
       )}
-      {source !== 'upload' && (
+      {requiresMaterial && source !== 'upload' && (
         <div className="mimir-pdf-inspector__footer">
-          <Button
-            type="primary"
-            block
-            disabled={busy || !currentExternal || (!!image && !image.editable)}
-            onClick={() => {
-              if (!currentExternal) return
-              void perform(
-                image ? 'replace_image' : 'insert_image',
-                image
-                  ? { page, image_number: image.image_number, url: currentExternal.url }
-                  : { page, url: currentExternal.url, width: 180 },
-                getVersion(),
-              )
-            }}
-          >
-            {image ? '替换所选图片' : '插入所选图片'}
-          </Button>
+          <ExternalImageApply
+            key={externalKey}
+            operation={operation}
+            page={page}
+            imageNumber={image?.image_number}
+            url={currentExternal?.url}
+            getVersion={getVersion}
+            onAction={perform}
+            disabled={
+              busy || !snapshot || !currentExternal || (operation === 'replace' && !image?.editable)
+            }
+          />
         </div>
       )}
     </section>

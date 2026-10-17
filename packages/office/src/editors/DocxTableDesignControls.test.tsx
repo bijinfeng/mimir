@@ -199,3 +199,48 @@ it('Escape discards the draft and returns focus; changed document blocks stale a
   }
   expect(editor.state.doc).toBe(current)
 })
+
+it('floating position fields are drafts, keep a fixed primary and apply signed coordinates and asymmetric distances together', async () => {
+  const { host, editor, tablePos, saves } = await boot()
+  const before = editor.state.doc
+  pick(host, '表格文字环绕', '文字在右侧（表格靠左）')
+  type(host, '表格水平位置（厘米）', '-0.4')
+  type(host, '表格垂直位置（厘米）', '-0.8')
+  type(host, '右距正文（厘米）', '0.7')
+  expect(editor.state.doc).toBe(before)
+  const panel = host.querySelector('.mimir-docx-table-design')!
+  expect(panel.querySelector('.mimir-docx-table-design__actions')!.parentElement).toBe(panel)
+  expect(panel.querySelectorAll('.ant-btn-primary')).toHaveLength(1)
+  await press(host, '应用表格设计')
+  const attrs = editor.state.doc.nodeAt(tablePos)!.attrs
+  expect(attrs).toMatchObject({
+    tblFloat: 'left',
+    tblFloatSource: 'left',
+    tblFloatXTwips: -227,
+    tblFloatYTwips: -454,
+    tblFloatXSpec: null,
+    tblFloatHorzAnchor: 'margin',
+    tblFloatVertAnchor: 'margin',
+    tblFloatDistance: { right: 397 },
+  })
+  expect(host.querySelector('table.doc-table-float-left')).not.toBeNull()
+  await press(host, '保存到库')
+  await settle(() => saves.length === 1)
+  const xml = await (await JSZip.loadAsync(saves[0]!)).file('word/document.xml')!.async('string')
+  expect(xml).toContain('w:tblpX="-227"')
+  expect(xml).toContain('w:tblpY="-454"')
+  expect(xml).toContain('w:rightFromText="397"')
+  await press(host, '撤销 (Ctrl+Z)')
+  expect(editor.state.doc.eq(before)).toBe(true)
+})
+
+it('position selection Escape discards the full draft and restores the existing live entry', async () => {
+  const { host, editor } = await boot()
+  const before = editor.state.doc
+  pick(host, '表格文字环绕', '文字在左侧（表格靠右）')
+  const inspector = host.querySelector<HTMLElement>('.mimir-docx-inspector')!
+  act(() => inspector.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })))
+  expect(editor.state.doc).toBe(before)
+  expect(host.querySelector('.mimir-docx-inspector')).toBeNull()
+  expect(document.activeElement).toBe(host.querySelector('[aria-label="表格设计与属性"]'))
+})

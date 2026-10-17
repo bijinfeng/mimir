@@ -1,3 +1,4 @@
+import type { AgentImageAspectRatio } from '@mimir/shared'
 import type {
   Message,
   DocumentAgentCreateInput,
@@ -82,6 +83,7 @@ export interface ChatIo {
     documentId: string,
     prompt: string,
     signal: AbortSignal,
+    aspectRatio?: AgentImageAspectRatio,
   ) => Promise<{ dataUrl: string; mimeType: string }>
   /** Fetch a public image through the server's SSRF-safe proxy before Office insertion. */
   fetchDocxImage?: (
@@ -102,6 +104,7 @@ export interface ChatIo {
       instruction: string
       kind: 'image' | 'audio' | 'video'
       source: File | { dataUrl: string; mimeType: string }
+      includeAudio?: boolean
     },
     signal: AbortSignal,
   ) => Promise<{ text: string }>

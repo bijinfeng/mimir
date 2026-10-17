@@ -5,7 +5,7 @@ import {
   effectiveTopPx,
   sectionPageBox,
 } from '../vendor/apps/docs/src/renderer/pagination-sections.js'
-import { setColumnLayout } from '../vendor/apps/docs/src/renderer/editor/column-layout.js'
+import { setLiveColumnLayout } from './docx-floating-table-layout.js'
 import {
   measureBlocks,
   noteRefOffsets,
@@ -341,7 +341,7 @@ export function clearDocxPagination(
     setPageGaps(editor.view, [])
     clearEndnoteDecorations(editor)
     clearContinuationGaps(editor)
-    setColumnLayout(editor.view, [])
+    setLiveColumnLayout(editor.view, [])
   }
   const wrap = container?.querySelector<HTMLElement>('.page-wrap')
   if (!wrap) return
@@ -459,7 +459,7 @@ export function usePagination({
       assignLiveBlockSections(pm, blocks, sections)
       assignLiveNoteBands(blocks)
       // Width decorations rewrap later sections before their vertical positions are measured.
-      setColumnLayout(ctx.editor.view, liveColumnPlacements(blocks, [], sections, geoms))
+      setLiveColumnLayout(ctx.editor.view, liveColumnPlacements(blocks, [], sections, geoms))
       measured = measureBlocks(pm, origin, 1)
       blocks = measured.blocks as BlockBox[]
       assignLiveBlockSections(pm, blocks, sections)
@@ -480,7 +480,7 @@ export function usePagination({
       if (geoms.some((geom) => (geom.cols ?? 1) > 1)) {
         for (let pass = 0; pass < 6; pass += 1) {
           const placements = liveColumnPlacements(blocks, slices, sections, geoms)
-          setColumnLayout(ctx.editor.view, placements)
+          setLiveColumnLayout(ctx.editor.view, placements)
           measured = measureBlocks(pm, origin, 1)
           blocks = measured.blocks as BlockBox[]
           assignLiveBlockSections(pm, blocks, sections)
@@ -509,7 +509,7 @@ export function usePagination({
           slices = refined
           if (stable && widthsStable) break
         }
-        setColumnLayout(ctx.editor.view, liveColumnPlacements(blocks, slices, sections, geoms))
+        setLiveColumnLayout(ctx.editor.view, liveColumnPlacements(blocks, slices, sections, geoms))
       }
       pageEl?.classList.remove('measuring-columns')
 

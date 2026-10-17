@@ -1,5 +1,8 @@
 /** @vitest-environment happy-dom */
 import { act } from 'react'
+import { readFileSync } from 'node:fs'
+import { dirname, resolve as resolvePath } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { createRoot } from 'react-dom/client'
 import JSZip from 'jszip'
 import { afterEach, expect, it, vi } from 'vitest'
@@ -153,6 +156,30 @@ const selected = (host: HTMLElement) => [
   ...host.querySelectorAll('.mimir-pptx-slide .mimir-pptx-selected'),
 ]
 const frozen = (handle: PptxAgentHandle) => handle.freezeSelection() as { elementIds: string[] }
+async function stagePictureBullet(host: HTMLElement) {
+  const listTab = [...host.querySelectorAll('.ant-segmented-item')].find(
+    (item) => item.textContent === '列表',
+  )!
+  click(listTab)
+  const image = readFileSync(
+    resolvePath(
+      dirname(fileURLToPath(import.meta.url)),
+      '../../tests/fixtures/pptx-images/picture.png',
+    ),
+  )
+  const fileField = host.querySelector<HTMLInputElement>('[aria-label="批量图片项目符号文件"]')!
+  act(() => {
+    Object.defineProperty(fileField, 'files', {
+      configurable: true,
+      value: [new File([image], 'picture.png', { type: 'image/png' })],
+    })
+    fileField.dispatchEvent(new Event('change', { bubbles: true }))
+  })
+  await settle(
+    () =>
+      host.textContent!.includes('待应用：picture.png') && !button(host, '应用对象格式').disabled,
+  )
+}
 function tab(host: HTMLElement, name: string) {
   click([...host.querySelectorAll('[role="tab"]')].find((node) => node.textContent === name)!)
 }
@@ -387,7 +414,7 @@ it('enters immediate group children, normalizes parent plus child and applies na
   expect(calls[1]!.ops).toHaveLength(2)
 })
 
-it('aborts an obsolete bulk host transaction when canvas selection changes and leaves no undo or dirty state', async () => {
+it('aborts an obsolete bulk picture-bullet host transaction when canvas selection changes and leaves no undo or dirty state', async () => {
   let release!: () => void
   const gate = new Promise<void>((done) => {
       release = done
@@ -401,8 +428,7 @@ it('aborts an obsolete bulk host transaction when canvas selection changes and l
   click(textNode(host, '对象甲'))
   click(textNode(host, '对象乙'), { ctrlKey: true })
   click(button(host, '打开对象选择与格式'))
-  pickSelectOption(host, '批量加粗', '开启')
-  field(host, '批量填充颜色', '#123456')
+  await stagePictureBullet(host)
   const before = getHandle().getVersion()
   click(button(host, '应用对象格式'))
   await settle(() => calls.length === 1)
@@ -418,6 +444,42 @@ it('aborts an obsolete bulk host transaction when canvas selection changes and l
   expect(frozen(getHandle()).elementIds).toHaveLength(1)
 })
 
+it.each(['top', 'members'] as const)(
+  'stages a picture-bullet file for %s and publishes one real host batch with saved history',
+  async (scope) => {
+    const calls: Parameters<PptxHostApply>[0][] = []
+    const { host, bytes, getHandle, apply, save } = await mount(async (request) => {
+      calls.push(request)
+      return applyPptxOpsOnHost(request)
+    })
+    click(textNode(host, scope === 'top' ? '对象甲' : '成员甲'), { altKey: scope === 'members' })
+    click(textNode(host, scope === 'top' ? '对象乙' : '成员乙'), {
+      ctrlKey: true,
+      altKey: scope === 'members',
+    })
+    expect(frozen(getHandle()).elementIds).toHaveLength(2)
+    click(button(host, '打开对象选择与格式'))
+    await stagePictureBullet(host)
+    expect(calls).toHaveLength(0)
+    expect(button(host, '保存到库').disabled).toBe(true)
+    await apply()
+    expect(calls).toHaveLength(1)
+    expect(calls[0]!.ops).toHaveLength(2)
+    const changed = await save(),
+      read = changed.session.slides()[0]!
+    const targets =
+      scope === 'top'
+        ? read.elements.filter((item) => item.type !== 'group').slice(0, 2)
+        : read.elements.flatMap((item) => (item.type === 'group' ? item.children : []))
+    for (const target of targets)
+      expect(textOfElement(target)!.paragraphs[0]!.bullet?.type).toBe('blip')
+    click(button(host, '撤销'))
+    expect(await entries((await save()).bytes)).toEqual(await entries(bytes))
+    expect(button(host, '撤销').disabled).toBe(true)
+    click(button(host, '重做'))
+    expect(await entries((await save()).bytes)).toEqual(await entries(changed.bytes))
+  },
+)
 it('applies existing Home font controls to a mixed multi-selection and a whole group in one undo step', async () => {
   const { host, getHandle, save } = await mount()
   click(textNode(host, '对象甲'))

@@ -227,3 +227,104 @@ describe('PPTX generation and external image services', () => {
     expect((await JSZip.loadAsync(second.bytes)).file('ppt/media/image1.png')).not.toBeNull()
   })
 })
+
+it('resolves only original request attachments and preserves their exact PNG bytes in native insert/replace', async () => {
+  const imageBytes = new Uint8Array(Buffer.from(png.split(',')[1]!, 'base64'))
+  const original = load(),
+    attachment = { name: '原图 中文.png', mimeType: 'image/png', bytes: imageBytes }
+  const url = 'attachment://原图 中文.png'
+  const apply = (
+    action: 'insert_web_image' | 'replace_image',
+    input: unknown,
+    bytes: Uint8Array = original,
+    attachments = [attachment],
+    expectedVersion = 0,
+  ) =>
+    applyPptxOpsOnHost({
+      documentId: 'pptx-1',
+      bytes,
+      expectedVersion,
+      action,
+      ops: [input],
+      attachments,
+    })
+  const first = await apply('insert_web_image', {
+    slideIndex: 0,
+    url,
+    x: 20,
+    y: 40,
+    w: 200,
+    h: 100,
+  })
+  const deck = await openPptx(first.bytes),
+    picture = deck.deck.slides[0]!.elements.find((el) => el.type === 'picture')!
+  const target = elementDurableId(picture)!
+  const second = await apply(
+    'replace_image',
+    { slideIndex: 0, sourceId: target, url, keepCrop: true },
+    first.bytes,
+    [attachment],
+    1,
+  )
+  const reopened = await openPptx(second.bytes),
+    after = reopened.deck.slides[0]!.elements.find((el) => el.type === 'picture')!
+  expect(elementDurableId(after)).toBe(target)
+  expect(after.transform).toEqual(picture.transform)
+  const zip = await JSZip.loadAsync(second.bytes)
+  const media = await Promise.all(
+    Object.keys(zip.files)
+      .filter((path) => path.startsWith('ppt/media/') && !zip.files[path]!.dir)
+      .map((path) => zip.files[path]!.async('uint8array')),
+  )
+  expect(media).toContainEqual(imageBytes)
+  await expect(
+    apply('insert_web_image', { slideIndex: 0, url, x: 0, y: 0, w: 100, h: 100 }, original, []),
+  ).rejects.toThrow('重新选择')
+  await expect(
+    apply('insert_web_image', { slideIndex: 0, url, x: 0, y: 0, w: 100, h: 100 }, original, [
+      attachment,
+      attachment,
+    ]),
+  ).rejects.toThrow('歧义')
+  await expect(
+    apply('insert_web_image', {
+      slideIndex: 0,
+      url: 'attachment://../secret.png',
+      x: 0,
+      y: 0,
+      w: 100,
+      h: 100,
+    }),
+  ).rejects.toThrow('不得包含路径')
+})
+
+it('passes PPTX reference originals, ratio, transparency and abort to the shared generator without remote fetch', async () => {
+  const imageBytes = new Uint8Array(Buffer.from(png.split(',')[1]!, 'base64'))
+  state.generate.mockReset().mockResolvedValue({ dataUrl: png, mimeType: 'image/png' })
+  state.fetch.mockReset()
+  const signal = new AbortController().signal
+  const result = await applyPptxOpsOnHost({
+    documentId: 'pptx-1',
+    bytes: load(),
+    expectedVersion: 0,
+    action: 'generate_image',
+    ops: [
+      {
+        prompt: '保留主体',
+        aspectRatio: '16:9',
+        referenceImageUrls: ['attachment://logo.png'],
+        transparentBackground: true,
+      },
+    ],
+    attachments: [{ name: 'logo.png', mimeType: 'image/png', bytes: imageBytes }],
+    signal,
+  })
+  expect(result.changed).toBe(false)
+  expect(state.fetch).not.toHaveBeenCalled()
+  expect(state.generate).toHaveBeenCalledWith('保留主体', 'pptx-1', {
+    signal,
+    aspectRatio: '16:9',
+    referenceImages: [{ dataUrl: png, mimeType: 'image/png' }],
+    transparentBackground: true,
+  })
+})

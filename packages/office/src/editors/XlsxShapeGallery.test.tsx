@@ -264,7 +264,9 @@ it('real editor inserts one native shape with a slow host, saves twice, and rest
   await wait(() => ui.handle().history().undo === 1)
   expect(execute).toHaveBeenCalledOnce()
   expect(ui.handle().getVersion()).toBe(1)
-  expect(host.querySelector('.mimir-xlsx-object__shape path')?.getAttribute('d')).toContain('C')
+  expect(
+    host.querySelector('.mimir-xlsx-object .mimir-xlsx-native-shape path')?.getAttribute('d'),
+  ).toContain('C')
   const workbook = await readXlsx(ui.handle().currentBytes()),
     visual = workbook.sheets[0]!.visuals![0]!
   expect(visual.shapeType).toBe('heart')

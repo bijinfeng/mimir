@@ -2,12 +2,14 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { Editor, type JSONContent } from '@tiptap/core'
-import { CellSelection, TableMap, columnResizingPluginKey } from '@tiptap/pm/tables'
+import { CellSelection, TableMap, columnResizingPluginKey, addRowAfter } from '@tiptap/pm/tables'
+import { Plugin } from '@tiptap/pm/state'
 import { afterEach, expect, it } from 'vitest'
 import JSZip from 'jszip'
 import { editorExtensions } from '../../vendor/apps/docs/src/renderer/editor/extensions.js'
 import { splitXmlChildren } from '../../vendor/packages/docx-engine/src/generate.js'
 import { openDocx } from '../docx.js'
+import { docxTablePositionIssue } from '../docx-table-save.js'
 import {
   applyDocxTableDesign,
   DocxTableDesignExtension,
@@ -324,4 +326,263 @@ it('saves the live drag grid and fixed total width while retaining native table 
   expect(await entries(await session.save(editor.getJSON() as never))).toEqual(originalEntries)
   editor.commands.redo()
   expect(await entries(await session.save(editor.getJSON() as never))).toEqual(savedEntries)
+})
+
+const NATIVE_POSITION = `<w:tblpPr xmlns:m="urn:mimir:position" m:keep="opaque" w:horzAnchor = 'page' w:vertAnchor="text" w:tblpX='317' w:tblpY="-271" w:tblpXSpec="center" w:tblpYSpec="bottom" w:topFromText="31" w:bottomFromText="57" w:leftFromText="113" w:rightFromText="229"><!--KEEP-POSITION--></w:tblpPr>`
+async function bootPosition(position = NATIVE_POSITION, tall = false) {
+  const zip = await JSZip.loadAsync(await tableFixture(true))
+  let xml = await zip.file('word/document.xml')!.async('string')
+  const source = firstTable(xml)
+  let table = source.replace(
+    '<w:tblPr>',
+    `<w:tblPr>${position}<w:tblOverlap w:val="never"/><!--KEEP-PR-->`,
+  )
+  if (tall) table = table.replace(/<w:tr>[\s\S]*?<\/w:tr>/g, (row) => row.repeat(20))
+  xml = xml.replace(source, table)
+  zip.file('word/document.xml', xml)
+  zip.file('customXml/mimir-position-sentinel.xml', '<keep>原件</keep>')
+  const bytes = await zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' })
+  const session = await openDocx(bytes)
+  const editor = new Editor({
+    element: document.createElement('div'),
+    extensions: [...editorExtensions, DocxTableDesignExtension],
+    content: session.content as never,
+  })
+  editors.push(editor)
+  editor.commands.setTextSelection(3)
+  const target = selectedDocxTable(editor)!
+  const context = { sourceXml: table, contentWidthPx: 624 }
+  return { bytes, session, editor, target, context, table }
+}
+it('preserves raw twips, asymmetric gaps, axis keywords, extensions and overlap on unrelated edits', async () => {
+  const { bytes, session, editor, target } = await bootPosition()
+  const draft = tableDesignDraft(target)
+  expect(draft.position).toMatchObject({
+    wrap: 'left',
+    x: 317,
+    y: -271,
+    xSpec: 'center',
+    ySpec: 'bottom',
+    distance: { top: 31, bottom: 57, left: 113, right: 229 },
+  })
+  expect(await session.save(editor.getJSON() as never)).toEqual(bytes)
+  draft.look.lastRow = true
+  applyDocxTableDesign(editor, target, draft, null, null)
+  const xml = await documentXml(await session.save(editor.getJSON() as never))
+  expect(xml).toContain(NATIVE_POSITION)
+  expect(xml).toContain('<w:tblOverlap w:val="never"/>')
+})
+it('patches just one signed axis and its keyword; keeps other XML, two saves and one-step history', async () => {
+  const { bytes, session, editor, target, context, table } = await bootPosition()
+  const draft = tableDesignDraft(target)
+  draft.position = { ...draft.position, x: -419, xSpec: null, xEdited: true }
+  applyDocxTableDesign(editor, target, draft, null, null, context)
+  expect(editor.view.dom.querySelector('table')!.className).toContain('doc-table-float-left')
+  const saved = await session.save(editor.getJSON() as never)
+  const expectedPosition = NATIVE_POSITION.replace("w:tblpX='317'", "w:tblpX='-419'").replace(
+    ' w:tblpXSpec="center"',
+    '',
+  )
+  expect(firstTable(await documentXml(saved))).toBe(
+    table.replace(NATIVE_POSITION, expectedPosition),
+  )
+  const before = await entries(bytes),
+    after = await entries(saved)
+  for (const key of Object.keys(before).filter((name) => name !== 'word/document.xml'))
+    expect(after[key]).toEqual(before[key])
+  expect(await entries(await session.save(editor.getJSON() as never))).toEqual(after)
+  const opened = await openDocx(saved)
+  expect(opened.content.content![0]!.attrs).toMatchObject({
+    tblFloatXTwips: -419,
+    tblFloatYTwips: -271,
+    tblFloatYSpec: 'bottom',
+  })
+  editor.commands.undo()
+  expect(await entries(await session.save(editor.getJSON() as never))).toEqual(before)
+  editor.commands.redo()
+  expect(await entries(await session.save(editor.getJSON() as never))).toEqual(after)
+})
+it('only changes the touched distance, retaining absent and asymmetric raw values', async () => {
+  const { session, editor, target, context, table } = await bootPosition()
+  const draft = tableDesignDraft(target)
+  draft.position.distance.right = 567
+  applyDocxTableDesign(editor, target, draft, null, null, context)
+  expect(firstTable(await documentXml(await session.save(editor.getJSON() as never)))).toBe(
+    table.replace('w:rightFromText="229"', 'w:rightFromText="567"'),
+  )
+})
+it('new left/right presets wrap real tables and right edge uses the current section width without moving an existing zero', async () => {
+  const { session, editor, target } = await boot()
+  const context = {
+    sourceXml: session.blocks.find((block) => block.docxIndex === target.node.attrs.docxIndex)!
+      .originalXml!,
+    contentWidthPx: 500,
+  }
+  let draft = tableDesignDraft(target)
+  draft.position.wrap = 'right'
+  const next = applyDocxTableDesign(editor, target, draft, null, null, context)
+  expect(next.node.attrs).toMatchObject({
+    tblFloat: 'right',
+    tblFloatXTwips: Math.round((500 - Number(target.node.attrs.widthPx)) * 15),
+    tblFloatXSpec: 'right',
+    tblFloatHorzAnchor: 'margin',
+    tblFloatVertAnchor: 'margin',
+  })
+  expect(editor.view.dom.querySelector('table')!.className).toContain('doc-table-float-right')
+  const saved = await session.save(editor.getJSON() as never)
+  expect((await openDocx(saved)).content.content![0]!.attrs!.tblFloatSource).toBe('right')
+  draft = tableDesignDraft(next)
+  expect(applyDocxTableDesign(editor, next, draft, null, null, context)).toBe(next)
+  const zero = await bootPosition('<w:tblpPr w:tblpX="0" w:tblpY="0" w:tblpXSpec="right"/>')
+  const zeroDraft = tableDesignDraft(zero.target)
+  zeroDraft.look.lastRow = true
+  applyDocxTableDesign(zero.editor, zero.target, zeroDraft, null, null, zero.context)
+  expect(zero.editor.state.doc.firstChild!.attrs.tblFloatXTwips).toBe(0)
+})
+it('returns to inline by removing positioning while preserving independent never-overlap and table content', async () => {
+  const { session, editor, target, context, table } = await bootPosition()
+  const draft = tableDesignDraft(target)
+  draft.position.wrap = 'none'
+  applyDocxTableDesign(editor, target, draft, null, null, context)
+  expect(editor.view.dom.querySelector('table')!.className).not.toContain('doc-table-float-left')
+  expect(firstTable(await documentXml(await session.save(editor.getJSON() as never)))).toBe(
+    table.replace(NATIVE_POSITION, ''),
+  )
+})
+it('keeps tall source floats suppressed and does not claim inline source positioning', async () => {
+  const { session, editor, target, context } = await bootPosition(NATIVE_POSITION, true)
+  expect(target.node.attrs.tblFloatSuppressed).toBe(true)
+  const draft = tableDesignDraft(target)
+  expect(draft.position.wrap).toBe('left')
+  draft.position.y = -731
+  draft.position.ySpec = null
+  const next = applyDocxTableDesign(editor, target, draft, null, null, context)
+  expect(next.node.attrs).toMatchObject({
+    tblFloat: null,
+    tblFloatSource: 'left',
+    tblFloatSuppressed: true,
+  })
+  expect(await documentXml(await session.save(editor.getJSON() as never))).toContain(
+    'w:tblpY="-731"',
+  )
+})
+it('rejects uninterpretable positioning, stale source targets and filtered transactions without publishing success', async () => {
+  const { editor, target, context } = await bootPosition('<w:tblpPr w:tblpX="bad" w:tblpY="0"/>')
+  const draft = tableDesignDraft(target)
+  draft.position.x = 500
+  const before = editor.state.doc
+  expect(() => applyDocxTableDesign(editor, target, draft, null, null, context)).toThrow('无法解释')
+  expect(editor.state.doc).toBe(before)
+  const good = await bootPosition()
+  const d = tableDesignDraft(good.target)
+  d.position.y = -500
+  good.editor.registerPlugin(new Plugin({ filterTransaction: (tr) => !tr.docChanged }))
+  expect(() => applyDocxTableDesign(good.editor, good.target, d, null, null, good.context)).toThrow(
+    '未获允许',
+  )
+  expect(good.editor.state.doc).toBe(good.target.doc)
+})
+
+it('retains untouched positioning attributes when a later row insertion requires native structure generation', async () => {
+  const { session, editor, target, context } = await bootPosition()
+  const draft = tableDesignDraft(target)
+  draft.position.y = -589
+  draft.position.ySpec = null
+  applyDocxTableDesign(editor, target, draft, null, null, context)
+  expect(addRowAfter(editor.state, editor.view.dispatch)).toBe(true)
+  const xml = firstTable(await documentXml(await session.save(editor.getJSON() as never)))
+  expect(xml).toContain(
+    NATIVE_POSITION.replace('w:tblpY="-271"', 'w:tblpY="-589"').replace(
+      ' w:tblpYSpec="bottom"',
+      '',
+    ),
+  )
+  expect(xml).toContain('<w:tblOverlap w:val="never"/>')
+})
+
+it('rejects a different live table selection even when the document bytes are unchanged', async () => {
+  const { editor, target } = await boot()
+  let other = -1
+  editor.state.doc.forEach((node, pos) => {
+    if (node.type.name === 'docTable' && pos !== target.pos && other < 0) other = pos
+  })
+  expect(other).toBeGreaterThan(target.pos)
+  editor.commands.setTextSelection(other + 3)
+  const draft = tableDesignDraft(target)
+  draft.look.lastRow = true
+  expect(() => applyDocxTableDesign(editor, target, draft, null, null)).toThrow('文档已变化')
+  expect(editor.state.doc).toBe(target.doc)
+})
+
+it('numeric positioning immediately uses the same wrap side as native reopen', async () => {
+  const { editor, session, target, context } = await bootPosition(
+    '<w:tblpPr w:tblpX="0" w:tblpY="0" w:tblpXSpec="right" w:vertAnchor="margin"/>',
+  )
+  const draft = tableDesignDraft(target)
+  draft.position.x = 317
+  draft.position.xSpec = null
+  draft.position.xEdited = true
+  const next = applyDocxTableDesign(editor, target, draft, null, null, context)
+  const reopened = await openDocx(await session.save(editor.getJSON() as never))
+  expect(next.node.attrs.tblFloatSource).toBe('left')
+  expect(next.node.attrs.tblFloatSource).toBe(reopened.content.content![0]!.attrs!.tblFloatSource)
+  expect(editor.view.dom.querySelector('table')!.className).toContain('doc-table-float-left')
+})
+
+it('refuses unsupported Word namespace aliases rather than adding duplicate positioning', async () => {
+  const word = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
+  for (const position of [
+    `<w:tblpPr xmlns:q="${word}" q:tblpX="10" w:tblpY="0"/>`,
+    `<q:tblpPr xmlns:q="${word}" q:tblpX="10"/>`,
+    '<w:tblpPr xmlns:w="urn:foreign" w:tblpX="10"/>',
+    '<w:tblpPr q:tblpX="10"/>',
+  ]) {
+    const { editor, session, bytes, target, context } = await bootPosition(position)
+    expect(docxTablePositionIssue(context.sourceXml)).toContain('命名空间')
+    const draft = tableDesignDraft(target)
+    draft.position.x = 500
+    expect(() => applyDocxTableDesign(editor, target, draft, null, null, context)).toThrow(
+      '命名空间',
+    )
+    expect(editor.state.doc).toBe(target.doc)
+    expect(await session.save(editor.getJSON() as never)).toEqual(bytes)
+  }
+  expect(docxTablePositionIssue(`<w:tbl><w:tblPr>${NATIVE_POSITION}</w:tblPr></w:tbl>`)).toBeNull()
+  expect(
+    docxTablePositionIssue('<w:tbl><w:tblPr><w:tblpPr w:opaque-extra="keep"/></w:tblPr></w:tbl>'),
+  ).toContain('无法解释')
+})
+
+it('recomputes current side room and clears suppression when the new placement has room', async () => {
+  const { editor, session, target, context } = await bootPosition(
+    '<w:tblpPr w:tblpX="0" w:tblpY="0" w:vertAnchor="text"/>',
+  )
+  const draft = tableDesignDraft(target)
+  draft.position.distance.right = 3000
+  let next = applyDocxTableDesign(editor, target, draft, null, null, context)
+  let reopened = await openDocx(await session.save(editor.getJSON() as never))
+  expect(next.node.attrs.tblFloatSuppressed).toBe(true)
+  expect(next.node.attrs.tblFloatSuppressed).toBe(
+    reopened.content.content![0]!.attrs!.tblFloatSuppressed,
+  )
+  const revised = tableDesignDraft(next)
+  revised.position.x = 1500
+  revised.position.xEdited = true
+  next = applyDocxTableDesign(editor, next, revised, null, null, context)
+  reopened = await openDocx(await session.save(editor.getJSON() as never))
+  expect(next.node.attrs.tblFloatSuppressed).toBe(false)
+  expect(next.node.attrs.tblFloatSuppressed).toBe(
+    reopened.content.content![0]!.attrs!.tblFloatSuppressed,
+  )
+})
+
+it('keeps opaque native positioning when only AutoFit changes', async () => {
+  const position = '<w:tblpPr w:tblpX="0" w:tblpY="0" w:opaque="keep"/>'
+  const { session, editor, target, context } = await bootPosition(position)
+  const draft = tableDesignDraft(target)
+  draft.autoFit = 'window'
+  applyDocxTableDesign(editor, target, draft, null, null, context)
+  const xml = await documentXml(await session.save(editor.getJSON() as never))
+  expect(xml).toContain(position)
+  expect(xml).toContain('<w:tblOverlap w:val="never"/>')
 })

@@ -8,6 +8,7 @@ packages:
 
 patchedDependencies:
   '@assistant-ui/react-ag-ui@0.0.68': patches/@assistant-ui__react-ag-ui@0.0.68.patch
+  cfb@1.2.2: patches/cfb@1.2.2.patch
 
 # ── 依赖版本集中管理 ──
 #
@@ -129,6 +130,8 @@ allowBuilds:
   electron-winstaller: false
   # TypeScript 7 是 Go 重写版，各平台的原生二进制；不需要构建脚本
   '@typescript/typescript-linux-x64': false
+  # Donation notice only; prebuilt worker and WASM need no install script.
+  tesseract.js: false
 
 # 新版本发布满一天后才允许安装。防止误装当天发布、可能被投毒的版本。
 minimumReleaseAge: 1440

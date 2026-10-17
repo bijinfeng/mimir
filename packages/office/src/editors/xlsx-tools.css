@@ -134,12 +134,15 @@
 }
 .mimir-xlsx-inspector-host > .me-scroll {
   margin-inline-end: 320px;
+  /* Keep frozen headers and drawing layers below the sibling Inspector. */
+  isolation: isolate;
 }
 .mimir-xlsx-inspector {
   position: absolute;
   inset-block: 0;
   inset-inline-end: 0;
   width: 320px;
+  box-sizing: border-box;
   max-width: 100%;
   display: flex;
   flex-direction: column;
@@ -151,6 +154,7 @@
   outline: none;
 }
 .mimir-xlsx-inspector__header {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;

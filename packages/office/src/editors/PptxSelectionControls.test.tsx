@@ -290,8 +290,8 @@ it('retains original image bullets, displays fixed spacing and only writes expli
     '75%',
   )
   formatTab(view.host, '列表')
-  expect(selectValueText(view.host, '批量列表类型')).toContain('原件图片符号')
-  expect(view.host.textContent).toContain('暂不替换图片')
+  expect(selectValueText(view.host, '批量列表类型')).toContain('图片符号')
+  expect(view.host.textContent).toContain('未替换时保留各对象原图片')
   expect(view.host.querySelector<HTMLInputElement>('[aria-label="批量符号大小（%）"]')!.value).toBe(
     '12 pt（固定）',
   )
@@ -302,6 +302,129 @@ it('retains original image bullets, displays fixed spacing and only writes expli
     { bulletSizePct: 110, bulletHangEmu: 152400 },
     { bulletSizePct: 110, bulletHangEmu: 152400 },
   ])
+})
+function imageReaderHarness(readFails = false) {
+  const readers: Reader[] = []
+  class Reader extends EventTarget {
+    result: string | null = null
+    readAsDataURL = vi.fn<() => void>(() => {
+      if (readFails) throw new Error('Read unavailable')
+    })
+    abort = vi.fn<() => void>(() => {
+      this.dispatchEvent(new Event('abort'))
+    })
+    constructor() {
+      super()
+      readers.push(this)
+    }
+    finish(value = 'data:image/png;base64,AAAA') {
+      this.result = value
+      this.dispatchEvent(new Event('load'))
+    }
+  }
+  const original = globalThis.FileReader
+  Object.assign(globalThis, { FileReader: Reader })
+  cleanup.push(() => Object.assign(globalThis, { FileReader: original }))
+  return readers
+}
+function chooseBulletImage(host: HTMLElement, file?: File) {
+  const fileField = host.querySelector<HTMLInputElement>('[aria-label="批量图片项目符号文件"]')!
+  act(() => {
+    Object.defineProperty(fileField, 'files', { configurable: true, value: file ? [file] : [] })
+    fileField.dispatchEvent(new Event('change', { bubbles: true }))
+  })
+}
+it.each(['png', 'jpeg'])(
+  'stages %s picture bullets without publication and submits all targets with one fixed primary action',
+  async (type) => {
+    const readers = imageReaderHarness(),
+      view = mount()
+    const source = structuredClone(elements)
+    source.slice(0, 2).forEach((element, i) => {
+      if (element.type === 'shape')
+        element.text!.paragraphs[0]!.bullet = { type: 'blip', mediaRef: `ppt/media/${i}.png` }
+    })
+    view.change({ elements: source })
+    formatTab(view.host, '列表')
+    expect(view.host.textContent).toContain('当前图片混合')
+    chooseBulletImage(view.host)
+    expect(readers).toHaveLength(0)
+    chooseBulletImage(view.host, new File(['test'], `bullet.${type}`, { type: `image/${type}` }))
+    expect(button(view.host, '应用对象格式').disabled).toBe(true)
+    expect(view.apply).not.toHaveBeenCalled()
+    act(() => readers[0]!.finish(`data:image/${type};base64,AAAA`))
+    expect(view.host.textContent).toContain(`待应用：bullet.${type}`)
+    expect(view.host.querySelectorAll('.mimir-pptx-selection-controls__actions')).toHaveLength(1)
+    expect(view.apply).not.toHaveBeenCalled()
+    view.apply.mockResolvedValueOnce(false)
+    await act(async () => button(view.host, '应用对象格式').click())
+    expect(view.apply.mock.calls[0]![0].map((op) => op.format)).toEqual(
+      [0, 1].map(() => ({
+        bullet: 'blip',
+        bulletImage: { ext: type === 'png' ? 'png' : 'jpg', base64: 'AAAA' },
+      })),
+    )
+    expect(view.host.textContent).toContain('已保留草稿')
+    expect(view.host.textContent).toContain(`待应用：bullet.${type}`)
+    view.apply.mockResolvedValueOnce(true)
+    await act(async () => button(view.host, '应用对象格式').click())
+    expect(view.apply).toHaveBeenCalledTimes(2)
+    expect(button(view.host, '应用对象格式').disabled).toBe(true)
+  },
+)
+it.each(['version', 'sourceKey', 'selectedRefs'] as const)(
+  'aborts picture reads and ignores late load after %s changes',
+  (field) => {
+    const readers = imageReaderHarness(),
+      view = mount()
+    formatTab(view.host, '列表')
+    chooseBulletImage(view.host, new File(['test'], 'late.png', { type: 'image/png' }))
+    view.change(
+      field === 'version'
+        ? { version: 2 }
+        : field === 'sourceKey'
+          ? { sourceKey: 'next' }
+          : { selectedRefs: ['e_12'] },
+    )
+    expect(readers[0]!.abort).toHaveBeenCalledOnce()
+    act(() => readers[0]!.finish())
+    expect(view.apply).not.toHaveBeenCalled()
+    expect(button(view.host, '应用对象格式').disabled).toBe(true)
+    expect(view.host.textContent).not.toContain('late.png')
+    expect(view.host.querySelector('[role="alert"]')).toBeNull()
+  },
+)
+it('retains readable image errors, blocks invalid image drafts and supports reset without writing', async () => {
+  const readers = imageReaderHarness(),
+    view = mount()
+  formatTab(view.host, '列表')
+  for (const file of [
+    new File(['test'], 'bad.svg', { type: 'image/svg+xml' }),
+    new File([], 'empty.png', { type: 'image/png' }),
+    new File([new Uint8Array(524289)], 'huge.jpg', { type: 'image/jpeg' }),
+  ]) {
+    chooseBulletImage(view.host, file)
+    expect(view.host.textContent).toContain('512 KiB')
+    expect(readers).toHaveLength(0)
+    await act(async () => button(view.host, '应用对象格式').click())
+    expect(view.apply).not.toHaveBeenCalled()
+  }
+  chooseBulletImage(view.host, new File(['test'], 'read-error.png', { type: 'image/png' }))
+  act(() => readers[0]!.dispatchEvent(new Event('error')))
+  expect(view.host.textContent).toContain('图片读取失败')
+  expect(button(view.host, '选择批量图片项目符号').disabled).toBe(false)
+  click(button(view.host, '重置对象格式草稿'))
+  expect(button(view.host, '应用对象格式').disabled).toBe(true)
+  expect(view.apply).not.toHaveBeenCalled()
+})
+it('recovers controls when the file reader throws before starting', () => {
+  imageReaderHarness(true)
+  const view = mount()
+  formatTab(view.host, '列表')
+  chooseBulletImage(view.host, new File(['test'], 'unreadable.png', { type: 'image/png' }))
+  expect(view.host.textContent).toContain('图片读取失败')
+  expect(button(view.host, '选择批量图片项目符号').disabled).toBe(false)
+  expect(view.apply).not.toHaveBeenCalled()
 })
 it('applies an explicit numbering scheme, stages range validation and disables composite detail fields while pending', async () => {
   const view = mount()

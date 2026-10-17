@@ -1,3 +1,4 @@
+import type { AgentImageAspectRatio } from '@mimir/shared'
 import type { ReactNode } from 'react'
 import type { DocumentDetail } from '@mimir/shared'
 import type { ChatDocumentAgent } from '@mimir/chat'
@@ -192,8 +193,8 @@ export function NoteEditor({
     () => ({
       fetchImage: (url: string, signal?: AbortSignal) =>
         api.conversations.fetchMarkdownImage(doc.id, url, signal),
-      generateImage: (prompt: string, signal?: AbortSignal) =>
-        api.conversations.generateMarkdownImage(doc.id, prompt, signal),
+      generateImage: (prompt: string, signal?: AbortSignal, aspectRatio?: AgentImageAspectRatio) =>
+        api.conversations.generateMarkdownImage(doc.id, prompt, signal, aspectRatio),
       uploadImage,
       async writeDocument(
         input: { plan: string; title?: string; context?: string },

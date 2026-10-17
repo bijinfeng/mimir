@@ -275,6 +275,7 @@ catalogs:
 
 patchedDependencies:
   '@assistant-ui/react-ag-ui@0.0.68': cf28b5b961f54b0ada401eb01fc29489be363f20749a1d07a76725944d113df3
+  cfb@1.2.2: 5b02abc642b912c2733bdbe59d2bd3faef6e3b69386fb54774b226faec77729f
 
 importers:
 
@@ -692,7 +693,7 @@ importers:
         version: 1.1.0
       cfb:
         specifier: 1.2.2
-        version: 1.2.2
+        version: 1.2.2(patch_hash=5b02abc642b912c2733bdbe59d2bd3faef6e3b69386fb54774b226faec77729f)
       fast-xml-parser:
         specifier: ^5.3.4
         version: 5.11.2
@@ -748,6 +749,9 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 7.0.2
+      vite:
+        specifier: 'catalog:'
+        version: 8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.13)
       vitest:
         specifier: 'catalog:'
         version: 5.0.4(@types/node@26.6.5)(happy-dom@20.14.6)(jsdom@28.1.0(@noble/hashes@2.4.0))(vite@8.3.4(@types/node@26.6.5))
@@ -11459,7 +11463,7 @@ snapshots:
 
   caniuse-lite@1.0.30001815: {}
 
-  cfb@1.2.2:
+  cfb@1.2.2(patch_hash=5b02abc642b912c2733bdbe59d2bd3faef6e3b69386fb54774b226faec77729f):
     dependencies:
       adler-32: 1.3.1
       crc-32: 1.2.2

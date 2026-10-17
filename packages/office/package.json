@@ -14,7 +14,8 @@
     "./vendor/extensions": "./vendor/apps/docs/src/renderer/editor/extensions.ts",
     "./vendor/fonts.css": "./vendor/apps/docs/src/renderer/fonts/fonts.css",
     "./vendor/styles.css": "./vendor/apps/docs/src/renderer/styles.css",
-    "./vendor/types": "./vendor/packages/docx-engine/src/types.ts"
+    "./vendor/types": "./vendor/packages/docx-engine/src/types.ts",
+    "./encryption-envelope": "./src/docx-encryption-envelope.ts"
   },
   "scripts": {
     "sync": "node scripts/sync-upstream.mjs",
@@ -68,6 +69,7 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "typescript": "catalog:",
+    "vite": "catalog:",
     "vitest": "catalog:"
   },
   "peerDependencies": {

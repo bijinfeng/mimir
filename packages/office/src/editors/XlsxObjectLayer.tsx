@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react'
-import { xlsxShapePreview } from './xlsx-shape-gallery.js'
+import { XlsxShapePreview } from './XlsxShapePreview.js'
 import {
   measureXlsxGrid,
   sameXlsxGridMetrics,
@@ -7,7 +7,6 @@ import {
   type XlsxGridMetrics,
 } from './xlsx-object-layout.js'
 import type { XlsxSheet } from '../xlsx.js'
-import type { XlsxVisual } from '../xlsx-visuals.js'
 import './xlsx-shape-gallery.css'
 export { xlsxVisualBox } from './xlsx-object-layout.js'
 export function XlsxObjectLayer({
@@ -74,7 +73,7 @@ export function XlsxObjectLayer({
             ) : v.kind === 'image' && v.image ? (
               <img src={v.image} alt={v.name} draggable={false} />
             ) : v.kind === 'shape' ? (
-              <XlsxShape visual={v} width={box.width} height={box.height} />
+              <XlsxShapePreview visual={v} width={box.width} height={box.height} />
             ) : (
               <span>{v.name}（暂不支持预览）</span>
             )}
@@ -82,35 +81,5 @@ export function XlsxObjectLayer({
         )
       })}
     </div>
-  )
-}
-
-function XlsxShape({
-  visual,
-  width,
-  height,
-}: {
-  visual: XlsxVisual
-  width: number
-  height: number
-}) {
-  const path = xlsxShapePreview(visual.shapeType, width, height)
-  const fill = visual.fillColor ? '#' + visual.fillColor : '#4472C4'
-  if (!path)
-    return (
-      <span className="mimir-xlsx-shape-limited">
-        <span>形状预览有限</span>
-        <span>{visual.text || visual.name}</span>
-      </span>
-    )
-  return (
-    <span className="mimir-xlsx-object__shape">
-      <svg viewBox={`0 0 ${width} ${height}`} aria-hidden="true" preserveAspectRatio="none">
-        {path.path && <path d={path.path} fill={fill} stroke={fill} />}
-        {path.fillPath && <path d={path.fillPath} fill={fill} />}
-        {path.strokePath && <path d={path.strokePath} fill="none" stroke={fill} />}
-      </svg>
-      <span>{visual.text}</span>
-    </span>
   )
 }

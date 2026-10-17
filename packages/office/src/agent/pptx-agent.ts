@@ -1,3 +1,5 @@
+import type { PptxDeckProgressListener } from '@mimir/shared'
+import type { AgentMediaAttachment } from '@mimir/shared'
 import {
   pptxAnimationTimingOpSchema,
   pptxChartEditOpSchema,
@@ -56,7 +58,12 @@ export interface PptxAgentHandle {
   execute(
     tool: string,
     args: unknown,
-    options: { expectedVersion?: number; roundId?: string; signal?: AbortSignal },
+    options: {
+      expectedVersion?: number
+      roundId?: string
+      signal?: AbortSignal
+      attachments?: AgentMediaAttachment[]
+    },
   ): Promise<unknown>
   undoRound(roundId: string): boolean
   dispose(): void
@@ -69,7 +76,10 @@ export interface PptxHostApply {
     expectedVersion: number
     ops: unknown[]
     action?: PptxHostAction
+    generationId?: string
+    onDeckProgress?: PptxDeckProgressListener
     signal?: AbortSignal
+    attachments?: AgentMediaAttachment[]
   }): Promise<{
     bytes: Uint8Array
     records: unknown[]
@@ -574,6 +584,7 @@ export function createPptxAgentHandle(
             action: tool as PptxHostAction,
             ops: [input],
             signal,
+            attachments: options.attachments,
           })
           assertActive(signal)
           if (session.version() !== version) throw new Error('宿主处理期间画布已变化，请重新读取')

@@ -1,3 +1,4 @@
+import type { XlsxPasteMode } from '@mimir/shared'
 import {
   useEffect,
   useImperativeHandle,
@@ -8,7 +9,11 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 import { Clipboard, Copy, Scissors, Upload, X } from 'lucide-react'
-import type { ClipboardContext, XlsxClipboardController } from '../xlsx-clipboard.js'
+import {
+  clipboardMarker,
+  type ClipboardContext,
+  type XlsxClipboardController,
+} from '../xlsx-clipboard.js'
 import {
   ToolbarButton,
   ToolbarFileButton,
@@ -92,6 +97,19 @@ export function XlsxClipboardControls({
   } catch (error) {
     issue = error instanceof Error ? error.message : '请选择范围'
   }
+  let native = !!state.capture && !state.payload
+  try {
+    if (state.capture && state.payload?.html)
+      native = clipboardMarker(state.payload.html) === state.capture.id
+  } catch {
+    /* Invalid external content is explained when pasted. */
+  }
+  const modeIssue =
+    native && state.capture?.kind === 'cut' && state.mode !== 'all'
+      ? '剪切内容只支持全部粘贴；请先复制以使用选择性粘贴'
+      : !native && !['all', 'value'].includes(state.mode)
+        ? '此方式需要工作簿内原生范围，请先复制'
+        : ''
   const blocked = state.busy || !!issue || !!current?.blocked
   const invoke = (action: (ctx: ClipboardContext) => void | Promise<void>) => {
     try {
@@ -108,7 +126,7 @@ export function XlsxClipboardControls({
       aria-label="范围剪贴板"
       className="mimir-xlsx-inspector mimir-xlsx-clipboard"
       onKeyDown={(event) => {
-        if (event.key === 'Escape') {
+        if (event.key === 'Escape' && !event.defaultPrevented) {
           event.stopPropagation()
           close()
         }
@@ -126,7 +144,9 @@ export function XlsxClipboardControls({
         </p>
         <ToolbarMenuFields label="工作簿内范围">
           <h3 className="mimir-xlsx-clipboard__section-title">内部范围</h3>
-          <ToolbarMenuNote>含隐藏行；单格目标按源大小展开，暂不重复平铺。</ToolbarMenuNote>
+          <ToolbarMenuNote>
+            含隐藏行；单格目标自动展开，整数倍矩形重复平铺，最多2000格。
+          </ToolbarMenuNote>
           <div className="mimir-xlsx-clipboard__actions">
             <ToolbarButton
               label="复制所选范围"
@@ -167,7 +187,7 @@ export function XlsxClipboardControls({
               </div>
               {state.payload && (
                 <ToolbarButton
-                  label="粘贴工作簿内范围"
+                  label="使用工作簿内范围"
                   disabled={blocked || state.stale || !!current?.sheet.extras?.protected}
                   disabledReason={
                     state.stale
@@ -176,15 +196,66 @@ export function XlsxClipboardControls({
                         ? '目标工作表已保护'
                         : issue || current?.blocked
                   }
-                  onClick={() => invoke((ctx) => controller.apply(ctx, null))}
+                  onClick={() => controller.selectInternal()}
                 >
-                  粘贴工作簿内范围
+                  使用工作簿内范围
                 </ToolbarButton>
               )}
             </>
           ) : (
             <ToolbarMenuNote>网格 Ctrl/Cmd+C、X、V。内部粘贴保留原生公式与格式。</ToolbarMenuNote>
           )}
+        </ToolbarMenuFields>
+        <ToolbarMenuFields label="选择性粘贴">
+          <ToolbarSelect<XlsxPasteMode>
+            label="粘贴方式"
+            value={state.mode}
+            disabled={state.busy}
+            onChange={(mode) => controller.setMode(mode)}
+            options={[
+              { value: 'all', label: '全部' },
+              {
+                value: 'value',
+                label: native ? '仅值' : '仅显示值',
+                disabled: native && state.capture?.kind === 'cut',
+              },
+              {
+                value: 'formula',
+                label: '公式与值',
+                disabled: !native || state.capture?.kind === 'cut',
+              },
+              {
+                value: 'format',
+                label: '仅格式',
+                disabled: !native || state.capture?.kind === 'cut',
+              },
+              {
+                value: 'column-width',
+                label: '仅列宽',
+                disabled: !native || state.capture?.kind === 'cut',
+              },
+              {
+                value: 'besides-border',
+                label: '除边框外全部',
+                disabled: !native || state.capture?.kind === 'cut',
+              },
+            ]}
+          />
+          <ToolbarMenuNote>
+            {modeIssue ||
+              (native
+                ? state.capture?.kind === 'cut'
+                  ? '剪切将在全部粘贴成功后移动原生范围；选择性粘贴请先复制。'
+                  : {
+                      all: '粘贴原生内容、格式、合并、链接及规则。',
+                      value: '保留目标格式和规则；公式使用原生缓存值。',
+                      formula: '平移公式并粘贴常量；保留目标格式和规则。',
+                      format: '粘贴基础格式、合并与条件格式；保留目标值和数据验证。',
+                      'column-width': '仅调整列宽；保留隐藏列和其他列属性。',
+                      'besides-border': '保留目标边框，粘贴其余原生内容、格式及规则。',
+                    }[state.mode]
+                : '外部内容支持全部或仅显示值；其他方式请先复制工作簿内范围。')}
+          </ToolbarMenuNote>
         </ToolbarMenuFields>
         <ToolbarMenuFields label="系统剪贴板与导入">
           <h3 className="mimir-xlsx-clipboard__section-title">外部内容</h3>
@@ -252,15 +323,6 @@ export function XlsxClipboardControls({
               </ToolbarMenuNote>
             </>
           )}
-          {state.payload?.html && (
-            <ToolbarButton
-              label="仅粘贴显示值"
-              disabled={blocked || !!current?.sheet.extras?.protected}
-              onClick={() => invoke((ctx) => controller.apply(ctx, state.payload, true))}
-            >
-              仅粘贴显示值
-            </ToolbarButton>
-          )}
         </ToolbarMenuFields>
         <p className="mimir-xlsx-clipboard__feedback" role={state.error ? 'alert' : 'status'}>
           {state.error || state.message || '支持系统HTML与显示值；内部原生范围只在本工作簿内有效。'}
@@ -268,19 +330,21 @@ export function XlsxClipboardControls({
       </div>
       <footer className="mimir-xlsx-clipboard__footer">
         <ToolbarButton
-          label={state.capture && !state.payload ? '粘贴工作簿内范围' : '粘贴已读取内容'}
+          label={state.busy ? '正在粘贴…' : '粘贴'}
           primary
           disabled={
             blocked ||
+            !!modeIssue ||
             (!state.payload && (!state.capture || state.stale)) ||
             !!current?.sheet.extras?.protected
           }
           disabledReason={
             current?.sheet.extras?.protected
               ? '目标工作表已保护'
-              : !state.payload && state.stale
-                ? '工作簿已更新，请重新复制'
-                : issue || current?.blocked || '先复制范围、读取系统剪贴板或输入内容'
+              : modeIssue ||
+                (!state.payload && state.stale
+                  ? '工作簿已更新，请重新复制'
+                  : issue || current?.blocked || '先复制范围、读取系统剪贴板或输入内容')
           }
           onClick={() => invoke((ctx) => controller.apply(ctx, state.payload))}
         />

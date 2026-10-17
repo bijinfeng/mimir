@@ -752,7 +752,7 @@ describe('DocxEditor 的保存按钮', () => {
 
     selectTab(host, '审阅')
     press(host, '添加批注')
-    expect(host.textContent).toContain('未选中文字时，批注当前段落')
+    expect(host.textContent).toContain('所选文字：第一章 概述')
     const apply = host.querySelector<HTMLButtonElement>('button[aria-label="添加批注到文档"]')
     expect(apply?.disabled).toBe(true)
     expect(apply?.title).toBe('请先输入批注内容')

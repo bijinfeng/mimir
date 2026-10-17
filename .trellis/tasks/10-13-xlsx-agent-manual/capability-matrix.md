@@ -1,5 +1,12 @@
 # XLSX 固定版能力矩阵（55 DSL入口已接，完整对标验收未完成）
 
+> 2026-10-17 最终补齐状态（覆盖本文历史待办时点）
+>
+> XLSX：R1/R2a/R2b及六模式R3特殊粘贴/平铺已实施并原生浏览器保存/history验收，CDATA显示/真实复制/reload已用新构建结清。数据有效性、透视、多级排序、复杂显示、对象管理及320px窄屏工具见最新专报。两旧测试粘贴入口与fakeHost已按现行唯一粘贴/真实special adapter修正，不删native/history断言。
+>
+> 总范围与逐项证据见 `10-11-chat-edit-office/research/all-tools-final-scope-independent-check-20261017.md`；最终源码质量门见同目录 `final-quality-check-20261017.md`（root第三轮原样pnpm check：4606通过/2既有跳过、exit0，最终Web构建exit0，1764输入起止不变；不沿用旧4231）。用户已选代码/浏览器优先：真实provider未配置，新密码和Desktop自行验收；旧“待两端/待Desktop”不构成本轮新增阻断。明确支持子集与原生复杂结构拒绝仍保留，不宣传任意Office原件全兼容。
+
+
 上游 GenOffice commit：`480548fd55f1be3593ee0d8e316a734751d58309`（2026-10-13 核对；Mimir 工具栏与专项测试于 2026-10-16 复核）。Agent 工具来源 `apps/sheets/src/renderer/ai/tools.ts`；55 种 DSL 来源 `packages/xlsx-gateway/src/domain/workbook-dsl.ts:903`；手动入口主要在 `apps/sheets/src/renderer/ribbon-actions.ts:195` 和 `App.tsx`。Mimir 使用共享 `XlsxEditor`，宿主为鉴权 HTTP `/api/conversations/xlsx-agent/apply-ops`，两端入口相同；**浏览器已有下述代表性实测，真实桌面仍待验**。WeKnora v0.8.3 的站点、源码与适用性证据见 `.trellis/tasks/10-16-genoffice-editor-capability-audit/research/toolbar-assessment.md`，文件编辑以本固定版 GenOffice 为主参考。
 
 “已接”只表示当前代码和专项测试覆盖；不表示该格式验收完成。独立读回证据：`apps/server/src/test/xlsx-agent-host.test.ts` 使用 GenOffice 样本，检查共享字符串、样式索引、两次保存、未触及 ZIP 条目；`packages/office/src/editors/XlsxEditor.test.tsx` 检查手动工具栏操作后的画布、保存字节和重开。显式公式重算已接官方 `@ironcalc/wasm-xlsx@0.9.0` 隔离worker；仅回写原件公式缓存，未引入Rust sidecar。普通编辑不自动重算，画布仍明确提示旧缓存；详见 [重算证据与限制](research/formula-wasm.md)。

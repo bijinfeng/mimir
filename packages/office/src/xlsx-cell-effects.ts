@@ -1,6 +1,12 @@
+import {
+  readXlsxRangeXmlTree,
+  readXlsxFormulaCharacterData,
+  type XlsxRangeXmlNode,
+} from './xlsx-native-xml.js'
+import { resolveXlsxValidationList } from './xlsx-validation-list.js'
+import type { XlsxValidationRule } from './xlsx-sheet-features.js'
 import type { XlsxCellFormat } from './xlsx-format.js'
 import type { XlsxCell, XlsxSheet, XlsxWorkbook } from './xlsx.js'
-import { decodeXlsxXml } from './xlsx-format.js'
 import { xlsxAttribute as attr } from './xlsx-sheet-features.js'
 import { xlsxTableCellFormat } from './xlsx-table-styles.js'
 import {
@@ -32,13 +38,48 @@ const color = (xml: string) => {
   const rgb = attr(xml, 'rgb')?.slice(-6)
   return rgb && /^[0-9a-f]{6}$/i.test(rgb) ? '#' + rgb : undefined
 }
+function cfDisplayXml(xml: string, root: XlsxRangeXmlNode): string {
+  const patches: { start: number; end: number; value: string }[] = []
+  const visit = (node: XlsxRangeXmlNode) => {
+    if (
+      node.ns === 'http://schemas.openxmlformats.org/spreadsheetml/2006/main' &&
+      node.tag !== node.local
+    ) {
+      patches.push({
+        start: node.start + 1,
+        end: node.start + 1 + node.tag.length,
+        value: node.local,
+      })
+      if (node.closeStart < node.end && xml.startsWith('</', node.closeStart))
+        patches.push({
+          start: node.closeStart + 2,
+          end: node.closeStart + 2 + node.tag.length,
+          value: node.local,
+        })
+    }
+    node.children.forEach(visit)
+  }
+  visit(root)
+  return patches
+    .toSorted((a, b) => b.start - a.start)
+    .reduce(
+      (text, item) =>
+        text.slice(0, item.start - root.start) + item.value + text.slice(item.end - root.start),
+      xml.slice(root.start, root.end),
+    )
+}
 export function readXlsxCfRules(xml: string, styles: string): XlsxCfRule[] {
-  const dxfs = [
-    ...(/<dxfs\b[^>]*>([\s\S]*?)<\/dxfs>/.exec(styles)?.[1] ?? '').matchAll(
-      /<dxf\b[^>]*>([\s\S]*?)<\/dxf>/g,
-    ),
-  ].map((m) => {
-    const body = m[1]!,
+  if (!xml.includes('conditionalFormatting')) return []
+  const main = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
+  const styleRoot = styles ? readXlsxRangeXmlTree(styles) : undefined
+  const dxfs = (
+    styleRoot?.children
+      .filter((node) => node.ns === main && node.local === 'dxfs')
+      .flatMap((node) =>
+        node.children.filter((child) => child.ns === main && child.local === 'dxf'),
+      ) ?? []
+  ).map((node) => {
+    const body = cfDisplayXml(styles, node),
       font = /<font\b[^>]*>([\s\S]*?)<\/font>/.exec(body)?.[1] ?? '',
       fill = /<fill\b[^>]*>([\s\S]*?)<\/fill>/.exec(body)?.[1] ?? ''
     return {
@@ -49,22 +90,28 @@ export function readXlsxCfRules(xml: string, styles: string): XlsxCfRule[] {
       numberFormat: attr(/<numFmt\b[^>]*>/.exec(body)?.[0] ?? '', 'formatCode'),
     } satisfies XlsxCellFormat
   })
-  return [...xml.matchAll(/<conditionalFormatting\b([^>]*)>([\s\S]*?)<\/conditionalFormatting>/g)]
-    .flatMap(([, a = '', body = '']) =>
-      [...body.matchAll(/<cfRule\b([^>]*)(?:\/>|>([\s\S]*?)<\/cfRule>)/g)].map(
-        ([full, attrs = '', rule = '']) => ({
-          range: attr(a, 'sqref') ?? '',
-          type: attr(attrs, 'type') ?? '',
-          operator: attr(attrs, 'operator'),
-          priority: Number(attr(attrs, 'priority') ?? 999),
-          stop: /^(?:1|true)$/.test(attr(attrs, 'stopIfTrue') ?? ''),
-          formula: [...rule.matchAll(/<formula\b[^>]*>([\s\S]*?)<\/formula>/g)].map((m) =>
-            decodeXlsxXml(m[1]!),
-          ),
-          style: dxfs[Number(attr(attrs, 'dxfId') ?? -1)],
-          xml: full,
-        }),
-      ),
+  const root = readXlsxRangeXmlTree(xml)
+  return root.children
+    .filter((node) => node.ns === main && node.local === 'conditionalFormatting')
+    .flatMap((group) =>
+      group.children
+        .filter((node) => node.ns === main && node.local === 'cfRule')
+        .map((node) => ({
+          range: group.attrs.get('sqref') ?? '',
+          type: node.attrs.get('type') ?? '',
+          operator: node.attrs.get('operator'),
+          priority: Number(node.attrs.get('priority') ?? 999),
+          stop: /^(?:1|true)$/.test(node.attrs.get('stopIfTrue') ?? ''),
+          formula: node.children
+            .filter((child) => child.ns === main && child.local === 'formula')
+            .map((child) =>
+              readXlsxFormulaCharacterData(xml.slice(child.openEnd, child.closeStart)),
+            ),
+          style: dxfs[Number(node.attrs.get('dxfId') ?? -1)],
+          // A display-only view lets existing scalar threshold rendering consume qualified native tags.
+          // This text never participates in native serialization.
+          xml: cfDisplayXml(xml, node),
+        })),
     )
     .toSorted((a, b) => a.priority - b.priority)
 }
@@ -82,6 +129,13 @@ export function xlsxCellEffects(
   const effects = new Map<string, XlsxCellEffect>(),
     scalarAt = (r: number, c: number) =>
       xlsxScalar(sheet.rows.find((row) => row.number === r + 1)?.cells[c])
+  const qualifiedAt = (name: string, row: number, column: number) => {
+    const source = workbook.sheets.find((item) => item.name.toLowerCase() === name.toLowerCase())
+    if (!source) throw new Error('条件格式引用的工作表不存在')
+    const cell = source.rows.find((item) => item.number === row + 1)?.cells[column]
+    if (cell?.formula && cell.formulaCache !== 'cached') throw new Error('条件格式引用了未缓存公式')
+    return xlsxScalar(cell)
+  }
   const cells = sheet.rows.flatMap((row) =>
     row.cells.map((cell) => ({ row: row.number - 1, cell, key: `${row.number}:${cell.col}` })),
   )
@@ -94,6 +148,13 @@ export function xlsxCellEffects(
     const threshold = (tag: string) => {
       const type = attr(tag, 'type'),
         val = Number(attr(tag, 'val') ?? 0)
+      if (type === 'formula') {
+        const result = Number(
+          evaluateXlsxPredicate(attr(tag, 'val') ?? '', scalarAt, 0, 0, qualifiedAt),
+        )
+        if (!Number.isFinite(result)) throw new Error('条件格式阈值公式无法可靠计算')
+        return result
+      }
       return type === 'min'
         ? min
         : type === 'max'
@@ -154,6 +215,7 @@ export function xlsxCellEffects(
               scalarAt,
               row - anchor.startRow,
               cell.col - anchor.startColumn,
+              qualifiedAt,
             ),
             b = rule.formula[1]
               ? evaluateXlsxPredicate(
@@ -161,6 +223,7 @@ export function xlsxCellEffects(
                   scalarAt,
                   row - anchor.startRow,
                   cell.col - anchor.startColumn,
+                  qualifiedAt,
                 )
               : null
           const compare =
@@ -221,6 +284,7 @@ export function xlsxCellEffects(
               scalarAt,
               row - anchor.startRow,
               cell.col - anchor.startColumn,
+              qualifiedAt,
             ),
           )
         else current.warnings = [...(current.warnings ?? []), `暂不支持规则 ${rule.type}`]
@@ -275,56 +339,114 @@ export function xlsxCellEffects(
   }
   return effects
 }
-export function validateXlsxCellInput(
+export function evaluateXlsxCellInput(
   sheet: XlsxSheet,
   workbook: XlsxWorkbook,
   address: string,
   input: PredicateScalar,
-): string | null {
+): XlsxValidationResult {
+  const issues: XlsxValidationIssue[] = []
+  for (const rule of sheet.extras?.validations ?? []) {
+    const parts = rule.range.trim().split(/\s+/)
+    if (
+      !parts.every((part) => {
+        if (!/^\$?[A-Z]{1,3}\$?[1-9]\d{0,6}(?::\$?[A-Z]{1,3}\$?[1-9]\d{0,6})?$/i.test(part))
+          return false
+        try {
+          const bounds = parseRange(part.replaceAll('$', '').toUpperCase())
+          return bounds.endRow < 1048576 && bounds.endColumn < 16384
+        } catch {
+          return false
+        }
+      })
+    )
+      issues.push({
+        kind: 'unsupported',
+        style: 'stop',
+        title: '',
+        message: '原件数据验证范围无法可靠映射',
+        rule,
+      })
+  }
   const p = parseAddress(address),
     rules = (sheet.extras?.validations ?? []).filter((v) =>
       xlsxRangeContains(v.range, p.row, p.column),
     )
   for (const rule of rules) {
-    if ((input === '' || input === null) && rule.allowBlank) continue
-    const at = (row: number, col: number) =>
-      row === p.row && col === p.column
-        ? input
-        : xlsxScalar(sheet.rows.find((r) => r.number === row + 1)?.cells[col])
+    const at = (row: number, col: number) => {
+      if (row === p.row && col === p.column) return input
+      const cell = sheet.rows.find((r) => r.number === row + 1)?.cells[col]
+      if (cell?.formula && cell.formulaCache !== 'cached')
+        throw new Error('数据验证引用了未缓存公式，无法可靠计算')
+      return xlsxScalar(cell)
+    }
+    const qualifiedAt = (name: string, row: number, column: number) => {
+      const source = workbook.sheets.find((item) => item.name.toLowerCase() === name.toLowerCase())
+      if (!source) throw new Error('数据验证引用的工作表不存在')
+      if (source === sheet) return at(row, column)
+      const cell = source.rows.find((item) => item.number === row + 1)?.cells[column]
+      if (cell?.formula && cell.formulaCache !== 'cached')
+        throw new Error('数据验证引用了未缓存公式，无法可靠计算')
+      return xlsxScalar(cell)
+    }
     try {
+      if (rule.unsupported) throw new Error(rule.unsupported)
+      if (
+        !['none', 'list', 'custom', 'decimal', 'whole', 'date', 'time', 'textLength'].includes(
+          rule.type,
+        )
+      )
+        throw new Error('当前网格暂不支持此数据验证类型')
+      if (!['stop', 'warning', 'information'].includes(rule.errorStyle ?? 'stop'))
+        throw new Error('原件数据验证错误样式无法识别')
+      if ((input === '' || input === null) && rule.allowBlank) continue
       let valid = true
       if (rule.type === 'list') {
-        const inline = /^"([\s\S]*)"$/.exec(rule.formula1)
-        let values: PredicateScalar[]
-        if (inline) values = inline[1]!.split(',')
-        else {
-          const defined =
-            workbook.definedNames?.find((n) => n.name === rule.formula1)?.ref ?? rule.formula1
-          const ref = /^(?:'((?:[^']|'')+)'|([^!]+))!(.+)$/.exec(defined),
-            source = ref
-              ? workbook.sheets.find((s) => s.name === (ref[1]?.replaceAll("''", "'") ?? ref[2]))
-              : sheet
-          if (!source) throw new Error('数据验证引用的工作表不存在')
-          const b = parseRange((ref?.[3] ?? defined).replaceAll('$', ''))
-          if ((b.endRow - b.startRow + 1) * (b.endColumn - b.startColumn + 1) > 2000)
-            throw new Error('数据验证引用超出范围')
-          values = []
-          for (let r = b.startRow; r <= b.endRow; r++)
-            for (let c = b.startColumn; c <= b.endColumn; c++)
-              values.push(xlsxScalar(source.rows.find((row) => row.number === r + 1)?.cells[c]))
-        }
+        const values = resolveXlsxValidationList(rule.formula1, sheet, workbook, {
+          address,
+          range: rule.range,
+        })
         valid = values.some(
           (v) => String(v ?? '').toLowerCase() === String(input ?? '').toLowerCase(),
         )
       } else if (rule.type === 'custom') {
         const b = parseRange(rule.range.split(/\s+/)[0]!.replaceAll('$', ''))
-        valid = Boolean(
-          evaluateXlsxPredicate(rule.formula1, at, p.row - b.startRow, p.column - b.startColumn),
+        const value = evaluateXlsxPredicate(
+          rule.formula1,
+          at,
+          p.row - b.startRow,
+          p.column - b.startColumn,
+          qualifiedAt,
         )
+        if (typeof value !== 'boolean' && (typeof value !== 'number' || !Number.isFinite(value)))
+          throw new Error('自定义数据验证公式未返回可计算的逻辑值')
+        valid = Boolean(value)
       } else if (['decimal', 'whole', 'date', 'time', 'textLength'].includes(rule.type)) {
+        if (
+          ![
+            'between',
+            'notBetween',
+            'equal',
+            'notEqual',
+            'greaterThan',
+            'lessThan',
+            'greaterThanOrEqual',
+            'lessThanOrEqual',
+          ].includes(rule.operator)
+        )
+          throw new Error('原件数据验证比较方式无法识别')
+        const between = ['between', 'notBetween'].includes(rule.operator)
+        if (between && !rule.formula2) throw new Error('原件数据验证缺少第二个比较值')
+        const anchor = parseRange(rule.range.split(/\s+/)[0]!.replaceAll('$', '')),
+          deltaRow = p.row - anchor.startRow,
+          deltaColumn = p.column - anchor.startColumn
         const value = rule.type === 'textLength' ? String(input ?? '').length : Number(input),
-          a = Number(evaluateXlsxPredicate(rule.formula1, at)),
-          b = rule.formula2 ? Number(evaluateXlsxPredicate(rule.formula2, at)) : 0
+          a = Number(evaluateXlsxPredicate(rule.formula1, at, deltaRow, deltaColumn, qualifiedAt)),
+          b = between
+            ? Number(evaluateXlsxPredicate(rule.formula2, at, deltaRow, deltaColumn, qualifiedAt))
+            : 0
+        if (!Number.isFinite(a) || !Number.isFinite(b))
+          throw new Error('原件数据验证比较公式无法可靠计算')
         valid =
           Number.isFinite(value) &&
           (rule.type !== 'whole' || Number.isInteger(value)) &&
@@ -344,10 +466,50 @@ export function validateXlsxCellInput(
                         ? value < a || value > b
                         : value >= a && value <= b)
       }
-      if (!valid) return rule.error || '输入不符合此单元格的数据验证规则'
+      if (!valid && rule.showErrorMessage !== false)
+        issues.push({
+          kind:
+            rule.errorStyle === 'warning' || rule.errorStyle === 'information'
+              ? 'confirmation'
+              : 'stop',
+          style: rule.errorStyle ?? 'stop',
+          title: rule.errorTitle ?? '',
+          message: rule.error || '输入不符合此单元格的数据验证规则',
+          rule,
+        })
     } catch (error) {
-      return error instanceof Error ? error.message : '无法检查数据验证规则'
+      issues.push({
+        kind: 'unsupported',
+        style: 'stop',
+        title: '',
+        message: error instanceof Error ? error.message : '无法检查数据验证规则',
+        rule,
+      })
     }
   }
-  return null
+  return { issues, valid: issues.length === 0 }
+}
+export interface XlsxValidationIssue {
+  kind: 'stop' | 'confirmation' | 'unsupported'
+  style: string
+  title: string
+  message: string
+  rule: XlsxValidationRule
+}
+export interface XlsxValidationResult {
+  valid: boolean
+  issues: XlsxValidationIssue[]
+}
+/** Compatibility callers remain strict; only the private grid handshake can confirm warnings. */
+export function validateXlsxCellInput(
+  sheet: XlsxSheet,
+  workbook: XlsxWorkbook,
+  address: string,
+  input: PredicateScalar,
+): string | null {
+  const result = evaluateXlsxCellInput(sheet, workbook, address, input)
+  const issue = result.issues.find((item) => item.kind !== 'confirmation') ?? result.issues[0]
+  return issue
+    ? issue.message + (issue.kind === 'confirmation' ? '；需要用户在当前格确认' : '')
+    : null
 }

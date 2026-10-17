@@ -41,3 +41,6 @@ export * from './pptx-picture.js'
 export * from './pptx-image.js'
 
 export * from './pdf-visual-signature.js'
+
+export * from './agent-media.js'
+export * from './pptx-deck-progress.js'

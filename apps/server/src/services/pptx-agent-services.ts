@@ -1,7 +1,17 @@
+import {
+  PPTX_DECK_CANDIDATE_MAX_BYTES,
+  PPTX_DECK_STREAM_MAX_BYTES,
+  PptxDeckStreamError,
+} from '@mimir/shared'
 import { createHash, randomUUID } from 'node:crypto'
+import { BoundedZip } from '../../../../packages/office/src/zip-bounds.js'
 import { z } from 'zod'
 import {
   pptxDeckPlanSchema,
+  pptxImageGenerationSchema,
+  pptxMediaAnalysisSchema,
+  agentAttachmentName,
+  readPptxImageInfo,
   pptxGenerateDeckSchema,
   pptxRegenerateSlideSchema,
   pptxInsertWebImageSchema,
@@ -65,14 +75,43 @@ function coverCrop(imageRatio: number, frameRatio: number) {
     ? { l: (1 - frameRatio / imageRatio) / 2, r: (1 - frameRatio / imageRatio) / 2, t: 0, b: 0 }
     : { l: 0, r: 0, t: (1 - imageRatio / frameRatio) / 2, b: (1 - imageRatio / frameRatio) / 2 }
 }
-async function imagePayload(url: string, documentId: string, probe: ImageProbe) {
+function attachmentImage(url: string, request: PptxHostRequest) {
+  const name = agentAttachmentName(url)
+  if (name === null) return null
+  const matches = (request.attachments ?? []).filter((file) => file.name === name)
+  if (matches.length !== 1)
+    throw new Error(matches.length ? '同名附件存在歧义' : '请重新选择此原附件')
+  const file = matches[0]!
+  if (file.bytes.length > 8 * 1024 * 1024) throw new Error('附件超过8 MiB')
+  const info = readPptxImageInfo(file.bytes)
+  if (!['png', 'jpg'].includes(info.ext) || info.mime !== file.mimeType)
+    throw new Error('原附件须为内容与类型一致的PNG或JPEG')
+  return {
+    dataUrl: `data:${info.mime};base64,${Buffer.from(file.bytes).toString('base64')}`,
+    mimeType: info.mime,
+  }
+}
+async function imageSource(url: string, request: PptxHostRequest) {
+  cancel(request.signal)
+  const attachment = attachmentImage(url, request)
+  if (attachment) return attachment
+  const downloaded = await fetchDocxImage(url, request.signal)
+  cancel(request.signal)
+  return downloaded
+}
+async function imagePayload(
+  url: string,
+  documentId: string,
+  probe: ImageProbe,
+  request?: PptxHostRequest,
+) {
   if (url.startsWith('mimir-generated://')) {
     const item = generated.get(url)
     if (!item || item.documentId !== documentId || item.expires < Date.now())
       throw new Error('生成图片已过期或不属于此文档，请重新生成')
     return probePayload(item.dataUrl, probe)
   }
-  const downloaded = await fetchDocxImage(url)
+  const downloaded = request ? await imageSource(url, request) : await fetchDocxImage(url)
   return probePayload(downloaded.dataUrl, probe)
 }
 
@@ -217,11 +256,17 @@ export async function applyPptxService(
     })
   }
   if (request.action === 'generate_image') {
-    const fields = z
-      .object({ prompt: z.string().trim().min(1).max(2000) })
-      .strict()
-      .parse(input)
-    const output = await generateDocxImage(fields.prompt, request.documentId)
+    const fields = pptxImageGenerationSchema.parse(input)
+    const referenceImages = await Promise.all(
+      (fields.referenceImageUrls ?? []).map((url) => imageSource(url, request)),
+    )
+    cancel(request.signal)
+    const output = await generateDocxImage(fields.prompt, request.documentId, {
+      signal: request.signal,
+      aspectRatio: fields.aspectRatio,
+      referenceImages,
+      transparentBackground: fields.transparentBackground,
+    })
     cancel(request.signal)
     for (const [key, item] of generated) if (item.expires < Date.now()) generated.delete(key)
     while (generated.size >= 8) generated.delete(generated.keys().next().value!)
@@ -234,26 +279,31 @@ export async function applyPptxService(
     return readResult({ url, expiresInMinutes: 20 })
   }
   if (request.action === 'analyze_media') {
-    const fields = z
-      .object({
-        mediaUrls: z.array(z.url().max(2000)).min(1).max(4),
-        requirements: z.string().trim().min(1).max(4000),
-      })
-      .strict()
-      .parse(input)
-    const images = await Promise.all(fields.mediaUrls.map((url) => fetchDocxImage(url)))
+    const fields = pptxMediaAnalysisSchema.parse(input)
+    if (fields.kind !== 'image') throw new Error('请从对话工具选择原音视频文件进行分析')
+    const images = await Promise.all(fields.mediaUrls!.map((url) => imageSource(url, request)))
     const media = images.map((image) => ({
       mimeType: image.mimeType,
       data: image.dataUrl.split(',')[1]!,
     }))
-    const result = await analyzeDocxMedia({
-      documentId: request.documentId,
-      instruction: fields.requirements,
-      kind: media.length === 1 ? 'image' : 'video',
-      media,
-    })
+    const results = []
+    for (const item of media) {
+      cancel(request.signal)
+      results.push(
+        await analyzeDocxMedia({
+          documentId: request.documentId,
+          instruction: fields.requirements,
+          kind: 'image',
+          media: [item],
+          signal: request.signal,
+        }),
+      )
+    }
     cancel(request.signal)
-    return readResult(result)
+    return readResult({
+      text: results.map((result, index) => `素材${index + 1}：${result.text}`).join('\n'),
+      sources: fields.mediaUrls,
+    })
   }
   const opened = await openPptx(request.bytes)
   if (request.action === 'insert_web_image' || request.action === 'replace_image') {
@@ -263,7 +313,7 @@ export async function applyPptxService(
       : pptxInsertWebImageSchema.parse(input)
     const slide = opened.deck.slides[fields.slideIndex]
     if (!slide) throw new Error('幻灯片已失效')
-    const payload = await imagePayload(fields.url, request.documentId, probe)
+    const payload = await imagePayload(fields.url, request.documentId, probe, request)
     cancel(request.signal)
     const original =
       'sourceId' in fields
@@ -346,6 +396,14 @@ export async function applyPptxService(
     dataSource = fields.dataSource
   } else if (request.action === 'generate_deck') {
     const fields = pptxGenerateDeckSchema.parse(input)
+    await request.onDeckProgress?.({
+      generationId: request.generationId!,
+      stage: 'planning',
+      total: fields.pages?.length ?? fields.approx_pages ?? 8,
+      completed: 0,
+      insertMode: fields.insert_mode,
+      originalPages: opened.deck.slides.length,
+    })
     const style = fields.style_template
       ? (await readTemplate(fields.style_template)).style
       : fields.style
@@ -382,14 +440,28 @@ export async function applyPptxService(
   // Specific figures must have an explicit provenance; never silently invent production data.
   if (/\d+(?:[.,]\d+)?\s*(?:%|％|万|亿|元|美元|USD|RMB)/i.test(JSON.stringify(plan)) && !dataSource)
     throw new Error('具体数字须声明 dataSource 来源')
+  const originalPageCount = opened.deck.slides.length
   let output = opened
   if (mode === 'replace') {
     output = await openPptx(await createBlankPptx())
     setSlideSize(output, opened.deck.size.cx, opened.deck.size.cy)
   }
+  let checkpointBytes: Uint8Array | undefined
+  let checkpointTotal = 0
+  const progress = (completed: number, stage: 'generating' | 'checkpoint', title?: string) => ({
+    generationId: request.generationId!,
+    stage,
+    total: plan.pages.length,
+    completed,
+    insertMode: mode === 'append' ? ('append' as const) : ('replace' as const),
+    originalPages: originalPageCount,
+    ...(title ? { title } : {}),
+  })
   for (let index = 0; index < plan.pages.length; index++) {
     cancel(request.signal)
     const page = plan.pages[index]!
+    if (request.action === 'generate_deck')
+      await request.onDeckProgress?.(progress(index, 'generating', page.title))
     const urls: string[] = []
     for (const query of page.image_queries) {
       if (/^https?:\/\//.test(query)) urls.push(query)
@@ -495,10 +567,32 @@ export async function applyPptxService(
       })
       if (!cropped.applied) throw new Error(cropped.failures?.[0]?.error ?? '生成图片裁切失败')
     }
+    if (request.action === 'generate_deck' && request.onDeckProgress) {
+      const candidate = await savePptx(output)
+      checkpointTotal += Math.ceil(candidate.byteLength / 3) * 4 + 20000
+      if (
+        candidate.byteLength > PPTX_DECK_CANDIDATE_MAX_BYTES ||
+        checkpointTotal > PPTX_DECK_STREAM_MAX_BYTES
+      )
+        throw new PptxDeckStreamError('生成预览超过传输预算；请减少页数或图片后重试')
+      // A page is complete only once the saved native package can actually be reopened.
+      await (await BoundedZip.open(candidate)).preflightAll()
+      const verified = await openPptx(candidate)
+      const expectedPages = (mode === 'append' ? originalPageCount : 0) + index + 1
+      if (verified.deck.slides.length !== expectedPages)
+        throw new PptxDeckStreamError('生成页数验证失败')
+      cancel(request.signal)
+      checkpointBytes = candidate
+      await request.onDeckProgress(progress(index + 1, 'checkpoint', page.title), {
+        bytes: candidate,
+        sampleData: dataSource === 'sample',
+        data: { pages: index + 1, style: plan.style, topic: plan.core_hook },
+      })
+    }
   }
   cancel(request.signal)
   return {
-    bytes: await savePptx(output),
+    bytes: checkpointBytes ?? (await savePptx(output)),
     records: [],
     version: request.expectedVersion + 1,
     sampleData: dataSource === 'sample',

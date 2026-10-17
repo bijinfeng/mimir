@@ -12,6 +12,7 @@ import {
 } from '@mimir/shared'
 import { HttpError, parseInput } from '../lib/http.js'
 import {
+  DocumentUpdateError,
   countDocuments,
   createNote,
   deleteDocument,
@@ -61,7 +62,14 @@ documentsRoute.get('/:id', async (c) => {
 
 documentsRoute.patch('/:id', async (c) => {
   const input = await parseInput(c, 'json', noteUpdateSchema)
-  const doc = await updateNote(c.req.param('id'), input)
+  let doc
+  try {
+    doc = await updateNote(c.req.param('id'), input)
+  } catch (error) {
+    if (error instanceof DocumentUpdateError)
+      throw new HttpError(409, 'SOURCE_CONFLICT', error.message)
+    throw error
+  }
   if (!doc) throw new HttpError(404, 'NOT_FOUND', '文档不存在')
   return c.json(doc)
 })

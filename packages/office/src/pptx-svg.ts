@@ -425,12 +425,10 @@ function textLayout(
     }
 
     for (const run of line.runs) {
-      if (run.text === '') continue
-
       /**
        * 图片项目符号（`<a:buBlip>`）：上游把 glyph 文本置空、把图片放在
        * `image` 字段里，并给出 `widthPx`（图宽）与 `ascentPx`（图高）。
-       * 它不是文字，单独画，且**打断**当前的样式段。
+       * 它不是文字，单独画，且**打断**当前的样式段；必须先于空文字过滤。
        */
       if (run.image) {
         flush()
@@ -443,6 +441,8 @@ function textLayout(
         groupRight = run.x + run.widthPx
         continue
       }
+
+      if (run.text === '') continue
 
       const prev = group.at(-1)
       // 样式不同、或位置接不上（引擎的 x 与自己算的宽度有累计误差），就断开

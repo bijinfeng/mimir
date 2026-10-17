@@ -1,3 +1,4 @@
+import { PptxDeckWritingPreview, usePptxDeckWriting } from './PptxDeckWritingPreview.js'
 import { PPTX_PICTURE_ACCEPT, PPTX_PICTURE_FORMATS } from '@mimir/shared'
 import { preparePptxPictureFile } from '../pptx-image-display.js'
 /**
@@ -1208,6 +1209,12 @@ export function PptxEditor({
   }>({ slideIndex: active, elementId: selected, elementIds: selectedRefs })
   const onAgentHandleChangeRef = useRef(onAgentHandleChange)
   const hostApplyRef = useRef(hostApply)
+  const { draft: deckWritingDraft, apply: applyWithDeckWriting } = usePptxDeckWriting(
+    hostApplyRef,
+    session,
+    documentId,
+    viewVersion,
+  )
   useEffect(() => {
     agentSelectionRef.current = {
       slideIndex: active,
@@ -1227,7 +1234,7 @@ export function PptxEditor({
       hostApplyRef.current
         ? (request) => {
             if (!hostApplyRef.current) throw new Error('PPTX 宿主执行器未配置')
-            return hostApplyRef.current(request)
+            return applyWithDeckWriting(request)
           }
         : undefined,
       (input, signal) =>
@@ -1261,7 +1268,14 @@ export function PptxEditor({
       if (agentHandleRef.current === handle) agentHandleRef.current = null
       onAgentHandleChangeRef.current?.(null)
     }
-  }, [session, documentId, agentSelectionRef, hostApplyRef, onAgentHandleChangeRef])
+  }, [
+    session,
+    documentId,
+    agentSelectionRef,
+    hostApplyRef,
+    onAgentHandleChangeRef,
+    applyWithDeckWriting,
+  ])
 
   /**
    * 当前页的**最新值**，给查找适配器的 `activate` 用。
@@ -4971,7 +4985,10 @@ export function PptxEditor({
           >
             {workspaceStage}
           </PptxWorkspaceViews>
-          {inspector && (
+          {deckWritingDraft && (
+            <PptxDeckWritingPreview draft={deckWritingDraft} focusFallback={canvasRef} />
+          )}
+          {!deckWritingDraft && inspector && (
             <aside
               ref={inspectorRef}
               tabIndex={-1}

@@ -1,5 +1,12 @@
 # PPTX 能力逐项矩阵（实施中，更新于 2026-10-16）
 
+> 2026-10-17 最终补齐状态（覆盖本文历史待办时点）
+>
+> PPTX：最后补齐图片比例/引用图/透明/attachment原图/原音视频分析、批量图片符号及逐页生成/停止保留。图片符号native正确但画布缺图的真实失败已补共享SVG分支，最新产品顶层/直接组成员8图可见。逐页真实Editor受控1280/420、单次发布/history/native保存重开/丢弃回焦已验；受控不等于真实provider。
+>
+> 总范围与逐项证据见 `10-11-chat-edit-office/research/all-tools-final-scope-independent-check-20261017.md`；最终源码质量门见同目录 `final-quality-check-20261017.md`（root第三轮原样pnpm check：4606通过/2既有跳过、exit0，最终Web构建exit0，1764输入起止不变；不沿用旧4231）。用户已选代码/浏览器优先：真实provider未配置，新密码和Desktop自行验收；旧“待两端/待Desktop”不构成本轮新增阻断。明确支持子集与原生复杂结构拒绝仍保留，不宣传任意Office原件全兼容。
+
+
 固定 GenOffice 版本：`480548fd55f1be3593ee0d8e316a734751d58309`。上游源码临时副本来自父任务调研，目录 `/private/tmp/mimir-genoffice-html-git/`；工具清单以 `apps/slides/src/renderer/ai/slides-skill.ts`，操作以 `packages/pptx-ops/src/prompts/ops/*.md` 为准。Mimir 执行证据是 `packages/office/src/agent/pptx-agent.test.ts`（6 例）及原有 `PptxEditor.test.tsx`、`pptx-structure.test.ts`。`packages/office/src/agent/pptx-agent.ts` 的 7 项浏览器本地操作与 `apps/server/src/services/pptx-agent-host.ts` 的固定上游 `runTxn` 共存；后者接受 61 项 AI-callable 操作，但目前只有代表性操作经过真实原件读回。
 
 状态说明：「本地已验」= 本地执行和聚焦测试覆盖；「宿主可调用，未逐项验」= 固定版 runTxn 已接通但该操作尚无独立保存读回证据。浏览器与桌面共用 HTTP 路由，新增对象层级/翻转/背景/隐藏命令尚未分别实测。非 AI-callable 操作仍被通用 `apply_ops` 拒绝；现有图表通过独立 `edit_chart` 动作接入受控的单项 `setChart`。表格单元格手动编辑已通过组件与宿主保存读回。图表手动插入要求用户逐项填写类别和有限数值，固定声明 `dataSource:'user'`，只支持单系列柱状/折线/饼图；现有图表现可编辑多个既有系列、标题、类型、图例与数据标签；首次导入转换须明确确认，特殊格式可能简化。不能通过新增后删除模拟编辑，因为会改变图表身份、层级和关系。

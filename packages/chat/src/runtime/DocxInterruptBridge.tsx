@@ -1,6 +1,12 @@
 import { useAgUiInterrupts, useAgUiSubmitInterruptResponses } from '@assistant-ui/react-ag-ui'
 import { useAuiState } from '@assistant-ui/react'
-import { documentAgentToolResultSchema } from '@mimir/shared'
+import {
+  agentAttachmentName,
+  pptxMediaAnalysisSchema,
+  pptxImageGenerationSchema,
+  agentImageAspectRatioSchema,
+  documentAgentToolResultSchema,
+} from '@mimir/shared'
 import type { DocumentAgentToolResult } from '@mimir/shared'
 import { Button, Upload } from 'antd'
 import { useEffect, useRef, useState } from 'react'
@@ -104,7 +110,14 @@ export async function executeDocxTool(
     const prompt = input.prompt
     if (typeof prompt !== 'string' || !prompt.trim()) throw new Error('图片描述不能为空')
     if (!generateDocxImage) throw new Error('图像生成服务未接入')
-    const image = await generateDocxImage(agent.documentId, prompt, signal)
+    const aspectRatio =
+      input.aspectRatio === undefined
+        ? undefined
+        : agentImageAspectRatioSchema.parse(input.aspectRatio)
+    const image =
+      aspectRatio === undefined
+        ? await generateDocxImage(agent.documentId, prompt, signal)
+        : await generateDocxImage(agent.documentId, prompt, signal, aspectRatio)
     if (signal.aborted) throw new Error('工具调用已停止')
     const afterBlockIndex = input.afterBlockIndex
     const maxWidthPx = input.maxWidthPx
@@ -203,7 +216,95 @@ export async function executeBridgeTool({
   if (batchChanged) throw new Error('同一批工具已有修改，后续操作需等模型重新读取文档后再执行')
 
   let result: unknown
-  if ((agent.format ?? 'docx') === 'docx' && tool.name === 'write_document') {
+  if (
+    agent.format === 'pptx' &&
+    tool.name === 'analyze_media' &&
+    objectInput(tool.input, tool.name).kind !== undefined &&
+    objectInput(tool.input, tool.name).kind !== 'image'
+  ) {
+    const input = pptxMediaAnalysisSchema.parse(tool.input)
+    if (input.kind === 'image') throw new Error('媒体类型无效')
+    if (input.mediaUrls?.length) throw new Error('原音视频分析请省略mediaUrls并选择本地原文件')
+    if (!analyzeDocxMedia) throw new Error('媒体分析服务未接入')
+    if (agent.getVersion() !== expectedVersion || signal.aborted)
+      throw new Error('画布版本已变化或操作已停止')
+    setProgress(input.kind === 'video' ? '请选择原视频文件' : '请选择原音频文件')
+    const source = await requestMediaSource(input.kind)
+    if (!(source instanceof File)) throw new Error('请选择原音视频文件')
+    if (agent.getVersion() !== expectedVersion || signal.aborted)
+      throw new Error('选择媒体期间画布已变化或操作已停止')
+    setProgress(input.kind === 'video' ? '正在提取并分析视频画面' : '正在转录并分析音频')
+    const analyzed = await analyzeDocxMedia(
+      {
+        documentId: agent.documentId,
+        instruction: input.requirements,
+        kind: input.kind,
+        source,
+        includeAudio: input.includeAudio,
+      },
+      signal,
+    )
+    if (agent.getVersion() !== expectedVersion || signal.aborted)
+      throw new Error('媒体分析期间画布已变化或操作已停止')
+    result = {
+      ok: true,
+      changed: false,
+      version: expectedVersion,
+      summary: '媒体分析完成',
+      data: {
+        ...analyzed,
+        sourceName: source.name,
+        scope:
+          input.kind === 'audio'
+            ? 'audio_transcript'
+            : input.includeAudio
+              ? 'visual_frames_and_audio'
+              : 'visual_frames_only',
+      },
+    }
+  } else if (
+    agent.format === 'pptx' &&
+    ['insert_web_image', 'replace_image', 'generate_image', 'analyze_media'].includes(tool.name)
+  ) {
+    const input = objectInput(tool.input, tool.name)
+    const urls =
+      tool.name === 'generate_image'
+        ? (pptxImageGenerationSchema.parse(input).referenceImageUrls ?? [])
+        : tool.name === 'analyze_media'
+          ? (pptxMediaAnalysisSchema.parse(input).mediaUrls ?? [])
+          : typeof input.url === 'string'
+            ? [input.url]
+            : []
+    const names = [...new Set(urls.map(agentAttachmentName).filter((name) => name !== null))]
+    const attachments: { name: string; mimeType: string; bytes: Uint8Array }[] = []
+    for (const name of names) {
+      if (signal.aborted || agent.getVersion() !== expectedVersion)
+        throw new Error('画布版本已变化或操作已停止')
+      setProgress(`请选择原附件「${name}」`)
+      const file = await requestMediaSource('image')
+      if (!(file instanceof File) || file.name !== name)
+        throw new Error(`请选择名称为「${name}」的原文件`)
+      if (
+        file.size === 0 ||
+        file.size > 8 * 1024 * 1024 ||
+        !['image/png', 'image/jpeg'].includes(file.type)
+      )
+        throw new Error('原附件须为8 MiB以内的PNG或JPEG')
+      const bytes = new Uint8Array(await file.arrayBuffer())
+      if (signal.aborted || agent.getVersion() !== expectedVersion)
+        throw new Error('读取附件期间画布已变化或操作已停止')
+      attachments.push({ name: file.name, mimeType: file.type, bytes })
+    }
+    if (signal.aborted || agent.getVersion() !== expectedVersion)
+      throw new Error('选择附件期间画布已变化或操作已停止')
+    setProgress('正在处理媒体')
+    result = await agent.execute(tool.name, tool.input, {
+      expectedVersion,
+      roundId,
+      signal,
+      attachments,
+    })
+  } else if ((agent.format ?? 'docx') === 'docx' && tool.name === 'write_document') {
     result = await executeWritingTool(
       agent,
       tool.input,
@@ -231,6 +332,8 @@ export async function executeBridgeTool({
       { documentId: agent.documentId, instruction, kind, source },
       signal,
     )
+    if (signal.aborted || agent.getVersion() !== expectedVersion)
+      throw new Error('媒体分析期间文档已变化或操作已停止')
     result = {
       ok: true,
       summary: '媒体分析完成',

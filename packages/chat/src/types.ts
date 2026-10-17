@@ -1,3 +1,4 @@
+import type { AgentMediaAttachment } from '@mimir/shared'
 import type { Citation, DocumentAgentFormat } from '@mimir/shared'
 import type { ReactNode } from 'react'
 
@@ -66,7 +67,12 @@ export interface ChatDocumentAgent {
   execute(
     tool: string,
     args: unknown,
-    options: { expectedVersion?: number; roundId?: string; signal?: AbortSignal },
+    options: {
+      expectedVersion?: number
+      roundId?: string
+      signal?: AbortSignal
+      attachments?: AgentMediaAttachment[]
+    },
   ): Promise<unknown>
   undoRound(roundId: string): boolean | void | Promise<boolean | void>
   /** XLSX exports the current sheet's displayed values without mutating its canvas. */

@@ -1,0 +1,10 @@
+diff --git a/cfb.js b/cfb.js
+index dec6197b90ee8e6e936b23201143289baedf655d..55760e9cad66defaee3f61d8eba1a78df3b9c62b 100644
+--- a/cfb.js
++++ b/cfb.js
+@@ -1976,4 +1976,4 @@ exports.utils = {
+ return exports;
+ })();
+ 
+-if(typeof require !== 'undefined' && typeof module !== 'undefined' && typeof DO_NOT_EXPORT_CFB === 'undefined') { module.exports = CFB; }
++if(typeof module !== 'undefined' && typeof DO_NOT_EXPORT_CFB === 'undefined') { module.exports = CFB; }

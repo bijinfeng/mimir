@@ -1,5 +1,12 @@
 # 设计：DOCX 对话编辑
 
+## 2026-10-17 当前范围与验收入口
+
+用户已将本任务扩展为固定GenOffice六格式Agent/手动工具与完整参数，以及PDF本地临时OCR；当前PRD与research/all-tools-final-scope-independent-check-20261017.md为现行范围。以下早期DOCX-only设计和未勾清单保留历史时点，不用于缩小后续已授权工作。最后参数缺口、R3、图片符号实际SVG、逐页生成、原音视频codec和320px面板已完成专项；第三轮原样 `pnpm check` 已 exit0（4606通过、2既有跳过、0失败），最终Web生产构建exit0；1764个源码/配置起止哈希无变化。最终证据见 `research/final-quality-check-20261017.md`。
+
+用户明确代码与浏览器先行：真实provider未配置，新密码和Desktop自行验收。本轮不暂存、提交、归档或删除测试件。
+
+
 ## 架构与边界
 
 1. **文档页宿主**：`OfficeSourceEditor` 为当前 `DocxEditor` 提供按文档 ID 绑定的 agent 句柄；句柄只暴露读取上下文、冻结选区、执行工具、捕获/回退快照、获取编辑版本与保存状态，不把 Tiptap 对象暴露给服务端。切文档或卸载立即使句柄失效并取消未完成工具。

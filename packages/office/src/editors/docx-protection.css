@@ -43,6 +43,30 @@
 }
 .mimir-docx-protection__actions {
   flex: none;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
   padding: 10px 12px;
   border-top: 1px solid var(--me-border);
+}
+
+.ProseMirror [data-mimir-native-form='editable'] {
+  cursor: pointer;
+}
+.ProseMirror [data-mimir-native-form='readonly'] {
+  cursor: not-allowed;
+}
+
+.mimir-docx-protection__error {
+  color: var(--me-danger, #b42318);
+}
+
+.mimir-docx-protection__password {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.mimir-docx-protection__actions > .me-btn:first-child {
+  flex: 1;
 }

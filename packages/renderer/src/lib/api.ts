@@ -1,3 +1,8 @@
+import { streamPptxDeck } from './pptx-deck-stream'
+import type { PptxDeckProgressListener } from '@mimir/shared'
+import type { AgentMediaAnalysisInput, AgentMediaAttachment } from '@mimir/shared'
+import type { AgentImageAspectRatio } from '@mimir/shared'
+import { XlsxValidationConfirmationError, xlsxValidationWarningSchema } from '@mimir/shared'
 import type {
   AiTagsResponse,
   AiTextResponse,
@@ -16,6 +21,7 @@ import type {
   PptxHostAction,
   XlsxHostAction,
   XlsxRecalculation,
+  XlsxValidationConsent,
   HtmlPageBrief,
   HtmlPlanPageInput,
   HtmlWriteDocumentInput,
@@ -563,6 +569,7 @@ export const api = {
       expectedVersion: number
       ops: unknown[]
       action?: XlsxHostAction
+      validationConsent?: XlsxValidationConsent
       imageFile?: File
       signal?: AbortSignal
     }) {
@@ -579,6 +586,8 @@ export const api = {
       form.set('expectedVersion', String(input.expectedVersion))
       form.set('ops', JSON.stringify(input.ops))
       form.set('action', input.action ?? 'apply_ops')
+      if (input.validationConsent)
+        form.set('validationConsent', JSON.stringify(input.validationConsent))
       if (input.imageFile) form.set('imageBlob', input.imageFile)
       const response = await sendMultipart<{
         bytesBase64: string
@@ -586,7 +595,15 @@ export const api = {
         changedCells: string[]
         touchedEntries: string[]
         recalculation?: XlsxRecalculation
-      }>('/api/conversations/xlsx-agent/apply-ops', 'POST', form, input.signal)
+      }>('/api/conversations/xlsx-agent/apply-ops', 'POST', form, input.signal).catch((error) => {
+        if (error instanceof ApiRequestError && error.code === 'XLSX_VALIDATION_CONFIRMATION') {
+          const warning = xlsxValidationWarningSchema.safeParse(
+            (error.details as { validationWarning?: unknown })?.validationWarning,
+          )
+          if (warning.success) throw new XlsxValidationConfirmationError(warning.data)
+        }
+        throw error
+      })
       const decoded = atob(response.bytesBase64)
       const bytes = new Uint8Array(decoded.length)
       for (let index = 0; index < decoded.length; index++) bytes[index] = decoded.charCodeAt(index)
@@ -604,9 +621,17 @@ export const api = {
       expectedVersion: number
       ops: unknown[]
       action?: PptxHostAction
+      generationId?: string
+      onDeckProgress?: PptxDeckProgressListener
       signal?: AbortSignal
+      attachments?: AgentMediaAttachment[]
     }) {
       const form = new FormData()
+      for (const file of input.attachments ?? [])
+        form.append(
+          'attachment',
+          new File([new Uint8Array(file.bytes)], file.name, { type: file.mimeType }),
+        )
       const copy = new Uint8Array(input.bytes.byteLength)
       copy.set(input.bytes)
       form.set(
@@ -619,6 +644,17 @@ export const api = {
       form.set('expectedVersion', String(input.expectedVersion))
       form.set('ops', JSON.stringify(input.ops))
       if (input.action) form.set('action', input.action)
+      if (input.action === 'generate_deck' && input.onDeckProgress && input.generationId) {
+        form.set('generationId', input.generationId)
+        return streamPptxDeck(
+          transport,
+          form,
+          input.expectedVersion,
+          input.generationId,
+          input.signal,
+          input.onDeckProgress,
+        )
+      }
       const response = await sendMultipart<{
         bytesBase64: string
         records: unknown[]
@@ -883,10 +919,15 @@ export const api = {
         { method: 'POST', body: JSON.stringify({ documentId, url }), signal },
       )
     },
-    generateMarkdownImage(documentId: string, prompt: string, signal?: AbortSignal) {
+    generateMarkdownImage(
+      documentId: string,
+      prompt: string,
+      signal?: AbortSignal,
+      aspectRatio?: AgentImageAspectRatio,
+    ) {
       return request<{ dataUrl: string; mimeType: string }>(
         '/api/conversations/markdown-agent/generate-image',
-        { method: 'POST', body: JSON.stringify({ documentId, prompt }), signal },
+        { method: 'POST', body: JSON.stringify({ documentId, prompt, aspectRatio }), signal },
       )
     },
     writeMarkdownDocument(
@@ -911,10 +952,15 @@ export const api = {
         },
       )
     },
-    generateDocxImage(documentId: string, prompt: string, signal?: AbortSignal) {
+    generateDocxImage(
+      documentId: string,
+      prompt: string,
+      signal?: AbortSignal,
+      aspectRatio?: AgentImageAspectRatio,
+    ) {
       return request<{ dataUrl: string; mimeType: string }>(
         '/api/conversations/docx-agent/generate-image',
-        { method: 'POST', body: JSON.stringify({ documentId, prompt }), signal },
+        { method: 'POST', body: JSON.stringify({ documentId, prompt, aspectRatio }), signal },
       )
     },
     fetchDocxImage(documentId: string, url: string, signal?: AbortSignal) {
@@ -924,16 +970,8 @@ export const api = {
       )
     },
     writeDocxDocument: streamDocxWriting,
-    analyzeDocxMedia(
-      input: {
-        documentId: string
-        instruction: string
-        kind: 'image' | 'audio' | 'video'
-        media: { mimeType: string; data: string }[]
-      },
-      signal?: AbortSignal,
-    ) {
-      return request<{ text: string }>('/api/conversations/docx-agent/analyze-media', {
+    analyzeDocxMedia(input: AgentMediaAnalysisInput, signal?: AbortSignal) {
+      return request<{ text: string }>('/api/conversations/document-agent/analyze-media', {
         method: 'POST',
         body: JSON.stringify(input),
         signal,

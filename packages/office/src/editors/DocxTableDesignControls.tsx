@@ -16,10 +16,13 @@ import {
   selectedDocxTable,
   tableDesignDraft,
   tableBorderCurrent,
+  tablePositionContext,
+  TABLE_TWIPS_PER_CM,
   TABLE_PRESETS,
   type BorderMode,
   type TableBorderDraft,
 } from './docx-table-design.js'
+import { docxTablePositionIssue } from '../docx-table-save.js'
 import './docx-table-design.css'
 
 const LOOK_LABELS: [keyof TableLook, string][] = [
@@ -75,7 +78,12 @@ export function DocxTableDesignControls({ context }: { context: DocxAdvancedCont
   }, [context.session, context.options])
   useEffect(() => {
     const check = () => {
-      if (target && context.editor.state.doc !== target.doc) setStale(true)
+      if (
+        target &&
+        (context.editor.state.doc !== target.doc ||
+          selectedDocxTable(context.editor)?.pos !== target.pos)
+      )
+        setStale(true)
     }
     context.editor.on('transaction', check)
     return () => {
@@ -85,6 +93,30 @@ export function DocxTableDesignControls({ context }: { context: DocxAdvancedCont
   if (!target || !draft)
     return <ToolbarMenuNote>请将光标放在表格内，再打开表格设计。</ToolbarMenuNote>
   const original = tableDesignDraft(target)
+  const sourceXml = context.session.blocks.find(
+    (block) => block.docxIndex === target.node.attrs.docxIndex,
+  )?.originalXml
+  const positionContext = tablePositionContext(target, context.sections, sourceXml ?? undefined)
+  const positionIssue = sourceXml
+    ? docxTablePositionIssue(sourceXml)
+    : target.node.attrs.docxIndex != null
+      ? '无法确认原件表格定位，请重新打开文档'
+      : null
+  const position = draft.position
+  const anchors: Record<string, string> = { page: '页面', margin: '页边距', text: '正文' }
+  const keywords: Record<string, string> = {
+    left: '左侧',
+    center: '居中',
+    right: '右侧',
+    inside: '内侧',
+    outside: '外侧',
+    top: '顶部',
+    bottom: '底部',
+  }
+  const updatePosition = (patch: Partial<typeof position>) => {
+    setDraft({ ...draft, position: { ...position, ...patch } })
+    setStatus('')
+  }
   const dirty =
     preset !== null || border !== null || JSON.stringify(draft) !== JSON.stringify(original)
   const optionsChanged = JSON.stringify(context.options) !== optionsIdentity
@@ -109,6 +141,7 @@ export function DocxTableDesignControls({ context }: { context: DocxAdvancedCont
               },
             }
           : null,
+        positionContext,
       )
       setTarget(next)
       setDraft(tableDesignDraft(next))
@@ -295,6 +328,116 @@ export function DocxTableDesignControls({ context }: { context: DocxAdvancedCont
                 ]}
                 onChange={(autoFit) => setDraft({ ...draft, autoFit })}
               />
+            </ToolbarMenuFields>
+            <ToolbarMenuFields label="文字环绕与位置">
+              {positionIssue ? (
+                <ToolbarMenuNote>{positionIssue}。原件定位将保留。</ToolbarMenuNote>
+              ) : (
+                <>
+                  <ToolbarSelect
+                    disabled={locked}
+                    label="表格文字环绕"
+                    value={position.wrap}
+                    options={[
+                      { value: 'none', label: '嵌入正文' },
+                      { value: 'left', label: '文字在右侧（表格靠左）' },
+                      { value: 'right', label: '文字在左侧（表格靠右）' },
+                    ]}
+                    onChange={(wrap) => updatePosition({ wrap })}
+                  />
+                  {position.wrap === 'right' &&
+                    original.position.wrap !== 'right' &&
+                    !position.xEdited && (
+                      <ToolbarMenuNote>
+                        应用时按当前节的右边缘放置；自填水平位置可覆盖此预设。
+                      </ToolbarMenuNote>
+                    )}
+                  {target.node.attrs.tblFloatSuppressed && position.wrap !== 'none' && (
+                    <ToolbarMenuNote>
+                      原件使用浮动定位；因表格较高或正文余宽不足，当前按分页流式显示，保留原定位。
+                    </ToolbarMenuNote>
+                  )}
+                  {position.wrap !== 'none' && (
+                    <>
+                      <ToolbarMenuNote>
+                        定位参照：水平
+                        {anchors[target.node.attrs.tblFloatHorzAnchor] ??
+                          (original.position.wrap === 'none' ? '页边距' : '原件默认')}{' '}
+                        · 垂直
+                        {anchors[target.node.attrs.tblFloatVertAnchor] ??
+                          (original.position.wrap === 'none' ? '页边距' : '正文')}
+                        。修改数值将替换该轴对齐。
+                      </ToolbarMenuNote>
+                      {(['x', 'y'] as const).map((axis) => {
+                        const spec = axis === 'x' ? position.xSpec : position.ySpec
+                        const label = axis === 'x' ? '水平' : '垂直'
+                        return (
+                          <div className="mimir-docx-table-design__axis" key={axis}>
+                            <ToolbarSelect
+                              disabled={locked}
+                              label={`表格${label}定位方式`}
+                              value={spec ?? 'numeric'}
+                              options={[
+                                { value: 'numeric', label: '数值位置' },
+                                ...(spec
+                                  ? [{ value: spec, label: `当前对齐：${keywords[spec] ?? spec}` }]
+                                  : []),
+                              ]}
+                              onChange={() =>
+                                updatePosition(
+                                  axis === 'x' ? { xSpec: null, xEdited: true } : { ySpec: null },
+                                )
+                              }
+                            />
+                            {!spec && (
+                              <ToolbarNumberField
+                                label={`表格${label}位置（厘米）`}
+                                value={Number((position[axis] / TABLE_TWIPS_PER_CM).toFixed(2))}
+                                min={-55.88}
+                                max={55.88}
+                                step={0.1}
+                                onCommit={(value) =>
+                                  updatePosition(
+                                    axis === 'x'
+                                      ? {
+                                          x: Math.round(value * TABLE_TWIPS_PER_CM),
+                                          xSpec: null,
+                                          xEdited: true,
+                                        }
+                                      : { y: Math.round(value * TABLE_TWIPS_PER_CM), ySpec: null },
+                                  )
+                                }
+                              />
+                            )}
+                          </div>
+                        )
+                      })}
+                      <div className="mimir-docx-table-design__distance">
+                        {(['top', 'bottom', 'left', 'right'] as const).map((side, i) => (
+                          <ToolbarNumberField
+                            key={side}
+                            label={`${['上', '下', '左', '右'][i]}距正文（厘米）`}
+                            value={Number(
+                              (position.distance[side] / TABLE_TWIPS_PER_CM).toFixed(2),
+                            )}
+                            min={0}
+                            max={55.88}
+                            step={0.1}
+                            onCommit={(value) =>
+                              updatePosition({
+                                distance: {
+                                  ...position.distance,
+                                  [side]: Math.round(value * TABLE_TWIPS_PER_CM),
+                                },
+                              })
+                            }
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
             </ToolbarMenuFields>
             <ToolbarMenuFields label="默认单元格边距">
               {(['top', 'bottom', 'left', 'right'] as const).map((side, i) => (

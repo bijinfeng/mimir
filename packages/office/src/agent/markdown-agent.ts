@@ -1,3 +1,4 @@
+import { agentImageAspectRatioSchema, type AgentImageAspectRatio } from '@mimir/shared'
 import type { Editor } from '@tiptap/core'
 import type { JSONContent } from '@tiptap/core'
 import { TextSelection } from '@tiptap/pm/state'
@@ -25,6 +26,7 @@ export interface MarkdownAgentServices {
   generateImage(
     prompt: string,
     signal?: AbortSignal,
+    aspectRatio?: AgentImageAspectRatio,
   ): Promise<{ dataUrl: string; mimeType: string }>
   uploadImage(file: File): Promise<{ url: string; name: string }>
   writeDocument(
@@ -179,10 +181,20 @@ export function createMarkdownAgentHandle(
   ): Promise<MarkdownAgentResult> => {
     if (!options.services) throw new Error('当前笔记未配置图片服务')
     const baseline = version
+    const aspectRatio =
+      args.aspectRatio === undefined
+        ? undefined
+        : agentImageAspectRatioSchema.parse(args.aspectRatio)
     const source =
       mode === 'fetch'
         ? await options.services.fetchImage(string(args.url, 'url', 2000), signal)
-        : await options.services.generateImage(string(args.prompt, 'prompt', 2000), signal)
+        : aspectRatio === undefined
+          ? await options.services.generateImage(string(args.prompt, 'prompt', 2000), signal)
+          : await options.services.generateImage(
+              string(args.prompt, 'prompt', 2000),
+              signal,
+              aspectRatio,
+            )
     live(signal)
     if (version !== baseline) throw new Error('下载期间笔记已修改，图片未插入')
     const file = imageFile(source.dataUrl, source.mimeType)

@@ -1,5 +1,12 @@
 # 实施计划：完整 DOCX 对话编辑
 
+## 2026-10-17 当前范围与验收入口
+
+用户已将本任务扩展为固定GenOffice六格式Agent/手动工具与完整参数，以及PDF本地临时OCR；当前PRD与research/all-tools-final-scope-independent-check-20261017.md为现行范围。以下早期DOCX-only设计和未勾清单保留历史时点，不用于缩小后续已授权工作。最后参数缺口、R3、图片符号实际SVG、逐页生成、原音视频codec和320px面板已完成专项；第三轮原样 `pnpm check` 已 exit0（4606通过、2既有跳过、0失败），最终Web生产构建exit0；1764个源码/配置起止哈希无变化。最终证据见 `research/final-quality-check-20261017.md`。
+
+用户明确代码与浏览器先行：真实provider未配置，新密码和Desktop自行验收。本轮不暂存、提交、归档或删除测试件。
+
+
 本任务按阶段实施，但只在全部 36 顶层工具和 `apply_ops` 15 操作可用、通过验收后视为交付。先读 `prd.md`、`design.md`、`research/docx-agent-inventory.md`、`research/tanstack-ai-capabilities.md`、`research/chat-runtime-assessment.md` 及 manifests 所列规范；实施前再核对固定上游源码与当前依赖版本。
 
 ## 顺序清单
@@ -372,3 +379,76 @@ C1已有讨论编辑/回复/解决/重开已最终构建实查，正文/设置�
 
 
 最终统一门禁补记（2026-10-17）：全Office **178文件1869/1869，exit0**，日志 `/tmp/mimir-office-full-c1-pivot-source-final-20261017.log`（143.52s）。先前1868/1869失败保留为历史；PPTX仅测试同步修复，生产未改。最终Web构建 `/tmp/mimir-toolbar-c1-pivot-source-web-20261017.log` exit0；此后只改PPTX测试/spec/报告，无需重建生产。Server沿前次最终default737/local10/fnos4/backup2全绿，本片生产未改，新增跨表宿主专项11/11。无模型/Desktop自验、全仓480技能lint基线与整体in_progress边界不变；本轮未暂存、提交、归档或删除测试文件。
+
+### 2026-10-17 全工具持续补齐：已有透视布局与保护锚点
+
+用户明确继续直到所有工具补齐；保持完整缺口清单，不以已完成切片替代总目标。批准research/xlsx-pivot-edit-plan-20261017.md作为下一实施方案：新增本地strict edit_pivot_layout，复用原生relayout，固定原source/target/path/name/cache身份，真实并集清旧输出；原件资格/共享cache/格式扩展/依赖关系须逐项证明，不能以只加按钮或删除再新建冒充原地编辑。独占shared xlsx schema、Office资格helper/Pivot UI最小接缝、server专用adapter/host分流及专项tests；既有跨表来源不回退。320px/420×500与逐层Escape、一次发布/history/全ZIP原生保真是门槛。vendor不改，root统一重型门禁及浏览器。
+
+并行批准DOCX P1-C2按research/docx-protection-p1-next-20261017.md §4实现受限评论新增/删除锚点，保持正文不可编辑。原件单段run/text字符映射、规范化去comments后完整PM相等、原子PM+metadata发布、精确插删native锚点，未知/复杂锚点保留并逐目标拒绝；root删除含本讨论replies，reply删除单独语义。仅允许可证明单段，不扩大普通body写权限；这不是最终所有保护工具完备，F/W/强制修订仍在后续队列。独占DOCX controller/comments/native/agent/Editor/局部CSS与专项tests；不触XLSX或server。完成须独立checker与浏览器，未验不标齐。
+
+全部参与者只目标tests/types/static，不并发fullOffice/Webbuild；不暂存提交归档或删除测试件。代码与浏览器验收，无真实模型、Desktop用户自验；全仓480技能lint既有基线保留。
+
+### PDF 外部图片准备与真实插入桥（root批准）
+
+按research/pdf-external-images-next-plan-20261017.md实施固定工具image_search/generate_image，包含max_results/aspect_ratio真实参数、独立配置门控、纯准备零bytes/version/history、按鉴权user+document+source session绑定有界20分钟opaque refs，现有insert/replace原生图片路径解析并真实写入。沿现有Brave/通用生成provider，不新密钥/供应商；可扩公共服务可选signal/aspect，旧DOCX/PPTX默认行为必须不变。请求取消贯穿SDK/下载，ref不得下放dataURL或给generic fetch白名单。实际解码PNG/JPEG与requested/actual ratio准确；不支持模型尺寸预拒绝，不假称任意精确比例。手动图片Inspector补来源switch/搜索生成草稿/真实比例结果/明确插入，320px内滚固定单一primary/420×500/Escape及错误保留。独占PDF image/external资产与必要route/catalog/renderer/PdfEditor最小接缝，暂不实施文字params以免同文件并写。DOCX owner不碰provider生成service，XLSX owner只改自有schema/server，保持并行所有权。目标tests/types/static，统一build/fullsuite/browser由root。OCR范围问题仍待用户回复，不能默认改变product非目标；数字证书纠正为固定GenOffice未实现而非本轮缺工具。
+
+### 2026-10-17 用户批准本地 PDF 临时 OCR
+
+用户已明确选择“包含，按建议补本地 OCR”。本批准取代此前等待范围答复的状态；product.md §1 同步记录窄例外。只在当前 PDF 编辑器内按显式动作进行本地识别，供复制与搜索；不写原件、派生入库正文或知识库索引，不新增付费模型服务或凭据。先核对可跨浏览器部署的本地 WASM 引擎、离线资产与中英文字框/取消预算，再安排正式 implement/check；不能只接系统 macOS helper 就宣称浏览器已支持。与外部图片/文字参数实施者顺序协调 PdfEditor 共享文件，root统一真实1280与420×500验收。
+
+
+### PDF 本地临时 OCR（root批准正式实施）
+
+按research/pdf-local-ocr-next-plan-20261017.md实施浏览器本地Tesseract WASM与同源离线中英文资产、真实字/词框和透明可选文字、当前页及顺序扫描页识别、搜索/复制/进度/停止/清除；不写PDF/知识库/版本/history、不用付费模型。严格bitmap/text/time/页数预算、初始化中也可取消且释放worker、绑定源身份/页几何并拒迟到，真实Rotate/Crop/zoom映射。原文编辑/标注writer不能获得OCR伪target，保留原生index与临时search-only provenance。独占新ocr helper/worker/assets/控件/tests及renderer打包/精确依赖；PDF共享Editor与read-only Agent接缝先等待外部图片owner及其checker释放，再由root明确放行，不能并写。只target tests/types/static，root统一构建与真实WASM/1280/420浏览器；须正式独立check。不改vendor/server/parser入库/提交暂存归档删测试件。
+
+
+### DOCX 保护 P1-F 真实复选框（root批准）
+
+C2 已经正式独立检查并完成真实新增/根与回复删除/首次评论/原生保真及未保存撤销预检，下一片按 research/docx-protection-p1-next-20261017.md §5 实施 forms-only 的真实 legacy FORMCHECKBOX 与 SDT checkbox。正文维持editable=false，原件occurrence私有身份/精确PM状态差量和native局部checked/glyph补丁必须同时验证，不凭marks/glyph授权。补当前控件列表与键盘Space路径、真实状态/具体拒绝原因、点击真实glyph；320px内滚/固定可达操作及420×500。保留未知XML/非目标ZIP、复原状态回原bytes、同PM history一步及undo/redo、保存重开/二次保存。SDT/altChunk展开后的段落身份沿C2新教训，不可按docxIndex或同文猜测。禁用/锁定/嵌套/歧义/权限例外先精确拒绝，不把所有forms一律开放。独占DOCX新forms helper/原生controller/session/PM插件/必要Editor/Controls和专项tests；不碰并行OCR/PDF/XLSX/vendor。先准确关闭权限与保真缺口，密码管理/强制修订后续片。本片仅目标tests/types/static，root统一重型构建/browser，不暂存提交归档删测试件。
+# 2026-10-17 剩余交互补片排期
+
+PDF 图片面板短窗口上传分支仍将主操作放在滚动body，root已记录具体浏览器/源码证据并采纳 `research/pdf-image-inspector-upload-followup-20261017.md`：紧凑操作选择、素材仅准备、section直属固定唯一primary、原真实工具和确认均保留。该修正限定图片面板，不抢OCR共享Editor接缝；最终仍独立复查和生产浏览器。
+
+沿用户已授权“补全所有工具，并注意样式交互”，采纳研究 `research/office-crop-remaining-plan-20261017.md` 的 A→B 与 C0→C1→D 顺序。当前先派 A：DOCX 图片 Inspector 预览八把手/移动保留区域，沿现有像素 crop 与一次 PM 提交；不把它称为非破坏原图裁切。A 所有者仅改图片控件/纯几何/专属测试，不碰进行中的 forms 共享 DocxEditor/protection/session 文件。后续 B 浮动表格、C0 父组显示矩阵、C1 直接组图画布裁切、D 媒体范围见研究，不互抢共享编辑器文件。
+
+数据验证确定差距采纳 `research/xlsx-validation-interactions-next-plan-20261017.md`，待槽位独立实施：当前格列表与提示、stop/warning/information/native 开关语义及冻结确认，不允许通用绕过校验。复杂形状预览/范围结构另查。每片仍 implement→独立check，root统一build与实际1280/420×500浏览器；不以局部绿标整体齐全。
+
+
+### 2026-10-17 OCR/forms/crop 生产验收与下一排期
+
+冻结OCR独立39/39、forms166/166、crop45/45已统一Webbuild exit0。真实OCR420footer/Radio、四Rotate offsetCrop搜索、整行/反向/跨行clipboard、空白只计4页、停止/重开销毁及原件SHA完全相同已验，见toolbar-pdf-ocr-browser报告。formsSpace+相邻glyph、保存UndoRedo与原生checked/glyph唯一变更已验，见toolbar-docx-forms-browser。crop420真实角拖/8键盘把手草稿零dirty、真实PNG120×80、一步Undo整件原bytes、Redo所有ZIP exact已验，alpha/shared/nativeinsets继续验证。
+
+统一Office首轮189files1974tests有58失败：旧PDF render mocks缺loadPdfDocument57项、DOCX旧文案1项。root补6文件56/56绿与旧copy断言27/27，图片owner另补2mock其27/27绿。该首轮失败保留，不拼接声称fullgreen，最终冻结后再完整跑。root最小测试接缝所有权为PdfEditor.local/image-export/pending-forms/drawing-canvas/forms/signature及docx-toolbar-render tests，其余owner勿覆盖。
+
+PDF图片upload收敛实施及独立check27/27已冻结，下一统一build/browser；浮动表格B独立26/26已冻结。OCR释放PdfEditor后，批准按pdf-text-params-next-plan实施原文字形partial/all/color、插字完整params/pending/replay+手势，独占PDFtext共享接缝，图片owner仅Panel。C0父组真实渲染矩阵已派正式implement，发现现存child F·R与固定上游R·F差距须在C1前核实修正，不忽略；C1/D顺序不变。XLSX DV已按既定计划派正式implement。各片仍独立check，root统一重型与browser，不修改vendor/不暂存提交归档删除。
+
+
+### 2026-10-17 恢复后root验收和下一顺序
+
+- [x] crop native-insets bytes重取断言全过；共享alpha原生Canvas RGB±1已诚实记录。
+- [x] forms A→B→A与最终420截图、C2最终reply确认/保存前撤销烟测。
+- [x] 真实JPEG/GIF/front原生crop保存回读，详toolbar-docx-crop-browser。三个测试件留在KY635Y，未删。
+- [x] C0独立28项和192颜色点通过。C1交原C0implement owner，原生EMU source矩阵统一SVG/overlay/反算，包含既有child/shear问题；root允许pptx-render.ts只读source最小seam。
+- [ ] PDF文字/完整参数冻结后独立check；DV冻结后独立check；再统一root suites/build/browser。
+- [ ] W1→W2→forced tracking按docx-protection-password-next-plan-20261017.md；整文件打开密码/隐私清理明确列队，不能遗落。
+- 继续保持in_progress，不stage/commit/archive/delete；原有480技能lint基线不重跑。
+
+- [ ] root实际5173发现浮动表跨节定位少算120px --page-cx，table browser不通过。详toolbar-docx-table-position-preflight-20261017.md；DV owner冻结后回片修，源库未保存且cmp原件精确。
+
+### 2026-10-17 最新执行点（覆盖以上历史待办状态）
+
+以上历史失败和排期保留；当前逐片以research/all-tools-completion-ledger-20261017.md和对应check/browser专报为准。OCR/forms/crop、浮动表跨节120px修复、PDF文字/图片、PPTX媒体/组图、W1/W2/强制修订/隐私、多级排序、管理、R2a/R2b均已实施、独立检查并具有对应生产浏览器证据。DOCX整文件加密实际Worker的cfb导出缺陷已精确修复，真实Standard/Agile编辑保存/第三方解密/history/reopen通过；frozen联网安装和1091输入稳定新Webbuild已通过。
+
+现正式释放R3按research/xlsx-special-paste-r3-plan-20261017.md接入全部/仅值/公式与值/仅格式/列宽/除边框外全部与整数倍平铺；准备阶段helper37绿不作为运行时完成。R3独占既有XLSX schema/host/manual/planner/controller/Inspector接缝和Server正式runner，保持R2a/R2b回归；root保留全局build与浏览器。并行独立checker只读核对全六格式固定上游工具/参数与当前证据，发现真实遗漏交root安排，不并写R3生产文件。
+
+R3冻结后依次独立check→root生产build与1280/420逐模式native/history/browser→全包最终2.2质量门及参数审计收口。无配置provider与Desktop用户自验的边界不变；新建/更改密码浏览器已准备具体页面，按自动化规则由用户亲自输入/确认/提交。保持in_progress，不stage/commit/archive/delete；不能把旧4231完整门当新代码已覆盖。
+
+### 2026-10-17 最终参数审计后的补片
+
+只读审计 `research/editor-all-tools-final-parameter-audit-20261017.md` 已确认六组真实缺口，批准在原“所有工具和参数”范围内继续补齐。媒体实施者独占 Markdown/DOCX/PPTX aspectRatio、PPTX引用图/真实alpha、原附件受控解析、原音视频前处理与分析接缝；逐页生成/部分保留独立排队，不与该owner并写服务。批量图片项目符号实施者独占 pptx-selection/SelectionFormatFields及最小native/专项tests，复用既有paragraph nativewriter，确保整批预检、一次history、顶层与直接组成员保存和非目标保真。两者按符号协调PPTX agent共享文件，不触R3/XLSX或DOCX保护。各片先记变更边界，正式implement→独立check→root生产浏览器；无provider时只证明受控transport/真实本地前处理/门控，不声称供应商通过。
+
+根会话重新核实截图：密码交接和强制修订420图有效；范围420旧图为空白、排序/PDF图片420旧图被缩成缩略图，属于截图证据缺陷，不改变已记录DOM/native操作结论。范围与排序已用captureBeyondViewport=false重取并实际查看有效420×500图；PDF图片截图待同法补取。不得把缩略图/白图作为视觉通过证据。
+
+截图补取已结清：PDF图片420亦同法重取并实际查看，翻转目标/操作/方向及固定底部主按钮完整可见；仅选目标和模式，未应用/未保存，库原件仍为已验baseline。范围与排序同样未再次写文档。逐页生成下一片已写 `research/pptx-deck-progress-next-plan-20261017.md`，待槽位与媒体共享接缝协调后正式实施。
+
+用户已明确回复“稍后自行验收”DOCX更改打开密码。该项继续记为用户输入验收，不再等待其阻塞本轮；浏览器tab31保留可交付页面，恢复常规视口、两密码字段空白，未输入或提交。R3与批量图片符号已冻结并交独立checker；媒体收尾本地视频前处理/静态，逐页生成owner已正式派发，按符号协调共享服务与传输文件。

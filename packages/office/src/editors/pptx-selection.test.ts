@@ -63,9 +63,9 @@ it('validates only explicit detailed paragraph drafts and preserves the original
     { arbitrary: 1 },
   ])
     expect(() => pptxSelectionParagraphPatch(invalid)).toThrow(/请输入|请检查|悬挂/)
-  expect(() =>
+  expect(
     pptxSelectionParagraphPatch({ bullet: 'blip', bulletImage: { ext: 'png', base64: 'AAAA' } }),
-  ).toThrow('图片符号')
+  ).toMatchObject({ bullet: 'blip', bulletImage: { ext: 'png', base64: 'AAAA' } })
   const { elements } = await selectionFixture()
   const group = pptxSelectionContexts(elements).find((item) => item.element.type === 'group')!
   expect(

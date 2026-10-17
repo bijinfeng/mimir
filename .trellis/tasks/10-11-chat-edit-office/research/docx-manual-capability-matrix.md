@@ -1,5 +1,12 @@
 # DOCX 本轮手动高级工具补全证据
 
+> 2026-10-17 最终补齐状态（覆盖本文历史待办时点）
+>
+> DOCX：36工具/15子操作及手动参数已有逐项实施/独立与浏览器证据；图片aspectRatio现已贯通。最后导出跨source busy/真实加密IO复验见docx-export-password-final-gate-independent-check。Standard/Agile真实Worker编辑保存/第三方密码HMAC/reopen已验；新建/更改打开密码由用户明确稍后自行输入验收。
+>
+> 总范围与逐项证据见 `10-11-chat-edit-office/research/all-tools-final-scope-independent-check-20261017.md`；最终源码质量门见同目录 `final-quality-check-20261017.md`（root第三轮原样pnpm check：4606通过/2既有跳过、exit0，最终Web构建exit0，1764输入起止不变；不沿用旧4231）。用户已选代码/浏览器优先：真实provider未配置，新密码和Desktop自行验收；旧“待两端/待Desktop”不构成本轮新增阻断。明确支持子集与原生复杂结构拒绝仍保留，不宣传任意Office原件全兼容。
+
+
 2026-10-16 实施记录；不表示全部 DOCX 手动能力或跨端验收完成。固定 GenOffice `480548fd55f1be3593ee0d8e316a734751d58309`。原始工具语义与参考证据沿用 [Agent 盘点](./docx-agent-inventory.md) 和 [工具栏竞品](./toolbar-competitors.md)。该竞品证据已核对 WeKnora 站点 v0.8.2、源码 `e5f9f9deab36898676fe85a9fda6b3e6f00288fa`（2026-10-12）；其 Markdown 编辑器不作为 Office 工具栏能力模型。本轮没有重新声称外部最新版。
 
 | 能力 | 具名手动入口 | 实际执行/画布 | 保存与验证证据 | 剩余边界 |
@@ -59,3 +66,8 @@ C1已有讨论编辑/回复/解决/重开已最终构建实查，正文/设置�
 
 
 最终统一门禁补记（2026-10-17）：全Office **178文件1869/1869，exit0**，日志 `/tmp/mimir-office-full-c1-pivot-source-final-20261017.log`（143.52s）。先前1868/1869失败保留为历史；PPTX仅测试同步修复，生产未改。最终Web构建 `/tmp/mimir-toolbar-c1-pivot-source-web-20261017.log` exit0；此后只改PPTX测试/spec/报告，无需重建生产。Server沿前次最终default737/local10/fnos4/backup2全绿，本片生产未改，新增跨表宿主专项11/11。无模型/Desktop自验、全仓480技能lint基线与整体in_progress边界不变；本轮未暂存、提交、归档或删除测试文件。
+
+
+### 2026-10-17 本轮最新验收
+
+C2新增删除锚点、forms实际checkbox及预览八把手裁剪已实施/独立/真实浏览器保存通过。crop PNG、alpha/共享/nativeinsets/front/JPEG/GIF及saved Undo/Redo见toolbar-docx-crop-browser-20261017；forms保存后Undo/Redo/A→B→A及最终420截图见toolbar-docx-forms-browser；C2最终删除回复确认文案烟测通过（仅保存前结构撤销）。浮动表格定位26项独立通过待新构建/browser。密码核验/设置/forced tracking、打开密码加密与隐私清理仍在正式队列，不标全齐。

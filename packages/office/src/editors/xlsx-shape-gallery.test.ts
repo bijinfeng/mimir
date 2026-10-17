@@ -2,6 +2,9 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import JSZip from 'jszip'
 import { expect, it } from 'vitest'
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { XlsxShapePreview } from './XlsxShapePreview.js'
 import { ADDABLE_SHAPE_TYPES } from '../../vendor/packages/xlsx-gateway/src/shared/shape-types.js'
 import { workbookOperationSchema } from '../../vendor/packages/xlsx-gateway/src/domain/workbook-dsl.js'
 import { applyXlsxObjectOperation } from '../../../../apps/server/src/services/xlsx-agent-objects.js'
@@ -95,6 +98,16 @@ it('inserts all native presets and textbox through the actual host and reopens w
     zip = await JSZip.loadAsync(bytes),
     drawing = await zip.file(reopened.sheets[0]!.visuals![0]!.drawingPath)!.async('string')
   expect(reopened.sheets[0]!.visuals).toHaveLength(XLSX_SHAPES.length)
+  for (const visual of reopened.sheets[0]!.visuals!) {
+    expect(visual.shapePreview?.unsupported).toBeUndefined()
+    expect(visual.shapePreview?.element).toBeDefined()
+    expect(xlsxShapePreview(visual.shapeType, 256, 160)).not.toBeNull()
+    const markup = renderToStaticMarkup(
+      createElement(XlsxShapePreview, { visual, width: 256, height: 160 }),
+    )
+    expect(markup).not.toContain('形状预览有限')
+    expect(markup).toContain('<path')
+  }
   const presets = [...drawing.matchAll(/<a:prstGeom prst="([^"]+)"/g)].map((match) => match[1])
   expect(presets.toSorted()).toEqual([...ADDABLE_SHAPE_TYPES, 'rect'].toSorted())
   expect(drawing).toContain('txBox="1"')

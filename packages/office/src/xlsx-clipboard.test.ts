@@ -73,7 +73,9 @@ describe('XLSX native range clipboard identity and transactions', () => {
       {
         operations: [
           {
-            op: 'move_range',
+            op: 'paste_range',
+            kind: 'cut',
+            mode: 'all',
             sheetId: 'sheet-2',
             sourceSheetId: 'sheet-1',
             source: 'A1:B1',
@@ -224,7 +226,7 @@ describe('XLSX native range clipboard identity and transactions', () => {
     const app = setup()
     const payload = app.controller.arm(app.context, 'copy')
     await app.controller.apply({ ...app.context, range: 'D2:D8' }, payload)
-    expect(app.controller.getSnapshot().error).toContain('暂不支持重复平铺')
+    expect(app.controller.getSnapshot().error).toContain('整数倍')
     await app.controller.apply({ ...app.context, documentId: 'other' }, payload)
     expect(app.execute).not.toHaveBeenCalled()
   })
@@ -337,4 +339,42 @@ it('rejects protected cut source/target while allowing read-only copy and cancel
   await read
   expect(app.controller.getSnapshot().payload).toBeNull()
   expect(app.controller.getSnapshot().stale).toBe(true)
+})
+
+it('prepares native modes and source selection without writing, freezes the chosen mode during paste', async () => {
+  const app = setup()
+  app.controller.arm(app.context, 'copy')
+  app.controller.setMode('format')
+  app.controller.stage({ plain: 'external', html: '' })
+  app.controller.selectInternal()
+  expect(app.controller.getSnapshot()).toMatchObject({ mode: 'format', payload: null })
+  expect(app.execute).not.toHaveBeenCalled()
+  let finish!: () => void
+  app.execute.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = () => resolve({ ok: true })
+      }),
+  )
+  const pending = app.controller.apply({ ...app.context, range: 'D2:G3' }, null)
+  app.controller.setMode('formula')
+  app.controller.selectInternal()
+  expect(app.controller.getSnapshot().mode).toBe('format')
+  expect(app.execute.mock.calls[0]![1]).toMatchObject({
+    operations: [{ mode: 'format', target: 'D2:G3' }],
+  })
+  finish()
+  await pending
+})
+it('refuses special cut and unsupported external native modes without losing the source', async () => {
+  const app = setup()
+  app.controller.arm(app.context, 'cut')
+  app.controller.setMode('value')
+  await app.controller.apply({ ...app.context, range: 'D2' }, null)
+  expect(app.controller.getSnapshot().error).toContain('请先复制')
+  expect(app.controller.getSnapshot().capture?.kind).toBe('cut')
+  app.controller.setMode('format')
+  await app.controller.apply({ ...app.context, range: 'D2' }, { plain: 'external', html: '' })
+  expect(app.controller.getSnapshot().error).toContain('原生范围')
+  expect(app.execute).not.toHaveBeenCalled()
 })

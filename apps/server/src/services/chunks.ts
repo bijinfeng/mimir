@@ -1,8 +1,17 @@
 import { eq, inArray, sql } from 'drizzle-orm'
-import { chunkText } from '../lib/chunk.js'
+import { publishChunks, publishEmbedding, publishFileReplacement } from '../db/document-index.js'
+import {
+  readUploadSnapshot,
+  sameUpload,
+  uploadIdentity,
+  withDocumentPublication,
+} from '../lib/document-publication.js'
 import { db } from '../db/client.js'
-import { chunkEmbeddings, chunks, documents } from '../db/schema.js'
+import { chunks, documents } from '../db/schema.js'
 import { dbDriver } from '../env.js'
+import { contentHash } from '../lib/text.js'
+import { toSearchText } from '@mimir/tokenizer'
+import { extractText } from './extract.js'
 import { assemble, executeRaw } from '../plugins/host.js'
 import { callEmbed, modelName } from './model.js'
 
@@ -65,82 +74,43 @@ export async function rebuildChunksAndEmbed(documentId: string, body: string): P
  * 换分块策略（`parser.chunk.size`）后要全量重跑：`rebuildAllChunks` 是入口。
  */
 export async function syncChunks(documentId: string, body: string): Promise<ChunkSyncResult> {
+  // Capture before the first settings/provider await, then compare again at publication.
+  const [doc] = await db.select().from(documents).where(eq(documents.id, documentId))
+  if (!doc || doc.body !== body || doc.deletedAt) return { count: 0, unchanged: true }
+  const snapshot = doc.kind === 'file' ? await readUploadSnapshot(documentId) : null
+  const source = snapshot?.identity ?? null
+  if (doc.kind === 'file' && (!source || source.key !== doc.sourceKey))
+    return { count: 0, unchanged: true }
+  if (snapshot && source?.compound)
+    return withDocumentPublication(documentId, async () => {
+      if (!sameUpload(source, await uploadIdentity(documentId)))
+        return { count: 0, unchanged: true }
+      const extracted = await extractText(
+        'encrypted.docx',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        snapshot.data,
+      )
+      if (!sameUpload(source, await uploadIdentity(documentId)))
+        return { count: 0, unchanged: true }
+      // A restored/external cipher can predate its derived DB cleanup. Rebuild must scrub old
+      // document text and chunks too, rather than merely refrain from inserting more chunks.
+      await publishFileReplacement(documentId, doc, {
+        body: '',
+        excerpt: '',
+        contentHash: contentHash(''),
+        searchText: toSearchText(doc.title, ''),
+        parseError: extracted.error,
+      })
+      return { count: 0, unchanged: false }
+    })
   const { settings } = assemble()
   const size = await settings.getNumber('parser.chunk.size')
   const overlap = await settings.getNumber('parser.chunk.overlap')
-
-  /**
-   * 标题从**数据库现取**，不由调用方传。
-   *
-   * 传进来会让「改名之后的分块用的是旧标题」成为一个可能的静默错误
-   * （六个调用点里只要有一个在更新标题之前调它就会发生）。
-   * 这里是主键查询，代价可以忽略。
-   */
-  const [doc] = await db
-    .select({ title: documents.title })
-    .from(documents)
-    .where(eq(documents.id, documentId))
-  const title = doc?.title ?? ''
-
-  const next = chunkText(body, { size, overlap, title }, documentId)
-
-  const existing = await db
-    .select({
-      id: chunks.id,
-      content: chunks.content,
-      searchText: chunks.searchText,
-      heading: chunks.heading,
-      startAt: chunks.startAt,
-      endAt: chunks.endAt,
-    })
-    .from(chunks)
-    .where(eq(chunks.documentId, documentId))
-    .orderBy(chunks.idx)
-
-  if (
-    existing.length === next.length &&
-    existing.every(
-      (row, i) =>
-        row.id === next[i]!.id &&
-        row.startAt === next[i]!.start &&
-        row.endAt === next[i]!.end &&
-        row.content === next[i]!.content,
-    )
-  ) {
-    for (const [index, row] of existing.entries()) {
-      const chunk = next[index]!
-      if (row.searchText === chunk.searchText && row.heading === chunk.heading) continue
-      await db
-        .update(chunks)
-        .set({ searchText: chunk.searchText, heading: chunk.heading, updatedAt: new Date() })
-        .where(eq(chunks.id, row.id))
-    }
-    return { count: existing.length, unchanged: true }
-  }
-
-  // 先删后插：分块是派生数据，没有「合并写入」的必要。
-  // 删掉的行由 chunk_embeddings 的级联一起带走——内容变了的分块
-  // 绝不能再留着旧向量（那是静默的错误召回）
-  await db.delete(chunks).where(eq(chunks.documentId, documentId))
-  if (next.length === 0) return { count: 0, unchanged: false }
-
-  const now = new Date()
-  await db.insert(chunks).values(
-    next.map((chunk) => ({
-      id: chunk.id,
-      documentId,
-      idx: chunk.index,
-      content: chunk.content,
-      searchText: chunk.searchText,
-      startAt: chunk.start,
-      endAt: chunk.end,
-      heading: chunk.heading,
-      createdAt: now,
-      updatedAt: now,
-    })),
-  )
-
-  return { count: next.length, unchanged: false }
+  return withDocumentPublication(documentId, async () => {
+    if (doc.kind === 'file' && !sameUpload(source, await uploadIdentity(documentId)))
+      return { count: 0, unchanged: true }
+    return publishChunks(documentId, doc, size, overlap)
+  })
 }
 
 /**
@@ -180,6 +150,15 @@ export async function embedDocument(documentId: string): Promise<{ embedded: num
   const model = await modelName('embed')
   if (model === '') return { embedded: 0 }
 
+  const [doc] = await db.select().from(documents).where(eq(documents.id, documentId))
+  if (!doc || doc.deletedAt) return { embedded: 0 }
+  const source = doc.kind === 'file' ? await uploadIdentity(documentId) : null
+  if (doc.kind === 'file' && (!source || source.key !== doc.sourceKey)) return { embedded: 0 }
+  if (source?.compound) {
+    await syncChunks(documentId, doc.body)
+    return { embedded: 0 }
+  }
+
   const rows = await db
     .select({ id: chunks.id, content: chunks.content })
     .from(chunks)
@@ -213,25 +192,19 @@ export async function embedDocument(documentId: string): Promise<{ embedded: num
        * （BLOB 列与 halfvec 列），逐条写让这段代码只有一种形状。
        * 一批 16 条，每批一次往返的代价在嵌入本身的耗时面前可以忽略。
        */
-      await db
-        .insert(chunkEmbeddings)
-        .values({
+      const published = await withDocumentPublication(documentId, async () => {
+        if (doc.kind === 'file' && !sameUpload(source, await uploadIdentity(documentId)))
+          return false
+        return publishEmbedding(documentId, doc, row, {
           chunkId: row.id,
           model,
           dimension: vector.length,
           embedding: serializeVector(vector) as never,
           createdAt: now,
         })
-        .onConflictDoUpdate({
-          target: [chunkEmbeddings.chunkId, chunkEmbeddings.model],
-          set: {
-            dimension: vector.length,
-            embedding: serializeVector(vector) as never,
-          },
-        })
+      })
+      if (published) embedded += 1
     }
-
-    embedded += batch.length
   }
 
   return { embedded }

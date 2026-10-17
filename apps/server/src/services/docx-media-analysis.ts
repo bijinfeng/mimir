@@ -1,3 +1,4 @@
+import type { AgentMediaAnalysisInput } from '@mimir/shared'
 import { generateTranscription } from '@tanstack/ai'
 import { docxTranscriptionAdapter, docxTranscriptionConfiguration } from '@mimir/plugin-provider'
 import { assemble } from '../plugins/host.js'
@@ -5,7 +6,6 @@ import { migrateAiServiceSettings } from './ai-service-settings.js'
 import { callChat, modelReady } from './model.js'
 import { record, tokenFields } from './usage.js'
 
-type Kind = 'image' | 'audio' | 'video'
 type Media = { mimeType: string; data: string }
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 const MAX_AUDIO_BYTES = 10 * 1024 * 1024
@@ -47,7 +47,8 @@ function imageMime(bytes: Buffer): string {
 
 function audioMime(item: Media, bytes: Buffer): string {
   const head = bytes.toString('ascii', 0, 4)
-  if (item.mimeType === 'audio/wav' && head === 'RIFF') return 'audio/wav'
+  if (item.mimeType === 'audio/wav' && head === 'RIFF' && bytes.toString('ascii', 8, 12) === 'WAVE')
+    return 'audio/wav'
   if (
     item.mimeType === 'audio/mpeg' &&
     (head.startsWith('ID3') || (bytes[0] === 255 && (bytes[1] ?? 0) >= 224))
@@ -58,7 +59,8 @@ function audioMime(item: Media, bytes: Buffer): string {
   throw new DocxMediaInputError('不支持的音频类型或文件内容与类型不符')
 }
 
-async function transcribe(item: Media, documentId: string): Promise<string> {
+async function transcribe(item: Media, documentId: string, signal?: AbortSignal): Promise<string> {
+  signal?.throwIfAborted()
   const issues = await migrateAiServiceSettings()
   const issue = issues.find((entry) => entry.key === 'model.transcription.apiKey')
   if (issue) throw new Error(issue.message)
@@ -78,7 +80,9 @@ async function transcribe(item: Media, documentId: string): Promise<string> {
         { type: mime },
       ),
       timeout: 60_000,
+      ...(signal ? { abortSignal: signal } : {}),
     })
+    signal?.throwIfAborted()
     usage = result.usage
     if (!result.text.trim()) throw new Error('音频转录服务没有返回文字')
     ok = true
@@ -102,30 +106,33 @@ async function transcribe(item: Media, documentId: string): Promise<string> {
   }
 }
 
-export async function analyzeDocxMedia(input: {
-  documentId: string
-  instruction: string
-  kind: Kind
-  media: Media[]
-}): Promise<{ text: string }> {
+export async function analyzeDocxMedia(
+  input: AgentMediaAnalysisInput & { signal?: AbortSignal },
+): Promise<{ text: string }> {
+  input.signal?.throwIfAborted()
   const ready = await docxMediaReadiness()
+  input.signal?.throwIfAborted()
   if (!input.instruction.trim() || input.instruction.length > 4_000)
     throw new DocxMediaInputError('分析要求不能为空且不能超过 4000 字符')
+  if (input.audio && input.kind !== 'video') throw new DocxMediaInputError('仅视频接受附带音轨')
   if (input.kind === 'audio') {
     if (!ready.audio) throw new Error('请先配置音频转录服务和聊天模型')
     if (input.media.length !== 1) throw new DocxMediaInputError('音频分析需要一个文件')
-    const transcript = await transcribe(input.media[0]!, input.documentId)
+    const transcript = await transcribe(input.media[0]!, input.documentId, input.signal)
     const text = await callChat({
       role: 'chat',
       source: 'chat',
       refId: input.documentId,
       stream: false,
+      ...(input.signal ? { abortSignal: input.signal } : {}),
       messages: [
         { role: 'user', content: `${input.instruction}\n\n音频转录内容：\n${transcript}` },
       ],
     })
+    input.signal?.throwIfAborted()
     return { text }
   }
+  if (input.audio && !ready.audio) throw new Error('视频音轨分析需要转录服务和聊天模型')
   if (!ready.vision) throw new Error('请先确认聊天模型支持图片输入并启用视觉输入')
   if (input.media.length < 1 || input.media.length > (input.kind === 'image' ? 1 : 4)) {
     throw new DocxMediaInputError('图片需要一个文件，视频需要 1 到 4 帧')
@@ -139,14 +146,31 @@ export async function analyzeDocxMedia(input: {
       source: { type: 'data' as const, value: item.data, mimeType: mime },
     }
   })
+  const transcript = input.audio
+    ? await transcribe(input.audio, input.documentId, input.signal)
+    : undefined
+  input.signal?.throwIfAborted()
   const text = await callChat({
+    ...(input.signal ? { abortSignal: input.signal } : {}),
     role: 'chat',
     source: 'chat',
     refId: input.documentId,
     stream: false,
     messages: [
-      { role: 'user', content: [{ type: 'text', content: input.instruction }, ...images] },
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'text',
+            content: transcript
+              ? `${input.instruction}\n\n视频音轨转录：\n${transcript}`
+              : input.instruction,
+          },
+          ...images,
+        ],
+      },
     ],
   })
+  input.signal?.throwIfAborted()
   return { text }
 }

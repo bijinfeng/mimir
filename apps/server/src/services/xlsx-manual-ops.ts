@@ -27,14 +27,20 @@ import {
   translateSharedFormula,
   type StructuralOp,
 } from '../../../../packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-structure.js'
+import { cellMap, replaceCells, assertOrdinaryFormulas } from './xlsx-agent-range.js'
 import {
-  cellMap,
-  replaceCells,
-  assertOrdinaryFormulas,
-  assertCopyFeatures,
-} from './xlsx-agent-range.js'
+  assertXlsxRangeFeatures,
+  assertXlsxSheetWritable,
+  assertXlsxWorksheetRangeStructure,
+} from './xlsx-range-features.js'
 import type { XlsxHostResult } from './xlsx-agent-host.js'
 import { materializeXlsxCellStyle, xlsxRangeStyles } from './xlsx-range-styles.js'
+import { planXlsxRangeStructures, rewriteXlsxRangeFormulas } from './xlsx-range-structures.js'
+import {
+  bindXlsxRangeValidation,
+  planXlsxRangeRules,
+  xlsxNativeRuleReaders,
+} from './xlsx-range-rules.js'
 
 type Area = ReturnType<typeof parseRange>
 const escape = (s: string) =>
@@ -129,9 +135,8 @@ export function moveXlsxFormula(
 }
 
 /** Preserve references outside the moved rectangle when a formula crosses sheets. */
-function qualifyMovedFormula(formula: string, sourceSheet: string): string {
-  const reference =
-    /(^|[^\p{L}\p{N}_.\]!:])(?:((?:'(?:[^']|'')+'|[\p{L}_][\p{L}\p{N}_.]*)!))?(\$?[A-Z]{1,3}\$?[1-9][0-9]*(?::\$?[A-Z]{1,3}\$?[1-9][0-9]*)?)(?![\p{L}\p{N}_(])/giu
+export function qualifyMovedFormula(formula: string, sourceSheet: string): string {
+  const reference = new RegExp(FORMULA_REFERENCE_PATTERN.source, 'giu')
   return formula
     .split('"')
     .map((part, i) =>
@@ -172,12 +177,16 @@ export async function applyXlsxManualOperation(
   op: XlsxManualOperation,
   version: number,
 ): Promise<XlsxHostResult> {
+  if (op.op === 'paste_range') throw new Error('选择性粘贴须使用专用原件适配器')
+  if (op.op === 'sort_range_multi') throw new Error('多级排序须使用专用原件适配器')
+  if (op.op === 'edit_pivot_layout') throw new Error('透视布局须使用专用原件适配器')
   const zip = await BoundedZip.open(bytes),
     view = await readXlsx(bytes)
   const sheet = view.sheets.find((s) => s.id === op.sheetId)
   if (!sheet) throw new Error('工作表ID已失效')
   if (sheet.extras?.protected) throw new Error('工作表已保护，请先取消保护')
   const xml = (await zip.readText(sheet.entry))!
+  assertXlsxSheetWritable(xml)
   const edits = new Map<string, string>(),
     changedCells: string[] = []
   let updated = xml
@@ -378,6 +387,7 @@ export async function applyXlsxManualOperation(
     if (sheet.id === sourceSheet.id && dr === 0 && dc === 0) throw new Error('目标与剪切源相同')
     const sourceXml = (await zip.readText(sourceSheet.entry))!,
       sourceCells = cellMap(sourceXml)
+    assertXlsxSheetWritable(sourceXml)
     const styleAt = xlsxRangeStyles(sourceXml, sourceCells)
     const checkParts = (candidateSheet: XlsxSheet, area: Area) => {
       if (
@@ -404,8 +414,70 @@ export async function applyXlsxManualOperation(
     }
     checkParts(sourceSheet, source)
     checkParts(sheet, target)
-    assertCopyFeatures(sourceXml, source, true)
-    assertCopyFeatures(xml, target, true)
+    const structures = await planXlsxRangeStructures(
+      zip,
+      { entry: sourceSheet.entry, xml: sourceXml, bounds: source },
+      { entry: sheet.entry, xml, bounds: target },
+      true,
+    )
+    const rules = planXlsxRangeRules(
+      {
+        sheets: await Promise.all(
+          view.sheets.map(async (item) => {
+            const original = (await zip.readText(item.entry))!
+            assertXlsxWorksheetRangeStructure(original)
+            return { entry: item.entry, name: item.name, xml: original }
+          }),
+        ),
+        source: { entry: sourceSheet.entry, bounds: source },
+        target: { entry: sheet.entry, bounds: target },
+        move: true,
+        stylesXml: (await zip.readText('xl/styles.xml')) ?? undefined,
+        candidateBases: structures.replacements,
+      },
+      xlsxNativeRuleReaders((formula, context, relocatedFrom) =>
+        moveXlsxFormula(
+          relocatedFrom && relocatedFrom !== context
+            ? qualifyMovedFormula(formula, relocatedFrom)
+            : formula,
+          context,
+          sourceSheet.name,
+          sheet.name,
+          source,
+          dr,
+          dc,
+        ),
+      ),
+    )
+    const nativeReplacements = new Map([...structures.replacements, ...rules.replacements])
+    for (const [entry] of rules.replacements) assertXlsxSheetWritable((await zip.readText(entry))!)
+    if (sourceSheet.entry === sheet.entry)
+      await assertXlsxRangeFeatures(
+        zip,
+        sheet.entry,
+        xml,
+        [source, target],
+        structures.permit,
+        rules.permit,
+      )
+    else {
+      await assertXlsxRangeFeatures(
+        zip,
+        sourceSheet.entry,
+        sourceXml,
+        [source],
+        structures.permit,
+        rules.permit,
+      )
+      await assertXlsxRangeFeatures(
+        zip,
+        sheet.entry,
+        xml,
+        [target],
+        structures.permit,
+        rules.permit,
+      )
+    }
     assertOrdinaryFormulas(sourceXml)
     assertOrdinaryFormulas(xml)
     const sourceWrites = new Map<string, string>()
@@ -417,10 +489,8 @@ export async function applyXlsxManualOperation(
       let raw = sourceCells.get(from) ?? `<c r="${from}"/>`
       raw = raw.replace(/\br="[^"]*"/, `r="${to}"`)
       if (sourceSheet.id !== sheet.id)
-        raw = raw.replace(
-          /(<f\b[^>]*>)([\s\S]*?)(<\/f>)/g,
-          (_a, open: string, body: string, close: string) =>
-            open + escape(qualifyMovedFormula(decodeXlsxXml(body), sourceSheet.name)) + close,
+        raw = rewriteXlsxRangeFormulas(raw, ['f'], (formula) =>
+          qualifyMovedFormula(formula, sourceSheet.name),
         )
       raw = materializeXlsxCellStyle(raw, styleAt(row, column))
       edits.set(to, raw)
@@ -428,34 +498,33 @@ export async function applyXlsxManualOperation(
     }
     if (sourceSheet.id === sheet.id) {
       for (const entry of edits) sourceWrites.set(...entry)
-      updated = replaceCells(xml, sourceWrites)
+      updated = replaceCells(nativeReplacements.get(sheet.entry) ?? xml, sourceWrites)
     } else {
-      updated = replaceCells(xml, edits)
+      updated = replaceCells(nativeReplacements.get(sheet.entry) ?? xml, edits)
       edits.clear()
-      edits.set(sourceSheet.entry, replaceCells(sourceXml, sourceWrites))
+      edits.set(
+        sourceSheet.entry,
+        replaceCells(nativeReplacements.get(sourceSheet.entry) ?? sourceXml, sourceWrites),
+      )
     }
-    const replacements = new Map<string, string>([[sheet.entry, updated]])
+    const replacements = new Map<string, string>([...nativeReplacements, [sheet.entry, updated]])
     if (sourceSheet.id !== sheet.id)
       replacements.set(sourceSheet.entry, edits.get(sourceSheet.entry)!)
     for (const s of view.sheets) {
       const text = replacements.get(s.entry) ?? (await zip.readText(s.entry))!
-      const rewritten = text.replace(
-        /(<(?:f|formula|formula1|formula2)\b[^>]*>)([\s\S]*?)(<\/(?:f|formula|formula1|formula2)>)/g,
-        (_a, open: string, body: string, close: string) =>
-          open +
-          escape(
-            moveXlsxFormula(
-              decodeXlsxXml(body),
-              s.name,
-              sourceSheet.name,
-              sheet.name,
-              source,
-              dr,
-              dc,
-            ),
-          ) +
-          close,
-      )
+      const rewritten = rewriteXlsxRangeFormulas(text, ['f'], (formula) => {
+        const movedFormula = moveXlsxFormula(
+          formula,
+          s.name,
+          sourceSheet.name,
+          sheet.name,
+          source,
+          dr,
+          dc,
+        )
+        return movedFormula
+      })
+      if (rewritten !== text) assertXlsxSheetWritable(text)
       if (rewritten !== text && s.extras?.protected) throw new Error('引用剪切范围的工作表已保护')
       if (rewritten !== text) {
         assertOrdinaryFormulas(text)
@@ -466,31 +535,29 @@ export async function applyXlsxManualOperation(
       .list()
       .filter((p) => p === 'xl/workbook.xml' || /^xl\/charts\/.*\.xml$/.test(p))) {
       const original = (await zip.readText(path))!
-      const rewritten = original.replace(
-        /(<(?:definedName|c:f|f)\b[^>]*>)([\s\S]*?)(<\/(?:definedName|c:f|f)>)/g,
-        (_a, open: string, body: string, close: string) => {
+      const rewritten = rewriteXlsxRangeFormulas(
+        original,
+        ['definedName', 'c:f', 'f'],
+        (formula, open) => {
           const local = attr(open, 'localSheetId'),
             context = local === undefined ? '' : (view.sheets[Number(local)]?.name ?? '')
-          return (
-            open +
-            escape(
-              moveXlsxFormula(
-                decodeXlsxXml(body),
-                context,
-                sourceSheet.name,
-                sheet.name,
-                source,
-                dr,
-                dc,
-              ),
-            ) +
-            close
+          const moved = moveXlsxFormula(
+            formula,
+            context,
+            sourceSheet.name,
+            sheet.name,
+            source,
+            dr,
+            dc,
           )
+          return moved
         },
       )
       if (rewritten !== original) replacements.set(path, rewritten)
     }
-    return assemble(bytes, replacements, changedCells, version)
+    const result = await assemble(bytes, replacements, changedCells, version)
+    bindXlsxRangeValidation(result.bytes, rules, { entry: sheet.entry, bounds: target })
+    return result
   }
   return assemble(bytes, new Map([[sheet.entry, updated]]), changedCells, version)
 }
@@ -516,12 +583,14 @@ async function assemble(
   changedCells: string[],
   version: number,
 ): Promise<XlsxHostResult> {
+  const existing = new Set((await BoundedZip.open(bytes)).list())
+  const addedEntries = [...replacements.keys()].filter((path) => !existing.has(path))
   const first = await assembleWithJsZip(Buffer.from(bytes), {
     replaced: replacements,
     added: new Map(),
     addedBinary: new Map(),
     removedEntries: [],
-    addedEntries: [],
+    addedEntries,
     touchedEntries: [...replacements.keys()],
   })
   // The gateway invalidates calcChain for worksheet edits and requests recalc;
@@ -538,6 +607,7 @@ async function assemble(
   const result = await assembleWithJsZip(Buffer.from(bytes), {
     ...plan,
     replaced,
+    addedEntries: [...new Set([...addedEntries, ...plan.addedEntries])],
     touchedEntries: [...new Set([...replacements.keys(), ...plan.touchedEntries])],
   })
   assertOnlyTouchedEntriesChanged(result)
@@ -548,3 +618,5 @@ async function assemble(
     touchedEntries: [...result.touchedEntries],
   }
 }
+
+export { assemble as assembleXlsxManualRange }

@@ -1,6 +1,7 @@
 import { readXlsxCfRules } from './xlsx-cell-effects.js'
 import { readXlsxObjects, type XlsxVisual, type XlsxTable, type XlsxPivot } from './xlsx-visuals.js'
 import { BoundedZip } from './zip-bounds.js'
+import { readXlsxFormulaCharacterData, xlsxRangeXmlTokens } from './xlsx-native-xml.js'
 import { readXlsxThemePalette } from './xlsx-fill.js'
 import { readXlsxSheetExtras, type XlsxSheetExtras, xlsxAttribute } from './xlsx-sheet-features.js'
 import {
@@ -361,16 +362,27 @@ async function readSharedStrings(zip: BoundedZip): Promise<string[]> {
    * 索引严格按 `<si>` 出现顺序（从 0 开始）——`<c t="s"><v>17</v></c>` 里的
    * 17 就是这个数组的下标。
    */
-  const out: string[] = []
-  // Empty entries occupy their original indexes, including before/between text.
-  // Decide at the opening tag so <si/> cannot consume a later </si>.
-  for (const si of xml.matchAll(/<si\b[^>]*?(?:\/>|>([\s\S]*?)<\/si>)/g)) {
-    const parts = [...(si[1] ?? '').matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g)].map((m) =>
-      decodeXml(m[1] ?? ''),
-    )
-    out.push(parts.join(''))
+  return textElementBodies(xml, 'si').map(readStringText)
+}
+
+/** Select real string elements; CDATA/comments may contain literal closing tags. */
+function textElementBodies(xml: string, name: 'si' | 't'): string[] {
+  const bodies: string[] = []
+  let start: number | undefined
+  for (const token of xlsxRangeXmlTokens(xml)) {
+    const tag = /^<(\/?)(si|t)(?=[\s/>])/.exec(token[0])
+    if (tag?.[2] !== name) continue
+    if (tag[1]) {
+      if (start !== undefined) bodies.push(xml.slice(start, token.index))
+      start = undefined
+    } else if (token[0].endsWith('/>')) bodies.push('')
+    else start = token.index + token[0].length
   }
-  return out
+  return bodies
+}
+
+function readStringText(xml: string): string {
+  return textElementBodies(xml, 't').map(readXlsxFormulaCharacterData).join('')
 }
 
 function rowNumber(attrs: string, previous: number): number {
@@ -599,10 +611,7 @@ function cellOf(
   }
 
   if (type === 'inlineStr') {
-    const parts = [...inner.matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g)].map((m) =>
-      decodeXml(m[1] ?? ''),
-    )
-    return { text: parts.join(''), col, colSpan: 1, rowSpan: 1, ...appearance }
+    return { text: readStringText(inner), col, colSpan: 1, rowSpan: 1, ...appearance }
   }
 
   const value = decodeXml(/<v>([\s\S]*?)<\/v>/.exec(inner)?.[1] ?? '')

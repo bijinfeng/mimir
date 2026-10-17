@@ -303,3 +303,114 @@ describe('cross-format new document bridge', () => {
     expect(value.onCreatedDocument).not.toHaveBeenCalled()
   })
 })
+
+it('forwards DOCX aspect choices and rejects invalid values before any generator call', async () => {
+  const execute = vi.fn<ChatDocxAgent['execute']>(async () => ({
+    ok: true,
+    changed: true,
+    version: 4,
+  }))
+  const generate = vi.fn<NonNullable<ChatIo['generateDocxImage']>>(async () => ({
+    dataUrl: 'data:image/png;base64,cG5n',
+    mimeType: 'image/png',
+  }))
+  const agent = handle(() => 3, execute),
+    signal = new AbortController().signal
+  await executeDocxTool(
+    agent,
+    { name: 'generate_image', input: { prompt: '海', aspectRatio: '4:3' } },
+    'r',
+    3,
+    signal,
+    generate,
+  )
+  expect(generate).toHaveBeenCalledWith('doc-1', '海', signal, '4:3')
+  generate.mockClear()
+  await expect(
+    executeDocxTool(
+      agent,
+      { name: 'generate_image', input: { prompt: '海', aspectRatio: 'bogus' } },
+      'r',
+      3,
+      signal,
+      generate,
+    ),
+  ).rejects.toThrow(/Invalid option/)
+  expect(generate).not.toHaveBeenCalled()
+})
+
+it('binds original PPTX attachments to the current tool request and rejects filename mismatch or source changes', async () => {
+  let version = 3
+  const execute = vi.fn<ChatDocxAgent['execute']>(async () => ({
+    ok: true,
+    changed: true,
+    version: 4,
+  }))
+  const agent = { ...handle(() => version, execute), format: 'pptx' as const }
+  const file = new File([new Uint8Array([1, 2, 3])], 'logo.png', { type: 'image/png' })
+  const value = {
+    ...createToolOptions(agent, { slideIndex: 0, url: 'attachment://logo.png' }),
+    tool: { name: 'insert_web_image', input: { slideIndex: 0, url: 'attachment://logo.png' } },
+    requestMediaSource: async () => file,
+  }
+  await executeBridgeTool(value)
+  expect(execute).toHaveBeenCalledWith(
+    'insert_web_image',
+    value.tool.input,
+    expect.objectContaining({
+      expectedVersion: 3,
+      attachments: [{ name: 'logo.png', mimeType: 'image/png', bytes: new Uint8Array([1, 2, 3]) }],
+    }),
+  )
+  execute.mockClear()
+  await expect(
+    executeBridgeTool({
+      ...value,
+      requestMediaSource: async () => new File(['x'], 'other.png', { type: 'image/png' }),
+    }),
+  ).rejects.toThrow('logo.png')
+  await expect(
+    executeBridgeTool({
+      ...value,
+      requestMediaSource: async () => {
+        version++
+        return file
+      },
+    }),
+  ).rejects.toThrow('已变化')
+  expect(execute).not.toHaveBeenCalled()
+})
+
+it('analyzes original audio/video through the existing user-file IO with explicit visual/audio scope and no canvas edit', async () => {
+  let version = 3
+  const execute = vi.fn<ChatDocxAgent['execute']>()
+  const agent = { ...handle(() => version, execute), format: 'pptx' as const }
+  const file = new File(['video'], 'demo.mp4', { type: 'video/mp4' })
+  const analyze = vi.fn<NonNullable<ChatIo['analyzeDocxMedia']>>(async () => ({
+    text: '画面与音轨分析',
+  }))
+  const value = {
+    ...createToolOptions(agent, {}),
+    tool: {
+      name: 'analyze_media',
+      input: { kind: 'video', requirements: '总结', includeAudio: true },
+    },
+    requestMediaSource: async () => file,
+    analyzeDocxMedia: analyze,
+  }
+  expect(await executeBridgeTool(value)).toMatchObject({
+    ok: true,
+    changed: false,
+    data: { sourceName: 'demo.mp4', scope: 'visual_frames_and_audio', text: '画面与音轨分析' },
+  })
+  expect(analyze).toHaveBeenCalledWith(
+    { documentId: 'doc-1', instruction: '总结', kind: 'video', source: file, includeAudio: true },
+    value.signal,
+  )
+  expect(execute).not.toHaveBeenCalled()
+  analyze.mockImplementationOnce(async () => {
+    version++
+    return { text: 'late' }
+  })
+  await expect(executeBridgeTool(value)).rejects.toThrow('已变化')
+})

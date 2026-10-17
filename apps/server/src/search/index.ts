@@ -1,8 +1,9 @@
-import { and, eq, inArray, isNull } from 'drizzle-orm'
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
 import type { EmbedPort, SearchHit, SearchResponse } from '@mimir/shared'
 import { channelsForMode, createPipeline, defaultMode, type SnippetPort } from '@mimir/core'
 import { db } from '../db/client.js'
-import { chunks, documents } from '../db/schema.js'
+import { chunks, documents, documentTags, tags } from '../db/schema.js'
+import { ENCRYPTED_OFFICE_INDEX_MESSAGE } from '../lib/document-publication.js'
 import { stripMarkdown } from '../lib/text.js'
 import { assemble } from '../plugins/host.js'
 import { callEmbed, modelName } from '../services/model.js'
@@ -170,28 +171,84 @@ async function embedPort(): Promise<EmbedPort | undefined> {
 export async function search(params: SearchParams): Promise<SearchResponse> {
   const outcome = await searchChunks(params)
 
+  // Encrypted files deliberately have no body chunks. UI title discovery must not fabricate
+  // a chunk/citation that could be passed to the Agent as plaintext document context.
+  const titleHits = params.mode === 'semantic' ? [] : await encryptedTitleHits(params)
+  const hits: SearchHit[] = outcome.hits.map((hit) => ({
+    documentId: hit.documentId,
+    kind: hit.kind as SearchHit['kind'],
+    title: hit.title,
+    path: hit.path,
+    url: hit.url,
+    mime: hit.mime,
+    size: hit.size,
+    snippet: { text: hit.snippet.text, start: hit.snippet.start, end: hit.snippet.end },
+    matchedBy: hit.matchedBy,
+    score: hit.score,
+  }))
+  const combined = [...hits, ...titleHits].slice(0, params.limit)
+
   // 前端契约在 M1-C 一个字没改：分块 id 与完整正文到这里被折掉，
   // 只留界面需要的那些字段（`SearchHit` 的解释见 shared/search.ts）
   return {
     mode: outcome.mode as SearchResponse['mode'],
-    channels: outcome.channels as SearchResponse['channels'],
+    channels: [
+      ...outcome.channels,
+      ...(titleHits.length ? ['标题匹配'] : []),
+    ] as SearchResponse['channels'],
     tookMs: outcome.tookMs,
     // `total` 是本次返回的命中条数，不是库里的总数——契约里它一直是这个含义
-    total: outcome.hits.length,
-    hits: outcome.hits.map((hit) => ({
-      documentId: hit.documentId,
-      kind: hit.kind as SearchHit['kind'],
-      title: hit.title,
-      path: hit.path,
-      url: hit.url,
-      mime: hit.mime,
-      size: hit.size,
-      snippet: { text: hit.snippet.text, start: hit.snippet.start, end: hit.snippet.end },
-      matchedBy: hit.matchedBy,
-      score: hit.score,
-    })),
+    total: combined.length,
+    hits: combined,
   }
 }
+async function encryptedTitleHits(params: SearchParams): Promise<SearchHit[]> {
+  if (params.kind && params.kind !== 'file') return []
+  const needle = `%${params.q
+    .trim()
+    .toLowerCase()
+    .replace(/[\\%_]/g, '\\$&')}%`
+  const rows = await db
+    .select()
+    .from(documents)
+    .where(
+      and(
+        eq(documents.kind, 'file'),
+        isNull(documents.deletedAt),
+        eq(documents.body, ''),
+        eq(documents.parseError, ENCRYPTED_OFFICE_INDEX_MESSAGE),
+        sql`lower(${documents.title}) like ${needle} escape '\\'`,
+        sql`not exists (select 1 from chunks c where c.document_id = ${documents.id})`,
+        ...(params.tag
+          ? [
+              inArray(
+                documents.id,
+                db
+                  .select({ id: documentTags.documentId })
+                  .from(documentTags)
+                  .innerJoin(tags, eq(tags.id, documentTags.tagId))
+                  .where(eq(tags.name, params.tag)),
+              ),
+            ]
+          : []),
+      ),
+    )
+    .orderBy(documents.id)
+    .limit(params.limit)
+  return rows.map((row) => ({
+    documentId: row.id,
+    kind: 'file',
+    title: row.title,
+    path: row.path,
+    url: row.url,
+    mime: row.mime,
+    size: row.size,
+    snippet: { text: '', start: 0, end: 0 },
+    matchedBy: ['标题匹配'],
+    score: 0,
+  }))
+}
+
 /**
  * 分块级的检索结果——**问答与引用组装用的是这一份**。
  *

@@ -3,7 +3,7 @@ import { openXlsxForEdit, type XlsxEditSession } from '../xlsx-edit.js'
 import { inspectXlsx } from './xlsx-inspect.js'
 import { findXlsxCells } from '../xlsx-find.js'
 import type { XlsxCell, XlsxSheet, XlsxWorkbook } from '../xlsx.js'
-import type { XlsxHostAction, XlsxRecalculation } from '@mimir/shared'
+import type { XlsxHostAction, XlsxRecalculation, XlsxValidationConsent } from '@mimir/shared'
 
 export interface XlsxHostApply {
   (request: {
@@ -11,6 +11,7 @@ export interface XlsxHostApply {
     bytes: Uint8Array
     expectedVersion: number
     ops: unknown[]
+    validationConsent?: XlsxValidationConsent
     imageFile?: File
     action?: XlsxHostAction
     signal?: AbortSignal
@@ -32,7 +33,13 @@ export interface XlsxAgentHandle {
   execute(
     tool: string,
     args: unknown,
-    options: { expectedVersion?: number; roundId?: string; signal?: AbortSignal; imageFile?: File },
+    options: {
+      expectedVersion?: number
+      roundId?: string
+      signal?: AbortSignal
+      imageFile?: File
+      validationConsent?: XlsxValidationConsent
+    },
   ): Promise<unknown>
   undoRound(roundId: string): Promise<boolean>
   history(): { undo: number; redo: number }
@@ -220,7 +227,13 @@ export function createXlsxAgentHandle(
   const run = async (
     tool: string,
     args: unknown,
-    options: { expectedVersion?: number; roundId?: string; signal?: AbortSignal; imageFile?: File },
+    options: {
+      expectedVersion?: number
+      roundId?: string
+      signal?: AbortSignal
+      imageFile?: File
+      validationConsent?: XlsxValidationConsent
+    },
   ): Promise<unknown> => {
     if (disposed) throw new Error('XLSX 画布已关闭')
     if (options.expectedVersion !== undefined && options.expectedVersion !== version)
@@ -354,8 +367,25 @@ export function createXlsxAgentHandle(
       action: input.recalculate === true ? 'recalculate_formulas' : 'apply_ops',
       signal: options.signal,
       imageFile: options.imageFile,
+      validationConsent: options.validationConsent,
     })
     if (disposed || options.signal?.aborted) throw new Error('XLSX 操作已取消')
+    if (
+      result.version === version &&
+      input.recalculate !== true &&
+      result.recalculation === undefined &&
+      result.changedCells.length === 0 &&
+      result.touchedEntries.length === 0 &&
+      result.bytes.length === bytes.length &&
+      result.bytes.every((byte, index) => byte === bytes[index])
+    )
+      return {
+        ok: true,
+        changed: false,
+        version,
+        summary: '工作簿未变化',
+        data: { changedCells: [], touchedEntries: [] },
+      }
     if (result.version !== version + 1) throw new Error('XLSX 宿主返回了错误的画布版本')
     const nextSession = await openXlsxForEdit(result.bytes)
     if (disposed || options.signal?.aborted) throw new Error('XLSX 操作已取消')

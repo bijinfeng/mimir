@@ -1,0 +1,72 @@
+.mimir-docx-inspector__body:has(> .mimir-docx-privacy) {
+  display: flex;
+  flex: 1;
+  padding: 0;
+  overflow: hidden;
+}
+.mimir-docx-privacy {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+}
+.mimir-docx-privacy__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 12px;
+}
+.mimir-docx-privacy__setting {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 16px;
+}
+.mimir-docx-privacy__setting > div {
+  flex: 1;
+  min-width: 0;
+}
+.mimir-docx-privacy__label {
+  color: var(--me-text);
+  font-weight: 600;
+}
+.mimir-docx-privacy__setting p {
+  margin: 6px 0 0;
+  color: var(--me-text-weak);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.mimir-docx-privacy__values {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 16px;
+  margin: 0 0 16px;
+  font-size: 12px;
+}
+.mimir-docx-privacy__values dt {
+  color: var(--me-text-weak);
+}
+.mimir-docx-privacy__values dd {
+  margin: 0;
+  color: var(--me-text);
+}
+.mimir-docx-privacy__actions {
+  flex: none;
+  padding: 12px;
+  border-top: 1px solid var(--me-border);
+  background: var(--me-surface);
+}
+.mimir-docx-privacy__feedback {
+  margin: 12px 0 0;
+  color: var(--me-text-weak);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.mimir-docx-privacy__feedback:empty {
+  display: none;
+}
+.mimir-docx-privacy__stale {
+  margin-top: 12px;
+}

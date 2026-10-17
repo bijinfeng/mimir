@@ -1,3 +1,4 @@
+import { pickSelectOption } from '../shell/antd-test-dom.js'
 /** @vitest-environment happy-dom */
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
@@ -198,7 +199,8 @@ it('external HTML applies real bold/color/size in one host batch and preserves l
   clipboardEvent(cell(host, 3, 0), 'paste', data)
   await wait(() => host.textContent?.includes('仅粘贴显示值') === true)
   expect(app.execute).toHaveBeenCalledOnce()
-  act(() => button(host, '仅粘贴显示值').click())
+  pickSelectOption(host, '粘贴方式', '仅显示值')
+  act(() => button(host, '粘贴').click())
   await wait(() => app.handle().history().undo === 2)
   expect(
     (await readXlsx(app.handle().currentBytes())).sheets[0]!.rows.find((row) => row.number === 3)!
@@ -248,7 +250,9 @@ it('cuts across real sheets atomically, migrates absolute references and consume
   await wait(() => app.handle().history().undo === 1)
   expect(app.execute.mock.calls[0]![0].ops).toEqual([
     {
-      op: 'move_range',
+      op: 'paste_range',
+      kind: 'cut',
+      mode: 'all',
       sheetId: 'sheet-2',
       sourceSheetId: 'sheet-1',
       source: 'A2:B2',
@@ -279,7 +283,7 @@ it('keeps the Inspector on the stable Editor body and cancels a late system read
   act(() => button(host, '范围剪贴板').click())
   const panel = host.querySelector<HTMLElement>('aside[aria-label="范围剪贴板"]')!
   expect(panel.parentElement?.classList.contains('mimir-editor__body')).toBe(true)
-  expect(panel.querySelector('footer button[aria-label="粘贴已读取内容"]')).not.toBeNull()
+  expect(panel.querySelector('footer button[aria-label="粘贴"]')).not.toBeNull()
   act(() => button(host, '读取系统剪贴板').click())
   expect(readText).toHaveBeenCalledOnce()
   act(() => button(host, '范围填充').click())
@@ -307,7 +311,7 @@ it('keeps manual text entered during a pending system read and renders the prima
   })
   type(host, '操作范围（A1 或 A1:B5）', 'A2')
   act(() => button(host, '范围剪贴板').click())
-  expect(button(host, '粘贴已读取内容').textContent).toBe('粘贴已读取内容')
+  expect(button(host, '粘贴').textContent).toBe('粘贴')
   act(() => button(host, '读取系统剪贴板').click())
   const input = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="待写入的表格内容"]')!
   expect(input.disabled).toBe(false)
@@ -318,7 +322,7 @@ it('keeps manual text entered during a pending system read and renders the prima
   act(() => input.dispatchEvent(new Event('input', { bubbles: true })))
   await act(async () => finish('old-system-read'))
   expect(input.value).toBe('user-new-draft')
-  expect(button(host, '粘贴已读取内容').disabled).toBe(false)
+  expect(button(host, '粘贴').disabled).toBe(false)
   expect(app.execute).not.toHaveBeenCalled()
   expect(app.handle().history().undo).toBe(0)
 })
@@ -359,7 +363,7 @@ it('keeps cache and Inspector through Ribbon collapse and returns Escape to a li
   clipboardEvent(cell(host, 2, 0), 'copy', data)
   act(() => button(host, '范围剪贴板').click())
   const panel = host.querySelector<HTMLElement>('aside[aria-label="范围剪贴板"]')!
-  expect(button(host, '粘贴工作簿内范围').textContent).toBe('粘贴工作簿内范围')
+  expect(button(host, '粘贴').textContent).toBe('粘贴')
   expect([...panel.querySelectorAll('h3')].map((heading) => heading.textContent)).toEqual([
     '内部范围',
     '外部内容',
@@ -394,4 +398,51 @@ it('keeps cache and Inspector through Ribbon collapse and returns Escape to a li
   expect(document.activeElement).toBe(dataTab)
   expect(app.execute).not.toHaveBeenCalled()
   expect(app.handle().history().undo).toBe(0)
+})
+
+it('prepares a special mode without writing and commits tiled native values with one history entry', async () => {
+  const app = await mount(),
+    host = app.host,
+    data = transfer()
+  type(host, '操作范围（A1 或 A1:B5）', 'A2:B2')
+  clipboardEvent(cell(host, 2, 0), 'copy', data)
+  act(() => button(host, '范围剪贴板').click())
+  pickSelectOption(host, '粘贴方式', '仅值')
+  expect(app.execute).not.toHaveBeenCalled()
+  expect(app.handle().isDirty()).toBe(false)
+  expect(app.handle().history()).toEqual({ undo: 0, redo: 0 })
+  type(host, '操作范围（A1 或 A1:B5）', 'G3:J4')
+  act(() => button(host, '粘贴').click())
+  await wait(() => app.handle().history().undo === 1)
+  expect(app.execute).toHaveBeenCalledOnce()
+  expect(app.execute.mock.calls[0]![0].ops).toEqual([
+    {
+      op: 'paste_range',
+      kind: 'copy',
+      mode: 'value',
+      sheetId: 'sheet-1',
+      sourceSheetId: 'sheet-1',
+      source: 'A2:B2',
+      target: 'G3:J4',
+    },
+  ])
+  const output = app.handle().currentBytes()
+  const native = await (
+    await JSZip.loadAsync(output)
+  )
+    .file('xl/worksheets/sheet1.xml')!
+    .async('string')
+  for (const address of ['H3', 'J3', 'H4', 'J4'])
+    expect(native).toMatch(new RegExp(`<c r="${address}"[^>]*><v>14</v></c>`))
+  await act(async () => {
+    await app.handle().undo()
+  })
+  expect(app.handle().currentBytes()).toEqual(app.bytes)
+  await act(async () => {
+    await app.handle().redo()
+  })
+  expect(app.handle().currentBytes()).toEqual(output)
+  act(() => button(host, '保存到库').click())
+  await wait(() => app.saved.length === 1)
+  expect(await entries(app.saved[0]!)).toEqual(await entries(output))
 })

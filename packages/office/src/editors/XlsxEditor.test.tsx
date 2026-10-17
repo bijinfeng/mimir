@@ -33,6 +33,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import JSZip from 'jszip'
 import { xlsxManualOperationSchema, XLSX_MANUAL_OPS } from '@mimir/shared'
 import { applyXlsxManualOperation } from '../../../../apps/server/src/services/xlsx-manual-ops.js'
+import { applyXlsxSpecialPaste } from '../../../../apps/server/src/services/xlsx-special-paste-host.js'
 import { XlsxEditor } from './XlsxEditor.js'
 import type { EditorIo, SaveTarget } from './types.js'
 import {
@@ -61,7 +62,7 @@ import {
   expandToPrimitiveOps,
   workbookOperationSchema,
 } from '../../vendor/packages/xlsx-gateway/src/domain/workbook-dsl.js'
-import type { XlsxHostApply } from '../agent/xlsx-agent.js'
+import type { XlsxAgentHandle, XlsxHostApply } from '../agent/xlsx-agent.js'
 
 /**
  * 夹具路径用 `import.meta.dirname` 拼，**不用 `new URL(..., import.meta.url)`**。
@@ -495,11 +496,28 @@ const fakeHostApply: XlsxHostApply = async ({ bytes, expectedVersion, ops }) => 
   }
 }
 
-async function openEditor() {
+async function openEditor(hostApply: XlsxHostApply = fakeHostApply) {
   const handle = fakeIo()
-  const host = mount(<XlsxEditor documentId="doc-1" io={handle.io} hostApply={fakeHostApply} />)
+  let agentHandle: XlsxAgentHandle | null = null
+  const host = mount(
+    <XlsxEditor
+      documentId="doc-1"
+      io={handle.io}
+      hostApply={hostApply}
+      onAgentHandleChange={(next) => {
+        agentHandle = next
+      }}
+    />,
+  )
   await waitForTable(host)
-  return { host, saved: handle.saved }
+  return {
+    host,
+    saved: handle.saved,
+    agent: () => {
+      if (!agentHandle) throw new Error('工作簿句柄未就绪')
+      return agentHandle
+    },
+  }
 }
 
 /** 挂一棵多表的工作簿 */
@@ -512,7 +530,12 @@ async function openMultiSheetEditor() {
 
 describe('xlsx 对象面板与历史操作', () => {
   it('剪切保留公式并迁移从属，格式刷与清除格式在保存重开保持，分组可折叠和恢复', async () => {
-    const { host, saved } = await openEditor()
+    const { host, saved } = await openEditor(async (request) => {
+      const operation = xlsxManualOperationSchema.safeParse(request.ops[0])
+      if (operation.success && operation.data.op === 'paste_range')
+        return applyXlsxSpecialPaste(request.bytes, operation.data, request.expectedVersion)
+      return fakeHostApply(request)
+    })
     expect(
       [...host.querySelectorAll('.mimir-compact-toolbar [data-section-key]')].map((group) =>
         group.getAttribute('data-section-key'),
@@ -523,7 +546,7 @@ describe('xlsx 对象面板与历史操作', () => {
     click(byLabel(host, '剪切所选范围'))
     await waitForGrid(host, () => !byLabel(host, '剪切所选范围').hasAttribute('disabled'))
     type(byLabel(host, '操作范围（A1 或 A1:B5）'), 'D4')
-    click(byLabel(host, '粘贴工作簿内范围'))
+    click(byLabel(host, '粘贴'))
     await waitForGrid(
       host,
       () =>
@@ -731,7 +754,7 @@ describe('xlsx 对象面板与历史操作', () => {
     click(byLabel(host, '范围剪贴板'))
     type(byLabel(host, '待写入的表格内容'), '12\tTRUE\t=2+3')
     expect(cellAt(host, 3, 0).textContent).toBe('张三')
-    click(byLabel(host, '粘贴已读取内容'))
+    click(byLabel(host, '粘贴'))
     await waitForGrid(host, () => cellAt(host, 3, 0).textContent === '12')
     expect(cellAt(host, 3, 1).textContent).toBe('TRUE')
     await save(host, saved)
@@ -787,48 +810,89 @@ async function save(host: HTMLElement, saved: () => Uint8Array | null): Promise<
   )
 }
 
-it('keeps a later edit unsaved when an older workbook save finishes', async () => {
-  const persisted: Uint8Array[] = []
-  let firstStarted = false
-  let finishFirst: () => void = vi.fn<() => void>()
-  const io: EditorIo = {
-    load: async () => new Uint8Array(readFileSync(FIXTURE)),
-    save: async (bytes) => {
-      if (persisted.length === 0) {
-        firstStarted = true
-        await new Promise<void>((resolve) => {
-          finishFirst = resolve
-        })
+it.each(['before', 'after'] as const)(
+  'keeps a later edit unsaved when it publishes %s an older workbook save finishes',
+  async (order) => {
+    const persisted: Uint8Array[] = []
+    let handle: XlsxAgentHandle | null = null
+    let firstStarted = false
+    let finishFirst: () => void = vi.fn<() => void>()
+    let editStarted = false
+    let finishEdit!: () => void
+    let editSignal: AbortSignal | undefined
+    const editGate = new Promise<void>((resolve) => {
+      finishEdit = resolve
+    })
+    const delayedHost: XlsxHostApply = async (request) => {
+      const result = await fakeHostApply(request)
+      if (request.ops.some((op) => (op as { address?: string }).address === 'B2')) {
+        editStarted = true
+        editSignal = request.signal
+        await editGate
       }
-      persisted.push(bytes)
-    },
-  }
-  const host = mount(<XlsxEditor documentId="save-race" io={io} hostApply={fakeHostApply} />)
-  await waitForTable(host)
-  click(cellAt(host, 2, 0))
-  type(byLabel(host, '单元格 A2'), '先保存')
-  press(byLabel(host, '单元格 A2'), 'Enter')
-  await waitForGrid(host, () => cellAt(host, 2, 0).textContent === '先保存')
-  await waitForGrid(host, () => !(byLabel(host, '保存到库') as HTMLButtonElement).disabled)
-  click(byLabel(host, '保存到库'))
-  await waitForGrid(host, () => firstStarted)
+      return result
+    }
+    const io: EditorIo = {
+      load: async () => new Uint8Array(readFileSync(FIXTURE)),
+      save: async (bytes) => {
+        if (persisted.length === 0) {
+          firstStarted = true
+          await new Promise<void>((resolve) => {
+            finishFirst = resolve
+          })
+        }
+        persisted.push(bytes)
+      },
+    }
+    const host = mount(
+      <XlsxEditor
+        documentId="save-race"
+        io={io}
+        hostApply={delayedHost}
+        onAgentHandleChange={(next) => {
+          handle = next
+        }}
+      />,
+    )
+    await waitForTable(host)
+    click(cellAt(host, 2, 0))
+    type(byLabel(host, '单元格 A2'), '先保存')
+    press(byLabel(host, '单元格 A2'), 'Enter')
+    await waitForGrid(host, () => cellAt(host, 2, 0).textContent === '先保存')
+    await waitForGrid(host, () => !(byLabel(host, '保存到库') as HTMLButtonElement).disabled)
+    click(byLabel(host, '保存到库'))
+    await waitForGrid(host, () => firstStarted)
+    expect(handle!.getVersion()).toBe(1)
 
-  click(cellAt(host, 2, 1))
-  type(byLabel(host, '单元格 B2'), '保存中又编辑')
-  press(byLabel(host, '单元格 B2'), 'Enter')
-  await waitForGrid(host, () => cellAt(host, 2, 1).textContent === '保存中又编辑')
-  await act(async () => finishFirst())
-  await waitForGrid(host, () => persisted.length === 1)
-  await waitForGrid(host, () => !(byLabel(host, '保存到库') as HTMLButtonElement).disabled)
+    click(cellAt(host, 2, 1))
+    type(byLabel(host, '单元格 B2'), '保存中又编辑')
+    press(byLabel(host, '单元格 B2'), 'Enter')
+    await waitForGrid(host, () => editStarted)
+    expect(handle!.getVersion()).toBe(1)
+    if (order === 'before') {
+      await act(async () => finishEdit())
+      await waitForGrid(host, () => handle!.getVersion() === 2)
+    }
+    await act(async () => finishFirst())
+    await waitForGrid(host, () => persisted.length === 1)
+    await waitForGrid(host, () => host.querySelector('[aria-label="保存到库"]') !== null)
+    expect(order === 'before' || editSignal?.aborted === false).toBe(true)
+    if (order === 'after') await act(async () => finishEdit())
+    await waitForGrid(host, () => handle!.getVersion() === 2)
+    expect(handle!.isDirty()).toBe(true)
+    const later = (await readBasicWorkbook(Buffer.from(handle!.currentBytes()))).snapshot.sheets[0]!
+    expect(later.cells.B2?.value).toBe('保存中又编辑')
+    await waitForGrid(host, () => !(byLabel(host, '保存到库') as HTMLButtonElement).disabled)
 
-  click(byLabel(host, '保存到库'))
-  await waitForGrid(host, () => persisted.length === 2)
-  const first = (await readBasicWorkbook(Buffer.from(persisted[0]!))).snapshot.sheets[0]!
-  const second = (await readBasicWorkbook(Buffer.from(persisted[1]!))).snapshot.sheets[0]!
-  expect(first.cells.A2?.value).toBe('先保存')
-  expect(first.cells.B2?.value).toBe('部门')
-  expect(second.cells.B2?.value).toBe('保存中又编辑')
-})
+    click(byLabel(host, '保存到库'))
+    await waitForGrid(host, () => persisted.length === 2)
+    const first = (await readBasicWorkbook(Buffer.from(persisted[0]!))).snapshot.sheets[0]!
+    const second = (await readBasicWorkbook(Buffer.from(persisted[1]!))).snapshot.sheets[0]!
+    expect(first.cells.A2?.value).toBe('先保存')
+    expect(first.cells.B2?.value).toBe('部门')
+    expect(second.cells.B2?.value).toBe('保存中又编辑')
+  },
+)
 
 function structureMenuItem(host: HTMLElement, label: string): HTMLButtonElement {
   click(byLabel(host, '行列操作'))
@@ -1594,7 +1658,19 @@ describe('xlsx 工具条：编辑之后派生列表跟着模型走', () => {
   })
 
   it('唯一的公式格被清空之后，公式跳转按钮禁用并说明原因', async () => {
-    const { host } = await openEditor()
+    let started = false
+    let release!: () => void
+    let signal: AbortSignal | undefined
+    const gate = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const { host, saved, agent } = await openEditor(async (request) => {
+      const result = await fakeHostApply(request)
+      started = true
+      signal = request.signal
+      await gate
+      return result
+    })
     selectRibbonTab(host, '公式')
     click(byLabel(host, '跳到下一个公式格'))
     expect(host.querySelector('.mimir-cell-editor__ref')?.textContent).toBe('C3')
@@ -1603,20 +1679,26 @@ describe('xlsx 工具条：编辑之后派生列表跟着模型走', () => {
     selectRibbonTab(host, '开始')
     click(byLabelPrefix(host, '清空这个格'))
     selectRibbonTab(host, '公式')
-    for (
-      let i = 0;
-      i < 50 && !(byLabel(host, '跳到上一个公式格') as HTMLButtonElement).disabled;
-      i += 1
-    )
-      await act(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 0))
-      })
+    await waitForGrid(host, () => started)
+    expect(signal?.aborted).toBe(false)
+    expect(agent().getVersion()).toBe(0)
+    await act(async () => release())
+    await waitForGrid(host, () => agent().getVersion() === 1)
+    const cleared = (await readBasicWorkbook(Buffer.from(agent().currentBytes()))).snapshot
+      .sheets[0]!.cells.C3
+    expect(cleared?.formula).toBeUndefined()
+    expect(cleared?.value).toBe('')
+    expect(agent().history()).toEqual({ undo: 1, redo: 0 })
 
     for (const label of ['跳到上一个公式格', '跳到下一个公式格']) {
       const button = byLabel(host, label) as HTMLButtonElement
       expect(button.disabled, `${label} 该禁用了`).toBe(true)
       expect(button.getAttribute('title')).toBe('这张表里没有公式格')
     }
+    await save(host, saved)
+    expect((await readBasicWorkbook(Buffer.from(saved()!))).snapshot.sheets[0]!.cells.C3).toEqual(
+      cleared,
+    )
   })
 })
 

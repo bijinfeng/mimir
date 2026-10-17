@@ -1,0 +1,32 @@
+.mimir-xlsx-native-shape {
+  position: absolute;
+  display: block;
+  transform-origin: center;
+  color: #000;
+  pointer-events: none;
+}
+.mimir-xlsx-native-shape > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.mimir-xlsx-native-shape__text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 4px 8px;
+  overflow: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  font-size: 14.667px;
+  line-height: 1.2;
+}
+.mimir-xlsx-native-shape__paragraph {
+  display: block;
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+}

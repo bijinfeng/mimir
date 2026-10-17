@@ -1,13 +1,13 @@
+import type { XlsxPivotLayoutEligibility } from '../xlsx-pivot-editability.js'
 import { XlsxPivotControls } from './XlsxPivotControls.js'
 import { XlsxShapeGallery } from './XlsxShapeGallery.js'
-import { XlsxVisualProperties } from './XlsxVisualProperties.js'
+import { XlsxObjectManagement } from './XlsxObjectManagement.js'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ChartColumn, X } from 'lucide-react'
 import type { XlsxSheet } from '../xlsx.js'
 import {
   ToolbarButton,
-  ToolbarConfirm,
   ToolbarFileButton,
   ToolbarMenuFields,
   ToolbarMenuNote,
@@ -15,12 +15,12 @@ import {
   ToolbarSelect,
   ToolbarTabs,
   ToolbarTextField,
-  ToolbarNumberField,
 } from '../shell/EditorShell.js'
 export function XlsxObjectControls({
   sheet,
   sheets,
   acceptedPivotSignal,
+  readPivotLayoutEligibility,
   range,
   busy,
   selectedId,
@@ -35,6 +35,10 @@ export function XlsxObjectControls({
 }: {
   sheet: XlsxSheet
   sheets?: readonly XlsxSheet[]
+  readPivotLayoutEligibility?: (
+    path: string,
+    signal: AbortSignal,
+  ) => Promise<XlsxPivotLayoutEligibility>
   acceptedPivotSignal?: AbortSignal
   sourceKey: unknown
   contextKey: string
@@ -82,12 +86,6 @@ export function XlsxObjectControls({
     [tableStyle, setTableStyle] = useState('TableStyleMedium2'),
     [bandedRows, setBandedRows] = useState('yes'),
     [feedback, setFeedback] = useState('')
-  const [tableAction, setTableAction] = useState('add_table_row'),
-    [position, setPosition] = useState(1),
-    [count, setCount] = useState(1),
-    [columnName, setColumnName] = useState('')
-  const visual = sheet.visuals?.find((v) => v.id === selectedId),
-    [selectedTable, setSelectedTable] = useState('')
   const apply = async (op: Record<string, unknown>) => {
     setFeedback('')
     const ok = await onOperation(op)
@@ -126,6 +124,12 @@ export function XlsxObjectControls({
             tabIndex={-1}
             onKeyDown={(event) => {
               if (event.key === 'Escape' && !event.defaultPrevented) {
+                // A shell picker or portal-owned Select/confirmation consumes its own layer.
+                if (
+                  event.target instanceof Element &&
+                  event.target.closest('.me-menu__panel, [role="listbox"], [role="tooltip"]')
+                )
+                  return
                 event.stopPropagation()
                 close()
               }
@@ -153,8 +157,9 @@ export function XlsxObjectControls({
                       { value: 'edit', label: '管理' },
                     ]}
                   />
-                  <fieldset disabled={busy}>
-                    {mode !== 'edit' && mode !== 'pivot' && mode !== 'shape' && (
+                  {/* Management locks its fields but keeps task navigation available to cancel. */}
+                  <fieldset disabled={busy && mode !== 'edit'}>
+                    {!['pivot', 'shape', 'edit'].includes(mode) && (
                       <ToolbarMenuNote>当前数据范围：{range || '未选择'}</ToolbarMenuNote>
                     )}
                     {['chart', 'image'].includes(mode) && (
@@ -316,6 +321,7 @@ export function XlsxObjectControls({
                     {mode === 'pivot' && (
                       <XlsxPivotControls
                         sheets={sheets}
+                        readLayoutEligibility={readPivotLayoutEligibility}
                         acceptedSignal={acceptedPivotSignal}
                         sheet={sheet}
                         range={range}
@@ -326,149 +332,18 @@ export function XlsxObjectControls({
                       />
                     )}
                     {mode === 'edit' && (
-                      <>
-                        <ToolbarMenuFields label="工作表对象">
-                          <ToolbarSelect
-                            label="当前对象"
-                            value={selectedId}
-                            onChange={(id) => {
-                              onSelect(id)
-                            }}
-                            options={(sheet.visuals ?? []).map((v) => ({
-                              value: v.id,
-                              label: v.name,
-                            }))}
-                          />
-                          {visual && (
-                            <>
-                              {visual.kind === 'shape' && (
-                                <ToolbarMenuNote>
-                                  当前显示预设轮廓；原件的复杂填充、旋转和文字样式预览有限，请在
-                                  Excel 中核对。
-                                </ToolbarMenuNote>
-                              )}
-                              <XlsxVisualProperties
-                                key={visual.id + visual.name + visual.text + visual.fillColor}
-                                visual={visual}
-                                onApply={apply}
-                              />
-                            </>
-                          )}
-                          <ToolbarConfirm
-                            title="删除所选对象？"
-                            description="移除图表、形状或图片，单元格数据保留。保存前可通过重新打开原件放弃变更。"
-                            confirmLabel="删除对象"
-                            onConfirm={() =>
-                              visual && void apply({ op: 'delete_visual', visualId: visual.id })
-                            }
-                          >
-                            <ToolbarButton
-                              label="删除工作表对象"
-                              disabled={!visual}
-                              disabledReason="先选择对象"
-                            >
-                              删除对象
-                            </ToolbarButton>
-                          </ToolbarConfirm>
-                        </ToolbarMenuFields>
-                        <ToolbarMenuFields label="已有结构化表">
-                          <ToolbarSelect
-                            label="结构化表名称"
-                            value={selectedTable}
-                            onChange={setSelectedTable}
-                            options={(sheet.tables ?? []).map((t) => ({
-                              value: t.name,
-                              label: `${t.name} · ${t.range}`,
-                            }))}
-                          />
-                          <ToolbarSelect
-                            label="表格结构操作"
-                            value={tableAction}
-                            onChange={setTableAction}
-                            options={[
-                              { value: 'add_table_row', label: '插入数据行' },
-                              { value: 'delete_table_row', label: '删除数据行' },
-                              { value: 'add_table_column', label: '插入表格列' },
-                              { value: 'delete_table_column', label: '删除表格列' },
-                            ]}
-                          />
-                          <ToolbarNumberField
-                            label={
-                              tableAction.endsWith('_row')
-                                ? '数据区相对行号（1开始）'
-                                : '表格内相对列号（1开始）'
-                            }
-                            value={position}
-                            min={1}
-                            max={1000}
-                            onCommit={setPosition}
-                          />
-                          <ToolbarNumberField
-                            label="行列数量"
-                            value={count}
-                            min={1}
-                            max={tableAction.endsWith('_row') ? 1000 : 100}
-                            onCommit={setCount}
-                          />
-                          {tableAction === 'add_table_column' && (
-                            <ToolbarTextField
-                              label="新增列名称"
-                              value={columnName}
-                              onChange={setColumnName}
-                            />
-                          )}
-                          <ToolbarMenuNote>
-                            与 Excel
-                            一致，插入或删除会移动整行或整列及关联对象；表格保留至少一行数据和一列。
-                          </ToolbarMenuNote>
-                          <ToolbarConfirm
-                            title="应用表格结构调整？"
-                            description="影响所在整行或整列。保存前可重新打开原件放弃变更。"
-                            confirmLabel="应用调整"
-                            onConfirm={() =>
-                              void apply({
-                                op: tableAction,
-                                tableName: selectedTable,
-                                count,
-                                ...(tableAction.endsWith('_row')
-                                  ? { row: position }
-                                  : { column: position }),
-                                ...(tableAction === 'add_table_column' ? { columnName } : {}),
-                              })
-                            }
-                          >
-                            <ToolbarButton
-                              label="应用表格结构调整"
-                              disabled={
-                                !selectedTable ||
-                                (tableAction === 'add_table_column' && !columnName.trim())
-                              }
-                              disabledReason="选择结构化表并填写所需参数"
-                            >
-                              应用结构调整
-                            </ToolbarButton>
-                          </ToolbarConfirm>
-                          <ToolbarConfirm
-                            title="将表格转换为普通区域？"
-                            description="移除结构化表定义，单元格内容和显式格式保留。引用此表的公式必须先修改。"
-                            confirmLabel="转换为区域"
-                            onConfirm={() =>
-                              void apply({ op: 'delete_table', tableName: selectedTable })
-                            }
-                          >
-                            <ToolbarButton
-                              label="转换结构化表为区域"
-                              disabled={!selectedTable}
-                              disabledReason="先选择结构化表"
-                            >
-                              转换为普通区域
-                            </ToolbarButton>
-                          </ToolbarConfirm>
-                        </ToolbarMenuFields>
-                      </>
+                      <XlsxObjectManagement
+                        sheet={sheet}
+                        sourceKey={sourceKey}
+                        contextKey={contextKey}
+                        busy={busy}
+                        selectedId={selectedId}
+                        onSelect={onSelect}
+                        onOperation={onPivotOperation}
+                      />
                     )}
                   </fieldset>
-                  {mode !== 'pivot' && mode !== 'shape' && (
+                  {!['pivot', 'shape', 'edit'].includes(mode) && (
                     <div className="mimir-xlsx-tools__feedback" role="status">
                       {busy ? '正在应用…' : feedback}
                     </div>

@@ -1,11 +1,24 @@
 # 六格式当前剩余工具缺口（去陈旧化）
 
+## 2026-10-17 最终状态：授权代码与浏览器范围完成
+
+六格式最后参数缺口、R3及CDATA显示、PPTX图片符号native与画布、逐页进度/停止保留/完整三页/单次history/最终回画布、原音视频codec均已完成实施、独立复核和浏览器验收。第三轮原样pnpm check已exit0：4606通过、2既有跳过、0失败；最终Web构建exit0，1764个源码/配置起止哈希无变化。最终证据见final-quality-check-20261017.md。下面旧队列与失败保留历史，不再代表当前未接项。
+
+总范围见all-tools-final-scope-independent-check-20261017.md。真实provider未配置、新密码用户稍后输入、Desktop用户自验，均为用户已选边界。
+
+
 核对时间：2026-10-17，Asia/Shanghai。初版为只读源码审计；后续以同日实施、独立检查及浏览器原生保存证据更新现状。历史源码行号仅作研究时点定位，不覆盖下文最新状态。
 
-## 结论与口径
+## 历史队列快照（已由顶部最终状态覆盖）
+
+最后参数审计已完成，见 `editor-all-tools-final-parameter-audit-20261017.md`。除 XLSX R3 外，确认三格式图片比例与 PPTX 引用图/透明背景、批量图片符号、原附件图片、原音视频分析、逐页生成进度/保留部分结果六组源码缺口。媒体 owner 已负责比例/引用图/透明/附件/AV，批量图片符号 owner 已负责多选/直接组目标；逐页生成独立片排队，不能用无 provider 或旧入口计数替代实现。每片仍需独立检查和相应浏览器证明；本轮最终统一门禁尚未执行。
+
+本文件其余主表含历史待接描述；当前逐片完成以 `all-tools-completion-ledger-20261017.md` 和对应 browser/check 专报为准。当前未完成集中在：固定上游XLSX特殊粘贴运行时接线、全六格式工具参数最后审计与统一门禁。DOCX整文件加密CFB Worker故障已精确修复并独立200/200、frozen联网安装、正式Standard/Agile编辑保存/第三方密码HMAC/UndoRedo/reopen/no-op密文导出通过，详toolbar-docx-encryption-final-browser；新建/更改密码实际输入提交须用户接手，已准备具体页面，不算自动浏览器通过。E1S源快照绑定修复后，SQLite与实际PG同9文件各115/115通过，已结清此前A→B→A缺陷。R2a/R2b原生复制/移动/history及Manage最终1280/420浏览器均通过，R3已明确接线交接。PDF当前图片新构建翻转/保存/Undo整件精确、列表自动恢复2图、无关来源隐藏及420布局/Escape已通过；真实忙碌取消仍以组件独立证据为限。T/W2标签/P即时固定导出/S单份排序文案的新构建烟测已结清；P新导出6metadata最小变化、其他原生部件精确，库原件整件未变。OCR已按用户批准完成本地WASM与生产复制/搜索验收，不再等待范围决定。数字证书不是固定GenOffice已证执行器。此前480技能lint基线已解决，现行完整门4231通过/2既有skip只覆盖其稳定源码窗口，新代码不算已覆盖。
+
+## 结论与口径（以下保留最初审计时点）
 
 六格式还不能统一标记“工具完备”。缺口已经从旧报告中的整类未接，缩小为
-**DOCX 保护批注锚点新增删除/表单/密码/修订及图片拖裁切等剩余子集、PDF OCR/数字证书及剩余手势、XLSX 复杂结构子集，以及 PPTX 组内画布裁切/媒体/部分参数**。
+**DOCX 保护密码/设置/强制修订、PDF 文字参数及剩余手势、XLSX DV交互与复杂结构子集，以及 PPTX 组内画布裁切/媒体/部分参数**。
 Markdown 在本次有限核对的固定 8 工具/15 操作和手动命令基线内，未发现新的确定缺名。
 
 状态含义：
@@ -153,3 +166,15 @@ KB/Agent 权限分工，没有六格式文件写回和 Ribbon 语义；本研究
 
 
 最终统一门禁补记（2026-10-17）：全Office **178文件1869/1869，exit0**，日志 `/tmp/mimir-office-full-c1-pivot-source-final-20261017.log`（143.52s）。先前1868/1869失败保留为历史；PPTX仅测试同步修复，生产未改。最终Web构建 `/tmp/mimir-toolbar-c1-pivot-source-web-20261017.log` exit0；此后只改PPTX测试/spec/报告，无需重建生产。Server沿前次最终default737/local10/fnos4/backup2全绿，本片生产未改，新增跨表宿主专项11/11。无模型/Desktop自验、全仓480技能lint基线与整体in_progress边界不变；本轮未暂存、提交、归档或删除测试文件。
+
+
+## 2026-10-17 当前权威增量（覆盖前文历史待接）
+
+- PDF OCR已获用户明确批准：本地临时复制/搜索，独立39/39及真实生产四旋转搜索、跨行/反向选字复制、空白跳过、停止/刷新清除通过；源PDF SHA256精确，未写KB索引。详toolbar-pdf-ocr-browser-20261017.md。固定GenOffice明确不核验证书，没有证书签署执行器证据；数字证书不再作为已证固定版能力差距。
+- DOCX C2新增删除普通原生锚点与真实受保护checkbox已完成实施/独立/生产浏览器原生保存验证。C2只证明未保存结构撤销，最终回复确认文案烟测通过；forms保存后PM Undo/Redo及A→B→A/420最终图通过。详toolbar-docx-protected-anchors-browser与toolbar-docx-forms-browser报告。
+- DOCX图片预览八把手、移动保留区、8键盘手柄、透明/共享/原生insets/浮动front/JPEG/GIF真实裁剪保存均已验证；alpha保存精确，Canvas原始半透明RGB可能±1，见toolbar-docx-crop-browser-20261017.md。不是非破坏srcRect编辑。浮动表格定位实施/独立26项已过，待统一构建/browser。
+- XLSX已有简单透视布局编辑已真实保存/UndoRedo所有ZIP payload精确，详toolbar-xlsx-pivot-layout-browser-20261017.md；DV列表/提示/警告确认正在实施。
+- PDF外部图片上传面板已修唯一固定footer及素材失效复活，独立27/27；文字partial/all/color及完整插字参数正在收口，均待新构建/browser，不将无provider配置记缺功能。
+- PPTX C0父组矩阵渲染实施/独立28/28及三样本192/192颜色点通过。C1直接组图Canvas已派实施，必须一并修child旋转翻转顺序及非等比37°原生几何误差；不能以保留XML冒称实际画布正确。媒体D随后。
+- DOCX保护W1/W2/forced tracking下一片计划docx-protection-password-next-plan-20261017.md。固定保护dialog另有整文件打开密码/ECMA加密及删除个人信息，明确加入剩余队列，不能将修改密码核验代替全部密码/隐私工具。
+- 此批Web build0覆盖OCR/forms/crop。全Office首轮189files1974tests中58失败的mock/copy问题已专项修绿，尚未最终完整重跑；不可将分片结果拼接称全套绿。整体in_progress，当前明细以all-tools-completion-ledger-20261017.md为准。

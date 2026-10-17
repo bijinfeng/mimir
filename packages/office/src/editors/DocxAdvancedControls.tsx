@@ -832,6 +832,103 @@ export function DocxWatermarkControls({ context }: { context: DocxAdvancedContex
   )
 }
 
+/** A frozen selection and version are retained while focus moves into the Inspector. */
+export function DocxAddCommentControls({ context }: { context: DocxAdvancedContext }) {
+  const [target] = useState(() => {
+    const { from, to, $from, $to } = context.editor.state.selection
+    const doc = context.editor.state.doc
+    const block = $from.index(0)
+    const node = doc.child(block)
+    const plain = ['docParagraph', 'docHeading', 'docListItem'].includes(node.type.name)
+    const text = from === to ? node.textContent : doc.textBetween(from, to, '')
+    const start = $from.depth >= 1 ? $from.start(1) : from
+    const offset = from === to ? 0 : from - start
+    let occurrence = 0,
+      count = 0
+    if (text)
+      for (
+        let at = node.textContent.indexOf(text);
+        at >= 0 && at <= offset;
+        at = node.textContent.indexOf(text, at + text.length)
+      ) {
+        count++
+        if (at === offset) {
+          occurrence = count
+          break
+        }
+      }
+    let overlap = false
+    node.nodesBetween(
+      Math.max(0, Math.min(node.content.size, from === to ? 0 : offset)),
+      Math.max(0, Math.min(node.content.size, from === to ? node.content.size : to - start)),
+      (child) => {
+        if (child.marks.some((m) => m.type.name === 'comment')) overlap = true
+      },
+    )
+    const reason =
+      !plain ||
+      $from.depth < 1 ||
+      $to.depth < 1 ||
+      $from.index(0) !== $to.index(0) ||
+      !text ||
+      !occurrence
+        ? '请选择同一段落中的普通文字后重新打开“添加批注”'
+        : (context.session.protection.getCommentTargetReason(block) ??
+          (overlap ? '所选文字已有批注，请选择其他文字' : null))
+    return { block, text, occurrence, reason }
+  })
+  const [text, setText] = useState('')
+  const [added, setAdded] = useState(false)
+  const { busy, run } = useDocxAction(context)
+  return (
+    <div className="mimir-docx-comments" aria-busy={busy}>
+      <div className="mimir-docx-comments__body">
+        <ToolbarPropertyForm columns={1}>
+          <ToolbarMenuFields label="批注位置">
+            <ToolbarMenuNote>
+              {target.reason ?? `所选文字：${target.text.slice(0, 160)}`}
+            </ToolbarMenuNote>
+            {context.session.protection.getAccess().commentsOnly && (
+              <ToolbarMenuNote>仅批注 · 正文保持只读，修改后请保存到库。</ToolbarMenuNote>
+            )}
+          </ToolbarMenuFields>
+          <fieldset
+            disabled={busy || added || !!target.reason}
+            className="mimir-docx-comments__fieldset"
+          >
+            <ToolbarTextArea label="批注内容" value={text} onChange={setText} rows={5} />
+          </fieldset>
+          {added && <ToolbarMenuNote>批注已添加。可在“管理批注”中继续回复或删除。</ToolbarMenuNote>}
+        </ToolbarPropertyForm>
+      </div>
+      <div className="mimir-docx-comments__actions">
+        <ToolbarButton
+          primary
+          label="添加批注到文档"
+          disabled={busy || added || !!target.reason || !text.trim()}
+          disabledReason={
+            target.reason ?? (added ? '当前批注已添加' : busy ? '正在添加批注' : '请先输入批注内容')
+          }
+          onClick={() =>
+            void (async () => {
+              if (
+                await run('add_comment', {
+                  blockIndex: target.block,
+                  text: target.text,
+                  occurrence: target.occurrence,
+                  comment: text.trim(),
+                  author: '用户',
+                })
+              )
+                setAdded(true)
+            })()
+          }
+        />
+      </div>
+    </div>
+  )
+}
+
 export function DocxCommentControls({ context }: { context: DocxAdvancedContext }) {
   const [items, setItems] = useState(
     () =>
@@ -895,7 +992,9 @@ export function DocxCommentControls({ context }: { context: DocxAdvancedContext 
               <ToolbarMenuNote>
                 {protection.getAccess().writable
                   ? '当前没有批注。选择正文后使用“添加批注”。'
-                  : '当前没有可管理的已有讨论。受保护原件新增批注尚未支持。'}
+                  : protection.getAccess().commentsOnly
+                    ? '当前没有批注。选择普通单段文字后使用“添加批注”。'
+                    : '当前没有可管理的已有讨论。原件仅供只读保留。'}
               </ToolbarMenuNote>
             ) : (
               <>
@@ -1007,9 +1106,9 @@ export function DocxCommentControls({ context }: { context: DocxAdvancedContext 
               解决讨论
             </ToolbarButton>
             <ToolbarConfirm
-              title="删除这条批注及其回复？"
+              title={current.parentId ? '删除这条回复？' : '删除这条批注及其回复？'}
               description="保存前可通过撤销结构操作恢复。"
-              confirmLabel="删除批注"
+              confirmLabel={current.parentId ? '删除回复' : '删除批注'}
               onConfirm={() => void change('delete_comment', { id: selected, withReplies: true })}
             >
               <ToolbarButton

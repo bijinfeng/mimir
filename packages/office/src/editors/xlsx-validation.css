@@ -1,0 +1,93 @@
+.mimir-xlsx-validation-list {
+  position: fixed;
+  z-index: 1200;
+  width: 280px;
+  max-width: calc(100vw - 16px);
+  overflow: auto;
+  padding: 4px;
+  background: var(--me-surface, var(--ant-color-bg-elevated));
+  color: var(--me-text, var(--ant-color-text));
+  border: 1px solid var(--me-border, var(--ant-color-border));
+  border-radius: 6px;
+  outline: none;
+}
+.mimir-xlsx-validation-option {
+  padding: 6px 8px;
+  border-radius: 3px;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  font-size: 13px;
+}
+.mimir-xlsx-validation-option[aria-selected='true'] {
+  background: var(--me-accent-bg, var(--ant-color-primary-bg));
+  color: var(--me-accent-text, var(--ant-color-primary-text));
+}
+.mimir-xlsx-validation-prompt {
+  max-height: 64px;
+  overflow: auto;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--me-text);
+  border-bottom: 1px solid var(--me-border);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.mimir-xlsx-validation-prompt strong {
+  margin-inline-end: 8px;
+}
+.mimir-xlsx-validation-confirm {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--me-border);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.mimir-xlsx-validation-confirm p {
+  margin: 0;
+  max-height: 70px;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  flex: 1 1 180px;
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+.mimir-xlsx-validation-confirm-actions {
+  display: flex;
+  gap: 6px;
+  margin-inline-start: auto;
+}
+.mimir-xlsx-validation-panel fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.mimir-xlsx-validation-panel .mimir-xlsx-inspector__content {
+  overflow: auto;
+  min-height: 0;
+  flex: 1;
+}
+.mimir-xlsx-validation-panel .mimir-xlsx-inspector__footer {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 16px;
+  border-top: 1px solid var(--me-border);
+}
+.mimir-xlsx-inspector.mimir-xlsx-validation-panel {
+  max-width: calc(100% - 32px);
+}
+.mimir-xlsx-validation-cell-trigger.ant-btn {
+  position: absolute;
+  inset-inline-end: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  min-width: 24px;
+  padding-inline: 0;
+  z-index: 1;
+}
+.mimir-xlsx td:has(> .mimir-xlsx-validation-cell-trigger) {
+  padding-inline-end: 26px;
+}

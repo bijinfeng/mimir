@@ -29,13 +29,20 @@ export async function documentAgentCapabilities(
     return { ...legacy, format, executorReady: true }
   }
   const catalog = await documentAgentCatalog(format)
-  const vision = format === 'pptx' && (await docxMediaReadiness()).vision
+  const media = format === 'pptx' ? await docxMediaReadiness() : null
   return {
     format,
     documentId,
     modelReady: await modelReady('chat'),
     executorReady: catalog !== null,
-    ...(format === 'pptx' ? { mediaKinds: vision ? ['image' as const] : [] } : {}),
+    ...(format === 'pptx'
+      ? {
+          mediaKinds: [
+            ...(media?.vision ? ['image' as const, 'video' as const] : []),
+            ...(media?.audio ? ['audio' as const] : []),
+          ],
+        }
+      : {}),
     availableTools: catalog ? catalog.tools.map((tool) => tool.name) : [],
     unavailableTools: catalog
       ? (catalog.unavailableTools ?? [])

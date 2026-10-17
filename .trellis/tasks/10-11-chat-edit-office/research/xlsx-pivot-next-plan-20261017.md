@@ -83,7 +83,7 @@ GenOffice 固定提交 `480548fd55f1be3593ee0d8e316a734751d58309`，本地固定
 
 1. helper：跨表sourceID/targetID正确、同坐标允许，同表重叠仍拒；字段/汇总取所选来源而非当前汇总表，失效ID/未缓存公式不生成操作。
 2. 真实控件：切来源重置依赖字段但保留名称/位置，不产生操作；取消/失败/相同tick双击、关闭/切表/换文档/切对象的旧结果不落画布；已有定义仍只读，refresh不误用新建sourceID。
-3. 真实Editor→真实原生宿主：当前汇总表点击一次创建，单版本/单history；sourceSheet/worksheetSource与目标pivotParts关系正确，网格总计150，来源sheet XML及未触及第三表/customXml逐字节保持。保存→Undo→保存→Redo→保存比较全部非目录ZIP entry，重开仍有原生透视。
+3. 真实Editor→真实原生宿主：当前汇总表点击一次创建，单版本/单history；sourceSheet/worksheetSource与目标 worksheet → pivotTable relationship 正确（Worksheet 没有 pivotParts 元素；见 2026-10-17 layout implementation 的官方 SDK/Openpyxl 核对），网格总计150，来源sheet XML及未触及第三表/customXml逐字节保持。保存→Undo→保存→Redo→保存比较全部非目录ZIP entry，重开仍有原生透视。
 4. 经完整 `applyXlsxOpsOnHost`：来源保护/目标保护、无效目标ID及目标内容/合并/表/DV冲突原子拒绝；输入bytes不变，Editor版本/history/dirty不变。不要只调用低层函数跳过来源保护检查。
 5. 浏览器用规定测试账号，在汇总表打开Inspector，来源选含空格/引号表并配置A1:F6→A1，新建/保存/下载原生检查，Undo/Redo各保存；再改来源金额/成员并在汇总表刷新，核native+网格；1280与420×500检查当前值、下拉Escape两层、内部滚动/固定footer/长名。此片实施阶段才上传fixture，研究阶段未上传。可沿用现有高级透视规则，不重做无关格式。
 

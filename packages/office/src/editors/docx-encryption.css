@@ -1,0 +1,90 @@
+.mimir-docx-inspector__body:has(> .mimir-docx-encryption) {
+  display: flex;
+  flex: 1;
+  padding: 0;
+  overflow: hidden;
+}
+.mimir-docx-encryption {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+}
+.mimir-docx-encryption__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 12px;
+}
+.mimir-docx-encryption__values {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 16px;
+  margin: 0 0 16px;
+  font-size: 12px;
+}
+.mimir-docx-encryption__values dt {
+  color: var(--me-text-weak);
+}
+.mimir-docx-encryption__values dd {
+  margin: 0;
+  color: var(--me-text);
+}
+.mimir-docx-encryption__fields {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0;
+}
+.mimir-docx-encryption__fields label {
+  display: grid;
+  gap: 6px;
+  color: var(--me-text);
+  font-size: 12px;
+}
+.mimir-docx-encryption__actions {
+  flex: none;
+  padding: 12px;
+  border-top: 1px solid var(--me-border);
+  background: var(--me-surface);
+}
+.mimir-docx-encryption__feedback {
+  margin: 12px 0 0;
+  color: var(--me-text-weak);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.mimir-docx-encryption__feedback:empty {
+  display: none;
+}
+.mimir-docx-opening {
+  width: min(320px, calc(100% - 32px));
+  margin: auto;
+  padding-block: 24px;
+  color: var(--me-text);
+}
+.mimir-docx-opening > svg {
+  color: var(--me-text-weak);
+}
+.mimir-docx-opening h2 {
+  margin: 12px 0 8px;
+  font-size: 18px;
+  font-weight: 600;
+}
+.mimir-docx-opening > p {
+  color: var(--me-text-weak);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.mimir-docx-opening > label {
+  display: block;
+  margin: 16px 0 6px;
+  font-size: 12px;
+}
+.mimir-docx-opening__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}

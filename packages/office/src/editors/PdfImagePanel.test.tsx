@@ -58,12 +58,19 @@ async function number(host: HTMLElement, label: string, value: string) {
     input.dispatchEvent(new FocusEvent('focusout', { bubbles: true }))
   })
 }
-async function setup(selected: number | null = null, action?: PdfAssetAction) {
+async function setup(selected: number | null = null, action?: PdfAssetAction, ready = true) {
   const host = document.createElement('div')
   document.body.append(host)
   const root = createRoot(host)
   let version = 0
-  let props = { sourceKey: 'source-a', page: 1, selected, contextVersion: 0, snapshot, busy: false }
+  let props = {
+    sourceKey: 'source-a',
+    page: 1,
+    selected,
+    contextVersion: 0,
+    snapshot: snapshot as PdfImageSnapshot | undefined,
+    busy: false,
+  }
   const calls = vi.fn<PdfAssetAction>(action ?? (async () => ({ ok: true, changed: true })))
   const close = vi.fn<() => void>()
   const render = () =>
@@ -73,8 +80,8 @@ async function setup(selected: number | null = null, action?: PdfAssetAction) {
           {...props}
           assetSessionId="asset-a"
           hostAssetReadiness={async () => ({
-            image_search: { available: true },
-            generate_image: { available: true },
+            image_search: { available: ready, reason: ready ? undefined : '搜索未配置' },
+            generate_image: { available: ready, reason: ready ? undefined : '图片模型未配置' },
           })}
           hostAssetPreview={async () => new Blob(['png'], { type: 'image/png' })}
           getVersion={() => version}
@@ -114,6 +121,85 @@ async function setup(selected: number | null = null, action?: PdfAssetAction) {
 }
 
 describe('PDF image upload Inspector tasks', () => {
+  it.each([
+    '插入图片',
+    '替换图片',
+    '位置与尺寸',
+    '旋转',
+    '翻转',
+    '不透明度',
+    '去除背景',
+    '裁切',
+    '删除图片',
+  ])('shows only the material tasks source selector for %s', async (operation) => {
+    const h = await setup(1)
+    await choose(h.host, 'PDF图片操作', operation)
+    const selectors = h.host.querySelectorAll('[aria-label="图片来源"]')
+    expect(selectors).toHaveLength(['插入图片', '替换图片'].includes(operation) ? 1 : 0)
+    expect(h.host.querySelectorAll('.ant-btn-primary')).toHaveLength(1)
+    expect(h.host.querySelectorAll('[aria-label="PDF图片翻转方向"]')).toHaveLength(
+      operation === '翻转' ? 1 : 0,
+    )
+    expect(h.host.querySelectorAll('[aria-label="PDF图片旋转方向"]')).toHaveLength(
+      operation === '旋转' ? 1 : 0,
+    )
+    expect(h.calls).not.toHaveBeenCalled()
+  })
+  it('distinguishes unknown image state from a proven empty page and disables stale targets', async () => {
+    const h = await setup(1)
+    await h.update({ snapshot: undefined })
+    expect(h.host.textContent).toContain('图片列表未读取')
+    expect(h.host.textContent).not.toContain('0 张图片')
+    expect(h.host.textContent).not.toContain('本页没有图片')
+    expect(button(h.host, '应用图片位置和尺寸').disabled).toBe(true)
+    await h.update({ busy: true })
+    expect(h.host.textContent).toContain('正在读取图片')
+    await h.update({ busy: false, snapshot: { ...snapshot, images: [] } })
+    expect(h.host.textContent).toContain('0 张图片')
+    expect(h.host.textContent).toContain('本页没有图片')
+  })
+  it('destroys a prepared material when changing the operation and never revives it', async () => {
+    const h = await setup(1, async () => ({
+      ok: true,
+      changed: false,
+      data: {
+        url: 'mimir-generated://prepared',
+        width: 2,
+        height: 1,
+        mimeType: 'image/png',
+        actualRatio: 2,
+        requestedRatio: 'auto',
+        expiresAt: Date.now() + 1200000,
+      },
+    }))
+    await choose(h.host, 'PDF图片操作', '替换图片')
+    const source = async (name: string) =>
+      click(
+        [...h.host.querySelectorAll('.ant-segmented-item')].find(
+          (item) => item.textContent === name,
+        )!,
+      )
+    await source('生成')
+    const prompt = h.host.querySelector<HTMLTextAreaElement>('textarea')!
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(
+        prompt,
+        'test',
+      )
+      prompt.dispatchEvent(new Event('input', { bubbles: true }))
+      prompt.dispatchEvent(new Event('change', { bubbles: true }))
+    })
+    await click(button(h.host, '生成图片'))
+    expect(button(h.host, '替换所选图片').disabled).toBe(false)
+    await choose(h.host, 'PDF图片操作', '翻转')
+    expect(h.host.querySelector('[aria-label="图片来源"]')).toBeNull()
+    await choose(h.host, 'PDF图片操作', '替换图片')
+    await source('生成')
+    expect(h.host.querySelector('img[alt="生成图片预览"]')).toBeNull()
+    expect(button(h.host, '替换所选图片').disabled).toBe(true)
+    expect(h.calls).toHaveBeenCalledTimes(1)
+  })
+
   it.each(['source', 'page', 'target', 'version'])(
     'never revives a hidden external material after a %s roundtrip',
     async (change) => {
@@ -164,6 +250,128 @@ describe('PDF image upload Inspector tasks', () => {
       expect(h.host.querySelector('img[alt="生成图片预览"]')).toBeNull()
       expect(button(h.host, '插入所选图片').disabled).toBe(true)
       expect(h.calls).toHaveBeenCalledTimes(1)
+    },
+  )
+  it.each([
+    ['搜索', '搜索图片', '搜索未配置'],
+    ['生成', '生成图片', '图片模型未配置'],
+  ])(
+    'gates the %s material task with the actual missing capability',
+    async (source, label, reason) => {
+      const h = await setup(null, undefined, false)
+      await click(
+        [...h.host.querySelectorAll('.ant-segmented-item')].find(
+          (item) => item.textContent === source,
+        )!,
+      )
+      expect(h.host.textContent).toContain(reason)
+      expect(button(h.host, label).disabled).toBe(true)
+      expect(button(h.host, '插入所选图片').disabled).toBe(true)
+      expect(h.calls).not.toHaveBeenCalled()
+    },
+  )
+  it('aborts material preparation on an operation change and ignores the late result', async () => {
+    let release!: (result: Awaited<ReturnType<PdfAssetAction>>) => void
+    const h = await setup(
+      1,
+      () =>
+        new Promise((resolve) => {
+          release = resolve
+        }),
+    )
+    await choose(h.host, 'PDF图片操作', '替换图片')
+    await click(
+      [...h.host.querySelectorAll('.ant-segmented-item')].find(
+        (item) => item.textContent === '生成',
+      )!,
+    )
+    const prompt = h.host.querySelector<HTMLTextAreaElement>('textarea')!
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(
+        prompt,
+        'test',
+      )
+      prompt.dispatchEvent(new Event('input', { bubbles: true }))
+      prompt.dispatchEvent(new Event('change', { bubbles: true }))
+    })
+    await click(button(h.host, '生成图片'))
+    const signal = h.calls.mock.calls[0]![3]!
+    await choose(h.host, 'PDF图片操作', '翻转')
+    expect(signal.aborted).toBe(true)
+    await act(async () => {
+      release({
+        ok: true,
+        changed: false,
+        data: {
+          url: 'mimir-generated://late',
+          width: 2,
+          height: 1,
+          mimeType: 'image/png',
+          actualRatio: 2,
+          requestedRatio: 'auto',
+          expiresAt: Date.now() + 1200000,
+        },
+      })
+      await Promise.resolve()
+    })
+    expect(h.host.querySelector('img[alt="生成图片预览"]')).toBeNull()
+    expect(h.calls).toHaveBeenCalledTimes(1)
+    expect(h.host.querySelector('[aria-label="PDF图片翻转方向"]')).not.toBeNull()
+  })
+  it.each(['operation', 'context', 'target', 'sourceKey'])(
+    'cancels final external application when its %s identity changes',
+    async (change) => {
+      let release!: (result: Awaited<ReturnType<PdfAssetAction>>) => void
+      const h = await setup(1, async (tool) =>
+        tool === 'generate_image'
+          ? {
+              ok: true,
+              changed: false,
+              data: {
+                url: 'mimir-generated://selected',
+                width: 2,
+                height: 1,
+                mimeType: 'image/png',
+                actualRatio: 2,
+                requestedRatio: 'auto',
+                expiresAt: Date.now() + 1200000,
+              },
+            }
+          : new Promise((resolve) => {
+              release = resolve
+            }),
+      )
+      await choose(h.host, 'PDF图片操作', '替换图片')
+      await click(
+        [...h.host.querySelectorAll('.ant-segmented-item')].find(
+          (item) => item.textContent === '生成',
+        )!,
+      )
+      const prompt = h.host.querySelector<HTMLTextAreaElement>('textarea')!
+      await act(async () => {
+        Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(
+          prompt,
+          'test',
+        )
+        prompt.dispatchEvent(new Event('input', { bubbles: true }))
+        prompt.dispatchEvent(new Event('change', { bubbles: true }))
+      })
+      await click(button(h.host, '生成图片'))
+      await click(button(h.host, '替换所选图片'))
+      const signal = h.calls.mock.calls[1]![3]!
+      expect(signal.aborted).toBe(false)
+      if (change === 'operation') await choose(h.host, 'PDF图片操作', '翻转')
+      if (change === 'context') await h.update({ contextVersion: 1 }, 1)
+      if (change === 'target') await h.update({ selected: null })
+      if (change === 'sourceKey') await h.update({ sourceKey: 'source-b' })
+      expect(signal.aborted).toBe(true)
+      await act(async () => {
+        release({ ok: false, changed: false, error: 'PDF 画布已变化，结果未应用' })
+        await Promise.resolve()
+      })
+      expect(h.calls).toHaveBeenCalledTimes(2)
+      expect(h.host.querySelector('img[alt="生成图片预览"]')).toBeNull()
+      expect(h.host.textContent).not.toContain('已应用到文档')
     },
   )
   it('prepares a preview without reading or writing; fixed footer applies exactly once at the bound version', async () => {

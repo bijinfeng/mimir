@@ -1,5 +1,7 @@
 import { parseTargetFor, type ParseTarget } from '@mimir/shared'
 import { decodeUploadedText } from '../lib/text.js'
+import { inspectOfficeEncryptionEnvelope } from '../../../../packages/office/src/docx-encryption-envelope.js'
+import { ENCRYPTED_OFFICE_INDEX_MESSAGE, isCompound } from '../lib/document-publication.js'
 import { assemble } from '../plugins/host.js'
 
 /**
@@ -43,6 +45,13 @@ export async function extractText(
   if (target === null) return { markdown: '', error: null }
 
   try {
+    if (target === 'docx' && isCompound(data)) {
+      inspectOfficeEncryptionEnvelope(data)
+      return {
+        markdown: '',
+        error: ENCRYPTED_OFFICE_INDEX_MESSAGE,
+      }
+    }
     return { markdown: await runParser(target, filename, mime, data), error: null }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)

@@ -1,4 +1,9 @@
-import type { PdfImageAspectRatio } from '@mimir/shared'
+import {
+  agentImageAspectRatioSchema,
+  readPptxImageInfo,
+  type AgentImageAspectRatio,
+} from '@mimir/shared'
+import { PNG } from 'pngjs'
 import { generateImage } from '@tanstack/ai'
 import { docxImageAdapter, docxImageConfiguration } from '@mimir/plugin-provider'
 import { assemble } from '../plugins/host.js'
@@ -29,7 +34,12 @@ function imageMime(bytes: Buffer): string {
 export async function generateDocxImage(
   prompt: string,
   documentId: string,
-  options: { signal?: AbortSignal; aspectRatio?: PdfImageAspectRatio } = {},
+  options: {
+    signal?: AbortSignal
+    aspectRatio?: AgentImageAspectRatio
+    referenceImages?: { dataUrl: string; mimeType: string }[]
+    transparentBackground?: boolean
+  } = {},
 ): Promise<{ dataUrl: string; mimeType: string }> {
   options.signal?.throwIfAborted()
   if (!prompt.trim() || prompt.length > 2_000)
@@ -40,7 +50,37 @@ export async function generateDocxImage(
   const config = await docxImageAdapter(assemble().settings)
   if (!config) throw new Error('请先配置图片生成 API 密钥')
   options.signal?.throwIfAborted()
-  const ratio = options.aspectRatio
+  const ratio =
+    options.aspectRatio === undefined
+      ? undefined
+      : agentImageAspectRatioSchema.parse(options.aspectRatio)
+  const references = options.referenceImages ?? []
+  if (references.length > 4) throw new Error('引用图最多4张')
+  if (references.length && config.model.startsWith('dall-e'))
+    throw new Error('引用图编辑需要 GPT Image 模型，请在模型设置切换')
+  if (options.transparentBackground && config.model.startsWith('dall-e'))
+    throw new Error('透明背景需要 GPT Image 模型，请在模型设置切换')
+  let referenceBytes = 0
+  const referenceParts = references.map((image) => {
+    const match = /^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/]+={0,2})$/.exec(
+      image.dataUrl,
+    )
+    if (
+      !match ||
+      match[1] !== image.mimeType ||
+      match[2]!.length > Math.ceil((MAX_IMAGE_BYTES * 4) / 3) + 8
+    )
+      throw new Error('引用图数据无效或超过8 MiB')
+    const bytes = Buffer.from(match[2]!, 'base64')
+    referenceBytes += bytes.length
+    if (referenceBytes > 16 * 1024 * 1024) throw new Error('引用图合计超过16 MiB')
+    const info = readPptxImageInfo(bytes)
+    if (info.mime !== image.mimeType) throw new Error('引用图内容与类型不符')
+    return {
+      type: 'image' as const,
+      source: { type: 'data' as const, value: match[2]!, mimeType: image.mimeType },
+    }
+  })
   const landscape = ratio && ['4:3', '16:9', '3:2'].includes(ratio)
   const portrait = ratio && ['9:16', '3:4', '2:3'].includes(ratio)
   if (config.model === 'dall-e-2' && (landscape || portrait))
@@ -63,13 +103,17 @@ export async function generateDocxImage(
   try {
     const result = await generateImage({
       adapter: config.adapter,
-      prompt: prompt.trim(),
+      prompt: referenceParts.length
+        ? [{ type: 'text' as const, content: prompt.trim() }, ...referenceParts]
+        : prompt.trim(),
       numberOfImages: 1,
       ...(size ? { size } : {}),
       ...(options.signal ? { abortSignal: options.signal } : {}),
       ...(config.model.startsWith('dall-e')
         ? { modelOptions: { response_format: 'b64_json' as const } }
-        : {}),
+        : options.transparentBackground
+          ? { modelOptions: { background: 'transparent' as const, output_format: 'png' as const } }
+          : {}),
       timeout: 60_000,
     })
     options.signal?.throwIfAborted()
@@ -82,6 +126,20 @@ export async function generateDocxImage(
     const bytes = Buffer.from(image.b64Json, 'base64')
     if (!bytes.length || bytes.length > MAX_IMAGE_BYTES) throw new Error('生成图片超过 8 MB 限制')
     const mimeType = imageMime(bytes)
+    if (options.transparentBackground) {
+      if (mimeType !== 'image/png') throw new Error('透明背景服务未返回PNG')
+      const info = readPptxImageInfo(bytes)
+      if (info.width * info.height > 16_000_000) throw new Error('透明图片超过1600万像素')
+      const decoded = PNG.sync.read(bytes, { checkCRC: true })
+      let transparent = false
+      for (let at = 3; at < decoded.data.length; at += 4)
+        if (decoded.data[at]! < 255) {
+          transparent = true
+          break
+        }
+      if (!transparent) throw new Error('图片生成服务返回了不透明图片，请重试')
+    }
+    options.signal?.throwIfAborted()
     ok = true
     return { dataUrl: `data:${mimeType};base64,${bytes.toString('base64')}`, mimeType }
   } finally {

@@ -100,3 +100,71 @@ describe('DOCX image generation', () => {
     ).rejects.toMatchObject({ name: 'AbortError' })
   })
 })
+
+describe('Agent image options', () => {
+  it('edits original image parts and requires actual transparent pixels from GPT Image', async () => {
+    const { PNG } = await import('pngjs')
+    const pixel = new PNG({ width: 2, height: 1 })
+    pixel.data.set([255, 0, 0, 255, 0, 0, 0, 0])
+    const bytes = PNG.sync.write(pixel),
+      b64 = bytes.toString('base64')
+    state.model = 'gpt-image-1'
+    state.generate.mockReset().mockResolvedValue({ images: [{ b64Json: b64 }] })
+    const signal = new AbortController().signal
+    const reference = { dataUrl: `data:image/png;base64,${b64}`, mimeType: 'image/png' }
+    const output = await generateDocxImage('保留主体，去除背景', 'pptx-1', {
+      referenceImages: [reference],
+      transparentBackground: true,
+      aspectRatio: '1:1',
+      signal,
+    })
+    expect(state.generate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        prompt: [
+          { type: 'text', content: '保留主体，去除背景' },
+          { type: 'image', source: { type: 'data', value: b64, mimeType: 'image/png' } },
+        ],
+        modelOptions: { background: 'transparent', output_format: 'png' },
+        size: '1024x1024',
+        abortSignal: signal,
+      }),
+    )
+    const decoded = PNG.sync.read(Buffer.from(output.dataUrl.split(',')[1]!, 'base64'))
+    expect(decoded.width).toBe(2)
+    expect(decoded.data[7]).toBe(0)
+    pixel.data[7] = 255
+    state.generate.mockResolvedValue({
+      images: [{ b64Json: PNG.sync.write(pixel).toString('base64') }],
+    })
+    await expect(
+      generateDocxImage('透明', 'pptx-1', { transparentBackground: true }),
+    ).rejects.toThrow('不透明')
+    state.model = 'dall-e-3'
+    const calls = state.generate.mock.calls.length
+    await expect(
+      generateDocxImage('编辑', 'pptx-1', { referenceImages: [reference] }),
+    ).rejects.toThrow('GPT Image')
+    await expect(
+      generateDocxImage('透明', 'pptx-1', { transparentBackground: true }),
+    ).rejects.toThrow('GPT Image')
+    expect(state.generate).toHaveBeenCalledTimes(calls)
+  })
+  it('rejects illegal ratios and late cancellation before publishing image output', async () => {
+    state.model = 'gpt-image-1'
+    state.generate.mockReset()
+    await expect(
+      generateDocxImage('image', 'doc', { aspectRatio: '5:7' as '1:1' }),
+    ).rejects.toThrow(/Invalid option/)
+    expect(state.generate).not.toHaveBeenCalled()
+    const cancel = new AbortController()
+    state.generate.mockImplementationOnce(async () => {
+      cancel.abort()
+      return {
+        images: [{ b64Json: Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]).toString('base64') }],
+      }
+    })
+    await expect(
+      generateDocxImage('image', 'doc', { signal: cancel.signal }),
+    ).rejects.toMatchObject({ name: 'AbortError' })
+  })
+})

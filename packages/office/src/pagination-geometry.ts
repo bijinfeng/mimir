@@ -160,7 +160,14 @@ export function liveColumnPlacements(
   geoms: SectionGeom[],
 ): ColumnBlockPlacement[] {
   const placements = new Map<HTMLElement, ColumnBlockPlacement>()
-  for (const spec of sectionWidthSpecs(blocks, sections, geoms)) placements.set(spec.el, spec)
+  // CSS-floated tables still belong to the section's horizontal coordinate
+  // system. The upstream helper skips all floats, dropping both the section
+  // width used by tblpX and the shared-paper centering translation. Only opt
+  // tables into width placement; keep them floated for slicing/column flow.
+  const widthBlocks = blocks.map((block) =>
+    block.floatTable && block.floated ? { ...block, floated: false } : block,
+  )
+  for (const spec of sectionWidthSpecs(widthBlocks, sections, geoms)) placements.set(spec.el, spec)
   for (const column of columnLayoutSpecs(blocks, slices, sections)) {
     const section = placements.get(column.el)
     placements.set(

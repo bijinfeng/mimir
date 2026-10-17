@@ -176,7 +176,9 @@ it('rejects a late export after an intervening edit and permits a fresh retry', 
   await settle(() => entered)
   act(() => app.editor.commands.insertContent('Newer edit'))
   await act(async () => release())
-  await settle(() => app.host.textContent!.includes('文档已变化，请重新导出副本'))
+  await settle(() =>
+    app.host.textContent!.includes('导出失败：文档或保护状态已变化，请重新保存或导出'),
+  )
   expect(app.downloaded).toHaveLength(0)
   expect(app.saved).not.toHaveBeenCalled()
   control.afterSave = null
@@ -276,6 +278,8 @@ it('allows the next document to export while an old request finishes, retaining 
     const oldHandle = app.handle()
     await app.render('snapshot-b')
     await settle(() => !!app.handle() && app.handle() !== oldHandle)
+    expect(app.handle().documentId).toBe('snapshot-b')
+    expect(app.handle().getVersion()).toBe(0)
     await tab(app.host, '视图')
     await click(app.host, '导出当前 DOCX 副本')
     await settle(() => releases.length === 2)
@@ -286,6 +290,10 @@ it('allows the next document to export while an old request finishes, retaining 
     ).toBe(true)
     await act(async () => releases[1]!())
     await settle(() => app.downloaded.length === 1)
+    expect(
+      app.host.querySelector<HTMLButtonElement>('[aria-label="导出当前 DOCX 副本"]')!.disabled,
+    ).toBe(false)
+    expect(app.handle().getVersion()).toBe(0)
     expect(app.saved).not.toHaveBeenCalled()
   } finally {
     await act(async () => releases.forEach((release) => release()))

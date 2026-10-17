@@ -2,6 +2,8 @@
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, expect, it, vi } from 'vitest'
+import { readXlsx } from '../xlsx.js'
+import { xlsxShapePreviewFixture } from '../xlsx-shape-preview-fixture.test-helper.js'
 import { XlsxObjectLayer } from './XlsxObjectLayer.js'
 import { XLSX_SHAPES, xlsxShapePreview } from './xlsx-shape-gallery.js'
 import type { XlsxSheet } from '../xlsx.js'
@@ -61,4 +63,64 @@ it('shows an explicit preview limit for unknown native geometry instead of drawi
   expect(host.textContent).toContain('形状预览有限')
   expect(host.textContent).toContain('原生文字')
   expect(host.querySelector('svg')).toBeNull()
+})
+
+it('renders real imported native frame/rotation/flips, adjusted geometry, gradient/line and rich paragraphs without a rectangle fallback', async () => {
+  const fixture = await xlsxShapePreviewFixture(),
+    sheet = (await readXlsx(fixture.bytes)).sheets[0]!,
+    { host, select } = mount(sheet.visuals!)
+  const buttons = host.querySelectorAll('button'),
+    first = buttons[0]!,
+    native = first.querySelector<HTMLElement>('.mimir-xlsx-native-shape')!
+  expect(native.style.width).toBe('200px')
+  expect(native.style.height).toBe('100px')
+  expect(native.style.transform).toBe('rotate(37deg) scale(-1, 1)')
+  expect(native.style.left).toBe('28px')
+  const gradient = first.querySelector('linearGradient')!
+  expect(Number(gradient.getAttribute('x1'))).toBeCloseTo(0.1464466094)
+  expect(first.querySelectorAll('stop')).toHaveLength(2)
+  expect(first.querySelector('stop')!.getAttribute('stop-color')).toBe('#186A7A')
+  expect(first.querySelector('path')!.getAttribute('stroke')).toBe('#186A7A')
+  expect(first.querySelector('path')!.getAttribute('stroke-width')).toBe('3')
+  expect(first.querySelector('path')!.getAttribute('stroke-dasharray')).toBe('4 3 1 3')
+  expect(first.querySelector('path')!.getAttribute('d')).toContain('M 40 0')
+  const paragraphs = first.querySelectorAll<HTMLElement>('.mimir-xlsx-native-shape__paragraph')
+  expect(paragraphs).toHaveLength(2)
+  expect(paragraphs[0]!.textContent).toBe('旋转渐变')
+  expect(paragraphs[0]!.querySelector<HTMLElement>('span')!.style.fontWeight).toBe('700')
+  expect(paragraphs[1]!.style.textAlign).toBe('right')
+  expect(buttons[1]!.querySelector('g')!.getAttribute('transform')).toContain('scale(')
+  expect(buttons[1]!.querySelectorAll('path')).toHaveLength(2)
+  expect(buttons[2]!.querySelector('path')!.getAttribute('fill')).toBe('none')
+  expect(buttons[3]!.querySelector('path')!.getAttribute('fill')).toBe('#E4A24A')
+  expect(buttons[4]!.querySelector('svg')).toBeNull()
+  expect(buttons[4]!.textContent).toContain('形状预览有限')
+  expect(buttons[5]!.querySelector<HTMLElement>('.mimir-xlsx-native-shape')!.style.transform).toBe(
+    'rotate(90deg) scale(-1, 1)',
+  )
+  act(() => first.click())
+  expect(select).toHaveBeenCalledWith(sheet.visuals![0]!.id)
+  expect(sheet.visuals![0]!.shapePreview!.element!.fill!.type).toBe('gradient')
+})
+it('uses new flat text after a native edit rather than reviving stale rich paragraphs', async () => {
+  const fixture = await xlsxShapePreviewFixture(),
+    sheet = (await readXlsx(fixture.bytes)).sheets[0]!,
+    item = { ...sheet.visuals![0]!, text: '新的文字' },
+    { host } = mount([item])
+  expect(host.querySelector('.mimir-xlsx-native-shape__text')!.textContent).toBe('新的文字')
+  expect(host.querySelectorAll('.mimir-xlsx-native-shape__paragraph')).toHaveLength(1)
+})
+
+it('uses quadrant-swapped anchor dimensions when native rotation lacks a usable native ext frame', async () => {
+  const fixture = await xlsxShapePreviewFixture(),
+    sheet = (await readXlsx(fixture.bytes)).sheets[0]!,
+    item = structuredClone(sheet.visuals![5]!)
+  item.shapePreview!.element!.transform.offset.cx = 0
+  item.shapePreview!.element!.transform.offset.cy = 0
+  const { host } = mount([item]),
+    frame = host.querySelector<HTMLElement>('.mimir-xlsx-native-shape')!
+  expect(frame.style.width).toBe('140px')
+  expect(frame.style.height).toBe('256px')
+  expect(frame.style.left).toBe('58px')
+  expect(frame.style.top).toBe('-58px')
 })

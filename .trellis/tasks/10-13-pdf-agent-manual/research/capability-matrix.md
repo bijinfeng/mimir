@@ -1,5 +1,12 @@
 # PDF 固定版 GenOffice 能力与验收矩阵
 
+> 2026-10-17 最终补齐状态（覆盖本文历史待办时点）
+>
+> PDF：45工具/26内部编辑操作和用户追加本地OCR均已实施及实际浏览器验收。文字/图片参数、原文块、移动/对齐/保存UndoRedo、图片flip/当前来源、签名与本地WASM OCR复制搜索/四旋转/取消已验；OCR临时结果不写原件或KB。视觉签名不等于数字证书签名。
+>
+> 总范围与逐项证据见 `10-11-chat-edit-office/research/all-tools-final-scope-independent-check-20261017.md`；最终源码质量门见同目录 `final-quality-check-20261017.md`（root第三轮原样pnpm check：4606通过/2既有跳过、exit0，最终Web构建exit0，1764输入起止不变；不沿用旧4231）。用户已选代码/浏览器优先：真实provider未配置，新密码和Desktop自行验收；旧“待两端/待Desktop”不构成本轮新增阻断。明确支持子集与原生复杂结构拒绝仍保留，不宣传任意Office原件全兼容。
+
+
 核对日期：2026-10-16。固定上游：`genspark-ai/genoffice@480548fd55f1be3593ee0d8e316a734751d58309`。来源链接逐行指向该 commit。WeKnora `v0.8.3` 的站点、源码及适用性证据见 `.trellis/tasks/10-16-genoffice-editor-capability-audit/research/toolbar-assessment.md`；PDF 编辑的主要参考是 GenOffice。
 
 状态说明：`现有`/`已接` 表示已有实际入口与执行器，参数限制及验证范围按行记录；`待接` 尚未注册 PDF Agent 工具。`pdf-pages.ts`的离线回退仍整体重建；已连接local宿主时当前手动页面布局走保留原结构的工作副本。未知Catalog/签名/活动动作继续拒绝。下表逐项列能力与缺口，不能将工具目录当成功能验收。

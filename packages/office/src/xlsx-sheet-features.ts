@@ -1,3 +1,4 @@
+import { readXlsxRangeXmlTree, readXlsxFormulaCharacterData } from './xlsx-native-xml.js'
 import type { XlsxCfRule } from './xlsx-cell-effects.js'
 import { decodeXlsxEscapes } from '../vendor/packages/xlsx-gateway/src/gateway/xlsx-escapes.js'
 import type { BoundedZip } from './zip-bounds.js'
@@ -24,19 +25,30 @@ export interface XlsxSheetExtras {
   frozenRows?: number
   frozenColumns?: number
   cfRules?: XlsxCfRule[]
-  validations?: {
-    range: string
-    type: string
-    formula1: string
-    formula2: string
-    operator: string
-    allowBlank: boolean
-    error: string
-  }[]
+  validations?: XlsxValidationRule[]
   conditionalFormats?: { range: string; types: string[] }[]
   pageSetup?: Record<string, string>
   headers?: { header: string; footer: string }
   sparklines?: { cell: string; source: string; type: string; color?: string }[]
+}
+export interface XlsxValidationRule {
+  range: string
+  type: string
+  formula1: string
+  formula2: string
+  operator: string
+  allowBlank: boolean
+  error: string
+  showErrorMessage?: boolean
+  errorStyle?: string
+  errorTitle?: string
+  showInputMessage?: boolean
+  promptTitle?: string
+  prompt?: string
+  /** Native OOXML: true suppresses the dropdown. */
+  showDropDown?: boolean
+  xml?: string
+  unsupported?: string
 }
 export function xlsxAttribute(xml: string, key: string): string | undefined {
   const value = new RegExp(`(?:^|\\s)${key}=(?:"([^"]*)"|'([^']*)')`).exec(xml)
@@ -46,6 +58,84 @@ function text(xml: string): string {
   return [...xml.matchAll(/<t\b[^>]*>([\s\S]*?)<\/t>/g)]
     .map((match) => decodeXlsxEscapes(decodeXlsxXml(match[1]!)))
     .join('')
+}
+function validationAttribute(xml: string, key: string) {
+  for (const [, name, double, single] of xml.matchAll(
+    /(?:^|\s)([^\s=/>]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g,
+  )) {
+    if (name === key) return decodeXlsxXml(double ?? single ?? '')
+  }
+  return undefined
+}
+function validationUnsupported(attrs: string, body: string) {
+  if (/<(?:\w+:)?extLst\b/.test(body)) return '扩展数据验证暂不支持计算'
+  const names = new Set<string>()
+  let duplicate = false
+  const rest = attrs
+    .replace(/(?:^|\s)([^\s=/>]+)\s*=\s*(?:"[^"]*"|'[^']*')/g, (_whole, name: string) => {
+      if (names.has(name)) duplicate = true
+      names.add(name)
+      return ''
+    })
+    .trim()
+    .replace(/\/$/, '')
+  if (duplicate || rest) return '原件验证属性存在重复或无法可靠读取'
+  for (const key of ['showErrorMessage', 'showInputMessage', 'showDropDown', 'allowBlank']) {
+    const value = validationAttribute(attrs, key)
+    if (value !== undefined && !['0', '1', 'true', 'false'].includes(value))
+      return '原件验证开关无法识别'
+  }
+  for (const key of ['promptTitle', 'errorTitle', 'prompt', 'error']) {
+    const value = decodeXlsxEscapes(validationAttribute(attrs, key) ?? '')
+    if (value.length > (key.endsWith('Title') ? 32 : 255))
+      return '原件验证提示超过标准长度，暂不支持编辑'
+  }
+  return undefined
+}
+/** Native QName-aware reading shared by the browser and the host candidate post-check. */
+export function readXlsxNativeValidations(xml: string): XlsxValidationRule[] {
+  if (!xml.includes('dataValidation')) return []
+  const main = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
+  const root = readXlsxRangeXmlTree(xml)
+  return root.children
+    .filter((node) => node.local === 'dataValidations')
+    .flatMap((container) =>
+      container.children.map((node) => {
+        const attrs = xml.slice(node.start + node.tag.length + 1, node.openEnd - 1)
+        const body = xml.slice(node.openEnd, node.closeStart)
+        const value = (name: string) => node.attrs.get(name)
+        const flag = (name: string) => /^(?:1|true)$/.test(value(name) ?? '')
+        const formula = (name: string) => {
+          const found = node.children.filter((item) => item.local === name)
+          if (found.length > 1 || found.some((item) => item.ns !== main || item.children.length))
+            throw new Error('原件数据验证公式无法可靠读取')
+          return found[0]
+            ? readXlsxFormulaCharacterData(xml.slice(found[0].openEnd, found[0].closeStart))
+            : ''
+        }
+        return {
+          xml: xml.slice(node.start, node.end),
+          unsupported:
+            container.ns !== main || node.ns !== main || node.local !== 'dataValidation'
+              ? '原件数据验证命名空间或结构无法识别'
+              : validationUnsupported(attrs, body),
+          showErrorMessage: flag('showErrorMessage'),
+          errorStyle: value('errorStyle') ?? 'stop',
+          errorTitle: decodeXlsxEscapes(value('errorTitle') ?? ''),
+          showInputMessage: flag('showInputMessage'),
+          promptTitle: decodeXlsxEscapes(value('promptTitle') ?? ''),
+          prompt: decodeXlsxEscapes(value('prompt') ?? ''),
+          showDropDown: flag('showDropDown'),
+          range: value('sqref') ?? '',
+          type: value('type') ?? 'none',
+          operator: value('operator') ?? 'between',
+          allowBlank: flag('allowBlank'),
+          error: decodeXlsxEscapes(value('error') ?? ''),
+          formula1: formula('formula1'),
+          formula2: formula('formula2'),
+        }
+      }),
+    )
 }
 function resolvePart(base: string, target: string): string {
   if (target.startsWith('/')) return target.slice(1)
@@ -109,25 +199,21 @@ export async function readXlsxSheetExtras(
   }
   const pane = /<pane\b[^>]*>/.exec(xml)?.[0] ?? ''
   const frozen = /\bstate=["']frozen(?:Split)?["']/.test(pane)
-  const validations = [
-    ...xml.matchAll(/<dataValidation\b([^>]*)(?:\/>|>([\s\S]*?)<\/dataValidation>)/g),
-  ].map(([, attrs = '', body = '']) => ({
-    range: xlsxAttribute(attrs, 'sqref') ?? '',
-    type: xlsxAttribute(attrs, 'type') ?? 'none',
-    operator: xlsxAttribute(attrs, 'operator') ?? 'between',
-    allowBlank: /^(?:1|true)$/.test(xlsxAttribute(attrs, 'allowBlank') ?? ''),
-    error: xlsxAttribute(attrs, 'error') ?? '',
-    formula1: decodeXlsxXml(/<formula1>([\s\S]*?)<\/formula1>/.exec(body)?.[1] ?? ''),
-    formula2: decodeXlsxXml(/<formula2>([\s\S]*?)<\/formula2>/.exec(body)?.[1] ?? ''),
-  }))
-  const conditionalFormats = [
-    ...xml.matchAll(/<conditionalFormatting\b([^>]*)>([\s\S]*?)<\/conditionalFormatting>/g),
-  ].map(([, attrs = '', body = '']) => ({
-    range: xlsxAttribute(attrs, 'sqref') ?? '',
-    types: [...body.matchAll(/<cfRule\b[^>]*>/g)].map(
-      ([tag]) => xlsxAttribute(tag, 'type') ?? 'unknown',
-    ),
-  }))
+  const validations = readXlsxNativeValidations(xml)
+  const conditionalFormats = xml.includes('conditionalFormatting')
+    ? readXlsxRangeXmlTree(xml)
+        .children.filter(
+          (node) =>
+            node.ns === 'http://schemas.openxmlformats.org/spreadsheetml/2006/main' &&
+            node.local === 'conditionalFormatting',
+        )
+        .map((group) => ({
+          range: group.attrs.get('sqref') ?? '',
+          types: group.children
+            .filter((node) => node.local === 'cfRule')
+            .map((node) => node.attrs.get('type') ?? 'unknown'),
+        }))
+    : []
   const setup = /<pageSetup\b[^>]*>/.exec(xml)?.[0] ?? ''
   const pageSetup = Object.fromEntries(
     [...setup.matchAll(/(\w+)=["']([^"']*)["']/g)].map(([, key = '', value = '']) => [key, value]),

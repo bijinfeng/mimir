@@ -515,8 +515,19 @@ export function PdfEditor({
   } | null>(null)
   const imageExportTriggerRef = useRef<HTMLButtonElement>(null)
   const [imageList, setImageList] = useState<{
+    sessionId: string
+    source: Uint8Array
     bytes: Uint8Array
     snapshot: PdfImageSnapshot
+  } | null>(null)
+  const [imagesReading, setImagesReading] = useState(false)
+  const [imageReadError, setImageReadError] = useState<string | null>(null)
+  const [imageRefresh, setImageRefresh] = useState(0)
+  const imageReadRequest = useRef<{
+    controller: AbortController
+    page: number
+    historyVersion: number
+    refresh: number
   } | null>(null)
   const [imageSelection, setImageSelection] = useState<number | null>(null)
   const [formsOpen, setFormsOpen] = useState(false)
@@ -1616,6 +1627,7 @@ export function PdfEditor({
       )
     }
     agentContentRef.current = async (tool, args, expectedVersion, signal, manual) => {
+      imageReadRequest.current?.controller.abort()
       redactionRequestRef.current?.abort()
       const handle = agentRef.current
       const snapshotBytes = agentSnapshotRef.current?.bytes
@@ -1888,8 +1900,15 @@ export function PdfEditor({
               })
           assertCurrent()
           const imageSnapshot = result.data as PdfImageSnapshot | undefined
-          if (imageSnapshot?.images)
-            setImageList({ bytes: result.bytes ?? base, snapshot: imageSnapshot })
+          if (imageSnapshot?.images) {
+            setImageReadError(null)
+            setImageList({
+              sessionId: assetSessionId,
+              source: sourceBytes,
+              bytes: result.bytes ?? base,
+              snapshot: imageSnapshot,
+            })
+          }
           if (tool === 'delete_image') setImageSelection(null)
           const forms = result.data as PdfFormSnapshot | undefined
           if (tool === 'list_form_fields' || (tool === 'apply_ops' && forms?.fields))
@@ -2204,6 +2223,99 @@ export function PdfEditor({
     if (result.changed) setNoteDraft('')
     return result
   }
+  const currentImageSnapshot =
+    imageList?.sessionId === assetSessionId &&
+    imageList.source === source.bytes &&
+    imageList?.bytes === currentBytes &&
+    sameAsFile
+      ? imageList.snapshot
+      : undefined
+  useEffect(() => {
+    if (
+      !imagesOpen ||
+      !hostImages ||
+      !currentBytes ||
+      !source.bytes ||
+      !ready ||
+      currentImageSnapshot ||
+      contentBusy ||
+      source.saving
+    )
+      return
+    const handle = agentRef.current
+    if (!handle) return
+    const version = handle.getVersion(),
+      controller = new AbortController()
+    const request = { controller, page: at, historyVersion, refresh: imageRefresh }
+    imageReadRequest.current = request
+    setImagesReading(true)
+    setImageReadError(null)
+    void (async () => {
+      if ((settled !== null && !sameAsFile) || (activePendingText?.inserts.length ?? 0) > 0)
+        throw new Error('请先保存当前页面或插字改动，再读取 PDF 图片')
+      const response = await hostImages({
+        bytes: currentBytes,
+        assetSessionId,
+        expectedVersion: version,
+        operation: { op: 'read' },
+        signal: controller.signal,
+      })
+      if (
+        controller.signal.aborted ||
+        imageReadRequest.current !== request ||
+        agentRef.current !== handle ||
+        handle.getVersion() !== version ||
+        agentSnapshotRef.current?.bytes !== currentBytes
+      )
+        return
+      if (response.bytes || response.version !== version) throw new Error('PDF 图片读取响应无效')
+      setImageList({
+        sessionId: assetSessionId,
+        source: source.bytes!,
+        bytes: currentBytes,
+        snapshot: response.images,
+      })
+    })()
+      .catch((cause) => {
+        if (
+          !controller.signal.aborted &&
+          imageReadRequest.current === request &&
+          agentRef.current === handle &&
+          handle.getVersion() === version
+        )
+          setImageReadError(`读取 PDF 图片失败：${messageOf(cause)}。请点击刷新重试。`)
+      })
+      .finally(() => {
+        if (imageReadRequest.current === request) {
+          imageReadRequest.current = null
+          setImagesReading(false)
+        }
+      })
+    return () => {
+      controller.abort()
+      if (imageReadRequest.current === request) {
+        imageReadRequest.current = null
+        setImagesReading(false)
+      }
+    }
+  }, [
+    imagesOpen,
+    hostImages,
+    currentBytes,
+    source.bytes,
+    ready,
+    currentImageSnapshot,
+    contentBusy,
+    source.saving,
+    settled,
+    sameAsFile,
+    activePendingText?.inserts.length,
+    assetSessionId,
+    historyVersion,
+    at,
+    imageRefresh,
+    agentSnapshotRef,
+  ])
   useEffect(() => {
     if (
       !formsOpen ||
@@ -3154,13 +3266,17 @@ export function PdfEditor({
       hostAssetReadiness={hostAssetReadiness}
       hostAssetPreview={hostAssetPreview}
       onAssetSettings={onAssetSettings}
-      snapshot={imageList?.bytes === currentBytes ? imageList.snapshot : undefined}
+      snapshot={currentImageSnapshot}
       page={at + 1}
       selected={imageSelection}
-      busy={contentBusy}
+      busy={contentBusy || imagesReading || source.saving}
+      onRefresh={() => {
+        setImageList(null)
+        setImageRefresh((value) => value + 1)
+      }}
       onSelect={setImageSelection}
       onAction={(tool, args, version, signal) => runManualContentTool(tool, args, version, signal)}
-      error={notice}
+      error={imageReadError ?? notice}
       onClose={() => closeInspector()}
       getVersion={() => agentRef.current?.getVersion() ?? 0}
     />
@@ -3736,7 +3852,6 @@ export function PdfEditor({
                     setFormsOpen(false)
                     setAnnotationsOpen(false)
                     setImagesOpen(!imagesOpen)
-                    if (!imagesOpen) void runManualContentTool('list_page_images', {})
                   }}
                 >
                   图片
@@ -4050,8 +4165,8 @@ export function PdfEditor({
                   blockSelection={selectedBlock?.rect}
                   imageSelection={(() => {
                     const item =
-                      imagesOpen && imageList?.bytes === currentBytes
-                        ? imageList.snapshot.images.find(
+                      imagesOpen && currentImageSnapshot
+                        ? currentImageSnapshot.images.find(
                             (entry) =>
                               entry.page === at + 1 && entry.image_number === imageSelection,
                           )

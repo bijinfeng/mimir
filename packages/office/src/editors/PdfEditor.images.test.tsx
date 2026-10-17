@@ -4,6 +4,7 @@ import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { PDFDocument, StandardFonts } from 'pdf-lib'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { PdfHostImages } from '../agent/pdf-image-agent.js'
 import type { PdfAgentHandle } from '../agent/pdf-agent.js'
 import { openSelect } from '../shell/antd-test-dom.js'
 vi.mock('./pdf-render.js', () => ({
@@ -54,7 +55,7 @@ function imageBytes() {
     ]),
   })
 }
-async function setup() {
+async function setup(imageHost?: PdfHostImages, waitForRead = true, pageCount = 1) {
   const pdf = await PDFDocument.create(),
     page = pdf.addPage([400, 500])
   page.drawText('ORIGINAL', {
@@ -65,6 +66,7 @@ async function setup() {
   })
   const image = await pdf.embedPng(imageBytes())
   page.drawImage(image, { x: 40, y: 300, width: 80, height: 40 })
+  if (pageCount > 1) pdf.addPage([400, 500])
   const original = await pdf.save(),
     saves: Uint8Array[] = []
   let handle: PdfAgentHandle | null = null
@@ -73,12 +75,15 @@ async function setup() {
   document.body.append(host)
   const root = createRoot(host)
   const operations: string[] = []
+  const dirty = vi.fn<(value: boolean) => void>()
+  let documentId = 'pdf-images'
   ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
-  await act(async () =>
+  const render = () =>
     root.render(
       <ConfigProvider componentSize="small">
         <PdfEditor
-          documentId="pdf-images"
+          documentId={documentId}
+          onDirtyChange={dirty}
           io={{
             load: async () => original,
             save: async (bytes) => {
@@ -88,15 +93,17 @@ async function setup() {
           onAgentHandleChange={(value) => {
             handle = value
           }}
-          hostImages={async ({ bytes, expectedVersion, operation }) => {
+          hostImages={async (input) => {
+            const { bytes, expectedVersion, operation } = input
             operations.push(operation.op)
+            if (imageHost) return imageHost(input)
             const result = await applyPdfImageOperation(bytes, operation)
             return { ...result, version: expectedVersion + (result.bytes ? 1 : 0) }
           }}
         />
       </ConfigProvider>,
-    ),
-  )
+    )
+  await act(async () => render())
   cleanup.push(() => {
     act(() => root.unmount())
     host.remove()
@@ -104,11 +111,212 @@ async function setup() {
   await settle(() => handle !== null)
   await click([...host.querySelectorAll('[role="tab"]')].find((tab) => tab.textContent === '编辑')!)
   await click(button(host, 'PDF图片工具'))
-  await settle(() => !button(host, '刷新PDF图片').disabled)
-  return { host, saves, operations, handle: handle! }
+  if (waitForRead) await settle(() => !button(host, '刷新PDF图片').disabled)
+  return {
+    host,
+    saves,
+    operations,
+    original,
+    dirty,
+    handle: handle!,
+    getHandle: () => handle!,
+    changeSource: async () => {
+      documentId = 'pdf-images-b'
+      await act(async () => render())
+    },
+  }
 }
 
 describe('PDF image Inspector and real working bytes', () => {
+  it('automatically reads the current bytes after saved Undo/Redo without extra writes or self-refresh', async () => {
+    const h = await setup()
+    const panel = () => h.host.querySelector('[aria-label="PDF 图片面板"]')!
+    await click(openSelect(h.host, '选择PDF图片').find((o) => o.textContent?.includes('图片1'))!)
+    await click(openSelect(h.host, 'PDF图片操作').find((o) => o.textContent === '翻转')!)
+    const before = h.operations.length
+    await click(button(h.host, '翻转所选PDF图片'))
+    await settle(() => !button(h.host, '刷新PDF图片').disabled)
+    expect(h.operations.slice(before)).toEqual(['read', 'flip_image'])
+    expect(panel().textContent).toContain('1 张图片')
+    await click(button(h.host, '保存到库'))
+    await settle(() => h.saves.length === 1)
+    const flipped = h.saves[0]!
+    const version = h.handle.getVersion()
+    await click(button(h.host, '撤销'))
+    await settle(
+      () =>
+        panel().textContent?.includes('1 张图片') === true &&
+        !button(h.host, '刷新PDF图片').disabled,
+    )
+    expect(h.operations.slice(before)).toEqual(['read', 'flip_image', 'read'])
+    expect(h.handle.getVersion()).toBe(version + 1)
+    expect(button(h.host, '撤销').disabled).toBe(true)
+    expect(button(h.host, '重做').disabled).toBe(false)
+    await click(button(h.host, '保存到库'))
+    await settle(() => h.saves.length === 2)
+    expect(h.saves[1]).toEqual(h.original)
+    await click(button(h.host, '重做'))
+    await settle(
+      () =>
+        panel().textContent?.includes('1 张图片') === true &&
+        !button(h.host, '刷新PDF图片').disabled,
+    )
+    expect(h.operations.slice(before)).toEqual(['read', 'flip_image', 'read', 'read'])
+    await click(button(h.host, '保存到库'))
+    await settle(() => h.saves.length === 3)
+    expect(h.saves[2]).toEqual(flipped)
+  })
+  it('check: discards an Undo read when Redo restores cached exact bytes before its reply', async () => {
+    let defer = false
+    let release!: () => void
+    let staleSignal!: AbortSignal
+    const h = await setup(async (input) => {
+      if (defer && input.operation.op === 'read') {
+        defer = false
+        staleSignal = input.signal!
+        await new Promise<void>((resolve) => {
+          release = resolve
+        })
+        return {
+          version: input.expectedVersion,
+          images: { sha256: 'poison', images: [], unsupportedPages: [1] },
+        }
+      }
+      const result = await applyPdfImageOperation(input.bytes, input.operation)
+      return { ...result, version: input.expectedVersion + (result.bytes ? 1 : 0) }
+    })
+    await click(openSelect(h.host, '选择PDF图片').find((o) => o.textContent?.includes('图片1'))!)
+    await click(openSelect(h.host, 'PDF图片操作').find((o) => o.textContent === '翻转')!)
+    await click(button(h.host, '翻转所选PDF图片'))
+    await settle(() => !button(h.host, '刷新PDF图片').disabled)
+    await click(button(h.host, '保存到库'))
+    await settle(() => h.saves.length === 1 && !button(h.host, '刷新PDF图片').disabled)
+    const flipped = h.saves[0]!
+    defer = true
+    await click(button(h.host, '撤销'))
+    await settle(() => !!release)
+    expect(h.host.textContent).toContain('正在读取图片')
+    expect(h.host.textContent).not.toContain('0 张图片')
+    await click(button(h.host, '重做'))
+    await settle(() => !button(h.host, '刷新PDF图片').disabled)
+    const version = h.handle.getVersion(),
+      reads = h.operations.filter((op) => op === 'read').length
+    await act(async () => {
+      release()
+      await Promise.resolve()
+    })
+    expect(staleSignal.aborted).toBe(true)
+    expect(h.host.textContent).toContain('1 张图片')
+    expect(h.host.textContent).not.toContain('此页含嵌套图片结构')
+    expect(h.handle.getVersion()).toBe(version)
+    expect(h.operations.filter((op) => op === 'read')).toHaveLength(reads)
+    expect(h.handle.getContext().dirty).toBe(false)
+    await click(button(h.host, '撤销'))
+    await settle(() => !button(h.host, '刷新PDF图片').disabled)
+    await click(button(h.host, '保存到库'))
+    await settle(() => h.saves.length === 2)
+    expect(h.saves[1]).toEqual(h.original)
+    expect(h.saves[0]).toEqual(flipped)
+  })
+
+  it('check: a successful current Agent image read supersedes an earlier automatic read failure', async () => {
+    let fail = true
+    const h = await setup(async (input) => {
+      if (fail) throw new Error('check old read failure')
+      const result = await applyPdfImageOperation(input.bytes, input.operation)
+      return { ...result, version: input.expectedVersion + (result.bytes ? 1 : 0) }
+    })
+    expect(h.host.textContent).toContain('check old read failure')
+    const version = h.handle.getVersion()
+    fail = false
+    await act(async () => {
+      expect((await h.handle.execute('list_page_images', {})).ok).toBe(true)
+    })
+    await settle(() => !button(h.host, '刷新PDF图片').disabled)
+    expect(h.host.textContent).toContain('1 张图片')
+    expect(h.host.textContent).not.toContain('check old read failure')
+    expect(h.handle.getVersion()).toBe(version)
+    expect(h.handle.getContext().dirty).toBe(false)
+    expect(button(h.host, '撤销').disabled).toBe(true)
+  })
+
+  it('reports failed reads as unknown and retries only on explicit refresh', async () => {
+    let fail = true
+    const h = await setup(async ({ bytes, expectedVersion, operation }) => {
+      if (fail) throw new Error('测试读取失败')
+      const result = await applyPdfImageOperation(bytes, operation)
+      return { ...result, version: expectedVersion }
+    })
+    expect(h.host.textContent).toContain('图片列表未读取')
+    expect(h.host.textContent).toContain('测试读取失败')
+    expect(h.host.textContent).not.toContain('0 张图片')
+    expect(h.operations).toEqual(['read'])
+    expect(button(h.host, '保存到库').disabled).toBe(true)
+    expect(button(h.host, '撤销').disabled).toBe(true)
+    const version = h.handle.getVersion()
+    fail = false
+    await click(button(h.host, '刷新PDF图片'))
+    await settle(() => h.host.textContent?.includes('1 张图片') === true)
+    expect(h.operations).toEqual(['read', 'read'])
+    expect(h.handle.getVersion()).toBe(version)
+    expect(h.handle.getContext().dirty).toBe(false)
+    expect(button(h.host, '保存到库').disabled).toBe(true)
+  })
+  it.each(['close', 'source', 'edit', 'page'])(
+    'rejects a delayed image read after %s changes',
+    async (change) => {
+      let release!: () => void
+      let signal!: AbortSignal
+      const h = await setup(
+        async ({ bytes, expectedVersion, operation, signal: inputSignal }) => {
+          if (!release) {
+            signal = inputSignal!
+            await new Promise<void>((resolve) => {
+              release = resolve
+            })
+            // A deliberately poisoned stale reply must never replace the current page/source.
+            return {
+              version: expectedVersion,
+              images: { sha256: 'stale', images: [], unsupportedPages: [1, 2] },
+            }
+          }
+          const result = await applyPdfImageOperation(bytes, operation)
+          return { ...result, version: expectedVersion }
+        },
+        false,
+        change === 'page' ? 2 : 1,
+      )
+      expect(h.host.textContent).toContain('正在读取图片')
+      expect(h.host.textContent).not.toContain('0 张图片')
+      let result = { ok: true }
+      if (change === 'close') await click(button(h.host, '关闭PDF图片面板'))
+      if (change === 'source') await h.changeSource()
+      if (change === 'edit')
+        await act(async () => {
+          result = await h.handle.execute('apply_ops', {
+            ops: [{ op: 'rotatePages', pages: [1], dir: 90 }],
+          })
+        })
+      if (change === 'page')
+        await act(async () => {
+          result = await h.handle.execute('goto_page', { page: 2 })
+        })
+      expect(result.ok).toBe(true)
+      expect(signal.aborted).toBe(true)
+      await act(async () => {
+        release()
+        await Promise.resolve()
+      })
+      expect(h.host.textContent).not.toContain('此页含嵌套图片结构，暂不能编辑')
+      const expectedCount = change === 'source' ? '1 张图片' : change === 'page' ? '0 张图片' : null
+      if (expectedCount) await settle(() => h.host.textContent?.includes(expectedCount) === true)
+      expect(expectedCount === null || h.host.textContent?.includes(expectedCount)).toBe(true)
+      await settle(() => h.getHandle() !== null)
+      expect(h.getHandle().getContext().dirty).toBe(change === 'edit')
+      expect(h.saves).toHaveLength(0)
+    },
+  )
+
   it('shares selected image pixels, Agent round undo and two saved files through the real host', async () => {
     const { host, saves, handle } = await setup()
     const panel = host.querySelector('[aria-label="PDF 图片面板"]')!

@@ -1,3 +1,13 @@
+import { DocxEncryptionControls, DocxOpeningControls } from './DocxEncryptionControls.js'
+import { DocxEncryptionExtension } from './docx-encryption.js'
+import { useDocxOpening } from './use-docx-opening.js'
+import {
+  bindDocxEncryptionDocument,
+  cancelDocxEncryptionGeneration,
+} from '../docx-encrypted-session.js'
+import { DocxPrivacyControls } from './DocxPrivacyControls.js'
+import { DocxPrivacyExtension } from './docx-privacy.js'
+import { FORCED_TRACKING_REASON } from '../docx-forced-tracking.js'
 /**
  * docx 的原件编辑器。
  *
@@ -59,6 +69,7 @@ import {
   DocxPageControls,
   DocxWatermarkControls,
   DocxCommentControls,
+  DocxAddCommentControls,
   DocxNoteControls,
   type DocxAdvancedContext,
 } from './DocxAdvancedControls.js'
@@ -75,6 +86,7 @@ import {
 import { DocxViewPanel } from './DocxViewPanel.js'
 import { DocxCompareControls } from './DocxCompareControls.js'
 import { DocxProtectionControls } from './DocxProtectionControls.js'
+import { docxFormFingerprint } from '../docx-protection.js'
 import { DocxProtectionExtension } from './docx-protection.js'
 import { DocxSplitView } from './DocxSplitView.js'
 import {
@@ -120,6 +132,7 @@ import { EditorContent, useEditor } from '@tiptap/react'
 import type { Editor } from '@tiptap/core'
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   useCallback,
@@ -175,7 +188,7 @@ import {
   isEastAsianFontName,
 } from '../../vendor/apps/docs/src/renderer/font-list.js'
 import type { SectionInfo } from '../../vendor/packages/docx-engine/src/types.js'
-import { openDocx, type DocxSession } from '../docx.js'
+import { type DocxSession } from '../docx.js'
 import { usePagination } from '../pagination.js'
 import {
   effectiveBottomPx,
@@ -250,7 +263,7 @@ import {
 } from '../shell/icons.js'
 import { hasNode, runCommand, toggleMarkByName } from '../shell/editor-commands.js'
 import { docxFindAdapter } from './docx-find.js'
-import { statusText, useParsed, useSource } from './use-source.js'
+import { statusText, useSource } from './use-source.js'
 import { CompactToolbar } from './CompactToolbar.js'
 import { PAGE_MARK, TOTAL_PAGES_MARK } from '../../vendor/packages/docx-engine/src/types.js'
 import './compact-toolbar.css'
@@ -276,6 +289,10 @@ import './editors.css'
 const NO_PROTECTION_SUBSCRIBE = () => () => {}
 const UNPROTECTED_ACCESS = {
   commentsOnly: false,
+  formsOnly: false,
+  mandatoryTracking: false,
+  modificationPasswordRequired: false,
+  modificationUnlocked: false,
   writable: true,
   reason: null,
   epoch: 0,
@@ -289,6 +306,8 @@ const DOCX_EDITOR_EXTENSIONS = [
   DocxReferencesExtension,
   DocxListsExtension,
   DocxDesignExtension,
+  DocxPrivacyExtension,
+  DocxEncryptionExtension,
   DocxInkExtension,
   DocxThemePreviewExtension,
 ]
@@ -1195,13 +1214,35 @@ export function DocxEditor({
 }: DocxEditorProps) {
   const source = useSource(io, documentId)
   /** 解析。结果与「哪一份字节」绑在一起（见 useParsed 的说明） */
-  const parsed = useParsed(source.bytes, openDocx)
+  const parsed = useDocxOpening(source.bytes, documentId)
   const session = parsed.value
+  const saveBinding = useRef<{
+    session: DocxSession | null
+    documentId: string
+    bytes: Uint8Array | null
+  } | null>(null)
+  useLayoutEffect(() => {
+    const binding = { session, documentId, bytes: source.bytes }
+    saveBinding.current = binding
+    return () => {
+      if (saveBinding.current === binding) saveBinding.current = null
+    }
+  }, [session, documentId, source.bytes])
   const protectionAccess = useSyncExternalStore(
     session?.protection.subscribe ?? NO_PROTECTION_SUBSCRIBE,
     session?.protection.getAccess ?? NO_PROTECTION_ACCESS,
   )
+  useEffect(() => {
+    if (!session || !documentId) return
+    return () => session.protection.endModificationSession()
+  }, [session, documentId])
   const protectionReason = protectionAccess.reason
+  const savedProtectionDocument = useRef<{
+    session: DocxSession
+    fingerprint: string
+    options: string
+  } | null>(null)
+  const savedFormsState = useRef<{ session: DocxSession; fingerprint: string } | null>(null)
   const [pageCount, setPageCount] = useState(1)
   const [layout, setLayout] = useState<DocxLayout>('print')
   const [reading, setReading] = useState(false)
@@ -1217,11 +1258,15 @@ export function DocxEditor({
   const returnNavigationFocus = useRef(false)
   const styleScope = useId().replace(/[^a-zA-Z0-9_-]/g, '')
   const [inspectorState, setInspector] = useState<{
+    documentId: string
     session: DocxSession | null
     label: string
     content: ReactElement<{ context: DocxAdvancedContext }>
   } | null>(null)
-  const inspector = inspectorState?.session === session ? inspectorState : null
+  const inspector =
+    inspectorState?.session === session && inspectorState.documentId === documentId
+      ? inspectorState
+      : null
   const inspectorRef = useRef<HTMLElement>(null)
   const inspectorTrigger = useRef<{ focus: () => void } | null>(null)
   const returnInspectorFocus = useRef(false)
@@ -1253,6 +1298,8 @@ export function DocxEditor({
   const agentHandleRef = useRef<DocxAgentHandle | null>(null)
   const [outlineHandle, setOutlineHandle] = useState<DocxAgentHandle | null>(null)
   const exportRequest = useRef<DocxAgentHandle | null>(null)
+  const saveRequest = useRef<object | null>(null)
+  const [saveJob, setSaveJob] = useState<object | null>(null)
   const [exportJob, setExportJob] = useState<{
     session: DocxSession
     documentId: string
@@ -1374,13 +1421,33 @@ export function DocxEditor({
           instance.setEditable(session?.protection.getAccess().writable ?? false, false)
           setNotice('已退出阅读模式以显示文档修改')
         }
-        dirtyRef.current = true
-        setDirty(true)
-        onDirtyChangeRef.current?.(true)
+        const formsOnly = session?.protection.getAccess().formsOnly
+        const isDirty = session?.protection.hasSettingsHistory()
+          ? docxFormFingerprint(instance.getJSON()) !==
+              (savedProtectionDocument.current?.session === session
+                ? savedProtectionDocument.current.fingerprint
+                : docxFormFingerprint(session.content)) ||
+            JSON.stringify(saveOptionsRef.current) !==
+              (savedProtectionDocument.current?.session === session
+                ? savedProtectionDocument.current.options
+                : '{}')
+          : formsOnly && session
+            ? docxFormFingerprint(instance.getJSON()) !==
+              (savedFormsState.current?.session === session
+                ? savedFormsState.current.fingerprint
+                : docxFormFingerprint(session.content))
+            : true
+        dirtyRef.current = isDirty
+        setDirty(isDirty)
+        onDirtyChangeRef.current?.(isDirty)
       },
     },
     [session],
   )
+  useLayoutEffect(() => {
+    if (!session || !editor) return
+    return bindDocxEncryptionDocument(session, () => editor.state.doc)
+  }, [session, editor])
   const exitReadingForWrite = useCallback(() => {
     if (!readingRef.current || !session?.protection.getAccess().writable) return
     readingRef.current = false
@@ -1755,42 +1822,93 @@ export function DocxEditor({
   })
 
   const save = async () => {
-    if (!session || !editor) return
-    const savingHandle = agentHandleRef.current
-    const savingVersion = savingHandle?.getVersion()
-    const options = saveOptionsWithLiveNotes(
-      editor.state.doc,
-      session,
-      saveOptionsWithLiveComments(editor.state.doc, session, saveOptionsRef.current),
+    if (
+      !session ||
+      !editor ||
+      saveRequest.current ||
+      (exportRequest.current !== null && exportRequest.current === agentHandleRef.current)
     )
-    if (options !== saveOptionsRef.current) {
-      saveOptionsRef.current = options
-      setSaveOptionsSnapshot({ session, options: structuredClone(options) })
-    }
-    let bytes: Uint8Array
-    try {
-      bytes = await session.save(editor.getJSON() as never, options)
-    } catch (cause) {
-      setNotice(cause instanceof Error ? cause.message : String(cause))
       return
+    const request = {}
+    saveRequest.current = request
+    setSaveJob(request)
+    try {
+      const savingHandle = agentHandleRef.current
+      const savingVersion = savingHandle?.getVersion()
+      const savingBinding = saveBinding.current
+      const savingProtectionEpoch = session.protection.getAccess().epoch
+      const options = saveOptionsWithLiveNotes(
+        editor.state.doc,
+        session,
+        saveOptionsWithLiveComments(editor.state.doc, session, saveOptionsRef.current),
+      )
+      if (options !== saveOptionsRef.current) {
+        saveOptionsRef.current = options
+        setSaveOptionsSnapshot({ session, options: structuredClone(options) })
+      }
+      const savingDocument = editor.getJSON()
+      let bytes: Uint8Array
+      try {
+        bytes = await session.save(savingDocument as never, options)
+      } catch (cause) {
+        if (saveBinding.current === savingBinding && agentHandleRef.current === savingHandle)
+          setNotice(cause instanceof Error ? cause.message : String(cause))
+        return
+      }
+      if (
+        saveBinding.current !== savingBinding ||
+        agentHandleRef.current !== savingHandle ||
+        session.protection.getAccess().epoch !== savingProtectionEpoch
+      )
+        return
+      if (savingVersion !== savingHandle?.getVersion()) {
+        setNotice('文档已变化，请重新保存')
+        return
+      }
+      session.assertSaveCandidate(bytes)
+      const ok = await source.save(bytes, { name: 'document.docx', mime: OFFICE_MIME.docx })
+      if (!ok) return
+      if (saveBinding.current !== savingBinding || agentHandleRef.current !== savingHandle) return
+      session.acknowledgeSaved(bytes)
+      savedProtectionDocument.current = {
+        session,
+        fingerprint: docxFormFingerprint(savingDocument),
+        options: JSON.stringify(options),
+      }
+      if (session.protection.getAccess().formsOnly) {
+        const fingerprint = docxFormFingerprint(savingDocument)
+        savedFormsState.current = { session, fingerprint }
+        // A successful in-flight save advances the persisted baseline even if the
+        // user has filled or undone another checkbox while it was pending.
+        if (savingVersion !== savingHandle?.getVersion()) {
+          const changed = docxFormFingerprint(editor.getJSON()) !== fingerprint
+          dirtyRef.current = changed
+          setDirty(changed)
+          onDirtyChangeRef.current?.(changed)
+          return
+        }
+      }
+      if (savingVersion !== savingHandle?.getVersion()) return
+      savingHandle?.markSaved()
+      setManualStructureRound(null)
+      setNotice('')
+      const pendingDraft = savingHandle?.hasPendingDraft() ?? false
+      dirtyRef.current = pendingDraft
+      setDirty(pendingDraft)
+      onDirtyChange?.(pendingDraft)
+    } catch (cause) {
+      if (saveBinding.current?.session === session)
+        setNotice(cause instanceof Error ? cause.message : String(cause))
+    } finally {
+      if (saveRequest.current === request) saveRequest.current = null
+      setSaveJob((current) => (current === request ? null : current))
     }
-    const ok = await source.save(bytes, { name: 'document.docx', mime: OFFICE_MIME.docx })
-    if (!ok) return
-    if (agentHandleRef.current !== savingHandle) return
-    if (savingVersion !== savingHandle?.getVersion()) return
-    savingHandle?.markSaved()
-    setManualStructureRound(null)
-    setNotice('')
-    const pendingDraft = savingHandle?.hasPendingDraft() ?? false
-    dirtyRef.current = pendingDraft
-    setDirty(pendingDraft)
-    onDirtyChange?.(pendingDraft)
   }
 
   const exportSnapshot = async () => {
     const handle = agentHandleRef.current
     if (!session || !editor || !handle) return
-    if (exportRequest.current === handle) return
+    if (exportRequest.current === handle || saveRequest.current) return
     if (handle.hasPendingDraft()) {
       setNotice('请先保留或丢弃 AI 草稿，再导出副本')
       return
@@ -1798,7 +1916,9 @@ export function DocxEditor({
     exportRequest.current = handle
     const job = { session, documentId }
     setExportJob(job)
-    const version = handle.getVersion()
+    const version = handle.getVersion(),
+      binding = saveBinding.current,
+      protectionEpoch = session.protection.getAccess().epoch
     try {
       const options = structuredClone(
         saveOptionsWithLiveNotes(
@@ -1808,15 +1928,20 @@ export function DocxEditor({
         ),
       )
       const bytes = await session.save(editor.getJSON() as never, options)
-      if (agentHandleRef.current !== handle) return
-      if (handle.getVersion() !== version || handle.hasPendingDraft()) {
+      if (saveBinding.current !== binding || agentHandleRef.current !== handle) return
+      if (
+        session.protection.getAccess().epoch !== protectionEpoch ||
+        handle.getVersion() !== version ||
+        handle.hasPendingDraft()
+      ) {
         setNotice('文档已变化，请重新导出副本')
         return
       }
+      session.assertSaveCandidate(bytes)
       downloadDocxSnapshot(bytes)
       setNotice('已导出当前副本')
     } catch (cause) {
-      if (agentHandleRef.current === handle)
+      if (saveBinding.current === binding && agentHandleRef.current === handle)
         setNotice(`导出失败：${cause instanceof Error ? cause.message : String(cause)}`)
     } finally {
       if (exportRequest.current === handle) exportRequest.current = null
@@ -1824,13 +1949,15 @@ export function DocxEditor({
     }
   }
 
+  const savingDocument = saveJob !== null || source.saving
+  const exportingDocument = exportJob?.session === session && exportJob?.documentId === documentId
   const status = statusText({
-    handle: source,
+    handle: { ...source, saving: savingDocument },
     dirty,
     // 页码跟随滚动。`min` 只是防越界：分页重排的那一帧里 gap 数量与
     // pageCount 可能差一，显示越界页码比慢半拍更难看
     idle: session
-      ? `${protectionAccess.commentsOnly ? '仅批注 · 正文只读 · ' : protectionReason ? '原件只读 · ' : reading ? '阅读 · ' : ''}${layout === 'print' ? `第 ${Math.min(currentPage, pageCount)} / 共 ${pageCount} 页` : 'Web 布局'} · ${Math.round(zoom * 100)}%`
+      ? `${protectionAccess.mandatoryTracking ? '强制修订 · ' : protectionAccess.formsOnly ? '仅填写表单 · 正文只读 · ' : protectionAccess.commentsOnly ? '仅批注 · 正文只读 · ' : protectionReason ? '原件只读 · ' : reading ? '阅读 · ' : ''}${layout === 'print' ? `第 ${Math.min(currentPage, pageCount)} / 共 ${pageCount} 页` : 'Web 布局'} · ${Math.round(zoom * 100)}%`
       : '读取中…',
   })
 
@@ -1859,6 +1986,14 @@ export function DocxEditor({
     )
   }
 
+  if (parsed.prompt && parsed.opening) {
+    return (
+      <EditorShell flush={flush} status={<ToolbarLabel>加密文档 · 等待本地打开</ToolbarLabel>}>
+        <DocxOpeningControls opening={parsed.opening} />
+      </EditorShell>
+    )
+  }
+
   if (parsed.error !== null) {
     return (
       <EditorShell flush={flush} status={<ToolbarLabel>{status}</ToolbarLabel>}>
@@ -1882,27 +2017,33 @@ export function DocxEditor({
                 setNavigation(false)
                 inspectorTrigger.current = trigger
                 setInspector((current) =>
-                  current?.session === session && current.label === label
+                  current?.session === session &&
+                  current.documentId === documentId &&
+                  current.label === label
                     ? null
-                    : { session, label, content },
+                    : { session, documentId, label, content },
                 )
               }}
               inspectorLabel={inspector?.label}
               editor={editor}
               disabled={session === null || !protectionAccess.writable}
               protectionReason={protectionReason}
+              formsOnly={protectionAccess.formsOnly}
               onExportSnapshot={() => void exportSnapshot()}
-              exporting={exportJob?.session === session && exportJob?.documentId === documentId}
+              exporting={exportingDocument}
+              exportBlockedReason={savingDocument ? '正在保存，请完成后导出副本' : undefined}
               saveAction={
                 <ToolbarButton
-                  label={source.saving ? '保存中…' : '保存到库'}
-                  disabled={session === null || !dirty || source.saving}
+                  label={savingDocument ? '保存中…' : '保存到库'}
+                  disabled={session === null || !dirty || savingDocument || exportingDocument}
                   disabledReason={
                     session === null
                       ? '文档还没读完'
-                      : source.saving
+                      : savingDocument
                         ? '正在保存…'
-                        : '没有未保存的改动'
+                        : exportingDocument
+                          ? '正在生成导出副本…'
+                          : '没有未保存的改动'
                   }
                   onClick={() => void save()}
                 >
@@ -1968,7 +2109,10 @@ export function DocxEditor({
                   ? () => {
                       const undone = agentHandleRef.current?.undoRound(manualStructureRound.id)
                       setManualStructureRound(null)
-                      if (undone) setInspector(null)
+                      if (undone) {
+                        setInspector(null)
+                        setNotice('已撤销上次结构操作')
+                      }
                       if (!undone) setNotice('文档已发生其他修改，无法撤销这一步')
                     }
                   : undefined
@@ -2047,8 +2191,8 @@ export function DocxEditor({
               {...viewControls}
               saveAction={
                 <ToolbarButton
-                  label={source.saving ? '保存中…' : '保存到库'}
-                  disabled={session === null || !dirty || source.saving}
+                  label={savingDocument ? '保存中…' : '保存到库'}
+                  disabled={session === null || !dirty || savingDocument || exportingDocument}
                   onClick={() => void save()}
                 >
                   <SaveIcon />
@@ -2057,7 +2201,14 @@ export function DocxEditor({
               exportAction={
                 <ToolbarButton
                   label="导出当前 DOCX 副本"
-                  disabled={session === null || exportJob?.session === session}
+                  disabled={session === null || exportingDocument || savingDocument}
+                  disabledReason={
+                    savingDocument
+                      ? '正在保存，请完成后导出副本'
+                      : exportingDocument
+                        ? '正在生成导出副本…'
+                        : '文档还没读完'
+                  }
                   onClick={() => void exportSnapshot()}
                 >
                   <Download size={14} />
@@ -2088,6 +2239,12 @@ export function DocxEditor({
       status={
         <>
           <ToolbarLabel>{status}</ToolbarLabel>
+          {session && ((savingDocument && !source.saving) || exportingDocument) && (
+            <ToolbarButton
+              label="停止生成副本"
+              onClick={() => cancelDocxEncryptionGeneration(session)}
+            />
+          )}
           {/*
             提示走外壳的 `ToolbarNotice`（危险色、能断词）——原来这里是一个
             自造的 `span.mimir-docx-notice`，与 pdf 那边拿 `ToolbarNote` 顶的
@@ -2268,9 +2425,11 @@ export interface DocxToolbarProps {
   viewControls?: DocxViewControlsProps
   inkController?: InkController
   protectionReason?: string | null
+  formsOnly?: boolean
   inkReason?: string | null
   onExportSnapshot?: () => void
   exporting?: boolean
+  exportBlockedReason?: string
   headingLevels: readonly number[]
   findOpen: boolean
   onToggleFind: () => void
@@ -2316,8 +2475,10 @@ export function DocxToolbar({
   inkController,
   inkReason = null,
   protectionReason = null,
+  formsOnly = false,
   onExportSnapshot,
   exporting = false,
+  exportBlockedReason,
   headingLevels,
   findOpen,
   onToggleFind,
@@ -2419,7 +2580,10 @@ export function DocxToolbar({
     <>
       <ToolbarButton
         label="撤销 (Ctrl+Z)"
-        disabled={disabled || !state.canUndo}
+        disabled={
+          (disabled && !formsOnly && !advanced?.session.protection.hasSettingsHistory()) ||
+          !state.canUndo
+        }
         disabledReason="没有可以撤销的改动了"
         onClick={() => runCommand(editor, 'undo')}
       >
@@ -2427,7 +2591,10 @@ export function DocxToolbar({
       </ToolbarButton>
       <ToolbarButton
         label="重做 (Ctrl+Shift+Z)"
-        disabled={disabled || !state.canRedo}
+        disabled={
+          (disabled && !formsOnly && !advanced?.session.protection.hasSettingsHistory()) ||
+          !state.canRedo
+        }
         disabledReason="没有可以重做的改动了"
         onClick={() => runCommand(editor, 'redo')}
       >
@@ -2778,7 +2945,11 @@ export function DocxToolbar({
         <ToolbarButton
           label={label}
           disabled={
-            (disabled && !['对比文档', '文档保护', '管理批注'].includes(label)) || !!disabledReason
+            (disabled &&
+              !['对比文档', '文档保护', '打开密码', '个人信息', '管理批注', '添加批注'].includes(
+                label,
+              )) ||
+            !!disabledReason
           }
           disabledReason={disabledReason ?? protectionReason ?? undefined}
           active={inspectorLabel === label}
@@ -2805,7 +2976,7 @@ export function DocxToolbar({
               sectionKey === 'ink-tools' ||
               sectionKey === 'document-compare' ||
               sectionKey === 'document-protection' ||
-              label === '管理批注'
+              ['管理批注', '添加批注'].includes(label)
             )
               origin
                 ?.closest<HTMLElement>('[data-section-key]')
@@ -2985,7 +3156,13 @@ export function DocxToolbar({
     <>
       {advancedMenu('管理批注', DocxCommentControls)}
       {advancedMenu('管理脚注与尾注', DocxNoteControls)}
-      {onAddComment && editor && !disabled ? (
+      {advanced && editor ? (
+        advancedMenu(
+          '添加批注',
+          DocxAddCommentControls,
+          advanced.session.protection.getCommentAccess('').add ?? undefined,
+        )
+      ) : onAddComment && editor && !disabled ? (
         <ToolbarMenu
           label="添加批注"
           text="批注"
@@ -3011,7 +3188,11 @@ export function DocxToolbar({
           <RevisionsPanel
             editor={editor}
             enabled={state.trackChanges}
-            protectionReason={protectionReason}
+            protectionReason={
+              advanced?.session.protection.getAccess().mandatoryTracking
+                ? FORCED_TRACKING_REASON
+                : protectionReason
+            }
           />
         )}
       />
@@ -3229,7 +3410,13 @@ export function DocxToolbar({
           label: '保护',
           tab: 'review',
           minWidth: 0,
-          content: advancedMenu('文档保护', DocxProtectionControls),
+          content: (
+            <>
+              {advancedMenu('文档保护', DocxProtectionControls)}
+              {advancedMenu('打开密码', DocxEncryptionControls)}
+              {advancedMenu('个人信息', DocxPrivacyControls)}
+            </>
+          ),
         },
         { key: 'review', label: '修订与拼写', tab: 'review', minWidth: 0, content: reviewControls },
         { key: 'table', label: '表格操作', tab: 'table', minWidth: 0, content: tableControls },
@@ -3287,8 +3474,10 @@ export function DocxToolbar({
                 content: (
                   <ToolbarButton
                     label="导出当前 DOCX 副本"
-                    disabled={(disabled && !protectionReason) || exporting}
-                    disabledReason={exporting ? '正在生成副本…' : '文档还没读完'}
+                    disabled={(disabled && !protectionReason) || exporting || !!exportBlockedReason}
+                    disabledReason={
+                      exportBlockedReason ?? (exporting ? '正在生成副本…' : '文档还没读完')
+                    }
                     onClick={onExportSnapshot}
                   >
                     <Download size={14} />

@@ -1,3 +1,4 @@
+import type { XlsxPasteMode } from '@mimir/shared'
 import { parseFragment, type DefaultTreeAdapterMap } from 'parse5'
 import {
   parseRange,
@@ -34,6 +35,7 @@ export type ClipboardState = {
   busy: boolean
   message: string
   error: string
+  mode: XlsxPasteMode
 }
 const LIMIT = 1024 * 1024
 const MARKER = 'data-mimir-xlsx-copy-id'
@@ -298,6 +300,7 @@ const initial: ClipboardState = {
   busy: false,
   message: '',
   error: '',
+  mode: 'all',
 }
 export function createXlsxClipboard() {
   let state = initial,
@@ -389,32 +392,49 @@ export function createXlsxClipboard() {
               capture.version !== context.version ||
               (marker && marker !== capture.id)
             )
-              throw new Error('内部复制范围已失效，请重新复制或主动选择仅粘贴显示值')
-            const b = clipboardBounds(context.range),
+              throw new Error('内部复制范围已失效，请重新复制')
+            const target = clipboardBounds(context.range),
               source = clipboardBounds(capture.range)
+            const height = source.endRow - source.startRow + 1,
+              width = source.endColumn - source.startColumn + 1
+            const single =
+              target.startRow === target.endRow && target.startColumn === target.endColumn
+            const targetHeight = single ? height : target.endRow - target.startRow + 1,
+              targetWidth = single ? width : target.endColumn - target.startColumn + 1
+            if (targetHeight % height || targetWidth % width)
+              throw new Error('目标行列数须分别为源范围的整数倍')
             if (
-              (b.startRow !== b.endRow || b.startColumn !== b.endColumn) &&
-              (b.endRow - b.startRow !== source.endRow - source.startRow ||
-                b.endColumn - b.startColumn !== source.endColumn - source.startColumn)
+              target.startRow + targetHeight > 1048576 ||
+              target.startColumn + targetWidth > 16384 ||
+              targetHeight * targetWidth > 2000
             )
-              throw new Error('目标应为单格或与源相同大小；暂不支持重复平铺')
+              throw new Error('展开后的目标超出2000格或工作表边界')
+            if (capture.kind === 'cut' && (targetHeight !== height || targetWidth !== width))
+              throw new Error('剪切目标须为单格或与源相同大小')
+            if (capture.kind === 'cut' && state.mode !== 'all')
+              throw new Error('剪切内容只支持全部粘贴；请先复制以使用选择性粘贴')
             operations = [
               {
-                op: capture.kind === 'cut' ? 'move_range' : 'copy_range',
+                op: 'paste_range',
                 sheetId: context.sheet.id,
                 sourceSheetId: capture.sheetId,
                 source: capture.range,
-                target: formatAddress(b.startRow, b.startColumn),
+                target: context.range,
+                kind: capture.kind,
+                mode: state.mode,
               },
             ]
           }
-        } else
+        } else {
+          if (!['all', 'value'].includes(state.mode))
+            throw new Error('此粘贴方式需要工作簿内原生范围，请先复制')
           operations = externalClipboardOperations(
             payload,
             context.sheet.id,
             context.range,
-            valuesOnly,
+            valuesOnly || state.mode === 'value',
           )
+        }
         await context.handle.execute(
           'propose_operations',
           { operations },
@@ -439,6 +459,17 @@ export function createXlsxClipboard() {
       }
     },
     getSnapshot: () => state,
+    selectInternal: () => {
+      if (!state.busy) update({ payload: null, error: '' })
+    },
+    setMode: (mode: XlsxPasteMode) => {
+      if (state.busy) return
+      if (!['all', 'value', 'formula', 'format', 'column-width', 'besides-border'].includes(mode)) {
+        update({ error: '未知粘贴方式' })
+        return
+      }
+      update({ mode, error: '' })
+    },
     sync: (nextScope: string, nextDocument: string, version: number, nextSource?: unknown) => {
       const changedVersion = lastVersion !== version
       const changedSource = documentKey !== nextDocument || sourceKey !== nextSource

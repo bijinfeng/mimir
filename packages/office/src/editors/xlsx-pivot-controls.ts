@@ -1,3 +1,4 @@
+import type { XlsxPivotLayoutEdit } from '@mimir/shared'
 import type { XlsxSheet } from '../xlsx.js'
 import type { XlsxPivot } from '../xlsx-visuals.js'
 import {
@@ -18,7 +19,9 @@ import {
   pivotOutputArea,
 } from '../../vendor/packages/xlsx-gateway/src/domain/pivot-layout.js'
 
-export type XlsxPivotOperation = Extract<WorkbookOperation, { op: 'add_pivot' | 'refresh_pivot' }>
+export type XlsxPivotOperation =
+  | Extract<WorkbookOperation, { op: 'add_pivot' | 'refresh_pivot' }>
+  | XlsxPivotLayoutEdit
 export type PivotAggregate = AddPivotOperation['values'][number]['agg']
 export const PIVOT_AGGREGATES: { value: PivotAggregate; label: string }[] = [
   { value: 'sum', label: '求和' },

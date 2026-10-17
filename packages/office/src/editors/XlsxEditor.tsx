@@ -1,4 +1,11 @@
+import { inspectXlsxPivotLayout } from '../xlsx-pivot-editability.js'
 import { XlsxManualControls } from './XlsxManualControls.js'
+import { XlsxValidationDropdown } from './XlsxValidationDropdown.js'
+import { XlsxValidationOptionsControls } from './XlsxValidationOptionsControls.js'
+import { useXlsxCellInput } from './use-xlsx-cell-input.js'
+import { resolveXlsxValidationList } from '../xlsx-validation-list.js'
+import { formatAddress } from '../../vendor/packages/xlsx-gateway/src/domain/cell-address.js'
+import { xlsxRangeContains, type PredicateScalar } from '../xlsx-formula-predicate.js'
 import { XlsxClipboardControls, type XlsxClipboardControlsHandle } from './XlsxClipboardControls.js'
 import { createXlsxClipboard, type ClipboardContext } from '../xlsx-clipboard.js'
 import { XlsxFindControls } from './XlsxFindControls.js'
@@ -149,9 +156,22 @@ export function XlsxEditor({
   const view = edited?.source === source.bytes ? edited.view : (session?.view() ?? null)
   const publishedVersion = edited?.source === source.bytes ? edited.version : 0
   const [activeInspector, setActiveInspector] = useState<string | null>(null)
+  const [dataTrigger, setDataTrigger] = useState<HTMLButtonElement | null>(null)
+  const setDataButton = useCallback(
+    (node: HTMLButtonElement | HTMLAnchorElement | null) =>
+      setDataTrigger(node instanceof HTMLButtonElement ? node : null),
+    [],
+  )
   const fillInspector = useRef<XlsxFillControlsHandle>(null)
   const clipboardInspector = useRef<XlsxClipboardControlsHandle>(null)
   const clipboardTrigger = useRef<HTMLButtonElement>(null)
+  const [validationTrigger, setValidationTrigger] = useState<HTMLButtonElement | null>(null)
+  const cellEditorRef = useRef<HTMLDivElement>(null)
+  const setValidationButton = useCallback(
+    (node: HTMLButtonElement | HTMLAnchorElement | null) =>
+      setValidationTrigger(node instanceof HTMLButtonElement ? node : null),
+    [],
+  )
   const [clipboard] = useState(createXlsxClipboard)
   const clipboardState = useSyncExternalStore(clipboard.subscribe, clipboard.getSnapshot)
   const recalculated = edited?.source === source.bytes && edited?.recalculation !== undefined
@@ -291,6 +311,23 @@ export function XlsxEditor({
   }, [session, source.bytes, documentId])
 
   const sheet = useMemo(() => view?.sheets[active] ?? null, [view, active])
+  const readPivotLayoutEligibility = useCallback(
+    async (path: string, signal: AbortSignal) => {
+      const handle = agentHandleRef.current
+      if (!handle || !sheet || signal.aborted || handle.getVersion() !== publishedVersion)
+        throw new Error('画布版本已变化')
+      const bytes = await handle.currentSession().save()
+      const result = await inspectXlsxPivotLayout(bytes, sheet.id, path)
+      if (
+        signal.aborted ||
+        agentHandleRef.current !== handle ||
+        handle.getVersion() !== publishedVersion
+      )
+        throw new Error('原件资格已过期')
+      return result
+    },
+    [sheet, publishedVersion],
+  )
   const cellEffects = useMemo(
     () => (sheet && view ? xlsxCellEffects(sheet, view) : new Map()),
     [sheet, view],
@@ -410,20 +447,66 @@ export function XlsxEditor({
     [],
   )
 
-  const commitCell = useCallback(
-    async (text: string): Promise<void> => {
-      if (!selected || !view) return
-      const sheetId = view.sheets[active]?.id
-      if (!sheetId) return
-      const address = `${columnLetters(selected.col)}${selected.row}`
-      await executeOps([
-        text.startsWith('=')
-          ? { op: 'set_formula', sheetId, address, formula: text }
-          : { op: 'set_cell', sheetId, address, value: parseXlsxInput(text) },
-      ])
+  const cellInput = useXlsxCellInput(
+    JSON.stringify([documentId, active, selected, draft]),
+    JSON.stringify([source.saving, activeInspector, toolbarTab]),
+    source.bytes,
+    view,
+    () => agentHandleRef.current,
+    (confirmed) => {
+      setApplyError(null)
+      setDraft(null)
+      setNote(null)
+      if (confirmed) {
+        const area = cellEditorRef.current
+        requestAnimationFrame(() => {
+          if (
+            area?.isConnected &&
+            cellEditorRef.current === area &&
+            (document.activeElement === document.body || area.contains(document.activeElement))
+          )
+            area?.querySelector<HTMLInputElement>('input')?.focus()
+        })
+      }
     },
-    [selected, active, view, executeOps],
+    setApplyError,
   )
+  const currentValidation = useMemo(() => {
+    if (!selected || !sheet || !view) return { rules: [], values: null, error: '' }
+    const rules = (sheet.extras?.validations ?? []).filter((rule) =>
+      xlsxRangeContains(rule.range, selected.row - 1, selected.col),
+    )
+    const lists = rules.filter((rule) => rule.type === 'list')
+    if (lists.length !== 1 || lists[0]!.showDropDown) return { rules, values: null, error: '' }
+    try {
+      return {
+        rules,
+        values: resolveXlsxValidationList(lists[0]!.formula1, sheet, view, {
+          address: formatAddress(selected.row - 1, selected.col),
+          range: lists[0]!.range,
+        }),
+        error: '',
+      }
+    } catch (error) {
+      return { rules, values: null, error: error instanceof Error ? error.message : '无法读取列表' }
+    }
+  }, [selected, sheet, view])
+  const commitCell = async (text: string, literal?: { value: PredicateScalar }): Promise<void> => {
+    if (!selected || !view) return
+    const sheetId = view.sheets[active]?.id
+    if (!sheetId) return
+    const address = `${columnLetters(selected.col)}${selected.row}`
+    await cellInput.submit(
+      !literal && text.startsWith('=')
+        ? { op: 'set_formula', sheetId, address, formula: text }
+        : {
+            op: 'set_cell',
+            sheetId,
+            address,
+            value: literal ? literal.value : parseXlsxInput(text),
+          },
+    )
+  }
 
   const structuralEdit = async (op: Record<string, unknown>) => {
     if (!selected || !view) return
@@ -472,6 +555,7 @@ export function XlsxEditor({
   const save = async () => {
     const handle = agentHandleRef.current
     if (!handle) return
+    cellInput.invalidateConfirmation()
     const bytes = await handle.flush()
     const savingVersion = handle.getVersion()
     const ok = await source.save(bytes, { name: 'workbook.xlsx', mime: OFFICE_MIME.xlsx })
@@ -487,7 +571,8 @@ export function XlsxEditor({
       view: handle.currentSession().view(),
       version: savingVersion,
     }))
-    setDraft(null)
+    // Saving this snapshot must preserve a newer cell draft or submitted edit
+    // that started while the host was writing it.
     setNote(null)
     onDirtyChange?.(false)
   }
@@ -910,6 +995,7 @@ export function XlsxEditor({
                   range={formatRange}
                   sourceKey={view}
                   sheets={view.sheets}
+                  readPivotLayoutEligibility={readPivotLayoutEligibility}
                   acceptedPivotSignal={
                     edited?.source === source.bytes ? edited.pivotSignal : undefined
                   }
@@ -1199,14 +1285,16 @@ export function XlsxEditor({
               minWidth: 0,
               tab: 'data',
               content: (
-                <XlsxDataControls
-                  key={`${sheet.id}:${formatRange}`}
-                  range={formatRange}
-                  filterRange={sheet.filterRange}
-                  busy={hostBusy || source.saving || !!sheet.extras?.protected}
-                  column={columnLetters(actionRange.target?.startCol ?? selected?.col ?? 0)}
-                  onOperation={(op) => void executeOps([{ ...op, sheetId: sheet.id }])}
-                />
+                <ToolbarButton
+                  ref={setDataButton}
+                  label="范围数据操作"
+                  active={activeInspector === 'data'}
+                  disabled={!formatRange}
+                  disabledReason="先选择单元格范围"
+                  onClick={() => setActiveInspector('data')}
+                >
+                  排序、筛选与替换
+                </ToolbarButton>
               ),
             },
             {
@@ -1272,19 +1360,32 @@ export function XlsxEditor({
               label: item.label,
               minWidth: 0,
               content: (
-                <XlsxPropertyControls
-                  key={`${sheet.id}:${formatRange}`}
-                  group={item.group}
-                  range={formatRange}
-                  sheet={sheet}
-                  workbook={view}
-                  busy={hostBusy || source.saving}
-                  onOperation={(op) =>
-                    executeOps([
-                      { ...op, ...(item.group === 'names' ? {} : { sheetId: sheet.id }) },
-                    ])
-                  }
-                />
+                <>
+                  {item.group === 'rules' && (
+                    <ToolbarButton
+                      label="数据验证提示设置"
+                      ref={setValidationButton}
+                      onClick={() => {
+                        setActiveInspector('validation-options')
+                      }}
+                    >
+                      验证提示
+                    </ToolbarButton>
+                  )}
+                  <XlsxPropertyControls
+                    key={`${sheet.id}:${formatRange}`}
+                    group={item.group}
+                    range={formatRange}
+                    sheet={sheet}
+                    workbook={view}
+                    busy={hostBusy || source.saving}
+                    onOperation={(op) =>
+                      executeOps([
+                        { ...op, ...(item.group === 'names' ? {} : { sheetId: sheet.id }) },
+                      ])
+                    }
+                  />
+                </>
               ),
             })),
             {
@@ -1621,12 +1722,66 @@ export function XlsxEditor({
       }
       footer={
         selected ? (
-          <div className="mimir-cell-editor">
-            <span className="mimir-cell-editor__ref">
-              {columnLetters(selected.col)}
-              {selected.row}
-            </span>
-            {/*
+          <div ref={cellEditorRef}>
+            {cellInput.warning && (
+              <div
+                role="alert"
+                className="mimir-xlsx-validation-confirm"
+                onKeyDown={(event) => {
+                  if (event.key === 'Escape') {
+                    event.stopPropagation()
+                    cellInput.cancel()
+                    setDraft(null)
+                    cellEditorRef.current?.querySelector<HTMLInputElement>('input')?.focus()
+                  }
+                }}
+              >
+                <p>
+                  <strong>
+                    {cellInput.warning.title ||
+                      (cellInput.warning.style === 'information' ? '输入提示' : '输入警告')}{' '}
+                    · {cellInput.warning.address}
+                  </strong>
+                  <br />
+                  {cellInput.warning.message}
+                </p>
+                <div className="mimir-xlsx-validation-confirm-actions">
+                  <ToolbarButton
+                    label="取消此次输入"
+                    onClick={() => {
+                      cellInput.cancel()
+                      setDraft(null)
+                      cellEditorRef.current?.querySelector<HTMLInputElement>('input')?.focus()
+                    }}
+                  >
+                    取消
+                  </ToolbarButton>
+                  <ToolbarButton
+                    label="仍然使用此值"
+                    primary
+                    disabled={hostBusy || source.saving}
+                    onClick={() => void cellInput.submit()}
+                  />
+                </div>
+              </div>
+            )}
+            {currentValidation.rules
+              .filter((rule) => rule.showInputMessage && (rule.promptTitle || rule.prompt))
+              .map((rule) => (
+                <div className="mimir-xlsx-validation-prompt" key={rule.xml ?? rule.range}>
+                  <strong>{rule.promptTitle}</strong>
+                  {rule.prompt}
+                </div>
+              ))}
+            {currentValidation.error && (
+              <div className="mimir-xlsx-validation-prompt">{currentValidation.error}</div>
+            )}
+            <div className="mimir-cell-editor">
+              <span className="mimir-cell-editor__ref">
+                {columnLetters(selected.col)}
+                {selected.row}
+              </span>
+              {/*
               格内容编辑框走 `ToolbarTextField`（antd `Input`）。
 
               **这里原来是一个裸 `<input className="me-input">`**，Enter → `apply()`、
@@ -1643,45 +1798,47 @@ export function XlsxEditor({
               的提示（`applyError`）。Esc 是「放弃这次输入」，那条提示也得一起
               收掉——否则换一个格它还挂在屏幕上说着上一个格的事。
             */}
-            <fieldset
-              className="mimir-xlsx-cell-input"
-              disabled={hostBusy || source.saving || sheet.extras?.protected}
-            >
-              <ToolbarTextField
-                label={`单元格 ${columnLetters(selected.col)}${selected.row}`}
-                value={shown}
-                onChange={(value) => setDraft(value)}
-                onSubmit={apply}
-                onCancel={() => {
-                  setDraft(null)
-                  setApplyError(null)
-                }}
-                placeholder="值或公式"
-              />
-            </fieldset>
-            <ToolbarButton
-              label="应用"
-              disabled={draft === null || hostBusy || source.saving || sheet.extras?.protected}
-              // 禁用必须给原因（DESIGN §8.4）：`draft === null` 是「格里的字还没被
-              // 改过」，正是最需要解释的一档——按钮刚出现就是灰的，用户会以为坏了
-              disabledReason={
-                sheet.extras?.protected ? '工作表已保护，请先取消保护' : '没有改动，不用应用'
-              }
-              onClick={apply}
-            >
-              应用
-            </ToolbarButton>
-            {wasFormula && (
-              <span className="me-label mimir-cell-editor__warn">
-                <AlertIcon />
-                {recalculated
-                  ? '已按当前工作簿重新计算缓存。'
-                  : selectedCell?.formulaCache === 'cached'
-                    ? '当前结果是文件中的缓存，尚未重算，可能已过期。'
-                    : '当前公式没有可显示的缓存结果，尚未重算。'}
-                输入普通值会覆盖公式，输入 = 开头可更新公式
-              </span>
-            )}
+              <fieldset
+                className="mimir-xlsx-cell-input"
+                disabled={hostBusy || source.saving || sheet.extras?.protected}
+              >
+                <ToolbarTextField
+                  label={`单元格 ${columnLetters(selected.col)}${selected.row}`}
+                  value={shown}
+                  onChange={(value) => setDraft(value)}
+                  onSubmit={apply}
+                  onCancel={() => {
+                    setDraft(null)
+                    setApplyError(null)
+                    cellInput.cancel()
+                  }}
+                  placeholder="值或公式"
+                />
+              </fieldset>
+              <ToolbarButton
+                label="应用"
+                disabled={draft === null || hostBusy || source.saving || sheet.extras?.protected}
+                // 禁用必须给原因（DESIGN §8.4）：`draft === null` 是「格里的字还没被
+                // 改过」，正是最需要解释的一档——按钮刚出现就是灰的，用户会以为坏了
+                disabledReason={
+                  sheet.extras?.protected ? '工作表已保护，请先取消保护' : '没有改动，不用应用'
+                }
+                onClick={apply}
+              >
+                应用
+              </ToolbarButton>
+              {wasFormula && (
+                <span className="me-label mimir-cell-editor__warn">
+                  <AlertIcon />
+                  {recalculated
+                    ? '已按当前工作簿重新计算缓存。'
+                    : selectedCell?.formulaCache === 'cached'
+                      ? '当前结果是文件中的缓存，尚未重算，可能已过期。'
+                      : '当前公式没有可显示的缓存结果，尚未重算。'}
+                  输入普通值会覆盖公式，输入 = 开头可更新公式
+                </span>
+              )}
+            </div>
           </div>
         ) : undefined
       }
@@ -1696,6 +1853,67 @@ export function XlsxEditor({
         </>
       }
     >
+      {activeInspector === 'data' && (
+        <XlsxDataControls
+          key={`${documentId}:${sheet.id}:${formatRange}:${publishedVersion}`}
+          range={formatRange}
+          column={columnLetters(actionRange.target?.startCol ?? selected?.col ?? 0)}
+          filterRange={sheet.filterRange}
+          busy={hostBusy || source.saving || !!sheet.extras?.protected}
+          sourceKey={source.bytes}
+          contextKey={JSON.stringify([documentId, sheet.id, formatRange, publishedVersion])}
+          trigger={dataTrigger}
+          onClose={() => setActiveInspector(null)}
+          onOperation={async (operation, signal) => {
+            const handle = agentHandleRef.current
+            if (!handle || signal.aborted || handle.documentId !== documentId) return false
+            try {
+              await handle.execute(
+                'propose_operations',
+                { operations: [{ ...operation, sheetId: sheet.id }] },
+                { expectedVersion: publishedVersion, signal },
+              )
+              setApplyError(null)
+              setNote(null)
+              setDraft(null)
+              return true
+            } catch (error) {
+              if (signal.aborted) return false
+              setApplyError(error instanceof Error ? error.message : '数据操作未应用')
+              throw error
+            }
+          }}
+        />
+      )}
+      {activeInspector === 'validation-options' && (
+        <XlsxValidationOptionsControls
+          sourceKey={source.bytes}
+          key={`${documentId}:${sheet.id}`}
+          version={publishedVersion}
+          sheet={sheet}
+          busy={hostBusy || source.saving}
+          trigger={validationTrigger}
+          onClose={() => setActiveInspector(null)}
+          onApply={async (operation, signal) => {
+            const handle = agentHandleRef.current
+            if (!handle || signal.aborted) return false
+            try {
+              await handle.execute(
+                'propose_operations',
+                { operations: [operation] },
+                { expectedVersion: publishedVersion, signal },
+              )
+              setApplyError(null)
+              setNote('已应用验证提示')
+              return true
+            } catch (error) {
+              if (!signal.aborted)
+                setApplyError(error instanceof Error ? error.message : '验证提示未应用')
+              return false
+            }
+          }}
+        />
+      )}
       <XlsxClipboardControls
         ref={clipboardInspector}
         controller={clipboard}
@@ -2106,6 +2324,18 @@ export function XlsxEditor({
                                 : undefined
                             }
                             onKeyDown={(event) => {
+                              if (event.altKey && event.key === 'ArrowDown') {
+                                const trigger =
+                                  event.currentTarget.querySelector<HTMLButtonElement>(
+                                    'button[aria-label="选择验证列表值"]',
+                                  )
+                                if (trigger) {
+                                  event.preventDefault()
+                                  event.stopPropagation()
+                                  trigger.click()
+                                }
+                                return
+                              }
                               const navigation = [
                                 'ArrowUp',
                                 'ArrowDown',
@@ -2120,6 +2350,8 @@ export function XlsxEditor({
                               ]
                               if (!navigation.includes(event.key)) {
                                 if (event.key === 'Escape') {
+                                  cellInput.cancel()
+                                  setDraft(null)
                                   clipboard.cancel()
                                   setRangeInput('')
                                   keyboardAnchor.current = null
@@ -2240,6 +2472,14 @@ export function XlsxEditor({
                               )
                             }}
                           >
+                            {isSelected && currentValidation.values && (
+                              <XlsxValidationDropdown
+                                key={`${sheet.id}:${row.number}:${cell.col}:${publishedVersion}`}
+                                values={currentValidation.values}
+                                disabled={hostBusy || source.saving || !!sheet.extras?.protected}
+                                onPick={(value) => void commitCell('', { value })}
+                              />
+                            )}
                             {cellEffects.get(`${row.number}:${cell.col}`)?.bar &&
                               (() => {
                                 const bar = cellEffects.get(`${row.number}:${cell.col}`)!.bar!

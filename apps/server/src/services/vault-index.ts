@@ -1,17 +1,18 @@
 import { and, eq, inArray, isNull, notInArray } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
+import { publishFileReindex } from '../db/document-index.js'
+import {
+  readUploadSnapshot,
+  sameUpload,
+  uploadIdentity,
+  withDocumentPublication,
+} from '../lib/document-publication.js'
 import { db } from '../db/client.js'
 import { documents } from '../db/schema.js'
 import { toSearchText } from '@mimir/tokenizer'
 import { contentHash, toExcerpt } from '../lib/text.js'
 import { readNote, toVaultPath, writeNote, VAULT_PREFIX } from '../lib/vault.js'
-import {
-  documentIdFromKey,
-  readUpload,
-  readUploadMeta,
-  uploadKey,
-  UPLOAD_PREFIX,
-} from '../lib/uploads.js'
+import { documentIdFromKey, readUploadMeta, uploadKey, UPLOAD_PREFIX } from '../lib/uploads.js'
 import { activeStorage } from '../plugins/host.js'
 import { syncTags } from './documents.js'
 import { ensureFolders } from './folders.js'
@@ -264,7 +265,8 @@ export async function reindexVault(): Promise<ReindexResult> {
    * `parseSupport()` 会说明原因）。这与上传时的那条判断一致。
    */
   for (const { id, originalKeys } of uploads.entries) {
-    const meta = await readUploadMeta(id)
+    const snapshot = await readUploadSnapshot(id)
+    const meta = snapshot?.meta ?? (await readUploadMeta(id))
     if (!meta) continue
 
     // 版本目录可能残留未提交的替换。绝不靠 LIST 顺序选原件。
@@ -280,13 +282,15 @@ export async function reindexVault(): Promise<ReindexResult> {
     }
     seenIds.add(id)
 
+    const source = snapshot?.identity ?? null
+    // LIST may precede a replacement: its old key set cannot downgrade the new source to missing.
+    if (source && source.key !== originalKey) continue
     let body = ''
     let parseError: string | null = null
 
-    if (originalKey !== null) {
+    if (originalKey !== null && snapshot) {
       try {
-        const data = await readUpload(originalKey)
-        const extracted = await extractText(meta.filename, meta.mime, data)
+        const extracted = await extractText(meta.filename, meta.mime, snapshot.data)
         body = extracted.markdown
         parseError = extracted.error
       } catch (error) {
@@ -317,16 +321,18 @@ export async function reindexVault(): Promise<ReindexResult> {
 
     await ensureFolders(meta.folder)
 
-    await db
-      .insert(documents)
-      .values(values)
-      .onConflictDoUpdate({ target: documents.id, set: { ...values, deletedAt: null } })
-
-    // 标签只在 meta.json 里（上传件没有 vault 文件）
-    await syncTags(id, meta.tags)
-    await syncDocumentLinks(id, body)
-    // 正文这一轮是**重新提取**的，所以分块必须跟着重算——
-    // 旧分块对应的是旧正文，留着它们会让引用跳到错误的位置
+    const published = await withDocumentPublication(id, async () => {
+      // Extraction can outlive a replace, including an external same-key overwrite.
+      const latest = await uploadIdentity(id)
+      if (source ? !sameUpload(source, latest) : latest !== null) return false
+      const latestMeta = await readUploadMeta(id)
+      if (JSON.stringify(latestMeta) !== JSON.stringify(meta)) return false
+      await publishFileReindex(values)
+      await syncTags(id, meta.tags)
+      await syncDocumentLinks(id, body)
+      return true
+    })
+    if (!published) continue
     await syncChunks(id, body)
 
     if (existingIds.has(id)) {

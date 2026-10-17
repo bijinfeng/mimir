@@ -143,8 +143,6 @@ export function pptxSelectionParagraphPatch(draft: Record<string, unknown>) {
   }
   const parsed = pptxParagraphFormatSchema.safeParse(format)
   if (!parsed.success) throw new Error('请检查段落数值、颜色与列表格式；输入须在标注范围内')
-  if (parsed.data.bullet === 'blip' || parsed.data.bulletImage)
-    throw new Error('批量图片符号暂不支持替换；保留原件图片符号')
   return parsed.data
 }
 export function pptxSelectionFormatOps(
@@ -169,6 +167,25 @@ export function pptxSelectionFormatOps(
   const paragraphFormat = Object.keys(paragraphDraft).length
     ? pptxSelectionParagraphPatch(paragraphDraft)
     : null
+  if (paragraphFormat?.bulletImage) {
+    const selected = pptxResolveSelection(elements, refs)
+    const contexts = pptxSelectionContexts(elements)
+    if (
+      !refs.length ||
+      selected.length !== refs.length ||
+      selected.some((context) => {
+        if (context.depth > 1) return true
+        if (context.element.type !== 'group') return !pptxSelectionText(context)
+        const children = contexts.filter((item) => item.ancestors.at(-1) === context.ref)
+        return (
+          context.depth !== 0 ||
+          !children.length ||
+          children.some((item) => !pptxSelectionText(item))
+        )
+      })
+    )
+      throw new Error('图片符号须选择可编辑文本框或形状；请移除失效、非文字或深层组合对象后重试')
+  }
   const line = {
     ...outline,
     ...(strokeColor === undefined ? {} : { color: strokeColor }),

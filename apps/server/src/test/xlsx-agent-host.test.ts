@@ -594,7 +594,7 @@ describe('XLSX sort preflight and cached-key safety', () => {
             { op: 'sort_range', sheetId: 'sheet-1', range: 'A1:B2', byColumn: 'A', order: 'asc' },
           ],
         }),
-      ).rejects.toThrow(/共享\/数组公式|排序需同时迁移对应结构/)
+      ).rejects.toThrow(/共享\/数组公式|范围关联结构无法安全保留/)
       expect(bytes).toEqual(prior)
     }
   })

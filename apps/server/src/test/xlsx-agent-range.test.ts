@@ -103,7 +103,7 @@ describe('raw XLSX ranges', () => {
       const bytes = await zip.generateAsync({ type: 'uint8array' })
       await expect(
         apply(bytes, { op: 'copy_range', source: 'A1:B1', target: 'A3' }),
-      ).rejects.toThrow('扩展')
+      ).rejects.toThrow(/扩展|命名空间/)
       expect(await xml(bytes)).toContain(rule)
     }
   })
@@ -198,7 +198,7 @@ describe('raw XLSX ranges', () => {
     }
     zip.file(
       'xl/worksheets/sheet1.xml',
-      base.replace('</worksheet>', '<mergeCells><mergeCell ref="A1:B1"/></mergeCells></worksheet>'),
+      base.replace('</worksheet>', '<mergeCells><mergeCell ref="A1:C1"/></mergeCells></worksheet>'),
     )
     await expect(
       apply(await zip.generateAsync({ type: 'uint8array' }), {

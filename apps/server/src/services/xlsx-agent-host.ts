@@ -1,8 +1,14 @@
+import { applyXlsxSpecialPaste } from './xlsx-special-paste-host.js'
+import { authorizeXlsxValidationWarning } from './xlsx-validation-consent.js'
+import { applyXlsxValidationOptions } from './xlsx-validation-options.js'
+import { applyXlsxPivotLayoutEdit } from './xlsx-pivot-layout-edit.js'
 import {
-  validateXlsxCellInput,
+  evaluateXlsxCellInput,
+  type XlsxValidationIssue,
   xlsxScalar,
 } from '../../../../packages/office/src/xlsx-cell-effects.js'
 import type { XlsxWorkbook } from '../../../../packages/office/src/xlsx.js'
+import { xlsxRangeContains } from '../../../../packages/office/src/xlsx-formula-predicate.js'
 import { preserveXlsxFillStyles } from './xlsx-fill-styles.js'
 import { normalizeStyleColor } from '../../../../packages/office/vendor/packages/xlsx-gateway/src/domain/style-color.js'
 import { applyXlsxPivotOperation, XLSX_PIVOT_OPS } from './xlsx-agent-pivots.js'
@@ -40,11 +46,18 @@ import { applyXlsxDataOperation } from './xlsx-agent-data.js'
 import { applyXlsxRangeOperation } from './xlsx-agent-range.js'
 import { applyXlsxPropertyOperation, XLSX_PROPERTY_OPS } from './xlsx-agent-properties.js'
 import { applyXlsxFeatureOperation } from './xlsx-agent-features.js'
-import { xlsxHostActionSchema, type XlsxHostAction, type XlsxRecalculation } from '@mimir/shared'
+import {
+  xlsxHostActionSchema,
+  xlsxValidationConsentSchema,
+  type XlsxHostAction,
+  type XlsxRecalculation,
+  type XlsxValidationConsent,
+} from '@mimir/shared'
 import { recalculateXlsx } from './xlsx-recalc.js'
 import { xlsxManualOperationSchema, XLSX_MANUAL_OPS } from '@mimir/shared'
 import { applyXlsxManualOperation } from './xlsx-manual-ops.js'
 import { readXlsx } from '../../../../packages/office/src/xlsx.js'
+import { xlsxRangeValidationCoverage } from './xlsx-range-rules.js'
 
 /** The same byte-level executor is called by the grid and by Agent proposals. */
 export interface XlsxHostRequest {
@@ -55,6 +68,8 @@ export interface XlsxHostRequest {
   image?: { bytes: Uint8Array; mimeType: string }
   action?: XlsxHostAction
   signal?: AbortSignal
+  principal?: string
+  validationConsent?: XlsxValidationConsent
 }
 
 export interface XlsxHostResult {
@@ -210,8 +225,14 @@ function forEachCell(
     for (let column = bounds.startColumn; column <= bounds.endColumn; column++) visit(row, column)
 }
 
-async function checkDataValidation(before: XlsxWorkbook, result: XlsxHostResult): Promise<void> {
+async function checkDataValidation(
+  before: XlsxWorkbook,
+  result: XlsxHostResult,
+  request: XlsxHostRequest,
+): Promise<void> {
+  const warnings: { sheetId: string; address: string; issue: XlsxValidationIssue }[] = []
   const after = await readXlsx(result.bytes)
+  const coverage = xlsxRangeValidationCoverage(result.bytes)
   for (const sheet of after.sheets) {
     if (!sheet.extras?.validations?.length) continue
     const prior = before.sheets.find((s) => s.id === sheet.id)
@@ -220,21 +241,60 @@ async function checkDataValidation(before: XlsxWorkbook, result: XlsxHostResult)
         row.cells.map((cell) => `${row.number}:${cell.col}`),
       ),
     )
+    const forced = coverage?.areas.get(sheet.entry) ?? []
+    if (coverage?.target.entry === sheet.entry)
+      forEachCell(coverage.target.bounds, (row, column) => {
+        if (
+          forced.some(
+            (area) =>
+              row >= area.startRow &&
+              row <= area.endRow &&
+              column >= area.startColumn &&
+              column <= area.endColumn,
+          )
+        )
+          positions.add(`${row + 1}:${column}`)
+      })
     for (const position of positions) {
       const [rowNumber, column] = position.split(':').map(Number) as [number, number]
       const cell = sheet.rows.find((r) => r.number === rowNumber)?.cells[column]
       const previous = prior?.rows.find((r) => r.number === rowNumber)?.cells[column]
+      const force = forced.some(
+        (area) =>
+          rowNumber - 1 >= area.startRow &&
+          rowNumber - 1 <= area.endRow &&
+          column >= area.startColumn &&
+          column <= area.endColumn,
+      )
       if (
-        cell?.rawText === previous?.rawText &&
-        cell?.text === previous?.text &&
-        cell?.formulaText === previous?.formulaText
+        !force &&
+        (cell?.rawText ?? '') === (previous?.rawText ?? '') &&
+        (cell?.text ?? '') === (previous?.text ?? '') &&
+        (cell?.formulaText ?? '') === (previous?.formulaText ?? '') &&
+        (cell?.numeric ?? false) === (previous?.numeric ?? false) &&
+        cell?.boolean === previous?.boolean
       )
         continue
       const address = formatAddress(rowNumber - 1, column),
-        error = validateXlsxCellInput(sheet, after, address, cell ? xlsxScalar(cell) : null)
-      if (error) throw new Error(`${sheet.name}!${address}：${error}；文档未修改`)
+        validation = evaluateXlsxCellInput(sheet, after, address, cell ? xlsxScalar(cell) : null)
+      if (
+        cell?.formula &&
+        cell.formulaCache !== 'cached' &&
+        sheet.extras.validations.some((rule) =>
+          xlsxRangeContains(rule.range, rowNumber - 1, column),
+        )
+      )
+        throw new Error(`${sheet.name}!${address}：未缓存公式无法可靠验证；文档未修改`)
+      for (const issue of validation.issues) {
+        if (issue.kind !== 'confirmation')
+          throw new Error(
+            `${sheet.name}!${address}：${issue.title ? issue.title + '：' : ''}${issue.message}；文档未修改`,
+          )
+        warnings.push({ sheetId: sheet.id, address, issue })
+      }
     }
   }
+  authorizeXlsxValidationWarning(request, warnings)
 }
 
 /** Unsupported upstream operations fail before a single byte is changed. */
@@ -249,7 +309,10 @@ export async function applyXlsxOpsOnHost(request: XlsxHostRequest): Promise<Xlsx
   if (!(bytes instanceof Uint8Array) || bytes.byteLength > MAX_ZIP_INPUT_BYTES)
     throw new Error(`XLSX 原件必须是至多 ${MAX_ZIP_INPUT_BYTES} 字节的二进制数据`)
   const action = xlsxHostActionSchema.parse(request.action ?? 'apply_ops')
+  if (request.validationConsent !== undefined)
+    xlsxValidationConsentSchema.parse(request.validationConsent)
   if (action === 'recalculate_formulas') {
+    if (request.validationConsent) throw new Error('重算不能使用数据验证确认')
     if (!Array.isArray(request.ops) || request.ops.length !== 0)
       throw new Error('公式重算须单独提交空operations')
     const result = await recalculateXlsx(bytes, signal)
@@ -258,6 +321,17 @@ export async function applyXlsxOpsOnHost(request: XlsxHostRequest): Promise<Xlsx
   if (!Array.isArray(request.ops) || request.ops.length < 1 || request.ops.length > 50)
     throw new Error('XLSX 操作批次必须包含 1–50 项')
 
+  if ((request.ops[0] as { op?: string })?.op === 'edit_validation_options') {
+    if (request.ops.length !== 1 || request.validationConsent || request.image)
+      throw new Error('验证提示编辑须单独提交')
+    checkSignal(signal)
+    return applyXlsxValidationOptions(bytes, request.ops[0], expectedVersion, signal)
+  }
+  if (
+    request.validationConsent &&
+    (request.ops.length !== 1 || (request.ops[0] as { op?: string })?.op !== 'set_cell')
+  )
+    throw new Error('数据验证确认仅适用于当前格手动输入')
   const manual = request.ops.filter(
     (raw) => raw && typeof raw === 'object' && XLSX_MANUAL_OPS.has((raw as { op: never }).op),
   )
@@ -266,8 +340,20 @@ export async function applyXlsxOpsOnHost(request: XlsxHostRequest): Promise<Xlsx
     const operation = xlsxManualOperationSchema.parse(manual[0])
     checkSignal(signal)
     await (await BoundedZip.open(bytes)).preflightAll()
-    const result = await applyXlsxManualOperation(bytes, operation, expectedVersion)
-    await checkDataValidation(await readXlsx(bytes), result)
+    const result =
+      operation.op === 'paste_range'
+        ? await applyXlsxSpecialPaste(bytes, operation, expectedVersion)
+        : operation.op === 'sort_range_multi'
+          ? await applyXlsxDataOperation(
+              bytes,
+              await readBasicWorkbook(Buffer.from(bytes)),
+              operation,
+              expectedVersion,
+            )
+          : operation.op === 'edit_pivot_layout'
+            ? await applyXlsxPivotLayoutEdit(bytes, operation, expectedVersion, signal)
+            : await applyXlsxManualOperation(bytes, operation, expectedVersion)
+    await checkDataValidation(await readXlsx(bytes), result, request)
     checkSignal(signal)
     await (await BoundedZip.open(result.bytes)).preflightAll()
     return result
@@ -365,7 +451,7 @@ export async function applyXlsxOpsOnHost(request: XlsxHostRequest): Promise<Xlsx
     ['copy_range', 'fill_range', 'convert_to_values'].includes(parsed[0]!.op)
   ) {
     const result = await applyXlsxRangeOperation(bytes, before, parsed[0]!, expectedVersion)
-    await checkDataValidation(preview, result)
+    await checkDataValidation(preview, result, request)
     checkSignal(signal)
     await (await BoundedZip.open(result.bytes)).preflightAll()
     return result
@@ -375,7 +461,7 @@ export async function applyXlsxOpsOnHost(request: XlsxHostRequest): Promise<Xlsx
     ['sort_range', 'set_filter', 'clear_filter', 'set_filter_criteria'].includes(parsed[0]!.op)
   ) {
     const result = await applyXlsxDataOperation(bytes, before, parsed[0]!, expectedVersion)
-    await checkDataValidation(preview, result)
+    await checkDataValidation(preview, result, request)
     checkSignal(signal)
     await (await BoundedZip.open(result.bytes)).preflightAll()
     return result
@@ -677,6 +763,7 @@ export async function applyXlsxOpsOnHost(request: XlsxHostRequest): Promise<Xlsx
     changedCells: [...edits.keys()],
     touchedEntries: [...mutation.touchedEntries],
   }
-  if (!structural || parsed[0]?.op === 'find_replace') await checkDataValidation(preview, result)
+  if (!structural || parsed[0]?.op === 'find_replace')
+    await checkDataValidation(preview, result, request)
   return result
 }

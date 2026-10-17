@@ -10,6 +10,13 @@ import type {
   NoteLookupItem,
   NoteUpdate,
 } from '@mimir/shared'
+import { publishFileReplacement } from '../db/document-index.js'
+import {
+  readUploadSnapshot,
+  sameUpload,
+  uploadIdentity,
+  withDocumentPublication,
+} from '../lib/document-publication.js'
 import { db } from '../db/client.js'
 import { documentTags, documents, tags } from '../db/schema.js'
 import { toSearchText } from '@mimir/tokenizer'
@@ -26,6 +33,7 @@ import {
 import { readUploadMeta, removeUpload, writeUploadMeta } from '../lib/uploads.js'
 import { ensureFolders, normalizeFolder } from './folders.js'
 import { getDocumentLinks, syncDocumentLinks } from './links.js'
+import { extractText } from './extract.js'
 import { rebuildChunksAndEmbed } from './chunks.js'
 
 /**
@@ -181,6 +189,14 @@ export async function createNote(input: NoteCreate): Promise<DocumentDetail> {
 
 const noteUpdateLocks = new Map<string, Promise<void>>()
 
+/** An editor/save conflict with a useful message at the API boundary. */
+export class DocumentUpdateError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'DocumentUpdateError'
+  }
+}
+
 /** Serialize writes to one note through the vault and database update together. */
 export async function updateNote(
   id: string,
@@ -195,8 +211,12 @@ export async function updateNote(
   noteUpdateLocks.set(id, current)
   await previous
   try {
-    await options?.precondition?.()
-    return await updateNoteUnlocked(id, input, options?.extraFrontmatter)
+    const doc = await withDocumentPublication(id, async () => {
+      await options?.precondition?.()
+      return updateNoteUnlocked(id, input, options?.extraFrontmatter)
+    })
+    if (doc) await rebuildChunksAndEmbed(id, doc.body)
+    return doc
   } finally {
     release()
     if (noteUpdateLocks.get(id) === current) noteUpdateLocks.delete(id)
@@ -210,13 +230,27 @@ async function updateNoteUnlocked(
 ): Promise<DocumentDetail | null> {
   const existing = await getDocumentRow(id)
   if (!existing) return null
+  const snapshot = existing.kind === 'file' ? await readUploadSnapshot(id) : null
+  const source = snapshot?.identity ?? null
+  if (source && source.key !== existing.sourceKey)
+    throw new DocumentUpdateError('原件已变化，请重新读取后再修改')
+  if (source?.compound && input.body !== undefined)
+    throw new DocumentUpdateError('加密文件的正文不能直接修改，请在编辑器中本地解锁后保存原件')
+  const compound =
+    snapshot && source?.compound
+      ? await extractText(
+          'encrypted.docx',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          snapshot.data,
+        )
+      : null
   const extraFrontmatter =
     existing.kind === 'note' && existing.path
       ? (extraOverride ?? (await readNoteFrontmatter(existing.path)))
       : undefined
 
   const title = input.title ?? existing.title
-  const body = input.body ?? existing.body
+  const body = compound ? '' : (input.body ?? existing.body)
   const status = input.status ?? existing.status
   const tagNames = input.tags ?? [...((await loadTags([id])).get(id) ?? [])]
   // folder 用 `=== undefined` 判断而不是 `??`：空串是合法值（移出目录），
@@ -264,6 +298,8 @@ async function updateNoteUnlocked(
    * 正文**不写进 meta.json**：它是派生数据（由原件重新提取），
    * 而 meta.json 只记「只能来自用户」的那些信息。
    */
+  if (existing.kind === 'file' && source && !sameUpload(source, await uploadIdentity(id)))
+    throw new DocumentUpdateError('原件已变化，请重新读取后再修改')
   if (existing.kind === 'file' && existing.sourceKey) {
     const meta = await readUploadMeta(id)
     if (meta) {
@@ -294,19 +330,20 @@ async function updateNoteUnlocked(
     }
   }
 
-  const [row] = await db
-    .update(documents)
-    .set({
-      title,
-      body,
-      status,
-      path,
-      folder,
-      ...buildIndexFields(title, body),
-      updatedAt: now,
-    })
-    .where(eq(documents.id, id))
-    .returning()
+  const values = {
+    title,
+    body,
+    status,
+    path,
+    folder,
+    ...buildIndexFields(title, body),
+    updatedAt: now,
+    ...(compound ? { parseError: compound.error } : {}),
+  }
+  const row =
+    existing.kind === 'file'
+      ? await publishFileReplacement(id, existing, values, body === '' || body !== existing.body)
+      : (await db.update(documents).set(values).where(eq(documents.id, id)).returning())[0]
 
   if (!row) return null
 
@@ -314,7 +351,6 @@ async function updateNoteUnlocked(
   // 正文变了，出链跟着重建。放在数据库写入之后：链接表是索引，
   // 而正文是真相——先写完真相再更新索引，顺序与全局规则一致
   await syncDocumentLinks(id, body)
-  await rebuildChunksAndEmbed(id, body)
 
   return {
     ...toSummary(row, [...tagNames].toSorted()),

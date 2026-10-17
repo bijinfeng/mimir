@@ -96,3 +96,49 @@ describe('DOCX media analysis', () => {
     expect(state.chat).not.toHaveBeenCalled()
   })
 })
+
+it('combines bounded video frames with real audio transcription and forwards abort through both activities', async () => {
+  state.vision = true
+  state.chat.mockReset().mockResolvedValue('画面与讲话')
+  state.transcription.mockReset().mockResolvedValue({ text: '讲话内容' })
+  const signal = new AbortController().signal
+  const result = await analyzeDocxMedia({
+    documentId: 'pptx',
+    instruction: '总结',
+    kind: 'video',
+    media: [{ mimeType: 'image/png', data: png }],
+    audio: { mimeType: 'audio/wav', data: Buffer.from('RIFF1234WAVEdata').toString('base64') },
+    signal,
+  })
+  expect(result.text).toBe('画面与讲话')
+  expect(state.transcription).toHaveBeenCalledWith(expect.objectContaining({ abortSignal: signal }))
+  expect(state.chat).toHaveBeenCalledWith(
+    expect.objectContaining({
+      abortSignal: signal,
+      messages: [
+        {
+          role: 'user',
+          content: expect.arrayContaining([
+            expect.objectContaining({ type: 'text', content: expect.stringContaining('讲话内容') }),
+          ]),
+        },
+      ],
+    }),
+  )
+  const controller = new AbortController()
+  state.transcription.mockImplementationOnce(async () => {
+    controller.abort()
+    return { text: 'late' }
+  })
+  const before = state.chat.mock.calls.length
+  await expect(
+    analyzeDocxMedia({
+      documentId: 'pptx',
+      instruction: '总结',
+      kind: 'audio',
+      media: [{ mimeType: 'audio/wav', data: Buffer.from('RIFF1234WAVEdata').toString('base64') }],
+      signal: controller.signal,
+    }),
+  ).rejects.toMatchObject({ name: 'AbortError' })
+  expect(state.chat).toHaveBeenCalledTimes(before)
+})

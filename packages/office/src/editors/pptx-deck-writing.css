@@ -1,0 +1,43 @@
+.mimir-pptx-deck-writing__content {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  flex: 1;
+  padding: 12px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.mimir-pptx-deck-writing__content p {
+  margin: 0 0 12px;
+  overflow-wrap: anywhere;
+}
+.mimir-pptx-deck-writing__hint,
+.mimir-pptx-deck-writing__empty {
+  color: var(--me-text-weak);
+}
+.mimir-pptx-deck-writing__empty {
+  padding-block: 24px;
+  text-align: center;
+}
+.mimir-pptx-deck-writing__page {
+  border: 1px solid var(--me-border);
+  background: var(--me-surface);
+}
+.mimir-pptx-deck-writing__page svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.mimir-pptx-deck-writing__content nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-block: 12px;
+}
+.mimir-pptx-deck-writing__actions {
+  flex-shrink: 0;
+  padding: 12px;
+  border-top: 1px solid var(--me-border);
+  display: grid;
+}

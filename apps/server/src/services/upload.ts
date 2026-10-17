@@ -9,6 +9,8 @@ import {
   titleFromFilename,
   type FileUploadResponse,
 } from '@mimir/shared'
+import { publishFileReplacement } from '../db/document-index.js'
+import { sameUpload, uploadIdentity, withDocumentPublication } from '../lib/document-publication.js'
 import { db } from '../db/client.js'
 import { documents } from '../db/schema.js'
 import { toSearchText } from '@mimir/tokenizer'
@@ -18,7 +20,6 @@ import {
   removeUpload,
   replacementUploadKey,
   writeUpload,
-  writeUploadMeta,
   type UploadMeta,
 } from '../lib/uploads.js'
 import { activeStorage } from '../plugins/host.js'
@@ -327,6 +328,28 @@ export async function replaceUpload(
   documentId: string,
   input: UploadInput,
 ): Promise<FileUploadResponse | null> {
+  const response = await withDocumentPublication(documentId, () =>
+    replaceUploadLocked(documentId, input),
+  )
+  if (response)
+    await rebuildChunksAndEmbed(
+      documentId,
+      (
+        await db
+          .select({ body: documents.body })
+          .from(documents)
+          .where(eq(documents.id, documentId))
+      )[0]?.body ?? '',
+    ).catch((error: unknown) => {
+      console.warn(`替换原件后的分块/嵌入失败（${documentId}）：`, error)
+    })
+  return response
+}
+
+async function replaceUploadLocked(
+  documentId: string,
+  input: UploadInput,
+): Promise<FileUploadResponse | null> {
   const [existing] = await db
     .select()
     .from(documents)
@@ -345,70 +368,70 @@ export async function replaceUpload(
   }
   if (input.data.byteLength === 0) throw new UploadError('EMPTY_FILE', '文件是空的')
 
+  const source = await uploadIdentity(documentId)
   const extracted = await extractText(filename, mime, input.data)
+  const currentSource = await uploadIdentity(documentId)
+  if (source ? !sameUpload(source, currentSource) : currentSource !== null)
+    throw new Error('原件已变化，请重新读取后再保存')
 
   const oldKey = existing.sourceKey
+  const rawMeta = await activeStorage()
+    .read(metaKey(documentId))
+    .catch(() => null)
   const meta = await readUploadMeta(documentId)
   const tags = (await loadTags([documentId])).get(documentId) ?? []
   const now = new Date()
 
-  const { key } = await writeUpload(
-    documentId,
-    filename,
-    input.data,
-    meta === null
-      ? {
-          id: documentId,
-          title: existing.title,
-          filename,
-          mime,
-          size: input.data.byteLength,
-          tags,
-          folder: existing.folder,
-          status: existing.status,
-          createdAt: existing.createdAt.toISOString(),
-          updatedAt: now.toISOString(),
-        }
-      : {
-          ...meta,
-          filename,
-          mime,
-          size: input.data.byteLength,
-          updatedAt: now.toISOString(),
-        },
-    replacementUploadKey(documentId, filename),
-  )
+  const key = replacementUploadKey(documentId, filename)
+  try {
+    await writeUpload(
+      documentId,
+      filename,
+      input.data,
+      meta === null
+        ? {
+            id: documentId,
+            title: existing.title,
+            filename,
+            mime,
+            size: input.data.byteLength,
+            tags,
+            folder: existing.folder,
+            status: existing.status,
+            createdAt: existing.createdAt.toISOString(),
+            updatedAt: now.toISOString(),
+          }
+        : {
+            ...meta,
+            filename,
+            mime,
+            size: input.data.byteLength,
+            updatedAt: now.toISOString(),
+          },
+      key,
+    )
+  } catch (error) {
+    // Storage writes can fail after writing bytes. Restore meta before discarding the candidate.
+    await rollbackReplacement(documentId, rawMeta, key)
+    throw error
+  }
 
   const body = extracted.markdown
   let row: typeof documents.$inferSelect
   try {
-    const [updated] = await db
-      .update(documents)
-      .set({
-        body,
-        excerpt: toExcerpt(body),
-        searchText: toSearchText(existing.title, body),
-        contentHash: contentHash(body),
-        sourceKey: key,
-        mime,
-        size: input.data.byteLength,
-        parseError: extracted.error,
-        updatedAt: now,
-      })
-      .where(eq(documents.id, documentId))
-      .returning()
-    if (!updated) throw new Error('替换原件入库失败：数据库未返回记录')
-    row = updated
+    row = await publishFileReplacement(documentId, existing, {
+      body,
+      excerpt: toExcerpt(body),
+      searchText: toSearchText(existing.title, body),
+      contentHash: contentHash(body),
+      sourceKey: key,
+      mime,
+      size: input.data.byteLength,
+      parseError: extracted.error,
+      updatedAt: now,
+    })
   } catch (error) {
-    // meta 已指向新文件。数据库失败时恢复旧指针；若恢复也失败，保留新文件，
-    // 让重建索引仍能沿 meta 找到它，而不是制造另一种裂图。
-    try {
-      if (meta) await writeUploadMeta(documentId, meta)
-      else await activeStorage().remove(metaKey(documentId))
-      await activeStorage().remove(key)
-    } catch (rollbackError) {
-      console.warn(`替换原件回滚失败（${documentId}），请核对 meta.json：`, rollbackError)
-    }
+    await rollbackReplacement(documentId, rawMeta, key)
     throw error
   }
 
@@ -426,6 +449,20 @@ export async function replaceUpload(
     document: toUploadSummary(row, tags),
     charCount: body.length,
     parseError: extracted.error,
+  }
+}
+
+async function rollbackReplacement(
+  documentId: string,
+  rawMeta: Uint8Array | null,
+  key: string,
+): Promise<void> {
+  try {
+    if (rawMeta) await activeStorage().write(metaKey(documentId), rawMeta)
+    else await activeStorage().remove(metaKey(documentId))
+    await activeStorage().remove(key)
+  } catch (error) {
+    console.warn(`替换原件回滚失败（${documentId}），请核对 meta.json：`, error)
   }
 }
 

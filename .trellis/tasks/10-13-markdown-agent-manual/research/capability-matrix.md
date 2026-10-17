@@ -1,5 +1,12 @@
 # Markdown Agent / manual command matrix
 
+> 2026-10-17 最终补齐状态（覆盖本文历史待办时点）
+>
+> Markdown：现行8工具/15操作及真实NDJSON草稿/停止保留丢弃、样式交互已有执行与浏览器证据；最后generate_image.aspectRatio已贯通通用生成服务。正文与frontmatter独立批次/flush是明确一致性合同，不能宣传任意混合原子操作。
+>
+> 总范围与逐项证据见 `10-11-chat-edit-office/research/all-tools-final-scope-independent-check-20261017.md`；最终源码质量门见同目录 `final-quality-check-20261017.md`（root第三轮原样pnpm check：4606通过/2既有跳过、exit0，最终Web构建exit0，1764输入起止不变；不沿用旧4231）。用户已选代码/浏览器优先：真实provider未配置，新密码和Desktop自行验收；旧“待两端/待Desktop”不构成本轮新增阻断。明确支持子集与原生复杂结构拒绝仍保留，不宣传任意Office原件全兼容。
+
+
 Checked 2026-10-13 against `genspark-ai/genoffice@480548fd55f1be3593ee0d8e316a734751d58309`, especially `apps/markdown/src/renderer/{ai/tools.ts,editor/ops.ts,components/Ribbon.tsx,components/TableMenu.tsx,components/SlashMenu.tsx}`. Mimir uses the same renderer package in browser and desktop (`apps/web/src/index.tsx`, `apps/desktop/src/renderer/index.tsx`), but **no physical two-end interaction run is recorded yet**. The source adaptation is `packages/office/src/agent/markdown-ops.ts`; the live handle is `markdown-agent.ts`. The fixed-version code is Apache-2.0; Mimir's adapted file includes provenance.
 
 ## Eight model tools

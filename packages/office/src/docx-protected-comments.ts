@@ -3,6 +3,7 @@ import { XMLValidator } from 'fast-xml-parser'
 import type { CommentInfo } from '../vendor/packages/docx-engine/src/types.js'
 import { decodeEntities } from '../vendor/packages/docx-engine/src/parse-xml-text.js'
 import type { BoundedZip } from './zip-bounds.js'
+import type { PmDocJson } from './docx.js'
 
 const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
 const WS = 'http://purl.oclc.org/ooxml/wordprocessingml/main'
@@ -20,8 +21,10 @@ export interface ProtectedComments {
   readonly comments: readonly CommentInfo[]
   readonly reason: string | null
   access(id: string): DocxCommentAccess
+  targetReason(block: number): string | null
   validate(comments: unknown): CommentInfo[]
-  save(comments: unknown): Promise<Uint8Array>
+  validateDocument(edited: PmDocJson, comments: unknown): void
+  save(comments: unknown, edited: PmDocJson): Promise<Uint8Array>
 }
 interface Attr {
   name: string
@@ -59,7 +62,7 @@ function fail(): never {
   throw new Error(UNSUPPORTED)
 }
 /** Offsets are retained; XML is never serialized back over the original shell. */
-function xmlTree(xml: string): Element {
+function xmlTree(xml: string, allowOpaqueText = false): Element {
   if (
     xml.length > 2_000_000 ||
     /<!DOCTYPE|<!ENTITY|<!\[CDATA\[/i.test(xml) ||
@@ -75,7 +78,11 @@ function xmlTree(xml: string): Element {
   while ((m = tokens.exec(xml))) {
     const token = m[0]
     const gap = xml.slice(cursor, m.index)
-    if (gap.includes('<') || (gap.trim() && stack.at(-1)?.local !== 't')) fail()
+    if (
+      gap.includes('<') ||
+      (gap.trim() && (!stack.length || (!allowOpaqueText && stack.at(-1)?.local !== 't')))
+    )
+      fail()
     cursor = tokens.lastIndex
     if (token.startsWith('<?') || token.startsWith('<!--')) continue
     if (token.startsWith('</')) {
@@ -415,9 +422,267 @@ function patchText(xml: string, item: NativeComment, text: string): string {
   return splice(xml, edits)
 }
 
+interface AnchorRange {
+  block: number
+  from: number
+  to: number
+}
+interface AnchorParagraph {
+  node: Element
+  text: string
+  runs: { node: Element; text: Element; from: number; to: number }[]
+}
+const ANCHOR_UNSUPPORTED = '该原生批注锚点尚不支持安全修改；请选择普通单段文字'
+function pmAnchors(doc: PmDocJson): Map<string, AnchorRange[]> {
+  const result = new Map<string, AnchorRange[]>()
+  doc.content?.forEach((block, blockIndex) => {
+    let offset = 0
+    const walk = (node: PmDocJson) => {
+      if (node.type === 'text') {
+        const end = offset + (node.text?.length ?? 0)
+        for (const mark of (node.marks ?? []) as PmDocJson[]) {
+          if (mark.type !== 'comment') continue
+          const ids = String(mark.attrs?.ids ?? '')
+            .split(/\s+/)
+            .filter(Boolean)
+          if (!ids.length || new Set(ids).size !== ids.length) fail()
+          for (const id of ids) {
+            if (!validId(id)) fail()
+            const ranges = result.get(id) ?? []
+            const last = ranges.at(-1)
+            if (last?.block === blockIndex && last.to === offset) last.to = end
+            else ranges.push({ block: blockIndex, from: offset, to: end })
+            result.set(id, ranges)
+          }
+        }
+        offset = end
+      } else {
+        // Any nested/nontext target is ineligible for new anchors, but retained
+        // comments on these blocks must still compare across the entire PM tree.
+        if (node !== block) offset++
+        node.content?.forEach(walk)
+        if (node !== block) offset++
+      }
+    }
+    walk(block)
+  })
+  return result
+}
+function createAnchorMapping(xml: string, original: PmDocJson) {
+  const originalMarks = pmAnchors(original)
+  const paragraphs = new Map<number, AnchorParagraph>()
+  const removable = new Map<string, Element[]>()
+  try {
+    const root = xmlTree(xml, true)
+    if (!word(root) || root.local !== 'document') fail()
+    const body = root.children.find((n) => word(n) && n.local === 'body')
+    if (!body) fail()
+    original.content?.forEach((block, index) => {
+      try {
+        const nativeIndex = block.attrs?.docxIndex
+        if (typeof nativeIndex !== 'number') fail()
+        // The engine expands these body elements into multiple DOCX indices.
+        // Equal paragraph text cannot prove identity after that expansion.
+        if (
+          body.children
+            .slice(0, nativeIndex + 1)
+            .some((n) => word(n) && ['sdt', 'altChunk'].includes(n.local))
+        )
+          fail()
+        const p = body.children[nativeIndex]
+        if (!p || !word(p) || p.local !== 'p') fail()
+        if (!block.content?.length || block.content.some((n) => n.type !== 'text')) fail()
+        const runs: AnchorParagraph['runs'] = []
+        let text = ''
+        for (const child of p.children) {
+          if (!word(child)) fail()
+          if (child.local === 'pPr') continue
+          if (['commentRangeStart', 'commentRangeEnd'].includes(child.local)) {
+            if (child.children.length || !validId(attr(child, 'id'))) fail()
+            continue
+          }
+          if (child.local !== 'r') fail()
+          // Run identity/revision metadata cannot be duplicated by splitting.
+          if (child.attrs.some((a) => /^(id|rsid.*|durableId)$/i.test(a.local))) fail()
+          const content = child.children.filter((n) => !(word(n) && n.local === 'rPr'))
+          if (!content.length) continue // exact empty run retained after reference deletion
+          if (content.length !== 1 || !word(content[0]!)) fail()
+          const t = content[0]!
+          if (t.local === 'commentReference') {
+            if (!validId(attr(t, 'id')) || t.children.length) fail()
+            continue
+          }
+          if (t.local !== 't' || t.children.length || t.closeStart < t.openEnd) fail()
+          const value = decodeEntities(xml.slice(t.openEnd, t.closeStart))
+          if (!value.length) continue
+          runs.push({ node: child, text: t, from: text.length, to: text.length + value.length })
+          text += value
+        }
+        if (text !== block.content.map((n) => n.text ?? '').join('')) fail()
+        const para = { node: p, text, runs }
+        paragraphs.set(index, para)
+        for (const [id, ranges] of originalMarks) {
+          if (ranges.length !== 1 || ranges[0]!.block !== index) continue
+          const range = ranges[0]!
+          const all = descendants(root).filter(
+            (n) =>
+              word(n) &&
+              ['commentRangeStart', 'commentRangeEnd', 'commentReference'].includes(n.local) &&
+              attr(n, 'id') === id,
+          )
+          if (all.length !== 3) continue
+          const start = all.find((n) => n.local === 'commentRangeStart')
+          const end = all.find((n) => n.local === 'commentRangeEnd')
+          const ref = all.find((n) => n.local === 'commentReference')
+          if (
+            !start ||
+            !end ||
+            !ref ||
+            !p.children.includes(start) ||
+            !p.children.includes(end) ||
+            ref.start < p.start ||
+            ref.end > p.end ||
+            start.end > end.start ||
+            ref.start < end.end
+          )
+            continue
+          const offsetAt = (node: Element) =>
+            runs.filter((r) => r.node.end <= node.start).reduce((n, r) => n + r.to - r.from, 0)
+          if (offsetAt(start) === range.from && offsetAt(end) === range.to) removable.set(id, all)
+        }
+      } catch {
+        /* This paragraph stays readable and byte-preserved. */
+      }
+    })
+  } catch {
+    /* Existing discussion text editing does not require mutable anchors. */
+  }
+  const plan = (edited: PmDocJson, ids: Set<string>, baselineIds: Set<string>) => {
+    const marks = pmAnchors(edited)
+    for (const [id, before] of originalMarks) {
+      if (ids.has(id) || !baselineIds.has(id)) {
+        if (JSON.stringify(before) !== JSON.stringify(marks.get(id))) fail()
+      } else if (marks.has(id) || !removable.has(id)) throw new Error(ANCHOR_UNSUPPORTED)
+    }
+    const additions: { id: string; range: AnchorRange; paragraph: AnchorParagraph }[] = []
+    for (const [id, ranges] of marks) {
+      if (!ids.has(id) && !originalMarks.has(id)) fail()
+      if (originalMarks.has(id)) {
+        if (JSON.stringify(ranges) !== JSON.stringify(originalMarks.get(id))) fail()
+        continue
+      }
+      if (ranges.length !== 1) throw new Error(ANCHOR_UNSUPPORTED)
+      const range = ranges[0]!,
+        paragraph = paragraphs.get(range.block)
+      if (!paragraph || range.from >= range.to || range.to > paragraph.text.length)
+        throw new Error(ANCHOR_UNSUPPORTED)
+      // A UTF-16 boundary cannot bisect a code point.
+      for (const at of [range.from, range.to])
+        if (
+          at > 0 &&
+          /[\uD800-\uDBFF]/.test(paragraph.text[at - 1]!) &&
+          /[\uDC00-\uDFFF]/.test(paragraph.text[at]!)
+        )
+          fail()
+      const overlaps = [...marks].some(
+        ([other, rs]) =>
+          other !== id &&
+          rs.some((r) => r.block === range.block && r.from < range.to && r.to > range.from),
+      )
+      if (overlaps) throw new Error('锚点已包含其他批注，不能覆盖其标记')
+      additions.push({ id, range, paragraph })
+    }
+    for (const id of ids)
+      if (!baselineIds.has(id) && (!marks.has(id) || originalMarks.has(id))) fail()
+    return additions
+  }
+  return {
+    canAdd: paragraphs.size > 0,
+    targetReason: (block: number) => (paragraphs.has(block) ? null : ANCHOR_UNSUPPORTED),
+    canDelete: (id: string) => removable.has(id),
+    validate: (edited: PmDocJson, roots: Set<string>, baselineRoots: Set<string>) => {
+      plan(edited, roots, baselineRoots)
+    },
+    patch(edited: PmDocJson, roots: Set<string>, baselineRoots: Set<string>): string {
+      const additions = plan(edited, roots, baselineRoots)
+      const edits: { start: number; end: number; value: string }[] = []
+      for (const id of baselineRoots)
+        if (!roots.has(id))
+          for (const node of removable.get(id) ?? [])
+            edits.push({ start: node.start, end: node.end, value: '' })
+      const byPara = new Map<AnchorParagraph, typeof additions>()
+      for (const item of additions)
+        byPara.set(item.paragraph, [...(byPara.get(item.paragraph) ?? []), item])
+      for (const [paragraph, items] of byPara) {
+        const events = new Map<number, string>()
+        for (const { id, range } of items) {
+          const ns = paragraph.node.ns
+          const marker = (name: string) => `<w:${name} xmlns:w="${ns}" w:id="${id}"/>`
+          events.set(range.from, (events.get(range.from) ?? '') + marker('commentRangeStart'))
+          events.set(
+            range.to,
+            (events.get(range.to) ?? '') +
+              marker('commentRangeEnd') +
+              `<w:r xmlns:w="${ns}">${marker('commentReference')}</w:r>`,
+          )
+        }
+        for (const [offset, value] of events) {
+          const inside = paragraph.runs.find((r) => offset > r.from && offset < r.to)
+          if (inside) continue
+          const next = paragraph.runs.find((r) => r.from === offset)
+          const prev = paragraph.runs.findLast((r) => r.to === offset)
+          const at = next?.node.start ?? prev?.node.end
+          if (at === undefined) fail()
+          edits.push({ start: at, end: at, value })
+        }
+        for (const run of paragraph.runs) {
+          const cuts = [...events.keys()]
+            .filter((n) => n > run.from && n < run.to)
+            .toSorted((a, b) => a - b)
+          if (!cuts.length) continue
+          const prefix = xml.slice(run.node.start, run.text.start)
+          const suffix = xml.slice(run.text.closeStart, run.node.end)
+          const text = decodeEntities(xml.slice(run.text.openEnd, run.text.closeStart))
+          // Every duplicated run retains its exact attributes/rPr; only the selected
+          // w:t content is split. All other runs/paragraph shell remain raw bytes.
+          const offsets = [run.from, ...cuts, run.to]
+          const pieces = offsets.slice(0, -1).map((from, i) => {
+            const value = text.slice(from - run.from, offsets[i + 1]! - run.from)
+            const opening = xml.slice(run.text.start, run.text.openEnd)
+            const preserved =
+              value.trim() !== value &&
+              attr(run.text, 'space', 'http://www.w3.org/XML/1998/namespace') !== 'preserve'
+            const withSpace = preserved
+              ? setAttribute(
+                  xml,
+                  run.text,
+                  'http://www.w3.org/XML/1998/namespace',
+                  'space',
+                  'preserve',
+                  'xml',
+                )
+              : xml
+            const open = preserved
+              ? withSpace.slice(run.text.start, run.text.openEnd + withSpace.length - xml.length)
+              : opening
+            return prefix + open + escapeText(value) + suffix + (events.get(offsets[i + 1]!) ?? '')
+          })
+          // The final boundary event is inserted separately at the original run end.
+          const tail = events.get(run.to) ?? ''
+          let value = pieces.join('')
+          if (tail) value = value.slice(0, -tail.length)
+          edits.push({ start: run.node.start, end: run.node.end, value })
+        }
+      }
+      return splice(xml, edits)
+    },
+  }
+}
+
 export async function createProtectedComments(
   archive: BoundedZip,
   original: Uint8Array,
+  originalDoc: PmDocJson,
 ): Promise<ProtectedComments> {
   const bytes = original.slice()
   const readText = async (path: string) => {
@@ -448,33 +713,11 @@ export async function createProtectedComments(
       ].includes(r.type),
     )
     const extRel = commentRels.filter((r) => r.type === EXT_REL)
-    if (commentRels.length === 0 && !archive.list().some((p) => /comments|people/i.test(p))) {
-      const empty = (input: unknown): CommentInfo[] => {
-        if (!Array.isArray(input) || input.length) fail()
-        return []
-      }
-      return Object.freeze({
-        comments: Object.freeze([]),
-        reason: null,
-        access: () =>
-          Object.freeze({
-            editText: UNSUPPORTED,
-            reply: UNSUPPORTED,
-            resolve: UNSUPPORTED,
-            reopen: UNSUPPORTED,
-            add: '受保护原件新增批注尚未支持',
-            delete: '受保护原件删除批注尚未支持',
-          }),
-        validate: empty,
-        save: async (input: unknown) => {
-          empty(input)
-          return bytes.slice()
-        },
-      })
-    }
+    const emptyPackage =
+      commentRels.length === 0 && !archive.list().some((p) => /comments|people/i.test(p))
     if (
       commentRels.length !== commentsRel.length + extRel.length ||
-      commentsRel.length !== 1 ||
+      (commentsRel.length !== 1 && !emptyPackage) ||
       extRel.length > 1 ||
       archive.list().some((p) => /commentsIds|commentsExtensible|people\.xml/i.test(p))
     )
@@ -501,11 +744,12 @@ export async function createProtectedComments(
       )
         fail()
     }
-    const path = targetPath(commentsRel[0]!.target),
-      xml = await readText(path)
+    const path = emptyPackage ? 'word/comments.xml' : targetPath(commentsRel[0]!.target),
+      xml = emptyPackage ? `<w:comments xmlns:w="${W}"></w:comments>` : await readText(path)
     if (!xml) fail()
     const native = parseComments(xml)
     if (
+      !emptyPackage &&
       !types.children.some(
         (n) =>
           attr(n, 'PartName', '') === `/${path}` &&
@@ -605,6 +849,8 @@ export async function createProtectedComments(
     }
     if (native.items.length > 1000) fail()
     const baseline = native.items.map((i) => i.model)
+    const anchors = createAnchorMapping((await readText('word/document.xml')) ?? '', originalDoc)
+    const baselineRoots = new Set(baseline.filter((c) => !c.parentId).map((c) => c.id))
     const replyIdReason =
       baseline.length >= 1000
         ? '原件批注数量已达上限，暂不能追加回复'
@@ -614,21 +860,19 @@ export async function createProtectedComments(
     const access = (id: string): DocxCommentAccess => {
       const item = native.items.find((c) => c.model.id === id)
       return Object.freeze({
-        editText: item?.textReason ?? (item ? null : UNSUPPORTED),
-        reply: item?.textReason ?? (item ? replyIdReason : UNSUPPORTED),
-        resolve: item?.textReason ?? (item ? null : UNSUPPORTED),
-        reopen: item?.textReason ?? (item ? null : UNSUPPORTED),
-        add: '受保护原件新增批注尚未支持',
-        delete: '受保护原件删除批注尚未支持',
+        editText: item?.textReason ?? null,
+        reply: item?.textReason ?? replyIdReason,
+        resolve: item?.textReason ?? null,
+        reopen: item?.textReason ?? null,
+        add: replyIdReason ?? (anchors.canAdd ? null : ANCHOR_UNSUPPORTED),
+        delete: item
+          ? (item.textReason ??
+            (item.model.parentId || anchors.canDelete(id) ? null : ANCHOR_UNSUPPORTED))
+          : null,
       })
     }
     const validate = (input: unknown): CommentInfo[] => {
-      if (
-        !Array.isArray(input) ||
-        input.length < baseline.length ||
-        input.length > Math.min(1000, baseline.length + 100)
-      )
-        fail()
+      if (!Array.isArray(input) || input.length > Math.min(1000, baseline.length + 100)) fail()
       const ids = new Set<string>(),
         old = new Map(baseline.map((c) => [c.id, c]))
       const out = input.map((value: unknown) => {
@@ -660,13 +904,14 @@ export async function createProtectedComments(
             )
           if (!!c.done !== !!prior.done && (c.parentId || access(c.id).resolve)) fail()
         } else {
-          const root = baseline.find((r) => r.id === c.parentId && !r.parentId)
+          const root = input.find((r: CommentInfo) => r.id === c.parentId && !r.parentId) as
+            | CommentInfo
+            | undefined
           if (
-            !root ||
-            access(root.id).reply ||
+            (c.parentId ? !root || (old.has(root.id) && access(root.id).reply) : access('').add) ||
             c.paraId !== undefined ||
-            c.initials !== undefined ||
-            c.done !== undefined ||
+            (c.initials !== undefined && (!textValid(c.initials) || c.initials.length > 100)) ||
+            (c.parentId !== undefined && c.done !== undefined) ||
             !textValid(c.author) ||
             c.author.length > 100 ||
             typeof c.date !== 'string' ||
@@ -677,20 +922,50 @@ export async function createProtectedComments(
         }
         return structuredClone(c)
       })
-      if (baseline.some((c) => !ids.has(c.id))) fail()
+      for (const c of baseline)
+        if (!ids.has(c.id)) {
+          if (access(c.id).delete) throw new Error(access(c.id).delete!)
+          if (!c.parentId && out.some((item) => item.parentId === c.id)) fail()
+        }
+      for (const c of out)
+        if (c.parentId && !out.some((r) => r.id === c.parentId && !r.parentId)) fail()
       return out
     }
-    const save = async (input: unknown) => {
+    const validateDocument = (edited: PmDocJson, input: unknown) => {
+      const current = validate(input)
+      anchors.validate(
+        edited,
+        new Set(current.filter((c) => !c.parentId).map((c) => c.id)),
+        baselineRoots,
+      )
+    }
+    const save = async (input: unknown, edited: PmDocJson) => {
+      validateDocument(edited, input)
       const current = validate(input)
       const same =
         baseline.length === current.length &&
         baseline.every((b) => {
-          const c = current.find((n) => n.id === b.id)!
-          return c.text === b.text && !!c.done === !!b.done
+          const c = current.find((n) => n.id === b.id)
+          return c && c.text === b.text && !!c.done === !!b.done
         })
       if (same) return bytes.slice()
-      let output = xml,
+      const removed = baseline.filter((b) => !current.some((c) => c.id === b.id))
+      let output = splice(
+          xml,
+          removed.map((c) => {
+            const node = native.items.find((i) => i.model.id === c.id)!.node
+            return { start: node.start, end: node.end, value: '' }
+          }),
+        ),
         extOutput = extXml
+          ? splice(
+              extXml,
+              removed.flatMap((c) => {
+                const node = extNodes.get((c.paraId ?? '').toUpperCase())
+                return node ? [{ start: node.start, end: node.end, value: '' }] : []
+              }),
+            )
+          : null
       const needsExt = current.some(
         (c) => c.parentId || !!c.done !== !!baseline.find((b) => b.id === c.id)?.done,
       )
@@ -725,7 +1000,7 @@ export async function createProtectedComments(
             if (c.parentId) pidFor(c.parentId)
           }
         for (const b of baseline)
-          if (pids.has(b.id) && !b.paraId) {
+          if (current.some((c) => c.id === b.id) && pids.has(b.id) && !b.paraId) {
             const item = parseComments(output).items.find((i) => i.model.id === b.id)!
             const p = item.node.children.findLast((n) => word(n) && n.local === 'p')
             if (!p) fail()
@@ -735,7 +1010,7 @@ export async function createProtectedComments(
       for (const c of current.filter((candidate) => !baseline.some((b) => b.id === candidate.id))) {
         const root = xmlTree(output),
           wns = root.ns
-        const child = `<w:comment xmlns:w="${wns}" xmlns:w14="${W14}" w:id="${c.id}" w:author="${escapeAttr(c.author)}" w:date="${escapeAttr(c.date!)}">${c.text
+        const child = `<w:comment xmlns:w="${wns}" xmlns:w14="${W14}" w:id="${c.id}" w:author="${escapeAttr(c.author)}"${c.initials === undefined ? '' : ` w:initials="${escapeAttr(c.initials)}"`} w:date="${escapeAttr(c.date!)}">${c.text
           .split('\n')
           .map(
             (line, i, arr) =>
@@ -778,36 +1053,68 @@ export async function createProtectedComments(
         fail()
       const zip = await JSZip.loadAsync(bytes)
       zip.file(path, output)
+      const documentXml = anchors.patch(
+        edited,
+        new Set(current.filter((c) => !c.parentId).map((c) => c.id)),
+        baselineRoots,
+      )
+      if (documentXml !== (await readText('word/document.xml'))) {
+        const documentRoot = xmlTree(documentXml, true)
+        const nativeAnchors = descendants(documentRoot).filter(
+          (n) =>
+            word(n) &&
+            ['commentRangeStart', 'commentRangeEnd', 'commentReference'].includes(n.local),
+        )
+        for (const c of current.filter((item) => !item.parentId && !baselineRoots.has(item.id)))
+          if (nativeAnchors.filter((n) => attr(n, 'id') === c.id).length !== 3) fail()
+        for (const c of removed.filter((item) => !item.parentId))
+          if (nativeAnchors.some((n) => attr(n, 'id') === c.id)) fail()
+        zip.file('word/document.xml', documentXml)
+      }
+      let nextRels = relXml,
+        nextTypes = typesXml
+      if (emptyPackage) {
+        let n = 1
+        while (rels.items.some((r) => r.id === `mimirCommentsRoot${n}`)) n++
+        nextRels = appendChild(
+          nextRels,
+          xmlTree(nextRels),
+          `<Relationship xmlns="${REL}" Id="mimirCommentsRoot${n}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments" Target="comments.xml"/>`,
+        )
+        nextTypes = appendChild(
+          nextTypes,
+          xmlTree(nextTypes),
+          `<Override xmlns="${CT}" PartName="/${path}" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.comments+xml"/>`,
+        )
+      }
       if (extOutput !== extXml && extOutput !== null) zip.file(extPath, extOutput)
       if (extOutput && !extRel.length) {
         if (archive.list().includes(extPath)) fail()
         let n = 1
         while (rels.items.some((r) => r.id === `mimirComments${n}`)) n++
-        zip.file(
-          relPath,
-          appendChild(
-            relXml,
-            rels.root,
-            `<Relationship xmlns="${REL}" Id="mimirComments${n}" Type="${EXT_REL}" Target="commentsExtended.xml"/>`,
-          ),
+        nextRels = appendChild(
+          nextRels,
+          xmlTree(nextRels),
+          `<Relationship xmlns="${REL}" Id="mimirComments${n}" Type="${EXT_REL}" Target="commentsExtended.xml"/>`,
         )
         if (types.children.some((c) => attr(c, 'PartName', '') === `/${extPath}`)) fail()
-        zip.file(
-          typesPath,
-          appendChild(
-            typesXml,
-            types,
-            `<Override xmlns="${CT}" PartName="/${extPath}" ContentType="${EXT_TYPE}"/>`,
-          ),
+        nextTypes = appendChild(
+          nextTypes,
+          xmlTree(nextTypes),
+          `<Override xmlns="${CT}" PartName="/${extPath}" ContentType="${EXT_TYPE}"/>`,
         )
       }
+      if (nextRels !== relXml) zip.file(relPath, nextRels)
+      if (nextTypes !== typesXml) zip.file(typesPath, nextTypes)
       return zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' })
     }
     return Object.freeze({
       comments: Object.freeze(structuredClone(baseline)),
       reason: null,
       access,
+      targetReason: anchors.targetReason,
       validate,
+      validateDocument,
       save,
     })
   } catch {
@@ -823,7 +1130,9 @@ export async function createProtectedComments(
             ]),
           ) as Record<DocxCommentOperation, string>,
         ),
+      targetReason: () => UNSUPPORTED,
       validate: fail,
+      validateDocument: fail,
       save: async () => fail(),
     })
   }

@@ -8,6 +8,12 @@ import { HeuristicMetrics } from '../vendor/packages/pptx-render/src/metrics.js'
 import { renderSlideToSvg } from './pptx-svg.js'
 import type { BoundedZip } from './zip-bounds.js'
 import { decodeXlsxXml } from './xlsx-format.js'
+import {
+  readXlsxShapePreviews,
+  readXlsxShapeTheme,
+  readXlsxShapeThemeTarget,
+  type XlsxShapePreview,
+} from './xlsx-shape-preview.js'
 import { xlsxAttribute } from './xlsx-sheet-features.js'
 import type { DrawingAnchor } from '../vendor/packages/xlsx-gateway/src/gateway/xlsx-drawing-add.js'
 import { readXlsxTableBands, type XlsxTableBands } from './xlsx-table-styles.js'
@@ -30,6 +36,7 @@ export interface XlsxVisual {
   }
   svg?: string
   image?: string
+  shapePreview?: XlsxShapePreview
   shapeType?: string
   fillColor?: string
   text?: string
@@ -93,6 +100,14 @@ export async function readXlsxObjects(
     visuals: XlsxVisual[] = [],
     tables: XlsxTable[] = [],
     pivots: XlsxPivot[] = []
+  const themeTarget = readXlsxShapeThemeTarget(
+    (await zip.readText(xlsxRelsPath('xl/workbook.xml'))) ?? '',
+  )
+  const theme = themeTarget
+    ? readXlsxShapeTheme(
+        (await zip.readText(resolveXlsxPart('xl/workbook.xml', themeTarget))) ?? '',
+      )
+    : undefined
   for (const rel of rels) {
     if (rel.type.endsWith('/pivotTable')) {
       const xml = (await zip.readText(rel.path)) ?? '',
@@ -139,7 +154,8 @@ export async function readXlsxObjects(
     }
     if (!rel.type.endsWith('/drawing')) continue
     const xml = (await zip.readText(rel.path)) ?? '',
-      drawingRels = await relations(zip, rel.path)
+      drawingRels = await relations(zip, rel.path),
+      shapePreviews = readXlsxShapePreviews(xml, theme)
     for (const [index, match] of [...xml.matchAll(XLSX_ANCHOR_PATTERN)].entries()) {
       const block = match[0],
         from = marker(block, 'from'),
@@ -256,8 +272,8 @@ export async function readXlsxObjects(
         }
         visual.kind = 'image'
       } else {
-        visual.shapeType =
-          xlsxAttribute(/<(?:\w+:)?prstGeom\b[^>]*>/.exec(block)?.[0] ?? '', 'prst') ?? 'rect'
+        visual.shapePreview = shapePreviews.get(match.index) ?? { unsupported: true }
+        visual.shapeType = visual.shapePreview.element?.presetGeometry
         visual.fillColor = xlsxAttribute(
           /<(?:\w+:)?solidFill>\s*<(?:\w+:)?srgbClr\b[^>]*>/.exec(block)?.[0]?.split('>').at(-2) ??
             '',
@@ -266,6 +282,11 @@ export async function readXlsxObjects(
         visual.text = [...block.matchAll(/<(?:\w+:)?t\b[^>]*>([\s\S]*?)<\/(?:\w+:)?t>/g)]
           .map((m) => decodeXlsxXml(m[1]!))
           .join('\n')
+        const model = visual.shapePreview.element
+        if (model?.text)
+          visual.text = model.text.paragraphs
+            .map((p) => p.runs.map((r) => r.text).join(''))
+            .join('\n')
       }
       visuals.push(visual)
     }

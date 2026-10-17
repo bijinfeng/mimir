@@ -1,0 +1,72 @@
+.mimir-xlsx-inspector__content[data-mode='edit'],
+.mimir-xlsx-inspector__content[data-mode='edit'] > .me-property-form,
+.mimir-xlsx-inspector__content[data-mode='edit'] .mimir-xlsx-tools,
+.mimir-xlsx-inspector__content[data-mode='edit'] .mimir-xlsx-tools > fieldset,
+.mimir-xlsx-management {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+.mimir-xlsx-inspector__content[data-mode='edit'] {
+  overflow: hidden;
+  padding: 0;
+}
+.mimir-xlsx-inspector__content[data-mode='edit'] .mimir-xlsx-tools {
+  gap: 0;
+}
+.mimir-xlsx-inspector__content[data-mode='edit'] .mimir-xlsx-tools > .me-tabs {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0 12px 8px;
+}
+.mimir-xlsx-management__navigation {
+  display: grid;
+  gap: 8px;
+  padding: 8px 12px 12px;
+}
+.mimir-xlsx-inspector .mimir-xlsx-management__navigation > .me-tabs {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+}
+.mimir-xlsx-management__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.mimir-xlsx-tools .mimir-xlsx-management__configuration {
+  padding: 0 12px 12px;
+}
+.mimir-xlsx-management__configuration > .me-property-group {
+  margin-block-start: 12px;
+}
+.mimir-xlsx-management__secondary {
+  margin-block-start: 16px;
+}
+.mimir-xlsx-management__empty {
+  margin: 4px 0;
+  color: var(--me-text-weak);
+  font-size: var(--me-font-size-sm, 12px);
+  line-height: 1.6;
+}
+.mimir-xlsx-management__footer {
+  flex-shrink: 0;
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border-block-start: 1px solid var(--me-border);
+  background: var(--me-surface);
+}
+.mimir-xlsx-management__primary:empty,
+.mimir-xlsx-management__footer > [role='status']:empty {
+  display: none;
+}
+.mimir-xlsx-management__primary .me-btn {
+  width: 100%;
+}
+
+.mimir-xlsx-management__confirm {
+  display: block;
+}

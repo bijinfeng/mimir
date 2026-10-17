@@ -1,3 +1,4 @@
+import type { PptxDeckProgressListener } from '@mimir/shared'
 import { pptxImageInfo as imageInfo } from './pptx-image-info.js'
 import {
   pptxChartEditOpSchema,
@@ -38,6 +39,7 @@ import { applyPptxManualInk } from './pptx-manual-ink.js'
 import { applyPptxManualClipboard } from './pptx-manual-clipboard.js'
 import { applyPptxUpload } from './pptx-manual-upload.js'
 import { runPptxHostTxn } from './pptx-group-flip.js'
+import { preflightPptxPictureBullets } from './pptx-picture-bullet.js'
 
 /** Stateless service: the browser sends its current unsaved canvas and still owns Save. */
 export interface PptxHostRequest {
@@ -47,6 +49,10 @@ export interface PptxHostRequest {
   ops: unknown[]
   action?: PptxHostAction
   signal?: AbortSignal
+  generationId?: string
+  onDeckProgress?: PptxDeckProgressListener
+  /** Original user-selected bytes, scoped to this authenticated request only. */
+  attachments?: { name: string; mimeType: string; bytes: Uint8Array }[]
 }
 
 export interface PptxHostResult {
@@ -256,6 +262,7 @@ export async function applyPptxOpsOnHost(request: PptxHostRequest): Promise<Pptx
     }
     setSlideAnimations(slide, items)
   }
+  preflightPptxPictureBullets(opened, ops)
   const result = animationInput
     ? {
         applied: true,

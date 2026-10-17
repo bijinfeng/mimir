@@ -301,6 +301,16 @@
   transform: translate(calc(var(--col-dx, 0px) + var(--page-cx, 0px)), var(--col-dy, 0px));
 }
 
+/* A right-floated table anchors to the full shared flow box. Keep the extra
+   canvas width outside its section in the float margin (real wrap geometry),
+   while preserving the engine's original native-X margin expression. Flowed
+   tall tables use normal block placement and need no float compensation. */
+.mimir-docx-scroll .doc-page .mimir-docx-section-float-right:not(.doc-table-float-flow) {
+  margin-right: calc(
+    max(0px, 100% - var(--doc-content-w, 100%)) + var(--mimir-tbl-margin-right, 0px)
+  ) !important;
+}
+
 /*
  * 查找高亮。
  *

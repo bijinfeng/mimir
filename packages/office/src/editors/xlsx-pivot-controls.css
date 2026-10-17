@@ -38,6 +38,10 @@
   margin: 0;
 }
 .mimir-xlsx-pivot__body {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
   flex: 1;
   min-height: 0;
   overflow: auto;
@@ -95,6 +99,8 @@
 }
 .mimir-xlsx-pivot__footer p {
   margin: 0;
+  max-height: 4.5em;
+  overflow: auto;
   font-size: var(--me-font-size-sm, 12px);
   overflow-wrap: anywhere;
 }
@@ -135,4 +141,15 @@
   color: var(--me-danger);
   font-size: var(--me-font-size-sm, 12px);
   overflow-wrap: anywhere;
+}
+
+.mimir-xlsx-pivot__footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+.mimir-xlsx-pivot__footer-actions > .me-tb:last-child {
+  flex: 1;
+  min-width: 0;
 }

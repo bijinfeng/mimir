@@ -353,3 +353,127 @@ it('keeps the open cross-sheet pivot draft at a narrower width with all configur
     bounds.mockRestore()
   }
 })
+
+it('edits an existing native pivot through the real host once and preserves every native entry across save, undo/save and redo/save', async () => {
+  const execute = vi.fn<XlsxHostApply>(applyXlsxOpsOnHost),
+    ui = await mount(execute, true)
+  click(ui.host, '添加行字段')
+  pickSelectOption(ui.host, '行字段 2', '部门')
+  type(ui.host, '透视名称', '已有布局历史验收')
+  tab(ui.host, '汇总')
+  pickSelectOption(ui.host, '汇总方式 1', '平均值')
+  tab(ui.host, '字段')
+  click(ui.host, '创建数据透视表')
+  await wait(
+    () =>
+      ui.handle().getVersion() === 1 &&
+      !ui.host.querySelector('.mimir-xlsx-pivot[aria-busy="true"]'),
+  )
+  click(ui.host, '保存到库')
+  await wait(() => ui.saved.length === 1 && !ui.handle().isDirty())
+  const baseline = await entries(ui.saved[0]!)
+  pickSelectOption(ui.host, '透视表', '已有布局历史验收')
+  await wait(
+    () =>
+      !!ui.host.querySelector('[aria-label="编辑布局"]') && !button(ui.host, '编辑布局').disabled,
+  )
+  const originalVersion = ui.handle().getVersion(),
+    originalHistory = ui.handle().history()
+  execute.mockClear()
+  click(ui.host, '编辑布局')
+  expect(ui.handle().isDirty()).toBe(false)
+  expect(button(ui.host, '应用布局').disabled).toBe(true)
+  click(ui.host, '上移行字段 2')
+  tab(ui.host, '汇总')
+  pickSelectOption(ui.host, '汇总方式 1', '最大值')
+  click(ui.host, '应用布局')
+  await wait(
+    () =>
+      ui.handle().getVersion() === originalVersion + 1 &&
+      !ui.host.querySelector('.mimir-xlsx-pivot[aria-busy="true"]'),
+  )
+  expect(execute).toHaveBeenCalledTimes(1)
+  expect(execute.mock.calls[0]![0].ops[0]).toMatchObject({
+    op: 'edit_pivot_layout',
+    rowFields: ['部门', '区域'],
+    values: [{ field: '金额', agg: 'max' }],
+  })
+  expect(ui.handle().history().undo).toBe(originalHistory.undo + 1)
+  expect(ui.handle().isDirty()).toBe(true)
+  const edited = await entries(ui.handle().currentBytes())
+  for (const path of [
+    ui.fixture.workbook.sheets[0]!.entry,
+    ui.fixture.workbook.sheets[2]!.entry,
+    'customXml/mimir-pivot-preservation.xml',
+    'xl/sharedStrings.xml',
+    'xl/styles.xml',
+  ])
+    expect(edited[path]).toEqual(baseline[path])
+  click(ui.host, '保存到库')
+  await wait(() => ui.saved.length === 2 && !ui.handle().isDirty())
+  expect(await entries(ui.saved[1]!)).toEqual(edited)
+  await act(async () => {
+    await ui.handle().undo()
+  })
+  click(ui.host, '保存到库')
+  await wait(() => ui.saved.length === 3 && !ui.handle().isDirty())
+  expect(await entries(ui.saved[2]!)).toEqual(baseline)
+  await act(async () => {
+    await ui.handle().redo()
+  })
+  click(ui.host, '保存到库')
+  await wait(() => ui.saved.length === 4 && !ui.handle().isDirty())
+  expect(await entries(ui.saved[3]!)).toEqual(edited)
+  await wait(
+    () =>
+      !!ui.host.querySelector('[aria-label="编辑布局"]') && !button(ui.host, '编辑布局').disabled,
+  )
+  click(ui.host, '编辑布局')
+  tab(ui.host, '汇总')
+  expect(
+    ui.host.querySelector('[aria-label="汇总方式 1"]')?.closest('.ant-select')?.textContent,
+  ).toContain('最大值')
+})
+
+it('cancels pending layout publication when the Inspector closes and ignores a late valid host result', async () => {
+  let finish!: (result: Awaited<ReturnType<XlsxHostApply>>) => void
+  let pending: Parameters<XlsxHostApply>[0] | undefined
+  const execute = vi.fn<XlsxHostApply>(async (request) => {
+    if ((request.ops[0] as { op: string }).op === 'edit_pivot_layout') {
+      pending = request
+      return new Promise((resolve) => {
+        finish = resolve
+      })
+    }
+    return applyXlsxOpsOnHost(request)
+  })
+  const ui = await mount(execute, true)
+  type(ui.host, '透视名称', '取消布局验收')
+  click(ui.host, '创建数据透视表')
+  await wait(
+    () =>
+      ui.handle().getVersion() === 1 &&
+      !ui.host.querySelector('.mimir-xlsx-pivot[aria-busy="true"]'),
+  )
+  const original = await entries(ui.handle().currentBytes()),
+    history = ui.handle().history(),
+    version = ui.handle().getVersion()
+  pickSelectOption(ui.host, '透视表', '取消布局验收')
+  await wait(
+    () =>
+      !!ui.host.querySelector('[aria-label="编辑布局"]') && !button(ui.host, '编辑布局').disabled,
+  )
+  click(ui.host, '编辑布局')
+  tab(ui.host, '汇总')
+  pickSelectOption(ui.host, '汇总方式 1', '计数')
+  click(ui.host, '应用布局')
+  await wait(() => !!pending)
+  const valid = await applyXlsxOpsOnHost({ ...pending!, signal: undefined })
+  click(ui.host, '关闭工作表对象面板')
+  expect(pending!.signal?.aborted).toBe(true)
+  await act(async () => finish(valid))
+  await tick()
+  expect(ui.handle().getVersion()).toBe(version)
+  expect(ui.handle().history()).toEqual(history)
+  expect(await entries(ui.handle().currentBytes())).toEqual(original)
+})

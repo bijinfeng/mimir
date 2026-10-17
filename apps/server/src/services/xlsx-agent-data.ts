@@ -1,6 +1,8 @@
+import { xlsxManualSortSchema, type XlsxManualSort } from '@mimir/shared'
+import { cellMap, assertOrdinaryFormulas, replaceCells } from './xlsx-agent-range.js'
+import { materializeXlsxCellStyle, xlsxRangeStyles } from './xlsx-range-styles.js'
 import JSZip from 'jszip'
 import {
-  parseAddress,
   parseRange,
   columnIndex,
   formatAddress,
@@ -22,9 +24,49 @@ import { readXlsx } from '../../../../packages/office/src/xlsx.js'
 import { decodeXlsxXml } from '../../../../packages/office/src/xlsx-format.js'
 import type { XlsxHostResult } from './xlsx-agent-host.js'
 
+import { BoundedZip } from '../../../../packages/office/src/zip-bounds.js'
+import { assertXlsxRangeFeatures, assertXlsxSheetWritable } from './xlsx-range-features.js'
+
 const MAX_CELLS = 2_000
 function attr(xml: string, name: string): string | undefined {
   return new RegExp(`(?:^|\\s)${name}="([^"]*)"`).exec(xml)?.[1]
+}
+/** Decode only references present in the original validated sort attribute/cache. */
+function decodeSortXml(value: string): string {
+  return value.replace(
+    /&(?:#x([0-9a-fA-F]+)|#(\d+)|(amp|lt|gt|quot|apos));/g,
+    (entity: string, hex: string | undefined, decimal: string | undefined, named: string) => {
+      if (hex !== undefined) return String.fromCodePoint(Number.parseInt(hex, 16))
+      if (decimal !== undefined) return String.fromCodePoint(Number(decimal))
+      switch (named) {
+        case 'amp':
+          return '&'
+        case 'lt':
+          return '<'
+        case 'gt':
+          return '>'
+        case 'quot':
+          return '"'
+        case 'apos':
+          return "'"
+        default:
+          return entity
+      }
+    },
+  )
+}
+/** Read one attribute from the validated native c opening tag, decoding exactly once.
+ * Consuming complete quoted values avoids treating decoy t= text as an attribute.
+ */
+function sortCellType(xml: string): string | undefined {
+  const opening = /^<c\b((?:[^"'<>]|"[^"]*"|'[^']*')*)(?:\/>|>)/.exec(xml)?.[1]
+  if (opening === undefined) throw new Error('排序单元格原生起始标签无效')
+  for (const [, name, double, single] of opening.matchAll(
+    /([^\s=/>]+)\s*=\s*(?:"([^"]*)"|'([^']*)')/g,
+  )) {
+    if (name === 't') return decodeSortXml(double ?? single ?? '')
+  }
+  return undefined
 }
 function xmlText(value: string): string {
   return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
@@ -42,7 +84,7 @@ function sameRange(a: ReturnType<typeof parseRange>, b: ReturnType<typeof parseR
 export async function applyXlsxDataOperation(
   bytes: Uint8Array,
   before: ImportedXlsx,
-  op: WorkbookOperation,
+  op: WorkbookOperation | XlsxManualSort,
   version: number,
 ): Promise<XlsxHostResult> {
   if (!('sheetId' in op)) throw new Error('缺少工作表 ID')
@@ -52,46 +94,78 @@ export async function applyXlsxDataOperation(
   if (!sheet || !sheetView) throw new Error('工作表 ID 已失效')
   const zip = await JSZip.loadAsync(bytes)
   const originalXml = await zip.file(sheetView.entry)!.async('string')
-  if (/<sheetProtection\b/.test(originalXml)) throw new Error('工作表已保护，请先取消保护')
-  if (op.op === 'sort_range') {
+  assertXlsxSheetWritable(originalXml)
+  if (op.op === 'sort_range' || op.op === 'sort_range_multi') {
+    const rules =
+      op.op === 'sort_range_multi'
+        ? xlsxManualSortSchema.parse(op).rules
+        : [{ column: op.byColumn, order: op.order }]
+
     const bounds = parseRange(op.range)
     if (rangeCellCount(bounds) > MAX_CELLS) throw new Error('单次排序最多 2000 个格子')
-    const key = columnIndex(op.byColumn)
-    if (key < bounds.startColumn || key > bounds.endColumn) throw new Error('排序列必须在范围内')
+    if (bounds.endRow >= 1048576 || bounds.endColumn >= 16384)
+      throw new Error('排序范围超出工作表边界')
+    const keys = rules.map((rule) => ({ key: columnIndex(rule.column), order: rule.order }))
+    if (keys.some(({ key }) => key < bounds.startColumn || key > bounds.endColumn))
+      throw new Error('排序列必须在范围内')
     const first = bounds.startRow + (op.hasHeader ? 1 : 0)
     if (first >= bounds.endRow) throw new Error('排序范围至少包含两行数据')
-    // These features bind extra OOXML parts to addresses; moving only cells would detach them.
-    for (const feature of [
-      'mergeCells',
-      'hyperlinks',
-      'legacyDrawing',
-      'tableParts',
-      'conditionalFormatting',
-      'dataValidations',
-      'autoFilter',
-    ]) {
-      if (new RegExp(`<${feature}\\b`).test(originalXml))
-        throw new Error(`此工作表含 ${feature}，排序需同时迁移对应结构，当前不支持`)
-    }
-    const sourceCells = new Map<string, string>()
-    for (const [cellXml] of originalXml.matchAll(/<c\b[^>]*\/>|<c\b[^>]*>[\s\S]*?<\/c>/g)) {
-      const ref = attr(cellXml, 'r')
-      if (ref) sourceCells.set(ref, cellXml)
-    }
+    await assertXlsxRangeFeatures(await BoundedZip.open(bytes), sheetView.entry, originalXml, [
+      { ...bounds, startRow: first },
+    ])
+    // The native writer supports ordinary unprefixed sheetData/cells only. Do not silently
+    // treat a legal prefixed cell as an empty value. Implicit rows use replaceCells.
+    if (/<[\w.-]+:(?:sheetData|row|c|f|v|is|t)\b/.test(originalXml))
+      throw new Error('排序暂不支持带命名空间前缀的单元格结构')
+    const sourceCells = cellMap(originalXml)
+    const styleAt = xlsxRangeStyles(originalXml, sourceCells)
+    const inheritedAt = xlsxRangeStyles(originalXml, new Map())
     const rows = Array.from({ length: bounds.endRow - first + 1 }, (_row, i) =>
       Array.from({ length: bounds.endColumn - bounds.startColumn + 1 }, (_column, j) => {
         const address = formatAddress(first + i, bounds.startColumn + j)
         const cell = sheet.cells[address]
         if (
-          j === key - bounds.startColumn &&
+          keys.some(({ key }) => j === key - bounds.startColumn) &&
           cell?.formula &&
-          !/<v\b[^>]*>[^<]+<\/v>/.test(sourceCells.get(address) ?? '')
+          !/<v\b[^>]*(?:\/>|>[\s\S]*?<\/v>)/.test(sourceCells.get(address) ?? '')
         )
           throw new Error(`${address} 排序键公式无缓存结果；先重新计算`)
+        if (cell?.formula && keys.some(({ key }) => j === key - bounds.startColumn)) {
+          const raw = sourceCells.get(address) ?? ''
+          const match = /<v\b[^>]*(?:\/>|>([\s\S]*?)<\/v>)/.exec(raw)
+          if (!match) throw new Error(`${address} 排序键公式无缓存结果；先重新计算`)
+          const cache = decodeSortXml(match[1] ?? '')
+          // Read the actual c root attributes, not text resembling attributes inside a
+          // different quoted attribute, formula or cache. This accepts legal XML quote
+          // styles, character references and whitespace around equals consistently.
+          const type = sortCellType(raw)
+          if (type === 'str' || type === 'e') return cache
+          if (type === 'b') {
+            if (!['0', '1'].includes(cache))
+              throw new Error(`${address} 排序键布尔缓存无效；先重新计算`)
+            return cache === '1'
+          }
+          if (type !== undefined && type !== 'n')
+            throw new Error(`${address} 排序键缓存类型暂不支持`)
+          const number = Number(cache)
+          if (!cache.trim() || !Number.isFinite(number))
+            throw new Error(`${address} 排序键缓存无效；先重新计算`)
+          return number
+        }
         return cell?.rawValue ?? cell?.value ?? null
       }),
     )
-    const order = computeSortedRowOrder(rows, key - bounds.startColumn, op.order === 'asc')
+    let order = rows.map((_row, index) => index)
+    // Stable sorting from the last level preserves each lower-priority order on ties.
+    // Reuse the pinned typed comparator, including blanks-last in either direction.
+    for (const { key, order: direction } of keys.toReversed()) {
+      const previous = order
+      order = computeSortedRowOrder(
+        previous.map((index) => rows[index]!),
+        key - bounds.startColumn,
+        direction === 'asc',
+      ).map((index) => previous[index]!)
+    }
     const replacements = new Map<number, string[]>()
     const changedCells: string[] = []
     order.forEach((sourceIndex, offset) => {
@@ -101,16 +175,26 @@ export async function applyXlsxDataOperation(
       for (let column = bounds.startColumn; column <= bounds.endColumn; column++) {
         const sourceAddress = formatAddress(sourceRow, column)
         const targetAddress = formatAddress(targetRow, column)
-        let cellXml = sourceCells.get(sourceAddress) ?? ''
+        let cellXml = sourceCells.get(sourceAddress) ?? `<c r="${sourceAddress}"/>`
         if (/<f\b[^>]*(?:\bt=|\bref=|\bsi=)/.test(cellXml))
           throw new Error(`${sourceAddress} 是共享/数组公式；排序前需展开公式组`)
+        assertOrdinaryFormulas(cellXml)
+        // A stationary row must retain its complete original lexical XML, including
+        // entities, attribute spelling and absent cells, even when other rows move.
+        if (sourceRow === targetRow) continue
+        if (
+          sourceRow !== targetRow &&
+          styleAt(sourceRow, column) !== inheritedAt(targetRow, column)
+        ) {
+          cellXml = materializeXlsxCellStyle(cellXml, styleAt(sourceRow, column))
+        }
         if (cellXml) {
           cellXml = cellXml.replace(/\br="[^"]*"/, `r="${targetAddress}"`)
           cellXml = cellXml.replace(
             /(<f\b[^>]*>)([\s\S]*?)(<\/f>)/,
             (_all, open: string, formula: string, close: string) => {
               const translated = translateSharedFormula(
-                decodeXlsxXml(formula),
+                decodeSortXml(formula),
                 targetRow - sourceRow,
                 0,
               )
@@ -122,42 +206,20 @@ export async function applyXlsxDataOperation(
         }
         if (sourceRow !== targetRow) changedCells.push(`${sheet.id}:${targetAddress}`)
       }
-      replacements.set(targetRow, targetCells)
+      if (sourceRow !== targetRow) replacements.set(targetRow, targetCells)
     })
-    const sheetData = /<sheetData\b[^>]*>([\s\S]*?)<\/sheetData>/.exec(originalXml)
+    const sheetData = /<sheetData\b[^>]*(?:\/>|>[\s\S]*?<\/sheetData>)/.exec(originalXml)
     if (!sheetData) throw new Error('工作表缺少 sheetData')
-    const seen = new Set<number>()
-    let data = sheetData[1]!.replace(
-      /<row\b([^>]*?)(?:\/>|>([\s\S]*?)<\/row>)/g,
-      (full, attrs: string, content: string | undefined) => {
-        const row = Number(attr(attrs, 'r')) - 1
-        const incoming = replacements.get(row)
-        if (!incoming) return full
-        seen.add(row)
-        const existing = [...(content ?? '').matchAll(/<c\b[^>]*\/>|<c\b[^>]*>[\s\S]*?<\/c>/g)]
-          .map(([cellXml]) => cellXml)
-          .filter((cellXml) => {
-            const ref = attr(cellXml, 'r')
-            if (!ref) throw new Error('单元格缺少地址')
-            const col = parseAddress(ref).column
-            return col < bounds.startColumn || col > bounds.endColumn
-          })
-        const all = [...existing, ...incoming].toSorted(
-          (a, b) => parseAddress(attr(a, 'r')!).column - parseAddress(attr(b, 'r')!).column,
-        )
-        const extras = (content ?? '').replace(/<c\b[^>]*\/>|<c\b[^>]*>[\s\S]*?<\/c>/g, '')
-        return `<row${attrs}>${all.join('')}${extras}</row>`
-      },
-    )
-    for (const [row, cells] of replacements) {
-      if (seen.has(row) || !cells.length) continue
-      const newRow = `<row r="${row + 1}">${cells.join('')}</row>`
-      const next = [...data.matchAll(/<row\b[^>]*\br="(\d+)"/g)].find(
-        (match) => Number(match[1]) > row + 1,
-      )
-      data = next ? data.slice(0, next.index) + newRow + data.slice(next.index) : data + newRow
-    }
-    zip.file(sheetView.entry, originalXml.replace(sheetData[0], `<sheetData>${data}</sheetData>`))
+    // Stable identity order changes neither cells nor recalculation state.
+    if (!changedCells.length)
+      return { bytes: bytes.slice(), version, changedCells: [], touchedEntries: [] }
+    const incoming = new Map<string, string>()
+    for (const cells of replacements.values())
+      for (const cell of cells) incoming.set(attr(cell, 'r')!, cell)
+    let sortedXml = replaceCells(originalXml, incoming)
+    const dimension = /<dimension\b[^>]*?(?:\/>|>[\s\S]*?<\/dimension>)/
+    sortedXml = sortedXml.replace(dimension, originalXml.match(dimension)?.[0] ?? '')
+    zip.file(sheetView.entry, sortedXml)
     const touched = [sheetView.entry, 'xl/workbook.xml']
     const workbook = await zip.file('xl/workbook.xml')!.async('string')
     const calcPr = /<calcPr\b[^>]*\/>|<calcPr\b[^>]*>[\s\S]*?<\/calcPr>/

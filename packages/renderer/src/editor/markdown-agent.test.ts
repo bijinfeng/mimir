@@ -260,3 +260,59 @@ describe('Markdown Agent on the live note canvas', () => {
     expect(yaml).toContain('Before')
   })
 })
+
+it('propagates generated image ratio before inserting the real upload result in the current note', async () => {
+  const { vi } = await import('vitest')
+  const editor = new Editor({
+    element: document.createElement('div'),
+    extensions: createExtensions(),
+    content: 'Original',
+    contentType: 'markdown',
+  })
+  opened.push(editor)
+  const generated = vi.fn<() => Promise<{ dataUrl: string; mimeType: string }>>(async () => ({
+    dataUrl:
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X9WQAAAAASUVORK5CYII=',
+    mimeType: 'image/png',
+  }))
+  const upload = vi.fn<(file: File) => Promise<{ url: string; name: string }>>(async () => ({
+    url: '/api/documents/real-upload/file',
+    name: '海.png',
+  }))
+  const handle = createMarkdownAgentHandle(editor, 'note', {
+    isDirty: () => false,
+    onDirtyChange: () => {},
+    services: {
+      generateImage: generated,
+      uploadImage: upload,
+      fetchImage: async () => {
+        throw new Error('unused')
+      },
+      writeDocument: async () => {
+        throw new Error('unused')
+      },
+      readFrontmatter: async () => '',
+      writeFrontmatter: async () => '',
+    },
+  })
+  const signal = new AbortController().signal
+  expect(
+    await handle.execute(
+      'generate_image',
+      { prompt: '海', aspectRatio: '16:9' },
+      { signal, expectedVersion: handle.getVersion() },
+    ),
+  ).toMatchObject({ ok: true, changed: true })
+  expect(generated).toHaveBeenCalledWith('海', signal, '16:9')
+  expect(upload.mock.calls[0]![0].type).toBe('image/png')
+  expect(editor.getMarkdown()).toContain('/api/documents/real-upload/file')
+  generated.mockClear()
+  expect(
+    await handle.execute(
+      'generate_image',
+      { prompt: '海', aspectRatio: 'invalid' },
+      { expectedVersion: handle.getVersion() },
+    ),
+  ).toMatchObject({ ok: false, changed: false })
+  expect(generated).not.toHaveBeenCalled()
+})

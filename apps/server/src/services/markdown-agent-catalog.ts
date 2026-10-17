@@ -1,3 +1,5 @@
+import { agentImageAspectRatioSchema } from '@mimir/shared'
+import { z } from 'zod'
 import { DOCX_CLIENT_TOOL_OUTPUT_SCHEMA } from '@mimir/shared'
 import type { ModelCallOptions } from './model.js'
 import type { DocumentAgentCatalog } from './document-agent-catalog.js'
@@ -138,6 +140,7 @@ const WRITE_TOOLS = [
       type: 'object',
       properties: {
         prompt: { type: 'string' },
+        aspectRatio: z.toJSONSchema(agentImageAspectRatioSchema),
         afterIndex: { type: 'integer' },
         alt: { type: 'string' },
       },

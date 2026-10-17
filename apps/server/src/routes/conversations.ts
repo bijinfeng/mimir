@@ -1,5 +1,7 @@
+import { pptxDeckStream } from '../services/pptx-deck-stream.js'
+import { agentImageGenerationSchema, agentMediaAnalysisInputSchema } from '@mimir/shared'
 import { layoutPdfTextInsert } from '../services/pdf-insert-layout.js'
-import { Hono } from 'hono'
+import { Hono, type Context } from 'hono'
 import { z } from 'zod'
 import {
   askInputSchema,
@@ -12,6 +14,8 @@ import {
   pptxManualUploadSchema,
   pptxHostActionSchema,
   xlsxHostActionSchema,
+  xlsxValidationConsentSchema,
+  XlsxValidationConfirmationError,
   PPTX_IMAGE_MAX_BYTES,
   PPTX_ASSET_MAX_BYTES,
   pdfTextProbeSchema,
@@ -214,12 +218,48 @@ conversationsRoute.post('/pptx-agent/apply-ops', async (c) => {
   }
   if (!Array.isArray(ops) || ops.length < 1 || ops.length > 50)
     throw new HttpError(400, 'INVALID_INPUT', 'PPTX 操作批次必须包含 1–50 项')
+  const files = form.getAll('attachment')
+  if (files.length > 4 || files.some((item) => !(item instanceof File)))
+    throw new HttpError(400, 'INVALID_INPUT', '附件最多4个文件')
+  const attachments: { name: string; mimeType: string; bytes: Uint8Array }[] = []
+  let attachmentSize = 0
+  const names = new Set<string>()
+  for (const value of files) {
+    const attachment = value as File
+    attachmentSize += attachment.size
+    if (!attachment.size || attachment.size > 8 * 1024 * 1024 || attachmentSize > 16 * 1024 * 1024)
+      throw new HttpError(413, 'PPTX_ATTACHMENT_TOO_LARGE', '附件每张最多8 MiB，合计16 MiB')
+    if (names.has(attachment.name))
+      throw new HttpError(400, 'INVALID_INPUT', '同名附件存在歧义，请重命名后选择')
+    names.add(attachment.name)
+    attachments.push({
+      name: attachment.name,
+      mimeType: attachment.type,
+      bytes: new Uint8Array(await attachment.arrayBuffer()),
+    })
+  }
+  if (c.req.query('stream') === '1') {
+    const generation = z.string().min(1).max(100).safeParse(form.get('generationId'))
+    if (values.data.action !== 'generate_deck' || !generation.success)
+      throw new HttpError(400, 'INVALID_INPUT', '分页生成请求无效')
+    return pptxDeckStream({
+      documentId: values.data.documentId,
+      bytes: new Uint8Array(await file.arrayBuffer()),
+      expectedVersion: values.data.expectedVersion,
+      ops,
+      attachments,
+      action: 'generate_deck',
+      generationId: generation.data,
+      signal: c.req.raw.signal,
+    })
+  }
   try {
     const result = await applyPptxOpsOnHost({
       documentId: values.data.documentId,
       bytes: new Uint8Array(await file.arrayBuffer()),
       expectedVersion: values.data.expectedVersion,
       ops,
+      attachments,
       action: values.data.action,
       signal: c.req.raw.signal,
     })
@@ -374,12 +414,14 @@ conversationsRoute.post('/xlsx-agent/apply-ops', async (c) => {
         .pipe(z.number().int().nonnegative()),
       ops: z.string().max(1_000_000),
       action: xlsxHostActionSchema,
+      validationConsent: z.string().max(512).nullable(),
     })
     .safeParse({
       documentId: form.get('documentId'),
       expectedVersion: form.get('expectedVersion'),
       ops: form.get('ops'),
       action: form.get('action') ?? 'apply_ops',
+      validationConsent: form.get('validationConsent'),
     })
   if (!values.success) throw new HttpError(400, 'INVALID_INPUT', 'XLSX 操作参数无效')
   let ops: unknown
@@ -394,8 +436,20 @@ conversationsRoute.post('/xlsx-agent/apply-ops', async (c) => {
     (values.data.action === 'apply_ops' ? ops.length < 1 : ops.length !== 0)
   )
     throw new HttpError(400, 'INVALID_INPUT', 'XLSX 操作批次必须包含 1–50 项')
+  let validationConsent
+  if (values.data.validationConsent !== null) {
+    try {
+      validationConsent = xlsxValidationConsentSchema.parse(
+        JSON.parse(values.data.validationConsent),
+      )
+    } catch {
+      throw new HttpError(400, 'INVALID_INPUT', '数据验证确认参数无效')
+    }
+  }
   try {
     const result = await applyXlsxOpsOnHost({
+      principal: c.get('user').id,
+      validationConsent,
       documentId: values.data.documentId,
       bytes: new Uint8Array(await file.arrayBuffer()),
       expectedVersion: values.data.expectedVersion,
@@ -415,6 +469,10 @@ conversationsRoute.post('/xlsx-agent/apply-ops', async (c) => {
       recalculation: result.recalculation,
     })
   } catch (error) {
+    if (error instanceof XlsxValidationConfirmationError)
+      throw new HttpError(409, 'XLSX_VALIDATION_CONFIRMATION', error.message, {
+        validationWarning: error.warning,
+      })
     throw new HttpError(
       400,
       'XLSX_OPERATION_FAILED',
@@ -1065,14 +1123,19 @@ conversationsRoute.post('/markdown-agent/generate-image', async (c) => {
   const input = await parseInput(
     c,
     'json',
-    markdownDocumentId.extend({ prompt: z.string().trim().min(1).max(2_000) }),
+    markdownDocumentId.extend(agentImageGenerationSchema.shape),
   )
   await requireMarkdownNote(input.documentId)
   const capability = await documentAgentCapabilities(input.documentId)
   if (!capability?.availableTools.includes('generate_image'))
     throw new HttpError(409, 'MARKDOWN_IMAGE_UNAVAILABLE', '请先配置图片生成服务')
   try {
-    return c.json(await generateDocxImage(input.prompt, input.documentId))
+    return c.json(
+      await generateDocxImage(input.prompt, input.documentId, {
+        aspectRatio: input.aspectRatio,
+        signal: c.req.raw.signal,
+      }),
+    )
   } catch (error) {
     throw new HttpError(
       500,
@@ -1188,7 +1251,7 @@ conversationsRoute.post('/docx-agent/generate-image', async (c) => {
     'json',
     z.object({
       documentId: z.string().min(1).max(200),
-      prompt: z.string().trim().min(1).max(2_000),
+      ...agentImageGenerationSchema.shape,
     }),
   )
   const capabilities = await docxAgentCapabilities(input.documentId)
@@ -1197,7 +1260,12 @@ conversationsRoute.post('/docx-agent/generate-image', async (c) => {
     throw new HttpError(409, 'DOCX_IMAGE_UNAVAILABLE', '请先配置聊天模型和 DOCX 图片生成服务')
   }
   try {
-    return c.json(await generateDocxImage(input.prompt, input.documentId))
+    return c.json(
+      await generateDocxImage(input.prompt, input.documentId, {
+        aspectRatio: input.aspectRatio,
+        signal: c.req.raw.signal,
+      }),
+    )
   } catch (error) {
     throw new HttpError(
       500,
@@ -1242,27 +1310,16 @@ conversationsRoute.post('/docx-agent/write-document', async (c) => {
   return streamDocxWriting({ ...input, signal: c.req.raw.signal })
 })
 
-conversationsRoute.post('/docx-agent/analyze-media', async (c) => {
-  const input = await parseInput(
-    c,
-    'json',
-    z.object({
-      documentId: z.string().min(1).max(200),
-      instruction: z.string().trim().min(1).max(4_000),
-      kind: z.enum(['image', 'audio', 'video']),
-      media: z
-        .array(z.object({ mimeType: z.string().max(100), data: z.string().max(14_000_000) }))
-        .min(1)
-        .max(4),
-    }),
-  )
-  const capabilities = await docxAgentCapabilities(input.documentId)
-  if (!capabilities) throw new HttpError(404, 'DOCX_NOT_FOUND', '当前文档不是可编辑的 DOCX 文件')
+const analyzeMediaHandler = async (c: Context<AppEnv>) => {
+  const input = await parseInput(c, 'json', agentMediaAnalysisInputSchema)
+  const capabilities = await documentAgentCapabilities(input.documentId)
+  if (!capabilities || !['docx', 'pptx'].includes(capabilities.format))
+    throw new HttpError(404, 'DOCUMENT_NOT_FOUND', '当前文档不支持媒体分析')
   if (!capabilities.availableTools.includes('analyze_media')) {
     throw new HttpError(409, 'DOCX_MEDIA_UNAVAILABLE', '请先配置 DOCX 媒体分析服务')
   }
   try {
-    return c.json(await analyzeDocxMedia(input))
+    return c.json(await analyzeDocxMedia({ ...input, signal: c.req.raw.signal }))
   } catch (error) {
     if (error instanceof DocxMediaInputError)
       throw new HttpError(400, 'DOCX_MEDIA_INVALID', error.message)
@@ -1272,7 +1329,9 @@ conversationsRoute.post('/docx-agent/analyze-media', async (c) => {
       error instanceof Error ? error.message : '媒体分析失败',
     )
   }
-})
+}
+conversationsRoute.post('/docx-agent/analyze-media', analyzeMediaHandler)
+conversationsRoute.post('/document-agent/analyze-media', analyzeMediaHandler)
 
 conversationsRoute.post('/document-agent/create-document', async (c) => {
   const input = await parseInput(c, 'json', documentAgentCreateInputSchema)

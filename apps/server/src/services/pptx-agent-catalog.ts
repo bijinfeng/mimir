@@ -1,5 +1,7 @@
 import {
   DOCX_CLIENT_TOOL_OUTPUT_SCHEMA,
+  pptxImageGenerationSchema,
+  pptxMediaAnalysisSchema,
   pptxChartEditOpSchema,
   pptxDeckPlanSchema,
   pptxGenerateDeckSchema,
@@ -103,7 +105,7 @@ const serviceTools = [
   {
     name: 'insert_web_image',
     description:
-      '将公开HTTP(S)图片或generate_image返回的mimir-generated引用插入当前画布。位置尺寸为px，按比例填充并居中裁切；不得提供本机路径。',
+      '将公开HTTP(S)图片、attachment://原文件名（用户选择原文件）或generate_image返回的mimir-generated引用插入当前画布。位置尺寸为px，按比例填充并居中裁切；不得提供本机路径。',
     inputSchema: z.toJSONSchema(pptxInsertWebImageSchema),
   },
   {
@@ -133,7 +135,7 @@ const serviceTools = [
   {
     name: 'generate_deck',
     description:
-      '从topic+approx_pages自动分批规划并逐页生成原生可编辑演示文稿，也可直接提供pages。insert_mode为replace或append。图片关键词经真实搜索解析；无图片服务时可传已知URL或空列表。全部页生成成功后才整体更新画布；任一失败或停止保留原画布。具体数字须声明dataSource。style_template复用已保存样式。',
+      '从topic+approx_pages自动分批规划并逐页生成原生可编辑演示文稿，也可直接提供pages。insert_mode为replace或append。图片关键词经真实搜索解析；无图片服务时可传已知URL或空列表。逐页显示临时预览；全完成一次更新画布，停止或后页失败可由用户明确保留已完成页或丢弃，确认前原画布不变。具体数字须声明dataSource。style_template复用已保存样式。',
     inputSchema: z.toJSONSchema(pptxGenerateDeckSchema),
   },
   {
@@ -164,27 +166,19 @@ export async function pptxAgentCatalog(): Promise<DocumentAgentCatalog> {
           {
             name: 'generate_image',
             description:
-              '使用已配置图片模型生成新图片，返回有效20分钟的受控图片引用；再用insert_web_image或replace_image落画布。此配置只支持文字生成。',
-            inputSchema: object({ prompt: { type: 'string', minLength: 1, maxLength: 2000 } }, [
-              'prompt',
-            ]),
+              '使用已配置图片模型生成新图片，返回有效20分钟的受控图片引用；再用insert_web_image或replace_image落画布。支持aspectRatio离散尺寸；GPT Image支持referenceImageUrls（公开URL或attachment://原文件名）及transparentBackground真实透明PNG；DALL-E不支持这两项，须切换模型。',
+            inputSchema: z.toJSONSchema(pptxImageGenerationSchema),
             outputSchema: DOCX_CLIENT_TOOL_OUTPUT_SCHEMA,
           },
         ]
       : []),
-    ...(media.vision
+    ...(media.vision || media.audio
       ? [
           {
             name: 'analyze_media',
             description:
-              '分析一个公开图片URL或最多4个已抽取的视频帧URL；返回素材摘要。原音视频文件需要先转录/抽帧。不得传本机路径。',
-            inputSchema: object(
-              {
-                mediaUrls: { type: 'array', minItems: 1, maxItems: 4, items: { type: 'string' } },
-                requirements: { type: 'string', minLength: 1, maxLength: 4000 },
-              },
-              ['mediaUrls', 'requirements'],
-            ),
+              '分析原始媒体。kind=image可用mediaUrls公开图片/attachment://原文件名；kind=audio或video将请用户选择本地原文件。音频须转录服务；视频默认抽取4个时间点画面，不含声音，includeAudio:true同时转录可解码的音轨且须转录配置。视频最长120秒/32MiB；源文件不入知识库。不要传本机路径。',
+            inputSchema: z.toJSONSchema(pptxMediaAnalysisSchema),
             outputSchema: DOCX_CLIENT_TOOL_OUTPUT_SCHEMA,
           },
         ]
@@ -221,7 +215,9 @@ export async function pptxAgentCatalog(): Promise<DocumentAgentCatalog> {
           ]
         : []),
       ...(!image ? [{ name: 'generate_image', reason: '请配置图片生成模型' }] : []),
-      ...(!media.vision ? [{ name: 'analyze_media', reason: '请配置并启用视觉模型' }] : []),
+      ...(!media.vision && !media.audio
+        ? [{ name: 'analyze_media', reason: '请配置视觉模型或音频转录服务' }]
+        : []),
     ],
   }
 }
