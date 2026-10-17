@@ -28,11 +28,13 @@ const tick = () =>
     await new Promise((resolve) => setTimeout(resolve, 0))
   })
 async function wait(ready: () => boolean) {
-  for (let i = 0; i < 100; i++) {
-    if (ready()) return
-    await tick()
-  }
-  expect(ready()).toBe(true)
+  await vi.waitFor(
+    async () => {
+      await tick()
+      expect(ready()).toBe(true)
+    },
+    { timeout: 3000, interval: 10 },
+  )
 }
 function button(host: HTMLElement, name: string) {
   const found = host.querySelector<HTMLButtonElement>(`button[aria-label="${name}"]`)

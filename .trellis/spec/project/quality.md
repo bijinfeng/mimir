@@ -15,6 +15,11 @@
 
 ---
 
+## 检查输入范围
+
+根 `.oxlintrc.json` 与 `.oxfmtrc.json` 的排除项只用于生成产物、第三方发布文件和本地缓存。安装在 `.agents/skills/impeccable/scripts/`、`.claude/skills/impeccable/scripts/`、`.github/skills/impeccable/scripts/` 的发布脚本及 `.pnpm-store/` 不属于本项目维护源码；产品代码仍由原规则检查。新增排除须指向具体产物路径并说明来源，不能用排除产品目录或降低规则来使质量门通过。
+
+异步行为测试以真实操作完成、版本发布与界面解锁作为等待条件；固定延时不能证明完成。涉及迟到结果时用可控 promise 分别守住“发布前”和“请求返回后”的边界，并在卸载前结算本测试创建的异步链。
 
 ## 完成定义
 

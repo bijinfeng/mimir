@@ -63,6 +63,12 @@
   "ignorePatterns": [
     "**/dist/**",
     "**/node_modules/**",
+    // Installed Impeccable release scripts are third-party artifacts, not project source.
+    ".agents/skills/impeccable/scripts/**",
+    ".claude/skills/impeccable/scripts/**",
+    ".github/skills/impeccable/scripts/**",
+    // Local package-manager cache contains dependency metadata, not maintained source.
+    ".pnpm-store/**",
     "**/routeTree.gen.ts",
     "**/drizzle/**",
     "output/**",

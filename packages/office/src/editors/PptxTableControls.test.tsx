@@ -142,14 +142,13 @@ async function setup(rejected = false, merged = false) {
     }
   }
   const submit = async () => {
+    click(button(host, '应用表格样式'))
+    const submission = apply.mock.results.at(-1)
+    expect(submission?.type).toBe('return')
     await act(async () => {
-      button(host, '应用表格样式').click()
-      await new Promise((finish) => setTimeout(finish, 35))
+      await submission!.value
     })
-    for (let i = 0; i < 40 && host.querySelector('[aria-busy="true"]'); i++)
-      await act(async () => {
-        await new Promise((finish) => setTimeout(finish, 5))
-      })
+    expect(host.querySelector('[aria-busy="true"]')).toBeNull()
     let result: Awaited<ReturnType<typeof readTwice>> | undefined
     await act(async () => {
       result = await readTwice()
@@ -285,8 +284,10 @@ it('a late successful submission preserves a newer style draft after the canvas 
   pickSelectOption(host, '表格方向', '从左到右')
   await act(async () => {
     finish()
-    await pending
+    // The gate resolves before the wrapper and component finally have completed.
+    await apply.mock.results.at(-1)!.value
   })
+  expect(host.querySelector('[aria-busy="true"]')).toBeNull()
   expect(selectValueText(host, '表格方向')).toBe('从左到右')
   expect(button(host, '应用表格样式').disabled).toBe(false)
 })

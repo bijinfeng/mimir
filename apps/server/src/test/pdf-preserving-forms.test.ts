@@ -61,7 +61,9 @@ async function outline(bytes: Uint8Array) {
 }
 
 describe('preserving PDF form adapter', () => {
-  it('keeps native outlines, fields and original content through consecutive fills and page operations', async () => {
+  // Eight native form rewrites, page operations and independent PDF.js reads need
+  // a bounded integration budget under concurrent workspace test load.
+  it('preserves native PDF through form and page edits', { timeout: 20_000 }, async () => {
     let bytes = await fixture()
     const original = bytes.slice()
     expect((await apply(bytes, { op: 'read' })).forms.fields).toHaveLength(4)

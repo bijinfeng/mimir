@@ -127,11 +127,15 @@ interface Recorder {
  * 不出现。所以每轮让出一次宏任务。
  */
 async function settle(done: () => boolean): Promise<void> {
-  for (let i = 0; i < 60 && !done(); i += 1) {
-    await act(async () => {
-      await new Promise((tick) => setTimeout(tick, 2))
-    })
-  }
+  await vi.waitFor(
+    async () => {
+      await act(async () => {
+        await new Promise((tick) => setTimeout(tick, 0))
+      })
+      expect(done()).toBe(true)
+    },
+    { timeout: 3000, interval: 10 },
+  )
 }
 
 async function waitForPlayback(check: () => void): Promise<void> {
