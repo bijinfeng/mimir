@@ -206,3 +206,76 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+
+## Session 9: 六格式工具补齐与最终浏览器质量门
+<!-- trellis-session: v=2 fp=0a8520235c335eb8 -->
+
+**Date**: 2026-10-17
+**Task**: 六格式工具补齐与最终浏览器质量门
+**Package**: office
+**Branch**: `codex/fnos-native-platform`
+
+### Summary
+
+固定GenOffice与用户追加本地OCR的代码/浏览器范围完成；原样全仓check和生产构建通过，保留真实provider与用户自行验收边界。
+
+### Main Changes
+
+- 完成XLSX六模式特殊粘贴及CDATA、图片比例/引用透明/原附件/原音视频、PPTX批量图片符号与逐页生成保留；统一320px Inspector与宽窄屏交互。
+- 修复跨来源DOCX导出锁所有权，完成独立总范围复核；同步六矩阵、最终质量报告和生命周期规范。
+
+### Git Commits
+
+(No commits - planning session)
+
+### Testing
+
+- [OK] 原样pnpm check第三轮exit0：4606通过、2既有跳过；14包类型与lint/styles/format通过，有22条lint warning。
+- [OK] 最终Web生产构建exit0；1764个源码/配置起止哈希不变，HEAD 94ee032；真实浏览器1280×800与420×500、native/history/重开通过。
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 用户稍后自行输入验收DOCX新建/更改打开密码及Desktop；可用provider配置后再验真实模型，当前未宣称通过。
+- 代码保留工作树未提交，任务保留in_progress；最终证据见10-11-chat-edit-office/research/final-quality-check-20261017.md。
+
+
+## Session 10: 补交编辑器工具并固定每轮提交节奏
+<!-- trellis-session: v=2 fp=46c6e4303508f744 -->
+
+**Date**: 2026-10-17
+**Task**: 补交编辑器工具并固定每轮提交节奏
+**Package**: office
+**Branch**: `codex/fnos-native-platform`
+
+### Summary
+
+按用户要求补交已验收的编辑器实现、测试、规范和浏览器记录，并将每轮实现验收后及时提交写入AGENTS.md。
+
+### Main Changes
+
+- 显式提交347个当前任务文件；保留其他会话的主题、技能、vendor测试原件等改动。
+- 提交前独立清理三处纯空白，限定lint/格式通过；CFB补丁上下文保留，SHA及反向应用验证通过。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `6bf29f2` | feat(office): complete editor tools and native workflows |
+
+### Testing
+
+- [OK] 沿用原样全仓pnpm check 4606通过/2既有跳过和最终Web构建；提交前220源码/配置与冻结快照一致，仅随后测试helper删除行末空格。
+- [OK] 显式暂存清单、cached差异检查（排除已单独验证的patch格式）、无关文件哈希保留检查通过。
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 后续每轮实现与验收后提交并记录commit；用户密码与Desktop自行验收，真实provider配置后再验；不自动推送。
