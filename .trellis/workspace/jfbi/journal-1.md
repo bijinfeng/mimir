@@ -183,3 +183,26 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+
+## Session 8: Yuque UI refinement and repository quality gate
+<!-- trellis-session: v=2 fp=8d4fbbb6de3f8e1f -->
+
+**Date**: 2026-10-17
+**Task**: Yuque UI refinement and repository quality gate
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+完成语雀风格视觉与交互精修收尾，恢复44–72px工具栏适配与浅深浏览器主题色；修复检查输入范围和PPTX/Pivot异步等待，保留原件与行为断言。稳定窗口原样pnpm check退出0：4231项通过、2项既有跳过，1714源码与配置前后摘要不变；Desktop构建及390px/1280px实测通过。按用户确认的两批方案提交，仅暂存共享文件的独立hunk，其余Office和技能安装工作保留给并行会话；本任务已归档。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `7500b69` | fix(check): bound repository scanning and await editor submissions |
+| `1b101f2` | fix(ui): fit compact commands and sync browser theme color |
+
+### Status
+
+[OK] **Completed**

@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 7
-- **Last Active**: 2026-10-16
+- **Total Sessions**: 8
+- **Last Active**: 2026-10-17
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~185 | Active |
+| `journal-1.md` | ~208 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 8 | 2026-10-17 | Yuque UI refinement and repository quality gate | `7500b69`, `1b101f2` | `codex/all-pages-polish` |
 | 7 | 2026-10-16 | 六格式工具栏补全与验证 | `a35886e`, `7ba52b4` | `codex/fnos-native-platform` |
 | 6 | 2026-10-15 | 全站界面打磨与跨端验收 | `8670637`, `dfd44db` | `codex/all-pages-polish` |
 | 5 | 2026-10-12 | PDF/PPTX page thumbnail navigation | `4f111ab`, `938ab7c` | `codex/fnos-native-platform` |
