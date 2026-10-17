@@ -1,5 +1,11 @@
+import { usePptxPicturePreview } from './use-pptx-picture-preview.js'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
-import { PPTX_ASSET_MAX_BYTES, type PptxManualUpload } from '@mimir/shared'
+import {
+  PPTX_ASSET_MAX_BYTES,
+  PPTX_PICTURE_ACCEPT,
+  PPTX_PICTURE_FORMATS,
+  type PptxManualUpload,
+} from '@mimir/shared'
 import type { PictureElement } from '../../vendor/packages/pptx-engine/src/types.js'
 import { openPptxForEdit, type PptxEditSession } from '../pptx.js'
 import { renderSlide } from '../pptx-render.js'
@@ -8,6 +14,7 @@ import {
   ToolbarFileButton,
   ToolbarMenuFields,
   ToolbarMenuNote,
+  ToolbarPropertyForm,
   ToolbarSelect,
   ToolbarTextField,
 } from '../shell/EditorShell.js'
@@ -138,69 +145,98 @@ export function PptxImageFillControls({
   elementId: string | null
   upload: PptxUpload
 }) {
-  const { selected, select } = useFilePreview()
+  const { selected, choose, preparing, error } = usePptxPicturePreview()
+  const pending = useRef(false)
   const [destination, setDestination] = useState(elementId ? 'shape' : 'background')
   const [mode, setMode] = useState('stretch')
   const [busy, setBusy] = useState(false)
   return (
-    <PptxControlPanel busy={busy}>
-      <ToolbarMenuFields label="图片填充">
-        <ToolbarSelect
-          label="填充位置"
-          value={destination}
-          options={[
-            { value: 'shape', label: '所选形状或文本框' },
-            { value: 'background', label: '当前幻灯片背景' },
-          ]}
-          onChange={setDestination}
+    <fieldset
+      className="mimir-pptx-control-panel mimir-pptx-image-fill"
+      disabled={busy}
+      aria-busy={busy}
+      aria-label="图片填充设置"
+    >
+      <div className="mimir-pptx-image-fill__body">
+        <ToolbarPropertyForm columns={1}>
+          {busy && <p role="status">正在应用修改…</p>}
+          <ToolbarMenuFields label="图片填充">
+            <ToolbarSelect
+              label="填充位置"
+              value={destination}
+              options={[
+                { value: 'shape', label: '所选形状或文本框' },
+                { value: 'background', label: '当前幻灯片背景' },
+              ]}
+              onChange={setDestination}
+            />
+            <ToolbarFileButton
+              label="选择填充图片"
+              accept={PPTX_PICTURE_ACCEPT}
+              onPick={(file) => {
+                void choose(file)
+              }}
+            >
+              选择图片
+            </ToolbarFileButton>
+            {selected && (
+              <>
+                <img className="mimir-pptx-asset-preview" src={selected.url} alt="所选填充图片" />
+                <ToolbarMenuNote>{assetNote(selected.file)}</ToolbarMenuNote>
+              </>
+            )}
+            {preparing && <ToolbarMenuNote>正在准备图片预览…</ToolbarMenuNote>}
+            {error && <p role="alert">{error}</p>}
+            {selected?.info.ext === 'tiff' && (
+              <ToolbarMenuNote>TIFF 显示尺寸最大的安全页面，保存保留全部页面。</ToolbarMenuNote>
+            )}
+            <ToolbarSelect
+              label="填充方式"
+              value={mode}
+              options={[
+                { value: 'stretch', label: '拉伸填满' },
+                { value: 'tile', label: '平铺' },
+              ]}
+              onChange={setMode}
+            />
+            <ToolbarMenuNote>
+              {PPTX_PICTURE_FORMATS}，不超过8 MiB。替换填充后仍可编辑形状文字和边框。
+            </ToolbarMenuNote>
+          </ToolbarMenuFields>
+        </ToolbarPropertyForm>
+      </div>
+      <div className="mimir-pptx-image-fill__footer">
+        <ToolbarButton
+          primary
+          label="应用图片填充"
+          disabled={
+            preparing ||
+            !selected ||
+            selected.file.size > 8 * 1024 * 1024 ||
+            (destination === 'shape' && !elementId)
+          }
+          disabledReason={
+            destination === 'shape' && !elementId
+              ? '先选择形状或文本框'
+              : '请选择不超过8 MiB的有效图片'
+          }
+          onClick={() => {
+            if (!selected || pending.current) return
+            pending.current = true
+            setBusy(true)
+            void upload(
+              destination === 'shape'
+                ? { kind: 'image_fill', slide, elementId: elementId!, tile: mode === 'tile' }
+                : { kind: 'image_background', slide, tile: mode === 'tile' },
+              selected.file,
+            ).finally(() => {
+              pending.current = false
+              setBusy(false)
+            })
+          }}
         />
-        <ToolbarFileButton label="选择填充图片" accept=".png,.jpg,.jpeg" onPick={select}>
-          选择图片
-        </ToolbarFileButton>
-        {selected && (
-          <>
-            <img className="mimir-pptx-asset-preview" src={selected.url} alt="所选填充图片" />
-            <ToolbarMenuNote>{assetNote(selected.file)}</ToolbarMenuNote>
-          </>
-        )}
-        <ToolbarSelect
-          label="填充方式"
-          value={mode}
-          options={[
-            { value: 'stretch', label: '拉伸填满' },
-            { value: 'tile', label: '平铺' },
-          ]}
-          onChange={setMode}
-        />
-        <ToolbarMenuNote>
-          PNG或JPEG，不超过8 MiB。替换填充后仍可编辑形状文字和边框。
-        </ToolbarMenuNote>
-      </ToolbarMenuFields>
-      <ToolbarButton
-        primary
-        label="应用图片填充"
-        disabled={
-          !selected ||
-          selected.file.size > 8 * 1024 * 1024 ||
-          (destination === 'shape' && !elementId)
-        }
-        disabledReason={
-          destination === 'shape' && !elementId
-            ? '先选择形状或文本框'
-            : '请选择不超过8 MiB的PNG或JPEG'
-        }
-        onClick={() => {
-          if (!selected) return
-          setBusy(true)
-          void upload(
-            destination === 'shape'
-              ? { kind: 'image_fill', slide, elementId: elementId!, tile: mode === 'tile' }
-              : { kind: 'image_background', slide, tile: mode === 'tile' },
-            selected.file,
-          ).finally(() => setBusy(false))
-        }}
-      />
-    </PptxControlPanel>
+      </div>
+    </fieldset>
   )
 }
 

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { htmlPageBriefSchema } from './html-brief.js'
 import type { DocumentDetail } from './documents.js'
 import { viewerFor } from './files.js'
 
@@ -18,6 +19,7 @@ export const pptxHostActionSchema = z.enum([
   'manual_animation',
   'manual_shape',
   'manual_paragraph',
+  'manual_picture',
   'insert_web_image',
   'replace_image',
   'plan_deck',
@@ -205,21 +207,7 @@ export interface DocumentAgentCapabilities {
   unavailableTools: { name: string; reason: string }[]
 }
 
-export const htmlPageBriefSchema = z.object({
-  title: z.string().max(200),
-  tone: z.string().max(400),
-  audience: z.string().max(400),
-  sections: z
-    .array(
-      z.object({
-        title: z.string().max(200),
-        purpose: z.string().max(1_000),
-      }),
-    )
-    .min(1)
-    .max(20),
-})
-export type HtmlPageBrief = z.infer<typeof htmlPageBriefSchema>
+export { htmlPageBriefSchema, type HtmlPageBrief } from './html-brief.js'
 
 export const htmlPlanPageInputSchema = z.object({
   documentId: z.string().min(1).max(200),

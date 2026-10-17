@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react'
 import type { Citation } from '@mimir/shared'
+import type { ChatPptxSnapshot } from '@mimir/chat'
 
 /**
  * 三栏之间共享的状态。
@@ -23,6 +24,7 @@ export interface AskDraft {
   text: string
   /** 锁定的范围：这一篇 */
   documentId?: string
+  snapshot?: ChatPptxSnapshot | undefined
 }
 
 /** 打开收集对话框时的预置项。全部可省——省略即保持对话框自己的默认 */

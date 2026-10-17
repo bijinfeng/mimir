@@ -97,6 +97,7 @@ const cached = new Map<Uint8Array, CachedDoc>()
 /** 多个缩略图会同时要同一份字节；解析进行中也要共用一笔 loading task。 */
 const loading = new Map<Uint8Array, Promise<PDFDocumentProxy>>()
 let retainedBytes: Set<Uint8Array> | null = null
+const imageExportUsers = new Map<Uint8Array, number>()
 
 /**
  * 还有多少笔渲染在用这些文档。
@@ -113,7 +114,7 @@ export function retainPdfDocuments(keep: readonly (Uint8Array | null)[]): void {
   const alive = new Set(keep.filter((bytes): bytes is Uint8Array => bytes !== null))
   retainedBytes = alive
   for (const [bytes, entry] of cached) {
-    if (alive.has(bytes)) continue
+    if (alive.has(bytes) || imageExportUsers.has(bytes)) continue
     cached.delete(bytes)
     pending.push(entry)
   }
@@ -178,7 +179,7 @@ export async function loadPdfDocument(bytes: Uint8Array): Promise<PDFDocumentPro
     (doc) => {
       loading.delete(bytes)
       const entry: CachedDoc = { bytes, doc, task }
-      if (retainedBytes !== null && !retainedBytes.has(bytes)) {
+      if (retainedBytes !== null && !retainedBytes.has(bytes) && !imageExportUsers.has(bytes)) {
         pending.push(entry)
         collect()
       } else {
@@ -346,6 +347,89 @@ export async function renderPdfPages(options: RenderPdfOptions): Promise<PdfRend
     if (state.task === startedTask) state.task = null
     activeRenders -= 1
     // 这一笔结束了，被淘汰的文档现在可以收了（见 `retainPdfDocuments`）
+    collect()
+  }
+}
+
+/** Keep one parsed workcopy for a whole image batch without changing the live viewer's sources. */
+export function retainPdfImageExport(bytes: Uint8Array): () => void {
+  imageExportUsers.set(bytes, (imageExportUsers.get(bytes) ?? 0) + 1)
+  let released = false
+  return () => {
+    if (released) return
+    released = true
+    const users = (imageExportUsers.get(bytes) ?? 1) - 1
+    if (users > 0) {
+      imageExportUsers.set(bytes, users)
+      return
+    }
+    imageExportUsers.delete(bytes)
+    if (retainedBytes?.has(bytes)) return
+    const entry = cached.get(bytes)
+    if (entry) {
+      cached.delete(bytes)
+      pending.push(entry)
+      collect()
+    }
+  }
+}
+
+/** Raster output has a fixed DPI, independent of the screen's zoom and DPR. */
+export async function renderPdfPageImage({
+  bytes,
+  pageIndex,
+  dpi,
+  signal,
+}: {
+  bytes: Uint8Array
+  pageIndex: number
+  dpi: number
+  signal?: AbortSignal
+}): Promise<{ bytes: Uint8Array; width: number; height: number }> {
+  if (![72, 150, 300].includes(dpi)) throw new Error('请选择 72、150 或 300 dpi')
+  signal?.throwIfAborted()
+  activeRenders += 1
+  const canvas = document.createElement('canvas')
+  let task: { cancel(): void } | null = null
+  const abort = () => task?.cancel()
+  signal?.addEventListener('abort', abort, { once: true })
+  try {
+    const doc = await loadPdfDocument(bytes)
+    signal?.throwIfAborted()
+    const page = await doc.getPage(pageIndex + 1)
+    signal?.throwIfAborted()
+    const viewport = page.getViewport({ scale: dpi / 72 })
+    const width = Math.floor(viewport.width)
+    const height = Math.floor(viewport.height)
+    if (width < 1 || height < 1 || width > 16384 || height > 16384 || width * height > 32_000_000)
+      throw new Error(`第 ${pageIndex + 1} 页图像过大，请降低分辨率后重试`)
+    canvas.width = width
+    canvas.height = height
+    const context = canvas.getContext('2d')
+    if (!context) throw new Error('浏览器无法生成页面图像')
+    const rendered = page.render({
+      canvas,
+      canvasContext: context,
+      viewport,
+      background: '#ffffff',
+    })
+    task = rendered
+    await rendered.promise
+    signal?.throwIfAborted()
+    const blob = await new Promise<Blob>((resolve, reject) =>
+      canvas.toBlob(
+        (value) => (value ? resolve(value) : reject(new Error('页面图像编码失败，请重试'))),
+        'image/png',
+      ),
+    )
+    const output = new Uint8Array(await blob.arrayBuffer())
+    signal?.throwIfAborted()
+    return { bytes: output, width, height }
+  } finally {
+    signal?.removeEventListener('abort', abort)
+    canvas.width = 0
+    canvas.height = 0
+    activeRenders -= 1
     collect()
   }
 }

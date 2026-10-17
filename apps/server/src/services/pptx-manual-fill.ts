@@ -4,12 +4,16 @@ import {
   openPptx,
   savePptx,
 } from '../../../../packages/office/vendor/packages/pptx-engine/src/index.js'
-import { matchesElementRef } from '../../../../packages/office/vendor/packages/pptx-engine/src/identity.js'
+import {
+  groupChildDurableId,
+  matchesElementRef,
+} from '../../../../packages/office/vendor/packages/pptx-engine/src/identity.js'
 import {
   runTxn,
   type Op,
 } from '../../../../packages/office/vendor/packages/pptx-ops/src/ops/index.js'
 import { BoundedZip } from '../../../../packages/office/src/zip-bounds.js'
+import { pptxSupportsShapeFill } from '../../../../packages/office/src/pptx-element-capabilities.js'
 import type { PptxHostRequest, PptxHostResult } from './pptx-agent-host.js'
 import { copyCurrentPptxBackground } from './pptx-copy-background.js'
 
@@ -55,51 +59,66 @@ export async function applyPptxManualFill(
       sampleData: false,
     }
   }
-  const element =
-    input.kind === 'shape'
-      ? slide.elements.find((item) => matchesElementRef(item, input.elementId))
+  const targets =
+    input.kind === 'selection'
+      ? input.targets
+      : input.kind === 'shape'
+        ? [{ elementId: input.elementId, group: undefined }]
+        : []
+  const resolved = targets.map((target) => {
+    const group = target.group
+      ? slide.elements.find((item) => matchesElementRef(item, target.group!))
       : undefined
-  if (input.kind === 'shape' && (!element || (element.type !== 'shape' && element.type !== 'text')))
-    throw new Error('请重新选择可填充的形状或文本框')
-  let source: { bytes: Uint8Array; ext: string } | { mediaPath: string }
+    if (target.group && group?.type !== 'group') throw new Error('父组合已失效，请重新选择')
+    const element =
+      group?.type === 'group'
+        ? group.children.find(
+            (item) =>
+              matchesElementRef(item, target.elementId) ||
+              groupChildDurableId(group, item) === target.elementId,
+          )
+        : slide.elements.find((item) => matchesElementRef(item, target.elementId))
+    if (!element || (element.type !== 'shape' && element.type !== 'text'))
+      throw new Error('请重新选择可填充的形状或文本框')
+    if (!pptxSupportsShapeFill(element)) throw new Error('线条不支持填充，请选择形状或文本框')
+    return { target, element }
+  })
+  if (new Set(resolved.map(({ element }) => element)).size !== resolved.length)
+    throw new Error('填充对象不得重复')
+  let texture: { bytes: Uint8Array; ext: string } | undefined
   if (input.source.kind === 'texture') {
     const bytes = new Uint8Array(Buffer.from(input.source.png, 'base64'))
     if (createHash('sha256').update(bytes).digest('hex') !== TEXTURES[input.source.id])
       throw new Error('内置纹理内容不匹配，请刷新后重试')
     const info = imageInfo(bytes)
     if (info.ext !== 'png') throw new Error('内置纹理必须为PNG')
-    source = { bytes, ext: 'png' }
-  } else {
-    const fill =
-      input.kind === 'background'
-        ? slide.background
-        : element && 'fill' in element
-          ? element.fill
-          : undefined
+    texture = { bytes, ext: 'png' }
+  }
+  const sourceFor = (fill: typeof slide.background) => {
+    if (texture) return texture
     if (
       fill?.type !== 'image' ||
       !/^ppt\/media\/[^/]+$/.test(fill.mediaRef) ||
       !opened.archive.readBytes(fill.mediaRef)?.length
     )
       throw new Error('当前填充图片已失效，请重新读取')
-    source = { mediaPath: fill.mediaRef }
+    return { mediaPath: fill.mediaRef }
   }
   const ops: Op[] =
-    input.kind === 'shape'
-      ? [
-          {
-            op: 'setImageFill',
-            target: { slide: input.slide, el: input.elementId },
-            source,
-            tile: input.tile,
-          },
-        ]
+    input.kind === 'shape' || input.kind === 'selection'
+      ? resolved.map(({ target, element }) => ({
+          op: 'setImageFill',
+          target: { slide: input.slide, el: target.elementId },
+          group: target.group,
+          source: sourceFor(element.fill),
+          tile: input.tile,
+        }))
       : (input.allSlides ? opened.deck.slides.map((_, index) => index) : [input.slide]).map(
           (index) => ({
             op: 'setBackground',
             target: { slide: index },
             kind: 'image',
-            source,
+            source: sourceFor(slide.background),
             tile: input.tile,
           }),
         )
@@ -112,7 +131,27 @@ export async function applyPptxManualFill(
   active()
   return {
     bytes,
-    records: result.records ?? [],
+    // Native records repeat the texture bytes per target. Keep the HTTP response
+    // bounded by describing this manual action once, with no image payload.
+    records:
+      input.kind === 'selection'
+        ? [
+            {
+              op: {
+                op: 'manual_fill',
+                kind: input.kind,
+                slide: input.slide,
+                targets: input.targets,
+                source:
+                  input.source.kind === 'texture'
+                    ? { kind: 'texture', id: input.source.id }
+                    : { kind: 'current' },
+                tile: input.tile,
+              },
+              after: { objects: resolved.length },
+            },
+          ]
+        : (result.records ?? []),
     version: request.expectedVersion + 1,
     sampleData: false,
     changed: true,

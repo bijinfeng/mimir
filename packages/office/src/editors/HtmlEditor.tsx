@@ -779,6 +779,45 @@ export function HtmlEditor({
 
   useEffect(() => {
     if (initial === null) return
+    let active = true
+    const publishPrompt = (request: HtmlPromptRequest, signal?: AbortSignal) => {
+      let settled = false
+      const finish = () => {
+        if (settled) return false
+        settled = true
+        signal?.removeEventListener('abort', cancel)
+        if (promptRequestRef.current === request) {
+          promptRequestRef.current = null
+          setPromptRequest((current) => (current?.id === request.id ? null : current))
+        }
+        return true
+      }
+      if (request.kind === 'questions') {
+        const resolve = request.resolve
+        request.resolve = (answer) => {
+          if (finish()) resolve(answer)
+        }
+      } else {
+        const resolve = request.resolve
+        request.resolve = (brief) => {
+          if (finish()) resolve(brief)
+        }
+      }
+      const cancel = () => {
+        if (request.kind === 'questions') request.resolve({ answers: '', cancelled: true })
+        else request.resolve(null)
+      }
+      if (!active || signal?.aborted) {
+        cancel()
+        return
+      }
+      const previous = promptRequestRef.current
+      if (previous?.kind === 'questions') previous.resolve({ answers: '', cancelled: true })
+      else if (previous?.kind === 'brief') previous.resolve(null)
+      promptRequestRef.current = request
+      setPromptRequest(request)
+      signal?.addEventListener('abort', cancel, { once: true })
+    }
     const handle = new HtmlAgentHandle(documentId, initial.text, {
       applyPatches: (patches, highlight) => {
         editorRef.current?.applyPatches(patches, highlight)
@@ -796,7 +835,7 @@ export function HtmlEditor({
         syncHistory()
       },
       getSelectedSid: () => selectedSidRef.current,
-      askClarification: (questions) =>
+      askClarification: (questions, signal) =>
         new Promise((resolve) => {
           const request: HtmlPromptRequest = {
             id: ++promptSerialRef.current,
@@ -804,10 +843,9 @@ export function HtmlEditor({
             questions,
             resolve,
           }
-          promptRequestRef.current = request
-          setPromptRequest(request)
+          publishPrompt(request, signal)
         }),
-      confirmBrief: (brief, mode) =>
+      confirmBrief: (brief, mode, signal) =>
         new Promise((resolve) => {
           const request: HtmlPromptRequest = {
             id: ++promptSerialRef.current,
@@ -816,8 +854,7 @@ export function HtmlEditor({
             mode,
             resolve,
           }
-          promptRequestRef.current = request
-          setPromptRequest(request)
+          publishPrompt(request, signal)
         }),
       planPage: async (input) => {
         if (!agentServicesRef.current) throw new Error('页面规划服务尚未就绪。')
@@ -828,10 +865,10 @@ export function HtmlEditor({
     agentRef.current = handle
     onAgentHandleChangeRef.current?.(handle)
     return () => {
+      active = false
       const pending = promptRequestRef.current
       if (pending?.kind === 'questions') pending.resolve({ answers: '', cancelled: true })
       else if (pending?.kind === 'brief') pending.resolve(null)
-      promptRequestRef.current = null
       agentRef.current = null
       onAgentHandleChangeRef.current?.(null)
     }
@@ -1364,26 +1401,12 @@ export function HtmlEditor({
         同一种出现方式：有选中才出来。
       */
       subbar={
-        findOpen ||
-        trail.length > 0 ||
-        promptRequest !== null ||
-        actionError !== null ||
-        writingDraft !== null ? (
+        findOpen || trail.length > 0 || actionError !== null || writingDraft !== null ? (
           <>
             {writingDraft && (
               <HtmlWritingPreview draft={writingDraft} currentVersion={doc.version} />
             )}
             {actionError && <div role="alert">{actionError}</div>}
-            {promptRequest && (
-              <HtmlAgentPrompt
-                key={promptRequest.id}
-                request={promptRequest}
-                onClose={() => {
-                  promptRequestRef.current = null
-                  setPromptRequest(null)
-                }}
-              />
-            )}
             {/*
               查找栏放在前面是有意的：它的宽度是 100%，会自己占掉一整行。
               放后面的话元素路径一打开查找就被挤下去——一行里的东西平移比
@@ -1531,7 +1554,19 @@ export function HtmlEditor({
             </div>
           </div>
         </div>
-        {elementInspectorDocument === documentId && (
+        {promptRequest && (
+          <HtmlAgentPrompt
+            key={promptRequest.id}
+            request={promptRequest}
+            onClose={() => {
+              if (promptRequestRef.current?.id === promptRequest.id) {
+                promptRequestRef.current = null
+                setPromptRequest((current) => (current?.id === promptRequest.id ? null : current))
+              }
+            }}
+          />
+        )}
+        {!promptRequest && elementInspectorDocument === documentId && (
           <HtmlElementMenu
             key={documentId}
             version={doc.version}

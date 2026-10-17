@@ -8,6 +8,9 @@ import {
   type Patch,
 } from '../../vendor/apps/html/src/renderer/document/patch.js'
 import { compileOps, type HtmlOp } from '../../vendor/apps/html/src/renderer/document/ops.js'
+import { normalizeHtmlPageBrief, type HtmlPageBrief, type HtmlBriefDecision } from '@mimir/shared'
+import { htmlBriefPinPatches, readHtmlBrief } from './html-brief.js'
+export type { HtmlPageBrief, HtmlBriefDecision } from '@mimir/shared'
 
 export const HTML_AGENT_TOOL_NAMES = [
   'get_outline',
@@ -45,18 +48,17 @@ export interface HtmlAgentResult {
   error?: string
   data?: unknown
 }
-export interface HtmlPageBrief {
-  title: string
-  tone: string
-  audience: string
-  sections: Array<{ title: string; purpose: string }>
-}
 export interface HtmlClarificationQuestion {
   id: string
   label: string
   description?: string
   options: string[]
   multi?: boolean
+}
+export interface HtmlClarificationResponse {
+  answers: string
+  cancelled?: boolean
+  selections?: Record<string, string[]>
 }
 export interface HtmlAgentHooks {
   applyPatches(patches: Patch[], highlight: boolean): void
@@ -65,7 +67,8 @@ export interface HtmlAgentHooks {
   getSelectedSid(): number | null
   askClarification?(
     questions: HtmlClarificationQuestion[],
-  ): Promise<{ answers: string; cancelled?: boolean }>
+    signal?: AbortSignal,
+  ): Promise<HtmlClarificationResponse>
   planPage?(input: {
     mode: 'new' | 'redesign' | 'restyle' | 'extract'
     instruction: string
@@ -73,7 +76,11 @@ export interface HtmlAgentHooks {
     currentSource: string
     signal?: AbortSignal
   }): Promise<HtmlPageBrief>
-  confirmBrief?(brief: HtmlPageBrief, mode: string): Promise<HtmlPageBrief | null>
+  confirmBrief?(
+    brief: HtmlPageBrief,
+    mode: string,
+    signal?: AbortSignal,
+  ): Promise<HtmlPageBrief | HtmlBriefDecision | null>
   writeDocument?(input: {
     kind: 'design' | 'content'
     instruction: string
@@ -182,6 +189,7 @@ export class HtmlAgentHandle {
       selectedSid: this.hooks.getSelectedSid(),
       outline: this.outline(3),
       sourceLength: this.doc.text.length,
+      brief: readHtmlBrief(this.doc.text),
     }
   }
   freezeSelection(): { sid: number | null; version: number } {
@@ -393,23 +401,38 @@ export class HtmlAgentHandle {
         !Array.isArray(questions) ||
         questions.length < 1 ||
         questions.length > 4 ||
+        new Set(questions.map((question) => (object(question) ? question.id : undefined))).size !==
+          questions.length ||
         !questions.every(
           (question) =>
             object(question) &&
             string(question.id) &&
             string(question.label) &&
+            (question.description === undefined || string(question.description)) &&
             Array.isArray(question.options) &&
             question.options.length > 0 &&
             question.options.length <= 5 &&
-            question.options.every(string),
+            question.options.every(string) &&
+            (question.multi === undefined || typeof question.multi === 'boolean') &&
+            new Set(question.options).size === question.options.length,
         )
       )
         return this.result(false, false, undefined, '问题格式无效。')
       if (!this.hooks.askClarification)
         return this.result(false, false, undefined, '当前界面没有可用的用户问答入口。')
-      const response = await this.hooks.askClarification(questions as HtmlClarificationQuestion[])
+      const version = this.doc.version
+      const response = await this.hooks.askClarification(
+        questions as HtmlClarificationQuestion[],
+        options.signal,
+      )
+      if (options.signal?.aborted) return this.result(false, false, undefined, '已取消。')
+      if (this.doc.version !== version)
+        return this.result(false, false, undefined, '回答期间文档已改变，请重新读取源码。')
       if (response.cancelled) return this.result(false, false, undefined, '用户跳过了问题。')
-      return this.result(true, false, undefined, undefined, { answers: response.answers })
+      return this.result(true, false, undefined, undefined, {
+        answers: response.answers,
+        ...(response.selections ? { selections: response.selections } : {}),
+      })
     }
     if (tool === 'plan_page') {
       if (
@@ -423,21 +446,69 @@ export class HtmlAgentHandle {
       const version = this.doc.version
       try {
         const mode = input.mode as 'new' | 'redesign' | 'restyle' | 'extract'
-        const brief = await this.hooks.planPage({
-          mode,
-          instruction: input.instruction.slice(0, 4000),
-          notes: string(input.notes) ? input.notes.slice(0, 2000) : undefined,
-          currentSource: this.doc.text.slice(0, 8000),
-          signal: options.signal,
-        })
-        if (this.doc.version !== version)
-          return this.result(false, false, undefined, '规划期间文档已改变，未写入画布。')
-        const confirmed = await this.hooks.confirmBrief(brief, mode)
-        if (!confirmed) return this.result(false, false, undefined, '用户取消了页面规划。')
-        if (mode === 'restyle' || mode === 'extract')
-          return this.result(true, false, '已确认页面提纲；当前源码未改变。', undefined, {
-            brief: confirmed,
+        let notes = string(input.notes) ? input.notes.slice(0, 2000) : undefined
+        let confirmed: HtmlPageBrief
+        // Each repeat waits for an explicit user redo; drafting never edits the canvas.
+        for (;;) {
+          const raw = await this.hooks.planPage({
+            mode,
+            instruction: input.instruction.slice(0, 4000),
+            notes,
+            currentSource: this.doc.text.slice(0, 8000),
+            signal: options.signal,
           })
+          if (options.signal?.aborted)
+            return this.result(false, false, undefined, '页面规划已取消，画布未修改。')
+          if (this.doc.version !== version)
+            return this.result(false, false, undefined, '规划期间文档已改变，未写入画布。')
+          const brief = normalizeHtmlPageBrief(raw)
+          const decision = await this.hooks.confirmBrief(brief, mode, options.signal)
+          if (options.signal?.aborted)
+            return this.result(false, false, undefined, '页面规划已取消，画布未修改。')
+          if (this.doc.version !== version)
+            return this.result(false, false, undefined, '确认期间文档已改变，未写入画布。')
+          if (!decision || ('kind' in decision && decision.kind === 'cancelled'))
+            return this.result(false, false, undefined, '用户取消了页面规划。')
+          if ('kind' in decision && decision.kind === 'redo') {
+            notes = [
+              `重新拟定要求：${decision.note}`,
+              `上一方向：${brief.core_hook}；${brief.style?.tone}`,
+              string(input.notes) ? input.notes : '',
+            ]
+              .join('\n')
+              .slice(0, 2000)
+            continue
+          }
+          confirmed = normalizeHtmlPageBrief('kind' in decision ? decision.brief : decision)
+          break
+        }
+        const roundId = options.roundId ?? `page-${version}`
+        if (mode === 'restyle' || mode === 'extract') {
+          const patches = htmlBriefPinPatches(this.doc.text, confirmed)
+          if (patches.length) {
+            if (!this.snapshots.has(roundId))
+              this.snapshots.set(roundId, { before: this.doc.text, afterVersion: version })
+            const next = applyPatches(this.doc.text, patches)
+            this.hooks.applyPatches(patches, true)
+            this.setDocument(next)
+            this.snapshots.get(roundId)!.afterVersion = this.doc.version
+          }
+          return this.result(
+            true,
+            patches.length > 0,
+            mode === 'restyle'
+              ? '已固定页面提纲；请继续调整 CSS，正文结构和内容保持不变。'
+              : '已固定页面提纲，未生成或改写正文。',
+            undefined,
+            {
+              brief: confirmed,
+              pinned: true,
+              ...(mode === 'restyle'
+                ? { nextStep: '使用 apply_ops 调整 --brief-* 变量及相关 CSS，保留结构和正文。' }
+                : {}),
+            },
+          )
+        }
         if (!this.hooks.writeDocument)
           return this.result(false, false, undefined, '页面写作服务尚未就绪。')
         const written = await this.hooks.writeDocument({
@@ -450,9 +521,11 @@ export class HtmlAgentHandle {
           return this.result(false, false, undefined, '页面写作已取消，画布未修改。')
         if (!written.complete && !written.keptPartial)
           return this.result(false, false, undefined, '页面生成未完成，画布未修改。')
-        const roundId = options.roundId ?? `page-${version}`
         this.beginDraft(roundId)
-        this.appendDraft(roundId, written.html)
+        this.appendDraft(
+          roundId,
+          applyPatches(written.html, htmlBriefPinPatches(written.html, confirmed)),
+        )
         const result = await this.commitDraft(roundId, {
           expectedVersion: version,
           allowPartial: !written.complete && written.keptPartial,

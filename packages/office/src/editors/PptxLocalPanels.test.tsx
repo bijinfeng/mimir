@@ -1,4 +1,7 @@
 /** @vitest-environment happy-dom */
+import { readFileSync } from 'node:fs'
+import { dirname, resolve as resolvePath } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { act, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { ConfigProvider } from 'antd'
@@ -8,6 +11,7 @@ import type { PptxUpload } from './PptxAssetControls.js'
 import { PptxModelControls } from './PptxModelControls.js'
 import { PptxOutputControls } from './PptxOutputControls.js'
 import { pickSelectOption } from '../shell/antd-test-dom.js'
+import { openPptxForEdit } from '../pptx.js'
 import type { PptxManualAsset } from '@mimir/shared'
 vi.mock('@google/model-viewer', () => ({}))
 const mounted: (() => void)[] = []
@@ -122,13 +126,24 @@ describe('PPTX persistent local tool panels', () => {
     expect(upload).not.toHaveBeenCalled()
   })
   it('renders a visible print action with an explicit raster PDF explanation', async () => {
-    const host = await mount(
-      <PptxOutputControls
-        active={0}
-        deck={{ size: { cx: 9144000, cy: 6858000 }, slides: () => [], media: new Map() }}
-      />,
+    const session = await openPptxForEdit(
+      new Uint8Array(
+        readFileSync(
+          resolvePath(
+            dirname(fileURLToPath(import.meta.url)),
+            '../../tests/fixtures/title-layout.pptx',
+          ),
+        ),
+      ),
     )
-    expect(host.querySelector('button[aria-label="打印幻灯片"]')?.textContent).toBe('打印幻灯片')
+    const host = await mount(<PptxOutputControls active={0} deck={session.view()} />)
     expect(host.textContent).toContain('文字不可选择')
+    pickSelectOption(host, '输出操作', '打印')
+    const print = host.querySelector<HTMLButtonElement>('button[aria-label="打开打印窗口"]')!
+    expect(print.textContent).toBe('打开打印窗口')
+    expect(print.disabled).toBe(false)
+    expect(host.querySelector('iframe[title="首页打印预览"]')?.getAttribute('srcdoc')).toContain(
+      '<svg',
+    )
   })
 })

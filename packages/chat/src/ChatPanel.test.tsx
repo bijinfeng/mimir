@@ -8,7 +8,13 @@ import { afterAll, afterEach, describe, expect, it } from 'vitest'
 import { installDomShims } from './test-dom.js'
 import { ChatPanel } from './ChatPanel.js'
 import type { ChatIo } from './runtime/io.js'
-import type { ChatComposerStatus, ChatDocxAgent, ChatDraft } from './types.js'
+import type {
+  ChatComposerStatus,
+  ChatDocxAgent,
+  ChatDraft,
+  ChatPanelProps,
+  ChatPptxSnapshot,
+} from './types.js'
 import type { Message } from '@mimir/shared'
 
 /**
@@ -236,6 +242,7 @@ async function mount(
   conversationId?: string,
   showReasoningControl?: boolean,
   guideActions?: (ask: (question: string) => void) => ReactNode,
+  snapshotOptions: Pick<ChatPanelProps, 'draftAgent' | 'snapshotVisionReady'> = {},
 ) {
   const container = document.createElement('div')
   document.body.appendChild(container)
@@ -249,6 +256,7 @@ async function mount(
         onOpenNote: () => {},
         io,
         composerStatus: EMPTY_STATUS,
+        ...snapshotOptions,
         showReasoningControl,
         ...(guideActions ? { guide: () => null, guideActions } : {}),
         ...(docxAgent?.format && docxAgent.format !== 'docx'
@@ -1444,5 +1452,426 @@ describe('ChatPanel：AG-UI 的其余消息体类型（不许静默丢弃）', (
     expect(textOf(container)).toContain('search_docs')
     /* 正文照常 */
     expect(textOf(container)).toContain('回答')
+  })
+})
+
+const SNAPSHOT_PNG =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/b9sAAAAASUVORK5CYII='
+function snapshotFixture(): ChatPptxSnapshot {
+  return {
+    sourceIsCurrent: () => true,
+    id: 'snapshot-1',
+    text: '美化本页',
+    target: { documentId: 'pptx-1', slidePath: 'ppt/slides/slide4.xml', slideIndex: 2, version: 7 },
+    image: {
+      name: '第3页截图-snapshot-1.png',
+      mimeType: 'image/png',
+      dataUrl: SNAPSHOT_PNG,
+      width: 1,
+      height: 1,
+    },
+  }
+}
+function snapshotAgent(version: () => number = () => 7): ChatDocxAgent {
+  return {
+    format: 'pptx',
+    documentId: 'pptx-1',
+    getVersion: version,
+    getContext: () => ({ slides: [{}, {}, { id: 's_4' }], selection: { slideIndex: 2 } }),
+    freezeSelection: () => ({ slideIndex: 2, elementId: 'shape-1', elements: [{ id: 'shape-1' }] }),
+    execute: async () => ({ ok: true, changed: false, version: 7, summary: '未修改' }),
+    undoRound: () => true,
+  }
+}
+describe('ChatPanel：PPTX真实截图草稿', () => {
+  it('移除截图不清除同时发生的普通对话连接错误', async () => {
+    const handle = serve(
+      () => [
+        F({ type: 'RUN_STARTED', runId: 'r1', threadId: 'c1' }),
+        F({ type: 'RUN_ERROR', message: '普通对话连接失败' }),
+      ],
+      { holdAfter: 1 },
+    )
+    servers.push(handle)
+    const io = makeIo(await handle.listen())
+    const agent = snapshotAgent()
+    const container = await mount(io, null, agent, undefined, false, undefined, {
+      snapshotVisionReady: true,
+    })
+    await type(container, '普通对话')
+    await send(container)
+    const snapshot = snapshotFixture()
+    await act(async () =>
+      mounted!.root.render(
+        createElement(ChatPanel, {
+          conversationId: undefined,
+          io,
+          documentAgent: agent,
+          draft: { documentId: 'pptx-1', text: '保留这段草稿', snapshot },
+          snapshotVisionReady: true,
+          composerStatus: EMPTY_STATUS,
+          onOpenCitation: () => {},
+          onOpenNote: () => {},
+        }),
+      ),
+    )
+    handle.release()
+    await waitFor(container, () => textOf(container).includes('普通对话连接失败'), '普通连接失败')
+    await act(async () =>
+      container.querySelector<HTMLButtonElement>('[aria-label="移除第3页截图"]')?.click(),
+    )
+    expect(container.querySelector('form img[alt="第3页截图"]')).toBeNull()
+    expect(container.querySelector('textarea')?.value).toBe('保留这段草稿')
+    expect(textOf(container)).toContain('普通对话连接失败')
+    expect(container.querySelector('form [role="alert"]')?.textContent).toContain(
+      '普通对话连接失败',
+    )
+  })
+  it('无模型仍可预览、编辑和移除草稿，但带图发送不能降级为检索请求', async () => {
+    let requests = 0
+    const snapshot = snapshotFixture()
+    const container = await mount(
+      makeIo('/api/chat', {
+        createConversation: async () => {
+          requests++
+          return { id: 'c1' }
+        },
+      }),
+      { documentId: 'pptx-1', text: snapshot.text, snapshot },
+      undefined,
+      undefined,
+      false,
+      undefined,
+      { draftAgent: snapshotAgent(), snapshotVisionReady: false },
+    )
+    expect(container.querySelector('img[alt="第3页截图"]')?.getAttribute('src')).toBe(SNAPSHOT_PNG)
+    expect(container.querySelector('textarea')?.value).toBe('美化本页')
+    expect(requests).toBe(0)
+    await type(container, '请美化布局并保留文字')
+    await send(container)
+    expect(textOf(container)).toContain('截图美化需要可用的聊天模型')
+    expect(requests).toBe(0)
+    await act(async () =>
+      container.querySelector<HTMLButtonElement>('[aria-label="移除第3页截图"]')?.click(),
+    )
+    expect(container.querySelector('img[alt="第3页截图"]')).toBeNull()
+    expect(container.querySelector('textarea')?.value).toBe('请美化布局并保留文字')
+    expect(textOf(container)).not.toContain('截图美化需要可用的聊天模型')
+    expect(container.querySelector('[aria-label="关闭截图提示"]')).toBeNull()
+  })
+  it('仅显式发送后将真实PNG内容和冻结的整页选区交给AG-UI', async () => {
+    const requests: Record<string, unknown>[] = []
+    const server = createServer(async (req, res) => {
+      const chunks: Uint8Array[] = []
+      for await (const chunk of req) chunks.push(chunk as Uint8Array)
+      requests.push(JSON.parse(Buffer.concat(chunks).toString('utf8')) as Record<string, unknown>)
+      res.writeHead(200, { 'Content-Type': 'text/event-stream' })
+      for (const frame of successFrames()) res.write(frame)
+      res.end()
+    })
+    servers.push({ server, drain: () => {} })
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
+    const address = server.address()
+    const port = typeof address === 'object' && address ? address.port : 0
+    const snapshot = snapshotFixture()
+    const container = await mount(
+      makeIo(`http://127.0.0.1:${port}/api/chat`),
+      { documentId: 'pptx-1', text: snapshot.text, snapshot },
+      snapshotAgent(),
+      undefined,
+      false,
+      undefined,
+      { snapshotVisionReady: true },
+    )
+    expect(requests).toHaveLength(0)
+    await send(container)
+    await waitFor(container, () => requests.length === 1, '真实PNG请求')
+    const body = requests[0]!
+    const messages = body.messages as { role: string; content: unknown }[]
+    expect(messages.find((message) => message.role === 'user')?.content).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'image',
+          source: { type: 'data', value: SNAPSHOT_PNG.split(',')[1], mimeType: 'image/png' },
+        }),
+      ]),
+    )
+    expect(body.forwardedProps).toMatchObject({
+      runConfig: {
+        documentAgent: true,
+        agentFormat: 'pptx',
+        agentVersion: 7,
+        agentSelection: {
+          slideIndex: 2,
+          elementId: null,
+          elementIds: [],
+          elements: [],
+          pptxSnapshotId: 'snapshot-1',
+        },
+      },
+    })
+    await waitFor(container, () => textOf(container).includes('回答'), '回答')
+    expect(container.querySelector('[data-role="user"] img[alt="第3页截图"]')).not.toBeNull()
+  })
+  it('画布版本已变时点击和Enter都不发送，也保留用户修改后的文字和图片', async () => {
+    let version = 7
+    let created = 0
+    const snapshot = snapshotFixture()
+    const container = await mount(
+      makeIo('/api/chat', {
+        createConversation: async () => {
+          created++
+          return { id: 'c1' }
+        },
+      }),
+      { documentId: 'pptx-1', text: snapshot.text, snapshot },
+      snapshotAgent(() => version),
+      undefined,
+      false,
+      undefined,
+      { snapshotVisionReady: true },
+    )
+    version++
+    await type(container, '保留我的新指令')
+    await send(container)
+    await act(async () =>
+      container.querySelector('textarea')?.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Enter',
+          code: 'Enter',
+          bubbles: true,
+          cancelable: true,
+        }),
+      ),
+    )
+    expect(created).toBe(0)
+    expect(container.querySelector('textarea')?.value).toBe('保留我的新指令')
+    expect(container.querySelector('img[alt="第3页截图"]')).not.toBeNull()
+    expect(textOf(container)).toContain('页面或版本已变化')
+  })
+})
+
+describe('ChatPanel：PPTX截图排队与重试', () => {
+  it.each(['stop', 'retrieve'] as const)(
+    '通过%s取回队列时一并恢复文字、PNG与原目标',
+    async (action) => {
+      const handle = serve(() => successFrames(), { holdAfter: 1 })
+      servers.push(handle)
+      const io = makeIo(await handle.listen())
+      const agent = snapshotAgent()
+      const container = await mount(io, null, agent, undefined, false, undefined, {
+        snapshotVisionReady: true,
+      })
+      await type(container, '第一问')
+      await send(container)
+      const snapshot = snapshotFixture()
+      const root = mounted!.root
+      await act(async () =>
+        root.render(
+          createElement(ChatPanel, {
+            conversationId: undefined,
+            io,
+            documentAgent: agent,
+            draft: { documentId: 'pptx-1', text: '排队美化指令', snapshot },
+            snapshotVisionReady: true,
+            composerStatus: EMPTY_STATUS,
+            onOpenCitation: () => {},
+            onOpenNote: () => {},
+          }),
+        ),
+      )
+      await enter(container)
+      await waitFor(container, () => textOf(container).includes('已排队'), '带PNG草稿入队')
+      expect(container.querySelector('textarea')?.value).toBe('')
+      await act(async () =>
+        container
+          .querySelector<HTMLButtonElement>(
+            action === 'stop' ? '[aria-label="停止"]' : '[aria-label="取回排队的消息"]',
+          )
+          ?.click(),
+      )
+      await waitFor(
+        container,
+        () => container.querySelector('textarea')?.value === '排队美化指令',
+        '原PNG草稿取回',
+      )
+      expect(container.querySelector('form img[alt="第3页截图"]')?.getAttribute('src')).toBe(
+        SNAPSHOT_PNG,
+      )
+      expect(textOf(container)).not.toContain('已排队')
+      if (action === 'retrieve')
+        await act(async () =>
+          container.querySelector<HTMLButtonElement>('[aria-label="停止"]')?.click(),
+        )
+    },
+  )
+  it.each([
+    [false, false],
+    [true, false],
+    [true, true],
+  ])(
+    '队列自动派发在stale=%s、newDraft=%s时验证原目标并保留用户草稿',
+    { timeout: 15000 },
+    async (stale, newDraft) => {
+      let version = 7
+      let received = 0
+      const bodies: unknown[] = []
+      let release: (() => void) | undefined
+      const server = createServer(async (req, res) => {
+        const chunks: Uint8Array[] = []
+        for await (const chunk of req) chunks.push(chunk as Uint8Array)
+        bodies.push(JSON.parse(Buffer.concat(chunks).toString('utf8')))
+        received++
+        res.writeHead(200, { 'Content-Type': 'text/event-stream' })
+        res.write(successFrames()[0]!)
+        release = () => {
+          for (const frame of successFrames().slice(1)) res.write(frame)
+          res.end()
+        }
+      })
+      servers.push({ server, drain: () => release?.() })
+      await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
+      const address = server.address()
+      const io = makeIo(
+        `http://127.0.0.1:${typeof address === 'object' && address ? address.port : 0}/api/chat`,
+      )
+      const agent = snapshotAgent(() => version)
+      const container = await mount(io, null, agent, undefined, false, undefined, {
+        snapshotVisionReady: true,
+      })
+      await type(container, '第一问')
+      await send(container)
+      const snapshot = snapshotFixture()
+      await act(async () =>
+        mounted!.root.render(
+          createElement(ChatPanel, {
+            conversationId: undefined,
+            io,
+            documentAgent: agent,
+            draft: { documentId: 'pptx-1', text: '过期美化指令', snapshot },
+            snapshotVisionReady: true,
+            composerStatus: EMPTY_STATUS,
+            onOpenCitation: () => {},
+            onOpenNote: () => {},
+          }),
+        ),
+      )
+      await enter(container)
+      await waitFor(container, () => textOf(container).includes('已排队'), '截图排队')
+      if (newDraft) await type(container, '用户正在写的新草稿')
+      if (stale) version++
+      release?.()
+      await waitFor(
+        container,
+        () => textOf(container).includes('页面或版本已变化') || received > 1,
+        '队列派发结果',
+      )
+      expect(bodies).toHaveLength(stale ? 1 : 2)
+      const routedSnapshot = expect.objectContaining({
+        forwardedProps: expect.objectContaining({
+          conversationId: 'c1',
+          runConfig: expect.objectContaining({
+            documentAgent: true,
+            agentFormat: 'pptx',
+            agentVersion: 7,
+            agentSelection: expect.objectContaining({
+              pptxSnapshotId: 'snapshot-1',
+              slideIndex: 2,
+            }),
+          }),
+        }),
+      })
+      expect(bodies[1] ?? null).toEqual(stale ? null : routedSnapshot)
+      expect(textOf(container).includes('页面或版本已变化')).toBe(stale)
+      expect(container.querySelector('textarea')?.value).toBe(
+        newDraft ? '用户正在写的新草稿' : stale ? '过期美化指令' : '',
+      )
+      expect(Boolean(container.querySelector('form img[alt="第3页截图"]'))).toBe(stale && !newDraft)
+      expect(container.querySelector('[data-role="user"] img[alt="第3页截图"]')).not.toBeNull()
+      if (!stale) {
+        release?.()
+        await waitFor(
+          container,
+          () => !container.querySelector('[aria-label="停止"]'),
+          '队列回答完成',
+        )
+      }
+    },
+  )
+  it('即使文档ID和版本相同，替换了原件来源后也拒绝发送旧截图', async () => {
+    let sourceLive = true
+    let created = 0
+    const snapshot = { ...snapshotFixture(), sourceIsCurrent: () => sourceLive }
+    const container = await mount(
+      makeIo('/api/chat', {
+        createConversation: async () => {
+          created++
+          return { id: 'c1' }
+        },
+      }),
+      { documentId: 'pptx-1', text: snapshot.text, snapshot },
+      snapshotAgent(),
+      undefined,
+      false,
+      undefined,
+      { snapshotVisionReady: true },
+    )
+    sourceLive = false
+    await send(container)
+    expect(created).toBe(0)
+    expect(container.querySelector('textarea')?.value).toBe(snapshot.text)
+    expect(textOf(container)).toContain('页面或版本已变化')
+  })
+})
+
+describe('ChatPanel：截图失败轮的操作', () => {
+  it.each(['重试', '只检索，不调模型'])('点击%s保留原PNG，且只检索不能吞图', async (action) => {
+    let received = 0
+    const server = createServer(async (req, res) => {
+      const chunks: Uint8Array[] = []
+      for await (const chunk of req) chunks.push(chunk as Uint8Array)
+      const body = JSON.parse(Buffer.concat(chunks).toString('utf8')) as { messages: unknown }
+      received++
+      expect(JSON.stringify(body.messages)).toContain(SNAPSHOT_PNG.split(',')[1])
+      res.writeHead(200, { 'Content-Type': 'text/event-stream' })
+      if (received === 1) {
+        res.write(F({ type: 'RUN_STARTED', runId: 'r1', threadId: 'c1' }))
+        res.write(
+          F({
+            type: 'CUSTOM',
+            name: 'mimir.failure',
+            value: { failure: 'offline', message: '本轮网络不可达' },
+          }),
+        )
+        res.write(F({ type: 'RUN_ERROR', message: '本轮网络不可达' }))
+      } else for (const frame of successFrames()) res.write(frame)
+      res.end()
+    })
+    servers.push({ server, drain: () => {} })
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
+    const address = server.address()
+    const snapshot = snapshotFixture()
+    const container = await mount(
+      makeIo(
+        `http://127.0.0.1:${typeof address === 'object' && address ? address.port : 0}/api/chat`,
+      ),
+      { documentId: 'pptx-1', text: snapshot.text, snapshot },
+      snapshotAgent(),
+      undefined,
+      false,
+      undefined,
+      { snapshotVisionReady: true },
+    )
+    await send(container)
+    await waitFor(container, () => textOf(container).includes('本轮网络不可达'), '失败卡')
+    const button = [...container.querySelectorAll<HTMLButtonElement>('button')].find(
+      (item) => item.textContent?.replace(/\s/g, '') === action,
+    )
+    expect(button).toBeDefined()
+    await act(async () => button?.click())
+    if (action === '重试') await waitFor(container, () => received === 2, '带PNG重试')
+    expect(received).toBe(action === '重试' ? 2 : 1)
+    expect(Boolean(container.querySelector('form img[alt="第3页截图"]'))).toBe(action !== '重试')
+    expect(textOf(container).includes('截图美化需要可用的聊天模型')).toBe(action !== '重试')
   })
 })

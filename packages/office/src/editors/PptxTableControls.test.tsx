@@ -261,11 +261,16 @@ it('a late successful submission preserves a newer style draft after the canvas 
   const { host, apply } = await setup()
   const originalApply = apply.getMockImplementation()!
   let finish!: () => void
+  let publish!: () => void
+  const published = new Promise<void>((resolve) => {
+    publish = resolve
+  })
   const pending = new Promise<void>((resolve) => {
     finish = resolve
   })
   apply.mockImplementation(async (op) => {
     const applied = await originalApply(op)
+    publish()
     await pending
     return applied
   })
@@ -273,7 +278,7 @@ it('a late successful submission preserves a newer style draft after the canvas 
   pickSelectOption(host, '表格方向', '从右到左')
   await act(async () => {
     button(host, '应用表格样式').click()
-    await new Promise((resolve) => setTimeout(resolve, 35))
+    await published
   })
   expect(host.querySelector('[aria-busy="true"]')).not.toBeNull()
   expect(selectValueText(host, '表格方向')).toBe('从右到左')

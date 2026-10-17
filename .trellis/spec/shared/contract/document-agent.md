@@ -19,8 +19,9 @@
 - `POST /api/conversations/pptx-agent/apply-ops`：接收当前未保存 PPTX 字节、文档 ID、画布版本及操作批次，由服务宿主运行固定上游操作并返回新字节、记录及版本；只接受已鉴权 PPTX 文档，不自动保存原件。通用 `apply_ops` 保留固定版 AI 操作白名单；现有图表走严格单项 `edit_chart`，已有动画时间走手动专用 `edit_animation`（`seq`、开始方式及持续/延迟毫秒）。动画动作由宿主读取当前 timing 并仅修改该项参数，客户端不能提交原始 XML、任意效果或整条时间线。
 - PPTX宿主服务动作返回`{bytes,records,version,changed,data?}`：只读的规划/模板列表/复制保持版本，只有`changed:true`才重解析画布、推进一次版本和进入撤销历史。下载/生成/重解析前后均核对取消信号与当前版本；迟到结果不能覆盖手动修改。风格模板存于既有存储的`templates/pptx/{sha256(name)}.json`，不把模型凭据或原件嵌入模板。
 - 同一PPTX端点的手动`manual_asset`动作由`pptxManualAssetSchema`校验，提供原生对象/整页复制、剪切、粘贴。复制数据只由固定引擎从当前未保存字节生成；客户端只能提交服务端opaque ref，不能提交OOXML、部件路径或parts。ref在当前Mimir窗口可复用15分钟，宿主最多保留12项、总64 MiB，重启失效；粘贴须再次确认源文件仍可访问。此动作不注册为模型工具，也不承诺PowerPoint系统剪贴板互通。
+- 对象复制/剪切恰选`elementIds`或`targets:[{elementId,group?}]`之一，各限1–100项；`group`只能指定顶层父组合的直接非组合成员。所有目标先严格解析，失效、错误父、同对象别名重复、父子重叠和深层目标整批拒绝。整组选中保持整组；直接成员按父归并，保留父变换包装为独立组合粘贴。对象使用目标主题且不携带动画；附着连接线、内部页跳转和外链媒体明确拒绝，普通外部超链接只保留关系、不下载。剪切清理已删目标timing和孤立资源、保留共享媒体；未选连接线仍引用删除目标时拒绝。粘贴返回新顶层持久`elementRefs`（兼容`elementIds`）供宿主重绑选择；成功剪切须在发布新版/选区使旧面板失效前保存已接受的ref。
 - 同一PPTX端点的手动`manual_ink`动作按`pptxManualInkSchema`接收单个`add/erase/clear`操作；新增笔迹保存为透明PNG图片和`aislides-ink`前缀、v1矢量`descr`，不宣称为PowerPoint InkML。擦除/清除仅允许当前页前缀及可解码元数据均匹配的笔迹图片，混入普通图片时整批拒绝。每笔沿当前版本/取消信号和原子历史路径写入；此动作不注册为模型工具。
-- 同一PPTX端点的手动`manual_fill`动作按`pptxManualFillSchema`接收形状持久ID或当前背景页，source仅允许固定八种纹理ID+匹配固定版SHA-256的PNG，或当前目标已解析的原生图片填充。浏览器不能提交任意mediaPath、XML或通用操作；宿主从当前文档取资源。背景`allSlides`在一次原子事务内应用到实际全部页，一次版本和历史；前端纹理读取、页/目标/版本变化与卸载须阻止迟到提交。此动作不注册模型工具，不放宽`apply_ops`白名单。严格`copy-current-background {slide,allSlides:true}`从当前原件沿slide→layout→master读取背景，保留复杂渐变/原生颜色变换；bgRef物化、源scheme基色跨主题固定、内部图片关系重映射，继承背景在目标页物化为本地背景。外部或失效图片关系拒绝，全部页仍一次版本/历史。
+- 同一PPTX端点的手动`manual_fill`动作按`pptxManualFillSchema`接收形状持久ID、当前背景页或`selection {slide,targets:[{elementId,group?}],source,tile}`。selection最多200个可填充的顶层形状/文本框或顶层组合直接成员，拒绝只有描边的line/connector；宿主解析所有目标并拒绝同对象的不同别名重复，深层组合不自动降级。source仅允许固定八种纹理ID+匹配固定版SHA-256的PNG，或当前目标已解析的原生图片填充；selection的current逐对象保留各自媒体，不能复制首个目标的图像。浏览器不能提交任意mediaPath、XML或通用操作；宿主从当前文档取资源。背景`allSlides`与selection均一次原子事务，一次版本和历史；前端纹理读取、页/目标/版本变化与卸载须阻止迟到提交。此动作不注册模型工具，不放宽`apply_ops`白名单。严格`copy-current-background {slide,allSlides:true}`从当前原件沿slide→layout→master读取背景，保留复杂渐变/原生颜色变换；bgRef物化、源scheme基色跨主题固定、内部图片关系重映射，继承背景在目标页物化为本地背景。外部或失效图片关系拒绝，全部页仍一次版本/历史。
 
 - 同一PPTX端点的手动`manual_zoom`按`pptxManualZoomSchema`接收slide/section/summary和目标页PNG快照；客户端不传XML、版式或分节路径。源页/节和摘要布局由服务端当前原件解析，原生picture+内部slide跳转及摘要分节在一次原子操作内写入，沿当前版本/取消/历史链，不注册模型工具。每批至多24目标、单PNG base64 1,400,000字符、总7,500,000字符，PNG尺寸至多1280×1280；该HTTP ops外壳至多8,000,000字符，其他action仍1,000,000字符。快照从当前未保存画布生成，取消或版本失效拒绝迟到提交。
 - 同一PPTX端点的`manual_animation`按`pptxManualAnimationSchema`接收`transition-all {slide}`或`animation {slide,elementId,operation:replace|add|remove,...}`。自动逐段从原件真实段落生成、全部页从当前原生切换读取，在一个私有事务内完成；至多5000动画项，HTTP仍为普通1,000,000字符。输入不能携带presetXml或任意XML。当前版本/取消/历史沿同一宿主，手动动作不进入模型目录，模型apply_ops保持50条限制。
@@ -47,6 +48,14 @@ TanStack AI 负责 `RUN_FINISHED.outcome → client_tool_* → resume → parent
 首轮发出 `POST /api/chat` 前，`packages/chat/src/runtime/agent.ts` 的 `onRunInitialized` 必须经 `ChatIo.createConversation()` 建立真实会话，并将返回的同一个 ID 同时写入 `params.agent.threadId`、请求 `threadId` 和 `forwardedProps.conversationId`；续轮继续沿用该 ID。AG-UI 自行生成的临时线程 ID 不能充当已落库会话。服务端 `docx-agent-stream.ts` 在首轮和续轮都要求 `getConversation(conversationId)` 存在，并校验 `threadId === conversationId`。这样工具首次中断后的续轮可以找到会话，也阻止伪造或已删除会话的写入。
 
 浏览器、桌面本地模式和桌面远端模式经相同的文档服务合同访问需要 Node、Rust 或 PDFium 的执行器；不能把格式工具只挂在 Electron IPC。各格式编辑器/宿主能力和两端实测另由格式任务证明。
+
+### PPTX 美化截图输入
+
+“美化本页”从当前未保存 renderer 生成静态 PNG，冻结文档、来源寿命、幻灯片持久路径/序号和版本，只预填可编辑、可移除草稿，由用户显式发送。无模型仍可预览，只有现有可执行句柄和视觉能力均可用才允许发送；只读 `draftAgent` 不授予执行权限。缩略图保持真实比例，准备可取消，取消/换页/改稿/切源拒绝迟到结果，不改变 dirty、历史或保存状态。
+
+沿既有 `agentSelection` 附加本地 `pptxSnapshotId`，并清空对象子选区为整页；图片走现有消息 image part 的内嵌 PNG data source。发送与实际排队派发复核原页/版本；续轮允许 Agent 自己推进版本，但仍核对原源寿命并遵守既有轮次/版本协议。停止、失败、重试保留同一文字/PNG/目标，不静默重绑当前页。
+
+服务端在落库和模型调用前校验 PPTX image part：仅 user 内嵌真实 PNG，每轮至多 1 张、请求历史至多 4 张、每张 5 MiB/全部 20 MiB，尺寸至多 1280×1920、2457600 像素；不抓取远程 URL。视觉未配置返回 `VISION_NOT_READY`，非法图片返回 `PPTX_SNAPSHOT_INVALID`；普通 RAG 带图返回 `IMAGE_AGENT_REQUIRED`，不得吞图退回文字。截图只在当前侧栏有界内存中保留，数据库历史仍只落文字，刷新后不承诺图片/绑定恢复。
 
 ## 4. Validation & Error Matrix
 

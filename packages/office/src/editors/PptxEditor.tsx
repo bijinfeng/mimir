@@ -1,3 +1,5 @@
+import { PPTX_PICTURE_ACCEPT, PPTX_PICTURE_FORMATS } from '@mimir/shared'
+import { preparePptxPictureFile } from '../pptx-image-display.js'
 /**
  * Current-workbook PPTX editor. Rendering, manual tools and Agent writes share one
  * patch-preserving session and history. Native text selection spans paragraphs;
@@ -6,7 +8,10 @@
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
 import { editableElements, openPptxForEdit, textOfElement } from '../pptx.js'
-import { PptxClipboardControls } from './PptxClipboardControls.js'
+import { PptxClipboardControls, publishPptxClipboardResult } from './PptxClipboardControls.js'
+import { PptxClipboardBridge } from './PptxClipboardBridge.js'
+import { writePptxClipboardMarker } from '../pptx-system-clipboard.js'
+import { pptxClipboardTargets } from '../pptx-selection-clipboard.js'
 import { PptxOutputControls } from './PptxOutputControls.js'
 import { PptxTextRangeEditor, type PptxTextSelectionEvent } from './PptxTextRangeEditor.js'
 import {
@@ -22,6 +27,7 @@ import {
   type PptxRehearsalResult,
 } from './PptxShowControls.js'
 import { PptxIconControls, PptxCutoutControls } from './PptxPictureTools.js'
+import { PptxGroupPictureControls } from './PptxGroupPictureControls.js'
 import { capturePptxBrush, pptxBrushOps, type PptxBrush } from '../pptx-format-brush.js'
 import { PptxMasterControls } from './PptxMasterControls.js'
 import { PptxModelControls } from './PptxModelControls.js'
@@ -29,8 +35,30 @@ import { PptxShapeFillControls, PptxBackgroundControls } from './PptxFillControl
 import { PptxInkControls, usePptxInkSettings } from './PptxInkControls.js'
 import { PptxInkCanvas } from './PptxInkCanvas.js'
 import { PptxShapeInsertCanvas } from './PptxShapeInsertCanvas.js'
+import { PptxPictureCropCanvas } from './PptxPictureCropCanvas.js'
+import { PptxAiControls } from './PptxAiControls.js'
+import { preparePptxAiSnapshot, type PptxAiSnapshotDraft } from './pptx-ai-snapshot.js'
+import { PptxSelectionControls } from './PptxSelectionControls.js'
+import { PptxSelectionGeometryControls } from './PptxSelectionGeometryControls.js'
+import './pptx-selection-workspace.css'
+import { PptxCommentControls } from './PptxCommentControls.js'
+import { PptxSelectionCanvas } from './PptxSelectionCanvas.js'
+import {
+  pptxResolveSelection,
+  pptxNormalizeSelection,
+  pptxExpandSelection,
+  pptxSelectionOp,
+  pptxSelectionText,
+} from './pptx-selection.js'
+import { pptxPictureCropUnavailableReason } from './pptx-picture-crop.js'
+import { PptxOutlineControls, pptxElementStroke, pptxOutlineOp } from './PptxOutlineControls.js'
+import {
+  PPTX_CHART_KINDS,
+  pptxChartNeedsPositiveValues,
+  type PptxChartKind,
+} from './pptx-chart-kinds.js'
 import { inkNodesOf } from '../pptx-ink.js'
-import type { PptxManualInk, PptxManualShape } from '@mimir/shared'
+import type { PptxManualInk, PptxManualShape, PptxManualPicture } from '@mimir/shared'
 import {
   PptxWorkspaceViews,
   pptxSlideMoveOps,
@@ -76,8 +104,10 @@ import {
   ToolbarMenuNote,
   ToolbarMenuSeparator,
   ToolbarNotice,
+  ToolbarPropertyForm,
   ToolbarNumberField,
   ToolbarSelect,
+  ToolbarToggleGroup,
   ToolbarTabs,
   ToolbarTextArea,
   ToolbarTextField,
@@ -139,6 +169,7 @@ import './compact-toolbar.css'
 import '../shell/shell.css'
 import './editors.css'
 import './pptx-pdf-toolbar.css'
+import './pptx-chart-insert.css'
 
 /**
  * 画布宽度（px）。渲染器按这个宽度算缩放，所以它决定文字大小与换行位置。
@@ -149,13 +180,6 @@ const THUMBNAIL_WIDTH_PX = 136
 const TABLE_GRID_SIZE = 6
 const tableCellLabel = (row: number, column: number) => `插入 ${row} 行 ${column} 列表格`
 const PICTURE_OPACITIES = [100, 75, 50, 25] as const
-
-type ManualChartKind = 'bar' | 'line' | 'pie'
-const MANUAL_CHART_KINDS: readonly ToolbarSelectOption<ManualChartKind>[] = [
-  { value: 'bar', label: '柱状图' },
-  { value: 'line', label: '折线图' },
-  { value: 'pie', label: '饼图' },
-]
 
 /** Only user-entered, finite figures reach addChart; this panel never supplies sample data. */
 function ChartInsertControls({
@@ -171,11 +195,13 @@ function ChartInsertControls({
   apply: (op: Record<string, unknown>) => Promise<boolean>
   close: () => void
 }) {
-  const [kind, setKind] = useState<ManualChartKind>('bar')
+  const [kind, setKind] = useState<PptxChartKind>('bar')
   const [title, setTitle] = useState('')
   const [seriesName, setSeriesName] = useState('')
   const [categoryText, setCategoryText] = useState('')
   const [valueText, setValueText] = useState('')
+  const [lineName, setLineName] = useState('')
+  const [lineText, setLineText] = useState('')
   const [busy, setBusy] = useState(false)
   const draftRevision = useRef(0)
   const categories = categoryText.trim()
@@ -192,6 +218,14 @@ function ChartInsertControls({
     : []
   const numberPattern = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i
   const values = rawValues.map(Number)
+  const lineRaw = lineText.trim()
+    ? lineText
+        .trim()
+        .split(/\r?\n/)
+        .map((item) => item.trim())
+    : []
+  const lineValues = lineRaw.map(Number)
+  const combo = kind === 'comboBarLine'
   const reason =
     categories.length === 0
       ? '请填写类别，每行一项'
@@ -207,10 +241,19 @@ function ChartInsertControls({
                     (item, index) => !numberPattern.test(item) || !Number.isFinite(values[index]),
                   )
                 ? '每行须为一个有限数值，不要填单位或千位分隔符'
-                : kind === 'pie' &&
-                    (values.some((value) => value < 0) || !values.some((value) => value > 0))
-                  ? '饼图数值不能为负，且至少有一项大于零'
-                  : undefined
+                : combo && (!lineName.trim() || lineName.trim().length > 80)
+                  ? '请填写不超过 80 个字符的折线系列名称'
+                  : combo &&
+                      (lineRaw.length !== categories.length ||
+                        lineRaw.some(
+                          (item, index) =>
+                            !numberPattern.test(item) || !Number.isFinite(lineValues[index]),
+                        ))
+                    ? '折线系列须为每个类别填写一个有限数值'
+                    : pptxChartNeedsPositiveValues(kind) &&
+                        (values.some((value) => value < 0) || !values.some((value) => value > 0))
+                      ? '饼图数值不能为负，且至少有一项大于零'
+                      : undefined
 
   const submit = async () => {
     if (reason || busy) return
@@ -223,7 +266,10 @@ function ChartInsertControls({
         kind,
         title: title.trim() || undefined,
         categories,
-        series: [{ name: seriesName.trim(), values }],
+        series: [
+          { name: seriesName.trim(), values },
+          ...(combo ? [{ name: lineName.trim(), values: lineValues }] : []),
+        ],
         dataSource: 'user',
         offset: {
           x: Math.round(width * 0.1),
@@ -239,60 +285,98 @@ function ChartInsertControls({
   }
 
   return (
-    <ToolbarMenuFields label="插入图表（用户数据）">
-      <ToolbarMenuNote>数据来源：你在此输入的数值。当前每次插入一个数据系列。</ToolbarMenuNote>
-      <ToolbarSelect
-        label="图表类型"
-        value={kind}
-        options={MANUAL_CHART_KINDS}
-        onChange={(value) => {
-          draftRevision.current += 1
-          setKind(value)
-        }}
-      />
-      <ToolbarTextField
-        label="图表标题（可选）"
-        value={title}
-        onChange={(value) => {
-          draftRevision.current += 1
-          setTitle(value)
-        }}
-      />
-      <ToolbarTextField
-        label="数据系列名称"
-        value={seriesName}
-        onChange={(value) => {
-          draftRevision.current += 1
-          setSeriesName(value)
-        }}
-      />
-      <ToolbarTextArea
-        label="图表类别（每行一项）"
-        rows={3}
-        value={categoryText}
-        onChange={(value) => {
-          draftRevision.current += 1
-          setCategoryText(value)
-        }}
-      />
-      <ToolbarTextArea
-        label="图表数值（每行一项）"
-        rows={3}
-        value={valueText}
-        onChange={(value) => {
-          draftRevision.current += 1
-          setValueText(value)
-        }}
-      />
-      <ToolbarButton
-        label="按输入数据插入图表"
-        disabled={Boolean(reason) || busy}
-        disabledReason={busy ? '正在插入图表' : reason}
-        onClick={() => void submit()}
-      >
-        插入图表
-      </ToolbarButton>
-    </ToolbarMenuFields>
+    <fieldset className="mimir-pptx-chart-insert" disabled={busy} aria-busy={busy}>
+      <div className="mimir-pptx-chart-insert__content">
+        <ToolbarPropertyForm columns={1}>
+          <ToolbarMenuFields label="插入图表（用户数据）">
+            <ToolbarMenuNote>
+              数据来源：你在此输入的数值。
+              {combo ? '柱形和折线分别使用两个系列。' : '当前每次插入一个数据系列。'}
+            </ToolbarMenuNote>
+            <ToolbarSelect
+              label="图表类型"
+              disabled={busy}
+              value={kind}
+              options={PPTX_CHART_KINDS}
+              onChange={(value) => {
+                draftRevision.current += 1
+                setKind(value)
+              }}
+            />
+            {kind === 'scatter' && (
+              <ToolbarMenuNote>类别填数字时作为 X 坐标；文字类别按 1、2、3…排列。</ToolbarMenuNote>
+            )}
+            <ToolbarTextField
+              label="图表标题（可选）"
+              value={title}
+              onChange={(value) => {
+                draftRevision.current += 1
+                setTitle(value)
+              }}
+            />
+            <ToolbarTextField
+              label="数据系列名称"
+              value={seriesName}
+              onChange={(value) => {
+                draftRevision.current += 1
+                setSeriesName(value)
+              }}
+            />
+            <ToolbarTextArea
+              label="图表类别（每行一项）"
+              rows={3}
+              value={categoryText}
+              onChange={(value) => {
+                draftRevision.current += 1
+                setCategoryText(value)
+              }}
+            />
+            <ToolbarTextArea
+              label="图表数值（每行一项）"
+              rows={3}
+              value={valueText}
+              onChange={(value) => {
+                draftRevision.current += 1
+                setValueText(value)
+              }}
+            />
+            {combo && (
+              <>
+                <ToolbarTextField
+                  label="折线系列名称"
+                  value={lineName}
+                  onChange={(value) => {
+                    draftRevision.current += 1
+                    setLineName(value)
+                  }}
+                />
+                <ToolbarTextArea
+                  label="折线系列数值（每行一项）"
+                  rows={3}
+                  value={lineText}
+                  onChange={(value) => {
+                    draftRevision.current += 1
+                    setLineText(value)
+                  }}
+                />
+              </>
+            )}
+          </ToolbarMenuFields>
+        </ToolbarPropertyForm>
+      </div>
+      <div className="mimir-pptx-chart-insert__actions">
+        <ToolbarMenuNote>
+          {busy ? '正在插入图表…' : (reason ?? '数据有效，可以插入图表')}
+        </ToolbarMenuNote>
+        <ToolbarButton
+          label="按输入数据插入图表"
+          primary
+          disabled={Boolean(reason) || busy}
+          disabledReason={busy ? '正在插入图表' : reason}
+          onClick={() => void submit()}
+        />
+      </div>
+    </fieldset>
   )
 }
 
@@ -691,11 +775,15 @@ export function PptxEditor({
   hostApply,
   hostPicture,
   hostAsset,
+  onAiPreset,
+  onAiSnapshotDraft,
   flush = false,
 }: EditorProps & {
   onAgentHandleChange?: (handle: PptxAgentHandle | null) => void
   hostApply?: PptxHostApply
   hostAsset?: PptxHostAsset
+  onAiPreset?: ((instruction: string) => void) | undefined
+  onAiSnapshotDraft?: ((draft: PptxAiSnapshotDraft) => void) | undefined
   hostPicture?: (request: {
     documentId: string
     bytes: Uint8Array
@@ -726,7 +814,7 @@ export function PptxEditor({
     source: Uint8Array
     documentId: string
     slidePath: string
-    elementRef: string
+    elementRefs: string[]
   } | null>(null)
   const [textRange, setTextRange] = useState<{
     targetKey: string
@@ -771,9 +859,16 @@ export function PptxEditor({
   const [manualBusy, setManualBusy] = useState(false)
   const [inkBusy, setInkBusy] = useState(false)
   const [shapeBusy, setShapeBusy] = useState(false)
+  const [cropBusy, setCropBusy] = useState(false)
+  const [pictureCrop, setPictureCrop] = useState<{
+    documentId: string
+    path: string
+    elementRef: string
+    version: number
+  } | null>(null)
   const ink = usePptxInkSettings()
   const manualPending = useRef(false)
-  const editingBusy = manualBusy || pictureBusy || source.saving || inkBusy || shapeBusy
+  const editingBusy = manualBusy || pictureBusy || source.saving || inkBusy || shapeBusy || cropBusy
   const withManualWrite = async <T,>(
     work: () => Promise<T>,
     pendingStatus = '正在应用修改…',
@@ -797,32 +892,50 @@ export function PptxEditor({
     }
   }
   const assetAbort = useRef<AbortController | null>(null)
+  const pictureAbort = useRef<AbortController | null>(null)
+  const panelWriteAbort = useRef<{
+    binding: string
+    session: typeof session
+    controller: AbortController
+  } | null>(null)
   useEffect(() => {
     if (!session || !documentId) return
     return () => {
       assetAbort.current?.abort()
+      pictureAbort.current?.abort()
+      panelWriteAbort.current?.controller.abort()
     }
   }, [session, documentId])
   const [inspector, setInspector] = useState<string | null>(null)
+  const [selectionTool, setSelectionTool] = useState<'format' | 'geometry'>('format')
   const [clarification, setClarification] = useState<{
     input: PptxClarification
     finish: (value: unknown) => void
   } | null>(null)
   const cancelClarification = useRef<(() => void) | null>(null)
   const inspectorRef = useRef<HTMLElement>(null)
+  const selectionInspectorTriggerRef = useRef<HTMLButtonElement>(null)
+  const commentReturnRef = useRef<HTMLElement | null>(null)
   const presentationTriggerRef = useRef<HTMLButtonElement>(null)
   const presenterTriggerRef = useRef<HTMLButtonElement>(null)
   const inspectorTriggers = useRef(new Map<string, { focus: () => void }>())
   const inspectorSections = useRef(new Map<string, string>())
   useEffect(() => {
-    if (inspector) inspectorRef.current?.focus()
+    if (inspector === '新建批注')
+      inspectorRef.current
+        ?.querySelector<HTMLTextAreaElement>('textarea[aria-label="新批注"]')
+        ?.focus()
+    else if (inspector) inspectorRef.current?.focus()
   }, [inspector])
   const closeInspector = () => {
     assetAbort.current?.abort()
+    panelWriteAbort.current?.controller.abort()
     if (inspector === '演示需求') cancelClarification.current?.()
     setInspector(null)
     if (inspector) {
-      inspectorTriggers.current.get(inspector)?.focus()
+      if (inspector === '新建批注' && commentReturnRef.current?.isConnected)
+        commentReturnRef.current.focus()
+      else inspectorTriggers.current.get(inspector)?.focus()
       const focused = document.activeElement
       if (focused === document.body || inspectorRef.current?.contains(focused)) {
         // A collapsed group's inner opener is unmounted when its menu closes.
@@ -917,36 +1030,47 @@ export function PptxEditor({
   const viewVersion = published?.version ?? 0
 
   const selectedSlide = view?.slides()[active]
-  const selectedObject =
+  const selectedRefs =
     selectedTarget?.source === source.bytes &&
     selectedTarget?.documentId === documentId &&
     selectedTarget?.slidePath === selectedSlide?.path
-      ? (selectedSlide?.elements.find((element) =>
-          matchesElementRef(element, selectedTarget.elementRef),
-        ) ?? null)
+      ? selectedTarget.elementRefs
+      : []
+  const selectedContexts = pptxResolveSelection(selectedSlide?.elements ?? [], selectedRefs)
+  // Existing local geometry/text paths are top-level only. Group members use
+  // the object Inspector's explicit native group operations.
+  const singleContext = selectedContexts.length === 1 ? selectedContexts[0] : null
+  const groupPictureContext =
+    singleContext?.depth === 1 &&
+    singleContext.group &&
+    singleContext.element.type === 'picture' &&
+    !singleContext.element.media
+      ? { ...singleContext, group: singleContext.group, element: singleContext.element }
       : null
+  const selectedObject = singleContext?.depth === 0 ? singleContext.element : null
   const selected = selectedObject?.id ?? null
-  // A first native write may add a creationId. Keep the original cNvPr alias
-  // for this selection; matchesElementRef continues to resolve it afterwards.
-  const selectedElementRef = selectedObject
-    ? (selectedTarget?.elementRef ?? elementDurableId(selectedObject) ?? selectedObject.id)
-    : null
-  const setSelected = useCallback(
-    (id: string | null) => {
+  const selectedElementRef = selectedObject ? (selectedRefs[0] ?? null) : null
+  const selectionBinding = JSON.stringify(
+    selectedContexts.map(
+      (item) => selectedRefs.find((ref) => matchesElementRef(item.element, ref)) ?? item.ref,
+    ),
+  )
+  const setSelection = useCallback(
+    (refs: string[]) => {
       const slide = session?.slides()[active]
-      const element = id ? slide?.elements.find((item) => item.id === id) : null
+      const normalized = pptxNormalizeSelection(slide?.elements ?? [], refs)
       setSelectedTarget(
-        element && slide && source.bytes
-          ? {
-              source: source.bytes,
-              documentId,
-              slidePath: slide.path,
-              elementRef: elementDurableId(element) ?? element.id,
-            }
+        normalized.length && slide && source.bytes
+          ? { source: source.bytes, documentId, slidePath: slide.path, elementRefs: normalized }
           : null,
       )
+      setTextRange(null)
     },
     [session, active, source.bytes, documentId],
+  )
+  const setSelected = useCallback(
+    (id: string | null) => setSelection(id ? [id] : []),
+    [setSelection],
   )
 
   const rendered = useMemo<RenderedSlide | null>(() => {
@@ -970,6 +1094,10 @@ export function PptxEditor({
    * 注册的 effect 只依赖真正是输入的东西。ref 的更新 effect 声明在渲染
    * **之前**——顺序反了 React Compiler 会判违规。
    */
+  const selectionBindingRef = useRef(selectionBinding)
+  useEffect(() => {
+    selectionBindingRef.current = selectionBinding
+  }, [selectionBinding, selectionBindingRef])
   const selectedDurableRef = useRef<string | null>(null)
   useEffect(() => {
     selectedDurableRef.current = selectedElementRef
@@ -985,13 +1113,13 @@ export function PptxEditor({
     }
     findEvents.notify()
     const activeSlide = session.slides()[active]
-    if (
-      selectedTarget &&
-      !activeSlide?.elements.some((element) =>
-        matchesElementRef(element, selectedTarget.elementRef),
+    if (selectedTarget && activeSlide) {
+      const valid = selectedTarget.elementRefs.filter(
+        (ref) => pptxResolveSelection(activeSlide.elements, [ref]).length > 0,
       )
-    )
-      setSelectedTarget(null)
+      if (valid.length !== selectedTarget.elementRefs.length)
+        setSelectedTarget(valid.length ? { ...selectedTarget, elementRefs: valid } : null)
+    }
   }
   const afterEditRef = useRef(afterEdit)
   useEffect(() => {
@@ -1002,10 +1130,24 @@ export function PptxEditor({
     const keydown = (event: KeyboardEvent) => {
       const target = event.target
       const root = canvasRef.current?.closest('.mimir-editor')
+      if (!session || !(target instanceof Node) || !root?.contains(target)) return
       if (
-        !session ||
-        !(target instanceof Node) ||
-        !root?.contains(target) ||
+        (event.ctrlKey || event.metaKey) &&
+        event.altKey &&
+        event.key.toLowerCase() === 'm' &&
+        !editingBusy &&
+        hostApply
+      ) {
+        event.preventDefault()
+        if (inspector !== '新建批注' && target instanceof HTMLElement)
+          commentReturnRef.current = target
+        setInspector('新建批注')
+        inspectorRef.current
+          ?.querySelector<HTMLTextAreaElement>('textarea[aria-label="新批注"]')
+          ?.focus()
+        return
+      }
+      if (
         !(event.ctrlKey || event.metaKey) ||
         event.altKey ||
         editingBusy ||
@@ -1026,13 +1168,21 @@ export function PptxEditor({
     }
     window.addEventListener('keydown', keydown)
     return () => window.removeEventListener('keydown', keydown)
-  }, [history, session, editingBusy])
+  }, [history, session, editingBusy, hostApply, inspector])
 
-  const agentSelectionRef = useRef({ slideIndex: active, elementId: selected })
+  const agentSelectionRef = useRef<{
+    slideIndex: number
+    elementId: string | null
+    elementIds: readonly string[]
+  }>({ slideIndex: active, elementId: selected, elementIds: selectedRefs })
   const onAgentHandleChangeRef = useRef(onAgentHandleChange)
   const hostApplyRef = useRef(hostApply)
   useEffect(() => {
-    agentSelectionRef.current = { slideIndex: active, elementId: selected }
+    agentSelectionRef.current = {
+      slideIndex: active,
+      elementId: singleContext?.element.id ?? null,
+      elementIds: selectedRefs,
+    }
     onAgentHandleChangeRef.current = onAgentHandleChange
     hostApplyRef.current = hostApply
   })
@@ -1097,6 +1247,103 @@ export function PptxEditor({
   useEffect(() => {
     activeRef.current = active
   })
+  const snapshotSource = useRef<object | null>(null)
+  useEffect(() => {
+    const binding = {}
+    snapshotSource.current = binding
+    return () => {
+      if (snapshotSource.current === binding) snapshotSource.current = null
+    }
+  }, [session, documentId, source.bytes])
+  const snapshotAbort = useRef<AbortController | null>(null)
+  const [snapshotPending, setSnapshotPending] = useState(false)
+  useEffect(() => {
+    return () => snapshotAbort.current?.abort()
+  }, [session, documentId, source.bytes, active, viewVersion])
+  useEffect(() => {
+    if (!snapshotPending) return
+    const cancel = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !event.isComposing) {
+        event.preventDefault()
+        snapshotAbort.current?.abort()
+      }
+    }
+    window.addEventListener('keydown', cancel, true)
+    return () => window.removeEventListener('keydown', cancel, true)
+  }, [snapshotPending])
+  const prepareSnapshot = async () => {
+    if (snapshotAbort.current) {
+      snapshotAbort.current.abort()
+      return
+    }
+    if (!session || !view || !source.bytes || !onAiSnapshotDraft || editingBusy) return
+    const controller = new AbortController()
+    snapshotAbort.current = controller
+    setSnapshotPending(true)
+    setPageError(null)
+    const focused = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const binding = snapshotSource.current
+    const sourceIsCurrent = () => binding !== null && snapshotSource.current === binding
+    const index = active
+    const version = viewVersion
+    const target = { documentId, slidePath: view.slides()[index]!.path, slideIndex: index, version }
+    const isCurrent = () =>
+      sourceIsCurrent() &&
+      snapshotAbort.current === controller &&
+      !controller.signal.aborted &&
+      session.version() === version &&
+      activeRef.current === index &&
+      session.slides()[index]?.path === target.slidePath
+    try {
+      const draft = await preparePptxAiSnapshot(
+        view,
+        target,
+        controller.signal,
+        isCurrent,
+        undefined,
+        sourceIsCurrent,
+      )
+      if (isCurrent()) onAiSnapshotDraft(draft)
+    } catch (error) {
+      if (!controller.signal.aborted)
+        setPageError(
+          error instanceof Error && error.name === 'TimeoutError'
+            ? '截图准备超时，请重试'
+            : error instanceof Error
+              ? error.message
+              : '截图准备失败，请重试',
+        )
+      else if (sourceIsCurrent()) {
+        if (focused?.isConnected) focused.focus({ preventScroll: true })
+        else {
+          const root = canvasRef.current?.closest('.mimir-editor')
+          const trigger =
+            root?.querySelector<HTMLElement>('[aria-label="美化本页"]') ??
+            root?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')
+          trigger?.focus({ preventScroll: true })
+        }
+      }
+    }
+    if (snapshotAbort.current === controller) {
+      snapshotAbort.current = null
+      setSnapshotPending(false)
+    }
+  }
+  useEffect(() => () => pictureAbort.current?.abort(), [active])
+  const panelWriteBinding = JSON.stringify([
+    documentId,
+    active,
+    selectionBinding,
+    inspector,
+    inspector === '对象选择与格式' ? selectionTool : null,
+  ])
+  useEffect(() => {
+    return () => {
+      const pending = panelWriteAbort.current
+      if (pending?.binding === panelWriteBinding && pending.session === session)
+        pending.controller.abort()
+    }
+  }, [panelWriteBinding, session])
 
   /**
    * 换到某一页。
@@ -1154,13 +1401,18 @@ export function PptxEditor({
     textRange?.targetKey === textTargetKey && textRange.version === viewVersion ? textRange : null
   const textSelection = currentRange?.selection ?? null
   const pendingFormat = currentRange?.pendingFormat
+  const bulkTextTargets = pptxExpandSelection(selectedSlide?.elements ?? [], selectedRefs).filter(
+    (context) => pptxSelectionText(context),
+  )
   const formatRuns = selectedText
     ? pptxSelectionRuns(selectedText.paragraphs, textSelection).map((run) =>
         textSelection?.start === textSelection?.end && textSelection !== null
           ? Object.assign({}, run, pendingFormat)
           : run,
       )
-    : []
+    : bulkTextTargets.flatMap(
+        (context) => textOfElement(context.element)?.paragraphs.flatMap((para) => para.runs) ?? [],
+      )
   const acceptTextEvent = (event: PptxTextSelectionEvent) =>
     !!session &&
     !editingBusy &&
@@ -1181,8 +1433,25 @@ export function PptxEditor({
     if (session.setText(active, selected, next)) afterEditRef.current()
     setTextRange({ ...event, version: session.version(), pendingFormat })
   }
+  const bulkFormatApplyRef = useRef<(ops: Record<string, unknown>[]) => Promise<boolean>>(
+    async () => false,
+  )
+  useEffect(() => {
+    bulkFormatApplyRef.current = applyPanelOps
+  })
   const applyFormat = (format: RunFormat | ((run: TextRun) => RunFormat)) => {
-    if (!session || !selected || !selectedText || editingBusy || manualPending.current) return
+    if (!session || editingBusy || manualPending.current) return
+    if (!selected || !selectedText) {
+      const ops = bulkTextTargets.map((context) =>
+        pptxSelectionOp(context, {
+          op: 'setText',
+          target: { slide: active, el: context.ref },
+          paragraphs: formatPptxTextRange(textOfElement(context.element)!.paragraphs, null, format),
+        }),
+      )
+      if (ops.length) void bulkFormatApplyRef.current(ops)
+      return
+    }
     if (textSelection && textSelection.start === textSelection.end) {
       const marks = typeof format === 'function' ? format(formatRuns[0] ?? { text: '' }) : format
       setTextRange({
@@ -1358,21 +1627,45 @@ export function PptxEditor({
     }
   }, [session, active, formatBrush, brushContinuous])
 
-  const onClickCanvas = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      event.preventDefault()
-      const target = event.target as Element | null
-      const hit = target?.closest('[data-element-id]')
-      const id = hit?.getAttribute('data-element-id') ?? null
-      if (id && formatBrush) {
-        brushApplyRef.current(id)
-        return
-      }
-      setSelected(id)
-      setTextRange(null)
-    },
-    [formatBrush, setSelected],
-  )
+  const onClickCanvas = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.defaultPrevented || shapeKind || cropTarget || ink.tool !== 'select') return
+    event.preventDefault()
+    const target = event.target as Element | null
+    let hit = target?.closest('[data-element-id]') ?? null
+    // A first click selects the group. Alt-click or a second click inside the
+    // selected group enters its immediate child; deeper groups stay explicit.
+    const parents: Element[] = []
+    for (let node = hit; node; node = node.parentElement?.closest('[data-element-id]') ?? null)
+      parents.unshift(node)
+    if (parents.length > 1) {
+      const top = parents[0]!
+      const topId = top.getAttribute('data-element-id')!
+      const groupSelected = selectedContexts.some((item) => item.element.id === topId)
+      const childSelected = selectedContexts.some(
+        (item) =>
+          item.depth === 1 &&
+          item.group &&
+          selectedSlide?.elements.some(
+            (element) => element.id === topId && matchesElementRef(element, item.group!),
+          ),
+      )
+      hit = event.altKey || groupSelected || childSelected ? parents[1]! : top
+    }
+    const id = hit?.getAttribute('data-element-id') ?? null
+    if (id && formatBrush) {
+      brushApplyRef.current(id)
+      return
+    }
+    if (event.shiftKey || event.ctrlKey || event.metaKey) {
+      if (!id) return
+      const existing = selectedContexts.find((item) => item.element.id === id)
+      setSelection(
+        existing
+          ? selectedRefs.filter((ref) => !matchesElementRef(existing.element, ref))
+          : [...selectedRefs, id],
+      )
+    } else setSelected(id)
+  }
 
   /** 当前 SVG（空串 = 还没渲染出来）。用它当 effect 的依赖，见下面的描边 */
   const svg = rendered?.svg ?? ''
@@ -1402,7 +1695,7 @@ export function PptxEditor({
       if (color !== null) styled.style.outlineColor = color
       marked.push(styled)
     }
-    mark(selected, null)
+    for (const item of selectedContexts) mark(item.element.id, null)
     if (findMark !== null && findMark.slideIndex === active)
       mark(findMark.elementId, FIND_MARK_COLOR)
     return () => {
@@ -1411,7 +1704,7 @@ export function PptxEditor({
         node.style.outlineColor = ''
       }
     }
-  }, [svg, selected, findMark, active])
+  }, [svg, selectedContexts, findMark, active])
 
   /**
    * 把当前命中的元素滚进视野。
@@ -1435,6 +1728,9 @@ export function PptxEditor({
     if (!session) return
     await withManualWrite(async () => {
       const savedVersion = session.version()
+      const savedRange = currentRange
+      const savedTarget = selectedElementRef
+      const savedHandle = agentHandleRef.current
       const bytes = await session.save()
       const ok = await source.save(bytes, { name: 'slides.pptx', mime: OFFICE_MIME.pptx })
       if (!ok) return
@@ -1447,6 +1743,19 @@ export function PptxEditor({
        * 会拿旧锚点拼字节，第一次的改动被静默回滚（保存本身还是成功）。
        */
       session.commit()
+      const committedVersion = session.version()
+      if (
+        savedRange?.version === savedVersion &&
+        savedRange.targetKey === textTargetKey &&
+        savedTarget !== null &&
+        selectedDurableRef.current === savedTarget &&
+        activeRef.current === active &&
+        agentHandleRef.current === savedHandle
+      ) {
+        setTextRange((current) =>
+          current === savedRange ? { ...current, version: committedVersion } : current,
+        )
+      }
       history?.synchronize()
       // commit 之后模型与刚写出的字节对齐了，取一份新快照（同时丢掉 edited）
       setEdited({ source: source.bytes!, view: session.view(), version: session.version() })
@@ -1541,16 +1850,25 @@ export function PptxEditor({
    * 禁用原因。**两个原因各不相同，不能合成一句「不可用」**——一个灰着的按钮
    * 加一句含糊的原因是让人猜。
    */
-  const formatReason =
-    selected === null ? '先在画布上点一个文字框或形状' : hasRuns ? undefined : '这个元素里没有文字'
+  const formatReason = editingBusy
+    ? '正在处理修改，请稍后重试'
+    : hasRuns
+      ? undefined
+      : selectedContexts.length
+        ? '所选对象中没有文字'
+        : '先在画布上选择文字框或形状'
 
   /** 增大/减小字号要**每条 run** 都读得到具体值（继承来的也算解析得出；读不到就禁用） */
-  const formatScope = textSelection
-    ? textSelection.start === textSelection.end
-      ? '插入点'
-      : '选中文字'
-    : '整框'
-  const canStepSize = hasRuns && formatRuns.every((run) => Number.isFinite(run.fontSize))
+  const formatScope =
+    !selectedText && bulkTextTargets.length
+      ? '所选对象'
+      : textSelection
+        ? textSelection.start === textSelection.end
+          ? '插入点'
+          : '选中文字'
+        : '整框'
+  const canStepSize =
+    !editingBusy && hasRuns && formatRuns.every((run) => Number.isFinite(run.fontSize))
   const sizeStepReason =
     formatReason ?? (canStepSize ? undefined : '有文字的字号取不到具体值，只能先用字号框设一个')
 
@@ -1567,6 +1885,7 @@ export function PptxEditor({
       | 'edit_animation'
       | 'manual_ink'
       | 'manual_fill'
+      | 'manual_picture'
       | 'manual_zoom'
       | 'manual_animation'
       | 'manual_shape'
@@ -1638,30 +1957,74 @@ export function PptxEditor({
     return applied
   }
 
-  const runClipboard = async (input: PptxManualAsset) => {
+  const runClipboard = async (input: PptxManualAsset, options?: { signal: AbortSignal }) => {
     const handle = agentHandleRef.current
     if (!handle || !session) return null
-    const roundId = crypto.randomUUID()
-    const response = (await withManualWrite(() =>
-      handle.execute('manual_asset', input, {
-        expectedVersion: session.version(),
-        roundId,
-      }),
-    )) as
-      | { ok: boolean; changed?: boolean; data?: Record<string, unknown>; error?: string }
-      | undefined
-    if (!response) return null
-    if (!response.ok) {
-      setPageError(response.error ?? '复制粘贴失败，请重新复制')
+    const version = viewVersion
+    if (
+      options?.signal.aborted ||
+      session.version() !== version ||
+      activeRef.current !== active ||
+      selectionBindingRef.current !== selectionBinding ||
+      ('slide' in input && input.slide !== active) ||
+      ('afterIndex' in input && input.afterIndex !== active)
+    ) {
+      setPageError('画布已变化，请重新打开剪贴板')
       return null
     }
-    setPageError(null)
-    if (response.changed) {
-      setManualUndoRound(roundId)
-      if (typeof response.data?.slideIndex === 'number') goTo(response.data.slideIndex)
-      else setActive((current) => Math.min(current, session.slides().length - 1))
+    if (panelWriteAbort.current && !panelWriteAbort.current.controller.signal.aborted) return null
+    const controller = new AbortController()
+    const pending = { binding: panelWriteBinding, session, controller }
+    panelWriteAbort.current = pending
+    const roundId = crypto.randomUUID()
+    try {
+      const response = (await withManualWrite(() =>
+        handle.execute('manual_asset', input, {
+          expectedVersion: version,
+          roundId,
+          signal: options
+            ? AbortSignal.any([controller.signal, options.signal])
+            : controller.signal,
+        }),
+      )) as
+        | { ok: boolean; changed?: boolean; data?: Record<string, unknown>; error?: string }
+        | undefined
+      if (!response || agentHandleRef.current !== handle) return null
+      if (!response.ok) {
+        if (!controller.signal.aborted && !options?.signal.aborted)
+          setPageError(response.error ?? '复制粘贴失败，请重新复制')
+        return null
+      }
+      // The live handle checks cancellation before accepting bytes. A successful
+      // cut may itself change the selection and unmount the initiating controls.
+      if (!response.changed && (controller.signal.aborted || options?.signal.aborted)) return null
+      if (
+        activeRef.current !== active ||
+        session.version() !== version + Number(response.changed === true)
+      )
+        return null
+      const data = response.data ?? {}
+      const copied = publishPptxClipboardResult(data)
+      if (copied)
+        void writePptxClipboardMarker(data).then((written) => {
+          if (!written && agentHandleRef.current === handle)
+            setPageStatus('已保存内部复制内容；系统标记未获准写入，请使用剪贴板面板粘贴')
+        })
+      setPageError(null)
+      if (response.changed) {
+        setManualUndoRound(roundId)
+        if (input.kind === 'paste_elements') {
+          const refs = data.elementRefs ?? data.elementIds
+          if (Array.isArray(refs) && refs.every((ref) => typeof ref === 'string'))
+            setSelection(refs)
+        } else if (input.kind === 'cut_elements') setSelection([])
+        else if (typeof data.slideIndex === 'number') goTo(data.slideIndex)
+        else setActive((current) => Math.min(current, session.slides().length - 1))
+      }
+      return data
+    } finally {
+      if (panelWriteAbort.current === pending) panelWriteAbort.current = null
     }
-    return response.data ?? {}
   }
   const insertTable = (rows: number, cols: number) =>
     runManualOp({
@@ -1677,9 +2040,9 @@ export function PptxEditor({
       },
     })
   const applyLocalPicture = async (file: File, action: 'insert' | 'replace') => {
-    if (!hostPicture || !session || pictureBusy) return
+    if (!hostPicture || !session || pictureBusy || pictureAbort.current) return
     if (file.size === 0 || file.size > 8 * 1024 * 1024) {
-      setPageError('图片必须是小于 8 MiB 的 PNG 或 JPEG')
+      setPageError(`请选择不超过 8 MiB 的 ${PPTX_PICTURE_FORMATS} 图片`)
       return
     }
     const elementId =
@@ -1691,42 +2054,72 @@ export function PptxEditor({
       return
     }
     const expectedVersion = session.version()
+    const controller = new AbortController()
+    const handle = agentHandleRef.current
+    const check = () => {
+      if (
+        controller.signal.aborted ||
+        agentHandleRef.current !== handle ||
+        activeRef.current !== active ||
+        session.version() !== expectedVersion
+      )
+        throw new Error('画布已变化或图片操作已取消，请重新操作')
+    }
+    pictureAbort.current = controller
     setPictureBusy(true)
     setPageError(null)
     try {
+      const prepared = await preparePptxPictureFile(file, controller.signal)
+      check()
+      const currentBytes = await session.save()
+      check()
       const response = await hostPicture({
         documentId,
-        bytes: await session.save(),
+        bytes: currentBytes,
         expectedVersion,
-        imageBytes: new Uint8Array(await file.arrayBuffer()),
+        imageBytes: prepared.bytes,
         slide: active,
         action,
         ...(elementId ? { elementId } : {}),
       })
-      if (session.version() !== expectedVersion)
-        throw new Error('图片处理期间画布已变化，请重新操作')
+      check()
       if (response.version !== expectedVersion + 1) throw new Error('图片宿主返回的画布版本无效')
-      await session.replaceFromHost(response.bytes, expectedVersion)
+      await session.replaceFromHost(response.bytes, expectedVersion, controller.signal)
       setManualUndoRound(null)
       afterEditRef.current()
     } catch (cause) {
-      setPageError(cause instanceof Error ? cause.message : '图片操作失败')
+      if (!controller.signal.aborted)
+        setPageError(cause instanceof Error ? cause.message : '图片操作失败')
     } finally {
+      if (pictureAbort.current === controller) pictureAbort.current = null
       setPictureBusy(false)
     }
   }
   const objectTarget = selectedObject ? { slide: active, el: selectedElementRef! } : null
-  const applyLocalAsset = async (input: PptxManualUpload, assetFile: File, posterFile?: File) => {
+  const applyLocalAsset = async (
+    input: PptxManualUpload,
+    assetFile: File,
+    posterFile?: File,
+    callerSignal?: AbortSignal,
+  ) => {
     if (!hostAsset || !session || assetAbort.current) return false
     const expectedVersion = session.version()
     const controller = new AbortController()
+    const startedSlide = active,
+      liveSignal = callerSignal
+        ? AbortSignal.any([controller.signal, callerSignal])
+        : controller.signal
     assetAbort.current = controller
     setPictureBusy(true)
     setPageError(null)
     setPageStatus('正在处理素材…')
     try {
       const bytes = await session.save()
-      if (controller.signal.aborted || session.version() !== expectedVersion)
+      if (
+        liveSignal.aborted ||
+        session.version() !== expectedVersion ||
+        activeRef.current !== startedSlide
+      )
         throw new Error('画布已变化或操作已取消，请重新操作')
       const response = await hostAsset({
         documentId,
@@ -1735,17 +2128,18 @@ export function PptxEditor({
         input,
         assetFile,
         ...(posterFile ? { posterFile } : {}),
-        signal: controller.signal,
+        signal: liveSignal,
       })
-      if (controller.signal.aborted) throw new Error('素材操作已取消，文档未修改')
-      if (session.version() !== expectedVersion)
+      if (liveSignal.aborted) throw new Error('素材操作已取消，文档未修改')
+      if (session.version() !== expectedVersion || activeRef.current !== startedSlide)
         throw new Error('素材处理期间画布已变化，请重新操作')
       if (response.version !== expectedVersion + 1) throw new Error('素材宿主返回的画布版本无效')
-      await session.replaceFromHost(response.bytes, expectedVersion, controller.signal)
+      await session.replaceFromHost(response.bytes, expectedVersion, liveSignal)
       setManualUndoRound(null)
       afterEditRef.current()
       const data = response.data as { slideIndex?: number; elementId?: string } | undefined
       if (typeof data?.slideIndex === 'number') goTo(data.slideIndex)
+      if (input.kind === 'picture' && data?.elementId) setSelection([data.elementId])
       if ((input.kind === 'media' || input.kind === 'model3d') && data?.elementId) {
         const mediaSlide = session.slides()[input.slide]
         const element = mediaSlide?.elements.find((item) =>
@@ -1767,11 +2161,16 @@ export function PptxEditor({
       )
       return true
     } catch (cause) {
-      setPageError(cause instanceof Error ? cause.message : '素材操作失败')
-      setPageStatus(null)
+      if (!liveSignal.aborted) {
+        setPageError(cause instanceof Error ? cause.message : '素材操作失败')
+        setPageStatus(null)
+      }
       return false
     } finally {
-      if (assetAbort.current === controller) assetAbort.current = null
+      if (assetAbort.current === controller) {
+        assetAbort.current = null
+        setPageStatus((current) => (current === '正在处理素材…' ? null : current))
+      }
       setPictureBusy(false)
     }
   }
@@ -1842,6 +2241,8 @@ export function PptxEditor({
         {hasRuns && uniformSize !== null ? (
           <ToolbarNumberField
             label={`字号（pt，${formatScope}）`}
+            disabled={editingBusy}
+            disabledReason={formatReason}
             value={uniformSize}
             min={MIN_FONT_SIZE_PT}
             max={MAX_FONT_SIZE_PT}
@@ -1977,6 +2378,8 @@ export function PptxEditor({
             <ToolbarMenuFields label="字体和颜色">
               <ToolbarSelect
                 label={`字体（${formatScope}，中英文一起换）`}
+                disabled={editingBusy}
+                disabledReason={formatReason}
                 value={uniformFont}
                 options={fontOptions}
                 fallbackLabel="多档字体"
@@ -1984,6 +2387,7 @@ export function PptxEditor({
               />
               <ToolbarColorPicker
                 label={`字体颜色（${formatScope}）`}
+                disabled={editingBusy}
                 value={uniformColor}
                 options={colorOptions}
                 onPick={(color) => applyFormat({ color })}
@@ -2116,7 +2520,7 @@ export function PptxEditor({
                     {hostPicture ? (
                       <ToolbarFileButton
                         label="替换选中图片"
-                        accept="image/png,image/jpeg"
+                        accept={PPTX_PICTURE_ACCEPT}
                         disabled={pictureBusy}
                         onPick={(file) => applyLocalPicture(file, 'replace')}
                       >
@@ -2181,14 +2585,15 @@ export function PptxEditor({
                 )}
                 <ToolbarColorPicker
                   label="轮廓颜色"
-                  value={null}
+                  value={(() => {
+                    const fill = pptxElementStroke(selectedObject)?.fill
+                    return fill?.type === 'solid' ? fill.color : null
+                  })()}
                   options={TEXT_COLORS}
                   onPick={(color) =>
-                    void runManualOp({
-                      op: 'setStroke',
-                      target: objectTarget,
-                      stroke: { color, widthEmu: 12700 },
-                    })
+                    void runManualOp(
+                      pptxOutlineOp(objectTarget, pptxElementStroke(selectedObject), { color }),
+                    )
                   }
                 />
                 <ToolbarMenuItemRow
@@ -2386,17 +2791,10 @@ export function PptxEditor({
 
   const metadata = session.metadata(active)
   const panelVersion = viewVersion
-  const panelKey = `${active}:${selected}:${panelVersion}`
-  const panelSelectionChanged = (ops: Record<string, unknown>[]) =>
-    ops.some((op) => {
-      const target = op.target
-      return (
-        target !== null &&
-        typeof target === 'object' &&
-        'el' in target &&
-        typeof target.el === 'string'
-      )
-    }) && selectedDurableRef.current !== objectTarget?.el
+  const panelKey = `${active}:${selectionBinding}:${panelVersion}`
+  const panelSelectionChanged = (_ops: Record<string, unknown>[]) =>
+    selectionBindingRef.current !== selectionBinding
+
   const applyPanelOp = async (op: Record<string, unknown>) => {
     if (
       session.version() !== panelVersion ||
@@ -2406,9 +2804,22 @@ export function PptxEditor({
       setPageError('画布已变化，请重新打开工具面板')
       return false
     }
-    return runManualOp(op)
+    if (panelWriteAbort.current && !panelWriteAbort.current.controller.signal.aborted) return false
+    const controller = new AbortController()
+    const pending = { binding: panelWriteBinding, session, controller }
+    panelWriteAbort.current = pending
+    try {
+      return await runManualTool(
+        'apply_ops',
+        { ops: [op] },
+        { expectedVersion: panelVersion, signal: controller.signal },
+      )
+    } finally {
+      if (panelWriteAbort.current === pending) panelWriteAbort.current = null
+    }
   }
-  const applyPanelOps = async (ops: Record<string, unknown>[]) => {
+  async function applyPanelOps(ops: Record<string, unknown>[]) {
+    if (!session) return false
     if (
       session.version() !== panelVersion ||
       activeRef.current !== active ||
@@ -2423,7 +2834,20 @@ export function PptxEditor({
       beforeIds = new Set(
         session.slides()[active]?.elements.map((item) => elementDurableId(item) ?? item.id),
       )
-    const applied = await runManualTool('apply_ops', { ops })
+    if (panelWriteAbort.current && !panelWriteAbort.current.controller.signal.aborted) return false
+    const controller = new AbortController()
+    const pending = { binding: panelWriteBinding, session, controller }
+    panelWriteAbort.current = pending
+    let applied: boolean
+    try {
+      applied = await runManualTool(
+        'apply_ops',
+        { ops },
+        { expectedVersion: panelVersion, signal: controller.signal },
+      )
+    } finally {
+      if (panelWriteAbort.current === pending) panelWriteAbort.current = null
+    }
     if (
       applied &&
       inserting &&
@@ -2454,6 +2878,30 @@ export function PptxEditor({
     }
     return runManualTool('manual_fill', input)
   }
+  const applySelectionFill = async (input: import('@mimir/shared').PptxManualFill) => {
+    if (
+      input.kind !== 'selection' ||
+      session.version() !== panelVersion ||
+      activeRef.current !== active ||
+      input.slide !== active ||
+      selectionBindingRef.current !== selectionBinding
+    ) {
+      setPageError('画布已变化，请重新打开工具面板')
+      return false
+    }
+    if (panelWriteAbort.current && !panelWriteAbort.current.controller.signal.aborted) return false
+    const controller = new AbortController()
+    const pending = { binding: panelWriteBinding, session, controller }
+    panelWriteAbort.current = pending
+    try {
+      return await runManualTool('manual_fill', input, {
+        expectedVersion: panelVersion,
+        signal: controller.signal,
+      })
+    } finally {
+      if (panelWriteAbort.current === pending) panelWriteAbort.current = null
+    }
+  }
   const applyPanelAsset = async (input: PptxManualUpload, file: File, poster?: File) => {
     if (
       session.version() !== panelVersion ||
@@ -2466,6 +2914,106 @@ export function PptxEditor({
     return applyLocalAsset(input, file, poster)
   }
   const inspectorPanels: Record<string, ReactNode> = {}
+  if (groupPictureContext) {
+    const target = {
+      slide: active,
+      group: groupPictureContext.group,
+      elementId: groupPictureContext.ref,
+    }
+    const validGroupPictureBinding = (signal: AbortSignal) => {
+      if (
+        signal.aborted ||
+        session.version() !== panelVersion ||
+        activeRef.current !== active ||
+        selectionBindingRef.current !== selectionBinding
+      ) {
+        if (!signal.aborted) setPageError('画布已变化，请重新打开组合图片工具')
+        return false
+      }
+      return true
+    }
+    inspectorPanels['组合图片'] = (
+      <PptxGroupPictureControls
+        key={`${documentId}:${selectedSlide?.path}:${panelKey}`}
+        element={groupPictureContext.element}
+        groupName={
+          selectedSlide?.elements.find((element) =>
+            matchesElementRef(element, groupPictureContext.group),
+          )?.name || '组合'
+        }
+        target={target}
+        source={
+          view.media.get(groupPictureContext.element.mediaRef) ??
+          groupPictureContext.element.dataUrl ??
+          ''
+        }
+        disabled={editingBusy || !hostApply}
+        canUpload={!!hostAsset}
+        apply={async (input: PptxManualPicture, signal: AbortSignal) => {
+          if (!validGroupPictureBinding(signal)) return false
+          if (panelWriteAbort.current && !panelWriteAbort.current.controller.signal.aborted)
+            return false
+          const controller = new AbortController()
+          const pending = { binding: panelWriteBinding, session, controller }
+          panelWriteAbort.current = pending
+          try {
+            return await runManualTool('manual_picture', input, {
+              expectedVersion: panelVersion,
+              signal: AbortSignal.any([signal, controller.signal]),
+            })
+          } finally {
+            if (panelWriteAbort.current === pending) panelWriteAbort.current = null
+          }
+        }}
+        upload={(input, file, signal) =>
+          validGroupPictureBinding(signal)
+            ? applyLocalAsset(input, file, undefined, signal)
+            : Promise.resolve(false)
+        }
+      />
+    )
+  }
+  inspectorPanels['对象选择与格式'] = (
+    <div className="mimir-pptx-selection-workspace">
+      <div className="mimir-pptx-selection-workspace__nav">
+        <ToolbarToggleGroup
+          label="对象属性分类"
+          value={selectionTool}
+          options={[
+            { value: 'format', label: '选择与格式', disabled: editingBusy },
+            { value: 'geometry', label: '位置与形状', disabled: editingBusy },
+          ]}
+          onChange={(value) => {
+            if (!manualPending.current) setSelectionTool(value)
+          }}
+        />
+      </div>
+      <div className="mimir-pptx-selection-workspace__view" hidden={selectionTool !== 'format'}>
+        <PptxSelectionControls
+          elements={selectedSlide?.elements ?? []}
+          selectedRefs={selectedRefs}
+          onSelectionChange={setSelection}
+          slide={active}
+          version={panelVersion}
+          sourceKey={`${documentId}:${selectedSlide?.path}`}
+          applyOps={applyPanelOps}
+          applyFill={applySelectionFill}
+          disabled={editingBusy || !hostApply}
+        />
+      </div>
+      <div className="mimir-pptx-selection-workspace__view" hidden={selectionTool !== 'geometry'}>
+        <PptxSelectionGeometryControls
+          elements={selectedSlide?.elements ?? []}
+          selectedRefs={selectedRefs}
+          slide={active}
+          version={panelVersion}
+          sourceKey={`${documentId}:${selectedSlide?.path}`}
+          applyOps={applyPanelOps}
+          disabled={editingBusy || !hostApply}
+        />
+      </div>
+    </div>
+  )
   if (selectedObject?.type === 'table' && objectTarget)
     inspectorPanels['编辑表格'] = hostApply ? (
       <PptxTableControls
@@ -2502,7 +3050,9 @@ export function PptxEditor({
   const advancedMenu = (label: string, content: ReactNode, reason?: string) => {
     const body =
       !hostApply && label !== '导出与打印' ? (
-        <ToolbarMenuNote>当前未连接 PPTX 宿主</ToolbarMenuNote>
+        <ToolbarMenuNote>
+          {label === '插入图表' ? '当前未连接 PPTX 宿主，无法插入图表' : '当前未连接 PPTX 宿主'}
+        </ToolbarMenuNote>
       ) : reason ? (
         <ToolbarMenuNote>{reason}</ToolbarMenuNote>
       ) : (
@@ -2510,11 +3060,18 @@ export function PptxEditor({
       )
     if (
       [
+        '剪贴板',
+        '对象选择与格式',
         '段落与文本框',
+        '插入图表',
+        '图片裁切',
+        '组合图片',
+        '轮廓',
         '形状库',
         '对齐与组合',
         '主题',
         '分节与批注',
+        '新建批注',
         '编辑顶点',
         '公式',
         '图示',
@@ -2549,6 +3106,8 @@ export function PptxEditor({
             if (inspector === label) closeInspector()
             else {
               const trigger = inspectorTriggers.current.get(label)
+              if (label === '新建批注' && trigger instanceof HTMLElement)
+                commentReturnRef.current = trigger
               const section =
                 trigger instanceof HTMLElement
                   ? trigger.closest<HTMLElement>('[data-section-key]')?.dataset.sectionKey
@@ -2640,6 +3199,36 @@ export function PptxEditor({
     return applied
   }
 
+  const cropTarget =
+    selectedObject?.type === 'picture' &&
+    objectTarget &&
+    pictureCrop?.documentId === documentId &&
+    pictureCrop.path === view.slides()[active]!.path &&
+    pictureCrop.elementRef === objectTarget.el &&
+    pictureCrop.version === panelVersion &&
+    (workspaceMode === 'normal' || workspaceMode === 'outline')
+      ? { element: selectedObject, target: objectTarget }
+      : null
+  const exitPictureCrop = () => {
+    setPictureCrop(null)
+    requestAnimationFrame(() => {
+      const editor = canvasRef.current?.closest('.mimir-editor')
+      const focus = document.activeElement
+      if (
+        focus !== document.body &&
+        !editor?.querySelector('.mimir-pptx-picture-crop-layer')?.contains(focus)
+      )
+        return
+      inspectorTriggers.current.get('图片裁切')?.focus()
+      if (document.activeElement === document.body)
+        editor
+          ?.querySelector<HTMLButtonElement>(
+            '[data-section-key="picture-crop"] button:not(:disabled)',
+          )
+          ?.focus()
+    })
+  }
+
   const workspaceStage = (
     <div className={`me-scroll mimir-pptx-stage${viewSettings.ruler ? ' has-ruler' : ''}`}>
       <div
@@ -2652,32 +3241,43 @@ export function PptxEditor({
           maxWidth: viewSettings.zoom === 'fit' ? '100%' : 'none',
         }}
       >
-        {/*
-          ## 白名单：本文件里**唯一**可点而不经过原语元素的元素
-
-          工具条上的交互元素一律走外壳的 antd 原语（D-064）。这里是一个
-          **显式列出来**的例外，不是漏网：
-
-            - 它是**画布**，不是控件。被点中的目标不是这个 `div`，而是它里面
-              那些 `<text>` / `<rect>`（点选靠 `closest('[data-element-id]')`
-              的事件代理，见 `onClickCanvas`）
-            - 那些目标是**字符串注入**的 SVG 节点（`dangerouslySetInnerHTML`，
-              见下面那段注释），不是 React 元素——给它们挂 `onClick` 要先把它
-              重写成 React 树，而那会让「渲染器是纯函数、产物能存成 .svg」这
-              条设计作废
-            - 换成 `ToolbarButton` 也没有意义：一个按钮只能有一个动作，而这里
-              的动作随**点在哪**而变
-
-          **它的代价要如实记着**：键盘用户目前没有「在画布上选一个文字框」的
-          路径（`div` 不可聚焦，SVG 里的节点也没有 `tabIndex`）。所以键盘路径
-          是附属面板的那排段落输入框（先用鼠标选一次元素，之后改字全在键盘上）。
-          要补上键盘选元素，得给画布自己做一层「元素列表 + 方向键」，那是新
-          功能，不是这次迁移的范围。
-        */}
+        {/* Canvas hit testing stays on injected SVG. The object Inspector and
+            focused-canvas arrows provide the corresponding keyboard path. */}
         <div
           ref={canvasRef}
           className="mimir-pptx-slide"
           onClick={onClickCanvas}
+          tabIndex={0}
+          role="group"
+          aria-label="幻灯片对象画布"
+          onKeyDown={(event) => {
+            if (event.target !== event.currentTarget || editingBusy) return
+            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'a') {
+              event.preventDefault()
+              setSelection(selectedSlide?.elements.map((item) => item.id) ?? [])
+            } else if (event.key === 'Escape') {
+              event.preventDefault()
+              setSelection([])
+            } else if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+              event.preventDefault()
+              const items = selectedSlide?.elements ?? []
+              if (!items.length) return
+              const anchor = selectedContexts.at(-1)
+              const index = items.findIndex(
+                (item) =>
+                  item.id === anchor?.element.id ||
+                  anchor?.ancestors.some((ref) => matchesElementRef(item, ref)),
+              )
+              const nextIndex =
+                index < 0
+                  ? event.key === 'ArrowRight'
+                    ? 0
+                    : items.length - 1
+                  : (index + (event.key === 'ArrowRight' ? 1 : items.length - 1)) % items.length
+              const next = items[nextIndex]!
+              setSelection(event.shiftKey ? [...selectedRefs, next.id] : [next.id])
+            }
+          }}
           /*
             注入渲染好的 SVG。**为什么用 dangerouslySetInnerHTML 而不是 React
             元素**：渲染器是纯函数（绘制列表 → 字符串），产物要能脱离 React
@@ -2687,6 +3287,16 @@ export function PptxEditor({
             **点选靠 data-element-id 属性**——渲染器给每个元素节点写了它。
           */
           dangerouslySetInnerHTML={{ __html: rendered.svg }}
+        />
+        <PptxSelectionCanvas
+          host={canvasRef}
+          binding={`${documentId}:${selectedSlide?.path}:${panelVersion}`}
+          ids={selectedSlide?.elements.map((item) => item.id) ?? []}
+          selectedIds={selectedContexts.map((item) => item.element.id)}
+          disabled={
+            editingBusy || !!shapeKind || !!cropTarget || ink.tool !== 'select' || !!formatBrush
+          }
+          onSelect={setSelection}
         />
         <PptxAnimationPreview
           host={canvasRef}
@@ -2705,6 +3315,55 @@ export function PptxEditor({
           }
         />
         <PptxViewOverlay size={view.size} settings={viewSettings} />
+        {cropTarget && (
+          <PptxPictureCropCanvas
+            documentId={documentId}
+            slideKey={view.slides()[active]!.path}
+            version={panelVersion}
+            element={cropTarget.element}
+            target={cropTarget.target}
+            imageHref={view.media.get(cropTarget.element.mediaRef)}
+            width={rendered.widthPx}
+            height={rendered.heightPx}
+            slideWidth={session.size.cx}
+            slideHeight={session.size.cy}
+            disabled={
+              (manualBusy && !cropBusy) ||
+              pictureBusy ||
+              source.saving ||
+              inkBusy ||
+              shapeBusy ||
+              !hostApply
+            }
+            apply={async (srcRect, expectedVersion, signal, box) => {
+              if (
+                signal.aborted ||
+                session.version() !== expectedVersion ||
+                activeRef.current !== active ||
+                selectedDurableRef.current !== cropTarget.target.el
+              )
+                return false
+              const changed = await runManualTool(
+                'apply_ops',
+                {
+                  ops: [
+                    {
+                      op: 'setPictureSrcRect',
+                      target: cropTarget.target,
+                      srcRect,
+                      ...(box ? { box } : {}),
+                    },
+                  ],
+                },
+                { expectedVersion, signal },
+              )
+              if (changed) exitPictureCrop()
+              return changed
+            }}
+            onExit={exitPictureCrop}
+            onBusy={setCropBusy}
+          />
+        )}
         <PptxShapeInsertCanvas
           documentId={documentId}
           slideKey={view.slides()[active]!.path}
@@ -2805,7 +3464,33 @@ export function PptxEditor({
                   <PptxClipboardControls
                     slide={active}
                     elementId={objectTarget?.el ?? null}
+                    elements={selectedSlide?.elements ?? []}
+                    selectedRefs={selectedRefs}
+                    contextKey={`${panelWriteBinding}:${viewVersion}`}
+                    disabled={editingBusy}
                     slideCount={session.slides().length}
+                    slideNames={session
+                      .slides()
+                      .map(
+                        (slide) => slide.originalXml.match(/<p:cSld[^>]*name="([^"]*)"/)?.[1] ?? '',
+                      )}
+                    insertSystemImage={
+                      hostAsset
+                        ? (file, signal) =>
+                            applyLocalAsset(
+                              {
+                                kind: 'picture',
+                                slide: active,
+                                widthPt: 72,
+                                keepCrop: false,
+                                naturalSize: true,
+                              },
+                              file,
+                              undefined,
+                              signal,
+                            )
+                        : undefined
+                    }
                     execute={runClipboard}
                   />,
                 ),
@@ -2935,6 +3620,44 @@ export function PptxEditor({
                 content: textFormatMenu,
               },
               {
+                key: 'ai-create',
+                label: 'AI 编辑',
+                tab: 'home',
+                minWidth: 0,
+                content: (
+                  <PptxAiControls
+                    documentId={documentId}
+                    slidePath={view.slides()[active]!.path}
+                    slideIndex={active}
+                    version={panelVersion}
+                    onAiPreset={onAiPreset}
+                    onSnapshot={onAiSnapshotDraft ? () => void prepareSnapshot() : undefined}
+                    snapshotPending={snapshotPending}
+                    disabled={editingBusy}
+                    section="create"
+                  />
+                ),
+              },
+              {
+                key: 'ai-review',
+                label: '检查与翻译',
+                tab: 'slide',
+                minWidth: 0,
+                content: (
+                  <PptxAiControls
+                    documentId={documentId}
+                    slidePath={view.slides()[active]!.path}
+                    slideIndex={active}
+                    version={panelVersion}
+                    onAiPreset={onAiPreset}
+                    onSnapshot={onAiSnapshotDraft ? () => void prepareSnapshot() : undefined}
+                    snapshotPending={snapshotPending}
+                    disabled={editingBusy}
+                    section="review"
+                  />
+                ),
+              },
+              {
                 key: 'insert',
                 label: '对象',
                 tab: 'insert',
@@ -3002,28 +3725,22 @@ export function PptxEditor({
                         )
                       }
                     />
-                    <ToolbarMenu
-                      label="插入图表"
-                      text="图表"
-                      panelWidth={340}
-                      renderPanel={(close) =>
-                        hostApply ? (
-                          <ChartInsertControls
-                            slide={active}
-                            width={session.size.cx}
-                            height={session.size.cy}
-                            apply={runManualOp}
-                            close={close}
-                          />
-                        ) : (
-                          <ToolbarMenuNote>当前未连接 PPTX 宿主，无法插入图表</ToolbarMenuNote>
-                        )
-                      }
-                    />
+                    {advancedMenu(
+                      '插入图表',
+                      hostApply ? (
+                        <ChartInsertControls
+                          slide={active}
+                          width={session.size.cx}
+                          height={session.size.cy}
+                          apply={applyPanelOp}
+                          close={closeInspector}
+                        />
+                      ) : null,
+                    )}
                     {hostPicture ? (
                       <ToolbarFileButton
                         label="插入图片"
-                        accept="image/png,image/jpeg"
+                        accept={PPTX_PICTURE_ACCEPT}
                         disabled={pictureBusy}
                         onPick={(file) => applyLocalPicture(file, 'insert')}
                       >
@@ -3276,6 +3993,13 @@ export function PptxEditor({
                 ),
               },
               {
+                key: 'object-selection',
+                label: '对象选择与格式',
+                tab: 'object',
+                minWidth: 0,
+                content: advancedMenu('对象选择与格式', inspectorPanels['对象选择与格式']),
+              },
+              {
                 key: 'object-arrange-advanced',
                 label: '对齐与组合',
                 tab: 'object',
@@ -3286,6 +4010,8 @@ export function PptxEditor({
                     elements={view.slides()[active]!.elements}
                     slide={active}
                     selected={selected}
+                    selectedRefs={selectedRefs}
+                    onSelectionChange={setSelection}
                     apply={applyPanelOp}
                   />,
                 ),
@@ -3326,6 +4052,33 @@ export function PptxEditor({
                 ),
               },
               {
+                key: 'object-outline',
+                label: '轮廓',
+                tab: 'object',
+                minWidth: 0,
+                content: advancedMenu(
+                  '轮廓',
+                  selectedObject && objectTarget ? (
+                    <PptxOutlineControls
+                      element={selectedObject}
+                      target={objectTarget}
+                      apply={applyPanelOp}
+                      version={panelVersion}
+                    />
+                  ) : null,
+                  !selectedObject ? '先选择对象' : undefined,
+                ),
+              },
+              {
+                key: 'group-picture',
+                label: '组合图片',
+                tab: 'object',
+                minWidth: 0,
+                content: groupPictureContext
+                  ? advancedMenu('组合图片', inspectorPanels['组合图片'])
+                  : null,
+              },
+              {
                 key: 'picture-crop',
                 label: '图片裁切',
                 tab: 'object',
@@ -3338,6 +4091,28 @@ export function PptxEditor({
                           element={selectedObject}
                           target={objectTarget}
                           apply={applyPanelOp}
+                          cropUnavailableReason={
+                            pptxPictureCropUnavailableReason(selectedObject, {
+                              width: rendered.widthPx,
+                              height: rendered.heightPx,
+                              slideWidth: session.size.cx,
+                              slideHeight: session.size.cy,
+                            }) ??
+                            (!(view.media.get(selectedObject.mediaRef) ?? selectedObject.dataUrl)
+                              ? '图片源未加载，请重新打开文档后重试'
+                              : undefined)
+                          }
+                          onStartCrop={() => {
+                            setShapeInsert(null)
+                            ink.setTool('select')
+                            setPictureCrop({
+                              documentId,
+                              path: view.slides()[active]!.path,
+                              elementRef: objectTarget.el,
+                              version: panelVersion,
+                            })
+                            closeInspector()
+                          }}
                         />,
                       )
                     : null,
@@ -3556,14 +4331,27 @@ export function PptxEditor({
                 label: '分节与批注',
                 tab: 'slide',
                 minWidth: 0,
-                content: advancedMenu(
-                  '分节与批注',
-                  <PptxReviewControls
-                    metadata={metadata}
-                    index={active}
-                    count={slideCount}
-                    apply={applyPanelOp}
-                  />,
+                content: (
+                  <ToolbarGroup label="分节与批注">
+                    {advancedMenu(
+                      '分节与批注',
+                      <PptxReviewControls
+                        metadata={metadata}
+                        index={active}
+                        count={slideCount}
+                        apply={applyPanelOp}
+                      />,
+                    )}
+                    {advancedMenu(
+                      '新建批注',
+                      <PptxCommentControls
+                        metadata={metadata}
+                        index={active}
+                        apply={applyPanelOp}
+                        disabled={editingBusy}
+                      />,
+                    )}
+                  </ToolbarGroup>
                 ),
               },
               {
@@ -3747,7 +4535,14 @@ export function PptxEditor({
                 minWidth: 0,
                 content: advancedMenu(
                   '图标',
-                  <PptxIconControls slide={active} upload={applyPanelAsset} />,
+                  <PptxIconControls
+                    slide={active}
+                    upload={applyPanelAsset}
+                    sourceKey={`${documentId}:${view.slides()[active]!.path}`}
+                    version={panelVersion}
+                    disabled={editingBusy}
+                    onCancel={closeInspector}
+                  />,
                 ),
               },
               {
@@ -3931,6 +4726,20 @@ export function PptxEditor({
               />
             )}
 
+            <ToolbarButton
+              label="打开对象选择与格式"
+              ref={selectionInspectorTriggerRef}
+              active={inspector === '对象选择与格式'}
+              onClick={() => {
+                const trigger = selectionInspectorTriggerRef.current
+                if (trigger) inspectorTriggers.current.set('对象选择与格式', trigger)
+                assetAbort.current?.abort()
+                cancelClarification.current?.()
+                setInspector('对象选择与格式')
+              }}
+            >
+              {selectedContexts.length ? `已选 ${selectedContexts.length} 个对象` : '选择对象'}
+            </ToolbarButton>
             {/* 放映隐藏状态由同一宿主操作写回 slide 的 show 属性。 */}
             {rendered.hidden && (
               <ToolbarLabel>
@@ -3989,6 +4798,43 @@ export function PptxEditor({
         }
       >
         <div className="mimir-pptx-workspace">
+          <PptxClipboardBridge
+            canvasRef={canvasRef}
+            contextKey={`${documentId}:${selectedSlide?.path}:${viewVersion}:${selectionBinding}`}
+            slide={active}
+            disabled={editingBusy}
+            copyInput={(cut, slides) =>
+              slides?.length
+                ? { kind: cut ? 'cut_slides' : 'copy_slides', slides: [...slides] }
+                : selectedRefs.length
+                  ? {
+                      kind: cut ? 'cut_elements' : 'copy_elements',
+                      slide: active,
+                      targets: pptxClipboardTargets(selectedSlide?.elements ?? [], selectedRefs),
+                    }
+                  : { kind: cut ? 'cut_slide' : 'copy_slide', slide: active }
+            }
+            execute={runClipboard}
+            insertImage={
+              hostAsset
+                ? (file, signal, center) =>
+                    applyLocalAsset(
+                      {
+                        kind: 'picture',
+                        slide: active,
+                        widthPt: 72,
+                        keepCrop: false,
+                        naturalSize: true,
+                        ...(center ? { center } : {}),
+                      },
+                      file,
+                      undefined,
+                      signal,
+                    )
+                : undefined
+            }
+            onError={setPageError}
+          />
           <PptxWorkspaceViews
             key={`${documentId}:${workspaceMode}`}
             mode={workspaceMode}
@@ -4039,15 +4885,19 @@ export function PptxEditor({
                 className="mimir-pptx-inspector__body"
                 data-panel={inspector}
                 key={
-                  inspector === '形状库'
-                    ? `${active}:shape-library`
-                    : inspector === '设置背景'
-                      ? `${active}:background`
-                      : inspector === '编辑表格' ||
-                          inspector === '形状填充' ||
-                          inspector === '段落与文本框'
-                        ? `${active}:${objectTarget?.el ?? selected}`
-                        : panelKey
+                  inspector === '对象选择与格式'
+                    ? `${active}:selection`
+                    : inspector === '新建批注'
+                      ? `${documentId}:${selectedSlide?.path}:comments`
+                      : inspector === '形状库'
+                        ? `${active}:shape-library`
+                        : inspector === '设置背景'
+                          ? `${active}:background`
+                          : inspector === '编辑表格' ||
+                              inspector === '形状填充' ||
+                              inspector === '段落与文本框'
+                            ? `${active}:${objectTarget?.el ?? selected}`
+                            : panelKey
                 }
               >
                 {inspectorPanels[inspector]}

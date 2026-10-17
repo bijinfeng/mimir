@@ -57,7 +57,10 @@ export interface MimirChatApi {
    * 它自己的 state 里，只认挂载时的初值）。现在 composer 的文本归引擎管，
    * 这就是一条普通的 setText——那个补丁与它的三个调用点一并退役。
    */
-  refill(text: string): void
+  refill(text: string, snapshotName?: string): void
+  reclaimQueued?: (id: string) => void
+  /** Removing a screenshot dismisses its validation notice, never a transport error. */
+  clearSnapshotAttachmentError?: () => void
   /**
    * 「这一轮的思考强度」是不是**这一块面板自己发过的**。
    *
@@ -71,6 +74,7 @@ export interface MimirChatApi {
 }
 
 export interface AskOptions {
+  snapshotName?: string | undefined
   /** 这一轮的检索范围（「+ 添加上下文」所选，或 draft 锁定） */
   documentId?: string | null
   /** 深入 = 用推理角色回答 */
@@ -136,4 +140,18 @@ export function askOptionsFor(failure: FailureKind, documentId: string | null): 
   return failure === 'quota' || failure === 'offline'
     ? { documentId, scope: 'search' }
     : { documentId }
+}
+
+/** The same preceding user turn as questionBefore, including its ephemeral screenshot. */
+export function snapshotBefore(
+  messages: readonly { role: string; attachments?: readonly { name: string }[] }[],
+  index: number,
+): string | undefined {
+  for (let i = index; i >= 0; i--) {
+    const message = messages[i]
+    if (message?.role !== 'user') continue
+    return message.attachments?.find((item) => /^第[1-9]\d*页截图-[\w-]+\.png$/.test(item.name))
+      ?.name
+  }
+  return undefined
 }

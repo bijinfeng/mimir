@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { pdfVisualSignatureOperations, type PdfVisualSignature } from './pdf-visual-signature.js'
 
 const coordinate = z.number().finite()
 export const pdfTextRectSchema = z
@@ -21,6 +22,105 @@ export const pdfTextTargetSchema = z.object({
 
 export type PdfTextProbe = z.infer<typeof pdfTextProbeSchema>
 export type PdfTextTarget = z.infer<typeof pdfTextTargetSchema>
+
+export const pdfTextBlockItemSchema = z
+  .object({ text: z.string().min(1).max(10_000), bounds: pdfTextRectSchema })
+  .strict()
+export const pdfTextBlockProbeSchema = z
+  .object({
+    pageIndex: z.number().int().nonnegative(),
+    items: z.array(pdfTextBlockItemSchema).min(1).max(500),
+  })
+  .strict()
+const pdfObjectMatrixSchema = z.tuple([
+  coordinate,
+  coordinate,
+  coordinate,
+  coordinate,
+  coordinate,
+  coordinate,
+])
+export const pdfTextBlockTargetSchema = z
+  .object({
+    sha256: z.string().regex(/^[a-f0-9]{64}$/),
+    pageIndex: z.number().int().nonnegative(),
+    blockIndex: z.number().int().nonnegative(),
+    members: z
+      .array(
+        pdfTextBlockItemSchema.extend({
+          objectIndex: z.number().int().nonnegative(),
+          matrix: pdfObjectMatrixSchema,
+        }),
+      )
+      .min(1)
+      .max(500),
+  })
+  .strict()
+export const pdfTextBlockOperationSchema = z.discriminatedUnion('op', [
+  z.object({ op: z.literal('read'), pageIndex: z.number().int().nonnegative() }).strict(),
+  z.object({ op: z.literal('inspect'), probe: pdfTextBlockProbeSchema }).strict(),
+  z
+    .object({
+      op: z.literal('move'),
+      target: pdfTextBlockTargetSchema,
+      // Points in the current page's displayed direction, including Rotate/CropBox.
+      dx: coordinate.min(-14400).max(14400),
+      dy: coordinate.min(-14400).max(14400),
+    })
+    .strict(),
+  z
+    .object({
+      op: z.literal('rewrite'),
+      target: pdfTextBlockTargetSchema,
+      newText: z.string().max(10_000),
+      // Omit replace to rewrite the complete paragraph; otherwise splice one occurrence.
+      replace: z
+        .object({
+          oldText: z.string().min(1).max(10_000),
+          occurrence: z.number().int().min(1).max(10000),
+        })
+        .strict()
+        .optional(),
+      fontSize: z.number().finite().positive().max(500).optional(),
+      color: z
+        .string()
+        .regex(/^#[a-fA-F0-9]{6}$/)
+        .optional(),
+      font: z.enum(['arial', 'times', 'courier']).optional(),
+      bold: z.boolean().optional(),
+      italic: z.boolean().optional(),
+      align: z.enum(['left', 'center', 'right']).optional(),
+    })
+    .strict()
+    .refine(
+      (operation) => !operation.replace || operation.align === undefined,
+      '局部替换不支持整段对齐',
+    ),
+])
+export type PdfTextBlockProbe = z.infer<typeof pdfTextBlockProbeSchema>
+export type PdfTextBlockTarget = z.infer<typeof pdfTextBlockTargetSchema>
+export type PdfTextBlockOperation = z.infer<typeof pdfTextBlockOperationSchema>
+export interface PdfPageTextBlock {
+  page: number
+  blockIndex: number
+  block_number: number
+  text: string
+  /** Displayed left/top/width/height, in points. */
+  x: number
+  y: number
+  width: number
+  height: number
+  editable: boolean
+  reason?: string
+  target?: PdfTextBlockTarget
+  canRewrite?: boolean
+  rewriteReason?: string
+  format?: { fontSize: number; leading: number; align: 'left' | 'center' | 'right' }
+}
+export interface PdfTextBlockSnapshot {
+  sha256: string
+  blocks: PdfPageTextBlock[]
+}
 
 export const pdfMarkupInputSchema = z.object({
   target: pdfTextTargetSchema,
@@ -308,24 +408,70 @@ export const pdfOutlineEntrySchema = z
   })
   .strict()
 export type PdfOutlineEntry = z.infer<typeof pdfOutlineEntrySchema>
+export const pdfBatchAnnotationOpSchema = z.discriminatedUnion('op', [
+  z.object({ op: z.literal('removeMarkup'), id: annotationId }).strict(),
+  z
+    .object({
+      op: z.literal('setNoteContents'),
+      id: annotationId,
+      contents: z.string().trim().min(1).max(10_000),
+    })
+    .strict(),
+])
+export const pdfNativeBatchOpSchema = z.union([
+  pdfFormOpSchema,
+  z.object({ op: z.literal('setMetadata'), metadata: pdfMetadataSchema }).strict(),
+  pdfBatchAnnotationOpSchema,
+])
+export const pdfBatchArgsSchema = z
+  .object({
+    dry_run: z.boolean().optional(),
+    ops: z
+      .array(
+        z.union([
+          pdfNativeBatchOpSchema,
+          z
+            .object({
+              op: z.literal('removeTextInsert'),
+              id: z.string().regex(/^T[a-zA-Z0-9-]{1,80}$/),
+            })
+            .strict(),
+        ]),
+      )
+      .min(1)
+      .max(30),
+  })
+  .strict()
+export type PdfBatchArgs = z.infer<typeof pdfBatchArgsSchema>
+export type PdfNativeBatchOp = z.infer<typeof pdfNativeBatchOpSchema>
+export type PdfBatchAnnotationOp = z.infer<typeof pdfBatchAnnotationOpSchema>
 export const pdfLocalOperationSchema = z.discriminatedUnion('op', [
   z.object({ op: z.literal('read') }).strict(),
   z
     .object({
       op: z.literal('apply_ops'),
       dry_run: z.boolean().optional(),
-      ops: z
-        .array(
-          z.union([
-            pdfFormOpSchema,
-            z.object({ op: z.literal('setMetadata'), metadata: pdfMetadataSchema }).strict(),
-          ]),
-        )
-        .min(1)
-        .max(30),
+      ops: z.array(pdfNativeBatchOpSchema).min(1).max(30),
     })
     .strict(),
   z.object({ op: z.literal('export_pdf') }).strict(),
+  z
+    .object({
+      op: z.literal('redact_copy'),
+      regions: z
+        .array(
+          z
+            .object({
+              pageIndex: z.number().int().min(0).max(999),
+              // PDF user space, before displayed Rotate; never silently clipped.
+              rect: pdfTextRectSchema,
+            })
+            .strict(),
+        )
+        .min(1)
+        .max(100),
+    })
+    .strict(),
   z
     .object({
       op: z.literal('apply_page_layout'),
@@ -416,6 +562,7 @@ export const pdfLocalOperationSchema = z.discriminatedUnion('op', [
       source_pages: pageRange.default('all'),
     })
     .strict(),
+  ...pdfVisualSignatureOperations,
   z.object({ op: z.literal('add_drawing'), drawing: pdfDrawingSchema }).strict(),
   z
     .object({ op: z.literal('update_drawing'), id: annotationId, drawing: pdfDrawingSchema })
@@ -446,4 +593,6 @@ export interface PdfLocalInfo {
   headerFooter: z.infer<typeof headerFooterSchema> | null
   outline: PdfOutlineEntry[]
   drawings: Array<PdfDrawingInput & { id: string }>
+  signatures?: PdfVisualSignature[]
+  signatureIssues?: Array<{ page: number; reason: string }>
 }

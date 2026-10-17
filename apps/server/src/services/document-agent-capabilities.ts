@@ -4,6 +4,7 @@ import { documentAgentCatalog } from './document-agent-catalog.js'
 import { documentAgentFormatOf } from './document-agent-format.js'
 import { getDocument } from './documents.js'
 import { docxAgentCapabilities } from './docx-agent-capabilities.js'
+import { docxMediaReadiness } from './docx-media-analysis.js'
 import { modelReady } from './model.js'
 
 export async function documentAgentCapabilities(
@@ -28,11 +29,13 @@ export async function documentAgentCapabilities(
     return { ...legacy, format, executorReady: true }
   }
   const catalog = await documentAgentCatalog(format)
+  const vision = format === 'pptx' && (await docxMediaReadiness()).vision
   return {
     format,
     documentId,
     modelReady: await modelReady('chat'),
     executorReady: catalog !== null,
+    ...(format === 'pptx' ? { mediaKinds: vision ? ['image' as const] : [] } : {}),
     availableTools: catalog ? catalog.tools.map((tool) => tool.name) : [],
     unavailableTools: catalog
       ? (catalog.unavailableTools ?? [])

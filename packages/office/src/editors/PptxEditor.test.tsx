@@ -1,3 +1,4 @@
+import { readPptxImageInfo } from '@mimir/shared'
 import { applyPptxManualAnimation } from '../../../../apps/server/src/services/pptx-manual-animation.js'
 /**
  * @vitest-environment happy-dom
@@ -40,6 +41,7 @@ import { runTxn, type Op } from '../../vendor/packages/pptx-ops/src/ops/index.js
 import { getSlideAnimations } from '../../vendor/packages/pptx-engine/src/animation.js'
 import type { PptxHostApply } from '../agent/pptx-agent.js'
 import { openSelect, pickSelectOption, selectValueText } from '../shell/antd-test-dom.js'
+import { pptxChartEditKind } from './PptxChartAppearance.js'
 import type { EditorIo } from './types.js'
 
 /**
@@ -70,20 +72,21 @@ const upstreamHostApply: PptxHostApply = async (request) => {
 type HostPicture = NonNullable<Parameters<typeof PptxEditor>[0]['hostPicture']>
 const upstreamHostPicture: HostPicture = async (request) => {
   const opened = await openUpstreamPptx(request.bytes)
+  const { ext } = readPptxImageInfo(request.imageBytes)
   const op: Op =
     request.action === 'insert'
       ? {
           op: 'addPicture',
           target: { slide: request.slide },
           bytes: request.imageBytes,
-          ext: 'png',
+          ext,
           offset: { x: 914400, y: 1371600, cx: 5486400, cy: 2743200 },
         }
       : {
           op: 'replacePicture',
           target: { slide: request.slide, el: request.elementId },
           bytes: request.imageBytes,
-          ext: 'png',
+          ext,
         }
   const transaction = runTxn(opened, { ops: [op], isolation: 'atomic' })
   if (!transaction.applied) throw new Error(transaction.failures?.[0]?.error ?? '图片操作失败')
@@ -239,15 +242,31 @@ function typeInField(host: HTMLElement, label: string, value: string): void {
 }
 
 async function pickImage(host: HTMLElement, label: string, bytes: Uint8Array): Promise<void> {
+  const dimensions = readPptxImageInfo(bytes)
+  vi.stubGlobal(
+    'Image',
+    class extends EventTarget {
+      naturalWidth = dimensions.width
+      naturalHeight = dimensions.height
+      onload: (() => void) | null = null
+      onerror: (() => void) | null = null
+      set src(_value: string) {
+        queueMicrotask(() => this.dispatchEvent(new Event('load')))
+      }
+    },
+  )
   const trigger = button(host, label)
   const input = trigger.closest('.me-file')?.querySelector<HTMLInputElement>('input[type="file"]')
   if (!input) throw new Error(`没有「${label}」的文件输入`)
-  const file = new File([new Uint8Array(bytes)], 'picture.png', { type: 'image/png' })
+  const file = new File([new Uint8Array(bytes)], `picture.${dimensions.ext}`, {
+    type: dimensions.mime,
+  })
   Object.defineProperty(input, 'files', { configurable: true, value: [file] })
   await act(async () => {
     input.dispatchEvent(new Event('change', { bubbles: true }))
     await new Promise((tick) => setTimeout(tick, 0))
   })
+  vi.unstubAllGlobals()
 }
 
 async function slideAction(host: HTMLElement, page: number, label: string): Promise<void> {
@@ -1194,8 +1213,17 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
   })
 
   it.each([
+    ['堆积柱状图', 'barStacked'],
+    ['百分比堆积柱状图', 'barPercentStacked'],
+    ['三维柱状图', 'bar3D'],
     ['折线图', 'line'],
+    ['面积图', 'area'],
     ['饼图', 'pie'],
+    ['三维饼图', 'pie3D'],
+    ['圆环图', 'doughnut'],
+    ['散点图', 'scatter'],
+    ['雷达图', 'radar'],
+    ['柱形折线组合图', 'comboBarLine'],
   ] as const)('图表类型 %s 写入原生图表', async (label, kind) => {
     const { host, record } = await mountEditor(load('title-layout.pptx'), {
       hostApply: upstreamHostApply,
@@ -1207,15 +1235,19 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
     click(button(host, '插入图表'))
     pickSelectOption(host, '图表类型', label)
     typeInField(host, '数据系列名称', '占比')
-    typeInField(host, '图表类别（每行一项）', '甲\n乙')
-    typeInField(host, '图表数值（每行一项）', '25\n75')
+    typeInField(host, '图表类别（每行一项）', '甲\n乙\n丙')
+    typeInField(host, '图表数值（每行一项）', '25\n75\n50')
+    if (kind === 'comboBarLine') {
+      typeInField(host, '折线系列名称', '趋势')
+      typeInField(host, '折线系列数值（每行一项）', '10\n20\n30')
+    }
     click(button(host, '按输入数据插入图表'))
     await settle(() => host.querySelector('[data-element-kind="chart"]') !== null)
     expect(host.querySelector('[data-element-kind="chart"]')).not.toBeNull()
     await saveAndRead(host, record, 'ppt/slides/slide1.xml')
     const reopened = await openPptxForEdit(record.saved.at(-1)!)
     const chart = reopened.slides()[0]?.elements.find((element) => element.type === 'chart')
-    expect(chart?.type === 'chart' ? chart.chart.kind : null).toBe(kind)
+    expect(chart?.type === 'chart' ? pptxChartEditKind(chart.chart) : null).toBe(kind)
   })
 
   it('图表宿主失败时保留输入和原画布', async () => {
@@ -1470,28 +1502,34 @@ describe('pptx 工具条：每个按钮都真的改了元件', () => {
     expect(button(host, '保存到库').disabled).toBe(true)
   })
 
-  it('本地 PNG 从插入工具栏写入画布、原生媒体与保存重开', async () => {
-    const { host, record } = await mountEditor(load('title-layout.pptx'), {
-      hostPicture: upstreamHostPicture,
-    })
-    const tab = [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
-      (item) => item.textContent === '插入',
-    )!
-    click(tab)
-    await pickImage(host, '插入图片', await imageBytes())
-    await settle(
-      () => host.querySelector('.mimir-pptx-slide [data-element-kind="picture"] image') !== null,
-    )
-    expect(
-      host.querySelector('.mimir-pptx-slide [data-element-kind="picture"] image'),
-    ).not.toBeNull()
-    const xml = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
-    expect(xml).toContain('<p:pic>')
-    const zip = await JSZip.loadAsync(record.saved.at(-1)!)
-    expect(zip.file('ppt/media/image1.png')).not.toBeNull()
-    const reopened = await openPptxForEdit(record.saved.at(-1)!)
-    expect(reopened.slides()[0]?.elements.some((element) => element.type === 'picture')).toBe(true)
-  })
+  it.each(['png', 'jpg', 'gif', 'bmp', 'webp'])(
+    '本地 %s 从插入工具栏写入画布、原生媒体与保存重开',
+    async (ext) => {
+      const { host, record } = await mountEditor(load('title-layout.pptx'), {
+        hostPicture: upstreamHostPicture,
+      })
+      const tab = [...host.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find(
+        (item) => item.textContent === '插入',
+      )!
+      click(tab)
+      const pictureBytes = load(`pptx-images/${ext === 'webp' ? 'animated' : 'picture'}.${ext}`)
+      await pickImage(host, '插入图片', pictureBytes)
+      await settle(
+        () => host.querySelector('.mimir-pptx-slide [data-element-kind="picture"] image') !== null,
+      )
+      expect(
+        host.querySelector('.mimir-pptx-slide [data-element-kind="picture"] image'),
+      ).not.toBeNull()
+      const xml = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+      expect(xml).toContain('<p:pic>')
+      const zip = await JSZip.loadAsync(record.saved.at(-1)!)
+      expect(await zip.file(`ppt/media/image1.${ext}`)!.async('uint8array')).toEqual(pictureBytes)
+      const reopened = await openPptxForEdit(record.saved.at(-1)!)
+      expect(reopened.slides()[0]?.elements.some((element) => element.type === 'picture')).toBe(
+        true,
+      )
+    },
+  )
 
   it('替换选中图片后画布与保存文件均更新', async () => {
     const { host, record } = await mountEditor(load('image-deck.pptx'), {
@@ -2320,7 +2358,8 @@ describe('PptxEditor 的控件契约', () => {
       (el) => el.className === 'mimir-pptx-slide',
     )
     expect(canvases).toHaveLength(1)
-    expect(canvases[0]?.getAttribute('role')).toBeNull()
+    expect(canvases[0]?.getAttribute('role')).toBe('group')
+    expect(canvases[0]?.getAttribute('tabindex')).toBe('0')
   })
 
   it('禁用的按钮都带着原因（灰着而不说为什么等于让人猜）', async () => {

@@ -8,6 +8,7 @@ import {
   pptxManualAssetSchema,
   pptxManualInkSchema,
   pptxManualFillSchema,
+  pptxManualPictureSchema,
   pptxManualZoomSchema,
   pptxManualAnimationSchema,
   pptxManualShapeSchema,
@@ -15,10 +16,12 @@ import {
   type PptxClarification,
 } from '@mimir/shared'
 import { getSlideAnimations } from '../../vendor/packages/pptx-engine/src/animation.js'
+import type { SlideElement } from '../../vendor/packages/pptx-engine/src/types.js'
 import type { EditParagraph, EditRun } from '../../vendor/packages/pptx-ops/src/types.js'
 import { OP_DOCS, opGuide, opGuideCatalog } from '../../vendor/packages/pptx-ops/src/op-docs.js'
 import {
   elementDurableId,
+  groupChildDurableId,
   matchesElementRef,
   slideDurableId,
 } from '../../vendor/packages/pptx-engine/src/identity.js'
@@ -151,17 +154,63 @@ function resolveTarget(
   return { slide, elementId: element.id }
 }
 
+/** These fixed-upstream operations actually implement the `group` transport. */
+const GROUP_OPS = new Set([
+  'setText',
+  'setFont',
+  'setParagraphFormat',
+  'setFill',
+  'setStroke',
+  'setTransform',
+  'flipElements',
+  'setShapeGeometry',
+  'setShapeAdjust',
+  'setShapeCustomGeometry',
+  'setImageFill',
+])
+
+function matchesGroupChild(group: SlideElement, child: SlideElement, ref: string): boolean {
+  return matchesElementRef(child, ref) || groupChildDurableId(group, child) === ref
+}
+
 function hostedOps(ops: unknown[], session: PptxEditSession): unknown[] {
   return ops.map((raw) => {
     const op = structuredClone(record(raw))
+    if (op.group !== undefined) {
+      if (!GROUP_OPS.has(String(op.op)))
+        throw new Error(`PPTX 操作 ${String(op.op)} 不支持组内对象；不会修改文档`)
+      const target = record(op.target)
+      const index = slideIndex(target.slide, session)
+      const groupRef = string(op.group, 'group')
+      const slide = session.slides()[index]!
+      const group = slide.elements.find(
+        (item) => item.type === 'group' && matchesElementRef(item, groupRef),
+      )
+      if (!group || group.type !== 'group') throw new Error('组合 ID 已失效，请重新 read_slide')
+      const durableGroup = elementDurableId(group)
+      if (!durableGroup) throw new Error('组合没有可持久定位的 ID，无法送往宿主')
+      const childRef = (ref: unknown): string => {
+        const id = string(ref, '组内元素 ID')
+        const child = group.children.find((item) => matchesGroupChild(group, item, id))
+        if (!child) throw new Error('目标不是此组合的直接成员，请重新 read_slide')
+        if (child.type === 'group') throw new Error('暂不支持编辑深层组合，请先取消组合')
+        const durable = groupChildDurableId(group, child)
+        if (!durable) throw new Error('组内元素没有可持久定位的 ID，无法送往宿主')
+        return durable
+      }
+      op.group = durableGroup
+      if (op.op === 'flipElements') {
+        if (!Array.isArray(op.els) || op.els.length === 0) throw new Error('els 必须包含组内对象')
+        op.els = op.els.map(childRef)
+      } else target.el = childRef(target.el)
+      return op
+    }
     if (op.target && typeof op.target === 'object' && !Array.isArray(op.target)) {
       const target = op.target as RecordValue
       if (typeof target.el === 'string' && target.slide !== undefined) {
         const index = slideIndex(target.slide, session)
-        const slides = session.slides()
-        const element = slides[index]?.elements.find((item) =>
-          matchesElementRef(item, target.el as string),
-        )
+        const slide = session.slides()[index]
+        const element = slide?.elements.find((item) => matchesElementRef(item, target.el as string))
         if (element) {
           const durable = elementDurableId(element)
           if (!durable) throw new Error('目标元素没有可持久定位的 ID，无法送往宿主')
@@ -171,6 +220,52 @@ function hostedOps(ops: unknown[], session: PptxEditSession): unknown[] {
     }
     return op
   })
+}
+
+function contextElement(
+  element: SlideElement,
+  detailed = false,
+  parent?: SlideElement,
+): RecordValue {
+  const text = textOfElement(element)
+  const id = parent ? groupChildDurableId(parent, element) : elementDurableId(element)
+  return {
+    id: id ?? element.id,
+    type: element.type,
+    ...(parent ? { group: elementDurableId(parent) ?? parent.id } : {}),
+    ...(element.type === 'group'
+      ? { children: element.children.map((child) => contextElement(child, detailed, element)) }
+      : {}),
+    ...(detailed
+      ? {
+          transform: element.transform,
+          chart: element.type === 'chart' ? element.chart : undefined,
+          requiresImportConfirmation:
+            element.type === 'chart' ? element.descr !== 'aislides-chart' : undefined,
+          rows: element.type === 'table' ? element.rows : undefined,
+          colWidths: element.type === 'table' ? element.colWidths : undefined,
+          rowHeights: element.type === 'table' ? element.rowHeights : undefined,
+        }
+      : {}),
+    text: detailed
+      ? (text?.paragraphs.map((para) => ({
+          runs: para.runs.map((run) => ({
+            text: run.text,
+            bold: run.bold,
+            italic: run.italic,
+            fontSize: run.fontSize,
+            color: run.color,
+          })),
+        })) ?? null)
+      : (text?.paragraphs.map((para) => para.runs.map((run) => run.text).join('')).join('\n') ??
+        null),
+  }
+}
+
+export interface PptxAgentSelection {
+  slideIndex: number
+  elementId: string | null
+  elementIds?: readonly string[]
 }
 
 function paragraphsOf(value: unknown): EditParagraph[] {
@@ -348,7 +443,7 @@ function opRun(session: PptxEditSession, value: unknown): string {
 export function createPptxAgentHandle(
   session: PptxEditSession,
   documentId: string,
-  currentSelection: () => { slideIndex: number; elementId: string | null },
+  currentSelection: () => PptxAgentSelection,
   onChange: () => void,
   hostApply?: PptxHostApply,
   askClarification?: (input: PptxClarification, signal: AbortSignal) => Promise<unknown>,
@@ -379,26 +474,37 @@ export function createPptxAgentHandle(
       slides: session.slides().map((slide, index) => ({
         index,
         id: slideDurableId(slide),
-        elements: slide.elements.map((element) => ({
-          id: elementDurableId(element) ?? element.id,
-          type: element.type,
-          text:
-            textOfElement(element)
-              ?.paragraphs.map((para) => para.runs.map((run) => run.text).join(''))
-              .join('\n') ?? null,
-        })),
+        elements: slide.elements.map((element) => contextElement(element)),
       })),
       selection: currentSelection(),
     }),
     freezeSelection(roundId) {
       const current = currentSelection()
-      const slides = session.slides()
-      const element = slides[current.slideIndex]?.elements.find(
-        (item) => item.id === current.elementId,
-      )
+      const slide = session.slides()[current.slideIndex]
+      const resolve = (ref: string | null) => {
+        if (!ref || !slide) return null
+        for (const element of slide.elements) {
+          if (matchesElementRef(element, ref))
+            return { elementId: ref.startsWith('e_') ? ref : (elementDurableId(element) ?? ref) }
+          if (element.type !== 'group') continue
+          const child = element.children.find((item) => matchesGroupChild(element, item, ref))
+          if (child)
+            return {
+              elementId: ref.startsWith('e_') ? ref : (groupChildDurableId(element, child) ?? ref),
+              groupId: elementDurableId(element) ?? element.id,
+            }
+        }
+        return null
+      }
+      const primary = resolve(current.elementId)
+      const elements = current.elementIds
+        ? [...new Set(current.elementIds)].map(resolve).filter((item) => item !== null)
+        : undefined
       const selection = {
         slideIndex: current.slideIndex,
-        elementId: element ? (elementDurableId(element) ?? element.id) : null,
+        elementId: primary?.elementId ?? null,
+        ...(primary && 'groupId' in primary ? { groupId: primary.groupId } : {}),
+        ...(elements ? { elementIds: elements.map((item) => item.elementId), elements } : {}),
         version: session.version(),
       }
       if (roundId) selections.set(roundId, selection)
@@ -433,6 +539,7 @@ export function createPptxAgentHandle(
           tool === 'manual_asset' ||
           tool === 'manual_ink' ||
           tool === 'manual_fill' ||
+          tool === 'manual_picture' ||
           tool === 'manual_zoom' ||
           tool === 'manual_animation' ||
           tool === 'manual_shape' ||
@@ -449,6 +556,7 @@ export function createPptxAgentHandle(
           if (tool === 'manual_asset') input = pptxManualAssetSchema.parse(args)
           if (tool === 'manual_ink') input = pptxManualInkSchema.parse(args)
           if (tool === 'manual_fill') input = pptxManualFillSchema.parse(args)
+          if (tool === 'manual_picture') input = pptxManualPictureSchema.parse(args)
           if (tool === 'manual_zoom') input = pptxManualZoomSchema.parse(args)
           if (tool === 'manual_animation') input = pptxManualAnimationSchema.parse(args)
           if (tool === 'manual_shape') input = pptxManualShapeSchema.parse(args)
@@ -524,27 +632,7 @@ export function createPptxAgentHandle(
               path: slide.path,
               notes: session.notes(index),
               animations: getSlideAnimations(slide),
-              elements: slide.elements.map((element) => ({
-                id: elementDurableId(element) ?? element.id,
-                type: element.type,
-                transform: element.transform,
-                chart: element.type === 'chart' ? element.chart : undefined,
-                requiresImportConfirmation:
-                  element.type === 'chart' ? element.descr !== 'aislides-chart' : undefined,
-                rows: element.type === 'table' ? element.rows : undefined,
-                colWidths: element.type === 'table' ? element.colWidths : undefined,
-                rowHeights: element.type === 'table' ? element.rowHeights : undefined,
-                text:
-                  textOfElement(element)?.paragraphs.map((para) => ({
-                    runs: para.runs.map((run) => ({
-                      text: run.text,
-                      bold: run.bold,
-                      italic: run.italic,
-                      fontSize: run.fontSize,
-                      color: run.color,
-                    })),
-                  })) ?? null,
-              })),
+              elements: slide.elements.map((element) => contextElement(element, true)),
             },
           })
         }
@@ -614,6 +702,7 @@ export function createPptxAgentHandle(
           Boolean(script) ||
           input.ops.some(
             (op) =>
+              record(op).group !== undefined ||
               !PPTX_EXECUTABLE_OPS.includes(record(op).op as (typeof PPTX_EXECUTABLE_OPS)[number]),
           )
         if (needsHost) {

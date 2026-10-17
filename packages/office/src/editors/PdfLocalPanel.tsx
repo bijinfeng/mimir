@@ -1,12 +1,18 @@
-import { Button, Checkbox, Input, InputNumber } from 'antd'
+import { Button, Checkbox, Collapse, Input, InputNumber } from 'antd'
 import { Download, FileOutput, Printer } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { PdfLocalInfo, PdfDrawingInput } from '@mimir/shared'
 import { ToolbarFileButton, ToolbarSelect } from '../shell/EditorShell.js'
 import { PdfInspectorHeader, type PdfPanelAction } from './PdfInspector.js'
 import type { PdfLocalOutput } from '../agent/pdf-local-agent.js'
-export type PdfLocalPanelMode = 'pages' | 'drawing' | 'stamps' | 'properties'
-const labels = { pages: '页面', drawing: '绘图', stamps: '水印与页眉', properties: '文档属性' }
+export type PdfLocalPanelMode = 'pages' | 'drawing' | 'stamps' | 'properties' | 'signature'
+const labels = {
+  signature: '签名与印章',
+  pages: '页面',
+  drawing: '绘图',
+  stamps: '水印与页眉',
+  properties: '文档属性',
+}
 function printOutput(output: PdfLocalOutput) {
   const url = URL.createObjectURL(
     new Blob([output.bytes.slice().buffer], { type: 'application/pdf' }),
@@ -125,8 +131,18 @@ export function PdfLocalPanel({
   error,
   onClose,
   onAction,
+  onModeChange,
+  drawingControls,
+  drawingFooter,
+  selectedDrawingId,
+  onSelectDrawing,
 }: {
   mode: PdfLocalPanelMode
+  onModeChange?(mode: PdfLocalPanelMode): void
+  drawingControls?: ReactNode
+  drawingFooter?: ReactNode
+  selectedDrawingId?: string | null
+  onSelectDrawing?(id: string | null): void
   page: number
   pageCount: number
   info?: PdfLocalInfo
@@ -189,6 +205,7 @@ export function PdfLocalPanel({
           if (next === null) return
           event.preventDefault()
           setMode(keys[next]!)
+          onModeChange?.(keys[next]!)
           setFeedback(null)
           event.currentTarget.querySelectorAll<HTMLButtonElement>('button')[next]?.focus()
         }}
@@ -202,6 +219,7 @@ export function PdfLocalPanel({
             type={mode === key ? 'primary' : 'text'}
             onClick={() => {
               setMode(key)
+              onModeChange?.(key)
               setFeedback(null)
             }}
           >
@@ -244,7 +262,35 @@ export function PdfLocalPanel({
         {mode === 'pages' ? (
           <PageTools page={page} pageCount={pageCount} busy={busy} act={act} />
         ) : mode === 'drawing' ? (
-          <DrawingTools key={page} page={page} info={info} busy={busy || !info} act={act} />
+          <>
+            {drawingControls}
+            <Collapse
+              ghost
+              size="small"
+              items={[
+                {
+                  key: 'precise-drawing',
+                  label: '精确数值绘图',
+                  children: (
+                    <>
+                      <p className="mimir-pdf-inspector__meta">
+                        新建或选择已应用的绘图。这里的参数不会修改画布草稿。
+                      </p>
+                      <DrawingTools
+                        key={page}
+                        page={page}
+                        info={info}
+                        busy={busy || !info}
+                        act={act}
+                        selectedId={selectedDrawingId}
+                        onSelect={onSelectDrawing}
+                      />
+                    </>
+                  ),
+                },
+              ]}
+            />
+          </>
         ) : mode === 'stamps' ? (
           <StampTools
             key={JSON.stringify([info?.watermark, info?.headerFooter])}
@@ -261,6 +307,7 @@ export function PdfLocalPanel({
           />
         )}
       </div>
+      {mode === 'drawing' && drawingFooter}
     </section>
   )
 }
@@ -428,6 +475,8 @@ function PageTools({
   )
 }
 function DrawingTools({
+  selectedId,
+  onSelect,
   page,
   info,
   busy,
@@ -437,8 +486,15 @@ function DrawingTools({
   info?: PdfLocalInfo
   busy: boolean
   act: Act
+  selectedId?: string | null
+  onSelect?(id: string | null): void
 }) {
-  const [id, setId] = useState('new')
+  const [localId, setLocalId] = useState('new')
+  const id = selectedId === undefined ? localId : (selectedId ?? 'new')
+  const setId = (value: string) => {
+    setLocalId(value)
+    onSelect?.(value === 'new' ? null : value)
+  }
   const drawings = info?.drawings.filter((d) => d.page === page) ?? []
   const selected = drawings.find((d) => d.id === id)
   const sourceKey = JSON.stringify(selected)
@@ -556,7 +612,7 @@ function DrawingTools({
           onChange={(fill) => patch({ fill: fill || undefined })}
         />
         <Button
-          type="primary"
+          type={onSelect ? 'default' : 'primary'}
           block
           disabled={busy}
           onClick={() =>

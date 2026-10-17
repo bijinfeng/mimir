@@ -45,12 +45,24 @@ export function PdfInspector({
     const previous = triggerRef.current ?? document.activeElement
     const panel = root.current
     const editor = panel?.closest('.mimir-editor') ?? null
+    const entryTab = editor?.querySelector<HTMLButtonElement>(
+      '.mimir-compact-toolbar__tabs [role="tab"][aria-selected="true"]',
+    )
     panel?.focus()
     return () => {
       // Preserve focus if the user already chose a control outside the panel.
       const active = document.activeElement
       if (active !== document.body && active !== panel && !panel?.contains(active)) return
       focusPdfInspectorTrigger(previous, editor, fallbackSectionKey)
+      const entryGroupVisible = Array.from(
+        editor?.querySelectorAll<HTMLElement>('[data-section-key]') ?? [],
+      ).some((group) => group.dataset.sectionKey === fallbackSectionKey)
+      if (
+        !entryGroupVisible &&
+        entryTab?.isConnected &&
+        (document.activeElement === active || document.activeElement === document.body)
+      )
+        entryTab.focus()
     }
   }, [triggerRef, fallbackSectionKey])
   return (

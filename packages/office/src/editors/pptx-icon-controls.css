@@ -1,0 +1,123 @@
+.mimir-pptx-inspector__body[data-panel='图标'] {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+.mimir-pptx-icons {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.mimir-pptx-icons__filters {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-bottom: 1px solid var(--me-border);
+}
+.mimir-pptx-icons__filters .me-input--text {
+  width: 100%;
+  min-width: 0;
+}
+.mimir-pptx-icons__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 12px 12px;
+}
+.mimir-pptx-icons__group {
+  margin-top: 16px;
+}
+.mimir-pptx-icons__group h3 {
+  margin: 0 0 8px;
+  color: var(--me-text);
+  font-size: var(--me-font-size-sm, 12px);
+  font-weight: 600;
+}
+.mimir-pptx-icons__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.mimir-pptx-icons__grid > .mimir-pptx-icons__cell {
+  height: auto;
+  min-height: 62px;
+  min-width: 0;
+  padding: 6px 3px;
+}
+.mimir-pptx-icons__cell-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  font-size: var(--me-font-size-sm, 12px);
+  line-height: 1.35;
+  white-space: normal;
+}
+.mimir-pptx-icons__cell-content svg {
+  flex-shrink: 0;
+}
+.mimir-pptx-icons__cell:focus-visible {
+  outline: 2px solid var(--me-accent);
+  outline-offset: 2px;
+}
+.mimir-pptx-icons__empty {
+  padding: 24px 0;
+  color: var(--me-text-weak);
+  font-size: var(--me-font-size-sm, 12px);
+  line-height: 1.5;
+}
+.mimir-pptx-icons__actions {
+  flex-shrink: 0;
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--me-border);
+  background: var(--me-surface);
+}
+.mimir-pptx-icons__chosen {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  color: var(--me-text);
+  font-size: var(--me-font-size-sm, 12px);
+}
+.mimir-pptx-icons__chosen svg {
+  flex-shrink: 0;
+}
+.mimir-pptx-icons__chosen small {
+  display: block;
+  margin-top: 3px;
+  color: var(--me-text-weak);
+  font-size: inherit;
+}
+.mimir-pptx-icons__settings {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+}
+.mimir-pptx-icons__buttons {
+  display: flex;
+  gap: 8px;
+}
+.mimir-pptx-icons__buttons > .me-tb:last-child {
+  flex: 1;
+}
+.mimir-pptx-icons__status {
+  color: var(--me-text-weak);
+  font-size: var(--me-font-size-sm, 12px);
+  overflow-wrap: anywhere;
+}
+.mimir-pptx-icons__status:empty {
+  display: none;
+}

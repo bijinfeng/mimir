@@ -5,8 +5,11 @@ import {
   type PdfAnnotation,
   type PdfAnnotationOperation,
   type PdfAnnotationSnapshot,
+  type PdfBatchAnnotationOp,
 } from '@mimir/shared'
 import { assertSafeToRewrite } from './pdf-agent-host.js'
+import { assertPdfPreservingSafe } from './pdf-preserving-guard.js'
+import { currentPdfPages } from './pdf-page-prune.js'
 
 const key = PDFName.of
 function text(dict: PDFDict, name: string): string {
@@ -22,7 +25,7 @@ interface Entry {
 function entries(pdf: PDFDocument): Entry[] {
   const result: Entry[] = []
   const ids = new Set<string>()
-  for (const [index, page] of pdf.getPages().entries()) {
+  for (const [index, page] of currentPdfPages(pdf).entries()) {
     const array = page.node.lookupMaybe(key('Annots'), PDFArray)
     if (!array) continue
     const pageEntries: Entry[] = []
@@ -95,8 +98,27 @@ export async function applyPdfAnnotationOperation(
   if (!expectedSha256 || sha !== expectedSha256) throw new Error('PDF 原件已变化，请重新读取批注')
   await assertSafeToRewrite(bytes)
   const pdf = await PDFDocument.load(bytes.slice(), { updateMetadata: false })
+  const change = await mutateAnnotation(pdf, op, bytes, author)
+  const result = await pdf.save()
+  await verifyPdfAnnotationChanges(result, [change])
+  return { bytes: result, annotations: await readPdfAnnotations(result) }
+}
+
+export interface PdfAnnotationChange {
+  pageRef: string
+  removed: string[]
+  expectedText?: { id: string; text: string }
+}
+
+/** The caller owns this detached graph; the public byte writer retains its strict guard. */
+async function mutateAnnotation(
+  pdf: PDFDocument,
+  op: Exclude<PdfAnnotationOperation, { op: 'read' }>,
+  bytes: Uint8Array,
+  author: string,
+): Promise<PdfAnnotationChange> {
   const all = entries(pdf)
-  const page = pdf.getPage(op.pageIndex)
+  const page = currentPdfPages(pdf)[op.pageIndex]
   if (!page) throw new Error('批注页号已失效')
   const onPage = all.filter((entry) => entry.annotation.page === op.pageIndex + 1)
   const removed = new Set<Entry>()
@@ -226,29 +248,64 @@ export async function applyPdfAnnotationOperation(
         entry.array.remove(at)
     }
   }
-  const result = await pdf.save()
-  const after = await readPdfAnnotations(result)
-  if (
-    expectedText &&
-    !after.annotations.some(
-      (entry) => entry.id === expectedText.id && entry.text === expectedText.text,
-    )
-  )
-    throw new Error('PDF 批注读回失败，未写入')
-  if (
-    [...removed].some((entry) => after.annotations.some((next) => next.id === entry.annotation.id))
-  )
-    throw new Error('PDF 批注删除读回失败，未写入')
-  const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs')
-  const task = getDocument({ data: result.slice() })
-  try {
-    const annotations = await (
-      await (await task.promise).getPage(op.pageIndex + 1)
-    ).getAnnotations()
-    if (expectedText && !annotations.some((item) => item.contentsObj?.str === expectedText.text))
-      throw new Error('PDF 批注未通过独立读回，未写入')
-  } finally {
-    await task.destroy()
+  return {
+    pageRef: page.ref.toString(),
+    removed: [...removed].map((entry) => entry.annotation.id),
+    expectedText,
   }
-  return { bytes: result, annotations: after }
+}
+
+/** Explicit preserving mutation for native batches only; no general guard bypass. */
+export async function mutatePdfBatchAnnotation(
+  pdf: PDFDocument,
+  op: PdfBatchAnnotationOp,
+): Promise<PdfAnnotationChange> {
+  assertPdfPreservingSafe(pdf)
+  const all = entries(pdf)
+  const target = all.find((entry) => entry.annotation.id === op.id)
+  if (!target) throw new Error('找不到指定批注，请重新读取')
+  const operation: PdfAnnotationOperation =
+    op.op === 'setNoteContents'
+      ? {
+          op: 'edit_note',
+          note_id: op.id,
+          text: op.contents,
+          pageIndex: target.annotation.page - 1,
+        }
+      : { op: 'delete_markup', markup_ids: [op.id], pageIndex: target.annotation.page - 1 }
+  if ((op.op === 'setNoteContents') !== (target.annotation.type === 'note'))
+    throw new Error('批注类型与批次操作不一致')
+  return mutateAnnotation(pdf, operation, new Uint8Array(), 'AI Assistant')
+}
+
+export async function verifyPdfAnnotationChanges(
+  result: Uint8Array,
+  changes: readonly PdfAnnotationChange[],
+): Promise<void> {
+  const after = await readPdfAnnotations(result)
+  for (const { expectedText, removed } of changes) {
+    if (
+      expectedText &&
+      !after.annotations.some(
+        (entry) => entry.id === expectedText.id && entry.text === expectedText.text,
+      )
+    )
+      throw new Error('PDF 批注读回失败，未写入')
+    if (removed.some((id) => after.annotations.some((next) => next.id === id)))
+      throw new Error('PDF 批注删除读回失败，未写入')
+    if (!expectedText) continue
+    const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs')
+    const task = getDocument({ data: result.slice() })
+    try {
+      const annotations = await (
+        await (
+          await task.promise
+        ).getPage(after.annotations.find((item) => item.id === expectedText.id)!.page)
+      ).getAnnotations()
+      if (expectedText && !annotations.some((item) => item.contentsObj?.str === expectedText.text))
+        throw new Error('PDF 批注未通过独立读回，未写入')
+    } finally {
+      await task.destroy()
+    }
+  }
 }

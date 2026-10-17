@@ -193,6 +193,8 @@ export function DocChatSidebar({
             showReasoningControl={false}
             docxAgent={isDocx ? availableDocxAgent(documentAgent, capabilities.data) : null}
             documentAgent={isDocx ? null : activeAgent}
+            draftAgent={documentAgent}
+            snapshotVisionReady={documentCapabilities.data?.mediaKinds?.includes('image') ?? false}
             docxRevisionMode={revisionMode}
             /* Empty conversation keeps the composer and actionable suggestions at the bottom. */
             guide={renderEmptyGuide}

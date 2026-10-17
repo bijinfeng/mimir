@@ -1,0 +1,115 @@
+.mimir-pptx-picture-crop-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+.mimir-pptx-picture-crop-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: auto;
+  touch-action: none;
+}
+.mimir-pptx-picture-crop-canvas:focus-visible {
+  outline: 2px solid var(--me-accent);
+  outline-offset: -2px;
+}
+.mimir-pptx-picture-crop-backing {
+  fill: var(--me-surface);
+  fill-opacity: 0.9;
+}
+.mimir-pptx-picture-crop-frame {
+  fill: none;
+  stroke: var(--me-accent);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.mimir-pptx-picture-crop-guide {
+  stroke: #fff;
+  stroke-opacity: 0.65;
+  pointer-events: none;
+}
+.mimir-pptx-picture-crop-guide line {
+  vector-effect: non-scaling-stroke;
+}
+.mimir-pptx-picture-crop-handle {
+  cursor: grab;
+  outline: none;
+}
+.mimir-pptx-picture-crop-handle:active {
+  cursor: grabbing;
+}
+.mimir-pptx-picture-crop-hit {
+  fill: transparent;
+}
+.mimir-pptx-picture-crop-grip {
+  fill: var(--me-accent);
+  stroke: var(--me-surface);
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+.mimir-pptx-picture-crop-handle:focus-visible .mimir-pptx-picture-crop-hit {
+  fill: var(--me-surface);
+  fill-opacity: 0.75;
+  stroke: var(--me-accent);
+  stroke-width: 2;
+}
+.mimir-pptx-picture-crop-handle[aria-disabled='true'] {
+  cursor: wait;
+}
+.mimir-pptx-sheet:has(.mimir-pptx-picture-crop-layer) {
+  margin-block-end: 120px;
+}
+.mimir-pptx-picture-crop-feedback {
+  position: absolute;
+  inset-inline: 8px;
+  top: calc(100% + 8px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  flex-wrap: wrap;
+  width: fit-content;
+  max-width: calc(100% - 16px);
+  margin-inline: auto;
+  padding: 8px 10px;
+  color: var(--me-text);
+  background: var(--me-surface);
+  border: 1px solid var(--me-border);
+  border-radius: var(--me-radius, 4px);
+  font-size: var(--me-font-size-sm, 12px);
+  pointer-events: auto;
+}
+.mimir-pptx-picture-crop-description {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.mimir-pptx-picture-crop-title,
+.mimir-pptx-picture-crop-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mimir-pptx-picture-crop-title {
+  font-weight: 600;
+}
+.mimir-pptx-picture-crop-title > span {
+  margin-inline-start: 4px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+.mimir-pptx-picture-crop-actions {
+  flex-shrink: 0;
+  margin-inline-start: auto;
+}
+.mimir-pptx-picture-crop-actions > .me-tb {
+  flex-shrink: 0;
+}
+.mimir-pptx-picture-crop-description > [role='alert'] {
+  color: var(--me-danger, #b42318);
+}

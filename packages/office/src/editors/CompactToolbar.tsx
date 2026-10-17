@@ -18,6 +18,8 @@ export interface CompactToolbarSection {
   /** Omit commands that the current editor or document cannot provide. */
   enabled?: boolean
   content: ReactNode
+  /** Close the collapsed group before opening another workspace surface. */
+  collapsedContent?(close: () => void): ReactNode
 }
 
 export interface CompactToolbarTab {
@@ -92,8 +94,9 @@ export function CompactToolbar({
     const measure = () => {
       const availableWidth = commands.clientWidth || commands.getBoundingClientRect().width
       if (availableWidth <= 0) return
-      // Preserve readable names even when every group has to collapse.
+      // Keep labels readable; if every group is collapsed, only this row scrolls.
       const buttonWidth = 72
+      commands.style.setProperty('--compact-group-width', `${buttonWidth}px`)
       for (const section of commands.querySelectorAll<HTMLElement>('[data-section-key]')) {
         const key = section.dataset.sectionKey!
         if (!section.hasAttribute('data-collapsed')) {
@@ -223,8 +226,10 @@ export function CompactToolbar({
                 label={section.label}
                 text={section.label}
                 panelWidth={320}
-                renderPanel={() => (
-                  <div className="mimir-compact-toolbar__panel">{section.content}</div>
+                renderPanel={(close) => (
+                  <div className="mimir-compact-toolbar__panel">
+                    {section.collapsedContent?.(close) ?? section.content}
+                  </div>
                 )}
               />
             ) : (

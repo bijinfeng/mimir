@@ -92,7 +92,7 @@ export function PptxCurveControls({
           >
             <path
               d={path}
-              fill={closed ? 'var(--me-primary-soft, #e8f0fe)' : 'none'}
+              fill={closed ? 'var(--me-accent-bg, #e6f4ec)' : 'none'}
               stroke="currentColor"
               strokeWidth="1.5"
             />
@@ -102,7 +102,7 @@ export function PptxCurveControls({
                   cx={s.pts.at(-2)}
                   cy={s.pts.at(-1)}
                   r={i === selected ? 3 : 1.5}
-                  fill={i === selected ? 'var(--me-primary, #2563eb)' : 'currentColor'}
+                  fill={i === selected ? 'var(--me-accent, #00834d)' : 'currentColor'}
                 />
                 <text
                   x={(s.pts.at(-2) ?? 0) + 3}

@@ -15,6 +15,7 @@ import {
   PPTX_ASSET_MAX_BYTES,
   pdfTextProbeSchema,
   pdfTextTargetSchema,
+  pdfTextBlockOperationSchema,
   pdfMarkupInputSchema,
   pdfAnnotationOperationSchema,
   pdfFormOperationSchema,
@@ -63,6 +64,7 @@ import {
   applyPdfVerifiedTextEdit,
   applyPdfVerifiedMarkup,
   inspectPdfTextTarget,
+  applyPdfTextBlockOperation,
 } from '../services/pdf-agent-host.js'
 import { applyPdfImageOperation } from '../services/pdf-images.js'
 import { applyPdfLocalOperation } from '../services/pdf-local.js'
@@ -499,6 +501,7 @@ conversationsRoute.post('/pdf-agent/local', async (c) => {
       new Uint8Array(await file.arrayBuffer()),
       operation.data,
       asset instanceof File ? new Uint8Array(await asset.arrayBuffer()) : undefined,
+      c.req.raw.signal,
     )
     c.req.raw.signal.throwIfAborted()
     return c.json({
@@ -515,6 +518,60 @@ conversationsRoute.post('/pdf-agent/local', async (c) => {
       400,
       'PDF_LOCAL_FAILED',
       error instanceof Error ? error.message : 'PDF 操作失败',
+    )
+  }
+})
+
+conversationsRoute.post('/pdf-agent/text-blocks', async (c) => {
+  const form = await readUploadForm(c.req.raw)
+  const file = form.get('file')
+  if (!(file instanceof File) || file.size < 1 || file.size > 50 * 1024 * 1024)
+    throw new HttpError(413, 'PDF_INPUT_TOO_LARGE', 'PDF 原件超过 50 MiB 上限')
+  const fields = z
+    .object({
+      documentId: z.string().min(1).max(200),
+      expectedVersion: z
+        .string()
+        .regex(/^\d+$/)
+        .transform(Number)
+        .pipe(
+          z
+            .number()
+            .int()
+            .nonnegative()
+            .max(Number.MAX_SAFE_INTEGER - 1),
+        ),
+    })
+    .safeParse({ documentId: form.get('documentId'), expectedVersion: form.get('expectedVersion') })
+  if (!fields.success) throw new HttpError(400, 'INVALID_INPUT', 'PDF 段落参数无效')
+  const document = await getDocument(fields.data.documentId)
+  if (!document || documentAgentFormatOf(document) !== 'pdf')
+    throw new HttpError(404, 'PDF_NOT_FOUND', '当前文档不是可编辑 PDF')
+  let raw: unknown
+  try {
+    raw = JSON.parse(String(form.get('operation')))
+  } catch {
+    throw new HttpError(400, 'INVALID_INPUT', 'PDF 段落不是有效 JSON')
+  }
+  const operation = pdfTextBlockOperationSchema.safeParse(raw)
+  if (!operation.success) throw new HttpError(400, 'INVALID_INPUT', 'PDF 段落内容无效')
+  try {
+    const result = await applyPdfTextBlockOperation(
+      new Uint8Array(await file.arrayBuffer()),
+      operation.data,
+      c.req.raw.signal,
+    )
+    return c.json({
+      ...result,
+      bytes: undefined,
+      bytesBase64: result.bytes ? Buffer.from(result.bytes).toString('base64') : undefined,
+      version: fields.data.expectedVersion + (result.bytes ? 1 : 0),
+    })
+  } catch (error) {
+    throw new HttpError(
+      400,
+      'PDF_BLOCK_FAILED',
+      error instanceof Error ? error.message : 'PDF 段落操作失败',
     )
   }
 })

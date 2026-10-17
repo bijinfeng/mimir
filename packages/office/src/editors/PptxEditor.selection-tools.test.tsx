@@ -64,7 +64,11 @@ async function textFixture() {
   )
   return initial.save()
 }
-async function mount(hostApply: PptxHostApply = applyPptxOpsOnHost, sourceBytes?: Uint8Array) {
+async function mount(
+  hostApply: PptxHostApply = applyPptxOpsOnHost,
+  sourceBytes?: Uint8Array,
+  saveImpl?: (bytes: Uint8Array) => Promise<void>,
+) {
   const bytes = sourceBytes ?? (await textFixture())
   const saved: Uint8Array[] = []
   let handle: PptxAgentHandle | null = null
@@ -83,6 +87,7 @@ async function mount(hostApply: PptxHostApply = applyPptxOpsOnHost, sourceBytes?
         io={{
           load: async () => bytes,
           save: async (next) => {
+            await saveImpl?.(next)
             saved.push(next)
           },
         }}
@@ -220,6 +225,10 @@ it('retains Product updates in the original Agenda after host formatting and del
   )
   click(button(host, '加粗（选中文字）'))
   const saved = await save()
+  expect(host.querySelector('.mimir-pptx-paragraph')?.textContent).toContain('第 2 段')
+  expect(host.querySelector('.mimir-pptx-text-range__head')?.textContent).toContain(
+    '已选 15 个字符',
+  )
   const body = saved
     .slides()[1]!
     .elements.map((element) => textOfElement(element))
@@ -233,7 +242,112 @@ it('retains Product updates in the original Agenda after host formatting and del
     true,
     false,
   ])
+  pickSelectOption(host, '文字基础方向', '从左到右')
+  const savedVersion = getHandle().getVersion()
+  click(button(host, '应用段落格式'))
+  await settle(
+    () =>
+      getHandle().getVersion() === savedVersion + 1 &&
+      !host.querySelector('fieldset[aria-busy="true"]'),
+  )
+  const afterSaveEdit = (await save())
+    .slides()[1]!
+    .elements.map((element) => textOfElement(element))
+    .find((value) =>
+      value?.paragraphs.some((p) => p.runs.some((run) => run.text === 'Product updates')),
+    )!
+  expect(afterSaveEdit.paragraphs.map((p) => p.rtl)).toEqual([undefined, false, undefined])
 })
+
+it('keeps caret marks through a successful save and applies them only to newly inserted text', async () => {
+  const { host, getHandle, save } = await mount()
+  selectBeta(host)
+  click(button(host, '加粗（选中文字）'))
+  const input = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="文本框文字"]')!
+  act(() => {
+    input.focus()
+    input.setSelectionRange(6, 6)
+    input.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, key: 'ArrowLeft' }))
+  })
+  click(button(host, '倾斜（插入点）'))
+  const version = getHandle().getVersion()
+  await save()
+  expect(getHandle().getVersion()).toBe(version + 1)
+  expect(host.querySelector('.mimir-pptx-text-range__head')?.textContent).toContain('插入点格式')
+  expect(button(host, '倾斜（插入点）').getAttribute('aria-pressed')).toBe('true')
+  act(() => {
+    input.dispatchEvent(
+      new InputEvent('beforeinput', { bubbles: true, inputType: 'insertText', data: 'X' }),
+    )
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(
+      input,
+      'Alpha\nXBeta\nGamma',
+    )
+    input.setSelectionRange(7, 7)
+    input.dispatchEvent(new Event('input', { bubbles: true }))
+  })
+  const saved = await save()
+  const paragraphs = textOfElement(
+    saved
+      .slides()[0]!
+      .elements.find((element) =>
+        textOfElement(element)?.paragraphs.some((p) =>
+          p.runs.some((run) => run.text.includes('Beta')),
+        ),
+      )!,
+  )!.paragraphs
+  expect(paragraphs[1]!.runs.some((run) => run.text === 'X' && run.italic)).toBe(true)
+  expect(
+    paragraphs[1]!.runs.filter((run) => run.text.includes('Beta')).every((run) => !run.italic),
+  ).toBe(true)
+})
+
+it.each(['failure', 'version', 'selection'] as const)(
+  'does not restore an obsolete saved range after %s changes',
+  async (scenario) => {
+    let resume!: () => void
+    let saving = false
+    const gate = new Promise<void>((done) => {
+      resume = done
+    })
+    const { host, getHandle } = await mount(applyPptxOpsOnHost, undefined, async () => {
+      saving = true
+      await gate
+      if (scenario === 'failure') throw new Error('Save failed')
+    })
+    selectBeta(host)
+    click(button(host, '加粗（选中文字）'))
+    const version = getHandle().getVersion()
+    click(button(host, '保存到库'))
+    await settle(() => saving)
+    let concurrentResult: unknown = { ok: true }
+    if (scenario === 'selection') {
+      click(
+        [...host.querySelectorAll('.mimir-pptx-slide text')].find(
+          (node) => node.textContent === '第一条',
+        )!,
+      )
+    } else if (scenario === 'version') {
+      await act(async () => {
+        concurrentResult = await getHandle().execute(
+          'apply_ops',
+          { ops: [{ op: 'setNotes', target: { slide: 0 }, text: 'Concurrent edit' }] },
+          { expectedVersion: version },
+        )
+      })
+    }
+    await act(async () => resume())
+    await settle(
+      () => !host.querySelector<HTMLTextAreaElement>('textarea[aria-label="文本框文字"]')!.disabled,
+    )
+    expect(concurrentResult).toMatchObject({ ok: true })
+    expect(getHandle().getVersion()).toBe(version + (scenario === 'failure' ? 0 : 1))
+    expect(host.querySelector('.mimir-pptx-text-range__head')?.textContent).toContain(
+      scenario === 'failure' ? '已选 4 个字符' : '整个文本框',
+    )
+    expect(button(host, '保存到库').disabled).toBe(scenario === 'selection')
+  },
+)
 
 it('still cancels a pending paragraph request when another object is selected', async () => {
   let resume!: () => void

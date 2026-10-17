@@ -5,7 +5,13 @@ import { useAgUiRuntime } from '@assistant-ui/react-ag-ui'
 import { createMimirAgent } from './agent.js'
 import { createHistoryAdapter } from './history.js'
 import type { AskOptions, MimirChatApi } from './chat-context.js'
-import type { ChatDocxAgent } from '../types.js'
+import type { ChatDocxAgent, ChatDraftAgent, ChatPptxSnapshot } from '../types.js'
+import {
+  PptxSnapshotRegistry,
+  assertSnapshotTarget,
+  snapshotNames,
+  snapshotFilename,
+} from './pptx-snapshot.js'
 
 /**
  * 对话的运行时。**这是这个包里唯一碰流式状态的地方**（组件不直接碰 runtime
@@ -45,19 +51,26 @@ export function useMimirRuntime({
   onOpenCitation,
   onOpenNote,
   docxAgent,
+  draftAgent,
+  snapshotVisionReady = false,
 }: {
   io: ChatIo
   conversationId: string | undefined
   onOpenCitation: (documentId: string, citation: Citation) => void
   onOpenNote: (noteId: string) => void
   docxAgent?: ChatDocxAgent | null
+  draftAgent?: ChatDraftAgent | null | undefined
+  snapshotVisionReady?: boolean | undefined
 }): {
   runtime: ReturnType<typeof useAgUiRuntime>
   api: MimirChatApi
   getDocxRound: () => { id: string; version: number } | null
   advanceDocxVersion: (version: number) => void
   registerToolCancel: (cancel: (() => void) | null) => void
-  prepareDocxSend: () => void
+  prepareDocxSend: () => boolean
+  applySnapshotDraft: (snapshot?: ChatPptxSnapshot) => boolean
+  snapshotError: string | null
+  clearSnapshotError: () => void
 } {
   /**
    * 当前会话 id。
@@ -77,6 +90,27 @@ export function useMimirRuntime({
   const [selection] = useState<{
     value: unknown
   }>(() => ({ value: null }))
+  const [snapshots] = useState(() => new PptxSnapshotRegistry())
+  const [snapshotFailure, setSnapshotFailure] = useState<{
+    message: string
+    attachmentBound: boolean
+  } | null>(null)
+  const snapshotError = snapshotFailure?.message ?? null
+  function setSnapshotError(message: string | null, attachmentBound = true) {
+    setSnapshotFailure((previous) =>
+      message === null
+        ? null
+        : previous?.message === message
+          ? previous
+          : { message, attachmentBound },
+    )
+  }
+  const [snapshotBinding] = useState(() =>
+    snapshotSendBinding(docxAgent, draftAgent, snapshotVisionReady),
+  )
+  useEffect(() => {
+    snapshotBinding.update(docxAgent, draftAgent, snapshotVisionReady)
+  }, [snapshotBinding, docxAgent, draftAgent, snapshotVisionReady])
   const toolCancelRef = useRef<(() => void) | null>(null)
   const [agentBinding] = useState(() =>
     createMimirAgent({
@@ -89,6 +123,40 @@ export function useMimirRuntime({
       docxAgent,
       round,
       selection,
+      onSnapshotRejected: (input, error) => {
+        const config = input.forwardedProps?.runConfig as Record<string, unknown> | undefined
+        const id = (config?.agentSelection as { pptxSnapshotId?: string } | undefined)
+          ?.pptxSnapshotId
+        const composer = runtime.thread.composer.getState()
+        // A queued request may fail after the user starts another draft.
+        // Keep that draft; the failed turn still offers explicit retry/refill.
+        if (id && !composer.text && !composer.attachments.length) {
+          try {
+            restoreSnapshot(snapshots.byId(id))
+            const content = input.messages.findLast((message) => message.role === 'user')?.content
+            runtime.thread.composer.setText(
+              typeof content === 'string'
+                ? content
+                : Array.isArray(content)
+                  ? content.flatMap((part) => (part.type === 'text' ? [part.text] : [])).join('')
+                  : '',
+            )
+          } catch {
+            /* Keep the binding failure visible if the bounded registry expired. */
+          }
+        }
+        setSnapshotError(error.message)
+      },
+      validateSnapshot: (config, resuming) => {
+        const selected = config.agentSelection as { pptxSnapshotId?: string } | undefined
+        if (!selected?.pptxSnapshotId) return
+        const snapshot = snapshots.byId(selected.pptxSnapshotId)
+        if (!snapshot.sourceIsCurrent()) throw new Error('截图来源已关闭或替换，请重新准备美化草稿')
+        const binding = snapshotBinding.get()
+        if (!binding.agent || !binding.vision)
+          throw new Error('截图美化需要可用的聊天模型并启用视觉输入，请前往模型设置')
+        if (!resuming) assertSnapshotTarget(snapshot, binding.draftAgent)
+      },
     }),
   )
   const agent = agentBinding.agent
@@ -127,25 +195,52 @@ export function useMimirRuntime({
       /* 流中断也要让宿主刷新：会话落库发生在服务端处理的**开头**，
          与服务端流的好坏死活无关（旧实现同一条注释）。 */
       console.error('对话流中断', error)
+      if (
+        snapshotNames(runtime.thread.composer.getState().attachments).length ||
+        runtime.thread.composer
+          .getState()
+          .queue.some((item) =>
+            item.parts.some(
+              (part) => part.type === 'file' && part.filename && snapshotFilename(part.filename),
+            ),
+          )
+      )
+        setSnapshotError(error.message, false)
+      if (!snapshotNames(runtime.thread.composer.getState().attachments).length) restoreQueued()
       settle()
     },
     onCancel: () => {
       toolCancelRef.current?.()
-      /* 见文件头：停止要把排队的那条还回输入框 */
-      const composer = runtime.thread.composer
-      const first = composer.getState().queue[0]
-      if (first) {
-        /* `removeQueueItem` 只管删，所以顺序是「先放回输入框、再删」——
-           反过来的话文本就随那条一起没了。
-           （命令面这里走 `runtime.thread.composer`，它带 `removeQueueItem`；
-           React 组件那边走 `useAui().composer`，那上面的对应方法是
-           `queueItem({ id }).remove()`——两条路径的方法名不同，见各自的注释） */
-        composer.setText(first.prompt)
-        composer.removeQueueItem(first.id)
-      }
+      restoreQueued()
       settle()
     },
   })
+
+  function restoreSnapshot(snapshot?: ChatPptxSnapshot) {
+    const composer = runtime.thread.composer
+    const attachments = composer.getState().attachments
+    for (let index = attachments.length - 1; index >= 0; index--) {
+      if (snapshotFilename(attachments[index]!.name))
+        void composer.getAttachmentByIndex(index).remove()
+    }
+    if (snapshot) void composer.addAttachment(snapshots.attachment(snapshot))
+  }
+
+  function restoreQueued(id?: string) {
+    const composer = runtime.thread.composer
+    const item = id
+      ? composer.getState().queue.find((entry) => entry.id === id)
+      : composer.getState().queue[0]
+    if (!item) return
+    try {
+      const restored = snapshots.restoreParts(item.parts)
+      restoreSnapshot(restored[0])
+      composer.setText(item.prompt)
+      composer.removeQueueItem(item.id)
+    } catch (error) {
+      setSnapshotError(error instanceof Error ? error.message : '截图恢复失败，请重新准备')
+    }
+  }
 
   function settle() {
     io.onTurnSettled(activeId)
@@ -153,6 +248,14 @@ export function useMimirRuntime({
 
   /** Captured before composer.send(), including when that send only enters the queue. */
   function docxRunConfig(current: Record<string, unknown>): Record<string, unknown> {
+    const names = snapshotNames(runtime.thread.composer.getState().attachments)
+    if (names.length > 1) throw new Error('每轮美化只能附一页截图，请移除多余截图')
+    const snapshot = names[0] ? snapshots.get(names[0]) : null
+    if (snapshot) {
+      assertSnapshotTarget(snapshot, draftAgent ?? docxAgent)
+      if (!docxAgent || !snapshotVisionReady || current.scope === 'search')
+        throw new Error('截图美化需要可用的聊天模型并启用视觉输入，请前往模型设置')
+    }
     if (!docxAgent) return current
     const roundId = crypto.randomUUID()
     const format = docxAgent.format ?? 'docx'
@@ -161,7 +264,15 @@ export function useMimirRuntime({
     return {
       ...current,
       agentRoundId: roundId,
-      agentSelection: frozen,
+      agentSelection: snapshot
+        ? {
+            ...(frozen as Record<string, unknown>),
+            elementId: null,
+            elementIds: [],
+            elements: [],
+            pptxSnapshotId: snapshot.id,
+          }
+        : frozen,
       agentVersion: version,
       ...(format === 'docx'
         ? { docxRoundId: roundId, docxSelection: frozen, docxVersion: version }
@@ -169,10 +280,46 @@ export function useMimirRuntime({
     }
   }
 
-  function prepareDocxSend() {
+  function prepareDocxSend(): boolean {
+    try {
+      const composer = runtime.thread.composer
+      const current = composer.getState().runConfig.custom ?? {}
+      composer.setRunConfig({ custom: docxRunConfig(current) })
+      setSnapshotError(null)
+      return true
+    } catch (error) {
+      setSnapshotError(error instanceof Error ? error.message : '截图目标已失效，请重新准备')
+      return false
+    }
+  }
+
+  function applySnapshotDraft(snapshot?: ChatPptxSnapshot): boolean {
     const composer = runtime.thread.composer
-    const current = composer.getState().runConfig.custom ?? {}
-    composer.setRunConfig({ custom: docxRunConfig(current) })
+    try {
+      if (snapshot) {
+        assertSnapshotTarget(snapshot, draftAgent ?? docxAgent)
+        const protectedNames = composer
+          .getState()
+          .queue.flatMap((item) =>
+            item.parts.flatMap((part) =>
+              part.type === 'file' && part.filename && snapshotFilename(part.filename)
+                ? [part.filename]
+                : [],
+            ),
+          )
+        const activeSnapshotId = (selection.value as { pptxSnapshotId?: string } | null)
+          ?.pptxSnapshotId
+        if (runtime.thread.getState().isRunning && activeSnapshotId)
+          protectedNames.push(snapshots.byId(activeSnapshotId).image.name)
+        snapshots.add(snapshot, protectedNames)
+      }
+      restoreSnapshot(snapshot)
+      setSnapshotError(null)
+      return true
+    } catch (error) {
+      setSnapshotError(error instanceof Error ? error.message : '截图草稿不可用，请重新准备')
+      return false
+    }
   }
 
   const api: MimirChatApi = {
@@ -205,19 +352,37 @@ export function useMimirRuntime({
        * 那套设置。旧实现用的是原来那一轮记下的值（看不见），两者对
        * 「历史轮的失败」都不完全等价，但看得见的那一个至少可解释。
        */
-      const current = composer.getState().runConfig.custom ?? {}
-      const next = docxRunConfig({ ...current, ...runConfigOf(options) })
-      composer.setRunConfig({ custom: next })
-      composer.setText(question)
-      composer.send()
-      setSentHere(true)
+      try {
+        if (options?.snapshotName) {
+          const snapshot = snapshots.get(options.snapshotName)
+          assertSnapshotTarget(snapshot, draftAgent ?? docxAgent)
+          if (!applySnapshotDraft(snapshot)) return
+        }
+        const current = composer.getState().runConfig.custom ?? {}
+        const next = docxRunConfig({ ...current, ...runConfigOf(options) })
+        composer.setRunConfig({ custom: next })
+        composer.setText(question)
+        composer.send()
+        setSnapshotError(null)
+        setSentHere(true)
+      } catch (error) {
+        setSnapshotError(error instanceof Error ? error.message : '截图目标已失效，请重新准备')
+      }
     },
     stop: () => {
       runtime.thread.cancelRun()
     },
-    refill: (text) => {
-      runtime.thread.composer.setText(text)
+    refill: (text, snapshotName) => {
+      try {
+        restoreSnapshot(snapshotName ? snapshots.get(snapshotName) : undefined)
+        runtime.thread.composer.setText(text)
+      } catch (error) {
+        setSnapshotError(error instanceof Error ? error.message : '截图目标已失效，请重新准备')
+      }
     },
+    reclaimQueued: restoreQueued,
+    clearSnapshotAttachmentError: () =>
+      setSnapshotFailure((previous) => (previous?.attachmentBound ? null : previous)),
   }
 
   return {
@@ -230,6 +395,9 @@ export function useMimirRuntime({
       toolCancelRef.current = cancel
     },
     prepareDocxSend,
+    applySnapshotDraft,
+    snapshotError,
+    clearSnapshotError: () => setSnapshotError(null),
   }
 }
 
@@ -251,5 +419,19 @@ function runConfigOf(options: AskOptions | undefined): Record<string, unknown> {
     ...(options.documentId !== undefined ? { documentId: options.documentId } : {}),
     ...(options.deepReasoning ? { deepReasoning: true } : {}),
     ...(options.scope ? { scope: options.scope } : {}),
+  }
+}
+
+function snapshotSendBinding(
+  agent: ChatDocxAgent | null | undefined,
+  draftAgent: ChatDraftAgent | null | undefined,
+  vision: boolean,
+) {
+  let current = { agent, draftAgent: draftAgent ?? agent, vision }
+  return {
+    get: () => current,
+    update: (next: typeof agent, draft: typeof draftAgent, ready: boolean) => {
+      current = { agent: next, draftAgent: draft ?? next, vision: ready }
+    },
   }
 }

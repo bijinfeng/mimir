@@ -716,9 +716,9 @@
 
 .mimir-pdf-inspector {
   box-sizing: border-box;
-  flex: 0 0 300px;
-  width: 300px;
-  max-width: 100%;
+  flex: 0 0 320px;
+  width: 320px;
+  max-width: calc(100% - 32px);
   min-height: 0;
   background-color: var(--me-surface, #fff);
   background-image: linear-gradient(var(--me-bar-bg, #fafafa), var(--me-bar-bg, #fafafa));
@@ -830,6 +830,13 @@
 
 .mimir-pdf-inspector__footer > button {
   min-height: 32px;
+}
+
+.mimir-pdf-form-panel > .mimir-pdf-inspector__footer {
+  flex: none;
+  margin-top: 0;
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--me-border);
 }
 
 .mimir-pdf-inspector__hint svg {

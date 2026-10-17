@@ -1,0 +1,46 @@
+.mimir-pdf-redaction-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  cursor: crosshair;
+  touch-action: none;
+  outline-offset: -2px;
+}
+.mimir-pdf-redaction-overlay[data-disabled] {
+  pointer-events: none;
+}
+.mimir-pdf-redaction-region {
+  position: absolute;
+  background: color-mix(in srgb, var(--me-accent, #2563eb) 25%, transparent);
+  border: 2px dashed var(--me-accent, #2563eb);
+  pointer-events: none;
+}
+.mimir-pdf-redaction-region[data-draft] {
+  border-style: solid;
+}
+.mimir-pdf-redaction-list {
+  list-style: none;
+  margin: 16px 0;
+  padding: 0;
+}
+.mimir-pdf-redaction-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-block: 4px;
+}
+.mimir-pdf-redaction-list li[data-current] {
+  font-weight: 600;
+}
+.mimir-pdf-redaction-list .me-tb {
+  flex: none;
+}
+.mimir-pdf-redaction-footer {
+  flex: none;
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--me-border);
+}
+.mimir-pdf-redaction-footer > .me-tb {
+  width: 100%;
+}

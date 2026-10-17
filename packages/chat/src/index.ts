@@ -31,6 +31,8 @@ export type {
   ChatPanelProps,
   ChatComposerStatus,
   ChatDraft,
+  ChatPptxSnapshot,
+  ChatDraftAgent,
   ChatIo,
   ChatDocxAgent,
   ChatDocumentAgent,

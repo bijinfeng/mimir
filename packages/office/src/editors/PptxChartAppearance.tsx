@@ -9,6 +9,11 @@ import {
   ToolbarSelect,
   ToolbarTextField,
 } from '../shell/EditorShell.js'
+import {
+  pptxChartColorSchemes,
+  pptxChartPointColor,
+  pptxChartSeriesColors,
+} from './pptx-chart-colors.js'
 
 export interface PptxChartAppearancePatch {
   barDir?: 'col' | 'bar'
@@ -18,6 +23,8 @@ export interface PptxChartAppearancePatch {
   gapWidthPct?: number
   holeSizePct?: number
   colorScheme?: string[]
+  /** Local palette intent; submitted as native pointColors only for pie defaults. */
+  pointColorScheme?: string[]
   pointColors?: Record<string, Record<string, string | null>>
 }
 /** Parser render kinds intentionally collapse variants; restore editable kind for current values. */
@@ -44,12 +51,6 @@ const PRESETS = [
   ['顶部图例', 't', false, true, 150],
   ['右侧图例', 'r', false, true, 150],
 ] as const
-const PALETTES = [
-  { key: 'blue', name: '蓝色', colors: ['#2E75B6', '#4472C4', '#5B9BD5', '#70AD47'] },
-  { key: 'warm', name: '暖色', colors: ['#ED7D31', '#FFC000', '#FF0000', '#C55A11'] },
-  { key: 'cool', name: '冷色', colors: ['#0070C0', '#00B0F0', '#00B0A0', '#7030A0'] },
-  { key: 'mono', name: '灰度', colors: ['#404040', '#666666', '#888888', '#AAAAAA'] },
-]
 export function PptxChartAppearance({
   chart,
   kind,
@@ -78,21 +79,35 @@ export function PptxChartAppearance({
     pie = ['pie', 'pie3D', 'doughnut'].includes(currentKind)
   const hasBars = bar || currentKind === 'comboBarLine'
   const axes = !pie
-  const palette = chart.series.map(
-    (series, index) =>
-      patch.colorScheme?.[index % patch.colorScheme.length] ??
-      series.color ??
-      chart.themePalette?.[index % (chart.themePalette.length || 1)] ??
-      PALETTES[0]!.colors[index % 4]!,
-  )
+  const schemes = pptxChartColorSchemes(chart)
+  const palette = pptxChartSeriesColors(chart, patch.colorScheme)
+  const originalPalette = pptxChartSeriesColors(chart)
   const update = (next: PptxChartAppearancePatch) =>
     setPatch((current) => ({ ...current, ...next }))
   const pointOverride = patch.pointColors?.[String(pointSeries)]?.[String(point)]
-  const pointColor =
-    pointOverride === undefined ? chart.series[pointSeries]?.pointColors?.[point] : pointOverride
-  const colorOptions = [...new Set([...PALETTES.flatMap((item) => item.colors), ...palette])].map(
-    (value) => ({ value, label: value, swatch: value }),
+  const hasPointOverride =
+    (pointOverride === undefined
+      ? chart.series[pointSeries]?.pointColors?.[point]
+      : pointOverride) != null
+  const pointColor = pptxChartPointColor(
+    chart,
+    pointSeries,
+    point,
+    patch.colorScheme,
+    pointOverride,
+    patch.pointColorScheme,
+    currentKind,
   )
+  const colorOptions = [
+    ...new Set([
+      ...schemes[0]!.colors,
+      ...schemes
+        .filter((scheme) => ['blue', 'warm', 'cool', 'mono'].includes(scheme.key))
+        .flatMap((scheme) => scheme.colors),
+      ...palette,
+      pointColor,
+    ]),
+  ].map((value) => ({ value, label: value, swatch: value }))
   const colorPoint = (color: string | null) =>
     setPatch((current) => ({
       ...current,
@@ -102,13 +117,13 @@ export function PptxChartAppearance({
       },
     }))
   const presets = PRESETS.filter((p) => hasBars || !['宽柱', '细柱'].includes(p[0]))
+  const activeScheme = pie ? patch.pointColorScheme : patch.colorScheme
   const matchesPalette = (colors?: string[]) =>
-    colors?.length === patch.colorScheme?.length &&
-    colors?.every((color, index) => color === patch.colorScheme?.[index])
-  const selectedPalette = !patch.colorScheme
+    colors?.length === activeScheme?.length &&
+    colors?.every((color, index) => color === activeScheme?.[index])
+  const selectedPalette = !activeScheme
     ? ''
-    : (PALETTES.find((item) => matchesPalette(item.colors))?.key ??
-      (matchesPalette(chart.themePalette) ? 'theme' : 'custom'))
+    : (schemes.find((item) => matchesPalette(item.colors))?.key ?? 'custom')
   return (
     <>
       {section === 'style' && (
@@ -194,53 +209,76 @@ export function PptxChartAppearance({
             value={selectedPalette}
             options={[
               { value: '', label: '保留当前配色' },
-              ...(chart.themePalette?.length ? [{ value: 'theme', label: '当前文档主题' }] : []),
-              ...PALETTES.map((item) => ({ value: item.key, label: item.name })),
+              ...schemes.map((item) => ({ value: item.key, label: item.name })),
               ...(selectedPalette === 'custom' ? [{ value: 'custom', label: '自定义配色' }] : []),
             ]}
             onChange={(value) => {
               if (value === '') {
-                update({ colorScheme: undefined })
+                update({ colorScheme: undefined, pointColorScheme: undefined })
                 return
               }
-              const colors =
-                value === 'theme'
-                  ? chart.themePalette
-                  : PALETTES.find((item) => item.key === value)?.colors
-              if (colors?.length) update({ colorScheme: colors })
+              const colors = schemes.find((item) => item.key === value)?.colors
+              if (colors?.length) update({ colorScheme: colors, pointColorScheme: colors })
             }}
           />
           <div className="mimir-pptx-chart-palette" aria-label="当前图表系列配色">
-            {palette.map((color, index) => (
+            {(pie
+              ? (patch.pointColorScheme ?? chart.themePalette ?? schemes[0]!.colors)
+              : palette
+            ).map((color, index) => (
               <span
-                key={seriesKeys[index]}
+                key={seriesKeys[index] ?? String(index)}
                 style={{ backgroundColor: color }}
-                title={`系列${index + 1}：${color}`}
+                title={`${pie ? '方案色' : '系列'}${index + 1}：${color}`}
               />
             ))}
           </div>
-          <ToolbarSelect
-            label="要配色的系列"
-            value={String(colorSeries)}
-            options={chart.series.map((series, index) => ({
-              value: String(index),
-              label: series.name || `系列${index + 1}`,
-            }))}
-            onChange={(value) => setColorSeries(Number(value))}
-          />
-          <ToolbarColorPicker
-            label="所选系列颜色"
-            value={palette[colorSeries] ?? null}
-            options={colorOptions}
-            icon={<span>系列颜色</span>}
-            onPick={(color) => {
-              const colors = [...palette]
-              colors[colorSeries] = color
-              update({ colorScheme: colors })
-            }}
-          />
+          {!pie && (
+            <>
+              <ToolbarSelect
+                label="要配色的系列"
+                value={String(colorSeries)}
+                options={chart.series.map((series, index) => ({
+                  value: String(index),
+                  label: series.name || `系列${index + 1}`,
+                }))}
+                onChange={(value) => setColorSeries(Number(value))}
+              />
+              <ToolbarColorPicker
+                label="所选系列颜色"
+                value={palette[colorSeries] ?? null}
+                options={colorOptions}
+                allowCustomRgb
+                icon={<span>系列颜色</span>}
+                onPick={(color) => {
+                  const colors = [...palette]
+                  colors[colorSeries] = color
+                  update({ colorScheme: colors })
+                }}
+              />
+              <ToolbarMenuNote>当前系列：{palette[colorSeries] ?? '无系列'}</ToolbarMenuNote>
+              <ToolbarButton
+                label="恢复所选系列颜色"
+                disabled={palette[colorSeries] === originalPalette[colorSeries]}
+                disabledReason="所选系列已使用原颜色"
+                onClick={() => {
+                  const colors = [...palette]
+                  colors[colorSeries] = originalPalette[colorSeries]!
+                  update({
+                    colorScheme: colors.every((color, index) => color === originalPalette[index])
+                      ? undefined
+                      : colors,
+                  })
+                }}
+              >
+                恢复此系列原颜色
+              </ToolbarButton>
+            </>
+          )}
           <ToolbarMenuNote>
-            系列颜色与数据点颜色分别保存。数据点的显式颜色优先于系列配色。
+            {pie
+              ? '方案应用于未单独着色的数据点，保留单独颜色。保存后方案色成为显式点色，再次配色时会保留。'
+              : '数据点的显式颜色优先于系列配色，修改系列不会清除数据点颜色。'}
           </ToolbarMenuNote>
           <ToolbarSelect
             label="数据点所属系列"
@@ -262,13 +300,24 @@ export function PptxChartAppearance({
           />
           <ToolbarColorPicker
             label="数据点颜色"
-            value={pointColor ?? palette[pointSeries] ?? null}
+            value={pointColor}
             options={colorOptions}
+            allowCustomRgb
             icon={<span>数据点</span>}
             onPick={colorPoint}
           />
-          <ToolbarButton label="重置数据点颜色" onClick={() => colorPoint(null)}>
-            使用系列颜色
+          <ToolbarMenuNote>当前数据点：{pointColor}</ToolbarMenuNote>
+          <ToolbarButton
+            label="重置数据点颜色"
+            disabled={!hasPointOverride}
+            disabledReason="此数据点已使用自动颜色"
+            onClick={() => colorPoint(null)}
+          >
+            {pie
+              ? patch.pointColorScheme
+                ? '使用当前方案颜色'
+                : '恢复此数据点自动颜色'
+              : '使用系列颜色'}
           </ToolbarButton>
         </ToolbarMenuFields>
       )}

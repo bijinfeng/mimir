@@ -236,58 +236,13 @@ export async function applyPdfFormOperation(
   const originalPages = [...pdf.getPages()]
   assertPdfFormSafe(pdf, catalogGuard)
   const fields = fieldsOf(pdf)
-  if (fields.some(({ model }) => model.type === 'unsupported'))
-    throw new Error('PDF 含不支持的表单字段类型')
-  const values: string[] = []
-  for (const op of operation.ops) {
-    if (op.op !== 'setFormValue') continue
-    const entry = fields.find(({ model }) => model.name === op.value.name)
-    if (!entry) throw new Error(`表单字段不存在：${op.value.name}`)
-    const { field, model } = entry
-    if (model.readOnly) throw new Error(`表单字段只读：${model.name}`)
-    if (field instanceof PDFCheckBox) {
-      if (typeof op.value.checked !== 'boolean' || op.value.value !== undefined)
-        throw new Error('勾选字段须使用 checked')
-    } else {
-      if (op.value.checked !== undefined) throw new Error('非勾选字段不能使用 checked')
-      const value = op.value.value ?? ''
-      if (field instanceof PDFTextField) {
-        if (field.isRichFormatted() || field.isFileSelector())
-          throw new Error('暂不支持富文本或文件字段')
-        if (field.getMaxLength() !== undefined && value.length > field.getMaxLength()!)
-          throw new Error('表单文字超过字段长度限制')
-        if (!field.isMultiline() && /[\r\n]/.test(value))
-          throw new Error('单行字段不能写入多行文字')
-      } else if (value && !model.options.includes(value)) throw new Error('表单选项无效')
-      if (
-        field instanceof PDFTextField ||
-        field instanceof PDFDropdown ||
-        field instanceof PDFOptionList
-      )
-        values.push(value, ...model.options)
-    }
-  }
-  const font = values.length ? await appearanceFont(pdf, values) : undefined
+  const applyValue = await preparePdfFormValues(
+    pdf,
+    operation.ops.filter((op) => op.op === 'setFormValue'),
+  )
   for (const op of operation.ops) {
     if (op.op === 'setFormValue') {
-      const field = fields.find(({ model }) => model.name === op.value.name)!.field
-      const value = op.value.value ?? ''
-      if (field instanceof PDFTextField) {
-        field.setText(value)
-        field.updateAppearances(font!)
-      } else if (field instanceof PDFCheckBox) {
-        if (op.value.checked) field.check()
-        else field.uncheck()
-        field.updateAppearances()
-      } else if (field instanceof PDFRadioGroup) {
-        if (value) field.select(value)
-        else field.clear()
-        field.updateAppearances()
-      } else if (field instanceof PDFDropdown || field instanceof PDFOptionList) {
-        if (value) field.select(value)
-        else field.clear()
-        field.updateAppearances(font!)
-      }
+      applyValue(op)
     } else if (op.op === 'rotatePages') {
       if (new Set(op.pages).size !== op.pages.length) throw new Error('旋转页号重复')
       for (const page of op.pages) {
@@ -335,6 +290,88 @@ export async function applyPdfFormOperation(
   const finalValues = new Map(
     operation.ops.filter((op) => op.op === 'setFormValue').map((op) => [op.value.name, op.value]),
   )
+  await verifyPdfFormValues(result, finalValues)
+  return operation.dryRun
+    ? { forms: await readPdfFormFields(bytes) }
+    : { bytes: result, forms: after }
+}
+
+type PdfFormValueOperation = Extract<
+  Extract<PdfFormOperation, { op: 'apply' }>['ops'][number],
+  { op: 'setFormValue' }
+>
+
+/** Prepare once on a detached graph; every value is checked before the first mutation. */
+export async function preparePdfFormValues(
+  pdf: PDFDocument,
+  operations: readonly PdfFormValueOperation[],
+) {
+  const fields = fieldsOf(pdf)
+  if (fields.some(({ model }) => model.type === 'unsupported'))
+    throw new Error('PDF 含不支持的表单字段类型')
+  const values: string[] = []
+  for (const [opIndex, op] of operations.entries()) {
+    try {
+      const entry = fields.find(({ model }) => model.name === op.value.name)
+      if (!entry) throw new Error(`表单字段不存在：${op.value.name}`)
+      const { field, model } = entry
+      if (model.readOnly) throw new Error(`表单字段只读：${model.name}`)
+      if (field instanceof PDFCheckBox) {
+        if (typeof op.value.checked !== 'boolean' || op.value.value !== undefined)
+          throw new Error('勾选字段须使用 checked')
+      } else {
+        if (op.value.checked !== undefined) throw new Error('非勾选字段不能使用 checked')
+        const value = op.value.value ?? ''
+        if (field instanceof PDFTextField) {
+          if (field.isRichFormatted() || field.isFileSelector())
+            throw new Error('暂不支持富文本或文件字段')
+          if (field.getMaxLength() !== undefined && value.length > field.getMaxLength()!)
+            throw new Error('表单文字超过字段长度限制')
+          if (!field.isMultiline() && /[\r\n]/.test(value))
+            throw new Error('单行字段不能写入多行文字')
+        } else if (value && !model.options.includes(value)) throw new Error('表单选项无效')
+        if (
+          field instanceof PDFTextField ||
+          field instanceof PDFDropdown ||
+          field instanceof PDFOptionList
+        )
+          values.push(value, ...model.options)
+      }
+    } catch (error) {
+      throw new Error(
+        `PDF 表单第 ${opIndex + 1} 项：${error instanceof Error ? error.message : String(error)}`,
+        { cause: error },
+      )
+    }
+  }
+  const font = values.length ? await appearanceFont(pdf, values) : undefined
+  return (op: PdfFormValueOperation) => {
+    const field = fields.find(({ model }) => model.name === op.value.name)!.field
+    const value = op.value.value ?? ''
+    if (field instanceof PDFTextField) {
+      field.setText(value)
+      field.updateAppearances(font!)
+    } else if (field instanceof PDFCheckBox) {
+      if (op.value.checked) field.check()
+      else field.uncheck()
+      field.updateAppearances()
+    } else if (field instanceof PDFRadioGroup) {
+      if (value) field.select(value)
+      else field.clear()
+      field.updateAppearances()
+    } else if (field instanceof PDFDropdown || field instanceof PDFOptionList) {
+      if (value) field.select(value)
+      else field.clear()
+      field.updateAppearances(font!)
+    }
+  }
+}
+
+export async function verifyPdfFormValues(
+  result: Uint8Array,
+  finalValues: ReadonlyMap<string, PdfFormValueOperation['value']>,
+): Promise<void> {
+  const after = await readPdfFormFields(result)
   for (const [name, value] of finalValues) {
     const model = after.fields.find((field) => field.name === name)
     const expected = model?.type === 'checkbox' ? value.checked : (value.value ?? '')
@@ -379,7 +416,4 @@ export async function applyPdfFormOperation(
   } finally {
     await task.destroy()
   }
-  return operation.dryRun
-    ? { forms: await readPdfFormFields(bytes) }
-    : { bytes: result, forms: after }
 }

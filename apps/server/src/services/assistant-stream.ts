@@ -7,6 +7,7 @@ import { nanoid } from 'nanoid'
 import { assemble } from '../plugins/host.js'
 import { assembleCitations, searchChunks, type AssembledCitation } from '../search/index.js'
 import { appendMessage, createConversation, ensureTitle, getConversation } from './conversations.js'
+import { hasImageInput } from './pptx-snapshot-input.js'
 import { streamChat as streamModelChat, modelReady } from './model.js'
 import { getDocument } from './documents.js'
 import { searchOnlyAnswer } from './search-only-answer.js'
@@ -339,6 +340,13 @@ export async function streamChat(requestBody: unknown): Promise<Response> {
   ) {
     return streamDocxAgent(parsed)
   }
+
+  if (hasImageInput(parsed.messages))
+    return errorResponse(
+      422,
+      'IMAGE_AGENT_REQUIRED',
+      '带截图的指令需要当前文档的 Agent 和视觉模型，不能仅检索知识库；请移除截图或配置模型',
+    )
 
   const props = mimirProps(parsed.forwardedProps)
   const question = lastUserQuestion(parsed.messages as { role: string; content?: unknown }[]).trim()

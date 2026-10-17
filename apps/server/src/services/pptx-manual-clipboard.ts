@@ -1,10 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { pptxManualAssetSchema } from '@mimir/shared'
 import {
-  copyElementData,
-  copySlide,
   pasteElements,
-  pasteSlide,
   openPptx,
   savePptx,
 } from '../../../../packages/office/vendor/packages/pptx-engine/src/index.js'
@@ -26,13 +23,21 @@ import {
 import { BoundedZip } from '../../../../packages/office/src/zip-bounds.js'
 import { getDocument } from './documents.js'
 import type { PptxHostRequest, PptxHostResult } from './pptx-agent-host.js'
+import { preparePptxClipboardElements } from './pptx-clipboard-elements.js'
+import {
+  preparePptxClipboardSlides,
+  pastePptxClipboardSlides,
+  type PptxSlidePacket,
+} from './pptx-clipboard-slides.js'
 
-type Elements = ReturnType<typeof copyElementData>[]
-type Bundle = NonNullable<ReturnType<typeof copySlide>>
+type Elements = ReturnType<typeof preparePptxClipboardElements>['items']
 type Pending = {
   documentId: string
   expires: number
-} & ({ kind: 'elements'; items: Elements } | { kind: 'slide'; bundle: Bundle })
+} & (
+  | { kind: 'elements'; items: Elements }
+  | { kind: 'slide' | 'slides'; packets: PptxSlidePacket[] }
+)
 type Stored = Pending & { size: number }
 const clipboard = new Map<string, Stored>()
 const MAX_BYTES = 64 * 1024 * 1024
@@ -239,52 +244,57 @@ export async function applyPptxManualClipboard(request: PptxHostRequest): Promis
   } else if (input.kind === 'copy_elements' || input.kind === 'cut_elements') {
     const slide = opened.deck.slides[input.slide]
     if (!slide) throw new Error('复制所在幻灯片已失效')
-    if (new Set(input.elementIds).size !== input.elementIds.length)
-      throw new Error('复制对象不能重复')
-    const elements = input.elementIds.map((id) => {
-      const element = slide.elements.find((item) => matchesElementRef(item, id))
-      if (!element) throw new Error('复制对象已失效，请重新选择')
-      return element
-    })
+    const targets = input.targets ?? input.elementIds!.map((elementId) => ({ elementId }))
+    const prepared = preparePptxClipboardElements(
+      opened,
+      slide,
+      targets,
+      input.kind === 'cut_elements',
+    )
     pending = {
       documentId: request.documentId,
       kind: 'elements',
-      items: elements.map((element) => copyElementData(opened, slide, element)),
+      items: prepared.items,
       expires: Date.now() + TTL_MS,
     }
-    data = { kind: 'elements', count: elements.length }
+    data = {
+      kind: 'elements',
+      count: prepared.count,
+      itemCount: prepared.items.length,
+      groupWrapperCount: prepared.groupWrapperCount,
+      animationCount: prepared.animationCount,
+    }
     if (input.kind === 'cut_elements') {
+      prepared.remove()
+      changed = true
+    }
+  } else if (
+    input.kind === 'copy_slide' ||
+    input.kind === 'cut_slide' ||
+    input.kind === 'copy_slides' ||
+    input.kind === 'cut_slides'
+  ) {
+    const indices = 'slides' in input ? input.slides : [input.slide]
+    const cut = input.kind === 'cut_slide' || input.kind === 'cut_slides'
+    const packets = preparePptxClipboardSlides(opened, indices, cut)
+    const kind = 'slides' in input ? 'slides' : 'slide'
+    pending = { documentId: request.documentId, kind, packets, expires: Date.now() + TTL_MS }
+    data = { kind, count: packets.length }
+    if (cut) {
       const result = runTxn(opened, {
         isolation: 'atomic',
-        ops: input.elementIds.map((el) => ({
-          op: 'deleteElement',
-          target: { slide: input.slide, el },
-        })) as Op[],
+        ops: indices
+          .toSorted((a, b) => b - a)
+          .map((slide) => ({ op: 'deleteSlide' as const, target: { slide } })),
       })
       if (!result.applied) throw new Error(result.failures?.[0]?.error ?? '剪切未应用')
       changed = true
     }
-  } else if (input.kind === 'copy_slide' || input.kind === 'cut_slide') {
-    if (input.kind === 'cut_slide' && opened.deck.slides.length <= 1)
-      throw new Error('至少保留一张幻灯片，最后一页可复制但不能剪切')
-    const bundle = copySlide(opened, input.slide)
-    if (!bundle) throw new Error('复制所在幻灯片已失效')
-    pending = {
-      documentId: request.documentId,
-      kind: 'slide',
-      bundle,
-      expires: Date.now() + TTL_MS,
-    }
-    data = { kind: 'slide', count: 1 }
-    if (input.kind === 'cut_slide') {
-      const result = runTxn(opened, {
-        isolation: 'atomic',
-        ops: [{ op: 'deleteSlide', target: { slide: input.slide } }],
-      })
-      if (!result.applied) throw new Error(result.failures?.[0]?.error ?? '剪切未应用')
-      changed = true
-    }
-  } else if (input.kind === 'paste_elements' || input.kind === 'paste_slide') {
+  } else if (
+    input.kind === 'paste_elements' ||
+    input.kind === 'paste_slide' ||
+    input.kind === 'paste_slides'
+  ) {
     expire()
     const stored = clipboard.get(input.ref)
     if (!stored || !(await getDocument(stored.documentId)))
@@ -297,15 +307,27 @@ export async function applyPptxManualClipboard(request: PptxHostRequest): Promis
         dy: input.dy,
       })
       if (!result) throw new Error('目标幻灯片已失效，粘贴未应用')
-      data = { kind: 'elements', elementIds: result.elementIds, slideIndex: input.slide }
-    } else {
-      if (stored.kind !== 'slide') throw new Error('复制的是对象，请使用粘贴对象')
-      if (input.afterIndex >= opened.deck.slides.length) throw new Error('粘贴位置已失效')
-      const slide = pasteSlide(opened, input.afterIndex, stored.bundle, {
-        keepSourceFormatting: input.keepSourceFormatting,
+      const elementIds = result.elementIds.map((id) => {
+        const element = result.slide.elements.find((item) => item.id === id)
+        if (!element) throw new Error('粘贴对象身份已失效')
+        return elementDurableId(element) ?? element.id
       })
-      if (!slide) throw new Error('幻灯片粘贴未应用，请检查目标版式')
-      data = { kind: 'slide', slideIndex: opened.deck.slides.indexOf(slide) }
+      data = { kind: 'elements', elementIds, elementRefs: elementIds, slideIndex: input.slide }
+    } else {
+      if (stored.kind !== 'slide' && stored.kind !== 'slides')
+        throw new Error('复制的是对象，请使用粘贴对象')
+      const slideIndices = pastePptxClipboardSlides(
+        opened,
+        input.afterIndex,
+        stored.packets,
+        input.keepSourceFormatting,
+      )
+      data = {
+        kind: stored.kind,
+        slideIndex: slideIndices[0],
+        slideIndices,
+        count: slideIndices.length,
+      }
     }
     changed = true
   } else throw new Error('复制粘贴操作无效')

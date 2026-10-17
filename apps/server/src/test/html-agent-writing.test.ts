@@ -125,3 +125,46 @@ describe('HTML page writer service', () => {
     await expect(writing.next()).rejects.toThrow('未完成')
   })
 })
+
+it('retains rich planning fields and sends the confirmed style and user edits to the writer', async () => {
+  const rich = {
+    title: 'Guide',
+    tone: 'calm',
+    audience: 'readers',
+    core_hook: 'Explain carefully',
+    style: {
+      name: 'Reading',
+      tone: 'quiet',
+      palette: { primary: '#13579B' },
+      typography: { body: 'Georgia' },
+      tokens: { spacing: '24px' },
+      docx_friendly: true,
+    },
+    alternatives: [{ tone: 'compact', palette: {}, typography: {} }],
+    sections: [{ title: 'Intro', purpose: 'explain', type: 'intro', image_queries: ['library'] }],
+    meta: { language: 'en', length: 'short' },
+    user_edited: ['style.palette.primary'],
+  }
+  mocks.call.mockResolvedValue(JSON.stringify(rich))
+  const planned = await planHtmlPage({
+    documentId: 'html-1',
+    mode: 'restyle',
+    instruction: 'Keep the prose',
+  })
+  expect(planned).toMatchObject(rich)
+  mocks.stream.mockResolvedValue(chunks('<!doctype html><html><body>Complete</body></html>'))
+  await writeHtmlDocument({
+    documentId: 'html-1',
+    kind: 'design',
+    instruction: 'Build',
+    brief: planned,
+  })
+  expect(mocks.stream).toHaveBeenLastCalledWith(
+    expect.objectContaining({
+      systemPrompts: expect.arrayContaining([
+        expect.stringContaining('"primary":"#13579B"'),
+        expect.stringContaining('--brief-*'),
+      ]),
+    }),
+  )
+})

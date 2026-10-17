@@ -30,6 +30,43 @@ describe('PDF Agent tool readiness', () => {
     expect(catalog.unavailableTools).toEqual([])
   })
 
+  it('advertises only strict batch operations with actual annotation and pending text IDs', () => {
+    const batch = pdfAgentCatalog().tools.find((tool) => tool.name === 'apply_ops')!
+    const schema = batch.inputSchema as {
+      additionalProperties: boolean
+      properties: {
+        ops: {
+          minItems: number
+          maxItems: number
+          items: {
+            oneOf: Array<{
+              additionalProperties: boolean
+              properties: Record<string, { const?: string; additionalProperties?: boolean }>
+            }>
+          }
+        }
+      }
+    }
+    expect(schema.additionalProperties).toBe(false)
+    expect(schema.properties.ops).toMatchObject({ minItems: 1, maxItems: 30 })
+    const operations = schema.properties.ops.items.oneOf
+    expect(operations.map((op) => op.properties.op!.const)).toEqual([
+      'removeMarkup',
+      'setNoteContents',
+      'removeTextInsert',
+      'setMetadata',
+      'setFormValue',
+      'rotatePages',
+      'deletePage',
+      'setPageOrder',
+    ])
+    for (const op of operations) expect(op.additionalProperties).toBe(false)
+    expect(
+      operations.find((op) => op.properties.op!.const === 'setFormValue')!.properties.value!
+        .additionalProperties,
+    ).toBe(false)
+  })
+
   it('keeps page tools but withholds text insertion when assets are missing', () => {
     assetPaths.mockImplementation(() => {
       throw new Error('missing asset')
@@ -42,6 +79,9 @@ describe('PDF Agent tool readiness', () => {
     expect(catalog.unavailableTools).toEqual(
       [
         ...pdfImageTools.map((tool) => tool.name),
+        'list_text_blocks',
+        'move_text_block',
+        'edit_block',
         'edit_text',
         'markup_text',
         'read_annotations',

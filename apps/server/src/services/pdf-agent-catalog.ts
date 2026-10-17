@@ -7,6 +7,9 @@ import { pdfAgentAssetPaths } from './pdf-agent-host.js'
 
 const contentToolNames = [
   ...pdfImageTools.map((tool) => tool.name),
+  'list_text_blocks',
+  'move_text_block',
+  'edit_block',
   'edit_text',
   'markup_text',
   'read_annotations',
@@ -26,21 +29,79 @@ const pdfCreateTools = [
 ]
 const contentTools = [
   {
+    name: 'list_text_blocks',
+    description:
+      '读取当前原件一页的真实段落、位置（pt）、可移动/改写状态、参考字号/行距/对齐与拒绝原因。仅可核验完整顶层文字集合可写；先保存待生效页面或插字改动。',
+    inputSchema: { type: 'object', required: ['page'], properties: { page } },
+  },
+  {
+    name: 'move_text_block',
+    description:
+      '整体移动包含唯一 paragraph_text 片段的原文段落。先 list_text_blocks；dx/dy 为当前页面显示方向向右/向下的pt偏移，包含Rotate/CropBox。保留原字体字形和其他对象，不重排或覆盖绘制；AcroForm、未知Catalog、跨段对象及裁切内容流拒绝。',
+    inputSchema: {
+      type: 'object',
+      required: ['page', 'paragraph_text', 'dx', 'dy'],
+      properties: {
+        page,
+        paragraph_text: text,
+        dx: { type: 'number', minimum: -14400, maximum: 14400 },
+        dy: { type: 'number', minimum: -14400, maximum: 14400 },
+      },
+    },
+  },
+  {
+    name: 'edit_block',
+    description:
+      '重写由唯一paragraph_text片段定位的完整原文段落；使用实际写入字体的字宽在原段宽内换行，长度增长向下展开，不推动其他内容。new_text为空真实删除原文对象。先list_text_blocks；仅canRewrite段可用，Form/clip/AcroForm/未知Catalog拒绝。',
+    inputSchema: {
+      type: 'object',
+      required: ['page', 'paragraph_text', 'new_text'],
+      properties: {
+        page,
+        paragraph_text: text,
+        new_text: { type: 'string', maxLength: 10000 },
+        font_size: { type: 'number', exclusiveMinimum: 0, maximum: 500 },
+        color: { type: 'string', pattern: '^#[0-9a-fA-F]{6}$' },
+        font: { type: 'string', enum: ['arial', 'times', 'courier'] },
+        bold: {
+          type: 'boolean',
+          description:
+            'true应用粗体，false真实取消，省略保留；普通字面不可核验时拒绝，可明确font后重试',
+        },
+        italic: {
+          type: 'boolean',
+          description:
+            'true应用斜体，false真实取消，省略保留；普通字面不可核验时拒绝，可明确font后重试',
+        },
+        align: { type: 'string', enum: ['left', 'center', 'right'] },
+      },
+    },
+  },
+  {
     name: 'edit_text',
     description:
-      '替换或删除页面中唯一的完整原文文字项。先 read_pages；部分文字、重复文字或含未知 Catalog 结构的文件会拒绝。new_text 为空字符串会删除原文，不重排页面。先保存页面或插字改动。',
+      '替换或删除页面原文的一次匹配；old_text可为部分原文，occurrence从1起指定页面阅读顺序中的第几次，默认1。只重写触及的原生文字容器，保留周边与非目标文字位置，不自动重排整段；整段重排用edit_block。先list_text_blocks核对原文；Form/clip/AcroForm/未知Catalog拒绝。',
     inputSchema: {
       type: 'object',
       required: ['page', 'old_text', 'new_text'],
       properties: {
         page,
         old_text: text,
+        occurrence: { type: 'integer', minimum: 1, maximum: 10000 },
         new_text: { type: 'string', maxLength: 10000 },
         font_size: { type: 'number', exclusiveMinimum: 0, maximum: 500 },
         color: { type: 'string', pattern: '^#[0-9a-fA-F]{6}$' },
         font: { type: 'string', enum: ['arial', 'times', 'courier'] },
-        bold: { type: 'boolean' },
-        italic: { type: 'boolean' },
+        bold: {
+          type: 'boolean',
+          description:
+            'true应用粗体，false真实取消，省略保留；普通字面不可核验时拒绝，可明确font后重试',
+        },
+        italic: {
+          type: 'boolean',
+          description:
+            'true应用斜体，false真实取消，省略保留；普通字面不可核验时拒绝，可明确font后重试',
+        },
       },
     },
   },
@@ -213,10 +274,11 @@ const tools = [
   {
     name: 'apply_ops',
     description:
-      '修改当前未保存 PDF 的页结构。当前支持 setMetadata（metadata:{title?,author?,subject?,keywords?}）及 rotatePages（pages: 页号数组, dir: 90|-90|180）、deletePage（page: 页号）、setPageOrder（order: 全部页号数组）。交互表单支持 setFormValue（value:{name,value?,checked?}），须先 list_form_fields；勾选框仅 checked，其他字段仅 value，空字符串清除。可与三类页面操作原子混批，不能删除含字段控件的页面。dry_run 只预检。批注请使用专用工具；图片使用专用工具。',
+      '修改当前未保存 PDF 的页结构。当前支持 setMetadata（metadata:{title?,author?,subject?,keywords?}）及 rotatePages（pages: 页号数组, dir: 90|-90|180）、deletePage（page: 页号）、setPageOrder（order: 全部页号数组）。交互表单支持 setFormValue（value:{name,value?,checked?}），须先 list_form_fields；勾选框仅 checked，其他字段仅 value，空字符串清除。可与三类页面操作原子混批，不能删除含字段控件的页面。removeMarkup({id})删除read_annotations的单条文字标注，setNoteContents({id,contents})改便笺或回复；使用当前真实批注id，不使用P前缀。removeTextInsert({id})删除list_inserted_text的当前T标识；整批先删除指定T再执行原生操作。无页面操作保留幸存T可继续编辑，有页面操作幸存字随页面物化且T失效。旧R对象标识与待保存插字混用须先保存并重读。dry_run完成真实校验但不发布。未知键/错误类型/重复删除整批拒绝。图片使用专用工具。',
     inputSchema: {
       type: 'object',
       required: ['ops'],
+      additionalProperties: false,
       properties: {
         dry_run: { type: 'boolean' },
         ops: {
@@ -227,7 +289,37 @@ const tools = [
             oneOf: [
               {
                 type: 'object',
+                required: ['op', 'id'],
+                additionalProperties: false,
+                properties: {
+                  op: { const: 'removeMarkup' },
+                  id: { type: 'string', minLength: 1, maxLength: 200 },
+                },
+              },
+              {
+                type: 'object',
+                required: ['op', 'id', 'contents'],
+                additionalProperties: false,
+                properties: {
+                  op: { const: 'setNoteContents' },
+                  id: { type: 'string', minLength: 1, maxLength: 200 },
+                  contents: { type: 'string', minLength: 1, maxLength: 10000 },
+                },
+              },
+              {
+                type: 'object',
+                required: ['op', 'id'],
+                additionalProperties: false,
+                properties: {
+                  op: { const: 'removeTextInsert' },
+                  id: { type: 'string', pattern: '^T[a-zA-Z0-9-]{1,80}$' },
+                },
+              },
+
+              {
+                type: 'object',
                 required: ['op', 'metadata'],
+                additionalProperties: false,
                 properties: {
                   op: { const: 'setMetadata' },
                   metadata: {
@@ -240,11 +332,13 @@ const tools = [
               {
                 type: 'object',
                 required: ['op', 'value'],
+                additionalProperties: false,
                 properties: {
                   op: { const: 'setFormValue' },
                   value: {
                     type: 'object',
                     required: ['name'],
+                    additionalProperties: false,
                     properties: {
                       name: { type: 'string', minLength: 1 },
                       value: { type: 'string', maxLength: 10000 },
@@ -256,6 +350,7 @@ const tools = [
               {
                 type: 'object',
                 required: ['op', 'pages', 'dir'],
+                additionalProperties: false,
                 properties: {
                   op: { const: 'rotatePages' },
                   pages: { type: 'array', minItems: 1, items: page },
@@ -265,11 +360,13 @@ const tools = [
               {
                 type: 'object',
                 required: ['op', 'page'],
+                additionalProperties: false,
                 properties: { op: { const: 'deletePage' }, page },
               },
               {
                 type: 'object',
                 required: ['op', 'order'],
+                additionalProperties: false,
                 properties: {
                   op: { const: 'setPageOrder' },
                   order: { type: 'array', minItems: 1, items: page },
@@ -308,7 +405,7 @@ export function pdfAgentCatalog(): DocumentAgentCatalog {
   return {
     format: 'pdf',
     systemPrompt:
-      '你是 Mimir 的 PDF 编辑助手。先读取当前画布。只使用工具描述中已接入的页面、文字和批注工具；已有文字仅支持唯一完整文字项；便笺、回复和文字标注使用持久化批注 id。表单先 list_form_fields 后用 apply_ops setFormValue，字段类型由宿主核验。图片先list_page_images后使用专用工具；URL仅支持PNG/JPEG，模型不能使用本地路径。插入文字在保存或页结构操作后不再是待编辑对象。失败、取消或版本冲突时不得声称已修改。改动只更新画布，用户手动保存。',
+      '你是 Mimir 的 PDF 编辑助手。先读取当前画布和list_text_blocks：move_text_block整体移动原文；edit_block用唯一paragraph_text重写整段并按原宽重排、向下增长、不推动其他内容；edit_text用old_text及1起occurrence替换部分或重复原文，按页面阅读顺序计数且不重排整段。空new_text真实删除对应原文。仅可核验完整目标可写，Form、clip、AcroForm及未知Catalog拒绝；模型不得传内部target绕过定位。粗斜体false需真实普通字面可核验，不能以保留冒称取消。便笺、回复和文字标注使用持久化批注id。表单先list_form_fields后用apply_ops setFormValue，字段类型由宿主核验。图片先list_page_images后使用专用工具；URL仅支持PNG/JPEG，模型不能使用本地路径。插入文字在保存或页结构操作后不再是待编辑对象。失败、取消或版本冲突时不得声称已修改。改动只更新画布，用户手动保存。',
     tools: availableTools,
     clientToolNames: new Set([
       'read_pages',

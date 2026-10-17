@@ -1,3 +1,4 @@
+import { preparePptxDisplayMedia } from './pptx-image-display.js'
 import { XMLParser } from 'fast-xml-parser'
 import {
   readPptxMetadata,
@@ -119,7 +120,7 @@ export async function openPptx(bytes: Uint8Array): Promise<PptxDeck> {
           return link ? [[element.id, link] as const] : []
         }),
       ),
-    media: archive.readMediaDataUrls(),
+    media: await preparePptxDisplayMedia(archive),
   }
 }
 
@@ -572,7 +573,7 @@ export async function openPptxForEdit(bytes: Uint8Array): Promise<PptxEditSessio
   /** 快照缓存（没改动时必须返回同一个对象，改动后置空以失效） */
   let cachedView: PptxRenderable | null = null
   let lastSavedPatch: EntryPatch | null = null
-  let media: ReadonlyMap<string, string> = archive.readMediaDataUrls()
+  let media: ReadonlyMap<string, string> = await preparePptxDisplayMedia(archive)
   let hostDirty = false
   const sessionId = Symbol('pptx-edit-session')
   let revision = 0
@@ -677,12 +678,14 @@ export async function openPptxForEdit(bytes: Uint8Array): Promise<PptxEditSessio
         nextSlides.push(slide)
       }
       if (!nextSlides.length) throw new Error('宿主返回了没有幻灯片的 PPTX')
+      const nextSize = nextArchive.readPresentation().size
+      const nextMedia = await preparePptxDisplayMedia(nextArchive)
       if (signal?.aborted) throw new Error('PPTX 操作已取消；文档未修改')
       if (expectedVersion !== undefined && revision !== expectedVersion)
         throw new Error('宿主解析期间画布已变化，请重新读取')
       archive = nextArchive
-      size = nextArchive.readPresentation().size
-      media = nextArchive.readMediaDataUrls()
+      size = nextSize
+      media = nextMedia
       pages.splice(0, pages.length, ...nextPages)
       slides.splice(0, slides.length, ...nextSlides)
       baseline = structuredClone(nextPages)

@@ -48,6 +48,8 @@ export interface MimirAgentOptions {
   docxAgent?: ChatDocxAgent | null
   round: { id: string | null; version: number | null }
   selection: { value: unknown }
+  validateSnapshot?: (config: Record<string, unknown>, resuming: boolean) => void
+  onSnapshotRejected?: (input: RunAgentInput, error: Error) => void
 }
 
 function queuedSelection(value: unknown): { from: number; to: number; text: string } | null {
@@ -69,6 +71,8 @@ export function createMimirAgent({
   docxAgent,
   round,
   selection,
+  validateSnapshot,
+  onSnapshotRejected,
 }: MimirAgentOptions): {
   agent: HttpAgent
   updateDocxAgent: (next: ChatDocxAgent | null | undefined) => void
@@ -88,7 +92,31 @@ export function createMimirAgent({
      * same-origin 下 fetch 默认就会带，这里显式写是为了跨源那条路径
      * 不需要有人记得回来加。
      */
-    fetch: (input, init) => globalThis.fetch(input, { ...init, credentials: 'include' }),
+    fetch: async (input, init) => {
+      const body = typeof init?.body === 'string' ? (JSON.parse(init.body) as RunAgentInput) : null
+      const config = body?.forwardedProps?.runConfig as Record<string, unknown> | undefined
+      const selected = config?.agentSelection as { pptxSnapshotId?: string } | undefined
+      if (!body || !selected?.pptxSnapshotId)
+        return globalThis.fetch(input, { ...init, credentials: 'include' })
+      try {
+        // A queued dispatch can arrive without subscriber-provided routing fields.
+        // Bind at the actual request boundary too, before any network operation.
+        if (config?.documentAgent !== true) await initialize(body, agent)
+        validateSnapshot?.(
+          config ?? {},
+          Array.isArray((body as RunAgentInput & { resume?: unknown }).resume),
+        )
+        return globalThis.fetch(input, {
+          ...init,
+          body: JSON.stringify(body),
+          credentials: 'include',
+        })
+      } catch (error) {
+        const failure = error instanceof Error ? error : new Error(String(error))
+        onSnapshotRejected?.(body, failure)
+        throw failure
+      }
+    },
   })
 
   /**
@@ -101,97 +129,115 @@ export function createMimirAgent({
    *   两个都写，是因为服务端两条通道都读（顶层优先），而 threadId 还决定
    *   客户端自己怎么分组消息
    */
-  agent.subscribe({
-    onRunInitialized: async (params) => {
-      const input = params.input as RunAgentInput & {
-        forwardedProps?: Record<string, unknown>
-      }
-      const forwarded = input.forwardedProps ?? {}
+  async function initialize(
+    input: RunAgentInput & { forwardedProps?: Record<string, unknown> },
+    runAgent: { threadId: string },
+  ) {
+    const forwarded = input.forwardedProps ?? {}
 
-      const currentDocxAgent = activeDocxAgent
-      if (currentDocxAgent) {
-        const format = currentDocxAgent.format ?? 'docx'
-        const previous =
-          typeof forwarded.runConfig === 'object' && forwarded.runConfig !== null
-            ? (forwarded.runConfig as Record<string, unknown>)
-            : {}
-        // The composer captures this pair before send(), including queued sends.
-        // A resume must retain the same pair; only a legacy/unprepared fresh
-        // request falls back to dispatch-time capture.
-        if (!Array.isArray((input as RunAgentInput & { resume?: unknown }).resume)) {
-          const preparedRound = previous.agentRoundId ?? previous.docxRoundId
-          const preparedSelection =
-            format === 'docx'
-              ? queuedSelection(previous.agentSelection ?? previous.docxSelection)
-              : previous.agentSelection
-          const preparedVersion = previous.agentVersion ?? previous.docxVersion
-          if (
-            typeof preparedRound === 'string' &&
-            preparedRound !== round.id &&
-            preparedSelection !== undefined &&
-            preparedSelection !== null &&
-            Number.isSafeInteger(preparedVersion)
-          ) {
-            round.id = preparedRound
-            round.version = preparedVersion as number
-            selection.value = preparedSelection
-          } else {
-            round.id = crypto.randomUUID()
-            selection.value = currentDocxAgent.freezeSelection(round.id)
-            round.version = currentDocxAgent.getVersion()
-          }
-        } else if (round.id === null || round.version === null) {
-          throw new Error('文档工具续轮已失去编辑轮次，请重新提问')
+    const currentDocxAgent = activeDocxAgent
+    const runConfig =
+      typeof forwarded.runConfig === 'object' && forwarded.runConfig !== null
+        ? (forwarded.runConfig as Record<string, unknown>)
+        : {}
+    const resuming = Array.isArray((input as RunAgentInput & { resume?: unknown }).resume)
+    validateSnapshot?.(runConfig, resuming)
+    if (currentDocxAgent) {
+      const format = currentDocxAgent.format ?? 'docx'
+      const previous =
+        typeof forwarded.runConfig === 'object' && forwarded.runConfig !== null
+          ? (forwarded.runConfig as Record<string, unknown>)
+          : {}
+      // The composer captures this pair before send(), including queued sends.
+      // A resume must retain the same pair; only a legacy/unprepared fresh
+      // request falls back to dispatch-time capture.
+      if (!Array.isArray((input as RunAgentInput & { resume?: unknown }).resume)) {
+        const preparedRound = previous.agentRoundId ?? previous.docxRoundId
+        const preparedSelection =
+          format === 'docx'
+            ? queuedSelection(previous.agentSelection ?? previous.docxSelection)
+            : previous.agentSelection
+        const preparedVersion = previous.agentVersion ?? previous.docxVersion
+        if (
+          typeof preparedRound === 'string' &&
+          preparedRound !== round.id &&
+          preparedSelection !== undefined &&
+          preparedSelection !== null &&
+          Number.isSafeInteger(preparedVersion)
+        ) {
+          round.id = preparedRound
+          round.version = preparedVersion as number
+          selection.value = preparedSelection
+        } else {
+          round.id = crypto.randomUUID()
+          selection.value = currentDocxAgent.freezeSelection(round.id)
+          round.version = currentDocxAgent.getVersion()
         }
-        if (round.version !== currentDocxAgent.getVersion())
-          throw new Error('文档在本轮指令期间发生了其他修改，请重新发送指令')
-        const liveContext = currentDocxAgent.getContext()
-        const docxContext =
-          typeof liveContext === 'object' && liveContext !== null
-            ? { ...liveContext, selection: selection.value }
-            : liveContext
-        input.forwardedProps = {
-          ...forwarded,
-          runConfig: {
-            ...previous,
-            documentAgent: true,
-            agentFormat: format,
-            documentId: currentDocxAgent.documentId,
-            agentContext: docxContext,
-            agentVersion: round.version,
-            agentRoundId: round.id,
-            agentSelection: selection.value,
-            ...(format === 'docx'
-              ? {
-                  docxAgent: true,
-                  docxContext,
-                  docxVersion: round.version,
-                  docxRoundId: round.id,
-                  docxSelection: selection.value,
-                }
-              : {}),
-          },
-        }
+      } else if (round.id === null || round.version === null) {
+        throw new Error('文档工具续轮已失去编辑轮次，请重新提问')
       }
+      if (round.version !== currentDocxAgent.getVersion())
+        throw new Error('文档在本轮指令期间发生了其他修改，请重新发送指令')
+      const liveContext = currentDocxAgent.getContext()
+      const docxContext =
+        typeof liveContext === 'object' && liveContext !== null
+          ? { ...liveContext, selection: selection.value }
+          : liveContext
+      input.forwardedProps = {
+        ...forwarded,
+        runConfig: {
+          ...previous,
+          documentAgent: true,
+          agentFormat: format,
+          documentId: currentDocxAgent.documentId,
+          agentContext: docxContext,
+          agentVersion: round.version,
+          agentRoundId: round.id,
+          agentSelection: selection.value,
+          ...(format === 'docx'
+            ? {
+                docxAgent: true,
+                docxContext,
+                docxVersion: round.version,
+                docxRoundId: round.id,
+                docxSelection: selection.value,
+              }
+            : {}),
+        },
+      }
+    }
 
-      if (!activeConversationId) {
-        const created = await io.createConversation()
-        activeConversationId = created.id
-        /* 建完立刻回推：包里更新 activeId（落库查询要用）、宿主换 URL
+    if (!activeConversationId) {
+      const created = await io.createConversation()
+      activeConversationId = created.id
+      /* 建完立刻回推：包里更新 activeId（落库查询要用）、宿主换 URL
            （自己建的会话不重挂载对话体，否则正在接收的流会被丢掉——
            见 `_app.chat.tsx` 的 ownedId） */
-        onConversationCreated(created.id)
-      }
-      if (currentDocxAgent && round.version !== currentDocxAgent.getVersion()) {
-        throw new Error('文档在本轮指令期间发生了其他修改，请重新发送指令')
-      }
-      // The protocol thread and Mimir routing context must keep the same
-      // persisted ID on the first request and on every tool continuation.
-      params.agent.threadId = activeConversationId
-      input.threadId = activeConversationId
-      input.forwardedProps = {
-        ...(input.forwardedProps ?? forwarded),
-        conversationId: activeConversationId,
+      onConversationCreated(created.id)
+    }
+    if (currentDocxAgent && round.version !== currentDocxAgent.getVersion()) {
+      throw new Error('文档在本轮指令期间发生了其他修改，请重新发送指令')
+    }
+    validateSnapshot?.(runConfig, resuming)
+    // The protocol thread and Mimir routing context must keep the same
+    // persisted ID on the first request and on every tool continuation.
+    runAgent.threadId = activeConversationId
+    input.threadId = activeConversationId
+    input.forwardedProps = {
+      ...(input.forwardedProps ?? forwarded),
+      conversationId: activeConversationId,
+    }
+  }
+  agent.subscribe({
+    onRunInitialized: async (params) => {
+      const input = params.input as RunAgentInput
+      try {
+        await initialize(input, params.agent)
+      } catch (error) {
+        const config = input.forwardedProps?.runConfig as Record<string, unknown> | undefined
+        if ((config?.agentSelection as { pptxSnapshotId?: string } | undefined)?.pptxSnapshotId)
+          onSnapshotRejected?.(input, error instanceof Error ? error : new Error(String(error)))
+        throw error
       }
     },
   })

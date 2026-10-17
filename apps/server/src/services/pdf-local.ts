@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from 'node:crypto'
+import { randomUUID } from 'node:crypto'
 import {
   PDFArray,
   PDFDict,
@@ -21,7 +21,18 @@ import {
   type PdfDrawingInput,
   type PdfOutlineEntry,
 } from '@mimir/shared'
-import { applyPdfFormOperation, appearanceFont } from './pdf-forms.js'
+import { createPdfRedactedCopy } from './pdf-redaction-copy.js'
+import {
+  appearanceFont,
+  assertPdfFormSafe,
+  preparePdfFormValues,
+  verifyPdfFormValues,
+} from './pdf-forms.js'
+import {
+  mutatePdfBatchAnnotation,
+  verifyPdfAnnotationChanges,
+  type PdfAnnotationChange,
+} from './pdf-annotations.js'
 import { assertPdfPreservingSafe as assertSafe } from './pdf-preserving-guard.js'
 import {
   currentPdfPages,
@@ -34,6 +45,12 @@ import {
   readPdfDrawings,
   transformPdfDrawings,
 } from './pdf-drawing-geometry.js'
+
+import {
+  applyPdfVisualSignature,
+  readPdfVisualSignatures,
+  pdfVisualSignatureIssue,
+} from './pdf-visual-signatures.js'
 
 const key = PDFName.of
 const MAX_PAGES = 1000
@@ -156,7 +173,42 @@ function infoOf(pdf: PDFDocument): PdfLocalInfo {
     headerFooter: dictJSON(pages[0]!.node, 'MimirHeaderFooter'),
     outline: outlineOf(pdf),
     drawings,
+    signatures: readPdfVisualSignatures(pdf),
+    signatureIssues: pdf.getPages().flatMap((page, index) => {
+      const reason = pdfVisualSignatureIssue(page)
+      return reason ? [{ page: index + 1, reason }] : []
+    }),
   }
+}
+/** Retained page objects keep destinations valid across reorder/duplicate/layout. */
+function pinOutlinePageReferences(pdf: PDFDocument) {
+  const originals = pdf.getPages(),
+    seen = new Set<PDFObject>()
+  const visit = (raw: PDFObject | undefined) => {
+    if (!raw) return
+    const obj = pdf.context.lookup(raw)
+    if (!obj || seen.has(obj)) return
+    if (seen.size > 10000) throw new Error('PDF 书签结构超限')
+    seen.add(obj)
+    if (obj instanceof PDFArray) {
+      const target = obj.lookup(0),
+        mode = obj.size() > 1 ? obj.lookup(1) : undefined
+      if (
+        target instanceof PDFNumber &&
+        mode instanceof PDFName &&
+        ['XYZ', 'Fit', 'FitH', 'FitV', 'FitR', 'FitB', 'FitBH', 'FitBV'].includes(mode.decodeText())
+      ) {
+        const page = originals[target.asNumber()]
+        if (!page) throw new Error('PDF 数字书签目标越界')
+        obj.set(0, page.ref)
+      } else obj.asArray().forEach(visit)
+    } else if (obj instanceof PDFDict) {
+      // Destinations link back to Pages; stop there rather than walking document resources.
+      if (obj.lookup(key('Type'))?.toString() === '/Page') return
+      obj.entries().forEach(([, value]) => visit(value))
+    }
+  }
+  for (const name of ['Outlines', 'Names', 'Dests']) visit(pdf.catalog.get(key(name)))
 }
 function setOutline(pdf: PDFDocument, entries: PdfOutlineEntry[]) {
   const currentPages = currentPdfPages(pdf)
@@ -444,13 +496,29 @@ export async function applyPdfLocalOperation(
   bytes: Uint8Array,
   raw: PdfLocalOperation,
   assetBytes?: Uint8Array,
+  signal?: AbortSignal,
 ): Promise<PdfLocalResult> {
-  const op = pdfLocalOperationSchema.parse(raw),
-    pdf = await load(bytes)
+  const op = pdfLocalOperationSchema.parse(raw)
+  if (op.op === 'redact_copy')
+    return {
+      outputs: [
+        { name: 'document-redacted.pdf', bytes: await createPdfRedactedCopy(bytes, op, signal) },
+      ],
+    }
+  const pdf = await load(bytes)
   const info = infoOf(pdf)
   if (op.op === 'read') return { info }
   if (op.op === 'export_pdf') return { outputs: [{ name: 'document.pdf', bytes: bytes.slice() }] }
   assertSafe(pdf)
+  if (
+    op.op === 'add_visual_signature' ||
+    op.op === 'transform_visual_signature' ||
+    op.op === 'delete_visual_signature'
+  ) {
+    await applyPdfVisualSignature(pdf, op)
+    signal?.throwIfAborted()
+    return { bytes: await save(pdf), info: infoOf(pdf) }
+  }
   const changesPageTree =
     [
       'extract_pages',
@@ -574,102 +642,143 @@ export async function applyPdfLocalOperation(
     }
   }
   if (op.op === 'apply_ops') {
-    if (op.ops.some((o) => o.op === 'setFormValue')) {
-      const formOps = op.ops.filter((o) => o.op === 'setFormValue')
-      const remainingOps = op.ops.filter((o) => o.op !== 'setFormValue')
-      const formed = await applyPdfFormOperation(
-        bytes,
-        { op: 'apply', ops: formOps },
-        createHash('sha256').update(bytes).digest('hex'),
-        assertSafe,
-      )
-      const result = remainingOps.length
-        ? await applyPdfLocalOperation(formed.bytes!, { op: 'apply_ops', ops: remainingOps })
-        : { bytes: formed.bytes!, info: infoOf(await load(formed.bytes!)) }
-      return op.dry_run ? { info: result.info } : result
-    }
+    const formOps = op.ops.filter((o) => o.op === 'setFormValue')
+    if (formOps.length) assertPdfFormSafe(pdf, assertSafe)
+    const applyValue = formOps.length
+      ? await preparePdfFormValues(pdf, formOps).catch((error: unknown) => {
+          if (error instanceof Error) {
+            const match = /^PDF 表单第 (\d+) 项：/.exec(error.message)
+            const formOp = match ? formOps[Number(match[1]) - 1] : undefined
+            const originalIndex = formOp ? op.ops.indexOf(formOp) : -1
+            if (originalIndex >= 0)
+              throw new Error(
+                error.message.replace(
+                  /^PDF 表单第 \d+ 项：/,
+                  `PDF 批次第 ${originalIndex + 1} 项：`,
+                ),
+                { cause: error },
+              )
+          }
+          throw error
+        })
+      : undefined
+    signal?.throwIfAborted()
+    const changes: PdfAnnotationChange[] = []
+    const removedIds = new Set<string>()
     const originalPages = [...pdf.getPages()]
-    for (const operation of op.ops) {
-      const pages = currentPdfPages(pdf)
-      if (operation.op === 'setMetadata') {
-        const m = operation.metadata
-        if (m.title !== undefined) pdf.setTitle(m.title)
-        if (m.author !== undefined) pdf.setAuthor(m.author)
-        if (m.subject !== undefined) pdf.setSubject(m.subject)
-        if (m.keywords !== undefined)
-          pdf.setKeywords(
-            m.keywords
-              .split(/[,，]/)
-              .map((s) => s.trim())
-              .filter(Boolean),
+    for (const [opIndex, operation] of op.ops.entries()) {
+      signal?.throwIfAborted()
+      try {
+        const pages = currentPdfPages(pdf)
+        if (operation.op === 'setFormValue') {
+          applyValue!(operation)
+        } else if (operation.op === 'removeMarkup' || operation.op === 'setNoteContents') {
+          if (removedIds.has(operation.id)) throw new Error('批注已被本批次删除')
+          const change = await mutatePdfBatchAnnotation(pdf, operation)
+          if (operation.op === 'removeMarkup') removedIds.add(operation.id)
+          changes.push(change)
+        } else if (operation.op === 'setMetadata') {
+          const m = operation.metadata
+          if (m.title !== undefined) pdf.setTitle(m.title)
+          if (m.author !== undefined) pdf.setAuthor(m.author)
+          if (m.subject !== undefined) pdf.setSubject(m.subject)
+          if (m.keywords !== undefined)
+            pdf.setKeywords(
+              m.keywords
+                .split(/[,，]/)
+                .map((s) => s.trim())
+                .filter(Boolean),
+            )
+          pdf.catalog.delete(key('Metadata'))
+        } else if (operation.op === 'rotatePages') {
+          const targets = new Set(operation.pages)
+          if (targets.size !== operation.pages.length) throw new Error('旋转页号重复')
+          for (const page of targets) {
+            if (page > pages.length) throw new Error('旋转页码越界')
+            const current = pages[page - 1]!
+            const before = pdfDrawingGeometry(current)
+            current.setRotation(
+              degrees((((current.getRotation().angle + operation.dir) % 360) + 360) % 360),
+            )
+            transformPdfDrawings(current, before)
+          }
+        } else if (operation.op === 'deletePage') {
+          const page = pages[operation.page - 1]
+          if (!page || pages.length < 2) throw new Error('删除页码无效或没有剩余页')
+          const annots = page.node.lookupMaybe(key('Annots'), PDFArray)
+          if (
+            annots?.asArray().some((r) => {
+              const a = pdf.context.lookup(r)
+              return a instanceof PDFDict && a.lookup(key('Subtype'))?.toString() === '/Widget'
+            })
           )
-        pdf.catalog.delete(key('Metadata'))
-      } else if (operation.op === 'rotatePages') {
-        const targets = new Set(operation.pages)
-        for (const page of targets) {
-          if (page > pages.length) throw new Error('旋转页码越界')
-          const current = pages[page - 1]!
-          const before = pdfDrawingGeometry(current)
-          current.setRotation(
-            degrees((((current.getRotation().angle + operation.dir) % 360) + 360) % 360),
+            throw new Error('不能删除含交互表单控件的页面')
+          pdf.removePage(operation.page - 1)
+        } else if (operation.op === 'setPageOrder') {
+          if (
+            operation.order.length !== pages.length ||
+            new Set(operation.order).size !== pages.length ||
+            operation.order.some((i) => i > pages.length)
           )
-          transformPdfDrawings(current, before)
+            throw new Error('页序必须包含当前全部页码')
+          while (pdf.getPageCount()) pdf.removePage(0)
+          operation.order.forEach((i) => pdf.addPage(pages[i - 1]!))
         }
-      } else if (operation.op === 'deletePage') {
-        const page = pages[operation.page - 1]
-        if (!page || pages.length < 2) throw new Error('删除页码无效或没有剩余页')
-        const annots = page.node.lookupMaybe(key('Annots'), PDFArray)
-        if (
-          annots?.asArray().some((r) => {
-            const a = pdf.context.lookup(r)
-            return a instanceof PDFDict && a.lookup(key('Subtype'))?.toString() === '/Widget'
-          })
+      } catch (error) {
+        throw new Error(
+          `PDF 批次第 ${opIndex + 1} 项：${error instanceof Error ? error.message : String(error)}`,
+          { cause: error },
         )
-          throw new Error('不能删除含交互表单控件的页面')
-        pdf.removePage(operation.page - 1)
-      } else if (operation.op === 'setPageOrder') {
-        if (
-          operation.order.length !== pages.length ||
-          new Set(operation.order).size !== pages.length ||
-          operation.order.some((i) => i > pages.length)
-        )
-          throw new Error('页序必须包含当前全部页码')
-        while (pdf.getPageCount()) pdf.removePage(0)
-        operation.order.forEach((i) => pdf.addPage(pages[i - 1]!))
       }
     }
-    let lastLevel = -1
-    const outline = info.outline.flatMap((e) => {
-      const page = currentPdfPages(pdf).findIndex((p) => p.ref === originalPages[e.page - 1]!.ref)
-      if (page < 0) return []
-      const level = Math.min(e.level, lastLevel + 1)
-      lastLevel = level
-      return [{ title: e.title, level, page: page + 1 }]
-    })
-    setOutline(pdf, outline)
+    // Annotation/value/metadata writes and rotation keep original page objects.
+    // Preserve native destinations and appearance instead of rebuilding them as Fit.
+    if (changesPageTree) {
+      let lastLevel = -1
+      const outline = info.outline.flatMap((e) => {
+        const page = currentPdfPages(pdf).findIndex((p) => p.ref === originalPages[e.page - 1]!.ref)
+        if (page < 0) return []
+        const level = Math.min(e.level, lastLevel + 1)
+        lastLevel = level
+        return [{ title: e.title, level, page: page + 1 }]
+      })
+      setOutline(pdf, outline)
+    }
     const retainedRefs = new Set(currentPdfPages(pdf).map((p) => p.ref.toString()))
     const removedRefs = new Set(
       originalPages.filter((p) => !retainedRefs.has(p.ref.toString())).map((p) => p.ref.toString()),
     )
     if (removedRefs.size) pruneExtractedObjects(pdf, removedRefs)
     const result = await save(pdf)
+    signal?.throwIfAborted()
+    const finalChanges = new Map<string, PdfAnnotationChange>()
+    for (const change of changes) {
+      if (!retainedRefs.has(change.pageRef)) continue
+      finalChanges.set(change.expectedText?.id ?? change.removed.join(','), change)
+    }
+    await verifyPdfAnnotationChanges(result, [...finalChanges.values()])
+    if (formOps.length)
+      await verifyPdfFormValues(result, new Map(formOps.map((o) => [o.value.name, o.value])))
+    signal?.throwIfAborted()
     return op.dry_run
       ? { info: infoOf(await load(result)) }
       : { bytes: result, info: infoOf(await load(result)) }
   }
   if (op.op === 'apply_page_layout') {
+    pinOutlinePageReferences(pdf)
     const { removed, remap } = applyPdfPageLayout(pdf, op.pages)
     let lastLevel = -1
-    setOutline(
-      pdf,
-      info.outline.flatMap((entry) => {
-        const page = remap(entry.page)
-        if (!page) return []
-        const level = Math.min(entry.level, lastLevel + 1)
-        lastLevel = level
-        return [{ ...entry, page, level }]
-      }),
-    )
+    if (removed.size)
+      setOutline(
+        pdf,
+        info.outline.flatMap((entry) => {
+          const page = remap(entry.page)
+          if (!page) return []
+          const level = Math.min(entry.level, lastLevel + 1)
+          lastLevel = level
+          return [{ ...entry, page, level }]
+        }),
+      )
     if (removed.size) pruneExtractedObjects(pdf, removed)
     // Reload to invalidate pdf-lib's stale getPages cache before repainting
     // page-numbered layers against the actual final page tree.

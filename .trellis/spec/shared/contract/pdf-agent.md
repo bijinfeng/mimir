@@ -2,7 +2,7 @@
 
 ## 1. Scope / Trigger
 
-适用于 PDF 原文替换/删除、文字标注、便笺线程、交互表单、图片，以及手动工具栏和 Agent 的共同执行路径。浏览器与桌面共享 renderer，经鉴权 HTTP 调用服务宿主；此合同不代表涂黑、签名、外部图片搜索/生成或全部上游工具已实现。全格式续轮规则仍见 [document-agent](./document-agent.md)。
+适用于 PDF 原文替换/删除、文字标注、便笺线程、交互表单、图片，以及手动工具栏和 Agent 的共同执行路径。浏览器与桌面共享 renderer，经鉴权 HTTP 调用服务宿主。真涂黑仅有§13的本地副本输出合同，不开放为 Agent 写入；普通页面视觉签名见§15，数字证书签名及外部图片搜索/生成等能力仍须分别验证。全格式续轮规则仍见 [document-agent](./document-agent.md)。
 
 ## 2. Signatures
 
@@ -112,7 +112,7 @@ setWorking({ source, bytes: result.bytes, structure })
 
 字段为 `{name,type,value,options,readOnly,required,widgets:[{page,rect}]}`，rect为PDF用户空间、page从1起。支持 text/checkbox/radio/choice；普通PDF只读不会创建AcroForm。Agent `list_form_fields` 后以 `apply_ops` 的 `{op:'setFormValue',value:{name,value?,checked?}}` 写入，kind由实际字段派生；checkbox只接受checked，其他字段value为空字符串或省略表示清除。专用手动面板使用相同路径。
 
-含setFormValue的批次可混合rotatePages/deletePage/setPageOrder，所有操作在单独字节副本完成，任一无效不发布。删除含字段widget的页拒绝；表单仍可编辑、不flatten。其他apply_ops子项仍未开放。页面布局未保存时，表单读取/填写复用`buildPdfWorkingCopy`仅在临时字节物化；读取与dryRun不发布工作字节、不清dirty、不新增history，成功写后才一次发布页面与字段状态。表单缓存同时绑定源字节及当前layout，撤销/重做或页序变化后以可取消后台read刷新，不争用Agent主动执行的内容锁；失败不消费pending布局。未保存插字仍需先保存。
+含setFormValue的批次可混合rotatePages/deletePage/setPageOrder，所有操作在单独字节副本完成，任一无效不发布。删除含字段widget的页拒绝；表单仍可编辑、不flatten。metadata及批注/插字扩展见第14节。页面布局未保存时，表单读取/填写复用`buildPdfWorkingCopy`仅在临时字节物化；读取与dryRun不发布工作字节、不清dirty、不新增history，成功写后才一次发布页面与字段状态。表单缓存同时绑定源字节及当前layout，撤销/重做或页序变化后以可取消后台read刷新，不争用Agent主动执行的内容锁；失败不消费pending布局。专用表单入口遇未保存插字仍需先保存；扩展批次只按第14节处理真实可重放状态。
 
 表单HTTP路径显式调用`applyPreservingPdfFormOperation`：纯字段使用原writer及与local共用的保留结构守卫；含页面批次复用local的原生书签目标映射/删除清理，最后返回同字段快照。普通AcroForm可保留Outlines、内部GoTo、metadata等已建模Catalog结构，页面复制/几何保存后仍可继续填写；旧`applyPdfFormOperation`默认仍仅允许Type/Pages/AcroForm，原文字节重写与页面重建的严格安全白名单保持。拒绝加密、未知Catalog/AcroForm结构、XFA/签名/外部或活动动作、只读目标、未知字段、选项和缺字；遍历直接与间接字典以覆盖嵌套动作。文本外观使用现有服务器打包NotoSansCJKsc字体，先查glyph。`@pdf-lib/fontkit@1.1.1` CFFSubset把cff.length误写到CFF offSize头，局部codec端口只将生成子集的非法offSize规范成4；不修改字体资产或依赖源码。仅text/choice创建外观字体并预置空格，避免空字段或未使用子集只含.notdef导致CFF负charset；fontkit异步encode异常必须转为error事件供调用方拒绝，不能使宿主进程退出。需独立Poppler实测中文可见，不能只检查字段/V。
 
@@ -146,3 +146,178 @@ PNG/JPEG解码依赖明确声明的纯JS生产包pngjs/jpeg-js；原图≤8MiB�
 `buildPdfWorkingCopy`供保存和本地工具复用：先追加用户已选定的普通来源页，再恢复最终布局，每次异步调用前后检查句柄/版本/signal。来源先裁成所选页面并清理未选内部目标，再由单个`PDFObjectCopier`复制`page.ref`，保证内部Dest/P指向实际插入页而非幽灵副本。来源AcroForm/标签结构仍明确拒绝。临时追加也受1000页/50MiB预算约束。宿主不写原件；读取/抽页成功不得自动清dirty或新增历史，操作/导入失败不得发布临时物化字节。旧导入按钮在宿主可用时直接操作工作副本，失败不留下无法保存的import页引用。
 
 所有pdf-local序列化在flush延迟嵌入后，从trailer根遍历并清除不可达对象；绘图/水印临时页不能残留在输出间接对象中。页码删除的目标裁剪另校验不得引用已删页。回归应比较可视页数与间接`Type=Page`数，并独立验证Widget值、Parent/P、缩放坐标、书签和再次填写。Inspector输出置顶并滚回可见位置；保留300px面板及关闭回焦。`pdf-drawing-geometry.test.ts`用独立pdf.js光栅化比较原内容流自然变换与缓存重绘，逐形覆盖rect/ellipse/line/arrow/check/cross/ink、四旋转、非零CropBox、裁剪+A5、页外路径和复制调序；不能只验证JSON缓存。
+
+## 11. 原文段落整体移动
+
+### Scope / Trigger
+
+移动可证明归属的完整原文段落，不覆盖绘制、不重建文字或字体、不重排其他内容。段落重写/部分原文替换共用本节核验目标，另见§12；旧`apply-text`路径仍保留唯一完整文字项限制。
+
+### Signatures
+
+- `POST /api/conversations/pdf-agent/text-blocks`：multipart `file/documentId/expectedVersion/operation`。
+- `PdfHostBlocks({bytes,expectedVersion,operation,signal?})`返回`{bytes?,version,blocks,target?}`；renderer为`api.documents.pdfTextBlocks`，服务为`applyPdfTextBlockOperation(bytes,operation,signal?)`。
+- `operation`为`{op:'read',pageIndex}`、`{op:'inspect',probe:{pageIndex,items:[{text,bounds}]}}`或`{op:'move',target,dx,dy}`。
+- Agent：`list_text_blocks({page})`、`move_text_block({page,paragraph_text,dx,dy})`；页号从1起，片段须唯一。仅`manual:true`接受已核验`args.target`；Agent不能传入目标对象绕过定位。
+
+### Contracts
+
+内部pageIndex/blockIndex/objectIndex从0起。target包含当前字节sha256、pageIndex、blockIndex与全部`members:[{objectIndex,text,bounds,matrix:[a,b,c,d,e,f]}]`。probe必须精确匹配当前PDF.js聚类的完整段落；宿主重新聚类并映射完整PDFium顶层对象，不能仅信任客户端序号、文字或相似外框。返回快照`{sha256,blocks:[{page,blockIndex,block_number,text,x,y,width,height,editable,reason?,target?}]}`，page/block_number从1起，显示位置为pt。
+
+dx/dy为当前页面显示方向向右/向下pt，有限且±14400，不能同时为0。通过两个viewport逆变换点之差换算PDF用户空间偏移，包含Rotate与非零CropBox；每个目标仅修改矩阵e/f。写前重新校验完整成员；写后校验全文原生对象数、文字、矩阵/边界、字体与图片资源hash、样式和非目标对象，再由独立PDF.js读取目标与非目标文字位置。字体的PDF.js生成ID含document前缀，不能跨两次打开直接比较该临时ID；字体实际保真用原生font program hash核验。PDFium保存可对相同字体资源去重并改变资源引用、字典键序；独立资源核对须比较原生字体字典语义或字体program、图片流，不能以资源名字或字典原始序列化差异认定资源丢失。
+
+读取/inspect不返回字节、不推进版本/dirty/history；move成功只返回一次字节和version+1。客户端沿现有句柄、源字节身份、expectedVersion和signal守卫接受一次历史，实际保存仍由普通file PUT。无新增环境键、存储或数据库状态。预算：file1字节–50MiB、最多1000页、单段500项/10000字符、全文原生对象30000；版本为安全非负整数且保留+1空间。
+
+### Validation & Error Matrix
+
+| 条件 | 结果 |
+| --- | --- |
+| 未登录 / 文档不存在或非PDF | 401 / 404 PDF_NOT_FOUND |
+| file缺失/空/超限；版本、JSON或strict schema无效 | 413 PDF_INPUT_TOO_LARGE / 400 INVALID_INPUT |
+| AcroForm、加密或未知Catalog | 保持原assertSafeToRewrite拒绝，400 PDF_BLOCK_FAILED |
+| 旧hash、伪造成员/矩阵、跨段对象、Form内文本、重叠对象或显式裁切内容流 | 读取可返回editable:false+reason；inspect/move拒绝，不返回可写字节 |
+| 取消、版本/页面/文档变化或独立读回失败 | 不接受工作字节，不产生成功历史或自动保存 |
+
+### Good / Base / Bad Cases
+
+Good：一个段落六个原生文字对象随页面90度方向统一向右17/下23pt，保留另一段相同文字及原图片/字体。Base：read/inspect仅显示段落和完整对象集合。Bad：传一个成员的target移动多对象段落，或以重复片段定位任意一段，均拒绝。
+
+### Tests Required
+
+`pdf-text-block-host.test.ts`：四旋转/offset CropBox、多对象同偏移、嵌入字体字形program与图片hash、非目标/第二页保真、两次写入、旧hash/伪造/部分/重叠/clip/结构/取消拒绝。`pdf-text-block-route.test.ts`：实际鉴权、原件不自动保存、单次版本及普通保存两次/undo保存/redo保存字节闭环。`pdf-block-agent.test.ts`：唯一片段/手动精确target和迟到取消；`pdf-text-blocks.test.ts`：分栏/段末短行/四旋转选择。`PdfEditor.blocks.test.tsx`、`PdfTextBlockPanel.test.tsx`：真实host、画布选择与同一历史、过期/关闭/换页取消及当前值。浏览器与真实模型验收另记任务证据。
+
+### Wrong vs Correct
+
+Wrong：用白框盖掉原文后按新位置绘制缓存文字，或只检查页面仍包含旧字符串。Correct：对独立核验的完整成员矩阵统一加viewport逆变换偏移，保存后按实际对象与位置读回；重复原文的非目标对象保持原位。
+
+## 12. 原文段落重写与指定匹配替换
+
+### Scope / Trigger
+
+与§11的完整原生对象核验共用`text-blocks`宿主。`edit_block`重写整段并按原宽度重排；`edit_text`可替换部分原文及指定重复匹配，不重排整段。两者真实移除/重建原生文字，空新文字真实删除，无白框覆盖。旧`apply-text`兼容入口及`markup_text`的唯一完整文字项限制保持。
+
+### Signatures
+
+- `operation:{op:'rewrite',target,newText,replace?:{oldText,occurrence},fontSize?,font?,color?,bold?,italic?,align?}`；target仍是当前SHA、完整段索引与全部成员，不允许以部分成员替代核验。
+- `newText`最多10000字符，允许空；`oldText`非空且最多10000，`occurrence`为1起整数、至多10000。最终整段也不得超过10000字符。`fontSize`为有限正数、至多500；font为arial/times/courier，color为#RRGGBB。bold/italic的true表示应用、false表示真实取消；省略保留。取消需原生普通字面可核验，已识别Helvetica/Arial、Times、Courier族使用同类普通字面，无法解析时要求显式选择字体，混合另一项未指定时拒绝并要求明确指定。合成粗体先在私有工作副本移除fill+stroke，返回前核对实际字体weight/name/italicAngle及render mode，不改vendor。`replace`与`align`不能同时出现。
+- Agent `edit_block({page,paragraph_text,new_text,...})`使用唯一段落片段；`edit_text({page,old_text,new_text,occurrence?,...})`按整页段落阅读顺序计数，默认第一处。仅manual接受完整精确target，局部替换次序此时限当前选段。
+- 快照新增`canRewrite/rewriteReason/format:{fontSize,leading,align}`；字号/行距来自原生对象中位数/基线，对齐为原生行边缘推导，不伪造原字体族或混合颜色当前值。
+
+### Contracts
+
+只接受正向轴对齐的原生文字矩阵；页面Rotate四种方向和非零CropBox可编辑。复杂Form、clip、AcroForm、未知Catalog沿原安全守卫拒绝，不能因重写支持而全局放宽。整个完整目标重新核验后，局部替换才在私有writer中派生实际触及的文字容器。匹配按NFKC及空白折叠、非重叠计数，不拆分原连字字形；浏览器计数与服务器原生foldMap有极少Unicode映射差异时以服务器拒绝为准。
+
+整段从原生首行baseline起，使用原行距随字号同比调整；先真实写入，测量实际保存字体字形的advance，再从原字节重做换行/对齐，最多4遍收敛。原宽不变，段落向下扩展，不推动别段，过长可重叠，面板明确提示。未改完整前后缀run在原生keep-plan有效时保留；明确字体/字号/粗斜体覆盖或跨行重排可重建受影响run，不声称所有目标字体对象原样保留。局部替换只触及原生容器、不做整段换行，较长替换可能与邻文重叠。
+
+读回验证使用全文原生对象多重集、字形、样式、矩阵/边界、字体program及图片资源hash，非目标页保持；选中范围仅能留下文字对象，不得出现覆盖path。PDFium文字页关联会因邻近重排给原对象提取结果附加尾部gap，比较仅忽略提取尾部空白，内部实际字形和资源/几何仍核验；独立PDF.js再验证非目标文字/变换和完整新原文。单页原生char-count预算200000，沿用全文30000对象/1000页与原文件预算。
+
+手动面板保留整体移动，增加整段改写/局部替换；格式默认折叠，显示真实参考值。空整段输入显示“删除整段”，空局部输入只删除指定匹配。源、选择、模式或关闭取消请求，自己的busy不能取消自身；失败保留草稿，执行冻结版本，成功沿同一PDF工作字节和一次历史，仍由用户显式保存。
+
+### Validation / Cases / Tests
+
+未登录401、schema无效400 INVALID_INPUT；旧SHA/部分目标/非法次序/不可用字形/读回不符均400 PDF_BLOCK_FAILED且无可写结果。Good：同页重复两段只改指定段内第二处，保留未触及粗体和另一段；Base：整段换行后正常保存、撤销保存、重做保存字节一致；Bad：用白块覆盖旧文或以旧target再次写入。
+
+`pdf-block-rewrite.test.ts`覆盖四Rotate/CropBox、实际字体换行/左中右对齐、局部第二次替换、真实删除、粗体资源保留、缺字/旧目标/取消，中文逐字PDF.js独立光栅可见；另须独立Poppler目视，不能仅检查提取字符串。`pdf-block-rewrite-route.test.ts`覆盖鉴权/严格参数/真实普通保存和撤销重做字节。`pdf-block-agent.test.ts`覆盖页面出现次序/唯一段落/manual目标与迟到取消；`PdfTextBlockPanel.test.tsx`覆盖当前值/折叠格式/空删除/失败重试/版本与取消；`PdfEditor.blocks.test.tsx`使用真实原生宿主，覆盖手动部分替换+整段改写和两套保存/undo/redo闭环。宽/420浏览器、Desktop和真实模型验收分别记证据。
+
+## 13. 本地真涂黑副本
+
+### Scope / Trigger
+
+本地 `redact_copy` 使用原生内容移除生成独立下载文件。宿主不修改知识库或编辑器工作字节，不进入公开 `PDF_LOCAL_TOOLS` / Agent 目录；它不负责清洗文档 Info 中全部隐私元数据。客户端工具与浏览器验收由任务记录分别说明。
+
+### Signatures
+
+- `POST /api/conversations/pdf-agent/local` 沿现有 multipart `file/documentId/expectedVersion/operation`。
+- `operation:{op:'redact_copy',regions:[{pageIndex,rect:[left,bottom,right,top]}]}`；strict schema，页索引从0起。
+- `createPdfRedactedCopy(bytes,operation,signal?) → Promise<Uint8Array>`；`applyPdfLocalOperation` 分支包装为 `{outputs:[{name:'document-redacted.pdf',bytes}]}`。
+- HTTP 返回 `outputs:[{name,bytesBase64}]` 与原 `version`，无 `bytesBase64` 工作字节、无 `info`，不调用存储保存。
+
+### Contracts
+
+文件与输出各1字节至50MiB；文档1–1000页，区域1–100项，页数×区域数≤10000。rect为有限PDF用户空间坐标、绝对值≤1e7，left<right、bottom<top，转float32后仍非空；完整位于CropBox∩MediaBox内，不静默裁切。Rotate仅0/90/180/270，UserUnit仅1。全部区域先预检，再调用未修改vendor的 `redactPdf`，内容删除完成后才绘制黑色填充。原生结果经全量保存及不可达对象清理，再由独立PDF.js解析目标页与总页数。
+
+沿用 `assertSafeToRewrite` 的加密/未知Catalog/AcroForm拒绝，并扫描所有间接对象中的签名Type/FT/ByteRange。目标页及继承页树仅允许服务列明的标准键，Mimir自有图层缓存与未知属性拒绝；资源图中的Properties、ActualText/Alt缓存、Metadata/PieceInfo/OPI/AF、非None遮罩、Pattern/Shading等拒绝。内联正文ActualText由native实际移除。命中批注只要与IRT/Parent/Popup关联图相连即整批拒绝，避免区域外节点保留原Contents；普通无关联批注可真实移除。共享图片或含图Form等沿原生安全检查拒绝。服务在原生调用前后、序列化/独立读取后检查signal；WASM执行中不可抢占，但取消后绝不返回输出。
+
+### Validation & Error Matrix
+
+| 情况 | 结果 |
+| --- | --- |
+| 未登录 / 文档不存在或非PDF | 401 / 404 PDF_NOT_FOUND |
+| 空或超限文件、版本、strict JSON/schema不合法 | 沿local端点413 PDF_INPUT_TOO_LARGE / 400 INVALID_INPUT |
+| 区域越界/预算、签名/加密、未知结构、缓存旁路或关联批注 | 400 PDF_LOCAL_FAILED；无部分输出、无版本推进 |
+| 原生处理/输出预算/独立读取失败，或取消 | 不返回可下载结果、不保存源文件 |
+
+### Good / Base / Bad Cases
+
+Good：文字中段、独立图片半区与90°/offset CropBox页面指定区域在副本中真实移除，邻文和另一页保留。Base：一项输出且返回版本等于请求版本，库存字节不变。Bad：只盖黑矩形，或原根批注仍由区域外回复引用，均不能称为真涂黑成功。
+
+### Tests Required
+
+`pdf-redaction-copy.test.ts`：真实PDFium+独立PDF.js提取、全部间接对象与解压流扫描、原图片像素消除和非目标像素保留、四Rotate/offsetCrop、完整单revision、原子无效尾区域、取消、上述结构/缓存/关联图拒绝。`pdf-redaction-copy-route.test.ts`：真实鉴权、outputs-only、原版本、库存文件逐字节不变及非法输入。浏览器选区与下载结果须另用独立Poppler光栅验证；服务测试通过不能替代客户端定位验收。
+
+### Wrong vs Correct
+
+Wrong：先存普通黑框，文本extract不含某个字符串就当作完成，忽略旧流、ActualText、批注回复和资源缓存。Correct：预检可恢复旁路，原生移除、完整重序列化并清理不可达对象；真实夹具用全文、全部对象/解压流及图像像素证明删除，再输出独立副本。
+
+
+## 14. 批注与待保存插字的原子 apply_ops
+
+### Scope / Trigger
+
+当前 PDF Agent 的 `apply_ops` 增加 `removeMarkup`、`setNoteContents`、`removeTextInsert`。原文、图片和专用批注/表单工具仍遵守各自守卫；没有上游 P 会话批注层。
+
+### Signatures
+
+- `pdfBatchArgsSchema`：严格 `{dry_run?:boolean,ops:1..30}`，每项为现有页面/表单/metadata，或 `{op:'removeMarkup',id}`、`{op:'setNoteContents',id,contents}`、`{op:'removeTextInsert',id}`。
+- `buildPdfBatchCandidate({args,bytes,pending,version,local,apply,annotations,assertCurrent,signal})`：只返回候选字节、页结构、nextPending、info、dryRun及删除/幸存/物化 T ID；不发布状态。
+- 既有 `POST /api/conversations/pdf-agent/local` 只接 native 子批次，严格拒绝 removeTextInsert。multipart、鉴权、50MiB、版本和不持久化合同不变。
+- `mutatePdfBatchAnnotation(pdf,op)` 只在一个 detached pdf-lib 图中使用显式 preserving 守卫；`applyPdfAnnotationOperation` 默认仍调用原严格 `assertSafeToRewrite`。
+
+### Contracts
+
+`id` 使用当前 read_annotations 的真实 NM/legacy R 身份；removeMarkup 仅三型文字标注，setNoteContents 仅便笺/回复，contents trim 后1–10000字符。T 标识匹配 `^T[a-zA-Z0-9-]{1,80}$` 且必须存在于冻结 pending 数组；整批先消费指定 T，重复消费拒绝。native 子批次严格按声明顺序在同一加载图执行；删除页后再改该页批注失败，先改再删可成功。遍历真实 Catalog.Pages，不能使用 pdf-lib 删除/重排后的 getPages 缓存。最终按幸存页验证批注最终内容，并独立 PDF.js 读回；不按中间值误报失败。
+
+无页面子操作时，先修改未含任何 T 的 pending.base，再以真实 scale1 viewport 的 `convertToPdfPoint(x,y+fontSize)` 重放全部幸存 T 一次；前后页数/Rotate/view/UserUnit/viewport transform 必须不变。nextPending 保留同一 T ID/坐标与修改后 raw base，后续移动/编辑/删除幸存 T 不丢批注/metadata。删尽且无 native 操作直接回同一 raw base 引用，可恢复 clean。native 批次仅在删页或调序时沿既有目录映射重建书签；纯批注/表单/metadata/旋转保留原 Outlines 对象图及原生目的地、颜色与字形，不能无条件转成 Fit 书签。
+
+有页面子操作时，先按原实际 viewport 重建幸存 T，再顺序执行 native 操作；成功清 pending，并明确提示 T 已物化失效。legacy R 与 pending 混用没有身份账本，须拒绝并提示先保存重读；无 pending 的 legacy R 可继续编辑。带 NM 的目标须在 raw base/current 及重放前后唯一、类型/页/线程/内容一致。不能新增通用 PDFium preserving bypass。
+
+Editor 冻结文档、handle、版本、source/snapshot bytes、pending、layout、保存基线与保存 token；每次异步后和发布前核验。最终只一段同步发布 working/pending/snapshot/layout/cache/dirty，外层 handle 只升一次版本/建一次 round。dry_run 计算完整候选但不发布字节、pending、选择、缓存、dirty、history或版本；结果以将来时说明物化。保存仍由用户既有保存按钮触发，无环境键或 DB 变化。
+
+### Validation & Error Matrix
+
+| 条件 | 结果 |
+| --- | --- |
+| 未知键、项数越界、错类型、空文字、服务端收到 T | strict schema 拒绝；HTTP 400 INVALID_INPUT |
+| 未知/重复 ID、类型不符、晚页号失败 | 整批拒绝；native 项错误映射回原批次序号，无可写字节 |
+| legacy R+pending、NM身份/几何漂移、pending与布局无法证明映射 | 客户端拒绝，提示保存/重读；原状态不变 |
+| 签名、XFA、未知 Catalog/活动动作、Widget页删除、tagged页树迁移 | 现有 preserving/form 守卫拒绝；默认原文/批注守卫不放宽 |
+| abort、外部编辑、换文档、保存中或保存基线变化 | 迟到结果不发布；已有 pending/dirty/history 保留 |
+
+### Good / Base / Bad Cases
+
+Good：T1/T2 删除 T1 并修改 Nreply；T2 保留原身份，随后 move/edit/delete T2 仍保留新回复。Base：仅删除全部 T 回原 raw base；页面批次后幸存 T 随原页物化，整轮回退恢复原 pending/base。Bad：从已烘焙 snapshot 重放造成被删 T 残留，或先发布 metadata 再因尾项失败回滚，均违反原子合同。
+
+### Tests Required
+
+`pdf-atomic-batch.test.ts` 验证真实 native 图顺序、NM/legacy、混合表单/metadata/页、内容流保留、类型/重复/晚失败/dryrun/严格守卫。`pdf-local-route.test.ts` 验证鉴权、native新操作、dryrun版本、严格错误及库存原字节不变。`pdf-batch.test.ts` 使用真实 PDFium/PDF.js 验证四 Rotate/offset CropBox、raw base与后续幸存 T、页面物化、legacy拒绝、几何/迟到/尾项失败与原序号。`PdfEditor.batch.test.tsx` 用真实 Editor/宿主契约验证一次版本/dirty、dryrun和失败无发布、整轮与手动历史、保存/撤销/重做精确字节、abort/外部改稿/切文档/保存中拒绝。canvas 渲染 mock 只证明发布合同，不代表浏览器批次或模型验收。
+
+### Wrong vs Correct
+
+Wrong：循环调用会自行发布的 insert/edit/delete，或分成 form 与其它两批后声称原生顺序一致。
+Correct：纯候选函数计算与独立读取完成后统一 assertCurrent；native 同一图依序修改，最终同步发布一次。
+
+## 15. 手动普通页面视觉签名
+
+`local` 端点 strict 操作 `add_visual_signature({page,source,rect})`、`transform_visual_signature({page,id,rect})`、`delete_visual_signature({page,id})` 沿用鉴权、50MiB、当前工作字节和版本合同。page从1起，rect为当前CropBox/Rotate显示方向左上pt坐标。只接受手动入口；公开模型工具目录不增加签名操作，也不能借 `apply_local_operation` 绕过manual门控。这是普通页面视觉标记，不是数字证书签名，不能填写或绕过 `/Sig`、ByteRange、DocMDP/FieldMDP、Perms守卫。
+
+`source.kind:'ink'` 保留独立笔画，写原生 `/Ink`、InkList、线宽与AP；`stamp` 接收规范PNG，写 `/Stamp`、图像AP及必要的SMask。输入限64笔/累计2000点、PNG4MiB/边1600px、100个自有对象/源合计16MiB。客户端姓名使用实际可用字体完成后栅格化；PNG/JPEG导入先检查编码尺寸再解码，只在明确选择时去浅色背景。共享schema位于 `pdf-visual-signature.ts`。
+
+可编辑身份不能仅依赖 `/NM` 前缀或私有元数据：服务验证MVS标识唯一、严格字典、所属页、类型/flags、几何与源仿射矩阵、InkList/线宽、完整有界AP资源图hash及实际AP模板/图像RGB与alpha一致；未核验对象保持外来只读。只返回≤240px预览，不把原始PNG返给Inspector。保存重开仍须重验。复制页派生稳定的新对象身份；纸型缩放同时维护InkList、BS.W、AP和源变换，避免读回失去身份或笔宽不一致。
+
+hash是可重算的公开完整性元数据，不能替代native白名单：Ink的C/BS样式须与source/AP一致，源stream只允许writer实际产生的Length字典。签名手动门控按入口tool判断，local构造操作须最后写入规范op，不能由args.op覆盖。回归以重新计算hash后的篡改对象证明仍拒绝，不只损坏hash。
+
+当前签名定位只覆盖CropBox完全在MediaBox内且UserUnit=1的页面；不改全PDF页模型。read返回可选signatureIssues页原因，面板禁用准备/调整并显示原因，native新增/变换同时兜底；已有严格核验签名的读取/删除保持可用。旧host缺少此可选字段也不能绕过native守卫。保存开始即取消未应用草稿，完成后不能复活。
+
+签名面板在320px Inspector内部滚动，准备后关闭面板进入纸面定位，点击或键盘居中放置，拖动/等比缩放/精确坐标均为本地草稿；明确应用只写一次版本和历史，取消不写。切页、换源、页面布局/版本/保存身份变化作废草稿及迟到结果。普通表单、外来批注和原生书签保留；无删页的页面布局保留原Outlines对象图与XYZ/C/F，不能无条件重建成Fit。
+
+`pdf-visual-signatures.test.ts`须验证真实Ink/Stamp及alpha、四Rotate/offsetCrop、移动/删除/重开/篡改、纸型缩放与复制身份、表单/书签保留及签名/标签/未知结构拒绝；`PdfEditor.signature.test.tsx`验证一次提交、连续拖动/缩放、保存/撤销/重做、取消/迟到及折叠菜单关闭回焦。独立PDF.js像素与Poppler目视另记证据。真实浏览器手写、中文字体和导入图片交互、420×500面板及输出须另验；组件测试不代表浏览器或Desktop通过。

@@ -1,3 +1,4 @@
+import type { PptxAiSnapshotDraft } from '@mimir/office'
 import { viewerFor, type Citation, type NoteUpdate } from '@mimir/shared'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { App, Button, Empty, Input, Modal, Select, Skeleton, Typography } from 'antd'
@@ -254,6 +255,16 @@ export function DocumentPanel({
           (passage ? `关于这篇里这段：\n> ${passage.replace(/\n+/g, ' ').slice(0, 200)}\n\n` : ''),
         documentId,
       },
+      open: true,
+    })
+  }
+
+  const askAiSnapshot = (snapshot: PptxAiSnapshotDraft) => {
+    if (!documentId || snapshot.target.documentId !== documentId) return
+    aiTriggerRef.current = document.activeElement as HTMLElement | null
+    setAiSidebar({
+      docId: documentId,
+      draft: { text: snapshot.text, documentId, snapshot },
       open: true,
     })
   }
@@ -794,6 +805,7 @@ export function DocumentPanel({
                 />
               ) : doc.kind === 'file' ? (
                 <FilePreview
+                  onAiSnapshotDraft={askAiSnapshot}
                   onAiPreset={(instruction) => askAi(undefined, instruction)}
                   key={doc.id}
                   doc={doc}

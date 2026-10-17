@@ -30,7 +30,7 @@
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, describe, expect, it } from 'vitest'
-import { HtmlEditor } from './HtmlEditor.js'
+import { HtmlEditor, type HtmlAgentServices } from './HtmlEditor.js'
 import type { HtmlAgentHandle } from '../agent/html-agent.js'
 import type { EditorIo } from './types.js'
 import { pickSelectOption } from '../shell/antd-test-dom.js'
@@ -88,6 +88,154 @@ async function boot(): Promise<HTMLElement> {
 const controls = (host: HTMLElement): HTMLElement[] => [
   ...host.querySelectorAll<HTMLElement>('button, input, select, textarea'),
 ]
+
+async function planningEditor(agentServices?: HtmlAgentServices) {
+  let current: HtmlAgentHandle | null = null
+  const host = document.createElement('div')
+  document.body.append(host)
+  const root = createRoot(host)
+  const io: EditorIo = { load: async () => new TextEncoder().encode(PAGE), save: async () => {} }
+  const render = (documentId = 'planning-cancellation') =>
+    root.render(
+      <HtmlEditor
+        documentId={documentId}
+        io={io}
+        agentServices={agentServices}
+        onAgentHandleChange={(handle) => {
+          current = handle
+        }}
+      />,
+    )
+  ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
+  await act(async () => {
+    render()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  })
+  let live = true
+  const dispose = () => {
+    if (!live) return
+    live = false
+    act(() => root.unmount())
+    host.remove()
+  }
+  mounted.push({ unmount: dispose })
+  expect(current).not.toBeNull()
+  return { host, render, dispose, handle: () => current! }
+}
+
+it('Stop closes only its own questions, ignores a superseded abort, and keeps the mounted source and preview', async () => {
+  const ui = await planningEditor(),
+    handle = ui.handle()
+  const source = ui.host.querySelector('.cm-content'),
+    frame = ui.host.querySelector('iframe')
+  const version = handle.getVersion(),
+    controller = new AbortController()
+  let old!: ReturnType<HtmlAgentHandle['execute']>
+  const args = { questions: [{ id: 'parts', label: '内容', multi: true, options: ['正文'] }] }
+  act(() => {
+    old = handle.execute('ask_clarification', args, { signal: controller.signal })
+  })
+  expect(ui.host.querySelector('[aria-label="页面创建前的问题"]')).not.toBeNull()
+  act(() => controller.abort())
+  expect(ui.host.querySelector('[aria-label="页面创建前的问题"]')).toBeNull()
+  expect(await old).toMatchObject({ ok: false, changed: false })
+  const superseded = new AbortController()
+  let first!: ReturnType<HtmlAgentHandle['execute']>, next!: ReturnType<HtmlAgentHandle['execute']>
+  act(() => {
+    first = handle.execute('ask_clarification', args, { signal: superseded.signal })
+  })
+  act(() => {
+    next = handle.execute('ask_clarification', args)
+  })
+  expect(await first).toMatchObject({ ok: false, changed: false })
+  act(() => superseded.abort())
+  expect(ui.host.querySelector('[aria-label="页面创建前的问题"]')).not.toBeNull()
+  press(ui.host.querySelector('[aria-label="提交页面选择"]')!)
+  expect(await next).toMatchObject({
+    ok: true,
+    changed: false,
+    data: { selections: { parts: [] } },
+  })
+  expect(handle.getVersion()).toBe(version)
+  expect(ui.host.querySelector('.cm-content')).toBe(source)
+  expect(ui.host.querySelector('iframe')).toBe(frame)
+})
+
+it('Stop closes a live brief confirmation and never calls the page-writing service', async () => {
+  const brief = {
+    title: '提纲',
+    tone: '简洁',
+    audience: '读者',
+    sections: [{ title: '正文', purpose: '说明' }],
+  }
+  let writes = 0
+  const ui = await planningEditor({
+    planPage: async () => brief,
+    writeDocument: async () => {
+      writes++
+      return { html: PAGE, complete: true }
+    },
+  })
+  const handle = ui.handle(),
+    before = handle.getDocument(),
+    controller = new AbortController()
+  let pending!: ReturnType<HtmlAgentHandle['execute']>
+  await act(async () => {
+    pending = handle.execute(
+      'plan_page',
+      { mode: 'new', instruction: '创建页面' },
+      { signal: controller.signal },
+    )
+    await Promise.resolve()
+  })
+  expect(ui.host.querySelector('[aria-label="确认页面提纲"]')).not.toBeNull()
+  act(() => controller.abort())
+  expect(ui.host.querySelector('[aria-label="确认页面提纲"]')).toBeNull()
+  expect(await pending).toMatchObject({ ok: false, changed: false })
+  expect(writes).toBe(0)
+  expect(handle.getDocument()).toBe(before)
+})
+
+it('keeps a late old-session plan out of the new document and cancels old handles without reopening prompts', async () => {
+  const brief = {
+    title: '提纲',
+    tone: '简洁',
+    audience: '读者',
+    sections: [{ title: '正文', purpose: '说明' }],
+  }
+  let finish!: (answer: typeof brief) => void,
+    writes = 0
+  const ui = await planningEditor({
+    planPage: () =>
+      new Promise((resolve) => {
+        finish = resolve
+      }),
+    writeDocument: async () => {
+      writes++
+      return { html: PAGE, complete: true }
+    },
+  })
+  const oldHandle = ui.handle()
+  let pending!: ReturnType<HtmlAgentHandle['execute']>
+  act(() => {
+    pending = oldHandle.execute('plan_page', { mode: 'new', instruction: '创建页面' })
+  })
+  await act(async () => {
+    ui.render('new-document')
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  })
+  expect(ui.handle().documentId).toBe('new-document')
+  await act(async () => finish(brief))
+  expect(await pending).toMatchObject({ ok: false, changed: false })
+  expect(writes).toBe(0)
+  expect(ui.host.querySelector('[aria-label="确认页面提纲"]')).toBeNull()
+  expect(
+    await oldHandle.execute('ask_clarification', {
+      questions: [{ id: 'parts', label: '内容', options: ['正文'] }],
+    }),
+  ).toMatchObject({ ok: false, changed: false })
+  expect(ui.host.querySelector('[aria-label="页面创建前的问题"]')).toBeNull()
+})
 
 /** 点一下（`mousedown` + `click`——原语在两个事件上都有语义） */
 function press(element: Element): void {
@@ -331,6 +479,33 @@ it('Agent 改动在源码和预览可见，保存恢复 BOM/CRLF 且不写入预
   expect(host.querySelector('[aria-label="页面创建前的问题"]')).not.toBeNull()
   press(host.querySelector<HTMLButtonElement>('[aria-label="提交页面选择"]')!)
   expect((await answer!)?.data).toEqual({ answers: '面向谁: 由 AI 决定' })
+  const sourceEditor = host.querySelector('.cm-content')
+  const previewFrame = host.querySelector('iframe')
+  const versionBeforeQuestions = handle.getVersion()
+  act(() => {
+    answer = handle.execute('ask_clarification', {
+      questions: [
+        { id: 'parts', label: '需要哪些内容', multi: true, options: ['介绍', '案例', '联系'] },
+      ],
+    })
+  })
+  const planning = host.querySelector('[aria-label="页面创建前的问题"]')!
+  expect(planning.closest('.mimir-html-workspace')).not.toBeNull()
+  expect(host.querySelector('.cm-content')).toBe(sourceEditor)
+  expect(host.querySelector('iframe')).toBe(previewFrame)
+  const choices = planning.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')
+  act(() => {
+    choices[2]!.click()
+    choices[0]!.click()
+  })
+  press(host.querySelector<HTMLButtonElement>('[aria-label="提交页面选择"]')!)
+  expect((await answer!)?.data).toEqual({
+    answers: '需要哪些内容: 介绍、联系',
+    selections: { parts: ['介绍', '联系'] },
+  })
+  expect(handle.getVersion()).toBe(versionBeforeQuestions)
+  expect(host.querySelector('.cm-content')).toBe(sourceEditor)
+  expect(host.querySelector('iframe')).toBe(previewFrame)
   act(() => root.unmount())
   host.remove()
 })

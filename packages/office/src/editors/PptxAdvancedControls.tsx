@@ -35,37 +35,16 @@ import {
   pptxChartEditKind,
   type PptxChartAppearancePatch,
 } from './PptxChartAppearance.js'
+import { pptxChartPalettePoints } from './pptx-chart-colors.js'
+
+import { PPTX_CHART_KINDS } from './pptx-chart-kinds.js'
 
 type Apply = (op: Record<string, unknown>) => Promise<boolean>
 type Target = { slide: number; el: string }
-const KINDS = [
-  'bar',
-  'barStacked',
-  'barPercentStacked',
-  'bar3D',
-  'line',
-  'area',
-  'pie',
-  'pie3D',
-  'doughnut',
-  'scatter',
-  'radar',
-  'comboBarLine',
-] as const
-const KIND_LABELS: Record<string, string> = {
-  bar: '柱状图',
-  barStacked: '堆积柱状图',
-  barPercentStacked: '百分比堆积柱状图',
-  bar3D: '三维柱状图',
-  line: '折线图',
-  area: '面积图',
-  pie: '饼图',
-  pie3D: '三维饼图',
-  doughnut: '圆环图',
-  scatter: '散点图',
-  radar: '雷达图',
-  comboBarLine: '柱形折线组合图',
-}
+const KINDS = PPTX_CHART_KINDS.map((item) => item.value)
+const KIND_LABELS: Record<string, string> = Object.fromEntries(
+  PPTX_CHART_KINDS.map((item) => [item.value, item.label]),
+)
 
 /** Keeps all existing series; data is sent only when the user actually changes it. */
 export function ChartEditControls({
@@ -116,10 +95,25 @@ export function ChartEditControls({
       ? '每个系列须有名称，数值数量须与类别一致，且每行都是有效数字'
       : undefined
   const currentKind = kind || pptxChartEditKind(chart.chart)
-  const { barDir, gapWidthPct, holeSizePct, gridlines, catAxisTitle, valAxisTitle, ...colors } =
-    appearance
+  const {
+    barDir,
+    gapWidthPct,
+    holeSizePct,
+    gridlines,
+    catAxisTitle,
+    valAxisTitle,
+    pointColorScheme,
+    ...colors
+  } = appearance
   const patch = {
     ...colors,
+    pointColors: pptxChartPalettePoints(
+      chart.chart,
+      currentKind,
+      pointColorScheme,
+      colors.pointColors,
+      dataEdited ? parsedSeries.map((item) => item.values.length) : undefined,
+    ),
     ...(currentKind.startsWith('bar') ? { barDir } : {}),
     ...(currentKind.startsWith('bar') || currentKind === 'comboBarLine' ? { gapWidthPct } : {}),
     ...(currentKind === 'doughnut' ? { holeSizePct } : {}),

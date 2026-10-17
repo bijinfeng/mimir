@@ -10,6 +10,8 @@ import type {
 } from '../../../../packages/office/vendor/apps/pdf/src/shared/ipc.js'
 import { configurePdfWasmPaths } from '../../../../packages/office/src/shims/pdf-wasm-path.js'
 
+export { applyPdfTextBlockOperation } from './pdf-text-blocks.js'
+
 const require = createRequire(import.meta.url)
 
 function digest(bytes: Uint8Array): string {

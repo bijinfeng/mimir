@@ -279,6 +279,55 @@ async function savedXml(bytes: Uint8Array, path = 'ppt/slides/slide1.xml') {
   return (await JSZip.loadAsync(bytes)).file(path)!.async('string')
 }
 
+function cropKey(host: HTMLElement, key: string, handle?: string, shiftKey = false) {
+  const node = host.querySelector(
+    handle ? `[data-crop-handle="${handle}"]` : '.mimir-pptx-picture-crop-canvas',
+  )!
+  act(() => {
+    node.dispatchEvent(
+      new KeyboardEvent('keydown', { key, shiftKey, bubbles: true, cancelable: true }),
+    )
+  })
+}
+
+function startPictureCrop(host: HTMLElement) {
+  click(host.querySelector('.mimir-pptx-slide [data-element-kind="picture"]')!)
+  menu(host, '图片裁切', '对象')
+  click(button(host, '在画布裁切图片'))
+  expect(host.querySelector('.mimir-pptx-picture-crop-canvas')).not.toBeNull()
+}
+
+function checkPendingCropSelectionLock(host: HTMLElement, request: Parameters<PptxHostApply>[0]) {
+  const selection = handles.get(host)!.freezeSelection()
+  click(host.querySelector('.mimir-pptx-slide [data-element-kind="text"]')!)
+  expect(handles.get(host)!.freezeSelection()).toEqual(selection)
+  expect(request.signal?.aborted).toBe(false)
+  expect(host.querySelector('.mimir-pptx-picture-crop-canvas')).not.toBeNull()
+  click(button(host, '打开对象选择与格式'))
+  const rows = [...host.querySelectorAll<HTMLButtonElement>('[role="listbox"] [role="option"]')]
+  expect(rows.length).toBeGreaterThan(0)
+  expect(rows.every((row) => row.disabled)).toBe(true)
+  const other = rows.find((row) => row.getAttribute('aria-selected') === 'false')!
+  expect(other).toBeDefined()
+  click(other)
+  expect(handles.get(host)!.freezeSelection()).toEqual(selection)
+  expect(request.signal?.aborted).toBe(false)
+}
+
+async function expectSameArchive(actual: Uint8Array, expected: Uint8Array) {
+  const [left, right] = await Promise.all([JSZip.loadAsync(actual), JSZip.loadAsync(expected)])
+  const paths = Object.keys(left.files).filter((path) => !left.files[path]!.dir)
+  expect(paths.toSorted()).toEqual(
+    Object.keys(right.files)
+      .filter((path) => !right.files[path]!.dir)
+      .toSorted(),
+  )
+  for (const path of paths)
+    expect(await left.file(path)!.async('uint8array')).toEqual(
+      await right.file(path)!.async('uint8array'),
+    )
+}
+
 describe('PPTX extended named toolbar tools', () => {
   it('exports current unsaved text as SVG through the Inspector and changes view aids without dirtying the deck', async () => {
     const { host } = await mountEditor(load('title-layout.pptx'), { hostApply: upstreamHostApply })
@@ -314,12 +363,18 @@ describe('PPTX extended named toolbar tools', () => {
     const ref = crypto.randomUUID()
     const hostApply: PptxHostApply = async (request) => {
       if (request.action !== 'manual_asset') return upstreamHostApply(request)
-      const input = request.ops[0] as { kind: string; slide: number; elementIds?: string[] }
+      const input = request.ops[0] as {
+        kind: string
+        slide: number
+        elementIds?: string[]
+        targets?: { elementId: string }[]
+      }
       const opened = await openUpstreamPptx(request.bytes)
       if (input.kind === 'copy_elements') {
         const slide = opened.deck.slides[input.slide]!
+        const refs = input.targets?.map((target) => target.elementId) ?? input.elementIds!
         items = slide.elements
-          .filter((item) => input.elementIds!.includes(elementDurableId(item)!))
+          .filter((item) => refs.includes(elementDurableId(item)!))
           .map((item) => copyElementData(opened, slide, item))
         return {
           bytes: request.bytes,
@@ -343,7 +398,10 @@ describe('PPTX extended named toolbar tools', () => {
     const count = host.querySelectorAll('.mimir-pptx-slide [data-element-id]').length
     menu(host, '剪贴板', '开始')
     click(button(host, '复制对象'))
-    await settle(() => !button(host, '粘贴对象').disabled)
+    await settle(
+      () =>
+        host.querySelector<HTMLButtonElement>('button[aria-label="粘贴对象"]')?.disabled === false,
+    )
     expect(handles.get(host)!.getVersion()).toBe(0)
     expect(button(host, '保存到库').disabled).toBe(true)
     expect(button(host, '粘贴对象').textContent).toBe('粘贴对象')
@@ -683,6 +741,306 @@ describe('PPTX extended named toolbar tools', () => {
     click(button(host, '应用图片裁切'))
     await settle(() => host.textContent!.includes('宿主离线'))
     expect(button(host, '保存到库').disabled).toBe(true)
+  })
+  it('disables canvas crop with an actionable reason when the native picture relationship has no media part', async () => {
+    const bytes = load('image-deck.pptx')
+    const session = await openPptxForEdit(bytes)
+    const picture = session.slides()[0]!.elements.find((element) => element.type === 'picture')!
+    if (picture.type !== 'picture') throw new Error('picture fixture missing')
+    const zip = await JSZip.loadAsync(bytes)
+    expect(zip.file(picture.mediaRef)).not.toBeNull()
+    // Keep the real native picture, blip relationship and frame, but remove its payload.
+    zip.remove(picture.mediaRef)
+    const missing = await zip.generateAsync({ type: 'uint8array' })
+    const hostApply = vi.fn<PptxHostApply>(upstreamHostApply)
+    const { host } = await mountEditor(missing, { hostApply })
+    const version = handles.get(host)!.getVersion()
+    click(host.querySelector('.mimir-pptx-slide [data-element-kind="picture"]')!)
+    menu(host, '图片裁切', '对象')
+    const trigger = button(host, '在画布裁切图片')
+    expect(trigger.disabled).toBe(true)
+    expect(trigger.title).toBe('图片源未加载，请重新打开文档后重试')
+    click(trigger)
+    expect(host.querySelector('.mimir-pptx-picture-crop-canvas')).toBeNull()
+    expect(host.querySelector<HTMLInputElement>('[aria-label="裁去左侧（%）"]')!.disabled).toBe(
+      false,
+    )
+    expect(handles.get(host)!.getVersion()).toBe(version)
+    expect(button(host, '保存到库').disabled).toBe(true)
+    expect(button(host, '撤销').disabled).toBe(true)
+    expect(hostApply).not.toHaveBeenCalled()
+  })
+  it('cancels canvas crop cleanly, returns Escape to the actual Ribbon, and saves native crop/frame through undo and redo', async () => {
+    const bytes = load('image-deck.pptx')
+    const calls: Parameters<PptxHostApply>[0][] = []
+    let finish!: () => void
+    const gate = new Promise<void>((done) => {
+      finish = done
+    })
+    const { host, record } = await mountEditor(bytes, {
+      hostApply: async (request) => {
+        calls.push(request)
+        await gate
+        return upstreamHostApply(request)
+      },
+    })
+    const version = handles.get(host)!.getVersion()
+    startPictureCrop(host)
+    cropKey(host, 'ArrowRight', 'w', true)
+    cropKey(host, 'Escape')
+    await settle(() => document.activeElement === button(host, '图片裁切'))
+    expect(host.querySelector('.mimir-pptx-picture-crop-canvas')).toBeNull()
+    expect(document.activeElement).toBe(button(host, '图片裁切'))
+    expect(handles.get(host)!.getVersion()).toBe(version)
+    expect(button(host, '保存到库').disabled).toBe(true)
+    expect(calls).toHaveLength(0)
+    startPictureCrop(host)
+    cropKey(host, 'ArrowRight', 'w', true)
+    cropKey(host, 'ArrowRight', 'w', true)
+    click(button(host, '应用拖动裁切'))
+    await settle(() => calls.length === 1)
+    // Own busy rerenders must neither unmount the gesture nor abort its write.
+    expect(calls[0]!.signal?.aborted).toBe(false)
+    expect(host.querySelector('.mimir-pptx-picture-crop-canvas')).not.toBeNull()
+    await act(async () => finish())
+    await settle(() => handles.get(host)!.getVersion() > version)
+    expect(handles.get(host)!.getVersion()).toBe(version + 1)
+    expect(host.querySelector('.mimir-pptx-picture-crop-canvas')).toBeNull()
+    const croppedXml = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    const cropped = record.saved.at(-1)!
+    const original = (await openPptxForEdit(bytes))
+      .slides()[0]!
+      .elements.find((e) => e.type === 'picture')!
+    const changed = (await openPptxForEdit(cropped))
+      .slides()[0]!
+      .elements.find((e) => e.type === 'picture')!
+    expect(changed.type).toBe('picture')
+    if (changed.type !== 'picture' || original.type !== 'picture')
+      throw new Error('picture missing')
+    expect(changed.srcRect!.l).toBeGreaterThan(0)
+    expect(changed.srcRect).toMatchObject({ t: 0, r: 0, b: 0 })
+    expect(croppedXml).toContain('creationId')
+    expect(changed.transform.offset.cy).toBe(original.transform.offset.cy)
+    expect(changed.transform.offset.cx / (1 - changed.srcRect!.l)).toBeCloseTo(
+      original.transform.offset.cx,
+      -2,
+    )
+    expect(changed.transform.offset.x + changed.transform.offset.cx).toBe(
+      original.transform.offset.x + original.transform.offset.cx,
+    )
+    await settle(() => button(host, '保存到库').disabled)
+    // Preserve the initial e_<cNvPr> alias after ensureCreationId upgraded the picture.
+    menu(host, '图片裁切', '对象')
+    expect(host.querySelector<HTMLInputElement>('[aria-label="裁去左侧（%）"]')!.value).not.toBe(
+      '0',
+    )
+    await change(host, () => click(button(host, '撤销')))
+    await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    await expectSameArchive(record.saved.at(-1)!, bytes)
+    await settle(() => button(host, '保存到库').disabled)
+    await change(host, () => click(button(host, '重做')))
+    await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    await expectSameArchive(record.saved.at(-1)!, cropped)
+  })
+  it.each(['cancel', 'locked-selection-then-cancel', 'page', 'version'] as const)(
+    'cancels pending canvas crop through %s and refuses a late accepted native response',
+    async (scenario) => {
+      const opened = await openUpstreamPptx(load('image-deck.pptx'))
+      expect(
+        runTxn(opened, {
+          isolation: 'atomic',
+          ops: [{ op: 'duplicateSlide', target: { slide: 0 } }],
+        }).applied,
+      ).toBe(true)
+      const bytes = await saveUpstreamPptx(opened)
+      const calls: Parameters<PptxHostApply>[0][] = []
+      let finish!: () => void
+      const gate = new Promise<void>((done) => {
+        finish = done
+      })
+      const { host } = await mountEditor(bytes, {
+        hostApply: async (request) => {
+          calls.push(request)
+          await gate
+          return upstreamHostApply(request)
+        },
+      })
+      const version = handles.get(host)!.getVersion()
+      startPictureCrop(host)
+      cropKey(host, 'ArrowRight', 'w', true)
+      click(button(host, '应用拖动裁切'))
+      await settle(() => calls.length === 1)
+      expect(calls[0]!.signal?.aborted).toBe(false)
+      let concurrentResponse: unknown = { ok: true }
+      if (scenario === 'cancel') click(button(host, '取消图片拖动裁切'))
+      else if (scenario === 'locked-selection-then-cancel') {
+        checkPendingCropSelectionLock(host, calls[0]!)
+        click(button(host, '取消图片拖动裁切'))
+      } else if (scenario === 'page') click(host.querySelector('[aria-label^="第 2 幻灯片"]')!)
+      else {
+        const title = host.querySelector('.mimir-pptx-slide [data-element-kind="text"]')!
+        await act(async () => {
+          concurrentResponse = await handles.get(host)!.execute(
+            'apply_ops',
+            {
+              ops: [
+                {
+                  op: 'setText',
+                  target: { slide: 0, el: title.getAttribute('data-element-id') },
+                  paragraphs: [{ runs: [{ text: '新的画布版本' }] }],
+                },
+              ],
+            },
+            { expectedVersion: version },
+          )
+        })
+      }
+      expect(concurrentResponse).toMatchObject({ ok: true })
+      expect(calls[0]!.signal?.aborted).toBe(true)
+      expect(host.querySelector('.mimir-pptx-picture-crop-canvas')).toBeNull()
+      await act(async () => finish())
+      await settle(() => !host.querySelector('[aria-busy="true"]'))
+      if (scenario === 'version') await settle(() => !button(host, '保存到库').disabled)
+      expect(handles.get(host)!.getVersion()).toBe(version + (scenario === 'version' ? 1 : 0))
+      expect(host.querySelector('.mimir-pptx-slide')!.innerHTML).not.toContain('clipPath')
+      expect(button(host, '保存到库').disabled).toBe(scenario !== 'version')
+      expect(button(host, '撤销').disabled).toBe(scenario !== 'version')
+      expect(host.textContent!.includes('新的画布版本')).toBe(scenario === 'version')
+    },
+  )
+  it('applies arbitrary picture opacity and both quarter-turn shortcuts without losing native crop', async () => {
+    const { host, record } = await mountEditor(load('image-deck.pptx'), {
+      hostApply: upstreamHostApply,
+    })
+    click(host.querySelector('.mimir-pptx-slide [data-element-kind="picture"]')!)
+    menu(host, '图片裁切', '对象')
+    number(host, '裁去左侧（%）', 17)
+    await change(host, () => click(button(host, '应用图片裁切')))
+    await change(host, () => number(host, '图片不透明度（%）', 37))
+    await change(host, () => click(button(host, '图片向右旋转90度')))
+    expect(await saveAndRead(host, record, 'ppt/slides/slide1.xml')).toContain('rot="5400000"')
+    await settle(() => button(host, '保存到库').disabled)
+    await change(host, () => click(button(host, '图片向左旋转90度')))
+    const xml = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    expect(xml).toContain('l="17000"')
+    expect(xml).toContain('amt="37000"')
+    const picture = (await openPptxForEdit(record.saved.at(-1)!))
+      .slides()[0]!
+      .elements.find((e) => e.type === 'picture')!
+    expect(picture.type === 'picture' && picture.opacity).toBeCloseTo(0.37)
+    expect(picture.transform.rot).toBe(0)
+  })
+  it.each(['selection', 'page', 'close'] as const)(
+    'cancels a pending native outline on Inspector %s without dirtying or creating history from late bytes',
+    async (scenario) => {
+      const opened = await openUpstreamPptx(load('title-layout.pptx'))
+      const ops = [
+        pptxInsertShapeOp('lineArrowDouble', 0, opened.deck.size.cx, opened.deck.size.cy),
+      ]
+      expect(runTxn(opened, { isolation: 'atomic', ops }).applied).toBe(true)
+      expect(
+        runTxn(opened, {
+          isolation: 'atomic',
+          ops: [{ op: 'duplicateSlide', target: { slide: 0 } }],
+        }).applied,
+      ).toBe(true)
+      const calls: Parameters<PptxHostApply>[0][] = []
+      let finish!: () => void
+      let returned = false
+      const gate = new Promise<void>((done) => {
+        finish = done
+      })
+      const { host } = await mountEditor(await saveUpstreamPptx(opened), {
+        hostApply: async (request) => {
+          calls.push(request)
+          await gate
+          const result = await upstreamHostApply(request)
+          returned = true
+          return result
+        },
+      })
+      selectOnCanvas(host, host.querySelectorAll('.mimir-pptx-slide [data-element-id]').length - 1)
+      menu(host, '轮廓', '对象')
+      number(host, '轮廓宽度（pt）', 8)
+      pick(host, '轮廓线型', '长双点划线')
+      const version = handles.get(host)!.getVersion()
+      click(button(host, '应用轮廓'))
+      await settle(() => calls.length === 1)
+      expect(calls[0]!.signal?.aborted).toBe(false)
+      if (scenario === 'selection') selectOnCanvas(host)
+      else if (scenario === 'page') click(host.querySelector('[aria-label^="第 2 幻灯片"]')!)
+      else click(button(host, '关闭幻灯片属性面板'))
+      expect(calls[0]!.signal?.aborted).toBe(true)
+      await act(async () => finish())
+      await settle(() => returned)
+      // Allow the accepted host promise to run its before-commit cancellation check.
+      await act(async () => {
+        await new Promise((done) => setTimeout(done, 10))
+      })
+      expect(handles.get(host)!.getVersion()).toBe(version)
+      expect(button(host, '保存到库').disabled).toBe(true)
+      expect(button(host, '撤销').disabled).toBe(true)
+      expect(host.textContent).not.toContain('当前轮廓：8pt')
+    },
+  )
+  it('applies native outline width and dash with current values and preserves them when quick-picking another color', async () => {
+    const opened = await openUpstreamPptx(load('title-layout.pptx'))
+    expect(
+      runTxn(opened, {
+        isolation: 'atomic',
+        ops: [pptxInsertShapeOp('lineArrowDouble', 0, opened.deck.size.cx, opened.deck.size.cy)],
+      }).applied,
+    ).toBe(true)
+    const bytes = await saveUpstreamPptx(opened)
+    const { host, record } = await mountEditor(bytes, { hostApply: upstreamHostApply })
+    selectOnCanvas(host, host.querySelectorAll('.mimir-pptx-slide [data-element-id]').length - 1)
+    menu(host, '轮廓', '对象')
+    const panel = host.querySelector('[data-panel="轮廓"]')!
+    expect(panel.textContent).toContain('轮廓宽度（pt）')
+    expect(panel.textContent).toContain('轮廓线型')
+    expect(panel.textContent).toContain('端点样式')
+    expect(host.textContent).toContain('当前轮廓：1pt · 实线')
+    number(host, '轮廓宽度（pt）', 4.5)
+    pick(host, '轮廓线型', '点划线')
+    expect(button(host, '保存到库').disabled).toBe(true)
+    await change(host, () => click(button(host, '应用轮廓')))
+    const first = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    const firstBytes = record.saved.at(-1)!
+    expect(first).toContain('w="57150"')
+    expect(first).toContain('val="dashDot"')
+    expect(host.textContent).toContain('当前轮廓：4.5pt · 点划线')
+    await settle(() => button(host, '保存到库').disabled)
+    await change(host, () => click(button(host, '撤销')))
+    await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    await expectSameArchive(record.saved.at(-1)!, bytes)
+    await settle(() => button(host, '保存到库').disabled)
+    await change(host, () => click(button(host, '重做')))
+    await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    await expectSameArchive(record.saved.at(-1)!, firstBytes)
+    menu(host, '对象与幻灯片操作', '对象')
+    click(button(host, '轮廓颜色'))
+    await change(host, () => click(button(host, '靛蓝')))
+    const next = await saveAndRead(host, record, 'ppt/slides/slide1.xml')
+    expect(next).toContain('w="57150"')
+    expect(next).toContain('val="dashDot"')
+    expect(next).toContain('val="4472C4"')
+    expect(next).toContain('<a:headEnd type="triangle"')
+    expect(next).toContain('<a:tailEnd type="triangle"')
+  })
+  it('shows readable chart field labels before data is entered without dirtying the deck', async () => {
+    const hostApply = vi.fn<PptxHostApply>(upstreamHostApply)
+    const { host } = await mountEditor(load('title-layout.pptx'), { hostApply })
+    menu(host, '插入图表', '插入')
+    const panel = host.querySelector('[data-panel="插入图表"]')!
+    // Accessible names alone do not explain bare values to a sighted user.
+    expect(panel.textContent).toContain('图表类型')
+    expect(panel.textContent).toContain('图表标题（可选）')
+    expect(panel.textContent).toContain('数据系列名称')
+    expect(panel.textContent).toContain('图表类别（每行一项）')
+    expect(panel.textContent).toContain('图表数值（每行一项）')
+    expect(button(host, '按输入数据插入图表').disabled).toBe(true)
+    expect(button(host, '保存到库').disabled).toBe(true)
+    expect(hostApply).not.toHaveBeenCalled()
   })
   it('shape gallery, align/distribute/group/ungroup and connector change live objects and saved XML', async () => {
     const { host, record } = await mountEditor(load('upstream/01_standard_business.pptx'), {

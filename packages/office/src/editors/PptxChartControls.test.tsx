@@ -123,14 +123,13 @@ async function setup(kind: NewChartKind = 'bar', rejected = false) {
     host.remove()
   })
   const applyAndRead = async () => {
+    const callIndex = apply.mock.calls.length
     await act(async () => {
       button(host, '应用图表修改').click()
-      await new Promise((resolve) => setTimeout(resolve, 20))
+      expect(apply.mock.results[callIndex]?.type).toBe('return')
+      await apply.mock.results[callIndex]!.value
     })
-    for (let i = 0; i < 40 && host.querySelector('[aria-busy="true"]'); i++)
-      await act(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 5))
-      })
+    expect(host.querySelector('[aria-busy="true"]')).toBeNull()
     return readTwice()
   }
   const readTwice = async () => {
@@ -259,8 +258,10 @@ it('switches actual native chart rows and columns as a separate operation', asyn
   tab(host, '数据')
   await act(async () => {
     button(host, '切换图表行列').click()
-    await new Promise((resolve) => setTimeout(resolve, 40))
+    expect(apply).toHaveBeenCalledOnce()
+    await apply.mock.results[0]!.value
   })
+  expect(host.querySelector('[aria-busy="true"]')).toBeNull()
   expect(apply).toHaveBeenCalledWith({ target: expect.anything(), patch: { switchRowCol: true } })
   const { chart } = await readTwice()
   expect(chart.categories).toEqual(['收入', '成本'])

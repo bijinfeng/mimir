@@ -1,3 +1,4 @@
+import type { PptxAiSnapshotDraft } from '@mimir/office'
 import { Button, Empty, Typography } from 'antd'
 import { createStyles } from 'antd-style'
 import { File, TriangleAlert } from 'lucide-react'
@@ -61,9 +62,11 @@ export function FilePreview({
   onDirtyChange,
   onDocumentAgentHandleChange,
   onAiPreset,
+  onAiSnapshotDraft,
 }: {
   doc: DocumentDetail
   onAiPreset?: ((instruction: string) => void) | undefined
+  onAiSnapshotDraft?: ((draft: PptxAiSnapshotDraft) => void) | undefined
   /** 原件编辑器有未保存改动时上报（宿主用它拦截离开） */
   onDirtyChange?: ((dirty: boolean) => void) | undefined
   onDocumentAgentHandleChange?: ((handle: ChatDocumentAgent | null) => void) | undefined
@@ -154,6 +157,7 @@ export function FilePreview({
       return (
         <OfficeSourceEditor
           onAiPreset={onAiPreset}
+          onAiSnapshotDraft={onAiSnapshotDraft}
           key={doc.id}
           doc={doc}
           kind={kind}

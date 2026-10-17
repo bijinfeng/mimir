@@ -1,5 +1,5 @@
+import { pptxImageInfo as imageInfo } from './pptx-image-info.js'
 import {
-  PPTX_IMAGE_MAX_BYTES,
   pptxChartEditOpSchema,
   pptxAnimationTimingOpSchema,
   type PptxHostAction,
@@ -29,6 +29,7 @@ import { documentAgentFormatOf } from './document-agent-format.js'
 import { getDocument } from './documents.js'
 import { applyPptxService } from './pptx-agent-services.js'
 import { applyPptxManualFill } from './pptx-manual-fill.js'
+import { applyPptxManualPicture } from './pptx-manual-picture.js'
 import { applyPptxManualAnimation } from './pptx-manual-animation.js'
 import { applyPptxManualShape } from './pptx-manual-shape.js'
 import { applyPptxManualParagraph } from './pptx-manual-paragraph.js'
@@ -36,6 +37,7 @@ import { applyPptxManualZoom } from './pptx-manual-zoom.js'
 import { applyPptxManualInk } from './pptx-manual-ink.js'
 import { applyPptxManualClipboard } from './pptx-manual-clipboard.js'
 import { applyPptxUpload } from './pptx-manual-upload.js'
+import { runPptxHostTxn } from './pptx-group-flip.js'
 
 /** Stateless service: the browser sends its current unsaved canvas and still owns Save. */
 export interface PptxHostRequest {
@@ -95,51 +97,6 @@ export async function applyPptxManualUploadOnHost(
   return applyPptxUpload(request, imageInfo)
 }
 
-function imageInfo(bytes: Uint8Array): { ext: 'png' | 'jpg'; width: number; height: number } {
-  if (!(bytes instanceof Uint8Array) || bytes.length < 24 || bytes.length > PPTX_IMAGE_MAX_BYTES)
-    throw new Error('图片必须是小于 8 MiB 的 PNG 或 JPEG')
-  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-  if (
-    bytes[0] === 0x89 &&
-    bytes[1] === 0x50 &&
-    bytes[2] === 0x4e &&
-    bytes[3] === 0x47 &&
-    bytes[4] === 0x0d &&
-    bytes[5] === 0x0a &&
-    bytes[6] === 0x1a &&
-    bytes[7] === 0x0a &&
-    bytes[12] === 0x49 &&
-    bytes[13] === 0x48 &&
-    bytes[14] === 0x44 &&
-    bytes[15] === 0x52
-  ) {
-    const width = view.getUint32(16)
-    const height = view.getUint32(20)
-    if (width > 0 && height > 0 && width <= 16_384 && height <= 16_384)
-      return { ext: 'png', width, height }
-  }
-  if (bytes[0] === 0xff && bytes[1] === 0xd8) {
-    let at = 2
-    while (at + 4 < bytes.length) {
-      if (bytes[at] !== 0xff) break
-      const marker = bytes[at + 1]!
-      at += 2
-      if (marker === 0xda || marker === 0xd9) break
-      if (marker === 0xff || marker === 0x01 || (marker >= 0xd0 && marker <= 0xd7)) continue
-      const length = view.getUint16(at)
-      if (length < 2 || at + length > bytes.length) break
-      if ([0xc0, 0xc1, 0xc2, 0xc3].includes(marker) && length >= 7) {
-        const height = view.getUint16(at + 3)
-        const width = view.getUint16(at + 5)
-        if (width > 0 && height > 0 && width <= 16_384 && height <= 16_384)
-          return { ext: 'jpg', width, height }
-      }
-      at += length
-    }
-  }
-  throw new Error('图片格式或尺寸无效；请选择 PNG 或 JPEG')
-}
-
 function checkSignal(signal?: AbortSignal): void {
   if (signal?.aborted) throw new Error('PPTX 操作已取消；文档未修改')
 }
@@ -187,6 +144,11 @@ export async function applyPptxOpsOnHost(request: PptxHostRequest): Promise<Pptx
   if (!(bytes instanceof Uint8Array) || bytes.byteLength > MAX_ZIP_INPUT_BYTES) {
     throw new Error(`PPTX 原件必须是至多 ${MAX_ZIP_INPUT_BYTES} 字节的二进制数据`)
   }
+  if (request.action === 'manual_picture') {
+    checkSignal(signal)
+    await (await BoundedZip.open(bytes)).preflightAll()
+    return applyPptxManualPicture(request)
+  }
   if (request.action === 'manual_shape') {
     checkSignal(signal)
     await (await BoundedZip.open(bytes)).preflightAll()
@@ -225,7 +187,12 @@ export async function applyPptxOpsOnHost(request: PptxHostRequest): Promise<Pptx
   if (PPTX_SERVICE_ACTIONS.includes(request.action as (typeof PPTX_SERVICE_ACTIONS)[number])) {
     checkSignal(signal)
     await (await BoundedZip.open(bytes)).preflightAll()
-    const output = await applyPptxService(request, imageInfo)
+    const output = await applyPptxService(request, (pictureBytes) => {
+      const info = imageInfo(pictureBytes)
+      if (info.ext !== 'png' && info.ext !== 'jpg')
+        throw new Error('Agent 图片服务当前仅支持 PNG 或 JPEG')
+      return { ...info, ext: info.ext }
+    })
     await (await BoundedZip.open(output.bytes)).preflightAll()
     checkSignal(signal)
     return output
@@ -295,7 +262,7 @@ export async function applyPptxOpsOnHost(request: PptxHostRequest): Promise<Pptx
         records: [{ op: animationInput, after: { count: 1 } }],
         failures: [],
       }
-    : runTxn(opened, { ops, isolation: 'atomic' })
+    : runPptxHostTxn(opened, ops)
   if (!result.applied) {
     const reason = result.failures
       ?.map((failure) => `第 ${failure.index + 1} 项：${failure.error}`)

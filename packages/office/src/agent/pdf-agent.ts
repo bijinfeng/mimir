@@ -1,3 +1,4 @@
+import { pdfBatchArgsSchema } from '@mimir/shared'
 import { PDF_LOCAL_TOOLS } from './pdf-local-agent.js'
 import { PDF_CONTENT_TOOLS } from './pdf-content-agent.js'
 import { searchPdfText, type PdfTextIndex } from '../editors/pdf-text.js'
@@ -198,7 +199,8 @@ export class PdfAgentHandle {
         throw new Error('PDF 画布版本已变化，请重新读取')
       const snapshot = this.hooks.snapshot()
       if (!snapshot) throw new Error('PDF 原件尚未读取完成')
-      const input = record(args)
+      const input: Record<string, unknown> =
+        tool === 'apply_ops' ? pdfBatchArgsSchema.parse(args) : record(args)
 
       if (tool === 'goto_page') {
         const page = pageNumber(input.page, snapshot.pages.length)
@@ -257,11 +259,23 @@ export class PdfAgentHandle {
         (PDF_LOCAL_TOOLS as readonly string[]).includes(tool) ||
         (tool === 'apply_ops' &&
           Array.isArray(input.ops) &&
-          input.ops.some(
-            (op) =>
-              op && typeof op === 'object' && (op.op === 'setFormValue' || op.op === 'setMetadata'),
-          ))
+          (this.hooks.pendingTextInserts().length > 0 ||
+            input.ops.some(
+              (op) =>
+                op &&
+                typeof op === 'object' &&
+                !PDF_PAGE_AGENT_OPS.includes(op.op as (typeof PDF_PAGE_AGENT_OPS)[number]),
+            )))
       ) {
+        if (
+          [
+            'add_visual_signature',
+            'transform_visual_signature',
+            'delete_visual_signature',
+          ].includes(tool) &&
+          !options.manual
+        )
+          throw new Error('视觉签名仅可由用户手动创建和调整')
         if (!this.hooks.contentTool) throw new Error('PDF 内容执行器尚未连接')
         const startingVersion = this.version
         const checkpoint = options.roundId ? this.rounds.get(options.roundId) : undefined

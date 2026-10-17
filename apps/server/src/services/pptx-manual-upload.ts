@@ -1,4 +1,4 @@
-import { pptxManualUploadSchema } from '@mimir/shared'
+import { pptxManualUploadSchema, validatePptxImageMime, type PptxImageInfo } from '@mimir/shared'
 import {
   addMedia,
   openPptx,
@@ -17,6 +17,10 @@ import {
 } from '../../../../packages/office/vendor/packages/pptx-ops/src/ops/index.js'
 import { BoundedZip } from '../../../../packages/office/src/zip-bounds.js'
 import { validatePptxGlb } from '../../../../packages/office/src/pptx-glb.js'
+import {
+  resolvePptxGroupPicture,
+  replacePptxGroupPicture,
+} from '../../../../packages/office/src/pptx-picture-edit.js'
 import type { PptxHostResult, PptxManualUploadRequest } from './pptx-agent-host.js'
 
 const cancel = (signal?: AbortSignal) => {
@@ -59,7 +63,9 @@ function mediaExt(bytes: Uint8Array, name: string, mime: string, kind: 'audio' |
     )
   return ext!
 }
-type ImageInfo = (bytes: Uint8Array) => { ext: 'png' | 'jpg'; width: number; height: number }
+type ImageInfo = (
+  bytes: Uint8Array,
+) => Pick<PptxImageInfo, 'ext' | 'width' | 'height'> & Partial<PptxImageInfo>
 export async function applyPptxUpload(
   request: PptxManualUploadRequest,
   imageInfo: ImageInfo,
@@ -166,16 +172,20 @@ export async function applyPptxUpload(
       }
     } else {
       const info = imageInfo(request.assetBytes)
-      const expectedMime = info.ext === 'png' ? 'image/png' : 'image/jpeg'
-      if (
-        request.assetMime &&
-        request.assetMime !== 'application/octet-stream' &&
-        request.assetMime.toLowerCase() !== expectedMime
+      validatePptxImageMime(
+        {
+          animated: false,
+          ...info,
+          mime: info.mime ?? (info.ext === 'jpg' ? 'image/jpeg' : `image/${info.ext}`),
+        },
+        request.assetMime,
       )
-        throw new Error('图片MIME与真实内容不一致，请重新选择PNG或JPEG图片')
       if (input.kind === 'picture') {
         if (input.elementId) {
-          const element = slide.elements.find((item) => matchesElementRef(item, input.elementId!))
+          const element = input.group
+            ? resolvePptxGroupPicture(slide, { group: input.group, elementId: input.elementId })
+                .picture
+            : slide.elements.find((item) => matchesElementRef(item, input.elementId!))
           if (!element || element.type !== 'picture' || element.media)
             throw new Error('请先选择普通图片')
           if (input.keepCrop) {
@@ -185,8 +195,19 @@ export async function applyPptxUpload(
               throw new Error('保留裁切需要与原图尺寸相同的图片')
           }
         }
-        const width = Math.min(input.widthPt * 12700, opened.deck.size.cx * 0.8)
+        const naturalWidth = input.naturalSize
+          ? info.width * 9525
+          : Math.min(input.widthPt * 12700, opened.deck.size.cx * 0.8)
+        const scale = input.naturalSize
+          ? Math.min(
+              1,
+              (opened.deck.size.cx * 0.8) / naturalWidth,
+              (opened.deck.size.cy * 0.8) / ((naturalWidth * info.height) / info.width),
+            )
+          : 1
+        const width = naturalWidth * scale
         const height = (width * info.height) / info.width
+        const center = input.center ?? { x: 0.5, y: 0.5 }
         const op: Op = input.elementId
           ? {
               op: 'replacePicture',
@@ -201,15 +222,54 @@ export async function applyPptxUpload(
               bytes: request.assetBytes,
               ext: info.ext,
               offset: {
-                x: Math.round((opened.deck.size.cx - width) / 2),
-                y: Math.round((opened.deck.size.cy - height) / 2),
+                x: Math.round(
+                  Math.max(
+                    0,
+                    Math.min(
+                      opened.deck.size.cx - width,
+                      opened.deck.size.cx * center.x - width / 2,
+                    ),
+                  ),
+                ),
+                y: Math.round(
+                  Math.max(
+                    0,
+                    Math.min(
+                      opened.deck.size.cy - height,
+                      opened.deck.size.cy * center.y - height / 2,
+                    ),
+                  ),
+                ),
                 cx: Math.round(width),
                 cy: Math.round(height),
               },
             }
-        const result = runTxn(opened, { ops: [op], isolation: 'atomic' })
-        if (!result.applied) throw new Error(result.failures?.[0]?.error ?? '图片操作失败')
-        data = { slideIndex: input.slide }
+        const groupPictureRef =
+          input.group && input.elementId
+            ? replacePptxGroupPicture(
+                opened,
+                slide,
+                { group: input.group, elementId: input.elementId },
+                request.assetBytes,
+                info.ext,
+                input.keepCrop ?? false,
+              )
+            : undefined
+        if (!groupPictureRef) {
+          const result = runTxn(opened, { ops: [op], isolation: 'atomic' })
+          if (!result.applied) throw new Error(result.failures?.[0]?.error ?? '图片操作失败')
+        }
+        const picture = input.elementId
+          ? slide.elements.find((item) => matchesElementRef(item, input.elementId!))
+          : slide.elements.at(-1)
+        data = {
+          slideIndex: input.slide,
+          ...(groupPictureRef
+            ? { elementId: groupPictureRef }
+            : picture
+              ? { elementId: elementDurableId(picture) ?? picture.id }
+              : {}),
+        }
       } else {
         if (input.kind === 'image_fill') {
           const element = slide.elements.find((item) => matchesElementRef(item, input.elementId))

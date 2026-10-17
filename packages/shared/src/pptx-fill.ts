@@ -35,6 +35,31 @@ export const pptxManualFillSchema = z.discriminatedUnion('kind', [
     .strict(),
   z
     .object({
+      kind: z.literal('selection'),
+      slide,
+      targets: z
+        .array(
+          z
+            .object({
+              elementId: z.string().min(1).max(300),
+              group: z.string().min(1).max(300).optional(),
+            })
+            .strict(),
+        )
+        .min(1)
+        .max(200)
+        .refine(
+          (targets) =>
+            new Set(targets.map((target) => JSON.stringify([target.group, target.elementId])))
+              .size === targets.length,
+          '填充对象不得重复',
+        ),
+      source: fillSource,
+      tile: z.boolean(),
+    })
+    .strict(),
+  z
+    .object({
       kind: z.literal('background'),
       slide,
       allSlides: z.boolean().default(false),

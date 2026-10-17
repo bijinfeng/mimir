@@ -276,6 +276,7 @@ export {
   type ParagraphStyle,
 } from './editors/markdown-format.js'
 export { HtmlEditor, type HtmlAgentServices } from './editors/HtmlEditor.js'
+export type { PptxAiSnapshotDraft } from './editors/pptx-ai-snapshot.js'
 export { PdfEditor } from './editors/PdfEditor.js'
 export { PdfAgentHandle, PDF_PAGE_AGENT_OPS } from './agent/pdf-agent.js'
 export {

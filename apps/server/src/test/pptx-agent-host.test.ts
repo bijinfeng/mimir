@@ -346,7 +346,7 @@ describe('PPTX host executor', () => {
         slide: 0,
         action: 'insert',
       }),
-    ).rejects.toThrow('图片格式或尺寸无效')
+    ).rejects.toThrow('请选择 PNG、JPEG、GIF、BMP、WebP、TIFF 图片')
     await expect(
       applyPptxManualPictureOnHost({
         documentId: 'pptx-1',
@@ -420,7 +420,7 @@ describe('PPTX host executor', () => {
         slide: 0,
         action: 'insert',
       }),
-    ).rejects.toThrow('图片必须是小于 8 MiB')
+    ).rejects.toThrow('不超过 8 MiB')
   })
 
   it('runs the pinned GenOffice op registry and returns patch-preserving bytes', async () => {

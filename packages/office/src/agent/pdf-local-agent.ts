@@ -18,6 +18,9 @@ export interface PdfHostLocal {
   }>
 }
 export const PDF_LOCAL_TOOLS = [
+  'add_visual_signature',
+  'transform_visual_signature',
+  'delete_visual_signature',
   'export_pdf',
   'insert_blank_page',
   'set_page_size',
@@ -44,5 +47,5 @@ export function pdfLocalToolOperation(
   args: Record<string, unknown>,
 ): PdfLocalOperation {
   if (tool === 'get_outline' || tool === 'get_document_properties') return { op: 'read' }
-  return pdfLocalOperationSchema.parse({ op: tool, ...args })
+  return pdfLocalOperationSchema.parse({ ...args, op: tool })
 }

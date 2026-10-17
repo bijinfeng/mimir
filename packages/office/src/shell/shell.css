@@ -915,6 +915,21 @@
   min-width: 0;
 }
 
+.me-color__panel--custom {
+  width: min(260px, calc(100vw - 16px));
+}
+.me-color__custom {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--me-border);
+}
+.me-color__custom > .me-tb {
+  justify-self: end;
+}
+
 .me-color__cell {
   display: inline-flex;
   align-items: center;

@@ -1,0 +1,257 @@
+.mimir-pptx-inspector__body[data-panel='对象选择与格式'] {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+.mimir-pptx-selection-controls {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+.mimir-pptx-selection-controls__scope {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.mimir-pptx-selection-controls__group-text {
+  display: grid;
+  flex-shrink: 0;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px;
+  border-bottom: 1px solid var(--me-border);
+  font-size: var(--me-font-size-sm, 12px);
+}
+.mimir-pptx-selection-controls__group-text textarea {
+  min-height: 72px;
+  max-height: 112px;
+}
+.mimir-pptx-selection-controls__group-text p[role='alert'] {
+  color: var(--me-danger);
+  margin: 0;
+}
+.mimir-pptx-selection-controls__group-text-draft {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+.mimir-pptx-selection-controls__content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 12px;
+}
+.mimir-pptx-selection-controls__objects {
+  display: grid;
+  gap: 8px;
+}
+.mimir-pptx-selection-controls__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: var(--me-font-size-sm, 12px);
+}
+.mimir-pptx-selection-controls__heading span {
+  color: var(--me-text-weak);
+  font-variant-numeric: tabular-nums;
+}
+.mimir-pptx-selection-controls__list {
+  max-height: 224px;
+  overflow: auto;
+  border: 1px solid var(--me-border);
+  border-radius: var(--me-radius, 6px);
+}
+.mimir-pptx-selection-controls__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 32px;
+  padding: 6px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--me-text);
+  text-align: start;
+  font: inherit;
+  font-size: var(--me-font-size-sm, 12px);
+  cursor: pointer;
+}
+.mimir-pptx-selection-controls__row:hover:not(:disabled) {
+  background: var(--me-hover);
+}
+.mimir-pptx-selection-controls__row[aria-selected='true'] {
+  background: var(--me-accent-bg);
+  color: var(--me-accent);
+}
+.mimir-pptx-selection-controls__row:focus-visible {
+  outline: 2px solid var(--me-accent);
+  outline-offset: -2px;
+}
+.mimir-pptx-selection-controls__row:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.mimir-pptx-selection-controls__check {
+  display: flex;
+  width: 14px;
+  flex-shrink: 0;
+}
+.mimir-pptx-selection-controls__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.mimir-pptx-selection-controls__type {
+  flex-shrink: 0;
+  color: var(--me-text-weak);
+  font-size: 11px;
+}
+.mimir-pptx-selection-controls__selection-actions {
+  display: flex;
+  gap: 6px;
+}
+.mimir-pptx-selection-controls__fields {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  border: 0;
+}
+.mimir-pptx-selection-controls__fields--pair {
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+}
+.mimir-pptx-selection-controls__fields--equal {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.mimir-pptx-selection-controls__tabs {
+  display: grid;
+  justify-items: start;
+  min-width: 0;
+}
+.mimir-pptx-selection-controls__fields .me-property-field {
+  min-width: 0;
+}
+.mimir-pptx-selection-controls__booleans {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.mimir-pptx-selection-controls__boolean {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.mimir-pptx-selection-controls__boolean > span {
+  font-size: var(--me-font-size-sm, 12px);
+  color: var(--me-text);
+}
+.mimir-pptx-selection-controls__boolean .me-property-field__label {
+  display: none;
+}
+.mimir-pptx-selection-controls__content > .me-property-form {
+  padding: 0;
+}
+.mimir-pptx-selection-controls .me-input--text {
+  width: 100%;
+  min-width: 0;
+}
+.mimir-pptx-selection-controls__actions {
+  display: grid;
+  flex-shrink: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--me-border);
+  background: var(--me-surface);
+}
+.mimir-pptx-selection-controls__actions > p,
+.mimir-pptx-selection-controls__actions > .me-menu__note {
+  grid-column: 1 / -1;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.mimir-pptx-selection-appearance__preview {
+  width: 100%;
+  height: 54px;
+  border: 1px solid var(--me-border);
+  border-radius: var(--me-radius);
+}
+.mimir-pptx-selection-appearance__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.mimir-pptx-selection-appearance__styles,
+.mimir-pptx-selection-appearance__textures {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  min-width: 0;
+}
+.mimir-pptx-selection-appearance__styles > .me-tb,
+.mimir-pptx-selection-appearance__textures > .me-tb {
+  height: auto;
+  min-height: 64px;
+  min-width: 0;
+  padding: 6px 3px;
+}
+.mimir-pptx-selection-appearance__styles > .me-tb > span,
+.mimir-pptx-selection-appearance__textures > .me-tb > span {
+  width: 100%;
+  min-width: 0;
+}
+.mimir-pptx-selection-appearance__tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+.mimir-pptx-selection-appearance__tile > svg {
+  flex-shrink: 0;
+}
+.mimir-pptx-selection-appearance__tile-label {
+  max-width: 100%;
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+  text-align: center;
+  font-size: var(--me-font-size-sm, 12px);
+  line-height: 1.35;
+}
+.mimir-pptx-selection-appearance__textures img {
+  display: block;
+  width: 100%;
+  height: 30px;
+  object-fit: cover;
+  border-radius: 2px;
+}
+.mimir-pptx-selection-controls__actions p[role='alert'] {
+  color: var(--me-danger);
+  font-size: var(--me-font-size-sm, 12px);
+}

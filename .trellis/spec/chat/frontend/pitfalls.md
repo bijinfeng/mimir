@@ -5,6 +5,7 @@
 
 | 症状 | 原因 |
 |---|---|
+| 截图排队后发成普通检索，或第二轮缺少真实会话/当前文档上下文 | AG-UI 排队构造的实际 HTTP body 可能保留 composer 的冻结 marker，却缺少 subscriber 注入的路由字段。PPTX 截图须在 fetch 边界检查真实 body，缺失时复用同一初始化函数补齐并再次校验目标；测试必须检查第二个真实 HTTP 请求，不能只检查 onRunInitialized 或队列状态 |
 | 文档 Agent 工具已改画布，续轮 HTTP 失败后再点提交提示 `no pending interrupts` | `@assistant-ui/react-ag-ui@0.0.68` 在请求发出前清掉中断；`patches/@assistant-ui__react-ag-ui@0.0.68.patch` 在失败且当前分支仍是该中断的子轮时恢复中断。补丁须登记在 `pnpm-workspace.yaml` 的 `patchedDependencies` 并更新 `pnpm-lock.yaml`；升级依赖时同步重做补丁，运行 `pnpm install --frozen-lockfile` 和 ChatPanel 续轮测试。桥接层只重送缓存结果，先核对文档、轮次和画布版本，不能重新执行工具；画布确实变化时仍须拒绝旧结果 |
 | **消息排版整批失灵（标记消失、正文回退浏览器默认），但类都定义着** | 样式类**定义了却没有人挂**：整组后代选择器（`[data-role='user'] …`）全靠一个容器类作祖先，容器类漏挂（重构时只渲染了 `<Messages/>` 忘了包壳）它们整批静默失配——界面能用、丑一圈、不报错（实测：抽包后 `ChatThread` 漏挂 `styles.thread`，`›` 标记与 markdown 规范全没了）。样式类必须有消费点，抽完壳 grep 一次 |
 | 打开历史会话右栏空白，而中栏的「本次引用」正常 | `useChat` 的 `initialMessages` 只在挂载时生效（旧引擎）。D-099 后由包的历史适配器 + `thread.isLoading` 骨架屏承担：数据没到位也能挂载。这条现在只剩历史价值——它解释了为什么 `ChatPanel` 曾有一个 `messagesLoading` 硬契约 |

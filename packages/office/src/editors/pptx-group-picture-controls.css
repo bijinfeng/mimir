@@ -1,0 +1,95 @@
+.mimir-pptx-inspector__body[data-panel='组合图片'] {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+.mimir-pptx-group-picture {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.mimir-pptx-group-picture__tabs {
+  flex-shrink: 0;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--me-border);
+}
+.mimir-pptx-group-picture__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  min-height: 0;
+  padding: 12px;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--me-border) transparent;
+}
+.mimir-pptx-group-picture__name,
+.mimir-pptx-group-picture__filename {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--me-text);
+  font-size: 12px;
+}
+.mimir-pptx-group-picture__name {
+  font-weight: 600;
+}
+.mimir-pptx-group-picture__preview {
+  position: relative;
+  flex-shrink: 0;
+  align-self: center;
+  width: 100%;
+  height: auto;
+  overflow: hidden;
+  outline: 1px solid var(--me-border);
+  outline-offset: -1px;
+  border-radius: 6px;
+  background: var(--me-bar-bg);
+}
+.mimir-pptx-group-picture__preview[data-empty] {
+  min-height: 80px;
+}
+.mimir-pptx-group-picture__preview img {
+  position: absolute;
+  max-width: none;
+  object-fit: fill;
+}
+.mimir-pptx-group-picture__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.mimir-pptx-group-picture__fields .me-property-form {
+  padding: 0;
+}
+.mimir-pptx-group-picture [role='alert'] {
+  margin: 0;
+  color: var(--me-danger);
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.mimir-pptx-group-picture [role='status'] {
+  margin: 0;
+  color: var(--me-text-weak);
+  font-size: 12px;
+}
+.mimir-pptx-group-picture__footer {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--me-border);
+}

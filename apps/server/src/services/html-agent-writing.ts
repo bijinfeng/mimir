@@ -1,14 +1,13 @@
-import type { HtmlWriteStreamEvent } from '@mimir/shared'
+import {
+  normalizeHtmlPageBrief,
+  type HtmlPageBrief,
+  type HtmlWriteStreamEvent,
+} from '@mimir/shared'
 import { getDocument } from './documents.js'
 import { documentAgentFormatOf } from './document-agent-format.js'
 import { callChat, modelReady, streamChat } from './model.js'
 
-export interface HtmlPageBrief {
-  title: string
-  tone: string
-  audience: string
-  sections: Array<{ title: string; purpose: string }>
-}
+export type { HtmlPageBrief } from '@mimir/shared'
 
 export interface HtmlPagePlanInput {
   documentId: string
@@ -49,7 +48,7 @@ export async function planHtmlPage(input: HtmlPagePlanInput): Promise<HtmlPageBr
     stream: false,
     messages: [{ role: 'user', content: input.instruction.slice(0, 4000) }],
     systemPrompts: [
-      '为 HTML 页面拟定简短设计提纲。只输出 JSON 对象：title、tone、audience、sections 数组（每项 title、purpose）。根据用户要求和提供的现有源码，不得编造事实。',
+      '为 HTML 页面拟定可执行的设计提纲，只输出 JSON 对象。字段：title、tone、audience、core_hook（内容主张），style {name,tone,palette {primary,accent,bg,surface,text}（颜色均为#六位RGB）,typography {heading,body,scale},tokens {radius,spacing,shadow},layout,density,docx_friendly}，alternatives（最多两个与主方向有明显差异的同结构style），sections（1–20项，每项title、purpose，可选type、layout、image_queries），meta {title,language,audience,length}，version:1。根据用户要求和现有源码，不编造事实；restyle/extract优先忠实提取现有内容与结构。',
       `模式：${input.mode}。补充说明：${(input.notes ?? '').slice(0, 2000)}。现有源码：${(input.currentSource ?? '').slice(0, 8000)}`,
     ],
     ...(input.signal ? { abortSignal: input.signal } : {}),
@@ -61,33 +60,7 @@ export async function planHtmlPage(input: HtmlPagePlanInput): Promise<HtmlPageBr
   } catch {
     throw new Error('页面规划结果不是有效 JSON，请重试')
   }
-  if (!parsed || typeof parsed !== 'object') throw new Error('页面规划缺少设计提纲')
-  const value = parsed as Record<string, unknown>
-  if (
-    typeof value.title !== 'string' ||
-    typeof value.tone !== 'string' ||
-    typeof value.audience !== 'string' ||
-    !Array.isArray(value.sections) ||
-    value.sections.length < 1 ||
-    value.sections.length > 20 ||
-    !value.sections.every(
-      (item) =>
-        item &&
-        typeof item === 'object' &&
-        typeof item.title === 'string' &&
-        typeof item.purpose === 'string',
-    )
-  )
-    throw new Error('页面规划字段无效，请重试')
-  return {
-    title: value.title.slice(0, 200),
-    tone: value.tone.slice(0, 400),
-    audience: value.audience.slice(0, 400),
-    sections: value.sections.map((item: { title: string; purpose: string }) => ({
-      title: item.title.slice(0, 200),
-      purpose: item.purpose.slice(0, 1000),
-    })),
-  }
+  return normalizeHtmlPageBrief(parsed)
 }
 
 /** Generate a complete HTML document. The editor applies it only after version and user confirmation checks. */
@@ -96,6 +69,7 @@ export async function* streamHtmlDocument(
 ): AsyncGenerator<HtmlWriteStreamEvent> {
   await requireHtml(input.documentId)
   if (input.kind === 'design' && !input.brief) throw new Error('设计页面需要已确认的提纲')
+  const brief = input.brief ? normalizeHtmlPageBrief(input.brief) : undefined
   if (input.kind === 'content' && !input.plan?.trim()) throw new Error('长文写作需要写作计划')
   const system =
     input.kind === 'design'
@@ -111,7 +85,7 @@ export async function* streamHtmlDocument(
       system,
       '只输出完整 HTML；从 <!doctype html> 开始到 </html> 结束。包含 html lang、head 的 charset、viewport、title 与一个 style，不能输出 Markdown 围栏、外部脚本或未经提供的远程资源。',
       input.kind === 'design'
-        ? `已确认提纲：${JSON.stringify(input.brief)}`
+        ? `已确认提纲：${JSON.stringify(brief)}。严格保留user_edited中列出的用户字段；style为最终选择，不再换用alternatives。为配色与字体提供--brief-*变量，统一使用这些变量。提纲meta由宿主固定，勿自行虚构其他提纲。`
         : `标题：${input.title ?? ''}\n计划：${input.plan?.slice(0, 4000) ?? ''}\n参考材料：${(input.context ?? '').slice(0, 8000)}`,
     ],
     ...(input.signal ? { abortSignal: input.signal } : {}),

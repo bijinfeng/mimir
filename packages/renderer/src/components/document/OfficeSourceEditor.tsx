@@ -1,3 +1,4 @@
+import type { PptxAiSnapshotDraft } from '@mimir/office'
 import type { DocumentDetail } from '@mimir/shared'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ChatDocumentAgent } from '@mimir/chat'
@@ -35,9 +36,11 @@ export function OfficeSourceEditor({
   onDirtyChange,
   onDocumentAgentHandleChange,
   onAiPreset,
+  onAiSnapshotDraft,
 }: {
   doc: DocumentDetail
   onAiPreset?: ((instruction: string) => void) | undefined
+  onAiSnapshotDraft?: ((draft: PptxAiSnapshotDraft) => void) | undefined
   kind: 'docx' | 'xlsx' | 'pptx' | 'html' | 'pdf'
   onDirtyChange?: (dirty: boolean) => void
   onDocumentAgentHandleChange?: (handle: ChatDocumentAgent | null) => void
@@ -186,6 +189,7 @@ export function OfficeSourceEditor({
         onAgentHandleChange={onDocumentAgentHandleChange}
         hostApply={(input) => api.documents.applyPdfText({ documentId: doc.id, ...input })}
         hostInspect={(input) => api.documents.inspectPdfText({ documentId: doc.id, ...input })}
+        hostBlocks={(input) => api.documents.pdfTextBlocks({ documentId: doc.id, ...input })}
         hostImages={(input) => api.documents.pdfImages({ documentId: doc.id, ...input })}
         hostLocal={(input) => api.documents.pdfLocal({ documentId: doc.id, ...input })}
         hostForms={(input) => api.documents.pdfForms({ documentId: doc.id, ...input })}
@@ -194,6 +198,8 @@ export function OfficeSourceEditor({
       />
     ) : (
       <PptxEditor
+        onAiSnapshotDraft={onAiSnapshotDraft}
+        onAiPreset={onAiPreset}
         key={doc.id}
         flush
         {...props}

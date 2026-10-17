@@ -1,0 +1,22 @@
+.mimir-pptx-selection-workspace {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.mimir-pptx-selection-workspace__nav {
+  flex-shrink: 0;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--me-border);
+}
+.mimir-pptx-selection-workspace__view {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.mimir-pptx-selection-workspace__view[hidden] {
+  display: none;
+}

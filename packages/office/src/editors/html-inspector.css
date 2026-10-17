@@ -191,3 +191,125 @@
     box-shadow: -8px 0 24px rgb(0 0 0 / 12%);
   }
 }
+
+.mimir-html-planning__choices {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.mimir-html-planning__choices .ant-checkbox-wrapper {
+  margin-inline-start: 0;
+  overflow-wrap: anywhere;
+}
+.mimir-html-planning__actions {
+  flex-direction: row;
+  justify-content: flex-end;
+}
+
+.mimir-html-planning .me-property-form {
+  display: grid;
+  gap: 20px;
+}
+.mimir-html-planning__question {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.mimir-html-planning .me-property-group + .me-property-group {
+  margin-top: 0;
+}
+
+.mimir-html-brief-directions {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.mimir-html-brief-direction .me-tb {
+  width: 100%;
+  height: auto;
+  padding: 4px;
+  text-align: left;
+  white-space: normal;
+}
+.mimir-html-brief-direction__sample {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  border-radius: 3px;
+  overflow-wrap: anywhere;
+}
+.mimir-html-brief-direction__title {
+  font-size: 14px;
+  font-weight: 600;
+}
+.mimir-html-brief-direction__tone {
+  font-size: 12px;
+  line-height: 1.5;
+}
+.mimir-html-brief-direction__swatches {
+  display: flex;
+  gap: 4px;
+}
+.mimir-html-brief-direction__swatches i {
+  width: 20px;
+  height: 8px;
+  border: 1px solid currentcolor;
+  border-radius: 2px;
+}
+.mimir-html-brief-details {
+  min-width: 0;
+  border-top: 1px solid var(--me-border);
+}
+.mimir-html-brief-details summary {
+  padding: 12px 0;
+  color: var(--me-text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.mimir-html-brief-details summary:focus-visible {
+  outline: 2px solid var(--me-accent);
+  outline-offset: 2px;
+}
+.mimir-html-brief-palette {
+  display: grid;
+  gap: 8px;
+}
+.mimir-html-brief-palette > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+}
+.mimir-html-brief-section {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.mimir-html-brief-section + .mimir-html-brief-section {
+  padding-top: 12px;
+  border-top: 1px solid var(--me-border);
+}
+.mimir-html-brief-section__title {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+.mimir-html-brief-section__title > .me-property-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.mimir-html-brief-direction .me-btn__icon {
+  width: 100%;
+  min-width: 0;
+}
+.mimir-html-brief-palette > div > code {
+  order: 1;
+  color: var(--me-text-weak);
+  font-size: 12px;
+}

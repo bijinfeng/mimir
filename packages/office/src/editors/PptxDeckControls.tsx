@@ -12,7 +12,6 @@ import {
   ToolbarMenuNote,
   ToolbarNumberField,
   ToolbarSelect,
-  ToolbarTextArea,
   ToolbarTextField,
 } from '../shell/EditorShell.js'
 import { PptxControlPanel, usePptxAction, type PptxApply } from './PptxObjectControls.js'
@@ -25,6 +24,7 @@ import {
   type PptxThemeDraft,
 } from './pptx-theme-presets.js'
 import './pptx-theme-controls.css'
+import { PptxCommentControls } from './PptxCommentControls.js'
 const PT = 12700
 
 export function PptxPageControls({
@@ -504,7 +504,6 @@ export function PptxReviewControls({
   const [rename, setRename] = useState(section?.name ?? '')
   const [first, setFirst] = useState(section?.slideIndices[0] ?? 0)
   const [last, setLast] = useState(section?.slideIndices.at(-1) ?? 0)
-  const [comment, setComment] = useState('')
   const at = metadata.sections.findIndex((item) => item.id === sectionId)
   const applyRange = () =>
     void run({
@@ -616,44 +615,13 @@ export function PptxReviewControls({
           <ToolbarMenuNote>当前演示文稿尚未分节。</ToolbarMenuNote>
         )}
       </ToolbarMenuFields>
-      <ToolbarMenuFields label="本页批注">
-        {metadata.comments.length ? (
-          metadata.comments.map((item) => (
-            <ToolbarMenuFields
-              key={`${item.authorId}:${item.idx}`}
-              label={`${item.author} · ${item.date}`}
-            >
-              <ToolbarMenuNote>{item.text}</ToolbarMenuNote>
-              <ToolbarButton
-                label={`删除批注 ${item.idx}`}
-                onClick={() =>
-                  void run({
-                    op: 'deleteComment',
-                    target: { slide: index },
-                    authorId: item.authorId,
-                    idx: item.idx,
-                  })
-                }
-              >
-                删除批注
-              </ToolbarButton>
-            </ToolbarMenuFields>
-          ))
-        ) : (
-          <ToolbarMenuNote>本页没有传统幻灯片批注。</ToolbarMenuNote>
-        )}
-        <ToolbarTextArea label="新批注" value={comment} rows={3} onChange={setComment} />
-        <ToolbarButton
-          label="添加本页批注"
-          disabled={!comment.trim()}
-          disabledReason="请输入批注内容"
-          onClick={() =>
-            void run({ op: 'addComment', target: { slide: index }, text: comment, author: '用户' })
-          }
-        >
-          添加批注
-        </ToolbarButton>
-      </ToolbarMenuFields>
+      <PptxCommentControls
+        metadata={metadata}
+        index={index}
+        apply={apply}
+        embedded
+        disabled={busy}
+      />
     </PptxControlPanel>
   )
 }

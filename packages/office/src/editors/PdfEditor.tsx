@@ -10,7 +10,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
-import type { CSSProperties } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import {
   EditorShell,
   EditorState,
@@ -96,6 +96,7 @@ import {
   executePdfContentTool,
   type PdfHostAnnotations,
   type PdfHostForms,
+  type PdfHostBlocks,
 } from '../agent/pdf-content-agent.js'
 import type { PdfHostImages } from '../agent/pdf-image-agent.js'
 import {
@@ -106,11 +107,27 @@ import {
 } from '../agent/pdf-local-agent.js'
 import { PdfHistory } from '../agent/pdf-history.js'
 import { buildPdfWorkingCopy } from '../agent/pdf-working-copy.js'
+import {
+  buildPdfBatchCandidate,
+  replayPdfPendingText,
+  type PdfPendingTextState,
+} from '../agent/pdf-batch.js'
+import {
+  usePdfDrawingCanvas,
+  usePdfDrawingPreview,
+  PdfDrawingRibbonIcon,
+} from './PdfDrawingCanvas.js'
 import { PdfLocalAssetRequest, PdfLocalPanel, type PdfLocalPanelMode } from './PdfLocalPanel.js'
 import { PdfImagePanel } from './PdfImagePanel.js'
+import { PdfImageExportControls } from './PdfImageExportControls.js'
+import { usePdfRedactionCopy } from './PdfRedactionCopy.js'
+import { PdfTextBlockPanel } from './PdfTextBlockPanel.js'
+import { groupPdfTextBlocks, pickPdfTextBlock, type PdfTextBlock } from './pdf-text-blocks.js'
 import { PdfInspector, PdfInspectorHeader, focusPdfInspectorTrigger } from './PdfInspector.js'
 import { PdfFormPanel } from './PdfFormPanel.js'
 import type { PdfAnnotation, PdfFormSnapshot, PdfImageSnapshot, PdfLocalInfo } from '@mimir/shared'
+import { usePdfSignature } from './PdfSignatureCanvas.js'
+import { PenLine } from 'lucide-react'
 import { CompactToolbar } from './CompactToolbar.js'
 import './compact-toolbar.css'
 import '../shell/shell.css'
@@ -178,14 +195,6 @@ interface PdfSavedBaseline {
   documentId: string
   source: Uint8Array
   bytes: Uint8Array
-}
-
-interface PdfPendingTextState {
-  documentId: string
-  source: Uint8Array
-  /** Bytes before the first pending insertion, including earlier page edits. */
-  base: Uint8Array
-  inserts: readonly PdfPendingTextInsert[]
 }
 
 function samePendingInsert(left: PdfPendingTextInsert, right: PdfPendingTextInsert): boolean {
@@ -335,6 +344,7 @@ export function PdfEditor({
   hostAnnotations,
   hostForms,
   hostImages,
+  hostBlocks,
   hostLocal,
   flush = false,
 }: EditorProps & {
@@ -345,6 +355,7 @@ export function PdfEditor({
   hostAnnotations?: PdfHostAnnotations
   hostForms?: PdfHostForms
   hostImages?: PdfHostImages
+  hostBlocks?: PdfHostBlocks
   hostLocal?: PdfHostLocal
 }) {
   const source = useSource(io, documentId)
@@ -355,7 +366,11 @@ export function PdfEditor({
     () => ({ documentId, source: source.bytes, history: new PdfHistory() }),
     [documentId, source.bytes],
   ).history
-  useSyncExternalStore(history.subscribe, history.getSnapshot, history.getSnapshot)
+  const historyVersion = useSyncExternalStore(
+    history.subscribe,
+    history.getSnapshot,
+    history.getSnapshot,
+  )
   const historySavedRef = useRef<Uint8Array | null>(null)
   const [savedBaseline, setSavedBaseline] = useState<PdfSavedBaseline | null>(null)
   const activeSavedBaseline =
@@ -413,6 +428,7 @@ export function PdfEditor({
   } | null>(null)
   const [localOutputs, setLocalOutputs] = useState<PdfLocalOutput[]>([])
   const localTriggerRef = useRef<HTMLButtonElement>(null)
+  const signatureTriggerRef = useRef<HTMLButtonElement>(null)
   const imagesTriggerRef = useRef<HTMLButtonElement>(null)
   const formsTriggerRef = useRef<HTMLButtonElement>(null)
   const annotationsTriggerRef = useRef<HTMLButtonElement>(null)
@@ -423,6 +439,22 @@ export function PdfEditor({
     sectionKey: string
   } | null>(null)
   const [imagesOpen, setImagesOpen] = useState(false)
+  const [imageExportOpen, setImageExportOpen] = useState(false)
+  const [redactionOpen, setRedactionOpenState] = useState(false)
+  const redactionRequestRef = useRef<AbortController | null>(null)
+  const setRedactionOpen = (open: boolean) => {
+    if (!open) redactionRequestRef.current?.abort()
+    setRedactionOpenState(open)
+  }
+  const redactionTriggerRef = useRef<HTMLButtonElement>(null)
+  const [blocksOpen, setBlocksOpen] = useState(false)
+  const blocksTriggerRef = useRef<HTMLButtonElement>(null)
+  const [blockSelection, setBlockSelection] = useState<{
+    bytes: Uint8Array
+    key: string
+    block: PdfTextBlock
+  } | null>(null)
+  const imageExportTriggerRef = useRef<HTMLButtonElement>(null)
   const [imageList, setImageList] = useState<{
     bytes: Uint8Array
     snapshot: PdfImageSnapshot
@@ -445,6 +477,7 @@ export function PdfEditor({
       imagesOpen ||
       formsOpen ||
       annotationsOpen ||
+      blocksOpen ||
       localMode !== null
     ) {
       deferredInspectorFocus.current = null
@@ -461,7 +494,7 @@ export function PdfEditor({
     if (document.activeElement === document.body && pending.editor?.isConnected) {
       focusPdfInspectorTrigger(pending.trigger, pending.editor, pending.sectionKey)
     }
-  }, [contentBusy, documentId, imagesOpen, formsOpen, annotationsOpen, localMode])
+  }, [contentBusy, documentId, imagesOpen, formsOpen, annotationsOpen, blocksOpen, localMode])
   const [annotationList, setAnnotationList] = useState<{
     bytes: Uint8Array
     items: PdfAnnotation[]
@@ -511,6 +544,7 @@ export function PdfEditor({
   const highlight = useSyncExternalStore(highlightStore.subscribe, highlightStore.getSnapshot)
   const canvasRef = useRef<HTMLDivElement>(null)
   const agentRef = useRef<PdfAgentHandle | null>(null)
+  const getBlockVersion = useCallback(() => agentRef.current?.getVersion() ?? 0, [])
   const agentSnapshotRef = useRef<PdfAgentSnapshot | null>(null)
   const agentApplyRef = useRef<(pages: PdfPageRef[]) => void>(() => {})
   const agentGoToRef = useRef<(index: number) => void>(() => {})
@@ -557,7 +591,14 @@ export function PdfEditor({
     hostApply !== undefined ||
     hostForms !== undefined ||
     hostImages !== undefined ||
+    hostBlocks !== undefined ||
     hostLocal !== undefined
+  const batchLiveRef = useRef<{
+    documentId: string
+    source: Uint8Array | null
+    edit: PdfEdit | null
+    saving: boolean
+  } | null>(null)
   const contentAbortRef = useRef<AbortController | null>(null)
   useEffect(() => () => contentAbortRef.current?.abort(), [])
   const onAgentHandleChangeRef = useRef(onAgentHandleChange)
@@ -601,6 +642,10 @@ export function PdfEditor({
    */
   const layout = useMemo<PdfPageRef[]>(() => settled?.pages ?? original ?? [], [settled, original])
   const imports = settled?.imports ?? NO_IMPORTS
+  const imageExportIdentity = useMemo(
+    () => ({ documentId, currentBytes, layout, historyVersion }),
+    [documentId, currentBytes, layout, historyVersion],
+  )
   const retainedSources = useMemo(
     () => [currentBytes, ...imports.values()],
     [currentBytes, imports],
@@ -690,6 +735,7 @@ export function PdfEditor({
    * 端点（改回原样也要报 `false`）。放在渲染期算就得用 effect 转发。
    */
   const applyPages = (pages: PdfPageRef[], nextImports = imports, fromAgent = false) => {
+    redactionRequestRef.current?.abort()
     // A structural edit changes the page coordinate system. The already rendered
     // text stays in the working bytes; its temporary object ids can no longer be
     // safely replayed against the earlier base.
@@ -915,6 +961,7 @@ export function PdfEditor({
 
   const save = async () => {
     if (currentBytes === null || !dirty || source.saving || contentBusy) return
+    redactionRequestRef.current?.abort()
     setNotice(null)
     const handle = agentRef.current
     const version = handle?.getVersion()
@@ -1130,6 +1177,12 @@ export function PdfEditor({
   )
 
   useEffect(() => {
+    batchLiveRef.current = {
+      documentId,
+      source: source.bytes,
+      edit: settled,
+      saving: source.saving,
+    }
     agentSnapshotRef.current =
       currentBytes === null || original === null
         ? null
@@ -1187,6 +1240,7 @@ export function PdfEditor({
       expectedVersion: number,
       signal?: AbortSignal,
     ) => {
+      redactionRequestRef.current?.abort()
       const sourceBytes = source.bytes
       if (!hostApply || currentBytes === null || sourceBytes === null)
         throw new Error('PDF 文字宿主执行器尚未就绪')
@@ -1202,52 +1256,24 @@ export function PdfEditor({
       setContentBusy(true)
       await runWithCleanup(
         async () => {
-          if (inserts.length > 30) throw new Error('一次最多保留 30 段待保存文字')
-          const pdf = inserts.length > 0 ? await loadPdfDocument(base) : null
-          const items = await Promise.all(
-            inserts.map(async (insert) => {
-              const targetPage = await pdf!.getPage(insert.pageIndex + 1)
-              const viewport = targetPage.getViewport({ scale: 1 })
-              if (
-                insert.x < 0 ||
-                insert.y < 0 ||
-                insert.x > viewport.width ||
-                insert.y + insert.fontSize > viewport.height
-              )
-                throw new Error(`文字 ${insert.id} 的位置超出页面范围`)
-              return {
-                pageIndex: insert.pageIndex,
-                origin: viewport.convertToPdfPoint(insert.x, insert.y + insert.fontSize),
-                text: insert.text,
-                fontSize: insert.fontSize,
-                color: insert.color,
-              }
+          const assertCurrent = () => {
+            if (
+              controller.signal.aborted ||
+              agentRef.current !== handle ||
+              handle.getVersion() !== expectedVersion
+            )
+              throw new Error('PDF 画布已变化，文字结果未应用')
+          }
+          const applied = {
+            bytes: await replayPdfPendingText({
+              base,
+              inserts,
+              version: expectedVersion,
+              apply: hostApply,
+              assertCurrent,
+              signal: controller.signal,
             }),
-          )
-          if (
-            controller.signal.aborted ||
-            agentRef.current !== handle ||
-            handle.getVersion() !== expectedVersion
-          )
-            throw new Error('PDF 画布已变化，文字结果未应用')
-          const applied =
-            inserts.length === 0
-              ? { bytes: base, version: expectedVersion + 1 }
-              : await hostApply({
-                  bytes: base,
-                  expectedVersion,
-                  kind: 'insert',
-                  items,
-                  signal: controller.signal,
-                })
-          if (
-            controller.signal.aborted ||
-            agentRef.current !== handle ||
-            handle.getVersion() !== expectedVersion
-          )
-            throw new Error('PDF 画布已变化，文字结果未应用')
-          if (applied.version !== expectedVersion + 1)
-            throw new Error('PDF 宿主返回了错误的画布版本')
+          }
           const entries = await readPdfPages(applied.bytes)
           if (
             controller.signal.aborted ||
@@ -1290,6 +1316,7 @@ export function PdfEditor({
       )
     }
     agentInsertRef.current = async (input, expectedVersion, signal) => {
+      redactionRequestRef.current?.abort()
       if (currentBytes === null || source.bytes === null) throw new Error('PDF 原件尚未读取完成')
       const pending = agentPendingRef.current
       const liveBytes = agentSnapshotRef.current?.bytes ?? currentBytes
@@ -1340,13 +1367,25 @@ export function PdfEditor({
       return inserted
     }
     agentContentRef.current = async (tool, args, expectedVersion, signal, manual) => {
+      redactionRequestRef.current?.abort()
       const handle = agentRef.current
       const snapshotBytes = agentSnapshotRef.current?.bytes
       const sourceBytes = source.bytes
       if (!handle || !snapshotBytes || !sourceBytes) throw new Error('PDF 原件尚未读取完成')
+      const frozenPending = agentPendingRef.current
+      const frozenBaseline = savedBaselineRef.current
+      const frozenSaving = savingPendingRef.current
+      const atomicBatch =
+        tool === 'apply_ops' &&
+        (frozenPending !== null ||
+          (Array.isArray(args.ops) &&
+            args.ops.some((op) =>
+              ['removeMarkup', 'setNoteContents', 'removeTextInsert'].includes(String(op?.op)),
+            )))
       let base: Uint8Array = snapshotBytes
       const isLocal =
         (PDF_LOCAL_TOOLS as readonly string[]).includes(tool) ||
+        atomicBatch ||
         (tool === 'apply_ops' &&
           Array.isArray(args.ops) &&
           args.ops.some((op) => op?.op === 'setMetadata'))
@@ -1358,7 +1397,7 @@ export function PdfEditor({
       const canMaterialize = isLocal || isForm
       if (
         (!canMaterialize && base === currentBytes && settled !== null && !sameAsFile) ||
-        (agentPendingRef.current?.inserts.length ?? 0) > 0 ||
+        (tool !== 'apply_ops' && (agentPendingRef.current?.inserts.length ?? 0) > 0) ||
         source.saving
       )
         throw new Error('请先保存当前页面或插字改动，再编辑PDF内容')
@@ -1372,7 +1411,15 @@ export function PdfEditor({
           controller.signal.aborted ||
           agentRef.current !== handle ||
           handle.getVersion() !== expectedVersion ||
-          agentSnapshotRef.current?.bytes !== snapshotBytes
+          agentSnapshotRef.current?.bytes !== snapshotBytes ||
+          (tool === 'apply_ops' &&
+            (agentPendingRef.current !== frozenPending ||
+              savedBaselineRef.current !== frozenBaseline ||
+              savingPendingRef.current !== frozenSaving ||
+              batchLiveRef.current?.documentId !== documentId ||
+              batchLiveRef.current.source !== sourceBytes ||
+              batchLiveRef.current.edit !== settled ||
+              batchLiveRef.current.saving))
         )
           throw new Error('PDF 画布已变化，内容结果未应用')
       }
@@ -1381,6 +1428,8 @@ export function PdfEditor({
       return runWithCleanup(
         async () => {
           assertCurrent()
+          if (tool === 'apply_ops' && frozenPending && settled !== null && !sameAsFile)
+            throw new Error('待保存插字与页面布局不能可靠映射，请先保存后重新读取')
           if (canMaterialize && base === currentBytes && settled !== null && !sameAsFile) {
             if (!hostLocal) throw new Error('PDF 本地工具宿主未连接，页面调整后请先保存再填写表单')
             base = await buildPdfWorkingCopy({
@@ -1394,6 +1443,64 @@ export function PdfEditor({
             })
           }
           assertCurrent()
+          if (atomicBatch) {
+            if (
+              frozenPending &&
+              (frozenPending.documentId !== documentId || frozenPending.source !== sourceBytes)
+            )
+              throw new Error('待保存文字已失效，请重新读取')
+            const candidate = await buildPdfBatchCandidate({
+              args,
+              bytes: base,
+              pending: frozenPending,
+              version: expectedVersion,
+              local: hostLocal,
+              apply: hostApply,
+              annotations: hostAnnotations,
+              assertCurrent,
+              signal: controller.signal,
+            })
+            assertCurrent()
+            if (candidate.dryRun)
+              return { changed: false, data: { ...candidate.data, dryRun: true } }
+            const pages: PdfPageRef[] = candidate.structure.map((entry, index) => ({
+              origin: { kind: 'original', index },
+              rotation: entry.rotation,
+              base: { width: entry.width, height: entry.height },
+              crop: null,
+              paper: null,
+            }))
+            const baselineBytes =
+              frozenBaseline?.documentId === documentId && frozenBaseline.source === sourceBytes
+                ? frozenBaseline.bytes
+                : sourceBytes
+            const nextDirty = candidate.bytes !== baselineBytes
+            // One synchronous publication. No intermediate host result has touched editor state.
+            agentPendingRef.current = candidate.nextPending
+            agentSnapshotRef.current = {
+              bytes: candidate.bytes,
+              pages,
+              activePage: Math.min(at, pages.length - 1),
+              dirty: nextDirty,
+            }
+            setWorking({
+              source: sourceBytes,
+              bytes: candidate.bytes,
+              structure: candidate.structure,
+            })
+            setPendingText(candidate.nextPending)
+            setEdit(null)
+            setSelectedText(null)
+            setSelectedPendingId(null)
+            setPendingDraft(null)
+            setImageList(null)
+            setImageSelection(null)
+            setFormList(null)
+            setLocalInfo(candidate.info ? { bytes: candidate.bytes, info: candidate.info } : null)
+            setNotice(candidate.data.message ?? null)
+            onDirtyChange?.(nextDirty)
+            return { changed: true, data: candidate.data }
+          }
           const result = isLocal
             ? await (async () => {
                 if (!hostLocal) throw new Error('PDF 本地工具宿主未连接')
@@ -1448,6 +1555,8 @@ export function PdfEditor({
                 }
                 let selectedFile = manual && assetFile instanceof File ? assetFile : undefined
                 if ((tool === 'replace_pages' || tool === 'import_pages') && !selectedFile) {
+                  setBlocksOpen(false)
+                  setRedactionOpen(false)
                   setImagesOpen(false)
                   setFormsOpen(false)
                   setAnnotationsOpen(false)
@@ -1484,6 +1593,8 @@ export function PdfEditor({
                   })
                 if (response.outputs) {
                   setLocalOutputs(response.outputs)
+                  setBlocksOpen(false)
+                  setRedactionOpen(false)
                   setImagesOpen(false)
                   setFormsOpen(false)
                   setAnnotationsOpen(false)
@@ -1516,6 +1627,7 @@ export function PdfEditor({
                 annotations: hostAnnotations,
                 forms: hostForms,
                 images: hostImages,
+                blocks: hostBlocks,
                 signal: controller.signal,
               })
           assertCurrent()
@@ -1680,8 +1792,46 @@ export function PdfEditor({
     agentRestoreRef,
   ])
 
+  const blocksShown =
+    blocksOpen &&
+    !assetRequest &&
+    !localMode &&
+    !imagesOpen &&
+    !formsOpen &&
+    !annotationsOpen &&
+    !imageExportOpen
+  const currentBlocks = useMemo(
+    () =>
+      textIndex?.bytes === currentBytes && textIndex.key === textKey
+        ? groupPdfTextBlocks(textIndex.index, at)
+        : [],
+    [textIndex, currentBytes, textKey, at],
+  )
+  const selectedBlock =
+    blocksShown &&
+    blockSelection?.bytes === currentBytes &&
+    blockSelection.key === textKey &&
+    blockSelection.block.page === at
+      ? blockSelection.block
+      : null
+  const blockIssue =
+    !sameAsFile || pendingInserts.length > 0
+      ? '请先保存页面或插字改动，再移动原文段落。'
+      : undefined
+  const selectBlock = (block: PdfTextBlock) => {
+    if (!currentBytes || contentBusy || source.saving || blockIssue) return
+    setBlockSelection({ bytes: currentBytes, key: textKey, block })
+    setNotice(null)
+  }
+  const pickBlock = (x: number, y: number) => {
+    if (textIndex?.bytes !== currentBytes || textIndex.key !== textKey) return
+    const block = pickPdfTextBlock(textIndex.index, at, x, y)
+    if (block) selectBlock(block)
+    else setNotice('这里没有可单独定位的段落；请点击文字或从面板选择。')
+  }
+
   useEffect(() => {
-    if ((!findOpen && !selectTextMode) || currentBytes === null) return
+    if ((!findOpen && !selectTextMode && !blocksShown) || currentBytes === null) return
     // 这一份页序已经扫过了
     if (textIndex !== null && textIndex.bytes === currentBytes && textIndex.key === textKey) return
     let cancelled = false
@@ -1701,7 +1851,7 @@ export function PdfEditor({
         if (index.pagesWithText === 0) {
           setFindOpen(false)
           setNotice(
-            selectTextMode
+            selectTextMode || blocksShown
               ? '这份 PDF 没有文字层（可能是扫描件），无法定位原文'
               : '这份 PDF 没有文字层（可能是扫描件），搜不到内容',
           )
@@ -1716,7 +1866,7 @@ export function PdfEditor({
     return () => {
       cancelled = true
     }
-  }, [findOpen, selectTextMode, currentBytes, textIndex, textKey, textSources])
+  }, [findOpen, selectTextMode, blocksShown, currentBytes, textIndex, textKey, textSources])
 
   const activeSelectedText =
     selectedText?.bytes === currentBytes && selectedText.key === textKey ? selectedText.run : null
@@ -1763,6 +1913,7 @@ export function PdfEditor({
     tool: string,
     args: Record<string, unknown>,
     expectedVersion?: number,
+    signal?: AbortSignal,
   ) => {
     const handle = agentRef.current
     if (!handle) return
@@ -1770,7 +1921,9 @@ export function PdfEditor({
     const result = await handle.execute(tool, args, {
       expectedVersion: expectedVersion ?? handle.getVersion(),
       manual: true,
+      signal,
     })
+    if (signal?.aborted) return result
     if (!result.ok) {
       setNotice(
         `${tool === 'markup_text' ? '标注原文失败' : tool === 'edit_text' ? '替换原文失败' : 'PDF 操作失败'}：${result.error ?? '未知错误'}`,
@@ -1936,6 +2089,150 @@ export function PdfEditor({
     agentRef,
     agentSnapshotRef,
   ])
+  const signatureEnabled = localMode === 'signature'
+  const drawingEnabled = localMode === 'drawing'
+  const redactionShown =
+    redactionOpen &&
+    !assetRequest &&
+    !localMode &&
+    !imagesOpen &&
+    !formsOpen &&
+    !annotationsOpen &&
+    !blocksOpen &&
+    !imageExportOpen
+  const redactionIssue =
+    dirty ||
+    !sameAsFile ||
+    pendingInserts.length > 0 ||
+    (insertMode && (!!insertText.trim() || insertPoint !== null)) ||
+    !!replacementDraft.trim()
+      ? '请先保存或取消页面、文字和其他待提交修改，再标记涂黑副本。'
+      : null
+  const redaction = usePdfRedactionCopy({
+    identity: imageExportIdentity,
+    enabled: redactionShown,
+    bytes: currentBytes,
+    pageIndex: at,
+    rotation: page?.rotation ?? 0,
+    blocked: contentBusy || source.saving || !!redactionIssue,
+    host: hostLocal,
+    agent: agentRef,
+    onRequest: (controller) => {
+      redactionRequestRef.current = controller
+    },
+    onClose: () => setRedactionOpen(false),
+  })
+  const drawingBinding = { documentId, currentBytes, layout, at, drawingEnabled, historyVersion }
+  const drawingPreview = usePdfDrawingPreview({
+    enabled: drawingEnabled || signatureEnabled,
+    bytes: currentBytes,
+    layout,
+    imports,
+    host: hostLocal,
+    revision: historyVersion,
+    agent: agentRef,
+  })
+  const drawingPage = drawingPreview.value?.pages[at]
+  const validLocalInfo =
+    localInfo?.bytes === currentBytes && (localInfo.pages ? localInfo.pages === layout : sameAsFile)
+      ? localInfo.info
+      : undefined
+  const drawing = usePdfDrawingCanvas({
+    enabled: drawingEnabled,
+    binding: drawingBinding,
+    selectionKey: `${documentId}:${at}`,
+    page: at + 1,
+    size: drawingPage ? screenSize(drawingPage, drawingPage.rotation) : { width: 1, height: 1 },
+    drawings: validLocalInfo?.drawings ?? [],
+    ready: !!drawingPage && !!validLocalInfo,
+    busy: contentBusy || source.saving || (activePendingText?.inserts.length ?? 0) > 0,
+    getVersion: () => agentRef.current?.getVersion() ?? 0,
+    apply: runManualContentTool,
+  })
+  const signature = usePdfSignature({
+    identity: {
+      documentId,
+      bytes: currentBytes,
+      layout,
+      page: at + 1,
+      revision: historyVersion,
+      enabled: signatureEnabled,
+      saving: source.saving,
+    },
+    size: drawingPage ? screenSize(drawingPage, drawingPage.rotation) : { width: 1, height: 1 },
+    ready:
+      !!drawingPage &&
+      !!validLocalInfo &&
+      !validLocalInfo.signatureIssues?.some((item) => item.page === at + 1),
+    issue: validLocalInfo?.signatureIssues?.find((item) => item.page === at + 1)?.reason,
+    busy: contentBusy || source.saving || (activePendingText?.inserts.length ?? 0) > 0,
+    signatures: validLocalInfo?.signatures ?? [],
+    getVersion: () => agentRef.current?.getVersion() ?? 0,
+    apply: runManualContentTool,
+    onClose: () => closeInspector(),
+  })
+  const signatureTrigger = (close?: () => void) => (
+    <ToolbarButton
+      ref={signatureTriggerRef}
+      label="签名与印章"
+      active={signatureEnabled}
+      disabled={!ready || contentBusy || source.saving || !hostLocal}
+      disabledReason="PDF 正在处理或本地工具宿主未连接"
+      onClick={() => {
+        close?.()
+        setBlocksOpen(false)
+        setRedactionOpen(false)
+        setImagesOpen(false)
+        setFormsOpen(false)
+        setAnnotationsOpen(false)
+        setImageExportOpen(false)
+        setInsertMode(false)
+        setSelectTextMode(false)
+        setLocalMode('signature')
+      }}
+    >
+      <PenLine size={14} />
+      签名
+    </ToolbarButton>
+  )
+  const formsTrigger = (close?: () => void) => (
+    <ToolbarButton
+      label="交互表单"
+      ref={formsTriggerRef}
+      disabled={!hostForms || contentBusy}
+      disabledReason="PDF 表单宿主未连接或正在处理"
+      onClick={() => {
+        close?.()
+        setBlocksOpen(false)
+        setRedactionOpen(false)
+        setImagesOpen(false)
+        setAnnotationsOpen(false)
+        setFormsOpen(!formsOpen)
+        if (!formsOpen) void runManualContentTool('list_form_fields', {})
+      }}
+    >
+      交互表单
+    </ToolbarButton>
+  )
+  const annotationsTrigger = (close?: () => void) => (
+    <ToolbarButton
+      label="便笺与标注"
+      ref={annotationsTriggerRef}
+      disabled={!hostAnnotations || contentBusy}
+      disabledReason="PDF 批注执行器未连接或正在写入"
+      onClick={() => {
+        close?.()
+        setBlocksOpen(false)
+        setRedactionOpen(false)
+        setImagesOpen(false)
+        setFormsOpen(false)
+        setAnnotationsOpen(!annotationsOpen)
+        if (!annotationsOpen) void runManualContentTool('read_annotations', {})
+      }}
+    >
+      便笺与标注
+    </ToolbarButton>
+  )
   const markupSelectedOriginal = async (type: 'highlight' | 'underline' | 'strikeout') => {
     const run = activeSelectedText
     if (!run || !verifiedSelection) return
@@ -2325,6 +2622,7 @@ export function PdfEditor({
               disabledReason: contentBusy ? '文字正在写入' : insertReason,
               onSelect: () => {
                 setAnnotationsOpen(false)
+                setRedactionOpen(false)
                 setInsertMode((value) => !value)
                 setInsertPoint(null)
                 setNotice(null)
@@ -2396,38 +2694,62 @@ export function PdfEditor({
       deferredInspectorFocus.current = {
         documentId,
         editor: document.activeElement?.closest('.mimir-editor') ?? null,
-        sectionKey: localMode
-          ? 'document-tools'
-          : imagesOpen
-            ? 'images'
-            : formsOpen
-              ? 'forms'
-              : 'annotations',
-        trigger: (localMode
-          ? localTriggerRef
-          : imagesOpen
-            ? imagesTriggerRef
-            : formsOpen
-              ? formsTriggerRef
-              : annotationsTriggerRef
+        sectionKey: signatureEnabled
+          ? 'visual-signature'
+          : localMode
+            ? 'document-tools'
+            : blocksShown
+              ? 'text-blocks'
+              : imagesOpen
+                ? 'images'
+                : formsOpen
+                  ? 'forms'
+                  : 'annotations',
+        trigger: (signatureEnabled
+          ? signatureTriggerRef
+          : localMode
+            ? localTriggerRef
+            : blocksShown
+              ? blocksTriggerRef
+              : imagesOpen
+                ? imagesTriggerRef
+                : formsOpen
+                  ? formsTriggerRef
+                  : annotationsTriggerRef
         ).current,
       }
     }
+    setBlocksOpen(false)
+    setRedactionOpen(false)
     setImagesOpen(false)
     setFormsOpen(false)
     setAnnotationsOpen(false)
     setLocalMode(null)
+    setImageExportOpen(false)
   }
-  const inspectorPanel = assetRequest ? (
+  const imageExportShown =
+    imageExportOpen && !assetRequest && !localMode && !imagesOpen && !formsOpen && !annotationsOpen
+  const inspectorPanel = redactionShown ? (
+    redaction.panel
+  ) : assetRequest ? (
     <PdfLocalAssetRequest
       tool={assetRequest.tool}
       onContinue={assetRequest.confirm}
       onCancel={closeInspector}
     />
+  ) : signatureEnabled ? (
+    signature.placing ? null : (
+      signature.panel
+    )
   ) : localMode ? (
     <PdfLocalPanel
       key={`${documentId}:${localMode}`}
       mode={localMode}
+      onModeChange={setLocalMode}
+      drawingControls={drawing.controls}
+      drawingFooter={drawing.footer}
+      selectedDrawingId={drawing.selectedId}
+      onSelectDrawing={drawing.onSelect}
       page={at + 1}
       pageCount={layout.length}
       info={
@@ -2438,7 +2760,7 @@ export function PdfEditor({
       }
       outputs={localOutputs}
       busy={contentBusy}
-      error={notice}
+      error={notice ?? (drawingEnabled ? drawingPreview.error : null)}
       onClose={closeInspector}
       onAction={(tool, args) => runManualContentTool(tool, args)}
     />
@@ -2625,6 +2947,57 @@ export function PdfEditor({
         </ul>
       </div>
     </section>
+  ) : blocksShown && currentBytes && hostBlocks ? (
+    <PdfTextBlockPanel
+      key={`${documentId}:${at}:${historyVersion}`}
+      bytes={currentBytes}
+      blocks={currentBlocks}
+      selected={selectedBlock}
+      getVersion={getBlockVersion}
+      size={displaySize(page)}
+      host={hostBlocks}
+      busy={contentBusy || source.saving}
+      ready={textIndex?.bytes === currentBytes && textIndex.key === textKey && !blockIssue}
+      issue={blockIssue}
+      onSelect={selectBlock}
+      onApply={runManualContentTool}
+      onClose={closeInspector}
+    />
+  ) : imageExportShown ? (
+    <PdfImageExportControls
+      identity={imageExportIdentity}
+      page={at + 1}
+      pageCount={layout.length}
+      blocked={contentBusy || source.saving}
+      onClose={closeInspector}
+      getSnapshot={async (signal) => {
+        const handle = agentRef.current
+        const version = handle?.getVersion()
+        if (!currentBytes || !handle || version === undefined) throw new Error('PDF 尚未就绪')
+        const assertCurrent = () => {
+          signal.throwIfAborted()
+          if (
+            agentRef.current !== handle ||
+            handle.getVersion() !== version ||
+            agentSnapshotRef.current?.bytes !== currentBytes ||
+            agentSnapshotRef.current?.pages !== layout
+          )
+            throw new Error('PDF 画布已变化，请重新生成页面图像')
+        }
+        assertCurrent()
+        const bytes = await buildPdfWorkingCopy({
+          bytes: currentBytes,
+          layout,
+          imports,
+          host: hostLocal,
+          version,
+          signal,
+          assertCurrent,
+        })
+        assertCurrent()
+        return bytes
+      }}
+    />
   ) : null
   return (
     <EditorShell
@@ -2665,9 +3038,107 @@ export function PdfEditor({
             { key: 'home', label: '开始' },
             { key: 'edit', label: '编辑' },
             { key: 'page', label: '页面' },
+            { key: 'draw', label: '绘制' },
             { key: 'view', label: '视图' },
           ]}
           sections={[
+            {
+              key: 'redaction-copy',
+              label: '涂黑副本',
+              tab: 'edit',
+              minWidth: 0,
+              content: (
+                <ToolbarButton
+                  ref={redactionTriggerRef}
+                  label="标记涂黑副本"
+                  active={redactionShown}
+                  disabled={!ready || contentBusy || source.saving || !hostLocal}
+                  disabledReason={!hostLocal ? 'PDF 本地工具宿主未连接' : 'PDF 尚未就绪或正在处理'}
+                  onClick={() => {
+                    if (redactionIssue) {
+                      setNotice(redactionIssue)
+                      return
+                    }
+                    setBlocksOpen(false)
+                    setImagesOpen(false)
+                    setFormsOpen(false)
+                    setAnnotationsOpen(false)
+                    setImageExportOpen(false)
+                    setLocalMode(null)
+                    setInsertMode(false)
+                    setSelectTextMode(false)
+                    setPendingEditorOpen(false)
+                    setSelectedText(null)
+                    setInsertPoint(null)
+                    setNotice(null)
+                    setRedactionOpen(!redactionShown)
+                  }}
+                >
+                  涂黑副本
+                </ToolbarButton>
+              ),
+            },
+            {
+              key: 'page-images',
+              label: '页面图像',
+              tab: 'view',
+              minWidth: 0,
+              content: (
+                <ToolbarButton
+                  ref={imageExportTriggerRef}
+                  label="导出页面图像"
+                  active={imageExportShown}
+                  disabled={!ready || contentBusy || source.saving}
+                  disabledReason="PDF 尚未就绪或正在处理"
+                  onClick={() => {
+                    setBlocksOpen(false)
+                    setRedactionOpen(false)
+                    setImagesOpen(false)
+                    setFormsOpen(false)
+                    setAnnotationsOpen(false)
+                    setLocalMode(null)
+                    setImageExportOpen(true)
+                  }}
+                >
+                  导出页面图像
+                </ToolbarButton>
+              ),
+            },
+            {
+              key: 'visual-signature',
+              label: '签名',
+              tab: 'draw',
+              minWidth: 0,
+              content: signatureTrigger(),
+              collapsedContent: (close) => signatureTrigger(close),
+            },
+            {
+              key: 'canvas-drawing',
+              label: '画布绘图',
+              tab: 'draw',
+              minWidth: 0,
+              content: (
+                <ToolbarButton
+                  label="打开画布绘图"
+                  active={drawingEnabled}
+                  disabled={!ready || contentBusy || source.saving || !hostLocal}
+                  disabledReason="PDF 正在处理或本地工具宿主未连接"
+                  onClick={() => {
+                    setBlocksOpen(false)
+                    setRedactionOpen(false)
+                    setImagesOpen(false)
+                    setFormsOpen(false)
+                    setAnnotationsOpen(false)
+                    setInsertMode(false)
+                    setSelectTextMode(false)
+                    setLocalMode('drawing')
+                  }}
+                >
+                  <PdfDrawingRibbonIcon />
+                  画布绘图
+                </ToolbarButton>
+              ),
+            },
             {
               key: 'document-tools',
               label: '文档工具',
@@ -2681,6 +3152,8 @@ export function PdfEditor({
                   disabled={!ready || contentBusy || !hostLocal}
                   disabledReason={!hostLocal ? 'PDF 本地工具宿主未连接' : 'PDF 正在处理'}
                   onClick={() => {
+                    setBlocksOpen(false)
+                    setRedactionOpen(false)
                     setImagesOpen(false)
                     setFormsOpen(false)
                     setAnnotationsOpen(false)
@@ -2713,6 +3186,8 @@ export function PdfEditor({
                     disabled={!canInsertText || contentBusy}
                     disabledReason={contentBusy ? '文字正在写入' : insertReason}
                     onClick={() => {
+                      setBlocksOpen(false)
+                      setRedactionOpen(false)
                       setAnnotationsOpen(false)
                       setInsertMode((value) => !value)
                       setInsertPoint(null)
@@ -2726,7 +3201,10 @@ export function PdfEditor({
                     active={pendingEditorOpen}
                     disabled={pendingInserts.length === 0 || contentBusy}
                     disabledReason={contentBusy ? '文字正在写入' : '当前没有待保存的插入文字'}
-                    onClick={() => setPendingEditorOpen((value) => !value)}
+                    onClick={() => {
+                      setRedactionOpen(false)
+                      setPendingEditorOpen((value) => !value)
+                    }}
                   >
                     编辑插字
                   </ToolbarButton>
@@ -2736,6 +3214,8 @@ export function PdfEditor({
                     disabled={!ready || contentBusy}
                     disabledReason={contentBusy ? '文字正在写入' : 'PDF 尚未读取完成'}
                     onClick={() => {
+                      setBlocksOpen(false)
+                      setRedactionOpen(false)
                       setAnnotationsOpen(false)
                       setSelectTextMode((value) => !value)
                       inspectRequestRef.current++
@@ -2768,6 +3248,36 @@ export function PdfEditor({
               ),
             },
             {
+              key: 'text-blocks',
+              label: '原文段落',
+              tab: 'edit',
+              minWidth: 0,
+              content: (
+                <ToolbarButton
+                  ref={blocksTriggerRef}
+                  label="原文段落编辑"
+                  active={blocksShown}
+                  disabled={!ready || !hostBlocks || contentBusy || source.saving}
+                  disabledReason={!hostBlocks ? 'PDF 原文段落宿主未连接' : 'PDF 正在处理'}
+                  onClick={() => {
+                    const open = !blocksShown
+                    setImagesOpen(false)
+                    setFormsOpen(false)
+                    setAnnotationsOpen(false)
+                    setImageExportOpen(false)
+                    setLocalMode(null)
+                    setInsertMode(false)
+                    setSelectTextMode(false)
+                    setBlocksOpen(open)
+                    setBlockSelection(null)
+                    setNotice(null)
+                  }}
+                >
+                  原文段落
+                </ToolbarButton>
+              ),
+            },
+            {
               key: 'images',
               label: '图片',
               tab: 'edit',
@@ -2779,6 +3289,8 @@ export function PdfEditor({
                   disabled={!hostImages || contentBusy}
                   disabledReason="PDF图片宿主未连接或正在处理"
                   onClick={() => {
+                    setBlocksOpen(false)
+                    setRedactionOpen(false)
                     setFormsOpen(false)
                     setAnnotationsOpen(false)
                     setImagesOpen(!imagesOpen)
@@ -2794,44 +3306,16 @@ export function PdfEditor({
               label: '表单',
               tab: 'edit',
               minWidth: 0,
-              content: (
-                <ToolbarButton
-                  label="交互表单"
-                  ref={formsTriggerRef}
-                  disabled={!hostForms || contentBusy}
-                  disabledReason="PDF 表单宿主未连接或正在处理"
-                  onClick={() => {
-                    setImagesOpen(false)
-                    setAnnotationsOpen(false)
-                    setFormsOpen(!formsOpen)
-                    if (!formsOpen) void runManualContentTool('list_form_fields', {})
-                  }}
-                >
-                  交互表单
-                </ToolbarButton>
-              ),
+              content: formsTrigger(),
+              collapsedContent: (close) => formsTrigger(close),
             },
             {
               key: 'annotations',
               label: '批注',
               tab: 'edit',
               minWidth: 0,
-              content: (
-                <ToolbarButton
-                  label="便笺与标注"
-                  ref={annotationsTriggerRef}
-                  disabled={!hostAnnotations || contentBusy}
-                  disabledReason="PDF 批注执行器未连接或正在写入"
-                  onClick={() => {
-                    setImagesOpen(false)
-                    setFormsOpen(false)
-                    setAnnotationsOpen(!annotationsOpen)
-                    if (!annotationsOpen) void runManualContentTool('read_annotations', {})
-                  }}
-                >
-                  便笺与标注
-                </ToolbarButton>
-              ),
+              content: annotationsTrigger(),
+              collapsedContent: (close) => annotationsTrigger(close),
             },
             {
               key: 'page-order',
@@ -3192,9 +3676,32 @@ export function PdfEditor({
                 <EditorState tone="error">渲染失败：{renderError}</EditorState>
               ) : (
                 <PdfSheet
-                  bytes={currentBytes}
-                  page={page}
-                  imports={imports}
+                  bytes={
+                    (drawingEnabled || signatureEnabled) && drawingPage
+                      ? drawingPreview.value!.bytes
+                      : currentBytes
+                  }
+                  page={
+                    (drawingEnabled || signatureEnabled) && drawingPage
+                      ? {
+                          origin: { kind: 'original', index: at },
+                          rotation: drawingPage.rotation,
+                          base: drawingPage,
+                          crop: null,
+                          paper: null,
+                        }
+                      : page
+                  }
+                  imports={
+                    (drawingEnabled || signatureEnabled) && drawingPage ? NO_IMPORTS : imports
+                  }
+                  drawingOverlay={
+                    redactionShown
+                      ? redaction.overlay
+                      : signatureEnabled
+                        ? signature.overlay
+                        : drawing.overlay
+                  }
                   zoom={zoom}
                   highlight={{
                     matches:
@@ -3205,6 +3712,7 @@ export function PdfEditor({
                     page: at,
                   }}
                   selectedText={activeSelectedText?.page === at ? activeSelectedText : null}
+                  blockSelection={selectedBlock?.rect}
                   imageSelection={(() => {
                     const item =
                       imagesOpen && imageList?.bytes === currentBytes
@@ -3232,39 +3740,69 @@ export function PdfEditor({
                   }
                   onError={setRenderError}
                   onPickPoint={
-                    insertMode ? (origin) => setInsertPoint({ page: at, origin }) : undefined
+                    !redactionShown && !drawingEnabled && !signatureEnabled && insertMode
+                      ? (origin) => setInsertPoint({ page: at, origin })
+                      : undefined
                   }
                   onPickText={
-                    selectTextMode && textIndex?.bytes === currentBytes && textIndex.key === textKey
-                      ? pickText
-                      : undefined
+                    blocksShown && !contentBusy && !source.saving && !blockIssue
+                      ? pickBlock
+                      : !redactionShown &&
+                          !drawingEnabled &&
+                          !signatureEnabled &&
+                          selectTextMode &&
+                          textIndex?.bytes === currentBytes &&
+                          textIndex.key === textKey
+                        ? pickText
+                        : undefined
                   }
                 />
               )}
             </div>
           </ThumbnailSidebar>
         </div>
+        {signatureEnabled && signature.actions}
         {inspectorPanel && (
           <PdfInspector
             fallbackSectionKey={
-              localMode
-                ? 'document-tools'
-                : imagesOpen
-                  ? 'images'
-                  : formsOpen
-                    ? 'forms'
-                    : 'annotations'
+              redactionShown
+                ? 'redaction-copy'
+                : imageExportShown
+                  ? 'page-images'
+                  : blocksShown
+                    ? 'text-blocks'
+                    : signatureEnabled
+                      ? 'visual-signature'
+                      : localMode
+                        ? 'document-tools'
+                        : imagesOpen
+                          ? 'images'
+                          : formsOpen
+                            ? 'forms'
+                            : 'annotations'
             }
             onClose={closeInspector}
-            onEscape={closeInspector}
+            onEscape={() => {
+              if (signatureEnabled && signature.hasDraft) signature.cancel()
+              else if (drawingEnabled && drawing.hasDraft) drawing.cancel()
+              else closeInspector()
+            }}
             triggerRef={
-              localMode
-                ? localTriggerRef
-                : imagesOpen
-                  ? imagesTriggerRef
-                  : formsOpen
-                    ? formsTriggerRef
-                    : annotationsTriggerRef
+              redactionShown
+                ? redactionTriggerRef
+                : imageExportShown
+                  ? imageExportTriggerRef
+                  : blocksShown
+                    ? blocksTriggerRef
+                    : signatureEnabled
+                      ? signatureTriggerRef
+                      : localMode
+                        ? localTriggerRef
+                        : imagesOpen
+                          ? imagesTriggerRef
+                          : formsOpen
+                            ? formsTriggerRef
+                            : annotationsTriggerRef
             }
           >
             {inspectorPanel}
@@ -3386,8 +3924,10 @@ function PdfSheet({
   zoom,
   highlight,
   selectedText,
+  blockSelection,
   markupFeedback,
   imageSelection,
+  drawingOverlay,
   onError,
   onPickPoint,
   onPickText,
@@ -3398,12 +3938,20 @@ function PdfSheet({
   zoom: number
   highlight: { matches: readonly PdfMatch[]; at: number; page: number }
   imageSelection?: PdfRect
+  drawingOverlay?: ReactNode
   selectedText: PdfTextRun | null
+  blockSelection?: PdfRect
   markupFeedback: { run: PdfTextRun; type: 'highlight' | 'underline' | 'strikeout' } | null
   onError: (message: string | null) => void
   onPickPoint?: (origin: [number, number]) => void
   onPickText?: (x: number, y: number) => void
 }) {
+  const [rendered, setRendered] = useState<{
+    bytes: Uint8Array
+    index: number
+    rotation: number
+    width: number
+  } | null>(null)
   const from = sourceOf(page, bytes, imports)
   /**
    * 画布上的宽高比。
@@ -3428,6 +3976,7 @@ function PdfSheet({
       >
         <span className="mimir-pdf-sheet__note">空白页</span>
         <CropOverlay page={page} />
+        {drawingOverlay}
       </div>
     )
   }
@@ -3444,6 +3993,10 @@ function PdfSheet({
         rotation={page.rotation}
         width={width}
         onError={onError}
+        onRendered={() =>
+          from.bytes &&
+          setRendered({ bytes: from.bytes, index: from.index, rotation: page.rotation, width })
+        }
         onPickPoint={onPickPoint}
         onPickText={onPickText}
       />
@@ -3461,6 +4014,15 @@ function PdfSheet({
           className="mimir-pdf-hit"
           data-active="true"
           style={hitStyle(selectedText.rect)}
+          aria-hidden="true"
+        />
+      )}
+      {blockSelection && (
+        <span
+          className="mimir-pdf-hit"
+          data-active="true"
+          data-block-selected="true"
+          style={hitStyle(blockSelection)}
           aria-hidden="true"
         />
       )}
@@ -3501,6 +4063,11 @@ function PdfSheet({
         )),
       )}
       <CropOverlay page={page} />
+      {rendered?.bytes === from.bytes &&
+        rendered.index === from.index &&
+        rendered.rotation === page.rotation &&
+        rendered.width === width &&
+        drawingOverlay}
     </div>
   )
 }
@@ -3580,6 +4147,7 @@ function PdfCanvas({
   rotation,
   width,
   onError,
+  onRendered,
   onPickPoint,
   onPickText,
 }: {
@@ -3588,6 +4156,7 @@ function PdfCanvas({
   rotation: number
   width: number
   onError: (message: string | null) => void
+  onRendered?(): void
   onPickPoint?: (origin: [number, number]) => void
   onPickText?: (x: number, y: number) => void
 }) {
@@ -3606,9 +4175,11 @@ function PdfCanvas({
    * （字节、页号、旋转、宽度）。ref 的更新 effect 声明在渲染 effect **之前**
    * ——顺序反了 React Compiler 会报 `Immutability` 并跳过这个组件。
    */
+  const onRenderedRef = useRef(onRendered)
   const onErrorRef = useRef(onError)
   useEffect(() => {
     onErrorRef.current = onError
+    onRenderedRef.current = onRendered
   })
 
   useEffect(() => {
@@ -3629,6 +4200,7 @@ function PdfCanvas({
         }
         handleRef.current = handle
         onErrorRef.current(null)
+        onRenderedRef.current?.()
       } catch (cause) {
         if (!cancelled) {
           onErrorRef.current(cause instanceof Error ? cause.message : String(cause))

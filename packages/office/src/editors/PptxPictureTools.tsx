@@ -1,37 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import {
-  Star,
-  Heart,
-  Check,
-  X,
-  Plus,
-  TriangleAlert,
-  Info,
-  CircleHelp,
-  Lightbulb,
-  Settings,
-  Clock,
-  CalendarDays,
-  Mail,
-  Phone,
-  Home,
-  UserRound,
-  UsersRound,
-  Search,
-  Globe,
-  MapPin,
-  ChartNoAxesCombined,
-  ShieldCheck,
-  Target,
-  Trophy,
-  type LucideIcon,
-} from 'lucide-react'
-import { renderToStaticMarkup } from 'react-dom/server'
 import { removeBackground } from '../../vendor/apps/slides/src/renderer/cutout.js'
-import { rasterizePptxSvg } from '../pptx-output.js'
 import {
   ToolbarButton,
-  ToolbarColorPicker,
   ToolbarMenuFields,
   ToolbarMenuNote,
   ToolbarNumberField,
@@ -40,105 +10,8 @@ import {
 import { PptxControlPanel } from './PptxControlPanel.js'
 import type { PptxUpload } from './PptxAssetControls.js'
 
-const icons: readonly [string, LucideIcon][] = [
-  ['星形', Star],
-  ['爱心', Heart],
-  ['对勾', Check],
-  ['叉号', X],
-  ['加号', Plus],
-  ['警告', TriangleAlert],
-  ['信息', Info],
-  ['帮助', CircleHelp],
-  ['灯泡', Lightbulb],
-  ['设置', Settings],
-  ['时钟', Clock],
-  ['日历', CalendarDays],
-  ['邮件', Mail],
-  ['电话', Phone],
-  ['主页', Home],
-  ['用户', UserRound],
-  ['团队', UsersRound],
-  ['搜索', Search],
-  ['地球', Globe],
-  ['位置', MapPin],
-  ['增长', ChartNoAxesCombined],
-  ['安全', ShieldCheck],
-  ['目标', Target],
-  ['奖杯', Trophy],
-]
-export function PptxIconControls({ slide, upload }: { slide: number; upload: PptxUpload }) {
-  const [selected, setSelected] = useState('星形'),
-    [color, setColor] = useState('#2563EB'),
-    [size, setSize] = useState(72)
-  const [busy, setBusy] = useState(false),
-    [message, setMessage] = useState('')
-  const Icon = icons.find(([name]) => name === selected)![1]
-  return (
-    <PptxControlPanel busy={busy}>
-      <ToolbarMenuFields label="插入图标">
-        <div className="mimir-pptx-icon-gallery">
-          {icons.map(([name, Item]) => (
-            <ToolbarButton
-              key={name}
-              label={name}
-              active={name === selected}
-              onClick={() => setSelected(name)}
-            >
-              <Item size={22} />
-            </ToolbarButton>
-          ))}
-        </div>
-        <ToolbarColorPicker
-          label="图标颜色"
-          options={['#2563EB', '#111827', '#FFFFFF', '#DC2626', '#16A34A', '#D97706'].map(
-            (value) => ({ value, label: value, swatch: value }),
-          )}
-          value={color}
-          onPick={setColor}
-        />
-        <ToolbarNumberField
-          label="图标宽度（磅）"
-          value={size}
-          min={6}
-          max={720}
-          onCommit={setSize}
-        />
-        <div className="mimir-pptx-icon-preview" style={{ color }}>
-          <Icon size={72} aria-label={`${selected}预览`} />
-        </div>
-      </ToolbarMenuFields>
-      <ToolbarButton
-        primary
-        label="插入所选图标"
-        onClick={() => {
-          setBusy(true)
-          setMessage('')
-          void (async () => {
-            const svg = renderToStaticMarkup(
-              <Icon xmlns="http://www.w3.org/2000/svg" width={512} height={512} color={color} />,
-            )
-            const bytes = await rasterizePptxSvg(svg, 512, 512)
-            if (
-              await upload(
-                { kind: 'picture', slide, widthPt: size, keepCrop: false },
-                new File([bytes], `${selected}.png`, { type: 'image/png' }),
-              )
-            )
-              setMessage('已插入图标')
-          })()
-            .catch((cause: unknown) =>
-              setMessage(cause instanceof Error ? cause.message : '图标生成失败'),
-            )
-            .finally(() => setBusy(false))
-        }}
-      />
-      <ToolbarMenuNote>
-        图标以透明 PNG 嵌入，可用图片工具调整。图形来自当前应用使用的 Lucide 图标库。
-      </ToolbarMenuNote>
-      {message && <span role="status">{message}</span>}
-    </PptxControlPanel>
-  )
-}
+export { PptxIconControls } from './PptxIconControls.js'
+
 export function PptxCutoutControls({
   slide,
   elementId,
@@ -179,7 +52,7 @@ export function PptxCutoutControls({
     image.addEventListener(
       'error',
       () => {
-        if (!cancelled) setMessage('无法解码原图，请换用 PNG 或 JPEG')
+        if (!cancelled) setMessage('无法解码原图，请重新选择图片')
       },
       { once: true },
     )
@@ -225,7 +98,8 @@ export function PptxCutoutControls({
           )}
         </div>
         <ToolbarMenuNote>
-          移除与图片边缘相连的相近颜色。适合纯色背景；增加容差会移除更多颜色。应用保留原尺寸、位置、裁切和效果。
+          移除与图片边缘相连的相近颜色。适合纯色背景；增加容差会移除更多颜色。应用保留原尺寸、位置、裁切和效果。结果为静态
+          PNG，GIF 或 WebP 动画仅使用当前画面。
         </ToolbarMenuNote>
       </ToolbarMenuFields>
       <ToolbarButton

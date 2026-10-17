@@ -1,0 +1,47 @@
+.mimir-pdf-image-export__fields {
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.mimir-pdf-image-export__preview {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+}
+
+.mimir-pdf-image-export__preview img {
+  display: block;
+  width: 100%;
+  max-height: 340px;
+  object-fit: contain;
+  background: white;
+  border: 1px solid var(--me-border);
+}
+
+.mimir-pdf-image-export__preview figcaption {
+  color: var(--me-text-weak);
+  font-size: var(--me-font-size-sm);
+  line-height: 1.6;
+}
+
+.mimir-pdf-image-export__actions {
+  display: grid;
+  flex: none;
+  gap: 8px;
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--me-border);
+}
+
+.mimir-pdf-image-export__actions > button {
+  width: 100%;
+  min-height: 32px;
+}
+
+.mimir-pdf-image-export__actions .me-btn__icon {
+  gap: 6px;
+}

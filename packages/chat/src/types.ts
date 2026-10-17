@@ -22,7 +22,22 @@ import type { ReactNode } from 'react'
 export interface ChatDraft {
   text?: string
   documentId?: string
+  snapshot?: ChatPptxSnapshot | undefined
 }
+
+/** An ephemeral editor screenshot, independent of executable model permissions. */
+export interface ChatPptxSnapshot {
+  /** In-memory source/session guard, excluded from all transport. */
+  sourceIsCurrent: () => boolean
+  id: string
+  text: string
+  target: { documentId: string; slidePath: string; slideIndex: number; version: number }
+  image: { name: string; mimeType: 'image/png'; dataUrl: string; width: number; height: number }
+}
+export type ChatDraftAgent = Pick<
+  ChatDocumentAgent,
+  'format' | 'documentId' | 'getVersion' | 'getContext'
+>
 
 /** 输入区底栏要显示的那三个数据（由宿主的 useQuery 取，包只渲染） */
 export interface ChatComposerStatus {
@@ -129,6 +144,8 @@ export interface ChatPanelProps {
   docxAgent?: ChatDocxAgent | null
   /** Only a registered format executor provides a writable canvas. */
   documentAgent?: ChatDocumentAgent | null
+  draftAgent?: ChatDraftAgent | null | undefined
+  snapshotVisionReady?: boolean | undefined
   /** AI changes become tracked revisions only when the user enables this per-panel switch. */
   docxRevisionMode?: boolean
 }

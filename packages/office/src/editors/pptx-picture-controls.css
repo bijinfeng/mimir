@@ -1,0 +1,46 @@
+.mimir-pptx-inspector__body[data-panel='图片裁切'] {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+.mimir-pptx-picture-controls {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+.mimir-pptx-picture-controls__content {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 12px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.mimir-pptx-picture-controls__pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: 100%;
+}
+.mimir-pptx-picture-controls__actions {
+  display: grid;
+  flex-shrink: 0;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--me-border);
+  background: var(--me-surface);
+}
+.mimir-pptx-picture-controls__actions p[role='alert'] {
+  margin: 0;
+  color: var(--me-danger);
+  font-size: var(--me-font-size-sm, 12px);
+  overflow-wrap: anywhere;
+}

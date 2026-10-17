@@ -35,6 +35,9 @@ import type {
   ProbeResult,
   PdfTextProbe,
   PdfTextTarget,
+  PdfTextBlockOperation,
+  PdfTextBlockSnapshot,
+  PdfTextBlockTarget,
   PdfMarkupInput,
   PdfAnnotationOperation,
   PdfFormOperation,
@@ -315,6 +318,39 @@ export const api = {
           bytes: decodeOfficeBytes(output.bytesBase64),
         })),
         info: response.info,
+      }
+    },
+    async pdfTextBlocks(input: {
+      documentId: string
+      bytes: Uint8Array
+      expectedVersion: number
+      operation: PdfTextBlockOperation
+      signal?: AbortSignal
+    }): Promise<{
+      bytes?: Uint8Array
+      version: number
+      blocks: PdfTextBlockSnapshot
+      target?: PdfTextBlockTarget
+    }> {
+      const form = new FormData()
+      form.set(
+        'file',
+        new File([new Uint8Array(input.bytes)], 'current.pdf', { type: 'application/pdf' }),
+      )
+      form.set('documentId', input.documentId)
+      form.set('expectedVersion', String(input.expectedVersion))
+      form.set('operation', JSON.stringify(input.operation))
+      const response = await sendMultipart<{
+        bytesBase64?: string
+        version: number
+        blocks: PdfTextBlockSnapshot
+        target?: PdfTextBlockTarget
+      }>('/api/conversations/pdf-agent/text-blocks', 'POST', form, input.signal)
+      return {
+        bytes: response.bytesBase64 ? decodeOfficeBytes(response.bytesBase64) : undefined,
+        version: response.version,
+        blocks: response.blocks,
+        target: response.target,
       }
     },
     async pdfImages(input: {

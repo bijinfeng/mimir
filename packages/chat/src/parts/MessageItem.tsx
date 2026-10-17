@@ -2,7 +2,13 @@ import { MessagePrimitive, useAuiState } from '@assistant-ui/react'
 import { SEARCH_ONLY_RESULT_TEXT } from '@mimir/shared'
 import type { ComponentType, ReactNode } from 'react'
 import { useChatPanelStyles } from '../ChatPanel.style.js'
-import { askOptionsFor, questionBefore, useMimirChatApi } from '../runtime/chat-context.js'
+import {
+  askOptionsFor,
+  questionBefore,
+  snapshotBefore,
+  useMimirChatApi,
+} from '../runtime/chat-context.js'
+import { MESSAGE_ATTACHMENT_COMPONENTS } from './PptxSnapshotAttachment.js'
 import { AnswerActions } from './AnswerActions.js'
 import { CitationList } from './CitationList.js'
 import { DocxAgentHistoryNotice } from './DocxAgentHistoryNotice.js'
@@ -58,6 +64,7 @@ export function MessageItem() {
 function UserMessage() {
   return (
     <MessagePrimitive.Root data-role="user">
+      <MessagePrimitive.Attachments components={MESSAGE_ATTACHMENT_COMPONENTS} />
       <MessagePrimitive.Parts
         components={{
           /* 用户消息的文本：自己打的字不需要流式光标那种装饰，
@@ -186,11 +193,17 @@ function AssistantMessage() {
           deepReasoningKnown={api.sentHere}
           onSearchOnly={() => {
             const question = questionBefore(threadMessages, index - 1)
-            if (question) api.ask(question, askOptionsFor(failure.kind, null))
+            if (question)
+              api.ask(question, {
+                ...askOptionsFor(failure.kind, null),
+                scope: 'search',
+                snapshotName: snapshotBefore(threadMessages, index - 1),
+              })
           }}
           onRetry={() => {
             const question = questionBefore(threadMessages, index - 1)
-            if (question) api.ask(question)
+            if (question)
+              api.ask(question, { snapshotName: snapshotBefore(threadMessages, index - 1) })
           }}
         />
       ) : (
@@ -259,15 +272,19 @@ function StreamErrorLine(): ReactNode {
     return text
   })
 
+  const snapshotName = useAuiState((state) =>
+    snapshotBefore(state.thread.messages, state.message.index - 1),
+  )
+
   if (detail === null) return null
   return (
     <StreamErrorCard
       detail={detail}
       onRetry={() => {
-        if (question) api.ask(question)
+        if (question) api.ask(question, { snapshotName })
       }}
       onRefill={() => {
-        if (question) api.refill(question)
+        if (question) api.refill(question, snapshotName)
       }}
     />
   )

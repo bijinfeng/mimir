@@ -33,6 +33,11 @@ async function click(node: Element) {
     await new Promise((r) => setTimeout(r, 0))
   })
 }
+async function openPreciseDrawing(host: HTMLElement) {
+  const header = host.querySelector<HTMLElement>('.ant-collapse-header')!
+  expect(header.textContent).toBe('精确数值绘图')
+  if (header.getAttribute('aria-expanded') !== 'true') await click(header)
+}
 function button(host: HTMLElement, name: string) {
   const b = host.querySelector<HTMLButtonElement>(`button[aria-label="${name}"]`)
   if (!b) throw new Error(name)
@@ -138,6 +143,7 @@ describe('PDF local toolbar and shared history', () => {
         ),
       )
     await render(info)
+    await openPreciseDrawing(host)
     pickSelectOption(host, '选择绘图', '1. 箭头')
     const input = (label: string) =>
       host.querySelector<HTMLInputElement>(`input[aria-label="${label}"]`)!
@@ -230,6 +236,7 @@ describe('PDF local toolbar and shared history', () => {
         (b) => b.textContent === '绘图',
       )!,
     )
+    await openPreciseDrawing(app.host)
     pickSelectOption(app.host, '选择绘图', '1. 箭头')
     const color = () => app.host.querySelector<HTMLInputElement>('input[aria-label="线条颜色"]')!
     await settle(() => color()?.value === '#2563EB')
@@ -437,6 +444,7 @@ describe('PDF local toolbar and shared history', () => {
         (b) => b.textContent === '绘图',
       )!,
     )
+    await openPreciseDrawing(app.host)
     pickSelectOption(app.host, '选择绘图', '1. 箭头')
     expect(selectValueText(app.host, '绘图方向')).toBe('90°')
     const x = () => app.host.querySelector<HTMLInputElement>('input[aria-label="左侧距离 pt"]')!
@@ -521,6 +529,7 @@ describe('PDF local toolbar and shared history', () => {
           (b) => b.textContent === '绘图',
         )!,
       )
+      await openPreciseDrawing(app.host)
       pickSelectOption(app.host, '选择绘图', '1. 箭头')
       for (const [label, value] of [
         ['左侧距离 pt', drawing.x],

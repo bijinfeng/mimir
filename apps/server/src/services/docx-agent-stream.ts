@@ -18,6 +18,8 @@ import { getDocument } from './documents.js'
 import { documentAgentCatalog } from './document-agent-catalog.js'
 import type { DocumentAgentCatalog } from './document-agent-catalog.js'
 import { documentAgentFormatOf } from './document-agent-format.js'
+import { docxMediaReadiness } from './docx-media-analysis.js'
+import { validatePptxSnapshots } from './pptx-snapshot-input.js'
 import { modelReady, streamChat as streamModelChat } from './model.js'
 
 type ParsedRun = Awaited<ReturnType<typeof import('@tanstack/ai').chatParamsFromRequestBody>>
@@ -127,6 +129,20 @@ export async function streamDocxAgent(
   if (!catalog) return fail(422, 'DOCUMENT_AGENT_UNAVAILABLE', '当前格式尚未接入 Agent 编辑器')
   const activeCatalog = catalog
   if (!(await modelReady('chat'))) return fail(422, 'MODEL_NOT_READY', '请先配置可用的聊天模型')
+  if (format === 'pptx') {
+    let snapshots: number
+    try {
+      snapshots = validatePptxSnapshots(parsed.messages)
+    } catch (error) {
+      return fail(
+        400,
+        'PPTX_SNAPSHOT_INVALID',
+        error instanceof Error ? error.message : '幻灯片截图无效',
+      )
+    }
+    if (snapshots && !(await docxMediaReadiness()).vision)
+      return fail(422, 'VISION_NOT_READY', '截图美化需要聊天模型并启用视觉输入，请前往模型设置')
+  }
 
   const resume = parsed.resume
   const resuming = Array.isArray(resume) && resume.length > 0

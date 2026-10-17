@@ -9,7 +9,21 @@
 }
 
 .mimir-editor--note .mimir-editor__bar:has(.mimir-compact-toolbar) {
-  padding: 0 4px;
+  padding: 0 12px;
+}
+
+.mimir-editor--note .mimir-compact-toolbar__tab-row {
+  border-bottom-color: color-mix(in srgb, var(--me-border, #e8e8e8) 60%, transparent);
+}
+.mimir-editor--note .mimir-compact-toolbar__section {
+  min-height: 44px;
+  gap: 1px;
+  padding: 3px 8px;
+  border-right-color: color-mix(in srgb, var(--me-border, #e8e8e8) 60%, transparent);
+}
+.mimir-editor--note .mimir-compact-toolbar__caption {
+  font-weight: 400;
+  line-height: 12px;
 }
 
 .mimir-compact-toolbar {
@@ -161,8 +175,8 @@
 
 .mimir-compact-toolbar__section[data-collapsed] {
   box-sizing: border-box;
-  flex: 0 0 72px;
-  width: 72px;
+  flex: 0 0 var(--compact-group-width, 72px);
+  width: var(--compact-group-width, 72px);
   min-width: 0;
   max-width: 100%;
   padding: 2px;

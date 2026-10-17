@@ -47,7 +47,15 @@
  * `useToolbarPopup`：一份定位 + 键盘 + 关闭的实现，三处抄一遍必然漂移。
  */
 
-import { createContext, useContext, useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react'
 import type {
   ComponentProps,
   KeyboardEvent as ReactKeyboardEvent,
@@ -1298,7 +1306,7 @@ function insidePanel(panel: HTMLElement | null, target: Node): boolean {
  * 坐标是**打开那一刻**算出来的。滚动之后触发按钮已经不在原处，面板还悬在
  * 旧位置——比关掉更让人困惑。改窗口大小同理。
  */
-function useToolbarPopup(panelWidth = POPUP_MIN_WIDTH) {
+function useToolbarPopup(panelWidth = POPUP_MIN_WIDTH, estimatedHeight = POPUP_EST_HEIGHT) {
   const triggerRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const [position, setPosition] = useState<PopupPosition | null>(null)
@@ -1319,7 +1327,7 @@ function useToolbarPopup(panelWidth = POPUP_MIN_WIDTH) {
     const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8))
     const below = window.innerHeight - rect.bottom
     setPosition(
-      below < POPUP_EST_HEIGHT && rect.top > below
+      below < estimatedHeight && rect.top > below
         ? // 下方放不下就往上展开：用 `bottom` 锚定，面板实际高度与估计值不同也不会越过按钮
           { bottom: window.innerHeight - rect.top + 4, left }
         : { top: rect.bottom + 4, left },
@@ -1351,8 +1359,16 @@ function useToolbarPopup(panelWidth = POPUP_MIN_WIDTH) {
       // Escape 关闭并**还焦点**：焦点留在被卸载的元素上会让键盘用户掉到 body
       if (event.key !== 'Escape') return
       const nearestMenu =
-        event.target instanceof Element ? event.target.closest('[role="menu"]') : null
+        event.target instanceof Element
+          ? event.target.closest('[role="menu"], [data-toolbar-popup]')
+          : null
       if (nearestMenu && nearestMenu !== panelRef.current) return
+      if (panelRef.current?.hasAttribute('data-toolbar-popup')) {
+        // Consume the nearest custom color layer before an enclosing Inspector
+        // sees this key and closes itself along with the picker.
+        event.preventDefault()
+        event.stopPropagation()
+      }
       dismiss(true)
     }
     const onScroll = (event: Event) => {
@@ -1754,6 +1770,74 @@ export interface ToolbarColorPickerProps {
    * 念「清除颜色」是**界面说了假话**，只是不明显。
    */
   clearLabel?: string
+  /** Opt in only for storage contracts accepting six-digit RGB (#RRGGBB). No alpha. */
+  allowCustomRgb?: boolean
+}
+
+function normalizedRgb(value: string | null): string | null {
+  const match = /^#?([\da-f]{6})$/i.exec(value?.trim() ?? '')
+  return match ? `#${match[1]!.toUpperCase()}` : null
+}
+
+/** A draft stays local until Enter or the explicit action; invalid input never picks. */
+function ToolbarCustomRgb({
+  label,
+  value,
+  disabled,
+  onPick,
+  onPicked,
+}: {
+  label: string
+  value: string | null
+  disabled: boolean
+  onPick: (value: string) => void
+  onPicked?: () => void
+}) {
+  const inputId = useId()
+  const [draft, setDraft] = useState(normalizedRgb(value) ?? '')
+  const color = normalizedRgb(draft)
+  const invalid = draft.trim() !== '' && color === null
+  const pick = () => {
+    if (!color || disabled) return
+    onPick(color)
+    onPicked?.()
+  }
+  return (
+    <div className="me-color__custom">
+      <label className="me-property-field__label" htmlFor={inputId}>
+        自定义 RGB
+      </label>
+      <Input
+        id={inputId}
+        aria-label={`${label}自定义 RGB`}
+        value={draft}
+        placeholder="#RRGGBB"
+        disabled={disabled}
+        spellCheck={false}
+        autoComplete="off"
+        aria-invalid={invalid}
+        status={invalid ? 'error' : undefined}
+        onChange={(event) => setDraft(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' && !event.nativeEvent.isComposing) {
+            event.preventDefault()
+            pick()
+          }
+        }}
+      />
+      <ToolbarMenuNote>
+        {invalid ? '请输入六位 RGB，例如 #4472C4' : '六位 RGB，不含透明度'}
+      </ToolbarMenuNote>
+      <ToolbarButton
+        label={`使用${label}自定义颜色`}
+        disabled={!color || disabled}
+        disabledReason="请输入六位 RGB"
+        onClick={pick}
+      >
+        使用颜色
+      </ToolbarButton>
+    </div>
+  )
 }
 
 /**
@@ -1860,9 +1944,14 @@ export function ToolbarColorPicker({
   icon,
   inline = false,
   clearLabel,
+  allowCustomRgb = false,
 }: ToolbarColorPickerProps) {
-  const { open, position, triggerRef, panelRef, toggle, close } = useToolbarPopup()
+  const { open, position, triggerRef, panelRef, toggle, close } = useToolbarPopup(
+    allowCustomRgb ? 260 : undefined,
+    allowCustomRgb ? 340 : undefined,
+  )
   const current = options.find((option) => option.value === value)
+  const currentSwatch = current?.swatch ?? (allowCustomRgb ? normalizedRgb(value) : null)
 
   const grid = (
     <ToolbarColorGrid
@@ -1884,7 +1973,21 @@ export function ToolbarColorPicker({
   )
 
   // 内联：不渲染触发器、不开 popup，只是把那排色块交出去
-  if (inline) return <ToolbarPropertyField label={label}>{grid}</ToolbarPropertyField>
+  if (inline)
+    return (
+      <ToolbarPropertyField label={label}>
+        {grid}
+        {allowCustomRgb && (
+          <ToolbarCustomRgb
+            key={value}
+            label={label}
+            value={value}
+            disabled={disabled}
+            onPick={onPick}
+          />
+        )}
+      </ToolbarPropertyField>
+    )
 
   return (
     <ToolbarPropertyField label={label}>
@@ -1903,11 +2006,11 @@ export function ToolbarColorPicker({
         >
           {icon !== undefined && <span className="me-btn__icon">{icon}</span>}
           <span className="me-btn__icon">
-            {current === undefined ? (
+            {!currentSwatch ? (
               // 没设置（或值不在选项里）时画一条斜线，**不能**显示成第一个颜色
               <span className="me-color__swatch me-color__swatch--none" />
             ) : (
-              <span className="me-color__swatch" style={{ background: current.swatch }} />
+              <span className="me-color__swatch" style={{ background: currentSwatch }} />
             )}
           </span>
           <span className="me-btn__icon me-menu__caret">
@@ -1917,7 +2020,8 @@ export function ToolbarColorPicker({
         {open && position !== null && (
           <div
             ref={panelRef}
-            className="me-menu__panel me-color__panel"
+            className={`me-menu__panel me-color__panel${allowCustomRgb ? ' me-color__panel--custom' : ''}`}
+            data-toolbar-popup={allowCustomRgb ? '' : undefined}
             /*
              * **面板这一层不带 `role` / `aria-label`**：语义（`role="group"` +
              * 名字）在那排色块自己的 `ToolbarColorGrid` 上。两层都挂同一个名字
@@ -1926,15 +2030,41 @@ export function ToolbarColorPicker({
              */
             tabIndex={-1}
             onKeyDown={(event) => {
-              if (event.key === 'Tab') close()
+              if (event.key !== 'Tab') return
+              if (!allowCustomRgb) {
+                close()
+                return
+              }
+              const controls = [
+                ...event.currentTarget.querySelectorAll<HTMLElement>(
+                  'button:not(:disabled), input:not(:disabled)',
+                ),
+              ]
+              if (
+                (event.shiftKey && event.target === controls[0]) ||
+                (!event.shiftKey && event.target === controls.at(-1))
+              )
+                close()
             }}
-            style={
-              position.bottom === undefined
-                ? { top: position.top, left: position.left }
-                : { bottom: position.bottom, left: position.left }
-            }
+            style={{
+              ...position,
+              ...(allowCustomRgb
+                ? {
+                    maxHeight: `calc(100dvh - ${position.top ?? position.bottom ?? 0}px - 8px)`,
+                  }
+                : {}),
+            }}
           >
             {grid}
+            {allowCustomRgb && (
+              <ToolbarCustomRgb
+                label={label}
+                value={value}
+                disabled={disabled}
+                onPick={onPick}
+                onPicked={close}
+              />
+            )}
           </div>
         )}
       </span>

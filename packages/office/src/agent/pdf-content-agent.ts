@@ -2,6 +2,11 @@ import { PDF_IMAGE_TOOLS, executePdfImageTool, type PdfHostImages } from './pdf-
 import {
   pdfAnnotationOperationSchema,
   pdfFormOperationSchema,
+  pdfTextBlockOperationSchema,
+  pdfTextBlockTargetSchema,
+  type PdfTextBlockOperation,
+  type PdfTextBlockSnapshot,
+  type PdfTextBlockTarget,
   type PdfFormOperation,
   type PdfFormSnapshot,
   type PdfAnnotationOperation,
@@ -9,10 +14,14 @@ import {
 } from '@mimir/shared'
 import type { PdfHostApply, PdfHostInspect, PdfHostMarkup } from '../editors/PdfEditor.js'
 import type { PdfTextIndex } from '../editors/pdf-text.js'
+import { pdfTextOccurrences } from '../editors/pdf-text-blocks.js'
 
 export const PDF_CONTENT_TOOLS = [
   ...PDF_IMAGE_TOOLS,
   'list_form_fields',
+  'list_text_blocks',
+  'move_text_block',
+  'edit_block',
   'edit_text',
   'markup_text',
   'read_annotations',
@@ -22,6 +31,19 @@ export const PDF_CONTENT_TOOLS = [
   'delete_note',
   'delete_markup',
 ] as const
+export interface PdfHostBlocks {
+  (input: {
+    bytes: Uint8Array
+    expectedVersion: number
+    operation: PdfTextBlockOperation
+    signal?: AbortSignal
+  }): Promise<{
+    bytes?: Uint8Array
+    version: number
+    blocks: PdfTextBlockSnapshot
+    target?: PdfTextBlockTarget
+  }>
+}
 export interface PdfHostAnnotations {
   (input: {
     bytes: Uint8Array
@@ -46,6 +68,8 @@ function pageIndex(value: unknown, total: number): number {
   return value - 1
 }
 
+const squash = (text: string) => text.replace(/\s+/g, '')
+
 /** Manual toolbar and Agent both enter this executor with the live byte version. */
 export async function executePdfContentTool(input: {
   tool: string
@@ -60,12 +84,107 @@ export async function executePdfContentTool(input: {
   annotations?: PdfHostAnnotations
   forms?: PdfHostForms
   images?: PdfHostImages
+  blocks?: PdfHostBlocks
   signal?: AbortSignal
   manual?: boolean
 }): Promise<{ bytes?: Uint8Array; data?: unknown }> {
   const { tool, args, bytes, version, signal } = input
   if ((PDF_IMAGE_TOOLS as readonly string[]).includes(tool))
     return executePdfImageTool({ ...input, host: input.images })
+  if (
+    tool === 'list_text_blocks' ||
+    tool === 'move_text_block' ||
+    tool === 'edit_block' ||
+    (tool === 'edit_text' && input.blocks)
+  ) {
+    if (!input.blocks) throw new Error('PDF 原文段落宿主未连接')
+    const page = pageIndex(args.page, input.pageCount)
+    if (signal?.aborted) throw new Error('操作已取消')
+    let target: PdfTextBlockTarget
+    let occurrence = args.occurrence === undefined ? 1 : args.occurrence
+    if (
+      typeof occurrence !== 'number' ||
+      !Number.isInteger(occurrence) ||
+      occurrence < 1 ||
+      occurrence > 10000
+    )
+      throw new Error('occurrence必须是1起的出现次序')
+    if (tool !== 'list_text_blocks' && input.manual && args.target !== undefined) {
+      target = pdfTextBlockTargetSchema.parse(args.target)
+      if (target.pageIndex !== page) throw new Error('PDF 段落与当前页面不一致')
+    } else {
+      if (args.target !== undefined) throw new Error('Agent 必须读取并定位原文段落')
+      const before = await input.blocks({
+        bytes,
+        expectedVersion: version,
+        operation: { op: 'read', pageIndex: page },
+        signal,
+      })
+      if (signal?.aborted) throw new Error('操作已取消')
+      if (before.version !== version || before.bytes) throw new Error('PDF 段落读取版本无效')
+      if (tool === 'list_text_blocks') return { data: before.blocks }
+      if (tool === 'edit_text') {
+        if (
+          typeof args.old_text !== 'string' ||
+          !args.old_text.trim() ||
+          args.old_text.length > 10000
+        )
+          throw new Error('请提供需要替换的原文')
+        const hits = before.blocks.blocks.flatMap((block) =>
+            pdfTextOccurrences(block.text, args.old_text as string).map((_, index) => ({
+              block,
+              occurrence: index + 1,
+            })),
+          ),
+          match = hits[occurrence - 1]
+        if (!match?.block.editable || !match.block.target)
+          throw new Error(match?.block.reason ?? '没有指定出现次序的可编辑原文')
+        target = match.block.target
+        occurrence = match.occurrence
+      } else {
+        if (
+          typeof args.paragraph_text !== 'string' ||
+          !args.paragraph_text.trim() ||
+          args.paragraph_text.length > 10000
+        )
+          throw new Error('请提供唯一段落片段 paragraph_text')
+        const matches = before.blocks.blocks.filter((block) =>
+          squash(block.text).includes(squash(args.paragraph_text as string)),
+        )
+        if (matches.length !== 1) throw new Error('段落片段不能唯一定位，请先读取并使用更长的原文')
+        const selected = matches[0]!
+        if (!selected.editable || !selected.target)
+          throw new Error(selected.reason ?? '此段落无法安全移动')
+        target = selected.target
+      }
+    }
+    const operation = pdfTextBlockOperationSchema.parse(
+      tool === 'move_text_block'
+        ? {
+            op: 'move',
+            target,
+            dx: args.dx,
+            dy: args.dy,
+          }
+        : {
+            op: 'rewrite',
+            target,
+            newText: args.new_text,
+            replace: tool === 'edit_text' ? { oldText: args.old_text, occurrence } : undefined,
+            fontSize: args.font_size,
+            color: args.color,
+            font: args.font,
+            bold: args.bold,
+            italic: args.italic,
+            align: args.align,
+          },
+    )
+    if (signal?.aborted) throw new Error('操作已取消')
+    const result = await input.blocks({ bytes, expectedVersion: version, operation, signal })
+    if (signal?.aborted) throw new Error('操作已取消')
+    if (!result.bytes || result.version !== version + 1) throw new Error('PDF 段落宿主结果无效')
+    return { bytes: result.bytes, data: result.blocks }
+  }
   if (tool === 'list_form_fields' || tool === 'apply_ops') {
     if (!input.forms) throw new Error('PDF 表单宿主未连接')
     const before = await input.forms({

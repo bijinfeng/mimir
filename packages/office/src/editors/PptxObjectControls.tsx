@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Check, ImagePlus, RotateCcw } from 'lucide-react'
+import { Check, Crop, ImagePlus, RotateCcw, RotateCw } from 'lucide-react'
 import {
   pptxParagraphFormatSchema,
   PPTX_PARAGRAPH_NUMBER_TYPES,
@@ -14,10 +14,14 @@ import {
 import type { PptxTextSelection } from '../pptx-text-range.js'
 import type { Paragraph } from '../../vendor/packages/pptx-engine/src/types.js'
 import './pptx-paragraph-controls.css'
+import './pptx-picture-controls.css'
 import type { SlideElement, TextBody } from '../../vendor/packages/pptx-engine/src/types.js'
 import type { PptxLink } from '../pptx-metadata.js'
 import { PptxCurveControls } from './PptxCurveControls.js'
-import { elementDurableId } from '../../vendor/packages/pptx-engine/src/identity.js'
+import {
+  elementDurableId,
+  matchesElementRef,
+} from '../../vendor/packages/pptx-engine/src/identity.js'
 import {
   ToolbarButton,
   ToolbarMenuFields,
@@ -643,10 +647,14 @@ export function PptxPictureControls({
   element,
   target,
   apply,
+  onStartCrop,
+  cropUnavailableReason,
 }: {
   element: Extract<SlideElement, { type: 'picture' }>
   target: PptxTarget
   apply: PptxApply
+  onStartCrop?: () => void
+  cropUnavailableReason?: string
 }) {
   const { busy, run } = usePptxAction(apply)
   const [crop, setCrop] = useState(() => ({
@@ -656,48 +664,118 @@ export function PptxPictureControls({
     b: element.srcRect?.b ?? 0,
   }))
   const invalid = crop.l + crop.r >= 1 || crop.t + crop.b >= 1
+  const [error, setError] = useState('')
+  const submit = async (srcRect: typeof crop | null) => {
+    setError('')
+    try {
+      const changed = await run({ op: 'setPictureSrcRect', target, srcRect })
+      if (!changed) setError('裁切未应用，请重试；原有图片已保留')
+    } catch {
+      setError('裁切未应用，请重试；原有图片已保留')
+    }
+  }
+  const rotate = (rotDeg: number) =>
+    void run({
+      op: 'setTransform',
+      target,
+      box: element.transform.offset,
+      rotDeg: ((rotDeg % 360) + 360) % 360,
+    })
   return (
-    <PptxControlPanel busy={busy}>
-      <ToolbarMenuFields label="图片裁切与旋转">
-        {(['l', 't', 'r', 'b'] as const).map((side, index) => (
-          <ToolbarNumberField
-            key={side}
-            label={`裁去${['左', '上', '右', '下'][index]}侧（%）`}
-            value={crop[side] * 100}
-            min={0}
-            max={99}
-            step={1}
-            onCommit={(value) => setCrop({ ...crop, [side]: value / 100 })}
-          />
-        ))}
-        {invalid && <ToolbarMenuNote>相对两边裁切之和必须小于100%。</ToolbarMenuNote>}
-        <ToolbarButton
-          label="应用图片裁切"
-          disabled={invalid}
-          disabledReason="裁切后须保留可见区域"
-          onClick={() => void run({ op: 'setPictureSrcRect', target, srcRect: crop })}
-        >
-          应用裁切
-        </ToolbarButton>
-        <ToolbarButton
-          label="重置图片裁切"
-          disabled={!element.srcRect}
-          disabledReason="图片没有裁切"
-          onClick={() => void run({ op: 'setPictureSrcRect', target, srcRect: null })}
-        >
-          重置裁切
-        </ToolbarButton>
-        <ToolbarNumberField
-          label="旋转角度（°）"
-          value={element.transform.rot / 60000}
-          min={-360}
-          max={360}
-          onCommit={(rotDeg) =>
-            void run({ op: 'setTransform', target, box: element.transform.offset, rotDeg })
-          }
-        />
-      </ToolbarMenuFields>
-    </PptxControlPanel>
+    <fieldset className="mimir-pptx-picture-controls" disabled={busy} aria-busy={busy}>
+      <div className="mimir-pptx-picture-controls__content">
+        <ToolbarPropertyForm>
+          <ToolbarMenuFields label="裁切范围">
+            {onStartCrop && (
+              <ToolbarButton
+                label="在画布裁切图片"
+                disabled={busy || !!cropUnavailableReason}
+                disabledReason={cropUnavailableReason || '正在处理图片'}
+                onClick={onStartCrop}
+              >
+                <Crop size={15} />
+                在画布裁切
+              </ToolbarButton>
+            )}
+            <ToolbarMenuNote>设置四边裁去的比例，点击应用后生效。</ToolbarMenuNote>
+            <div className="mimir-pptx-picture-controls__pair">
+              {(['l', 't', 'r', 'b'] as const).map((side, index) => (
+                <ToolbarNumberField
+                  key={side}
+                  label={`裁去${['左', '上', '右', '下'][index]}侧（%）`}
+                  value={crop[side] * 100}
+                  min={0}
+                  max={99}
+                  step={1}
+                  onCommit={(value) => setCrop({ ...crop, [side]: value / 100 })}
+                />
+              ))}
+            </div>
+            {invalid && <ToolbarMenuNote>相对两边裁切之和必须小于100%。</ToolbarMenuNote>}
+          </ToolbarMenuFields>
+          <ToolbarMenuFields label="图片外观">
+            <ToolbarNumberField
+              label="图片不透明度（%）"
+              value={(element.opacity ?? 1) * 100}
+              min={0}
+              max={100}
+              step={1}
+              onCommit={(value) =>
+                void run({ op: 'setPictureOpacity', target, opacity: value / 100 })
+              }
+            />
+            <ToolbarNumberField
+              label="旋转角度（°）"
+              value={element.transform.rot / 60000}
+              min={-360}
+              max={360}
+              onCommit={rotate}
+            />
+            <div className="mimir-pptx-picture-controls__pair">
+              <ToolbarButton
+                label="图片向左旋转90度"
+                onClick={() => rotate(element.transform.rot / 60000 - 90)}
+              >
+                <RotateCcw size={15} />
+                向左90°
+              </ToolbarButton>
+              <ToolbarButton
+                label="图片向右旋转90度"
+                onClick={() => rotate(element.transform.rot / 60000 + 90)}
+              >
+                <RotateCw size={15} />
+                向右90°
+              </ToolbarButton>
+            </div>
+            <ToolbarMenuNote>不透明度和旋转角度即时应用。</ToolbarMenuNote>
+          </ToolbarMenuFields>
+        </ToolbarPropertyForm>
+      </div>
+      <div className="mimir-pptx-picture-controls__actions">
+        {error && <p role="alert">{error}</p>}
+        {busy && <ToolbarMenuNote>正在应用图片修改…</ToolbarMenuNote>}
+        <div className="mimir-pptx-picture-controls__pair">
+          <ToolbarButton
+            label="重置图片裁切"
+            disabled={busy || !element.srcRect}
+            disabledReason="图片没有裁切"
+            onClick={() => void submit(null)}
+          >
+            <RotateCcw size={15} />
+            重置裁切
+          </ToolbarButton>
+          <ToolbarButton
+            label="应用图片裁切"
+            primary
+            disabled={busy || invalid}
+            disabledReason={busy ? '正在应用图片修改' : '裁切后须保留可见区域'}
+            onClick={() => void submit(crop)}
+          >
+            <Check size={15} />
+          </ToolbarButton>
+        </div>
+      </div>
+    </fieldset>
   )
 }
 
@@ -1015,17 +1093,26 @@ export function PptxArrangeControls({
   elements,
   slide,
   selected,
+  selectedRefs,
+  onSelectionChange,
   apply,
 }: {
   elements: readonly SlideElement[]
   slide: number
   selected: string | null
+  selectedRefs?: readonly string[]
+  onSelectionChange?: (refs: string[]) => void
   apply: PptxApply
 }) {
   const { busy, run } = usePptxAction(apply)
-  const [ids, setIds] = useState<string[]>(() =>
+  const [localIds, setLocalIds] = useState<string[]>(() =>
     elements.filter((el) => el.id === selected).map(id),
   )
+  const ids = selectedRefs
+    ? elements.filter((el) => selectedRefs.some((ref) => matchesElementRef(el, ref))).map(id)
+    : localIds
+  const setIds = (next: string[]) =>
+    onSelectionChange ? onSelectionChange(next) : setLocalIds(next)
   const [to, setTo] = useState('selection')
   const [mode, setMode] = useState('left')
   const [axis, setAxis] = useState('horizontal')
@@ -1041,7 +1128,7 @@ export function PptxArrangeControls({
     <PptxControlPanel busy={busy}>
       <ToolbarMenuFields label="多对象排列">
         <ToolbarMenuNote>
-          选择本页顶层对象；选中项保持高亮按钮状态。组合后可在对象选择器选择整个组合。
+          与画布使用同一组选中对象。按住 Shift 可追加选择；组合成员可在“选择与格式”中编辑。
         </ToolbarMenuNote>
         {choices.map((item) => (
           <ToolbarButton

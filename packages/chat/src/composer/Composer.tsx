@@ -3,6 +3,9 @@ import { Button, Tag } from 'antd'
 import { createStyles } from 'antd-style'
 import { ArrowUp, Square, X } from 'lucide-react'
 import { useEffect } from 'react'
+import { COMPOSER_ATTACHMENT_COMPONENTS } from '../parts/PptxSnapshotAttachment.js'
+import { useMimirChatApi } from '../runtime/chat-context.js'
+import { snapshotFilename } from '../runtime/pptx-snapshot.js'
 import { CONTENT_WIDTH } from '../ChatPanel.style.js'
 import type { ChatIo } from '../runtime/io.js'
 import type { ChatComposerStatus } from '../types.js'
@@ -186,6 +189,23 @@ const useStyles = createStyles(({ css, token, prefixCls }) => ({
   `,
   /* 排队中的追问：输入框与工具栏之间的一行。单行省略——它只是
      「有一条在排队」的提醒，全文等自动发出之后就在回答流里了 */
+  snapshotNotice: css`
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 6px 0;
+    color: ${token.colorTextSecondary};
+    font-size: var(--mimir-chat-font-note, 12.5px);
+    line-height: 1.5;
+    span {
+      flex: 1;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    &[role='alert'] {
+      color: ${token.colorErrorText};
+    }
+  `,
   queued: css`
     display: flex;
     align-items: center;
@@ -222,7 +242,10 @@ export interface ComposerProps {
   focusOnMount?: boolean
   io: ChatIo
   status: ChatComposerStatus
-  onBeforeSubmit: () => void
+  onBeforeSubmit: () => boolean
+  snapshotError: string | null
+  clearSnapshotError: () => void
+  snapshotVisionReady: boolean
 }
 
 export function Composer({
@@ -235,6 +258,9 @@ export function Composer({
   io,
   status,
   onBeforeSubmit,
+  snapshotError,
+  clearSnapshotError,
+  snapshotVisionReady,
 }: ComposerProps) {
   const { styles } = useStyles()
   const aui = useAui()
@@ -260,23 +286,38 @@ export function Composer({
 
   /** 生成中（按钮换成「停止」的相位、占位符也要跟着换） */
   const canCancel = useAuiState((state) => state.composer.canCancel)
+  const hasSnapshot = useAuiState((state) =>
+    state.composer.attachments.some((item) => snapshotFilename(item.name)),
+  )
 
   return (
     <div className={styles.wrap}>
       <div className={styles.inner}>
         <ComposerPrimitive.Root
           className={styles.box}
-          onSubmitCapture={onBeforeSubmit}
+          onSubmitCapture={(event) => {
+            if (!onBeforeSubmit()) {
+              event.preventDefault()
+              event.stopPropagation()
+            }
+          }}
           onClickCapture={(event) => {
-            if ((event.target as Element).closest('button[aria-label="发送"]')) onBeforeSubmit()
+            if (
+              (event.target as Element).closest('button[aria-label="发送"]') &&
+              !onBeforeSubmit()
+            ) {
+              event.preventDefault()
+              event.stopPropagation()
+            }
           }}
         >
+          <ComposerPrimitive.Attachments components={COMPOSER_ATTACHMENT_COMPONENTS} />
           <ComposerPrimitive.Input
             autoFocus={focusOnMount}
-            /* 3 行起、到 8 行封顶（Codex 式，既有决策）。
+            /* 普通文字 3–8 行；截图草稿 2–5 行，给预览与发送留空间。
                react-textarea-autosize 的 props 直接透传 */
-            minRows={3}
-            maxRows={8}
+            minRows={hasSnapshot ? 2 : 3}
+            maxRows={hasSnapshot ? 5 : 8}
             /* Enter 发送、Shift+Enter 换行是聊天框的通行约定；输入法里的
                回车由引擎自己按 isComposing 挡掉 */
             submitMode="enter"
@@ -293,6 +334,17 @@ export function Composer({
                   ? `就「${contextDocument.title}」提问…`
                   : '直接向知识库提问…'
             }
+            onKeyDownCapture={(event) => {
+              if (
+                event.key === 'Enter' &&
+                !event.shiftKey &&
+                !event.nativeEvent.isComposing &&
+                !onBeforeSubmit()
+              ) {
+                event.preventDefault()
+                event.stopPropagation()
+              }
+            }}
             onKeyDown={(event) => {
               /**
                * 生成中按 Esc 停止。
@@ -310,6 +362,26 @@ export function Composer({
             }}
           />
 
+          {hasSnapshot && !snapshotVisionReady && !snapshotError && (
+            <div className={styles.snapshotNotice} role="status">
+              <span>可先编辑草稿，发送截图需要聊天模型并启用视觉输入。</span>
+              <Button type="link" size="small" onClick={io.onManageModels}>
+                设置模型
+              </Button>
+            </div>
+          )}
+          {snapshotError && (
+            <div className={styles.snapshotNotice} role="alert">
+              <span>{snapshotError}</span>
+              <Button
+                type="text"
+                size="small"
+                icon={<X size={14} />}
+                aria-label="关闭截图提示"
+                onClick={clearSnapshotError}
+              />
+            </div>
+          )}
           <QueueRow />
 
           <div className={styles.bar}>
@@ -390,6 +462,7 @@ export function Composer({
  * `onCancel`），只是触发点不同：这里是用户点的。
  */
 function QueueRow() {
+  const api = useMimirChatApi()
   const { styles } = useStyles()
   const aui = useAui()
   const first = useAuiState((state) => state.composer.queue[0])
@@ -408,8 +481,11 @@ function QueueRow() {
         onClick={() => {
           /* 先把文本放回输入框再删（`remove` 只管删）——与停止时的处理
              是同一个动作，见 runtime/use-mimir-runtime.ts 的 onCancel */
-          aui.composer.setText(first.prompt)
-          aui.composer.queueItem({ id: first.id }).remove()
+          if (api.reclaimQueued) api.reclaimQueued(first.id)
+          else {
+            aui.composer.setText(first.prompt)
+            aui.composer.queueItem({ id: first.id }).remove()
+          }
         }}
       />
     </div>

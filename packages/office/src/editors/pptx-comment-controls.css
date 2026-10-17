@@ -1,0 +1,79 @@
+.mimir-pptx-inspector__body[data-panel='新建批注'] {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+.mimir-pptx-comment-controls {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+.mimir-pptx-comment-controls__content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 12px;
+}
+.mimir-pptx-comment-controls textarea {
+  min-height: 96px;
+  max-height: 240px;
+}
+.mimir-pptx-comment-controls__thread h3 {
+  margin: 0 0 8px;
+  color: var(--me-text-weak);
+  font-size: var(--me-font-size-sm, 12px);
+  font-weight: 500;
+}
+.mimir-pptx-comment-controls__thread article {
+  padding: 10px 0;
+  border-top: 1px solid var(--me-border);
+  font-size: var(--me-font-size-sm, 12px);
+}
+.mimir-pptx-comment-controls__author {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.mimir-pptx-comment-controls__thread time {
+  display: block;
+  color: var(--me-text-weak);
+  font-size: var(--me-font-size-sm, 12px);
+}
+.mimir-pptx-comment-controls__thread p {
+  margin: 6px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.mimir-pptx-comment-controls__actions {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--me-border);
+}
+.mimir-pptx-comment-controls__actions .me-notice {
+  flex-basis: 100%;
+}
+.mimir-pptx-comment-controls--embedded .mimir-pptx-comment-controls__content {
+  overflow: visible;
+  padding: 0;
+}
+.mimir-pptx-comment-controls--embedded .mimir-pptx-comment-controls__actions {
+  padding: 12px 0 0;
+}

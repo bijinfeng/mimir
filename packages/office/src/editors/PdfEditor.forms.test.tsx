@@ -78,6 +78,75 @@ function CollapsedPdfInspectorHarness() {
 }
 
 describe('PDF real form toolbar and Agent', () => {
+  it.each([
+    ['表单', '交互表单', 'PDF 表单面板'],
+    ['批注', '便笺与标注', 'PDF 批注面板'],
+  ])(
+    'closes the collapsed %s menu before opening its actual Editor inspector',
+    async (group, command, panelLabel) => {
+      vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+        this: HTMLElement,
+      ) {
+        return DOMRect.fromRect({
+          width: this.classList.contains('mimir-compact-toolbar__commands')
+            ? 100
+            : this.dataset.sectionKey
+              ? this.hasAttribute('data-collapsed')
+                ? 72
+                : 150
+              : 100,
+          height: 56,
+        })
+      })
+      const pdf = await PDFDocument.create()
+      pdf.addPage([400, 600])
+      const original = await pdf.save(),
+        host = document.createElement('div'),
+        root = createRoot(host)
+      document.body.append(host)
+      let handle: PdfAgentHandle | null = null
+      cleanup.push(() => {
+        act(() => root.unmount())
+        host.remove()
+        vi.restoreAllMocks()
+      })
+      await act(async () =>
+        root.render(
+          <PdfEditor
+            documentId="collapsed-pdf-tools"
+            io={{ load: async () => original, save: async () => {} }}
+            onAgentHandleChange={(value) => {
+              handle = value
+            }}
+            hostForms={async ({ expectedVersion }) => ({
+              forms: { sha256: '', fields: [] },
+              version: expectedVersion,
+            })}
+            hostAnnotations={async ({ expectedVersion }) => ({
+              annotations: { sha256: '', annotations: [] },
+              version: expectedVersion,
+            })}
+          />,
+        ),
+      )
+      await settle(() => handle !== null)
+      await click(
+        [...host.querySelectorAll('[role="tab"]')].find((tab) => tab.textContent === '编辑')!,
+      )
+      await click(button(host, group))
+      await settle(() => !!host.querySelector('[role="menu"]'))
+      await click(button(host, command))
+      await settle(() => !!host.querySelector(`[aria-label="${panelLabel}"]`))
+      expect(host.querySelector('[role="menu"]')).toBeNull()
+      await settle(() => !button(host, group).disabled)
+      await act(async () =>
+        host
+          .querySelector('[aria-label="PDF 属性工具"]')!
+          .dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })),
+      )
+      expect(document.activeElement).toBe(button(host, group))
+    },
+  )
   it.each(['escape', 'close'])(
     'returns focus to a collapsed named group after %s closes the inspector',
     async (action) => {
@@ -485,14 +554,24 @@ describe('PDF real form toolbar and Agent', () => {
       },
     ]
     await render({ snapshot: { sha256: 'b', fields } })
+    const panel = host.querySelector('[aria-label="PDF 表单面板"]')!,
+      content = panel.querySelector('.mimir-pdf-inspector__content')!,
+      footer = panel.querySelector('footer')!
+    expect(footer.parentElement).toBe(panel)
+    expect(content.contains(footer)).toBe(false)
+    expect(footer.contains(button(host, '应用表单字段'))).toBe(true)
+    expect(footer.querySelector('[role="status"]')).not.toBeNull()
     expect(button(host, '应用表单字段').disabled).toBe(true)
+    const fieldSelector = host.querySelector('[aria-label="选择表单字段"]')
     await click(
       openSelect(host, '选择表单字段').find((option) => option.textContent?.includes('readonly'))!,
     )
     expect(onGotoPage).toHaveBeenCalledWith(2)
+    expect(host.querySelector('[aria-label="选择表单字段"]')).toBe(fieldSelector)
     expect(host.textContent).toContain('文本 · 第 2 页')
     expect(host.textContent).not.toContain('第 2、2 页')
     expect(host.querySelector<HTMLTextAreaElement>('textarea')!.disabled).toBe(true)
+    expect(host.querySelector<HTMLTextAreaElement>('textarea')!.value).toBe('锁定')
     expect(button(host, '应用表单字段').disabled).toBe(true)
     expect(host.textContent).toContain('此字段为只读')
   })

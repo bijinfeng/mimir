@@ -1,0 +1,74 @@
+.mimir-pdf-text-block__selection {
+  display: grid;
+  flex: none;
+  gap: 12px;
+  min-width: 0;
+  max-height: 50%;
+  overflow: auto;
+  padding: 4px 16px 16px;
+}
+.mimir-pdf-text-block__excerpt {
+  max-height: 120px;
+  overflow: auto;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--me-border);
+  border-radius: var(--me-radius);
+  color: var(--me-text);
+  font-size: var(--me-font-size-sm);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.mimir-pdf-text-block__actions {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  flex: none;
+  gap: 8px;
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--me-border);
+}
+.mimir-pdf-text-block__actions .me-btn__icon {
+  gap: 6px;
+}
+.mimir-pdf-text-block__empty {
+  flex: 1;
+}
+.mimir-pdf-text-block__modes {
+  flex: none;
+  padding: 0 16px 12px;
+}
+.mimir-pdf-text-block__fields {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.mimir-pdf-text-block__fields .me-input--text {
+  width: 100%;
+}
+.mimir-pdf-text-block__format {
+  border-top: 1px solid var(--me-border);
+  padding-top: 12px;
+}
+.mimir-pdf-text-block__format summary {
+  color: var(--me-text);
+  cursor: pointer;
+}
+.mimir-pdf-text-block__format[open] > :not(summary) {
+  margin-top: 12px;
+}
+.mimir-pdf-text-block__match {
+  margin: 0;
+  color: var(--me-text);
+  font-size: var(--me-font-size-sm);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.mimir-pdf-text-block__match mark {
+  color: var(--me-text);
+  background: var(--me-accent-bg);
+}

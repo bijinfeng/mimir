@@ -88,10 +88,26 @@ export const pptxManualAssetSchema = z.discriminatedUnion('kind', [
     .object({
       kind: z.enum(['copy_elements', 'cut_elements']),
       slide: clipboardSlide,
-      elementIds: z.array(text(300)).min(1).max(100),
+      elementIds: z.array(text(300)).min(1).max(100).optional(),
+      targets: z
+        .array(z.object({ elementId: text(300), group: text(300).optional() }).strict())
+        .min(1)
+        .max(100)
+        .optional(),
     })
-    .strict(),
+    .strict()
+    .refine(
+      (input) => (input.elementIds === undefined) !== (input.targets === undefined),
+      '请提供elementIds或targets之一',
+    ),
   z.object({ kind: z.enum(['copy_slide', 'cut_slide']), slide: clipboardSlide }).strict(),
+  z
+    .object({
+      kind: z.enum(['copy_slides', 'cut_slides']),
+      slides: z.array(clipboardSlide).min(1).max(40),
+    })
+    .strict()
+    .refine((input) => new Set(input.slides).size === input.slides.length, '页面不能重复'),
   z
     .object({
       kind: z.literal('paste_elements'),
@@ -103,7 +119,7 @@ export const pptxManualAssetSchema = z.discriminatedUnion('kind', [
     .strict(),
   z
     .object({
-      kind: z.literal('paste_slide'),
+      kind: z.enum(['paste_slide', 'paste_slides']),
       afterIndex: z.number().int().min(-1),
       ref: z.uuid(),
       keepSourceFormatting: z.boolean().default(false),
@@ -119,10 +135,17 @@ export const pptxManualUploadSchema = z.discriminatedUnion('kind', [
       kind: z.literal('picture'),
       slide: clipboardSlide,
       elementId: text(300).optional(),
+      group: text(300).optional(),
       widthPt: z.number().finite().min(6).max(720).default(72),
+      naturalSize: z.boolean().optional(),
+      center: z
+        .object({ x: z.number().finite().min(0).max(1), y: z.number().finite().min(0).max(1) })
+        .strict()
+        .optional(),
       keepCrop: z.boolean().default(false),
     })
-    .strict(),
+    .strict()
+    .refine((input) => !input.group || !!input.elementId, '组内图片替换必须指定直接成员'),
   z
     .object({
       kind: z.literal('media'),

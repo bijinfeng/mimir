@@ -18,6 +18,10 @@ import {
   readPdfDrawings,
   transformPdfDrawings,
 } from './pdf-drawing-geometry.js'
+import {
+  preparePdfVisualSignatureScale,
+  clonePdfVisualSignatureId,
+} from './pdf-visual-signatures.js'
 const key = PDFName.of
 export type PdfPageLayout = Extract<PdfLocalOperation, { op: 'apply_page_layout' }>['pages']
 
@@ -26,8 +30,10 @@ export function resizePdfPage(page: PDFPage, width: number, height: number) {
   const before = pdfDrawingGeometry(page),
     b = page.getCropBox(),
     k = Math.min(width / b.width, height / b.height)
+  const finishSignatures = preparePdfVisualSignatureScale(page, k)
   page.scaleContent(k, k)
   page.scaleAnnotations(k, k)
+  finishSignatures()
   const x = b.x * k - (width - b.width * k) / 2,
     y = b.y * k - (height - b.height * k) / 2
   page.setMediaBox(x, y, width, height)
@@ -102,6 +108,20 @@ function duplicate(
         : pdf.context.register(cloned)
     cloned.set(key('P'), ref)
     cloned.set(key('NM'), PDFHexString.fromText(randomUUID()))
+    clonePdfVisualSignatureId(
+      source,
+      original,
+      cloned,
+      `MVS-${createHash('sha256')
+        .update(
+          JSON.stringify([
+            source.ref.toString(),
+            original.lookup(key('NM'))?.toString(),
+            occurrence,
+          ]),
+        )
+        .digest('hex')}`,
+    )
     if (field) {
       for (const name of ['T', 'FT', 'V', 'DV', 'Kids', 'Ff']) cloned.delete(key(name))
       cloned.set(key('Parent'), field.ref)
