@@ -8,5 +8,5 @@
 {"file": ".trellis/spec/core/backend/index.md", "reason": "检索编排与通道职责边界"}
 {"file": ".trellis/spec/plugin-leg/backend/index.md", "reason": "keyword / substring / vector 双方言召回约束"}
 {"file": ".trellis/tasks/10-17-wechat-miniapp-research/research/miniapp-product-research.md", "reason": "微信官方能力、WeKnora v0.8.3 固定源码和产品决策证据"}
-{"file": ".trellis/tasks/10-17-wechat-miniapp-research/research/taro-component-selection.md", "reason": "核对 NutUI 4.0 beta.10 版本、React 声明及未验证的 Taro 5.0 兼容性，不沿用原生或 NutUI 3.x 规划"}
+{"file": ".trellis/tasks/10-17-wechat-miniapp-research/research/taro-component-selection.md", "reason": "核对已确认的 Taro 4.3.0 / React 18 / NutUI 4.0.0-beta.10 组合及构建 / 真机证据，不沿用原生、Taro 5.0 或 NutUI 3.x 规划"}
 {"file": ".trellis/spec/project/quality.md", "reason": "pnpm check、实际检索效果、界面验收及如实记录限制"}

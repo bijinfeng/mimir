@@ -5,7 +5,7 @@
 ## 1. 约束与选择
 
 - 仅一个自用、固定域名服务端；沿用单用户身份及当前知识库 / 目录 / 标签 / 文件体系。
-- 建议新增 `apps/miniapp`，按用户选择使用 Taro + React + TypeScript，组件库确定为 NutUI React Taro 4.0。截至 2026-10-18，最新 4.0 发布为 `@nutui/nutui-react-taro@4.0.0-beta.10`（2026-10-16 发布），显式锁定该版本。用户指定的 Taro 5.0 尚无官方 npm 发布来源，版本待核实，不自行改成 Taro 4.3.0；React 暂按 NutUI 声明的 React 18 范围验证。详见 [选型记录](research/taro-component-selection.md)。WeKnora v0.8.3 原生实现只用于产品职责参考，不能证明 Taro / NutUI 的兼容性。
+- 建议新增 `apps/miniapp`，技术栈已由用户确认（2026-10-18）：Taro 4.3.0 + React 18 + TypeScript + NutUI React Taro 4.0.0-beta.10。Taro 核心包、CLI 与平台 / 框架插件统一锁定 4.3.0；NutUI 显式锁定 `@nutui/nutui-react-taro@4.0.0-beta.10`（2026-10-16 发布），React 18 的具体补丁版本在基础构建验证后锁定。用户先前看到的 Taro 5.0 文章已核验，不能证明官方发布。详见 [选型记录](research/taro-component-selection.md)。WeKnora v0.8.3 原生实现只用于产品职责参考，不能证明 Taro / NutUI 的兼容性；上述组合仍须构建及真机验证。
 - 共享契约仍在 `packages/shared`，通过 Taro 构建生成可供微信开发工具导入的代码，不能把 TS workspace 源码或 Node 模块直接当微信运行时依赖。`apps/miniapp` 使用精简入口和 type-only imports，构建不带入 Office / antd / DOM-only 依赖。构建器与 Markdown tokenizer 在第一阶段按兼容与包体积选定、锁定，不扩大产品范围。
 - 复用服务层与检索通道，页面用适合小程序的 Taro React 组件实现；现有网页 React 组件不直接搬入。浏览器 `fetch` / EventSource、Tiptap / GenOffice 不进入小程序。NutUI 用于弹窗、表单、选择器等基础交互，业务布局自建，统一主题以保持紧凑、简单、内容优先。
 - 现有网页、桌面与 fnOS 保持兼容；新增合同按可选字段或专门的小程序路由引入，不放宽原业务接口鉴权。

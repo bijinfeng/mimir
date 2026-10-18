@@ -1,6 +1,6 @@
 # Taro 与小程序组件库选型补充
 
-核对日期：2026-10-18。用户指定 Taro 5.0，并明确选择 NutUI React Taro 最新 4.0。组件库已确认，任务仍为 planning，尚未进入产品实施。技术规划已从原生方案调整为 Taro React；用户提供的 5.0 消息来源已核验（见下文），具体 Taro 依赖版本待确认。
+核对及决策日期：2026-10-18。用户在 Taro 5.0 消息核验后确认采用 Taro 4.3.0 + React 18 + NutUI React Taro 4.0.0-beta.10，技术规划已从原生方案调整为 Taro React。任务仍为 planning，尚未进入产品实施；依赖组合尚未经过工程构建或真机验证。
 
 ## 版本证据
 
@@ -8,7 +8,7 @@
 
 | 包 | 核对结果 | 对 Mimir 的影响 |
 | --- | --- | --- |
-| [@tarojs/taro](https://registry.npmjs.org/@tarojs/taro) | latest 为 4.3.0，2026-09-29 发布；版本列表没有 5.x。[官方 release](https://github.com/NervJS/taro/releases/tag/v4.3.0) 同样为 4.3.0 | 不能承诺 Taro 5.0 可安装或兼容，需确认用户指的是哪个版本来源 |
+| [@tarojs/taro](https://registry.npmjs.org/@tarojs/taro) | latest 为 4.3.0，2026-09-29 发布；版本列表没有 5.x。[官方 release](https://github.com/NervJS/taro/releases/tag/v4.3.0) 同样为 4.3.0 | 用户已确认采用 4.3.0，核心包、CLI 与平台 / 框架插件统一锁定版本 |
 | [@nutui/nutui-react-taro](https://registry.npmjs.org/@nutui/nutui-react-taro) | 最高非预发布版本 3.0.20；本轮再次核对最新 4.0 为 4.0.0-beta.10，2026-10-16T12:26:10.540Z 发布；latest 仍指向 beta.9，beta 指向 beta.10；beta.10 声明 React 16.8 / 17 / 18 | 按用户选择锁定 4.0.0-beta.10，不直接依赖 latest，也不据此承诺 React 19 或 Taro 5 兼容 |
 | [@taroify/core](https://registry.npmjs.org/@taroify/core) | latest 1.0.6，2026-08-16 发布；声明 Taro >=3、React ^18.2.0 | 备选。基于 Vant 设计语言，基础组件适合内容型应用；宽泛的 Taro peer 范围不代表实测 Taro 5 |
 | [taro-ui](https://registry.npmjs.org/taro-ui) | latest 3.4.2，2026-09-25 发布 | 仍有更新，不能以停止维护为由排除；本项目优先比较 NutUI React Taro 与 Taroify |
@@ -17,7 +17,7 @@ NutUI [官方 React Taro 3.x 文档](https://nutui.jd.com/taro/react/3x/) 和 [�
 
 ## 建议及适用边界
 
-前轮建议采用 3.0.20 稳定版；用户本轮明确选择最新 4.0，因此现行决策为 `@nutui/nutui-react-taro@4.0.0-beta.10`，不再以 3.x 作为计划依赖。React 暂按 18 验证；Taro 版本继续保留用户的 5.0 意向，先核实其分支或预发布来源，不把前轮建议的 4.3.0 当作用户已接受的决定。本轮未安装依赖、构建工程或执行真机验证，不能写成已通过验收的组合。
+现行确认组合为 Taro 4.3.0 + React 18 + `@nutui/nutui-react-taro@4.0.0-beta.10`，取代前轮 NutUI 3.0.20 建议及待核实的 Taro 5.0 意向。React 18 的具体补丁版本在基础构建验证后锁定。本轮未安装依赖、构建工程或执行真机验证，不能写成已通过验收的组合。
 
 库只负责 Dialog、Popup、表单、选择器、Toast、Loading 等通用交互。知识库列表、问答、引用、阅读与 Markdown 编辑区由 Mimir 自己组合，统一字号、间距、边框、颜色和触控尺寸，保持当前紧凑、简单、内容优先的方向。组件库的默认演示页不作为页面设计模板。暂不混用两套基础组件库。
 
@@ -33,7 +33,7 @@ NutUI [官方 React Taro 3.x 文档](https://nutui.jd.com/taro/react/3x/) 和 [�
 - 再次读取 [核心包 npm 元数据](https://registry.npmjs.org/@tarojs/taro) 与 [CLI npm 元数据](https://registry.npmjs.org/@tarojs/cli)：两者 `latest` 均为 4.3.0，`beta` 均为 4.3.1-beta.3，`alpha` 均为 4.3.1-alpha.4，完整 versions 中均无 `5.*`。GitHub [正式发布 v4.3.0](https://github.com/NervJS/taro/releases/tag/v4.3.0) 日期为 2026-09-29，`main/package.json` 读取时同样为 4.3.0。
 - 官方文档仓库完整树响应 `truncated: false`，博客目录未发现 5.0 发布文档。官网及文档站本轮直连超时；使用上述 GitHub 固定源码作为官方文章证据，不能声称官网全文已成功检索。搜索引擎结果受无命中 / 验证限制，不作为否定消息真实性的依据。
 
-结论：截至本轮核对，官方发布渠道没有可安装的 Taro 5.x 正式版或预发布版；该掘金文章不足以证实官方 5.0 版本或路线。建议实际验证组合使用当前正式版 Taro 4.3.0 + React 18 + 用户已选 NutUI React Taro 4.0.0-beta.10，尚未将此建议记为用户已批准的框架版本。鸿蒙专用能力不进入首版微信小程序范围。
+结论：截至本轮核对，官方发布渠道没有可安装的 Taro 5.x 正式版或预发布版；该掘金文章不足以证实官方 5.0 版本或路线。核验后建议的 Taro 4.3.0 + React 18 + NutUI React Taro 4.0.0-beta.10 已获用户确认。鸿蒙专用能力不进入首版微信小程序范围。
 
 ## WeKnora 复核
 
