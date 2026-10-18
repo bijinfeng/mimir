@@ -212,6 +212,8 @@ packages:
     path: apps/server
   web:
     path: apps/web
+  miniapp:
+    path: apps/miniapp
   chat:
     path: packages/chat
   core:

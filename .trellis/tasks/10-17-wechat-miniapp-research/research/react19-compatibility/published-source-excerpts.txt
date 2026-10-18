@@ -1,0 +1,130 @@
+SOURCE https://registry.npmjs.org/@tarojs/react/-/react-4.3.0.tgz
+ARCHIVE MEMBER package/dist/react.esm.js
+FULL FILE SHA256 f3faccd2da12c071d7b0fe91777788d53588a733a11a96e9885f399ab767a47f
+LINES 1-4
+1: import { PLATFORM_TYPE, isObject, isEnableTTDom, isString, isFunction, toCamelCase, UNITLESS_PROPERTIES_SET, isNumber, capitalize, internalComponents, isUndefined, noop, isBoolean, hooks, ensure } from '@tarojs/shared';
+2: import { setInnerHTML, FormElement, convertNumber2PX, eventHandlerTTDom, document } from '@tarojs/runtime';
+3: import Reconciler from 'react-reconciler';
+4: import { DefaultEventPriority as DefaultEventPriority$1 } from 'react-reconciler/constants';
+LINES 742-751
+742:         if (element.childNodes.length > 0) {
+743:             element.textContent = '';
+744:         }
+745:     }
+746: };
+747: const TaroReconciler = Reconciler(hostConfig);
+748: if (process.env.NODE_ENV !== 'production') {
+749:     const foundDevTools = TaroReconciler.injectIntoDevTools({
+750:         bundleType: 1,
+751:         version: '18.0.0',
+LINES 838-875
+838:         this.renderer = renderer;
+839:         this.initInternalRoot(renderer, domContainer, options);
+840:     }
+841:     initInternalRoot(renderer, domContainer, options) {
+842:         // Since react-reconciler v0.27, createContainer need more parameters
+843:         // @see:https://github.com/facebook/react/blob/0b974418c9a56f6c560298560265dcf4b65784bc/packages/react-reconciler/src/ReactFiberReconciler.js#L248
+844:         const containerInfo = domContainer;
+845:         if (options) {
+846:             const tag = 1; // ConcurrentRoot
+847:             const concurrentUpdatesByDefaultOverride = false;
+848:             let isStrictMode = false;
+849:             let identifierPrefix = '';
+850:             let onRecoverableError = (error) => console.error(error);
+851:             let transitionCallbacks = null;
+852:             if (options.unstable_strictMode === true) {
+853:                 isStrictMode = true;
+854:             }
+855:             if (options.identifierPrefix !== undefined) {
+856:                 identifierPrefix = options.identifierPrefix;
+857:             }
+858:             if (options.onRecoverableError !== undefined) {
+859:                 onRecoverableError = options.onRecoverableError;
+860:             }
+861:             if (options.unstable_transitionCallbacks !== undefined) {
+862:                 transitionCallbacks = options.unstable_transitionCallbacks;
+863:             }
+864:             this.internalRoot = renderer.createContainer(containerInfo, tag, null, // hydrationCallbacks
+865:             isStrictMode, concurrentUpdatesByDefaultOverride, identifierPrefix, onRecoverableError, transitionCallbacks);
+866:         }
+867:         else {
+868:             const tag = 0; // LegacyRoot
+869:             this.internalRoot = renderer.createContainer(containerInfo, tag, null, // hydrationCallbacks
+870:             false, // isStrictMode
+871:             false, // concurrentUpdatesByDefaultOverride,
+872:             '', // identifierPrefix
+873:             () => { }, // onRecoverableError, this isn't reachable because onRecoverableError isn't called in the legacy API.
+874:             null // transitionCallbacks
+875:             );
+
+SOURCE https://registry.npmjs.org/react-reconciler/-/react-reconciler-0.29.0.tgz
+ARCHIVE MEMBER package/cjs/react-reconciler.development.js
+FULL FILE SHA256 ad67d52fcefb288ef6d96e8b1c494965920ec1182b4d205f145d1b4f35e2bffe
+LINES 11-22
+11: 'use strict';
+12: 
+13: if (process.env.NODE_ENV !== "production") {
+14:   module.exports = function $$$reconciler($$$hostConfig) {
+15:     var exports = {};
+16: 'use strict';
+17: 
+18: var React = require('react');
+19: var Scheduler = require('scheduler');
+20: 
+21: var ReactSharedInternals = React.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+22: 
+LINES 486-495
+486: // This allows certain concepts to persist without recalculating them,
+487: // e.g. whether a subtree contains passive effects or portals.
+488: 
+489: var StaticMask = LayoutStatic | PassiveStatic | RefStatic;
+490: 
+491: var ReactCurrentOwner = ReactSharedInternals.ReactCurrentOwner;
+492: function getNearestMountedFiber(fiber) {
+493:   var node = fiber;
+494:   var nearestMounted = fiber;
+495: 
+LINES 1015-1022
+1015:     }
+1016:   }
+1017: }
+1018: 
+1019: var ReactCurrentDispatcher = ReactSharedInternals.ReactCurrentDispatcher;
+1020: var prefix;
+1021: function describeBuiltInComponentFrame(name, source, ownerFn) {
+1022:   {
+
+SOURCE https://registry.npmjs.org/react/-/react-19.3.1.tgz
+ARCHIVE MEMBER package/cjs/react.development.js
+FULL FILE SHA256 2d9afa5ada426157ecb2c89984f89d7a3981095615af0a71dfe4ba809998f826
+LINES 868-888
+868:       }
+869:     };
+870:     exports.Activity = REACT_ACTIVITY_TYPE;
+871:     exports.Children = fnName;
+872:     exports.Component = Component;
+873:     exports.Fragment = REACT_FRAGMENT_TYPE;
+874:     exports.Profiler = REACT_PROFILER_TYPE;
+875:     exports.PureComponent = PureComponent;
+876:     exports.StrictMode = REACT_STRICT_MODE_TYPE;
+877:     exports.Suspense = REACT_SUSPENSE_TYPE;
+878:     exports.ViewTransition = REACT_VIEW_TRANSITION_TYPE;
+879:     exports.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE =
+880:       ReactSharedInternals;
+881:     exports.__COMPILER_RUNTIME = deprecatedAPIs;
+882:     exports.act = function (callback) {
+883:       var prevActQueue = ReactSharedInternals.actQueue,
+884:         prevActScopeDepth = actScopeDepth;
+885:       actScopeDepth++;
+886:       var queue = (ReactSharedInternals.actQueue =
+887:           null !== prevActQueue ? prevActQueue : []),
+888:         didAwaitActCall = !1;
+LINES 1320-1327
+1320:       );
+1321:     };
+1322:     exports.useTransition = function () {
+1323:       return resolveDispatcher().useTransition();
+1324:     };
+1325:     exports.version = "19.3.1";
+1326:     "undefined" !== typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ &&
+1327:       "function" ===

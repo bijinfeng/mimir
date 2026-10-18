@@ -1,0 +1,22 @@
+{
+  "url": "https://registry.npmjs.org/@tarojs/react/-/react-4.3.0.tgz",
+  "sha256": "3bf3c54c44e2faab94ba35988d335604c74066488a9103a9afb8caf1a03ec396",
+  "registryIntegrity": "sha512-OnAOdI/mhxTyKhCeV0EiA6c4tPw/KmxMR8qLtHiJ8g3QyOEN4huTC8rwhiSkvy42VmRo+xHsoJMjGylsT+uSKw==",
+  "files": [
+    "package/dist/react.esm.js",
+    "package/package.json",
+    "package/dist/react.esm.js.map",
+    "package/README.md",
+    "package/dist/componentTree.d.ts",
+    "package/dist/constant.d.ts",
+    "package/dist/domInput.d.ts",
+    "package/dist/event.d.ts",
+    "package/dist/index.d.ts",
+    "package/dist/inputValueTracking.d.ts",
+    "package/dist/props.d.ts",
+    "package/dist/reconciler.d.ts",
+    "package/dist/render.d.ts",
+    "package/dist/workTags.d.ts",
+    "package/LICENSE"
+  ]
+}

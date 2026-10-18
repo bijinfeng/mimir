@@ -8,5 +8,8 @@
 {"file": ".trellis/spec/core/backend/index.md", "reason": "检索编排与通道职责边界"}
 {"file": ".trellis/spec/plugin-leg/backend/index.md", "reason": "keyword / substring / vector 双方言召回约束"}
 {"file": ".trellis/tasks/10-17-wechat-miniapp-research/research/miniapp-product-research.md", "reason": "微信官方能力、WeKnora v0.8.3 固定源码和产品决策证据"}
-{"file": ".trellis/tasks/10-17-wechat-miniapp-research/research/taro-component-selection.md", "reason": "用户确认 Taro 4.3.0 / React 18 / NutUI React Taro 4.0.0-beta.10，版本证据与紧凑业务布局边界"}
-{"file": ".trellis/tasks/10-17-wechat-miniapp-research/research/mobile-interface-references.md", "reason": "移动界面官方截图与当前原型对照；下一稿建议仍待用户评审，不能作为已批准的功能扩展"}
+{"file": ".trellis/tasks/10-17-wechat-miniapp-research/research/taro-component-selection.md", "reason": "Taro 4.3.0 / NutUI 4.0.0-beta.10 官方版本依据；React 19 兼容性另见专项研究，用户已选择 React 18.3.1"}
+{"file": ".trellis/tasks/10-17-wechat-miniapp-research/research/mobile-interface-references.md", "reason": "移动界面参考与 v3 紧凑方向；具体交互已同步 design，不扩展产品范围"}
+{"file": ".trellis/tasks/10-17-wechat-miniapp-research/research/react19-compatibility.md", "reason": "React 19 官方依赖与渲染器断裂证据；用户确认采用 React 18.3.1，不能强制覆盖 peer"}
+{"file": ".trellis/spec/miniapp/frontend/index.md", "reason": "新端真实 Taro 组件、包边界与质量门"}
+{"file": ".trellis/spec/miniapp/frontend/build.md", "reason": "React 18 独立依赖、固定 HTTPS origin、微信工程与产物合同"}

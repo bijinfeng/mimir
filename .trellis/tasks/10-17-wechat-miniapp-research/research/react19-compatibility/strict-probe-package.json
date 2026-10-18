@@ -1,0 +1,9 @@
+{
+  "name": "mimir-react19-compat-probe",
+  "version": "0.0.0",
+  "private": true,
+  "dependencies": {
+    "react": "19.3.1",
+    "@tarojs/react": "4.3.0"
+  }
+}

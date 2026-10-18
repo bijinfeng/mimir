@@ -8,10 +8,11 @@
 
 | 层 | 选择 | 理由 |
 |---|---|---|
-| 前端 | Vite + React 19 + TanStack Router + TanStack Query | SSR 对单用户后台应用没有收益；TanStack Router 的类型安全路由省掉一层手写 |
-| UI 库 | antd 6 | 已定。表格、表单、树、抽屉开箱可用 |
+| 浏览器 / 桌面前端 | Vite + React 19 + TanStack Router + TanStack Query | SSR 对单用户后台应用没有收益；TanStack Router 的类型安全路由省掉一层手写 |
+| 网页 UI 库 | antd 6 | 已定。表格、表单、树、抽屉开箱可用 |
+| 微信小程序 | Taro 4.3.0 + React 18.3.1 + NutUI React Taro 4.0.0-beta.10 | 独立 webpack5 工程；当前为三入口构建基线，尚未接入业务 API。依赖与配置合同见 [miniapp](../miniapp/frontend/build.md) |
 | 编辑器 | Tiptap 3 + `@tiptap/markdown` | 官方 markdown 序列化，往返幂等（见 PRD 5.4） |
-| 构建期优化 | **React Compiler** | 自动记忆化，替代手写 useMemo / useCallback / memo |
+| 网页构建期优化 | **React Compiler** | 自动记忆化，替代手写 useMemo / useCallback / memo |
 | 后端 | Hono 4 + `@hono/node-server` | 浏览器扩展、脚本、CLI 都要调同一套 HTTP 接口，比 server function 更合适 |
 | ORM | Drizzle 0.45（PG：postgres.js / 本地：better-sqlite3） | 类型安全的 SQL，不引入第二套查询语言 |
 | 数据库 | **服务器**：PostgreSQL 17 + pgvector 0.8；**本地开发 / 桌面端**：SQLite + FTS5 | 同一套服务层。按 `DATABASE_URL` 协议头判定驱动，未设置默认 SQLite（免 Docker）。方言分支只在列明的 5 处，见 D-045 与 RESEARCH §11 |
@@ -124,6 +125,7 @@ mimir/
 │   ├── web/                     # 浏览器部署的**壳**（D-103）
 │   │   ├── src/index.tsx        #   注入浏览器插槽 → createApp()
 │   │   └── index.html           #   首帧外观脚本 + 挂载点
+│   ├── miniapp/                 # Taro 微信客户端；独立 React 18 / webpack5，当前为工程基线
 │   ├── fnos/                    # fnOS x86_64 原生包：manifest、向导、生命周期、桌面入口
 │   └── desktop/                 # Electron 载体（D-046）。三段由 electron-vite 构建（D-103）
 │       ├── electron.vite.config.ts

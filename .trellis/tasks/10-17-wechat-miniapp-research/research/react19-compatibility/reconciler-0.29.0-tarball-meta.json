@@ -1,0 +1,20 @@
+{
+  "url": "https://registry.npmjs.org/react-reconciler/-/react-reconciler-0.29.0.tgz",
+  "sha256": "71ff410d7721ae77598bc7d6d167a1b991b953b76e7a3c815e63f703cc600bb5",
+  "registryIntegrity": "sha512-wa0fGj7Zht1EYMRhKWwoo1H9GApxYLBuhoAuXN0TlltESAjDssB+Apf0T/DngVqaMyPypDmabL37vw/2aRM98Q==",
+  "files": [
+    "package/LICENSE",
+    "package/constants.js",
+    "package/index.js",
+    "package/cjs/react-reconciler-constants.development.js",
+    "package/cjs/react-reconciler-constants.production.min.js",
+    "package/cjs/react-reconciler-reflection.development.js",
+    "package/cjs/react-reconciler-reflection.production.min.js",
+    "package/cjs/react-reconciler.development.js",
+    "package/cjs/react-reconciler.production.min.js",
+    "package/cjs/react-reconciler.profiling.min.js",
+    "package/reflection.js",
+    "package/package.json",
+    "package/README.md"
+  ]
+}

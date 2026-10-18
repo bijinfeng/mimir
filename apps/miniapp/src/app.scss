@@ -1,0 +1,57 @@
+page {
+  --nutui-color-primary: #00834d;
+  --nutui-color-primary-stop-1: #00834d;
+  --nutui-color-primary-stop-2: #00834d;
+  --nutui-color-primary-pressed: #006b3e;
+  --nutui-button-square-border-radius: 6px;
+  --nutui-button-border-radius: 6px;
+  --nutui-button-default-height: 44px;
+  --nutui-button-default-font-size: 14px;
+  background: #fff;
+  color: #262626;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei',
+    sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.page {
+  padding: 16px;
+}
+.page-heading {
+  margin-bottom: 16px;
+}
+.page-title {
+  font-size: 19px;
+  font-weight: 600;
+}
+.status-block {
+  margin: 24px 0 16px;
+}
+.status-title {
+  display: block;
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.muted {
+  color: #595959;
+}
+.detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 48px;
+  padding: 4px 0;
+  border-bottom: 1px solid #e8e8e8;
+}
+.detail-value {
+  max-width: 70%;
+  text-align: right;
+  word-break: break-all;
+}
+.connection-note {
+  display: block;
+  margin-top: 16px;
+}

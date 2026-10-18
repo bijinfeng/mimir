@@ -1,0 +1,247 @@
+{
+  "date": "2026-10-18",
+  "sources": [
+    {
+      "file": "react-latest.json",
+      "url": "https://registry.npmjs.org/react/latest",
+      "status": 200,
+      "bytes": 2150,
+      "sha256": "ecf8c02b9096a7813842d87fae50a707a8809c5c3d0ec6b359ac51d40188ff6f"
+    },
+    {
+      "file": "react-dom-latest.json",
+      "url": "https://registry.npmjs.org/react-dom/latest",
+      "status": 200,
+      "bytes": 3419,
+      "sha256": "2d72d7d33a8b0fea5614e1b415d06470877efa8eebbdf638cee04e5b83c2c7a5"
+    },
+    {
+      "file": "taro-react-4.3.0.json",
+      "url": "https://registry.npmjs.org/@tarojs%2freact/4.3.0",
+      "status": 200,
+      "bytes": 2480,
+      "sha256": "aeea168ce5f4188ba5df25d7364ebee19bf187190fea12206045bd5c7b315d70"
+    },
+    {
+      "file": "taro-framework-react-4.3.0.json",
+      "url": "https://registry.npmjs.org/@tarojs%2fplugin-framework-react/4.3.0",
+      "status": 200,
+      "bytes": 3409,
+      "sha256": "23feb5cd5c86274bf6603cd47bd00a987dc6c2e251e33aadb5005d15201a95d4"
+    },
+    {
+      "file": "nutui-beta10.json",
+      "url": "https://registry.npmjs.org/@nutui%2fnutui-react-taro/4.0.0-beta.10",
+      "status": 200,
+      "bytes": 3172,
+      "sha256": "556ec31a201d9ac5dba954f0e8b64307a7ad01746d91458ad225c3020cab72f7"
+    },
+    {
+      "file": "reconciler-0.29.0.json",
+      "url": "https://registry.npmjs.org/react-reconciler/0.29.0",
+      "status": 200,
+      "bytes": 2712,
+      "sha256": "908ebf00191f7afa5bf26262d516ad490c06e8a298dc83cd925735e1d345e461"
+    },
+    {
+      "file": "taro-react-beta.json",
+      "url": "https://registry.npmjs.org/@tarojs%2freact/beta",
+      "status": 200,
+      "bytes": 2563,
+      "sha256": "6734cf084903b0410a2b7038e31e83674b05660a57515b90d50548aa4b44fa64"
+    },
+    {
+      "file": "taro-framework-react-beta.json",
+      "url": "https://registry.npmjs.org/@tarojs%2fplugin-framework-react/beta",
+      "status": 200,
+      "bytes": 3536,
+      "sha256": "9e69d0467b61188ba2988ee077d141776db3c2f8856aa2c335a3702129e78bb5"
+    },
+    {
+      "file": "weknora-site.html",
+      "url": "https://weknora.weixin.qq.com/",
+      "status": 200,
+      "bytes": 113529,
+      "sha256": "6ae3d1aefe92980cded37b949947f077e12c227993745c7f10f5124ec2baedbe"
+    },
+    {
+      "file": "weknora-release.json",
+      "url": "https://api.github.com/repos/Tencent/WeKnora/releases/latest",
+      "status": 200,
+      "bytes": 44048,
+      "sha256": "163a964cc10c02fbca6dec0ad01f6fee50ffa0cc3f95957587c7df3b55fa9478"
+    },
+    {
+      "file": "weknora-native-app.json",
+      "url": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/miniprogram/app.json",
+      "status": 200,
+      "bytes": 1011,
+      "sha256": "d1b27c8eb65789623a325f5d6a601de46dc85521e4f879d3f63b03e37d08eda0"
+    },
+    {
+      "file": "taro-react-alpha.json",
+      "url": "https://registry.npmjs.org/@tarojs%2freact/alpha",
+      "sha256": "5007916e17f361f24f3faac3e195bdf269eecacebb6f6ff63df30f53a20e32e8",
+      "bytes": 2573,
+      "status": 200
+    },
+    {
+      "file": "taro-framework-react-alpha.json",
+      "url": "https://registry.npmjs.org/@tarojs%2fplugin-framework-react/alpha",
+      "sha256": "0fc67314402ec49a70d70370e637db2e7bbf62af4a1f23dc7cb546ee42a71b56",
+      "bytes": 3550,
+      "status": 200
+    },
+    {
+      "file": "taro-tags.json",
+      "url": "https://registry.npmjs.org/-/package/@tarojs%2freact/dist-tags",
+      "sha256": "ac03990bce0b07c5597fcdbd56ae3ddd1a533543e3796dbb78512ebbabc156e8",
+      "bytes": 283,
+      "status": 200
+    },
+    {
+      "file": "nutui-tags.json",
+      "url": "https://registry.npmjs.org/-/package/@nutui%2fnutui-react-taro/dist-tags",
+      "sha256": "b1cfe48e110bbafc0776c021f1fd7b56ed43bce30976b5602c6327b374617b00",
+      "bytes": 143,
+      "status": 200
+    },
+    {
+      "file": "taro-core-4.3.0.json",
+      "url": "https://registry.npmjs.org/@tarojs%2ftaro/4.3.0",
+      "sha256": "be97ec7756ed8244ac810eb15ad4f261e9c3ea9401ccbcdc1580728ac577b1f3",
+      "bytes": 2976,
+      "status": 200
+    },
+    {
+      "file": "react18-maximum-stable.json",
+      "url": "https://registry.npmjs.org/react/18.3.1",
+      "sha256": "c1e44da006bc2fb250075db381201154591301e12e1100d8e35bf48f8406002d",
+      "bytes": 1687,
+      "status": 200
+    }
+  ],
+  "retrievedAt": "2026-10-18T07:37:50.077279+00:00",
+  "localArtifacts": [
+    {
+      "file": "nutui-beta10.json",
+      "sha256": "556ec31a201d9ac5dba954f0e8b64307a7ad01746d91458ad225c3020cab72f7",
+      "bytes": 3172
+    },
+    {
+      "file": "nutui-tags.json",
+      "sha256": "b1cfe48e110bbafc0776c021f1fd7b56ed43bce30976b5602c6327b374617b00",
+      "bytes": 143
+    },
+    {
+      "file": "published-source-excerpts.txt",
+      "sha256": "3d15dbdbf90db9798ca25d8c0a91de39207248ef9131c5c9d9d67ea267359bde",
+      "bytes": 5954
+    },
+    {
+      "file": "react-dom-latest.json",
+      "sha256": "2d72d7d33a8b0fea5614e1b415d06470877efa8eebbdf638cee04e5b83c2c7a5",
+      "bytes": 3419
+    },
+    {
+      "file": "react-latest-tarball-meta.json",
+      "sha256": "f82386d8a0c99a51b929e0d4933e64e5023dbbd89fe09e0715612fdefc0c6bbb",
+      "bytes": 1548
+    },
+    {
+      "file": "react-latest.json",
+      "sha256": "ecf8c02b9096a7813842d87fae50a707a8809c5c3d0ec6b359ac51d40188ff6f",
+      "bytes": 2150
+    },
+    {
+      "file": "react18-maximum-stable.json",
+      "sha256": "c1e44da006bc2fb250075db381201154591301e12e1100d8e35bf48f8406002d",
+      "bytes": 1687
+    },
+    {
+      "file": "reconciler-0.29.0-tarball-meta.json",
+      "sha256": "aba85ca37d6f5a9b95ec2138c5007b67415a52c37ad5164e3710d3d0f78d5e00",
+      "bytes": 875
+    },
+    {
+      "file": "reconciler-0.29.0.json",
+      "sha256": "908ebf00191f7afa5bf26262d516ad490c06e8a298dc83cd925735e1d345e461",
+      "bytes": 2712
+    },
+    {
+      "file": "strict-probe-package.json",
+      "sha256": "91e3558a0dcb4b45e730c58837ba0b16f379510893ca60c6be4fd9ec0c004e83",
+      "bytes": 161
+    },
+    {
+      "file": "strict-probe-result.txt",
+      "sha256": "c36183c1578f019e67ef5945aa36db9e84860327833d7b7fb5efb7e58cb8fd94",
+      "bytes": 807
+    },
+    {
+      "file": "strict-probe-run.json",
+      "sha256": "bdf147095269314ae0ff5d6a803e930322e458864a150ffcaaef19fe24da7d8d",
+      "bytes": 388
+    },
+    {
+      "file": "taro-core-4.3.0.json",
+      "sha256": "be97ec7756ed8244ac810eb15ad4f261e9c3ea9401ccbcdc1580728ac577b1f3",
+      "bytes": 2976
+    },
+    {
+      "file": "taro-framework-react-4.3.0.json",
+      "sha256": "23feb5cd5c86274bf6603cd47bd00a987dc6c2e251e33aadb5005d15201a95d4",
+      "bytes": 3409
+    },
+    {
+      "file": "taro-framework-react-alpha.json",
+      "sha256": "0fc67314402ec49a70d70370e637db2e7bbf62af4a1f23dc7cb546ee42a71b56",
+      "bytes": 3550
+    },
+    {
+      "file": "taro-framework-react-beta.json",
+      "sha256": "9e69d0467b61188ba2988ee077d141776db3c2f8856aa2c335a3702129e78bb5",
+      "bytes": 3536
+    },
+    {
+      "file": "taro-react-4.3.0-tarball-meta.json",
+      "sha256": "caf82bf2876501b1ba07a62c22acc3f3ea3d6c0c926b6a9a25204475d09d4373",
+      "bytes": 785
+    },
+    {
+      "file": "taro-react-4.3.0.json",
+      "sha256": "aeea168ce5f4188ba5df25d7364ebee19bf187190fea12206045bd5c7b315d70",
+      "bytes": 2480
+    },
+    {
+      "file": "taro-react-alpha.json",
+      "sha256": "5007916e17f361f24f3faac3e195bdf269eecacebb6f6ff63df30f53a20e32e8",
+      "bytes": 2573
+    },
+    {
+      "file": "taro-react-beta.json",
+      "sha256": "6734cf084903b0410a2b7038e31e83674b05660a57515b90d50548aa4b44fa64",
+      "bytes": 2563
+    },
+    {
+      "file": "taro-tags.json",
+      "sha256": "ac03990bce0b07c5597fcdbd56ae3ddd1a533543e3796dbb78512ebbabc156e8",
+      "bytes": 283
+    },
+    {
+      "file": "weknora-native-app.json",
+      "sha256": "d1b27c8eb65789623a325f5d6a601de46dc85521e4f879d3f63b03e37d08eda0",
+      "bytes": 1011
+    },
+    {
+      "file": "weknora-release.json",
+      "sha256": "163a964cc10c02fbca6dec0ad01f6fee50ffa0cc3f95957587c7df3b55fa9478",
+      "bytes": 44048
+    },
+    {
+      "file": "weknora-site.html",
+      "sha256": "6ae3d1aefe92980cded37b949947f077e12c227993745c7f10f5124ec2baedbe",
+      "bytes": 113529
+    }
+  ]
+}

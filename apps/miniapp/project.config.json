@@ -1,0 +1,14 @@
+{
+  "description": "Mimir 微信小程序",
+  "miniprogramRoot": "dist/",
+  "projectname": "mimir-miniapp",
+  "appid": "touristappid",
+  "compileType": "miniprogram",
+  "libVersion": "3.0.0",
+  "setting": {
+    "es6": true,
+    "minified": true,
+    "postcss": false,
+    "urlCheck": true
+  }
+}

@@ -56,6 +56,7 @@ mimir 是单用户自托管知识库。设计已定稿；按现行契约实现�
 | 服务端 | [server/backend](../server/backend/index.md) |
 | 共享 UI | [renderer/frontend](../renderer/frontend/index.md) |
 | 浏览器壳 | [web/frontend](../web/frontend/index.md) |
+| 微信小程序 | [miniapp/frontend](../miniapp/frontend/index.md) |
 | 桌面端 | [desktop/runtime](../desktop/runtime/index.md) |
 | 对话包 | [chat/frontend](../chat/frontend/index.md) |
 | Office 引擎与界面 | [office/engine](../office/engine/index.md)、[office/frontend](../office/frontend/index.md) |
