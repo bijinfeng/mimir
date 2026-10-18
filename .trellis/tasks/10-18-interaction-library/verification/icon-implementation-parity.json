@@ -1,0 +1,105 @@
+{
+  "approvedRevision": 2,
+  "scheme": "A",
+  "commit": "2b75f3ad12b420c9504ef05df8d2564a28f8500e",
+  "formats": [
+    {
+      "format": "word",
+      "paths": 2,
+      "jsxPreservesGeometryAndOpacity": true,
+      "sourceSha256": "71ba3e223c85300609dcdbcbb29b8eb3535a6e44353edfe6f2ca8ff68bcf16f5"
+    },
+    {
+      "format": "excel",
+      "paths": 2,
+      "jsxPreservesGeometryAndOpacity": true,
+      "sourceSha256": "fd093243c13ff0d0403f6e0b347613d983ea22e429f191419500cb9875e94f3f"
+    },
+    {
+      "format": "powerpoint",
+      "paths": 2,
+      "jsxPreservesGeometryAndOpacity": true,
+      "sourceSha256": "33223c3ec22a195dc3d33d66f33c7af6faac03d8d4f907657a90453ca638aabf"
+    },
+    {
+      "format": "pdf",
+      "paths": 2,
+      "jsxPreservesGeometryAndOpacity": true,
+      "sourceSha256": "451b593fba4a0ae151561d77eb1517fa50d8ddfcf8517afc817fa8972fd3b5bb"
+    },
+    {
+      "format": "audio",
+      "paths": 2,
+      "jsxPreservesGeometryAndOpacity": true,
+      "sourceSha256": "38bd7e1976ce3af5a232985145c4c6912ad26bc6e1f88746ed8a796d4e173c0f"
+    },
+    {
+      "format": "video",
+      "paths": 2,
+      "jsxPreservesGeometryAndOpacity": true,
+      "sourceSha256": "1aa36d02b655d240f00f9169c08cda6b300757ff5026d65cd1cddfb6198ae31d"
+    },
+    {
+      "format": "note",
+      "paths": 2,
+      "jsxPreservesGeometryAndOpacity": true,
+      "sourceSha256": "2c09f50754ecfcf11902a5c7dcddd188d52556254d4cee847a28fe7948841689"
+    },
+    {
+      "format": "image",
+      "paths": 2,
+      "jsxPreservesGeometryAndOpacity": true,
+      "sourceSha256": "1497ced443096e5c07c3ae89891c46952bd9aa9a05fae7e148c19d5839a482d2"
+    },
+    {
+      "format": "web",
+      "paths": 2,
+      "jsxPreservesGeometryAndOpacity": true,
+      "sourceSha256": "52a225637cebbe67a961f6066f2ef9c29a73b9645e78258bd39e6bb2f4784bb6"
+    },
+    {
+      "format": "wechat",
+      "paths": 2,
+      "jsxPreservesGeometryAndOpacity": true,
+      "sourceSha256": "b28d67e9e23f32473c56ac7dd7f01370809081b6115e0afef84cecd310c49243"
+    },
+    {
+      "format": "github",
+      "paths": 2,
+      "jsxPreservesGeometryAndOpacity": true,
+      "sourceSha256": "e5cad1ca4d6cd2c3b04b70aae0608945ef6ca89de9f9ee1f8d44dc9015d8601d"
+    },
+    {
+      "format": "html",
+      "paths": 2,
+      "jsxPreservesGeometryAndOpacity": true,
+      "sourceSha256": "a995d7170c1e6e9743065a284beb2ab0001f8c8841f56140fe24d35774873782"
+    },
+    {
+      "format": "text",
+      "paths": 2,
+      "jsxPreservesGeometryAndOpacity": true,
+      "sourceSha256": "6b0867a397af11f3c0a66091a4e17e3c172a42f48812ba99fc8157d9093cb7ea"
+    },
+    {
+      "format": "archive",
+      "paths": 2,
+      "jsxPreservesGeometryAndOpacity": true,
+      "sourceSha256": "9dee0c2597c5471b45ea55c87b3de872cb26bca1f8b8ea31866b83a1d7726ad7"
+    },
+    {
+      "format": "code",
+      "paths": 2,
+      "jsxPreservesGeometryAndOpacity": true,
+      "sourceSha256": "730c27ca9c598f83d7a4bd07fb6b2c18e1930e214fdb70573d4175a9a79a92d2"
+    },
+    {
+      "format": "unknown",
+      "paths": 2,
+      "jsxPreservesGeometryAndOpacity": true,
+      "sourceSha256": "ddb6e4c20296785f4b6dac96536b49fe2d3d13998a26017bcf4eba9e4d554d05"
+    }
+  ],
+  "total": 16,
+  "unsafeRuntimeSvg": false
+}

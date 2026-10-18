@@ -1,0 +1,114 @@
+[
+  {
+    "url": "http://127.0.0.1:5185/api/folders",
+    "method": "GET",
+    "mode": "empty"
+  },
+  {
+    "url": "http://127.0.0.1:5185/api/documents?tag=%E7%A9%BA%E6%A0%87%E7%AD%BE&limit=100",
+    "method": "GET",
+    "mode": "empty"
+  },
+  {
+    "url": "http://127.0.0.1:5185/api/folders",
+    "method": "GET",
+    "mode": "normal"
+  },
+  {
+    "url": "http://127.0.0.1:5185/api/documents?folder=%E8%AE%BE%E8%AE%A1%E5%B7%A5%E4%BD%9C%E5%8F%B0&limit=100",
+    "method": "GET",
+    "mode": "normal"
+  },
+  {
+    "url": "http://127.0.0.1:5185/api/folders",
+    "method": "POST",
+    "body": "{\"path\":\"设计工作台/验收草稿\"}",
+    "result": "mock_success"
+  },
+  {
+    "url": "http://127.0.0.1:5185/api/documents?folder=%E8%AE%BE%E8%AE%A1%E5%B7%A5%E4%BD%9C%E5%8F%B0&limit=100",
+    "method": "GET",
+    "mode": "normal"
+  },
+  {
+    "url": "http://127.0.0.1:5185/api/folders",
+    "method": "GET",
+    "mode": "normal"
+  },
+  {
+    "url": "http://127.0.0.1:5185/api/folders",
+    "method": "GET",
+    "mode": "normal"
+  },
+  {
+    "url": "http://127.0.0.1:5185/api/documents?folder=%E8%AE%BE%E8%AE%A1%E5%B7%A5%E4%BD%9C%E5%8F%B0&limit=100",
+    "method": "GET",
+    "mode": "normal"
+  },
+  {
+    "url": "http://127.0.0.1:5185/api/folders",
+    "method": "GET",
+    "mode": "normal"
+  },
+  {
+    "url": "http://127.0.0.1:5185/api/documents?folder=%E8%AE%BE%E8%AE%A1%E5%B7%A5%E4%BD%9C%E5%8F%B0&limit=100",
+    "method": "GET",
+    "mode": "normal"
+  },
+  {
+    "url": "http://127.0.0.1:5185/api/documents/pdf/file",
+    "method": "PUT",
+    "result": "mock_failure"
+  },
+  {
+    "url": "http://127.0.0.1:5185/api/documents/pdf/file",
+    "method": "PUT",
+    "result": "mock_saved_parse_error"
+  },
+  {
+    "url": "http://127.0.0.1:5185/api/documents?folder=%E8%AE%BE%E8%AE%A1%E5%B7%A5%E4%BD%9C%E5%8F%B0&limit=100",
+    "method": "GET",
+    "mode": "normal"
+  },
+  {
+    "url": "http://127.0.0.1:5185/api/folders",
+    "method": "GET",
+    "mode": "normal"
+  },
+  {
+    "url": "http://127.0.0.1:5185/api/documents/Y5sJ31WzhcQ7_GFg",
+    "canceled": true
+  },
+  {
+    "url": "http://127.0.0.1:5185/api/folders",
+    "canceled": true
+  },
+  {
+    "url": "http://127.0.0.1:5185/api/documents?folder=%E8%AE%BE%E8%AE%A1%E5%B7%A5%E4%BD%9C%E5%8F%B0&limit=100",
+    "canceled": true
+  },
+  {
+    "url": "http://127.0.0.1:5185/api/folders",
+    "method": "GET",
+    "mode": "normal"
+  },
+  {
+    "url": "http://127.0.0.1:5185/api/documents?folder=%E8%AE%BE%E8%AE%A1%E5%B7%A5%E4%BD%9C%E5%8F%B0&limit=100",
+    "method": "GET",
+    "mode": "normal"
+  },
+  {
+    "url": "http://127.0.0.1:5185/api/documents/Y5sJ31WzhcQ7_GFg",
+    "canceled": true
+  },
+  {
+    "url": "http://127.0.0.1:5185/api/folders",
+    "method": "GET",
+    "mode": "normal"
+  },
+  {
+    "url": "http://127.0.0.1:5185/api/documents?folder=%E8%AE%BE%E8%AE%A1%E5%B7%A5%E4%BD%9C%E5%8F%B0&limit=100",
+    "method": "GET",
+    "mode": "normal"
+  }
+]

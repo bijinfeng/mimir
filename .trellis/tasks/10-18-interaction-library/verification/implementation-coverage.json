@@ -1,0 +1,1269 @@
+{
+  "schemaVersion": 1,
+  "module": "interaction-library",
+  "date": "2026-10-18",
+  "approvedHtmlSha256": "ce43cbea265b09b3fd75d9db9d0f3d02723ef1559f2e9a09d742750285dc2f40",
+  "scheme": "A",
+  "groups": 58,
+  "enumeratedStates": 299,
+  "reviewKind": "independent static contract review plus separately recorded automated checks; main session owns GUI and full quality gates",
+  "mustNotClaim": [
+    "299 real pages",
+    "299 GUI tests",
+    "native picker/download/OS IME/Electron acceptance from HTML",
+    "full repository quality pass while external gate fails"
+  ],
+  "items": [
+    {
+      "id": "LIB-001",
+      "label": "知识库入口与首库重定向",
+      "classification": "retained",
+      "states": [
+        "folders-loading",
+        "first-library",
+        "no-libraries"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:137",
+        "packages/renderer/src/components/NavSidebar.tsx:219"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:144"
+      ],
+      "review": "static-code-contract",
+      "result": "scope=all仍只重定向首库，无库进入引导，不新增全部文档首页。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-002",
+      "label": "首次引导",
+      "classification": "retained",
+      "states": [
+        "idle",
+        "create-open",
+        "created",
+        "cancel"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:1246"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:1296"
+      ],
+      "review": "static-code-contract",
+      "result": "首次引导继续使用模块2创建表单。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-003",
+      "label": "统一创建/编辑知识库",
+      "classification": "reused",
+      "states": [
+        "create",
+        "edit",
+        "invalid-name",
+        "description-limit",
+        "pending",
+        "request-error",
+        "reconcile-error",
+        "retry",
+        "unchanged",
+        "cancel",
+        "success",
+        "legacy-description"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/KnowledgeBaseCreateModal.tsx:64",
+        "packages/renderer/src/components/nav/FolderSection.tsx:503"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/KnowledgeBaseCreateModal.tsx:64"
+      ],
+      "review": "static-code-contract",
+      "result": "复用模块2统一名称/描述、无图标选择；完整表单状态沿既有实现。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-004",
+      "label": "知识库身份头部",
+      "classification": "implemented",
+      "states": [
+        "description",
+        "no-description",
+        "long-title",
+        "long-description",
+        "nested-folder"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:335"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:353"
+      ],
+      "review": "static-code-contract",
+      "result": "根知识库身份保持；描述实际溢出检测与展开；scope变化重建描述状态。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-005",
+      "label": "知识库ID复制",
+      "classification": "retained",
+      "states": [
+        "hover",
+        "focus",
+        "success",
+        "clipboard-error",
+        "missing-code"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:357"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:367"
+      ],
+      "review": "static-code-contract",
+      "result": "已有ID才提供复制；异常准确提示手动复制；系统剪贴板另验。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-006",
+      "label": "文档计数",
+      "classification": "implemented",
+      "states": [
+        "loading",
+        "loaded",
+        "100-cap"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:458"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:472"
+      ],
+      "review": "static-code-contract",
+      "result": "计数按当前已读items，不伪造全库total；100上限另有真实提示。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-007",
+      "label": "布局切换偏好",
+      "classification": "retained",
+      "states": [
+        "list",
+        "card",
+        "reload",
+        "storage-unavailable"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:146",
+        "packages/renderer/src/components/list-helpers.ts:38"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:150"
+      ],
+      "review": "static-code-contract",
+      "result": "保留list/card持久化，存储失败容错沿list-helpers。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-008",
+      "label": "添加文档菜单",
+      "classification": "reused",
+      "states": [
+        "open",
+        "keyboard",
+        "dismiss",
+        "upload-file",
+        "upload-folder",
+        "capture-url",
+        "edit-now"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:842"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:223"
+      ],
+      "review": "static-code-contract",
+      "result": "模块4四项添加路径保留当前folder；不新增收集业务。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-009",
+      "label": "新建文件/直接编辑",
+      "classification": "implemented",
+      "states": [
+        "idle",
+        "failure",
+        "success",
+        "unsaved-guard"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:157"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:163"
+      ],
+      "review": "static-code-contract",
+      "result": "空笔记同步ref单飞、pending按钮、失败提示；成功走已有未保存守卫打开。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-010",
+      "label": "新建文件夹入口",
+      "classification": "implemented",
+      "states": [
+        "desktop",
+        "narrow-menu",
+        "missing-node-disabled"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:499"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:235"
+      ],
+      "review": "static-code-contract",
+      "result": "桌面与窄屏入口共享局部表单；无currentNode禁用。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-011",
+      "label": "新建文件夹表单",
+      "classification": "implemented",
+      "states": [
+        "empty-disabled",
+        "trim",
+        "slash",
+        "60-limit",
+        "enter",
+        "pending",
+        "request-error",
+        "cancel",
+        "success"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:767"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/FolderNameModal.tsx:7"
+      ],
+      "review": "static-code-contract",
+      "result": "统一trim/路径符号/60字、关联错误、IME/229、同步锁/pending、失败草稿。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-012",
+      "label": "目录面包屑",
+      "classification": "implemented",
+      "states": [
+        "root",
+        "nested",
+        "ancestor-link",
+        "current-text",
+        "long-path",
+        "unsaved-guard"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:541"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:602"
+      ],
+      "review": "static-code-contract",
+      "result": "祖先路径保持可导航，长路径折叠展开，根身份不变。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-013",
+      "label": "列表读取初次加载",
+      "classification": "retained",
+      "states": [
+        "documents-loading",
+        "folders-loading",
+        "tag-loading"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:593"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:676"
+      ],
+      "review": "static-code-contract",
+      "result": "文档/目录首次加载有骨架；标签不依赖无关目录请求结果。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-014",
+      "label": "列表读取失败重试",
+      "classification": "implemented",
+      "states": [
+        "documents-error",
+        "folders-error",
+        "both-error",
+        "retry",
+        "cached-data-error"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:598"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:658"
+      ],
+      "review": "static-code-contract",
+      "result": "文档和目录缓存错误保留旧数据并独立重读；无缓存错误准确阻断，双错误重试两项。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-015",
+      "label": "切换scope期间旧数据",
+      "classification": "implemented",
+      "states": [
+        "new-scope-pending",
+        "placeholder"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:124"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:131"
+      ],
+      "review": "static-code-contract",
+      "result": "placeholder注明旧来源；目录/位置来自同一sourceScope，不混旧tag与新目录。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-016",
+      "label": "失效知识库",
+      "classification": "implemented",
+      "states": [
+        "missing-root",
+        "return-first",
+        "zero-roots"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:344"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:355"
+      ],
+      "review": "static-code-contract",
+      "result": "缺失根包含最后一个根已删除，返回首库或创建入口。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-017",
+      "label": "失效子目录",
+      "classification": "implemented",
+      "states": [
+        "missing-child",
+        "existing-root"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:119"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:357"
+      ],
+      "review": "static-code-contract",
+      "result": "区分有效知识库内失效子目录，准确返回库根。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-018",
+      "label": "空知识库/空目录",
+      "classification": "retained",
+      "states": [
+        "empty-root",
+        "empty-child",
+        "upload",
+        "edit-now"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:619"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:683"
+      ],
+      "review": "static-code-contract",
+      "result": "空库/空子目录保留添加/直接编辑路径与当前目标。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-019",
+      "label": "标签视图",
+      "classification": "implemented",
+      "states": [
+        "tag-list",
+        "tag-cards",
+        "empty",
+        "loading",
+        "failure",
+        "long-tag"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:115"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:112"
+      ],
+      "review": "static-code-contract",
+      "result": "标签横切视图；长标题有完整title，不提供添加/拖入目标。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-020",
+      "label": "空标签真实现状",
+      "classification": "implemented",
+      "states": [
+        "empty-tag"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:624"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:734"
+      ],
+      "review": "static-code-contract",
+      "result": "空标签准确说明如何添加标签，无虚构上传目标。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-021",
+      "label": "文件夹列表与卡片",
+      "classification": "retained",
+      "states": [
+        "list",
+        "card",
+        "open",
+        "keyboard",
+        "long-name",
+        "count"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:683",
+        "packages/renderer/src/components/library/LibraryView.tsx:1007"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:1009"
+      ],
+      "review": "static-code-contract",
+      "result": "直接子目录先行，count为后代文档，列表/卡片可用鼠标和标题键盘进入。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-022",
+      "label": "文件夹更多菜单",
+      "classification": "implemented",
+      "states": [
+        "open",
+        "hover",
+        "focus",
+        "keyboard",
+        "escape",
+        "portal-event"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:1054"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:1056"
+      ],
+      "review": "static-code-contract",
+      "result": "复用目录菜单，portal传播阻断，触发操作前聚焦实际trigger供模态关闭恢复。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-023",
+      "label": "文件夹重命名",
+      "classification": "implemented",
+      "states": [
+        "prefilled",
+        "blank-disabled",
+        "trim",
+        "slash",
+        "60-limit",
+        "unchanged",
+        "enter",
+        "pending",
+        "request-error",
+        "success",
+        "cancel",
+        "focus-return"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:236"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:243"
+      ],
+      "review": "static-code-contract",
+      "result": "同父级move改名；失败重读身份、阻止不安全旧路径重试；无自由移动。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-024",
+      "label": "删除空文件夹",
+      "classification": "retained",
+      "states": [
+        "confirm",
+        "cancel-focused",
+        "pending",
+        "retry-error",
+        "success",
+        "cancel"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:285"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:316"
+      ],
+      "review": "static-code-contract",
+      "result": "空目录准确后果；使用已有confirmDanger取消初焦/pending/失败重试。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-025",
+      "label": "删除非空文件夹",
+      "classification": "implemented",
+      "states": [
+        "confirm",
+        "pending",
+        "retry-error",
+        "success",
+        "cancel"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:285",
+        "apps/server/src/services/folders.ts:407"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:315"
+      ],
+      "review": "static-code-contract",
+      "result": "非空目录保留文档但folder=null，不承诺回同库根；数量及对象来自选中folder。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-026",
+      "label": "列表文档行",
+      "classification": "implemented",
+      "states": [
+        "open",
+        "hover",
+        "focus",
+        "keyboard",
+        "long-name"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:713"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:1242"
+      ],
+      "review": "static-code-contract",
+      "result": "列表标题保留按钮/完整后缀；行体点击一次；更多独立操作。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-027",
+      "label": "卡片打开入口",
+      "classification": "retained",
+      "states": [
+        "body-click",
+        "title-keyboard",
+        "meta-click",
+        "once",
+        "action-no-open"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:1119"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:1126"
+      ],
+      "review": "static-code-contract",
+      "result": "普通卡片容器和兄弟标题/动作，避免嵌套交互与重复打开。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-028",
+      "label": "卡片文档更多菜单",
+      "classification": "implemented",
+      "states": [
+        "note",
+        "web",
+        "file-editable",
+        "file-readonly",
+        "open",
+        "escape",
+        "download-no-open"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:1201"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:1166"
+      ],
+      "review": "static-code-contract",
+      "result": "列表/卡片共享既有类型动作；portal不打开父文档，Escape回trigger。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-029",
+      "label": "文件格式图标与来源徽标",
+      "classification": "implemented",
+      "states": [
+        "note",
+        "web",
+        "wechat",
+        "github",
+        "docx",
+        "xlsx",
+        "pptx",
+        "pdf",
+        "html",
+        "txt",
+        "image",
+        "audio",
+        "video",
+        "archive",
+        "code",
+        "unknown"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:882"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/FileFormatIcon.tsx:70"
+      ],
+      "review": "static-code-contract",
+      "result": "A16类静态Phosphor几何/透明度精确保留，22px、浅深配色、未知回退与kind优先。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-030",
+      "label": "文件名称和后缀",
+      "classification": "retained",
+      "states": [
+        "missing-suffix",
+        "existing-suffix",
+        "case-insensitive",
+        "long-stem",
+        "extension-preserved"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:894"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/document-name.ts:4"
+      ],
+      "review": "static-code-contract",
+      "result": "已有后缀不重复；显示单独保留后缀，不改变存储标题。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-031",
+      "label": "摘要/位置/文件大小",
+      "classification": "implemented",
+      "states": [
+        "root-file",
+        "nested-file",
+        "tag-location",
+        "empty-body",
+        "unknown-size",
+        "long-excerpt"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:868",
+        "packages/renderer/src/components/list-helpers.ts:88"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:957"
+      ],
+      "review": "static-code-contract",
+      "result": "当前/后代/标签路径准确；无归属不误称库根；完整元信息title。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-032",
+      "label": "就绪与提取失败",
+      "classification": "retained",
+      "states": [
+        "ready",
+        "failed",
+        "all-ready-list",
+        "has-failed-list",
+        "narrow-failed"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:374",
+        "packages/renderer/src/components/library/LibraryView.tsx:1238",
+        "packages/renderer/src/components/DocumentBadges.tsx:40"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:384"
+      ],
+      "review": "static-code-contract",
+      "result": "ready/failed仅真实持久状态；无processing伪进度，窄屏失败徽标保留。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-033",
+      "label": "更新时间",
+      "classification": "retained",
+      "states": [
+        "valid-date",
+        "null-date",
+        "long-layout",
+        "narrow-hidden"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:737"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.style.ts:838"
+      ],
+      "review": "static-code-contract",
+      "result": "保持时间格式与窄容器隐藏策略，不虚构空时间。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-034",
+      "label": "打开/编辑交接",
+      "classification": "reused",
+      "states": [
+        "note",
+        "editable-office",
+        "readonly-file",
+        "unsaved-guard",
+        "return-scope"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:655"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:137"
+      ],
+      "review": "static-code-contract",
+      "result": "打开/编辑沿module3未保存守卫与既有详情能力；未新增编辑模式。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-035",
+      "label": "下载原件",
+      "classification": "native-boundary",
+      "states": [
+        "click",
+        "native-download",
+        "download-failure-boundary"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:1207"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:1200"
+      ],
+      "review": "static-code-contract",
+      "result": "同源原件下载链接保留；浏览器接管，应用不伪报下载完成。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-036",
+      "label": "替换原件选择器",
+      "classification": "implemented",
+      "states": [
+        "choose",
+        "native-cancel",
+        "same-file-reselect"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:188"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/SourceReplaceDialog.tsx:81"
+      ],
+      "review": "static-code-contract",
+      "result": "替换弹窗内真实文件input，选择后显式提交，重选/取消保留既有File，input重置支持同文件。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-037",
+      "label": "替换原件请求",
+      "classification": "implemented",
+      "states": [
+        "pending-gap",
+        "success",
+        "network-error",
+        "oversize-server-error",
+        "parse-result-gap"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:746"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/SourceReplaceDialog.tsx:27"
+      ],
+      "review": "static-code-contract",
+      "result": "同步单飞保留同File/ID，失败保留，charCount/parseError结果如实呈现，非假百分比。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-038",
+      "label": "删除笔记",
+      "classification": "implemented",
+      "states": [
+        "confirm",
+        "cancel-focused",
+        "pending",
+        "retry-error",
+        "success"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:172"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:191"
+      ],
+      "review": "static-code-contract",
+      "result": "笔记回收文件/无一键恢复准确说明，仍用confirmDanger。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-039",
+      "label": "删除文件",
+      "classification": "retained",
+      "states": [
+        "confirm",
+        "cancel-focused",
+        "pending",
+        "retry-error",
+        "success"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:172"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:190"
+      ],
+      "review": "static-code-contract",
+      "result": "文件记录与原件删除不可撤销，使用实际已有API。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-040",
+      "label": "删除网页/公众号/GitHub",
+      "classification": "implemented",
+      "states": [
+        "confirm",
+        "pending",
+        "retry-error",
+        "success"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:172"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:193"
+      ],
+      "review": "static-code-contract",
+      "result": "网页/公众号/GitHub按资料记录表达，不套笔记回收/文件原件承诺。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-041",
+      "label": "页面拖入文件",
+      "classification": "reused",
+      "states": [
+        "files-enter",
+        "nested-enter-leave",
+        "drop",
+        "nonfiles-ignore",
+        "empty-ignore",
+        "tag-disabled"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:388"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:324"
+      ],
+      "review": "static-code-contract",
+      "result": "复用module4 Files/单批锁/当前目录上传；失效目录拒绝；原生拖入宿主另验。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-042",
+      "label": "页内导入结果",
+      "classification": "reused",
+      "states": [
+        "busy",
+        "mixed-results",
+        "all-failed",
+        "complete",
+        "clear"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:421"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:437"
+      ],
+      "review": "static-code-contract",
+      "result": "复用module4 inline串行结果和刷新，不新增第二套上传业务。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-043",
+      "label": "导航知识库行菜单",
+      "classification": "reused",
+      "states": [
+        "edit",
+        "delete-empty",
+        "delete-nonempty",
+        "cache-refresh-error",
+        "keyboard",
+        "rename-path-follow"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/nav/FolderSection.tsx:250",
+        "packages/renderer/src/components/nav/FolderSection.tsx:409"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/nav/FolderSection.tsx:350"
+      ],
+      "review": "static-code-contract",
+      "result": "module2菜单/表单/回焦保持，仅更正知识库删除清空folder说明。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-044",
+      "label": "文档重命名命令",
+      "classification": "reused",
+      "states": [
+        "note-only",
+        "prefill",
+        "invalid",
+        "pending",
+        "failure",
+        "unchanged",
+        "read-refresh-error"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/command-palette/items.tsx:41",
+        "packages/renderer/src/components/document/DocumentCommandModal.tsx:83"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/document/DocumentCommandModal.tsx:30"
+      ],
+      "review": "static-code-contract",
+      "result": "沿module3 note-only文档命令；浏览页不新增改名。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-045",
+      "label": "文档移动命令",
+      "classification": "reused",
+      "states": [
+        "folders-loading",
+        "folders-error",
+        "retry",
+        "current-target",
+        "pending",
+        "failure",
+        "success",
+        "unchanged",
+        "read-refresh-error"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/command-palette/items.tsx:52",
+        "packages/renderer/src/components/document/DocumentCommandModal.tsx:237"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/document/DocumentCommandModal.tsx:7"
+      ],
+      "review": "static-code-contract",
+      "result": "沿module3 Select扁平目录选项及读写失败恢复；不新增浏览页移动。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-046",
+      "label": "文档详情目录菜单与撤销",
+      "classification": "reused",
+      "states": [
+        "current-disabled",
+        "other-folder",
+        "no-folder",
+        "move-out",
+        "success-undo",
+        "undo-error"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/document/doc-menu.tsx:119",
+        "packages/renderer/src/components/DocumentPanel.tsx:319"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/document/doc-menu.tsx:42"
+      ],
+      "review": "static-code-contract",
+      "result": "详情目录菜单和真实撤销沿module3；本轮不改阅读器。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-047",
+      "label": "固定头部/列表滚动",
+      "classification": "implemented",
+      "states": [
+        "top",
+        "scrolled",
+        "long-list",
+        "low-height"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.style.ts:76",
+        "packages/renderer/src/components/library/LibraryView.style.ts:279",
+        "packages/renderer/src/components/library/LibraryView.style.ts:309"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.style.ts:417"
+      ],
+      "review": "static-code-contract",
+      "result": "滚动正文保留140px最小区域；头部低高度限高内部滚动。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-048",
+      "label": "小屏与触屏",
+      "classification": "implemented",
+      "states": [
+        "390-light",
+        "390-dark",
+        "touch-actions",
+        "layout-wrap",
+        "low-height",
+        "long-name"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.style.ts:26",
+        "packages/renderer/src/components/library/LibraryView.style.ts:590"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.style.ts:473"
+      ],
+      "review": "static-code-contract",
+      "result": "列表按容器收起详情/状态/日期，更多44px；卡片、表单窄屏与低高度抽验由主线程记录。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-049",
+      "label": "焦点/hover/pressed/disabled",
+      "classification": "implemented",
+      "states": [
+        "keyboard",
+        "focus-return",
+        "hover-stability",
+        "pressed",
+        "disabled",
+        "reduced-motion"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.style.ts:327",
+        "packages/renderer/src/components/library/LibraryView.style.ts:619"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.style.ts:373"
+      ],
+      "review": "static-code-contract",
+      "result": "稳定透明1px边框、仅绘制属性transition；focus提示/更多占位与busy禁用，GUI几何另验。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-050",
+      "label": "查询、排序与容量边界",
+      "classification": "retained",
+      "states": [
+        "descendants",
+        "updated-desc",
+        "100-limit",
+        "no-pagination",
+        "no-total"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:124",
+        "apps/server/src/services/documents.ts:567"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:123"
+      ],
+      "review": "static-code-contract",
+      "result": "接口仍最多100与更新时间降序，含后代；不增total/分页。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-P01",
+      "label": "列表/卡片共享更多入口",
+      "classification": "implemented",
+      "states": [
+        "list-menu",
+        "card-menu",
+        "keyboard",
+        "portal-no-open"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:713"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:1166"
+      ],
+      "review": "static-code-contract",
+      "result": "既有卡片动作补齐列表，共享类型判断和portal阻断。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-P02",
+      "label": "目录新建/改名就地校验与等待锁定",
+      "classification": "implemented",
+      "states": [
+        "invalid-inline",
+        "pending-guard",
+        "retry-draft",
+        "focus-return",
+        "ime"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:767",
+        "packages/renderer/src/components/library/LibraryView.tsx:806"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/FolderNameModal.tsx:37"
+      ],
+      "review": "static-code-contract",
+      "result": "表单错误/IME/单飞/草稿/回焦合同落地；unsafe reconcile阻断进一步写入。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-P03",
+      "label": "目录定位失效与空标签文案",
+      "classification": "implemented",
+      "states": [
+        "missing-child",
+        "zero-roots-folder",
+        "empty-tag"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:344",
+        "packages/renderer/src/components/library/LibraryView.tsx:624"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:357"
+      ],
+      "review": "static-code-contract",
+      "result": "缺失子目录/零库旧scope/空标签分别表达。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-P04",
+      "label": "查询状态与100条上限说明",
+      "classification": "implemented",
+      "states": [
+        "scope-changing",
+        "cached-refresh-error",
+        "100-loaded"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:124",
+        "packages/renderer/src/components/library/LibraryView.tsx:458"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:131"
+      ],
+      "review": "static-code-contract",
+      "result": "切换显示真实旧源；缓存失败保留；达到100仅说明已显示上限。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-P05",
+      "label": "替换请求反馈及防重",
+      "classification": "implemented",
+      "states": [
+        "pending",
+        "success-parse-empty",
+        "success-parse-error",
+        "failure-rechoose",
+        "native-cancel"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:746",
+        "packages/renderer/src/lib/api.ts:840"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/SourceReplaceDialog.tsx:10"
+      ],
+      "review": "static-code-contract",
+      "result": "显式选择/重选/提交、pending锁、失败同File重试、无正文/提取失败真实结果。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-P06",
+      "label": "删除准确后果说明",
+      "classification": "implemented",
+      "states": [
+        "folder-assignment-cleared",
+        "web-softdelete",
+        "file-original-delete"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:285",
+        "packages/renderer/src/components/library/LibraryView.tsx:172",
+        "apps/server/src/services/folders.ts:407"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:310"
+      ],
+      "review": "static-code-contract",
+      "result": "目录清空归属/资料记录/文件原件后果与服务端一致。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-P07",
+      "label": "长路径/描述与低高度布局",
+      "classification": "implemented",
+      "states": [
+        "long-breadcrumb",
+        "long-description",
+        "390",
+        "low-height"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.style.ts:293"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:874"
+      ],
+      "review": "static-code-contract",
+      "result": "实际溢出后可展开描述，长路径展开，低高度与窄屏可达。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    },
+    {
+      "id": "LIB-P08",
+      "label": "浏览页移动/重命名入口边界",
+      "classification": "boundary-retained",
+      "states": [
+        "decision-required",
+        "note-only-rename",
+        "move-handoff"
+      ],
+      "originalSourceEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:1201",
+        "packages/renderer/src/components/document/DocumentCommandModal.tsx:83"
+      ],
+      "implementationEvidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:1166"
+      ],
+      "review": "static-code-contract",
+      "result": "未增加浏览页移动/改名；保留module3入口与note-only边界。",
+      "guiCoverage": "representative main-session checks only; see product-browser verification, not 299 state executions"
+    }
+  ]
+}

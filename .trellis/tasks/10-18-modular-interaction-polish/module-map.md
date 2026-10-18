@@ -8,7 +8,7 @@
 | 2 | 工作区导航与账户菜单 | 平铺知识库导航/最近笔记/历史对话/账户主题与登出 | [v2已实施，模块验收通过](../10-18-interaction-workspace/implementation-acceptance.md) |
 | 3 | 搜索与命令面板 | 搜索/最近项/命令/失败恢复/上下文宿主与未保存边界 | [v1已实施并完成还原修正](../10-18-interaction-search/implementation-acceptance.md) |
 | 4 | 收集与导入 | 网页收集；文件与文件夹上传/部分失败 | [v1 revision2已获批实施，验收记录](../10-18-interaction-capture/implementation-acceptance.md) |
-| 5 | 知识库与目录浏览管理 | 首次引导/创建；列表卡片/面包屑/标签；目录文件动作/替换删除 | [v1 revision2：A图标已选，待最终实施确认](../10-18-interaction-library/icon-planning-acceptance.md) |
+| 5 | 知识库与目录浏览管理 | 首次引导/创建；列表卡片/面包屑/标签；目录文件动作/替换删除 | [v1 revision2 A已实施，模块验收通过、全仓门待解](../10-18-interaction-library/implementation-acceptance.md) |
 | 6 | 文档阅读与共享文档流程 | 阅读框架/标题/大纲/引用；整理菜单/摘要/双链；图片音视频/降级；助手宿主与未保存流程 | 已索引，待展开与出稿 |
 | 7 | AI对话与生成交互 | 输入范围/模型/队列；消息思考/工具/引用/媒体；失败与历史；Agent中断/截图写作交接 | 已索引，待展开与出稿 |
 | 8 | 设置全分区 | 供应商/模型；网络搜索；检索；订阅；存储；支持能力；统计；数据备份；外观；账号头像；客户端（Desktop） | 已索引，待展开与出稿 |

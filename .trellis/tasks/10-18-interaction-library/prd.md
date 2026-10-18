@@ -34,4 +34,12 @@
 - 源码锚点、API和覆盖清单：[inventory](research/library-inventory.md)、[scenes](research/library-scenes.json)，保留全部file:line依据。
 - 参考研究：[reference](research/reference-review.md)、[图标固定版本与许可](research/icon-refresh.md)。
 - 原v1独立检查/GUI：[历史规划验收](planning-acceptance.md)；旧HTML完整保存在prototype/versions/v1.html。
-- revision2：[图标评审记录](icon-planning-acceptance.md)、[版本](prototype/version.json)。独立检查及代表GUI抽验已完成；用户选A，冻结HTML不需改动。产品代码未修改，任务保持planning，最终实施范围等待本轮审阅确认。
+- revision2：[图标评审记录](icon-planning-acceptance.md)、[版本](prototype/version.json)。独立检查及代表GUI抽验已完成；用户选A，冻结HTML不需改动。2026-10-18用户在最终范围摘要后明确“开始实施”，整个第五模块按revision2 A分支获批进入实施。
+
+## 实施授权
+
+用户最终原话：“开始实施”。授权对应revision2冻结哈希及A图标分支、整个第五模块范围；业务边界、验收和原生未测限制继续有效。
+
+## 产品实施结果
+
+已按批准revision2 A实施并通过模块限定验收，Renderer最终537测试通过。全仓门仍受外部lint和TS2550阻断，任务保留in_progress；详情见implementation-acceptance.md。
