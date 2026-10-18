@@ -779,3 +779,40 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+
+## Session 28: 文档模块按批准稿实施与大纲返修
+<!-- trellis-session: v=2 fp=7a8b7901564b6586 -->
+
+**Date**: 2026-10-18
+**Task**: 文档模块按批准稿实施与大纲返修
+**Package**: renderer
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+按document-review-v1实施文档宿主，78组422状态源码映射及真实浏览器证据已保存；用户指出大纲偏差后，精确还原浅深/32px条目/边框/焦点并修复滚动选中和文末夹紧。全仓门因范围外错误未通过，任务保留in_progress，不归档、不推送。
+
+### Main Changes
+
+- 文档阅读、标题/元数据恢复、AI隔离、大纲/引用、媒体降级、助手与未保存守卫实现；冻结HTML不变。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `675e6ae` | feat(renderer): implement approved document interaction polish |
+| `33776c3` | docs(task): record document implementation commit and gate status |
+| `a2340f7` | fix(renderer): match approved outline styling and scroll selection |
+
+### Testing
+
+- [OK] Renderer完整72文件569项通过（大纲返修前）；返修3文件11项通过，限定lint/format/style/diff通过；真实GUI核对大纲171x32、hover/focus稳定、浅深颜色与第三节夹紧后选中及滚离恢复。
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 范围外miniapp/server lint/format、Promise.withResolvers类型及Office全套单项PDF失败由对应任务继续；全仓门通过前不归档本模块。
