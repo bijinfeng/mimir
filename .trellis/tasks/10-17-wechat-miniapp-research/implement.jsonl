@@ -8,3 +8,4 @@
 {"file": ".trellis/spec/core/backend/index.md", "reason": "检索编排与通道职责边界"}
 {"file": ".trellis/spec/plugin-leg/backend/index.md", "reason": "keyword / substring / vector 双方言召回约束"}
 {"file": ".trellis/tasks/10-17-wechat-miniapp-research/research/miniapp-product-research.md", "reason": "微信官方能力、WeKnora v0.8.3 固定源码和产品决策证据"}
+{"file": ".trellis/tasks/10-17-wechat-miniapp-research/research/taro-component-selection.md", "reason": "用户确认 NutUI React Taro 4.0，锁定 beta.10；Taro 5.0 来源待核实及紧凑业务布局边界"}

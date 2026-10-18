@@ -5,11 +5,11 @@
 ## 1. 约束与选择
 
 - 仅一个自用、固定域名服务端；沿用单用户身份及当前知识库 / 目录 / 标签 / 文件体系。
-- 建议新增 `apps/miniapp`，使用原生微信小程序 + TypeScript + WXML / WXSS。首版只面向微信，无跨端需求；WeKnora v0.8.3 原生实现证明这类轻客户端边界可行，但其功能和 SSE 处理不能直接照搬。
-- 共享契约仍在 `packages/shared`，通过构建生成可供微信开发工具导入的代码，不能把 TS workspace 源码或 Node 模块直接当微信运行时依赖。`apps/miniapp` 使用精简入口和 type-only imports，构建不带入 Office / React / antd。具体构建器和 Markdown tokenizer 版本在第一阶段按兼容与包体积选定、锁定，不扩大产品范围。
-- 复用服务层与检索通道。原生页面重新实现，浏览器 `fetch` / EventSource、React 组件、Tiptap / GenOffice 不进入小程序。
+- 建议新增 `apps/miniapp`，按用户选择使用 Taro + React + TypeScript，组件库确定为 NutUI React Taro 4.0。截至 2026-10-18，最新 4.0 发布为 `@nutui/nutui-react-taro@4.0.0-beta.10`（2026-10-16 发布），显式锁定该版本。用户指定的 Taro 5.0 尚无官方 npm 发布来源，版本待核实，不自行改成 Taro 4.3.0；React 暂按 NutUI 声明的 React 18 范围验证。详见 [选型记录](research/taro-component-selection.md)。WeKnora v0.8.3 原生实现只用于产品职责参考，不能证明 Taro / NutUI 的兼容性。
+- 共享契约仍在 `packages/shared`，通过 Taro 构建生成可供微信开发工具导入的代码，不能把 TS workspace 源码或 Node 模块直接当微信运行时依赖。`apps/miniapp` 使用精简入口和 type-only imports，构建不带入 Office / antd / DOM-only 依赖。构建器与 Markdown tokenizer 在第一阶段按兼容与包体积选定、锁定，不扩大产品范围。
+- 复用服务层与检索通道，页面用适合小程序的 Taro React 组件实现；现有网页 React 组件不直接搬入。浏览器 `fetch` / EventSource、Tiptap / GenOffice 不进入小程序。NutUI 用于弹窗、表单、选择器等基础交互，业务布局自建，统一主题以保持紧凑、简单、内容优先。
 - 现有网页、桌面与 fnOS 保持兼容；新增合同按可选字段或专门的小程序路由引入，不放宽原业务接口鉴权。
-- 最低目标基础库建议 2.20.2（分块请求所需），实际在开发工具和目标 iOS / Android 验证。低于目标版本明确提示升级，不能静默退回不可恢复的长等待。
+- 基础库至少满足 2.20.2（分块请求所需），最终目标取网络能力、所选 Taro / NutUI 要求中的最高值，并在开发工具和目标 iOS / Android 验证。低于目标版本明确提示升级，不能静默退回不可恢复的长等待。
 
 ## 2. 应用与服务边界
 
@@ -26,7 +26,7 @@
 
 ## 3. 页面与交互提案
 
-2026-10-18 用户追加高保真原型评审，详见 [原型说明](prototype/README.md)。原型位于任务目录，采用浏览器内手机预览壳和模拟数据；正式客户端仍按原生微信 TypeScript 方案，不把原型的 React 运行时带入小程序。当前交互均为评审提案，原型反馈收敛后才进行最终实施确认。
+2026-10-18 用户追加高保真原型评审，详见 [原型说明](prototype/README.md)。原型位于任务目录，采用浏览器内手机预览壳和模拟数据；正式客户端采用 Taro React + NutUI React Taro 4.0，原型的 Vite / DOM / 设备壳不能直接复用为小程序运行时。当前交互均为评审提案，原型反馈收敛后才进行最终实施确认。
 
 第一版交付后，用户指出其交互与现有紧凑、简单的设计不一致。修订以 `.trellis/spec/project/design.md` §0.3–0.4 为准：工作台内容优先，缩短常态文案，减少重复标题、入口和多层容器；库列表优先呈现名称与必要元信息，范围操作只保留一处，评审工具收为辅助控件。阅读行距与手机触控命中区独立于操作区密度，不通过缩字或缩小命中区实现紧凑。
 

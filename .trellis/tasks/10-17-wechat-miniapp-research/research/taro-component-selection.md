@@ -1,6 +1,6 @@
 # Taro 与小程序组件库选型补充
 
-核对日期：2026-10-18。用户指定 Taro 5.0；本记录是选型建议，尚未确认组件库，也未进入产品实施。原生小程序技术规划需要在框架版本确认后调整。
+核对日期：2026-10-18。用户指定 Taro 5.0，并在本轮明确选择 NutUI React Taro 最新 4.0。组件库已确认，任务仍为 planning，尚未进入产品实施。技术规划已从原生方案调整为 Taro React；Taro 5.0 的版本来源待核实。
 
 ## 版本证据
 
@@ -9,7 +9,7 @@
 | 包 | 核对结果 | 对 Mimir 的影响 |
 | --- | --- | --- |
 | [@tarojs/taro](https://registry.npmjs.org/@tarojs/taro) | latest 为 4.3.0，2026-09-29 发布；版本列表没有 5.x。[官方 release](https://github.com/NervJS/taro/releases/tag/v4.3.0) 同样为 4.3.0 | 不能承诺 Taro 5.0 可安装或兼容，需确认用户指的是哪个版本来源 |
-| [@nutui/nutui-react-taro](https://registry.npmjs.org/@nutui/nutui-react-taro) | 最高非预发布版本 3.0.20，2026-05-20 发布；latest 指向 4.0.0-beta.9，beta 指向 4.0.0-beta.10；3.0.20 声明 React 16.8 / 17 / 18 | 首选候选，使用 React Taro 专用包并锁定稳定版本，不直接依赖 latest，也不据此承诺 React 19 或 Taro 5 兼容 |
+| [@nutui/nutui-react-taro](https://registry.npmjs.org/@nutui/nutui-react-taro) | 最高非预发布版本 3.0.20；本轮再次核对最新 4.0 为 4.0.0-beta.10，2026-10-16T12:26:10.540Z 发布；latest 仍指向 beta.9，beta 指向 beta.10；beta.10 声明 React 16.8 / 17 / 18 | 按用户选择锁定 4.0.0-beta.10，不直接依赖 latest，也不据此承诺 React 19 或 Taro 5 兼容 |
 | [@taroify/core](https://registry.npmjs.org/@taroify/core) | latest 1.0.6，2026-08-16 发布；声明 Taro >=3、React ^18.2.0 | 备选。基于 Vant 设计语言，基础组件适合内容型应用；宽泛的 Taro peer 范围不代表实测 Taro 5 |
 | [taro-ui](https://registry.npmjs.org/taro-ui) | latest 3.4.2，2026-09-25 发布 | 仍有更新，不能以停止维护为由排除；本项目优先比较 NutUI React Taro 与 Taroify |
 
@@ -17,7 +17,7 @@ NutUI [官方 React Taro 3.x 文档](https://nutui.jd.com/taro/react/3x/) 和 [�
 
 ## 建议及适用边界
 
-优先采用 NutUI React Taro 的稳定版作为基础交互库，Taroify 为备选。现阶段建议验证组合为 Taro 4.3.0、React 18、NutUI React Taro 3.0.20；这是待工程验证的候选，不能写成已通过验收的依赖组合。若用户确有 Taro 5 的分支或预发布来源，先按该来源核对兼容性。
+前轮建议采用 3.0.20 稳定版；用户本轮明确选择最新 4.0，因此现行决策为 `@nutui/nutui-react-taro@4.0.0-beta.10`，不再以 3.x 作为计划依赖。React 暂按 18 验证；Taro 版本继续保留用户的 5.0 意向，先核实其分支或预发布来源，不把前轮建议的 4.3.0 当作用户已接受的决定。本轮未安装依赖、构建工程或执行真机验证，不能写成已通过验收的组合。
 
 库只负责 Dialog、Popup、表单、选择器、Toast、Loading 等通用交互。知识库列表、问答、引用、阅读与 Markdown 编辑区由 Mimir 自己组合，统一字号、间距、边框、颜色和触控尺寸，保持当前紧凑、简单、内容优先的方向。组件库的默认演示页不作为页面设计模板。暂不混用两套基础组件库。
 
