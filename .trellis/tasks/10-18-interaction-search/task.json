@@ -15,7 +15,7 @@
   "branch": "codex/all-pages-polish",
   "base_branch": "master",
   "worktree_path": null,
-  "commit": "924b721f7ad958db45a607defcd34a7c63daa98d",
+  "commit": "1f119ff45ffea79052aab7f56e6c62de9857f9c1",
   "pr_url": null,
   "subtasks": [],
   "children": [],
@@ -37,8 +37,10 @@
     "verification/visual-parity-audit.md",
     "verification/parity/comparison.html",
     "verification/parity/browser-qa.json",
-    "verification/parity/independent-check.md"
+    "verification/parity/independent-check.md",
+    "verification/ai-hover/acceptance.md",
+    "verification/ai-hover/check.md"
   ],
-  "notes": "首轮视觉完成结论已更正。16组差异审计、冻结稿还原修正、实际浅深/390/低高度/详情与宿主对照完成；独立Renderer57文件495测试及全仓类型通过。pnpm check停于外部小程序7项lint，不归档。verification/parity/comparison.html与browser-qa.json为本轮证据。",
+  "notes": "首轮视觉完成结论已更正。16组差异审计、冻结稿还原修正、实际浅深/390/低高度/详情与宿主对照完成；独立Renderer57文件495测试及全仓类型通过。pnpm check停于外部小程序7项lint，不归档。verification/parity/comparison.html与browser-qa.json为本轮证据。 AI区hover修复：AntD状态边框覆盖已消除，浅深/390px状态矩形一致，焦点与active通过；Palette15项通过，独立检查无问题。证据verification/ai-hover/；全仓仍被外部小程序7项lint阻断。",
   "meta": {}
 }
