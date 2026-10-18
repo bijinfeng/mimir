@@ -1,0 +1,135 @@
+{
+  "date": "2026-10-18",
+  "scope": "WeKnora官网及公开源码，搜索/命令/显式AI交接",
+  "version": "v0.8.3",
+  "commit": "3e22822c1d2397be730c458c7539d0eb8c113a24",
+  "versionMeaning": "GitHub releases/latest在本次采样返回v0.8.3；tag refs确认同SHA。只能代表采样时刻latest release，不声称main最新提交或已实际运行产品。",
+  "published_at": "2026-10-14T07:53:24Z",
+  "responses": [
+    {
+      "key": "official",
+      "url": "https://weknora.weixin.qq.com/",
+      "http": 200,
+      "bytes": 113529,
+      "sha256": "6ae3d1aefe92980cded37b949947f077e12c227993745c7f10f5124ec2baedbe",
+      "file": "weknora-official.html"
+    },
+    {
+      "key": "release-latest",
+      "url": "https://api.github.com/repos/Tencent/WeKnora/releases/latest",
+      "http": 200,
+      "bytes": 44048,
+      "sha256": "163a964cc10c02fbca6dec0ad01f6fee50ffa0cc3f95957587c7df3b55fa9478",
+      "file": "weknora-release-latest.json"
+    },
+    {
+      "key": "pinned-ref",
+      "url": "https://api.github.com/repos/Tencent/WeKnora/git/ref/tags/v0.8.3",
+      "http": 200,
+      "bytes": 331,
+      "sha256": "c89b8fa98ab3886eb77bfb414206de35e9570d1cb522289081505cefda2d290c",
+      "file": "weknora-pinned-ref.json"
+    },
+    {
+      "key": "pinned-tree",
+      "url": "https://api.github.com/repos/Tencent/WeKnora/git/trees/3e22822c1d2397be730c458c7539d0eb8c113a24?recursive=1",
+      "http": 200,
+      "bytes": 1331756,
+      "sha256": "81e4db225ec55e05b3f41dd2b4e279c07cbfe3f85d03b63bed03841075cb4fe2",
+      "file": null,
+      "retained_excerpt": "weknora-tree-excerpt.json",
+      "raw_retained": false
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/frontend/src/components/GlobalCommandPalette/ResultGroup.vue",
+      "file": "weknora-ResultGroup.vue.source.txt",
+      "http": 200,
+      "bytes": 1731,
+      "sha256": "37111b5f86ca99b0788da2cc1dd95a7bdff163113a4a0a5810e7979003e04b3b"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/frontend/src/components/GlobalCommandPalette/ResultItem.test.ts",
+      "file": "weknora-ResultItem.test.ts.source.txt",
+      "http": 200,
+      "bytes": 1001,
+      "sha256": "b8762f440c31ec2d08498adfee90a0f51e96ef8d7146cce969dfd06309b7f06a"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/frontend/src/components/GlobalCommandPalette/ResultItem.vue",
+      "file": "weknora-ResultItem.vue.source.txt",
+      "http": 200,
+      "bytes": 4559,
+      "sha256": "db0b62e642636f8105b628d9a41aeef2a41b5eed051a3f11c5d165ec4de37035"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/frontend/src/components/GlobalCommandPalette/commands.ts",
+      "file": "weknora-commands.ts.source.txt",
+      "http": 200,
+      "bytes": 3408,
+      "sha256": "8881889e1f8e82cd67724d16fa037c649bc1ee5f74a23d8c62d1eb3973b713ce"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/frontend/src/components/GlobalCommandPalette/useHighlight.ts",
+      "file": "weknora-useHighlight.ts.source.txt",
+      "http": 200,
+      "bytes": 1706,
+      "sha256": "f0c2f5f72666287fbf02da73d80c9da8fbced87cb2ab99103ed7beab99bfad7c"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/frontend/src/components/GlobalCommandPalette/useSearch.ts",
+      "file": "weknora-useSearch.ts.source.txt",
+      "http": 200,
+      "bytes": 12417,
+      "sha256": "81e85487fc251b5917299380cf84040dceb1d258132654131c97246093a5f371"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/frontend/src/components/GlobalCommandPalette/useStartChat.ts",
+      "file": "weknora-useStartChat.ts.source.txt",
+      "http": 200,
+      "bytes": 1267,
+      "sha256": "e6887dbb81dbabd5e4145484be9ff3d17e665ef6e161f48e4c71ccc666dfa218"
+    }
+  ],
+  "evidence": [
+    {
+      "source": "https://weknora.weixin.qq.com/",
+      "retained": "weknora-official.html",
+      "quote": "结合语义与关键词检索查找相关资料，回答附带来源引用，可打开原文核对。",
+      "application": "维持检索命中到原文核查路径，不能因条目美化丢掉chunk定位；官网不证明登录后的交互细节。"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/frontend/src/components/GlobalCommandPalette/useSearch.ts",
+      "retained": "weknora-useSearch.ts.source.txt",
+      "lines": "57-80,233-281,332-349",
+      "fact": "默认350ms debounce；单调requestSeq丢弃旧响应；空词清结果；检索知识chunk和消息并按知识文件聚合。",
+      "application": "借鉴输入确认与请求归属意识；Mimir已有queryKey隔离，不能声称同样存在迟到覆盖bug；不要移植知识库锁定/消息搜索/Agent搜索。"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/frontend/src/components/GlobalCommandPalette/ResultItem.vue",
+      "retained": "weknora-ResultItem.vue.source.txt",
+      "lines": "1-35,69-114",
+      "fact": "button行、title/subtitle、主动作/hover独立事件；selected使用中性secondarycontainer；flex min-width0。",
+      "application": "可采用安静中性选中及可读标题片段，与已获批语雀token相容；不照搬相似度百分比、向量徽标、命令数字快捷键。"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/frontend/src/components/GlobalCommandPalette/useStartChat.ts",
+      "retained": "weknora-useStartChat.ts.source.txt",
+      "lines": "20-37",
+      "fact": "startChat把query设为prefill并router到creatChat，同时可绑定KB/文件。",
+      "application": "Mimir同样是显式AI草稿交接而非自动发送；沿用scope及既有AskDraft，不新增KB锁定和文件附件能力。"
+    },
+    {
+      "source": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/frontend/src/components/GlobalCommandPalette/useSearch.ts",
+      "retained": "weknora-useSearch.ts.source.txt",
+      "lines": "260-277",
+      "fact": "搜索失败catch记录console并返回空集合。",
+      "application": "不照搬吞错；Mimir本轮应明确失败和重试，不把网络失败画成无匹配。"
+    }
+  ],
+  "designAuthority": "用户已认可语雀适配视觉为主；Obsidian仅布局连续性；WeKnora按KB/Agent领域研究，非Office编辑工具条规范。",
+  "limitations": [
+    "仅HTTP和固定源码核查，未登录运行WeKnora工作台",
+    "未核查语雀私人工作台的精确命令面板；Mimir提案是适配，不宣称像素级复制",
+    "不新增检索算法、排序、消息/Agent检索、过滤器、统计、分页、批量动作"
+  ]
+}

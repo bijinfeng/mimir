@@ -1,0 +1,613 @@
+{
+  "meaning": "All fixture selector entries rendered; this does not prove all native/business behaviors",
+  "entries": [
+    {
+      "id": "search.entry.button",
+      "body": true
+    },
+    {
+      "id": "search.entry.rail",
+      "body": true
+    },
+    {
+      "id": "search.entry.drawer",
+      "body": true
+    },
+    {
+      "id": "search.entry.ctrl-k",
+      "body": true
+    },
+    {
+      "id": "search.entry.cmd-k",
+      "body": true
+    },
+    {
+      "id": "search.entry.editor",
+      "body": true
+    },
+    {
+      "id": "search.entry.reset",
+      "body": true
+    },
+    {
+      "id": "search.entry.escape",
+      "body": true
+    },
+    {
+      "id": "search.entry.mask",
+      "body": true
+    },
+    {
+      "id": "search.entry.focus-live",
+      "body": true
+    },
+    {
+      "id": "search.entry.focus-missing",
+      "body": true
+    },
+    {
+      "id": "search.recents.loading",
+      "body": true
+    },
+    {
+      "id": "search.recents.empty",
+      "body": true
+    },
+    {
+      "id": "search.recents.ready",
+      "body": true
+    },
+    {
+      "id": "search.recents.partial",
+      "body": true
+    },
+    {
+      "id": "search.recents.failed",
+      "body": true
+    },
+    {
+      "id": "search.recents.retry",
+      "body": true
+    },
+    {
+      "id": "search.recents.filtered",
+      "body": true
+    },
+    {
+      "id": "search.recents.unauthorized",
+      "body": true
+    },
+    {
+      "id": "search.recents.storage",
+      "body": true
+    },
+    {
+      "id": "search.recents.revision",
+      "body": true
+    },
+    {
+      "id": "search.recents.user-unknown",
+      "body": true
+    },
+    {
+      "id": "search.input.blank",
+      "body": true
+    },
+    {
+      "id": "search.input.single",
+      "body": true
+    },
+    {
+      "id": "search.input.two",
+      "body": true
+    },
+    {
+      "id": "search.input.case",
+      "body": true
+    },
+    {
+      "id": "search.input.clear",
+      "body": true
+    },
+    {
+      "id": "search.input.compose",
+      "body": true
+    },
+    {
+      "id": "search.input.compose-enter",
+      "body": true
+    },
+    {
+      "id": "search.input.compose-arrows",
+      "body": true
+    },
+    {
+      "id": "search.input.long",
+      "body": true
+    },
+    {
+      "id": "search.input.paste",
+      "body": true
+    },
+    {
+      "id": "search.query.loading",
+      "body": true
+    },
+    {
+      "id": "search.query.pending-command",
+      "body": true
+    },
+    {
+      "id": "search.query.cached",
+      "body": true
+    },
+    {
+      "id": "search.query.refresh",
+      "body": true
+    },
+    {
+      "id": "search.query.empty",
+      "body": true
+    },
+    {
+      "id": "search.query.error",
+      "body": true
+    },
+    {
+      "id": "search.query.retry",
+      "body": true
+    },
+    {
+      "id": "search.query.retry-pending",
+      "body": true
+    },
+    {
+      "id": "search.query.error-cached",
+      "body": true
+    },
+    {
+      "id": "search.query.query-race",
+      "body": true
+    },
+    {
+      "id": "search.query.closed-late",
+      "body": true
+    },
+    {
+      "id": "search.query.query-clear",
+      "body": true
+    },
+    {
+      "id": "search.hits.one",
+      "body": true
+    },
+    {
+      "id": "search.hits.multi-document",
+      "body": true
+    },
+    {
+      "id": "search.hits.multi-chunk",
+      "body": true
+    },
+    {
+      "id": "search.hits.long-title",
+      "body": true
+    },
+    {
+      "id": "search.hits.long-snippet",
+      "body": true
+    },
+    {
+      "id": "search.hits.path-null",
+      "body": true
+    },
+    {
+      "id": "search.hits.file",
+      "body": true
+    },
+    {
+      "id": "search.hits.six",
+      "body": true
+    },
+    {
+      "id": "search.hits.count",
+      "body": true
+    },
+    {
+      "id": "search.hits.punctuation",
+      "body": true
+    },
+    {
+      "id": "search.selection.first",
+      "body": true
+    },
+    {
+      "id": "search.selection.documents-first",
+      "body": true
+    },
+    {
+      "id": "search.selection.commands-only",
+      "body": true
+    },
+    {
+      "id": "search.selection.down",
+      "body": true
+    },
+    {
+      "id": "search.selection.up",
+      "body": true
+    },
+    {
+      "id": "search.selection.scroll",
+      "body": true
+    },
+    {
+      "id": "search.selection.hover",
+      "body": true
+    },
+    {
+      "id": "search.selection.click",
+      "body": true
+    },
+    {
+      "id": "search.selection.tab",
+      "body": true
+    },
+    {
+      "id": "search.selection.list-growth",
+      "body": true
+    },
+    {
+      "id": "search.selection.list-shrink",
+      "body": true
+    },
+    {
+      "id": "search.selection.announce",
+      "body": true
+    },
+    {
+      "id": "search.new-note.ready",
+      "body": true
+    },
+    {
+      "id": "search.new-note.dirty",
+      "body": true
+    },
+    {
+      "id": "search.new-note.pending",
+      "body": true
+    },
+    {
+      "id": "search.new-note.success",
+      "body": true
+    },
+    {
+      "id": "search.new-note.failed",
+      "body": true
+    },
+    {
+      "id": "search.new-note.cancel-guard",
+      "body": true
+    },
+    {
+      "id": "search.new-note.repeat",
+      "body": true
+    },
+    {
+      "id": "search.new-note.response-lost",
+      "body": true
+    },
+    {
+      "id": "search.capture.ready",
+      "body": true
+    },
+    {
+      "id": "search.capture.handoff",
+      "body": true
+    },
+    {
+      "id": "search.capture.focus",
+      "body": true
+    },
+    {
+      "id": "search.capture.cancel",
+      "body": true
+    },
+    {
+      "id": "search.capture.dirty",
+      "body": true
+    },
+    {
+      "id": "search.context.none",
+      "body": true
+    },
+    {
+      "id": "search.context.note",
+      "body": true
+    },
+    {
+      "id": "search.context.file",
+      "body": true
+    },
+    {
+      "id": "search.context.loading",
+      "body": true
+    },
+    {
+      "id": "search.context.error",
+      "body": true
+    },
+    {
+      "id": "search.context.cached",
+      "body": true
+    },
+    {
+      "id": "search.context.switch",
+      "body": true
+    },
+    {
+      "id": "search.rename.handoff",
+      "body": true
+    },
+    {
+      "id": "search.rename.prefill",
+      "body": true
+    },
+    {
+      "id": "search.rename.empty",
+      "body": true
+    },
+    {
+      "id": "search.rename.unchanged",
+      "body": true
+    },
+    {
+      "id": "search.rename.pending",
+      "body": true
+    },
+    {
+      "id": "search.rename.error",
+      "body": true
+    },
+    {
+      "id": "search.rename.success",
+      "body": true
+    },
+    {
+      "id": "search.rename.ime",
+      "body": true
+    },
+    {
+      "id": "search.rename.cancel-focus",
+      "body": true
+    },
+    {
+      "id": "search.move.prefill",
+      "body": true
+    },
+    {
+      "id": "search.move.folder-loading",
+      "body": true
+    },
+    {
+      "id": "search.move.folder-error",
+      "body": true
+    },
+    {
+      "id": "search.move.nested",
+      "body": true
+    },
+    {
+      "id": "search.move.unchanged",
+      "body": true
+    },
+    {
+      "id": "search.move.pending",
+      "body": true
+    },
+    {
+      "id": "search.move.error",
+      "body": true
+    },
+    {
+      "id": "search.move.success",
+      "body": true
+    },
+    {
+      "id": "search.move.undo",
+      "body": true
+    },
+    {
+      "id": "search.move.cancel",
+      "body": true
+    },
+    {
+      "id": "search.find.blank",
+      "body": true
+    },
+    {
+      "id": "search.find.one",
+      "body": true
+    },
+    {
+      "id": "search.find.two",
+      "body": true
+    },
+    {
+      "id": "search.find.found",
+      "body": true
+    },
+    {
+      "id": "search.find.not-found",
+      "body": true
+    },
+    {
+      "id": "search.find.ime",
+      "body": true
+    },
+    {
+      "id": "search.find.close",
+      "body": true
+    },
+    {
+      "id": "search.find.case",
+      "body": true
+    },
+    {
+      "id": "search.open-hit.recent",
+      "body": true
+    },
+    {
+      "id": "search.open-hit.hit",
+      "body": true
+    },
+    {
+      "id": "search.open-hit.same-document",
+      "body": true
+    },
+    {
+      "id": "search.open-hit.repeated-text",
+      "body": true
+    },
+    {
+      "id": "search.open-hit.late-content",
+      "body": true
+    },
+    {
+      "id": "search.open-hit.missing",
+      "body": true
+    },
+    {
+      "id": "search.open-hit.no-highlight-api",
+      "body": true
+    },
+    {
+      "id": "search.open-hit.back",
+      "body": true
+    },
+    {
+      "id": "search.open-hit.load-error",
+      "body": true
+    },
+    {
+      "id": "search.open-hit.cancel-guard",
+      "body": true
+    },
+    {
+      "id": "search.ai.blank",
+      "body": true
+    },
+    {
+      "id": "search.ai.one",
+      "body": true
+    },
+    {
+      "id": "search.ai.searching",
+      "body": true
+    },
+    {
+      "id": "search.ai.empty",
+      "body": true
+    },
+    {
+      "id": "search.ai.error",
+      "body": true
+    },
+    {
+      "id": "search.ai.keyboard",
+      "body": true
+    },
+    {
+      "id": "search.ai.prefill",
+      "body": true
+    },
+    {
+      "id": "search.ai.scope",
+      "body": true
+    },
+    {
+      "id": "search.ai.dirty",
+      "body": true
+    },
+    {
+      "id": "search.ai.cancel",
+      "body": true
+    },
+    {
+      "id": "search.guard.clean",
+      "body": true
+    },
+    {
+      "id": "search.guard.manual",
+      "body": true
+    },
+    {
+      "id": "search.guard.auto",
+      "body": true
+    },
+    {
+      "id": "search.guard.saving",
+      "body": true
+    },
+    {
+      "id": "search.guard.save-failed",
+      "body": true
+    },
+    {
+      "id": "search.guard.saved-during",
+      "body": true
+    },
+    {
+      "id": "search.guard.discard",
+      "body": true
+    },
+    {
+      "id": "search.guard.continue",
+      "body": true
+    },
+    {
+      "id": "search.guard.office",
+      "body": true
+    },
+    {
+      "id": "search.layout.light",
+      "body": true
+    },
+    {
+      "id": "search.layout.dark",
+      "body": true
+    },
+    {
+      "id": "search.layout.narrow",
+      "body": true
+    },
+    {
+      "id": "search.layout.low",
+      "body": true
+    },
+    {
+      "id": "search.layout.zoom",
+      "body": true
+    },
+    {
+      "id": "search.layout.touch",
+      "body": true
+    },
+    {
+      "id": "search.layout.reduced-motion",
+      "body": true
+    },
+    {
+      "id": "search.layout.drawer-focus",
+      "body": true
+    },
+    {
+      "id": "search.layout.desktop",
+      "body": true
+    },
+    {
+      "id": "search.layout.screen-reader",
+      "body": true
+    }
+  ]
+}

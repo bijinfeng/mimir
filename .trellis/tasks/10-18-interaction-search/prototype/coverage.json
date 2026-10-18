@@ -1,0 +1,2552 @@
+{
+  "schemaVersion": 1,
+  "module": "search",
+  "planningOnly": true,
+  "groupCount": 16,
+  "coverageCount": 152,
+  "fixtureCount": 152,
+  "dimensions": [
+    "light/dark",
+    "desktop1280×800/narrow390×844/low390×500",
+    "mouse/keyboard/touch",
+    "default/hover/focus/active/disabled only when applicable"
+  ],
+  "items": [
+    {
+      "id": "search.entry.button",
+      "title": "展开侧栏搜索按钮",
+      "group": "search.entry",
+      "fixture": "search.entry.button",
+      "entry": "review.html#scene=search.entry.button",
+      "mode": "interactive_fixture",
+      "steps": "点击画布搜索入口，输入后按Esc关闭，再次打开；快捷键仅在浏览器提供的事件中演示。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:276-285",
+        "packages/renderer/src/routes/_app.tsx:319",
+        "packages/renderer/src/components/CommandPalette.tsx:300-347",
+        "packages/renderer/src/components/NavSidebar.tsx:132-135"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.entry.rail",
+      "title": "折叠功能栏搜索",
+      "group": "search.entry",
+      "fixture": "search.entry.rail",
+      "entry": "review.html#scene=search.entry.rail",
+      "mode": "interactive_fixture",
+      "steps": "点击画布搜索入口，输入后按Esc关闭，再次打开；快捷键仅在浏览器提供的事件中演示。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:276-285",
+        "packages/renderer/src/routes/_app.tsx:319",
+        "packages/renderer/src/components/CommandPalette.tsx:300-347",
+        "packages/renderer/src/components/NavSidebar.tsx:132-135"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.entry.drawer",
+      "title": "窄屏抽屉搜索后关闭抽屉",
+      "group": "search.entry",
+      "fixture": "search.entry.drawer",
+      "entry": "review.html#scene=search.entry.drawer",
+      "mode": "interactive_fixture",
+      "steps": "点击画布搜索入口，输入后按Esc关闭，再次打开；快捷键仅在浏览器提供的事件中演示。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:276-285",
+        "packages/renderer/src/routes/_app.tsx:319",
+        "packages/renderer/src/components/CommandPalette.tsx:300-347",
+        "packages/renderer/src/components/NavSidebar.tsx:132-135"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.entry.ctrl-k",
+      "title": "Ctrl+K打开/再次切换关闭",
+      "group": "search.entry",
+      "fixture": "search.entry.ctrl-k",
+      "entry": "review.html#scene=search.entry.ctrl-k",
+      "mode": "interactive_with_qualified_host_boundary",
+      "steps": "点击画布搜索入口，输入后按Esc关闭，再次打开；快捷键仅在浏览器提供的事件中演示。",
+      "hostQualification": "本地演示可操作的交接/状态，不能替代原生输入法、读屏、宿主权限及真正文定位验证。",
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:276-285",
+        "packages/renderer/src/routes/_app.tsx:319",
+        "packages/renderer/src/components/CommandPalette.tsx:300-347",
+        "packages/renderer/src/components/NavSidebar.tsx:132-135"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.entry.cmd-k",
+      "title": "Cmd+K打开/再次切换关闭",
+      "group": "search.entry",
+      "fixture": "search.entry.cmd-k",
+      "entry": "review.html#scene=search.entry.cmd-k",
+      "mode": "interactive_with_qualified_host_boundary",
+      "steps": "点击画布搜索入口，输入后按Esc关闭，再次打开；快捷键仅在浏览器提供的事件中演示。",
+      "hostQualification": "本地演示可操作的交接/状态，不能替代原生输入法、读屏、宿主权限及真正文定位验证。",
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:276-285",
+        "packages/renderer/src/routes/_app.tsx:319",
+        "packages/renderer/src/components/CommandPalette.tsx:300-347",
+        "packages/renderer/src/components/NavSidebar.tsx:132-135"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.entry.editor",
+      "title": "编辑器中唤起且不触发浏览器默认",
+      "group": "search.entry",
+      "fixture": "search.entry.editor",
+      "entry": "review.html#scene=search.entry.editor",
+      "mode": "interactive_with_qualified_host_boundary",
+      "steps": "点击画布搜索入口，输入后按Esc关闭，再次打开；快捷键仅在浏览器提供的事件中演示。",
+      "hostQualification": "本地演示可操作的交接/状态，不能替代原生输入法、读屏、宿主权限及真正文定位验证。",
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:276-285",
+        "packages/renderer/src/routes/_app.tsx:319",
+        "packages/renderer/src/components/CommandPalette.tsx:300-347",
+        "packages/renderer/src/components/NavSidebar.tsx:132-135"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.entry.reset",
+      "title": "关闭重开清空输入/首项选中",
+      "group": "search.entry",
+      "fixture": "search.entry.reset",
+      "entry": "review.html#scene=search.entry.reset",
+      "mode": "interactive_fixture",
+      "steps": "点击画布搜索入口，输入后按Esc关闭，再次打开；快捷键仅在浏览器提供的事件中演示。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:276-285",
+        "packages/renderer/src/routes/_app.tsx:319",
+        "packages/renderer/src/components/CommandPalette.tsx:300-347",
+        "packages/renderer/src/components/NavSidebar.tsx:132-135"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.entry.escape",
+      "title": "Esc关闭",
+      "group": "search.entry",
+      "fixture": "search.entry.escape",
+      "entry": "review.html#scene=search.entry.escape",
+      "mode": "interactive_fixture",
+      "steps": "点击画布搜索入口，输入后按Esc关闭，再次打开；快捷键仅在浏览器提供的事件中演示。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:276-285",
+        "packages/renderer/src/routes/_app.tsx:319",
+        "packages/renderer/src/components/CommandPalette.tsx:300-347",
+        "packages/renderer/src/components/NavSidebar.tsx:132-135"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.entry.mask",
+      "title": "遮罩关闭",
+      "group": "search.entry",
+      "fixture": "search.entry.mask",
+      "entry": "review.html#scene=search.entry.mask",
+      "mode": "interactive_fixture",
+      "steps": "点击画布搜索入口，输入后按Esc关闭，再次打开；快捷键仅在浏览器提供的事件中演示。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:276-285",
+        "packages/renderer/src/routes/_app.tsx:319",
+        "packages/renderer/src/components/CommandPalette.tsx:300-347",
+        "packages/renderer/src/components/NavSidebar.tsx:132-135"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.entry.focus-live",
+      "title": "回到存活触发器",
+      "group": "search.entry",
+      "fixture": "search.entry.focus-live",
+      "entry": "review.html#scene=search.entry.focus-live",
+      "mode": "interactive_fixture",
+      "steps": "点击画布搜索入口，输入后按Esc关闭，再次打开；快捷键仅在浏览器提供的事件中演示。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:276-285",
+        "packages/renderer/src/routes/_app.tsx:319",
+        "packages/renderer/src/components/CommandPalette.tsx:300-347",
+        "packages/renderer/src/components/NavSidebar.tsx:132-135"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.entry.focus-missing",
+      "title": "触发器卸载或隐藏的回焦兜底",
+      "group": "search.entry",
+      "fixture": "search.entry.focus-missing",
+      "entry": "review.html#scene=search.entry.focus-missing",
+      "mode": "interactive_fixture",
+      "steps": "点击画布搜索入口，输入后按Esc关闭，再次打开；快捷键仅在浏览器提供的事件中演示。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:276-285",
+        "packages/renderer/src/routes/_app.tsx:319",
+        "packages/renderer/src/components/CommandPalette.tsx:300-347",
+        "packages/renderer/src/components/NavSidebar.tsx:132-135"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.recents.loading",
+      "title": "有ID初次读取",
+      "group": "search.recents",
+      "fixture": "search.recents.loading",
+      "entry": "review.html#scene=search.recents.loading",
+      "mode": "interactive_fixture",
+      "steps": "观察最近读取反馈，使用原位重试或“模拟成功/失败响应”；点击已授权笔记打开。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:321",
+        "packages/renderer/src/components/CommandPalette.tsx:437-447",
+        "packages/renderer/src/lib/recent-documents.ts:6-75"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.recents.empty",
+      "title": "无历史或仅非笔记",
+      "group": "search.recents",
+      "fixture": "search.recents.empty",
+      "entry": "review.html#scene=search.recents.empty",
+      "mode": "interactive_fixture",
+      "steps": "观察最近读取反馈，使用原位重试或“模拟成功/失败响应”；点击已授权笔记打开。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:321",
+        "packages/renderer/src/components/CommandPalette.tsx:437-447",
+        "packages/renderer/src/lib/recent-documents.ts:6-75"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.recents.ready",
+      "title": "最多12条历史中的note按序",
+      "group": "search.recents",
+      "fixture": "search.recents.ready",
+      "entry": "review.html#scene=search.recents.ready",
+      "mode": "interactive_fixture",
+      "steps": "观察最近读取反馈，使用原位重试或“模拟成功/失败响应”；点击已授权笔记打开。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:321",
+        "packages/renderer/src/components/CommandPalette.tsx:437-447",
+        "packages/renderer/src/lib/recent-documents.ts:6-75"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.recents.partial",
+      "title": "部分网络/5xx失败且有可见note",
+      "group": "search.recents",
+      "fixture": "search.recents.partial",
+      "entry": "review.html#scene=search.recents.partial",
+      "mode": "interactive_fixture",
+      "steps": "观察最近读取反馈，使用原位重试或“模拟成功/失败响应”；点击已授权笔记打开。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:321",
+        "packages/renderer/src/components/CommandPalette.tsx:437-447",
+        "packages/renderer/src/lib/recent-documents.ts:6-75"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.recents.failed",
+      "title": "全部暂时读取失败",
+      "group": "search.recents",
+      "fixture": "search.recents.failed",
+      "entry": "review.html#scene=search.recents.failed",
+      "mode": "interactive_fixture",
+      "steps": "观察最近读取反馈，使用原位重试或“模拟成功/失败响应”；点击已授权笔记打开。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:321",
+        "packages/renderer/src/components/CommandPalette.tsx:437-447",
+        "packages/renderer/src/lib/recent-documents.ts:6-75"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.recents.retry",
+      "title": "原位重试/忙碌",
+      "group": "search.recents",
+      "fixture": "search.recents.retry",
+      "entry": "review.html#scene=search.recents.retry",
+      "mode": "interactive_fixture",
+      "steps": "观察最近读取反馈，使用原位重试或“模拟成功/失败响应”；点击已授权笔记打开。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:321",
+        "packages/renderer/src/components/CommandPalette.tsx:437-447",
+        "packages/renderer/src/lib/recent-documents.ts:6-75"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.recents.filtered",
+      "title": "403/404不显示标题",
+      "group": "search.recents",
+      "fixture": "search.recents.filtered",
+      "entry": "review.html#scene=search.recents.filtered",
+      "mode": "interactive_fixture",
+      "steps": "观察最近读取反馈，使用原位重试或“模拟成功/失败响应”；点击已授权笔记打开。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:321",
+        "packages/renderer/src/components/CommandPalette.tsx:437-447",
+        "packages/renderer/src/lib/recent-documents.ts:6-75"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.recents.unauthorized",
+      "title": "401归查询错误不伪装为空",
+      "group": "search.recents",
+      "fixture": "search.recents.unauthorized",
+      "entry": "review.html#scene=search.recents.unauthorized",
+      "mode": "interactive_fixture",
+      "steps": "观察最近读取反馈，使用原位重试或“模拟成功/失败响应”；点击已授权笔记打开。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:321",
+        "packages/renderer/src/components/CommandPalette.tsx:437-447",
+        "packages/renderer/src/lib/recent-documents.ts:6-75"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.recents.storage",
+      "title": "损坏/禁用存储降级",
+      "group": "search.recents",
+      "fixture": "search.recents.storage",
+      "entry": "review.html#scene=search.recents.storage",
+      "mode": "interactive_fixture",
+      "steps": "观察最近读取反馈，使用原位重试或“模拟成功/失败响应”；点击已授权笔记打开。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:321",
+        "packages/renderer/src/components/CommandPalette.tsx:437-447",
+        "packages/renderer/src/lib/recent-documents.ts:6-75"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.recents.revision",
+      "title": "跨标签storage或本次记录更新",
+      "group": "search.recents",
+      "fixture": "search.recents.revision",
+      "entry": "review.html#scene=search.recents.revision",
+      "mode": "interactive_fixture",
+      "steps": "观察最近读取反馈，使用原位重试或“模拟成功/失败响应”；点击已授权笔记打开。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:321",
+        "packages/renderer/src/components/CommandPalette.tsx:437-447",
+        "packages/renderer/src/lib/recent-documents.ts:6-75"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.recents.user-unknown",
+      "title": "用户ID未知不触发最近读取",
+      "group": "search.recents",
+      "fixture": "search.recents.user-unknown",
+      "entry": "review.html#scene=search.recents.user-unknown",
+      "mode": "interactive_fixture",
+      "steps": "观察最近读取反馈，使用原位重试或“模拟成功/失败响应”；点击已授权笔记打开。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:321",
+        "packages/renderer/src/components/CommandPalette.tsx:437-447",
+        "packages/renderer/src/lib/recent-documents.ts:6-75"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.input.blank",
+      "title": "纯空格等同空查询",
+      "group": "search.input",
+      "fixture": "search.input.blank",
+      "entry": "review.html#scene=search.input.blank",
+      "mode": "interactive_fixture",
+      "steps": "输入或清空；预置组合状态下按Enter/方向键后完成模拟选字；500上限仅约束提案。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:349-360",
+        "packages/renderer/src/components/CommandPalette.tsx:483-513",
+        "packages/shared/src/search.ts:15-21"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.input.single",
+      "title": "trim后长度1不请求文档但匹配命令",
+      "group": "search.input",
+      "fixture": "search.input.single",
+      "entry": "review.html#scene=search.input.single",
+      "mode": "interactive_fixture",
+      "steps": "输入或清空；预置组合状态下按Enter/方向键后完成模拟选字；500上限仅约束提案。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:349-360",
+        "packages/renderer/src/components/CommandPalette.tsx:483-513",
+        "packages/shared/src/search.ts:15-21"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.input.two",
+      "title": "trim后长度>=2开始检索",
+      "group": "search.input",
+      "fixture": "search.input.two",
+      "entry": "review.html#scene=search.input.two",
+      "mode": "interactive_fixture",
+      "steps": "输入或清空；预置组合状态下按Enter/方向键后完成模拟选字；500上限仅约束提案。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:349-360",
+        "packages/renderer/src/components/CommandPalette.tsx:483-513",
+        "packages/shared/src/search.ts:15-21"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.input.case",
+      "title": "命令名称/副标题大小写不敏感子串匹配",
+      "group": "search.input",
+      "fixture": "search.input.case",
+      "entry": "review.html#scene=search.input.case",
+      "mode": "interactive_fixture",
+      "steps": "输入或清空；预置组合状态下按Enter/方向键后完成模拟选字；500上限仅约束提案。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:349-360",
+        "packages/renderer/src/components/CommandPalette.tsx:483-513",
+        "packages/shared/src/search.ts:15-21"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.input.clear",
+      "title": "清空恢复最近与操作",
+      "group": "search.input",
+      "fixture": "search.input.clear",
+      "entry": "review.html#scene=search.input.clear",
+      "mode": "interactive_fixture",
+      "steps": "输入或清空；预置组合状态下按Enter/方向键后完成模拟选字；500上限仅约束提案。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:349-360",
+        "packages/renderer/src/components/CommandPalette.tsx:483-513",
+        "packages/shared/src/search.ts:15-21"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.input.compose",
+      "title": "中文组合输入不误选/发送",
+      "group": "search.input",
+      "fixture": "search.input.compose",
+      "entry": "review.html#scene=search.input.compose",
+      "mode": "interactive_with_qualified_host_boundary",
+      "steps": "输入或清空；预置组合状态下按Enter/方向键后完成模拟选字；500上限仅约束提案。",
+      "hostQualification": "本地演示可操作的交接/状态，不能替代原生输入法、读屏、宿主权限及真正文定位验证。",
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:349-360",
+        "packages/renderer/src/components/CommandPalette.tsx:483-513",
+        "packages/shared/src/search.ts:15-21"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.input.compose-enter",
+      "title": "选字Enter不得执行命令",
+      "group": "search.input",
+      "fixture": "search.input.compose-enter",
+      "entry": "review.html#scene=search.input.compose-enter",
+      "mode": "interactive_with_qualified_host_boundary",
+      "steps": "输入或清空；预置组合状态下按Enter/方向键后完成模拟选字；500上限仅约束提案。",
+      "hostQualification": "本地演示可操作的交接/状态，不能替代原生输入法、读屏、宿主权限及真正文定位验证。",
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:349-360",
+        "packages/renderer/src/components/CommandPalette.tsx:483-513",
+        "packages/shared/src/search.ts:15-21"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.input.compose-arrows",
+      "title": "候选箭头不得移选行",
+      "group": "search.input",
+      "fixture": "search.input.compose-arrows",
+      "entry": "review.html#scene=search.input.compose-arrows",
+      "mode": "interactive_with_qualified_host_boundary",
+      "steps": "输入或清空；预置组合状态下按Enter/方向键后完成模拟选字；500上限仅约束提案。",
+      "hostQualification": "本地演示可操作的交接/状态，不能替代原生输入法、读屏、宿主权限及真正文定位验证。",
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:349-360",
+        "packages/renderer/src/components/CommandPalette.tsx:483-513",
+        "packages/shared/src/search.ts:15-21"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.input.long",
+      "title": "超长查询与500字API上限",
+      "group": "search.input",
+      "fixture": "search.input.long",
+      "entry": "review.html#scene=search.input.long",
+      "mode": "interactive_fixture",
+      "steps": "输入或清空；预置组合状态下按Enter/方向键后完成模拟选字；500上限仅约束提案。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:349-360",
+        "packages/renderer/src/components/CommandPalette.tsx:483-513",
+        "packages/shared/src/search.ts:15-21"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.input.paste",
+      "title": "粘贴长文本保持输入可编辑",
+      "group": "search.input",
+      "fixture": "search.input.paste",
+      "entry": "review.html#scene=search.input.paste",
+      "mode": "interactive_fixture",
+      "steps": "输入或清空；预置组合状态下按Enter/方向键后完成模拟选字；500上限仅约束提案。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:349-360",
+        "packages/renderer/src/components/CommandPalette.tsx:483-513",
+        "packages/shared/src/search.ts:15-21"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.query.loading",
+      "title": "首次请求且无命中",
+      "group": "search.query",
+      "fixture": "search.query.loading",
+      "entry": "review.html#scene=search.query.loading",
+      "mode": "interactive_fixture",
+      "steps": "改变输入/重试/模拟响应；检索中Enter与提案鼠标动作不会执行暂时首项。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:355-360",
+        "packages/renderer/src/components/CommandPalette.tsx:608-633",
+        "packages/renderer/src/lib/query.ts:11-23",
+        "packages/renderer/src/lib/api.ts:1055-1059"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.query.pending-command",
+      "title": "请求期间临时命令排首不因Enter执行",
+      "group": "search.query",
+      "fixture": "search.query.pending-command",
+      "entry": "review.html#scene=search.query.pending-command",
+      "mode": "interactive_fixture",
+      "steps": "改变输入/重试/模拟响应；检索中Enter与提案鼠标动作不会执行暂时首项。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:355-360",
+        "packages/renderer/src/components/CommandPalette.tsx:608-633",
+        "packages/renderer/src/lib/query.ts:11-23",
+        "packages/renderer/src/lib/api.ts:1055-1059"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.query.cached",
+      "title": "30秒缓存同词返回",
+      "group": "search.query",
+      "fixture": "search.query.cached",
+      "entry": "review.html#scene=search.query.cached",
+      "mode": "interactive_fixture",
+      "steps": "改变输入/重试/模拟响应；检索中Enter与提案鼠标动作不会执行暂时首项。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:355-360",
+        "packages/renderer/src/components/CommandPalette.tsx:608-633",
+        "packages/renderer/src/lib/query.ts:11-23",
+        "packages/renderer/src/lib/api.ts:1055-1059"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.query.refresh",
+      "title": "同词缓存后台刷新",
+      "group": "search.query",
+      "fixture": "search.query.refresh",
+      "entry": "review.html#scene=search.query.refresh",
+      "mode": "interactive_fixture",
+      "steps": "改变输入/重试/模拟响应；检索中Enter与提案鼠标动作不会执行暂时首项。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:355-360",
+        "packages/renderer/src/components/CommandPalette.tsx:608-633",
+        "packages/renderer/src/lib/query.ts:11-23",
+        "packages/renderer/src/lib/api.ts:1055-1059"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.query.empty",
+      "title": "检索成功无命中",
+      "group": "search.query",
+      "fixture": "search.query.empty",
+      "entry": "review.html#scene=search.query.empty",
+      "mode": "interactive_fixture",
+      "steps": "改变输入/重试/模拟响应；检索中Enter与提案鼠标动作不会执行暂时首项。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:355-360",
+        "packages/renderer/src/components/CommandPalette.tsx:608-633",
+        "packages/renderer/src/lib/query.ts:11-23",
+        "packages/renderer/src/lib/api.ts:1055-1059"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.query.error",
+      "title": "网络/5xx最终失败",
+      "group": "search.query",
+      "fixture": "search.query.error",
+      "entry": "review.html#scene=search.query.error",
+      "mode": "interactive_fixture",
+      "steps": "改变输入/重试/模拟响应；检索中Enter与提案鼠标动作不会执行暂时首项。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:355-360",
+        "packages/renderer/src/components/CommandPalette.tsx:608-633",
+        "packages/renderer/src/lib/query.ts:11-23",
+        "packages/renderer/src/lib/api.ts:1055-1059"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.query.retry",
+      "title": "重试保持原查询",
+      "group": "search.query",
+      "fixture": "search.query.retry",
+      "entry": "review.html#scene=search.query.retry",
+      "mode": "interactive_fixture",
+      "steps": "改变输入/重试/模拟响应；检索中Enter与提案鼠标动作不会执行暂时首项。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:355-360",
+        "packages/renderer/src/components/CommandPalette.tsx:608-633",
+        "packages/renderer/src/lib/query.ts:11-23",
+        "packages/renderer/src/lib/api.ts:1055-1059"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.query.retry-pending",
+      "title": "重试按钮忙碌防重复",
+      "group": "search.query",
+      "fixture": "search.query.retry-pending",
+      "entry": "review.html#scene=search.query.retry-pending",
+      "mode": "interactive_fixture",
+      "steps": "改变输入/重试/模拟响应；检索中Enter与提案鼠标动作不会执行暂时首项。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:355-360",
+        "packages/renderer/src/components/CommandPalette.tsx:608-633",
+        "packages/renderer/src/lib/query.ts:11-23",
+        "packages/renderer/src/lib/api.ts:1055-1059"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.query.error-cached",
+      "title": "缓存存在但本次读取失败",
+      "group": "search.query",
+      "fixture": "search.query.error-cached",
+      "entry": "review.html#scene=search.query.error-cached",
+      "mode": "interactive_fixture",
+      "steps": "改变输入/重试/模拟响应；检索中Enter与提案鼠标动作不会执行暂时首项。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:355-360",
+        "packages/renderer/src/components/CommandPalette.tsx:608-633",
+        "packages/renderer/src/lib/query.ts:11-23",
+        "packages/renderer/src/lib/api.ts:1055-1059"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.query.query-race",
+      "title": "快速改变查询旧结果不得覆盖新词",
+      "group": "search.query",
+      "fixture": "search.query.query-race",
+      "entry": "review.html#scene=search.query.query-race",
+      "mode": "interactive_fixture",
+      "steps": "改变输入/重试/模拟响应；检索中Enter与提案鼠标动作不会执行暂时首项。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:355-360",
+        "packages/renderer/src/components/CommandPalette.tsx:608-633",
+        "packages/renderer/src/lib/query.ts:11-23",
+        "packages/renderer/src/lib/api.ts:1055-1059"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.query.closed-late",
+      "title": "关闭后迟到结果不打开面板",
+      "group": "search.query",
+      "fixture": "search.query.closed-late",
+      "entry": "review.html#scene=search.query.closed-late",
+      "mode": "interactive_fixture",
+      "steps": "改变输入/重试/模拟响应；检索中Enter与提案鼠标动作不会执行暂时首项。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:355-360",
+        "packages/renderer/src/components/CommandPalette.tsx:608-633",
+        "packages/renderer/src/lib/query.ts:11-23",
+        "packages/renderer/src/lib/api.ts:1055-1059"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.query.query-clear",
+      "title": "请求中清空不显示旧命中",
+      "group": "search.query",
+      "fixture": "search.query.query-clear",
+      "entry": "review.html#scene=search.query.query-clear",
+      "mode": "interactive_fixture",
+      "steps": "改变输入/重试/模拟响应；检索中Enter与提案鼠标动作不会执行暂时首项。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:355-360",
+        "packages/renderer/src/components/CommandPalette.tsx:608-633",
+        "packages/renderer/src/lib/query.ts:11-23",
+        "packages/renderer/src/lib/api.ts:1055-1059"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.hits.one",
+      "title": "单命中标题+片段",
+      "group": "search.hits",
+      "fixture": "search.hits.one",
+      "entry": "review.html#scene=search.hits.one",
+      "mode": "interactive_fixture",
+      "steps": "选择命中，点击详情按钮查看完整标题、路径与片段；每个片段独立打开。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:430-460",
+        "packages/renderer/src/components/CommandPalette.tsx:535-549",
+        "packages/renderer/src/components/CommandPalette.tsx:181-201",
+        "packages/shared/src/search.ts:33-84"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.hits.multi-document",
+      "title": "多文档按服务器返回顺序",
+      "group": "search.hits",
+      "fixture": "search.hits.multi-document",
+      "entry": "review.html#scene=search.hits.multi-document",
+      "mode": "interactive_fixture",
+      "steps": "选择命中，点击详情按钮查看完整标题、路径与片段；每个片段独立打开。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:430-460",
+        "packages/renderer/src/components/CommandPalette.tsx:535-549",
+        "packages/renderer/src/components/CommandPalette.tsx:181-201",
+        "packages/shared/src/search.ts:33-84"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.hits.multi-chunk",
+      "title": "同文档多片段分行保留命中序号",
+      "group": "search.hits",
+      "fixture": "search.hits.multi-chunk",
+      "entry": "review.html#scene=search.hits.multi-chunk",
+      "mode": "interactive_fixture",
+      "steps": "选择命中，点击详情按钮查看完整标题、路径与片段；每个片段独立打开。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:430-460",
+        "packages/renderer/src/components/CommandPalette.tsx:535-549",
+        "packages/renderer/src/components/CommandPalette.tsx:181-201",
+        "packages/shared/src/search.ts:33-84"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.hits.long-title",
+      "title": "超长标题可获全文",
+      "group": "search.hits",
+      "fixture": "search.hits.long-title",
+      "entry": "review.html#scene=search.hits.long-title",
+      "mode": "interactive_fixture",
+      "steps": "选择命中，点击详情按钮查看完整标题、路径与片段；每个片段独立打开。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:430-460",
+        "packages/renderer/src/components/CommandPalette.tsx:535-549",
+        "packages/renderer/src/components/CommandPalette.tsx:181-201",
+        "packages/shared/src/search.ts:33-84"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.hits.long-snippet",
+      "title": "超长片段可获全文",
+      "group": "search.hits",
+      "fixture": "search.hits.long-snippet",
+      "entry": "review.html#scene=search.hits.long-snippet",
+      "mode": "interactive_fixture",
+      "steps": "选择命中，点击详情按钮查看完整标题、路径与片段；每个片段独立打开。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:430-460",
+        "packages/renderer/src/components/CommandPalette.tsx:535-549",
+        "packages/renderer/src/components/CommandPalette.tsx:181-201",
+        "packages/shared/src/search.ts:33-84"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.hits.path-null",
+      "title": "根路径/null来源保持真实",
+      "group": "search.hits",
+      "fixture": "search.hits.path-null",
+      "entry": "review.html#scene=search.hits.path-null",
+      "mode": "interactive_fixture",
+      "steps": "选择命中，点击详情按钮查看完整标题、路径与片段；每个片段独立打开。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:430-460",
+        "packages/renderer/src/components/CommandPalette.tsx:535-549",
+        "packages/renderer/src/components/CommandPalette.tsx:181-201",
+        "packages/shared/src/search.ts:33-84"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.hits.file",
+      "title": "文件/网页命中也能打开",
+      "group": "search.hits",
+      "fixture": "search.hits.file",
+      "entry": "review.html#scene=search.hits.file",
+      "mode": "interactive_fixture",
+      "steps": "选择命中，点击详情按钮查看完整标题、路径与片段；每个片段独立打开。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:430-460",
+        "packages/renderer/src/components/CommandPalette.tsx:535-549",
+        "packages/renderer/src/components/CommandPalette.tsx:181-201",
+        "packages/shared/src/search.ts:33-84"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.hits.six",
+      "title": "limit6代表命中处而非文档数",
+      "group": "search.hits",
+      "fixture": "search.hits.six",
+      "entry": "review.html#scene=search.hits.six",
+      "mode": "interactive_fixture",
+      "steps": "选择命中，点击详情按钮查看完整标题、路径与片段；每个片段独立打开。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:430-460",
+        "packages/renderer/src/components/CommandPalette.tsx:535-549",
+        "packages/renderer/src/components/CommandPalette.tsx:181-201",
+        "packages/shared/src/search.ts:33-84"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.hits.count",
+      "title": "显示实际命中处而非虚构总量",
+      "group": "search.hits",
+      "fixture": "search.hits.count",
+      "entry": "review.html#scene=search.hits.count",
+      "mode": "interactive_fixture",
+      "steps": "选择命中，点击详情按钮查看完整标题、路径与片段；每个片段独立打开。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:430-460",
+        "packages/renderer/src/components/CommandPalette.tsx:535-549",
+        "packages/renderer/src/components/CommandPalette.tsx:181-201",
+        "packages/shared/src/search.ts:33-84"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.hits.punctuation",
+      "title": "尖括号与特殊字符按纯文本显示",
+      "group": "search.hits",
+      "fixture": "search.hits.punctuation",
+      "entry": "review.html#scene=search.hits.punctuation",
+      "mode": "interactive_fixture",
+      "steps": "选择命中，点击详情按钮查看完整标题、路径与片段；每个片段独立打开。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:430-460",
+        "packages/renderer/src/components/CommandPalette.tsx:535-549",
+        "packages/renderer/src/components/CommandPalette.tsx:181-201",
+        "packages/shared/src/search.ts:33-84"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.selection.first",
+      "title": "默认最近/结果首项",
+      "group": "search.selection",
+      "fixture": "search.selection.first",
+      "entry": "review.html#scene=search.selection.first",
+      "mode": "interactive_fixture",
+      "steps": "在输入中用上下箭头/Tab/鼠标选择；增长缩短场景点“改变结果列表”。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:465-468",
+        "packages/renderer/src/components/CommandPalette.tsx:495-519",
+        "packages/renderer/src/components/CommandPalette.tsx:637-692"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.selection.documents-first",
+      "title": "有结果时结果先于匹配命令",
+      "group": "search.selection",
+      "fixture": "search.selection.documents-first",
+      "entry": "review.html#scene=search.selection.documents-first",
+      "mode": "interactive_fixture",
+      "steps": "在输入中用上下箭头/Tab/鼠标选择；增长缩短场景点“改变结果列表”。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:465-468",
+        "packages/renderer/src/components/CommandPalette.tsx:495-519",
+        "packages/renderer/src/components/CommandPalette.tsx:637-692"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.selection.commands-only",
+      "title": "无结果时命令为首",
+      "group": "search.selection",
+      "fixture": "search.selection.commands-only",
+      "entry": "review.html#scene=search.selection.commands-only",
+      "mode": "interactive_fixture",
+      "steps": "在输入中用上下箭头/Tab/鼠标选择；增长缩短场景点“改变结果列表”。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:465-468",
+        "packages/renderer/src/components/CommandPalette.tsx:495-519",
+        "packages/renderer/src/components/CommandPalette.tsx:637-692"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.selection.down",
+      "title": "ArrowDown到末项不循环",
+      "group": "search.selection",
+      "fixture": "search.selection.down",
+      "entry": "review.html#scene=search.selection.down",
+      "mode": "interactive_fixture",
+      "steps": "在输入中用上下箭头/Tab/鼠标选择；增长缩短场景点“改变结果列表”。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:465-468",
+        "packages/renderer/src/components/CommandPalette.tsx:495-519",
+        "packages/renderer/src/components/CommandPalette.tsx:637-692"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.selection.up",
+      "title": "ArrowUp到首项不循环",
+      "group": "search.selection",
+      "fixture": "search.selection.up",
+      "entry": "review.html#scene=search.selection.up",
+      "mode": "interactive_fixture",
+      "steps": "在输入中用上下箭头/Tab/鼠标选择；增长缩短场景点“改变结果列表”。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:465-468",
+        "packages/renderer/src/components/CommandPalette.tsx:495-519",
+        "packages/renderer/src/components/CommandPalette.tsx:637-692"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.selection.scroll",
+      "title": "选择滚入列表视口",
+      "group": "search.selection",
+      "fixture": "search.selection.scroll",
+      "entry": "review.html#scene=search.selection.scroll",
+      "mode": "interactive_fixture",
+      "steps": "在输入中用上下箭头/Tab/鼠标选择；增长缩短场景点“改变结果列表”。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:465-468",
+        "packages/renderer/src/components/CommandPalette.tsx:495-519",
+        "packages/renderer/src/components/CommandPalette.tsx:637-692"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.selection.hover",
+      "title": "鼠标进入更新activeIndex",
+      "group": "search.selection",
+      "fixture": "search.selection.hover",
+      "entry": "review.html#scene=search.selection.hover",
+      "mode": "interactive_fixture",
+      "steps": "在输入中用上下箭头/Tab/鼠标选择；增长缩短场景点“改变结果列表”。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:465-468",
+        "packages/renderer/src/components/CommandPalette.tsx:495-519",
+        "packages/renderer/src/components/CommandPalette.tsx:637-692"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.selection.click",
+      "title": "鼠标执行对应行",
+      "group": "search.selection",
+      "fixture": "search.selection.click",
+      "entry": "review.html#scene=search.selection.click",
+      "mode": "interactive_fixture",
+      "steps": "在输入中用上下箭头/Tab/鼠标选择；增长缩短场景点“改变结果列表”。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:465-468",
+        "packages/renderer/src/components/CommandPalette.tsx:495-519",
+        "packages/renderer/src/components/CommandPalette.tsx:637-692"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.selection.tab",
+      "title": "Tab到按钮Enter/Space执行",
+      "group": "search.selection",
+      "fixture": "search.selection.tab",
+      "entry": "review.html#scene=search.selection.tab",
+      "mode": "interactive_fixture",
+      "steps": "在输入中用上下箭头/Tab/鼠标选择；增长缩短场景点“改变结果列表”。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:465-468",
+        "packages/renderer/src/components/CommandPalette.tsx:495-519",
+        "packages/renderer/src/components/CommandPalette.tsx:637-692"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.selection.list-growth",
+      "title": "异步插入结果时语义选择稳定",
+      "group": "search.selection",
+      "fixture": "search.selection.list-growth",
+      "entry": "review.html#scene=search.selection.list-growth",
+      "mode": "interactive_fixture",
+      "steps": "在输入中用上下箭头/Tab/鼠标选择；增长缩短场景点“改变结果列表”。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:465-468",
+        "packages/renderer/src/components/CommandPalette.tsx:495-519",
+        "packages/renderer/src/components/CommandPalette.tsx:637-692"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.selection.list-shrink",
+      "title": "列表缩短activeIndex不失效",
+      "group": "search.selection",
+      "fixture": "search.selection.list-shrink",
+      "entry": "review.html#scene=search.selection.list-shrink",
+      "mode": "interactive_fixture",
+      "steps": "在输入中用上下箭头/Tab/鼠标选择；增长缩短场景点“改变结果列表”。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:465-468",
+        "packages/renderer/src/components/CommandPalette.tsx:495-519",
+        "packages/renderer/src/components/CommandPalette.tsx:637-692"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.selection.announce",
+      "title": "读屏报告当前选项和请求状态",
+      "group": "search.selection",
+      "fixture": "search.selection.announce",
+      "entry": "review.html#scene=search.selection.announce",
+      "mode": "interactive_fixture",
+      "steps": "在输入中用上下箭头/Tab/鼠标选择；增长缩短场景点“改变结果列表”。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:465-468",
+        "packages/renderer/src/components/CommandPalette.tsx:495-519",
+        "packages/renderer/src/components/CommandPalette.tsx:637-692"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.new-note.ready",
+      "title": "全局新建笔记可匹配",
+      "group": "search.new-note",
+      "fixture": "search.new-note.ready",
+      "entry": "review.html#scene=search.new-note.ready",
+      "mode": "interactive_fixture",
+      "steps": "选择新建笔记；单飞等待、失败保留与成功交接可由模拟响应控制。响应不确定场景不承诺幂等。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:370-378",
+        "packages/renderer/src/routes/_app.tsx:371-385",
+        "packages/renderer/src/routes/_app.tsx:199",
+        "packages/renderer/src/components/DocumentPanel.tsx:785-799",
+        "packages/office/src/editors/MarkdownEditor.tsx:777-781"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.new-note.dirty",
+      "title": "先确认未保存再创建",
+      "group": "search.new-note",
+      "fixture": "search.new-note.dirty",
+      "entry": "review.html#scene=search.new-note.dirty",
+      "mode": "interactive_fixture",
+      "steps": "选择新建笔记；单飞等待、失败保留与成功交接可由模拟响应控制。响应不确定场景不承诺幂等。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:370-378",
+        "packages/renderer/src/routes/_app.tsx:371-385",
+        "packages/renderer/src/routes/_app.tsx:199",
+        "packages/renderer/src/components/DocumentPanel.tsx:785-799",
+        "packages/office/src/editors/MarkdownEditor.tsx:777-781"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.new-note.pending",
+      "title": "请求中不重复新建",
+      "group": "search.new-note",
+      "fixture": "search.new-note.pending",
+      "entry": "review.html#scene=search.new-note.pending",
+      "mode": "interactive_fixture",
+      "steps": "选择新建笔记；单飞等待、失败保留与成功交接可由模拟响应控制。响应不确定场景不承诺幂等。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:370-378",
+        "packages/renderer/src/routes/_app.tsx:371-385",
+        "packages/renderer/src/routes/_app.tsx:199",
+        "packages/renderer/src/components/DocumentPanel.tsx:785-799",
+        "packages/office/src/editors/MarkdownEditor.tsx:777-781"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.new-note.success",
+      "title": "真实成功才导航根目录并聚焦笔记正文",
+      "group": "search.new-note",
+      "fixture": "search.new-note.success",
+      "entry": "review.html#scene=search.new-note.success",
+      "mode": "interactive_fixture",
+      "steps": "选择新建笔记；单飞等待、失败保留与成功交接可由模拟响应控制。响应不确定场景不承诺幂等。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:370-378",
+        "packages/renderer/src/routes/_app.tsx:371-385",
+        "packages/renderer/src/routes/_app.tsx:199",
+        "packages/renderer/src/components/DocumentPanel.tsx:785-799",
+        "packages/office/src/editors/MarkdownEditor.tsx:777-781"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.new-note.failed",
+      "title": "失败留原上下文与重试",
+      "group": "search.new-note",
+      "fixture": "search.new-note.failed",
+      "entry": "review.html#scene=search.new-note.failed",
+      "mode": "interactive_fixture",
+      "steps": "选择新建笔记；单飞等待、失败保留与成功交接可由模拟响应控制。响应不确定场景不承诺幂等。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:370-378",
+        "packages/renderer/src/routes/_app.tsx:371-385",
+        "packages/renderer/src/routes/_app.tsx:199",
+        "packages/renderer/src/components/DocumentPanel.tsx:785-799",
+        "packages/office/src/editors/MarkdownEditor.tsx:777-781"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.new-note.cancel-guard",
+      "title": "取消离开不创建",
+      "group": "search.new-note",
+      "fixture": "search.new-note.cancel-guard",
+      "entry": "review.html#scene=search.new-note.cancel-guard",
+      "mode": "interactive_fixture",
+      "steps": "选择新建笔记；单飞等待、失败保留与成功交接可由模拟响应控制。响应不确定场景不承诺幂等。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:370-378",
+        "packages/renderer/src/routes/_app.tsx:371-385",
+        "packages/renderer/src/routes/_app.tsx:199",
+        "packages/renderer/src/components/DocumentPanel.tsx:785-799",
+        "packages/office/src/editors/MarkdownEditor.tsx:777-781"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.new-note.repeat",
+      "title": "连续Enter/点击只发一次",
+      "group": "search.new-note",
+      "fixture": "search.new-note.repeat",
+      "entry": "review.html#scene=search.new-note.repeat",
+      "mode": "interactive_fixture",
+      "steps": "选择新建笔记；单飞等待、失败保留与成功交接可由模拟响应控制。响应不确定场景不承诺幂等。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:370-378",
+        "packages/renderer/src/routes/_app.tsx:371-385",
+        "packages/renderer/src/routes/_app.tsx:199",
+        "packages/renderer/src/components/DocumentPanel.tsx:785-799",
+        "packages/office/src/editors/MarkdownEditor.tsx:777-781"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.new-note.response-lost",
+      "title": "网络结果不确定不承诺幂等创建",
+      "group": "search.new-note",
+      "fixture": "search.new-note.response-lost",
+      "entry": "review.html#scene=search.new-note.response-lost",
+      "mode": "interactive_fixture",
+      "steps": "选择新建笔记；单飞等待、失败保留与成功交接可由模拟响应控制。响应不确定场景不承诺幂等。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:370-378",
+        "packages/renderer/src/routes/_app.tsx:371-385",
+        "packages/renderer/src/routes/_app.tsx:199",
+        "packages/renderer/src/components/DocumentPanel.tsx:785-799",
+        "packages/office/src/editors/MarkdownEditor.tsx:777-781"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.capture.ready",
+      "title": "匹配收集链接或文件",
+      "group": "search.capture",
+      "fixture": "search.capture.ready",
+      "entry": "review.html#scene=search.capture.ready",
+      "mode": "interactive_fixture",
+      "steps": "点击收集命令，验证焦点交接；取消返回稳定入口。收集完整流程不在本模块。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:379-385",
+        "packages/renderer/src/routes/_app.tsx:137-162",
+        "packages/renderer/src/routes/_app.tsx:344-347"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.capture.handoff",
+      "title": "关闭面板交接真实收集弹窗",
+      "group": "search.capture",
+      "fixture": "search.capture.handoff",
+      "entry": "review.html#scene=search.capture.handoff",
+      "mode": "interactive_fixture",
+      "steps": "点击收集命令，验证焦点交接；取消返回稳定入口。收集完整流程不在本模块。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:379-385",
+        "packages/renderer/src/routes/_app.tsx:137-162",
+        "packages/renderer/src/routes/_app.tsx:344-347"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.capture.focus",
+      "title": "焦点进入新弹窗不跳回背景",
+      "group": "search.capture",
+      "fixture": "search.capture.focus",
+      "entry": "review.html#scene=search.capture.focus",
+      "mode": "interactive_fixture",
+      "steps": "点击收集命令，验证焦点交接；取消返回稳定入口。收集完整流程不在本模块。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:379-385",
+        "packages/renderer/src/routes/_app.tsx:137-162",
+        "packages/renderer/src/routes/_app.tsx:344-347"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.capture.cancel",
+      "title": "收集取消回稳定入口",
+      "group": "search.capture",
+      "fixture": "search.capture.cancel",
+      "entry": "review.html#scene=search.capture.cancel",
+      "mode": "interactive_fixture",
+      "steps": "点击收集命令，验证焦点交接；取消返回稳定入口。收集完整流程不在本模块。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:379-385",
+        "packages/renderer/src/routes/_app.tsx:137-162",
+        "packages/renderer/src/routes/_app.tsx:344-347"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.capture.dirty",
+      "title": "打开收集无需离开现文档",
+      "group": "search.capture",
+      "fixture": "search.capture.dirty",
+      "entry": "review.html#scene=search.capture.dirty",
+      "mode": "interactive_fixture",
+      "steps": "点击收集命令，验证焦点交接；取消返回稳定入口。收集完整流程不在本模块。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:379-385",
+        "packages/renderer/src/routes/_app.tsx:137-162",
+        "packages/renderer/src/routes/_app.tsx:344-347"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.context.none",
+      "title": "库列表/设置/对话无当前文档命令",
+      "group": "search.context",
+      "fixture": "search.context.none",
+      "entry": "review.html#scene=search.context.none",
+      "mode": "interactive_fixture",
+      "steps": "切换文档能力场景，观察笔记/只读文件/未知类型的命令差异；读取失败可原位重试。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:322-326",
+        "packages/renderer/src/components/CommandPalette.tsx:387-426",
+        "packages/renderer/src/routes/_app.tsx:353"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.context.note",
+      "title": "note显示改名/移动/搜索/返回库",
+      "group": "search.context",
+      "fixture": "search.context.note",
+      "entry": "review.html#scene=search.context.note",
+      "mode": "interactive_fixture",
+      "steps": "切换文档能力场景，观察笔记/只读文件/未知类型的命令差异；读取失败可原位重试。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:322-326",
+        "packages/renderer/src/components/CommandPalette.tsx:387-426",
+        "packages/renderer/src/routes/_app.tsx:353"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.context.file",
+      "title": "file及只读资料仅移动/返回库",
+      "group": "search.context",
+      "fixture": "search.context.file",
+      "entry": "review.html#scene=search.context.file",
+      "mode": "interactive_fixture",
+      "steps": "切换文档能力场景，观察笔记/只读文件/未知类型的命令差异；读取失败可原位重试。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:322-326",
+        "packages/renderer/src/components/CommandPalette.tsx:387-426",
+        "packages/renderer/src/routes/_app.tsx:353"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.context.loading",
+      "title": "文档类型未知不猜note专属命令",
+      "group": "search.context",
+      "fixture": "search.context.loading",
+      "entry": "review.html#scene=search.context.loading",
+      "mode": "interactive_fixture",
+      "steps": "切换文档能力场景，观察笔记/只读文件/未知类型的命令差异；读取失败可原位重试。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:322-326",
+        "packages/renderer/src/components/CommandPalette.tsx:387-426",
+        "packages/renderer/src/routes/_app.tsx:353"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.context.error",
+      "title": "当前文档读取失败不伪造note命令",
+      "group": "search.context",
+      "fixture": "search.context.error",
+      "entry": "review.html#scene=search.context.error",
+      "mode": "interactive_fixture",
+      "steps": "切换文档能力场景，观察笔记/只读文件/未知类型的命令差异；读取失败可原位重试。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:322-326",
+        "packages/renderer/src/components/CommandPalette.tsx:387-426",
+        "packages/renderer/src/routes/_app.tsx:353"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.context.cached",
+      "title": "同document query缓存共用",
+      "group": "search.context",
+      "fixture": "search.context.cached",
+      "entry": "review.html#scene=search.context.cached",
+      "mode": "interactive_fixture",
+      "steps": "切换文档能力场景，观察笔记/只读文件/未知类型的命令差异；读取失败可原位重试。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:322-326",
+        "packages/renderer/src/components/CommandPalette.tsx:387-426",
+        "packages/renderer/src/routes/_app.tsx:353"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.context.switch",
+      "title": "命令绑定唤起时当前文档",
+      "group": "search.context",
+      "fixture": "search.context.switch",
+      "entry": "review.html#scene=search.context.switch",
+      "mode": "interactive_fixture",
+      "steps": "切换文档能力场景，观察笔记/只读文件/未知类型的命令差异；读取失败可原位重试。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:322-326",
+        "packages/renderer/src/components/CommandPalette.tsx:387-426",
+        "packages/renderer/src/routes/_app.tsx:353"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.rename.handoff",
+      "title": "事件交接到重命名弹窗",
+      "group": "search.rename",
+      "fixture": "search.rename.handoff",
+      "entry": "review.html#scene=search.rename.handoff",
+      "mode": "interactive_fixture",
+      "steps": "编辑名称或保持不变，保存/取消；提案锁定异步退出，失败保留草稿。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:358-361",
+        "packages/renderer/src/components/DocumentPanel.tsx:103-116",
+        "packages/renderer/src/components/DocumentPanel.tsx:294-302",
+        "packages/renderer/src/components/DocumentPanel.tsx:675-681",
+        "packages/renderer/src/components/DocumentPanel.tsx:913-948"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.rename.prefill",
+      "title": "预填标题最长200",
+      "group": "search.rename",
+      "fixture": "search.rename.prefill",
+      "entry": "review.html#scene=search.rename.prefill",
+      "mode": "interactive_fixture",
+      "steps": "编辑名称或保持不变，保存/取消；提案锁定异步退出，失败保留草稿。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:358-361",
+        "packages/renderer/src/components/DocumentPanel.tsx:103-116",
+        "packages/renderer/src/components/DocumentPanel.tsx:294-302",
+        "packages/renderer/src/components/DocumentPanel.tsx:675-681",
+        "packages/renderer/src/components/DocumentPanel.tsx:913-948"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.rename.empty",
+      "title": "空白不能提交",
+      "group": "search.rename",
+      "fixture": "search.rename.empty",
+      "entry": "review.html#scene=search.rename.empty",
+      "mode": "interactive_fixture",
+      "steps": "编辑名称或保持不变，保存/取消；提案锁定异步退出，失败保留草稿。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:358-361",
+        "packages/renderer/src/components/DocumentPanel.tsx:103-116",
+        "packages/renderer/src/components/DocumentPanel.tsx:294-302",
+        "packages/renderer/src/components/DocumentPanel.tsx:675-681",
+        "packages/renderer/src/components/DocumentPanel.tsx:913-948"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.rename.unchanged",
+      "title": "未变直接关闭",
+      "group": "search.rename",
+      "fixture": "search.rename.unchanged",
+      "entry": "review.html#scene=search.rename.unchanged",
+      "mode": "interactive_fixture",
+      "steps": "编辑名称或保持不变，保存/取消；提案锁定异步退出，失败保留草稿。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:358-361",
+        "packages/renderer/src/components/DocumentPanel.tsx:103-116",
+        "packages/renderer/src/components/DocumentPanel.tsx:294-302",
+        "packages/renderer/src/components/DocumentPanel.tsx:675-681",
+        "packages/renderer/src/components/DocumentPanel.tsx:913-948"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.rename.pending",
+      "title": "异步改名锁重复和退出",
+      "group": "search.rename",
+      "fixture": "search.rename.pending",
+      "entry": "review.html#scene=search.rename.pending",
+      "mode": "interactive_fixture",
+      "steps": "编辑名称或保持不变，保存/取消；提案锁定异步退出，失败保留草稿。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:358-361",
+        "packages/renderer/src/components/DocumentPanel.tsx:103-116",
+        "packages/renderer/src/components/DocumentPanel.tsx:294-302",
+        "packages/renderer/src/components/DocumentPanel.tsx:675-681",
+        "packages/renderer/src/components/DocumentPanel.tsx:913-948"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.rename.error",
+      "title": "失败保留标题草稿",
+      "group": "search.rename",
+      "fixture": "search.rename.error",
+      "entry": "review.html#scene=search.rename.error",
+      "mode": "interactive_fixture",
+      "steps": "编辑名称或保持不变，保存/取消；提案锁定异步退出，失败保留草稿。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:358-361",
+        "packages/renderer/src/components/DocumentPanel.tsx:103-116",
+        "packages/renderer/src/components/DocumentPanel.tsx:294-302",
+        "packages/renderer/src/components/DocumentPanel.tsx:675-681",
+        "packages/renderer/src/components/DocumentPanel.tsx:913-948"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.rename.success",
+      "title": "更新缓存/列表和标题",
+      "group": "search.rename",
+      "fixture": "search.rename.success",
+      "entry": "review.html#scene=search.rename.success",
+      "mode": "interactive_fixture",
+      "steps": "编辑名称或保持不变，保存/取消；提案锁定异步退出，失败保留草稿。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:358-361",
+        "packages/renderer/src/components/DocumentPanel.tsx:103-116",
+        "packages/renderer/src/components/DocumentPanel.tsx:294-302",
+        "packages/renderer/src/components/DocumentPanel.tsx:675-681",
+        "packages/renderer/src/components/DocumentPanel.tsx:913-948"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.rename.ime",
+      "title": "组合Enter不提交",
+      "group": "search.rename",
+      "fixture": "search.rename.ime",
+      "entry": "review.html#scene=search.rename.ime",
+      "mode": "interactive_fixture",
+      "steps": "编辑名称或保持不变，保存/取消；提案锁定异步退出，失败保留草稿。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:358-361",
+        "packages/renderer/src/components/DocumentPanel.tsx:103-116",
+        "packages/renderer/src/components/DocumentPanel.tsx:294-302",
+        "packages/renderer/src/components/DocumentPanel.tsx:675-681",
+        "packages/renderer/src/components/DocumentPanel.tsx:913-948"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.rename.cancel-focus",
+      "title": "取消回有效文档操作入口",
+      "group": "search.rename",
+      "fixture": "search.rename.cancel-focus",
+      "entry": "review.html#scene=search.rename.cancel-focus",
+      "mode": "interactive_fixture",
+      "steps": "编辑名称或保持不变，保存/取消；提案锁定异步退出，失败保留草稿。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:358-361",
+        "packages/renderer/src/components/DocumentPanel.tsx:103-116",
+        "packages/renderer/src/components/DocumentPanel.tsx:294-302",
+        "packages/renderer/src/components/DocumentPanel.tsx:675-681",
+        "packages/renderer/src/components/DocumentPanel.tsx:913-948"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.move.prefill",
+      "title": "预填当前目录/根",
+      "group": "search.move",
+      "fixture": "search.move.prefill",
+      "entry": "review.html#scene=search.move.prefill",
+      "mode": "interactive_fixture",
+      "steps": "改变目录后移动；目录读取失败可重试；移动成功提供原有撤销衔接。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/DocumentPanel.tsx:321-363",
+        "packages/renderer/src/components/DocumentPanel.tsx:913-973"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.move.folder-loading",
+      "title": "目录首次加载",
+      "group": "search.move",
+      "fixture": "search.move.folder-loading",
+      "entry": "review.html#scene=search.move.folder-loading",
+      "mode": "interactive_fixture",
+      "steps": "改变目录后移动；目录读取失败可重试；移动成功提供原有撤销衔接。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/DocumentPanel.tsx:321-363",
+        "packages/renderer/src/components/DocumentPanel.tsx:913-973"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.move.folder-error",
+      "title": "目录读取失败可重试",
+      "group": "search.move",
+      "fixture": "search.move.folder-error",
+      "entry": "review.html#scene=search.move.folder-error",
+      "mode": "interactive_fixture",
+      "steps": "改变目录后移动；目录读取失败可重试；移动成功提供原有撤销衔接。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/DocumentPanel.tsx:321-363",
+        "packages/renderer/src/components/DocumentPanel.tsx:913-973"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.move.nested",
+      "title": "长层级目录选项可达",
+      "group": "search.move",
+      "fixture": "search.move.nested",
+      "entry": "review.html#scene=search.move.nested",
+      "mode": "interactive_fixture",
+      "steps": "改变目录后移动；目录读取失败可重试；移动成功提供原有撤销衔接。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/DocumentPanel.tsx:321-363",
+        "packages/renderer/src/components/DocumentPanel.tsx:913-973"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.move.unchanged",
+      "title": "同目录直接关闭",
+      "group": "search.move",
+      "fixture": "search.move.unchanged",
+      "entry": "review.html#scene=search.move.unchanged",
+      "mode": "interactive_fixture",
+      "steps": "改变目录后移动；目录读取失败可重试；移动成功提供原有撤销衔接。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/DocumentPanel.tsx:321-363",
+        "packages/renderer/src/components/DocumentPanel.tsx:913-973"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.move.pending",
+      "title": "移动中防重复/防关闭",
+      "group": "search.move",
+      "fixture": "search.move.pending",
+      "entry": "review.html#scene=search.move.pending",
+      "mode": "interactive_fixture",
+      "steps": "改变目录后移动；目录读取失败可重试；移动成功提供原有撤销衔接。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/DocumentPanel.tsx:321-363",
+        "packages/renderer/src/components/DocumentPanel.tsx:913-973"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.move.error",
+      "title": "失败保留所选目录",
+      "group": "search.move",
+      "fixture": "search.move.error",
+      "entry": "review.html#scene=search.move.error",
+      "mode": "interactive_fixture",
+      "steps": "改变目录后移动；目录读取失败可重试；移动成功提供原有撤销衔接。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/DocumentPanel.tsx:321-363",
+        "packages/renderer/src/components/DocumentPanel.tsx:913-973"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.move.success",
+      "title": "真实成功更新并提供既有撤销",
+      "group": "search.move",
+      "fixture": "search.move.success",
+      "entry": "review.html#scene=search.move.success",
+      "mode": "interactive_fixture",
+      "steps": "改变目录后移动；目录读取失败可重试；移动成功提供原有撤销衔接。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/DocumentPanel.tsx:321-363",
+        "packages/renderer/src/components/DocumentPanel.tsx:913-973"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.move.undo",
+      "title": "既有撤销成功/失败不伪造事务",
+      "group": "search.move",
+      "fixture": "search.move.undo",
+      "entry": "review.html#scene=search.move.undo",
+      "mode": "interactive_fixture",
+      "steps": "改变目录后移动；目录读取失败可重试；移动成功提供原有撤销衔接。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/DocumentPanel.tsx:321-363",
+        "packages/renderer/src/components/DocumentPanel.tsx:913-973"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.move.cancel",
+      "title": "取消不改目录",
+      "group": "search.move",
+      "fixture": "search.move.cancel",
+      "entry": "review.html#scene=search.move.cancel",
+      "mode": "interactive_fixture",
+      "steps": "改变目录后移动；目录读取失败可重试；移动成功提供原有撤销衔接。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/DocumentPanel.tsx:321-363",
+        "packages/renderer/src/components/DocumentPanel.tsx:913-973"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.find.blank",
+      "title": "空输入禁用",
+      "group": "search.find",
+      "fixture": "search.find.blank",
+      "entry": "review.html#scene=search.find.blank",
+      "mode": "interactive_fixture",
+      "steps": "输入0/1/2字符，Enter/查找；未命中保留文本，真实匹配算法另验。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/DocumentPanel.tsx:684-703",
+        "packages/renderer/src/components/DocumentPanel.tsx:935-955",
+        "packages/renderer/src/components/DocumentPanel.tsx:1076-1149"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.find.one",
+      "title": "1字符当前静默无效",
+      "group": "search.find",
+      "fixture": "search.find.one",
+      "entry": "review.html#scene=search.find.one",
+      "mode": "interactive_fixture",
+      "steps": "输入0/1/2字符，Enter/查找；未命中保留文本，真实匹配算法另验。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/DocumentPanel.tsx:684-703",
+        "packages/renderer/src/components/DocumentPanel.tsx:935-955",
+        "packages/renderer/src/components/DocumentPanel.tsx:1076-1149"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.find.two",
+      "title": "至少2字符可查",
+      "group": "search.find",
+      "fixture": "search.find.two",
+      "entry": "review.html#scene=search.find.two",
+      "mode": "interactive_fixture",
+      "steps": "输入0/1/2字符，Enter/查找；未命中保留文本，真实匹配算法另验。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/DocumentPanel.tsx:684-703",
+        "packages/renderer/src/components/DocumentPanel.tsx:935-955",
+        "packages/renderer/src/components/DocumentPanel.tsx:1076-1149"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.find.found",
+      "title": "找到首个可定位匹配并滚入视口",
+      "group": "search.find",
+      "fixture": "search.find.found",
+      "entry": "review.html#scene=search.find.found",
+      "mode": "interactive_fixture",
+      "steps": "输入0/1/2字符，Enter/查找；未命中保留文本，真实匹配算法另验。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/DocumentPanel.tsx:684-703",
+        "packages/renderer/src/components/DocumentPanel.tsx:935-955",
+        "packages/renderer/src/components/DocumentPanel.tsx:1076-1149"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.find.not-found",
+      "title": "未匹配仍留弹窗草稿",
+      "group": "search.find",
+      "fixture": "search.find.not-found",
+      "entry": "review.html#scene=search.find.not-found",
+      "mode": "interactive_fixture",
+      "steps": "输入0/1/2字符，Enter/查找；未命中保留文本，真实匹配算法另验。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/DocumentPanel.tsx:684-703",
+        "packages/renderer/src/components/DocumentPanel.tsx:935-955",
+        "packages/renderer/src/components/DocumentPanel.tsx:1076-1149"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.find.ime",
+      "title": "Enter选字不查找",
+      "group": "search.find",
+      "fixture": "search.find.ime",
+      "entry": "review.html#scene=search.find.ime",
+      "mode": "interactive_fixture",
+      "steps": "输入0/1/2字符，Enter/查找；未命中保留文本，真实匹配算法另验。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/DocumentPanel.tsx:684-703",
+        "packages/renderer/src/components/DocumentPanel.tsx:935-955",
+        "packages/renderer/src/components/DocumentPanel.tsx:1076-1149"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.find.close",
+      "title": "Esc/取消回文档动作",
+      "group": "search.find",
+      "fixture": "search.find.close",
+      "entry": "review.html#scene=search.find.close",
+      "mode": "interactive_fixture",
+      "steps": "输入0/1/2字符，Enter/查找；未命中保留文本，真实匹配算法另验。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/DocumentPanel.tsx:684-703",
+        "packages/renderer/src/components/DocumentPanel.tsx:935-955",
+        "packages/renderer/src/components/DocumentPanel.tsx:1076-1149"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.find.case",
+      "title": "大小写及归一化与现实现一致",
+      "group": "search.find",
+      "fixture": "search.find.case",
+      "entry": "review.html#scene=search.find.case",
+      "mode": "interactive_fixture",
+      "steps": "输入0/1/2字符，Enter/查找；未命中保留文本，真实匹配算法另验。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/DocumentPanel.tsx:684-703",
+        "packages/renderer/src/components/DocumentPanel.tsx:935-955",
+        "packages/renderer/src/components/DocumentPanel.tsx:1076-1149"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.open-hit.recent",
+      "title": "最近note按folder scope打开",
+      "group": "search.open-hit",
+      "fixture": "search.open-hit.recent",
+      "entry": "review.html#scene=search.open-hit.recent",
+      "mode": "interactive_fixture",
+      "steps": "点击命中后查看局部模拟文档；片段身份保持，真实滚动、高亮与读取交由文档宿主另验。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:238-267",
+        "packages/renderer/src/routes/_app.tsx:348-365",
+        "packages/renderer/src/components/DocumentPanel.tsx:549-608",
+        "packages/renderer/src/components/DocumentPanel.test.ts:4-28"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.open-hit.hit",
+      "title": "检索命中按scope all打开并带完整Citation",
+      "group": "search.open-hit",
+      "fixture": "search.open-hit.hit",
+      "entry": "review.html#scene=search.open-hit.hit",
+      "mode": "interactive_fixture",
+      "steps": "点击命中后查看局部模拟文档；片段身份保持，真实滚动、高亮与读取交由文档宿主另验。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:238-267",
+        "packages/renderer/src/routes/_app.tsx:348-365",
+        "packages/renderer/src/components/DocumentPanel.tsx:549-608",
+        "packages/renderer/src/components/DocumentPanel.test.ts:4-28"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.open-hit.same-document",
+      "title": "同文档第二命中重置旧高亮再定位",
+      "group": "search.open-hit",
+      "fixture": "search.open-hit.same-document",
+      "entry": "review.html#scene=search.open-hit.same-document",
+      "mode": "interactive_with_qualified_host_boundary",
+      "steps": "点击命中后查看局部模拟文档；片段身份保持，真实滚动、高亮与读取交由文档宿主另验。",
+      "hostQualification": "本地演示可操作的交接/状态，不能替代原生输入法、读屏、宿主权限及真正文定位验证。",
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:238-267",
+        "packages/renderer/src/routes/_app.tsx:348-365",
+        "packages/renderer/src/components/DocumentPanel.tsx:549-608",
+        "packages/renderer/src/components/DocumentPanel.test.ts:4-28"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.open-hit.repeated-text",
+      "title": "重复原句按sourceStart辨别正确出现处",
+      "group": "search.open-hit",
+      "fixture": "search.open-hit.repeated-text",
+      "entry": "review.html#scene=search.open-hit.repeated-text",
+      "mode": "interactive_with_qualified_host_boundary",
+      "steps": "点击命中后查看局部模拟文档；片段身份保持，真实滚动、高亮与读取交由文档宿主另验。",
+      "hostQualification": "本地演示可操作的交接/状态，不能替代原生输入法、读屏、宿主权限及真正文定位验证。",
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:238-267",
+        "packages/renderer/src/routes/_app.tsx:348-365",
+        "packages/renderer/src/components/DocumentPanel.tsx:549-608",
+        "packages/renderer/src/components/DocumentPanel.test.ts:4-28"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.open-hit.late-content",
+      "title": "正文异步加载重试最多20×150ms",
+      "group": "search.open-hit",
+      "fixture": "search.open-hit.late-content",
+      "entry": "review.html#scene=search.open-hit.late-content",
+      "mode": "interactive_with_qualified_host_boundary",
+      "steps": "点击命中后查看局部模拟文档；片段身份保持，真实滚动、高亮与读取交由文档宿主另验。",
+      "hostQualification": "本地演示可操作的交接/状态，不能替代原生输入法、读屏、宿主权限及真正文定位验证。",
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:238-267",
+        "packages/renderer/src/routes/_app.tsx:348-365",
+        "packages/renderer/src/components/DocumentPanel.tsx:549-608",
+        "packages/renderer/src/components/DocumentPanel.test.ts:4-28"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.open-hit.missing",
+      "title": "文档变化找不到只打开不乱高亮",
+      "group": "search.open-hit",
+      "fixture": "search.open-hit.missing",
+      "entry": "review.html#scene=search.open-hit.missing",
+      "mode": "interactive_with_qualified_host_boundary",
+      "steps": "点击命中后查看局部模拟文档；片段身份保持，真实滚动、高亮与读取交由文档宿主另验。",
+      "hostQualification": "本地演示可操作的交接/状态，不能替代原生输入法、读屏、宿主权限及真正文定位验证。",
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:238-267",
+        "packages/renderer/src/routes/_app.tsx:348-365",
+        "packages/renderer/src/components/DocumentPanel.tsx:549-608",
+        "packages/renderer/src/components/DocumentPanel.test.ts:4-28"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.open-hit.no-highlight-api",
+      "title": "无CustomHighlight仍滚动定位",
+      "group": "search.open-hit",
+      "fixture": "search.open-hit.no-highlight-api",
+      "entry": "review.html#scene=search.open-hit.no-highlight-api",
+      "mode": "interactive_with_qualified_host_boundary",
+      "steps": "点击命中后查看局部模拟文档；片段身份保持，真实滚动、高亮与读取交由文档宿主另验。",
+      "hostQualification": "本地演示可操作的交接/状态，不能替代原生输入法、读屏、宿主权限及真正文定位验证。",
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:238-267",
+        "packages/renderer/src/routes/_app.tsx:348-365",
+        "packages/renderer/src/components/DocumentPanel.tsx:549-608",
+        "packages/renderer/src/components/DocumentPanel.test.ts:4-28"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.open-hit.back",
+      "title": "返回知识库保留当前scope清id",
+      "group": "search.open-hit",
+      "fixture": "search.open-hit.back",
+      "entry": "review.html#scene=search.open-hit.back",
+      "mode": "interactive_fixture",
+      "steps": "点击命中后查看局部模拟文档；片段身份保持，真实滚动、高亮与读取交由文档宿主另验。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:238-267",
+        "packages/renderer/src/routes/_app.tsx:348-365",
+        "packages/renderer/src/components/DocumentPanel.tsx:549-608",
+        "packages/renderer/src/components/DocumentPanel.test.ts:4-28"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.open-hit.load-error",
+      "title": "打开文档读取失败归文档模块",
+      "group": "search.open-hit",
+      "fixture": "search.open-hit.load-error",
+      "entry": "review.html#scene=search.open-hit.load-error",
+      "mode": "interactive_with_qualified_host_boundary",
+      "steps": "点击命中后查看局部模拟文档；片段身份保持，真实滚动、高亮与读取交由文档宿主另验。",
+      "hostQualification": "本地演示可操作的交接/状态，不能替代原生输入法、读屏、宿主权限及真正文定位验证。",
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:238-267",
+        "packages/renderer/src/routes/_app.tsx:348-365",
+        "packages/renderer/src/components/DocumentPanel.tsx:549-608",
+        "packages/renderer/src/components/DocumentPanel.test.ts:4-28"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.open-hit.cancel-guard",
+      "title": "取消离开不改变route/citation",
+      "group": "search.open-hit",
+      "fixture": "search.open-hit.cancel-guard",
+      "entry": "review.html#scene=search.open-hit.cancel-guard",
+      "mode": "interactive_fixture",
+      "steps": "点击命中后查看局部模拟文档；片段身份保持，真实滚动、高亮与读取交由文档宿主另验。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/routes/_app.tsx:238-267",
+        "packages/renderer/src/routes/_app.tsx:348-365",
+        "packages/renderer/src/components/DocumentPanel.tsx:549-608",
+        "packages/renderer/src/components/DocumentPanel.test.ts:4-28"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.ai.blank",
+      "title": "空白无提问动作",
+      "group": "search.ai",
+      "fixture": "search.ai.blank",
+      "entry": "review.html#scene=search.ai.blank",
+      "mode": "interactive_fixture",
+      "steps": "使用独立“带到新对话”按钮；输入框Enter不会自动提问，目的地仅预填且可修改。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:469-474",
+        "packages/renderer/src/components/CommandPalette.tsx:608-633",
+        "packages/renderer/src/routes/_app.tsx:366-370",
+        "packages/chat/src/ChatPanel.tsx:178-194"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.ai.one",
+      "title": "1字符也可显式提问",
+      "group": "search.ai",
+      "fixture": "search.ai.one",
+      "entry": "review.html#scene=search.ai.one",
+      "mode": "interactive_fixture",
+      "steps": "使用独立“带到新对话”按钮；输入框Enter不会自动提问，目的地仅预填且可修改。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:469-474",
+        "packages/renderer/src/components/CommandPalette.tsx:608-633",
+        "packages/renderer/src/routes/_app.tsx:366-370",
+        "packages/chat/src/ChatPanel.tsx:178-194"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.ai.searching",
+      "title": "检索中显式提问可选",
+      "group": "search.ai",
+      "fixture": "search.ai.searching",
+      "entry": "review.html#scene=search.ai.searching",
+      "mode": "interactive_fixture",
+      "steps": "使用独立“带到新对话”按钮；输入框Enter不会自动提问，目的地仅预填且可修改。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:469-474",
+        "packages/renderer/src/components/CommandPalette.tsx:608-633",
+        "packages/renderer/src/routes/_app.tsx:366-370",
+        "packages/chat/src/ChatPanel.tsx:178-194"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.ai.empty",
+      "title": "无匹配时不默认发送",
+      "group": "search.ai",
+      "fixture": "search.ai.empty",
+      "entry": "review.html#scene=search.ai.empty",
+      "mode": "interactive_fixture",
+      "steps": "使用独立“带到新对话”按钮；输入框Enter不会自动提问，目的地仅预填且可修改。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:469-474",
+        "packages/renderer/src/components/CommandPalette.tsx:608-633",
+        "packages/renderer/src/routes/_app.tsx:366-370",
+        "packages/chat/src/ChatPanel.tsx:178-194"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.ai.error",
+      "title": "检索失败仍可显式选择AI",
+      "group": "search.ai",
+      "fixture": "search.ai.error",
+      "entry": "review.html#scene=search.ai.error",
+      "mode": "interactive_fixture",
+      "steps": "使用独立“带到新对话”按钮；输入框Enter不会自动提问，目的地仅预填且可修改。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:469-474",
+        "packages/renderer/src/components/CommandPalette.tsx:608-633",
+        "packages/renderer/src/routes/_app.tsx:366-370",
+        "packages/chat/src/ChatPanel.tsx:178-194"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.ai.keyboard",
+      "title": "Tab到提问Enter/Space明确触发",
+      "group": "search.ai",
+      "fixture": "search.ai.keyboard",
+      "entry": "review.html#scene=search.ai.keyboard",
+      "mode": "interactive_fixture",
+      "steps": "使用独立“带到新对话”按钮；输入框Enter不会自动提问，目的地仅预填且可修改。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:469-474",
+        "packages/renderer/src/components/CommandPalette.tsx:608-633",
+        "packages/renderer/src/routes/_app.tsx:366-370",
+        "packages/chat/src/ChatPanel.tsx:178-194"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.ai.prefill",
+      "title": "进入新对话只预填问题不自动发送",
+      "group": "search.ai",
+      "fixture": "search.ai.prefill",
+      "entry": "review.html#scene=search.ai.prefill",
+      "mode": "interactive_fixture",
+      "steps": "使用独立“带到新对话”按钮；输入框Enter不会自动提问，目的地仅预填且可修改。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:469-474",
+        "packages/renderer/src/components/CommandPalette.tsx:608-633",
+        "packages/renderer/src/routes/_app.tsx:366-370",
+        "packages/chat/src/ChatPanel.tsx:178-194"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.ai.scope",
+      "title": "保留当前scope而非捏造当前文档附件",
+      "group": "search.ai",
+      "fixture": "search.ai.scope",
+      "entry": "review.html#scene=search.ai.scope",
+      "mode": "interactive_fixture",
+      "steps": "使用独立“带到新对话”按钮；输入框Enter不会自动提问，目的地仅预填且可修改。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:469-474",
+        "packages/renderer/src/components/CommandPalette.tsx:608-633",
+        "packages/renderer/src/routes/_app.tsx:366-370",
+        "packages/chat/src/ChatPanel.tsx:178-194"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.ai.dirty",
+      "title": "离开dirty内容先guard",
+      "group": "search.ai",
+      "fixture": "search.ai.dirty",
+      "entry": "review.html#scene=search.ai.dirty",
+      "mode": "interactive_fixture",
+      "steps": "使用独立“带到新对话”按钮；输入框Enter不会自动提问，目的地仅预填且可修改。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:469-474",
+        "packages/renderer/src/components/CommandPalette.tsx:608-633",
+        "packages/renderer/src/routes/_app.tsx:366-370",
+        "packages/chat/src/ChatPanel.tsx:178-194"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.ai.cancel",
+      "title": "取消guard不写入对话草稿",
+      "group": "search.ai",
+      "fixture": "search.ai.cancel",
+      "entry": "review.html#scene=search.ai.cancel",
+      "mode": "interactive_fixture",
+      "steps": "使用独立“带到新对话”按钮；输入框Enter不会自动提问，目的地仅预填且可修改。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:469-474",
+        "packages/renderer/src/components/CommandPalette.tsx:608-633",
+        "packages/renderer/src/routes/_app.tsx:366-370",
+        "packages/chat/src/ChatPanel.tsx:178-194"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.guard.clean",
+      "title": "干净直接动作",
+      "group": "search.guard",
+      "fixture": "search.guard.clean",
+      "entry": "review.html#scene=search.guard.clean",
+      "mode": "interactive_fixture",
+      "steps": "继续编辑、丢弃、保存并离开；自动保存不提供丢弃，Office提示工具条保存，不伪造代存成功。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/UnsavedGuard.tsx:37-89",
+        "packages/renderer/src/lib/unsaved.tsx:75-130",
+        "packages/renderer/src/routes/_app.tsx:348-385",
+        "packages/renderer/src/components/document/OfficeSourceEditor.tsx:97"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.guard.manual",
+      "title": "手动保存三选",
+      "group": "search.guard",
+      "fixture": "search.guard.manual",
+      "entry": "review.html#scene=search.guard.manual",
+      "mode": "interactive_fixture",
+      "steps": "继续编辑、丢弃、保存并离开；自动保存不提供丢弃，Office提示工具条保存，不伪造代存成功。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/UnsavedGuard.tsx:37-89",
+        "packages/renderer/src/lib/unsaved.tsx:75-130",
+        "packages/renderer/src/routes/_app.tsx:348-385",
+        "packages/renderer/src/components/document/OfficeSourceEditor.tsx:97"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.guard.auto",
+      "title": "自动保存仅继续/保存并离开无丢弃",
+      "group": "search.guard",
+      "fixture": "search.guard.auto",
+      "entry": "review.html#scene=search.guard.auto",
+      "mode": "interactive_fixture",
+      "steps": "继续编辑、丢弃、保存并离开；自动保存不提供丢弃，Office提示工具条保存，不伪造代存成功。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/UnsavedGuard.tsx:37-89",
+        "packages/renderer/src/lib/unsaved.tsx:75-130",
+        "packages/renderer/src/routes/_app.tsx:348-385",
+        "packages/renderer/src/components/document/OfficeSourceEditor.tsx:97"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.guard.saving",
+      "title": "保存中锁定全部退出",
+      "group": "search.guard",
+      "fixture": "search.guard.saving",
+      "entry": "review.html#scene=search.guard.saving",
+      "mode": "interactive_fixture",
+      "steps": "继续编辑、丢弃、保存并离开；自动保存不提供丢弃，Office提示工具条保存，不伪造代存成功。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/UnsavedGuard.tsx:37-89",
+        "packages/renderer/src/lib/unsaved.tsx:75-130",
+        "packages/renderer/src/routes/_app.tsx:348-385",
+        "packages/renderer/src/components/document/OfficeSourceEditor.tsx:97"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.guard.save-failed",
+      "title": "保存失败留原位和改动",
+      "group": "search.guard",
+      "fixture": "search.guard.save-failed",
+      "entry": "review.html#scene=search.guard.save-failed",
+      "mode": "interactive_fixture",
+      "steps": "继续编辑、丢弃、保存并离开；自动保存不提供丢弃，Office提示工具条保存，不伪造代存成功。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/UnsavedGuard.tsx:37-89",
+        "packages/renderer/src/lib/unsaved.tsx:75-130",
+        "packages/renderer/src/routes/_app.tsx:348-385",
+        "packages/renderer/src/components/document/OfficeSourceEditor.tsx:97"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.guard.saved-during",
+      "title": "auto后台完成提示已自动保存可离开",
+      "group": "search.guard",
+      "fixture": "search.guard.saved-during",
+      "entry": "review.html#scene=search.guard.saved-during",
+      "mode": "interactive_fixture",
+      "steps": "继续编辑、丢弃、保存并离开；自动保存不提供丢弃，Office提示工具条保存，不伪造代存成功。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/UnsavedGuard.tsx:37-89",
+        "packages/renderer/src/lib/unsaved.tsx:75-130",
+        "packages/renderer/src/routes/_app.tsx:348-385",
+        "packages/renderer/src/components/document/OfficeSourceEditor.tsx:97"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.guard.discard",
+      "title": "manual丢弃后原目标执行一次",
+      "group": "search.guard",
+      "fixture": "search.guard.discard",
+      "entry": "review.html#scene=search.guard.discard",
+      "mode": "interactive_fixture",
+      "steps": "继续编辑、丢弃、保存并离开；自动保存不提供丢弃，Office提示工具条保存，不伪造代存成功。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/UnsavedGuard.tsx:37-89",
+        "packages/renderer/src/lib/unsaved.tsx:75-130",
+        "packages/renderer/src/routes/_app.tsx:348-385",
+        "packages/renderer/src/components/document/OfficeSourceEditor.tsx:97"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.guard.continue",
+      "title": "继续编辑恢复原处焦点",
+      "group": "search.guard",
+      "fixture": "search.guard.continue",
+      "entry": "review.html#scene=search.guard.continue",
+      "mode": "interactive_fixture",
+      "steps": "继续编辑、丢弃、保存并离开；自动保存不提供丢弃，Office提示工具条保存，不伪造代存成功。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/UnsavedGuard.tsx:37-89",
+        "packages/renderer/src/lib/unsaved.tsx:75-130",
+        "packages/renderer/src/routes/_app.tsx:348-385",
+        "packages/renderer/src/components/document/OfficeSourceEditor.tsx:97"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.guard.office",
+      "title": "Office原件保存句柄不能代存需工具条保存",
+      "group": "search.guard",
+      "fixture": "search.guard.office",
+      "entry": "review.html#scene=search.guard.office",
+      "mode": "interactive_fixture",
+      "steps": "继续编辑、丢弃、保存并离开；自动保存不提供丢弃，Office提示工具条保存，不伪造代存成功。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/UnsavedGuard.tsx:37-89",
+        "packages/renderer/src/lib/unsaved.tsx:75-130",
+        "packages/renderer/src/routes/_app.tsx:348-385",
+        "packages/renderer/src/components/document/OfficeSourceEditor.tsx:97"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.layout.light",
+      "title": "浅色桌面620px面板",
+      "group": "search.layout",
+      "fixture": "search.layout.light",
+      "entry": "review.html#scene=search.layout.light",
+      "mode": "interactive_fixture",
+      "steps": "使用顶部浅深/桌面/390px/低高度开关；查看列表滚动、输入和尾部可达。原生平台与辅助技术需独立验收。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:65-279",
+        "packages/renderer/src/components/CommandPalette.tsx:552-573",
+        "packages/renderer/src/components/NavSidebar.tsx:132-135"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.layout.dark",
+      "title": "深色对比和焦点",
+      "group": "search.layout",
+      "fixture": "search.layout.dark",
+      "entry": "review.html#scene=search.layout.dark",
+      "mode": "interactive_fixture",
+      "steps": "使用顶部浅深/桌面/390px/低高度开关；查看列表滚动、输入和尾部可达。原生平台与辅助技术需独立验收。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:65-279",
+        "packages/renderer/src/components/CommandPalette.tsx:552-573",
+        "packages/renderer/src/components/NavSidebar.tsx:132-135"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.layout.narrow",
+      "title": "390px所有动作与长行无横溢",
+      "group": "search.layout",
+      "fixture": "search.layout.narrow",
+      "entry": "review.html#scene=search.layout.narrow",
+      "mode": "interactive_fixture",
+      "steps": "使用顶部浅深/桌面/390px/低高度开关；查看列表滚动、输入和尾部可达。原生平台与辅助技术需独立验收。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:65-279",
+        "packages/renderer/src/components/CommandPalette.tsx:552-573",
+        "packages/renderer/src/components/NavSidebar.tsx:132-135"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.layout.low",
+      "title": "390×500底部动作仍可达",
+      "group": "search.layout",
+      "fixture": "search.layout.low",
+      "entry": "review.html#scene=search.layout.low",
+      "mode": "interactive_fixture",
+      "steps": "使用顶部浅深/桌面/390px/低高度开关；查看列表滚动、输入和尾部可达。原生平台与辅助技术需独立验收。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:65-279",
+        "packages/renderer/src/components/CommandPalette.tsx:552-573",
+        "packages/renderer/src/components/NavSidebar.tsx:132-135"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.layout.zoom",
+      "title": "200%缩放内容可滚动",
+      "group": "search.layout",
+      "fixture": "search.layout.zoom",
+      "entry": "review.html#scene=search.layout.zoom",
+      "mode": "interactive_with_qualified_host_boundary",
+      "steps": "使用顶部浅深/桌面/390px/低高度开关；查看列表滚动、输入和尾部可达。原生平台与辅助技术需独立验收。",
+      "hostQualification": "本地演示可操作的交接/状态，不能替代原生输入法、读屏、宿主权限及真正文定位验证。",
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:65-279",
+        "packages/renderer/src/components/CommandPalette.tsx:552-573",
+        "packages/renderer/src/components/NavSidebar.tsx:132-135"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.layout.touch",
+      "title": "粗指针至少44px点击区",
+      "group": "search.layout",
+      "fixture": "search.layout.touch",
+      "entry": "review.html#scene=search.layout.touch",
+      "mode": "interactive_fixture",
+      "steps": "使用顶部浅深/桌面/390px/低高度开关；查看列表滚动、输入和尾部可达。原生平台与辅助技术需独立验收。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:65-279",
+        "packages/renderer/src/components/CommandPalette.tsx:552-573",
+        "packages/renderer/src/components/NavSidebar.tsx:132-135"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.layout.reduced-motion",
+      "title": "减少动效遵循现框架",
+      "group": "search.layout",
+      "fixture": "search.layout.reduced-motion",
+      "entry": "review.html#scene=search.layout.reduced-motion",
+      "mode": "interactive_with_qualified_host_boundary",
+      "steps": "使用顶部浅深/桌面/390px/低高度开关；查看列表滚动、输入和尾部可达。原生平台与辅助技术需独立验收。",
+      "hostQualification": "本地演示可操作的交接/状态，不能替代原生输入法、读屏、宿主权限及真正文定位验证。",
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:65-279",
+        "packages/renderer/src/components/CommandPalette.tsx:552-573",
+        "packages/renderer/src/components/NavSidebar.tsx:132-135"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.layout.drawer-focus",
+      "title": "Drawer发起时关闭后回52px功能栏入口",
+      "group": "search.layout",
+      "fixture": "search.layout.drawer-focus",
+      "entry": "review.html#scene=search.layout.drawer-focus",
+      "mode": "interactive_fixture",
+      "steps": "使用顶部浅深/桌面/390px/低高度开关；查看列表滚动、输入和尾部可达。原生平台与辅助技术需独立验收。",
+      "hostQualification": null,
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:65-279",
+        "packages/renderer/src/components/CommandPalette.tsx:552-573",
+        "packages/renderer/src/components/NavSidebar.tsx:132-135"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.layout.desktop",
+      "title": "Electron相同renderer，原生键盘宿主另验",
+      "group": "search.layout",
+      "fixture": "search.layout.desktop",
+      "entry": "review.html#scene=search.layout.desktop",
+      "mode": "interactive_with_qualified_host_boundary",
+      "steps": "使用顶部浅深/桌面/390px/低高度开关；查看列表滚动、输入和尾部可达。原生平台与辅助技术需独立验收。",
+      "hostQualification": "本地演示可操作的交接/状态，不能替代原生输入法、读屏、宿主权限及真正文定位验证。",
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:65-279",
+        "packages/renderer/src/components/CommandPalette.tsx:552-573",
+        "packages/renderer/src/components/NavSidebar.tsx:132-135"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    },
+    {
+      "id": "search.layout.screen-reader",
+      "title": "弹窗名称/结果状态/选项选择可感知",
+      "group": "search.layout",
+      "fixture": "search.layout.screen-reader",
+      "entry": "review.html#scene=search.layout.screen-reader",
+      "mode": "interactive_with_qualified_host_boundary",
+      "steps": "使用顶部浅深/桌面/390px/低高度开关；查看列表滚动、输入和尾部可达。原生平台与辅助技术需独立验收。",
+      "hostQualification": "本地演示可操作的交接/状态，不能替代原生输入法、读屏、宿主权限及真正文定位验证。",
+      "currentEvidence": [
+        "packages/renderer/src/components/CommandPalette.tsx:65-279",
+        "packages/renderer/src/components/CommandPalette.tsx:552-573",
+        "packages/renderer/src/components/NavSidebar.tsx:132-135"
+      ],
+      "approvalRequiredBeforeProductCode": true
+    }
+  ],
+  "notApplicable": [
+    {
+      "item": "搜索过滤器/分页/消息检索/Agent检索",
+      "reason": "当前Palette无UI能力，不因参考竞品加入"
+    },
+    {
+      "item": "取消服务端新建/幂等重试/撤销新建",
+      "reason": "现API无合同，不作承诺"
+    },
+    {
+      "item": "Office内部查找/替换",
+      "reason": "后续每格式模块，当前命令只给note"
+    },
+    {
+      "item": "浏览器刷新/窗口关闭未保存拦截",
+      "reason": "此模块只涵盖明确host命令导航，原生另验"
+    }
+  ]
+}

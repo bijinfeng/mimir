@@ -1,0 +1,79 @@
+{
+  "source": "https://api.github.com/repos/Tencent/WeKnora/git/trees/3e22822c1d2397be730c458c7539d0eb8c113a24?recursive=1",
+  "sha": "3e22822c1d2397be730c458c7539d0eb8c113a24",
+  "truncated": false,
+  "selection": "Paths containing GlobalCommandPalette only; source raw body hash recorded in reference-fetch.json",
+  "tree": [
+    {
+      "path": "frontend/src/components/GlobalCommandPalette.vue",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e3b166084fe30cac05df439975d91fce053f2bb5",
+      "size": 30182,
+      "url": "https://api.github.com/repos/Tencent/WeKnora/git/blobs/e3b166084fe30cac05df439975d91fce053f2bb5"
+    },
+    {
+      "path": "frontend/src/components/GlobalCommandPalette",
+      "mode": "040000",
+      "type": "tree",
+      "sha": "5271211fd5f1f44c1d01bdb124d8f8fcacb48667",
+      "url": "https://api.github.com/repos/Tencent/WeKnora/git/trees/5271211fd5f1f44c1d01bdb124d8f8fcacb48667"
+    },
+    {
+      "path": "frontend/src/components/GlobalCommandPalette/ResultGroup.vue",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "505907c6b3df82e40a38dbae18b74b50a737e04d",
+      "size": 1731,
+      "url": "https://api.github.com/repos/Tencent/WeKnora/git/blobs/505907c6b3df82e40a38dbae18b74b50a737e04d"
+    },
+    {
+      "path": "frontend/src/components/GlobalCommandPalette/ResultItem.test.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "24d018785d9925883a069dd82750014b137bc8f0",
+      "size": 1001,
+      "url": "https://api.github.com/repos/Tencent/WeKnora/git/blobs/24d018785d9925883a069dd82750014b137bc8f0"
+    },
+    {
+      "path": "frontend/src/components/GlobalCommandPalette/ResultItem.vue",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "58669ecdaae0369fee39406fb7bbb845602fe959",
+      "size": 4559,
+      "url": "https://api.github.com/repos/Tencent/WeKnora/git/blobs/58669ecdaae0369fee39406fb7bbb845602fe959"
+    },
+    {
+      "path": "frontend/src/components/GlobalCommandPalette/commands.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4db0f49b2541f2752c4b3bff80e4c0c916835867",
+      "size": 3408,
+      "url": "https://api.github.com/repos/Tencent/WeKnora/git/blobs/4db0f49b2541f2752c4b3bff80e4c0c916835867"
+    },
+    {
+      "path": "frontend/src/components/GlobalCommandPalette/useHighlight.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8b08672889da6519080d27085b5d07a58b86c801",
+      "size": 1706,
+      "url": "https://api.github.com/repos/Tencent/WeKnora/git/blobs/8b08672889da6519080d27085b5d07a58b86c801"
+    },
+    {
+      "path": "frontend/src/components/GlobalCommandPalette/useSearch.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "831596acbbc09f690c1c946c270239ed02d93d5d",
+      "size": 12417,
+      "url": "https://api.github.com/repos/Tencent/WeKnora/git/blobs/831596acbbc09f690c1c946c270239ed02d93d5d"
+    },
+    {
+      "path": "frontend/src/components/GlobalCommandPalette/useStartChat.ts",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "172a8f55360e3d9a5bedf16853a75ba8c2f9ec86",
+      "size": 1267,
+      "url": "https://api.github.com/repos/Tencent/WeKnora/git/blobs/172a8f55360e3d9a5bedf16853a75ba8c2f9ec86"
+    }
+  ]
+}

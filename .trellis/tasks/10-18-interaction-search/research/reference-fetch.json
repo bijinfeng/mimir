@@ -1,0 +1,36 @@
+[
+  {
+    "key": "official",
+    "url": "https://weknora.weixin.qq.com/",
+    "http": 200,
+    "bytes": 113529,
+    "sha256": "6ae3d1aefe92980cded37b949947f077e12c227993745c7f10f5124ec2baedbe",
+    "file": "weknora-official.html"
+  },
+  {
+    "key": "release-latest",
+    "url": "https://api.github.com/repos/Tencent/WeKnora/releases/latest",
+    "http": 200,
+    "bytes": 44048,
+    "sha256": "163a964cc10c02fbca6dec0ad01f6fee50ffa0cc3f95957587c7df3b55fa9478",
+    "file": "weknora-release-latest.json"
+  },
+  {
+    "key": "pinned-ref",
+    "url": "https://api.github.com/repos/Tencent/WeKnora/git/ref/tags/v0.8.3",
+    "http": 200,
+    "bytes": 331,
+    "sha256": "c89b8fa98ab3886eb77bfb414206de35e9570d1cb522289081505cefda2d290c",
+    "file": "weknora-pinned-ref.json"
+  },
+  {
+    "key": "pinned-tree",
+    "url": "https://api.github.com/repos/Tencent/WeKnora/git/trees/3e22822c1d2397be730c458c7539d0eb8c113a24?recursive=1",
+    "http": 200,
+    "bytes": 1331756,
+    "sha256": "81e4db225ec55e05b3f41dd2b4e279c07cbfe3f85d03b63bed03841075cb4fe2",
+    "file": null,
+    "retained_excerpt": "weknora-tree-excerpt.json",
+    "raw_retained": false
+  }
+]

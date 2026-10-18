@@ -1,0 +1,34 @@
+{
+  "date": "2026-10-18T05:43:49.179392+00:00",
+  "scope": "prototype_only",
+  "checks": [
+    {
+      "command": "pnpm exec oxlint --no-ignore --deny-warnings .trellis/tasks/10-18-interaction-search/prototype/main.tsx .trellis/tasks/10-18-interaction-search/prototype/fixtures.ts .trellis/tasks/10-18-interaction-search/prototype/build.mjs .trellis/tasks/10-18-interaction-search/prototype/check-artifact.mjs --format json",
+      "exitCode": 0,
+      "output": "diagnostics=[], number_of_files=4, number_of_rules=201"
+    },
+    {
+      "command": "pnpm --filter @mimir/renderer exec tsc -p /Users/admin/Desktop/mimir/.trellis/tasks/10-18-interaction-search/prototype/tsconfig.json",
+      "exitCode": 0,
+      "output": ""
+    },
+    {
+      "command": "node .trellis/tasks/10-18-interaction-search/prototype/build.mjs",
+      "exitCode": 0,
+      "output": "Vite8.3.4 build pass,1910modules transformed;297.48kB JS/25.60kB CSS;standalone review.html regenerated"
+    },
+    {
+      "command": "node .trellis/tasks/10-18-interaction-search/prototype/check-artifact.mjs",
+      "exitCode": 0,
+      "output": "{\"passed\":true,\"groups\":16,\"coverage\":152,\"singleFile\":true,\"productImports\":false}\n"
+    },
+    {
+      "command": "oxfmt --stdin-filepath per authored source/data/doc file",
+      "exitCode": 0,
+      "output": "All authored source/data/doc files formatted via stdin; batch-corrected3 files reformatted. .trellis is ignored by default."
+    }
+  ],
+  "browserQA": "../verification/browser-qa.json",
+  "reviewer": "search_check",
+  "artifactSha256": "0e8a90da0c37c509f8fcda8027c9f01bac5f58607c45db83f10d41f8fb950535"
+}

@@ -1,0 +1,1044 @@
+{
+  "schemaVersion": 1,
+  "module": "search",
+  "date": "2026-10-18",
+  "status": "planning_only",
+  "stateMeaning": "states是交互覆盖项，不等同独立页面，也非全笛卡尔积；原型按切片合并展示",
+  "groupCount": 16,
+  "stateCount": 152,
+  "globalDimensions": [
+    "light/dark",
+    "desktop1280×800/narrow390×844/low390×500",
+    "mouse/keyboard/touch",
+    "default/hover/focus/active/disabled only when applicable"
+  ],
+  "groups": [
+    {
+      "id": "search.entry",
+      "title": "入口与打开关闭",
+      "sources": [
+        "packages/renderer/src/routes/_app.tsx:276-285",
+        "packages/renderer/src/routes/_app.tsx:319",
+        "packages/renderer/src/components/CommandPalette.tsx:300-347",
+        "packages/renderer/src/components/NavSidebar.tsx:132-135"
+      ],
+      "current": "open=false不渲染；输入初空；effect卸载只检查isConnected回焦；全局快捷键无repeat/IME检查。",
+      "proposal": "保留平台快捷键和重置；回焦需可见的稳定搜索入口兜底；交接弹窗不抢回焦。",
+      "boundary": "in_scope",
+      "exit": "Esc/遮罩取消回原有效触发器；执行动作由宿主接管焦点",
+      "states": [
+        {
+          "id": "search.entry.button",
+          "title": "展开侧栏搜索按钮",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.entry.rail",
+          "title": "折叠功能栏搜索",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.entry.drawer",
+          "title": "窄屏抽屉搜索后关闭抽屉",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.entry.ctrl-k",
+          "title": "Ctrl+K打开/再次切换关闭",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.entry.cmd-k",
+          "title": "Cmd+K打开/再次切换关闭",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.entry.editor",
+          "title": "编辑器中唤起且不触发浏览器默认",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.entry.reset",
+          "title": "关闭重开清空输入/首项选中",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.entry.escape",
+          "title": "Esc关闭",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.entry.mask",
+          "title": "遮罩关闭",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.entry.focus-live",
+          "title": "回到存活触发器",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.entry.focus-missing",
+          "title": "触发器卸载或隐藏的回焦兜底",
+          "fixtureRequired": true
+        }
+      ]
+    },
+    {
+      "id": "search.recents",
+      "title": "空输入最近笔记",
+      "sources": [
+        "packages/renderer/src/components/CommandPalette.tsx:321",
+        "packages/renderer/src/components/CommandPalette.tsx:437-447",
+        "packages/renderer/src/lib/recent-documents.ts:6-75"
+      ],
+      "current": "hook已提供失败计数/错误并过滤权限项，Palette只取data数组，忽略loading/error/retryableFailureCount，所以静默退化为操作列表。Palette未slice6，最多12个ID中的note均显示。",
+      "proposal": "展开独立最近反馈区，真空/读取/部分失败/全失败分开；只展示授权返回项；重试期间不伪称已恢复。",
+      "boundary": "in_scope",
+      "exit": "Esc/遮罩取消回原有效触发器；执行动作由宿主接管焦点",
+      "states": [
+        {
+          "id": "search.recents.loading",
+          "title": "有ID初次读取",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.recents.empty",
+          "title": "无历史或仅非笔记",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.recents.ready",
+          "title": "最多12条历史中的note按序",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.recents.partial",
+          "title": "部分网络/5xx失败且有可见note",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.recents.failed",
+          "title": "全部暂时读取失败",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.recents.retry",
+          "title": "原位重试/忙碌",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.recents.filtered",
+          "title": "403/404不显示标题",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.recents.unauthorized",
+          "title": "401归查询错误不伪装为空",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.recents.storage",
+          "title": "损坏/禁用存储降级",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.recents.revision",
+          "title": "跨标签storage或本次记录更新",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.recents.user-unknown",
+          "title": "用户ID未知不触发最近读取",
+          "fixtureRequired": true
+        }
+      ]
+    },
+    {
+      "id": "search.input",
+      "title": "查询输入与中文输入法",
+      "sources": [
+        "packages/renderer/src/components/CommandPalette.tsx:349-360",
+        "packages/renderer/src/components/CommandPalette.tsx:483-513",
+        "packages/shared/src/search.ts:15-21"
+      ],
+      "current": "阈值用JS字符串length；无debounce/maxLength/composition处理；API q最大500而Input无上限。",
+      "proposal": "保持2字符门槛，组合期不导航/执行/检索未确认词；约束到已存在500上限并清楚反馈；不引入筛选或新快捷键。",
+      "boundary": "in_scope",
+      "exit": "Esc/遮罩取消回原有效触发器；执行动作由宿主接管焦点",
+      "states": [
+        {
+          "id": "search.input.blank",
+          "title": "纯空格等同空查询",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.input.single",
+          "title": "trim后长度1不请求文档但匹配命令",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.input.two",
+          "title": "trim后长度>=2开始检索",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.input.case",
+          "title": "命令名称/副标题大小写不敏感子串匹配",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.input.clear",
+          "title": "清空恢复最近与操作",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.input.compose",
+          "title": "中文组合输入不误选/发送",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.input.compose-enter",
+          "title": "选字Enter不得执行命令",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.input.compose-arrows",
+          "title": "候选箭头不得移选行",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.input.long",
+          "title": "超长查询与500字API上限",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.input.paste",
+          "title": "粘贴长文本保持输入可编辑",
+          "fixtureRequired": true
+        }
+      ]
+    },
+    {
+      "id": "search.query",
+      "title": "检索请求与恢复",
+      "sources": [
+        "packages/renderer/src/components/CommandPalette.tsx:355-360",
+        "packages/renderer/src/components/CommandPalette.tsx:608-633",
+        "packages/renderer/src/lib/query.ts:11-23",
+        "packages/renderer/src/lib/api.ts:1055-1059"
+      ],
+      "current": "queryKey按trim词隔离、无placeholderData；缓存仅同词复用；未消费AbortSignal。状态在AI行，pending Enter已拦；鼠标按钮仍能执行；后台错误仍可能留缓存hits。",
+      "proposal": "独立可读检索状态、同一词重试；旧查询绝不作当前词结果；刷新中保留已确认上下文但不隐瞒错误；不要宣称现有查询隔离有覆盖bug。",
+      "boundary": "in_scope",
+      "exit": "Esc/遮罩取消回原有效触发器；执行动作由宿主接管焦点",
+      "states": [
+        {
+          "id": "search.query.loading",
+          "title": "首次请求且无命中",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.query.pending-command",
+          "title": "请求期间临时命令排首不因Enter执行",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.query.cached",
+          "title": "30秒缓存同词返回",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.query.refresh",
+          "title": "同词缓存后台刷新",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.query.empty",
+          "title": "检索成功无命中",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.query.error",
+          "title": "网络/5xx最终失败",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.query.retry",
+          "title": "重试保持原查询",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.query.retry-pending",
+          "title": "重试按钮忙碌防重复",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.query.error-cached",
+          "title": "缓存存在但本次读取失败",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.query.query-race",
+          "title": "快速改变查询旧结果不得覆盖新词",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.query.closed-late",
+          "title": "关闭后迟到结果不打开面板",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.query.query-clear",
+          "title": "请求中清空不显示旧命中",
+          "fixtureRequired": true
+        }
+      ]
+    },
+    {
+      "id": "search.hits",
+      "title": "文档命中与文本信息",
+      "sources": [
+        "packages/renderer/src/components/CommandPalette.tsx:430-460",
+        "packages/renderer/src/components/CommandPalette.tsx:535-549",
+        "packages/renderer/src/components/CommandPalette.tsx:181-201",
+        "packages/shared/src/search.ts:33-84"
+      ],
+      "current": "最多6 hits，各chunk独立；同doc标题附·命中N；path/url/mime/size未消费；标题与片段单行ellipsis无Tooltip；found显示documents.length处。",
+      "proposal": "中性选中+可见焦点；正文片段更易扫读(可两行)且长内容可达；保留每chunk独立导航与排序，不合并去掉定位，不造来源/时间/得分。",
+      "boundary": "in_scope",
+      "exit": "Esc/遮罩取消回原有效触发器；执行动作由宿主接管焦点",
+      "states": [
+        {
+          "id": "search.hits.one",
+          "title": "单命中标题+片段",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.hits.multi-document",
+          "title": "多文档按服务器返回顺序",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.hits.multi-chunk",
+          "title": "同文档多片段分行保留命中序号",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.hits.long-title",
+          "title": "超长标题可获全文",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.hits.long-snippet",
+          "title": "超长片段可获全文",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.hits.path-null",
+          "title": "根路径/null来源保持真实",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.hits.file",
+          "title": "文件/网页命中也能打开",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.hits.six",
+          "title": "limit6代表命中处而非文档数",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.hits.count",
+          "title": "显示实际命中处而非虚构总量",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.hits.punctuation",
+          "title": "尖括号与特殊字符按纯文本显示",
+          "fixtureRequired": true
+        }
+      ]
+    },
+    {
+      "id": "search.selection",
+      "title": "选择与键盘可达",
+      "sources": [
+        "packages/renderer/src/components/CommandPalette.tsx:465-468",
+        "packages/renderer/src/components/CommandPalette.tsx:495-519",
+        "packages/renderer/src/components/CommandPalette.tsx:637-692"
+      ],
+      "current": "输入拥有方向键；行是真button可Tab；srOnly报告当前选择；无combobox/listbox aria链；只按数字index选中，数据变化不重置/钳制；scroll effect只依赖index。鼠标row.run不主动close，但当前宿主每项均负责close。",
+      "proposal": "用稳定key处理数据变化并明确恢复首项；键盘与鼠标执行同一防重/忙碌逻辑；保留真实button语义，不混入伪listbox交互。",
+      "boundary": "in_scope",
+      "exit": "Esc/遮罩取消回原有效触发器；执行动作由宿主接管焦点",
+      "states": [
+        {
+          "id": "search.selection.first",
+          "title": "默认最近/结果首项",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.selection.documents-first",
+          "title": "有结果时结果先于匹配命令",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.selection.commands-only",
+          "title": "无结果时命令为首",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.selection.down",
+          "title": "ArrowDown到末项不循环",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.selection.up",
+          "title": "ArrowUp到首项不循环",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.selection.scroll",
+          "title": "选择滚入列表视口",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.selection.hover",
+          "title": "鼠标进入更新activeIndex",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.selection.click",
+          "title": "鼠标执行对应行",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.selection.tab",
+          "title": "Tab到按钮Enter/Space执行",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.selection.list-growth",
+          "title": "异步插入结果时语义选择稳定",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.selection.list-shrink",
+          "title": "列表缩短activeIndex不失效",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.selection.announce",
+          "title": "读屏报告当前选项和请求状态",
+          "fixtureRequired": true
+        }
+      ]
+    },
+    {
+      "id": "search.new-note",
+      "title": "新建笔记异步动作",
+      "sources": [
+        "packages/renderer/src/components/CommandPalette.tsx:370-378",
+        "packages/renderer/src/routes/_app.tsx:371-385",
+        "packages/renderer/src/routes/_app.tsx:199",
+        "packages/renderer/src/components/DocumentPanel.tsx:785-799",
+        "packages/office/src/editors/MarkdownEditor.tsx:777-781"
+      ],
+      "current": "run void onNewNote；宿主先关palette再create；无runGuarded/单飞；成功toast+setNewNoteFocusId+openDocument(all)，失败仅toast；可重开重复发。",
+      "proposal": "先经过现有guard、再显示单飞创建中；失败保留可操作上下文；成功再导航。POST无幂等键，超时重试不能保证绝不生成副本，不伪造撤销。",
+      "boundary": "in_scope",
+      "exit": "Esc/遮罩取消回原有效触发器；执行动作由宿主接管焦点",
+      "states": [
+        {
+          "id": "search.new-note.ready",
+          "title": "全局新建笔记可匹配",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.new-note.dirty",
+          "title": "先确认未保存再创建",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.new-note.pending",
+          "title": "请求中不重复新建",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.new-note.success",
+          "title": "真实成功才导航根目录并聚焦笔记正文",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.new-note.failed",
+          "title": "失败留原上下文与重试",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.new-note.cancel-guard",
+          "title": "取消离开不创建",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.new-note.repeat",
+          "title": "连续Enter/点击只发一次",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.new-note.response-lost",
+          "title": "网络结果不确定不承诺幂等创建",
+          "fixtureRequired": true
+        }
+      ]
+    },
+    {
+      "id": "search.capture",
+      "title": "收集入口交接",
+      "sources": [
+        "packages/renderer/src/components/CommandPalette.tsx:379-385",
+        "packages/renderer/src/routes/_app.tsx:137-162",
+        "packages/renderer/src/routes/_app.tsx:344-347"
+      ],
+      "current": "宿主先setPaletteOpen(false)再openCapture，capture记录当时activeElement可能是即将卸载的palette行，取消有稳定收集入口fallback。",
+      "proposal": "仅打磨交接焦点/层级；收集内容流程归模块4；不在此设计新增上传/取消能力。",
+      "boundary": "handoff_only",
+      "exit": "Esc/遮罩取消回原有效触发器；执行动作由宿主接管焦点",
+      "states": [
+        {
+          "id": "search.capture.ready",
+          "title": "匹配收集链接或文件",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.capture.handoff",
+          "title": "关闭面板交接真实收集弹窗",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.capture.focus",
+          "title": "焦点进入新弹窗不跳回背景",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.capture.cancel",
+          "title": "收集取消回稳定入口",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.capture.dirty",
+          "title": "打开收集无需离开现文档",
+          "fixtureRequired": true
+        }
+      ]
+    },
+    {
+      "id": "search.context",
+      "title": "当前文档能力和上下文",
+      "sources": [
+        "packages/renderer/src/components/CommandPalette.tsx:322-326",
+        "packages/renderer/src/components/CommandPalette.tsx:387-426",
+        "packages/renderer/src/routes/_app.tsx:353"
+      ],
+      "current": "只在docs页传ID；kind未知时仍显示移动+返回，note两项随query出现；currentDocQuery错误无就地提示。",
+      "proposal": "保留能力条件，读取失败可说明重试；绑定正确文档，避免弹窗保存到切换后的ID；不扩展Office查找。",
+      "boundary": "in_scope",
+      "exit": "Esc/遮罩取消回原有效触发器；执行动作由宿主接管焦点",
+      "states": [
+        {
+          "id": "search.context.none",
+          "title": "库列表/设置/对话无当前文档命令",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.context.note",
+          "title": "note显示改名/移动/搜索/返回库",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.context.file",
+          "title": "file及只读资料仅移动/返回库",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.context.loading",
+          "title": "文档类型未知不猜note专属命令",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.context.error",
+          "title": "当前文档读取失败不伪造note命令",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.context.cached",
+          "title": "同document query缓存共用",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.context.switch",
+          "title": "命令绑定唤起时当前文档",
+          "fixtureRequired": true
+        }
+      ]
+    },
+    {
+      "id": "search.rename",
+      "title": "当前笔记重命名宿主衔接",
+      "sources": [
+        "packages/renderer/src/routes/_app.tsx:358-361",
+        "packages/renderer/src/components/DocumentPanel.tsx:103-116",
+        "packages/renderer/src/components/DocumentPanel.tsx:294-302",
+        "packages/renderer/src/components/DocumentPanel.tsx:675-681",
+        "packages/renderer/src/components/DocumentPanel.tsx:913-948"
+      ],
+      "current": "宿主CustomEvent同步打开；Modal未绑定confirmLoading/pending退出，mutation失败toast，await拒绝可能逃逸；Input无onPressEnter；closeCommand对存活行ref或更多按钮fallback，存活不等于可见。",
+      "proposal": "只完善命令链路必要pending/inline-error/focus，不重做全文档头部；保护文档身份和草稿。若dirty元数据与autosave竞态，须在实施前明确host合同。",
+      "boundary": "handoff_and_safety",
+      "exit": "Esc/遮罩取消回原有效触发器；执行动作由宿主接管焦点",
+      "states": [
+        {
+          "id": "search.rename.handoff",
+          "title": "事件交接到重命名弹窗",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.rename.prefill",
+          "title": "预填标题最长200",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.rename.empty",
+          "title": "空白不能提交",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.rename.unchanged",
+          "title": "未变直接关闭",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.rename.pending",
+          "title": "异步改名锁重复和退出",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.rename.error",
+          "title": "失败保留标题草稿",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.rename.success",
+          "title": "更新缓存/列表和标题",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.rename.ime",
+          "title": "组合Enter不提交",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.rename.cancel-focus",
+          "title": "取消回有效文档操作入口",
+          "fixtureRequired": true
+        }
+      ]
+    },
+    {
+      "id": "search.move",
+      "title": "当前文档移动宿主衔接",
+      "sources": [
+        "packages/renderer/src/components/DocumentPanel.tsx:321-363",
+        "packages/renderer/src/components/DocumentPanel.tsx:913-973"
+      ],
+      "current": "Select由flattenFolders生成，空query等同只有根选项；folder加载/错误未区分；move有try/catch返回boolean与8秒撤销toast，无pending单飞；更名/移动与编辑保存竞态需实测。",
+      "proposal": "只演示并改进命令交接必要读取/保存反馈；保留已有撤销并说明真实失败，不扩展目录管理。",
+      "boundary": "handoff_and_safety",
+      "exit": "Esc/遮罩取消回原有效触发器；执行动作由宿主接管焦点",
+      "states": [
+        {
+          "id": "search.move.prefill",
+          "title": "预填当前目录/根",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.move.folder-loading",
+          "title": "目录首次加载",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.move.folder-error",
+          "title": "目录读取失败可重试",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.move.nested",
+          "title": "长层级目录选项可达",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.move.unchanged",
+          "title": "同目录直接关闭",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.move.pending",
+          "title": "移动中防重复/防关闭",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.move.error",
+          "title": "失败保留所选目录",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.move.success",
+          "title": "真实成功更新并提供既有撤销",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.move.undo",
+          "title": "既有撤销成功/失败不伪造事务",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.move.cancel",
+          "title": "取消不改目录",
+          "fixtureRequired": true
+        }
+      ]
+    },
+    {
+      "id": "search.find",
+      "title": "当前笔记查找宿主衔接",
+      "sources": [
+        "packages/renderer/src/components/DocumentPanel.tsx:684-703",
+        "packages/renderer/src/components/DocumentPanel.tsx:935-955",
+        "packages/renderer/src/components/DocumentPanel.tsx:1076-1149"
+      ],
+      "current": "OK仅按非空禁用，find实际query.length<2直接return；onPressEnter无IME拦截；未匹配message.info；找到close。",
+      "proposal": "门槛前后一致，未命中原处说明，保留Enter与文本；不新增上一处/下一处/替换/计数引擎。",
+      "boundary": "handoff_and_safety",
+      "exit": "Esc/遮罩取消回原有效触发器；执行动作由宿主接管焦点",
+      "states": [
+        {
+          "id": "search.find.blank",
+          "title": "空输入禁用",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.find.one",
+          "title": "1字符当前静默无效",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.find.two",
+          "title": "至少2字符可查",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.find.found",
+          "title": "找到首个可定位匹配并滚入视口",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.find.not-found",
+          "title": "未匹配仍留弹窗草稿",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.find.ime",
+          "title": "Enter选字不查找",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.find.close",
+          "title": "Esc/取消回文档动作",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.find.case",
+          "title": "大小写及归一化与现实现一致",
+          "fixtureRequired": true
+        }
+      ]
+    },
+    {
+      "id": "search.open-hit",
+      "title": "打开命中/最近/返回库",
+      "sources": [
+        "packages/renderer/src/routes/_app.tsx:238-267",
+        "packages/renderer/src/routes/_app.tsx:348-365",
+        "packages/renderer/src/components/DocumentPanel.tsx:549-608",
+        "packages/renderer/src/components/DocumentPanel.test.ts:4-28"
+      ],
+      "current": "搜索保存snippet/start/end/matchedBy；host runGuarded后导航；Citation匹配优先真正文，失败只打开；无网络文档重试UI属下模块。",
+      "proposal": "保留真实定位算法和每命中差异；HTML明确模拟滚动不能替代产品渲染定位；取消guard恢复可用搜索上下文。",
+      "boundary": "handoff_and_regression",
+      "exit": "Esc/遮罩取消回原有效触发器；执行动作由宿主接管焦点",
+      "states": [
+        {
+          "id": "search.open-hit.recent",
+          "title": "最近note按folder scope打开",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.open-hit.hit",
+          "title": "检索命中按scope all打开并带完整Citation",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.open-hit.same-document",
+          "title": "同文档第二命中重置旧高亮再定位",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.open-hit.repeated-text",
+          "title": "重复原句按sourceStart辨别正确出现处",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.open-hit.late-content",
+          "title": "正文异步加载重试最多20×150ms",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.open-hit.missing",
+          "title": "文档变化找不到只打开不乱高亮",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.open-hit.no-highlight-api",
+          "title": "无CustomHighlight仍滚动定位",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.open-hit.back",
+          "title": "返回知识库保留当前scope清id",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.open-hit.load-error",
+          "title": "打开文档读取失败归文档模块",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.open-hit.cancel-guard",
+          "title": "取消离开不改变route/citation",
+          "fixtureRequired": true
+        }
+      ]
+    },
+    {
+      "id": "search.ai",
+      "title": "显式AI动作",
+      "sources": [
+        "packages/renderer/src/components/CommandPalette.tsx:469-474",
+        "packages/renderer/src/components/CommandPalette.tsx:608-633",
+        "packages/renderer/src/routes/_app.tsx:366-370",
+        "packages/chat/src/ChatPanel.tsx:178-194"
+      ],
+      "current": "提问在input之外的Button；输入Enter不默认ask；host设置AskDraft并跳/chat，ChatPanel.setText而非send；host此分支目前缺runGuarded。",
+      "proposal": "保留独立按钮，可改更清楚“向AI提问”但不得声称立即请求；guard之后才赋草稿和导航；AI实际消息生成归模块7。",
+      "boundary": "in_scope",
+      "exit": "Esc/遮罩取消回原有效触发器；执行动作由宿主接管焦点",
+      "states": [
+        {
+          "id": "search.ai.blank",
+          "title": "空白无提问动作",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.ai.one",
+          "title": "1字符也可显式提问",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.ai.searching",
+          "title": "检索中显式提问可选",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.ai.empty",
+          "title": "无匹配时不默认发送",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.ai.error",
+          "title": "检索失败仍可显式选择AI",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.ai.keyboard",
+          "title": "Tab到提问Enter/Space明确触发",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.ai.prefill",
+          "title": "进入新对话只预填问题不自动发送",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.ai.scope",
+          "title": "保留当前scope而非捏造当前文档附件",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.ai.dirty",
+          "title": "离开dirty内容先guard",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.ai.cancel",
+          "title": "取消guard不写入对话草稿",
+          "fixtureRequired": true
+        }
+      ]
+    },
+    {
+      "id": "search.guard",
+      "title": "未保存离开联动",
+      "sources": [
+        "packages/renderer/src/components/UnsavedGuard.tsx:37-89",
+        "packages/renderer/src/lib/unsaved.tsx:75-130",
+        "packages/renderer/src/routes/_app.tsx:348-385",
+        "packages/renderer/src/components/document/OfficeSourceEditor.tsx:97"
+      ],
+      "current": "最近/命中/返回已有guard；new-note与AI没有；UnsavedGuard自身禁止mask/Esc，manual三选/auto双选，失败留原位；Office saveFromHere提示工具条而返回false。",
+      "proposal": "仅补齐会离开内容的两个缺口并正确焦点交接；不改变共享guard选项/Office保存算法；HTML分别演示成功和不可代存。",
+      "boundary": "handoff_and_safety",
+      "exit": "Esc/遮罩取消回原有效触发器；执行动作由宿主接管焦点",
+      "states": [
+        {
+          "id": "search.guard.clean",
+          "title": "干净直接动作",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.guard.manual",
+          "title": "手动保存三选",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.guard.auto",
+          "title": "自动保存仅继续/保存并离开无丢弃",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.guard.saving",
+          "title": "保存中锁定全部退出",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.guard.save-failed",
+          "title": "保存失败留原位和改动",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.guard.saved-during",
+          "title": "auto后台完成提示已自动保存可离开",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.guard.discard",
+          "title": "manual丢弃后原目标执行一次",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.guard.continue",
+          "title": "继续编辑恢复原处焦点",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.guard.office",
+          "title": "Office原件保存句柄不能代存需工具条保存",
+          "fixtureRequired": true
+        }
+      ]
+    },
+    {
+      "id": "search.layout",
+      "title": "浅深/长内容/跨宿主布局",
+      "sources": [
+        "packages/renderer/src/components/CommandPalette.tsx:65-279",
+        "packages/renderer/src/components/CommandPalette.tsx:552-573",
+        "packages/renderer/src/components/NavSidebar.tsx:132-135"
+      ],
+      "current": "Modal620/top14vh；列表max48vh/440，footer会整项换行；继承token；选中仍colorPrimaryBg+colorLink；无专属低高度fit约束。",
+      "proposal": "沿用已认可中性选中、细边和类型尺寸，保留focusRing；限制整面板视口内高、内部列表滚动，固定输入与尾部；不重做全局tokens。",
+      "boundary": "in_scope",
+      "exit": "Esc/遮罩取消回原有效触发器；执行动作由宿主接管焦点",
+      "states": [
+        {
+          "id": "search.layout.light",
+          "title": "浅色桌面620px面板",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.layout.dark",
+          "title": "深色对比和焦点",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.layout.narrow",
+          "title": "390px所有动作与长行无横溢",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.layout.low",
+          "title": "390×500底部动作仍可达",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.layout.zoom",
+          "title": "200%缩放内容可滚动",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.layout.touch",
+          "title": "粗指针至少44px点击区",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.layout.reduced-motion",
+          "title": "减少动效遵循现框架",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.layout.drawer-focus",
+          "title": "Drawer发起时关闭后回52px功能栏入口",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.layout.desktop",
+          "title": "Electron相同renderer，原生键盘宿主另验",
+          "fixtureRequired": true
+        },
+        {
+          "id": "search.layout.screen-reader",
+          "title": "弹窗名称/结果状态/选项选择可感知",
+          "fixtureRequired": true
+        }
+      ]
+    }
+  ],
+  "notApplicable": [
+    {
+      "item": "搜索过滤器/分页/消息检索/Agent检索",
+      "reason": "当前Palette无UI能力，不因参考竞品加入"
+    },
+    {
+      "item": "取消服务端新建/幂等重试/撤销新建",
+      "reason": "现API无合同，不作承诺"
+    },
+    {
+      "item": "Office内部查找/替换",
+      "reason": "后续每格式模块，当前命令只给note"
+    },
+    {
+      "item": "浏览器刷新/窗口关闭未保存拦截",
+      "reason": "此模块只涵盖明确host命令导航，原生另验"
+    }
+  ]
+}

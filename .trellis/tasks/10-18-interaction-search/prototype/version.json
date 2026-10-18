@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "status": "awaiting_user_review",
+  "date": "2026-10-18",
+  "file": "review.html",
+  "sha256": "0e8a90da0c37c509f8fcda8027c9f01bac5f58607c45db83f10d41f8fb950535",
+  "groupCount": 16,
+  "fixtureCount": 152,
+  "coverageCount": 152,
+  "productCodeChanged": false,
+  "approvalRequired": true,
+  "referenceInventory": "../research/search-scenes.json",
+  "notes": "Standalone HTML, independent checks and bounded browser QA complete; user approval still required before product implementation. Native/host boundaries qualified in coverage."
+}

@@ -1,0 +1,51 @@
+[
+  {
+    "url": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/frontend/src/components/GlobalCommandPalette/ResultGroup.vue",
+    "file": "weknora-ResultGroup.vue.source.txt",
+    "http": 200,
+    "bytes": 1731,
+    "sha256": "37111b5f86ca99b0788da2cc1dd95a7bdff163113a4a0a5810e7979003e04b3b"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/frontend/src/components/GlobalCommandPalette/ResultItem.test.ts",
+    "file": "weknora-ResultItem.test.ts.source.txt",
+    "http": 200,
+    "bytes": 1001,
+    "sha256": "b8762f440c31ec2d08498adfee90a0f51e96ef8d7146cce969dfd06309b7f06a"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/frontend/src/components/GlobalCommandPalette/ResultItem.vue",
+    "file": "weknora-ResultItem.vue.source.txt",
+    "http": 200,
+    "bytes": 4559,
+    "sha256": "db0b62e642636f8105b628d9a41aeef2a41b5eed051a3f11c5d165ec4de37035"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/frontend/src/components/GlobalCommandPalette/commands.ts",
+    "file": "weknora-commands.ts.source.txt",
+    "http": 200,
+    "bytes": 3408,
+    "sha256": "8881889e1f8e82cd67724d16fa037c649bc1ee5f74a23d8c62d1eb3973b713ce"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/frontend/src/components/GlobalCommandPalette/useHighlight.ts",
+    "file": "weknora-useHighlight.ts.source.txt",
+    "http": 200,
+    "bytes": 1706,
+    "sha256": "f0c2f5f72666287fbf02da73d80c9da8fbced87cb2ab99103ed7beab99bfad7c"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/frontend/src/components/GlobalCommandPalette/useSearch.ts",
+    "file": "weknora-useSearch.ts.source.txt",
+    "http": 200,
+    "bytes": 12417,
+    "sha256": "81e85487fc251b5917299380cf84040dceb1d258132654131c97246093a5f371"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/frontend/src/components/GlobalCommandPalette/useStartChat.ts",
+    "file": "weknora-useStartChat.ts.source.txt",
+    "http": 200,
+    "bytes": 1267,
+    "sha256": "e6887dbb81dbabd5e4145484be9ff3d17e665ef6e161f48e4c71ccc666dfa218"
+  }
+]

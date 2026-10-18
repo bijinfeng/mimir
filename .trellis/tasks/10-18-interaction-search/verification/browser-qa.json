@@ -1,0 +1,108 @@
+{
+  "date": "2026-10-18",
+  "sha256": "0e8a90da0c37c509f8fcda8027c9f01bac5f58607c45db83f10d41f8fb950535",
+  "scope": "Standalone prototype; not product/native validation",
+  "cycle": "Initial batch and one consolidated confirmation; checker mechanical fixes confirmed with targeted checks",
+  "fixtures": 152,
+  "observations": [
+    {
+      "check": "low-height dark proposal",
+      "dialog": [
+        {
+          "parent": {
+            "bottom": 938.171875,
+            "height": 498,
+            "left": 319.5,
+            "right": 707.5,
+            "top": 440.171875,
+            "width": 388,
+            "x": 319.5,
+            "y": 440.171875
+          },
+          "r": {
+            "bottom": 890.171875,
+            "height": 380,
+            "left": 327.5,
+            "right": 699.5,
+            "top": 510.171875,
+            "width": 372,
+            "x": 327.5,
+            "y": 510.171875
+          }
+        }
+      ],
+      "overflow": false,
+      "smallButtons": []
+    },
+    {
+      "check": "search error single recovery",
+      "retryCount": 1
+    },
+    {
+      "check": "manual failure is preserved",
+      "retry": true
+    },
+    {
+      "check": "create pending completion",
+      "body": true,
+      "focus": "新笔记正文"
+    },
+    {
+      "check": "rename draft retained on failure",
+      "draft": "知识整理的方法（修订）"
+    },
+    {
+      "check": "saved-during leaves without resave",
+      "guard": 0
+    },
+    {
+      "check": "detail Escape returns to input",
+      "focus": "打磨后：搜索文档或输入问题"
+    },
+    {
+      "check": "simulated composition Enter blocked",
+      "palette": true
+    },
+    {
+      "check": "AI guard cancellation keeps input",
+      "focus": "打磨后：搜索文档或输入问题"
+    },
+    {
+      "check": "AI prefill only and focus",
+      "draftVisible": true,
+      "focus": "新对话预填草稿",
+      "unsent": true
+    },
+    {
+      "check": "recent partial retry",
+      "recovered": true
+    },
+    {
+      "check": "async list inserts preserve selection",
+      "selected": "当前选择：新建笔记"
+    },
+    {
+      "check": "one character find threshold",
+      "disabled": true
+    },
+    {
+      "check": "390px actual viewport",
+      "overflow": false,
+      "smallButtons": []
+    },
+    {
+      "check": "checker initial host focus correction",
+      "focus": "当前笔记查找内容"
+    },
+    {
+      "check": "move undo restores previous directory",
+      "restored": true
+    }
+  ],
+  "limits": [
+    "Real backend/citation offset/OS IME/native shortcut/screen reader/zoom/Electron require implementation acceptance",
+    "8s undo expiry source reviewed; affordance was absent after delayed GUI attempt, then reset for successful immediate undo",
+    "Fixture traversal verifies reachability, not all business semantics"
+  ],
+  "consoleErrors": []
+}

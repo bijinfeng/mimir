@@ -1,0 +1,6 @@
+{"file": ".trellis/spec/project/product.md", "reason": "搜索/命令/AI显式动作与未保存边界"}
+{"file": ".trellis/spec/project/design.md", "reason": "已认可视觉与基础组件合同"}
+{"file": ".trellis/spec/renderer/frontend/conventions.md", "reason": "共享Renderer与样式惯例"}
+{"file": ".trellis/spec/renderer/frontend/forms.md", "reason": "异步表单和失败草稿"}
+{"file": ".trellis/tasks/10-18-interaction-search/research/search-inventory.md", "reason": "完整源代码状态/交接/限制与参考适用性"}
+{"file": ".trellis/spec/renderer/frontend/document/conventions.md", "reason": "当前文档能力、元数据和保存宿主约束"}

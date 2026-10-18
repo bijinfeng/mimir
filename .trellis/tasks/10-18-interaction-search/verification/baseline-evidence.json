@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-18",
+  "source": "Actual product current working tree, isolated development app at http://127.0.0.1:5174",
+  "productCommit": "f21195d",
+  "themeBaseline": "Existing uncommitted foundation tokens preserved as current workspace appearance",
+  "account": "AGENTS unified test user",
+  "captures": {
+    "current-desktop-empty.png": "Opened global palette from library; no recent notes; newnote/capture",
+    "current-desktop-results.png": "Query Mimir returned5chunk hits from seed note;first selected;explicit question button",
+    "current-narrow-results.png": "Same query/results at390x844",
+    "current-note-context.png": "Opened seed note then palette;recent first;newnote/capture/rename/move/find/return",
+    "current-search-transition.png": "Intermediate search capture, timing not asserted to be loading"
+  },
+  "limits": [
+    "No production data mutated for this research",
+    "Read/open existing seed note only",
+    "Network/error states require source/fixture evidence; screenshots are baseline evidence, not proof of proposal behavior",
+    "Viewport reset after captures"
+  ]
+}
