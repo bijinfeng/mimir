@@ -56,7 +56,7 @@
       "version": "capture-review-v1 revision2",
       "approved_at": "2026-10-18",
       "user_quote": "可以，实施吧",
-      "implementation_commit": null,
+      "implementation_commit": "f78df5f5eab93d7404f52ee5e7351c12de752f1c",
       "task": ".trellis/tasks/10-18-interaction-capture",
       "planning_user_quote": "继续吧",
       "sha256": "fa66bdc5e0ed6a4c7d1383342b7e554754b9f88ce69db162a56fc947b93061e1",

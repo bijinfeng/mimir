@@ -15,7 +15,7 @@
   "branch": "codex/all-pages-polish",
   "base_branch": "master",
   "worktree_path": null,
-  "commit": null,
+  "commit": "f78df5f5eab93d7404f52ee5e7351c12de752f1c",
   "pr_url": null,
   "subtasks": [],
   "children": [],

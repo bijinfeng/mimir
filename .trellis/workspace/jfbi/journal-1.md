@@ -616,3 +616,39 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+
+## Session 22: 收集与导入批准稿实施与验收
+<!-- trellis-session: v=2 fp=8abed42aa53cd478 -->
+
+**Date**: 2026-10-18
+**Task**: 收集与导入批准稿实施与验收
+**Package**: renderer
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+按批准revision2实现收集/导入及guard，511项Renderer测试通过；实际浅深/390/低高度与mock恢复验收，保留外部lint和类型阻断。
+
+### Main Changes
+
+- 收集URL同步锁、阶段真实性、串行上传、inline drop、guard保留与Office保存能力事实；17项指定度量一致、hover稳定。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `f78df5f` | feat(ui): polish capture and import interactions |
+
+### Testing
+
+- [OK] Renderer59文件511项、限定20文件lint/format、AntD和样式守卫通过。
+- [BLOCKED] 全仓pnpm check被miniapp lint阻断；Renderer tsc有外部TS2550。
+
+### Status
+
+[PENDING] 本轮实现已提交；任务保持in_progress，外部质量门通过前不归档。
+
+### Next Steps
+
+- 外部门修复后重跑pnpm check再归档；下一模块仍先出HTML并获用户批准。
