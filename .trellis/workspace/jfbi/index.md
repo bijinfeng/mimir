@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 16
+- **Total Sessions**: 17
 - **Last Active**: 2026-10-18
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~474 | Active |
+| `journal-1.md` | ~498 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 17 | 2026-10-18 | 搜索模块按冻结稿修正还原偏差 | `924b721`, `6dc7226` | `codex/all-pages-polish` |
 | 16 | 2026-10-18 | 搜索与命令面板 v1 产品实施 | `2b3b6b3` | `codex/all-pages-polish` |
 | 15 | 2026-10-18 | 搜索与命令面板 v1 HTML 评审稿 | `07617d4` | `codex/all-pages-polish` |
 | 14 | 2026-10-18 | 工作区导航v2实施与模块验收 | `f21195d`, `35b80f7` | `codex/all-pages-polish` |

@@ -472,3 +472,27 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Next Steps
 
 - 外部阻断修复后重跑pnpm check，通过后归档；下一模块仍先HTML评审。
+
+
+## Session 17: 搜索模块按冻结稿修正还原偏差
+<!-- trellis-session: v=2 fp=833ef2d57d4d3d0e -->
+
+**Date**: 2026-10-18
+**Task**: 搜索模块按冻结稿修正还原偏差
+**Package**: renderer
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+用户指出首轮未按打磨稿还原。基于冻结HTML逐组审计16组，修正输入焦点、字号间距、独立详情层、AI和状态反馈、文档命令弹窗及390/低高布局；补坏存储提示和不确定创建结果保护。保存HTML原稿/实际截图对照与计算样式；独立Renderer57文件495项、全仓类型及局部lint/format/AntD/样式门通过。pnpm check被外部小程序7项lint阻断，任务不归档；其他会话WIP不纳入，不推送。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `924b721` | fix(ui): restore search polish to approved prototype |
+| `6dc7226` | chore(task): record search parity correction commit |
+
+### Status
+
+[OK] **Completed**
