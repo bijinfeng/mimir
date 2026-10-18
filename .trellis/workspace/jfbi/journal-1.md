@@ -519,3 +519,41 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+
+## Session 19: 微信小程序 S0 工程基线与 React 18 兼容组合
+<!-- trellis-session: v=2 fp=d8551cf53f756538 -->
+
+**Date**: 2026-10-18
+**Task**: 微信小程序 S0 工程基线与 React 18 兼容组合
+**Package**: miniapp
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+按用户最终选择建立 Taro 4.3.0、React 18.3.1、NutUI 4.0.0-beta.10 独立小程序工程；S0 构建基线通过独立审阅，完整产品任务保持进行中。
+
+### Main Changes
+
+- 新增真实三入口 Taro 工程、固定 HTTPS origin、NutUI 按需主题、模块图和原始包体校验；保留既有客户端依赖图。
+- 保存 React 19 不兼容的官方发布源码与严格 peer 探针，补充小程序工程规范和 S0 验证记录。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `0b22c50` | feat(miniapp): bootstrap Taro client with isolated React 18 |
+
+### Testing
+
+- [OK] miniapp 类型、3 项配置测试、微信编译和产物校验、scoped lint/format 及独立审阅通过；产物 353.5 KiB。
+- [OK] 现有 web/desktop 类型检查通过；全仓 pnpm check 停在本轮未改的旧原型 7 个 lint error。官方源码摘录空白按哈希保留。
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 继续 S1 设备鉴权与只读知识库 API；S2–S5 检索、版本保护、完整小程序交互及真机验收仍待实现。
+- 真实 AppID、稳定 HTTPS 域名、微信开发工具与 iOS/Android 平台运行待验证；不归档整个任务。
