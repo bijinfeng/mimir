@@ -35,4 +35,4 @@
 
 OS IME、读屏、Electron关闭、原生播放/拖动/全屏、下载落盘完成、各Office内部工具及真实写入尚未执行，保留宿主验证边界；不声称完全像素等同或所有枚举状态GUI通过。原型外置模拟条/Office工具示意与产品真实字数条/工具区属于既定宿主差异。
 
-本轮实施与限定验证已交付；因完整`pnpm check`未通过，任务仍为`in_progress / implemented_verified_global_gate_pending`，不归档，不推送。按AGENTS提交节奏只提交本任务代码/测试/规范/记录，commit随后登记于task.json和父台账。
+本轮实施与限定验证已交付；因完整`pnpm check`未通过，任务仍为`in_progress / implemented_verified_global_gate_pending`，不归档，不推送。按AGENTS提交节奏只提交本任务代码/测试/规范/记录，实施commit `675e6aefeac9c1edf6849200047e7d943000412b` 已登记于task.json和父台账。
