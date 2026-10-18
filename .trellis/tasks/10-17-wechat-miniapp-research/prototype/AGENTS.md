@@ -2,6 +2,10 @@
 
 ## Prototype Instructions
 
+### Confirmed Mimir prototype feedback
+
+On 2026-10-18 the user rejected the first prototype's spacious presentation: “交互感觉和我们现在的紧凑，简单的设计不太一样”. Follow the current Mimir compact workspace contract in `.trellis/spec/project/design.md` §0.3–0.4. Keep operational UI dense and direct: no promotional hero, decorative intro icon, repeated page title, persistent tutorial, or duplicate scope control. Keep review-only scenarios in compact external controls. Preserve readable document spacing and at least 44px touch targets; do not equate compactness with smaller text or hit areas. This feedback changes the prototype presentation, not MVP scope or authorization for production implementation.
+
 In ChatGPT Work Mode, run `sites-preview start "$PWD"`, open `http://terminal.local:4173/` in the cloud browser, and verify the rendered app and its primary interactions. Keep that preview open and tell the user to inspect it in the cloud browser; do not present the local URL as a user-facing chat link. In Codex Desktop, run the local server yourself, open the preview in the in-app browser, and provide the clickable local URL. Do not deploy to Sites unless the user explicitly asks to share, publish, or deploy. Do not give the user server-start instructions when you can run it.
 
 Before planning or implementing any mobile-app change, read this `AGENTS.md` in full. It is the source of truth for the template's runtime and component guidance.

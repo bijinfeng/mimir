@@ -437,7 +437,7 @@ export default function Prototype() {
       setAnswerScope(libs[0].name);
     }
   };
-  const rows = (items: Doc[]) =>
+  const rows = (items: Doc[], showExcerpt = false) =>
     items.map((d) => (
       <button className="doc-row" key={d.id} onClick={() => read(d)}>
         <span className={"file-icon " + d.kind}>
@@ -451,9 +451,9 @@ export default function Prototype() {
         </span>
         <span className="row-copy">
           <strong>{d.title}</strong>
-          <span>{d.summary}</span>
+          {showExcerpt && <span>{d.summary}</span>}
           <small>
-            {d.kind === "note" ? "笔记" : d.kind === "web" ? "网页资料" : "PDF · 12 页"} · 今天
+            {d.kind === "note" ? "笔记" : d.kind === "web" ? "网页资料" : "PDF"} · 今天
             10:24
           </small>
         </span>
@@ -492,63 +492,28 @@ export default function Prototype() {
   return (
     <>
       {createPortal(
-        <aside className="review-rail">
-          <a
-            className="review-brand"
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              scenario("开始提问", "ask");
-            }}
-          >
-            <img src="/mimir.svg" alt="" />
-            mimir<span>微信小程序</span>
-          </a>
-          <h1>让交互先发生。</h1>
-          <p>
-            高保真交互原型 · v1
-            <br />
-            示例资料与模拟结果，不连接真实服务。
-          </p>
-          <div className="scenario-list">
-            {scenarios.map(([label, p, detail], i) => (
-              <button
-                key={label}
-                aria-current={scene === label ? "step" : undefined}
-                onClick={() => scenario(label, p)}
-              >
-                <span className="scenario-num">{String(i + 1).padStart(2, "0")}</span>
-                <span>
-                  <strong>{label}</strong>
-                  <small>{detail}</small>
-                </span>
-                <ArrowRight size={16} />
-              </button>
-            ))}
+        <aside className="review-controls" aria-label="原型评审工具">
+          <div className="review-control-row">
+            <label htmlFor="prototype-scene">原型场景</label>
+            <select
+              id="prototype-scene"
+              aria-label="选择原型场景"
+              value={scene}
+              onChange={(e) => {
+                const s = scenarios.find((s) => s[0] === e.target.value)!;
+                scenario(s[0], s[1]);
+              }}
+            >
+              {scenarios.map((s) => (
+                <option key={s[0]}>{s[0]}</option>
+              ))}
+            </select>
+            <button onClick={() => setDark(!dark)}>
+              {dark ? "浅色外观" : "深色外观"}
+            </button>
           </div>
-          <div className="review-bottom">
-            <button onClick={() => setDark(!dark)}>{dark ? "切换浅色外观" : "查看深色外观"}</button>
-            <span>点按操作，拖动正文滚动</span>
-          </div>
+          <p>模拟资料与结果 · 未连接真实服务</p>
         </aside>,
-        document.body,
-      )}
-      {createPortal(
-        <div className="compact-scenarios">
-          <span>原型场景</span>
-          <select
-            aria-label="选择原型场景"
-            value={scene}
-            onChange={(e) => {
-              const s = scenarios.find((s) => s[0] === e.target.value)!;
-              scenario(s[0], s[1]);
-            }}
-          >
-            {scenarios.map((s) => (
-              <option key={s[0]}>{s[0]}</option>
-            ))}
-          </select>
-        </div>,
         document.body,
       )}
       <div className={"mimir-app" + (dark ? " dark" : "")}>
@@ -625,57 +590,37 @@ export default function Prototype() {
                   </div>
                   {mode === "search" ? (
                     <>
-                      <div className="intro search-intro">
-                        <Search size={27} />
-                        <h1>找到你存下的资料</h1>
-                        <p>直接查看原文与命中片段</p>
-                      </div>
                       {searched ? (
                         <>
                           <div className="section-heading">
                             <span>“{searched}”的检索结果</span>
                             <small>{hits.length} 篇</small>
                           </div>
-                          {rows(hits)}
+                          {rows(hits, true)}
                           {!hits.length && (
                             <div className="empty-state">
-                              <Search />
                               <h2>没有找到相关资料</h2>
                               <p>试试更短的关键词，或主动切换范围。</p>
                             </div>
                           )}
                         </>
                       ) : (
-                        <p className="search-hint">
-                          搜索标题和已入库正文
-                          <br />
-                          不生成 AI 回答
-                        </p>
+                        <div className="ask-empty">
+                          <h1>搜索资料</h1>
+                          <p>输入标题或正文关键词，直接查看原文。</p>
+                        </div>
                       )}
                     </>
                   ) : answer === "empty" ? (
                     <>
-                      <div className="intro">
-                        <BookOpen className="intro-mark" size={31} strokeWidth={1.5} />
-                        <h1>
-                          从你的知识里
-                          <br />
-                          找到答案
-                        </h1>
-                        <p>带着问题来，带着来源离开。</p>
-                        <button className="scope-pill" onClick={() => open("scope")}>
-                          <Folder size={15} />
-                          <span>{scope}</span>
-                          <ChevronDown size={15} />
-                        </button>
+                      <div className="ask-empty">
+                        <h1>向知识库提问</h1>
                       </div>
                       <div className="suggestions">
-                        <p>可以从这里开始</p>
                         {(scope === "全部知识库" || libs.some((l) => l.name === scope)
                           ? [
                               "怎样做一次有产出的每周回顾？",
                               "收集的资料，怎样变成自己的知识？",
-                              "记录之后，如何建立知识之间的联系？",
                             ]
                           : ["这篇文档有哪些值得行动的建议？", "文中建议怎样安排回顾时间？"]
                         ).map((q) => (
@@ -701,12 +646,9 @@ export default function Prototype() {
                     </>
                   ) : !evidence.length ? (
                     <div className="empty-state">
-                      <Search size={30} />
                       <h2>这个范围内没有可用资料</h2>
                       <p>当前知识库为空，没有依据可生成回答。</p>
-                      <button className="text-button" onClick={() => open("scope")}>
-                        选择其他范围
-                      </button>
+                      <p>更换下方范围后重试。</p>
                     </div>
                   ) : (
                     <>
@@ -806,10 +748,6 @@ export default function Prototype() {
               )}
               {page === "library" && (
                 <>
-                  <div className="page-heading">
-                    <h1>知识库</h1>
-                    <p>你的笔记与资料，都在这里。</p>
-                  </div>
                   <button
                     className="search-entry"
                     onClick={() => {
@@ -838,11 +776,10 @@ export default function Prototype() {
                       }}
                     >
                       <span className="library-icon">
-                        <BookOpen size={24} />
+                        <BookOpen size={20} />
                       </span>
                       <span className="row-copy">
                         <strong>{l.name}</strong>
-                        <span>{l.description}</span>
                         <small>{docs.filter((d) => d.folder === l.name).length} 篇资料</small>
                       </span>
                       <ChevronRight size={18} />
@@ -856,11 +793,6 @@ export default function Prototype() {
               )}
               {page === "folder" && (
                 <>
-                  <div className="page-heading">
-                    <BookOpen className="library-glyph" size={30} />
-                    <h1>{library}</h1>
-                    <p>{libs.find((l) => l.name === library)?.description}</p>
-                  </div>
                   <div className="library-tools">
                     <button
                       className="primary"
@@ -913,7 +845,6 @@ export default function Prototype() {
                     (d) => d.folder === library && (!filtered || d.tags.includes("方法")),
                   ) && (
                     <div className="empty-state">
-                      <BookOpen size={32} />
                       <h2>{filtered ? "没有这个标签的资料" : "这里还没有资料"}</h2>
                       <p>写下笔记，或收集一篇值得留下的文章。</p>
                     </div>
@@ -1006,13 +937,22 @@ export default function Prototype() {
                     <Markdown text={draft} />
                   ) : (
                     <KeyboardTextarea
-                      className="source-editor"
+                      className={"source-editor" + (isKeyboardVisible ? " keyboard-open" : "")}
                       aria-label="Markdown 正文"
                       placeholder="写下你的想法…"
                       value={draft}
                       onChange={(e) => {
-                        setDraft(e.target.value);
+                        const editor = e.currentTarget;
+                        const shortened = editor.value.length < draft.length;
+                        setDraft(editor.value);
                         setKept(true);
+                        if (shortened) {
+                          // A shorter draft must not leave the viewport at the old editor's tail.
+                          requestAnimationFrame(() => {
+                            if (editor.isConnected && editor.scrollHeight <= 240)
+                              editor.closest(".page-edit")?.scrollIntoView({ block: "start" });
+                          });
+                        }
                       }}
                       spellCheck={false}
                     />
@@ -1022,18 +962,12 @@ export default function Prototype() {
               )}
               {page === "capture" && (
                 <>
-                  <div className="page-heading">
-                    <Link className="library-glyph" size={28} />
-                    <h1>把好资料留下来</h1>
-                    <p>粘贴网页或公众号文章链接，稍后也能找回来。</p>
-                  </div>
                   {capture === "done" ? (
                     <div className="capture-success">
                       <span className="success-symbol">
                         <Check size={28} />
                       </span>
                       <h2>资料已入库</h2>
-                      <p>让知识重新参与思考</p>
                       <small>已存入「{target}」</small>
                       <button
                         className="primary full"
@@ -1103,10 +1037,6 @@ export default function Prototype() {
               )}
               {page === "history" && (
                 <>
-                  <div className="page-heading">
-                    <h1>会话历史</h1>
-                    <p>接着上次的问题，继续想下去。</p>
-                  </div>
                   <div className="section-heading">今天</div>
                   {["怎样做一次有产出的每周回顾？", "怎样建立知识回顾习惯？"].map((q) => (
                     <button
@@ -1142,7 +1072,6 @@ export default function Prototype() {
                       <ShieldCheck size={18} />
                       已连接你的 Mimir
                     </span>
-                    <p>电脑与手机，使用同一份知识。</p>
                     <small>固定服务端 · 示例连接</small>
                   </div>
                   <button className="settings-row" onClick={() => go("history")}>
@@ -1165,9 +1094,7 @@ export default function Prototype() {
               {page === "login" && (
                 <>
                   <div className="login-brand">
-                    <img src="/mimir.svg" alt="" />
-                    <h1>你的知识，随身可问。</h1>
-                    <p>登录已有 Mimir 账号</p>
+                    <h1>登录 Mimir</h1>
                   </div>
                   <form
                     onSubmit={(e) => {
@@ -1243,7 +1170,7 @@ export default function Prototype() {
           </MobileScroll>
         </div>
         {page === "ask" && (
-          <div className="composer" style={{ bottom: bottomInset + (isKeyboardVisible ? 0 : 65) }}>
+          <div className="composer" style={{ bottom: bottomInset + (isKeyboardVisible ? 0 : 61) }}>
             <button className="composer-scope" onClick={() => open("scope")}>
               <Folder size={14} />
               <span>{scope}</span>
@@ -1338,7 +1265,6 @@ export default function Prototype() {
             <button className="secondary" onClick={() => (dirty ? open("leave") : go("read"))}>
               取消
             </button>
-            <span>{preview ? "阅读预览" : "源文编辑"}</span>
             <button className="primary" disabled={!dirty} onClick={() => save()}>
               <Check size={17} />
               保存
