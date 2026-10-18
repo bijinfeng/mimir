@@ -1,0 +1,58 @@
+[
+  {
+    "id": "weknora-site",
+    "url": "https://weknora.weixin.qq.com/",
+    "final_url": "https://weknora.weixin.qq.com/",
+    "status": 200,
+    "response_sha256": "6ae3d1aefe92980cded37b949947f077e12c227993745c7f10f5124ec2baedbe",
+    "snapshot": "weknora-site.txt",
+    "snapshot_sha256": "ff1c7aa7e2aa656f7c4c5fc3906bd5c056707b5e116d30d9dcee7c5ddf8f5ef7",
+    "checked_date": "2026-10-18",
+    "snapshot_note": "Extracted text snapshot with line-end whitespace normalized; original HTTP response hash retained separately."
+  },
+  {
+    "id": "weknora-miniapp-config",
+    "url": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/miniprogram/app.json",
+    "error": "The read operation timed out",
+    "checked_date": "2026-10-18"
+  },
+  {
+    "id": "weknora-miniapp-readme",
+    "url": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/miniprogram/README.md",
+    "final_url": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/miniprogram/README.md",
+    "status": 200,
+    "response_sha256": "f0c9dfde74453dcc7261e8aace9bf1c38e98ad7793e5f65a50d168be6823c07d",
+    "snapshot": "weknora-miniapp-readme.txt",
+    "snapshot_sha256": "f0c9dfde74453dcc7261e8aace9bf1c38e98ad7793e5f65a50d168be6823c07d",
+    "checked_date": "2026-10-18",
+    "snapshot_note": "Extracted text snapshot with line-end whitespace normalized; original HTTP response hash retained separately."
+  },
+  {
+    "id": "obsidian-mobile-help",
+    "url": "https://help.obsidian.md/mobile",
+    "final_url": "https://obsidian.md/help/mobile",
+    "status": 200,
+    "response_sha256": "66f5c61b53816b36440c46e713d3a5c895749c205963c3ce377d1de1a8c79db9",
+    "snapshot": "obsidian-mobile-help.txt",
+    "snapshot_sha256": "1c7ece2d6a3671c08f39089cf53e0edf4e6292ebce294cd5f7c67207a31b094f",
+    "checked_date": "2026-10-18",
+    "snapshot_note": "Extracted text snapshot with line-end whitespace normalized; original HTTP response hash retained separately."
+  },
+  {
+    "id": "flomo-quick-input",
+    "url": "https://help.flomoapp.com/basic/quick-input.html",
+    "final_url": "https://help.flomoapp.com/basic/quick-input.html",
+    "status": 200,
+    "response_sha256": "47163686cc0f7e70afc94959fda8f9ea6beda5e082f3c14f197531d12e15a006",
+    "snapshot": "flomo-quick-input.txt",
+    "snapshot_sha256": "2792b53e1ea6d4a53b92f66cdbbfe326cddbebb25537b5ff0791594302ff596e",
+    "checked_date": "2026-10-18",
+    "snapshot_note": "Extracted text snapshot with line-end whitespace normalized; original HTTP response hash retained separately."
+  },
+  {
+    "id": "reader-site",
+    "url": "https://readwise.io/read",
+    "error": "<urlopen error _ssl.c:1063: The handshake operation timed out>",
+    "checked_date": "2026-10-18"
+  }
+]

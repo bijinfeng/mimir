@@ -1,0 +1,208 @@
+{
+  "checked_date": "2026-10-18",
+  "evidence_type": "official publisher App Store assets, not hands-on mobile app testing",
+  "products": [
+    {
+      "product": "obsidian",
+      "metadata_file": "obsidian-metadata.json",
+      "version": "1.14.5",
+      "name": "Obsidian - Connected Notes",
+      "screenshots": [
+        {
+          "index": 1,
+          "file": "obsidian-store-01.png",
+          "url": "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource122/v4/d2/2f/09/d22f093d-b50c-3bb2-6277-f119c1e71986/d3dde89e-453a-4ae6-bbd1-cacd5424afb5_1.png/392x696bb.png",
+          "sha256": "3a14129b782f690662fe1fcd1f6f2dc4be2edc5babd73fb3cec007a93c559d90"
+        },
+        {
+          "index": 2,
+          "file": "obsidian-store-02.png",
+          "url": "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource122/v4/00/aa/7a/00aa7a68-e75b-e84c-9359-8215e131c432/9ee95548-8b05-406b-a4f9-f9d2b42e8cb0_2.png/392x696bb.png",
+          "sha256": "7b105ff4ba29848ab2db69f9f61e188cfaa9083251dd861f21fcfb8bddc3106b"
+        },
+        {
+          "index": 3,
+          "file": "obsidian-store-03.png",
+          "url": "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource112/v4/aa/1e/50/aa1e503e-a96a-70af-d352-3d613c293cef/769f649e-06d2-4d9b-8184-053fc5c53da8_3.png/392x696bb.png",
+          "sha256": "d43d66a71ccdc827909b8d9b8f367137fa8a3cd1bc319b05ad1853c9aae685ca"
+        },
+        {
+          "index": 4,
+          "file": "obsidian-store-04.png",
+          "url": "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource122/v4/4c/04/d9/4c04d969-bf6f-168b-25f8-94af958e14bc/86090b2d-b1b9-4e32-b612-01cf91d56e66_4.png/392x696bb.png",
+          "sha256": "88814b2c4d01681a122385975a5d8b9215558fa5316bc8c6bcae82a85bb263ff"
+        },
+        {
+          "index": 5,
+          "file": "obsidian-store-05.png",
+          "url": "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource112/v4/33/53/38/3353388d-d3f7-61d7-70f6-a1955cacc079/b3602843-b9b0-4f39-8098-639c867bab11_5.png/392x696bb.png",
+          "sha256": "11c4160acbb1d8b6d9e6db27e4d6f2c6f469326f1637029995eafd89b1474763"
+        },
+        {
+          "index": 6,
+          "file": "obsidian-store-06.png",
+          "url": "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource112/v4/68/98/f4/6898f455-0d41-9534-dfa4-d1ce44604cdc/44ef04dd-c1bb-4737-88dc-106876ef5e41_6.png/392x696bb.png",
+          "sha256": "11872452613c021f5f65ea43fb4efa4896d35aa7631b86dfb8a3930c70ca1fbc"
+        },
+        {
+          "index": 7,
+          "file": "obsidian-store-07.png",
+          "url": "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource122/v4/25/b1/76/25b1760e-dbec-4bdb-e1b2-4f8ab2b7460c/1c3ca44c-2412-4fc2-b48e-023404bd0a36_7.png/392x696bb.png",
+          "sha256": "5c3da946f604ffdb7c707bcaad3e9b5c571426b7f174926e084e5db21c75ddf1"
+        }
+      ]
+    },
+    {
+      "product": "notebooklm",
+      "metadata_file": "notebooklm-metadata.json",
+      "version": "1.61.7",
+      "name": "Gemini Notebook",
+      "screenshots": [
+        {
+          "index": 2,
+          "file": "notebooklm-store-02.jpg",
+          "url": "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/61/d9/06/61d9068d-db96-bc4d-9417-097baa6b0987/GNB_AppStore_iOS_Mobile_Home.jpg/320x480bb.jpg",
+          "sha256": "38750d0f5414dff55fc7d1c419621a3859d79fd7316714eed0e584bb64629313"
+        },
+        {
+          "index": 3,
+          "file": "notebooklm-store-03.jpg",
+          "url": "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/0e/59/5b/0e595bb4-a1ae-981e-e487-c469f36e3bd3/GNB_AppStore_iOS_Mobile_Sources.jpg/320x480bb.jpg",
+          "sha256": "a85e9d49d759a1bac75728aaac30addef8b4733cd75f0e31200344ce8e24b1dd"
+        },
+        {
+          "index": 5,
+          "file": "notebooklm-store-05.jpg",
+          "url": "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/99/16/e8/9916e82d-74fa-bee1-984e-d7f60608d4bf/GNB_AppStore_iOS_Mobile_Chat.jpg/320x480bb.jpg",
+          "sha256": "ec949ef627fb677b9ec3a900c953c0d3f93739b468b05417da709f01dc413e59"
+        },
+        {
+          "index": 6,
+          "file": "notebooklm-store-06.jpg",
+          "url": "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/9b/6e/03/9b6e03d6-25cb-0852-ce70-07dad679f39a/GNB_AppStore_iOS_Mobile_ShareSheet.jpg/320x480bb.jpg",
+          "sha256": "b749ee91d7baecec542d6fab3658de164b713486ed25c37c6c7e6aef3918c4a5"
+        }
+      ]
+    },
+    {
+      "product": "ima",
+      "metadata_file": "ima-metadata.json",
+      "version": "2.6.12",
+      "name": "ima - 腾讯AI知识管家",
+      "screenshots": [
+        {
+          "index": 1,
+          "file": "ima-store-01.jpg",
+          "url": "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/d1/33/8a/d1338a67-4a1a-77da-9028-21f0363b6ebe/01.jpg/320x480bb.jpg",
+          "sha256": "b8c3f8b0260f764a672a018f37d7f4e95c7fcb15f5b5f2a1f2e310454a86545f"
+        },
+        {
+          "index": 2,
+          "file": "ima-store-02.jpg",
+          "url": "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/e8/5e/0c/e85e0cca-3182-aca0-7ca3-3b23ed120278/02.jpg/320x480bb.jpg",
+          "sha256": "85019408d92bac3a849731205fe79bb10d83e5049868b6c95dd9ade3ed790cb2"
+        },
+        {
+          "index": 3,
+          "file": "ima-store-03.jpg",
+          "url": "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/69/a7/3f/69a73f7d-16fe-05e4-3ac2-136a6195c25c/03.jpg/320x480bb.jpg",
+          "sha256": "f6ff630cf4a848258bdfce34437fb2df6f650dea908ae716e3922851f43cdd56"
+        },
+        {
+          "index": 4,
+          "file": "ima-store-04.jpg",
+          "url": "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/1c/1f/0e/1c1f0eff-8774-3f15-7d93-07dd536829ba/04.jpg/320x480bb.jpg",
+          "sha256": "8e628bf39680b08448150c78970aecf6a7e80d33fbe074ef9b4b3a506faefe49"
+        },
+        {
+          "index": 5,
+          "file": "ima-store-05.jpg",
+          "url": "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/7d/9f/43/7d9f438e-d1a8-2f70-e550-ac3038f777a7/05.jpg/320x480bb.jpg",
+          "sha256": "b90d5f62f37dea969b17cc92357982d3dfb3d608cc624dc33893264b2d5dec15"
+        },
+        {
+          "index": 6,
+          "file": "ima-store-06.jpg",
+          "url": "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/39/b4/c8/39b4c8ce-2d94-4dce-e311-1503a77c1c0e/06.jpg/320x480bb.jpg",
+          "sha256": "bfcd70190840f289843155b22eb77ebcb8be7781ada7ab677604eb34d7c10e33"
+        }
+      ]
+    },
+    {
+      "product": "flomo",
+      "metadata_file": "flomo-metadata.json",
+      "version": "5.5.4",
+      "name": "flomo浮墨笔记-AI语音备忘|卡片便签|日记回顾与洞察",
+      "screenshots": [
+        {
+          "index": 1,
+          "file": "flomo-store-01.jpg",
+          "url": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/e7/e3/98/e7e39837-5f31-6f2a-d4a9-a07310611e81/dca8c83d-90a0-4849-97df-ac3db2c1f08b_appstore_01.jpg/392x696bb.jpg",
+          "sha256": "e3018b90ca3588e3d366df89c90666386d206145fdffd1eec41f3add41a07555"
+        },
+        {
+          "index": 2,
+          "file": "flomo-store-02.jpg",
+          "url": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/65/bc/f9/65bcf9fd-54c0-a35d-63d1-efd7c90e45fc/ff9eaba7-062c-47da-9644-63e981f13e90_appstore_03.jpg/392x696bb.jpg",
+          "sha256": "4c67af9d8f0c34e27f2ea96fa5b64c79794bdbfb54a93aa8b8654bee5f9135c7"
+        },
+        {
+          "index": 3,
+          "file": "flomo-store-03.jpg",
+          "url": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/80/3e/26/803e26f7-bc34-a9d0-8ee4-8033fce60219/8c590809-484f-40e8-ba29-4840f63002d8_appstore_04.jpg/392x696bb.jpg",
+          "sha256": "d06ee285e9962384e3fe6bc97fb0207e53265b8308dfb848dc698fccd9e9c561"
+        },
+        {
+          "index": 4,
+          "file": "flomo-store-04.jpg",
+          "url": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/9f/3c/83/9f3c8378-4c93-b520-c73f-52a350e12598/3a448fe7-ea3e-4b69-9c98-2ee8c3ed21dc_appstore_05.jpg/392x696bb.jpg",
+          "sha256": "905e220cf22f1d37e8951bec7c16886af091d23e477ee73005a6750be2daa03f"
+        },
+        {
+          "index": 5,
+          "file": "flomo-store-05.jpg",
+          "url": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/e9/6e/76/e96e762e-c85d-939e-76ff-863b70418ae4/cab713f0-882d-4a7f-9f5e-bcb359d58cb3_appstore_02.jpg/392x696bb.jpg",
+          "sha256": "6da2bf71ab771ee830387f734fa27000a890cb14faf89d28d2294a9c43ad2774"
+        },
+        {
+          "index": 6,
+          "file": "flomo-store-06.jpg",
+          "url": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/8d/13/d1/8d13d19e-7ad9-7427-107e-cf0e3bbecfa0/b713c63f-0084-4261-b876-2747c35d7927_appstore_04-1.jpg/392x696bb.jpg",
+          "sha256": "c3c591080762356fd8794e3164194a2e66dc2ab07a81047b56f4a925b51a4754"
+        }
+      ]
+    },
+    {
+      "product": "reader",
+      "metadata_file": "reader-metadata.json",
+      "version": "8.25",
+      "name": "Readwise Reader",
+      "screenshots": [
+        {
+          "index": 1,
+          "file": "reader-store-01.png",
+          "url": "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/73/03/0f/73030f7d-b543-8432-6665-8219d5c42587/iphone55-01.png/392x696bb.png",
+          "sha256": "34b4e71e18f54fdb54aa2fea6fc1429490899235b5c3c3b3059b85d9bccf3799"
+        },
+        {
+          "index": 2,
+          "file": "reader-store-02.png",
+          "url": "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/58/ff/48/58ff4898-67d6-7774-fb18-41be5e4ba839/iphone55-03.png/392x696bb.png",
+          "sha256": "470130f4161f84c77925a382bbd9c8a3e5d08124280088315e8f97ad1b0f38c1"
+        },
+        {
+          "index": 3,
+          "file": "reader-store-03.png",
+          "url": "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/4c/f4/64/4cf46454-cd67-3c06-67ee-b2f0d9dd5c13/iphone55-04.png/392x696bb.png",
+          "sha256": "840394ce33587c0eab0393d2379e3536023d18329342676877cc36767f82ff58"
+        },
+        {
+          "index": 4,
+          "file": "reader-store-04.png",
+          "url": "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/45/3e/5c/453e5c1f-243d-23a1-c1e2-02d55277bba6/iphone55-02.png/392x696bb.png",
+          "sha256": "1c4a68b9a63b1e217eaa7682e055b057bbb4e66a2b3a3ecbea7b8dba63295115"
+        }
+      ]
+    }
+  ]
+}

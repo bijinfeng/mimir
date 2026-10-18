@@ -1,0 +1,23 @@
+{
+  "trackId": 1557175442,
+  "trackName": "Obsidian - Connected Notes",
+  "artistName": "Dynalist Inc.",
+  "version": "1.14.5",
+  "currentVersionReleaseDate": "2026-10-09T21:06:22Z",
+  "trackViewUrl": "https://apps.apple.com/us/app/obsidian-connected-notes/id1557175442?uo=4",
+  "description": "Obsidian is a powerful knowledge base that works on top of a local folder of plain text Markdown files.\n\nIt is a second brain, for you, forever. Now available on the go for iOS!\n\nFeatures include:\n- Customizable toolbar\n- Pull down quick actions\n- Graph view\n- Community plugins\n- Themes\n- Sidebar pinning for tablet\n- iCloud vaults",
+  "releaseNotes": "Fixed crash for iOS versions below 16.3.",
+  "screenshotUrls": [
+    "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource122/v4/d2/2f/09/d22f093d-b50c-3bb2-6277-f119c1e71986/d3dde89e-453a-4ae6-bbd1-cacd5424afb5_1.png/392x696bb.png",
+    "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource122/v4/00/aa/7a/00aa7a68-e75b-e84c-9359-8215e131c432/9ee95548-8b05-406b-a4f9-f9d2b42e8cb0_2.png/392x696bb.png",
+    "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource112/v4/aa/1e/50/aa1e503e-a96a-70af-d352-3d613c293cef/769f649e-06d2-4d9b-8184-053fc5c53da8_3.png/392x696bb.png",
+    "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource122/v4/4c/04/d9/4c04d969-bf6f-168b-25f8-94af958e14bc/86090b2d-b1b9-4e32-b612-01cf91d56e66_4.png/392x696bb.png",
+    "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource112/v4/33/53/38/3353388d-d3f7-61d7-70f6-a1955cacc079/b3602843-b9b0-4f39-8098-639c867bab11_5.png/392x696bb.png",
+    "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource112/v4/68/98/f4/6898f455-0d41-9534-dfa4-d1ce44604cdc/44ef04dd-c1bb-4737-88dc-106876ef5e41_6.png/392x696bb.png",
+    "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource122/v4/25/b1/76/25b1760e-dbec-4bdb-e1b2-4f8ab2b7460c/1c3ca44c-2412-4fc2-b48e-023404bd0a36_7.png/392x696bb.png"
+  ],
+  "lookup_url": "https://itunes.apple.com/lookup?id=1557175442&country=us",
+  "checked_date": "2026-10-18",
+  "lookup_sha256": "9562324d4d9b3c4e445f2f90a6109800154bd90f59380bdfbe1e3f13a75cf676",
+  "capture_note": "Publisher-supplied App Store screenshots; screenshot build/date unspecified; current metadata version does not prove pictured build."
+}

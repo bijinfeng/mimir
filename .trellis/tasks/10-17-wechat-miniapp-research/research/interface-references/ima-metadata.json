@@ -1,0 +1,22 @@
+{
+  "trackId": 6737188438,
+  "trackName": "ima - 腾讯AI知识管家",
+  "artistName": "Tencent Technology (Shenzhen) Company Limited",
+  "version": "2.6.12",
+  "currentVersionReleaseDate": "2026-09-28T09:05:12Z",
+  "trackViewUrl": "https://apps.apple.com/cn/app/ima-%E8%85%BE%E8%AE%AFai%E7%9F%A5%E8%AF%86%E7%AE%A1%E5%AE%B6/id6737188438?uo=4",
+  "description": "ima是以知识库为基础的AI知识管家，提供“搜-读-写”一站式体验，具备以下核心功能：\n• copilot：你的专属知识伙伴，擅长解决复杂任务，还会记住你的习惯偏好，越用越懂你\n• 个人知识库：支持本地文件、微信文件、公众号文章、网页、图片、音频等多种内容解读，构建专属“第二大脑”\n• 共享知识库：经验知识轻松流动，我的ima，也是我们的ima\n• 知识库广场：发现各领域优质知识库，别人的智慧为我所用\n• 录音纪要：长达2小时录音，支持多种语言，自动生成原文和纪要，会议记录很轻松\n• 笔记：优质内容随手摘录记入笔记，随时唤起AI帮写生成文案、扩写、润色，还能一键配图\n• AI生图：输入描述，快速生成指定比例、风格的图片，改到满意为止\n• AI解读：上传文档，一键生成思维导图、真人有声播客、知识小测验，信息轻松消化\n• 图文并茂：针对文档问答，自动匹配相关图表，内容更易懂\nima专注于工作与学习场景，能实现信息的智能分析解读、交互式AI问答、高质量内容生成，辅助你完成课程学习、学术研究、信息整理/共享/应用等日常任务。",
+  "releaseNotes": "1. 问问ima支持agent工具调用；\n2. 修复一些已知问题，体验更流畅。",
+  "screenshotUrls": [
+    "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/d1/33/8a/d1338a67-4a1a-77da-9028-21f0363b6ebe/01.jpg/320x480bb.jpg",
+    "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/e8/5e/0c/e85e0cca-3182-aca0-7ca3-3b23ed120278/02.jpg/320x480bb.jpg",
+    "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/69/a7/3f/69a73f7d-16fe-05e4-3ac2-136a6195c25c/03.jpg/320x480bb.jpg",
+    "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/1c/1f/0e/1c1f0eff-8774-3f15-7d93-07dd536829ba/04.jpg/320x480bb.jpg",
+    "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/7d/9f/43/7d9f438e-d1a8-2f70-e550-ac3038f777a7/05.jpg/320x480bb.jpg",
+    "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/39/b4/c8/39b4c8ce-2d94-4dce-e311-1503a77c1c0e/06.jpg/320x480bb.jpg"
+  ],
+  "lookup_url": "https://itunes.apple.com/lookup?id=6737188438&country=cn",
+  "checked_date": "2026-10-18",
+  "lookup_sha256": "bd6c2f4f12c297c93be9eee2dd67362bf18c5bd21373430c0356b7039e3f41f0",
+  "capture_note": "Publisher-supplied App Store screenshots; screenshot build/date unspecified; current metadata version does not prove pictured build."
+}

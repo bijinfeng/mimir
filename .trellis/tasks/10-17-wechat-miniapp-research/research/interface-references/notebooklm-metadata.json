@@ -1,0 +1,22 @@
+{
+  "trackId": 6737527615,
+  "trackName": "Gemini Notebook",
+  "artistName": "Google",
+  "version": "1.61.7",
+  "currentVersionReleaseDate": "2026-10-12T15:00:43Z",
+  "trackViewUrl": "https://apps.apple.com/us/app/gemini-notebook/id6737527615?uo=4",
+  "description": "Turn complexity into clarity with Gemini Notebook, your brain’s new best friend. Join the millions of students, creators, researchers, professionals, CEOs, and more who are saving time, getting stuff done, and learning in new ways.\n\n“One of the most compelling and completely flabbergasting demonstrations of AI’s potential yet.” – The Wall Street Journal\n\nNow, with the Gemini Notebook app, you can create and access notebooks, ask questions whenever you think of them, and listen to your podcast-style Audio Overviews on the go with background playback and offline support.\n\nUPLOAD SOURCES\nUpload all your long and complex PDFs, websites, YouTube videos, or text into a notebook.\n\nINSIGHTS YOU CAN TRUST\nGemini Notebook becomes an expert on your sources, summarizing them and making interesting connections. Then, you can ask it questions about, well, anything — and you can trust the answers, since your sources are cited in-line.\n\nLEARN YOUR OWN WAY\nLong blocks of text not your preferred way to learn? Transform what you uploaded into something more your speed, like a podcast-style audio discussion with two engaging AI hosts. You can even join the show to ask questions or steer the conversation in a different direction.",
+  "releaseNotes": "Bug fixes and improvements!",
+  "screenshotUrls": [
+    "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/54/a1/64/54a1648e-6b2c-0131-b0aa-6f6129dd8697/GNB_AppStore_iOS_Mobile_Splash.jpg/320x480bb.jpg",
+    "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/61/d9/06/61d9068d-db96-bc4d-9417-097baa6b0987/GNB_AppStore_iOS_Mobile_Home.jpg/320x480bb.jpg",
+    "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/0e/59/5b/0e595bb4-a1ae-981e-e487-c469f36e3bd3/GNB_AppStore_iOS_Mobile_Sources.jpg/320x480bb.jpg",
+    "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/34/1d/52/341d5267-0ec2-abad-9d49-3459649d43a9/GNB_AppStore_iOS_Mobile_Audio.jpg/320x480bb.jpg",
+    "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/99/16/e8/9916e82d-74fa-bee1-984e-d7f60608d4bf/GNB_AppStore_iOS_Mobile_Chat.jpg/320x480bb.jpg",
+    "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/9b/6e/03/9b6e03d6-25cb-0852-ce70-07dad679f39a/GNB_AppStore_iOS_Mobile_ShareSheet.jpg/320x480bb.jpg"
+  ],
+  "lookup_url": "https://itunes.apple.com/lookup?id=6737527615&country=us",
+  "checked_date": "2026-10-18",
+  "lookup_sha256": "e300adf3d63be4fbc01bf198bcf7a3293c1b78721a633fd27640e1d94bca0c52",
+  "capture_note": "Publisher-supplied App Store screenshots; screenshot build/date unspecified; current metadata version does not prove pictured build."
+}
