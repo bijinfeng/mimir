@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-18",
+  "htmlSha256": "ce43cbea265b09b3fd75d9db9d0f3d02723ef1559f2e9a09d742750285dc2f40",
+  "scope": "GUI samples only; no product/business/native verification",
+  "gallery": {
+    "types": 16,
+    "candidateSvgCount": 96,
+    "sizes": [
+      20,
+      24,
+      32
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "desktopOverflow": false,
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "overflow": false,
+      "defaultSize": 24,
+      "selectedSize": 32,
+      "observedVisibleBoxes": [
+        32,
+        32
+      ]
+    }
+  },
+  "application": {
+    "list": {
+      "schemes": [
+        "A",
+        "B",
+        "original"
+      ],
+      "icons": 16,
+      "candidateSlot": [
+        22,
+        22
+      ],
+      "rowHeight": 56,
+      "stableAcrossSchemes": true
+    },
+    "cards": {
+      "schemes": [
+        "A",
+        "B"
+      ],
+      "icons": 16,
+      "candidateSlot": [
+        22,
+        22
+      ]
+    },
+    "before": {
+      "candidateIcons": 0,
+      "originalMaterialGlyphs": 13,
+      "otherSourceGlyphs": 3
+    },
+    "consoleErrors": []
+  },
+  "boundary": "No full 299-state rerun, native file actions, screen reader or external service tests."
+}

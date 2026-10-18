@@ -1,0 +1,294 @@
+{
+  "phosphorCommit": "2b75f3ad12b420c9504ef05df8d2564a28f8500e",
+  "materialCommit": "13025adc5ad10a5cc649528a2c1edec93069f1b9",
+  "license": "MIT (both upstream libraries)",
+  "transform": "Original SVG files retained byte for byte. Phosphor original currentColor and duotone opacity retained; CSS applies semantic colors per theme. Material original colors retained except dark-theme Word foreground changes from #01579b to #64b5f6 using scoped CSS, without a whole-icon filter.",
+  "sourceMappingNote": "B source glyphs WeChat and GitHub deliberately reuse Phosphor; http.svg is website source, HTML is a separate local file type. table.svg maps Excel; xml.svg is a generic-code fallback; document.svg covers text and unknown.",
+  "mappings": [
+    {
+      "id": "word",
+      "A": "assets/phosphor/file-doc-duotone.svg",
+      "B": "assets/material/word.svg"
+    },
+    {
+      "id": "excel",
+      "A": "assets/phosphor/file-xls-duotone.svg",
+      "B": "assets/material/table.svg"
+    },
+    {
+      "id": "powerpoint",
+      "A": "assets/phosphor/file-ppt-duotone.svg",
+      "B": "assets/material/powerpoint.svg"
+    },
+    {
+      "id": "pdf",
+      "A": "assets/phosphor/file-pdf-duotone.svg",
+      "B": "assets/material/pdf.svg"
+    },
+    {
+      "id": "audio",
+      "A": "assets/phosphor/file-audio-duotone.svg",
+      "B": "assets/material/audio.svg"
+    },
+    {
+      "id": "video",
+      "A": "assets/phosphor/file-video-duotone.svg",
+      "B": "assets/material/video.svg"
+    },
+    {
+      "id": "note",
+      "A": "assets/phosphor/file-md-duotone.svg",
+      "B": "assets/material/markdown.svg"
+    },
+    {
+      "id": "image",
+      "A": "assets/phosphor/file-image-duotone.svg",
+      "B": "assets/material/image.svg"
+    },
+    {
+      "id": "web",
+      "A": "assets/phosphor/globe-hemisphere-west-duotone.svg",
+      "B": "assets/material/http.svg"
+    },
+    {
+      "id": "wechat",
+      "A": "assets/phosphor/wechat-logo-duotone.svg",
+      "B": "assets/phosphor/wechat-logo-duotone.svg"
+    },
+    {
+      "id": "github",
+      "A": "assets/phosphor/github-logo-duotone.svg",
+      "B": "assets/phosphor/github-logo-duotone.svg"
+    },
+    {
+      "id": "html",
+      "A": "assets/phosphor/file-html-duotone.svg",
+      "B": "assets/material/html.svg"
+    },
+    {
+      "id": "text",
+      "A": "assets/phosphor/file-text-duotone.svg",
+      "B": "assets/material/document.svg"
+    },
+    {
+      "id": "archive",
+      "A": "assets/phosphor/file-zip-duotone.svg",
+      "B": "assets/material/zip.svg"
+    },
+    {
+      "id": "code",
+      "A": "assets/phosphor/file-code-duotone.svg",
+      "B": "assets/material/xml.svg"
+    },
+    {
+      "id": "unknown",
+      "A": "assets/phosphor/file-duotone.svg",
+      "B": "assets/material/document.svg"
+    }
+  ],
+  "assets": [
+    {
+      "localPath": "assets/phosphor/file-audio-duotone.svg",
+      "upstreamPath": "assets/duotone/file-audio-duotone.svg",
+      "blobSha": "63e822d7d9251f34e3030f29b8a046dd56a7b1b3",
+      "sha256": "38bd7e1976ce3af5a232985145c4c6912ad26bc6e1f88746ed8a796d4e173c0f",
+      "source": "https://api.github.com/repos/phosphor-icons/core/git/blobs/63e822d7d9251f34e3030f29b8a046dd56a7b1b3"
+    },
+    {
+      "localPath": "assets/phosphor/file-code-duotone.svg",
+      "upstreamPath": "assets/duotone/file-code-duotone.svg",
+      "blobSha": "6835d88f853f6d1d108060859b9d785038bbe875",
+      "sha256": "730c27ca9c598f83d7a4bd07fb6b2c18e1930e214fdb70573d4175a9a79a92d2",
+      "source": "https://api.github.com/repos/phosphor-icons/core/git/blobs/6835d88f853f6d1d108060859b9d785038bbe875"
+    },
+    {
+      "localPath": "assets/phosphor/file-doc-duotone.svg",
+      "upstreamPath": "assets/duotone/file-doc-duotone.svg",
+      "blobSha": "c93f70b6371a112b875e2be56b9e57b76d7201e4",
+      "sha256": "71ba3e223c85300609dcdbcbb29b8eb3535a6e44353edfe6f2ca8ff68bcf16f5",
+      "source": "https://api.github.com/repos/phosphor-icons/core/git/blobs/c93f70b6371a112b875e2be56b9e57b76d7201e4"
+    },
+    {
+      "localPath": "assets/phosphor/file-duotone.svg",
+      "upstreamPath": "assets/duotone/file-duotone.svg",
+      "blobSha": "ff8a54b2bf8216baa2f2acf51ee32cf5a7597d29",
+      "sha256": "ddb6e4c20296785f4b6dac96536b49fe2d3d13998a26017bcf4eba9e4d554d05",
+      "source": "https://api.github.com/repos/phosphor-icons/core/git/blobs/ff8a54b2bf8216baa2f2acf51ee32cf5a7597d29"
+    },
+    {
+      "localPath": "assets/phosphor/file-html-duotone.svg",
+      "upstreamPath": "assets/duotone/file-html-duotone.svg",
+      "blobSha": "eaa20d7ddaa1669d64c33d0f6242f28a30257907",
+      "sha256": "a995d7170c1e6e9743065a284beb2ab0001f8c8841f56140fe24d35774873782",
+      "source": "https://api.github.com/repos/phosphor-icons/core/git/blobs/eaa20d7ddaa1669d64c33d0f6242f28a30257907"
+    },
+    {
+      "localPath": "assets/phosphor/file-image-duotone.svg",
+      "upstreamPath": "assets/duotone/file-image-duotone.svg",
+      "blobSha": "204531ef1359861b6002c82b3b3ce5dd5aeacdb0",
+      "sha256": "1497ced443096e5c07c3ae89891c46952bd9aa9a05fae7e148c19d5839a482d2",
+      "source": "https://api.github.com/repos/phosphor-icons/core/git/blobs/204531ef1359861b6002c82b3b3ce5dd5aeacdb0"
+    },
+    {
+      "localPath": "assets/phosphor/file-md-duotone.svg",
+      "upstreamPath": "assets/duotone/file-md-duotone.svg",
+      "blobSha": "1d9eaa6e8dabf9df29022f1113aa1ba7af19039e",
+      "sha256": "2c09f50754ecfcf11902a5c7dcddd188d52556254d4cee847a28fe7948841689",
+      "source": "https://api.github.com/repos/phosphor-icons/core/git/blobs/1d9eaa6e8dabf9df29022f1113aa1ba7af19039e"
+    },
+    {
+      "localPath": "assets/phosphor/file-pdf-duotone.svg",
+      "upstreamPath": "assets/duotone/file-pdf-duotone.svg",
+      "blobSha": "5f3e46e2751a2e3fc1eedd2ff2fb6c94dfa32259",
+      "sha256": "451b593fba4a0ae151561d77eb1517fa50d8ddfcf8517afc817fa8972fd3b5bb",
+      "source": "https://api.github.com/repos/phosphor-icons/core/git/blobs/5f3e46e2751a2e3fc1eedd2ff2fb6c94dfa32259"
+    },
+    {
+      "localPath": "assets/phosphor/file-ppt-duotone.svg",
+      "upstreamPath": "assets/duotone/file-ppt-duotone.svg",
+      "blobSha": "7721199c980d85666df323bc9d08e4de95c16364",
+      "sha256": "33223c3ec22a195dc3d33d66f33c7af6faac03d8d4f907657a90453ca638aabf",
+      "source": "https://api.github.com/repos/phosphor-icons/core/git/blobs/7721199c980d85666df323bc9d08e4de95c16364"
+    },
+    {
+      "localPath": "assets/phosphor/file-text-duotone.svg",
+      "upstreamPath": "assets/duotone/file-text-duotone.svg",
+      "blobSha": "daff55db854ffd779edda46423bad37478bdc941",
+      "sha256": "6b0867a397af11f3c0a66091a4e17e3c172a42f48812ba99fc8157d9093cb7ea",
+      "source": "https://api.github.com/repos/phosphor-icons/core/git/blobs/daff55db854ffd779edda46423bad37478bdc941"
+    },
+    {
+      "localPath": "assets/phosphor/file-video-duotone.svg",
+      "upstreamPath": "assets/duotone/file-video-duotone.svg",
+      "blobSha": "e998840206d5cf0972e6e04f408719db35115a80",
+      "sha256": "1aa36d02b655d240f00f9169c08cda6b300757ff5026d65cd1cddfb6198ae31d",
+      "source": "https://api.github.com/repos/phosphor-icons/core/git/blobs/e998840206d5cf0972e6e04f408719db35115a80"
+    },
+    {
+      "localPath": "assets/phosphor/file-xls-duotone.svg",
+      "upstreamPath": "assets/duotone/file-xls-duotone.svg",
+      "blobSha": "47ac1067763a64442bda58f1a4ef98d83993daaa",
+      "sha256": "fd093243c13ff0d0403f6e0b347613d983ea22e429f191419500cb9875e94f3f",
+      "source": "https://api.github.com/repos/phosphor-icons/core/git/blobs/47ac1067763a64442bda58f1a4ef98d83993daaa"
+    },
+    {
+      "localPath": "assets/phosphor/file-zip-duotone.svg",
+      "upstreamPath": "assets/duotone/file-zip-duotone.svg",
+      "blobSha": "88f333b6e1d1090af9b6c0157d6a27fefed7c429",
+      "sha256": "9dee0c2597c5471b45ea55c87b3de872cb26bca1f8b8ea31866b83a1d7726ad7",
+      "source": "https://api.github.com/repos/phosphor-icons/core/git/blobs/88f333b6e1d1090af9b6c0157d6a27fefed7c429"
+    },
+    {
+      "localPath": "assets/material/audio.svg",
+      "upstreamPath": "icons/audio.svg",
+      "blobSha": "74f43c461753f6e9c496d981823ec6e75d52e0d2",
+      "sha256": "d4dc1adb8cb99055cb8ad0c2428d6d73ebd94435b575084af1b2e0d1f82f6cf2",
+      "source": "https://api.github.com/repos/material-extensions/vscode-material-icon-theme/git/blobs/74f43c461753f6e9c496d981823ec6e75d52e0d2"
+    },
+    {
+      "localPath": "assets/material/document.svg",
+      "upstreamPath": "icons/document.svg",
+      "blobSha": "a717956b7d28f75befe20aacf227f9088fa315f4",
+      "sha256": "64f5da56de591d5f429d2c7f5f5733388b3ce704762631ba0b487a08475f9452",
+      "source": "https://api.github.com/repos/material-extensions/vscode-material-icon-theme/git/blobs/a717956b7d28f75befe20aacf227f9088fa315f4"
+    },
+    {
+      "localPath": "assets/material/html.svg",
+      "upstreamPath": "icons/html.svg",
+      "blobSha": "71caf32b6bbff61cfe1ba0b5bfceabe6ab30b088",
+      "sha256": "23e04ad5f1ae9cd16dc79fe52c4290e5bd80f2f7bfe4c0769e7485832b3eb146",
+      "source": "https://api.github.com/repos/material-extensions/vscode-material-icon-theme/git/blobs/71caf32b6bbff61cfe1ba0b5bfceabe6ab30b088"
+    },
+    {
+      "localPath": "assets/material/http.svg",
+      "upstreamPath": "icons/http.svg",
+      "blobSha": "94574d4a5c52acef6640422e55ecd96cec063bd0",
+      "sha256": "d2e9b95d750c048059d3d5a74e245059036239b1e24a66444033dcc0bf4dba36",
+      "source": "https://api.github.com/repos/material-extensions/vscode-material-icon-theme/git/blobs/94574d4a5c52acef6640422e55ecd96cec063bd0"
+    },
+    {
+      "localPath": "assets/material/image.svg",
+      "upstreamPath": "icons/image.svg",
+      "blobSha": "0ca446bb91ebd3bcaa2f13a7ca2b753d5ecc7e5d",
+      "sha256": "838e1953a3a2ebf5c6a06b662892ba17e1c605c4379a77c61737639e51fb4f0a",
+      "source": "https://api.github.com/repos/material-extensions/vscode-material-icon-theme/git/blobs/0ca446bb91ebd3bcaa2f13a7ca2b753d5ecc7e5d"
+    },
+    {
+      "localPath": "assets/material/markdown.svg",
+      "upstreamPath": "icons/markdown.svg",
+      "blobSha": "4c224341c02a0b0a50c980859a3d6e120cbb8b05",
+      "sha256": "42f95867350ed1f349ab29b3f254405f84ae65e6d42972d74b01442027eddfcd",
+      "source": "https://api.github.com/repos/material-extensions/vscode-material-icon-theme/git/blobs/4c224341c02a0b0a50c980859a3d6e120cbb8b05"
+    },
+    {
+      "localPath": "assets/material/pdf.svg",
+      "upstreamPath": "icons/pdf.svg",
+      "blobSha": "1c84fe82d6b39bccd3a49325e6fae19477699e3a",
+      "sha256": "c14c66a3914b894da40778a6dcd00f0daa134426521aaddbd8ccea86ba4f5ffc",
+      "source": "https://api.github.com/repos/material-extensions/vscode-material-icon-theme/git/blobs/1c84fe82d6b39bccd3a49325e6fae19477699e3a"
+    },
+    {
+      "localPath": "assets/material/powerpoint.svg",
+      "upstreamPath": "icons/powerpoint.svg",
+      "blobSha": "eaba916fbb4b335849cee1a4280c6b252589885a",
+      "sha256": "40468deea73e07067459c0c3b0bbef0697e93afbc4533e961d1b441f5294871e",
+      "source": "https://api.github.com/repos/material-extensions/vscode-material-icon-theme/git/blobs/eaba916fbb4b335849cee1a4280c6b252589885a"
+    },
+    {
+      "localPath": "assets/material/table.svg",
+      "upstreamPath": "icons/table.svg",
+      "blobSha": "040b3839e82d92581a278ed7adc89b409ed87232",
+      "sha256": "1714898c0d538648edb0f8dd041d97435aa8cbac078c5897f9fa8103b36f029a",
+      "source": "https://api.github.com/repos/material-extensions/vscode-material-icon-theme/git/blobs/040b3839e82d92581a278ed7adc89b409ed87232"
+    },
+    {
+      "localPath": "assets/material/video.svg",
+      "upstreamPath": "icons/video.svg",
+      "blobSha": "2ade126f841b0e897fa4b55a9cd9789c5654df4c",
+      "sha256": "4d5d50b0f1fe5cb7aaa4892356fabffb54f8629c9f600069dd0aadd251b3c83e",
+      "source": "https://api.github.com/repos/material-extensions/vscode-material-icon-theme/git/blobs/2ade126f841b0e897fa4b55a9cd9789c5654df4c"
+    },
+    {
+      "localPath": "assets/material/word.svg",
+      "upstreamPath": "icons/word.svg",
+      "blobSha": "a90b88f9cdc18e25566fa6a319620037da204e53",
+      "sha256": "9f12a8d98f292c34f73181c49ce79dd378decfb82f760cd9c4aa9900e2d7b2d6",
+      "source": "https://api.github.com/repos/material-extensions/vscode-material-icon-theme/git/blobs/a90b88f9cdc18e25566fa6a319620037da204e53"
+    },
+    {
+      "localPath": "assets/material/xml.svg",
+      "upstreamPath": "icons/xml.svg",
+      "blobSha": "c3a1eaf45395f2c2a7043cfce8aa140c2b308c54",
+      "sha256": "51bfeb938c24772c0dfeb12ab3e6bab446fbea0410dadf1ec18106d60d52914a",
+      "source": "https://api.github.com/repos/material-extensions/vscode-material-icon-theme/git/blobs/c3a1eaf45395f2c2a7043cfce8aa140c2b308c54"
+    },
+    {
+      "localPath": "assets/material/zip.svg",
+      "upstreamPath": "icons/zip.svg",
+      "blobSha": "1056c60bde4c3e3405465597b74eb73acee56fd3",
+      "sha256": "dad79a45f756542d37abd422502ecfbea15720b92ea1c9d80ef0439ab6b9448a",
+      "source": "https://api.github.com/repos/material-extensions/vscode-material-icon-theme/git/blobs/1056c60bde4c3e3405465597b74eb73acee56fd3"
+    },
+    {
+      "localPath": "assets/phosphor/globe-hemisphere-west-duotone.svg",
+      "upstreamPath": "assets/duotone/globe-hemisphere-west-duotone.svg",
+      "blobSha": "6fd1f04330266aec2441a464f41a22fea2ef3b81",
+      "sha256": "52a225637cebbe67a961f6066f2ef9c29a73b9645e78258bd39e6bb2f4784bb6",
+      "source": "https://api.github.com/repos/phosphor-icons/core/contents/assets/duotone/globe-hemisphere-west-duotone.svg?ref=2b75f3ad12b420c9504ef05df8d2564a28f8500e"
+    },
+    {
+      "localPath": "assets/phosphor/wechat-logo-duotone.svg",
+      "upstreamPath": "assets/duotone/wechat-logo-duotone.svg",
+      "blobSha": "04323628e1605b46a4883a7d9c9cd765ee21d3a5",
+      "sha256": "b28d67e9e23f32473c56ac7dd7f01370809081b6115e0afef84cecd310c49243",
+      "source": "https://api.github.com/repos/phosphor-icons/core/contents/assets/duotone/wechat-logo-duotone.svg?ref=2b75f3ad12b420c9504ef05df8d2564a28f8500e"
+    },
+    {
+      "localPath": "assets/phosphor/github-logo-duotone.svg",
+      "upstreamPath": "assets/duotone/github-logo-duotone.svg",
+      "blobSha": "cb25db25ccd3584123bce8a7f83c0b5c6d7b6c08",
+      "sha256": "e5cad1ca4d6cd2c3b04b70aae0608945ef6ca89de9f9ee1f8d44dc9015d8601d",
+      "source": "https://api.github.com/repos/phosphor-icons/core/contents/assets/duotone/github-logo-duotone.svg?ref=2b75f3ad12b420c9504ef05df8d2564a28f8500e"
+    }
+  ]
+}

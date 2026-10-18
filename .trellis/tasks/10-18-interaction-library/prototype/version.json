@@ -1,23 +1,37 @@
 {
   "version": "library-review-v1",
-  "revision": 1,
+  "revision": 2,
   "module": "知识库与目录浏览管理",
   "approval": "pending",
   "frozen": true,
   "productImplementationAuthorized": false,
-  "htmlSha256": "a3f0f0053519810140a955d5d9fdbb727eded3a9661d2353b0282f473b21f281",
-  "note": "已完成独立检查和浏览器代表路径抽验；冻结供评审，approval仍pending，产品实施须用户认可此精确版本。",
+  "htmlSha256": "ce43cbea265b09b3fd75d9db9d0f3d02723ef1559f2e9a09d742750285dc2f40",
+  "note": "图标revision2候选对比稿已冻结供选择；默认A只为预览，不代表用户选型。approval pending；产品实施仍未授权。",
   "frozenAt": "2026-10-18",
-  "previewUrl": "http://127.0.0.1:5186/review.html",
+  "previewUrl": "http://127.0.0.1:5186/review.html?view=icons",
   "coverageGroups": 58,
   "coverageStates": 299,
   "sourceSha256": {
-    "main.tsx": "e4c21a20a0bd45e6e2643ac492d11786c7fa1bcb3241ada1ebc674f41a7b9a70",
+    "main.tsx": "fc00ad7083c2965165ac124cf07407d1c0a5b318b39d561831e167de94961788",
     "fixtures.ts": "7905f2c8e39a3bbf3bf7c7a4948d77e1dfff071ce0d8317e6119b0e76144b2b3",
     "review.css": "c918fe7e2393775b5d9c871875c4c728fa4cae6154cd4da3c289f13af39ee5ab",
+    "file-icons.tsx": "71298487f298f85670e255b511ca57718a88f981818cf7e5f3f8b4054dbd391f",
+    "original-icons.tsx": "0ea79d5b4236b304fd812ecabb5f5bc0ae5e5b583a1e2a6217ccb9d25975045c",
+    "icon-gallery.tsx": "5b0644035543a0ed3af71cc457effbe240b198e4fa3960347bdb7eac676a438c",
+    "icon-gallery.css": "a765dc231bf4300437a3b252800463e0240bc5ed962cf593a83a9e26f06746c7",
+    "icon-assets.json": "a10521e161e471f25220459be6d79942d2ff2ebd00dc7636e1f0a37813ba828a",
     "scenes.json": "ecd0cb0a92b4b95b5cd4691faaf595c74e2cf784609d0559847ac5091312210a",
     "coverage.json": "c52c68e95e3eeb6fe99652169721b896c37148877fefa41e3a3257de9c0ee430",
     "build.mjs": "a59553b73133a0ee4b6662f54384575ec950ca80ee953441db802224135d9495",
-    "check-artifact.mjs": "690bdda9647b555059611a6e54a90e3dbf399af00aa4f53ced7056561b064af9"
-  }
+    "check-artifact.mjs": "4da2d3abc1163a37277aed8923851546a4a7d40aa72b7cc3eefe7c6f94e3ecee"
+  },
+  "previousVersion": "versions/v1-version.json",
+  "selectedIconScheme": null,
+  "defaultPreviewIconScheme": "A",
+  "iconChoice": "pending",
+  "iconCandidates": [
+    "Phosphor duotone",
+    "Material Icon Theme + Phosphor source glyphs"
+  ],
+  "iconFormats": 16
 }

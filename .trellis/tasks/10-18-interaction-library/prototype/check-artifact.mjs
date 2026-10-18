@@ -11,6 +11,54 @@ const coverage = await json('coverage.json')
 const html = await readFile(join(here, 'review.html'), 'utf8')
 const main = await readFile(join(here, 'main.tsx'), 'utf8')
 const fixtures = await readFile(join(here, 'fixtures.ts'), 'utf8')
+const icons = await readFile(join(here, 'file-icons.tsx'), 'utf8')
+const gallery = await readFile(join(here, 'icon-gallery.tsx'), 'utf8')
+const iconManifest = await json('icon-assets.json')
+const v1 = await json('versions/v1-version.json')
+assert.equal(
+  createHash('sha256')
+    .update(await readFile(join(here, 'versions/v1.html')))
+    .digest('hex'),
+  v1.htmlSha256,
+)
+assert.equal(iconManifest.assets.length, 29)
+assert.equal(iconManifest.mappings.length, 16)
+assert.equal(new Set(iconManifest.mappings.map((item) => item.id)).size, 16)
+for (const asset of iconManifest.assets) {
+  const data = await readFile(join(here, asset.localPath))
+  assert.equal(createHash('sha256').update(data).digest('hex'), asset.sha256)
+  assert.equal(
+    createHash('sha1')
+      .update(Buffer.concat([Buffer.from(`blob ${data.length}\0`), data]))
+      .digest('hex'),
+    asset.blobSha,
+  )
+  assert.ok(data.toString().startsWith('<svg'))
+  assert.equal(
+    /<(?:script|foreignObject|image)\b|\bon\w+=|(?:href|src)=/i.test(data.toString()),
+    false,
+  )
+}
+for (const item of iconManifest.mappings) {
+  assert.ok(iconManifest.assets.some((asset) => asset.localPath === item.A))
+  assert.ok(iconManifest.assets.some((asset) => asset.localPath === item.B))
+  assert.ok(icons.includes(`id: '${item.id}'`))
+}
+for (const family of ['phosphor', 'material']) {
+  const license = await readFile(join(here, 'assets', family, 'LICENSE.txt'), 'utf8')
+  assert.equal(
+    license,
+    await readFile(join(here, '../research/icon-evidence', family + '-LICENSE.txt'), 'utf8'),
+  )
+  assert.ok(license.includes('MIT License'))
+  assert.ok(html.includes(license.split('\n').find((line) => line.startsWith('Copyright'))))
+  assert.ok(html.includes('Permission is hereby granted'))
+}
+assert.ok(main.includes("get('view') === 'icons'"))
+assert.ok(main.includes("scheme={after ? iconScheme : 'original'}"))
+assert.ok(gallery.includes('const sizes = [20, 24, 32]'))
+assert.ok(gallery.includes('IconGallery'))
+assert.equal(/(?:fetch\(|XMLHttpRequest|localStorage)/.test(icons + gallery), false)
 assert.equal(inventory.items.length, 58)
 assert.equal(scenes.scenes.length, 299)
 assert.equal(new Set(scenes.scenes.map((s) => s.id)).size, 299)
@@ -53,7 +101,15 @@ assert.ok(main.includes('requestLock'))
 assert.ok(main.includes('data-side='))
 const report = {
   version: 'library-review-v1',
-  revision: 1,
+  revision: 2,
+  iconSelectionView: 'review.html?view=icons',
+  iconCandidates: ['A: Phosphor duotone', 'B: Material Icon Theme + Phosphor source glyphs'],
+  defaultIconCandidate: 'A (pending selection)',
+  iconFormats: 16,
+  iconSizes: [20, 24, 32],
+  vendoredSvgAssets: 29,
+  iconLicensesEmbedded: true,
+  originalV1Sha256: v1.htmlSha256,
   coverageItems: 58,
   linkedStateRoutes: 299,
   proposedItems: 8,

@@ -1,0 +1,2 @@
+# Preserve official evidence byte-for-byte; recorded hashes refer to upstream bytes.
+* -whitespace

@@ -16,5 +16,5 @@
     },
     "resolveJsonModule": true
   },
-  "include": ["main.tsx", "fixtures.ts", "env.d.ts", "scenes.json"]
+  "include": ["*.tsx", "fixtures.ts", "env.d.ts", "scenes.json"]
 }

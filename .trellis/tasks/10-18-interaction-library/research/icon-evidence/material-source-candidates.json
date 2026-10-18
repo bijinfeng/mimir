@@ -1,0 +1,42 @@
+{
+  "icons/table.svg": {
+    "path": "icons/table.svg",
+    "mode": "100644",
+    "type": "blob",
+    "sha": "040b3839e82d92581a278ed7adc89b409ed87232",
+    "size": 268,
+    "url": "https://api.github.com/repos/material-extensions/vscode-material-icon-theme/git/blobs/040b3839e82d92581a278ed7adc89b409ed87232"
+  },
+  "icons/document.svg": {
+    "path": "icons/document.svg",
+    "mode": "100644",
+    "type": "blob",
+    "sha": "a717956b7d28f75befe20aacf227f9088fa315f4",
+    "size": 234,
+    "url": "https://api.github.com/repos/material-extensions/vscode-material-icon-theme/git/blobs/a717956b7d28f75befe20aacf227f9088fa315f4"
+  },
+  "icons/code.svg": null,
+  "icons/xml.svg": {
+    "path": "icons/xml.svg",
+    "mode": "100644",
+    "type": "blob",
+    "sha": "c3a1eaf45395f2c2a7043cfce8aa140c2b308c54",
+    "size": 290,
+    "url": "https://api.github.com/repos/material-extensions/vscode-material-icon-theme/git/blobs/c3a1eaf45395f2c2a7043cfce8aa140c2b308c54"
+  },
+  "icons/http.svg": {
+    "path": "icons/http.svg",
+    "mode": "100644",
+    "type": "blob",
+    "sha": "94574d4a5c52acef6640422e55ecd96cec063bd0",
+    "size": 919,
+    "url": "https://api.github.com/repos/material-extensions/vscode-material-icon-theme/git/blobs/94574d4a5c52acef6640422e55ecd96cec063bd0"
+  },
+  "icons/world.svg": null,
+  "icons/github.svg": null,
+  "icons/github_light.svg": null,
+  "icons/wechat.svg": null,
+  "icons/file.svg": null,
+  "icons/browser.svg": null,
+  "icons/text.svg": null
+}

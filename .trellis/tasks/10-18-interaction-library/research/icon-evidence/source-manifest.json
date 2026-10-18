@@ -1,0 +1,225 @@
+{
+  "date": "2026-10-18",
+  "phosphor": {
+    "repository": "phosphor-icons/core",
+    "commit": "2b75f3ad12b420c9504ef05df8d2564a28f8500e",
+    "license": "MIT",
+    "licenseFile": "phosphor-LICENSE.txt"
+  },
+  "material": {
+    "repository": "material-extensions/vscode-material-icon-theme",
+    "commit": "13025adc5ad10a5cc649528a2c1edec93069f1b9",
+    "license": "MIT",
+    "licenseFile": "material-LICENSE.txt"
+  },
+  "weknora": {
+    "repository": "Tencent/WeKnora",
+    "commit": "2c0d8384398ca756ee414eef01b71caf91e2caa6"
+  },
+  "files": {
+    "blob-source-map.json": {
+      "bytes": 1332,
+      "sha256": "079724d39201a875603a0942e4e6fa4cc67d2bc5ea482ee3ec6b1275c8c73efc"
+    },
+    "download-map.json": {
+      "bytes": 4466,
+      "sha256": "b094a30a1d739de1ca1cba813175016ac9306dd81cad1de5fd048580756e129f"
+    },
+    "extra-source-map.json": {
+      "bytes": 718,
+      "sha256": "2db600b7d9de7a4755eca3a8fb7800ec044220321204cbea03b946ccc644c57c"
+    },
+    "material-LICENSE.txt": {
+      "bytes": 1085,
+      "sha256": "cdab3014d4f69b49dde2b85e81792208c72de613aa6aed7f7a9b5c6609b89670"
+    },
+    "material-head.json": {
+      "bytes": 6047,
+      "sha256": "45f7fd1fa88ba60a5d5af45d35e26a002b33ef0cf9ca8d3f26d3d981e522b4d9"
+    },
+    "material-html.svg": {
+      "bytes": 232,
+      "sha256": "23e04ad5f1ae9cd16dc79fe52c4290e5bd80f2f7bfe4c0769e7485832b3eb146",
+      "retrievedFrom": "https://raw.githubusercontent.com/material-extensions/vscode-material-icon-theme/13025adc5ad10a5cc649528a2c1edec93069f1b9/icons/html.svg",
+      "license": "MIT",
+      "family": "material"
+    },
+    "material-image.svg": {
+      "bytes": 346,
+      "sha256": "838e1953a3a2ebf5c6a06b662892ba17e1c605c4379a77c61737639e51fb4f0a",
+      "retrievedFrom": "https://api.github.com/repos/material-extensions/vscode-material-icon-theme/git/blobs/0ca446bb91ebd3bcaa2f13a7ca2b753d5ecc7e5d",
+      "license": "MIT",
+      "family": "material"
+    },
+    "material-license.json": {
+      "bytes": 2762,
+      "sha256": "f5887fda790add69792b089591d90b3613d46ed8159b54e9c1c1a8b07a77af31"
+    },
+    "material-markdown.svg": {
+      "bytes": 161,
+      "sha256": "42f95867350ed1f349ab29b3f254405f84ae65e6d42972d74b01442027eddfcd",
+      "retrievedFrom": "https://raw.githubusercontent.com/material-extensions/vscode-material-icon-theme/13025adc5ad10a5cc649528a2c1edec93069f1b9/icons/markdown.svg",
+      "license": "MIT",
+      "family": "material"
+    },
+    "material-pdf.svg": {
+      "bytes": 976,
+      "sha256": "c14c66a3914b894da40778a6dcd00f0daa134426521aaddbd8ccea86ba4f5ffc",
+      "retrievedFrom": "https://api.github.com/repos/material-extensions/vscode-material-icon-theme/git/blobs/1c84fe82d6b39bccd3a49325e6fae19477699e3a",
+      "license": "MIT",
+      "family": "material"
+    },
+    "material-powerpoint.svg": {
+      "bytes": 261,
+      "sha256": "40468deea73e07067459c0c3b0bbef0697e93afbc4533e961d1b441f5294871e",
+      "retrievedFrom": "https://api.github.com/repos/material-extensions/vscode-material-icon-theme/git/blobs/eaba916fbb4b335849cee1a4280c6b252589885a",
+      "license": "MIT",
+      "family": "material"
+    },
+    "material-repo.json": {
+      "bytes": 7843,
+      "sha256": "295f6e72ecb5636c8bfb463e1943542e74795c9ccbe7002a33dbcbbe511ceac7"
+    },
+    "material-selected-tree.json": {
+      "bytes": 93291,
+      "sha256": "c9e2c8301b59ce55cf97007b7f8eb6403182d3ddb8c89f68874b5bc5ac5bf783"
+    },
+    "material-source-candidates.json": {
+      "bytes": 1478,
+      "sha256": "8ecc40e71d1e1b123b819ac8ddfcb7e50ff4d16097ccbff1ebf07c4b1c4e379a"
+    },
+    "material-table.svg": {
+      "bytes": 268,
+      "sha256": "1714898c0d538648edb0f8dd041d97435aa8cbac078c5897f9fa8103b36f029a",
+      "retrievedFrom": "https://raw.githubusercontent.com/material-extensions/vscode-material-icon-theme/13025adc5ad10a5cc649528a2c1edec93069f1b9/icons/table.svg",
+      "license": "MIT",
+      "family": "material"
+    },
+    "material-video.svg": {
+      "bytes": 191,
+      "sha256": "4d5d50b0f1fe5cb7aaa4892356fabffb54f8629c9f600069dd0aadd251b3c83e",
+      "retrievedFrom": "https://raw.githubusercontent.com/material-extensions/vscode-material-icon-theme/13025adc5ad10a5cc649528a2c1edec93069f1b9/icons/video.svg",
+      "license": "MIT",
+      "family": "material"
+    },
+    "material-word.svg": {
+      "bytes": 251,
+      "sha256": "9f12a8d98f292c34f73181c49ce79dd378decfb82f760cd9c4aa9900e2d7b2d6",
+      "retrievedFrom": "https://api.github.com/repos/material-extensions/vscode-material-icon-theme/git/blobs/a90b88f9cdc18e25566fa6a319620037da204e53",
+      "license": "MIT",
+      "family": "material"
+    },
+    "phosphor-LICENSE.txt": {
+      "bytes": 1071,
+      "sha256": "b5b1f1da112d18ea2147decfd48ddc1bf2b5aeb6c265381579340e95b15a2bb2"
+    },
+    "phosphor-file-audio.svg": {
+      "bytes": 719,
+      "sha256": "38bd7e1976ce3af5a232985145c4c6912ad26bc6e1f88746ed8a796d4e173c0f",
+      "retrievedFrom": "https://raw.githubusercontent.com/phosphor-icons/core/2b75f3ad12b420c9504ef05df8d2564a28f8500e/assets/duotone/file-audio-duotone.svg",
+      "license": "MIT",
+      "family": "phosphor"
+    },
+    "phosphor-file-doc.svg": {
+      "bytes": 825,
+      "sha256": "71ba3e223c85300609dcdbcbb29b8eb3535a6e44353edfe6f2ca8ff68bcf16f5",
+      "retrievedFrom": "https://api.github.com/repos/phosphor-icons/core/git/blobs/c93f70b6371a112b875e2be56b9e57b76d7201e4",
+      "license": "MIT",
+      "family": "phosphor"
+    },
+    "phosphor-file-image.svg": {
+      "bytes": 562,
+      "sha256": "1497ced443096e5c07c3ae89891c46952bd9aa9a05fae7e148c19d5839a482d2",
+      "retrievedFrom": "https://raw.githubusercontent.com/phosphor-icons/core/2b75f3ad12b420c9504ef05df8d2564a28f8500e/assets/duotone/file-image-duotone.svg",
+      "license": "MIT",
+      "family": "phosphor"
+    },
+    "phosphor-file-pdf.svg": {
+      "bytes": 686,
+      "sha256": "451b593fba4a0ae151561d77eb1517fa50d8ddfcf8517afc817fa8972fd3b5bb",
+      "retrievedFrom": "https://api.github.com/repos/phosphor-icons/core/git/blobs/5f3e46e2751a2e3fc1eedd2ff2fb6c94dfa32259",
+      "license": "MIT",
+      "family": "phosphor"
+    },
+    "phosphor-file-ppt.svg": {
+      "bytes": 668,
+      "sha256": "33223c3ec22a195dc3d33d66f33c7af6faac03d8d4f907657a90453ca638aabf",
+      "retrievedFrom": "https://api.github.com/repos/phosphor-icons/core/git/blobs/7721199c980d85666df323bc9d08e4de95c16364",
+      "license": "MIT",
+      "family": "phosphor"
+    },
+    "phosphor-file-video.svg": {
+      "bytes": 668,
+      "sha256": "1aa36d02b655d240f00f9169c08cda6b300757ff5026d65cd1cddfb6198ae31d",
+      "retrievedFrom": "https://raw.githubusercontent.com/phosphor-icons/core/2b75f3ad12b420c9504ef05df8d2564a28f8500e/assets/duotone/file-video-duotone.svg",
+      "license": "MIT",
+      "family": "phosphor"
+    },
+    "phosphor-file-xls.svg": {
+      "bytes": 1043,
+      "sha256": "fd093243c13ff0d0403f6e0b347613d983ea22e429f191419500cb9875e94f3f",
+      "retrievedFrom": "https://api.github.com/repos/phosphor-icons/core/git/blobs/47ac1067763a64442bda58f1a4ef98d83993daaa",
+      "license": "MIT",
+      "family": "phosphor"
+    },
+    "phosphor-github.svg": {
+      "bytes": 1165,
+      "sha256": "e5cad1ca4d6cd2c3b04b70aae0608945ef6ca89de9f9ee1f8d44dc9015d8601d",
+      "retrievedFrom": "https://api.github.com/repos/phosphor-icons/core/contents/assets/duotone/github-logo-duotone.svg?ref=2b75f3ad12b420c9504ef05df8d2564a28f8500e",
+      "license": "MIT",
+      "family": "phosphor"
+    },
+    "phosphor-globe.svg": {
+      "bytes": 1416,
+      "sha256": "52a225637cebbe67a961f6066f2ef9c29a73b9645e78258bd39e6bb2f4784bb6",
+      "retrievedFrom": "https://api.github.com/repos/phosphor-icons/core/contents/assets/duotone/globe-hemisphere-west-duotone.svg?ref=2b75f3ad12b420c9504ef05df8d2564a28f8500e",
+      "license": "MIT",
+      "family": "phosphor"
+    },
+    "phosphor-head.json": {
+      "bytes": 5039,
+      "sha256": "0a06eb8dd63609fb6e326ebc3293b656f22f30c49f063b133b7ad1ed781b74f0"
+    },
+    "phosphor-license.json": {
+      "bytes": 2551,
+      "sha256": "d70a1ea65b9aeed2104792a1bb00181656d294502c7c9df7fcffae956ccb8d74"
+    },
+    "phosphor-repo.json": {
+      "bytes": 6342,
+      "sha256": "9f7913c6f95fbdf8f6be681b19f6ba0b0a29a7640eb81f991f931a79c2a01629"
+    },
+    "phosphor-selected-tree.json": {
+      "bytes": 21673,
+      "sha256": "3a700faec88a7ee7aab17ac601c0e45104b141ea849814a705ab00aa2cdaf454"
+    },
+    "phosphor-wechat.svg": {
+      "bytes": 817,
+      "sha256": "b28d67e9e23f32473c56ac7dd7f01370809081b6115e0afef84cecd310c49243",
+      "retrievedFrom": "https://api.github.com/repos/phosphor-icons/core/contents/assets/duotone/wechat-logo-duotone.svg?ref=2b75f3ad12b420c9504ef05df8d2564a28f8500e",
+      "license": "MIT",
+      "family": "phosphor"
+    },
+    "size-theme-samples-notes.txt": {
+      "bytes": 396,
+      "sha256": "5365ecce8444230ce9a6aa95c280bbc404c35e1e557fa387b42c08b58ba8fd49"
+    },
+    "size-theme-samples.png": {
+      "bytes": 64099,
+      "sha256": "7b9a5033894e55e09b2fd68b4c874d832a4be4e1a0758b2b02d9715c75bebc87"
+    },
+    "weknora-ArtifactFileIcon.vue": {
+      "bytes": 647,
+      "sha256": "0fa51fa72673791ccf0df267e01489fdc591306d118c12741a4d6bf008eaedd1",
+      "retrievedFrom": "https://api.github.com/repos/Tencent/WeKnora/contents/frontend/src/views/chat/components/ArtifactFileIcon.vue?ref=2c0d8384398ca756ee414eef01b71caf91e2caa6"
+    },
+    "weknora-DocumentFileIcon.vue": {
+      "bytes": 1440,
+      "sha256": "c2fee154548bc61e388745d45c423873f2531ea3f705a6077a6a9a8278d5c6e0",
+      "retrievedFrom": "https://api.github.com/repos/Tencent/WeKnora/contents/frontend/src/views/knowledge/components/DocumentFileIcon.vue?ref=2c0d8384398ca756ee414eef01b71caf91e2caa6"
+    },
+    "weknora-artifactFileIcon.ts": {
+      "bytes": 995,
+      "sha256": "15e17c9ddc691cd54451b6a701c977d92f3799605a78df52f3a740e17857d239"
+    }
+  }
+}

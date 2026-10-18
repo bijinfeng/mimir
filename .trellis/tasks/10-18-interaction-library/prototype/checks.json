@@ -1,6 +1,21 @@
 {
   "version": "library-review-v1",
-  "revision": 1,
+  "revision": 2,
+  "iconSelectionView": "review.html?view=icons",
+  "iconCandidates": [
+    "A: Phosphor duotone",
+    "B: Material Icon Theme + Phosphor source glyphs"
+  ],
+  "defaultIconCandidate": "A (pending selection)",
+  "iconFormats": 16,
+  "iconSizes": [
+    20,
+    24,
+    32
+  ],
+  "vendoredSvgAssets": 29,
+  "iconLicensesEmbedded": true,
+  "originalV1Sha256": "a3f0f0053519810140a955d5d9fdbb727eded3a9661d2353b0282f473b21f281",
   "coverageItems": 58,
   "linkedStateRoutes": 299,
   "proposedItems": 8,
@@ -40,5 +55,5 @@
   "productImports": false,
   "businessRequests": false,
   "scope": "Static linkage and build checks only; 299 routes do not assert 299 browser tests or native coverage.",
-  "htmlSha256": "a3f0f0053519810140a955d5d9fdbb727eded3a9661d2353b0282f473b21f281"
+  "htmlSha256": "ce43cbea265b09b3fd75d9db9d0f3d02723ef1559f2e9a09d742750285dc2f40"
 }

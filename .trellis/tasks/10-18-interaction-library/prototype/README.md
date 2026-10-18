@@ -1,5 +1,12 @@
 # 知识库与目录 · 独立 HTML 评审
 
+图标修订稿 revision2：直接打开 `review.html?view=icons`。默认候选A Phosphor双色，可横向比较原稿/A/B的16种文件与来源、20/24/32px以及浅深主题；窄屏通过尺寸选择器逐一检查。顶部“看列表/看卡片”把当前选择应用到LIB-029实际密度，只有打磨后图标变化，当前侧、目录、布局和业务保持。选择只作用于独立HTML，不表示用户选型或产品实施批准。
+
+- `?view=icons&scheme=B&theme=dark` 可直达B深色；`?scheme=A&layout=card#scene=LIB-029.docx` 可直达A卡片。
+- 本地SVG原件与两份MIT许可证保存在 `assets/{phosphor,material}/`；许可全文同时内嵌HTML。`icon-assets.json`记录固定commit、16项映射、29份原件的Git blob SHA与SHA256。
+- A保留官方currentColor与duotone透明度，CSS分别适配浅深格式色；B保留原色，仅将深色Word的#01579b提亮至#64b5f6。B的公众号/GitHub来源明确复用Phosphor，不冒称Material原生徽标。
+- `versions/v1.html` 与对应version/checks是先前冻结原稿，不得覆盖。其SHA256仍为`a3f0f0053519810140a955d5d9fdbb727eded3a9661d2353b0282f473b21f281`。
+
 预览 `review.html`，默认完整根目录列表、仅打磨后。顶部可切当前/打磨后/同宽上下对比、浅深色、390px、低高度、200%文字、减少动效。左侧58个覆盖项，299个状态可直接定位；不把状态链接数量称为浏览器测试数量。
 
 - 页面内均为虚构样例，不请求业务接口，不读写产品或真实存储。

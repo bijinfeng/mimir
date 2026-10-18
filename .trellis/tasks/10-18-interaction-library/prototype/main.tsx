@@ -37,7 +37,11 @@ import {
   stateLabel,
 } from './fixtures'
 import type { Doc, Scene } from './fixtures'
+import { FormatIcon as Icon, IconSchemePicker } from './file-icons'
+import type { IconScheme } from './file-icons'
+import { IconGallery } from './icon-gallery'
 import './review.css'
+import './icon-gallery.css'
 
 type ModalKind =
   | 'kb-delete'
@@ -142,41 +146,6 @@ function initialMenu(s: Scene): MenuKind {
   if (is(s, 'LIB-046')) return 'detail'
   return null
 }
-import glyph0 from './assets/description.svg'
-import glyph1 from './assets/table_chart.svg'
-import glyph2 from './assets/slideshow.svg'
-import glyph3 from './assets/picture_as_pdf.svg'
-import glyph4 from './assets/code.svg'
-import glyph5 from './assets/notes.svg'
-import glyph6 from './assets/image.svg'
-import glyph7 from './assets/audio_file.svg'
-import glyph8 from './assets/video_file.svg'
-import glyph9 from './assets/folder_zip.svg'
-import glyph10 from './assets/draft.svg'
-import glyph11 from './assets/article.svg'
-const glyphs: Record<string, string> = {
-  Word: glyph0,
-  Excel: glyph1,
-  PowerPoint: glyph2,
-  PDF: glyph3,
-  HTML: glyph4,
-  代码: glyph4,
-  笔记: glyph5,
-  图片: glyph6,
-  音频: glyph7,
-  视频: glyph8,
-  压缩包: glyph9,
-  未知文件: glyph10,
-  文本: glyph11,
-}
-function Icon({ doc }: { doc: Doc }) {
-  if (['网页', '公众号', 'GitHub'].includes(doc.kind))
-    return <FileText size={19} strokeWidth={1.7} aria-hidden />
-  const url = `url("${glyphs[doc.kind] ?? glyph10}")`
-  return (
-    <span className="format-glyph" aria-hidden style={{ maskImage: url, WebkitMaskImage: url }} />
-  )
-}
 function Name({ doc }: { doc: Doc }) {
   const full =
     doc.ext && !doc.title.toLowerCase().endsWith(doc.ext.toLowerCase())
@@ -210,7 +179,15 @@ function Notice({ children, error = false }: { children: ReactNode; error?: bool
     </div>
   )
 }
-function Pane({ scene, after }: { scene: Scene; after: boolean }) {
+function Pane({
+  scene,
+  after,
+  iconScheme,
+}: {
+  scene: Scene
+  after: boolean
+  iconScheme: IconScheme
+}) {
   const host = useRef<HTMLElement>(null)
   const origin = useRef<HTMLElement | null>(null)
   const restoreFrame = useRef<number | null>(null)
@@ -235,6 +212,8 @@ function Pane({ scene, after }: { scene: Scene; after: boolean }) {
   const [recovered, setRecovered] = useState(false)
   const [queryFinished, setQueryFinished] = useState(false)
   const [layout, setLayout] = useState<'list' | 'card'>(() =>
+    (is(scene, 'LIB-029') &&
+      new URLSearchParams(window.location.search).get('layout') === 'card') ||
     has(
       scene,
       'card',
@@ -244,7 +223,8 @@ function Pane({ scene, after }: { scene: Scene; after: boolean }) {
       'title-keyboard',
       'meta-click',
       'action-no-open',
-    ) || is(scene, 'LIB-027', 'LIB-028')
+    ) ||
+    is(scene, 'LIB-027', 'LIB-028')
       ? 'card'
       : 'list',
   )
@@ -1570,8 +1550,10 @@ function Pane({ scene, after }: { scene: Scene; after: boolean }) {
                               if (!after) openDocument(doc)
                             }}
                           >
-                            <span className={`file-icon tone-${doc.kind}`}>
-                              <Icon doc={doc} />
+                            <span
+                              className={`file-icon tone-${doc.kind} scheme-${after ? iconScheme : 'original'}`}
+                            >
+                              <Icon doc={doc} scheme={after ? iconScheme : 'original'} />
                             </span>
                             {after ? (
                               <button
@@ -1660,8 +1642,10 @@ function Pane({ scene, after }: { scene: Scene; after: boolean }) {
                             onClick={() => openDocument(doc)}
                           >
                             <div className="card-heading">
-                              <span className={`file-icon tone-${doc.kind}`}>
-                                <Icon doc={doc} />
+                              <span
+                                className={`file-icon tone-${doc.kind} scheme-${after ? iconScheme : 'original'}`}
+                              >
+                                <Icon doc={doc} scheme={after ? iconScheme : 'original'} />
                               </span>
                               <button
                                 type="button"
@@ -2345,9 +2329,18 @@ function readHash() {
 }
 function App() {
   const [scene, setScene] = useState(readHash)
+  const [iconView, setIconView] = useState(
+    () => new URLSearchParams(location.search).get('view') === 'icons',
+  )
+  const [iconScheme, setIconScheme] = useState<IconScheme>(() => {
+    const value = new URLSearchParams(location.search).get('scheme')
+    return value === 'B' || value === 'original' ? value : 'A'
+  })
   const [search, setSearch] = useState('')
   const [theme, setTheme] = useState<'light' | 'dark'>(() =>
-    has(readHash(), '390-dark') ? 'dark' : 'light',
+    new URLSearchParams(location.search).get('theme') === 'dark' || has(readHash(), '390-dark')
+      ? 'dark'
+      : 'light',
   )
   const [mode, setMode] = useState('after')
   const [size, setSize] = useState(() =>
@@ -2377,6 +2370,39 @@ function App() {
   const found = itemHeads.filter((s) =>
     (s.itemId + s.label + s.currentBehavior).toLowerCase().includes(search.toLowerCase()),
   )
+  function changeIconScheme(value: IconScheme) {
+    setIconScheme(value)
+    const url = new URL(location.href)
+    url.searchParams.set('scheme', value)
+    history.replaceState(null, '', url)
+  }
+  function changeTheme(value: 'light' | 'dark') {
+    setTheme(value)
+    const url = new URL(location.href)
+    url.searchParams.set('theme', value)
+    history.replaceState(null, '', url)
+  }
+  function changeIconView(value: boolean) {
+    setIconView(value)
+    const url = new URL(location.href)
+    if (value) url.searchParams.set('view', 'icons')
+    else url.searchParams.delete('view')
+    history.replaceState(null, '', url)
+    window.scrollTo(0, 0)
+  }
+  function previewIcons(layout: 'list' | 'card') {
+    const next = allScenes.find((item) => item.id === 'LIB-029.docx')!
+    const url = new URL(location.href)
+    url.searchParams.delete('view')
+    url.searchParams.set('layout', layout)
+    url.searchParams.set('scheme', iconScheme)
+    url.hash = 'scene=' + next.id
+    history.replaceState(null, '', url)
+    setScene(next)
+    setMode('after')
+    setIconView(false)
+    window.scrollTo(0, 0)
+  }
   function select(next: Scene) {
     setScene(next)
     history.replaceState(null, '', '#scene=' + next.id)
@@ -2418,12 +2444,23 @@ function App() {
     'LIB-046',
     'LIB-P08',
   )
+  if (iconView)
+    return (
+      <IconGallery
+        scheme={iconScheme}
+        onScheme={changeIconScheme}
+        theme={theme}
+        onTheme={changeTheme}
+        onBack={() => changeIconView(false)}
+        onPreview={previewIcons}
+      />
+    )
   return (
     <main className={`review ${theme} ${reduced ? 'reduced' : ''} ${zoom ? 'zoom-text' : ''}`}>
       <header className="review-top">
         <div>
           <h1>知识库与目录</h1>
-          <span>第五模块 · 交互打磨对比 v1</span>
+          <span>第五模块 · 交互打磨对比 v1 修订 2</span>
         </div>
         <button type="button" className="btn mobile-nav" onClick={() => setNavOpen(!navOpen)}>
           <List size={16} />
@@ -2472,6 +2509,8 @@ function App() {
         </aside>
         <div className="review-main">
           <div className="review-controls">
+            <IconSchemePicker value={iconScheme} onChange={changeIconScheme} />
+            <Btn onClick={() => changeIconView(true)}>比较文件图标</Btn>
             <label>
               对比
               <select
@@ -2489,7 +2528,7 @@ function App() {
               <select
                 aria-label="主题"
                 value={theme}
-                onChange={(event) => setTheme(event.target.value as 'light' | 'dark')}
+                onChange={(event) => changeTheme(event.target.value as 'light' | 'dark')}
               >
                 <option value="light">浅色</option>
                 <option value="dark">深色</option>
@@ -2566,8 +2605,17 @@ function App() {
             </div>
           </section>
           <div className={`preview-grid mode-${mode} size-${size}`}>
-            {mode !== 'after' && <Pane key={scene.id + '-before'} scene={scene} after={false} />}
-            {mode !== 'before' && <Pane key={scene.id + '-after'} scene={scene} after />}
+            {mode !== 'after' && (
+              <Pane
+                key={scene.id + '-before'}
+                scene={scene}
+                after={false}
+                iconScheme={iconScheme}
+              />
+            )}
+            {mode !== 'before' && (
+              <Pane key={scene.id + '-after'} scene={scene} after iconScheme={iconScheme} />
+            )}
           </div>
           <section className="evidence">
             <details>

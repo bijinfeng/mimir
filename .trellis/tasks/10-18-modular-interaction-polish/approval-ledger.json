@@ -69,9 +69,9 @@
     {
       "id": "library",
       "name": "知识库与目录浏览管理",
-      "status": "proposal_ready_pending_approval",
+      "status": "proposal_icon_choice_pending",
       "proposal": "../10-18-interaction-library/prototype/review.html",
-      "version": "library-review-v1 revision1",
+      "version": "library-review-v1 revision2",
       "approved_at": null,
       "user_quote": null,
       "implementation_commit": null,
@@ -79,10 +79,18 @@
       "planning_user_quote": "继续",
       "coverage_groups": 58,
       "product_implementation_approved": false,
-      "sha256": "a3f0f0053519810140a955d5d9fdbb727eded3a9661d2353b0282f473b21f281",
-      "preview_url": "http://127.0.0.1:5186/review.html",
+      "sha256": "ce43cbea265b09b3fd75d9db9d0f3d02723ef1559f2e9a09d742750285dc2f40",
+      "preview_url": "http://127.0.0.1:5186/review.html?view=icons",
       "coverage_states": 299,
-      "verification": "../10-18-interaction-library/planning-acceptance.md"
+      "verification": "../10-18-interaction-library/icon-planning-acceptance.md",
+      "previous_proposal": "../10-18-interaction-library/prototype/versions/v1.html",
+      "previous_sha256": "a3f0f0053519810140a955d5d9fdbb727eded3a9661d2353b0282f473b21f281",
+      "revision_user_quote": "文件格式的图标有点不太好看，帮我重新设计，或者重新从互联网上找一套好看的图标",
+      "icon_candidates": [
+        "A: Phosphor duotone",
+        "B: Material Icon Theme"
+      ],
+      "selected_icon_scheme": null
     },
     {
       "id": "document",

@@ -1,13 +1,13 @@
 # 知识库与目录浏览管理 · 规划交付
 
-2026-10-18；仅规划。产品代码未修改，task 保持 planning，未启动实施。
+2026-10-18；v1历史交付（源代码见commit 68a0972），最新图标修订见[revision2评审](icon-planning-acceptance.md)。仅规划。产品代码未修改，task 保持 planning，未启动实施。
 
 ## 冻结版本
 
 - library-review-v1 revision1；approval=pending。
-- [交互HTML](prototype/review.html)，预览 http://127.0.0.1:5186/review.html 。
+- [原v1交互HTML](prototype/versions/v1.html)，预览 http://127.0.0.1:5186/review.html 。
 - SHA256：`a3f0f0053519810140a955d5d9fdbb727eded3a9661d2353b0282f473b21f281`。
-- [版本与源哈希](prototype/version.json)、[覆盖映射](prototype/coverage.json)、[静态检查](prototype/checks.json)。HTML 修改必须重新冻结并提交用户评审。
+- [原v1版本与源哈希](prototype/versions/v1-version.json)、[覆盖映射](prototype/coverage.json)、[原v1静态检查](prototype/versions/v1-checks.json)。HTML 修改必须重新冻结并提交用户评审。
 
 ## 覆盖与方案
 

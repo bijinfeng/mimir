@@ -1,0 +1,574 @@
+{
+  "sha": "2b75f3ad12b420c9504ef05df8d2564a28f8500e",
+  "truncated": false,
+  "tree": [
+    {
+      "path": "LICENSE",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "78c9810819776e135d314adc0ff26eda7bec8b38",
+      "size": 1071,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/78c9810819776e135d314adc0ff26eda7bec8b38"
+    },
+    {
+      "path": "README.md",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0666c3dd2fd7948c847ad77199b13505882d8968",
+      "size": 10060,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/0666c3dd2fd7948c847ad77199b13505882d8968"
+    },
+    {
+      "path": "assets/duotone/archive-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2b28034ad4ee6bec7e82133530403f37a9564bb4",
+      "size": 410,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/2b28034ad4ee6bec7e82133530403f37a9564bb4"
+    },
+    {
+      "path": "assets/duotone/code-block-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "38da0a1e2244df60fc7ce94a537761209399909c",
+      "size": 573,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/38da0a1e2244df60fc7ce94a537761209399909c"
+    },
+    {
+      "path": "assets/duotone/code-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "06354d45ca946a32f3745f157ef9404264400638",
+      "size": 513,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/06354d45ca946a32f3745f157ef9404264400638"
+    },
+    {
+      "path": "assets/duotone/code-simple-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c2c44978c6bf17fc5f996c01362086b8936cfb4c",
+      "size": 344,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/c2c44978c6bf17fc5f996c01362086b8936cfb4c"
+    },
+    {
+      "path": "assets/duotone/codepen-logo-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2b09fa37d4537c430cb7e205a92bc0bc6ed8a108",
+      "size": 574,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/2b09fa37d4537c430cb7e205a92bc0bc6ed8a108"
+    },
+    {
+      "path": "assets/duotone/codesandbox-logo-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7150b23df44be196c2a39c63e14c7fd362f52f39",
+      "size": 828,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/7150b23df44be196c2a39c63e14c7fd362f52f39"
+    },
+    {
+      "path": "assets/duotone/file-archive-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "069ca54b7ba4f48be26dc4e611ceb6a9b5084d59",
+      "size": 502,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/069ca54b7ba4f48be26dc4e611ceb6a9b5084d59"
+    },
+    {
+      "path": "assets/duotone/file-arrow-down-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c273e6b062d125b4e5d0886837aa101f9bf1b97b",
+      "size": 495,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/c273e6b062d125b4e5d0886837aa101f9bf1b97b"
+    },
+    {
+      "path": "assets/duotone/file-arrow-up-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4a54cf204544b1f58e1df512f66a0e70559b6dd8",
+      "size": 469,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/4a54cf204544b1f58e1df512f66a0e70559b6dd8"
+    },
+    {
+      "path": "assets/duotone/file-audio-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "63e822d7d9251f34e3030f29b8a046dd56a7b1b3",
+      "size": 719,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/63e822d7d9251f34e3030f29b8a046dd56a7b1b3"
+    },
+    {
+      "path": "assets/duotone/file-c-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "566f28291120f5a72a84561b58fc5c0069411e55",
+      "size": 569,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/566f28291120f5a72a84561b58fc5c0069411e55"
+    },
+    {
+      "path": "assets/duotone/file-c-sharp-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8bba36792f73d9b013caac82531dfc195befcc87",
+      "size": 738,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/8bba36792f73d9b013caac82531dfc195befcc87"
+    },
+    {
+      "path": "assets/duotone/file-cloud-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b5a95a9d045200619849eba5ea5f91a0e77105ff",
+      "size": 589,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/b5a95a9d045200619849eba5ea5f91a0e77105ff"
+    },
+    {
+      "path": "assets/duotone/file-code-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6835d88f853f6d1d108060859b9d785038bbe875",
+      "size": 558,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/6835d88f853f6d1d108060859b9d785038bbe875"
+    },
+    {
+      "path": "assets/duotone/file-cpp-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "99ba4279785b69bf8abf1d9a4752fe6643d2ec1e",
+      "size": 733,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/99ba4279785b69bf8abf1d9a4752fe6643d2ec1e"
+    },
+    {
+      "path": "assets/duotone/file-css-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "094ca0296ea56b76a9f124cc1411edf0ee022a80",
+      "size": 1430,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/094ca0296ea56b76a9f124cc1411edf0ee022a80"
+    },
+    {
+      "path": "assets/duotone/file-csv-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f13da21352fb3dfe1c9cbeea22aeb96c3df3a0ed",
+      "size": 1126,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/f13da21352fb3dfe1c9cbeea22aeb96c3df3a0ed"
+    },
+    {
+      "path": "assets/duotone/file-dashed-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "9666926f3d51f2d4a16c7f6d7efa8206955c5356",
+      "size": 623,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/9666926f3d51f2d4a16c7f6d7efa8206955c5356"
+    },
+    {
+      "path": "assets/duotone/file-doc-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "c93f70b6371a112b875e2be56b9e57b76d7201e4",
+      "size": 825,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/c93f70b6371a112b875e2be56b9e57b76d7201e4"
+    },
+    {
+      "path": "assets/duotone/file-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ff8a54b2bf8216baa2f2acf51ee32cf5a7597d29",
+      "size": 337,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/ff8a54b2bf8216baa2f2acf51ee32cf5a7597d29"
+    },
+    {
+      "path": "assets/duotone/file-html-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "eaa20d7ddaa1669d64c33d0f6242f28a30257907",
+      "size": 710,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/eaa20d7ddaa1669d64c33d0f6242f28a30257907"
+    },
+    {
+      "path": "assets/duotone/file-image-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "204531ef1359861b6002c82b3b3ce5dd5aeacdb0",
+      "size": 562,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/204531ef1359861b6002c82b3b3ce5dd5aeacdb0"
+    },
+    {
+      "path": "assets/duotone/file-ini-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "2beb36dfa947e0059e7884d51541f62dd892161b",
+      "size": 577,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/2beb36dfa947e0059e7884d51541f62dd892161b"
+    },
+    {
+      "path": "assets/duotone/file-jpg-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "074dd22a6f21b43e88fab4db96706aac7bc2e313",
+      "size": 757,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/074dd22a6f21b43e88fab4db96706aac7bc2e313"
+    },
+    {
+      "path": "assets/duotone/file-js-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7ff374a11a1a02877ddf44f5854ae98b066e3618",
+      "size": 867,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/7ff374a11a1a02877ddf44f5854ae98b066e3618"
+    },
+    {
+      "path": "assets/duotone/file-jsx-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "42f0d9945811442c90cb4659e9a9c3d04d53c07e",
+      "size": 1050,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/42f0d9945811442c90cb4659e9a9c3d04d53c07e"
+    },
+    {
+      "path": "assets/duotone/file-lock-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0efafeecb95c7bc060d731a9cb567265dd955ecb",
+      "size": 508,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/0efafeecb95c7bc060d731a9cb567265dd955ecb"
+    },
+    {
+      "path": "assets/duotone/file-magnifying-glass-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "62ccfff1d7883fe702e8272247a4561279000831",
+      "size": 461,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/62ccfff1d7883fe702e8272247a4561279000831"
+    },
+    {
+      "path": "assets/duotone/file-md-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1d9eaa6e8dabf9df29022f1113aa1ba7af19039e",
+      "size": 567,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/1d9eaa6e8dabf9df29022f1113aa1ba7af19039e"
+    },
+    {
+      "path": "assets/duotone/file-minus-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8c9ea0833037c3de31fcd3269f9754276ff380d4",
+      "size": 399,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/8c9ea0833037c3de31fcd3269f9754276ff380d4"
+    },
+    {
+      "path": "assets/duotone/file-pdf-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5f3e46e2751a2e3fc1eedd2ff2fb6c94dfa32259",
+      "size": 686,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/5f3e46e2751a2e3fc1eedd2ff2fb6c94dfa32259"
+    },
+    {
+      "path": "assets/duotone/file-plus-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a3b800dccf93312b560bd045e3282a89da59ff8c",
+      "size": 450,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/a3b800dccf93312b560bd045e3282a89da59ff8c"
+    },
+    {
+      "path": "assets/duotone/file-png-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "8a726e4cdae9a4d0725cc1b6cef0fef6add5373a",
+      "size": 833,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/8a726e4cdae9a4d0725cc1b6cef0fef6add5373a"
+    },
+    {
+      "path": "assets/duotone/file-ppt-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7721199c980d85666df323bc9d08e4de95c16364",
+      "size": 668,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/7721199c980d85666df323bc9d08e4de95c16364"
+    },
+    {
+      "path": "assets/duotone/file-py-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "46f6181f305aa2f8ff4e813037d6c356873245c9",
+      "size": 559,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/46f6181f305aa2f8ff4e813037d6c356873245c9"
+    },
+    {
+      "path": "assets/duotone/file-rs-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "26b3b8a89c9fe56b488917185da7158be070f4d7",
+      "size": 958,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/26b3b8a89c9fe56b488917185da7158be070f4d7"
+    },
+    {
+      "path": "assets/duotone/file-sql-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "95926320051c15ddcce33bacc02cce410461bdd1",
+      "size": 1149,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/95926320051c15ddcce33bacc02cce410461bdd1"
+    },
+    {
+      "path": "assets/duotone/file-svg-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "6de2939a6d91f6d79ab41529a9e3c4a33fa7bb47",
+      "size": 1138,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/6de2939a6d91f6d79ab41529a9e3c4a33fa7bb47"
+    },
+    {
+      "path": "assets/duotone/file-text-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "daff55db854ffd779edda46423bad37478bdc941",
+      "size": 457,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/daff55db854ffd779edda46423bad37478bdc941"
+    },
+    {
+      "path": "assets/duotone/file-ts-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "54695aff45415fedbe91f57ee139856dc8907065",
+      "size": 873,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/54695aff45415fedbe91f57ee139856dc8907065"
+    },
+    {
+      "path": "assets/duotone/file-tsx-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e80d2a94a986788e8ac609c89b707b4cdb2c58a4",
+      "size": 999,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/e80d2a94a986788e8ac609c89b707b4cdb2c58a4"
+    },
+    {
+      "path": "assets/duotone/file-txt-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "58a23ab1caa8cb5d2a8d4aa0a171831b3d0d8d55",
+      "size": 668,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/58a23ab1caa8cb5d2a8d4aa0a171831b3d0d8d55"
+    },
+    {
+      "path": "assets/duotone/file-video-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e998840206d5cf0972e6e04f408719db35115a80",
+      "size": 668,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/e998840206d5cf0972e6e04f408719db35115a80"
+    },
+    {
+      "path": "assets/duotone/file-vue-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "5bba74d650c2d80c04de874350d70ce1f2204370",
+      "size": 624,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/5bba74d650c2d80c04de874350d70ce1f2204370"
+    },
+    {
+      "path": "assets/duotone/file-x-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "259f7edbf3e4663819ebd3dc089551275a37563e",
+      "size": 533,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/259f7edbf3e4663819ebd3dc089551275a37563e"
+    },
+    {
+      "path": "assets/duotone/file-xls-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "47ac1067763a64442bda58f1a4ef98d83993daaa",
+      "size": 1043,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/47ac1067763a64442bda58f1a4ef98d83993daaa"
+    },
+    {
+      "path": "assets/duotone/file-zip-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "88f333b6e1d1090af9b6c0157d6a27fefed7c429",
+      "size": 571,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/88f333b6e1d1090af9b6c0157d6a27fefed7c429"
+    },
+    {
+      "path": "assets/duotone/files-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b251f280983444b41e27a307408244f99f2a2a88",
+      "size": 640,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/b251f280983444b41e27a307408244f99f2a2a88"
+    },
+    {
+      "path": "assets/duotone/image-broken-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "89f6dedcd0d80c4b419dd06e128eba06af01c0c4",
+      "size": 893,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/89f6dedcd0d80c4b419dd06e128eba06af01c0c4"
+    },
+    {
+      "path": "assets/duotone/image-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "3dfd85412945660d934cbf6cfdfd4f8175a71f16",
+      "size": 562,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/3dfd85412945660d934cbf6cfdfd4f8175a71f16"
+    },
+    {
+      "path": "assets/duotone/image-square-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "a3a9bcfbd8bf46a527217ac09a129f0ea4a8e4f1",
+      "size": 547,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/a3a9bcfbd8bf46a527217ac09a129f0ea4a8e4f1"
+    },
+    {
+      "path": "assets/duotone/images-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "66f866346b260a03a1d37d1db338b325e63bb683",
+      "size": 662,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/66f866346b260a03a1d37d1db338b325e63bb683"
+    },
+    {
+      "path": "assets/duotone/images-square-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "404a1d8a9d7323413d001ed13bcaef64900fff95",
+      "size": 637,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/404a1d8a9d7323413d001ed13bcaef64900fff95"
+    },
+    {
+      "path": "assets/duotone/music-note-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b7ce2efab0aff4ece875a2e189fd85db49899527",
+      "size": 376,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/b7ce2efab0aff4ece875a2e189fd85db49899527"
+    },
+    {
+      "path": "assets/duotone/music-note-simple-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "f5055b137a06adcbfaadae14525842704cf5a553",
+      "size": 319,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/f5055b137a06adcbfaadae14525842704cf5a553"
+    },
+    {
+      "path": "assets/duotone/music-notes-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "831926841f43126026348ad6ec08f5787e310c46",
+      "size": 488,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/831926841f43126026348ad6ec08f5787e310c46"
+    },
+    {
+      "path": "assets/duotone/music-notes-minus-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b88b7c0cd9792133248621ce001a7befe3a65cd7",
+      "size": 553,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/b88b7c0cd9792133248621ce001a7befe3a65cd7"
+    },
+    {
+      "path": "assets/duotone/music-notes-plus-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "91f634f104c248f242750675e5bd662ce8d6ea72",
+      "size": 603,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/91f634f104c248f242750675e5bd662ce8d6ea72"
+    },
+    {
+      "path": "assets/duotone/music-notes-simple-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ccbb48fa6c82475bec4afa0688a4b67f80c25b36",
+      "size": 458,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/ccbb48fa6c82475bec4afa0688a4b67f80c25b36"
+    },
+    {
+      "path": "assets/duotone/note-blank-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "504e5a4000b91956e0a0b14182280f5748e5fb68",
+      "size": 361,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/504e5a4000b91956e0a0b14182280f5748e5fb68"
+    },
+    {
+      "path": "assets/duotone/note-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "4ffb1f21faddfeccc09c1121d4319926e895fe94",
+      "size": 501,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/4ffb1f21faddfeccc09c1121d4319926e895fe94"
+    },
+    {
+      "path": "assets/duotone/note-pencil-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "0a531fa296acba35d35f83cff6cce46a7b18a6d8",
+      "size": 486,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/0a531fa296acba35d35f83cff6cce46a7b18a6d8"
+    },
+    {
+      "path": "assets/duotone/notebook-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "62d06e0c50f6ef7b33679d9f20b4229659da5a99",
+      "size": 410,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/62d06e0c50f6ef7b33679d9f20b4229659da5a99"
+    },
+    {
+      "path": "assets/duotone/notepad-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "70324d5aa425e7fda760aa93c00b048758723e03",
+      "size": 567,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/70324d5aa425e7fda760aa93c00b048758723e03"
+    },
+    {
+      "path": "assets/duotone/table-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "14f263a3ed47db66525572c47838ee91e81c581b",
+      "size": 322,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/14f263a3ed47db66525572c47838ee91e81c581b"
+    },
+    {
+      "path": "assets/duotone/video-camera-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "411120c601bad4ffc4192250ae94056d0cad39a3",
+      "size": 459,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/411120c601bad4ffc4192250ae94056d0cad39a3"
+    },
+    {
+      "path": "assets/duotone/video-camera-slash-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "e24a9e7b543e72e11064f785a860970160834e00",
+      "size": 576,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/e24a9e7b543e72e11064f785a860970160834e00"
+    },
+    {
+      "path": "assets/duotone/video-conference-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "dda62f7fb47821e67da8a9e3f6d0ffa401a431aa",
+      "size": 674,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/dda62f7fb47821e67da8a9e3f6d0ffa401a431aa"
+    },
+    {
+      "path": "assets/duotone/video-duotone.svg",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "1cb6a834ab4b83f20c543c5de5736e313932453d",
+      "size": 513,
+      "url": "https://api.github.com/repos/phosphor-icons/core/git/blobs/1cb6a834ab4b83f20c543c5de5736e313932453d"
+    }
+  ]
+}
