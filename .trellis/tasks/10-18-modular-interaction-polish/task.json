@@ -22,10 +22,11 @@
     "10-18-interaction-foundations",
     "10-18-interaction-workspace",
     "10-18-interaction-search",
-    "10-18-interaction-capture"
+    "10-18-interaction-capture",
+    "10-18-interaction-library"
   ],
   "parent": null,
   "relatedFiles": [],
-  "notes": "基础组件v1已完成；工作区v2与搜索v1已获批实施并通过模块验收，保留全仓外部阻断。第四模块收集与导入规划/HTML出稿，未获产品实施认可。",
+  "notes": "基础组件v1完成；工作区v2、搜索v1与收集v1 revision2已获批实施且模块验收通过，保留外部全仓门阻断。第五模块知识库与目录管理v1 revision1已冻结，58组299状态，待具体HTML认可。",
   "meta": {}
 }

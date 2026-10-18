@@ -1,0 +1,1056 @@
+{
+ "schema_version": 1,
+ "module": "library",
+ "date": "2026-10-18",
+ "source_kind": "workspace-source-inventory",
+ "coverage_count": 58,
+ "current_count": 50,
+ "proposal_count": 8,
+ "approval": "planning-only; product changes require exact HTML approval",
+ "items": [
+  {
+   "id": "LIB-001",
+   "label": "知识库入口与首库重定向",
+   "classification": "current",
+   "owner": "module2+module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:137",
+    "packages/renderer/src/components/NavSidebar.tsx:219"
+   ],
+   "states": [
+    "folders-loading",
+    "first-library",
+    "no-libraries"
+   ],
+   "current_behavior": "/docs 无id且scope=all时导航至已排序folders第一个顶层节点，replace历史；没有全部文档首页。"
+  },
+  {
+   "id": "LIB-002",
+   "label": "首次引导",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:1246"
+   ],
+   "states": [
+    "idle",
+    "create-open",
+    "created",
+    "cancel"
+   ],
+   "current_behavior": "先创建一个知识库；统一创建弹窗成功后导航新库，取消回引导。"
+  },
+  {
+   "id": "LIB-003",
+   "label": "统一创建/编辑知识库",
+   "classification": "current",
+   "owner": "module2-reuse",
+   "source": [
+    "packages/renderer/src/components/KnowledgeBaseCreateModal.tsx:64",
+    "packages/renderer/src/components/nav/FolderSection.tsx:503"
+   ],
+   "states": [
+    "create",
+    "edit",
+    "invalid-name",
+    "description-limit",
+    "pending",
+    "request-error",
+    "reconcile-error",
+    "retry",
+    "unchanged",
+    "cancel",
+    "success",
+    "legacy-description"
+   ],
+   "current_behavior": "名称+描述；无图标选择；完整沿用第二模块合同，500字新描述与旧长描述保留。"
+  },
+  {
+   "id": "LIB-004",
+   "label": "知识库身份头部",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:335"
+   ],
+   "states": [
+    "description",
+    "no-description",
+    "long-title",
+    "long-description",
+    "nested-folder"
+   ],
+   "current_behavior": "根库名称/描述保持，进入子目录不替换为子目录身份；名称桌面省略，窄屏可换行。"
+  },
+  {
+   "id": "LIB-005",
+   "label": "知识库ID复制",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:357"
+   ],
+   "states": [
+    "hover",
+    "focus",
+    "success",
+    "clipboard-error",
+    "missing-code"
+   ],
+   "current_behavior": "整块按钮复制六位短码；成功已复制知识库 ID，失败提示手动选中复制；无code隐藏。"
+  },
+  {
+   "id": "LIB-006",
+   "label": "文档计数",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:458"
+   ],
+   "states": [
+    "loading",
+    "loaded",
+    "100-cap"
+   ],
+   "current_behavior": "items.length计数，最大100；不是全库总数，包含后代。"
+  },
+  {
+   "id": "LIB-007",
+   "label": "布局切换偏好",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:146",
+    "packages/renderer/src/components/list-helpers.ts:38"
+   ],
+   "states": [
+    "list",
+    "card",
+    "reload",
+    "storage-unavailable"
+   ],
+   "current_behavior": "列表/卡片 Segmented，默认列表，mimir.library-layout持久化；存储异常不阻断当前切换。"
+  },
+  {
+   "id": "LIB-008",
+   "label": "添加文档菜单",
+   "classification": "current",
+   "owner": "module4-handoff",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:842"
+   ],
+   "states": [
+    "open",
+    "keyboard",
+    "dismiss",
+    "upload-file",
+    "upload-folder",
+    "capture-url",
+    "edit-now"
+   ],
+   "current_behavior": "上传文件/上传文件夹/网页抓取/直接编辑，前3项交给module4并带当前目录。"
+  },
+  {
+   "id": "LIB-009",
+   "label": "新建文件/直接编辑",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:157"
+   ],
+   "states": [
+    "idle",
+    "failure",
+    "success",
+    "unsaved-guard"
+   ],
+   "current_behavior": "创建未命名笔记空正文+tags[]+当前folder，成功requestNewNoteFocus再打开；失败全局新建文件失败；目前无pending防重。"
+  },
+  {
+   "id": "LIB-010",
+   "label": "新建文件夹入口",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:499"
+   ],
+   "states": [
+    "desktop",
+    "narrow-menu",
+    "missing-node-disabled"
+   ],
+   "current_behavior": "桌面单独按钮，窄屏新建下拉；无currentNode时禁用新建文件夹。"
+  },
+  {
+   "id": "LIB-011",
+   "label": "新建文件夹表单",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:767"
+   ],
+   "states": [
+    "empty-disabled",
+    "trim",
+    "slash",
+    "60-limit",
+    "enter",
+    "pending",
+    "request-error",
+    "cancel",
+    "success"
+   ],
+   "current_behavior": "子目录仅名称，按钮创建；斜杠按钮toast但Enter静默不提交；新建失败toast保留草稿，取消清空；pending只有按钮loading，未锁取消和Enter。"
+  },
+  {
+   "id": "LIB-012",
+   "label": "目录面包屑",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:541"
+   ],
+   "states": [
+    "root",
+    "nested",
+    "ancestor-link",
+    "current-text",
+    "long-path",
+    "unsaved-guard"
+   ],
+   "current_behavior": "文档回根，中间段可点，末段文字；根身份不变；长路径当前flex:none不截断。"
+  },
+  {
+   "id": "LIB-013",
+   "label": "列表读取初次加载",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:593"
+   ],
+   "states": [
+    "documents-loading",
+    "folders-loading",
+    "tag-loading"
+   ],
+   "current_behavior": "Skeleton五行；目录视图等folders，tag视图仍发folders请求。"
+  },
+  {
+   "id": "LIB-014",
+   "label": "列表读取失败重试",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:598"
+   ],
+   "states": [
+    "documents-error",
+    "folders-error",
+    "both-error",
+    "retry",
+    "cached-data-error"
+   ],
+   "current_behavior": "文档列表读取失败；先于空态；仅重试当前失败query之一；缓存刷新失败也覆盖原列表。"
+  },
+  {
+   "id": "LIB-015",
+   "label": "切换scope期间旧数据",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:124"
+   ],
+   "states": [
+    "new-scope-pending",
+    "placeholder"
+   ],
+   "current_behavior": "keepPreviousData导致新目录头部可能暂配旧文档，当前无isPlaceholderData明确提示。"
+  },
+  {
+   "id": "LIB-016",
+   "label": "失效知识库",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:344"
+   ],
+   "states": [
+    "missing-root",
+    "return-first",
+    "zero-roots"
+   ],
+   "current_behavior": "仅folders非空且kbRoot不存在触发这个知识库不存在；返回首库。全部库为空但scope仍folder时不进入此分支。"
+  },
+  {
+   "id": "LIB-017",
+   "label": "失效子目录",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:119"
+   ],
+   "states": [
+    "missing-child",
+    "existing-root"
+   ],
+   "current_behavior": "currentNode不存在但kbRoot存在时没有失效子目录提示；空列表落通用空态，新建文件夹禁用。"
+  },
+  {
+   "id": "LIB-018",
+   "label": "空知识库/空目录",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:619"
+   ],
+   "states": [
+    "empty-root",
+    "empty-child",
+    "upload",
+    "edit-now"
+   ],
+   "current_behavior": "这里还是空的+拖文件或添加文档提示，上传文件/直接编辑带当前folder。"
+  },
+  {
+   "id": "LIB-019",
+   "label": "标签视图",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:115"
+   ],
+   "states": [
+    "tag-list",
+    "tag-cards",
+    "empty",
+    "loading",
+    "failure",
+    "long-tag"
+   ],
+   "current_behavior": "scope=tag:name显示#name；无身份ID、添加、新建、拖入；横切所有目录，显示文档位置；当前无站内标签列表入口，URL可达。"
+  },
+  {
+   "id": "LIB-020",
+   "label": "空标签真实现状",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:624"
+   ],
+   "states": [
+    "empty-tag"
+   ],
+   "current_behavior": "仍显示拖文件/右上添加文档文案，实际无对应入口；须在对比当前保留此缺口，提案纠正。"
+  },
+  {
+   "id": "LIB-021",
+   "label": "文件夹列表与卡片",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:683",
+    "packages/renderer/src/components/library/LibraryView.tsx:1007"
+   ],
+   "states": [
+    "list",
+    "card",
+    "open",
+    "keyboard",
+    "long-name",
+    "count"
+   ],
+   "current_behavior": "直接子目录排在文档前；名字按钮可键盘进入，鼠标整个容器可点；显示子树文档count。"
+  },
+  {
+   "id": "LIB-022",
+   "label": "文件夹更多菜单",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:1054"
+   ],
+   "states": [
+    "open",
+    "hover",
+    "focus",
+    "keyboard",
+    "escape",
+    "portal-event"
+   ],
+   "current_behavior": "重命名/删除，卡片与列表复用FolderRowMenu，阻止冒泡不意外进目录；目前无受控Escape焦点恢复逻辑。"
+  },
+  {
+   "id": "LIB-023",
+   "label": "文件夹重命名",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:236"
+   ],
+   "states": [
+    "prefilled",
+    "blank-disabled",
+    "trim",
+    "slash",
+    "60-limit",
+    "unchanged",
+    "enter",
+    "pending",
+    "request-error",
+    "success",
+    "cancel",
+    "focus-return"
+   ],
+   "current_behavior": "api.folders.move，目标取被操作目录parentOf(from)，子树scope跟随；未变关闭；请求错误toast保留；pending未锁关闭与Enter；关闭尝试原trigger否则body首button。"
+  },
+  {
+   "id": "LIB-024",
+   "label": "删除空文件夹",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:285"
+   ],
+   "states": [
+    "confirm",
+    "cancel-focused",
+    "pending",
+    "retry-error",
+    "success",
+    "cancel"
+   ],
+   "current_behavior": "这是一个空文件夹，删除后不影响任何文档；使用confirmDanger。"
+  },
+  {
+   "id": "LIB-025",
+   "label": "删除非空文件夹",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:285",
+    "apps/server/src/services/folders.ts:407"
+   ],
+   "states": [
+    "confirm",
+    "pending",
+    "retry-error",
+    "success",
+    "cancel"
+   ],
+   "current_behavior": "UI说文档保留回知识库根，后端实际清空folder=null；不得演示确定留当前KB，见critical caveat。"
+  },
+  {
+   "id": "LIB-026",
+   "label": "列表文档行",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:713"
+   ],
+   "states": [
+    "open",
+    "hover",
+    "focus",
+    "keyboard",
+    "long-name"
+   ],
+   "current_behavior": "当前整行button仅打开；没有文档更多操作、下载、删除、移动；补齐属于proposed。"
+  },
+  {
+   "id": "LIB-027",
+   "label": "卡片打开入口",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:1119"
+   ],
+   "states": [
+    "body-click",
+    "title-keyboard",
+    "meta-click",
+    "once",
+    "action-no-open"
+   ],
+   "current_behavior": "普通容器可鼠标打开，标题button可键盘打开，动作与标题同级，避免嵌套交互。"
+  },
+  {
+   "id": "LIB-028",
+   "label": "卡片文档更多菜单",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:1201"
+   ],
+   "states": [
+    "note",
+    "web",
+    "file-editable",
+    "file-readonly",
+    "open",
+    "escape",
+    "download-no-open"
+   ],
+   "current_behavior": "打开；note与docx/xlsx/pptx编辑；file下载原件/替换原件；全部删除。隐藏直接图标，更多始终可见。无rename/move入口。"
+  },
+  {
+   "id": "LIB-029",
+   "label": "文件格式图标与来源徽标",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:882"
+   ],
+   "states": [
+    "note",
+    "web",
+    "wechat",
+    "github",
+    "docx",
+    "xlsx",
+    "pptx",
+    "pdf",
+    "html",
+    "txt",
+    "image",
+    "audio",
+    "video",
+    "archive",
+    "code",
+    "unknown"
+   ],
+   "current_behavior": "文件用当前后缀+格式语义图标，不重复格式徽标；非文件显示笔记/网页/公众号/GitHub。"
+  },
+  {
+   "id": "LIB-030",
+   "label": "文件名称和后缀",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:894"
+   ],
+   "states": [
+    "missing-suffix",
+    "existing-suffix",
+    "case-insensitive",
+    "long-stem",
+    "extension-preserved"
+   ],
+   "current_behavior": "显示时补fileExtension，已有忽略大小写不重复，长名只截主体保留后缀；title给全名。"
+  },
+  {
+   "id": "LIB-031",
+   "label": "摘要/位置/文件大小",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:868",
+    "packages/renderer/src/components/list-helpers.ts:88"
+   ],
+   "states": [
+    "root-file",
+    "nested-file",
+    "tag-location",
+    "empty-body",
+    "unknown-size",
+    "long-excerpt"
+   ],
+   "current_behavior": "file元信息大小，其他正文摘要；当前目录可省略，后代位置相对路径；非文件空正文显示还没有内容。"
+  },
+  {
+   "id": "LIB-032",
+   "label": "就绪与提取失败",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:374",
+    "packages/renderer/src/components/library/LibraryView.tsx:1238",
+    "packages/renderer/src/components/DocumentBadges.tsx:40"
+   ],
+   "states": [
+    "ready",
+    "failed",
+    "all-ready-list",
+    "has-failed-list",
+    "narrow-failed"
+   ],
+   "current_behavior": "卡片就绪为 quiet 文字，提取失败保留徽标；列表全ready隐藏状态列，有failed才启用，窄屏failed移到标题次行。不是异步导入processing进度。"
+  },
+  {
+   "id": "LIB-033",
+   "label": "更新时间",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:737"
+   ],
+   "states": [
+    "valid-date",
+    "null-date",
+    "long-layout",
+    "narrow-hidden"
+   ],
+   "current_behavior": "YYYY/MM/DD HH:mm；列表小容器隐藏时间，卡片仍有时间。"
+  },
+  {
+   "id": "LIB-034",
+   "label": "打开/编辑交接",
+   "classification": "current",
+   "owner": "module3-handoff",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:655"
+   ],
+   "states": [
+    "note",
+    "editable-office",
+    "readonly-file",
+    "unsaved-guard",
+    "return-scope"
+   ],
+   "current_behavior": "卡片打开/编辑都open(doc.id)；编辑不是新模式切换，Office由详情能力决定；返回库保持scope。"
+  },
+  {
+   "id": "LIB-035",
+   "label": "下载原件",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:1207"
+   ],
+   "states": [
+    "click",
+    "native-download",
+    "download-failure-boundary"
+   ],
+   "current_behavior": "同源/api/documents/:id/file?download=1锚点，凭cookie；浏览器接管，当前无可验证下载完成UI。"
+  },
+  {
+   "id": "LIB-036",
+   "label": "替换原件选择器",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:188"
+   ],
+   "states": [
+    "choose",
+    "native-cancel",
+    "same-file-reselect"
+   ],
+   "current_behavior": "隐藏input，点击前存doc.id；change先重置input value+目标；原生取消没有自定义回调。"
+  },
+  {
+   "id": "LIB-037",
+   "label": "替换原件请求",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:746"
+   ],
+   "states": [
+    "pending-gap",
+    "success",
+    "network-error",
+    "oversize-server-error",
+    "parse-result-gap"
+   ],
+   "current_behavior": "PUT multipart后仅toast成功/失败；无替换pending/防重/重试文件保留，成功只invalidate documents/folders/counts，不显示charCount/parseError明细。"
+  },
+  {
+   "id": "LIB-038",
+   "label": "删除笔记",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:172"
+   ],
+   "states": [
+    "confirm",
+    "cancel-focused",
+    "pending",
+    "retry-error",
+    "success"
+   ],
+   "current_behavior": "笔记从库移除，文件保留回收站，无一键恢复；成功已移入回收站；confirmDanger默认取消焦点。"
+  },
+  {
+   "id": "LIB-039",
+   "label": "删除文件",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:172"
+   ],
+   "states": [
+    "confirm",
+    "cancel-focused",
+    "pending",
+    "retry-error",
+    "success"
+   ],
+   "current_behavior": "记录与原件都删除，明确不可撤销；成功已删除文件与原件。"
+  },
+  {
+   "id": "LIB-040",
+   "label": "删除网页/公众号/GitHub",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:172"
+   ],
+   "states": [
+    "confirm",
+    "pending",
+    "retry-error",
+    "success"
+   ],
+   "current_behavior": "当前非file都走笔记回收站文案，但成功文案按kind===note判断，网页等会说已删除文件与原件；后端通常仅软删DB记录。是待澄清文案缺口。"
+  },
+  {
+   "id": "LIB-041",
+   "label": "页面拖入文件",
+   "classification": "current",
+   "owner": "module4-reuse",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:388"
+   ],
+   "states": [
+    "files-enter",
+    "nested-enter-leave",
+    "drop",
+    "nonfiles-ignore",
+    "empty-ignore",
+    "tag-disabled"
+   ],
+   "current_behavior": "目录视图整页drop overlay，带当前目录，claimUploadBatch同帧防重；不新增目录拖拽。"
+  },
+  {
+   "id": "LIB-042",
+   "label": "页内导入结果",
+   "classification": "current",
+   "owner": "module4-reuse",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:421"
+   ],
+   "states": [
+    "busy",
+    "mixed-results",
+    "all-failed",
+    "complete",
+    "clear"
+   ],
+   "current_behavior": "UploadPanel inline，完成刷list/folders/counts，逐项结果，清空恢复；完全复用module4。"
+  },
+  {
+   "id": "LIB-043",
+   "label": "导航知识库行菜单",
+   "classification": "current",
+   "owner": "module2-reuse",
+   "source": [
+    "packages/renderer/src/components/nav/FolderSection.tsx:250",
+    "packages/renderer/src/components/nav/FolderSection.tsx:409"
+   ],
+   "states": [
+    "edit",
+    "delete-empty",
+    "delete-nonempty",
+    "cache-refresh-error",
+    "keyboard",
+    "rename-path-follow"
+   ],
+   "current_behavior": "复用module2，不在module5重画全工作区；知识库编辑/删除仍由侧边栏触发，主区无编辑按钮。"
+  },
+  {
+   "id": "LIB-044",
+   "label": "文档重命名命令",
+   "classification": "current",
+   "owner": "module3-reuse",
+   "source": [
+    "packages/renderer/src/components/command-palette/items.tsx:41",
+    "packages/renderer/src/components/document/DocumentCommandModal.tsx:83"
+   ],
+   "states": [
+    "note-only",
+    "prefill",
+    "invalid",
+    "pending",
+    "failure",
+    "unchanged",
+    "read-refresh-error"
+   ],
+   "current_behavior": "module3已批准命令仅笔记，需打开文档后命令面板调用；文件当前无相同命令。"
+  },
+  {
+   "id": "LIB-045",
+   "label": "文档移动命令",
+   "classification": "current",
+   "owner": "module3-reuse",
+   "source": [
+    "packages/renderer/src/components/command-palette/items.tsx:52",
+    "packages/renderer/src/components/document/DocumentCommandModal.tsx:237"
+   ],
+   "states": [
+    "folders-loading",
+    "folders-error",
+    "retry",
+    "current-target",
+    "pending",
+    "failure",
+    "success",
+    "unchanged",
+    "read-refresh-error"
+   ],
+   "current_behavior": "module3已批准，打开文档后命令触发；目录 Select（flattenFolders 扁平路径选项），空值知识库根是folder清空，不是当前KB根。"
+  },
+  {
+   "id": "LIB-046",
+   "label": "文档详情目录菜单与撤销",
+   "classification": "current",
+   "owner": "module3-handoff",
+   "source": [
+    "packages/renderer/src/components/document/doc-menu.tsx:119",
+    "packages/renderer/src/components/DocumentPanel.tsx:319"
+   ],
+   "states": [
+    "current-disabled",
+    "other-folder",
+    "no-folder",
+    "move-out",
+    "success-undo",
+    "undo-error"
+   ],
+   "current_behavior": "更多>目录，可移出目录；成功8秒撤销以同API回写原folder，真实已有；详情模块交接不重做阅读器。"
+  },
+  {
+   "id": "LIB-047",
+   "label": "固定头部/列表滚动",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.style.ts:76",
+    "packages/renderer/src/components/library/LibraryView.style.ts:279",
+    "packages/renderer/src/components/library/LibraryView.style.ts:309"
+   ],
+   "states": [
+    "top",
+    "scrolled",
+    "long-list",
+    "low-height"
+   ],
+   "current_behavior": "头部flex:none内容body滚动，边界随bodyScrolled显形；低高度+长描述可挤没body。"
+  },
+  {
+   "id": "LIB-048",
+   "label": "小屏与触屏",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.style.ts:26",
+    "packages/renderer/src/components/library/LibraryView.style.ts:590"
+   ],
+   "states": [
+    "390-light",
+    "390-dark",
+    "touch-actions",
+    "layout-wrap",
+    "low-height",
+    "long-name"
+   ],
+   "current_behavior": "当前narrow新建合并、布局放sectionHead，list容器700隐藏详情/状态，480隐藏时间，更多40px；全场景均要可用。"
+  },
+  {
+   "id": "LIB-049",
+   "label": "焦点/hover/pressed/disabled",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.style.ts:327",
+    "packages/renderer/src/components/library/LibraryView.style.ts:619"
+   ],
+   "states": [
+    "keyboard",
+    "focus-return",
+    "hover-stability",
+    "pressed",
+    "disabled",
+    "reduced-motion"
+   ],
+   "current_behavior": "现有hover只改背景/颜色/边框色不改变几何；列表/卡片focus结构各异，pending锁定不完整须显式提案。"
+  },
+  {
+   "id": "LIB-050",
+   "label": "查询、排序与容量边界",
+   "classification": "current",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:124",
+    "apps/server/src/services/documents.ts:567"
+   ],
+   "states": [
+    "descendants",
+    "updated-desc",
+    "100-limit",
+    "no-pagination",
+    "no-total"
+   ],
+   "current_behavior": "GET documents folder包含后代，limit100，updatedAt降序，无total，无分页UI；直接子目录在前且也列出后代文档。"
+  },
+  {
+   "id": "LIB-P01",
+   "label": "列表/卡片共享更多入口",
+   "classification": "proposed",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:713"
+   ],
+   "states": [
+    "list-menu",
+    "card-menu",
+    "keyboard",
+    "portal-no-open"
+   ],
+   "current_behavior": "建议列表增加卡片已有动作以免切换布局丢能力；当前列表没有，需标注新增前端入口。"
+  },
+  {
+   "id": "LIB-P02",
+   "label": "目录新建/改名就地校验与等待锁定",
+   "classification": "proposed",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:767",
+    "packages/renderer/src/components/library/LibraryView.tsx:806"
+   ],
+   "states": [
+    "invalid-inline",
+    "pending-guard",
+    "retry-draft",
+    "focus-return",
+    "ime"
+   ],
+   "current_behavior": "建议与已批准表单一致：字段就地错误、IME保护、Enter防重、pending锁取消/关闭；仅现有API。"
+  },
+  {
+   "id": "LIB-P03",
+   "label": "目录定位失效与空标签文案",
+   "classification": "proposed",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:344",
+    "packages/renderer/src/components/library/LibraryView.tsx:624"
+   ],
+   "states": [
+    "missing-child",
+    "zero-roots-folder",
+    "empty-tag"
+   ],
+   "current_behavior": "建议显示真正缺失目录及返回有效库；空标签移除不存在的上传提示。"
+  },
+  {
+   "id": "LIB-P04",
+   "label": "查询状态与100条上限说明",
+   "classification": "proposed",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:124",
+    "packages/renderer/src/components/library/LibraryView.tsx:458"
+   ],
+   "states": [
+    "scope-changing",
+    "cached-refresh-error",
+    "100-loaded"
+   ],
+   "current_behavior": "建议真实说明正在切换/刷新失败保留内容/当前最多显示100条且包含子目录；不增加分页。"
+  },
+  {
+   "id": "LIB-P05",
+   "label": "替换请求反馈及防重",
+   "classification": "proposed",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:746",
+    "packages/renderer/src/lib/api.ts:840"
+   ],
+   "states": [
+    "pending",
+    "success-parse-empty",
+    "success-parse-error",
+    "failure-rechoose",
+    "native-cancel"
+   ],
+   "current_behavior": "建议已选文件可见与pending锁、失败说明、结果如实区分原件保存和正文提取；无后端百分比或取消API。"
+  },
+  {
+   "id": "LIB-P06",
+   "label": "删除准确后果说明",
+   "classification": "proposed",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:285",
+    "packages/renderer/src/components/library/LibraryView.tsx:172",
+    "apps/server/src/services/folders.ts:407"
+   ],
+   "states": [
+    "folder-assignment-cleared",
+    "web-softdelete",
+    "file-original-delete"
+   ],
+   "current_behavior": "建议目录明确文档保留但归属清空，不承诺留当前KB；资料删除按真实kind表达，无恢复入口承诺。"
+  },
+  {
+   "id": "LIB-P07",
+   "label": "长路径/描述与低高度布局",
+   "classification": "proposed",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.style.ts:293"
+   ],
+   "states": [
+    "long-breadcrumb",
+    "long-description",
+    "390",
+    "low-height"
+   ],
+   "current_behavior": "建议路径收缩/可滚动、长描述可展开并保留正文视口；不改信息架构。"
+  },
+  {
+   "id": "LIB-P08",
+   "label": "浏览页移动/重命名入口边界",
+   "classification": "proposed",
+   "owner": "module5",
+   "source": [
+    "packages/renderer/src/components/library/LibraryView.tsx:1201",
+    "packages/renderer/src/components/document/DocumentCommandModal.tsx:83"
+   ],
+   "states": [
+    "decision-required",
+    "note-only-rename",
+    "move-handoff"
+   ],
+   "current_behavior": "若主设计拟增加浏览页移动或重命名，须显式新增前端入口并沿用module3合同；不得当成当前卡片已有；文件重命名当前命令不支持。"
+  }
+ ],
+ "routes": {
+  "browse": "/docs?scope=folder:<path> (no id)",
+  "tag": "/docs?scope=tag:<name> (URL reachable; no tag navigation found)",
+  "read": "/docs?scope=<same scope>&id=<documentId>",
+  "first": "/docs or scope=all -> first root if exists; otherwise create onboard"
+ },
+ "out_of_scope": [
+  "new backend capabilities",
+  "pagination UI",
+  "bulk selection/actions",
+  "trash UI",
+  "KB permissions/multiuser",
+  "directory drag/reparent",
+  "Office toolbar redesign",
+  "standalone tag management page"
+ ],
+ "must_not_claim": [
+  "folder deletion keeps documents in current KB",
+  "unlimited/all documents when showing100",
+  "document row currently has more actions",
+  "file rename currently offered by note command",
+  "download completed based only on click",
+  "native OS chooser/dialog reproduced in HTML",
+  "real backend success from mock demo"
+ ]
+}

@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-18",
+  "head": "e99c007846be30fbda8a377680d0e430937ba418",
+  "files": {
+    "packages/renderer/src/components/library/LibraryView.tsx": "6b91c6327c563a9cdd7594df76f39f07ceb7e13f83ac042e5329cfdc6f847e53",
+    "packages/renderer/src/components/library/LibraryView.style.ts": "22791d35bc8752a03fa8e463aae8ce270f55fa6a0053018b53765241d82eeadf",
+    "packages/renderer/src/components/nav/FolderSection.tsx": "b750e6def3ba97ff35ed961fa334aff1cdce13750ff3cf1ce69ccd5f12f8e481",
+    "packages/renderer/src/components/KnowledgeBaseCreateModal.tsx": "3b57a845aae4ca514bffd218d556f46b8f57aca518fd3210b7fa41945e5423d7",
+    "packages/renderer/src/theme/tokens.ts": "ca675729c6cd874969b91b40e1fac829084bd070277dc0a8398ea760c4368bf5"
+  },
+  "notes": "Existing shared theme files have concurrent WIP. Baseline captures reflect current working tree; module5 planning does not modify product."
+}

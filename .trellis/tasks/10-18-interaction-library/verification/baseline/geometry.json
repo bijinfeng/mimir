@@ -1,0 +1,14 @@
+{
+  "capturedAt": "2026-10-18",
+  "url": "http://127.0.0.1:5185/docs?scope=folder%3A%E5%BC%80%E5%A7%8B%E4%BD%BF%E7%94%A8",
+  "viewport": { "width": 1280, "height": 720 },
+  "theme": "light",
+  "sidebarWidth": 256,
+  "topbarHeight": 48,
+  "pageInlinePadding": 40.96,
+  "heading": { "x": 296.953125, "y": 76, "height": 35, "fontSize": 28, "lineHeight": 35 },
+  "addButton": { "x": 296.953125, "y": 199.390625, "width": 113.125, "height": 32, "borderWidth": 1, "radius": 6, "fontSize": 14, "background": "rgb(0, 131, 77)" },
+  "defaultButtonBorder": "rgb(232, 232, 232)",
+  "documentCrumb": { "x": 296.953125, "y": 266.390625, "fontSize": 14, "lineHeight": 22 },
+  "method": "Read-only DOM getBoundingClientRect/getComputedStyle through cua_repl. Representative live tree only; concurrent theme WIP exists."
+}

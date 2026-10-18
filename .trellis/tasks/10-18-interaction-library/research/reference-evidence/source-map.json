@@ -1,0 +1,111 @@
+{
+  "weknoraCommit": "2c0d8384398ca756ee414eef01b71caf91e2caa6",
+  "obsidianCommit": "08ef563f07b78dd589f19b1583d089c1e2d2377c",
+  "sources": {
+    "DocumentActionMenu.vue": "https://raw.githubusercontent.com/Tencent/WeKnora/2c0d8384398ca756ee414eef01b71caf91e2caa6/frontend/src/views/knowledge/components/DocumentActionMenu.vue",
+    "DocumentCardView.vue": "https://raw.githubusercontent.com/Tencent/WeKnora/2c0d8384398ca756ee414eef01b71caf91e2caa6/frontend/src/views/knowledge/components/DocumentCardView.vue",
+    "DocumentListView.vue": "https://raw.githubusercontent.com/Tencent/WeKnora/2c0d8384398ca756ee414eef01b71caf91e2caa6/frontend/src/views/knowledge/components/DocumentListView.vue",
+    "KbFolderTree.vue": "https://raw.githubusercontent.com/Tencent/WeKnora/2c0d8384398ca756ee414eef01b71caf91e2caa6/frontend/src/views/knowledge/components/KbFolderTree.vue",
+    "KnowledgeTagFilter.vue": "https://raw.githubusercontent.com/Tencent/WeKnora/2c0d8384398ca756ee414eef01b71caf91e2caa6/frontend/src/views/knowledge/components/KnowledgeTagFilter.vue",
+    "KnowledgeBaseList.vue": "https://raw.githubusercontent.com/Tencent/WeKnora/2c0d8384398ca756ee414eef01b71caf91e2caa6/frontend/src/views/knowledge/KnowledgeBaseList.vue",
+    "FolderPickerMenu.vue": "https://raw.githubusercontent.com/Tencent/WeKnora/2c0d8384398ca756ee414eef01b71caf91e2caa6/frontend/src/views/knowledge/components/FolderPickerMenu.vue",
+    "obsidian-tree.json": "https://api.github.com/repos/obsidianmd/obsidian-help/git/trees/08ef563f07b78dd589f19b1583d089c1e2d2377c?recursive=1",
+    "obsidian-File-explorer.md": "https://raw.githubusercontent.com/obsidianmd/obsidian-help/08ef563f07b78dd589f19b1583d089c1e2d2377c/en/Plugins/File%20explorer.md",
+    "obsidian-Tags.md": "https://raw.githubusercontent.com/obsidianmd/obsidian-help/08ef563f07b78dd589f19b1583d089c1e2d2377c/en/Editing%20and%20formatting/Tags.md",
+    "obsidian-Workspace.md": "https://raw.githubusercontent.com/obsidianmd/obsidian-help/08ef563f07b78dd589f19b1583d089c1e2d2377c/en/User%20interface/Workspace.md",
+    "obsidian-Tabs.md": "https://raw.githubusercontent.com/obsidianmd/obsidian-help/08ef563f07b78dd589f19b1583d089c1e2d2377c/en/User%20interface/Tabs.md",
+    "weknora-site.html": "https://weknora.weixin.qq.com/",
+    "weknora-site-visible-text.txt": "Derived from weknora-site.html, HTMLParser strips script/style content",
+    "weknora-head.json": "https://api.github.com/repos/Tencent/WeKnora/commits/main",
+    "weknora-latest-release.json": "https://api.github.com/repos/Tencent/WeKnora/releases/latest",
+    "weknora-readme.md": "https://raw.githubusercontent.com/Tencent/WeKnora/2c0d8384398ca756ee414eef01b71caf91e2caa6/README.md",
+    "obsidian-head.json": "https://api.github.com/repos/obsidianmd/obsidian-help/commits/master",
+    "obsidian-files.html": "https://help.obsidian.md/Plugins/File+explorer",
+    "obsidian-layout.html": "https://help.obsidian.md/User+interface/Tabs",
+    "obsidian-properties.html": "https://help.obsidian.md/Editing+and+formatting/Tags"
+  },
+  "retrievedDate": "2026-10-18",
+  "method": "HTTP GET of official site, GitHub API and fixed-revision raw source. No logged-in WeKnora UI execution or visual screenshot audit.",
+  "files": {
+    "DocumentActionMenu.vue": {
+      "bytes": 5628,
+      "sha256": "b9367e771406894508121326dd1178be06609ef01c66c4ac86783b430e987ba2"
+    },
+    "DocumentCardView.vue": {
+      "bytes": 39240,
+      "sha256": "00fb90ea2227164528db7ca9acf487fa12ac2a11348e9166224f4fef4cd4cc01"
+    },
+    "DocumentListView.vue": {
+      "bytes": 31816,
+      "sha256": "3b0649c3fb1204a8e5f9f0e245b8e616f63c9f7d5c21d9897d988b7a620e7610"
+    },
+    "FolderPickerMenu.vue": {
+      "bytes": 9626,
+      "sha256": "87a31a7020585a9de955b1c7c69e69b032e78c806edae579c697ceb2988dd348"
+    },
+    "KbFolderTree.vue": {
+      "bytes": 14456,
+      "sha256": "ce5242ac231b8da754e0538c66ed193abed749311fb4a5365ecb2ea9079b323d"
+    },
+    "KnowledgeBaseList.vue": {
+      "bytes": 92452,
+      "sha256": "e9237763f08e31a9fc2f2987739895171b9ae89997d999249c522d95b2dba53c"
+    },
+    "KnowledgeTagFilter.vue": {
+      "bytes": 14087,
+      "sha256": "fc098b7d7cca2e73cdf3b796f1be5d628dc5077586706c116bb818742191cf23"
+    },
+    "obsidian-File-explorer.md": {
+      "bytes": 6489,
+      "sha256": "d0d70aebc6539f0fae3fd6be263f977c0eb798ebf420fcb815abbf4e69f90abb"
+    },
+    "obsidian-Tabs.md": {
+      "bytes": 4893,
+      "sha256": "1b79b32f48a04ade5aa04e9eb515a6ae45afa7f61d70eda9704c9ff6cb6a8fe5"
+    },
+    "obsidian-Tags.md": {
+      "bytes": 2209,
+      "sha256": "20214764032cb166d6e13cc39605b654d691f5a17ad70437d6df81e28fc149dc"
+    },
+    "obsidian-Workspace.md": {
+      "bytes": 1494,
+      "sha256": "0ee2cbb2e2ada49dd58a93a1c93e5f46a1c88f770bb1e4f2c1b499470f2540cf"
+    },
+    "obsidian-files.html": {
+      "bytes": 2789,
+      "sha256": "492d9eb289961c10f3baffcd179c1f7332b8baa12e28526f5cb68a08b653ec2a"
+    },
+    "obsidian-head.json": {
+      "bytes": 46954,
+      "sha256": "592edbd0f076470e939beaf84e4ac708a5cfc9e04eafbcbd3bb3b58e1de1ad28"
+    },
+    "obsidian-layout.html": {
+      "bytes": 2760,
+      "sha256": "ae651ea8f9336bff4f7a97d346ccdbdb735d8e224b29ed674faff4fb5f065835"
+    },
+    "obsidian-properties.html": {
+      "bytes": 2770,
+      "sha256": "f4b473e949f1bbb8051d183244c928298d5e7a734a4597c4f66f284e13804e7c"
+    },
+    "weknora-head.json": {
+      "bytes": 8842,
+      "sha256": "c52b745efe790952f460bf3c89d43b5d5424e341d43a1b473e1173b40201a83c"
+    },
+    "weknora-latest-release.json": {
+      "bytes": 44048,
+      "sha256": "163a964cc10c02fbca6dec0ad01f6fee50ffa0cc3f95957587c7df3b55fa9478"
+    },
+    "weknora-readme.md": {
+      "bytes": 36300,
+      "sha256": "51dae2acad7b70f82631635526e4ab41f47f8910074d234be9c4b1cfed59a4c9"
+    },
+    "weknora-site-visible-text.txt": {
+      "bytes": 6581,
+      "sha256": "76b4dcd1a42c3667fea58eb9e9c72c9f4d062f2d14c01bf5cb5045cfbd9db448"
+    },
+    "weknora-site.html": {
+      "bytes": 113529,
+      "sha256": "6ae3d1aefe92980cded37b949947f077e12c227993745c7f10f5124ec2baedbe"
+    }
+  }
+}

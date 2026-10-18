@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-18",
+  "files": {
+    "packages/renderer/src/components/library/LibraryView.tsx": true,
+    "packages/renderer/src/components/library/LibraryView.style.ts": true,
+    "packages/renderer/src/components/nav/FolderSection.tsx": true,
+    "packages/renderer/src/components/KnowledgeBaseCreateModal.tsx": true,
+    "packages/renderer/src/theme/tokens.ts": true
+  },
+  "note": "本轮只规划；这些产品基线文件均未被本轮改变。"
+}

@@ -69,12 +69,20 @@
     {
       "id": "library",
       "name": "知识库与目录浏览管理",
-      "status": "not_requested",
-      "proposal": null,
-      "version": null,
+      "status": "proposal_ready_pending_approval",
+      "proposal": "../10-18-interaction-library/prototype/review.html",
+      "version": "library-review-v1 revision1",
       "approved_at": null,
       "user_quote": null,
-      "implementation_commit": null
+      "implementation_commit": null,
+      "task": ".trellis/tasks/10-18-interaction-library",
+      "planning_user_quote": "继续",
+      "coverage_groups": 58,
+      "product_implementation_approved": false,
+      "sha256": "a3f0f0053519810140a955d5d9fdbb727eded3a9661d2353b0282f473b21f281",
+      "preview_url": "http://127.0.0.1:5186/review.html",
+      "coverage_states": 299,
+      "verification": "../10-18-interaction-library/planning-acceptance.md"
     },
     {
       "id": "document",

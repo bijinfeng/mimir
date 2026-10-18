@@ -1,0 +1,104 @@
+{
+  "date": "2026-10-18",
+  "samples": [
+    {
+      "canvas": [
+        {
+          "height": 680,
+          "scrollWidth": 360,
+          "width": 360
+        }
+      ],
+      "documentWidth": 382,
+      "horizontalOverflow": false,
+      "scene": "#scene=LIB-048.390-dark",
+      "theme": "review dark  ",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      },
+      "visibleMenuTargets": [
+        {
+          "height": 40,
+          "name": "参考资料 的更多操作",
+          "width": 36
+        },
+        {
+          "height": 40,
+          "name": "灵感收集 的更多操作",
+          "width": 36
+        }
+      ]
+    },
+    {
+      "dialog": [
+        {
+          "bottom": 484.6875,
+          "height": 251.6875,
+          "left": 21,
+          "right": 361,
+          "top": 233,
+          "width": 340,
+          "x": 21,
+          "y": 233
+        }
+      ],
+      "error": "名称不能包含 /",
+      "horizontalOverflow": false,
+      "scene": "#scene=LIB-048.390-light",
+      "viewport": {
+        "height": 844,
+        "width": 390
+      }
+    },
+    {
+      "dialog": [
+        {
+          "bottom": 351.1875,
+          "height": 211.6875,
+          "left": 263,
+          "right": 763,
+          "top": 139.5,
+          "width": 500,
+          "x": 263,
+          "y": 139.5
+        }
+      ],
+      "footer": [
+        {
+          "bottom": 331.1875,
+          "height": 32,
+          "left": 283,
+          "right": 743,
+          "top": 299.1875,
+          "width": 460,
+          "x": 283,
+          "y": 299.1875
+        }
+      ],
+      "horizontalOverflow": false,
+      "scene": "#scene=LIB-011.empty-disabled",
+      "viewport": {
+        "height": 480,
+        "width": 844
+      }
+    },
+    {
+      "loadedCount": "已显示 100 个文档知识库 ID：DSN8K2",
+      "notice": "当前最多显示最近更新的 100 个文档，包含下级目录。接口暂无总数及分页。",
+      "rowClasses": {
+        "row document-row has-actions has-status": 100,
+        "row folder-row has-actions has-status": 2
+      },
+      "scene": "#scene=LIB-050.100-limit"
+    }
+  ],
+  "notes": [
+    "Final records version: create adds independent empty folder; original remains. Second-folder rename retains correct 2 child documents and root identity.",
+    "Final: renamed second-folder delete confirms correct name/count2, cancel initially focused; success removes its directory assignment documents from current KB, retains unrelated note.",
+    "Final records pass: replace explicit original-saved/empty response shows empty-text outcome rather than false extraction success. Native picker not exercised.",
+    "100-limit: library body scrollHeight6042/clientHeight408; concrete row count checked separately; no pagination/total asserted.",
+    "最终 a3f0f005 版：before KB 删除保留当前“回库根”错误文案，after 准确说明清空归属；容量提示无 API 术语；390px more 控件实测44×44且无横向溢出。",
+    "最终版 GUI：创建“验收独立知识库”成功后标题更新、0文档、空态，无原8篇样例继承；模拟请求无业务写入。"
+  ]
+}

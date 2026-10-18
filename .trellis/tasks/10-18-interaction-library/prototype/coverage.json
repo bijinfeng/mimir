@@ -1,0 +1,2803 @@
+{
+  "version": "library-review-v1",
+  "items": [
+    {
+      "id": "LIB-001",
+      "label": "知识库入口与首库重定向",
+      "classification": "current",
+      "states": [
+        {
+          "state": "folders-loading",
+          "scene": "LIB-001.folders-loading",
+          "entry": "review.html#scene=LIB-001.folders-loading",
+          "view": "entry-routing",
+          "path": "点击评审工具“模拟首库重定向”观察导航反馈；无库时点击创建；加载时用读取成功/失败结束",
+          "expected": "首库替换历史或进入无库引导"
+        },
+        {
+          "state": "first-library",
+          "scene": "LIB-001.first-library",
+          "entry": "review.html#scene=LIB-001.first-library",
+          "view": "entry-routing",
+          "path": "点击评审工具“模拟首库重定向”观察导航反馈；无库时点击创建；加载时用读取成功/失败结束",
+          "expected": "首库替换历史或进入无库引导"
+        },
+        {
+          "state": "no-libraries",
+          "scene": "LIB-001.no-libraries",
+          "entry": "review.html#scene=LIB-001.no-libraries",
+          "view": "entry-routing",
+          "path": "点击评审工具“模拟首库重定向”观察导航反馈；无库时点击创建；加载时用读取成功/失败结束",
+          "expected": "首库替换历史或进入无库引导"
+        }
+      ]
+    },
+    {
+      "id": "LIB-002",
+      "label": "首次引导",
+      "classification": "current",
+      "states": [
+        {
+          "state": "idle",
+          "scene": "LIB-002.idle",
+          "entry": "review.html#scene=LIB-002.idle",
+          "view": "onboarding",
+          "path": "创建知识库→输入名称和描述→保存→F6→模拟请求成功；取消则返回引导",
+          "expected": "创建后进入根目录，取消保留引导"
+        },
+        {
+          "state": "create-open",
+          "scene": "LIB-002.create-open",
+          "entry": "review.html#scene=LIB-002.create-open",
+          "view": "onboarding",
+          "path": "创建知识库→输入名称和描述→保存→F6→模拟请求成功；取消则返回引导",
+          "expected": "创建后进入根目录，取消保留引导"
+        },
+        {
+          "state": "created",
+          "scene": "LIB-002.created",
+          "entry": "review.html#scene=LIB-002.created",
+          "view": "onboarding",
+          "path": "创建知识库→输入名称和描述→保存→F6→模拟请求成功；取消则返回引导",
+          "expected": "创建后进入根目录，取消保留引导"
+        },
+        {
+          "state": "cancel",
+          "scene": "LIB-002.cancel",
+          "entry": "review.html#scene=LIB-002.cancel",
+          "view": "onboarding",
+          "path": "创建知识库→输入名称和描述→保存→F6→模拟请求成功；取消则返回引导",
+          "expected": "创建后进入根目录，取消保留引导"
+        }
+      ]
+    },
+    {
+      "id": "LIB-003",
+      "label": "统一创建/编辑知识库",
+      "classification": "current",
+      "states": [
+        {
+          "state": "create",
+          "scene": "LIB-003.create",
+          "entry": "review.html#scene=LIB-003.create",
+          "view": "kb-editor",
+          "path": "编辑名称和描述；保存触发校验；请求结果用F6工具；对账失败先用“模拟按稳定ID对账成功”再保存",
+          "expected": "无图标；500字新描述限制、旧长描述不截断；失败留草稿；等待锁定"
+        },
+        {
+          "state": "edit",
+          "scene": "LIB-003.edit",
+          "entry": "review.html#scene=LIB-003.edit",
+          "view": "kb-editor",
+          "path": "编辑名称和描述；保存触发校验；请求结果用F6工具；对账失败先用“模拟按稳定ID对账成功”再保存",
+          "expected": "无图标；500字新描述限制、旧长描述不截断；失败留草稿；等待锁定"
+        },
+        {
+          "state": "invalid-name",
+          "scene": "LIB-003.invalid-name",
+          "entry": "review.html#scene=LIB-003.invalid-name",
+          "view": "kb-editor",
+          "path": "编辑名称和描述；保存触发校验；请求结果用F6工具；对账失败先用“模拟按稳定ID对账成功”再保存",
+          "expected": "无图标；500字新描述限制、旧长描述不截断；失败留草稿；等待锁定"
+        },
+        {
+          "state": "description-limit",
+          "scene": "LIB-003.description-limit",
+          "entry": "review.html#scene=LIB-003.description-limit",
+          "view": "kb-editor",
+          "path": "编辑名称和描述；保存触发校验；请求结果用F6工具；对账失败先用“模拟按稳定ID对账成功”再保存",
+          "expected": "无图标；500字新描述限制、旧长描述不截断；失败留草稿；等待锁定"
+        },
+        {
+          "state": "pending",
+          "scene": "LIB-003.pending",
+          "entry": "review.html#scene=LIB-003.pending",
+          "view": "kb-editor",
+          "path": "编辑名称和描述；保存触发校验；请求结果用F6工具；对账失败先用“模拟按稳定ID对账成功”再保存",
+          "expected": "无图标；500字新描述限制、旧长描述不截断；失败留草稿；等待锁定"
+        },
+        {
+          "state": "request-error",
+          "scene": "LIB-003.request-error",
+          "entry": "review.html#scene=LIB-003.request-error",
+          "view": "kb-editor",
+          "path": "编辑名称和描述；保存触发校验；请求结果用F6工具；对账失败先用“模拟按稳定ID对账成功”再保存",
+          "expected": "无图标；500字新描述限制、旧长描述不截断；失败留草稿；等待锁定"
+        },
+        {
+          "state": "reconcile-error",
+          "scene": "LIB-003.reconcile-error",
+          "entry": "review.html#scene=LIB-003.reconcile-error",
+          "view": "kb-editor",
+          "path": "编辑名称和描述；保存触发校验；请求结果用F6工具；对账失败先用“模拟按稳定ID对账成功”再保存",
+          "expected": "无图标；500字新描述限制、旧长描述不截断；失败留草稿；等待锁定"
+        },
+        {
+          "state": "retry",
+          "scene": "LIB-003.retry",
+          "entry": "review.html#scene=LIB-003.retry",
+          "view": "kb-editor",
+          "path": "编辑名称和描述；保存触发校验；请求结果用F6工具；对账失败先用“模拟按稳定ID对账成功”再保存",
+          "expected": "无图标；500字新描述限制、旧长描述不截断；失败留草稿；等待锁定"
+        },
+        {
+          "state": "unchanged",
+          "scene": "LIB-003.unchanged",
+          "entry": "review.html#scene=LIB-003.unchanged",
+          "view": "kb-editor",
+          "path": "编辑名称和描述；保存触发校验；请求结果用F6工具；对账失败先用“模拟按稳定ID对账成功”再保存",
+          "expected": "无图标；500字新描述限制、旧长描述不截断；失败留草稿；等待锁定"
+        },
+        {
+          "state": "cancel",
+          "scene": "LIB-003.cancel",
+          "entry": "review.html#scene=LIB-003.cancel",
+          "view": "kb-editor",
+          "path": "编辑名称和描述；保存触发校验；请求结果用F6工具；对账失败先用“模拟按稳定ID对账成功”再保存",
+          "expected": "无图标；500字新描述限制、旧长描述不截断；失败留草稿；等待锁定"
+        },
+        {
+          "state": "success",
+          "scene": "LIB-003.success",
+          "entry": "review.html#scene=LIB-003.success",
+          "view": "kb-editor",
+          "path": "编辑名称和描述；保存触发校验；请求结果用F6工具；对账失败先用“模拟按稳定ID对账成功”再保存",
+          "expected": "无图标；500字新描述限制、旧长描述不截断；失败留草稿；等待锁定"
+        },
+        {
+          "state": "legacy-description",
+          "scene": "LIB-003.legacy-description",
+          "entry": "review.html#scene=LIB-003.legacy-description",
+          "view": "kb-editor",
+          "path": "编辑名称和描述；保存触发校验；请求结果用F6工具；对账失败先用“模拟按稳定ID对账成功”再保存",
+          "expected": "无图标；500字新描述限制、旧长描述不截断；失败留草稿；等待锁定"
+        }
+      ]
+    },
+    {
+      "id": "LIB-004",
+      "label": "知识库身份头部",
+      "classification": "current",
+      "states": [
+        {
+          "state": "description",
+          "scene": "LIB-004.description",
+          "entry": "review.html#scene=LIB-004.description",
+          "view": "identity-header",
+          "path": "进入参考资料并点击文档面包屑返回；长描述在提案侧展开/收起",
+          "expected": "根知识库身份保持，子目录只改变文档面包屑"
+        },
+        {
+          "state": "no-description",
+          "scene": "LIB-004.no-description",
+          "entry": "review.html#scene=LIB-004.no-description",
+          "view": "identity-header",
+          "path": "进入参考资料并点击文档面包屑返回；长描述在提案侧展开/收起",
+          "expected": "根知识库身份保持，子目录只改变文档面包屑"
+        },
+        {
+          "state": "long-title",
+          "scene": "LIB-004.long-title",
+          "entry": "review.html#scene=LIB-004.long-title",
+          "view": "identity-header",
+          "path": "进入参考资料并点击文档面包屑返回；长描述在提案侧展开/收起",
+          "expected": "根知识库身份保持，子目录只改变文档面包屑"
+        },
+        {
+          "state": "long-description",
+          "scene": "LIB-004.long-description",
+          "entry": "review.html#scene=LIB-004.long-description",
+          "view": "identity-header",
+          "path": "进入参考资料并点击文档面包屑返回；长描述在提案侧展开/收起",
+          "expected": "根知识库身份保持，子目录只改变文档面包屑"
+        },
+        {
+          "state": "nested-folder",
+          "scene": "LIB-004.nested-folder",
+          "entry": "review.html#scene=LIB-004.nested-folder",
+          "view": "identity-header",
+          "path": "进入参考资料并点击文档面包屑返回；长描述在提案侧展开/收起",
+          "expected": "根知识库身份保持，子目录只改变文档面包屑"
+        }
+      ]
+    },
+    {
+      "id": "LIB-005",
+      "label": "知识库ID复制",
+      "classification": "current",
+      "states": [
+        {
+          "state": "hover",
+          "scene": "LIB-005.hover",
+          "entry": "review.html#scene=LIB-005.hover",
+          "view": "identity-copy",
+          "path": "hover/Tab聚焦整个知识库ID块→点击；剪贴板失败场景再次点击查看失败提示；本状态微交互：hover/focus/keyboard通过真实指针或Tab/Enter操作，不用脚本注入状态",
+          "expected": "复制整块有反馈，缺少code则隐藏；实际剪贴板须宿主另验"
+        },
+        {
+          "state": "focus",
+          "scene": "LIB-005.focus",
+          "entry": "review.html#scene=LIB-005.focus",
+          "view": "identity-copy",
+          "path": "hover/Tab聚焦整个知识库ID块→点击；剪贴板失败场景再次点击查看失败提示；本状态微交互：hover/focus/keyboard通过真实指针或Tab/Enter操作，不用脚本注入状态",
+          "expected": "复制整块有反馈，缺少code则隐藏；实际剪贴板须宿主另验"
+        },
+        {
+          "state": "success",
+          "scene": "LIB-005.success",
+          "entry": "review.html#scene=LIB-005.success",
+          "view": "identity-copy",
+          "path": "hover/Tab聚焦整个知识库ID块→点击；剪贴板失败场景再次点击查看失败提示",
+          "expected": "复制整块有反馈，缺少code则隐藏；实际剪贴板须宿主另验"
+        },
+        {
+          "state": "clipboard-error",
+          "scene": "LIB-005.clipboard-error",
+          "entry": "review.html#scene=LIB-005.clipboard-error",
+          "view": "identity-copy",
+          "path": "hover/Tab聚焦整个知识库ID块→点击；剪贴板失败场景再次点击查看失败提示",
+          "expected": "复制整块有反馈，缺少code则隐藏；实际剪贴板须宿主另验"
+        },
+        {
+          "state": "missing-code",
+          "scene": "LIB-005.missing-code",
+          "entry": "review.html#scene=LIB-005.missing-code",
+          "view": "identity-copy",
+          "path": "hover/Tab聚焦整个知识库ID块→点击；剪贴板失败场景再次点击查看失败提示",
+          "expected": "复制整块有反馈，缺少code则隐藏；实际剪贴板须宿主另验"
+        }
+      ]
+    },
+    {
+      "id": "LIB-006",
+      "label": "文档计数",
+      "classification": "current",
+      "states": [
+        {
+          "state": "loading",
+          "scene": "LIB-006.loading",
+          "entry": "review.html#scene=LIB-006.loading",
+          "view": "count-and-capacity",
+          "path": "加载场景点读取成功；100条场景在文档体滚动到底核对实际100行",
+          "expected": "计数来自已读items，不伪造total；前后同100样例"
+        },
+        {
+          "state": "loaded",
+          "scene": "LIB-006.loaded",
+          "entry": "review.html#scene=LIB-006.loaded",
+          "view": "count-and-capacity",
+          "path": "加载场景点读取成功；100条场景在文档体滚动到底核对实际100行",
+          "expected": "计数来自已读items，不伪造total；前后同100样例"
+        },
+        {
+          "state": "100-cap",
+          "scene": "LIB-006.100-cap",
+          "entry": "review.html#scene=LIB-006.100-cap",
+          "view": "count-and-capacity",
+          "path": "加载场景点读取成功；100条场景在文档体滚动到底核对实际100行",
+          "expected": "计数来自已读items，不伪造total；前后同100样例"
+        }
+      ]
+    },
+    {
+      "id": "LIB-007",
+      "label": "布局切换偏好",
+      "classification": "current",
+      "states": [
+        {
+          "state": "list",
+          "scene": "LIB-007.list",
+          "entry": "review.html#scene=LIB-007.list",
+          "view": "layout-preference",
+          "path": "列表/卡片相互切换→评审工具模拟重载偏好；存储异常场景仍可切换",
+          "expected": "两种布局可用，偏好重载仅本地模拟，不写产品存储"
+        },
+        {
+          "state": "card",
+          "scene": "LIB-007.card",
+          "entry": "review.html#scene=LIB-007.card",
+          "view": "layout-preference",
+          "path": "列表/卡片相互切换→评审工具模拟重载偏好；存储异常场景仍可切换",
+          "expected": "两种布局可用，偏好重载仅本地模拟，不写产品存储"
+        },
+        {
+          "state": "reload",
+          "scene": "LIB-007.reload",
+          "entry": "review.html#scene=LIB-007.reload",
+          "view": "layout-preference",
+          "path": "列表/卡片相互切换→评审工具模拟重载偏好；存储异常场景仍可切换",
+          "expected": "两种布局可用，偏好重载仅本地模拟，不写产品存储"
+        },
+        {
+          "state": "storage-unavailable",
+          "scene": "LIB-007.storage-unavailable",
+          "entry": "review.html#scene=LIB-007.storage-unavailable",
+          "view": "layout-preference",
+          "path": "列表/卡片相互切换→评审工具模拟重载偏好；存储异常场景仍可切换",
+          "expected": "两种布局可用，偏好重载仅本地模拟，不写产品存储"
+        }
+      ]
+    },
+    {
+      "id": "LIB-008",
+      "label": "添加文档菜单",
+      "classification": "current",
+      "states": [
+        {
+          "state": "open",
+          "scene": "LIB-008.open",
+          "entry": "review.html#scene=LIB-008.open",
+          "view": "add-menu",
+          "path": "添加文档按钮→Enter/方向键→菜单项；上传/抓取进入带目录交接页；直接编辑用结果工具结束请求",
+          "expected": "四入口带当前目录；系统选择器与完整模块4另验"
+        },
+        {
+          "state": "keyboard",
+          "scene": "LIB-008.keyboard",
+          "entry": "review.html#scene=LIB-008.keyboard",
+          "view": "add-menu",
+          "path": "添加文档按钮→Enter/方向键→菜单项；上传/抓取进入带目录交接页；直接编辑用结果工具结束请求；本状态微交互：hover/focus/keyboard通过真实指针或Tab/Enter操作，不用脚本注入状态",
+          "expected": "四入口带当前目录；系统选择器与完整模块4另验"
+        },
+        {
+          "state": "dismiss",
+          "scene": "LIB-008.dismiss",
+          "entry": "review.html#scene=LIB-008.dismiss",
+          "view": "add-menu",
+          "path": "添加文档按钮→Enter/方向键→菜单项；上传/抓取进入带目录交接页；直接编辑用结果工具结束请求",
+          "expected": "四入口带当前目录；系统选择器与完整模块4另验"
+        },
+        {
+          "state": "upload-file",
+          "scene": "LIB-008.upload-file",
+          "entry": "review.html#scene=LIB-008.upload-file",
+          "view": "add-menu",
+          "path": "添加文档按钮→Enter/方向键→菜单项；上传/抓取进入带目录交接页；直接编辑用结果工具结束请求",
+          "expected": "四入口带当前目录；系统选择器与完整模块4另验"
+        },
+        {
+          "state": "upload-folder",
+          "scene": "LIB-008.upload-folder",
+          "entry": "review.html#scene=LIB-008.upload-folder",
+          "view": "add-menu",
+          "path": "添加文档按钮→Enter/方向键→菜单项；上传/抓取进入带目录交接页；直接编辑用结果工具结束请求",
+          "expected": "四入口带当前目录；系统选择器与完整模块4另验"
+        },
+        {
+          "state": "capture-url",
+          "scene": "LIB-008.capture-url",
+          "entry": "review.html#scene=LIB-008.capture-url",
+          "view": "add-menu",
+          "path": "添加文档按钮→Enter/方向键→菜单项；上传/抓取进入带目录交接页；直接编辑用结果工具结束请求",
+          "expected": "四入口带当前目录；系统选择器与完整模块4另验"
+        },
+        {
+          "state": "edit-now",
+          "scene": "LIB-008.edit-now",
+          "entry": "review.html#scene=LIB-008.edit-now",
+          "view": "add-menu",
+          "path": "添加文档按钮→Enter/方向键→菜单项；上传/抓取进入带目录交接页；直接编辑用结果工具结束请求",
+          "expected": "四入口带当前目录；系统选择器与完整模块4另验"
+        }
+      ]
+    },
+    {
+      "id": "LIB-009",
+      "label": "新建文件/直接编辑",
+      "classification": "current",
+      "states": [
+        {
+          "state": "idle",
+          "scene": "LIB-009.idle",
+          "entry": "review.html#scene=LIB-009.idle",
+          "view": "create-note",
+          "path": "新建文件或直接编辑→F6→失败；再次触发→成功；未保存守卫场景先处理守卫",
+          "expected": "提案新建等待防重；成功打开未命名笔记，失败可重试"
+        },
+        {
+          "state": "failure",
+          "scene": "LIB-009.failure",
+          "entry": "review.html#scene=LIB-009.failure",
+          "view": "create-note",
+          "path": "新建文件或直接编辑→F6→失败；再次触发→成功；未保存守卫场景先处理守卫",
+          "expected": "提案新建等待防重；成功打开未命名笔记，失败可重试"
+        },
+        {
+          "state": "success",
+          "scene": "LIB-009.success",
+          "entry": "review.html#scene=LIB-009.success",
+          "view": "create-note",
+          "path": "新建文件或直接编辑→F6→失败；再次触发→成功；未保存守卫场景先处理守卫",
+          "expected": "提案新建等待防重；成功打开未命名笔记，失败可重试"
+        },
+        {
+          "state": "unsaved-guard",
+          "scene": "LIB-009.unsaved-guard",
+          "entry": "review.html#scene=LIB-009.unsaved-guard",
+          "view": "create-note",
+          "path": "新建文件或直接编辑→F6→失败；再次触发→成功；未保存守卫场景先处理守卫",
+          "expected": "提案新建等待防重；成功打开未命名笔记，失败可重试"
+        }
+      ]
+    },
+    {
+      "id": "LIB-010",
+      "label": "新建文件夹入口",
+      "classification": "current",
+      "states": [
+        {
+          "state": "desktop",
+          "scene": "LIB-010.desktop",
+          "entry": "review.html#scene=LIB-010.desktop",
+          "view": "new-actions",
+          "path": "桌面新建文件/文件夹；390px点击新建下拉；缺失节点检查禁用文件夹项",
+          "expected": "窄屏合并新建，不凭空增加目录能力"
+        },
+        {
+          "state": "narrow-menu",
+          "scene": "LIB-010.narrow-menu",
+          "entry": "review.html#scene=LIB-010.narrow-menu",
+          "view": "new-actions",
+          "path": "桌面新建文件/文件夹；390px点击新建下拉；缺失节点检查禁用文件夹项",
+          "expected": "窄屏合并新建，不凭空增加目录能力"
+        },
+        {
+          "state": "missing-node-disabled",
+          "scene": "LIB-010.missing-node-disabled",
+          "entry": "review.html#scene=LIB-010.missing-node-disabled",
+          "view": "new-actions",
+          "path": "桌面新建文件/文件夹；390px点击新建下拉；缺失节点检查禁用文件夹项",
+          "expected": "窄屏合并新建，不凭空增加目录能力"
+        }
+      ]
+    },
+    {
+      "id": "LIB-011",
+      "label": "新建文件夹表单",
+      "classification": "current",
+      "states": [
+        {
+          "state": "empty-disabled",
+          "scene": "LIB-011.empty-disabled",
+          "entry": "review.html#scene=LIB-011.empty-disabled",
+          "view": "folder-editor",
+          "path": "新建文件夹→输入→Enter或创建；空/斜杠/60字/首尾空白分别校验；F6失败→改草稿重试→成功；取消后重开",
+          "expected": "提案就地错误与等待防重，当前保留toast与取消/Enter缺口"
+        },
+        {
+          "state": "trim",
+          "scene": "LIB-011.trim",
+          "entry": "review.html#scene=LIB-011.trim",
+          "view": "folder-editor",
+          "path": "新建文件夹→输入→Enter或创建；空/斜杠/60字/首尾空白分别校验；F6失败→改草稿重试→成功；取消后重开",
+          "expected": "提案就地错误与等待防重，当前保留toast与取消/Enter缺口"
+        },
+        {
+          "state": "slash",
+          "scene": "LIB-011.slash",
+          "entry": "review.html#scene=LIB-011.slash",
+          "view": "folder-editor",
+          "path": "新建文件夹→输入→Enter或创建；空/斜杠/60字/首尾空白分别校验；F6失败→改草稿重试→成功；取消后重开",
+          "expected": "提案就地错误与等待防重，当前保留toast与取消/Enter缺口"
+        },
+        {
+          "state": "60-limit",
+          "scene": "LIB-011.60-limit",
+          "entry": "review.html#scene=LIB-011.60-limit",
+          "view": "folder-editor",
+          "path": "新建文件夹→输入→Enter或创建；空/斜杠/60字/首尾空白分别校验；F6失败→改草稿重试→成功；取消后重开",
+          "expected": "提案就地错误与等待防重，当前保留toast与取消/Enter缺口"
+        },
+        {
+          "state": "enter",
+          "scene": "LIB-011.enter",
+          "entry": "review.html#scene=LIB-011.enter",
+          "view": "folder-editor",
+          "path": "新建文件夹→输入→Enter或创建；空/斜杠/60字/首尾空白分别校验；F6失败→改草稿重试→成功；取消后重开",
+          "expected": "提案就地错误与等待防重，当前保留toast与取消/Enter缺口"
+        },
+        {
+          "state": "pending",
+          "scene": "LIB-011.pending",
+          "entry": "review.html#scene=LIB-011.pending",
+          "view": "folder-editor",
+          "path": "新建文件夹→输入→Enter或创建；空/斜杠/60字/首尾空白分别校验；F6失败→改草稿重试→成功；取消后重开",
+          "expected": "提案就地错误与等待防重，当前保留toast与取消/Enter缺口"
+        },
+        {
+          "state": "request-error",
+          "scene": "LIB-011.request-error",
+          "entry": "review.html#scene=LIB-011.request-error",
+          "view": "folder-editor",
+          "path": "新建文件夹→输入→Enter或创建；空/斜杠/60字/首尾空白分别校验；F6失败→改草稿重试→成功；取消后重开",
+          "expected": "提案就地错误与等待防重，当前保留toast与取消/Enter缺口"
+        },
+        {
+          "state": "cancel",
+          "scene": "LIB-011.cancel",
+          "entry": "review.html#scene=LIB-011.cancel",
+          "view": "folder-editor",
+          "path": "新建文件夹→输入→Enter或创建；空/斜杠/60字/首尾空白分别校验；F6失败→改草稿重试→成功；取消后重开",
+          "expected": "提案就地错误与等待防重，当前保留toast与取消/Enter缺口"
+        },
+        {
+          "state": "success",
+          "scene": "LIB-011.success",
+          "entry": "review.html#scene=LIB-011.success",
+          "view": "folder-editor",
+          "path": "新建文件夹→输入→Enter或创建；空/斜杠/60字/首尾空白分别校验；F6失败→改草稿重试→成功；取消后重开",
+          "expected": "提案就地错误与等待防重，当前保留toast与取消/Enter缺口"
+        }
+      ]
+    },
+    {
+      "id": "LIB-012",
+      "label": "目录面包屑",
+      "classification": "current",
+      "states": [
+        {
+          "state": "root",
+          "scene": "LIB-012.root",
+          "entry": "review.html#scene=LIB-012.root",
+          "view": "breadcrumb",
+          "path": "点击文档回根、中间目录返回上级；提案长路径点省略按钮展开完整路径",
+          "expected": "当前末段是文本；长路径提案不撑破画布；未保存交接单列"
+        },
+        {
+          "state": "nested",
+          "scene": "LIB-012.nested",
+          "entry": "review.html#scene=LIB-012.nested",
+          "view": "breadcrumb",
+          "path": "点击文档回根、中间目录返回上级；提案长路径点省略按钮展开完整路径",
+          "expected": "当前末段是文本；长路径提案不撑破画布；未保存交接单列"
+        },
+        {
+          "state": "ancestor-link",
+          "scene": "LIB-012.ancestor-link",
+          "entry": "review.html#scene=LIB-012.ancestor-link",
+          "view": "breadcrumb",
+          "path": "点击文档回根、中间目录返回上级；提案长路径点省略按钮展开完整路径",
+          "expected": "当前末段是文本；长路径提案不撑破画布；未保存交接单列"
+        },
+        {
+          "state": "current-text",
+          "scene": "LIB-012.current-text",
+          "entry": "review.html#scene=LIB-012.current-text",
+          "view": "breadcrumb",
+          "path": "点击文档回根、中间目录返回上级；提案长路径点省略按钮展开完整路径",
+          "expected": "当前末段是文本；长路径提案不撑破画布；未保存交接单列"
+        },
+        {
+          "state": "long-path",
+          "scene": "LIB-012.long-path",
+          "entry": "review.html#scene=LIB-012.long-path",
+          "view": "breadcrumb",
+          "path": "点击文档回根、中间目录返回上级；提案长路径点省略按钮展开完整路径",
+          "expected": "当前末段是文本；长路径提案不撑破画布；未保存交接单列"
+        },
+        {
+          "state": "unsaved-guard",
+          "scene": "LIB-012.unsaved-guard",
+          "entry": "review.html#scene=LIB-012.unsaved-guard",
+          "view": "breadcrumb",
+          "path": "点击文档回根、中间目录返回上级；提案长路径点省略按钮展开完整路径",
+          "expected": "当前末段是文本；长路径提案不撑破画布；未保存交接单列"
+        }
+      ]
+    },
+    {
+      "id": "LIB-013",
+      "label": "列表读取初次加载",
+      "classification": "current",
+      "states": [
+        {
+          "state": "documents-loading",
+          "scene": "LIB-013.documents-loading",
+          "entry": "review.html#scene=LIB-013.documents-loading",
+          "view": "list-loading",
+          "path": "检查五行骨架→下方读取失败→重试→读取成功",
+          "expected": "目录与标签初次读取均可结束，不用定时器假进度"
+        },
+        {
+          "state": "folders-loading",
+          "scene": "LIB-013.folders-loading",
+          "entry": "review.html#scene=LIB-013.folders-loading",
+          "view": "list-loading",
+          "path": "检查五行骨架→下方读取失败→重试→读取成功",
+          "expected": "目录与标签初次读取均可结束，不用定时器假进度"
+        },
+        {
+          "state": "tag-loading",
+          "scene": "LIB-013.tag-loading",
+          "entry": "review.html#scene=LIB-013.tag-loading",
+          "view": "list-loading",
+          "path": "检查五行骨架→下方读取失败→重试→读取成功",
+          "expected": "目录与标签初次读取均可结束，不用定时器假进度"
+        }
+      ]
+    },
+    {
+      "id": "LIB-014",
+      "label": "列表读取失败重试",
+      "classification": "current",
+      "states": [
+        {
+          "state": "documents-error",
+          "scene": "LIB-014.documents-error",
+          "entry": "review.html#scene=LIB-014.documents-error",
+          "view": "list-error",
+          "path": "失败页重试→读取成功/失败；缓存错误场景提案保留内容并点重新读取",
+          "expected": "失败先于空判断；两query失败现状说明留在当前行为"
+        },
+        {
+          "state": "folders-error",
+          "scene": "LIB-014.folders-error",
+          "entry": "review.html#scene=LIB-014.folders-error",
+          "view": "list-error",
+          "path": "失败页重试→读取成功/失败；缓存错误场景提案保留内容并点重新读取",
+          "expected": "失败先于空判断；两query失败现状说明留在当前行为"
+        },
+        {
+          "state": "both-error",
+          "scene": "LIB-014.both-error",
+          "entry": "review.html#scene=LIB-014.both-error",
+          "view": "list-error",
+          "path": "失败页重试→读取成功/失败；缓存错误场景提案保留内容并点重新读取",
+          "expected": "失败先于空判断；两query失败现状说明留在当前行为"
+        },
+        {
+          "state": "retry",
+          "scene": "LIB-014.retry",
+          "entry": "review.html#scene=LIB-014.retry",
+          "view": "list-error",
+          "path": "失败页重试→读取成功/失败；缓存错误场景提案保留内容并点重新读取",
+          "expected": "失败先于空判断；两query失败现状说明留在当前行为"
+        },
+        {
+          "state": "cached-data-error",
+          "scene": "LIB-014.cached-data-error",
+          "entry": "review.html#scene=LIB-014.cached-data-error",
+          "view": "list-error",
+          "path": "失败页重试→读取成功/失败；缓存错误场景提案保留内容并点重新读取",
+          "expected": "失败先于空判断；两query失败现状说明留在当前行为"
+        }
+      ]
+    },
+    {
+      "id": "LIB-015",
+      "label": "切换scope期间旧数据",
+      "classification": "current",
+      "states": [
+        {
+          "state": "new-scope-pending",
+          "scene": "LIB-015.new-scope-pending",
+          "entry": "review.html#scene=LIB-015.new-scope-pending",
+          "view": "scope-switching",
+          "path": "新目录头部+旧文档→下方读取成功/失败",
+          "expected": "当前无占位提示；提案提示旧数据来源，完成后提示消失"
+        },
+        {
+          "state": "placeholder",
+          "scene": "LIB-015.placeholder",
+          "entry": "review.html#scene=LIB-015.placeholder",
+          "view": "scope-switching",
+          "path": "新目录头部+旧文档→下方读取成功/失败",
+          "expected": "当前无占位提示；提案提示旧数据来源，完成后提示消失"
+        }
+      ]
+    },
+    {
+      "id": "LIB-016",
+      "label": "失效知识库",
+      "classification": "current",
+      "states": [
+        {
+          "state": "missing-root",
+          "scene": "LIB-016.missing-root",
+          "entry": "review.html#scene=LIB-016.missing-root",
+          "view": "missing-root",
+          "path": "缺失根库点击返回知识库；全部库已空时提案创建知识库再完成请求",
+          "expected": "当前zero-roots缺口如实为空；提案回有效库或创建"
+        },
+        {
+          "state": "return-first",
+          "scene": "LIB-016.return-first",
+          "entry": "review.html#scene=LIB-016.return-first",
+          "view": "missing-root",
+          "path": "缺失根库点击返回知识库；全部库已空时提案创建知识库再完成请求",
+          "expected": "当前zero-roots缺口如实为空；提案回有效库或创建"
+        },
+        {
+          "state": "zero-roots",
+          "scene": "LIB-016.zero-roots",
+          "entry": "review.html#scene=LIB-016.zero-roots",
+          "view": "missing-root",
+          "path": "缺失根库点击返回知识库；全部库已空时提案创建知识库再完成请求",
+          "expected": "当前zero-roots缺口如实为空；提案回有效库或创建"
+        }
+      ]
+    },
+    {
+      "id": "LIB-017",
+      "label": "失效子目录",
+      "classification": "current",
+      "states": [
+        {
+          "state": "missing-child",
+          "scene": "LIB-017.missing-child",
+          "entry": "review.html#scene=LIB-017.missing-child",
+          "view": "missing-child",
+          "path": "检查现有根、缺失子目录→提案返回知识库根目录",
+          "expected": "当前泛化空态且禁用新建文件夹；提案准确定位并恢复"
+        },
+        {
+          "state": "existing-root",
+          "scene": "LIB-017.existing-root",
+          "entry": "review.html#scene=LIB-017.existing-root",
+          "view": "missing-child",
+          "path": "检查现有根、缺失子目录→提案返回知识库根目录",
+          "expected": "当前泛化空态且禁用新建文件夹；提案准确定位并恢复"
+        }
+      ]
+    },
+    {
+      "id": "LIB-018",
+      "label": "空知识库/空目录",
+      "classification": "current",
+      "states": [
+        {
+          "state": "empty-root",
+          "scene": "LIB-018.empty-root",
+          "entry": "review.html#scene=LIB-018.empty-root",
+          "view": "empty-folder",
+          "path": "空根/空子目录的上传文件与直接编辑分别点击；F6完成新建或返回",
+          "expected": "空目录路径保持；入口带当前folder"
+        },
+        {
+          "state": "empty-child",
+          "scene": "LIB-018.empty-child",
+          "entry": "review.html#scene=LIB-018.empty-child",
+          "view": "empty-folder",
+          "path": "空根/空子目录的上传文件与直接编辑分别点击；F6完成新建或返回",
+          "expected": "空目录路径保持；入口带当前folder"
+        },
+        {
+          "state": "upload",
+          "scene": "LIB-018.upload",
+          "entry": "review.html#scene=LIB-018.upload",
+          "view": "empty-folder",
+          "path": "空根/空子目录的上传文件与直接编辑分别点击；F6完成新建或返回",
+          "expected": "空目录路径保持；入口带当前folder"
+        },
+        {
+          "state": "edit-now",
+          "scene": "LIB-018.edit-now",
+          "entry": "review.html#scene=LIB-018.edit-now",
+          "view": "empty-folder",
+          "path": "空根/空子目录的上传文件与直接编辑分别点击；F6完成新建或返回",
+          "expected": "空目录路径保持；入口带当前folder"
+        }
+      ]
+    },
+    {
+      "id": "LIB-019",
+      "label": "标签视图",
+      "classification": "current",
+      "states": [
+        {
+          "state": "tag-list",
+          "scene": "LIB-019.tag-list",
+          "entry": "review.html#scene=LIB-019.tag-list",
+          "view": "tag-list",
+          "path": "列表/卡片切换；无创建上传入口；加载/失败用读取工具；长标签折行检查",
+          "expected": "横切筛选显示真实来源位置，标签并非内容容器"
+        },
+        {
+          "state": "tag-cards",
+          "scene": "LIB-019.tag-cards",
+          "entry": "review.html#scene=LIB-019.tag-cards",
+          "view": "tag-list",
+          "path": "列表/卡片切换；无创建上传入口；加载/失败用读取工具；长标签折行检查",
+          "expected": "横切筛选显示真实来源位置，标签并非内容容器"
+        },
+        {
+          "state": "empty",
+          "scene": "LIB-019.empty",
+          "entry": "review.html#scene=LIB-019.empty",
+          "view": "tag-list",
+          "path": "列表/卡片切换；无创建上传入口；加载/失败用读取工具；长标签折行检查",
+          "expected": "横切筛选显示真实来源位置，标签并非内容容器"
+        },
+        {
+          "state": "loading",
+          "scene": "LIB-019.loading",
+          "entry": "review.html#scene=LIB-019.loading",
+          "view": "tag-list",
+          "path": "列表/卡片切换；无创建上传入口；加载/失败用读取工具；长标签折行检查",
+          "expected": "横切筛选显示真实来源位置，标签并非内容容器"
+        },
+        {
+          "state": "failure",
+          "scene": "LIB-019.failure",
+          "entry": "review.html#scene=LIB-019.failure",
+          "view": "tag-list",
+          "path": "列表/卡片切换；无创建上传入口；加载/失败用读取工具；长标签折行检查",
+          "expected": "横切筛选显示真实来源位置，标签并非内容容器"
+        },
+        {
+          "state": "long-tag",
+          "scene": "LIB-019.long-tag",
+          "entry": "review.html#scene=LIB-019.long-tag",
+          "view": "tag-list",
+          "path": "列表/卡片切换；无创建上传入口；加载/失败用读取工具；长标签折行检查",
+          "expected": "横切筛选显示真实来源位置，标签并非内容容器"
+        }
+      ]
+    },
+    {
+      "id": "LIB-020",
+      "label": "空标签真实现状",
+      "classification": "current",
+      "states": [
+        {
+          "state": "empty-tag",
+          "scene": "LIB-020.empty-tag",
+          "entry": "review.html#scene=LIB-020.empty-tag",
+          "view": "empty-tag",
+          "path": "比较空标签提示与实际可用入口",
+          "expected": "当前错误上传提示保留；提案解释标签来源，不提供伪创建入口"
+        }
+      ]
+    },
+    {
+      "id": "LIB-021",
+      "label": "文件夹列表与卡片",
+      "classification": "current",
+      "states": [
+        {
+          "state": "list",
+          "scene": "LIB-021.list",
+          "entry": "review.html#scene=LIB-021.list",
+          "view": "folder-browser",
+          "path": "点击文件夹行空白/名称或卡片进入子目录→面包屑返回；Tab聚焦名称",
+          "expected": "只列直接子目录，文档含后代；目录计数与样例归属对应"
+        },
+        {
+          "state": "card",
+          "scene": "LIB-021.card",
+          "entry": "review.html#scene=LIB-021.card",
+          "view": "folder-browser",
+          "path": "点击文件夹行空白/名称或卡片进入子目录→面包屑返回；Tab聚焦名称",
+          "expected": "只列直接子目录，文档含后代；目录计数与样例归属对应"
+        },
+        {
+          "state": "open",
+          "scene": "LIB-021.open",
+          "entry": "review.html#scene=LIB-021.open",
+          "view": "folder-browser",
+          "path": "点击文件夹行空白/名称或卡片进入子目录→面包屑返回；Tab聚焦名称",
+          "expected": "只列直接子目录，文档含后代；目录计数与样例归属对应"
+        },
+        {
+          "state": "keyboard",
+          "scene": "LIB-021.keyboard",
+          "entry": "review.html#scene=LIB-021.keyboard",
+          "view": "folder-browser",
+          "path": "点击文件夹行空白/名称或卡片进入子目录→面包屑返回；Tab聚焦名称；本状态微交互：hover/focus/keyboard通过真实指针或Tab/Enter操作，不用脚本注入状态",
+          "expected": "只列直接子目录，文档含后代；目录计数与样例归属对应"
+        },
+        {
+          "state": "long-name",
+          "scene": "LIB-021.long-name",
+          "entry": "review.html#scene=LIB-021.long-name",
+          "view": "folder-browser",
+          "path": "点击文件夹行空白/名称或卡片进入子目录→面包屑返回；Tab聚焦名称",
+          "expected": "只列直接子目录，文档含后代；目录计数与样例归属对应"
+        },
+        {
+          "state": "count",
+          "scene": "LIB-021.count",
+          "entry": "review.html#scene=LIB-021.count",
+          "view": "folder-browser",
+          "path": "点击文件夹行空白/名称或卡片进入子目录→面包屑返回；Tab聚焦名称",
+          "expected": "只列直接子目录，文档含后代；目录计数与样例归属对应"
+        }
+      ]
+    },
+    {
+      "id": "LIB-022",
+      "label": "文件夹更多菜单",
+      "classification": "current",
+      "states": [
+        {
+          "state": "open",
+          "scene": "LIB-022.open",
+          "entry": "review.html#scene=LIB-022.open",
+          "view": "folder-menu",
+          "path": "文件夹更多→方向键上下遍历/Home/End→Escape回原更多；重命名/删除不进入目录",
+          "expected": "菜单不触发行点击，更多按钮几何稳定"
+        },
+        {
+          "state": "hover",
+          "scene": "LIB-022.hover",
+          "entry": "review.html#scene=LIB-022.hover",
+          "view": "folder-menu",
+          "path": "文件夹更多→方向键上下遍历/Home/End→Escape回原更多；重命名/删除不进入目录；本状态微交互：hover/focus/keyboard通过真实指针或Tab/Enter操作，不用脚本注入状态",
+          "expected": "菜单不触发行点击，更多按钮几何稳定"
+        },
+        {
+          "state": "focus",
+          "scene": "LIB-022.focus",
+          "entry": "review.html#scene=LIB-022.focus",
+          "view": "folder-menu",
+          "path": "文件夹更多→方向键上下遍历/Home/End→Escape回原更多；重命名/删除不进入目录；本状态微交互：hover/focus/keyboard通过真实指针或Tab/Enter操作，不用脚本注入状态",
+          "expected": "菜单不触发行点击，更多按钮几何稳定"
+        },
+        {
+          "state": "keyboard",
+          "scene": "LIB-022.keyboard",
+          "entry": "review.html#scene=LIB-022.keyboard",
+          "view": "folder-menu",
+          "path": "文件夹更多→方向键上下遍历/Home/End→Escape回原更多；重命名/删除不进入目录；本状态微交互：hover/focus/keyboard通过真实指针或Tab/Enter操作，不用脚本注入状态",
+          "expected": "菜单不触发行点击，更多按钮几何稳定"
+        },
+        {
+          "state": "escape",
+          "scene": "LIB-022.escape",
+          "entry": "review.html#scene=LIB-022.escape",
+          "view": "folder-menu",
+          "path": "文件夹更多→方向键上下遍历/Home/End→Escape回原更多；重命名/删除不进入目录",
+          "expected": "菜单不触发行点击，更多按钮几何稳定"
+        },
+        {
+          "state": "portal-event",
+          "scene": "LIB-022.portal-event",
+          "entry": "review.html#scene=LIB-022.portal-event",
+          "view": "folder-menu",
+          "path": "文件夹更多→方向键上下遍历/Home/End→Escape回原更多；重命名/删除不进入目录",
+          "expected": "菜单不触发行点击，更多按钮几何稳定"
+        }
+      ]
+    },
+    {
+      "id": "LIB-023",
+      "label": "文件夹重命名",
+      "classification": "current",
+      "states": [
+        {
+          "state": "prefilled",
+          "scene": "LIB-023.prefilled",
+          "entry": "review.html#scene=LIB-023.prefilled",
+          "view": "folder-rename",
+          "path": "修改预填名称→Enter；空/斜杠/60字检查；失败留草稿→重试；未改直接关闭；取消回原更多",
+          "expected": "只改同父级名称，不自由移动；提案等待锁关闭和重复提交"
+        },
+        {
+          "state": "blank-disabled",
+          "scene": "LIB-023.blank-disabled",
+          "entry": "review.html#scene=LIB-023.blank-disabled",
+          "view": "folder-rename",
+          "path": "修改预填名称→Enter；空/斜杠/60字检查；失败留草稿→重试；未改直接关闭；取消回原更多",
+          "expected": "只改同父级名称，不自由移动；提案等待锁关闭和重复提交"
+        },
+        {
+          "state": "trim",
+          "scene": "LIB-023.trim",
+          "entry": "review.html#scene=LIB-023.trim",
+          "view": "folder-rename",
+          "path": "修改预填名称→Enter；空/斜杠/60字检查；失败留草稿→重试；未改直接关闭；取消回原更多",
+          "expected": "只改同父级名称，不自由移动；提案等待锁关闭和重复提交"
+        },
+        {
+          "state": "slash",
+          "scene": "LIB-023.slash",
+          "entry": "review.html#scene=LIB-023.slash",
+          "view": "folder-rename",
+          "path": "修改预填名称→Enter；空/斜杠/60字检查；失败留草稿→重试；未改直接关闭；取消回原更多",
+          "expected": "只改同父级名称，不自由移动；提案等待锁关闭和重复提交"
+        },
+        {
+          "state": "60-limit",
+          "scene": "LIB-023.60-limit",
+          "entry": "review.html#scene=LIB-023.60-limit",
+          "view": "folder-rename",
+          "path": "修改预填名称→Enter；空/斜杠/60字检查；失败留草稿→重试；未改直接关闭；取消回原更多",
+          "expected": "只改同父级名称，不自由移动；提案等待锁关闭和重复提交"
+        },
+        {
+          "state": "unchanged",
+          "scene": "LIB-023.unchanged",
+          "entry": "review.html#scene=LIB-023.unchanged",
+          "view": "folder-rename",
+          "path": "修改预填名称→Enter；空/斜杠/60字检查；失败留草稿→重试；未改直接关闭；取消回原更多",
+          "expected": "只改同父级名称，不自由移动；提案等待锁关闭和重复提交"
+        },
+        {
+          "state": "enter",
+          "scene": "LIB-023.enter",
+          "entry": "review.html#scene=LIB-023.enter",
+          "view": "folder-rename",
+          "path": "修改预填名称→Enter；空/斜杠/60字检查；失败留草稿→重试；未改直接关闭；取消回原更多",
+          "expected": "只改同父级名称，不自由移动；提案等待锁关闭和重复提交"
+        },
+        {
+          "state": "pending",
+          "scene": "LIB-023.pending",
+          "entry": "review.html#scene=LIB-023.pending",
+          "view": "folder-rename",
+          "path": "修改预填名称→Enter；空/斜杠/60字检查；失败留草稿→重试；未改直接关闭；取消回原更多",
+          "expected": "只改同父级名称，不自由移动；提案等待锁关闭和重复提交"
+        },
+        {
+          "state": "request-error",
+          "scene": "LIB-023.request-error",
+          "entry": "review.html#scene=LIB-023.request-error",
+          "view": "folder-rename",
+          "path": "修改预填名称→Enter；空/斜杠/60字检查；失败留草稿→重试；未改直接关闭；取消回原更多",
+          "expected": "只改同父级名称，不自由移动；提案等待锁关闭和重复提交"
+        },
+        {
+          "state": "success",
+          "scene": "LIB-023.success",
+          "entry": "review.html#scene=LIB-023.success",
+          "view": "folder-rename",
+          "path": "修改预填名称→Enter；空/斜杠/60字检查；失败留草稿→重试；未改直接关闭；取消回原更多",
+          "expected": "只改同父级名称，不自由移动；提案等待锁关闭和重复提交"
+        },
+        {
+          "state": "cancel",
+          "scene": "LIB-023.cancel",
+          "entry": "review.html#scene=LIB-023.cancel",
+          "view": "folder-rename",
+          "path": "修改预填名称→Enter；空/斜杠/60字检查；失败留草稿→重试；未改直接关闭；取消回原更多",
+          "expected": "只改同父级名称，不自由移动；提案等待锁关闭和重复提交"
+        },
+        {
+          "state": "focus-return",
+          "scene": "LIB-023.focus-return",
+          "entry": "review.html#scene=LIB-023.focus-return",
+          "view": "folder-rename",
+          "path": "修改预填名称→Enter；空/斜杠/60字检查；失败留草稿→重试；未改直接关闭；取消回原更多；本状态微交互：hover/focus/keyboard通过真实指针或Tab/Enter操作，不用脚本注入状态",
+          "expected": "只改同父级名称，不自由移动；提案等待锁关闭和重复提交"
+        }
+      ]
+    },
+    {
+      "id": "LIB-024",
+      "label": "删除空文件夹",
+      "classification": "current",
+      "states": [
+        {
+          "state": "confirm",
+          "scene": "LIB-024.confirm",
+          "entry": "review.html#scene=LIB-024.confirm",
+          "view": "folder-delete-empty",
+          "path": "默认取消焦点→删除→F6失败→重试成功；取消或Escape回原入口",
+          "expected": "空目录不影响任何文档；mask不关闭；pending不可关闭"
+        },
+        {
+          "state": "cancel-focused",
+          "scene": "LIB-024.cancel-focused",
+          "entry": "review.html#scene=LIB-024.cancel-focused",
+          "view": "folder-delete-empty",
+          "path": "默认取消焦点→删除→F6失败→重试成功；取消或Escape回原入口",
+          "expected": "空目录不影响任何文档；mask不关闭；pending不可关闭"
+        },
+        {
+          "state": "pending",
+          "scene": "LIB-024.pending",
+          "entry": "review.html#scene=LIB-024.pending",
+          "view": "folder-delete-empty",
+          "path": "默认取消焦点→删除→F6失败→重试成功；取消或Escape回原入口",
+          "expected": "空目录不影响任何文档；mask不关闭；pending不可关闭"
+        },
+        {
+          "state": "retry-error",
+          "scene": "LIB-024.retry-error",
+          "entry": "review.html#scene=LIB-024.retry-error",
+          "view": "folder-delete-empty",
+          "path": "默认取消焦点→删除→F6失败→重试成功；取消或Escape回原入口",
+          "expected": "空目录不影响任何文档；mask不关闭；pending不可关闭"
+        },
+        {
+          "state": "success",
+          "scene": "LIB-024.success",
+          "entry": "review.html#scene=LIB-024.success",
+          "view": "folder-delete-empty",
+          "path": "默认取消焦点→删除→F6失败→重试成功；取消或Escape回原入口",
+          "expected": "空目录不影响任何文档；mask不关闭；pending不可关闭"
+        },
+        {
+          "state": "cancel",
+          "scene": "LIB-024.cancel",
+          "entry": "review.html#scene=LIB-024.cancel",
+          "view": "folder-delete-empty",
+          "path": "默认取消焦点→删除→F6失败→重试成功；取消或Escape回原入口",
+          "expected": "空目录不影响任何文档；mask不关闭；pending不可关闭"
+        }
+      ]
+    },
+    {
+      "id": "LIB-025",
+      "label": "删除非空文件夹",
+      "classification": "current",
+      "states": [
+        {
+          "state": "confirm",
+          "scene": "LIB-025.confirm",
+          "entry": "review.html#scene=LIB-025.confirm",
+          "view": "folder-delete-populated",
+          "path": "删除确认→F6失败/成功→检查目录及其4篇后代文档从当前库消失",
+          "expected": "实际folder=null，文档全局保留；提案纠正回当前库根的错误承诺"
+        },
+        {
+          "state": "pending",
+          "scene": "LIB-025.pending",
+          "entry": "review.html#scene=LIB-025.pending",
+          "view": "folder-delete-populated",
+          "path": "删除确认→F6失败/成功→检查目录及其4篇后代文档从当前库消失",
+          "expected": "实际folder=null，文档全局保留；提案纠正回当前库根的错误承诺"
+        },
+        {
+          "state": "retry-error",
+          "scene": "LIB-025.retry-error",
+          "entry": "review.html#scene=LIB-025.retry-error",
+          "view": "folder-delete-populated",
+          "path": "删除确认→F6失败/成功→检查目录及其4篇后代文档从当前库消失",
+          "expected": "实际folder=null，文档全局保留；提案纠正回当前库根的错误承诺"
+        },
+        {
+          "state": "success",
+          "scene": "LIB-025.success",
+          "entry": "review.html#scene=LIB-025.success",
+          "view": "folder-delete-populated",
+          "path": "删除确认→F6失败/成功→检查目录及其4篇后代文档从当前库消失",
+          "expected": "实际folder=null，文档全局保留；提案纠正回当前库根的错误承诺"
+        },
+        {
+          "state": "cancel",
+          "scene": "LIB-025.cancel",
+          "entry": "review.html#scene=LIB-025.cancel",
+          "view": "folder-delete-populated",
+          "path": "删除确认→F6失败/成功→检查目录及其4篇后代文档从当前库消失",
+          "expected": "实际folder=null，文档全局保留；提案纠正回当前库根的错误承诺"
+        }
+      ]
+    },
+    {
+      "id": "LIB-026",
+      "label": "列表文档行",
+      "classification": "current",
+      "states": [
+        {
+          "state": "open",
+          "scene": "LIB-026.open",
+          "entry": "review.html#scene=LIB-026.open",
+          "view": "document-list",
+          "path": "当前整行（含空白）Enter/点击打开；提案标题打开与行尾更多分别操作；hover测量",
+          "expected": "当前没有文档行更多；提案是新增前端入口"
+        },
+        {
+          "state": "hover",
+          "scene": "LIB-026.hover",
+          "entry": "review.html#scene=LIB-026.hover",
+          "view": "document-list",
+          "path": "当前整行（含空白）Enter/点击打开；提案标题打开与行尾更多分别操作；hover测量；本状态微交互：hover/focus/keyboard通过真实指针或Tab/Enter操作，不用脚本注入状态",
+          "expected": "当前没有文档行更多；提案是新增前端入口"
+        },
+        {
+          "state": "focus",
+          "scene": "LIB-026.focus",
+          "entry": "review.html#scene=LIB-026.focus",
+          "view": "document-list",
+          "path": "当前整行（含空白）Enter/点击打开；提案标题打开与行尾更多分别操作；hover测量；本状态微交互：hover/focus/keyboard通过真实指针或Tab/Enter操作，不用脚本注入状态",
+          "expected": "当前没有文档行更多；提案是新增前端入口"
+        },
+        {
+          "state": "keyboard",
+          "scene": "LIB-026.keyboard",
+          "entry": "review.html#scene=LIB-026.keyboard",
+          "view": "document-list",
+          "path": "当前整行（含空白）Enter/点击打开；提案标题打开与行尾更多分别操作；hover测量；本状态微交互：hover/focus/keyboard通过真实指针或Tab/Enter操作，不用脚本注入状态",
+          "expected": "当前没有文档行更多；提案是新增前端入口"
+        },
+        {
+          "state": "long-name",
+          "scene": "LIB-026.long-name",
+          "entry": "review.html#scene=LIB-026.long-name",
+          "view": "document-list",
+          "path": "当前整行（含空白）Enter/点击打开；提案标题打开与行尾更多分别操作；hover测量",
+          "expected": "当前没有文档行更多；提案是新增前端入口"
+        }
+      ]
+    },
+    {
+      "id": "LIB-027",
+      "label": "卡片打开入口",
+      "classification": "current",
+      "states": [
+        {
+          "state": "body-click",
+          "scene": "LIB-027.body-click",
+          "entry": "review.html#scene=LIB-027.body-click",
+          "view": "document-cards",
+          "path": "卡片空白/摘要/标题打开；更多菜单不得打开；键盘标题打开一次",
+          "expected": "交互为平级按钮，卡片保留状态/来源/时间"
+        },
+        {
+          "state": "title-keyboard",
+          "scene": "LIB-027.title-keyboard",
+          "entry": "review.html#scene=LIB-027.title-keyboard",
+          "view": "document-cards",
+          "path": "卡片空白/摘要/标题打开；更多菜单不得打开；键盘标题打开一次",
+          "expected": "交互为平级按钮，卡片保留状态/来源/时间"
+        },
+        {
+          "state": "meta-click",
+          "scene": "LIB-027.meta-click",
+          "entry": "review.html#scene=LIB-027.meta-click",
+          "view": "document-cards",
+          "path": "卡片空白/摘要/标题打开；更多菜单不得打开；键盘标题打开一次",
+          "expected": "交互为平级按钮，卡片保留状态/来源/时间"
+        },
+        {
+          "state": "once",
+          "scene": "LIB-027.once",
+          "entry": "review.html#scene=LIB-027.once",
+          "view": "document-cards",
+          "path": "卡片空白/摘要/标题打开；更多菜单不得打开；键盘标题打开一次",
+          "expected": "交互为平级按钮，卡片保留状态/来源/时间"
+        },
+        {
+          "state": "action-no-open",
+          "scene": "LIB-027.action-no-open",
+          "entry": "review.html#scene=LIB-027.action-no-open",
+          "view": "document-cards",
+          "path": "卡片空白/摘要/标题打开；更多菜单不得打开；键盘标题打开一次",
+          "expected": "交互为平级按钮，卡片保留状态/来源/时间"
+        }
+      ]
+    },
+    {
+      "id": "LIB-028",
+      "label": "卡片文档更多菜单",
+      "classification": "current",
+      "states": [
+        {
+          "state": "note",
+          "scene": "LIB-028.note",
+          "entry": "review.html#scene=LIB-028.note",
+          "view": "document-menu",
+          "path": "按note/web/editable/readonly场景打开更多；核对打开/编辑/下载/替换/删除的类型分支",
+          "expected": "无文件重命名或浏览页移动；编辑入口仍交给详情能力"
+        },
+        {
+          "state": "web",
+          "scene": "LIB-028.web",
+          "entry": "review.html#scene=LIB-028.web",
+          "view": "document-menu",
+          "path": "按note/web/editable/readonly场景打开更多；核对打开/编辑/下载/替换/删除的类型分支",
+          "expected": "无文件重命名或浏览页移动；编辑入口仍交给详情能力"
+        },
+        {
+          "state": "file-editable",
+          "scene": "LIB-028.file-editable",
+          "entry": "review.html#scene=LIB-028.file-editable",
+          "view": "document-menu",
+          "path": "按note/web/editable/readonly场景打开更多；核对打开/编辑/下载/替换/删除的类型分支",
+          "expected": "无文件重命名或浏览页移动；编辑入口仍交给详情能力"
+        },
+        {
+          "state": "file-readonly",
+          "scene": "LIB-028.file-readonly",
+          "entry": "review.html#scene=LIB-028.file-readonly",
+          "view": "document-menu",
+          "path": "按note/web/editable/readonly场景打开更多；核对打开/编辑/下载/替换/删除的类型分支",
+          "expected": "无文件重命名或浏览页移动；编辑入口仍交给详情能力"
+        },
+        {
+          "state": "open",
+          "scene": "LIB-028.open",
+          "entry": "review.html#scene=LIB-028.open",
+          "view": "document-menu",
+          "path": "按note/web/editable/readonly场景打开更多；核对打开/编辑/下载/替换/删除的类型分支",
+          "expected": "无文件重命名或浏览页移动；编辑入口仍交给详情能力"
+        },
+        {
+          "state": "escape",
+          "scene": "LIB-028.escape",
+          "entry": "review.html#scene=LIB-028.escape",
+          "view": "document-menu",
+          "path": "按note/web/editable/readonly场景打开更多；核对打开/编辑/下载/替换/删除的类型分支",
+          "expected": "无文件重命名或浏览页移动；编辑入口仍交给详情能力"
+        },
+        {
+          "state": "download-no-open",
+          "scene": "LIB-028.download-no-open",
+          "entry": "review.html#scene=LIB-028.download-no-open",
+          "view": "document-menu",
+          "path": "按note/web/editable/readonly场景打开更多；核对打开/编辑/下载/替换/删除的类型分支",
+          "expected": "无文件重命名或浏览页移动；编辑入口仍交给详情能力"
+        }
+      ]
+    },
+    {
+      "id": "LIB-029",
+      "label": "文件格式图标与来源徽标",
+      "classification": "current",
+      "states": [
+        {
+          "state": "note",
+          "scene": "LIB-029.note",
+          "entry": "review.html#scene=LIB-029.note",
+          "view": "format-catalog",
+          "path": "滚动检查16类格式图标、非文件来源徽标及更多菜单",
+          "expected": "图标复制当前材料SVG；文件不重复格式徽标"
+        },
+        {
+          "state": "web",
+          "scene": "LIB-029.web",
+          "entry": "review.html#scene=LIB-029.web",
+          "view": "format-catalog",
+          "path": "滚动检查16类格式图标、非文件来源徽标及更多菜单",
+          "expected": "图标复制当前材料SVG；文件不重复格式徽标"
+        },
+        {
+          "state": "wechat",
+          "scene": "LIB-029.wechat",
+          "entry": "review.html#scene=LIB-029.wechat",
+          "view": "format-catalog",
+          "path": "滚动检查16类格式图标、非文件来源徽标及更多菜单",
+          "expected": "图标复制当前材料SVG；文件不重复格式徽标"
+        },
+        {
+          "state": "github",
+          "scene": "LIB-029.github",
+          "entry": "review.html#scene=LIB-029.github",
+          "view": "format-catalog",
+          "path": "滚动检查16类格式图标、非文件来源徽标及更多菜单",
+          "expected": "图标复制当前材料SVG；文件不重复格式徽标"
+        },
+        {
+          "state": "docx",
+          "scene": "LIB-029.docx",
+          "entry": "review.html#scene=LIB-029.docx",
+          "view": "format-catalog",
+          "path": "滚动检查16类格式图标、非文件来源徽标及更多菜单",
+          "expected": "图标复制当前材料SVG；文件不重复格式徽标"
+        },
+        {
+          "state": "xlsx",
+          "scene": "LIB-029.xlsx",
+          "entry": "review.html#scene=LIB-029.xlsx",
+          "view": "format-catalog",
+          "path": "滚动检查16类格式图标、非文件来源徽标及更多菜单",
+          "expected": "图标复制当前材料SVG；文件不重复格式徽标"
+        },
+        {
+          "state": "pptx",
+          "scene": "LIB-029.pptx",
+          "entry": "review.html#scene=LIB-029.pptx",
+          "view": "format-catalog",
+          "path": "滚动检查16类格式图标、非文件来源徽标及更多菜单",
+          "expected": "图标复制当前材料SVG；文件不重复格式徽标"
+        },
+        {
+          "state": "pdf",
+          "scene": "LIB-029.pdf",
+          "entry": "review.html#scene=LIB-029.pdf",
+          "view": "format-catalog",
+          "path": "滚动检查16类格式图标、非文件来源徽标及更多菜单",
+          "expected": "图标复制当前材料SVG；文件不重复格式徽标"
+        },
+        {
+          "state": "html",
+          "scene": "LIB-029.html",
+          "entry": "review.html#scene=LIB-029.html",
+          "view": "format-catalog",
+          "path": "滚动检查16类格式图标、非文件来源徽标及更多菜单",
+          "expected": "图标复制当前材料SVG；文件不重复格式徽标"
+        },
+        {
+          "state": "txt",
+          "scene": "LIB-029.txt",
+          "entry": "review.html#scene=LIB-029.txt",
+          "view": "format-catalog",
+          "path": "滚动检查16类格式图标、非文件来源徽标及更多菜单",
+          "expected": "图标复制当前材料SVG；文件不重复格式徽标"
+        },
+        {
+          "state": "image",
+          "scene": "LIB-029.image",
+          "entry": "review.html#scene=LIB-029.image",
+          "view": "format-catalog",
+          "path": "滚动检查16类格式图标、非文件来源徽标及更多菜单",
+          "expected": "图标复制当前材料SVG；文件不重复格式徽标"
+        },
+        {
+          "state": "audio",
+          "scene": "LIB-029.audio",
+          "entry": "review.html#scene=LIB-029.audio",
+          "view": "format-catalog",
+          "path": "滚动检查16类格式图标、非文件来源徽标及更多菜单",
+          "expected": "图标复制当前材料SVG；文件不重复格式徽标"
+        },
+        {
+          "state": "video",
+          "scene": "LIB-029.video",
+          "entry": "review.html#scene=LIB-029.video",
+          "view": "format-catalog",
+          "path": "滚动检查16类格式图标、非文件来源徽标及更多菜单",
+          "expected": "图标复制当前材料SVG；文件不重复格式徽标"
+        },
+        {
+          "state": "archive",
+          "scene": "LIB-029.archive",
+          "entry": "review.html#scene=LIB-029.archive",
+          "view": "format-catalog",
+          "path": "滚动检查16类格式图标、非文件来源徽标及更多菜单",
+          "expected": "图标复制当前材料SVG；文件不重复格式徽标"
+        },
+        {
+          "state": "code",
+          "scene": "LIB-029.code",
+          "entry": "review.html#scene=LIB-029.code",
+          "view": "format-catalog",
+          "path": "滚动检查16类格式图标、非文件来源徽标及更多菜单",
+          "expected": "图标复制当前材料SVG；文件不重复格式徽标"
+        },
+        {
+          "state": "unknown",
+          "scene": "LIB-029.unknown",
+          "entry": "review.html#scene=LIB-029.unknown",
+          "view": "format-catalog",
+          "path": "滚动检查16类格式图标、非文件来源徽标及更多菜单",
+          "expected": "图标复制当前材料SVG；文件不重复格式徽标"
+        }
+      ]
+    },
+    {
+      "id": "LIB-030",
+      "label": "文件名称和后缀",
+      "classification": "current",
+      "states": [
+        {
+          "state": "missing-suffix",
+          "scene": "LIB-030.missing-suffix",
+          "entry": "review.html#scene=LIB-030.missing-suffix",
+          "view": "filename-overflow",
+          "path": "比较已有/缺少/大小写后缀与长名称；390px检查主体截断后缀保留",
+          "expected": "不重复后缀，保留已有大小写，title包含全名"
+        },
+        {
+          "state": "existing-suffix",
+          "scene": "LIB-030.existing-suffix",
+          "entry": "review.html#scene=LIB-030.existing-suffix",
+          "view": "filename-overflow",
+          "path": "比较已有/缺少/大小写后缀与长名称；390px检查主体截断后缀保留",
+          "expected": "不重复后缀，保留已有大小写，title包含全名"
+        },
+        {
+          "state": "case-insensitive",
+          "scene": "LIB-030.case-insensitive",
+          "entry": "review.html#scene=LIB-030.case-insensitive",
+          "view": "filename-overflow",
+          "path": "比较已有/缺少/大小写后缀与长名称；390px检查主体截断后缀保留",
+          "expected": "不重复后缀，保留已有大小写，title包含全名"
+        },
+        {
+          "state": "long-stem",
+          "scene": "LIB-030.long-stem",
+          "entry": "review.html#scene=LIB-030.long-stem",
+          "view": "filename-overflow",
+          "path": "比较已有/缺少/大小写后缀与长名称；390px检查主体截断后缀保留",
+          "expected": "不重复后缀，保留已有大小写，title包含全名"
+        },
+        {
+          "state": "extension-preserved",
+          "scene": "LIB-030.extension-preserved",
+          "entry": "review.html#scene=LIB-030.extension-preserved",
+          "view": "filename-overflow",
+          "path": "比较已有/缺少/大小写后缀与长名称；390px检查主体截断后缀保留",
+          "expected": "不重复后缀，保留已有大小写，title包含全名"
+        }
+      ]
+    },
+    {
+      "id": "LIB-031",
+      "label": "摘要/位置/文件大小",
+      "classification": "current",
+      "states": [
+        {
+          "state": "root-file",
+          "scene": "LIB-031.root-file",
+          "entry": "review.html#scene=LIB-031.root-file",
+          "view": "document-metadata",
+          "path": "检查当前/后代/标签来源、空正文、未知大小与长摘要省略；hover查看完整title",
+          "expected": "摘要不撑破列；当前目录文字省略规则依据源实现"
+        },
+        {
+          "state": "nested-file",
+          "scene": "LIB-031.nested-file",
+          "entry": "review.html#scene=LIB-031.nested-file",
+          "view": "document-metadata",
+          "path": "检查当前/后代/标签来源、空正文、未知大小与长摘要省略；hover查看完整title",
+          "expected": "摘要不撑破列；当前目录文字省略规则依据源实现"
+        },
+        {
+          "state": "tag-location",
+          "scene": "LIB-031.tag-location",
+          "entry": "review.html#scene=LIB-031.tag-location",
+          "view": "document-metadata",
+          "path": "检查当前/后代/标签来源、空正文、未知大小与长摘要省略；hover查看完整title",
+          "expected": "摘要不撑破列；当前目录文字省略规则依据源实现"
+        },
+        {
+          "state": "empty-body",
+          "scene": "LIB-031.empty-body",
+          "entry": "review.html#scene=LIB-031.empty-body",
+          "view": "document-metadata",
+          "path": "检查当前/后代/标签来源、空正文、未知大小与长摘要省略；hover查看完整title",
+          "expected": "摘要不撑破列；当前目录文字省略规则依据源实现"
+        },
+        {
+          "state": "unknown-size",
+          "scene": "LIB-031.unknown-size",
+          "entry": "review.html#scene=LIB-031.unknown-size",
+          "view": "document-metadata",
+          "path": "检查当前/后代/标签来源、空正文、未知大小与长摘要省略；hover查看完整title",
+          "expected": "摘要不撑破列；当前目录文字省略规则依据源实现"
+        },
+        {
+          "state": "long-excerpt",
+          "scene": "LIB-031.long-excerpt",
+          "entry": "review.html#scene=LIB-031.long-excerpt",
+          "view": "document-metadata",
+          "path": "检查当前/后代/标签来源、空正文、未知大小与长摘要省略；hover查看完整title",
+          "expected": "摘要不撑破列；当前目录文字省略规则依据源实现"
+        }
+      ]
+    },
+    {
+      "id": "LIB-032",
+      "label": "就绪与提取失败",
+      "classification": "current",
+      "states": [
+        {
+          "state": "ready",
+          "scene": "LIB-032.ready",
+          "entry": "review.html#scene=LIB-032.ready",
+          "view": "extraction-status",
+          "path": "全就绪列表与含失败列表比较表头；切390px检查失败移至名称次行；卡片查看状态",
+          "expected": "有failed才启用独立状态列；ready不冒充导入处理中"
+        },
+        {
+          "state": "failed",
+          "scene": "LIB-032.failed",
+          "entry": "review.html#scene=LIB-032.failed",
+          "view": "extraction-status",
+          "path": "全就绪列表与含失败列表比较表头；切390px检查失败移至名称次行；卡片查看状态",
+          "expected": "有failed才启用独立状态列；ready不冒充导入处理中"
+        },
+        {
+          "state": "all-ready-list",
+          "scene": "LIB-032.all-ready-list",
+          "entry": "review.html#scene=LIB-032.all-ready-list",
+          "view": "extraction-status",
+          "path": "全就绪列表与含失败列表比较表头；切390px检查失败移至名称次行；卡片查看状态",
+          "expected": "有failed才启用独立状态列；ready不冒充导入处理中"
+        },
+        {
+          "state": "has-failed-list",
+          "scene": "LIB-032.has-failed-list",
+          "entry": "review.html#scene=LIB-032.has-failed-list",
+          "view": "extraction-status",
+          "path": "全就绪列表与含失败列表比较表头；切390px检查失败移至名称次行；卡片查看状态",
+          "expected": "有failed才启用独立状态列；ready不冒充导入处理中"
+        },
+        {
+          "state": "narrow-failed",
+          "scene": "LIB-032.narrow-failed",
+          "entry": "review.html#scene=LIB-032.narrow-failed",
+          "view": "extraction-status",
+          "path": "全就绪列表与含失败列表比较表头；切390px检查失败移至名称次行；卡片查看状态",
+          "expected": "有failed才启用独立状态列；ready不冒充导入处理中"
+        }
+      ]
+    },
+    {
+      "id": "LIB-033",
+      "label": "更新时间",
+      "classification": "current",
+      "states": [
+        {
+          "state": "valid-date",
+          "scene": "LIB-033.valid-date",
+          "entry": "review.html#scene=LIB-033.valid-date",
+          "view": "document-time",
+          "path": "对照有效/null时间；窄屏场景隐藏列表时间；切卡片查看时间",
+          "expected": "YYYY/MM/DD HH:mm，null不编造日期"
+        },
+        {
+          "state": "null-date",
+          "scene": "LIB-033.null-date",
+          "entry": "review.html#scene=LIB-033.null-date",
+          "view": "document-time",
+          "path": "对照有效/null时间；窄屏场景隐藏列表时间；切卡片查看时间",
+          "expected": "YYYY/MM/DD HH:mm，null不编造日期"
+        },
+        {
+          "state": "long-layout",
+          "scene": "LIB-033.long-layout",
+          "entry": "review.html#scene=LIB-033.long-layout",
+          "view": "document-time",
+          "path": "对照有效/null时间；窄屏场景隐藏列表时间；切卡片查看时间",
+          "expected": "YYYY/MM/DD HH:mm，null不编造日期"
+        },
+        {
+          "state": "narrow-hidden",
+          "scene": "LIB-033.narrow-hidden",
+          "entry": "review.html#scene=LIB-033.narrow-hidden",
+          "view": "document-time",
+          "path": "对照有效/null时间；窄屏场景隐藏列表时间；切卡片查看时间",
+          "expected": "YYYY/MM/DD HH:mm，null不编造日期"
+        }
+      ]
+    },
+    {
+      "id": "LIB-034",
+      "label": "打开/编辑交接",
+      "classification": "current",
+      "states": [
+        {
+          "state": "note",
+          "scene": "LIB-034.note",
+          "entry": "review.html#scene=LIB-034.note",
+          "view": "document-handoff",
+          "path": "打开文档交接页→返回知识库；未保存场景选择继续/放弃/保存后继续",
+          "expected": "范围与id交接明确，不重画阅读器/Office工具栏"
+        },
+        {
+          "state": "editable-office",
+          "scene": "LIB-034.editable-office",
+          "entry": "review.html#scene=LIB-034.editable-office",
+          "view": "document-handoff",
+          "path": "打开文档交接页→返回知识库；未保存场景选择继续/放弃/保存后继续",
+          "expected": "范围与id交接明确，不重画阅读器/Office工具栏"
+        },
+        {
+          "state": "readonly-file",
+          "scene": "LIB-034.readonly-file",
+          "entry": "review.html#scene=LIB-034.readonly-file",
+          "view": "document-handoff",
+          "path": "打开文档交接页→返回知识库；未保存场景选择继续/放弃/保存后继续",
+          "expected": "范围与id交接明确，不重画阅读器/Office工具栏"
+        },
+        {
+          "state": "unsaved-guard",
+          "scene": "LIB-034.unsaved-guard",
+          "entry": "review.html#scene=LIB-034.unsaved-guard",
+          "view": "document-handoff",
+          "path": "打开文档交接页→返回知识库；未保存场景选择继续/放弃/保存后继续",
+          "expected": "范围与id交接明确，不重画阅读器/Office工具栏"
+        },
+        {
+          "state": "return-scope",
+          "scene": "LIB-034.return-scope",
+          "entry": "review.html#scene=LIB-034.return-scope",
+          "view": "document-handoff",
+          "path": "打开文档交接页→返回知识库；未保存场景选择继续/放弃/保存后继续",
+          "expected": "范围与id交接明确，不重画阅读器/Office工具栏"
+        }
+      ]
+    },
+    {
+      "id": "LIB-035",
+      "label": "下载原件",
+      "classification": "current",
+      "states": [
+        {
+          "state": "click",
+          "scene": "LIB-035.click",
+          "entry": "review.html#scene=LIB-035.click",
+          "view": "download-boundary",
+          "path": "查看下载交接页→返回；对比真实浏览器下载须宿主记录",
+          "expected": "HTML不真实下载且不承诺点击即完成，无虚构成功"
+        },
+        {
+          "state": "native-download",
+          "scene": "LIB-035.native-download",
+          "entry": "review.html#scene=LIB-035.native-download",
+          "view": "download-boundary",
+          "path": "查看下载交接页→返回；对比真实浏览器下载须宿主记录",
+          "expected": "HTML不真实下载且不承诺点击即完成，无虚构成功"
+        },
+        {
+          "state": "download-failure-boundary",
+          "scene": "LIB-035.download-failure-boundary",
+          "entry": "review.html#scene=LIB-035.download-failure-boundary",
+          "view": "download-boundary",
+          "path": "查看下载交接页→返回；对比真实浏览器下载须宿主记录",
+          "expected": "HTML不真实下载且不承诺点击即完成，无虚构成功"
+        }
+      ]
+    },
+    {
+      "id": "LIB-036",
+      "label": "替换原件选择器",
+      "classification": "current",
+      "states": [
+        {
+          "state": "choose",
+          "scene": "LIB-036.choose",
+          "entry": "review.html#scene=LIB-036.choose",
+          "view": "replacement-chooser",
+          "path": "当前选择器边界或提案选择文件→取消/再次选择同一文件；提交后用结果工具",
+          "expected": "原生取消不修改原件；此处仅模拟选择，不伪造OS弹窗"
+        },
+        {
+          "state": "native-cancel",
+          "scene": "LIB-036.native-cancel",
+          "entry": "review.html#scene=LIB-036.native-cancel",
+          "view": "replacement-chooser",
+          "path": "当前选择器边界或提案选择文件→取消/再次选择同一文件；提交后用结果工具",
+          "expected": "原生取消不修改原件；此处仅模拟选择，不伪造OS弹窗"
+        },
+        {
+          "state": "same-file-reselect",
+          "scene": "LIB-036.same-file-reselect",
+          "entry": "review.html#scene=LIB-036.same-file-reselect",
+          "view": "replacement-chooser",
+          "path": "当前选择器边界或提案选择文件→取消/再次选择同一文件；提交后用结果工具",
+          "expected": "原生取消不修改原件；此处仅模拟选择，不伪造OS弹窗"
+        }
+      ]
+    },
+    {
+      "id": "LIB-037",
+      "label": "替换原件请求",
+      "classification": "current",
+      "states": [
+        {
+          "state": "pending-gap",
+          "scene": "LIB-037.pending-gap",
+          "entry": "review.html#scene=LIB-037.pending-gap",
+          "view": "replacement-request",
+          "path": "选择替换文件→替换→F6失败；重选重试→成功/无正文/提取失败",
+          "expected": "当前无pendingUI，提案反馈真实保存和提取结果，不显示虚构百分比"
+        },
+        {
+          "state": "success",
+          "scene": "LIB-037.success",
+          "entry": "review.html#scene=LIB-037.success",
+          "view": "replacement-request",
+          "path": "选择替换文件→替换→F6失败；重选重试→成功/无正文/提取失败",
+          "expected": "当前无pendingUI，提案反馈真实保存和提取结果，不显示虚构百分比"
+        },
+        {
+          "state": "network-error",
+          "scene": "LIB-037.network-error",
+          "entry": "review.html#scene=LIB-037.network-error",
+          "view": "replacement-request",
+          "path": "选择替换文件→替换→F6失败；重选重试→成功/无正文/提取失败",
+          "expected": "当前无pendingUI，提案反馈真实保存和提取结果，不显示虚构百分比"
+        },
+        {
+          "state": "oversize-server-error",
+          "scene": "LIB-037.oversize-server-error",
+          "entry": "review.html#scene=LIB-037.oversize-server-error",
+          "view": "replacement-request",
+          "path": "选择替换文件→替换→F6失败；重选重试→成功/无正文/提取失败",
+          "expected": "当前无pendingUI，提案反馈真实保存和提取结果，不显示虚构百分比"
+        },
+        {
+          "state": "parse-result-gap",
+          "scene": "LIB-037.parse-result-gap",
+          "entry": "review.html#scene=LIB-037.parse-result-gap",
+          "view": "replacement-request",
+          "path": "选择替换文件→替换→F6失败；重选重试→成功/无正文/提取失败",
+          "expected": "当前无pendingUI，提案反馈真实保存和提取结果，不显示虚构百分比"
+        }
+      ]
+    },
+    {
+      "id": "LIB-038",
+      "label": "删除笔记",
+      "classification": "current",
+      "states": [
+        {
+          "state": "confirm",
+          "scene": "LIB-038.confirm",
+          "entry": "review.html#scene=LIB-038.confirm",
+          "view": "delete-note",
+          "path": "确认默认取消→删除→失败重试/成功；成功移除笔记，无一键恢复按钮",
+          "expected": "笔记文件保留回收站的现有合同"
+        },
+        {
+          "state": "cancel-focused",
+          "scene": "LIB-038.cancel-focused",
+          "entry": "review.html#scene=LIB-038.cancel-focused",
+          "view": "delete-note",
+          "path": "确认默认取消→删除→失败重试/成功；成功移除笔记，无一键恢复按钮",
+          "expected": "笔记文件保留回收站的现有合同"
+        },
+        {
+          "state": "pending",
+          "scene": "LIB-038.pending",
+          "entry": "review.html#scene=LIB-038.pending",
+          "view": "delete-note",
+          "path": "确认默认取消→删除→失败重试/成功；成功移除笔记，无一键恢复按钮",
+          "expected": "笔记文件保留回收站的现有合同"
+        },
+        {
+          "state": "retry-error",
+          "scene": "LIB-038.retry-error",
+          "entry": "review.html#scene=LIB-038.retry-error",
+          "view": "delete-note",
+          "path": "确认默认取消→删除→失败重试/成功；成功移除笔记，无一键恢复按钮",
+          "expected": "笔记文件保留回收站的现有合同"
+        },
+        {
+          "state": "success",
+          "scene": "LIB-038.success",
+          "entry": "review.html#scene=LIB-038.success",
+          "view": "delete-note",
+          "path": "确认默认取消→删除→失败重试/成功；成功移除笔记，无一键恢复按钮",
+          "expected": "笔记文件保留回收站的现有合同"
+        }
+      ]
+    },
+    {
+      "id": "LIB-039",
+      "label": "删除文件",
+      "classification": "current",
+      "states": [
+        {
+          "state": "confirm",
+          "scene": "LIB-039.confirm",
+          "entry": "review.html#scene=LIB-039.confirm",
+          "view": "delete-original",
+          "path": "核对文件名与不可撤销后果→删除→失败重试或成功",
+          "expected": "记录与原件均删除，无恢复承诺"
+        },
+        {
+          "state": "cancel-focused",
+          "scene": "LIB-039.cancel-focused",
+          "entry": "review.html#scene=LIB-039.cancel-focused",
+          "view": "delete-original",
+          "path": "核对文件名与不可撤销后果→删除→失败重试或成功",
+          "expected": "记录与原件均删除，无恢复承诺"
+        },
+        {
+          "state": "pending",
+          "scene": "LIB-039.pending",
+          "entry": "review.html#scene=LIB-039.pending",
+          "view": "delete-original",
+          "path": "核对文件名与不可撤销后果→删除→失败重试或成功",
+          "expected": "记录与原件均删除，无恢复承诺"
+        },
+        {
+          "state": "retry-error",
+          "scene": "LIB-039.retry-error",
+          "entry": "review.html#scene=LIB-039.retry-error",
+          "view": "delete-original",
+          "path": "核对文件名与不可撤销后果→删除→失败重试或成功",
+          "expected": "记录与原件均删除，无恢复承诺"
+        },
+        {
+          "state": "success",
+          "scene": "LIB-039.success",
+          "entry": "review.html#scene=LIB-039.success",
+          "view": "delete-original",
+          "path": "核对文件名与不可撤销后果→删除→失败重试或成功",
+          "expected": "记录与原件均删除，无恢复承诺"
+        }
+      ]
+    },
+    {
+      "id": "LIB-040",
+      "label": "删除网页/公众号/GitHub",
+      "classification": "current",
+      "states": [
+        {
+          "state": "confirm",
+          "scene": "LIB-040.confirm",
+          "entry": "review.html#scene=LIB-040.confirm",
+          "view": "delete-source-record",
+          "path": "核对网页来源删除文案→失败重试/成功；比较当前错误成功反馈与提案资料记录反馈",
+          "expected": "网页/公众号/GitHub均为来源记录分支，不谎称删除原件"
+        },
+        {
+          "state": "pending",
+          "scene": "LIB-040.pending",
+          "entry": "review.html#scene=LIB-040.pending",
+          "view": "delete-source-record",
+          "path": "核对网页来源删除文案→失败重试/成功；比较当前错误成功反馈与提案资料记录反馈",
+          "expected": "网页/公众号/GitHub均为来源记录分支，不谎称删除原件"
+        },
+        {
+          "state": "retry-error",
+          "scene": "LIB-040.retry-error",
+          "entry": "review.html#scene=LIB-040.retry-error",
+          "view": "delete-source-record",
+          "path": "核对网页来源删除文案→失败重试/成功；比较当前错误成功反馈与提案资料记录反馈",
+          "expected": "网页/公众号/GitHub均为来源记录分支，不谎称删除原件"
+        },
+        {
+          "state": "success",
+          "scene": "LIB-040.success",
+          "entry": "review.html#scene=LIB-040.success",
+          "view": "delete-source-record",
+          "path": "核对网页来源删除文案→失败重试/成功；比较当前错误成功反馈与提案资料记录反馈",
+          "expected": "网页/公众号/GitHub均为来源记录分支，不谎称删除原件"
+        }
+      ]
+    },
+    {
+      "id": "LIB-041",
+      "label": "页面拖入文件",
+      "classification": "current",
+      "states": [
+        {
+          "state": "files-enter",
+          "scene": "LIB-041.files-enter",
+          "entry": "review.html#scene=LIB-041.files-enter",
+          "view": "drop-boundary",
+          "path": "下方模拟拖入文件→忙态/部分失败/完成；标签/非文件/空输入模拟被忽略",
+          "expected": "模拟不等于原生拖入验收；不支持目录重排"
+        },
+        {
+          "state": "nested-enter-leave",
+          "scene": "LIB-041.nested-enter-leave",
+          "entry": "review.html#scene=LIB-041.nested-enter-leave",
+          "view": "drop-boundary",
+          "path": "下方模拟拖入文件→忙态/部分失败/完成；标签/非文件/空输入模拟被忽略",
+          "expected": "模拟不等于原生拖入验收；不支持目录重排"
+        },
+        {
+          "state": "drop",
+          "scene": "LIB-041.drop",
+          "entry": "review.html#scene=LIB-041.drop",
+          "view": "drop-boundary",
+          "path": "下方模拟拖入文件→忙态/部分失败/完成；标签/非文件/空输入模拟被忽略",
+          "expected": "模拟不等于原生拖入验收；不支持目录重排"
+        },
+        {
+          "state": "nonfiles-ignore",
+          "scene": "LIB-041.nonfiles-ignore",
+          "entry": "review.html#scene=LIB-041.nonfiles-ignore",
+          "view": "drop-boundary",
+          "path": "下方模拟拖入文件→忙态/部分失败/完成；标签/非文件/空输入模拟被忽略",
+          "expected": "模拟不等于原生拖入验收；不支持目录重排"
+        },
+        {
+          "state": "empty-ignore",
+          "scene": "LIB-041.empty-ignore",
+          "entry": "review.html#scene=LIB-041.empty-ignore",
+          "view": "drop-boundary",
+          "path": "下方模拟拖入文件→忙态/部分失败/完成；标签/非文件/空输入模拟被忽略",
+          "expected": "模拟不等于原生拖入验收；不支持目录重排"
+        },
+        {
+          "state": "tag-disabled",
+          "scene": "LIB-041.tag-disabled",
+          "entry": "review.html#scene=LIB-041.tag-disabled",
+          "view": "drop-boundary",
+          "path": "下方模拟拖入文件→忙态/部分失败/完成；标签/非文件/空输入模拟被忽略",
+          "expected": "模拟不等于原生拖入验收；不支持目录重排"
+        }
+      ]
+    },
+    {
+      "id": "LIB-042",
+      "label": "页内导入结果",
+      "classification": "current",
+      "states": [
+        {
+          "state": "busy",
+          "scene": "LIB-042.busy",
+          "entry": "review.html#scene=LIB-042.busy",
+          "view": "inline-upload-handoff",
+          "path": "topbar前页内导入结果→模拟部分失败/全部失败/完成→清空结果",
+          "expected": "复用模块4，仅交接位置与目录；无真实业务请求"
+        },
+        {
+          "state": "mixed-results",
+          "scene": "LIB-042.mixed-results",
+          "entry": "review.html#scene=LIB-042.mixed-results",
+          "view": "inline-upload-handoff",
+          "path": "topbar前页内导入结果→模拟部分失败/全部失败/完成→清空结果",
+          "expected": "复用模块4，仅交接位置与目录；无真实业务请求"
+        },
+        {
+          "state": "all-failed",
+          "scene": "LIB-042.all-failed",
+          "entry": "review.html#scene=LIB-042.all-failed",
+          "view": "inline-upload-handoff",
+          "path": "topbar前页内导入结果→模拟部分失败/全部失败/完成→清空结果",
+          "expected": "复用模块4，仅交接位置与目录；无真实业务请求"
+        },
+        {
+          "state": "complete",
+          "scene": "LIB-042.complete",
+          "entry": "review.html#scene=LIB-042.complete",
+          "view": "inline-upload-handoff",
+          "path": "topbar前页内导入结果→模拟部分失败/全部失败/完成→清空结果",
+          "expected": "复用模块4，仅交接位置与目录；无真实业务请求"
+        },
+        {
+          "state": "clear",
+          "scene": "LIB-042.clear",
+          "entry": "review.html#scene=LIB-042.clear",
+          "view": "inline-upload-handoff",
+          "path": "topbar前页内导入结果→模拟部分失败/全部失败/完成→清空结果",
+          "expected": "复用模块4，仅交接位置与目录；无真实业务请求"
+        }
+      ]
+    },
+    {
+      "id": "LIB-043",
+      "label": "导航知识库行菜单",
+      "classification": "current",
+      "states": [
+        {
+          "state": "edit",
+          "scene": "LIB-043.edit",
+          "entry": "review.html#scene=LIB-043.edit",
+          "view": "sidebar-kb-handoff",
+          "path": "侧边栏复用入口的编辑/删除（空与非空）；删除失败重试、成功无库回创建；编辑对账错误需先对账",
+          "expected": "KB对象不混同子目录；完整导航细节复用模块2已批准HTML"
+        },
+        {
+          "state": "delete-empty",
+          "scene": "LIB-043.delete-empty",
+          "entry": "review.html#scene=LIB-043.delete-empty",
+          "view": "sidebar-kb-handoff",
+          "path": "侧边栏复用入口的编辑/删除（空与非空）；删除失败重试、成功无库回创建；编辑对账错误需先对账",
+          "expected": "KB对象不混同子目录；完整导航细节复用模块2已批准HTML"
+        },
+        {
+          "state": "delete-nonempty",
+          "scene": "LIB-043.delete-nonempty",
+          "entry": "review.html#scene=LIB-043.delete-nonempty",
+          "view": "sidebar-kb-handoff",
+          "path": "侧边栏复用入口的编辑/删除（空与非空）；删除失败重试、成功无库回创建；编辑对账错误需先对账",
+          "expected": "KB对象不混同子目录；完整导航细节复用模块2已批准HTML"
+        },
+        {
+          "state": "cache-refresh-error",
+          "scene": "LIB-043.cache-refresh-error",
+          "entry": "review.html#scene=LIB-043.cache-refresh-error",
+          "view": "sidebar-kb-handoff",
+          "path": "侧边栏复用入口的编辑/删除（空与非空）；删除失败重试、成功无库回创建；编辑对账错误需先对账",
+          "expected": "KB对象不混同子目录；完整导航细节复用模块2已批准HTML"
+        },
+        {
+          "state": "keyboard",
+          "scene": "LIB-043.keyboard",
+          "entry": "review.html#scene=LIB-043.keyboard",
+          "view": "sidebar-kb-handoff",
+          "path": "侧边栏复用入口的编辑/删除（空与非空）；删除失败重试、成功无库回创建；编辑对账错误需先对账；本状态微交互：hover/focus/keyboard通过真实指针或Tab/Enter操作，不用脚本注入状态",
+          "expected": "KB对象不混同子目录；完整导航细节复用模块2已批准HTML"
+        },
+        {
+          "state": "rename-path-follow",
+          "scene": "LIB-043.rename-path-follow",
+          "entry": "review.html#scene=LIB-043.rename-path-follow",
+          "view": "sidebar-kb-handoff",
+          "path": "侧边栏复用入口的编辑/删除（空与非空）；删除失败重试、成功无库回创建；编辑对账错误需先对账",
+          "expected": "KB对象不混同子目录；完整导航细节复用模块2已批准HTML"
+        }
+      ]
+    },
+    {
+      "id": "LIB-044",
+      "label": "文档重命名命令",
+      "classification": "current",
+      "states": [
+        {
+          "state": "note-only",
+          "scene": "LIB-044.note-only",
+          "entry": "review.html#scene=LIB-044.note-only",
+          "view": "note-command-handoff",
+          "path": "文档交接页重命名笔记→未改关闭或改名提交；read-refresh-error仅重新读取",
+          "expected": "仅笔记命令；不增加文件重命名或列表命令"
+        },
+        {
+          "state": "prefill",
+          "scene": "LIB-044.prefill",
+          "entry": "review.html#scene=LIB-044.prefill",
+          "view": "note-command-handoff",
+          "path": "文档交接页重命名笔记→未改关闭或改名提交；read-refresh-error仅重新读取",
+          "expected": "仅笔记命令；不增加文件重命名或列表命令"
+        },
+        {
+          "state": "invalid",
+          "scene": "LIB-044.invalid",
+          "entry": "review.html#scene=LIB-044.invalid",
+          "view": "note-command-handoff",
+          "path": "文档交接页重命名笔记→未改关闭或改名提交；read-refresh-error仅重新读取",
+          "expected": "仅笔记命令；不增加文件重命名或列表命令"
+        },
+        {
+          "state": "pending",
+          "scene": "LIB-044.pending",
+          "entry": "review.html#scene=LIB-044.pending",
+          "view": "note-command-handoff",
+          "path": "文档交接页重命名笔记→未改关闭或改名提交；read-refresh-error仅重新读取",
+          "expected": "仅笔记命令；不增加文件重命名或列表命令"
+        },
+        {
+          "state": "failure",
+          "scene": "LIB-044.failure",
+          "entry": "review.html#scene=LIB-044.failure",
+          "view": "note-command-handoff",
+          "path": "文档交接页重命名笔记→未改关闭或改名提交；read-refresh-error仅重新读取",
+          "expected": "仅笔记命令；不增加文件重命名或列表命令"
+        },
+        {
+          "state": "unchanged",
+          "scene": "LIB-044.unchanged",
+          "entry": "review.html#scene=LIB-044.unchanged",
+          "view": "note-command-handoff",
+          "path": "文档交接页重命名笔记→未改关闭或改名提交；read-refresh-error仅重新读取",
+          "expected": "仅笔记命令；不增加文件重命名或列表命令"
+        },
+        {
+          "state": "read-refresh-error",
+          "scene": "LIB-044.read-refresh-error",
+          "entry": "review.html#scene=LIB-044.read-refresh-error",
+          "view": "note-command-handoff",
+          "path": "文档交接页重命名笔记→未改关闭或改名提交；read-refresh-error仅重新读取",
+          "expected": "仅笔记命令；不增加文件重命名或列表命令"
+        }
+      ]
+    },
+    {
+      "id": "LIB-045",
+      "label": "文档移动命令",
+      "classification": "current",
+      "states": [
+        {
+          "state": "folders-loading",
+          "scene": "LIB-045.folders-loading",
+          "entry": "review.html#scene=LIB-045.folders-loading",
+          "view": "move-command-handoff",
+          "path": "目录读取失败先重读；Select选择目标；当前目标直接关闭；提交失败保留选择；写后读失败仅重读",
+          "expected": "沿用模块3Select，空值当前标知识库根但实际清空folder，解释真实边界"
+        },
+        {
+          "state": "folders-error",
+          "scene": "LIB-045.folders-error",
+          "entry": "review.html#scene=LIB-045.folders-error",
+          "view": "move-command-handoff",
+          "path": "目录读取失败先重读；Select选择目标；当前目标直接关闭；提交失败保留选择；写后读失败仅重读",
+          "expected": "沿用模块3Select，空值当前标知识库根但实际清空folder，解释真实边界"
+        },
+        {
+          "state": "retry",
+          "scene": "LIB-045.retry",
+          "entry": "review.html#scene=LIB-045.retry",
+          "view": "move-command-handoff",
+          "path": "目录读取失败先重读；Select选择目标；当前目标直接关闭；提交失败保留选择；写后读失败仅重读",
+          "expected": "沿用模块3Select，空值当前标知识库根但实际清空folder，解释真实边界"
+        },
+        {
+          "state": "current-target",
+          "scene": "LIB-045.current-target",
+          "entry": "review.html#scene=LIB-045.current-target",
+          "view": "move-command-handoff",
+          "path": "目录读取失败先重读；Select选择目标；当前目标直接关闭；提交失败保留选择；写后读失败仅重读",
+          "expected": "沿用模块3Select，空值当前标知识库根但实际清空folder，解释真实边界"
+        },
+        {
+          "state": "pending",
+          "scene": "LIB-045.pending",
+          "entry": "review.html#scene=LIB-045.pending",
+          "view": "move-command-handoff",
+          "path": "目录读取失败先重读；Select选择目标；当前目标直接关闭；提交失败保留选择；写后读失败仅重读",
+          "expected": "沿用模块3Select，空值当前标知识库根但实际清空folder，解释真实边界"
+        },
+        {
+          "state": "failure",
+          "scene": "LIB-045.failure",
+          "entry": "review.html#scene=LIB-045.failure",
+          "view": "move-command-handoff",
+          "path": "目录读取失败先重读；Select选择目标；当前目标直接关闭；提交失败保留选择；写后读失败仅重读",
+          "expected": "沿用模块3Select，空值当前标知识库根但实际清空folder，解释真实边界"
+        },
+        {
+          "state": "success",
+          "scene": "LIB-045.success",
+          "entry": "review.html#scene=LIB-045.success",
+          "view": "move-command-handoff",
+          "path": "目录读取失败先重读；Select选择目标；当前目标直接关闭；提交失败保留选择；写后读失败仅重读",
+          "expected": "沿用模块3Select，空值当前标知识库根但实际清空folder，解释真实边界"
+        },
+        {
+          "state": "unchanged",
+          "scene": "LIB-045.unchanged",
+          "entry": "review.html#scene=LIB-045.unchanged",
+          "view": "move-command-handoff",
+          "path": "目录读取失败先重读；Select选择目标；当前目标直接关闭；提交失败保留选择；写后读失败仅重读",
+          "expected": "沿用模块3Select，空值当前标知识库根但实际清空folder，解释真实边界"
+        },
+        {
+          "state": "read-refresh-error",
+          "scene": "LIB-045.read-refresh-error",
+          "entry": "review.html#scene=LIB-045.read-refresh-error",
+          "view": "move-command-handoff",
+          "path": "目录读取失败先重读；Select选择目标；当前目标直接关闭；提交失败保留选择；写后读失败仅重读",
+          "expected": "沿用模块3Select，空值当前标知识库根但实际清空folder，解释真实边界"
+        }
+      ]
+    },
+    {
+      "id": "LIB-046",
+      "label": "文档详情目录菜单与撤销",
+      "classification": "current",
+      "states": [
+        {
+          "state": "current-disabled",
+          "scene": "LIB-046.current-disabled",
+          "entry": "review.html#scene=LIB-046.current-disabled",
+          "view": "detail-directory-handoff",
+          "path": "目录菜单当前项禁用；选择其他目录或移出；无归属不显示移出；模拟撤销失败",
+          "expected": "既有8秒撤销合同用显式模拟，不伪造计时或新能力"
+        },
+        {
+          "state": "other-folder",
+          "scene": "LIB-046.other-folder",
+          "entry": "review.html#scene=LIB-046.other-folder",
+          "view": "detail-directory-handoff",
+          "path": "目录菜单当前项禁用；选择其他目录或移出；无归属不显示移出；模拟撤销失败",
+          "expected": "既有8秒撤销合同用显式模拟，不伪造计时或新能力"
+        },
+        {
+          "state": "no-folder",
+          "scene": "LIB-046.no-folder",
+          "entry": "review.html#scene=LIB-046.no-folder",
+          "view": "detail-directory-handoff",
+          "path": "目录菜单当前项禁用；选择其他目录或移出；无归属不显示移出；模拟撤销失败",
+          "expected": "既有8秒撤销合同用显式模拟，不伪造计时或新能力"
+        },
+        {
+          "state": "move-out",
+          "scene": "LIB-046.move-out",
+          "entry": "review.html#scene=LIB-046.move-out",
+          "view": "detail-directory-handoff",
+          "path": "目录菜单当前项禁用；选择其他目录或移出；无归属不显示移出；模拟撤销失败",
+          "expected": "既有8秒撤销合同用显式模拟，不伪造计时或新能力"
+        },
+        {
+          "state": "success-undo",
+          "scene": "LIB-046.success-undo",
+          "entry": "review.html#scene=LIB-046.success-undo",
+          "view": "detail-directory-handoff",
+          "path": "目录菜单当前项禁用；选择其他目录或移出；无归属不显示移出；模拟撤销失败",
+          "expected": "既有8秒撤销合同用显式模拟，不伪造计时或新能力"
+        },
+        {
+          "state": "undo-error",
+          "scene": "LIB-046.undo-error",
+          "entry": "review.html#scene=LIB-046.undo-error",
+          "view": "detail-directory-handoff",
+          "path": "目录菜单当前项禁用；选择其他目录或移出；无归属不显示移出；模拟撤销失败",
+          "expected": "既有8秒撤销合同用显式模拟，不伪造计时或新能力"
+        }
+      ]
+    },
+    {
+      "id": "LIB-047",
+      "label": "固定头部/列表滚动",
+      "classification": "current",
+      "states": [
+        {
+          "state": "top",
+          "scene": "LIB-047.top",
+          "entry": "review.html#scene=LIB-047.top",
+          "view": "scroll-layout",
+          "path": "真实100条滚动；scrolled直接初始scrollTop240；长描述低高度比较固定头部与内容视口",
+          "expected": "提案保留可用文档视口；当前低高度缺口保留"
+        },
+        {
+          "state": "scrolled",
+          "scene": "LIB-047.scrolled",
+          "entry": "review.html#scene=LIB-047.scrolled",
+          "view": "scroll-layout",
+          "path": "真实100条滚动；scrolled直接初始scrollTop240；长描述低高度比较固定头部与内容视口",
+          "expected": "提案保留可用文档视口；当前低高度缺口保留"
+        },
+        {
+          "state": "long-list",
+          "scene": "LIB-047.long-list",
+          "entry": "review.html#scene=LIB-047.long-list",
+          "view": "scroll-layout",
+          "path": "真实100条滚动；scrolled直接初始scrollTop240；长描述低高度比较固定头部与内容视口",
+          "expected": "提案保留可用文档视口；当前低高度缺口保留"
+        },
+        {
+          "state": "low-height",
+          "scene": "LIB-047.low-height",
+          "entry": "review.html#scene=LIB-047.low-height",
+          "view": "scroll-layout",
+          "path": "真实100条滚动；scrolled直接初始scrollTop240；长描述低高度比较固定头部与内容视口",
+          "expected": "提案保留可用文档视口；当前低高度缺口保留"
+        }
+      ]
+    },
+    {
+      "id": "LIB-048",
+      "label": "小屏与触屏",
+      "classification": "current",
+      "states": [
+        {
+          "state": "390-light",
+          "scene": "LIB-048.390-light",
+          "entry": "review.html#scene=LIB-048.390-light",
+          "view": "responsive-layout",
+          "path": "390浅深直接链接→新建下拉/布局/更多/弹窗；切低高度与长名",
+          "expected": "双方相同容器尺寸，窄屏触屏更多始终可见"
+        },
+        {
+          "state": "390-dark",
+          "scene": "LIB-048.390-dark",
+          "entry": "review.html#scene=LIB-048.390-dark",
+          "view": "responsive-layout",
+          "path": "390浅深直接链接→新建下拉/布局/更多/弹窗；切低高度与长名",
+          "expected": "双方相同容器尺寸，窄屏触屏更多始终可见"
+        },
+        {
+          "state": "touch-actions",
+          "scene": "LIB-048.touch-actions",
+          "entry": "review.html#scene=LIB-048.touch-actions",
+          "view": "responsive-layout",
+          "path": "390浅深直接链接→新建下拉/布局/更多/弹窗；切低高度与长名",
+          "expected": "双方相同容器尺寸，窄屏触屏更多始终可见"
+        },
+        {
+          "state": "layout-wrap",
+          "scene": "LIB-048.layout-wrap",
+          "entry": "review.html#scene=LIB-048.layout-wrap",
+          "view": "responsive-layout",
+          "path": "390浅深直接链接→新建下拉/布局/更多/弹窗；切低高度与长名",
+          "expected": "双方相同容器尺寸，窄屏触屏更多始终可见"
+        },
+        {
+          "state": "low-height",
+          "scene": "LIB-048.low-height",
+          "entry": "review.html#scene=LIB-048.low-height",
+          "view": "responsive-layout",
+          "path": "390浅深直接链接→新建下拉/布局/更多/弹窗；切低高度与长名",
+          "expected": "双方相同容器尺寸，窄屏触屏更多始终可见"
+        },
+        {
+          "state": "long-name",
+          "scene": "LIB-048.long-name",
+          "entry": "review.html#scene=LIB-048.long-name",
+          "view": "responsive-layout",
+          "path": "390浅深直接链接→新建下拉/布局/更多/弹窗；切低高度与长名",
+          "expected": "双方相同容器尺寸，窄屏触屏更多始终可见"
+        }
+      ]
+    },
+    {
+      "id": "LIB-049",
+      "label": "焦点/hover/pressed/disabled",
+      "classification": "current",
+      "states": [
+        {
+          "state": "keyboard",
+          "scene": "LIB-049.keyboard",
+          "entry": "review.html#scene=LIB-049.keyboard",
+          "view": "interaction-microstates",
+          "path": "查看画布下方本状态具体步骤；Tab/Enter/方向键/Escape回焦；按住按钮；禁用新建文件夹；本状态微交互：hover/focus/keyboard通过真实指针或Tab/Enter操作，不用脚本注入状态",
+          "expected": "hover/pressed只改背景颜色，不变尺寸；减少动效可开关"
+        },
+        {
+          "state": "focus-return",
+          "scene": "LIB-049.focus-return",
+          "entry": "review.html#scene=LIB-049.focus-return",
+          "view": "interaction-microstates",
+          "path": "查看画布下方本状态具体步骤；Tab/Enter/方向键/Escape回焦；按住按钮；禁用新建文件夹；本状态微交互：hover/focus/keyboard通过真实指针或Tab/Enter操作，不用脚本注入状态",
+          "expected": "hover/pressed只改背景颜色，不变尺寸；减少动效可开关"
+        },
+        {
+          "state": "hover-stability",
+          "scene": "LIB-049.hover-stability",
+          "entry": "review.html#scene=LIB-049.hover-stability",
+          "view": "interaction-microstates",
+          "path": "查看画布下方本状态具体步骤；Tab/Enter/方向键/Escape回焦；按住按钮；禁用新建文件夹",
+          "expected": "hover/pressed只改背景颜色，不变尺寸；减少动效可开关"
+        },
+        {
+          "state": "pressed",
+          "scene": "LIB-049.pressed",
+          "entry": "review.html#scene=LIB-049.pressed",
+          "view": "interaction-microstates",
+          "path": "查看画布下方本状态具体步骤；Tab/Enter/方向键/Escape回焦；按住按钮；禁用新建文件夹；本状态微交互：hover/focus/keyboard通过真实指针或Tab/Enter操作，不用脚本注入状态",
+          "expected": "hover/pressed只改背景颜色，不变尺寸；减少动效可开关"
+        },
+        {
+          "state": "disabled",
+          "scene": "LIB-049.disabled",
+          "entry": "review.html#scene=LIB-049.disabled",
+          "view": "interaction-microstates",
+          "path": "查看画布下方本状态具体步骤；Tab/Enter/方向键/Escape回焦；按住按钮；禁用新建文件夹；本状态微交互：hover/focus/keyboard通过真实指针或Tab/Enter操作，不用脚本注入状态",
+          "expected": "hover/pressed只改背景颜色，不变尺寸；减少动效可开关"
+        },
+        {
+          "state": "reduced-motion",
+          "scene": "LIB-049.reduced-motion",
+          "entry": "review.html#scene=LIB-049.reduced-motion",
+          "view": "interaction-microstates",
+          "path": "查看画布下方本状态具体步骤；Tab/Enter/方向键/Escape回焦；按住按钮；禁用新建文件夹；本状态微交互：hover/focus/keyboard通过真实指针或Tab/Enter操作，不用脚本注入状态",
+          "expected": "hover/pressed只改背景颜色，不变尺寸；减少动效可开关"
+        }
+      ]
+    },
+    {
+      "id": "LIB-050",
+      "label": "查询、排序与容量边界",
+      "classification": "current",
+      "states": [
+        {
+          "state": "descendants",
+          "scene": "LIB-050.descendants",
+          "entry": "review.html#scene=LIB-050.descendants",
+          "view": "query-boundaries",
+          "path": "100条同数据按更新时间降序滚动；检查来源目录及无分页/无总数说明",
+          "expected": "直接子目录在前，文档含后代；不伪造无限列表"
+        },
+        {
+          "state": "updated-desc",
+          "scene": "LIB-050.updated-desc",
+          "entry": "review.html#scene=LIB-050.updated-desc",
+          "view": "query-boundaries",
+          "path": "100条同数据按更新时间降序滚动；检查来源目录及无分页/无总数说明",
+          "expected": "直接子目录在前，文档含后代；不伪造无限列表"
+        },
+        {
+          "state": "100-limit",
+          "scene": "LIB-050.100-limit",
+          "entry": "review.html#scene=LIB-050.100-limit",
+          "view": "query-boundaries",
+          "path": "100条同数据按更新时间降序滚动；检查来源目录及无分页/无总数说明",
+          "expected": "直接子目录在前，文档含后代；不伪造无限列表"
+        },
+        {
+          "state": "no-pagination",
+          "scene": "LIB-050.no-pagination",
+          "entry": "review.html#scene=LIB-050.no-pagination",
+          "view": "query-boundaries",
+          "path": "100条同数据按更新时间降序滚动；检查来源目录及无分页/无总数说明",
+          "expected": "直接子目录在前，文档含后代；不伪造无限列表"
+        },
+        {
+          "state": "no-total",
+          "scene": "LIB-050.no-total",
+          "entry": "review.html#scene=LIB-050.no-total",
+          "view": "query-boundaries",
+          "path": "100条同数据按更新时间降序滚动；检查来源目录及无分页/无总数说明",
+          "expected": "直接子目录在前，文档含后代；不伪造无限列表"
+        }
+      ]
+    },
+    {
+      "id": "LIB-P01",
+      "label": "列表/卡片共享更多入口",
+      "classification": "proposed",
+      "states": [
+        {
+          "state": "list-menu",
+          "scene": "LIB-P01.list-menu",
+          "entry": "review.html#scene=LIB-P01.list-menu",
+          "view": "shared-more-proposal",
+          "path": "提案列表行尾更多→卡片相同类型动作；切卡片对照；菜单动作不导航",
+          "expected": "当前列表没有更多，提案明确新增前端入口"
+        },
+        {
+          "state": "card-menu",
+          "scene": "LIB-P01.card-menu",
+          "entry": "review.html#scene=LIB-P01.card-menu",
+          "view": "shared-more-proposal",
+          "path": "提案列表行尾更多→卡片相同类型动作；切卡片对照；菜单动作不导航",
+          "expected": "当前列表没有更多，提案明确新增前端入口"
+        },
+        {
+          "state": "keyboard",
+          "scene": "LIB-P01.keyboard",
+          "entry": "review.html#scene=LIB-P01.keyboard",
+          "view": "shared-more-proposal",
+          "path": "提案列表行尾更多→卡片相同类型动作；切卡片对照；菜单动作不导航；本状态微交互：hover/focus/keyboard通过真实指针或Tab/Enter操作，不用脚本注入状态",
+          "expected": "当前列表没有更多，提案明确新增前端入口"
+        },
+        {
+          "state": "portal-no-open",
+          "scene": "LIB-P01.portal-no-open",
+          "entry": "review.html#scene=LIB-P01.portal-no-open",
+          "view": "shared-more-proposal",
+          "path": "提案列表行尾更多→卡片相同类型动作；切卡片对照；菜单动作不导航",
+          "expected": "当前列表没有更多，提案明确新增前端入口"
+        }
+      ]
+    },
+    {
+      "id": "LIB-P02",
+      "label": "目录新建/改名就地校验与等待锁定",
+      "classification": "proposed",
+      "states": [
+        {
+          "state": "invalid-inline",
+          "scene": "LIB-P02.invalid-inline",
+          "entry": "review.html#scene=LIB-P02.invalid-inline",
+          "view": "folder-form-proposal",
+          "path": "斜杠/空校验→正确名称提交→F6失败草稿保留→重试；pending尝试关闭/回车；IME不误提交",
+          "expected": "中性1px边框轻轮廓、同步防重、失败恢复、稳定回焦"
+        },
+        {
+          "state": "pending-guard",
+          "scene": "LIB-P02.pending-guard",
+          "entry": "review.html#scene=LIB-P02.pending-guard",
+          "view": "folder-form-proposal",
+          "path": "斜杠/空校验→正确名称提交→F6失败草稿保留→重试；pending尝试关闭/回车；IME不误提交",
+          "expected": "中性1px边框轻轮廓、同步防重、失败恢复、稳定回焦"
+        },
+        {
+          "state": "retry-draft",
+          "scene": "LIB-P02.retry-draft",
+          "entry": "review.html#scene=LIB-P02.retry-draft",
+          "view": "folder-form-proposal",
+          "path": "斜杠/空校验→正确名称提交→F6失败草稿保留→重试；pending尝试关闭/回车；IME不误提交",
+          "expected": "中性1px边框轻轮廓、同步防重、失败恢复、稳定回焦"
+        },
+        {
+          "state": "focus-return",
+          "scene": "LIB-P02.focus-return",
+          "entry": "review.html#scene=LIB-P02.focus-return",
+          "view": "folder-form-proposal",
+          "path": "斜杠/空校验→正确名称提交→F6失败草稿保留→重试；pending尝试关闭/回车；IME不误提交；本状态微交互：hover/focus/keyboard通过真实指针或Tab/Enter操作，不用脚本注入状态",
+          "expected": "中性1px边框轻轮廓、同步防重、失败恢复、稳定回焦"
+        },
+        {
+          "state": "ime",
+          "scene": "LIB-P02.ime",
+          "entry": "review.html#scene=LIB-P02.ime",
+          "view": "folder-form-proposal",
+          "path": "斜杠/空校验→正确名称提交→F6失败草稿保留→重试；pending尝试关闭/回车；IME不误提交",
+          "expected": "中性1px边框轻轮廓、同步防重、失败恢复、稳定回焦"
+        }
+      ]
+    },
+    {
+      "id": "LIB-P03",
+      "label": "目录定位失效与空标签文案",
+      "classification": "proposed",
+      "states": [
+        {
+          "state": "missing-child",
+          "scene": "LIB-P03.missing-child",
+          "entry": "review.html#scene=LIB-P03.missing-child",
+          "view": "location-copy-proposal",
+          "path": "失效子目录返回有效库；无根创建新库；空标签只读真实提示",
+          "expected": "三个差异独立画面，当前真实缺口保留"
+        },
+        {
+          "state": "zero-roots-folder",
+          "scene": "LIB-P03.zero-roots-folder",
+          "entry": "review.html#scene=LIB-P03.zero-roots-folder",
+          "view": "location-copy-proposal",
+          "path": "失效子目录返回有效库；无根创建新库；空标签只读真实提示",
+          "expected": "三个差异独立画面，当前真实缺口保留"
+        },
+        {
+          "state": "empty-tag",
+          "scene": "LIB-P03.empty-tag",
+          "entry": "review.html#scene=LIB-P03.empty-tag",
+          "view": "location-copy-proposal",
+          "path": "失效子目录返回有效库；无根创建新库；空标签只读真实提示",
+          "expected": "三个差异独立画面，当前真实缺口保留"
+        }
+      ]
+    },
+    {
+      "id": "LIB-P04",
+      "label": "查询状态与100条上限说明",
+      "classification": "proposed",
+      "states": [
+        {
+          "state": "scope-changing",
+          "scene": "LIB-P04.scope-changing",
+          "entry": "review.html#scene=LIB-P04.scope-changing",
+          "view": "query-feedback-proposal",
+          "path": "切目录旧数据提示→读取结果；缓存刷新失败保留内容→重读；实际100行上限",
+          "expected": "只修复查询反馈，不增加分页、total或接口"
+        },
+        {
+          "state": "cached-refresh-error",
+          "scene": "LIB-P04.cached-refresh-error",
+          "entry": "review.html#scene=LIB-P04.cached-refresh-error",
+          "view": "query-feedback-proposal",
+          "path": "切目录旧数据提示→读取结果；缓存刷新失败保留内容→重读；实际100行上限",
+          "expected": "只修复查询反馈，不增加分页、total或接口"
+        },
+        {
+          "state": "100-loaded",
+          "scene": "LIB-P04.100-loaded",
+          "entry": "review.html#scene=LIB-P04.100-loaded",
+          "view": "query-feedback-proposal",
+          "path": "切目录旧数据提示→读取结果；缓存刷新失败保留内容→重读；实际100行上限",
+          "expected": "只修复查询反馈，不增加分页、total或接口"
+        }
+      ]
+    },
+    {
+      "id": "LIB-P05",
+      "label": "替换请求反馈及防重",
+      "classification": "proposed",
+      "states": [
+        {
+          "state": "pending",
+          "scene": "LIB-P05.pending",
+          "entry": "review.html#scene=LIB-P05.pending",
+          "view": "replace-feedback-proposal",
+          "path": "选择文件→替换→F6成功/失败/无正文/提取失败；失败重新选择；取消不改原件",
+          "expected": "同一parse结果状态驱动反馈；无取消上传API或假百分比"
+        },
+        {
+          "state": "success-parse-empty",
+          "scene": "LIB-P05.success-parse-empty",
+          "entry": "review.html#scene=LIB-P05.success-parse-empty",
+          "view": "replace-feedback-proposal",
+          "path": "选择文件→替换→F6成功/失败/无正文/提取失败；失败重新选择；取消不改原件",
+          "expected": "同一parse结果状态驱动反馈；无取消上传API或假百分比"
+        },
+        {
+          "state": "success-parse-error",
+          "scene": "LIB-P05.success-parse-error",
+          "entry": "review.html#scene=LIB-P05.success-parse-error",
+          "view": "replace-feedback-proposal",
+          "path": "选择文件→替换→F6成功/失败/无正文/提取失败；失败重新选择；取消不改原件",
+          "expected": "同一parse结果状态驱动反馈；无取消上传API或假百分比"
+        },
+        {
+          "state": "failure-rechoose",
+          "scene": "LIB-P05.failure-rechoose",
+          "entry": "review.html#scene=LIB-P05.failure-rechoose",
+          "view": "replace-feedback-proposal",
+          "path": "选择文件→替换→F6成功/失败/无正文/提取失败；失败重新选择；取消不改原件",
+          "expected": "同一parse结果状态驱动反馈；无取消上传API或假百分比"
+        },
+        {
+          "state": "native-cancel",
+          "scene": "LIB-P05.native-cancel",
+          "entry": "review.html#scene=LIB-P05.native-cancel",
+          "view": "replace-feedback-proposal",
+          "path": "选择文件→替换→F6成功/失败/无正文/提取失败；失败重新选择；取消不改原件",
+          "expected": "同一parse结果状态驱动反馈；无取消上传API或假百分比"
+        }
+      ]
+    },
+    {
+      "id": "LIB-P06",
+      "label": "删除准确后果说明",
+      "classification": "proposed",
+      "states": [
+        {
+          "state": "folder-assignment-cleared",
+          "scene": "LIB-P06.folder-assignment-cleared",
+          "entry": "review.html#scene=LIB-P06.folder-assignment-cleared",
+          "view": "delete-copy-proposal",
+          "path": "目录/网页资料/文件原件三种确认各核对对象和后果→失败/成功",
+          "expected": "目录清空folder；资料移除记录；文件删除原件，均无恢复承诺"
+        },
+        {
+          "state": "web-softdelete",
+          "scene": "LIB-P06.web-softdelete",
+          "entry": "review.html#scene=LIB-P06.web-softdelete",
+          "view": "delete-copy-proposal",
+          "path": "目录/网页资料/文件原件三种确认各核对对象和后果→失败/成功",
+          "expected": "目录清空folder；资料移除记录；文件删除原件，均无恢复承诺"
+        },
+        {
+          "state": "file-original-delete",
+          "scene": "LIB-P06.file-original-delete",
+          "entry": "review.html#scene=LIB-P06.file-original-delete",
+          "view": "delete-copy-proposal",
+          "path": "目录/网页资料/文件原件三种确认各核对对象和后果→失败/成功",
+          "expected": "目录清空folder；资料移除记录；文件删除原件，均无恢复承诺"
+        }
+      ]
+    },
+    {
+      "id": "LIB-P07",
+      "label": "长路径/描述与低高度布局",
+      "classification": "proposed",
+      "states": [
+        {
+          "state": "long-breadcrumb",
+          "scene": "LIB-P07.long-breadcrumb",
+          "entry": "review.html#scene=LIB-P07.long-breadcrumb",
+          "view": "long-content-proposal",
+          "path": "提案展开/收起描述；长面包屑省略展开；390与低高度保持正文可滚动",
+          "expected": "根身份与现有结构不改；防长内容挤掉所有文档区"
+        },
+        {
+          "state": "long-description",
+          "scene": "LIB-P07.long-description",
+          "entry": "review.html#scene=LIB-P07.long-description",
+          "view": "long-content-proposal",
+          "path": "提案展开/收起描述；长面包屑省略展开；390与低高度保持正文可滚动",
+          "expected": "根身份与现有结构不改；防长内容挤掉所有文档区"
+        },
+        {
+          "state": "390",
+          "scene": "LIB-P07.390",
+          "entry": "review.html#scene=LIB-P07.390",
+          "view": "long-content-proposal",
+          "path": "提案展开/收起描述；长面包屑省略展开；390与低高度保持正文可滚动",
+          "expected": "根身份与现有结构不改；防长内容挤掉所有文档区"
+        },
+        {
+          "state": "low-height",
+          "scene": "LIB-P07.low-height",
+          "entry": "review.html#scene=LIB-P07.low-height",
+          "view": "long-content-proposal",
+          "path": "提案展开/收起描述；长面包屑省略展开；390与低高度保持正文可滚动",
+          "expected": "根身份与现有结构不改；防长内容挤掉所有文档区"
+        }
+      ]
+    },
+    {
+      "id": "LIB-P08",
+      "label": "浏览页移动/重命名入口边界",
+      "classification": "proposed",
+      "states": [
+        {
+          "state": "decision-required",
+          "scene": "LIB-P08.decision-required",
+          "entry": "review.html#scene=LIB-P08.decision-required",
+          "view": "browse-command-boundary",
+          "path": "查看文档命令交接；笔记重命名/目录移动仍在详情页触发→返回浏览",
+          "expected": "本轮明确不新增浏览页移动/重命名，非待开发按钮"
+        },
+        {
+          "state": "note-only-rename",
+          "scene": "LIB-P08.note-only-rename",
+          "entry": "review.html#scene=LIB-P08.note-only-rename",
+          "view": "browse-command-boundary",
+          "path": "查看文档命令交接；笔记重命名/目录移动仍在详情页触发→返回浏览",
+          "expected": "本轮明确不新增浏览页移动/重命名，非待开发按钮"
+        },
+        {
+          "state": "move-handoff",
+          "scene": "LIB-P08.move-handoff",
+          "entry": "review.html#scene=LIB-P08.move-handoff",
+          "view": "browse-command-boundary",
+          "path": "查看文档命令交接；笔记重命名/目录移动仍在详情页触发→返回浏览",
+          "expected": "本轮明确不新增浏览页移动/重命名，非待开发按钮"
+        }
+      ]
+    }
+  ]
+}
