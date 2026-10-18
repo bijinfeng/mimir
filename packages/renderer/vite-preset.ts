@@ -33,6 +33,22 @@ export function emitCarlitoLicense(): Plugin {
   }
 }
 
+/** The locally bundled Phosphor paths must carry their MIT notice on both hosts. */
+export function emitPhosphorLicense(): Plugin {
+  return {
+    name: 'mimir:emit-phosphor-license',
+    async generateBundle() {
+      this.emitFile({
+        type: 'asset',
+        fileName: 'licenses/Phosphor-Icons-MIT.txt',
+        source: await readFile(
+          new URL('./src/components/library/phosphor-file-icons/LICENSE', import.meta.url),
+        ),
+      })
+    },
+  }
+}
+
 /**
  * 渲染层的构建预设（D-103）。
  *
@@ -199,6 +215,7 @@ export function rendererPlugins(options: RendererPluginOptions): PluginOption[] 
     copyPdfjsAssets(publicDir),
     copyPdfOcrAssets(publicDir),
     emitCarlitoLicense(),
+    emitPhosphorLicense(),
     /**
      * 文件路由。**配置来自 `route-config.mjs`**——那一份同时被
      * `generate-routes.mjs` 用（typecheck 之前要先有路由树，而插件那时还没跑）。

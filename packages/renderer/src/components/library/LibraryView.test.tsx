@@ -1,10 +1,10 @@
 import type { DocumentSummary } from '@mimir/shared'
-import { renderToStaticMarkup } from 'react-dom/server'
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { MimirProvider } from '../../theme/MimirProvider'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { chipOf, displayDocumentTitle, docIcon, DocCard } from './LibraryView'
+import { fileFormatOf } from './FileFormatIcon'
+import { chipOf, displayDocumentTitle, DocCard, DocRow } from './LibraryView'
 
 const baseFile: DocumentSummary = {
   id: 'file-1',
@@ -33,29 +33,22 @@ describe('知识库文件名和类型图标', () => {
   })
 
   it('不同格式使用各自的图形和语义色，未知格式回退普通文件', () => {
-    for (const [extension, icon, tone] of [
-      ['pdf', 'pdf', 'pdf'],
-      ['docx', 'document', 'document'],
-      ['xlsx', 'table', 'table'],
-      ['pptx', 'slides', 'slides'],
-      ['html', 'code', 'code'],
-      ['txt', 'text', 'neutral'],
-      ['png', 'image', 'media'],
-      ['mp3', 'audio', 'media'],
-      ['mp4', 'video', 'media'],
-      ['zip', 'archive', 'neutral'],
+    for (const [extension, format] of [
+      ['pdf', 'pdf'],
+      ['docx', 'word'],
+      ['xlsx', 'excel'],
+      ['pptx', 'powerpoint'],
+      ['html', 'html'],
+      ['txt', 'text'],
+      ['png', 'image'],
+      ['mp3', 'audio'],
+      ['mp4', 'video'],
+      ['zip', 'archive'],
     ] as const) {
-      const markup = renderToStaticMarkup(docIcon({ ...baseFile, fileExtension: extension }))
-      expect(markup).toContain(`data-file-icon="${icon}"`)
-      expect(markup).toContain(`data-file-tone="${tone}"`)
-      expect(markup).toContain('mask-image:')
+      expect(fileFormatOf({ ...baseFile, fileExtension: extension })).toBe(format)
     }
-    expect(renderToStaticMarkup(docIcon({ ...baseFile, kind: 'note' }))).toContain(
-      'data-file-icon="note"',
-    )
-    expect(renderToStaticMarkup(docIcon({ ...baseFile, fileExtension: 'unknown' }))).toContain(
-      'data-file-icon="unknown"',
-    )
+    expect(fileFormatOf({ ...baseFile, kind: 'note' })).toBe('note')
+    expect(fileFormatOf({ ...baseFile, fileExtension: 'unknown' })).toBe('unknown')
   })
 
   it('文件卡片不重复显示格式徽标，笔记和网页保留来源徽标', () => {
@@ -75,7 +68,7 @@ afterEach(async () => {
   cardHost = undefined
 })
 
-async function mountCard() {
+async function mountCard(asRow = false) {
   ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
   cardHost = document.createElement('div')
   document.body.append(cardHost)
@@ -83,10 +76,12 @@ async function mountCard() {
   const open = vi.fn<() => void>()
   const replace = vi.fn<() => void>()
   const remove = vi.fn<() => void>()
+  const Component = asRow ? DocRow : DocCard
   await act(async () =>
     cardRoot!.render(
       <MimirProvider>
-        <DocCard
+        <Component
+          hasStatus={false}
           doc={baseFile}
           location="当前目录"
           onOpen={open}
@@ -149,4 +144,21 @@ describe('知识库卡片操作', () => {
     expect(document.activeElement).toBe(more)
     expect(open).not.toHaveBeenCalled()
   })
+})
+
+it('列表更多菜单复用卡片能力，点击替换不会冒泡打开，标题仍可键盘打开', async () => {
+  const { host, open, replace } = await mountCard(true)
+  await press(host.querySelector<HTMLButtonElement>('[aria-label="报告 的更多操作"]')!)
+  const action = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
+    (node) => node.textContent === '替换原件',
+  )!
+  await press(action)
+  expect(replace).toHaveBeenCalledOnce()
+  expect(open).not.toHaveBeenCalled()
+  const title = [...host.querySelectorAll<HTMLButtonElement>('button')].find(
+    (node) => node.textContent === '报告.pdf',
+  )!
+  expect(title.type).toBe('button')
+  await press(title)
+  expect(open).toHaveBeenCalledOnce()
 })

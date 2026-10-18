@@ -1,0 +1,104 @@
+{
+  "upstream": "https://github.com/phosphor-icons/core",
+  "commit": "2b75f3ad12b420c9504ef05df8d2564a28f8500e",
+  "license": "MIT",
+  "transformation": "Static SVG path elements converted to React JSX; original path data, opacity 0.2, viewBox and currentColor retained. Approved format colors applied by FileFormatIcon.style.ts. No runtime network, parsing or arbitrary SVG input.",
+  "icons": [
+    {
+      "format": "word",
+      "upstreamPath": "assets/duotone/file-doc-duotone.svg",
+      "blobSha": "c93f70b6371a112b875e2be56b9e57b76d7201e4",
+      "sha256": "71ba3e223c85300609dcdbcbb29b8eb3535a6e44353edfe6f2ca8ff68bcf16f5"
+    },
+    {
+      "format": "excel",
+      "upstreamPath": "assets/duotone/file-xls-duotone.svg",
+      "blobSha": "47ac1067763a64442bda58f1a4ef98d83993daaa",
+      "sha256": "fd093243c13ff0d0403f6e0b347613d983ea22e429f191419500cb9875e94f3f"
+    },
+    {
+      "format": "powerpoint",
+      "upstreamPath": "assets/duotone/file-ppt-duotone.svg",
+      "blobSha": "7721199c980d85666df323bc9d08e4de95c16364",
+      "sha256": "33223c3ec22a195dc3d33d66f33c7af6faac03d8d4f907657a90453ca638aabf"
+    },
+    {
+      "format": "pdf",
+      "upstreamPath": "assets/duotone/file-pdf-duotone.svg",
+      "blobSha": "5f3e46e2751a2e3fc1eedd2ff2fb6c94dfa32259",
+      "sha256": "451b593fba4a0ae151561d77eb1517fa50d8ddfcf8517afc817fa8972fd3b5bb"
+    },
+    {
+      "format": "audio",
+      "upstreamPath": "assets/duotone/file-audio-duotone.svg",
+      "blobSha": "63e822d7d9251f34e3030f29b8a046dd56a7b1b3",
+      "sha256": "38bd7e1976ce3af5a232985145c4c6912ad26bc6e1f88746ed8a796d4e173c0f"
+    },
+    {
+      "format": "video",
+      "upstreamPath": "assets/duotone/file-video-duotone.svg",
+      "blobSha": "e998840206d5cf0972e6e04f408719db35115a80",
+      "sha256": "1aa36d02b655d240f00f9169c08cda6b300757ff5026d65cd1cddfb6198ae31d"
+    },
+    {
+      "format": "note",
+      "upstreamPath": "assets/duotone/file-md-duotone.svg",
+      "blobSha": "1d9eaa6e8dabf9df29022f1113aa1ba7af19039e",
+      "sha256": "2c09f50754ecfcf11902a5c7dcddd188d52556254d4cee847a28fe7948841689"
+    },
+    {
+      "format": "image",
+      "upstreamPath": "assets/duotone/file-image-duotone.svg",
+      "blobSha": "204531ef1359861b6002c82b3b3ce5dd5aeacdb0",
+      "sha256": "1497ced443096e5c07c3ae89891c46952bd9aa9a05fae7e148c19d5839a482d2"
+    },
+    {
+      "format": "web",
+      "upstreamPath": "assets/duotone/globe-hemisphere-west-duotone.svg",
+      "blobSha": "6fd1f04330266aec2441a464f41a22fea2ef3b81",
+      "sha256": "52a225637cebbe67a961f6066f2ef9c29a73b9645e78258bd39e6bb2f4784bb6"
+    },
+    {
+      "format": "wechat",
+      "upstreamPath": "assets/duotone/wechat-logo-duotone.svg",
+      "blobSha": "04323628e1605b46a4883a7d9c9cd765ee21d3a5",
+      "sha256": "b28d67e9e23f32473c56ac7dd7f01370809081b6115e0afef84cecd310c49243"
+    },
+    {
+      "format": "github",
+      "upstreamPath": "assets/duotone/github-logo-duotone.svg",
+      "blobSha": "cb25db25ccd3584123bce8a7f83c0b5c6d7b6c08",
+      "sha256": "e5cad1ca4d6cd2c3b04b70aae0608945ef6ca89de9f9ee1f8d44dc9015d8601d"
+    },
+    {
+      "format": "html",
+      "upstreamPath": "assets/duotone/file-html-duotone.svg",
+      "blobSha": "eaa20d7ddaa1669d64c33d0f6242f28a30257907",
+      "sha256": "a995d7170c1e6e9743065a284beb2ab0001f8c8841f56140fe24d35774873782"
+    },
+    {
+      "format": "text",
+      "upstreamPath": "assets/duotone/file-text-duotone.svg",
+      "blobSha": "daff55db854ffd779edda46423bad37478bdc941",
+      "sha256": "6b0867a397af11f3c0a66091a4e17e3c172a42f48812ba99fc8157d9093cb7ea"
+    },
+    {
+      "format": "archive",
+      "upstreamPath": "assets/duotone/file-zip-duotone.svg",
+      "blobSha": "88f333b6e1d1090af9b6c0157d6a27fefed7c429",
+      "sha256": "9dee0c2597c5471b45ea55c87b3de872cb26bca1f8b8ea31866b83a1d7726ad7"
+    },
+    {
+      "format": "code",
+      "upstreamPath": "assets/duotone/file-code-duotone.svg",
+      "blobSha": "6835d88f853f6d1d108060859b9d785038bbe875",
+      "sha256": "730c27ca9c598f83d7a4bd07fb6b2c18e1930e214fdb70573d4175a9a79a92d2"
+    },
+    {
+      "format": "unknown",
+      "upstreamPath": "assets/duotone/file-duotone.svg",
+      "blobSha": "ff8a54b2bf8216baa2f2acf51ee32cf5a7597d29",
+      "sha256": "ddb6e4c20296785f4b6dac96536b49fe2d3d13998a26017bcf4eba9e4d554d05"
+    }
+  ]
+}

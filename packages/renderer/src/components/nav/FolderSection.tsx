@@ -411,7 +411,7 @@ export function FolderSection({
     onSuccess: (data, path) => {
       invalidate()
       message.success(
-        data.cleared > 0 ? `已删除知识库，${data.cleared} 篇文档移回库根` : '已删除知识库',
+        data.cleared > 0 ? `已删除知识库，${data.cleared} 篇文档的目录归属已清空` : '已删除知识库',
       )
       // 删的正是当前所在知识库（或其内部）时，留在原 scope 等于看一个空目录
       if (activePath && (activePath === path || isDescendantOf(activePath, path))) onSelect('')
@@ -423,7 +423,7 @@ export function FolderSection({
       title: `删除知识库「${node.name}」？`,
       content:
         node.count > 0
-          ? `里面的 ${node.count} 篇文档会保留，指派清空后回到库根。`
+          ? `里面的 ${node.count} 篇文档会保留，但目录归属将被清空，不再显示在任何知识库中。`
           : '这是一个空知识库，删除后不影响任何文档。',
       onConfirm: () => removeMut.mutateAsync(node.path),
     })

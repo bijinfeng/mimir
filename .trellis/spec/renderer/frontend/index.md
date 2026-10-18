@@ -22,6 +22,7 @@ paths:
 - [表单](./forms.md)
 - [搜索面板批准稿与还原验收](./search-parity.md)
 - [收集与导入批准稿与状态合同](./capture-parity.md)
+- [知识库与目录批准稿与交互合同](./library-parity.md)
 - [Markdown 编辑器](./editor/index.md)
 - [主题与外观](./theme/index.md)
 - [文档面板](./document/index.md)
