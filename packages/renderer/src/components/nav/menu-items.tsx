@@ -1,6 +1,8 @@
 import { MessageCircle, Plus, Search } from 'lucide-react'
+import { Tooltip } from 'antd'
 import type { MenuProps } from 'antd'
 import type { ConversationSummary } from '@mimir/shared'
+import { useEffect, useRef, useState } from 'react'
 import { formatRelative } from '../list-helpers'
 
 /**
@@ -16,17 +18,12 @@ import { formatRelative } from '../list-helpers'
  * action:new-chat       动作：新对话
  * action:search         动作：搜索（命令面板）
  * action:settings       动作：设置
- * action:retry-conversations  动作：会话列表读取失败后重试
  * conv:<id>             导航：某次会话
  * ```
  *
  * （标签那一组已移除——它是「横切」维度的入口，而侧边栏是「归属」维度的地方；
  * 标签筛选改从命令面板与中栏的筛选行进入。这条记在这里是为了避免后人
  * 又把它加回来。）
- *
- * `action:retry-conversations` 由 `NavSidebar` 在 `conversationsQuery.isError`
- * 时直接构造（不经过这里的函数——那条分支要读查询状态，
- * 而这个文件是纯函数）。写在这里是为了 key 表完整：分发端按它匹配。
  */
 
 type MenuItem = Required<MenuProps>['items'][number]
@@ -86,19 +83,47 @@ export function buildConversations(
   limit: number,
   activeId?: string,
 ): MenuItem[] {
+  const visible = conversations.slice(0, limit)
+  const active = activeId ? conversations.find((item) => item.id === activeId) : undefined
+  if (limit > 0 && active && !visible.some((item) => item.id === activeId)) {
+    visible.splice(limit - 1, 1, active)
+  }
   return [
     {
       key: 'conv-group:all',
       type: 'group' as const,
       label: '对话',
-      children: conversations.slice(0, limit).map((conversation) => ({
+      children: visible.map((conversation) => ({
         key: `conv:${conversation.id}`,
         'aria-current': conversation.id === activeId ? 'page' : undefined,
         icon: <MessageCircle size={16} />,
-        label: conversation.title || '新对话',
+        label: <ConversationTitle title={conversation.title || '新对话'} />,
         // 相对时间：翻会话时想知道的是「多久以前问的」
         extra: formatRelative(conversation.updatedAt),
       })),
     },
   ]
+}
+
+/** Menu focuses its li, so focus on the label's Tooltip alone misses keyboard navigation. */
+function ConversationTitle({ title }: { title: string }) {
+  const labelRef = useRef<HTMLSpanElement>(null)
+  const [open, setOpen] = useState(false)
+  useEffect(() => {
+    const item = labelRef.current?.closest('[role="menuitem"]')
+    if (!item) return
+    const show = () => setOpen(true)
+    const hide = () => setOpen(false)
+    item.addEventListener('focus', show)
+    item.addEventListener('blur', hide)
+    return () => {
+      item.removeEventListener('focus', show)
+      item.removeEventListener('blur', hide)
+    }
+  }, [])
+  return (
+    <Tooltip title={title} placement="right" open={open} onOpenChange={setOpen}>
+      <span ref={labelRef}>{title}</span>
+    </Tooltip>
+  )
 }

@@ -12,7 +12,7 @@ import {
   Settings,
   X,
 } from 'lucide-react'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { BrandMark } from './BrandMark'
 import { useStyles } from './NavSidebar.style'
 import { FolderSection } from './nav/FolderSection'
@@ -64,6 +64,30 @@ export function NavSidebar({
   const { styles } = useStyles()
   const navigate = useNavigate()
   const { runGuarded, pending } = useUnsaved()
+  // This survives account-row remounts between the rail and Drawer.
+  const signingOutRef = useRef(false)
+  const [signingOut, setSigningOut] = useState(false)
+  const [signoutError, setSignoutError] = useState(false)
+  const signOut = (onStart: () => void) => {
+    if (signingOutRef.current) return
+    runGuarded(() => {
+      if (signingOutRef.current) return
+      signingOutRef.current = true
+      setSigningOut(true)
+      setSignoutError(false)
+      onStart()
+      void (async () => {
+        try {
+          await api.auth.signOutAndLeave()
+        } catch {
+          setSignoutError(true)
+        } finally {
+          signingOutRef.current = false
+          setSigningOut(false)
+        }
+      })()
+    })
+  }
   const foldersQuery = useQuery({ queryKey: ['folders'], queryFn: api.folders.list })
   const conversationsQuery = useQuery({
     queryKey: ['conversations'],
@@ -117,34 +141,16 @@ export function NavSidebar({
     if (key.startsWith('conv:')) return goChat(key.slice('conv:'.length))
     if (key === 'action:new-chat') return goChat()
     if (key === 'action:search') return openPalette()
-    if (key === 'action:retry-conversations') return void conversationsQuery.refetch()
   }
 
   const selectedKey = currentKey(selection)
   const conversations = conversationsQuery.data?.items ?? []
-  const conversationItems = conversationsQuery.isError
-    ? [
-        {
-          key: 'conv-group:all',
-          type: 'group' as const,
-          label: '对话',
-          children: [{ key: 'action:retry-conversations', label: '读取失败，点此重试' }],
-        },
-      ]
-    : conversations.length === 0
-      ? [
-          {
-            key: 'conv-group:all',
-            type: 'group' as const,
-            label: '对话',
-            children: [],
-          },
-        ]
-      : buildConversations(
-          conversations,
-          CONVERSATION_LIMIT,
-          selection.page === 'chat' ? selection.id : undefined,
-        )
+  // Cached history stays navigable when a background refresh fails.
+  const conversationItems = buildConversations(
+    conversations,
+    CONVERSATION_LIMIT,
+    selection.page === 'chat' ? selection.id : undefined,
+  )
 
   const bodyRef = useRef<HTMLDivElement>(null)
   const bodyScrolled = useScrolled(bodyRef)
@@ -233,6 +239,28 @@ export function NavSidebar({
             }
             parentOnly={Boolean(selection.id)}
             onSelect={(path) => goDocs(path ? `folder:${path}` : 'all')}
+            onPathChanged={(from, to) => {
+              const prefix = 'folder:'
+              const path = selection.scope.startsWith(prefix)
+                ? selection.scope.slice(prefix.length)
+                : null
+              if (
+                selection.page !== 'docs' ||
+                from === to ||
+                !path ||
+                !(path === from || path.startsWith(`${from}/`))
+              )
+                return
+              // The save already committed; synchronize the same content's canonical
+              // location, not a guarded departure that could leave an obsolete scope.
+              void navigate({
+                to: '/docs',
+                search: {
+                  scope: `${prefix}${to}${path.slice(from.length)}`,
+                  ...(selection.id ? { id: selection.id } : {}),
+                },
+              })
+            }}
           />
         </div>
         <Menu
@@ -242,8 +270,26 @@ export function NavSidebar({
           onClick={onMenuClick}
           items={conversationItems}
         />
+        {conversationsQuery.isPending && (
+          <p className={styles.conversationEmpty} role="status">
+            正在读取对话…
+          </p>
+        )}
+        {conversationsQuery.isError && (
+          <div className={styles.queryFeedback}>
+            <span role="status">{conversations.length ? '对话刷新失败' : '对话读取失败'}</span>
+            <Button
+              type="link"
+              size="small"
+              loading={conversationsQuery.isFetching}
+              onClick={() => void conversationsQuery.refetch()}
+            >
+              重试
+            </Button>
+          </div>
+        )}
         {!conversationsQuery.isError &&
-          !conversationsQuery.isLoading &&
+          !conversationsQuery.isPending &&
           conversations.length === 0 && (
             <p className={styles.conversationEmpty}>暂无对话，点上方“新建对话”</p>
           )}
@@ -253,6 +299,10 @@ export function NavSidebar({
         <AccountRow
           key={`${selection.page}:${selection.scope}:${selection.id ?? ''}`}
           collapsed={false}
+          narrowViewport={narrowViewport}
+          signingOut={signingOut}
+          signoutError={signoutError}
+          onSignOut={signOut}
           settingsActive={selection.page === 'settings'}
           onOpenAccount={() => goSettingsSection('account')}
           onOpenSettings={goSettings}
@@ -307,17 +357,23 @@ export function NavSidebar({
             onClick={goSettings}
             active={selection.page === 'settings'}
           />
-          <div className={styles.railFoot}>
-            <AccountRow
-              key={`${selection.page}:${selection.scope}:${selection.id ?? ''}`}
-              collapsed
-              showSettings={false}
-              settingsActive={selection.page === 'settings'}
-              onOpenAccount={() => goSettingsSection('account')}
-              onOpenSettings={goSettings}
-              onOpenStats={() => goSettingsSection('stats')}
-            />
-          </div>
+          {!(narrowViewport && overlayOpen) && (
+            <div className={styles.railFoot}>
+              <AccountRow
+                key={`${selection.page}:${selection.scope}:${selection.id ?? ''}`}
+                collapsed
+                narrowViewport={narrowViewport}
+                signingOut={signingOut}
+                signoutError={signoutError}
+                onSignOut={signOut}
+                showSettings={false}
+                settingsActive={selection.page === 'settings'}
+                onOpenAccount={() => goSettingsSection('account')}
+                onOpenSettings={goSettings}
+                onOpenStats={() => goSettingsSection('stats')}
+              />
+            </div>
+          )}
         </div>
       ) : (
         workspace

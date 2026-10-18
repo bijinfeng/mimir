@@ -1,3 +1,5 @@
+> 2026-10-18：用户“实施吧”已认可v2，SHA256 `28a3baa22002dc0d506a33744bd6b5d6c9f715861e50b44888e895365d706746`。以下待认可字样为规划历史，本轮开始按批准范围实施。
+
 # 工作区导航与账户菜单交互精修
 
 ## 目标
@@ -23,3 +25,5 @@
 ## 待核实
 
 v1源码盘点19组144项保留；v2按用户反馈增补至19组150项，见prototype/coverage-v2.json与research/workspace-v2-amendment.md。完整复杂任务方案与实施计划已整理；当前等待具体HTML版本认可。侧栏树展开/拖拽/新建子目录不适用（D-079），不发明新能力。
+
+> 本轮实现与验证记录：见 [implementation-acceptance.md](implementation-acceptance.md)。模块实现已交付；全仓lint/format有其他任务阻断，暂不归档。

@@ -3,7 +3,7 @@
   "name": "interaction-workspace",
   "title": "工作区导航与账户菜单交互精修",
   "description": "第二模块：完整盘点工作区导航、知识库平铺、最近历史与账户菜单，交付HTML前后对比稿，获批后再实施",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": "fullstack",
   "scope": "renderer/navigation + shared/server folder metadata",
   "package": "packages/renderer",
@@ -12,7 +12,7 @@
   "assignee": "jfbi",
   "createdAt": "2026-10-18",
   "completedAt": null,
-  "branch": null,
+  "branch": "codex/all-pages-polish",
   "base_branch": "master",
   "worktree_path": null,
   "commit": null,
@@ -28,8 +28,10 @@
     "research/workspace-inventory.md",
     "research/workspace-scenes.json",
     "prototype/coverage-v2.json",
-    "research/workspace-v2-amendment.md"
+    "research/workspace-v2-amendment.md",
+    "implementation-acceptance.md",
+    "verification/implementation-coverage.json"
   ],
-  "notes": "v2按用户反馈修改HTML：无图标选择，创建/编辑共用名称描述表单；规划含描述更新API。待v2具体认可，未激活，产品代码未改。",
+  "notes": "v2已实施、独立检查与真实浏览器验收通过；全仓类型与测试通过。pnpm check仍受其他会话小程序原型lint及.impeccable/config.json格式阻断，保留in_progress不归档。",
   "meta": {}
 }

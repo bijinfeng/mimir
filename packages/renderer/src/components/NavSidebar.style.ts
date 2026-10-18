@@ -232,6 +232,27 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     color: ${token.colorTextTertiary};
     font-size: ${FONT_SIZE.note}px;
   `,
+  queryFeedback: css`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+    padding-inline: 8px;
+    color: ${token.colorTextSecondary};
+    font-size: ${FONT_SIZE.note}px;
+    @media (pointer: coarse), ${NAV_NARROW_QUERY} {
+      button { min-height: 44px; }
+    }
+  `,
+  accountMenuError: css`
+    max-width: min(212px, calc(100vw - 16px));
+    margin: 4px 0 0;
+    padding: 8px 12px;
+    border-radius: ${token.borderRadius}px;
+    background: ${token.colorBgElevated};
+    color: ${token.colorErrorText};
+    font-size: ${FONT_SIZE.note}px;
+  `,
   menu: css`
     background: transparent;
     border-inline-end: none !important;
@@ -391,6 +412,21 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     white-space: nowrap;
   `,
   accountMenuPopup: css`
+    &.${prefixCls}-dropdown {
+      width: min(212px, calc(100vw - 16px));
+      max-width: calc(100vw - 16px);
+    }
+    @media (pointer: coarse), ${NAV_NARROW_QUERY} {
+      &.${prefixCls}-dropdown {
+        width: min(224px, calc(100vw - 16px));
+      }
+    }
+    @media (max-width: 370px) {
+      &.${prefixCls}-dropdown-menu-submenu-popup {
+        left: auto !important;
+        right: 8px;
+      }
+    }
     &.${prefixCls}-dropdown-menu-submenu-popup {
       overflow: hidden;
       background: ${token.colorBgElevated};
@@ -405,7 +441,8 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       box-shadow: none;
     }
     .${prefixCls}-dropdown-menu {
-      min-width: min(212px, calc(100vw - 16px));
+      min-width: 0;
+      max-width: calc(100vw - 16px);
       padding: 0 4px 4px;
       background: ${token.colorBgElevated};
       border: 1px solid ${token.colorBorderSecondary};
@@ -429,6 +466,9 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       color: ${token.colorText};
       font-size: ${FONT_SIZE.body}px;
       line-height: 1.4;
+      @media (pointer: coarse), ${NAV_NARROW_QUERY} {
+        min-height: 44px;
+      }
     }
     .${prefixCls}-dropdown-menu-item-icon {
       display: inline-flex;
@@ -468,6 +508,10 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     flex-direction: column;
     min-width: 0;
     gap: 2px;
+    > span:focus-visible {
+      outline: 2px solid ${token.focusRing};
+      outline-offset: 2px;
+    }
   `,
   accountMenuName: css`
     overflow: hidden;

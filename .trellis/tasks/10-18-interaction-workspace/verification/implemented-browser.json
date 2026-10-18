@@ -1,0 +1,80 @@
+{
+  "date": "2026-10-18",
+  "origin": "http://127.0.0.1:5174",
+  "isolatedData": "/tmp/mimir-workspace-v2-qa",
+  "checks": [
+    {
+      "case": "create-via-navigation-edit-prefill-no-icon-selector",
+      "pass": true
+    },
+    {
+      "case": "actual-description-only-update",
+      "pass": true
+    },
+    {
+      "case": "actual-clear-description-focus-return",
+      "pass": true
+    },
+    {
+      "case": "actual-rename-and-description-persists-on-reload",
+      "pass": true
+    },
+    {
+      "case": "real-409-error-keeps-both-drafts-then-resaves",
+      "pass": true
+    },
+    {
+      "case": "theme-escape-child-parent-focus-return",
+      "pass": true
+    },
+    {
+      "case": "390px cascade final",
+      "result": {
+        "menus": [
+          {
+            "heights": [
+              44,
+              44,
+              44,
+              44
+            ],
+            "left": 8,
+            "right": 232,
+            "width": 224
+          },
+          {
+            "heights": [
+              44,
+              44,
+              44
+            ],
+            "left": 228,
+            "right": 364,
+            "width": 136
+          }
+        ],
+        "scroll": 390,
+        "viewport": 390
+      }
+    }
+  ],
+  "additionalChecks": [
+    "390x480 deep theme edit footer visible at bottom370px",
+    "desktop rail collapse and expand verified",
+    "final390 rows44px and no horizontal overflow",
+    "theme Esc returns to parent then account trigger",
+    "Final desktop modal body clientHeight=scrollHeight=208; count visible",
+    "Final390x360 modal body196/scroll208; footer bottom315; horizontal width390",
+    "Console capture contains only two historical AntD maskClosable deprecation warnings"
+  ],
+  "limitations": [
+    "Native Electron/OS interactions not run",
+    "network failures and guard cases are automated test evidence"
+  ],
+  "screenshots": [
+    "implemented-edit-desktop.png",
+    "implemented-edit-dark-narrow.png",
+    "implemented-drawer-theme.png",
+    "implemented-edit-low-height.png"
+  ]
+}

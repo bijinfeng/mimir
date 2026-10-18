@@ -108,3 +108,27 @@ describe('菜单项构造', () => {
     expect(group.children[0]?.extra).toBe('2 天前')
   })
 })
+
+describe('当前旧会话的有限列表', () => {
+  const conversations = Array.from({ length: 20 }, (_, index) => ({
+    id: `conversation-${index}`,
+    title: `会话${index}`,
+    updatedAt: '2026-10-18T00:00:00Z',
+  }))
+  function keys(activeId?: string) {
+    const [group] = buildConversations(conversations as never, 12, activeId)
+    return (group as { children: { key: string }[] }).children.map((item) => item.key)
+  }
+  it('当前返回项超过前12时保留前11加当前，仍最多12', () => {
+    expect(keys('conversation-18')).toEqual([
+      ...conversations.slice(0, 11).map((item) => `conv:${item.id}`),
+      'conv:conversation-18',
+    ])
+  })
+  it('前12内不重排，未返回的当前ID不虚构', () => {
+    const first = conversations.slice(0, 12).map((item) => `conv:${item.id}`)
+    expect(keys('conversation-3')).toEqual(first)
+    expect(keys('not-returned')).toEqual(first)
+    expect(keys()).toEqual(first)
+  })
+})

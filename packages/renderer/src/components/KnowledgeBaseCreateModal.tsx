@@ -1,31 +1,30 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { App, Input, Modal } from 'antd'
+import { App, Button, Input, Modal } from 'antd'
 import type { InputRef } from 'antd'
 import { createStyles } from 'antd-style'
 import { useId, useRef, useState } from 'react'
-import { FOLDER_ICONS } from '@mimir/shared'
-import { FolderGlyph } from './nav/folder-icons'
-import { api } from '../lib/api'
+import { folderUpdateRecoverySchema } from '@mimir/shared'
+import type { FolderNode } from '@mimir/shared'
+import { api, ApiRequestError } from '../lib/api'
 import { FONT_SIZE } from '../theme/tokens'
+import { joinPath, nameOf, parentOf } from './nav/folder-ops'
 
-/**
- * 「创建知识库」表单（名称 / 描述 / 图标，D-078）。
- *
- * ## 为什么是一个共享组件
- *
- * 两个入口都要它：侧边栏知识库分组的 ＋（`FolderSection`）与知识库页
- * 在没有知识库时给的引导（`LibraryView`）。两处各写一份表单会**从第一天
- * 起就漂移**——字段一样、校验一样、提交一样，而任何一处改样式或加字段
- * 都不会让另一处跟着动。表单只有一份，谁要谁挂。
- *
- * 创建成功后失效 `folders` 查询并回调 `onCreated(path)`：调用方决定
- * 「建完去哪」（侧边栏进入该库、库页引导进入该库）。
- */
-export interface KnowledgeBaseCreateModalProps {
+export interface KnowledgeBaseModalProps {
   open: boolean
+  folder?: FolderNode
   onCancel: () => void
-  /** 建好之后。`path` 是新建知识库的完整路径（顶层，即名称本身） */
-  onCreated: (path: string) => void
+  onSaved: (path: string, from?: string) => void
+  onReconciled?: (from: string, to: string) => void
+  afterClose?: () => void
+}
+
+function findIdentity(items: FolderNode[], original: FolderNode): FolderNode | undefined {
+  for (const item of items) {
+    if (original.code ? item.code === original.code : item.path === original.path) return item
+    const child = findIdentity(item.children, original)
+    if (child) return child
+  }
+  return undefined
 }
 
 const useStyles = createStyles(({ css, token }) => ({
@@ -38,6 +37,9 @@ const useStyles = createStyles(({ css, token }) => ({
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
+  `,
+  descriptionControl: css`
+    padding-bottom: 24px;
   `,
   error: css`
     margin: 6px 0 0;
@@ -56,144 +58,187 @@ const useStyles = createStyles(({ css, token }) => ({
       margin-top: 0;
     }
   `,
-  /**
-   * 图标网格：**flex 换行 + 居中**，不是 4 列定行网格。
-   *
-   * 13 个图标按 4 列排出来是 4/4/4/1——最后一行孤零零一个格子贴在左缘，
-   * 看起来像渲染漏了几格。换行 + 居中之后，末行的 1 个（或 2 个、3 个）
-   * 落在中线上，读作「这一组到此为止」而不是「少了三个」。
-   *
-   * 每格宽 `(100% - 3×gap) / 4` 保持四列节奏：居中只在**不完整的行**
-   * 上产生可见差别（整行四个正好铺满，居中没有效果）。
-   */
-  iconGrid: css`
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px;
-    padding: 10px;
-    border: 1px solid ${token.colorBorderSecondary};
-    border-radius: ${token.borderRadius}px;
-    background: ${token.colorFillQuaternary};
-  `,
-  iconCell: css`
-    width: calc((100% - 24px) / 4);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
-    padding: 9px 4px 7px;
-    border: 1px solid ${token.colorBorderSecondary};
-    border-radius: ${token.borderRadius}px;
-    background: ${token.colorBgContainer};
-    color: ${token.colorTextSecondary};
-    font-size: ${FONT_SIZE.badge}px;
-    cursor: pointer;
-
-    &:hover {
-      border-color: ${token.colorPrimaryBorder};
-      color: ${token.colorText};
-    }
-
-    &:disabled {
-      cursor: not-allowed;
-      color: ${token.colorTextDisabled};
-    }
-
-    &:focus-visible {
-      outline: 2px solid ${token.colorPrimaryBorder};
-      outline-offset: 2px;
-    }
-  `,
-  iconCellActive: css`
-    border-color: ${token.colorLink};
-    background: ${token.colorPrimaryBg};
-    color: ${token.colorLink};
-  `,
 }))
 
-export function KnowledgeBaseCreateModal({
+/** Shared create/edit form. Mount with the edited path as key to isolate drafts. */
+export function KnowledgeBaseModal({
   open,
+  folder,
   onCancel,
-  onCreated,
-}: KnowledgeBaseCreateModalProps) {
+  onSaved,
+  onReconciled,
+  afterClose,
+}: KnowledgeBaseModalProps) {
   const { styles } = useStyles()
   const queryClient = useQueryClient()
   const { message } = App.useApp()
-
   const fieldId = useId()
   const nameRef = useRef<InputRef>(null)
   const submitting = useRef(false)
+  const composing = useRef(false)
+  const actual = useRef(folder)
+  const [unsafeRecovery, setUnsafeRecovery] = useState(false)
+  const unsafeRecoveryRef = useRef(false)
+  const [name, setName] = useState(folder?.name ?? '')
+  const [description, setDescription] = useState(folder?.description ?? '')
   const [nameError, setNameError] = useState('')
+  const [descriptionError, setDescriptionError] = useState('')
   const [requestError, setRequestError] = useState('')
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
-  /** 图标键；null = 未选（行上回退文件夹图标） */
-  const [icon, setIcon] = useState<string | null>(null)
+  const [recoveryBlocked, setRecoveryBlocked] = useState(false)
+  const [recovering, setRecovering] = useState(false)
+  const edit = Boolean(folder)
+  const busy = recovering
 
   const reset = () => {
-    setName('')
-    setDescription('')
-    setIcon(null)
+    setName(folder?.name ?? '')
+    setDescription(folder?.description ?? '')
     setNameError('')
+    setDescriptionError('')
     setRequestError('')
+    setRecoveryBlocked(false)
+    actual.current = folder
+    unsafeRecoveryRef.current = false
+    setUnsafeRecovery(false)
   }
-
-  const createMut = useMutation({
-    mutationFn: (input: { name: string; description: string; icon: string | null }) =>
-      api.folders.create(input.name, {
-        // 空描述 = 没写；不把空串发上去，服务端默认值承担「没写」
-        ...(input.description ? { description: input.description } : {}),
-        ...(input.icon ? { icon: input.icon } : {}),
-      }),
-    onSuccess: (_data, vars) => {
-      void queryClient.invalidateQueries({ queryKey: ['folders'] })
-      message.success('已创建知识库')
-      reset()
-      onCreated(vars.name)
+  const reconcile = async () => {
+    if (!actual.current) return
+    setRecovering(true)
+    try {
+      const result = await api.folders.list()
+      queryClient.setQueryData(['folders'], result)
+      const resolved = findIdentity(result.items, actual.current)
+      if (!resolved) throw new Error('知识库已不可用，请关闭后重新选择')
+      const from = actual.current.path
+      actual.current = resolved
+      if (from !== resolved.path) onReconciled?.(from, resolved.path)
+      setRecoveryBlocked(unsafeRecoveryRef.current)
+    } catch {
+      setRecoveryBlocked(true)
+    } finally {
+      setRecovering(false)
+    }
+  }
+  const mutation = useMutation({
+    mutationFn: async (input: { name: string; description: string }) => {
+      const source = actual.current
+      if (!source) {
+        await api.folders.create(
+          input.name,
+          input.description ? { description: input.description } : {},
+        )
+        return { path: input.name, from: undefined }
+      }
+      const path = joinPath(parentOf(source.path), input.name)
+      const result = await api.folders.move(
+        source.path,
+        path,
+        input.description === (source.description ?? '') ? {} : { description: input.description },
+      )
+      return { path: result.path ?? path, from: source.path }
     },
-    onError: (error: unknown) => {
-      setRequestError(error instanceof Error ? error.message : '新建失败，请重试')
+    onSuccess: async (result) => {
+      await Promise.all(
+        [['folders'], ['documents'], ['document'], ['recent-documents']].map((queryKey) =>
+          queryClient.invalidateQueries({ queryKey }),
+        ),
+      )
+      message.success(edit ? '已保存知识库' : '已创建知识库')
+      reset()
+      onSaved(result.path, result.from)
+    },
+    onError: async (error: unknown) => {
+      setRequestError(error instanceof Error ? error.message : '请求失败，请重试')
+      const recovery = folderUpdateRecoverySchema.safeParse(
+        error instanceof ApiRequestError &&
+          error.details &&
+          typeof error.details === 'object' &&
+          'recovery' in error.details
+          ? error.details.recovery
+          : undefined,
+      )
+      if (recovery.success && !recovery.data.retrySafe) {
+        unsafeRecoveryRef.current = true
+        setUnsafeRecovery(true)
+        setRecoveryBlocked(true)
+      }
+      // Even a lost response may have committed a rename. Resolve the stable code before retry.
+      if (edit) await reconcile()
     },
     onSettled: () => {
       submitting.current = false
     },
   })
-
+  const pending = mutation.isPending || busy
   const submit = () => {
-    if (submitting.current) return
+    if (submitting.current || composing.current || recoveryBlocked) return
     const trimmed = name.trim()
-    const error = !trimmed ? '请输入知识库名称' : trimmed.includes('/') ? '名称不能包含 /' : ''
+    const error = !trimmed
+      ? '请输入知识库名称'
+      : trimmed.includes('/')
+        ? '名称不能包含 /'
+        : trimmed === '.' || trimmed === '..' || trimmed.includes('\\')
+          ? '名称不能包含路径符号'
+          : trimmed.length > 60 && trimmed !== actual.current?.name
+            ? '名称最多 60 字'
+            : ''
     setNameError(error)
     if (error) {
       nameRef.current?.focus()
       return
     }
+    // Legacy descriptions over 500 remain intact when only the name is changed.
+    const originalDescription = actual.current?.description ?? ''
+    if (description.length > 500 && description !== originalDescription) {
+      setDescriptionError('描述最多 500 字；原有长描述可保持不变')
+      return
+    }
+    if (
+      actual.current &&
+      trimmed === nameOf(actual.current.path) &&
+      description === originalDescription
+    ) {
+      reset()
+      onCancel()
+      return
+    }
     setRequestError('')
     submitting.current = true
-    createMut.mutate({ name: trimmed, description: description.trim(), icon })
+    mutation.mutate({ name: trimmed, description })
   }
-
   return (
     <Modal
-      title="创建知识库"
+      title={edit ? '编辑知识库' : '创建知识库'}
       open={open}
       onOk={submit}
       onCancel={() => {
-        if (submitting.current) return
-        reset()
-        onCancel()
+        if (!submitting.current && !pending) {
+          reset()
+          onCancel()
+        }
       }}
-      okText={createMut.isPending ? '创建中…' : requestError ? '重试创建' : '创建'}
-      closable={!createMut.isPending}
-      keyboard={!createMut.isPending}
-      mask={{ closable: !createMut.isPending }}
-      cancelButtonProps={{ disabled: createMut.isPending }}
+      afterClose={afterClose}
+      okText={
+        pending
+          ? edit
+            ? '保存中…'
+            : '创建中…'
+          : requestError
+            ? edit
+              ? '重试保存'
+              : '重试创建'
+            : edit
+              ? '保存'
+              : '创建'
+      }
+      closable={!pending}
+      keyboard={!pending}
+      mask={{ closable: !pending }}
+      cancelButtonProps={{ disabled: pending }}
+      cancelText="取消"
       afterOpenChange={(visible) => {
         if (visible) nameRef.current?.focus()
       }}
-      cancelText="取消"
-      okButtonProps={{ disabled: name.trim() === '', loading: createMut.isPending }}
+      okButtonProps={{ disabled: !name.trim() || recoveryBlocked, loading: pending }}
       destroyOnHidden
       centered
       classNames={{ container: styles.dialog, body: styles.body }}
@@ -205,69 +250,89 @@ export function KnowledgeBaseCreateModal({
       <Input
         id={`${fieldId}-name`}
         ref={nameRef}
-        disabled={createMut.isPending}
+        disabled={pending}
+        value={name}
         status={nameError ? 'error' : undefined}
         aria-invalid={Boolean(nameError)}
         aria-describedby={nameError ? `${fieldId}-name-error` : undefined}
-        value={name}
         autoFocus
         placeholder="如：技术笔记"
         maxLength={60}
+        onCompositionStart={() => {
+          composing.current = true
+        }}
+        onCompositionEnd={() => {
+          composing.current = false
+        }}
         onChange={(event) => {
           setName(event.target.value)
           setNameError('')
           setRequestError('')
         }}
-        onPressEnter={submit}
+        onPressEnter={(event) => {
+          if (!event.nativeEvent.isComposing && event.keyCode !== 229) submit()
+        }}
       />
-
       {nameError && (
         <p id={`${fieldId}-name-error`} role="alert" className={styles.error}>
           {nameError}
         </p>
       )}
-
       <label className={styles.fieldLabel} htmlFor={`${fieldId}-desc`}>
         描述（可选）
       </label>
-      <Input.TextArea
-        id={`${fieldId}-desc`}
-        disabled={createMut.isPending}
-        value={description}
-        placeholder="简单描述这个知识库"
-        autoSize={{ minRows: 3, maxRows: 5 }}
-        maxLength={2000}
-        showCount
-        onChange={(event) => setDescription(event.target.value)}
-      />
-
-      <span className={styles.fieldLabel}>图标</span>
-      {/* 13 格图标网格（与 shared 的 FOLDER_ICONS 同序）。
-          再点已选的格子 = 取消选择，可以不要图标 */}
-      <div className={styles.iconGrid}>
-        {FOLDER_ICONS.map((item) => {
-          const active = icon === item.key
-          return (
-            <button
-              key={item.key}
-              type="button"
-              disabled={createMut.isPending}
-              aria-pressed={active}
-              aria-label={item.label}
-              className={`${styles.iconCell} ${active ? styles.iconCellActive : ''}`}
-              onClick={() => setIcon(active ? null : item.key)}
-            >
-              <FolderGlyph iconKey={item.key} size={18} />
-              {item.label}
-            </button>
-          )
-        })}
+      <div className={styles.descriptionControl}>
+        <Input.TextArea
+          id={`${fieldId}-desc`}
+          disabled={pending}
+          value={description}
+          status={descriptionError ? 'error' : undefined}
+          aria-invalid={Boolean(descriptionError)}
+          aria-describedby={descriptionError ? `${fieldId}-desc-error` : undefined}
+          placeholder="简单描述这个知识库"
+          autoSize={{ minRows: 3, maxRows: 5 }}
+          maxLength={folder && (folder.description?.length ?? 0) > 500 ? 2000 : 500}
+          showCount
+          onChange={(event) => {
+            setDescription(event.target.value)
+            setDescriptionError('')
+            setRequestError('')
+          }}
+        />
       </div>
+      {descriptionError && (
+        <p id={`${fieldId}-desc-error`} role="alert" className={styles.error}>
+          {descriptionError}
+        </p>
+      )}
       {requestError && (
         <p role="alert" className={styles.error}>
-          创建失败：{requestError}。草稿已保留，请重试。
+          {edit ? '保存' : '创建'}失败：{requestError}。草稿已保留，请重试。
         </p>
+      )}
+      {recoveryBlocked && (
+        <div role="alert" className={styles.error}>
+          {unsafeRecovery
+            ? '保存未能完整恢复，请关闭后重新打开知识库检查内容。'
+            : '暂时无法确认知识库的最新状态，请重新读取后再保存。'}
+          <Button type="link" size="small" loading={recovering} onClick={() => void reconcile()}>
+            重新读取状态
+          </Button>
+        </div>
       )}
     </Modal>
   )
+}
+
+/** Compatibility entry point; both creation surfaces use the same editor. */
+export function KnowledgeBaseCreateModal({
+  open,
+  onCancel,
+  onCreated,
+}: {
+  open: boolean
+  onCancel: () => void
+  onCreated: (path: string) => void
+}) {
+  return <KnowledgeBaseModal open={open} onCancel={onCancel} onSaved={(path) => onCreated(path)} />
 }

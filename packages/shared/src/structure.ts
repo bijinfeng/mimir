@@ -124,13 +124,29 @@ export const folderCreateSchema = z.object({
 export const folderMoveSchema = z.object({
   from: folderPathSchema,
   to: folderPathSchema,
+  /** Omitted preserves the description; an empty string clears it. */
+  description: z.string().max(2000).optional(),
 })
 
 export const folderDeleteSchema = z.object({ path: folderPathSchema })
 
 /** 改名 / 移动的结果：受影响的文档数（含子目录），界面据此提示 */
-export const folderMoveResponseSchema = z.object({ moved: z.number().int() })
+export const folderMoveResponseSchema = z.object({
+  moved: z.number().int(),
+  /** Additive fields: older servers only return moved. */
+  path: folderPathSchema.optional(),
+  description: z.string().nullable().optional(),
+})
 export type FolderMoveResponse = z.infer<typeof folderMoveResponseSchema>
+
+/** FOLDER_UPDATE_FAILED details. Never blindly retry an incompletely restored move. */
+export const folderUpdateRecoverySchema = z.object({
+  code: z.string().nullable(),
+  path: folderPathSchema.nullable(),
+  description: z.string().nullable(),
+  retrySafe: z.boolean(),
+})
+export type FolderUpdateRecovery = z.infer<typeof folderUpdateRecoverySchema>
 
 /** 删除目录的结果：目录里原有几篇文档被移出（文档本身不删） */
 export const folderDeleteResponseSchema = z.object({ cleared: z.number().int() })

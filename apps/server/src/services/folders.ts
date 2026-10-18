@@ -1,11 +1,17 @@
 import { and, count, eq, isNull, like, or, sql } from 'drizzle-orm'
 import { customAlphabet } from 'nanoid'
-import type { DocumentStatus, FolderNode } from '@mimir/shared'
+import type {
+  DocumentStatus,
+  FolderMoveResponse,
+  FolderNode,
+  FolderUpdateRecovery,
+} from '@mimir/shared'
 import { db } from '../db/client.js'
 import { documents, folders } from '../db/schema.js'
 import { HttpError } from '../lib/http.js'
 import { readUploadMeta, writeUploadMeta } from '../lib/uploads.js'
-import { writeNote } from '../lib/vault.js'
+import { extraNoteFrontmatter, readNoteFrontmatter, toStorageKey, writeNote } from '../lib/vault.js'
+import { activeStorage } from '../plugins/host.js'
 import { loadTags } from './documents.js'
 
 /**
@@ -229,96 +235,173 @@ function prefixOf(path: string): ReturnType<typeof or> {
   return or(eq(folders.path, path), like(folders.path, `${path}/%`))
 }
 
-/** 改名 / 移动（同一个操作）：把 `from` 子树整体搬到 `to`。返回受影响文档数 */
-export async function moveFolder(from: string, to: string): Promise<number> {
+/**
+ * Change a subtree's path and/or description. Files are written first. Since the
+ * storage backend and SQL cannot share a transaction, retain compensating writes
+ * and report whether a failure was completely restored before allowing retry.
+ */
+export async function moveFolder(
+  from: string,
+  to: string,
+  description?: string,
+): Promise<FolderMoveResponse> {
   const source = normalizeFolder(from)
   const target = normalizeFolder(to)
   if (!source || !target) throw new HttpError(400, 'INVALID_INPUT', '目录路径不合法')
-  if (source === target) return 0
-  // 搬进自己的子树会让前缀重写套娃（技术 → 技术/前端/技术），直接拒绝
-  if (target === source || target.startsWith(`${source}/`)) {
+  if (source !== target && target.startsWith(`${source}/`)) {
     throw new HttpError(400, 'INVALID_TARGET', '不能把目录移动到它自己的子目录里')
   }
 
-  const [existing] = await db
-    .select({ path: folders.path })
-    .from(folders)
-    .where(eq(folders.path, source))
+  const [existing] = await db.select().from(folders).where(eq(folders.path, source))
   if (!existing) throw new HttpError(404, 'FOLDER_NOT_FOUND', '目录不存在')
-  const [clash] = await db
-    .select({ path: folders.path })
-    .from(folders)
-    .where(eq(folders.path, target))
-  if (clash) throw new HttpError(409, 'FOLDER_EXISTS', '目标目录已存在')
+  const nextDescription = description === undefined ? existing.description : description.trim()
+  if (source === target && nextDescription === existing.description) {
+    return { moved: 0, path: source, description: existing.description || null }
+  }
+  if (source !== target) {
+    const [clash] = await db
+      .select({ path: folders.path })
+      .from(folders)
+      .where(eq(folders.path, target))
+    if (clash) throw new HttpError(409, 'FOLDER_EXISTS', '目标目录已存在')
+  }
 
-  const affected = await db
-    .select({
-      id: documents.id,
-      kind: documents.kind,
-      path: documents.path,
-      folder: documents.folder,
-      title: documents.title,
-      body: documents.body,
-      status: documents.status,
-      createdAt: documents.createdAt,
-    })
-    .from(documents)
-    .where(
-      and(
-        isNull(documents.deletedAt),
-        sql`(${documents.folder} = ${source} or ${documents.folder} like ${`${source}/%`})`,
-      ),
-    )
-
+  const affected =
+    source === target
+      ? []
+      : await db
+          .select({
+            id: documents.id,
+            kind: documents.kind,
+            path: documents.path,
+            folder: documents.folder,
+            title: documents.title,
+            body: documents.body,
+            status: documents.status,
+            createdAt: documents.createdAt,
+          })
+          .from(documents)
+          .where(
+            and(
+              isNull(documents.deletedAt),
+              sql`(${documents.folder} = ${source} or ${documents.folder} like ${`${source}/%`})`,
+            ),
+          )
+  const folderRows =
+    source === target ? [] : await db.select().from(folders).where(prefixOf(source))
   const rewrite = (folder: string): string =>
     folder === source ? target : `${target}${folder.slice(source.length)}`
 
-  // 文件先写（铁律 2）：笔记改 frontmatter，上传件改 meta.json
-  const tagsByDoc = await loadTags(affected.map((row) => row.id))
-  for (const row of affected) {
-    const nextFolder = row.folder ? rewrite(row.folder) : null
-    if (row.kind === 'note' && row.path) {
-      await writeNote({
-        id: row.id,
-        title: row.title,
-        tags: tagsByDoc.get(row.id) ?? [],
-        body: row.body,
-        status: row.status as DocumentStatus,
-        folder: nextFolder,
-        createdAt: row.createdAt.toISOString(),
-        updatedAt: new Date().toISOString(),
-        path: row.path,
-      })
-    } else if (row.kind === 'file') {
-      const meta = await readUploadMeta(row.id)
-      if (meta) {
-        await writeUploadMeta(row.id, { ...meta, folder: nextFolder }).catch((error: unknown) => {
-          console.warn(`写回 meta.json 失败（${row.id}），重建索引后目录指派可能回退：`, error)
+  const undoFiles: (() => Promise<unknown>)[] = []
+  const undoDatabase: (() => Promise<unknown>)[] = []
+  try {
+    // Preserve the original bytes, including user YAML fields, for compensation.
+    const tagsByDoc = await loadTags(affected.map((row) => row.id))
+    for (const row of affected) {
+      const nextFolder = rewrite(row.folder!)
+      if (row.kind === 'note' && row.path) {
+        const storage = activeStorage()
+        const key = toStorageKey(row.path)
+        const original = await storage.read(key)
+        const extraFrontmatter = extraNoteFrontmatter(await readNoteFrontmatter(row.path))
+        undoFiles.push(() => storage.write(key, original))
+        await writeNote({
+          id: row.id,
+          title: row.title,
+          tags: tagsByDoc.get(row.id) ?? [],
+          body: row.body,
+          status: row.status as DocumentStatus,
+          folder: nextFolder,
+          createdAt: row.createdAt.toISOString(),
+          updatedAt: new Date().toISOString(),
+          path: row.path,
+          extraFrontmatter,
         })
+      } else if (row.kind === 'file') {
+        const meta = await readUploadMeta(row.id)
+        if (!meta) throw new Error(`上传件元数据不存在：${row.id}`)
+        undoFiles.push(() => writeUploadMeta(row.id, meta))
+        // A failed metadata write cannot be reported as a successful move.
+        await writeUploadMeta(row.id, { ...meta, folder: nextFolder })
       }
     }
-    // 抓取的资料（web / wechat / github）没有 vault 文件，数据库就是它们的真相
-  }
 
-  // 文件都写完了，再动数据库：先按旧路径取出全部目录行，再逐行改写——
-  // 边查边改会拿到混合了新旧前缀的快照。
-  // **不用事务**：better-sqlite3 的事务回调是同步契约，async 回调会在
-  // 提交后继续执行（实测 500）。与其它服务一致，顺序写靠「文件先行」兜底。
-  const folderRows = await db.select({ path: folders.path }).from(folders).where(prefixOf(source))
-  for (const row of affected) {
-    await db
-      .update(documents)
-      .set({ folder: rewrite(row.folder!) })
-      .where(eq(documents.id, row.id))
-  }
-  for (const row of folderRows) {
+    // No async db.transaction: better-sqlite3 requires a synchronous callback.
+    // Register each inverse before its write, covering errors after persistence.
+    for (const row of affected) {
+      undoDatabase.push(() =>
+        db.update(documents).set({ folder: row.folder }).where(eq(documents.id, row.id)),
+      )
+      await db
+        .update(documents)
+        .set({ folder: rewrite(row.folder!) })
+        .where(eq(documents.id, row.id))
+    }
+    // The root and its description move in the same SQL statement, last.
+    for (const row of folderRows.filter((child) => child.path !== source)) {
+      undoDatabase.push(() =>
+        db
+          .update(folders)
+          .set({ path: row.path })
+          .where(and(eq(folders.path, rewrite(row.path)), eq(folders.code, row.code))),
+      )
+      await db
+        .update(folders)
+        .set({ path: rewrite(row.path) })
+        .where(eq(folders.path, row.path))
+    }
+    undoDatabase.push(() =>
+      db
+        .update(folders)
+        .set({ path: source, description: existing.description })
+        .where(and(eq(folders.path, target), eq(folders.code, existing.code))),
+    )
     await db
       .update(folders)
-      .set({ path: rewrite(row.path) })
-      .where(eq(folders.path, row.path))
+      .set({ path: target, description: nextDescription })
+      .where(eq(folders.path, source))
+    return { moved: affected.length, path: target, description: nextDescription || null }
+  } catch (error) {
+    let retrySafe = true
+    // Restore files before their index. Best effort continues after each failure.
+    for (const undo of [...undoFiles.toReversed(), ...undoDatabase.toReversed()]) {
+      try {
+        await undo()
+      } catch (restoreError) {
+        retrySafe = false
+        console.error('恢复知识库更新失败：', restoreError)
+      }
+    }
+    const recovery: FolderUpdateRecovery = {
+      code: existing.code || null,
+      path: null,
+      description: null,
+      retrySafe,
+    }
+    try {
+      const [current] = await db
+        .select()
+        .from(folders)
+        .where(
+          existing.code
+            ? eq(folders.code, existing.code)
+            : or(eq(folders.path, source), eq(folders.path, target)),
+        )
+      if (current) {
+        recovery.path = current.path
+        recovery.description = current.description || null
+      } else recovery.retrySafe = false
+    } catch {
+      recovery.retrySafe = false
+    }
+    console.error('知识库更新失败：', error)
+    throw new HttpError(
+      500,
+      'FOLDER_UPDATE_FAILED',
+      recovery.retrySafe ? '保存失败，已恢复原内容，请重试' : '保存未完成，请刷新知识库状态后重试',
+      { recovery },
+    )
   }
-
-  return affected.length
 }
 
 /** 删除目录（含子目录）。里面的文档**保留**、指派清空（回库根）。返回移出文档数 */

@@ -1,0 +1,376 @@
+{
+  "date": "2026-10-18",
+  "proposalSha256": "28a3baa22002dc0d506a33744bd6b5d6c9f715861e50b44888e895365d706746",
+  "groups": [
+    {
+      "id": "shell",
+      "title": "展开工作区与滚动",
+      "items": [
+        "shell-01",
+        "shell-02",
+        "shell-03",
+        "shell-04",
+        "shell-05",
+        "shell-06"
+      ],
+      "implementationReview": "approved behavior implemented or retained; independently reviewed",
+      "evidence": [
+        "source review; retained existing behavior",
+        "actual browser checks; see verification/implemented-browser.json"
+      ],
+      "limits": "Group evidence does not assert a separate browser run for every state; native Electron/OS behavior not verified in this module."
+    },
+    {
+      "id": "rail",
+      "title": "52px折叠栏",
+      "items": [
+        "rail-01",
+        "rail-02",
+        "rail-03",
+        "rail-04",
+        "rail-05",
+        "rail-06"
+      ],
+      "implementationReview": "approved behavior implemented or retained; independently reviewed",
+      "evidence": [
+        "source review; retained existing behavior",
+        "actual browser checks; see verification/implemented-browser.json"
+      ],
+      "limits": "Group evidence does not assert a separate browser run for every state; native Electron/OS behavior not verified in this module."
+    },
+    {
+      "id": "drawer",
+      "title": "窄屏临时抽屉",
+      "items": [
+        "drawer-01",
+        "drawer-02",
+        "drawer-03",
+        "drawer-04",
+        "drawer-05",
+        "drawer-06",
+        "drawer-07",
+        "drawer-08",
+        "drawer-09"
+      ],
+      "implementationReview": "approved behavior implemented or retained; independently reviewed",
+      "evidence": [
+        "focused renderer tests; see check-evidence.md",
+        "actual browser checks; see verification/implemented-browser.json"
+      ],
+      "limits": "Group evidence does not assert a separate browser run for every state; native Electron/OS behavior not verified in this module."
+    },
+    {
+      "id": "actions",
+      "title": "主入口与目的地",
+      "items": [
+        "actions-01",
+        "actions-02",
+        "actions-03",
+        "actions-04",
+        "actions-05",
+        "actions-06",
+        "actions-07"
+      ],
+      "implementationReview": "approved behavior implemented or retained; independently reviewed",
+      "evidence": [
+        "source review; retained existing behavior"
+      ],
+      "limits": "Group evidence does not assert a separate browser run for every state; native Electron/OS behavior not verified in this module."
+    },
+    {
+      "id": "selection",
+      "title": "路由与位置层次",
+      "items": [
+        "selection-01",
+        "selection-02",
+        "selection-03",
+        "selection-04",
+        "selection-05",
+        "selection-06",
+        "selection-07",
+        "selection-08",
+        "selection-09"
+      ],
+      "implementationReview": "approved behavior implemented or retained; independently reviewed",
+      "evidence": [
+        "focused renderer tests; see check-evidence.md"
+      ],
+      "limits": "Group evidence does not assert a separate browser run for every state; native Electron/OS behavior not verified in this module."
+    },
+    {
+      "id": "libraries",
+      "title": "知识库列表读取",
+      "items": [
+        "libraries-01",
+        "libraries-02",
+        "libraries-03",
+        "libraries-04",
+        "libraries-05",
+        "libraries-06",
+        "libraries-07",
+        "libraries-08"
+      ],
+      "implementationReview": "approved behavior implemented or retained; independently reviewed",
+      "evidence": [
+        "source review; retained existing behavior"
+      ],
+      "limits": "Group evidence does not assert a separate browser run for every state; native Electron/OS behavior not verified in this module."
+    },
+    {
+      "id": "library-menu",
+      "title": "知识库行菜单",
+      "items": [
+        "library-menu-01",
+        "library-menu-02",
+        "library-menu-03",
+        "library-menu-04",
+        "library-menu-05",
+        "library-menu-06",
+        "library-menu-07",
+        "library-menu-08"
+      ],
+      "implementationReview": "approved behavior implemented or retained; independently reviewed",
+      "evidence": [
+        "source review; retained existing behavior",
+        "actual browser checks; see verification/implemented-browser.json"
+      ],
+      "limits": "Group evidence does not assert a separate browser run for every state; native Electron/OS behavior not verified in this module."
+    },
+    {
+      "id": "create",
+      "title": "创建知识库（复用统一编辑弹窗）",
+      "items": [
+        "create-01",
+        "create-02",
+        "create-03",
+        "create-04",
+        "create-05",
+        "create-06",
+        "create-07",
+        "create-08"
+      ],
+      "implementationReview": "approved behavior implemented or retained; independently reviewed",
+      "evidence": [
+        "focused renderer tests; see check-evidence.md",
+        "actual browser checks; see verification/implemented-browser.json"
+      ],
+      "limits": "Group evidence does not assert a separate browser run for every state; native Electron/OS behavior not verified in this module."
+    },
+    {
+      "id": "rename",
+      "title": "编辑知识库（当前仅重命名）",
+      "items": [
+        "rename-01",
+        "rename-02",
+        "rename-03",
+        "rename-04",
+        "rename-05",
+        "rename-06",
+        "rename-07",
+        "rename-08",
+        "rename-09",
+        "rename-10",
+        "rename-11",
+        "rename-12",
+        "rename-13",
+        "rename-14"
+      ],
+      "implementationReview": "approved behavior implemented or retained; independently reviewed",
+      "evidence": [
+        "focused renderer tests; see check-evidence.md",
+        "actual browser checks; see verification/implemented-browser.json"
+      ],
+      "limits": "Group evidence does not assert a separate browser run for every state; native Electron/OS behavior not verified in this module."
+    },
+    {
+      "id": "remove",
+      "title": "删除知识库（基础v1保留）",
+      "items": [
+        "remove-01",
+        "remove-02",
+        "remove-03",
+        "remove-04",
+        "remove-05",
+        "remove-06"
+      ],
+      "implementationReview": "approved behavior implemented or retained; independently reviewed",
+      "evidence": [
+        "focused renderer tests; see check-evidence.md"
+      ],
+      "limits": "Group evidence does not assert a separate browser run for every state; native Electron/OS behavior not verified in this module."
+    },
+    {
+      "id": "history",
+      "title": "对话历史",
+      "items": [
+        "history-01",
+        "history-02",
+        "history-03",
+        "history-04",
+        "history-05",
+        "history-06",
+        "history-07",
+        "history-08",
+        "history-09"
+      ],
+      "implementationReview": "approved behavior implemented or retained; independently reviewed",
+      "evidence": [
+        "focused renderer tests; see check-evidence.md"
+      ],
+      "limits": "Group evidence does not assert a separate browser run for every state; native Electron/OS behavior not verified in this module."
+    },
+    {
+      "id": "recent",
+      "title": "最近笔记正常态",
+      "items": [
+        "recent-01",
+        "recent-02",
+        "recent-03",
+        "recent-04",
+        "recent-05",
+        "recent-06",
+        "recent-07",
+        "recent-08"
+      ],
+      "implementationReview": "approved behavior implemented or retained; independently reviewed",
+      "evidence": [
+        "focused renderer tests; see check-evidence.md"
+      ],
+      "limits": "Group evidence does not assert a separate browser run for every state; native Electron/OS behavior not verified in this module."
+    },
+    {
+      "id": "recent-recovery",
+      "title": "最近笔记读取恢复",
+      "items": [
+        "recent-recovery-01",
+        "recent-recovery-02",
+        "recent-recovery-03",
+        "recent-recovery-04",
+        "recent-recovery-05",
+        "recent-recovery-06"
+      ],
+      "implementationReview": "approved behavior implemented or retained; independently reviewed",
+      "evidence": [
+        "focused renderer tests; see check-evidence.md"
+      ],
+      "limits": "Group evidence does not assert a separate browser run for every state; native Electron/OS behavior not verified in this module."
+    },
+    {
+      "id": "identity",
+      "title": "账户身份与模式",
+      "items": [
+        "identity-01",
+        "identity-02",
+        "identity-03",
+        "identity-04",
+        "identity-05",
+        "identity-06",
+        "identity-07",
+        "identity-08"
+      ],
+      "implementationReview": "approved behavior implemented or retained; independently reviewed",
+      "evidence": [
+        "focused renderer tests; see check-evidence.md",
+        "actual browser checks; see verification/implemented-browser.json"
+      ],
+      "limits": "Group evidence does not assert a separate browser run for every state; native Electron/OS behavior not verified in this module."
+    },
+    {
+      "id": "account-menu",
+      "title": "账户菜单与目的地",
+      "items": [
+        "account-menu-01",
+        "account-menu-02",
+        "account-menu-03",
+        "account-menu-04",
+        "account-menu-05",
+        "account-menu-06",
+        "account-menu-07"
+      ],
+      "implementationReview": "approved behavior implemented or retained; independently reviewed",
+      "evidence": [
+        "focused renderer tests; see check-evidence.md",
+        "actual browser checks; see verification/implemented-browser.json"
+      ],
+      "limits": "Group evidence does not assert a separate browser run for every state; native Electron/OS behavior not verified in this module."
+    },
+    {
+      "id": "appearance",
+      "title": "主题级联",
+      "items": [
+        "appearance-01",
+        "appearance-02",
+        "appearance-03",
+        "appearance-04",
+        "appearance-05",
+        "appearance-06",
+        "appearance-07",
+        "appearance-08",
+        "appearance-09"
+      ],
+      "implementationReview": "approved behavior implemented or retained; independently reviewed",
+      "evidence": [
+        "focused renderer tests; see check-evidence.md",
+        "actual browser checks; see verification/implemented-browser.json"
+      ],
+      "limits": "Group evidence does not assert a separate browser run for every state; native Electron/OS behavior not verified in this module."
+    },
+    {
+      "id": "signout",
+      "title": "云端登出",
+      "items": [
+        "signout-01",
+        "signout-02",
+        "signout-03",
+        "signout-04",
+        "signout-05",
+        "signout-06",
+        "signout-07",
+        "signout-08"
+      ],
+      "implementationReview": "approved behavior implemented or retained; independently reviewed",
+      "evidence": [
+        "focused renderer tests; see check-evidence.md"
+      ],
+      "limits": "Group evidence does not assert a separate browser run for every state; native Electron/OS behavior not verified in this module."
+    },
+    {
+      "id": "unsaved",
+      "title": "导航未保存边界",
+      "items": [
+        "unsaved-01",
+        "unsaved-02",
+        "unsaved-03",
+        "unsaved-04",
+        "unsaved-05",
+        "unsaved-06",
+        "unsaved-07",
+        "unsaved-08"
+      ],
+      "implementationReview": "approved behavior implemented or retained; independently reviewed",
+      "evidence": [
+        "focused renderer tests; see check-evidence.md"
+      ],
+      "limits": "Group evidence does not assert a separate browser run for every state; native Electron/OS behavior not verified in this module."
+    },
+    {
+      "id": "stress",
+      "title": "状态组合与适配",
+      "items": [
+        "stress-01",
+        "stress-02",
+        "stress-03",
+        "stress-04",
+        "stress-05",
+        "stress-06"
+      ],
+      "implementationReview": "approved behavior implemented or retained; independently reviewed",
+      "evidence": [
+        "source review; retained existing behavior",
+        "actual browser checks; see verification/implemented-browser.json"
+      ],
+      "limits": "Group evidence does not assert a separate browser run for every state; native Electron/OS behavior not verified in this module."
+    }
+  ],
+  "itemCount": 150
+}

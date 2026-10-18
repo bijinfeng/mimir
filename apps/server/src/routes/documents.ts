@@ -202,7 +202,7 @@ foldersRoute.post('/', async (c) => {
 
 foldersRoute.patch('/', async (c) => {
   const input = await parseInput(c, 'json', folderMoveSchema)
-  return c.json({ moved: await moveFolder(input.from, input.to) })
+  return c.json(await moveFolder(input.from, input.to, input.description))
 })
 
 foldersRoute.delete('/', async (c) => {

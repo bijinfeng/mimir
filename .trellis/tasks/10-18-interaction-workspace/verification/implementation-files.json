@@ -1,0 +1,21 @@
+[
+  "apps/server/src/routes/documents.ts",
+  "apps/server/src/services/folders.ts",
+  "packages/renderer/src/components/KnowledgeBaseCreateModal.test.tsx",
+  "packages/renderer/src/components/KnowledgeBaseCreateModal.tsx",
+  "packages/renderer/src/components/NavSidebar.style.ts",
+  "packages/renderer/src/components/NavSidebar.test.tsx",
+  "packages/renderer/src/components/NavSidebar.tsx",
+  "packages/renderer/src/components/nav/AccountRow.tsx",
+  "packages/renderer/src/components/nav/FolderSection.tsx",
+  "packages/renderer/src/components/nav/RecentNotes.tsx",
+  "packages/renderer/src/components/nav/menu-items.test.ts",
+  "packages/renderer/src/components/nav/menu-items.tsx",
+  "packages/renderer/src/lib/api.ts",
+  "packages/renderer/src/lib/recent-documents.test.ts",
+  "packages/renderer/src/lib/recent-documents.ts",
+  "packages/shared/src/structure.ts",
+  "apps/server/src/test/folder-update.test.ts",
+  "packages/renderer/src/components/nav/FolderSection.test.tsx",
+  "packages/renderer/src/components/nav/RecentNotes.test.tsx"
+]

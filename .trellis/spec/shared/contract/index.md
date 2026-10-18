@@ -9,6 +9,8 @@ paths:
 
 API 请求/响应 schema 与插件接缝接口的唯一契约包；前后端都从这里取类型。
 
+知识库/文件夹改名、描述更新与失败恢复见 [folder-update](./folder-update.md)。
+
 DOCX 对话编辑的跨层工具与续轮合同见 [docx-agent](./docx-agent.md)。
 多格式共用鉴权、能力查询、画布句柄及续轮合同见 [document-agent](./document-agent.md)；各格式真实执行能力须由对应格式任务验证。
 PDF 原文与批注 HTTP、NM/IRT 身份和鉴权作者合同见 [pdf-agent](./pdf-agent.md)。

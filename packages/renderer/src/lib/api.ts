@@ -876,10 +876,10 @@ export const api = {
       })
     },
     /** 改名与移动是同一个操作：from 子树整体搬到 to */
-    move(from: string, to: string) {
+    move(from: string, to: string, meta: { description?: string } = {}) {
       return request<FolderMoveResponse>('/api/folders', {
         method: 'PATCH',
-        body: JSON.stringify({ from, to }),
+        body: JSON.stringify({ from, to, ...meta }),
       })
     },
     /** 删除目录（文档保留、指派清空）。返回被移出的文档数 */

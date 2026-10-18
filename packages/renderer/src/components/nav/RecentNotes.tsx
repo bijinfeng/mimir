@@ -1,4 +1,4 @@
-import { Button } from 'antd'
+import { Button, Tooltip } from 'antd'
 import { ChevronDown, ChevronRight, FileText } from 'lucide-react'
 import { useState } from 'react'
 import { useStyles } from '../NavSidebar.style'
@@ -16,6 +16,8 @@ export function RecentNotes({
   const { styles } = useStyles()
   const recentQuery = useRecentDocuments(userId)
   const [showRecent, setShowRecent] = useState(true)
+  const notes = (recentQuery.data ?? []).filter((doc) => doc.kind === 'note').slice(0, 6)
+  const failed = recentQuery.isError || recentQuery.retryableFailureCount > 0
   return (
     <div className={styles.recentGroup}>
       <Button
@@ -33,19 +35,24 @@ export function RecentNotes({
       </Button>
       {showRecent && (
         <div className={styles.recentList}>
-          {(recentQuery.data ?? []).filter((doc) => doc.kind === 'note').length === 0 ? (
+          {userId && recentQuery.isPending ? (
+            <span className={styles.recentEmpty} role="status">
+              正在读取最近笔记…
+            </span>
+          ) : notes.length === 0 && !failed ? (
             <span className={styles.recentEmpty}>还没有最近打开的笔记</span>
           ) : (
-            (recentQuery.data ?? [])
-              .filter((doc) => doc.kind === 'note')
-              .slice(0, 6)
-              .map((doc) => (
+            notes.map((doc) => (
+              <Tooltip
+                key={doc.id}
+                title={`${doc.title} · ${doc.folder ?? '知识库根'}`}
+                trigger={['hover', 'focus']}
+                placement="right"
+              >
                 <Button
-                  key={doc.id}
                   type="text"
                   className={styles.recentItem}
                   aria-current={activeId === doc.id ? 'page' : undefined}
-                  title={`${doc.title} · ${doc.folder ?? '知识库根'}`}
                   onClick={(event) => {
                     event.currentTarget.focus()
                     onOpenDocument(doc.id, doc.folder ? `folder:${doc.folder}` : 'all')
@@ -54,7 +61,22 @@ export function RecentNotes({
                   <FileText size={16} aria-hidden />
                   <span>{doc.title}</span>
                 </Button>
-              ))
+              </Tooltip>
+            ))
+          )}
+          {failed && (
+            <div className={styles.recentEmpty} role="status">
+              <span>{notes.length ? '部分笔记暂时无法读取' : '最近笔记暂时无法读取'}</span>
+              <Button
+                type="link"
+                size="small"
+                loading={recentQuery.isFetching}
+                disabled={recentQuery.isFetching}
+                onClick={() => void recentQuery.refetch()}
+              >
+                {recentQuery.isFetching ? '重试中…' : '重试'}
+              </Button>
+            </div>
           )}
         </div>
       )}

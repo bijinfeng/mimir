@@ -16,17 +16,18 @@
     {
       "id": "workspace",
       "name": "工作区导航与账户菜单",
-      "status": "awaiting_review",
+      "status": "implemented_verified_global_gate_pending",
       "proposal": "../10-18-interaction-workspace/prototype/review.html",
       "version": "v2",
-      "approved_at": null,
-      "user_quote": null,
+      "approved_at": "2026-10-18",
+      "user_quote": "实施吧",
       "implementation_commit": null,
       "sha256": "28a3baa22002dc0d506a33744bd6b5d6c9f715861e50b44888e895365d706746",
       "task": ".trellis/tasks/10-18-interaction-workspace",
       "planning_user_quote": "可以，创建并规划",
       "revision_user_quote": "去掉知识库的图标选择功能，编辑时也不仅仅是编辑名称，描述也需要支持编辑，创建和编辑可以复用同一个编辑弹窗",
-      "previous_proposal": "../10-18-interaction-workspace/prototype/versions/v1.html"
+      "previous_proposal": "../10-18-interaction-workspace/prototype/versions/v1.html",
+      "verification": "../10-18-interaction-workspace/implementation-acceptance.md"
     },
     {
       "id": "search",

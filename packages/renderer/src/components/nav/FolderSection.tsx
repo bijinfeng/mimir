@@ -1,15 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { App, Button, Dropdown, Input, Modal, Skeleton, Tooltip } from 'antd'
+import { App, Button, Dropdown, Skeleton, Tooltip } from 'antd'
 import { createStyles } from 'antd-style'
 import { Ellipsis, Plus } from 'lucide-react'
 import { useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { FolderNode } from '@mimir/shared'
-import { KnowledgeBaseCreateModal } from '../KnowledgeBaseCreateModal'
+import { KnowledgeBaseModal } from '../KnowledgeBaseCreateModal'
 import { api } from '../../lib/api'
 import { confirmDanger } from '../confirm-danger'
 import { FolderGlyph } from './folder-icons'
-import { isDescendantOf, joinPath, nameOf, parentOf } from './folder-ops'
+import { isDescendantOf, nameOf } from './folder-ops'
 import { FONT_SIZE, NAV_ITEM_HEIGHT, NAV_NARROW_QUERY } from '../../theme/tokens'
 
 /**
@@ -24,7 +24,7 @@ import { FONT_SIZE, NAV_ITEM_HEIGHT, NAV_NARROW_QUERY } from '../../theme/tokens
  *  - **无拖拽**。拖拽的语义是「重挂父级」，平铺之后父级只剩库根，
  *    没有可拖的东西；「移动」没有独立语义，改名即移动
  *    （`services/folders.ts` 的 moveFolder）。
- *  - **行上 ⋯ 只剩改名与删除**。「新建子目录」跟着树一起退场——建目录
+ *  - **行上 ⋯ 支持编辑与删除**。「新建子目录」跟着树一起退场——建目录
  *    的入口在知识库页的工具条上（「新建文件夹」）。
  *
  * 删除的语义（D-068，未变）：删的是**目录**，里面的文档保留、指派清空——
@@ -42,6 +42,8 @@ interface FolderSectionProps {
   /** 打开笔记时，当前知识库只作为位置线索，不与笔记争夺选中态 */
   parentOnly: boolean
   onSelect: (path: string) => void
+  /** Updating location after a rename must retain an open note. */
+  onPathChanged?: (from: string, to: string) => void
 }
 
 const useStyles = createStyles(({ css, token }) => ({
@@ -108,11 +110,6 @@ const useStyles = createStyles(({ css, token }) => ({
     font-size: ${FONT_SIZE.note}px;
     line-height: 1.7;
     color: ${token.colorTextSecondary};
-  `,
-  dialogHint: css`
-    margin-top: 8px;
-    font-size: ${FONT_SIZE.note}px;
-    color: ${token.colorTextTertiary};
   `,
 }))
 
@@ -252,7 +249,7 @@ const useRowStyles = createStyles(({ css, token, prefixCls }) => ({
 
 /** 行内 ⋯ 菜单。平铺之后只剩库自己的管理动作（D-079） */
 const ROW_MENU = [
-  { key: 'rename', label: '重命名' },
+  { key: 'edit', label: '编辑' },
   { type: 'divider' as const },
   { key: 'remove', label: '删除', danger: true },
 ]
@@ -283,22 +280,24 @@ function FolderRow({ folder, active, parentOnly, onSelect, onAction }: RowProps)
       data-current={current}
       data-menu-open={menuOpen || undefined}
       onClick={(event) => {
-        // 点 ⋯ 的冒泡不该被当成「进知识库」——⋯ 自己有 handler，
-        // 但 Dropdown 的浮层点击也会冒泡到这里，统一在行层排除按钮目标
+        // React portals bubble through this row even though their DOM is elsewhere.
+        if (!event.currentTarget.contains(event.target as Node)) return
         if ((event.target as HTMLElement).closest('button')) return
         onSelect(folder.path)
       }}
     >
-      <button
-        type="button"
-        className={styles.rowBtn}
-        aria-current={current}
-        aria-label={folder.count > 0 ? `${folder.name}，${folder.count} 篇文档` : folder.name}
-        onClick={() => onSelect(folder.path)}
-      >
-        <FolderGlyph iconKey={folder.icon} />
-        <span className={styles.rowName}>{folder.name}</span>
-      </button>
+      <Tooltip title={folder.name} trigger={['hover', 'focus']} placement="right">
+        <button
+          type="button"
+          className={styles.rowBtn}
+          aria-current={current}
+          aria-label={folder.count > 0 ? `${folder.name}，${folder.count} 篇文档` : folder.name}
+          onClick={() => onSelect(folder.path)}
+        >
+          <FolderGlyph iconKey={folder.icon} />
+          <span className={styles.rowName}>{folder.name}</span>
+        </button>
+      </Tooltip>
       <div className={styles.rowAction}>
         {folder.count > 0 && (
           <span className={styles.rowCount} aria-hidden="true">
@@ -319,7 +318,8 @@ function FolderRow({ folder, active, parentOnly, onSelect, onAction }: RowProps)
               setMenuOpen(false)
               menuTriggerRef.current?.focus()
             },
-            onClick: ({ key }) => {
+            onClick: ({ key, domEvent }) => {
+              domEvent.stopPropagation()
               setMenuOpen(false)
               menuTriggerRef.current?.focus()
               onAction(folder, key)
@@ -355,6 +355,7 @@ export function FolderSection({
   activePath,
   parentOnly,
   onSelect,
+  onPathChanged,
 }: FolderSectionProps) {
   const { styles } = useStyles()
   const queryClient = useQueryClient()
@@ -363,32 +364,27 @@ export function FolderSection({
   /* 只取顶层——子目录是知识库内部的结构，归知识库页管（D-079） */
   const folders = items ?? []
 
-  /**
-   * 新建走**共享表单**（`KnowledgeBaseCreateModal`）——知识库页的引导空态
-   * 也要同一张表单，各写一份会从第一天起漂移。重命名只问名字，留在本地。
-   */
   const [createOpen, setCreateOpen] = useState(false)
-  const [dialog, setDialog] = useState<{
-    /** 原完整路径（重命名用） */
-    path: string
-    initial: string
-  } | null>(null)
-  const [name, setName] = useState('')
-  const renameTriggerRef = useRef<HTMLElement | null>(null)
-
-  const openRename = (path: string) => {
-    renameTriggerRef.current =
-      Array.from(document.querySelectorAll<HTMLElement>('button')).find(
-        (button) => button.getAttribute('aria-label') === `知识库 ${nameOf(path)} 的操作`,
-      ) ?? null
-    setName(nameOf(path))
-    setDialog({ path, initial: nameOf(path) })
+  const [dialog, setDialog] = useState<FolderNode | null>(null)
+  const [editOpen, setEditOpen] = useState(false)
+  const editTriggerRef = useRef<HTMLElement | null>(null)
+  const editNameRef = useRef('')
+  const openEdit = (folder: FolderNode) => {
+    editTriggerRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null
+    editNameRef.current = folder.name
+    setDialog(folder)
+    setEditOpen(true)
   }
-  const closeDialog = () => setDialog(null)
-  const restoreRenameFocus = () => {
-    const trigger = renameTriggerRef.current
+  const restoreEditFocus = () => {
+    const trigger = editTriggerRef.current
     if (trigger?.isConnected && trigger.getClientRects().length > 0) trigger.focus()
-    else document.querySelector<HTMLElement>('[aria-label="知识库"]')?.focus()
+    else {
+      const updated = Array.from(document.querySelectorAll<HTMLButtonElement>('button')).find(
+        (button) => button.getAttribute('aria-label') === `知识库 ${editNameRef.current} 的操作`,
+      )
+      ;(updated ?? document.querySelector<HTMLElement>('[aria-label="创建知识库"]'))?.focus()
+    }
   }
 
   const invalidate = () => {
@@ -404,23 +400,11 @@ export function FolderSection({
    * 所以凡是 activePath 落在子树里，都要跟着改写到新路径。
    */
   const followActivePath = (from: string, to: string) => {
-    if (!activePath) return
-    if (activePath === from) onSelect(to)
-    else if (isDescendantOf(activePath, from)) onSelect(`${to}${activePath.slice(from.length)}`)
+    if (!activePath || from === to) return
+    if (activePath !== from && !isDescendantOf(activePath, from)) return
+    if (onPathChanged) onPathChanged(from, to)
+    else onSelect(`${to}${activePath.slice(from.length)}`)
   }
-
-  const renameMut = useMutation({
-    mutationFn: (input: { from: string; name: string }) =>
-      api.folders.move(input.from, joinPath(parentOf(input.from), input.name)),
-    onSuccess: (_data, vars) => {
-      invalidate()
-      message.success(`已重命名为「${vars.name}」`)
-      closeDialog()
-      followActivePath(vars.from, joinPath(parentOf(vars.from), vars.name))
-    },
-    onError: (error: unknown) =>
-      message.error(error instanceof Error ? error.message : '重命名失败'),
-  })
 
   const removeMut = useMutation({
     mutationFn: (path: string) => api.folders.remove(path),
@@ -445,23 +429,8 @@ export function FolderSection({
     })
   }
 
-  const submitDialog = () => {
-    const trimmed = name.trim()
-    if (!trimmed) return
-    if (trimmed.includes('/')) {
-      message.error('名称不能包含 /')
-      return
-    }
-    if (!dialog) return
-    if (trimmed === nameOf(dialog.path)) {
-      closeDialog()
-      return
-    }
-    renameMut.mutate({ from: dialog.path, name: trimmed })
-  }
-
   const onRowMenuClick = (node: FolderNode, key: string) => {
-    if (key === 'rename') openRename(node.path)
+    if (key === 'edit') openEdit(node)
     if (key === 'remove') confirmRemove(node)
   }
 
@@ -478,7 +447,11 @@ export function FolderSection({
             aria-label="创建知识库"
             icon={<Plus size={16} />}
             className={styles.headAdd}
-            onClick={() => setCreateOpen(true)}
+            onClick={() => {
+              setDialog(null)
+              setEditOpen(false)
+              setCreateOpen(true)
+            }}
           />
         </Tooltip>
       </div>
@@ -487,7 +460,7 @@ export function FolderSection({
         <div className={styles.emptyHint}>
           <Skeleton active paragraph={{ rows: 2 }} title={false} />
         </div>
-      ) : isError ? (
+      ) : isError && folders.length === 0 ? (
         /* 失败不能落进「还没有知识库」那一支——那句会让用户以为库没了 */
         <div className={styles.errorHint}>
           <span>知识库读取失败</span>
@@ -517,37 +490,38 @@ export function FolderSection({
         </div>
       )}
 
-      {/* 新建 = 共享的创建知识库表单（名称 / 描述 / 图标，D-078）；
-          重命名只问名字，留在本地 */}
-      <KnowledgeBaseCreateModal
-        open={createOpen}
-        onCancel={() => setCreateOpen(false)}
-        onCreated={(path) => {
+      {isError && folders.length > 0 && (
+        <div className={styles.errorHint} role="status">
+          <span>知识库更新失败，已保留上次内容</span>
+          {onRetry && (
+            <Button type="link" size="small" onClick={onRetry}>
+              重试
+            </Button>
+          )}
+        </div>
+      )}
+      <KnowledgeBaseModal
+        key={dialog?.path ?? 'create'}
+        folder={dialog ?? undefined}
+        open={createOpen || editOpen}
+        onCancel={() => {
           setCreateOpen(false)
-          onSelect(path)
+          setEditOpen(false)
+        }}
+        afterClose={() => {
+          if (dialog) restoreEditFocus()
+          setDialog(null)
+        }}
+        onReconciled={followActivePath}
+        onSaved={(path, from) => {
+          setCreateOpen(false)
+          setEditOpen(false)
+          if (from) {
+            editNameRef.current = nameOf(path)
+            followActivePath(from, path)
+          } else onSelect(path)
         }}
       />
-
-      <Modal
-        title="重命名知识库"
-        open={dialog !== null}
-        onOk={submitDialog}
-        onCancel={closeDialog}
-        afterClose={restoreRenameFocus}
-        okText="重命名"
-        cancelText="取消"
-        okButtonProps={{ disabled: name.trim() === '' }}
-        destroyOnHidden
-      >
-        <Input
-          value={name}
-          autoFocus
-          placeholder="新名称"
-          onChange={(event) => setName(event.target.value)}
-          onPressEnter={submitDialog}
-        />
-        <div className={styles.dialogHint}>改名即移动：该知识库下的目录结构原样保留</div>
-      </Modal>
     </div>
   )
 }
