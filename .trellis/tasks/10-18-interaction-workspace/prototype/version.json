@@ -1,10 +1,12 @@
 {
-  "version": "v1",
+  "version": "v2",
   "status": "awaiting_review",
-  "sha256": "de8c187e2e7c71205dfdf6859f4be8948759433faff7be8f896e936b6b6f3271",
+  "sha256": "28a3baa22002dc0d506a33744bd6b5d6c9f715861e50b44888e895365d706746",
   "preview": "http://127.0.0.1:5181/review.html",
   "task": ".trellis/tasks/10-18-interaction-workspace",
   "approved_at": null,
   "user_quote": null,
-  "implementation_commit": null
+  "implementation_commit": null,
+  "revision_user_quote": "去掉知识库的图标选择功能，编辑时也不仅仅是编辑名称，描述也需要支持编辑，创建和编辑可以复用同一个编辑弹窗",
+  "previous_version": "versions/v1.json"
 }

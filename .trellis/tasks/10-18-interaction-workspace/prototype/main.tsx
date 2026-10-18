@@ -44,7 +44,7 @@ import { FolderGlyph } from '../../../../packages/renderer/src/components/nav/fo
 import { FOLDER_ICONS } from '../../../../packages/shared/src/structure'
 import { useStyles as useNavStyles } from '../../../../packages/renderer/src/components/NavSidebar.style'
 import sceneData from './scenes.json'
-import inventory from '../research/workspace-scenes.json'
+import inventory from './coverage-v2.json'
 import './review.css'
 
 type Scene = (typeof sceneData)[number]
@@ -105,7 +105,7 @@ function Feedback({ children, error = false }: { children: ReactNode; error?: bo
 function Review() {
   const { styles } = useReviewStyles()
   const appearance = useAppearance()
-  const [sceneId, setSceneId] = useState('overview')
+  const [sceneId, setSceneId] = useState('rename')
   const [state, setState] = useState('默认')
   const [size, setSize] = useState('桌面')
   const [coverage, setCoverage] = useState(false)
@@ -122,7 +122,7 @@ function Review() {
       <header className="review-header">
         <div>
           <h1>工作区导航与账户菜单</h1>
-          <p>逐模块交互精修 · v1 待认可</p>
+          <p>逐模块交互精修 · v2 待认可</p>
         </div>
         <div className="toolbar">
           <Segmented
@@ -231,9 +231,11 @@ function Review() {
           </section>
           {coverage && (
             <section className="coverage">
-              <h2>完整交互盘点 · 19 组 / 144 项</h2>
+              <h2>
+                完整交互盘点 · {inventory.counts.groups} 组 / {inventory.counts.states} 项
+              </h2>
               <p>
-                这些是源码状态、操作步骤和跨端条件的并集，并非 144
+                这些是源码状态、操作步骤和跨端条件的并集，并非 {inventory.counts.states}
                 个页面。可点击任一项进入对应切片；主题、尺寸和实际键盘步骤需组合核验。标记「保留」的行为也包含在此次评审中。
               </p>
               {inventory.groups.map((g) => (
@@ -373,18 +375,28 @@ function Preview({
           ? state === '默认'
             ? ''
             : '产品设计'
-          : state === '未修改' || state === '默认'
+          : state === '未修改' ||
+              state === '默认' ||
+              state === '仅修改描述' ||
+              state === '清空描述' ||
+              state === '描述上限' ||
+              state === '统一表单'
             ? '产品设计'
             : '产品设计与研究',
   )
   const [description, setDescription] = useState(
     state === '描述上限'
       ? '这是一段用于检查描述上限的本地示例。'.repeat(35).slice(0, 500)
-      : scene.id === 'create' && state === '默认'
+      : state === '清空描述'
         ? ''
-        : '团队的产品设计与研究记录',
+        : state === '仅修改描述' || state === '名称与描述一起改'
+          ? '补充新的调研范围和资料整理方式。'
+          : scene.id === 'create' && state === '默认'
+            ? ''
+            : '团队的产品设计与研究记录',
   )
   const [icon, setIcon] = useState<string | null>(null)
+  const initialDraft = useRef({ name: '产品设计', description: '团队的产品设计与研究记录' })
   const [fieldError, setFieldError] = useState(
     proposed && (state === '含斜杠' || state === '名称错误') ? '名称不能包含 /' : '',
   )
@@ -483,13 +495,17 @@ function Preview({
         else void message.error('名称不能包含 /')
         return
       }
-      if (kind === 'rename' && name.trim() === '产品设计') {
+      if (
+        kind === 'rename' &&
+        name.trim() === initialDraft.current.name &&
+        (!proposed || description.trim() === initialDraft.current.description)
+      ) {
         setDialog(null)
         setInlineOpen(false)
-        setResult('名称未修改，直接关闭')
+        setResult(proposed ? '名称与描述均未修改，直接关闭' : '名称未修改，直接关闭')
         return
       }
-      if (kind === 'create' && description.length > 500) return
+      if ((kind === 'create' || (proposed && kind === 'rename')) && description.length > 500) return
     }
     busyRef.current = true
     setBusy(true)
@@ -509,12 +525,35 @@ function Preview({
           kind === 'remove'
             ? '已删除知识库，12篇文档保留并回到库根（模拟）'
             : kind === 'rename'
-              ? '已重命名，当前子目录后缀 / 调研 / 访谈保持（模拟）'
+              ? proposed
+                ? `已保存知识库「${name.trim()}」，描述${description.trim() ? '已更新' : '已清空'}；当前子目录后缀保持（模拟）`
+                : '已重命名，当前子目录后缀 / 调研 / 访谈保持（模拟）'
               : '已创建并进入新知识库（模拟）',
         )
-        setRoute(kind === 'remove' ? '知识库' : name.trim() || '产品设计')
+        setRoute((previous) => {
+          if (kind === 'remove') return '知识库'
+          if (kind === 'create') return name.trim()
+          const previousName = initialDraft.current.name
+          return previous === previousName || previous.startsWith(`${previousName} /`)
+            ? name.trim() + previous.slice(previousName.length)
+            : previous
+        })
       }
     }, 800)
+  }
+  function openKnowledgeBaseForm(kind: string, libraryName = '产品设计') {
+    const baseDescription = '团队的产品设计与研究记录'
+    initialDraft.current = { name: libraryName, description: baseDescription }
+    firstAttempt.current = true
+    busyRef.current = false
+    setIcon(null)
+    setActiveForm(kind)
+    setName(kind === 'create' ? '' : libraryName)
+    setDescription(kind === 'create' ? '' : baseDescription)
+    setFieldError('')
+    setError('')
+    setBusy(false)
+    setDialog('full-form')
   }
   function signout() {
     if (logoutBusy || local || configUnknown) return
@@ -892,10 +931,7 @@ function Preview({
               size="small"
               aria-label="创建知识库"
               icon={<Plus size={16} />}
-              onClick={() => {
-                setActiveForm('create')
-                setDialog('full-form')
-              }}
+              onClick={() => openKnowledgeBaseForm('create')}
             />
           </Tooltip>
         </div>
@@ -957,7 +993,7 @@ function Preview({
                     onOpenChange={(open) => setFolderMenu(open ? f.name : null)}
                     menu={{
                       items: [
-                        { key: 'rename', label: '重命名' },
+                        { key: 'rename', label: proposed ? '编辑' : '重命名' },
                         { type: 'divider' },
                         { key: 'remove', label: '删除', danger: true },
                       ],
@@ -970,8 +1006,7 @@ function Preview({
                       },
                       onClick: ({ key }) => {
                         setFolderMenu(null)
-                        setActiveForm(key)
-                        setDialog('full-form')
+                        openKnowledgeBaseForm(key, f.name)
                       },
                     }}
                   >
@@ -1117,7 +1152,9 @@ function Preview({
       ? '创建知识库'
       : formKind === 'remove'
         ? '删除知识库「产品设计」？'
-        : '重命名知识库'
+        : proposed
+          ? '编辑知识库'
+          : '重命名知识库'
   const formContent = (
     <>
       {formKind === 'remove' ? (
@@ -1140,7 +1177,7 @@ function Preview({
             aria-invalid={Boolean(fieldError)}
             aria-describedby={fieldError ? `${scene.id}-${proposed}-name-error` : undefined}
             value={name}
-            maxLength={formKind === 'create' ? 60 : undefined}
+            maxLength={formKind === 'create' || proposed ? 60 : undefined}
             disabled={canonical && busy}
             status={fieldError ? 'error' : undefined}
             placeholder={formKind === 'create' ? '如：技术笔记' : '新名称'}
@@ -1159,38 +1196,46 @@ function Preview({
               {fieldError}
             </p>
           )}
-          {formKind === 'create' ? (
+          {formKind === 'create' || (proposed && formKind === 'rename') ? (
             <>
-              <label className="field-label" htmlFor={`${proposed}-desc`}>
+              <label className="field-label" htmlFor={`${scene.id}-${proposed}-desc`}>
                 描述 <small>可选</small>
               </label>
               <Input.TextArea
-                id={`${proposed}-desc`}
+                id={`${scene.id}-${proposed}-desc`}
+                aria-label="知识库描述"
                 value={description}
                 maxLength={500}
                 showCount
                 rows={3}
                 disabled={busy}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={(e) => {
+                  setDescription(e.target.value)
+                  setError('')
+                }}
               />
-              <label className="field-label">
-                图标 <small>再次点击可取消</small>
-              </label>
-              <div className="icon-grid">
-                {FOLDER_ICONS.map((i) => (
-                  <button
-                    key={i.key}
-                    title={i.label}
-                    disabled={busy}
-                    aria-label={i.label}
-                    aria-pressed={icon === i.key}
-                    onClick={() => setIcon(icon === i.key ? null : i.key)}
-                  >
-                    <FolderGlyph iconKey={i.key} />
-                    <span>{i.label}</span>
-                  </button>
-                ))}
-              </div>
+              {!proposed && (
+                <>
+                  <label className="field-label">
+                    图标 <small>再次点击可取消</small>
+                  </label>
+                  <div className="icon-grid">
+                    {FOLDER_ICONS.map((i) => (
+                      <button
+                        key={i.key}
+                        title={i.label}
+                        disabled={busy}
+                        aria-label={i.label}
+                        aria-pressed={icon === i.key}
+                        onClick={() => setIcon(icon === i.key ? null : i.key)}
+                      >
+                        <FolderGlyph iconKey={i.key} />
+                        <span>{i.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
             </>
           ) : (
             <p className="dialog-hint">改名即移动：该知识库下的目录结构原样保留</p>
@@ -1211,19 +1256,28 @@ function Preview({
         loading={canonical && busy}
         disabled={
           (formKind !== 'remove' && !name.trim()) ||
-          (formKind === 'create' && description.length > 500)
+          ((formKind === 'create' || (proposed && formKind === 'rename')) &&
+            description.length > 500)
         }
         onClick={() => submit(formKind!)}
       >
         {canonical && busy
-          ? '提交中…'
+          ? formKind === 'create'
+            ? '创建中…'
+            : formKind === 'remove'
+              ? '删除中…'
+              : '保存中…'
           : error && canonical
-            ? '重试'
+            ? proposed && formKind === 'rename'
+              ? '重试保存'
+              : '重试'
             : formKind === 'create'
               ? '创建'
               : formKind === 'remove'
                 ? '删除'
-                : '重命名'}
+                : proposed
+                  ? '保存'
+                  : '重命名'}
       </Button>
     </>
   )
@@ -1322,6 +1376,9 @@ function Preview({
         )}
       </div>
       <div className="preview-controls">
+        {proposed && hasForm && formKind !== 'remove' && (
+          <span>同一套表单：名称 + 描述（可选，500字）；创建留空，编辑预填，无图标选择。</span>
+        )}
         {scene.id === 'recent' && state === '容量与账号隔离' && (
           <p>
             数据合同：当前账号

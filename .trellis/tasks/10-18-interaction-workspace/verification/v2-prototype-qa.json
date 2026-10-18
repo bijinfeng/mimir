@@ -1,0 +1,75 @@
+{
+  "scope": "v2 local HTML only; no product source changes",
+  "fixtures": 102,
+  "coverage": 150,
+  "checks": [
+    {
+      "case": "description-only",
+      "pass": true
+    },
+    {
+      "case": "clear-description",
+      "pass": true
+    },
+    {
+      "case": "both-unchanged-closes",
+      "pass": true
+    },
+    {
+      "case": "failed-both-drafts-retained",
+      "pass": true,
+      "fields": [
+        {
+          "disabled": false,
+          "value": "产品研究 v2"
+        },
+        {
+          "disabled": false,
+          "value": "修改后的研究范围。"
+        }
+      ]
+    },
+    {
+      "case": "retry-succeeds",
+      "pass": true
+    },
+    {
+      "case": "create-no-icons-current-truth-preserved",
+      "pass": true
+    },
+    {
+      "case": "real-edit-from-row-retains-nested-path",
+      "pass": true
+    },
+    {
+      "case": "create-after-edit-resets-both-drafts",
+      "pass": true
+    },
+    {
+      "case": "final-390px-dark-real-modal",
+      "pass": true,
+      "measure": {
+        "body": [
+          {
+            "height": 207,
+            "scroll": 207
+          }
+        ],
+        "icons": 0,
+        "scrollWidth": 390,
+        "width": 390
+      }
+    },
+    {
+      "case": "coverage-150",
+      "pass": true,
+      "count": 150
+    }
+  ],
+  "limits": [
+    "All business operations are local mock results",
+    "Real server metadata update and partial-failure recovery are planned, not implemented",
+    "IME, login, storage isolation and real data integration require product QA after v2 approval",
+    "AntD native radio check helper did not activate; label click verified controlled radio property"
+  ]
+}

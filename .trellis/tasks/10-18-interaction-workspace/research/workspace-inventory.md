@@ -5,6 +5,8 @@
 - Date: 2026-10-18
 - Active task: `.trellis/tasks/10-18-interaction-workspace`；本稿不是产品实现授权。
 
+> 本文为v1源码盘点基线；其中“创建仅回归、不改move合同”的v1建议已被用户v2反馈取代。当前范围见[修订证据](workspace-v2-amendment.md)及prototype/coverage-v2.json。
+
 ## Findings
 
 当前侧栏是 **D-079 顶层知识库平铺列表**，不是树。源码仍有旧 tree 命名/注释，不能据此在对比稿画回侧栏子树、拖拽或新建子目录。深层 `folder:技术/前端` 只点亮“技术”；打开笔记时该库是 `aria-current=location`，最近笔记才是 page（FolderSection:15、279、508）。

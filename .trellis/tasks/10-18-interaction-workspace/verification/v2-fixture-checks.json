@@ -1,0 +1,614 @@
+[
+  {
+    "scene": "overview",
+    "state": "默认",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "overview",
+    "state": "知识库内部",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "overview",
+    "state": "笔记位置",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "overview",
+    "state": "对话页面",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "overview",
+    "state": "新建对话",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "overview",
+    "state": "设置页面",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "overview",
+    "state": "Desktop宿主",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "overview",
+    "state": "长内容与滚动",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "overview",
+    "state": "标签筛选",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "kb",
+    "state": "默认",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "kb",
+    "state": "加载中",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "kb",
+    "state": "空列表",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "kb",
+    "state": "读取失败",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "kb",
+    "state": "后台刷新失败",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "kb",
+    "state": "长标题",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "kb",
+    "state": "空知识库",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "kb",
+    "state": "菜单展开",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "kb",
+    "state": "重试中",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "kb",
+    "state": "恢复成功",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "kb",
+    "state": "图标与回退",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "rename",
+    "state": "默认",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "rename",
+    "state": "空白名称",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "rename",
+    "state": "含斜杠",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "rename",
+    "state": "未修改",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "rename",
+    "state": "提交中",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "rename",
+    "state": "提交失败",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "rename",
+    "state": "成功",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "rename",
+    "state": "重名错误",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "rename",
+    "state": "取消返回",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "rename",
+    "state": "仅修改描述",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "rename",
+    "state": "清空描述",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "rename",
+    "state": "描述上限",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "rename",
+    "state": "名称与描述一起改",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "rename",
+    "state": "统一表单",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "create",
+    "state": "默认",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "create",
+    "state": "名称错误",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "create",
+    "state": "描述上限",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "create",
+    "state": "统一表单",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "create",
+    "state": "提交中",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "create",
+    "state": "提交失败",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "create",
+    "state": "成功",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "create",
+    "state": "取消返回",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "remove",
+    "state": "有文档",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "remove",
+    "state": "空知识库",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "remove",
+    "state": "提交中",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "remove",
+    "state": "失败与重试",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "remove",
+    "state": "成功",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "remove",
+    "state": "取消返回",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "history",
+    "state": "默认",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "history",
+    "state": "加载中",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "history",
+    "state": "空列表",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "history",
+    "state": "读取失败",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "history",
+    "state": "后台刷新失败",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "history",
+    "state": "当前对话在第13项",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "history",
+    "state": "长标题",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "history",
+    "state": "重试中",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "history",
+    "state": "超过12条",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "history",
+    "state": "空标题回退",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "recent",
+    "state": "默认",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "recent",
+    "state": "折叠",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "recent",
+    "state": "加载中",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "recent",
+    "state": "空列表",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "recent",
+    "state": "读取失败",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "recent",
+    "state": "部分读取失败",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "recent",
+    "state": "失效或无权限",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "recent",
+    "state": "长标题",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "recent",
+    "state": "重试中",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "recent",
+    "state": "恢复成功",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "recent",
+    "state": "6条与顺序",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "recent",
+    "state": "容量与账号隔离",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "account",
+    "state": "云端账户",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "account",
+    "state": "本地账户",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "account",
+    "state": "会话加载中",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "account",
+    "state": "会话读取失败",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "account",
+    "state": "配置加载中",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "account",
+    "state": "配置读取失败",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "account",
+    "state": "长姓名与邮箱",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "account",
+    "state": "头像缺失",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "theme",
+    "state": "跟随系统",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "theme",
+    "state": "浅色",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "theme",
+    "state": "深色",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "theme",
+    "state": "键盘路径",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "theme",
+    "state": "触屏边界",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "logout",
+    "state": "默认",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "logout",
+    "state": "未保存内容",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "logout",
+    "state": "登出中",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "logout",
+    "state": "登出失败",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "logout",
+    "state": "成功",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "drawer",
+    "state": "桌面折叠栏",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "drawer",
+    "state": "窄屏关闭",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "drawer",
+    "state": "窄屏展开",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "drawer",
+    "state": "遮罩关闭",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "drawer",
+    "state": "导航后关闭",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "drawer",
+    "state": "未保存确认中",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "guard",
+    "state": "默认",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "guard",
+    "state": "未保存内容",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "guard",
+    "state": "保存中",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "guard",
+    "state": "保存失败",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "guard",
+    "state": "放弃并离开",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "guard",
+    "state": "取消返回",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "guard",
+    "state": "自动保存中",
+    "columns": 2,
+    "overflow": false
+  },
+  {
+    "scene": "guard",
+    "state": "自动保存完成",
+    "columns": 2,
+    "overflow": false
+  }
+]
