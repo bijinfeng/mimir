@@ -52,11 +52,42 @@ describe('最近记录的授权与暂时读取失败', () => {
     get.mockRejectedValueOnce(authError)
     await expect(loadRecentDocuments('admin')).rejects.toBe(authError)
     get.mockRejectedValueOnce(new Error('offline'))
-    expect(await loadRecentDocuments('admin')).toEqual({ items: [], retryableFailureCount: 1 })
+    expect(await loadRecentDocuments('admin')).toEqual({
+      items: [],
+      retryableFailureCount: 1,
+      storageUnavailable: false,
+    })
     get.mockResolvedValueOnce(note('one'))
     expect(await loadRecentDocuments('admin')).toEqual({
       items: [note('one')],
       retryableFailureCount: 0,
+      storageUnavailable: false,
     })
   })
+})
+
+it('本机记录读取异常与损坏不冒充真实空列表，恢复后仍按授权读取原ID', async () => {
+  const get = vi.spyOn(api.documents, 'get').mockResolvedValue(note('one'))
+  localStorage.setItem('mimir.recent-documents.admin', '{bad-json')
+  expect(await loadRecentDocuments('admin')).toEqual({
+    items: [],
+    retryableFailureCount: 0,
+    storageUnavailable: true,
+  })
+  expect(get).not.toHaveBeenCalled()
+  localStorage.setItem('mimir.recent-documents.admin', JSON.stringify(['one']))
+  expect(await loadRecentDocuments('admin')).toEqual({
+    items: [note('one')],
+    retryableFailureCount: 0,
+    storageUnavailable: false,
+  })
+  const storageRead = vi.spyOn(localStorage, 'getItem').mockImplementation(() => {
+    throw new DOMException('disabled', 'SecurityError')
+  })
+  expect(await loadRecentDocuments('admin')).toEqual({
+    items: [],
+    retryableFailureCount: 0,
+    storageUnavailable: true,
+  })
+  storageRead.mockRestore()
 })

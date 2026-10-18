@@ -1,5 +1,6 @@
 import type { DocumentDetail, SearchHit, SearchResponse } from '@mimir/shared'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ConfigProvider } from 'antd'
 import { act } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, expect, it, vi } from 'vitest'
@@ -91,7 +92,9 @@ async function renderPalette(overrides: Partial<CommandPaletteProps> = {}) {
       root.render(
         <QueryClientProvider client={client}>
           <MimirProvider>
-            <CommandPalette {...props} />
+            <ConfigProvider theme={{ token: { motion: false } }}>
+              <CommandPalette {...props} />
+            </ConfigProvider>
           </MimirProvider>
         </QueryClientProvider>,
       ),
@@ -114,7 +117,7 @@ it('最近12个ID中的笔记不截成6篇；部分失败保留可用项，403�
     return note(id)
   })
   const view = await renderPalette()
-  await settle(() => expect(document.body.textContent).toContain('部分笔记暂时无法读取'))
+  await settle(() => expect(document.body.textContent).toContain('部分最近笔记暂时无法读取'))
   expect(document.querySelectorAll('[data-item-key^="recent:"]')).toHaveLength(8)
   expect(document.body.textContent).not.toContain('秘密标题')
   await act(async () => row('recent:7').click())
@@ -179,7 +182,7 @@ it('搜索中键鼠与Tab按钮同样不可执行；缓存刷新等待/失败有
   await act(async () => {
     refreshPromise = view.client.refetchQueries({ queryKey: ['palette-search', '结果'] })
   })
-  await settle(() => expect(document.body.textContent).toContain('正在更新搜索结果'))
+  await settle(() => expect(document.body.textContent).toContain('正在更新当前搜索结果'))
   expect(row('hit:a:15:20:0').disabled).toBe(true)
   await act(async () => {
     key('Enter')
@@ -190,7 +193,7 @@ it('搜索中键鼠与Tab按钮同样不可执行；缓存刷新等待/失败有
     refresh.reject(new Error('offline'))
     await refreshPromise
   })
-  await settle(() => expect(document.body.textContent).toContain('更新失败，保留上次结果'))
+  await settle(() => expect(document.body.textContent).toContain('本次更新失败，下方仍是此前结果'))
   expect(row('hit:a:15:20:0').disabled).toBe(false)
   await act(async () => row('hit:a:15:20:0').click())
   expect(view.props.onOpenSearchHit).toHaveBeenCalledWith(first)
@@ -218,11 +221,14 @@ it('异步列表插入保留选中身份、删除可恢复；重复文档片段�
     ),
   ).toEqual(['hit:other:0:5:0', 'hit:same:0:5:0', 'hit:same:20:25:0'])
   await act(async () => button('查看完整信息：结果same · 命中 2').click())
-  expect(
-    document.getElementById(
-      button('查看完整信息：结果same · 命中 2').getAttribute('aria-controls')!,
-    )?.textContent,
-  ).toContain('完整片段same')
+  const detail = Array.from(document.querySelectorAll('[role="dialog"]')).find((node) =>
+    node.textContent?.includes('完整结果信息'),
+  )!
+  expect(detail.textContent).toContain('完整片段same')
+  expect(detail.textContent).toContain('产品/调研')
+  expect(button('返回搜索')).toBeDefined()
+  await act(async () => button('返回搜索').click())
+  await settle(() => expect(document.activeElement).toBe(input()))
   await act(async () => view.client.setQueryData(['palette-search', '片段'], response(c)))
   await settle(() => expect(row('hit:other:0:5:0').getAttribute('aria-current')).toBe('true'))
 })
@@ -287,7 +293,7 @@ it('上下文加载与错误不展示猜测的note能力，文件只开放真实
   const view = await renderPalette({ currentDocumentId: 'file' })
   expect(row('rename-current')).toBeNull()
   expect(row('move-current')).toBeNull()
-  expect(document.body.textContent).toContain('正在读取当前文档操作')
+  expect(document.body.textContent).toContain('正在读取当前文档信息')
   await act(async () => read.resolve({ ...note('file'), kind: 'file' }))
   await settle(() => expect(row('move-current')).not.toBeNull())
   expect(row('rename-current')).toBeNull()
@@ -296,7 +302,7 @@ it('上下文加载与错误不展示猜测的note能力，文件只开放真实
   await act(async () => {
     await view.client.refetchQueries({ queryKey: ['document', 'file'] })
   })
-  await settle(() => expect(document.body.textContent).toContain('当前文档操作暂时无法读取'))
+  await settle(() => expect(document.body.textContent).toContain('当前文档信息读取失败'))
   expect(row('move-current')).toBeNull()
 })
 
@@ -370,4 +376,99 @@ it('取消回到可见触发器；宿主动作交接不抢新页面焦点', asyn
   expect(document.activeElement).toBe(destination)
   trigger.remove()
   destination.remove()
+})
+
+it('独立完整信息层保留搜索上下文，关闭只返回搜索，打开保留原片段且交给宿主guard', async () => {
+  const original = {
+    ...hit('a', 21),
+    title: '很长的标题 <纯文本>',
+    snippet: { text: '完整片段\n第二行', start: 21, end: 30 },
+  }
+  vi.spyOn(api, 'search').mockResolvedValue(response(original))
+  const view = await renderPalette()
+  await act(async () => type('完整'))
+  await settle(() => expect(row('hit:a:21:30:0')).not.toBeNull())
+  expect(document.body.textContent).toContain('匹配的文档 · 1 处')
+  const disclose = button('查看完整信息：很长的标题 <纯文本>')
+  expect(disclose.getAttribute('aria-haspopup')).toBe('dialog')
+  await act(async () => disclose.click())
+  expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(2)
+  expect(input().closest('[inert]')).not.toBeNull()
+  const detail = Array.from(document.querySelectorAll('[role="dialog"]')).find((node) =>
+    node.textContent?.includes('完整结果信息'),
+  )!
+  expect(detail.querySelector('h4')?.textContent).toBe(original.title)
+  expect(detail.textContent).toContain(original.snippet.text)
+  await act(async () => button('关闭完整信息').click())
+  await settle(() => expect(document.activeElement).toBe(input()))
+  expect(input().value).toBe('完整')
+  expect(view.props.onClose).not.toHaveBeenCalled()
+  await act(async () => disclose.click())
+  await act(async () => button('打开这处命中').click())
+  expect(view.props.onOpenSearchHit).toHaveBeenCalledExactlyOnceWith(original)
+  expect(view.props.onClose).not.toHaveBeenCalled()
+  await view.render({ interactionSuspended: true })
+  await view.render({ interactionSuspended: false })
+  expect(input().value).toBe('完整')
+  expect(document.activeElement).toBe(input())
+})
+
+it('首次搜索的加载、空、失败与重试在列表中独立反馈；AI只保留一条说明', async () => {
+  const pending = deferred<SearchResponse>()
+  vi.spyOn(api, 'search').mockReturnValueOnce(pending.promise)
+  await renderPalette()
+  await act(async () => type('问题'))
+  const loading = Array.from(document.querySelectorAll('[role="status"]')).find((node) =>
+    node.textContent?.includes('正在检索文档'),
+  )!
+  expect(loading.querySelector('strong')?.textContent).toBe('正在检索文档')
+  expect(loading.querySelector('svg')).not.toBeNull()
+  expect(loading.textContent).toContain('结果到达后，再打开所选内容')
+  await act(async () => pending.reject(new Error('offline')))
+  await settle(() => expect(document.body.textContent).toContain('暂时无法完成搜索'))
+  expect(button('重试搜索').closest('[role="status"]')?.textContent).toContain(
+    '输入已保留，可以原词重试',
+  )
+  vi.mocked(api.search).mockResolvedValueOnce(response())
+  await act(async () => button('重试搜索').click())
+  await settle(() => expect(document.body.textContent).toContain('没有匹配的文档'))
+  expect(document.body.textContent).toContain('试试更短的词，或把问题带到新对话')
+  expect(document.body.textContent?.match(/只预填问题，不自动发送/g)).toHaveLength(1)
+  expect(button('带到新对话').querySelector('.lucide-arrow-right')).not.toBeNull()
+})
+
+it('结果未确认时仅显示错误解释，创建等待与失败反馈独立于滚动列表', async () => {
+  const view = await renderPalette({ creatingNote: true })
+  const waiting = Array.from(document.querySelectorAll('[role="status"]')).find((node) =>
+    node.textContent?.includes('正在创建笔记'),
+  )!
+  expect(waiting.textContent).toContain('请等待创建结果')
+  expect(waiting.parentElement?.querySelector('[aria-busy]')?.contains(waiting)).toBe(false)
+  await view.render({
+    creatingNote: false,
+    createNoteError: '未能确认笔记是否创建成功，请先检查知识库，再决定是否重试。',
+    createNoteRetryable: false,
+  })
+  expect(button('重试新建笔记')).toBeUndefined()
+  expect(document.querySelector('[role="alert"]')?.textContent).toContain('请先检查知识库')
+})
+
+it('损坏的本机记录显示准确降级说明，仍可搜索且修复storage事件后恢复最近笔记', async () => {
+  localStorage.setItem('mimir.recent-documents.admin', 'invalid-json')
+  vi.spyOn(api.documents, 'get').mockResolvedValue(note('restored'))
+  vi.spyOn(api, 'search').mockResolvedValue(response(hit('a')))
+  await renderPalette()
+  await settle(() =>
+    expect(document.body.textContent).toContain('暂时无法读取本机最近记录，仍可搜索文档'),
+  )
+  expect(document.body.textContent).not.toContain('还没有最近打开')
+  await act(async () => type('笔记'))
+  await settle(() => expect(row('hit:a:0:5:0')).not.toBeNull())
+  await act(async () => button('清空搜索').click())
+  await act(async () => {
+    localStorage.setItem('mimir.recent-documents.admin', JSON.stringify(['restored']))
+    window.dispatchEvent(new Event('storage'))
+  })
+  await settle(() => expect(row('recent:restored')).not.toBeNull())
+  expect(document.body.textContent).not.toContain('本机最近记录')
 })

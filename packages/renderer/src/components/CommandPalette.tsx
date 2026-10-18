@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { SearchHit } from '@mimir/shared'
 import { Button, Input, Modal } from 'antd'
 import type { InputRef } from 'antd'
-import { Search, Sparkles, X } from 'lucide-react'
+import { ArrowRight, Search, Sparkles, X } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import { api, ApiRequestError } from '../lib/api'
@@ -11,7 +11,13 @@ import { paletteCommands, paletteDocuments } from './command-palette/items'
 import type { PaletteItem } from './command-palette/items'
 import { useStyles } from './command-palette/styles'
 import { PaletteRow } from './command-palette/PaletteRow'
-import { CommandFeedback, RecentFeedback } from './command-palette/Feedback'
+import {
+  CommandFeedback,
+  NewNoteFeedback,
+  RecentFeedback,
+  SearchFeedback,
+} from './command-palette/Feedback'
+import { ResultDetail } from './command-palette/ResultDetail'
 
 export interface CommandPaletteProps {
   open: boolean
@@ -22,6 +28,7 @@ export interface CommandPaletteProps {
   onNewNote: () => void | Promise<void>
   creatingNote?: boolean
   createNoteError?: string | null
+  createNoteRetryable?: boolean
   interactionSuspended?: boolean
   userId?: string
   currentDocumentId?: string
@@ -41,6 +48,8 @@ function PaletteBody(props: Omit<CommandPaletteProps, 'open'>) {
   const [value, setValue] = useState('')
   const [committedValue, setCommittedValue] = useState('')
   const [composing, setComposing] = useState(false)
+  const [detail, setDetail] = useState<PaletteItem | null>(null)
+  const restoreDetailFocus = useRef(false)
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const composingRef = useRef(false)
   const restoreOnCancel = useRef(false)
@@ -76,8 +85,7 @@ function PaletteBody(props: Omit<CommandPaletteProps, 'open'>) {
     recentQuery.data ?? [],
     props,
   )
-  const documentsFirst = !question || documents.length > 0
-  const items = documentsFirst ? [...documents, ...commands] : [...commands, ...documents]
+  const items = [...documents, ...commands]
   // A stable identity survives late insertions. A removed selection falls back to the first item.
   const activeItem = items.find((item) => item.key === selectedKey) ?? items[0]
   const activeIndex = activeItem ? items.indexOf(activeItem) : -1
@@ -113,12 +121,17 @@ function PaletteBody(props: Omit<CommandPaletteProps, 'open'>) {
         busy
       )
         return
+      if (detail) {
+        restoreDetailFocus.current = true
+        setDetail(null)
+        return
+      }
       restoreOnCancel.current = true
       onClose()
     }
     window.addEventListener('keydown', toggle, true)
     return () => window.removeEventListener('keydown', toggle, true)
-  }, [busy, onClose])
+  }, [busy, detail, onClose])
 
   useEffect(() => {
     const node = listRef.current?.querySelectorAll<HTMLElement>('[data-item-key]')
@@ -187,187 +200,226 @@ function PaletteBody(props: Omit<CommandPaletteProps, 'open'>) {
             key={item.key}
             item={item}
             active={activeItem?.key === item.key}
-            disabled={executionBlocked}
+            disabled={executionBlocked || Boolean(detail)}
+            onDetail={() => setDetail(item)}
             onSelect={() => setSelectedKey(item.key)}
             onExecute={() => execute(item)}
           />
         ))}
       </section>
     )
-  const documentSection = renderSection(documents, question ? '匹配的文档' : '最近打开的笔记')
+  const documentSection = renderSection(
+    documents,
+    question ? `匹配的文档 · ${documents.length} 处` : '最近打开的笔记',
+  )
   const commandSection = renderSection(commands, '操作')
 
   return (
-    <Modal
-      open
-      title={<span className={styles.srOnly}>搜索文档与操作</span>}
-      onCancel={cancel}
-      keyboard={!busy && !composing}
-      mask={{ closable: !busy && !composing }}
-      focusable={{ focusTriggerAfterClose: false }}
-      afterOpenChange={(open) => {
-        if (open) inputRef.current?.focus()
-      }}
-      footer={null}
-      closable={false}
-      width={620}
-      destroyOnHidden
-      className={styles.modal}
-      styles={{
-        header: { marginBottom: 0 },
-        body: { padding: 0 },
-        container: { padding: 0, overflow: 'hidden' },
-      }}
-      style={{ top: '14vh' }}
-    >
-      <div
-        className={styles.panel}
-        onKeyDownCapture={(event) => {
-          if (
-            event.nativeEvent.isComposing ||
-            event.nativeEvent.keyCode === 229 ||
-            composingRef.current
-          )
-            event.stopPropagation()
+    <>
+      <Modal
+        open
+        title={<span className={styles.srOnly}>搜索文档与操作</span>}
+        onCancel={cancel}
+        keyboard={!busy && !composing && !detail}
+        mask={{ closable: !busy && !composing && !detail }}
+        focusable={{ focusTriggerAfterClose: false, trap: !detail && !props.interactionSuspended }}
+        afterOpenChange={(open) => {
+          if (open) inputRef.current?.focus()
         }}
+        footer={null}
+        closable={false}
+        width={620}
+        destroyOnHidden
+        className={styles.modal}
+        styles={{
+          header: { marginBottom: 0, display: 'none' },
+          body: { padding: 0 },
+          container: { padding: 0, overflow: 'hidden' },
+        }}
+        style={{ top: '14vh' }}
       >
-        <div className={styles.searchRow}>
-          <Input
-            ref={inputRef}
-            size="large"
-            variant="borderless"
-            prefix={<Search size={17} aria-hidden />}
-            aria-label="搜索文档或输入问题"
-            aria-describedby={question || composing ? statusId : undefined}
-            placeholder="搜索文档或输入问题"
-            value={value}
-            maxLength={500}
-            disabled={busy}
-            onChange={(event) => handleChange(event.target.value)}
-            onCompositionStart={() => {
-              composingRef.current = true
-              setComposing(true)
-            }}
-            onCompositionEnd={(event) => {
-              composingRef.current = false
-              setComposing(false)
-              handleChange(event.currentTarget.value)
-            }}
-            onKeyDown={handleKeyDown}
-          />
-          {value && (
+        <div
+          className={styles.panel}
+          inert={detail || props.interactionSuspended ? true : undefined}
+          onKeyDownCapture={(event) => {
+            if (
+              event.nativeEvent.isComposing ||
+              event.nativeEvent.keyCode === 229 ||
+              composingRef.current
+            )
+              event.stopPropagation()
+          }}
+        >
+          <div className={styles.searchRow}>
+            <Search size={16} aria-hidden />
+            <Input
+              ref={inputRef}
+              variant="borderless"
+              className={styles.searchInput}
+              aria-label="搜索文档或输入问题"
+              aria-describedby={question || composing ? statusId : undefined}
+              placeholder="搜索文档或输入问题"
+              value={value}
+              maxLength={500}
+              disabled={busy}
+              onChange={(event) => handleChange(event.target.value)}
+              onCompositionStart={() => {
+                composingRef.current = true
+                setComposing(true)
+              }}
+              onCompositionEnd={(event) => {
+                composingRef.current = false
+                setComposing(false)
+                handleChange(event.currentTarget.value)
+              }}
+              onKeyDown={handleKeyDown}
+            />
+            {value && (
+              <Button
+                autoInsertSpace={false}
+                type="text"
+                className={styles.iconButton}
+                icon={<X size={14} />}
+                aria-label="清空搜索"
+                disabled={busy || composing}
+                onClick={() => {
+                  handleChange('')
+                  inputRef.current?.focus()
+                }}
+              />
+            )}
             <Button
+              autoInsertSpace={false}
               type="text"
               className={styles.iconButton}
-              icon={<X size={15} />}
-              aria-label="清空搜索"
+              icon={<X size={17} />}
+              aria-label="关闭搜索"
               disabled={busy || composing}
-              onClick={() => {
-                handleChange('')
-                inputRef.current?.focus()
-              }}
+              onClick={cancel}
             />
+          </div>
+          {composing && (
+            <div className={styles.compositionInfo} role="status">
+              正在输入中文，选字不会执行操作
+            </div>
           )}
-          <Button
-            type="text"
-            className={styles.iconButton}
-            icon={<X size={17} />}
-            aria-label="关闭搜索"
-            disabled={busy || composing}
-            onClick={cancel}
-          />
-        </div>
-        <div className={styles.list} ref={listRef} aria-busy={searchPending || props.creatingNote}>
-          {!question && (
-            <RecentFeedback
-              query={recentQuery}
-              userId={props.userId}
-              hasNotes={documents.length > 0}
+          {value.length >= 500 && (
+            <div className={styles.counter}>最多500个字符 · {value.length}/500</div>
+          )}
+          <div
+            className={styles.list}
+            ref={listRef}
+            aria-busy={searchPending || props.creatingNote}
+          >
+            {!question && (
+              <RecentFeedback
+                query={recentQuery}
+                userId={props.userId}
+                hasNotes={documents.length > 0}
+                busy={busy || composing}
+                onRetry={() => {
+                  inputRef.current?.focus()
+                  void recentQuery.refetch()
+                }}
+              />
+            )}
+            {question.length === 1 && (
+              <p className={styles.inlineFeedback}>输入至少两个字搜索文档</p>
+            )}
+            {documentSection}
+            {shouldSearch && (
+              <SearchFeedback
+                hasHits={documents.length > 0}
+                pending={searchPending}
+                error={searchQuery.isError}
+                unauthorized={isUnauthorized(searchQuery.error)}
+                busy={busy || composing || searchPending}
+                onRetry={() => {
+                  inputRef.current?.focus()
+                  void searchQuery.refetch()
+                }}
+              />
+            )}
+            <CommandFeedback
+              currentDocumentId={props.currentDocumentId}
+              query={currentDocQuery}
               busy={busy || composing}
-              onRetry={() => {
-                inputRef.current?.focus()
-                void recentQuery.refetch()
-              }}
             />
-          )}
-          {documentsFirst ? (
-            <>
-              {documentSection}
-              {commandSection}
-            </>
-          ) : (
-            <>
-              {commandSection}
-              {documentSection}
-            </>
-          )}
-          <CommandFeedback
-            currentDocumentId={props.currentDocumentId}
-            query={currentDocQuery}
+            {commandSection}
+          </div>
+          <NewNoteFeedback
             creatingNote={props.creatingNote}
             error={props.createNoteError}
+            retryable={props.createNoteRetryable}
             busy={busy || composing}
             onRetry={() => {
               if (!busy && !composingRef.current) void props.onNewNote()
             }}
           />
-        </div>
-        {(question || composing) && (
-          <div className={styles.aiRow}>
-            <span id={statusId} role="status" aria-live="polite">
-              {searchStatus}
-              {value.length >= 480 && ` · ${value.length}/500 字`}
-            </span>
-            {shouldSearch && searchQuery.isError && (
+          {question && (
+            <div className={styles.aiRow}>
+              <span className={styles.aiLabel}>
+                <Sparkles size={16} aria-hidden />
+                <span>只预填问题，不自动发送</span>
+              </span>
               <Button
-                size="small"
+                autoInsertSpace={false}
                 type="link"
-                disabled={busy || composing || searchQuery.isFetching}
-                onClick={() => {
-                  inputRef.current?.focus()
-                  void searchQuery.refetch()
-                }}
-              >
-                重试搜索
-              </Button>
-            )}
-            <span className={styles.aiLabel}>
-              <Sparkles size={15} aria-hidden />
-              <Button
-                size="small"
-                type="link"
+                className={styles.askButton}
                 disabled={busy || composing || !question}
                 onClick={() => {
                   if (!busy && !composingRef.current && question) props.onAsk(question)
                 }}
               >
                 带到新对话
+                <ArrowRight size={13} aria-hidden />
               </Button>
+            </div>
+          )}
+          <div className={styles.foot}>
+            {items.length > 0 && (
+              <span>
+                <kbd className={styles.kbd}>↑</kbd>
+                <kbd className={styles.kbd}>↓</kbd>选择
+              </span>
+            )}
+            {activeItem && (
+              <span>
+                <kbd className={styles.kbd}>Enter</kbd>
+                {activeItem.type === 'document' ? '打开所选结果' : '执行所选操作'}
+              </span>
+            )}
+            <span>
+              <kbd className={styles.kbd}>Esc</kbd>关闭
             </span>
-            <span>仅预填问题，不会自动发送</span>
+            <span className={styles.srOnly} id={statusId} role="status" aria-live="polite">
+              {activeItem ? `当前选择：${activeItem.title}` : '没有可选择的结果'}
+              {searchStatus}
+            </span>
           </div>
-        )}
-        <div className={styles.foot}>
-          {items.length > 0 && (
-            <span>
-              <kbd className={styles.kbd}>↑ ↓</kbd>选择
-            </span>
-          )}
-          {activeItem && (
-            <span>
-              <kbd className={styles.kbd}>Enter</kbd>
-              {activeItem.type === 'document' ? '打开所选结果' : '执行所选操作'}
-            </span>
-          )}
-          <span>
-            <kbd className={styles.kbd}>Esc</kbd>关闭
-          </span>
-          <span className={styles.srOnly} role="status" aria-live="polite">
-            {activeItem ? `当前选择：${activeItem.title}` : '没有可选择的结果'}
-          </span>
         </div>
-      </div>
-    </Modal>
+      </Modal>
+      <ResultDetail
+        item={detail}
+        busy={executionBlocked}
+        onReturn={() => {
+          restoreDetailFocus.current = true
+          setDetail(null)
+        }}
+        afterClose={() => {
+          if (restoreDetailFocus.current) {
+            restoreDetailFocus.current = false
+            inputRef.current?.focus()
+          }
+        }}
+        onOpen={(item) => {
+          if (executionBlocked) return
+          restoreDetailFocus.current = false
+          setDetail(null)
+          execute(item)
+        }}
+      />
+    </>
   )
 }
 

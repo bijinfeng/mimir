@@ -7,15 +7,23 @@ const LIMIT = 12
 const eventName = 'mimir:recent-documents'
 const keyFor = (userId: string) => `mimir.recent-documents.${userId}`
 
-export function readRecentIds(userId: string): string[] {
+function readRecentState(userId: string): { ids: string[]; storageUnavailable: boolean } {
   try {
     const value: unknown = JSON.parse(localStorage.getItem(keyFor(userId)) ?? '[]')
-    return Array.isArray(value)
-      ? value.filter((id): id is string => typeof id === 'string' && id.length > 0).slice(0, LIMIT)
-      : []
+    if (!Array.isArray(value)) return { ids: [], storageUnavailable: true }
+    return {
+      ids: value
+        .filter((id): id is string => typeof id === 'string' && id.length > 0)
+        .slice(0, LIMIT),
+      storageUnavailable: false,
+    }
   } catch {
-    return []
+    return { ids: [], storageUnavailable: true }
   }
+}
+
+export function readRecentIds(userId: string): string[] {
+  return readRecentState(userId).ids
 }
 
 export function recordRecentDocument(userId: string, id: string): void {
@@ -30,7 +38,7 @@ export function recordRecentDocument(userId: string, id: string): void {
 
 /** 每次读取都以 GET 的授权结果为准，不用旧缓存补回失败文档的标题。 */
 export async function loadRecentDocuments(userId: string) {
-  const ids = readRecentIds(userId)
+  const { ids, storageUnavailable } = readRecentState(userId)
   const results = await Promise.allSettled(ids.map((id) => api.documents.get(id)))
   const items: DocumentDetail[] = []
   let retryableFailureCount = 0
@@ -46,7 +54,7 @@ export async function loadRecentDocuments(userId: string) {
       retryableFailureCount += 1
     }
   }
-  return { items, retryableFailureCount }
+  return { items, retryableFailureCount, storageUnavailable }
 }
 
 /** 最近列表以文档 GET 为准，已删除或无权限的 ID 不呈现。 */
@@ -72,5 +80,6 @@ export function useRecentDocuments(userId: string | undefined) {
     // 保留 CommandPalette 已有的数组消费合同。
     data: query.isError ? undefined : query.data?.items,
     retryableFailureCount: query.data?.retryableFailureCount ?? 0,
+    storageUnavailable: query.data?.storageUnavailable ?? false,
   }
 }

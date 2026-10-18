@@ -1,0 +1,26 @@
+{
+  "ai": {
+    "bg": "rgb(247, 249, 248)",
+    "h": 47.390625
+  },
+  "input": {
+    "border": "0px none rgb(38, 38, 38)",
+    "outline": "rgb(38, 38, 38) none 3px",
+    "shadow": "none"
+  },
+  "rect": {
+    "bottom": 699.796875,
+    "height": 580.390625,
+    "left": 211,
+    "right": 831,
+    "top": 119.40625,
+    "width": 620,
+    "x": 211,
+    "y": 119.40625
+  },
+  "row": {
+    "border": "1px solid rgb(0, 131, 77)",
+    "height": 54,
+    "padding": "16px 18px"
+  }
+}

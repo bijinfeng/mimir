@@ -1,0 +1,21 @@
+{
+  "horizontal": false,
+  "list": {
+    "height": 217,
+    "scroll": 561
+  },
+  "rect": {
+    "bottom": 452,
+    "height": 382,
+    "left": 8,
+    "right": 382,
+    "top": 70,
+    "width": 374,
+    "x": 8,
+    "y": 70
+  },
+  "viewport": [
+    390,
+    500
+  ]
+}

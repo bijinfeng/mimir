@@ -91,7 +91,7 @@ it('metadata refresh failure retains the mounted editor and command draft; retry
     })
     await act(async () =>
       [...document.querySelectorAll<HTMLButtonElement>('.ant-modal button')]
-        .find((b) => b.textContent?.replace(/\s/g, '') === '重命名')!
+        .find((b) => b.textContent?.replace(/\s/g, '') === '保存')!
         .click(),
     )
     await act(async () => {

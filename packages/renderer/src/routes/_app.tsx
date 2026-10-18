@@ -123,6 +123,7 @@ function AppShell() {
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [creatingNote, setCreatingNote] = useState(false)
   const [createNoteError, setCreateNoteError] = useState<string | null>(null)
+  const [createNoteRetryable, setCreateNoteRetryable] = useState(true)
   const creatingNoteRef = useRef(false)
   const paletteGuardRef = useRef(false)
 
@@ -315,6 +316,7 @@ function AppShell() {
           setNewNoteFocusId(created.id)
           openDocument(created.id, 'all')
         } catch (error) {
+          setCreateNoteRetryable(error instanceof ApiRequestError && error.status < 500)
           setCreateNoteError(
             error instanceof ApiRequestError && error.status < 500
               ? `新建笔记失败：${error.message}`
@@ -421,6 +423,7 @@ function AppShell() {
         onClose={closePalette}
         creatingNote={creatingNote}
         createNoteError={createNoteError}
+        createNoteRetryable={createNoteRetryable}
         interactionSuspended={Boolean(pendingLeave) || saving}
         onOpenCapture={() => {
           if (creatingNoteRef.current || paletteGuardRef.current || pendingLeave || saving) return

@@ -1,0 +1,3 @@
+$ pnpm routes:generate && tsc --noEmit
+$ node generate-routes.mjs src/routeTree.gen.ts
+路由树已生成 → /Users/admin/Desktop/mimir/packages/renderer/src/routeTree.gen.ts

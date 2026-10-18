@@ -1,0 +1,12 @@
+
+ RUN  v5.0.4 /Users/admin/Desktop/mimir/packages/renderer
+
+
+ Test Files  57 passed (57)
+      Tests  495 passed (495)
+   Start at  14:40:05
+   Duration  47.26s (import 56%, tests 28%, environment 13%, transform 2%)
+
+     Import  834 modules were evaluated 2255 times · 48.38s total, 56% of tracked time
+             ~8.54s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation

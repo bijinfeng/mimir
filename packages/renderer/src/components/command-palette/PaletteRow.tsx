@@ -1,6 +1,5 @@
 import { Button } from 'antd'
-import { ChevronDown, ChevronUp } from 'lucide-react'
-import { useId, useState } from 'react'
+import { ChevronDown, Folder } from 'lucide-react'
 import type { PaletteItem } from './items'
 import { useStyles } from './styles'
 
@@ -10,16 +9,16 @@ export function PaletteRow({
   disabled,
   onSelect,
   onExecute,
+  onDetail,
 }: {
   item: PaletteItem
   active: boolean
   disabled: boolean
   onSelect: () => void
   onExecute: () => void
+  onDetail: () => void
 }) {
   const { styles, cx } = useStyles()
-  const [expanded, setExpanded] = useState(false)
-  const detailsId = useId()
   return (
     <div className={styles.row}>
       <button
@@ -29,39 +28,48 @@ export function PaletteRow({
         className={cx(
           styles.item,
           item.type === 'document' && styles.documentItem,
+          item.key.startsWith('hit:') && styles.hitItem,
           active && styles.itemActive,
         )}
+        title={`${item.title}${item.path ? `\n${item.path}` : ''}`}
         disabled={disabled}
         onMouseEnter={onSelect}
         onFocus={onSelect}
         onClick={onExecute}
       >
-        <span className={styles.itemIcon}>{item.icon}</span>
+        <span className={styles.itemIcon} data-role="icon">
+          {item.icon}
+        </span>
         <span className={styles.itemMain}>
           <span className={styles.itemTitle} data-role="title">
             {item.title}
           </span>
-          {item.sub && <span className={styles.itemSub}>{item.sub}</span>}
-          {item.path && <span className={styles.path}>{item.path}</span>}
+          {item.sub && (
+            <span className={styles.itemSub} data-role="snippet">
+              {item.sub}
+            </span>
+          )}
+          {item.path && (
+            <span className={styles.path}>
+              <Folder size={11} aria-hidden />
+              <span>{item.path.replaceAll('/', ' / ')}</span>
+            </span>
+          )}
         </span>
       </button>
       {item.type === 'document' && (
         <Button
+          autoInsertSpace={false}
           type="text"
           size="small"
           className={styles.detailButton}
           aria-label={`查看完整信息：${item.title}`}
-          aria-expanded={expanded}
-          aria-controls={detailsId}
-          icon={expanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+          aria-haspopup="dialog"
+          title="查看完整标题与片段"
+          icon={<ChevronDown size={14} aria-hidden />}
           disabled={disabled}
-          onClick={() => setExpanded((value) => !value)}
+          onClick={onDetail}
         />
-      )}
-      {expanded && (
-        <div id={detailsId} className={styles.detail}>
-          {[item.title, item.path, item.sub].filter(Boolean).join('\n')}
-        </div>
       )}
     </div>
   )

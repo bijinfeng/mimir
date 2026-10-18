@@ -1,0 +1,55 @@
+{
+  "date": "2026-10-18",
+  "basis": "frozen search v1 HTML SHA256 0e8a90da0c37c509f8fcda8027c9f01bac5f58607c45db83f10d41f8fb950535",
+  "product": "http://127.0.0.1:5174",
+  "account": "admin@example.com",
+  "comparison": "comparison.html",
+  "checks": [
+    {
+      "state": "desktop.light",
+      "result": "620px; row54 padding16/18 gap10; input14/21 border0 shadow none; whole row focus bottom1px; title13/20 snippet12/19 path10/16; footer39; AI47.390625"
+    },
+    {
+      "state": "desktop.dark",
+      "result": "surface #202225 selected #34383c AI #242629 focus #6bdaa5; shadow 0 16 40 rgba(0,0,0,.36)"
+    },
+    {
+      "state": "detail",
+      "result": "480x275.8125 padding24; separate second dialog; return preserves Mimir and focuses search input"
+    },
+    {
+      "state": "390x844",
+      "result": "panel374x605 top118.15625; row65; detail44x44; no horizontal overflow"
+    },
+    {
+      "state": "390x500",
+      "result": "panel374x382 top70 bottom452; list internal scroll; footer and AI within viewport"
+    },
+    {
+      "state": "rename",
+      "result": "480x249 padding24; title/context/name/save/cancel match; local autoInsertSpace false"
+    },
+    {
+      "state": "move",
+      "result": "real root directory/移动到/所选目录 fields visible; screenshot saved"
+    },
+    {
+      "state": "find",
+      "result": "one trimmed character confirmation disabled; two enabled; current context/helper visible"
+    },
+    {
+      "state": "empty",
+      "result": "real nonexistent term renders centered icon/title/help, explicit AI action separate"
+    },
+    {
+      "state": "report",
+      "result": "all15 comparison and gallery images loaded; frozen/product difference explained; viewport reset and light restored"
+    }
+  ],
+  "coverage": "16 groups inspected in source; not 152 real GUI runs",
+  "limits": [
+    "native Electron / OS IME / screenreader / soft keyboard not newly verified",
+    "native browser200% zoom not executed",
+    "error/loading/cache/guard/new-note/storage edge states use focused regressions and source evidence; no claim all run in GUI"
+  ]
+}

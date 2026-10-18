@@ -1,5 +1,8 @@
 import type { DocumentDetail, FolderNode } from '@mimir/shared'
 import { Button, Input, Modal, Select } from 'antd'
+import { CircleAlert, LoaderCircle, X } from 'lucide-react'
+import { useHostStyles } from '../command-palette/host-styles'
+import { useStyles as usePaletteStyles } from '../command-palette/styles'
 import { useEffect, useRef, useState } from 'react'
 import { flattenFolders } from './folders'
 import { useStyles } from './DocumentCommandModal.style'
@@ -37,6 +40,8 @@ export function DocumentCommandModal({
   restoreFocus,
 }: Props) {
   const { styles } = useStyles()
+  const { styles: hostStyles, cx } = useHostStyles()
+  const { styles: paletteStyles } = usePaletteStyles()
   const [command, setCommand] = useState<DocumentCommand>('rename')
   const [open, setOpen] = useState(false)
   const [value, setValue] = useState('')
@@ -152,51 +157,57 @@ export function DocumentCommandModal({
   }
   const help =
     command === 'rename'
-      ? '最多 200 个字符；修改后同步重命名文件'
+      ? ''
       : command === 'search'
-        ? '至少输入 2 个字符，在当前笔记正文中查找'
-        : '选择目标目录，成功后可在 8 秒内撤销'
+        ? '输入至少两个字，定位当前笔记中的首个匹配'
+        : ''
 
   return (
     <Modal
-      title={
-        command === 'rename'
-          ? '重命名当前笔记'
-          : command === 'move'
-            ? '移动当前文档'
-            : '搜索当前笔记'
-      }
+      title={command === 'rename' ? '重命名笔记' : command === 'move' ? '移动文档' : '搜索当前笔记'}
+      width={480}
+      className={hostStyles.modal}
+      style={{ top: 'calc(14vh + 24px)' }}
+      closeIcon={<X size={17} aria-hidden />}
       open={open}
       onCancel={close}
       onOk={() => void submit()}
       okText={
-        refreshOnly
-          ? '重试刷新'
-          : command === 'rename'
-            ? '重命名'
+        pending
+          ? refreshOnly
+            ? '刷新中…'
             : command === 'move'
-              ? '移动'
-              : '查找'
+              ? '移动中…'
+              : '保存中…'
+          : refreshOnly
+            ? '重试刷新'
+            : command === 'rename'
+              ? '保存'
+              : command === 'move'
+                ? '移动'
+                : '查找'
       }
       confirmLoading={pending}
-      cancelButtonProps={{ disabled: pending }}
-      okButtonProps={{
-        disabled:
-          pending || (!refreshOnly && command === 'move' && (foldersLoading || foldersError)),
+      cancelButtonProps={{
+        autoInsertSpace: false,
+        className: hostStyles.button,
+        disabled: pending,
       }}
-      closable={!pending}
+      okButtonProps={{
+        autoInsertSpace: false,
+        className: cx(hostStyles.button, hostStyles.primary),
+        disabled:
+          pending ||
+          (!refreshOnly &&
+            ((command === 'move' && (foldersLoading || foldersError)) ||
+              (command === 'search' && value.trim().length < 2))),
+      }}
+      closable={{ disabled: pending }}
       keyboard={!pending}
       mask={{ closable: !pending }}
       focusable={{ focusTriggerAfterClose: false }}
       afterClose={() => {
         if (mounted.current && !open) restoreFocus(doc.id, trigger.current)
-      }}
-      centered
-      styles={{
-        container: { maxHeight: 'calc(100dvh - 32px)', display: 'flex', flexDirection: 'column' },
-        header: { flexShrink: 0 },
-        body: { minHeight: 0, overflowY: 'auto' },
-        footer: { flexShrink: 0 },
       }}
       destroyOnHidden
     >
@@ -220,63 +231,67 @@ export function DocumentCommandModal({
           }
         }}
       >
+        <p className={styles.subtitle}>
+          {doc.kind === 'note' ? '当前笔记' : '当前文档'}：{doc.title}
+        </p>
         {command === 'move' ? (
           <>
             <span className={styles.label} id="document-command-label">
-              目标目录
+              移动到
             </span>
-            <Select
-              autoFocus
-              aria-labelledby="document-command-label"
-              aria-describedby="document-command-help document-command-error"
-              style={{ width: '100%' }}
-              disabled={pending || refreshOnly || foldersLoading || foldersError}
-              loading={foldersLoading}
-              value={value}
-              onChange={(next) => {
-                setValue(next)
-                setError(null)
-              }}
-              options={[
-                { value: '', label: '知识库根' },
-                ...flattenFolders(folders).map((item) => ({
-                  value: item.path,
-                  label: item.path,
-                  title: item.path,
-                })),
-              ]}
-            />
-            <p className={styles.path} title={value || '知识库根'}>
-              目标：{value || '知识库根'}
-            </p>
-            {foldersLoading ? (
-              <p role="status" className={styles.help}>
-                正在读取目录…
-              </p>
-            ) : null}
-            {foldersError ? (
-              <div role="alert" className={styles.error}>
-                目录暂时无法读取，请重试。
-                <Button
-                  type="link"
-                  disabled={foldersLoading}
-                  loading={foldersLoading}
-                  onClick={retryFolders}
-                >
-                  重试
-                </Button>
+            {foldersLoading || foldersError ? (
+              <div className={styles.folderFeedback} role={foldersError ? 'alert' : 'status'}>
+                {foldersLoading ? (
+                  <>
+                    <LoaderCircle size={14} className={paletteStyles.spin} aria-hidden />
+                    正在读取目录…
+                  </>
+                ) : (
+                  <>
+                    <CircleAlert size={17} aria-hidden />
+                    <span>目录暂时无法读取</span>
+                    <Button type="link" className={styles.retry} onClick={retryFolders}>
+                      重试
+                    </Button>
+                  </>
+                )}
               </div>
-            ) : null}
+            ) : (
+              <Select
+                autoFocus
+                aria-labelledby="document-command-label"
+                aria-describedby="document-command-help document-command-error"
+                className={styles.select}
+                disabled={pending || refreshOnly}
+                value={value}
+                onChange={(next) => {
+                  setValue(next)
+                  setError(null)
+                }}
+                options={[
+                  { value: '', label: '知识库根' },
+                  ...flattenFolders(folders).map((item) => ({
+                    value: item.path,
+                    label: item.path,
+                    title: item.path,
+                  })),
+                ]}
+              />
+            )}
+            <p className={styles.path} title={value || '知识库根'}>
+              所选目录：{value || '知识库根'}
+            </p>
           </>
         ) : (
           <>
             <label className={styles.label} htmlFor="document-command-input">
-              {command === 'rename' ? '新标题' : '查找内容'}
+              {command === 'rename' ? '名称' : '查找内容'}
             </label>
             <Input
               id="document-command-input"
+              className={styles.input}
               autoFocus
-              aria-label={command === 'rename' ? '新标题' : '在当前笔记中查找'}
+              aria-label={command === 'rename' ? '笔记名称' : '当前笔记查找内容'}
               aria-describedby="document-command-help document-command-error"
               aria-invalid={Boolean(error)}
               status={error ? 'error' : undefined}
@@ -290,25 +305,16 @@ export function DocumentCommandModal({
             />
           </>
         )}
-        <p className={styles.help} id="document-command-help">
-          {help}
-        </p>
-        <div
-          id="document-command-error"
-          role={error ? 'alert' : undefined}
-          className={styles.error}
-        >
-          {error}
-        </div>
-        {pending ? (
-          <p role="status" className={styles.help}>
-            {refreshOnly
-              ? '正在刷新，请稍候…'
-              : command === 'rename'
-                ? '正在重命名，请稍候…'
-                : '正在移动，请稍候…'}
+        {help && (
+          <p className={styles.help} id="document-command-help">
+            {help}
           </p>
-        ) : null}
+        )}
+        {error && (
+          <p id="document-command-error" role="alert" className={styles.error}>
+            {error}
+          </p>
+        )}
       </div>
     </Modal>
   )

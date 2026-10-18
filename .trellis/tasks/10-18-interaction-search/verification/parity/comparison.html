@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>搜索模块 · 还原复核</title
+  ><style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #f7f8f8;
+      color: #262626;
+      font:
+        14px/1.65 -apple-system,
+        BlinkMacSystemFont,
+        'Segoe UI',
+        'PingFang SC',
+        sans-serif;
+    }
+    header {
+      padding: 28px max(24px, calc((100% - 1360px) / 2));
+      background: #fff;
+      border-bottom: 1px solid #e8e8e8;
+    }
+    h1 {
+      font-size: 24px;
+      margin: 5px 0 8px;
+    }
+    p {
+      margin: 8px 0;
+    }
+    small,
+    .note {
+      color: #6b6b6b;
+    }
+    a {
+      color: #007a45;
+    }
+    main {
+      max-width: 1408px;
+      margin: auto;
+      padding: 24px;
+    }
+    nav {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin: 0 0 20px;
+    }
+    button {
+      font: inherit;
+      background: white;
+      border: 1px solid #e0e3e1;
+      border-radius: 6px;
+      padding: 7px 16px;
+      cursor: pointer;
+      color: inherit;
+    }
+    button[aria-pressed='true'] {
+      background: #eff0f0;
+      border-color: #8a9890;
+    }
+    button:focus-visible {
+      outline: 2px solid #00834d;
+      outline-offset: 2px;
+    }
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .pair[hidden] {
+      display: none;
+    }
+    figure {
+      margin: 0;
+      min-width: 0;
+      background: white;
+      border: 1px solid #e4e7e5;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    figcaption {
+      padding: 12px 18px;
+      font-weight: 600;
+      border-bottom: 1px solid #e8e8e8;
+    }
+    .image {
+      padding: 20px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      background: #e5e7e6;
+      min-height: 300px;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+    .note {
+      min-height: 46px;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin: 20px 0;
+    }
+    .cards img {
+      width: 100%;
+    }
+    h2 {
+      font-size: 18px;
+      margin: 32px 0 12px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+    }
+    td,
+    th {
+      text-align: left;
+      border: 1px solid #e8e8e8;
+      padding: 10px 14px;
+    }
+    footer {
+      padding: 24px 0;
+      color: #6b6b6b;
+    }
+    .muted {
+      font-size: 12px;
+      color: #6b6b6b;
+    }
+    @media (max-width: 800px) {
+      .compare,
+      .cards {
+        grid-template-columns: 1fr;
+      }
+      main {
+        padding: 16px;
+      }
+      .image {
+        padding: 12px;
+      }
+    }
+  </style>
+  <header>
+    <small>Mimir · 第三模块 / 已批准稿还原修正</small>
+    <h1>搜索与命令面板 · 还原复核</h1>
+    <p>以冻结的「打磨后」稿为准，修正了输入焦点、排版、命中详情、AI区与文档操作弹窗。</p>
+    <p class="muted">
+      这是原稿与实际产品的证据对照。原稿不作修改；数据来自各自原型样例与实际API，标题、片段与路径可能不同。桌面原型画布高度小于实际视口，列表按可用高度收缩；两者最大高度均为440px。
+    </p>
+  </header>
+  <main>
+    <nav>
+      <button data-view="desktop" aria-pressed="true">浅色搜索</button
+      ><button data-view="dark" aria-pressed="false">深色搜索</button
+      ><button data-view="detail" aria-pressed="false">完整信息</button
+      ><button data-view="rename" aria-pressed="false">重命名</button
+      ><button data-view="narrow" aria-pressed="false">390px</button
+      ><button data-view="low" aria-pressed="false">低高度</button>
+    </nav>
+    <section id="desktop" class="pair">
+      <p class="note">输入14/21、标题13/20、片段12/19、路径10/16；整行1px焦点底线。</p>
+      <div class="compare">
+        <figure>
+          <figcaption>已批准 · 冻结 HTML v1</figcaption>
+          <div class="image"><img src="target-desktop.png" alt="批准稿：浅色搜索" /></div>
+        </figure>
+        <figure>
+          <figcaption>修正后 · 实际产品截图</figcaption>
+          <div class="image"><img src="actual-desktop-panel.png" alt="实际产品：浅色搜索" /></div>
+        </figure>
+      </div>
+    </section>
+    <section id="dark" class="pair" hidden>
+      <p class="note">
+        浮层 #202225、选中 #34383c、AI底 #242629，阴影与原稿一致。原稿使用长标题用例。
+      </p>
+      <div class="compare">
+        <figure>
+          <figcaption>已批准 · 冻结 HTML v1</figcaption>
+          <div class="image"><img src="target-dark.png" alt="批准稿：深色搜索" /></div>
+        </figure>
+        <figure>
+          <figcaption>修正后 · 实际产品截图</figcaption>
+          <div class="image"><img src="actual-dark-panel.png" alt="实际产品：深色搜索" /></div>
+        </figure>
+      </div>
+    </section>
+    <section id="detail" class="pair" hidden>
+      <p class="note">独立480px详情层，24px内边距；返回保留查询和输入焦点。</p>
+      <div class="compare">
+        <figure>
+          <figcaption>已批准 · 冻结 HTML v1</figcaption>
+          <div class="image"><img src="target-detail.png" alt="批准稿：完整信息" /></div>
+        </figure>
+        <figure>
+          <figcaption>修正后 · 实际产品截图</figcaption>
+          <div class="image"><img src="actual-detail-panel.png" alt="实际产品：完整信息" /></div>
+        </figure>
+      </div>
+    </section>
+    <section id="rename" class="pair" hidden>
+      <p class="note">480×249px；名称字段、当前笔记上下文、保存与取消均按稿。</p>
+      <div class="compare">
+        <figure>
+          <figcaption>已批准 · 冻结 HTML v1</figcaption>
+          <div class="image"><img src="target-rename.png" alt="批准稿：重命名" /></div>
+        </figure>
+        <figure>
+          <figcaption>修正后 · 实际产品截图</figcaption>
+          <div class="image"><img src="actual-rename-panel.png" alt="实际产品：重命名" /></div>
+        </figure>
+      </div>
+    </section>
+    <section id="narrow" class="pair" hidden>
+      <p class="note">实际视口390×844，面板374×605px，顶部118px；详情按钮44×44px，无横向溢出。</p>
+      <div class="compare">
+        <figure>
+          <figcaption>已批准 · 冻结 HTML v1</figcaption>
+          <div class="image"><img src="target-narrow.png" alt="批准稿：390px" /></div>
+        </figure>
+        <figure>
+          <figcaption>修正后 · 实际产品截图</figcaption>
+          <div class="image"><img src="after-narrow.png" alt="实际产品：390px" /></div>
+        </figure>
+      </div>
+    </section>
+    <section id="low" class="pair" hidden>
+      <p class="note">
+        实际390×500，顶部70px、面板高382px；底部可见，列表内部滚动。原稿画布有2px边框，面板高380px。
+      </p>
+      <div class="compare">
+        <figure>
+          <figcaption>已批准 · 冻结 HTML v1</figcaption>
+          <div class="image"><img src="target-low.png" alt="批准稿：低高度" /></div>
+        </figure>
+        <figure>
+          <figcaption>修正后 · 实际产品截图</figcaption>
+          <div class="image"><img src="after-low.png" alt="实际产品：低高度" /></div>
+        </figure>
+      </div>
+    </section>
+    <h2>实际产品的其他状态</h2>
+    <div class="cards">
+      <figure>
+        <figcaption>移动文档</figcaption>
+        <img src="after-move.png" alt="真实移动弹窗" />
+      </figure>
+      <figure>
+        <figcaption>查找当前笔记</figcaption>
+        <img src="after-find.png" alt="真实查找弹窗" />
+      </figure>
+      <figure>
+        <figcaption>没有匹配文档 · 深色</figcaption>
+        <img src="after-empty.png" alt="真实无结果反馈" />
+      </figure>
+    </div>
+    <h2>本轮验证</h2>
+    <table>
+      <tr>
+        <th>范围</th>
+        <th>结果 / 边界</th>
+      </tr>
+      <tr>
+        <td>16组 / 152覆盖项</td>
+        <td>逐组源码审计与对应回归；152项不是152个真实页面。</td>
+      </tr>
+      <tr>
+        <td>实际浏览器</td>
+        <td>
+          浅深桌面、390×844、390×500、详情返回焦点、重命名/移动/查找、真实无结果；未声称逐项真实GUI或原生200%缩放已执行。
+        </td>
+      </tr>
+      <tr>
+        <td>Renderer</td>
+        <td>57文件 / 495项测试通过；本轮lint、format、类型、样式与AntD检查通过。</td>
+      </tr>
+      <tr>
+        <td>全仓</td>
+        <td>
+          类型检查通过；pnpm
+          check停在另一小程序原型的7项lint错误，后续步骤未执行。前轮Office加密测试历史阻断本轮未重跑。
+        </td>
+      </tr>
+    </table>
+    <footer>
+      冻结HTML SHA256：<code>0e8a90da…fb950535</code> ·
+      <a href="http://127.0.0.1:5182/review.html" target="_blank" rel="noreferrer"
+        >打开原始批准稿</a
+      >
+      ·
+      <a
+        href="http://127.0.0.1:5174/docs?scope=all&amp;id=Y5sJ31WzhcQ7_GFg"
+        target="_blank"
+        rel="noreferrer"
+        >打开实际产品</a
+      >
+      <p class="muted">
+        本轮只修正已批准模块；原生输入法、Electron、读屏和软键盘仍需对应宿主验收。
+      </p>
+    </footer>
+  </main>
+  <script>
+    document.querySelectorAll('[data-view]').forEach((button) =>
+      button.addEventListener('click', () => {
+        document
+          .querySelectorAll('[data-view]')
+          .forEach((b) => b.setAttribute('aria-pressed', String(b === button)))
+        document.querySelectorAll('.pair').forEach((p) => (p.hidden = p.id !== button.dataset.view))
+      }),
+    )
+  </script>
+</html>

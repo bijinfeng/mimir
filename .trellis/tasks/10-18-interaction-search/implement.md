@@ -43,3 +43,7 @@
 - 三处关注点实施、独立检查和合并真实浏览器验收完成。元数据刷新失败的必要保护采用有缓存doc保留活编辑器、只重试读取；未改autosave算法。
 - 完整Renderer57文件490项通过；全仓类型通过。本轮lint/format/AntD/样式门通过。全仓门仍被小程序lint、其他配置格式及Office加密测试阻断，任务保持in_progress。
 - 全部事实、152项验证分类与限制见[产品实施验收](implementation-acceptance.md)，不把原型模拟或组件回归当真实原生能力验证。
+
+## 还原修正轮
+
+用户指出首轮视觉偏差；按照冻结稿执行16组差异审计、局部视觉修正、独立检查及实际截图/计算样式对照。修正结果与边界以implementation-acceptance.md末节、verification/parity/为准，替代首轮视觉完成声明。Renderer495测试和全仓类型通过，全仓lint仍有外部阻断，保持in_progress。

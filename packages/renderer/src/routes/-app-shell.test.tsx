@@ -48,6 +48,7 @@ vi.mock('../components/CommandPalette', () => ({
       <input aria-label="搜索草稿" defaultValue="保留这个输入" />
       <output data-pending>{String(props.creatingNote)}</output>
       <output data-suspended>{String(props.interactionSuspended)}</output>
+      <output data-create-retryable>{String(props.createNoteRetryable)}</output>
       <output data-create-error>{props.createNoteError}</output>
       <button onClick={props.onClose}>关闭搜索</button>
       <button onClick={() => void props.onNewNote()}>新建</button>
@@ -200,6 +201,7 @@ describe('命令面板的应用壳交接', () => {
     await act(async () => request.reject(new TypeError('Network response lost')))
     expect(host.querySelector('[data-pending]')?.textContent).toBe('false')
     expect(host.querySelector('[data-create-error]')?.textContent).toContain('先检查知识库')
+    expect(host.querySelector('[data-create-retryable]')?.textContent).toBe('false')
     expect(host.querySelector<HTMLInputElement>('input')?.value).toBe('保留这个输入')
     expect(paletteOpen()).toBe(true)
 
@@ -231,6 +233,7 @@ describe('命令面板的应用壳交接', () => {
     expect(create).toHaveBeenCalledTimes(1)
     expect(paletteOpen()).toBe(true)
     expect(host.querySelector('[data-create-error]')?.textContent).toContain('当前不能新建')
+    expect(host.querySelector('[data-create-retryable]')?.textContent).toBe('true')
     expect(navigation.navigate).not.toHaveBeenCalled()
   })
 

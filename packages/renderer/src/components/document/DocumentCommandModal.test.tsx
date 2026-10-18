@@ -132,7 +132,7 @@ describe('document-bound command hosts', () => {
       expect(composingShortcut.defaultPrevented).toBe(false)
       expect(globalShortcut).not.toHaveBeenCalled()
       await fill('新标题')
-      await click('重命名')
+      await click('保存')
       const event = new KeyboardEvent('keydown', {
         key: 'k',
         metaKey: true,
@@ -160,14 +160,17 @@ describe('document-bound command hosts', () => {
   it('prefills the title, rejects blank, closes unchanged without a request', async () => {
     await render()
     await command('rename')
+    expect(document.body.textContent).toContain('当前笔记：研究笔记')
+    expect(document.body.textContent).toContain('重命名笔记')
+    expect(input().getAttribute('aria-label')).toBe('笔记名称')
     expect(input().value).toBe(note.title)
     expect(input().maxLength).toBe(200)
     await fill('  ')
-    await click('重命名')
+    await click('保存')
     expect(document.body.textContent).toContain('请输入笔记标题')
     expect(rename).not.toHaveBeenCalled()
     await fill(note.title)
-    await click('重命名')
+    await click('保存')
     expect(rename).not.toHaveBeenCalled()
     await act(async () => {
       await vi.waitFor(() => expect(restoreFocus).toHaveBeenCalledWith(note.id, expect.anything()))
@@ -199,7 +202,7 @@ describe('document-bound command hosts', () => {
     expect(document.body.textContent).toContain('网络断开，请重试')
     expect(input().value).toBe('中文新标题')
     expect(input().disabled).toBe(false)
-    await click('重命名')
+    await click('保存')
     expect(rename).toHaveBeenCalledTimes(2)
     await act(async () => {
       await vi.waitFor(() => expect(restoreFocus).toHaveBeenCalled())
@@ -214,7 +217,7 @@ describe('document-bound command hosts', () => {
     expect(input()).toBeNull()
     await command('rename')
     await fill('A 的新名称')
-    await click('重命名')
+    await click('保存')
     const other = { ...note, id: 'note-b', title: 'B 笔记' }
     await render(other)
     await command('rename', other.id)
@@ -223,7 +226,7 @@ describe('document-bound command hosts', () => {
     expect(input().value).toBe('B 的草稿')
     expect(rename).toHaveBeenCalledExactlyOnceWith(note.id, 'A 的新名称')
     expect(restoreFocus).not.toHaveBeenCalled()
-    await click('重命名')
+    await click('保存')
     expect(rename).toHaveBeenLastCalledWith(other.id, 'B 的草稿')
   })
 
@@ -243,7 +246,7 @@ describe('document-bound command hosts', () => {
     const pending = deferred()
     move.mockReturnValueOnce(pending.promise)
     await click('移动')
-    await click('移动')
+    await click('移动中…')
     expect(move).toHaveBeenCalledExactlyOnceWith(
       expect.objectContaining({ id: note.id }),
       '资料/原目录',
@@ -251,7 +254,7 @@ describe('document-bound command hosts', () => {
     expect(button('取消').disabled).toBe(true)
     await act(async () => pending.reject(new Error('移动失败，请重试')))
     expect(document.body.textContent).toContain('移动失败，请重试')
-    expect(document.body.textContent).toContain('目标：资料/原目录')
+    expect(document.body.textContent).toContain('所选目录：资料/原目录')
     await click('移动')
     expect(move).toHaveBeenCalledTimes(2)
   })
@@ -268,11 +271,14 @@ describe('document-bound command hosts', () => {
   it('makes the find threshold explicit, protects composition, retains not-found query, and binds successful locate', async () => {
     await render()
     await command('search')
+    expect(button('查找').disabled).toBe(true)
     await fill(' 中 ')
+    expect(button('查找').disabled).toBe(true)
     await key('Enter')
     expect(find).not.toHaveBeenCalled()
     expect(document.body.textContent).toContain('至少输入 2 个字符')
     await fill('  中文  ')
+    expect(button('查找').disabled).toBe(false)
     await key('Enter', { isComposing: true })
     expect(find).not.toHaveBeenCalled()
     await key('Enter')
@@ -291,7 +297,7 @@ describe('document-bound command hosts', () => {
     await render()
     await command('rename')
     await fill('已写入的新标题')
-    await click('重命名')
+    await click('保存')
     expect(input().value).toBe('已写入的新标题')
     expect(button('重试刷新')).toBeDefined()
     await click('重试刷新')

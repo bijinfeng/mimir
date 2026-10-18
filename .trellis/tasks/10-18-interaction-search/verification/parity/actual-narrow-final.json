@@ -1,0 +1,33 @@
+{
+  "detail": {
+    "bottom": 324.15625,
+    "height": 44,
+    "left": 315,
+    "right": 359,
+    "top": 280.15625,
+    "width": 44,
+    "x": 315,
+    "y": 280.15625
+  },
+  "horizontal": false,
+  "rect": {
+    "bottom": 723.15625,
+    "height": 605,
+    "left": 8,
+    "right": 382,
+    "top": 118.15625,
+    "width": 374,
+    "x": 8,
+    "y": 118.15625
+  },
+  "row": {
+    "bottom": 183.15625,
+    "height": 65,
+    "left": 8,
+    "right": 382,
+    "top": 118.15625,
+    "width": 374,
+    "x": 8,
+    "y": 118.15625
+  }
+}

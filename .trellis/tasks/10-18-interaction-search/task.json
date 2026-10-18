@@ -2,7 +2,7 @@
   "id": "interaction-search",
   "name": "interaction-search",
   "title": "搜索与命令面板交互精修",
-  "description": "第三模块：冻结HTML v1已获批准并完成产品实施，保留全仓质量门外部阻断待复验",
+  "description": "第三模块：冻结HTML v1获准；用户指出还原偏差后完成修正与对照，保留外部全仓质量门阻断",
   "status": "in_progress",
   "dev_type": null,
   "scope": "renderer/global search and document command host handoff",
@@ -33,8 +33,12 @@
     "verification/prototype-check.md",
     "implementation-acceptance.md",
     "verification/independent-check.md",
-    "verification/product-browser-qa.json"
+    "verification/product-browser-qa.json",
+    "verification/visual-parity-audit.md",
+    "verification/parity/comparison.html",
+    "verification/parity/browser-qa.json",
+    "verification/parity/independent-check.md"
   ],
-  "notes": "用户2026-10-18回复实施吧，批准冻结v1。产品实施与实际浏览器验收、独立检查完成；Renderer 57文件490测试通过。全仓lint/format和Office加密测试外部阻断未解决，不归档、不宣称全仓门通过。详见implementation-acceptance.md。",
+  "notes": "首轮视觉完成结论已更正。16组差异审计、冻结稿还原修正、实际浅深/390/低高度/详情与宿主对照完成；独立Renderer57文件495测试及全仓类型通过。pnpm check停于外部小程序7项lint，不归档。verification/parity/comparison.html与browser-qa.json为本轮证据。",
   "meta": {}
 }

@@ -20,6 +20,7 @@ paths:
 - [pitfalls](./pitfalls.md)
 
 - [表单](./forms.md)
+- [搜索面板批准稿与还原验收](./search-parity.md)
 - [Markdown 编辑器](./editor/index.md)
 - [主题与外观](./theme/index.md)
 - [文档面板](./document/index.md)

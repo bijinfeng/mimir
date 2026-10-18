@@ -1,0 +1,34 @@
+packages/shared typecheck$ tsc --noEmit
+packages/tokenizer typecheck$ tsc --noEmit
+packages/tokenizer typecheck: Done
+packages/shared typecheck: Done
+plugins/capturer typecheck$ tsc --noEmit
+packages/chat typecheck$ tsc --noEmit
+packages/core typecheck$ tsc --noEmit
+packages/office typecheck$ tsc --noEmit
+plugins/capturer typecheck: Done
+plugins/leg typecheck$ tsc --noEmit
+packages/core typecheck: Done
+plugins/parser typecheck$ tsc --noEmit
+packages/chat typecheck: Done
+plugins/provider typecheck$ tsc --noEmit
+plugins/leg typecheck: Done
+plugins/storage typecheck$ tsc --noEmit
+plugins/parser typecheck: Done
+packages/office typecheck: Done
+packages/renderer typecheck$ pnpm routes:generate && tsc --noEmit
+plugins/provider typecheck: Done
+plugins/storage typecheck: Done
+apps/server typecheck$ tsc --noEmit
+packages/renderer typecheck: $ node generate-routes.mjs src/routeTree.gen.ts
+packages/renderer typecheck: 路由树已生成 → /Users/admin/Desktop/mimir/packages/renderer/src/routeTree.gen.ts
+apps/server typecheck: Done
+packages/renderer typecheck: Done
+apps/web typecheck$ pnpm routes:generate && tsc --noEmit
+apps/desktop typecheck$ pnpm routes:generate && tsc --noEmit
+apps/desktop typecheck: $ node ../../packages/renderer/generate-routes.mjs src/renderer/routeTree.gen.ts src/renderer/routes /client
+apps/web typecheck: $ node ../../packages/renderer/generate-routes.mjs src/routeTree.gen.ts
+apps/desktop typecheck: 路由树已生成 → /Users/admin/Desktop/mimir/apps/desktop/src/renderer/routeTree.gen.ts
+apps/web typecheck: 路由树已生成 → /Users/admin/Desktop/mimir/apps/web/src/routeTree.gen.ts
+apps/web typecheck: Done
+apps/desktop typecheck: Done
