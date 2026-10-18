@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import brandSvg from "../public/mimir.svg?raw";
 import {
   ArrowLeft,
   ArrowRight,
@@ -43,6 +44,7 @@ type Page =
   | "folder"
   | "read"
   | "edit"
+  | "append"
   | "capture"
   | "history"
   | "mine"
@@ -113,6 +115,7 @@ const libs = [
   { name: "技术笔记", description: "开发中值得留下的经验" },
   { name: "阅读随记", description: "读过之后，留下自己的理解" },
 ];
+const brandMark = `data:image/svg+xml,${encodeURIComponent(brandSvg)}`;
 const scenarios: [string, Page, string][] = [
   ["开始提问", "ask", "范围 → 回答 → 引用 → 存为笔记"],
   ["浏览知识库", "library", "知识库 → 文档列表 → 阅读"],
@@ -184,7 +187,7 @@ export default function Prototype() {
     [searched, setSearched] = useState("");
   const [question, setQuestion] = useState(""),
     [answerScope, setAnswerScope] = useState("全部知识库"),
-    [answerDoc, setAnswerDoc] = useState("review");
+    [evidence, setEvidence] = useState<Doc[]>([]);
   const [answer, setAnswer] = useState<"empty" | "loading" | "done" | "interrupted">("empty"),
     [tick, setTick] = useState(0),
     [saved, setSaved] = useState("");
@@ -196,7 +199,9 @@ export default function Prototype() {
     [draftDoc, setDraftDoc] = useState("review"),
     [draftTarget, setDraftTarget] = useState(libs[0].name),
     [preview, setPreview] = useState(false),
+    [draftMode, setDraftMode] = useState<"edit" | "append">("edit"),
     [conflict, setConflict] = useState(false);
+  const [citation, setCitation] = useState<number | null>(null);
   const [target, setTarget] = useState(libs[0].name),
     [url, setUrl] = useState(""),
     [capture, setCapture] = useState<"idle" | "loading" | "done" | "error">("idle"),
@@ -212,15 +217,21 @@ export default function Prototype() {
   const keyboard = useKeyboard(),
     { bottomInset, isKeyboardVisible } = useKeyboardInsets();
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const dirty = newNote || draft !== baseline || title !== doc.title;
+  const appRef = useRef<HTMLDivElement>(null);
+  const answerScroll = useRef<number | null>(null);
+  const dirty =
+    draftMode === "append"
+      ? Boolean(draft.trim())
+      : newNote || draft !== baseline || title !== doc.title;
   const single = !libs.some((l) => l.name === answerScope) && answerScope !== "全部知识库";
-  const evidence = docs
-    .filter(
-      (d) =>
-        answerScope === "全部知识库" || (single ? d.id === answerDoc : d.folder === answerScope),
-    )
-    .slice(0, 2);
-  const source = evidence[0] ?? docs[0];
+  const snapshotEvidence = (range: string, documentId: string, available = docs) => {
+    const documentScope = range !== "全部知识库" && !libs.some((l) => l.name === range);
+    return available
+      .filter((d) => range === "全部知识库" || (documentScope ? d.id === documentId : d.folder === range))
+      .slice(0, 2)
+      .map((d) => ({ ...d, tags: [...d.tags] }));
+  };
+  const source = evidence[0] ?? seed[0];
   const technical = source.id === "rag";
   const answerText = technical
     ? "这份实践笔记强调：检索范围必须在召回阶段生效。无命中时应明确说明，不扩大范围，再用找到的相关段落组织有来源的回答。"
@@ -261,12 +272,14 @@ export default function Prototype() {
     setSheet(s);
   };
   const read = (d: Doc) => {
+    if (page === "ask")
+      answerScroll.current = appRef.current?.querySelector(".app-body .mobile-scroll")?.scrollTop ?? 0;
     setReadFrom(page);
     setId(d.id);
     setLibrary(d.folder);
     go("read");
   };
-  const edit = (isNew = false) => {
+  const edit = (isNew = false, append = false) => {
     if (kept && (draftDoc !== id || isNew)) {
       setId(draftDoc);
       setLibrary(
@@ -280,16 +293,27 @@ export default function Prototype() {
     const resume = !isNew && kept && draftDoc === id;
     if (!resume) {
       setNew(isNew);
+      setDraftMode(append ? "append" : "edit");
       setKept(false);
       setConflict(false);
       setDraftDoc(id);
       setDraftTarget(isNew ? library : doc.folder);
-      setDraft(isNew ? "" : doc.body);
+      setDraft(isNew || append ? "" : doc.body);
       setBaseline(isNew ? "" : doc.body);
       setTitle(isNew ? "" : doc.title);
     }
-    go("edit");
+    go(resume ? draftMode : append ? "append" : "edit");
     return true;
+  };
+  const showCitation = (number: number | null) => {
+    setCitation(number);
+    open("citation");
+  };
+  const organize = () => {
+    setMetaTitle(doc.title);
+    setTags(doc.tags.join("，"));
+    setTarget(doc.folder);
+    open("actions");
   };
   const askDoc = () => {
     setScope(doc.title);
@@ -297,6 +321,17 @@ export default function Prototype() {
     setAnswer("empty");
     setQuery("");
     go("ask");
+  };
+  const restoreConversation = (value: string, interrupted = false) => {
+    // The two demo history entries retain the sources captured for those answers.
+    setQuestion(value);
+    setScope(libs[0].name);
+    setAnswerScope(libs[0].name);
+    setEvidence(snapshotEvidence(libs[0].name, "review", seed));
+    setMode("ask");
+    setSaved("");
+    setTick(interrupted ? 1 : 6);
+    setAnswer(interrupted ? "interrupted" : "done");
   };
   const send = (value = query) => {
     if (!value.trim() || answer === "loading") return;
@@ -308,7 +343,7 @@ export default function Prototype() {
     }
     setQuestion(value.trim());
     setAnswerScope(scope);
-    setAnswerDoc(id);
+    setEvidence(snapshotEvidence(scope, id));
     setAnswer("loading");
     setTick(0);
     setSaved("");
@@ -317,6 +352,12 @@ export default function Prototype() {
   useEffect(() => {
     document.title = "mimir · 微信小程序交互原型";
   }, []);
+  useEffect(() => {
+    if (page !== "ask" || answerScroll.current === null) return;
+    const scroll = appRef.current?.querySelector(".app-body .mobile-scroll");
+    if (scroll) scroll.scrollTop = answerScroll.current;
+    answerScroll.current = null;
+  }, [page]);
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(""), 2800);
@@ -342,7 +383,8 @@ export default function Prototype() {
       notify("请先填写笔记标题");
       return;
     }
-    if (conflict && !asNew) {
+    if ((conflict || (draftMode === "append" && doc.body !== baseline)) && !asNew) {
+      setConflict(true);
       open("conflict");
       return;
     }
@@ -360,13 +402,23 @@ export default function Prototype() {
       ]);
       setId(nid);
       setLibrary(draftTarget);
-    } else setDocs((ds) => ds.map((d) => (d.id === id ? { ...d, title, body: draft } : d)));
+    } else {
+      setDocs((ds) =>
+        ds.map((d) =>
+          d.id !== id
+            ? d
+            : draftMode === "append"
+              ? { ...d, body: d.body + "\n\n" + draft.trim() }
+              : { ...d, title, body: draft },
+        ),
+      );
+    }
     setKept(false);
     setConflict(false);
     setNew(false);
     setBaseline(draft);
     go("read");
-    notify(asNew ? "已另存为新笔记" : "笔记已保存");
+    notify(asNew ? "已另存为新笔记" : draftMode === "append" ? "内容已追加到笔记" : "笔记已保存");
   };
   const collect = () => {
     keyboard.hide();
@@ -397,11 +449,15 @@ export default function Prototype() {
     setScope("全部知识库");
     setMode("ask");
     setAnswer("empty");
+    setEvidence([]);
     setSearched("");
     setQuery("");
     setCapture("idle");
     setError("");
     setNew(false);
+    setDraftMode("edit");
+    setCitation(null);
+    answerScroll.current = null;
     setKept(false);
     setDraftTarget(libs[0].name);
     setPreview(false);
@@ -430,11 +486,7 @@ export default function Prototype() {
       setCapture("error");
     }
     if (label === "中断恢复") {
-      setQuestion("怎样做一次有产出的每周回顾？");
-      setAnswer("interrupted");
-      setTick(1);
-      setScope(libs[0].name);
-      setAnswerScope(libs[0].name);
+      restoreConversation("怎样做一次有产出的每周回顾？", true);
     }
   };
   const rows = (items: Doc[], showExcerpt = false) =>
@@ -466,11 +518,12 @@ export default function Prototype() {
       (d.title + d.body).includes(searched),
   );
   const titles: Record<Page, string> = {
-    ask: "mimir",
+    ask: "问答",
     library: "知识库",
     folder: library,
-    read: library,
+    read: "阅读",
     edit: newNote ? "新建笔记" : "编辑笔记",
+    append: "追加内容",
     capture: "链接入库",
     history: "会话历史",
     mine: "我的",
@@ -479,9 +532,9 @@ export default function Prototype() {
   };
   const sheetTitles: Record<string, string> = {
     scope: "选择范围",
-    citation: "回答依据",
+    citation: citation === null ? "全部参考资料" : `引用 ${citation}`,
     save: "存为笔记",
-    actions: "整理文档",
+    actions: "文档操作",
     metadata: "文档信息",
     conflict: "这篇笔记有了新版本",
     leave: "保留未保存的内容？",
@@ -516,14 +569,14 @@ export default function Prototype() {
         </aside>,
         document.body,
       )}
-      <div className={"mimir-app" + (dark ? " dark" : "")}>
+      <div ref={appRef} data-page={page} className={"mimir-app" + (dark ? " dark" : "")}>
         <header className="mini-header">
           <div className="mini-title">
             {!["ask", "library", "mine", "login"].includes(page) && (
               <Icon
                 label="返回"
                 onClick={() =>
-                  page === "edit" && dirty
+                  (page === "edit" || page === "append") && dirty
                     ? open("leave")
                     : go(
                         page === "read"
@@ -532,7 +585,7 @@ export default function Prototype() {
                             ? "folder"
                             : page === "viewer"
                               ? "read"
-                              : page === "edit"
+                              : page === "edit" || page === "append"
                                 ? "read"
                                 : page === "folder"
                                   ? "library"
@@ -543,7 +596,7 @@ export default function Prototype() {
                 <ArrowLeft size={20} />
               </Icon>
             )}
-            {(page === "ask" || page === "login") && <img src="/mimir.svg" alt="" />}
+            {page === "login" && <img src={brandMark} alt="" />}
             <span>{titles[page]}</span>
           </div>
           <span className="wechat-capsule" aria-label="微信系统菜单示意">
@@ -552,42 +605,50 @@ export default function Prototype() {
             <CircleHelp size={17} />
           </span>
         </header>
+        {page === "ask" && (
+          <div className="chat-toolbar">
+            <div className="segmented">
+              <button
+                className={mode === "ask" ? "selected" : ""}
+                onClick={() => setMode("ask")}
+              >
+                提问
+              </button>
+              <button
+                className={mode === "search" ? "selected" : ""}
+                onClick={() => setMode("search")}
+              >
+                搜索
+              </button>
+            </div>
+            <div className="toolbar-actions">
+              <Icon label="会话历史" onClick={() => go("history")}>
+                <History size={20} />
+              </Icon>
+              <Icon
+                label="新对话"
+                onClick={() => {
+                  setAnswer("empty");
+                  setSearched("");
+                  setQuery("");
+                }}
+              >
+                <Plus size={21} />
+              </Icon>
+            </div>
+          </div>
+        )}
+        {page === "read" && (
+          <div className="reader-toolbar">
+            <span>{library}</span>
+            <Icon label="文档操作" onClick={organize}><MoreHorizontal size={20} /></Icon>
+          </div>
+        )}
         <div className="content-stage">
           <MobileScroll key={page + mode + (page === "folder" ? library : "")} className="app-body">
             <main className={"page-content page-" + page}>
               {page === "ask" && (
                 <>
-                  <div className="chat-toolbar">
-                    <div className="segmented">
-                      <button
-                        className={mode === "ask" ? "selected" : ""}
-                        onClick={() => setMode("ask")}
-                      >
-                        提问
-                      </button>
-                      <button
-                        className={mode === "search" ? "selected" : ""}
-                        onClick={() => setMode("search")}
-                      >
-                        搜索
-                      </button>
-                    </div>
-                    <div className="toolbar-actions">
-                      <Icon label="会话历史" onClick={() => go("history")}>
-                        <History size={20} />
-                      </Icon>
-                      <Icon
-                        label="新对话"
-                        onClick={() => {
-                          setAnswer("empty");
-                          setSearched("");
-                          setQuery("");
-                        }}
-                      >
-                        <Plus size={21} />
-                      </Icon>
-                    </div>
-                  </div>
                   {mode === "search" ? (
                     <>
                       {searched ? (
@@ -613,8 +674,21 @@ export default function Prototype() {
                     </>
                   ) : answer === "empty" ? (
                     <>
-                      <div className="ask-empty">
-                        <h1>向知识库提问</h1>
+                      <button
+                        className="recent-chat"
+                        onClick={() => {
+                          restoreConversation("怎样建立知识回顾习惯？");
+                        }}
+                      >
+                        <History size={17} />
+                        <span>
+                          <small>继续上次会话</small>
+                          <strong>怎样建立知识回顾习惯？</strong>
+                        </span>
+                        <ChevronRight size={16} />
+                      </button>
+                      <div className="ask-empty ask-examples">
+                        <h1>试着问问</h1>
                       </div>
                       <div className="suggestions">
                         {(scope === "全部知识库" || libs.some((l) => l.name === scope)
@@ -630,19 +704,6 @@ export default function Prototype() {
                           </button>
                         ))}
                       </div>
-                      <button
-                        className="recent-chat"
-                        onClick={() => {
-                          setQuestion("怎样建立知识回顾习惯？");
-                          setAnswer("done");
-                          setScope(libs[0].name);
-                          setAnswerScope(libs[0].name);
-                        }}
-                      >
-                        <History size={17} />
-                        <span>继续：怎样建立知识回顾习惯？</span>
-                        <ChevronRight size={16} />
-                      </button>
                     </>
                   ) : !evidence.length ? (
                     <div className="empty-state">
@@ -659,7 +720,7 @@ export default function Prototype() {
                       </div>
                       <h1 className="question">{question}</h1>
                       <div className="answer-heading">
-                        <img src="/mimir.svg" alt="mimir" />
+                        <img src={brandMark} alt="mimir" />
                         <strong>来自你的知识库</strong>
                         <span>
                           {answer === "loading"
@@ -683,7 +744,7 @@ export default function Prototype() {
                                   <button
                                     className="citation-ref"
                                     aria-label={"查看引用 " + citationNumber(i)}
-                                    onClick={() => open("citation")}
+                                    onClick={() => showCitation(citationNumber(i))}
                                   >
                                     {citationNumber(i)}
                                   </button>
@@ -696,7 +757,7 @@ export default function Prototype() {
                       </div>
                       {answer === "done" && (
                         <>
-                          <button className="sources-row" onClick={() => open("citation")}>
+                          <button className="sources-row" onClick={() => showCitation(null)}>
                             <FileText size={17} />
                             <strong>查看 {evidence.length} 份参考资料</strong>
                             <ChevronRight size={17} />
@@ -868,7 +929,7 @@ export default function Prototype() {
                 <>
                   <div className="reading-meta">
                     <span>
-                      {doc.kind === "note" ? "笔记" : doc.kind === "pdf" ? "PDF 文档" : "网页资料"}
+                      {doc.kind === "note" ? "Markdown 笔记 · 可编辑" : doc.kind === "pdf" ? "PDF 文档 · 正文只读" : "网页资料 · 正文只读"}
                     </span>
                     <span>今天 10:24 更新</span>
                   </div>
@@ -896,6 +957,28 @@ export default function Prototype() {
                   <Markdown text={doc.body} />
                   {doc.kind === "web" && <p className="source-note">收集自网页 · 原始正文只读</p>}
                   <div className="reading-end">已读到这里</div>
+                </>
+              )}
+              {page === "append" && (
+                <>
+                  <div className="append-target">
+                    <FileText size={18} />
+                    <span>
+                      <strong>{doc.title}</strong>
+                      <small>{doc.folder}</small>
+                    </span>
+                  </div>
+                  <div className="append-status">{dirty ? "本机草稿 · 尚未保存" : "追加到笔记末尾"}</div>
+                  <KeyboardTextarea
+                    className="append-input"
+                    aria-label="追加正文"
+                    placeholder="补充一个想法…"
+                    value={draft}
+                    onChange={(e) => {
+                      setDraft(e.target.value);
+                      setKept(Boolean(e.target.value.trim()));
+                    }}
+                  />
                 </>
               )}
               {page === "edit" && (
@@ -1043,10 +1126,7 @@ export default function Prototype() {
                       className="history-row"
                       key={q}
                       onClick={() => {
-                        setQuestion(q);
-                        setAnswer("done");
-                        setScope(libs[0].name);
-                        setAnswerScope(libs[0].name);
+                        restoreConversation(q);
                         go("ask");
                       }}
                     >
@@ -1231,25 +1311,13 @@ export default function Prototype() {
         )}
         {page === "read" && (
           <div className="reading-toolbar" style={{ bottom: bottomInset }}>
-            <button
-              className="secondary"
-              onClick={() => {
-                setMetaTitle(doc.title);
-                setTags(doc.tags.join("，"));
-                setTarget(doc.folder);
-                open("actions");
-              }}
-            >
-              <MoreHorizontal size={20} />
-              整理
-            </button>
             {doc.kind === "note" ? (
-              <button className="secondary" onClick={() => edit()}>
+              <button className="reader-edit" onClick={() => edit()}>
                 <Pencil size={17} />
                 编辑
               </button>
             ) : doc.kind === "pdf" ? (
-              <button className="secondary" onClick={() => go("viewer")}>
+              <button className="reader-edit" onClick={() => go("viewer")}>
                 <File size={17} />
                 原件
               </button>
@@ -1260,14 +1328,14 @@ export default function Prototype() {
             </button>
           </div>
         )}
-        {page === "edit" && (
+        {(page === "edit" || page === "append") && (
           <div className="edit-toolbar" style={{ bottom: bottomInset }}>
             <button className="secondary" onClick={() => (dirty ? open("leave") : go("read"))}>
               取消
             </button>
             <button className="primary" disabled={!dirty} onClick={() => save()}>
               <Check size={17} />
-              保存
+              {page === "append" ? "保存追加" : "保存"}
             </button>
           </div>
         )}
@@ -1318,13 +1386,17 @@ export default function Prototype() {
             )}
             {sheet === "citation" && (
               <>
-                <p className="sheet-help">引用来自本次回答的范围，可打开原文核对。</p>
-                {evidence.map((d, i) => (
-                  <div className="citation-detail" key={d.id}>
+                <div className="citation-heading">
+                  <span>{answerScope}</span>
+                  {citation !== null && <button className="text-button" onClick={() => setCitation(null)}>全部来源 <ChevronRight size={15} /></button>}
+                </div>
+                {evidence.map((d, i) => (citation === null || citation === i + 1) && (
+                  <div className={"citation-detail" + (citation !== null ? " focused" : "")} key={d.id}>
                     <div>
                       <span className="source-index">{i + 1}</span>
                       <strong>{d.title}</strong>
                     </div>
+                    <p className="citation-identity">{d.kind === "note" ? "Markdown 笔记" : d.kind === "web" ? "网页资料 · 正文只读" : "PDF · 提取正文"} · {d.folder}</p>
                     <blockquote>
                       {d.id === "review"
                         ? "每周五留出 20 分钟，只回顾本周真正用过的资料。"
@@ -1334,8 +1406,11 @@ export default function Prototype() {
                             ? "将回顾时间固定在每周五的 20 分钟。"
                             : "为每份资料写下一句自己的判断，再链接到正在思考的问题。"}
                     </blockquote>
-                    <p>保留命中片段及上下文，便于核对来源。</p>
-                    <button className="text-button" onClick={() => read(d)}>
+                    <button className="text-button" onClick={() => {
+                      const current = docs.find((item) => item.id === d.id);
+                      if (current) read(current);
+                      else notify("原文已不存在，引用片段仍保留");
+                    }}>
                       打开原文
                       <ArrowRight size={16} />
                     </button>
@@ -1387,14 +1462,7 @@ export default function Prototype() {
                 {doc.kind === "note" && (
                   <button
                     className="choice-row"
-                    onClick={() => {
-                      if (edit()) {
-                        setDraft(
-                          (current) => (kept && draftDoc === id ? current : doc.body) + "\n\n",
-                        );
-                        setKept(true);
-                      }
-                    }}
+                    onClick={() => edit(false, true)}
                   >
                     <Plus size={20} />
                     <span>追加内容</span>
@@ -1529,6 +1597,11 @@ export default function Prototype() {
                   className="text-button full danger"
                   onClick={() => {
                     setKept(false);
+                    setConflict(false);
+                    setNew(false);
+                    setDraftMode("edit");
+                    setTitle(doc.title);
+                    setBaseline(doc.body);
                     setDraft(doc.body);
                     go("read");
                   }}
@@ -1560,7 +1633,10 @@ export default function Prototype() {
                     : "退出后需重新登录，当前账号缓存将清理。"}
                 </p>
                 {kept && (
-                  <button className="primary full" onClick={() => go("edit")}>
+                  <button className="primary full" onClick={() => {
+                    setId(draftDoc);
+                    go(draftMode);
+                  }}>
                     返回保存草稿
                   </button>
                 )}

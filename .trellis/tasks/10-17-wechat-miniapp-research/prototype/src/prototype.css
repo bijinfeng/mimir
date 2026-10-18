@@ -96,6 +96,10 @@
 .sheet-app p {
   margin: 0;
 }
+.mimir-app :where(p),
+.sheet-app :where(p) {
+  color: inherit;
+}
 .mimir-app button:disabled,
 .sheet-app button:disabled {
   opacity: 0.45;
@@ -212,7 +216,36 @@
   min-height: 100%;
 }
 .page-ask {
-  padding: 0 20px 220px;
+  padding: 12px 20px 220px;
+}
+.mimir-app:is([data-page="ask"], [data-page="read"]) .content-stage {
+  top: calc(var(--top) + 92px);
+}
+.chat-toolbar,
+.reader-toolbar {
+  position: absolute;
+  top: calc(var(--top) + 48px);
+  left: 20px;
+  right: 20px;
+  height: 44px;
+  z-index: 12;
+  background: var(--surface);
+}
+.reader-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.reader-toolbar > span {
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.reader-toolbar .icon-btn {
+  margin-right: -10px;
 }
 .icon-btn {
   width: 44px;
@@ -257,12 +290,17 @@
   font-weight: 600;
 }
 .ask-empty {
-  margin: 20px 0 12px;
+  margin: 22px 0 4px;
 }
 .ask-empty h1 {
   font-size: 16px;
   font-weight: 600;
   line-height: 1.5;
+}
+.ask-examples h1 {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
 }
 .ask-empty p {
   margin-top: 8px;
@@ -284,18 +322,33 @@
   color: var(--muted);
 }
 .recent-chat {
-  margin-top: 16px;
+  margin-top: 0;
   width: 100%;
-  min-height: 44px;
+  min-height: 68px;
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--muted) !important;
-  font-size: 12px !important;
+  border-bottom: 1px solid var(--line) !important;
   text-align: left;
 }
 .recent-chat span {
   flex: 1;
+}
+.recent-chat > svg {
+  color: var(--muted);
+}
+.recent-chat small,
+.recent-chat strong {
+  display: block;
+}
+.recent-chat small {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 3px;
+}
+.recent-chat strong {
+  font-size: 14px;
+  font-weight: 500;
 }
 .composer {
   position: absolute;
@@ -439,6 +492,12 @@
   font-size: 15px;
   line-height: 1.8;
   user-select: text;
+}
+.answer-prose > p,
+.prose p {
+  color: var(--text);
+  font-size: inherit;
+  line-height: inherit;
 }
 .answer-prose h2 {
   font-size: 17px;
@@ -761,8 +820,19 @@
   transition: bottom 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .reading-toolbar > button {
-  flex: 1;
   font-size: 13px !important;
+}
+.reading-toolbar > .primary {
+  flex: 1;
+}
+.reading-toolbar .reader-edit {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 14px;
+  color: var(--secondary);
 }
 .edit-toolbar {
   justify-content: space-between;
@@ -845,6 +915,41 @@
   color: var(--muted);
   font-size: 12px;
   padding: 20px 0;
+}
+.append-target {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 4px 0 16px;
+  border-bottom: 1px solid var(--line);
+}
+.append-target > svg {
+  color: var(--muted);
+  margin-top: 3px;
+}
+.append-target strong {
+  font-size: 14px;
+  font-weight: 500;
+  display: block;
+}
+.append-target small,
+.append-status {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+}
+.append-status {
+  margin: 14px 0 10px;
+}
+.append-input {
+  width: 100%;
+  min-height: 150px;
+  field-sizing: content;
+  resize: none;
+  border: 0;
+  padding: 0;
+  font-size: 15px !important;
+  line-height: 1.8;
 }
 .field-label {
   font-size: 12px;
@@ -1087,6 +1192,7 @@
   margin: 22px 0 14px;
 }
 .paper-preview p {
+  color: #555;
   font-family: "Songti SC", "SimSun", serif;
   font-size: 12px;
   line-height: 2.1;
@@ -1149,6 +1255,30 @@
 }
 .citation-detail {
   margin: 18px 0 25px;
+}
+.citation-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.citation-heading > span {
+  font-size: 12px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.citation-heading .text-button {
+  flex-shrink: 0;
+  font-size: 12px;
+}
+.citation-detail.focused {
+  margin-top: 12px;
+}
+.citation-detail.focused blockquote {
+  background: var(--soft);
+}
+.citation-detail .citation-identity {
+  margin: 5px 0 0 30px;
 }
 .citation-detail > div {
   display: flex;
