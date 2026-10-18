@@ -1,4 +1,6 @@
-# 收集与导入：待认可的交互方案
+# 收集与导入：已批准的交互方案
+
+2026-10-18用户“可以，实施吧”已批准capture-review-v1 revision2。下文记录原提案；实施与验收另见implementation-acceptance.md。
 
 ## 视觉与交互边界
 

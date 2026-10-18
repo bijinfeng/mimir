@@ -1,4 +1,8 @@
 import { Button, Modal } from 'antd'
+import { useRef } from 'react'
+import { FileText, LoaderCircle, ShieldCheck } from 'lucide-react'
+import { useCaptureStyles } from './capture/styles'
+import { CaptureNotice } from './capture/Notice'
 import { createStyles } from 'antd-style'
 import { useUnsaved } from '../lib/unsaved'
 
@@ -34,56 +38,139 @@ const useStyles = createStyles(({ css, token }) => ({
   `,
 }))
 
-export function UnsavedGuard() {
-  const { pending, isDirty, saveMode, saving, saveError, resolve } = useUnsaved()
+export function UnsavedGuard({
+  captureContext,
+}: {
+  captureContext?: {
+    description: string
+    resultHint: string
+    documentTitle?: string
+    onContinue?: () => void
+  }
+}) {
+  const cancelRef = useRef<HTMLButtonElement>(null)
+  const { pending, isDirty, saveMode, canSave, saving, saveError, resolve } = useUnsaved()
   const { styles } = useStyles()
+  const { styles: captureStyles } = useCaptureStyles()
   const auto = saveMode === 'auto'
-
+  const captureButton = captureContext ? captureStyles.button : undefined
+  function continueEditing() {
+    if (saving) return
+    resolve('cancel')
+    captureContext?.onContinue?.()
+  }
   return (
     <Modal
       open={Boolean(pending)}
-      title={auto && !isDirty ? '改动已自动保存' : '有改动还没保存'}
+      title={
+        captureContext
+          ? '打开文档前保存改动'
+          : auto && !isDirty
+            ? '改动已自动保存'
+            : '有改动还没保存'
+      }
       closable={false}
-      /**
-       * `mask={{ closable: false }}` 而不是 `maskClosable={false}`。
-       *
-       * antd 6.6.4 把那个 prop 标成 `@deprecated Please use mask.closable instead`
-       * （`es/modal/interface.d.ts:71`），而它在**每次渲染**时就检查——prop 存在
-       * 就发警告，与有没有 open 无关，于是每个页面加载都会往控制台打一条。
-       * 这一屏的语义恰恰是「点遮罩不能走」（有未保存内容时不许放行），
-       * 迁移到新写法才不会在 antd 7 移除旧 prop 后**静默退回**「点遮罩就关」。
-       * 同类迁移见 `.trellis/spec/project/design.md` §7.5（antd v6 的两处 API 变更）。
-       */
+      classNames={{ footer: captureContext ? captureStyles.footer : undefined }}
+      width={captureContext ? 480 : undefined}
+      className={captureContext ? captureStyles.modal : undefined}
       mask={{ closable: false }}
-      keyboard={false}
-      onCancel={() => resolve('cancel')}
+      keyboard={Boolean(captureContext) && !saving}
+      afterOpenChange={(visible) => {
+        if (visible && captureContext) cancelRef.current?.focus()
+      }}
+      onCancel={continueEditing}
       footer={[
-        <Button key="cancel" disabled={saving} onClick={() => resolve('cancel')}>
+        <Button
+          ref={cancelRef}
+          key="cancel"
+          autoInsertSpace={captureContext ? false : undefined}
+          className={captureButton}
+          disabled={saving}
+          onClick={continueEditing}
+        >
           继续编辑
         </Button>,
-        ...(!auto
+        ...(!auto && (!captureContext || canSave)
           ? [
-              <Button key="discard" danger disabled={saving} onClick={() => resolve('discard')}>
+              <Button
+                key="discard"
+                danger={!captureContext}
+                className={captureButton}
+                disabled={saving}
+                onClick={() => resolve('discard')}
+              >
                 丢弃改动
               </Button>,
             ]
           : []),
-        <Button key="save" type="primary" loading={saving} onClick={() => resolve('save')}>
-          {auto && !isDirty ? '离开' : '保存并离开'}
-        </Button>,
+        ...(!captureContext || canSave
+          ? [
+              <Button
+                key="save"
+                type="primary"
+                className={captureButton}
+                disabled={Boolean(captureContext) && saving}
+                loading={!captureContext && saving}
+                onClick={() => resolve('save')}
+              >
+                {captureContext &&
+                  (saving ? (
+                    <LoaderCircle size={15} className={captureStyles.spin} aria-hidden="true" />
+                  ) : (
+                    <ShieldCheck size={15} aria-hidden="true" />
+                  ))}
+                <span>
+                  {captureContext && saving ? '保存中…' : auto && !isDirty ? '离开' : '保存并离开'}
+                </span>
+              </Button>,
+            ]
+          : []),
       ]}
     >
-      <p className={styles.body}>
-        {auto
-          ? isDirty
-            ? '笔记正在自动保存。保存完成后才能离开。'
-            : '这次改动已经写入笔记，可以离开。'
-          : '离开前保存改动，或丢弃改动。'}
-      </p>
-      {saveError && (
-        <p role="alert" className={styles.body}>
-          {saveError}
-        </p>
+      {captureContext ? (
+        <div className={captureStyles.body}>
+          <div className={captureStyles.guardContext}>
+            <FileText size={18} aria-hidden="true" />
+            <div>
+              <strong>{captureContext.documentTitle || '当前文档'}</strong>
+              <p>{isDirty ? '还有未保存的改动' : '改动已保存'}</p>
+            </div>
+          </div>
+          <p className={captureStyles.guardDescription}>{captureContext.description}</p>
+          <p className={captureStyles.guardHint}>{captureContext.resultHint}</p>
+          {!canSave && (
+            <CaptureNotice tone="warning">
+              当前编辑器无法代为保存，请继续编辑并在工具栏中保存。
+            </CaptureNotice>
+          )}
+          {saveError && (
+            <CaptureNotice tone="error">
+              <strong>{saveError}</strong>
+              <p>仍停留在原文档，导入结果保留。</p>
+            </CaptureNotice>
+          )}
+          {saving && (
+            <div className={captureStyles.wait} role="status">
+              <LoaderCircle size={16} className={captureStyles.spin} aria-hidden="true" />
+              <span>正在保存当前改动…</span>
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+          <p className={styles.body}>
+            {auto
+              ? isDirty
+                ? '笔记正在自动保存。保存完成后才能离开。'
+                : '这次改动已经写入笔记，可以离开。'
+              : '离开前保存改动，或丢弃改动。'}
+          </p>
+          {saveError && (
+            <p role="alert" className={styles.body}>
+              {saveError}
+            </p>
+          )}
+        </>
       )}
     </Modal>
   )

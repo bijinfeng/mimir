@@ -1,0 +1,31 @@
+
+ RUN  v5.0.4 /Users/admin/Desktop/mimir/packages/renderer
+
+ ❯ src/lib/nav-collapse.test.ts (4 tests | 1 failed) 5548ms
+   ❯ 窄屏强制折叠 (4)
+     × 窄视口下第一帧就是折叠——首帧不能是展开态（会闪一下） 5525ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/nav-collapse.test.ts > 窄屏强制折叠 > 窄视口下第一帧就是折叠——首帧不能是展开态（会闪一下）
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ src/lib/nav-collapse.test.ts:82:3
+     80|
+     81| describe('窄屏强制折叠', () => {
+     82|   it('窄视口下第一帧就是折叠——首帧不能是展开态（会闪一下）', async () => {
+       |   ^
+     83|     installMatchMedia(true)
+     84|     const { useForcedNavCollapse } = await freshImport()
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 58 passed (59)
+      Tests  1 failed | 508 passed (509)
+   Start at  16:32:51
+   Duration  44.27s (import 65%, tests 15%, environment 15%, transform 5%)
+
+    Isolate  59 workers spawned · ~1.30s startup each (spawn + environment, per file)
+             at least ~7.21s faster with isolate: false — reuses workers across files instead of one per file
+

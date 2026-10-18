@@ -1,0 +1,134 @@
+{
+  "finalBefore": [
+    {
+      "background": "rgb(239, 240, 240)",
+      "border": "1px solid rgba(0, 0, 0, 0)",
+      "color": "rgb(107, 107, 107)",
+      "font": "14px",
+      "height": 16,
+      "lineHeight": "normal",
+      "name": "清除链接",
+      "padding": "0px",
+      "shadow": "none",
+      "width": 16,
+      "x": 859,
+      "y": 250.25
+    },
+    {
+      "background": "rgb(255, 255, 255)",
+      "border": "1px solid rgb(232, 232, 232)",
+      "color": "rgb(38, 38, 38)",
+      "font": "13px",
+      "height": 32,
+      "lineHeight": "20px",
+      "name": "取消",
+      "padding": "5px 14px",
+      "shadow": "none",
+      "width": 56.53125,
+      "x": 764.9375,
+      "y": 329.640625
+    },
+    {
+      "background": "rgb(0, 131, 77)",
+      "border": "1px solid rgb(0, 131, 77)",
+      "color": "rgb(255, 255, 255)",
+      "font": "13px",
+      "height": 32,
+      "lineHeight": "20px",
+      "name": "抓取",
+      "padding": "5px 14px",
+      "shadow": "none",
+      "width": 56.53125,
+      "x": 829.46875,
+      "y": 329.640625
+    }
+  ],
+  "finalHover": [
+    {
+      "background": "rgb(239, 240, 240)",
+      "border": "1px solid rgba(0, 0, 0, 0)",
+      "color": "rgb(107, 107, 107)",
+      "font": "14px",
+      "height": 16,
+      "lineHeight": "normal",
+      "name": "清除链接",
+      "padding": "0px",
+      "shadow": "none",
+      "width": 16,
+      "x": 859,
+      "y": 250.25
+    },
+    {
+      "background": "rgb(255, 255, 255)",
+      "border": "1px solid rgb(232, 232, 232)",
+      "color": "rgb(38, 38, 38)",
+      "font": "13px",
+      "height": 32,
+      "lineHeight": "20px",
+      "name": "取消",
+      "padding": "5px 14px",
+      "shadow": "none",
+      "width": 56.53125,
+      "x": 764.9375,
+      "y": 329.640625
+    },
+    {
+      "background": "rgb(0, 120, 70)",
+      "border": "1px solid rgb(0, 120, 70)",
+      "color": "rgb(255, 255, 255)",
+      "font": "13px",
+      "height": 32,
+      "lineHeight": "20px",
+      "name": "抓取",
+      "padding": "5px 14px",
+      "shadow": "none",
+      "width": 56.53125,
+      "x": 829.46875,
+      "y": 329.640625
+    }
+  ],
+  "finalFocus": [
+    {
+      "background": "rgb(239, 240, 240)",
+      "border": "1px solid rgba(0, 0, 0, 0)",
+      "color": "rgb(107, 107, 107)",
+      "font": "14px",
+      "height": 16,
+      "lineHeight": "normal",
+      "name": "清除链接",
+      "padding": "0px",
+      "shadow": "none",
+      "width": 16,
+      "x": 859,
+      "y": 250.25
+    },
+    {
+      "background": "rgb(255, 255, 255)",
+      "border": "1px solid rgb(232, 232, 232)",
+      "color": "rgb(38, 38, 38)",
+      "font": "13px",
+      "height": 32,
+      "lineHeight": "20px",
+      "name": "取消",
+      "padding": "5px 14px",
+      "shadow": "none",
+      "width": 56.53125,
+      "x": 764.9375,
+      "y": 329.640625
+    },
+    {
+      "background": "rgb(0, 131, 77)",
+      "border": "1px solid rgb(0, 131, 77)",
+      "color": "rgb(255, 255, 255)",
+      "font": "13px",
+      "height": 32,
+      "lineHeight": "20px",
+      "name": "抓取",
+      "padding": "5px 14px",
+      "shadow": "none",
+      "width": 56.53125,
+      "x": 829.46875,
+      "y": 329.640625
+    }
+  ]
+}

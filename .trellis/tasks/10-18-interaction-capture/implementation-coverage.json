@@ -1,0 +1,1523 @@
+{
+  "approved_version": "capture-review-v1 revision2",
+  "count": 91,
+  "note": "91项源码落点逐组复核；不是91个GUI通过。测试列是组级证据，实际GUI与模拟网络边界另见browser-qa.json。",
+  "items": [
+    {
+      "id": "capture.entry.nav",
+      "group": "entry",
+      "approved_view": "entry.sidebar",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/routes/_app.tsx",
+          "packages/renderer/src/components/library/LibraryView.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/routes/-app-shell.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.entry.palette",
+      "group": "entry",
+      "approved_view": "entry.palette",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/routes/_app.tsx",
+          "packages/renderer/src/components/library/LibraryView.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/routes/-app-shell.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.entry.menu",
+      "group": "entry",
+      "approved_view": "entry.menu-upload",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/routes/_app.tsx",
+          "packages/renderer/src/components/library/LibraryView.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/routes/-app-shell.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.entry.file",
+      "group": "entry",
+      "approved_view": "entry.menu-upload",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/routes/_app.tsx",
+          "packages/renderer/src/components/library/LibraryView.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/routes/-app-shell.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.entry.directory",
+      "group": "entry",
+      "approved_view": "entry.menu-directory",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/routes/_app.tsx",
+          "packages/renderer/src/components/library/LibraryView.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/routes/-app-shell.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.entry.url",
+      "group": "entry",
+      "approved_view": "entry.menu-url",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/routes/_app.tsx",
+          "packages/renderer/src/components/library/LibraryView.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/routes/-app-shell.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.entry.empty",
+      "group": "entry",
+      "approved_view": "entry.empty",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/routes/_app.tsx",
+          "packages/renderer/src/components/library/LibraryView.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/routes/-app-shell.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.entry.scope",
+      "group": "entry",
+      "approved_view": "drop.disabled",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/routes/_app.tsx",
+          "packages/renderer/src/components/library/LibraryView.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/routes/-app-shell.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.url.empty",
+      "group": "url",
+      "approved_view": "url.empty",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/CaptureDialog.tsx",
+          "packages/renderer/src/components/capture/helpers.ts",
+          "packages/renderer/src/components/capture/use-capture-request.ts"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.url.whitespace",
+      "group": "url",
+      "approved_view": "url.whitespace",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/CaptureDialog.tsx",
+          "packages/renderer/src/components/capture/helpers.ts",
+          "packages/renderer/src/components/capture/use-capture-request.ts"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.url.invalid-prefix",
+      "group": "url",
+      "approved_view": "url.invalid",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/CaptureDialog.tsx",
+          "packages/renderer/src/components/capture/helpers.ts",
+          "packages/renderer/src/components/capture/use-capture-request.ts"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.url.web",
+      "group": "url",
+      "approved_view": "url.valid",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/CaptureDialog.tsx",
+          "packages/renderer/src/components/capture/helpers.ts",
+          "packages/renderer/src/components/capture/use-capture-request.ts"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.url.wechat",
+      "group": "url",
+      "approved_view": "url.wechat",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/CaptureDialog.tsx",
+          "packages/renderer/src/components/capture/helpers.ts",
+          "packages/renderer/src/components/capture/use-capture-request.ts"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.url.github",
+      "group": "url",
+      "approved_view": "url.github",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/CaptureDialog.tsx",
+          "packages/renderer/src/components/capture/helpers.ts",
+          "packages/renderer/src/components/capture/use-capture-request.ts"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.url.incomplete",
+      "group": "url",
+      "approved_view": "url.protocol",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/CaptureDialog.tsx",
+          "packages/renderer/src/components/capture/helpers.ts",
+          "packages/renderer/src/components/capture/use-capture-request.ts"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.url.clear",
+      "group": "url",
+      "approved_view": "url.edit-error",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/CaptureDialog.tsx",
+          "packages/renderer/src/components/capture/helpers.ts",
+          "packages/renderer/src/components/capture/use-capture-request.ts"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.url.submit",
+      "group": "url",
+      "approved_view": "url.ime",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/CaptureDialog.tsx",
+          "packages/renderer/src/components/capture/helpers.ts",
+          "packages/renderer/src/components/capture/use-capture-request.ts"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.url.edit-after-error",
+      "group": "url",
+      "approved_view": "url.edit-error",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/CaptureDialog.tsx",
+          "packages/renderer/src/components/capture/helpers.ts",
+          "packages/renderer/src/components/capture/use-capture-request.ts"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.stage.waiting",
+      "group": "stage",
+      "approved_view": "stage.wait",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/capture/use-capture-request.ts",
+          "packages/renderer/src/components/capture/CaptureStages.tsx",
+          "packages/renderer/src/components/capture/Notice.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.stage.fetch-error",
+      "group": "stage",
+      "approved_view": "stage.fetch",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/capture/use-capture-request.ts",
+          "packages/renderer/src/components/capture/CaptureStages.tsx",
+          "packages/renderer/src/components/capture/Notice.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.stage.extract-error",
+      "group": "stage",
+      "approved_view": "stage.extract",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/capture/use-capture-request.ts",
+          "packages/renderer/src/components/capture/CaptureStages.tsx",
+          "packages/renderer/src/components/capture/Notice.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.stage.wechat-error",
+      "group": "stage",
+      "approved_view": "stage.wechat",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/capture/use-capture-request.ts",
+          "packages/renderer/src/components/capture/CaptureStages.tsx",
+          "packages/renderer/src/components/capture/Notice.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.stage.unknown-error",
+      "group": "stage",
+      "approved_view": "stage.network",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/capture/use-capture-request.ts",
+          "packages/renderer/src/components/capture/CaptureStages.tsx",
+          "packages/renderer/src/components/capture/Notice.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.stage.assets-contract",
+      "group": "stage",
+      "approved_view": "stage.assets",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/capture/use-capture-request.ts",
+          "packages/renderer/src/components/capture/CaptureStages.tsx",
+          "packages/renderer/src/components/capture/Notice.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.stage.convert-contract",
+      "group": "stage",
+      "approved_view": "stage.convert",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/capture/use-capture-request.ts",
+          "packages/renderer/src/components/capture/CaptureStages.tsx",
+          "packages/renderer/src/components/capture/Notice.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.stage.success",
+      "group": "stage",
+      "approved_view": "stage.success",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/capture/use-capture-request.ts",
+          "packages/renderer/src/components/capture/CaptureStages.tsx",
+          "packages/renderer/src/components/capture/Notice.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.stage.success-no-images",
+      "group": "stage",
+      "approved_view": "stage.success",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/capture/use-capture-request.ts",
+          "packages/renderer/src/components/capture/CaptureStages.tsx",
+          "packages/renderer/src/components/capture/Notice.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.stage.partial-contract",
+      "group": "stage",
+      "approved_view": "stage.partial",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/capture/use-capture-request.ts",
+          "packages/renderer/src/components/capture/CaptureStages.tsx",
+          "packages/renderer/src/components/capture/Notice.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.stage.null-id-contract",
+      "group": "stage",
+      "approved_view": "stage.null-id",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/capture/use-capture-request.ts",
+          "packages/renderer/src/components/capture/CaptureStages.tsx",
+          "packages/renderer/src/components/capture/Notice.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.stage.repeat-url",
+      "group": "stage",
+      "approved_view": "stage.duplicate",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/capture/use-capture-request.ts",
+          "packages/renderer/src/components/capture/CaptureStages.tsx",
+          "packages/renderer/src/components/capture/Notice.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.upload.empty",
+      "group": "upload",
+      "approved_view": "upload.empty",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/UploadResultRow.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.upload.picker-cancel",
+      "group": "upload",
+      "approved_view": "upload.chooser",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/UploadResultRow.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.upload.accept-any",
+      "group": "upload",
+      "approved_view": "upload.empty",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/UploadResultRow.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.upload.pointer",
+      "group": "upload",
+      "approved_view": "upload.empty",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/UploadResultRow.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.upload.pending",
+      "group": "upload",
+      "approved_view": "upload.pending",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/UploadResultRow.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.upload.uploading",
+      "group": "upload",
+      "approved_view": "upload.wait",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/UploadResultRow.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.upload.duplicate-event",
+      "group": "upload",
+      "approved_view": "upload.wait",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/UploadResultRow.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.upload.too-large",
+      "group": "upload",
+      "approved_view": "upload.too-large",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/UploadResultRow.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.upload.zero-byte",
+      "group": "upload",
+      "approved_view": "upload.zero",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/UploadResultRow.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.upload.network-error",
+      "group": "upload",
+      "approved_view": "upload.all-failed",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/UploadResultRow.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.upload.lost-response",
+      "group": "upload",
+      "approved_view": "upload.network",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/UploadResultRow.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.upload.saved-text",
+      "group": "upload",
+      "approved_view": "upload.success",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/UploadResultRow.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.upload.saved-original",
+      "group": "upload",
+      "approved_view": "upload.raw",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/UploadResultRow.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.upload.markdown-note",
+      "group": "upload",
+      "approved_view": "upload.markdown",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/UploadResultRow.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.upload.markdown-empty-body",
+      "group": "upload",
+      "approved_view": "upload.empty-markdown",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/UploadResultRow.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.upload.unknown-format",
+      "group": "upload",
+      "approved_view": "upload.raw",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/UploadResultRow.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.upload.parse-failure",
+      "group": "upload",
+      "approved_view": "upload.raw",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/UploadResultRow.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.upload.all-success",
+      "group": "upload",
+      "approved_view": "upload.success",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/UploadResultRow.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.upload.partial-failure",
+      "group": "upload",
+      "approved_view": "upload.partial",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/UploadResultRow.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.upload.all-failed",
+      "group": "upload",
+      "approved_view": "upload.all-failed",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/UploadResultRow.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.upload.continue",
+      "group": "upload",
+      "approved_view": "upload.partial",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/UploadResultRow.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.upload.replace-batch",
+      "group": "upload",
+      "approved_view": "upload.partial",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/UploadResultRow.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.upload.long-rows",
+      "group": "upload",
+      "approved_view": "upload.long",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/UploadResultRow.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.upload.same-name",
+      "group": "upload",
+      "approved_view": "upload.names",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/UploadResultRow.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.directory.empty",
+      "group": "directory",
+      "approved_view": "directory.empty",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/helpers.ts"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.directory.paths",
+      "group": "directory",
+      "approved_view": "directory.success",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/helpers.ts"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.directory.empty-folders",
+      "group": "directory",
+      "approved_view": "directory.no-files",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/helpers.ts"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.directory.mixed",
+      "group": "directory",
+      "approved_view": "directory.success",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/helpers.ts"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.directory.native-support",
+      "group": "directory",
+      "approved_view": "directory.empty",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/components/capture/helpers.ts"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/UploadPanel.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.drop.enter",
+      "group": "drop",
+      "approved_view": "drop.hover",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/library/LibraryView.tsx",
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/routes/_app.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/library/LibraryView.drop.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.drop.leave",
+      "group": "drop",
+      "approved_view": "drop.hover",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/library/LibraryView.tsx",
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/routes/_app.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/library/LibraryView.drop.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.drop.upload",
+      "group": "drop",
+      "approved_view": "drop.busy",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/library/LibraryView.tsx",
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/routes/_app.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/library/LibraryView.drop.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.drop.all-success",
+      "group": "drop",
+      "approved_view": "drop.success",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/library/LibraryView.tsx",
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/routes/_app.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/library/LibraryView.drop.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.drop.partial",
+      "group": "drop",
+      "approved_view": "drop.partial",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/library/LibraryView.tsx",
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/routes/_app.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/library/LibraryView.drop.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.drop.all-failed",
+      "group": "drop",
+      "approved_view": "drop.failed",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/library/LibraryView.tsx",
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/routes/_app.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/library/LibraryView.drop.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.drop.repeat",
+      "group": "drop",
+      "approved_view": "drop.busy",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/library/LibraryView.tsx",
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/routes/_app.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/library/LibraryView.drop.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.drop.irrelevant",
+      "group": "drop",
+      "approved_view": "drop.non-files",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/library/LibraryView.tsx",
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/routes/_app.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/library/LibraryView.drop.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.drop.directory-boundary",
+      "group": "drop",
+      "approved_view": "drop.idle",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/library/LibraryView.tsx",
+          "packages/renderer/src/components/UploadPanel.tsx",
+          "packages/renderer/src/routes/_app.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/library/LibraryView.drop.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.result.url-handoff",
+      "group": "result",
+      "approved_view": "stage.success",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/routes/_app.tsx",
+          "packages/renderer/src/components/UnsavedGuard.tsx",
+          "packages/renderer/src/lib/unsaved.tsx",
+          "packages/renderer/src/components/document/OfficeSourceEditor.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/routes/-app-shell.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.result.upload-open",
+      "group": "result",
+      "approved_view": "upload.partial",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/routes/_app.tsx",
+          "packages/renderer/src/components/UnsavedGuard.tsx",
+          "packages/renderer/src/lib/unsaved.tsx",
+          "packages/renderer/src/components/document/OfficeSourceEditor.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/routes/-app-shell.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.result.close-refresh",
+      "group": "result",
+      "approved_view": "upload.success",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/routes/_app.tsx",
+          "packages/renderer/src/components/UnsavedGuard.tsx",
+          "packages/renderer/src/lib/unsaved.tsx",
+          "packages/renderer/src/components/document/OfficeSourceEditor.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/routes/-app-shell.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.result.unsaved-gap",
+      "group": "result",
+      "approved_view": "guard.manual",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/routes/_app.tsx",
+          "packages/renderer/src/components/UnsavedGuard.tsx",
+          "packages/renderer/src/lib/unsaved.tsx",
+          "packages/renderer/src/components/document/OfficeSourceEditor.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/routes/-app-shell.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.result.guard-choices",
+      "group": "result",
+      "approved_view": "guard.manual",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/routes/_app.tsx",
+          "packages/renderer/src/components/UnsavedGuard.tsx",
+          "packages/renderer/src/lib/unsaved.tsx",
+          "packages/renderer/src/components/document/OfficeSourceEditor.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/routes/-app-shell.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.result.guard-saving",
+      "group": "result",
+      "approved_view": "guard.saving",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/routes/_app.tsx",
+          "packages/renderer/src/components/UnsavedGuard.tsx",
+          "packages/renderer/src/lib/unsaved.tsx",
+          "packages/renderer/src/components/document/OfficeSourceEditor.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/routes/-app-shell.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.lifecycle.idle-close",
+      "group": "lifecycle",
+      "approved_view": "url.valid",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/CaptureDialog.tsx",
+          "packages/renderer/src/components/capture/use-capture-request.ts",
+          "packages/renderer/src/routes/_app.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.lifecycle.busy-close",
+      "group": "lifecycle",
+      "approved_view": "stage.wait",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/CaptureDialog.tsx",
+          "packages/renderer/src/components/capture/use-capture-request.ts",
+          "packages/renderer/src/routes/_app.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.lifecycle.idle-tab",
+      "group": "lifecycle",
+      "approved_view": "url.valid",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/CaptureDialog.tsx",
+          "packages/renderer/src/components/capture/use-capture-request.ts",
+          "packages/renderer/src/routes/_app.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.lifecycle.busy-tab",
+      "group": "lifecycle",
+      "approved_view": "lifecycle.busy-tab",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/CaptureDialog.tsx",
+          "packages/renderer/src/components/capture/use-capture-request.ts",
+          "packages/renderer/src/routes/_app.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.lifecycle.settling",
+      "group": "lifecycle",
+      "approved_view": "stage.success",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/CaptureDialog.tsx",
+          "packages/renderer/src/components/capture/use-capture-request.ts",
+          "packages/renderer/src/routes/_app.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.lifecycle.reopen",
+      "group": "lifecycle",
+      "approved_view": "lifecycle.reopen",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/CaptureDialog.tsx",
+          "packages/renderer/src/components/capture/use-capture-request.ts",
+          "packages/renderer/src/routes/_app.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.lifecycle.focus-return",
+      "group": "lifecycle",
+      "approved_view": "url.valid",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/CaptureDialog.tsx",
+          "packages/renderer/src/components/capture/use-capture-request.ts",
+          "packages/renderer/src/routes/_app.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.lifecycle.target-changed",
+      "group": "lifecycle",
+      "approved_view": "url.long",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/CaptureDialog.tsx",
+          "packages/renderer/src/components/capture/use-capture-request.ts",
+          "packages/renderer/src/routes/_app.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.lifecycle.refresh-loss",
+      "group": "lifecycle",
+      "approved_view": "upload.wait",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/CaptureDialog.tsx",
+          "packages/renderer/src/components/capture/use-capture-request.ts",
+          "packages/renderer/src/routes/_app.tsx"
+        ]
+      },
+      "group_test_evidence": "packages/renderer/src/components/CaptureDialog.test.tsx",
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.layout.pointer-states",
+      "group": "layout",
+      "approved_view": "url.valid",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/capture/styles.ts",
+          "packages/renderer/src/components/capture/upload-styles.ts",
+          "packages/renderer/src/components/capture/capture-tokens.ts"
+        ]
+      },
+      "group_test_evidence": null,
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.layout.keyboard",
+      "group": "layout",
+      "approved_view": "url.empty",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/capture/styles.ts",
+          "packages/renderer/src/components/capture/upload-styles.ts",
+          "packages/renderer/src/components/capture/capture-tokens.ts"
+        ]
+      },
+      "group_test_evidence": null,
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.layout.narrow",
+      "group": "layout",
+      "approved_view": "layout.narrow",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/capture/styles.ts",
+          "packages/renderer/src/components/capture/upload-styles.ts",
+          "packages/renderer/src/components/capture/capture-tokens.ts"
+        ]
+      },
+      "group_test_evidence": null,
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.layout.low-height",
+      "group": "layout",
+      "approved_view": "layout.low",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/capture/styles.ts",
+          "packages/renderer/src/components/capture/upload-styles.ts",
+          "packages/renderer/src/components/capture/capture-tokens.ts"
+        ]
+      },
+      "group_test_evidence": null,
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.layout.long-content",
+      "group": "layout",
+      "approved_view": "upload.long",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/capture/styles.ts",
+          "packages/renderer/src/components/capture/upload-styles.ts",
+          "packages/renderer/src/components/capture/capture-tokens.ts"
+        ]
+      },
+      "group_test_evidence": null,
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.layout.themes",
+      "group": "layout",
+      "approved_view": "layout.dark",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/capture/styles.ts",
+          "packages/renderer/src/components/capture/upload-styles.ts",
+          "packages/renderer/src/components/capture/capture-tokens.ts"
+        ]
+      },
+      "group_test_evidence": null,
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.layout.a11y",
+      "group": "layout",
+      "approved_view": "url.invalid",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/capture/styles.ts",
+          "packages/renderer/src/components/capture/upload-styles.ts",
+          "packages/renderer/src/components/capture/capture-tokens.ts"
+        ]
+      },
+      "group_test_evidence": null,
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    },
+    {
+      "id": "capture.layout.desktop",
+      "group": "layout",
+      "approved_view": "directory.empty",
+      "source_review": {
+        "status": "reviewed",
+        "files": [
+          "packages/renderer/src/components/capture/styles.ts",
+          "packages/renderer/src/components/capture/upload-styles.ts",
+          "packages/renderer/src/components/capture/capture-tokens.ts"
+        ]
+      },
+      "group_test_evidence": null,
+      "group_evidence_is_not_per_item_test_proof": true,
+      "gui": "not_individually_sampled",
+      "native_or_real_backend": "not_verified"
+    }
+  ]
+}

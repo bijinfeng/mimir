@@ -1,0 +1,137 @@
+Scope: all 16 workspace projects
+? Verifying lockfile against supply-chain policies (2387 entries)...
+[WARN] Request took 14329ms: https://registry.npmmirror.com/@aws-sdk%2Fclient-s3
+[WARN] Request took 10235ms: https://registry.npmmirror.com/@radix-ui%2Freact-portal
+[WARN] Request took 11578ms: https://registry.npmmirror.com/@radix-ui%2Freact-context-menu
+[WARN] Request took 11963ms: https://registry.npmmirror.com/@radix-ui%2Freact-focus-scope
+[WARN] Request took 11811ms: https://registry.npmmirror.com/@radix-ui%2Freact-progress
+[WARN] Request took 12130ms: https://registry.npmmirror.com/@radix-ui%2Freact-navigation-menu
+[WARN] Request took 13007ms: https://registry.npmmirror.com/@radix-ui%2Freact-accordion
+[WARN] Request took 12569ms: https://registry.npmmirror.com/@radix-ui%2Freact-primitive
+[WARN] Request took 12963ms: https://registry.npmmirror.com/@radix-ui%2Freact-presence
+[WARN] Request took 14128ms: https://registry.npmmirror.com/@radix-ui%2Freact-menu
+[WARN] Request took 14453ms: https://registry.npmmirror.com/@radix-ui%2Freact-toolbar
+[WARN] Request took 11857ms: https://registry.npmmirror.com/@swc%2Fcore-linux-arm-gnueabihf
+[WARN] Request took 12773ms: https://registry.npmmirror.com/@swc%2Fcore-linux-arm64-gnu
+[WARN] Request took 11130ms: https://registry.npmmirror.com/@tanstack%2Freact-query
+[WARN] Request took 11079ms: https://registry.npmmirror.com/@tanstack%2Frouter-core
+[WARN] Request took 11561ms: https://registry.npmmirror.com/@tanstack%2Frouter-generator
+[WARN] Request took 11950ms: https://registry.npmmirror.com/@tanstack%2Frouter-cli
+[WARN] Request took 20025ms: https://registry.npmmirror.com/@radix-ui%2Freact-roving-focus
+[WARN] Request took 11320ms: https://registry.npmmirror.com/@tarojs%2Fhelper
+[WARN] Request took 14014ms: https://registry.npmmirror.com/@swc%2Fcore-linux-x64-musl
+[WARN] Request took 12389ms: https://registry.npmmirror.com/@tarojs%2Fapi
+[WARN] Request took 16453ms: https://registry.npmmirror.com/@swc%2Fcore-win32-ia32-msvc
+[WARN] Request took 11114ms: https://registry.npmmirror.com/@tiptap%2Fextension-code-block-lowlight
+[WARN] Request took 16837ms: https://registry.npmmirror.com/@swc%2Fcore
+[WARN] Request took 13381ms: https://registry.npmmirror.com/@tarojs%2Fruntime
+[WARN] Request took 10985ms: https://registry.npmmirror.com/@tiptap%2Fextension-italic
+[WARN] Request took 18397ms: https://registry.npmmirror.com/@stencil%2Fcore
+[WARN] Request took 24559ms: https://registry.npmmirror.com/@radix-ui%2Freact-radio-group
+[WARN] Request took 12166ms: https://registry.npmmirror.com/@tiptap%2Fextension-heading
+[WARN] Request took 15100ms: https://registry.npmmirror.com/@tarojs%2Fplugin-platform-weapp
+[WARN] Request took 11199ms: https://registry.npmmirror.com/@tiptap%2Fextension-placeholder
+[WARN] Request took 16432ms: https://registry.npmmirror.com/@tarojs%2Fcli
+[WARN] Request took 13986ms: https://registry.npmmirror.com/@tiptap%2Fextension-horizontal-rule
+[WARN] Request took 20834ms: https://registry.npmmirror.com/@swc%2Fcore-darwin-arm64
+[WARN] Request took 15991ms: https://registry.npmmirror.com/@tarojs%2Fwebpack5-runner
+[WARN] Request took 13677ms: https://registry.npmmirror.com/@tiptap%2Fextension-ordered-list
+[WARN] Request took 11862ms: https://registry.npmmirror.com/@tiptap%2Fstarter-kit
+[WARN] Request took 17061ms: https://registry.npmmirror.com/@tarojs%2Ftaro
+[WARN] Request took 12654ms: https://registry.npmmirror.com/@tiptap%2Freact
+[WARN] Request took 18007ms: https://registry.npmmirror.com/@tarojs%2Fwebpack5-prebundle
+[WARN] Request took 10612ms: https://registry.npmmirror.com/@tanstack%2Freact-query
+[WARN] Request took 22510ms: https://registry.npmmirror.com/@tanstack%2Freact-router
+[WARN] Request took 20518ms: https://registry.npmmirror.com/@tarojs%2Ftaro-loader
+[WARN] Request took 13437ms: https://registry.npmmirror.com/@tanstack%2Fquery-core
+[WARN] Request took 22056ms: https://registry.npmmirror.com/@tarojs%2Fplugin-framework-react
+[WARN] Request took 27142ms: https://registry.npmmirror.com/@tarojs%2Fcomponents
+[WARN] Request took 19956ms: https://registry.npmmirror.com/antd
+[WARN] Request took 11729ms: https://registry.npmmirror.com/hono
+[WARN] Request took 10582ms: https://registry.npmmirror.com/pdfjs-dist
+[WARN] Request took 17410ms: https://registry.npmmirror.com/happy-dom
+[WARN] Request took 12016ms: https://registry.npmmirror.com/react-dom
+[WARN] Request took 12521ms: https://registry.npmmirror.com/scheduler
+[WARN] Request took 11021ms: https://registry.npmmirror.com/openai
+[WARN] Request took 14288ms: https://registry.npmmirror.com/react-refresh
+[WARN] Request took 15901ms: https://registry.npmmirror.com/react
+[WARN] Request took 16598ms: https://registry.npmmirror.com/react-reconciler
+[WARN] Request took 11179ms: https://registry.npmmirror.com/typescript
+[WARN] Request took 24680ms: https://registry.npmmirror.com/hls.js
+✓ Lockfile passes supply-chain policies (2387 entries in 1m 7.1s)
+Lockfile is up to date, resolution step is skipped
+Packages: +12 -8
+++++++++++++--------
+Progress: resolved 12, reused 12, downloaded 0, added 12, done
+Done in 1m 7.7s using pnpm v12.4.2
+$ pnpm lint && pnpm lint:styles && pnpm format:check && pnpm -r typecheck && pnpm test
+$ oxlint
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/tests/mobile-runtime.spec.ts:194:11: warning eslint(no-shadow): 'screen' is already declared in the upper scope. help: Consider renaming 'screen' to avoid shadowing the variable from the outer scope.
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/tests/mobile-runtime.spec.ts:143:9: error eslint(no-unused-vars): Variable 'footer' is declared but never used. Unused variables should start with a '_'. help: Consider removing this declaration.
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/mobile/BottomSheet.tsx:33:6: warning react(exhaustive-effect-dependencies): Found missing effect dependencies help: Missing dependencies can cause an effect to fire less often than it should
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/mobile/BottomSheet.tsx:74:27: error react(refs): Cannot access refs during render help: React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/mobile/BottomSheet.tsx:32:15: warning react-hooks(exhaustive-deps): React Hook useEffect has a missing dependency: 'keyboard' help: Either include it or remove the dependency array.
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/mobile/Keyboard.tsx:72:5: warning react(memo-dependencies): Found missing memoization dependencies help: Missing dependencies can cause a value to update less often than it should, resulting in stale UI
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/mobile/Keyboard.tsx:57:7: warning react-hooks(exhaustive-deps): React Hook useMemo has a missing dependency: 'setDragOffset' help: Either include it or remove the dependency array.
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/tests/runtime-fixture.tsx:63:13: warning react(no-unstable-nested-components): Do not define components during render. help: Move this component definition out of the parent component `KeyboardFixture` and pass data as props. If you want to allow component creation in props, set `allowAsProps` option to true.
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/tests/runtime-fixture.tsx:118:13: warning react(no-unstable-nested-components): Do not define components during render. help: Move this component definition out of the parent component `FlowFixture` and pass data as props. If you want to allow component creation in props, set `allowAsProps` option to true.
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/mobile/FlowStack.tsx:65:51: error react(refs): Cannot access refs during render help: React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/mobile/Carousel.tsx:42:17: warning unicorn(consistent-function-scoping): Function `primary` does not capture any variables from its parent scope help: Move `primary` to the outer scope to avoid recreating it on every call.
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/mobile/Carousel.tsx:42:17: warning unicorn(consistent-function-scoping): Function `cross` does not capture any variables from its parent scope help: Move `cross` to the outer scope to avoid recreating it on every call.
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/mobile/MobileScroll.tsx:169:11: warning eslint(no-shadow): 'maxScrollTop' is already declared in the upper scope. help: Consider renaming 'maxScrollTop' to avoid shadowing the variable from the outer scope.
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/mobile/MobileScroll.tsx:237:7: warning react(exhaustive-effect-dependencies): Found extra effect dependencies help: Extra dependencies can cause an effect to fire more often than it should, resulting in performance problems such as excessive renders and side effects
+packages/office/src/agent/docx-agent.ts:1171:18: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+packages/office/src/agent/docx-agent.ts:1307:30: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+packages/office/src/agent/docx-agent.ts:2183:50: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+packages/office/src/agent/docx-agent.ts:2213:31: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+plugins/provider/src/provider.ts:99:17: warning unicorn(consistent-function-scoping): Function `listEndpointModels` does not capture any variables from its parent scope help: Move `listEndpointModels` to the outer scope to avoid recreating it on every call.
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/Prototype.tsx:556:43: warning eslint(no-shadow): 's' is already declared in the upper scope. help: Consider renaming 's' to avoid shadowing the variable from the outer scope.
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/Prototype.tsx:360:6: warning react(exhaustive-effect-dependencies): Found missing effect dependencies help: Missing dependencies can cause an effect to fire less often than it should
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/Prototype.tsx:372:44: error react(set-state-in-effect): Calling setState synchronously within an effect can trigger cascading renders help: Effects should synchronize React with external systems. Calling setState synchronously inside an effect starts another render and is usually unnecessary. Derive the value during render, initialize state directly, or update it from the event that caused the change. Use an effect only when synchronizing with an external system.
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/Prototype.tsx:151:15: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/Prototype.tsx:153:23: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/Prototype.tsx:155:15: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/Prototype.tsx:157:19: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/Prototype.tsx:161:38: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/Prototype.tsx:163:18: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/Prototype.tsx:170:14: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/Prototype.tsx:232:8: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/Prototype.tsx:1295:34: error react(jsx-key): Missing "key" prop for element in array.
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/Prototype.tsx:1296:41: error react(jsx-key): Missing "key" prop for element in array.
+.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/Prototype.tsx:1297:35: error react(jsx-key): Missing "key" prop for element in array.
+packages/office/src/editors/PptxDeckWritingPreview.test.tsx:392:39: warning eslint(no-shadow): 'resolve' is already declared in the upper scope. help: Consider renaming 'resolve' to avoid shadowing the variable from the outer scope.
+packages/renderer/src/components/UploadPanel.tsx:126:21: warning react-hooks(exhaustive-deps): React hook useEffect depends on `uploadAll`, which changes every render help: Try memoizing this variable with `useRef` or `useCallback`.
+packages/office/src/editors/docx-toolbar-render.test.tsx:539:18: warning unicorn(consistent-function-scoping): Function `openTableMenu` does not capture any variables from its parent scope help: Move `openTableMenu` to the outer scope to avoid recreating it on every call.
+packages/office/src/editors/PptxDeckWritingPreview.tsx:217:13: warning unicorn(consistent-function-scoping): Function `ownsFocus` does not capture any variables from its parent scope help: Move `ownsFocus` to the outer scope to avoid recreating it on every call.
+packages/renderer/src/editor/markdown-toolbar.test.ts:449:12: warning unicorn(consistent-function-scoping): Function `cursorInCell` does not capture any variables from its parent scope help: Move `cursorInCell` to the outer scope to avoid recreating it on every call.
+packages/office/src/editors/PdfOcrOverlay.test.tsx:24:24: warning oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+packages/office/src/editors/pdf-ocr-worker.ts:69:12: warning unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts. help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
+packages/office/src/editors/pdf-ocr-worker.ts:70:12: warning unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts. help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
+packages/office/src/editors/pdf-ocr-worker.ts:80:10: warning unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts. help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
+packages/office/src/editors/pdf-ocr-worker.ts:81:10: warning unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts. help: `addEventListener()` can register multiple handlers and accepts options such as `{ once: true }`; assigning to `on<event>` replaces any previously registered handler.
+packages/office/src/editors/pdf-ocr-worker.ts:109:77: warning unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument. help: Insert `, worker.location.origin`
+apps/server/src/test/document-agent-core.test.ts:199:11: warning unicorn(consistent-function-scoping): Function `resolveCatalog` does not capture any variables from its parent scope help: Move `resolveCatalog` to the outer scope to avoid recreating it on every call.
+packages/office/src/editors/docx-toolbar.test.ts:213:18: warning unicorn(consistent-function-scoping): Function `inTable` does not capture any variables from its parent scope help: Move `inTable` to the outer scope to avoid recreating it on every call.
+packages/office/src/editors/use-pdf-ocr.test.ts:98:11: warning unicorn(consistent-function-scoping): Function `recognize` does not capture any variables from its parent scope help: Move `recognize` to the outer scope to avoid recreating it on every call.
+packages/office/src/editors/use-pdf-ocr.test.ts:112:13: warning unicorn(consistent-function-scoping): Function `recognize` does not capture any variables from its parent scope help: Move `recognize` to the outer scope to avoid recreating it on every call.
+apps/server/src/services/miniapp-operations.ts:14:6: warning unicorn(no-array-sort): Use `Array#toSorted()` instead of `Array#sort()`. help: `Array#sort()` mutates the original array. Use `Array#toSorted()` to return a new sorted array without modifying the original.
+packages/office/src/shell/EditorShell.test.tsx:1908:12: warning unicorn(consistent-function-scoping): Function `withRealCss` does not capture any variables from its parent scope help: Move `withRealCss` to the outer scope to avoid recreating it on every call.
+apps/miniapp/src/components/markdown.tsx:85:104: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/components/markdown.tsx:82:5: error react(set-state-in-effect): Calling setState synchronously within an effect can trigger cascading renders help: Effects should synchronize React with external systems. Calling setState synchronously inside an effect starts another render and is usually unnecessary. Derive the value during render, initialize state directly, or update it from the event that caused the change. Use an effect only when synchronizing with an external system.
+apps/miniapp/src/components/markdown.tsx:93:42: warning react(no-object-type-as-default-prop): Do not use an array literal as default prop value. Use a stable reference instead. help: Default values are re-created on every render and break referential equality, causing unnecessary re-renders. Move the value out of the component or memoize it.
+apps/miniapp/src/components/markdown.tsx:96:18: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+apps/miniapp/src/components/markdown.tsx:97:344: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+apps/miniapp/src/components/markdown.tsx:97:473: warning react(no-array-index-key): Usage of Array index in keys is not allowed help: Use a unique data-dependent key to avoid unnecessary rerenders
+apps/miniapp/src/pages/account/index.tsx:15:12: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/account/index.tsx:24:41: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/account/index.tsx:29:14: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/components/ui.tsx:35:120: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/library/index.tsx:20:14: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/library/index.tsx:23:144: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/library/index.tsx:23:283: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+apps/miniapp/src/pages/library/index.tsx:10:10: warning unicorn(consistent-function-scoping): Function `find` does not capture any variables from its parent scope help: Move `find` to the outer scope to avoid recreating it on every call.
+apps/miniapp/src/pages/login/index.tsx:15:12: warning eslint(no-shadow): 'error' is already declared in the upper scope. help: Consider renaming 'error' to avoid shadowing the variable from the outer scope.
+packages/office/src/pptx.test.ts:283:18: warning unicorn(consistent-function-scoping): Function `withMissingGeometry` does not capture any variables from its parent scope help: Move `withMissingGeometry` to the outer scope to avoid recreating it on every call.
+apps/server/src/test/api.test.ts:173:9: warning unicorn(consistent-function-scoping): Function `treePaths` does not capture any variables from its parent scope help: Move `treePaths` to the outer scope to avoid recreating it on every call.
+[ELIFECYCLE] Command failed with exit code 1.
+[ELIFECYCLE] Command failed with exit code 1.

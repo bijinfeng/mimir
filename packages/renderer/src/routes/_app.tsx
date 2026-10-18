@@ -5,7 +5,7 @@ import {
   useNavigate,
   useSearch,
 } from '@tanstack/react-router'
-import type { Citation, SearchHit } from '@mimir/shared'
+import type { Citation, SearchHit, DocumentDetail } from '@mimir/shared'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { App as AntApp } from 'antd'
 import { createStyles } from 'antd-style'
@@ -150,6 +150,18 @@ function AppShell() {
     })
   }
   const [captureOpen, setCaptureOpen] = useState(false)
+  const captureOpenRef = useRef(false)
+  const uploadBatchRef = useRef(false)
+  const captureNonce = useRef(0)
+  const [captureHandoff, setCaptureHandoff] = useState(false)
+  const claimUploadBatch = (fromDialog = false) => {
+    if (uploadBatchRef.current || (!fromDialog && captureOpenRef.current)) return false
+    uploadBatchRef.current = true
+    return true
+  }
+  const releaseUploadBatch = () => {
+    uploadBatchRef.current = false
+  }
   const captureTriggerRef = useRef<HTMLElement | null>(null)
   const restoreCaptureFocusRef = useRef(false)
   /**
@@ -164,12 +176,18 @@ function AppShell() {
   )
 
   const openCapture = (options?: CaptureOptions) => {
+    if (captureOpenRef.current || uploadBatchRef.current || pendingLeave || saving) return
+    captureOpenRef.current = true
+    setCaptureHandoff(false)
     captureTriggerRef.current = document.activeElement as HTMLElement | null
     restoreCaptureFocusRef.current = false
-    setCaptureRequest({ ...options, nonce: Date.now() })
+    setCaptureRequest({ ...options, nonce: ++captureNonce.current })
     setCaptureOpen(true)
   }
   const closeCapture = () => {
+    if (uploadBatchRef.current) return
+    captureOpenRef.current = false
+    setCaptureHandoff(false)
     restoreCaptureFocusRef.current = true
     setCaptureOpen(false)
   }
@@ -373,6 +391,8 @@ function AppShell() {
         clearHighlight: () => setCitation(null),
         openDocument,
         openCapture,
+        claimUploadBatch,
+        releaseUploadBatch,
         openCitation,
         cameFromChat,
         newNoteFocusId,
@@ -486,27 +506,37 @@ function AppShell() {
         folder={captureRequest?.folder ?? null}
         onClose={closeCapture}
         onAfterClose={afterCaptureClose}
+        interactionSuspended={captureHandoff && Boolean(pendingLeave)}
         onCaptured={(documentId) => {
-          restoreCaptureFocusRef.current = false
-          setCaptureOpen(false)
-          /* 收件箱视图已随 D-054 退役（`.trellis/spec/project/decisions.md`:3022，新内容默认
-             `ready`）——这里再说「已入收件箱」等于指认一个不存在的去处。
-             与 CaptureDialog 页脚同一句话：入库之后按标签与目录整理。 */
-          message.success(
-            captureRequest?.folder
-              ? `已收进「${captureRequest.folder}」`
-              : '已收进知识库根，之后可按标签与目录整理',
-          )
-          /* 从知识库页收进来的内容指回那个知识库（「返回库」回得到原地）；
-             从别处唤起的落库根，回库默认视图 */
-          openDocument(
-            documentId,
-            captureRequest?.folder ? `folder:${captureRequest.folder}` : 'all',
-          )
+          if (!captureOpenRef.current) return
+          setCaptureHandoff(true)
+          runGuarded(() => {
+            captureOpenRef.current = false
+            restoreCaptureFocusRef.current = false
+            setCaptureOpen(false)
+            setCaptureHandoff(false)
+            message.success('收集结果已就绪')
+            openDocument(
+              documentId,
+              captureRequest?.folder ? `folder:${captureRequest.folder}` : 'all',
+            )
+          })
         }}
       />
 
-      <UnsavedGuard />
+      <UnsavedGuard
+        captureContext={
+          captureHandoff && captureOpen
+            ? {
+                description: '打开刚收集的文档前，请先处理当前改动。',
+                onContinue: () => setCaptureHandoff(false),
+                documentTitle: queryClient.getQueryData<DocumentDetail>(['document', search.id])
+                  ?.title,
+                resultHint: '本批导入结果会保留，不需要重新上传。',
+              }
+            : undefined
+        }
+      />
     </AppShellContext.Provider>
   )
 }

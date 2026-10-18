@@ -8,6 +8,7 @@ import { api, ApiRequestError } from '../lib/api'
 import { useAppShell } from '../lib/app-shell-context'
 import { UnsavedProvider, useUnsaved } from '../lib/unsaved'
 import { MimirProvider } from '../theme/MimirProvider'
+import type { CaptureDialogProps } from '../components/CaptureDialog'
 import type { CommandPaletteProps } from '../components/CommandPalette'
 
 const navigation = vi.hoisted(() => ({
@@ -24,7 +25,16 @@ vi.mock('@tanstack/react-router', () => ({
 }))
 vi.mock('../platform', () => ({ useIsDesktop: () => false, useTitleBar: () => null }))
 vi.mock('../lib/recent-documents', () => ({ recordRecentDocument: vi.fn<() => void>() }))
-vi.mock('../components/CaptureDialog', () => ({ CaptureDialog: () => null }))
+vi.mock('../components/CaptureDialog', () => ({
+  CaptureDialog: (props: CaptureDialogProps) => (
+    <section data-capture-open={props.open} hidden={!props.open}>
+      <input aria-label="收集结果草稿" defaultValue="已上传文件的结果" />
+      <output data-capture-suspended>{String(props.interactionSuspended)}</output>
+      <button onClick={() => props.onCaptured('imported-document')}>打开导入文档</button>
+      <button onClick={props.onClose}>关闭收集</button>
+    </section>
+  ),
+}))
 vi.mock('../components/NavSidebar', () => ({
   NavSidebar: ({ onOpenPalette }: { onOpenPalette: () => void }) => (
     <button onClick={onOpenPalette}>打开搜索</button>
@@ -71,7 +81,8 @@ vi.mock('../components/CommandPalette', () => ({
 
 function DocumentHarness() {
   const { setDirty, setSave } = useUnsaved()
-  const { askDraft, newNoteFocusId, citation } = useAppShell()
+  const { askDraft, newNoteFocusId, citation, openCapture, claimUploadBatch, releaseUploadBatch } =
+    useAppShell()
   return (
     <>
       <button
@@ -82,6 +93,32 @@ function DocumentHarness() {
       >
         标记未保存
       </button>
+      <button
+        onClick={() => {
+          openCapture({ tab: 'upload', folder: '研究' })
+          openCapture({ tab: 'url' })
+        }}
+      >
+        重复打开收集
+      </button>
+      <button
+        onClick={() => {
+          setDirty(true)
+          setSave(async () => false)
+        }}
+      >
+        标记保存失败
+      </button>
+      <button
+        onClick={() => {
+          setDirty(true)
+          setSave(async () => false, 'manual', false)
+        }}
+      >
+        标记不能代存
+      </button>
+      <button onClick={() => claimUploadBatch?.()}>占用页面批次</button>
+      <button onClick={releaseUploadBatch}>结束页面批次</button>
       <output data-draft>{JSON.stringify(askDraft)}</output>
       <output data-focus>{newNoteFocusId}</output>
       <output data-citation>{JSON.stringify(citation)}</output>
@@ -324,5 +361,96 @@ describe('命令面板的应用壳交接', () => {
     } finally {
       window.removeEventListener('mimir:document-command', listener)
     }
+  })
+})
+
+it('收集打开前沿用未保存守卫；取消或保存失败保留结果，确认后仅导航一次', async () => {
+  await mount()
+  await act(async () => {
+    button('标记保存失败').click()
+    button('重复打开收集').click()
+  })
+  const draft = document.querySelector<HTMLInputElement>('[aria-label="收集结果草稿"]')!
+  draft.value = '本批已保存，无需重传'
+  await act(async () => button('打开导入文档').click())
+  expect(document.querySelector('[data-capture-suspended]')?.textContent).toBe('true')
+  expect(document.querySelector('[role="dialog"]')?.textContent).toContain('打开文档前保存改动')
+  expect(document.querySelector('[role="dialog"]')?.textContent).toContain('不需要重新上传')
+  await act(async () => button('保存并离开').click())
+  expect(document.querySelector('[role="alert"]')?.textContent).toContain('保存未完成')
+  expect(navigation.navigate).not.toHaveBeenCalled()
+  await act(async () => button('继续编辑').click())
+  expect(document.querySelector('[data-capture-suspended]')?.textContent).toBe('false')
+  expect(document.querySelector<HTMLInputElement>('[aria-label="收集结果草稿"]')?.value).toBe(
+    '本批已保存，无需重传',
+  )
+  await act(async () => button('重复打开收集').click())
+  expect(document.querySelector<HTMLInputElement>('[aria-label="收集结果草稿"]')?.value).toBe(
+    '本批已保存，无需重传',
+  )
+  await act(async () => button('打开导入文档').click())
+  await act(async () => button('丢弃改动').click())
+  expect(navigation.navigate).toHaveBeenCalledExactlyOnceWith({
+    to: '/docs',
+    search: { scope: 'folder:研究', id: 'imported-document' },
+  })
+  expect(document.querySelector('[data-capture-open]')?.getAttribute('data-capture-open')).toBe(
+    'false',
+  )
+})
+
+it('全局同步批次锁阻止弹窗重挂载；释放后只按首次调用的入口打开', async () => {
+  await mount()
+  await act(async () => {
+    button('占用页面批次').click()
+    button('重复打开收集').click()
+  })
+  expect(document.querySelector('[data-capture-open]')?.getAttribute('data-capture-open')).toBe(
+    'false',
+  )
+  await act(async () => {
+    button('结束页面批次').click()
+    button('重复打开收集').click()
+  })
+  expect(document.querySelector('[data-capture-open]')?.getAttribute('data-capture-open')).toBe(
+    'true',
+  )
+  const input = document.querySelector<HTMLInputElement>('[aria-label="收集结果草稿"]')!
+  input.value = '已有进行中批次'
+  await act(async () => button('重复打开收集').click())
+  expect(document.querySelector<HTMLInputElement>('[aria-label="收集结果草稿"]')?.value).toBe(
+    '已有进行中批次',
+  )
+})
+
+it('收集取消并关闭后，普通导航恢复默认守卫；Office无法代存时只返回编辑器', async () => {
+  await mount()
+  await act(async () => {
+    button('标记不能代存').click()
+    button('重复打开收集').click()
+  })
+  await act(async () => button('打开导入文档').click())
+  const guard = document.querySelector('[role="dialog"]')!
+  expect(guard.textContent).toContain('当前编辑器无法代为保存')
+  expect(guard.textContent).not.toContain('丢弃改动')
+  expect(guard.textContent).not.toContain('保存并离开')
+  await act(async () => button('继续编辑').click())
+  await act(async () => button('关闭收集').click())
+  await click('打开搜索')
+  await click('打开命中')
+  expect(document.querySelector('[role="dialog"]')?.textContent).toContain('有改动还没保存')
+  expect(document.querySelector('[role="dialog"]')?.textContent).not.toContain('本批导入结果')
+})
+
+it('没有未保存改动时，同帧重复打开结果只交接一次；关闭后的迟到回调被忽略', async () => {
+  await mount()
+  await act(async () => button('重复打开收集').click())
+  await act(async () => {
+    button('打开导入文档').click()
+    button('打开导入文档').click()
+  })
+  expect(navigation.navigate).toHaveBeenCalledExactlyOnceWith({
+    to: '/docs',
+    search: { scope: 'folder:研究', id: 'imported-document' },
   })
 })

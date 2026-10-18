@@ -128,7 +128,8 @@ export function OfficeSourceEditor({
    */
   useEffect(() => {
     const register = registerRef.current
-    register(() => saveFromHereRef.current())
+    // This callback only explains toolbar saving; it cannot save from the guard.
+    register(() => saveFromHereRef.current(), 'manual', false)
     return () => {
       register(null)
       dirtyRef.current(false)

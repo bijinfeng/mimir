@@ -51,19 +51,20 @@
     {
       "id": "capture",
       "name": "收集与导入",
-      "status": "awaiting_user_approval",
+      "status": "implemented_verified_global_gate_pending",
       "proposal": "../10-18-interaction-capture/prototype/review.html",
       "version": "capture-review-v1 revision2",
-      "approved_at": null,
-      "user_quote": null,
+      "approved_at": "2026-10-18",
+      "user_quote": "可以，实施吧",
       "implementation_commit": null,
       "task": ".trellis/tasks/10-18-interaction-capture",
       "planning_user_quote": "继续吧",
       "sha256": "fa66bdc5e0ed6a4c7d1383342b7e554754b9f88ce69db162a56fc947b93061e1",
-      "verification": "../10-18-interaction-capture/verification/browser-qa.json",
+      "verification": "../10-18-interaction-capture/implementation-acceptance.md",
       "preview_url": "http://127.0.0.1:5184/review.html",
       "coverage_groups": 9,
-      "coverage_items": 91
+      "coverage_items": 91,
+      "revision_notes": "按冻结revision2实施；独立检查与Renderer59文件511测试通过。真实GUI抽验、17项指定度量一致与hover稳定有证据；全仓小程序lint及Renderer外部TS2550阻断保留。"
     },
     {
       "id": "library",

@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-18",
+  "product_url": "http://127.0.0.1:5185/docs",
+  "approved_html_sha256": "fa66bdc5e0ed6a4c7d1383342b7e554754b9f88ce69db162a56fc947b93061e1",
+  "transport": "CDP intercepted capture/upload and two save failures; mocked business responses; successful capture/upload did not write backend documents. Temporary note marker was undone, original text restored and saved.",
+  "verified": [
+    "Actual navbar and directory menu entry/target/root and directory presets",
+    "Invalid URL disabled/help; clear focus; web and WeChat labels",
+    "Pending capture has one-request copy, locked tabs/close; failed extract does not mark unknown earlier stages done",
+    "Native file chooser accepted two task-local non-sensitive fixtures; first request pending while second row queued; second starts only after first completed",
+    "Saved original with zero extracted characters counts as success; partial failure uncertainty copy; first success open action only after batch",
+    "Auto-save failure then successful capture result opens 480px unsaved guard with actual title, initial Continue focus, one visible modal",
+    "Guard save failure blocks navigation; Continue restores success result and Open focus, no second capture request",
+    "Final 390x844 actions 342px wide/44px tall and no horizontal page overflow",
+    "844x480 body scrolls while close remains at y412..444; final narrower footer CSS reviewed independently",
+    "Dark mode palette/input green focus/no shadow; preference restored to light",
+    "Nav close focus returns to Collect; directory menu close returns to Add document",
+    "Final true pointer default/hover/leave and keyboard focus boxes identical, primary shadow none"
+  ],
+  "limits": [
+    "No actual remote capture/upload parsing/storage success end-to-end",
+    "No native OS directory picker / recursive directory drop / filesystem permission tests",
+    "Raw CDP file drag unsupported; attempted dispatch was rejected before UI action. No GUI drop success claim; component tests cover handlers",
+    "No OS IME candidate window, touch, screen reader or Electron host verification",
+    "Long lists and 200% product zoom not GUI sampled; source/approved prototype and tests cover relevant branches",
+    "Manual and Office guard variations covered by controlled component/host tests; actual browser sampled auto-save mode"
+  ],
+  "cleanup": {
+    "fetch_patterns": [],
+    "viewport_override": "reset",
+    "theme": "light",
+    "temporary_note_text": "undone; original content saved"
+  },
+  "screenshots": [
+    "product-url-empty-final.png",
+    "product-url-valid-final.png",
+    "product-url-dark.png",
+    "product-url-wait.png",
+    "product-url-error.png",
+    "product-upload-wait.png",
+    "product-upload-partial-final.png",
+    "product-upload-narrow-final.png",
+    "product-upload-low.png",
+    "product-directory-empty.png",
+    "product-guard-auto.png",
+    "product-guard-save-error.png",
+    "product-guard-cancel-result.png"
+  ],
+  "final_geometry": "hover-geometry-final.json"
+}

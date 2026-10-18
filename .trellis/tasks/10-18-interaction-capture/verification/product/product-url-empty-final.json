@@ -1,0 +1,108 @@
+{
+  "buttons": [
+    {
+      "bg": "rgb(255, 255, 255)",
+      "border": "0px none rgb(38, 38, 38)",
+      "color": "rgb(38, 38, 38)",
+      "font": "13px",
+      "h": 28,
+      "line": "20px",
+      "name": "粘贴链接",
+      "padding": "4px 12px",
+      "shadow": "rgba(0, 0, 0, 0.07) 0px 1px 4px 0px",
+      "w": 242
+    },
+    {
+      "bg": "rgba(0, 0, 0, 0)",
+      "border": "0px none rgb(89, 89, 89)",
+      "color": "rgb(89, 89, 89)",
+      "font": "13px",
+      "h": 28,
+      "line": "20px",
+      "name": "上传文件",
+      "padding": "4px 12px",
+      "shadow": "none",
+      "w": 242
+    },
+    {
+      "bg": "rgb(255, 255, 255)",
+      "border": "1px solid rgb(232, 232, 232)",
+      "color": "rgb(38, 38, 38)",
+      "font": "13px",
+      "h": 32,
+      "line": "20px",
+      "name": "取消",
+      "padding": "5px 14px",
+      "shadow": "none",
+      "w": 56.53125
+    },
+    {
+      "bg": "rgb(244, 245, 245)",
+      "border": "1px solid rgb(231, 233, 232)",
+      "color": "rgb(144, 150, 146)",
+      "font": "13px",
+      "h": 32,
+      "line": "20px",
+      "name": "抓取",
+      "padding": "5px 14px",
+      "shadow": "none",
+      "w": 56.53125
+    }
+  ],
+  "field": {
+    "bg": "rgb(255, 255, 255)",
+    "border": "1px solid rgb(0, 122, 69)",
+    "color": "rgb(38, 38, 38)",
+    "font": "14px",
+    "h": 34,
+    "line": "22px",
+    "padding": "0px 10px",
+    "shadow": "none",
+    "w": 492
+  },
+  "focus": "capture-url",
+  "input": {
+    "bg": "rgba(0, 0, 0, 0)",
+    "border": "0px none rgb(38, 38, 38)",
+    "color": "rgb(38, 38, 38)",
+    "font": "14px",
+    "h": 32,
+    "line": "22px",
+    "padding": "5px 0px",
+    "shadow": "none",
+    "w": 470
+  },
+  "label": {
+    "bg": "rgba(0, 0, 0, 0)",
+    "border": "0px none rgb(38, 38, 38)",
+    "color": "rgb(38, 38, 38)",
+    "font": "12.5px",
+    "h": 21.25,
+    "line": "21.25px",
+    "padding": "0px",
+    "shadow": "none",
+    "w": 492
+  },
+  "modal": {
+    "bg": "rgb(255, 255, 255)",
+    "border": "0px none rgb(38, 38, 38)",
+    "color": "rgb(38, 38, 38)",
+    "font": "14px",
+    "h": 323.640625,
+    "line": "22px",
+    "padding": "20px 24px",
+    "shadow": "rgba(0, 0, 0, 0.2) 0px 12px 32px 0px",
+    "w": 540
+  },
+  "tabs": {
+    "bg": "rgb(247, 248, 248)",
+    "border": "0px none rgb(38, 38, 38)",
+    "color": "rgb(38, 38, 38)",
+    "font": "14px",
+    "h": 34,
+    "line": "22px",
+    "padding": "3px",
+    "shadow": "none",
+    "w": 492
+  }
+}

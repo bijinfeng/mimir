@@ -1,0 +1,107 @@
+{
+  "scope": "Final light desktop URL empty/focus, named visual metrics only; not proof for every scene",
+  "checks": [
+    {
+      "metric": "modal.width",
+      "product": 540,
+      "reference": 540,
+      "equal": true
+    },
+    {
+      "metric": "modal.height",
+      "product": 323.640625,
+      "reference": 323.640625,
+      "equal": true
+    },
+    {
+      "metric": "modal.padding",
+      "product": "20px 24px",
+      "reference": "20px 24px",
+      "equal": true
+    },
+    {
+      "metric": "field.height",
+      "product": 34,
+      "reference": 34,
+      "equal": true
+    },
+    {
+      "metric": "field.border",
+      "product": "1px solid rgb(0, 122, 69)",
+      "reference": "1px solid rgb(0, 122, 69)",
+      "equal": true
+    },
+    {
+      "metric": "field.shadow",
+      "product": "none",
+      "reference": "none",
+      "equal": true
+    },
+    {
+      "metric": "input.width",
+      "product": 470,
+      "reference": 470,
+      "equal": true
+    },
+    {
+      "metric": "input.font",
+      "product": "14px",
+      "reference": "14px",
+      "equal": true
+    },
+    {
+      "metric": "input.line",
+      "product": "22px",
+      "reference": "22px",
+      "equal": true
+    },
+    {
+      "metric": "label.line",
+      "product": "21.25px",
+      "reference": "21.25px",
+      "equal": true
+    },
+    {
+      "metric": "tabs.height",
+      "product": 34,
+      "reference": 34,
+      "equal": true
+    },
+    {
+      "metric": "disabled.width",
+      "product": 56.53125,
+      "reference": 56.53125,
+      "equal": true
+    },
+    {
+      "metric": "disabled.height",
+      "product": 32,
+      "reference": 32,
+      "equal": true
+    },
+    {
+      "metric": "disabled.background",
+      "product": "rgb(244, 245, 245)",
+      "reference": "rgb(244, 245, 245)",
+      "equal": true
+    },
+    {
+      "metric": "disabled.border",
+      "product": "1px solid rgb(231, 233, 232)",
+      "reference": "1px solid rgb(231, 233, 232)",
+      "equal": true
+    },
+    {
+      "metric": "disabled.text",
+      "product": "rgb(144, 150, 146)",
+      "reference": "rgb(144, 150, 146)",
+      "equal": true
+    },
+    {
+      "metric": "disabled.shadow",
+      "product": "none",
+      "reference": "none",
+      "equal": true
+    }
+  ]
+}

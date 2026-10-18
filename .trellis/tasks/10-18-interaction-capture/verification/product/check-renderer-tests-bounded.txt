@@ -1,0 +1,12 @@
+
+ RUN  v5.0.4 /Users/admin/Desktop/mimir/packages/renderer
+
+
+ Test Files  59 passed (59)
+      Tests  509 passed (509)
+   Start at  16:34:11
+   Duration  58.18s (import 63%, tests 20%, environment 15%, transform 2%)
+
+    Isolate  59 workers spawned · ~765ms startup each (spawn + environment, per file)
+             at least ~10.52s faster with isolate: false — reuses workers across files instead of one per file
+

@@ -1,4 +1,6 @@
 import { confirmDanger } from '../confirm-danger'
+import { UploadPanel } from '../UploadPanel'
+import { useUploadStyles } from '../capture/upload-styles'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { App, Button, Dropdown, Empty, Input, Modal, Segmented, Skeleton, Tooltip } from 'antd'
@@ -96,10 +98,12 @@ import articleIcon from './material-symbols-rounded/article.svg?url'
  */
 export function LibraryView({ scope }: { scope: string }) {
   const { styles } = useStyles()
+  const { styles: captureStyles } = useUploadStyles()
   const narrowViewport = useNarrowViewport()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { openDocument, openCapture, requestNewNoteFocus } = useAppShell()
+  const { openDocument, openCapture, requestNewNoteFocus, claimUploadBatch, releaseUploadBatch } =
+    useAppShell()
   const { runGuarded } = useUnsaved()
   const { message, modal } = App.useApp()
 
@@ -307,25 +311,23 @@ export function LibraryView({ scope }: { scope: string }) {
   const dropDepth = useRef(0)
   const [dragging, setDragging] = useState(false)
   const canDrop = folderPath !== null
-  const uploadDropped = async (files: File[]) => {
-    if (!folderPath) return
-    let ok = 0
-    let failed = 0
-    for (const file of files) {
-      if (file.size > FILE_MAX_BYTES) {
-        failed += 1
-        continue
-      }
-      try {
-        await api.documents.upload(file, folderPath)
-        ok += 1
-      } catch {
-        failed += 1
-      }
-    }
-    invalidateList()
-    if (ok > 0) message.success(`已收进 ${ok} 个文件`)
-    if (failed > 0) message.warning(`${failed} 个文件没能上传`)
+  const [droppedBatch, setDroppedBatch] = useState<{
+    files: File[]
+    folder: string
+    nonce: number
+  } | null>(null)
+  const dropActive = useRef(false)
+  const dropNonce = useRef(0)
+  const uploadDropped = (files: File[]) => {
+    if (
+      folderPath === null ||
+      !files.length ||
+      dropActive.current ||
+      (claimUploadBatch && !claimUploadBatch())
+    )
+      return
+    dropActive.current = true
+    setDroppedBatch({ files, folder: folderPath, nonce: ++dropNonce.current })
   }
 
   const isOnboard = scope === 'all' && foldersQuery.isSuccess && !firstPath
@@ -397,20 +399,46 @@ export function LibraryView({ scope }: { scope: string }) {
         if (dropDepth.current === 0) setDragging(false)
       }}
       onDragOver={(event) => {
-        if (!canDrop) return
+        if (!canDrop || !event.dataTransfer.types.includes('Files')) return
         event.preventDefault()
         event.dataTransfer.dropEffect = 'copy'
       }}
       onDrop={(event) => {
-        if (!canDrop) return
+        if (!canDrop || !event.dataTransfer.types.includes('Files')) return
         event.preventDefault()
         dropDepth.current = 0
         setDragging(false)
         const files = Array.from(event.dataTransfer.files)
-        if (files.length > 0) void uploadDropped(files)
+        if (files.length > 0) uploadDropped(files)
       }}
     >
-      {dragging && <div className={styles.dropOverlay}>松开即上传到这个知识库</div>}
+      {dragging && (
+        <div className={styles.dropOverlay}>
+          <span>松开即上传到当前知识库</span>
+          <span>{folderPath}</span>
+        </div>
+      )}
+      {droppedBatch && (
+        <section className={captureStyles.integrated} aria-label="文件导入">
+          <div className={captureStyles.integratedHeading}>
+            <strong>文件导入</strong>
+            <span>{droppedBatch.folder}</span>
+          </div>
+          <UploadPanel
+            key={droppedBatch.nonce}
+            inline
+            initialFiles={droppedBatch.files}
+            folder={droppedBatch.folder}
+            onUploaded={() => {}}
+            onComplete={invalidateList}
+            releaseBatch={releaseUploadBatch}
+            onBusyChange={(value) => {
+              dropActive.current = value
+            }}
+            onCleared={() => setDroppedBatch(null)}
+          />
+        </section>
+      )}
 
       {showKbChrome && (
         <div className={styles.topBar} aria-label="知识库位置">

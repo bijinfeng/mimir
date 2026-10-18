@@ -1,0 +1,102 @@
+{
+  "button": [
+    {
+      "bg": "rgb(244, 245, 245)",
+      "border": "1px solid rgb(231, 233, 232)",
+      "borderRadius": "5px",
+      "boxShadow": "none",
+      "color": "rgb(144, 150, 146)",
+      "font": "13px",
+      "gap": "7px",
+      "height": 32,
+      "lineHeight": "20px",
+      "padding": "5px 14px",
+      "tag": "BUTTON",
+      "width": 56.53125
+    }
+  ],
+  "dialog": {
+    "bg": "rgb(255, 255, 255)",
+    "border": "0px none rgb(38, 38, 38)",
+    "borderRadius": "6px",
+    "boxShadow": "rgba(0, 0, 0, 0.2) 0px 12px 32px 0px",
+    "color": "rgb(38, 38, 38)",
+    "font": "14px",
+    "gap": "normal",
+    "height": 323.640625,
+    "lineHeight": "23.8px",
+    "padding": "20px 24px",
+    "tag": "DIV",
+    "width": 540
+  },
+  "field": {
+    "bg": "rgb(255, 255, 255)",
+    "border": "1px solid rgb(0, 122, 69)",
+    "borderRadius": "5px",
+    "boxShadow": "none",
+    "color": "rgb(38, 38, 38)",
+    "font": "14px",
+    "gap": "5px",
+    "height": 34,
+    "lineHeight": "23.8px",
+    "padding": "0px 10px",
+    "tag": "DIV",
+    "width": 492
+  },
+  "heading": {
+    "bg": "rgba(0, 0, 0, 0)",
+    "border": "0px none rgb(38, 38, 38)",
+    "borderRadius": "0px",
+    "boxShadow": "none",
+    "color": "rgb(38, 38, 38)",
+    "font": "16px",
+    "gap": "normal",
+    "height": 26,
+    "lineHeight": "26px",
+    "padding": "0px",
+    "tag": "H3",
+    "width": 456
+  },
+  "input": {
+    "bg": "rgba(0, 0, 0, 0)",
+    "border": "0px none rgb(38, 38, 38)",
+    "borderRadius": "0px",
+    "boxShadow": "none",
+    "color": "rgb(38, 38, 38)",
+    "font": "14px",
+    "gap": "normal",
+    "height": 32,
+    "lineHeight": "22px",
+    "padding": "5px 0px",
+    "tag": "INPUT",
+    "width": 470
+  },
+  "label": {
+    "bg": "rgba(0, 0, 0, 0)",
+    "border": "0px none rgb(38, 38, 38)",
+    "borderRadius": "0px",
+    "boxShadow": "none",
+    "color": "rgb(38, 38, 38)",
+    "font": "12.5px",
+    "gap": "8px",
+    "height": 21.25,
+    "lineHeight": "21.25px",
+    "padding": "0px",
+    "tag": "LABEL",
+    "width": 492
+  },
+  "tabs": {
+    "bg": "rgb(247, 248, 248)",
+    "border": "0px none rgb(38, 38, 38)",
+    "borderRadius": "5px",
+    "boxShadow": "none",
+    "color": "rgb(38, 38, 38)",
+    "font": "14px",
+    "gap": "2px",
+    "height": 34,
+    "lineHeight": "23.8px",
+    "padding": "3px",
+    "tag": "DIV",
+    "width": 492
+  }
+}

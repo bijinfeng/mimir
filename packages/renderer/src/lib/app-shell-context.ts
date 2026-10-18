@@ -66,6 +66,9 @@ export interface AppShellContextValue {
    * 打开它的人决定，而不是让用户在对话框里再选一遍。
    */
   openCapture: (options?: CaptureOptions) => void
+  /** Synchronous single batch ownership across dialog selection and whole-page drop. */
+  claimUploadBatch?: (fromDialog?: boolean) => boolean
+  releaseUploadBatch?: () => void
 
   /**
    * 从对话的引用跳去文档。

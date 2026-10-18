@@ -24,9 +24,14 @@ interface UnsavedContextValue {
   /** 由编辑器在挂载/状态变化时调用 */
   setDirty: (dirty: boolean) => void
   /** 提供一个「重新保存」的入口，供「保存并离开」调用 */
-  setSave: (save: (() => Promise<boolean>) | null, mode?: 'auto' | 'manual') => void
+  setSave: (
+    save: (() => Promise<boolean>) | null,
+    mode?: 'auto' | 'manual',
+    canSaveFromGuard?: boolean,
+  ) => void
   /** 自动保存笔记不能承诺丢弃已写入的版本 */
   saveMode: 'auto' | 'manual'
+  canSave: boolean
   saving: boolean
   saveError: string | null
   /**
@@ -49,6 +54,7 @@ export function UnsavedProvider({ children }: { children: ReactNode }) {
   const [pending, setPending] = useState<PendingLeave | null>(null)
   const [saveMode, setSaveMode] = useState<'auto' | 'manual'>('manual')
   const [saving, setSaving] = useState(false)
+  const [canSave, setCanSave] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const dirtyRef = useRef(false)
   const savingRef = useRef(false)
@@ -65,8 +71,13 @@ export function UnsavedProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const setSave = useCallback(
-    (save: (() => Promise<boolean>) | null, mode: 'auto' | 'manual' = 'manual') => {
+    (
+      save: (() => Promise<boolean>) | null,
+      mode: 'auto' | 'manual' = 'manual',
+      canSaveFromGuard = true,
+    ) => {
       saveRef.current = save
+      setCanSave(Boolean(save) && canSaveFromGuard)
       setSaveMode(save ? mode : 'manual')
     },
     [],
@@ -137,6 +148,7 @@ export function UnsavedProvider({ children }: { children: ReactNode }) {
         setDirty,
         setSave,
         saveMode,
+        canSave,
         saving,
         saveError,
         runGuarded,

@@ -3,9 +3,9 @@
   "name": "interaction-capture",
   "title": "收集与导入交互精修",
   "description": "第四模块：盘点网页收集、文件与文件夹导入及失败恢复，先交互HTML对比，经认可后再实施",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": null,
-  "scope": "capture/upload frontend interaction proposal only",
+  "scope": "Approved capture-review-v1 revision2 frontend implementation and parity verification",
   "package": "renderer",
   "priority": "P2",
   "creator": "jfbi",
@@ -31,8 +31,13 @@
     "prototype/version.json",
     "prototype/coverage.json",
     "verification/prototype-check.md",
-    "verification/browser-qa.json"
+    "verification/browser-qa.json",
+    "implementation-acceptance.md",
+    "implementation-coverage.json",
+    "verification/product-check.md",
+    "verification/product/browser-qa.json",
+    "verification/product/comparison.html"
   ],
-  "notes": "第四模块HTML capture-review-v1 revision2已完成，9组91项覆盖/60基础视图；构建、lint、类型、结构与浏览器代表路径抽验通过。待用户认可，保持planning；未启动产品实施。全仓外部检查阻断不因原型检查解除。",
+  "notes": "用户“可以，实施吧”批准revision2；本轮实施及独立复查完成，Renderer59文件511测试、限定lint/format通过。真实GUI与17项指定度量/hover证据齐全。全仓小程序lint及外部Promise.withResolvers类型阻断；保持in_progress，未归档。",
   "meta": {}
 }
