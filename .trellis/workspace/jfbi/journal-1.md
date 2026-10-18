@@ -496,3 +496,26 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+
+## Session 18: 搜索 AI 操作区对齐与 hover 修复
+<!-- trellis-session: v=2 fp=403f43ff80f42d1f -->
+
+**Date**: 2026-10-18
+**Task**: 搜索 AI 操作区对齐与 hover 修复
+**Package**: renderer
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+修复 AntD link Button 状态边框导致的 2px 布局变化，显式居中图文；浅深桌面与390px默认/悬停/离开矩形一致，active及键盘焦点验证通过。定向检查、Renderer类型和Palette15项通过，独立检查无问题。全仓仍停于外部小程序7项lint，任务保持开放，未推送。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `1f119ff` | fix(ui): stabilize search AI action alignment on hover |
+
+### Status
+
+[OK] **Completed**
