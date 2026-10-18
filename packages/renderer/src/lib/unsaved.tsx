@@ -28,6 +28,7 @@ interface UnsavedContextValue {
     save: (() => Promise<boolean>) | null,
     mode?: 'auto' | 'manual',
     canSaveFromGuard?: boolean,
+    editorId?: string,
   ) => void
   /** 自动保存笔记不能承诺丢弃已写入的版本 */
   saveMode: 'auto' | 'manual'
@@ -58,6 +59,12 @@ export function UnsavedProvider({ children }: { children: ReactNode }) {
   const [saveError, setSaveError] = useState<string | null>(null)
   const dirtyRef = useRef(false)
   const savingRef = useRef(false)
+  const canSaveRef = useRef(false)
+  const changeVersion = useRef(0)
+  const editorVersion = useRef(0)
+  const editorIdRef = useRef<string | undefined>(undefined)
+  const registrationVersion = useRef(0)
+  const pendingRef = useRef<PendingLeave | null>(null)
 
   /**
    * 保存函数放 ref 而不是 state：它只是一个命令入口，
@@ -66,6 +73,7 @@ export function UnsavedProvider({ children }: { children: ReactNode }) {
   const saveRef = useRef<(() => Promise<boolean>) | null>(null)
 
   const setDirty = useCallback((dirty: boolean) => {
+    if (dirty) changeVersion.current += 1
     dirtyRef.current = dirty
     setDirtyState(dirty)
   }, [])
@@ -75,27 +83,56 @@ export function UnsavedProvider({ children }: { children: ReactNode }) {
       save: (() => Promise<boolean>) | null,
       mode: 'auto' | 'manual' = 'manual',
       canSaveFromGuard = true,
+      editorId?: string,
     ) => {
+      const invalidateEditor = () => {
+        editorVersion.current += 1
+        pendingRef.current = null
+        savingRef.current = false
+        setPending(null)
+        setSaving(false)
+        setSaveError(null)
+      }
+      // React effect cleanup/setup may unregister and re-register the same
+      // editor in one commit. Only a different document ID invalidates it.
+      if (save && editorId !== undefined && editorId !== editorIdRef.current) {
+        invalidateEditor()
+        editorIdRef.current = editorId
+      }
+      registrationVersion.current += 1
+      const registration = registrationVersion.current
       saveRef.current = save
+      canSaveRef.current = Boolean(save) && canSaveFromGuard
       setCanSave(Boolean(save) && canSaveFromGuard)
       setSaveMode(save ? mode : 'manual')
+      if (!save) {
+        queueMicrotask(() => {
+          if (saveRef.current || registrationVersion.current !== registration) return
+          invalidateEditor()
+          editorIdRef.current = undefined
+        })
+      }
     },
     [],
   )
 
   const runGuarded = (action: () => void) => {
+    if (savingRef.current) return
     if (!dirtyRef.current) {
       action()
       return
     }
     setSaveError(null)
-    setPending({ action })
+    const request = { action }
+    pendingRef.current = request
+    setPending(request)
   }
 
   const resolve = (choice: 'cancel' | 'discard' | 'save') => {
-    const current = pending
+    const current = pendingRef.current
     if (!current || savingRef.current) return
     if (choice === 'cancel') {
+      pendingRef.current = null
       setPending(null)
       setSaveError(null)
       return
@@ -103,6 +140,7 @@ export function UnsavedProvider({ children }: { children: ReactNode }) {
 
     if (choice === 'discard') {
       if (saveMode === 'auto') return
+      pendingRef.current = null
       setPending(null)
       dirtyRef.current = false
       setDirtyState(false)
@@ -111,33 +149,51 @@ export function UnsavedProvider({ children }: { children: ReactNode }) {
     }
 
     if (!dirtyRef.current) {
+      pendingRef.current = null
       setPending(null)
       current.action()
+      return
+    }
+
+    if (!canSaveRef.current) {
+      setSaveError('当前编辑器无法代为保存，请继续编辑并在工具栏中保存。')
       return
     }
 
     savingRef.current = true
     setSaving(true)
     setSaveError(null)
+    const version = changeVersion.current
+    const editor = editorVersion.current
     void (async () => {
       const save = saveRef.current
       try {
         const ok = save ? await save() : false
+        if (editorVersion.current !== editor || pendingRef.current !== current) return
         if (!ok) {
           setSaveError('保存未完成，请重试或继续编辑。')
+        } else if (dirtyRef.current && changeVersion.current !== version) {
+          // A successful write of an older snapshot is not a successful flush.
+          // Editors draining all newer changes report setDirty(false).
+          setSaveError('保存期间又有新改动，请再次保存或继续编辑。')
         } else {
           dirtyRef.current = false
           setDirtyState(false)
+          pendingRef.current = null
           setPending(null)
           current.action()
         }
       } catch (error) {
         // 保存失败就不放行——放行了用户以为存上了，实际丢了，
         // 比不拦截更糟（.trellis/spec/project/product.md §5.9）
-        setSaveError(error instanceof Error ? error.message : '保存失败，请重试。')
+        if (editorVersion.current === editor && pendingRef.current === current)
+          setSaveError(error instanceof Error ? error.message : '保存失败，请重试。')
+      } finally {
+        if (editorVersion.current === editor) {
+          savingRef.current = false
+          setSaving(false)
+        }
       }
-      savingRef.current = false
-      setSaving(false)
     })()
   }
 

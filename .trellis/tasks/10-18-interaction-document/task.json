@@ -3,7 +3,7 @@
   "name": "interaction-document",
   "title": "文档阅读与共享文档流程交互精修",
   "description": "第六模块：完整盘点文档阅读、整理、媒体预览与未保存流程，先交互HTML前后对比，具体认可后再实施",
-  "status": "planning",
+  "status": "in_progress",
   "dev_type": "frontend",
   "scope": "document",
   "package": "renderer",
@@ -21,15 +21,23 @@
   "children": [],
   "parent": "10-18-modular-interaction-polish",
   "relatedFiles": [],
-  "notes": "document-review-v1规划交付：78组422状态、29渲染轨道、17条代表GUI；具体HTML待用户认可，产品未改。",
+  "notes": "用户已认可document-review-v1冻结版，逐项按78组422状态还原并建立实施/验收映射。",
   "meta": {
     "planning_user_quote": "继续",
-    "product_implementation_approved": false,
+    "product_implementation_approved": true,
     "coverage_groups": 78,
     "coverage_states": 422,
     "planning_delivery": "ready_for_user_review",
     "html_sha256": "2a3aafb4277c37bd06e38ae94ecec085e0f31a062b88e25a000042e5cbdb220d",
     "preview_url": "http://127.0.0.1:5187/review.html",
-    "planning_acceptance": "planning-acceptance.md"
+    "planning_acceptance": "planning-acceptance.md",
+    "approved_version": "document-review-v1",
+    "approval_user_quote": "开始实施吧，每个打磨点都要还原到位，不要有遗漏和偏差",
+    "approved_html_sha256": "2a3aafb4277c37bd06e38ae94ecec085e0f31a062b88e25a000042e5cbdb220d",
+    "implementation_delivery": "implemented_verified_global_gate_pending",
+    "implementation_verification": "implementation-acceptance.md",
+    "renderer_tests_passed": 569,
+    "global_gate": "failed_outside_scope",
+    "gui_verification": "verification/implementation-browser-qa.md"
   }
 }

@@ -76,3 +76,38 @@ it('renders saved WaveDrom fences read-only and preserves source on a drawing er
     host.remove()
   }
 })
+
+it('excludes fenced heading samples from DOM anchors and makes internal links usable', () => {
+  const host = document.createElement('div')
+  document.body.append(host)
+  const root = createRoot(host)
+  const open = vi.fn<(id: string) => void>()
+  const body = '# Start\n\n```md\n# Code sample\n```\n\n## End\n\n[内部笔记](/doc/note-b)'
+  try {
+    act(() =>
+      root.render(
+        <MarkdownBody body={body} headings={extractHeadings(body)} onOpenInternalNote={open} />,
+      ),
+    )
+    expect([...host.querySelectorAll('h1,h2,h3')].map((n) => n.id)).toEqual(['h-0', 'h-1'])
+    act(() => host.querySelector<HTMLAnchorElement>('a')!.click())
+    expect(open).toHaveBeenCalledExactlyOnceWith('note-b')
+  } finally {
+    act(() => root.unmount())
+    host.remove()
+  }
+})
+
+it('distinguishes an empty read-only body from a loading document', () => {
+  const host = document.createElement('div')
+  document.body.append(host)
+  const root = createRoot(host)
+  try {
+    act(() => root.render(<MarkdownBody body="" headings={[]} />))
+    expect(host.textContent).toContain('还没有可检索的正文')
+    expect(host.querySelector('.ProseMirror')).toBeNull()
+  } finally {
+    act(() => root.unmount())
+    host.remove()
+  }
+})

@@ -1,4 +1,5 @@
 import type { DocumentDetail } from '@mimir/shared'
+import { ExternalLink, Link } from 'lucide-react'
 import { useStyles } from './DocumentPanel.style'
 
 /**
@@ -24,11 +25,12 @@ export function DocumentFooter({
   const { styles } = useStyles()
   const { sources, backlinks } = doc.links
 
-  if (sources.length === 0 && backlinks.length === 0) return null
+  const originalUrl = doc.url && /^https?:\/\//i.test(doc.url) ? doc.url : null
+  if (sources.length === 0 && backlinks.length === 0 && !originalUrl) return null
 
   return (
-    <div className={styles.foot}>
-      {sources.length > 0 && (
+    <footer className={styles.foot} aria-label="文档关联">
+      {(sources.length > 0 || originalUrl) && (
         <div className={styles.footRow}>
           <span className={styles.footLabel}>来源</span>
           <span className={styles.footLinks}>
@@ -39,9 +41,21 @@ export function DocumentFooter({
                 className={styles.footLink}
                 onClick={() => onOpenDocument(link.id)}
               >
+                <Link size={13} aria-hidden="true" />
                 {link.title}
               </button>
             ))}
+            {originalUrl && (
+              <a
+                className={styles.footLink}
+                href={originalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="在新标签打开原网页"
+              >
+                查看原网页 <ExternalLink size={12} aria-hidden="true" />
+              </a>
+            )}
           </span>
         </div>
       )}
@@ -62,6 +76,6 @@ export function DocumentFooter({
           </span>
         </div>
       )}
-    </div>
+    </footer>
   )
 }

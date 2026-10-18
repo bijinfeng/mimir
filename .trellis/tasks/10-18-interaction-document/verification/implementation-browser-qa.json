@@ -1,0 +1,132 @@
+{
+  "date": "2026-10-18",
+  "approved_version": "document-review-v1",
+  "method": "Actual browser with temporary document Fetch fixtures; no actual backend writes. Source-state mapping is not GUI execution count.",
+  "cases": [
+    {
+      "id": "note-desktop",
+      "states": [
+        "DOC-001.note",
+        "DOC-009.idle",
+        "DOC-016.note",
+        "DOC-075.desktop",
+        "DOC-076.light"
+      ],
+      "observed": "同内容笔记：48px头部、28px标题、15px/1.9正文、32px内边距、196px大纲；双链与正文共用滚动区。",
+      "screenshot": "implementation-browser/note-desktop-light-final.png"
+    },
+    {
+      "id": "title-cancel",
+      "states": [
+        "DOC-010.edit",
+        "DOC-010.cancel"
+      ],
+      "observed": "显式编辑/取消，回到标题入口；未写真实API。",
+      "screenshot": null
+    },
+    {
+      "id": "title-read-recovery",
+      "states": [
+        "DOC-012.saved-read-error",
+        "DOC-012.retry-read",
+        "DOC-012.success"
+      ],
+      "observed": "冷刷新后拦截PATCH200/GET404；禁用标题并仅重试GET，恢复后回焦，活正文保留。",
+      "screenshot": "implementation-browser/title-saved-read-failure-final.png"
+    },
+    {
+      "id": "tags-failure",
+      "states": [
+        "DOC-026.error"
+      ],
+      "observed": "拦截标签PATCH500，保留失败候选并提示重试。",
+      "screenshot": null
+    },
+    {
+      "id": "submenu-escape",
+      "states": [
+        "DOC-023.submenu",
+        "DOC-023.keyboard",
+        "DOC-023.escape"
+      ],
+      "observed": "ArrowRight展开标签；第一层Escape回父菜单，第二层关闭并回焦更多操作，expanded=false。",
+      "screenshot": null
+    },
+    {
+      "id": "narrow",
+      "states": [
+        "DOC-009.narrow",
+        "DOC-016.narrow-hidden",
+        "DOC-075.390",
+        "DOC-075.nav-rail"
+      ],
+      "observed": "390px无页面横溢；标题25px/35px、正文28/16/48内边距，无大纲。",
+      "screenshot": "implementation-browser/note-390-light.png"
+    },
+    {
+      "id": "assistant",
+      "states": [
+        "DOC-059.overlay",
+        "DOC-059.narrow",
+        "DOC-060.close",
+        "DOC-060.focus-return"
+      ],
+      "observed": "390px覆盖层left84,width306；焦点在关闭按钮，aria-modal；Escape回入口；隐藏保留挂载且inert。1100px视口/844px实际文档栏仍覆盖400px。",
+      "screenshot": null
+    },
+    {
+      "id": "low-height",
+      "states": [
+        "DOC-075.low-height"
+      ],
+      "observed": "1280×480正文内部滚动，头部/工具区固定，命令动作可达。",
+      "screenshot": null
+    },
+    {
+      "id": "dark",
+      "states": [
+        "DOC-076.dark"
+      ],
+      "observed": "实际账户主题切换深色核对；随后恢复浅色。",
+      "screenshot": "implementation-browser/note-desktop-dark-final.png"
+    },
+    {
+      "id": "command",
+      "states": [
+        "DOC-067.open",
+        "DOC-070.focus"
+      ],
+      "observed": "桌面480px弹窗/24px内边距/17px标题；最终390px left62,top24,width318,padding18,radius12,title15；取消关闭。最后清除窄屏margin-block抵消8px偏移。",
+      "screenshot": "implementation-browser/rename-dialog-390-final.png"
+    },
+    {
+      "id": "readonly",
+      "states": [
+        "DOC-006.web",
+        "DOC-040.source-url"
+      ],
+      "observed": "只读抓取正文、单一H1与来源链接；http(s)、blank、noopener noreferrer。",
+      "screenshot": "implementation-browser/readonly-desktop-light.png"
+    },
+    {
+      "id": "media-error",
+      "states": [
+        "DOC-045.broken",
+        "DOC-048.image-error"
+      ],
+      "observed": "图片请求404进入明确失败下载卡片，下载名称说明已保存原件。未证明成功解码或下载完成。",
+      "screenshot": "implementation-browser/media-fallback.png"
+    }
+  ],
+  "not_verified": [
+    "422 states individually in GUI",
+    "native media playback/seek/fullscreen",
+    "download completion",
+    "OS IME composition",
+    "screen reader",
+    "Electron close",
+    "real backend mutation integration",
+    "all Office toolbar internal states"
+  ],
+  "cleanup": "Fetch patterns cleared; viewport overrides cleared; light theme restored; real mimir 产品说明 reloaded."
+}

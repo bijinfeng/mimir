@@ -1,8 +1,9 @@
 import type { PptxAiSnapshotDraft } from '@mimir/office'
 import { viewerFor, type Citation, type DocumentDetail, type NoteUpdate } from '@mimir/shared'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 import { App, Button, Empty, Skeleton, Typography } from 'antd'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ChatDocumentAgent } from '@mimir/chat'
 import { NoteEditor, type NoteSaveState } from './NoteEditor'
 import { useContentStyles } from './ContentTypography.style'
@@ -16,8 +17,8 @@ import { MarkdownBody } from './document/MarkdownBody'
 import { DocChatSidebar } from './document/DocChatSidebar'
 import { buildDocMenu } from './document/doc-menu'
 import { flattenFolders } from './document/folders'
-import { extractHeadings } from './document/headings'
-import { api } from '../lib/api'
+import { extractHeadings, type Heading } from './document/headings'
+import { api, ApiRequestError } from '../lib/api'
 import { useAppShell, type AskDraft } from '../lib/app-shell-context'
 import { useNarrowViewport } from '../lib/nav-collapse'
 import { useUnsaved } from '../lib/unsaved'
@@ -78,6 +79,7 @@ export function DocumentPanel({
   const { runGuarded } = useUnsaved()
   const queryClient = useQueryClient()
   const { message } = App.useApp()
+  const navigate = useNavigate()
 
   const docQuery = useQuery({
     queryKey: ['document', documentId],
@@ -98,6 +100,17 @@ export function DocumentPanel({
   }
   const docKind = doc?.kind
   const panelRef = useRef<HTMLDivElement>(null)
+  const sidebarRef = useRef<HTMLDivElement>(null)
+  const [compactPanel, setCompactPanel] = useState(false)
+  useEffect(() => {
+    const panel = panelRef.current
+    if (!panel || !documentId || !docKind || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry) setCompactPanel(entry.contentRect.width <= 880)
+    })
+    observer.observe(panel)
+    return () => observer.disconnect()
+  }, [documentId, docKind])
 
   useEffect(() => {
     if (!documentId || !docKind) return
@@ -134,7 +147,35 @@ export function DocumentPanel({
       cleanup()
     }
   }, [documentId, docKind])
-  const headings = doc ? extractHeadings(doc.body) : []
+  const [liveHeadings, setLiveHeadings] = useState<{ id: string; items: Heading[] } | null>(null)
+  const headings = useMemo(
+    () =>
+      doc && liveHeadings?.id === doc.id ? liveHeadings.items : extractHeadings(doc?.body ?? ''),
+    [doc, liveHeadings],
+  )
+  useEffect(() => {
+    const panel = panelRef.current
+    if (!panel || !docKind || !documentId) return
+    const sync = () => {
+      const body = panel.querySelector('.ProseMirror')
+      const items = [...(body?.querySelectorAll('h1, h2, h3, h4, h5, h6') ?? [])].map(
+        (node, index) => ({
+          id: `h-${index}`,
+          level: Number(node.tagName.slice(1)) <= 2 ? 2 : 3,
+          text: node.textContent ?? '',
+        }),
+      )
+      setLiveHeadings((current) =>
+        current?.id === documentId && JSON.stringify(current.items) === JSON.stringify(items)
+          ? current
+          : { id: documentId, items },
+      )
+    }
+    const observer = new MutationObserver(sync)
+    observer.observe(panel, { childList: true, subtree: true, characterData: true })
+    sync()
+    return () => observer.disconnect()
+  }, [documentId, docKind])
 
   /**
    * 内容列要不要占满。
@@ -217,9 +258,33 @@ export function DocumentPanel({
     text: string
     model: string
   } | null>(null)
-  const [aiSummaryLoading, setAiSummaryLoading] = useState(false)
+  const [aiBusy, setAiBusy] = useState<{ documentId: string; kind: 'summary' | 'tags' } | null>(
+    null,
+  )
+  const [aiFeedback, setAiFeedback] = useState<{
+    documentId: string
+    kind: 'summary' | 'tags'
+    text: string
+    noModel?: boolean
+  } | null>(null)
+  const aiRequest = useRef<{ id: string; token: symbol } | null>(null)
+  const activeDocument = useRef(documentId)
+  useEffect(() => {
+    activeDocument.current = documentId
+    return () => {
+      aiRequest.current = null
+    }
+  }, [documentId])
+  const [aiDocument, setAiDocument] = useState(documentId)
   /** AI 给出的标签候选。与统计版建议标签分开显示——来源不同，可信度不同 */
   const [aiTags, setAiTags] = useState<{ documentId: string; tags: string[] } | null>(null)
+  if (aiDocument !== documentId) {
+    setAiDocument(documentId)
+    setAiBusy(null)
+    setAiFeedback(null)
+    setAiSummary(null)
+    setAiTags(null)
+  }
 
   /**
    * 「问 AI」侧栏（D-087）。
@@ -233,6 +298,27 @@ export function DocumentPanel({
     draft: AskDraft
     open: boolean
   } | null>(null)
+  const sidebarMounted = aiSidebar !== null && aiSidebar.docId === documentId
+  const sidebarOpen = sidebarMounted && aiSidebar!.open
+  const overlayOpen = sidebarOpen && compactPanel
+  const closeAssistant = () => {
+    setAiSidebar((current) => (current ? { ...current, open: false } : current))
+    requestAnimationFrame(() => {
+      if (aiTriggerRef.current?.isConnected && !aiTriggerRef.current.closest('[inert]'))
+        aiTriggerRef.current.focus()
+      else
+        panelRef.current
+          ?.querySelector<HTMLElement>('[data-document-ai-trigger], [aria-label="询问这篇文档"]')
+          ?.focus()
+    })
+  }
+  useEffect(() => {
+    if (!overlayOpen) return
+    const frame = requestAnimationFrame(() =>
+      sidebarRef.current?.querySelector<HTMLElement>('[aria-label="关闭侧栏"]')?.focus(),
+    )
+    return () => cancelAnimationFrame(frame)
+  }, [overlayOpen])
   const [documentAgentHandle, setDocumentAgentHandle] = useState<ChatDocumentAgent | null>(null)
   const aiTriggerRef = useRef<HTMLElement | null>(null)
   /** 侧栏里点开的、属于当前这一篇的引用：原地滚动高亮，不走导航 */
@@ -242,6 +328,10 @@ export function DocumentPanel({
   const askAi = (passage?: string, instruction?: string) => {
     if (!documentId) return
     aiTriggerRef.current = document.activeElement as HTMLElement | null
+    if (!passage && !instruction && aiSidebar?.docId === documentId) {
+      setAiSidebar({ ...aiSidebar, open: true })
+      return
+    }
     setAiSidebar({
       docId: documentId,
       draft: {
@@ -304,17 +394,71 @@ export function DocumentPanel({
    * 「⋯」菜单触发——**失效范围一处不能少**：列表、目录树、标签云、导航计数。
    * 少刷一处就是界面上有一个数字在骗人。
    */
-  const patch = useMutation({
-    mutationFn: (input: NoteUpdate) => api.documents.update(documentId!, input),
-    onSuccess: (updated) => {
-      void queryClient.setQueryData(['document', updated.id], updated)
-      void queryClient.invalidateQueries({ queryKey: ['documents'] })
-      void queryClient.invalidateQueries({ queryKey: ['folders'] })
-      void queryClient.invalidateQueries({ queryKey: ['tags'] })
-      void queryClient.invalidateQueries({ queryKey: ['counts'] })
-    },
-    onError: (error: unknown) => message.error(error instanceof Error ? error.message : '操作失败'),
-  })
+  const metadataLocks = useRef(new Set<string>())
+  const moveVersions = useRef(new Map<string, symbol>())
+  const [metadata, setMetadata] = useState<{
+    id: string
+    input: NoteUpdate
+    pending: boolean
+    saved: boolean
+    error: string
+  } | null>(null)
+  const updateTags = async (tags: string[], readOnly = false): Promise<void> => {
+    if (!doc || metadataLocks.current.has(doc.id)) return
+    const id = doc.id
+    const input = { tags }
+    if (tags.length > 20 || tags.some((tag) => !tag.trim() || tag.trim().length > 50)) {
+      setMetadata({
+        id,
+        input,
+        pending: false,
+        saved: false,
+        error: '最多 20 个标签，每个标签为 1–50 个字符。',
+      })
+      return
+    }
+    metadataLocks.current.add(id)
+    setMetadata({ id, input, pending: true, saved: readOnly, error: '' })
+    let saved = readOnly
+    try {
+      if (!readOnly) {
+        const updated = await api.documents.update(id, input)
+        saved = true
+        // A metadata response contains a stale body snapshot. Only merge the field we wrote.
+        queryClient.setQueryData<DocumentDetail>(['document', id], (current) =>
+          current ? { ...current, tags: updated.tags } : current,
+        )
+      }
+      await Promise.all([
+        queryClient.invalidateQueries(
+          { queryKey: ['document', id], exact: true },
+          { throwOnError: true },
+        ),
+        ...['documents', 'folders', 'tags', 'counts'].map((key) =>
+          queryClient.invalidateQueries({ queryKey: [key] }),
+        ),
+      ])
+      setMetadata((current) => (current?.id === id ? null : current))
+    } catch (cause) {
+      setMetadata((current) =>
+        current?.id === id
+          ? {
+              id,
+              input,
+              pending: false,
+              saved,
+              error: saved
+                ? '标签已保存，但暂时无法读取最新内容。请重试刷新。'
+                : cause instanceof Error
+                  ? cause.message
+                  : '标签更新失败，原标签与候选已保留。',
+            }
+          : current,
+      )
+    } finally {
+      metadataLocks.current.delete(id)
+    }
+  }
 
   const moveDocument = async (
     folder: string,
@@ -324,8 +468,21 @@ export function DocumentPanel({
     if (!target || folder === (target.folder ?? '')) return true
     const before = target.folder ?? ''
     const targetId = target.id
+    if (metadataLocks.current.has(targetId)) {
+      if (inline) throw new Error('整理信息正在保存，请稍后重试。')
+      return false
+    }
+    metadataLocks.current.add(targetId)
+    const moveVersion = Symbol(targetId)
+    moveVersions.current.set(targetId, moveVersion)
+    setMetadata({ id: targetId, input: { folder }, pending: true, saved: false, error: '' })
+    let saved = false
     try {
       await api.documents.update(targetId, { folder })
+      saved = true
+      queryClient.setQueryData<DocumentDetail>(['document', targetId], (current) =>
+        current ? { ...current, folder: folder || null } : current,
+      )
       let refreshFailed = false
       await Promise.all([
         queryClient.invalidateQueries(
@@ -337,44 +494,69 @@ export function DocumentPanel({
       ]).catch(() => {
         refreshFailed = true
       })
-      const destination = folder || '知识库根'
+      const destination = folder || '所有知识库之外'
+      let undoSaved = false
       message.success({
         duration: 8,
         content: (
           <span>
             已移到 {destination}　
-            <Button
-              type="link"
-              size="small"
-              onClick={() => {
-                void (async () => {
-                  try {
+            <UndoMoveAction
+              onUndo={async () => {
+                if (moveVersions.current.get(targetId) !== moveVersion)
+                  throw new Error('文档已再次移动，此次撤销已失效。')
+                if (metadataLocks.current.has(targetId))
+                  throw new Error('整理信息正在保存，请稍后重试。')
+                metadataLocks.current.add(targetId)
+                try {
+                  if (!undoSaved) {
                     await api.documents.update(targetId, { folder: before })
-                    await queryClient.invalidateQueries({
-                      queryKey: ['document', targetId],
-                      exact: true,
-                    })
-                    void queryClient.invalidateQueries({ queryKey: ['documents'] })
-                    void queryClient.invalidateQueries({ queryKey: ['folders'] })
-                    message.success(`已移回 ${before || '知识库根'}`)
-                  } catch (error) {
-                    message.error(error instanceof Error ? error.message : '撤销移动失败')
+                    undoSaved = true
+                    queryClient.setQueryData<DocumentDetail>(['document', targetId], (current) =>
+                      current ? { ...current, folder: before || null } : current,
+                    )
                   }
-                })()
+                  await queryClient.invalidateQueries(
+                    { queryKey: ['document', targetId], exact: true },
+                    { throwOnError: true },
+                  )
+                  void queryClient.invalidateQueries({ queryKey: ['documents'] })
+                  void queryClient.invalidateQueries({ queryKey: ['folders'] })
+                  message.success(`已移回 ${before || '所有知识库之外'}`)
+                } catch (cause) {
+                  if (undoSaved)
+                    throw new Error('撤销已保存，但暂时无法读取最新内容。再次点击仅重试刷新。', {
+                      cause,
+                    })
+                  throw cause
+                } finally {
+                  metadataLocks.current.delete(targetId)
+                }
               }}
-            >
-              撤销
-            </Button>
+            />
           </span>
         ),
       })
+      if (!refreshFailed) setMetadata((current) => (current?.id === targetId ? null : current))
       if (refreshFailed)
         throw new DocumentCommandRefreshError('移动已完成，但暂时无法读取最新内容。请重试刷新。')
       return true
     } catch (error) {
+      setMetadata((current) =>
+        current?.id === targetId
+          ? {
+              id: targetId,
+              input: { folder },
+              pending: false,
+              saved,
+              error: error instanceof Error ? error.message : '移动失败，原目录已保留。',
+            }
+          : current,
+      )
       if (inline) throw error
-      message.error(error instanceof Error ? error.message : '移动失败')
       return false
+    } finally {
+      metadataLocks.current.delete(targetId)
     }
   }
 
@@ -385,50 +567,46 @@ export function DocumentPanel({
    * 失效哪些查询」这件事要处理（服务端什么都没写），而 mutation 的
    * 那套缓存语义在这里全是空的。loading 与错误各自如实反映。
    */
-  const runSummary = async (): Promise<void> => {
-    if (!documentId || aiSummaryLoading) return
-    setAiSummaryLoading(true)
+  const runAi = async (kind: 'summary' | 'tags'): Promise<void> => {
+    if (!documentId || aiRequest.current?.id === documentId) return
+    const id = documentId
+    const token = Symbol(kind)
+    aiRequest.current = { id, token }
+    setAiBusy({ documentId: id, kind })
+    setAiFeedback(null)
+    const current = () => activeDocument.current === id && aiRequest.current?.token === token
     try {
-      const result = await api.documents.summary(documentId)
-      if (!result.usedModel) {
-        // 没配模型时**如实说**，不显示一段像摘要的说明文字（见 ai-text.ts）
-        message.warning(result.text)
+      if (kind === 'summary') {
+        const result = await api.documents.summary(id)
+        if (!current()) return
+        if (!result.usedModel)
+          setAiFeedback({ documentId: id, kind, text: result.text, noModel: true })
+        else setAiSummary({ documentId: id, text: result.text, model: result.model })
       } else {
-        setAiSummary({ documentId, text: result.text, model: result.model })
+        const result = await api.documents.suggestedTagsAi(id)
+        if (!current()) return
+        if (!result.usedModel)
+          setAiFeedback({ documentId: id, kind, text: '尚未配置可用模型。', noModel: true })
+        else {
+          const tags = [...new Set(result.tags.map((tag) => tag.trim()).filter(Boolean))]
+          setAiTags({ documentId: id, tags })
+          if (tags.length === 0)
+            setAiFeedback({ documentId: id, kind, text: '本次没有生成标签候选' })
+        }
       }
     } catch (error) {
-      message.error(error instanceof Error ? error.message : '生成摘要失败')
-    }
-    setAiSummaryLoading(false)
-  }
-
-  /**
-   * AI 标签建议（M1-D）。
-   *
-   * 结果**不自动挂上**——它是一组候选，用户要自己选。自动加标签会让
-   * 「AI 猜错了」变成一件需要用户去删的事，而 AI 猜对时用户反而没有获得感。
-   */
-  const runAiTags = async (): Promise<void> => {
-    if (!documentId || aiSummaryLoading) return
-    setAiSummaryLoading(true)
-    try {
-      const result = await api.documents.suggestedTagsAi(documentId)
-      if (!result.usedModel) {
-        message.warning('AI 标签建议需要先配置模型（设置 › 模型 › 任务分配）')
-      } else if (result.tags.length === 0) {
-        message.info('AI 没有给出新的标签')
-      } else {
-        /**
-         * 摆成按钮让用户点（与统计版建议标签的交互一致）。
-         * 用一个 keys 数组当 message 的 key 前缀，重复点同一批标签不会
-         * 叠出一堆一模一样的提示。
-         */
-        setAiTags({ documentId, tags: result.tags })
+      if (current())
+        setAiFeedback({
+          documentId: id,
+          kind,
+          text: error instanceof Error ? error.message : '生成失败，原有正文与结果保留。',
+        })
+    } finally {
+      if (current()) {
+        aiRequest.current = null
+        setAiBusy(null)
       }
-    } catch (error) {
-      message.error(error instanceof Error ? error.message : 'AI 建议标签失败')
     }
-    setAiSummaryLoading(false)
   }
 
   /** 目录列表与建议标签：只有打开「⋯」菜单才需要，但 antd 的菜单要一次给全 */
@@ -448,12 +626,11 @@ export function DocumentPanel({
    * 依赖 `doc.body` 而不是 `headings`：headings 是每次渲染新建的数组，
    * 依赖它会让观察器被反复拆装。body 变了 headings 才会变。
    */
-  const body = doc?.body ?? ''
   useEffect(() => {
     const panel = scrollRef.current
     if (!panel) return
 
-    const list = extractHeadings(body)
+    const list = headings
     if (list.length < 2) return
 
     let observer: IntersectionObserver | null = null
@@ -523,12 +700,15 @@ export function DocumentPanel({
       window.clearTimeout(timer)
       observer?.disconnect()
     }
-  }, [body])
+  }, [headings])
 
   const jumpTo = (index: number) => {
     const root = scrollRef.current
     const target = root ? headingNodes(root, headings.length)[index] : undefined
-    if (!root || !target) return
+    if (!root || !target) {
+      setCitationFeedback({ id: documentId!, text: '没有找到对应大纲目标，当前阅读位置保留。' })
+      return
+    }
     /* 滚的是**目标所在的那一层**：笔记与原件现在由外壳自己滚
        （`.me-scroll`，见 DocumentPanel.style.ts 的 `cols`），只读资料
        那一列才是面板在滚。写死面板的话，笔记里点大纲会「点了没反应」——
@@ -540,7 +720,7 @@ export function DocumentPanel({
         scroller.getBoundingClientRect().top +
         scroller.scrollTop -
         20,
-      behavior: 'smooth',
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
     })
   }
 
@@ -549,6 +729,9 @@ export function DocumentPanel({
    * 「滚动 + 高亮」的 effect。prop 优先——它带一次导航，语义更新。
    */
   const activeCitation = citation ?? sidebarCitation
+  const [citationFeedback, setCitationFeedback] = useState<{ id: string; text: string } | null>(
+    null,
+  )
 
   /**
    * 引用跳转的下半句：滚动到原文区间并高亮（D-047 待办收尾）。
@@ -566,6 +749,7 @@ export function DocumentPanel({
     const root = scrollRef.current
     if (!root || !doc || !activeCitation) return
     const snippet = activeCitation.snippet
+    if (activeCitation.documentId !== doc.id) return
 
     /**
      * **要重试**：effect 首次跑时正文可能还没挂载完（笔记的 Tiptap 与
@@ -577,6 +761,7 @@ export function DocumentPanel({
     let cancelled = false
     let attempts = 0
     let pendingRange: Range | null = null
+    let timer = 0
     // 同一文档连续打开两个命中时，不能把上一个仍有效的高亮当成本次结果。
     window.CSS?.highlights?.delete('mimir-citation')
 
@@ -594,6 +779,14 @@ export function DocumentPanel({
     const tick = () => {
       if (cancelled) return
       attempts += 1
+      if (showsSource) {
+        setCitationFeedback({
+          id: doc.id,
+          text: '已打开原件；引用基于提取正文，无法定位到原件中的精确位置。',
+        })
+        finish()
+        return
+      }
 
       const alive =
         pendingRange && !pendingRange.collapsed && pendingRange.startContainer.isConnected
@@ -606,22 +799,50 @@ export function DocumentPanel({
         const scroller = scrollableAncestor(alive.startContainer.parentElement ?? root, root)
         scroller.scrollTo({
           top: rect.top - scroller.getBoundingClientRect().top + scroller.scrollTop - 140,
-          behavior: 'smooth',
+          behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+            ? 'auto'
+            : 'smooth',
+        })
+        const exact =
+          normalizeForMatch(alive.toString()).norm ===
+          normalizeForMatch(snippet.trim().replace(/(\.{3}|…)$/, '')).norm
+        const highlightSupported =
+          typeof Highlight !== 'undefined' && Boolean(window.CSS?.highlights)
+        setCitationFeedback({
+          id: doc.id,
+          text: `${exact ? '已定位引用原文' : '已定位到相近片段，请核对上下文'}${highlightSupported ? '' : '；当前浏览器不支持高亮，已滚动到原文。'}`,
         })
         finish()
         return
       }
 
       pendingRange = highlightSnippet(root, snippet, doc.body, activeCitation.start)
-      if (attempts < 20) window.setTimeout(tick, 150)
-      else finish()
+      if (attempts < 20) timer = window.setTimeout(tick, 150)
+      else {
+        setCitationFeedback({
+          id: doc.id,
+          text: '未找到引用片段，正文可能已更新。已为你打开文档，可使用查找继续核对。',
+        })
+        finish()
+      }
     }
-    tick()
+    timer = window.setTimeout(tick, 0)
 
     return () => {
       cancelled = true
+      window.clearTimeout(timer)
     }
-  }, [doc, activeCitation, sidebarCitation, clearHighlight])
+  }, [doc, activeCitation, sidebarCitation, clearHighlight, showsSource, setCitationFeedback])
+  useEffect(
+    () => () => {
+      if (documentId) window.CSS?.highlights?.delete('mimir-citation')
+    },
+    [documentId],
+  )
+
+  const tagsMutation = useMutation({ mutationFn: (tags: string[]) => updateTags(tags) })
+  const folderMutation = useMutation({ mutationFn: (folder: string) => moveDocument(folder) })
+  const aiMutation = useMutation({ mutationFn: (kind: 'summary' | 'tags') => runAi(kind) })
 
   if (!documentId) {
     return (
@@ -639,7 +860,19 @@ export function DocumentPanel({
     return (
       <div className={styles.wrap}>
         <div className={styles.centered}>
-          <Typography.Text type="danger">文档加载失败</Typography.Text>
+          <Typography.Text type="danger">
+            {docQuery.error instanceof ApiRequestError && docQuery.error.status === 404
+              ? '这篇文档不存在或已被删除。'
+              : '暂时无法连接，请检查网络后重试。'}
+          </Typography.Text>
+          <Button
+            loading={docQuery.isFetching}
+            disabled={docQuery.isFetching}
+            onClick={() => void docQuery.refetch()}
+          >
+            重试读取
+          </Button>
+          {onBack && <Button onClick={onBack}>返回知识库</Button>}
         </div>
       </div>
     )
@@ -648,7 +881,7 @@ export function DocumentPanel({
   if (!doc) {
     return (
       <div className={styles.wrap}>
-        <div className={styles.centered}>
+        <div className={styles.centered} role="status" aria-label="正在读取文档">
           <Skeleton active paragraph={{ rows: 6 }} />
         </div>
       </div>
@@ -664,28 +897,33 @@ export function DocumentPanel({
 
   const menu = buildDocMenu({
     doc,
-    onSetTags: (tags) => patch.mutate({ tags }),
-    onSetFolder: (folder) => void moveDocument(folder),
+    onSetTags: (tags) => tagsMutation.mutate(tags),
+    onSetFolder: (folder) => folderMutation.mutate(folder),
     folders: flattenFolders(folderQuery.data?.items ?? []).map((item) => item.path),
     suggestedTags: suggestQuery.data?.items ?? [],
-    onAiTags: () => void runAiTags(),
-    onSummary: () => void runSummary(),
-    aiBusy: aiSummaryLoading,
+    onAiTags: () => aiMutation.mutate('tags'),
+    onSummary: () => aiMutation.mutate('summary'),
+    aiBusy: aiBusy?.documentId === documentId,
+    mutationBusy: metadata?.id === documentId && metadata.pending,
+    suggestionsLoading: suggestQuery.isPending,
+    suggestionsError: suggestQuery.isError,
+    retrySuggestions: () => void suggestQuery.refetch(),
+    foldersLoading: folderQuery.isPending,
+    foldersError: folderQuery.isError,
+    retryFolders: () => void folderQuery.refetch(),
   })
 
   /**
    * 侧栏的挂载与可见是两件事（见 aiSidebar state 的注释）：
    * 属于这一篇就保持挂载（流式不丢），open 决定它展不展开。
    */
-  const sidebarMounted = aiSidebar !== null && aiSidebar.docId === documentId
-  const sidebarOpen = sidebarMounted && aiSidebar!.open
   // 阅读助手占用右侧 400px；同时显示大纲会把正文挤到难以阅读。
   const showOutline = headings.length >= 2 && !showsSource && !narrowViewport && !sidebarOpen
 
   /** 侧栏里点引用：同一篇原地高亮，别的文档走导航（离开这一篇，侧栏随之卸载） */
   const openSidebarCitation = (id: string, cite: Citation) => {
     if (id === documentId) setSidebarCitation(cite)
-    else onOpenDocument(id)
+    else runGuarded(() => onOpenDocument(id))
   }
 
   const findInDocument = (targetId: string, query: string) => {
@@ -705,9 +943,97 @@ export function DocumentPanel({
     return true
   }
 
+  const aiResults = (
+    <>
+      {aiBusy?.documentId === doc.id && (
+        <div className={styles.aiBlock} role="status">
+          AI 正在读… 本次调用产生用量
+        </div>
+      )}
+      {aiFeedback?.documentId === doc.id && (
+        <div className={styles.aiBlock} role="status">
+          {aiFeedback.text}
+          {aiFeedback.noModel ? (
+            <Button
+              type="link"
+              onClick={() =>
+                runGuarded(() => {
+                  void navigate({
+                    to: '/settings',
+                    search: { scope: 'all', section: 'models' },
+                  })
+                })
+              }
+            >
+              前往模型设置
+            </Button>
+          ) : (
+            <Button
+              type="link"
+              disabled={aiBusy?.documentId === doc.id}
+              onClick={() => void runAi(aiFeedback.kind)}
+            >
+              重新生成 · 产生用量
+            </Button>
+          )}
+        </div>
+      )}
+      {visibleSummary ? (
+        <div className={styles.aiBlock}>
+          <div className={styles.aiLabel} data-ai-result-heading>
+            AI 摘要 · 当前会话 · {visibleSummary.model}
+            <Button
+              type="text"
+              size="small"
+              aria-label="关闭摘要"
+              onClick={() => setAiSummary(null)}
+            >
+              关闭
+            </Button>
+          </div>
+          <div className={styles.aiText}>{visibleSummary.text}</div>
+          <div className={styles.aiLabel}>不会保存到正文；切换文档后不显示。</div>
+        </div>
+      ) : null}
+
+      {aiTags?.documentId === documentId ? (
+        <div className={styles.aiBlock}>
+          <div className={styles.aiLabel}>AI 建议的标签（点一下加上）</div>
+          <div className={styles.aiTags}>
+            {visibleAiTags
+              .filter((tag) => !doc.tags.includes(tag))
+              .map((tag) => (
+                <button
+                  key={tag}
+                  type="button"
+                  className={styles.aiTag}
+                  disabled={
+                    (metadata?.id === doc.id && metadata.pending) ||
+                    doc.tags.length >= 20 ||
+                    tag.length > 50
+                  }
+                  onClick={() => {
+                    void updateTags([...doc.tags, tag])
+                  }}
+                >
+                  ＋ {tag}
+                </button>
+              ))}
+            {/* 全部加完之后给一句说明，而不是留一个空盒子 */}
+            {visibleAiTags.length === 0 ? (
+              <span className={styles.aiLabel}>本次没有生成标签候选</span>
+            ) : visibleAiTags.every((tag) => doc.tags.includes(tag)) ? (
+              <span className={styles.aiLabel}>都加上了</span>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+    </>
+  )
+
   return (
     <div className={styles.root} ref={panelRef} data-document-id={doc.id}>
-      <div className={styles.wrap}>
+      <div className={styles.wrap} inert={overlayOpen}>
         <DocumentHeader
           doc={doc}
           onBack={onBack}
@@ -721,8 +1047,22 @@ export function DocumentPanel({
           }
           onAskAi={() => askAi()}
           menu={menu}
+          menuBusy={metadata?.id === doc.id && metadata.pending}
         />
 
+        {citationFeedback?.id === doc.id && (
+          <div role="status" data-document-notice>
+            {citationFeedback.text}
+            <Button
+              type="text"
+              size="small"
+              aria-label="关闭引用提示"
+              onClick={() => setCitationFeedback(null)}
+            >
+              关闭
+            </Button>
+          </div>
+        )}
         {docQuery.isError ? (
           <div role="alert">
             <Typography.Text type="warning">暂时无法刷新文档，已保留当前内容。</Typography.Text>
@@ -738,6 +1078,36 @@ export function DocumentPanel({
             </Button>
           </div>
         ) : null}
+        {metadata?.id === doc.id && (metadata.pending || metadata.error) && (
+          <div role={metadata.error ? 'alert' : 'status'} data-document-notice>
+            {metadata.pending ? '正在更新整理信息…' : metadata.error}
+            {!metadata.pending && (
+              <Button
+                type="link"
+                onClick={() => {
+                  if (metadata.input.tags) void updateTags(metadata.input.tags, metadata.saved)
+                  else if (metadata.saved) {
+                    const current = metadata
+                    setMetadata({ ...current, pending: true })
+                    void queryClient
+                      .invalidateQueries(
+                        { queryKey: ['document', doc.id], exact: true },
+                        { throwOnError: true },
+                      )
+                      .then(() => setMetadata((value) => (value?.id === current.id ? null : value)))
+                      .catch(() =>
+                        setMetadata((value) =>
+                          value?.id === current.id ? { ...current, pending: false } : value,
+                        ),
+                      )
+                  } else void moveDocument(metadata.input.folder ?? '')
+                }}
+              >
+                {metadata.saved ? '重试刷新' : '重试更新'}
+              </Button>
+            )}
+          </div>
+        )}
         <div className={styles.scroll} ref={scrollRef}>
           <div className={styles.cols}>
             <div className={wideContent ? styles.innerWide : styles.inner}>
@@ -753,44 +1123,7 @@ export function DocumentPanel({
               不产生「这里以前有东西、现在没了」的疑惑——关掉再开
               就是「重新生成一次」的语义。
             */}
-              {visibleSummary ? (
-                <div className={styles.aiBlock}>
-                  <div className={styles.aiLabel}>AI 摘要 · {visibleSummary.model}</div>
-                  <div className={styles.aiText}>{visibleSummary.text}</div>
-                </div>
-              ) : null}
-
-              {visibleAiTags.length > 0 ? (
-                <div className={styles.aiBlock}>
-                  <div className={styles.aiLabel}>AI 建议的标签（点一下加上）</div>
-                  <div className={styles.aiTags}>
-                    {visibleAiTags
-                      .filter((tag) => !doc.tags.includes(tag))
-                      .map((tag) => (
-                        <button
-                          key={tag}
-                          type="button"
-                          className={styles.aiTag}
-                          onClick={() => {
-                            patch.mutate({ tags: [...doc.tags, tag] })
-                            // 加过的从候选里拿掉——留着会让「点了没变化」变得可能
-                            setAiTags((current) =>
-                              current === null
-                                ? current
-                                : { ...current, tags: current.tags.filter((item) => item !== tag) },
-                            )
-                          }}
-                        >
-                          ＋ {tag}
-                        </button>
-                      ))}
-                    {/* 全部加完之后给一句说明，而不是留一个空盒子 */}
-                    {visibleAiTags.every((tag) => doc.tags.includes(tag)) ? (
-                      <span className={styles.aiLabel}>都加上了</span>
-                    ) : null}
-                  </div>
-                </div>
-              ) : null}
+              {doc.kind !== 'note' && aiResults}
 
               {/*
               三种正文区，按 kind 分派：
@@ -808,13 +1141,31 @@ export function DocumentPanel({
                 <NoteEditor
                   key={doc.id}
                   document={doc}
-                  contentHeader={
-                    <DocumentTitle
-                      key={doc.id}
-                      title={doc.title}
-                      updatedAt={doc.updatedAt}
-                      onRename={(next) => renameTitle.mutate({ id: doc.id, title: next })}
+                  contentFooter={
+                    <DocumentFooter
+                      doc={doc}
+                      onOpenDocument={(id) => runGuarded(() => onOpenDocument(id))}
                     />
+                  }
+                  contentHeader={
+                    <>
+                      {aiResults}
+                      <DocumentTitle
+                        key={doc.id}
+                        title={doc.title}
+                        updatedAt={doc.updatedAt}
+                        tags={doc.tags}
+                        onRename={(next) =>
+                          renameTitle.mutateAsync({ id: doc.id, title: next, inline: true })
+                        }
+                        onRefresh={() =>
+                          queryClient.invalidateQueries(
+                            { queryKey: ['document', doc.id], exact: true },
+                            { throwOnError: true },
+                          )
+                        }
+                      />
+                    </>
                   }
                   onSaveStateChange={reportNoteSaveState}
                   focusOnReady={newNoteFocusId === doc.id}
@@ -859,18 +1210,24 @@ export function DocumentPanel({
               ) : (
                 /* 正文排版与编辑器共用同一个类——两个视图都让 Tiptap 渲染同一份
                  Markdown，排版必须同源。这里曾经各自手抄一份，漂移出四处 */
-                <div className={contentStyles.content}>
-                  <MarkdownBody body={doc.body} headings={headings} />
+                <div className={contentStyles.content} data-document-prose>
+                  <MarkdownBody
+                    body={doc.body}
+                    headings={headings}
+                    onOpenInternalNote={(id) => runGuarded(() => onOpenDocument(id))}
+                  />
                 </div>
               )}
 
               {/* 页脚双链与「返回库」是同一类动作：换一篇=离开这一篇。
                 同样走守卫，否则「改完点一个双链」是又一条静默丢改动的路
                 （中栏列表里的同一动作一直是拦的，见 LibraryView 的 open） */}
-              <DocumentFooter
-                doc={doc}
-                onOpenDocument={(id) => runGuarded(() => onOpenDocument(id))}
-              />
+              {doc.kind !== 'note' && (
+                <DocumentFooter
+                  doc={doc}
+                  onOpenDocument={(id) => runGuarded(() => onOpenDocument(id))}
+                />
+              )}
             </div>
 
             {/* 右侧大纲。判据见 `showOutline`：正文里有 ≥ 2 个标题就出现，
@@ -910,8 +1267,57 @@ export function DocumentPanel({
         两件事：移出 tab 序列 + 移出可及树。收起态下用 `inert={true}`，
         展开时不给属性（React 会把 false 渲染成没这个属性）。
       */}
+      {overlayOpen && (
+        <button
+          type="button"
+          className={styles.aiOverlayBackdrop}
+          aria-label="关闭文档助手"
+          tabIndex={-1}
+          onClick={closeAssistant}
+        />
+      )}
       {sidebarMounted && (
         <div
+          ref={sidebarRef}
+          role={overlayOpen ? 'dialog' : undefined}
+          aria-modal={overlayOpen || undefined}
+          aria-label={overlayOpen ? '文档助手' : undefined}
+          onKeyDown={(event) => {
+            if (
+              !overlayOpen ||
+              event.defaultPrevented ||
+              event.nativeEvent.isComposing ||
+              event.keyCode === 229 ||
+              (event.target instanceof Element &&
+                event.target.closest('.ant-modal, [role="menu"], [role="listbox"]'))
+            )
+              return
+            if (event.key === 'Escape') {
+              event.preventDefault()
+              event.stopPropagation()
+              closeAssistant()
+            }
+            if (event.key === 'Tab') {
+              const controls = [
+                ...(sidebarRef.current?.querySelectorAll<HTMLElement>(
+                  'button:not(:disabled), input:not(:disabled), textarea:not(:disabled), a[href], [tabindex="0"], [contenteditable="true"]',
+                ) ?? []),
+              ].filter(
+                (node) =>
+                  !node.closest('[inert], [aria-hidden="true"]') &&
+                  node.getClientRects().length > 0,
+              )
+              const first = controls[0],
+                last = controls.at(-1)
+              if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault()
+                last?.focus()
+              } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault()
+                first?.focus()
+              }
+            }
+          }}
           className={styles.aiSidebar}
           data-open={sidebarOpen || undefined}
           aria-hidden={!sidebarOpen}
@@ -921,13 +1327,7 @@ export function DocumentPanel({
             doc={doc}
             documentAgent={documentAgentHandle?.documentId === doc.id ? documentAgentHandle : null}
             draft={aiSidebar!.draft}
-            onClose={() => {
-              setAiSidebar((current) => (current ? { ...current, open: false } : current))
-              requestAnimationFrame(() => {
-                if (aiTriggerRef.current?.isConnected) aiTriggerRef.current.focus()
-                else document.querySelector<HTMLElement>('[aria-label="询问这篇文档"]')?.focus()
-              })
-            }}
+            onClose={closeAssistant}
             onOpenCitation={openSidebarCitation}
           />
         </div>
@@ -987,12 +1387,11 @@ export function DocumentPanel({
  *
  * 序号对应是同一个组件的既有做法：`MarkdownBody` 补 id 用的就是
  * `nodes[index] ← headings[index]`。所以两处共用这一条规则。
- * 已知的偏差：围栏代码块里的 `#` 会被正则当成标题、而 DOM 里没有对应节点
- * ——那种情况下错位一格（与 `MarkdownBody` 的 id 补法同源，不是新引入的）。
  */
 function headingNodes(root: HTMLElement, count: number): Element[] {
   if (count === 0) return []
-  return [...root.querySelectorAll('h1, h2, h3, h4, h5, h6')].slice(0, count)
+  const body = root.querySelector('.ProseMirror')
+  return body ? [...body.querySelectorAll('h1, h2, h3, h4, h5, h6')].slice(0, count) : []
 }
 
 /**
@@ -1142,4 +1541,40 @@ function highlightSnippet(
     window.CSS?.highlights?.set('mimir-citation', new Highlight(range))
   }
   return range
+}
+
+/** The eight-second undo keeps its own synchronous lock and visible retry state. */
+function UndoMoveAction({ onUndo }: { onUndo: () => Promise<void> }) {
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState('')
+  const [done, setDone] = useState(false)
+  const lock = useRef(false)
+  return (
+    <span>
+      <Button
+        type="link"
+        size="small"
+        loading={pending}
+        disabled={pending || done}
+        onClick={() => {
+          if (lock.current) return
+          lock.current = true
+          setPending(true)
+          setError('')
+          void onUndo()
+            .then(() => setDone(true))
+            .catch((cause: unknown) =>
+              setError(cause instanceof Error ? cause.message : '撤销移动失败，可重试'),
+            )
+            .finally(() => {
+              lock.current = false
+              setPending(false)
+            })
+        }}
+      >
+        {done ? '已撤销' : pending ? '撤销中…' : error ? '重试撤销' : '撤销'}
+      </Button>
+      {error && <span role="alert">{error}</span>}
+    </span>
+  )
 }

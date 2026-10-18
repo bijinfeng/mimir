@@ -525,6 +525,7 @@ function AppShell() {
       />
 
       <UnsavedGuard
+        documentTitle={queryClient.getQueryData<DocumentDetail>(['document', search.id])?.title}
         captureContext={
           captureHandoff && captureOpen
             ? {

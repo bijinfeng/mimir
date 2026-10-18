@@ -24,6 +24,7 @@ interface DocumentHeaderProps {
   noteSaveState?: NoteSaveState | undefined
   onAskAi: () => void
   menu: MenuProps['items']
+  menuBusy?: boolean
 }
 
 /** All document kinds share one compact header; only supported actions vary. */
@@ -34,12 +35,14 @@ export function DocumentHeader({
   noteSaveState,
   onAskAi,
   menu,
+  menuBusy = false,
 }: DocumentHeaderProps) {
   const { styles } = useStyles()
   const { runGuarded } = useUnsaved()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuTrigger = useRef<HTMLButtonElement>(null)
   const closeMenu = () => {
+    if (menuBusy) return
     setMenuOpen(false)
     menuTrigger.current?.focus()
   }
@@ -81,7 +84,7 @@ export function DocumentHeader({
           {doc.folder ? (
             <>
               <span className={styles.headerFolder} title={doc.folder}>
-                {doc.folder.split('/').at(-1)}
+                {doc.folder.split('/').join(' / ')}
               </span>
               <span aria-hidden="true">/</span>
             </>
@@ -104,6 +107,7 @@ export function DocumentHeader({
           <span
             className={styles.saveStatus}
             role="status"
+            aria-live={noteSaveState === 'error' ? 'assertive' : 'polite'}
             data-save-state={noteSaveState}
             title={noteSaveState === 'error' ? '保存失败，请使用工具栏的保存按钮重试' : undefined}
           >
@@ -133,7 +137,8 @@ export function DocumentHeader({
             size="small"
             icon={<Download size={16} />}
             className={styles.tbBtn}
-            aria-label="下载原件"
+            aria-label="下载已保存原件"
+            title="下载已保存原件，不包含尚未保存的改动"
             href={api.documents.sourceUrl(doc.id, { download: true })}
           >
             下载
@@ -152,6 +157,7 @@ export function DocumentHeader({
             icon={<MessageCircle size={14} />}
             className={styles.tbBtn}
             aria-label="询问这篇文档"
+            data-document-ai-trigger
             onClick={onAskAi}
             disabled={doc.body.trim() === ''}
           >
@@ -162,14 +168,38 @@ export function DocumentHeader({
           trigger={['click']}
           autoFocus
           open={menuOpen}
-          onOpenChange={setMenuOpen}
+          onOpenChange={(open) => {
+            if (!menuBusy) setMenuOpen(open)
+          }}
           menu={{
             items: styledMenu,
-            onClick: closeMenu,
-            onKeyDown: (event) => {
-              if (event.key !== 'Escape') return
+            onClick: ({ key }) => {
+              // Metadata keeps its submenu visible while the request settles.
+              // AI actions reveal their document result and close normally.
+              if (
+                key.startsWith('tag-') ||
+                key.startsWith('folder:') ||
+                key.startsWith('folder-')
+              ) {
+                setMenuOpen(true)
+              } else closeMenu()
+            },
+            onKeyDownCapture: (event) => {
+              if (event.key !== 'Escape' || event.nativeEvent.isComposing || event.keyCode === 229)
+                return
+              const level =
+                event.target instanceof Element ? event.target.closest('[role="menu"]') : null
+              if (level && level !== event.currentTarget) return
+              // Close the root before rc-menu schedules a parent-item focus.
+              event.preventDefault()
               event.stopPropagation()
               closeMenu()
+            },
+            onKeyDown: (event) => {
+              if (event.key !== 'Escape') return
+              // rc-menu has handled this submenu level; stop Dropdown's
+              // window Escape listener from closing the root as well.
+              event.stopPropagation()
             },
           }}
           placement="bottomRight"
@@ -183,13 +213,15 @@ export function DocumentHeader({
             ref={menuTrigger}
             aria-label="更多操作"
             aria-haspopup="menu"
+            aria-disabled={menuBusy}
+            aria-busy={menuBusy}
             aria-expanded={menuOpen}
             onKeyDown={(event) => {
               if (event.key === 'Escape') {
                 event.stopPropagation()
                 closeMenu()
               }
-              if (event.key === 'ArrowDown') {
+              if (event.key === 'ArrowDown' && !menuBusy) {
                 event.preventDefault()
                 setMenuOpen(true)
               }

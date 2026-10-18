@@ -132,7 +132,7 @@ describe('document-bound command hosts', () => {
       expect(composingShortcut.defaultPrevented).toBe(false)
       expect(globalShortcut).not.toHaveBeenCalled()
       await fill('新标题')
-      await click('保存')
+      await click('保存名称')
       const event = new KeyboardEvent('keydown', {
         key: 'k',
         metaKey: true,
@@ -160,17 +160,17 @@ describe('document-bound command hosts', () => {
   it('prefills the title, rejects blank, closes unchanged without a request', async () => {
     await render()
     await command('rename')
-    expect(document.body.textContent).toContain('当前笔记：研究笔记')
+    expect(document.querySelector('.ant-modal-close')).toBeNull()
     expect(document.body.textContent).toContain('重命名笔记')
     expect(input().getAttribute('aria-label')).toBe('笔记名称')
     expect(input().value).toBe(note.title)
     expect(input().maxLength).toBe(200)
     await fill('  ')
-    await click('保存')
+    await click('保存名称')
     expect(document.body.textContent).toContain('请输入笔记标题')
     expect(rename).not.toHaveBeenCalled()
     await fill(note.title)
-    await click('保存')
+    await click('保存名称')
     expect(rename).not.toHaveBeenCalled()
     await act(async () => {
       await vi.waitFor(() => expect(restoreFocus).toHaveBeenCalledWith(note.id, expect.anything()))
@@ -202,7 +202,7 @@ describe('document-bound command hosts', () => {
     expect(document.body.textContent).toContain('网络断开，请重试')
     expect(input().value).toBe('中文新标题')
     expect(input().disabled).toBe(false)
-    await click('保存')
+    await click('保存名称')
     expect(rename).toHaveBeenCalledTimes(2)
     await act(async () => {
       await vi.waitFor(() => expect(restoreFocus).toHaveBeenCalled())
@@ -217,7 +217,7 @@ describe('document-bound command hosts', () => {
     expect(input()).toBeNull()
     await command('rename')
     await fill('A 的新名称')
-    await click('保存')
+    await click('保存名称')
     const other = { ...note, id: 'note-b', title: 'B 笔记' }
     await render(other)
     await command('rename', other.id)
@@ -226,7 +226,7 @@ describe('document-bound command hosts', () => {
     expect(input().value).toBe('B 的草稿')
     expect(rename).toHaveBeenCalledExactlyOnceWith(note.id, 'A 的新名称')
     expect(restoreFocus).not.toHaveBeenCalled()
-    await click('保存')
+    await click('保存名称')
     expect(rename).toHaveBeenLastCalledWith(other.id, 'B 的草稿')
   })
 
@@ -234,10 +234,10 @@ describe('document-bound command hosts', () => {
     await render(note, 'loading')
     await command('move')
     expect(document.body.textContent).toContain('正在读取目录')
-    expect(button('移动').disabled).toBe(true)
+    expect(button('移动文档').disabled).toBe(true)
     await render(note, 'error')
-    expect(document.body.textContent).toContain('目录暂时无法读取')
-    await click('重试')
+    expect(document.body.textContent).toContain('目录读取失败，原位置保留。')
+    await click('重试读取')
     expect(retryFolders).toHaveBeenCalledOnce()
     await render(note)
     // A background document refresh can change the persisted folder while the
@@ -245,7 +245,7 @@ describe('document-bound command hosts', () => {
     await render({ ...note, folder: '资料/其他目录' })
     const pending = deferred()
     move.mockReturnValueOnce(pending.promise)
-    await click('移动')
+    await click('移动文档')
     await click('移动中…')
     expect(move).toHaveBeenCalledExactlyOnceWith(
       expect.objectContaining({ id: note.id }),
@@ -254,8 +254,8 @@ describe('document-bound command hosts', () => {
     expect(button('取消').disabled).toBe(true)
     await act(async () => pending.reject(new Error('移动失败，请重试')))
     expect(document.body.textContent).toContain('移动失败，请重试')
-    expect(document.body.textContent).toContain('所选目录：资料/原目录')
-    await click('移动')
+    expect(document.querySelector('.ant-select')?.textContent).toContain('资料/原目录')
+    await click('移动文档')
     expect(move).toHaveBeenCalledTimes(2)
   })
 
@@ -264,7 +264,7 @@ describe('document-bound command hosts', () => {
     await act(async () =>
       window.dispatchEvent(new CustomEvent('mimir:document-command', { detail: 'move' })),
     )
-    await click('移动')
+    await click('移动文档')
     expect(move).not.toHaveBeenCalled()
   })
 
@@ -297,7 +297,7 @@ describe('document-bound command hosts', () => {
     await render()
     await command('rename')
     await fill('已写入的新标题')
-    await click('保存')
+    await click('保存名称')
     expect(input().value).toBe('已写入的新标题')
     expect(button('重试刷新')).toBeDefined()
     await click('重试刷新')
@@ -312,6 +312,6 @@ describe('document-bound command hosts', () => {
     await command('search')
     expect(input()).toBeNull()
     await command('move')
-    expect(button('移动')).toBeDefined()
+    expect(button('移动文档')).toBeDefined()
   })
 })

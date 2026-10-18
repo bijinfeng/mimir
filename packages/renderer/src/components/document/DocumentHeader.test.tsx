@@ -30,6 +30,12 @@ const baseDoc: DocumentDetail = {
   links: { sources: [], backlinks: [] },
 }
 
+function escapeEvent() {
+  const event = new KeyboardEvent('keydown', { key: 'Escape', keyCode: 27, bubbles: true })
+  Object.defineProperty(event, 'which', { value: 27 })
+  return event
+}
+
 function DirtyControl() {
   const { pending, setDirty } = useUnsaved()
   return (
@@ -50,7 +56,7 @@ async function renderHeader(
   const host = document.createElement('div')
   document.body.append(host)
   const root = createRoot(host)
-  const onRename = vi.fn<(title: string) => void>()
+  const onRename = vi.fn<(title: string) => Promise<unknown>>().mockResolvedValue(undefined)
   const onAskAi = vi.fn<() => void>()
   ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true
   await act(async () => {
@@ -65,7 +71,12 @@ async function renderHeader(
             menu={menu}
           />
           {doc.kind === 'note' ? (
-            <DocumentTitle title={doc.title} updatedAt={doc.updatedAt} onRename={onRename} />
+            <DocumentTitle
+              title={doc.title}
+              updatedAt={doc.updatedAt}
+              onRename={onRename}
+              onRefresh={async () => {}}
+            />
           ) : null}
           <DirtyControl />
         </UnsavedProvider>
@@ -96,7 +107,9 @@ describe('共用文档头部', () => {
       expect(view.host.querySelector('[aria-label="返回知识库"]')).not.toBeNull()
       expect(view.host.querySelector('[aria-label="询问这篇文档"]')).not.toBeNull()
       expect(view.host.querySelector('[aria-label="更多操作"]')).not.toBeNull()
-      expect(Boolean(view.host.querySelector('[aria-label="下载原件"]'))).toBe(doc.kind === 'file')
+      expect(Boolean(view.host.querySelector('[aria-label="下载已保存原件"]'))).toBe(
+        doc.kind === 'file',
+      )
       expect(Boolean(view.host.querySelector('[aria-label^="修改笔记标题"]'))).toBe(
         doc.kind === 'note',
       )
@@ -233,4 +246,32 @@ it('更多菜单的 Escape 关闭并回到触发按钮，选择动作也回焦',
   expect(trigger.getAttribute('aria-expanded')).toBe('false')
   expect(document.activeElement).toBe(trigger)
   await view.unmount()
+})
+
+it('Escape closes only the current submenu before the root menu and restores its trigger', async () => {
+  const view = await renderHeader(baseDoc, undefined, [
+    { key: 'tags', label: '标签', children: [{ key: 'add', label: '＋ 写作' }] },
+  ])
+  try {
+    const trigger = view.host.querySelector<HTMLButtonElement>('[aria-label="更多操作"]')!
+    await act(async () => trigger.click())
+    const parent = document.querySelector<HTMLElement>('[role="menuitem"][aria-haspopup]')!
+    await act(async () => {
+      parent.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }))
+      await new Promise((resolve) => setTimeout(resolve, 200))
+    })
+    const child = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
+      (node) => node.textContent === '＋ 写作',
+    )!
+    expect(child).toBeDefined()
+    await act(async () => child.focus())
+    await act(async () => child.dispatchEvent(escapeEvent()))
+    expect(trigger.getAttribute('aria-expanded')).toBe('true')
+    await act(async () => vi.waitFor(() => expect(document.activeElement).toBe(parent)))
+    await act(async () => parent.dispatchEvent(escapeEvent()))
+    expect(trigger.getAttribute('aria-expanded')).toBe('false')
+    expect(document.activeElement).toBe(trigger)
+  } finally {
+    await view.unmount()
+  }
 })

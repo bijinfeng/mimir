@@ -352,6 +352,8 @@ export interface MarkdownEditorProps {
   contentClassName?: string
   /** Host metadata above the editable body, within the same reading scroll area. */
   contentHeader?: ReactNode
+  /** Host-owned links and metadata, after the body in its reading scroller. */
+  contentFooter?: ReactNode
   /** 保存。抛出的 Error 的 message 会显示在状态行上 */
   onSave: (markdown: string) => Promise<void>
   /** Export the current live body; the host chooses a filename and handles download. */
@@ -423,6 +425,7 @@ export function MarkdownEditor({
   initialContent,
   contentClassName,
   contentHeader,
+  contentFooter,
   onSave,
   onExportMarkdown,
   onAiPreset,
@@ -990,6 +993,7 @@ export function MarkdownEditor({
             {contentHeader}
             {/* EditorContent 负责把编辑器挂进 React 树，并在卸载时清理 */}
             <EditorContent editor={editor} />
+            {contentFooter}
           </div>
         </div>
       </div>

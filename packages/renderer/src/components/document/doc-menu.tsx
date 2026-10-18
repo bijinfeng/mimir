@@ -58,6 +58,13 @@ export interface DocMenuOptions {
   onSummary?: () => void
   /** 正在生成（按钮转 loading，防连点） */
   aiBusy?: boolean
+  mutationBusy?: boolean
+  suggestionsLoading?: boolean
+  suggestionsError?: boolean
+  retrySuggestions?: () => void
+  foldersLoading?: boolean
+  foldersError?: boolean
+  retryFolders?: () => void
 }
 
 export function buildDocMenu(options: DocMenuOptions): MenuProps['items'] {
@@ -70,6 +77,22 @@ export function buildDocMenu(options: DocMenuOptions): MenuProps['items'] {
   /* ── 标签 ───────────────────────────────────────────────────── */
 
   const tagChildren: MenuProps['items'] = []
+  if (options.suggestionsLoading)
+    tagChildren.push({ key: 'tag-loading', label: '正在读取建议标签…', disabled: true })
+  else if (options.suggestionsError)
+    tagChildren.push({
+      key: 'tag-retry',
+      label: '建议标签读取失败，重试读取',
+      onClick: options.retrySuggestions,
+    })
+  else if (fresh.length === 0)
+    tagChildren.push({ key: 'tag-no-suggestions', label: '暂无新的建议标签', disabled: true })
+  if (doc.tags.length >= 20)
+    tagChildren.push({
+      key: 'tag-capacity',
+      label: '已达 20 个标签上限，请先移除一个',
+      disabled: true,
+    })
   if (fresh.length > 0) {
     tagChildren.push({
       type: 'group',
@@ -77,6 +100,7 @@ export function buildDocMenu(options: DocMenuOptions): MenuProps['items'] {
       children: fresh.map((tag) => ({
         key: `tag-add:${tag}`,
         label: `＋ ${tag}`,
+        disabled: options.mutationBusy || doc.tags.length >= 20 || tag.length > 50 || !tag.trim(),
         onClick: () => options.onSetTags([...doc.tags, tag]),
       })),
     })
@@ -88,6 +112,7 @@ export function buildDocMenu(options: DocMenuOptions): MenuProps['items'] {
       children: doc.tags.map((tag) => ({
         key: `tag-del:${tag}`,
         label: `－ ${tag}`,
+        disabled: options.mutationBusy,
         onClick: () => options.onSetTags(doc.tags.filter((item) => item !== tag)),
       })),
     })
@@ -95,6 +120,7 @@ export function buildDocMenu(options: DocMenuOptions): MenuProps['items'] {
     tagChildren.push({
       key: 'tag-clear',
       label: '清除全部标签',
+      disabled: options.mutationBusy,
       onClick: () => options.onSetTags([]),
     })
   }
@@ -116,31 +142,29 @@ export function buildDocMenu(options: DocMenuOptions): MenuProps['items'] {
 
   /* ── 目录 ───────────────────────────────────────────────────── */
 
-  const folderChildren: MenuProps['items'] =
-    folders.length > 0
-      ? [
-          ...folders.map((path) =>
-            path === doc.folder
-              ? { key: `folder:${path}`, label: `${path}（当前）`, title: path, disabled: true }
-              : {
-                  key: `folder:${path}`,
-                  label: path,
-                  title: path,
-                  onClick: () => options.onSetFolder(path),
-                },
-          ),
-          ...(doc.folder
-            ? [
-                { type: 'divider' as const },
-                {
-                  key: 'folder-none',
-                  label: '移出目录',
-                  onClick: () => options.onSetFolder(''),
-                },
-              ]
-            : []),
-        ]
-      : [{ key: 'folder-empty', label: '还没有其它目录', disabled: true }]
+  const folderChildren: MenuProps['items'] = options.foldersLoading
+    ? [{ key: 'folder-loading', label: '正在读取目录…', disabled: true }]
+    : options.foldersError
+      ? [{ key: 'folder-retry', label: '目录读取失败，重试读取', onClick: options.retryFolders }]
+      : folders.length > 0
+        ? folders.map((path) => ({
+            key: `folder:${path}`,
+            label: path === doc.folder ? `${path}（当前）` : path,
+            title: path,
+            disabled: options.mutationBusy || path === doc.folder,
+            onClick: () => options.onSetFolder(path),
+          }))
+        : [{ key: 'folder-empty', label: '还没有其它目录', disabled: true }]
+  if (doc.folder)
+    folderChildren.push(
+      { type: 'divider' },
+      {
+        key: 'folder-none',
+        label: '移出目录（不再归属任何知识库）',
+        disabled: options.mutationBusy,
+        onClick: () => options.onSetFolder(''),
+      },
+    )
 
   items.push({
     key: 'folder',

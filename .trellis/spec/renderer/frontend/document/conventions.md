@@ -17,6 +17,10 @@
 
 元数据更新成功后精确刷新 document query，不把更新响应的整对象覆盖活编辑器。后台读取失败而缓存仍有 doc 时，保留同一编辑器节点和本地正文；只有无 doc 的读取失败才展示整页错误。已写入但刷新失败在弹窗明确提示，“重试刷新”只读，不再次提交元数据。
 
+就地标题同样显式确认/取消，blur 留稿；组合输入及同步锁阻止重复提交。写入已成功后即使连续 GET 失败也保持 saved 状态，禁止再次 PATCH。标签和目录响应仅合并已写入字段，不能覆盖活正文；标签写失败保留候选，最多 20 个、每项 1–50 字符。目录空串表示移出所有知识库，不能写成“知识库根目录”。
+
+移动与撤销共享元数据锁；每次移动发布新的文档级 token，旧 toast 的撤销不得覆盖后续移动。撤销写入已完成但刷新失败时，同样只读恢复。笔记 AI 结果随 contentHeader 放在正文滚动区内，不能作为外壳 flex 子块挤压活编辑器；下载语义明确是已保存原件，不包含尚未保存的改动。
+
 ### 验证与错误矩阵
 
 | 条件 | 界面与执行 |
@@ -38,6 +42,30 @@
 ### 错误与正确写法
 
 错误：`if (docQuery.isError) return <Error />`，后台刷新错误会卸载活编辑器。正确：无缓存 doc 才进入整页错误；有 doc 时保留编辑器并展示读取恢复入口。
+
+---
+
+## 文档宿主交互与局部排版
+
+文档宿主沿用已批准的 document-review-v1：头部 48px；只读容器 max-width 856px、padding 36px 48px 72px，正文 15px/1.9；笔记内部 max-width 856px、padding 32px 32px 72px，主标题 28px/1.35（窄屏 25px），H2 22px/1.5。局部角色在 DocumentPanel.style 维护，不能为凑数改全局主题或所有 Office 编辑器。笔记的 contentHeader/contentFooter 插槽位于同一正文滚动区内；外壳工具区仍铺满。
+
+大纲只取真实标题（排除反引号/波浪线围栏），挂载后从活正文 ProseMirror DOM 同步；至少两个标题且非原件、非窄栏、非助手态才显示。196px 大纲不能叠加旧 220px 编辑器留白。跳转失败保留阅读位置并给提示，不能回退匹配元数据标题或伪装成定位成功。
+
+助手是否覆盖由文档容器实际宽度 ≤880px 决定。关闭保持 Chat 挂载和流式结果，隐藏区 inert；覆盖态提供焦点限制、Escape 和遮罩关闭，关闭后回到有效入口。同篇引用定位，跨篇引用和双链/正文内链统一 runGuarded。快捷问题直接发送，选区与编辑器预设仅预填。
+
+AI 整理请求显式提示产生用量；结果是当前文档的临时会话内容。结果提交必须同时匹配文档 ID 与请求 token；A→B→A 也不能接纳旧 A 结果。原网页入口只使用实际 http(s) doc.url，双链仍按内部文档处理。
+
+验证：DocumentTitle、DocumentPanel.core、headings、MarkdownBody、MarkdownHostSlots、DocumentFooter、FilePreview 的回归测试覆盖写后读失败、迟到结果、围栏标题、滚动插槽和真实文件分派；同内容 GUI 对照单独记录实际抽验，不能把枚举状态数写成浏览器通过次数。
+
+文档命令与离开弹窗使用局部 DocumentDialog 样式：桌面宽480px、内边距24px、圆角12px、标题17px；≤575px避开52px导航栏并留左右10px，390px实际left62/top24/width318，内边距18px、标题15px。必须归零窄屏默认上下margin，否则top24会变成实际32px。不能覆盖收集弹窗的独立class。菜单Escape逐层关闭；子菜单回父项，根菜单关闭后回更多入口，不与portal/window监听竞争焦点。
+
+### 未保存守卫注册
+
+`setSave(save, mode = 'manual', canSaveFromGuard = true, editorId?)` 的 `editorId` 由 NoteEditor/OfficeSourceEditor 传当前 doc.id。`canSave` 必须同时有真实回调和代存能力；Office 提示型回调传 false，普通离开提示不出现“保存并离开”，引导回工具栏保存。自动保存模式不提供丢弃已写版本。
+
+同一编辑器的 effect cleanup/setup 不得撤销正在等待的导航；不同 editorId 或真正卸载使旧保存结果失效。保存进行中不能替换待执行目标，保存成功也不能清除期间新增且尚未写入的改动。失败与新改动保留当前内容及目标，继续编辑/Escape 回到实际触发入口。
+
+回归以可控 promise 断言：canSave=false 不调用代存；回调重注册仍完成原请求；切换文档后旧完成不放行；保存期间再改动保持 dirty。`UnsavedGuard.test.tsx`、`markdown-save.test.tsx` 和 `NavSidebar.test.tsx` 分别覆盖 provider、真实笔记保存与导航焦点。浏览器 Back/原生关闭仍按既有宿主能力，不据此声称新增全局路由拦截。
 
 ---
 

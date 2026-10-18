@@ -5,7 +5,7 @@ import type { Citation, DocumentDetail } from '@mimir/shared'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { Button } from 'antd'
-import { X } from 'lucide-react'
+import { FileText, MessageCircle, X } from 'lucide-react'
 import { useState } from 'react'
 import { ChatThemeBridge } from '../chat/ChatThemeBridge'
 import { DocQuickAsks } from './DocChatGuide'
@@ -59,9 +59,19 @@ export interface DocChatSidebarProps {
   documentAgent?: ChatDocumentAgent | null
 }
 
-/** Keep the composer pinned without putting a tutorial in the empty conversation. */
-function renderEmptyGuide(): null {
-  return null
+/** The guide describes the current document scope; sending remains in ChatPanel. */
+function DocumentChatGuide() {
+  const { styles } = useStyles()
+  return (
+    <div className={styles.assistantGuide}>
+      <h3>围绕这篇文档提问</h3>
+      <p>回答限定在本文，可回到原文查看依据。</p>
+    </div>
+  )
+}
+
+function renderEmptyGuide() {
+  return <DocumentChatGuide />
 }
 
 /** 输入框上方的快捷提问。同样必须在模块级（理由见上） */
@@ -129,46 +139,59 @@ export function DocChatSidebar({
        套两层折叠类会让内容被自己的 overflow 折成 0.8px（实测踩过）。 */
     <aside className={styles.aiSidebarInner} aria-label="问 AI 侧栏">
       <div className={styles.aiSidebarHeader}>
-        <span className={styles.aiSidebarTitle}>问 AI · {doc.title}</span>
+        <MessageCircle size={15} aria-hidden="true" />
+        <span className={styles.aiSidebarTitle}>文档助手</span>
         <Button
           type="text"
           size="small"
+          className={styles.assistantClose}
           aria-label="关闭侧栏"
           icon={<X size={16} />}
           onClick={onClose}
         />
       </div>
+      <div className={styles.aiSidebarScope}>
+        <FileText size={14} aria-hidden="true" />
+        <span title={doc.title}>{doc.title}</span>
+      </div>
       {isDocx ? (
         <DocxCapabilityStatus
           capabilities={capabilities.data}
-          loading={!documentAgent || capabilities.isPending}
+          loading={Boolean(documentAgent) && capabilities.isPending}
+          canvasReady={Boolean(documentAgent)}
           error={capabilities.isError}
           onRetry={() => void capabilities.refetch()}
           onSettings={openSettings}
           revisionMode={revisionMode}
           onRevisionModeChange={setRevisionMode}
         />
-      ) : format &&
-        (documentCapabilities.isError ||
-          (documentCapabilities.data &&
-            (!documentCapabilities.data.executorReady ||
-              !documentCapabilities.data.modelReady ||
-              !activeAgent))) ? (
-        <section aria-label="文档编辑能力状态" className={styles.aiSidebarStatus}>
-          {documentCapabilities.isError
-            ? '能力状态读取失败'
-            : !documentCapabilities.data?.executorReady
-              ? '当前格式暂不可编辑'
-              : !documentCapabilities.data.modelReady
-                ? '需要聊天模型'
-                : '当前画布编辑不可用'}
+      ) : format ? (
+        <section
+          aria-label="文档编辑能力状态"
+          aria-busy={documentCapabilities.isPending}
+          className={styles.aiSidebarStatus}
+        >
+          <strong>原件 Agent 编辑</strong>
+          <p role={documentCapabilities.isError ? 'alert' : 'status'}>
+            {documentCapabilities.isPending
+              ? '正在检测当前文档能力…'
+              : documentCapabilities.isError
+                ? '读取编辑能力失败。'
+                : !documentCapabilities.data?.executorReady
+                  ? '当前格式未提供可执行编辑工具。'
+                  : !documentCapabilities.data.modelReady
+                    ? '尚未配置支持工具调用的模型。'
+                    : !activeAgent
+                      ? '原件画布尚未就绪，暂时不能编辑。'
+                      : '当前文档已连接可执行编辑工具。'}
+          </p>
           {documentCapabilities.isError ? (
             <Button type="link" size="small" onClick={() => void documentCapabilities.refetch()}>
-              重试
+              重试检测
             </Button>
           ) : documentCapabilities.data?.executorReady && !documentCapabilities.data.modelReady ? (
             <Button type="link" size="small" onClick={() => openSettings('models')}>
-              模型设置
+              配置模型
             </Button>
           ) : null}
         </section>

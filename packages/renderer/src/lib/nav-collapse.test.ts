@@ -2,6 +2,7 @@ import { act, createElement } from 'react'
 import type { ReactElement } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { NAV_NARROW_BREAKPOINT, NAV_NARROW_QUERY } from '../theme/tokens'
 
 /**
  * 窄屏强制折叠。
@@ -109,8 +110,6 @@ describe('窄屏强制折叠', () => {
   })
 
   it('断点取自 tokens.ts，不在别处再写一个 880', async () => {
-    const { NAV_NARROW_BREAKPOINT, NAV_NARROW_QUERY } = await import('../theme/tokens')
-
     // 宿主与栏内内容必须问同一个宽度：查询串是从那个常量派生的，
     // 而不是模块里另写的字符串（另写就必然有一天只改一处，静默变形）
     expect(NAV_NARROW_QUERY).toBe(`(max-width: ${NAV_NARROW_BREAKPOINT}px)`)

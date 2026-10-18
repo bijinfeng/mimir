@@ -1,7 +1,7 @@
 import type { DocumentDetail, FolderNode } from '@mimir/shared'
 import { Button, Input, Modal, Select } from 'antd'
-import { CircleAlert, LoaderCircle, X } from 'lucide-react'
-import { useHostStyles } from '../command-palette/host-styles'
+import { CircleAlert, LoaderCircle } from 'lucide-react'
+import { useDocumentDialogStyles } from './DocumentDialog.style'
 import { useStyles as usePaletteStyles } from '../command-palette/styles'
 import { useEffect, useRef, useState } from 'react'
 import { flattenFolders } from './folders'
@@ -40,7 +40,7 @@ export function DocumentCommandModal({
   restoreFocus,
 }: Props) {
   const { styles } = useStyles()
-  const { styles: hostStyles, cx } = useHostStyles()
+  const { styles: hostStyles, cx } = useDocumentDialogStyles()
   const { styles: paletteStyles } = usePaletteStyles()
   const [command, setCommand] = useState<DocumentCommand>('rename')
   const [open, setOpen] = useState(false)
@@ -118,6 +118,10 @@ export function DocumentCommandModal({
       setError('请输入笔记标题')
       return
     }
+    if (command === 'rename' && next.length > 200) {
+      setError('标题最多 200 个字符')
+      return
+    }
     if (command === 'search') {
       if (next.length < 2) {
         setError('至少输入 2 个字符后查找')
@@ -157,18 +161,17 @@ export function DocumentCommandModal({
   }
   const help =
     command === 'rename'
-      ? ''
+      ? '重命名会同步更新文件名。'
       : command === 'search'
-        ? '输入至少两个字，定位当前笔记中的首个匹配'
-        : ''
+        ? '至少输入两个字符，只定位一处，不提供替换。'
+        : '未归入目录的文档不属于任何知识库。'
 
   return (
     <Modal
       title={command === 'rename' ? '重命名笔记' : command === 'move' ? '移动文档' : '搜索当前笔记'}
       width={480}
       className={hostStyles.modal}
-      style={{ top: 'calc(14vh + 24px)' }}
-      closeIcon={<X size={17} aria-hidden />}
+      style={{ top: 52 }}
       open={open}
       onCancel={close}
       onOk={() => void submit()}
@@ -182,9 +185,9 @@ export function DocumentCommandModal({
           : refreshOnly
             ? '重试刷新'
             : command === 'rename'
-              ? '保存'
+              ? '保存名称'
               : command === 'move'
-                ? '移动'
+                ? '移动文档'
                 : '查找'
       }
       confirmLoading={pending}
@@ -202,7 +205,7 @@ export function DocumentCommandModal({
             ((command === 'move' && (foldersLoading || foldersError)) ||
               (command === 'search' && value.trim().length < 2))),
       }}
-      closable={{ disabled: pending }}
+      closable={false}
       keyboard={!pending}
       mask={{ closable: !pending }}
       focusable={{ focusTriggerAfterClose: false }}
@@ -231,13 +234,10 @@ export function DocumentCommandModal({
           }
         }}
       >
-        <p className={styles.subtitle}>
-          {doc.kind === 'note' ? '当前笔记' : '当前文档'}：{doc.title}
-        </p>
         {command === 'move' ? (
           <>
             <span className={styles.label} id="document-command-label">
-              移动到
+              目标目录
             </span>
             {foldersLoading || foldersError ? (
               <div className={styles.folderFeedback} role={foldersError ? 'alert' : 'status'}>
@@ -249,43 +249,42 @@ export function DocumentCommandModal({
                 ) : (
                   <>
                     <CircleAlert size={17} aria-hidden />
-                    <span>目录暂时无法读取</span>
+                    <span>目录读取失败，原位置保留。</span>
                     <Button type="link" className={styles.retry} onClick={retryFolders}>
-                      重试
+                      重试读取
                     </Button>
                   </>
                 )}
               </div>
-            ) : (
-              <Select
-                autoFocus
-                aria-labelledby="document-command-label"
-                aria-describedby="document-command-help document-command-error"
-                className={styles.select}
-                disabled={pending || refreshOnly}
-                value={value}
-                onChange={(next) => {
-                  setValue(next)
-                  setError(null)
-                }}
-                options={[
-                  { value: '', label: '知识库根' },
-                  ...flattenFolders(folders).map((item) => ({
-                    value: item.path,
-                    label: item.path,
-                    title: item.path,
-                  })),
-                ]}
-              />
+            ) : null}
+            <Select
+              autoFocus
+              aria-labelledby="document-command-label"
+              aria-describedby="document-command-help document-command-error"
+              className={styles.select}
+              disabled={pending || refreshOnly || foldersLoading || foldersError}
+              value={value}
+              onChange={(next) => {
+                setValue(next)
+                setError(null)
+              }}
+              options={[
+                { value: '', label: '未归入目录' },
+                ...flattenFolders(folders).map((item) => ({
+                  value: item.path,
+                  label: item.path,
+                  title: item.path,
+                })),
+              ]}
+            />
+            {!foldersLoading && !foldersError && folders.length === 0 && (
+              <p className={styles.help}>暂无目录，可将文档移出当前目录。</p>
             )}
-            <p className={styles.path} title={value || '知识库根'}>
-              所选目录：{value || '知识库根'}
-            </p>
           </>
         ) : (
           <>
             <label className={styles.label} htmlFor="document-command-input">
-              {command === 'rename' ? '名称' : '查找内容'}
+              {command === 'rename' ? '笔记名称' : '查找内容'}
             </label>
             <Input
               id="document-command-input"

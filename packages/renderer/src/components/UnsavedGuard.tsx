@@ -1,17 +1,17 @@
 import { Button, Modal } from 'antd'
-import { useRef } from 'react'
+import { useRef, type ReactNode } from 'react'
 import { FileText, LoaderCircle, ShieldCheck } from 'lucide-react'
 import { useCaptureStyles } from './capture/styles'
 import { CaptureNotice } from './capture/Notice'
 import { createStyles } from 'antd-style'
 import { useUnsaved } from '../lib/unsaved'
+import { useDocumentDialogStyles, DOCUMENT_DIALOG_TYPE } from './document/DocumentDialog.style'
 
 /**
  * 未保存内容的拦截框。
  *
- * `.trellis/spec/project/product.md` §5.9：给**三个**选项，而不是两个。
- * 「继续编辑 / 丢弃改动 / 保存并离开」——两选项（留下 / 丢弃）把这个场景
- * 变成二选一的拷问，而用户真正想要的往往是第三种。
+ * 根据编辑器能力提供继续、丢弃与保存。自动保存不能撤销已落库版本，
+ * Office 原件未暴露保存句柄，须回实际工具栏保存。
  *
  * 用 antd 的 Modal（声明式）而不是 Modal.confirm（命令式）：这里的状态由
  * UnsavedProvider 持有，声明式渲染才能让「保存中」这类中间态真实反映出来，
@@ -31,16 +31,82 @@ import { useUnsaved } from '../lib/unsaved'
  * 而这里是在 JSX 里，`${prefixCls}` 根本拿不到。
  */
 const useStyles = createStyles(({ css, token }) => ({
+  document: css`
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    margin: 0 0 12px;
+    color: ${token.colorText};
+    font-size: ${DOCUMENT_DIALOG_TYPE.body}px;
+    line-height: 1.75;
+    overflow-wrap: anywhere;
+    font-weight: 500;
+    > svg {
+      margin-top: 2px;
+    }
+  `,
   body: css`
     margin: 0;
+    font-size: ${DOCUMENT_DIALOG_TYPE.body}px;
     line-height: 1.75;
     color: ${token.colorText};
   `,
+  notice: css`
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin: 12px 0 0;
+    padding: 10px 12px;
+    background: ${token.colorFillQuaternary};
+    border: 1px solid ${token.colorBorderSecondary};
+    border-radius: 6px;
+    font-size: ${DOCUMENT_DIALOG_TYPE.body}px;
+    line-height: 1.75;
+    overflow-wrap: anywhere;
+    > svg {
+      margin-top: 3px;
+    }
+  `,
+  error: css`
+    color: ${token.colorErrorText};
+    background: ${token.colorErrorBg};
+  `,
 }))
+
+function GuardKeyBoundary({ children }: { children: ReactNode }) {
+  const composing = useRef(false)
+  return (
+    <div
+      onCompositionStart={() => {
+        composing.current = true
+      }}
+      onCompositionEnd={() => {
+        composing.current = false
+      }}
+      onKeyDownCapture={(event) => {
+        if (
+          (event.key === 'Enter' || event.key === 'Escape') &&
+          (composing.current || event.nativeEvent.isComposing || event.keyCode === 229)
+        ) {
+          event.preventDefault()
+          event.stopPropagation()
+        }
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+function renderGuardModal(node: ReactNode) {
+  return <GuardKeyBoundary>{node}</GuardKeyBoundary>
+}
 
 export function UnsavedGuard({
   captureContext,
+  documentTitle,
 }: {
+  documentTitle?: string
   captureContext?: {
     description: string
     resultHint: string
@@ -51,9 +117,10 @@ export function UnsavedGuard({
   const cancelRef = useRef<HTMLButtonElement>(null)
   const { pending, isDirty, saveMode, canSave, saving, saveError, resolve } = useUnsaved()
   const { styles } = useStyles()
+  const { styles: hostStyles, cx } = useDocumentDialogStyles()
   const { styles: captureStyles } = useCaptureStyles()
   const auto = saveMode === 'auto'
-  const captureButton = captureContext ? captureStyles.button : undefined
+  const buttonClass = captureContext ? captureStyles.button : hostStyles.button
   function continueEditing() {
     if (saving) return
     resolve('cancel')
@@ -71,20 +138,24 @@ export function UnsavedGuard({
       }
       closable={false}
       classNames={{ footer: captureContext ? captureStyles.footer : undefined }}
-      width={captureContext ? 480 : undefined}
-      className={captureContext ? captureStyles.modal : undefined}
+      width={480}
+      style={captureContext ? undefined : { top: 52 }}
+      className={captureContext ? captureStyles.modal : hostStyles.modal}
       mask={{ closable: false }}
-      keyboard={Boolean(captureContext) && !saving}
+      keyboard={!saving}
       afterOpenChange={(visible) => {
-        if (visible && captureContext) cancelRef.current?.focus()
+        if (visible) {
+          cancelRef.current?.focus()
+        }
       }}
+      modalRender={renderGuardModal}
       onCancel={continueEditing}
       footer={[
         <Button
           ref={cancelRef}
           key="cancel"
-          autoInsertSpace={captureContext ? false : undefined}
-          className={captureButton}
+          autoInsertSpace={false}
+          className={buttonClass}
           disabled={saving}
           onClick={continueEditing}
         >
@@ -94,8 +165,8 @@ export function UnsavedGuard({
           ? [
               <Button
                 key="discard"
-                danger={!captureContext}
-                className={captureButton}
+                autoInsertSpace={false}
+                className={buttonClass}
                 disabled={saving}
                 onClick={() => resolve('discard')}
               >
@@ -103,14 +174,14 @@ export function UnsavedGuard({
               </Button>,
             ]
           : []),
-        ...(!captureContext || canSave
+        ...(canSave || !isDirty
           ? [
               <Button
                 key="save"
                 type="primary"
-                className={captureButton}
-                disabled={Boolean(captureContext) && saving}
-                loading={!captureContext && saving}
+                autoInsertSpace={false}
+                className={captureContext ? buttonClass : cx(buttonClass, hostStyles.primary)}
+                disabled={saving}
                 onClick={() => resolve('save')}
               >
                 {captureContext &&
@@ -119,9 +190,7 @@ export function UnsavedGuard({
                   ) : (
                     <ShieldCheck size={15} aria-hidden="true" />
                   ))}
-                <span>
-                  {captureContext && saving ? '保存中…' : auto && !isDirty ? '离开' : '保存并离开'}
-                </span>
+                <span>{saving ? '保存中…' : !isDirty ? '离开' : '保存并离开'}</span>
               </Button>,
             ]
           : []),
@@ -158,15 +227,27 @@ export function UnsavedGuard({
         </div>
       ) : (
         <>
-          <p className={styles.body}>
-            {auto
-              ? isDirty
-                ? '笔记正在自动保存。保存完成后才能离开。'
-                : '这次改动已经写入笔记，可以离开。'
-              : '离开前保存改动，或丢弃改动。'}
+          <p className={styles.document}>
+            <FileText size={18} aria-hidden />
+            {documentTitle || '当前文档'}
           </p>
+          <p className={styles.body}>
+            {!canSave && isDirty
+              ? '当前编辑器无法代为保存，请继续编辑并在工具栏中保存。'
+              : auto
+                ? isDirty
+                  ? '笔记正在自动保存。保存完成后才能离开。'
+                  : '这次改动已经写入笔记，可以离开。'
+                : '离开前保存改动，或丢弃改动。'}
+          </p>
+          {saving && (
+            <p role="status" className={styles.notice}>
+              <LoaderCircle size={15} className={captureStyles.spin} aria-hidden />
+              正在保存当前改动…
+            </p>
+          )}
           {saveError && (
-            <p role="alert" className={styles.body}>
+            <p role="alert" className={cx(styles.notice, styles.error)}>
               {saveError}
             </p>
           )}

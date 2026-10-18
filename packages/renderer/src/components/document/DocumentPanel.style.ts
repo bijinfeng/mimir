@@ -1,6 +1,15 @@
 import { createStyles } from 'antd-style'
 import { CONTENT_WIDTH, FONT_SIZE, NAV_NARROW_QUERY, PANEL_HEADER_HEIGHT } from '../../theme/tokens'
 
+/** Approved document-review-v1 typography; local roles do not change other modules. */
+export const DOCUMENT_FONT_SIZE = {
+  control: 12,
+  path: 13,
+  meta: 11,
+  narrowTitle: 25,
+  readingHeading: 22,
+} as const
+
 /**
  * 文档视图的样式。
  *
@@ -22,6 +31,143 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     min-width: 0;
     overflow: hidden;
     background: ${token.surfaceContent};
+    /* Approved reading rhythm is scoped to this document host, including note body. */
+    [data-document-prose] .tiptap,
+    .mimir-markdown-body .ProseMirror {
+      font-size: ${FONT_SIZE.reading}px;
+      line-height: 1.9;
+      h2 {
+        font-size: ${DOCUMENT_FONT_SIZE.readingHeading}px;
+        font-weight: 600;
+        line-height: 1.5;
+        letter-spacing: normal;
+        margin: 30px 0 12px;
+        scroll-margin-top: 24px;
+        &:first-child {
+          margin-top: 0;
+        }
+      }
+      p {
+        margin: 0 0 16px;
+      }
+      blockquote {
+        border-left: 2px solid ${token.colorBorderSecondary};
+        padding: 6px 16px;
+        margin: 22px 0;
+        color: ${token.colorTextSecondary};
+        p:last-child {
+          margin-bottom: 0;
+        }
+      }
+      ul,
+      ol {
+        padding-left: 22px;
+        margin: 16px 0;
+      }
+      ul[data-type='taskList'] {
+        padding-left: 0;
+      }
+      ul[data-type='taskList'] p {
+        margin: 0;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: ${FONT_SIZE.body}px;
+        margin: 22px 0;
+      }
+      th,
+      td {
+        padding: 9px 12px;
+        border: 1px solid ${token.colorBorderSecondary};
+        text-align: left;
+      }
+      th {
+        background: ${token.colorFillQuaternary};
+        font-weight: 500;
+      }
+      pre {
+        background: ${token.colorFillQuaternary};
+        border: 0;
+        border-radius: 8px;
+        padding: 16px;
+        font-family: ${token.fontFamilyCode};
+        font-size: ${FONT_SIZE.excerpt}px;
+        line-height: 1.75;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        code {
+          font-size: inherit;
+        }
+      }
+      img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+      }
+    }
+    .mimir-editor--note .mimir-editor__body--split > .me-scroll {
+      padding-right: 196px;
+    }
+    .mimir-editor--note .mimir-editor__side {
+      top: 0;
+      right: 0;
+      bottom: 0;
+    }
+    .mimir-markdown-body {
+      max-width: ${CONTENT_WIDTH + 96}px;
+      padding: 32px 32px 72px;
+    }
+    @container markdown-reading (max-width: 620px) {
+      .mimir-markdown-body {
+        padding: 28px 16px 48px;
+      }
+    }
+    @media (max-width: 600px) {
+      [data-document-prose] .tiptap h2,
+      .mimir-markdown-body .ProseMirror h2 {
+        font-size: ${DOCUMENT_FONT_SIZE.readingHeading - 1}px;
+      }
+    }
+    [data-title-metadata] {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 16px;
+      font-size: ${DOCUMENT_FONT_SIZE.meta}px;
+      line-height: 1.7;
+      color: ${token.colorTextSecondary};
+      overflow-wrap: anywhere;
+    }
+    [data-document-empty-body] {
+      margin: 0;
+      color: ${token.colorTextSecondary};
+      font-size: ${FONT_SIZE.reading}px;
+      line-height: 1.9;
+    }
+    [data-document-notice] {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 14px;
+      background: ${token.colorFillQuaternary};
+      color: ${token.colorTextSecondary};
+      font-size: ${DOCUMENT_FONT_SIZE.control}px;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+      flex: none;
+      &[role='alert'],
+      &[data-error] {
+        color: ${token.colorErrorText};
+        background: ${token.colorErrorBg};
+      }
+      p {
+        margin: 0;
+      }
+      button {
+        font-size: inherit;
+      }
+    }
   `,
   wrap: css`
     flex: 1;
@@ -43,6 +189,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
 
     @media (max-width: 600px) {
       gap: 4px;
+      padding-inline: 6px;
     }
   `,
   /* Title and optional rename action shrink before the right-side actions. */
@@ -63,8 +210,8 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       flex: 0 1 auto;
       min-width: 0;
       margin: 0;
-      font-size: ${FONT_SIZE.section}px;
-      font-weight: 600;
+      font-size: ${DOCUMENT_FONT_SIZE.path}px;
+      font-weight: 500;
       line-height: 1.4;
       letter-spacing: 0;
       color: ${token.colorText};
@@ -80,11 +227,11 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     flex: 1;
     min-width: 0;
     color: ${token.colorTextTertiary};
-    font-size: ${FONT_SIZE.item}px;
+    font-size: ${DOCUMENT_FONT_SIZE.path}px;
   `,
   headerFolder: css`
     flex: 0 1 auto;
-    max-width: 32%;
+    max-width: 42%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -98,7 +245,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     text-overflow: ellipsis;
     white-space: nowrap;
     color: ${token.colorTextSecondary};
-    font-weight: 500;
+    font-weight: 400;
   `,
   saveStatus: css`
     display: inline-flex;
@@ -106,7 +253,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     gap: 5px;
     padding-inline: 6px;
     color: ${token.colorTextTertiary};
-    font-size: ${FONT_SIZE.meta}px;
+    font-size: ${DOCUMENT_FONT_SIZE.meta}px;
     white-space: nowrap;
     &[data-save-state='error'] {
       color: ${token.colorErrorText};
@@ -133,6 +280,27 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     align-items: flex-start;
     gap: 8px;
     min-width: 0;
+    [data-title-editor] {
+      width: 100%;
+      min-width: 0;
+    }
+    [data-title-actions] {
+      display: flex;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 10px 0;
+      button {
+        font-size: ${DOCUMENT_FONT_SIZE.path}px;
+      }
+    }
+    [data-title-error] {
+      color: ${token.colorErrorText};
+      font-size: ${DOCUMENT_FONT_SIZE.control}px;
+      font-weight: 400;
+      margin: 6px 0;
+      overflow-wrap: anywhere;
+    }
   `,
   noteTitle: css`
     &&.${prefixCls}-typography {
@@ -144,29 +312,62 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       line-height: 1.35;
       color: ${token.colorText};
       overflow-wrap: anywhere;
+      @media (max-width: 600px) {
+        font-size: ${DOCUMENT_FONT_SIZE.narrowTitle}px;
+        line-height: 1.4;
+      }
     }
   `,
   noteTitleInput: css`
     &&.${prefixCls}-input {
       width: 100%;
       margin-bottom: 10px;
-      padding: 0;
+      padding: 3px 6px;
+      height: auto;
+      border: 1px solid ${token.focusRing};
+      border-radius: 6px;
       font-size: ${FONT_SIZE.display}px;
       font-weight: 700;
       line-height: 1.35;
-      border-bottom-color: ${token.focusRing};
+      caret-color: ${token.colorText};
+      &:focus,
+      &:focus-within {
+        border-color: ${token.focusRing};
+        box-shadow: 0 0 0 2px ${token.colorPrimaryBg};
+      }
+      @media (max-width: 600px) {
+        font-size: ${DOCUMENT_FONT_SIZE.narrowTitle}px;
+        line-height: 1.4;
+      }
     }
   `,
+  noteTitleActions: css`
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 10px 0;
+    button {
+      font-size: ${DOCUMENT_FONT_SIZE.path}px;
+    }
+  `,
+  noteTitleError: css`
+    color: ${token.colorErrorText};
+    font-size: ${DOCUMENT_FONT_SIZE.control}px;
+    font-weight: 400;
+    margin: 6px 0;
+    overflow-wrap: anywhere;
+  `,
   noteUpdated: css`
-    font-size: ${FONT_SIZE.meta}px;
+    font-size: ${DOCUMENT_FONT_SIZE.meta}px;
     line-height: 1.7;
     color: ${token.colorTextTertiary};
   `,
   headerTitleEdit: css`
     flex: none;
-    width: 24px;
-    min-width: 24px;
-    height: 24px;
+    width: 28px;
+    min-width: 28px;
+    height: 28px;
     padding: 0;
     opacity: 0;
     color: ${token.colorTextTertiary};
@@ -188,6 +389,8 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       background: ${token.colorFillTertiary};
       border-radius: ${token.borderRadiusSM}px;
     }
+
+    &:focus-visible { outline: 2px solid ${token.focusRing}; outline-offset: 2px; }
 
     &:active {
       background: ${token.colorFillSecondary};
@@ -241,14 +444,25 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
      这样头部读起来是一条安静的路径栏，不是一个表单 */
   tbBtn: css`
     flex: none;
-    font-size: ${FONT_SIZE.note}px;
+    height: 30px;
+    min-width: 30px;
+    padding: 4px 7px;
+    font-size: ${DOCUMENT_FONT_SIZE.control}px;
+    line-height: 20px;
     color: ${token.colorTextSecondary};
 
     &:hover {
       color: ${token.colorText} !important;
     }
 
+    &:focus-visible {
+      outline: 2px solid ${token.focusRing};
+      outline-offset: 2px;
+    }
     @media (max-width: 500px) {
+      min-width: 36px;
+      height: 40px;
+      padding: 0;
       .${prefixCls}-btn-icon + span {
         display: none;
       }
@@ -258,11 +472,14 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
      so its class belongs on Dropdown rather than on the header subtree. */
   docMenu: css`
     .${prefixCls}-dropdown-menu {
-      min-width: min(232px, calc(100vw - 16px));
+      min-width: min(238px, calc(100vw - 16px));
       max-width: min(320px, calc(100vw - 16px));
       padding: 6px;
+      max-height: min(520px, calc(100dvh - 64px));
+      overflow-y: auto;
+      overscroll-behavior: contain;
       border: 1px solid ${token.colorBorderSecondary};
-      border-radius: ${token.borderRadiusLG}px;
+      border-radius: 10px;
       box-shadow: ${token.boxShadowSecondary};
     }
 
@@ -272,7 +489,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       padding: 7px 10px;
       border-radius: ${token.borderRadiusSM}px;
       color: ${token.colorText};
-      font-size: ${FONT_SIZE.item}px;
+      font-size: ${DOCUMENT_FONT_SIZE.path}px;
       line-height: 1.4;
     }
 
@@ -285,7 +502,8 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     .${prefixCls}-dropdown-menu-item .${prefixCls}-dropdown-menu-title-content {
       overflow: hidden;
       text-overflow: ellipsis;
-      white-space: nowrap;
+      white-space: normal;
+      overflow-wrap: anywhere;
     }
 
     .${prefixCls}-dropdown-menu-item-active,
@@ -307,7 +525,13 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     .${prefixCls}-dropdown-menu-item-group-title {
       padding: 5px 10px 4px;
       color: ${token.colorTextTertiary};
-      font-size: ${FONT_SIZE.note}px;
+      font-size: ${DOCUMENT_FONT_SIZE.meta}px;
+    }
+
+    .${prefixCls}-dropdown-menu-sub .${prefixCls}-dropdown-menu-item {
+      min-height: 34px;
+      padding: 6px;
+      font-size: ${DOCUMENT_FONT_SIZE.control}px;
     }
 
     [data-doc-menu-row] {
@@ -329,7 +553,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       text-overflow: ellipsis;
       white-space: nowrap;
       color: ${token.colorTextTertiary};
-      font-size: ${FONT_SIZE.note}px;
+      font-size: ${DOCUMENT_FONT_SIZE.meta}px;
     }
 
     [data-doc-menu-group] {
@@ -341,7 +565,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
 
     [data-doc-menu-cost] {
       color: ${token.colorTextSecondary};
-      font-size: ${FONT_SIZE.note}px;
+      font-size: ${DOCUMENT_FONT_SIZE.meta}px;
       font-weight: 400;
     }
   `,
@@ -357,7 +581,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     border-radius: 6px;
     background: transparent;
     font-family: inherit;
-    font-size: ${FONT_SIZE.note}px;
+    font-size: ${DOCUMENT_FONT_SIZE.control}px;
     color: ${token.colorTextSecondary};
     cursor: pointer;
     transition: background 0.12s ease-out;
@@ -393,6 +617,13 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     min-height: 0;
     overflow-y: auto;
     position: relative;
+    scrollbar-width: thin;
+    scrollbar-gutter: stable;
+    /* Notes already own their scroll gutter; avoid reserving a second 16px outside the editor. */
+    &:has(.mimir-editor--note) {
+      scrollbar-gutter: auto;
+    }
+    scrollbar-color: ${token.colorBorderSecondary} transparent;
   `,
   cols: css`
     display: flex;
@@ -427,10 +658,10 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     flex: 1;
     min-width: 0;
     max-width: ${CONTENT_WIDTH + 96}px;
-    padding: 40px 48px 72px;
+    padding: 36px 48px 72px;
 
     @media ${NAV_NARROW_QUERY} {
-      padding: 28px 16px 64px;
+      padding: 28px 16px 48px;
     }
 
     @media (max-width: 600px) {
@@ -474,7 +705,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
    */
   outlineSide: css`
     height: 100%;
-    padding: 6px 0 24px 10px;
+    padding: 36px 12px 40px;
     /* 浮层浮在滚动内容之上，底必须不透明——否则滚动的文字从大纲字缝里透出来 */
     background: ${token.surfaceContent};
   `,
@@ -497,16 +728,17 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   guideSuggest: css`
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
   `,
 
   guideChip: css`
-    border: 1px solid ${token.colorBorder};
-    background: ${token.colorBgContainer};
+    border: 1px solid ${token.colorBorderSecondary};
+    background: ${token.surfaceContent};
     color: ${token.colorText};
     border-radius: 999px;
-    padding: 4px 12px;
-    font-size: ${FONT_SIZE.note}px;
+    padding: 2px 10px;
+    min-height: 28px;
+    font-size: ${DOCUMENT_FONT_SIZE.control}px;
     font-family: inherit;
     line-height: 1.5;
     cursor: pointer;
@@ -522,6 +754,14 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     }
   `,
 
+  aiOverlayBackdrop: css`
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    border: none;
+    padding: 0;
+    background: transparent;
+  `,
   aiSidebar: css`
     flex: none;
     width: 0;
@@ -551,7 +791,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
       transition: none;
 
       &[data-open] {
-        width: min(400px, calc(100% - 40px));
+        width: min(400px, calc(100% - 32px));
         box-shadow: ${token.boxShadowSecondary};
       }
     }
@@ -571,7 +811,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     justify-content: space-between;
     gap: 8px;
     height: ${PANEL_HEADER_HEIGHT}px;
-    padding: 0 8px 0 14px;
+    padding: 0 10px 0 16px;
     border-bottom: 1px solid ${token.colorBorderSecondary};
   `,
 
@@ -585,14 +825,68 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: ${FONT_SIZE.note}px;
-    font-weight: 600;
-    color: ${token.colorTextSecondary};
+    font-size: ${DOCUMENT_FONT_SIZE.path}px;
+    font-weight: 500;
+    color: ${token.colorText};
   `,
 
+  aiSidebarScope: css`
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+    padding: 12px 16px;
+    border-bottom: 1px solid ${token.colorBorderSecondary};
+    font-size: ${DOCUMENT_FONT_SIZE.control}px;
+    color: ${token.colorTextSecondary};
+    span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  `,
+  assistantClose: css`
+    flex: none;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    @container (max-width: 500px) {
+      width: 40px;
+      height: 40px;
+    }
+  `,
+  assistantGuide: css`
+    /* ChatPanel provides 38px top / 16px sides; the document guide target is 24 / 20. */
+    margin-top: -14px;
+    padding-inline: 4px;
+    @container (max-width: 500px) {
+      padding-inline: 0;
+    }
+    h3 {
+      font-size: ${FONT_SIZE.section + 1}px;
+      font-weight: 600;
+      margin: 0 0 8px;
+    }
+    p {
+      font-size: ${DOCUMENT_FONT_SIZE.path}px;
+      line-height: 1.8;
+      color: ${token.colorTextSecondary};
+      margin: 0;
+    }
+  `,
   aiSidebarStatus: css`
     flex: none;
-    padding: 10px 16px;
+    padding: 16px;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+    p {
+      margin: 8px 0;
+    }
+    strong {
+      color: ${token.colorText};
+      font-weight: 600;
+    }
     border-bottom: 1px solid ${token.colorBorderSecondary};
     color: ${token.colorTextSecondary};
     font-size: ${FONT_SIZE.note}px;
@@ -607,8 +901,8 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     flex: none;
     width: 196px;
     align-self: stretch;
-    padding: 28px 12px 40px;
-    border-left: 1px solid ${token.colorBorderSecondary};
+    padding: 36px 12px 40px;
+    border-left: 1px solid transparent;
     background: ${token.surfaceContent};
     max-height: 100%;
     overflow-y: auto;
@@ -618,22 +912,23 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     }
   `,
   outlineTitle: css`
-    font-size: ${FONT_SIZE.badge}px;
+    font-size: ${DOCUMENT_FONT_SIZE.meta}px;
     font-weight: 600;
     color: ${token.colorTextTertiary};
-    letter-spacing: 0.04em;
-    margin-bottom: 8px;
-    padding-left: 9px;
+    margin-bottom: 10px;
+    padding-left: 10px;
   `,
   olItem: css`
     display: block;
     width: 100%;
-    padding: 5px 11px;
+    padding: 6px 11px;
+    min-height: 30px;
+    margin: 2px 0;
     border: none;
     border-radius: ${token.borderRadiusSM}px;
     background: transparent;
     font-family: inherit;
-    font-size: ${FONT_SIZE.note}px;
+    font-size: ${DOCUMENT_FONT_SIZE.control}px;
     line-height: 1.5;
     color: ${token.colorTextSecondary};
     text-align: left;
@@ -652,12 +947,12 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
     }
   `,
   olItemLv3: css`
-    padding-left: 20px;
+    padding-left: 23px;
   `,
   olItemActive: css`
-    color: ${token.navSelectedText};
-    background: transparent;
-    box-shadow: inset 2px 0 ${token.colorText};
+    color: ${token.colorLink};
+    background: ${token.colorFillQuaternary};
+    box-shadow: inset 1px 0 ${token.colorPrimary};
     font-weight: 600;
   `,
   /* ── 页脚：来源 / 被引用 ────────────────────────────── */
@@ -672,10 +967,21 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
    * 会让它看起来像出了问题。
    */
   aiBlock: css`
-    margin: 0 0 20px;
+    margin: 0 0 24px;
     padding: 14px 16px;
-    border-radius: ${token.borderRadius}px;
+    border-radius: 8px;
     background: ${token.colorFillQuaternary};
+    [data-ai-result-heading] {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-bottom: 8px;
+      > button {
+        margin-left: auto;
+        min-height: 24px;
+        padding: 0;
+      }
+    }
   `,
 
   aiLabel: css`
@@ -686,7 +992,7 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
 
   aiText: css`
     font-size: ${FONT_SIZE.body}px;
-    line-height: 1.7;
+    line-height: 1.8;
     color: ${token.colorText};
     white-space: pre-wrap;
   `,
@@ -716,44 +1022,53 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
 
   foot: css`
     margin-top: 40px;
-    padding-top: 18px;
-    /* 不画线（D-070）：40px 的留白已经把「正文」和「元信息」分成两段，
-       线是重复信号——这是滚动内容内部的分区，不是固定区与滚动区的边界 */
+    padding-top: 20px;
+    border-top: 1px solid ${token.colorBorderSecondary};
   `,
   footRow: css`
     display: flex;
     align-items: baseline;
-    gap: 10px;
+    flex-wrap: wrap;
+    gap: 4px 12px;
     margin-bottom: 8px;
   `,
   footLabel: css`
     flex: none;
-    width: 46px;
-    font-size: ${FONT_SIZE.badge}px;
+    width: 42px;
+    font-size: ${DOCUMENT_FONT_SIZE.control}px;
     color: ${token.colorTextTertiary};
   `,
   footLinks: css`
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 4px 12px;
+    min-width: 0;
+    flex: 1;
   `,
   /* 双链的一条。**是真 button**（键盘可达），所以要把浏览器给 button 的
      默认观感全部推掉：它要看起来就是一条正文里的链接。
      padding 归 0 而不是留 2px——留了会在行里垫高、行距与旁边的标签对不上 */
   footLink: css`
-    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 0;
+    min-height: 26px;
+    max-width: 100%;
+    text-align: left;
+    overflow-wrap: anywhere;
     border: none;
     background: none;
     font-family: inherit;
-    font-size: ${FONT_SIZE.note}px;
-    line-height: inherit;
+    font-size: ${DOCUMENT_FONT_SIZE.control}px;
+    line-height: 1.6;
     color: ${token.colorLink};
     cursor: pointer;
-    text-decoration: underline;
-    text-underline-offset: 2px;
+    text-decoration: none;
+    text-underline-offset: 3px;
 
     &:hover {
-      opacity: 0.8;
+      text-decoration: underline;
     }
 
     &:focus-visible {

@@ -98,20 +98,21 @@
     {
       "id": "document",
       "name": "文档阅读与共享文档流程",
-      "status": "planning_ready_for_review",
+      "status": "implemented_verified_global_gate_pending",
       "proposal": "../10-18-interaction-document/prototype/review.html",
       "version": "document-review-v1",
-      "approved_at": null,
-      "user_quote": null,
+      "approved_at": "2026-10-18",
+      "user_quote": "开始实施吧，每个打磨点都要还原到位，不要有遗漏和偏差",
       "implementation_commit": null,
       "task": ".trellis/tasks/10-18-interaction-document",
       "planning_user_quote": "继续",
-      "product_implementation_approved": false,
+      "product_implementation_approved": true,
       "coverage_groups": 78,
       "coverage_states": 422,
       "sha256": "2a3aafb4277c37bd06e38ae94ecec085e0f31a062b88e25a000042e5cbdb220d",
       "preview_url": "http://127.0.0.1:5187/review.html",
-      "verification": "../10-18-interaction-document/planning-acceptance.md"
+      "verification": "../10-18-interaction-document/implementation-acceptance.md",
+      "global_gate": "failed_outside_scope"
     },
     {
       "id": "chat",

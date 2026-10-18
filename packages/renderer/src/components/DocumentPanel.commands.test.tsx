@@ -8,6 +8,8 @@ import { api } from '../lib/api'
 import { MimirProvider } from '../theme/MimirProvider'
 import { DocumentPanel } from './DocumentPanel'
 
+vi.mock('@tanstack/react-router', () => ({ useNavigate: () => vi.fn<() => void>() }))
+
 vi.mock('./NoteEditor', () => ({
   NoteEditor: ({
     document: doc,
@@ -91,7 +93,7 @@ it('metadata refresh failure retains the mounted editor and command draft; retry
     })
     await act(async () =>
       [...document.querySelectorAll<HTMLButtonElement>('.ant-modal button')]
-        .find((b) => b.textContent?.replace(/\s/g, '') === '保存')!
+        .find((b) => b.textContent?.replace(/\s/g, '') === '保存名称')!
         .click(),
     )
     await act(async () => {

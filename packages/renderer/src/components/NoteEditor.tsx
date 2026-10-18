@@ -51,6 +51,7 @@ interface Props {
   /** 编辑区右侧的固定列（大纲）。透传给编辑器外壳的 bodySide */
   bodySide?: ReactNode
   contentHeader?: ReactNode
+  contentFooter?: ReactNode
   onSaveStateChange?: ((state: NoteSaveState) => void) | undefined
   /** 新建笔记的一次性正文聚焦请求 */
   focusOnReady?: boolean
@@ -69,6 +70,7 @@ export function NoteEditor({
   onDirtyChange,
   bodySide,
   contentHeader,
+  contentFooter,
   onSaveStateChange,
   focusOnReady,
   onFocusReady,
@@ -81,8 +83,8 @@ export function NoteEditor({
   const queryClient = useQueryClient()
   const { setDirty, setSave } = useUnsaved()
   const registerAutoSave = useCallback(
-    (save: (() => Promise<boolean>) | null) => setSave(save, 'auto'),
-    [setSave],
+    (save: (() => Promise<boolean>) | null) => setSave(save, 'auto', true, doc.id),
+    [setSave, doc.id],
   )
 
   /**
@@ -229,6 +231,7 @@ export function NoteEditor({
         initialContent={doc.body}
         contentClassName={contentStyles.content}
         contentHeader={contentHeader}
+        contentFooter={contentFooter}
         onSaveStateChange={onSaveStateChange}
         onSave={onSave}
         onExportMarkdown={async (markdown) => {

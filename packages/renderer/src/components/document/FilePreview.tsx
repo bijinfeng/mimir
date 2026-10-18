@@ -1,20 +1,16 @@
 import type { PptxAiSnapshotDraft } from '@mimir/office'
-import { Button, Empty, Typography } from 'antd'
+import { Button, Typography } from 'antd'
 import { createStyles } from 'antd-style'
-import { File, TriangleAlert } from 'lucide-react'
+import { Download, File, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
-import {
-  formatBytes,
-  formatLabel,
-  parseSupport,
-  viewerFor,
-  type DocumentDetail,
-} from '@mimir/shared'
+import { formatBytes, formatLabel, viewerFor, type DocumentDetail } from '@mimir/shared'
 import { MarkdownBody } from './MarkdownBody'
 import { OfficeSourceEditor } from './OfficeSourceEditor'
 import { useContentStyles } from '../ContentTypography.style'
 import { api } from '../../lib/api'
+import { excerptText } from '../list-helpers'
 import { FONT_SIZE } from '../../theme/tokens'
+import { DOCUMENT_FONT_SIZE } from './DocumentPanel.style'
 import type { ChatDocumentAgent } from '@mimir/chat'
 
 /**
@@ -74,7 +70,6 @@ export function FilePreview({
   const { styles } = useStyles()
   const { styles: contentStyles } = useContentStyles()
 
-  const support = parseSupport(doc.mime, doc.title)
   const viewer = viewerFor(doc.mime)
   const hasBody = doc.body.trim() !== ''
   const hasSource = doc.sourceKey !== null
@@ -86,6 +81,7 @@ export function FilePreview({
    */
   const showsSource = hasSource && viewer !== 'none'
   const showsBody = !showsSource && hasBody
+  const editorSource = showsSource && ['office', 'sheet', 'deck', 'html', 'pdf'].includes(viewer)
 
   // 查看器加载失败（浏览器不支持这个格式）。按 `doc.id` 记住失败，
   // 换一篇文档时重置——否则「上一篇看不了」会跟着显示到下一篇上
@@ -105,9 +101,9 @@ export function FilePreview({
       ? `正文提取失败：${doc.parseError}`
       : hasBody
         ? null
-        : support === 'planned'
-          ? '这种格式的正文提取将在后续版本支持，所以它暂时搜不到——原件可以正常查看'
-          : '这个文件里没有可提取的文字，所以它暂时搜不到'
+        : hasSource
+          ? excerptText({ ...doc, excerpt: '' })
+          : '没有可检索的正文，原件也不可用。'
 
   function renderSource() {
     if (!hasSource) return null
@@ -115,7 +111,7 @@ export function FilePreview({
     if (viewerFailed || viewer === 'none') {
       return (
         <div className={styles.card}>
-          <TriangleAlert className={styles.cardIcon} size={22} />
+          <TriangleAlert className={styles.cardIcon} size={25} />
           <div className={styles.cardText}>
             <Typography.Text strong>
               {viewerFailed
@@ -126,8 +122,12 @@ export function FilePreview({
               {doc.mime ? `${doc.mime} · ${formatBytes(doc.size ?? 0)}` : null}
             </div>
           </div>
-          <Button type="primary" href={api.documents.sourceUrl(doc.id, { download: true })}>
-            下载原件
+          <Button
+            type="primary"
+            icon={<Download size={16} />}
+            href={api.documents.sourceUrl(doc.id, { download: true })}
+          >
+            下载已保存原件
           </Button>
         </div>
       )
@@ -202,7 +202,7 @@ export function FilePreview({
           className={styles.imageLink}
           href={url}
           target="_blank"
-          rel="noreferrer"
+          rel="noopener noreferrer"
           title="在新标签打开原件（实际大小）"
         >
           <img
@@ -217,17 +217,31 @@ export function FilePreview({
 
     if (viewer === 'audio') {
       return (
-        <audio className={styles.media} src={url} controls onError={() => setFailedFor(doc.id)} />
+        <audio
+          aria-label={doc.title}
+          className={styles.media}
+          src={url}
+          controls
+          preload="metadata"
+          onError={() => setFailedFor(doc.id)}
+        />
       )
     }
 
     return (
-      <video className={styles.media} src={url} controls onError={() => setFailedFor(doc.id)} />
+      <video
+        aria-label={doc.title}
+        className={styles.media}
+        src={url}
+        controls
+        preload="metadata"
+        onError={() => setFailedFor(doc.id)}
+      />
     )
   }
 
   return (
-    <div className={styles.wrap}>
+    <div className={styles.wrap} data-preview-mode={editorSource ? 'editor' : 'media'}>
       {extractNote !== null && !showsBody && <div className={styles.note}>{extractNote}</div>}
 
       {showsSource ? (
@@ -242,11 +256,14 @@ export function FilePreview({
           */}
           {extractNote !== null && <div className={styles.note}>{extractNote}</div>}
           {isPlainText(doc.mime) ? (
-            <pre className={styles.plain}>{doc.body}</pre>
+            <>
+              <pre className={styles.plain}>{doc.body}</pre>
+              <div className={styles.note}>原样文本</div>
+            </>
           ) : (
             /* 正文排版与编辑器共用同一个类——两个视图都渲染同一份 Markdown，
                排版必须同源（见 components/ContentTypography.style.ts 的说明） */
-            <div className={contentStyles.content}>
+            <div className={contentStyles.content} data-document-prose>
               <MarkdownBody body={doc.body} headings={[]} />
             </div>
           )}
@@ -281,7 +298,7 @@ export function FilePreview({
           ——两处各写一套的话，同一件事在界面上会有两种说法。
         */
         <div className={styles.card}>
-          <File className={styles.cardIcon} size={22} />
+          <File className={styles.cardIcon} size={25} />
           <div className={styles.cardText}>
             <Typography.Text strong>
               {doc.parseError !== null
@@ -290,23 +307,26 @@ export function FilePreview({
             </Typography.Text>
             <div className={styles.cardHint}>原件已经保存，可以下载查看</div>
           </div>
-          <Button type="primary" href={api.documents.sourceUrl(doc.id, { download: true })}>
-            下载原件
+          <Button
+            type="primary"
+            icon={<Download size={16} />}
+            href={api.documents.sourceUrl(doc.id, { download: true })}
+          >
+            下载已保存原件
           </Button>
         </div>
       ) : (
         /* 没有原件的记录：**不给下载按钮**——没有东西可下，点了只会得到
            一个 404，那正是 DESIGN §7.4 说的假动作 */
-        <Empty
-          image={<File className={styles.bigIcon} size={34} />}
-          description={
-            <span>
-              {doc.parseError !== null
-                ? `提取正文失败：${doc.parseError}`
-                : `${formatLabel(doc.mime, doc.title)} 没有在线预览`}
-            </span>
-          }
-        />
+        <div className={styles.card}>
+          <TriangleAlert className={styles.cardIcon} size={25} />
+          <div className={styles.cardText}>
+            <Typography.Text strong>
+              {doc.parseError !== null ? `提取正文失败：${doc.parseError}` : '这种格式没有在线预览'}
+            </Typography.Text>
+            <div className={styles.cardHint}>当前记录没有原件，无法提供下载。</div>
+          </div>
+        </div>
       )}
     </div>
   )
@@ -323,13 +343,15 @@ function isPlainText(mime: string | null): boolean {
 function isExtracted(mime: string | null): boolean {
   const lower = (mime ?? '').toLowerCase()
   return (
+    lower === 'application/msword' ||
+    lower === 'application/vnd.ms-excel' ||
     lower.includes('wordprocessingml') ||
     lower.includes('spreadsheetml') ||
     lower.includes('presentationml')
   )
 }
 
-const useStyles = createStyles(({ css, token }) => ({
+const useStyles = createStyles(({ css, token, prefixCls }) => ({
   wrap: css`
     display: flex;
     flex-direction: column;
@@ -347,19 +369,25 @@ const useStyles = createStyles(({ css, token }) => ({
      * 所在的位置。链上少一环不会报错，只让底部那一格「消失」（DESIGN §7.7）。
      */
     min-height: 0;
+    &[data-preview-mode='media'] {
+      padding: 24px;
+      overflow: auto;
+      @media (max-width: 600px) {
+        padding: 16px;
+      }
+    }
   `,
   plain: css`
     margin: 0;
-    padding: 14px 16px;
+    padding: 16px;
     background: ${token.colorFillQuaternary};
-    border: 1px solid ${token.colorBorderSecondary};
+    border: 0;
     border-radius: 8px;
     font-family: ${token.fontFamilyCode};
     font-size: ${FONT_SIZE.excerpt}px;
-    line-height: 1.7;
+    line-height: 1.75;
     white-space: pre-wrap;
     word-break: break-word;
-    max-height: 70vh;
     overflow: auto;
   `,
   frame: css`
@@ -389,6 +417,13 @@ const useStyles = createStyles(({ css, token }) => ({
     &:hover {
       opacity: 0.88;
     }
+    &:focus-visible {
+      outline: 2px solid ${token.focusRing};
+      outline-offset: 3px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
   `,
   image: css`
     max-width: 100%;
@@ -400,19 +435,33 @@ const useStyles = createStyles(({ css, token }) => ({
     display: block;
   `,
   media: css`
+    display: block;
     width: 100%;
     max-height: 70vh;
     border-radius: 8px;
+    &[aria-label] {
+      flex: none;
+    }
+    &:is(video) {
+      min-height: 260px;
+    }
     background: ${token.colorFillQuaternary};
   `,
   card: css`
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 18px 20px;
+    padding: 20px;
     background: ${token.colorFillQuaternary};
-    border: 1px solid ${token.colorBorderSecondary};
     border-radius: 10px;
+    overflow-wrap: anywhere;
+    @media (max-width: 600px) {
+      flex-wrap: wrap;
+      padding: 16px;
+      a {
+        margin-left: 36px;
+      }
+    }
   `,
   cardIcon: css`
     font-size: 22px; /* 图标字形，非文本 */
@@ -422,21 +471,20 @@ const useStyles = createStyles(({ css, token }) => ({
     display: flex;
     flex-direction: column;
     gap: 3px;
+    .${prefixCls}-typography {
+      font-size: ${FONT_SIZE.reading}px;
+    }
     flex: 1;
     min-width: 0;
   `,
   cardHint: css`
-    font-size: ${FONT_SIZE.note}px;
-    color: ${token.colorTextTertiary};
+    font-size: ${DOCUMENT_FONT_SIZE.control}px;
+    color: ${token.colorTextSecondary};
     word-break: break-all;
   `,
-  bigIcon: css`
-    font-size: 34px; /* 图标字形，非文本 */
-    color: ${token.colorTextQuaternary};
-  `,
   note: css`
-    font-size: ${FONT_SIZE.note}px;
-    color: ${token.colorTextTertiary};
+    font-size: ${DOCUMENT_FONT_SIZE.control}px;
+    color: ${token.colorTextSecondary};
     line-height: 1.7;
   `,
 }))

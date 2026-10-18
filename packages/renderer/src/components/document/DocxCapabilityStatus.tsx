@@ -1,11 +1,12 @@
 import type { DocxAgentCapabilities } from '@mimir/shared'
 import { Button, Switch } from 'antd'
 import { createStyles } from 'antd-style'
-import { FONT_SIZE } from '../../theme/tokens'
+import { DOCUMENT_FONT_SIZE } from './DocumentPanel.style'
 
 export function DocxCapabilityStatus({
   capabilities,
   loading,
+  canvasReady = true,
   error,
   onRetry,
   onSettings,
@@ -14,6 +15,7 @@ export function DocxCapabilityStatus({
 }: {
   capabilities?: DocxAgentCapabilities
   loading: boolean
+  canvasReady?: boolean
   error: boolean
   onRetry: () => void
   onSettings: (section: 'models' | 'network-search') => void
@@ -33,21 +35,35 @@ export function DocxCapabilityStatus({
           onChange={onRevisionModeChange}
         />
       </div>
-      {error ? (
+      {loading ? (
+        <p className={styles.detail} role="status">
+          正在检测当前文档能力…
+        </p>
+      ) : error ? (
         <div className={styles.detail} role="alert">
-          能力状态读取失败。
+          读取编辑能力失败。
           <Button type="link" size="small" onClick={onRetry}>
-            重试
+            重试检测
           </Button>
         </div>
-      ) : !loading && capabilities && !capabilities.modelReady ? (
+      ) : capabilities && !capabilities.modelReady ? (
         <div className={styles.detail}>
-          需要聊天模型
+          尚未配置支持工具调用的模型。
           <Button type="link" size="small" onClick={() => onSettings('models')}>
-            模型设置
+            配置模型
           </Button>
         </div>
-      ) : null}
+      ) : !canvasReady ? (
+        <p className={styles.detail} role="status">
+          原件画布尚未就绪，暂时不能编辑。
+        </p>
+      ) : (
+        <p className={styles.detail} role="status">
+          {revisionMode
+            ? '修订模式已开启，DOCX编辑结果保留待审阅。'
+            : '修订模式已关闭，编辑会直接更新DOCX原件。'}
+        </p>
+      )}
     </section>
   )
 }
@@ -55,14 +71,16 @@ export function DocxCapabilityStatus({
 const useStyles = createStyles(({ css, token }) => ({
   wrap: css`
     flex: none;
-    padding: 8px 16px;
+    padding: 16px;
     border-bottom: 1px solid ${token.colorBorderSecondary};
-    font-size: ${FONT_SIZE.meta}px;
+    font-size: ${DOCUMENT_FONT_SIZE.control}px;
     color: ${token.colorTextSecondary};
   `,
   detail: css`
     display: block;
-    line-height: 1.5;
+    line-height: 1.8;
+    margin: 8px 0 0;
+    overflow-wrap: anywhere;
   `,
   revision: css`
     display: flex;

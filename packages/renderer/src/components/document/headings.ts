@@ -1,32 +1,57 @@
-/**
- * 文档大纲：从 Markdown 正文里抽出标题。
- *
- * 抽出来的 id 要**同时**给两处用：右侧大纲的锚点跳转，与只读正文挂载后
- * 补的 `id` 属性。两处的序号规则必须完全一致，否则点击大纲会跳错位置——
- * 所以规则只有这一份。
- */
+/** Stable outline IDs share DOM order with the Markdown renderer. */
 export interface Heading {
   id: string
   level: number
   text: string
 }
 
-/** 抽取标题，用于右侧大纲。序号规则必须与行内高亮一致，否则点击会跳错位置。 */
+const label = (text: string) =>
+  text
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/<[^>]*>/g, '')
+    .replace(/[*_`~]/g, '')
+    .replace(/\\([\\`*{}[\]()#+.!_>-])/g, '$1')
+    .trim()
+
+/** Fenced/indented code is never an outline entry. Both ATX and Setext headings render. */
 export function extractHeadings(markdown: string): Heading[] {
   const out: Heading[] = []
-  const pattern = /^(#{1,6})\s+(.+)$/gm
-  let match: RegExpExecArray | null
-
-  while ((match = pattern.exec(markdown)) !== null) {
-    const hashes = match[1] ?? ''
-    out.push({
-      id: `h-${out.length}`,
-      // 一二级统一按二级渲染（原型既有规则）：h1 已经是页面标题，
-      // 正文里再出现 h1 属于 Markdown 作者的层级混乱，压平更好读
-      level: hashes.length <= 2 ? 2 : 3,
-      text: (match[2] ?? '').trim(),
-    })
+  let fence: { marker: string; length: number } | null = null
+  let previous = ''
+  for (const raw of markdown.split(/\r?\n/)) {
+    const line = raw.replace(/^ {0,3}(?:> ?)+/, '')
+    const fenced = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(line)
+    if (fence) {
+      if (
+        fenced &&
+        fenced[1]![0] === fence.marker &&
+        fenced[1]!.length >= fence.length &&
+        !fenced[2]!.trim()
+      )
+        fence = null
+      previous = ''
+      continue
+    }
+    if (fenced && !(fenced[1]![0] === '`' && fenced[2]!.includes('`'))) {
+      fence = { marker: fenced[1]![0]!, length: fenced[1]!.length }
+      previous = ''
+      continue
+    }
+    if (/^(?: {4}|\t)/.test(line)) {
+      previous = ''
+      continue
+    }
+    const heading = /^ {0,3}(#{1,6})(?:[ \t]+(.*?)|[ \t]*)$/.exec(line)
+    const setext = previous.trim() && /^ {0,3}(=+|-+)\s*$/.exec(line)
+    if (heading || setext) {
+      const level = heading ? heading[1]!.length : setext && setext[1]![0] === '=' ? 1 : 2
+      out.push({
+        id: `h-${out.length}`,
+        level: level <= 2 ? 2 : 3,
+        text: label(heading ? (heading[2] ?? '').replace(/[ \t]+#+[ \t]*$/, '') : previous),
+      })
+      previous = ''
+    } else previous = line
   }
-
   return out
 }

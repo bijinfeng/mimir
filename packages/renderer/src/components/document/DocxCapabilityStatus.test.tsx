@@ -28,7 +28,7 @@ function renderStatus({
 }
 
 describe('DOCX 能力状态', () => {
-  it('模型就绪时仅显示 AI 修订，不展示工具清单或配置说明', () => {
+  it('模型就绪时显示修订结果边界，不展示工具清单', () => {
     const html = renderStatus({
       capabilities: {
         documentId: 'd1',
@@ -57,20 +57,21 @@ describe('DOCX 能力状态', () => {
         unavailableTools: [{ name: 'read_blocks', reason: '请先配置可用的聊天模型' }],
       },
     })
-    expect(html).toContain('需要聊天模型')
-    expect(html).toContain('模型设置')
+    expect(html).toContain('尚未配置支持工具调用的模型')
+    expect(html).toContain('配置模型')
     expect(html).not.toContain('读取段落')
     expect(html).not.toContain('工具状态')
   })
 
-  it('读取失败时保留重试入口；加载中不显示说明文案', () => {
+  it('读取失败时保留重试入口，等待显示检测状态', () => {
     const failed = renderStatus({ error: true })
-    expect(failed).toContain('能力状态读取失败')
+    expect(failed).toContain('读取编辑能力失败')
     expect(failed).toContain('重试')
 
     const loading = renderStatus({ loading: true })
     expect(loading).toContain('AI 修订')
-    expect(loading).not.toContain('读取中')
+    expect(loading).toContain('正在检测当前文档能力')
+    expect(loading).toContain('aria-busy="true"')
     expect(loading).not.toContain('工具状态')
   })
 
@@ -110,7 +111,7 @@ describe('DOCX 能力状态', () => {
       expect(onRevisionModeChange.mock.calls[0]?.[0]).toBe(true)
 
       const settings = Array.from(host.querySelectorAll('button')).find((button) =>
-        button.textContent?.includes('模型设置'),
+        button.textContent?.includes('配置模型'),
       )
       await act(async () => settings!.click())
       expect(onSettings).toHaveBeenCalledWith('models')
