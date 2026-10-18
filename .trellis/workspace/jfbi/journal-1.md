@@ -675,3 +675,26 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+
+## Session 24: 文件格式图标候选 revision2
+<!-- trellis-session: v=2 fp=5f851168c41f88d0 -->
+
+**Date**: 2026-10-18
+**Task**: 文件格式图标候选 revision2
+**Package**: renderer
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+按用户图标审美反馈，仅修订知识库独立HTML：比较原稿、Phosphor双色A与Material Icon Theme B。核实官方固定commit和MIT，29 SVG及许可本地内嵌；16类/20-24-32尺寸/浅深/390px/列表卡片。独立lint/type/format/build/artifact通过，浏览器确认全部SVG、无横向溢出、22px槽位和56px行高稳定；旧v1保留且hash不变。冻结revision2 hash ce43cbea265b09b3fd75d9db9d0f3d02723ef1559f2e9a09d742750285dc2f40；预览5186/review.html?view=icons。默认A仅为候选预览，用户尚未选型或授权产品实施；planning不归档，产品基线未改，无关工作未提交。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `5b76293` | docs(ui): compare refreshed file icon families |
+
+### Status
+
+[OK] **Completed**
