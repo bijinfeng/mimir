@@ -435,3 +435,40 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Next Steps
 
 - 等待用户认可搜索v1具体HTML后开始产品实施，其他模块独立评审。
+
+
+## Session 16: 搜索与命令面板 v1 产品实施
+<!-- trellis-session: v=2 fp=983aaf51dbe9ddf0 -->
+
+**Date**: 2026-10-18
+**Task**: 搜索与命令面板 v1 产品实施
+**Package**: renderer
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+按用户认可的冻结HTML实施搜索模块，完成真实浏览器及独立检查并限定提交；全仓门有外部阻断，任务保留in_progress。
+
+### Main Changes
+
+- 落实中性选中/细边输入、最近与检索恢复、IME与稳定chunk选择、宿主guard及新建单飞、文档命令身份和刷新失败正文保护。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `2b3b6b3` | feat(ui): implement approved search interaction polish |
+
+### Testing
+
+- [OK] 完整Renderer57文件490项通过；33项定向回归、最终DocModal9项通过；本轮lint/format/AntD、样式守卫与全仓类型通过。
+- [OK] 实际GUI完成浅深/390窄屏/低高度、新建正文焦点、重命名移动撤销、查找、AI预填、保存失败guard、重试回焦及正文高亮。
+- [OK] pnpm check被miniapp7项lint阻断；全仓format仅.impeccable/config.json失败；pnpm test中Office2项加密settle失败并bail，server/root测试未完成。
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 外部阻断修复后重跑pnpm check，通过后归档；下一模块仍先HTML评审。
