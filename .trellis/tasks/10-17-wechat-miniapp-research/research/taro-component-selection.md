@@ -1,6 +1,6 @@
 # Taro 与小程序组件库选型补充
 
-核对日期：2026-10-18。用户指定 Taro 5.0，并在本轮明确选择 NutUI React Taro 最新 4.0。组件库已确认，任务仍为 planning，尚未进入产品实施。技术规划已从原生方案调整为 Taro React；Taro 5.0 的版本来源待核实。
+核对日期：2026-10-18。用户指定 Taro 5.0，并明确选择 NutUI React Taro 最新 4.0。组件库已确认，任务仍为 planning，尚未进入产品实施。技术规划已从原生方案调整为 Taro React；用户提供的 5.0 消息来源已核验（见下文），具体 Taro 依赖版本待确认。
 
 ## 版本证据
 
@@ -20,6 +20,20 @@ NutUI [官方 React Taro 3.x 文档](https://nutui.jd.com/taro/react/3x/) 和 [�
 前轮建议采用 3.0.20 稳定版；用户本轮明确选择最新 4.0，因此现行决策为 `@nutui/nutui-react-taro@4.0.0-beta.10`，不再以 3.x 作为计划依赖。React 暂按 18 验证；Taro 版本继续保留用户的 5.0 意向，先核实其分支或预发布来源，不把前轮建议的 4.3.0 当作用户已接受的决定。本轮未安装依赖、构建工程或执行真机验证，不能写成已通过验收的组合。
 
 库只负责 Dialog、Popup、表单、选择器、Toast、Loading 等通用交互。知识库列表、问答、引用、阅读与 Markdown 编辑区由 Mimir 自己组合，统一字号、间距、边框、颜色和触控尺寸，保持当前紧凑、简单、内容优先的方向。组件库的默认演示页不作为页面设计模板。暂不混用两套基础组件库。
+
+## 用户提供的 Taro 5.0 消息核验
+
+2026-10-18 用户提供 [掘金文章](https://juejin.cn/post/7515475567283044388)，页面 HTTP 200，可读取正文。标题为《Taro 5.0前瞻：基于HarmonyOS 5的元服务编译架构设计原理解析》，页面标注 2025-06-15，作者“黑马波哥”，个人资料标注“讲师 @传智播客(黑马程序员)”。这是一篇第三方前瞻文章，页面没有 Taro 官方 5.0 发布公告、官方实现 commit 或可安装 5.0 包的链接；不能将其当作官方路线承诺或已发布版本。
+
+具体核对：
+
+- 文章 §9 列出编译时间 15s → 4.2s、包体积 2.1MB → 680KB、运行时 3800 → 9200 ops/s，但正文没有基准仓库、测量方法、设备和版本依据，不能用于 Mimir 的性能预估或验收。
+- 文章 §3 / §8 展示 `ReactToArkTransformer` 与 `harmony.metaService` 等示例，未链接对应官方实现。它们不能直接作为本项目构建配置或 API 契约。
+- 真正的官方鸿蒙文章 [《Taro on Harmony C-API 版本正式开源》](https://github.com/NervJS/taro-docs/blob/d911a8ec2bb2e36be69ff80d0602e4539f74f6e6/blog/2025-05-16-taro-harmony-c-api.md)（2025-05-16，固定文档仓库 commit `d911a8ec2bb2e36be69ff80d0602e4539f74f6e6`）元信息明确为 `tags: [v4, harmony]`，描述 React 运行时、CSSOM / TaroElement 与 C++ 渲染管线，使用 `@tarojs/plugin-platform-harmony-cpp` 和 `taro build --type harmony_cpp`。这是已公布的鸿蒙平台适配，不能据此推导 Taro 5.0 已发布；HarmonyOS 5 的系统版本也不等于 Taro 主版本。
+- 再次读取 [核心包 npm 元数据](https://registry.npmjs.org/@tarojs/taro) 与 [CLI npm 元数据](https://registry.npmjs.org/@tarojs/cli)：两者 `latest` 均为 4.3.0，`beta` 均为 4.3.1-beta.3，`alpha` 均为 4.3.1-alpha.4，完整 versions 中均无 `5.*`。GitHub [正式发布 v4.3.0](https://github.com/NervJS/taro/releases/tag/v4.3.0) 日期为 2026-09-29，`main/package.json` 读取时同样为 4.3.0。
+- 官方文档仓库完整树响应 `truncated: false`，博客目录未发现 5.0 发布文档。官网及文档站本轮直连超时；使用上述 GitHub 固定源码作为官方文章证据，不能声称官网全文已成功检索。搜索引擎结果受无命中 / 验证限制，不作为否定消息真实性的依据。
+
+结论：截至本轮核对，官方发布渠道没有可安装的 Taro 5.x 正式版或预发布版；该掘金文章不足以证实官方 5.0 版本或路线。建议实际验证组合使用当前正式版 Taro 4.3.0 + React 18 + 用户已选 NutUI React Taro 4.0.0-beta.10，尚未将此建议记为用户已批准的框架版本。鸿蒙专用能力不进入首版微信小程序范围。
 
 ## WeKnora 复核
 
