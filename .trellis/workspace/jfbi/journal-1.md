@@ -756,3 +756,26 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Next Steps
 
 - 后续模块仍先 HTML 对比并获用户认可；全仓质量门阻断继续记录
+
+
+## Session 27: 文档阅读模块 HTML 对比稿 v1 冻结待审
+<!-- trellis-session: v=2 fp=a875f9500807afc3 -->
+
+**Date**: 2026-10-18
+**Task**: 文档阅读模块 HTML 对比稿 v1 冻结待审
+**Package**: renderer
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+第六模块仅规划：78组422设计状态及29渲染轨道，固定WeKnora与Obsidian参考；独立检查与限定lint、格式、类型、构建、artifact通过，主会话17条GUI代表路径通过。冻结HTML SHA256 2a3aafb4277c37bd06e38ae94ecec085e0f31a062b88e25a000042e5cbdb220d，预览5187。24个文档产品基线哈希不变；保留planning，等待用户认可具体版本后再实施，不归档不推送。并发WIP及前模块外部全仓阻断保留。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `2cf6bf3` | docs(ui): freeze document interaction review v1 for approval |
+
+### Status
+
+[OK] **Completed**
