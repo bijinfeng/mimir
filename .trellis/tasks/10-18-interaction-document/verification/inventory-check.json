@@ -1,0 +1,14 @@
+{
+  "status": "final-source-inventory-and-prototype-static-review-passed",
+  "input_sha256": "44c922d50fad87600837e2b9f28e91edf920784d506da62f71e2bb1f262edd7c",
+  "groups": 78,
+  "enumerated_states": 422,
+  "source_references": 196,
+  "unique_source_references": 179,
+  "mechanical_problems": [],
+  "boundary": "Independent source/inventory/prototype static review and limited quality checks. 422 enumerated states are not GUI tests. Main session performed 17 representative browser paths; no product implementation, real backend writes, OS IME, native media/download, screen reader, or Electron verification by this reviewer.",
+  "prototype_html_sha256": "2a3aafb4277c37bd06e38ae94ecec085e0f31a062b88e25a000042e5cbdb220d",
+  "prototype_static_linked_states": 422,
+  "prototype_render_tracks": 29,
+  "main_session_gui_representative_paths": 17
+}

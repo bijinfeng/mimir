@@ -1,0 +1,4104 @@
+{
+  "source": "../research/document-scenes.json",
+  "groups": 78,
+  "enumeratedStates": 422,
+  "countsAre": "静态可定位状态，不是浏览器测试次数",
+  "items": [
+    {
+      "id": "DOC-001",
+      "source": [
+        "packages/renderer/src/routes/_app.docs.tsx:20",
+        "packages/renderer/src/routes/_app.tsx:285"
+      ],
+      "states": [
+        {
+          "state": "library",
+          "entry": "review.html#scene=DOC-001.library",
+          "renderTrack": "entry",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "note",
+          "entry": "review.html#scene=DOC-001.note",
+          "renderTrack": "entry",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "file",
+          "entry": "review.html#scene=DOC-001.file",
+          "renderTrack": "entry",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "capture",
+          "entry": "review.html#scene=DOC-001.capture",
+          "renderTrack": "entry",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "direct-id",
+          "entry": "review.html#scene=DOC-001.direct-id",
+          "renderTrack": "entry",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-002",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:626",
+        "packages/renderer/src/routes/_app.docs.tsx:29"
+      ],
+      "states": [
+        {
+          "state": "component-empty",
+          "entry": "review.html#scene=DOC-002.component-empty",
+          "renderTrack": "empty",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "route-library",
+          "entry": "review.html#scene=DOC-002.route-library",
+          "renderTrack": "empty",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-003",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:82",
+        "packages/renderer/src/components/DocumentPanel.tsx:648"
+      ],
+      "states": [
+        {
+          "state": "loading",
+          "entry": "review.html#scene=DOC-003.loading",
+          "renderTrack": "loading",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "resolved",
+          "entry": "review.html#scene=DOC-003.resolved",
+          "renderTrack": "loading",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "slow",
+          "entry": "review.html#scene=DOC-003.slow",
+          "renderTrack": "loading",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-004",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:638",
+        "apps/server/src/routes/documents.ts:57"
+      ],
+      "states": [
+        {
+          "state": "network-error",
+          "entry": "review.html#scene=DOC-004.network-error",
+          "renderTrack": "read",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "not-found",
+          "entry": "review.html#scene=DOC-004.not-found",
+          "renderTrack": "read",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "retry-pending",
+          "entry": "review.html#scene=DOC-004.retry-pending",
+          "renderTrack": "read",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "recovered",
+          "entry": "review.html#scene=DOC-004.recovered",
+          "renderTrack": "read",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-005",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:726",
+        "packages/renderer/src/components/DocumentPanel.commands.test.tsx:39"
+      ],
+      "states": [
+        {
+          "state": "cached",
+          "entry": "review.html#scene=DOC-005.cached",
+          "renderTrack": "read",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "refreshing",
+          "entry": "review.html#scene=DOC-005.refreshing",
+          "renderTrack": "read",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "refresh-error",
+          "entry": "review.html#scene=DOC-005.refresh-error",
+          "renderTrack": "read",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "retry",
+          "entry": "review.html#scene=DOC-005.retry",
+          "renderTrack": "read",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "recovered",
+          "entry": "review.html#scene=DOC-005.recovered",
+          "renderTrack": "read",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-006",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:807",
+        "packages/renderer/src/components/document/DocumentHeader.tsx:79",
+        "packages/renderer/src/components/DocumentBadges.tsx:1"
+      ],
+      "states": [
+        {
+          "state": "note",
+          "entry": "review.html#scene=DOC-006.note",
+          "renderTrack": "header",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "web",
+          "entry": "review.html#scene=DOC-006.web",
+          "renderTrack": "header",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "wechat",
+          "entry": "review.html#scene=DOC-006.wechat",
+          "renderTrack": "header",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "github",
+          "entry": "review.html#scene=DOC-006.github",
+          "renderTrack": "header",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "file",
+          "entry": "review.html#scene=DOC-006.file",
+          "renderTrack": "header",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "failed",
+          "entry": "review.html#scene=DOC-006.failed",
+          "renderTrack": "header",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-007",
+      "source": [
+        "packages/renderer/src/components/document/DocumentHeader.tsx:54",
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:35"
+      ],
+      "states": [
+        {
+          "state": "note-path",
+          "entry": "review.html#scene=DOC-007.note-path",
+          "renderTrack": "header",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "readonly-title",
+          "entry": "review.html#scene=DOC-007.readonly-title",
+          "renderTrack": "header",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "long-title",
+          "entry": "review.html#scene=DOC-007.long-title",
+          "renderTrack": "header",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "narrow",
+          "entry": "review.html#scene=DOC-007.narrow",
+          "renderTrack": "header",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-008",
+      "source": [
+        "packages/renderer/src/components/document/DocumentHeader.tsx:56",
+        "packages/renderer/src/routes/_app.tsx:295",
+        "packages/renderer/src/routes/_app.tsx:400"
+      ],
+      "states": [
+        {
+          "state": "to-library",
+          "entry": "review.html#scene=DOC-008.to-library",
+          "renderTrack": "navigation",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "to-chat",
+          "entry": "review.html#scene=DOC-008.to-chat",
+          "renderTrack": "navigation",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "dirty",
+          "entry": "review.html#scene=DOC-008.dirty",
+          "renderTrack": "navigation",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "cancel",
+          "entry": "review.html#scene=DOC-008.cancel",
+          "renderTrack": "navigation",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "leave",
+          "entry": "review.html#scene=DOC-008.leave",
+          "renderTrack": "navigation",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-009",
+      "source": [
+        "packages/renderer/src/components/document/DocumentTitle.tsx:29",
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:128"
+      ],
+      "states": [
+        {
+          "state": "idle",
+          "entry": "review.html#scene=DOC-009.idle",
+          "renderTrack": "title",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "hover",
+          "entry": "review.html#scene=DOC-009.hover",
+          "renderTrack": "title",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "focus",
+          "entry": "review.html#scene=DOC-009.focus",
+          "renderTrack": "title",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "long-title",
+          "entry": "review.html#scene=DOC-009.long-title",
+          "renderTrack": "title",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "narrow",
+          "entry": "review.html#scene=DOC-009.narrow",
+          "renderTrack": "title",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-010",
+      "source": ["packages/renderer/src/components/document/DocumentTitle.tsx:17"],
+      "states": [
+        {
+          "state": "edit",
+          "entry": "review.html#scene=DOC-010.edit",
+          "renderTrack": "title",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "enter",
+          "entry": "review.html#scene=DOC-010.enter",
+          "renderTrack": "title",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "blur",
+          "entry": "review.html#scene=DOC-010.blur",
+          "renderTrack": "title",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "escape",
+          "entry": "review.html#scene=DOC-010.escape",
+          "renderTrack": "title",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "unchanged",
+          "entry": "review.html#scene=DOC-010.unchanged",
+          "renderTrack": "title",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "blank",
+          "entry": "review.html#scene=DOC-010.blank",
+          "renderTrack": "title",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "limit-200",
+          "entry": "review.html#scene=DOC-010.limit-200",
+          "renderTrack": "title",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "confirm",
+          "entry": "review.html#scene=DOC-010.confirm",
+          "renderTrack": "title",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "cancel",
+          "entry": "review.html#scene=DOC-010.cancel",
+          "renderTrack": "title",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "blur-draft",
+          "entry": "review.html#scene=DOC-010.blur-draft",
+          "renderTrack": "title",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-011",
+      "source": [
+        "packages/renderer/src/components/document/DocumentTitle.tsx:41",
+        "packages/renderer/src/components/DocumentPanel.tsx:278"
+      ],
+      "states": [
+        {
+          "state": "ime-enter",
+          "entry": "review.html#scene=DOC-011.ime-enter",
+          "renderTrack": "title",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "ime-escape",
+          "entry": "review.html#scene=DOC-011.ime-escape",
+          "renderTrack": "title",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "pending",
+          "entry": "review.html#scene=DOC-011.pending",
+          "renderTrack": "title",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "double-submit",
+          "entry": "review.html#scene=DOC-011.double-submit",
+          "renderTrack": "title",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-012",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:278",
+        "packages/renderer/src/components/document/DocumentTitle.tsx:21"
+      ],
+      "states": [
+        {
+          "state": "write-error",
+          "entry": "review.html#scene=DOC-012.write-error",
+          "renderTrack": "title",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "draft-retained",
+          "entry": "review.html#scene=DOC-012.draft-retained",
+          "renderTrack": "title",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "saved-read-error",
+          "entry": "review.html#scene=DOC-012.saved-read-error",
+          "renderTrack": "title",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "retry-read",
+          "entry": "review.html#scene=DOC-012.retry-read",
+          "renderTrack": "title",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "success",
+          "entry": "review.html#scene=DOC-012.success",
+          "renderTrack": "title",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-013",
+      "source": [
+        "packages/renderer/src/components/document/DocumentHeader.tsx:103",
+        "packages/renderer/src/components/DocumentPanel.tsx:715",
+        "packages/renderer/src/components/NoteEditor.tsx:63"
+      ],
+      "states": [
+        {
+          "state": "idle",
+          "entry": "review.html#scene=DOC-013.idle",
+          "renderTrack": "save",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "pending",
+          "entry": "review.html#scene=DOC-013.pending",
+          "renderTrack": "save",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "saving",
+          "entry": "review.html#scene=DOC-013.saving",
+          "renderTrack": "save",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "saved",
+          "entry": "review.html#scene=DOC-013.saved",
+          "renderTrack": "save",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "error",
+          "entry": "review.html#scene=DOC-013.error",
+          "renderTrack": "save",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "reduced-motion",
+          "entry": "review.html#scene=DOC-013.reduced-motion",
+          "renderTrack": "save",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-014",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:820",
+        "packages/renderer/src/components/NoteEditor.tsx:55",
+        "packages/renderer/src/routes/_app.tsx:316"
+      ],
+      "states": [
+        {
+          "state": "created",
+          "entry": "review.html#scene=DOC-014.created",
+          "renderTrack": "handoff",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "editor-ready",
+          "entry": "review.html#scene=DOC-014.editor-ready",
+          "renderTrack": "handoff",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "focused",
+          "entry": "review.html#scene=DOC-014.focused",
+          "renderTrack": "handoff",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "consumed",
+          "entry": "review.html#scene=DOC-014.consumed",
+          "renderTrack": "handoff",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-015",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:102",
+        "packages/renderer/src/components/DocumentPanel.tsx:1006"
+      ],
+      "states": [
+        {
+          "state": "readonly-scroll",
+          "entry": "review.html#scene=DOC-015.readonly-scroll",
+          "renderTrack": "navigation",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "note-scroll",
+          "entry": "review.html#scene=DOC-015.note-scroll",
+          "renderTrack": "navigation",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "source-scroll",
+          "entry": "review.html#scene=DOC-015.source-scroll",
+          "renderTrack": "navigation",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "return",
+          "entry": "review.html#scene=DOC-015.return",
+          "renderTrack": "navigation",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "delayed-layout",
+          "entry": "review.html#scene=DOC-015.delayed-layout",
+          "renderTrack": "navigation",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-016",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:137",
+        "packages/renderer/src/components/DocumentPanel.tsx:683",
+        "packages/renderer/src/components/DocumentPanel.tsx:827",
+        "packages/renderer/src/components/DocumentPanel.tsx:880"
+      ],
+      "states": [
+        {
+          "state": "two-headings",
+          "entry": "review.html#scene=DOC-016.two-headings",
+          "renderTrack": "outline",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "one-heading",
+          "entry": "review.html#scene=DOC-016.one-heading",
+          "renderTrack": "outline",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "note",
+          "entry": "review.html#scene=DOC-016.note",
+          "renderTrack": "outline",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "readonly",
+          "entry": "review.html#scene=DOC-016.readonly",
+          "renderTrack": "outline",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "source-hidden",
+          "entry": "review.html#scene=DOC-016.source-hidden",
+          "renderTrack": "outline",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "ai-hidden",
+          "entry": "review.html#scene=DOC-016.ai-hidden",
+          "renderTrack": "outline",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "narrow-hidden",
+          "entry": "review.html#scene=DOC-016.narrow-hidden",
+          "renderTrack": "outline",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-017",
+      "source": [
+        "packages/renderer/src/components/document/headings.ts:15",
+        "packages/renderer/src/components/DocumentPanel.tsx:477",
+        "packages/renderer/src/components/DocumentPanel.tsx:528",
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:620"
+      ],
+      "states": [
+        {
+          "state": "idle",
+          "entry": "review.html#scene=DOC-017.idle",
+          "renderTrack": "outline",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "hover",
+          "entry": "review.html#scene=DOC-017.hover",
+          "renderTrack": "outline",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "focus",
+          "entry": "review.html#scene=DOC-017.focus",
+          "renderTrack": "outline",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "active",
+          "entry": "review.html#scene=DOC-017.active",
+          "renderTrack": "outline",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "deep-level",
+          "entry": "review.html#scene=DOC-017.deep-level",
+          "renderTrack": "outline",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "long-heading",
+          "entry": "review.html#scene=DOC-017.long-heading",
+          "renderTrack": "outline",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "jump",
+          "entry": "review.html#scene=DOC-017.jump",
+          "renderTrack": "outline",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "scroll-follow",
+          "entry": "review.html#scene=DOC-017.scroll-follow",
+          "renderTrack": "outline",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-018",
+      "source": [
+        "packages/renderer/src/components/document/headings.ts:17",
+        "packages/renderer/src/components/DocumentPanel.tsx:973",
+        "packages/renderer/src/components/document/MarkdownBody.tsx:34"
+      ],
+      "states": [
+        {
+          "state": "fenced-heading",
+          "entry": "review.html#scene=DOC-018.fenced-heading",
+          "renderTrack": "outline",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "duplicate-text",
+          "entry": "review.html#scene=DOC-018.duplicate-text",
+          "renderTrack": "outline",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "dom-replaced",
+          "entry": "review.html#scene=DOC-018.dom-replaced",
+          "renderTrack": "outline",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "no-target",
+          "entry": "review.html#scene=DOC-018.no-target",
+          "renderTrack": "outline",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-019",
+      "source": [
+        "packages/renderer/src/routes/_app.tsx:295",
+        "packages/renderer/src/routes/_app.tsx:302",
+        "packages/renderer/src/components/DocumentPanel.tsx:551"
+      ],
+      "states": [
+        {
+          "state": "chat-citation",
+          "entry": "review.html#scene=DOC-019.chat-citation",
+          "renderTrack": "citation",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "search-hit",
+          "entry": "review.html#scene=DOC-019.search-hit",
+          "renderTrack": "citation",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "same-doc",
+          "entry": "review.html#scene=DOC-019.same-doc",
+          "renderTrack": "citation",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "new-doc",
+          "entry": "review.html#scene=DOC-019.new-doc",
+          "renderTrack": "citation",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "highlighted",
+          "entry": "review.html#scene=DOC-019.highlighted",
+          "renderTrack": "citation",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-020",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:1015",
+        "packages/renderer/src/components/DocumentPanel.tsx:1031",
+        "packages/renderer/src/components/DocumentPanel.tsx:1071",
+        "packages/renderer/src/components/DocumentPanel.test.ts:4"
+      ],
+      "states": [
+        {
+          "state": "repeat-first",
+          "entry": "review.html#scene=DOC-020.repeat-first",
+          "renderTrack": "citation",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "repeat-later",
+          "entry": "review.html#scene=DOC-020.repeat-later",
+          "renderTrack": "citation",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "markdown-noise",
+          "entry": "review.html#scene=DOC-020.markdown-noise",
+          "renderTrack": "citation",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "cross-node",
+          "entry": "review.html#scene=DOC-020.cross-node",
+          "renderTrack": "citation",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "truncated-snippet",
+          "entry": "review.html#scene=DOC-020.truncated-snippet",
+          "renderTrack": "citation",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-021",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:594",
+        "packages/renderer/src/components/DocumentPanel.tsx:1083",
+        "packages/renderer/src/components/DocumentPanel.tsx:1140"
+      ],
+      "states": [
+        {
+          "state": "no-match",
+          "entry": "review.html#scene=DOC-021.no-match",
+          "renderTrack": "citation",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "short-snippet",
+          "entry": "review.html#scene=DOC-021.short-snippet",
+          "renderTrack": "citation",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "no-highlight-api",
+          "entry": "review.html#scene=DOC-021.no-highlight-api",
+          "renderTrack": "citation",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "detached-range",
+          "entry": "review.html#scene=DOC-021.detached-range",
+          "renderTrack": "citation",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "timeout",
+          "entry": "review.html#scene=DOC-021.timeout",
+          "renderTrack": "citation",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-022",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:580",
+        "packages/renderer/src/components/DocumentPanel.tsx:588",
+        "packages/renderer/src/components/DocumentPanel.tsx:621"
+      ],
+      "states": [
+        {
+          "state": "same-doc-next",
+          "entry": "review.html#scene=DOC-022.same-doc-next",
+          "renderTrack": "citation",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "consume-once",
+          "entry": "review.html#scene=DOC-022.consume-once",
+          "renderTrack": "citation",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "switch-document",
+          "entry": "review.html#scene=DOC-022.switch-document",
+          "renderTrack": "citation",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "stale-range",
+          "entry": "review.html#scene=DOC-022.stale-range",
+          "renderTrack": "citation",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-023",
+      "source": [
+        "packages/renderer/src/components/document/DocumentHeader.tsx:40",
+        "packages/renderer/src/components/document/DocumentHeader.tsx:161",
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:259"
+      ],
+      "states": [
+        {
+          "state": "closed",
+          "entry": "review.html#scene=DOC-023.closed",
+          "renderTrack": "menu",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "open",
+          "entry": "review.html#scene=DOC-023.open",
+          "renderTrack": "menu",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "submenu",
+          "entry": "review.html#scene=DOC-023.submenu",
+          "renderTrack": "menu",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "keyboard",
+          "entry": "review.html#scene=DOC-023.keyboard",
+          "renderTrack": "menu",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "escape",
+          "entry": "review.html#scene=DOC-023.escape",
+          "renderTrack": "menu",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "outside",
+          "entry": "review.html#scene=DOC-023.outside",
+          "renderTrack": "menu",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "action-focus",
+          "entry": "review.html#scene=DOC-023.action-focus",
+          "renderTrack": "menu",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-024",
+      "source": ["packages/renderer/src/components/document/doc-menu.tsx:70"],
+      "states": [
+        {
+          "state": "existing",
+          "entry": "review.html#scene=DOC-024.existing",
+          "renderTrack": "tags",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "remove",
+          "entry": "review.html#scene=DOC-024.remove",
+          "renderTrack": "tags",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "clear",
+          "entry": "review.html#scene=DOC-024.clear",
+          "renderTrack": "tags",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "no-tags",
+          "entry": "review.html#scene=DOC-024.no-tags",
+          "renderTrack": "tags",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "long-tag",
+          "entry": "review.html#scene=DOC-024.long-tag",
+          "renderTrack": "tags",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-025",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:434",
+        "packages/renderer/src/components/document/doc-menu.tsx:66",
+        "apps/server/src/routes/documents.ts:126"
+      ],
+      "states": [
+        {
+          "state": "suggested",
+          "entry": "review.html#scene=DOC-025.suggested",
+          "renderTrack": "tags",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "all-added",
+          "entry": "review.html#scene=DOC-025.all-added",
+          "renderTrack": "tags",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "empty",
+          "entry": "review.html#scene=DOC-025.empty",
+          "renderTrack": "tags",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "loading",
+          "entry": "review.html#scene=DOC-025.loading",
+          "renderTrack": "tags",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "error",
+          "entry": "review.html#scene=DOC-025.error",
+          "renderTrack": "tags",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "retry",
+          "entry": "review.html#scene=DOC-025.retry",
+          "renderTrack": "tags",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-026",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:307",
+        "packages/renderer/src/components/document/doc-menu.tsx:80"
+      ],
+      "states": [
+        {
+          "state": "adding",
+          "entry": "review.html#scene=DOC-026.adding",
+          "renderTrack": "tags",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "removing",
+          "entry": "review.html#scene=DOC-026.removing",
+          "renderTrack": "tags",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "clearing",
+          "entry": "review.html#scene=DOC-026.clearing",
+          "renderTrack": "tags",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "pending",
+          "entry": "review.html#scene=DOC-026.pending",
+          "renderTrack": "tags",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "error",
+          "entry": "review.html#scene=DOC-026.error",
+          "renderTrack": "tags",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "success",
+          "entry": "review.html#scene=DOC-026.success",
+          "renderTrack": "tags",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "retry",
+          "entry": "review.html#scene=DOC-026.retry",
+          "renderTrack": "tags",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-027",
+      "source": [
+        "packages/shared/src/documents.ts:76",
+        "packages/renderer/src/components/document/doc-menu.tsx:77"
+      ],
+      "states": [
+        {
+          "state": "20-tags",
+          "entry": "review.html#scene=DOC-027.20-tags",
+          "renderTrack": "tags",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "over-capacity",
+          "entry": "review.html#scene=DOC-027.over-capacity",
+          "renderTrack": "tags",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "long-tag",
+          "entry": "review.html#scene=DOC-027.long-tag",
+          "renderTrack": "tags",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "duplicate",
+          "entry": "review.html#scene=DOC-027.duplicate",
+          "renderTrack": "tags",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-028",
+      "source": [
+        "packages/renderer/src/components/document/doc-menu.tsx:119",
+        "packages/renderer/src/components/DocumentPanel.tsx:665",
+        "packages/renderer/src/components/document/folders.ts:1"
+      ],
+      "states": [
+        {
+          "state": "paths",
+          "entry": "review.html#scene=DOC-028.paths",
+          "renderTrack": "folder",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "current",
+          "entry": "review.html#scene=DOC-028.current",
+          "renderTrack": "folder",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "rootless",
+          "entry": "review.html#scene=DOC-028.rootless",
+          "renderTrack": "folder",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "long-path",
+          "entry": "review.html#scene=DOC-028.long-path",
+          "renderTrack": "folder",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "no-folders",
+          "entry": "review.html#scene=DOC-028.no-folders",
+          "renderTrack": "folder",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-029",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:435",
+        "packages/renderer/src/components/DocumentPanel.tsx:665",
+        "packages/renderer/src/components/document/doc-menu.tsx:119"
+      ],
+      "states": [
+        {
+          "state": "loading",
+          "entry": "review.html#scene=DOC-029.loading",
+          "renderTrack": "folder",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "error",
+          "entry": "review.html#scene=DOC-029.error",
+          "renderTrack": "folder",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "cached-error",
+          "entry": "review.html#scene=DOC-029.cached-error",
+          "renderTrack": "folder",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "retry",
+          "entry": "review.html#scene=DOC-029.retry",
+          "renderTrack": "folder",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "empty",
+          "entry": "review.html#scene=DOC-029.empty",
+          "renderTrack": "folder",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "loaded",
+          "entry": "review.html#scene=DOC-029.loaded",
+          "renderTrack": "folder",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-030",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:319",
+        "packages/renderer/src/components/document/doc-menu.tsx:132",
+        "packages/shared/src/documents.ts:81"
+      ],
+      "states": [
+        {
+          "state": "move",
+          "entry": "review.html#scene=DOC-030.move",
+          "renderTrack": "folder",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "current-noop",
+          "entry": "review.html#scene=DOC-030.current-noop",
+          "renderTrack": "folder",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "remove",
+          "entry": "review.html#scene=DOC-030.remove",
+          "renderTrack": "folder",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "pending",
+          "entry": "review.html#scene=DOC-030.pending",
+          "renderTrack": "folder",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "error",
+          "entry": "review.html#scene=DOC-030.error",
+          "renderTrack": "folder",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "saved-read-error",
+          "entry": "review.html#scene=DOC-030.saved-read-error",
+          "renderTrack": "folder",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-031",
+      "source": ["packages/renderer/src/components/DocumentPanel.tsx:340"],
+      "states": [
+        {
+          "state": "toast",
+          "entry": "review.html#scene=DOC-031.toast",
+          "renderTrack": "folder",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "undo",
+          "entry": "review.html#scene=DOC-031.undo",
+          "renderTrack": "folder",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "pending",
+          "entry": "review.html#scene=DOC-031.pending",
+          "renderTrack": "folder",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "undo-success",
+          "entry": "review.html#scene=DOC-031.undo-success",
+          "renderTrack": "folder",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "undo-error",
+          "entry": "review.html#scene=DOC-031.undo-error",
+          "renderTrack": "folder",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "expired",
+          "entry": "review.html#scene=DOC-031.expired",
+          "renderTrack": "folder",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-032",
+      "source": [
+        "packages/renderer/src/components/document/doc-menu.tsx:167",
+        "packages/renderer/src/components/DocumentPanel.tsx:388",
+        "packages/renderer/src/components/DocumentPanel.tsx:411"
+      ],
+      "states": [
+        {
+          "state": "ready",
+          "entry": "review.html#scene=DOC-032.ready",
+          "renderTrack": "ai-organize",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "no-body",
+          "entry": "review.html#scene=DOC-032.no-body",
+          "renderTrack": "ai-organize",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "busy",
+          "entry": "review.html#scene=DOC-032.busy",
+          "renderTrack": "ai-organize",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "cost-label",
+          "entry": "review.html#scene=DOC-032.cost-label",
+          "renderTrack": "ai-organize",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-033",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:215",
+        "packages/renderer/src/components/DocumentPanel.tsx:388",
+        "packages/renderer/src/components/DocumentPanel.tsx:756",
+        "apps/server/src/routes/documents.ts:162"
+      ],
+      "states": [
+        {
+          "state": "generate",
+          "entry": "review.html#scene=DOC-033.generate",
+          "renderTrack": "summary",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "ready",
+          "entry": "review.html#scene=DOC-033.ready",
+          "renderTrack": "summary",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "regenerated",
+          "entry": "review.html#scene=DOC-033.regenerated",
+          "renderTrack": "summary",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "leave",
+          "entry": "review.html#scene=DOC-033.leave",
+          "renderTrack": "summary",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "reopen",
+          "entry": "review.html#scene=DOC-033.reopen",
+          "renderTrack": "summary",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-034",
+      "source": ["packages/renderer/src/components/DocumentPanel.tsx:388"],
+      "states": [
+        {
+          "state": "pending",
+          "entry": "review.html#scene=DOC-034.pending",
+          "renderTrack": "summary",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "no-model",
+          "entry": "review.html#scene=DOC-034.no-model",
+          "renderTrack": "summary",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "request-error",
+          "entry": "review.html#scene=DOC-034.request-error",
+          "renderTrack": "summary",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "retry",
+          "entry": "review.html#scene=DOC-034.retry",
+          "renderTrack": "summary",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "long-result",
+          "entry": "review.html#scene=DOC-034.long-result",
+          "renderTrack": "summary",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-035",
+      "source": ["packages/renderer/src/components/DocumentPanel.tsx:411"],
+      "states": [
+        {
+          "state": "pending",
+          "entry": "review.html#scene=DOC-035.pending",
+          "renderTrack": "ai-tags",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "no-model",
+          "entry": "review.html#scene=DOC-035.no-model",
+          "renderTrack": "ai-tags",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "empty",
+          "entry": "review.html#scene=DOC-035.empty",
+          "renderTrack": "ai-tags",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "candidates",
+          "entry": "review.html#scene=DOC-035.candidates",
+          "renderTrack": "ai-tags",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "error",
+          "entry": "review.html#scene=DOC-035.error",
+          "renderTrack": "ai-tags",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "retry",
+          "entry": "review.html#scene=DOC-035.retry",
+          "renderTrack": "ai-tags",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-036",
+      "source": ["packages/renderer/src/components/DocumentPanel.tsx:763"],
+      "states": [
+        {
+          "state": "candidate",
+          "entry": "review.html#scene=DOC-036.candidate",
+          "renderTrack": "ai-tags",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "apply",
+          "entry": "review.html#scene=DOC-036.apply",
+          "renderTrack": "ai-tags",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "pending",
+          "entry": "review.html#scene=DOC-036.pending",
+          "renderTrack": "ai-tags",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "success",
+          "entry": "review.html#scene=DOC-036.success",
+          "renderTrack": "ai-tags",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "failure",
+          "entry": "review.html#scene=DOC-036.failure",
+          "renderTrack": "ai-tags",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "remaining",
+          "entry": "review.html#scene=DOC-036.remaining",
+          "renderTrack": "ai-tags",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "all-added",
+          "entry": "review.html#scene=DOC-036.all-added",
+          "renderTrack": "ai-tags",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-037",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:215",
+        "packages/renderer/src/components/DocumentPanel.tsx:388",
+        "packages/renderer/src/components/DocumentPanel.tsx:411",
+        "packages/renderer/src/components/DocumentPanel.tsx:658"
+      ],
+      "states": [
+        {
+          "state": "switch-pending",
+          "entry": "review.html#scene=DOC-037.switch-pending",
+          "renderTrack": "stale-ai",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "late-summary",
+          "entry": "review.html#scene=DOC-037.late-summary",
+          "renderTrack": "stale-ai",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "late-tags",
+          "entry": "review.html#scene=DOC-037.late-tags",
+          "renderTrack": "stale-ai",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "new-document",
+          "entry": "review.html#scene=DOC-037.new-document",
+          "renderTrack": "stale-ai",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-038",
+      "source": [
+        "packages/renderer/src/components/document/MarkdownBody.tsx:14",
+        "packages/renderer/src/components/ContentTypography.style.ts:1",
+        "packages/renderer/src/components/document/MarkdownBody.test.tsx:41"
+      ],
+      "states": [
+        {
+          "state": "paragraph",
+          "entry": "review.html#scene=DOC-038.paragraph",
+          "renderTrack": "body",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "table",
+          "entry": "review.html#scene=DOC-038.table",
+          "renderTrack": "body",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "code",
+          "entry": "review.html#scene=DOC-038.code",
+          "renderTrack": "body",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "image",
+          "entry": "review.html#scene=DOC-038.image",
+          "renderTrack": "body",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "math",
+          "entry": "review.html#scene=DOC-038.math",
+          "renderTrack": "body",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "diagram",
+          "entry": "review.html#scene=DOC-038.diagram",
+          "renderTrack": "body",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "diagram-error",
+          "entry": "review.html#scene=DOC-038.diagram-error",
+          "renderTrack": "body",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "empty",
+          "entry": "review.html#scene=DOC-038.empty",
+          "renderTrack": "body",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-039",
+      "source": [
+        "packages/renderer/src/components/NoteEditor.tsx:184",
+        "packages/renderer/src/components/DocumentPanel.tsx:822",
+        "packages/renderer/src/editor/extensions.ts:30",
+        "packages/renderer/src/components/document/MarkdownBody.tsx:21"
+      ],
+      "states": [
+        {
+          "state": "note-internal",
+          "entry": "review.html#scene=DOC-039.note-internal",
+          "renderTrack": "body",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "dirty",
+          "entry": "review.html#scene=DOC-039.dirty",
+          "renderTrack": "body",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "cancel",
+          "entry": "review.html#scene=DOC-039.cancel",
+          "renderTrack": "body",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "readonly-link",
+          "entry": "review.html#scene=DOC-039.readonly-link",
+          "renderTrack": "body",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "external-link",
+          "entry": "review.html#scene=DOC-039.external-link",
+          "renderTrack": "body",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-040",
+      "source": [
+        "packages/shared/src/documents.ts:96",
+        "packages/renderer/src/components/document/DocumentFooter.tsx:25",
+        "packages/renderer/src/components/document/DocumentHeader.tsx:54"
+      ],
+      "states": [
+        {
+          "state": "source-url",
+          "entry": "review.html#scene=DOC-040.source-url",
+          "renderTrack": "body",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "no-url",
+          "entry": "review.html#scene=DOC-040.no-url",
+          "renderTrack": "body",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "external-open",
+          "entry": "review.html#scene=DOC-040.external-open",
+          "renderTrack": "body",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-041",
+      "source": [
+        "packages/renderer/src/components/document/DocumentFooter.tsx:24",
+        "packages/shared/src/documents.ts:138"
+      ],
+      "states": [
+        {
+          "state": "none",
+          "entry": "review.html#scene=DOC-041.none",
+          "renderTrack": "links",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "sources",
+          "entry": "review.html#scene=DOC-041.sources",
+          "renderTrack": "links",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "backlinks",
+          "entry": "review.html#scene=DOC-041.backlinks",
+          "renderTrack": "links",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "both",
+          "entry": "review.html#scene=DOC-041.both",
+          "renderTrack": "links",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "long-title",
+          "entry": "review.html#scene=DOC-041.long-title",
+          "renderTrack": "links",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "many-links",
+          "entry": "review.html#scene=DOC-041.many-links",
+          "renderTrack": "links",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-042",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:867",
+        "packages/renderer/src/components/document/DocumentFooter.tsx:35"
+      ],
+      "states": [
+        {
+          "state": "activate",
+          "entry": "review.html#scene=DOC-042.activate",
+          "renderTrack": "links",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "dirty",
+          "entry": "review.html#scene=DOC-042.dirty",
+          "renderTrack": "links",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "cancel",
+          "entry": "review.html#scene=DOC-042.cancel",
+          "renderTrack": "links",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "open",
+          "entry": "review.html#scene=DOC-042.open",
+          "renderTrack": "links",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "missing-target",
+          "entry": "review.html#scene=DOC-042.missing-target",
+          "renderTrack": "links",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-043",
+      "source": [
+        "packages/renderer/src/components/document/FilePreview.tsx:77",
+        "packages/shared/src/files.ts:144"
+      ],
+      "states": [
+        {
+          "state": "source-viewer",
+          "entry": "review.html#scene=DOC-043.source-viewer",
+          "renderTrack": "file",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "source-no-viewer",
+          "entry": "review.html#scene=DOC-043.source-no-viewer",
+          "renderTrack": "file",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "body-only",
+          "entry": "review.html#scene=DOC-043.body-only",
+          "renderTrack": "file",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "no-source",
+          "entry": "review.html#scene=DOC-043.no-source",
+          "renderTrack": "file",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-044",
+      "source": [
+        "packages/renderer/src/components/document/FilePreview.tsx:103",
+        "packages/shared/src/documents.ts:134"
+      ],
+      "states": [
+        {
+          "state": "parse-error",
+          "entry": "review.html#scene=DOC-044.parse-error",
+          "renderTrack": "file",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "planned",
+          "entry": "review.html#scene=DOC-044.planned",
+          "renderTrack": "file",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "empty-text",
+          "entry": "review.html#scene=DOC-044.empty-text",
+          "renderTrack": "file",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "has-body",
+          "entry": "review.html#scene=DOC-044.has-body",
+          "renderTrack": "file",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "source-visible",
+          "entry": "review.html#scene=DOC-044.source-visible",
+          "renderTrack": "file",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-045",
+      "source": [
+        "packages/renderer/src/components/document/FilePreview.tsx:189",
+        "packages/renderer/src/components/document/FilePreview.tsx:381"
+      ],
+      "states": [
+        {
+          "state": "loaded",
+          "entry": "review.html#scene=DOC-045.loaded",
+          "renderTrack": "media",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "small-image",
+          "entry": "review.html#scene=DOC-045.small-image",
+          "renderTrack": "media",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "large-image",
+          "entry": "review.html#scene=DOC-045.large-image",
+          "renderTrack": "media",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "hover",
+          "entry": "review.html#scene=DOC-045.hover",
+          "renderTrack": "media",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "focus",
+          "entry": "review.html#scene=DOC-045.focus",
+          "renderTrack": "media",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "open-original",
+          "entry": "review.html#scene=DOC-045.open-original",
+          "renderTrack": "media",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "broken",
+          "entry": "review.html#scene=DOC-045.broken",
+          "renderTrack": "media",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-046",
+      "source": ["packages/renderer/src/components/document/FilePreview.tsx:218"],
+      "states": [
+        {
+          "state": "loading",
+          "entry": "review.html#scene=DOC-046.loading",
+          "renderTrack": "media",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "ready",
+          "entry": "review.html#scene=DOC-046.ready",
+          "renderTrack": "media",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "playing",
+          "entry": "review.html#scene=DOC-046.playing",
+          "renderTrack": "media",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "paused",
+          "entry": "review.html#scene=DOC-046.paused",
+          "renderTrack": "media",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "ended",
+          "entry": "review.html#scene=DOC-046.ended",
+          "renderTrack": "media",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "error",
+          "entry": "review.html#scene=DOC-046.error",
+          "renderTrack": "media",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-047",
+      "source": ["packages/renderer/src/components/document/FilePreview.tsx:224"],
+      "states": [
+        {
+          "state": "loading",
+          "entry": "review.html#scene=DOC-047.loading",
+          "renderTrack": "media",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "ready",
+          "entry": "review.html#scene=DOC-047.ready",
+          "renderTrack": "media",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "playing",
+          "entry": "review.html#scene=DOC-047.playing",
+          "renderTrack": "media",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "paused",
+          "entry": "review.html#scene=DOC-047.paused",
+          "renderTrack": "media",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "seek",
+          "entry": "review.html#scene=DOC-047.seek",
+          "renderTrack": "media",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "fullscreen",
+          "entry": "review.html#scene=DOC-047.fullscreen",
+          "renderTrack": "media",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "error",
+          "entry": "review.html#scene=DOC-047.error",
+          "renderTrack": "media",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-048",
+      "source": [
+        "packages/renderer/src/components/document/FilePreview.tsx:90",
+        "packages/renderer/src/components/document/FilePreview.tsx:115"
+      ],
+      "states": [
+        {
+          "state": "image-error",
+          "entry": "review.html#scene=DOC-048.image-error",
+          "renderTrack": "media",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "audio-error",
+          "entry": "review.html#scene=DOC-048.audio-error",
+          "renderTrack": "media",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "video-error",
+          "entry": "review.html#scene=DOC-048.video-error",
+          "renderTrack": "media",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "fallback",
+          "entry": "review.html#scene=DOC-048.fallback",
+          "renderTrack": "media",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "next-document",
+          "entry": "review.html#scene=DOC-048.next-document",
+          "renderTrack": "media",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-049",
+      "source": [
+        "packages/renderer/src/components/document/FilePreview.tsx:235",
+        "packages/renderer/src/components/document/FilePreview.tsx:315",
+        "packages/renderer/src/components/document/FilePreview.tsx:351"
+      ],
+      "states": [
+        {
+          "state": "txt",
+          "entry": "review.html#scene=DOC-049.txt",
+          "renderTrack": "file",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "csv",
+          "entry": "review.html#scene=DOC-049.csv",
+          "renderTrack": "file",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "json",
+          "entry": "review.html#scene=DOC-049.json",
+          "renderTrack": "file",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "code",
+          "entry": "review.html#scene=DOC-049.code",
+          "renderTrack": "file",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "long-lines",
+          "entry": "review.html#scene=DOC-049.long-lines",
+          "renderTrack": "file",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-050",
+      "source": [
+        "packages/renderer/src/components/document/FilePreview.tsx:244",
+        "packages/renderer/src/components/document/FilePreview.tsx:262"
+      ],
+      "states": [
+        {
+          "state": "legacy-doc",
+          "entry": "review.html#scene=DOC-050.legacy-doc",
+          "renderTrack": "file",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "extracted-markdown",
+          "entry": "review.html#scene=DOC-050.extracted-markdown",
+          "renderTrack": "file",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "parse-warning",
+          "entry": "review.html#scene=DOC-050.parse-warning",
+          "renderTrack": "file",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-051",
+      "source": ["packages/renderer/src/components/document/FilePreview.tsx:268"],
+      "states": [
+        {
+          "state": "unsupported",
+          "entry": "review.html#scene=DOC-051.unsupported",
+          "renderTrack": "file",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "parse-error",
+          "entry": "review.html#scene=DOC-051.parse-error",
+          "renderTrack": "file",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "download",
+          "entry": "review.html#scene=DOC-051.download",
+          "renderTrack": "file",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "narrow-card",
+          "entry": "review.html#scene=DOC-051.narrow-card",
+          "renderTrack": "file",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-052",
+      "source": ["packages/renderer/src/components/document/FilePreview.tsx:297"],
+      "states": [
+        {
+          "state": "missing-source",
+          "entry": "review.html#scene=DOC-052.missing-source",
+          "renderTrack": "file",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "parse-error",
+          "entry": "review.html#scene=DOC-052.parse-error",
+          "renderTrack": "file",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "empty",
+          "entry": "review.html#scene=DOC-052.empty",
+          "renderTrack": "file",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-053",
+      "source": [
+        "packages/renderer/src/components/document/DocumentHeader.tsx:130",
+        "packages/renderer/src/components/document/FilePreview.tsx:129",
+        "packages/renderer/src/lib/api.ts:858"
+      ],
+      "states": [
+        {
+          "state": "file-source",
+          "entry": "review.html#scene=DOC-053.file-source",
+          "renderTrack": "file",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "readonly-no-download",
+          "entry": "review.html#scene=DOC-053.readonly-no-download",
+          "renderTrack": "file",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "downloading",
+          "entry": "review.html#scene=DOC-053.downloading",
+          "renderTrack": "file",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "native-error",
+          "entry": "review.html#scene=DOC-053.native-error",
+          "renderTrack": "file",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-054",
+      "source": [
+        "packages/renderer/src/components/document/OfficeSourceEditor.tsx:34",
+        "packages/renderer/src/components/document/FilePreview.tsx:148",
+        "packages/renderer/src/components/document/FilePreview.tsx:177"
+      ],
+      "states": [
+        {
+          "state": "docx",
+          "entry": "review.html#scene=DOC-054.docx",
+          "renderTrack": "office",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "xlsx",
+          "entry": "review.html#scene=DOC-054.xlsx",
+          "renderTrack": "office",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "pptx",
+          "entry": "review.html#scene=DOC-054.pptx",
+          "renderTrack": "office",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "html",
+          "entry": "review.html#scene=DOC-054.html",
+          "renderTrack": "office",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "pdf",
+          "entry": "review.html#scene=DOC-054.pdf",
+          "renderTrack": "office",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-055",
+      "source": [
+        "packages/renderer/src/lib/office-source-filename.ts:32",
+        "packages/renderer/src/components/document/OfficeSourceEditor.tsx:59"
+      ],
+      "states": [
+        {
+          "state": "loading",
+          "entry": "review.html#scene=DOC-055.loading",
+          "renderTrack": "office",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "ready",
+          "entry": "review.html#scene=DOC-055.ready",
+          "renderTrack": "office",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "load-error",
+          "entry": "review.html#scene=DOC-055.load-error",
+          "renderTrack": "office",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "dirty",
+          "entry": "review.html#scene=DOC-055.dirty",
+          "renderTrack": "office",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "saving",
+          "entry": "review.html#scene=DOC-055.saving",
+          "renderTrack": "office",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "save-error",
+          "entry": "review.html#scene=DOC-055.save-error",
+          "renderTrack": "office",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "filename-preserved",
+          "entry": "review.html#scene=DOC-055.filename-preserved",
+          "renderTrack": "office",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-056",
+      "source": [
+        "packages/renderer/src/components/document/OfficeSourceEditor.tsx:84",
+        "packages/renderer/src/components/document/OfficeSourceEditor.tsx:129",
+        "packages/renderer/src/components/UnsavedGuard.tsx:93"
+      ],
+      "states": [
+        {
+          "state": "dirty",
+          "entry": "review.html#scene=DOC-056.dirty",
+          "renderTrack": "office",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "guard",
+          "entry": "review.html#scene=DOC-056.guard",
+          "renderTrack": "office",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "save-at-toolbar",
+          "entry": "review.html#scene=DOC-056.save-at-toolbar",
+          "renderTrack": "office",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "save-from-guard-blocked",
+          "entry": "review.html#scene=DOC-056.save-from-guard-blocked",
+          "renderTrack": "office",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-057",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:241",
+        "packages/renderer/src/components/DocumentPanel.tsx:822",
+        "packages/renderer/src/components/document/OfficeSourceEditor.tsx:174",
+        "packages/renderer/src/components/NoteEditor.tsx:153"
+      ],
+      "states": [
+        {
+          "state": "whole-doc",
+          "entry": "review.html#scene=DOC-057.whole-doc",
+          "renderTrack": "handoff",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "selection",
+          "entry": "review.html#scene=DOC-057.selection",
+          "renderTrack": "handoff",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "preset",
+          "entry": "review.html#scene=DOC-057.preset",
+          "renderTrack": "handoff",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "no-model",
+          "entry": "review.html#scene=DOC-057.no-model",
+          "renderTrack": "handoff",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-058",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:257",
+        "packages/renderer/src/components/document/OfficeSourceEditor.tsx:219",
+        ".trellis/spec/shared/contract/document-agent.md:1"
+      ],
+      "states": [
+        {
+          "state": "snapshot-ready",
+          "entry": "review.html#scene=DOC-058.snapshot-ready",
+          "renderTrack": "handoff",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "wrong-document",
+          "entry": "review.html#scene=DOC-058.wrong-document",
+          "renderTrack": "handoff",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "preview",
+          "entry": "review.html#scene=DOC-058.preview",
+          "renderTrack": "handoff",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "remove",
+          "entry": "review.html#scene=DOC-058.remove",
+          "renderTrack": "handoff",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "explicit-send",
+          "entry": "review.html#scene=DOC-058.explicit-send",
+          "renderTrack": "handoff",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "stale-target",
+          "entry": "review.html#scene=DOC-058.stale-target",
+          "renderTrack": "handoff",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-059",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:231",
+        "packages/renderer/src/components/DocumentPanel.tsx:241",
+        "packages/renderer/src/components/DocumentPanel.tsx:913",
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:525"
+      ],
+      "states": [
+        {
+          "state": "closed",
+          "entry": "review.html#scene=DOC-059.closed",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "open",
+          "entry": "review.html#scene=DOC-059.open",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "desktop",
+          "entry": "review.html#scene=DOC-059.desktop",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "overlay",
+          "entry": "review.html#scene=DOC-059.overlay",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "narrow",
+          "entry": "review.html#scene=DOC-059.narrow",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "long-title",
+          "entry": "review.html#scene=DOC-059.long-title",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-060",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:902",
+        "packages/renderer/src/components/DocumentPanel.tsx:924",
+        "packages/renderer/src/components/document/DocChatSidebar.tsx:130"
+      ],
+      "states": [
+        {
+          "state": "close",
+          "entry": "review.html#scene=DOC-060.close",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "streaming-hidden",
+          "entry": "review.html#scene=DOC-060.streaming-hidden",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "reopen",
+          "entry": "review.html#scene=DOC-060.reopen",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "tab-hidden",
+          "entry": "review.html#scene=DOC-060.tab-hidden",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "focus-return",
+          "entry": "review.html#scene=DOC-060.focus-return",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "document-switch",
+          "entry": "review.html#scene=DOC-060.document-switch",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-061",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:685",
+        "packages/renderer/src/components/document/DocChatSidebar.tsx:189"
+      ],
+      "states": [
+        {
+          "state": "same-doc",
+          "entry": "review.html#scene=DOC-061.same-doc",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "cross-doc",
+          "entry": "review.html#scene=DOC-061.cross-doc",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "dirty",
+          "entry": "review.html#scene=DOC-061.dirty",
+          "renderTrack": "assistant",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "cancel",
+          "entry": "review.html#scene=DOC-061.cancel",
+          "renderTrack": "assistant",
+          "currentState": false,
+          "proposalState": true,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-062",
+      "source": [
+        "packages/renderer/src/components/document/DocChatSidebar.tsx:84",
+        "packages/renderer/src/components/document/DocxCapabilityStatus.tsx:25"
+      ],
+      "states": [
+        {
+          "state": "loading",
+          "entry": "review.html#scene=DOC-062.loading",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "ready",
+          "entry": "review.html#scene=DOC-062.ready",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "revision-off",
+          "entry": "review.html#scene=DOC-062.revision-off",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "revision-on",
+          "entry": "review.html#scene=DOC-062.revision-on",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "no-model",
+          "entry": "review.html#scene=DOC-062.no-model",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "error",
+          "entry": "review.html#scene=DOC-062.error",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "retry",
+          "entry": "review.html#scene=DOC-062.retry",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-063",
+      "source": ["packages/renderer/src/components/document/DocChatSidebar.tsx:91"],
+      "states": [
+        {
+          "state": "loading",
+          "entry": "review.html#scene=DOC-063.loading",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "ready",
+          "entry": "review.html#scene=DOC-063.ready",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "executor-unavailable",
+          "entry": "review.html#scene=DOC-063.executor-unavailable",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "model-unavailable",
+          "entry": "review.html#scene=DOC-063.model-unavailable",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "canvas-unavailable",
+          "entry": "review.html#scene=DOC-063.canvas-unavailable",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "error",
+          "entry": "review.html#scene=DOC-063.error",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "retry",
+          "entry": "review.html#scene=DOC-063.retry",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-064",
+      "source": [
+        "packages/renderer/src/components/document/DocChatSidebar.tsx:102",
+        "packages/renderer/src/components/document/DocChatSidebar.tsx:123",
+        "packages/renderer/src/components/document/DocChatSidebar.tsx:190"
+      ],
+      "states": [
+        {
+          "state": "model-settings",
+          "entry": "review.html#scene=DOC-064.model-settings",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "dirty",
+          "entry": "review.html#scene=DOC-064.dirty",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "cancel",
+          "entry": "review.html#scene=DOC-064.cancel",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "new-note",
+          "entry": "review.html#scene=DOC-064.new-note",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "open-note",
+          "entry": "review.html#scene=DOC-064.open-note",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-065",
+      "source": [
+        "packages/renderer/src/components/document/DocChatSidebar.tsx:182",
+        "packages/chat/src/ChatPanel.tsx:1"
+      ],
+      "states": [
+        {
+          "state": "empty",
+          "entry": "review.html#scene=DOC-065.empty",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "draft",
+          "entry": "review.html#scene=DOC-065.draft",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "streaming",
+          "entry": "review.html#scene=DOC-065.streaming",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "stop",
+          "entry": "review.html#scene=DOC-065.stop",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "failed",
+          "entry": "review.html#scene=DOC-065.failed",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "retry",
+          "entry": "review.html#scene=DOC-065.retry",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "citation",
+          "entry": "review.html#scene=DOC-065.citation",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "saved-note",
+          "entry": "review.html#scene=DOC-065.saved-note",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-066",
+      "source": [
+        "packages/renderer/src/components/document/DocChatGuide.tsx:7",
+        "packages/renderer/src/components/document/DocChatSidebar.tsx:63"
+      ],
+      "states": [
+        {
+          "state": "empty",
+          "entry": "review.html#scene=DOC-066.empty",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "quick-read",
+          "entry": "review.html#scene=DOC-066.quick-read",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "quick-points",
+          "entry": "review.html#scene=DOC-066.quick-points",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "quick-details",
+          "entry": "review.html#scene=DOC-066.quick-details",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "sent",
+          "entry": "review.html#scene=DOC-066.sent",
+          "renderTrack": "assistant",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-067",
+      "source": [
+        "packages/renderer/src/components/document/DocumentCommandModal.tsx:77",
+        "packages/renderer/src/components/document/DocumentCommandModal.tsx:116"
+      ],
+      "states": [
+        {
+          "state": "open",
+          "entry": "review.html#scene=DOC-067.open",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "blank",
+          "entry": "review.html#scene=DOC-067.blank",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "unchanged",
+          "entry": "review.html#scene=DOC-067.unchanged",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "limit-200",
+          "entry": "review.html#scene=DOC-067.limit-200",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "pending",
+          "entry": "review.html#scene=DOC-067.pending",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "error",
+          "entry": "review.html#scene=DOC-067.error",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "retry",
+          "entry": "review.html#scene=DOC-067.retry",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "saved-read-error",
+          "entry": "review.html#scene=DOC-067.saved-read-error",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-068",
+      "source": [
+        "packages/renderer/src/components/document/DocumentCommandModal.tsx:133",
+        "packages/renderer/src/components/document/DocumentCommandModal.tsx:237"
+      ],
+      "states": [
+        {
+          "state": "open",
+          "entry": "review.html#scene=DOC-068.open",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "folders-loading",
+          "entry": "review.html#scene=DOC-068.folders-loading",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "folders-error",
+          "entry": "review.html#scene=DOC-068.folders-error",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "retry",
+          "entry": "review.html#scene=DOC-068.retry",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "selected",
+          "entry": "review.html#scene=DOC-068.selected",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "unchanged",
+          "entry": "review.html#scene=DOC-068.unchanged",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "pending",
+          "entry": "review.html#scene=DOC-068.pending",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "error",
+          "entry": "review.html#scene=DOC-068.error",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-069",
+      "source": [
+        "packages/renderer/src/components/document/DocumentCommandModal.tsx:121",
+        "packages/renderer/src/components/DocumentPanel.tsx:691"
+      ],
+      "states": [
+        {
+          "state": "open",
+          "entry": "review.html#scene=DOC-069.open",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "too-short",
+          "entry": "review.html#scene=DOC-069.too-short",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "ime",
+          "entry": "review.html#scene=DOC-069.ime",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "no-match",
+          "entry": "review.html#scene=DOC-069.no-match",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "match",
+          "entry": "review.html#scene=DOC-069.match",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-070",
+      "source": [
+        "packages/renderer/src/components/document/DocumentCommandModal.tsx:51",
+        "packages/renderer/src/components/document/DocumentCommandModal.tsx:97",
+        "packages/renderer/src/components/document/DocumentCommandModal.tsx:209",
+        "packages/renderer/src/components/DocumentPanel.tsx:957"
+      ],
+      "states": [
+        {
+          "state": "ime-enter",
+          "entry": "review.html#scene=DOC-070.ime-enter",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "ime-escape",
+          "entry": "review.html#scene=DOC-070.ime-escape",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "pending",
+          "entry": "review.html#scene=DOC-070.pending",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "escape-blocked",
+          "entry": "review.html#scene=DOC-070.escape-blocked",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "palette-blocked",
+          "entry": "review.html#scene=DOC-070.palette-blocked",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "error",
+          "entry": "review.html#scene=DOC-070.error",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "retained",
+          "entry": "review.html#scene=DOC-070.retained",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "late-result",
+          "entry": "review.html#scene=DOC-070.late-result",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "refresh-only",
+          "entry": "review.html#scene=DOC-070.refresh-only",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "focus",
+          "entry": "review.html#scene=DOC-070.focus",
+          "renderTrack": "command",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-071",
+      "source": [
+        "packages/renderer/src/components/UnsavedGuard.tsx:62",
+        "packages/renderer/src/lib/unsaved.tsx:86"
+      ],
+      "states": [
+        {
+          "state": "clean",
+          "entry": "review.html#scene=DOC-071.clean",
+          "renderTrack": "guard",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "manual-dirty",
+          "entry": "review.html#scene=DOC-071.manual-dirty",
+          "renderTrack": "guard",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "continue",
+          "entry": "review.html#scene=DOC-071.continue",
+          "renderTrack": "guard",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "discard",
+          "entry": "review.html#scene=DOC-071.discard",
+          "renderTrack": "guard",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "save",
+          "entry": "review.html#scene=DOC-071.save",
+          "renderTrack": "guard",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-072",
+      "source": [
+        "packages/renderer/src/components/UnsavedGuard.tsx:93",
+        "packages/renderer/src/lib/unsaved.tsx:104",
+        "packages/renderer/src/components/NoteEditor.tsx:83"
+      ],
+      "states": [
+        {
+          "state": "auto-dirty",
+          "entry": "review.html#scene=DOC-072.auto-dirty",
+          "renderTrack": "guard",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "saving",
+          "entry": "review.html#scene=DOC-072.saving",
+          "renderTrack": "guard",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "auto-saved",
+          "entry": "review.html#scene=DOC-072.auto-saved",
+          "renderTrack": "guard",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "stay",
+          "entry": "review.html#scene=DOC-072.stay",
+          "renderTrack": "guard",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "leave",
+          "entry": "review.html#scene=DOC-072.leave",
+          "renderTrack": "guard",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-073",
+      "source": [
+        "packages/renderer/src/lib/unsaved.tsx:119",
+        "packages/renderer/src/components/UnsavedGuard.tsx:168",
+        "packages/renderer/src/editor/markdown-save.test.tsx:369"
+      ],
+      "states": [
+        {
+          "state": "pending",
+          "entry": "review.html#scene=DOC-073.pending",
+          "renderTrack": "guard",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "false-result",
+          "entry": "review.html#scene=DOC-073.false-result",
+          "renderTrack": "guard",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "thrown-error",
+          "entry": "review.html#scene=DOC-073.thrown-error",
+          "renderTrack": "guard",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "retry",
+          "entry": "review.html#scene=DOC-073.retry",
+          "renderTrack": "guard",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "continue",
+          "entry": "review.html#scene=DOC-073.continue",
+          "renderTrack": "guard",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "newer-edit",
+          "entry": "review.html#scene=DOC-073.newer-edit",
+          "renderTrack": "guard",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-074",
+      "source": [
+        "packages/office/src/editors/MarkdownEditor.tsx:790",
+        "packages/renderer/src/components/document/OfficeSourceEditor.tsx:123",
+        "packages/renderer/src/routes/_app.tsx:1"
+      ],
+      "states": [
+        {
+          "state": "browser-back",
+          "entry": "review.html#scene=DOC-074.browser-back",
+          "renderTrack": "guard",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "route-bypass",
+          "entry": "review.html#scene=DOC-074.route-bypass",
+          "renderTrack": "guard",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "reload",
+          "entry": "review.html#scene=DOC-074.reload",
+          "renderTrack": "guard",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "tab-close",
+          "entry": "review.html#scene=DOC-074.tab-close",
+          "renderTrack": "guard",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "desktop-close",
+          "entry": "review.html#scene=DOC-074.desktop-close",
+          "renderTrack": "guard",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-075",
+      "source": [
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:44",
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:251",
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:426",
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:546"
+      ],
+      "states": [
+        {
+          "state": "desktop",
+          "entry": "review.html#scene=DOC-075.desktop",
+          "renderTrack": "layout",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "390",
+          "entry": "review.html#scene=DOC-075.390",
+          "renderTrack": "layout",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "mid-column",
+          "entry": "review.html#scene=DOC-075.mid-column",
+          "renderTrack": "layout",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "low-height",
+          "entry": "review.html#scene=DOC-075.low-height",
+          "renderTrack": "layout",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "overlay",
+          "entry": "review.html#scene=DOC-075.overlay",
+          "renderTrack": "layout",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "nav-rail",
+          "entry": "review.html#scene=DOC-075.nav-rail",
+          "renderTrack": "layout",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-076",
+      "source": [
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:16",
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:349",
+        "packages/renderer/src/components/document/FilePreview.tsx:332"
+      ],
+      "states": [
+        {
+          "state": "light",
+          "entry": "review.html#scene=DOC-076.light",
+          "renderTrack": "layout",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "dark",
+          "entry": "review.html#scene=DOC-076.dark",
+          "renderTrack": "layout",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "hover",
+          "entry": "review.html#scene=DOC-076.hover",
+          "renderTrack": "layout",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "focus",
+          "entry": "review.html#scene=DOC-076.focus",
+          "renderTrack": "layout",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "active",
+          "entry": "review.html#scene=DOC-076.active",
+          "renderTrack": "layout",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "reduced-motion",
+          "entry": "review.html#scene=DOC-076.reduced-motion",
+          "renderTrack": "layout",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-077",
+      "source": [
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:391",
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:397",
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:606",
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:717"
+      ],
+      "states": [
+        {
+          "state": "long-body",
+          "entry": "review.html#scene=DOC-077.long-body",
+          "renderTrack": "layout",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "long-outline",
+          "entry": "review.html#scene=DOC-077.long-outline",
+          "renderTrack": "layout",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "long-summary",
+          "entry": "review.html#scene=DOC-077.long-summary",
+          "renderTrack": "layout",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "many-links",
+          "entry": "review.html#scene=DOC-077.many-links",
+          "renderTrack": "layout",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "low-height",
+          "entry": "review.html#scene=DOC-077.low-height",
+          "renderTrack": "layout",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    },
+    {
+      "id": "DOC-078",
+      "source": [
+        "packages/renderer/src/components/document/DocumentHeader.tsx:161",
+        "packages/renderer/src/components/document/DocumentCommandModal.tsx:209",
+        "packages/renderer/src/components/DocumentPanel.tsx:924",
+        "packages/renderer/src/components/UnsavedGuard.tsx:77"
+      ],
+      "states": [
+        {
+          "state": "menu-to-dialog",
+          "entry": "review.html#scene=DOC-078.menu-to-dialog",
+          "renderTrack": "accessibility",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "sidebar-to-settings",
+          "entry": "review.html#scene=DOC-078.sidebar-to-settings",
+          "renderTrack": "accessibility",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "guard-cancel",
+          "entry": "review.html#scene=DOC-078.guard-cancel",
+          "renderTrack": "accessibility",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "modal-error",
+          "entry": "review.html#scene=DOC-078.modal-error",
+          "renderTrack": "accessibility",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        },
+        {
+          "state": "focus-visible",
+          "entry": "review.html#scene=DOC-078.focus-visible",
+          "renderTrack": "accessibility",
+          "currentState": true,
+          "proposalState": false,
+          "verification": "static-route; runtime QA representative only"
+        }
+      ]
+    }
+  ]
+}

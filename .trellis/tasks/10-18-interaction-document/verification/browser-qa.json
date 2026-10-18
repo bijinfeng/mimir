@@ -1,0 +1,100 @@
+{
+  "date": "2026-10-18",
+  "executor": "root",
+  "target": "standalone planning HTML only",
+  "enumerations_are_not_gui_passes": true,
+  "cases": [
+    {
+      "scene": "DOC-009.idle",
+      "action": "笔记标题编辑→保存等待锁定→失败保留斜线/中文草稿→重试成功更新标题",
+      "result": "passed"
+    },
+    {
+      "scene": "DOC-012.saved-read-error",
+      "action": "已保存状态锁输入和重复写；只重读等待→失败仍锁且保留读取重试→成功清错误并收起编辑",
+      "result": "passed"
+    },
+    {
+      "scene": "DOC-029.error",
+      "action": "目录加载失败局部提示→重试读取→模拟成功恢复真实目录集合",
+      "result": "passed"
+    },
+    {
+      "scene": "DOC-036.candidate",
+      "action": "采用等待单飞，失败候选保留，成功加入标签后移除；最终版仅采用错误提示",
+      "result": "passed"
+    },
+    {
+      "scene": "DOC-040.source-url",
+      "action": "当前侧无外站入口，提案侧显示原网页；未实际打开外站",
+      "result": "passed"
+    },
+    {
+      "scene": "DOC-041.sources",
+      "action": "当前与提案仅显示来源集合，不伪造被引用",
+      "result": "passed"
+    },
+    {
+      "scene": "DOC-021.no-match",
+      "action": "保留正文与阅读位置，提案明确未能可靠定位",
+      "result": "passed"
+    },
+    {
+      "scene": "DOC-056.guard",
+      "action": "模拟改动后离开只提供继续编辑与丢弃，不声称能代存Office",
+      "result": "passed"
+    },
+    {
+      "scene": "DOC-062.revision-off",
+      "action": "最终版同名DOCX宿主与助手，AI修订Switch可开启；不代表Agent执行通过",
+      "result": "passed"
+    },
+    {
+      "scene": "DOC-058.preview",
+      "action": "最终版同名PPTX宿主，截图草稿预览/移除后可见状态，未发送业务请求",
+      "result": "passed"
+    },
+    {
+      "scene": "DOC-075.390",
+      "action": "390px内部画布，52px导航，助手覆盖；关闭恢复问AI入口焦点；scrollWidth388<390",
+      "result": "passed"
+    },
+    {
+      "scene": "DOC-075.low-height",
+      "action": "1024x480内部画布，助手关闭/输入/发送均在容器可视范围",
+      "result": "passed"
+    },
+    {
+      "scene": "DOC-076.dark",
+      "action": "深色阅读画布视觉检查，单独截图",
+      "result": "passed"
+    },
+    {
+      "scene": "DOC-076.hover",
+      "action": "更多按钮hover=true；前后x1198.609375 y311.109375 w32.015625 h28.140625完全一致（缩放后坐标）",
+      "result": "passed"
+    },
+    {
+      "scene": "DOC-077.long-outline",
+      "action": "28条大纲；200%字号无可见横溢；末项点击实际read-scroll约9119且aria-current=末项",
+      "result": "passed"
+    },
+    {
+      "scene": "DOC-068.folders-error",
+      "action": "移动命令目录失败→重试读取→成功select恢复可用，原位置保留",
+      "result": "passed"
+    },
+    {
+      "scene": "DOC-069.no-match",
+      "action": "查找输入Enter显示未命中并留稿，不发起标题写请求",
+      "result": "passed"
+    }
+  ],
+  "product_writes": false,
+  "limitations": [
+    "422为设计枚举，未逐项手动点击。",
+    "HTML本地模拟不等于API/AI/保存/原件实际执行通过。",
+    "未测原生媒体/下载/剪贴板/系统IME/屏幕阅读/Electron。",
+    "浏览器外部viewport仿真导致截图重复拼贴，已清除并丢弃该截图；最终截图均用正常窗口，390/低高度由原型内部画布提供。"
+  ]
+}

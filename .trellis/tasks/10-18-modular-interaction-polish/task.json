@@ -23,10 +23,11 @@
     "10-18-interaction-workspace",
     "10-18-interaction-search",
     "10-18-interaction-capture",
-    "10-18-interaction-library"
+    "10-18-interaction-library",
+    "10-18-interaction-document"
   ],
   "parent": null,
   "relatedFiles": [],
-  "notes": "基础组件v1完成；工作区v2、搜索v1与收集v1 revision2已获批实施且模块验收通过，保留外部全仓门阻断。第五模块知识库与目录管理v1 revision2文件图标候选已冻结，待用户选型及具体HTML认可；58组299状态保持。",
+  "notes": "基础组件v1完成；工作区v2、搜索v1、收集v1 revision2、知识库v1 revision2 A均已获批实施并通过模块验收，外部全仓门阻断保留。第六模块文档阅读已展开78组422状态，交付独立HTML具体审阅，尚无产品实施认可。",
   "meta": {}
 }

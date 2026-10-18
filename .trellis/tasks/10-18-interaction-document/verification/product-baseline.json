@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-18",
+  "head": "2118df5dc98b756b25dfa422642319775a69b53b",
+  "purpose": "planning-only relevant product baseline; before any product edits (none authorized)",
+  "files": {
+    "packages/renderer/src/components/DocumentPanel.tsx": "dabd1f168b484c0c89a9419dbb34fe2702c319b7286932d6bcbfb6744681f413",
+    "packages/renderer/src/components/UnsavedGuard.tsx": "9379589d8d055de28043d816a1252949419bb319bd00f27ddbb8bf0fa9dee6ec",
+    "packages/renderer/src/components/document/DocChatGuide.tsx": "9d56175a865b1166b5a057ff17799ef4f2fc53cb4aeadb7066f1589c12db8fb6",
+    "packages/renderer/src/components/document/DocChatSidebar.tsx": "b24bff2b6181ed410a7667a65338c6b0202237f1369e2b5cad33bca58d9c3dfa",
+    "packages/renderer/src/components/document/DocumentCommandModal.style.ts": "c3ead0d415425e105dc52a1e06d840d485541e04797d76de97ea1340778c0c10",
+    "packages/renderer/src/components/document/DocumentCommandModal.test.tsx": "2f52392f6bf148542cd79fb22f1f32d55be85c84f59665ad2e6accb8a462e24c",
+    "packages/renderer/src/components/document/DocumentCommandModal.tsx": "3789028d96bf00f02cbf6bdf74f55543cbf3da78f35353b9b0cbb886fa49633b",
+    "packages/renderer/src/components/document/DocumentFooter.tsx": "b633ed507c3e0dbd6b5e7bb611fd4d6a6c098a1db9a60d99a33d9c894f7311e2",
+    "packages/renderer/src/components/document/DocumentHeader.test.tsx": "62f25e5216ef0d4a4366bc0e8b5f8193cae0afe59d9e580d36bcbaa34c4f5a23",
+    "packages/renderer/src/components/document/DocumentHeader.tsx": "85142375772f1915dd177650b508dd49898c99fbb4c2b7cddb5d3f251ddf1656",
+    "packages/renderer/src/components/document/DocumentPanel.style.ts": "fff96968ce3daf5ad441ad26bad0019814ac080b051d193db198b3b1d4050c7a",
+    "packages/renderer/src/components/document/DocumentTitle.tsx": "11cae5039d47d273f57860a027995592d61976eaebc666c14fd76d67efd64ca5",
+    "packages/renderer/src/components/document/DocxCapabilityStatus.test.tsx": "c38998bb29ea89f996223b06ed65e4da1c21a515193865f850854a7e4e421143",
+    "packages/renderer/src/components/document/DocxCapabilityStatus.tsx": "bca35859ac02ca6efef12805ba919b9b87ed38adb8e5130b0d23f8bc0f909fa2",
+    "packages/renderer/src/components/document/FilePreview.tsx": "c031f3a78fe385dc52d2785d5485ccb32318ae4c20c8a049e3b512cf882dff23",
+    "packages/renderer/src/components/document/MarkdownBody.test.tsx": "1085e5e1e459f29eabc50a6f891af7e45314a746ee0c2b4ad84041a3bf086674",
+    "packages/renderer/src/components/document/MarkdownBody.tsx": "04ecc5513d8cfea0f00127deb4f614bedcfec8553711618bedd06677f78e7305",
+    "packages/renderer/src/components/document/OfficeSourceEditor.tsx": "df66e4fb231053d28536b1691d56524af638a2c5c53043a8111729b39dbdeedb",
+    "packages/renderer/src/components/document/doc-menu.tsx": "404488b00665771d5c12570850f8a4fafedab6bcdd4fac3ef19ea6c7fb579e92",
+    "packages/renderer/src/components/document/folders.ts": "2c216c201f5678f01d313bfa8b549e3186d3ec55fab403e6f6b2a9620751a39a",
+    "packages/renderer/src/components/document/headings.ts": "52312ee5501fd4dbfe5860de23af2a3799ad0d9efb63dab968d65879f4d08010",
+    "packages/renderer/src/lib/unsaved.tsx": "8b4c5a831f1af5e7a19acf92465e519539da26abd9b7b7610b05579039527fc0",
+    "packages/renderer/src/routes/_app.docs.tsx": "8f53fc436226ea7b6736450b8995d7f4a6ec5f14c1a3e227a38ab5dd668220fa",
+    "packages/renderer/src/routes/_app.tsx": "f9c46adb9c77b62c3e816ba37348b1ee502c95d3b0daa5fce051ff07b9767598"
+  }
+}

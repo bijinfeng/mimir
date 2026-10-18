@@ -1,0 +1,670 @@
+{
+  "version": "document-review-v1",
+  "coverageGroups": 78,
+  "linkedStates": 422,
+  "renderedTracks": 29,
+  "sourceBindings": [
+    {
+      "track": "entry",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "library-handoff",
+          "line": 1088
+        },
+        {
+          "needle": "navigate()",
+          "line": 546
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    },
+    {
+      "track": "empty",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "component-empty",
+          "line": 788
+        },
+        {
+          "needle": "选一条开始看",
+          "line": 1116
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    },
+    {
+      "track": "loading",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "className=\"skeleton\"",
+          "line": 1106
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    },
+    {
+      "track": "reader",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "className=\"prose\"",
+          "line": 669
+        },
+        {
+          "needle": "diagram-sample",
+          "line": 1466
+        },
+        {
+          "needle": "math-sample",
+          "line": 1459
+        },
+        {
+          "needle": "inline-image",
+          "line": 1453
+        },
+        {
+          "needle": "readonly",
+          "line": 170
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    },
+    {
+      "track": "read",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "readError",
+          "line": 334
+        },
+        {
+          "needle": "setReadError(false)",
+          "line": 487
+        },
+        {
+          "needle": "重试刷新",
+          "line": 875
+        },
+        {
+          "needle": "重新加载",
+          "line": 1130
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    },
+    {
+      "track": "header",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "className=\"document-header\"",
+          "line": 792
+        },
+        {
+          "needle": "save-status",
+          "line": 808
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    },
+    {
+      "track": "navigation",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "function navigate()",
+          "line": 546
+        },
+        {
+          "needle": "open('guard')",
+          "line": 552
+        },
+        {
+          "needle": "setLeft(true)",
+          "line": 466
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    },
+    {
+      "track": "title",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "saveTitle",
+          "line": 366
+        },
+        {
+          "needle": "onCompositionStart",
+          "line": 1348
+        },
+        {
+          "needle": "metadataSaved",
+          "line": 362
+        },
+        {
+          "needle": "retryMetadataRead",
+          "line": 398
+        },
+        {
+          "needle": "title-form-actions",
+          "line": 1384
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    },
+    {
+      "track": "save",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "save-status",
+          "line": 808
+        },
+        {
+          "needle": "已保存 · 待刷新",
+          "line": 823
+        },
+        {
+          "needle": "保存中…",
+          "line": 825
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    },
+    {
+      "track": "handoff",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "editor-handoff",
+          "line": 1139
+        },
+        {
+          "needle": "setQuestion",
+          "line": 269
+        },
+        {
+          "needle": "snapshot-draft",
+          "line": 1834
+        },
+        {
+          "needle": "snapshotPreview",
+          "line": 329
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    },
+    {
+      "track": "outline",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "className=\"outline\"",
+          "line": 1606
+        },
+        {
+          "needle": "function jump(",
+          "line": 558
+        },
+        {
+          "needle": "aria-current",
+          "line": 1614
+        },
+        {
+          "needle": "fenced-heading",
+          "line": 1207
+        },
+        {
+          "needle": "dom-replaced",
+          "line": 1210
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    },
+    {
+      "track": "citation",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "repeat-fixture",
+          "line": 1221
+        },
+        {
+          "needle": "repeat-first",
+          "line": 1223
+        },
+        {
+          "needle": "repeat-later",
+          "line": 1227
+        },
+        {
+          "needle": "cross-node",
+          "line": 1230
+        },
+        {
+          "needle": "citation-highlight",
+          "line": 1223
+        },
+        {
+          "needle": "定位本篇引用",
+          "line": 1634
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    },
+    {
+      "track": "menu",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "organize-menu",
+          "line": 763
+        },
+        {
+          "needle": "onPointerDown",
+          "line": 758
+        },
+        {
+          "needle": "ArrowDown",
+          "line": 860
+        },
+        {
+          "needle": "Escape",
+          "line": 578
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    },
+    {
+      "track": "tags",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "mutateTags",
+          "line": 404
+        },
+        {
+          "needle": "tagIntent.current",
+          "line": 407
+        },
+        {
+          "needle": "suggestRead",
+          "line": 108
+        },
+        {
+          "needle": "tags.length >= 20",
+          "line": 999
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    },
+    {
+      "track": "folder",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "folderRead",
+          "line": 101
+        },
+        {
+          "needle": "beginRead",
+          "line": 391
+        },
+        {
+          "needle": "移出目录",
+          "line": 1070
+        },
+        {
+          "needle": "undoing.current",
+          "line": 425
+        },
+        {
+          "needle": "模拟8秒到期",
+          "line": 1923
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    },
+    {
+      "track": "ai-organize",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "产生用量",
+          "line": 963
+        },
+        {
+          "needle": "disabled={noBody || pending}",
+          "line": 967
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    },
+    {
+      "track": "summary",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "ai-result",
+          "line": 1246
+        },
+        {
+          "needle": "setSummary",
+          "line": 283
+        },
+        {
+          "needle": "不会保存到正文",
+          "line": 1256
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    },
+    {
+      "track": "ai-tags",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "applyingTags",
+          "line": 237
+        },
+        {
+          "needle": "tagIntent.current",
+          "line": 407
+        },
+        {
+          "needle": "candidate",
+          "line": 247
+        },
+        {
+          "needle": "本次没有生成标签候选",
+          "line": 1286
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    },
+    {
+      "track": "stale-ai",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "stale-request",
+          "line": 1179
+        },
+        {
+          "needle": "setSwitched(true)",
+          "line": 1188
+        },
+        {
+          "needle": "投递文档 A 的旧响应",
+          "line": 1202
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    },
+    {
+      "track": "body",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "className=\"prose\"",
+          "line": 669
+        },
+        {
+          "needle": "diagram-sample",
+          "line": 1466
+        },
+        {
+          "needle": "math-sample",
+          "line": 1459
+        },
+        {
+          "needle": "inline-image",
+          "line": 1453
+        },
+        {
+          "needle": "readonly",
+          "line": 170
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    },
+    {
+      "track": "links",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "document-footer",
+          "line": 1554
+        },
+        {
+          "needle": "matches(scene, 'backlinks')",
+          "line": 1555
+        },
+        {
+          "needle": "matches(scene, 'sources')",
+          "line": 1576
+        },
+        {
+          "needle": "新增前端入口",
+          "line": 1567
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    },
+    {
+      "track": "file",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "const media =",
+          "line": 603
+        },
+        {
+          "needle": "const missing",
+          "line": 614
+        },
+        {
+          "needle": "className=\"plain\"",
+          "line": 685
+        },
+        {
+          "needle": "下载原件",
+          "line": 747
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    },
+    {
+      "track": "media",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "<audio",
+          "line": 716
+        },
+        {
+          "needle": "<video",
+          "line": 718
+        },
+        {
+          "needle": "sample-image",
+          "line": 710
+        },
+        {
+          "needle": "setMediaFailed(true)",
+          "line": 725
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    },
+    {
+      "track": "office",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "editor-boundary",
+          "line": 617
+        },
+        {
+          "needle": "研究资料原件.docx",
+          "line": 188
+        },
+        {
+          "needle": "cannotSave",
+          "line": 356
+        },
+        {
+          "needle": "工具栏中保存",
+          "line": 1967
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    },
+    {
+      "track": "assistant",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "assistant-header",
+          "line": 1651
+        },
+        {
+          "needle": "revision-switch",
+          "line": 1676
+        },
+        {
+          "needle": "role=\"switch\"",
+          "line": 1680
+        },
+        {
+          "needle": "capability-state",
+          "line": 1674
+        },
+        {
+          "needle": "停止生成",
+          "line": 1762
+        },
+        {
+          "needle": "assistant-handoff",
+          "line": 1771
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    },
+    {
+      "track": "command",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "function submitCommand()",
+          "line": 491
+        },
+        {
+          "needle": "submitCommand()",
+          "line": 491
+        },
+        {
+          "needle": "folderRead",
+          "line": 101
+        },
+        {
+          "needle": "至少输入两个字符",
+          "line": 509
+        },
+        {
+          "needle": "未找到匹配内容",
+          "line": 513
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    },
+    {
+      "track": "guard",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "role=\"dialog\"",
+          "line": 570
+        },
+        {
+          "needle": "function close()",
+          "line": 529
+        },
+        {
+          "needle": "cannotSave && after",
+          "line": 2069
+        },
+        {
+          "needle": "保存并离开",
+          "line": 2086
+        },
+        {
+          "needle": "继续编辑",
+          "line": 1967
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    },
+    {
+      "track": "layout",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "sizeFor",
+          "line": 2101
+        },
+        {
+          "needle": "ResizeObserver",
+          "line": 2125
+        },
+        {
+          "needle": "articleHeadings",
+          "line": 81
+        },
+        {
+          "needle": "availableWidth",
+          "line": 2121
+        },
+        {
+          "needle": "200% 字体",
+          "line": 2186
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    },
+    {
+      "track": "accessibility",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "function close()",
+          "line": 529
+        },
+        {
+          "needle": "const trap",
+          "line": 576
+        },
+        {
+          "needle": "F6",
+          "line": 772
+        },
+        {
+          "needle": "focus()",
+          "line": 534
+        }
+      ],
+      "scope": "source binding only, not runtime proof"
+    }
+  ],
+  "standalone": true,
+  "productImports": false,
+  "businessRequests": false,
+  "manualOutcomes": true,
+  "currentProposalDistinguished": true,
+  "scope": "Static routes, source bindings, local-only contracts. Does not assert 422 GUI tests, real backend writes, native media playback, downloads, clipboard, screen reader, or Electron success.",
+  "htmlSha256": "2a3aafb4277c37bd06e38ae94ecec085e0f31a062b88e25a000042e5cbdb220d"
+}

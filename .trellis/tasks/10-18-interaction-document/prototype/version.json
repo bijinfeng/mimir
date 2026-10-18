@@ -1,0 +1,20 @@
+{
+  "version": "document-review-v1",
+  "frozen_at": "2026-10-18",
+  "sha256": "2a3aafb4277c37bd06e38ae94ecec085e0f31a062b88e25a000042e5cbdb220d",
+  "preview_url": "http://127.0.0.1:5187/review.html",
+  "default_scene": "DOC-009.idle",
+  "coverage_groups": 78,
+  "enumerated_states": 422,
+  "render_tracks": 29,
+  "gui_representative_cases": 17,
+  "product_implementation_approved": false,
+  "approval_required": "User approval of this exact HTML before task.py start or product edits",
+  "source_sha256": {
+    "main.tsx": "80ad63b91900e42f284984b0dd52ecfe82ea1c3754b106c4d90fada7f5cba30b",
+    "review.css": "dc28c786a36d0e715fd4da31721bcd8dea3218a037e1ea22195069d49101bc27",
+    "scenes.json": "07e3a866c9b8dfeafe8719c5b5cd415ad159b2041df236a1cc63884603169d63",
+    "build.mjs": "a59553b73133a0ee4b6662f54384575ec950ca80ee953441db802224135d9495",
+    "check-artifact.mjs": "bcf3f244472b982aa1077cba7fbe4fee28830ecf4dd28615906a93a0d2a38cae"
+  }
+}

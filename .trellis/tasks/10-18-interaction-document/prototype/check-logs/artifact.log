@@ -1,0 +1,14 @@
+{
+  "version": "document-review-v1",
+  "coverageGroups": 78,
+  "linkedStates": 422,
+  "renderedTracks": 29,
+  "sourceBindings": "29 render-track source bindings",
+  "standalone": true,
+  "productImports": false,
+  "businessRequests": false,
+  "manualOutcomes": true,
+  "currentProposalDistinguished": true,
+  "scope": "Static routes, source bindings, local-only contracts. Does not assert 422 GUI tests, real backend writes, native media playback, downloads, clipboard, screen reader, or Electron success.",
+  "htmlSha256": "2a3aafb4277c37bd06e38ae94ecec085e0f31a062b88e25a000042e5cbdb220d"
+}

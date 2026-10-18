@@ -1,0 +1,3206 @@
+{
+  "schema_version": 1,
+  "module": "document",
+  "date": "2026-10-18",
+  "source_kind": "workspace-source-inventory",
+  "coverage_count": 78,
+  "current_count": 76,
+  "proposal_count": 2,
+  "enumerated_state_count": 422,
+  "approval": "planning-only; product changes require exact HTML approval",
+  "counts_are": "Source groups and enumerated design states; never GUI test pass counts.",
+  "source_refresh": "Fresh read of current workspace DocumentPanel/document subtree, routes, guard, API, shared schemas, server routes and relevant tests. Parent inventory used only as a scope cross-check.",
+  "scene_path_contract": "#scene=DOC-<zero-padded group number>.<state>; current/proposed use identical content and viewport.",
+  "items": [
+    {
+      "id": "DOC-001",
+      "label": "阅读路由与返回范围",
+      "category": "entry",
+      "classification": "current",
+      "owner": "module5+module6",
+      "source": [
+        "packages/renderer/src/routes/_app.docs.tsx:20",
+        "packages/renderer/src/routes/_app.tsx:285"
+      ],
+      "states": [
+        "library",
+        "note",
+        "file",
+        "capture",
+        "direct-id"
+      ],
+      "current_states": [
+        "library",
+        "note",
+        "file",
+        "capture",
+        "direct-id"
+      ],
+      "proposal_states": [],
+      "current_behavior": "/docs 无 id 渲染 LibraryView；有 id 进入详情，返回库保留 scope；openDocument 清 cameFromChat。",
+      "gap": "未发现独立能力缺口；仍需按批准稿校对视觉、可达性和恢复细节。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "库中打开沿用 module5；详情返回由 Header 调用守卫。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "library": "#scene=DOC-001.library",
+        "note": "#scene=DOC-001.note",
+        "file": "#scene=DOC-001.file",
+        "capture": "#scene=DOC-001.capture",
+        "direct-id": "#scene=DOC-001.direct-id"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-002",
+      "label": "未选文档组件空态",
+      "category": "entry",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:626",
+        "packages/renderer/src/routes/_app.docs.tsx:29"
+      ],
+      "states": [
+        "component-empty",
+        "route-library"
+      ],
+      "current_states": [
+        "component-empty",
+        "route-library"
+      ],
+      "proposal_states": [],
+      "current_behavior": "组件 documentId 未定义显示“选一条开始看”；正常 docs 路由无 id 时显示库，不触发此空态。",
+      "gap": "不可把组件备用态作为真实 /docs 首页。",
+      "target_behavior": "HTML 单独标明组件防御态；主入口展示库。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "component-empty": "#scene=DOC-002.component-empty",
+        "route-library": "#scene=DOC-002.route-library"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-003",
+      "label": "首次读取与骨架",
+      "category": "read",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:82",
+        "packages/renderer/src/components/DocumentPanel.tsx:648"
+      ],
+      "states": [
+        "loading",
+        "resolved",
+        "slow"
+      ],
+      "current_states": [
+        "loading",
+        "resolved",
+        "slow"
+      ],
+      "proposal_states": [],
+      "current_behavior": "GET document query 按 ID 独立；无 doc 且未失败显示 6 行 Skeleton。",
+      "gap": "未发现独立能力缺口；仍需按批准稿校对视觉、可达性和恢复细节。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "请求结束后进入对应正文；骨架不可代表文档确实为空。",
+      "html_paths": {
+        "loading": "#scene=DOC-003.loading",
+        "resolved": "#scene=DOC-003.resolved",
+        "slow": "#scene=DOC-003.slow"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-004",
+      "label": "初次加载失败/不存在",
+      "category": "read",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:638",
+        "apps/server/src/routes/documents.ts:57"
+      ],
+      "states": [
+        "network-error",
+        "not-found",
+        "retry-pending",
+        "recovered"
+      ],
+      "current_states": [
+        "network-error",
+        "not-found"
+      ],
+      "proposal_states": [
+        "retry-pending",
+        "recovered"
+      ],
+      "current_behavior": "无缓存时只显示“文档加载失败”；服务端 404 文档不存在；当前 UI 无重试或返回入口。",
+      "gap": "网络失败和404混在一起；整页没有可用恢复按钮。",
+      "target_behavior": "提案：清晰错误原因、重试读取与返回库；不从失败状态推断笔记能力。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "network-error": "#scene=DOC-004.network-error",
+        "not-found": "#scene=DOC-004.not-found",
+        "retry-pending": "#scene=DOC-004.retry-pending",
+        "recovered": "#scene=DOC-004.recovered"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-005",
+      "label": "缓存刷新失败保留活内容",
+      "category": "read",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:726",
+        "packages/renderer/src/components/DocumentPanel.commands.test.tsx:39"
+      ],
+      "states": [
+        "cached",
+        "refreshing",
+        "refresh-error",
+        "retry",
+        "recovered"
+      ],
+      "current_states": [
+        "cached",
+        "refreshing",
+        "refresh-error",
+        "retry",
+        "recovered"
+      ],
+      "proposal_states": [],
+      "current_behavior": "有缓存且 docQuery.isError 保留正文/编辑器，显示“暂时无法刷新文档，已保留当前内容。”及重试刷新。",
+      "gap": "未发现独立能力缺口；仍需按批准稿校对视觉、可达性和恢复细节。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "重试仅读 GET；同一编辑器节点、未保存正文与命令草稿保留。",
+      "html_paths": {
+        "cached": "#scene=DOC-005.cached",
+        "refreshing": "#scene=DOC-005.refreshing",
+        "refresh-error": "#scene=DOC-005.refresh-error",
+        "retry": "#scene=DOC-005.retry",
+        "recovered": "#scene=DOC-005.recovered"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-006",
+      "label": "文档种类/失败标记",
+      "category": "header",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:807",
+        "packages/renderer/src/components/document/DocumentHeader.tsx:79",
+        "packages/renderer/src/components/DocumentBadges.tsx:1"
+      ],
+      "states": [
+        "note",
+        "web",
+        "wechat",
+        "github",
+        "file",
+        "failed"
+      ],
+      "current_states": [
+        "note",
+        "web",
+        "wechat",
+        "github",
+        "file",
+        "failed"
+      ],
+      "proposal_states": [],
+      "current_behavior": "note→NoteEditor，file→FilePreview，其余→只读Markdown；仅 failed 显示异常状态徽标。",
+      "gap": "不要依据旧注释宣称全部上传件只读，实际Office支持编辑。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "note": "#scene=DOC-006.note",
+        "web": "#scene=DOC-006.web",
+        "wechat": "#scene=DOC-006.wechat",
+        "github": "#scene=DOC-006.github",
+        "file": "#scene=DOC-006.file",
+        "failed": "#scene=DOC-006.failed"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-007",
+      "label": "共享紧凑标题栏",
+      "category": "header",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/document/DocumentHeader.tsx:54",
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:35"
+      ],
+      "states": [
+        "note-path",
+        "readonly-title",
+        "long-title",
+        "narrow"
+      ],
+      "current_states": [
+        "note-path",
+        "readonly-title",
+        "long-title",
+        "narrow"
+      ],
+      "proposal_states": [],
+      "current_behavior": "笔记显示目录末段/标题路径，主标题在画布；其他格式 h1 在头部；动作按能力显示。",
+      "gap": "窄屏时返回、保存状态、问AI、更多需测真实宽度，不能挤出主动作。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "note-path": "#scene=DOC-007.note-path",
+        "readonly-title": "#scene=DOC-007.readonly-title",
+        "long-title": "#scene=DOC-007.long-title",
+        "narrow": "#scene=DOC-007.narrow"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-008",
+      "label": "返回库/返回对话",
+      "category": "navigation",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/document/DocumentHeader.tsx:56",
+        "packages/renderer/src/routes/_app.tsx:295",
+        "packages/renderer/src/routes/_app.tsx:400"
+      ],
+      "states": [
+        "to-library",
+        "to-chat",
+        "dirty",
+        "cancel",
+        "leave"
+      ],
+      "current_states": [
+        "to-library",
+        "to-chat",
+        "dirty",
+        "cancel",
+        "leave"
+      ],
+      "proposal_states": [],
+      "current_behavior": "来自主对话引用有“返回对话”，同时可有返回库；均经 runGuarded；lastConversationId 仅当前壳内保存。",
+      "gap": "未发现独立能力缺口；仍需按批准稿校对视觉、可达性和恢复细节。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Enter/Space 返回；取消守卫应回到原入口。",
+      "recovery": "dirty 留下/失败时仍在原文档；刷新页面不承诺恢复 cameFromChat。",
+      "html_paths": {
+        "to-library": "#scene=DOC-008.to-library",
+        "to-chat": "#scene=DOC-008.to-chat",
+        "dirty": "#scene=DOC-008.dirty",
+        "cancel": "#scene=DOC-008.cancel",
+        "leave": "#scene=DOC-008.leave"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-009",
+      "label": "笔记主标题与更新时间",
+      "category": "title",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/document/DocumentTitle.tsx:29",
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:128"
+      ],
+      "states": [
+        "idle",
+        "hover",
+        "focus",
+        "long-title",
+        "narrow"
+      ],
+      "current_states": [
+        "idle",
+        "hover",
+        "focus",
+        "long-title",
+        "narrow"
+      ],
+      "proposal_states": [],
+      "current_behavior": "标题在编辑正文外；hover/focus-within 铅笔出现；窄屏/粗指针40px常显；真实 updatedAt 格式化显示。",
+      "gap": "不要向正文写入第二个主标题或虚构“刚刚更新”。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "idle": "#scene=DOC-009.idle",
+        "hover": "#scene=DOC-009.hover",
+        "focus": "#scene=DOC-009.focus",
+        "long-title": "#scene=DOC-009.long-title",
+        "narrow": "#scene=DOC-009.narrow"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-010",
+      "label": "标题就地编辑提交/取消",
+      "category": "title",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/document/DocumentTitle.tsx:17"
+      ],
+      "states": [
+        "edit",
+        "enter",
+        "blur",
+        "escape",
+        "unchanged",
+        "blank",
+        "limit-200",
+        "confirm",
+        "cancel",
+        "blur-draft"
+      ],
+      "current_states": [
+        "edit",
+        "enter",
+        "blur",
+        "escape",
+        "unchanged",
+        "limit-200"
+      ],
+      "proposal_states": [
+        "blank",
+        "confirm",
+        "cancel",
+        "blur-draft"
+      ],
+      "current_behavior": "Input underlined max200；Enter提交、blur提交、Escape取消；settledRef避免Enter+blur双提交；空白静默退出不写。",
+      "gap": "空标题缺字段反馈；编辑结束早于网络结果，缺明确等待。",
+      "target_behavior": "提案：显式确认/取消；Enter排除IME后确认、Escape取消、blur留稿不自动提交；空白阻止确认并说明。等待单飞与草稿保留按DOC-011/012。",
+      "keyboard_and_exit": "当前Enter/blur提交、Escape取消；提案Enter确认（排除IME）、Escape取消、Tab离开字段保留草稿，确认/取消按钮可达，成功/取消回原入口。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "edit": "#scene=DOC-010.edit",
+        "enter": "#scene=DOC-010.enter",
+        "blur": "#scene=DOC-010.blur",
+        "escape": "#scene=DOC-010.escape",
+        "unchanged": "#scene=DOC-010.unchanged",
+        "blank": "#scene=DOC-010.blank",
+        "limit-200": "#scene=DOC-010.limit-200",
+        "confirm": "#scene=DOC-010.confirm",
+        "cancel": "#scene=DOC-010.cancel",
+        "blur-draft": "#scene=DOC-010.blur-draft"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-011",
+      "label": "标题IME与同步单飞",
+      "category": "title",
+      "classification": "proposal",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/document/DocumentTitle.tsx:41",
+        "packages/renderer/src/components/DocumentPanel.tsx:278"
+      ],
+      "states": [
+        "ime-enter",
+        "ime-escape",
+        "pending",
+        "double-submit"
+      ],
+      "current_states": [],
+      "proposal_states": [
+        "ime-enter",
+        "ime-escape",
+        "pending",
+        "double-submit"
+      ],
+      "current_behavior": "当前 inline 标题未检查 isComposing/229；仅本轮 finish 去重，不锁 mutation 在途重复编辑。",
+      "gap": "中文确认可能提前提交；等待期可再次开改名并产生并发。",
+      "target_behavior": "提案补 IME 保护和同步 busy；编辑值在途仍可读；等待不重复写。",
+      "keyboard_and_exit": "组合输入确认不能保存或取消。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "ime-enter": "#scene=DOC-011.ime-enter",
+        "ime-escape": "#scene=DOC-011.ime-escape",
+        "pending": "#scene=DOC-011.pending",
+        "double-submit": "#scene=DOC-011.double-submit"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-012",
+      "label": "标题请求失败与读取恢复",
+      "category": "title",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:278",
+        "packages/renderer/src/components/document/DocumentTitle.tsx:21"
+      ],
+      "states": [
+        "write-error",
+        "draft-retained",
+        "saved-read-error",
+        "retry-read",
+        "success"
+      ],
+      "current_states": [
+        "write-error",
+        "saved-read-error",
+        "success"
+      ],
+      "proposal_states": [
+        "draft-retained",
+        "retry-read"
+      ],
+      "current_behavior": "renameTitle PATCH成功后精确invalidate，读取失败抛 DocumentCommandRefreshError；inline标题先退出，只通过 message 报错；命令弹窗已有保留草稿和只重读。",
+      "gap": "inline与命令宿主错误恢复不一致；inline丢失未保存的改名草稿。",
+      "target_behavior": "提案沿用模块3已保存/读取失败分离语义；不覆盖活编辑正文。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "write-error": "#scene=DOC-012.write-error",
+        "draft-retained": "#scene=DOC-012.draft-retained",
+        "saved-read-error": "#scene=DOC-012.saved-read-error",
+        "retry-read": "#scene=DOC-012.retry-read",
+        "success": "#scene=DOC-012.success"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-013",
+      "label": "笔记保存状态反馈",
+      "category": "save",
+      "classification": "current",
+      "owner": "module6+office-shell-reuse",
+      "source": [
+        "packages/renderer/src/components/document/DocumentHeader.tsx:103",
+        "packages/renderer/src/components/DocumentPanel.tsx:715",
+        "packages/renderer/src/components/NoteEditor.tsx:63"
+      ],
+      "states": [
+        "idle",
+        "pending",
+        "saving",
+        "saved",
+        "error",
+        "reduced-motion"
+      ],
+      "current_states": [
+        "idle",
+        "pending",
+        "saving",
+        "saved",
+        "error",
+        "reduced-motion"
+      ],
+      "proposal_states": [],
+      "current_behavior": "note保存反馈区分未保存/保存中/已保存/保存失败；标题rename在途覆盖为saving；error tooltip 指向工具栏保存重试。",
+      "gap": "error不是标题改名失败的可靠持久状态；需要明确状态来源但不可假报保存成功。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "idle": "#scene=DOC-013.idle",
+        "pending": "#scene=DOC-013.pending",
+        "saving": "#scene=DOC-013.saving",
+        "saved": "#scene=DOC-013.saved",
+        "error": "#scene=DOC-013.error",
+        "reduced-motion": "#scene=DOC-013.reduced-motion"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-014",
+      "label": "新建笔记一次性正文焦点",
+      "category": "handoff",
+      "classification": "current",
+      "owner": "module3+module6+office-reuse",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:820",
+        "packages/renderer/src/components/NoteEditor.tsx:55",
+        "packages/renderer/src/routes/_app.tsx:316"
+      ],
+      "states": [
+        "created",
+        "editor-ready",
+        "focused",
+        "consumed"
+      ],
+      "current_states": [
+        "created",
+        "editor-ready",
+        "focused",
+        "consumed"
+      ],
+      "proposal_states": [],
+      "current_behavior": "newNoteFocusId 传 focusOnReady，消费后清空；来自现有新建链路，不额外自动改标题。",
+      "gap": "未发现独立能力缺口；仍需按批准稿校对视觉、可达性和恢复细节。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "created": "#scene=DOC-014.created",
+        "editor-ready": "#scene=DOC-014.editor-ready",
+        "focused": "#scene=DOC-014.focused",
+        "consumed": "#scene=DOC-014.consumed"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-015",
+      "label": "逐文档滚动恢复",
+      "category": "navigation",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:102",
+        "packages/renderer/src/components/DocumentPanel.tsx:1006"
+      ],
+      "states": [
+        "readonly-scroll",
+        "note-scroll",
+        "source-scroll",
+        "return",
+        "delayed-layout"
+      ],
+      "current_states": [
+        "readonly-scroll",
+        "note-scroll",
+        "source-scroll",
+        "return",
+        "delayed-layout"
+      ],
+      "proposal_states": [],
+      "current_behavior": "Map按文档ID存scrollTop；note用.me-scroll，其余优先内滚；20次100ms等布局；仅内存不跨刷新。",
+      "gap": "恢复值与新引用定位先后需真实浏览器验证，不能声明跨会话持久化。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "滚动容器不应使工具栏/保存状态脱离视口。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "readonly-scroll": "#scene=DOC-015.readonly-scroll",
+        "note-scroll": "#scene=DOC-015.note-scroll",
+        "source-scroll": "#scene=DOC-015.source-scroll",
+        "return": "#scene=DOC-015.return",
+        "delayed-layout": "#scene=DOC-015.delayed-layout"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-016",
+      "label": "大纲显示条件与归属",
+      "category": "outline",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:137",
+        "packages/renderer/src/components/DocumentPanel.tsx:683",
+        "packages/renderer/src/components/DocumentPanel.tsx:827",
+        "packages/renderer/src/components/DocumentPanel.tsx:880"
+      ],
+      "states": [
+        "two-headings",
+        "one-heading",
+        "note",
+        "readonly",
+        "source-hidden",
+        "ai-hidden",
+        "narrow-hidden"
+      ],
+      "current_states": [
+        "two-headings",
+        "one-heading",
+        "note",
+        "readonly",
+        "source-hidden",
+        "ai-hidden",
+        "narrow-hidden"
+      ],
+      "proposal_states": [],
+      "current_behavior": "≥2个标题、无能显示原件、视口非≤880、侧栏未开才显示；note在EditorShell.bodySide；只读在面板aside。",
+      "gap": "宽度判据现为视口，AI面板覆盖判据为实际容器，两者不能混用。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "two-headings": "#scene=DOC-016.two-headings",
+        "one-heading": "#scene=DOC-016.one-heading",
+        "note": "#scene=DOC-016.note",
+        "readonly": "#scene=DOC-016.readonly",
+        "source-hidden": "#scene=DOC-016.source-hidden",
+        "ai-hidden": "#scene=DOC-016.ai-hidden",
+        "narrow-hidden": "#scene=DOC-016.narrow-hidden"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-017",
+      "label": "大纲层级/锚点/联动",
+      "category": "outline",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/document/headings.ts:15",
+        "packages/renderer/src/components/DocumentPanel.tsx:477",
+        "packages/renderer/src/components/DocumentPanel.tsx:528",
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:620"
+      ],
+      "states": [
+        "idle",
+        "hover",
+        "focus",
+        "active",
+        "deep-level",
+        "long-heading",
+        "jump",
+        "scroll-follow"
+      ],
+      "current_states": [
+        "idle",
+        "hover",
+        "focus",
+        "active",
+        "deep-level",
+        "long-heading",
+        "jump",
+        "scroll-follow"
+      ],
+      "proposal_states": [],
+      "current_behavior": "h1/h2压成二级，h3–6压为三级；按钮按DOM顺序匹配；点击滚最近可滚容器；IntersectionObserver联动aria-current=location。",
+      "gap": "标题文本直接保留Markdown记号；没有持久展开折叠能力。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab定位各标题，Enter/Space跳转；active不应仅靠颜色。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "idle": "#scene=DOC-017.idle",
+        "hover": "#scene=DOC-017.hover",
+        "focus": "#scene=DOC-017.focus",
+        "active": "#scene=DOC-017.active",
+        "deep-level": "#scene=DOC-017.deep-level",
+        "long-heading": "#scene=DOC-017.long-heading",
+        "jump": "#scene=DOC-017.jump",
+        "scroll-follow": "#scene=DOC-017.scroll-follow"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-018",
+      "label": "大纲代码围栏/动态正文边界",
+      "category": "outline",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/document/headings.ts:17",
+        "packages/renderer/src/components/DocumentPanel.tsx:973",
+        "packages/renderer/src/components/document/MarkdownBody.tsx:34"
+      ],
+      "states": [
+        "fenced-heading",
+        "duplicate-text",
+        "dom-replaced",
+        "no-target"
+      ],
+      "current_states": [
+        "fenced-heading",
+        "duplicate-text",
+        "dom-replaced",
+        "no-target"
+      ],
+      "proposal_states": [],
+      "current_behavior": "正则会把围栏内#误识别，注释已承认DOM顺序错位；body取服务端doc，不直接订阅笔记未保存标题。",
+      "gap": "HTML不能把现存错位描述成正确能力；修复是否纳入需明确。",
+      "target_behavior": "提案对围栏和动态DOM重挂做准确映射；正文内部编辑算法归Office/Markdown复用。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "fenced-heading": "#scene=DOC-018.fenced-heading",
+        "duplicate-text": "#scene=DOC-018.duplicate-text",
+        "dom-replaced": "#scene=DOC-018.dom-replaced",
+        "no-target": "#scene=DOC-018.no-target"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-019",
+      "label": "引用进入与高亮定位",
+      "category": "citation",
+      "classification": "current",
+      "owner": "module3+module6",
+      "source": [
+        "packages/renderer/src/routes/_app.tsx:295",
+        "packages/renderer/src/routes/_app.tsx:302",
+        "packages/renderer/src/components/DocumentPanel.tsx:551"
+      ],
+      "states": [
+        "chat-citation",
+        "search-hit",
+        "same-doc",
+        "new-doc",
+        "highlighted"
+      ],
+      "current_states": [
+        "chat-citation",
+        "search-hit",
+        "same-doc",
+        "new-doc",
+        "highlighted"
+      ],
+      "proposal_states": [],
+      "current_behavior": "主对话引用携snippet/start/end/matchedBy进入文档；搜索命中同样构造Citation；activeCitation prop优先。",
+      "gap": "未发现独立能力缺口；仍需按批准稿校对视觉、可达性和恢复细节。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "引用入口键盘沿用来源组件；定位不应把焦点抢到无操作正文。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "chat-citation": "#scene=DOC-019.chat-citation",
+        "search-hit": "#scene=DOC-019.search-hit",
+        "same-doc": "#scene=DOC-019.same-doc",
+        "new-doc": "#scene=DOC-019.new-doc",
+        "highlighted": "#scene=DOC-019.highlighted"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-020",
+      "label": "引用重复正文与Markdown归一化",
+      "category": "citation",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:1015",
+        "packages/renderer/src/components/DocumentPanel.tsx:1031",
+        "packages/renderer/src/components/DocumentPanel.tsx:1071",
+        "packages/renderer/src/components/DocumentPanel.test.ts:4"
+      ],
+      "states": [
+        "repeat-first",
+        "repeat-later",
+        "markdown-noise",
+        "cross-node",
+        "truncated-snippet"
+      ],
+      "current_states": [
+        "repeat-first",
+        "repeat-later",
+        "markdown-noise",
+        "cross-node",
+        "truncated-snippet"
+      ],
+      "proposal_states": [],
+      "current_behavior": "小写/去空白/Markdown记号，原始start确定重复次数；全文→40→20字符前缀降级；短于4字符不匹配；跨文本节点Range。",
+      "gap": "不保证所有复杂渲染都能定位；不能把原始Markdown偏移当DOM偏移。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "repeat-first": "#scene=DOC-020.repeat-first",
+        "repeat-later": "#scene=DOC-020.repeat-later",
+        "markdown-noise": "#scene=DOC-020.markdown-noise",
+        "cross-node": "#scene=DOC-020.cross-node",
+        "truncated-snippet": "#scene=DOC-020.truncated-snippet"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-021",
+      "label": "引用无命中/不支持高亮API",
+      "category": "citation",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:594",
+        "packages/renderer/src/components/DocumentPanel.tsx:1083",
+        "packages/renderer/src/components/DocumentPanel.tsx:1140"
+      ],
+      "states": [
+        "no-match",
+        "short-snippet",
+        "no-highlight-api",
+        "detached-range",
+        "timeout"
+      ],
+      "current_states": [
+        "short-snippet",
+        "no-highlight-api",
+        "detached-range",
+        "timeout"
+      ],
+      "proposal_states": [
+        "no-match"
+      ],
+      "current_behavior": "先清旧高亮；异步挂载20次150ms重试；找不到只打开、不高亮错位；无CustomHighlight仍滚动定位。",
+      "gap": "无命中没有可见解释；提案可温和说明“已打开文档，未定位到原片段”。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "no-match": "#scene=DOC-021.no-match",
+        "short-snippet": "#scene=DOC-021.short-snippet",
+        "no-highlight-api": "#scene=DOC-021.no-highlight-api",
+        "detached-range": "#scene=DOC-021.detached-range",
+        "timeout": "#scene=DOC-021.timeout"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-022",
+      "label": "引用连续定位与生命周期",
+      "category": "citation",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:580",
+        "packages/renderer/src/components/DocumentPanel.tsx:588",
+        "packages/renderer/src/components/DocumentPanel.tsx:621"
+      ],
+      "states": [
+        "same-doc-next",
+        "consume-once",
+        "switch-document",
+        "stale-range"
+      ],
+      "current_states": [
+        "same-doc-next",
+        "consume-once",
+        "switch-document",
+        "stale-range"
+      ],
+      "proposal_states": [],
+      "current_behavior": "新引用先删除旧CSS高亮；成功/超时消费context或本地引用，cleanup取消异步尝试。",
+      "gap": "仅effect取消，没有引用失败状态UI；需要验证旧高亮不会残留下一文档。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "same-doc-next": "#scene=DOC-022.same-doc-next",
+        "consume-once": "#scene=DOC-022.consume-once",
+        "switch-document": "#scene=DOC-022.switch-document",
+        "stale-range": "#scene=DOC-022.stale-range"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-023",
+      "label": "更多菜单打开/键盘/回焦",
+      "category": "organize",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/document/DocumentHeader.tsx:40",
+        "packages/renderer/src/components/document/DocumentHeader.tsx:161",
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:259"
+      ],
+      "states": [
+        "closed",
+        "open",
+        "submenu",
+        "keyboard",
+        "escape",
+        "outside",
+        "action-focus"
+      ],
+      "current_states": [
+        "closed",
+        "open",
+        "submenu",
+        "keyboard",
+        "escape",
+        "outside",
+        "action-focus"
+      ],
+      "proposal_states": [],
+      "current_behavior": "Dropdown click/ArrowDown打开并autoFocus；Esc关闭并回触发；动作后统一closeMenu；portal子菜单沿用样式。",
+      "gap": "外点关闭不应无条件抢焦点；子层Esc是否逐层由AntD实际行为验证。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab至更多；ArrowDown打开；方向键导航；Escape关闭当前层并回焦。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "closed": "#scene=DOC-023.closed",
+        "open": "#scene=DOC-023.open",
+        "submenu": "#scene=DOC-023.submenu",
+        "keyboard": "#scene=DOC-023.keyboard",
+        "escape": "#scene=DOC-023.escape",
+        "outside": "#scene=DOC-023.outside",
+        "action-focus": "#scene=DOC-023.action-focus"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-024",
+      "label": "已有标签/删除/清空",
+      "category": "organize",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/document/doc-menu.tsx:70"
+      ],
+      "states": [
+        "existing",
+        "remove",
+        "clear",
+        "no-tags",
+        "long-tag"
+      ],
+      "current_states": [
+        "existing",
+        "remove",
+        "clear",
+        "no-tags",
+        "long-tag"
+      ],
+      "proposal_states": [],
+      "current_behavior": "标签子菜单显示建议和已有，已有逐项“－”，支持清除全部；父行显示数量；无内容禁用“还没有标签”。",
+      "gap": "只管理已有和建议；没有任意标签输入控件，不能悄悄新增自定义编辑表单。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "existing": "#scene=DOC-024.existing",
+        "remove": "#scene=DOC-024.remove",
+        "clear": "#scene=DOC-024.clear",
+        "no-tags": "#scene=DOC-024.no-tags",
+        "long-tag": "#scene=DOC-024.long-tag"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-025",
+      "label": "统计建议标签读取",
+      "category": "organize",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:434",
+        "packages/renderer/src/components/document/doc-menu.tsx:66",
+        "apps/server/src/routes/documents.ts:126"
+      ],
+      "states": [
+        "suggested",
+        "all-added",
+        "empty",
+        "loading",
+        "error",
+        "retry"
+      ],
+      "current_states": [
+        "suggested",
+        "all-added",
+        "empty"
+      ],
+      "proposal_states": [
+        "loading",
+        "error",
+        "retry"
+      ],
+      "current_behavior": "按documentId及tags key GET suggested-tags；排除已有；当前loading/error都退化为空候选。",
+      "gap": "读取失败被当成没有建议；无独立重试。",
+      "target_behavior": "提案在子菜单区分读取/失败/无建议，重试只读且不受目录错误阻断。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "suggested": "#scene=DOC-025.suggested",
+        "all-added": "#scene=DOC-025.all-added",
+        "empty": "#scene=DOC-025.empty",
+        "loading": "#scene=DOC-025.loading",
+        "error": "#scene=DOC-025.error",
+        "retry": "#scene=DOC-025.retry"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-026",
+      "label": "标签写入与正文缓存保真",
+      "category": "organize",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:307",
+        "packages/renderer/src/components/document/doc-menu.tsx:80"
+      ],
+      "states": [
+        "adding",
+        "removing",
+        "clearing",
+        "pending",
+        "error",
+        "success",
+        "retry"
+      ],
+      "current_states": [
+        "adding",
+        "removing",
+        "clearing",
+        "error",
+        "success"
+      ],
+      "proposal_states": [
+        "pending",
+        "retry"
+      ],
+      "current_behavior": "PATCH tags成功setQueryData整DocumentDetail，刷新documents/folders/tags/counts；失败只message。",
+      "gap": "无同步单飞和行等待；整对象body快照有覆盖活笔记缓存的风险；需按重命名模式收敛。",
+      "target_behavior": "提案同步锁+可见等待/错误重试，精确刷新元数据且保留同一编辑器、正文草稿。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "adding": "#scene=DOC-026.adding",
+        "removing": "#scene=DOC-026.removing",
+        "clearing": "#scene=DOC-026.clearing",
+        "pending": "#scene=DOC-026.pending",
+        "error": "#scene=DOC-026.error",
+        "success": "#scene=DOC-026.success",
+        "retry": "#scene=DOC-026.retry"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-027",
+      "label": "标签字段/容量边界",
+      "category": "organize",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/shared/src/documents.ts:76",
+        "packages/renderer/src/components/document/doc-menu.tsx:77"
+      ],
+      "states": [
+        "20-tags",
+        "over-capacity",
+        "long-tag",
+        "duplicate"
+      ],
+      "current_states": [
+        "20-tags",
+        "long-tag",
+        "duplicate"
+      ],
+      "proposal_states": [
+        "over-capacity"
+      ],
+      "current_behavior": "后端tags最多20个，每项trim后1–50字；候选点击直接数组追加，无前端容量提示。",
+      "gap": "上限时仍可点击并依赖400；AI候选长度/重复需按实际结果校验。",
+      "target_behavior": "提案上限禁用新增并解释；已有删除可用；不添加新后端能力。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "20-tags": "#scene=DOC-027.20-tags",
+        "over-capacity": "#scene=DOC-027.over-capacity",
+        "long-tag": "#scene=DOC-027.long-tag",
+        "duplicate": "#scene=DOC-027.duplicate"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-028",
+      "label": "目录菜单与当前路径",
+      "category": "organize",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/document/doc-menu.tsx:119",
+        "packages/renderer/src/components/DocumentPanel.tsx:665",
+        "packages/renderer/src/components/document/folders.ts:1"
+      ],
+      "states": [
+        "paths",
+        "current",
+        "rootless",
+        "long-path",
+        "no-folders"
+      ],
+      "current_states": [
+        "paths",
+        "current",
+        "rootless",
+        "long-path",
+        "no-folders"
+      ],
+      "proposal_states": [],
+      "current_behavior": "递归flatten全部路径；当前目录禁用；有当前folder且folders非空才提供移出目录；无目录禁用“还没有其它目录”。",
+      "gap": "这不是可新建目录树；不把KB根和folder=null混为一谈。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "paths": "#scene=DOC-028.paths",
+        "current": "#scene=DOC-028.current",
+        "rootless": "#scene=DOC-028.rootless",
+        "long-path": "#scene=DOC-028.long-path",
+        "no-folders": "#scene=DOC-028.no-folders"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-029",
+      "label": "目录加载/失败/恢复",
+      "category": "organize",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:435",
+        "packages/renderer/src/components/DocumentPanel.tsx:665",
+        "packages/renderer/src/components/document/doc-menu.tsx:119"
+      ],
+      "states": [
+        "loading",
+        "error",
+        "cached-error",
+        "retry",
+        "empty",
+        "loaded"
+      ],
+      "current_states": [
+        "empty",
+        "loaded"
+      ],
+      "proposal_states": [
+        "loading",
+        "error",
+        "cached-error",
+        "retry"
+      ],
+      "current_behavior": "folderQuery加载/失败未传菜单，data??[]直接伪装空目录；有缓存时仍可选择。",
+      "gap": "目录菜单与已做的命令移动弹窗状态合同不一致。",
+      "target_behavior": "提案目录子菜单局部loading/error/retry，真实空态明确；目录错误不阻断标签与AI。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "loading": "#scene=DOC-029.loading",
+        "error": "#scene=DOC-029.error",
+        "cached-error": "#scene=DOC-029.cached-error",
+        "retry": "#scene=DOC-029.retry",
+        "empty": "#scene=DOC-029.empty",
+        "loaded": "#scene=DOC-029.loaded"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-030",
+      "label": "菜单移动/移出目录",
+      "category": "organize",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:319",
+        "packages/renderer/src/components/document/doc-menu.tsx:132",
+        "packages/shared/src/documents.ts:81"
+      ],
+      "states": [
+        "move",
+        "current-noop",
+        "remove",
+        "pending",
+        "error",
+        "saved-read-error"
+      ],
+      "current_states": [
+        "move",
+        "current-noop",
+        "remove",
+        "error",
+        "saved-read-error"
+      ],
+      "proposal_states": [
+        "pending"
+      ],
+      "current_behavior": "PATCH {folder}，空串移出；当前同值直接return；成功刷新document/documents/folders；失败message。",
+      "gap": "菜单动作无等待锁；空串提示“知识库根”错误：它是未指派文档，只能搜索/标签找。",
+      "target_behavior": "提案明确“移出目录（文档保留）”；保留失败上下文和已写入/读取失败区分。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "move": "#scene=DOC-030.move",
+        "current-noop": "#scene=DOC-030.current-noop",
+        "remove": "#scene=DOC-030.remove",
+        "pending": "#scene=DOC-030.pending",
+        "error": "#scene=DOC-030.error",
+        "saved-read-error": "#scene=DOC-030.saved-read-error"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-031",
+      "label": "移动8秒撤销",
+      "category": "organize",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:340"
+      ],
+      "states": [
+        "toast",
+        "undo",
+        "pending",
+        "undo-success",
+        "undo-error",
+        "expired"
+      ],
+      "current_states": [
+        "toast",
+        "undo",
+        "pending",
+        "undo-success",
+        "undo-error",
+        "expired"
+      ],
+      "proposal_states": [],
+      "current_behavior": "message success持续8秒，按钮PATCH回旧folder并刷新；目标ID捕获在闭包。",
+      "gap": "撤销按钮无同步单飞；后续新移动后点旧撤销可能覆盖更新，需绑定当前移动上下文。",
+      "target_behavior": "提案保留真实8秒时长；撤销等待/失败明确，不宣传历史版本或批量恢复。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "toast": "#scene=DOC-031.toast",
+        "undo": "#scene=DOC-031.undo",
+        "pending": "#scene=DOC-031.pending",
+        "undo-success": "#scene=DOC-031.undo-success",
+        "undo-error": "#scene=DOC-031.undo-error",
+        "expired": "#scene=DOC-031.expired"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-032",
+      "label": "AI整理入口与费用说明",
+      "category": "ai-organize",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/document/doc-menu.tsx:167",
+        "packages/renderer/src/components/DocumentPanel.tsx:388",
+        "packages/renderer/src/components/DocumentPanel.tsx:411"
+      ],
+      "states": [
+        "ready",
+        "no-body",
+        "busy",
+        "cost-label"
+      ],
+      "current_states": [
+        "ready",
+        "no-body",
+        "busy",
+        "cost-label"
+      ],
+      "proposal_states": [],
+      "current_behavior": "菜单底部分组AI/产生用量；摘要与AI建议标签无正文禁用；共享aiSummaryLoading，忙时两项均“AI正在读…”。",
+      "gap": "busy依赖state非同步ref，不充分阻止同帧双触发；无取消能力。",
+      "target_behavior": "提案同步singleflight；说明付费动作；不虚构流式/停止摘要。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "ready": "#scene=DOC-032.ready",
+        "no-body": "#scene=DOC-032.no-body",
+        "busy": "#scene=DOC-032.busy",
+        "cost-label": "#scene=DOC-032.cost-label"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-033",
+      "label": "AI摘要展示/临时性",
+      "category": "ai-organize",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:215",
+        "packages/renderer/src/components/DocumentPanel.tsx:388",
+        "packages/renderer/src/components/DocumentPanel.tsx:756",
+        "apps/server/src/routes/documents.ts:162"
+      ],
+      "states": [
+        "generate",
+        "ready",
+        "regenerated",
+        "leave",
+        "reopen"
+      ],
+      "current_states": [
+        "generate",
+        "ready",
+        "regenerated",
+        "leave",
+        "reopen"
+      ],
+      "proposal_states": [],
+      "current_behavior": "POST summary，服务端只取body前12000字；usedModel=true显示文本和model；只当前内存不落库；换篇不显示旧摘要。",
+      "gap": "不得显示完整超长正文已全读或承诺永久保存；无收起/删除摘要控件。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "generate": "#scene=DOC-033.generate",
+        "ready": "#scene=DOC-033.ready",
+        "regenerated": "#scene=DOC-033.regenerated",
+        "leave": "#scene=DOC-033.leave",
+        "reopen": "#scene=DOC-033.reopen"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-034",
+      "label": "AI摘要缺模型/失败",
+      "category": "ai-organize",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:388"
+      ],
+      "states": [
+        "pending",
+        "no-model",
+        "request-error",
+        "retry",
+        "long-result"
+      ],
+      "current_states": [
+        "pending",
+        "no-model",
+        "request-error",
+        "retry",
+        "long-result"
+      ],
+      "proposal_states": [],
+      "current_behavior": "无模型warning返回result.text，不伪造摘要；请求失败message；忙结束后可重新点；长摘要pre-wrap。",
+      "gap": "生成失败没有贴近正文的持久反馈；不可把重试说成免费。",
+      "target_behavior": "提案局部等待和错误，保留已有成功摘要，新调用仍显式产生用量。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "pending": "#scene=DOC-034.pending",
+        "no-model": "#scene=DOC-034.no-model",
+        "request-error": "#scene=DOC-034.request-error",
+        "retry": "#scene=DOC-034.retry",
+        "long-result": "#scene=DOC-034.long-result"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-035",
+      "label": "AI候选标签生成",
+      "category": "ai-organize",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:411"
+      ],
+      "states": [
+        "pending",
+        "no-model",
+        "empty",
+        "candidates",
+        "error",
+        "retry"
+      ],
+      "current_states": [
+        "pending",
+        "no-model",
+        "empty",
+        "candidates",
+        "error",
+        "retry"
+      ],
+      "proposal_states": [],
+      "current_behavior": "POST suggested-tags/ai，usedModel=false提示模型设置路径；零标签info；有候选单独AI块，生成不自动挂载标签。",
+      "gap": "设置路径只是文字无按钮；结果不持久化，不承诺重新打开仍保留。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "pending": "#scene=DOC-035.pending",
+        "no-model": "#scene=DOC-035.no-model",
+        "empty": "#scene=DOC-035.empty",
+        "candidates": "#scene=DOC-035.candidates",
+        "error": "#scene=DOC-035.error",
+        "retry": "#scene=DOC-035.retry"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-036",
+      "label": "AI候选应用/失败恢复",
+      "category": "ai-organize",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:763"
+      ],
+      "states": [
+        "candidate",
+        "apply",
+        "pending",
+        "success",
+        "failure",
+        "remaining",
+        "all-added"
+      ],
+      "current_states": [
+        "candidate",
+        "apply",
+        "success",
+        "remaining"
+      ],
+      "proposal_states": [
+        "pending",
+        "failure",
+        "all-added"
+      ],
+      "current_behavior": "候选按钮PATCH tags后立即从本地候选移除；patch失败不会还原；全部选完本地空数组使整块消失，“都加上了”分支常无法呈现。",
+      "gap": "请求未成功先移除导致失败后候选丢失；并发点击可能用旧tags数组。",
+      "target_behavior": "提案单飞/成功后移除/失败保留候选；全加上明确完成态；不丢正文草稿。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "candidate": "#scene=DOC-036.candidate",
+        "apply": "#scene=DOC-036.apply",
+        "pending": "#scene=DOC-036.pending",
+        "success": "#scene=DOC-036.success",
+        "failure": "#scene=DOC-036.failure",
+        "remaining": "#scene=DOC-036.remaining",
+        "all-added": "#scene=DOC-036.all-added"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-037",
+      "label": "AI结果文档ID与迟到结果",
+      "category": "ai-organize",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:215",
+        "packages/renderer/src/components/DocumentPanel.tsx:388",
+        "packages/renderer/src/components/DocumentPanel.tsx:411",
+        "packages/renderer/src/components/DocumentPanel.tsx:658"
+      ],
+      "states": [
+        "switch-pending",
+        "late-summary",
+        "late-tags",
+        "new-document"
+      ],
+      "current_states": [
+        "switch-pending",
+        "late-summary",
+        "late-tags",
+        "new-document"
+      ],
+      "proposal_states": [],
+      "current_behavior": "结果带documentId渲染过滤；但loading是跨文档共享boolean，旧请求直到结束仍影响新篇入口。",
+      "gap": "仅结果隔离不等于请求生命周期隔离；同ID返回时也需防过期结果覆盖新请求。",
+      "target_behavior": "提案document+request token界定等待/结果；无需后台取消端点。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "switch-pending": "#scene=DOC-037.switch-pending",
+        "late-summary": "#scene=DOC-037.late-summary",
+        "late-tags": "#scene=DOC-037.late-tags",
+        "new-document": "#scene=DOC-037.new-document"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-038",
+      "label": "只读正文排版/复杂块",
+      "category": "body",
+      "classification": "current",
+      "owner": "module6+office-markdown-reuse",
+      "source": [
+        "packages/renderer/src/components/document/MarkdownBody.tsx:14",
+        "packages/renderer/src/components/ContentTypography.style.ts:1",
+        "packages/renderer/src/components/document/MarkdownBody.test.tsx:41"
+      ],
+      "states": [
+        "paragraph",
+        "table",
+        "code",
+        "image",
+        "math",
+        "diagram",
+        "diagram-error",
+        "empty"
+      ],
+      "current_states": [
+        "paragraph",
+        "table",
+        "code",
+        "image",
+        "math",
+        "diagram",
+        "diagram-error",
+        "empty"
+      ],
+      "proposal_states": [],
+      "current_behavior": "只读Tiptap共用createExtensions；表格/代码/数学/WaveDrom等沿用同一方言；body变化重建只读editor；复杂图失败保留源。",
+      "gap": "不能假造阅读编辑切换；抓取内容只读。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "paragraph": "#scene=DOC-038.paragraph",
+        "table": "#scene=DOC-038.table",
+        "code": "#scene=DOC-038.code",
+        "image": "#scene=DOC-038.image",
+        "math": "#scene=DOC-038.math",
+        "diagram": "#scene=DOC-038.diagram",
+        "diagram-error": "#scene=DOC-038.diagram-error",
+        "empty": "#scene=DOC-038.empty"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-039",
+      "label": "正文内部链接交接",
+      "category": "body",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/NoteEditor.tsx:184",
+        "packages/renderer/src/components/DocumentPanel.tsx:822",
+        "packages/renderer/src/editor/extensions.ts:30",
+        "packages/renderer/src/components/document/MarkdownBody.tsx:21"
+      ],
+      "states": [
+        "note-internal",
+        "dirty",
+        "cancel",
+        "readonly-link",
+        "external-link"
+      ],
+      "current_states": [
+        "note-internal",
+        "dirty",
+        "cancel",
+        "readonly-link",
+        "external-link"
+      ],
+      "proposal_states": [],
+      "current_behavior": "笔记internal-note明确回调runGuarded；只读MarkdownBody不传导航处理，extensions设置openOnClick=false。",
+      "gap": "只读正文链接是否可点击、默认新标签行为不能仅凭锚点存在宣称已实现；需浏览器验证。",
+      "target_behavior": "提案仅修复宿主链接可达性，内部ID经守卫、外部真实链接明确；不新增Wiki能力。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "note-internal": "#scene=DOC-039.note-internal",
+        "dirty": "#scene=DOC-039.dirty",
+        "cancel": "#scene=DOC-039.cancel",
+        "readonly-link": "#scene=DOC-039.readonly-link",
+        "external-link": "#scene=DOC-039.external-link"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-040",
+      "label": "抓取原网页来源入口",
+      "category": "body",
+      "classification": "proposal",
+      "owner": "module6",
+      "source": [
+        "packages/shared/src/documents.ts:96",
+        "packages/renderer/src/components/document/DocumentFooter.tsx:25",
+        "packages/renderer/src/components/document/DocumentHeader.tsx:54"
+      ],
+      "states": [
+        "source-url",
+        "no-url",
+        "external-open"
+      ],
+      "current_states": [],
+      "proposal_states": [
+        "source-url",
+        "no-url",
+        "external-open"
+      ],
+      "current_behavior": "doc有url字段，但当前Header/Footer未显示原网页URL；Footer“来源”只是站内出链。",
+      "gap": "原网页查看不是现成入口，原型若添加必须标提案。",
+      "target_behavior": "建议提案：抓取文档显示原网页域名/外链；使用已有url，不称公开分享，不新增后端。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "source-url": "#scene=DOC-040.source-url",
+        "no-url": "#scene=DOC-040.no-url",
+        "external-open": "#scene=DOC-040.external-open"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-041",
+      "label": "来源/被引用双链内容",
+      "category": "links",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/document/DocumentFooter.tsx:24",
+        "packages/shared/src/documents.ts:138"
+      ],
+      "states": [
+        "none",
+        "sources",
+        "backlinks",
+        "both",
+        "long-title",
+        "many-links"
+      ],
+      "current_states": [
+        "none",
+        "sources",
+        "backlinks",
+        "both",
+        "long-title",
+        "many-links"
+      ],
+      "proposal_states": [],
+      "current_behavior": "服务端links.sources/backlinks为站内文档；任一非空才显示；button标题文本，没有计数折叠和分页。",
+      "gap": "不要将“来源”误当URL；多链接长标题布局需覆盖。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "none": "#scene=DOC-041.none",
+        "sources": "#scene=DOC-041.sources",
+        "backlinks": "#scene=DOC-041.backlinks",
+        "both": "#scene=DOC-041.both",
+        "long-title": "#scene=DOC-041.long-title",
+        "many-links": "#scene=DOC-041.many-links"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-042",
+      "label": "双链打开/守卫/失效文档",
+      "category": "links",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:867",
+        "packages/renderer/src/components/document/DocumentFooter.tsx:35"
+      ],
+      "states": [
+        "activate",
+        "dirty",
+        "cancel",
+        "open",
+        "missing-target"
+      ],
+      "current_states": [
+        "activate",
+        "dirty",
+        "cancel",
+        "open",
+        "missing-target"
+      ],
+      "proposal_states": [],
+      "current_behavior": "双链回调runGuarded→onOpenDocument；目标被删后进入读取失败。",
+      "gap": "失效目标无专门恢复文案；回焦与旧滚动位置需抽验。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "每个来源/被引用是button，Tab/Enter/Space可达。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "activate": "#scene=DOC-042.activate",
+        "dirty": "#scene=DOC-042.dirty",
+        "cancel": "#scene=DOC-042.cancel",
+        "open": "#scene=DOC-042.open",
+        "missing-target": "#scene=DOC-042.missing-target"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-043",
+      "label": "文件实际分派矩阵",
+      "category": "file",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/document/FilePreview.tsx:77",
+        "packages/shared/src/files.ts:144"
+      ],
+      "states": [
+        "source-viewer",
+        "source-no-viewer",
+        "body-only",
+        "no-source"
+      ],
+      "current_states": [
+        "source-viewer",
+        "source-no-viewer",
+        "body-only",
+        "no-source"
+      ],
+      "proposal_states": [],
+      "current_behavior": "hasSource+viewer非none优先原件；否则有body显示正文；否则有源下载卡；无源Empty。",
+      "gap": "禁止恢复“正文/原件”切换；viewerFor是唯一分派源。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "source-viewer": "#scene=DOC-043.source-viewer",
+        "source-no-viewer": "#scene=DOC-043.source-no-viewer",
+        "body-only": "#scene=DOC-043.body-only",
+        "no-source": "#scene=DOC-043.no-source"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-044",
+      "label": "提取原因/可检索性",
+      "category": "file",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/document/FilePreview.tsx:103",
+        "packages/shared/src/documents.ts:134"
+      ],
+      "states": [
+        "parse-error",
+        "planned",
+        "empty-text",
+        "has-body",
+        "source-visible"
+      ],
+      "current_states": [
+        "parse-error",
+        "planned",
+        "empty-text",
+        "has-body",
+        "source-visible"
+      ],
+      "proposal_states": [],
+      "current_behavior": "parseError优先；有body无提示；planned说明后续提取、暂无可检索正文；其他空说明无可提取文字；不遮原件。",
+      "gap": "部分unsupported文案可能与planned不同；以parseSupport真实结果为准；原件可看不等于AI能引用。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "parse-error": "#scene=DOC-044.parse-error",
+        "planned": "#scene=DOC-044.planned",
+        "empty-text": "#scene=DOC-044.empty-text",
+        "has-body": "#scene=DOC-044.has-body",
+        "source-visible": "#scene=DOC-044.source-visible"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-045",
+      "label": "图片预览/原始大小",
+      "category": "media",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/document/FilePreview.tsx:189",
+        "packages/renderer/src/components/document/FilePreview.tsx:381"
+      ],
+      "states": [
+        "loaded",
+        "small-image",
+        "large-image",
+        "hover",
+        "focus",
+        "open-original",
+        "broken"
+      ],
+      "current_states": [
+        "loaded",
+        "small-image",
+        "large-image",
+        "hover",
+        "focus",
+        "open-original",
+        "broken"
+      ],
+      "proposal_states": [],
+      "current_behavior": "图片不放大，最大100%按比例；可点新标签打开原件实际大小；alt doc.title；onError下载降级。",
+      "gap": "真实新标签/原件鉴权由宿主验；HTML只能模拟。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab到a，Enter打开原件；焦点环明确。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "loaded": "#scene=DOC-045.loaded",
+        "small-image": "#scene=DOC-045.small-image",
+        "large-image": "#scene=DOC-045.large-image",
+        "hover": "#scene=DOC-045.hover",
+        "focus": "#scene=DOC-045.focus",
+        "open-original": "#scene=DOC-045.open-original",
+        "broken": "#scene=DOC-045.broken"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-046",
+      "label": "音频原生播放器",
+      "category": "media",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/document/FilePreview.tsx:218"
+      ],
+      "states": [
+        "loading",
+        "ready",
+        "playing",
+        "paused",
+        "ended",
+        "error"
+      ],
+      "current_states": [
+        "loading",
+        "ready",
+        "playing",
+        "paused",
+        "ended",
+        "error"
+      ],
+      "proposal_states": [],
+      "current_behavior": "audio controls src同源原件URL，onError下载降级；不提供自定义转录按钮。",
+      "gap": "本模块不重绘原生播放器；不同浏览器外观不同，不能用HTML假播放器证明宿主通过。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "原生controls键盘与媒体可用性需实际宿主验。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "loading": "#scene=DOC-046.loading",
+        "ready": "#scene=DOC-046.ready",
+        "playing": "#scene=DOC-046.playing",
+        "paused": "#scene=DOC-046.paused",
+        "ended": "#scene=DOC-046.ended",
+        "error": "#scene=DOC-046.error"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-047",
+      "label": "视频原生播放器",
+      "category": "media",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/document/FilePreview.tsx:224"
+      ],
+      "states": [
+        "loading",
+        "ready",
+        "playing",
+        "paused",
+        "seek",
+        "fullscreen",
+        "error"
+      ],
+      "current_states": [
+        "loading",
+        "ready",
+        "playing",
+        "paused",
+        "seek",
+        "fullscreen",
+        "error"
+      ],
+      "proposal_states": [],
+      "current_behavior": "video controls src同源原件URL，max-height70vh；不等于后台视频内容可检索。",
+      "gap": "全屏/播放/编解码/Range需宿主验证；不添加本模块分析视频能力。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "沿原生controls；播放/全屏快捷键由浏览器。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "loading": "#scene=DOC-047.loading",
+        "ready": "#scene=DOC-047.ready",
+        "playing": "#scene=DOC-047.playing",
+        "paused": "#scene=DOC-047.paused",
+        "seek": "#scene=DOC-047.seek",
+        "fullscreen": "#scene=DOC-047.fullscreen",
+        "error": "#scene=DOC-047.error"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-048",
+      "label": "查看器失败下载降级",
+      "category": "media",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/document/FilePreview.tsx:90",
+        "packages/renderer/src/components/document/FilePreview.tsx:115"
+      ],
+      "states": [
+        "image-error",
+        "audio-error",
+        "video-error",
+        "fallback",
+        "next-document"
+      ],
+      "current_states": [
+        "image-error",
+        "audio-error",
+        "video-error",
+        "fallback",
+        "next-document"
+      ],
+      "proposal_states": [],
+      "current_behavior": "按doc.id记录失败；失败卡“这个浏览器打不开这种格式”+mime/size+下载；换文档不继承失败。",
+      "gap": "同一文档没有重试预览入口；若原型增加则标提案。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "保留原件下载可用，不以空白代替失败，不自动重新上传。",
+      "html_paths": {
+        "image-error": "#scene=DOC-048.image-error",
+        "audio-error": "#scene=DOC-048.audio-error",
+        "video-error": "#scene=DOC-048.video-error",
+        "fallback": "#scene=DOC-048.fallback",
+        "next-document": "#scene=DOC-048.next-document"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-049",
+      "label": "原样文本预览",
+      "category": "file",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/document/FilePreview.tsx:235",
+        "packages/renderer/src/components/document/FilePreview.tsx:315",
+        "packages/renderer/src/components/document/FilePreview.tsx:351"
+      ],
+      "states": [
+        "txt",
+        "csv",
+        "json",
+        "code",
+        "long-lines"
+      ],
+      "current_states": [
+        "txt",
+        "csv",
+        "json",
+        "code",
+        "long-lines"
+      ],
+      "proposal_states": [],
+      "current_behavior": "text/*（除markdown/html）与application/json用pre等宽、pre-wrap、break-word；有内滚max70vh，保持换行/#。",
+      "gap": "yaml映射application/yaml，不走isPlainText；不可把所有代码格式宣称已按pre渲染。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "txt": "#scene=DOC-049.txt",
+        "csv": "#scene=DOC-049.csv",
+        "json": "#scene=DOC-049.json",
+        "code": "#scene=DOC-049.code",
+        "long-lines": "#scene=DOC-049.long-lines"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-050",
+      "label": "提取正文回退",
+      "category": "file",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/document/FilePreview.tsx:244",
+        "packages/renderer/src/components/document/FilePreview.tsx:262"
+      ],
+      "states": [
+        "legacy-doc",
+        "extracted-markdown",
+        "parse-warning"
+      ],
+      "current_states": [
+        "legacy-doc",
+        "extracted-markdown",
+        "parse-warning"
+      ],
+      "proposal_states": [],
+      "current_behavior": "无可看原件但有body，非纯文本走MarkdownBody；isExtracted仅openxml MIME提示版式不同。",
+      "gap": "注释称旧doc版式说明，但application/msword并不命中isExtracted；原型不能宣称旧doc已有提示。",
+      "target_behavior": "提案在实际提取格式明确版式差异；不虚构原件可编辑。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "legacy-doc": "#scene=DOC-050.legacy-doc",
+        "extracted-markdown": "#scene=DOC-050.extracted-markdown",
+        "parse-warning": "#scene=DOC-050.parse-warning"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-051",
+      "label": "无查看器但有原件",
+      "category": "file",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/document/FilePreview.tsx:268"
+      ],
+      "states": [
+        "unsupported",
+        "parse-error",
+        "download",
+        "narrow-card"
+      ],
+      "current_states": [
+        "unsupported",
+        "parse-error",
+        "download",
+        "narrow-card"
+      ],
+      "proposal_states": [],
+      "current_behavior": "说明卡格式无在线预览或提取失败；原件已保存可下载；主按钮下载原件。",
+      "gap": "窄屏卡片横排图标/文字/主按钮需防挤压，不能省略真实下一步。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "unsupported": "#scene=DOC-051.unsupported",
+        "parse-error": "#scene=DOC-051.parse-error",
+        "download": "#scene=DOC-051.download",
+        "narrow-card": "#scene=DOC-051.narrow-card"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-052",
+      "label": "无原件/无正文",
+      "category": "file",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/document/FilePreview.tsx:297"
+      ],
+      "states": [
+        "missing-source",
+        "parse-error",
+        "empty"
+      ],
+      "current_states": [
+        "missing-source",
+        "parse-error",
+        "empty"
+      ],
+      "proposal_states": [],
+      "current_behavior": "无源不给下载，避免404假动作；显示格式无在线预览或提取失败。",
+      "gap": "缺少可操作恢复路径，提案仅返回库/说明，不能凭空提供重新提取端点。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "missing-source": "#scene=DOC-052.missing-source",
+        "parse-error": "#scene=DOC-052.parse-error",
+        "empty": "#scene=DOC-052.empty"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-053",
+      "label": "下载原件入口",
+      "category": "file",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/document/DocumentHeader.tsx:130",
+        "packages/renderer/src/components/document/FilePreview.tsx:129",
+        "packages/renderer/src/lib/api.ts:858"
+      ],
+      "states": [
+        "file-source",
+        "readonly-no-download",
+        "downloading",
+        "native-error"
+      ],
+      "current_states": [
+        "file-source",
+        "readonly-no-download",
+        "downloading",
+        "native-error"
+      ],
+      "proposal_states": [],
+      "current_behavior": "头部仅kind=file且sourceKey存在显示下载；下载卡同端点?download=1；浏览器处理下载，不经blob全量复制。",
+      "gap": "没有浏览器下载完成回执，不能显示“已下载成功”；Office有dirty时下载端点仍是上次已保存原件。",
+      "target_behavior": "提案明确“下载已保存原件”语义；当前未保存导出属于Office内部。",
+      "keyboard_and_exit": "键盘激活原生a；不触发离开守卫，不暗示自动保存。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "file-source": "#scene=DOC-053.file-source",
+        "readonly-no-download": "#scene=DOC-053.readonly-no-download",
+        "downloading": "#scene=DOC-053.downloading",
+        "native-error": "#scene=DOC-053.native-error"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-054",
+      "label": "Office宿主五格式交接",
+      "category": "office",
+      "classification": "current",
+      "owner": "module6-host+office-reuse",
+      "source": [
+        "packages/renderer/src/components/document/OfficeSourceEditor.tsx:34",
+        "packages/renderer/src/components/document/FilePreview.tsx:148",
+        "packages/renderer/src/components/document/FilePreview.tsx:177"
+      ],
+      "states": [
+        "docx",
+        "xlsx",
+        "pptx",
+        "html",
+        "pdf"
+      ],
+      "current_states": [
+        "docx",
+        "xlsx",
+        "pptx",
+        "html",
+        "pdf"
+      ],
+      "proposal_states": [],
+      "current_behavior": "五格式统一OfficeSourceEditor，flush/io/appearance/onDirty/Agent句柄透传；笔记Markdown另由NoteEditor适配同一Office shell。",
+      "gap": "不重做格式内Ribbon、画布、格式专属弹窗；本模块只示意交接与真实宿主边界。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "docx": "#scene=DOC-054.docx",
+        "xlsx": "#scene=DOC-054.xlsx",
+        "pptx": "#scene=DOC-054.pptx",
+        "html": "#scene=DOC-054.html",
+        "pdf": "#scene=DOC-054.pdf"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-055",
+      "label": "原件载入/保存/错误边界",
+      "category": "office",
+      "classification": "current",
+      "owner": "module6-host+office-reuse",
+      "source": [
+        "packages/renderer/src/lib/office-source-filename.ts:32",
+        "packages/renderer/src/components/document/OfficeSourceEditor.tsx:59"
+      ],
+      "states": [
+        "loading",
+        "ready",
+        "load-error",
+        "dirty",
+        "saving",
+        "save-error",
+        "filename-preserved"
+      ],
+      "current_states": [
+        "loading",
+        "ready",
+        "load-error",
+        "dirty",
+        "saving",
+        "save-error",
+        "filename-preserved"
+      ],
+      "proposal_states": [],
+      "current_behavior": "io.load按原件URL带cookie取字节，HTTP错误抛；io.save替换同文档原件，保留原始文件名；解析/保存UI由Office执行。",
+      "gap": "宿主io保存忽略FileUploadResponse详情；不能宣称已对parseError、缓存刷新做额外验证。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "Office保存失败保持dirty；具体格式恢复由Office既有实现，不用HTML模拟替代。",
+      "html_paths": {
+        "loading": "#scene=DOC-055.loading",
+        "ready": "#scene=DOC-055.ready",
+        "load-error": "#scene=DOC-055.load-error",
+        "dirty": "#scene=DOC-055.dirty",
+        "saving": "#scene=DOC-055.saving",
+        "save-error": "#scene=DOC-055.save-error",
+        "filename-preserved": "#scene=DOC-055.filename-preserved"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-056",
+      "label": "Office无法守卫代存",
+      "category": "office",
+      "classification": "current",
+      "owner": "module6-host+office-contract",
+      "source": [
+        "packages/renderer/src/components/document/OfficeSourceEditor.tsx:84",
+        "packages/renderer/src/components/document/OfficeSourceEditor.tsx:129",
+        "packages/renderer/src/components/UnsavedGuard.tsx:93"
+      ],
+      "states": [
+        "dirty",
+        "guard",
+        "save-at-toolbar",
+        "save-from-guard-blocked"
+      ],
+      "current_states": [
+        "dirty",
+        "guard",
+        "save-at-toolbar",
+        "save-from-guard-blocked"
+      ],
+      "proposal_states": [],
+      "current_behavior": "注册manual save handler但canSave=false；当前通用守卫仍显示保存并离开，调用只提示并return false；capture guard则隐藏不可用代存。",
+      "gap": "旧提示“工具条右端保存到库”与现行保存快捷区在标签左侧冲突；不可承诺保存并离开可存Office。",
+      "target_behavior": "提案无代存时明确“继续编辑并保存”；仍提供真实丢弃；不改Office API实现代存。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "无法代存必须留在原件，现有工具栏保存成功dirty=false后再导航。",
+      "html_paths": {
+        "dirty": "#scene=DOC-056.dirty",
+        "guard": "#scene=DOC-056.guard",
+        "save-at-toolbar": "#scene=DOC-056.save-at-toolbar",
+        "save-from-guard-blocked": "#scene=DOC-056.save-from-guard-blocked"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-057",
+      "label": "编辑器AI预设/选区问答交接",
+      "category": "handoff",
+      "classification": "current",
+      "owner": "module6-host+office/chat-reuse",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:241",
+        "packages/renderer/src/components/DocumentPanel.tsx:822",
+        "packages/renderer/src/components/document/OfficeSourceEditor.tsx:174",
+        "packages/renderer/src/components/NoteEditor.tsx:153"
+      ],
+      "states": [
+        "whole-doc",
+        "selection",
+        "preset",
+        "no-model"
+      ],
+      "current_states": [
+        "whole-doc",
+        "selection",
+        "preset",
+        "no-model"
+      ],
+      "proposal_states": [],
+      "current_behavior": "问AI空草稿；选区预填截200字、换行合并；instruction优先；不自动发送。Note inline rewrite独立服务，失败返回null不替换正文。",
+      "gap": "不能混淆“预填问答”与“直接应用AI改写”；格式内控件保留现有。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "whole-doc": "#scene=DOC-057.whole-doc",
+        "selection": "#scene=DOC-057.selection",
+        "preset": "#scene=DOC-057.preset",
+        "no-model": "#scene=DOC-057.no-model"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-058",
+      "label": "PPTX截图草稿交接",
+      "category": "handoff",
+      "classification": "current",
+      "owner": "module6-host+office/chat-reuse",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:257",
+        "packages/renderer/src/components/document/OfficeSourceEditor.tsx:219",
+        ".trellis/spec/shared/contract/document-agent.md:1"
+      ],
+      "states": [
+        "snapshot-ready",
+        "wrong-document",
+        "preview",
+        "remove",
+        "explicit-send",
+        "stale-target"
+      ],
+      "current_states": [
+        "snapshot-ready",
+        "wrong-document",
+        "preview",
+        "remove",
+        "explicit-send",
+        "stale-target"
+      ],
+      "proposal_states": [],
+      "current_behavior": "snapshot只接收匹配documentId，预填同文档侧栏；预览/移除/显式发送和版本复核由Chat/Office合同控制。",
+      "gap": "不把snapshot入口当自动编辑或自动发送；本模块仅展示宿主交接不枚举全部生成工具。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "snapshot-ready": "#scene=DOC-058.snapshot-ready",
+        "wrong-document": "#scene=DOC-058.wrong-document",
+        "preview": "#scene=DOC-058.preview",
+        "remove": "#scene=DOC-058.remove",
+        "explicit-send": "#scene=DOC-058.explicit-send",
+        "stale-target": "#scene=DOC-058.stale-target"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-059",
+      "label": "文档助手开启/布局",
+      "category": "assistant",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:231",
+        "packages/renderer/src/components/DocumentPanel.tsx:241",
+        "packages/renderer/src/components/DocumentPanel.tsx:913",
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:525"
+      ],
+      "states": [
+        "closed",
+        "open",
+        "desktop",
+        "overlay",
+        "narrow",
+        "long-title"
+      ],
+      "current_states": [
+        "closed",
+        "open",
+        "desktop",
+        "overlay",
+        "narrow",
+        "long-title"
+      ],
+      "proposal_states": [],
+      "current_behavior": "同文档草稿和open状态；桌面400px侧栏；实际容器≤880覆盖并宽min(400,100%-40)；展开时隐藏大纲。",
+      "gap": "窄屏留40px正文不代表焦点隔离已完成；没有遮罩/焦点圈定和Esc关闭逻辑。",
+      "target_behavior": "提案覆盖模式焦点/退出明确且读写不中断；不将整Chat重新实现。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "closed": "#scene=DOC-059.closed",
+        "open": "#scene=DOC-059.open",
+        "desktop": "#scene=DOC-059.desktop",
+        "overlay": "#scene=DOC-059.overlay",
+        "narrow": "#scene=DOC-059.narrow",
+        "long-title": "#scene=DOC-059.long-title"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-060",
+      "label": "关闭助手保留流式与回焦",
+      "category": "assistant",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:902",
+        "packages/renderer/src/components/DocumentPanel.tsx:924",
+        "packages/renderer/src/components/document/DocChatSidebar.tsx:130"
+      ],
+      "states": [
+        "close",
+        "streaming-hidden",
+        "reopen",
+        "tab-hidden",
+        "focus-return",
+        "document-switch"
+      ],
+      "current_states": [
+        "close",
+        "streaming-hidden",
+        "reopen",
+        "tab-hidden",
+        "focus-return",
+        "document-switch"
+      ],
+      "proposal_states": [],
+      "current_behavior": "关闭只是宽0，保持挂载；aria-hidden+inert移除Tab/可及树；关闭requestAnimationFrame回触发或问AI；换doc不显示旧sidebar。",
+      "gap": "重新打开askAi会set新draft；Chat内部是否保持未发草稿需实际验证；overlay当前无Escape。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "关闭按钮Enter/Space；提案Esc关闭覆盖层；折叠态不得Tab进隐藏内容。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "close": "#scene=DOC-060.close",
+        "streaming-hidden": "#scene=DOC-060.streaming-hidden",
+        "reopen": "#scene=DOC-060.reopen",
+        "tab-hidden": "#scene=DOC-060.tab-hidden",
+        "focus-return": "#scene=DOC-060.focus-return",
+        "document-switch": "#scene=DOC-060.document-switch"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-061",
+      "label": "助手引用同篇/跨篇导航",
+      "category": "assistant",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/DocumentPanel.tsx:685",
+        "packages/renderer/src/components/document/DocChatSidebar.tsx:189"
+      ],
+      "states": [
+        "same-doc",
+        "cross-doc",
+        "dirty",
+        "cancel"
+      ],
+      "current_states": [
+        "same-doc",
+        "cross-doc"
+      ],
+      "proposal_states": [
+        "dirty",
+        "cancel"
+      ],
+      "current_behavior": "同篇引用本地高亮；跨篇直接onOpenDocument（未guard）。Chat保存为笔记后onOpenNote已走runGuarded。",
+      "gap": "跨篇引用可绕开dirty保护；与页脚双链和保存为笔记不一致。",
+      "target_behavior": "提案跨篇引用统一runGuarded，同篇不触发离开；仅此宿主缺口。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "same-doc": "#scene=DOC-061.same-doc",
+        "cross-doc": "#scene=DOC-061.cross-doc",
+        "dirty": "#scene=DOC-061.dirty",
+        "cancel": "#scene=DOC-061.cancel"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-062",
+      "label": "DOCX能力/AI修订开关",
+      "category": "assistant",
+      "classification": "current",
+      "owner": "module6-host+chat-agent-reuse",
+      "source": [
+        "packages/renderer/src/components/document/DocChatSidebar.tsx:84",
+        "packages/renderer/src/components/document/DocxCapabilityStatus.tsx:25"
+      ],
+      "states": [
+        "loading",
+        "ready",
+        "revision-off",
+        "revision-on",
+        "no-model",
+        "error",
+        "retry"
+      ],
+      "current_states": [
+        "loading",
+        "ready",
+        "revision-off",
+        "revision-on",
+        "no-model",
+        "error",
+        "retry"
+      ],
+      "proposal_states": [],
+      "current_behavior": "有docx真实画布+handle才查询capabilities；显示AI修订开关；读取中aria-busy，无教程；缺模型设置入口；读取错误重试。",
+      "gap": "开关不等于模型/句柄可执行；availableDocxAgent负责过滤；不允许仅靠开关解锁写入。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "loading": "#scene=DOC-062.loading",
+        "ready": "#scene=DOC-062.ready",
+        "revision-off": "#scene=DOC-062.revision-off",
+        "revision-on": "#scene=DOC-062.revision-on",
+        "no-model": "#scene=DOC-062.no-model",
+        "error": "#scene=DOC-062.error",
+        "retry": "#scene=DOC-062.retry"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-063",
+      "label": "其他格式助手能力状态",
+      "category": "assistant",
+      "classification": "current",
+      "owner": "module6-host+chat-agent-reuse",
+      "source": [
+        "packages/renderer/src/components/document/DocChatSidebar.tsx:91"
+      ],
+      "states": [
+        "loading",
+        "ready",
+        "executor-unavailable",
+        "model-unavailable",
+        "canvas-unavailable",
+        "error",
+        "retry"
+      ],
+      "current_states": [
+        "loading",
+        "ready",
+        "executor-unavailable",
+        "model-unavailable",
+        "canvas-unavailable",
+        "error",
+        "retry"
+      ],
+      "proposal_states": [],
+      "current_behavior": "按format查询document capabilities；executorReady+modelReady+匹配format才activeAgent；状态区区分不可编辑/需要聊天模型/画布不可用；失败可重试。",
+      "gap": "非docx loading无显式文案；不能伪称所有格式Agent工具相同。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "loading": "#scene=DOC-063.loading",
+        "ready": "#scene=DOC-063.ready",
+        "executor-unavailable": "#scene=DOC-063.executor-unavailable",
+        "model-unavailable": "#scene=DOC-063.model-unavailable",
+        "canvas-unavailable": "#scene=DOC-063.canvas-unavailable",
+        "error": "#scene=DOC-063.error",
+        "retry": "#scene=DOC-063.retry"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-064",
+      "label": "助手设置/保存笔记后跳转",
+      "category": "assistant",
+      "classification": "current",
+      "owner": "module6-host+module2/chat-reuse",
+      "source": [
+        "packages/renderer/src/components/document/DocChatSidebar.tsx:102",
+        "packages/renderer/src/components/document/DocChatSidebar.tsx:123",
+        "packages/renderer/src/components/document/DocChatSidebar.tsx:190"
+      ],
+      "states": [
+        "model-settings",
+        "dirty",
+        "cancel",
+        "new-note",
+        "open-note"
+      ],
+      "current_states": [
+        "model-settings",
+        "dirty",
+        "cancel",
+        "new-note",
+        "open-note"
+      ],
+      "proposal_states": [],
+      "current_behavior": "模型/网络设置、io打开文档、保存为笔记后打开均runGuarded；不把侧栏会话写进URL高亮。",
+      "gap": "侧栏会话id由Chat持有，不代表一定不落库；composer容量不查询此会话。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "model-settings": "#scene=DOC-064.model-settings",
+        "dirty": "#scene=DOC-064.dirty",
+        "cancel": "#scene=DOC-064.cancel",
+        "new-note": "#scene=DOC-064.new-note",
+        "open-note": "#scene=DOC-064.open-note"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-065",
+      "label": "助手ChatPanel承载状态边界",
+      "category": "assistant",
+      "classification": "current",
+      "owner": "module6-host+chat-reuse",
+      "source": [
+        "packages/renderer/src/components/document/DocChatSidebar.tsx:182",
+        "packages/chat/src/ChatPanel.tsx:1"
+      ],
+      "states": [
+        "empty",
+        "draft",
+        "streaming",
+        "stop",
+        "failed",
+        "retry",
+        "citation",
+        "saved-note"
+      ],
+      "current_states": [
+        "empty",
+        "draft",
+        "streaming",
+        "stop",
+        "failed",
+        "retry",
+        "citation",
+        "saved-note"
+      ],
+      "proposal_states": [],
+      "current_behavior": "复用完整ChatPanel承载流式/停止/错误/重试/引用/存笔记；showReasoningControl=false；当前文档draft作用域。",
+      "gap": "本模块只覆盖容器与交接，完整聊天气泡、工具审批/续轮恢复在Chat模块；不能宣称已逐工具验收。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "empty": "#scene=DOC-065.empty",
+        "draft": "#scene=DOC-065.draft",
+        "streaming": "#scene=DOC-065.streaming",
+        "stop": "#scene=DOC-065.stop",
+        "failed": "#scene=DOC-065.failed",
+        "retry": "#scene=DOC-065.retry",
+        "citation": "#scene=DOC-065.citation",
+        "saved-note": "#scene=DOC-065.saved-note"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-066",
+      "label": "助手快捷提问",
+      "category": "assistant",
+      "classification": "current",
+      "owner": "module6-host+chat-reuse",
+      "source": [
+        "packages/renderer/src/components/document/DocChatGuide.tsx:7",
+        "packages/renderer/src/components/document/DocChatSidebar.tsx:63"
+      ],
+      "states": [
+        "empty",
+        "quick-read",
+        "quick-points",
+        "quick-details",
+        "sent"
+      ],
+      "current_states": [
+        "empty",
+        "quick-read",
+        "quick-points",
+        "quick-details",
+        "sent"
+      ],
+      "proposal_states": [],
+      "current_behavior": "空对话不放教程；输入框上方速读本文/提出要点/解释细节；点快捷问题直接ask发送，与选区预填不同。",
+      "gap": "HTML必须清楚区分直接发送和仅预填；无模型/发送失败由Chat处理。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Enter直接发送完整预置问题，需文案准确。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "empty": "#scene=DOC-066.empty",
+        "quick-read": "#scene=DOC-066.quick-read",
+        "quick-points": "#scene=DOC-066.quick-points",
+        "quick-details": "#scene=DOC-066.quick-details",
+        "sent": "#scene=DOC-066.sent"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-067",
+      "label": "命令重命名弹窗复用",
+      "category": "commands",
+      "classification": "current",
+      "owner": "module3-reuse+module6-parity",
+      "source": [
+        "packages/renderer/src/components/document/DocumentCommandModal.tsx:77",
+        "packages/renderer/src/components/document/DocumentCommandModal.tsx:116"
+      ],
+      "states": [
+        "open",
+        "blank",
+        "unchanged",
+        "limit-200",
+        "pending",
+        "error",
+        "retry",
+        "saved-read-error"
+      ],
+      "current_states": [
+        "open",
+        "blank",
+        "unchanged",
+        "limit-200",
+        "pending",
+        "error",
+        "retry",
+        "saved-read-error"
+      ],
+      "proposal_states": [],
+      "current_behavior": "仅笔记rename；预填标题，trim空报错；同值无写关闭；max200；写失败保留value；读取失败refreshOnly。",
+      "gap": "不要在本模块更多菜单再加重复改名入口；命令路径复用module3。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "open": "#scene=DOC-067.open",
+        "blank": "#scene=DOC-067.blank",
+        "unchanged": "#scene=DOC-067.unchanged",
+        "limit-200": "#scene=DOC-067.limit-200",
+        "pending": "#scene=DOC-067.pending",
+        "error": "#scene=DOC-067.error",
+        "retry": "#scene=DOC-067.retry",
+        "saved-read-error": "#scene=DOC-067.saved-read-error"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-068",
+      "label": "命令移动弹窗复用",
+      "category": "commands",
+      "classification": "current",
+      "owner": "module3-reuse+module6-copy",
+      "source": [
+        "packages/renderer/src/components/document/DocumentCommandModal.tsx:133",
+        "packages/renderer/src/components/document/DocumentCommandModal.tsx:237"
+      ],
+      "states": [
+        "open",
+        "folders-loading",
+        "folders-error",
+        "retry",
+        "selected",
+        "unchanged",
+        "pending",
+        "error"
+      ],
+      "current_states": [
+        "open",
+        "folders-loading",
+        "folders-error",
+        "retry",
+        "selected",
+        "unchanged",
+        "pending",
+        "error"
+      ],
+      "proposal_states": [],
+      "current_behavior": "全格式move；Select已有路径+空串“知识库根”；目录读取/失败/重试明确；同值关闭无写。",
+      "gap": "“知识库根”文案同样错误，应改未指派而非虚构根层归属；不新增目录创建能力。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "open": "#scene=DOC-068.open",
+        "folders-loading": "#scene=DOC-068.folders-loading",
+        "folders-error": "#scene=DOC-068.folders-error",
+        "retry": "#scene=DOC-068.retry",
+        "selected": "#scene=DOC-068.selected",
+        "unchanged": "#scene=DOC-068.unchanged",
+        "pending": "#scene=DOC-068.pending",
+        "error": "#scene=DOC-068.error"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-069",
+      "label": "命令当前笔记查找",
+      "category": "commands",
+      "classification": "current",
+      "owner": "module3-reuse",
+      "source": [
+        "packages/renderer/src/components/document/DocumentCommandModal.tsx:121",
+        "packages/renderer/src/components/DocumentPanel.tsx:691"
+      ],
+      "states": [
+        "open",
+        "too-short",
+        "ime",
+        "no-match",
+        "match"
+      ],
+      "current_states": [
+        "open",
+        "too-short",
+        "ime",
+        "no-match",
+        "match"
+      ],
+      "proposal_states": [],
+      "current_behavior": "仅note；trim至少2字；首个匹配定位；没找到保留query给错误；无下一处/替换（Office内部另有查找替换）。",
+      "gap": "HTML不可把命令查找做成完整搜索工具；保留 module3 原型行为。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "open": "#scene=DOC-069.open",
+        "too-short": "#scene=DOC-069.too-short",
+        "ime": "#scene=DOC-069.ime",
+        "no-match": "#scene=DOC-069.no-match",
+        "match": "#scene=DOC-069.match"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-070",
+      "label": "命令等待/IME/回焦/晚回包",
+      "category": "commands",
+      "classification": "current",
+      "owner": "module3-reuse+module6-integration",
+      "source": [
+        "packages/renderer/src/components/document/DocumentCommandModal.tsx:51",
+        "packages/renderer/src/components/document/DocumentCommandModal.tsx:97",
+        "packages/renderer/src/components/document/DocumentCommandModal.tsx:209",
+        "packages/renderer/src/components/DocumentPanel.tsx:957"
+      ],
+      "states": [
+        "ime-enter",
+        "ime-escape",
+        "pending",
+        "escape-blocked",
+        "palette-blocked",
+        "error",
+        "retained",
+        "late-result",
+        "refresh-only",
+        "focus"
+      ],
+      "current_states": [
+        "ime-enter",
+        "ime-escape",
+        "pending",
+        "escape-blocked",
+        "palette-blocked",
+        "error",
+        "retained",
+        "late-result",
+        "refresh-only",
+        "focus"
+      ],
+      "proposal_states": [],
+      "current_behavior": "busy ref同步防重；组合输入不提交/不关；等待禁取消/关闭/Esc/遮罩；阻止Cmd/Ctrl+K叠层；doc.id key防晚回包；成功后回有效trigger否则更多。",
+      "gap": "只读恢复不能再次PATCH；所有适配保留既有合同。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Enter提交非move；IME不提交；等待禁退出；Esc可取消空闲；Cmd/Ctrl+K不另开搜索。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "ime-enter": "#scene=DOC-070.ime-enter",
+        "ime-escape": "#scene=DOC-070.ime-escape",
+        "pending": "#scene=DOC-070.pending",
+        "escape-blocked": "#scene=DOC-070.escape-blocked",
+        "palette-blocked": "#scene=DOC-070.palette-blocked",
+        "error": "#scene=DOC-070.error",
+        "retained": "#scene=DOC-070.retained",
+        "late-result": "#scene=DOC-070.late-result",
+        "refresh-only": "#scene=DOC-070.refresh-only",
+        "focus": "#scene=DOC-070.focus"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-071",
+      "label": "未保存手动格式离开",
+      "category": "guard",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/UnsavedGuard.tsx:62",
+        "packages/renderer/src/lib/unsaved.tsx:86"
+      ],
+      "states": [
+        "clean",
+        "manual-dirty",
+        "continue",
+        "discard",
+        "save"
+      ],
+      "current_states": [
+        "clean",
+        "manual-dirty",
+        "continue",
+        "discard",
+        "save"
+      ],
+      "proposal_states": [],
+      "current_behavior": "clean直接执行；manual dirty三选择继续编辑/丢弃/保存并离开；通用guard无X/遮罩/Esc；resolve discard只清dirty并执行pending action。",
+      "gap": "必须按canSave能力呈现真实动作；Office不可代存见DOC-056；不要承诺所有格式均可一键保存离开。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "clean": "#scene=DOC-071.clean",
+        "manual-dirty": "#scene=DOC-071.manual-dirty",
+        "continue": "#scene=DOC-071.continue",
+        "discard": "#scene=DOC-071.discard",
+        "save": "#scene=DOC-071.save"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-072",
+      "label": "自动保存笔记离开",
+      "category": "guard",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/UnsavedGuard.tsx:93",
+        "packages/renderer/src/lib/unsaved.tsx:104",
+        "packages/renderer/src/components/NoteEditor.tsx:83"
+      ],
+      "states": [
+        "auto-dirty",
+        "saving",
+        "auto-saved",
+        "stay",
+        "leave"
+      ],
+      "current_states": [
+        "auto-dirty",
+        "saving",
+        "auto-saved",
+        "stay",
+        "leave"
+      ],
+      "proposal_states": [],
+      "current_behavior": "auto没有丢弃：已写入版本不可撤销；自动完成时守卫可保留“改动已自动保存/离开”；手动点save等flush完成再执行导航。",
+      "gap": "不显示“丢弃改动”撤销已经落库的笔记。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "auto-dirty": "#scene=DOC-072.auto-dirty",
+        "saving": "#scene=DOC-072.saving",
+        "auto-saved": "#scene=DOC-072.auto-saved",
+        "stay": "#scene=DOC-072.stay",
+        "leave": "#scene=DOC-072.leave"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-073",
+      "label": "守卫保存失败/连续修改",
+      "category": "guard",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/lib/unsaved.tsx:119",
+        "packages/renderer/src/components/UnsavedGuard.tsx:168",
+        "packages/renderer/src/editor/markdown-save.test.tsx:369"
+      ],
+      "states": [
+        "pending",
+        "false-result",
+        "thrown-error",
+        "retry",
+        "continue",
+        "newer-edit"
+      ],
+      "current_states": [
+        "pending",
+        "false-result",
+        "thrown-error",
+        "retry",
+        "continue",
+        "newer-edit"
+      ],
+      "proposal_states": [],
+      "current_behavior": "savingRef同步锁resolve；save false或throw保留guard及原文档；error显示；Markdown继续编辑串行保存最新正文后才离开。",
+      "gap": "当前generic guard缺IME处理且canSave=false仍提供主保存；新模块补齐不能破坏capture专用guard。",
+      "target_behavior": "提案共享视觉和能力判定，保存失败可重试或返回编辑；等待期不退出。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "pending": "#scene=DOC-073.pending",
+        "false-result": "#scene=DOC-073.false-result",
+        "thrown-error": "#scene=DOC-073.thrown-error",
+        "retry": "#scene=DOC-073.retry",
+        "continue": "#scene=DOC-073.continue",
+        "newer-edit": "#scene=DOC-073.newer-edit"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-074",
+      "label": "浏览器后退/刷新/关闭宿主边界",
+      "category": "guard",
+      "classification": "current",
+      "owner": "module6-boundary+runtime/office",
+      "source": [
+        "packages/office/src/editors/MarkdownEditor.tsx:790",
+        "packages/renderer/src/components/document/OfficeSourceEditor.tsx:123",
+        "packages/renderer/src/routes/_app.tsx:1"
+      ],
+      "states": [
+        "browser-back",
+        "route-bypass",
+        "reload",
+        "tab-close",
+        "desktop-close"
+      ],
+      "current_states": [
+        "browser-back",
+        "route-bypass",
+        "reload",
+        "tab-close",
+        "desktop-close"
+      ],
+      "proposal_states": [],
+      "current_behavior": "仅发现MarkdownEditor beforeunload dirty原生提示；renderer无useBlocker/popstate统一拦截；Office卸载清dirty。",
+      "gap": "当前自绘guard覆盖主动runGuarded路径，不证明browser back/forward或Office关页有保护。",
+      "target_behavior": "规划需主会话定边界：至少明确未验，不在HTML声称原生已实现；通用路由拦截若纳入另核设计。",
+      "keyboard_and_exit": "浏览器/系统退出不能用普通Esc/假HTML弹窗替代实际宿主验证。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "browser-back": "#scene=DOC-074.browser-back",
+        "route-bypass": "#scene=DOC-074.route-bypass",
+        "reload": "#scene=DOC-074.reload",
+        "tab-close": "#scene=DOC-074.tab-close",
+        "desktop-close": "#scene=DOC-074.desktop-close"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-075",
+      "label": "390px/中栏/低高度布局",
+      "category": "layout",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:44",
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:251",
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:426",
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:546"
+      ],
+      "states": [
+        "desktop",
+        "390",
+        "mid-column",
+        "low-height",
+        "overlay",
+        "nav-rail"
+      ],
+      "current_states": [
+        "desktop",
+        "390",
+        "mid-column",
+        "low-height",
+        "overlay",
+        "nav-rail"
+      ],
+      "proposal_states": [],
+      "current_behavior": "header600缩gap，500隐藏动作文本；只读≤880用16边距；大纲≤880隐藏；AI依真实container≤880覆盖；Office高度链min-height0。",
+      "gap": "多返回按钮+保存状态可能挤标题；低高度叠AI块/页脚可能挤编辑器；需要同内容同宽比较。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "desktop": "#scene=DOC-075.desktop",
+        "390": "#scene=DOC-075.390",
+        "mid-column": "#scene=DOC-075.mid-column",
+        "low-height": "#scene=DOC-075.low-height",
+        "overlay": "#scene=DOC-075.overlay",
+        "nav-rail": "#scene=DOC-075.nav-rail"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-076",
+      "label": "浅深/焦点/hover不抖动",
+      "category": "layout",
+      "classification": "current",
+      "owner": "module1-reuse+module6",
+      "source": [
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:16",
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:349",
+        "packages/renderer/src/components/document/FilePreview.tsx:332"
+      ],
+      "states": [
+        "light",
+        "dark",
+        "hover",
+        "focus",
+        "active",
+        "reduced-motion"
+      ],
+      "current_states": [
+        "light",
+        "dark",
+        "hover",
+        "focus",
+        "active",
+        "reduced-motion"
+      ],
+      "proposal_states": [],
+      "current_behavior": "组件用theme token；按钮边框透明占位；返回focus ring；spin/宽度transition尊重reduce；媒体背景共享容器色。",
+      "gap": "修复后输入框颜色/边框粗细遵循module1；不能借全局覆盖Office .ant-*破坏内部组件。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "light": "#scene=DOC-076.light",
+        "dark": "#scene=DOC-076.dark",
+        "hover": "#scene=DOC-076.hover",
+        "focus": "#scene=DOC-076.focus",
+        "active": "#scene=DOC-076.active",
+        "reduced-motion": "#scene=DOC-076.reduced-motion"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-077",
+      "label": "长正文/大纲/摘要/双链滚动",
+      "category": "layout",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:391",
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:397",
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:606",
+        "packages/renderer/src/components/document/DocumentPanel.style.ts:717"
+      ],
+      "states": [
+        "long-body",
+        "long-outline",
+        "long-summary",
+        "many-links",
+        "low-height"
+      ],
+      "current_states": [
+        "long-body",
+        "long-outline",
+        "long-summary",
+        "many-links",
+        "low-height"
+      ],
+      "proposal_states": [],
+      "current_behavior": "只读面板滚；note/Office.me-scroll内部滚；大纲单独滚；AI结果放正文前；双链末尾按内容高度。",
+      "gap": "AI块位于flex列上方可侵占有界编辑器高度；需实际长内容低高度核对工具栏/保存状态仍可达。",
+      "target_behavior": "保留真实能力与数据合同；只调整阅读层级、间距、状态反馈和操作可达性。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "long-body": "#scene=DOC-077.long-body",
+        "long-outline": "#scene=DOC-077.long-outline",
+        "long-summary": "#scene=DOC-077.long-summary",
+        "many-links": "#scene=DOC-077.many-links",
+        "low-height": "#scene=DOC-077.low-height"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    },
+    {
+      "id": "DOC-078",
+      "label": "弹层层级/焦点恢复整体",
+      "category": "accessibility",
+      "classification": "current",
+      "owner": "module6",
+      "source": [
+        "packages/renderer/src/components/document/DocumentHeader.tsx:161",
+        "packages/renderer/src/components/document/DocumentCommandModal.tsx:209",
+        "packages/renderer/src/components/DocumentPanel.tsx:924",
+        "packages/renderer/src/components/UnsavedGuard.tsx:77"
+      ],
+      "states": [
+        "menu-to-dialog",
+        "sidebar-to-settings",
+        "guard-cancel",
+        "modal-error",
+        "focus-visible"
+      ],
+      "current_states": [
+        "menu-to-dialog",
+        "sidebar-to-settings",
+        "guard-cancel",
+        "modal-error",
+        "focus-visible"
+      ],
+      "proposal_states": [],
+      "current_behavior": "菜单和命令回焦已有路径；侧栏关闭回触发；capture guard主动聚焦继续；通用guard交给AntD默认。",
+      "gap": "覆盖式助手无focus trap/inert底层；普通guard与capture风格/键盘不一致；需明确主层级先于装饰。",
+      "target_behavior": "提案准确的层级、回焦及焦点可见；不让新恢复入口抢走用户后来选择的控件。",
+      "keyboard_and_exit": "Tab/Shift+Tab；Enter/Space 激活可聚焦按钮。",
+      "recovery": "失败保留当前文档上下文；具体写入失败不可伪装成功。",
+      "html_paths": {
+        "menu-to-dialog": "#scene=DOC-078.menu-to-dialog",
+        "sidebar-to-settings": "#scene=DOC-078.sidebar-to-settings",
+        "guard-cancel": "#scene=DOC-078.guard-cancel",
+        "modal-error": "#scene=DOC-078.modal-error",
+        "focus-visible": "#scene=DOC-078.focus-visible"
+      },
+      "verification_status": "source-inspected; no GUI execution by this inventory"
+    }
+  ],
+  "state_classification_note": "current_states/proposal_states 区分当前已有呈现与新提案呈现，不表示底层网络状态不存在；例如当前no-match定位分支存在，但新增未定位说明属于proposal presentation。"
+}

@@ -98,12 +98,20 @@
     {
       "id": "document",
       "name": "文档阅读与共享文档流程",
-      "status": "not_requested",
-      "proposal": null,
-      "version": null,
+      "status": "planning_ready_for_review",
+      "proposal": "../10-18-interaction-document/prototype/review.html",
+      "version": "document-review-v1",
       "approved_at": null,
       "user_quote": null,
-      "implementation_commit": null
+      "implementation_commit": null,
+      "task": ".trellis/tasks/10-18-interaction-document",
+      "planning_user_quote": "继续",
+      "product_implementation_approved": false,
+      "coverage_groups": 78,
+      "coverage_states": 422,
+      "sha256": "2a3aafb4277c37bd06e38ae94ecec085e0f31a062b88e25a000042e5cbdb220d",
+      "preview_url": "http://127.0.0.1:5187/review.html",
+      "verification": "../10-18-interaction-document/planning-acceptance.md"
     },
     {
       "id": "chat",
