@@ -1,0 +1,38 @@
+[
+  {
+    "url": "https://weknora.weixin.qq.com/",
+    "status": 200,
+    "file": "weknora-official.html"
+  },
+  {
+    "url": "https://api.github.com/repos/Tencent/WeKnora/releases/tags/v0.8.3",
+    "status": 200,
+    "file": "weknora-release.json"
+  },
+  {
+    "url": "https://api.github.com/repos/Tencent/WeKnora/git/trees/3e22822c1d2397be730c458c7539d0eb8c113a24?recursive=1",
+    "status": 200,
+    "file": "weknora-tree-evidence.json",
+    "note": "仅保留本模块相关路径与blob SHA，非完整树"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/frontend/src/views/knowledge/components/UploadConfirmDialog.vue",
+    "status": 200,
+    "file": "weknora-UploadConfirmDialog.vue.txt"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/frontend/src/components/upload-tasks/UploadTaskRow.vue",
+    "status": 200,
+    "file": "weknora-UploadTaskRow.vue.txt"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/frontend/src/components/upload-tasks/UploadTasksPanel.vue",
+    "status": 200,
+    "file": "weknora-UploadTasksPanel.vue.txt"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/frontend/src/views/knowledge/components/KbUploadSourceDropdown.vue",
+    "status": 200,
+    "file": "weknora-KbUploadSourceDropdown.vue.txt"
+  }
+]

@@ -1,0 +1,7 @@
+{"file": ".trellis/spec/renderer/frontend/index.md", "reason": "renderer规范入口与质量门"}
+{"file": ".trellis/spec/renderer/frontend/forms.md", "reason": "已认可输入字段/焦点/IME规则"}
+{"file": ".trellis/spec/renderer/frontend/search-parity.md", "reason": "批准稿保真与真实hover几何验证要求"}
+{"file": ".trellis/spec/project/rules.md", "reason": "产品语义和文档边界"}
+{"file": ".trellis/spec/project/design.md", "reason": "当前语雀设计合同"}
+{"file": ".trellis/tasks/10-18-interaction-capture/research/capture-inventory.md", "reason": "全部入口/状态/宿主与API语义的精确盘点"}
+{"file": ".trellis/tasks/10-18-interaction-capture/research/reference-review.md", "reason": "WeKnora固定版本适用范围与证据"}

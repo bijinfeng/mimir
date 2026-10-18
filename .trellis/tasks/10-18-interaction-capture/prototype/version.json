@@ -1,0 +1,19 @@
+{
+  "version": "capture-review-v1",
+  "revision": 2,
+  "status": "awaiting-user-approval",
+  "approval": "pending-user-review",
+  "entry": "http://127.0.0.1:5184/review.html",
+  "defaultScene": "capture.upload.partial-failure",
+  "groups": 9,
+  "coverage": 91,
+  "productImplementationApproved": false,
+  "htmlSha256": "fa66bdc5e0ed6a4c7d1383342b7e554754b9f88ce69db162a56fc947b93061e1",
+  "sources": {
+    "main.tsx": "7c54bc792ae1ec6b326d96ae9847cea4ac3ef18f548bab886646b035beeddcc7",
+    "fixtures.ts": "138fe446de0f32c18398753cadf6cea85f806378b94358cb55fc2dd8ae1ef983",
+    "review.css": "2d7b34a155420a7860fe82c30da5ce9659c3499a01fb17a822712837e7e41b89",
+    "scenes.json": "49ce03e4604b7a5f5e1bb1e23b171002809f5384f0fdf6342b1867d8c65e032c",
+    "coverage.json": "2a899a84ee3bb1bc7cb9e48e1ccffcc9b438bd577744cb205e87ce2e26431183"
+  }
+}

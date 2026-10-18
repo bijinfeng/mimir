@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-18",
+  "allMatch": true,
+  "files": {
+    "packages/renderer/src/components/CaptureDialog.tsx": true,
+    "packages/renderer/src/components/UploadPanel.tsx": true,
+    "packages/renderer/src/components/library/LibraryView.tsx": true,
+    "packages/renderer/src/routes/_app.tsx": true,
+    "packages/shared/src/capture.ts": true,
+    "apps/server/src/services/capture.ts": true,
+    "apps/server/src/services/upload.ts": true
+  },
+  "note": "本轮收集/导入产品来源文件仍与规划起点hash一致；不代表其他会话产品代码无改动。"
+}

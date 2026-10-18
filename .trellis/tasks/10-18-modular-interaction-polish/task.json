@@ -21,10 +21,11 @@
   "children": [
     "10-18-interaction-foundations",
     "10-18-interaction-workspace",
-    "10-18-interaction-search"
+    "10-18-interaction-search",
+    "10-18-interaction-capture"
   ],
   "parent": null,
   "relatedFiles": [],
-  "notes": "基础组件v1完成；工作区v2已实施与模块验收，仍有全仓门的其他任务阻断。第三模块搜索v1的16组152项HTML已完成并冻结、等待具体版本认可；产品未改。",
+  "notes": "基础组件v1已完成；工作区v2与搜索v1已获批实施并通过模块验收，保留全仓外部阻断。第四模块收集与导入规划/HTML出稿，未获产品实施认可。",
   "meta": {}
 }

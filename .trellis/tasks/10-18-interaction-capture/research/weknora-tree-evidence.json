@@ -1,0 +1,38 @@
+{
+  "sha": "3e22822c1d2397be730c458c7539d0eb8c113a24",
+  "selected": [
+    {
+      "path": "frontend/src/components/upload-tasks/UploadTaskRow.vue",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "b1d7780d2458dd7b952d18459e79dcd9e038dd87",
+      "size": 8005,
+      "url": "https://api.github.com/repos/Tencent/WeKnora/git/blobs/b1d7780d2458dd7b952d18459e79dcd9e038dd87"
+    },
+    {
+      "path": "frontend/src/components/upload-tasks/UploadTasksPanel.vue",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "11bcf369e0df548b3839d36b63bb94cf74e17a69",
+      "size": 21291,
+      "url": "https://api.github.com/repos/Tencent/WeKnora/git/blobs/11bcf369e0df548b3839d36b63bb94cf74e17a69"
+    },
+    {
+      "path": "frontend/src/views/knowledge/components/KbUploadSourceDropdown.vue",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "7dd72e4391584ce9e4577ba863098928024f05a6",
+      "size": 7013,
+      "url": "https://api.github.com/repos/Tencent/WeKnora/git/blobs/7dd72e4391584ce9e4577ba863098928024f05a6"
+    },
+    {
+      "path": "frontend/src/views/knowledge/components/UploadConfirmDialog.vue",
+      "mode": "100644",
+      "type": "blob",
+      "sha": "ba04d3b3ef486ea4492d8f6169fc79d23f633120",
+      "size": 88927,
+      "url": "https://api.github.com/repos/Tencent/WeKnora/git/blobs/ba04d3b3ef486ea4492d8f6169fc79d23f633120"
+    }
+  ],
+  "full_tree_saved": false
+}

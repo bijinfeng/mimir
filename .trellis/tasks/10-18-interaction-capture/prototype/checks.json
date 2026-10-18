@@ -1,0 +1,14 @@
+{
+  "version": "capture-review-v1",
+  "generatedAt": "2026-10-18T08:05:08.130Z",
+  "groups": 9,
+  "coverage": 91,
+  "distinctDataViews": 60,
+  "inventoryComplete": true,
+  "singleFile": true,
+  "productImports": false,
+  "businessRequests": false,
+  "sourceFixtureAssertions": true,
+  "htmlSha256": "fa66bdc5e0ed6a4c7d1383342b7e554754b9f88ce69db162a56fc947b93061e1",
+  "browserVerification": "Main session records screenshots/geometry separately. This check does not assert browser/native acceptance."
+}

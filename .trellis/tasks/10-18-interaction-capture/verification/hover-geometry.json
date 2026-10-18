@@ -1,0 +1,155 @@
+{
+  "default": {
+    "button": {
+      "bottom": 582.625,
+      "height": 32,
+      "left": 739.46875,
+      "right": 796,
+      "top": 550.625,
+      "width": 56.53125,
+      "x": 739.46875,
+      "y": 550.625
+    },
+    "buttonBorder": "1px solid rgb(0, 131, 77)",
+    "buttonChildren": [
+      {
+        "rect": {
+          "bottom": 576.625,
+          "height": 20,
+          "left": 754.46875,
+          "right": 781,
+          "top": 556.625,
+          "width": 26.53125,
+          "x": 754.46875,
+          "y": 556.625
+        },
+        "tag": "SPAN"
+      }
+    ],
+    "dialog": {
+      "bottom": 602.625,
+      "height": 323.640625,
+      "left": 280,
+      "right": 820,
+      "top": 278.984375,
+      "width": 540,
+      "x": 280,
+      "y": 278.984375
+    },
+    "field": {
+      "bottom": 496.234375,
+      "height": 34,
+      "left": 304,
+      "right": 796,
+      "top": 462.234375,
+      "width": 492,
+      "x": 304,
+      "y": 462.234375
+    },
+    "fieldBorder": "1px solid rgb(231, 233, 232)",
+    "focus": "INPUT",
+    "hover": false
+  },
+  "hover": {
+    "button": {
+      "bottom": 582.625,
+      "height": 32,
+      "left": 739.46875,
+      "right": 796,
+      "top": 550.625,
+      "width": 56.53125,
+      "x": 739.46875,
+      "y": 550.625
+    },
+    "buttonBorder": "1px solid rgb(0, 131, 77)",
+    "buttonChildren": [
+      {
+        "rect": {
+          "bottom": 576.625,
+          "height": 20,
+          "left": 754.46875,
+          "right": 781,
+          "top": 556.625,
+          "width": 26.53125,
+          "x": 754.46875,
+          "y": 556.625
+        },
+        "tag": "SPAN"
+      }
+    ],
+    "dialog": {
+      "bottom": 602.625,
+      "height": 323.640625,
+      "left": 280,
+      "right": 820,
+      "top": 278.984375,
+      "width": 540,
+      "x": 280,
+      "y": 278.984375
+    },
+    "field": {
+      "bottom": 496.234375,
+      "height": 34,
+      "left": 304,
+      "right": 796,
+      "top": 462.234375,
+      "width": 492,
+      "x": 304,
+      "y": 462.234375
+    },
+    "fieldBorder": "1px solid rgb(123, 181, 156)",
+    "focus": "INPUT",
+    "hover": true
+  },
+  "leave": {
+    "button": {
+      "bottom": 582.625,
+      "height": 32,
+      "left": 739.46875,
+      "right": 796,
+      "top": 550.625,
+      "width": 56.53125,
+      "x": 739.46875,
+      "y": 550.625
+    },
+    "buttonBorder": "1px solid rgb(0, 129, 76)",
+    "buttonChildren": [
+      {
+        "rect": {
+          "bottom": 576.625,
+          "height": 20,
+          "left": 754.46875,
+          "right": 781,
+          "top": 556.625,
+          "width": 26.53125,
+          "x": 754.46875,
+          "y": 556.625
+        },
+        "tag": "SPAN"
+      }
+    ],
+    "dialog": {
+      "bottom": 602.625,
+      "height": 323.640625,
+      "left": 280,
+      "right": 820,
+      "top": 278.984375,
+      "width": 540,
+      "x": 280,
+      "y": 278.984375
+    },
+    "field": {
+      "bottom": 496.234375,
+      "height": 34,
+      "left": 304,
+      "right": 796,
+      "top": 462.234375,
+      "width": 492,
+      "x": 304,
+      "y": 462.234375
+    },
+    "fieldBorder": "1px solid rgb(34, 138, 93)",
+    "focus": "INPUT",
+    "hover": false
+  }
+}

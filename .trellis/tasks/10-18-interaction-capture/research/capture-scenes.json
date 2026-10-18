@@ -1,0 +1,1711 @@
+{
+  "schemaVersion": 1,
+  "topic": "capture-interaction-inventory",
+  "date": "2026-10-18",
+  "evidenceLevel": "source-and-tests-read-only; no browser/native execution; no new tests run",
+  "groups": [
+    {
+      "id": "entry",
+      "title": "宿主入口与落点"
+    },
+    {
+      "id": "url",
+      "title": "链接输入与识别"
+    },
+    {
+      "id": "stage",
+      "title": "抓取等待与结果"
+    },
+    {
+      "id": "upload",
+      "title": "文件上传"
+    },
+    {
+      "id": "directory",
+      "title": "文件夹上传"
+    },
+    {
+      "id": "drop",
+      "title": "整页拖放"
+    },
+    {
+      "id": "result",
+      "title": "结果交接"
+    },
+    {
+      "id": "lifecycle",
+      "title": "关闭切换与恢复"
+    },
+    {
+      "id": "layout",
+      "title": "共享细节与跨端"
+    }
+  ],
+  "variants": {
+    "theme": [
+      "light",
+      "dark"
+    ],
+    "viewport": [
+      {
+        "id": "desktop",
+        "width": 1042,
+        "height": 853
+      },
+      {
+        "id": "narrow",
+        "width": 390,
+        "height": 844
+      },
+      {
+        "id": "low-height",
+        "width": 844,
+        "height": 480
+      }
+    ],
+    "zoom": [
+      "100%",
+      "200%"
+    ],
+    "motion": [
+      "normal",
+      "reduced"
+    ],
+    "input": [
+      "pointer",
+      "keyboard"
+    ],
+    "rule": "Apply relevant shared layout IDs to each slice; do not multiply every data state into redundant stills. Show same content/sizing side by side, and give every ID a live reachable path."
+  },
+  "forbiddenAssumptions": [
+    "real-time staged capture",
+    "upload percentage/speed/ETA",
+    "abort/pause/resume",
+    "automatic retry",
+    "safe-to-reupload after response loss",
+    "single-click retry failed items",
+    "undo successful imports",
+    "file dedup/overwrite",
+    "image localization",
+    "batch URLs",
+    "directory drag traversal",
+    "target folder picker",
+    "each result row opens",
+    "native picker verified by HTML simulation"
+  ],
+  "scenes": [
+    {
+      "id": "capture.entry.nav",
+      "group": "entry",
+      "title": "导航收集 / 根目录URL",
+      "classification": "existing",
+      "current": "展开/紧凑/窄屏导航收集均先关闭overlay，默认URL页，目标知识库根。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/NavSidebar.tsx:136",
+        "packages/renderer/src/components/NavSidebar.tsx:231",
+        "packages/renderer/src/components/NavSidebar.tsx:356",
+        "packages/renderer/src/routes/_app.tsx:400"
+      ],
+      "controls": [
+        "收集"
+      ],
+      "tags": []
+    },
+    {
+      "id": "capture.entry.palette",
+      "group": "entry",
+      "title": "命令面板转收集",
+      "classification": "existing",
+      "current": "收集链接或文件关闭Palette，再打开根目录URL弹窗；guard/创建/保存中拒绝执行。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/command-palette/items.tsx:28",
+        "packages/renderer/src/routes/_app.tsx:428"
+      ],
+      "controls": [
+        "收集链接或文件"
+      ],
+      "tags": []
+    },
+    {
+      "id": "capture.entry.menu",
+      "group": "entry",
+      "title": "添加文档菜单",
+      "classification": "existing",
+      "current": "当前目录工具条菜单上传文件/上传文件夹/网页抓取/直接编辑；直接编辑不走收集弹窗。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:192",
+        "packages/renderer/src/components/library/LibraryView.tsx:457",
+        "packages/renderer/src/components/library/LibraryView.tsx:814"
+      ],
+      "controls": [
+        "添加文档",
+        "上传文件",
+        "上传文件夹",
+        "网页抓取",
+        "直接编辑"
+      ],
+      "tags": []
+    },
+    {
+      "id": "capture.entry.file",
+      "group": "entry",
+      "title": "菜单上传文件",
+      "classification": "existing",
+      "current": "预置upload页和当前folder路径。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:193",
+        "packages/renderer/src/routes/_app.tsx:480"
+      ],
+      "controls": [
+        "上传文件"
+      ],
+      "tags": []
+    },
+    {
+      "id": "capture.entry.directory",
+      "group": "entry",
+      "title": "菜单上传文件夹",
+      "classification": "existing",
+      "current": "预置upload页、directory=true和当前folder路径。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:194",
+        "packages/renderer/src/components/UploadPanel.tsx:63"
+      ],
+      "controls": [
+        "上传文件夹"
+      ],
+      "tags": []
+    },
+    {
+      "id": "capture.entry.url",
+      "group": "entry",
+      "title": "菜单网页抓取",
+      "classification": "existing",
+      "current": "预置URL页与当前folder路径。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:196"
+      ],
+      "controls": [
+        "网页抓取"
+      ],
+      "tags": []
+    },
+    {
+      "id": "capture.entry.empty",
+      "group": "entry",
+      "title": "知识库空状态上传",
+      "classification": "existing",
+      "current": "空知识库显示上传文件/直接编辑；上传进入当前目录upload页。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:591",
+        "packages/renderer/src/components/library/LibraryView.tsx:606"
+      ],
+      "controls": [
+        "上传文件",
+        "直接编辑"
+      ],
+      "tags": []
+    },
+    {
+      "id": "capture.entry.scope",
+      "group": "entry",
+      "title": "目标路径与不可拖入视图",
+      "classification": "existing",
+      "current": "folder scope支持工具条与整页拖入；tag scope无folder目标，不能承诺tag自动指派；全局收集始终root。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:111",
+        "packages/renderer/src/components/library/LibraryView.tsx:309",
+        "packages/renderer/src/routes/_app.tsx:166"
+      ],
+      "controls": [],
+      "tags": [
+        "long-path"
+      ]
+    },
+    {
+      "id": "capture.url.empty",
+      "group": "url",
+      "title": "空值 / 首次焦点",
+      "classification": "existing",
+      "current": "网页链接label、autoFocus、placeholder、默认支持说明；抓取disabled，取消可用。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/CaptureDialog.tsx:340",
+        "packages/renderer/src/components/CaptureDialog.tsx:368",
+        "packages/renderer/src/components/CaptureDialog.tsx:308"
+      ],
+      "controls": [
+        "网页链接",
+        "抓取(disabled)",
+        "取消"
+      ],
+      "tags": []
+    },
+    {
+      "id": "capture.url.whitespace",
+      "group": "url",
+      "title": "只有空格",
+      "classification": "existing",
+      "current": "trim后无detected、显示默认支持说明，抓取disabled。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/shared/src/capture.ts:80",
+        "packages/renderer/src/components/CaptureDialog.tsx:363"
+      ],
+      "controls": [
+        "清除",
+        "取消"
+      ],
+      "tags": []
+    },
+    {
+      "id": "capture.url.invalid-prefix",
+      "group": "url",
+      "title": "非http(s)链接",
+      "classification": "existing",
+      "current": "非空不匹配前缀，warning色说明http/https；没有input status=error。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/CaptureDialog.tsx:363",
+        "packages/shared/src/capture.ts:82"
+      ],
+      "controls": [
+        "网页链接",
+        "清除",
+        "抓取(disabled)"
+      ],
+      "tags": []
+    },
+    {
+      "id": "capture.url.web",
+      "group": "url",
+      "title": "通用网页识别",
+      "classification": "existing",
+      "current": "http(s)开头且非特定子串：网页 · 提取网页正文。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/shared/src/capture.ts:98",
+        "packages/renderer/src/components/CaptureDialog.tsx:357"
+      ],
+      "controls": [
+        "抓取",
+        "清除"
+      ],
+      "tags": []
+    },
+    {
+      "id": "capture.url.wechat",
+      "group": "url",
+      "title": "公众号识别",
+      "classification": "existing",
+      "current": "识别为微信公众号 · 图片保留原链接，正文可离线阅读。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/shared/src/capture.ts:84"
+      ],
+      "controls": [
+        "抓取"
+      ],
+      "tags": []
+    },
+    {
+      "id": "capture.url.github",
+      "group": "url",
+      "title": "GitHub识别",
+      "classification": "existing",
+      "current": "识别为GitHub仓库 · 收集仓库信息和README。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/shared/src/capture.ts:91"
+      ],
+      "controls": [
+        "抓取"
+      ],
+      "tags": []
+    },
+    {
+      "id": "capture.url.incomplete",
+      "group": "url",
+      "title": "有前缀但URL不完整",
+      "classification": "existing",
+      "current": "https://也可detected启用按钮；server zod .url拒绝，URL最长2000；客户端无限长限制。",
+      "proposal": "提案：更完整本地校验；须明确新增前端验证，保留draft和可解释错误。",
+      "evidence": [
+        "packages/shared/src/capture.ts:27",
+        "packages/shared/src/capture.ts:82"
+      ],
+      "controls": [],
+      "tags": [
+        "validation-gap"
+      ]
+    },
+    {
+      "id": "capture.url.clear",
+      "group": "url",
+      "title": "清除输入",
+      "classification": "existing",
+      "current": "allowClear清url；错误只有重新提交时清除，未随编辑/clear清除。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/CaptureDialog.tsx:222",
+        "packages/renderer/src/components/CaptureDialog.tsx:349",
+        "packages/renderer/src/components/CaptureDialog.tsx:354"
+      ],
+      "controls": [
+        "清除"
+      ],
+      "tags": []
+    },
+    {
+      "id": "capture.url.submit",
+      "group": "url",
+      "title": "按钮 / Enter提交",
+      "classification": "existing",
+      "current": "抓取和Enter提交trim后的URL，running时禁止；无IME composition保护/同步ref。",
+      "proposal": "提案：IME与同步提交保护；正常Enter仍只提交一次。",
+      "evidence": [
+        "packages/renderer/src/components/CaptureDialog.tsx:305",
+        "packages/renderer/src/components/CaptureDialog.tsx:350"
+      ],
+      "controls": [
+        "抓取",
+        "Enter"
+      ],
+      "tags": [
+        "keyboard",
+        "race"
+      ]
+    },
+    {
+      "id": "capture.url.edit-after-error",
+      "group": "url",
+      "title": "失败后编辑与再发起",
+      "classification": "existing",
+      "current": "保留原url且可编辑；旧错误不自动消失，再点抓取才clear failure/stages并完整重发。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/CaptureDialog.tsx:222",
+        "packages/renderer/src/components/CaptureDialog.tsx:240"
+      ],
+      "controls": [
+        "网页链接",
+        "抓取"
+      ],
+      "tags": [
+        "recovery"
+      ]
+    },
+    {
+      "id": "capture.stage.waiting",
+      "group": "stage",
+      "title": "单次请求等待",
+      "classification": "existing",
+      "current": "pending时4行可见，只有获取页面running，其他空圆点；不是实时阶段流。",
+      "proposal": "保留单次请求；用诚实“正在处理，完成后展示阶段结果”说明，禁止自动跳阶段或假百分比。",
+      "evidence": [
+        "packages/renderer/src/components/CaptureDialog.tsx:274",
+        "packages/renderer/src/components/CaptureDialog.tsx:375",
+        "packages/renderer/src/lib/api.ts:1038"
+      ],
+      "controls": [
+        "disabled输入",
+        "disabled取消",
+        "disabled抓取"
+      ],
+      "tags": [
+        "busy"
+      ]
+    },
+    {
+      "id": "capture.stage.fetch-error",
+      "group": "stage",
+      "title": "获取页面失败",
+      "classification": "existing",
+      "current": "400 CAPTURE_FAILED details.stage=fetch；fetch红叉，其他未完成点；warning原始message与检查链接说明。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "apps/server/src/routes/capture.ts:61",
+        "packages/renderer/src/components/CaptureDialog.tsx:387",
+        "packages/renderer/src/components/CaptureDialog.tsx:428"
+      ],
+      "controls": [
+        "编辑链接",
+        "抓取",
+        "取消"
+      ],
+      "tags": [
+        "error",
+        "recovery"
+      ]
+    },
+    {
+      "id": "capture.stage.extract-error",
+      "group": "stage",
+      "title": "提取正文失败",
+      "classification": "existing",
+      "current": "service之前fetch完成，但route抛错丢弃stage数组；UI extract红叉，fetch普通空点没有meta。",
+      "proposal": "保留实际失败stage；前序状态没有证据时不能补勾或数字；可说明无法取得前序详情。",
+      "evidence": [
+        "apps/server/src/services/capture.ts:119",
+        "apps/server/src/routes/capture.ts:63",
+        "packages/renderer/src/components/CaptureDialog.tsx:240"
+      ],
+      "controls": [
+        "抓取",
+        "取消"
+      ],
+      "tags": [
+        "error",
+        "recovery"
+      ]
+    },
+    {
+      "id": "capture.stage.wechat-error",
+      "group": "stage",
+      "title": "公众号失败说明",
+      "classification": "existing",
+      "current": "任何stage失败只要当前detected.kind=wechat就优先显示反爬/稍后重试/浏览器扩展文字，无打开扩展按钮。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/CaptureDialog.tsx:424"
+      ],
+      "controls": [
+        "抓取",
+        "取消"
+      ],
+      "tags": [
+        "error"
+      ]
+    },
+    {
+      "id": "capture.stage.unknown-error",
+      "group": "stage",
+      "title": "网络 / 保存等无stage失败",
+      "classification": "existing",
+      "current": "warning显示message，failure无stage且stages空时不出现阶段框。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/CaptureDialog.tsx:240",
+        "packages/renderer/src/components/CaptureDialog.tsx:371"
+      ],
+      "controls": [
+        "抓取",
+        "取消"
+      ],
+      "tags": [
+        "error",
+        "network"
+      ]
+    },
+    {
+      "id": "capture.stage.assets-contract",
+      "group": "stage",
+      "title": "assets失败契约防御",
+      "classification": "contract-defensive",
+      "current": "schema允许assets失败；现有service并不产生该分支。没有图片下载、本地化成功承诺。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/shared/src/capture.ts:14",
+        "apps/server/src/services/capture.ts:138",
+        "packages/renderer/src/components/CaptureDialog.tsx:387"
+      ],
+      "controls": [
+        "抓取",
+        "取消"
+      ],
+      "tags": []
+    },
+    {
+      "id": "capture.stage.convert-contract",
+      "group": "stage",
+      "title": "convert失败契约防御",
+      "classification": "contract-defensive",
+      "current": "schema允许convert失败；现有service直接标done，存储失败通常无该stage详情。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/shared/src/capture.ts:14",
+        "apps/server/src/services/capture.ts:147",
+        "packages/renderer/src/components/CaptureDialog.tsx:387"
+      ],
+      "controls": [],
+      "tags": []
+    },
+    {
+      "id": "capture.stage.success",
+      "group": "stage",
+      "title": "4阶段完成 / 260ms交接",
+      "classification": "existing",
+      "current": "fetch体积耗时、extract字数、assets原链接图数或无图、convertMarkdown；抓取完成卡；260ms自动reset+onCaptured。API preview标题摘要不显示。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/CaptureDialog.tsx:226",
+        "packages/renderer/src/components/CaptureDialog.tsx:233",
+        "packages/renderer/src/components/CaptureDialog.tsx:439",
+        "apps/server/src/services/capture.ts:132"
+      ],
+      "controls": [
+        "取消(260ms窗口)"
+      ],
+      "tags": [
+        "success",
+        "handoff"
+      ]
+    },
+    {
+      "id": "capture.stage.success-no-images",
+      "group": "stage",
+      "title": "无图成功",
+      "classification": "existing",
+      "current": "assets meta显示无图片，完成meta使用extract/assets，不下载图片。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "apps/server/src/services/capture.ts:142",
+        "packages/renderer/src/components/CaptureDialog.tsx:443"
+      ],
+      "controls": [],
+      "tags": [
+        "success"
+      ]
+    },
+    {
+      "id": "capture.stage.partial-contract",
+      "group": "stage",
+      "title": "有id的partial响应防御",
+      "classification": "contract-defensive",
+      "current": "schema容许failed stage+id，但当前服务端不稳定产生；UI只看result对象而不检查status，误画勾且自动打开。",
+      "proposal": "提案：按status画状态并保留partial警示；不得伪称当前API日常有图片部分失败。",
+      "evidence": [
+        "packages/shared/src/capture.ts:52",
+        "packages/renderer/src/components/CaptureDialog.tsx:395",
+        "packages/renderer/src/components/CaptureDialog.tsx:401"
+      ],
+      "controls": [],
+      "tags": [
+        "partial",
+        "risk"
+      ]
+    },
+    {
+      "id": "capture.stage.null-id-contract",
+      "group": "stage",
+      "title": "完成数组但无id防御",
+      "classification": "contract-defensive",
+      "current": "4阶段且documentId=null时只显示完成，不自动交接；没有确认后入库能力。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/CaptureDialog.tsx:231",
+        "packages/renderer/src/components/CaptureDialog.tsx:439",
+        "apps/server/src/services/capture.ts:266"
+      ],
+      "controls": [],
+      "tags": [
+        "risk"
+      ]
+    },
+    {
+      "id": "capture.stage.repeat-url",
+      "group": "stage",
+      "title": "重复URL返回旧文档",
+      "classification": "existing",
+      "current": "canonical_url去重保留已有正文目录，返回旧id；响应不含created/dedup标志，UI仍说已收进当前目标。",
+      "proposal": "不能添加“已更新/已移动”提示或重复检测控件；需未来扩展响应才能可靠区分。",
+      "evidence": [
+        "apps/server/src/services/capture.ts:192",
+        "apps/server/src/services/capture.ts:261",
+        "packages/renderer/src/routes/_app.tsx:495"
+      ],
+      "controls": [],
+      "tags": [
+        "dedup-boundary"
+      ]
+    },
+    {
+      "id": "capture.upload.empty",
+      "group": "upload",
+      "title": "文件模式空白",
+      "classification": "existing",
+      "current": "Dragger图标、拖入或点击文案、50MB/Markdown说明；选文件即开始，无暂存确认。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:167",
+        "packages/renderer/src/components/UploadPanel.tsx:188"
+      ],
+      "controls": [
+        "Dragger",
+        "关闭"
+      ],
+      "tags": []
+    },
+    {
+      "id": "capture.upload.picker-cancel",
+      "group": "upload",
+      "title": "原生文件选择取消",
+      "classification": "native-unverified",
+      "current": "通过AntD文件input；应用未定义picker cancel UI、无fileList则通常维持原界面；未做原生验证。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:175"
+      ],
+      "controls": [
+        "Dragger"
+      ],
+      "tags": [
+        "native"
+      ]
+    },
+    {
+      "id": "capture.upload.accept-any",
+      "group": "upload",
+      "title": "任意格式",
+      "classification": "existing",
+      "current": "未设accept，未知格式也上传保存原件；无格式白名单拦截。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:172",
+        "apps/server/src/services/upload.ts:89"
+      ],
+      "controls": [
+        "Dragger"
+      ],
+      "tags": []
+    },
+    {
+      "id": "capture.upload.pointer",
+      "group": "upload",
+      "title": "Dragger hover/focus/drop微状态",
+      "classification": "existing",
+      "current": "交给AntD Dragger，没有模块自己的drop-hover state逻辑；busy disabled。",
+      "proposal": "固定边框几何/安静hover/明显键盘focus；不得用实线宽度变化导致跳动。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:167",
+        "packages/renderer/src/components/UploadPanel.tsx:183"
+      ],
+      "controls": [],
+      "tags": [
+        "pointer",
+        "keyboard"
+      ]
+    },
+    {
+      "id": "capture.upload.pending",
+      "group": "upload",
+      "title": "批次等待队列",
+      "classification": "existing",
+      "current": "File[]选择序全入pending行，key=name-index，同名独立；pending无图标，等待上传文字。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:88",
+        "packages/renderer/src/components/UploadPanel.tsx:219",
+        "packages/renderer/src/components/UploadPanel.tsx:270"
+      ],
+      "controls": [],
+      "tags": [
+        "busy",
+        "queue"
+      ]
+    },
+    {
+      "id": "capture.upload.uploading",
+      "group": "upload",
+      "title": "串行上传中",
+      "classification": "existing",
+      "current": "逐文件uploading+LoaderCircle、上传中；其余pending、前面done/failed保留；没有上传percent或速度。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:98",
+        "packages/renderer/src/components/UploadPanel.tsx:221"
+      ],
+      "controls": [
+        "disabledDragger",
+        "disabled关闭"
+      ],
+      "tags": [
+        "busy"
+      ]
+    },
+    {
+      "id": "capture.upload.duplicate-event",
+      "group": "upload",
+      "title": "重复选择guard",
+      "classification": "existing",
+      "current": "uploadActive.current同步拒绝同一组件实例的重复批次；不是后端文件去重。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:83",
+        "packages/renderer/src/components/UploadPanel.test.tsx:10"
+      ],
+      "controls": [],
+      "tags": [
+        "busy",
+        "race"
+      ]
+    },
+    {
+      "id": "capture.upload.too-large",
+      "group": "upload",
+      "title": "单文件超50MiB",
+      "classification": "existing",
+      "current": "size>FILE_MAX_BYTES立即failed，完整文件大小与上限；不发送该文件，继续后续。等于上限允许。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:107",
+        "packages/shared/src/files.ts:22"
+      ],
+      "controls": [],
+      "tags": [
+        "error",
+        "validation"
+      ]
+    },
+    {
+      "id": "capture.upload.zero-byte",
+      "group": "upload",
+      "title": "0字节失败",
+      "classification": "existing",
+      "current": "前端发送，服务端400 EMPTY_FILE 文件是空的；该行failed，其他继续。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:123",
+        "apps/server/src/services/upload.ts:85",
+        "apps/server/src/test/upload.test.ts:306"
+      ],
+      "controls": [],
+      "tags": [
+        "error",
+        "validation"
+      ]
+    },
+    {
+      "id": "capture.upload.network-error",
+      "group": "upload",
+      "title": "逐文件请求失败",
+      "classification": "existing",
+      "current": "catch Error.message原样完整展示；非Error 上传失败；失败继续下一文件。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:140"
+      ],
+      "controls": [],
+      "tags": [
+        "error",
+        "network"
+      ]
+    },
+    {
+      "id": "capture.upload.lost-response",
+      "group": "upload",
+      "title": "响应丢失 / 不确定是否已保存",
+      "classification": "existing",
+      "current": "网络失败可能在server入库后发生；前端failed无法区分未保存和响应丢失。文件上传每次nanoID，无幂等key/去重。",
+      "proposal": "提案文案：连接中断时先在库中核对，再重新选择；不得承诺“安全重试不会重复”。URL有canonical去重也不代表所有上传可安全重传。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:140",
+        "apps/server/src/services/upload.ts:214",
+        "packages/renderer/src/lib/api.ts:826"
+      ],
+      "controls": [],
+      "tags": [
+        "error",
+        "uncertainty",
+        "recovery"
+      ]
+    },
+    {
+      "id": "capture.upload.saved-text",
+      "group": "upload",
+      "title": "提取正文成功",
+      "classification": "existing",
+      "current": "done绿勾，已提取N字，保存document.id；批次未结束不能点打开。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:128",
+        "packages/renderer/src/components/UploadPanel.tsx:241"
+      ],
+      "controls": [],
+      "tags": [
+        "success"
+      ]
+    },
+    {
+      "id": "capture.upload.saved-original",
+      "group": "upload",
+      "title": "原件已保存无正文",
+      "classification": "existing",
+      "current": "charCount=0仍done算成功，文案原件已保存；可搜索状态见详情；parseError不在此区分。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:130",
+        "apps/server/src/services/upload.ts:278"
+      ],
+      "controls": [],
+      "tags": [
+        "success",
+        "original-only"
+      ]
+    },
+    {
+      "id": "capture.upload.markdown-note",
+      "group": "upload",
+      "title": "Markdown导入笔记",
+      "classification": "existing",
+      "current": "md/markdown走note，可编辑，frontmatter标题tags生效，非保只读原件。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "apps/server/src/services/upload.ts:89",
+        "apps/server/src/services/upload.ts:112",
+        "apps/server/src/test/upload.test.ts:252"
+      ],
+      "controls": [],
+      "tags": [
+        "success",
+        "format"
+      ]
+    },
+    {
+      "id": "capture.upload.markdown-empty-body",
+      "group": "upload",
+      "title": "Markdown正文为空但文件非空",
+      "classification": "existing",
+      "current": "frontmatter-only可返回note+charCount0，现UI仍说原件已保存，是语义误导。",
+      "proposal": "提案：依据result.document.kind区分“笔记已导入，暂无正文”和原件保存；非空字节仍可成功。",
+      "evidence": [
+        "apps/server/src/services/upload.ts:119",
+        "apps/server/src/services/upload.ts:127",
+        "packages/renderer/src/components/UploadPanel.tsx:132"
+      ],
+      "controls": [],
+      "tags": [
+        "success",
+        "risk"
+      ]
+    },
+    {
+      "id": "capture.upload.unknown-format",
+      "group": "upload",
+      "title": "未知格式保原件",
+      "classification": "existing",
+      "current": "zip等可201、0字数、parseError=null，仍可下载；不能画成上传失败。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "apps/server/src/test/upload.test.ts:200",
+        "packages/renderer/src/components/UploadPanel.tsx:132"
+      ],
+      "controls": [],
+      "tags": [
+        "original-only",
+        "format"
+      ]
+    },
+    {
+      "id": "capture.upload.parse-failure",
+      "group": "upload",
+      "title": "可提取格式解析失败保原件",
+      "classification": "existing",
+      "current": "损坏Office/非UTF8等201、0字数、parseError有原因，UI此处与未知格式同绿勾。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "apps/server/src/test/upload.test.ts:149",
+        "apps/server/src/test/upload.test.ts:294",
+        "packages/renderer/src/components/UploadPanel.tsx:132"
+      ],
+      "controls": [],
+      "tags": [
+        "original-only",
+        "format"
+      ]
+    },
+    {
+      "id": "capture.upload.all-success",
+      "group": "upload",
+      "title": "全批成功",
+      "classification": "existing",
+      "current": "最后完成后success Alert N个成功；首个成功打开+继续上传；Dragger可再次选择替换整批。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:76",
+        "packages/renderer/src/components/UploadPanel.tsx:230",
+        "packages/renderer/src/components/UploadPanel.tsx:241"
+      ],
+      "controls": [
+        "打开首个成功",
+        "继续上传",
+        "Dragger",
+        "关闭"
+      ],
+      "tags": [
+        "success",
+        "terminal"
+      ]
+    },
+    {
+      "id": "capture.upload.partial-failure",
+      "group": "upload",
+      "title": "部分失败",
+      "classification": "existing",
+      "current": "warning N成功M失败，逐项成功/失败详情可见；只能首个成功打开；说明处理后重新选择失败文件。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:230",
+        "packages/renderer/src/components/UploadPanel.tsx:243"
+      ],
+      "controls": [
+        "打开首个成功",
+        "继续上传",
+        "Dragger",
+        "关闭"
+      ],
+      "tags": [
+        "partial",
+        "terminal",
+        "recovery"
+      ]
+    },
+    {
+      "id": "capture.upload.all-failed",
+      "group": "upload",
+      "title": "全部失败",
+      "classification": "existing",
+      "current": "warning 0成功M失败，完整原因；没有打开按钮；继续上传清表。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:230",
+        "packages/renderer/src/components/UploadPanel.tsx:243",
+        "packages/renderer/src/components/UploadPanel.test.tsx:54"
+      ],
+      "controls": [
+        "继续上传",
+        "Dragger",
+        "关闭"
+      ],
+      "tags": [
+        "error",
+        "terminal",
+        "recovery"
+      ]
+    },
+    {
+      "id": "capture.upload.continue",
+      "group": "upload",
+      "title": "继续上传清除结果",
+      "classification": "existing",
+      "current": "只setRows([])，不自动打开picker；已入库文件保持；必须重新选择整批。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:256"
+      ],
+      "controls": [
+        "继续上传",
+        "Dragger"
+      ],
+      "tags": [
+        "recovery"
+      ]
+    },
+    {
+      "id": "capture.upload.replace-batch",
+      "group": "upload",
+      "title": "新选择替换旧结果",
+      "classification": "existing",
+      "current": "idle直接点Dragger选新文件也setRows(initial)，旧结果丢弃，不追加队列。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:88",
+        "packages/renderer/src/components/UploadPanel.tsx:96"
+      ],
+      "controls": [
+        "Dragger"
+      ],
+      "tags": []
+    },
+    {
+      "id": "capture.upload.long-rows",
+      "group": "upload",
+      "title": "长文件名/错误/大列表",
+      "classification": "existing",
+      "current": "stem省略保后缀，完整name title；detail max180换行，列表maxheight240滚动，format+size不wrap。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:199",
+        "packages/renderer/src/components/UploadPanel.tsx:263",
+        "packages/renderer/src/components/UploadPanel.tsx:302"
+      ],
+      "controls": [],
+      "tags": [
+        "long-string",
+        "scroll"
+      ]
+    },
+    {
+      "id": "capture.upload.same-name",
+      "group": "upload",
+      "title": "同名/无后缀/隐藏文件",
+      "classification": "existing",
+      "current": "key name-index避免同名key冲突；fileNameParts排除首位dot/末尾dot，后缀单span；不dedup。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:89",
+        "packages/renderer/src/components/UploadPanel.tsx:263"
+      ],
+      "controls": [],
+      "tags": [
+        "format",
+        "long-string"
+      ]
+    },
+    {
+      "id": "capture.directory.empty",
+      "group": "directory",
+      "title": "文件夹模式空白",
+      "classification": "existing",
+      "current": "directory=true，选择一个文件夹/保留目录结构跳过空文件夹；仍upload页签文案。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:171",
+        "packages/renderer/src/components/UploadPanel.tsx:189"
+      ],
+      "controls": [
+        "Dragger",
+        "关闭"
+      ],
+      "tags": []
+    },
+    {
+      "id": "capture.directory.paths",
+      "group": "directory",
+      "title": "完整保留所选目录首段",
+      "classification": "existing",
+      "current": "webkitRelativePath前段保留，拼当前folder；行名显示相对全路径。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:63",
+        "packages/renderer/src/components/UploadPanel.tsx:90"
+      ],
+      "controls": [],
+      "tags": [
+        "path"
+      ]
+    },
+    {
+      "id": "capture.directory.empty-folders",
+      "group": "directory",
+      "title": "空文件夹不创建",
+      "classification": "browser-contract",
+      "current": "FileList无空目录，循环没有文件时不会创建目录实体；无empty-folder完成结果。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:175",
+        "packages/renderer/src/components/UploadPanel.tsx:98"
+      ],
+      "controls": [],
+      "tags": [
+        "native"
+      ]
+    },
+    {
+      "id": "capture.directory.mixed",
+      "group": "directory",
+      "title": "目录中混合结果",
+      "classification": "existing",
+      "current": "与普通文件同串行、大小/网络/提取语义；每行保相对路径，最后统一计数，首个成功打开。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:98",
+        "packages/renderer/src/components/UploadPanel.tsx:230"
+      ],
+      "controls": [],
+      "tags": [
+        "partial",
+        "long-string"
+      ]
+    },
+    {
+      "id": "capture.directory.native-support",
+      "group": "directory",
+      "title": "原生目录能力",
+      "classification": "native-unverified",
+      "current": "使用webkitdirectory，无Electron专用目录picker/不支持时降级提示；需各真实浏览器验证。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:171",
+        "apps/desktop/src/renderer/index.tsx:39"
+      ],
+      "controls": [],
+      "tags": [
+        "native",
+        "desktop"
+      ]
+    },
+    {
+      "id": "capture.drop.enter",
+      "group": "drop",
+      "title": "整页Files拖入覆盖",
+      "classification": "existing",
+      "current": "folder scope Files dragenter depth递增，覆盖层松开即上传到这个知识库，dropEffect=copy。",
+      "proposal": "目标完整目录应可辨，子目录不能被泛称掩盖。",
+      "evidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:389",
+        "packages/renderer/src/components/library/LibraryView.tsx:413"
+      ],
+      "controls": [],
+      "tags": [
+        "drag"
+      ]
+    },
+    {
+      "id": "capture.drop.leave",
+      "group": "drop",
+      "title": "经过子节点 / 拖出页面",
+      "classification": "existing",
+      "current": "depth减至0才撤覆盖；真正drop清depth与overlay。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:394",
+        "packages/renderer/src/components/library/LibraryView.tsx:407"
+      ],
+      "controls": [],
+      "tags": [
+        "drag"
+      ]
+    },
+    {
+      "id": "capture.drop.upload",
+      "group": "drop",
+      "title": "整页drop后台串行",
+      "classification": "existing",
+      "current": "独立uploadDropped循环，无弹窗/逐行进度/同步锁；drop完成后才toast计数。",
+      "proposal": "提案：将整页drop接统一逐文件反馈，明确这是现流程变化；不得只伪装已有UI。",
+      "evidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:310",
+        "packages/renderer/src/components/library/LibraryView.tsx:410"
+      ],
+      "controls": [],
+      "tags": [
+        "drag",
+        "busy"
+      ]
+    },
+    {
+      "id": "capture.drop.all-success",
+      "group": "drop",
+      "title": "整页drop全部成功",
+      "classification": "existing",
+      "current": "invalidate documents/folders/counts后已收进N个文件toast，无自动打开。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:326"
+      ],
+      "controls": [],
+      "tags": [
+        "success"
+      ]
+    },
+    {
+      "id": "capture.drop.partial",
+      "group": "drop",
+      "title": "整页drop部分失败",
+      "classification": "existing",
+      "current": "成功toast加失败warning，仅数量无逐项原因；超限也只记failed。",
+      "proposal": "提案：统一结果面板保每项原始错误；无自动retry。",
+      "evidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:315",
+        "packages/renderer/src/components/library/LibraryView.tsx:327"
+      ],
+      "controls": [],
+      "tags": [
+        "partial",
+        "recovery"
+      ]
+    },
+    {
+      "id": "capture.drop.all-failed",
+      "group": "drop",
+      "title": "整页drop全部失败",
+      "classification": "existing",
+      "current": "只有M个文件没能上传warning，不能从此toast知道哪个或为什么。",
+      "proposal": "提案：完整失败原因与人工重新选择路径。",
+      "evidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:321",
+        "packages/renderer/src/components/library/LibraryView.tsx:328"
+      ],
+      "controls": [],
+      "tags": [
+        "error",
+        "recovery"
+      ]
+    },
+    {
+      "id": "capture.drop.repeat",
+      "group": "drop",
+      "title": "重复drop并发风险",
+      "classification": "existing",
+      "current": "独立函数无uploadActive或busy，重复drop可启动多个串行批次。",
+      "proposal": "提案：统一批次guard/明确本次队列，不能宣称后端幂等。",
+      "evidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:310",
+        "packages/renderer/src/components/library/LibraryView.tsx:410"
+      ],
+      "controls": [],
+      "tags": [
+        "race"
+      ]
+    },
+    {
+      "id": "capture.drop.irrelevant",
+      "group": "drop",
+      "title": "非Files / 非folder / 空drop",
+      "classification": "existing",
+      "current": "非Files不显示overlay，非folder不拦默认drop，空FileList不上传。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:390",
+        "packages/renderer/src/components/library/LibraryView.tsx:405",
+        "packages/renderer/src/components/library/LibraryView.tsx:410"
+      ],
+      "controls": [],
+      "tags": [
+        "drag",
+        "boundary"
+      ]
+    },
+    {
+      "id": "capture.drop.directory-boundary",
+      "group": "drop",
+      "title": "整页拖目录不承诺结构",
+      "classification": "existing",
+      "current": "只读取dataTransfer.files、不遍历entry、不计算relative folder；与directory picker不同。",
+      "proposal": "提示上传文件夹请使用菜单；若要支持drop目录须新能力设计。",
+      "evidence": [
+        "packages/renderer/src/components/library/LibraryView.tsx:409",
+        "packages/renderer/src/components/library/LibraryView.tsx:320"
+      ],
+      "controls": [],
+      "tags": [
+        "drag",
+        "native"
+      ]
+    },
+    {
+      "id": "capture.result.url-handoff",
+      "group": "result",
+      "title": "URL成功自动打开",
+      "classification": "existing",
+      "current": "260ms后关modal，目标路径toast，打开doc，folder入口用该scope，global用all。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/CaptureDialog.tsx:233",
+        "packages/renderer/src/routes/_app.tsx:489",
+        "packages/renderer/src/routes/_app.tsx:502"
+      ],
+      "controls": [],
+      "tags": [
+        "handoff"
+      ]
+    },
+    {
+      "id": "capture.result.upload-open",
+      "group": "result",
+      "title": "上传整批结束手动打开首个成功",
+      "classification": "existing",
+      "current": "打开《name》仅firstDone，onUploaded先close再onCaptured；不支持点任意行或逐项打开。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:163",
+        "packages/renderer/src/components/UploadPanel.tsx:243",
+        "packages/renderer/src/components/CaptureDialog.tsx:334"
+      ],
+      "controls": [
+        "打开首个成功"
+      ],
+      "tags": [
+        "handoff"
+      ]
+    },
+    {
+      "id": "capture.result.close-refresh",
+      "group": "result",
+      "title": "上传后仅关闭与查询刷新缺口",
+      "classification": "existing",
+      "current": "UploadPanel无invalidateQueries；close不刷新背景库/计数/目录，onCaptured也未额外失效查询。",
+      "proposal": "提案：各成功批次刷新documents/counts/folders，同时保留失败明细。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:155",
+        "packages/renderer/src/components/CaptureDialog.tsx:265",
+        "packages/renderer/src/routes/_app.tsx:489"
+      ],
+      "controls": [],
+      "tags": [
+        "cache",
+        "risk"
+      ]
+    },
+    {
+      "id": "capture.result.unsaved-gap",
+      "group": "result",
+      "title": "打开结果绕过未保存guard",
+      "classification": "existing",
+      "current": "宿主openDocument直接navigate，onCaptured未runGuarded；从未保存背景收集结果可能跳离。",
+      "proposal": "提案：结果打开接入既有guard；收集打开本身不离开可无需guard。",
+      "evidence": [
+        "packages/renderer/src/routes/_app.tsx:268",
+        "packages/renderer/src/routes/_app.tsx:489"
+      ],
+      "controls": [],
+      "tags": [
+        "guard",
+        "risk"
+      ]
+    },
+    {
+      "id": "capture.result.guard-choices",
+      "group": "result",
+      "title": "未保存交接保护提案",
+      "classification": "proposed",
+      "current": "既有guard支持继续编辑/保存并离开，手动mode另有丢弃；当前capture未接入。",
+      "proposal": "展示批准后的guard路径，清楚标“拟复用”；包括取消/保存中/保存失败/保存成功导航。",
+      "evidence": [
+        "packages/renderer/src/lib/unsaved.tsx:75",
+        "packages/renderer/src/components/UnsavedGuard.tsx:60"
+      ],
+      "controls": [
+        "继续编辑",
+        "丢弃改动(手动)",
+        "保存并离开"
+      ],
+      "tags": []
+    },
+    {
+      "id": "capture.result.guard-saving",
+      "group": "result",
+      "title": "保存中 / 保存失败提案",
+      "classification": "proposed",
+      "current": "既有guard saving锁操作，失败inline错误不离开；此处仅拟复用。",
+      "proposal": "保留capture已保存结果、让用户继续编辑或重试保存；不重复上传。",
+      "evidence": [
+        "packages/renderer/src/lib/unsaved.tsx:108",
+        "packages/renderer/src/components/UnsavedGuard.tsx:83"
+      ],
+      "controls": [],
+      "tags": [
+        "guard",
+        "error"
+      ]
+    },
+    {
+      "id": "capture.lifecycle.idle-close",
+      "group": "lifecycle",
+      "title": "idle关闭与清draft",
+      "classification": "existing",
+      "current": "X/遮罩/Escape/footer可关闭并reset URL阶段错误；upload结果因destroy丢失，已上传文件不撤销。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/CaptureDialog.tsx:255",
+        "packages/renderer/src/components/CaptureDialog.tsx:265",
+        "packages/renderer/src/components/CaptureDialog.tsx:286"
+      ],
+      "controls": [
+        "关闭X",
+        "遮罩",
+        "Escape",
+        "取消/关闭"
+      ],
+      "tags": []
+    },
+    {
+      "id": "capture.lifecycle.busy-close",
+      "group": "lifecycle",
+      "title": "busy不可关闭",
+      "classification": "existing",
+      "current": "closable false、maskClosable false、keyboard false、footer disabled，close函数仍挡。没有取消服务端任务。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/CaptureDialog.tsx:265",
+        "packages/renderer/src/components/CaptureDialog.tsx:290"
+      ],
+      "controls": [
+        "disabled取消/关闭"
+      ],
+      "tags": [
+        "busy"
+      ]
+    },
+    {
+      "id": "capture.lifecycle.idle-tab",
+      "group": "lifecycle",
+      "title": "idle切换页签",
+      "classification": "existing",
+      "current": "Segmented只setTab；URL state留在父，UploadPanel条件渲染卸载，结果不持久保存；directory prop切换后仍旧预置。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/components/CaptureDialog.tsx:202",
+        "packages/renderer/src/components/CaptureDialog.tsx:318",
+        "packages/renderer/src/components/CaptureDialog.tsx:329"
+      ],
+      "controls": [
+        "粘贴链接",
+        "上传文件"
+      ],
+      "tags": []
+    },
+    {
+      "id": "capture.lifecycle.busy-tab",
+      "group": "lifecycle",
+      "title": "busy切页签丢队列风险",
+      "classification": "existing",
+      "current": "Segmented未disabled；上传中切URL卸载面板，异步继续且rows丢失；再进upload是新实例新guard。URLpending也可切upload并并行请求。",
+      "proposal": "提案：busy锁tabs和稳定队列；不新增abort/resume，不声称切换已能安全恢复。",
+      "evidence": [
+        "packages/renderer/src/components/CaptureDialog.tsx:318",
+        "packages/renderer/src/components/CaptureDialog.tsx:329",
+        "packages/renderer/src/components/UploadPanel.tsx:82"
+      ],
+      "controls": [
+        "当前仍可用tabs"
+      ],
+      "tags": [
+        "busy",
+        "race",
+        "risk"
+      ]
+    },
+    {
+      "id": "capture.lifecycle.settling",
+      "group": "lifecycle",
+      "title": "成功260ms竞态",
+      "classification": "existing",
+      "current": "capture running false到timer交接窗口，用户可close清timer，但可再次submit或切tab；onMutate不清旧timer。",
+      "proposal": "提案：settling期间阻重复动作，交接timer与组件生命一致。",
+      "evidence": [
+        "packages/renderer/src/components/CaptureDialog.tsx:222",
+        "packages/renderer/src/components/CaptureDialog.tsx:233",
+        "packages/renderer/src/components/CaptureDialog.tsx:255"
+      ],
+      "controls": [],
+      "tags": [
+        "race"
+      ]
+    },
+    {
+      "id": "capture.lifecycle.reopen",
+      "group": "lifecycle",
+      "title": "每次重开初始参数",
+      "classification": "existing",
+      "current": "nonce key重新mount，初始tab/folder/directory按调用传参；无草稿/结果resume。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/routes/_app.tsx:166",
+        "packages/renderer/src/routes/_app.tsx:480"
+      ],
+      "controls": [],
+      "tags": [
+        "recovery"
+      ]
+    },
+    {
+      "id": "capture.lifecycle.focus-return",
+      "group": "lifecycle",
+      "title": "关闭焦点恢复 / 成功不抢焦点",
+      "classification": "existing",
+      "current": "afterClose优先library data-capture-trigger再原activeElement再fallback；success先restore=false。",
+      "proposal": "保留此业务语义，按批准后的视觉和可用性方案表达。",
+      "evidence": [
+        "packages/renderer/src/routes/_app.tsx:176",
+        "packages/renderer/src/routes/_app.tsx:490"
+      ],
+      "controls": [],
+      "tags": [
+        "keyboard",
+        "focus"
+      ]
+    },
+    {
+      "id": "capture.lifecycle.target-changed",
+      "group": "lifecycle",
+      "title": "打开期间目录被改名/删除",
+      "classification": "existing",
+      "current": "folder捕获路径，server ensureFolders可补建旧路径，无稳定code协调；没有目录选择器。",
+      "proposal": "标记落点变化风险，交由主会话决定范围；不能伪称自动定位改名后目录。",
+      "evidence": [
+        "packages/renderer/src/routes/_app.tsx:169",
+        "apps/server/src/services/capture.ts:72",
+        "apps/server/src/services/upload.ts:237"
+      ],
+      "controls": [],
+      "tags": [
+        "risk",
+        "path"
+      ]
+    },
+    {
+      "id": "capture.lifecycle.refresh-loss",
+      "group": "lifecycle",
+      "title": "刷新 / 断网 / 页面退出",
+      "classification": "existing",
+      "current": "本模块无持久队列或beforeunload任务恢复；pending不能关闭不代表页面退出可恢复或请求可取消。",
+      "proposal": "预览只说明边界，不绘制可点的恢复后台任务控件。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:72",
+        "packages/renderer/src/components/CaptureDialog.tsx:202",
+        "packages/renderer/src/lib/api.ts:826"
+      ],
+      "controls": [],
+      "tags": [
+        "network",
+        "boundary"
+      ]
+    },
+    {
+      "id": "capture.layout.pointer-states",
+      "group": "layout",
+      "title": "共享指针微状态",
+      "classification": "existing",
+      "current": "按钮/Segmented/clear/Dragger由AntD状态样式合成；本次未浏览器测量。",
+      "proposal": "各可交互控件default/hover/active/focus/disabled；边框和图标文字中心无布局位移；适用于所有相关场景。",
+      "evidence": [
+        "packages/renderer/src/components/CaptureDialog.tsx:286",
+        "packages/renderer/src/components/CaptureDialog.tsx:318",
+        "packages/renderer/src/components/UploadPanel.tsx:167"
+      ],
+      "controls": [],
+      "tags": [
+        "cross-cutting",
+        "pointer",
+        "geometry"
+      ]
+    },
+    {
+      "id": "capture.layout.keyboard",
+      "group": "layout",
+      "title": "共享键盘路径",
+      "classification": "existing",
+      "current": "URL autoFocus，普通modal Escape关闭busy禁用；其他AntD trap/radio/Dragger语义需真实验证。",
+      "proposal": "Tab/ShiftTab顺序、focus trap、Enter/Space、Segmented方向键、焦点归还；IME不误提交；适用于全模块。",
+      "evidence": [
+        "packages/renderer/src/components/CaptureDialog.tsx:292",
+        "packages/renderer/src/components/CaptureDialog.tsx:346",
+        "packages/renderer/src/components/UploadPanel.tsx:167"
+      ],
+      "controls": [],
+      "tags": [
+        "cross-cutting",
+        "keyboard"
+      ]
+    },
+    {
+      "id": "capture.layout.narrow",
+      "group": "layout",
+      "title": "390px窄屏",
+      "classification": "existing",
+      "current": "UploadPanel≤600px行wrap，detail全行缩进24px；CaptureDialog无专用窄屏布局，footer不wrap。",
+      "proposal": "390×844无横向溢出、按钮44px触达，完整错误可滚动、长路径title可读。",
+      "evidence": [
+        "packages/renderer/src/components/UploadPanel.tsx:318",
+        "packages/renderer/src/components/UploadPanel.tsx:353",
+        "packages/renderer/src/components/CaptureDialog.tsx:181"
+      ],
+      "controls": [],
+      "tags": [
+        "cross-cutting",
+        "narrow"
+      ]
+    },
+    {
+      "id": "capture.layout.low-height",
+      "group": "layout",
+      "title": "低高度 / 大字号",
+      "classification": "existing",
+      "current": "Modal540px且未自定义body maxheight和stickyfooter；原生AntD容器行为待测。",
+      "proposal": "844×480/200%zoom下正文可滚动、footer与close可达，不隐藏错误/继续上传。",
+      "evidence": [
+        "packages/renderer/src/components/CaptureDialog.tsx:295",
+        "packages/renderer/src/components/UploadPanel.tsx:306"
+      ],
+      "controls": [],
+      "tags": [
+        "cross-cutting",
+        "scroll",
+        "zoom"
+      ]
+    },
+    {
+      "id": "capture.layout.long-content",
+      "group": "layout",
+      "title": "长路径/URL/来源/错误",
+      "classification": "existing",
+      "current": "kind baseline flex无wrap，stageMeta auto margin，previewMeta flex无wrap；row后缀flexnone；可能溢出。",
+      "proposal": "完整路径、2k URL、超长无空格error、长后缀、20+条队列和千位数字均验。",
+      "evidence": [
+        "packages/renderer/src/components/CaptureDialog.tsx:74",
+        "packages/renderer/src/components/CaptureDialog.tsx:145",
+        "packages/renderer/src/components/CaptureDialog.tsx:173",
+        "packages/renderer/src/components/UploadPanel.tsx:337"
+      ],
+      "controls": [],
+      "tags": [
+        "cross-cutting",
+        "long-string"
+      ]
+    },
+    {
+      "id": "capture.layout.themes",
+      "group": "layout",
+      "title": "浅深主题 / 动效偏好",
+      "classification": "existing",
+      "current": "stage语义成对浅底+文字，done/fail文本token；LoaderCircle本组件无spin规则。",
+      "proposal": "浅深theme均可辨且不单靠颜色；reducedmotion尊重，不能靠动画伪造阶段。",
+      "evidence": [
+        "packages/renderer/src/components/CaptureDialog.tsx:131",
+        "packages/renderer/src/components/UploadPanel.tsx:370"
+      ],
+      "controls": [],
+      "tags": [
+        "cross-cutting",
+        "theme",
+        "motion"
+      ]
+    },
+    {
+      "id": "capture.layout.a11y",
+      "group": "layout",
+      "title": "状态朗读 / label关联",
+      "classification": "existing",
+      "current": "URL label关联id；提示无describedby，stage无live/status；上传结果有aria-label与aria-busy。",
+      "proposal": "拟补错误关联、可朗读状态和独立状态文案，SVG装饰aria-hidden；仅前端可用性方案。",
+      "evidence": [
+        "packages/renderer/src/components/CaptureDialog.tsx:341",
+        "packages/renderer/src/components/CaptureDialog.tsx:357",
+        "packages/renderer/src/components/UploadPanel.tsx:199"
+      ],
+      "controls": [],
+      "tags": [
+        "cross-cutting",
+        "a11y"
+      ]
+    },
+    {
+      "id": "capture.layout.desktop",
+      "group": "layout",
+      "title": "桌面共享组件 / 原生边界",
+      "classification": "existing",
+      "current": "Electron注入desktop platform，使用共享renderer与同源HTTP；没有独立CaptureDialog/上传IPC。",
+      "proposal": "共享web视觉可复用；Electron真实文件picker/drop/字体/缩放另验，HTML模拟不等价桌面验收。",
+      "evidence": [
+        "apps/desktop/src/renderer/index.tsx:39",
+        "apps/desktop/src/main/host.ts:11"
+      ],
+      "controls": [],
+      "tags": [
+        "cross-cutting",
+        "desktop",
+        "native"
+      ]
+    }
+  ]
+}

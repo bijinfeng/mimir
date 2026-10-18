@@ -1,0 +1,735 @@
+{
+  "version": "capture-review-v1",
+  "inventory": "../research/capture-scenes.json",
+  "count": 91,
+  "items": [
+    {
+      "id": "capture.entry.nav",
+      "group": "entry",
+      "entry": "review.html#scene=capture.entry.nav",
+      "view": "entry.sidebar",
+      "path": "点击收集；顶部入口形态可切换展开、紧凑、窄屏。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.entry.palette",
+      "group": "entry",
+      "entry": "review.html#scene=capture.entry.palette",
+      "view": "entry.palette",
+      "path": "点击收集链接或文件；模拟保存中时命令禁用。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.entry.menu",
+      "group": "entry",
+      "entry": "review.html#scene=capture.entry.menu",
+      "view": "entry.menu-upload",
+      "path": "打开添加文档菜单，逐项体验文件、文件夹、网页抓取；直接编辑仅模拟宿主交接。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.entry.file",
+      "group": "entry",
+      "entry": "review.html#scene=capture.entry.file",
+      "view": "entry.menu-upload",
+      "path": "点击上传文件进入预置页签与当前目录。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.entry.directory",
+      "group": "entry",
+      "entry": "review.html#scene=capture.entry.directory",
+      "view": "entry.menu-directory",
+      "path": "点击上传文件夹，保留directory预置。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.entry.url",
+      "group": "entry",
+      "entry": "review.html#scene=capture.entry.url",
+      "view": "entry.menu-url",
+      "path": "点击网页抓取，目录落点保持不变。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.entry.empty",
+      "group": "entry",
+      "entry": "review.html#scene=capture.entry.empty",
+      "view": "entry.empty",
+      "path": "体验空库上传或直接编辑入口。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.entry.scope",
+      "group": "entry",
+      "entry": "review.html#scene=capture.entry.scope",
+      "view": "drop.disabled",
+      "path": "在评审工具切换目录、标签视图，比较拖放边界；全局收集固定根。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.url.empty",
+      "group": "url",
+      "entry": "review.html#scene=capture.url.empty",
+      "view": "url.empty",
+      "path": "默认输入焦点、禁用抓取、取消。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.url.whitespace",
+      "group": "url",
+      "entry": "review.html#scene=capture.url.whitespace",
+      "view": "url.whitespace",
+      "path": "清除或键入链接，空白不能提交。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.url.invalid-prefix",
+      "group": "url",
+      "entry": "review.html#scene=capture.url.invalid-prefix",
+      "view": "url.invalid",
+      "path": "本地校验说明与disabled；编辑后可恢复。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.url.web",
+      "group": "url",
+      "entry": "review.html#scene=capture.url.web",
+      "view": "url.valid",
+      "path": "输入、清空、抓取。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.url.wechat",
+      "group": "url",
+      "entry": "review.html#scene=capture.url.wechat",
+      "view": "url.wechat",
+      "path": "识别来源与可折行说明。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.url.github",
+      "group": "url",
+      "entry": "review.html#scene=capture.url.github",
+      "view": "url.github",
+      "path": "评审工具可选择仓库根、仓库子路径、子串误判数据。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.url.incomplete",
+      "group": "url",
+      "entry": "review.html#scene=capture.url.incomplete",
+      "view": "url.protocol",
+      "path": "对比https://按钮；评审工具可切换超2000字符。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.url.clear",
+      "group": "url",
+      "entry": "review.html#scene=capture.url.clear",
+      "view": "url.edit-error",
+      "path": "点击清除，当前与提案均保留上次请求失败；重新提交才清除。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.url.submit",
+      "group": "url",
+      "entry": "review.html#scene=capture.url.submit",
+      "view": "url.ime",
+      "path": "真实键盘Enter提交；评审工具模拟组合输入只演示事件保护，非OS输入法验收。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.url.edit-after-error",
+      "group": "url",
+      "entry": "review.html#scene=capture.url.edit-after-error",
+      "view": "url.edit-error",
+      "path": "编辑链接仍保留旧请求错误；点击抓取重发全部请求。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.stage.waiting",
+      "group": "stage",
+      "entry": "review.html#scene=capture.stage.waiting",
+      "view": "stage.wait",
+      "path": "等待保持静止，评审工具模拟响应；不自动推进阶段。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.stage.fetch-error",
+      "group": "stage",
+      "entry": "review.html#scene=capture.stage.fetch-error",
+      "view": "stage.fetch",
+      "path": "fetch失败，其他阶段未知；编辑后完整重新发起。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.stage.extract-error",
+      "group": "stage",
+      "entry": "review.html#scene=capture.stage.extract-error",
+      "view": "stage.extract",
+      "path": "前序未返回不得补勾；检查失败原因。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.stage.wechat-error",
+      "group": "stage",
+      "entry": "review.html#scene=capture.stage.wechat-error",
+      "view": "stage.wechat",
+      "path": "公众号说明仅文字，无虚构扩展按钮。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.stage.unknown-error",
+      "group": "stage",
+      "entry": "review.html#scene=capture.stage.unknown-error",
+      "view": "stage.network",
+      "path": "结果不确定，先查看目标库；不承诺安全重传。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.stage.assets-contract",
+      "group": "stage",
+      "entry": "review.html#scene=capture.stage.assets-contract",
+      "view": "stage.assets",
+      "path": "仅契约防御，无图片下载承诺。",
+      "classification": "contract-defensive"
+    },
+    {
+      "id": "capture.stage.convert-contract",
+      "group": "stage",
+      "entry": "review.html#scene=capture.stage.convert-contract",
+      "view": "stage.convert",
+      "path": "仅契约防御，展示具体阶段与未返回状态。",
+      "classification": "contract-defensive"
+    },
+    {
+      "id": "capture.stage.success",
+      "group": "stage",
+      "entry": "review.html#scene=capture.stage.success",
+      "view": "stage.success",
+      "path": "评审工具暂停260ms成功窗口；模拟交接保留自动打开合同。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.stage.success-no-images",
+      "group": "stage",
+      "entry": "review.html#scene=capture.stage.success-no-images",
+      "view": "stage.success",
+      "path": "无图片返回的assets内容；评审工具切换为无图结果。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.stage.partial-contract",
+      "group": "stage",
+      "entry": "review.html#scene=capture.stage.partial-contract",
+      "view": "stage.partial",
+      "path": "对比current忽略status与after按failed显示，注明防御响应。",
+      "classification": "contract-defensive"
+    },
+    {
+      "id": "capture.stage.null-id-contract",
+      "group": "stage",
+      "entry": "review.html#scene=capture.stage.null-id-contract",
+      "view": "stage.null-id",
+      "path": "无可打开ID，不显示虚构完成确认或重复保存承诺。",
+      "classification": "contract-defensive"
+    },
+    {
+      "id": "capture.stage.repeat-url",
+      "group": "stage",
+      "entry": "review.html#scene=capture.stage.repeat-url",
+      "view": "stage.duplicate",
+      "path": "已存在标志未公开：完成页不显示已更新/已移动。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.upload.empty",
+      "group": "upload",
+      "entry": "review.html#scene=capture.upload.empty",
+      "view": "upload.empty",
+      "path": "点击拖放区打开明确模拟的选择工具，选择即开始。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.upload.picker-cancel",
+      "group": "upload",
+      "entry": "review.html#scene=capture.upload.picker-cancel",
+      "view": "upload.chooser",
+      "path": "模拟选择工具的取消保持空态；原生选择器另验。",
+      "classification": "native-unverified"
+    },
+    {
+      "id": "capture.upload.accept-any",
+      "group": "upload",
+      "entry": "review.html#scene=capture.upload.accept-any",
+      "view": "upload.empty",
+      "path": "模拟选择FIG/无后缀文件；不设accept白名单。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.upload.pointer",
+      "group": "upload",
+      "entry": "review.html#scene=capture.upload.pointer",
+      "view": "upload.empty",
+      "path": "hover/focus/Space/Enter与模拟拖入；按钮框不改变尺寸。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.upload.pending",
+      "group": "upload",
+      "entry": "review.html#scene=capture.upload.pending",
+      "view": "upload.pending",
+      "path": "上传项与等待项；通过评审工具返回下一文件结果。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.upload.uploading",
+      "group": "upload",
+      "entry": "review.html#scene=capture.upload.uploading",
+      "view": "upload.wait",
+      "path": "顺序固定，明确结束数而非字节百分比。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.upload.duplicate-event",
+      "group": "upload",
+      "entry": "review.html#scene=capture.upload.duplicate-event",
+      "view": "upload.wait",
+      "path": "评审工具重复选择；同步批次锁不创建第二批。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.upload.too-large",
+      "group": "upload",
+      "entry": "review.html#scene=capture.upload.too-large",
+      "view": "upload.too-large",
+      "path": "超过50MiB拒绝；评审工具可切换等于上限。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.upload.zero-byte",
+      "group": "upload",
+      "entry": "review.html#scene=capture.upload.zero-byte",
+      "view": "upload.zero",
+      "path": "0字节保留服务端完整原因。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.upload.network-error",
+      "group": "upload",
+      "entry": "review.html#scene=capture.upload.network-error",
+      "view": "upload.all-failed",
+      "path": "逐文件失败原因，其他文件继续处理。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.upload.lost-response",
+      "group": "upload",
+      "entry": "review.html#scene=capture.upload.lost-response",
+      "view": "upload.network",
+      "path": "先检查库中是否已保存，再人工判断重传。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.upload.saved-text",
+      "group": "upload",
+      "entry": "review.html#scene=capture.upload.saved-text",
+      "view": "upload.success",
+      "path": "已提取字数与状态分层。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.upload.saved-original",
+      "group": "upload",
+      "entry": "review.html#scene=capture.upload.saved-original",
+      "view": "upload.raw",
+      "path": "0字正文但原件保存仍是成功，查看详情保留语义。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.upload.markdown-note",
+      "group": "upload",
+      "entry": "review.html#scene=capture.upload.markdown-note",
+      "view": "upload.markdown",
+      "path": "Markdown成为可编辑笔记。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.upload.markdown-empty-body",
+      "group": "upload",
+      "entry": "review.html#scene=capture.upload.markdown-empty-body",
+      "view": "upload.empty-markdown",
+      "path": "对比当前原件文字与提案空正文笔记提示。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.upload.unknown-format",
+      "group": "upload",
+      "entry": "review.html#scene=capture.upload.unknown-format",
+      "view": "upload.raw",
+      "path": "FIG未知格式保原件，不承诺可搜索。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.upload.parse-failure",
+      "group": "upload",
+      "entry": "review.html#scene=capture.upload.parse-failure",
+      "view": "upload.raw",
+      "path": "切换解析失败样本：仍成功保存，原因在文档详情。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.upload.all-success",
+      "group": "upload",
+      "entry": "review.html#scene=capture.upload.all-success",
+      "view": "upload.success",
+      "path": "整批完成后才显示首个打开和继续上传。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.upload.partial-failure",
+      "group": "upload",
+      "entry": "review.html#scene=capture.upload.partial-failure",
+      "view": "upload.partial",
+      "path": "查看失败原因，人工重新选择失败文件，无单击重试。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.upload.all-failed",
+      "group": "upload",
+      "entry": "review.html#scene=capture.upload.all-failed",
+      "view": "upload.all-failed",
+      "path": "无打开按钮，继续上传返回选择空态。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.upload.continue",
+      "group": "upload",
+      "entry": "review.html#scene=capture.upload.continue",
+      "view": "upload.partial",
+      "path": "点击继续上传仅清结果，不模拟自动打开系统选择器。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.upload.replace-batch",
+      "group": "upload",
+      "entry": "review.html#scene=capture.upload.replace-batch",
+      "view": "upload.partial",
+      "path": "重新点击选择可开始新批，旧结果整体替换。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.upload.long-rows",
+      "group": "upload",
+      "entry": "review.html#scene=capture.upload.long-rows",
+      "view": "upload.long",
+      "path": "长后缀可折行、长错误展开；评审工具切24项列表。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.upload.same-name",
+      "group": "upload",
+      "entry": "review.html#scene=capture.upload.same-name",
+      "view": "upload.names",
+      "path": "同名独立行、隐藏文件、无后缀都可保存，不提供去重。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.directory.empty",
+      "group": "directory",
+      "entry": "review.html#scene=capture.directory.empty",
+      "view": "directory.empty",
+      "path": "模拟目录选择，支持情况在工具中说明。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.directory.paths",
+      "group": "directory",
+      "entry": "review.html#scene=capture.directory.paths",
+      "view": "directory.success",
+      "path": "展开相对路径，目标保留所选目录首段。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.directory.empty-folders",
+      "group": "directory",
+      "entry": "review.html#scene=capture.directory.empty-folders",
+      "view": "directory.no-files",
+      "path": "空目录无File，不创建目录实体。",
+      "classification": "browser-contract"
+    },
+    {
+      "id": "capture.directory.mixed",
+      "group": "directory",
+      "entry": "review.html#scene=capture.directory.mixed",
+      "view": "directory.success",
+      "path": "混合结果样本保留每项相对路径。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.directory.native-support",
+      "group": "directory",
+      "entry": "review.html#scene=capture.directory.native-support",
+      "view": "directory.empty",
+      "path": "模拟不支持目录选择时提示；HTML不冒充原生能力验收。",
+      "classification": "native-unverified"
+    },
+    {
+      "id": "capture.drop.enter",
+      "group": "drop",
+      "entry": "review.html#scene=capture.drop.enter",
+      "view": "drop.hover",
+      "path": "模拟Files进入、子节点穿越和松开，目标明确。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.drop.leave",
+      "group": "drop",
+      "entry": "review.html#scene=capture.drop.leave",
+      "view": "drop.hover",
+      "path": "子节点离开不闪退；整体离开移除覆盖。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.drop.upload",
+      "group": "drop",
+      "entry": "review.html#scene=capture.drop.upload",
+      "view": "drop.busy",
+      "path": "对比当前背景串行无进度与提案统一逐项结果。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.drop.all-success",
+      "group": "drop",
+      "entry": "review.html#scene=capture.drop.all-success",
+      "view": "drop.success",
+      "path": "当前仅toast，提案统一结果且刷新库。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.drop.partial",
+      "group": "drop",
+      "entry": "review.html#scene=capture.drop.partial",
+      "view": "drop.partial",
+      "path": "当前双toast，提案逐文件原因，无自动重试。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.drop.all-failed",
+      "group": "drop",
+      "entry": "review.html#scene=capture.drop.all-failed",
+      "view": "drop.failed",
+      "path": "当前只计数，提案完整错误和重新选择。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.drop.repeat",
+      "group": "drop",
+      "entry": "review.html#scene=capture.drop.repeat",
+      "view": "drop.busy",
+      "path": "评审工具重复drop；当前计数第二批，提案guard拒绝。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.drop.irrelevant",
+      "group": "drop",
+      "entry": "review.html#scene=capture.drop.irrelevant",
+      "view": "drop.non-files",
+      "path": "评审工具切换非Files、空列表、标签视图；均不请求。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.drop.directory-boundary",
+      "group": "drop",
+      "entry": "review.html#scene=capture.drop.directory-boundary",
+      "view": "drop.idle",
+      "path": "整页拖目录不遍历；使用菜单上传文件夹，模拟边界提示。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.result.url-handoff",
+      "group": "result",
+      "entry": "review.html#scene=capture.result.url-handoff",
+      "view": "stage.success",
+      "path": "评审工具模拟自动交接，目标scope按入口保持。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.result.upload-open",
+      "group": "result",
+      "entry": "review.html#scene=capture.result.upload-open",
+      "view": "upload.partial",
+      "path": "只能整批结束后打开首个成功文档。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.result.close-refresh",
+      "group": "result",
+      "entry": "review.html#scene=capture.result.close-refresh",
+      "view": "upload.success",
+      "path": "点击关闭：提案背景更新，当前保留未刷新的模拟列表。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.result.unsaved-gap",
+      "group": "result",
+      "entry": "review.html#scene=capture.result.unsaved-gap",
+      "view": "guard.manual",
+      "path": "当前无保护直接交接；提案拟复用未保存弹窗。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.result.guard-choices",
+      "group": "result",
+      "entry": "review.html#scene=capture.result.guard-choices",
+      "view": "guard.manual",
+      "path": "继续编辑保留上传结果；保存、丢弃后打开；可切自动/Office。",
+      "classification": "proposed"
+    },
+    {
+      "id": "capture.result.guard-saving",
+      "group": "result",
+      "entry": "review.html#scene=capture.result.guard-saving",
+      "view": "guard.saving",
+      "path": "评审工具返回保存成功/失败；失败保留结果，可重试保存。",
+      "classification": "proposed"
+    },
+    {
+      "id": "capture.lifecycle.idle-close",
+      "group": "lifecycle",
+      "entry": "review.html#scene=capture.lifecycle.idle-close",
+      "view": "url.valid",
+      "path": "X、Esc、遮罩、取消均回焦，重开草稿清空。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.lifecycle.busy-close",
+      "group": "lifecycle",
+      "entry": "review.html#scene=capture.lifecycle.busy-close",
+      "view": "stage.wait",
+      "path": "Esc/遮罩均不可关闭，不提供取消后台任务。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.lifecycle.idle-tab",
+      "group": "lifecycle",
+      "entry": "review.html#scene=capture.lifecycle.idle-tab",
+      "view": "url.valid",
+      "path": "链接草稿留父层；上传页切走结果销毁，不声称持久恢复。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.lifecycle.busy-tab",
+      "group": "lifecycle",
+      "entry": "review.html#scene=capture.lifecycle.busy-tab",
+      "view": "lifecycle.busy-tab",
+      "path": "点击current页签见队列卸载；after锁定页签。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.lifecycle.settling",
+      "group": "lifecycle",
+      "entry": "review.html#scene=capture.lifecycle.settling",
+      "view": "stage.success",
+      "path": "比较成功窗口可重提与提案交接锁；不制造第二次入库。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.lifecycle.reopen",
+      "group": "lifecycle",
+      "entry": "review.html#scene=capture.lifecycle.reopen",
+      "view": "lifecycle.reopen",
+      "path": "以入口参数重新打开，目录/文件夹模式保留，草稿清空。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.lifecycle.focus-return",
+      "group": "lifecycle",
+      "entry": "review.html#scene=capture.lifecycle.focus-return",
+      "view": "url.valid",
+      "path": "关闭回入口焦点；成功交接不再抢回触发点。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.lifecycle.target-changed",
+      "group": "lifecycle",
+      "entry": "review.html#scene=capture.lifecycle.target-changed",
+      "view": "url.long",
+      "path": "评审工具模拟外部目录改名；本轮只标限制，不自动改目标或新增API。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.lifecycle.refresh-loss",
+      "group": "lifecycle",
+      "entry": "review.html#scene=capture.lifecycle.refresh-loss",
+      "view": "upload.wait",
+      "path": "评审工具模拟页面退出，只说明没有持久队列恢复。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.layout.pointer-states",
+      "group": "layout",
+      "entry": "review.html#scene=capture.layout.pointer-states",
+      "view": "url.valid",
+      "path": "所有控件真实hover/focus/active保持边框、布局稳定；可切上传。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.layout.keyboard",
+      "group": "layout",
+      "entry": "review.html#scene=capture.layout.keyboard",
+      "view": "url.empty",
+      "path": "Tab/ShiftTab循环、页签方向键、Esc回焦；模拟组合输入仅工具。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.layout.narrow",
+      "group": "layout",
+      "entry": "review.html#scene=capture.layout.narrow",
+      "view": "layout.narrow",
+      "path": "自动切390×844，触点44px，长错误与结果可达。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.layout.low-height",
+      "group": "layout",
+      "entry": "review.html#scene=capture.layout.low-height",
+      "view": "layout.low",
+      "path": "自动切低高度；文字200%开关可组合，内部滚动尾部可达。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.layout.long-content",
+      "group": "layout",
+      "entry": "review.html#scene=capture.layout.long-content",
+      "view": "upload.long",
+      "path": "工具切长URL、长后缀、长错误、24项列表。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.layout.themes",
+      "group": "layout",
+      "entry": "review.html#scene=capture.layout.themes",
+      "view": "layout.dark",
+      "path": "自动深色，可切浅色和减少动效。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.layout.a11y",
+      "group": "layout",
+      "entry": "review.html#scene=capture.layout.a11y",
+      "view": "url.invalid",
+      "path": "可关联提示和状态区；键盘可访问，读屏真实播报另验。",
+      "classification": "existing"
+    },
+    {
+      "id": "capture.layout.desktop",
+      "group": "layout",
+      "entry": "review.html#scene=capture.layout.desktop",
+      "view": "directory.empty",
+      "path": "共享renderer外观；原生picker/拖放/字体/权限未验证。",
+      "classification": "existing"
+    }
+  ]
+}

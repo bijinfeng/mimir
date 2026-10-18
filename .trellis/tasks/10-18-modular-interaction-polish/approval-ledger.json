@@ -37,7 +37,7 @@
       "version": "v1",
       "approved_at": "2026-10-18",
       "user_quote": "实施吧",
-      "implementation_commit": "924b721f7ad958db45a607defcd34a7c63daa98d",
+      "implementation_commit": "1f119ff45ffea79052aab7f56e6c62de9857f9c1",
       "task": ".trellis/tasks/10-18-interaction-search",
       "planning_user_quote": "继续",
       "sha256": "0e8a90da0c37c509f8fcda8027c9f01bac5f58607c45db83f10d41f8fb950535",
@@ -45,17 +45,25 @@
       "previous_implementation_commit": "2b3b6b3741b62f6f3e710b361c1f82b38840fc0e",
       "revision_user_quote": "不对呀，你没有完全按照打磨后的还原啊",
       "parity_verification": "../10-18-interaction-search/verification/parity/comparison.html",
-      "revision_notes": "按冻结v1修正16组视觉/交互偏差；Renderer495项及全仓类型通过，外部全仓lint阻断保留。"
+      "revision_notes": "按冻结v1修正16组视觉/交互偏差；Renderer495项及全仓类型通过，外部全仓lint阻断保留。 AI操作区图文居中与hover边框引起的2px抖动已修复，实测浅深/390px状态尺寸一致。",
+      "parity_implementation_commit": "924b721f7ad958db45a607defcd34a7c63daa98d"
     },
     {
       "id": "capture",
       "name": "收集与导入",
-      "status": "not_requested",
-      "proposal": null,
-      "version": null,
+      "status": "awaiting_user_approval",
+      "proposal": "../10-18-interaction-capture/prototype/review.html",
+      "version": "capture-review-v1 revision2",
       "approved_at": null,
       "user_quote": null,
-      "implementation_commit": null
+      "implementation_commit": null,
+      "task": ".trellis/tasks/10-18-interaction-capture",
+      "planning_user_quote": "继续吧",
+      "sha256": "fa66bdc5e0ed6a4c7d1383342b7e554754b9f88ce69db162a56fc947b93061e1",
+      "verification": "../10-18-interaction-capture/verification/browser-qa.json",
+      "preview_url": "http://127.0.0.1:5184/review.html",
+      "coverage_groups": 9,
+      "coverage_items": 91
     },
     {
       "id": "library",

@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-18",
+  "head": "fad5360cc0d47269509a5979a56e65f10349a5ff",
+  "files": {
+    "packages/renderer/src/components/CaptureDialog.tsx": "5a7fb231b9acc2c346319db6aba073de6a0cdc1df2c43f28f7bbad7851a92807",
+    "packages/renderer/src/components/UploadPanel.tsx": "b4e0059fa9bc2ec871089103a817a9c71a646387198acec0cfebaf626a93a759",
+    "packages/renderer/src/components/library/LibraryView.tsx": "0b2212618dfd7de4db27cd193ecaac1611c13ac4111d2aea06cf11fe353ad7d5",
+    "packages/renderer/src/routes/_app.tsx": "4b0f2bad5b0ddba8c96b4f4c06fac3473edbbec012b879d67efbd2f6a01baf47",
+    "packages/shared/src/capture.ts": "6b3df0d94b2715d1efe9ea69a687d8436599f5bd6d7d49746fa291cb54de5098",
+    "apps/server/src/services/capture.ts": "dfc71839b5d79b85d8fda6182315dd1770efa9ad17541c4fa251cb69284d1899",
+    "apps/server/src/services/upload.ts": "4f18369615a4174986b840853b971e68b0be7b96abcfcf4559d7b999531db3e3"
+  },
+  "note": "工作树源码hash，非声明文件在HEAD均未改；仅标识本次盘点所见版本"
+}

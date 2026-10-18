@@ -1,0 +1,76 @@
+{
+  "date": "2026-10-18",
+  "htmlSha256": "fa66bdc5e0ed6a4c7d1383342b7e554754b9f88ce69db162a56fc947b93061e1",
+  "scope": "sampled prototype paths only, not 91 browser tests or native product acceptance",
+  "passed": {
+    "incompleteUrlDisabled": true,
+    "busyEscapeRetainsDialog": true,
+    "busyCloseDisabled": true,
+    "guardCancelFocus": "打开《设计系统调研.pdf》",
+    "guardEscapeFocus": "打开《设计系统调研.pdf》",
+    "idleEscape": {
+      "dialogCount": 0,
+      "label": "收集",
+      "tag": "BUTTON",
+      "text": "收集"
+    },
+    "clearTouch": {
+      "height": 44,
+      "width": 44,
+      "x": 560,
+      "y": 348.234375
+    },
+    "clearHoverSize": {
+      "width": 44,
+      "height": 44
+    },
+    "darkNarrow": {
+      "dialog": {
+        "width": 372,
+        "height": 796
+      },
+      "horizontalOverflow": false,
+      "bodyClient": 537,
+      "bodyScrollHeight": 607,
+      "listClient": 278,
+      "listScrollHeight": 355
+    },
+    "lowLarge": {
+      "dialog": {
+        "width": 540,
+        "height": 404
+      },
+      "horizontalOverflow": false,
+      "bodyClient": 115,
+      "bodyScrollHeight": 783,
+      "listClient": 278,
+      "listScrollHeight": 576,
+      "keyboardBodyScroll": 608,
+      "openActionReached": true
+    },
+    "busyTabFocus": "dialog",
+    "directoryRootPath": [
+      "论文集/2024",
+      "论文集/附件"
+    ],
+    "partialNetworkCopy": "先查看目标知识库，确认后再决定是否重新上传",
+    "consoleErrors": []
+  },
+  "priorEvidence": "hover-geometry.json records first-pass real pointer hover/leave stable rectangles; clear control verified again on frozen candidate",
+  "screenshots": [
+    "proposal-desktop.png",
+    "proposal-dark-narrow.png",
+    "proposal-low-large.png",
+    "proposal-low-large-actions.png"
+  ],
+  "notVerified": [
+    "native file/directory picker",
+    "real file upload/drop and recursive directory traversal",
+    "OS IME candidate behavior",
+    "screenreader announcements",
+    "Electron",
+    "real network/capture/parsing/storage and unsaved save",
+    "all 91 GUI paths",
+    "native browser 200% zoom"
+  ]
+}
