@@ -211,3 +211,115 @@ describe('设置项的保存', () => {
     await unmount()
   })
 })
+
+it('开关失败回滚到已保存值，就地重试成功后保持新值', async () => {
+  const { api } = await import('../../lib/api')
+  const update = vi
+    .spyOn(api, 'updateSettings')
+    .mockRejectedValueOnce(new Error('连接失败'))
+    .mockResolvedValueOnce({ ok: true, issues: [] })
+  const { host, unmount } = await render(
+    createElement(SettingControl, {
+      entry: { ...BASE_ENTRY, type: 'boolean', value: false, defaultValue: false },
+    }),
+  )
+  const toggle = host.querySelector<HTMLButtonElement>('[role="switch"]')!
+  await act(async () => toggle.click())
+  await act(async () => {
+    await vi.waitFor(() =>
+      expect(host.querySelector('[role="alert"]')?.textContent).toContain('已恢复为已保存状态'),
+    )
+  })
+  expect(toggle.getAttribute('aria-checked')).toBe('false')
+  expect(host.textContent).not.toContain('保存中')
+  const retry = Array.from(host.querySelectorAll<HTMLButtonElement>('button')).find(
+    (button) => buttonLabel(button) === '重试',
+  )!
+  await act(async () => retry.click())
+  await act(async () => {
+    await vi.waitFor(() => expect(host.querySelector('[role="alert"]')).toBeNull())
+  })
+  expect(toggle.getAttribute('aria-checked')).toBe('true')
+  expect(update).toHaveBeenNthCalledWith(2, { [BASE_ENTRY.key]: true })
+  expect(host.textContent).toContain('已保存')
+  await unmount()
+})
+
+it('显式保存失败保留输入，重试成功即标为已保存且不能重复提交', async () => {
+  const { api } = await import('../../lib/api')
+  const update = vi
+    .spyOn(api, 'updateSettings')
+    .mockRejectedValueOnce(new Error('写入失败'))
+    .mockResolvedValueOnce({ ok: true, issues: [] })
+  const { host, unmount } = await render(createElement(SettingControl, { entry: BASE_ENTRY }))
+  const input = host.querySelector('input')!
+  await act(async () => typeInto(input, 'https://example.dev/v1'))
+  await act(async () => host.querySelector('button')!.click())
+  await act(async () => {
+    await vi.waitFor(() =>
+      expect(host.querySelector('[role="alert"]')?.textContent).toContain('草稿已保留'),
+    )
+  })
+  expect(input.value).toBe('https://example.dev/v1')
+  await act(async () => {
+    host.querySelector('button')!.click()
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+  })
+  await act(async () => {
+    await vi.waitFor(() => expect(buttonLabel(host.querySelector('button'))).toBe('已保存'))
+  })
+  expect(host.querySelector('button')!.disabled).toBe(true)
+  expect(update).toHaveBeenCalledTimes(2)
+  await unmount()
+})
+
+it('数字字段组合输入的 Enter 不触发保存', async () => {
+  const { api } = await import('../../lib/api')
+  const update = vi.spyOn(api, 'updateSettings')
+  const { host, unmount } = await render(
+    createElement(SettingControl, {
+      entry: { ...BASE_ENTRY, type: 'number', value: 2, defaultValue: 2 },
+    }),
+  )
+  await act(async () =>
+    host
+      .querySelector('input')!
+      .dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, isComposing: true }),
+      ),
+  )
+  expect(update).not.toHaveBeenCalled()
+  await unmount()
+})
+
+it('清除秘密配置失败保留原草稿，重试成功后才清空', async () => {
+  const { api } = await import('../../lib/api')
+  const update = vi
+    .spyOn(api, 'updateSettings')
+    .mockRejectedValueOnce(new Error('清除失败'))
+    .mockResolvedValueOnce({ ok: true, issues: [] })
+  const { host, unmount } = await render(
+    createElement(SettingControl, {
+      entry: { ...BASE_ENTRY, type: 'secret', value: null, configured: true },
+      secret: true,
+    }),
+  )
+  const input = host.querySelector('input')!
+  const clear = () =>
+    Array.from(host.querySelectorAll('button')).find((button) => buttonLabel(button) === '清除')!
+  await act(async () => typeInto(input, 'unsaved-secret'))
+  await act(async () => clear().click())
+  await act(async () => {
+    await vi.waitFor(() =>
+      expect(host.querySelector('[role="alert"]')?.textContent).toContain('草稿已保留'),
+    )
+  })
+  expect(input.value).toBe('unsaved-secret')
+  expect(host.textContent).not.toContain('unsaved-secret')
+  await act(async () => clear().click())
+  await act(async () => {
+    await vi.waitFor(() => expect(input.value).toBe(''))
+  })
+  expect(update.mock.calls).toEqual([[{ [BASE_ENTRY.key]: null }], [{ [BASE_ENTRY.key]: null }]])
+  await unmount()
+})

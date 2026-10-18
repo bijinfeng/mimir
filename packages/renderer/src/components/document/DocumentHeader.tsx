@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react'
 import type { DocumentDetail } from '@mimir/shared'
 import { Button, Dropdown, Tooltip, Typography, type MenuProps } from 'antd'
 import {
@@ -36,6 +37,12 @@ export function DocumentHeader({
 }: DocumentHeaderProps) {
   const { styles } = useStyles()
   const { runGuarded } = useUnsaved()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuTrigger = useRef<HTMLButtonElement>(null)
+  const closeMenu = () => {
+    setMenuOpen(false)
+    menuTrigger.current?.focus()
+  }
   // Ant Design portals submenu popups outside the root dropdown. Give those
   // popups the same scoped class so their rows keep the document-menu styling.
   const styledMenu = menu?.map((item) =>
@@ -153,7 +160,18 @@ export function DocumentHeader({
         </Tooltip>
         <Dropdown
           trigger={['click']}
-          menu={{ items: styledMenu }}
+          autoFocus
+          open={menuOpen}
+          onOpenChange={setMenuOpen}
+          menu={{
+            items: styledMenu,
+            onClick: closeMenu,
+            onKeyDown: (event) => {
+              if (event.key !== 'Escape') return
+              event.stopPropagation()
+              closeMenu()
+            },
+          }}
           placement="bottomRight"
           classNames={{ root: styles.docMenu }}
         >
@@ -162,7 +180,20 @@ export function DocumentHeader({
             size="small"
             icon={<Ellipsis size={16} />}
             className={styles.tbBtn}
+            ref={menuTrigger}
             aria-label="更多操作"
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') {
+                event.stopPropagation()
+                closeMenu()
+              }
+              if (event.key === 'ArrowDown') {
+                event.preventDefault()
+                setMenuOpen(true)
+              }
+            }}
           />
         </Dropdown>
       </div>

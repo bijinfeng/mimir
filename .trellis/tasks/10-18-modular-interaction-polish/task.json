@@ -1,0 +1,28 @@
+{
+  "id": "modular-interaction-polish",
+  "name": "modular-interaction-polish",
+  "title": "分模块交互精修",
+  "description": "逐模块盘点全部页面与交互状态，先交付可交互HTML前后对比稿，经用户逐模块认可后再实施验收并提交",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P2",
+  "creator": "jfbi",
+  "assignee": "jfbi",
+  "createdAt": "2026-10-18",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "10-18-interaction-foundations"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "2026-10-18 基础组件v1已认可、实施并完成实际页面与按包串行全仓检查；其他15模块仍须先交付HTML，未获产品实施授权。下一模块：工作区导航与账户菜单。",
+  "meta": {}
+}

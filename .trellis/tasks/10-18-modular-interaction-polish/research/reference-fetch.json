@@ -1,0 +1,20 @@
+[
+  {
+    "file": "weknora-official.html",
+    "url": "https://weknora.weixin.qq.com/",
+    "http": 200,
+    "bytes": 113529
+  },
+  {
+    "file": "weknora-release.json",
+    "url": "https://api.github.com/repos/Tencent/WeKnora/releases/tags/v0.8.3",
+    "http": 200,
+    "bytes": 44048
+  },
+  {
+    "file": "weknora-theme.css",
+    "url": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/frontend/src/assets/theme/theme.css",
+    "http": 200,
+    "bytes": 26126
+  }
+]

@@ -1,0 +1,167 @@
+{
+  "version": 1,
+  "date": "2026-10-18",
+  "modules": [
+    {
+      "id": "foundation",
+      "name": "基础组件与系统反馈",
+      "status": "implemented_verified",
+      "proposal": "../10-18-interaction-foundations/prototype/review.html",
+      "version": "v1",
+      "approved_at": "2026-10-18",
+      "user_quote": "没问题了，继续吧",
+      "implementation_commit": null,
+      "sha256": "a4ca817e948b1e24a39daf85d2ed7ab7e04f54548f4b1ea9e075a367f2014789"
+    },
+    {
+      "id": "workspace",
+      "name": "工作区导航与账户菜单",
+      "status": "not_requested",
+      "proposal": null,
+      "version": null,
+      "approved_at": null,
+      "user_quote": null,
+      "implementation_commit": null
+    },
+    {
+      "id": "search",
+      "name": "搜索与命令面板",
+      "status": "not_requested",
+      "proposal": null,
+      "version": null,
+      "approved_at": null,
+      "user_quote": null,
+      "implementation_commit": null
+    },
+    {
+      "id": "capture",
+      "name": "收集与导入",
+      "status": "not_requested",
+      "proposal": null,
+      "version": null,
+      "approved_at": null,
+      "user_quote": null,
+      "implementation_commit": null
+    },
+    {
+      "id": "library",
+      "name": "知识库与目录浏览管理",
+      "status": "not_requested",
+      "proposal": null,
+      "version": null,
+      "approved_at": null,
+      "user_quote": null,
+      "implementation_commit": null
+    },
+    {
+      "id": "document",
+      "name": "文档阅读与共享文档流程",
+      "status": "not_requested",
+      "proposal": null,
+      "version": null,
+      "approved_at": null,
+      "user_quote": null,
+      "implementation_commit": null
+    },
+    {
+      "id": "chat",
+      "name": "AI对话与生成交互",
+      "status": "not_requested",
+      "proposal": null,
+      "version": null,
+      "approved_at": null,
+      "user_quote": null,
+      "implementation_commit": null
+    },
+    {
+      "id": "settings",
+      "name": "设置全分区",
+      "status": "not_requested",
+      "proposal": null,
+      "version": null,
+      "approved_at": null,
+      "user_quote": null,
+      "implementation_commit": null
+    },
+    {
+      "id": "login",
+      "name": "登录与全局故障",
+      "status": "not_requested",
+      "proposal": null,
+      "version": null,
+      "approved_at": null,
+      "user_quote": null,
+      "implementation_commit": null
+    },
+    {
+      "id": "markdown",
+      "name": "Markdown笔记编辑器",
+      "status": "not_requested",
+      "proposal": null,
+      "version": null,
+      "approved_at": null,
+      "user_quote": null,
+      "implementation_commit": null
+    },
+    {
+      "id": "html",
+      "name": "HTML页面编辑器",
+      "status": "not_requested",
+      "proposal": null,
+      "version": null,
+      "approved_at": null,
+      "user_quote": null,
+      "implementation_commit": null
+    },
+    {
+      "id": "docx",
+      "name": "Word / DOCX编辑器",
+      "status": "not_requested",
+      "proposal": null,
+      "version": null,
+      "approved_at": null,
+      "user_quote": null,
+      "implementation_commit": null
+    },
+    {
+      "id": "xlsx",
+      "name": "Excel / XLSX编辑器",
+      "status": "not_requested",
+      "proposal": null,
+      "version": null,
+      "approved_at": null,
+      "user_quote": null,
+      "implementation_commit": null
+    },
+    {
+      "id": "pptx",
+      "name": "PowerPoint / PPTX编辑器",
+      "status": "not_requested",
+      "proposal": null,
+      "version": null,
+      "approved_at": null,
+      "user_quote": null,
+      "implementation_commit": null
+    },
+    {
+      "id": "pdf",
+      "name": "PDF编辑器",
+      "status": "not_requested",
+      "proposal": null,
+      "version": null,
+      "approved_at": null,
+      "user_quote": null,
+      "implementation_commit": null
+    },
+    {
+      "id": "desktop",
+      "name": "Desktop专属载体",
+      "status": "not_requested",
+      "proposal": null,
+      "version": null,
+      "approved_at": null,
+      "user_quote": null,
+      "implementation_commit": null
+    }
+  ]
+}

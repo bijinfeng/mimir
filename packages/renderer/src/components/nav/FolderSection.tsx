@@ -7,6 +7,7 @@ import type { ReactNode } from 'react'
 import type { FolderNode } from '@mimir/shared'
 import { KnowledgeBaseCreateModal } from '../KnowledgeBaseCreateModal'
 import { api } from '../../lib/api'
+import { confirmDanger } from '../confirm-danger'
 import { FolderGlyph } from './folder-icons'
 import { isDescendantOf, joinPath, nameOf, parentOf } from './folder-ops'
 import { FONT_SIZE, NAV_ITEM_HEIGHT, NAV_NARROW_QUERY } from '../../theme/tokens'
@@ -431,20 +432,16 @@ export function FolderSection({
       // 删的正是当前所在知识库（或其内部）时，留在原 scope 等于看一个空目录
       if (activePath && (activePath === path || isDescendantOf(activePath, path))) onSelect('')
     },
-    onError: (error: unknown) => message.error(error instanceof Error ? error.message : '删除失败'),
   })
 
   const confirmRemove = (node: FolderNode) => {
-    modal.confirm({
+    confirmDanger(modal, {
       title: `删除知识库「${node.name}」？`,
       content:
         node.count > 0
           ? `里面的 ${node.count} 篇文档会保留，指派清空后回到库根。`
           : '这是一个空知识库，删除后不影响任何文档。',
-      okText: '删除',
-      okButtonProps: { danger: true },
-      cancelText: '取消',
-      onOk: () => removeMut.mutateAsync(node.path),
+      onConfirm: () => removeMut.mutateAsync(node.path),
     })
   }
 

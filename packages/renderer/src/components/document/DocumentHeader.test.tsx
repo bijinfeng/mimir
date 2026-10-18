@@ -210,3 +210,27 @@ describe('共用文档头部', () => {
     await view.unmount()
   })
 })
+
+it('更多菜单的 Escape 关闭并回到触发按钮，选择动作也回焦', async () => {
+  const action = vi.fn<() => void>()
+  const view = await renderHeader(baseDoc, undefined, [
+    { key: 'test', label: '测试操作', onClick: action },
+  ])
+  const trigger = view.host.querySelector<HTMLButtonElement>('[aria-label="更多操作"]')!
+  await act(async () =>
+    trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true })),
+  )
+  expect(trigger.getAttribute('aria-expanded')).toBe('true')
+  const menu = document.querySelector<HTMLElement>('[role="menu"]')!
+  await act(async () =>
+    menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })),
+  )
+  expect(trigger.getAttribute('aria-expanded')).toBe('false')
+  expect(document.activeElement).toBe(trigger)
+  await act(async () => trigger.click())
+  await act(async () => document.querySelector<HTMLElement>('[role="menuitem"]')!.click())
+  expect(action).toHaveBeenCalledOnce()
+  expect(trigger.getAttribute('aria-expanded')).toBe('false')
+  expect(document.activeElement).toBe(trigger)
+  await view.unmount()
+})

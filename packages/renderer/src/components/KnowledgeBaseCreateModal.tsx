@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { App, Input, Modal } from 'antd'
+import type { InputRef } from 'antd'
 import { createStyles } from 'antd-style'
-import { useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { FOLDER_ICONS } from '@mimir/shared'
 import { FolderGlyph } from './nav/folder-icons'
 import { api } from '../lib/api'
@@ -28,6 +29,22 @@ export interface KnowledgeBaseCreateModalProps {
 }
 
 const useStyles = createStyles(({ css, token }) => ({
+  dialog: css`
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100dvh - 48px);
+  `,
+  body: css`
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  `,
+  error: css`
+    margin: 6px 0 0;
+    color: ${token.colorErrorText};
+    font-size: ${FONT_SIZE.note}px;
+    overflow-wrap: anywhere;
+  `,
   fieldLabel: css`
     display: block;
     margin: 20px 0 7px;
@@ -78,6 +95,11 @@ const useStyles = createStyles(({ css, token }) => ({
       color: ${token.colorText};
     }
 
+    &:disabled {
+      cursor: not-allowed;
+      color: ${token.colorTextDisabled};
+    }
+
     &:focus-visible {
       outline: 2px solid ${token.colorPrimaryBorder};
       outline-offset: 2px;
@@ -99,6 +121,11 @@ export function KnowledgeBaseCreateModal({
   const queryClient = useQueryClient()
   const { message } = App.useApp()
 
+  const fieldId = useId()
+  const nameRef = useRef<InputRef>(null)
+  const submitting = useRef(false)
+  const [nameError, setNameError] = useState('')
+  const [requestError, setRequestError] = useState('')
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   /** 图标键；null = 未选（行上回退文件夹图标） */
@@ -108,6 +135,8 @@ export function KnowledgeBaseCreateModal({
     setName('')
     setDescription('')
     setIcon(null)
+    setNameError('')
+    setRequestError('')
   }
 
   const createMut = useMutation({
@@ -123,16 +152,25 @@ export function KnowledgeBaseCreateModal({
       reset()
       onCreated(vars.name)
     },
-    onError: (error: unknown) => message.error(error instanceof Error ? error.message : '新建失败'),
+    onError: (error: unknown) => {
+      setRequestError(error instanceof Error ? error.message : '新建失败，请重试')
+    },
+    onSettled: () => {
+      submitting.current = false
+    },
   })
 
   const submit = () => {
+    if (submitting.current) return
     const trimmed = name.trim()
-    if (!trimmed) return
-    if (trimmed.includes('/')) {
-      message.error('名称不能包含 /')
+    const error = !trimmed ? '请输入知识库名称' : trimmed.includes('/') ? '名称不能包含 /' : ''
+    setNameError(error)
+    if (error) {
+      nameRef.current?.focus()
       return
     }
+    setRequestError('')
+    submitting.current = true
     createMut.mutate({ name: trimmed, description: description.trim(), icon })
   }
 
@@ -142,33 +180,59 @@ export function KnowledgeBaseCreateModal({
       open={open}
       onOk={submit}
       onCancel={() => {
+        if (submitting.current) return
         reset()
         onCancel()
       }}
-      okText="创建"
+      okText={createMut.isPending ? '创建中…' : requestError ? '重试创建' : '创建'}
+      closable={!createMut.isPending}
+      keyboard={!createMut.isPending}
+      mask={{ closable: !createMut.isPending }}
+      cancelButtonProps={{ disabled: createMut.isPending }}
+      afterOpenChange={(visible) => {
+        if (visible) nameRef.current?.focus()
+      }}
       cancelText="取消"
       okButtonProps={{ disabled: name.trim() === '', loading: createMut.isPending }}
       destroyOnHidden
+      centered
+      classNames={{ container: styles.dialog, body: styles.body }}
       width={520}
     >
-      <label className={styles.fieldLabel} htmlFor="kb-name">
+      <label className={styles.fieldLabel} htmlFor={`${fieldId}-name`}>
         名称
       </label>
       <Input
-        id="kb-name"
+        id={`${fieldId}-name`}
+        ref={nameRef}
+        disabled={createMut.isPending}
+        status={nameError ? 'error' : undefined}
+        aria-invalid={Boolean(nameError)}
+        aria-describedby={nameError ? `${fieldId}-name-error` : undefined}
         value={name}
         autoFocus
         placeholder="如：技术笔记"
         maxLength={60}
-        onChange={(event) => setName(event.target.value)}
+        onChange={(event) => {
+          setName(event.target.value)
+          setNameError('')
+          setRequestError('')
+        }}
         onPressEnter={submit}
       />
 
-      <label className={styles.fieldLabel} htmlFor="kb-desc">
+      {nameError && (
+        <p id={`${fieldId}-name-error`} role="alert" className={styles.error}>
+          {nameError}
+        </p>
+      )}
+
+      <label className={styles.fieldLabel} htmlFor={`${fieldId}-desc`}>
         描述（可选）
       </label>
       <Input.TextArea
-        id="kb-desc"
+        id={`${fieldId}-desc`}
+        disabled={createMut.isPending}
         value={description}
         placeholder="简单描述这个知识库"
         autoSize={{ minRows: 3, maxRows: 5 }}
@@ -187,6 +251,7 @@ export function KnowledgeBaseCreateModal({
             <button
               key={item.key}
               type="button"
+              disabled={createMut.isPending}
               aria-pressed={active}
               aria-label={item.label}
               className={`${styles.iconCell} ${active ? styles.iconCellActive : ''}`}
@@ -198,6 +263,11 @@ export function KnowledgeBaseCreateModal({
           )
         })}
       </div>
+      {requestError && (
+        <p role="alert" className={styles.error}>
+          创建失败：{requestError}。草稿已保留，请重试。
+        </p>
+      )}
     </Modal>
   )
 }

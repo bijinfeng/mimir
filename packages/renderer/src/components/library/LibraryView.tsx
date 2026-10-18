@@ -1,3 +1,4 @@
+import { confirmDanger } from '../confirm-danger'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { App, Button, Dropdown, Empty, Input, Modal, Segmented, Skeleton, Tooltip } from 'antd'
@@ -165,24 +166,17 @@ export function LibraryView({ scope }: { scope: string }) {
   }
 
   const confirmDelete = (doc: DocumentSummary) => {
-    modal.confirm({
+    confirmDanger(modal, {
       title: `删除《${doc.title}》？`,
       content:
         doc.kind === 'file'
           ? '不可撤销：记录与原件都会删除。'
           : '笔记将从知识库移除，文件保留在回收站。当前应用没有一键恢复入口。',
-      okText: '删除',
-      okButtonProps: { danger: true },
-      cancelText: '取消',
-      onOk: async () => {
-        try {
-          await api.documents.remove(doc.id)
-          invalidateList()
-          void queryClient.invalidateQueries({ queryKey: ['recent-documents'] })
-          message.success(doc.kind === 'note' ? '已移入回收站' : '已删除文件与原件')
-        } catch (error) {
-          message.error(error instanceof Error ? error.message : '删除失败')
-        }
+      onConfirm: async () => {
+        await api.documents.remove(doc.id)
+        invalidateList()
+        void queryClient.invalidateQueries({ queryKey: ['recent-documents'] })
+        message.success(doc.kind === 'note' ? '已移入回收站' : '已删除文件与原件')
       },
     })
   }
@@ -282,20 +276,16 @@ export function LibraryView({ scope }: { scope: string }) {
         goFolder(segments.slice(0, path.split('/').length - 1).join('/'))
       }
     },
-    onError: (error: unknown) => message.error(error instanceof Error ? error.message : '删除失败'),
   })
 
   const confirmDeleteFolder = (folder: FolderNode) => {
-    modal.confirm({
+    confirmDanger(modal, {
       title: `删除文件夹「${folder.name}」？`,
       content:
         folder.count > 0
           ? `里面的 ${folder.count} 篇文档会保留，指派清空后回到知识库根。`
           : '这是一个空文件夹，删除后不影响任何文档。',
-      okText: '删除',
-      okButtonProps: { danger: true },
-      cancelText: '取消',
-      onOk: () => deleteFolderMut.mutateAsync(folder.path),
+      onConfirm: () => deleteFolderMut.mutateAsync(folder.path),
     })
   }
 

@@ -23,12 +23,12 @@ import { FONT_SIZE } from '../theme/tokens'
  * 再给一个用户按得下去的动作。react-query 自己会为网络错误重试几次，
  * 走到这里说明它已经放弃了——再自动重试只是把「失败」变成「一直在转」。
  *
- * 文案不出现技术细节（URL、状态码）：能给用户参考的是「东西没丢，
- * 刷新即可」这一层信息。
+ * 文案不出现技术细节（URL、状态码），也不在读取失败时推断数据是否完好；
+ * 提供当前可以执行的重试动作。
  */
 export function LoadError({
   message = '读取失败',
-  detail = '数据还在，重试一下就能出来。',
+  detail = '暂时无法读取，请重试。',
   onRetry,
   compact = false,
 }: {
@@ -40,7 +40,7 @@ export function LoadError({
 }) {
   const { styles } = useStyles()
   return (
-    <div className={`${styles.box} ${compact ? styles.boxCompact : ''}`}>
+    <div className={`${styles.box} ${compact ? styles.boxCompact : ''}`} role="alert">
       <span className={styles.text}>
         <b>{message}</b>
         <span className={styles.detail}>{detail}</span>
@@ -59,7 +59,8 @@ const useStyles = createStyles(({ css, token }) => ({
     justify-content: space-between;
     gap: 12px;
     padding: 14px 16px;
-    border-radius: 8px;
+    border-radius: ${token.borderRadius}px;
+    flex-wrap: wrap;
     background: ${token.colorFillQuaternary};
   `,
   boxCompact: css`

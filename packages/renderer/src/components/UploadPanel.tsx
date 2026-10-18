@@ -1,7 +1,7 @@
 import { Alert, Button, Typography, Upload } from 'antd'
 import { createStyles } from 'antd-style'
 import { ArrowUpFromLine, CircleCheck, CircleX, LoaderCircle } from 'lucide-react'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { FILE_MAX_BYTES, formatBytes, formatLabel } from '@mimir/shared'
 import { api } from '../lib/api'
 import { FONT_SIZE } from '../theme/tokens'
@@ -71,6 +71,7 @@ export function UploadPanel({ onUploaded, onBusyChange, folder, directory }: Upl
   const { styles } = useStyles()
   const [rows, setRows] = useState<UploadRow[]>([])
   const [busy, setBusy] = useState(false)
+  const uploadActive = useRef(false)
 
   const allDone = rows.length > 0 && !busy && rows.every((row) => row.state !== 'pending')
 
@@ -79,6 +80,8 @@ export function UploadPanel({ onUploaded, onBusyChange, folder, directory }: Upl
    * 而下面的进度行是按选择顺序排的——顺序一跳，用户就找不到刚才那一条了。
    */
   async function uploadAll(files: File[]) {
+    if (uploadActive.current) return
+    uploadActive.current = true
     setBusy(true)
     onBusyChange?.(true)
 
@@ -150,10 +153,13 @@ export function UploadPanel({ onUploaded, onBusyChange, folder, directory }: Upl
     }
 
     setBusy(false)
+    uploadActive.current = false
     onBusyChange?.(false)
   }
 
   /** 打开第一个成功的文档——用户刚传的通常是它，而失败的那些会留在列表上看得到 */
+  const succeeded = rows.filter((row) => row.state === 'done').length
+  const failed = rows.filter((row) => row.state === 'failed').length
   const firstDone = rows.find((row) => row.state === 'done' && row.documentId !== null)
 
   return (
@@ -190,17 +196,32 @@ export function UploadPanel({ onUploaded, onBusyChange, folder, directory }: Upl
       </Upload.Dragger>
 
       {rows.length > 0 && (
-        <div className={styles.rows}>
+        <div className={styles.rows} aria-label="逐文件上传结果" aria-busy={busy}>
           {rows.map((row) => (
             <div key={row.key} className={styles.row}>
               <span className={styles.rowIcon}>{iconFor(row.state, styles)}</span>
               <span className={styles.rowName} title={row.name}>
-                {row.name}
+                {fileNameParts(row.name).map((part, index) => (
+                  <span
+                    key={index === 0 ? 'stem' : 'extension'}
+                    className={index === 0 ? styles.nameStem : styles.nameExtension}
+                  >
+                    {part}
+                  </span>
+                ))}
               </span>
               <span className={styles.rowFormat}>
                 {formatLabel(null, row.name)} · {formatBytes(row.size)}
               </span>
-              <span className={styles.rowDetail}>{row.detail}</span>
+              <span
+                className={`${styles.rowDetail} ${row.state === 'failed' ? styles.iconFail : ''}`}
+              >
+                {row.state === 'pending'
+                  ? '等待上传'
+                  : row.state === 'uploading'
+                    ? '上传中…'
+                    : row.detail}
+              </span>
             </div>
           ))}
         </div>
@@ -210,24 +231,40 @@ export function UploadPanel({ onUploaded, onBusyChange, folder, directory }: Upl
         <Alert
           type={rows.some((row) => row.state === 'failed') ? 'warning' : 'success'}
           showIcon
-          title={
-            rows.every((row) => row.state === 'done')
-              ? `${rows.length} 个文件已上传`
-              : '部分文件上传失败，请查看上方原因'
+          description={
+            failed > 0 ? '请查看对应文件的原因，处理后可重新选择失败文件上传。' : undefined
           }
+          title={`${succeeded} 个成功${failed > 0 ? `，${failed} 个失败` : ''}`}
         />
       )}
 
-      {allDone && firstDone?.documentId && (
+      {allDone && (
         <div className={styles.actions}>
-          <Button type="primary" onClick={() => onUploaded(firstDone.documentId!)}>
-            打开《<Typography.Text>{firstDone.name}</Typography.Text>》
-          </Button>
+          {firstDone?.documentId && (
+            <Button
+              type="primary"
+              className={styles.openButton}
+              onClick={() => onUploaded(firstDone.documentId!)}
+            >
+              打开《
+              <Typography.Text ellipsis title={firstDone.name}>
+                {firstDone.name}
+              </Typography.Text>
+              》
+            </Button>
+          )}
           <Button onClick={() => setRows([])}>继续上传</Button>
         </div>
       )}
     </div>
   )
+}
+
+function fileNameParts(name: string): string[] {
+  const dot = name.lastIndexOf('.')
+  return dot > name.lastIndexOf('/') + 1 && dot < name.length - 1
+    ? [name.slice(0, dot), name.slice(dot)]
+    : [name]
 }
 
 /** 每行的状态图标。颜色走语义 token——深色下也要对（DESIGN §3.4） */
@@ -288,26 +325,30 @@ const useStyles = createStyles(({ css, token }) => ({
     color: ${token.colorTextTertiary};
   `,
   rowName: css`
+    display: flex;
     flex: 1;
-    min-width: 0;
+    min-width: 80px;
+  `,
+  nameStem: css`
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   `,
+  nameExtension: css`
+    flex: none;
+  `,
   rowFormat: css`
     flex: none;
     font-size: ${FONT_SIZE.badge}px;
-    color: ${token.colorTextQuaternary};
+    color: ${token.colorTextSecondary};
     white-space: nowrap;
   `,
   rowDetail: css`
     flex: none;
     max-width: 180px;
-    font-size: ${FONT_SIZE.badge}px;
-    color: ${token.colorTextTertiary};
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    font-size: ${FONT_SIZE.meta}px;
+    color: ${token.colorTextSecondary};
+    overflow-wrap: anywhere;
 
     @media (max-width: 600px) {
       flex-basis: 100%;
@@ -319,6 +360,12 @@ const useStyles = createStyles(({ css, token }) => ({
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+  `,
+  openButton: css`
+    max-width: 100%;
+    > span {
+      min-width: 0;
+    }
   `,
   iconDone: css`
     color: ${token.colorSuccessText};

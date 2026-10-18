@@ -1,0 +1,174 @@
+{
+  "version": "v1",
+  "scene_count": 12,
+  "state_count": 58,
+  "scenes": [
+    {
+      "id": "fields",
+      "name": "字段与校验",
+      "states": [
+        "默认",
+        "内容较长",
+        "错误",
+        "警告",
+        "禁用",
+        "只读"
+      ],
+      "source": "theme/tokens.ts · components/KnowledgeBaseCreateModal.tsx:130–181 · routes/login.tsx:399–461",
+      "proposal_status": "awaiting_user_review",
+      "product_status": "not_implemented"
+    },
+    {
+      "id": "select",
+      "name": "搜索与选择",
+      "states": [
+        "默认",
+        "无结果",
+        "加载中",
+        "失败",
+        "多选",
+        "禁用"
+      ],
+      "source": "components/settings/ProviderForm.tsx:550–593 · components/DocumentPanel.tsx:958 · routes/_app.settings.tsx:167",
+      "proposal_status": "awaiting_user_review",
+      "product_status": "not_implemented"
+    },
+    {
+      "id": "number",
+      "name": "数字与范围",
+      "states": [
+        "默认",
+        "最小值",
+        "最大值",
+        "错误",
+        "禁用"
+      ],
+      "source": "components/settings/SettingControl.tsx:158–176 · components/AvatarCropper.tsx:190+",
+      "proposal_status": "awaiting_user_review",
+      "product_status": "not_implemented"
+    },
+    {
+      "id": "buttons",
+      "name": "按钮与工具提示",
+      "states": [
+        "默认",
+        "提交中",
+        "失败",
+        "成功",
+        "禁用"
+      ],
+      "source": "theme/tokens.ts · components/nav/NavigationAction.tsx:16–43 · components/settings/ProviderList.tsx:175–193",
+      "proposal_status": "awaiting_user_review",
+      "product_status": "not_implemented"
+    },
+    {
+      "id": "choices",
+      "name": "单复选与开关",
+      "states": [
+        "默认",
+        "部分选择",
+        "保存中",
+        "失败",
+        "禁用"
+      ],
+      "source": "components/settings/SettingControl.tsx:177–186 · components/settings/ProviderForm.tsx:610–670",
+      "proposal_status": "awaiting_user_review",
+      "product_status": "not_implemented"
+    },
+    {
+      "id": "tabs",
+      "name": "分段与标签页",
+      "states": [
+        "默认",
+        "内容较长",
+        "禁用"
+      ],
+      "source": "components/CaptureDialog.tsx:317–327 · routes/_app.settings.tsx:95–181",
+      "proposal_status": "awaiting_user_review",
+      "product_status": "not_implemented"
+    },
+    {
+      "id": "menus",
+      "name": "菜单与浮层",
+      "states": [
+        "默认",
+        "长名称",
+        "禁用"
+      ],
+      "source": "components/nav/AccountRow.tsx:150–215 · components/library/LibraryView.tsx:1048–1075 · components/document/doc-menu.tsx",
+      "proposal_status": "awaiting_user_review",
+      "product_status": "not_implemented"
+    },
+    {
+      "id": "dialogs",
+      "name": "表单弹窗",
+      "states": [
+        "默认",
+        "错误",
+        "提交中",
+        "失败",
+        "成功"
+      ],
+      "source": "components/KnowledgeBaseCreateModal.tsx:112–206 · components/CaptureDialog.tsx:265–310",
+      "proposal_status": "awaiting_user_review",
+      "product_status": "not_implemented"
+    },
+    {
+      "id": "danger",
+      "name": "危险操作确认",
+      "states": [
+        "默认",
+        "提交中",
+        "失败"
+      ],
+      "source": "components/settings/ProviderList.tsx:183–193 · components/library/LibraryView.tsx:166–189",
+      "proposal_status": "awaiting_user_review",
+      "product_status": "not_implemented"
+    },
+    {
+      "id": "unsaved",
+      "name": "未保存与离开",
+      "states": [
+        "默认",
+        "保存中",
+        "保存失败",
+        "自动保存中",
+        "已自动保存"
+      ],
+      "source": "components/UnsavedGuard.tsx:43–112 · lib/unsaved.tsx",
+      "proposal_status": "awaiting_user_review",
+      "product_status": "not_implemented"
+    },
+    {
+      "id": "feedback",
+      "name": "保存与读取反馈",
+      "states": [
+        "已保存",
+        "未保存",
+        "保存中",
+        "保存失败",
+        "读取中",
+        "空内容",
+        "读取失败"
+      ],
+      "source": "components/settings/SettingControl.tsx:86–103,232–260 · components/LoadError.tsx:29–81 · routes/__root.tsx:65–109",
+      "proposal_status": "awaiting_user_review",
+      "product_status": "not_implemented"
+    },
+    {
+      "id": "upload",
+      "name": "上传与批量结果",
+      "states": [
+        "待选择",
+        "上传中",
+        "部分失败",
+        "全部成功",
+        "超出限制"
+      ],
+      "source": "components/UploadPanel.tsx:70–227 · components/CaptureDialog.tsx:329–338",
+      "proposal_status": "awaiting_user_review",
+      "product_status": "not_implemented"
+    }
+  ],
+  "note": "仅共用机制；场景选择快照与本地交互可审阅，不等于业务全页已验收。"
+}

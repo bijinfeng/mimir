@@ -1,6 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Button, Input, InputNumber, Switch, Tooltip, message } from 'antd'
-import { useState } from 'react'
+import { Button, Input, InputNumber, Switch, Tooltip } from 'antd'
+import { useId, useRef, useState } from 'react'
+import type { KeyboardEvent } from 'react'
+import { createStyles } from 'antd-style'
+import { FONT_SIZE } from '../../theme/tokens'
 import type { SettingEntry } from '@mimir/shared'
 import { ApiRequestError, api } from '../../lib/api'
 import { useStyles } from './settings.style'
@@ -57,7 +60,9 @@ export function SettingControl({
 }) {
   const { styles } = useStyles()
   const queryClient = useQueryClient()
-  const [messageApi, contextHolder] = message.useMessage()
+  const { styles: feedbackStyles } = useFeedbackStyles()
+  const statusId = useId()
+  const submitting = useRef(false)
 
   /**
    * 草稿。初值来自服务端。
@@ -92,32 +97,35 @@ export function SettingControl({
    * 且不提交中间状态，用户看不到闪烁。
    */
   const [lastServerValue, setLastServerValue] = useState(serverValue)
+  const [persistedValue, setPersistedValue] = useState(serverValue)
   if (serverValue !== lastServerValue) {
     setLastServerValue(serverValue)
-    if (!draftKey || readSettingDraft(draftKey) === undefined) setDraft(serverValue)
+    setPersistedValue(serverValue)
+    if (draft === lastServerValue && (!draftKey || readSettingDraft(draftKey) === undefined))
+      setDraft(serverValue)
   }
 
   const save = useMutation({
     mutationFn: (value: string | number | boolean | null) =>
       api.updateSettings({ [entry.key]: value }),
-    onSuccess: () => {
+    onSuccess: (_result, value) => {
       if (draftKey) clearSettingDraft(draftKey)
-      if (secret) setDraft('')
-      messageApi.success('已保存')
+      const persisted = secret ? '' : (value ?? toScalar(entry.defaultValue))
+      setPersistedValue(persisted)
+      setDraft(persisted)
       void queryClient.invalidateQueries({ queryKey: ['config'] })
     },
-    onError: (error) => {
-      // 服务端把「哪个键、什么原因」放在 details 里，直接显示它
-      const detail =
-        error instanceof ApiRequestError && Array.isArray(error.details)
-          ? (error.details as { message?: string }[]).map((item) => item.message).join('；')
-          : String(error)
-      messageApi.error(`保存失败：${detail}`)
+    onError: () => {
+      // 开关立即生效：失败时回到已保存值；文本/数字保留草稿供修改或重试。
+      if (entry.type === 'boolean') updateDraft(persistedValue)
+    },
+    onSettled: () => {
+      submitting.current = false
     },
   })
 
   /** 编辑后是否还没保存。空串视作「清除覆盖」，所以它也算改动 */
-  const dirty = String(draft ?? '') !== String(secret ? '' : (scalar ?? ''))
+  const dirty = String(draft ?? '') !== String(persistedValue ?? '')
 
   /**
    * 保存。`clear` 为真时显式写入 `null`（删除覆盖）。
@@ -126,9 +134,9 @@ export function SettingControl({
    * 此时点「清除」的意图是删掉已存的值，不是把那半截存进去。
    */
   const commit = (options: { clear?: boolean } = {}) => {
-    if (!entry.writable) return
+    if (!entry.writable || submitting.current) return
+    submitting.current = true
     if (options.clear) {
-      updateDraft('')
       save.mutate(null)
       return
     }
@@ -155,68 +163,140 @@ export function SettingControl({
         ? { width, maxWidth: '100%' }
         : undefined,
     disabled: save.isPending,
-    onPressEnter: () => commit(),
+    'aria-describedby': statusId,
+    'aria-invalid': save.isError,
+    status: save.isError ? ('error' as const) : undefined,
+    onPressEnter: (event: KeyboardEvent<HTMLInputElement>) => {
+      if (!event.nativeEvent.isComposing) commit()
+    },
     ...(placeholder ? { placeholder } : {}),
   }
 
   return (
-    <div className={styles.actions}>
-      {contextHolder}
-
-      {entry.type === 'number' ? (
-        <InputNumber
-          {...common}
-          value={typeof draft === 'number' ? draft : Number(entry.defaultValue)}
-          onChange={(value) => updateDraft(value)}
-        />
-      ) : entry.type === 'boolean' ? (
-        /*
+    <div className={feedbackStyles.control}>
+      <div className={styles.actions}>
+        {entry.type === 'number' ? (
+          <InputNumber
+            {...common}
+            value={typeof draft === 'number' ? draft : Number(entry.defaultValue)}
+            onChange={(value) => updateDraft(value)}
+          />
+        ) : entry.type === 'boolean' ? (
+          /*
           开关用 antd 的 `Switch` 而不是原生 checkbox：原生控件不服从 token
           体系——深色下是浏览器默认的白框，而勾选态的颜色（各浏览器不同）
           也不由我们校准（.trellis/spec/project/decisions.md D-042、D-045）。
         */
-        <Switch
-          aria-label={entry.label}
-          checked={draft === true}
-          disabled={save.isPending}
-          onChange={(checked) => {
-            updateDraft(checked)
-            // 开关只有两态，用户点它就是这个意思——不需要再点一次保存
-            save.mutate(checked)
-          }}
-        />
-      ) : secret ? (
-        <Input.Password
-          {...common}
-          value={typeof draft === 'string' ? draft : ''}
-          placeholder={placeholder ?? (entry.configured ? '已配置（留空则不修改）' : '尚未配置')}
-          onChange={(event) => updateDraft(event.target.value)}
-        />
-      ) : (
-        <Input
-          {...common}
-          value={typeof draft === 'string' ? draft : String(entry.value ?? '')}
-          onChange={(event) => updateDraft(event.target.value)}
-        />
-      )}
+          <Switch
+            aria-label={entry.label}
+            checked={draft === true}
+            disabled={save.isPending}
+            loading={save.isPending}
+            aria-describedby={statusId}
+            onChange={(checked) => {
+              if (submitting.current) return
+              submitting.current = true
+              updateDraft(checked)
+              // 开关只有两态，用户点它就是这个意思——不需要再点一次保存
+              save.mutate(checked)
+            }}
+          />
+        ) : secret ? (
+          <Input.Password
+            {...common}
+            value={typeof draft === 'string' ? draft : ''}
+            placeholder={placeholder ?? (entry.configured ? '已配置（留空则不修改）' : '尚未配置')}
+            onChange={(event) => updateDraft(event.target.value)}
+          />
+        ) : (
+          <Input
+            {...common}
+            value={typeof draft === 'string' ? draft : String(entry.value ?? '')}
+            onChange={(event) => updateDraft(event.target.value)}
+          />
+        )}
 
-      <SaveButton
-        dirty={dirty}
-        pending={save.isPending}
-        secret={secret}
-        configured={entry.configured}
-        onSave={() => commit()}
-        onClear={() => commit({ clear: true })}
-      />
+        {entry.type !== 'boolean' && (
+          <SaveButton
+            dirty={dirty}
+            pending={save.isPending}
+            secret={secret}
+            configured={entry.configured}
+            onSave={() => commit()}
+            onClear={() => commit({ clear: true })}
+          />
+        )}
 
-      {entry.problem ? (
-        <Tooltip title="这个值没有真正生效，见右侧说明">
-          <span className={styles.warnText}>{entry.problem}</span>
-        </Tooltip>
-      ) : null}
+        {entry.type === 'boolean' && save.isError && (
+          <Button
+            size="small"
+            onClick={() => {
+              if (submitting.current) return
+              submitting.current = true
+              updateDraft(save.variables ?? persistedValue)
+              save.mutate(save.variables ?? persistedValue)
+            }}
+          >
+            重试
+          </Button>
+        )}
+        {entry.problem ? (
+          <Tooltip title="这个值没有真正生效，见右侧说明">
+            <span className={styles.warnText}>{entry.problem}</span>
+          </Tooltip>
+        ) : null}
+      </div>
+      <span
+        id={statusId}
+        role={save.isError ? 'alert' : 'status'}
+        className={save.isError ? feedbackStyles.error : feedbackStyles.status}
+      >
+        {save.isPending
+          ? '保存中…'
+          : save.isError
+            ? `保存失败：${settingError(save.error)}${entry.type === 'boolean' ? '；已恢复为已保存状态' : '；草稿已保留'}`
+            : dirty
+              ? '未保存'
+              : save.isSuccess
+                ? '已保存'
+                : ''}
+      </span>
     </div>
   )
 }
+
+function settingError(error: unknown): string {
+  if (error instanceof ApiRequestError && Array.isArray(error.details)) {
+    const detail = (error.details as { message?: string }[])
+      .map((item) => item.message)
+      .filter(Boolean)
+      .join('；')
+    if (detail) return detail
+  }
+  return error instanceof Error ? error.message : '请重试'
+}
+
+const useFeedbackStyles = createStyles(({ css, token }) => ({
+  control: css`
+    min-width: 0;
+  `,
+  status: css`
+    display: block;
+    color: ${token.colorTextSecondary};
+    font-size: ${FONT_SIZE.meta}px;
+    overflow-wrap: anywhere;
+    &:not(:empty) {
+      margin-top: 4px;
+    }
+  `,
+  error: css`
+    display: block;
+    margin-top: 4px;
+    color: ${token.colorErrorText};
+    font-size: ${FONT_SIZE.meta}px;
+    overflow-wrap: anywhere;
+  `,
+}))
 
 /**
  * 保存按钮 + 秘密类的「清除」。
@@ -248,7 +328,7 @@ function SaveButton({
         loading={pending}
         onClick={onSave}
       >
-        {dirty ? '保存' : '已保存'}
+        {pending ? '保存中…' : dirty ? '保存' : '已保存'}
       </Button>
       {secret && configured ? (
         <Button size="small" onClick={onClear} disabled={pending}>
