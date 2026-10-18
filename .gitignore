@@ -49,3 +49,17 @@ data/
 .DS_Store
 .vite/
 coverage/
+
+# Bundled offline OCR runtime copied from pinned npm dependencies.
+apps/web/public/pdf-ocr/
+apps/desktop/public/pdf-ocr/
+
+# Local package-manager and design-tool runtime artifacts.
+.pnpm-store/
+.claude/settings.local.json
+**/.impeccable/config.local.json
+**/.impeccable/hook.cache.json
+**/.impeccable/hook.pending.json
+**/.impeccable/live/
+# Impeccable launchers fetch the pinned engine; installed binaries stay local.
+**/skills/impeccable/scripts/bin/
