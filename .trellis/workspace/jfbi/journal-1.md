@@ -557,3 +557,38 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 
 - 继续 S1 设备鉴权与只读知识库 API；S2–S5 检索、版本保护、完整小程序交互及真机验收仍待实现。
 - 真实 AppID、稳定 HTTPS 域名、微信开发工具与 iOS/Android 平台运行待验证；不归档整个任务。
+
+
+## Session 20: 收集与导入交互HTML评审完成
+<!-- trellis-session: v=2 fp=ae787d7621aa4174 -->
+
+**Date**: 2026-10-18
+**Task**: 收集与导入交互HTML评审完成
+**Package**: renderer
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+第四模块capture-review-v1 revision2完成；9组91项覆盖与60个基础视图。当前保持planning，产品实施须等待用户认可。
+
+### Main Changes
+
+- 提交源码盘点、WeKnora v0.8.3具体证据、独立HTML及完整覆盖映射；没有修改收集导入产品来源文件。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `5037224` | design(ui): preview capture and import interaction polish |
+
+### Testing
+
+- [OK] 原型lint、类型、格式、构建与结构夹具检查通过；浏览器抽验hover、回焦、busy锁、390px、低高度和大文字布局。原生/真实上传与91项全GUI未验。
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 用户审阅http://127.0.0.1:5184/review.html；认可具体版本后再开始实施。
