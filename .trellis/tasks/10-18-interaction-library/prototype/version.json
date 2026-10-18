@@ -6,7 +6,7 @@
   "frozen": true,
   "productImplementationAuthorized": false,
   "htmlSha256": "ce43cbea265b09b3fd75d9db9d0f3d02723ef1559f2e9a09d742750285dc2f40",
-  "note": "图标revision2候选对比稿已冻结供选择；默认A只为预览，不代表用户选型。approval pending；产品实施仍未授权。",
+  "note": "用户已选择A（Phosphor双色）；冻结HTML字节不变。第五模块最终实施范围待确认，productImplementationAuthorized仍false。",
   "frozenAt": "2026-10-18",
   "previewUrl": "http://127.0.0.1:5186/review.html?view=icons",
   "coverageGroups": 58,
@@ -26,12 +26,14 @@
     "check-artifact.mjs": "4da2d3abc1163a37277aed8923851546a4a7d40aa72b7cc3eefe7c6f94e3ecee"
   },
   "previousVersion": "versions/v1-version.json",
-  "selectedIconScheme": null,
+  "selectedIconScheme": "A",
   "defaultPreviewIconScheme": "A",
-  "iconChoice": "pending",
+  "iconChoice": "selected",
   "iconCandidates": [
     "Phosphor duotone",
     "Material Icon Theme + Phosphor source glyphs"
   ],
-  "iconFormats": 16
+  "iconFormats": 16,
+  "iconChoiceUserQuote": "A",
+  "iconChoiceDate": "2026-10-18"
 }
