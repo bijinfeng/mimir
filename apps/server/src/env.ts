@@ -167,6 +167,7 @@ export const env = {
    * 它是部署事实（由 `apps/desktop/src/host.ts` 注入），不进设置页。
    * 与 DATABASE_URL 同一条：设错了不会「运行到一半才发现」，启动期即断言。
    */
+  miniappEnabled: process.env.MIMIR_MINIAPP_ENABLED === '1',
   localMode: process.env.MIMIR_LOCAL_MODE === '1',
   /**
    * 本地模式的访问令牌。宿主每次启动随机生成（每次启动换一把，不需要

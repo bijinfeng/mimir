@@ -1,3 +1,4 @@
+import type { RetrievalScope } from './retrieval.js'
 import type {
   FetchedModelsResult,
   FetchModelsInput,
@@ -167,6 +168,7 @@ export interface EmbedPort {
 }
 
 export interface LegContext {
+  retrievalScope?: RetrievalScope
   /** 原始查询串，未分词 */
   query: string
   /** 每个通道各取多少候选再融合 */

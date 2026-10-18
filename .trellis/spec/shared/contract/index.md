@@ -9,6 +9,8 @@ paths:
 
 API 请求/响应 schema 与插件接缝接口的唯一契约包；前后端都从这里取类型。
 
+微信小程序设备凭证、范围、文档版本及操作回执见 [miniapp](./miniapp.md)。
+
 知识库/文件夹改名、描述更新与失败恢复见 [folder-update](./folder-update.md)。
 
 DOCX 对话编辑的跨层工具与续轮合同见 [docx-agent](./docx-agent.md)。

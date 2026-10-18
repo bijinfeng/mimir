@@ -1,3 +1,4 @@
+import { user as authUser, session as authSession } from './auth-schema.sqlite.js'
 import { sql } from 'drizzle-orm'
 import {
   blob,
@@ -147,6 +148,9 @@ export const conversations = sqliteTable(
     id: text('id').primaryKey(),
     /** 由第一个问题生成，之后不再变。空会话显示为「新对话」 */
     title: text('title').notNull().default(''),
+    retrievalScope: text('retrieval_scope', { mode: 'json' }).$type<
+      import('@mimir/shared').RetrievalScope
+    >(),
     createdAt: integer('created_at', { mode: 'timestamp_ms' })
       .notNull()
       .$defaultFn(() => new Date()),
@@ -361,3 +365,55 @@ export const usageLog = sqliteTable(
 // Better Auth 的表结构单独一个文件，但必须并入同一个 schema 对象，
 // 这样 drizzle(sql, { schema }) 才能让适配器解析到表名。
 export * from './auth-schema.sqlite.js'
+
+/** Separate limited device credentials; raw tokens never enter the database. */
+export const miniappDevices = sqliteTable(
+  'miniapp_devices',
+  {
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id')
+      .notNull()
+      .references(() => authUser.id, { onDelete: 'cascade' }),
+    sessionId: text('session_id')
+      .notNull()
+      .references(() => authSession.id, { onDelete: 'cascade' }),
+    tokenHash: text('token_hash').notNull(),
+    credentialHash: text('credential_hash').notNull(),
+    name: text('name').notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+    expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
+    revokedAt: integer('revoked_at', { mode: 'timestamp_ms' }),
+  },
+  (t) => [
+    uniqueIndex('miniapp_devices_token_idx').on(t.tokenHash),
+    index('miniapp_devices_owner_idx').on(t.ownerId),
+  ],
+)
+
+/** Durable operation receipts survive a disconnected client and process restart. */
+export const miniappOperations = sqliteTable(
+  'miniapp_operations',
+  {
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id')
+      .notNull()
+      .references(() => authUser.id, { onDelete: 'cascade' }),
+    deviceId: text('device_id').notNull(),
+    requestId: text('request_id').notNull(),
+    kind: text('kind').notNull(),
+    fingerprint: text('fingerprint').notNull(),
+    status: text('status').notNull(),
+    processId: text('process_id').notNull(),
+    conversationId: text('conversation_id'),
+    result: text('result', { mode: 'json' }).$type<
+      import('@mimir/shared/miniapp').MiniappOperationResult
+    >(),
+    error: text('error', { mode: 'json' }).$type<{ code: string; message: string }>(),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  (t) => [
+    uniqueIndex('miniapp_operations_request_idx').on(t.ownerId, t.requestId),
+    index('miniapp_operations_status_idx').on(t.status),
+  ],
+)

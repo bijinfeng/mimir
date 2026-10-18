@@ -99,6 +99,13 @@
       "when": 1792311600000,
       "tag": "0013_rare_longshot",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792311284208,
+      "tag": "0014_strange_mastermind",
+      "breakpoints": true
     }
   ]
 }

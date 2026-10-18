@@ -40,3 +40,6 @@ export const user = pick('user')
 export const session = pick('session')
 export const account = pick('account')
 export const verification = pick('verification')
+
+export const miniappDevices = pick('miniappDevices')
+export const miniappOperations = pick('miniappOperations')

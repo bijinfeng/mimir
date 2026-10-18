@@ -1,3 +1,4 @@
+import { scopePredicate } from './scope.js'
 import { sql } from 'drizzle-orm'
 import { queryTokens } from '@mimir/tokenizer'
 import type { LegContext, PluginDatabase, RankedHit, RetrievalLeg } from '@mimir/shared'
@@ -29,7 +30,7 @@ export function createSubstringLegSqlite(db: PluginDatabase): RetrievalLeg {
     id: 'substring',
     defaultWeight: 0.6,
 
-    async run({ query, limit, kind, tag }: LegContext): Promise<RankedHit[]> {
+    async run({ query, limit, kind, tag, retrievalScope }: LegContext): Promise<RankedHit[]> {
       // 只留长度 ≥ 2 的词：单字符子串会命中几乎所有分块，没有区分度
       const needles = new Set(queryTokens(query).filter((token) => token.length >= 2))
 
@@ -69,6 +70,7 @@ export function createSubstringLegSqlite(db: PluginDatabase): RetrievalLeg {
           from chunks c
           join documents d on d.id = c.document_id
           where d.deleted_at is null
+            and ${scopePredicate(retrievalScope)}
             ${kind ? sql`and d.kind = ${kind}` : sql``}
             ${
               tag

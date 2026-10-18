@@ -1,11 +1,14 @@
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm'
-import type { EmbedPort, SearchHit, SearchResponse } from '@mimir/shared'
+import type { EmbedPort, SearchHit, SearchResponse, RetrievalScope } from '@mimir/shared'
 import { channelsForMode, createPipeline, defaultMode, type SnippetPort } from '@mimir/core'
 import { db } from '../db/client.js'
 import { chunks, documents, documentTags, tags } from '../db/schema.js'
 import { ENCRYPTED_OFFICE_INDEX_MESSAGE } from '../lib/document-publication.js'
+import { HttpError } from '../lib/http.js'
 import { stripMarkdown } from '../lib/text.js'
 import { assemble } from '../plugins/host.js'
+import { normalizeRetrievalScope, retrievalScopeCondition } from '../services/retrieval-scope.js'
+import { requireFreshSources } from './source-freshness.js'
 import { callEmbed, modelName } from '../services/model.js'
 
 /**
@@ -34,6 +37,8 @@ const SNIPPET_LEAD = 80
 const SNIPPET_LENGTH = 240
 
 export interface SearchParams {
+  retrievalScope?: RetrievalScope
+  verifySources?: boolean
   q: string
   limit: number
   kind?: string
@@ -55,61 +60,80 @@ export interface SearchParams {
  * 同一份文档在两种入口下读起来是同一个东西。**两个偏移不动**——
  * 它们是「这段取自正文的哪个区间」，供「跳回原文并高亮」用。
  */
-const snippetPort: SnippetPort = {
-  async load(ids, _query) {
-    if (ids.length === 0) return []
+function createSnippetPort(verifySources: boolean): SnippetPort {
+  return {
+    async load(ids, _query, scope) {
+      if (ids.length === 0) return []
 
-    const rows = await db
-      .select({
-        id: chunks.id,
-        documentId: chunks.documentId,
-        content: chunks.content,
-        startAt: chunks.startAt,
-        endAt: chunks.endAt,
-        heading: chunks.heading,
-        idx: chunks.idx,
-        kind: documents.kind,
-        title: documents.title,
-        path: documents.path,
-        url: documents.url,
-        mime: documents.mime,
-        size: documents.size,
+      const rows = await db
+        .select({
+          id: chunks.id,
+          documentId: chunks.documentId,
+          content: chunks.content,
+          startAt: chunks.startAt,
+          endAt: chunks.endAt,
+          heading: chunks.heading,
+          idx: chunks.idx,
+          kind: documents.kind,
+          title: documents.title,
+          path: documents.path,
+          url: documents.url,
+          mime: documents.mime,
+          size: documents.size,
+        })
+        .from(chunks)
+        .innerJoin(documents, eq(documents.id, chunks.documentId))
+        .where(
+          and(inArray(chunks.id, ids), isNull(documents.deletedAt), retrievalScopeCondition(scope)),
+        )
+
+      const sources = verifySources
+        ? await requireFreshSources(
+            rows.map((row) => row.documentId),
+            scope,
+          )
+        : undefined
+      return rows.map((row) => {
+        /**
+         * 片段从**分块自己**的区间取，但同时保留「窗口」这一层：
+         * 一段 500 字的块整个塞进列表项太长，界面要的是「命中附近的一段」。
+         *
+         * 窗口仍然按查询词在**块内**定位（M0 的做法），但它的基准变了——
+         * 不再是「整篇正文里猜」，而是「这一段就是命中段」，所以猜错也
+         * 只在 500 字内偏一点。找不到时退回块首，而不是整篇文档的开头。
+         */
+        const source = sources?.get(row.documentId)
+        if (source && source.indexedBody.slice(row.startAt, row.endAt) !== row.content)
+          throw new HttpError(409, 'SOURCE_CHANGED', '分块与当前正文不一致，请重新检索或同步索引', {
+            documentId: row.documentId,
+          })
+        const base = Math.max(0, row.startAt + (source?.offset ?? 0))
+        const content = source
+          ? source.body.slice(base, Math.max(base, row.endAt + source.offset))
+          : row.content
+        const needle = _query.trim().toLowerCase()
+        const pos = needle === '' ? -1 : content.toLowerCase().indexOf(needle)
+        const offset = pos >= 0 ? Math.max(0, pos - SNIPPET_LEAD) : 0
+        const raw = content.slice(offset, offset + SNIPPET_LENGTH)
+
+        const text = stripMarkdown(raw) || raw
+        return {
+          id: row.id,
+          documentId: row.documentId,
+          kind: row.kind,
+          title: row.title,
+          path: row.path,
+          url: row.url,
+          mime: row.mime,
+          size: row.size,
+          text,
+          // 偏移相对**完整正文**：分块自己的起点 + 块内窗口偏移
+          start: base + offset,
+          end: base + offset + raw.length,
+        }
       })
-      .from(chunks)
-      .innerJoin(documents, eq(documents.id, chunks.documentId))
-      .where(and(inArray(chunks.id, ids), isNull(documents.deletedAt)))
-
-    return rows.map((row) => {
-      /**
-       * 片段从**分块自己**的区间取，但同时保留「窗口」这一层：
-       * 一段 500 字的块整个塞进列表项太长，界面要的是「命中附近的一段」。
-       *
-       * 窗口仍然按查询词在**块内**定位（M0 的做法），但它的基准变了——
-       * 不再是「整篇正文里猜」，而是「这一段就是命中段」，所以猜错也
-       * 只在 500 字内偏一点。找不到时退回块首，而不是整篇文档的开头。
-       */
-      const needle = _query.trim().toLowerCase()
-      const pos = needle === '' ? -1 : row.content.toLowerCase().indexOf(needle)
-      const offset = pos >= 0 ? Math.max(0, pos - SNIPPET_LEAD) : 0
-      const raw = row.content.slice(offset, offset + SNIPPET_LENGTH)
-
-      const text = stripMarkdown(raw) || raw
-      return {
-        id: row.id,
-        documentId: row.documentId,
-        kind: row.kind,
-        title: row.title,
-        path: row.path,
-        url: row.url,
-        mime: row.mime,
-        size: row.size,
-        text,
-        // 偏移相对**完整正文**：分块自己的起点 + 块内窗口偏移
-        start: row.startAt + offset,
-        end: row.startAt + offset + raw.length,
-      }
-    })
-  },
+    },
+  }
 }
 
 /**
@@ -169,6 +193,8 @@ async function embedPort(): Promise<EmbedPort | undefined> {
 }
 
 export async function search(params: SearchParams): Promise<SearchResponse> {
+  if (params.retrievalScope)
+    params = { ...params, retrievalScope: await normalizeRetrievalScope(params.retrievalScope) }
   const outcome = await searchChunks(params)
 
   // Encrypted files deliberately have no body chunks. UI title discovery must not fabricate
@@ -213,6 +239,7 @@ async function encryptedTitleHits(params: SearchParams): Promise<SearchHit[]> {
     .from(documents)
     .where(
       and(
+        retrievalScopeCondition(params.retrievalScope),
         eq(documents.kind, 'file'),
         isNull(documents.deletedAt),
         eq(documents.body, ''),
@@ -280,6 +307,8 @@ export async function searchChunks(params: SearchParams): Promise<{
   tookMs: number
   hits: ChunkHit[]
 }> {
+  if (params.retrievalScope)
+    params = { ...params, retrievalScope: await normalizeRetrievalScope(params.retrievalScope) }
   const { settings } = assemble()
   const legs = await readyLegs()
   const available = legs.map(({ leg }) => leg.id)
@@ -288,12 +317,13 @@ export async function searchChunks(params: SearchParams): Promise<{
 
   const pipeline = createPipeline({
     legs,
-    snippets: snippetPort,
+    snippets: createSnippetPort(params.verifySources ?? params.retrievalScope !== undefined),
     settings,
     ...(embed ? { embed } : {}),
   })
   const outcome = await pipeline.search({
     q: params.q,
+    ...(params.retrievalScope ? { retrievalScope: params.retrievalScope } : {}),
     limit: params.limit,
     ...(params.kind ? { kind: params.kind } : {}),
     ...(params.tag ? { tag: params.tag } : {}),
@@ -382,8 +412,14 @@ export interface AssembledCitation {
 
 export async function assembleCitations(
   hits: ChunkHit[],
-  options: { limit: number; maxPerDoc: number },
+  options: {
+    limit: number
+    maxPerDoc: number
+    retrievalScope?: RetrievalScope
+    verifySources?: boolean
+  },
 ): Promise<AssembledCitation[]> {
+  if (options.retrievalScope) await normalizeRetrievalScope(options.retrievalScope)
   const top = hits.slice(0, options.limit)
   if (top.length === 0) return []
 
@@ -395,9 +431,24 @@ export async function assembleCitations(
       content: chunks.content,
       startAt: chunks.startAt,
       endAt: chunks.endAt,
+      documentId: documents.id,
     })
     .from(chunks)
-    .where(inArray(chunks.id, ids))
+    .innerJoin(documents, eq(documents.id, chunks.documentId))
+    .where(
+      and(
+        inArray(chunks.id, ids),
+        isNull(documents.deletedAt),
+        retrievalScopeCondition(options.retrievalScope),
+      ),
+    )
+  const sources =
+    (options.verifySources ?? options.retrievalScope !== undefined)
+      ? await requireFreshSources(
+          rows.map((row) => row.documentId),
+          options.retrievalScope,
+        )
+      : undefined
   const byId = new Map(rows.map((row) => [row.id, row]))
 
   interface Piece {
@@ -406,6 +457,7 @@ export async function assembleCitations(
     end: number
     content: string
     heading: string | null
+    score: number
   }
 
   /** 按文档分组。**组内顺序按融合后的名次**——它决定保留哪几段（第 3 步） */
@@ -425,25 +477,22 @@ export async function assembleCitations(
     group.best = Math.max(group.best, hit.score)
 
     const row = byId.get(hit.chunkId)
-    group.pieces.push(
-      row
-        ? {
-            idx: hit.idx,
-            start: row.startAt,
-            end: row.endAt,
-            content: row.content,
-            heading: row.heading,
-          }
-        : {
-            // 分块读不到时退回命中片段（它至少能显示）——
-            // 这在刚删掉文档时会发生，而一条没有正文的引用卡片是空白
-            idx: hit.idx,
-            start: hit.snippet.start,
-            end: hit.snippet.end,
-            content: hit.snippet.text,
-            heading: null,
-          },
-    )
+    if (!row) continue
+    const source = sources?.get(hit.documentId)
+    if (source && source.indexedBody.slice(row.startAt, row.endAt) !== row.content)
+      throw new HttpError(409, 'SOURCE_CHANGED', '分块与当前正文不一致，请重新检索或同步索引', {
+        documentId: hit.documentId,
+      })
+    const start = Math.max(0, row.startAt + (source?.offset ?? 0))
+    const end = Math.min(source?.body.length ?? row.endAt, row.endAt + (source?.offset ?? 0))
+    group.pieces.push({
+      idx: hit.idx,
+      start,
+      end,
+      content: source ? source.body.slice(start, end) : row.content,
+      heading: row.heading,
+      score: hit.score,
+    })
 
     byDocument.set(hit.documentId, group)
   }
@@ -462,6 +511,7 @@ export async function assembleCitations(
         last.content += piece.content.slice(last.end - piece.start)
         last.end = Math.max(last.end, piece.end)
         last.idx = piece.idx
+        last.score = Math.max(last.score, piece.score)
       } else {
         merged.push({ ...piece })
       }
@@ -473,7 +523,7 @@ export async function assembleCitations(
      * 取**分最高的那几段**——组内是按融合名次进来的，所以直接取前几条。
      * 长文有三十段命中时，把整个文档塞进上下文会挤掉别的文档。
      */
-    for (const piece of merged.slice(0, options.maxPerDoc)) {
+    for (const piece of merged.toSorted((a, b) => b.score - a.score).slice(0, options.maxPerDoc)) {
       assembled.push({
         documentId: group.base.documentId,
         kind: group.base.kind,
@@ -488,5 +538,5 @@ export async function assembleCitations(
   }
 
   // 第 4 步：仍按总分排序，编号与 citations 下标一一对应
-  return assembled.toSorted((a, b) => b.matchedBy.length - a.matchedBy.length || a.start - b.start)
+  return assembled
 }

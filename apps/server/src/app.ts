@@ -26,6 +26,7 @@ import { setupRoute } from './routes/setup.js'
 import { mountStatic } from './lib/static.js'
 import { localSessionPayload, localTokenMatches } from './services/local-mode.js'
 import { searchRoute } from './routes/search.js'
+import { miniappRoute } from './routes/miniapp.js'
 import { statsRoute } from './routes/stats.js'
 import type { AppEnv } from './types.js'
 
@@ -98,6 +99,8 @@ export function createApp() {
 
   // 通配放最后：它会接走 /api/auth/ 下的其余一切
   app.on(['GET', 'POST'], '/api/auth/*', (c) => handleAuth(c.req.raw))
+
+  app.route('/api/miniapp', miniappRoute)
 
   /** 以下全部需要登录 */
   const api = new Hono<AppEnv>()

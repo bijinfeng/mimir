@@ -1,3 +1,4 @@
+import { scopePredicate } from './scope.js'
 import { sql } from 'drizzle-orm'
 import type { LegContext, PluginDatabase, RetrievalLeg } from '@mimir/shared'
 import { vectorLegWithQuery } from './vector.js'
@@ -56,6 +57,7 @@ export function createVectorLegPostgres(db: PluginDatabase): RetrievalLeg {
         where ce.model = ${embed.model}
           and ce.dimension = ${dimension}
           and d.deleted_at is null
+          and ${scopePredicate(ctx.retrievalScope)}
           ${ctx.kind ? sql`and d.kind = ${ctx.kind}` : sql``}
           ${
             ctx.tag

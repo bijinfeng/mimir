@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto'
+import matter from 'gray-matter'
 import { and, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { extensionOf } from '@mimir/shared'
@@ -10,6 +12,8 @@ import type {
   NoteLookupItem,
   NoteUpdate,
 } from '@mimir/shared'
+import { activeStorage } from '../plugins/host.js'
+import { HttpError } from '../lib/http.js'
 import { publishFileReplacement } from '../db/document-index.js'
 import {
   readUploadSnapshot,
@@ -18,11 +22,13 @@ import {
   withDocumentPublication,
 } from '../lib/document-publication.js'
 import { db } from '../db/client.js'
-import { documentTags, documents, tags } from '../db/schema.js'
+import { documentTags, documents, folders, tags } from '../db/schema.js'
 import { toSearchText } from '@mimir/tokenizer'
 import { contentHash, toExcerpt } from '../lib/text.js'
 import {
   buildNotePath,
+  toStorageKey,
+  extraNoteFrontmatter,
   moveNote,
   readNote,
   readNoteFrontmatter,
@@ -127,7 +133,10 @@ function buildIndexFields(title: string, body: string) {
   }
 }
 
-export async function createNote(input: NoteCreate): Promise<DocumentDetail> {
+export async function createNote(
+  input: NoteCreate,
+  options?: { preserveSource?: boolean },
+): Promise<DocumentDetail> {
   const now = new Date()
   const id = nanoid(16)
   const path = buildNotePath(input.title, id, now)
@@ -150,7 +159,8 @@ export async function createNote(input: NoteCreate): Promise<DocumentDetail> {
     path,
   }
 
-  await writeNote(note)
+  if (options?.preserveSource) await writeExactNote(note)
+  else await writeNote(note)
 
   const index = buildIndexFields(note.title, note.body)
   const [row] = await db
@@ -187,6 +197,99 @@ export async function createNote(input: NoteCreate): Promise<DocumentDetail> {
   }
 }
 
+export interface DocumentVersion {
+  document: DocumentDetail
+  revision: string
+  indexState: 'current' | 'stale'
+  rawNote?: string
+}
+
+/** Exact source bytes, metadata and source identity form an opaque save baseline. */
+async function readDocumentVersionUnlocked(id: string): Promise<DocumentVersion | null> {
+  const row = await getDocumentRow(id)
+  if (!row) return null
+  const document = await getDocument(id)
+  if (!document) return null
+  let rawNote: string | undefined
+  let indexState: 'current' | 'stale' = 'current'
+  if (row.kind === 'note' && row.path) {
+    try {
+      rawNote = Buffer.from(await activeStorage().read(toStorageKey(row.path))).toString('utf8')
+    } catch {
+      throw new HttpError(409, 'NOTE_SOURCE_MISSING', '笔记源文件无法读取，请先在电脑端恢复或同步')
+    }
+    const parsed = matter(rawNote)
+    document.body = parsed.content
+    const data = parsed.data as Record<string, unknown>
+    if (typeof data.title === 'string') document.title = data.title
+    if (data.status === 'ready' || data.status === 'failed') document.status = data.status
+    if (Array.isArray(data.tags) && data.tags.every((tag) => typeof tag === 'string'))
+      document.tags = data.tags as string[]
+    document.folder = typeof data.folder === 'string' && data.folder ? data.folder : null
+    if (
+      parsed.content.trim() !== row.body.trim() ||
+      document.title !== row.title ||
+      document.folder !== row.folder ||
+      JSON.stringify(document.tags.toSorted()) !==
+        JSON.stringify(((await loadTags([id])).get(id) ?? []).toSorted())
+    )
+      indexState = 'stale'
+  }
+  const original = row.kind === 'file' ? await uploadIdentity(id) : null
+  if (row.kind === 'file' && (!original || original.key !== row.sourceKey)) indexState = 'stale'
+  const revision = createHash('sha256')
+    .update(
+      JSON.stringify({
+        id: row.id,
+        title: row.title,
+        body: row.body,
+        folder: row.folder,
+        status: row.status,
+        path: row.path,
+        sourceKey: row.sourceKey,
+        updatedAt: row.updatedAt.toISOString(),
+        tags: (await loadTags([id])).get(id) ?? [],
+        rawNote: rawNote ?? null,
+        original,
+      }),
+    )
+    .digest('base64url')
+  return { document, revision, indexState, ...(rawNote === undefined ? {} : { rawNote }) }
+}
+export async function readDocumentVersion(id: string): Promise<DocumentVersion | null> {
+  return withDocumentPublication(id, () => readDocumentVersionUnlocked(id))
+}
+function appendSource(body: string, text: string): string {
+  const newline = body.includes('\r\n') ? '\r\n' : '\n'
+  const separator =
+    body.length === 0 || body.endsWith(newline + newline)
+      ? ''
+      : body.endsWith(newline)
+        ? newline
+        : newline + newline
+  return body + separator + text
+}
+async function writeExactNote(note: VaultNote, previousRaw?: string): Promise<void> {
+  const oldData =
+    previousRaw === undefined ? {} : (matter(previousRaw).data as Record<string, unknown>)
+  const frontmatter = {
+    ...extraNoteFrontmatter(oldData),
+    ...extraNoteFrontmatter(note.extraFrontmatter ?? {}),
+    id: note.id,
+    title: note.title,
+    tags: note.tags,
+    status: note.status,
+    ...(note.folder ? { folder: note.folder } : {}),
+    createdAt: note.createdAt,
+    updatedAt: note.updatedAt,
+  }
+  // Stringify YAML alone: gray-matter's body serializer trims content. Append the
+  // untouched body afterwards so CRLF, trailing whitespace and advanced syntax survive.
+  const newline = previousRaw?.includes('\r\n') ? '\r\n' : '\n'
+  const header = matter.stringify('', frontmatter).slice(0, -1).replace(/\r?\n/g, newline)
+  await activeStorage().write(toStorageKey(note.path), header + note.body)
+}
+
 const noteUpdateLocks = new Map<string, Promise<void>>()
 
 /** An editor/save conflict with a useful message at the API boundary. */
@@ -201,7 +304,14 @@ export class DocumentUpdateError extends Error {
 export async function updateNote(
   id: string,
   input: NoteUpdate,
-  options?: { precondition?: () => Promise<void>; extraFrontmatter?: Record<string, unknown> },
+  options?: {
+    precondition?: () => Promise<void>
+    extraFrontmatter?: Record<string, unknown>
+    expectedRevision?: string
+    appendText?: string
+    preserveSource?: boolean
+    requireDurableMetadata?: boolean
+  },
 ): Promise<DocumentDetail | null> {
   const previous = noteUpdateLocks.get(id) ?? Promise.resolve()
   let release!: () => void
@@ -213,7 +323,29 @@ export async function updateNote(
   try {
     const doc = await withDocumentPublication(id, async () => {
       await options?.precondition?.()
-      return updateNoteUnlocked(id, input, options?.extraFrontmatter)
+      const version =
+        options?.expectedRevision === undefined ? null : await readDocumentVersionUnlocked(id)
+      if (
+        options?.expectedRevision !== undefined &&
+        (!version || version.revision !== options.expectedRevision)
+      )
+        throw new HttpError(409, 'DOCUMENT_CONFLICT', '内容已变化，请保留草稿并重新读取后保存')
+      if (version && input.body !== undefined && version.document.kind !== 'note')
+        throw new HttpError(403, 'BODY_READ_ONLY', '资料正文只读，只能整理标题、标签和目录')
+      if (options?.appendText !== undefined && version?.document.kind !== 'note')
+        throw new HttpError(403, 'BODY_READ_ONLY', '只能向自己的 Markdown 笔记追加内容')
+      const effective =
+        options?.appendText === undefined
+          ? input
+          : {
+              ...input,
+              body: appendSource(version!.document.body, options.appendText),
+            }
+      return updateNoteUnlocked(id, effective, options?.extraFrontmatter, {
+        version,
+        preserveSource: options?.preserveSource ?? false,
+        requireDurableMetadata: options?.requireDurableMetadata ?? false,
+      })
     })
     if (doc) await rebuildChunksAndEmbed(id, doc.body)
     return doc
@@ -227,6 +359,11 @@ async function updateNoteUnlocked(
   id: string,
   input: NoteUpdate,
   extraOverride?: Record<string, unknown>,
+  sourceOptions?: {
+    version: DocumentVersion | null
+    preserveSource: boolean
+    requireDurableMetadata: boolean
+  },
 ): Promise<DocumentDetail | null> {
   const existing = await getDocumentRow(id)
   if (!existing) return null
@@ -249,21 +386,38 @@ async function updateNoteUnlocked(
       ? (extraOverride ?? (await readNoteFrontmatter(existing.path)))
       : undefined
 
-  const title = input.title ?? existing.title
-  const body = compound ? '' : (input.body ?? existing.body)
-  const status = input.status ?? existing.status
-  const tagNames = input.tags ?? [...((await loadTags([id])).get(id) ?? [])]
+  const current = sourceOptions?.version?.document
+  const title = input.title ?? current?.title ?? existing.title
+  const body = compound ? '' : (input.body ?? current?.body ?? existing.body)
+  const status = input.status ?? current?.status ?? existing.status
+  const tagNames = input.tags ?? current?.tags ?? [...((await loadTags([id])).get(id) ?? [])]
   // folder 用 `=== undefined` 判断而不是 `??`：空串是合法值（移出目录），
   // 用 ?? 会把「移出目录」当成「不修改」
   const folder =
-    input.folder === undefined ? existing.folder : normalizeFolder(input.folder) || null
+    input.folder === undefined
+      ? current
+        ? current.folder
+        : existing.folder
+      : normalizeFolder(input.folder) || null
 
   // 指派到新目录时先补建注册表行（mkdir -p）：folders 表是树结构的唯一真相（D-068），
   // 漏了这一步，文档指派存在而树上看不到这个目录
-  await ensureFolders(folder)
+  if (sourceOptions?.requireDurableMetadata && folder) {
+    const [target] = await db
+      .select({ path: folders.path })
+      .from(folders)
+      .where(eq(folders.path, folder))
+      .limit(1)
+    if (!target) throw new HttpError(404, 'FOLDER_NOT_FOUND', '目标目录已不存在，请重新选择')
+  } else await ensureFolders(folder)
 
   // 标题变了就跟随改名，保证文件名和内容一致；
   // 自动生成的 id 后缀保证不会和已有文件冲突
+  if (
+    sourceOptions?.version &&
+    (await readDocumentVersionUnlocked(id))?.revision !== sourceOptions.version.revision
+  )
+    throw new HttpError(409, 'DOCUMENT_CONFLICT', '发布前发现内容已变化，请保留草稿并重新读取')
   let path = existing.path
   if (existing.path && title !== existing.title) {
     const nextPath = buildNotePath(title, id, existing.createdAt)
@@ -273,18 +427,20 @@ async function updateNoteUnlocked(
 
   const now = new Date()
   if (path) {
-    await writeNote({
+    const note: VaultNote = {
       id,
       title,
       tags: tagNames,
       body,
       status,
       folder,
-      createdAt: existing.createdAt.toISOString(),
+      createdAt: current?.createdAt ?? existing.createdAt.toISOString(),
       updatedAt: now.toISOString(),
       path,
       ...(extraFrontmatter ? { extraFrontmatter } : {}),
-    })
+    }
+    if (sourceOptions?.preserveSource) await writeExactNote(note, sourceOptions.version?.rawNote)
+    else await writeNote(note)
   }
 
   /**
@@ -311,11 +467,18 @@ async function updateNoteUnlocked(
         status,
         updatedAt: now.toISOString(),
       }).catch((error: unknown) => {
+        if (sourceOptions?.requireDurableMetadata) throw error
         // 写失败不阻止这次的修改：数据库已经更新，而重建索引时
         // 会以 meta.json 为准——所以这里必须留下日志（否则会静默回退）
         console.warn(`写回 meta.json 失败（${id}），重建索引后可能丢失这次改动：`, error)
       })
     } else {
+      if (sourceOptions?.requireDurableMetadata)
+        throw new HttpError(
+          409,
+          'SOURCE_METADATA_MISSING',
+          '原件元信息缺失，请先在电脑端恢复后再整理',
+        )
       /**
        * 记录有原件、却读不到 meta.json。
        *
@@ -424,7 +587,7 @@ export async function listDocuments(query: DocumentListQuery): Promise<DocumentS
     // 含子目录：选中「技术」要能看见「技术/前端/React」下的东西，
     // 否则用户得把每个子目录都点一遍才能翻完
     conditions.push(
-      sql`(${documents.folder} = ${folder} or ${documents.folder} like ${`${folder}/%`})`,
+      sql`(${documents.folder} = ${folder} or ${documents.folder} like ${`${folder.replace(/[\\%_]/g, '\\$&')}/%`} escape ${'\\'})`,
     )
   }
 

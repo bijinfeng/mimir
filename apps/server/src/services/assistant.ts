@@ -1,68 +1,34 @@
-import type { AskInput, AskResponse, Citation, FailureKind, Trace, TraceStep } from '@mimir/shared'
-import { toQueryText } from '@mimir/tokenizer'
-import { assemble } from '../plugins/host.js'
-import { assembleCitations, searchChunks, type AssembledCitation } from '../search/index.js'
-import { appendMessage, getConversation } from './conversations.js'
+import type { AskInput, AskResponse, FailureKind } from '@mimir/shared'
+import { appendMessage, ensureConversationScope, getConversation } from './conversations.js'
 import { callChat, modelReady } from './model.js'
-import { getDocument } from './documents.js'
+import { HttpError } from '../lib/http.js'
+import {
+  prepareRetrieval,
+  verifiedRetrievalHistory,
+  SYSTEM_PROMPT,
+  type Retrieval,
+} from './retrieval-preparation.js'
 import { searchOnlyAnswer } from './search-only-answer.js'
-
-/**
- * 通道名的中文标签（trace 用）。
- *
- * **不取注册表**：注册表里的 `name` 是给设置页的（「关键词（jieba 分词）」），
- * 而 trace 里的一句「词级召回 3 段」要短得多。未知的通道名原样显示——
- * 加通道时不需要回来改这张表，缺的只是翻译（与 `CitationCards.tsx` 同一条做法）。
- */
-const CHANNEL_LABELS: Record<string, string> = {
-  keyword: '词级召回',
-  substring: '子串兜底',
-  vector: '语义向量',
-}
-
-/** 每篇最多贡献几条引用（`retrieval.maxChunksPerDoc`，§4.11 的第 3 步） */
-async function maxChunksPerDoc(): Promise<number> {
-  const { settings } = assemble()
-  return settings.getNumber('retrieval.maxChunksPerDoc')
-}
-
-/**
- * 问答。
- *
- * 两条路径，按**有没有配模型**分叉，而不是按用户选了什么：
- *
- *  1. 配了 `MODEL_API_KEY`：检索 → 组装上下文 → 调模型 → 带引用回答
- *  2. 没配（或显式 scope=search）：只检索，命中的原文由引用卡展示
- *
- * 第二条不是「降级」而是**产品的一部分**：`.trellis/spec/project/product.md` §5.8 明确要求
- * 「网络不可达时只用检索不调模型」——检索在本地 Postgres、笔记在本地文件，
- * 离线不是全盘瘫痪。所以这条路径要能独立工作，并且明确告诉用户
- * 「没有调模型，所以没花钱」。
- *
- * 关于 trace：这些数字全部来自**真实的检索结果**，不是渲染时编的。
- * 编的数字比没有数字更糟——用户会拿它做判断（「是没存过还是分词没匹配上」），
- * 而假数字会让他得出错误结论。见 `.trellis/spec/project/product.md` §5.6。
- */
-
-/** 上下文预算。按字符数粗略限制，避免把整库塞进 prompt。 */
-const CONTEXT_CHAR_BUDGET = 6000
-
-/** 每个命中给多少字的原文。比检索片段长，让模型有足够上下文 */
-const PER_CITATION_CHARS = 1200
-
-const SYSTEM_PROMPT = `你是 mimir 的问答助手，帮用户回顾他自己的知识库。
-
-规则：
-1. 只根据【资料】回答。资料里没有的内容，明确说「知识库里没有相关记录」，不要用通用知识补全。
-2. 资料里的事实要标注来源编号，写成 [1] [2] 这样的形式。
-3. 用中文回答，简洁直接。不要写「根据提供的资料」这类套话。
-4. 如果资料只能部分回答问题，说明哪部分能答、哪部分没有记录。`
 
 export interface AskParams extends AskInput {
   conversationId: string
 }
 
 export async function ask(params: AskParams): Promise<AskResponse> {
+  const conversation = await getConversation(params.conversationId)
+  if (!conversation) throw new HttpError(404, 'CONVERSATION_NOT_FOUND', '会话不存在')
+  if (params.scope === 'document' && !params.documentId && !params.retrievalScope)
+    throw new HttpError(400, 'INVALID_SCOPE', '单篇范围缺少文档 ID')
+  const scope =
+    params.retrievalScope ??
+    (params.scope === 'document' && params.documentId
+      ? { type: 'document' as const, documentId: params.documentId }
+      : { type: 'all' as const })
+  if (params.retrievalScope || conversation.retrievalScope)
+    await ensureConversationScope(params.conversationId, scope)
+  const retrieval = await prepareRetrieval(params.question, scope, {
+    verifySources: !!(params.retrievalScope || conversation.retrievalScope),
+  })
   // 先落用户消息：即使后面模型调用失败，用户的提问也不会丢
   const userMessage = await appendMessage({
     conversationId: params.conversationId,
@@ -70,9 +36,8 @@ export async function ask(params: AskParams): Promise<AskResponse> {
     text: params.question,
   })
 
-  const retrieval = await retrieve(params)
-
-  const wantsSearchOnly = params.scope === 'search' || !(await modelReady('chat'))
+  const wantsSearchOnly =
+    params.scope === 'search' || retrieval.citations.length === 0 || !(await modelReady('chat'))
   if (wantsSearchOnly) {
     const assistant = await appendMessage({
       conversationId: params.conversationId,
@@ -110,180 +75,14 @@ export async function ask(params: AskParams): Promise<AskResponse> {
   }
 }
 
-interface Retrieval {
-  citations: Citation[]
-  trace: Trace
-  /** 组装好的上下文文本，仅在调模型时用到 */
-  context: string
-  /** 命中数，用于 trace */
-  total: number
-  hitDocumentCount: number
-  /** 检索开始时刻。总耗时要把模型调用算进去，所以起点要带出来 */
-  startedAt: number
-}
-
-/**
- * 检索 + 组装引用。
- *
- * `scope=document` 时把检索范围锁到单篇——对应原型输入框里那个
- * 「范围：当前文档」pill，也是文档工具条「问 AI」的行为。
- */
-async function retrieve(params: AskParams): Promise<Retrieval> {
-  const startedAt = performance.now()
-  const steps: TraceStep[] = [{ icon: 'think', text: '先把问题拿去知识库里找相关内容' }]
-
-  const keywords = toQueryText(params.question).split(' ').filter(Boolean)
-  steps.push({
-    icon: 'search',
-    text: '用 jieba 切分查询词',
-    keywords,
-  })
-
-  if (params.scope === 'document' && params.documentId) {
-    const doc = await getDocument(params.documentId)
-    if (!doc) {
-      steps.push({ icon: 'check', text: '指定的文档不存在，改为检索全库' })
-      return {
-        citations: [],
-        trace: finishTrace(steps, 0, 0, startedAt),
-        context: '',
-        total: 0,
-        hitDocumentCount: 0,
-        startedAt,
-      }
-    }
-
-    // 单篇模式下不做通道召回：用户已经指明是哪一篇，
-    // 再跑一遍检索只会引入「为什么搜的是这篇但引用了别的」的困惑
-    const snippet = doc.body.slice(0, PER_CITATION_CHARS)
-    steps.push({
-      icon: 'read',
-      text: '范围限定在这一篇，读取全文',
-      meta: `${doc.body.length} 字`,
-    })
-
-    const citation: Citation = {
-      documentId: doc.id,
-      kind: doc.kind,
-      title: doc.title,
-      snippet,
-      start: 0,
-      end: Math.min(snippet.length, doc.body.length),
-      matchedBy: ['scope'],
-    }
-
-    steps.push({ icon: 'check', text: '确认没有遗漏，生成回答' })
-    return {
-      citations: [citation],
-      trace: finishTrace(steps, 1, 1, startedAt),
-      context: formatContext([citation]),
-      total: 1,
-      hitDocumentCount: 1,
-      startedAt,
-    }
-  }
-
-  const result = await searchChunks({ q: params.question, limit: 8 })
-
-  if (result.hits.length > 0) {
-    // 这一行是 trace 里最有信息量的一条：它区分了「词级命中」与「子串兜底命中」。
-    // 用户看到「子串兜底 1 段」时就知道是分词没切对但被兜住了，
-    // 看到全是 0 才是真的没存过。见 .trellis/spec/project/product.md §5.6。
-    //
-    // 通道名来自注册表（`channels`），不写死枚举——M1-C 加上向量通道时
-    // 这一行自动多报一个（「语义向量 N 段」）
-    const byChannel = (name: string) =>
-      result.hits.filter((hit) => hit.matchedBy.includes(name)).length
-    const parts = result.channels.map(
-      (name) => `${CHANNEL_LABELS[name] ?? name} ${byChannel(name)} 段`,
-    )
-
-    steps.push({ icon: 'search', text: '通道召回结果', meta: parts.join(' · ') })
-  }
-
-  const assembled = await assembleCitations(result.hits, {
-    limit: 8,
-    maxPerDoc: await maxChunksPerDoc(),
-  })
-  const citations = buildCitations(assembled)
-  const hitDocumentCount = new Set(citations.map((item) => item.documentId)).size
-
-  if (citations.length > 0) {
-    steps.push({
-      icon: 'read',
-      text: '读取命中的文档并合并相邻分块',
-      meta: `来自 ${hitDocumentCount} 个文档，共 ${citations.length} 段`,
-    })
-  }
-
-  steps.push({
-    icon: 'check',
-    text: citations.length > 0 ? '确认没有遗漏，生成回答' : '知识库里没有找到相关内容',
-  })
-
-  return {
-    citations,
-    trace: finishTrace(steps, 1, result.hits.length > 0 ? 2 : 1, startedAt),
-    context: formatContext(citations),
-    total: citations.length,
-    hitDocumentCount,
-    startedAt,
-  }
-}
-
-/**
- * 引用卡片由**组装好的分块段**给出（M1-C）。
- *
- * 与 M0 的区别：那时候输入是「文档级命中 + 现截的窗口」，位置是猜的；
- * 现在每段自带 `[start, end)` 的**真实偏移**，引用卡片上的
- * 「跳回原文并高亮」因此能落在正确的位置。
- */
-function buildCitations(assembled: AssembledCitation[]): Citation[] {
-  const citations: Citation[] = []
-  let budget = CONTEXT_CHAR_BUDGET
-
-  for (const item of assembled) {
-    if (budget <= 0) break
-    const text = item.text.slice(0, Math.min(PER_CITATION_CHARS, budget))
-    budget -= text.length
-
-    citations.push({
-      documentId: item.documentId,
-      // 来源的联合类型在契约里收窄，而检索层只保证「它是 documents.kind」
-      // （core 不认识这个枚举）。断言发生在**构造 Citation 的这一个点**上
-      kind: item.kind as Citation['kind'],
-      title: item.title,
-      snippet: text,
-      // 偏移是分块自己的真实区间（不是查询词猜出来的位置）。
-      // 截断到 PER_CITATION_CHARS 时 end 跟着缩——契约里 end 的含义是
-      // 「这段文字在正文里的结束位置」，不能与 snippet 对不上
-      start: item.start,
-      end: item.start + text.length,
-      matchedBy: item.matchedBy,
-    })
-  }
-
-  return citations
-}
-
-/** 组装成带编号的上下文，编号与 citations 数组下标一一对应 */
-function formatContext(citations: Citation[]): string {
-  if (citations.length === 0) return '（知识库里没有检索到相关内容）'
-
-  return citations
-    .map((cite, index) => `【${index + 1}】${cite.title}\n${cite.snippet}`)
-    .join('\n\n---\n\n')
-}
-
-/** trace 的收口：轮次、工具数、耗时只在这里算一次，避免各分支各写一遍 */
-function finishTrace(steps: TraceStep[], rounds: number, tools: number, startedAt: number): Trace {
-  return { rounds, tools, tookMs: Math.round(performance.now() - startedAt), steps }
-}
-
 async function callModel(params: AskParams, retrieval: Retrieval): Promise<string> {
   // 对话历史作为上下文带上，让追问能接住上文。
   // 截断到最近若干轮：更早的内容对当前问题帮助有限，却会挤掉检索到的原文。
-  const history = await loadHistory(params.conversationId, 6)
+  const history = await verifiedRetrievalHistory(
+    params.conversationId,
+    retrieval.scope,
+    retrieval.verifySources,
+  )
 
   // 适配器不再在这里构造——它在 provider 接缝里（plugins/provider/）。
   // 宿主只知道「要哪个角色」，不知道用的是哪个工厂、模型名怎么断言
@@ -303,26 +102,6 @@ async function callModel(params: AskParams, retrieval: Retrieval): Promise<strin
       },
     ],
   })
-}
-
-async function loadHistory(
-  conversationId: string,
-  limit: number,
-): Promise<{ role: 'user' | 'assistant'; content: string }[]> {
-  const conversation = await getConversation(conversationId)
-  if (!conversation) return []
-
-  return (
-    conversation.messages
-      .filter((message) => !message.failure && message.text.trim())
-      .slice(-limit)
-      // 最后一条是本次提问，已经单独带上下文传了，避免重复
-      .slice(0, -1)
-      .map((message) => ({
-        role: message.role,
-        content: message.text.slice(0, 1500),
-      }))
-  )
 }
 
 /**

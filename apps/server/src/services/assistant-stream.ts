@@ -1,35 +1,34 @@
 import type { StreamChunk } from '@tanstack/ai'
 import { chatParamsFromRequestBody, toServerSentEventsResponse } from '@tanstack/ai'
-import type { Citation, FailureKind, Trace, TraceStep } from '@mimir/shared'
-import { EVENT_CITATIONS, EVENT_CONVERSATION, EVENT_FAILURE, EVENT_TRACE } from '@mimir/shared'
-import { toQueryText } from '@mimir/tokenizer'
+import type { FailureKind, Trace, RetrievalScope } from '@mimir/shared'
+import {
+  EVENT_CITATIONS,
+  EVENT_CONVERSATION,
+  EVENT_FAILURE,
+  EVENT_TRACE,
+  retrievalScopeSchema,
+} from '@mimir/shared'
 import { nanoid } from 'nanoid'
-import { assemble } from '../plugins/host.js'
-import { assembleCitations, searchChunks, type AssembledCitation } from '../search/index.js'
-import { appendMessage, createConversation, ensureTitle, getConversation } from './conversations.js'
+import {
+  prepareRetrieval,
+  verifiedRetrievalHistory,
+  SYSTEM_PROMPT,
+  type Retrieval,
+} from './retrieval-preparation.js'
+import { normalizeRetrievalScope } from './retrieval-scope.js'
+import {
+  appendMessage,
+  createConversation,
+  ensureConversationScope,
+  ensureTitle,
+  getConversation,
+} from './conversations.js'
 import { hasImageInput } from './pptx-snapshot-input.js'
 import { streamChat as streamModelChat, modelReady } from './model.js'
-import { getDocument } from './documents.js'
 import { searchOnlyAnswer } from './search-only-answer.js'
 import { streamDocxAgent } from './docx-agent-stream.js'
 import { classifyFailure } from './chat-failure.js'
 export { classifyFailure } from './chat-failure.js'
-
-/**
- * 通道名的中文标签（trace 用）。与 `assistant.ts` 同一套取值，
- * 未知的通道名原样显示——加通道时不需要回来改
- */
-const CHANNEL_LABELS: Record<string, string> = {
-  keyword: '词级召回',
-  substring: '子串兜底',
-  vector: '语义向量',
-}
-
-/** 每篇最多贡献几条引用（`retrieval.maxChunksPerDoc`，§4.11 的第 3 步） */
-async function maxChunksPerDoc(): Promise<number> {
-  const { settings } = assemble()
-  return settings.getNumber('retrieval.maxChunksPerDoc')
-}
 
 /**
  * 流式问答（AG-UI 协议）。
@@ -78,6 +77,7 @@ async function maxChunksPerDoc(): Promise<number> {
 
 /** forwardedProps 里 mimir 自己的字段 */
 interface MimirProps {
+  retrievalScope?: RetrievalScope
   conversationId?: string
   documentId?: string
   deepReasoning?: boolean
@@ -93,153 +93,6 @@ interface MimirProps {
    * 「用户选了只检索」。
    */
   scope?: 'search'
-}
-
-const CONTEXT_CHAR_BUDGET = 6000
-const PER_CITATION_CHARS = 1200
-
-const SYSTEM_PROMPT = `你是 mimir 的问答助手，帮用户回顾他自己的知识库。
-
-规则：
-1. 只根据【资料】回答。资料里没有的内容，明确说「知识库里没有相关记录」，不要用通用知识补全。
-2. 资料里的事实要标注来源编号，写成 [1] [2] 这样的形式。
-3. 用中文回答，简洁直接。不要写「根据提供的资料」这类套话。
-4. 如果资料只能部分回答问题，说明哪部分能答、哪部分没有记录。`
-
-interface Retrieval {
-  citations: Citation[]
-  trace: Trace
-  context: string
-}
-
-async function retrieve(question: string, documentId?: string): Promise<Retrieval> {
-  const startedAt = performance.now()
-  const steps: TraceStep[] = [{ icon: 'think', text: '先把问题拿去知识库里找相关内容' }]
-
-  const keywords = toQueryText(question).split(' ').filter(Boolean)
-  steps.push({ icon: 'search', text: '用 jieba 切分查询词', keywords })
-
-  // 单篇模式：用户已经指明是哪一篇，不再跑通道召回。
-  // 否则会出现「问的是这篇，引用却来自别的文档」的困惑
-  if (documentId) {
-    const doc = await getDocument(documentId)
-    if (doc) {
-      const snippet = doc.body.slice(0, PER_CITATION_CHARS)
-      steps.push({
-        icon: 'read',
-        text: '范围限定在这一篇，读取全文',
-        meta: `${doc.body.length} 字`,
-      })
-      steps.push({ icon: 'check', text: '确认没有遗漏，生成回答' })
-
-      const citation: Citation = {
-        documentId: doc.id,
-        kind: doc.kind,
-        title: doc.title,
-        snippet,
-        start: 0,
-        end: snippet.length,
-        matchedBy: ['scope'],
-      }
-
-      return {
-        citations: [citation],
-        trace: { rounds: 1, tools: 1, tookMs: Math.round(performance.now() - startedAt), steps },
-        context: formatContext([citation]),
-      }
-    }
-    steps.push({ icon: 'check', text: '指定的文档不存在，改为检索全库' })
-  }
-
-  const result = await searchChunks({ q: question, limit: 8 })
-
-  const byChannel = (name: string) =>
-    result.hits.filter((hit) => hit.matchedBy.includes(name)).length
-
-  if (result.hits.length > 0) {
-    // 这一行是 trace 里最有信息量的一条：它把「词级命中」与「子串兜底命中」
-    // 分开报。看到「子串兜底 1 段」就知道是分词没切对但被兜住了，
-    // 两个都是 0 才是真的没存过（.trellis/spec/project/product.md §5.6）。
-    //
-    // 通道名**不写死**：`channels` 来自注册表，M1-C 加上向量通道后
-    // 这里无需改动（每个就绪的通道各报一行）
-    const parts = result.channels.map((name) => {
-      const label = CHANNEL_LABELS[name] ?? name
-      return `${label} ${byChannel(name)} 段`
-    })
-    steps.push({ icon: 'search', text: '通道召回结果', meta: parts.join(' · ') })
-  }
-
-  // 引用组装：相邻分块合并 + 每篇上限（§4.11 的第 2、3 步）。
-  // 上限从设置来（`retrieval.maxChunksPerDoc`），默认 3
-  const maxPerDoc = await maxChunksPerDoc()
-  const assembled = await assembleCitations(result.hits, { limit: 8, maxPerDoc })
-  const citations = buildCitations(assembled)
-  const documentCount = new Set(citations.map((item) => item.documentId)).size
-
-  if (citations.length > 0) {
-    steps.push({
-      icon: 'read',
-      text: '读取命中的文档并合并相邻分块',
-      meta: `来自 ${documentCount} 个文档，共 ${citations.length} 段`,
-    })
-  }
-
-  steps.push({
-    icon: 'check',
-    text: citations.length > 0 ? '确认没有遗漏，生成回答' : '知识库里没有找到相关内容',
-  })
-
-  return {
-    citations,
-    trace: {
-      rounds: 1,
-      tools: result.hits.length > 0 ? 2 : 1,
-      tookMs: Math.round(performance.now() - startedAt),
-      steps,
-    },
-    context: formatContext(citations),
-  }
-}
-
-/**
- * 引用卡片由**组装好的分块段**给出（M1-C，§4.11）。
- *
- * 偏移是分块自己的真实区间，不再是查询词猜出来的位置——「跳回原文并高亮」
- * 因此落在正确的地方。截断到 `PER_CITATION_CHARS` 时 `end` 跟着缩：
- * 契约里它的含义是「这段文字在正文里的结束位置」，不能与 snippet 对不上。
- */
-function buildCitations(assembled: AssembledCitation[]): Citation[] {
-  const citations: Citation[] = []
-  let budget = CONTEXT_CHAR_BUDGET
-
-  for (const item of assembled) {
-    if (budget <= 0) break
-    const text = item.text.slice(0, Math.min(PER_CITATION_CHARS, budget))
-    budget -= text.length
-
-    citations.push({
-      documentId: item.documentId,
-      // 来源的联合类型在契约里收窄，而检索层只保证「它是 documents.kind」
-      // （core 不认识这个枚举）。断言发生在**构造 Citation 的这一个点**上
-      kind: item.kind as Citation['kind'],
-      title: item.title,
-      snippet: text,
-      start: item.start,
-      end: item.start + text.length,
-      matchedBy: item.matchedBy,
-    })
-  }
-
-  return citations
-}
-
-/** 编号与 citations 数组下标一一对应，模型引用 [1] 就能对上第一张卡片 */
-function formatContext(citations: Citation[]): string {
-  if (citations.length === 0) return '（知识库里没有检索到相关内容）'
-  return citations
-    .map((cite, i) => `【${i + 1}】${cite.title}\n${cite.snippet}`)
-    .join('\n\n---\n\n')
 }
 
 /**
@@ -283,7 +136,10 @@ function mimirProps(forwarded: Record<string, unknown> | undefined): MimirProps 
   const pick = (key: 'conversationId' | 'documentId'): unknown =>
     props[key] === undefined ? runConfig[key] : props[key]
 
+  const rawScope = props.retrievalScope ?? runConfig.retrievalScope
+  const retrievalScope = rawScope === undefined ? undefined : retrievalScopeSchema.parse(rawScope)
   return {
+    ...(retrievalScope ? { retrievalScope } : {}),
     ...(typeof pick('conversationId') === 'string'
       ? { conversationId: pick('conversationId') as string }
       : {}),
@@ -348,7 +204,16 @@ export async function streamChat(requestBody: unknown): Promise<Response> {
       '带截图的指令需要当前文档的 Agent 和视觉模型，不能仅检索知识库；请移除截图或配置模型',
     )
 
-  const props = mimirProps(parsed.forwardedProps)
+  let props: MimirProps
+  try {
+    props = mimirProps(parsed.forwardedProps)
+  } catch {
+    return errorResponse(400, 'INVALID_SCOPE', '检索范围不合法')
+  }
+  const retrievalScope = await normalizeRetrievalScope(
+    props.retrievalScope ??
+      (props.documentId ? { type: 'document', documentId: props.documentId } : { type: 'all' }),
+  )
   const question = lastUserQuestion(parsed.messages as { role: string; content?: unknown }[]).trim()
 
   if (!question) {
@@ -358,21 +223,26 @@ export async function streamChat(requestBody: unknown): Promise<Response> {
   // 会话不存在或没传就新建一个。空会话只在这一瞬间存在，紧接着就落用户消息
   let conversationId = props.conversationId
   let isNew = false
+  let verifySources = props.retrievalScope !== undefined
 
   if (conversationId) {
     const existing = await getConversation(conversationId)
-    if (!existing) conversationId = undefined
+    if (!existing) return errorResponse(404, 'CONVERSATION_NOT_FOUND', '会话不存在')
+    verifySources = verifySources || existing.retrievalScope !== undefined
+    if (props.retrievalScope || existing.retrievalScope)
+      await ensureConversationScope(conversationId, retrievalScope)
   }
   if (!conversationId) {
-    conversationId = (await createConversation()).id
+    conversationId = (
+      await createConversation('', props.retrievalScope ? retrievalScope : undefined)
+    ).id
     isNew = true
   }
 
+  const retrieval = await prepareRetrieval(question, retrievalScope, { verifySources })
   await ensureTitle(conversationId, question)
   // 用户消息先落库：即使模型调用失败，提问本身不会丢
   await appendMessage({ conversationId, role: 'user', text: question })
-
-  const retrieval = await retrieve(question, props.documentId)
 
   return toServerSentEventsResponse(
     createStream({ conversationId, question, props, retrieval, isNew, requestBody }),
@@ -438,7 +308,7 @@ async function* createStream(params: StreamParams): AsyncGenerator<StreamChunk> 
   // 它同样要收一对生命周期括号：没有模型不等于「没有这一轮」。
   // （这一条路径**不补发**终局那份整轮耗时的 trace：它没有模型那一趟，
   //  检索耗时就是全部，先发的那份已经是对的）
-  if (props.scope === 'search' || !(await modelReady('chat'))) {
+  if (props.scope === 'search' || retrieval.citations.length === 0 || !(await modelReady('chat'))) {
     const text = searchOnlyAnswer(retrieval.citations)
     for await (const chunk of textOnlyStream(text)) yield chunk
     await persistAssistant(conversationId, text, retrieval, null, turnStartedAt)
@@ -446,10 +316,13 @@ async function* createStream(params: StreamParams): AsyncGenerator<StreamChunk> 
     return
   }
 
-  // 历史消息由客户端带过来（AG-UI 的运行时维护整段对话），服务端不重复维护一份。
+  // 历史只取服务端已落库且引用仍可核对的消息。
   // 最后一条是本次提问，已经单独带上下文传了，所以去掉避免重复
-  const parsed = await chatParamsFromRequestBody(params.requestBody).catch(() => null)
-  const history = (parsed?.messages ?? []).slice(0, -1)
+  const history = await verifiedRetrievalHistory(
+    conversationId,
+    retrieval.scope,
+    retrieval.verifySources,
+  )
 
   try {
     // 适配器由 provider 接缝提供——这里只说「要哪个角色」。
@@ -467,6 +340,7 @@ async function* createStream(params: StreamParams): AsyncGenerator<StreamChunk> 
     })
 
     let answer = ''
+    let modelFinished = false
     let streamError: string | null = null
     /** 模型那一趟报的用量。原先它随 RUN_FINISHED 一起流出去，现在剥掉生命周期
         事件之后要单独接住，挂在我们自己那条 RUN_FINISHED 的 metadata 上继续往
@@ -514,6 +388,7 @@ async function* createStream(params: StreamParams): AsyncGenerator<StreamChunk> 
 
       // 模型那一趟的用量随它的 RUN_FINISHED 到，剥掉事件本身之前先接住
       if (type === 'RUN_FINISHED') {
+        modelFinished = true
         modelUsage = (chunk as { usage?: unknown }).usage
       }
 
@@ -522,6 +397,9 @@ async function* createStream(params: StreamParams): AsyncGenerator<StreamChunk> 
       if (!isModelLifecycle && streamError === null) yield chunk
     }
 
+    if (!modelFinished && streamError === null)
+      throw new Error('模型输出中断（truncated），未收到完成事件')
+    if (!answer.trim() && streamError === null) throw new Error('模型未返回回答正文')
     if (streamError !== null) {
       throw new Error(streamError)
     }

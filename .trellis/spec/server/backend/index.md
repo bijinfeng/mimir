@@ -23,6 +23,7 @@ paths:
 - [PDF 原文与批注宿主合同](../../shared/contract/pdf-agent.md)
 - [XLSX 编辑与公式重算宿主合同](../../shared/contract/xlsx-agent.md)
 - [鉴权](./auth.md)
+- [小程序设备与有限写入](./miniapp.md)
 - [日志和错误](./logging.md)
 - [测试](./tests.md)
 - [Office 加密原件与派生索引](./office-encrypted-index.md)

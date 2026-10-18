@@ -1,3 +1,4 @@
+import { scopePredicate } from './scope.js'
 import { sql } from 'drizzle-orm'
 import { queryTokens } from '@mimir/tokenizer'
 import type { LegContext, PluginDatabase, RankedHit, RetrievalLeg } from '@mimir/shared'
@@ -39,7 +40,7 @@ export function createKeywordLegSqlite(db: PluginDatabase): RetrievalLeg {
     id: 'keyword',
     defaultWeight: 1,
 
-    async run({ query, limit, kind, tag }: LegContext): Promise<RankedHit[]> {
+    async run({ query, limit, kind, tag, retrievalScope }: LegContext): Promise<RankedHit[]> {
       const tokens = queryTokens(query)
       if (tokens.length === 0) return []
 
@@ -48,7 +49,11 @@ export function createKeywordLegSqlite(db: PluginDatabase): RetrievalLeg {
       const coverage = await Promise.all(
         tokens.map(async (token) => {
           const rows = await db.execute<{ chunk_id: string }>(sql`
-            select chunk_id from chunks_fts where chunks_fts match ${quote(token)}
+            select chunks_fts.chunk_id from chunks_fts
+            join chunks c on c.id = chunks_fts.chunk_id
+            join documents d on d.id = c.document_id
+            where chunks_fts match ${quote(token)} and d.deleted_at is null
+              and ${scopePredicate(retrievalScope)}
           `)
           return new Set(rows.map((row) => row.chunk_id))
         }),
@@ -62,6 +67,7 @@ export function createKeywordLegSqlite(db: PluginDatabase): RetrievalLeg {
         join documents d on d.id = c.document_id
         where chunks_fts match ${anyMatch}
           and d.deleted_at is null
+          and ${scopePredicate(retrievalScope)}
           ${kind ? sql`and d.kind = ${kind}` : sql``}
           ${
             tag

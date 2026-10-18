@@ -1,5 +1,5 @@
 import { and, eq, isNull } from 'drizzle-orm'
-import { Hono } from 'hono'
+import { Hono, type Context } from 'hono'
 import { FILE_MAX_BYTES, isInlineSafe } from '@mimir/shared'
 import { db } from '../db/client.js'
 import { documents } from '../db/schema.js'
@@ -128,7 +128,7 @@ function asHttpError(error: unknown): unknown {
  * 所以这里是**读全文再切片**：对 50MB 以内的文件比给接缝加流式能力划算得多
  * （那要让本地与 S3 两个实现都改）。
  */
-filesRoute.get('/:id/file', async (c) => {
+export async function downloadDocumentFile(c: Context<AppEnv>): Promise<Response> {
   const id = c.req.param('id')
   const [row] = await db
     .select()
@@ -193,7 +193,9 @@ filesRoute.get('/:id/file', async (c) => {
 
   headers.set('Content-Length', String(total))
   return new Response(new Uint8Array(data), { status: 200, headers })
-})
+}
+
+filesRoute.get('/:id/file', downloadDocumentFile)
 
 /** 弱 ETag：大小 + 更新时间。不用内容哈希——那要读全文件才算得出来 */
 function etagFor(size: number, updatedAt: Date): string {

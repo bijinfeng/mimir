@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { retrievalScopeSchema } from './retrieval.js'
 import { documentKindSchema } from './documents.js'
 import { documentAgentFormatSchema } from './document-agent.js'
 
@@ -100,6 +101,8 @@ export const messageSchema = z.object({
 export type Message = z.infer<typeof messageSchema>
 
 export const conversationSummarySchema = z.object({
+  /** Absent on legacy conversations: their historical scope was not persisted. */
+  retrievalScope: retrievalScopeSchema.optional(),
   id: z.string(),
   title: z.string(),
   /** 中栏「本次引用」用的来源 id 列表 */
@@ -130,6 +133,7 @@ export const askInputSchema = z.object({
   /** 不传表示新开一个会话 */
   conversationId: z.string().optional(),
   scope: askScopeSchema.default('all'),
+  retrievalScope: retrievalScopeSchema.optional(),
   /** scope 为 document 时必填 */
   documentId: z.string().optional(),
   /** 深度思考：打开时用推理模型 */

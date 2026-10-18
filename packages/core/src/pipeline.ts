@@ -1,4 +1,4 @@
-import type { EmbedPort, LegContext, RetrievalLeg } from '@mimir/shared'
+import type { EmbedPort, LegContext, RetrievalLeg, RetrievalScope } from '@mimir/shared'
 import { fuse, type FusionChannel } from './fuse.js'
 
 /**
@@ -29,7 +29,7 @@ export interface SnippetPort {
    * `query` 传进去是为了让宿主能做「命中位置周围的窗口」——
    * 没有它就只能退回头 N 个字，那正是 M0 的做法，也正是不准的原因。
    */
-  load(ids: readonly string[], query: string): Promise<SnippetRow[]>
+  load(ids: readonly string[], query: string, scope?: RetrievalScope): Promise<SnippetRow[]>
 }
 
 export interface SnippetRow {
@@ -58,6 +58,7 @@ export interface SnippetRow {
 }
 
 export interface SearchRequest {
+  retrievalScope?: RetrievalScope
   q: string
   limit: number
   kind?: string
@@ -141,6 +142,7 @@ export function createPipeline(deps: PipelineDeps): Pipeline {
 
       const context: LegContext = {
         query: request.q,
+        ...(request.retrievalScope ? { retrievalScope: request.retrievalScope } : {}),
         limit: perLegLimit,
         ...(request.kind ? { kind: request.kind } : {}),
         ...(request.tag ? { tag: request.tag } : {}),
@@ -176,6 +178,7 @@ export function createPipeline(deps: PipelineDeps): Pipeline {
       const rows = await deps.snippets.load(
         fused.map((item) => item.id),
         request.q,
+        request.retrievalScope,
       )
       const byId = new Map(rows.map((row) => [row.id, row]))
 

@@ -8,11 +8,14 @@ import type {
   FailureKind,
   Message,
   Trace,
+  RetrievalScope,
 } from '@mimir/shared'
-import { SEARCH_ONLY_RESULT_TEXT } from '@mimir/shared'
+import { SEARCH_ONLY_RESULT_TEXT, retrievalScopeSchema } from '@mimir/shared'
 import { db } from '../db/client.js'
 import { conversationRefs, conversations, documents, messages } from '../db/schema.js'
 import { createNote } from './documents.js'
+import { HttpError } from '../lib/http.js'
+import { normalizeRetrievalScope, requireExistingFolder } from './retrieval-scope.js'
 import { loadDocxAgentHistory } from './docx-agent-runs.js'
 
 /**
@@ -31,6 +34,9 @@ function toSummary(row: ConversationRow, refs: string[]): ConversationSummary {
     id: row.id,
     title: row.title,
     refs,
+    ...(row.retrievalScope
+      ? { retrievalScope: retrievalScopeSchema.parse(row.retrievalScope) }
+      : {}),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   }
@@ -75,12 +81,13 @@ async function loadRefs(conversationIds: string[]): Promise<Map<string, string[]
 }
 
 /** 会话列表。左导航按日期分组由前端做，这里只按更新时间倒序给出全量。 */
-export async function listConversations(limit = 50): Promise<ConversationSummary[]> {
+export async function listConversations(limit = 50, offset = 0): Promise<ConversationSummary[]> {
   const rows = await db
     .select()
     .from(conversations)
     .orderBy(desc(conversations.updatedAt))
-    .limit(limit)
+    .limit(Math.min(101, Math.max(1, Number.isFinite(limit) ? Math.trunc(limit) : 50)))
+    .offset(Math.max(0, Number.isFinite(offset) ? Math.trunc(offset) : 0))
 
   const refs = await loadRefs(rows.map((row) => row.id))
   return rows.map((row) => toSummary(row, refs.get(row.id) ?? []))
@@ -111,14 +118,48 @@ export async function getConversation(id: string): Promise<ConversationDetail | 
 }
 
 /** 新建会话。标题留空，第一次提问时由问题内容生成。 */
-export async function createConversation(title = ''): Promise<ConversationSummary> {
+export async function createConversation(
+  title = '',
+  scope?: RetrievalScope,
+): Promise<ConversationSummary> {
+  const retrievalScope = scope ? await normalizeRetrievalScope(scope) : undefined
   const [row] = await db
     .insert(conversations)
-    .values({ id: nanoid(16), title })
+    .values({ id: nanoid(16), title, ...(retrievalScope ? { retrievalScope } : {}) })
     .returning()
 
   if (!row) throw new Error('创建会话失败：数据库未返回记录')
   return toSummary(row, [])
+}
+
+/** A scope is immutable. Empty legacy conversations may acquire their first scope. */
+export async function ensureConversationScope(
+  conversationId: string,
+  scope: RetrievalScope,
+): Promise<void> {
+  const normalized = await normalizeRetrievalScope(scope)
+  const [row] = await db.select().from(conversations).where(eq(conversations.id, conversationId))
+  if (!row) throw new HttpError(404, 'CONVERSATION_NOT_FOUND', '会话不存在')
+  const stored = row.retrievalScope ? retrievalScopeSchema.parse(row.retrievalScope) : undefined
+  if (stored) {
+    if (JSON.stringify(stored) !== JSON.stringify(normalized))
+      throw new HttpError(409, 'CONVERSATION_SCOPE_MISMATCH', '会话范围已固定，请新建会话切换范围')
+    return
+  }
+  const [message] = await db
+    .select({ id: messages.id })
+    .from(messages)
+    .where(eq(messages.conversationId, conversationId))
+    .limit(1)
+  if (message && normalized.type !== 'all')
+    throw new HttpError(409, 'CONVERSATION_SCOPE_MISMATCH', '旧会话未记录此范围，请新建会话')
+  // A compare-and-set avoids a concurrent first request overwriting another scope.
+  const changed = await db
+    .update(conversations)
+    .set({ retrievalScope: normalized })
+    .where(and(eq(conversations.id, conversationId), isNull(conversations.retrievalScope)))
+    .returning({ id: conversations.id })
+  if (!changed.length) return ensureConversationScope(conversationId, normalized)
 }
 
 /** 标题由第一个问题生成：截断到一眼能认出的长度 */
@@ -220,13 +261,18 @@ export async function deleteConversation(id: string): Promise<boolean> {
  * 笔记底部的「来源」列出这些文档，而对方底部的「被引用」会反过来指回来。
  * 若只是把标题当纯文本写进去，双链就断了。
  */
-export async function saveMessageAsNote(
+async function saveMessageAsNoteOnce(
   messageId: string,
+  options?: { folder?: string },
 ): Promise<{ noteId: string; conversationId: string } | null> {
   const [row] = await db.select().from(messages).where(eq(messages.id, messageId))
   if (!row) return null
   if (row.savedNoteId) return { noteId: row.savedNoteId, conversationId: row.conversationId }
 
+  if (row.role !== 'assistant' || row.failure || !row.text.trim())
+    throw new HttpError(400, 'MESSAGE_NOT_SAVEABLE', '只能保存已完成的助手回答')
+  const folder =
+    options?.folder === undefined ? undefined : await requireExistingFolder(options.folder)
   const citations = (row.citations as Citation[] | null) ?? []
 
   // 新的只检索回答把原文放在引用卡里；保存为独立笔记时要把片段带上。
@@ -248,11 +294,32 @@ export async function saveMessageAsNote(
           : []),
       ].join('\n')
   const title = noteTitleFrom(isSearchOnly ? `检索摘录：${citations[0]?.title ?? ''}` : row.text)
-  const note = await createNote({ title, body, tags: ['对话沉淀'] })
+  const note = await createNote({ title, body, tags: ['对话沉淀'], ...(folder ? { folder } : {}) })
 
   await db.update(messages).set({ savedNoteId: note.id }).where(eq(messages.id, messageId))
 
   return { noteId: note.id, conversationId: row.conversationId }
+}
+
+const savingMessages = new Map<string, Promise<void>>()
+export async function saveMessageAsNote(
+  messageId: string,
+  options?: { folder?: string },
+): Promise<{ noteId: string; conversationId: string } | null> {
+  const previous = savingMessages.get(messageId) ?? Promise.resolve()
+  let release!: () => void
+  const current = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  const queued = previous.then(() => current)
+  savingMessages.set(messageId, queued)
+  await previous
+  try {
+    return await saveMessageAsNoteOnce(messageId, options)
+  } finally {
+    release()
+    if (savingMessages.get(messageId) === queued) savingMessages.delete(messageId)
+  }
 }
 
 /** 从回答里取一个像标题的开头。取不到就用兜底名，不生成空标题。 */

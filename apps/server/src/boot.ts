@@ -3,6 +3,7 @@ import { dbDriver, env, assertOwnerConfigComplete } from './env.js'
 import { runMigrations } from './db/migrate.js'
 import { ensureOwnerAccount, hasAnyUser } from './services/bootstrap.js'
 import { seedDefaultLibrary } from './services/seed.js'
+import { recoverMiniappOperations } from './services/miniapp-operations.js'
 
 /**
  * 启动前的准备 + 路由装配。**两个入口共用这一份**：
@@ -37,6 +38,7 @@ export async function boot() {
     throw new Error('fnOS 所有者账号与数据库中已有账号不一致，拒绝启动')
   }
   await ensureDefaultContent()
+  if (env.miniappEnabled) await recoverMiniappOperations()
 
   return createApp()
 }

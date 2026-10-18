@@ -44,3 +44,7 @@ export * from './pdf-visual-signature.js'
 
 export * from './agent-media.js'
 export * from './pptx-deck-progress.js'
+
+export * from './miniapp.js'
+
+export * from './retrieval.js'

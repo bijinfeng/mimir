@@ -85,6 +85,13 @@
       "when": 1792311600000,
       "tag": "0011_classy_butterfly",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1792311287590,
+      "tag": "0012_cuddly_namora",
+      "breakpoints": true
     }
   ]
 }

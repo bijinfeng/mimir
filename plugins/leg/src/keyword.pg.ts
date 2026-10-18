@@ -1,3 +1,4 @@
+import { scopePredicate } from './scope.js'
 import { sql } from 'drizzle-orm'
 import { queryTokens } from '@mimir/tokenizer'
 import type { LegContext, PluginDatabase, RankedHit, RetrievalLeg } from '@mimir/shared'
@@ -45,7 +46,7 @@ export function createKeywordLegPostgres(db: PluginDatabase): RetrievalLeg {
     id: 'keyword',
     defaultWeight: 1,
 
-    async run({ query, limit, kind, tag }: LegContext): Promise<RankedHit[]> {
+    async run({ query, limit, kind, tag, retrievalScope }: LegContext): Promise<RankedHit[]> {
       // 用 queryTokens 而不是裸 tokenize：标点、单字、疑问词要在算门槛之前
       // 就去掉，否则它们会把分母抬高，让真正的关键词命中被误判为「命中不足」
       const tokens = queryTokens(query)
@@ -78,6 +79,7 @@ export function createKeywordLegPostgres(db: PluginDatabase): RetrievalLeg {
           from chunks c
           join documents d on d.id = c.document_id
           where d.deleted_at is null
+            and ${scopePredicate(retrievalScope)}
             ${kind ? sql`and d.kind = ${kind}` : sql``}
             ${
               tag
