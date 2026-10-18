@@ -6,11 +6,11 @@
       "id": "foundation",
       "name": "基础组件与系统反馈",
       "status": "implemented_verified",
-      "proposal": "../10-18-interaction-foundations/prototype/review.html",
+      "proposal": "../archive/2026-10/10-18-interaction-foundations/prototype/review.html",
       "version": "v1",
       "approved_at": "2026-10-18",
       "user_quote": "没问题了，继续吧",
-      "implementation_commit": null,
+      "implementation_commit": "cb54c9e0ad4a690d62ca1987ba54d8fe13af1d8d",
       "sha256": "a4ca817e948b1e24a39daf85d2ed7ab7e04f54548f4b1ea9e075a367f2014789"
     },
     {
