@@ -10,6 +10,7 @@
     "verify:artifact": "node scripts/verify-artifact.mjs"
   },
   "dependencies": {
+    "@mimir/shared": "workspace:*",
     "@nutui/nutui-react-taro": "4.0.0-beta.10",
     "@tarojs/components": "4.3.0",
     "@tarojs/react": "4.3.0",

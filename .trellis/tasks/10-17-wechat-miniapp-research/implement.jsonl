@@ -13,3 +13,7 @@
 {"file": ".trellis/tasks/10-17-wechat-miniapp-research/research/react19-compatibility.md", "reason": "React 19 官方依赖与渲染器断裂证据；用户确认采用 React 18.3.1，不能强制覆盖 peer"}
 {"file": ".trellis/spec/miniapp/frontend/index.md", "reason": "新端真实 Taro 组件、包边界与质量门"}
 {"file": ".trellis/spec/miniapp/frontend/build.md", "reason": "React 18 独立依赖、固定 HTTPS origin、微信工程与产物合同"}
+{"file": ".trellis/spec/shared/contract/miniapp.md", "reason": "小程序唯一DTO、操作回执与固定范围合同"}
+{"file": ".trellis/spec/server/backend/miniapp.md", "reason": "独立设备权限、锁内版本保护与持久防重"}
+{"file": ".trellis/spec/core/backend/retrieval-scope.md", "reason": "双数据库通道范围过滤、长文与会话边界"}
+{"file": ".trellis/spec/miniapp/frontend/client.md", "reason": "微信原生传输、草稿、阅读与生命周期合同"}

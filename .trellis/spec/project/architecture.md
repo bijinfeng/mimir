@@ -10,7 +10,7 @@
 |---|---|---|
 | 浏览器 / 桌面前端 | Vite + React 19 + TanStack Router + TanStack Query | SSR 对单用户后台应用没有收益；TanStack Router 的类型安全路由省掉一层手写 |
 | 网页 UI 库 | antd 6 | 已定。表格、表单、树、抽屉开箱可用 |
-| 微信小程序 | Taro 4.3.0 + React 18.3.1 + NutUI React Taro 4.0.0-beta.10 | 独立 webpack5 工程；当前为三入口构建基线，尚未接入业务 API。依赖与配置合同见 [miniapp](../miniapp/frontend/build.md) |
+| 微信小程序 | Taro 4.3.0 + React 18.3.1 + NutUI React Taro 4.0.0-beta.10 | 独立 webpack5 原生客户端；通过有限设备 API 接入检索问答、阅读与笔记。依赖及客户端合同见 [miniapp](../miniapp/frontend/index.md) |
 | 编辑器 | Tiptap 3 + `@tiptap/markdown` | 官方 markdown 序列化，往返幂等（见 PRD 5.4） |
 | 网页构建期优化 | **React Compiler** | 自动记忆化，替代手写 useMemo / useCallback / memo |
 | 后端 | Hono 4 + `@hono/node-server` | 浏览器扩展、脚本、CLI 都要调同一套 HTTP 接口，比 server function 更合适 |
@@ -125,7 +125,7 @@ mimir/
 │   ├── web/                     # 浏览器部署的**壳**（D-103）
 │   │   ├── src/index.tsx        #   注入浏览器插槽 → createApp()
 │   │   └── index.html           #   首帧外观脚本 + 挂载点
-│   ├── miniapp/                 # Taro 微信客户端；独立 React 18 / webpack5，当前为工程基线
+│   ├── miniapp/                 # Taro 微信客户端；独立 React 18 / webpack5、七页原生流程
 │   ├── fnos/                    # fnOS x86_64 原生包：manifest、向导、生命周期、桌面入口
 │   └── desktop/                 # Electron 载体（D-046）。三段由 electron-vite 构建（D-103）
 │       ├── electron.vite.config.ts
@@ -1248,6 +1248,12 @@ services:
 - **建议再套一层 Tailscale 或 Cloudflare Tunnel**。自托管暴露公网是最大的现实风险点
 
 ### 8.3 构建顺序
+
+微信端单独构建：`MIMIR_MINIAPP_SERVER_URL` 固定 HTTPS origin；服务端通过
+`MIMIR_MINIAPP_ENABLED=1` 开启有限入口。设备 token 与普通 cookie / 桌面凭证隔离，
+依赖新增双数据库迁移。具体部署、合法域名、SSE 代理与 AppID 见
+[小程序说明](../../../apps/miniapp/README.md)，权限与写入合同见
+[server miniapp](../server/backend/miniapp.md)。
 
 **包与包之间已经没有顺序要求**，因为 `@mimir/shared` 以源码发布
 （`exports` 直接指向 `src/index.ts`），编译责任跟着使用方走：

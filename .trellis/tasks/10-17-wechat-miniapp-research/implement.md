@@ -1,16 +1,18 @@
 # 微信小程序首版实施计划
 
-日期：2026-10-18。用户已明确选择“开始正式开发”，本轮从 S0 启动现有任务；React 19 已核对不兼容，用户明确选择保留 Taro + NutUI 并使用 React 18.3.1；证据与构建结果同步技术方案。S1–S5 仍按顺序执行。
+日期：2026-10-18。S0 工程已提交 `0b22c50`；用户明确要求完成全部剩余开发后自行验证。本轮按接口依赖推进 S1–S4 与交付文档，允许清晰所有权下并行开发，不设置阶段验收停点；S5 运行验证交由用户后续进行。React 版本保持已确认的 18.3.1。
 
 ## 1. 组织与变更边界
 
-当前任务保留一个端到端交付：小程序客户端、服务端接入及共同合同缺一不可，暂不创建可独立验收的产品子任务。以下为串行交付步骤，不把父子树当依赖调度。
+当前任务保留一个端到端交付：小程序客户端、服务端接入及共同合同缺一不可，暂不创建可独立验收的产品子任务。以下为依赖顺序和范围记录，当前按文末最新用户指示组织开发，不把父子树当依赖调度。
 
 实现 / 检查阶段按 Trellis 配置分派 implement / check 子代理，主会话负责决策、上下文、集成及提交。每个派发以 `Active task: .trellis/tasks/10-17-wechat-miniapp-research` 开头，明确文件所有权、共享工作区不回退他人修改。没有批准前不派实现。
 
-每个步骤通过本步质量门后，只提交本任务代码、测试和规范；不混入其他会话工作。提交记录写入本文件的执行记录。`implement.jsonl` / `check.jsonl` 仅列真实规范与研究资料，具体源码从本计划定位。
+按用户最新指示，本轮开发完成后仅按功能提交本任务代码及规范，运行质量门留待用户验证；不混入其他会话工作。提交记录写入本文件的执行记录。`implement.jsonl` / `check.jsonl` 仅列真实规范与研究资料，具体源码从本计划定位。
 
 ## 2. 有序步骤
+
+本轮 `[x]` 仅表示开发项已落盘，不表示验收通过。各步骤的运行质量门保留待用户统一验证，具体交付与待验项见 [delivery.md](delivery.md)。
 
 ### S0：批准与基础验证
 
@@ -26,44 +28,44 @@
 
 ### S1：设备鉴权与只读数据入口（AC1）
 
-- [ ] 共享合同：`packages/shared/src/miniapp.ts`（建议）、最小公开入口；新增设备表的 PG / SQLite schema、迁移及 parity 测试。
-- [ ] 服务：`apps/server/src/services/miniapp-auth.ts`、`middleware/miniapp-auth.ts`、`routes/miniapp.ts`（建议）；复用 `auth.ts` / `routes/auth.ts` 的账号解析与密码校验。
-- [ ] 在 `app.ts` 以独立受鉴权组挂载专用路由，登录作为明确公开入口，避免 `requireAuth` 或通配顺序误吞。小程序 token 不被旧 API 识别为全权凭证。
-- [ ] 实现目录、标签、分页文档列表 / 详情、会话历史与原件读取的服务复用；详情过滤运行时路径等不必要字段。
+- [x] 共享合同：`packages/shared/src/miniapp.ts`、最小公开入口；新增设备表的 PG / SQLite schema、迁移及 parity 测试。
+- [x] 服务：`apps/server/src/services/miniapp-auth.ts`、`middleware/miniapp-auth.ts`、`routes/miniapp.ts`；复用 `auth.ts` / `routes/auth.ts` 的账号解析与密码校验。
+- [x] 在 `app.ts` 以独立受鉴权组挂载专用路由，登录作为明确公开入口，避免 `requireAuth` 或通配顺序误吞。小程序 token 不被旧 API 识别为全权凭证。
+- [x] 实现目录、标签、分页文档列表 / 详情、会话历史与原件读取的服务复用；详情过滤运行时路径等不必要字段。
 - [ ] 验证 token 过期 / 撤销 / 退出、错误登录、无鉴权下载、访问配置 / Agent / 维护入口被拒；响应与日志不含密码 / token。
 
 门：同一标准测试账号成功读取本人数据；越权负例与双数据库迁移通过。退路：关闭专用入口、撤销设备会话；不影响旧 Better Auth 登录。
 
 ### S2：范围过滤与当前文档长文问答（AC2、AC3、AC10）
 
-- [ ] 新 scope schema 与服务端规范化；保存会话范围，对旧会话兼容读取，切范围新开会话。
-- [ ] 贯穿 `packages/core/src/pipeline.ts`、`packages/shared/src/seams.ts`、`apps/server/src/search/index.ts`，同步六个 `plugins/leg/src/{keyword,substring,vector}.{pg,sqlite}.ts` 查询。
-- [ ] 所有通道在 LIMIT 前过滤，文件标题兜底、相邻块与引用装配同样验证范围，目录分段 / 通配符按字面处理。
-- [ ] 抽取流式与非流式共用问答准备逻辑，替换单篇开头截断；未知 / 已删范围不回退全库，源文 / 索引不同步明确提示。
+- [x] 新 scope schema 与服务端规范化；保存会话范围，对旧会话兼容读取，切范围新开会话。
+- [x] 贯穿 `packages/core/src/pipeline.ts`、`packages/shared/src/seams.ts`、`apps/server/src/search/index.ts`，同步六个 `plugins/leg/src/{keyword,substring,vector}.{pg,sqlite}.ts` 查询。
+- [x] 所有通道在 LIMIT 前过滤，文件标题兜底、相邻块与引用装配同样验证范围，目录分段 / 通配符按字面处理。
+- [x] 抽取流式与非流式共用问答准备逻辑，替换单篇开头截断；未知 / 已删范围不回退全库，源文 / 索引不同步明确提示。
 - [ ] 在两篇资料放置相似词 / 冲突事实，长文尾部放唯一事实；确认“问这篇”只引用指定长文尾部，不混入其他资料。同时验证无命中、无正文及无模型路径。
 
 门：SQLite / PG 的同一批范围断言通过，真实检索效果有样例记录，现有搜索 / 聊天回归通过。退路：回退新增范围接线，保持旧 API 默认行为；新端不能带着无效范围上线。
 
 ### S3：版本保护、有限写入与操作防重（AC5–AC8）
 
-- [ ] 服务端真实 revision 与 expectedRevision，在既有 `updateNote` / `withDocumentPublication` 边界内检查；元信息更新不回写旧正文，非笔记拒绝 body。
-- [ ] 专用 POST 新建 / update / append / 存回答 / capture 入口，调用现有服务；目标库必须存在且明确。
-- [ ] 新增最小操作记录及双数据库迁移：requestId、请求指纹、状态、结果；相同操作防重，冲突参数拒绝，未知结果不自动重执行。
-- [ ] 答案保存保留引用与 messageId 的已保存关系，加入目标 folder；重复点击返回同一笔记。捕获使用现有实际阶段结果，不造假进度。
-- [ ] 处理电脑端已保存、手机旧草稿、外部源文件更新、重复请求、写后响应丢失、进程重启时未完成操作等边界。
+- [x] 服务端真实 revision 与 expectedRevision，在既有 `updateNote` / `withDocumentPublication` 边界内检查；元信息更新不回写旧正文，非笔记拒绝 body。
+- [x] 专用 POST 新建 / update / append / 存回答 / capture 入口，调用现有服务；目标库必须存在且明确。
+- [x] 新增最小操作记录及双数据库迁移：requestId、请求指纹、状态、结果；相同操作防重，冲突参数拒绝，未知结果不自动重执行。
+- [x] 答案保存保留引用与 messageId 的已保存关系，加入目标 folder；重复点击返回同一笔记。捕获使用现有实际阶段结果，不造假进度。
+- [x] 处理电脑端已保存、手机旧草稿、外部源文件更新、重复请求、写后响应丢失、进程重启时未完成操作等边界。
 - [ ] 真实文件检查无改动 Markdown 往返、frontmatter 保留、标题 / 标签 / 目录、追加、新笔记的磁盘 / DB / 索引一致性。
 
 门：冲突不写、重试不重复、元信息不改原件；双数据库、索引及已有 Office publication 回归通过。退路：禁用小程序写入口，保留已提交内容和草稿，不删除数据表 / 文件来回滚。
 
 ### S4：小程序交互与传输（AC1–AC10）
 
-- [ ] 登录与退出、三个主入口、库 / 目录分页列表、标签、只搜索与提问、范围提示与历史。
-- [ ] 网络适配：token header、状态码、统一错误、超时、增量 UTF-8 / SSE；屏蔽 Agent 模式，不透传任意工具参数。
-- [ ] 原生正文与引用片段、文档详情“问这篇”、受控 Markdown 阅读、图片失败提示；鉴权下载后的 `openDocument` 和返回阅读页。
-- [ ] Markdown 源文 / 预览编辑、显式保存、实例 / 账号 / 文档隔离草稿、冲突保留 / 重载 / 另存；键盘和导航状态不丢输入。
-- [ ] 链接收集、目标位置、真实成功 / 部分失败 / 失败展示、操作查询、防重复提交。
-- [ ] 前后台生命周期、断网恢复、会话与操作结果对齐；不会把未结束流当成功、不会自动重复生成。
-- [ ] 小程序动效与样式保持轻量；Obsidian 用于移动阅读 / 编辑布局参考，实际视觉由本项目 token 和平台可访问性验证，不移植桌面三栏。
+- [x] 登录与退出、三个主入口、库 / 目录分页列表、标签、只搜索与提问、范围提示与历史。
+- [x] 网络适配：token header、状态码、统一错误、超时、增量 UTF-8 / SSE；屏蔽 Agent 模式，不透传任意工具参数。
+- [x] 原生正文与引用片段、文档详情“问这篇”、受控 Markdown 阅读、图片失败提示；鉴权下载后的 `openDocument` 和返回阅读页。
+- [x] Markdown 源文 / 预览编辑、显式保存、实例 / 账号 / 文档隔离草稿、冲突保留 / 重载 / 另存；键盘和导航状态不丢输入。
+- [x] 链接收集、目标位置、真实成功 / 部分失败 / 失败展示、操作查询、防重复提交。
+- [x] 前后台生命周期、断网恢复、会话与操作结果对齐；不会把未结束流当成功、不会自动重复生成。
+- [x] 小程序动效与样式保持轻量；Obsidian 用于移动阅读 / 编辑布局参考，实际视觉由本项目 token 和平台可访问性验证，不移植桌面三栏。
 
 门：自动测试覆盖跨块中文 / emoji / 半帧 / 错误 / 结束，草稿与状态机以真实事件 / 可控 Promise 验证；不能用固定 sleep 证明完成。开发工具可用时实际检查页面。
 
@@ -79,11 +81,11 @@
 
 ## 3. 验证命令
 
-以下包含已建立的 S0 工程命令与 S1–S5 的预期命令。实际执行结果以本文件当前执行记录和 verification 记录为准；业务验收测试尚未实现，不能将下列清单当作已运行证明。
+以下包含已建立的 S0 工程命令与 S1–S5 的预期命令。实际执行结果以本文件当前执行记录和 verification 记录为准；关键业务测试源码已新增但本轮均未运行，不能将下列清单当作已运行证明。
 
 ```bash
 # 单批数据库集成测试串行执行，不能让多个 Vitest 进程共用 data/.test。
-pnpm --filter @mimir/server exec vitest run src/test/miniapp-auth.test.ts src/test/miniapp-scope.test.ts src/test/miniapp-write.test.ts src/test/miniapp-operations.test.ts
+pnpm --filter @mimir/server exec vitest run src/test/miniapp-auth.test.ts src/test/miniapp-retrieval.test.ts src/test/miniapp-write.test.ts src/test/miniapp-operations.test.ts
 pnpm --filter @mimir/server exec vitest run src/test/search.test.ts src/test/plugins.test.ts src/test/chunks.test.ts src/test/chat-stream.test.ts
 pnpm --filter @mimir/core typecheck
 pnpm --filter @mimir/plugin-leg typecheck
@@ -95,7 +97,7 @@ pnpm build
 git diff --check
 ```
 
-上述 server 测试文件为 S1–S3 计划目标，创建后再运行；`@mimir/miniapp` 已在 S0 建立。PG 使用项目规定的 `TEST_DATABASE_URL`（数据库名含 `mimir_test`）重跑同一批 server 断言，连接信息从本地受控配置取得，不输出凭据。不要创建生产数据库或对真实 vault 执行清理。
+上述 server 测试文件已创建，留待用户统一运行；`@mimir/miniapp` 已在 S0 建立。PG 使用项目规定的 `TEST_DATABASE_URL`（数据库名含 `mimir_test`）重跑同一批 server 断言，连接信息从本地受控配置取得，不输出凭据。不要创建生产数据库或对真实 vault 执行清理。
 
 所有人工 / 自动登录统一使用 `admin@example.com` / `12345678`、用户名 `admin`；不另建测试账号。真实模型 / 网络验证记录费用与失败，不把 mock 通过当实际效果。
 
@@ -163,3 +165,25 @@ git diff --check
 - 实施者完成 frozen install、类型、3 项测试、微信编译与模块 / 包体校验；最终产物 361987 原始字节（353.5 KiB）。独立审阅与最终命令记录见 [S0 验证](verification/s0-engineering.md) 和 [代码审阅](verification/s0-code-review.md)。
 - 主会话全仓 `pnpm check` 在旧原型 7 个 lint error 处失败；未改原型或降低检查，不能宣称全仓质量门通过。无微信开发工具 / 真机结果，S1–S5 保持未完成。
 - 本轮功能提交及 SHA 记录到开发者会话日志；任务维持 in_progress，不归档为产品已完成。
+
+
+## 全量开发续行边界（2026-10-18，用户最新指示）
+
+用户明确要求“先不用验证，先完成所有开发，等全部完成后我自行验证”。本轮直接完成剩余服务端和客户端开发；不运行测试、类型检查、lint、构建、浏览器 / 微信操作或模型探测，不设置阶段验收停点。保留现有验收要求与测试脚本，结果统一标为待用户验证，不把未运行的检查写为通过。必要的代码阅读、迁移文件生成、依赖锁更新及差异整理属于实现工作。
+
+- 行为缺口：现有工程只有未接入三入口，缺少设备凭证、受限 API、范围检索、并发版本与操作防重，以及真实小程序页面和传输。
+- 实际归属：服务端设备 / 写入服务与独立路由；core / leg 检索范围；shared 唯一合同；Taro 原生页面与微信传输 / 本地草稿。
+- 工作边界 A：共享 miniapp 合同、server miniapp 服务 / 路由 / auth、documents 写入扩展、DB 双方言 schema 与迁移、app / env 接线。
+- 工作边界 B：shared retrieval / conversations / seams、core pipeline、六个 leg、server search / assistant / assistant-stream / conversations 及 retrieval-scope 服务。会话 `retrievalScope` 列由 A 统一加入双 schema 和迁移；B 不改 DB 文件。
+- 工作边界 C：apps/miniapp 全部页面、组件、传输、草稿、受控 Markdown、前后台恢复和交付 README。使用统一 miniapp 合同，与 A / B 对齐，根锁文件由主会话管理。
+- 主会话：跨边界协调、任务与规范、依赖锁、集成接线、提交；保留其他会话所有变更。
+- 不扩大范围：不增加 Agent 修改、Office 原件编辑、上传 / OCR、多用户或公开发布；不在真实库运行迁移 / 清理 / 写入验证，不自动发送消息或进行平台审核。
+
+共享接线目标：`RetrievalScope = all | folder(path) | document(documentId)`，新增 AskInput.retrievalScope 与 ConversationSummary.retrievalScope 保持旧 API 兼容；Miniapp chat 使用 `mode: ask | search`，与检索 scope 分离。服务端专用 JSON API、操作结果和 streaming 最终以 `packages/shared/src/miniapp.ts` 为唯一合同，客户端通过 `@mimir/shared/miniapp` 轻量入口使用类型。
+
+
+### 全量开发交付（2026-10-18）
+
+- S1–S4 的服务端、检索和七页 Taro 客户端已实现，关键测试源码、双数据库迁移、共享合同、包说明与领域规范同批交付。详见 [delivery.md](delivery.md)。
+- 本轮只做源码实现、接口衔接和格式整理；没有执行测试、类型检查、lint、构建、浏览器 / 微信 / 真机、模型探测或真实数据库迁移。S0 历史验证不覆盖新业务实现。
+- 所有运行质量门与平台 / 模型验收保持待用户统一验证，不将本任务归档为产品质量门已通过。提交 SHA 由本轮开发者日志记录。

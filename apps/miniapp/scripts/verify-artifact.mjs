@@ -7,10 +7,19 @@ import { fileURLToPath } from 'node:url'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const output = join(root, 'dist')
 const app = JSON.parse(await readFile(join(output, 'app.json'), 'utf8'))
-assert.equal(app.pages.length, 3, 'S0 must compile its three native entry pages')
+const pages = [
+  'pages/chat/index',
+  'pages/library/index',
+  'pages/account/index',
+  'pages/login/index',
+  'pages/reader/index',
+  'pages/editor/index',
+  'pages/capture/index',
+]
+assert.deepEqual(app.pages, pages, 'All native pages must be registered and compiled')
 assert.deepEqual(
   app.tabBar.list.map((tab) => tab.pagePath),
-  app.pages,
+  pages.slice(0, 3),
 )
 for (const page of app.pages) {
   for (const extension of ['js', 'json', 'wxml']) {
@@ -61,7 +70,7 @@ async function collect(directory) {
 const bytes = await collect(output)
 assert.ok(bytes < 2 * 1024 * 1024, `Raw main package exceeds 2 MiB: ${bytes} bytes`)
 console.log(
-  `Weapp artifact verified: 3 pages, ${modules.length} modules, ${bytes} raw bytes (${(bytes / 1024).toFixed(1)} KiB).`,
+  `Weapp artifact verified: ${app.pages.length} pages, ${modules.length} modules, ${bytes} raw bytes (${(bytes / 1024).toFixed(1)} KiB).`,
 )
 console.log(
   'Raw directory size is not the WeChat developer-tools upload measurement; real-device validation is still required.',

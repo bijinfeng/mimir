@@ -2,6 +2,7 @@
 
 自托管的单用户个人知识库：写 Markdown 笔记、收集资料，并带引用地问 AI。
 浏览器端连接自部署服务；桌面端可离线使用本机数据，也可连接服务端。
+微信小程序端连接固定 HTTPS 实例，提供检索问答、资料阅读及有限笔记编辑；工程与配置见 [小程序说明](apps/miniapp/README.md)。
 产品边界见[产品契约](.trellis/spec/project/product.md)，架构见[技术契约](.trellis/spec/project/architecture.md)。
 
 ## 快速开始

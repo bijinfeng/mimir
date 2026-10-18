@@ -2,7 +2,7 @@
   "id": "wechat-miniapp-research",
   "name": "wechat-miniapp-research",
   "title": "微信小程序端调研、原型与首版开发",
-  "description": "按已批准的 v3 交互与 MVP 范围实现 Taro 小程序；当前推进 S0 工程构建，后续接入登录、检索问答、阅读与有限编辑",
+  "description": "按已批准 v3 与 MVP 完成服务端、范围检索和真实 Taro 客户端；用户要求先完成全部开发，验证统一由用户后续进行",
   "status": "in_progress",
   "dev_type": "fullstack",
   "scope": null,
@@ -21,6 +21,9 @@
   "children": [],
   "parent": null,
   "relatedFiles": [],
-  "notes": "",
-  "meta": {}
+  "notes": "S0及首版全部功能开发已交付；2026-10-18用户要求统一自行验证，本轮未运行质量门，保持in_progress待验，不归档。",
+  "meta": {
+    "delivery": "delivery.md",
+    "development_status": "implemented_pending_user_validation"
+  }
 }

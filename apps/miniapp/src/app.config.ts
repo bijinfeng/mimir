@@ -1,5 +1,13 @@
 export default defineAppConfig({
-  pages: ['pages/chat/index', 'pages/library/index', 'pages/account/index'],
+  pages: [
+    'pages/chat/index',
+    'pages/library/index',
+    'pages/account/index',
+    'pages/login/index',
+    'pages/reader/index',
+    'pages/editor/index',
+    'pages/capture/index',
+  ],
   window: {
     navigationBarTitleText: 'Mimir',
     navigationBarBackgroundColor: '#ffffff',
