@@ -592,3 +592,27 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Next Steps
 
 - 用户审阅http://127.0.0.1:5184/review.html；认可具体版本后再开始实施。
+
+
+## Session 21: 微信小程序首版全量开发交付，待用户统一验证
+<!-- trellis-session: v=2 fp=75a32851337b4481 -->
+
+**Date**: 2026-10-18
+**Task**: 微信小程序首版全量开发交付，待用户统一验证
+**Package**: miniapp
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+完成独立设备鉴权、有限API、锁内版本保护与操作防重、双数据库迁移、全库/目录/单篇检索及长文问答，以及七页Taro原生客户端、草稿冲突恢复、引用和原件查看、链接收集。同步代码合同和部署说明，补充关键测试源码。按用户要求未运行测试、类型检查、lint、构建、浏览器/微信/真机、模型或真实数据库迁移；旧dist未重建。任务保持in_progress待用户统一验收，未归档、未推送。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `7864115` | feat(miniapp): add limited APIs and scoped retrieval |
+| `6828ad2` | feat(miniapp): complete native knowledge workflows |
+
+### Status
+
+[OK] **Completed**
