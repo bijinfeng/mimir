@@ -1,0 +1,14 @@
+{
+  "version": "chat-review-v1",
+  "frozen_on": "2026-10-18",
+  "html": "review.html",
+  "sha256": "70a18bd3622cb98ccde681c539c28336fd730f5e9b380e271109c67c34496f19",
+  "preview_url": "http://127.0.0.1:5189/review.html?mode=compare",
+  "groups": 71,
+  "source_states": 379,
+  "render_tracks": 52,
+  "status": "awaiting_exact_version_approval",
+  "product_implementation_approved": false,
+  "immutable": true,
+  "revision_policy": "冻结后不覆盖；实质修改另存版本并重新审阅。"
+}

@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-18",
+  "checks": [
+    {
+      "command": "node .trellis/tasks/10-18-interaction-chat/prototype/build.mjs",
+      "result": "pass",
+      "note": "独立单文件1.13MB，Vite提示单包超过500kB；该体积来自刻意内联React/antd，原型可离线打开。"
+    },
+    {
+      "command": "packages/renderer/node_modules/.bin/tsc -p .trellis/tasks/10-18-interaction-chat/prototype/tsconfig.json",
+      "result": "pass"
+    },
+    {
+      "command": "node_modules/.bin/oxlint --no-ignore <prototype main.tsx/build.mjs/check-artifact.mjs>",
+      "result": "pass"
+    },
+    {
+      "command": "node_modules/.bin/oxfmt --check --config <prototype format.json> <main.tsx/review.css/build.mjs/check-artifact.mjs>",
+      "result": "pass"
+    },
+    {
+      "command": "node <prototype>/check-artifact.mjs",
+      "result": "pass",
+      "note": "71/379精确映射与52轨道绑定；不等于379次GUI测试。"
+    },
+    {
+      "command": "SHA256 comparison of 47 product source files",
+      "result": "pass",
+      "changed": []
+    },
+    {
+      "command": "python3 .trellis/scripts/task.py validate .trellis/tasks/10-18-interaction-chat",
+      "result": "pass",
+      "note": "implement/check各10项context有效。"
+    },
+    {
+      "command": "git diff --check",
+      "result": "pass"
+    }
+  ],
+  "wrapper_attempts": "pnpm exec 自动触发本地依赖整理并在esbuild staging失败，未运行目标检查；改用现有node_modules/.bin后lint/format均实际通过。最终构建可复现相同HTML哈希。",
+  "scope": "本轮仅规划原型，不重跑产品全仓测试；不宣称全仓通过。"
+}

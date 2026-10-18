@@ -1,0 +1,33 @@
+{
+  "idle": {
+    "border": "1.97232px",
+    "borderColor": "rgb(0, 163, 95)",
+    "focus": false,
+    "height": 75.46875,
+    "shadow": "none",
+    "width": 390.421875,
+    "x": 1000.671875,
+    "y": 403.6875
+  },
+  "hover": {
+    "border": "1.97232px",
+    "borderColor": "rgb(96, 192, 152)",
+    "focus": false,
+    "height": 75.46875,
+    "shadow": "none",
+    "width": 390.421875,
+    "x": 1000.671875,
+    "y": 403.6875
+  },
+  "focus": {
+    "border": "1.97232px",
+    "borderColor": "rgb(191, 197, 193)",
+    "focus": true,
+    "height": 75.46875,
+    "shadow": "none",
+    "width": 390.421875,
+    "x": 1000.671875,
+    "y": 403.6875
+  },
+  "note": "Scaled comparison canvas; CSS border compensates preview scaling. Bounding rectangles are visual pixels."
+}

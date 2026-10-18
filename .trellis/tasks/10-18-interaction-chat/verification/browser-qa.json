@@ -1,0 +1,114 @@
+{
+  "date": "2026-10-18",
+  "html_sha256": "70a18bd3622cb98ccde681c539c28336fd730f5e9b380e271109c67c34496f19",
+  "type": "representative_interactive_prototype_checks",
+  "observations": [
+    {
+      "scene": "CHAT-007/008/014",
+      "topic": "输入与发送",
+      "observation": "实际输入、Shift+Enter换行、Enter生成中排队、取回到输入框。"
+    },
+    {
+      "scene": "CHAT-015",
+      "topic": "检索阶段停止",
+      "observation": "停止保留首条队列草稿，不捏造正文或成功回答动作。"
+    },
+    {
+      "scene": "CHAT-009",
+      "topic": "范围恢复",
+      "observation": "错误→重试→加载→模拟成功→选择文档→范围标签。"
+    },
+    {
+      "scene": "CHAT-012",
+      "topic": "模型绑定",
+      "observation": "两条绑定只读，仅管理模型可操作。"
+    },
+    {
+      "scene": "CHAT-022",
+      "topic": "存笔记失败恢复",
+      "observation": "等待禁重复→模拟失败→可重试→成功转打开。"
+    },
+    {
+      "scene": "CHAT-019",
+      "topic": "代码复制失败",
+      "observation": "copy-error模拟后代码和状态均显示可见错误。"
+    },
+    {
+      "scene": "CHAT-036",
+      "topic": "缓存续传",
+      "observation": "待定禁重复、失败可重试；修改画布版本后拒绝旧结果。"
+    },
+    {
+      "scene": "CHAT-038",
+      "topic": "部分草稿",
+      "observation": "保留/丢弃待定互斥；失败留稿，重试成功后给出回退入口。"
+    },
+    {
+      "scene": "HOST-019",
+      "topic": "跨篇引用守卫",
+      "observation": "真实点击引用后取消，回焦到引用；直接预置弹窗的无触发器场景不冒充回焦测试。"
+    },
+    {
+      "scene": "CHAT-044.stale-new",
+      "topic": "旧截图与新问题隔离",
+      "observation": "新文本保留、composer无旧截图，新问题能发送。"
+    },
+    {
+      "scene": "CHAT-045.expired",
+      "topic": "截图重试失效",
+      "observation": "明确拒绝过期图片，不开始生成。"
+    },
+    {
+      "scene": "CHAT-001.overflow",
+      "topic": "短高与200%字",
+      "observation": "400逻辑高可滚动，scroll client360/content505；textarea计算28px。"
+    },
+    {
+      "scene": "CHAT-014.multiple",
+      "topic": "多条队列",
+      "observation": "取回第一条后显示第二条；每条冻结参数另经静态独立核查，未称真实请求验证。"
+    },
+    {
+      "scene": "HOST-018.escape",
+      "topic": "覆盖与Escape",
+      "observation": "768逻辑宽aria-modal=true；Escape先关范围菜单、助手保留，再从关闭控件Esc隐藏助手并回焦问AI。"
+    },
+    {
+      "scene": "HOST-018.tab",
+      "topic": "覆盖焦点循环",
+      "observation": "重开助手后关闭按钮Shift+Tab回到侧栏内最后可用控件当前模型。"
+    },
+    {
+      "scene": "CHAT-028.zero",
+      "topic": "无正文错误对比",
+      "observation": "当前助手为空；提案有连接中断、重试和放回输入框入口。"
+    },
+    {
+      "scene": "CHAT-029.history-mode",
+      "topic": "历史重试",
+      "observation": "提案先选深入再点重试，实际显示标准模式与相符反馈；真实HTTP参数留实施回归。"
+    },
+    {
+      "scene": "CHAT-016.live",
+      "topic": "手动检索展开",
+      "observation": "运行中收起再展开后模拟完成，aria-expanded仍为true。"
+    },
+    {
+      "scene": "CHAT-032.broken",
+      "topic": "深色390px图像错误",
+      "observation": "错误占位269px等于父容器；重新加载可进入读取状态。未验证真实远端图片或原图打开。"
+    },
+    {
+      "scene": "CHAT-001.idle",
+      "topic": "输入框几何",
+      "observation": "idle/hover/focus三个状态同一矩形390.421875×75.46875、x1000.671875/y403.6875，无阴影。颜色采样处于CSS过渡，不据此断言最终颜色。"
+    },
+    {
+      "scene": "CHAT-001.idle",
+      "topic": "浅色同宽对比",
+      "observation": "1440×1100完整CDP截图中两列同1140×853逻辑尺寸、fit缩放，输入和发送可见。"
+    }
+  ],
+  "console_errors_or_warnings": [],
+  "native_or_api_validation": false
+}

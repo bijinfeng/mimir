@@ -1,0 +1,2245 @@
+{
+  "schemaVersion": 1,
+  "title": "packages/chat interaction source inventory",
+  "date": "2026-10-18",
+  "scope": "internal",
+  "groupCount": 46,
+  "stateCount": 250,
+  "coverageMeaning": "Source-derived planning groups/states, not browser tests or passed acceptance assertions.",
+  "environmentMatrix": [
+    "All applicable scenes: light and dark host theme.",
+    "Main content column and embedded 400px sidebar; proposed narrow viewport should be demonstrated without claiming current perfect fit.",
+    "All available controls: Tab, Enter/Space, Escape where supported; native IME/file picker/clipboard/download remain explicit boundaries.",
+    "Hover/focus/active geometry must remain stable in proposed comparison; before column follows source CSS, not comments."
+  ],
+  "files": [
+    "packages/chat/package.json",
+    "packages/chat/src/ChatHostVars.tsx",
+    "packages/chat/src/ChatPanel.style.ts",
+    "packages/chat/src/ChatPanel.test.tsx",
+    "packages/chat/src/ChatPanel.tsx",
+    "packages/chat/src/ChatThread.tsx",
+    "packages/chat/src/EmptyStage.tsx",
+    "packages/chat/src/composer/Composer.tsx",
+    "packages/chat/src/composer/ComposerMenus.tsx",
+    "packages/chat/src/custom-token.d.ts",
+    "packages/chat/src/hooks/use-scrolled.ts",
+    "packages/chat/src/index.ts",
+    "packages/chat/src/parts/AnswerActions.tsx",
+    "packages/chat/src/parts/CitationList.tsx",
+    "packages/chat/src/parts/CodeBlock.style.ts",
+    "packages/chat/src/parts/CodeBlock.tsx",
+    "packages/chat/src/parts/DocxAgentHistoryNotice.tsx",
+    "packages/chat/src/parts/FailureNotice.tsx",
+    "packages/chat/src/parts/MarkdownPart.tsx",
+    "packages/chat/src/parts/MediaParts.tsx",
+    "packages/chat/src/parts/MessageItem.tsx",
+    "packages/chat/src/parts/PptxSnapshotAttachment.tsx",
+    "packages/chat/src/parts/ReasoningPart.tsx",
+    "packages/chat/src/parts/StoppedNotice.tsx",
+    "packages/chat/src/parts/ToolCallPart.tsx",
+    "packages/chat/src/parts/TraceActivity.tsx",
+    "packages/chat/src/parts/data-parts.ts",
+    "packages/chat/src/parts/parts.test.tsx",
+    "packages/chat/src/parts/reasoning-shell.tsx",
+    "packages/chat/src/runtime/DocxInterruptBridge.test.ts",
+    "packages/chat/src/runtime/DocxInterruptBridge.tsx",
+    "packages/chat/src/runtime/agent-media.check.test.ts",
+    "packages/chat/src/runtime/agent.ts",
+    "packages/chat/src/runtime/chat-context.tsx",
+    "packages/chat/src/runtime/history.test.ts",
+    "packages/chat/src/runtime/history.ts",
+    "packages/chat/src/runtime/io.ts",
+    "packages/chat/src/runtime/pptx-snapshot.test.ts",
+    "packages/chat/src/runtime/pptx-snapshot.ts",
+    "packages/chat/src/runtime/use-mimir-runtime.ts",
+    "packages/chat/src/test-dom.ts",
+    "packages/chat/src/types.ts",
+    "packages/chat/tsconfig.json",
+    "packages/chat/vitest.config.ts"
+  ],
+  "groups": [
+    {
+      "id": "CHAT-001",
+      "title": "主对话空态",
+      "source": [
+        "packages/chat/src/EmptyStage.tsx:19",
+        "packages/chat/src/ChatPanel.tsx:227",
+        "packages/chat/src/ChatPanel.style.ts:63"
+      ],
+      "entry": "主对话无历史、无文档草稿",
+      "states": [
+        {
+          "id": "CHAT-001.idle",
+          "label": "向知识库提问",
+          "description": "图标、标题与“检索你的文档，回答会附上原文引用。”和输入框组成居中舞台。"
+        },
+        {
+          "id": "CHAT-001.document",
+          "label": "针对本文提问",
+          "description": "draft.documentId 存在时显示“围绕这篇文档提问，回答可跳回原文。”。"
+        },
+        {
+          "id": "CHAT-001.overflow",
+          "label": "短高窗口",
+          "description": "舞台用 margin:auto；内容超高后从顶部可滚动，不把顶部裁掉。"
+        },
+        {
+          "id": "CHAT-001.sent",
+          "label": "开始首轮",
+          "description": "空态退场，输入框移到底部，消息列接替。"
+        }
+      ],
+      "controls": [
+        "主输入框",
+        "范围、强度、模型、发送"
+      ],
+      "transitions": [
+        "输入问题→CHAT-007",
+        "发送→CHAT-008"
+      ],
+      "boundary": "没有推荐文档/收件箱列表；空态本身不发请求。"
+    },
+    {
+      "id": "CHAT-002",
+      "title": "文档侧栏指南与快捷问",
+      "source": [
+        "packages/chat/src/ChatPanel.tsx:216",
+        "packages/chat/src/ChatPanel.tsx:227",
+        "packages/chat/src/ChatPanel.tsx:291"
+      ],
+      "entry": "空消息且宿主传 guide",
+      "states": [
+        {
+          "id": "CHAT-002.guide",
+          "label": "指南",
+          "description": "宿主 guide(ask) 占滚动区；输入固定底部。"
+        },
+        {
+          "id": "CHAT-002.actions",
+          "label": "快捷提问",
+          "description": "guideActions(ask) 与输入框对齐，点击直接按当前范围、有效标准强度发送。"
+        },
+        {
+          "id": "CHAT-002.snapshot",
+          "label": "截图优先",
+          "description": "存在截图附件时隐藏快捷问题行；指南本体由宿主决定。"
+        },
+        {
+          "id": "CHAT-002.answered",
+          "label": "有消息",
+          "description": "指南及快捷问题行撤下，改为共用消息列。"
+        },
+        {
+          "id": "CHAT-002.standard",
+          "label": "侧栏强度隐藏",
+          "description": "showReasoningControl=false 时按钮不在 DOM，深度模式归 false；模型、发送、停止仍在。"
+        }
+      ],
+      "controls": [
+        "指南问题（宿主提供）",
+        "底部输入框",
+        "当前模型"
+      ],
+      "transitions": [
+        "点击问题→CHAT-008",
+        "有消息→CHAT-005"
+      ],
+      "boundary": "指南文案/页头/关闭/拖宽归 renderer 宿主清单；不能创造侧栏强度入口。"
+    },
+    {
+      "id": "CHAT-003",
+      "title": "宿主草稿一次消费与范围",
+      "source": [
+        "packages/chat/src/ChatPanel.tsx:161",
+        "packages/chat/src/ChatPanel.tsx:179",
+        "packages/chat/src/ChatPanel.test.tsx:1156"
+      ],
+      "entry": "搜索/文档/截图入口传 draft",
+      "states": [
+        {
+          "id": "CHAT-003.prefill",
+          "label": "纯文本草稿",
+          "description": "搜索来的文本进入输入框，全库空态保持全库，不自动发送。"
+        },
+        {
+          "id": "CHAT-003.context",
+          "label": "只锁范围",
+          "description": "documentId 存在且无 text 时更新范围，不清空用户已有输入。"
+        },
+        {
+          "id": "CHAT-003.repeated",
+          "label": "同一草稿重渲染",
+          "description": "按 draft 对象身份只消费一次，不覆盖用户已修改的文本。"
+        },
+        {
+          "id": "CHAT-003.replacement",
+          "label": "新草稿对象",
+          "description": "已挂载且已有回答仍能消费新对象；范围跟随新 documentId 或恢复全库。"
+        },
+        {
+          "id": "CHAT-003.snapshot-rejected",
+          "label": "截图草稿无效",
+          "description": "applySnapshotDraft=false 时不覆盖现有文字，显示截图原因。"
+        }
+      ],
+      "controls": [
+        "已预填文字可编辑",
+        "范围标签移除"
+      ],
+      "transitions": [
+        "草稿确认发送→CHAT-008",
+        "截图草稿→CHAT-042"
+      ],
+      "boundary": "没有自动发送；draft=null 只重置消费标记，不擅自清输入/清范围。"
+    },
+    {
+      "id": "CHAT-004",
+      "title": "历史加载与适配",
+      "source": [
+        "packages/chat/src/ChatThread.tsx:56",
+        "packages/chat/src/runtime/history.ts:109",
+        "packages/chat/src/runtime/history.test.ts:146"
+      ],
+      "entry": "conversationId 存在后挂载运行时",
+      "states": [
+        {
+          "id": "CHAT-004.loading",
+          "label": "正在加载会话",
+          "description": "骨架先于空态判断：右侧提问气泡和两组递减文本条，role=status/aria-live。"
+        },
+        {
+          "id": "CHAT-004.loaded",
+          "label": "历史消息",
+          "description": "按服务器顺序还原 trace/citations/failure/agent/text。"
+        },
+        {
+          "id": "CHAT-004.new",
+          "label": "新会话",
+          "description": "无 id 不请求历史，返回空库。"
+        },
+        {
+          "id": "CHAT-004.missing",
+          "label": "历史不存在",
+          "description": "io 返回 null 时包返回空库，如何报不存在由宿主决定。"
+        },
+        {
+          "id": "CHAT-004.rejected",
+          "label": "读取抛错",
+          "description": "loadConversation 的 rejection 直接传播，无包内历史专用重试按钮。"
+        }
+      ],
+      "controls": [
+        "历史内容（消息控件）"
+      ],
+      "transitions": [
+        "加载成功→CHAT-005",
+        "返回空库→CHAT-001"
+      ],
+      "boundary": "不能将真实读取失败画成“没有会话”；renderer 应覆盖标题/历史列表/路由恢复。"
+    },
+    {
+      "id": "CHAT-005",
+      "title": "消息列与回复动作门控",
+      "source": [
+        "packages/chat/src/parts/MessageItem.tsx:58",
+        "packages/chat/src/parts/MessageItem.tsx:140",
+        "packages/chat/src/ChatPanel.style.ts:159"
+      ],
+      "entry": "存在用户/助手消息",
+      "states": [
+        {
+          "id": "CHAT-005.user",
+          "label": "用户消息",
+          "description": "原样文本、右对齐浅气泡；附件先于文本，不解析用户 Markdown。"
+        },
+        {
+          "id": "CHAT-005.assistant",
+          "label": "助手消息",
+          "description": "mimir 名称→检索过程→parts 正文→Agent历史→引用→失败/停止→动作。"
+        },
+        {
+          "id": "CHAT-005.placeholder",
+          "label": "空助手正在运行",
+          "description": "0 parts 且最后一条仍运行时立即显示“正在检索知识库…”；无空气泡。"
+        },
+        {
+          "id": "CHAT-005.empty-settled",
+          "label": "空助手已停止",
+          "description": "0 parts 且不再运行或非最后一条时整条隐藏。"
+        },
+        {
+          "id": "CHAT-005.last",
+          "label": "最后一条成功回复",
+          "description": "仅最终非空成功助手提供动作，上一轮的动作在新用户消息出现时消失。"
+        },
+        {
+          "id": "CHAT-005.blocked",
+          "label": "失败或 Agent 未完成",
+          "description": "incomplete、failure，或 Agent pending/cancelled/failed 不给动作条。"
+        }
+      ],
+      "controls": [
+        "各类消息内控件",
+        "最后回答保存/复制"
+      ],
+      "transitions": [
+        "生成完成→CHAT-022",
+        "失败→CHAT-024…028"
+      ],
+      "boundary": "当前 CSS 内容列 max850、消息 gap36，用户 max min(85%,620)；不要相信旧注释的860或gap20。"
+    },
+    {
+      "id": "CHAT-006",
+      "title": "消息滚动与回到底部",
+      "source": [
+        "packages/chat/src/ChatPanel.tsx:258",
+        "packages/chat/src/ChatPanel.style.ts:86",
+        "packages/chat/src/hooks/use-scrolled.ts:1"
+      ],
+      "entry": "长消息/流式消息滚动",
+      "states": [
+        {
+          "id": "CHAT-006.bottom",
+          "label": "贴底",
+          "description": "回到底部按钮 disabled 且 visibility:hidden，不影响几何。"
+        },
+        {
+          "id": "CHAT-006.away",
+          "label": "离底",
+          "description": "40×40 圆钮居中浮于输入上方，按钮不会随滚动内容跑走。"
+        },
+        {
+          "id": "CHAT-006.return",
+          "label": "点回底部",
+          "description": "调用 ThreadPrimitive.ScrollToBottom，回贴最新内容。"
+        },
+        {
+          "id": "CHAT-006.focus",
+          "label": "键盘焦点",
+          "description": "圆钮有焦点环，不能因隐藏仍成为可用焦点目标。"
+        },
+        {
+          "id": "CHAT-006.divider",
+          "label": "输入上边界",
+          "description": "scrolled 标记出现时只变 border-color，1px 边界始终预留。"
+        }
+      ],
+      "controls": [
+        "回到底部"
+      ],
+      "transitions": [
+        "点击→最新消息",
+        "手动上滚→离底"
+      ],
+      "boundary": "实际滚动由引擎 viewport；原型不能把自动滚动当真实流验收。"
+    },
+    {
+      "id": "CHAT-007",
+      "title": "输入框编辑与键盘",
+      "source": [
+        "packages/chat/src/composer/Composer.tsx:74",
+        "packages/chat/src/composer/Composer.tsx:315"
+      ],
+      "entry": "主/侧栏输入框",
+      "states": [
+        {
+          "id": "CHAT-007.empty",
+          "label": "空输入",
+          "description": "发送禁用；按当前全库/单篇范围显示真实 placeholder。"
+        },
+        {
+          "id": "CHAT-007.focus",
+          "label": "容器聚焦",
+          "description": "外盒1px边框换色；textarea 无独立环/阴影，不增加粗细。"
+        },
+        {
+          "id": "CHAT-007.typed",
+          "label": "输入文字",
+          "description": "普通3–8行自动长高；截图2–5行，不另建文字副本。"
+        },
+        {
+          "id": "CHAT-007.multiline",
+          "label": "换行",
+          "description": "Shift+Enter 插入换行；长文达到 maxRows 后输入区内滚动。"
+        },
+        {
+          "id": "CHAT-007.enter",
+          "label": "Enter发送",
+          "description": "非 composing 的 Enter 走 composer.send，先通过截图/Agent发送校验。"
+        },
+        {
+          "id": "CHAT-007.ime",
+          "label": "输入法候选",
+          "description": "Enter 和 Escape 在 nativeEvent.isComposing 时不误发或误停。"
+        },
+        {
+          "id": "CHAT-007.escape-idle",
+          "label": "空闲Esc",
+          "description": "cancelOnEscape=false，不清空输入草稿。"
+        },
+        {
+          "id": "CHAT-007.narrow",
+          "label": "窄栏工具换行",
+          "description": "bar/barGroup flex-wrap，模型名136px截断、范围125px截断，发送保持32×32。"
+        }
+      ],
+      "controls": [
+        "textarea",
+        "发送/停止",
+        "范围/强度/模型"
+      ],
+      "transitions": [
+        "Enter→CHAT-008 或 CHAT-014",
+        "Esc生成中→CHAT-015"
+      ],
+      "boundary": "原生 IME 行为需真机；原型仅说明/模拟，不能宣称完成系统输入法实测。"
+    },
+    {
+      "id": "CHAT-008",
+      "title": "发送与建会话",
+      "source": [
+        "packages/chat/src/composer/Composer.tsx:424",
+        "packages/chat/src/runtime/agent.ts:210",
+        "packages/chat/src/runtime/use-mimir-runtime.ts:178"
+      ],
+      "entry": "点击发送或非 composing Enter",
+      "states": [
+        {
+          "id": "CHAT-008.ready",
+          "label": "可发送",
+          "description": "可用性由 composer 原语决定，按钮为 ArrowUp。"
+        },
+        {
+          "id": "CHAT-008.creating",
+          "label": "建会话",
+          "description": "首问先 createConversation，再绑定同一真实 threadId/conversationId。"
+        },
+        {
+          "id": "CHAT-008.running",
+          "label": "生成中",
+          "description": "同一位置变停止 Square，输入仍可编辑；placeholder“生成中 · Enter 排队这条，Esc 停止”。"
+        },
+        {
+          "id": "CHAT-008.completed",
+          "label": "本轮结束",
+          "description": "停止换回发送；通知 onTurnSettled 刷新宿主。"
+        },
+        {
+          "id": "CHAT-008.create-failed",
+          "label": "创建/传输失败",
+          "description": "错误进入运行时；不能伪称已建立会话或有保存的回答。"
+        },
+        {
+          "id": "CHAT-008.guard-rejected",
+          "label": "发送前校验拒绝",
+          "description": "onSubmitCapture/发送点击/Enter统一阻断，保留草稿并显示截图错误。"
+        }
+      ],
+      "controls": [
+        "发送",
+        "停止"
+      ],
+      "transitions": [
+        "运行→CHAT-016",
+        "新增追问→CHAT-014",
+        "失败→CHAT-028"
+      ],
+      "boundary": "主/侧栏共享运行时；URL更换是否重挂归宿主；真实模型/API请求边界。"
+    },
+    {
+      "id": "CHAT-009",
+      "title": "本轮范围下拉",
+      "source": [
+        "packages/chat/src/composer/ComposerMenus.tsx:119"
+      ],
+      "entry": "点击“范围：全部文档”或“更换范围”",
+      "states": [
+        {
+          "id": "CHAT-009.all",
+          "label": "全库触发器",
+          "description": "Plus图标与“范围：全部文档”；tooltip“选择本轮检索范围”。"
+        },
+        {
+          "id": "CHAT-009.menu",
+          "label": "文档列表",
+          "description": "最多取最近20个 docs.items，选中即按ID设置本轮单篇范围。"
+        },
+        {
+          "id": "CHAT-009.loading",
+          "label": "文档加载中",
+          "description": "只有 disabled“加载中…”条目。"
+        },
+        {
+          "id": "CHAT-009.error",
+          "label": "读取失败",
+          "description": "可点“读取失败，点此重试”→docs.refetch。"
+        },
+        {
+          "id": "CHAT-009.empty",
+          "label": "无文档",
+          "description": "只有 disabled“知识库还没有文档”；与请求失败区别。"
+        },
+        {
+          "id": "CHAT-009.dismiss",
+          "label": "关闭菜单",
+          "description": "点击外部/Esc由antd下拉处理，不改变已选范围。"
+        },
+        {
+          "id": "CHAT-009.keyboard",
+          "label": "键盘菜单",
+          "description": "触发器可Tab进入、focus-visible细环；菜单导航沿antd，不加伪搜索控件。"
+        }
+      ],
+      "controls": [
+        "范围触发器",
+        "最近20篇",
+        "读取失败，点此重试"
+      ],
+      "transitions": [
+        "选文档→CHAT-010",
+        "重试→loading→menu/empty/error"
+      ],
+      "boundary": "不是附件上传/全库文档搜索器；不增加多选/文件夹/技能能力。"
+    },
+    {
+      "id": "CHAT-010",
+      "title": "单篇范围标签与替换",
+      "source": [
+        "packages/chat/src/composer/Composer.tsx:389",
+        "packages/chat/src/ChatPanel.tsx:161"
+      ],
+      "entry": "已选一篇文档或文档草稿",
+      "states": [
+        {
+          "id": "CHAT-010.selected",
+          "label": "已锁单篇",
+          "description": "触发器显示“更换范围”；Tag“范围：{title}”，title说明本轮范围。"
+        },
+        {
+          "id": "CHAT-010.long",
+          "label": "长标题",
+          "description": "文字最大125px省略、Tag最大160px，关闭图标留在可见区。"
+        },
+        {
+          "id": "CHAT-010.replace",
+          "label": "更换",
+          "description": "重新打开最近文档，选新篇替换当前上下文。"
+        },
+        {
+          "id": "CHAT-010.remove",
+          "label": "移除",
+          "description": "Tag关闭恢复null全库；后续发送跟随新范围。"
+        },
+        {
+          "id": "CHAT-010.queued",
+          "label": "已排队范围",
+          "description": "排队消息保留入队时 runConfig，后来换范围不回改已入队一轮。"
+        }
+      ],
+      "controls": [
+        "更换范围",
+        "Tag关闭"
+      ],
+      "transitions": [
+        "关闭→CHAT-009.all",
+        "发问→当前documentId"
+      ],
+      "boundary": "draft只负责初次锁定，“锁范围”不等于不允许关闭。显式取回队列恢复文字/PNG，不回写旧scope UI。"
+    },
+    {
+      "id": "CHAT-011",
+      "title": "主对话思考强度",
+      "source": [
+        "packages/chat/src/composer/ComposerMenus.tsx:167",
+        "packages/chat/src/ChatPanel.tsx:196"
+      ],
+      "entry": "主视图“标准/深入”",
+      "states": [
+        {
+          "id": "CHAT-011.standard",
+          "label": "标准",
+          "description": "菜单“标准（对话模型）”选中，当前模型跟随chat角色。"
+        },
+        {
+          "id": "CHAT-011.menu",
+          "label": "打开强度",
+          "description": "仅标准/深入两个项，选中由 selectedKeys 表达。"
+        },
+        {
+          "id": "CHAT-011.deep",
+          "label": "深入",
+          "description": "菜单“深入（推理模型）”选中，runConfig.deepReasoning=true，当前模型跟随reasoning。"
+        },
+        {
+          "id": "CHAT-011.hidden",
+          "label": "侧栏隐藏",
+          "description": "showReasoningControl=false 后强制标准；再次显示时仍为标准。"
+        },
+        {
+          "id": "CHAT-011.dismiss",
+          "label": "取消选择",
+          "description": "Esc/外部关闭不改变当前强度。"
+        }
+      ],
+      "controls": [
+        "强度触发器",
+        "标准（对话模型）",
+        "深入（推理模型）"
+      ],
+      "transitions": [
+        "选深入→CHAT-012.reasoning",
+        "隐藏→标准"
+      ],
+      "boundary": "强度为模型角色轴，不是低中高effort；不新增模型参数。"
+    },
+    {
+      "id": "CHAT-012",
+      "title": "全局模型绑定只读菜单",
+      "source": [
+        "packages/chat/src/composer/ComposerMenus.tsx:202",
+        "packages/chat/src/ChatPanel.test.tsx:356"
+      ],
+      "entry": "点击当前模型",
+      "states": [
+        {
+          "id": "CHAT-012.chat",
+          "label": "对话模型",
+          "description": "触发器只显示当前chat模型名；菜单勾选紧随当前项名称。"
+        },
+        {
+          "id": "CHAT-012.reasoning",
+          "label": "推理模型",
+          "description": "深入时当前模型改reasoning绑定；不在此切换单独模型。"
+        },
+        {
+          "id": "CHAT-012.menu",
+          "label": "只读两绑定",
+          "description": "菜单两项均 disabled，只显示名称；角色和“当前使用”仅读屏。"
+        },
+        {
+          "id": "CHAT-012.missing",
+          "label": "未配置",
+          "description": "触发“未配置模型”，菜单项“未配置”，仍以读屏角色区分两项。"
+        },
+        {
+          "id": "CHAT-012.same-name",
+          "label": "同名模型",
+          "description": "两角色同名仍分别保留 disabled 项和辅助角色文案。"
+        },
+        {
+          "id": "CHAT-012.long",
+          "label": "长模型名",
+          "description": "触发136px截断；菜单 max min(240px,100vw-96px)，勾选不被文字挤掉。"
+        },
+        {
+          "id": "CHAT-012.manage",
+          "label": "管理模型",
+          "description": "唯一可点动作“管理模型”调用宿主 io.onManageModels。"
+        }
+      ],
+      "controls": [
+        "当前模型",
+        "管理模型（可点）",
+        "两项全局绑定（禁用）"
+      ],
+      "transitions": [
+        "管理模型→宿主设置模型页"
+      ],
+      "boundary": "不能为未配置显示会话级切换/自动配置；设置页改版归后续模块。"
+    },
+    {
+      "id": "CHAT-013",
+      "title": "上下文容量",
+      "source": [
+        "packages/chat/src/composer/ComposerMenus.tsx:271"
+      ],
+      "entry": "会话最近一次真实用量可用",
+      "states": [
+        {
+          "id": "CHAT-013.hidden",
+          "label": "无记账",
+          "description": "usage缺失或totalTokens=null整颗不渲染，不显示0。"
+        },
+        {
+          "id": "CHAT-013.known",
+          "label": "已记账",
+          "description": "按钮显示真实 promptTokens tok，≥10000转1位小数“万”。"
+        },
+        {
+          "id": "CHAT-013.unknown-input",
+          "label": "部分null",
+          "description": "total已知但prompt/completion为null显示“—”，不能算作0。"
+        },
+        {
+          "id": "CHAT-013.popover",
+          "label": "展开用量",
+          "description": "“最近一次请求 · {model}”及输入（上下文）/输出/合计。"
+        },
+        {
+          "id": "CHAT-013.close",
+          "label": "关闭浮层",
+          "description": "点击外部关闭，不改变用量或范围。"
+        }
+      ],
+      "controls": [
+        "上下文容量"
+      ],
+      "transitions": [
+        "点击→popover",
+        "新轮结算→宿主用量刷新"
+      ],
+      "boundary": "不是上下文窗口百分比或字符估算，不能凭空增加容量上限图。"
+    },
+    {
+      "id": "CHAT-014",
+      "title": "生成中追问队列",
+      "source": [
+        "packages/chat/src/composer/Composer.tsx:445",
+        "packages/chat/src/runtime/use-mimir-runtime.ts:229",
+        "packages/chat/src/ChatPanel.test.tsx:1293"
+      ],
+      "entry": "生成中在输入按Enter",
+      "states": [
+        {
+          "id": "CHAT-014.queued",
+          "label": "已排队首条",
+          "description": "输入清空，条内显示“已排队”+首条prompt省略+取回×。"
+        },
+        {
+          "id": "CHAT-014.multiple",
+          "label": "多个排队",
+          "description": "引擎可含多项，UI只显示queue[0]；前项移走后后项依次露头。"
+        },
+        {
+          "id": "CHAT-014.auto",
+          "label": "自动派发",
+          "description": "当前轮正常结束自动发下一条，保留该轮完整runConfig和transcript。"
+        },
+        {
+          "id": "CHAT-014.retrieve",
+          "label": "取回",
+          "description": "点击“取回排队的消息”：先恢复文字及截图，再移除首条，当前生成继续。"
+        },
+        {
+          "id": "CHAT-014.stop",
+          "label": "停止归还",
+          "description": "取消当前轮自动恢复队列首条，队列剩余项由引擎暂停。"
+        },
+        {
+          "id": "CHAT-014.failed",
+          "label": "失败归还",
+          "description": "onError在无composer截图附件时恢复首条，保留截图绑定失败原因。"
+        }
+      ],
+      "controls": [
+        "取回排队的消息",
+        "停止"
+      ],
+      "transitions": [
+        "正常完成→下一轮",
+        "取回→CHAT-007",
+        "带图→CHAT-044"
+      ],
+      "boundary": "UI只露首条，不能擅自增加“全部清空/拖拽排序/每条发送”。普通取回会setText覆盖当前输入，不能把保护截图派发失败新草稿的特殊分支泛化到所有取回。"
+    },
+    {
+      "id": "CHAT-015",
+      "title": "停止生成",
+      "source": [
+        "packages/chat/src/composer/Composer.tsx:348",
+        "packages/chat/src/parts/MessageItem.tsx:215",
+        "packages/chat/src/parts/StoppedNotice.tsx:39"
+      ],
+      "entry": "点击停止或输入区非composing Esc",
+      "states": [
+        {
+          "id": "CHAT-015.stop",
+          "label": "停止动作",
+          "description": "调用cancelRun；若有活跃画布工具同时中止工具并归还队列首条。"
+        },
+        {
+          "id": "CHAT-015.partial",
+          "label": "有部分正文",
+          "description": "显示中性“已停止生成”“以上是已生成的部分”；保留已显示内容。"
+        },
+        {
+          "id": "CHAT-015.empty",
+          "label": "零parts停止",
+          "description": "助手空占位整体不渲染，不生成空气泡。"
+        },
+        {
+          "id": "CHAT-015.failure-distinct",
+          "label": "错误与停止互斥",
+          "description": "reason=error不给“已停止生成”，只走失败卡。"
+        },
+        {
+          "id": "CHAT-015.after",
+          "label": "停止后输入",
+          "description": "发送键恢复；用户可编辑归还问题重新发送。"
+        }
+      ],
+      "controls": [
+        "停止",
+        "textarea Esc"
+      ],
+      "transitions": [
+        "归还→CHAT-014",
+        "重新发问→CHAT-008"
+      ],
+      "boundary": "没有可续跑run，不新增“继续生成/放弃”按钮；停止轮无保存/复制动作。"
+    },
+    {
+      "id": "CHAT-016",
+      "title": "检索过程折叠",
+      "source": [
+        "packages/chat/src/parts/TraceActivity.tsx:173",
+        "packages/chat/src/parts/MessageItem.tsx:158"
+      ],
+      "entry": "助手运行/存在mimir.trace",
+      "states": [
+        {
+          "id": "CHAT-016.waiting",
+          "label": "尚无trace",
+          "description": "live且trace=null：role=status“正在检索知识库…”，此时div不可点击，无chevron。"
+        },
+        {
+          "id": "CHAT-016.live",
+          "label": "有trace运行中",
+          "description": "按当前代码running驱动expanded，列出步骤、关键词、meta，摘要客户端秒数持续走。"
+        },
+        {
+          "id": "CHAT-016.manual",
+          "label": "手动收起/展开",
+          "description": "按钮aria-expanded，用户开合在expanded属性不变期间保留。"
+        },
+        {
+          "id": "CHAT-016.done",
+          "label": "完成摘要",
+          "description": "live=false改服务端tookMs/1000保留1位小数，自动收起，可再展开。"
+        },
+        {
+          "id": "CHAT-016.search",
+          "label": "只检索",
+          "description": "正文为SEARCH_ONLY_RESULT_TEXT时显示“检索 N 轮 · M 次检索操作”，不暗示调用模型。"
+        },
+        {
+          "id": "CHAT-016.scroll",
+          "label": "长步骤",
+          "description": "展开区最大256px内滚动，数字/关键词按服务器原值。"
+        },
+        {
+          "id": "CHAT-016.absent",
+          "label": "无过程",
+          "description": "trace=null且非live不渲染。"
+        }
+      ],
+      "controls": [
+        "过程摘要按钮"
+      ],
+      "transitions": [
+        "点击→展开/收起",
+        "run结束→done"
+      ],
+      "boundary": "源码注释称“正文一出就收起”，但传入expanded=running，实际是run结束才随之收起；当前列按代码，若方案改成前者须明确是交互改动。"
+    },
+    {
+      "id": "CHAT-017",
+      "title": "模型思考折叠",
+      "source": [
+        "packages/chat/src/parts/ReasoningPart.tsx:39",
+        "packages/chat/src/parts/reasoning-shell.tsx:134"
+      ],
+      "entry": "reasoning part存在",
+      "states": [
+        {
+          "id": "CHAT-017.live",
+          "label": "思考中",
+          "description": "live默认展开，标签“模型思考 (Ns)”来自本地等待钟，正文按Markdown。"
+        },
+        {
+          "id": "CHAT-017.toggle",
+          "label": "手动开合",
+          "description": "按钮aria-expanded；运行状态未变时保持手动开合。"
+        },
+        {
+          "id": "CHAT-017.done",
+          "label": "思考结束",
+          "description": "状态从running变完成自动收起，只留“模型思考”，不编造总耗时。"
+        },
+        {
+          "id": "CHAT-017.empty",
+          "label": "空思考完成",
+          "description": "文本trim空且非live整体不渲染。"
+        },
+        {
+          "id": "CHAT-017.long",
+          "label": "长思考",
+          "description": "共用reasoning shell内容区有最大高度与内部滚动。"
+        }
+      ],
+      "controls": [
+        "模型思考"
+      ],
+      "transitions": [
+        "展开→思考原文",
+        "结束→折叠"
+      ],
+      "boundary": "运行时showThinking=true与渲染槽同步；不新增思考原文落库承诺。"
+    },
+    {
+      "id": "CHAT-018",
+      "title": "流式Markdown与正文长内容",
+      "source": [
+        "packages/chat/src/parts/MarkdownPart.tsx:28",
+        "packages/chat/src/ChatPanel.style.ts:200",
+        "packages/chat/src/parts/parts.test.tsx:185"
+      ],
+      "entry": "助手text part",
+      "states": [
+        {
+          "id": "CHAT-018.complete",
+          "label": "完整正文",
+          "description": "标题/段落/列表/引用/行内代码/链接/表格等由tanstack Markdown渲染。"
+        },
+        {
+          "id": "CHAT-018.partial",
+          "label": "流式半截",
+          "description": "streaming extension处理未闭合加粗、列表、标题、半段代码，不闪裸标记。"
+        },
+        {
+          "id": "CHAT-018.code",
+          "label": "代码块",
+          "description": "自定义pre由CHAT-019承担，正文pre可横滚。"
+        },
+        {
+          "id": "CHAT-018.links",
+          "label": "正文链接",
+          "description": "继承colorLink且下划线，遵循真实href语义；不是引用按钮。"
+        },
+        {
+          "id": "CHAT-018.wide",
+          "label": "窄栏长内容",
+          "description": "长URL/宽表格/代码不应推宽宿主，当前style仅overflow-x:hidden的风险需现场验证。"
+        }
+      ],
+      "controls": [
+        "正文a链接",
+        "代码复制"
+      ],
+      "transitions": [
+        "链接→浏览器目标",
+        "代码→CHAT-019"
+      ],
+      "boundary": "当前消息Markdown无专用表格容器/断链/图片失败恢复控件，不可声称已有；不替换解析器。"
+    },
+    {
+      "id": "CHAT-019",
+      "title": "代码块复制",
+      "source": [
+        "packages/chat/src/parts/CodeBlock.tsx:31",
+        "packages/chat/src/parts/CodeBlock.tsx:93"
+      ],
+      "entry": "正文pre/code",
+      "states": [
+        {
+          "id": "CHAT-019.idle",
+          "label": "代码头",
+          "description": "语言名来自data-lang，缺失显示“文本”，按钮“复制代码”。"
+        },
+        {
+          "id": "CHAT-019.copied",
+          "label": "复制成功",
+          "description": "clipboard成功后按钮标签/图标变“已复制”，2秒恢复。"
+        },
+        {
+          "id": "CHAT-019.failure",
+          "label": "复制失败",
+          "description": "catch吞错误，维持原按钮无toast；当前列必须如实。"
+        },
+        {
+          "id": "CHAT-019.fallback",
+          "label": "非纯文本退化",
+          "description": "提取不到纯文本时只渲染普通pre，不显示不能用的复制。"
+        },
+        {
+          "id": "CHAT-019.hover-focus",
+          "label": "代码工具交互",
+          "description": "代码头复制按钮hover提亮；当前CodeBlock.style没有专门focus-visible规则，仅浏览器默认焦点。Copy/Check叠同格交换不改几何。"
+        }
+      ],
+      "controls": [
+        "复制代码"
+      ],
+      "transitions": [
+        "成功→copied→2秒idle"
+      ],
+      "boundary": "系统剪贴板权限/成功需浏览器验证；改为显式失败文案属于需在对比稿展示的新反馈，不可将原型toast写成当前行为。"
+    },
+    {
+      "id": "CHAT-020",
+      "title": "工具调用消息折叠",
+      "source": [
+        "packages/chat/src/parts/ToolCallPart.tsx:220"
+      ],
+      "entry": "tool-call part",
+      "states": [
+        {
+          "id": "CHAT-020.running",
+          "label": "Running tool",
+          "description": "Loader旋转、工具名、可用时引擎真实耗时。"
+        },
+        {
+          "id": "CHAT-020.complete",
+          "label": "Used tool",
+          "description": "Check图标；缺status也默认complete。"
+        },
+        {
+          "id": "CHAT-020.failed",
+          "label": "Failed tool",
+          "description": "XCircle错误色，仍能查看已收到args/result。"
+        },
+        {
+          "id": "CHAT-020.collapsed",
+          "label": "默认折叠",
+          "description": "所有状态默认open=false；aria-expanded=false。"
+        },
+        {
+          "id": "CHAT-020.expanded",
+          "label": "Args/Result",
+          "description": "argsText非空才显示Args，result!==undefined才显示Result；字符串原样、其余JSON。"
+        },
+        {
+          "id": "CHAT-020.long",
+          "label": "长工具数据",
+          "description": "pre最大240px内滚动、换行；保留原始内容不凭空总结成功。"
+        }
+      ],
+      "controls": [
+        "工具触发行"
+      ],
+      "transitions": [
+        "点击→展开/折叠"
+      ],
+      "boundary": "这是消息展示fallback，不能代替真实Agent桥审批或工具重试；不用“同意/拒绝”创造能力。"
+    },
+    {
+      "id": "CHAT-021",
+      "title": "引用来源与原文跳转",
+      "source": [
+        "packages/chat/src/parts/CitationList.tsx:184",
+        "packages/chat/src/parts/parts.test.tsx:71"
+      ],
+      "entry": "citations非空",
+      "states": [
+        {
+          "id": "CHAT-021.list",
+          "label": "来源列表",
+          "description": "正文下细分割线通栏列表，标题+两行纯文本摘要+命中通道。"
+        },
+        {
+          "id": "CHAT-021.channels",
+          "label": "多通道",
+          "description": "keyword词级召回、substring子串兜底、vector向量、scope限定本篇；多个以 + 连接，未知ID原样。"
+        },
+        {
+          "id": "CHAT-021.preview",
+          "label": "Markdown摘要",
+          "description": "去展示标记/脚注/inlineHTML得到可扫文字，onOpen仍传原始citation与start/end。"
+        },
+        {
+          "id": "CHAT-021.hover",
+          "label": "悬停来源",
+          "description": "透明卡仅hover浅底，不改变padding/尺寸。"
+        },
+        {
+          "id": "CHAT-021.focus",
+          "label": "键盘来源",
+          "description": "全卡button可键盘触发，有内侧焦点环；长标题省略。"
+        },
+        {
+          "id": "CHAT-021.empty",
+          "label": "无引用",
+          "description": "空数组整块不占位。"
+        }
+      ],
+      "controls": [
+        "每条来源按钮"
+      ],
+      "transitions": [
+        "点击→宿主onOpenCitation(documentId,citation)"
+      ],
+      "boundary": "宿主负责原文定位/弹窗/错误恢复，本包不做本地假定位；引用不应变成虚假来源网格。"
+    },
+    {
+      "id": "CHAT-022",
+      "title": "回答存成笔记",
+      "source": [
+        "packages/chat/src/parts/AnswerActions.tsx:113",
+        "packages/chat/src/parts/MessageItem.tsx:226"
+      ],
+      "entry": "最后成功非空助手且activeId可用",
+      "states": [
+        {
+          "id": "CHAT-022.idle",
+          "label": "存成笔记",
+          "description": "24px图标按钮、Tooltip/aria-label“存成笔记”。"
+        },
+        {
+          "id": "CHAT-022.saving",
+          "label": "保存中",
+          "description": "disabled=saving，当前没有spin或可见保存中文字。"
+        },
+        {
+          "id": "CHAT-022.saved",
+          "label": "保存成功",
+          "description": "toast“已存成笔记”，按钮改“打开笔记”外链图标。"
+        },
+        {
+          "id": "CHAT-022.open",
+          "label": "打开笔记",
+          "description": "调用api.onOpenNote(savedNoteId)。"
+        },
+        {
+          "id": "CHAT-022.error",
+          "label": "保存失败",
+          "description": "显示原error.message或“存成笔记失败”，恢复可点保存按钮。"
+        },
+        {
+          "id": "CHAT-022.hidden",
+          "label": "动作不适用",
+          "description": "空正文/running/无activeId不渲染，父门控还排除失败停止Agent未完成。"
+        }
+      ],
+      "controls": [
+        "存成笔记",
+        "打开笔记"
+      ],
+      "transitions": [
+        "保存→saving→saved/error",
+        "打开→宿主文档"
+      ],
+      "boundary": "按服务端最后助手消息落库并幂等归宿主IO；原型仅模拟，不创建真实笔记。"
+    },
+    {
+      "id": "CHAT-023",
+      "title": "复制回答与检索结果",
+      "source": [
+        "packages/chat/src/parts/AnswerActions.tsx:11",
+        "packages/chat/src/parts/AnswerActions.tsx:207"
+      ],
+      "entry": "同保存动作门控",
+      "states": [
+        {
+          "id": "CHAT-023.idle",
+          "label": "复制回答",
+          "description": "次级图标按钮有Tooltip和aria-label。"
+        },
+        {
+          "id": "CHAT-023.success",
+          "label": "复制成功",
+          "description": "图标变Check、文案“已复制”，toast同文；2秒后恢复。"
+        },
+        {
+          "id": "CHAT-023.failure",
+          "label": "复制失败",
+          "description": "toast“复制失败”，保持原图标可再试。"
+        },
+        {
+          "id": "CHAT-023.search-only",
+          "label": "只检索复制",
+          "description": "对SEARCH_ONLY_RESULT_TEXT且有引用复制每条snippet和来源站内链接；不是复制占位句。"
+        },
+        {
+          "id": "CHAT-023.ordinary",
+          "label": "普通回答复制",
+          "description": "仅所有text part正文，排除trace/citations/tool JSON。"
+        }
+      ],
+      "controls": [
+        "复制回答"
+      ],
+      "transitions": [
+        "点击→success/failure",
+        "2秒→idle"
+      ],
+      "boundary": "与代码复制的失败反馈不同；失败/停止轮不提供复制按钮。"
+    },
+    {
+      "id": "CHAT-024",
+      "title": "模型请求受限失败卡",
+      "source": [
+        "packages/chat/src/parts/FailureNotice.tsx:74",
+        "packages/chat/src/parts/FailureNotice.tsx:127",
+        "packages/chat/src/parts/MessageItem.tsx:189"
+      ],
+      "entry": "mimir.failure=quota",
+      "states": [
+        {
+          "id": "CHAT-024.card",
+          "label": "模型请求受限",
+          "description": "role=alert；服务端原始detail优先，否则“服务商拒绝了本次请求。请检查额度或稍后重试；模型用量以服务商账单为准。”。"
+        },
+        {
+          "id": "CHAT-024.recover",
+          "label": "可用出路",
+          "description": "现有可点：只检索，不调模型；按当前可见范围/强度重新发本卡之前的用户问题。"
+        },
+        {
+          "id": "CHAT-024.history",
+          "label": "历史失败",
+          "description": "历史无detail采用分类默认说明，带“历史记录未保存思考模式；重试将使用标准模式。”提示。"
+        },
+        {
+          "id": "CHAT-024.unavailable",
+          "label": "暂不可用",
+          "description": "以下按钮真实disabled且外层Tooltip“暂不可用”：换一个模型、去充值。"
+        },
+        {
+          "id": "CHAT-024.snapshot",
+          "label": "含截图失败",
+          "description": "只检索不得丢图降级，会在composer显示视觉能力提示并保留图文；重试需重新校验目标。"
+        }
+      ],
+      "controls": [
+        "只检索，不调模型",
+        "换一个模型（禁用）",
+        "去充值（禁用）"
+      ],
+      "transitions": [
+        "只检索→检索结果",
+        "重试（如有）→CHAT-008",
+        "截图→CHAT-045"
+      ],
+      "boundary": "失败不给成功动作条；不可宣称本轮未计费/额度余额/自动换模型。历史模式提示存在与真实发送参数差异，见研究 caveat。"
+    },
+    {
+      "id": "CHAT-025",
+      "title": "请求超时失败卡",
+      "source": [
+        "packages/chat/src/parts/FailureNotice.tsx:74",
+        "packages/chat/src/parts/FailureNotice.tsx:127",
+        "packages/chat/src/parts/MessageItem.tsx:189"
+      ],
+      "entry": "mimir.failure=timeout",
+      "states": [
+        {
+          "id": "CHAT-025.card",
+          "label": "请求超时",
+          "description": "role=alert；服务端原始detail优先，否则“模型响应超时。可以重试，或只查看检索结果。”。"
+        },
+        {
+          "id": "CHAT-025.recover",
+          "label": "可用出路",
+          "description": "现有可点：重试、只检索，不调模型；按当前可见范围/强度重新发本卡之前的用户问题。"
+        },
+        {
+          "id": "CHAT-025.history",
+          "label": "历史失败",
+          "description": "历史无detail采用分类默认说明，带“历史记录未保存思考模式；重试将使用标准模式。”提示。"
+        },
+        {
+          "id": "CHAT-025.unavailable",
+          "label": "暂不可用",
+          "description": "以下按钮真实disabled且外层Tooltip“暂不可用”：缩小到当前文档。"
+        },
+        {
+          "id": "CHAT-025.snapshot",
+          "label": "含截图失败",
+          "description": "只检索不得丢图降级，会在composer显示视觉能力提示并保留图文；重试需重新校验目标。"
+        }
+      ],
+      "controls": [
+        "重试",
+        "只检索，不调模型",
+        "缩小到当前文档（禁用）"
+      ],
+      "transitions": [
+        "只检索→检索结果",
+        "重试（如有）→CHAT-008",
+        "截图→CHAT-045"
+      ],
+      "boundary": "失败不给成功动作条；不可宣称本轮未计费/额度余额/自动换模型。历史模式提示存在与真实发送参数差异，见研究 caveat。"
+    },
+    {
+      "id": "CHAT-026",
+      "title": "回答被截断失败卡",
+      "source": [
+        "packages/chat/src/parts/FailureNotice.tsx:74",
+        "packages/chat/src/parts/FailureNotice.tsx:127",
+        "packages/chat/src/parts/MessageItem.tsx:189"
+      ],
+      "entry": "mimir.failure=truncated",
+      "states": [
+        {
+          "id": "CHAT-026.card",
+          "label": "回答被截断",
+          "description": "role=alert；服务端原始detail优先，否则“回答达到输出上限。已显示的内容仍可查看。”。"
+        },
+        {
+          "id": "CHAT-026.recover",
+          "label": "可用出路",
+          "description": "现有可点：只检索，不调模型；按当前可见范围/强度重新发本卡之前的用户问题。"
+        },
+        {
+          "id": "CHAT-026.history",
+          "label": "历史失败",
+          "description": "历史无detail采用分类默认说明，带“历史记录未保存思考模式；重试将使用标准模式。”提示。"
+        },
+        {
+          "id": "CHAT-026.unavailable",
+          "label": "暂不可用",
+          "description": "以下按钮真实disabled且外层Tooltip“暂不可用”：接着生成、只要结论。"
+        },
+        {
+          "id": "CHAT-026.snapshot",
+          "label": "含截图失败",
+          "description": "只检索不得丢图降级，会在composer显示视觉能力提示并保留图文；重试需重新校验目标。"
+        }
+      ],
+      "controls": [
+        "只检索，不调模型",
+        "接着生成（禁用）",
+        "只要结论（禁用）"
+      ],
+      "transitions": [
+        "只检索→检索结果",
+        "重试（如有）→CHAT-008",
+        "截图→CHAT-045"
+      ],
+      "boundary": "失败不给成功动作条；不可宣称本轮未计费/额度余额/自动换模型。历史模式提示存在与真实发送参数差异，见研究 caveat。"
+    },
+    {
+      "id": "CHAT-027",
+      "title": "网络不可达失败卡",
+      "source": [
+        "packages/chat/src/parts/FailureNotice.tsx:74",
+        "packages/chat/src/parts/FailureNotice.tsx:127",
+        "packages/chat/src/parts/MessageItem.tsx:189"
+      ],
+      "entry": "mimir.failure=offline",
+      "states": [
+        {
+          "id": "CHAT-027.card",
+          "label": "网络不可达",
+          "description": "role=alert；服务端原始detail优先，否则“无法连接模型服务。仍可查看检索结果或稍后重试。”。"
+        },
+        {
+          "id": "CHAT-027.recover",
+          "label": "可用出路",
+          "description": "现有可点：只检索，不调模型、重试；按当前可见范围/强度重新发本卡之前的用户问题。"
+        },
+        {
+          "id": "CHAT-027.history",
+          "label": "历史失败",
+          "description": "历史无detail采用分类默认说明，带“历史记录未保存思考模式；重试将使用标准模式。”提示。"
+        },
+        {
+          "id": "CHAT-027.snapshot",
+          "label": "含截图失败",
+          "description": "只检索不得丢图降级，会在composer显示视觉能力提示并保留图文；重试需重新校验目标。"
+        }
+      ],
+      "controls": [
+        "只检索，不调模型",
+        "重试"
+      ],
+      "transitions": [
+        "只检索→检索结果",
+        "重试（如有）→CHAT-008",
+        "截图→CHAT-045"
+      ],
+      "boundary": "失败不给成功动作条；不可宣称本轮未计费/额度余额/自动换模型。历史模式提示存在与真实发送参数差异，见研究 caveat。"
+    },
+    {
+      "id": "CHAT-028",
+      "title": "连接中断恢复",
+      "source": [
+        "packages/chat/src/parts/FailureNotice.tsx:223",
+        "packages/chat/src/parts/MessageItem.tsx:253"
+      ],
+      "entry": "无分类failure且消息incomplete/error",
+      "states": [
+        {
+          "id": "CHAT-028.card",
+          "label": "连接中断",
+          "description": "role=alert；原始错误+“本轮未生成回答。”。"
+        },
+        {
+          "id": "CHAT-028.retry",
+          "label": "重试",
+          "description": "回溯本卡上一用户问题及其截图名，按当前设置重新ask。"
+        },
+        {
+          "id": "CHAT-028.refill",
+          "label": "放回输入框",
+          "description": "只恢复问题及截图，不自动发送。"
+        },
+        {
+          "id": "CHAT-028.queued",
+          "label": "带队列错误",
+          "description": "onError触发队列恢复规则与宿主刷新。"
+        },
+        {
+          "id": "CHAT-028.zero",
+          "label": "无parts错误占位",
+          "description": "MessageItem的parts=0分支会隐藏已停止的空助手；不能保证任何网络错误都呈现此卡。"
+        }
+      ],
+      "controls": [
+        "重试",
+        "把问题放回输入框"
+      ],
+      "transitions": [
+        "重试→CHAT-008",
+        "放回→CHAT-007"
+      ],
+      "boundary": "分类模型失败与传输失败互斥；本卡固定“未生成回答”即使已有部分正文也不宜扩大为服务端无任何写入保证。"
+    },
+    {
+      "id": "CHAT-029",
+      "title": "历史重试与上一问定位",
+      "source": [
+        "packages/chat/src/runtime/chat-context.tsx:122",
+        "packages/chat/src/runtime/use-mimir-runtime.ts:345",
+        "packages/chat/src/parts/MessageItem.tsx:194"
+      ],
+      "entry": "历史/旧轮失败卡动作",
+      "states": [
+        {
+          "id": "CHAT-029.previous",
+          "label": "对应问题",
+          "description": "取失败卡之前最近用户，不能取全局最后一问，截图同样回溯对应用户附件。"
+        },
+        {
+          "id": "CHAT-029.current-config",
+          "label": "当前设置",
+          "description": "ask合并composer当前runConfig与本次覆盖；重试通常采用当前可见强度与范围。"
+        },
+        {
+          "id": "CHAT-029.search-scope",
+          "label": "只检索覆盖",
+          "description": "MessageItem显式scope=search，并经askOptionsFor(kind,null)传documentId=null。"
+        },
+        {
+          "id": "CHAT-029.running",
+          "label": "运行中再重试",
+          "description": "经composer.send进入队列，不能绕过排队直接append。"
+        },
+        {
+          "id": "CHAT-029.history-mode",
+          "label": "历史模式未知",
+          "description": "sentHere初始false；只有api.ask路径显式setSentHere(true)，普通手动发送未更新该值。"
+        }
+      ],
+      "controls": [
+        "失败卡动作（复用）"
+      ],
+      "transitions": [
+        "重试→composer发送/排队"
+      ],
+      "boundary": "历史提示说“标准模式”但ask实际会读取当前深度；此为既存文案/逻辑差异，不在原型偷偷修正。scope=search也会保留在composer runConfig直到后续同步覆盖，需验证实际轮次。"
+    },
+    {
+      "id": "CHAT-030",
+      "title": "AG-UI 来源pill",
+      "source": [
+        "packages/chat/src/parts/MediaParts.tsx:191"
+      ],
+      "entry": "source part",
+      "states": [
+        {
+          "id": "CHAT-030.url",
+          "label": "URL来源",
+          "description": "徽标首字+title/域名；a新页打开，rel=noopener noreferrer与隐藏读屏说明。"
+        },
+        {
+          "id": "CHAT-030.document",
+          "label": "文档来源",
+          "description": "无URL用filename/title或“来源”，渲染span不可点。"
+        },
+        {
+          "id": "CHAT-030.fallback",
+          "label": "名称退化",
+          "description": "title→filename（document）→domain→来源，不编文档标题。"
+        },
+        {
+          "id": "CHAT-030.hover-focus",
+          "label": "链接交互",
+          "description": "仅实际a可进入链接焦点；非链接pill不能假装可跳。"
+        }
+      ],
+      "controls": [
+        "URL来源链接（如有）"
+      ],
+      "transitions": [
+        "a→浏览器新标签"
+      ],
+      "boundary": "此类型与Mimir原文引用不同，不冒充带start/end的站内定位。"
+    },
+    {
+      "id": "CHAT-031",
+      "title": "文件附件chip",
+      "source": [
+        "packages/chat/src/parts/MediaParts.tsx:164",
+        "packages/chat/src/parts/MediaParts.tsx:219"
+      ],
+      "entry": "file part或用户file part",
+      "states": [
+        {
+          "id": "CHAT-031.file",
+          "label": "普通文件",
+          "description": "mime类型图标+filename，缺名显示mimeType；名最大320px省略。"
+        },
+        {
+          "id": "CHAT-031.safe",
+          "label": "可下载",
+          "description": "data/http(s)/blob或裸base64转换dataURI，显示“下载 {filename/文件}”。"
+        },
+        {
+          "id": "CHAT-031.unsafe",
+          "label": "不支持协议",
+          "description": "scheme不在白名单则保留文件chip但不显示下载动作。"
+        },
+        {
+          "id": "CHAT-031.focus",
+          "label": "下载焦点",
+          "description": "24px链接按钮focus-visible细环，与文件名不互相挤掉。"
+        }
+      ],
+      "controls": [
+        "下载 文件名（有安全href时）"
+      ],
+      "transitions": [
+        "下载→浏览器/系统行为"
+      ],
+      "boundary": "不是composer通用上传器，不证明下载完成、内容安全或播放器功能；与已选文件格式图标方案兼容需主会话决定复用。"
+    },
+    {
+      "id": "CHAT-032",
+      "title": "图片part原图链接",
+      "source": [
+        "packages/chat/src/parts/MediaParts.tsx:262"
+      ],
+      "entry": "image part（用户/助手）",
+      "states": [
+        {
+          "id": "CHAT-032.image",
+          "label": "图片",
+          "description": "max-width320、细边框、圆角；外层a标签“查看原图”。"
+        },
+        {
+          "id": "CHAT-032.open",
+          "label": "原图",
+          "description": "点击新页打开实际image href。"
+        },
+        {
+          "id": "CHAT-032.broken",
+          "label": "图像读取失败",
+          "description": "当前没有onError/重试/占位文案分支，浏览器原生坏图。"
+        },
+        {
+          "id": "CHAT-032.narrow",
+          "label": "窄栏图片",
+          "description": "当前仅max-width320无max-width100%，超窄宿主溢出风险需GUI。"
+        }
+      ],
+      "controls": [
+        "查看原图"
+      ],
+      "transitions": [
+        "点击→新页"
+      ],
+      "boundary": "若提案增加图片失败/响应式反馈要标为新视觉恢复方案，不声称当前已有；不做图片编辑器。"
+    },
+    {
+      "id": "CHAT-033",
+      "title": "音频part与MIME图标",
+      "source": [
+        "packages/chat/src/parts/MediaParts.tsx:258",
+        "packages/chat/src/parts/MediaParts.tsx:164"
+      ],
+      "entry": "audio part或音频file",
+      "states": [
+        {
+          "id": "CHAT-033.mp3",
+          "label": "MP3音频",
+          "description": "旧audio类型转换audio/mp3共用FileChip，缺文件名显示mime。"
+        },
+        {
+          "id": "CHAT-033.wav",
+          "label": "WAV音频",
+          "description": "audio/wav同款音乐图标+下载。"
+        },
+        {
+          "id": "CHAT-033.other-mime",
+          "label": "其他文件图标",
+          "description": "image图、pdf/text文稿、audio音乐、video视频，其余通用file。"
+        }
+      ],
+      "controls": [
+        "音频下载链接"
+      ],
+      "transitions": [
+        "下载→浏览器"
+      ],
+      "boundary": "没有原生audio播放控件；不要把视频file画成内联播放器，媒体分析另见CHAT-037/046。"
+    },
+    {
+      "id": "CHAT-034",
+      "title": "Agent执行与续轮进度",
+      "source": [
+        "packages/chat/src/runtime/DocxInterruptBridge.tsx:517",
+        "packages/chat/src/runtime/DocxInterruptBridge.tsx:577",
+        "packages/chat/src/runtime/DocxInterruptBridge.tsx:752"
+      ],
+      "entry": "文档Agent有client_tool中断，SSE完全结束后",
+      "states": [
+        {
+          "id": "CHAT-034.execute",
+          "label": "执行中",
+          "description": "aria-live区域显示“正在执行 {tool.name}”和“停止工具”。"
+        },
+        {
+          "id": "CHAT-034.resume",
+          "label": "工具已完成续轮",
+          "description": "显示“正在继续生成回答”；完整responses提交续轮。"
+        },
+        {
+          "id": "CHAT-034.failed",
+          "label": "工具执行失败",
+          "description": "错误“{tool} 执行失败：{reason}”，作为ok:false真实结果交给模型续轮。"
+        },
+        {
+          "id": "CHAT-034.invalid-round",
+          "label": "轮次失效",
+          "description": "显示“编辑轮次已失效，请重新发送指令”；不执行工具。"
+        },
+        {
+          "id": "CHAT-034.unsupported",
+          "label": "不支持中断",
+          "description": "显示“需要处理的中断类型不受支持：{reason}”。"
+        },
+        {
+          "id": "CHAT-034.dedupe",
+          "label": "中断去重",
+          "description": "已完成key不再次执行，重复渲染不能重复改画布。"
+        }
+      ],
+      "controls": [
+        "停止工具"
+      ],
+      "transitions": [
+        "工具完成→模型续轮",
+        "失败→CHAT-036或CHAT-038"
+      ],
+      "boundary": "此桥UI目前放在ChatPanelBody之前，布局并非消息内气泡；写工具仅当前文档且真实能力就绪，库级对话只读。"
+    },
+    {
+      "id": "CHAT-035",
+      "title": "Agent停止与已改画布",
+      "source": [
+        "packages/chat/src/runtime/DocxInterruptBridge.tsx:675",
+        "packages/chat/src/runtime/use-mimir-runtime.ts:212"
+      ],
+      "entry": "点击停止工具/停止生成/卸载",
+      "states": [
+        {
+          "id": "CHAT-035.stopping",
+          "label": "中止在途",
+          "description": "AbortController取消媒体读取/网络/工具，挂起媒体选择被reject。"
+        },
+        {
+          "id": "CHAT-035.stopped",
+          "label": "停止提示",
+          "description": "“已停止工具执行；已经落到画布的修改仍是未保存状态”。"
+        },
+        {
+          "id": "CHAT-035.cancel-error",
+          "label": "取消提交失败",
+          "description": "“停止工具失败：{error}”；不能伪称服务端已取消成功。"
+        },
+        {
+          "id": "CHAT-035.draft",
+          "label": "存在部分草稿",
+          "description": "停止时有getDraft则显示保留/丢弃选择。"
+        },
+        {
+          "id": "CHAT-035.unmount",
+          "label": "切文档/卸载",
+          "description": "旧document的活跃controller.abort，迟到结果不写新画布。"
+        }
+      ],
+      "controls": [
+        "停止工具",
+        "生成停止"
+      ],
+      "transitions": [
+        "有草稿→CHAT-038",
+        "已改画布→手动保存/回退"
+      ],
+      "boundary": "停止不自动撤销已落画布修改，也不自动保存；系统文件选择器退出行为属原生边界。"
+    },
+    {
+      "id": "CHAT-036",
+      "title": "工具结果续传失败与安全重试",
+      "source": [
+        "packages/chat/src/runtime/DocxInterruptBridge.tsx:630",
+        "packages/chat/src/runtime/DocxInterruptBridge.tsx:707"
+      ],
+      "entry": "画布工具已执行而submit失败",
+      "states": [
+        {
+          "id": "CHAT-036.failed",
+          "label": "续轮失败",
+          "description": "保留PendingSubmission完整结果，提示“工具结果续轮失败：…”。"
+        },
+        {
+          "id": "CHAT-036.ready",
+          "label": "可续传",
+          "description": "显示“重试续传工具结果”；runtime.running时disabled。"
+        },
+        {
+          "id": "CHAT-036.retrying",
+          "label": "正在重试",
+          "description": "按钮loading，retryingRef阻止并发；不重新执行工具。"
+        },
+        {
+          "id": "CHAT-036.success",
+          "label": "续传成功",
+          "description": "清pending，保留已完成画布/新文档结果。"
+        },
+        {
+          "id": "CHAT-036.stale",
+          "label": "当前环境变化",
+          "description": "文档/格式/中断集/轮次/版本任一不匹配则清pending，提示“文档或画布已变化，无法续传旧工具结果，请重新发送指令”。"
+        },
+        {
+          "id": "CHAT-036.again",
+          "label": "重试仍失败",
+          "description": "保留可重试缓存，错误更新；服务端原子消费拒绝重复重放。"
+        }
+      ],
+      "controls": [
+        "重试续传工具结果"
+      ],
+      "transitions": [
+        "成功→继续回答",
+        "失败→保留重试",
+        "失效→重新提问"
+      ],
+      "boundary": "禁止同一按钮重跑写工具；客户端缓存与patched AG-UI恢复配套，真实API续轮需单独验证。"
+    },
+    {
+      "id": "CHAT-037",
+      "title": "Agent媒体选择与分析",
+      "source": [
+        "packages/chat/src/runtime/DocxInterruptBridge.tsx:222",
+        "packages/chat/src/runtime/DocxInterruptBridge.tsx:534",
+        "packages/chat/src/runtime/DocxInterruptBridge.tsx:764"
+      ],
+      "entry": "工具请求image/audio/video原件",
+      "states": [
+        {
+          "id": "CHAT-037.choose-image",
+          "label": "选择图片",
+          "description": "accept PNG/JPEG/WebP；显示“选择本地文件”，readImage可用时有“使用文档中选中的图片”。"
+        },
+        {
+          "id": "CHAT-037.choose-audio",
+          "label": "选择音频",
+          "description": "accept wav/mpeg/mp4/ogg，提示“请选择原音频文件”或通用媒体要求。"
+        },
+        {
+          "id": "CHAT-037.choose-video",
+          "label": "选择视频",
+          "description": "accept video/*，提示“请选择原视频文件”。"
+        },
+        {
+          "id": "CHAT-037.document-image",
+          "label": "读取选中图片",
+          "description": "读取成功resolve选中图；异常“读取文档图片失败：…”。"
+        },
+        {
+          "id": "CHAT-037.processing",
+          "label": "分析中",
+          "description": "按分支“正在提取并分析视频画面”/“正在转录并分析音频”/“正在分析媒体”。"
+        },
+        {
+          "id": "CHAT-037.picker-cancel",
+          "label": "系统取消选择",
+          "description": "Upload无onCancel；不resolve也不reject，继续等候，用户可“停止工具”。"
+        },
+        {
+          "id": "CHAT-037.stale",
+          "label": "选件期间已变化",
+          "description": "画布版本/源文件/取消失效直接拒绝迟到结果，不写。"
+        }
+      ],
+      "controls": [
+        "选择本地文件",
+        "使用文档中选中的图片（条件）",
+        "停止工具"
+      ],
+      "transitions": [
+        "选择→分析→工具续轮",
+        "停止→CHAT-035"
+      ],
+      "boundary": "原生picker与真实媒体服务不由HTML证明；Upload beforeUpload仅交给工具，不通用入库/自动上传列表。"
+    },
+    {
+      "id": "CHAT-038",
+      "title": "中断写作的部分草稿",
+      "source": [
+        "packages/chat/src/runtime/DocxInterruptBridge.tsx:427",
+        "packages/chat/src/runtime/DocxInterruptBridge.tsx:804"
+      ],
+      "entry": "流式写作失败/取消且getDraft存在",
+      "states": [
+        {
+          "id": "CHAT-038.pending",
+          "label": "保留或丢弃",
+          "description": "“写作已中断，草稿仍显示在画布中。请选择保留或丢弃。”。"
+        },
+        {
+          "id": "CHAT-038.keep",
+          "label": "保留草稿",
+          "description": "按中断roundId/version和revisionMode提交，推进版本，清部分草稿/错误，给回退入口。"
+        },
+        {
+          "id": "CHAT-038.keep-error",
+          "label": "保留失败",
+          "description": "“保留草稿失败：{error}”，继续保留选择与草稿。"
+        },
+        {
+          "id": "CHAT-038.discard",
+          "label": "丢弃草稿",
+          "description": "调用discardDraft，清partialDraft/failure，原有内容按宿主恢复。"
+        },
+        {
+          "id": "CHAT-038.stale",
+          "label": "版本不匹配",
+          "description": "必须拒绝保留过期草稿，不能覆盖后续人工编辑。"
+        }
+      ],
+      "controls": [
+        "保留草稿",
+        "丢弃草稿"
+      ],
+      "transitions": [
+        "保留→CHAT-039",
+        "丢弃→原画布"
+      ],
+      "boundary": "UI没有提交loading或防双击专门状态，不能将提案的pending误写成当前实现；不自动保存原件。"
+    },
+    {
+      "id": "CHAT-039",
+      "title": "回退本轮画布修改",
+      "source": [
+        "packages/chat/src/runtime/DocxInterruptBridge.tsx:442",
+        "packages/chat/src/runtime/DocxInterruptBridge.tsx:846"
+      ],
+      "entry": "changed=true或保留部分草稿后",
+      "states": [
+        {
+          "id": "CHAT-039.available",
+          "label": "可回退",
+          "description": "显示“回退本轮修改”。"
+        },
+        {
+          "id": "CHAT-039.success",
+          "label": "回退成功",
+          "description": "await undoRound后清入口与failure。"
+        },
+        {
+          "id": "CHAT-039.unsafe",
+          "label": "后续已修改",
+          "description": "undoRound返回false报“画布已有后续修改，无法安全回退”，UI“无法回退本轮：…”保留入口。"
+        },
+        {
+          "id": "CHAT-039.failed",
+          "label": "执行异常",
+          "description": "相同错误前缀，不能说已撤销或已保存。"
+        }
+      ],
+      "controls": [
+        "回退本轮修改"
+      ],
+      "transitions": [
+        "成功→画布恢复",
+        "失败→保留提示"
+      ],
+      "boundary": "不是撤销所有用户操作；工具本轮撤销由格式宿主保证原子性。"
+    },
+    {
+      "id": "CHAT-040",
+      "title": "Agent创建新文档交接",
+      "source": [
+        "packages/chat/src/runtime/DocxInterruptBridge.tsx:341",
+        "packages/chat/src/runtime/DocxInterruptBridge.tsx:510",
+        "packages/chat/src/runtime/DocxInterruptBridge.tsx:759"
+      ],
+      "entry": "create_document工具创建成功",
+      "states": [
+        {
+          "id": "CHAT-040.created",
+          "label": "文件已创建",
+          "description": "真实返回ID后显示“打开新文档”。"
+        },
+        {
+          "id": "CHAT-040.autoopen",
+          "label": "回答结束交接",
+          "description": "runtime非running且无interrupts后，按ID只自动打开一次。"
+        },
+        {
+          "id": "CHAT-040.open",
+          "label": "显式打开",
+          "description": "按钮调用onOpenDocument，同一ID。"
+        },
+        {
+          "id": "CHAT-040.stopped-after",
+          "label": "创建后取消",
+          "description": "创建仍存在；工具报“创建操作已停止；新文件 {title} 已保存到知识库”，不自动导航。"
+        },
+        {
+          "id": "CHAT-040.invalid",
+          "label": "创建/导出失败",
+          "description": "字段/源格式/版本不合法或服务未接入→工具失败，不能虚构文件。"
+        },
+        {
+          "id": "CHAT-040.parse-error",
+          "label": "已保存但解析失败",
+          "description": "created.parseError存在时工具仍ok:true、changed:false；summary“文件已保存，但解析或索引失败：…”，返回真实ID与parseError，可打开新文档但不能假称内容可检索。"
+        }
+      ],
+      "controls": [
+        "打开新文档"
+      ],
+      "transitions": [
+        "完成回答→宿主文档导航"
+      ],
+      "boundary": "新文件创建/源画布编辑与格式工具栏属于现行API/Office能力；原型不可真写文件或增加格式能力。"
+    },
+    {
+      "id": "CHAT-041",
+      "title": "Agent历史中断摘要",
+      "source": [
+        "packages/chat/src/parts/DocxAgentHistoryNotice.tsx:42",
+        "packages/chat/src/runtime/history.ts:71"
+      ],
+      "entry": "持久消息含agent摘要",
+      "states": [
+        {
+          "id": "CHAT-041.pending",
+          "label": "待处理",
+          "description": "role=alert标题“文档编辑工具 · 待处理”；说明需打开原文档确认画布后重新发送指令。"
+        },
+        {
+          "id": "CHAT-041.open",
+          "label": "打开原文档",
+          "description": "只有api.onOpenDocument存在才显示“打开文档”。"
+        },
+        {
+          "id": "CHAT-041.cancelling",
+          "label": "取消待处理工具",
+          "description": "只有api.cancelDocxAgentRun存在才有按钮，loading，成功状态变已取消。"
+        },
+        {
+          "id": "CHAT-041.cancel-error",
+          "label": "取消失败",
+          "description": "role=alert保留error.message或“取消失败，请稍后再试”，可再按。"
+        },
+        {
+          "id": "CHAT-041.completed",
+          "label": "已完成",
+          "description": "role=status，“文档编辑工具 · 已完成”及工具名/状态/已修改画布。"
+        },
+        {
+          "id": "CHAT-041.failed",
+          "label": "失败",
+          "description": "摘要状态失败，无待处理动作，也不给回答成功动作条。"
+        },
+        {
+          "id": "CHAT-041.cancelled",
+          "label": "已取消",
+          "description": "摘要和每工具按取消显示，无待处理动作。"
+        }
+      ],
+      "controls": [
+        "打开文档",
+        "取消待处理工具"
+      ],
+      "transitions": [
+        "打开→宿主原文档",
+        "取消→cancelled/error"
+      ],
+      "boundary": "历史不存工具参数、结果或正文；不自动重新执行历史工具，不提供伪恢复按钮。"
+    },
+    {
+      "id": "CHAT-042",
+      "title": "PPTX截图草稿与消息附件",
+      "source": [
+        "packages/chat/src/parts/PptxSnapshotAttachment.tsx:42",
+        "packages/chat/src/composer/Composer.tsx:365"
+      ],
+      "entry": "宿主美化本页草稿",
+      "states": [
+        {
+          "id": "CHAT-042.draft",
+          "label": "待发送附件",
+          "description": "96×64内缩略图，标题“第N页截图”，说明“准备时的页面 · 发送后用于美化”。"
+        },
+        {
+          "id": "CHAT-042.remove",
+          "label": "移除截图",
+          "description": "按钮“移除第N页截图”，清本次绑定的截图校验提示。"
+        },
+        {
+          "id": "CHAT-042.no-model",
+          "label": "模型/视觉未就绪",
+          "description": "保留可编辑草稿，状态“可先编辑草稿，发送截图需要聊天模型并启用视觉输入。”+“设置模型”。"
+        },
+        {
+          "id": "CHAT-042.sent",
+          "label": "已发截图",
+          "description": "用户消息附件显示“准备时的页面”，不可移除。"
+        },
+        {
+          "id": "CHAT-042.other",
+          "label": "非截图附件退化",
+          "description": "名字不符合约定时只显示AttachmentPrimitive.Name，不画截图编辑。"
+        }
+      ],
+      "controls": [
+        "移除第N页截图",
+        "设置模型"
+      ],
+      "transitions": [
+        "发送→CHAT-043",
+        "移除→普通输入"
+      ],
+      "boundary": "PNG仅侧栏内存、刷新/卸载不恢复；不是通用附件上传/截图编辑器，禁止丢图检索降级。"
+    },
+    {
+      "id": "CHAT-043",
+      "title": "截图发送校验与错误",
+      "source": [
+        "packages/chat/src/runtime/pptx-snapshot.ts:11",
+        "packages/chat/src/runtime/pptx-snapshot.ts:32",
+        "packages/chat/src/runtime/use-mimir-runtime.ts:250"
+      ],
+      "entry": "截图存在时点击/Enter/API快捷发送",
+      "states": [
+        {
+          "id": "CHAT-043.valid",
+          "label": "当前真实截图",
+          "description": "核对documentId、slideIndex、slidePath、canvasVersion、sourceIsCurrent；发送真实PNG而非提示词。"
+        },
+        {
+          "id": "CHAT-043.target",
+          "label": "目标变化",
+          "description": "显示“截图对应的文档、页面或版本已变化，请重新点击“美化本页””，保留文字PNG不发请求。"
+        },
+        {
+          "id": "CHAT-043.vision",
+          "label": "视觉未就绪/只检索",
+          "description": "“截图美化需要可用的聊天模型并启用视觉输入，请前往模型设置”，不能降级。"
+        },
+        {
+          "id": "CHAT-043.multiple",
+          "label": "多截图",
+          "description": "“每轮美化只能附一页截图，请移除多余截图”。"
+        },
+        {
+          "id": "CHAT-043.invalid",
+          "label": "字节尺寸无效",
+          "description": "校验真实PNG、≤5MiB、≤1280×1920且≤2457600px；不合法显示具体原因。"
+        },
+        {
+          "id": "CHAT-043.full",
+          "label": "四份都被保护",
+          "description": "registry满4份且均排队/在途时显示“已有 4 份截图等待发送，请先处理队列中的草稿”。"
+        },
+        {
+          "id": "CHAT-043.dismiss",
+          "label": "关闭提示",
+          "description": "“关闭截图提示”只清错误，可继续改草稿；不绕过下次校验。"
+        }
+      ],
+      "controls": [
+        "关闭截图提示",
+        "发送",
+        "移除附件"
+      ],
+      "transitions": [
+        "重新美化→新草稿",
+        "再次发→重验"
+      ],
+      "boundary": "使用只读draftAgent核对不授予写能力；来源寿命回调不序列化；实际PNG未在本次research执行。"
+    },
+    {
+      "id": "CHAT-044",
+      "title": "截图排队/取回与派发",
+      "source": [
+        "packages/chat/src/runtime/use-mimir-runtime.ts:126",
+        "packages/chat/src/runtime/use-mimir-runtime.ts:229",
+        "packages/chat/src/runtime/agent.ts:95",
+        "packages/chat/src/ChatPanel.test.tsx:1654"
+      ],
+      "entry": "生成中Enter排队截图草稿",
+      "states": [
+        {
+          "id": "CHAT-044.freeze",
+          "label": "入队冻结",
+          "description": "文字PNG和整页目标/版本成一轮，不随之后选区变化漂移。"
+        },
+        {
+          "id": "CHAT-044.retrieve",
+          "label": "取回/停止",
+          "description": "恢复PNG文字原目标后移除首条。"
+        },
+        {
+          "id": "CHAT-044.dispatch",
+          "label": "自动派发前校验",
+          "description": "实际fetch边界补齐真实会话/Agent路由并再次重验目标。"
+        },
+        {
+          "id": "CHAT-044.stale-empty",
+          "label": "失效且输入空",
+          "description": "派发前发现过期，拒绝HTTP，空composer自动恢复原图文并显示原因。"
+        },
+        {
+          "id": "CHAT-044.stale-new",
+          "label": "失效且有新草稿",
+          "description": "保留用户新输入，原截图保留失败用户消息供显式重试/取回。"
+        },
+        {
+          "id": "CHAT-044.tampered",
+          "label": "取回内容不符",
+          "description": "队列file.data与registry PNG不符报“排队截图与原草稿不符，请重新准备”，不移除原队列。"
+        }
+      ],
+      "controls": [
+        "取回排队的消息",
+        "停止",
+        "失败重试/取回"
+      ],
+      "transitions": [
+        "派发成功→Agent",
+        "过期→CHAT-045"
+      ],
+      "boundary": "新草稿保护只在onSnapshotRejected自动恢复路径；不能泛化为所有setText均保留，原型应展示这一区别。"
+    },
+    {
+      "id": "CHAT-045",
+      "title": "截图失败重试与附件错误隔离",
+      "source": [
+        "packages/chat/src/runtime/use-mimir-runtime.ts:345",
+        "packages/chat/src/runtime/use-mimir-runtime.ts:375",
+        "packages/chat/src/ChatPanel.test.tsx:1827"
+      ],
+      "entry": "带截图失败轮的重试/只检索/取回",
+      "states": [
+        {
+          "id": "CHAT-045.retry",
+          "label": "带图重试",
+          "description": "回溯失败轮自己的snapshotName，重载registry PNG并按当下目标重验，重新发真实PNG。"
+        },
+        {
+          "id": "CHAT-045.search",
+          "label": "只检索被拒绝",
+          "description": "恢复原PNG到composer但拒绝scope=search，不发送无图检索，说明原因。"
+        },
+        {
+          "id": "CHAT-045.refill",
+          "label": "取回图文",
+          "description": "恢复该轮文字、PNG，不自动发送。"
+        },
+        {
+          "id": "CHAT-045.expired",
+          "label": "内存已失效",
+          "description": "registry查不到时“截图目标已失效，请重新点击“美化本页””，提示重新准备。"
+        },
+        {
+          "id": "CHAT-045.remove-validation",
+          "label": "移除本附件错误",
+          "description": "只清attachmentBound的校验错误。"
+        },
+        {
+          "id": "CHAT-045.remove-transport",
+          "label": "连接错误保留",
+          "description": "移除截图不得清同时存在的普通连接错误，用户仍需看到传输问题。"
+        }
+      ],
+      "controls": [
+        "重试",
+        "只检索，不调模型",
+        "把问题放回输入框",
+        "移除截图"
+      ],
+      "transitions": [
+        "重试→CHAT-043",
+        "取回→CHAT-042"
+      ],
+      "boundary": "已发截图仅有界内存内可重试，无持久化恢复；同名文档版本相同但源换过也拒绝旧截图。"
+    },
+    {
+      "id": "CHAT-046",
+      "title": "Agent跨格式工具与媒体原件错误",
+      "source": [
+        "packages/chat/src/runtime/DocxInterruptBridge.tsx:67",
+        "packages/chat/src/runtime/DocxInterruptBridge.tsx:199",
+        "packages/chat/src/runtime/DocxInterruptBridge.test.ts:208"
+      ],
+      "entry": "Agent桥按固定工具名/格式分派",
+      "states": [
+        {
+          "id": "CHAT-046.read-write",
+          "label": "当前画布工具",
+          "description": "从发送冻结round/version执行，changed=true推进版本；同批首写后拒绝后续过期块操作并反馈模型。"
+        },
+        {
+          "id": "CHAT-046.image-generate",
+          "label": "受控图片生成/下载",
+          "description": "必须有对应IO服务；取消/人工编辑后不插图，不回传图片字节。"
+        },
+        {
+          "id": "CHAT-046.original-attachment",
+          "label": "指定原附件",
+          "description": "提示“请选择原附件「{name}」”，名称须匹配且≤8MiB PNG/JPEG，选择/读取期间版本和来源都重验。"
+        },
+        {
+          "id": "CHAT-046.original-media",
+          "label": "原音视频",
+          "description": "仅当前File原件，不接受mediaUrls替代，取消或分析时画布变化拒绝迟到结果，不调用写执行器。"
+        },
+        {
+          "id": "CHAT-046.stream-writing",
+          "label": "DOCX流式写作",
+          "description": "逐段预览，完成按发送版本提交一次；失败转CHAT-038。"
+        },
+        {
+          "id": "CHAT-046.export-sheet",
+          "label": "导出当前工作表",
+          "description": "XLSX来源xlsx/csv只用当前显示值，拒绝content/无效sheetId，原bytes不回模型。"
+        },
+        {
+          "id": "CHAT-046.invalid",
+          "label": "工具结果无效",
+          "description": "schema不符“编辑器返回了无效的工具结果”，异常进可见执行失败；不能呈现成功。"
+        }
+      ],
+      "controls": [
+        "按请求出现的媒体选择",
+        "停止工具",
+        "各格式宿主控件"
+      ],
+      "transitions": [
+        "失败→CHAT-034.failed",
+        "创建→CHAT-040",
+        "部分写作→CHAT-038"
+      ],
+      "boundary": "仅盘点共用桥/消息交接，不在本模块重做Office格式工具条、执行器或生成服务；无需列出上千格式操作作为聊天新页面。"
+    }
+  ]
+}

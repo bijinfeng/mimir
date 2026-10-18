@@ -1,0 +1,9 @@
+{
+  "groups": 71,
+  "source_states": 379,
+  "unique_ids": true,
+  "source_anchor_count": 188,
+  "source_anchors_in_range": true,
+  "issues": [],
+  "scope": "File/line existence and unique IDs only; not statement correctness, HTML rendering or GUI execution."
+}

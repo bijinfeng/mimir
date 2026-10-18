@@ -112,17 +112,28 @@
       "sha256": "2a3aafb4277c37bd06e38ae94ecec085e0f31a062b88e25a000042e5cbdb220d",
       "preview_url": "http://127.0.0.1:5187/review.html",
       "verification": "../10-18-interaction-document/implementation-acceptance.md",
-      "global_gate": "failed_outside_scope"
+      "global_gate": "failed_outside_scope",
+      "parity_implementation_commit": "a2340f7",
+      "parity_notes": "修复大纲行几何、主题与滚动选中，还原已批准v1；冻结稿未变。"
     },
     {
       "id": "chat",
       "name": "AI对话与生成交互",
-      "status": "not_requested",
-      "proposal": null,
-      "version": null,
+      "status": "awaiting_exact_version_approval",
+      "proposal": "../10-18-interaction-chat/prototype/review.html",
+      "version": "chat-review-v1",
       "approved_at": null,
       "user_quote": null,
-      "implementation_commit": null
+      "implementation_commit": null,
+      "task": ".trellis/tasks/10-18-interaction-chat",
+      "planning_user_quote": "继续",
+      "product_implementation_approved": false,
+      "sha256": "70a18bd3622cb98ccde681c539c28336fd730f5e9b380e271109c67c34496f19",
+      "preview_url": "http://127.0.0.1:5189/review.html?mode=compare",
+      "coverage_groups": 71,
+      "coverage_states": 379,
+      "render_tracks": 52,
+      "verification": "../10-18-interaction-chat/planning-acceptance.md"
     },
     {
       "id": "settings",

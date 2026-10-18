@@ -1,0 +1,1086 @@
+{
+  "version": "chat-review-v1",
+  "groups": 71,
+  "linkedStates": 379,
+  "renderedTracks": 52,
+  "sourceBindings": [
+    {
+      "track": "empty",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "empty-stage",
+          "line": 1746
+        },
+        {
+          "needle": "empty-greeting",
+          "line": 1747
+        },
+        {
+          "needle": "向知识库提问",
+          "line": 712
+        }
+      ]
+    },
+    {
+      "track": "sidebar",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "quick-questions",
+          "line": 1762
+        },
+        {
+          "needle": "!snapshot",
+          "line": 748
+        },
+        {
+          "needle": "send([",
+          "line": 1767
+        },
+        {
+          "needle": "标准模式",
+          "line": 491
+        }
+      ]
+    },
+    {
+      "track": "draft",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "draft-consume",
+          "line": 2405
+        },
+        {
+          "needle": "重投同一草稿",
+          "line": 2408
+        },
+        {
+          "needle": "投递新草稿",
+          "line": 2417
+        },
+        {
+          "needle": "模拟页面刷新",
+          "line": 2438
+        }
+      ]
+    },
+    {
+      "track": "history",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "skeleton",
+          "line": 1736
+        },
+        {
+          "needle": "loadError",
+          "line": 299
+        },
+        {
+          "needle": "读取成功",
+          "line": 2369
+        },
+        {
+          "needle": "setDelivered",
+          "line": 227
+        }
+      ]
+    },
+    {
+      "track": "messages",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "message-thread",
+          "line": 1787
+        },
+        {
+          "needle": "ui.emptyAnswer",
+          "line": 229
+        },
+        {
+          "needle": "lastSuccessful",
+          "line": 340
+        },
+        {
+          "needle": "!ui.multiTurn",
+          "line": 2080
+        }
+      ]
+    },
+    {
+      "track": "scroll",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "scrollAway",
+          "line": 318
+        },
+        {
+          "needle": "scroller.current?.scrollTo",
+          "line": 2162
+        },
+        {
+          "needle": "composer-line",
+          "line": 692
+        }
+      ]
+    },
+    {
+      "track": "composer",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "onCompositionStart",
+          "line": 726
+        },
+        {
+          "needle": "composing.current",
+          "line": 727
+        },
+        {
+          "needle": "event.shiftKey",
+          "line": 641
+        },
+        {
+          "needle": "Enter 排队",
+          "line": 717
+        }
+      ]
+    },
+    {
+      "track": "send",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "function send(",
+          "line": 387
+        },
+        {
+          "needle": "function stop(",
+          "line": 381
+        },
+        {
+          "needle": "setDelivered('none')",
+          "line": 402
+        },
+        {
+          "needle": "enqueue(value",
+          "line": 397
+        }
+      ]
+    },
+    {
+      "track": "scope",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "renderScopeMenu",
+          "line": 661
+        },
+        {
+          "needle": "docsRead",
+          "line": 300
+        },
+        {
+          "needle": "sampleDocs.map",
+          "line": 675
+        },
+        {
+          "needle": "setScope(doc)",
+          "line": 680
+        }
+      ]
+    },
+    {
+      "track": "strength",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "setDeep(false)",
+          "line": 468
+        },
+        {
+          "needle": "setDeep(true)",
+          "line": 2200
+        },
+        {
+          "needle": "!sidebar",
+          "line": 779
+        }
+      ]
+    },
+    {
+      "track": "model",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "bound-option",
+          "line": 2209
+        },
+        {
+          "needle": "aria-disabled=\"true\"",
+          "line": 2209
+        },
+        {
+          "needle": "管理模型",
+          "line": 2221
+        },
+        {
+          "needle": "ui.sameModel",
+          "line": 2215
+        }
+      ]
+    },
+    {
+      "track": "usage",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "输入（上下文）",
+          "line": 2229
+        },
+        {
+          "needle": "输出：1,280 tok",
+          "line": 2230
+        },
+        {
+          "needle": "合计：1.7万 tok",
+          "line": 2231
+        }
+      ]
+    },
+    {
+      "track": "queue",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "queue-row",
+          "line": 755
+        },
+        {
+          "needle": "restoreQueued",
+          "line": 367
+        },
+        {
+          "needle": "setLastQuestion(queued)",
+          "line": 426
+        }
+      ]
+    },
+    {
+      "track": "stop",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "function stop()",
+          "line": 381
+        },
+        {
+          "needle": "delivered",
+          "line": 227
+        },
+        {
+          "needle": "已停止生成",
+          "line": 385
+        }
+      ]
+    },
+    {
+      "track": "trace",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "traceReady",
+          "line": 236
+        },
+        {
+          "needle": "trace-waiting",
+          "line": 1804
+        },
+        {
+          "needle": "setManual(true)",
+          "line": 151
+        },
+        {
+          "needle": "wasLive",
+          "line": 139
+        }
+      ]
+    },
+    {
+      "track": "reasoning",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "reasoning-shell",
+          "line": 1843
+        },
+        {
+          "needle": "ui.reasoningOpen",
+          "line": 1846
+        },
+        {
+          "needle": "ui.specialState==='long'",
+          "line": 1854
+        }
+      ]
+    },
+    {
+      "track": "markdown",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "table-scroll",
+          "line": 1895
+        },
+        {
+          "needle": "code-head",
+          "line": 1922
+        },
+        {
+          "needle": "stream-caret",
+          "line": 1214
+        },
+        {
+          "needle": "prose",
+          "line": 1867
+        }
+      ]
+    },
+    {
+      "track": "code",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "function copyAnswer",
+          "line": 513
+        },
+        {
+          "needle": "if (code && !after) return",
+          "line": 515
+        },
+        {
+          "needle": "复制失败，请选择代码后手动复制",
+          "line": 1939
+        },
+        {
+          "needle": "fallback",
+          "line": 697
+        }
+      ]
+    },
+    {
+      "track": "tool",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "scene.track==='tool' && agentCard",
+          "line": 1864
+        },
+        {
+          "needle": "Args",
+          "line": 925
+        },
+        {
+          "needle": "Result",
+          "line": 939
+        },
+        {
+          "needle": "tool-disclosure",
+          "line": 146
+        }
+      ]
+    },
+    {
+      "track": "citations",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "citation-title",
+          "line": 844
+        },
+        {
+          "needle": "citation-snippet",
+          "line": 856
+        },
+        {
+          "needle": "unknownChannel",
+          "line": 847
+        },
+        {
+          "needle": "openTarget('current')",
+          "line": 841
+        }
+      ]
+    },
+    {
+      "track": "save",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "saveAnswer",
+          "line": 496
+        },
+        {
+          "needle": "setSaving(true)",
+          "line": 498
+        },
+        {
+          "needle": "completeSave",
+          "line": 503
+        },
+        {
+          "needle": "saveError",
+          "line": 289
+        }
+      ]
+    },
+    {
+      "track": "copy",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "copyAnswer",
+          "line": 513
+        },
+        {
+          "needle": "已复制原文片段与来源链接",
+          "line": 524
+        },
+        {
+          "needle": "copyStatus",
+          "line": 291
+        }
+      ]
+    },
+    {
+      "track": "failure",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "failureUI",
+          "line": 59
+        },
+        {
+          "needle": "quota:",
+          "line": 60
+        },
+        {
+          "needle": "timeout:",
+          "line": 69
+        },
+        {
+          "needle": "truncated:",
+          "line": 78
+        },
+        {
+          "needle": "offline:",
+          "line": 87
+        },
+        {
+          "needle": "暂不可用",
+          "line": 898
+        }
+      ]
+    },
+    {
+      "track": "recovery",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "ui.historyMode) setDeep(false)",
+          "line": 468
+        },
+        {
+          "needle": "if (search) setScope('')",
+          "line": 469
+        },
+        {
+          "needle": "enqueue(lastQuestion",
+          "line": 471
+        },
+        {
+          "needle": "zero-stream",
+          "line": 1793
+        }
+      ]
+    },
+    {
+      "track": "sources",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "scene.track==='sources'",
+          "line": 1969
+        },
+        {
+          "needle": "source-chip",
+          "line": 1972
+        },
+        {
+          "needle": "ui.noHref",
+          "line": 1978
+        }
+      ]
+    },
+    {
+      "track": "files",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "scene.track==='files'",
+          "line": 1983
+        },
+        {
+          "needle": "ui.unsafeFile",
+          "line": 1991
+        },
+        {
+          "needle": "FileGlyph kind=\"pdf\"",
+          "line": 1985
+        }
+      ]
+    },
+    {
+      "track": "images",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "imageState",
+          "line": 333
+        },
+        {
+          "needle": "image-error",
+          "line": 2030
+        },
+        {
+          "needle": "broken-image",
+          "line": 2043
+        },
+        {
+          "needle": "setImageState('loading')",
+          "line": 2035
+        }
+      ]
+    },
+    {
+      "track": "audio",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "scene.track==='audio'",
+          "line": 2003
+        },
+        {
+          "needle": "FileGlyph kind=\"audio\"",
+          "line": 2006
+        },
+        {
+          "needle": "访谈录音.mp3",
+          "line": 2015
+        }
+      ]
+    },
+    {
+      "track": "agent",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "bridgePanel",
+          "line": 1049
+        },
+        {
+          "needle": "agent-progress",
+          "line": 1055
+        },
+        {
+          "needle": "specialState==='execute'",
+          "line": 1073
+        },
+        {
+          "needle": "停止工具",
+          "line": 1075
+        }
+      ]
+    },
+    {
+      "track": "agent-stop",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "agent-stop",
+          "line": 1038
+        },
+        {
+          "needle": "停止工具失败",
+          "line": 1086
+        },
+        {
+          "needle": "已经落到画布",
+          "line": 1089
+        }
+      ]
+    },
+    {
+      "track": "agent-resume",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "agent-resume",
+          "line": 1104
+        },
+        {
+          "needle": "重试续传工具结果",
+          "line": 1128
+        },
+        {
+          "needle": "缓存的工具结果",
+          "line": 1120
+        },
+        {
+          "needle": "agentStage==='submitting'",
+          "line": 982
+        }
+      ]
+    },
+    {
+      "track": "agent-media",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "mediaRequest",
+          "line": 1039
+        },
+        {
+          "needle": "选择本地文件",
+          "line": 1173
+        },
+        {
+          "needle": "使用文档中选中的图片",
+          "line": 1183
+        },
+        {
+          "needle": "mediaChoice",
+          "line": 336
+        }
+      ]
+    },
+    {
+      "track": "agent-draft",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "partialDraft",
+          "line": 1034
+        },
+        {
+          "needle": "beginDraftAction",
+          "line": 1007
+        },
+        {
+          "needle": "settleDraft",
+          "line": 1012
+        },
+        {
+          "needle": "保留草稿",
+          "line": 1018
+        },
+        {
+          "needle": "丢弃草稿",
+          "line": 1242
+        }
+      ]
+    },
+    {
+      "track": "agent-undo",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "const undo =",
+          "line": 1048
+        },
+        {
+          "needle": "beginDraftAction('undo')",
+          "line": 1276
+        },
+        {
+          "needle": "无法安全回退",
+          "line": 1264
+        }
+      ]
+    },
+    {
+      "track": "agent-create",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "const created =",
+          "line": 1045
+        },
+        {
+          "needle": "openTarget('new')",
+          "line": 1309
+        },
+        {
+          "needle": "parse-error",
+          "line": 1291
+        },
+        {
+          "needle": "stopped-after",
+          "line": 1300
+        }
+      ]
+    },
+    {
+      "track": "agent-history",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "historyNotice",
+          "line": 1366
+        },
+        {
+          "needle": "agent-history",
+          "line": 344
+        },
+        {
+          "needle": "history-original",
+          "line": 1402
+        },
+        {
+          "needle": "取消待处理工具",
+          "line": 966
+        }
+      ]
+    },
+    {
+      "track": "snapshot",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "Snapshot",
+          "line": 180
+        },
+        {
+          "needle": "sentSnapshot",
+          "line": 328
+        },
+        {
+          "needle": "移除第3页截图",
+          "line": 199
+        },
+        {
+          "needle": "ui.noVision",
+          "line": 389
+        }
+      ]
+    },
+    {
+      "track": "snapshot-validation",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "validationIssue",
+          "line": 327
+        },
+        {
+          "needle": "setSnapshotIssue(validationIssue",
+          "line": 390
+        },
+        {
+          "needle": "setValidationIssue('')",
+          "line": 705
+        }
+      ]
+    },
+    {
+      "track": "snapshot-queue",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "snapshot-queue",
+          "line": 281
+        },
+        {
+          "needle": "stale-new",
+          "line": 282
+        },
+        {
+          "needle": "queued-text",
+          "line": 757
+        },
+        {
+          "needle": "restoreQueued",
+          "line": 367
+        }
+      ]
+    },
+    {
+      "track": "snapshot-retry",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "sentSnapshot) && validationIssue",
+          "line": 457
+        },
+        {
+          "needle": "sentSnapshot) && search",
+          "line": 462
+        },
+        {
+          "needle": "snapshotIssue",
+          "line": 285
+        }
+      ]
+    },
+    {
+      "track": "agent-service",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "agent-service",
+          "line": 1036
+        },
+        {
+          "needle": "original-attachment",
+          "line": 1042
+        },
+        {
+          "needle": "original-media",
+          "line": 1042
+        },
+        {
+          "needle": "stream-writing",
+          "line": 1044
+        },
+        {
+          "needle": "export-sheet",
+          "line": 1047
+        }
+      ]
+    },
+    {
+      "track": "history-error",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "load-error",
+          "line": 1718
+        },
+        {
+          "needle": "暂时无法读取这段对话",
+          "line": 1722
+        },
+        {
+          "needle": "记录还在",
+          "line": 1722
+        }
+      ]
+    },
+    {
+      "track": "history-nav",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "historyRead",
+          "line": 301
+        },
+        {
+          "needle": "history-row",
+          "line": 1517
+        },
+        {
+          "needle": "aria-current",
+          "line": 1523
+        },
+        {
+          "needle": "对话刷新失败",
+          "line": 1501
+        }
+      ]
+    },
+    {
+      "track": "navigation",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "navOpen",
+          "line": 305
+        },
+        {
+          "needle": "runGuarded",
+          "line": 530
+        },
+        {
+          "needle": "performPendingNavigation",
+          "line": 545
+        }
+      ]
+    },
+    {
+      "track": "search-handoff",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "搜索问题交接",
+          "line": 2255
+        },
+        {
+          "needle": "只预填问题，不自动发送",
+          "line": 2286
+        },
+        {
+          "needle": "ui.searchBlocked",
+          "line": 2289
+        }
+      ]
+    },
+    {
+      "track": "citation-handoff",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "runGuarded(()=>openTarget",
+          "line": 841
+        },
+        {
+          "needle": "返回对话",
+          "line": 1697
+        },
+        {
+          "needle": "sourceTarget",
+          "line": 309
+        }
+      ]
+    },
+    {
+      "track": "layout",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "FitPreview",
+          "line": 2541
+        },
+        {
+          "needle": "ResizeObserver",
+          "line": 583
+        },
+        {
+          "needle": "ChatDemo",
+          "line": 206
+        },
+        {
+          "needle": "narrow=",
+          "line": 2713
+        }
+      ]
+    },
+    {
+      "track": "sidebar-lifetime",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "setHidden(true)",
+          "line": 629
+        },
+        {
+          "needle": "重新打开助手",
+          "line": 1610
+        },
+        {
+          "needle": "同篇生成继续进行",
+          "line": 1608
+        }
+      ]
+    },
+    {
+      "track": "sidebar-overlay",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "aria-modal={overlay",
+          "line": 1618
+        },
+        {
+          "needle": "inert={overlay",
+          "line": 1567
+        },
+        {
+          "needle": "overlay-dismiss",
+          "line": 1445
+        },
+        {
+          "needle": "handleRootKey",
+          "line": 609
+        }
+      ]
+    },
+    {
+      "track": "capability",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "capability==='loading'",
+          "line": 1654
+        },
+        {
+          "needle": "capability==='nomodel'",
+          "line": 1658
+        },
+        {
+          "needle": "revision-switch",
+          "line": 1672
+        }
+      ]
+    },
+    {
+      "track": "agent-boundary",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "ui.special",
+          "line": 237
+        },
+        {
+          "needle": "ui.capability",
+          "line": 302
+        },
+        {
+          "needle": "agentStage",
+          "line": 313
+        },
+        {
+          "needle": "画布版本",
+          "line": 578
+        }
+      ]
+    },
+    {
+      "track": "agent-end",
+      "source": "main.tsx",
+      "anchors": [
+        {
+          "needle": "manualChanged",
+          "line": 315
+        },
+        {
+          "needle": "agentChanged",
+          "line": 946
+        },
+        {
+          "needle": "changeAgent",
+          "line": 575
+        }
+      ]
+    }
+  ],
+  "standalone": true,
+  "productImports": false,
+  "businessRequests": false,
+  "persistence": false,
+  "scope": "Routes + source recipe bindings; not 379 GUI tests. API settlement, tools, PNG capture, clipboard, file picker, native media, Electron and screen readers are simulated or boundary-only.",
+  "htmlSha256": "70a18bd3622cb98ccde681c539c28336fd730f5e9b380e271109c67c34496f19"
+}
