@@ -698,3 +698,25 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+
+## Session 25: 确认A图标并收敛第五模块范围
+<!-- trellis-session: v=2 fp=991f4df10705c24c -->
+
+**Date**: 2026-10-18
+**Task**: 确认A图标并收敛第五模块范围
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+用户回复A并继续，已记录Phosphor双色选择；revision2精确HTML与哈希保持不变。PRD收敛并保留来源/边界/验收，选型台账同步。任务仍planning，按规划技能呈现整个第五模块最终实施范围等待明确确认；未写产品代码，未创建重复任务，无关WIP未提交。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `9c5ebde` | docs(ui): record selected Phosphor icon direction |
+
+### Status
+
+[OK] **Completed**
