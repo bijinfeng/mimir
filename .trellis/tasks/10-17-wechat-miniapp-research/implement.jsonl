@@ -1,0 +1,10 @@
+{"file": ".trellis/spec/project/rules.md", "reason": "文件真相、统一正文、中文分词及现有插件边界"}
+{"file": ".trellis/spec/guides/index.md", "reason": "跨层变更检查与领域参考要求"}
+{"file": ".trellis/spec/server/backend/index.md", "reason": "Hono 宿主规范入口"}
+{"file": ".trellis/spec/server/backend/auth.md", "reason": "既有会话和桌面令牌隔离，不能放宽原有鉴权"}
+{"file": ".trellis/spec/server/backend/api-routes.md", "reason": "共享校验、路由顺序、统一错误及服务层复用"}
+{"file": ".trellis/spec/server/backend/tests.md", "reason": "测试账号、隔离目录、共享库串行、SQLite / PG 验证"}
+{"file": ".trellis/spec/shared/contract/index.md", "reason": "共享合同唯一来源与包边界"}
+{"file": ".trellis/spec/core/backend/index.md", "reason": "检索编排与通道职责边界"}
+{"file": ".trellis/spec/plugin-leg/backend/index.md", "reason": "keyword / substring / vector 双方言召回约束"}
+{"file": ".trellis/tasks/10-17-wechat-miniapp-research/research/miniapp-product-research.md", "reason": "微信官方能力、WeKnora v0.8.3 固定源码和产品决策证据"}

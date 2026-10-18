@@ -1,0 +1,22 @@
+# RequestTask.onChunkReceived(function listener)
+基础库 2.20.1 开始支持，低版本需做兼容处理。
+小程序插件：支持
+相关文档: 网络使用说明、局域网通信、移动解析HttpDNS
+# 功能描述
+监听 Transfer-Encoding Chunk Received 事件。当接收到新的chunk时触发。
+# 参数
+# function listener
+Transfer-Encoding Chunk Received 事件的监听函数
+# 参数
+ # Object res 
+属性 类型 说明
+data ArrayBuffer 返回的chunk buffer
+The translations are provided by WeChat Translation and are for reference only. In case of any inconsistency and discrepancy between the Chinese version and the English version, the Chinese version shall prevail.Incorrect translation. Tap to report.
+关于腾讯
+文档中心
+辟谣中心
+客服中心
+Copyright © 2012-2026 Tencent. All Rights Reserved.
+复制
+问题反馈
+ 反馈
