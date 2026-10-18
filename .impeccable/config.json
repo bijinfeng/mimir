@@ -1,0 +1,29 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": ["packages/office/src/pptx-output-complete.test.ts"],
+        "createdAt": "2026-10-16T16:13:34.406Z",
+        "reason": "Checker: this regression deliberately includes literal <img> in escaped speaker notes and uses detached image decode stubs; no empty image is rendered in product UI."
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": ["packages/renderer/src/components/ContentTypography.style.ts"],
+        "createdAt": "2026-10-16T18:12:12.303Z",
+        "reason": "Agent review: line 169 styles semantic Markdown blockquote with a neutral colorBorder quote rule, not a decorative card accent; preserve quotation hierarchy."
+      },
+      {
+        "rule": "overused-font",
+        "value": "roboto",
+        "files": [".trellis/tasks/10-17-wechat-miniapp-research/prototype/src/styles.css"],
+        "createdAt": "2026-10-18T01:27:36.820Z",
+        "reason": "Agent: protected mobile-app template AGENTS.md requires Roboto for the Pixel Android status bar; styles.css line 520 implements that device chrome, not the Mimir app typeface."
+      }
+    ]
+  }
+}
