@@ -1,0 +1,78 @@
+{
+  "button": {
+    "bottom": 649.796875,
+    "height": 24.390625,
+    "left": 723.734375,
+    "right": 813,
+    "top": 625.40625,
+    "width": 89.265625,
+    "x": 723.734375,
+    "y": 625.40625
+  },
+  "children": [
+    {
+      "css": {
+        "display": "block",
+        "line": "20.4px",
+        "margin": "0px",
+        "vertical": "baseline"
+      },
+      "rect": {
+        "bottom": 647.796875,
+        "height": 20.390625,
+        "left": 728.734375,
+        "right": 790,
+        "top": 627.40625,
+        "width": 61.265625,
+        "x": 728.734375,
+        "y": 627.40625
+      },
+      "tag": "SPAN"
+    },
+    {
+      "css": {
+        "display": "block",
+        "line": "20.4px",
+        "margin": "0px",
+        "vertical": "baseline"
+      },
+      "rect": {
+        "bottom": 644.09375,
+        "height": 13,
+        "left": 795,
+        "right": 808,
+        "top": 631.09375,
+        "width": 13,
+        "x": 795,
+        "y": 631.09375
+      },
+      "tag": "svg"
+    }
+  ],
+  "css": {
+    "border": "0px none rgb(0, 122, 69)",
+    "line": "20.4px",
+    "padding": "2px 5px",
+    "transform": "none"
+  },
+  "label": {
+    "bottom": 647.796875,
+    "height": 20.390625,
+    "left": 229,
+    "right": 387.78125,
+    "top": 627.40625,
+    "width": 158.78125,
+    "x": 229,
+    "y": 627.40625
+  },
+  "row": {
+    "bottom": 660.796875,
+    "height": 47.390625,
+    "left": 211,
+    "right": 831,
+    "top": 613.40625,
+    "width": 620,
+    "x": 211,
+    "y": 613.40625
+  }
+}

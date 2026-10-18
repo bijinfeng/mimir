@@ -70,3 +70,12 @@ Office失败：`DocxEditor.encryption.test.tsx` 的 external standard / external
 - 独立检查及完整Renderer：57文件495测试通过；本轮17文件lint/format、Renderer类型、样式/AntD检查通过。全仓`pnpm -r typecheck`通过。
 - 本轮`pnpm check`仍停在其他小程序任务7项lint错误；后续门未执行。此前Office加密测试历史阻断本轮未重跑。任务仍开放、不归档，不宣称全仓通过。
 - 仅提交当前搜索还原改动、测试、规范与证据；其他会话WIP保留，不推送。
+
+## 2026-10-18 AI 操作区 hover 修复
+
+用户标注图文未居中且 hover 抖动。真实浏览器确认 AntD 6.6.6 link Button 的 hover/active 边框简写覆盖默认局部边框：按钮宽高各增加2px，整条AI区增加2px，文字左移/下移1px。局部状态规则固定无边框，左右图文组显式flex居中，过渡限定颜色/背景，并保留键盘焦点环与窄屏44px触点。
+
+- 桌面浅色、深色和390×844浅深色分别采样 default / hover / leave：AI行、按钮、左右图文的矩形全部相同；内部图文中心差桌面约0.008px，窄屏0px。桌面active与键盘focus另有实际采样，focus-visible为2px描边。
+- 独立检查无新增问题；定向lint/format、样式守卫、AntD lint、Renderer类型检查及Palette15项测试通过。禁用态由组件既有回归和级联审查覆盖，未声称执行原生OS输入法或disabled的真实GUI采样。
+- 本轮重新执行pnpm check，仍在其他小程序原型7项lint错误处终止，后续全仓门未执行。任务保持开放，不归档。
+- 证据：`verification/ai-hover/`，含修复前后截图、四组状态几何、active、独立检查和全仓失败输出；冻结HTML保持原哈希。

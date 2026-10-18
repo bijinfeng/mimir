@@ -463,7 +463,13 @@ export const useStyles = createStyles(({ css, token, prefixCls, isDarkMode }) =>
       align-items: center;
       min-width: 0;
       gap: 8px;
+      line-height: 1.7;
+      > span {
+        display: block;
+        min-width: 0;
+      }
       > svg {
+        display: block;
         color: ${token.colorLink};
       }
       @media (max-width: 575px) {
@@ -478,6 +484,7 @@ export const useStyles = createStyles(({ css, token, prefixCls, isDarkMode }) =>
         display: inline-flex;
         flex: none;
         align-items: center;
+        justify-content: center;
         gap: 5px;
         height: auto;
         padding: 2px 5px;
@@ -486,6 +493,28 @@ export const useStyles = createStyles(({ css, token, prefixCls, isDarkMode }) =>
         font-size: ${SEARCH_TYPE.snippet}px;
         line-height: 1.7;
         white-space: nowrap;
+        transition:
+          color 0.2s,
+          background-color 0.2s;
+        > span {
+          display: inline-flex;
+          align-items: center;
+        }
+        > svg {
+          display: block;
+        }
+      }
+      /* AntD's link variant reapplies its border shorthand on hover/active. */
+      &&&,
+      &&&:hover:enabled,
+      &&&:active:enabled,
+      &&&:focus-visible,
+      &&&:disabled {
+        border: 0;
+      }
+      &&&:focus-visible {
+        outline: 2px solid ${token.focusRing};
+        outline-offset: 2px;
       }
       @media (max-width: 575px) {
         && {
