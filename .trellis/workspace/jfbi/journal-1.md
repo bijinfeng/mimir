@@ -652,3 +652,26 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Next Steps
 
 - 外部门修复后重跑pnpm check再归档；下一模块仍先出HTML并获用户批准。
+
+
+## Session 23: 知识库目录交互 HTML 评审稿冻结
+<!-- trellis-session: v=2 fp=0cb14aa150fe316b -->
+
+**Date**: 2026-10-18
+**Task**: 知识库目录交互 HTML 评审稿冻结
+**Package**: renderer
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+第五模块仅规划：完成58组299状态源码盘点、WeKnora与Obsidian固定版本证据、独立HTML前后对比；原型独立lint/type/format/build与映射检查通过，主会话浏览器抽验创建改名删除、失败恢复、菜单回焦、hover几何、浅深390px低高度和100条长列表。冻结library-review-v1 revision1，SHA256 a3f0f0053519810140a955d5d9fdbb727eded3a9661d2353b0282f473b21f281，预览5186。产品基线未改，任务保持planning等待用户认可，未启动实施或归档；外部全仓门阻断沿用模块4记录。无关并发修改未纳入提交。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `68a0972` | docs(ui): add library interaction review prototype |
+
+### Status
+
+[OK] **Completed**
