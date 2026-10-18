@@ -301,3 +301,38 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+
+## Session 12: 工作区导航与账户菜单 v1 HTML 待评审
+<!-- trellis-session: v=2 fp=58b72bc70d30dd84 -->
+
+**Date**: 2026-10-18
+**Task**: 工作区导航与账户菜单 v1 HTML 待评审
+**Package**: renderer
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+第二模块独立建档与规划完成；交付12切片97预览状态和19组144项清单，等待具体HTML认可，产品代码零修改。
+
+### Main Changes
+
+- 新增独立HTML及源码，保留语雀视觉、平铺知识库与主题级联，规划重命名/读取/账户/登出恢复。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `3cfde06` | docs(ui): plan workspace navigation interaction polish |
+
+### Testing
+
+- [OK] 原型lint、TypeScript、独立构建通过；97状态双栏渲染、390px级联边界与关键恢复路径核对。
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 等待用户认可workspace v1（SHA256 de8c187e2e7c71205dfdf6859f4be8948759433faff7be8f896e936b6b6f3271），未认可前不执行task.py start或产品实现。

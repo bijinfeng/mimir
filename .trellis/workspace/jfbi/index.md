@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 11
+- **Total Sessions**: 12
 - **Last Active**: 2026-10-18
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~303 | Active |
+| `journal-1.md` | ~338 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 12 | 2026-10-18 | 工作区导航与账户菜单 v1 HTML 待评审 | `3cfde06` | `codex/all-pages-polish` |
 | 11 | 2026-10-18 | 基础组件 v1 实施与验收 | `cb54c9e` | `codex/all-pages-polish` |
 | 10 | 2026-10-17 | 补交编辑器工具并固定每轮提交节奏 | `6bf29f2` | `codex/fnos-native-platform` |
 | 9 | 2026-10-17 | 六格式工具补齐与最终浏览器质量门 | - | `codex/fnos-native-platform` |
