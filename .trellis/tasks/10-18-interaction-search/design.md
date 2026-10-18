@@ -1,4 +1,4 @@
-# 搜索与命令面板设计方向（HTML评审阶段）
+# 搜索与命令面板设计方向（v1已认可）
 
 ## 视觉与交互
 
@@ -16,4 +16,4 @@ Operate场景，保持语雀方向及基础组件合同，轻边界、克制绿�
 
 ## 证据与验收
 
-research/search-inventory.md及search-scenes.json拥有全部盘点ID；prototype/coverage.json将每项映射到可直达预览状态，无法真实模拟的宿主行为注明限制。参考WeKnora版本/SHA和适用性由research/reference-evidence.json记录。冻结版本含sha256，等待用户认可，不task.py start、不改产品源码。
+research/search-inventory.md及search-scenes.json拥有全部盘点ID；prototype/coverage.json将每项映射到可直达预览状态，无法真实模拟的宿主行为注明限制。参考WeKnora版本/SHA和适用性由research/reference-evidence.json记录。冻结版本含sha256，用户2026-10-18“实施吧”认可后进入产品实现；不改原型，不扩大其他模块范围。

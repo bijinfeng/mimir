@@ -1,0 +1,100 @@
+packages/chat test:
+packages/chat test:  RUN  v5.0.4 /Users/admin/Desktop/mimir/packages/chat
+packages/chat test:
+packages/office test:
+packages/office test:  RUN  v5.0.4 /Users/admin/Desktop/mimir/packages/office
+packages/office test:
+plugins/storage test:
+plugins/storage test:  Test Files  1 passed | 1 skipped (2)
+plugins/storage test:       Tests  13 passed | 2 skipped (15)
+plugins/storage test:    Start at  14:02:46
+plugins/storage test:    Duration  2.13s (import 79%, transform 12%, tests 8%, worker 1%)
+plugins/storage test:
+plugins/storage test: Done
+plugins/provider test:
+plugins/provider test:  RUN  v5.0.4 /Users/admin/Desktop/mimir/plugins/provider
+plugins/provider test:
+plugins/provider test:
+plugins/provider test:  Test Files  1 passed (1)
+plugins/provider test:       Tests  25 passed (25)
+plugins/provider test:    Start at  14:02:48
+plugins/provider test:    Duration  2.29s (import 55%, transform 41%, tests 2%, worker 1%)
+plugins/provider test:
+plugins/provider test: Done
+apps/server test$ vitest run && vitest run --config vitest.local.config.ts && vitest run --config vitest.fnos.config.ts && node --test scripts/sqlite-backup.node-test.mjs
+apps/server test:
+apps/server test:  RUN  v5.0.4 /Users/admin/Desktop/mimir/apps/server
+apps/server test:
+packages/chat test: POST http://127.0.0.1:54220/api/chat 503 (Service Unavailable)
+packages/chat test: POST http://127.0.0.1:54229/api/chat 503 (Service Unavailable)
+packages/chat test:
+packages/chat test:  Test Files  6 passed (6)
+packages/chat test:       Tests  85 passed (85)
+packages/chat test:    Start at  14:02:47
+packages/chat test:    Duration  40.26s (import 75%, tests 17%, environment 7%, transform 1%)
+packages/chat test:
+packages/chat test: Done
+packages/office test:  ❯ src/editors/DocxEditor.encryption.test.tsx (13 tests | 2 failed) 50956ms
+packages/office test:    × real Editor opens external standard through actual worker; wrong password/cancel are zero history 6522ms
+packages/office test:    × real Editor opens external agile through actual worker; wrong password/cancel are zero history 4979ms
+packages/office test:
+packages/office test: ⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+packages/office test:
+packages/office test:  FAIL  src/editors/DocxEditor.encryption.test.tsx > real Editor opens external standard through actual worker; wrong password/cancel are zero history
+packages/office test: AssertionError: expected false to be true // Object.is equality
+packages/office test:
+packages/office test: - Expected
+packages/office test: + Received
+packages/office test:
+packages/office test: - true
+packages/office test: + false
+packages/office test:
+packages/office test:  ❯ settle src/editors/DocxEditor.encryption.test.tsx:36:18
+packages/office test:      34|   for (let i = 0; i < 1200 && !done(); i++)
+packages/office test:      35|     await act(async () => new Promise((resolve) => setTimeout(resolve,…
+packages/office test:      36|   expect(done()).toBe(true)
+packages/office test:        |                  ^
+packages/office test:      37| }
+packages/office test:      38| async function click(host: HTMLElement, label: string) {
+packages/office test:  ❯ src/editors/DocxEditor.encryption.test.tsx:140:5
+packages/office test:
+packages/office test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+packages/office test:
+packages/office test:  FAIL  src/editors/DocxEditor.encryption.test.tsx > real Editor opens external agile through actual worker; wrong password/cancel are zero history
+packages/office test: AssertionError: expected false to be true // Object.is equality
+packages/office test:
+packages/office test: - Expected
+packages/office test: + Received
+packages/office test:
+packages/office test: - true
+packages/office test: + false
+packages/office test:
+packages/office test:  ❯ settle src/editors/DocxEditor.encryption.test.tsx:36:18
+packages/office test:      34|   for (let i = 0; i < 1200 && !done(); i++)
+packages/office test:      35|     await act(async () => new Promise((resolve) => setTimeout(resolve,…
+packages/office test:      36|   expect(done()).toBe(true)
+packages/office test:        |                  ^
+packages/office test:      37| }
+packages/office test:      38| async function click(host: HTMLElement, label: string) {
+packages/office test:  ❯ src/editors/DocxEditor.encryption.test.tsx:131:5
+packages/office test:
+packages/office test: ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+packages/office test:
+packages/office test:
+packages/office test:  Test Files  1 failed | 228 passed (229)
+packages/office test:       Tests  2 failed | 2705 passed (2707)
+packages/office test:    Start at  14:02:48
+packages/office test:    Duration  247.95s (import 49%, tests 38%, environment 11%, transform 2%)
+packages/office test:
+packages/office test:     Isolate  229 workers spawned · ~1.72s startup each (spawn + environment, per file)
+packages/office test:              at least ~42.01s faster with isolate: false — reuses workers across files instead of one per file
+packages/office test:
+packages/office test: Failed
+[ELIFECYCLE] Test failed. See above for more details.
+apps/server test: Failed
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in /Users/admin/Desktop/mimir/packages/office
+
+[ELIFECYCLE] Test failed. See above for more details.

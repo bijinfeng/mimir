@@ -1,33 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
 import type { SearchHit } from '@mimir/shared'
 import { Button, Input, Modal } from 'antd'
-import { createStyles } from 'antd-style'
-import {
-  ArrowLeft,
-  FilePlus,
-  FileText,
-  FolderInput,
-  Pencil,
-  Search,
-  Sparkles,
-  Upload,
-} from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
-import type { ReactNode } from 'react'
-import { api } from '../lib/api'
+import type { InputRef } from 'antd'
+import { Search, Sparkles, X } from 'lucide-react'
+import { useEffect, useId, useRef, useState } from 'react'
+import type { KeyboardEvent } from 'react'
+import { api, ApiRequestError } from '../lib/api'
 import { useRecentDocuments } from '../lib/recent-documents'
-import { FONT_SIZE } from '../theme/tokens'
-
-/**
- * 命令面板（Ctrl K）。
- *
- * `.trellis/spec/project/product.md` §5.10 与原型 README：搜索文档、执行操作，**或直接提问**。
- * 三条出路共用一个输入框是刻意的——用户此刻只有「我想找点什么」这个意图，
- * 让他先选「这是搜索还是提问」是把分类负担推给他。
- *
- * 用 antd 的 Modal 而不是自绘浮层：焦点捕获、Esc 关闭、滚动锁定、
- * aria 语义这些它都处理好了，自己写一遍必然漏掉其中几样。
- */
+import { paletteCommands, paletteDocuments } from './command-palette/items'
+import type { PaletteItem } from './command-palette/items'
+import { useStyles } from './command-palette/styles'
+import { PaletteRow } from './command-palette/PaletteRow'
+import { CommandFeedback, RecentFeedback } from './command-palette/Feedback'
 
 export interface CommandPaletteProps {
   open: boolean
@@ -36,6 +20,9 @@ export interface CommandPaletteProps {
   onAsk: (question: string) => void
   onOpenCapture: () => void
   onNewNote: () => void | Promise<void>
+  creatingNote?: boolean
+  createNoteError?: string | null
+  interactionSuspended?: boolean
   userId?: string
   currentDocumentId?: string
   onOpenRecent: (id: string, scope: string) => void
@@ -43,612 +30,340 @@ export interface CommandPaletteProps {
   onReturnToLibrary: () => void
 }
 
-const useStyles = createStyles(({ css, token, prefixCls }) => ({
-  /**
-   * 面板内容。**竖排三段：搜索行 / 列表 / 页脚**，每段自己管内边距。
-   *
-   * ## 为什么不再用负外边距
-   *
-   * 早期这里给列表和页脚写 `margin: 0 -24px`，用来「抵消 body 的 24px 内边距」，
-   * 好让 hover 底色通栏。但 body 的实际内边距是 **20px**（Modal 的
-   * `styles={{ body: { padding: 20 } }}`），两边对不上：列表因此比正文区
-   * 宽出 8px，hover 底色与输入框左右不齐。
-   *
-   * 更糟的是那个 `margin-top: -12vh`——它本意是让面板更靠上，而 Modal 已经用
-   * `top: 14vh` 定位了。实测（视口 940px）内容顶部落在 **y=59**，而 Modal 面板
-   * 从 **y=132** 才开始：整个搜索框被拉到了白色面板**外面**，浮在页面内容上，
-   * 「操作」分组标题也被裁掉半个。
-   *
-   * 现在 body 内边距归零，三段各自声明左右内边距（统一 18px）——通栏底色
-   * 不再需要负数抵消，也就不会再有对不齐或溢出面板的可能。
-   */
-  panel: css`
-    display: flex;
-    flex-direction: column;
-  `,
-
-  /* ── 搜索行 ────────────────────────────────────────── */
-  searchRow: css`
-    display: flex;
-    align-items: center;
-    padding: 16px 20px;
-    border-bottom: 1px solid ${token.colorSplit};
-    transition: border-color 0.2s;
-
-    /*
-     * 搜索框不画自己的边框与焦点环（浮层本身就是容器），但**焦点仍要可见**
-     * （DESIGN §7.2）——面板一打开输入框就是焦点所在，用一道常驻的蓝环会变成
-     * 噪声。改成让分隔线在聚焦时提亮，安静但看得见。
-     *
-     * 三处都要关掉：antd v6 给输入类控件加了 focusOutline（实测计算样式
-     * outline: rgb(22,119,255) solid 1px），它会画出那个蓝色胶囊。
-     *
-     * 前缀走 prefixCls 变量而不是写死 .ant-（.trellis/spec/renderer/frontend/conventions.md 样式第 7 条）。
-     */
-    .${prefixCls}-input-affix-wrapper,
-    .${prefixCls}-input {
-      padding: 0;
-      background: transparent;
-      border: none;
-      outline: none;
-      box-shadow: none;
-      font-size: ${FONT_SIZE.body}px;
-
-      &:focus,
-      &:focus-within,
-      &:hover {
-        outline: none;
-        box-shadow: none;
-      }
-    }
-
-    &:focus-within {
-      border-bottom-color: ${token.colorPrimaryBorder};
-    }
-
-    /* 放大镜与元信息同色阶即可，不需要单独降透明度 */
-    .${prefixCls}-input-prefix {
-      color: ${token.colorTextTertiary};
-      margin-inline-end: 9px;
-    }
-  `,
-
-  /* ── 列表 ──────────────────────────────────────────── */
-  list: css`
-    max-height: min(48vh, 440px);
-    overflow-y: auto;
-    padding: 8px;
-  `,
-
-  sectionLabel: css`
-    padding: 12px 10px 7px;
-    font-size: ${FONT_SIZE.badge}px;
-    font-weight: 600;
-    color: ${token.colorTextTertiary};
-    letter-spacing: 0.03em;
-  `,
-
-  item: css`
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    width: 100%;
-    min-height: 48px;
-    padding: 7px 10px;
-    border: none;
-    border-radius: ${token.borderRadiusSM}px;
-    background: transparent;
-    font-family: inherit;
-    text-align: left;
-    cursor: pointer;
-    transition: background 0.1s ease-out;
-
-    &:hover {
-      background: ${token.colorFillQuaternary};
-    }
-
-    &:focus-visible {
-      outline: 2px solid ${token.colorPrimaryBorder};
-      outline-offset: -2px;
-    }
-  `,
-  /**
-   * 高亮项用**三重线索**（DESIGN §8.1 的导航项同款）：底色 + 字色 + 字重。
-   *
-   * 只给底色的话，键盘上下移动时视线要去找「哪一行变色了」；把标题同时
-   * 提成链接色并加粗，扫读时一眼就能落下。用 `colorLink` 而不是 `colorPrimary`：
-   * 主色作文字在浅蓝底上只有 3.61:1（DESIGN §3.2）。
-   */
-  itemActive: css`
-    background: ${token.colorPrimaryBg};
-
-    & [data-role='title'] {
-      color: ${token.colorLink};
-      font-weight: 500;
-    }
-  `,
-  itemIcon: css`
-    flex: none;
-    width: 30px;
-    height: 30px;
-    display: grid;
-    place-items: center;
-    border: 1px solid ${token.colorBorderSecondary};
-    border-radius: ${token.borderRadiusSM}px;
-    font-size: ${FONT_SIZE.item}px;
-    color: ${token.colorTextSecondary};
-  `,
-  itemMain: css`
-    flex: 1;
-    min-width: 0;
-  `,
-  itemTitle: css`
-    display: block;
-    font-size: ${FONT_SIZE.item}px;
-    color: ${token.colorText};
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  `,
-  itemSub: css`
-    display: block;
-    margin-top: 1px;
-    font-size: ${FONT_SIZE.meta}px;
-    color: ${token.colorTextTertiary};
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  `,
-
-  /* ── 底部两段 ──────────────────────────────────────── */
-  /** 检索状态与独立提问动作。中性底色使它与高亮结果明显分开。 */
-  aiRow: css`
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 10px 20px;
-    border-top: 1px solid ${token.colorSplit};
-    background: ${token.tintNav};
-    font-size: ${FONT_SIZE.note}px;
-    line-height: 1.7;
-    color: ${token.colorTextSecondary};
-  `,
-  aiIco: css`
-    flex: none;
-    margin-top: 2px;
-    color: ${token.colorLink};
-  `,
-  aiStatus: css`
-    display: inline-flex;
-    align-items: center;
-    min-width: 0;
-    gap: 8px;
-  `,
-  aiActions: css`
-    display: inline-flex;
-    align-items: center;
-    flex: none;
-  `,
-
-  /**
-   * 页脚。
-   *
-   * **换行只能发生在项与项之间。** 页脚是 `display: flex` + `gap`，各段是裸
-   * `<span>`——中文可以在任意字间断行。实测窄到 440px 以下时页脚占两行，
-   * 而断点在词内部：「↑ ↓ 选 / 择」「Enter 打 / 开」「Esc 关 / 闭」
-   * （w=400/440 → 页脚 55px，w=480 以上 → 37px）。快捷键提示读不成句，
-   * 用户看不出那几组键各是做什么的。
-   *
-   * 所以每一项 `flex: none` + `nowrap`（项不会被压扁，字也不拆），整行
-   * `flex-wrap: wrap`：放不下时整项落到下一行。行间距取 4px 而不是 12px
-   * ——那是**换行后**两行之间的距离，按 DESIGN §5.1 的 4px 网格走，列间距不变。
-   */
-  foot: css`
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 4px 12px;
-    padding: 10px 20px;
-    border-top: 1px solid ${token.colorSplit};
-    font-size: ${FONT_SIZE.badge}px;
-    color: ${token.colorTextTertiary};
-  `,
-  footItem: css`
-    flex: none;
-    white-space: nowrap;
-  `,
-  kbd: css`
-    font-family: ${token.fontFamilyCode};
-    font-size: ${FONT_SIZE.badge}px;
-    padding: 1px 5px;
-    border: 1px solid ${token.colorBorderSecondary};
-    border-radius: 4px;
-    background: ${token.colorFillQuaternary};
-    margin-right: 4px;
-  `,
-  srOnly: css`
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  `,
-}))
-
-interface PaletteItem {
-  type: 'command' | 'document'
-  key: string
-  icon?: ReactNode
-  title: string
-  sub?: string
-  run: () => void
-}
-
-/**
- * 命令面板。
- *
- * 外面这层只做一件事：**关闭时整块不渲染**，于是每次打开都从零开始
- * （输入为空、高亮在第一项）。
- *
- * 不用「effect 里判断 open 然后重置 state」：那是用 effect 同步状态，
- * React 会警告它引发级联渲染，而且中间会有一帧渲染出上一次的输入。
- * 卸载重挂载干净，也没有中间态。
- */
+/** Unmount on close so reopening starts with a fresh input and selection. */
 export function CommandPalette({ open, ...rest }: CommandPaletteProps) {
-  if (!open) return null
-  return <PaletteBody {...rest} />
+  return open ? <PaletteBody {...rest} /> : null
 }
 
-function PaletteBody({
-  onClose,
-  onOpenSearchHit,
-  onAsk,
-  onOpenCapture,
-  onNewNote,
-  userId,
-  currentDocumentId,
-  onOpenRecent,
-  onCurrentCommand,
-  onReturnToLibrary,
-}: Omit<CommandPaletteProps, 'open'>) {
-  const { styles, cx } = useStyles()
+function PaletteBody(props: Omit<CommandPaletteProps, 'open'>) {
+  const { styles } = useStyles()
+  const { onClose } = props
   const [value, setValue] = useState('')
-  const [activeIndex, setActiveIndex] = useState(0)
+  const [committedValue, setCommittedValue] = useState('')
+  const [composing, setComposing] = useState(false)
+  const [selectedKey, setSelectedKey] = useState<string | null>(null)
+  const composingRef = useRef(false)
+  const restoreOnCancel = useRef(false)
+  const inputRef = useRef<InputRef>(null)
   const listRef = useRef<HTMLDivElement>(null)
-  const recentQuery = useRecentDocuments(userId)
+  const statusId = useId()
+  const busy = Boolean(props.creatingNote || props.interactionSuspended)
+  const previousBusyRef = useRef(busy)
+  const recentQuery = useRecentDocuments(props.userId)
   const currentDocQuery = useQuery({
-    queryKey: ['document', currentDocumentId],
-    queryFn: () => api.documents.get(currentDocumentId!),
-    enabled: Boolean(currentDocumentId),
+    queryKey: ['document', props.currentDocumentId],
+    queryFn: () => api.documents.get(props.currentDocumentId!),
+    enabled: Boolean(props.currentDocumentId),
   })
+  const question = committedValue.trim()
+  const shouldSearch = question.length >= 2 && question.length <= 500
+  const searchQuery = useQuery({
+    queryKey: ['palette-search', question],
+    queryFn: () => api.search({ q: question, limit: 6 }),
+    enabled: shouldSearch && !composing,
+  })
+  const searchPending = shouldSearch && searchQuery.isFetching
+  const executionBlocked = busy || composing || searchPending
+  const commands = paletteCommands(
+    props,
+    currentDocQuery.isError ? undefined : currentDocQuery.data?.kind,
+  ).filter(
+    (item) =>
+      !question || `${item.title} ${item.sub ?? ''}`.toLowerCase().includes(question.toLowerCase()),
+  )
+  const documents = paletteDocuments(
+    question ? (shouldSearch ? (searchQuery.data?.hits ?? []) : []) : undefined,
+    recentQuery.data ?? [],
+    props,
+  )
+  const documentsFirst = !question || documents.length > 0
+  const items = documentsFirst ? [...documents, ...commands] : [...commands, ...documents]
+  // A stable identity survives late insertions. A removed selection falls back to the first item.
+  const activeItem = items.find((item) => item.key === selectedKey) ?? items[0]
+  const activeIndex = activeItem ? items.indexOf(activeItem) : -1
 
-  /**
-   * 关闭时**把焦点还给打开它的人**。
-   *
-   * 这一层是唯一「关闭即卸载」的对话框（外层 `if (!open) return null`）——
-   * 而 antd 的焦点归还是挂在 `visible: false` 那条路径上的，卸载不会走到
-   * 那里。实测：从某个按钮按 Ctrl+K 打开、Esc 关闭，`activeElement` 是
-   * `BODY`，键盘用户每次用完面板都要重新 Tab 一大段才能回到刚才的位置。
-   *
-   * 记的是**挂载时的 activeElement**（打开前的焦点所在），卸载时若它还在
-   * 文档里就还回去。`isConnected` 的判断是必须的：触发按钮可能随导航一起
-   * 消失（例如从「新建对话」进对话页之后，那个按钮还在侧栏，但历史里点
-   * 进来的会话项可能已经不在了），对着一个已卸载的元素 focus 是空操作，
-   * 而不判断也不会报错——只是行为「有时不生效」，最难查。
-   */
   useEffect(() => {
     const previous = document.activeElement
     return () => {
-      if (previous instanceof HTMLElement && previous.isConnected) previous.focus()
+      if (!restoreOnCancel.current) return
+      const fallback = Array.from(
+        document.querySelectorAll<HTMLElement>('[data-palette-trigger], button[aria-label="搜索"]'),
+      ).find(isVisibleFocusTarget)
+      if (previous instanceof HTMLElement && isVisibleFocusTarget(previous)) previous.focus()
+      else fallback?.focus()
     }
   }, [])
 
-  /**
-   * 输入两个字以上才检索。
-   *
-   * 一个字就查的话，中文里几乎所有字都会命中一大片，
-   * 结果列表毫无信息量，而每次敲键都要跑一次检索。
-   */
-  const shouldSearch = value.trim().length >= 2
-  const searchQuery = useQuery({
-    queryKey: ['palette-search', value.trim()],
-    queryFn: () => api.search({ q: value.trim(), limit: 6 }),
-    enabled: shouldSearch,
-  })
+  useEffect(() => {
+    if (previousBusyRef.current && !busy) inputRef.current?.focus()
+    previousBusyRef.current = busy
+  }, [busy])
 
-  /**
-   * 两条操作命令。副标题用 `.trellis/spec/project/design.md` §8.10 原型里的措辞（「直接落进库」）。
-   *
-   * 曾经写的是「落在收件箱 / 进收件箱」——收件箱视图与导航项已随 D-054 退役
-   * （`.trellis/spec/project/decisions.md`:3022：新内容 `status` 直接 `ready`）。界面里再没有
-   * 那个去处：用户收集完一篇东西却被告知内容进了「收件箱」，会去找一个不存在
-   * 的视图，怀疑内容没收到。文案说的是别处（对话框、toast）也要说同一件事。
-   */
-  const commands: PaletteItem[] = (
-    [
-      {
-        type: 'command',
-        key: 'new-note',
-        icon: <FilePlus size={16} />,
-        title: '新建笔记',
-        run: () => void onNewNote(),
-      },
-      {
-        type: 'command',
-        key: 'capture',
-        icon: <Upload size={16} />,
-        title: '收集链接或文件',
-        sub: '网页、公众号、GitHub、文件',
-        run: onOpenCapture,
-      },
-      ...(currentDocumentId
-        ? [
-            ...(currentDocQuery.data?.kind === 'note'
-              ? [
-                  {
-                    type: 'command' as const,
-                    key: 'rename-current',
-                    icon: <Pencil size={16} />,
-                    title: '重命名当前笔记',
-                    run: () => onCurrentCommand('rename'),
-                  },
-                ]
-              : []),
-            {
-              type: 'command' as const,
-              key: 'move-current',
-              icon: <FolderInput size={16} />,
-              title: '移动当前文档',
-              run: () => onCurrentCommand('move'),
-            },
-            ...(currentDocQuery.data?.kind === 'note'
-              ? [
-                  {
-                    type: 'command' as const,
-                    key: 'search-current',
-                    icon: <Search size={16} />,
-                    title: '搜索当前笔记',
-                    run: () => onCurrentCommand('search'),
-                  },
-                ]
-              : []),
-            {
-              type: 'command' as const,
-              key: 'back-to-library',
-              icon: <ArrowLeft size={16} />,
-              title: '返回知识库',
-              run: onReturnToLibrary,
-            },
-          ]
-        : []),
-    ] satisfies PaletteItem[]
-  ).filter((item) => !value.trim() || matches(item, value))
+  useEffect(() => {
+    const toggle = (event: globalThis.KeyboardEvent) => {
+      if (event.altKey || !(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== 'k')
+        return
+      event.preventDefault()
+      event.stopPropagation()
+      if (
+        event.repeat ||
+        event.isComposing ||
+        event.keyCode === 229 ||
+        composingRef.current ||
+        busy
+      )
+        return
+      restoreOnCancel.current = true
+      onClose()
+    }
+    window.addEventListener('keydown', toggle, true)
+    return () => window.removeEventListener('keydown', toggle, true)
+  }, [busy, onClose])
 
-  const searchHits = searchQuery.data?.hits ?? []
-  const hitTotals = new Map<string, number>()
-  const hitOrdinals = new Map<string, number>()
-  for (const hit of searchHits) {
-    hitTotals.set(hit.documentId, (hitTotals.get(hit.documentId) ?? 0) + 1)
-  }
+  useEffect(() => {
+    const node = listRef.current?.querySelectorAll<HTMLElement>('[data-item-key]')
+    Array.from(node ?? [])
+      .find((item) => item.dataset.itemKey === activeItem?.key)
+      ?.scrollIntoView({ block: 'nearest' })
+  }, [activeItem?.key])
 
-  const documents: PaletteItem[] = !value.trim()
-    ? (recentQuery.data ?? [])
-        .filter((doc) => doc.kind === 'note')
-        .map((doc) => ({
-          type: 'document',
-          key: `recent:${doc.id}`,
-          icon: <FileText size={16} />,
-          title: doc.title,
-          sub: doc.folder ?? '知识库根',
-          run: () => onOpenRecent(doc.id, doc.folder ? `folder:${doc.folder}` : 'all'),
-        }))
-    : searchHits.map((hit, index) => {
-        const ordinal = (hitOrdinals.get(hit.documentId) ?? 0) + 1
-        hitOrdinals.set(hit.documentId, ordinal)
-        return {
-          type: 'document',
-          key: `${hit.documentId}-${hit.snippet.start}-${hit.snippet.end}-${index}`,
-          icon: <FileText size={16} />,
-          title:
-            (hitTotals.get(hit.documentId) ?? 0) > 1 ? `${hit.title} · 命中 ${ordinal}` : hit.title,
-          sub: hit.snippet.text,
-          run: () => onOpenSearchHit(hit),
-        }
-      })
-
-  // A document query should open a matching hit on Enter. Matching commands
-  // remain available below the results.
-  const documentsFirst = !value.trim() || documents.length > 0
-  const items = documentsFirst ? [...documents, ...commands] : [...commands, ...documents]
-  const commandStart = documentsFirst ? documents.length : 0
-  const documentStart = documentsFirst ? 0 : commands.length
-  const activeItem = items[activeIndex]
-  const question = value.trim()
-  const askQuestion = () => {
-    if (!question) return
-    onAsk(question)
+  const cancel = () => {
+    if (busy || composingRef.current) return
+    restoreOnCancel.current = true
     onClose()
   }
-
-  /**
-   * 输入变化时把高亮收回到第一项。
-   *
-   * 在这里做而不是用 effect 观察 value：改动输入**就是**触发它的那个事件。
-   * 用 effect 去「观察变化再改状态」会多一次渲染，React 也会警告
-   * （effect 里同步 setState 会引发级联渲染）。
-   */
+  const execute = (item: PaletteItem) => {
+    if (!executionBlocked && !composingRef.current) item.run()
+    // The host owns guard confirmation, pending and closure. A cancelled guard keeps this draft.
+  }
   const handleChange = (next: string) => {
     setValue(next)
-    setActiveIndex(0)
-  }
-
-  /**
-   * 键盘导航绑在输入框自己身上，而不是 window。
-   *
-   * 两个理由：命令面板打开时键盘输入理应只影响它；绑 window 会在关闭后
-   * 仍然吃掉页面上别处的方向键（除非小心解绑，而那种解绑很容易漏）。
-   * Modal 自己的 Esc 处理已经覆盖了关闭。
-   */
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'ArrowDown') {
-      event.preventDefault()
-      if (items.length > 0) setActiveIndex((index) => Math.min(items.length - 1, index + 1))
-    } else if (event.key === 'ArrowUp') {
-      event.preventDefault()
-      if (items.length > 0) setActiveIndex((index) => Math.max(0, index - 1))
-    } else if (event.key === 'Enter') {
-      event.preventDefault()
-      // While results are pending, Enter must not run a matching command that
-      // is only temporarily first in the list.
-      if (shouldSearch && searchQuery.isFetching) return
-      const item = items[activeIndex]
-      if (item) {
-        item.run()
-        onClose()
-      }
+    if (!composingRef.current) {
+      setCommittedValue(next)
+      setSelectedKey(null)
     }
   }
-
-  /** 高亮项滚进视野。键盘选择时列表不跟着动，用户就看不到自己选到哪了 */
-  useEffect(() => {
-    const node = listRef.current?.querySelector(`[data-index="${activeIndex}"]`)
-    node?.scrollIntoView({ block: 'nearest' })
-  }, [activeIndex])
-
-  const commandSection = commands.length > 0 && (
-    <>
-      <div className={styles.sectionLabel}>操作</div>
-      {commands.map((item, index) => (
-        <PaletteRow
-          key={item.key}
-          item={item}
-          index={commandStart + index}
-          active={commandStart + index === activeIndex}
-          onHover={setActiveIndex}
-          className={cx}
-        />
-      ))}
-    </>
-  )
-  const documentSection = documents.length > 0 && (
-    <>
-      <div className={styles.sectionLabel}>{value.trim() ? '匹配的文档' : '最近打开的笔记'}</div>
-      {documents.map((item, index) => (
-        <PaletteRow
-          key={item.key}
-          item={item}
-          index={documentStart + index}
-          active={documentStart + index === activeIndex}
-          onHover={setActiveIndex}
-          className={cx}
-        />
-      ))}
-    </>
-  )
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.nativeEvent.isComposing || event.nativeEvent.keyCode === 229 || composingRef.current)
+      return
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault()
+      if (executionBlocked || !items.length) return
+      const next = Math.max(
+        0,
+        Math.min(items.length - 1, activeIndex + (event.key === 'ArrowDown' ? 1 : -1)),
+      )
+      setSelectedKey(items[next]!.key)
+    } else if (event.key === 'Enter') {
+      event.preventDefault()
+      if (!event.repeat && activeItem) execute(activeItem)
+    }
+  }
+  const searchStatus = composing
+    ? '正在输入，确认后搜索'
+    : question.length > 500
+      ? '搜索内容最多 500 字，请缩短后重试'
+      : !shouldSearch
+        ? '输入至少两个字搜索文档'
+        : searchQuery.isFetching
+          ? searchQuery.data
+            ? '正在更新搜索结果，完成后可打开'
+            : '正在检索…'
+          : searchQuery.isError
+            ? isUnauthorized(searchQuery.error)
+              ? '登录状态已失效，请重新登录后重试'
+              : searchQuery.data
+                ? '更新失败，保留上次结果；可以重试'
+                : '搜索暂时失败，请重试'
+            : documents.length
+              ? `找到 ${documents.length} 处`
+              : '没有匹配的文档'
+  const renderSection = (rows: PaletteItem[], label: string) =>
+    rows.length > 0 && (
+      <section aria-label={label}>
+        <div className={styles.sectionLabel}>{label}</div>
+        {rows.map((item) => (
+          <PaletteRow
+            key={item.key}
+            item={item}
+            active={activeItem?.key === item.key}
+            disabled={executionBlocked}
+            onSelect={() => setSelectedKey(item.key)}
+            onExecute={() => execute(item)}
+          />
+        ))}
+      </section>
+    )
+  const documentSection = renderSection(documents, question ? '匹配的文档' : '最近打开的笔记')
+  const commandSection = renderSection(commands, '操作')
 
   return (
     <Modal
       open
       title={<span className={styles.srOnly}>搜索文档与操作</span>}
-      onCancel={onClose}
+      onCancel={cancel}
+      keyboard={!busy && !composing}
+      mask={{ closable: !busy && !composing }}
+      focusable={{ focusTriggerAfterClose: false }}
+      afterOpenChange={(open) => {
+        if (open) inputRef.current?.focus()
+      }}
       footer={null}
       closable={false}
       width={620}
-      centered={false}
       destroyOnHidden
-      /* 内容首尾通栏，圆角与表面层次由全局 Modal token 控制。 */
+      className={styles.modal}
       styles={{
         header: { marginBottom: 0 },
         body: { padding: 0 },
         container: { padding: 0, overflow: 'hidden' },
       }}
-      /* 贴着屏幕上方而不是垂直居中：命令面板是「从顶部拉出来」的东西，
-         居中会让人以为是个对话框，期待它挡住并取代后面的一切。
-         **定位只靠这一处**——早期另给内容加了 `margin-top: -12vh`，
-         结果把搜索框拉到了面板外面。 */
       style={{ top: '14vh' }}
     >
-      <div className={styles.panel}>
+      <div
+        className={styles.panel}
+        onKeyDownCapture={(event) => {
+          if (
+            event.nativeEvent.isComposing ||
+            event.nativeEvent.keyCode === 229 ||
+            composingRef.current
+          )
+            event.stopPropagation()
+        }}
+      >
         <div className={styles.searchRow}>
           <Input
-            autoFocus
+            ref={inputRef}
             size="large"
             variant="borderless"
-            prefix={<Search size={16} />}
+            prefix={<Search size={17} aria-hidden />}
             aria-label="搜索文档或输入问题"
+            aria-describedby={question || composing ? statusId : undefined}
             placeholder="搜索文档或输入问题"
             value={value}
+            maxLength={500}
+            disabled={busy}
             onChange={(event) => handleChange(event.target.value)}
+            onCompositionStart={() => {
+              composingRef.current = true
+              setComposing(true)
+            }}
+            onCompositionEnd={(event) => {
+              composingRef.current = false
+              setComposing(false)
+              handleChange(event.currentTarget.value)
+            }}
             onKeyDown={handleKeyDown}
           />
-          <span className={styles.srOnly} role="status" aria-live="polite">
-            {activeItem ? `当前选择：${activeItem.title}` : '没有可选择的结果'}
-          </span>
+          {value && (
+            <Button
+              type="text"
+              className={styles.iconButton}
+              icon={<X size={15} />}
+              aria-label="清空搜索"
+              disabled={busy || composing}
+              onClick={() => {
+                handleChange('')
+                inputRef.current?.focus()
+              }}
+            />
+          )}
+          <Button
+            type="text"
+            className={styles.iconButton}
+            icon={<X size={17} />}
+            aria-label="关闭搜索"
+            disabled={busy || composing}
+            onClick={cancel}
+          />
         </div>
-
-        {items.length > 0 && (
-          <div className={styles.list} ref={listRef}>
-            {documentsFirst ? (
-              <>
-                {documentSection}
-                {commandSection}
-              </>
-            ) : (
-              <>
-                {commandSection}
-                {documentSection}
-              </>
-            )}
-          </div>
-        )}
-
-        {question && (
+        <div className={styles.list} ref={listRef} aria-busy={searchPending || props.creatingNote}>
+          {!question && (
+            <RecentFeedback
+              query={recentQuery}
+              userId={props.userId}
+              hasNotes={documents.length > 0}
+              busy={busy || composing}
+              onRetry={() => {
+                inputRef.current?.focus()
+                void recentQuery.refetch()
+              }}
+            />
+          )}
+          {documentsFirst ? (
+            <>
+              {documentSection}
+              {commandSection}
+            </>
+          ) : (
+            <>
+              {commandSection}
+              {documentSection}
+            </>
+          )}
+          <CommandFeedback
+            currentDocumentId={props.currentDocumentId}
+            query={currentDocQuery}
+            creatingNote={props.creatingNote}
+            error={props.createNoteError}
+            busy={busy || composing}
+            onRetry={() => {
+              if (!busy && !composingRef.current) void props.onNewNote()
+            }}
+          />
+        </div>
+        {(question || composing) && (
           <div className={styles.aiRow}>
-            <span className={styles.aiStatus}>
-              <Sparkles className={styles.aiIco} size={16} aria-hidden="true" />
-              <span>
-                {!shouldSearch
-                  ? '输入至少两个字搜索文档'
-                  : searchQuery.isFetching
-                    ? '正在检索…'
-                    : searchQuery.isError
-                      ? '搜索失败，请重试'
-                      : documents.length > 0
-                        ? `找到 ${documents.length} 处`
-                        : '没有匹配的文档'}
-              </span>
+            <span id={statusId} role="status" aria-live="polite">
+              {searchStatus}
+              {value.length >= 480 && ` · ${value.length}/500 字`}
             </span>
-            <span className={styles.aiActions}>
-              {searchQuery.isError && (
-                <Button size="small" type="link" onClick={() => void searchQuery.refetch()}>
-                  重试
-                </Button>
-              )}
-              <Button size="small" type="link" onClick={askQuestion}>
-                提问
+            {shouldSearch && searchQuery.isError && (
+              <Button
+                size="small"
+                type="link"
+                disabled={busy || composing || searchQuery.isFetching}
+                onClick={() => {
+                  inputRef.current?.focus()
+                  void searchQuery.refetch()
+                }}
+              >
+                重试搜索
+              </Button>
+            )}
+            <span className={styles.aiLabel}>
+              <Sparkles size={15} aria-hidden />
+              <Button
+                size="small"
+                type="link"
+                disabled={busy || composing || !question}
+                onClick={() => {
+                  if (!busy && !composingRef.current && question) props.onAsk(question)
+                }}
+              >
+                带到新对话
               </Button>
             </span>
+            <span>仅预填问题，不会自动发送</span>
           </div>
         )}
-
         <div className={styles.foot}>
           {items.length > 0 && (
-            <span className={styles.footItem}>
-              <span className={styles.kbd}>↑</span>
-              <span className={styles.kbd}>↓</span>选择
+            <span>
+              <kbd className={styles.kbd}>↑ ↓</kbd>选择
             </span>
           )}
           {activeItem && (
-            <span className={styles.footItem}>
-              <span className={styles.kbd}>Enter</span>
+            <span>
+              <kbd className={styles.kbd}>Enter</kbd>
               {activeItem.type === 'document' ? '打开所选结果' : '执行所选操作'}
             </span>
           )}
-          <span className={styles.footItem}>
-            <span className={styles.kbd}>Esc</span>关闭
+          <span>
+            <kbd className={styles.kbd}>Esc</kbd>关闭
+          </span>
+          <span className={styles.srOnly} role="status" aria-live="polite">
+            {activeItem ? `当前选择：${activeItem.title}` : '没有可选择的结果'}
           </span>
         </div>
       </div>
@@ -656,42 +371,14 @@ function PaletteBody({
   )
 }
 
-function PaletteRow({
-  item,
-  index,
-  active,
-  onHover,
-  className: cx,
-}: {
-  item: PaletteItem
-  index: number
-  active: boolean
-  onHover: (index: number) => void
-  className: (a?: string, b?: string) => string
-}) {
-  const { styles } = useStyles()
-  return (
-    <button
-      type="button"
-      data-index={index}
-      className={cx(styles.item, active ? styles.itemActive : undefined)}
-      onMouseEnter={() => onHover(index)}
-      onClick={item.run}
-    >
-      <span className={styles.itemIcon}>{item.icon}</span>
-      <span className={styles.itemMain}>
-        {/* data-role 供高亮态选中：antd-style 的作用域类名不好做子选择器匹配，
-            而这个属性把「这是标题」表达得比 nth-child 明确 */}
-        <span className={styles.itemTitle} data-role="title">
-          {item.title}
-        </span>
-        {item.sub && <span className={styles.itemSub}>{item.sub}</span>}
-      </span>
-    </button>
-  )
+function isUnauthorized(error: unknown) {
+  return error instanceof ApiRequestError && error.status === 401
 }
 
-function matches(item: PaletteItem, query: string): boolean {
-  const needle = query.trim().toLowerCase()
-  return `${item.title} ${item.sub ?? ''}`.toLowerCase().includes(needle)
+function isVisibleFocusTarget(element: HTMLElement) {
+  return (
+    element.isConnected &&
+    element.getClientRects().length > 0 &&
+    !element.closest('[inert], [aria-hidden="true"]')
+  )
 }

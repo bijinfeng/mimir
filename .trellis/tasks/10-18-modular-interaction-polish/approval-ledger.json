@@ -32,16 +32,16 @@
     {
       "id": "search",
       "name": "搜索与命令面板",
-      "status": "awaiting_user_review",
+      "status": "implemented_verified_global_gate_pending",
       "proposal": "../10-18-interaction-search/prototype/review.html",
       "version": "v1",
-      "approved_at": null,
-      "user_quote": null,
+      "approved_at": "2026-10-18",
+      "user_quote": "实施吧",
       "implementation_commit": null,
       "task": ".trellis/tasks/10-18-interaction-search",
       "planning_user_quote": "继续",
       "sha256": "0e8a90da0c37c509f8fcda8027c9f01bac5f58607c45db83f10d41f8fb950535",
-      "verification": "../10-18-interaction-search/verification/review-acceptance.md"
+      "verification": "../10-18-interaction-search/implementation-acceptance.md"
     },
     {
       "id": "capture",

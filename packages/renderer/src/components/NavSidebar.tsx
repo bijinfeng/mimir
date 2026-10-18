@@ -203,7 +203,12 @@ export function NavSidebar({
         </Tooltip>
       </div>
       <div className={styles.primaryActions}>
-        <Button className={styles.searchButton} icon={<Search size={17} />} onClick={openPalette}>
+        <Button
+          data-palette-trigger
+          className={styles.searchButton}
+          icon={<Search size={17} />}
+          onClick={openPalette}
+        >
           <span className={styles.searchLabel}>快速搜索…</span>
           <kbd className={styles.searchShortcut} aria-hidden="true">
             {typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)

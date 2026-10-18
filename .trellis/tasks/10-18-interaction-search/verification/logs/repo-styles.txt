@@ -1,0 +1,2 @@
+$ node scripts/check-style-backticks.mjs
+样式模板里没有多余的反引号

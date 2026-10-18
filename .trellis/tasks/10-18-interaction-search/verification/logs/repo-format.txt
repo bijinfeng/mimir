@@ -1,0 +1,8 @@
+$ oxfmt --check
+Checking formatting...
+
+.impeccable/config.json (2ms)
+
+Format issues found in above 1 files. Run without `--check` to fix.
+Finished in 1417ms on 1587 files using 10 threads.
+[ELIFECYCLE] Command failed with exit code 1.

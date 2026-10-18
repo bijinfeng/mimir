@@ -1,11 +1,12 @@
 import type { PptxAiSnapshotDraft } from '@mimir/office'
-import { viewerFor, type Citation, type NoteUpdate } from '@mimir/shared'
+import { viewerFor, type Citation, type DocumentDetail, type NoteUpdate } from '@mimir/shared'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { App, Button, Empty, Input, Modal, Select, Skeleton, Typography } from 'antd'
+import { App, Button, Empty, Skeleton, Typography } from 'antd'
 import { useEffect, useRef, useState } from 'react'
 import type { ChatDocumentAgent } from '@mimir/chat'
 import { NoteEditor, type NoteSaveState } from './NoteEditor'
 import { useContentStyles } from './ContentTypography.style'
+import { DocumentCommandModal, DocumentCommandRefreshError } from './document/DocumentCommandModal'
 import { DocumentFooter } from './document/DocumentFooter'
 import { DocumentHeader } from './document/DocumentHeader'
 import { DocumentTitle } from './document/DocumentTitle'
@@ -96,24 +97,7 @@ export function DocumentPanel({
     )
   }
   const docKind = doc?.kind
-  const [command, setCommand] = useState<'rename' | 'move' | 'search' | null>(null)
-  const [commandValue, setCommandValue] = useState('')
-  const commandTriggerRef = useRef<HTMLElement | null>(null)
-
-  useEffect(() => {
-    const onCommand = (event: Event) => {
-      const detail = (event as CustomEvent<'rename' | 'move' | 'search'>).detail
-      if (detail !== 'rename' && detail !== 'move' && detail !== 'search') return
-      if (detail === 'rename' && doc?.kind !== 'note') return
-      commandTriggerRef.current = document.activeElement as HTMLElement | null
-      setCommandValue(
-        detail === 'rename' ? (doc?.title ?? '') : detail === 'move' ? (doc?.folder ?? '') : '',
-      )
-      setCommand(detail)
-    }
-    window.addEventListener('mimir:document-command', onCommand)
-    return () => window.removeEventListener('mimir:document-command', onCommand)
-  }, [doc])
+  const panelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!documentId || !docKind) return
@@ -287,18 +271,32 @@ export function DocumentPanel({
    * 而正文是编辑器内容。两处都渲染标题会让页面上出现两个一模一样的 h1
    * （真实踩过）。所以标题归这里，编辑器只管正文。
    *
-   * 真相在查询缓存里：改名走 `renameTitle`，成功后把新值写回缓存，
+   * 真相在查询缓存里：改名走 `renameTitle`，成功后重新读取当前文档，
    * 于是标题与编辑器传下去的 `title` 都会跟着更新，不需要额外的本地 state。
    * 展示态用 Typography.Title，编辑态用 Input underlined；改名仍走同一请求。
    */
   const renameTitle = useMutation({
-    mutationFn: (next: string) => api.documents.update(documentId!, { title: next }),
-    onSuccess: (updated) => {
-      void queryClient.setQueryData(['document', updated.id], updated)
-      void queryClient.invalidateQueries({ queryKey: ['documents'] })
+    mutationFn: ({ id, title }: { id: string; title: string; inline?: boolean }) =>
+      api.documents.update(id, { title }),
+    onSuccess: async (updated) => {
+      // Metadata responses carry a body snapshot. Reconcile from the server rather
+      // than pushing that snapshot into the active note's query cache.
+      try {
+        await Promise.all([
+          queryClient.invalidateQueries(
+            { queryKey: ['document', updated.id], exact: true },
+            { throwOnError: true },
+          ),
+          queryClient.invalidateQueries({ queryKey: ['documents'] }),
+        ])
+      } catch {
+        throw new DocumentCommandRefreshError('标题已保存，但暂时无法读取最新内容。请重试刷新。')
+      }
       message.success('标题已更新')
     },
-    onError: (error: unknown) => message.error(error instanceof Error ? error.message : '改名失败'),
+    onError: (error: unknown, input) => {
+      if (!input.inline) message.error(error instanceof Error ? error.message : '改名失败')
+    },
   })
 
   /**
@@ -318,15 +316,27 @@ export function DocumentPanel({
     onError: (error: unknown) => message.error(error instanceof Error ? error.message : '操作失败'),
   })
 
-  const moveDocument = async (folder: string) => {
-    if (!doc || folder === (doc.folder ?? '')) return true
-    const before = doc.folder ?? ''
-    const targetId = doc.id
+  const moveDocument = async (
+    folder: string,
+    target: DocumentDetail | undefined = doc,
+    inline = false,
+  ) => {
+    if (!target || folder === (target.folder ?? '')) return true
+    const before = target.folder ?? ''
+    const targetId = target.id
     try {
-      const updated = await api.documents.update(targetId, { folder })
-      queryClient.setQueryData(['document', targetId], updated)
-      void queryClient.invalidateQueries({ queryKey: ['documents'] })
-      void queryClient.invalidateQueries({ queryKey: ['folders'] })
+      await api.documents.update(targetId, { folder })
+      let refreshFailed = false
+      await Promise.all([
+        queryClient.invalidateQueries(
+          { queryKey: ['document', targetId], exact: true },
+          { throwOnError: true },
+        ),
+        queryClient.invalidateQueries({ queryKey: ['documents'] }),
+        queryClient.invalidateQueries({ queryKey: ['folders'] }),
+      ]).catch(() => {
+        refreshFailed = true
+      })
       const destination = folder || '知识库根'
       message.success({
         duration: 8,
@@ -339,8 +349,11 @@ export function DocumentPanel({
               onClick={() => {
                 void (async () => {
                   try {
-                    const restored = await api.documents.update(targetId, { folder: before })
-                    queryClient.setQueryData(['document', targetId], restored)
+                    await api.documents.update(targetId, { folder: before })
+                    await queryClient.invalidateQueries({
+                      queryKey: ['document', targetId],
+                      exact: true,
+                    })
                     void queryClient.invalidateQueries({ queryKey: ['documents'] })
                     void queryClient.invalidateQueries({ queryKey: ['folders'] })
                     message.success(`已移回 ${before || '知识库根'}`)
@@ -355,8 +368,11 @@ export function DocumentPanel({
           </span>
         ),
       })
+      if (refreshFailed)
+        throw new DocumentCommandRefreshError('移动已完成，但暂时无法读取最新内容。请重试刷新。')
       return true
     } catch (error) {
+      if (inline) throw error
       message.error(error instanceof Error ? error.message : '移动失败')
       return false
     }
@@ -619,7 +635,7 @@ export function DocumentPanel({
     )
   }
 
-  if (docQuery.isError) {
+  if (docQuery.isError && !doc) {
     return (
       <div className={styles.wrap}>
         <div className={styles.centered}>
@@ -672,19 +688,9 @@ export function DocumentPanel({
     else onOpenDocument(id)
   }
 
-  const closeCommand = () => {
-    setCommand(null)
-    requestAnimationFrame(() => {
-      const target = commandTriggerRef.current
-      if (target?.isConnected) target.focus()
-      else document.querySelector<HTMLElement>('[aria-label="更多操作"]')?.focus()
-    })
-  }
-
-  const findInDocument = () => {
+  const findInDocument = (targetId: string, query: string) => {
     const root = scrollRef.current
-    const query = commandValue.trim()
-    if (!root || query.length < 2) return
+    if (!root || targetId !== doc.id || query.length < 2) return false
     const range = highlightSnippet(
       root,
       query,
@@ -692,30 +698,46 @@ export function DocumentPanel({
       doc.body.toLowerCase().indexOf(query.toLowerCase()),
       2,
     )
-    if (!range) {
-      message.info('当前文档没有匹配内容')
-      return
-    }
+    if (!range) return false
     const scroller = scrollableAncestor(range.startContainer.parentElement ?? root, root)
     scroller.scrollTop +=
       range.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 80
-    closeCommand()
+    return true
   }
 
   return (
-    <div className={styles.root}>
+    <div className={styles.root} ref={panelRef} data-document-id={doc.id}>
       <div className={styles.wrap}>
         <DocumentHeader
           doc={doc}
           onBack={onBack}
           onBackToChat={onBackToChat}
           noteSaveState={
-            renameTitle.isPending ? 'saving' : noteSave?.id === doc.id ? noteSave.state : 'idle'
+            renameTitle.isPending && renameTitle.variables?.id === doc.id
+              ? 'saving'
+              : noteSave?.id === doc.id
+                ? noteSave.state
+                : 'idle'
           }
           onAskAi={() => askAi()}
           menu={menu}
         />
 
+        {docQuery.isError ? (
+          <div role="alert">
+            <Typography.Text type="warning">暂时无法刷新文档，已保留当前内容。</Typography.Text>
+            <Button
+              type="link"
+              loading={docQuery.isFetching}
+              disabled={docQuery.isFetching}
+              onClick={() => {
+                void docQuery.refetch()
+              }}
+            >
+              重试刷新
+            </Button>
+          </div>
+        ) : null}
         <div className={styles.scroll} ref={scrollRef}>
           <div className={styles.cols}>
             <div className={wideContent ? styles.innerWide : styles.inner}>
@@ -791,7 +813,7 @@ export function DocumentPanel({
                       key={doc.id}
                       title={doc.title}
                       updatedAt={doc.updatedAt}
-                      onRename={(next) => renameTitle.mutate(next)}
+                      onRename={(next) => renameTitle.mutate({ id: doc.id, title: next })}
                     />
                   }
                   onSaveStateChange={reportNoteSaveState}
@@ -910,67 +932,40 @@ export function DocumentPanel({
           />
         </div>
       )}
-      <Modal
-        title={
-          command === 'rename'
-            ? '重命名当前笔记'
-            : command === 'move'
-              ? '移动当前文档'
-              : '搜索当前笔记'
-        }
-        open={command !== null}
-        onCancel={closeCommand}
-        onOk={async () => {
-          if (command === 'rename') {
-            const next = commandValue.trim()
-            if (next && next !== doc.title) await renameTitle.mutateAsync(next)
-          } else if (command === 'move') {
-            if (!(await moveDocument(commandValue))) return
-          } else if (command === 'search') {
-            findInDocument()
-            return
-          }
-          closeCommand()
+      <DocumentCommandModal
+        key={doc.id}
+        document={doc}
+        folders={folderQuery.data?.items ?? []}
+        foldersLoading={folderQuery.isPending || folderQuery.isFetching}
+        foldersError={folderQuery.isError}
+        retryFolders={() => {
+          void folderQuery.refetch()
         }}
-        okText={command === 'rename' ? '重命名' : command === 'move' ? '移动' : '查找'}
-        okButtonProps={{
-          disabled: (command === 'rename' || command === 'search') && !commandValue.trim(),
+        rename={async (id, title) => {
+          await renameTitle.mutateAsync({ id, title, inline: true })
         }}
-        destroyOnHidden
-      >
-        {command === 'rename' ? (
-          <Input
-            autoFocus
-            aria-label="新标题"
-            maxLength={200}
-            value={commandValue}
-            onChange={(event) => setCommandValue(event.target.value)}
-          />
-        ) : command === 'search' ? (
-          <Input
-            autoFocus
-            aria-label="在当前笔记中查找"
-            value={commandValue}
-            onChange={(event) => setCommandValue(event.target.value)}
-            onPressEnter={findInDocument}
-          />
-        ) : (
-          <Select
-            autoFocus
-            aria-label="目标目录"
-            style={{ width: '100%' }}
-            value={commandValue}
-            onChange={setCommandValue}
-            options={[
-              { value: '', label: '知识库根' },
-              ...flattenFolders(folderQuery.data?.items ?? []).map((item) => ({
-                value: item.path,
-                label: item.path,
-              })),
-            ]}
-          />
-        )}
-      </Modal>
+        move={async (target, folder) => {
+          await moveDocument(folder, target, true)
+        }}
+        find={findInDocument}
+        refresh={async (targetId) => {
+          await queryClient.invalidateQueries(
+            { queryKey: ['document', targetId], exact: true },
+            { throwOnError: true },
+          )
+        }}
+        restoreFocus={(targetId, trigger) => {
+          const panel = panelRef.current
+          if (!panel || panel.dataset.documentId !== targetId) return
+          if (
+            trigger?.isConnected &&
+            !trigger.closest('[inert], [aria-hidden="true"]') &&
+            trigger.getClientRects().length > 0
+          )
+            trigger.focus()
+          else panel.querySelector<HTMLElement>('[aria-label="更多操作"]')?.focus()
+        }}
+      />
     </div>
   )
 }

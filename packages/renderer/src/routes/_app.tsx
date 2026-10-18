@@ -6,7 +6,7 @@ import {
   useSearch,
 } from '@tanstack/react-router'
 import type { Citation, SearchHit } from '@mimir/shared'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { App as AntApp } from 'antd'
 import { createStyles } from 'antd-style'
 import { useEffect, useRef, useState } from 'react'
@@ -14,7 +14,7 @@ import { CaptureDialog } from '../components/CaptureDialog'
 import { CommandPalette } from '../components/CommandPalette'
 import { NavSidebar } from '../components/NavSidebar'
 import { UnsavedGuard } from '../components/UnsavedGuard'
-import { api } from '../lib/api'
+import { api, ApiRequestError } from '../lib/api'
 import { AppShellContext, type AskDraft, type CaptureOptions } from '../lib/app-shell-context'
 import { useForcedNavCollapse } from '../lib/nav-collapse'
 import { recordRecentDocument } from '../lib/recent-documents'
@@ -112,14 +112,42 @@ const useStyles = createStyles(({ css, token }) => ({
 function AppShell() {
   const { styles } = useStyles()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const location = useLocation()
   const { message } = AntApp.useApp()
-  const { runGuarded } = useUnsaved()
+  const { runGuarded, pending: pendingLeave, saving } = useUnsaved()
   const search = useSearch({ from: '/_app' })
   const sessionQuery = useQuery({ queryKey: ['session'], queryFn: api.auth.session })
   const userId = sessionQuery.data?.user.id
 
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const [creatingNote, setCreatingNote] = useState(false)
+  const [createNoteError, setCreateNoteError] = useState<string | null>(null)
+  const creatingNoteRef = useRef(false)
+  const paletteGuardRef = useRef(false)
+
+  useEffect(() => {
+    if (!pendingLeave) paletteGuardRef.current = false
+  }, [pendingLeave])
+
+  const openPalette = () => {
+    if (creatingNoteRef.current || paletteGuardRef.current || pendingLeave || saving) return
+    setCreateNoteError(null)
+    setPaletteOpen(true)
+  }
+  const closePalette = () => {
+    if (creatingNoteRef.current || paletteGuardRef.current || pendingLeave || saving) return
+    setPaletteOpen(false)
+  }
+  const runPaletteGuarded = (action: () => void) => {
+    if (creatingNoteRef.current || paletteGuardRef.current || pendingLeave || saving) return
+    // Cover repeated commands before React publishes the pending confirmation.
+    paletteGuardRef.current = true
+    runGuarded(() => {
+      paletteGuardRef.current = false
+      action()
+    })
+  }
   const [captureOpen, setCaptureOpen] = useState(false)
   const captureTriggerRef = useRef<HTMLElement | null>(null)
   const restoreCaptureFocusRef = useRef(false)
@@ -266,6 +294,40 @@ function AppShell() {
     void navigate({ to: '/docs', search: { scope: 'all', id: hit.documentId } })
   }
 
+  const createNote = () => {
+    runPaletteGuarded(() => {
+      if (creatingNoteRef.current) return
+      creatingNoteRef.current = true
+      setCreatingNote(true)
+      setCreateNoteError(null)
+      void (async () => {
+        try {
+          const created = await api.documents.createNote({
+            title: '未命名笔记',
+            body: '',
+            tags: [],
+          })
+          setPaletteOpen(false)
+          message.success('已新建笔记')
+          void queryClient.invalidateQueries({ queryKey: ['documents'] })
+          void queryClient.invalidateQueries({ queryKey: ['folders'] })
+          void queryClient.invalidateQueries({ queryKey: ['counts'] })
+          setNewNoteFocusId(created.id)
+          openDocument(created.id, 'all')
+        } catch (error) {
+          setCreateNoteError(
+            error instanceof ApiRequestError && error.status < 500
+              ? `新建笔记失败：${error.message}`
+              : '未能确认笔记是否创建成功，请先检查知识库，再决定是否重试。',
+          )
+        } finally {
+          creatingNoteRef.current = false
+          setCreatingNote(false)
+        }
+      })()
+    })
+  }
+
   /**
    * Ctrl K 打开命令面板。
    *
@@ -275,14 +337,30 @@ function AppShell() {
    */
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
-        event.preventDefault()
-        setPaletteOpen((open) => !open)
-      }
+      if (
+        event.defaultPrevented ||
+        event.isComposing ||
+        event.keyCode === 229 ||
+        event.altKey ||
+        !(event.ctrlKey || event.metaKey) ||
+        event.key.toLowerCase() !== 'k'
+      )
+        return
+      event.preventDefault()
+      if (
+        event.repeat ||
+        creatingNoteRef.current ||
+        paletteGuardRef.current ||
+        pendingLeave ||
+        saving
+      )
+        return
+      setCreateNoteError(null)
+      setPaletteOpen((open) => !open)
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [])
+  }, [pendingLeave, saving])
 
   return (
     <AppShellContext.Provider
@@ -316,7 +394,7 @@ function AppShell() {
                 scope: search.scope,
                 ...(search.id ? { id: search.id } : {}),
               }}
-              onOpenPalette={() => setPaletteOpen(true)}
+              onOpenPalette={openPalette}
               onOpenCapture={() => openCapture()}
               collapsed={navCollapsed}
               overlayOpen={overlayOpen && narrowViewport}
@@ -340,49 +418,60 @@ function AppShell() {
 
       <CommandPalette
         open={paletteOpen}
-        onClose={() => setPaletteOpen(false)}
+        onClose={closePalette}
+        creatingNote={creatingNote}
+        createNoteError={createNoteError}
+        interactionSuspended={Boolean(pendingLeave) || saving}
         onOpenCapture={() => {
+          if (creatingNoteRef.current || paletteGuardRef.current || pendingLeave || saving) return
           setPaletteOpen(false)
           openCapture()
         }}
         onOpenSearchHit={(hit) => {
-          setPaletteOpen(false)
-          runGuarded(() => openSearchHit(hit))
+          runPaletteGuarded(() => {
+            setPaletteOpen(false)
+            openSearchHit(hit)
+          })
         }}
         userId={userId}
         currentDocumentId={page === 'docs' ? search.id : undefined}
         onOpenRecent={(id, scope) => {
-          setPaletteOpen(false)
-          runGuarded(() => openDocument(id, scope))
+          runPaletteGuarded(() => {
+            setPaletteOpen(false)
+            openDocument(id, scope)
+          })
         }}
         onCurrentCommand={(command) => {
+          if (
+            !search.id ||
+            page !== 'docs' ||
+            pendingLeave ||
+            saving ||
+            paletteGuardRef.current ||
+            creatingNoteRef.current
+          )
+            return
           setPaletteOpen(false)
-          window.dispatchEvent(new CustomEvent('mimir:document-command', { detail: command }))
+          window.dispatchEvent(
+            new CustomEvent('mimir:document-command', {
+              detail: { command, documentId: search.id },
+            }),
+          )
         }}
         onReturnToLibrary={() => {
-          setPaletteOpen(false)
-          runGuarded(() => void navigate({ to: '/docs', search: { scope: search.scope } }))
+          runPaletteGuarded(() => {
+            setPaletteOpen(false)
+            void navigate({ to: '/docs', search: { scope: search.scope } })
+          })
         }}
         onAsk={(question) => {
-          setPaletteOpen(false)
-          setAskDraft({ text: question })
-          void navigate({ to: '/chat', search: { scope: search.scope } })
+          runPaletteGuarded(() => {
+            setPaletteOpen(false)
+            setAskDraft({ text: question })
+            void navigate({ to: '/chat', search: { scope: search.scope } })
+          })
         }}
-        onNewNote={async () => {
-          setPaletteOpen(false)
-          try {
-            const created = await api.documents.createNote({
-              title: '未命名笔记',
-              body: '',
-              tags: [],
-            })
-            message.success('已新建笔记')
-            setNewNoteFocusId(created.id)
-            openDocument(created.id, 'all')
-          } catch {
-            message.error('新建笔记失败')
-          }
-        }}
+        onNewNote={createNote}
       />
 
       <CaptureDialog

@@ -1,0 +1,95 @@
+{
+  "date": "2026-10-18",
+  "artifact": "product implementation",
+  "prototypeSha256": "0e8a90da0c37c509f8fcda8027c9f01bac5f58607c45db83f10d41f8fb950535",
+  "environment": {
+    "web": "http://127.0.0.1:5174",
+    "server": "http://127.0.0.1:3001",
+    "data": "/tmp/mimir-workspace-v2-qa",
+    "account": "admin@example.com",
+    "testNoteId": "Y5sJ31WzhcQ7_GFg"
+  },
+  "verified": [
+    {
+      "flow": "desktop empty/recent/context",
+      "evidence": "product-desktop-empty.png",
+      "result": "最近笔记与当前文档命令，打开输入聚焦"
+    },
+    {
+      "flow": "desktop results/detail",
+      "evidence": "product-desktop-results.png",
+      "result": "五处同文档命中独立、路径与双行片段、完整信息展开"
+    },
+    {
+      "flow": "create success",
+      "result": "单击真实创建后导航新笔记，AX焦点为正文contenteditable"
+    },
+    {
+      "flow": "create request failure",
+      "evidence": "product-create-failure.png",
+      "result": "tab断网，保留面板并明确无法确认创建结果，可重试；未直接重试避免不确定重复"
+    },
+    {
+      "flow": "rename/move/undo",
+      "result": "真实重命名为搜索模块交互验收、移入交互验收完成后点击8秒撤销，成功移回根"
+    },
+    {
+      "flow": "find",
+      "result": "单字显示门槛错误，两个字执行关闭；CtrlK在命令弹窗内不叠加搜索"
+    },
+    {
+      "flow": "body hit location",
+      "evidence": "product-body-hit-location.png",
+      "result": "最终焦点命中真实笔记，打开后正文对应片段可见高亮"
+    },
+    {
+      "flow": "AI prefill",
+      "evidence": "product-ai-prefill.png",
+      "result": "保留scope=all，正文为原问题，暂无对话且未自动发送"
+    },
+    {
+      "flow": "guard cancel",
+      "evidence": "product-unsaved-guard.png",
+      "result": "确认覆盖期间底层禁用，继续编辑后搜索输入仍在；最终真实动画回到原AI动作按钮，可键盘操作"
+    },
+    {
+      "flow": "guard save failure",
+      "evidence": "product-save-failure-guard.png",
+      "result": "仅阻断该测试笔记document请求，保存并离开失败仍留在原文档，正文与搜索词保留"
+    },
+    {
+      "flow": "search retry focus",
+      "result": "仅阻断search请求后出现重试；解除阻断并点击重试，DOM/AX确认焦点为搜索输入"
+    },
+    {
+      "flow": "responsive narrow",
+      "evidence": "product-narrow-results.png",
+      "viewport": [
+        390,
+        844
+      ],
+      "result": "列表、底部AI与键盘说明可达；关闭按钮44x44"
+    },
+    {
+      "flow": "responsive low height",
+      "evidence": "product-low-height-results.png",
+      "viewport": [
+        844,
+        390
+      ],
+      "result": "列表内部滚动，头部和底部保留"
+    },
+    {
+      "flow": "dark",
+      "evidence": "product-dark-results.png",
+      "result": "中性选中、薄绿色输入边与片段/路径层级可读"
+    }
+  ],
+  "cleanup": "网络模拟/URL阻断均解除，临时故障标签关闭，视口重置，外观恢复浅色，测试笔记最终保存成功",
+  "limits": [
+    "152项为覆盖目录，并非152个真实独立页面或每一项均GUI验证；详细边界由原型与自动测试补足",
+    "OS原生IME、触屏软键盘、真实读屏、200%浏览器缩放、Electron原生快捷键未执行",
+    "后台GET失败保留同一编辑器与草稿及只读重试由可控promise集成测试验证，未用网络注入伪称逐步GUI复现",
+    "首次全标签断网会触发既有全局服务不可达界面；后续采用仅指定请求阻断验证模块保护，不改全局故障流程"
+  ]
+}
