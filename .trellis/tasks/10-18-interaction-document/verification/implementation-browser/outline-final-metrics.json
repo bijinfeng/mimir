@@ -1,0 +1,67 @@
+{
+  "asideWidth": 196,
+  "current": "从收集开始",
+  "items": [
+    {
+      "bg": "rgb(244, 245, 246)",
+      "border": "1px solid rgba(0, 0, 0, 0)",
+      "color": "rgb(36, 118, 76)",
+      "current": "location",
+      "font": "600 12px / 18px -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif",
+      "rect": [
+        1097,
+        191.59375,
+        171,
+        32
+      ],
+      "shadow": "rgb(34, 139, 88) 1px 0px 0px 0px inset",
+      "text": "从收集开始"
+    },
+    {
+      "bg": "rgba(0, 0, 0, 0)",
+      "border": "1px solid rgba(0, 0, 0, 0)",
+      "color": "rgb(104, 109, 118)",
+      "current": null,
+      "font": "12px / 18px -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif",
+      "rect": [
+        1097,
+        227.59375,
+        171,
+        32
+      ],
+      "shadow": "none",
+      "text": "让阅读形成联系"
+    },
+    {
+      "bg": "rgba(0, 0, 0, 0)",
+      "border": "1px solid rgba(0, 0, 0, 0)",
+      "color": "rgb(104, 109, 118)",
+      "current": null,
+      "font": "12px / 18px -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif",
+      "rect": [
+        1097,
+        263.59375,
+        171,
+        32
+      ],
+      "shadow": "none",
+      "text": "回到原文的语境"
+    },
+    {
+      "bg": "rgba(0, 0, 0, 0)",
+      "border": "1px solid rgba(0, 0, 0, 0)",
+      "color": "rgb(104, 109, 118)",
+      "current": null,
+      "font": "12px / 18px -apple-system, \"system-ui\", \"Segoe UI\", \"PingFang SC\", \"Hiragino Sans GB\", \"Microsoft YaHei\", sans-serif",
+      "rect": [
+        1097,
+        299.59375,
+        171,
+        32
+      ],
+      "shadow": "none",
+      "text": "保留自己的判断"
+    }
+  ],
+  "titleLineHeight": "17.6px"
+}

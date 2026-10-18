@@ -38,6 +38,7 @@
     "implementation_verification": "implementation-acceptance.md",
     "renderer_tests_passed": 569,
     "global_gate": "failed_outside_scope",
-    "gui_verification": "verification/implementation-browser-qa.md"
+    "gui_verification": "verification/implementation-browser-qa.md",
+    "outline_parity_correction": "implemented; exact local outline geometry/colors, reading-anchor and clamped destination follow; 11 regressions pass; see implementation-acceptance.md"
   }
 }

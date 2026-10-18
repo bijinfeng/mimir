@@ -3620,7 +3620,7 @@
       "verification": {
         "source_review": "independent trellis-check reviewed full inventory and frozen proposal against the product locations; fixes listed in implementation-review.md",
         "regression": "Related regression suites passed; not a one-to-one execution of every enumerated state: packages/renderer/src/components/document/headings.test.ts, packages/renderer/src/components/document/MarkdownBody.test.tsx, packages/renderer/src/components/DocumentPanel.core.test.tsx",
-        "gui": "not-executed-individually; source/regression evidence only",
+        "gui": "sampled: implementation-browser-qa.json#outline-parity-correction",
         "host": "not claimed"
       }
     },
@@ -3649,7 +3649,7 @@
       "verification": {
         "source_review": "independent trellis-check reviewed full inventory and frozen proposal against the product locations; fixes listed in implementation-review.md",
         "regression": "Related regression suites passed; not a one-to-one execution of every enumerated state: packages/renderer/src/components/document/headings.test.ts, packages/renderer/src/components/document/MarkdownBody.test.tsx, packages/renderer/src/components/DocumentPanel.core.test.tsx",
-        "gui": "not-executed-individually; source/regression evidence only",
+        "gui": "sampled: implementation-browser-qa.json#outline-parity-correction",
         "host": "not claimed"
       }
     },
@@ -3678,7 +3678,7 @@
       "verification": {
         "source_review": "independent trellis-check reviewed full inventory and frozen proposal against the product locations; fixes listed in implementation-review.md",
         "regression": "Related regression suites passed; not a one-to-one execution of every enumerated state: packages/renderer/src/components/document/headings.test.ts, packages/renderer/src/components/document/MarkdownBody.test.tsx, packages/renderer/src/components/DocumentPanel.core.test.tsx",
-        "gui": "not-executed-individually; source/regression evidence only",
+        "gui": "sampled: implementation-browser-qa.json#outline-parity-correction",
         "host": "not claimed"
       }
     },
@@ -3765,7 +3765,7 @@
       "verification": {
         "source_review": "independent trellis-check reviewed full inventory and frozen proposal against the product locations; fixes listed in implementation-review.md",
         "regression": "Related regression suites passed; not a one-to-one execution of every enumerated state: packages/renderer/src/components/document/headings.test.ts, packages/renderer/src/components/document/MarkdownBody.test.tsx, packages/renderer/src/components/DocumentPanel.core.test.tsx",
-        "gui": "not-executed-individually; source/regression evidence only",
+        "gui": "sampled: implementation-browser-qa.json#outline-parity-correction",
         "host": "not claimed"
       }
     },
@@ -3794,7 +3794,7 @@
       "verification": {
         "source_review": "independent trellis-check reviewed full inventory and frozen proposal against the product locations; fixes listed in implementation-review.md",
         "regression": "Related regression suites passed; not a one-to-one execution of every enumerated state: packages/renderer/src/components/document/headings.test.ts, packages/renderer/src/components/document/MarkdownBody.test.tsx, packages/renderer/src/components/DocumentPanel.core.test.tsx",
-        "gui": "not-executed-individually; source/regression evidence only",
+        "gui": "sampled: implementation-browser-qa.json#outline-parity-correction",
         "host": "not claimed"
       }
     },
@@ -12884,5 +12884,5 @@
     }
   ],
   "review_note": "Independent check fully consumed all 78 source groups / 422 states. implemented/preserved records static implementation status; exact native and GUI validation is explicitly separate. Related test paths denote suite evidence, never 422 GUI passes.",
-  "gui_sampled_state_count": 30
+  "gui_sampled_state_count": 35
 }

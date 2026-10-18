@@ -36,3 +36,11 @@
 OS IME、读屏、Electron关闭、原生播放/拖动/全屏、下载落盘完成、各Office内部工具及真实写入尚未执行，保留宿主验证边界；不声称完全像素等同或所有枚举状态GUI通过。原型外置模拟条/Office工具示意与产品真实字数条/工具区属于既定宿主差异。
 
 本轮实施与限定验证已交付；因完整`pnpm check`未通过，任务仍为`in_progress / implemented_verified_global_gate_pending`，不归档，不推送。按AGENTS提交节奏只提交本任务代码/测试/规范/记录，实施commit `675e6aefeac9c1edf6849200047e7d943000412b` 已登记于task.json和父台账。
+
+## 大纲定向返修与补验
+
+用户指出 DOC-009.idle 右侧选中条目未还原到位。本轮比对发现原产品 border0/block/30px、通用背景与颜色以及标题继承行高偏离冻结稿。恢复 inline-flex/1px透明边框/32px实高、36px步长、171px内容宽及固定局部浅深色；focus外圈2px+offset2px，hover/focus无盒尺寸变化。笔记固定侧列保留，读取分支沿批准稿sticky。
+
+实测点击第三节后曾因IO仅含变化项而被第四项抢占；改为完整标题集/实际阅读锚点与rAF滚动联动。文末scrollTop719被夹紧、第三节距滚动根顶部36.77px时，保持明确点击第三节；向上滚240px后scrollTop479正确回第二节。再回顶部，首项正确选中。深色普通#a3a9b3、选中#91c7a7/背景#282c33/细线#4b9c71；浅色对应冻结稿。悬停与键盘Tab焦点的条目矩形均171×32，未发生位移。
+
+独立trellis-check复核并修复联动，3文件11项相关回归通过；lint/format/样式守卫/diff通过，Renderer tsc仍仅范围外TS2550。此前569项全套结果是返修前记录，未当作返修后全套重跑。新[大纲同尺寸截图](verification/implementation-browser/outline-comparison.png)、[联动截图](verification/implementation-browser/outline-third-active.png)和最终metrics已保存；冻结稿未修改。

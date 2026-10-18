@@ -32,9 +32,11 @@ vi.mock('./NoteEditor', () => ({
       {bodySide}
       <div data-note-content-header>{contentHeader}</div>
       <textarea aria-label="正文草稿" defaultValue={doc.body} />
-      <div className="ProseMirror">
-        <h2>正文标题</h2>
-        <h2>另一个标题</h2>
+      <div className="me-scroll" style={{ overflowY: 'auto' }}>
+        <div className="ProseMirror">
+          <h2>正文标题</h2>
+          <h2>另一个标题</h2>
+        </div>
       </div>
     </div>
   ),
@@ -95,6 +97,7 @@ const cleanups: (() => Promise<void>)[] = []
 afterEach(async () => {
   for (const cleanup of cleanups.splice(0)) await cleanup()
   vi.restoreAllMocks()
+  vi.unstubAllGlobals()
   guards.run.mockReset()
 })
 async function mount() {
@@ -309,4 +312,116 @@ it('a missing outline target preserves reading position and explains the unavail
     heading.click()
   })
   expect(t.host.textContent).toContain('没有找到对应大纲目标，当前阅读位置保留')
+})
+
+it('outline keeps the reading-anchor section when only a later heading enters the observer', async () => {
+  const observers: {
+    callback: IntersectionObserverCallback
+    root: Element | Document | null | undefined
+    disconnected: boolean
+  }[] = []
+  vi.stubGlobal(
+    'IntersectionObserver',
+    class {
+      record: (typeof observers)[number]
+      constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
+        this.record = { callback, root: options?.root, disconnected: false }
+        observers.push(this.record)
+      }
+      observe() {}
+      disconnect() {
+        this.record.disconnected = true
+      }
+    },
+  )
+  let secondTop = 250
+  let firstTop = 120.75
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+    this: HTMLElement,
+  ) {
+    const top =
+      this.tagName === 'H2'
+        ? this.textContent === '正文标题'
+          ? firstTop
+          : this.textContent === '后面的标题'
+            ? secondTop + 160
+            : secondTop
+        : this.classList.contains('me-scroll')
+          ? 100
+          : 0
+    return new DOMRect(0, top, 400, 24)
+  })
+  vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockImplementation(function (
+    this: HTMLElement,
+  ) {
+    return this.classList.contains('me-scroll') ? 2000 : 0
+  })
+  vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockImplementation(function (
+    this: HTMLElement,
+  ) {
+    return this.classList.contains('me-scroll') ? 400 : 0
+  })
+  let nextFrame: FrameRequestCallback | undefined
+  vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((callback) => {
+    nextFrame = callback
+    return 1
+  })
+  vi.spyOn(globalThis, 'cancelAnimationFrame').mockImplementation(() => {})
+  const t = await mount()
+  await act(async () => {
+    const later = document.createElement('h2')
+    later.textContent = '后面的标题'
+    t.host.querySelector('.ProseMirror')!.append(later)
+  })
+  const scroller = t.host.querySelector('.me-scroll')!
+  const observer = observers.findLast((item) => !item.disconnected)!
+  expect(observer.root).toBe(scroller)
+  const current = () => t.host.querySelector('[aria-current="location"]')?.textContent
+  expect(current()).toBe('正文标题')
+
+  // IO delivers changed entries, omitting the first heading that is still at the anchor.
+  const second = t.host.querySelectorAll('.ProseMirror h2')[1]!
+  await act(async () =>
+    observer.callback(
+      [
+        {
+          target: second,
+          isIntersecting: true,
+          boundingClientRect: new DOMRect(0, secondTop, 400, 24),
+        },
+      ] as IntersectionObserverEntry[],
+      {} as IntersectionObserver,
+    ),
+  )
+  expect(current()).toBe('正文标题')
+
+  // Continuous scrolling must update even before another IO boundary changes.
+  firstTop = -30
+  secondTop = 120.75
+  await act(async () => {
+    scroller.dispatchEvent(new Event('scroll'))
+    nextFrame?.(0)
+  })
+  expect(current()).toBe('另一个标题')
+
+  // At the bottom the chosen heading cannot reach 20px. Preserve that explicit
+  // destination instead of reverting to the preceding section on the next IO event.
+  const scrollRoot = scroller as HTMLElement
+  scrollRoot.scrollTop = 1600
+  secondTop = 136.75
+  const scrollTo = vi.spyOn(scrollRoot, 'scrollTo').mockImplementation(() => {})
+  await t.click('另一个标题')
+  expect(scrollTo).toHaveBeenCalledWith({ top: 1616.75, behavior: 'smooth' })
+  await act(async () => observer.callback([], {} as IntersectionObserver))
+  expect(current()).toBe('另一个标题')
+
+  // Scrolling away releases the click destination, even while the next heading
+  // remains visible farther down the viewport; long sections retain their owner.
+  scrollRoot.scrollTop = 1500
+  secondTop = 236.75
+  await act(async () => {
+    scroller.dispatchEvent(new Event('scroll'))
+    nextFrame?.(0)
+  })
+  expect(current()).toBe('正文标题')
 })

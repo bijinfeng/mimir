@@ -116,6 +116,19 @@
       ],
       "observed": "图片请求404进入明确失败下载卡片，下载名称说明已保存原件。未证明成功解码或下载完成。",
       "screenshot": "implementation-browser/media-fallback.png"
+    },
+    {
+      "id": "outline-parity-correction",
+      "states": [
+        "DOC-017.hover",
+        "DOC-017.focus",
+        "DOC-017.active",
+        "DOC-017.jump",
+        "DOC-017.scroll-follow"
+      ],
+      "observed": "Actual geometry171x32px, stable hover/focus, light/dark exact local roles. Click third at clampedscroll719 retains third; wheel up240 to479 restores second; at0 selectsfirst. Focus outline2/offset2.",
+      "screenshot": "implementation-browser/outline-comparison.png",
+      "regression": "3files11tests pass after correction; prior569 full-suite run predates correction."
     }
   ],
   "not_verified": [

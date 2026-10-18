@@ -17,7 +17,7 @@ export const DOCUMENT_FONT_SIZE = {
  * 样式覆写加起来三百多行，混在组件文件里会把逻辑挤到看不见。
  * 规范见 `.trellis/spec/project/design.md` §4.3 / §5。
  */
-export const useStyles = createStyles(({ css, token, prefixCls }) => ({
+export const useStyles = createStyles(({ css, token, prefixCls, isDarkMode }) => ({
   /**
    * 根容器：文档视图 + （可选的）问 AI 侧栏，横向排列。
    * `.wrap` 原来的职责（整列）原样保留，只是变成了根的一个 flex 子项。
@@ -704,8 +704,10 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
    * 这里只补排版细节。sticky 不需要——侧列本身就是固定高度。
    */
   outlineSide: css`
+    box-sizing: border-box;
     height: 100%;
     padding: 36px 12px 40px;
+    border-left: 1px solid transparent;
     /* 浮层浮在滚动内容之上，底必须不透明——否则滚动的文字从大纲字缝里透出来 */
     background: ${token.surfaceContent};
   `,
@@ -898,6 +900,9 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   `,
 
   outline: css`
+    box-sizing: border-box;
+    position: sticky;
+    top: 0;
     flex: none;
     width: 196px;
     align-self: stretch;
@@ -914,45 +919,51 @@ export const useStyles = createStyles(({ css, token, prefixCls }) => ({
   outlineTitle: css`
     font-size: ${DOCUMENT_FONT_SIZE.meta}px;
     font-weight: 600;
-    color: ${token.colorTextTertiary};
+    line-height: 1.6;
+    color: ${isDarkMode ? '#a3a9b3' : '#686d76'};
     margin-bottom: 10px;
     padding-left: 10px;
   `,
   olItem: css`
-    display: block;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
     width: 100%;
     padding: 6px 11px;
     min-height: 30px;
     margin: 2px 0;
-    border: none;
-    border-radius: ${token.borderRadiusSM}px;
+    border: 1px solid transparent;
+    border-radius: 6px;
     background: transparent;
     font-family: inherit;
     font-size: ${DOCUMENT_FONT_SIZE.control}px;
     line-height: 1.5;
-    color: ${token.colorTextSecondary};
+    color: ${isDarkMode ? '#a3a9b3' : '#686d76'};
     text-align: left;
+    white-space: normal;
     cursor: pointer;
     transition:
       color 0.12s ease-out,
       background 0.12s ease-out;
 
     &:hover {
-      background: ${token.colorFillTertiary};
+      background: ${isDarkMode ? '#282c33' : '#f4f5f6'};
     }
 
     &:focus-visible {
-      outline: 2px solid ${token.focusRing};
-      outline-offset: -2px;
+      outline: 2px solid ${isDarkMode ? '#71ac88' : '#82b99a'};
+      outline-offset: 2px;
     }
   `,
   olItemLv3: css`
     padding-left: 23px;
   `,
   olItemActive: css`
-    color: ${token.colorLink};
-    background: ${token.colorFillQuaternary};
-    box-shadow: inset 1px 0 ${token.colorPrimary};
+    color: ${isDarkMode ? '#91c7a7' : '#24764c'};
+    background: ${isDarkMode ? '#282c33' : '#f4f5f6'};
+    box-shadow: inset 1px 0 ${isDarkMode ? '#4b9c71' : '#228b58'};
     font-weight: 600;
   `,
   /* ── 页脚：来源 / 被引用 ────────────────────────────── */

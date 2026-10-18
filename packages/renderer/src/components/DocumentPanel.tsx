@@ -236,6 +236,13 @@ export function DocumentPanel({
   const scrollRef = useRef<HTMLDivElement>(null)
   /* 标题栏的界线随正文滚动显形（D-070） */
   const [activeHeading, setActiveHeading] = useState<string | undefined>()
+  const clampedOutlineJump = useRef<{
+    root: HTMLElement
+    target: Element
+    destination: number
+    distance: number
+    arrived: boolean
+  } | null>(null)
 
   /**
    * AI 的结果**不落库**（服务端也不存，见 `services/ai-text.ts` 的注释），
@@ -620,11 +627,9 @@ export function DocumentPanel({
   /**
    * 滚动联动的高亮。
    *
-   * 用 IntersectionObserver 而不是监听 scroll：后者每次滚动都要读
-   * getBoundingClientRect（强制重排），而正文可以有几千字。
-   *
-   * 依赖 `doc.body` 而不是 `headings`：headings 是每次渲染新建的数组，
-   * 依赖它会让观察器被反复拆装。body 变了 headings 才会变。
+   * IO 的 entries 只包含本次改变的标题，不能据此覆盖仍在阅读锚点的当前节。
+   * 按真实滚动根顶部的阅读锚点选择完整标题集；scroll 在一帧内合并，
+   * IO 同时负责正文节点替换后的重挂。
    */
   useEffect(() => {
     const panel = scrollRef.current
@@ -636,6 +641,8 @@ export function DocumentPanel({
     let observer: IntersectionObserver | null = null
     let timer = 0
     let attempts = 0
+    let frame = 0
+    let stopTracking = () => {}
 
     /**
      * **要重试**，而且要能**重挂**。两条都是实测定下来的：
@@ -664,9 +671,51 @@ export function DocumentPanel({
          `.me-scroll`，只读资料是面板）——见 `jumpTo` 的同一条说明。
          root 写错时观察器仍然「工作」，只是永远不触发 */
       const root = scrollableAncestor(targets[0]!, panel)
+      stopTracking()
+      const updateActive = () => {
+        const jump = clampedOutlineJump.current
+        if (jump?.root === root) {
+          const index = targets.indexOf(jump.target as HTMLElement)
+          const distance = Math.abs(root.scrollTop - jump.destination)
+          if (index === -1 || (jump.arrived && distance > 1) || distance > jump.distance + 1) {
+            clampedOutlineJump.current = null
+          } else {
+            jump.distance = distance
+            if (distance <= 1) {
+              jump.arrived = true
+              const heading = list[index]
+              if (heading) setActiveHeading(heading.id)
+              return
+            }
+          }
+        }
+        // jumpTo 留出 20px；4px 容差覆盖小数坐标与滚动舍入。
+        const anchor = root.getBoundingClientRect().top + 24
+        let index = 0
+        for (let i = 0; i < targets.length; i += 1) {
+          if (targets[i]!.getBoundingClientRect().top > anchor) break
+          index = i
+        }
+        const heading = list[index]
+        if (heading) setActiveHeading(heading.id)
+      }
+      const track = () => {
+        if (frame) return
+        frame = requestAnimationFrame(() => {
+          frame = 0
+          if (targets[0]!.isConnected) updateActive()
+        })
+      }
+      root.addEventListener('scroll', track, { passive: true })
+      stopTracking = () => {
+        root.removeEventListener('scroll', track)
+        cancelAnimationFrame(frame)
+        frame = 0
+      }
+      updateActive()
 
       observer = new IntersectionObserver(
-        (entries) => {
+        () => {
           /*
             **观察目标被换掉时要重挂。** 内容装进 ProseMirror 时编辑器会重建
             那一层 DOM，于是我们观察的是已经脱离文档的旧节点：回调照样来，
@@ -681,12 +730,7 @@ export function DocumentPanel({
             return
           }
 
-          const visible = entries
-            .filter((entry) => entry.isIntersecting)
-            .toSorted((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0]
-          const index = visible ? targets.indexOf(visible.target) : -1
-          const heading = index === -1 ? undefined : list[index]
-          if (heading) setActiveHeading(heading.id)
+          updateActive()
         },
         { root, rootMargin: '0px 0px -70% 0px', threshold: 0 },
       )
@@ -699,6 +743,7 @@ export function DocumentPanel({
     return () => {
       window.clearTimeout(timer)
       observer?.disconnect()
+      stopTracking()
     }
   }, [headings])
 
@@ -714,12 +759,30 @@ export function DocumentPanel({
        那一列才是面板在滚。写死面板的话，笔记里点大纲会「点了没反应」——
        面板的量根本不够滚，而目标在更里面那一层。 */
     const scroller = scrollableAncestor(target, root)
+    const top =
+      target.getBoundingClientRect().top -
+      scroller.getBoundingClientRect().top +
+      scroller.scrollTop -
+      20
+    const maximum = Math.max(0, scroller.scrollHeight - scroller.clientHeight)
+    // 文末没有足够留白时，目标到不了顶部锚点；保留本次明确选中的节。
+    // 滚离该位置（或中途反向）即恢复按实际阅读位置联动，不能一律选末节。
+    clampedOutlineJump.current =
+      top > maximum
+        ? {
+            root: scroller,
+            target,
+            destination: maximum,
+            distance: Math.abs(scroller.scrollTop - maximum),
+            arrived: false,
+          }
+        : null
+    if (clampedOutlineJump.current && clampedOutlineJump.current.distance <= 1) {
+      clampedOutlineJump.current.arrived = true
+      setActiveHeading(headings[index]?.id)
+    }
     scroller.scrollTo({
-      top:
-        target.getBoundingClientRect().top -
-        scroller.getBoundingClientRect().top +
-        scroller.scrollTop -
-        20,
+      top,
       behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
     })
   }
