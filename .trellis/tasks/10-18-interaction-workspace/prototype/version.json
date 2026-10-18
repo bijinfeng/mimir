@@ -1,0 +1,10 @@
+{
+  "version": "v1",
+  "status": "awaiting_review",
+  "sha256": "de8c187e2e7c71205dfdf6859f4be8948759433faff7be8f896e936b6b6f3271",
+  "preview": "http://127.0.0.1:5181/review.html",
+  "task": ".trellis/tasks/10-18-interaction-workspace",
+  "approved_at": null,
+  "user_quote": null,
+  "implementation_commit": null
+}

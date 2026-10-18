@@ -1,0 +1,953 @@
+{
+  "schemaVersion": 1,
+  "module": "workspace-navigation-account",
+  "date": "2026-10-18",
+  "status": "research-not-approved",
+  "basis": "Current source inspection; actual browser evidence belongs to main session",
+  "references": {
+    "weknora": {
+      "version": "v0.8.3",
+      "commit": "3e22822c1d2397be730c458c7539d0eb8c113a24",
+      "verification": "reference-recheck.json",
+      "sourceEvidence": "../../10-18-modular-interaction-polish/research/weknora-theme.css:204"
+    }
+  },
+  "axes": {
+    "appearance": [
+      "light",
+      "dark"
+    ],
+    "layout": [
+      "desktop-expanded-256",
+      "desktop-collapsed-52",
+      "narrow-drawer-280",
+      "narrow-rail-52"
+    ],
+    "input": [
+      "pointer",
+      "keyboard",
+      "touch"
+    ],
+    "asyncResults": [
+      "idle",
+      "pending",
+      "success",
+      "failure-retry"
+    ]
+  },
+  "groups": [
+    {
+      "id": "shell",
+      "title": "展开工作区与滚动",
+      "sources": [
+        "packages/renderer/src/components/NavSidebar.tsx:157",
+        "packages/renderer/src/components/NavSidebar.style.ts:73",
+        "packages/renderer/src/routes/_app.tsx:69"
+      ],
+      "states": [
+        {
+          "id": "shell-01",
+          "label": "浏览器256px展开"
+        },
+        {
+          "id": "shell-02",
+          "label": "桌面宿主隐藏重复品牌标记"
+        },
+        {
+          "id": "shell-03",
+          "label": "长内容区滚动/底部账户固定"
+        },
+        {
+          "id": "shell-04",
+          "label": "顶部主动作区/48px分栏头部"
+        },
+        {
+          "id": "shell-05",
+          "label": "窗口变窄再变宽保留偏好"
+        },
+        {
+          "id": "shell-06",
+          "label": "低高度横向不溢出"
+        }
+      ],
+      "current": "展开侧栏256px；头部48px；主动作固定，列表独立滚动，账户固定。桌面hideTopBar只改变品牌标记/文字，不属于本轮原生窗口控件。",
+      "proposal": "保留几何与语雀中性选中角色；校准三组文字/图标基线与滚动边界，不扩大工作台功能。",
+      "keyboard": "Tab顺DOM；按钮Enter/Space；保留可见focus。",
+      "exit": "折叠由应用壳保存到mimir.nav-collapsed；不请求服务端。",
+      "caveat": ""
+    },
+    {
+      "id": "rail",
+      "title": "52px折叠栏",
+      "sources": [
+        "packages/renderer/src/components/NavSidebar.tsx:267",
+        "packages/renderer/src/components/NavSidebar.style.ts:19",
+        "packages/renderer/src/components/nav/NavigationAction.tsx:22"
+      ],
+      "states": [
+        {
+          "id": "rail-01",
+          "label": "默认折叠与图标Tooltip"
+        },
+        {
+          "id": "rail-02",
+          "label": "知识库选中"
+        },
+        {
+          "id": "rail-03",
+          "label": "新建/历史对话所属选中"
+        },
+        {
+          "id": "rail-04",
+          "label": "设置选中"
+        },
+        {
+          "id": "rail-05",
+          "label": "头像/账户Tooltip"
+        },
+        {
+          "id": "rail-06",
+          "label": "展开后恢复列表上下文"
+        }
+      ],
+      "current": "折叠栏有展开/知识库/新建对话/搜索/收集/设置/账号，紧凑按钮38px；窄屏44px；chat任一页亮对话入口。",
+      "proposal": "保留全部入口；统一hover/focus可见度与Tooltip名称；折叠态不添加知识库弹出树。",
+      "keyboard": "可Tab到所有图标；Enter/Space打开；Tooltip不拦操作。",
+      "exit": "宽屏展开修改长期偏好，窄屏仅打开临时Drawer。",
+      "caveat": ""
+    },
+    {
+      "id": "drawer",
+      "title": "窄屏临时抽屉",
+      "sources": [
+        "packages/renderer/src/components/NavSidebar.tsx:159",
+        "packages/renderer/src/components/NavSidebar.tsx:325",
+        "packages/renderer/src/routes/_app.tsx:335",
+        "packages/renderer/src/components/NavSidebar.test.tsx:170"
+      ],
+      "states": [
+        {
+          "id": "drawer-01",
+          "label": "收起52px栏"
+        },
+        {
+          "id": "drawer-02",
+          "label": "打开280px或100vw抽屉"
+        },
+        {
+          "id": "drawer-03",
+          "label": "首次焦点到关闭按钮"
+        },
+        {
+          "id": "drawer-04",
+          "label": "Tab/ShiftTab首尾循环"
+        },
+        {
+          "id": "drawer-05",
+          "label": "X关闭与回焦"
+        },
+        {
+          "id": "drawer-06",
+          "label": "Escape/遮罩关闭与回焦"
+        },
+        {
+          "id": "drawer-07",
+          "label": "点击目的地后关闭"
+        },
+        {
+          "id": "drawer-08",
+          "label": "未保存确认叠层"
+        },
+        {
+          "id": "drawer-09",
+          "label": "低高度滚动保持账户可达"
+        }
+      ],
+      "current": "≤880px强制折叠，不覆盖长期偏好；Drawer背景inert/锁滚动；X/Escape/遮罩回触发器；获准导航后关闭而非回抢焦点。已有行为测试覆盖。",
+      "proposal": "保留；重点验收账户/主题/行菜单独立portal在抽屉内的Escape逐层收起，不预先宣称现有有bug。",
+      "keyboard": "已有手动Tab环+AntD trap；pending时让UnsavedGuard接管焦点。",
+      "exit": "dismiss恢复展开按钮，action关闭不回抢焦点；Guard取消保持抽屉。",
+      "caveat": "账户/主题菜单的Escape需浏览器核实；不可把未证实风险画成事实。"
+    },
+    {
+      "id": "actions",
+      "title": "主入口与目的地",
+      "sources": [
+        "packages/renderer/src/components/NavSidebar.tsx:83",
+        "packages/renderer/src/components/NavSidebar.tsx:199",
+        "packages/renderer/src/routes/_app.tsx:269"
+      ],
+      "states": [
+        {
+          "id": "actions-01",
+          "label": "快速搜索与平台快捷键"
+        },
+        {
+          "id": "actions-02",
+          "label": "知识库根视图"
+        },
+        {
+          "id": "actions-03",
+          "label": "新建对话空id"
+        },
+        {
+          "id": "actions-04",
+          "label": "收集弹层"
+        },
+        {
+          "id": "actions-05",
+          "label": "账号资料目的地"
+        },
+        {
+          "id": "actions-06",
+          "label": "数据统计目的地"
+        },
+        {
+          "id": "actions-07",
+          "label": "设置默认目的地"
+        }
+      ],
+      "current": "搜索按钮⌘K/CtrlK取真实平台；打开搜索/收集只叠层不离开，选搜索结果才guard；知识库/chat/settings导航runGuarded，统一scope=all。",
+      "proposal": "保持动作语义，仅展示目的地边界和回焦，不在此评审搜索结果/收集表单/设置内容。",
+      "keyboard": "快捷键真实支持Meta/Ctrl+K；入口均Button；不编造额外快捷键。",
+      "exit": "搜索/收集由宿主弹层关闭；窄屏发起时先关Drawer；目的地触发前guard。",
+      "caveat": ""
+    },
+    {
+      "id": "selection",
+      "title": "路由与位置层次",
+      "sources": [
+        "packages/renderer/src/components/NavSidebar.tsx:208",
+        "packages/renderer/src/components/NavSidebar.tsx:229",
+        "packages/renderer/src/components/nav/FolderSection.tsx:279",
+        "packages/renderer/src/components/nav/FolderSection.tsx:508",
+        "packages/renderer/src/components/nav/menu-items.tsx:44"
+      ],
+      "states": [
+        {
+          "id": "selection-01",
+          "label": "知识库总览"
+        },
+        {
+          "id": "selection-02",
+          "label": "根知识库选中"
+        },
+        {
+          "id": "selection-03",
+          "label": "深层目录映射根知识库"
+        },
+        {
+          "id": "selection-04",
+          "label": "笔记打开根知识库location"
+        },
+        {
+          "id": "selection-05",
+          "label": "最近笔记page高亮"
+        },
+        {
+          "id": "selection-06",
+          "label": "历史对话id高亮"
+        },
+        {
+          "id": "selection-07",
+          "label": "新对话无id"
+        },
+        {
+          "id": "selection-08",
+          "label": "设置高亮"
+        },
+        {
+          "id": "selection-09",
+          "label": "标签scope无伪知识库行选中"
+        }
+      ],
+      "current": "知识库主入口docs时active；知识库行page，笔记id存在时变location弱上下文；嵌套activePath映射根；最近笔记id匹配page。",
+      "proposal": "保留父位置与当前页强弱分层；避免把location伪装成当前笔记；长标题完整名可发现。",
+      "keyboard": "aria-current语义page/location保留；当前项hover不抹选中。",
+      "exit": "导航后按真实route更新；不乐观伪选中。",
+      "caveat": ""
+    },
+    {
+      "id": "libraries",
+      "title": "知识库列表读取",
+      "sources": [
+        "packages/renderer/src/components/nav/FolderSection.tsx:15",
+        "packages/renderer/src/components/nav/FolderSection.tsx:486",
+        "packages/renderer/src/components/nav/folder-icons.tsx:57",
+        "apps/server/src/services/folders.ts:145"
+      ],
+      "states": [
+        {
+          "id": "libraries-01",
+          "label": "顶层列表及文档累计数"
+        },
+        {
+          "id": "libraries-02",
+          "label": "空知识库数量0"
+        },
+        {
+          "id": "libraries-03",
+          "label": "长知识库名截断"
+        },
+        {
+          "id": "libraries-04",
+          "label": "13种图标及未知键回退"
+        },
+        {
+          "id": "libraries-05",
+          "label": "首次loading骨架"
+        },
+        {
+          "id": "libraries-06",
+          "label": "读取失败/重试"
+        },
+        {
+          "id": "libraries-07",
+          "label": "重试中"
+        },
+        {
+          "id": "libraries-08",
+          "label": "成功恢复列表"
+        }
+      ],
+      "current": "只显示response.items顶层；children不渲染，无树展开/拖拽/新建子目录；数字包含子树总数；已有loading/empty/error/retry。",
+      "proposal": "保留全部状态，重试中给就地反馈与防重复；长名称完整可发现；失败不伪装空库。",
+      "keyboard": "行button及独立⋯Button；无tree角色/方向键树契约。",
+      "exit": "重试保持当前scope，不清空位置。",
+      "caveat": "来源路径的server项请去掉renderer前缀；这是跨层语义证据而非允许修改server。"
+    },
+    {
+      "id": "library-menu",
+      "title": "知识库行菜单",
+      "sources": [
+        "packages/renderer/src/components/nav/FolderSection.tsx:182",
+        "packages/renderer/src/components/nav/FolderSection.tsx:253",
+        "packages/renderer/src/components/nav/FolderSection.tsx:275"
+      ],
+      "states": [
+        {
+          "id": "library-menu-01",
+          "label": "默认数字可见"
+        },
+        {
+          "id": "library-menu-02",
+          "label": "hover显示更多数字隐去"
+        },
+        {
+          "id": "library-menu-03",
+          "label": "键盘focus-within显示更多"
+        },
+        {
+          "id": "library-menu-04",
+          "label": "菜单展开保留更多"
+        },
+        {
+          "id": "library-menu-05",
+          "label": "触屏/窄屏更多常显"
+        },
+        {
+          "id": "library-menu-06",
+          "label": "重命名/危险删除"
+        },
+        {
+          "id": "library-menu-07",
+          "label": "菜单Escape与回焦"
+        },
+        {
+          "id": "library-menu-08",
+          "label": "点击菜单不导航"
+        }
+      ],
+      "current": "数字与⋯同槽，hover/focus/menu-open切换；触摸常显⋯；菜单只有重命名/删除；Escape已显式回焦，菜单操作不冒泡成导航。",
+      "proposal": "保留，打磨触摸目标和长名称上下文；不加移动/建子目录/复制等不存在项。",
+      "keyboard": "Tab到行与独立⋯；Enter/Space开；菜单Esc回⋯；菜单方向键依AntD。",
+      "exit": "外点/选择/Escape关闭；重命名转Modal；删除转confirmDanger。",
+      "caveat": ""
+    },
+    {
+      "id": "create",
+      "title": "侧栏创建入口（基础v1保留）",
+      "sources": [
+        "packages/renderer/src/components/nav/FolderSection.tsx:474",
+        "packages/renderer/src/components/nav/FolderSection.tsx:522",
+        "packages/renderer/src/components/KnowledgeBaseCreateModal.tsx:163"
+      ],
+      "states": [
+        {
+          "id": "create-01",
+          "label": "新建空表单"
+        },
+        {
+          "id": "create-02",
+          "label": "名称/描述/13图标可取消选中"
+        },
+        {
+          "id": "create-03",
+          "label": "空白禁用/非法斜线错误"
+        },
+        {
+          "id": "create-04",
+          "label": "提交锁定"
+        },
+        {
+          "id": "create-05",
+          "label": "请求失败保留草稿/重试"
+        },
+        {
+          "id": "create-06",
+          "label": "取消清草稿与回焦"
+        },
+        {
+          "id": "create-07",
+          "label": "成功进入新库"
+        }
+      ],
+      "current": "共享Modal已完成内联校验/错误、草稿保留、提交guard/禁关闭/禁取消；成功invalidate并onSelect新path。",
+      "proposal": "作为本模块入口串联和回归展示，不重复列为新增设计；同已验收基础v1。",
+      "keyboard": "初始名称焦点、字段label/错误描述；Input已有IME Enter抑制。",
+      "exit": "非pending可取消；成功进入新库；pending不离开。",
+      "caveat": ""
+    },
+    {
+      "id": "rename",
+      "title": "知识库重命名",
+      "sources": [
+        "packages/renderer/src/components/nav/FolderSection.tsx:379",
+        "packages/renderer/src/components/nav/FolderSection.tsx:412",
+        "packages/renderer/src/components/nav/FolderSection.tsx:448",
+        "packages/renderer/src/components/nav/FolderSection.tsx:531"
+      ],
+      "states": [
+        {
+          "id": "rename-01",
+          "label": "打开预填旧名称"
+        },
+        {
+          "id": "rename-02",
+          "label": "空白禁提交"
+        },
+        {
+          "id": "rename-03",
+          "label": "未改名提交直接关闭"
+        },
+        {
+          "id": "rename-04",
+          "label": "斜线非法"
+        },
+        {
+          "id": "rename-05",
+          "label": "重名/服务端失败"
+        },
+        {
+          "id": "rename-06",
+          "label": "提交中"
+        },
+        {
+          "id": "rename-07",
+          "label": "失败保留输入重试"
+        },
+        {
+          "id": "rename-08",
+          "label": "取消恢复原名与回焦"
+        },
+        {
+          "id": "rename-09",
+          "label": "成功保持嵌套位置"
+        }
+      ],
+      "current": "现有name.trim校验；非法及请求失败仅message；无pending loading/取消锁/按钮防重；无label/id/error关联；成功followActivePath保留后缀，失效folders/documents/document。",
+      "proposal": "对齐基础v1：可见标签、就地校验及请求错误、失败保留草稿、pending只提交一次并锁退出；保留未改名直接结束与原路径子树跟随。",
+      "keyboard": "名称初始焦点、Enter有效提交/IME不误交、非法回字段；取消回⋯或知识库入口。",
+      "exit": "取消/X/Escape/遮罩只在未提交时可关；完成回原行或语义fallback；成功若重命名当前子树保留后缀。",
+      "caveat": ""
+    },
+    {
+      "id": "remove",
+      "title": "删除知识库（基础v1保留）",
+      "sources": [
+        "packages/renderer/src/components/nav/FolderSection.tsx:425",
+        "packages/renderer/src/components/nav/FolderSection.tsx:437",
+        "packages/renderer/src/components/confirm-danger.tsx:13"
+      ],
+      "states": [
+        {
+          "id": "remove-01",
+          "label": "空库删除说明"
+        },
+        {
+          "id": "remove-02",
+          "label": "含文档删除保留文档/清指派说明"
+        },
+        {
+          "id": "remove-03",
+          "label": "取消默认焦点"
+        },
+        {
+          "id": "remove-04",
+          "label": "删除中锁退出"
+        },
+        {
+          "id": "remove-05",
+          "label": "失败原处重试/取消"
+        },
+        {
+          "id": "remove-06",
+          "label": "成功移出当前scope"
+        }
+      ],
+      "current": "confirmDanger已保留对象/错误/重试，pending禁取消/Escape；删除知识库保留文档回库根；当前子树删除成功onSelect空path。",
+      "proposal": "保留合同，展示基础v1复用；不可称删除文档、不可加撤销或假后台回收站。",
+      "keyboard": "默认取消焦点；失败alert；AntD promise控制loading与保留。",
+      "exit": "取消不删；成功才关闭，当前scope失效则到知识库总览。",
+      "caveat": ""
+    },
+    {
+      "id": "history",
+      "title": "对话历史",
+      "sources": [
+        "packages/renderer/src/components/NavSidebar.tsx:48",
+        "packages/renderer/src/components/NavSidebar.tsx:125",
+        "packages/renderer/src/components/nav/menu-items.tsx:84",
+        "packages/renderer/src/components/nav/menu-items.test.ts:67"
+      ],
+      "states": [
+        {
+          "id": "history-01",
+          "label": "单组列表/相对时间"
+        },
+        {
+          "id": "history-02",
+          "label": "空标题回退新对话"
+        },
+        {
+          "id": "history-03",
+          "label": "长标题与时间并存"
+        },
+        {
+          "id": "history-04",
+          "label": "空列表说明"
+        },
+        {
+          "id": "history-05",
+          "label": "首次loading"
+        },
+        {
+          "id": "history-06",
+          "label": "读取失败/重试"
+        },
+        {
+          "id": "history-07",
+          "label": "重试中"
+        },
+        {
+          "id": "history-08",
+          "label": "超过12条"
+        },
+        {
+          "id": "history-09",
+          "label": "当前id在12条以外"
+        }
+      ],
+      "current": "单组对话，slice(0,12)，不按日期分；空态有说明；error一行菜单可重试；loading没有骨架/文本；active超过12条不出现在侧栏。",
+      "proposal": "加轻loading/重试中反馈和长标题完整名；建议维持最多12条并让已返回的当前旧会话可定位（替换列表末条或附当前位置需主方案定），不新增分页/更多会话接口。",
+      "keyboard": "Menu方向键/Enter；选中aria-current；Esc语义由菜单宿主。",
+      "exit": "点击历史runGuarded后去/chat?scope=all&id=...；失败留现页面。",
+      "caveat": "列表API返回范围以现有响应为准，不能凭空取得未返回的旧会话；若不做active可见修复应明确限制。"
+    },
+    {
+      "id": "recent",
+      "title": "最近笔记正常态",
+      "sources": [
+        "packages/renderer/src/components/nav/RecentNotes.tsx:17",
+        "packages/renderer/src/lib/recent-documents.ts:6",
+        "packages/renderer/src/lib/recent-documents.test.ts:6",
+        "packages/renderer/src/routes/_app.tsx:244"
+      ],
+      "states": [
+        {
+          "id": "recent-01",
+          "label": "展开标题与aria-expanded"
+        },
+        {
+          "id": "recent-02",
+          "label": "折叠后保留分组头"
+        },
+        {
+          "id": "recent-03",
+          "label": "只列note前6条"
+        },
+        {
+          "id": "recent-04",
+          "label": "长名称和原路径title"
+        },
+        {
+          "id": "recent-05",
+          "label": "当前笔记选中"
+        },
+        {
+          "id": "recent-06",
+          "label": "空本地记录"
+        },
+        {
+          "id": "recent-07",
+          "label": "已删除/无权限记录排除"
+        },
+        {
+          "id": "recent-08",
+          "label": "重开移动最前/账号隔离"
+        }
+      ],
+      "current": "本地每账号存12文档ID、再按GET真相排除失败、只显示前6个note；收起状态是组件内存不承诺跨设备；行title有完整名与folder。",
+      "proposal": "保留容量/过滤/排序/账号隔离/折叠；不增加全局最近文档页或云同步。",
+      "keyboard": "组头Enter/Space，aria-expanded；笔记Button；保留title补充但非唯一名称。",
+      "exit": "打开笔记runGuarded；取消保持原笔记与Drawer；开成功只按真实id高亮。",
+      "caveat": ""
+    },
+    {
+      "id": "recent-recovery",
+      "title": "最近笔记读取恢复",
+      "sources": [
+        "packages/renderer/src/components/nav/RecentNotes.tsx:34",
+        "packages/renderer/src/lib/recent-documents.ts:44"
+      ],
+      "states": [
+        {
+          "id": "recent-recovery-01",
+          "label": "有本地ID但首次loading"
+        },
+        {
+          "id": "recent-recovery-02",
+          "label": "全部暂时请求失败"
+        },
+        {
+          "id": "recent-recovery-03",
+          "label": "部分成功部分暂时失败"
+        },
+        {
+          "id": "recent-recovery-04",
+          "label": "重试中"
+        },
+        {
+          "id": "recent-recovery-05",
+          "label": "重试成功"
+        },
+        {
+          "id": "recent-recovery-06",
+          "label": "全部404/403真实不可显示"
+        }
+      ],
+      "current": "当前Promise.allSettled把所有reject静默丢掉且query整体成功，UI未消费isLoading/isError，因此网络失败可显示成无最近笔记。",
+      "proposal": "区分首次读取/暂时错误/真实空；保留已成功项，局部说明+重试；404/无权限继续不显示；利用既有GET和refetch，不新建端点。",
+      "keyboard": "重试Button+status/alert，焦点保持重试/当前行；折叠不强制展开。",
+      "exit": "失败不自动离开；重试不清空当前打开笔记。",
+      "caveat": "需要实现时对ApiRequestError.status分类并保持隐私；不能只在UI读取isError，hook现在吞错不会置error。"
+    },
+    {
+      "id": "identity",
+      "title": "账户身份与模式",
+      "sources": [
+        "packages/renderer/src/components/nav/AccountRow.tsx:32",
+        "packages/renderer/src/components/nav/AccountRow.tsx:65",
+        "packages/renderer/src/components/nav/AccountRow.tsx:93",
+        "packages/renderer/src/routes/__root.tsx:14"
+      ],
+      "states": [
+        {
+          "id": "identity-01",
+          "label": "云端头像/名称/邮箱"
+        },
+        {
+          "id": "identity-02",
+          "label": "本地用户且无登出"
+        },
+        {
+          "id": "identity-03",
+          "label": "无头像字母fallback"
+        },
+        {
+          "id": "identity-04",
+          "label": "长名称邮箱截断"
+        },
+        {
+          "id": "identity-05",
+          "label": "session尚未返回"
+        },
+        {
+          "id": "identity-06",
+          "label": "session读取失败"
+        },
+        {
+          "id": "identity-07",
+          "label": "config未返回"
+        },
+        {
+          "id": "identity-08",
+          "label": "config读取失败"
+        }
+      ],
+      "current": "无user整个AccountRow不渲染（连设置入口）；localMode=data?.localMode??false，因此未知时按云端出邮箱/登出；身份group非可点击标题。",
+      "proposal": "保留身份结构；未知模式不展示云端专属危险动作，loading/error轻占位及就地重试；可用设置入口不因身份请求临时失效消失。",
+      "keyboard": "头像Button完整aria-label；菜单身份不可当重复账号动作；长名称可完整发现。",
+      "exit": "session/config重试已有API；本地模式判服务端事实，与desktop壳区别。",
+      "caveat": "根路由beforeLoad先直调session，正常失效会redirect登录、初次连接失败是RootError；本组缺席仅指导航自身独立session query尚未到或失败，不伪造未鉴权工作台。"
+    },
+    {
+      "id": "account-menu",
+      "title": "账户菜单与目的地",
+      "sources": [
+        "packages/renderer/src/components/nav/AccountRow.tsx:132",
+        "packages/renderer/src/components/nav/AccountRow.tsx:155",
+        "packages/renderer/src/components/NavSidebar.style.ts:393"
+      ],
+      "states": [
+        {
+          "id": "account-menu-01",
+          "label": "展开态点击账号"
+        },
+        {
+          "id": "account-menu-02",
+          "label": "折叠态头像菜单"
+        },
+        {
+          "id": "account-menu-03",
+          "label": "账号资料入口"
+        },
+        {
+          "id": "account-menu-04",
+          "label": "数据统计入口"
+        },
+        {
+          "id": "account-menu-05",
+          "label": "外点关闭与回焦"
+        },
+        {
+          "id": "account-menu-06",
+          "label": "Escape逐层关闭"
+        },
+        {
+          "id": "account-menu-07",
+          "label": "窄屏边缘弹层/44px触达"
+        }
+      ],
+      "current": "topRight受控Dropdown，destroyOnHidden；account/stats通过父回调guard；设置是独立底部按钮不在菜单；主题级联；行min-height32，尚无窄屏44覆写。",
+      "proposal": "保留菜单IA及独立设置；窄屏菜单触达统一44、边缘避让、键盘焦点清楚；明确Escape回触发器；避免外点关闭时抢新目标焦点。",
+      "keyboard": "Enter/Space头像；Menu方向键；Esc优先当前菜单/子菜单，需实际浏览器核对当前；不关闭整个Drawer。",
+      "exit": "选择目的地guard；取消未保存回原入口/菜单上下文；外点/ESC收起并清子菜单。",
+      "caveat": ""
+    },
+    {
+      "id": "appearance",
+      "title": "主题级联",
+      "sources": [
+        "packages/renderer/src/components/nav/AccountRow.tsx:67",
+        "packages/renderer/src/components/nav/AccountRow.tsx:170",
+        "packages/renderer/src/theme/appearance.ts:39",
+        "packages/renderer/src/components/NavSidebar.test.tsx:123"
+      ],
+      "states": [
+        {
+          "id": "appearance-01",
+          "label": "主题父项与级联箭头"
+        },
+        {
+          "id": "appearance-02",
+          "label": "跟随系统选中"
+        },
+        {
+          "id": "appearance-03",
+          "label": "浅色选中"
+        },
+        {
+          "id": "appearance-04",
+          "label": "深色选中"
+        },
+        {
+          "id": "appearance-05",
+          "label": "点当前项无多余变化"
+        },
+        {
+          "id": "appearance-06",
+          "label": "选择后全部层收起"
+        },
+        {
+          "id": "appearance-07",
+          "label": "重开显示最新勾"
+        },
+        {
+          "id": "appearance-08",
+          "label": "系统变化auto跟随"
+        },
+        {
+          "id": "appearance-09",
+          "label": "窄屏级联不出界"
+        }
+      ],
+      "current": "级联形态是用户既有拍板；THEME_MODES唯一清单；extra尾勾对齐；受控openKeys+flushSync先关子层防残留；本地偏好非账号云同步。",
+      "proposal": "保留已正确行为及选项顺序/文案；拟为父项增加当前值提示、触摸安全区/边缘避让与主题选择语义，不能改回平铺。",
+      "keyboard": "方向键进入/返回子层；Esc分层；当前项不disabled；勾不成为唯一可及选择状态。",
+      "exit": "选择先关子层再关父层再切外观；无需guard/网络保存；偏好受限存储时本次仍生效。",
+      "caveat": ""
+    },
+    {
+      "id": "signout",
+      "title": "云端登出",
+      "sources": [
+        "packages/renderer/src/components/nav/AccountRow.tsx:123",
+        "packages/renderer/src/components/nav/AccountRow.tsx:204",
+        "packages/renderer/src/lib/api.ts:1340"
+      ],
+      "states": [
+        {
+          "id": "signout-01",
+          "label": "云端登出可用"
+        },
+        {
+          "id": "signout-02",
+          "label": "本地不出现"
+        },
+        {
+          "id": "signout-03",
+          "label": "脏内容选择登出"
+        },
+        {
+          "id": "signout-04",
+          "label": "guard取消"
+        },
+        {
+          "id": "signout-05",
+          "label": "guard保存成功再登出"
+        },
+        {
+          "id": "signout-06",
+          "label": "登出请求中"
+        },
+        {
+          "id": "signout-07",
+          "label": "登出失败原处恢复"
+        },
+        {
+          "id": "signout-08",
+          "label": "重试成功至登录"
+        }
+      ],
+      "current": "当前关闭菜单后直接void api.auth.signOutAndLeave；没有runGuarded/pending/错误反馈；成功才window.location.href到/login整页清内存。",
+      "proposal": "接入已有unsaved合同；请求期间单次busy，失败保留账号与错误说明/重试，成功仍整页离开；不新增普通干净登出的强制确认页。",
+      "keyboard": "guard取消回账户入口；busy不可重复；错误alert/可聚焦重试。",
+      "exit": "失败不跳登录、不假装退出；本地无动作；保存失败不发登出；成功才重载清缓存。",
+      "caveat": ""
+    },
+    {
+      "id": "unsaved",
+      "title": "导航未保存边界",
+      "sources": [
+        "packages/renderer/src/components/NavSidebar.tsx:83",
+        "packages/renderer/src/lib/unsaved.tsx:75",
+        "packages/renderer/src/components/UnsavedGuard.tsx:43",
+        "packages/renderer/src/components/NavSidebar.test.tsx:239"
+      ],
+      "states": [
+        {
+          "id": "unsaved-01",
+          "label": "manual继续编辑"
+        },
+        {
+          "id": "unsaved-02",
+          "label": "manual丢弃改动"
+        },
+        {
+          "id": "unsaved-03",
+          "label": "manual保存并离开"
+        },
+        {
+          "id": "unsaved-04",
+          "label": "保存中锁定"
+        },
+        {
+          "id": "unsaved-05",
+          "label": "保存失败不放行"
+        },
+        {
+          "id": "unsaved-06",
+          "label": "auto正在保存无丢弃"
+        },
+        {
+          "id": "unsaved-07",
+          "label": "auto已保存后离开"
+        },
+        {
+          "id": "unsaved-08",
+          "label": "Drawer保留直到获准"
+        }
+      ],
+      "current": "已guard知识库/新建历史对话/设置/资料/统计/最近笔记。manual三选，auto无丢弃；失败保持原位置。搜索/收集打开不guard因为未离开；选结果才guard。",
+      "proposal": "保留现有Guard，不重写Office/自动保存算法；将云端登出作为当前未覆盖离开入口补齐；删除/重命名导致scope导航仍沿父onSelect guard。",
+      "keyboard": "pending时Drawer暂停自身trap/键盘关闭，Modal独占；取消回触发导航项。",
+      "exit": "仅获准才closeAfterAction并navigate；取消/失败不改route与原抽屉；保存必须调用原注册save。",
+      "caveat": ""
+    },
+    {
+      "id": "stress",
+      "title": "状态组合与适配",
+      "sources": [
+        "packages/renderer/src/components/NavSidebar.style.ts:152",
+        "packages/renderer/src/components/NavSidebar.style.ts:393",
+        "packages/renderer/src/components/nav/FolderSection.tsx:124",
+        "packages/renderer/src/theme/customToken.ts:31"
+      ],
+      "states": [
+        {
+          "id": "stress-01",
+          "label": "浅色桌面键盘"
+        },
+        {
+          "id": "stress-02",
+          "label": "深色桌面键盘"
+        },
+        {
+          "id": "stress-03",
+          "label": "390×844窄屏触摸"
+        },
+        {
+          "id": "stress-04",
+          "label": "低高度长列表"
+        },
+        {
+          "id": "stress-05",
+          "label": "长中英混排与大计数"
+        },
+        {
+          "id": "stress-06",
+          "label": "reduced-motion/禁用态"
+        }
+      ],
+      "current": "现有中性navSelectedBg/Text、细字段边框、focusRing、触摸44目标已局部建立。",
+      "proposal": "同一数据双栏对比、同尺寸/主题切换；只修具体不一致；保留token体系，不引入页面字面量色/第二provider。",
+      "keyboard": "全程键盘、hover与focus可独立检查；不得移除focus outline来追求细边。",
+      "exit": "全部异步本地模拟、明确成功/失败模拟；无真实登出/删除/偏好写入。",
+      "caveat": ""
+    }
+  ],
+  "notApplicable": [
+    {
+      "id": "na-tree",
+      "label": "侧栏树展开/嵌套行/方向键树导航/拖拽/建子目录",
+      "reason": "D-079仅顶层平铺，嵌套在知识库页；本模块仅展示嵌套scope的根库位置映射",
+      "source": "packages/renderer/src/components/nav/FolderSection.tsx:15"
+    },
+    {
+      "id": "na-server-new",
+      "label": "分页/更多会话端点、最近记录云同步、撤销删除、用户切换",
+      "reason": "没有本模块既有UI/合同，不加能力"
+    },
+    {
+      "id": "na-content",
+      "label": "搜索结果/收集内容/完整知识库页/设置分区内容/原生标题栏",
+      "reason": "展示入口与目的地边界，归后续模块"
+    }
+  ],
+  "counts": {
+    "groups": 19,
+    "states": 144,
+    "notApplicable": 3
+  }
+}

@@ -1,0 +1,681 @@
+[
+  {
+    "columns": 2,
+    "heading": "导航与位置",
+    "overflow": false,
+    "selected": "默 认",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "导航与位置",
+    "overflow": false,
+    "selected": "知识库内部",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "导航与位置",
+    "overflow": false,
+    "selected": "笔记位置",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "导航与位置",
+    "overflow": false,
+    "selected": "对话页面",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "导航与位置",
+    "overflow": false,
+    "selected": "新建对话",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "导航与位置",
+    "overflow": false,
+    "selected": "设置页面",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "导航与位置",
+    "overflow": false,
+    "selected": "Desktop宿主",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "导航与位置",
+    "overflow": false,
+    "selected": "长内容与滚动",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "导航与位置",
+    "overflow": false,
+    "selected": "标签筛选",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "知识库列表与菜单",
+    "overflow": false,
+    "selected": "默 认",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "知识库列表与菜单",
+    "overflow": false,
+    "selected": "加载中",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "知识库列表与菜单",
+    "overflow": false,
+    "selected": "空列表",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "知识库列表与菜单",
+    "overflow": false,
+    "selected": "读取失败",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "知识库列表与菜单",
+    "overflow": false,
+    "selected": "后台刷新失败",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "知识库列表与菜单",
+    "overflow": false,
+    "selected": "长标题",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "知识库列表与菜单",
+    "overflow": false,
+    "selected": "空知识库",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "知识库列表与菜单",
+    "overflow": false,
+    "selected": "菜单展开",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "知识库列表与菜单",
+    "overflow": false,
+    "selected": "重试中",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "知识库列表与菜单",
+    "overflow": false,
+    "selected": "恢复成功",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "知识库列表与菜单",
+    "overflow": false,
+    "selected": "图标与回退",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "重命名",
+    "overflow": false,
+    "selected": "默 认",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "重命名",
+    "overflow": false,
+    "selected": "空白名称",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "重命名",
+    "overflow": false,
+    "selected": "含斜杠",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "重命名",
+    "overflow": false,
+    "selected": "未修改",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "重命名",
+    "overflow": false,
+    "selected": "提交中",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "重命名",
+    "overflow": false,
+    "selected": "提交失败",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "重命名",
+    "overflow": false,
+    "selected": "成 功",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "重命名",
+    "overflow": false,
+    "selected": "重名错误",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "重命名",
+    "overflow": false,
+    "selected": "取消返回",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "创建知识库",
+    "overflow": false,
+    "selected": "默 认",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "创建知识库",
+    "overflow": false,
+    "selected": "名称错误",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "创建知识库",
+    "overflow": false,
+    "selected": "描述上限",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "创建知识库",
+    "overflow": false,
+    "selected": "图标选择",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "创建知识库",
+    "overflow": false,
+    "selected": "提交中",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "创建知识库",
+    "overflow": false,
+    "selected": "提交失败",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "创建知识库",
+    "overflow": false,
+    "selected": "成 功",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "创建知识库",
+    "overflow": false,
+    "selected": "取消返回",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "删除知识库",
+    "overflow": false,
+    "selected": "有文档",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "删除知识库",
+    "overflow": false,
+    "selected": "空知识库",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "删除知识库",
+    "overflow": false,
+    "selected": "提交中",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "删除知识库",
+    "overflow": false,
+    "selected": "失败与重试",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "删除知识库",
+    "overflow": false,
+    "selected": "成 功",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "删除知识库",
+    "overflow": false,
+    "selected": "取消返回",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "历史对话",
+    "overflow": false,
+    "selected": "默 认",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "历史对话",
+    "overflow": false,
+    "selected": "加载中",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "历史对话",
+    "overflow": false,
+    "selected": "空列表",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "历史对话",
+    "overflow": false,
+    "selected": "读取失败",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "历史对话",
+    "overflow": false,
+    "selected": "后台刷新失败",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "历史对话",
+    "overflow": false,
+    "selected": "当前对话在第13项",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "历史对话",
+    "overflow": false,
+    "selected": "长标题",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "历史对话",
+    "overflow": false,
+    "selected": "重试中",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "历史对话",
+    "overflow": false,
+    "selected": "超过12条",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "历史对话",
+    "overflow": false,
+    "selected": "空标题回退",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "最近笔记",
+    "overflow": false,
+    "selected": "默 认",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "最近笔记",
+    "overflow": false,
+    "selected": "折 叠",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "最近笔记",
+    "overflow": false,
+    "selected": "加载中",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "最近笔记",
+    "overflow": false,
+    "selected": "空列表",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "最近笔记",
+    "overflow": false,
+    "selected": "读取失败",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "最近笔记",
+    "overflow": false,
+    "selected": "部分读取失败",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "最近笔记",
+    "overflow": false,
+    "selected": "失效或无权限",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "最近笔记",
+    "overflow": false,
+    "selected": "长标题",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "最近笔记",
+    "overflow": false,
+    "selected": "重试中",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "最近笔记",
+    "overflow": false,
+    "selected": "恢复成功",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "最近笔记",
+    "overflow": false,
+    "selected": "6条与顺序",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "最近笔记",
+    "overflow": false,
+    "selected": "容量与账号隔离",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "账户与模式",
+    "overflow": false,
+    "selected": "云端账户",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "账户与模式",
+    "overflow": false,
+    "selected": "本地账户",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "账户与模式",
+    "overflow": false,
+    "selected": "会话加载中",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "账户与模式",
+    "overflow": false,
+    "selected": "会话读取失败",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "账户与模式",
+    "overflow": false,
+    "selected": "配置加载中",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "账户与模式",
+    "overflow": false,
+    "selected": "配置读取失败",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "账户与模式",
+    "overflow": false,
+    "selected": "长姓名与邮箱",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "账户与模式",
+    "overflow": false,
+    "selected": "头像缺失",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "主题级联",
+    "overflow": false,
+    "selected": "跟随系统",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "主题级联",
+    "overflow": false,
+    "selected": "浅 色",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "主题级联",
+    "overflow": false,
+    "selected": "深 色",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "主题级联",
+    "overflow": false,
+    "selected": "键盘路径",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "主题级联",
+    "overflow": false,
+    "selected": "触屏边界",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "登出与恢复",
+    "overflow": false,
+    "selected": "默 认",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "登出与恢复",
+    "overflow": false,
+    "selected": "未保存内容",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "登出与恢复",
+    "overflow": false,
+    "selected": "登出中",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "登出与恢复",
+    "overflow": false,
+    "selected": "登出失败",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "登出与恢复",
+    "overflow": false,
+    "selected": "成 功",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "折叠栏与窄屏",
+    "overflow": false,
+    "selected": "桌面折叠栏",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "折叠栏与窄屏",
+    "overflow": false,
+    "selected": "窄屏关闭",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "折叠栏与窄屏",
+    "overflow": false,
+    "selected": "窄屏展开",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "折叠栏与窄屏",
+    "overflow": false,
+    "selected": "遮罩关闭",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "折叠栏与窄屏",
+    "overflow": false,
+    "selected": "导航后关闭",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "折叠栏与窄屏",
+    "overflow": false,
+    "selected": "未保存确认中",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "跨页与键盘",
+    "overflow": false,
+    "selected": "默 认",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "跨页与键盘",
+    "overflow": false,
+    "selected": "未保存内容",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "跨页与键盘",
+    "overflow": false,
+    "selected": "保存中",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "跨页与键盘",
+    "overflow": false,
+    "selected": "保存失败",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "跨页与键盘",
+    "overflow": false,
+    "selected": "放弃并离开",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "跨页与键盘",
+    "overflow": false,
+    "selected": "取消返回",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "跨页与键盘",
+    "overflow": false,
+    "selected": "自动保存中",
+    "stages": 2
+  },
+  {
+    "columns": 2,
+    "heading": "跨页与键盘",
+    "overflow": false,
+    "selected": "自动保存完成",
+    "stages": 2
+  }
+]

@@ -1,0 +1,33 @@
+{
+  "id": "interaction-workspace",
+  "name": "interaction-workspace",
+  "title": "工作区导航与账户菜单交互精修",
+  "description": "第二模块：完整盘点工作区导航、知识库平铺、最近历史与账户菜单，交付HTML前后对比稿，获批后再实施",
+  "status": "planning",
+  "dev_type": "frontend",
+  "scope": "renderer/navigation",
+  "package": "packages/renderer",
+  "priority": "P2",
+  "creator": "jfbi",
+  "assignee": "jfbi",
+  "createdAt": "2026-10-18",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "master",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [],
+  "parent": "10-18-modular-interaction-polish",
+  "relatedFiles": [
+    "prd.md",
+    "design.md",
+    "implement.md",
+    "prototype/review.html",
+    "research/workspace-inventory.md",
+    "research/workspace-scenes.json"
+  ],
+  "notes": "用户已批准创建并规划；仅HTML提案，待本模块具体版本认可后才可实现。",
+  "meta": {}
+}

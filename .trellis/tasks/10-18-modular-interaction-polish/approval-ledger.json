@@ -16,12 +16,15 @@
     {
       "id": "workspace",
       "name": "工作区导航与账户菜单",
-      "status": "not_requested",
-      "proposal": null,
-      "version": null,
+      "status": "awaiting_review",
+      "proposal": "../10-18-interaction-workspace/prototype/review.html",
+      "version": "v1",
       "approved_at": null,
       "user_quote": null,
-      "implementation_commit": null
+      "implementation_commit": null,
+      "sha256": "de8c187e2e7c71205dfdf6859f4be8948759433faff7be8f896e936b6b6f3271",
+      "task": ".trellis/tasks/10-18-interaction-workspace",
+      "planning_user_quote": "可以，创建并规划"
     },
     {
       "id": "search",

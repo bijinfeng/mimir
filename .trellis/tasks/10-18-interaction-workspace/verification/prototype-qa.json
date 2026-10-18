@@ -1,0 +1,39 @@
+{
+  "date": "2026-10-18",
+  "scope": "HTML planning prototype only; no product implementation approval",
+  "fixturesRendered": 97,
+  "inventoryStates": 144,
+  "columnsPerFixture": 2,
+  "desktop": {
+    "width": 1280,
+    "height": 900,
+    "horizontalOverflow": false
+  },
+  "narrow": {
+    "width": 390,
+    "height": 844,
+    "drawerWidth": 280,
+    "themeSubmenuRight": 365,
+    "scrollWidth": 390,
+    "touchMenuRowHeight": 44
+  },
+  "verified": [
+    "12 scenes and 97 state fixtures render both columns",
+    "rename retains 产品研究验收 through failure then retry succeeds",
+    "old current conversation visible in proposal only; before and after both 12 items",
+    "unknown config shows mode error retry and no signout",
+    "auto save guard has no discard control",
+    "coverage checklist has exactly 144 entries",
+    "real AntD modal focuses name after opening animation",
+    "theme selection closes parent and child menus",
+    "390px drawer focuses close after opening animation; controlled cascade single instance and bounded",
+    "light and dark screenshots; no console error entries"
+  ],
+  "limits": [
+    "No real API, login, creation, deletion, signout or server-setting mutation in HTML",
+    "Storage isolation, OS auto theme, real routing and native host need product QA after implementation",
+    "Initial smoke assertion used AX diffs and incorrectly returned false; final 97 fixture checks use visible DOM measurements instead",
+    "Some two-character AntD button labels contain spacing; verification used semantic matching",
+    "Planning-only checks do not replace renderer/product integration tests"
+  ]
+}
