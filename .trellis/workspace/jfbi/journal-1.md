@@ -279,3 +279,25 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Next Steps
 
 - 后续每轮实现与验收后提交并记录commit；用户密码与Desktop自行验收，真实provider配置后再验；不自动推送。
+
+
+## Session 11: 基础组件 v1 实施与验收
+<!-- trellis-session: v=2 fp=5664727b5e4e7e10 -->
+
+**Date**: 2026-10-18
+**Task**: 基础组件 v1 实施与验收
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+基础组件v1获批后完成就地校验、设置失败恢复、危险确认、上传反馈及菜单焦点；相关21项与Renderer427项通过，真实浅深/窄屏验收完成。默认并行Office等待断言失败，单独13项及按包串行pnpm check全部通过。仅限定提交并归档本模块，其他15模块仍需HTML逐模块审批，下一模块为工作区导航与账户菜单。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `cb54c9e` | fix(ui): polish foundation feedback and recovery |
+
+### Status
+
+[OK] **Completed**
