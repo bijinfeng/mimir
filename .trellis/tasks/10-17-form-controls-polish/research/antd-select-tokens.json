@@ -1,0 +1,173 @@
+{
+  "component": "Select",
+  "tokens": [
+    {
+      "name": "activeBorderColor",
+      "type": "string",
+      "default": "",
+      "description": "Active border color",
+      "descriptionZh": "激活态边框色"
+    },
+    {
+      "name": "activeOutlineColor",
+      "type": "string",
+      "default": "",
+      "description": "Active outline color",
+      "descriptionZh": "激活态 outline 颜色"
+    },
+    {
+      "name": "clearBg",
+      "type": "string",
+      "default": "",
+      "description": "Background color of clear button",
+      "descriptionZh": "清空按钮背景色"
+    },
+    {
+      "name": "hoverBorderColor",
+      "type": "string",
+      "default": "",
+      "description": "Hover border color",
+      "descriptionZh": "悬浮态边框色"
+    },
+    {
+      "name": "multipleItemBg",
+      "type": "string",
+      "default": "",
+      "description": "Background color of multiple tag",
+      "descriptionZh": "多选标签背景色"
+    },
+    {
+      "name": "multipleItemBorderColor",
+      "type": "string",
+      "default": "",
+      "description": "Border color of multiple tag",
+      "descriptionZh": "多选标签边框色"
+    },
+    {
+      "name": "multipleItemBorderColorDisabled",
+      "type": "string",
+      "default": "",
+      "description": "Border color of multiple tag when disabled",
+      "descriptionZh": "多选标签禁用边框色"
+    },
+    {
+      "name": "multipleItemColorDisabled",
+      "type": "string",
+      "default": "",
+      "description": "Text color of multiple tag when disabled",
+      "descriptionZh": "多选标签禁用文本颜色"
+    },
+    {
+      "name": "multipleItemHeight",
+      "type": "number",
+      "default": "",
+      "description": "Height of multiple tag",
+      "descriptionZh": "多选标签高度"
+    },
+    {
+      "name": "multipleItemHeightLG",
+      "type": "number",
+      "default": "",
+      "description": "Height of multiple tag with large size",
+      "descriptionZh": "大号多选标签高度"
+    },
+    {
+      "name": "multipleItemHeightSM",
+      "type": "number",
+      "default": "",
+      "description": "Height of multiple tag with small size",
+      "descriptionZh": "小号多选标签高度"
+    },
+    {
+      "name": "multipleSelectorBgDisabled",
+      "type": "string",
+      "default": "",
+      "description": "Background color of multiple selector when disabled",
+      "descriptionZh": "多选框禁用背景"
+    },
+    {
+      "name": "optionActiveBg",
+      "type": "string",
+      "default": "",
+      "description": "Background color when option is active",
+      "descriptionZh": "选项激活态时背景色"
+    },
+    {
+      "name": "optionFontSize",
+      "type": "number",
+      "default": "",
+      "description": "Font size of option",
+      "descriptionZh": "选项字体大小"
+    },
+    {
+      "name": "optionHeight",
+      "type": "number",
+      "default": "",
+      "description": "Height of option",
+      "descriptionZh": "选项高度"
+    },
+    {
+      "name": "optionLineHeight",
+      "type": "LineHeight<string | number> | undefined",
+      "default": "",
+      "description": "Line height of option",
+      "descriptionZh": "选项行高"
+    },
+    {
+      "name": "optionPadding",
+      "type": "Padding<string | number> | undefined",
+      "default": "",
+      "description": "Padding of option",
+      "descriptionZh": "选项内间距"
+    },
+    {
+      "name": "optionSelectedBg",
+      "type": "string",
+      "default": "",
+      "description": "Background color when option is selected",
+      "descriptionZh": "选项选中时背景色"
+    },
+    {
+      "name": "optionSelectedColor",
+      "type": "string",
+      "default": "",
+      "description": "Text color when option is selected",
+      "descriptionZh": "选项选中时文本颜色"
+    },
+    {
+      "name": "optionSelectedFontWeight",
+      "type": "FontWeight | undefined",
+      "default": "",
+      "description": "Font weight when option is selected",
+      "descriptionZh": "选项选中时文本字重"
+    },
+    {
+      "name": "selectorBg",
+      "type": "string",
+      "default": "",
+      "description": "Background color of selector",
+      "descriptionZh": "选框背景色"
+    },
+    {
+      "name": "showArrowPaddingInlineEnd",
+      "type": "number",
+      "default": "",
+      "description": "Inline end padding of arrow",
+      "descriptionZh": "箭头的行末内边距"
+    },
+    {
+      "name": "singleItemHeightLG",
+      "type": "number",
+      "default": "",
+      "description": "Height of single selected item with large size",
+      "descriptionZh": "单选大号回填项高度"
+    },
+    {
+      "name": "zIndexPopup",
+      "type": "number",
+      "default": "",
+      "description": "z-index of dropdown",
+      "descriptionZh": "下拉菜单 z-index"
+    }
+  ]
+}

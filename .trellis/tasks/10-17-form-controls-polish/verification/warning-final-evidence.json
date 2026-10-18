@@ -1,0 +1,127 @@
+{
+  "samples": [
+    {
+      "label": "warning input",
+      "appearance": "light",
+      "background": "rgb(255, 255, 255)",
+      "border": "rgb(196, 122, 0)",
+      "classes": "ant-input css-dev-only-do-not-override-jdb7z4 ant-input-outlined ant-input-status-warning mimir ant-input-css-var",
+      "height": 32,
+      "outline": "rgb(38, 38, 38) none 0px",
+      "shadow": "none",
+      "width": "1px"
+    },
+    {
+      "label": "warning password",
+      "appearance": "light",
+      "background": "rgb(255, 255, 255)",
+      "border": "rgb(196, 122, 0)",
+      "classes": "ant-input-affix-wrapper ant-input-affix-wrapper-focused css-dev-only-do-not-override-jdb7z4 ant-input-outlined ant-input-status-warning ant-input-password mimir ant-input-css-var",
+      "height": 32,
+      "outline": "rgb(38, 38, 38) none 0px",
+      "shadow": "none",
+      "width": "1px"
+    },
+    {
+      "label": "warning textarea",
+      "appearance": "light",
+      "background": "rgb(255, 255, 255)",
+      "border": "rgb(196, 122, 0)",
+      "classes": "ant-input css-dev-only-do-not-override-jdb7z4 ant-input-outlined ant-input-status-warning mimir ant-input-css-var",
+      "height": 54,
+      "outline": "rgb(38, 38, 38) none 0px",
+      "shadow": "none",
+      "width": "1px"
+    },
+    {
+      "label": "warning number",
+      "appearance": "light",
+      "background": "rgb(255, 255, 255)",
+      "border": "rgb(196, 122, 0)",
+      "classes": "ant-input-number ant-input-number-mode-input mimir ant-input-number-css-var css-dev-only-do-not-override-jdb7z4 ant-input-number-status-warning ant-input-number-outlined ant-input-number-focused",
+      "height": 32,
+      "outline": "rgb(38, 38, 38) none 0px",
+      "shadow": "none",
+      "width": "1px"
+    },
+    {
+      "label": "warning select",
+      "appearance": "light",
+      "background": "rgb(255, 255, 255)",
+      "border": "rgb(196, 122, 0)",
+      "classes": "ant-select ant-select-outlined ant-select-status-warning mimir ant-select-css-var css-dev-only-do-not-override-jdb7z4 ant-select-focused ant-select-single ant-select-show-arrow ant-select-open",
+      "height": 32,
+      "outline": "rgb(38, 38, 38) none 0px",
+      "shadow": "rgba(255, 163, 17, 0.13) 0px 0px 0px 0px",
+      "width": "1px"
+    },
+    {
+      "label": "warning cascader",
+      "appearance": "light",
+      "background": "rgb(255, 255, 255)",
+      "border": "rgb(196, 122, 0)",
+      "classes": "ant-select ant-cascader ant-select-outlined ant-select-status-warning ant-select-css-var ant-cascader-css-var css-dev-only-do-not-override-jdb7z4 mimir ant-select-focused ant-select-single ant-select-show-arrow ant-select-open",
+      "height": 32,
+      "outline": "rgb(38, 38, 38) none 0px",
+      "shadow": "rgba(255, 163, 17, 0.13) 0px 0px 0px 0px",
+      "width": "1px"
+    },
+    {
+      "label": "warning input",
+      "appearance": "dark",
+      "background": "rgb(32, 34, 37)",
+      "border": "rgb(216, 150, 20)",
+      "classes": "ant-input css-dev-only-do-not-override-jdb7z4 ant-input-outlined ant-input-status-warning mimir ant-input-css-var",
+      "height": 32,
+      "outline": "rgb(236, 238, 239) none 0px",
+      "shadow": "none",
+      "width": "1px"
+    },
+    {
+      "label": "warning number",
+      "appearance": "dark",
+      "background": "rgb(32, 34, 37)",
+      "border": "rgb(216, 150, 20)",
+      "classes": "ant-input-number ant-input-number-mode-input mimir ant-input-number-css-var css-dev-only-do-not-override-jdb7z4 ant-input-number-status-warning ant-input-number-outlined ant-input-number-focused",
+      "height": 32,
+      "outline": "rgb(236, 238, 239) none 0px",
+      "shadow": "none",
+      "width": "1px"
+    },
+    {
+      "label": "warning select",
+      "appearance": "dark",
+      "background": "rgb(32, 34, 37)",
+      "border": "rgb(216, 150, 20)",
+      "classes": "ant-select ant-select-outlined ant-select-status-warning mimir ant-select-css-var css-dev-only-do-not-override-jdb7z4 ant-select-focused ant-select-single ant-select-show-arrow ant-select-open",
+      "height": 32,
+      "outline": "rgb(236, 238, 239) none 0px",
+      "shadow": "rgba(87, 55, 0, 0.38) 0px 0px 0px 0px",
+      "width": "1px"
+    },
+    {
+      "label": "warning cascader",
+      "appearance": "dark",
+      "background": "rgb(32, 34, 37)",
+      "border": "rgb(216, 150, 20)",
+      "classes": "ant-select ant-cascader ant-select-outlined ant-select-status-warning ant-select-css-var ant-cascader-css-var css-dev-only-do-not-override-jdb7z4 mimir ant-select-focused ant-select-single ant-select-show-arrow ant-select-open",
+      "height": 32,
+      "outline": "rgb(236, 238, 239) none 0px",
+      "shadow": "rgba(87, 55, 0, 0.38) 0px 0px 0px 0px",
+      "width": "1px"
+    },
+    {
+      "label": "error input",
+      "appearance": "dark",
+      "background": "rgb(32, 34, 37)",
+      "border": "rgb(220, 68, 70)",
+      "classes": "ant-input css-dev-only-do-not-override-jdb7z4 ant-input-outlined ant-input-status-error mimir ant-input-css-var",
+      "height": 32,
+      "outline": "rgb(236, 238, 239) none 0px",
+      "shadow": "none",
+      "width": "1px"
+    }
+  ],
+  "media": "prefers-reduced-motion:reduce",
+  "note": "Final confirmation after warning component calibration; zero-spread Select shadow has no outer halo."
+}

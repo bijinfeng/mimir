@@ -99,8 +99,50 @@ const darkCalibration: MappingAlgorithm = (seedToken, mapToken) => ({
   colorLinkActive: '#aaedce',
 })
 
+/** Fields have lighter boundaries than standalone checkbox/radio controls. */
+const FIELD_COLOR = {
+  light: {
+    colorBorder: '#e7e9e8',
+    hoverBorderColor: '#bfc5c1',
+    activeBorderColor: '#00a35f',
+  },
+  dark: {
+    colorBorder: '#454b47',
+    hoverBorderColor: '#66736c',
+    activeBorderColor: '#50c28f',
+  },
+} as const
+
+function fieldComponents(appearance: Appearance): ThemeConfig['components'] {
+  // Input/InputNumber consume colorWarningBorderHover; Select consumes
+  // colorWarningHover. Calibrate both without changing the global status palette.
+  const warning =
+    appearance === 'light'
+      ? {
+          colorWarning: '#c47a00',
+          colorWarningHover: '#c47a00',
+          colorWarningBorderHover: '#c47a00',
+        }
+      : {}
+  const colors = { ...FIELD_COLOR[appearance], ...warning }
+  const input = {
+    ...colors,
+    activeShadow: 'none',
+    errorActiveShadow: 'none',
+    warningActiveShadow: 'none',
+  }
+  return {
+    Input: input,
+    InputNumber: input,
+    // Cascader also uses Select's input styles. Keep lineWidthFocus intact for
+    // borderless keyboard focus; only remove the outlined field's outer halo.
+    Select: { ...colors, controlOutlineWidth: 0 },
+  }
+}
+
 const COMPONENT_TOKEN: Record<Appearance, ThemeConfig['components']> = {
   light: {
+    ...fieldComponents('light'),
     Button: { defaultBorderColor: LIGHT_COLOR.colorBorderSecondary, defaultShadow: 'none' },
     Tabs: { itemSelectedColor: LIGHT_COLOR.colorLink },
     Menu: {
@@ -111,6 +153,7 @@ const COMPONENT_TOKEN: Record<Appearance, ThemeConfig['components']> = {
     },
   },
   dark: {
+    ...fieldComponents('dark'),
     Button: { defaultBorderColor: DARK_COLOR.colorBorderSecondary, defaultShadow: 'none' },
     Tabs: { itemSelectedColor: DARK_LINK },
     Menu: {

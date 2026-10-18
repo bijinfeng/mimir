@@ -17,6 +17,10 @@ colors:
   navigation-selected: "#eff0f0"
   hover: "#e9ebeb"
   border: "#8a8a8a"
+  field-border: "#e7e9e8"
+  field-hover: "#bfc5c1"
+  field-focus: "#00a35f"
+  field-warning: "#c47a00"
   border-subtle: "#e8e8e8"
   text-dark: "#eceeef"
   text-secondary-dark: "#b3b6bb"
@@ -27,6 +31,9 @@ colors:
   elevated-dark: "#26282b"
   navigation-selected-dark: "#303235"
   border-dark: "#686e76"
+  field-border-dark: "#454b47"
+  field-hover-dark: "#66736c"
+  field-focus-dark: "#50c28f"
   border-subtle-dark: "#3b3e43"
   warning: "#8a5700"
   warning-soft: "#fff3e0"
@@ -108,7 +115,7 @@ mimir 让笔记、资料与可核对来源的回答占据视觉中心。白灰�
 - **纸白工作面**：`surface` 用于浅色主内容、卡片和输入；`navigation` 用于侧栏、列表辅助区和大纲。
 - **中性当前项**：`navigation-selected` 配正文色；悬停采用 `hover`。深色当前项与悬停共用 `navigation-selected-dark`，由字重和 `aria-current` 继续区分当前项。
 - **夜间工作面**：`surface-dark` 是主内容，`navigation-dark` 是辅助区；卡片 / 输入用 `container-dark`，浮层用 `elevated-dark`。
-- **文字与边界**：正文、次文字、元信息各有浅深角色。`border` / `border-dark` 说明输入等必要边界；`border-subtle` / `border-subtle-dark` 只负责装饰分隔，不能代替关键控件边界。
+- **文字与边界**：正文、次文字、元信息各有浅深角色。`border` / `border-dark` 说明复选 / 单选等独立关键边界，表单字段使用 `field-*` 角色；`border-subtle` / `border-subtle-dark` 只负责装饰分隔，不能代替关键控件边界。
 
 **The Separate Selection Rule.** 导航选中使用专用中性角色；用途选择与编辑器按下使用品牌语义角色。不得把全局 `colorPrimaryBg` 改灰来实现导航外观。
 
@@ -152,11 +159,13 @@ Markdown 正文由 `CONTENT_WIDTH` 收在阅读列（760px）；唯一可编辑�
 
 ### Buttons
 
-主按钮使用品牌填充、白字和 control 圆角；hover / pressed 使用对应状态角色。次要按钮使用当前容器、正文色与轻装饰边界；输入仍保留独立的关键边界。loading 保持尺寸与明确状态，disabled 阻止触发。触控目标按现有粗指针适配可达 40–44px，图标不必同比放大。
+主按钮使用品牌填充、白字和 control 圆角；hover / pressed 使用对应状态角色。次要按钮使用当前容器、正文色与轻装饰边界；表单字段使用独立的轻边界与聚焦角色。loading 保持尺寸与明确状态，disabled 阻止触发。触控目标按现有粗指针适配可达 40–44px，图标不必同比放大。
 
 ### Inputs / Fields
 
-输入框有可见标签、容器表面、关键边界与 control 圆角。键盘焦点环（2px）与边界留距（2px），浅深分别使用当前 focusRing。错误同时给出错误文字和状态；不得仅依赖红色或清除 outline。普通 UI 文字对比目标至少 4.5:1，正文保留至少 7:1 的现有守卫，焦点与关键边界目标至少 3:1；计划配色不能替代运行时验证。
+输入框有可见标签、容器表面、轻默认边界与 control 圆角；Input、密码、搜索、多行、数字与 Select / Cascader 共享字段状态。默认 / hover / focus 使用 field-border / field-hover / field-focus（深色用对应 dark 角色），始终单层 1px，聚焦无外扩阴影，状态切换不改变尺寸。错误 / 警告优先于普通聚焦色并配合文字；浅色字段警告的默认 / hover / focus 统一使用 field-warning，输入底对比度 ≥3:1，深色保留原语义值。该字段校准不改变全局警告文字 / 背景。禁用保留灰底与不可交互语义。无边框字段保留键盘 focus-visible，密码眼睛与自定义按钮保留自身焦点环（2px、offset 2px），不得全局清除 outline。
+
+轻默认边界是 2026-10-17 用户批准的语雀适配取舍（白底约 1.22:1），不宣称默认字段边界达到非文本 AA。字段聚焦及复选 / 单选等独立关键边界仍至少 3:1；普通 UI 文字至少 4.5:1，正文至少 7:1。语雀公开登录页的细边与无阴影有实测证据，hover、深色及语义态属 Mimir 适配；计划配色不能替代运行时验证。
 
 ### Navigation
 

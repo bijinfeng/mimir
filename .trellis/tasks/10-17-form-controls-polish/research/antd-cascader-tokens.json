@@ -1,0 +1,61 @@
+{
+  "component": "Cascader",
+  "tokens": [
+    {
+      "name": "controlItemWidth",
+      "type": "string | number",
+      "default": "",
+      "description": "Width of item",
+      "descriptionZh": "选项宽度"
+    },
+    {
+      "name": "controlWidth",
+      "type": "string | number",
+      "default": "",
+      "description": "Width of Cascader",
+      "descriptionZh": "选择器宽度"
+    },
+    {
+      "name": "dropdownHeight",
+      "type": "string | number",
+      "default": "",
+      "description": "Height of dropdown",
+      "descriptionZh": "下拉菜单高度"
+    },
+    {
+      "name": "menuPadding",
+      "type": "Padding<string | number> | undefined",
+      "default": "",
+      "description": "Padding of menu item (single column)",
+      "descriptionZh": "选项菜单（单列）内间距"
+    },
+    {
+      "name": "optionPadding",
+      "type": "Padding<string | number> | undefined",
+      "default": "",
+      "description": "Padding of menu item",
+      "descriptionZh": "选项内间距"
+    },
+    {
+      "name": "optionSelectedBg",
+      "type": "string",
+      "default": "",
+      "description": "Background color of selected item",
+      "descriptionZh": "选项选中时背景色"
+    },
+    {
+      "name": "optionSelectedColor",
+      "type": "string",
+      "default": "",
+      "description": "Text color when option is selected",
+      "descriptionZh": "选项选中时文本颜色"
+    },
+    {
+      "name": "optionSelectedFontWeight",
+      "type": "FontWeight | undefined",
+      "default": "",
+      "description": "Font weight of selected item",
+      "descriptionZh": "选项选中时字重"
+    }
+  ]
+}

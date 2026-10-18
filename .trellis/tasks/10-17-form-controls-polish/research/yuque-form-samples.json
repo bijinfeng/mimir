@@ -1,0 +1,162 @@
+{
+  "sampledAt": "2026-10-17",
+  "url": "https://www.yuque.com/login",
+  "version": "Online Web; build not published",
+  "defaultFields": [
+    {
+      "classes": "ant-select-selection-search-input",
+      "layers": [
+        {
+          "border": "0px none rgb(38, 38, 38)",
+          "classes": "ant-select-selection-search-input",
+          "height": "30px",
+          "outline": "rgb(38, 38, 38) none 3px",
+          "radius": "0px",
+          "shadow": "none",
+          "tag": "INPUT"
+        },
+        {
+          "border": "0px none rgb(38, 38, 38)",
+          "classes": "ant-select-selection-search",
+          "height": "38px",
+          "outline": "rgb(38, 38, 38) none 3px",
+          "radius": "0px",
+          "shadow": "none",
+          "tag": "SPAN"
+        },
+        {
+          "border": "",
+          "classes": "ant-select-selector",
+          "height": "40px",
+          "outline": "rgb(38, 38, 38) none 3px",
+          "radius": "6px 0px 0px 6px",
+          "shadow": "none",
+          "tag": "DIV"
+        }
+      ],
+      "placeholder": "",
+      "type": "search"
+    },
+    {
+      "classes": "ant-input ant-input-lg larkui-input",
+      "layers": [
+        {
+          "border": "1px solid rgb(231, 233, 232)",
+          "classes": "ant-input ant-input-lg larkui-input",
+          "height": "40px",
+          "outline": "rgb(38, 38, 38) none 3px",
+          "radius": "0px 6px 6px 0px",
+          "shadow": "none",
+          "tag": "INPUT"
+        },
+        {
+          "border": "0px none rgb(38, 38, 38)",
+          "classes": "ant-input-group ant-input-group-compact",
+          "height": "40px",
+          "outline": "rgb(38, 38, 38) none 3px",
+          "radius": "0px",
+          "shadow": "none",
+          "tag": "SPAN"
+        },
+        {
+          "border": "0px none rgb(38, 38, 38)",
+          "classes": "PrefixSelectorInput-module_selectorInput_RQFy3",
+          "height": "40px",
+          "outline": "rgb(38, 38, 38) none 3px",
+          "radius": "0px",
+          "shadow": "none",
+          "tag": "DIV"
+        }
+      ],
+      "placeholder": "请输入手机号",
+      "type": "tel"
+    },
+    {
+      "classes": "ant-input ant-input-lg",
+      "layers": [
+        {
+          "border": "0px none rgb(38, 38, 38)",
+          "classes": "ant-input ant-input-lg",
+          "height": "25.1406px",
+          "outline": "rgb(38, 38, 38) none 3px",
+          "radius": "6px",
+          "shadow": "none",
+          "tag": "INPUT"
+        },
+        {
+          "border": "1px solid rgb(231, 233, 232)",
+          "classes": "ant-input-affix-wrapper ant-input-affix-wrapper-lg ant-input-password login-password-input ant-input-password-large",
+          "height": "40.1406px",
+          "outline": "rgb(38, 38, 38) none 3px",
+          "radius": "6px",
+          "shadow": "none",
+          "tag": "SPAN"
+        },
+        {
+          "border": "0px none rgb(38, 38, 38)",
+          "classes": "ant-legacy-form-item-children",
+          "height": "auto",
+          "outline": "rgb(38, 38, 38) none 3px",
+          "radius": "0px",
+          "shadow": "none",
+          "tag": "SPAN"
+        }
+      ],
+      "placeholder": "请输入密码",
+      "type": "password"
+    },
+    {
+      "classes": "ant-checkbox-input",
+      "layers": [
+        {
+          "border": "0px none rgb(38, 38, 38)",
+          "classes": "ant-checkbox-input",
+          "height": "16px",
+          "outline": "rgb(38, 38, 38) none 3px",
+          "radius": "0px",
+          "shadow": "none",
+          "tag": "INPUT"
+        },
+        {
+          "border": "0px none rgb(38, 38, 38)",
+          "classes": "ant-checkbox",
+          "height": "16px",
+          "outline": "rgb(38, 38, 38) none 3px",
+          "radius": "0px",
+          "shadow": "none",
+          "tag": "SPAN"
+        },
+        {
+          "border": "0px none rgb(38, 38, 38)",
+          "classes": "ant-checkbox-wrapper",
+          "height": "22px",
+          "outline": "rgb(38, 38, 38) none 3px",
+          "radius": "0px",
+          "shadow": "none",
+          "tag": "LABEL"
+        }
+      ],
+      "placeholder": "",
+      "type": "checkbox"
+    }
+  ],
+  "phoneFocus": {
+    "border": "1px solid rgb(0, 185, 107)",
+    "shadow": "none",
+    "height": "40px"
+  },
+  "passwordFocus": {
+    "border": "1px solid rgb(11, 208, 125)",
+    "height": "40.1406px",
+    "outline": "rgb(38, 38, 38) none 0px",
+    "radius": "6px",
+    "shadow": "none"
+  },
+  "passwordFocusSettled": {
+    "border": "1px solid rgb(11, 208, 125)",
+    "height": "40.1406px",
+    "outline": "rgb(38, 38, 38) none 0px",
+    "radius": "6px",
+    "shadow": "none"
+  }
+}

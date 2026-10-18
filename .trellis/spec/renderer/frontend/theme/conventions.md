@@ -47,7 +47,7 @@ font-size: ${FONT_SIZE.excerpt}px;
    而不是在样式里散落 `appearance === 'dark' ? … : …` 判断。
    样式层拿 token 就够，`customTokenFor(appearance)` 已经按外观选好了
 2. **两套外观守同等可读性下限。** 普通文字 ≥4.5:1、正文 ≥7:1、
-   焦点及关键输入边界 ≥3:1。新中性主题不再要求深色每项比值大于浅色，
+   字段聚焦及独立关键控件边界 ≥3:1。新中性主题不再要求深色每项比值大于浅色，
    也不要求五种表面互不相同；`design.test.ts` 分别检查实际组合，
    保留 provider / DOM / CSS 变量守卫。
 3. **与 seed 同名的 token 覆盖会被 antd 丢掉**（`colorLink`、`colorPrimary`
@@ -63,7 +63,7 @@ font-size: ${FONT_SIZE.excerpt}px;
 
 主内容使用 `surfaceContent`（白 / `#18191a`），卡片和输入用 `colorBgContainer`
 （白 / `#202225`）。导航与列表共用辅助面；浅色主面、卡片、浮层可以共用白色。
-装饰性分隔线取 `colorBorderSecondary`，不能把 ≥3:1 的输入边界用作每条列表分隔线。
+装饰性分隔线取 `colorBorderSecondary`，不能把 ≥3:1 的独立关键控件边界用作每条列表分隔线。
 
 导航当前项使用 `navSelectedBg` / `navSelectedText`（中性灰底与正文色）并保留
 字重、`aria-current`。`colorPrimaryBg` 仍为绿色语义浅底，供引用定位、编辑器按下态
@@ -75,3 +75,9 @@ Chat 继续继承宿主颜色，Office 通过 `editor-theme-bridge.ts` 的 `--me
 已有 `--ant-*` 继承；不增加第二份 provider，也不更换文档内容调色板。
 
 ---
+
+## 表单字段状态
+
+`tokens.ts` 的组件级 Input / InputNumber / Select 覆盖统一字段颜色；Password、Search、TextArea 继承 Input，Cascader 复用 Select。浅色默认 / hover / focus 为 `#e7e9e8` / `#bfc5c1` / `#00a35f`，深色为 `#454b47` / `#66736c` / `#50c28f`。Outlined 字段始终 1px，Input / InputNumber 的普通与语义 activeShadow 为 none，Select 的组件级 controlOutlineWidth 为 0；错误 / 警告 / 禁用仍由 antd 状态规则处理。浅色字段的 colorWarning / colorWarningBorderHover / colorWarningHover 仅在这三个组件内校准为 `#c47a00`，使默认、hover、focus 的警告边界均 ≥3:1；Input / InputNumber 实际消费 colorWarningBorderHover，Select 消费 colorWarningHover，不能只改其中一个。深色语义值与全局警告色对保持。不要全局修改 colorBorder、lineWidthFocus 或清除 outline，以免弱化复选 / 单选边界、无边框字段及独立按钮的键盘焦点。
+
+轻默认字段边界是已批准的外观取舍，不能宣称其达到非文本边界 AA；聚焦边界与输入底 ≥3:1。`design.test.ts` 同时守住真实 provider 的字段变量 / 状态与全局关键边界，不能只测配置对象便推定组件实际生效。

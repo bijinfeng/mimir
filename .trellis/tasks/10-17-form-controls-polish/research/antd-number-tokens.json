@@ -1,0 +1,187 @@
+{
+  "component": "InputNumber",
+  "tokens": [
+    {
+      "name": "activeBg",
+      "type": "string",
+      "default": "",
+      "description": "Background color when the input box is activated",
+      "descriptionZh": "输入框激活状态时背景颜色"
+    },
+    {
+      "name": "activeBorderColor",
+      "type": "string",
+      "default": "",
+      "description": "Active border color",
+      "descriptionZh": "激活态边框色"
+    },
+    {
+      "name": "activeShadow",
+      "type": "string",
+      "default": "",
+      "description": "Box-shadow when active",
+      "descriptionZh": "激活态阴影"
+    },
+    {
+      "name": "addonBg",
+      "type": "string",
+      "default": "",
+      "description": "Background color of addon",
+      "descriptionZh": "前/后置标签背景色"
+    },
+    {
+      "name": "controlWidth",
+      "type": "number",
+      "default": "",
+      "description": "Width of input",
+      "descriptionZh": "输入框宽度"
+    },
+    {
+      "name": "errorActiveShadow",
+      "type": "string",
+      "default": "",
+      "description": "Box-shadow when active in error status",
+      "descriptionZh": "错误状态时激活态阴影"
+    },
+    {
+      "name": "filledHandleBg",
+      "type": "string",
+      "default": "",
+      "description": "Background color of handle in filled variant",
+      "descriptionZh": "面性变体操作按钮背景色"
+    },
+    {
+      "name": "handleActiveBg",
+      "type": "string",
+      "default": "",
+      "description": "Active background color of handle",
+      "descriptionZh": "操作按钮激活背景色"
+    },
+    {
+      "name": "handleBg",
+      "type": "string",
+      "default": "",
+      "description": "Background color of handle",
+      "descriptionZh": "操作按钮背景色"
+    },
+    {
+      "name": "handleBorderColor",
+      "type": "string",
+      "default": "",
+      "description": "Border color of handle",
+      "descriptionZh": "操作按钮边框颜色"
+    },
+    {
+      "name": "handleFontSize",
+      "type": "number",
+      "default": "",
+      "description": "Icon size of control button",
+      "descriptionZh": "操作按钮图标大小"
+    },
+    {
+      "name": "handleHoverColor",
+      "type": "string",
+      "default": "",
+      "description": "Hover color of handle",
+      "descriptionZh": "操作按钮悬浮颜色"
+    },
+    {
+      "name": "handleVisible",
+      "type": "true | \"auto\"",
+      "default": "",
+      "description": "Handle visible",
+      "descriptionZh": "操作按钮可见性"
+    },
+    {
+      "name": "handleWidth",
+      "type": "number",
+      "default": "",
+      "description": "Width of control button",
+      "descriptionZh": "操作按钮宽度"
+    },
+    {
+      "name": "hoverBg",
+      "type": "string",
+      "default": "",
+      "description": "Background color when the input box hovers",
+      "descriptionZh": "输入框hover状态时背景颜色"
+    },
+    {
+      "name": "hoverBorderColor",
+      "type": "string",
+      "default": "",
+      "description": "Hover border color",
+      "descriptionZh": "悬浮态边框色"
+    },
+    {
+      "name": "inputFontSize",
+      "type": "number",
+      "default": "",
+      "description": "Font size",
+      "descriptionZh": "字体大小"
+    },
+    {
+      "name": "inputFontSizeLG",
+      "type": "number",
+      "default": "",
+      "description": "Font size of large",
+      "descriptionZh": "大号字体大小"
+    },
+    {
+      "name": "inputFontSizeSM",
+      "type": "number",
+      "default": "",
+      "description": "Font size of small",
+      "descriptionZh": "小号字体大小"
+    },
+    {
+      "name": "paddingBlock",
+      "type": "number",
+      "default": "",
+      "description": "Vertical padding of input",
+      "descriptionZh": "输入框纵向内边距"
+    },
+    {
+      "name": "paddingBlockLG",
+      "type": "number",
+      "default": "",
+      "description": "Vertical padding of large input",
+      "descriptionZh": "大号输入框纵向内边距"
+    },
+    {
+      "name": "paddingBlockSM",
+      "type": "number",
+      "default": "",
+      "description": "Vertical padding of small input",
+      "descriptionZh": "小号输入框纵向内边距"
+    },
+    {
+      "name": "paddingInline",
+      "type": "number",
+      "default": "",
+      "description": "Horizontal padding of input",
+      "descriptionZh": "输入框横向内边距"
+    },
+    {
+      "name": "paddingInlineLG",
+      "type": "number",
+      "default": "",
+      "description": "Horizontal padding of large input",
+      "descriptionZh": "大号输入框横向内边距"
+    },
+    {
+      "name": "paddingInlineSM",
+      "type": "number",
+      "default": "",
+      "description": "Horizontal padding of small input",
+      "descriptionZh": "小号输入框横向内边距"
+    },
+    {
+      "name": "warningActiveShadow",
+      "type": "string",
+      "default": "",
+      "description": "Box-shadow when active in warning status",
+      "descriptionZh": "警告状态时激活态阴影"
+    }
+  ]
+}

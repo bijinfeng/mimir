@@ -300,7 +300,7 @@ describe('非文本对比度：焦点环与描边', () => {
     }
   })
 
-  it.each(APPEARANCES)('输入与未选控件边界 %s下 ≥ 3:1', (appearance) => {
+  it.each(APPEARANCES)('独立未选控件边界与自定义焦点 %s下 ≥ 3:1', (appearance) => {
     const token = tokenOf(appearance)
     const custom = customTokenFor(appearance)
     for (const background of [
@@ -1126,6 +1126,14 @@ function readTokenVars(): string {
     .join('\n')
 }
 
+/** Read generated rules without depending on happy-dom's incomplete pseudo-class cascade. */
+function readRuleDeclarations(css: string, ...selectorParts: string[]): string {
+  return [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+    .filter((match) => selectorParts.every((part) => match[1]!.includes(part)))
+    .map((match) => match[2])
+    .join(';')
+}
+
 /** 挂载真实的 provider 栈，返回 DOM、注入的 CSS 文本与卸载函数 */
 async function renderApp(child: ReactElement = createElement(Probe)) {
   const host = document.createElement('div')
@@ -1168,6 +1176,221 @@ afterEach(async () => {
 })
 
 describe('cssVar 运行时确实注入了变量', () => {
+  it('字段通过真实 provider 继承状态角色，切换外观后同步更新', async () => {
+    const { Input, InputNumber, Select, Cascader, Checkbox, Radio } = await import('antd')
+    const { host, readCss, unmount } = await renderApp(
+      createElement(
+        'div',
+        null,
+        createElement(Input, { 'aria-label': '普通输入' }),
+        createElement(Input.Password, { 'aria-label': '密码' }),
+        createElement(Input.Search, { 'aria-label': '搜索' }),
+        createElement(Input.TextArea, { 'aria-label': '多行' }),
+        createElement(InputNumber, { 'aria-label': '数字' }),
+        createElement(Select, { options: [{ value: 'a', label: '模型' }] }),
+        createElement(Cascader, { options: [{ value: 'a', label: '模型' }] }),
+        createElement(Input, { variant: 'borderless' }),
+        createElement(Select, { variant: 'borderless' }),
+        createElement(Checkbox, null, '复选'),
+        createElement(Radio, null, '单选'),
+      ),
+    )
+
+    try {
+      for (const appearance of APPEARANCES) {
+        await switchAppearance(appearance)
+        const normal = appearance === 'light' ? '#e7e9e8' : '#454b47'
+        const hover = appearance === 'light' ? '#bfc5c1' : '#66736c'
+        const active = appearance === 'light' ? '#00a35f' : '#50c28f'
+        const fields = host.querySelectorAll<HTMLElement>(
+          'input.ant-input-outlined, textarea.ant-input-outlined, .ant-input-affix-wrapper.ant-input-outlined, .ant-input-number-outlined, .ant-select-outlined',
+        )
+        expect(fields.length, '普通、组合与级联字段都必须进入样本').toBe(7)
+        // happy-dom does not implement the full :where/:focus cascade. Read
+        // scoped variables on the actual DOM and the rules consuming them;
+        // browser acceptance covers the final computed border and geometry.
+        for (const field of fields) {
+          const family = field.classList.contains('ant-select')
+            ? 'select'
+            : field.classList.contains('ant-input-number')
+              ? 'input-number'
+              : 'input'
+          const rendered = getComputedStyle(field)
+          expect(rendered.getPropertyValue('--ant-color-border').trim()).toBe(normal)
+          expect(rendered.getPropertyValue('--ant-line-width').trim()).toBe('1px')
+          expect(rendered.getPropertyValue(`--ant-${family}-hover-border-color`).trim()).toBe(hover)
+          expect(rendered.getPropertyValue(`--ant-${family}-active-border-color`).trim()).toBe(
+            active,
+          )
+          expect(
+            contrast(active, String(tokenOf(appearance).colorBgContainer)),
+          ).toBeGreaterThanOrEqual(3)
+          const shadowRoles =
+            family === 'select'
+              ? [['--ant-control-outline-width', '0px']]
+              : ['active-shadow', 'error-active-shadow', 'warning-active-shadow'].map((shadow) => [
+                  `--ant-${family}-${shadow}`,
+                  'none',
+                ])
+          for (const [role, expected] of shadowRoles) {
+            expect(rendered.getPropertyValue(role!).trim()).toBe(expected)
+          }
+        }
+        for (const selector of ['.ant-checkbox-wrapper', '.ant-radio-wrapper']) {
+          const rendered = getComputedStyle(host.querySelector(selector)!)
+          expect(rendered.getPropertyValue('--ant-color-border').trim()).toBe(
+            String(tokenOf(appearance).colorBorder),
+          )
+          expect(rendered.getPropertyValue('--ant-line-width-focus').trim()).toBe('2px')
+        }
+        for (const family of ['input', 'select']) {
+          const field = host.querySelector(`.ant-${family}-borderless`)!
+          expect(
+            getComputedStyle(field).getPropertyValue(`--ant-${family}-line-width-focus`).trim(),
+          ).toBe('1px')
+          expect(
+            readRuleDeclarations(readCss(), `.ant-${family}-borderless`, ':focus-visible'),
+          ).toContain('outline:')
+        }
+        expect(readRuleDeclarations(readCss(), '.ant-input-outlined:focus')).toContain(
+          'border-color:var(--ant-input-active-border-color)',
+        )
+        expect(
+          readRuleDeclarations(
+            readCss(),
+            '.ant-select-outlined:not(.ant-select-disabled).ant-select-focused',
+          ),
+        ).toContain('--ant-select-border-color:var(--ant-select-active-border-color)')
+      }
+    } finally {
+      await unmount()
+    }
+  })
+
+  it.each(APPEARANCES)('字段校验与禁用在 %s 下保留各自的 DOM 和样式规则', async (appearance) => {
+    await switchAppearance(appearance)
+    const { Input, InputNumber, Select, Cascader } = await import('antd')
+    const { host, readCss, unmount } = await renderApp(
+      createElement(
+        'div',
+        null,
+        ...(['error', 'warning'] as const).flatMap((status) => [
+          createElement(Input, { key: `input-${status}`, status }),
+          createElement(Input.Password, { key: `password-${status}`, status }),
+          createElement(InputNumber, { key: `number-${status}`, status }),
+          createElement(Select, { key: `select-${status}`, status }),
+          createElement(Cascader, { key: `cascader-${status}`, status }),
+        ]),
+        createElement(Input, { disabled: true }),
+        createElement(InputNumber, { disabled: true }),
+        createElement(Select, { disabled: true }),
+        createElement(Cascader, { disabled: true }),
+        createElement(Input, { variant: 'borderless', status: 'warning' }),
+        createElement(Select, { variant: 'borderless', status: 'warning' }),
+      ),
+    )
+    try {
+      for (const status of ['error', 'warning'] as const) {
+        const fields = host.querySelectorAll(
+          `.ant-input-status-${status}, .ant-input-affix-wrapper-status-${status}, .ant-input-number-status-${status}, .ant-select-status-${status}`,
+        )
+        expect(fields.length).toBe(status === 'warning' ? 7 : 5)
+        const colorRole = status === 'warning' ? 'colorWarning' : 'colorError'
+        const expected =
+          appearance === 'light' && status === 'warning'
+            ? '#c47a00'
+            : String(tokenOf(appearance)[colorRole])
+        for (const field of fields) {
+          const color = getComputedStyle(field).getPropertyValue(`--ant-color-${status}`).trim()
+          expect(color).toBe(expected)
+          expect(
+            contrast(color, String(tokenOf(appearance).colorBgContainer)),
+          ).toBeGreaterThanOrEqual(3)
+        }
+        // Component calibration must not escape into the provider's global
+        // semantic palette (e.g. Alert or warning text/background pairs).
+        expect(
+          getComputedStyle(host.querySelector('.ant-app')!)
+            .getPropertyValue(`--ant-color-${status}`)
+            .trim(),
+        ).toBe(String(tokenOf(appearance)[colorRole]))
+        for (const family of ['input', 'input-number']) {
+          const declarations = readRuleDeclarations(
+            readCss(),
+            `.ant-${family}-status-${status}:not(.ant-${family}-disabled):focus`,
+          )
+          expect(declarations).toContain(`border-color:var(--ant-color-${status})`)
+          expect(declarations).toContain(`box-shadow:var(--ant-${family}-${status}-active-shadow)`)
+        }
+        expect(
+          readRuleDeclarations(
+            readCss(),
+            `.ant-select-status-${status}:not(.ant-select-disabled).ant-select-focused`,
+          ),
+        ).toContain(`--ant-select-border-color:var(--ant-color-${status})`)
+      }
+      const warningFields = host.querySelectorAll(
+        '.ant-input-status-warning, .ant-input-affix-wrapper-status-warning, .ant-input-number-status-warning, .ant-select-status-warning',
+      )
+      for (const field of warningFields) {
+        const hoverRole = field.classList.contains('ant-select')
+          ? '--ant-color-warning-hover'
+          : '--ant-color-warning-border-hover'
+        const expected =
+          appearance === 'light'
+            ? '#c47a00'
+            : String(
+                tokenOf(appearance)[
+                  field.classList.contains('ant-select')
+                    ? 'colorWarningHover'
+                    : 'colorWarningBorderHover'
+                ],
+              )
+        expect(getComputedStyle(field).getPropertyValue(hoverRole).trim()).toBe(expected)
+        // Light hover equals the calibrated focus color measured above;
+        // dark hover keeps its existing AntD value (not a new contrast claim).
+      }
+      for (const family of ['input', 'input-number']) {
+        expect(
+          readRuleDeclarations(
+            readCss(),
+            `.ant-${family}-status-warning:not(.ant-${family}-disabled):hover`,
+          ),
+        ).toContain('border-color:var(--ant-color-warning-border-hover)')
+      }
+      expect(
+        readRuleDeclarations(
+          readCss(),
+          '.ant-select-status-warning:not(.ant-select-disabled):hover',
+        ),
+      ).toContain('--ant-select-border-color:var(--ant-color-warning-hover)')
+      for (const family of ['input', 'select']) {
+        expect(
+          readRuleDeclarations(
+            readCss(),
+            `.ant-${family}-borderless`,
+            `.ant-${family}-status-warning`,
+            ':focus-visible',
+          ),
+        ).toContain('var(--ant-color-warning)')
+      }
+      const disabledInputs = host.querySelectorAll<HTMLInputElement>('input:disabled')
+      expect(disabledInputs.length).toBe(4)
+      for (const input of disabledInputs) {
+        await act(async () => input.focus())
+        expect(document.activeElement).not.toBe(input)
+      }
+      expect(readRuleDeclarations(readCss(), '.ant-input-outlined.ant-input-disabled')).toContain(
+        'background-color:var(--ant-color-bg-container-disabled)',
+      )
+      expect(readRuleDeclarations(readCss(), '.ant-select-outlined.ant-select-disabled')).toContain(
+        '--ant-select-border-color:var(--ant-color-border-disabled)',
+      )
+    } finally {
+      await unmount()
+    }
+  })
+
   it.each(APPEARANCES)('Office 面板说明在 %s 下连同透明度仍达到 AA', async (appearance) => {
     const { readFile } = await import('node:fs/promises')
     const { URL: NodeURL } = await import('node:url')

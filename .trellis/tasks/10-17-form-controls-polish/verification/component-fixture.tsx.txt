@@ -1,0 +1,27 @@
+import React from 'react'
+import { createRoot } from 'react-dom/client'
+import { Input, InputNumber, Select, Cascader, Checkbox, Radio, Button, Space } from 'antd'
+import { useTheme } from 'antd-style'
+import { MimirProvider } from '../../packages/renderer/src/theme/MimirProvider'
+import { setThemeMode } from '../../packages/renderer/src/theme/appearance'
+const options=[{value:'library',label:'知识库',children:[{value:'note',label:'笔记'}]}]
+function Fixture(){
+ const t=useTheme()
+ return <main style={{minHeight:'100vh',padding:24,background:t.colorBgContainer,color:t.colorText}}>
+ <h1 style={{fontSize:22}}>表单状态验收</h1>
+ <Space><Button onClick={()=>setThemeMode('light')}>浅色</Button><Button onClick={()=>setThemeMode('dark')}>深色</Button></Space>
+ <p>使用产品真实 MimirProvider，无后端写入。</p>
+ <section style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))',gap:24}}>
+ {(['normal','error','warning','disabled'] as const).map(state=><div key={state} data-state={state}><h2 style={{fontSize:16}}>{state}</h2><Space orientation="vertical" style={{width:'100%'}}>
+ <Input aria-label={`${state} input`} placeholder="输入内容" status={state==='error'||state==='warning'?state:undefined} disabled={state==='disabled'}/>
+ <Input.Password aria-label={`${state} password`} placeholder="密码" status={state==='error'||state==='warning'?state:undefined} disabled={state==='disabled'}/>
+ <Input.TextArea aria-label={`${state} textarea`} placeholder="多行内容" status={state==='error'||state==='warning'?state:undefined} disabled={state==='disabled'}/>
+ <InputNumber aria-label={`${state} number`} defaultValue={10} status={state==='error'||state==='warning'?state:undefined} disabled={state==='disabled'} style={{width:'100%'}}/>
+ <Select aria-label={`${state} select`} placeholder="选择" options={[{value:'note',label:'笔记'},{value:'file',label:'文件'}]} status={state==='error'||state==='warning'?state:undefined} disabled={state==='disabled'} style={{width:'100%'}}/>
+ <Cascader aria-label={`${state} cascader`} placeholder="级联选择" options={options} status={state==='error'||state==='warning'?state:undefined} disabled={state==='disabled'} style={{width:'100%'}}/>
+ </Space></div>)}
+ </section>
+ <section style={{marginTop:24}}><h2 style={{fontSize:16}}>独立边界与键盘</h2><Space wrap><Checkbox>复选</Checkbox><Radio>单选</Radio><Button>操作</Button><Input aria-label="borderless input" placeholder="无边框" variant="borderless"/><Select aria-label="borderless select" variant="borderless" placeholder="无边框选择" options={[{value:'note',label:'笔记'}]} /></Space></section>
+ </main>
+}
+createRoot(document.getElementById('root')!).render(<MimirProvider><Fixture/></MimirProvider>)
