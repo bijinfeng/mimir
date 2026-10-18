@@ -15,12 +15,12 @@
   "branch": "codex/all-pages-polish",
   "base_branch": "master",
   "worktree_path": null,
-  "commit": null,
+  "commit": "d727d71826ce3bb5c0ec74b9a2585dfd14ad9c1d",
   "pr_url": null,
   "subtasks": [],
   "children": [],
   "parent": null,
   "relatedFiles": [],
-  "notes": "实施、浏览器验收及独立复核完成；主题109项/Renderer独立397项通过。最终全仓lint/styles/format/14包typecheck通过，pnpm check因并行Office导出/透视布局与Server加密测试失败(exit1)。未代修他人代码，未提交、未归档。详见verification/final-summary.md。 2026-10-18用户授权整理提交；Renderer复核72文件/570项通过，相关lint/format/styles通过；全仓门受既有Miniapp refs与Renderer Promise.withResolvers类型错误阻塞，保留in_progress，详见verification/cleanup-2026-10-18.md。",
+  "notes": "实施、浏览器验收及独立复核完成；主题109项/Renderer独立397项通过。最终全仓lint/styles/format/14包typecheck通过，pnpm check因并行Office导出/透视布局与Server加密测试失败(exit1)。未代修他人代码，未提交、未归档。详见verification/final-summary.md。 2026-10-18用户授权整理提交；Renderer复核72文件/570项通过，相关lint/format/styles通过；全仓门受既有Miniapp refs与Renderer Promise.withResolvers类型错误阻塞，保留in_progress，详见verification/cleanup-2026-10-18.md。 已提交表单代码与验收证据，提交OID见commit字段；全仓门尚未通过，未归档。",
   "meta": {}
 }

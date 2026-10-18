@@ -816,3 +816,27 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Next Steps
 
 - 范围外miniapp/server lint/format、Promise.withResolvers类型及Office全套单项PDF失败由对应任务继续；全仓门通过前不归档本模块。
+
+
+## Session 29: 整理遗留表单改动、设计工具与本地产物
+<!-- trellis-session: v=2 fp=39b9bd6b76631006 -->
+
+**Date**: 2026-10-18
+**Task**: 整理遗留表单改动、设计工具与本地产物
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+用户授权提交只读盘点中应保留的改动并清理无必要项。独立提交表单主题/测试/规范/证据、OCR与本地产物忽略规则、Impeccable 0.1.14工具配置。恢复五份DOCX重打包、无关技能链接及旧计划；清除pnpm与hook缓存，平台二进制和机器配置留本地且忽略。Renderer 72文件570项通过，相关lint/format/styles与工具语法检查通过；全仓门受已有Miniapp refs错误、Renderer Promise.withResolvers类型错误和Server格式问题阻塞。表单任务记录提交OID并保持in_progress；保留主会话interaction-chat与modular-interaction-polish修改。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `d727d71826ce3bb5c0ec74b9a2585dfd14ad9c1d` | fix(renderer): polish shared form control borders and focus |
+| `249004f1161d61f006cce2a6ea9cea3722b522c5` | chore(repo): ignore generated OCR assets and local tool artifacts |
+| `18610395b6a3d106530523c70fc314fbffdae268` | chore(design): retain Impeccable skills and shared configuration |
+
+### Status
+
+[OK] **Completed**

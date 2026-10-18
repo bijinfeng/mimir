@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 28
+- **Total Sessions**: 29
 - **Last Active**: 2026-10-18
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~818 | Active |
+| `journal-1.md` | ~842 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 29 | 2026-10-18 | 整理遗留表单改动、设计工具与本地产物 | `d727d71826ce3bb5c0ec74b9a2585dfd14ad9c1d`, `249004f1161d61f006cce2a6ea9cea3722b522c5`, `18610395b6a3d106530523c70fc314fbffdae268` | `codex/all-pages-polish` |
 | 28 | 2026-10-18 | 文档模块按批准稿实施与大纲返修 | `675e6ae`, `33776c3`, `a2340f7` | `codex/all-pages-polish` |
 | 27 | 2026-10-18 | 文档阅读模块 HTML 对比稿 v1 冻结待审 | `2cf6bf3` | `codex/all-pages-polish` |
 | 26 | 2026-10-18 | 实施知识库模块与 A 图标 | `0b0a18b`, `51031c2` | `codex/all-pages-polish` |
