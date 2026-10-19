@@ -1328,3 +1328,25 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+
+## Session 46: DOCX交互精修与真实对比归档
+<!-- trellis-session: v=2 fp=80d6a62a16f3a19c -->
+
+**Date**: 2026-10-20
+**Task**: DOCX交互精修与真实对比归档
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+完成模块12 DOCX：旧属性面板独立滚动和固定动作、折叠菜单关闭回焦、Find关闭及外部输入焦点边界、可见按钮文字与主次。9组真实配对与5组补充状态、478项来源映射及真实组件Demo保存。独立审查及全仓pnpm check通过；IO模拟和未验安全/原生路径明确。当前截图所示聊天起始页此前bf6638b完成，已打开永久对比。父模块1–12完成，13 XLSX、14 PPTX、15 PDF、16 Desktop继续。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `c625f5b` | fix(office): refine DOCX editor interactions |
+
+### Status
+
+[OK] **Completed**
