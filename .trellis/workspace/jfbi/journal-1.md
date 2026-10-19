@@ -967,3 +967,40 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Next Steps
 
 - 等待用户认可具体v4后再实施产品；保留附件服务/真实AGUI/原生宿主验收边界
+
+
+## Session 35: 对话 v5 TanStack 与自有组件规划交付
+<!-- trellis-session: v=2 fp=03b03746fb7fd43b -->
+
+**Date**: 2026-10-19
+**Task**: 对话 v5 TanStack 与自有组件规划交付
+**Package**: chat
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+冻结v5对比与独立AGUI交互详情，产品与v1-v4未改，等待具体版本认可；父子任务保持planning，不归档、不推送。
+
+### Main Changes
+
+- Mimir自有组件+TanStack AI React真实本地事件；403场景路由、126项目录；保留输入内模型/思考强度/范围。
+- 明确迁移完整RunAgentInput、单一冻结队列和原始resume target恢复合同；附件仍为独立临时资源规划。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `8c643d2` | docs(chat): freeze TanStack v5 interaction prototypes and migration plan |
+
+### Testing
+
+- [OK] 原型tsc/artifact通过；lint0errors31warnings；58默认+89变体+8协议检查、4组实际SDK探针；代表GUI与独立源码/视觉复核记录。
+- [OK] 51产品文件与202历史原型hash不变，产品manifest/lock保持；390px为嵌入布局模拟，未声明真实服务或全GUI验收。
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 用户认可具体chat-review-v5后，再start父子任务并实施产品迁移。
