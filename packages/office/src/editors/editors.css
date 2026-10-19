@@ -520,9 +520,18 @@
  * 左右分栏。**两边都要能滚**，且都占满高度——HTML 的源码与渲染结果长度通常
  * 不同，让容器统一滚动会让其中一边的工具栏滑出视野。
  */
+.mimir-html-split-container {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  container: html-split / inline-size;
+}
+
 .mimir-html-split {
   display: flex;
   flex: 1;
+  min-width: 0;
   min-height: 0;
 }
 
@@ -548,6 +557,20 @@
 
 /* CodeMirror 自己的滚动容器。高度由宿主给，它只管铺满 */
 .mimir-html-cm {
+  /* Keep the vendored editor's palette contract local to the source pane. */
+  --surface: var(--me-surface, #fff);
+  --text: var(--me-text, #262626);
+  --text-muted: var(--me-text-weak, #777);
+  --accent-soft: var(--me-accent-bg, #e6f4ec);
+  --hover: var(--me-hover, #f3f3f3);
+  --border: var(--me-border, #d9d9d9);
+  --cm-tag: var(--me-accent-text, #007a45);
+  --cm-punct: var(--me-text, #262626);
+  --cm-attr: var(--me-text, #262626);
+  --cm-string: var(--me-danger, #d4380d);
+  --cm-comment: var(--me-text-weak, #777);
+  --cm-keyword: var(--me-accent-text, #007a45);
+  --cm-number: var(--me-danger, #d4380d);
   height: 100%;
 }
 
@@ -672,9 +695,14 @@
 .mimir-html-op-panel {
   display: grid;
   gap: 8px;
-  min-width: 320px;
-  max-width: 380px;
+  min-width: 0;
   padding: 8px;
+}
+
+.mimir-html-op-panel .me-property-form {
+  display: grid;
+  gap: 12px;
+  padding: 0;
 }
 
 .mimir-html-op-row {
@@ -686,6 +714,10 @@
 
 .mimir-html-op-row .me-field {
   flex: 1 1 150px;
+}
+
+.mimir-html-op-panel .mimir-html-op-row .me-property-field {
+  flex: 1 1 100px;
 }
 
 .mimir-html-picture-dialog {
@@ -731,19 +763,34 @@
   align-items: center;
   gap: 8px;
   width: 100%;
+  min-width: 0;
   padding: 8px;
-  border: 1px solid var(--me-border, #d9d9d9);
   background: var(--me-surface, #fff);
 }
 
-.mimir-html-agent-prompt > div {
+.mimir-html-writing__copy {
+  flex: 1 1 280px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.mimir-html-writing__copy strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--me-text, #262626);
+  font-size: var(--me-font-size, 14px);
+  font-weight: 600;
+}
+
+.mimir-html-writing__actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
 }
 
-/* 窄屏：上下叠放。左右分栏在 700px 左右时两边都只剩一条，谁都看不清 */
-@media (max-width: 1100px) {
+/* Follow the actual panes' width, including space taken by the Inspector. */
+@container html-split (width < 800px) {
   .mimir-html-split {
     flex-direction: column;
   }

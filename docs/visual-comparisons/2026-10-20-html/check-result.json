@@ -1,0 +1,16 @@
+{
+  "command": "pnpm check",
+  "exitCode": 0,
+  "rawOutput": "full-check.txt",
+  "office": 2716,
+  "renderer": 591,
+  "chat": 88,
+  "desktop": 50,
+  "server": {
+    "regular": 1365,
+    "local": 10,
+    "fnos": 4
+  },
+  "storageExistingSkippedTests": 2,
+  "scope": "final product tree; archive documentation formatted and verified afterwards"
+}

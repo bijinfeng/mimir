@@ -8,10 +8,16 @@
 }
 .mimir-html-presentation__bar {
   display: flex;
+  flex: none;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
   border-bottom: 1px solid var(--me-border, #ddd);
+}
+.mimir-html-presentation__bar .me-note {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .mimir-html-presentation > iframe {
   width: 100%;

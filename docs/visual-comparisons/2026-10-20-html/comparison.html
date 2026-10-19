@@ -1,0 +1,1363 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  /><title>HTML 编辑器 · 真实前后对比</title
+  ><style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font:
+        14px/1.65 system-ui,
+        sans-serif;
+      color: #26332c;
+      background: #f5f7f6;
+    }
+    header,
+    main {
+      max-width: 1500px;
+      margin: auto;
+      padding: 20px 28px;
+    }
+    header {
+      padding-bottom: 4px;
+    }
+    h1 {
+      font-size: 24px;
+      margin: 0 0 6px;
+    }
+    p {
+      margin: 6px 0;
+      color: #55645b;
+    }
+    a {
+      color: #28704b;
+    }
+    nav,
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      margin: 12px 0;
+    }
+    select,
+    button,
+    input {
+      font: inherit;
+      padding: 7px 10px;
+      border: 1px solid #cbd5ce;
+      border-radius: 6px;
+      background: white;
+      color: inherit;
+    }
+    select {
+      max-width: 100%;
+    }
+    button[aria-pressed='true'] {
+      background: #28704b;
+      color: white;
+      border-color: #28704b;
+    }
+    .views {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin: 16px 0;
+    }
+    figure {
+      margin: 0;
+      min-width: 0;
+    }
+    figcaption {
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: white;
+      border: 1px solid #dce3de;
+    }
+    #caption {
+      min-height: 26px;
+    }
+    .single {
+      grid-template-columns: 1fr;
+      max-width: 1280px;
+      margin-inline: auto;
+    }
+    .hidden {
+      display: none !important;
+    }
+    details {
+      margin: 24px 0;
+      border-top: 1px solid #d8e1db;
+      padding-top: 16px;
+    }
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .table-wrap {
+      overflow: auto;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 12px;
+      background: white;
+    }
+    td,
+    th {
+      text-align: left;
+      vertical-align: top;
+      padding: 9px;
+      border-bottom: 1px solid #e2e8e4;
+    }
+    th {
+      white-space: nowrap;
+    }
+    td:first-child {
+      white-space: nowrap;
+    }
+    #search {
+      margin: 12px 0;
+      width: min(100%, 420px);
+    }
+    @media (max-width: 800px) {
+      header,
+      main {
+        padding: 16px;
+      }
+      .views {
+        grid-template-columns: 1fr;
+      }
+      .controls {
+        gap: 6px;
+      }
+      h1 {
+        font-size: 21px;
+      }
+    }
+  </style>
+  <header>
+    <h1>HTML 编辑器 · 真实前后对比</h1>
+    <p>
+      8组同内容、同尺寸真实截图，5组补充状态。基线 0c44cde；2026-10-20
+      精修。沿现有主题与真实组件实现。
+    </p>
+    <nav>
+      <a href="demo/dist/after/index.html?scene=body">打开可操作 Demo</a
+      ><a href="demo/dist/before/index.html?scene=body">基线 Demo</a
+      ><a href="acceptance.md">验收记录</a><a href="capture-manifest.json">截图指纹</a
+      ><a href="build-manifest.json">构建指纹</a><a href="browser-observations.json">交互实测</a>
+    </nav>
+    <p>
+      截图可离线查看；Demo需本地HTTP服务。读写库与模型为明确模拟，原生、外部服务及vendor既有限制见验收记录。
+    </p>
+  </header>
+  <main>
+    <div class="controls">
+      <label
+        >场景
+        <select id="scene">
+          <option value="wide-light">宽编辑列 · 源码主题</option>
+          <option value="narrow-dark">中编辑列 · 深色分栏</option>
+          <option value="inspector">元素属性 · 扣除面板后的分栏</option>
+          <option value="insert-table">插入表格 · 标签与主操作</option>
+          <option value="writing-partial">部分草稿 · 状态与动作</option>
+          <option value="brief-short">长提纲 · 短高回归</option>
+          <option value="brief-280">最窄提纲 · 动作换行</option>
+          <option value="phone">窄视口 · 源码与预览</option>
+          <option value="css-preview">CSS 临时预览</option>
+          <option value="writing-stale">过期草稿保护</option>
+          <option value="questions-narrow">最窄前置问题</option>
+          <option value="insert-short">短视口插入</option>
+          <option value="presentation-short">短视口演示</option>
+        </select></label
+      ><button data-mode="compare" aria-pressed="true">并排</button
+      ><button data-mode="before" aria-pressed="false">打磨前</button
+      ><button data-mode="after" aria-pressed="false">打磨后</button>
+    </div>
+    <p id="caption"></p>
+    <div class="views">
+      <figure id="before">
+        <figcaption>打磨前</figcaption>
+        <a><img alt="打磨前真实截图" /></a>
+      </figure>
+      <figure id="after">
+        <figcaption>打磨后</figcaption>
+        <a><img alt="打磨后真实截图" /></a>
+      </figure>
+    </div>
+    <details open>
+      <summary>92 项真实交互入口及证据边界</summary>
+      <p>
+        入口完整映射不等于逐项完成GUI断言；每行保留具体状态与操作方式。原件保真/版本/消息等合同由相关行为测试验证。
+      </p>
+      <input id="search" aria-label="筛选交互" placeholder="搜索编号、入口或状态" />
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>编号</th>
+              <th>交互</th>
+              <th>入口</th>
+              <th>浏览器证据</th>
+              <th>实际组件</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>HTML-001</td>
+              <td>读取与外壳</td>
+              <td>打开HTML文档</td>
+              <td>加载失败/真实重试（后续记录）</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=load-pending&amp;interaction=HTML-001"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-002</td>
+              <td>源码/分栏/预览</td>
+              <td>视图→视图三切换</td>
+              <td>实际分栏和视图；源码/iframe不卸载由回归测试验证</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=body&amp;interaction=HTML-002"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-003</td>
+              <td>分类与快捷操作</td>
+              <td>开始/插入/视图与固定快捷区</td>
+              <td>真实分类/快捷操作禁用与插入后可用</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=body&amp;interaction=HTML-003"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-004</td>
+              <td>保存状态与重试</td>
+              <td>修改源码→保存到库</td>
+              <td>受控保存等待→失败保留dirty→再次保存完成，未写盘</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=save&amp;interaction=HTML-004"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-005</td>
+              <td>源码编辑与行列</td>
+              <td>源码CodeMirror</td>
+              <td>源码行列和新增插表源码可见</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=source&amp;interaction=HTML-005"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-006</td>
+              <td>撤销与重做</td>
+              <td>快捷区或源码Mod+Z/Mod+Shift+Z</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=source&amp;interaction=HTML-006"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-007</td>
+              <td>原件格式保真</td>
+              <td>加载BOM/CRLF/末尾换行文档并保存</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=body&amp;interaction=HTML-007"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-008</td>
+              <td>源码单栏宽窄</td>
+              <td>视图→只看源码</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=source&amp;interaction=HTML-008"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-009</td>
+              <td>分栏宽窄与高度</td>
+              <td>视图→分栏</td>
+              <td>1100/780/690/390实际编辑列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=body&amp;interaction=HTML-009"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-010</td>
+              <td>源码高亮与主题</td>
+              <td>查看源码文字/选区/行号</td>
+              <td>浅深源码背景及语法角色实测</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=source&amp;interaction=HTML-010"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-011</td>
+              <td>查找打开和重复聚焦</td>
+              <td>开始→查找或Mod+F</td>
+              <td>打开查找</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=find&amp;interaction=HTML-011"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-012</td>
+              <td>查找词与结果导航</td>
+              <td>查询输入→Enter/Shift+Enter或前后箭头</td>
+              <td>知识9处，下一匹配</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=find&amp;interaction=HTML-012"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-013</td>
+              <td>查找选项</td>
+              <td>Aa与全词匹配</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=find&amp;interaction=HTML-013"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-014</td>
+              <td>替换单个与全部</td>
+              <td>替换框、替换、全部替换</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=find&amp;interaction=HTML-014"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-015</td>
+              <td>查找关闭与回焦</td>
+              <td>关闭查找或输入框Escape</td>
+              <td>Escape回到真实CM contenteditable</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=find&amp;interaction=HTML-015"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-016</td>
+              <td>预览加载/就绪</td>
+              <td>等待gx:ready</td>
+              <td>真实iframe就绪与标题</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=preview&amp;interaction=HTML-016"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-017</td>
+              <td>桌面/平板/手机</td>
+              <td>视图→设备三档</td>
+              <td>真实手机设备390px档位</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=preview&amp;interaction=HTML-017"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-018</td>
+              <td>预览缩放</td>
+              <td>视图→缩放字段</td>
+              <td>200%时host布局390px、实际780px</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=preview&amp;interaction=HTML-018"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-019</td>
+              <td>预览缩放滚动与快捷键</td>
+              <td>iframe焦点→Mod +/-/0与Ctrl/Meta+wheel</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=preview&amp;interaction=HTML-019"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-020</td>
+              <td>预览点选与取消</td>
+              <td>iframe内点击元素/空白</td>
+              <td>预览标题点选</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-020"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-021</td>
+              <td>预览源码互定位</td>
+              <td>源码光标/预览点选→定位源码</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-021"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-022</td>
+              <td>元素路径</td>
+              <td>选择深层元素→面包屑</td>
+              <td>html/body/main/h1路径</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-022"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-023</td>
+              <td>清除行内样式</td>
+              <td>开始→清除行内样式</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-023"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-024</td>
+              <td>预览直接文字编辑</td>
+              <td>iframe单击文字/双击元素按vendor入口</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-024"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-025</td>
+              <td>预览内部HTML编辑</td>
+              <td>vendor iframe htmlEditCommit对应入口</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-025"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-026</td>
+              <td>预览拖拽移动</td>
+              <td>选中框拖拽→目标前/后</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-026"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-027</td>
+              <td>预览手柄缩放</td>
+              <td>选择可缩放元素→拖动八向手柄</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-027"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-028</td>
+              <td>预览键盘选择与删除</td>
+              <td>iframe选中后箭头/Delete/Backspace</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-028"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-029</td>
+              <td>预览文字加粗斜体</td>
+              <td>iframe内选中文字→Mod+B/I</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-029"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-030</td>
+              <td>插入类型与普通元素</td>
+              <td>插入→插入HTML元素</td>
+              <td>真实类型下拉8项</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=insert&amp;interaction=HTML-030"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-031</td>
+              <td>插入图片URL</td>
+              <td>插入类型→图片URL</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=insert&amp;interaction=HTML-031"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-032</td>
+              <td>插入表格</td>
+              <td>插入类型→表格</td>
+              <td>行数9拒绝，修为2成功，3列保留</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=insert&amp;interaction=HTML-032"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-033</td>
+              <td>插入结果与位置</td>
+              <td>选中/未选中后插入</td>
+              <td>成功status与保存/撤销变为可用</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=insert&amp;interaction=HTML-033"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-034</td>
+              <td>Inspector打开/关闭</td>
+              <td>开始→编辑元素</td>
+              <td>真实Inspector打开/关闭</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-034"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-035</td>
+              <td>Inspector无选中与刷新</td>
+              <td>打开未选择/选择后刷新</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-035"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-036</td>
+              <td>Inspector分类键盘</td>
+              <td>文字样式/内容与结构/图片/CSS</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-036"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-037</td>
+              <td>Inspector过期版本</td>
+              <td>属性草稿打开→外部源码变更</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-037"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-038</td>
+              <td>文字加粗与斜体</td>
+              <td>文字样式→加粗/斜体</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=text&amp;interaction=HTML-038"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-039</td>
+              <td>文字字号</td>
+              <td>文字样式→字号−/+</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=text&amp;interaction=HTML-039"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-040</td>
+              <td>文字对齐</td>
+              <td>文字样式→左/中/右</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=text&amp;interaction=HTML-040"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-041</td>
+              <td>文字和背景颜色</td>
+              <td>文字样式→颜色网格/清除</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=text&amp;interaction=HTML-041"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-042</td>
+              <td>元素宽高</td>
+              <td>文字样式→宽度/高度+应用</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=text&amp;interaction=HTML-042"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-043</td>
+              <td>尺寸锁定比例</td>
+              <td>img→锁定比例→改宽高</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=text&amp;interaction=HTML-043"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-044</td>
+              <td>内容结构快捷移动</td>
+              <td>内容与结构→上移/下移</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-044"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-045</td>
+              <td>复制元素</td>
+              <td>内容与结构→复制元素</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-045"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-046</td>
+              <td>命令选择与参数显示</td>
+              <td>内容与结构→元素命令</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-046"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-047</td>
+              <td>设置纯文本</td>
+              <td>元素命令→设置纯文本</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-047"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-048</td>
+              <td>设置内部HTML</td>
+              <td>元素命令→设置内部HTML</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-048"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-049</td>
+              <td>替换整个元素</td>
+              <td>元素命令→替换整个元素</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-049"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-050</td>
+              <td>插入HTML参数</td>
+              <td>元素命令→插入HTML</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-050"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-051</td>
+              <td>设置或移除属性</td>
+              <td>元素命令→设置或移除属性</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-051"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-052</td>
+              <td>设置或移除样式</td>
+              <td>元素命令→设置或移除行内样式</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-052"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-053</td>
+              <td>更换标签</td>
+              <td>元素命令→更换标签</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-053"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-054</td>
+              <td>移动参照与位置</td>
+              <td>元素命令→移动到另一元素旁</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-054"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-055</td>
+              <td>替换直接文本节点</td>
+              <td>元素命令→替换直接文本节点</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-055"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-056</td>
+              <td>包裹文本片段</td>
+              <td>元素命令→包裹文本片段</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-056"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-057</td>
+              <td>去掉元素标签</td>
+              <td>元素命令→去掉元素标签</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-057"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-058</td>
+              <td>删除元素</td>
+              <td>元素命令→删除元素</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-058"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-059</td>
+              <td>源码替换文字</td>
+              <td>元素命令→在源码中替换文字</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=element&amp;interaction=HTML-059"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-060</td>
+              <td>CSS输入与临时预览</td>
+              <td>Inspector→CSS→输入声明</td>
+              <td>color:red;padding:8px临时预览</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=layout&amp;interaction=HTML-060"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-061</td>
+              <td>CSS应用/取消/关闭恢复</td>
+              <td>应用CSS/取消预览/切分类/关闭/文档过期</td>
+              <td>取消恢复，保存仍禁用</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=layout&amp;interaction=HTML-061"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-062</td>
+              <td>图片类别和替代文字</td>
+              <td>选img默认图片tab→alt输入和应用</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=image&amp;interaction=HTML-062"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-063</td>
+              <td>图片填充方式</td>
+              <td>图片→填充方式</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=image&amp;interaction=HTML-063"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-064</td>
+              <td>图片旋转与翻转</td>
+              <td>图片→左/右转90°、水平/垂直翻转</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=image&amp;interaction=HTML-064"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-065</td>
+              <td>图片左中右对齐</td>
+              <td>图片→对齐三按钮</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=image&amp;interaction=HTML-065"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-066</td>
+              <td>本地图片替换</td>
+              <td>图片→选择本地图片</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=image&amp;interaction=HTML-066"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-067</td>
+              <td>图片URL替换</td>
+              <td>图片→替换图片URL→替换</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=image&amp;interaction=HTML-067"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-068</td>
+              <td>图片像素入口可用性</td>
+              <td>图片→裁切/去背景</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=image&amp;interaction=HTML-068"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-069</td>
+              <td>图片像素加载与版本</td>
+              <td>启动裁切/去背景等待图片资源</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=image&amp;interaction=HTML-069"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-070</td>
+              <td>裁切原vendor面板</td>
+              <td>图片→裁切图片</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=image&amp;interaction=HTML-070"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-071</td>
+              <td>去背景原vendor面板</td>
+              <td>图片→去除背景</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=image&amp;interaction=HTML-071"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-072</td>
+              <td>像素应用守卫</td>
+              <td>裁切/去背景→应用PNG</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=image&amp;interaction=HTML-072"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-073</td>
+              <td>AI预设</td>
+              <td>开始→问AI菜单</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=body&amp;interaction=HTML-073"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-074</td>
+              <td>AI单选问题</td>
+              <td>Agent ask_clarification单选</td>
+              <td>真实单选问题可见标签</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=questions&amp;interaction=HTML-074"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-075</td>
+              <td>AI多选问题</td>
+              <td>Agent ask_clarification multi</td>
+              <td>选择整理方法并提交</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=questions&amp;interaction=HTML-075"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-076</td>
+              <td>问题ID与生命周期</td>
+              <td>前一问题取消/停止/后继问题/换文档</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=questions&amp;interaction=HTML-076"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-077</td>
+              <td>提纲内容主张/标题/读者</td>
+              <td>Agent plan_page→确认提纲</td>
+              <td>真实提纲字段</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=brief&amp;interaction=HTML-077"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-078</td>
+              <td>提纲视觉方向</td>
+              <td>确认提纲→选择方向</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=brief&amp;interaction=HTML-078"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-079</td>
+              <td>提纲配色字体布局</td>
+              <td>展开配色、字体与布局</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=brief&amp;interaction=HTML-079"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-080</td>
+              <td>提纲章节</td>
+              <td>章节标题/用途、添加、移除</td>
+              <td>12章节/长输入与滚动</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=brief&amp;interaction=HTML-080"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-081</td>
+              <td>提纲文档要求与重新拟定</td>
+              <td>展开文档要求→语言/长度/重新拟定说明</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=brief&amp;interaction=HTML-081"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-082</td>
+              <td>规划侧栏焦点/动作</td>
+              <td>问题/提纲面板出现、关闭、外部焦点</td>
+              <td>390/280编辑列，固定动作与Escape取消</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=brief&amp;interaction=HTML-082"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-083</td>
+              <td>生成开始/流式计数</td>
+              <td>Agent write_document→onDelta</td>
+              <td>公开handle写作+真实增量反馈</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=writing&amp;interaction=HTML-083"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-084</td>
+              <td>生成完成与无内容失败</td>
+              <td>Writer complete或抛错</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=writing&amp;interaction=HTML-084"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-085</td>
+              <td>停止/错误部分稿</td>
+              <td>停止或服务失败且有部分文本</td>
+              <td>失败后268字符部分保留，源码写入且dirty</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=writing-partial&amp;interaction=HTML-085"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-086</td>
+              <td>过期草稿与外部取消</td>
+              <td>部分稿等待时手动编辑/外部abort</td>
+              <td>推进版本→保留禁用→丢弃关闭</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=writing-stale&amp;interaction=HTML-086"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-087</td>
+              <td>演示覆盖层</td>
+              <td>视图→演示</td>
+              <td>真实演示层、短视口、Escape退出</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=presentation&amp;interaction=HTML-087"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-088</td>
+              <td>全屏及不支持错误</td>
+              <td>演示→全屏</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=presentation&amp;interaction=HTML-088"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-089</td>
+              <td>独立窗口演示</td>
+              <td>视图→新窗口</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=presentation&amp;interaction=HTML-089"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-090</td>
+              <td>导出HTML</td>
+              <td>视图→导出HTML</td>
+              <td>实际下载5166字节，doctype/尾换行保留，无gx预览注入</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=presentation&amp;interaction=HTML-090"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-091</td>
+              <td>安全与消息合同</td>
+              <td>预览/演示/伪消息输入</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=body&amp;interaction=HTML-091"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+            <tr>
+              <td>HTML-092</td>
+              <td>宿主离开守卫</td>
+              <td>编辑后导航/换文档/关闭页面</td>
+              <td>未逐项进行浏览器断言；实际组件Demo可经记录入口操作，源码/行为测试另列</td>
+              <td>
+                <a href="demo/dist/after/index.html?scene=save&amp;interaction=HTML-092"
+                  >操作Demo</a
+                >
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+  </main>
+  <script>
+    const data = {
+      pairs: [
+        {
+          key: 'wide-light',
+          title: '宽编辑列 · 源码主题',
+          caption: '1100×640 编辑区，1280×720 视口；语法、行号、选中与光标沿现有主题角色。',
+          dimensions: [1280, 720],
+        },
+        {
+          key: 'narrow-dark',
+          title: '中编辑列 · 深色分栏',
+          caption:
+            '690×640 编辑区，1280×720 视口；根据编辑区实际宽度上下排列，作者页面保持原配色。',
+          dimensions: [1280, 720],
+        },
+        {
+          key: 'inspector',
+          title: '元素属性 · 扣除面板后的分栏',
+          caption: '1100×640 编辑区，1280×720 视口；属性面板占320px，剩余780px分栏上下排列。',
+          dimensions: [1280, 720],
+        },
+        {
+          key: 'insert-table',
+          title: '插入表格 · 标签与主操作',
+          caption: '690×640 深色编辑区，1280×720 视口；菜单280px、行列可见名称与明确主操作。',
+          dimensions: [1280, 720],
+        },
+        {
+          key: 'writing-partial',
+          title: '部分草稿 · 状态与动作',
+          caption:
+            '690×640 编辑区，1280×720 视口；同一268字符模拟增量后失败，既有iframe临时预览，源码尚未写入。',
+          dimensions: [1280, 720],
+        },
+        {
+          key: 'brief-short',
+          title: '长提纲 · 短高回归',
+          caption:
+            '390×440 编辑区，1280×720 视口；12章节长输入、内部滚动与固定动作。此组主要记录既有行为保持。',
+          dimensions: [1280, 720],
+        },
+        {
+          key: 'brief-280',
+          title: '最窄提纲 · 动作换行',
+          caption: '280×360 编辑区，1280×720 视口；247px面板为三项操作保留间距，确认动作另起一行。',
+          dimensions: [1280, 720],
+        },
+        {
+          key: 'phone',
+          title: '窄视口 · 源码与预览',
+          caption: '390×640 真实视口；页面无横向溢出，两栏始终挂载，主题与语法可读。',
+          dimensions: [390, 640],
+        },
+      ],
+      supplements: [
+        {
+          key: 'css-preview',
+          title: 'CSS 临时预览',
+          caption: '真实标题临时变红与增加8px内边距；保存仍禁用。取消后恢复原色与0px内边距。',
+        },
+        {
+          key: 'writing-stale',
+          title: '过期草稿保护',
+          caption: '原文版本推进后，保留禁用；丢弃清除本次临时草稿。',
+        },
+        {
+          key: 'questions-narrow',
+          title: '最窄前置问题',
+          caption: '280×360编辑区，单选与多选、说明在内部滚动区，固定提交可达。',
+        },
+        {
+          key: 'insert-short',
+          title: '短视口插入',
+          caption: '390×360真实视口；280px菜单及主动作均在视口内，无内部横向溢出。',
+        },
+        {
+          key: 'presentation-short',
+          title: '短视口演示',
+          caption:
+            '390×360真实视口；41px操作条，319px iframe；Escape退出。全屏/原生权限未据此宣称已验。',
+        },
+      ],
+    }
+    const scene = document.querySelector('#scene')
+    let mode = 'compare'
+    const entries = [...data.pairs, ...data.supplements]
+    function render() {
+      const item = entries.find((x) => x.key === scene.value) || entries[0]
+      scene.value = item.key
+      document.querySelector('#caption').textContent = item.caption
+      const paired = data.pairs.some((x) => x.key === item.key)
+      for (const kind of ['before', 'after']) {
+        const figure = document.getElementById(kind)
+        figure.classList.toggle(
+          'hidden',
+          (kind === 'before' && !paired) || (mode !== 'compare' && mode !== kind),
+        )
+        const src = 'captures/' + item.key + '-' + kind + '.jpg'
+        if (kind === 'after' || paired) {
+          figure.querySelector('img').src = src
+          figure.querySelector('a').href = src
+        }
+      }
+      document.querySelector('.views').classList.toggle('single', mode !== 'compare' || !paired)
+      document.querySelectorAll('[data-mode]').forEach((b) => {
+        b.setAttribute('aria-pressed', String(b.dataset.mode === mode))
+        b.disabled = !paired && b.dataset.mode === 'before'
+      })
+      history.replaceState(null, '', '#' + item.key)
+    }
+    scene.addEventListener('change', () => {
+      if (!data.pairs.some((x) => x.key === scene.value)) mode = 'after'
+      render()
+    })
+    document.querySelectorAll('[data-mode]').forEach((b) =>
+      b.addEventListener('click', () => {
+        mode = b.dataset.mode
+        render()
+      }),
+    )
+    document.querySelector('#search').addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase()
+      document
+        .querySelectorAll('tbody tr')
+        .forEach((r) => (r.hidden = !r.textContent.toLowerCase().includes(q)))
+    })
+    scene.value = location.hash.slice(1) || entries[0].key
+    render()
+  </script>
+</html>

@@ -101,31 +101,44 @@ export function HtmlWritingPreview({
   const stale = draft.version !== currentVersion
   return (
     <section className="mimir-html-agent-prompt" aria-label="HTML 生成草稿">
-      <ToolbarNote>
-        {draft.generating
-          ? `正在生成页面，已收到 ${draft.html.length} 字符；尚未写入原文。`
-          : `${draft.error ?? ''} 已收到 ${draft.html.length} 字符，页面尚未完成。`}
-      </ToolbarNote>
-      {stale && <ToolbarNote>原文已改变，本次草稿不能覆盖当前内容；请丢弃后重新生成。</ToolbarNote>}
-      {draft.generating ? (
-        <ToolbarButton label="停止生成页面" onClick={draft.stop}>
-          停止生成
-        </ToolbarButton>
-      ) : (
-        <>
-          <ToolbarButton
-            label="保留部分 HTML 草稿"
-            disabled={stale}
-            disabledReason="原文已改变，请丢弃后重新生成"
-            onClick={() => draft.resolve?.(true)}
-          >
-            保留部分内容
+      <div className="mimir-html-writing__copy">
+        <strong role="status">{draft.generating ? '正在生成页面' : '页面草稿待处理'}</strong>
+        <ToolbarNote>
+          {draft.generating
+            ? `已收到 ${draft.html.length} 字符；尚未写入原文。`
+            : `已收到 ${draft.html.length} 字符，页面尚未完成。`}
+        </ToolbarNote>
+        {draft.error && !draft.generating && (
+          <div role="status">
+            <ToolbarNote>{draft.error}</ToolbarNote>
+          </div>
+        )}
+        {stale && (
+          <div role="alert">
+            <ToolbarNote>原文已改变，本次草稿不能覆盖当前内容；请丢弃后重新生成。</ToolbarNote>
+          </div>
+        )}
+      </div>
+      <div className="mimir-html-writing__actions">
+        {draft.generating ? (
+          <ToolbarButton label="停止生成页面" onClick={draft.stop}>
+            停止生成
           </ToolbarButton>
-          <ToolbarButton label="丢弃 HTML 草稿" onClick={() => draft.resolve?.(false)}>
-            丢弃草稿
-          </ToolbarButton>
-        </>
-      )}
+        ) : (
+          <>
+            <ToolbarButton
+              label="保留部分 HTML 草稿"
+              primary
+              disabled={stale}
+              disabledReason="原文已改变，请丢弃后重新生成"
+              onClick={() => draft.resolve?.(true)}
+            />
+            <ToolbarButton label="丢弃 HTML 草稿" onClick={() => draft.resolve?.(false)}>
+              丢弃草稿
+            </ToolbarButton>
+          </>
+        )}
+      </div>
     </section>
   )
 }

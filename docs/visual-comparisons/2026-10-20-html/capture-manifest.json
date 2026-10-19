@@ -1,0 +1,209 @@
+{
+  "baseline": "0c44cde",
+  "date": "2026-10-20",
+  "pairs": [
+    {
+      "key": "wide-light",
+      "title": "宽编辑列 · 源码主题",
+      "caption": "1100×640 编辑区，1280×720 视口；语法、行号、选中与光标沿现有主题角色。",
+      "dimensions": [1280, 720]
+    },
+    {
+      "key": "narrow-dark",
+      "title": "中编辑列 · 深色分栏",
+      "caption": "690×640 编辑区，1280×720 视口；根据编辑区实际宽度上下排列，作者页面保持原配色。",
+      "dimensions": [1280, 720]
+    },
+    {
+      "key": "inspector",
+      "title": "元素属性 · 扣除面板后的分栏",
+      "caption": "1100×640 编辑区，1280×720 视口；属性面板占320px，剩余780px分栏上下排列。",
+      "dimensions": [1280, 720]
+    },
+    {
+      "key": "insert-table",
+      "title": "插入表格 · 标签与主操作",
+      "caption": "690×640 深色编辑区，1280×720 视口；菜单280px、行列可见名称与明确主操作。",
+      "dimensions": [1280, 720]
+    },
+    {
+      "key": "writing-partial",
+      "title": "部分草稿 · 状态与动作",
+      "caption": "690×640 编辑区，1280×720 视口；同一268字符模拟增量后失败，既有iframe临时预览，源码尚未写入。",
+      "dimensions": [1280, 720]
+    },
+    {
+      "key": "brief-short",
+      "title": "长提纲 · 短高回归",
+      "caption": "390×440 编辑区，1280×720 视口；12章节长输入、内部滚动与固定动作。此组主要记录既有行为保持。",
+      "dimensions": [1280, 720]
+    },
+    {
+      "key": "brief-280",
+      "title": "最窄提纲 · 动作换行",
+      "caption": "280×360 编辑区，1280×720 视口；247px面板为三项操作保留间距，确认动作另起一行。",
+      "dimensions": [1280, 720]
+    },
+    {
+      "key": "phone",
+      "title": "窄视口 · 源码与预览",
+      "caption": "390×640 真实视口；页面无横向溢出，两栏始终挂载，主题与语法可读。",
+      "dimensions": [390, 640]
+    }
+  ],
+  "supplements": [
+    {
+      "key": "css-preview",
+      "title": "CSS 临时预览",
+      "caption": "真实标题临时变红与增加8px内边距；保存仍禁用。取消后恢复原色与0px内边距。"
+    },
+    {
+      "key": "writing-stale",
+      "title": "过期草稿保护",
+      "caption": "原文版本推进后，保留禁用；丢弃清除本次临时草稿。"
+    },
+    {
+      "key": "questions-narrow",
+      "title": "最窄前置问题",
+      "caption": "280×360编辑区，单选与多选、说明在内部滚动区，固定提交可达。"
+    },
+    {
+      "key": "insert-short",
+      "title": "短视口插入",
+      "caption": "390×360真实视口；280px菜单及主动作均在视口内，无内部横向溢出。"
+    },
+    {
+      "key": "presentation-short",
+      "title": "短视口演示",
+      "caption": "390×360真实视口；41px操作条，319px iframe；Escape退出。全屏/原生权限未据此宣称已验。"
+    }
+  ],
+  "images": [
+    {
+      "path": "captures/wide-light-before.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "056ab2d64f00fa4dea101daedfa24aa2aff6c50f1367a32211270a98a0f2736e"
+    },
+    {
+      "path": "captures/wide-light-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "5ee0212f20667710d05a595a5d428f870984b554d782f3e55899e7ab2107dcad"
+    },
+    {
+      "path": "captures/narrow-dark-before.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "dd4091a75e9d3ff9f4aa648eb97142dc13debc8ee2a1acd438fb8ddcda4fef00"
+    },
+    {
+      "path": "captures/narrow-dark-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "8e610ffb039bd8e5dbb316fa56050aa11c17a220f14723d45122f9b18d83d2df"
+    },
+    {
+      "path": "captures/inspector-before.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "1bf9ba10c5bcc1bb1a6ff3dbbffefbea968e63cb206a33bca2204426697c4bb4"
+    },
+    {
+      "path": "captures/inspector-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "20a54dfc306276dbbd9497e78f2232f4c22fd02f4abf0384878366295be34765"
+    },
+    {
+      "path": "captures/insert-table-before.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "a5031a98b8dfdf23e0157debc4f24e1c729a5ab94c27617a510aeee84ec1eb3a"
+    },
+    {
+      "path": "captures/insert-table-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "a7ef09b40029ff18e1b3c6b27f70ec8eea58951468d7a558ba9e82c108d1306d"
+    },
+    {
+      "path": "captures/writing-partial-before.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "61c60ed5552edcd9a9c843e2494cae95124a20f4781d3c8b5fcb49ad20b67eb0"
+    },
+    {
+      "path": "captures/writing-partial-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "13b9f3492bc66380f5362f1961df7f23674c549e72673a515113469c81763513"
+    },
+    {
+      "path": "captures/brief-short-before.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "8c02c8017131e8932abeb3191e40ce378e8f2f6de1fc91558bcdd91b4517986d"
+    },
+    {
+      "path": "captures/brief-short-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "c77425ba71e6fb736841962195f86817a61fba4d21e7ce8dd15b6c81be47cca7"
+    },
+    {
+      "path": "captures/brief-280-before.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "cee0990e9fd7a0e02e0acb9723667033280599c6cc47344a3cd74d2c46fc5a1c"
+    },
+    {
+      "path": "captures/brief-280-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "cdd0ee85c62bb9c532aaa9d3736f2a7a3e62b80dca903d0e7119787a7d10ed94"
+    },
+    {
+      "path": "captures/phone-before.jpg",
+      "width": 390,
+      "height": 640,
+      "sha256": "95a1052d23c7c587c8c3c1bd2fd12761a20d25cf7fda8d751259097949dd59af"
+    },
+    {
+      "path": "captures/phone-after.jpg",
+      "width": 390,
+      "height": 640,
+      "sha256": "a68d3cd45d041613685ea5be45047baac3fa3a4cd229c80f43a9e6018e509bd8"
+    },
+    {
+      "path": "captures/css-preview-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "a0a90ee23bca2eb47a17080d0729244b9025ab551145fdecb91d89de54bc4923"
+    },
+    {
+      "path": "captures/writing-stale-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "8c5c9cc8625384bb4affca627fce990bf8d4f3f85a98ea7ebde1e4fa14ee7a5a"
+    },
+    {
+      "path": "captures/questions-narrow-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "c0879cf5fa09ce44e7999969014bf971c1f0ffdddb29c0447d751d3938048e50"
+    },
+    {
+      "path": "captures/insert-short-after.jpg",
+      "width": 390,
+      "height": 360,
+      "sha256": "b9e491fd9e1a220dec4846b607683be22f0abd6411fde90476811bb3b32debe6"
+    },
+    {
+      "path": "captures/presentation-short-after.jpg",
+      "width": 390,
+      "height": 360,
+      "sha256": "97db4e65f7335f3729307e79e37b706708ee55a680b769dba5395989e1c421ea"
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "baseline": "0c44cde",
+  "variants": {
+    "before": {
+      "sourceRoot": "/private/tmp/mimir-html-baseline-0c44cde",
+      "sourceManifest": "dist/before/source-manifest.json",
+      "headAtBuild": "f462139b14035854d6515b6b88df073610d9ad8c",
+      "aggregateSha256": "6e6cffe1fdf81521f2aed3c06c94ad2c5ae57fba01bd5c6dd05daf6fd991d63c",
+      "files": [
+        {
+          "path": "assets/index-5R-ZPzxs.js",
+          "bytes": 1916843,
+          "sha256": "37db8f091352e750150e59355b2f088bd68410b0a19445459ccc8ea98c69bab9"
+        },
+        {
+          "path": "assets/index-qlXsiiyT.css",
+          "bytes": 39402,
+          "sha256": "a943c2dc684f044c3cecaa094d50011c6b1aa03152e8895e41e246ef427d8b2b"
+        },
+        {
+          "path": "index.html",
+          "bytes": 415,
+          "sha256": "9c4af7352d02e3e244962655614ee033967e36dc787287e8fef486a8469011a4"
+        },
+        {
+          "path": "source-manifest.json",
+          "bytes": 15399,
+          "sha256": "ecef8440b837f9ce5a566dd06d14631a84519860967f9c91410a9f98d8d2d66d"
+        }
+      ]
+    },
+    "after": {
+      "sourceRoot": "/Users/admin/Desktop/mimir",
+      "sourceManifest": "dist/after/source-manifest.json",
+      "headAtBuild": "f462139b14035854d6515b6b88df073610d9ad8c",
+      "aggregateSha256": "faa401a176879b543d5974c99b37259e9ff6939b13d585927779a8a6edce504d",
+      "files": [
+        {
+          "path": "assets/index-CpM1jOBX.css",
+          "bytes": 40369,
+          "sha256": "76b86c8e37b5b06c118deb02948346c1fbff62cde94ad5b998dc4f2487ba0196"
+        },
+        {
+          "path": "assets/index-fhocae1Y.js",
+          "bytes": 1917553,
+          "sha256": "8780cb6483bb6ed35ee145a2fbdb66dd8616aea65a4eba592052251dfe5960df"
+        },
+        {
+          "path": "index.html",
+          "bytes": 415,
+          "sha256": "856b18ae53a956abf237493965fe8446e9ec8c2ff1c9cbe964e9cc3ec402bab0"
+        },
+        {
+          "path": "source-manifest.json",
+          "bytes": 15398,
+          "sha256": "a7112fd4913623cc102237539a427bae69e2ec26a7bda306aae7d204f4a52302"
+        }
+      ]
+    }
+  }
+}

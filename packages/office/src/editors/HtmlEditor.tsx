@@ -387,6 +387,12 @@ export function HtmlEditor({
   /** 预览页面的标题（来自 `gx:ready`），用来在状态行确认渲染的是哪一份 */
   const [previewTitle, setPreviewTitle] = useState<string | null>(null)
   const editorRef = useRef<SourceEditorHandle>(null)
+  const findFocusPending = useRef(false)
+  useEffect(() => {
+    if (findOpen || !findFocusPending.current) return
+    findFocusPending.current = false
+    editorRef.current?.focus()
+  }, [findOpen])
   const agentRef = useRef<HtmlAgentHandle | null>(null)
   const selectedSidRef = useRef<number | null>(null)
   const textSelectionRef = useRef<{
@@ -914,10 +920,16 @@ export function HtmlEditor({
     if (view === 'source') setView('split')
   }
 
+  const closeFind = () => {
+    findFocusPending.current = true
+    if (view === 'preview') setView('split')
+    setFindOpen(false)
+  }
+
   /** 打开/关掉查找栏 */
   const toggleFind = () => {
     if (findOpen) {
-      setFindOpen(false)
+      closeFind()
       return
     }
     openFind()
@@ -1419,7 +1431,7 @@ export function HtmlEditor({
                 onQueryChange={setFindQuery}
                 options={findOptions}
                 onOptionsChange={setFindOptions}
-                onClose={() => setFindOpen(false)}
+                onClose={closeFind}
               />
             )}
             {/*
@@ -1469,88 +1481,94 @@ export function HtmlEditor({
       {/*
         左右分栏：源码在左、预览在右。**预览是本格式存在的理由**——HTML 的
         源码与它渲染出来的样子差了十万八千里，只看源码等于用记事本打开网页。
-        窄屏（<1100px）下改为上下叠放，见 editors.css。
+        实际分栏区域不足 800px 时改为上下叠放，见 editors.css。
 
         两栏都用 `hidden` 控制显隐（**不卸载**）：源码编辑器卸载就会丢掉
         CodeMirror 的实例与编辑历史，重新挂载读的是刚打开文件时的文本——
         那是静默丢内容，理由写在 `view` 的说明里。
       */}
       <div className="mimir-html-workspace">
-        <div className="mimir-html-split">
-          <div className="mimir-html-source" hidden={view === 'preview'}>
-            <SourceEditor
-              ref={editorRef}
-              initialText={initial?.text ?? doc.text}
-              className="mimir-html-cm"
-              onChange={(next) => {
-                /**
-                 * 文本与映射一起前进（理由见 `edited` 的说明）。
-                 * 用更新函数形式读 `prev`，于是「上一份 map」不必经过 ref。
-                 */
-                const agent = agentRef.current
-                if (agent) agent.setManualText(next)
-                else
-                  setEdited((prev) => {
-                    const base = prev ?? initial
-                    const version = (base?.version ?? 0) + 1
-                    return {
-                      text: next,
-                      map: buildParseMap(next, version, base?.map ?? null),
-                      version,
-                    }
-                  })
-                if (!dirty) {
-                  setDirty(true)
-                  onDirtyChange?.(true)
-                }
-                // 敲键、替换、撤销都会走到这里（撤销也改文档）
-                syncHistory()
-              }}
-              onCursor={(info) => {
-                setCursor(info)
-                const current = agentRef.current?.getDocument()
-                if (current) {
-                  const entry = elementCovering(
-                    current.map,
-                    info.pos,
-                    Math.min(info.pos + 1, current.text.length),
-                  )
-                  const sid =
-                    entry && !['html', 'head', 'body'].includes(entry.tag) ? entry.sid : null
-                  if (sid !== selectedSidRef.current) {
-                    selectedSidRef.current = sid
-                    setSelected(
-                      entry && sid !== null ? { sid, tag: entry.tag, className: '' } : null,
-                    )
-                    frameRef.current?.contentWindow?.postMessage({ type: 'gx:select', sid }, '*')
+        <div className="mimir-html-split-container">
+          <div className="mimir-html-split">
+            <div className="mimir-html-source" hidden={view === 'preview'}>
+              <SourceEditor
+                ref={editorRef}
+                initialText={initial?.text ?? doc.text}
+                className="mimir-html-cm"
+                onChange={(next) => {
+                  /**
+                   * 文本与映射一起前进（理由见 `edited` 的说明）。
+                   * 用更新函数形式读 `prev`，于是「上一份 map」不必经过 ref。
+                   */
+                  const agent = agentRef.current
+                  if (agent) agent.setManualText(next)
+                  else
+                    setEdited((prev) => {
+                      const base = prev ?? initial
+                      const version = (base?.version ?? 0) + 1
+                      return {
+                        text: next,
+                        map: buildParseMap(next, version, base?.map ?? null),
+                        version,
+                      }
+                    })
+                  if (!dirty) {
+                    setDirty(true)
+                    onDirtyChange?.(true)
                   }
-                }
-                // 撤销/重做会改选区，所以这条回调也是刷新撤销栈可用性的时机
-                syncHistory()
-              }}
-            />
-          </div>
-          {/*
+                  // 敲键、替换、撤销都会走到这里（撤销也改文档）
+                  syncHistory()
+                }}
+                onCursor={(info) => {
+                  setCursor(info)
+                  const current = agentRef.current?.getDocument()
+                  if (current) {
+                    const entry = elementCovering(
+                      current.map,
+                      info.pos,
+                      Math.min(info.pos + 1, current.text.length),
+                    )
+                    const sid =
+                      entry && !['html', 'head', 'body'].includes(entry.tag) ? entry.sid : null
+                    if (sid !== selectedSidRef.current) {
+                      selectedSidRef.current = sid
+                      setSelected(
+                        entry && sid !== null ? { sid, tag: entry.tag, className: '' } : null,
+                      )
+                      frameRef.current?.contentWindow?.postMessage({ type: 'gx:select', sid }, '*')
+                    }
+                  }
+                  // 撤销/重做会改选区，所以这条回调也是刷新撤销栈可用性的时机
+                  syncHistory()
+                }}
+              />
+            </div>
+            {/*
           预览一侧。宿主层负责**宽度**（设备档位）与**缩放**：上游
           `PreviewFrame` 也把 `zoom` 加在这一层（frame 自己不该知道这些）。
         */}
-          <div className="mimir-html-preview-pane" hidden={view === 'source'}>
-            <div className="mimir-html-preview-host" data-device={device} style={previewHostStyle}>
-              <iframe
-                ref={frameRef}
-                className="mimir-html-preview"
-                title="预览"
-                srcDoc={previewHtml ?? ''}
-                /*
+            <div className="mimir-html-preview-pane" hidden={view === 'source'}>
+              <div
+                className="mimir-html-preview-host"
+                data-device={device}
+                style={previewHostStyle}
+              >
+                <iframe
+                  ref={frameRef}
+                  className="mimir-html-preview"
+                  title="预览"
+                  srcDoc={previewHtml ?? ''}
+                  /*
                 **不给 `allow-same-origin`**：给了它，frame 里的脚本就能碰宿主页的
                 cookie 与 localStorage（srcdoc 是同源的），等于让被编辑的页面拿到
                 mimir 的登录态。不给的话它在 opaque origin 里跑，拿不到任何东西。
                 `allow-scripts` 必须给——真实页面大量依赖 CDN 脚本，禁掉就只剩
                 一片空白（与上游同一条判断）。
               */
-                sandbox="allow-scripts allow-forms allow-popups allow-modals"
-                referrerPolicy="no-referrer"
-              />
+                  sandbox="allow-scripts allow-forms allow-popups allow-modals"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
             </div>
           </div>
         </div>

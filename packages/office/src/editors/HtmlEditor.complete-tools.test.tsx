@@ -13,6 +13,8 @@ const PAGE =
 const roots: Root[] = []
 afterEach(() => {
   act(() => roots.splice(0).forEach((root) => root.unmount()))
+  // happy-dom retains ranges into detached CodeMirror nodes across mounts.
+  window.getSelection()?.removeAllRanges()
   document.body.textContent = ''
   vi.restoreAllMocks()
 })
@@ -376,6 +378,51 @@ it('草稿等待确认时人工改动或外部取消均不能覆盖当前原文'
   expect(app.handle.getDocument().text).toContain('人工保留')
   expect(app.host.querySelector('[aria-label="HTML 生成草稿"]')).toBeNull()
 })
+
+it.each(['查找框 Escape', '替换框 Escape', '关闭按钮', '再次点击查找', '预览中的关闭按钮'])(
+  '%s 关闭查找后回到原CodeMirror，保留源码、版本与预览实例',
+  async (method) => {
+    const app = await boot()
+    const source = app.host.querySelector<HTMLElement>('.cm-content')!
+    const frame = app.host.querySelector('iframe')!
+    const original = app.handle.getDocument().text
+    const version = app.handle.getVersion()
+    act(() => {
+      source.focus()
+      source.dispatchEvent(new KeyboardEvent('keydown', { key: 'f', ctrlKey: true, bubbles: true }))
+    })
+    const query = app.host.querySelector<HTMLInputElement>('[aria-label="查找内容"]')!
+    await vi.waitFor(() => expect(document.activeElement).toBe(query))
+    if (method === '预览中的关闭按钮') {
+      click(app.host, '视图')
+      act(() =>
+        app.host.querySelector<HTMLElement>('[title="只看预览"]')!.closest('label')!.click(),
+      )
+    }
+    expect(app.host.querySelector<HTMLElement>('.mimir-html-source')!.hidden).toBe(
+      method === '预览中的关闭按钮',
+    )
+    if (method.endsWith('Escape')) {
+      const field =
+        method === '查找框 Escape'
+          ? query
+          : app.host.querySelector<HTMLInputElement>('[aria-label="替换为"]')!
+      act(() => {
+        field.focus()
+        field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+      })
+    } else {
+      click(app.host, method === '再次点击查找' ? '查找和替换' : '关闭查找')
+    }
+    expect(app.host.querySelector('.me-find')).toBeNull()
+    expect(app.host.querySelector<HTMLElement>('.mimir-html-source')!.hidden).toBe(false)
+    expect(document.activeElement).toBe(source)
+    expect(app.host.querySelector('.cm-content')).toBe(source)
+    expect(app.host.querySelector('iframe')).toBe(frame)
+    expect(app.handle.getDocument().text).toBe(original)
+    expect(app.handle.getVersion()).toBe(version)
+  },
+)
 
 it('元素Inspector支持键盘分类、Escape回焦与不抢外部焦点', async () => {
   const app = await boot()

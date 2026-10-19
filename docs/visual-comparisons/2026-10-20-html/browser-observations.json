@@ -1,0 +1,122 @@
+[
+  {
+    "case": "baseline",
+    "findCloseActive": "BODY",
+    "editor690At1280": "row, source344/preview345",
+    "codeSurface": "transparent; --surface empty; no syntax colors"
+  },
+  {
+    "case": "after-narrow-dark",
+    "editor690At1280": "column, source690x265/preview690x266",
+    "codeSurface": "rgb(24,25,26)",
+    "tag": "rgb(107,218,165)"
+  },
+  {
+    "case": "after-phone",
+    "viewport": [390, 640],
+    "documentWidth": 390,
+    "documentScrollWidth": 390,
+    "source": [390, 263],
+    "preview": [390, 264]
+  },
+  {
+    "case": "table-error",
+    "input": "9",
+    "message": "表格行数需为 1–8，列数需为 1–10。"
+  },
+  {
+    "case": "css-preview-cancel",
+    "preview": {
+      "color": "rgb(255,0,0)",
+      "padding": "8px",
+      "save": "disabled"
+    },
+    "cancel": {
+      "color": "rgb(40,54,46)",
+      "padding": "0px"
+    }
+  },
+  {
+    "case": "find-close",
+    "query": "知识",
+    "matches": 9,
+    "escapeFocused": "CodeMirror cm-content",
+    "sourceModified": false
+  },
+  {
+    "case": "short-insert",
+    "viewport": [390, 360],
+    "menu": {
+      "left": 14,
+      "top": 63.09,
+      "width": 280,
+      "bottom": 230.59,
+      "clientWidth": 278,
+      "scrollWidth": 278
+    },
+    "actionBottom": 217.59
+  },
+  {
+    "case": "short-presentation",
+    "viewport": [390, 360],
+    "barHeight": 41,
+    "frameHeight": 319,
+    "sandbox": "allow-scripts allow-forms allow-popups allow-modals",
+    "escape": "dialog removed; focus target not recorded"
+  },
+  {
+    "case": "brief-280",
+    "editorWidth": 280,
+    "inspectorWidth": 247,
+    "footerHeight": 92,
+    "scrollBodyHeight": 63,
+    "scrollBodyContent": 1192,
+    "actions": "Cancel and Redo first row, Confirm second row; all inside panel"
+  },
+  {
+    "case": "writing",
+    "partialCount": 268,
+    "partialKeep": "source becomes draft and save enabled",
+    "stale": "keep disabled and discard clears feedback",
+    "preview": "existing iframe temporarily renders matching-version draft; source remains original before explicit keep"
+  },
+  {
+    "case": "questions",
+    "editorWidth": 280,
+    "panelWidth": 247,
+    "footerHeight": 52,
+    "bodyHeight": 103,
+    "bodyContent": 466,
+    "multi": "整理方法 selected and submit closes panel"
+  },
+  {
+    "case": "load-error",
+    "failure": "controlled original load rejects",
+    "recovery": "real Retry restores tool shell and preview"
+  },
+  {
+    "case": "save-io",
+    "sequence": "manual source op→Save pending→controlled failure→Save again→controlled completion",
+    "bytes": 5166,
+    "scope": "real component state, mocked IO; no disk/database write"
+  },
+  {
+    "case": "device-zoom",
+    "view": "preview",
+    "sourceHidden": true,
+    "mountedCM": 1,
+    "mountedIframe": 1,
+    "device": "phone",
+    "layoutWidth": 390,
+    "zoom": 2,
+    "actualWidth": 780
+  },
+  {
+    "case": "download",
+    "filename": "page (1).html",
+    "bytes": 5166,
+    "doctype": true,
+    "trailingNewline": true,
+    "previewInstrumentation": false
+  }
+]

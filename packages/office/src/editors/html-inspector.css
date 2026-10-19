@@ -7,10 +7,6 @@
   container: html-workspace / inline-size;
 }
 
-.mimir-html-workspace > .mimir-html-split {
-  min-width: 0;
-}
-
 .mimir-html-inspector {
   z-index: 4;
   display: flex;
@@ -204,6 +200,7 @@
 }
 .mimir-html-planning__actions {
   flex-direction: row;
+  flex-wrap: wrap;
   justify-content: flex-end;
 }
 
