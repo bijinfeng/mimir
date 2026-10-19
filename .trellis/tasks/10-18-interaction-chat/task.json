@@ -15,7 +15,7 @@
   "branch": "codex/all-pages-polish",
   "base_branch": "master",
   "worktree_path": null,
-  "commit": null,
+  "commit": "c4970020b89c79c2bf21cf27570225d758f07840",
   "pr_url": null,
   "subtasks": [],
   "children": [
@@ -97,6 +97,11 @@
     "implementation_approved_on": "2026-10-19",
     "planning_verification": "verification/v7/browser-qa.md",
     "implementation_status": "implemented_verified",
-    "global_gate": "pnpm check exit 0 on 2026-10-19"
+    "global_gate": "pnpm check exit 0 on 2026-10-19",
+    "implementation_commits": [
+      "25f5ca69e6fbbfebcedbcc5804ba9061876bff28",
+      "57c24e34930ae04d598d9217c4b1935cc9f27989",
+      "c4970020b89c79c2bf21cf27570225d758f07840"
+    ]
   }
 }

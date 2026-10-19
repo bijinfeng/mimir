@@ -16,7 +16,7 @@
     {
       "id": "workspace",
       "name": "工作区导航与账户菜单",
-      "status": "implemented_verified_global_gate_pending",
+      "status": "implemented_verified",
       "proposal": "../10-18-interaction-workspace/prototype/review.html",
       "version": "v2",
       "approved_at": "2026-10-18",
@@ -27,12 +27,14 @@
       "planning_user_quote": "可以，创建并规划",
       "revision_user_quote": "去掉知识库的图标选择功能，编辑时也不仅仅是编辑名称，描述也需要支持编辑，创建和编辑可以复用同一个编辑弹窗",
       "previous_proposal": "../10-18-interaction-workspace/prototype/versions/v1.html",
-      "verification": "../10-18-interaction-workspace/implementation-acceptance.md"
+      "verification": "../10-18-interaction-workspace/implementation-acceptance.md",
+      "global_gate": "passed_2026-10-19",
+      "global_gate_verification": "../archive/2026-10/10-18-interaction-chat/verification/implementation/acceptance.md"
     },
     {
       "id": "search",
       "name": "搜索与命令面板",
-      "status": "implemented_verified_global_gate_pending",
+      "status": "implemented_verified",
       "proposal": "../10-18-interaction-search/prototype/review.html",
       "version": "v1",
       "approved_at": "2026-10-18",
@@ -46,12 +48,14 @@
       "revision_user_quote": "不对呀，你没有完全按照打磨后的还原啊",
       "parity_verification": "../10-18-interaction-search/verification/parity/comparison.html",
       "revision_notes": "按冻结v1修正16组视觉/交互偏差；Renderer495项及全仓类型通过，外部全仓lint阻断保留。 AI操作区图文居中与hover边框引起的2px抖动已修复，实测浅深/390px状态尺寸一致。",
-      "parity_implementation_commit": "924b721f7ad958db45a607defcd34a7c63daa98d"
+      "parity_implementation_commit": "924b721f7ad958db45a607defcd34a7c63daa98d",
+      "global_gate": "passed_2026-10-19",
+      "global_gate_verification": "../archive/2026-10/10-18-interaction-chat/verification/implementation/acceptance.md"
     },
     {
       "id": "capture",
       "name": "收集与导入",
-      "status": "implemented_verified_global_gate_pending",
+      "status": "implemented_verified",
       "proposal": "../10-18-interaction-capture/prototype/review.html",
       "version": "capture-review-v1 revision2",
       "approved_at": "2026-10-18",
@@ -64,12 +68,14 @@
       "preview_url": "http://127.0.0.1:5184/review.html",
       "coverage_groups": 9,
       "coverage_items": 91,
-      "revision_notes": "按冻结revision2实施；独立检查与Renderer59文件511测试通过。真实GUI抽验、17项指定度量一致与hover稳定有证据；全仓小程序lint及Renderer外部TS2550阻断保留。"
+      "revision_notes": "按冻结revision2实施；独立检查与Renderer59文件511测试通过。真实GUI抽验、17项指定度量一致与hover稳定有证据；全仓小程序lint及Renderer外部TS2550阻断保留。",
+      "global_gate": "passed_2026-10-19",
+      "global_gate_verification": "../archive/2026-10/10-18-interaction-chat/verification/implementation/acceptance.md"
     },
     {
       "id": "library",
       "name": "知识库与目录浏览管理",
-      "status": "implemented_verified_global_gate_pending",
+      "status": "implemented_verified",
       "proposal": "../10-18-interaction-library/prototype/review.html",
       "version": "library-review-v1 revision2",
       "approved_at": "2026-10-18",
@@ -93,12 +99,14 @@
       "selected_icon_scheme": "A",
       "icon_selection_user_quote": "A",
       "icon_selection_at": "2026-10-18",
-      "revision_notes": "revision2 A已实施；独立58组/299状态映射，Renderer64文件537测试通过，真实UI浅深/390px/低高度/失败恢复有证据。外部miniapp lint与既有TS2550阻断保留。"
+      "revision_notes": "revision2 A已实施；独立58组/299状态映射，Renderer64文件537测试通过，真实UI浅深/390px/低高度/失败恢复有证据。外部miniapp lint与既有TS2550阻断保留。",
+      "global_gate": "passed_2026-10-19",
+      "global_gate_verification": "../archive/2026-10/10-18-interaction-chat/verification/implementation/acceptance.md"
     },
     {
       "id": "document",
       "name": "文档阅读与共享文档流程",
-      "status": "implemented_verified_global_gate_pending",
+      "status": "implemented_verified",
       "proposal": "../10-18-interaction-document/prototype/review.html",
       "version": "document-review-v1",
       "approved_at": "2026-10-18",
@@ -112,30 +120,31 @@
       "sha256": "2a3aafb4277c37bd06e38ae94ecec085e0f31a062b88e25a000042e5cbdb220d",
       "preview_url": "http://127.0.0.1:5187/review.html",
       "verification": "../10-18-interaction-document/implementation-acceptance.md",
-      "global_gate": "failed_outside_scope",
+      "global_gate": "passed_2026-10-19",
       "parity_implementation_commit": "a2340f7",
-      "parity_notes": "修复大纲行几何、主题与滚动选中，还原已批准v1；冻结稿未变。"
+      "parity_notes": "修复大纲行几何、主题与滚动选中，还原已批准v1；冻结稿未变。",
+      "global_gate_verification": "../archive/2026-10/10-18-interaction-chat/verification/implementation/acceptance.md"
     },
     {
       "id": "chat",
       "name": "AI对话与生成交互",
-      "status": "in_progress",
-      "proposal": "../10-18-interaction-chat/prototype/v7/review.html",
+      "status": "implemented_verified",
+      "proposal": "../archive/2026-10/10-18-interaction-chat/prototype/v7/review.html",
       "version": "chat-review-v7",
       "approved_at": "2026-10-19",
       "user_quote": "可以",
-      "implementation_commit": null,
-      "task": ".trellis/tasks/10-18-interaction-chat",
+      "implementation_commit": "c4970020b89c79c2bf21cf27570225d758f07840",
+      "task": ".trellis/tasks/archive/2026-10/10-18-interaction-chat",
       "planning_user_quote": "继续",
       "product_implementation_approved": true,
       "sha256": "1537bb796575dc47c8cc5b5661034b5bfa80e23d4a5995e9ff2a6ef39d67e3ff",
       "preview_url": "http://127.0.0.1:5189/v7/review.html?mode=proposed#scene=CHAT-012.menu",
       "coverage_groups": 71,
       "coverage_states": 379,
-      "verification": "../10-18-interaction-chat/planning-acceptance-v7.md",
+      "verification": "../archive/2026-10/10-18-interaction-chat/verification/implementation/acceptance.md",
       "revision_user_quote": "assistant-ui 还是和我们的样式风格不太一致，使用 tantack ai react + 自定义组件替换 assistan-ui 吧，但是风格可以换，交互需要一模一样，单开个交互细节页面，把 AG-UI 协议对应的每一种组件每一个交互都要展示出来",
-      "revision_notes": "v7升级至最新稳定TanStack SDK；保留v6按供应商选模型及实际能力推理等级。v1-v6冻结，产品迁移随模块实施完成。",
-      "previous_proposal": "../10-18-interaction-chat/prototype/v6/review.html",
+      "revision_notes": "已按批准v7实施Mimir自有UI、TanStack最新已验证稳定版本、供应商分组与实际推理等级、真实临时附件。独立复核、真实主/侧栏浏览器抽验、全仓pnpm check、PG子集84/84及Web/Server/Desktop构建通过；v1–v7冻结保存，原生与付费供应商验证边界见验收记录。",
+      "previous_proposal": "../archive/2026-10/10-18-interaction-chat/prototype/v6/review.html",
       "previous_sha256": "0946cf191be8491e6d4606f6be1bbe90a925bfef26e373115124c04ce3fe6ad0",
       "previous_version": "chat-review-v6",
       "removed_source_states": 7,
@@ -144,7 +153,7 @@
       "total_groups": 72,
       "total_routes": 403,
       "attachment_planning_user_quote": "一并规划聊天附件能力（推荐）",
-      "attachment_task": ".trellis/tasks/10-19-chat-attachments",
+      "attachment_task": ".trellis/tasks/archive/2026-10/10-19-chat-attachments",
       "composer_controls_user_quote": "但是输入框里的模型和思考强度选择还有知识库范围都是需要的",
       "composer_extension_user_quote": "可以",
       "composer_extension_decision": "approved_for_v4_planning",
@@ -161,7 +170,13 @@
         "boundary": 122
       },
       "implementation_phase_started": true,
-      "approval_summary": "../10-18-interaction-chat/implementation-review-v7.md"
+      "approval_summary": "../archive/2026-10/10-18-interaction-chat/implementation-review-v7.md",
+      "implementation_commits": [
+        "25f5ca69e6fbbfebcedbcc5804ba9061876bff28",
+        "57c24e34930ae04d598d9217c4b1935cc9f27989",
+        "c4970020b89c79c2bf21cf27570225d758f07840"
+      ],
+      "global_gate": "passed_2026-10-19"
     },
     {
       "id": "settings",
