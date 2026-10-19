@@ -1386,3 +1386,26 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Next Steps
 
 - 继续模块14 PPTX，再15 PDF、16 Desktop；保持直接实施并留真实前后存档的授权。
+
+
+## Session 48: PPTX interaction refinement
+<!-- trellis-session: v=2 fp=f0fc6e03a2243e35 -->
+
+**Date**: 2026-10-20
+**Task**: PPTX interaction refinement
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+模块14完成：三个长Inspector固定动作、58处Select忙态、父子路径提交；8组真实前后/完整来源索引与隔离原生Demo归档。原生公式/图示/导入/图表、撤销重做/失败重试/保存重开已验，独立检查及pnpm check通过。1–14完成，继续15 PDF与16 Desktop。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `02b50d2` | fix(office): refine PPTX editor interactions |
+| `560f463` | docs: record PPTX verification and commit |
+
+### Status
+
+[OK] **Completed**
