@@ -252,6 +252,7 @@ export function XlsxFormatControls({
               <ToolbarMenuFields label="对齐">
                 <ToolbarLabel>对齐</ToolbarLabel>
                 <ToolbarSelect
+                  disabled={busy}
                   label="范围水平对齐"
                   value={current('horizontalAlign')}
                   emptyLabel="混合或默认"
@@ -263,6 +264,7 @@ export function XlsxFormatControls({
                   onChange={(horizontalAlign) => onFormat({ horizontalAlign })}
                 />
                 <ToolbarSelect
+                  disabled={busy}
                   label="范围垂直对齐"
                   value={current('verticalAlign')}
                   emptyLabel="混合或默认"
@@ -329,6 +331,7 @@ export function XlsxFormatControls({
               <ToolbarMenuFields label="数字格式">
                 <ToolbarLabel>数字格式</ToolbarLabel>
                 <ToolbarSelect
+                  disabled={busy}
                   label="范围数字格式预设"
                   value={current('numberFormat')}
                   emptyLabel="混合或自定义"

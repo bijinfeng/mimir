@@ -25,6 +25,49 @@
   color: var(--me-text-weak);
   overflow-wrap: anywhere;
 }
+.mimir-xlsx-find__results {
+  display: grid;
+  gap: 4px;
+  max-height: 220px;
+  padding: 0;
+  margin: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+}
+.mimir-xlsx-find .me-property-group {
+  gap: 8px;
+}
+.mimir-xlsx-find__results .me-tb {
+  width: 100%;
+  height: auto;
+  min-height: 32px;
+  justify-content: flex-start;
+  text-align: start;
+}
+.mimir-xlsx-find__results .me-btn__icon {
+  width: 100%;
+  min-width: 0;
+}
+.mimir-xlsx-find__result {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding-block: 4px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.mimir-xlsx-find__address {
+  font-weight: 500;
+}
+.mimir-xlsx-find__value {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: var(--me-text-weak);
+  font-size: var(--me-font-size-sm, 12px);
+}
 .mimir-xlsx__cell--link {
   text-decoration: underline;
 }
@@ -170,6 +213,59 @@
   padding: 0 16px 16px;
   overflow: auto;
   min-height: 0;
+}
+.mimir-xlsx-inspector__content:is([data-mode='chart'], [data-mode='image'], [data-mode='table']) {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+}
+.mimir-xlsx-inspector__content:is([data-mode='chart'], [data-mode='image'], [data-mode='table'])
+  > .me-property-form,
+.mimir-xlsx-inspector__content:is([data-mode='chart'], [data-mode='image'], [data-mode='table'])
+  > .me-property-form
+  > .mimir-xlsx-tools {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  gap: 0;
+}
+.mimir-xlsx-inspector__content:is([data-mode='chart'], [data-mode='image'], [data-mode='table'])
+  .mimir-xlsx-tools
+  > .me-tabs {
+  flex: none;
+  margin: 0;
+  padding: 0 12px 8px;
+}
+.mimir-xlsx-inspector__content:is([data-mode='chart'], [data-mode='image'], [data-mode='table'])
+  .mimir-xlsx-tools
+  > fieldset {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: 12px;
+}
+.mimir-xlsx-object-footer {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-block-start: 1px solid var(--me-border);
+  background: var(--me-surface);
+}
+.mimir-xlsx-object-footer > [role='status'] {
+  flex-basis: 100%;
+  max-height: 4.5em;
+  overflow: auto;
+}
+.mimir-xlsx-object-footer > [role='status']:empty {
+  display: none;
 }
 .mimir-xlsx-inspector .me-tabs {
   display: grid;

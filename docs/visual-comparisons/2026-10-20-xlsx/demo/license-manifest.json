@@ -1,0 +1,9 @@
+{
+  "GenOffice": {
+    "source": "https://raw.githubusercontent.com/genspark-ai/genoffice/480548fd55f1be3593ee0d8e316a734751d58309/LICENSE",
+    "commit": "480548fd55f1be3593ee0d8e316a734751d58309",
+    "license": "Apache-2.0",
+    "archive": "docs/visual-comparisons/2026-10-20-xlsx/demo/LICENSE-GenOffice.txt",
+    "sha256": "68e32334df324ef4fc79fad3a26487e5abac36055a484bb6c8d7ecf9d8350885"
+  }
+}

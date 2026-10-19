@@ -1,0 +1,29 @@
+{
+  "scope": "Standalone index DOM and link semantics only; not product GUI QA",
+  "results": [
+    {
+      "path": ".trellis/tasks/10-20-interaction-xlsx/gallery/interactions.html",
+      "initial": 447,
+      "family": 20,
+      "idSearch": 1,
+      "firstLink": "http://127.0.0.1:5204/?scene=search&interaction=XLSX-STATE-FIND-TRUNCATED&capture=0&theme=dark&width=390&height=400",
+      "reset": 447
+    },
+    {
+      "path": "docs/visual-comparisons/2026-10-20-xlsx/demo/interactions.html",
+      "initial": 447,
+      "family": 20,
+      "idSearch": 1,
+      "firstLink": "./dist/before/index.html?scene=search&interaction=XLSX-STATE-FIND-TRUNCATED&capture=0&theme=dark&width=390&height=400",
+      "reset": 447
+    },
+    {
+      "path": "docs/visual-comparisons/2026-10-20-xlsx/interactions.html",
+      "initial": 447,
+      "family": 20,
+      "idSearch": 1,
+      "firstLink": "./demo/dist/before/index.html?scene=search&interaction=XLSX-STATE-FIND-TRUNCATED&capture=0&theme=dark&width=390&height=400",
+      "reset": 447
+    }
+  ]
+}

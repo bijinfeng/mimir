@@ -1,0 +1,1158 @@
+{
+  "baseline": "dcb9a40",
+  "adapterSha256": "b28c24dd6f8687ab9b33a6ab88a7dceb995eeb256171f92c0bdb9b9b4e3d8d01",
+  "variants": {
+    "before": {
+      "sourceRoot": "/private/tmp/mimir-xlsx-baseline-dcb9a40",
+      "entryPoint": "apps/server/src/services/xlsx-agent-host.ts",
+      "bundleSha256": "8be4a20d6687215f3c56508e3f5335c533c47a769a9ef28b391b65a4f89c235c",
+      "files": [
+        {
+          "path": "apps/server/src/services/document-agent-format.ts",
+          "sha256": "7105faa424bae5fd61c1a53967569e6918736366a6d6559b7ad933b54318548c"
+        },
+        {
+          "path": "apps/server/src/services/pdf-image-codec.ts",
+          "sha256": "3467d20786639d798e3a05c93399eb7610bc4b2d5281a6528a96a1d55b5b8e05"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-agent-data.ts",
+          "sha256": "cbdbed4abb60035bb4547b5f2abdab4e1391c8a4144bb6278992fd21c55ff20e"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-agent-features.ts",
+          "sha256": "392689fb47ce8f394a80ffd7d1be6c31ca11eca04bc7d9dcbe3536d6e663fca7"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-agent-host.ts",
+          "sha256": "ec9e6345f07cc6ae549bb5cf87856bcbe396f0b108c8cce1cbbc8fddc4616eff"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-agent-objects.ts",
+          "sha256": "de3db91020121fabfcbc7ee17dbac27345b4c6011a0b2c565377a589cd83be27"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-agent-pivots.ts",
+          "sha256": "6a2d5ec983458973c617d5b74bf65b9cdbaa49960830ef9912e59bf944040895"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-agent-properties.ts",
+          "sha256": "31971e83ef2fa9762c060d687ab083d1397ef42df7a55c0a5cf11e95cac00fef"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-agent-range.ts",
+          "sha256": "163cf84349aa7f16b1e45ff7a3db8a55739024a1df2a29d38c8a1f7b4db06afb"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-agent-tables.ts",
+          "sha256": "b7850aed991a7e5f738d2f41ddb2cd4581a967489545fab15659f25697e2efd5"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-fill-styles.ts",
+          "sha256": "4478388d1dc5ee7caef1bfc9d818ac73b7e1c3889fcc885afef200ce727fe9ed"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-manual-ops.ts",
+          "sha256": "bfc7467fcc26cdc3393cdaa9aee42a5478998f32475c98b1ad815f2a79d04a9e"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-pivot-layout-edit.ts",
+          "sha256": "23a38cb686c35ded649756b8bf38203db42711fc9e7aeea2399f536c9cc7f311"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-range-features.ts",
+          "sha256": "728bb5cf57d11798339811fc8ef842f5d9a3156ad4abf2048d9f71d36794423d"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-range-rules.ts",
+          "sha256": "f4f7f7f212e6cb073e133010f4a2a44266b29bbcaf694e8fe1b78874208f167b"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-range-structures.ts",
+          "sha256": "c733f1740c81f7a96cd455bc4de3dc39adc4439d30d873e203f3fb032e312647"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-range-styles.ts",
+          "sha256": "299d863d6eb294713311fd9d3480eefe7788367a3b4122e497d2884df62003af"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-rule-footprint.ts",
+          "sha256": "513f0fcfc985ea678bd5bb54557a04786e0e1fa3c6e1d0ecc4da32ddd577a98e"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-special-paste-host.ts",
+          "sha256": "0e1f1377514d72bccbe49d69547ab34e653cb7454fa4584c48443aaf0ec42638"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-special-paste.ts",
+          "sha256": "74ed070a99fe972f8350628aeb831d648807a0d77d7f159d88084d316e0ca835"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-validation-consent.ts",
+          "sha256": "7aeb660eed9c26b2992ca388265b401f6d10e4ad483bf6341404dbde005c4858"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-validation-options.ts",
+          "sha256": "4f3b69946789aac6d58272264a27a672302465a28a6032f2aebd9cfde5e37faa"
+        },
+        {
+          "path": "packages/office/src/editors/xlsx-pivot-controls.ts",
+          "sha256": "49560fff5b0596fa8dcbe0272379ffdeb349368f43a9e5946cec327ba9426284"
+        },
+        {
+          "path": "packages/office/src/pptx-group-placement.ts",
+          "sha256": "7602270d3918c375138291b1bdd5173fa0141e06cb0ebf583c703dee422b5aa3"
+        },
+        {
+          "path": "packages/office/src/pptx-picture-placement.ts",
+          "sha256": "dce9cfb52aa3a34223962da80f31b139fa62a977df1cc8b30c1a22e58e31a52c"
+        },
+        {
+          "path": "packages/office/src/pptx-svg.ts",
+          "sha256": "63e048bbf69f49a4b5cbf49b6f62dfd339957bb09b6295be06d663dfd3298c91"
+        },
+        {
+          "path": "packages/office/src/xlsx-cell-effects.ts",
+          "sha256": "d35e05a3874ca93410aa282b8c3fcfe84af710922c3460910fd9d735fa36f543"
+        },
+        {
+          "path": "packages/office/src/xlsx-fill.ts",
+          "sha256": "093a07bd10409897c590077744fc724b20cad9c98b718b1c54a58e93f111ea75"
+        },
+        {
+          "path": "packages/office/src/xlsx-format.ts",
+          "sha256": "9045ca6ab3545b4c21be52f241a8ab7374bef351eb29d1cc68dc0c4881415b10"
+        },
+        {
+          "path": "packages/office/src/xlsx-formula-predicate.ts",
+          "sha256": "412f27fa3b962bb28eb1b778c647115594f7d73e893347b46b8be04155595aa0"
+        },
+        {
+          "path": "packages/office/src/xlsx-manual.ts",
+          "sha256": "6c2fe2cfeec2e8a84da38e1f63f8e6d5330578325b948bdb2bd71c1bc395314d"
+        },
+        {
+          "path": "packages/office/src/xlsx-native-xml.ts",
+          "sha256": "326d1c9c09eef582d2974eaa0686fddaf7ee9a16c8a7ab2f4a2581e36e909535"
+        },
+        {
+          "path": "packages/office/src/xlsx-pivot-editability.ts",
+          "sha256": "6915567a3d29eb2ddccd7a4ccd2c4f9dc9359987deaf9e27eabcb6f8669909cb"
+        },
+        {
+          "path": "packages/office/src/xlsx-shape-preview.ts",
+          "sha256": "4bd7b755805349ed3f30f1c3fcc91cab7dbf0ac06c34a08eb5170d67118c0404"
+        },
+        {
+          "path": "packages/office/src/xlsx-sheet-features.ts",
+          "sha256": "2848927ad1a10cfd2d7b613362cbb769fd5191b4454a6469d0f2f146b7098563"
+        },
+        {
+          "path": "packages/office/src/xlsx-table-styles.ts",
+          "sha256": "54d0bfa48bb384d2c4be1879af68ba40dc453c6f4f9c06d8fea0b2aae5d80d41"
+        },
+        {
+          "path": "packages/office/src/xlsx-validation-list.ts",
+          "sha256": "689afd9acaf72958f7f49d3bbfcde05e51c9ff59010430c57b8e7bef2182c08c"
+        },
+        {
+          "path": "packages/office/src/xlsx-visuals.ts",
+          "sha256": "4213f650e6d5979939f6130ba79c713e876ad383c550b6b9a83be46e32a12e3f"
+        },
+        {
+          "path": "packages/office/src/xlsx.ts",
+          "sha256": "44b6151efe0d4d9b5290b96020b5a6a8dfd5ff97c7e686c594cdc269f5b9f3f4"
+        },
+        {
+          "path": "packages/office/src/zip-bounds.ts",
+          "sha256": "58f4b5114cc8660ff48fea23549351d5a64157585fbc5ee02afed7b83be3297f"
+        },
+        {
+          "path": "packages/office/vendor/packages/docx-engine/src/parse-xml-text.ts",
+          "sha256": "d93fbf642f24e78248d7e4d831badf9d9ef922efb432a085de93f98b72ab6c34"
+        },
+        {
+          "path": "packages/office/vendor/packages/docx-engine/src/theme.ts",
+          "sha256": "8753803fba752427c858ccfa9e08b07318dd6708d5d709a7256f7f1b8ecdbf46"
+        },
+        {
+          "path": "packages/office/vendor/packages/docx-engine/src/xml-utils.ts",
+          "sha256": "69ebdb5bff764beaec6ecbf33fcbfe5991b61b939997e8b1d7edc73baa5d6dd1"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/chart.ts",
+          "sha256": "4d74bb8156228d10c89114f9d75236e7883ed6a46417f583bf0238c20cd83655"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/chartex.ts",
+          "sha256": "b494d56242847ff27102ca80c94c6225d767c14de45b56562a7e4b65e6ab05dd"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/color.ts",
+          "sha256": "449b9a8cf4b6a2a6bc5b66b52cf7eab87756fbfe80f72ddc0452ee38eeec38a2"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/custgeom.ts",
+          "sha256": "d814fa01d8bd40b9c439780e733d5ee2f28bef49113db65f511d137860b45ade"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/dgm-hier.ts",
+          "sha256": "c33bc070b0b8cabbc1224866c0fc06296f3c7b4c1965ef7a4d17addf10b81d8e"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/named-action.ts",
+          "sha256": "f1037b8b2d11394d438862c1b94bfea8c00b39a13cb199e519fe492bc59bbe9c"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/parse.ts",
+          "sha256": "bebfa2a8b0ff5a1f409d06c6c078cb873842d4b362a028403c99154db6154da3"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/placeholder.ts",
+          "sha256": "441614171751acf64e2ea6b1ecab05f77f37430de1af355e88be9659e0ce2f0f"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/scan.ts",
+          "sha256": "be9e0241176e634796dca02941b8d5ab14e0a31b2c46fcbc49443af6018e60ff"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/table-grid.ts",
+          "sha256": "dd6015aa8c1f9d95d2fda02f6d34ec2100a2f96a766b3090ff059f5e9af2cd4d"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/table-style.ts",
+          "sha256": "bc2417e18e680ac6d760e70013962ea9502e7872a5437fd7d480f5223c6ea188"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/theme.ts",
+          "sha256": "eea493cb5921170ece16b8311741b010d6847e7752aad528c75537843d88aadb"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/xml-utils.ts",
+          "sha256": "445c823bf29fded797e033d0ea958030027d3225eb224cbaeffce0fe0ea2371c"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/build-chart.ts",
+          "sha256": "68327d0001db020dbacd76a5fb39fba8822c774c043c1bb0bb2dba8463e06214"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/coords.ts",
+          "sha256": "0ca48416d1d652cae716ecc8670faabb1913f41796b9d401c06b25fe66ff557e"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/fill.ts",
+          "sha256": "f9bc79197dd9762f276218d5a2d5a41ddad09ed1d48b7eb4f705f472fd740ed9"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/image-dpi.ts",
+          "sha256": "5d303a037ca40de4aed7e36f74c087d958922e35ccb3dc34de29c143ea2738df"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/metrics.ts",
+          "sha256": "bfa02b26b685bc82fe417d47c76b084e03546bbba417e49738b9b404de83d980"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/pattern-fills.ts",
+          "sha256": "5c73223e295f5f43524c97e9484885c966d42e689328280d398e334888d36a76"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/scene3d.ts",
+          "sha256": "a5c0e1c3eee2efc6c6cf24a0e5783907f5738d3654e1c53cce670fd3e3f5a7bc"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/domain/cell-address.ts",
+          "sha256": "2fbc63f653e64c440fe9e879024f9ff884eef891132de480142830be3b286c97"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/domain/chart-visual.ts",
+          "sha256": "344428f357878aef3009b32fc21812faf4ae3e4fafb906d4a6a1eee692718faf"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/domain/flash-fill.ts",
+          "sha256": "7fa1efbd90cdc7ffdd17fd7f78962086276f8a9d44d0539bf8ab017fcfc9236a"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/domain/pivot-engine.ts",
+          "sha256": "f9d5083f04b0a65cf98fbba1d9f8a05374efdefebd3a822bc968dd0ab4ed4ea7"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/domain/pivot-filters.ts",
+          "sha256": "84ea71f3bfc9fe5174a2d6565b26d41d6ab862366db4856508c323930beca9d0"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/domain/pivot-formula.ts",
+          "sha256": "93699e3f94d464a0c78f8439ce4de3dd2c27e182fc3f7021af66f422aa524c43"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/domain/pivot-grouping.ts",
+          "sha256": "6277072290d1f9c7a603e3500138d0f7114eb951c5ac82f4d8bcd846318845b4"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/domain/pivot-layout.ts",
+          "sha256": "97991304487ec4aca5d4122d3fb1f0802a089dfdb13cbf8df6383a65e245fb51"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/domain/sort-range.ts",
+          "sha256": "0595cf85e5c4d936669c23636c5001aea06bd34c093f5d79e1512f164ae89d17"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/domain/style-color.ts",
+          "sha256": "3fdacd7679aa20e07e913221b5988142d0f5806ca0e8e1e7ac0dab7fd7d0fd2c"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/domain/workbook-dsl.ts",
+          "sha256": "f53f46c1ad893f9156762f8e032415fcee7d30ec77dea664cd2aaac9a00a8210"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/future-functions.ts",
+          "sha256": "af5f04bcd42afc85046048c9ca33babb4b2505ac9766bea79a7020bbf88e4d34"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-cf.ts",
+          "sha256": "86062fc86dbecbf718c3cdf55d7aee6e811fd4a059034b12541df67e38f90ea9"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-chart.ts",
+          "sha256": "6b23f5bb942b78ef3be5d60e5d99cc067d5e98e31dc63deee4e23af6017bb52d"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-default-styles.ts",
+          "sha256": "a9aef75cc0f70ebb38b6f5a28c820ae7df51bc7ed38b8d938ef514cc7b7ddf10"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-defined-names.ts",
+          "sha256": "dd4b06e6f7ccfa98e320fd81469933624e103eb2bf91ec4813adb56a220e952c"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-drawing-add.ts",
+          "sha256": "223eb4485021e34545f040473f6a7250ecb228be9f272e296cd44969f563d003"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-drawing-edit.ts",
+          "sha256": "29ee0ea18a3222a083cb9025fcb2428aa9cd5ee02c2cc1eb1426e6e05dd6ba0b"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-dv.ts",
+          "sha256": "88d9776f7b823355926d1aec91bb8211a560cd54d5bc274de985e4dda5288aa2"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-escapes.ts",
+          "sha256": "21df63cea974ca99a5b02a7395808596e5e46933058bdbc9896dd2f59311f4be"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-filter.ts",
+          "sha256": "a552ca930e692b288dcb62e8c703dfa61731e84648e0ad9cc8e158cc2aceb4f4"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-gateway.ts",
+          "sha256": "d5306ca289d0ee8087ea89ccf30f27e604f2d1d98c3bb7bf77485b1ef940a59c"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-hyperlinks.ts",
+          "sha256": "53f065613618fd306f7708efb1f31710a76bb4b7754c6bcf63e67e910c4de764"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-namespace.ts",
+          "sha256": "48e1350db657224ee76e2caadde72df1fba4682d75853cbdfa7fc4376271c13a"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-notes.ts",
+          "sha256": "1e4135995658ef45a461468bf55590ba85d6af11a74f39a2677372ca912f3365"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-page-setup.ts",
+          "sha256": "d21de6faed5b5da682da1d4b4c8a17aee27f1bdf50853d2813c99efc34beb604"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-pivot-add.ts",
+          "sha256": "f30d0cc53536f4835501ef72b9840a65cac2022ca35d986a1c04066d0077bd85"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-pivot-expand.ts",
+          "sha256": "da2fcd23ab2ca8b9d231d46a084681ea1dab04e39f8811e3f0ef325a80c4bb3f"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-pivot.ts",
+          "sha256": "f2e0b1c661989caf05538827db3cf4a1767ad9a168e7000ef2ffc7018eabbe5b"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-protection.ts",
+          "sha256": "ee4c71ee94cefbfc40f29945204a47b749811e7808fe2790a7cf3368f390e333"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-sheets.ts",
+          "sha256": "3df1a12fbcea09a65c7ee711753c82bd50d136060a67dbf58f4265079400fde2"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-sparkline.ts",
+          "sha256": "bcc9f3d77a5de900df61e6085d13b647fe7e534ee021919b664b6882b29f337b"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-structure.ts",
+          "sha256": "cb2c1b3c01345f10b91e0b419711c215d2432a9a484c25316632c188b6e70f7a"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-styles.ts",
+          "sha256": "a04b142daa109d4501065239bf25298492b784b4d30d6d9bdce7f02a6914748b"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-table-add.ts",
+          "sha256": "da4761bc506b971a6f1e0eb9ef652d31e3fe62e251df703c1b43ba7c26a8cfbf"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-theme.ts",
+          "sha256": "67e77d6d4d6ad6bb294dc51f42fae77e80daf22c8c206a3a515b8e867bc591c6"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/shared/edit-schemas.ts",
+          "sha256": "b88a051668623a568bf8639d4cafa37b3cd468e1856286b0e9401f4193e0188c"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/shared/shape-types.ts",
+          "sha256": "1091c2ae432ba8f2b44e1de06728cb910671ee900c739e32a50fc3b7de39445d"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/shared/short-date.ts",
+          "sha256": "bd7f6d303515975ecd6235c5f6c1a84f1fccd4cc59c0fcdc2a987bb4aad15135"
+        },
+        {
+          "path": "packages/shared/src/agent-media.ts",
+          "sha256": "0fb7c24258c60d1d7ec5e4dada2e3accc5cdb564156bc836a883b34b371e9e85"
+        },
+        {
+          "path": "packages/shared/src/ai-text.ts",
+          "sha256": "6a7c2ac21168b1cf7cdc1f1867b607bc74b5a09fc223c4c5b71d1919fb74428c"
+        },
+        {
+          "path": "packages/shared/src/auth.ts",
+          "sha256": "441ea506f814d9ec809cb92f0e68179b17725c2e62f229f0c685ca6cf7f772ca"
+        },
+        {
+          "path": "packages/shared/src/capture.ts",
+          "sha256": "6b3df0d94b2715d1efe9ea69a687d8436599f5bd6d7d49746fa291cb54de5098"
+        },
+        {
+          "path": "packages/shared/src/chat-attachments.ts",
+          "sha256": "79d68ea992f28ab4924bed461b805f3985535c80dec9636f2ad4432a53065196"
+        },
+        {
+          "path": "packages/shared/src/chat-models.ts",
+          "sha256": "219a4e596de1a73ba44b5631a99fb4aa2eccf0bb952419a4b367980d5b13d755"
+        },
+        {
+          "path": "packages/shared/src/config.ts",
+          "sha256": "48405f0b5e840a6647a122e3dbf2a09aa7aee1231932ac60c50e4ea4c2f9ceba"
+        },
+        {
+          "path": "packages/shared/src/conversations.ts",
+          "sha256": "28465744520de1eaf9f949d1d13786f4c955eca688a3b8405be8976a386b83a7"
+        },
+        {
+          "path": "packages/shared/src/desktop.ts",
+          "sha256": "6615178a2c3494560ae7546087e98b6f4bc425dba3dc8a864f57c20a5205c6e6"
+        },
+        {
+          "path": "packages/shared/src/document-agent.ts",
+          "sha256": "c52bc6ccf6796332da5e527f0cd7f48d68423b8a67e407be0939e82798b843d2"
+        },
+        {
+          "path": "packages/shared/src/documents.ts",
+          "sha256": "c2d867c38bc91a826aec09c458c0bd374564fb658cee5dbbbd42f75376942fe5"
+        },
+        {
+          "path": "packages/shared/src/docx-agent.ts",
+          "sha256": "86387516b18450550319124daff63286a5b92f1df0c92bc92c9d2cbcc7580131"
+        },
+        {
+          "path": "packages/shared/src/docx-office-tools.ts",
+          "sha256": "22200ac02b679f2d22756bed993ef6cdd16d349afe30880c7dedde8794d0f3c3"
+        },
+        {
+          "path": "packages/shared/src/export.ts",
+          "sha256": "ee13032f2e82b2c44723580062b7c0c79a9d2f95f7359391b4a8f8412cd6890b"
+        },
+        {
+          "path": "packages/shared/src/feeds.ts",
+          "sha256": "38b1d7bb968fb93deb6087a26763b633cc10fb6938edaa383b53ca723275d53a"
+        },
+        {
+          "path": "packages/shared/src/files.ts",
+          "sha256": "e229f62fdf3f5404bdd63c28b855964c86adc5c927b949457cbf8b38cc043237"
+        },
+        {
+          "path": "packages/shared/src/html-brief.ts",
+          "sha256": "72e7551932bc6c72e05a1f05fb9b06b00f7c09f6a3d5501ed5cefac64a018b4c"
+        },
+        {
+          "path": "packages/shared/src/index.ts",
+          "sha256": "ba21f0b1168d184d19dd92aa4489e8e9d1493f37ebb71f9c7dff8d93c0d6fb26"
+        },
+        {
+          "path": "packages/shared/src/local.ts",
+          "sha256": "e6780f8af15ce51a5482f81e3163c8f1f71f7ed76b395ef068bf37a130b64bd3"
+        },
+        {
+          "path": "packages/shared/src/miniapp.ts",
+          "sha256": "f0e74622dff90236b5a39e2783816d4137907ed49cf91c49d61a8dcd593e5c59"
+        },
+        {
+          "path": "packages/shared/src/pdf-agent.ts",
+          "sha256": "611abc1f4708888194276c40ecb5302668300f1755604a85a2d184f1ca21df46"
+        },
+        {
+          "path": "packages/shared/src/pdf-visual-signature.ts",
+          "sha256": "52acded015883a0ddb8a69e9a0089af494d994568e97e65ae4bea3b645d149f7"
+        },
+        {
+          "path": "packages/shared/src/plugin.ts",
+          "sha256": "243f7d1569d33a616ee57332f5599810ed41436339e688b59cde92430f123723"
+        },
+        {
+          "path": "packages/shared/src/pptx-agent.ts",
+          "sha256": "f9c50470a326dfd0b57aa3650f69222670e4e302f6c9cf268eacdcd7314de9ac"
+        },
+        {
+          "path": "packages/shared/src/pptx-animation.ts",
+          "sha256": "f556f66fb4904630a06104418a711c09f17dd333ed2437b9c6aff17bad2aa40f"
+        },
+        {
+          "path": "packages/shared/src/pptx-deck-progress.ts",
+          "sha256": "a39014d4279feffa9f299401d439da141725c39ace2cd95f9bc9b83c2879db28"
+        },
+        {
+          "path": "packages/shared/src/pptx-fill.ts",
+          "sha256": "1cd2981b906969e0d4beacd6ac5a5540a109613f359b43a6b96c718fb0194373"
+        },
+        {
+          "path": "packages/shared/src/pptx-image.ts",
+          "sha256": "2e796250e171653045a453215c810af24f8db298ce39dce853e26845fa9d380d"
+        },
+        {
+          "path": "packages/shared/src/pptx-ink.ts",
+          "sha256": "fa4556647bbf553aa758f8850093fc20ce2715cb7e833bbd299cc6cd052157c5"
+        },
+        {
+          "path": "packages/shared/src/pptx-paragraph.ts",
+          "sha256": "a69d627fd6a71ba8e7be3bf352afbd93b4b070dd077698e10649d6585ed6552f"
+        },
+        {
+          "path": "packages/shared/src/pptx-picture.ts",
+          "sha256": "e1f829619f57dba4d931668fcbdd9f608232332f1bcf0b677027a2bb24d5fc59"
+        },
+        {
+          "path": "packages/shared/src/pptx-shape.ts",
+          "sha256": "0d47e4546cf3659206bfa8cd2dfaf13d1a1a7e39e23e9c62e22c60bdf82b77bd"
+        },
+        {
+          "path": "packages/shared/src/pptx-zoom.ts",
+          "sha256": "572f160ac854894cf769c31c6320152f14e0b622df667c50e30e114f201fea5a"
+        },
+        {
+          "path": "packages/shared/src/retrieval.ts",
+          "sha256": "5661f5aeaadf63f36bad957e15e5cba6af98afac385eb1259fe214901448d2fb"
+        },
+        {
+          "path": "packages/shared/src/seams.ts",
+          "sha256": "1ab833ff66a44890b603e118fe6233317be550a763b377e890889923dbc17df8"
+        },
+        {
+          "path": "packages/shared/src/search.ts",
+          "sha256": "dcbcf32017e2c4d7e13ee66686e8c618ef6faff3603735b0c302f8d2bbbbfe08"
+        },
+        {
+          "path": "packages/shared/src/structure.ts",
+          "sha256": "d0cdb24ad03e4a030f872d246588ed7110a7001c7827ce7973b4518a17d8d3ed"
+        },
+        {
+          "path": "packages/shared/src/usage.ts",
+          "sha256": "5f55cd19e4ae213449ce67394a148c5f08ed8e8a324a8dc202dfa3f7953123ba"
+        },
+        {
+          "path": "packages/shared/src/xlsx-agent.ts",
+          "sha256": "f0681ab8265ad8d1565f5847d3cd6cc77d0a180aa0120a928997b09e6a35de37"
+        }
+      ],
+      "substitutions": [
+        "getDocument: fixture identity only; no DB module",
+        "recalculateXlsx: explicit rejection, no worker/process",
+        "fetchDocxImage: explicit rejection, no network"
+      ]
+    },
+    "after": {
+      "sourceRoot": "/Users/admin/Desktop/mimir",
+      "entryPoint": "apps/server/src/services/xlsx-agent-host.ts",
+      "bundleSha256": "78713ff417da9f83de8739973f5ff856546762040889c13c2a1092aa571a3fc4",
+      "files": [
+        {
+          "path": "apps/server/src/services/document-agent-format.ts",
+          "sha256": "7105faa424bae5fd61c1a53967569e6918736366a6d6559b7ad933b54318548c"
+        },
+        {
+          "path": "apps/server/src/services/pdf-image-codec.ts",
+          "sha256": "3467d20786639d798e3a05c93399eb7610bc4b2d5281a6528a96a1d55b5b8e05"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-agent-data.ts",
+          "sha256": "cbdbed4abb60035bb4547b5f2abdab4e1391c8a4144bb6278992fd21c55ff20e"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-agent-features.ts",
+          "sha256": "392689fb47ce8f394a80ffd7d1be6c31ca11eca04bc7d9dcbe3536d6e663fca7"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-agent-host.ts",
+          "sha256": "ec9e6345f07cc6ae549bb5cf87856bcbe396f0b108c8cce1cbbc8fddc4616eff"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-agent-objects.ts",
+          "sha256": "de3db91020121fabfcbc7ee17dbac27345b4c6011a0b2c565377a589cd83be27"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-agent-pivots.ts",
+          "sha256": "6a2d5ec983458973c617d5b74bf65b9cdbaa49960830ef9912e59bf944040895"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-agent-properties.ts",
+          "sha256": "31971e83ef2fa9762c060d687ab083d1397ef42df7a55c0a5cf11e95cac00fef"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-agent-range.ts",
+          "sha256": "163cf84349aa7f16b1e45ff7a3db8a55739024a1df2a29d38c8a1f7b4db06afb"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-agent-tables.ts",
+          "sha256": "b7850aed991a7e5f738d2f41ddb2cd4581a967489545fab15659f25697e2efd5"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-fill-styles.ts",
+          "sha256": "4478388d1dc5ee7caef1bfc9d818ac73b7e1c3889fcc885afef200ce727fe9ed"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-manual-ops.ts",
+          "sha256": "bfc7467fcc26cdc3393cdaa9aee42a5478998f32475c98b1ad815f2a79d04a9e"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-pivot-layout-edit.ts",
+          "sha256": "23a38cb686c35ded649756b8bf38203db42711fc9e7aeea2399f536c9cc7f311"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-range-features.ts",
+          "sha256": "728bb5cf57d11798339811fc8ef842f5d9a3156ad4abf2048d9f71d36794423d"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-range-rules.ts",
+          "sha256": "f4f7f7f212e6cb073e133010f4a2a44266b29bbcaf694e8fe1b78874208f167b"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-range-structures.ts",
+          "sha256": "c733f1740c81f7a96cd455bc4de3dc39adc4439d30d873e203f3fb032e312647"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-range-styles.ts",
+          "sha256": "299d863d6eb294713311fd9d3480eefe7788367a3b4122e497d2884df62003af"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-rule-footprint.ts",
+          "sha256": "513f0fcfc985ea678bd5bb54557a04786e0e1fa3c6e1d0ecc4da32ddd577a98e"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-special-paste-host.ts",
+          "sha256": "0e1f1377514d72bccbe49d69547ab34e653cb7454fa4584c48443aaf0ec42638"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-special-paste.ts",
+          "sha256": "74ed070a99fe972f8350628aeb831d648807a0d77d7f159d88084d316e0ca835"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-validation-consent.ts",
+          "sha256": "7aeb660eed9c26b2992ca388265b401f6d10e4ad483bf6341404dbde005c4858"
+        },
+        {
+          "path": "apps/server/src/services/xlsx-validation-options.ts",
+          "sha256": "4f3b69946789aac6d58272264a27a672302465a28a6032f2aebd9cfde5e37faa"
+        },
+        {
+          "path": "packages/office/src/editors/xlsx-pivot-controls.ts",
+          "sha256": "49560fff5b0596fa8dcbe0272379ffdeb349368f43a9e5946cec327ba9426284"
+        },
+        {
+          "path": "packages/office/src/pptx-group-placement.ts",
+          "sha256": "7602270d3918c375138291b1bdd5173fa0141e06cb0ebf583c703dee422b5aa3"
+        },
+        {
+          "path": "packages/office/src/pptx-picture-placement.ts",
+          "sha256": "dce9cfb52aa3a34223962da80f31b139fa62a977df1cc8b30c1a22e58e31a52c"
+        },
+        {
+          "path": "packages/office/src/pptx-svg.ts",
+          "sha256": "63e048bbf69f49a4b5cbf49b6f62dfd339957bb09b6295be06d663dfd3298c91"
+        },
+        {
+          "path": "packages/office/src/xlsx-cell-effects.ts",
+          "sha256": "d35e05a3874ca93410aa282b8c3fcfe84af710922c3460910fd9d735fa36f543"
+        },
+        {
+          "path": "packages/office/src/xlsx-fill.ts",
+          "sha256": "093a07bd10409897c590077744fc724b20cad9c98b718b1c54a58e93f111ea75"
+        },
+        {
+          "path": "packages/office/src/xlsx-format.ts",
+          "sha256": "9045ca6ab3545b4c21be52f241a8ab7374bef351eb29d1cc68dc0c4881415b10"
+        },
+        {
+          "path": "packages/office/src/xlsx-formula-predicate.ts",
+          "sha256": "412f27fa3b962bb28eb1b778c647115594f7d73e893347b46b8be04155595aa0"
+        },
+        {
+          "path": "packages/office/src/xlsx-manual.ts",
+          "sha256": "6c2fe2cfeec2e8a84da38e1f63f8e6d5330578325b948bdb2bd71c1bc395314d"
+        },
+        {
+          "path": "packages/office/src/xlsx-native-xml.ts",
+          "sha256": "326d1c9c09eef582d2974eaa0686fddaf7ee9a16c8a7ab2f4a2581e36e909535"
+        },
+        {
+          "path": "packages/office/src/xlsx-pivot-editability.ts",
+          "sha256": "6915567a3d29eb2ddccd7a4ccd2c4f9dc9359987deaf9e27eabcb6f8669909cb"
+        },
+        {
+          "path": "packages/office/src/xlsx-shape-preview.ts",
+          "sha256": "4bd7b755805349ed3f30f1c3fcc91cab7dbf0ac06c34a08eb5170d67118c0404"
+        },
+        {
+          "path": "packages/office/src/xlsx-sheet-features.ts",
+          "sha256": "2848927ad1a10cfd2d7b613362cbb769fd5191b4454a6469d0f2f146b7098563"
+        },
+        {
+          "path": "packages/office/src/xlsx-table-styles.ts",
+          "sha256": "54d0bfa48bb384d2c4be1879af68ba40dc453c6f4f9c06d8fea0b2aae5d80d41"
+        },
+        {
+          "path": "packages/office/src/xlsx-validation-list.ts",
+          "sha256": "689afd9acaf72958f7f49d3bbfcde05e51c9ff59010430c57b8e7bef2182c08c"
+        },
+        {
+          "path": "packages/office/src/xlsx-visuals.ts",
+          "sha256": "4213f650e6d5979939f6130ba79c713e876ad383c550b6b9a83be46e32a12e3f"
+        },
+        {
+          "path": "packages/office/src/xlsx.ts",
+          "sha256": "44b6151efe0d4d9b5290b96020b5a6a8dfd5ff97c7e686c594cdc269f5b9f3f4"
+        },
+        {
+          "path": "packages/office/src/zip-bounds.ts",
+          "sha256": "58f4b5114cc8660ff48fea23549351d5a64157585fbc5ee02afed7b83be3297f"
+        },
+        {
+          "path": "packages/office/vendor/packages/docx-engine/src/parse-xml-text.ts",
+          "sha256": "d93fbf642f24e78248d7e4d831badf9d9ef922efb432a085de93f98b72ab6c34"
+        },
+        {
+          "path": "packages/office/vendor/packages/docx-engine/src/theme.ts",
+          "sha256": "8753803fba752427c858ccfa9e08b07318dd6708d5d709a7256f7f1b8ecdbf46"
+        },
+        {
+          "path": "packages/office/vendor/packages/docx-engine/src/xml-utils.ts",
+          "sha256": "69ebdb5bff764beaec6ecbf33fcbfe5991b61b939997e8b1d7edc73baa5d6dd1"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/chart.ts",
+          "sha256": "4d74bb8156228d10c89114f9d75236e7883ed6a46417f583bf0238c20cd83655"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/chartex.ts",
+          "sha256": "b494d56242847ff27102ca80c94c6225d767c14de45b56562a7e4b65e6ab05dd"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/color.ts",
+          "sha256": "449b9a8cf4b6a2a6bc5b66b52cf7eab87756fbfe80f72ddc0452ee38eeec38a2"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/custgeom.ts",
+          "sha256": "d814fa01d8bd40b9c439780e733d5ee2f28bef49113db65f511d137860b45ade"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/dgm-hier.ts",
+          "sha256": "c33bc070b0b8cabbc1224866c0fc06296f3c7b4c1965ef7a4d17addf10b81d8e"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/named-action.ts",
+          "sha256": "f1037b8b2d11394d438862c1b94bfea8c00b39a13cb199e519fe492bc59bbe9c"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/parse.ts",
+          "sha256": "bebfa2a8b0ff5a1f409d06c6c078cb873842d4b362a028403c99154db6154da3"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/placeholder.ts",
+          "sha256": "441614171751acf64e2ea6b1ecab05f77f37430de1af355e88be9659e0ce2f0f"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/scan.ts",
+          "sha256": "be9e0241176e634796dca02941b8d5ab14e0a31b2c46fcbc49443af6018e60ff"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/table-grid.ts",
+          "sha256": "dd6015aa8c1f9d95d2fda02f6d34ec2100a2f96a766b3090ff059f5e9af2cd4d"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/table-style.ts",
+          "sha256": "bc2417e18e680ac6d760e70013962ea9502e7872a5437fd7d480f5223c6ea188"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/theme.ts",
+          "sha256": "eea493cb5921170ece16b8311741b010d6847e7752aad528c75537843d88aadb"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-engine/src/xml-utils.ts",
+          "sha256": "445c823bf29fded797e033d0ea958030027d3225eb224cbaeffce0fe0ea2371c"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/build-chart.ts",
+          "sha256": "68327d0001db020dbacd76a5fb39fba8822c774c043c1bb0bb2dba8463e06214"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/coords.ts",
+          "sha256": "0ca48416d1d652cae716ecc8670faabb1913f41796b9d401c06b25fe66ff557e"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/fill.ts",
+          "sha256": "f9bc79197dd9762f276218d5a2d5a41ddad09ed1d48b7eb4f705f472fd740ed9"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/image-dpi.ts",
+          "sha256": "5d303a037ca40de4aed7e36f74c087d958922e35ccb3dc34de29c143ea2738df"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/metrics.ts",
+          "sha256": "bfa02b26b685bc82fe417d47c76b084e03546bbba417e49738b9b404de83d980"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/pattern-fills.ts",
+          "sha256": "5c73223e295f5f43524c97e9484885c966d42e689328280d398e334888d36a76"
+        },
+        {
+          "path": "packages/office/vendor/packages/pptx-render/src/scene3d.ts",
+          "sha256": "a5c0e1c3eee2efc6c6cf24a0e5783907f5738d3654e1c53cce670fd3e3f5a7bc"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/domain/cell-address.ts",
+          "sha256": "2fbc63f653e64c440fe9e879024f9ff884eef891132de480142830be3b286c97"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/domain/chart-visual.ts",
+          "sha256": "344428f357878aef3009b32fc21812faf4ae3e4fafb906d4a6a1eee692718faf"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/domain/flash-fill.ts",
+          "sha256": "7fa1efbd90cdc7ffdd17fd7f78962086276f8a9d44d0539bf8ab017fcfc9236a"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/domain/pivot-engine.ts",
+          "sha256": "f9d5083f04b0a65cf98fbba1d9f8a05374efdefebd3a822bc968dd0ab4ed4ea7"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/domain/pivot-filters.ts",
+          "sha256": "84ea71f3bfc9fe5174a2d6565b26d41d6ab862366db4856508c323930beca9d0"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/domain/pivot-formula.ts",
+          "sha256": "93699e3f94d464a0c78f8439ce4de3dd2c27e182fc3f7021af66f422aa524c43"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/domain/pivot-grouping.ts",
+          "sha256": "6277072290d1f9c7a603e3500138d0f7114eb951c5ac82f4d8bcd846318845b4"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/domain/pivot-layout.ts",
+          "sha256": "97991304487ec4aca5d4122d3fb1f0802a089dfdb13cbf8df6383a65e245fb51"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/domain/sort-range.ts",
+          "sha256": "0595cf85e5c4d936669c23636c5001aea06bd34c093f5d79e1512f164ae89d17"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/domain/style-color.ts",
+          "sha256": "3fdacd7679aa20e07e913221b5988142d0f5806ca0e8e1e7ac0dab7fd7d0fd2c"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/domain/workbook-dsl.ts",
+          "sha256": "f53f46c1ad893f9156762f8e032415fcee7d30ec77dea664cd2aaac9a00a8210"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/future-functions.ts",
+          "sha256": "af5f04bcd42afc85046048c9ca33babb4b2505ac9766bea79a7020bbf88e4d34"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-cf.ts",
+          "sha256": "86062fc86dbecbf718c3cdf55d7aee6e811fd4a059034b12541df67e38f90ea9"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-chart.ts",
+          "sha256": "6b23f5bb942b78ef3be5d60e5d99cc067d5e98e31dc63deee4e23af6017bb52d"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-default-styles.ts",
+          "sha256": "a9aef75cc0f70ebb38b6f5a28c820ae7df51bc7ed38b8d938ef514cc7b7ddf10"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-defined-names.ts",
+          "sha256": "dd4b06e6f7ccfa98e320fd81469933624e103eb2bf91ec4813adb56a220e952c"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-drawing-add.ts",
+          "sha256": "223eb4485021e34545f040473f6a7250ecb228be9f272e296cd44969f563d003"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-drawing-edit.ts",
+          "sha256": "29ee0ea18a3222a083cb9025fcb2428aa9cd5ee02c2cc1eb1426e6e05dd6ba0b"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-dv.ts",
+          "sha256": "88d9776f7b823355926d1aec91bb8211a560cd54d5bc274de985e4dda5288aa2"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-escapes.ts",
+          "sha256": "21df63cea974ca99a5b02a7395808596e5e46933058bdbc9896dd2f59311f4be"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-filter.ts",
+          "sha256": "a552ca930e692b288dcb62e8c703dfa61731e84648e0ad9cc8e158cc2aceb4f4"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-gateway.ts",
+          "sha256": "d5306ca289d0ee8087ea89ccf30f27e604f2d1d98c3bb7bf77485b1ef940a59c"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-hyperlinks.ts",
+          "sha256": "53f065613618fd306f7708efb1f31710a76bb4b7754c6bcf63e67e910c4de764"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-namespace.ts",
+          "sha256": "48e1350db657224ee76e2caadde72df1fba4682d75853cbdfa7fc4376271c13a"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-notes.ts",
+          "sha256": "1e4135995658ef45a461468bf55590ba85d6af11a74f39a2677372ca912f3365"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-page-setup.ts",
+          "sha256": "d21de6faed5b5da682da1d4b4c8a17aee27f1bdf50853d2813c99efc34beb604"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-pivot-add.ts",
+          "sha256": "f30d0cc53536f4835501ef72b9840a65cac2022ca35d986a1c04066d0077bd85"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-pivot-expand.ts",
+          "sha256": "da2fcd23ab2ca8b9d231d46a084681ea1dab04e39f8811e3f0ef325a80c4bb3f"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-pivot.ts",
+          "sha256": "f2e0b1c661989caf05538827db3cf4a1767ad9a168e7000ef2ffc7018eabbe5b"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-protection.ts",
+          "sha256": "ee4c71ee94cefbfc40f29945204a47b749811e7808fe2790a7cf3368f390e333"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-sheets.ts",
+          "sha256": "3df1a12fbcea09a65c7ee711753c82bd50d136060a67dbf58f4265079400fde2"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-sparkline.ts",
+          "sha256": "bcc9f3d77a5de900df61e6085d13b647fe7e534ee021919b664b6882b29f337b"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-structure.ts",
+          "sha256": "cb2c1b3c01345f10b91e0b419711c215d2432a9a484c25316632c188b6e70f7a"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-styles.ts",
+          "sha256": "a04b142daa109d4501065239bf25298492b784b4d30d6d9bdce7f02a6914748b"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-table-add.ts",
+          "sha256": "da4761bc506b971a6f1e0eb9ef652d31e3fe62e251df703c1b43ba7c26a8cfbf"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/gateway/xlsx-theme.ts",
+          "sha256": "67e77d6d4d6ad6bb294dc51f42fae77e80daf22c8c206a3a515b8e867bc591c6"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/shared/edit-schemas.ts",
+          "sha256": "b88a051668623a568bf8639d4cafa37b3cd468e1856286b0e9401f4193e0188c"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/shared/shape-types.ts",
+          "sha256": "1091c2ae432ba8f2b44e1de06728cb910671ee900c739e32a50fc3b7de39445d"
+        },
+        {
+          "path": "packages/office/vendor/packages/xlsx-gateway/src/shared/short-date.ts",
+          "sha256": "bd7f6d303515975ecd6235c5f6c1a84f1fccd4cc59c0fcdc2a987bb4aad15135"
+        },
+        {
+          "path": "packages/shared/src/agent-media.ts",
+          "sha256": "0fb7c24258c60d1d7ec5e4dada2e3accc5cdb564156bc836a883b34b371e9e85"
+        },
+        {
+          "path": "packages/shared/src/ai-text.ts",
+          "sha256": "6a7c2ac21168b1cf7cdc1f1867b607bc74b5a09fc223c4c5b71d1919fb74428c"
+        },
+        {
+          "path": "packages/shared/src/auth.ts",
+          "sha256": "441ea506f814d9ec809cb92f0e68179b17725c2e62f229f0c685ca6cf7f772ca"
+        },
+        {
+          "path": "packages/shared/src/capture.ts",
+          "sha256": "6b3df0d94b2715d1efe9ea69a687d8436599f5bd6d7d49746fa291cb54de5098"
+        },
+        {
+          "path": "packages/shared/src/chat-attachments.ts",
+          "sha256": "79d68ea992f28ab4924bed461b805f3985535c80dec9636f2ad4432a53065196"
+        },
+        {
+          "path": "packages/shared/src/chat-models.ts",
+          "sha256": "219a4e596de1a73ba44b5631a99fb4aa2eccf0bb952419a4b367980d5b13d755"
+        },
+        {
+          "path": "packages/shared/src/config.ts",
+          "sha256": "48405f0b5e840a6647a122e3dbf2a09aa7aee1231932ac60c50e4ea4c2f9ceba"
+        },
+        {
+          "path": "packages/shared/src/conversations.ts",
+          "sha256": "28465744520de1eaf9f949d1d13786f4c955eca688a3b8405be8976a386b83a7"
+        },
+        {
+          "path": "packages/shared/src/desktop.ts",
+          "sha256": "6615178a2c3494560ae7546087e98b6f4bc425dba3dc8a864f57c20a5205c6e6"
+        },
+        {
+          "path": "packages/shared/src/document-agent.ts",
+          "sha256": "c52bc6ccf6796332da5e527f0cd7f48d68423b8a67e407be0939e82798b843d2"
+        },
+        {
+          "path": "packages/shared/src/documents.ts",
+          "sha256": "c2d867c38bc91a826aec09c458c0bd374564fb658cee5dbbbd42f75376942fe5"
+        },
+        {
+          "path": "packages/shared/src/docx-agent.ts",
+          "sha256": "86387516b18450550319124daff63286a5b92f1df0c92bc92c9d2cbcc7580131"
+        },
+        {
+          "path": "packages/shared/src/docx-office-tools.ts",
+          "sha256": "22200ac02b679f2d22756bed993ef6cdd16d349afe30880c7dedde8794d0f3c3"
+        },
+        {
+          "path": "packages/shared/src/export.ts",
+          "sha256": "ee13032f2e82b2c44723580062b7c0c79a9d2f95f7359391b4a8f8412cd6890b"
+        },
+        {
+          "path": "packages/shared/src/feeds.ts",
+          "sha256": "38b1d7bb968fb93deb6087a26763b633cc10fb6938edaa383b53ca723275d53a"
+        },
+        {
+          "path": "packages/shared/src/files.ts",
+          "sha256": "e229f62fdf3f5404bdd63c28b855964c86adc5c927b949457cbf8b38cc043237"
+        },
+        {
+          "path": "packages/shared/src/html-brief.ts",
+          "sha256": "72e7551932bc6c72e05a1f05fb9b06b00f7c09f6a3d5501ed5cefac64a018b4c"
+        },
+        {
+          "path": "packages/shared/src/index.ts",
+          "sha256": "ba21f0b1168d184d19dd92aa4489e8e9d1493f37ebb71f9c7dff8d93c0d6fb26"
+        },
+        {
+          "path": "packages/shared/src/local.ts",
+          "sha256": "e6780f8af15ce51a5482f81e3163c8f1f71f7ed76b395ef068bf37a130b64bd3"
+        },
+        {
+          "path": "packages/shared/src/miniapp.ts",
+          "sha256": "f0e74622dff90236b5a39e2783816d4137907ed49cf91c49d61a8dcd593e5c59"
+        },
+        {
+          "path": "packages/shared/src/pdf-agent.ts",
+          "sha256": "611abc1f4708888194276c40ecb5302668300f1755604a85a2d184f1ca21df46"
+        },
+        {
+          "path": "packages/shared/src/pdf-visual-signature.ts",
+          "sha256": "52acded015883a0ddb8a69e9a0089af494d994568e97e65ae4bea3b645d149f7"
+        },
+        {
+          "path": "packages/shared/src/plugin.ts",
+          "sha256": "243f7d1569d33a616ee57332f5599810ed41436339e688b59cde92430f123723"
+        },
+        {
+          "path": "packages/shared/src/pptx-agent.ts",
+          "sha256": "f9c50470a326dfd0b57aa3650f69222670e4e302f6c9cf268eacdcd7314de9ac"
+        },
+        {
+          "path": "packages/shared/src/pptx-animation.ts",
+          "sha256": "f556f66fb4904630a06104418a711c09f17dd333ed2437b9c6aff17bad2aa40f"
+        },
+        {
+          "path": "packages/shared/src/pptx-deck-progress.ts",
+          "sha256": "a39014d4279feffa9f299401d439da141725c39ace2cd95f9bc9b83c2879db28"
+        },
+        {
+          "path": "packages/shared/src/pptx-fill.ts",
+          "sha256": "1cd2981b906969e0d4beacd6ac5a5540a109613f359b43a6b96c718fb0194373"
+        },
+        {
+          "path": "packages/shared/src/pptx-image.ts",
+          "sha256": "2e796250e171653045a453215c810af24f8db298ce39dce853e26845fa9d380d"
+        },
+        {
+          "path": "packages/shared/src/pptx-ink.ts",
+          "sha256": "fa4556647bbf553aa758f8850093fc20ce2715cb7e833bbd299cc6cd052157c5"
+        },
+        {
+          "path": "packages/shared/src/pptx-paragraph.ts",
+          "sha256": "a69d627fd6a71ba8e7be3bf352afbd93b4b070dd077698e10649d6585ed6552f"
+        },
+        {
+          "path": "packages/shared/src/pptx-picture.ts",
+          "sha256": "e1f829619f57dba4d931668fcbdd9f608232332f1bcf0b677027a2bb24d5fc59"
+        },
+        {
+          "path": "packages/shared/src/pptx-shape.ts",
+          "sha256": "0d47e4546cf3659206bfa8cd2dfaf13d1a1a7e39e23e9c62e22c60bdf82b77bd"
+        },
+        {
+          "path": "packages/shared/src/pptx-zoom.ts",
+          "sha256": "572f160ac854894cf769c31c6320152f14e0b622df667c50e30e114f201fea5a"
+        },
+        {
+          "path": "packages/shared/src/retrieval.ts",
+          "sha256": "5661f5aeaadf63f36bad957e15e5cba6af98afac385eb1259fe214901448d2fb"
+        },
+        {
+          "path": "packages/shared/src/seams.ts",
+          "sha256": "1ab833ff66a44890b603e118fe6233317be550a763b377e890889923dbc17df8"
+        },
+        {
+          "path": "packages/shared/src/search.ts",
+          "sha256": "dcbcf32017e2c4d7e13ee66686e8c618ef6faff3603735b0c302f8d2bbbbfe08"
+        },
+        {
+          "path": "packages/shared/src/structure.ts",
+          "sha256": "d0cdb24ad03e4a030f872d246588ed7110a7001c7827ce7973b4518a17d8d3ed"
+        },
+        {
+          "path": "packages/shared/src/usage.ts",
+          "sha256": "5f55cd19e4ae213449ce67394a148c5f08ed8e8a324a8dc202dfa3f7953123ba"
+        },
+        {
+          "path": "packages/shared/src/xlsx-agent.ts",
+          "sha256": "f0681ab8265ad8d1565f5847d3cd6cc77d0a180aa0120a928997b09e6a35de37"
+        }
+      ],
+      "substitutions": [
+        "getDocument: fixture identity only; no DB module",
+        "recalculateXlsx: explicit rejection, no worker/process",
+        "fetchDocxImage: explicit rejection, no network"
+      ]
+    }
+  }
+}

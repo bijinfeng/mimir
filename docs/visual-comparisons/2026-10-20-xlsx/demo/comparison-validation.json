@@ -1,0 +1,12 @@
+{
+  "scope": "Archive comparison DOM semantics only; source screenshots separately captured by parent",
+  "pairs": 9,
+  "supplements": 3,
+  "options": 12,
+  "initialBefore": "captures/chart-before.jpg",
+  "initialAfter": "captures/chart-after.jpg",
+  "shortFind": "captures/short-find-after.jpg",
+  "beforeModeAfterHidden": true,
+  "supplementBeforeDisabled": true,
+  "supplementAfterVisible": true
+}

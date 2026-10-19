@@ -1417,7 +1417,10 @@ export function XlsxEditor({
               content: (
                 <ToolbarGroup label="在当前工作表里查找">
                   <XlsxFindControls
+                    documentId={documentId}
+                    sourceKey={source.bytes}
                     sheetId={sheet.id}
+                    version={publishedVersion}
                     inspect={async (args) => {
                       const handle = agentHandleRef.current
                       if (!handle) throw new Error('工作簿尚未打开')

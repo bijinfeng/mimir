@@ -30,6 +30,7 @@ export function XlsxPropertyControls({
   busy: boolean
   onOperation: (op: Record<string, unknown>) => Promise<boolean>
 }) {
+  const fieldsDisabled = busy || (group !== 'names' && !!sheet.extras?.protected)
   const [mode, setMode] = useState('validation')
   const [validation, setValidation] = useState('list')
   const [cfKind, setCfKind] = useState('number')
@@ -203,10 +204,7 @@ export function XlsxPropertyControls({
                 ]}
               />
             )}
-            <fieldset
-              disabled={busy || (group !== 'names' && sheet.extras?.protected)}
-              aria-busy={busy}
-            >
+            <fieldset disabled={fieldsDisabled} aria-busy={busy}>
               {group === 'rules' && mode === 'validation' && (
                 <ToolbarMenuFields label="数据验证">
                   <ToolbarMenuNote>
@@ -223,6 +221,7 @@ export function XlsxPropertyControls({
                       .join('；')}
                   </ToolbarMenuNote>
                   <ToolbarSelect
+                    disabled={fieldsDisabled}
                     label="验证类型"
                     value={validation}
                     onChange={(value) =>
@@ -312,6 +311,7 @@ export function XlsxPropertyControls({
                       .join('；')}
                   </ToolbarMenuNote>
                   <ToolbarSelect
+                    disabled={fieldsDisabled}
                     label="条件类型"
                     value={cfKind}
                     onChange={(value) =>
@@ -334,6 +334,7 @@ export function XlsxPropertyControls({
                   />
                   {cfKind === 'number' && (
                     <ToolbarSelect
+                      disabled={fieldsDisabled}
                       label="比较方式"
                       value={operator}
                       onChange={(value) => change(() => setOperator(value))}
@@ -418,6 +419,7 @@ export function XlsxPropertyControls({
                       .join('；')}
                   </ToolbarMenuNote>
                   <ToolbarSelect
+                    disabled={fieldsDisabled}
                     label="迷你图类型"
                     value={sparkType}
                     onChange={(value) => change(() => setSparkType(value))}
@@ -483,6 +485,7 @@ export function XlsxPropertyControls({
                   </ToolbarMenuFields>
                   <ToolbarMenuFields label="已有名称">
                     <ToolbarSelect
+                      disabled={fieldsDisabled}
                       label="工作簿命名范围"
                       value={selectedName}
                       onChange={setSelectedName}
@@ -505,6 +508,7 @@ export function XlsxPropertyControls({
               {group === 'print' && printMode === 'page' && (
                 <ToolbarMenuFields label="纸张与缩放">
                   <ToolbarSelect
+                    disabled={fieldsDisabled}
                     label="纸张方向"
                     value={orientation}
                     onChange={(value) =>
@@ -518,6 +522,7 @@ export function XlsxPropertyControls({
                     ]}
                   />
                   <ToolbarSelect
+                    disabled={fieldsDisabled}
                     label="纸张大小"
                     value={paper}
                     onChange={(value) =>
@@ -544,6 +549,7 @@ export function XlsxPropertyControls({
                     }
                   />
                   <ToolbarSelect
+                    disabled={fieldsDisabled}
                     label="页边距"
                     value={margins}
                     onChange={(value) =>

@@ -107,12 +107,14 @@ export function XlsxVisualProperties({
                 onChange={(v) => change('title', v)}
               />
               <ToolbarSelect
+                disabled={busy}
                 label="图表类型"
                 value={String(patch.chartType ?? chart?.type ?? '')}
                 options={XLSX_CHART_TYPES}
                 onChange={(v) => change('chartType', v)}
               />
               <ToolbarSelect
+                disabled={busy}
                 label="图例位置"
                 value={String(patch.legend ?? chart?.legend ?? 'none')}
                 options={[
@@ -125,6 +127,7 @@ export function XlsxVisualProperties({
                 onChange={(v) => change('legend', v)}
               />
               <ToolbarSelect
+                disabled={busy}
                 label="数据标签"
                 value={String(patch.dataLabels ?? chart?.dataLabels ?? 'none')}
                 options={[
@@ -136,6 +139,7 @@ export function XlsxVisualProperties({
                 onChange={(v) => change('dataLabels', v)}
               />
               <ToolbarSelect
+                disabled={busy}
                 label="系列排列"
                 value={String(patch.grouping ?? chart?.grouping ?? 'clustered')}
                 options={[
@@ -187,6 +191,7 @@ export function XlsxVisualProperties({
           {task !== 'properties' && (
             <>
               <ToolbarSelect
+                disabled={busy}
                 label="数据系列"
                 value={seriesIndex}
                 onChange={(value) => {

@@ -529,6 +529,52 @@ async function openMultiSheetEditor() {
 }
 
 describe('xlsx 对象面板与历史操作', () => {
+  it('高级查找按真实已发布版本失效并保留查询，结果导航不写入文档或历史', async () => {
+    const { host, agent } = await openEditor()
+    const handle = agent(),
+      before = handle.currentBytes().slice(),
+      workbook = await readXlsx(before)
+    click(byLabel(host, '高级查找'))
+    type(byLabel(host, '搜索文字或正则表达式'), '1001')
+    click(byLabel(host, '搜索工作簿'))
+    await waitForGrid(host, () => host.textContent?.includes('找到1项') === true)
+    const result = host.querySelector<HTMLButtonElement>('[aria-label^="转到"][aria-label$="!C3"]')!
+    expect(result).not.toBeNull()
+    click(result)
+    await waitForGrid(
+      host,
+      () => host.querySelector('.mimir-cell-editor__ref')?.textContent === 'C3',
+    )
+    expect(agent()).toBe(handle)
+    expect(handle.getVersion()).toBe(0)
+    expect(handle.history()).toEqual({ undo: 0, redo: 0 })
+    expect(handle.isDirty()).toBe(false)
+    expect(handle.currentBytes()).toEqual(before)
+    await act(async () => {
+      await handle.execute(
+        'propose_operations',
+        {
+          operations: [
+            {
+              op: 'set_cell',
+              sheetId: workbook.sheets[0]!.id,
+              address: 'C3',
+              value: 222,
+            },
+          ],
+        },
+        {},
+      )
+    })
+    await waitForGrid(host, () => handle.getVersion() === 1)
+    expect(host.querySelector('ul[aria-label="匹配结果"]')).toBeNull()
+    expect((byLabel(host, '搜索文字或正则表达式') as HTMLInputElement).value).toBe('1001')
+    click(byLabel(host, '搜索工作簿'))
+    await waitForGrid(host, () => host.textContent?.includes('找到0项') === true)
+    expect(handle.history()).toEqual({ undo: 1, redo: 0 })
+    expect(handle.isDirty()).toBe(true)
+  })
+
   it('剪切保留公式并迁移从属，格式刷与清除格式在保存重开保持，分组可折叠和恢复', async () => {
     const { host, saved } = await openEditor(async (request) => {
       const operation = xlsxManualOperationSchema.safeParse(request.ops[0])

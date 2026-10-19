@@ -1,0 +1,137 @@
+{
+  "scope": "Native Node HTTP/ZIP part smoke; not GUI verification",
+  "results": [
+    {
+      "variant": "before",
+      "name": "format",
+      "status": 200,
+      "version": 1,
+      "nativeParts": ["xl/styles.xml"],
+      "touchedEntries": [
+        "[Content_Types].xml",
+        "xl/_rels/workbook.xml.rels",
+        "xl/styles.xml",
+        "xl/workbook.xml",
+        "xl/worksheets/sheet1.xml"
+      ]
+    },
+    {
+      "variant": "before",
+      "name": "chart",
+      "status": 200,
+      "version": 1,
+      "nativeParts": ["xl/charts/chart1.xml"],
+      "touchedEntries": [
+        "[Content_Types].xml",
+        "xl/charts/chart1.xml",
+        "xl/drawings/_rels/drawing1.xml.rels",
+        "xl/drawings/drawing1.xml",
+        "xl/workbook.xml",
+        "xl/worksheets/_rels/sheet1.xml.rels",
+        "xl/worksheets/sheet1.xml"
+      ]
+    },
+    {
+      "variant": "before",
+      "name": "table",
+      "status": 200,
+      "version": 1,
+      "nativeParts": ["xl/tables/table1.xml"],
+      "touchedEntries": [
+        "[Content_Types].xml",
+        "xl/tables/table1.xml",
+        "xl/workbook.xml",
+        "xl/worksheets/_rels/sheet1.xml.rels",
+        "xl/worksheets/sheet1.xml"
+      ]
+    },
+    {
+      "variant": "before",
+      "name": "pivot",
+      "status": 200,
+      "version": 1,
+      "nativeParts": [
+        "xl/pivotTables/_rels/pivotTable1.xml.rels",
+        "xl/pivotTables/pivotTable1.xml"
+      ],
+      "touchedEntries": [
+        "[Content_Types].xml",
+        "xl/_rels/workbook.xml.rels",
+        "xl/pivotCache/_rels/pivotCacheDefinition1.xml.rels",
+        "xl/pivotCache/pivotCacheDefinition1.xml",
+        "xl/pivotCache/pivotCacheRecords1.xml",
+        "xl/pivotTables/_rels/pivotTable1.xml.rels",
+        "xl/pivotTables/pivotTable1.xml",
+        "xl/workbook.xml",
+        "xl/worksheets/_rels/sheet1.xml.rels",
+        "xl/worksheets/sheet1.xml"
+      ]
+    },
+    {
+      "variant": "after",
+      "name": "format",
+      "status": 200,
+      "version": 1,
+      "nativeParts": ["xl/styles.xml"],
+      "touchedEntries": [
+        "[Content_Types].xml",
+        "xl/_rels/workbook.xml.rels",
+        "xl/styles.xml",
+        "xl/workbook.xml",
+        "xl/worksheets/sheet1.xml"
+      ]
+    },
+    {
+      "variant": "after",
+      "name": "chart",
+      "status": 200,
+      "version": 1,
+      "nativeParts": ["xl/charts/chart1.xml"],
+      "touchedEntries": [
+        "[Content_Types].xml",
+        "xl/charts/chart1.xml",
+        "xl/drawings/_rels/drawing1.xml.rels",
+        "xl/drawings/drawing1.xml",
+        "xl/workbook.xml",
+        "xl/worksheets/_rels/sheet1.xml.rels",
+        "xl/worksheets/sheet1.xml"
+      ]
+    },
+    {
+      "variant": "after",
+      "name": "table",
+      "status": 200,
+      "version": 1,
+      "nativeParts": ["xl/tables/table1.xml"],
+      "touchedEntries": [
+        "[Content_Types].xml",
+        "xl/tables/table1.xml",
+        "xl/workbook.xml",
+        "xl/worksheets/_rels/sheet1.xml.rels",
+        "xl/worksheets/sheet1.xml"
+      ]
+    },
+    {
+      "variant": "after",
+      "name": "pivot",
+      "status": 200,
+      "version": 1,
+      "nativeParts": [
+        "xl/pivotTables/_rels/pivotTable1.xml.rels",
+        "xl/pivotTables/pivotTable1.xml"
+      ],
+      "touchedEntries": [
+        "[Content_Types].xml",
+        "xl/_rels/workbook.xml.rels",
+        "xl/pivotCache/_rels/pivotCacheDefinition1.xml.rels",
+        "xl/pivotCache/pivotCacheDefinition1.xml",
+        "xl/pivotCache/pivotCacheRecords1.xml",
+        "xl/pivotTables/_rels/pivotTable1.xml.rels",
+        "xl/pivotTables/pivotTable1.xml",
+        "xl/workbook.xml",
+        "xl/worksheets/_rels/sheet1.xml.rels",
+        "xl/worksheets/sheet1.xml"
+      ]
+    }
+  ]
+}

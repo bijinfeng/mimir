@@ -193,6 +193,7 @@ export function XlsxRangeControls({
               {group === 'data' && (mode === 'copy' || mode === 'filter') && (
                 <ToolbarMenuFields label="复制与填充">
                   <ToolbarSelect
+                    disabled={busy || locked}
                     label="复制源工作表"
                     value={sourceSheetId}
                     options={sheets.map((s) => ({

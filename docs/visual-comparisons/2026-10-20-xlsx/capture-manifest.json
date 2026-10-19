@@ -1,0 +1,241 @@
+{
+  "baseline": "dcb9a40",
+  "date": "2026-10-20",
+  "pairs": [
+    {
+      "key": "chart",
+      "title": "图表创建与属性",
+      "caption": "浅色，1280×720视口、690×640编辑栏。同一原生工作簿和图表表单；观察字段布局、滚动与提交动作。",
+      "dimensions": [1280, 720],
+      "editorSize": [690, 640],
+      "theme": "light",
+      "fixture": "rich",
+      "searchQuery": null
+    },
+    {
+      "key": "image",
+      "title": "图片来源与插入入口",
+      "caption": "浅色，1280×720视口、690×640编辑栏。同一原件和图片类型；原生文件选择与网址入口保留，隔离helper拒绝图片提交。",
+      "dimensions": [1280, 720],
+      "editorSize": [690, 640],
+      "theme": "light",
+      "fixture": "rich",
+      "searchQuery": null
+    },
+    {
+      "key": "table",
+      "title": "结构化表创建",
+      "caption": "浅色，1280×720视口、690×640编辑栏。同一原件和表格表单，保留名称、样式与带状行选项。",
+      "dimensions": [1280, 720],
+      "editorSize": [690, 640],
+      "theme": "light",
+      "fixture": "rich",
+      "searchQuery": null
+    },
+    {
+      "key": "short-chart",
+      "title": "短高窄屏 · 图表",
+      "caption": "浅色，390×400真实视口、390×400编辑栏。对比字段内部滚动与主操作可见性。",
+      "dimensions": [390, 400],
+      "editorSize": [390, 400],
+      "theme": "light",
+      "fixture": "rich",
+      "searchQuery": null
+    },
+    {
+      "key": "short-image",
+      "title": "短高窄屏 · 图片",
+      "caption": "浅色，390×400真实视口、390×400编辑栏。对比真实图片入口、字段与提交区。",
+      "dimensions": [390, 400],
+      "editorSize": [390, 400],
+      "theme": "light",
+      "fixture": "rich",
+      "searchQuery": null
+    },
+    {
+      "key": "short-table",
+      "title": "短高窄屏 · 表格",
+      "caption": "浅色，390×400真实视口、390×400编辑栏。对比字段滚动与实际创建操作。",
+      "dimensions": [390, 400],
+      "editorSize": [390, 400],
+      "theme": "light",
+      "fixture": "rich",
+      "searchQuery": null
+    },
+    {
+      "key": "find",
+      "title": "高级查找 · 200条截断",
+      "caption": "浅色，1280×720视口、690×640编辑栏。同一search原件，实际输入“项目”，保留200条真实匹配截断列表。",
+      "dimensions": [1280, 720],
+      "editorSize": [690, 640],
+      "theme": "light",
+      "fixture": "search",
+      "searchQuery": "项目"
+    },
+    {
+      "key": "find-dark",
+      "title": "高级查找 · 深色",
+      "caption": "深色，1280×720视口、690×640编辑栏。同一search原件、“项目”查询与200条真实匹配结果。",
+      "dimensions": [1280, 720],
+      "editorSize": [690, 640],
+      "theme": "dark",
+      "fixture": "search",
+      "searchQuery": "项目"
+    },
+    {
+      "key": "short-find",
+      "title": "短高窄屏 · 查找结果",
+      "caption": "浅色，390×400真实视口、390×400编辑栏。同一search原件、“项目”查询，检验长结果局部滚动与上方筛选可达。",
+      "dimensions": [390, 400],
+      "editorSize": [390, 400],
+      "theme": "light",
+      "fixture": "search",
+      "searchQuery": "项目"
+    }
+  ],
+  "supplements": [
+    {
+      "key": "chart-inserted",
+      "title": "图表插入后的真实状态",
+      "caption": "补充真实组件状态：使用本地隔离 Node helper 执行原生图表操作后的编辑画布；仅展示打磨后结果，不构成前后配对。"
+    },
+    {
+      "key": "pivot-preserved",
+      "title": "成熟透视任务保留",
+      "caption": "补充真实组件状态：原生工作簿中的成熟透视任务与既有数据、字段配置继续保留；本轮仅精修交互布局，具体执行与原件保留证据见验收记录。仅展示打磨后结果，不构成前后配对。"
+    },
+    {
+      "key": "table-applied",
+      "title": "结构化表创建后的真实状态",
+      "caption": "补充真实组件状态：使用本地隔离 Node helper 创建结构化表后的画布与表格属性；仅展示打磨后结果，不构成前后配对。"
+    }
+  ],
+  "images": [
+    {
+      "path": "captures/chart-before.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "96aa0ea2277840fae728e29dd71c77912e3a1cde71301b1dc732fc0651fabee9"
+    },
+    {
+      "path": "captures/chart-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "7f589bc6a8d4b683260c59c653d24c86d4d9f0d94e2df9dd317e82ad2947b493"
+    },
+    {
+      "path": "captures/image-before.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "dd1da58d3053f7a61893fa0b0abad20ce69409b15b1819a007840b2988f4f92e"
+    },
+    {
+      "path": "captures/image-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "549db3d370c43f91698dc8ae34c213be20d8cd690ac931869f9ca29f8a6a7692"
+    },
+    {
+      "path": "captures/table-before.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "a3326a2fef177fef0d31f09acd54b25f29f68b7c402f0fd16c10fdb65ff8daec"
+    },
+    {
+      "path": "captures/table-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "384523a3007391846518845ef853fb46f7ca08f947cbda0262a450e84cf2c9aa"
+    },
+    {
+      "path": "captures/short-chart-before.jpg",
+      "width": 390,
+      "height": 400,
+      "sha256": "3b38637899f4e11a708b59f3e1e8d88ab2851492ef68b17ba27dab14da6bb86d"
+    },
+    {
+      "path": "captures/short-chart-after.jpg",
+      "width": 390,
+      "height": 400,
+      "sha256": "92dc17db061df51f70b05fc5d5c35bfdb79dd902769a0c564f78139191a95f56"
+    },
+    {
+      "path": "captures/short-image-before.jpg",
+      "width": 390,
+      "height": 400,
+      "sha256": "a41b3366ba6aa07c9c61084cacfdf2f0922a6f3c8c0847fe5cc588239e20647b"
+    },
+    {
+      "path": "captures/short-image-after.jpg",
+      "width": 390,
+      "height": 400,
+      "sha256": "c7d6a19c306e776de851c5ad0fdc9d830ef5374b1d3ffb574b60413a663569f5"
+    },
+    {
+      "path": "captures/short-table-before.jpg",
+      "width": 390,
+      "height": 400,
+      "sha256": "2629b91c71d96108c4bdc401f83fa72443d10e98234a69c036cdb01d56028e7c"
+    },
+    {
+      "path": "captures/short-table-after.jpg",
+      "width": 390,
+      "height": 400,
+      "sha256": "e221f8010b0b5f790df4663752b2a69886f7f830149a5a5c955d863419ae7ac9"
+    },
+    {
+      "path": "captures/find-before.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "df236655f72de7a35288be80a59abab163dda8d70f839dbfa8e78361dd2bd731"
+    },
+    {
+      "path": "captures/find-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "12e30583a3c3350f9e38a04167ec68f9042bb91e39536b1c70951387fee9da55"
+    },
+    {
+      "path": "captures/find-dark-before.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "c6ec96de18745405a5941651e28c53f22b6985af541cab5f29d2c6892c297f3c"
+    },
+    {
+      "path": "captures/find-dark-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "40a60d6b8c38ec859775e6d0bde5f73ef3b2de1ec8dbd3b66ebae7adfd6511b7"
+    },
+    {
+      "path": "captures/short-find-before.jpg",
+      "width": 390,
+      "height": 400,
+      "sha256": "2de0e75dd07d74f87de2d1ad3a346b83cf13aaffad930ce36717e4439baa2146"
+    },
+    {
+      "path": "captures/short-find-after.jpg",
+      "width": 390,
+      "height": 400,
+      "sha256": "d98432fc37c65b3abdc34056debc0e8607855c4bc6c991d0393596387d339984"
+    },
+    {
+      "path": "captures/chart-inserted-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "31f8fe7f19677141b37e461b050d17c22f3af77b47ac38f2f6ee1a01f106056a"
+    },
+    {
+      "path": "captures/pivot-preserved-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "6cb7964921ea328d45c3f0e34cf57d055270bbe5b3d55cec668a7042b7a9232c"
+    },
+    {
+      "path": "captures/table-applied-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "04a2f7665f56d2d0823e6405ced45f2cf32bc495abf17b7fc34b82c424d6c879"
+    }
+  ]
+}

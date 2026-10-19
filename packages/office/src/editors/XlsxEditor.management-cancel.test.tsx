@@ -141,9 +141,9 @@ it.each(['task', 'close'] as const)(
       expect(host.querySelector('[aria-label="工作表对象与表格"]') !== null).toBe(change === 'task')
       expect(host.textContent!.includes('当前工作表没有结构化表')).toBe(change === 'task')
       if (change === 'close') click(button(host, '图表、形状与结构化表'))
-      // Other insertion modes keep their existing disabled ancestor while hostBusy is true.
+      // Insertion actions remain disabled outside the scrolling fieldset while hostBusy is true.
       click(task(host, '图表'))
-      expect(button(host, '插入范围图表').closest('fieldset[disabled]')).not.toBeNull()
+      expect(button(host, '插入范围图表').disabled).toBe(true)
       expect(cellFields.disabled).toBe(true)
     } finally {
       // Settle both the hostile host and the real execute/finally chain, even for a red test.

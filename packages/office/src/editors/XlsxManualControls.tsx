@@ -167,6 +167,7 @@ export function XlsxManualControls({
               {group === 'data' && (
                 <ToolbarMenuFields label="填充所选范围">
                   <ToolbarSelect
+                    disabled={busy}
                     label="填充方式"
                     value={fill}
                     onChange={setFill}
@@ -240,6 +241,7 @@ export function XlsxManualControls({
                   </ToolbarMenuFields>
                   <ToolbarMenuFields label="分级显示">
                     <ToolbarSelect
+                      disabled={busy}
                       label="分组方向"
                       value={axis}
                       onChange={(value) => setAxis(value as 'rows' | 'columns')}

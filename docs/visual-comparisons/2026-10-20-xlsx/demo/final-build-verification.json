@@ -1,0 +1,62 @@
+{
+  "scope": "Source/resource provenance and archive/index semantics only; product GUI observations are separate.",
+  "baseline": "dcb9a40",
+  "variants": {
+    "before": {
+      "resourceCount": 11,
+      "resourceAggregateSha256": "f694a79dbf6989ee3c729ac21cf7c82fa7082e12b0c0b9de8b8e6f47069c0af8",
+      "resourceBytesAndHashesMatch": true,
+      "sourceInputsVerified": 150,
+      "sourceComparison": "git show dcb9a40 (project inputs; frozen gallery inputs preserved)"
+    },
+    "after": {
+      "resourceCount": 11,
+      "resourceAggregateSha256": "7a211eaea8aa21a4585f929ad4f5fadc6bcd7ef4e8d2900d908d43c7fbdfbfff",
+      "resourceBytesAndHashesMatch": true,
+      "sourceInputsVerified": 160,
+      "sourceComparison": "current filesystem including gallery fixture inputs"
+    }
+  },
+  "changedProductRuntimeInputsVerified": [
+    "packages/office/src/editors/XlsxEditor.tsx",
+    "packages/office/src/editors/XlsxFindControls.tsx",
+    "packages/office/src/editors/XlsxFormatControls.tsx",
+    "packages/office/src/editors/XlsxManualControls.tsx",
+    "packages/office/src/editors/XlsxObjectControls.tsx",
+    "packages/office/src/editors/XlsxPropertyControls.tsx",
+    "packages/office/src/editors/XlsxRangeControls.tsx",
+    "packages/office/src/editors/XlsxVisualProperties.tsx",
+    "packages/office/src/editors/xlsx-tools.css"
+  ],
+  "nativeHelper": {
+    "adapterSha256": "b28c24dd6f8687ab9b33a6ab88a7dceb995eeb256171f92c0bdb9b9b4e3d8d01",
+    "variants": {
+      "before": {
+        "verifiedSourceInputs": 141,
+        "compiledBundleSha256": "8be4a20d6687215f3c56508e3f5335c533c47a769a9ef28b391b65a4f89c235c",
+        "sourceComparison": "git show dcb9a40",
+        "actualCompiledBundleHashMatches": true
+      },
+      "after": {
+        "verifiedSourceInputs": 141,
+        "compiledBundleSha256": "78713ff417da9f83de8739973f5ff856546762040889c13c2a1092aa571a3fc4",
+        "sourceComparison": "current filesystem",
+        "actualCompiledBundleHashMatches": true
+      }
+    }
+  },
+  "inventory": {
+    "records": 447,
+    "unique": true,
+    "inventorySha256": "a8358ed17089732cd854007bf7154ec63058dff1b9fc79a95b1bbef22f161e2e",
+    "rawArchiveCopyBytesMatch": true,
+    "allRowsSourceOnlyUnverified": true
+  },
+  "captures": {
+    "pairs": 9,
+    "supplements": 3,
+    "imageHashesMatch": true,
+    "supplementTitlesChinese": true
+  },
+  "sourceHashesAreDistinctFromBuiltResourceHashes": true
+}

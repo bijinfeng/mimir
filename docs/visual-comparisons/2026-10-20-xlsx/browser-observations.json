@@ -1,0 +1,108 @@
+{
+  "baseline": "dcb9a40",
+  "before": {
+    "object690": {
+      "viewport": [1280, 720],
+      "editor": [690, 640],
+      "theme": "light",
+      "range": "A2:C5",
+      "modes": ["chart", "image", "table"],
+      "chartActionTop": 570.75,
+      "chartActionBottom": 594.75,
+      "panelBottom": 613.359375,
+      "result": "动作位于整块内容滚动末尾；图片设备选择按钮有aria-label但无可见文字"
+    },
+    "objectShort": {
+      "viewport": [390, 400],
+      "editor": [390, 400],
+      "theme": "light",
+      "range": "A2:C5",
+      "modes": ["chart", "image", "table"],
+      "chartActionTop": 577.75,
+      "chartActionBottom": 601.75,
+      "panelBottom": 373.359375,
+      "result": "未滚动时主动作位于面板外"
+    },
+    "find690": {
+      "viewport": [1280, 720],
+      "editor": [690, 640],
+      "themes": ["light", "dark"],
+      "fixture": "search",
+      "query": "项目",
+      "resultCount": 200,
+      "truncated": true,
+      "menuHeight": 432,
+      "scrollHeight": 7615,
+      "result": "高级查找整个菜单滚动；长结果与条件混排"
+    },
+    "findShort": {
+      "viewport": [390, 400],
+      "editor": [390, 400],
+      "theme": "light",
+      "fixture": "search",
+      "query": "项目",
+      "resultCount": 200,
+      "truncated": true,
+      "menuHeight": 240,
+      "scrollHeight": 7615
+    }
+  },
+  "after": {
+    "objectShort": {
+      "viewport": [390, 400],
+      "editor": [390, 400],
+      "actionTop": 331.359375,
+      "actionBottom": 355.359375,
+      "panelBottom": 373.359375,
+      "result": "三个模式固定操作区均在面板内；设备图片按钮有可见文字，未填锚点时仍禁用"
+    },
+    "find": {
+      "result": "同一项目查询200项截断；地址/值左对齐，有界列表。A200按钮真实点击后当前范围变为A200且菜单关闭。零结果显示找到0项；无效正则产生alert；Escape仅关内层并回焦高级查找按钮。",
+      "shortViewport": [390, 400],
+      "shortMenuHeight": 240,
+      "shortScrollHeight": 566,
+      "shortPageScrollWidth": 390,
+      "shortResult": "父菜单和列表均可滚动；A200仍可真实点击。"
+    },
+    "nativeWrite": {
+      "viewport": [1280, 720],
+      "editor": [1100, 640],
+      "fixture": "search",
+      "range": "A1:B6",
+      "result": "实际add_chart锚点E2后出现选择图表Series 1，已应用且save/undo启用。通过页面内存IO手动pending→failure保留dirty→retry success清dirty→重开10727字节XLSX后图表仍在。实际add_table名称PolishReview后已应用，原生管理列表显示PolishReview · A1:B6。",
+      "busy": "表格提交中textbox与两处实际combobox均disabled。",
+      "boundary": "Node隔离fixture helper执行真实产品宿主逻辑；保存ACK/重开只当前页面内存，不证明产品后端持久化。"
+    },
+    "preservedSamples": {
+      "viewport": [1280, 720],
+      "editor": [1100, 640],
+      "fixture": "pivot与validation",
+      "openedOnly": [
+        "排序/筛选/替换Inspector",
+        "填充方式菜单",
+        "范围写入与复制菜单",
+        "范围剪贴板Inspector",
+        "104原生预设+1文本框形状库",
+        "透视来源/输出/行列字段与固定创建操作",
+        "打印页面菜单",
+        "命名范围管理",
+        "审阅分类入口",
+        "视图缩放/公式显示入口",
+        "原生A1 list验证提示Inspector"
+      ],
+      "result": "上述是实际打开/切换及内容抽查，没有逐项执行写入/下载/剪贴板/保护修改。成熟任务结构保留，未对其整组重写。"
+    },
+    "loadRecovery": {
+      "result": "load-error实际显示读取失败与重试；点击重试成功加载原生rich。load-pending显示正在解析与读取中，辅助区显示等待读取请求，未声称真实网络超时。"
+    },
+    "archive": {
+      "result": "最终5194静态comparison九对三补充图与中文场景可浏览。真实after静态bundle可加载原件/对象面板，未开helper的插入实际提示静态归档未连接本地Node helper且未应用。交互索引实际显示447记录，筛选HOST相关记录后390×400/深色链接参数正确。",
+      "boundary": "索引本身继续标注逐项GUI unverified，没有将入口数量计为实测通过数。"
+    }
+  },
+  "limitations": [
+    "入口源码映射不等于逐项浏览器GUI验收",
+    "真实原生工作簿加载与序列化；保存宿主仅页面内存模拟。Node helper通过本地HTTP执行固定fixture的原有宿主函数，不接产品数据库或永久文件。",
+    "原查找find_cells当前同步计算；延迟请求生命周期问题由源码与受控回归验证，不能称本次浏览器观察到了真实远程乱序。"
+  ]
+}

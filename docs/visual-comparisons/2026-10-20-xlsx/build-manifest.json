@@ -1,0 +1,131 @@
+{
+  "baseline": "dcb9a40",
+  "variants": {
+    "before": {
+      "sourceRoot": "/private/tmp/mimir-xlsx-baseline-dcb9a40",
+      "sourceManifest": "dist/before/source-manifest.json",
+      "headAtBuild": "dcb9a40b5fc7e731a735097595970159f82c9291",
+      "aggregateSha256": "f694a79dbf6989ee3c729ac21cf7c82fa7082e12b0c0b9de8b8e6f47069c0af8",
+      "files": [
+        {
+          "path": "LICENSE-GenOffice-fonts-OFL.txt",
+          "bytes": 5154,
+          "sha256": "992656df2b40e317ea54b4d3b7ca47a48eec11c2eaaf46bd74effd600714841a"
+        },
+        {
+          "path": "assets/cross-sheet-MkMUWxiv.xlsx",
+          "bytes": 14882,
+          "sha256": "ee2b71c7474b5ecb71085e39ac82911ae045e911caa4547a1f7e4eae4d1c9bdd"
+        },
+        {
+          "path": "assets/fill-cXN-RPDw.xlsx",
+          "bytes": 7799,
+          "sha256": "c4a212477f92b34914149beaca6f70ba86c3086a6e3c91300e7c1a948bea9cb0"
+        },
+        {
+          "path": "assets/index-B1YUSxjF.css",
+          "bytes": 48816,
+          "sha256": "96e0e99aee651b1fbcf8733e222f17ab0d53a12c332794d9226d078121a18818"
+        },
+        {
+          "path": "assets/index-BD5AgZSx.js",
+          "bytes": 1907992,
+          "sha256": "8924811311322295a77563d70b30946c46288471b324f506b0504a5d8d35d441"
+        },
+        {
+          "path": "assets/objects-Ddxb9P9b.xlsx",
+          "bytes": 18581,
+          "sha256": "597f1850ad2b48be2adf234949cfeacaf543b501bb303a84e170058e16075465"
+        },
+        {
+          "path": "assets/pivot-C-FdMDOw.xlsx",
+          "bytes": 6170,
+          "sha256": "d9d14989d6437ff5eebbfae821dfa70d84936a67e6e145612dd10518a89a0bbc"
+        },
+        {
+          "path": "assets/search-CH4660Ku.xlsx",
+          "bytes": 42449,
+          "sha256": "32ebf97ae405a136416da9a54cb0e027d5cf47d6ddf8d9cc5dcb7814f31cf422"
+        },
+        {
+          "path": "assets/validation-DC8JAEb_.xlsx",
+          "bytes": 20070,
+          "sha256": "816343a4d351ec1721014b61f1815e122e2a30779ed375cc3537a7fc1080b619"
+        },
+        {
+          "path": "index.html",
+          "bytes": 415,
+          "sha256": "9a2b9adc29d20432307cf8e4a91b60ff3563b2c7d5df12084fe6b0b810b1abcb"
+        },
+        {
+          "path": "source-manifest.json",
+          "bytes": 28847,
+          "sha256": "d00e1d9426141070ae133483f89203e74eebdd641f081a53333abc3402cd834e"
+        }
+      ]
+    },
+    "after": {
+      "sourceRoot": "/Users/admin/Desktop/mimir",
+      "sourceManifest": "dist/after/source-manifest.json",
+      "headAtBuild": "dcb9a40b5fc7e731a735097595970159f82c9291",
+      "aggregateSha256": "7a211eaea8aa21a4585f929ad4f5fadc6bcd7ef4e8d2900d908d43c7fbdfbfff",
+      "files": [
+        {
+          "path": "LICENSE-GenOffice-fonts-OFL.txt",
+          "bytes": 5154,
+          "sha256": "992656df2b40e317ea54b4d3b7ca47a48eec11c2eaaf46bd74effd600714841a"
+        },
+        {
+          "path": "assets/cross-sheet-MkMUWxiv.xlsx",
+          "bytes": 14882,
+          "sha256": "ee2b71c7474b5ecb71085e39ac82911ae045e911caa4547a1f7e4eae4d1c9bdd"
+        },
+        {
+          "path": "assets/fill-cXN-RPDw.xlsx",
+          "bytes": 7799,
+          "sha256": "c4a212477f92b34914149beaca6f70ba86c3086a6e3c91300e7c1a948bea9cb0"
+        },
+        {
+          "path": "assets/index-BnVH-621.css",
+          "bytes": 50641,
+          "sha256": "d6a5dadb3ff7ed55998113e9f8079ce9c4aea4640d8da7d57a20733085a7c449"
+        },
+        {
+          "path": "assets/index-kCX6rbBY.js",
+          "bytes": 1910039,
+          "sha256": "1a48886f8104b1008ff2b34e08b7dad60fdf93ad736c06a6ba75995592b5062f"
+        },
+        {
+          "path": "assets/objects-Ddxb9P9b.xlsx",
+          "bytes": 18581,
+          "sha256": "597f1850ad2b48be2adf234949cfeacaf543b501bb303a84e170058e16075465"
+        },
+        {
+          "path": "assets/pivot-C-FdMDOw.xlsx",
+          "bytes": 6170,
+          "sha256": "d9d14989d6437ff5eebbfae821dfa70d84936a67e6e145612dd10518a89a0bbc"
+        },
+        {
+          "path": "assets/search-CH4660Ku.xlsx",
+          "bytes": 42449,
+          "sha256": "32ebf97ae405a136416da9a54cb0e027d5cf47d6ddf8d9cc5dcb7814f31cf422"
+        },
+        {
+          "path": "assets/validation-DC8JAEb_.xlsx",
+          "bytes": 20070,
+          "sha256": "816343a4d351ec1721014b61f1815e122e2a30779ed375cc3537a7fc1080b619"
+        },
+        {
+          "path": "index.html",
+          "bytes": 415,
+          "sha256": "6e138266204982c7671acb596d27355c705cabd56db89d5124173e60cc7cb98f"
+        },
+        {
+          "path": "source-manifest.json",
+          "bytes": 28846,
+          "sha256": "8bfda8fabfd64567e0b6b5ae4679579ed1c47f7b7088bcf3255cb424e37be6f3"
+        }
+      ]
+    }
+  }
+}

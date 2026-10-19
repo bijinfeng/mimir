@@ -1,0 +1,78 @@
+{
+  "baseline": "dcb9a40",
+  "generatedAt": "2026-10-19T19:19:01.491Z",
+  "files": [
+    {
+      "file": "rich.xlsx",
+      "source": "packages/office/vendor/apps/docs/tests/pagination-corpus/xlsx-fixture.xlsx",
+      "generation": "byte-identical copy",
+      "bytes": 2677,
+      "sha256": "818ba30bebaf289275ce95327b1a64e4456296bf6940e60822f939be91f52710"
+    },
+    {
+      "file": "pivot.xlsx",
+      "sourceFunction": "xlsxPivotFixture",
+      "source": "editors/xlsx-pivot-test-fixture.ts",
+      "generation": "existing native test fixture builder; no UI simulation",
+      "bytes": 6170,
+      "sha256": "d9d14989d6437ff5eebbfae821dfa70d84936a67e6e145612dd10518a89a0bbc"
+    },
+    {
+      "file": "cross-sheet.xlsx",
+      "sourceFunction": "xlsxCrossSheetPivotFixture",
+      "source": "editors/xlsx-pivot-test-fixture.ts",
+      "generation": "existing native test fixture builder; no UI simulation",
+      "bytes": 14882,
+      "sha256": "ee2b71c7474b5ecb71085e39ac82911ae045e911caa4547a1f7e4eae4d1c9bdd"
+    },
+    {
+      "file": "validation.xlsx",
+      "sourceFunction": "xlsxValidationFixture",
+      "source": "editors/xlsx-validation-test-fixture.ts",
+      "generation": "existing native test fixture builder; no UI simulation",
+      "bytes": 20070,
+      "sha256": "816343a4d351ec1721014b61f1815e122e2a30779ed375cc3537a7fc1080b619"
+    },
+    {
+      "file": "fill.xlsx",
+      "sourceFunction": "xlsxFillFixture",
+      "source": "editors/xlsx-fill-test-fixture.ts",
+      "generation": "existing native test fixture builder; no UI simulation",
+      "bytes": 7799,
+      "sha256": "c4a212477f92b34914149beaca6f70ba86c3086a6e3c91300e7c1a948bea9cb0"
+    },
+    {
+      "file": "objects.xlsx",
+      "sourceFunction": "xlsxShapePreviewFixture",
+      "source": "xlsx-shape-preview-fixture.test-helper.ts",
+      "generation": "existing native test fixture builder; no UI simulation",
+      "bytes": 18581,
+      "sha256": "597f1850ad2b48be2adf234949cfeacaf543b501bb303a84e170058e16075465"
+    },
+    {
+      "file": "search.xlsx",
+      "source": "packages/office/vendor/apps/docs/tests/pagination-corpus/xlsx-fixture.xlsx",
+      "generation": "native OOXML adapter: 240 matching text rows, numeric/formula/error caches; independent second sheet. No UI simulation.",
+      "bytes": 42449,
+      "sha256": "32ebf97ae405a136416da9a54cb0e027d5cf47d6ddf8d9cc5dcb7814f31cf422"
+    }
+  ],
+  "builders": [
+    {
+      "path": "packages/office/src/editors/xlsx-pivot-test-fixture.ts",
+      "sha256": "168926c127b263039a60f13e81a89f8efff6fd1f4b9ad740da43d9b6fb537912"
+    },
+    {
+      "path": "packages/office/src/editors/xlsx-validation-test-fixture.ts",
+      "sha256": "c87aa292a4eace7d56e2a22b90231bfdb19851515ac0e0ab3fa369a166f6d991"
+    },
+    {
+      "path": "packages/office/src/editors/xlsx-fill-test-fixture.ts",
+      "sha256": "528f36efc83e941e7ade31b7b8511ee9356ce32eb519fe1d4e1d7fd87ec5a58f"
+    },
+    {
+      "path": "packages/office/src/xlsx-shape-preview-fixture.test-helper.ts",
+      "sha256": "071045fec7494a384390dd2ca83eaa5c3d344c85464d9412889c24f6ce088c97"
+    }
+  ]
+}

@@ -158,7 +158,7 @@ export function XlsxObjectControls({
                     ]}
                   />
                   {/* Management locks its fields but keeps task navigation available to cancel. */}
-                  <fieldset disabled={busy && mode !== 'edit'}>
+                  <fieldset disabled={busy && mode !== 'edit'} aria-busy={busy}>
                     {!['pivot', 'shape', 'edit'].includes(mode) && (
                       <ToolbarMenuNote>当前数据范围：{range || '未选择'}</ToolbarMenuNote>
                     )}
@@ -178,6 +178,7 @@ export function XlsxObjectControls({
                     {mode === 'chart' && (
                       <ToolbarMenuFields label="从范围创建图表">
                         <ToolbarSelect
+                          disabled={busy}
                           label="图表类型"
                           value={kind}
                           onChange={setKind}
@@ -197,21 +198,6 @@ export function XlsxObjectControls({
                           label="图表标题（留空自动）"
                           value={title}
                           onChange={setTitle}
-                        />
-                        <ToolbarButton
-                          label="插入范围图表"
-                          primary
-                          disabled={!range}
-                          disabledReason="先选择数据范围"
-                          onClick={() =>
-                            void apply({
-                              op: 'add_chart',
-                              dataRange: range,
-                              chartType: kind,
-                              ...(title ? { title } : {}),
-                              ...(anchor ? { anchorCell: anchor } : {}),
-                            })
-                          }
                         />
                       </ToolbarMenuFields>
                     )}
@@ -242,7 +228,9 @@ export function XlsxObjectControls({
                             const ok = await onImage?.(file, anchor)
                             setFeedback(ok ? '已应用' : '未插入，请查看编辑器错误说明')
                           }}
-                        />
+                        >
+                          从设备选择图片
+                        </ToolbarFileButton>
                         <ToolbarMenuNote>
                           支持PNG/JPEG，最大8MiB；先填写对象左上角。
                         </ToolbarMenuNote>
@@ -251,15 +239,6 @@ export function XlsxObjectControls({
                           value={url}
                           onChange={setUrl}
                           placeholder="https://…"
-                        />
-                        <ToolbarButton
-                          label="插入工作表图片"
-                          primary
-                          disabled={!anchor || !/^https?:\/\//i.test(url)}
-                          disabledReason="填写图片网址与对象左上角"
-                          onClick={() =>
-                            void apply({ op: 'add_image', path: url, anchorCell: anchor })
-                          }
                         />
                       </ToolbarMenuFields>
                     )}
@@ -274,6 +253,7 @@ export function XlsxObjectControls({
                           onChange={setTableName}
                         />
                         <ToolbarSelect
+                          disabled={busy}
                           label="表格样式"
                           value={tableStyle}
                           onChange={setTableStyle}
@@ -293,6 +273,7 @@ export function XlsxObjectControls({
                           ]}
                         />
                         <ToolbarSelect
+                          disabled={busy}
                           label="表格隔行底色"
                           value={bandedRows}
                           onChange={setBandedRows}
@@ -300,21 +281,6 @@ export function XlsxObjectControls({
                             { value: 'yes', label: '显示' },
                             { value: 'no', label: '隐藏' },
                           ]}
-                        />
-                        <ToolbarButton
-                          label="插入结构化表"
-                          primary
-                          disabled={!range}
-                          disabledReason="先选中标题与数据范围"
-                          onClick={() =>
-                            void apply({
-                              op: 'add_table',
-                              range,
-                              style: tableStyle,
-                              bandedRows: bandedRows === 'yes',
-                              ...(tableName ? { name: tableName } : {}),
-                            })
-                          }
                         />
                       </ToolbarMenuFields>
                     )}
@@ -344,8 +310,55 @@ export function XlsxObjectControls({
                     )}
                   </fieldset>
                   {!['pivot', 'shape', 'edit'].includes(mode) && (
-                    <div className="mimir-xlsx-tools__feedback" role="status">
-                      {busy ? '正在应用…' : feedback}
+                    <div className="mimir-xlsx-object-footer">
+                      <div className="mimir-xlsx-tools__feedback" role="status">
+                        {busy ? '正在应用…' : feedback}
+                      </div>
+                      {mode === 'chart' && (
+                        <ToolbarButton
+                          label="插入范围图表"
+                          primary
+                          disabled={busy || !range}
+                          disabledReason="先选择数据范围"
+                          onClick={() =>
+                            void apply({
+                              op: 'add_chart',
+                              dataRange: range,
+                              chartType: kind,
+                              ...(title ? { title } : {}),
+                              ...(anchor ? { anchorCell: anchor } : {}),
+                            })
+                          }
+                        />
+                      )}
+                      {mode === 'image' && (
+                        <ToolbarButton
+                          label="插入工作表图片"
+                          primary
+                          disabled={busy || !anchor || !/^https?:\/\//i.test(url)}
+                          disabledReason="填写图片网址与对象左上角"
+                          onClick={() =>
+                            void apply({ op: 'add_image', path: url, anchorCell: anchor })
+                          }
+                        />
+                      )}
+                      {mode === 'table' && (
+                        <ToolbarButton
+                          label="插入结构化表"
+                          primary
+                          disabled={busy || !range}
+                          disabledReason="先选中标题与数据范围"
+                          onClick={() =>
+                            void apply({
+                              op: 'add_table',
+                              range,
+                              style: tableStyle,
+                              bandedRows: bandedRows === 'yes',
+                              ...(tableName ? { name: tableName } : {}),
+                            })
+                          }
+                        />
+                      )}
                     </div>
                   )}
                 </div>

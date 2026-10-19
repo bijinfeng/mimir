@@ -1,0 +1,49 @@
+{
+  "scope": "HTTP native executor/denial smoke; not GUI verification",
+  "results": [
+    {
+      "variant": "before",
+      "name": "set_cell",
+      "status": 200,
+      "version": 1,
+      "changedCells": ["sheet-1:A2"],
+      "bytes": 3433
+    },
+    {
+      "variant": "before",
+      "name": "reject_recalc",
+      "status": 400,
+      "bytes": 0,
+      "error": "隔离演示不启动计算工作进程"
+    },
+    {
+      "variant": "before",
+      "name": "reject_remote_image",
+      "status": 400,
+      "bytes": 0,
+      "error": "隔离演示不读取远程或上传图片"
+    },
+    {
+      "variant": "after",
+      "name": "set_cell",
+      "status": 200,
+      "version": 1,
+      "changedCells": ["sheet-1:A2"],
+      "bytes": 3433
+    },
+    {
+      "variant": "after",
+      "name": "reject_recalc",
+      "status": 400,
+      "bytes": 0,
+      "error": "隔离演示不启动计算工作进程"
+    },
+    {
+      "variant": "after",
+      "name": "reject_remote_image",
+      "status": 400,
+      "bytes": 0,
+      "error": "隔离演示不读取远程或上传图片"
+    }
+  ]
+}

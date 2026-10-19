@@ -1,0 +1,17 @@
+{
+  "scope": "Build/source provenance only, not product GUI QA",
+  "variants": {
+    "before": {
+      "files": 11,
+      "aggregateSha256": "f694a79dbf6989ee3c729ac21cf7c82fa7082e12b0c0b9de8b8e6f47069c0af8",
+      "assetHashesMatch": true
+    },
+    "after": {
+      "files": 11,
+      "aggregateSha256": "b812552d59cd6465a12d8804df75d7399ef2044d9cf117c3e8d526a85aa650fc",
+      "assetHashesMatch": true
+    }
+  },
+  "beforeProjectInputsComparedToGitDcb9a40": 150,
+  "matched": true
+}
