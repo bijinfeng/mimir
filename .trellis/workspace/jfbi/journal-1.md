@@ -932,3 +932,38 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+
+## Session 34: 对话 v4：输入框内业务控制与官方渲染规划
+<!-- trellis-session: v=2 fp=ce2e9ce4a05ace36 -->
+
+**Date**: 2026-10-19
+**Task**: 对话 v4：输入框内业务控制与官方渲染规划
+**Package**: chat
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+冻结chat-review-v4：仅Composer底部模型/思考强度/范围有限组合，其余官方原件/默认CSS；真实runtime时序探针及代表GUI通过。具体HTML仍待认可，产品与旧稿未改，父子任务保持planning。
+
+### Main Changes
+
+- 保存独立v4 HTML、固定源码/许可、44态扩展映射及截图证据，保留71组379原状态和24附件态
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `8d9b2fb` | docs(chat): restore composer controls in official UI review v4 |
+
+### Testing
+
+- [OK] 构建/严格类型/lint/17项格式/产物检查通过；3项actual ExternalStoreRuntime探针及独立源码复核通过；GUI验证异步发送、独立队列、取消保稿、浅深/390；51产品与125旧稿hash匹配
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 等待用户认可具体v4后再实施产品；保留附件服务/真实AGUI/原生宿主验收边界

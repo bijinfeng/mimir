@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 33
+- **Total Sessions**: 34
 - **Last Active**: 2026-10-19
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~934 | Active |
+| `journal-1.md` | ~969 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 34 | 2026-10-19 | 对话 v4：输入框内业务控制与官方渲染规划 | `8d9b2fb` | `codex/all-pages-polish` |
 | 33 | 2026-10-19 | 输入框业务控制位置修订 | `fc09bbd` | `codex/all-pages-polish` |
 | 32 | 2026-10-19 | 完整官方Thread v3与聊天附件规划交付 | `9fc4157` | `codex/all-pages-polish` |
 | 31 | 2026-10-19 | Chat v2 官方消息交互与trace删除规划交付 | `c6c4aee` | `codex/all-pages-polish` |
