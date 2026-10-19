@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { View, Text, Textarea, Picker, ScrollView } from '@tarojs/components'
 import Taro, { useDidShow, useDidHide, useUnload } from '@tarojs/taro'
 import type {
@@ -58,14 +58,15 @@ export default function ChatPage() {
   return <Gate>{session && <Chat key={session.user.id} ownerId={session.user.id} />}</Gate>
 }
 function Chat({ ownerId }: { ownerId: string }) {
-  const initial = useRef(readStorage<ChatCache>(localKey(ownerId, 'chat')))
-  const [scope, setScope] = useState<RetrievalScope>(initial.current?.scope || { type: 'all' })
-  const [label, setLabel] = useState(initial.current?.label || '全库')
-  const [question, setQuestion] = useState(initial.current?.question || '')
+  const [initial] = useState(() => readStorage<ChatCache>(localKey(ownerId, 'chat')))
+  const initialConversationId = useRef(initial?.conversationId)
+  const [scope, setScope] = useState<RetrievalScope>(initial?.scope || { type: 'all' })
+  const [label, setLabel] = useState(initial?.label || '全库')
+  const [question, setQuestion] = useState(initial?.question || '')
   const [mode, setMode] = useState<'ask' | 'search'>('ask')
   const [conversation, setConversation] = useState<ConversationDetail | null>(null)
   const [running, setRunning] = useState<Running | null>(
-    initial.current?.running ? { ...initial.current.running, state: 'interrupted' } : null,
+    initial?.running ? { ...initial.running, state: 'interrupted' } : null,
   )
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -87,13 +88,15 @@ function Chat({ ownerId }: { ownerId: string }) {
   const mounted = useRef(true)
   const started = useRef(false)
   const latest = useRef<ChatCache>({ scope, label, question, running })
-  latest.current = {
-    conversationId: conversation?.id || running?.conversationId || initial.current?.conversationId,
-    scope,
-    label,
-    question,
-    running,
-  }
+  useLayoutEffect(() => {
+    latest.current = {
+      conversationId: conversation?.id || running?.conversationId || initialConversationId.current,
+      scope,
+      label,
+      question,
+      running,
+    }
+  }, [conversation, scope, label, question, running])
   const valid = () => mounted.current && getSession()?.user.id === ownerId
   const persist = useCallback(() => {
     try {
@@ -147,7 +150,7 @@ function Chat({ ownerId }: { ownerId: string }) {
       )
       setRunning(null)
       setShowHistory(false)
-      initial.current = { ...latest.current, conversationId: id, running: null }
+      initialConversationId.current = id
     } catch (error) {
       if (valid() && run === sequence.current) setError(errorMessage(error))
     } finally {
@@ -164,7 +167,7 @@ function Chat({ ownerId }: { ownerId: string }) {
     setLabel(nextLabel)
     setError('')
     setShowHistory(false)
-    initial.current = null
+    initialConversationId.current = undefined
     latest.current = { scope: nextScope, label: nextLabel, question, running: null }
     persist()
   }
@@ -225,7 +228,7 @@ function Chat({ ownerId }: { ownerId: string }) {
     }
     if (!started.current) {
       started.current = true
-      if (initial.current?.conversationId) void loadConversation(initial.current.conversationId)
+      if (initialConversationId.current) void loadConversation(initialConversationId.current)
       else {
         const selection = sequence.current
         void loadHistory().then((items) => {

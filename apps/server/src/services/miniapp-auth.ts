@@ -84,18 +84,16 @@ export async function loginMiniapp(input: MiniappLoginInput): Promise<MiniappLog
   )
   const id = randomBytes(16).toString('hex')
   try {
-    await db
-      .insert(miniappDevices)
-      .values({
-        id,
-        ownerId: signedIn.user.id,
-        sessionId: backing.id,
-        tokenHash: digest(rawToken),
-        credentialHash,
-        name: input.deviceName || '微信小程序',
-        createdAt,
-        expiresAt,
-      })
+    await db.insert(miniappDevices).values({
+      id,
+      ownerId: signedIn.user.id,
+      sessionId: backing.id,
+      tokenHash: digest(rawToken),
+      credentialHash,
+      name: input.deviceName || '微信小程序',
+      createdAt,
+      expiresAt,
+    })
   } catch (error) {
     await db.delete(session).where(eq(session.id, backing.id))
     throw error

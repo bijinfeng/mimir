@@ -366,11 +366,12 @@ export default function Prototype() {
   useEffect(() => {
     if (answer !== "loading") return;
     const t = setInterval(() => setTick((n) => n + 1), 200);
-    return () => clearInterval(t);
+    const completion = setTimeout(() => setAnswer("done"), 1200);
+    return () => {
+      clearInterval(t);
+      clearTimeout(completion);
+    };
   }, [answer]);
-  useEffect(() => {
-    if (answer === "loading" && tick >= 6) setAnswer("done");
-  }, [tick, answer]);
   useEffect(
     () => () => {
       if (timer.current) clearTimeout(timer.current);
@@ -1292,9 +1293,9 @@ export default function Prototype() {
         {tabs && !isKeyboardVisible && (
           <nav className="tabbar" style={{ bottom: bottomInset }} aria-label="主导航">
             {[
-              ["ask", "问答", <MessageCircle size={22} />],
-              ["library", "知识库", <BookOpen size={22} />],
-              ["mine", "我的", <User size={22} />],
+              ["ask", "问答", <MessageCircle key="ask" size={22} />],
+              ["library", "知识库", <BookOpen key="library" size={22} />],
+              ["mine", "我的", <User key="mine" size={22} />],
             ].map(([p, label, icon]) => (
               <button
                 key={String(p)}

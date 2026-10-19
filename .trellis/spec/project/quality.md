@@ -17,7 +17,7 @@
 
 ## 检查输入范围
 
-根 `.oxlintrc.json` 与 `.oxfmtrc.json` 的排除项只用于生成产物、第三方发布文件和本地缓存。安装在 `.agents/skills/impeccable/scripts/`、`.claude/skills/impeccable/scripts/`、`.github/skills/impeccable/scripts/` 的发布脚本及 `.pnpm-store/` 不属于本项目维护源码；产品代码仍由原规则检查。新增排除须指向具体产物路径并说明来源，不能用排除产品目录或降低规则来使质量门通过。
+根 `.oxlintrc.json` 与 `.oxfmtrc.json` 的排除项只用于生成产物、第三方发布文件和本地缓存。安装在 `.agents/skills/impeccable/scripts/`、`.claude/skills/impeccable/scripts/`、`.github/skills/impeccable/scripts/` 的发布脚本及 `.pnpm-store/` 不属于本项目维护源码；Product Design 移动原型的 `10-17-wechat-miniapp-research/prototype/src/mobile/` 是受保护上游模板运行时，由 `mobile-runtime.lock.json` 与 `check:runtime` 校验原样性；只排除该模板路径，原型的 `Prototype.tsx` 和测试继续参与 lint。对话调研下载的 TanStack/assistant-ui 原始源码与 v3/v4 `vendor` 同样按具体路径排除；任务名前的路径通配仅兼容任务归档，仍限定这些第三方子目录，产品代码仍由原规则检查。新增排除须指向具体产物路径并说明来源，不能用排除产品目录或降低规则来使质量门通过。
 
 异步行为测试以真实操作完成、版本发布与界面解锁作为等待条件；固定延时不能证明完成。涉及迟到结果时用可控 promise 分别守住“发布前”和“请求返回后”的边界，并在卸载前结算本测试创建的异步链。
 

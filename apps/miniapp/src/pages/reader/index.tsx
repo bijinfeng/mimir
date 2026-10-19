@@ -40,7 +40,7 @@ function Reader({
   const [busy, setBusy] = useState(false)
   const [opening, setOpening] = useState(false)
   const sequence = useRef(0)
-  const citation = useRef(
+  const [quoted] = useState(() =>
     showCitation ? readStorage<Citation>(localKey(ownerId, `citation:${id}`)) : null,
   )
   async function load() {
@@ -60,7 +60,6 @@ function Reader({
   useDidShow(() => {
     void load()
   })
-  const quoted = citation.current
   const matches = Boolean(
     document && quoted && document.body.slice(quoted.start, quoted.end) === quoted.snippet,
   )

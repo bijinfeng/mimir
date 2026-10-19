@@ -54,7 +54,7 @@ beforeAll(async () => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ identifier: TEST_USER.email, password: TEST_USER.password }),
   })
-  expect(response.status).toBe(200)
+  if (response.status !== 200) throw new Error(`小程序测试登录失败：HTTP ${response.status}`)
   token = ((await response.json()) as MiniappLoginResponse).token
   folder = await createFolder({ path: `miniapp-write-${nanoid(10)}` })
 })

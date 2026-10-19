@@ -140,7 +140,6 @@ test("switching to Pixel keeps the composer above Android navigation", async ({ 
   const screen = page.getByTestId("device-screen");
   const statusIndicators = page.getByTestId("status-indicators");
   const navigation = page.getByTestId("android-navigation-bar");
-  const footer = page.getByTestId("flow-fixed-footer");
 
   await expect(frame).toHaveAttribute("data-device", "pixel-10");
   await expect(screen).toHaveAttribute("data-device", "pixel-10");

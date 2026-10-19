@@ -201,17 +201,17 @@ function inline(
   return result
 }
 function MarkdownImage({ source, alt }: { source: string; alt: string }) {
-  const [src, setSrc] = useState('')
+  const [downloadedSrc, setSrc] = useState('')
   const [error, setError] = useState('')
+  const relative = origin && source.startsWith(origin + '/') ? source.slice(origin.length) : source
+  const protectedPath = /^\/api\/miniapp\/documents\/[^/]+\/file$/.test(relative)
+    ? relative.slice('/api/miniapp'.length)
+    : null
+  const external = /^https:\/\//i.test(source) && !relative.startsWith('/api/')
+  const src = protectedPath ? downloadedSrc : external ? source : ''
+  const imageError = error || (!protectedPath && !external ? '图片地址暂不支持在微信中显示。' : '')
   useEffect(() => {
     let live = true
-    setSrc('')
-    setError('')
-    const relative =
-      origin && source.startsWith(origin + '/') ? source.slice(origin.length) : source
-    const protectedPath = /^\/api\/miniapp\/documents\/[^/]+\/file$/.test(relative)
-      ? relative.slice('/api/miniapp'.length)
-      : null
     if (protectedPath)
       protectedDownload(protectedPath)
         .then((path) => {
@@ -220,17 +220,15 @@ function MarkdownImage({ source, alt }: { source: string; alt: string }) {
         .catch((error) => {
           if (live) setError(errorMessage(error))
         })
-    else if (/^https:\/\//i.test(source) && !relative.startsWith('/api/')) setSrc(source)
-    else setError('图片地址暂不支持在微信中显示。')
     return () => {
       live = false
     }
-  }, [source])
-  if (error)
+  }, [protectedPath])
+  if (imageError)
     return (
       <View className="image-fallback">
         <Text>{alt} · 图片不可用</Text>
-        <Text className="block muted">{error}</Text>
+        <Text className="block muted">{imageError}</Text>
         <Text
           className="md-link"
           onClick={() => {
@@ -281,7 +279,11 @@ export function Markdown({
             {block.kind === 'rule' ? (
               <View className="md-rule-line" />
             ) : block.kind === 'image' ? (
-              <MarkdownImage source={block.source || ''} alt={block.text} />
+              <MarkdownImage
+                key={block.source || ''}
+                source={block.source || ''}
+                alt={block.text}
+              />
             ) : block.kind === 'table' ? (
               <ScrollView scrollX>
                 <View className="md-table">

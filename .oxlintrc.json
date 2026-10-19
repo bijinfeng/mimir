@@ -69,6 +69,15 @@
     ".github/skills/impeccable/scripts/**",
     // Local package-manager cache contains dependency metadata, not maintained source.
     ".pnpm-store/**",
+    // Product Design mobile template runtime: protected upstream files, verified by mobile-runtime.lock.json.
+    ".trellis/tasks/**/10-17-wechat-miniapp-research/prototype/src/mobile/**",
+    // Match the same task-owned third-party paths before and after task archive.
+    // Verbatim downloaded SDK/UI evidence is third-party reference source, not product code.
+    ".trellis/tasks/**/10-18-interaction-chat/prototype/v3/vendor/**",
+    ".trellis/tasks/**/10-18-interaction-chat/prototype/v4/vendor/**",
+    ".trellis/tasks/**/10-18-interaction-chat/research/vendor-full-thread/**",
+    ".trellis/tasks/**/10-18-interaction-chat/research/tanstack-latest-evidence/**",
+    ".trellis/tasks/**/10-18-interaction-chat/research/tanstack-v5-evidence/**",
     "**/routeTree.gen.ts",
     "**/drizzle/**",
     "output/**",

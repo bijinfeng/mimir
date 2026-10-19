@@ -27,7 +27,21 @@ for (const page of app.pages) {
   }
 }
 assert.ok((await stat(join(output, 'app.wxss'))).size > 0, 'Global styles are missing')
-assert.ok((await stat(join(output, 'pages/chat/index.wxss'))).size > 0, 'NutUI styles are missing')
+// Taro extracts shared component styles into common.wxss when multiple pages use them.
+// Verify the CSS actually imported by the app instead of assuming a page-local filename.
+const importedStyles = new Map()
+async function readImportedStyles(path) {
+  if (importedStyles.has(path)) return
+  const source = await readFile(path, 'utf8')
+  importedStyles.set(path, source)
+  for (const match of source.matchAll(/@import\s+["']([^"']+)["']\s*;/g))
+    await readImportedStyles(resolve(dirname(path), match[1]))
+}
+await readImportedStyles(join(output, 'app.wxss'))
+assert.ok(
+  [...importedStyles.values()].some((source) => /\.nut-button(?:[\s.{:#-])/.test(source)),
+  'NutUI Button styles are missing from the app stylesheet import graph',
+)
 const modules = JSON.parse(await readFile(join(root, '.temp/runtime-modules.json'), 'utf8'))
 const forbidden = modules.filter((name) =>
   /node_modules\/(?:antd|antd-style|react-dom|lottie-web|lottie-react|@mimir\/(?:office|renderer))(?:\/|$)|packages\/(?:office|renderer)\//.test(

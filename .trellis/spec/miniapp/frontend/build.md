@@ -42,6 +42,7 @@ pnpm --filter @mimir/miniapp verify:artifact
 - 版本库使用游客 AppID 作为工程占位；真实 AppID 和本地开发工具配置按包 README 的操作管理，不能声称游客占位即可完成正式预览或发布。
 - 主包体积按未压缩微信产物检查；当前无分包。新增分包或插件后应扩展验证，不能继续用整包总和冒充各分包预算。
 - `ModuleAuditPlugin` 在编译成功后把真实模块标识写入忽略的 `.temp/runtime-modules.json`；产物脚本据此确认 Taro 渲染器和按需 NutUI 进入编译，并拒绝 React DOM / Office / renderer 等浏览器依赖。不把仅检查 manifest 当作运行时依赖检查。
+- 样式产物以 `app.wxss` 的实际 `@import` 图检查：多页面复用 NutUI 时 Taro 可抽取至 `common.wxss`。必须断言可达样式含 `.nut-button`，不能硬编码要求聊天页单独生成 `index.wxss`，也不能仅凭模块进入编译就推断样式已加载。
 
 ## 4. Validation & Error Matrix
 

@@ -130,6 +130,7 @@ function asHttpError(error: unknown): unknown {
  */
 export async function downloadDocumentFile(c: Context<AppEnv>): Promise<Response> {
   const id = c.req.param('id')
+  if (!id) throw new HttpError(400, 'INVALID_INPUT', '缺少文档 ID')
   const [row] = await db
     .select()
     .from(documents)

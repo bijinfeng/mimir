@@ -52,12 +52,10 @@ function Editor({
   folder: string
   restoreIdentity?: string
 }) {
-  const identity = useRef(
-    restoreIdentity || (mode === 'new' ? `new:${requestId()}` : `${mode}:${id}`),
-  ).current
-  const initial = useRef(readStorage<NoteDraft>(draftKey(ownerId, identity)))
-  const [draft, setDraft] = useState<NoteDraft>(
-    initial.current || {
+  const [initial] = useState(() => {
+    const identity = restoreIdentity || (mode === 'new' ? `new:${requestId()}` : `${mode}:${id}`)
+    const cachedDraft = readStorage<NoteDraft>(draftKey(ownerId, identity))
+    const draft: NoteDraft = cachedDraft || {
       identity,
       documentId: id || null,
       mode,
@@ -67,23 +65,25 @@ function Editor({
       folder,
       revision: '',
       updatedAt: new Date().toISOString(),
-    },
-  )
-  const [tagText, setTagText] = useState(initial.current?.tags.join(', ') || '')
+    }
+    return { identity, cachedDraft, draft }
+  })
+  const { identity, cachedDraft } = initial
+  const [draft, setDraft] = useState(initial.draft)
+  const [tagText, setTagText] = useState(cachedDraft?.tags.join(', ') || '')
   const [document, setDocument] = useState<MiniappDocument | null>(null)
   const [ready, setReady] = useState(mode === 'new')
   const [busy, setBusy] = useState(false)
   const [preview, setPreview] = useState(false)
   const [error, setError] = useState('')
-  const [restored, setRestored] = useState(Boolean(initial.current))
+  const [restored, setRestored] = useState(Boolean(cachedDraft))
   const [conflict, setConflict] = useState(false)
   const [saved, setSaved] = useState(false)
   const { folders, error: folderError } = useFolders()
   const latest = useRef(draft)
   const alive = useRef(true)
-  const modified = useRef(Boolean(initial.current))
+  const modified = useRef(Boolean(cachedDraft))
   const busyRef = useRef(false)
-  latest.current = draft
   function valid() {
     return alive.current && getSession()?.user.id === ownerId
   }
@@ -136,7 +136,7 @@ function Editor({
             return
           }
           setDocument(result.document)
-          if (!initial.current) {
+          if (!cachedDraft) {
             replaceDraft(fromDocument(result.document))
             setTagText(result.document.tags.join(', '))
           }
@@ -152,12 +152,14 @@ function Editor({
   }, [id, mode, ownerId, identity])
   useEffect(() => {
     if (modified.current && !saved)
-      void Taro.enableAlertBeforeUnload({
-        message: '未保存内容已保留为本机草稿，离开前请确认。',
-      }).catch(() => undefined)
-    else void Taro.disableAlertBeforeUnload().catch(() => undefined)
+      void Promise.resolve(
+        Taro.enableAlertBeforeUnload({
+          message: '未保存内容已保留为本机草稿，离开前请确认。',
+        }),
+      ).catch(() => undefined)
+    else void Promise.resolve(Taro.disableAlertBeforeUnload()).catch(() => undefined)
     return () => {
-      void Taro.disableAlertBeforeUnload().catch(() => undefined)
+      void Promise.resolve(Taro.disableAlertBeforeUnload()).catch(() => undefined)
     }
   }, [draft.updatedAt, saved])
   useDidHide(persist)

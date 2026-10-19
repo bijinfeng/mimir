@@ -9,14 +9,17 @@ afterEach(() => {
 it('times out audio decoding, closes the context, and ignores late decoded audio', async () => {
   vi.useFakeTimers()
   let finish!: (audio: AudioBuffer) => void
-  const started = Promise.withResolvers<void>()
+  let markStarted!: () => void
+  const started = new Promise<void>((resolve) => {
+    markStarted = resolve
+  })
   const close = vi.fn<() => Promise<void>>(async () => {})
   vi.stubGlobal(
     'AudioContext',
     class {
       close = close
       decodeAudioData() {
-        started.resolve()
+        markStarted()
         return new Promise<AudioBuffer>((resolve) => {
           finish = resolve
         })
@@ -31,7 +34,7 @@ it('times out audio decoding, closes the context, and ignores late decoded audio
     () => null,
     (error: unknown) => error,
   )
-  await started.promise
+  await started
   await vi.advanceTimersByTimeAsync(15_000)
   expect(await outcome).toMatchObject({ message: expect.stringContaining('15秒') })
   expect(close).toHaveBeenCalledOnce()
