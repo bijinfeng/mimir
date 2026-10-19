@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-20",
+  "sourceMetadata": "external-evidence.json",
+  "excerpts": [
+    {
+      "query": "Tool finder (formerly",
+      "text": "e Docs, press\nCtrl + /\n(Windows, Chrome OS) or\n⌘ + /\n(Mac).\nTool finder (formerly search the menus), press\nAlt + /\n(Windows, Chrome OS) or\nOption + /\n(Mac).\nYou can also use menu access keys. Open any application menu using the keyboard, then type the underlined letter for the item you'd like to select. For example, to "
+    },
+    {
+      "query": "Hide the menus (compact mode)",
+      "text": "Ctrl\n+\nh\nFind again\nCtrl\n+\ng\nFind previous\nCtrl\n+\nShift\n+\ng\nHide the menus (compact mode)\nCtrl\n+\nShift\n+\nf\nInsert page break\nCtrl\n+\nEnter\nTool finder(formerly Search the menus)\nAlt + /\nAlt + Shift + z\nGoogle Chrome:\nAlt + z\nRepeat last action\nCtrl\n+\ny\nSwitch to editing\nCtrl + Alt + Shift + z\nSwitch to suggesting\nCtrl + Alt + Sh"
+    }
+  ]
+}

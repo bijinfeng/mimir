@@ -1,0 +1,560 @@
+[
+  {
+    "key": "body-light-wide",
+    "label": "正文 · 浅色宽列",
+    "scene": "body",
+    "ids": ["MD-001", "MD-003", "MD-009"],
+    "w": 1100,
+    "h": 760,
+    "side": "before",
+    "file": "before/body-light-wide.jpg",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "fixture": {
+      "width": 1100,
+      "height": 760
+    }
+  },
+  {
+    "key": "body-light-wide",
+    "label": "正文 · 浅色宽列",
+    "scene": "body",
+    "ids": ["MD-001", "MD-003", "MD-009"],
+    "w": 1100,
+    "h": 760,
+    "side": "after",
+    "file": "after/body-light-wide.jpg",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "fixture": {
+      "width": 1100,
+      "height": 760
+    }
+  },
+  {
+    "key": "empty-dark-narrow",
+    "label": "空白笔记 · 深色窄列",
+    "scene": "empty",
+    "theme": "dark",
+    "ids": ["MD-002", "MD-007"],
+    "w": 420,
+    "h": 640,
+    "side": "before",
+    "file": "before/empty-dark-narrow.jpg",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "fixture": {
+      "width": 420,
+      "height": 640
+    }
+  },
+  {
+    "key": "empty-dark-narrow",
+    "label": "空白笔记 · 深色窄列",
+    "scene": "empty",
+    "theme": "dark",
+    "ids": ["MD-002", "MD-007"],
+    "w": 420,
+    "h": 640,
+    "side": "after",
+    "file": "after/empty-dark-narrow.jpg",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "fixture": {
+      "width": 420,
+      "height": 640
+    }
+  },
+  {
+    "key": "inline-light-wide",
+    "label": "选区工具 · 浅色",
+    "scene": "inline",
+    "ids": ["MD-063", "MD-064", "MD-067"],
+    "w": 1100,
+    "h": 760,
+    "side": "before",
+    "file": "before/inline-light-wide.jpg",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "fixture": {
+      "width": 1100,
+      "height": 760
+    }
+  },
+  {
+    "key": "inline-light-wide",
+    "label": "选区工具 · 浅色",
+    "scene": "inline",
+    "ids": ["MD-063", "MD-064", "MD-067"],
+    "w": 1100,
+    "h": 760,
+    "side": "after",
+    "file": "after/inline-light-wide.jpg",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "fixture": {
+      "width": 1100,
+      "height": 760
+    }
+  },
+  {
+    "key": "inline-dark-narrow",
+    "label": "选区工具 · 深色窄列",
+    "scene": "inline",
+    "theme": "dark",
+    "ids": ["MD-067"],
+    "w": 420,
+    "h": 640,
+    "side": "before",
+    "file": "before/inline-dark-narrow.jpg",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "fixture": {
+      "width": 420,
+      "height": 640
+    }
+  },
+  {
+    "key": "inline-dark-narrow",
+    "label": "选区工具 · 深色窄列",
+    "scene": "inline",
+    "theme": "dark",
+    "ids": ["MD-067"],
+    "w": 420,
+    "h": 640,
+    "side": "after",
+    "file": "after/inline-dark-narrow.jpg",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "fixture": {
+      "width": 420,
+      "height": 640
+    }
+  },
+  {
+    "key": "wiki-long",
+    "label": "超长笔记候选",
+    "scene": "wiki-long",
+    "ids": ["MD-055", "MD-056", "MD-062"],
+    "w": 760,
+    "h": 640,
+    "side": "before",
+    "file": "before/wiki-long.jpg",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "fixture": {
+      "width": 760,
+      "height": 640
+    }
+  },
+  {
+    "key": "wiki-long",
+    "label": "超长笔记候选",
+    "scene": "wiki-long",
+    "ids": ["MD-055", "MD-056", "MD-062"],
+    "w": 760,
+    "h": 640,
+    "side": "after",
+    "file": "after/wiki-long.jpg",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "fixture": {
+      "width": 760,
+      "height": 640
+    }
+  },
+  {
+    "key": "table-context",
+    "label": "表格上下文",
+    "scene": "table",
+    "ids": ["MD-034", "MD-038"],
+    "w": 760,
+    "h": 640,
+    "side": "before",
+    "file": "before/table-context.jpg",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "fixture": {
+      "width": 760,
+      "height": 640
+    }
+  },
+  {
+    "key": "table-context",
+    "label": "表格上下文",
+    "scene": "table",
+    "ids": ["MD-034", "MD-038"],
+    "w": 760,
+    "h": 640,
+    "side": "after",
+    "file": "after/table-context.jpg",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "fixture": {
+      "width": 760,
+      "height": 640
+    }
+  },
+  {
+    "key": "code-context",
+    "label": "代码上下文",
+    "scene": "code",
+    "ids": ["MD-039", "MD-040"],
+    "w": 760,
+    "h": 640,
+    "side": "before",
+    "file": "before/code-context.jpg",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "fixture": {
+      "width": 760,
+      "height": 640
+    }
+  },
+  {
+    "key": "code-context",
+    "label": "代码上下文",
+    "scene": "code",
+    "ids": ["MD-039", "MD-040"],
+    "w": 760,
+    "h": 640,
+    "side": "after",
+    "file": "after/code-context.jpg",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "fixture": {
+      "width": 760,
+      "height": 640
+    }
+  },
+  {
+    "key": "link-panel",
+    "label": "链接 · 地址与笔记检索",
+    "scene": "link",
+    "ids": ["MD-023", "MD-024", "MD-026", "MD-027"],
+    "w": 760,
+    "h": 640,
+    "side": "before",
+    "file": "before/link-panel.jpg",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "fixture": {
+      "width": 760,
+      "height": 640
+    }
+  },
+  {
+    "key": "link-panel",
+    "label": "链接 · 地址与笔记检索",
+    "scene": "link",
+    "ids": ["MD-023", "MD-024", "MD-026", "MD-027"],
+    "w": 760,
+    "h": 640,
+    "side": "after",
+    "file": "after/link-panel.jpg",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "fixture": {
+      "width": 760,
+      "height": 640
+    }
+  },
+  {
+    "key": "frontmatter-panel",
+    "label": "笔记属性 · 可见字段标签",
+    "scene": "frontmatter",
+    "ids": ["MD-046", "MD-047", "MD-048"],
+    "w": 760,
+    "h": 640,
+    "side": "before",
+    "file": "before/frontmatter-panel.jpg",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "fixture": {
+      "width": 760,
+      "height": 640
+    }
+  },
+  {
+    "key": "frontmatter-panel",
+    "label": "笔记属性 · 可见字段标签",
+    "scene": "frontmatter",
+    "ids": ["MD-046", "MD-047", "MD-048"],
+    "w": 760,
+    "h": 640,
+    "side": "after",
+    "file": "after/frontmatter-panel.jpg",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "fixture": {
+      "width": 760,
+      "height": 640
+    }
+  },
+  {
+    "key": "insert-table",
+    "label": "插入表格 · 行列字段",
+    "scene": "body",
+    "ids": ["MD-029", "MD-030"],
+    "w": 760,
+    "h": 640,
+    "side": "before",
+    "file": "before/insert-table.jpg",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "fixture": {
+      "width": 760,
+      "height": 640
+    }
+  },
+  {
+    "key": "insert-table",
+    "label": "插入表格 · 行列字段",
+    "scene": "body",
+    "ids": ["MD-029", "MD-030"],
+    "w": 760,
+    "h": 640,
+    "side": "after",
+    "file": "after/insert-table.jpg",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "fixture": {
+      "width": 760,
+      "height": 640
+    }
+  },
+  {
+    "key": "writing-partial",
+    "label": "写作部分失败 · 保留与丢弃",
+    "scene": "writing-partial",
+    "ids": ["MD-068", "MD-069", "MD-070", "MD-074"],
+    "w": 420,
+    "h": 640,
+    "side": "before",
+    "file": "before/writing-partial.jpg",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "fixture": {
+      "width": 420,
+      "height": 640
+    }
+  },
+  {
+    "key": "writing-partial",
+    "label": "写作部分失败 · 保留与丢弃",
+    "scene": "writing-partial",
+    "ids": ["MD-068", "MD-069", "MD-070", "MD-074"],
+    "w": 420,
+    "h": 640,
+    "side": "after",
+    "file": "after/writing-partial.jpg",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "fixture": {
+      "width": 420,
+      "height": 640
+    }
+  },
+  {
+    "key": "find-panel",
+    "label": "查找替换 · 匹配计数",
+    "scene": "find",
+    "ids": ["MD-051", "MD-052", "MD-053", "MD-054"],
+    "w": 760,
+    "h": 640,
+    "side": "before",
+    "file": "before/find-panel.jpg",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "fixture": {
+      "width": 760,
+      "height": 640
+    }
+  },
+  {
+    "key": "find-panel",
+    "label": "查找替换 · 匹配计数",
+    "scene": "find",
+    "ids": ["MD-051", "MD-052", "MD-053", "MD-054"],
+    "w": 760,
+    "h": 640,
+    "side": "after",
+    "file": "after/find-panel.jpg",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "fixture": {
+      "width": 760,
+      "height": 640
+    }
+  },
+  {
+    "key": "frontmatter-error",
+    "label": "笔记属性 · 窄列读取失败",
+    "scene": "frontmatter-error",
+    "ids": ["MD-007", "MD-008", "MD-047", "MD-048"],
+    "w": 420,
+    "h": 640,
+    "side": "before",
+    "file": "before/frontmatter-error.jpg",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "fixture": {
+      "width": 420,
+      "height": 640
+    }
+  },
+  {
+    "key": "frontmatter-error",
+    "label": "笔记属性 · 窄列读取失败",
+    "scene": "frontmatter-error",
+    "ids": ["MD-007", "MD-008", "MD-047", "MD-048"],
+    "w": 420,
+    "h": 640,
+    "side": "after",
+    "file": "after/frontmatter-error.jpg",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "fixture": {
+      "width": 420,
+      "height": 640
+    }
+  },
+  {
+    "key": "slash-short",
+    "label": "斜杠菜单 · 短窗口",
+    "scene": "slash",
+    "ids": ["MD-059", "MD-060", "MD-062"],
+    "w": 420,
+    "h": 320,
+    "side": "before",
+    "file": "before/slash-short.png",
+    "viewport": {
+      "width": 420,
+      "height": 320
+    },
+    "fixture": {
+      "width": 420,
+      "height": 320
+    }
+  },
+  {
+    "key": "slash-short",
+    "label": "斜杠菜单 · 短窗口",
+    "scene": "slash",
+    "ids": ["MD-059", "MD-060", "MD-062"],
+    "w": 420,
+    "h": 320,
+    "side": "after",
+    "file": "after/slash-short.png",
+    "viewport": {
+      "width": 420,
+      "height": 320
+    },
+    "fixture": {
+      "width": 420,
+      "height": 320
+    }
+  },
+  {
+    "key": "supplement-before-product-home",
+    "label": "真实产品基线 · 正文",
+    "scene": "body",
+    "ids": ["MD-001", "MD-046", "MD-063"],
+    "side": "before",
+    "file": "before/product-home.png",
+    "theme": "dark",
+    "supplement": true
+  },
+  {
+    "key": "supplement-before-product-link",
+    "label": "真实产品基线 · 链接",
+    "scene": "body",
+    "ids": ["MD-001", "MD-046", "MD-063"],
+    "side": "before",
+    "file": "before/product-link.png",
+    "theme": "dark",
+    "supplement": true
+  },
+  {
+    "key": "supplement-before-product-properties",
+    "label": "真实产品基线 · 属性",
+    "scene": "body",
+    "ids": ["MD-001", "MD-046", "MD-063"],
+    "side": "before",
+    "file": "before/product-properties.png",
+    "theme": "dark",
+    "supplement": true
+  },
+  {
+    "key": "supplement-after-product-properties",
+    "label": "真实产品当前 · 属性",
+    "scene": "body",
+    "ids": ["MD-001", "MD-046", "MD-063"],
+    "side": "after",
+    "file": "after/product-properties.jpg",
+    "theme": "dark",
+    "supplement": true
+  },
+  {
+    "key": "supplement-after-product-inline",
+    "label": "真实产品当前 · 选区工具",
+    "scene": "body",
+    "ids": ["MD-001", "MD-046", "MD-063"],
+    "side": "after",
+    "file": "after/product-inline.jpg",
+    "theme": "dark",
+    "supplement": true
+  }
+]

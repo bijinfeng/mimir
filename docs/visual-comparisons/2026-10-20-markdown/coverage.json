@@ -1,0 +1,673 @@
+{
+  "baseline": "46a2120",
+  "implementation": "same-entry-real-components",
+  "coverage": [
+    {
+      "id": "MD-001",
+      "requirement": "现有笔记打开：唯一标题/元信息在正文前，编辑正文居中，正文后元信息保持",
+      "scene": "body",
+      "entry": "实际正文、保存/历史与Ribbon；调整主题/width/height；有外部守卫的项需真实产品",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["body-light-wide"]
+    },
+    {
+      "id": "MD-002",
+      "requirement": "新建空笔记：Placeholder、正文大片空白可点击，首次焦点到末尾",
+      "scene": "empty",
+      "entry": "实际正文、保存/历史与Ribbon；调整主题/width/height；有外部守卫的项需真实产品",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["empty-dark-narrow"]
+    },
+    {
+      "id": "MD-003",
+      "requirement": "宽列/窄中栏、AI 侧栏开闭、短高、浅/深主题、200% 缩放",
+      "scene": "body",
+      "entry": "实际正文、保存/历史与Ribbon；调整主题/width/height；有外部守卫的项需真实产品",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["body-light-wide"]
+    },
+    {
+      "id": "MD-004",
+      "requirement": "带 bodySide 的大纲与正文两栏、正文滚到末尾",
+      "scene": "side",
+      "entry": "实际正文、保存/历史与Ribbon；调整主题/width/height；有外部守卫的项需真实产品",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-005",
+      "requirement": "编辑器尚未 ready 的快捷区",
+      "scene": "body",
+      "entry": "实际正文、保存/历史与Ribbon；调整主题/width/height；有外部守卫的项需真实产品",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-006",
+      "requirement": "默认开始/插入/笔记/审阅分类，当前 Tab",
+      "scene": "body",
+      "entry": "实际正文、保存/历史与Ribbon；调整主题/width/height；有外部守卫的项需真实产品",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-007",
+      "requirement": "可用命令直接展示；窄列逐组具名折叠；再窄才命令区局部滚",
+      "scene": "body",
+      "entry": "实际正文、保存/历史与Ribbon；调整主题/width/height；有外部守卫的项需真实产品",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["empty-dark-narrow", "frontmatter-error"]
+    },
+    {
+      "id": "MD-008",
+      "requirement": "具名折叠组中再次打开段落/链接/表格/属性弹层",
+      "scene": "body",
+      "entry": "实际正文、保存/历史与Ribbon；调整主题/width/height；有外部守卫的项需真实产品",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["frontmatter-error"]
+    },
+    {
+      "id": "MD-009",
+      "requirement": "文档刚打开/无改动；即时保存不可点，状态字数可见",
+      "scene": "body",
+      "entry": "实际正文、保存/历史与Ribbon；调整主题/width/height；有外部守卫的项需真实产品",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["body-light-wide"]
+    },
+    {
+      "id": "MD-010",
+      "requirement": "输入后 pending、防抖900ms、saving、saved",
+      "scene": "body",
+      "entry": "实际正文、保存/历史与Ribbon；调整主题/width/height；有外部守卫的项需真实产品",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-011",
+      "requirement": "保存失败：长错误、重试、再次失败、最终恢复",
+      "scene": "body",
+      "entry": "实际正文、保存/历史与Ribbon；调整主题/width/height；有外部守卫的项需真实产品",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-012",
+      "requirement": "图片/导出失败：状态行关闭；和保存失败并存时优先级",
+      "scene": "body",
+      "entry": "实际正文、保存/历史与Ribbon；调整主题/width/height；有外部守卫的项需真实产品",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-013",
+      "requirement": "保存中再编辑、离开/切文档/刷新",
+      "scene": "body",
+      "entry": "实际正文、保存/历史与Ribbon；调整主题/width/height；有外部守卫的项需真实产品",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-014",
+      "requirement": "Undo/Redo：空历史、编辑后可撤销、redo恢复",
+      "scene": "body",
+      "entry": "实际正文、保存/历史与Ribbon；调整主题/width/height；有外部守卫的项需真实产品",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-015",
+      "requirement": "字数：空文、长文、模型写入、undo后同步",
+      "scene": "body",
+      "entry": "实际正文、保存/历史与Ribbon；调整主题/width/height；有外部守卫的项需真实产品",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-016",
+      "requirement": "段落样式：正文/H1–H6/引用/代码块九种；混合选区",
+      "scene": "body",
+      "entry": "开始分类，实际格式/列表/链接；候选状态切wiki-*与IO模式",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-017",
+      "requirement": "加粗/倾斜：关/开、跨选区、缺 mark禁用",
+      "scene": "body",
+      "entry": "开始分类，实际格式/列表/链接；候选状态切wiki-*与IO模式",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-018",
+      "requirement": "下划线/删除线/行内代码：开关与方言禁用",
+      "scene": "body",
+      "entry": "开始分类，实际格式/列表/链接；候选状态切wiki-*与IO模式",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-019",
+      "requirement": "清除格式：光标/无格式禁用、选中格式可用",
+      "scene": "body",
+      "entry": "开始分类，实际格式/列表/链接；候选状态切wiki-*与IO模式",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-020",
+      "requirement": "项目列表/编号列表：当前种类、切换、普通段落",
+      "scene": "body",
+      "entry": "开始分类，实际格式/列表/链接；候选状态切wiki-*与IO模式",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-021",
+      "requirement": "任务列表：整张转换、checkbox状态、嵌套禁用说明",
+      "scene": "body",
+      "entry": "开始分类，实际格式/列表/链接；候选状态切wiki-*与IO模式",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-022",
+      "requirement": "减少/增加缩进：非列表、首项/最外层、可缩进任务/普通列表",
+      "scene": "body",
+      "entry": "开始分类，实际格式/列表/链接；候选状态切wiki-*与IO模式",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-023",
+      "requirement": "链接触发器：选中文字、空光标、已有链接；外部面板打开",
+      "scene": "link",
+      "entry": "开始分类，实际格式/列表/链接；候选状态切wiki-*与IO模式",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["link-panel"]
+    },
+    {
+      "id": "MD-024",
+      "requirement": "地址输入、空地址、合法地址、长URL",
+      "scene": "link",
+      "entry": "开始分类，实际格式/列表/链接；候选状态切wiki-*与IO模式",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["link-panel"]
+    },
+    {
+      "id": "MD-025",
+      "requirement": "已有链接改地址、移除；空光标应用禁用",
+      "scene": "link",
+      "entry": "开始分类，实际格式/列表/链接；候选状态切wiki-*与IO模式",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-026",
+      "requirement": "链接面板“链接到笔记”：初始loading、空结果、最多6条、长标题",
+      "scene": "link",
+      "entry": "开始分类，实际格式/列表/链接；候选状态切wiki-*与IO模式",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["link-panel"]
+    },
+    {
+      "id": "MD-027",
+      "requirement": "链接面板查找失败→重输恢复；快速改查询/迟到响应",
+      "scene": "link",
+      "entry": "开始分类，实际格式/列表/链接；候选状态切wiki-*与IO模式",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["link-panel"]
+    },
+    {
+      "id": "MD-028",
+      "requirement": "选已有笔记：保留已选显示文字；空光标插标题；已有内链替换",
+      "scene": "link",
+      "entry": "开始分类，实际格式/列表/链接；候选状态切wiki-*与IO模式",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-029",
+      "requirement": "插入表格弹层默认3×3、行1–50/列1–12、编辑中间态",
+      "scene": "body",
+      "entry": "插入表格；公开按钮进入实际表格/代码上下文，再操作Ribbon",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["insert-table"]
+    },
+    {
+      "id": "MD-030",
+      "requirement": "点击插入：真实含表头表格、单步undo；当前不能插入时disabled",
+      "scene": "body",
+      "entry": "插入表格；公开按钮进入实际表格/代码上下文，再操作Ribbon",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["insert-table"]
+    },
+    {
+      "id": "MD-031",
+      "requirement": "插入图片：有上传通道显示、无通道不显示；原生文件picker取消",
+      "scene": "image",
+      "entry": "插入表格；公开按钮进入实际表格/代码上下文，再操作Ribbon",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-032",
+      "requirement": "图片上传成功/失败；大图/长alt/断图",
+      "scene": "image",
+      "entry": "插入表格；公开按钮进入实际表格/代码上下文，再操作Ribbon",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-033",
+      "requirement": "插入分隔线、数学公式、Mermaid、WaveDrom",
+      "scene": "diagrams",
+      "entry": "插入表格；公开按钮进入实际表格/代码上下文，再操作Ribbon",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-034",
+      "requirement": "光标进/出table→表格上下文分类显隐、回默认分类",
+      "scene": "table",
+      "entry": "插入表格；公开按钮进入实际表格/代码上下文，再操作Ribbon",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["table-context"]
+    },
+    {
+      "id": "MD-035",
+      "requirement": "表格菜单：上/下插行、左/右插列、删行/列/表",
+      "scene": "table",
+      "entry": "插入表格；公开按钮进入实际表格/代码上下文，再操作Ribbon",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-036",
+      "requirement": "当前列左/中/右对齐，当前项勾选且不可重复",
+      "scene": "table",
+      "entry": "插入表格；公开按钮进入实际表格/代码上下文，再操作Ribbon",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-037",
+      "requirement": "第一行设为/取消表头",
+      "scene": "table",
+      "entry": "插入表格；公开按钮进入实际表格/代码上下文，再操作Ribbon",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-038",
+      "requirement": "表格正文：长单元格/横宽/checkbox/节点边界与undo",
+      "scene": "table",
+      "entry": "插入表格；公开按钮进入实际表格/代码上下文，再操作Ribbon",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["table-context"]
+    },
+    {
+      "id": "MD-039",
+      "requirement": "光标进/出code→代码块分类与语言Select",
+      "scene": "code",
+      "entry": "插入表格；公开按钮进入实际表格/代码上下文，再操作Ribbon",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["code-context"]
+    },
+    {
+      "id": "MD-040",
+      "requirement": "普通代码内容/高亮、空代码、长行、语言变更",
+      "scene": "code",
+      "entry": "插入表格；公开按钮进入实际表格/代码上下文，再操作Ribbon",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["code-context"]
+    },
+    {
+      "id": "MD-041",
+      "requirement": "数学公式：正常/空/无效LaTeX、源码编辑同步预览",
+      "scene": "diagrams",
+      "entry": "真实公式与图表；diagram-error为固定无效源码",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-042",
+      "requirement": "Mermaid：首次绘制/loading、成功、无效源码、编辑防抖",
+      "scene": "diagrams",
+      "entry": "真实公式与图表；diagram-error为固定无效源码",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-043",
+      "requirement": "WaveDrom：同上；大图/横长图在窄列内滚",
+      "scene": "diagrams",
+      "entry": "真实公式与图表；diagram-error为固定无效源码",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-044",
+      "requirement": "导出当前未保存正文+已保存属性；pending防连点/失败",
+      "scene": "export",
+      "entry": "笔记/审阅分类；属性/导出/块操作/AI预填；手动完成或失败IO",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-045",
+      "requirement": "块操作：上移/下移（首/末禁用）、复制、删除",
+      "scene": "body",
+      "entry": "笔记/审阅分类；属性/导出/块操作/AI预填；手动完成或失败IO",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-046",
+      "requirement": "属性弹层：有services显示、loading、读取成功/空属性",
+      "scene": "frontmatter",
+      "entry": "笔记/审阅分类；属性/导出/块操作/AI预填；手动完成或失败IO",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["frontmatter-panel"]
+    },
+    {
+      "id": "MD-047",
+      "requirement": "属性编辑：7行YAML、长行、多行、读失败错误",
+      "scene": "frontmatter-error",
+      "entry": "笔记/审阅分类；属性/导出/块操作/AI预填；手动完成或失败IO",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["frontmatter-panel", "frontmatter-error"]
+    },
+    {
+      "id": "MD-048",
+      "requirement": "保存属性：pending/成功关闭/失败保稿重试/冲突原因",
+      "scene": "frontmatter-save",
+      "entry": "笔记/审阅分类；属性/导出/块操作/AI预填；手动完成或失败IO",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["frontmatter-panel", "frontmatter-error"]
+    },
+    {
+      "id": "MD-049",
+      "requirement": "AI总结全文/润色/整理排版：空文/无host禁用，全文/选区指令",
+      "scene": "body",
+      "entry": "笔记/审阅分类；属性/导出/块操作/AI预填；手动完成或失败IO",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-050",
+      "requirement": "拼写检查默认开、关、换文档、开关后内链仍能点",
+      "scene": "body",
+      "entry": "笔记/审阅分类；属性/导出/块操作/AI预填；手动完成或失败IO",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-051",
+      "requirement": "查找入口按钮与Ctrl/Cmd+F，其他分类/折叠状态下也可打开",
+      "scene": "find",
+      "entry": "点击查找/Ctrl+F；真实查找替换栏，输入和键盘关闭",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["find-panel"]
+    },
+    {
+      "id": "MD-052",
+      "requirement": "查找空串—/无匹配/单个/多个；当前高亮与计数",
+      "scene": "find",
+      "entry": "点击查找/Ctrl+F；真实查找替换栏，输入和键盘关闭",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["find-panel"]
+    },
+    {
+      "id": "MD-053",
+      "requirement": "替换输入/替换当前/全部替换/无匹配禁用",
+      "scene": "find",
+      "entry": "点击查找/Ctrl+F；真实查找替换栏，输入和键盘关闭",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["find-panel"]
+    },
+    {
+      "id": "MD-054",
+      "requirement": "关闭查找：按钮/Escape；重新打开保query/options、替换局部state重置",
+      "scene": "find",
+      "entry": "点击查找/Ctrl+F；真实查找替换栏，输入和键盘关闭",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["find-panel"]
+    },
+    {
+      "id": "MD-055",
+      "requirement": "`[[` 触发：空query、文字过滤、当前笔记排除、长query不再匹配",
+      "scene": "wiki",
+      "entry": "输入[[，切wiki-loading/error/empty/long；导航仅日志，真实守卫另验",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["wiki-long"]
+    },
+    {
+      "id": "MD-056",
+      "requirement": "`[[` 候选：loading/结果/空/失败、长同名标题",
+      "scene": "wiki",
+      "entry": "输入[[，切wiki-loading/error/empty/long；导航仅日志，真实守卫另验",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["wiki-long"]
+    },
+    {
+      "id": "MD-057",
+      "requirement": "`[[` 插入/取消后继续写、换query、快速异步竞态",
+      "scene": "wiki",
+      "entry": "输入[[，切wiki-loading/error/empty/long；导航仅日志，真实守卫另验",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-058",
+      "requirement": "正文点内部笔记链接→宿主导航/未保存守卫/返回",
+      "scene": "wiki",
+      "entry": "输入[[，切wiki-loading/error/empty/long；导航仅日志，真实守卫另验",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-059",
+      "requirement": "`/`菜单：空/按英文id/中文label/keywords过滤、无匹配",
+      "scene": "slash",
+      "entry": "输入/；无匹配入口；真实菜单，短高width/height；图片选择用户UI",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["slash-short"]
+    },
+    {
+      "id": "MD-060",
+      "requirement": "Slash 所有既有项：正文/H1/H2/H3/项目/编号/任务/引用/代码/表格/分隔/公式/Mermaid/WaveDrom/图片",
+      "scene": "slash",
+      "entry": "输入/；无匹配入口；真实菜单，短高width/height；图片选择用户UI",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["slash-short"]
+    },
+    {
+      "id": "MD-061",
+      "requirement": "Slash 图片：原生picker取消/抛错；上传成功/失败；等待中人工/Agent改正文",
+      "scene": "slash",
+      "entry": "输入/；无匹配入口；真实菜单，短高width/height；图片选择用户UI",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-062",
+      "requirement": "Slash近底/近顶/短高窗口/正文滚动；`[[`同步定位",
+      "scene": "slash",
+      "entry": "输入/；无匹配入口；真实菜单，短高width/height；图片选择用户UI",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["wiki-long", "slash-short"]
+    },
+    {
+      "id": "MD-063",
+      "requirement": ">=2位置跨度的非空文字选区显示BubbleMenu；单光标/代码块/只读不显示",
+      "scene": "inline",
+      "entry": "选中正文文字；真实选区BubbleMenu与改写宿主Promise",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["inline-light-wide"]
+    },
+    {
+      "id": "MD-064",
+      "requirement": "改写/翻译/精简/扩写：有/无回调、rewriting禁用、空文本不发",
+      "scene": "inline",
+      "entry": "选中正文文字；真实选区BubbleMenu与改写宿主Promise",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["inline-light-wide"]
+    },
+    {
+      "id": "MD-065",
+      "requirement": "改写结果成功替换、undo；网络失败/没模型提示正文保留",
+      "scene": "inline",
+      "entry": "选中正文文字；真实选区BubbleMenu与改写宿主Promise",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-066",
+      "requirement": "就这段提问",
+      "scene": "inline",
+      "entry": "选中正文文字；真实选区BubbleMenu与改写宿主Promise",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-067",
+      "requirement": "选区浮层多按钮：浅/深、窄列/短高、上缘翻转、滚动",
+      "scene": "inline",
+      "entry": "选中正文文字；真实选区BubbleMenu与改写宿主Promise",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["inline-light-wide", "inline-dark-narrow"]
+    },
+    {
+      "id": "MD-068",
+      "requirement": "Agent开始整篇写作：等待首字、增量字符计数、流式Markdown预览",
+      "scene": "writing",
+      "entry": "开始实际写作流程→发送模拟增量→完成/失败/停止→保留/丢弃；stale与外部取消公开操作",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["writing-partial"]
+    },
+    {
+      "id": "MD-069",
+      "requirement": "停止生成：空草稿、已有部分、等待请求结算",
+      "scene": "writing-stop",
+      "entry": "开始实际写作流程→发送模拟增量→完成/失败/停止→保留/丢弃；stale与外部取消公开操作",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["writing-partial"]
+    },
+    {
+      "id": "MD-070",
+      "requirement": "中断/失败有部分：丢弃草稿/保留部分（单primary）",
+      "scene": "writing-partial",
+      "entry": "开始实际写作流程→发送模拟增量→完成/失败/停止→保留/丢弃；stale与外部取消公开操作",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["writing-partial"]
+    },
+    {
+      "id": "MD-071",
+      "requirement": "草稿期间人工编辑/undo：stale警告、保留禁用、只可丢弃",
+      "scene": "writing-stale",
+      "entry": "开始实际写作流程→发送模拟增量→完成/失败/停止→保留/丢弃；stale与外部取消公开操作",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-072",
+      "requirement": "外部Agent整轮取消/切文档/卸载：迟到流/待确认全部销毁",
+      "scene": "writing-stop",
+      "entry": "开始实际写作流程→发送模拟增量→完成/失败/停止→保留/丢弃；stale与外部取消公开操作",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-073",
+      "requirement": "完整草稿成功：同Agent句柄提交到正文、可保存与整轮undo",
+      "scene": "writing",
+      "entry": "开始实际写作流程→发送模拟增量→完成/失败/停止→保留/丢弃；stale与外部取消公开操作",
+      "verification": "source-reviewed; full-package-regressions; interactive-demo-available; not-exhaustive-browser-execution",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": []
+    },
+    {
+      "id": "MD-074",
+      "requirement": "草稿超长/错误超长/窄与短高：停止或丢弃/保留始终可达",
+      "scene": "writing",
+      "entry": "开始实际写作流程→发送模拟增量→完成/失败/停止→保留/丢弃；stale与外部取消公开操作",
+      "verification": "source-reviewed; full-package-regressions; representative-browser-evidence",
+      "boundary": "各ID包含多状态；截图与回归证据不等于每一状态逐次GUI验收。原生上传/下载、真实模型、真实写盘与离开宿主守卫另验。",
+      "captures": ["writing-partial"]
+    }
+  ],
+  "browserEvidence": "checks/browser-geometry.json; acceptance.md; manifest.json"
+}

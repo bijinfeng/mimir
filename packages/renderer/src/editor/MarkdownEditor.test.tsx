@@ -370,6 +370,40 @@ describe('列表与缩进', () => {
 })
 
 describe('链接', () => {
+  it('空选区的地址框 Enter 与禁用的应用按钮一致，不制造链接或关闭面板', () => {
+    const { host, editor } = mount('一段文字\n')
+    const panel = openMenu(host, '链接')
+    const input = panel.querySelector<HTMLInputElement>('[aria-label="链接地址"]')!
+    act(() => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(
+        input,
+        'https://example.com',
+      )
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    act(() => input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })))
+    expect(markdown(editor)).toBe('一段文字')
+    expect(editor.isActive('link')).toBe(false)
+    expect(panel.isConnected).toBe(true)
+    expect(panel.querySelector<HTMLButtonElement>('[aria-label^="应用链接"]')?.disabled).toBe(true)
+  })
+
+  it('已有链接留空地址按 Enter 不会绕过禁用按钮删除链接', () => {
+    const { host, editor } = mount('前 [链](https://old.a) 后\n')
+    cursorAt(editor, '链')
+    const panel = openMenu(host, '链接')
+    const input = panel.querySelector<HTMLInputElement>('[aria-label="链接地址"]')!
+    act(() => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(input, '')
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+    })
+    act(() => input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })))
+    expect(markdown(editor)).toBe('前 [链](https://old.a) 后')
+    expect(panel.isConnected).toBe(true)
+    click(panel.querySelector<HTMLButtonElement>('[aria-label="移除链接"]')!)
+    expect(markdown(editor)).toBe('前 链 后')
+  })
+
   it('选中文字 + 面板里填地址 → 真的写成链接', () => {
     const { host, editor } = mount('一段文字\n')
     selectRange(editor, 1, 3)

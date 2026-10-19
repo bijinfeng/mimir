@@ -1,0 +1,90 @@
+{
+  "date": "2026-10-20",
+  "files": [
+    {
+      "path": "packages/office/src/editors/MarkdownEditor.tsx",
+      "sha256": "1b649d4af5427034d381198f5a58b94f32d2ee4328072867882eba3515577829",
+      "lines": 2002
+    },
+    {
+      "path": "packages/office/src/editors/InlineToolbar.tsx",
+      "sha256": "10657ba76d777333627f209d9b4216ad2cc157cea2a66bdb72d11596f39cf0e4",
+      "lines": 147
+    },
+    {
+      "path": "packages/office/src/editors/NoteLinkPicker.tsx",
+      "sha256": "7131899832c041fb8014d173e21303bea670113689fcb16008e63431ded7b557",
+      "lines": 64
+    },
+    {
+      "path": "packages/office/src/editors/MarkdownWritingPreview.tsx",
+      "sha256": "d2135ebb79195a9ac761e738771a822ba682063735120eb8c2d02e0459d3f50b",
+      "lines": 200
+    },
+    {
+      "path": "packages/office/src/editors/CompactToolbar.tsx",
+      "sha256": "616537059b202af3c2a37d208a4f3b7cd8a68788137fcd9657f1c9f576634523",
+      "lines": 249
+    },
+    {
+      "path": "packages/office/src/editors/compact-toolbar.css",
+      "sha256": "ab15ed591401edb43b53916c5a20635eb36e7530790347f9cd6d295e353433a9",
+      "lines": 226
+    },
+    {
+      "path": "packages/office/src/editors/editors.css",
+      "sha256": "9b446ff9728c256ed57097e13a6078b25d443d64362bdc54e9700865e0274f18",
+      "lines": 1089
+    },
+    {
+      "path": "packages/office/src/editors/markdown-slash.ts",
+      "sha256": "c74727c4a7469bd0fc381e3e4f703377bfa7d9a658347322345fc81a9ce1a2a9",
+      "lines": 248
+    },
+    {
+      "path": "packages/office/src/editors/markdown-format.ts",
+      "sha256": "0e969964b76d4c189b9a0cce181942b72a288b34d2bc8596ec19a17dd15fbd55",
+      "lines": 525
+    },
+    {
+      "path": "packages/office/src/editors/note-links.ts",
+      "sha256": "8b7a8ef3dac096ddf1199bf3427b56a03c11347eb79026b08ccd025a0aafe2ee",
+      "lines": 58
+    },
+    {
+      "path": "packages/office/src/shell/EditorShell.tsx",
+      "sha256": "dfd9033878e28660a0a41c0074a1e32eaf60d8a765dd7006a782993b923e3c4e",
+      "lines": 2546
+    },
+    {
+      "path": "packages/office/src/shell/shell.css",
+      "sha256": "ef000dab5bcb473c3b25bf9c686c15388817aa876acd2ddf0d74e08b5040808f",
+      "lines": 1170
+    },
+    {
+      "path": "packages/renderer/src/components/NoteEditor.tsx",
+      "sha256": "e1417b0fc07c05470038a256e1b8f1aa50a8fe3e287d8f8f251d963b04db4ea8",
+      "lines": 258
+    },
+    {
+      "path": "packages/renderer/src/components/ContentTypography.style.ts",
+      "sha256": "5da9fa7a3de2297ba3fecd9bb50c32e35559affe25f2a73d897fe65d2d27c349",
+      "lines": 351
+    },
+    {
+      "path": "packages/renderer/src/editor/math-block.ts",
+      "sha256": "547f827700776d2c681bfcb9c1249d95c07c244b8044b487e731d9f9bb4e100c",
+      "lines": 93
+    },
+    {
+      "path": "packages/renderer/src/editor/diagram-code-block.ts",
+      "sha256": "9f4d4adafd0f6acd04b2167f73fa8d4e07f6fa9288c2f3a2d7f98f0377590d39",
+      "lines": 82
+    },
+    {
+      "path": "packages/renderer/src/editor/extensions.ts",
+      "sha256": "ef5d065f3d155c9dfb34968a0b7d364f642e06cb074e86babac299943943a745",
+      "lines": 49
+    }
+  ]
+}

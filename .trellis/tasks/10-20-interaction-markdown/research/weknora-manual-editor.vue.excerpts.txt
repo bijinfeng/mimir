@@ -1,0 +1,98 @@
+# Fixed-source excerpts; numbers are ORIGINAL source lines, not this excerpt line count.
+
+## Original lines 92–96
+92: // ---------- view mode ----------
+93: type ViewMode = 'edit' | 'split' | 'preview'
+94: const VIEW_MODE_STORAGE_KEY = 'manual-editor:view-mode'
+95: /** Below this the two panes would each be too narrow to write or read in. */
+96: const SPLIT_MIN_WIDTH = 820
+
+## Original lines 108–118
+108: const viewMode = ref<ViewMode>(readStoredViewMode())
+109: const editorAreaRef = ref<HTMLElement | null>(null)
+110: const editorAreaWidth = ref(SPLIT_MIN_WIDTH)
+111: const canSplit = computed(() => editorAreaWidth.value >= SPLIT_MIN_WIDTH)
+112: /**
+113:  * Narrow-layout switch, driven from the same measurement rather than a
+114:  * `@container` query: this project's scoped-style pipeline drops `@container`
+115:  * blocks, so those rules never reach the page.
+116:  */
+117: const NARROW_WIDTH = 620
+118: const isNarrow = computed(() => editorAreaWidth.value > 0 && editorAreaWidth.value < NARROW_WIDTH)
+
+## Original lines 375–407
+375: const toolbarGroups = computed<ToolbarGroup[]>(() => {
+376:   const headingMenu: ToolbarMenu = {
+377:     key: 'heading',
+378:     label: t('manualEditor.toolbar.headingGroup'),
+379:     options: [
+380:       { content: t('manualEditor.toolbar.heading1'), value: 'h1' },
+381:       { content: t('manualEditor.toolbar.heading2'), value: 'h2' },
+382:       { content: t('manualEditor.toolbar.heading3'), value: 'h3' },
+383:     ],
+384:     actions: {
+385:       h1: () => applyHeading(1),
+386:       h2: () => applyHeading(2),
+387:       h3: () => applyHeading(3),
+388:     },
+389:   }
+390: 
+391:   const insertMenu: ToolbarMenu = {
+392:     key: 'insert',
+393:     label: t('manualEditor.toolbar.insertGroup'),
+394:     options: [
+395:       { content: t('manualEditor.toolbar.blockquote'), value: 'quote' },
+396:       { content: t('manualEditor.toolbar.codeBlock'), value: 'codeblock' },
+397:       { content: t('manualEditor.toolbar.table'), value: 'table' },
+398:       { content: t('manualEditor.toolbar.image'), value: 'image' },
+399:       { content: t('manualEditor.toolbar.horizontalRule'), value: 'hr' },
+400:     ],
+401:     actions: {
+402:       quote: applyBlockquote,
+403:       codeblock: insertCodeBlock,
+404:       table: insertTable,
+405:       image: insertImage,
+406:       hr: insertHorizontalRule,
+407:     },
+
+## Original lines 410–431
+410:   return [
+411:     {
+412:       key: 'format',
+413:       buttons: [
+414:         { key: 'bold', icon: 'textformat-bold', tooltip: t('manualEditor.toolbar.bold'), action: () => wrapSelection('**', '**', t('manualEditor.placeholders.bold')) },
+415:         { key: 'italic', icon: 'textformat-italic', tooltip: t('manualEditor.toolbar.italic'), action: () => wrapSelection('*', '*', t('manualEditor.placeholders.italic')) },
+416:         { key: 'strike', icon: 'textformat-strikethrough', tooltip: t('manualEditor.toolbar.strike'), action: () => wrapSelection('~~', '~~', t('manualEditor.placeholders.strike')) },
+417:         { key: 'inline-code', icon: 'code', tooltip: t('manualEditor.toolbar.inlineCode'), action: () => wrapSelection('`', '`', t('manualEditor.placeholders.inlineCode')) },
+418:       ],
+419:     },
+420:     { key: 'heading', buttons: [], menu: headingMenu },
+421:     {
+422:       key: 'list',
+423:       buttons: [
+424:         { key: 'ul', icon: 'view-list', tooltip: t('manualEditor.toolbar.bulletList'), action: applyBulletList },
+425:         { key: 'ol', icon: 'list-numbered', tooltip: t('manualEditor.toolbar.orderedList'), action: applyOrderedList },
+426:         { key: 'task', icon: 'check-rectangle', tooltip: t('manualEditor.toolbar.taskList'), action: applyTaskList },
+427:       ],
+428:     },
+429:     {
+430:       key: 'insert',
+431:       buttons: [
+
+## Original lines 1013–1028
+1013:         <div class="editor-toolbar">
+1014:           <div class="editor-toolbar__format">
+1015:             <template v-for="(group, groupIndex) in toolbarGroups" :key="group.key">
+1016:               <div class="toolbar-group">
+1017:                 <template v-for="btn in group.buttons" :key="btn.key">
+1018:                   <t-tooltip :content="btn.tooltip" placement="top">
+1019:                     <button
+1020:                       type="button"
+1021:                       class="toolbar-btn"
+1022:                       :aria-label="btn.tooltip"
+1023:                       @mousedown.prevent
+1024:                       @click="handleToolbarAction(btn.action)"
+1025:                     >
+1026:                       <t-icon :name="btn.icon" size="18px" />
+1027:                     </button>
+1028:                   </t-tooltip>

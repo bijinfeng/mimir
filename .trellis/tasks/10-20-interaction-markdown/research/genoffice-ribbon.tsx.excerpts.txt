@@ -1,0 +1,113 @@
+# Fixed-source excerpts; numbers are ORIGINAL source lines, not this excerpt line count.
+
+## Original lines 57–69
+57: type BlockStyle = 'paragraph' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' | 'quote' | 'codeBlock'
+58: 
+59: const STYLE_LABEL: Record<BlockStyle, StringKey> = {
+60:   paragraph: 'styleParagraph',
+61:   h1: 'styleH1',
+62:   h2: 'styleH2',
+63:   h3: 'styleH3',
+64:   h4: 'styleH4',
+65:   h5: 'styleH5',
+66:   h6: 'styleH6',
+67:   quote: 'styleQuote',
+68:   codeBlock: 'styleCodeBlock',
+69: }
+
+## Original lines 260–270
+260:       {/* quick-access row above the toolbar (save / undo / redo / autosave), same as the docs QAT row */}
+261:       <div className="ribbon-tabs">
+262:         <button
+263:           type="button"
+264:           className="qa-btn"
+265:           data-tip={t('save')}
+266:           aria-label={t('save')}
+267:           disabled={off || !dirty}
+268:           onMouseDown={(e) => e.preventDefault()}
+269:           onClick={onSave}
+270:         >
+
+## Original lines 368–391
+368:         <div className="ribbon-group">
+369:           <div className="ribbon-group-items">
+370:             <Dropdown
+371:               className="rb-style"
+372:               value={state?.style ?? 'paragraph'}
+373:               disabled={off}
+374:               options={(Object.keys(STYLE_LABEL) as BlockStyle[]).map((s) => ({
+375:                 value: s,
+376:                 label: t(STYLE_LABEL[s]),
+377:               }))}
+378:               onPick={(s) => editor && applyBlockStyle(editor, s)}
+379:             />
+380:           </div>
+381:         </div>
+382: 
+383:         <div className="rb-sep" />
+384: 
+385:         <div className="ribbon-group">
+386:           <div className="ribbon-group-items">
+387:             <IconBtn
+388:               title={t('bold')}
+389:               active={state?.bold}
+390:               disabled={off}
+391:               onClick={() => toggleStyle(editor, 'bold')}
+
+## Original lines 446–470
+446:         <div className="ribbon-group">
+447:           <div className="ribbon-group-items">
+448:             <IconBtn
+449:               title={t('bulletList')}
+450:               active={state?.bullet}
+451:               disabled={off}
+452:               onClick={() => toggleList(editor, 'bullet')}
+453:             >
+454:               <IconBullets size={ICON} />
+455:             </IconBtn>
+456:             <IconBtn
+457:               title={t('orderedList')}
+458:               active={state?.ordered}
+459:               disabled={off}
+460:               onClick={() => toggleList(editor, 'ordered')}
+461:             >
+462:               <IconNumbered size={ICON} />
+463:             </IconBtn>
+464:             <IconBtn
+465:               title={t('taskList')}
+466:               active={state?.task}
+467:               disabled={off}
+468:               onClick={() => toggleList(editor, 'task')}
+469:             >
+470:               <IconTaskList size={ICON} />
+
+## Original lines 477–505
+477:         <div className="ribbon-group">
+478:           <div className="ribbon-group-items">
+479:             <IconBtn
+480:               title={t('insertTable')}
+481:               disabled={off}
+482:               onClick={() => editor && uiOp(editor, { op: 'insertTable', after: 'selection' })}
+483:             >
+484:               <IconTable size={ICON} />
+485:             </IconBtn>
+486:             <IconBtn
+487:               title={t('insertImage')}
+488:               disabled={off || !imageEnabled}
+489:               onClick={onInsertImage}
+490:             >
+491:               <IconPicture size={ICON} />
+492:             </IconBtn>
+493:             <IconBtn
+494:               title={t('insertHr')}
+495:               disabled={off}
+496:               onClick={() =>
+497:                 editor && uiOp(editor, { op: 'insertHorizontalRule', after: 'selection' })
+498:               }
+499:             >
+500:               <IconHr size={ICON} />
+501:             </IconBtn>
+502:           </div>
+503:         </div>
+504: 
+505:         <div className="rb-spacer" />

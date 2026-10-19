@@ -1,0 +1,1131 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Markdown笔记编辑器精修 · 渲染存档</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #f7f8f8;
+        color: #262626;
+        font:
+          14px/1.6 system-ui,
+          sans-serif;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+      button,
+      select {
+        cursor: pointer;
+      }
+      a {
+        color: #007746;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        padding: 18px 24px;
+        background: #fff;
+        border-bottom: 1px solid #e7e9e8;
+      }
+      h1 {
+        font-size: 20px;
+        margin: 0;
+      }
+      header p {
+        margin: 0;
+        color: #595959;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: 260px minmax(0, 1fr);
+        min-height: calc(100vh - 94px);
+      }
+      aside {
+        padding: 16px;
+        background: #fff;
+        border-right: 1px solid #e7e9e8;
+      }
+      input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #bfc5c1;
+        border-radius: 6px;
+      }
+      nav {
+        display: grid;
+        gap: 4px;
+        margin-top: 12px;
+        max-height: calc(100vh - 190px);
+        overflow: auto;
+      }
+      nav button {
+        border: 0;
+        background: transparent;
+        text-align: left;
+        padding: 8px 10px;
+        border-radius: 6px;
+        color: inherit;
+      }
+      nav button:hover,
+      nav button[aria-current='true'] {
+        background: #eff0f0;
+      }
+      nav small {
+        display: block;
+        color: #6b6b6b;
+      }
+      main {
+        min-width: 0;
+        padding: 20px;
+      }
+      .controls {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      select {
+        padding: 6px 10px;
+        border: 1px solid #bfc5c1;
+        background: white;
+        border-radius: 6px;
+      }
+      #description {
+        margin: 0 0 16px;
+        color: #595959;
+      }
+      #screens {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+        align-items: start;
+      }
+      figure {
+        margin: 0;
+        min-width: 0;
+      }
+      figcaption {
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      .image-scroll {
+        overflow: auto;
+        max-height: 80vh;
+        background: #fff;
+        border: 1px solid #e7e9e8;
+      }
+      img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      #screens[data-original='true'] img {
+        width: auto;
+        max-width: none;
+      }
+      #screens[data-mode='before'] figure:last-child,
+      #screens[data-mode='after'] figure:first-child {
+        display: none;
+      }
+      #screens:not([data-mode='compare']) {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .missing {
+        padding: 24px;
+        color: #595959;
+      }
+      :focus-visible {
+        outline: 2px solid #00a35f;
+        outline-offset: 2px;
+      }
+      @media (max-width: 760px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+        aside {
+          border-right: 0;
+          border-bottom: 1px solid #e7e9e8;
+        }
+        nav {
+          max-height: 170px;
+        }
+        main {
+          padding: 16px;
+        }
+        #screens {
+          grid-template-columns: 1fr;
+        }
+        header {
+          padding: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Markdown 笔记编辑器精修</h1>
+      <p>真实组件前后渲染存档 · 基线 46a2120</p>
+    </header>
+    <div class="layout">
+      <aside>
+        <input id="filter" aria-label="筛选交互场景" placeholder="搜索场景或 MD 编号" />
+        <nav id="navigation" aria-label="交互场景"></nav>
+      </aside>
+      <main>
+        <div class="controls">
+          <label
+            >查看
+            <select id="mode">
+              <option value="compare">前后对比</option>
+              <option value="before">打磨前</option>
+              <option value="after">打磨后</option>
+            </select></label
+          ><label><input id="original" type="checkbox" style="width: auto" /> 原尺寸</label
+          ><a id="demo" href="demo/dist/after/index.html">打开可操作 Demo</a
+          ><a href="acceptance.md">验收记录</a><a href="coverage.json">74 项覆盖清单</a>
+        </div>
+        <p id="description"></p>
+        <div id="screens" data-mode="compare">
+          <figure>
+            <figcaption>打磨前</figcaption>
+            <div class="image-scroll" id="before"></div>
+          </figure>
+          <figure>
+            <figcaption>打磨后</figcaption>
+            <div class="image-scroll" id="after"></div>
+          </figure>
+        </div>
+        <p>
+          截图展示真实组件；Demo
+          的保存、图片、属性和模型服务均为本地模拟。真实产品补充图与隔离场景分开登记，未验证的原生与外部服务见验收记录。
+        </p>
+      </main>
+    </div>
+    <script>
+      const scenes = [
+        {
+          key: 'body-light-wide',
+          label: '正文 · 浅色宽列',
+          scene: 'body',
+          ids: ['MD-001', 'MD-003', 'MD-009'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          before: { file: 'before/body-light-wide.jpg', width: 1265, height: 712 },
+          after: { file: 'after/body-light-wide.jpg', width: 1265, height: 712 },
+        },
+        {
+          key: 'empty-dark-narrow',
+          label: '空白笔记 · 深色窄列',
+          scene: 'empty',
+          ids: ['MD-002', 'MD-007'],
+          fixture: { width: 420, height: 640 },
+          theme: 'dark',
+          before: { file: 'before/empty-dark-narrow.jpg', width: 1280, height: 720 },
+          after: { file: 'after/empty-dark-narrow.jpg', width: 1280, height: 720 },
+        },
+        {
+          key: 'inline-light-wide',
+          label: '选区工具 · 浅色',
+          scene: 'inline',
+          ids: ['MD-063', 'MD-064', 'MD-067'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          before: { file: 'before/inline-light-wide.jpg', width: 1265, height: 712 },
+          after: { file: 'after/inline-light-wide.jpg', width: 1265, height: 712 },
+        },
+        {
+          key: 'inline-dark-narrow',
+          label: '选区工具 · 深色窄列',
+          scene: 'inline',
+          ids: ['MD-067'],
+          fixture: { width: 420, height: 640 },
+          theme: 'dark',
+          before: { file: 'before/inline-dark-narrow.jpg', width: 1280, height: 720 },
+          after: { file: 'after/inline-dark-narrow.jpg', width: 1280, height: 720 },
+        },
+        {
+          key: 'wiki-long',
+          label: '超长笔记候选',
+          scene: 'wiki-long',
+          ids: ['MD-055', 'MD-056', 'MD-062'],
+          fixture: { width: 760, height: 640 },
+          theme: 'light',
+          before: { file: 'before/wiki-long.jpg', width: 1280, height: 720 },
+          after: { file: 'after/wiki-long.jpg', width: 1280, height: 720 },
+        },
+        {
+          key: 'table-context',
+          label: '表格上下文',
+          scene: 'table',
+          ids: ['MD-034', 'MD-038'],
+          fixture: { width: 760, height: 640 },
+          theme: 'light',
+          before: { file: 'before/table-context.jpg', width: 1280, height: 720 },
+          after: { file: 'after/table-context.jpg', width: 1280, height: 720 },
+        },
+        {
+          key: 'code-context',
+          label: '代码上下文',
+          scene: 'code',
+          ids: ['MD-039', 'MD-040'],
+          fixture: { width: 760, height: 640 },
+          theme: 'light',
+          before: { file: 'before/code-context.jpg', width: 1280, height: 720 },
+          after: { file: 'after/code-context.jpg', width: 1280, height: 720 },
+        },
+        {
+          key: 'link-panel',
+          label: '链接 · 地址与笔记检索',
+          scene: 'link',
+          ids: ['MD-023', 'MD-024', 'MD-026', 'MD-027'],
+          fixture: { width: 760, height: 640 },
+          theme: 'light',
+          before: { file: 'before/link-panel.jpg', width: 1280, height: 720 },
+          after: { file: 'after/link-panel.jpg', width: 1280, height: 720 },
+        },
+        {
+          key: 'frontmatter-panel',
+          label: '笔记属性 · 可见字段标签',
+          scene: 'frontmatter',
+          ids: ['MD-046', 'MD-047', 'MD-048'],
+          fixture: { width: 760, height: 640 },
+          theme: 'light',
+          before: { file: 'before/frontmatter-panel.jpg', width: 1280, height: 720 },
+          after: { file: 'after/frontmatter-panel.jpg', width: 1280, height: 720 },
+        },
+        {
+          key: 'insert-table',
+          label: '插入表格 · 行列字段',
+          scene: 'body',
+          ids: ['MD-029', 'MD-030'],
+          fixture: { width: 760, height: 640 },
+          theme: 'light',
+          before: { file: 'before/insert-table.jpg', width: 1280, height: 720 },
+          after: { file: 'after/insert-table.jpg', width: 1280, height: 720 },
+        },
+        {
+          key: 'writing-partial',
+          label: '写作部分失败 · 保留与丢弃',
+          scene: 'writing-partial',
+          ids: ['MD-068', 'MD-069', 'MD-070', 'MD-074'],
+          fixture: { width: 420, height: 640 },
+          theme: 'light',
+          before: { file: 'before/writing-partial.jpg', width: 1280, height: 720 },
+          after: { file: 'after/writing-partial.jpg', width: 1280, height: 720 },
+        },
+        {
+          key: 'find-panel',
+          label: '查找替换 · 匹配计数',
+          scene: 'find',
+          ids: ['MD-051', 'MD-052', 'MD-053', 'MD-054'],
+          fixture: { width: 760, height: 640 },
+          theme: 'light',
+          before: { file: 'before/find-panel.jpg', width: 1280, height: 720 },
+          after: { file: 'after/find-panel.jpg', width: 1280, height: 720 },
+        },
+        {
+          key: 'frontmatter-error',
+          label: '笔记属性 · 窄列读取失败',
+          scene: 'frontmatter-error',
+          ids: ['MD-007', 'MD-008', 'MD-047', 'MD-048'],
+          fixture: { width: 420, height: 640 },
+          theme: 'light',
+          before: { file: 'before/frontmatter-error.jpg', width: 1280, height: 720 },
+          after: { file: 'after/frontmatter-error.jpg', width: 1280, height: 720 },
+        },
+        {
+          key: 'slash-short',
+          label: '斜杠菜单 · 短窗口',
+          scene: 'slash',
+          ids: ['MD-059', 'MD-060', 'MD-062'],
+          fixture: { width: 420, height: 320 },
+          theme: 'light',
+          before: { file: 'before/slash-short.png', width: 420, height: 320 },
+          after: { file: 'after/slash-short.png', width: 420, height: 320 },
+        },
+        {
+          key: 'supplement-before-product-home',
+          label: '真实产品基线 · 正文',
+          scene: 'body',
+          ids: ['MD-001', 'MD-046', 'MD-063'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'dark',
+          before: { file: 'before/product-home.png', width: 1280, height: 720 },
+        },
+        {
+          key: 'supplement-before-product-link',
+          label: '真实产品基线 · 链接',
+          scene: 'body',
+          ids: ['MD-001', 'MD-046', 'MD-063'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'dark',
+          before: { file: 'before/product-link.png', width: 1280, height: 720 },
+        },
+        {
+          key: 'supplement-before-product-properties',
+          label: '真实产品基线 · 属性',
+          scene: 'body',
+          ids: ['MD-001', 'MD-046', 'MD-063'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'dark',
+          before: { file: 'before/product-properties.png', width: 1280, height: 720 },
+        },
+        {
+          key: 'supplement-after-product-properties',
+          label: '真实产品当前 · 属性',
+          scene: 'body',
+          ids: ['MD-001', 'MD-046', 'MD-063'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'dark',
+          after: { file: 'after/product-properties.jpg', width: 1280, height: 720 },
+        },
+        {
+          key: 'supplement-after-product-inline',
+          label: '真实产品当前 · 选区工具',
+          scene: 'body',
+          ids: ['MD-001', 'MD-046', 'MD-063'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'dark',
+          after: { file: 'after/product-inline.jpg', width: 1280, height: 720 },
+        },
+        {
+          key: 'MD-001',
+          label: 'MD-001 · 现有笔记打开：唯一标题/元信息在正文前，编辑正文居中，正文后元信息保持',
+          scene: 'body',
+          ids: ['MD-001'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-002',
+          label: 'MD-002 · 新建空笔记：Placeholder、正文大片空白可点击，首次焦点到末尾',
+          scene: 'empty',
+          ids: ['MD-002'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-003',
+          label: 'MD-003 · 宽列/窄中栏、AI 侧栏开闭、短高、浅/深主题、200% 缩放',
+          scene: 'body',
+          ids: ['MD-003'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-004',
+          label: 'MD-004 · 带 bodySide 的大纲与正文两栏、正文滚到末尾',
+          scene: 'side',
+          ids: ['MD-004'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-005',
+          label: 'MD-005 · 编辑器尚未 ready 的快捷区',
+          scene: 'body',
+          ids: ['MD-005'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-006',
+          label: 'MD-006 · 默认开始/插入/笔记/审阅分类，当前 Tab',
+          scene: 'body',
+          ids: ['MD-006'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-007',
+          label: 'MD-007 · 可用命令直接展示；窄列逐组具名折叠；再窄才命令区局部滚',
+          scene: 'body',
+          ids: ['MD-007'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-008',
+          label: 'MD-008 · 具名折叠组中再次打开段落/链接/表格/属性弹层',
+          scene: 'body',
+          ids: ['MD-008'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-009',
+          label: 'MD-009 · 文档刚打开/无改动；即时保存不可点，状态字数可见',
+          scene: 'body',
+          ids: ['MD-009'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-010',
+          label: 'MD-010 · 输入后 pending、防抖900ms、saving、saved',
+          scene: 'body',
+          ids: ['MD-010'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-011',
+          label: 'MD-011 · 保存失败：长错误、重试、再次失败、最终恢复',
+          scene: 'body',
+          ids: ['MD-011'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-012',
+          label: 'MD-012 · 图片/导出失败：状态行关闭；和保存失败并存时优先级',
+          scene: 'body',
+          ids: ['MD-012'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-013',
+          label: 'MD-013 · 保存中再编辑、离开/切文档/刷新',
+          scene: 'body',
+          ids: ['MD-013'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-014',
+          label: 'MD-014 · Undo/Redo：空历史、编辑后可撤销、redo恢复',
+          scene: 'body',
+          ids: ['MD-014'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-015',
+          label: 'MD-015 · 字数：空文、长文、模型写入、undo后同步',
+          scene: 'body',
+          ids: ['MD-015'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-016',
+          label: 'MD-016 · 段落样式：正文/H1–H6/引用/代码块九种；混合选区',
+          scene: 'body',
+          ids: ['MD-016'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-017',
+          label: 'MD-017 · 加粗/倾斜：关/开、跨选区、缺 mark禁用',
+          scene: 'body',
+          ids: ['MD-017'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-018',
+          label: 'MD-018 · 下划线/删除线/行内代码：开关与方言禁用',
+          scene: 'body',
+          ids: ['MD-018'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-019',
+          label: 'MD-019 · 清除格式：光标/无格式禁用、选中格式可用',
+          scene: 'body',
+          ids: ['MD-019'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-020',
+          label: 'MD-020 · 项目列表/编号列表：当前种类、切换、普通段落',
+          scene: 'body',
+          ids: ['MD-020'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-021',
+          label: 'MD-021 · 任务列表：整张转换、checkbox状态、嵌套禁用说明',
+          scene: 'body',
+          ids: ['MD-021'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-022',
+          label: 'MD-022 · 减少/增加缩进：非列表、首项/最外层、可缩进任务/普通列表',
+          scene: 'body',
+          ids: ['MD-022'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-023',
+          label: 'MD-023 · 链接触发器：选中文字、空光标、已有链接；外部面板打开',
+          scene: 'link',
+          ids: ['MD-023'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-024',
+          label: 'MD-024 · 地址输入、空地址、合法地址、长URL',
+          scene: 'link',
+          ids: ['MD-024'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-025',
+          label: 'MD-025 · 已有链接改地址、移除；空光标应用禁用',
+          scene: 'link',
+          ids: ['MD-025'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-026',
+          label: 'MD-026 · 链接面板“链接到笔记”：初始loading、空结果、最多6条、长标题',
+          scene: 'link',
+          ids: ['MD-026'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-027',
+          label: 'MD-027 · 链接面板查找失败→重输恢复；快速改查询/迟到响应',
+          scene: 'link',
+          ids: ['MD-027'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-028',
+          label: 'MD-028 · 选已有笔记：保留已选显示文字；空光标插标题；已有内链替换',
+          scene: 'link',
+          ids: ['MD-028'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-029',
+          label: 'MD-029 · 插入表格弹层默认3×3、行1–50/列1–12、编辑中间态',
+          scene: 'body',
+          ids: ['MD-029'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-030',
+          label: 'MD-030 · 点击插入：真实含表头表格、单步undo；当前不能插入时disabled',
+          scene: 'body',
+          ids: ['MD-030'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-031',
+          label: 'MD-031 · 插入图片：有上传通道显示、无通道不显示；原生文件picker取消',
+          scene: 'image',
+          ids: ['MD-031'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-032',
+          label: 'MD-032 · 图片上传成功/失败；大图/长alt/断图',
+          scene: 'image',
+          ids: ['MD-032'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-033',
+          label: 'MD-033 · 插入分隔线、数学公式、Mermaid、WaveDrom',
+          scene: 'diagrams',
+          ids: ['MD-033'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-034',
+          label: 'MD-034 · 光标进/出table→表格上下文分类显隐、回默认分类',
+          scene: 'table',
+          ids: ['MD-034'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-035',
+          label: 'MD-035 · 表格菜单：上/下插行、左/右插列、删行/列/表',
+          scene: 'table',
+          ids: ['MD-035'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-036',
+          label: 'MD-036 · 当前列左/中/右对齐，当前项勾选且不可重复',
+          scene: 'table',
+          ids: ['MD-036'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-037',
+          label: 'MD-037 · 第一行设为/取消表头',
+          scene: 'table',
+          ids: ['MD-037'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-038',
+          label: 'MD-038 · 表格正文：长单元格/横宽/checkbox/节点边界与undo',
+          scene: 'table',
+          ids: ['MD-038'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-039',
+          label: 'MD-039 · 光标进/出code→代码块分类与语言Select',
+          scene: 'code',
+          ids: ['MD-039'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-040',
+          label: 'MD-040 · 普通代码内容/高亮、空代码、长行、语言变更',
+          scene: 'code',
+          ids: ['MD-040'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-041',
+          label: 'MD-041 · 数学公式：正常/空/无效LaTeX、源码编辑同步预览',
+          scene: 'diagrams',
+          ids: ['MD-041'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-042',
+          label: 'MD-042 · Mermaid：首次绘制/loading、成功、无效源码、编辑防抖',
+          scene: 'diagrams',
+          ids: ['MD-042'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-043',
+          label: 'MD-043 · WaveDrom：同上；大图/横长图在窄列内滚',
+          scene: 'diagrams',
+          ids: ['MD-043'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-044',
+          label: 'MD-044 · 导出当前未保存正文+已保存属性；pending防连点/失败',
+          scene: 'export',
+          ids: ['MD-044'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-045',
+          label: 'MD-045 · 块操作：上移/下移（首/末禁用）、复制、删除',
+          scene: 'body',
+          ids: ['MD-045'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-046',
+          label: 'MD-046 · 属性弹层：有services显示、loading、读取成功/空属性',
+          scene: 'frontmatter',
+          ids: ['MD-046'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-047',
+          label: 'MD-047 · 属性编辑：7行YAML、长行、多行、读失败错误',
+          scene: 'frontmatter-error',
+          ids: ['MD-047'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-048',
+          label: 'MD-048 · 保存属性：pending/成功关闭/失败保稿重试/冲突原因',
+          scene: 'frontmatter-save',
+          ids: ['MD-048'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-049',
+          label: 'MD-049 · AI总结全文/润色/整理排版：空文/无host禁用，全文/选区指令',
+          scene: 'body',
+          ids: ['MD-049'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-050',
+          label: 'MD-050 · 拼写检查默认开、关、换文档、开关后内链仍能点',
+          scene: 'body',
+          ids: ['MD-050'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-051',
+          label: 'MD-051 · 查找入口按钮与Ctrl/Cmd+F，其他分类/折叠状态下也可打开',
+          scene: 'find',
+          ids: ['MD-051'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-052',
+          label: 'MD-052 · 查找空串—/无匹配/单个/多个；当前高亮与计数',
+          scene: 'find',
+          ids: ['MD-052'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-053',
+          label: 'MD-053 · 替换输入/替换当前/全部替换/无匹配禁用',
+          scene: 'find',
+          ids: ['MD-053'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-054',
+          label: 'MD-054 · 关闭查找：按钮/Escape；重新打开保query/options、替换局部state重置',
+          scene: 'find',
+          ids: ['MD-054'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-055',
+          label: 'MD-055 · `[[` 触发：空query、文字过滤、当前笔记排除、长query不再匹配',
+          scene: 'wiki',
+          ids: ['MD-055'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-056',
+          label: 'MD-056 · `[[` 候选：loading/结果/空/失败、长同名标题',
+          scene: 'wiki',
+          ids: ['MD-056'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-057',
+          label: 'MD-057 · `[[` 插入/取消后继续写、换query、快速异步竞态',
+          scene: 'wiki',
+          ids: ['MD-057'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-058',
+          label: 'MD-058 · 正文点内部笔记链接→宿主导航/未保存守卫/返回',
+          scene: 'wiki',
+          ids: ['MD-058'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-059',
+          label: 'MD-059 · `/`菜单：空/按英文id/中文label/keywords过滤、无匹配',
+          scene: 'slash',
+          ids: ['MD-059'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-060',
+          label:
+            'MD-060 · Slash 所有既有项：正文/H1/H2/H3/项目/编号/任务/引用/代码/表格/分隔/公式/Mermaid/WaveDrom/图片',
+          scene: 'slash',
+          ids: ['MD-060'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-061',
+          label: 'MD-061 · Slash 图片：原生picker取消/抛错；上传成功/失败；等待中人工/Agent改正文',
+          scene: 'slash',
+          ids: ['MD-061'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-062',
+          label: 'MD-062 · Slash近底/近顶/短高窗口/正文滚动；`[[`同步定位',
+          scene: 'slash',
+          ids: ['MD-062'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-063',
+          label: 'MD-063 · >=2位置跨度的非空文字选区显示BubbleMenu；单光标/代码块/只读不显示',
+          scene: 'inline',
+          ids: ['MD-063'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-064',
+          label: 'MD-064 · 改写/翻译/精简/扩写：有/无回调、rewriting禁用、空文本不发',
+          scene: 'inline',
+          ids: ['MD-064'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-065',
+          label: 'MD-065 · 改写结果成功替换、undo；网络失败/没模型提示正文保留',
+          scene: 'inline',
+          ids: ['MD-065'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-066',
+          label: 'MD-066 · 就这段提问',
+          scene: 'inline',
+          ids: ['MD-066'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-067',
+          label: 'MD-067 · 选区浮层多按钮：浅/深、窄列/短高、上缘翻转、滚动',
+          scene: 'inline',
+          ids: ['MD-067'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-068',
+          label: 'MD-068 · Agent开始整篇写作：等待首字、增量字符计数、流式Markdown预览',
+          scene: 'writing',
+          ids: ['MD-068'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-069',
+          label: 'MD-069 · 停止生成：空草稿、已有部分、等待请求结算',
+          scene: 'writing-stop',
+          ids: ['MD-069'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-070',
+          label: 'MD-070 · 中断/失败有部分：丢弃草稿/保留部分（单primary）',
+          scene: 'writing-partial',
+          ids: ['MD-070'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-071',
+          label: 'MD-071 · 草稿期间人工编辑/undo：stale警告、保留禁用、只可丢弃',
+          scene: 'writing-stale',
+          ids: ['MD-071'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-072',
+          label: 'MD-072 · 外部Agent整轮取消/切文档/卸载：迟到流/待确认全部销毁',
+          scene: 'writing-stop',
+          ids: ['MD-072'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-073',
+          label: 'MD-073 · 完整草稿成功：同Agent句柄提交到正文、可保存与整轮undo',
+          scene: 'writing',
+          ids: ['MD-073'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+        {
+          key: 'MD-074',
+          label: 'MD-074 · 草稿超长/错误超长/窄与短高：停止或丢弃/保留始终可达',
+          scene: 'writing',
+          ids: ['MD-074'],
+          fixture: { width: 1100, height: 760 },
+          theme: 'light',
+          detail: true,
+        },
+      ]
+      const byId = (id) => document.getElementById(id)
+      let current
+      function choose(key) {
+        current = scenes.find((s) => s.key === key) || scenes[0]
+        if (!current) return
+        history.replaceState(null, '', '#' + encodeURIComponent(current.key))
+        byId('description').textContent = current.label + ' · ' + current.ids.join(' / ')
+        byId('demo').href =
+          'demo/dist/after/index.html?scene=' +
+          encodeURIComponent(current.scene) +
+          '&prepare=1&theme=' +
+          current.theme +
+          '&width=' +
+          current.fixture.width +
+          '&height=' +
+          current.fixture.height
+        for (const side of ['before', 'after']) {
+          const host = byId(side)
+          host.replaceChildren()
+          host.classList.remove('missing')
+          const data = current[side]
+          if (data) {
+            const img = new Image()
+            img.src = data.file
+            img.alt = current.label + ' ' + (side === 'before' ? '打磨前' : '打磨后')
+            host.append(img)
+          } else {
+            host.textContent = current.detail
+              ? '此项请打开实际组件 Demo；覆盖与未验证边界见 acceptance.md 和 coverage.json。'
+              : '真实产品补充证据，未配对'
+            host.classList.add('missing')
+          }
+        }
+        for (const button of byId('navigation').children)
+          button.setAttribute('aria-current', String(button.dataset.key === current.key))
+      }
+      function list() {
+        const q = byId('filter').value.toLowerCase()
+        byId('navigation').replaceChildren()
+        for (const s of scenes.filter((s) =>
+          (s.label + s.key + s.ids.join(' ')).toLowerCase().includes(q),
+        )) {
+          const b = document.createElement('button')
+          b.dataset.key = s.key
+          b.textContent = s.label
+          const small = document.createElement('small')
+          small.textContent = s.ids.join(' · ')
+          b.append(small)
+          b.onclick = () => choose(s.key)
+          b.setAttribute('aria-current', String(current?.key === s.key))
+          byId('navigation').append(b)
+        }
+      }
+      byId('filter').oninput = list
+      byId('mode').onchange = () => (byId('screens').dataset.mode = byId('mode').value)
+      byId('original').onchange = () =>
+        (byId('screens').dataset.original = String(byId('original').checked))
+      list()
+      choose(decodeURIComponent(location.hash.slice(1)))
+    </script>
+  </body>
+</html>

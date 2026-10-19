@@ -1,0 +1,108 @@
+[
+  {
+    "stage": "420x320",
+    "focusedEditor": true,
+    "panel": {
+      "bottom": 262.96875,
+      "height": 254.96875,
+      "left": 20.34375,
+      "right": 236.34375,
+      "top": 8,
+      "width": 216,
+      "x": 20.34375,
+      "y": 8
+    },
+    "scrollTop": 0,
+    "viewport": {
+      "h": 320,
+      "w": 420
+    }
+  },
+  {
+    "stage": "14-down",
+    "focusedEditor": true,
+    "panel": {
+      "bottom": 312,
+      "height": 304,
+      "left": 20.34375,
+      "right": 236.34375,
+      "top": 8,
+      "width": 216,
+      "x": 20.34375,
+      "y": 8
+    },
+    "scrollTop": 61,
+    "viewport": {
+      "h": 320,
+      "w": 420
+    }
+  },
+  {
+    "stage": "resized-760x640",
+    "focusedEditor": true,
+    "panel": {
+      "bottom": 312,
+      "height": 304,
+      "left": 20.34375,
+      "right": 236.34375,
+      "top": 8,
+      "width": 216,
+      "x": 20.34375,
+      "y": 8
+    },
+    "scrollTop": 61,
+    "viewport": {
+      "h": 640,
+      "w": 760
+    }
+  },
+  {
+    "stage": "last-item-visible",
+    "active": {
+      "bottom": 312,
+      "height": 24,
+      "left": 25.34375,
+      "right": 216.34375,
+      "top": 288,
+      "width": 191,
+      "x": 25.34375,
+      "y": 288
+    },
+    "panel": {
+      "bottom": 312,
+      "height": 304,
+      "left": 20.34375,
+      "right": 236.34375,
+      "top": 8,
+      "width": 216,
+      "x": 20.34375,
+      "y": 8
+    },
+    "scrollTop": 61,
+    "text": "图片",
+    "viewport": {
+      "h": 320,
+      "w": 420
+    }
+  },
+  {
+    "stage": "final-insert-table",
+    "viewport": [1280, 720],
+    "fixture": [760, 640],
+    "menuWidth": 280,
+    "clientWidth": 278,
+    "scrollWidth": 278,
+    "overflowDescendants": [],
+    "rowField": {
+      "x": 297,
+      "y": 136.125,
+      "width": 109
+    },
+    "columnField": {
+      "x": 434,
+      "y": 136.125,
+      "width": 109
+    },
+    "evidence": "after/insert-table.jpg"
+  }
+]

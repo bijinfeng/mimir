@@ -1,8 +1,10 @@
 import { Button } from 'antd'
+import type { Editor } from '@tiptap/core'
+import { MarkdownSuggestionPanel } from './MarkdownSuggestionPanel.js'
 
 interface Props {
-  left: number
-  top: number
+  editor: Editor
+  anchor: number
   items: Array<{ id: string; title: string }>
   selected: number
   pending: boolean
@@ -27,19 +29,25 @@ export function NoteLinkOption({ title, selected, onClick }: NoteLinkOptionProps
       onMouseDown={(event) => event.preventDefault()}
       onClick={onClick}
     >
-      {title}
+      <span className="me-note-link-picker__title" title={title}>
+        {title}
+      </span>
     </Button>
   )
 }
 
 /** `[[` 候选面板；命令输入仍留在正文编辑器里。 */
-export function NoteLinkPicker({ left, top, items, selected, pending, error, onPick }: Props) {
+export function NoteLinkPicker({ editor, anchor, items, selected, pending, error, onPick }: Props) {
   return (
-    <div
+    <MarkdownSuggestionPanel
+      editor={editor}
+      anchor={anchor}
+      width={280}
+      maxHeight={180}
+      selected={selected}
       className="me-note-link-picker"
       role="listbox"
-      aria-label="链接到笔记"
-      style={{ left, top }}
+      label="链接到笔记"
     >
       {pending ? (
         <div className="me-note-link-picker__hint">正在查找笔记…</div>
@@ -59,6 +67,6 @@ export function NoteLinkPicker({ left, top, items, selected, pending, error, onP
           />
         ))
       )}
-    </div>
+    </MarkdownSuggestionPanel>
   )
 }

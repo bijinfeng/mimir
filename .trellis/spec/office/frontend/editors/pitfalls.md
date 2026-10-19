@@ -131,3 +131,8 @@ session.view().slides()闭包会暴露原地替换后的数组，宿主重解析
 手动引用使用 `DocxReferencesExtension` 的运行时根属性 `mimirReferenceSources`；来源和新 CITATION 必须在同一 PM transaction 中写入，不能另存 React 状态而脱离正文 history/dirty/version。保存由 `docxReferenceSaveOptions` 转为原生 bibliography customXml；编辑已知字段时只补对应子元素，不能重建整个来源而丢掉 DOI、多作者或其他未建模信息。源属性为 null 时保留会话原件，撤销后保存同样能移除本轮新建的 customXml 部件。
 
 目录更新仅替换能完整识别的保护字段，忽略段落 pPr 内的制表位但识别正文的 tab/文本；域外文字、嵌入对象、书签/批注或不完整字段必须拒绝，不能吞掉旁边内容。目录/索引原生页码由 Word 更新；UI 不填虚假页码。NodeSelection 的段后插入边界取 `$from.index(0)`，其 `$to` 已位于下一个块，误用会把图片题注插到下一段后。回归见 `docx-references.test.ts` 与 `DocxReferencesControls.test.tsx` 的原生保存、完整 entry 历史、超链接目录及图片选择。
+
+
+### Markdown 光标候选浮层的测位与滚动
+
+Slash 与笔记候选使用实际光标坐标和 visualViewport 边界测量，按可用空间翻转并限制高度。除 resize、捕获阶段 scroll、候选内容变更外，还须订阅编辑器 selectionUpdate/update；同一组候选下移动光标不会改变候选 DOM，不能只依赖尺寸观察。活动项只调整候选容器 scrollTop，避免 scrollIntoView 带动正文和光标滚动。回归见 MarkdownSuggestionPanel.test.tsx 的短视口、resize/scroll、同候选移动/输入/撤销与列表内部滚动。

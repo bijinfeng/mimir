@@ -91,6 +91,8 @@ import {
   ToolbarMenu,
   ToolbarMenuItemRow,
   ToolbarNumberField,
+  ToolbarPropertyForm,
+  ToolbarMenuFields,
   ToolbarSelect,
   ToolbarTextButton,
   ToolbarTextArea,
@@ -103,6 +105,7 @@ import {
 import { CompactToolbar } from './CompactToolbar.js'
 import { InlineToolbar, type RewriteActionName } from './InlineToolbar.js'
 import { NoteLinkOption, NoteLinkPicker } from './NoteLinkPicker.js'
+import { MarkdownSuggestionPanel } from './MarkdownSuggestionPanel.js'
 import {
   insertInternalNoteLink,
   linkExistingNote,
@@ -496,11 +499,6 @@ export function MarkdownEditor({
     error: string | null
   }>({ token: '', items: [], error: null })
   const [pickerSelection, setPickerSelection] = useState({ token: '', index: 0 })
-  const [pickerPosition, setPickerPosition] = useState<{
-    token: string
-    left: number
-    top: number
-  } | null>(null)
   const [closedPickerToken, setClosedPickerToken] = useState<string | null>(null)
   const closePickerRef = useRef<() => void>(() => {})
   const pickerRef = useRef<{
@@ -654,14 +652,6 @@ export function MarkdownEditor({
     if (!editor || !wikiToken || !pickerVisible || !searchNotes) return
     const match = JSON.parse(wikiToken) as WikiMatch
     let active = true
-    const frame = requestAnimationFrame(() => {
-      if (!active) return
-      const coords = editor.view.coordsAtPos(match.to)
-      const left = Math.max(8, Math.min(coords.left, window.innerWidth - 288))
-      const top =
-        coords.bottom + 180 < window.innerHeight ? coords.bottom + 6 : Math.max(8, coords.top - 186)
-      setPickerPosition({ token: wikiToken, left, top })
-    })
     void searchNotes(match.query)
       .then((items) => {
         if (active) setPickerResult({ token: wikiToken, items, error: null })
@@ -671,7 +661,6 @@ export function MarkdownEditor({
       })
     return () => {
       active = false
-      cancelAnimationFrame(frame)
     }
   }, [editor, wikiToken, pickerVisible, searchNotes])
 
@@ -888,7 +877,10 @@ export function MarkdownEditor({
             onPickImage={onUploadImage === undefined ? undefined : (file) => void insertImage(file)}
             frontmatter={agentServices}
             findOpen={findOpen}
-            onToggleFind={() => setFindOpen((current) => !current)}
+            onToggleFind={() => {
+              setFindOpen((current) => !current)
+              if (findOpen) editor?.commands.focus()
+            }}
             onAiPreset={onAiPreset}
             onExportMarkdown={
               onExportMarkdown
@@ -920,7 +912,10 @@ export function MarkdownEditor({
             onQueryChange={setFindQuery}
             options={findOptions}
             onOptionsChange={setFindOptions}
-            onClose={() => setFindOpen(false)}
+            onClose={() => {
+              setFindOpen(false)
+              editor?.commands.focus()
+            }}
           />
         ) : undefined
       }
@@ -947,10 +942,10 @@ export function MarkdownEditor({
           {...(rewriting === undefined ? {} : { rewriting })}
         />
       ) : null}
-      {pickerVisible && wikiMatch && pickerPosition?.token === wikiToken && (
+      {editor && pickerVisible && wikiMatch && (
         <NoteLinkPicker
-          left={pickerPosition.left}
-          top={pickerPosition.top}
+          editor={editor}
+          anchor={wikiMatch.to}
           items={pickerItems}
           selected={pickerSelected}
           pending={pickerResult.token !== wikiToken}
@@ -958,16 +953,15 @@ export function MarkdownEditor({
           onPick={pickNote}
         />
       )}
-      {slashState?.rect && (
-        <div
+      {editor && slashState?.rect && (
+        <MarkdownSuggestionPanel
+          editor={editor}
+          width={216}
+          maxHeight={320}
+          selected={slashSelection}
           className="mimir-markdown-slash me-menu__panel"
           role="menu"
-          aria-label="插入内容"
-          style={{
-            position: 'fixed',
-            top: Math.min(slashState.rect.bottom + 4, window.innerHeight - 320),
-            left: Math.max(8, Math.min(slashState.rect.left, window.innerWidth - 224)),
-          }}
+          label="插入内容"
         >
           {slashState.items.length === 0 ? (
             <div className="mimir-markdown-slash__empty">没有匹配的命令</div>
@@ -984,7 +978,7 @@ export function MarkdownEditor({
               />
             ))
           )}
-        </div>
+        </MarkdownSuggestionPanel>
       )}
       <div className="me-scroll mimir-markdown-scroll">
         {writingDraft && <MarkdownWritingPreview draft={writingDraft} editor={editor} />}
@@ -1654,15 +1648,28 @@ function FrontmatterPanel({
     }
   }, [frontmatter])
   return (
-    <div className="me-menu__fields">
-      <ToolbarTextArea
-        label="笔记属性 YAML"
-        value={draft}
-        onChange={setDraft}
-        placeholder={loading ? '正在读取…' : 'title: …'}
-        rows={7}
-      />
-      {error ? <div role="alert">{error}</div> : null}
+    <div className="mimir-markdown-properties" aria-busy={loading || saving}>
+      <ToolbarPropertyForm columns={1}>
+        <ToolbarMenuFields label="笔记属性">
+          <ToolbarTextArea
+            label="笔记属性 YAML"
+            value={draft}
+            onChange={setDraft}
+            placeholder={loading ? '正在读取…' : 'title: …'}
+            rows={7}
+          />
+        </ToolbarMenuFields>
+      </ToolbarPropertyForm>
+      {loading ? (
+        <p className="mimir-markdown-panel-hint" role="status">
+          正在读取笔记属性…
+        </p>
+      ) : null}
+      {error ? (
+        <p className="mimir-markdown-panel-error" role="alert">
+          {error}
+        </p>
+      ) : null}
       <ToolbarMenuItemRow
         item={{
           key: 'save',
@@ -1786,24 +1793,25 @@ function LinkPanel({
 
   const apply = () => {
     const value = href.trim()
-    if (value === '') {
-      removeLink(editor)
-    } else {
-      applyLink(editor, value)
-    }
+    // Enter follows the same contract as the disabled Apply button.
+    if (blocked || value === '') return
+    applyLink(editor, value)
     close()
   }
 
   return (
     <div className="me-link">
-      <ToolbarTextField
-        label="链接地址"
-        value={href}
-        placeholder="https://…"
-        onChange={setHref}
-        onSubmit={apply}
-        onCancel={close}
-      />
+      <ToolbarPropertyForm columns={1}>
+        <ToolbarTextField
+          label="链接地址"
+          value={href}
+          placeholder="https://…"
+          onChange={setHref}
+          onSubmit={apply}
+          onCancel={close}
+        />
+      </ToolbarPropertyForm>
+      {blocked ? <p className="mimir-markdown-panel-hint">先选中要加链接的文字</p> : null}
       <div className="me-link__row">
         <ToolbarButton
           label="应用链接（回车）"
@@ -1828,25 +1836,27 @@ function LinkPanel({
       {searchNotes && (
         <div className="me-link__notes">
           <div className="me-link__section">链接到笔记</div>
-          <ToolbarTextField
-            label="查找已有笔记"
-            value={noteQuery}
-            placeholder="输入笔记名"
-            onChange={(value) => {
-              setNoteQuery(value.slice(0, 100))
-              setNoteResult(null)
-              setNotePending(true)
-              setNoteError(false)
-            }}
-            onSubmit={() => {
-              if (notePending || noteError) return
-              const first = noteItems[0]
-              if (!first) return
-              linkExistingNote(editor, first)
-              close()
-            }}
-            onCancel={close}
-          />
+          <ToolbarPropertyForm columns={1}>
+            <ToolbarTextField
+              label="查找已有笔记"
+              value={noteQuery}
+              placeholder="输入笔记名"
+              onChange={(value) => {
+                setNoteQuery(value.slice(0, 100))
+                setNoteResult(null)
+                setNotePending(true)
+                setNoteError(false)
+              }}
+              onSubmit={() => {
+                if (notePending || noteError) return
+                const first = noteItems[0]
+                if (!first) return
+                linkExistingNote(editor, first)
+                close()
+              }}
+              onCancel={close}
+            />
+          </ToolbarPropertyForm>
           <div className="me-link__note-list" aria-label="已有笔记">
             {notePending ? (
               <div className="me-note-link-picker__hint">正在查找笔记…</div>
@@ -1881,6 +1891,7 @@ function InsertTableMenu({ editor }: { editor: Editor }) {
     <ToolbarMenu
       label="插入表格"
       icon={<TableIcon />}
+      panelWidth={280}
       renderPanel={(close) => <InsertTablePanel editor={editor} close={close} />}
     />
   )
@@ -1895,33 +1906,19 @@ function InsertTablePanel({ editor, close }: { editor: Editor; close: () => void
   }
   return (
     <div className="me-insert">
-      <div className="me-insert__row">
-        <ToolbarNumberField
-          label="行数"
-          value={rows}
-          min={1}
-          max={50}
-          onCommit={setRows}
-          suffix="行"
-        />
-        <ToolbarNumberField
-          label="列数"
-          value={cols}
-          min={1}
-          max={12}
-          onCommit={setCols}
-          suffix="列"
-        />
-      </div>
+      <ToolbarPropertyForm>
+        <ToolbarMenuFields label="表格大小">
+          <ToolbarNumberField label="行数" value={rows} min={1} max={50} onCommit={setRows} />
+          <ToolbarNumberField label="列数" value={cols} min={1} max={12} onCommit={setCols} />
+        </ToolbarMenuFields>
+      </ToolbarPropertyForm>
       {/*
         `withHeaderRow` 不给开关，固定 true：markdown 的表格**必须有**表头行
         ——列对齐就写在表头下面那条分隔行上（`@tiptap/extension-table` 的
         序列化器按列取第一个非空 align），没有表头行的表格往返一次会多出一行
         空表头（实测：3 行 → 4 行）。
       */}
-      <ToolbarButton label={`插入 ${rows}×${cols} 表格（带表头行）`} primary onClick={insert}>
-        插入表格
-      </ToolbarButton>
+      <ToolbarButton label={`插入 ${rows}×${cols} 表格（带表头行）`} primary onClick={insert} />
       <ToolbarLabel>markdown 表格必须有表头行</ToolbarLabel>
     </div>
   )

@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-20",
+  "sourceMetadata": "external-evidence.json",
+  "excerpts": [
+    {
+      "query": "v0.8.3",
+      "text": "dia('(prefers-color-scheme: dark)').matches))})()\n跳至正文\n产品能力\nv0.8.3\nNEW\n生态集成\n企业部署\n文档\n模型评测\nLLM\nEmbed\nRerank\n数据集\nGitHub\nGitHub\nv0.8.3\n画廊 · 多模态 Embedding · Wiki 图谱 · 原文引用\n帮你找到答案，\n并将知识付诸实践。\nTENCENT OPEN SOURCE · WEKNORA\n腾讯开源的企业级知识管理框架。\n汇集团队资料，用于知识问答、任务执行和 Wiki 整理。\n开始使用\nGitHub\nRAG 问答 / Agent 推理 / 自动 Wiki\n产品演示\n/"
+    },
+    {
+      "query": "RAG 问答 / Agent",
+      "text": "RA\n腾讯开源的企业级知识管理框架。\n汇集团队资料，用于知识问答、任务执行和 Wiki 整理。\n开始使用\nGitHub\nRAG 问答 / Agent 推理 / 自动 Wiki\n产品演示\n/\nPRODUCT FILM\n02:25\n/\n1080P\nWeKnora 产品演示\n播放产品介绍 · 2 分 25 秒\n知识问答、Agent 推理与 Wiki 整理\nREADME 产品视频 · 英文旁白 / 中英字幕\n腾讯开源 · MIT License\n支持私有化部署\n自由选择模型与存储\n01 / KNOWLEDGE AT WORK\n知识问答、任务执行与自动 Wiki\n查询资料用 RAG，处理多步任务用 Agent，\n整理知识用 Wik"
+    }
+  ]
+}

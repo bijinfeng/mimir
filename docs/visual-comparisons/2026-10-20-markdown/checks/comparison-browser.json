@@ -1,0 +1,244 @@
+{
+  "pairs": [
+    {
+      "label": "正文 · 浅色宽列\nMD-001 · MD-003 · MD-009",
+      "images": [
+        {
+          "height": 712,
+          "loaded": true,
+          "src": "before/body-light-wide.jpg",
+          "width": 1265
+        },
+        {
+          "height": 712,
+          "loaded": true,
+          "src": "after/body-light-wide.jpg",
+          "width": 1265
+        }
+      ]
+    },
+    {
+      "label": "空白笔记 · 深色窄列\nMD-002 · MD-007",
+      "images": [
+        {
+          "height": 720,
+          "loaded": true,
+          "src": "before/empty-dark-narrow.jpg",
+          "width": 1280
+        },
+        {
+          "height": 720,
+          "loaded": true,
+          "src": "after/empty-dark-narrow.jpg",
+          "width": 1280
+        }
+      ]
+    },
+    {
+      "label": "选区工具 · 浅色\nMD-063 · MD-064 · MD-067",
+      "images": [
+        {
+          "height": 712,
+          "loaded": true,
+          "src": "before/inline-light-wide.jpg",
+          "width": 1265
+        },
+        {
+          "height": 712,
+          "loaded": true,
+          "src": "after/inline-light-wide.jpg",
+          "width": 1265
+        }
+      ]
+    },
+    {
+      "label": "选区工具 · 深色窄列\nMD-067",
+      "images": [
+        {
+          "height": 720,
+          "loaded": true,
+          "src": "before/inline-dark-narrow.jpg",
+          "width": 1280
+        },
+        {
+          "height": 720,
+          "loaded": true,
+          "src": "after/inline-dark-narrow.jpg",
+          "width": 1280
+        }
+      ]
+    },
+    {
+      "label": "超长笔记候选\nMD-055 · MD-056 · MD-062",
+      "images": [
+        {
+          "height": 720,
+          "loaded": true,
+          "src": "before/wiki-long.jpg",
+          "width": 1280
+        },
+        {
+          "height": 720,
+          "loaded": true,
+          "src": "after/wiki-long.jpg",
+          "width": 1280
+        }
+      ]
+    },
+    {
+      "label": "表格上下文\nMD-034 · MD-038",
+      "images": [
+        {
+          "height": 720,
+          "loaded": true,
+          "src": "before/table-context.jpg",
+          "width": 1280
+        },
+        {
+          "height": 720,
+          "loaded": true,
+          "src": "after/table-context.jpg",
+          "width": 1280
+        }
+      ]
+    },
+    {
+      "label": "代码上下文\nMD-039 · MD-040",
+      "images": [
+        {
+          "height": 720,
+          "loaded": true,
+          "src": "before/code-context.jpg",
+          "width": 1280
+        },
+        {
+          "height": 720,
+          "loaded": true,
+          "src": "after/code-context.jpg",
+          "width": 1280
+        }
+      ]
+    },
+    {
+      "label": "链接 · 地址与笔记检索\nMD-023 · MD-024 · MD-026 · MD-027",
+      "images": [
+        {
+          "height": 720,
+          "loaded": true,
+          "src": "before/link-panel.jpg",
+          "width": 1280
+        },
+        {
+          "height": 720,
+          "loaded": true,
+          "src": "after/link-panel.jpg",
+          "width": 1280
+        }
+      ]
+    },
+    {
+      "label": "笔记属性 · 可见字段标签\nMD-046 · MD-047 · MD-048",
+      "images": [
+        {
+          "height": 720,
+          "loaded": true,
+          "src": "before/frontmatter-panel.jpg",
+          "width": 1280
+        },
+        {
+          "height": 720,
+          "loaded": true,
+          "src": "after/frontmatter-panel.jpg",
+          "width": 1280
+        }
+      ]
+    },
+    {
+      "label": "插入表格 · 行列字段\nMD-029 · MD-030",
+      "images": [
+        {
+          "height": 720,
+          "loaded": true,
+          "src": "before/insert-table.jpg",
+          "width": 1280
+        },
+        {
+          "height": 720,
+          "loaded": true,
+          "src": "after/insert-table.jpg",
+          "width": 1280
+        }
+      ]
+    },
+    {
+      "label": "写作部分失败 · 保留与丢弃\nMD-068 · MD-069 · MD-070 · MD-074",
+      "images": [
+        {
+          "height": 720,
+          "loaded": true,
+          "src": "before/writing-partial.jpg",
+          "width": 1280
+        },
+        {
+          "height": 720,
+          "loaded": true,
+          "src": "after/writing-partial.jpg",
+          "width": 1280
+        }
+      ]
+    },
+    {
+      "label": "查找替换 · 匹配计数\nMD-051 · MD-052 · MD-053 · MD-054",
+      "images": [
+        {
+          "height": 720,
+          "loaded": true,
+          "src": "before/find-panel.jpg",
+          "width": 1280
+        },
+        {
+          "height": 720,
+          "loaded": true,
+          "src": "after/find-panel.jpg",
+          "width": 1280
+        }
+      ]
+    },
+    {
+      "label": "笔记属性 · 窄列读取失败\nMD-007 · MD-008 · MD-047 · MD-048",
+      "images": [
+        {
+          "height": 720,
+          "loaded": true,
+          "src": "before/frontmatter-error.jpg",
+          "width": 1280
+        },
+        {
+          "height": 720,
+          "loaded": true,
+          "src": "after/frontmatter-error.jpg",
+          "width": 1280
+        }
+      ]
+    },
+    {
+      "label": "斜杠菜单 · 短窗口\nMD-059 · MD-060 · MD-062",
+      "images": [
+        {
+          "height": 320,
+          "loaded": true,
+          "src": "before/slash-short.png",
+          "width": 420
+        },
+        {
+          "height": 320,
+          "loaded": true,
+          "src": "after/slash-short.png",
+          "width": 420
+        }
+      ]
+    }
+  ],
+  "searchTest": "MD-074 narrows navigation and opens matching real component scene",
+  "source": "browser DOM read-only; actual nav clicks"
+}

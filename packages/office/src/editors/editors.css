@@ -407,9 +407,75 @@
 
 .mimir-markdown-slash {
   z-index: 80;
+  box-sizing: border-box;
   width: 216px;
+  min-width: 0;
   max-height: min(320px, 60vh);
   overflow-y: auto;
+}
+
+.mimir-inline-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  box-sizing: border-box;
+  max-width: calc(100vw - 16px);
+  padding: 4px;
+  border-radius: var(--me-radius, 6px);
+  background: var(--me-surface, #fff);
+  color: var(--me-text, #262626);
+  box-shadow: var(--me-shadow, 0 8px 24px rgb(0 0 0 / 12%));
+}
+
+.mimir-inline-bar .me-tb {
+  flex: 0 0 auto;
+}
+
+.mimir-editor--note .me-note-link-picker {
+  box-sizing: border-box;
+  overscroll-behavior: contain;
+}
+
+.mimir-editor--note .me-note-link-picker__hint {
+  overflow-wrap: anywhere;
+}
+
+.me-note-link-picker__title {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mimir-markdown-properties {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 4px;
+}
+
+.mimir-markdown-properties > .me-property-form,
+.mimir-editor--note .me-link .me-property-form,
+.mimir-editor--note .me-insert > .me-property-form {
+  padding: 0;
+}
+
+.mimir-markdown-panel-hint,
+.mimir-markdown-panel-error {
+  margin: 0;
+  font-size: var(--me-font-size-sm, 12px);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.mimir-markdown-panel-hint {
+  color: var(--me-text-weak, #6b6b6b);
+}
+
+.mimir-markdown-panel-error {
+  color: var(--me-danger);
 }
 
 .mimir-markdown-slash__empty {
@@ -1056,9 +1122,13 @@
   align-items: center;
   flex-wrap: wrap;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px 16px;
   padding: 12px 16px;
   border-bottom: 1px solid var(--me-border);
+}
+.mimir-markdown-writing__header > div:first-child {
+  flex: 1 1 240px;
+  min-width: 0;
 }
 .mimir-markdown-writing h3 {
   margin: 0 0 4px;
@@ -1067,13 +1137,17 @@
 }
 .mimir-markdown-writing p {
   margin: 0;
+  color: var(--me-text-weak);
+  font-size: var(--me-font-size-sm, 12px);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 .mimir-markdown-writing__actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
-.mimir-markdown-writing__warning {
+.mimir-markdown-writing .mimir-markdown-writing__warning {
   padding: 12px 16px;
   color: var(--me-danger);
 }
@@ -1086,4 +1160,5 @@
   overflow-wrap: anywhere;
   font: inherit;
   line-height: 1.7;
+  overscroll-behavior: contain;
 }

@@ -105,7 +105,12 @@ export function InlineToolbar({
       }
       options={{ placement: 'top', offset: 8 }}
     >
-      <div className="mimir-inline-bar">
+      <div
+        className="mimir-inline-bar"
+        role="group"
+        aria-label="选中文字操作"
+        aria-busy={rewriting}
+      >
         {REWRITE_ACTIONS.map(({ label, action }) => (
           <ToolbarButton
             key={action}

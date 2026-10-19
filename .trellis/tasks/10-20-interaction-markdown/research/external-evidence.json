@@ -1,0 +1,72 @@
+{
+  "date": "2026-10-20",
+  "sources": [
+    {
+      "file": "weknora-site.html",
+      "url": "https://weknora.weixin.qq.com/",
+      "status": 200,
+      "finalUrl": "https://weknora.weixin.qq.com/",
+      "bytes": 113529,
+      "sha256": "6ae3d1aefe92980cded37b949947f077e12c227993745c7f10f5124ec2baedbe",
+      "retainedFile": "weknora-site-excerpts.json",
+      "retainedAs": "relevant extracted text; sha256/bytes describe full HTTP response"
+    },
+    {
+      "file": "weknora-release.json",
+      "url": "https://api.github.com/repos/Tencent/WeKnora/releases/latest",
+      "status": 200,
+      "finalUrl": "https://api.github.com/repos/Tencent/WeKnora/releases/latest",
+      "bytes": 44048,
+      "sha256": "163a964cc10c02fbca6dec0ad01f6fee50ffa0cc3f95957587c7df3b55fa9478",
+      "retainedAs": "selected metadata only; sha256/bytes describe full HTTP response"
+    },
+    {
+      "file": "weknora-manual-editor.vue.txt",
+      "url": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/frontend/src/components/manual-knowledge-editor.vue",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/Tencent/WeKnora/3e22822c1d2397be730c458c7539d0eb8c113a24/frontend/src/components/manual-knowledge-editor.vue",
+      "bytes": 51203,
+      "sha256": "ed136de7e4e43dab257015ed659a5f90d485ca491e912723ee4f26e964c62c8e",
+      "retainedFile": "weknora-manual-editor.vue.excerpts.txt",
+      "retainedAs": "numbered relevant excerpts; sha256/bytes describe full HTTP response"
+    },
+    {
+      "file": "genoffice-ribbon.tsx.txt",
+      "url": "https://raw.githubusercontent.com/genspark-ai/genoffice/480548fd55f1be3593ee0d8e316a734751d58309/apps/markdown/src/renderer/components/Ribbon.tsx",
+      "status": 200,
+      "finalUrl": "https://raw.githubusercontent.com/genspark-ai/genoffice/480548fd55f1be3593ee0d8e316a734751d58309/apps/markdown/src/renderer/components/Ribbon.tsx",
+      "bytes": 17062,
+      "sha256": "9747801547e474aa24a7ce322e04eaeea082e8c8e04ada1a48298c589c061624",
+      "retainedFile": "genoffice-ribbon.tsx.excerpts.txt",
+      "retainedAs": "numbered relevant excerpts; sha256/bytes describe full HTTP response"
+    },
+    {
+      "file": "google-docs-shortcuts.html",
+      "url": "https://support.google.com/docs/answer/179738?hl=en",
+      "status": 200,
+      "finalUrl": "https://support.google.com/docs/answer/179738?hl=en",
+      "bytes": 1696475,
+      "sha256": "a28e9a06014cc8006bffdab69aca32d01d6e068af5f3d76337182984362df78c",
+      "retainedFile": "google-docs-shortcuts-excerpts.json",
+      "retainedAs": "relevant extracted text; sha256/bytes describe full HTTP response"
+    },
+    {
+      "file": "office-ribbon.html",
+      "url": "https://support.microsoft.com/en-us/office/foundations-experiences/show-or-hide-the-ribbon-in-office",
+      "status": 200,
+      "finalUrl": "https://support.microsoft.com/en-us/office/foundations-experiences/show-or-hide-the-ribbon-in-office",
+      "bytes": 113711,
+      "sha256": "6a4a838a35f3a75fd5cc3780f2344ce4e2bb3b8fa2f1ae605810bc480619c1f3",
+      "retainedFile": "office-ribbon-excerpts.json",
+      "retainedAs": "relevant extracted text; sha256/bytes describe full HTTP response"
+    },
+    {
+      "file": "weknora-tag.json",
+      "url": "https://api.github.com/repos/Tencent/WeKnora/git/ref/tags/v0.8.3",
+      "status": 200,
+      "bytes": 331,
+      "sha256": "c89b8fa98ab3886eb77bfb414206de35e9570d1cb522289081505cefda2d290c",
+      "retainedAs": "full response"
+    }
+  ]
+}

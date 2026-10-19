@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-20",
+  "command": "pnpm check",
+  "exitCode": 0,
+  "log": "pnpm-check.log",
+  "logSha256": "8b344e0293395a42e6836181e4607fcefde70d0f3df60f1cf86d4697c484a58b",
+  "sourceSha256": {
+    "packages/office/src/editors/InlineToolbar.tsx": "b414ad2b0d1bda6684a6de0b3ae49519e663ff0d01ae43e00c72600a412feffb",
+    "packages/office/src/editors/MarkdownEditor.tsx": "2fe3b0e0aae4fcd464f662e1602a4d43704113e02801e155365ee2c0f2d710c5",
+    "packages/office/src/editors/MarkdownSuggestionPanel.tsx": "e024006b3788c654eabe5bfaae55fed2ca133065d5fe6ba3d538f3b18fe17060",
+    "packages/office/src/editors/MarkdownWritingPreview.tsx": "45d486c3a341bc8cd42dc3d93841739a6c1f38b6743aab0428f022cc6a03a079",
+    "packages/office/src/editors/NoteLinkPicker.tsx": "ec076af6a4bb02510728b03810a23ce941a5bb51215b13b57d251c785bb28a1d",
+    "packages/office/src/editors/editors.css": "08e417c89183e800352c5a39929f23bcdc2d2d420cf6991568d233c0102bfca6",
+    "packages/office/src/editors/MarkdownSuggestionPanel.test.tsx": "ffbebf0571002c07b6ba0890cbfe91c2cd22aaa515f87621aa1ed4831a6057eb",
+    "packages/renderer/src/editor/MarkdownEditor.test.tsx": "2dc45ee25c10f0a2f744b63cd9afd0c69a5995d5d3193e307feef003cf90f340",
+    "packages/renderer/src/editor/markdown-find-focus.test.tsx": "b19637c648267f2a3744b79785b1cefd5c606f5990dcaa049b54d153648b0242",
+    "packages/office/src/editors/PdfEditor.content.test.tsx": "3fb7c02d49a9fd8975894e20074e6bfcf1f04aa6181ea497c6465f2d0d13f558",
+    "apps/server/src/test/chat-attachments.test.ts": "c757373545feb134b4e6c2fa9fd6a3bbc6220b35e913ff1655202b701304884e"
+  },
+  "supplemental": "14 real browser capture pairs loaded; 74 traced interaction IDs; actual product and isolated IO boundaries in acceptance.md"
+}

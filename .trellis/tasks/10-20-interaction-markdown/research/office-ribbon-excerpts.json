@@ -1,0 +1,18 @@
+{
+  "date": "2026-10-20",
+  "sourceMetadata": "external-evidence.json",
+  "excerpts": [
+    {
+      "query": "Classic Ribbon",
+      "text": "n appear as well as the icon.\nChoose an option in the menu:\nClassic Ribbon\n: Displays the full ribbon you may be used to from previous versions of Office.\nSingle Line Ribbon\n: Displays a more compact version that takes up less space.\nAlways show ribbon\n: Always have the ribbon visible.\nShow tabs only\n: Hides the "
+    },
+    {
+      "query": "Single Line Ribbon",
+      "text": "ribbon you may be used to from previous versions of Office.\nSingle Line Ribbon\n: Displays a more compact version that takes up less space.\nAlways show ribbon\n: Always have the ribbon visible.\nShow tabs only\n: Hides the ribbon\nAdjust automatically\n: Hides and shows the ribbon when you move your cursor to the top of th"
+    },
+    {
+      "query": "Show tabs only",
+      "text": "llipsis (\n⁠...⁠\n) in the upper right, or press the ALT key.\nShow tabs only\n: Shows only the ribbon tabs, so you see more of your document, and you can still quickly switch among the tabs.\nAlways show Ribbon\n: Keeps all the tabs and commands on the ribbon visible all the time.\nExpand or collapse the ribbon\nYou can"
+    }
+  ]
+}

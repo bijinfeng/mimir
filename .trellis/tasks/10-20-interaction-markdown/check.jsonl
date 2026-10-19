@@ -1,0 +1,7 @@
+{"file": ".trellis/spec/project/rules.md", "reason": "项目硬规则"}
+{"file": ".trellis/spec/project/design.md", "reason": "既有主题与密度"}
+{"file": ".trellis/spec/office/frontend/editors/conventions.md", "reason": "编辑器与Markdown合同"}
+{"file": ".trellis/spec/office/frontend/shell/conventions.md", "reason": "控件/布局与焦点规则"}
+{"file": ".trellis/spec/office/frontend/shell/pitfalls.md", "reason": "浮层与高度链"}
+{"file": ".trellis/spec/renderer/frontend/editor/conventions.md", "reason": "真实方言与BubbleMenu"}
+{"file": ".trellis/tasks/10-20-interaction-markdown/design.md", "reason": "本模块变更边界"}

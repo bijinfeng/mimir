@@ -144,7 +144,11 @@ export function MarkdownWritingPreview({
   )
   const stale = source !== draft.source
   return (
-    <section className="mimir-markdown-writing" aria-label="Markdown 写作草稿">
+    <section
+      className="mimir-markdown-writing"
+      aria-label="Markdown 写作草稿"
+      aria-busy={draft.generating}
+    >
       <div className="mimir-markdown-writing__header">
         <div>
           <h3>{draft.generating ? '正在撰写草稿' : '草稿尚未完成'}</h3>
@@ -188,7 +192,7 @@ export function MarkdownWritingPreview({
         </div>
       </div>
       {stale && (
-        <p className="mimir-markdown-writing__warning">
+        <p className="mimir-markdown-writing__warning" role="status">
           正文已改变，本次草稿不能写入；请丢弃后重新生成。
         </p>
       )}

@@ -1,0 +1,665 @@
+{
+  "baseline": "46a2120",
+  "sourceCommit": "46a212072f5f182a2cbe8361bfeaa8b799c543fd",
+  "pairCount": 14,
+  "captures": [
+    {
+      "key": "body-light-wide",
+      "label": "正文 · 浅色宽列",
+      "scene": "body",
+      "ids": ["MD-001", "MD-003", "MD-009"],
+      "w": 1100,
+      "h": 760,
+      "side": "before",
+      "file": "before/body-light-wide.jpg",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fixture": {
+        "width": 1100,
+        "height": 760
+      },
+      "width": 1265,
+      "height": 712,
+      "sha256": "7843e602ddf2f1313944f6722e0a4ac8d23a545ac5c2b90f0c8425a5f9a06d9c"
+    },
+    {
+      "key": "body-light-wide",
+      "label": "正文 · 浅色宽列",
+      "scene": "body",
+      "ids": ["MD-001", "MD-003", "MD-009"],
+      "w": 1100,
+      "h": 760,
+      "side": "after",
+      "file": "after/body-light-wide.jpg",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fixture": {
+        "width": 1100,
+        "height": 760
+      },
+      "width": 1265,
+      "height": 712,
+      "sha256": "7843e602ddf2f1313944f6722e0a4ac8d23a545ac5c2b90f0c8425a5f9a06d9c"
+    },
+    {
+      "key": "empty-dark-narrow",
+      "label": "空白笔记 · 深色窄列",
+      "scene": "empty",
+      "theme": "dark",
+      "ids": ["MD-002", "MD-007"],
+      "w": 420,
+      "h": 640,
+      "side": "before",
+      "file": "before/empty-dark-narrow.jpg",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fixture": {
+        "width": 420,
+        "height": 640
+      },
+      "width": 1280,
+      "height": 720,
+      "sha256": "fd587416997ad888575b69ec7c568b2e8b7b85ddd66fe9a3acf9bfd43fa4e1ce"
+    },
+    {
+      "key": "empty-dark-narrow",
+      "label": "空白笔记 · 深色窄列",
+      "scene": "empty",
+      "theme": "dark",
+      "ids": ["MD-002", "MD-007"],
+      "w": 420,
+      "h": 640,
+      "side": "after",
+      "file": "after/empty-dark-narrow.jpg",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fixture": {
+        "width": 420,
+        "height": 640
+      },
+      "width": 1280,
+      "height": 720,
+      "sha256": "fd587416997ad888575b69ec7c568b2e8b7b85ddd66fe9a3acf9bfd43fa4e1ce"
+    },
+    {
+      "key": "inline-light-wide",
+      "label": "选区工具 · 浅色",
+      "scene": "inline",
+      "ids": ["MD-063", "MD-064", "MD-067"],
+      "w": 1100,
+      "h": 760,
+      "side": "before",
+      "file": "before/inline-light-wide.jpg",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fixture": {
+        "width": 1100,
+        "height": 760
+      },
+      "width": 1265,
+      "height": 712,
+      "sha256": "b277f416c3adf5d6538e0f3e85afd4035d31d78d8fc084d21785a012fecca3d5"
+    },
+    {
+      "key": "inline-light-wide",
+      "label": "选区工具 · 浅色",
+      "scene": "inline",
+      "ids": ["MD-063", "MD-064", "MD-067"],
+      "w": 1100,
+      "h": 760,
+      "side": "after",
+      "file": "after/inline-light-wide.jpg",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fixture": {
+        "width": 1100,
+        "height": 760
+      },
+      "width": 1265,
+      "height": 712,
+      "sha256": "882a2964547f391bb0d3cb5d693d8312e0431d3ad2c192080d3e43cba26fd95d"
+    },
+    {
+      "key": "inline-dark-narrow",
+      "label": "选区工具 · 深色窄列",
+      "scene": "inline",
+      "theme": "dark",
+      "ids": ["MD-067"],
+      "w": 420,
+      "h": 640,
+      "side": "before",
+      "file": "before/inline-dark-narrow.jpg",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fixture": {
+        "width": 420,
+        "height": 640
+      },
+      "width": 1280,
+      "height": 720,
+      "sha256": "407e94bf7e95e4b4db11fc8189ef6fedd9c9e4f2395fe254eab291f5138642a5"
+    },
+    {
+      "key": "inline-dark-narrow",
+      "label": "选区工具 · 深色窄列",
+      "scene": "inline",
+      "theme": "dark",
+      "ids": ["MD-067"],
+      "w": 420,
+      "h": 640,
+      "side": "after",
+      "file": "after/inline-dark-narrow.jpg",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fixture": {
+        "width": 420,
+        "height": 640
+      },
+      "width": 1280,
+      "height": 720,
+      "sha256": "6942241c04042f3ef6a5d3e763629896555c33441056fb39279b2c86b7df8425"
+    },
+    {
+      "key": "wiki-long",
+      "label": "超长笔记候选",
+      "scene": "wiki-long",
+      "ids": ["MD-055", "MD-056", "MD-062"],
+      "w": 760,
+      "h": 640,
+      "side": "before",
+      "file": "before/wiki-long.jpg",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fixture": {
+        "width": 760,
+        "height": 640
+      },
+      "width": 1280,
+      "height": 720,
+      "sha256": "484a81cc1b072c8fa55bd89c6d84498a8a69820b46ee8d6713fc8900f8cd3d45"
+    },
+    {
+      "key": "wiki-long",
+      "label": "超长笔记候选",
+      "scene": "wiki-long",
+      "ids": ["MD-055", "MD-056", "MD-062"],
+      "w": 760,
+      "h": 640,
+      "side": "after",
+      "file": "after/wiki-long.jpg",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fixture": {
+        "width": 760,
+        "height": 640
+      },
+      "width": 1280,
+      "height": 720,
+      "sha256": "bc00b26f1a53b005e8d965bb7934f2c645c1012be9d13be91fdb4f9294a9ed5b"
+    },
+    {
+      "key": "table-context",
+      "label": "表格上下文",
+      "scene": "table",
+      "ids": ["MD-034", "MD-038"],
+      "w": 760,
+      "h": 640,
+      "side": "before",
+      "file": "before/table-context.jpg",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fixture": {
+        "width": 760,
+        "height": 640
+      },
+      "width": 1280,
+      "height": 720,
+      "sha256": "4163fed10f6b644a92b595c24dfb4c0af8fe024b2b347253f950709b3ead883f"
+    },
+    {
+      "key": "table-context",
+      "label": "表格上下文",
+      "scene": "table",
+      "ids": ["MD-034", "MD-038"],
+      "w": 760,
+      "h": 640,
+      "side": "after",
+      "file": "after/table-context.jpg",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fixture": {
+        "width": 760,
+        "height": 640
+      },
+      "width": 1280,
+      "height": 720,
+      "sha256": "4163fed10f6b644a92b595c24dfb4c0af8fe024b2b347253f950709b3ead883f"
+    },
+    {
+      "key": "code-context",
+      "label": "代码上下文",
+      "scene": "code",
+      "ids": ["MD-039", "MD-040"],
+      "w": 760,
+      "h": 640,
+      "side": "before",
+      "file": "before/code-context.jpg",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fixture": {
+        "width": 760,
+        "height": 640
+      },
+      "width": 1280,
+      "height": 720,
+      "sha256": "b7a52a8ec0e87dd07d23d4295a4f58f186665716e3f3ab0391cbc6801cac3882"
+    },
+    {
+      "key": "code-context",
+      "label": "代码上下文",
+      "scene": "code",
+      "ids": ["MD-039", "MD-040"],
+      "w": 760,
+      "h": 640,
+      "side": "after",
+      "file": "after/code-context.jpg",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fixture": {
+        "width": 760,
+        "height": 640
+      },
+      "width": 1280,
+      "height": 720,
+      "sha256": "b7a52a8ec0e87dd07d23d4295a4f58f186665716e3f3ab0391cbc6801cac3882"
+    },
+    {
+      "key": "link-panel",
+      "label": "链接 · 地址与笔记检索",
+      "scene": "link",
+      "ids": ["MD-023", "MD-024", "MD-026", "MD-027"],
+      "w": 760,
+      "h": 640,
+      "side": "before",
+      "file": "before/link-panel.jpg",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fixture": {
+        "width": 760,
+        "height": 640
+      },
+      "width": 1280,
+      "height": 720,
+      "sha256": "3b7fb2c0b862cc33a94fc8d3e41becc1ffc497b4b4faf40a9f8937786f2fbc6b"
+    },
+    {
+      "key": "link-panel",
+      "label": "链接 · 地址与笔记检索",
+      "scene": "link",
+      "ids": ["MD-023", "MD-024", "MD-026", "MD-027"],
+      "w": 760,
+      "h": 640,
+      "side": "after",
+      "file": "after/link-panel.jpg",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fixture": {
+        "width": 760,
+        "height": 640
+      },
+      "width": 1280,
+      "height": 720,
+      "sha256": "d9a65a7582b164b4b84d90a5145508c3f9e2ef81c64d1a83914e95b5be5daa5c"
+    },
+    {
+      "key": "frontmatter-panel",
+      "label": "笔记属性 · 可见字段标签",
+      "scene": "frontmatter",
+      "ids": ["MD-046", "MD-047", "MD-048"],
+      "w": 760,
+      "h": 640,
+      "side": "before",
+      "file": "before/frontmatter-panel.jpg",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fixture": {
+        "width": 760,
+        "height": 640
+      },
+      "width": 1280,
+      "height": 720,
+      "sha256": "26203412d2c2c7a2eb4447f42f3ac197f07a42bfa022964a2cd17ab2c77515a7"
+    },
+    {
+      "key": "frontmatter-panel",
+      "label": "笔记属性 · 可见字段标签",
+      "scene": "frontmatter",
+      "ids": ["MD-046", "MD-047", "MD-048"],
+      "w": 760,
+      "h": 640,
+      "side": "after",
+      "file": "after/frontmatter-panel.jpg",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fixture": {
+        "width": 760,
+        "height": 640
+      },
+      "width": 1280,
+      "height": 720,
+      "sha256": "384366fa8ad68cbcb8dfb1bcaadbbee9d122fb83ec49d249eb20d68ddba0d0b7"
+    },
+    {
+      "key": "insert-table",
+      "label": "插入表格 · 行列字段",
+      "scene": "body",
+      "ids": ["MD-029", "MD-030"],
+      "w": 760,
+      "h": 640,
+      "side": "before",
+      "file": "before/insert-table.jpg",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fixture": {
+        "width": 760,
+        "height": 640
+      },
+      "width": 1280,
+      "height": 720,
+      "sha256": "636fe1eb012d7d924fdccb52fab41504c74263653862102a820807a7d0f61cdf"
+    },
+    {
+      "key": "insert-table",
+      "label": "插入表格 · 行列字段",
+      "scene": "body",
+      "ids": ["MD-029", "MD-030"],
+      "w": 760,
+      "h": 640,
+      "side": "after",
+      "file": "after/insert-table.jpg",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fixture": {
+        "width": 760,
+        "height": 640
+      },
+      "width": 1280,
+      "height": 720,
+      "sha256": "d9e50e767cd4909db629a04847f5a13fd11f69e586ba18e505a435f6a726ffea"
+    },
+    {
+      "key": "writing-partial",
+      "label": "写作部分失败 · 保留与丢弃",
+      "scene": "writing-partial",
+      "ids": ["MD-068", "MD-069", "MD-070", "MD-074"],
+      "w": 420,
+      "h": 640,
+      "side": "before",
+      "file": "before/writing-partial.jpg",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fixture": {
+        "width": 420,
+        "height": 640
+      },
+      "width": 1280,
+      "height": 720,
+      "sha256": "1e3596f83d75af4037f98a564c644d10bca38875e1f32542ad851bf41a65113d"
+    },
+    {
+      "key": "writing-partial",
+      "label": "写作部分失败 · 保留与丢弃",
+      "scene": "writing-partial",
+      "ids": ["MD-068", "MD-069", "MD-070", "MD-074"],
+      "w": 420,
+      "h": 640,
+      "side": "after",
+      "file": "after/writing-partial.jpg",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fixture": {
+        "width": 420,
+        "height": 640
+      },
+      "width": 1280,
+      "height": 720,
+      "sha256": "0602879c02c0a7517f91d4a932ed848244b7f8f295032f7fe86e42444ac85754"
+    },
+    {
+      "key": "find-panel",
+      "label": "查找替换 · 匹配计数",
+      "scene": "find",
+      "ids": ["MD-051", "MD-052", "MD-053", "MD-054"],
+      "w": 760,
+      "h": 640,
+      "side": "before",
+      "file": "before/find-panel.jpg",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fixture": {
+        "width": 760,
+        "height": 640
+      },
+      "width": 1280,
+      "height": 720,
+      "sha256": "bcd20c65ef75e94dcb7611e4fa02d63d8de524cf05c6b37b9cf8660f82ebfe8c"
+    },
+    {
+      "key": "find-panel",
+      "label": "查找替换 · 匹配计数",
+      "scene": "find",
+      "ids": ["MD-051", "MD-052", "MD-053", "MD-054"],
+      "w": 760,
+      "h": 640,
+      "side": "after",
+      "file": "after/find-panel.jpg",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fixture": {
+        "width": 760,
+        "height": 640
+      },
+      "width": 1280,
+      "height": 720,
+      "sha256": "6e30515e18f2ee08a691c94ed544ab2daa9504d33b3d8b96db7ca5d944d29cbd"
+    },
+    {
+      "key": "frontmatter-error",
+      "label": "笔记属性 · 窄列读取失败",
+      "scene": "frontmatter-error",
+      "ids": ["MD-007", "MD-008", "MD-047", "MD-048"],
+      "w": 420,
+      "h": 640,
+      "side": "before",
+      "file": "before/frontmatter-error.jpg",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fixture": {
+        "width": 420,
+        "height": 640
+      },
+      "width": 1280,
+      "height": 720,
+      "sha256": "17ee16bed7d2dae609b8c9087f356edbeb2d7fe137df924af8004eada65be74f"
+    },
+    {
+      "key": "frontmatter-error",
+      "label": "笔记属性 · 窄列读取失败",
+      "scene": "frontmatter-error",
+      "ids": ["MD-007", "MD-008", "MD-047", "MD-048"],
+      "w": 420,
+      "h": 640,
+      "side": "after",
+      "file": "after/frontmatter-error.jpg",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "fixture": {
+        "width": 420,
+        "height": 640
+      },
+      "width": 1280,
+      "height": 720,
+      "sha256": "6c0fbcccc71e810700f6526a9a7915c6c93a625dc383552d2e23b24f4b525da1"
+    },
+    {
+      "key": "slash-short",
+      "label": "斜杠菜单 · 短窗口",
+      "scene": "slash",
+      "ids": ["MD-059", "MD-060", "MD-062"],
+      "w": 420,
+      "h": 320,
+      "side": "before",
+      "file": "before/slash-short.png",
+      "viewport": {
+        "width": 420,
+        "height": 320
+      },
+      "fixture": {
+        "width": 420,
+        "height": 320
+      },
+      "width": 420,
+      "height": 320,
+      "sha256": "a48ea93f4f885cdbe7b091ec060943165cfd998c6695492645911c34e4d009bc"
+    },
+    {
+      "key": "slash-short",
+      "label": "斜杠菜单 · 短窗口",
+      "scene": "slash",
+      "ids": ["MD-059", "MD-060", "MD-062"],
+      "w": 420,
+      "h": 320,
+      "side": "after",
+      "file": "after/slash-short.png",
+      "viewport": {
+        "width": 420,
+        "height": 320
+      },
+      "fixture": {
+        "width": 420,
+        "height": 320
+      },
+      "width": 420,
+      "height": 320,
+      "sha256": "6233d10b1209d5895702917b6130d9ea8a25d78a04c441d5d2ac7a4335555b73"
+    },
+    {
+      "key": "supplement-before-product-home",
+      "label": "真实产品基线 · 正文",
+      "scene": "body",
+      "ids": ["MD-001", "MD-046", "MD-063"],
+      "side": "before",
+      "file": "before/product-home.png",
+      "theme": "dark",
+      "supplement": true,
+      "width": 1280,
+      "height": 720,
+      "sha256": "8988fb1f3a998486c59e02ec4fc057e1033bd7d389573bbf3b04d28d08f0c827"
+    },
+    {
+      "key": "supplement-before-product-link",
+      "label": "真实产品基线 · 链接",
+      "scene": "body",
+      "ids": ["MD-001", "MD-046", "MD-063"],
+      "side": "before",
+      "file": "before/product-link.png",
+      "theme": "dark",
+      "supplement": true,
+      "width": 1280,
+      "height": 720,
+      "sha256": "7f35adcf6257e4aa6537eae93e4776ab169ce89ddcaeaa79b6ab8532b04a6e59"
+    },
+    {
+      "key": "supplement-before-product-properties",
+      "label": "真实产品基线 · 属性",
+      "scene": "body",
+      "ids": ["MD-001", "MD-046", "MD-063"],
+      "side": "before",
+      "file": "before/product-properties.png",
+      "theme": "dark",
+      "supplement": true,
+      "width": 1280,
+      "height": 720,
+      "sha256": "b8333a059ed7d84f9aeebda88df5391526e253bb6365f7133de94e56ded7c07d"
+    },
+    {
+      "key": "supplement-after-product-properties",
+      "label": "真实产品当前 · 属性",
+      "scene": "body",
+      "ids": ["MD-001", "MD-046", "MD-063"],
+      "side": "after",
+      "file": "after/product-properties.jpg",
+      "theme": "dark",
+      "supplement": true,
+      "width": 1280,
+      "height": 720,
+      "sha256": "0f3e2f6261e56588e81687f7abb7ca05f377f11562cc550aaa798ffed2ca2dd1"
+    },
+    {
+      "key": "supplement-after-product-inline",
+      "label": "真实产品当前 · 选区工具",
+      "scene": "body",
+      "ids": ["MD-001", "MD-046", "MD-063"],
+      "side": "after",
+      "file": "after/product-inline.jpg",
+      "theme": "dark",
+      "supplement": true,
+      "width": 1280,
+      "height": 720,
+      "sha256": "9f9876183f4597f6cf2e162364cfe9bbad67140f099519cfe8f2a73ba15211fc"
+    }
+  ],
+  "boundary": "真实Markdown组件与宿主视觉；IO由隔离Demo模拟，真实产品截图单独标识。不代表原生文件选择或真实模型服务验收。"
+}
