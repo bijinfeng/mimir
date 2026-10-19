@@ -1172,3 +1172,26 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+
+## Session 41: 设置全分区交互精修与真实渲染存档
+<!-- trellis-session: v=2 fp=fc9a6becf195e885 -->
+
+**Date**: 2026-10-20
+**Task**: 设置全分区交互精修与真实渲染存档
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+完成模块8设置：修复TanStack路由渲染后重放旧分区滚动；供应商动作与独立披露语义、实际内容容器适配、长内容换行。全仓pnpm check通过，Renderer583项。真实GUI滚动1181→0/标题y40/焦点保持，浅深及600/880/1100/1440验收；保存21组同尺寸前后、60场景、81份PNG及完整日志。Desktop、外部供应商/S3、原生选择器和实际备份未验边界已记录。父任务模块9–16继续，用户持续授权直接实施后留真实HTML存档。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `ee37c32` | fix(settings): refine responsive layout and section navigation |
+| `fd60679` | docs(settings): preserve full quality gate output |
+
+### Status
+
+[OK] **Completed**

@@ -8,8 +8,8 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 40
-- **Last Active**: 2026-10-19
+- **Total Sessions**: 41
+- **Last Active**: 2026-10-20
 <!-- @@@/auto:current-status -->
 
 ---
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1174 | Active |
+| `journal-1.md` | ~1197 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 41 | 2026-10-20 | 设置全分区交互精修与真实渲染存档 | `ee37c32`, `fd60679` | `codex/all-pages-polish` |
 | 40 | 2026-10-19 | 对话渲染精修与侧栏单行工具栏 | `9c080f1`, `e5c39a3`, `7965c2b` | `codex/all-pages-polish` |
 | 39 | 2026-10-19 | 接入 TanStack 官方 Headless UI 并完成验收 | `c6d6c42`, `b124c34` | `codex/all-pages-polish` |
 | 38 | 2026-10-19 | 完成 v7 TanStack 对话与临时附件实施验收 | `25f5ca6`, `57c24e3`, `c497002`, `87cfa96` | `codex/all-pages-polish` |
