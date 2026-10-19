@@ -1,0 +1,4 @@
+node_modules
+dist/
+thread-dist/
+interactions-dist/

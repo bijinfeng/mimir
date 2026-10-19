@@ -1,0 +1,23 @@
+{
+  "scope": "v6 planning prototype only",
+  "build": "pass",
+  "typecheck": "pass",
+  "lint": {
+    "errors": 0,
+    "warnings": 40,
+    "files": 23
+  },
+  "formatChangedAuthoredFiles": 10,
+  "artifact": "pass",
+  "runtimeProbeGroups": 5,
+  "protocol": {
+    "defaultSequences": 58,
+    "additionalVariants": 89,
+    "checks": 8
+  },
+  "independentModelMatrix": 9,
+  "independentReview": "../../research/independent-v6-review.md",
+  "browser": "browser-qa.md",
+  "productImplementationApproved": false,
+  "wholeRepoCheckRun": false
+}

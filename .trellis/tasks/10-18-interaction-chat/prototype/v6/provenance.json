@@ -1,0 +1,57 @@
+{
+  "version": "chat-review-v6",
+  "runtime": "TanStack AI React with first-party Mimir components",
+  "assistantUiExecuting": false,
+  "v4ReferenceOnly": true,
+  "sources": [
+    {
+      "name": "@tanstack/ai-react",
+      "version": "0.30.3",
+      "registry": "https://registry.npmjs.org",
+      "license": "MIT"
+    },
+    {
+      "name": "@tanstack/ai-client",
+      "version": "0.39.2",
+      "registry": "https://registry.npmjs.org",
+      "license": "MIT"
+    },
+    {
+      "name": "@tanstack/ai",
+      "version": "0.68.0",
+      "registry": "https://registry.npmjs.org",
+      "license": "MIT"
+    },
+    {
+      "name": "react-markdown",
+      "version": "10.1.0",
+      "registry": "https://registry.npmjs.org",
+      "license": "MIT"
+    },
+    {
+      "name": "remark-gfm",
+      "version": "4.0.1",
+      "registry": "https://registry.npmjs.org",
+      "license": "MIT"
+    },
+    {
+      "name": "fast-json-patch",
+      "version": "3.1.1",
+      "registry": "https://registry.npmjs.org",
+      "license": "MIT"
+    }
+  ],
+  "media": [
+    {
+      "source": "packages/office/tests/fixtures/pptx-media/tone.wav",
+      "sha256": "552d3eccca32105cf09bcd521140cf01d342e2e1937d8d3bd214893c85fa847c",
+      "usage": "local demo only"
+    },
+    {
+      "source": "packages/office/tests/fixtures/pptx-media/landscape.mp4",
+      "sha256": "03ffa8ee5278aca5bcaa52197d93a635249b3bf595c61c4c5a296f65bd931117",
+      "usage": "local demo only"
+    }
+  ],
+  "icons": "assets/phosphor/LICENSE.txt; inherited frozen v4 icon fixtures"
+}
