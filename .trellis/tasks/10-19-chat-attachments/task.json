@@ -24,24 +24,27 @@
     "prd.md",
     "design.md",
     "implement.md",
-    "../10-18-interaction-chat/prototype/v3/review.html",
+    "../10-18-interaction-chat/prototype/v4/review.html",
     "../10-18-interaction-chat/research/chat-attachment-planning.md"
   ],
-  "notes": "用户已同意一并规划聊天附件；具体v3及拟定政策尚待认可，本任务与父任务仍planning，无产品改动。",
+  "notes": "v4具体HTML已冻结并核验：输入框内三项控制有限扩展，其余官方默认；等待本版认可，父子任务均planning，无产品改动。",
   "meta": {
     "planning_user_quote": "一并规划聊天附件能力（推荐）",
     "product_implementation_approved": false,
     "planning_delivery": "awaiting_exact_version_approval",
-    "shared_prototype": "../10-18-interaction-chat/prototype/v3/review.html",
+    "shared_prototype": "../10-18-interaction-chat/prototype/v4/review.html",
     "blocking_dependency": "父任务完整官方Thread/公开发送与队列同步冻结接缝",
     "release_dependency_for": "10-18-interaction-chat",
-    "policy_status": "proposed_for_v3_review",
+    "policy_status": "proposed_for_v4_review",
     "prd_convergence_pass": "2026-10-19",
-    "version": "chat-review-v3",
-    "html_sha256": "2bfbfd2cd62fefca351297ec03d0d3bfde7f64e9eed123a7372e5ef0bcabd920",
-    "thread_html_sha256": "e49deaad771175b871bb4674a0def6bafd09c77c3359df7dab89e5357f442df2",
-    "preview_url": "http://127.0.0.1:5189/v3/review.html?mode=proposed#scene=CHAT-005.user",
-    "version_file": "../10-18-interaction-chat/prototype/v3/version.json",
-    "additional_attachment_states": 24
+    "version": "chat-review-v4",
+    "html_sha256": "72e2ca29620a90e6dc2a777a7621ddbda0511a79589423279378ef8c3c9128ce",
+    "thread_html_sha256": "5ed483d87152181feb52f39571ba1ea2fe375404ea9f7eb61b66a99a5ff0af7e",
+    "preview_url": "http://127.0.0.1:5189/v4/review.html?mode=proposed#scene=CHAT-005.user",
+    "version_file": "../10-18-interaction-chat/prototype/v4/version.json",
+    "additional_attachment_states": 24,
+    "composer_extension_decision": "approved_for_v4_planning",
+    "composer_extension_user_quote": "可以",
+    "composer_extension_only": true
   }
 }

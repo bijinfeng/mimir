@@ -1,0 +1,18 @@
+--- .trellis/tasks/10-18-interaction-chat/prototype/v4/vendor/packages/ui/src/components/react/assistant-ui/elements/thread.aui.tsx	2026-10-19 12:37:52
++++ .trellis/tasks/10-18-interaction-chat/prototype/v4/thread-extended.tsx	2026-10-19 12:39:56
+@@ -1,5 +1,7 @@
+ "use client";
+ 
++import { ComposerBusinessToolbar } from "./composer-toolbar";
++
+ import {
+   ComposerAddAttachment,
+   ComposerAttachments,
+@@ -511,6 +513,7 @@
+             enterKeyHint="send"
+             aria-label="Message input"
+           />
++          <ComposerBusinessToolbar />
+           <ComposerAction />
+         </div>
+       </ComposerPrimitive.AttachmentDropzone>

@@ -2,7 +2,7 @@
 
 ## 目标与背景
 
-用户于2026-10-19选择「一并规划聊天附件能力（推荐）」。为完整未改的assistant-ui官方Thread接通真实标准附件，使选择、准备、发送、历史和恢复可用，不自动导入知识库。本轮只形成方案及父任务prototype/v3的HTML效果稿，父子任务保持planning；认可具体新版后才实施。
+用户于2026-10-19选择「一并规划聊天附件能力（推荐）」。为assistant-ui官方Thread（仅Composer三项工具栏有限扩展）接通真实标准附件，使选择、准备、发送、历史和恢复可用，不自动导入知识库。本轮只形成方案及父任务prototype/v4的HTML效果稿，父子任务保持planning；认可具体新版后才实施。
 
 固定官方源a587b2838f2d644549d216098d54cfbeedfac522，React SDK0.15.29/core0.3.29的完整Thread始终有附件入口；现有产品React0.15.28不等于已验证兼容。已有`/api/documents/files`会创建笔记/文档、目录标签及分块嵌入（`apps/server/src/services/upload.ts:74–96,235–275`），不是临时附件。普通聊天还拒图片、无KB引用不调用模型、历史仅text（`assistant-stream.ts:154–173,200–245,309–343`及`retrieval-preparation.ts:175–211`）；需要完整业务改造。证据集中于[附件研究](../10-18-interaction-chat/research/chat-attachment-planning.md)。
 

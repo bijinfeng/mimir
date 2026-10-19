@@ -1,0 +1,35 @@
+{
+  "version": "chat-review-v4",
+  "frozen_on": "2026-10-19",
+  "html": "review.html",
+  "sha256": "72e2ca29620a90e6dc2a777a7621ddbda0511a79589423279378ef8c3c9128ce",
+  "thread_html": "thread.review.html",
+  "thread_html_sha256": "5ed483d87152181feb52f39571ba1ea2fe375404ea9f7eb61b66a99a5ff0af7e",
+  "preview_url": "http://127.0.0.1:5189/v4/review.html?mode=proposed#scene=CHAT-005.user",
+  "groups": 72,
+  "source_groups": 71,
+  "source_states": 379,
+  "additional_attachment_states": 24,
+  "total_routes": 403,
+  "dispositions": {
+    "official-default": 71,
+    "external-host": 179,
+    "removed": 7,
+    "boundary": 122
+  },
+  "status": "awaiting_exact_version_approval",
+  "product_implementation_approved": false,
+  "immutable": true,
+  "supersedes": "../v3/version.json",
+  "revision_policy": "冻结后不覆盖；实质修改另存版本并重新审阅。",
+  "composer_extension": {
+    "scope": "inside Composer bottom toolbar only",
+    "controls": [
+      "readonly global model bindings",
+      "deepReasoning role boolean",
+      "all-or-single-document retrieval scope"
+    ],
+    "source_states": 44,
+    "upstream_source_changes": "one import plus one toolbar mount; other components/default styles unchanged"
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "date": "2026-10-19",
+  "status": "PASS",
+  "scope": "Independent final-candidate source/static planning review; saved real ExternalStoreRuntime probe inspected, not independently rerun; not 403 GUI tests or product E2E",
+  "htmlSha256": {
+    "review.html": "72e2ca29620a90e6dc2a777a7621ddbda0511a79589423279378ef8c3c9128ce",
+    "thread.review.html": "5ed483d87152181feb52f39571ba1ea2fe375404ea9f7eb61b66a99a5ff0af7e"
+  },
+  "productBaseline": {
+    "manifest": "research/v2-product-baseline-hashes.json",
+    "count": 51,
+    "matches": 51,
+    "mismatches": []
+  },
+  "frozenPreviousAssets": {
+    "manifest": "research/v4-frozen-prototype-hashes.json",
+    "count": 125,
+    "matches": 125,
+    "mismatches": []
+  },
+  "sourceMappings": {
+    "groups": 71,
+    "states": 379,
+    "exactCurrentSourceAndBoundaryMatches": 379,
+    "additionalAttachmentStates": 24,
+    "totalUniqueRoutes": 403,
+    "dispositions": {
+      "official-default": 71,
+      "external-host": 179,
+      "boundary": 122,
+      "removed": 7,
+      "new-requirement": 24
+    },
+    "explicitComposerExtensionStates": 44,
+    "extensionDispositionBreakdown": {
+      "external-host": 35,
+      "official-default": 7,
+      "boundary": 2
+    }
+  },
+  "officialSources": {
+    "commit": "a587b2838f2d644549d216098d54cfbeedfac522",
+    "originals": 36,
+    "hashMatches": 36,
+    "unchangedPriorOfficialFiles": 35,
+    "newDropdownSha256": "897df3d3b32c9f292b7bf09e3c00f475c1c28916a660ebe810a8ca8d8337630d",
+    "archivedClosureCount": 26,
+    "executedVendorClosureCount": 25,
+    "unresolvedLocalImports": [],
+    "derivativeExactImportAndSingleNodeOnly": true,
+    "licenseEmbeddedBothStandaloneHTML": true,
+    "defaultCssAndNoControlOverrides": true
+  },
+  "runtime": {
+    "sdk": "0.15.29",
+    "core": "0.3.29",
+    "react": "19.3.0",
+    "singleProjectReactPerDocument": true,
+    "preSubmissionFreeze": "composer.send before c.send captures runConfig; thread.append before original append; runtime.thread/main/getById wrapped; iframe toolbar context updated synchronously before host IO; onNew/enqueue/steer forwards only captured intent",
+    "resolvedBlocker": "initial callback-time latestToolbar read replaced by public runtime facade and per-submission runConfig payload",
+    "probePassed": 3,
+    "probeFailed": 0,
+    "probeSource": "prototype/v4/composer-send-intent.test.tsx",
+    "probeResults": "prototype/v4/send-intent-probe-result.json",
+    "probeBoundary": "real ExternalStoreRuntime + official Send/Suggestion primitives; not full Thread product E2E"
+  },
+  "criticalPending": [],
+  "caveats": [
+    "Scope uses disclosed fixture titles, not canonical service documentId; product must use canonical IDs.",
+    "No real uploader, model, parser, storage, Agent writes, native picker/IME/clipboard/screen-reader or Electron validation.",
+    "Primary source disposition counts retained for provenance;44 Composer-extension flags truthfully indicate approved business composition.",
+    "Attachment sizing/extraction/retention remains a specific proposal awaiting HTML approval."
+  ],
+  "reviewedSourceSha256": {
+    "thread-app.tsx": "dac5e9baa389739f1be4c511bde2a7609d64a7c451e372ad62eaabf9e870a174",
+    "thread-frame.tsx": "ef3b4c98b29a069fc69798b48f12baa8b3435d2f6889721993f78dcb9ae6bdee",
+    "composer-toolbar.tsx": "585f1493b0cf060e52e5d9d17ebc80e3f3b13bd4827382f485872262ec87b860",
+    "thread-extended.tsx": "0184d70feeaf7c066ac7614297b8c05cc5920bbf3be42864cc702e3db7dc8fe2",
+    "runtime-facade.ts": "19073ff7f2fa8aa898d9ba7db252fb4b25fbc181e1cf88bc5dc82ad1a591fedb",
+    "composer-send-intent.ts": "c8a2006da518b6145e0f71697b6c587d4d25ec76f285dc508061a40567d75adc",
+    "composer-send-intent.test.tsx": "d1fe38a50c950a6661e36bd9dffdab3b97139cfa18be114613051b6fb2c48354",
+    "main.tsx": "b475c5185e5aa5107eb1a86b304bad3f6dc2774959dea44ebe123d2423fff544",
+    "README.md": "cd16e0f7bb25c18c54f0c2d62db7bdd53b5103c25d7a9fc93d32113e5554f311",
+    "scenes.json": "baceba19844f729d32d23cee7eda2d05be69b9acf5e4cac9f87a500e94b19afa",
+    "coverage.json": "25ae24e3f4048ccd76801750af2c0650ab1c2091b79c4878fecf729576eb72ed",
+    "provenance.json": "b5040d2a812bc77e9c983e2f23ac25dce45bee310db869937938b0f16dec1d1e"
+  }
+}

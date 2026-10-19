@@ -12,11 +12,11 @@
 - `composer-controls/model-selector.tsx`：公开 models、value/onValueChange、effort/onEffortChange；ModelSelectorEffort 原生展示各选项，默认样式可以原样使用。它不自动实现 Mimir 的“标准/深入”业务语义，不能未经映射把两者等同于 provider reasoningEffort。
 - Mimir 现行模型两条全局绑定只读/设置管理、主对话标准/深入、侧栏标准、范围与Agent及队列冻结等合同不因视觉改造改变。用户本次要求保留位置与能力，不自动授权新增任意模型切换行为。
 
-## 具体修订建议，尚待确认
+## 具体修订边界，用户已确认
 
 仅允许 Composer 底部工具栏做有限组合，将模型、思考强度、知识库范围放回输入框内；优先官方 ModelSelector/Effort 与官方通用选择基础件，业务数据/权限/请求参数来自 Mimir。输入、附件、发送/停止继续使用官方组件及默认样式，不覆盖颜色、边框、间距；消息、Markdown、reasoning、tool-call 与动作维持官方原件。
 
-这会放宽 v3 的“整个 Thread 源码完全不动、不做任何本地组合”约束，必须如实记为输入区业务扩展，不能宣称未修改的完整 Thread。用户确认这一边界后另建 v4 HTML，保留 v1/v2/v3，具体效果仍需认可后才能实施。当前没有新增 v4 或修改产品代码。
+这会放宽 v3 的“整个 Thread 源码完全不动、不做任何本地组合”约束，必须如实记为输入区业务扩展，不能宣称未修改的完整 Thread。用户已回复「可以」确认这一边界；另建 v4 HTML，保留 v1/v2/v3，具体效果仍需认可后才能实施。当前在制作v4规划HTML，不修改产品代码。
 
 ## 项目参考复核
 

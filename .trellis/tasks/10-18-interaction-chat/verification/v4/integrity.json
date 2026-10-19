@@ -1,0 +1,29 @@
+{
+  "date": "2026-10-19",
+  "version": "chat-review-v4",
+  "html_sha256": "72e2ca29620a90e6dc2a777a7621ddbda0511a79589423279378ef8c3c9128ce",
+  "thread_html_sha256": "5ed483d87152181feb52f39571ba1ea2fe375404ea9f7eb61b66a99a5ff0af7e",
+  "baselines": {
+    "v2-product-baseline-hashes.json": {
+      "count": 51,
+      "all_match": true
+    },
+    "v4-frozen-prototype-hashes.json": {
+      "count": 125,
+      "all_match": true
+    }
+  },
+  "product_changes": false,
+  "old_prototype_changes": false,
+  "artifact_check": "PASS",
+  "strict_types": "PASS",
+  "independent_source_review": "PASS",
+  "runtime_probe_passed": 3,
+  "screenshots": {
+    "dark-narrow.png": "a6faf3b7022600071ab6650a6a7214fad546d5aad36e8946d75e2851570077a6",
+    "preview.png": "0b86b004fd8f6d5fb625aff495b82a689f1165de856057572a8c861c6d9e9e9a",
+    "queue-independent-snapshots.png": "cfdd4c8af69053d9399eea3b0c7f5f846b190cc9f27f870f605db88820839869",
+    "send-pending-snapshot.png": "437c66ba644862b05192db7b052dbbb6bf9d91cd9591ec3306cd693326201791"
+  },
+  "limits": "Local HTML planning and representative browser checks, not 403 GUI tests or product services E2E."
+}

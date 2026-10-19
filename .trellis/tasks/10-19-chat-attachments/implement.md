@@ -3,7 +3,7 @@
 ## 本轮规划交付
 
 - 将用户纳入附件规划的决定及A1–A10/AA1–AA8收敛为PRD，补齐设计与真实spec/research上下文。
-- 父任务v3共用完整未改官方Thread和标准fixture AttachmentAdapter；独立新增附件场景，不计入原71组379来源状态。
+- 父任务v4共用官方Thread（仅Composer底部三项控制有限扩展）和标准fixture AttachmentAdapter；独立新增附件场景，不计入原71组379来源状态。
 - 审阅格式/限额/默认提问/寿命与错误恢复，明确本地模拟和真实API/模型/原生边界；父子任务不start。
 - 父任务冻结version/hash和独立复核/GUI记录，本子任务引用同一具体版本。限定提交与日志，无推送。认可最新具体方案后才实施。
 

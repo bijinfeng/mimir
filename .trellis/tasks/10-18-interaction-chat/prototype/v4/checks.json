@@ -1,0 +1,47 @@
+{
+  "version": "chat-review-v4",
+  "sourceGroups": 71,
+  "sourceStates": 379,
+  "additionalAttachmentStates": 24,
+  "totalRoutes": 403,
+  "dispositions": {
+    "official-default": 71,
+    "external-host": 179,
+    "removed": 7,
+    "boundary": 122
+  },
+  "officialSourceFiles": 36,
+  "officialRender": "Complete official Thread derivative: exactly one toolbar insertion plus import; no other source changes; unmodified upstream Button/DropdownMenu defaults compose business controls; no renderer/components/theme/style overrides; registry CSS + Tailwind4.3.3 isolated document",
+  "sendIntentProbe": {
+    "passed": 3,
+    "actualExternalStoreRuntime": true,
+    "publicFacadeBeforeAsyncAttachmentFinalization": true,
+    "lanes": [
+      "enqueue",
+      "steer",
+      "onNew"
+    ],
+    "scope": "local runtime probe; not full product E2E"
+  },
+  "composerExtension": {
+    "derivativeSha256": "0184d70feeaf7c066ac7614297b8c05cc5920bbf3be42864cc702e3db7dc8fe2",
+    "baseSha256": "a5c2a4655a90a4e24df4e1223bbe4eb4f4f1b58f95fe868ce7b1fc9894f60dc7",
+    "exactMinimalPatch": true,
+    "controls": [
+      "readonly global model bindings",
+      "main deepReasoning role boolean",
+      "single-document retrieval scope"
+    ],
+    "providerModelContextRegistration": false
+  },
+  "sdk": "0.15.29",
+  "core": "0.3.29",
+  "react": "19.3.0",
+  "reactInstancesPerDocument": 1,
+  "productChanges": false,
+  "businessRequests": false,
+  "localAttachmentMock": true,
+  "htmlSha256": "72e2ca29620a90e6dc2a777a7621ddbda0511a79589423279378ef8c3c9128ce",
+  "threadHtmlSha256": "5ed483d87152181feb52f39571ba1ea2fe375404ea9f7eb61b66a99a5ff0af7e",
+  "scope": "Static source mapping, original-byte and standalone artifact checks; not 403 GUI tests or proof of product adapters/services."
+}

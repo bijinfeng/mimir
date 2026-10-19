@@ -12,10 +12,13 @@
 {"file": ".trellis/tasks/10-18-interaction-chat/research/full-official-thread-contract.md", "reason": "v3完整官方Thread/25运行源闭包、默认CSS、禁止覆盖与真实能力边界"}
 {"file": ".trellis/tasks/10-18-interaction-chat/research/full-official-feature-mapping-summary.md", "reason": "71组379来源状态逐项official/host-external/removed/boundary分类，非GUI次数"}
 {"file": ".trellis/tasks/10-18-interaction-chat/research/chat-attachment-planning.md", "reason": "用户已同意附件规划：独立临时资源/模型与历史/生命周期/官方adapter"}
-{"file": ".trellis/tasks/10-18-interaction-chat/design.md", "reason": "v3全官方与宿主业务分工及兼容/回滚"}
-{"file": ".trellis/tasks/10-18-interaction-chat/implement.md", "reason": "认可具体v3后实施顺序与附件集成依赖"}
+{"file": ".trellis/tasks/10-18-interaction-chat/design.md", "reason": "v4唯一Composer工具栏例外、官方渲染与宿主分工及兼容/回滚"}
+{"file": ".trellis/tasks/10-18-interaction-chat/implement.md", "reason": "认可具体v4后实施顺序、公开发送前冻结与附件集成依赖"}
 {"file": ".trellis/tasks/10-18-interaction-chat/research/chat-attachment-adapter-roundtrip.md", "reason": "真实已装AGUI转换往返：绝对图片URL/canonicalID/file引用，非真实HTTP能力"}
 {"file": ".trellis/tasks/10-18-interaction-chat/research/agui-official-thread-pre-send-seam.md", "reason": "公开runtime动作冻结与唯一AGUI bridge的最小隔离验证；非完整Thread/产品验收"}
-{"file": ".trellis/tasks/10-18-interaction-chat/planning-acceptance-v3.md", "reason": "冻结完整官方v3、附件方案、质量证据及未验边界；产品实施仍需本版认可"}
+{"file": ".trellis/tasks/10-18-interaction-chat/planning-acceptance-v4.md", "reason": "当前v4具体版本、三项工具栏/附件方案、证据与未验边界，产品实施仍待认可"}
 {"file": ".trellis/tasks/10-18-interaction-chat/research/independent-v3-review.md", "reason": "独立源码复核结果与产品集成剩余边界，非GUI或产品端到端验收"}
-{"file": ".trellis/tasks/10-18-interaction-chat/research/composer-controls-contract.md", "reason": "最新输入框内三项控制要求、官方ModelSelector/Effort证据与待确认的Composer有限组合边界"}
+{"file": ".trellis/tasks/10-18-interaction-chat/research/composer-controls-contract.md", "reason": "输入框三项控制与已确认的Composer有限组合边界，官方ModelSelector/Effort适用限制"}
+{"file": ".trellis/tasks/10-18-interaction-chat/research/composer-v4-contract.md", "reason": "已确认唯一工具栏扩展：真实模型只读绑定、标准/深入角色、单篇/全部范围、主侧栏限制和队列请求冻结"}
+{"file": ".trellis/tasks/10-18-interaction-chat/research/composer-v4-feature-mapping.md", "reason": "v4工具栏定位覆盖原映射的44态，避免把v3外部位置误作现行批准方案"}
+{"file": ".trellis/tasks/10-18-interaction-chat/research/independent-v4-review.md", "reason": "v4独立源码及快照时序复核；须与最终候选哈希一致"}
