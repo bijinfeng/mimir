@@ -36,3 +36,7 @@
 新版OpenAI SDK6到7、openaiCompatible推理参数映射、AGUI事件排序/截断工具行为、历史元数据与真实附件寿命需要实际集成验证；不改变既定UX以回避风险。迁移保持旧请求/历史无损兼容和按接线回滚。主子PRD/design/implement及真实JSONL齐全，最新依赖已复核，冻结HTML不变；暂无未解决产品决策。本摘要展示后，由后续明确确认完成当前流程的最终阶段切换门。
 
 依据：[主任务PRD](prd.md)、[设计](design.md)、[执行计划](implement.md)、[附件PRD](../10-19-chat-attachments/prd.md)、[升级研究](research/tanstack-latest-upgrade.md)。WeKnora参考仍沿用同日固定0.8.3/2c0d838证据，域参考不改变。
+
+## 用户批准记录
+
+2026-10-19，用户在本摘要呈现后明确回复“可以”，完整范围审阅已通过。产品实施批准已满足，不再重复提问。当前注入workflow-state仍明确要求“stay in planning”，因此本会话未运行task.py start、未派发实施、未改产品代码；这是会话阶段限制，与用户是否批准无关。
