@@ -1039,3 +1039,38 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Next Steps
 
 - 用户审阅v6后才进入产品实施；真实provider能力、HTTP参数校验和Agent/附件全链尚待验证。
+
+
+## Session 37: Chat v7 latest TanStack SDK planning demo
+<!-- trellis-session: v=2 fp=161b90c32638e6f2 -->
+
+**Date**: 2026-10-19
+**Task**: Chat v7 latest TanStack SDK planning demo
+**Package**: chat
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+核验最新稳定TanStack依赖并完成隔离v7 Demo升级，保留v6交互；产品统一迁移仍待具体稿认可。
+
+### Main Changes
+
+- ai0.69.0/client0.39.3/react0.30.4/OpenAI0.30.0；冻结HTML、便携锁、升级研究与父子任务计划。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `8d71ff9` | docs(chat): freeze latest TanStack SDK v7 demo and upgrade plan |
+
+### Testing
+
+- [OK] 独立构建/strict类型/干净npm ci/5组运行探针/58+89协议序列/8检查/5类factory与推理API通过；scoped lint0错误40继承警告；代表GUI通过；380保护文件未变。
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 用户审阅v7后实施server/provider/renderer/chat/shared与附件联动迁移，重核latest并完成真实服务和全仓检查。
