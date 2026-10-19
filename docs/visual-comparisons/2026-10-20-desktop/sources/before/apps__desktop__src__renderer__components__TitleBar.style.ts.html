@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>apps/desktop/src/renderer/components/TitleBar.style.ts</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+      min-height: 1.65em;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">Desktop来源索引</a>
+    <h1>apps/desktop/src/renderer/components/TitleBar.style.ts</h1>
+    <p>before真实源码 · SHA256 dcffddaf385afbef17b4899076a8644d880842783952b00a1308b8274002476a</p>
+  </header>
+  <ol>
+    <li id="L1">
+      <!-- prettier-ignore -->
+      <pre>import { FONT_SIZE, TITLEBAR_HEIGHT } from &#x27;@mimir/renderer/titlebar-kit&#x27;</pre>
+    </li>
+    <li id="L2">
+      <!-- prettier-ignore -->
+      <pre>import { createStyles } from &#x27;antd-style&#x27;</pre>
+    </li>
+    <li id="L3">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L4">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L5">
+      <!-- prettier-ignore -->
+      <pre> * 自绘窗口标题栏的样式（D-094）。</pre>
+    </li>
+    <li id="L6">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L7">
+      <!-- prettier-ignore -->
+      <pre> * ## 高度是 `TITLEBAR_HEIGHT`，与页面头部同档（44px）</pre>
+    </li>
+    <li id="L8">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L9">
+      <!-- prettier-ignore -->
+      <pre> * 两处 44px 叠在一起会显得厚，所以标题栏**故意与页面头部同高**：</pre>
+    </li>
+    <li id="L10">
+      <!-- prettier-ignore -->
+      <pre> * 视觉上它们读作「一条上铬条 + 一条下铬条」，节奏一致；而合并掉侧栏</pre>
+    </li>
+    <li id="L11">
+      <!-- prettier-ignore -->
+      <pre> * 那条顶栏之后，垂直空间净增为零。</pre>
+    </li>
+    <li id="L12">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L13">
+      <!-- prettier-ignore -->
+      <pre> * ## macOS 的左侧让位写在这里，不写在组件里</pre>
+    </li>
+    <li id="L14">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L15">
+      <!-- prettier-ignore -->
+      <pre> * 三枚窗口控件的样式**不在这里**：它们在 `WindowControls.style.ts`，</pre>
+    </li>
+    <li id="L16">
+      <!-- prettier-ignore -->
+      <pre> * 因为选择页也要用那一组而不需要标题栏的其余部分（D-103）。</pre>
+    </li>
+    <li id="L17">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L18">
+      <!-- prettier-ignore -->
+      <pre> * `--titlebar-pad-left` 按平台给：mac 的红绿灯（系统画）从 left 16 开始、</pre>
+    </li>
+    <li id="L19">
+      <!-- prettier-ignore -->
+      <pre> * 三枚共 52px 宽，所以内容要右移到约 88px。Windows / Linux 没有这回事，</pre>
+    </li>
+    <li id="L20">
+      <!-- prettier-ignore -->
+      <pre> * 保持 12px 的内边距。**用选择器而不是 JS 判断**——平台在构建时与运行时</pre>
+    </li>
+    <li id="L21">
+      <!-- prettier-ignore -->
+      <pre> * 都不变，一个 `[data-platform]` 属性绑定就够了。</pre>
+    </li>
+    <li id="L22">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L23">
+      <!-- prettier-ignore -->
+      <pre>export const useStyles = createStyles(({ css, token }) =&gt; ({</pre>
+    </li>
+    <li id="L24">
+      <!-- prettier-ignore -->
+      <pre>  bar: css`</pre>
+    </li>
+    <li id="L25">
+      <!-- prettier-ignore -->
+      <pre>    flex: none;</pre>
+    </li>
+    <li id="L26">
+      <!-- prettier-ignore -->
+      <pre>    display: flex;</pre>
+    </li>
+    <li id="L27">
+      <!-- prettier-ignore -->
+      <pre>    align-items: center;</pre>
+    </li>
+    <li id="L28">
+      <!-- prettier-ignore -->
+      <pre>    height: ${TITLEBAR_HEIGHT}px;</pre>
+    </li>
+    <li id="L29">
+      <!-- prettier-ignore -->
+      <pre>    padding-left: var(--titlebar-pad-left, 12px);</pre>
+    </li>
+    <li id="L30">
+      <!-- prettier-ignore -->
+      <pre>    background: ${token.colorBgLayout};</pre>
+    </li>
+    <li id="L31">
+      <!-- prettier-ignore -->
+      <pre>    /* 与下面侧栏/主区之间不画线：主区自己有一条头部界线，再画一条会</pre>
+    </li>
+    <li id="L32">
+      <!-- prettier-ignore -->
+      <pre>       出现「两道线夹着一条空带」（D-070 的去线原则） */</pre>
+    </li>
+    <li id="L33">
+      <!-- prettier-ignore -->
+      <pre>    -webkit-app-region: drag;</pre>
+    </li>
+    <li id="L34">
+      <!-- prettier-ignore -->
+      <pre>    user-select: none;</pre>
+    </li>
+    <li id="L35">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L36">
+      <!-- prettier-ignore -->
+      <pre>    &amp;[data-platform=&#x27;darwin&#x27;] {</pre>
+    </li>
+    <li id="L37">
+      <!-- prettier-ignore -->
+      <pre>      /* 红绿灯在 left 16，三枚 12px + 8px 间距 = 52px 宽 → 内容从 88px 起，</pre>
+    </li>
+    <li id="L38">
+      <!-- prettier-ignore -->
+      <pre>         与它们的右缘留出 20px 的呼吸 */</pre>
+    </li>
+    <li id="L39">
+      <!-- prettier-ignore -->
+      <pre>      --titlebar-pad-left: 88px;</pre>
+    </li>
+    <li id="L40">
+      <!-- prettier-ignore -->
+      <pre>    }</pre>
+    </li>
+    <li id="L41">
+      <!-- prettier-ignore -->
+      <pre>  `,</pre>
+    </li>
+    <li id="L42">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L43">
+      <!-- prettier-ignore -->
+      <pre>  /**</pre>
+    </li>
+    <li id="L44">
+      <!-- prettier-ignore -->
+      <pre>   * 品牌。字号比侧栏那条（16px）小一档——标题栏不是内容区，它整条</pre>
+    </li>
+    <li id="L45">
+      <!-- prettier-ignore -->
+      <pre>   * 44px 里只承载「这是哪个应用」，不需要与页面标题争视觉重量。</pre>
+    </li>
+    <li id="L46">
+      <!-- prettier-ignore -->
+      <pre>   */</pre>
+    </li>
+    <li id="L47">
+      <!-- prettier-ignore -->
+      <pre>  brand: css`</pre>
+    </li>
+    <li id="L48">
+      <!-- prettier-ignore -->
+      <pre>    flex: none;</pre>
+    </li>
+    <li id="L49">
+      <!-- prettier-ignore -->
+      <pre>    display: inline-flex;</pre>
+    </li>
+    <li id="L50">
+      <!-- prettier-ignore -->
+      <pre>    align-items: center;</pre>
+    </li>
+    <li id="L51">
+      <!-- prettier-ignore -->
+      <pre>    gap: 6px;</pre>
+    </li>
+    <li id="L52">
+      <!-- prettier-ignore -->
+      <pre>    margin-right: 0;</pre>
+    </li>
+    <li id="L53">
+      <!-- prettier-ignore -->
+      <pre>    color: ${token.colorText};</pre>
+    </li>
+    <li id="L54">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L55">
+      <!-- prettier-ignore -->
+      <pre>    b {</pre>
+    </li>
+    <li id="L56">
+      <!-- prettier-ignore -->
+      <pre>      font-size: ${FONT_SIZE.item}px;</pre>
+    </li>
+    <li id="L57">
+      <!-- prettier-ignore -->
+      <pre>      font-weight: 700;</pre>
+    </li>
+    <li id="L58">
+      <!-- prettier-ignore -->
+      <pre>      letter-spacing: 0.06em;</pre>
+    </li>
+    <li id="L59">
+      <!-- prettier-ignore -->
+      <pre>    }</pre>
+    </li>
+    <li id="L60">
+      <!-- prettier-ignore -->
+      <pre>  `,</pre>
+    </li>
+    <li id="L61">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L62">
+      <!-- prettier-ignore -->
+      <pre>  /**</pre>
+    </li>
+    <li id="L63">
+      <!-- prettier-ignore -->
+      <pre>   * 折叠开关。**它必须能点**（`-webkit-app-region: no-drag`），</pre>
+    </li>
+    <li id="L64">
+      <!-- prettier-ignore -->
+      <pre>   * 而它周围整条是拖动区——这一对的正确性靠一个类，漏了就变成</pre>
+    </li>
+    <li id="L65">
+      <!-- prettier-ignore -->
+      <pre>   * 「按钮点不动」（不报错、控制台也没有任何东西）。</pre>
+    </li>
+    <li id="L66">
+      <!-- prettier-ignore -->
+      <pre>   */</pre>
+    </li>
+    <li id="L67">
+      <!-- prettier-ignore -->
+      <pre>  toggle: css`</pre>
+    </li>
+    <li id="L68">
+      <!-- prettier-ignore -->
+      <pre>    flex: none;</pre>
+    </li>
+    <li id="L69">
+      <!-- prettier-ignore -->
+      <pre>    display: inline-flex;</pre>
+    </li>
+    <li id="L70">
+      <!-- prettier-ignore -->
+      <pre>    align-items: center;</pre>
+    </li>
+    <li id="L71">
+      <!-- prettier-ignore -->
+      <pre>    justify-content: center;</pre>
+    </li>
+    <li id="L72">
+      <!-- prettier-ignore -->
+      <pre>    width: 26px;</pre>
+    </li>
+    <li id="L73">
+      <!-- prettier-ignore -->
+      <pre>    height: 26px;</pre>
+    </li>
+    <li id="L74">
+      <!-- prettier-ignore -->
+      <pre>    margin-left: 6px;</pre>
+    </li>
+    <li id="L75">
+      <!-- prettier-ignore -->
+      <pre>    border: 1px solid transparent;</pre>
+    </li>
+    <li id="L76">
+      <!-- prettier-ignore -->
+      <pre>    border-radius: 6px;</pre>
+    </li>
+    <li id="L77">
+      <!-- prettier-ignore -->
+      <pre>    background: transparent;</pre>
+    </li>
+    <li id="L78">
+      <!-- prettier-ignore -->
+      <pre>    color: ${token.colorTextSecondary};</pre>
+    </li>
+    <li id="L79">
+      <!-- prettier-ignore -->
+      <pre>    cursor: pointer;</pre>
+    </li>
+    <li id="L80">
+      <!-- prettier-ignore -->
+      <pre>    -webkit-app-region: no-drag;</pre>
+    </li>
+    <li id="L81">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L82">
+      <!-- prettier-ignore -->
+      <pre>    &amp;:hover {</pre>
+    </li>
+    <li id="L83">
+      <!-- prettier-ignore -->
+      <pre>      background: ${token.colorFillTertiary};</pre>
+    </li>
+    <li id="L84">
+      <!-- prettier-ignore -->
+      <pre>      color: ${token.colorText};</pre>
+    </li>
+    <li id="L85">
+      <!-- prettier-ignore -->
+      <pre>    }</pre>
+    </li>
+    <li id="L86">
+      <!-- prettier-ignore -->
+      <pre>  `,</pre>
+    </li>
+    <li id="L87">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L88">
+      <!-- prettier-ignore -->
+      <pre>  spacer: css`</pre>
+    </li>
+    <li id="L89">
+      <!-- prettier-ignore -->
+      <pre>    flex: 1;</pre>
+    </li>
+    <li id="L90">
+      <!-- prettier-ignore -->
+      <pre>    min-width: 0;</pre>
+    </li>
+    <li id="L91">
+      <!-- prettier-ignore -->
+      <pre>    height: 100%;</pre>
+    </li>
+    <li id="L92">
+      <!-- prettier-ignore -->
+      <pre>  `,</pre>
+    </li>
+    <li id="L93">
+      <!-- prettier-ignore -->
+      <pre>}))</pre>
+    </li>
+  </ol>
+</html>

@@ -115,3 +115,9 @@ electron-vite 的 dev 形态会为渲染进程另起一个 Vite dev server，让
 或宿主静态根之后跑一次。
 
 ---
+
+## 选择页异步状态与重复提交
+
+`SetupPage` 的 mode.get 等待期间保留品牌与 `WindowControls`，用 `role=status` 呈现读取状态，不返回空页面。提交按钮和地址 Enter 共用入口；除 pending state 外，用同步 ref gate 在同一帧阻止重复 choose。空白云端地址以及桥缺失都不得 choose。失败（返回失败或异常）释放 gate/pending 并保留地址供重试；成功仅 activate 一次，保持 gate/pending 直到主进程导航。检查空白使用 trim，地址负载沿既有规则，不截断路径/查询。
+
+等待提示独立于动作行，短高页面使用局部滚动，窗口控件保持可用。交互回归使用 deferred promise 锁住同帧防重、失败恢复和成功等待；不要只断言 loading 样式。浏览器模拟桥只能证明组件回调，实际启动/隔离用三段构建与 smoke.mjs；拖拽/系统菜单须另有原生GUI证据。

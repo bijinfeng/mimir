@@ -83,6 +83,10 @@ export const useStyles = createStyles(({ css, token }) => ({
       background: ${token.colorFillTertiary};
       color: ${token.colorText};
     }
+    &:focus-visible {
+      outline: 2px solid ${token.focusRing};
+      outline-offset: 2px;
+    }
   `,
 
   spacer: css`

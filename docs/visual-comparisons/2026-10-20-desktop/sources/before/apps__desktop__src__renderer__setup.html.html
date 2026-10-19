@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>apps/desktop/src/renderer/setup.html</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+      min-height: 1.65em;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">Desktop来源索引</a>
+    <h1>apps/desktop/src/renderer/setup.html</h1>
+    <p>before真实源码 · SHA256 febd7e91832eb8b421195db375dd67ce74f68f8658f38911227978001d4b23a0</p>
+  </header>
+  <ol>
+    <li id="L1">
+      <!-- prettier-ignore -->
+      <pre>&lt;!doctype html&gt;</pre>
+    </li>
+    <li id="L2">
+      <!-- prettier-ignore -->
+      <pre>&lt;html lang=&quot;zh-CN&quot;&gt;</pre>
+    </li>
+    <li id="L3">
+      <!-- prettier-ignore -->
+      <pre>  &lt;head&gt;</pre>
+    </li>
+    <li id="L4">
+      <!-- prettier-ignore -->
+      <pre>    &lt;meta charset=&quot;UTF-8&quot; /&gt;</pre>
+    </li>
+    <li id="L5">
+      <!-- prettier-ignore -->
+      <pre>    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot; /&gt;</pre>
+    </li>
+    <li id="L6">
+      <!-- prettier-ignore -->
+      <pre>    &lt;link rel=&quot;icon&quot; type=&quot;image/svg+xml&quot; href=&quot;./favicon.svg&quot; /&gt;</pre>
+    </li>
+    <li id="L7">
+      <!-- prettier-ignore -->
+      <pre>    &lt;title&gt;mimir · 选择使用方式&lt;/title&gt;</pre>
+    </li>
+    <li id="L8">
+      <!-- prettier-ignore -->
+      <pre>    &lt;!--</pre>
+    </li>
+    <li id="L9">
+      <!-- prettier-ignore -->
+      <pre>      首帧外观。与 index.html 完全同源（读同一个 key、同样的取值收敛、</pre>
+    </li>
+    <li id="L10">
+      <!-- prettier-ignore -->
+      <pre>      同样兜住 localStorage 抛错）——两边必须一起改。</pre>
+    </li>
+    <li id="L11">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L12">
+      <!-- prettier-ignore -->
+      <pre>      这一页尤其需要它：它是**首次启动看到的第一个画面**，而 React 挂载前</pre>
+    </li>
+    <li id="L13">
+      <!-- prettier-ignore -->
+      <pre>      浏览器会先按默认（白色）画一帧。深色用户看到的就是一下白闪。</pre>
+    </li>
+    <li id="L14">
+      <!-- prettier-ignore -->
+      <pre>    --&gt;</pre>
+    </li>
+    <li id="L15">
+      <!-- prettier-ignore -->
+      <pre>    &lt;script&gt;</pre>
+    </li>
+    <li id="L16">
+      <!-- prettier-ignore -->
+      <pre>      ;(function () {</pre>
+    </li>
+    <li id="L17">
+      <!-- prettier-ignore -->
+      <pre>        var appearance = null</pre>
+    </li>
+    <li id="L18">
+      <!-- prettier-ignore -->
+      <pre>        try {</pre>
+    </li>
+    <li id="L19">
+      <!-- prettier-ignore -->
+      <pre>          var stored = localStorage.getItem(&#x27;mimir.appearance&#x27;)</pre>
+    </li>
+    <li id="L20">
+      <!-- prettier-ignore -->
+      <pre>          if (stored === &#x27;light&#x27; || stored === &#x27;dark&#x27;) appearance = stored</pre>
+    </li>
+    <li id="L21">
+      <!-- prettier-ignore -->
+      <pre>        } catch (error) {</pre>
+    </li>
+    <li id="L22">
+      <!-- prettier-ignore -->
+      <pre>          // 隐私模式下 localStorage 读取会抛错，当作「没存过」</pre>
+    </li>
+    <li id="L23">
+      <!-- prettier-ignore -->
+      <pre>        }</pre>
+    </li>
+    <li id="L24">
+      <!-- prettier-ignore -->
+      <pre>        if (!appearance) {</pre>
+    </li>
+    <li id="L25">
+      <!-- prettier-ignore -->
+      <pre>          appearance =</pre>
+    </li>
+    <li id="L26">
+      <!-- prettier-ignore -->
+      <pre>            window.matchMedia &amp;&amp; window.matchMedia(&#x27;(prefers-color-scheme: dark)&#x27;).matches</pre>
+    </li>
+    <li id="L27">
+      <!-- prettier-ignore -->
+      <pre>              ? &#x27;dark&#x27;</pre>
+    </li>
+    <li id="L28">
+      <!-- prettier-ignore -->
+      <pre>              : &#x27;light&#x27;</pre>
+    </li>
+    <li id="L29">
+      <!-- prettier-ignore -->
+      <pre>        }</pre>
+    </li>
+    <li id="L30">
+      <!-- prettier-ignore -->
+      <pre>        var root = document.documentElement</pre>
+    </li>
+    <li id="L31">
+      <!-- prettier-ignore -->
+      <pre>        root.dataset.theme = appearance</pre>
+    </li>
+    <li id="L32">
+      <!-- prettier-ignore -->
+      <pre>        root.style.colorScheme = appearance</pre>
+    </li>
+    <li id="L33">
+      <!-- prettier-ignore -->
+      <pre>        root.style.background = appearance === &#x27;dark&#x27; ? &#x27;#18191a&#x27; : &#x27;#ffffff&#x27;</pre>
+    </li>
+    <li id="L34">
+      <!-- prettier-ignore -->
+      <pre>      })()</pre>
+    </li>
+    <li id="L35">
+      <!-- prettier-ignore -->
+      <pre>    &lt;/script&gt;</pre>
+    </li>
+    <li id="L36">
+      <!-- prettier-ignore -->
+      <pre>  &lt;/head&gt;</pre>
+    </li>
+    <li id="L37">
+      <!-- prettier-ignore -->
+      <pre>  &lt;body&gt;</pre>
+    </li>
+    <li id="L38">
+      <!-- prettier-ignore -->
+      <pre>    &lt;div id=&quot;root&quot;&gt;&lt;/div&gt;</pre>
+    </li>
+    <li id="L39">
+      <!-- prettier-ignore -->
+      <pre>    &lt;script type=&quot;module&quot; src=&quot;./setup.tsx&quot;&gt;&lt;/script&gt;</pre>
+    </li>
+    <li id="L40">
+      <!-- prettier-ignore -->
+      <pre>  &lt;/body&gt;</pre>
+    </li>
+    <li id="L41">
+      <!-- prettier-ignore -->
+      <pre>&lt;/html&gt;</pre>
+    </li>
+  </ol>
+</html>

@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>apps/desktop/src/preload/index.ts</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+      min-height: 1.65em;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">Desktop来源索引</a>
+    <h1>apps/desktop/src/preload/index.ts</h1>
+    <p>current真实源码 · SHA256 4bdbb4a00bb5b5a94059bee223929e85b52878bc30c3bfb11900eaf39b7e1f3d</p>
+  </header>
+  <ol>
+    <li id="L1">
+      <!-- prettier-ignore -->
+      <pre>import { contextBridge, ipcRenderer } from &#x27;electron&#x27;</pre>
+    </li>
+    <li id="L2">
+      <!-- prettier-ignore -->
+      <pre>import type { DesktopBootInfo, DesktopModeResult, DesktopModeState } from &#x27;@mimir/shared/desktop&#x27;</pre>
+    </li>
+    <li id="L3">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L4">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L5">
+      <!-- prettier-ignore -->
+      <pre> * 沙箱化 preload：只暴露宿主↔载体的握手契约</pre>
+    </li>
+    <li id="L6">
+      <!-- prettier-ignore -->
+      <pre> * （packages/shared/src/desktop.ts）——boot 信息、模式选择、窗口控制、退出。</pre>
+    </li>
+    <li id="L7">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L8">
+      <!-- prettier-ignore -->
+      <pre> * ## 边界</pre>
+    </li>
+    <li id="L9">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L10">
+      <!-- prettier-ignore -->
+      <pre> * 页面拿不到 BrowserWindow、路径、句柄这些它不该碰的东西。preload 只装在</pre>
+    </li>
+    <li id="L11">
+      <!-- prettier-ignore -->
+      <pre> * 本地页与选择页；云端远端页面不装它（D-107）。「模式」仍只是动作请求，</pre>
+    </li>
+    <li id="L12">
+      <!-- prettier-ignore -->
+      <pre> * **能不能改由主进程判断**；preload 不做这个判断——它是渲染进程里的代码。</pre>
+    </li>
+    <li id="L13">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L14">
+      <!-- prettier-ignore -->
+      <pre>contextBridge.exposeInMainWorld(&#x27;mimirDesktop&#x27;, {</pre>
+    </li>
+    <li id="L15">
+      <!-- prettier-ignore -->
+      <pre>  boot: (): Promise&lt;DesktopBootInfo | null&gt; =&gt; ipcRenderer.invoke(&#x27;mimir:boot-info&#x27;),</pre>
+    </li>
+    <li id="L16">
+      <!-- prettier-ignore -->
+      <pre>  quit: (): void =&gt; {</pre>
+    </li>
+    <li id="L17">
+      <!-- prettier-ignore -->
+      <pre>    ipcRenderer.send(&#x27;mimir:quit&#x27;)</pre>
+    </li>
+    <li id="L18">
+      <!-- prettier-ignore -->
+      <pre>  },</pre>
+    </li>
+    <li id="L19">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L20">
+      <!-- prettier-ignore -->
+      <pre>  /**</pre>
+    </li>
+    <li id="L21">
+      <!-- prettier-ignore -->
+      <pre>   * 使用方式（D-100）：本地离线 / 云端。</pre>
+    </li>
+    <li id="L22">
+      <!-- prettier-ignore -->
+      <pre>   *</pre>
+    </li>
+    <li id="L23">
+      <!-- prettier-ignore -->
+      <pre>   * `get()` 在首次启动（还没选过）时返回 null；</pre>
+    </li>
+    <li id="L24">
+      <!-- prettier-ignore -->
+      <pre>   * `choose()` 只负责校验与持久化（本地模式还会把宿主起好），**不导航**；</pre>
+    </li>
+    <li id="L25">
+      <!-- prettier-ignore -->
+      <pre>   * `activate()` 才让窗口切过去（单向通知，调用它的页面会被替换）。</pre>
+    </li>
+    <li id="L26">
+      <!-- prettier-ignore -->
+      <pre>   */</pre>
+    </li>
+    <li id="L27">
+      <!-- prettier-ignore -->
+      <pre>  mode: {</pre>
+    </li>
+    <li id="L28">
+      <!-- prettier-ignore -->
+      <pre>    get: (): Promise&lt;DesktopModeState | null&gt; =&gt; ipcRenderer.invoke(&#x27;mimir:mode-get&#x27;),</pre>
+    </li>
+    <li id="L29">
+      <!-- prettier-ignore -->
+      <pre>    choose: (choice: DesktopModeState): Promise&lt;DesktopModeResult&gt; =&gt;</pre>
+    </li>
+    <li id="L30">
+      <!-- prettier-ignore -->
+      <pre>      ipcRenderer.invoke(&#x27;mimir:mode-choose&#x27;, choice),</pre>
+    </li>
+    <li id="L31">
+      <!-- prettier-ignore -->
+      <pre>    activate: (): void =&gt; {</pre>
+    </li>
+    <li id="L32">
+      <!-- prettier-ignore -->
+      <pre>      ipcRenderer.send(&#x27;mimir:mode-activate&#x27;)</pre>
+    </li>
+    <li id="L33">
+      <!-- prettier-ignore -->
+      <pre>    },</pre>
+    </li>
+    <li id="L34">
+      <!-- prettier-ignore -->
+      <pre>    openSetup: (): void =&gt; {</pre>
+    </li>
+    <li id="L35">
+      <!-- prettier-ignore -->
+      <pre>      ipcRenderer.send(&#x27;mimir:mode-open-setup&#x27;)</pre>
+    </li>
+    <li id="L36">
+      <!-- prettier-ignore -->
+      <pre>    },</pre>
+    </li>
+    <li id="L37">
+      <!-- prettier-ignore -->
+      <pre>  },</pre>
+    </li>
+    <li id="L38">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L39">
+      <!-- prettier-ignore -->
+      <pre>  /**</pre>
+    </li>
+    <li id="L40">
+      <!-- prettier-ignore -->
+      <pre>   * 窗口控制（D-094）。自绘标题栏用。</pre>
+    </li>
+    <li id="L41">
+      <!-- prettier-ignore -->
+      <pre>   *</pre>
+    </li>
+    <li id="L42">
+      <!-- prettier-ignore -->
+      <pre>   * 暴露的是**动作与只读状态**，不是 BrowserWindow 本身：页面拿不到窗口</pre>
+    </li>
+    <li id="L43">
+      <!-- prettier-ignore -->
+      <pre>   * 对象，只能请求三件事，也拿不到路径 / 句柄这些它不该碰的东西</pre>
+    </li>
+    <li id="L44">
+      <!-- prettier-ignore -->
+      <pre>   * （与 `boot` / `quit` 同一条最小穿越边界的规矩）。</pre>
+    </li>
+    <li id="L45">
+      <!-- prettier-ignore -->
+      <pre>   *</pre>
+    </li>
+    <li id="L46">
+      <!-- prettier-ignore -->
+      <pre>   * `isMaximized` 是异步的（IPC 往返），其余是单向通知——最大化状态要读</pre>
+    </li>
+    <li id="L47">
+      <!-- prettier-ignore -->
+      <pre>   * 权威值，不能靠页面自己翻一个布尔值。</pre>
+    </li>
+    <li id="L48">
+      <!-- prettier-ignore -->
+      <pre>   */</pre>
+    </li>
+    <li id="L49">
+      <!-- prettier-ignore -->
+      <pre>  window: {</pre>
+    </li>
+    <li id="L50">
+      <!-- prettier-ignore -->
+      <pre>    platform: process.platform,</pre>
+    </li>
+    <li id="L51">
+      <!-- prettier-ignore -->
+      <pre>    minimize: (): void =&gt; {</pre>
+    </li>
+    <li id="L52">
+      <!-- prettier-ignore -->
+      <pre>      ipcRenderer.send(&#x27;mimir:window&#x27;, &#x27;minimize&#x27;)</pre>
+    </li>
+    <li id="L53">
+      <!-- prettier-ignore -->
+      <pre>    },</pre>
+    </li>
+    <li id="L54">
+      <!-- prettier-ignore -->
+      <pre>    toggleMaximize: (): void =&gt; {</pre>
+    </li>
+    <li id="L55">
+      <!-- prettier-ignore -->
+      <pre>      ipcRenderer.send(&#x27;mimir:window&#x27;, &#x27;toggle-maximize&#x27;)</pre>
+    </li>
+    <li id="L56">
+      <!-- prettier-ignore -->
+      <pre>    },</pre>
+    </li>
+    <li id="L57">
+      <!-- prettier-ignore -->
+      <pre>    close: (): void =&gt; {</pre>
+    </li>
+    <li id="L58">
+      <!-- prettier-ignore -->
+      <pre>      ipcRenderer.send(&#x27;mimir:window&#x27;, &#x27;close&#x27;)</pre>
+    </li>
+    <li id="L59">
+      <!-- prettier-ignore -->
+      <pre>    },</pre>
+    </li>
+    <li id="L60">
+      <!-- prettier-ignore -->
+      <pre>    isMaximized: (): Promise&lt;boolean&gt; =&gt; ipcRenderer.invoke(&#x27;mimir:window-maximized&#x27;),</pre>
+    </li>
+    <li id="L61">
+      <!-- prettier-ignore -->
+      <pre>    onMaximizeChange: (listener: (maximized: boolean) =&gt; void): (() =&gt; void) =&gt; {</pre>
+    </li>
+    <li id="L62">
+      <!-- prettier-ignore -->
+      <pre>      const handler = (_event: unknown, maximized: boolean): void =&gt; listener(maximized)</pre>
+    </li>
+    <li id="L63">
+      <!-- prettier-ignore -->
+      <pre>      ipcRenderer.on(&#x27;mimir:window-maximized-changed&#x27;, handler)</pre>
+    </li>
+    <li id="L64">
+      <!-- prettier-ignore -->
+      <pre>      return () =&gt; {</pre>
+    </li>
+    <li id="L65">
+      <!-- prettier-ignore -->
+      <pre>        ipcRenderer.off(&#x27;mimir:window-maximized-changed&#x27;, handler)</pre>
+    </li>
+    <li id="L66">
+      <!-- prettier-ignore -->
+      <pre>      }</pre>
+    </li>
+    <li id="L67">
+      <!-- prettier-ignore -->
+      <pre>    },</pre>
+    </li>
+    <li id="L68">
+      <!-- prettier-ignore -->
+      <pre>  },</pre>
+    </li>
+    <li id="L69">
+      <!-- prettier-ignore -->
+      <pre>})</pre>
+    </li>
+  </ol>
+</html>

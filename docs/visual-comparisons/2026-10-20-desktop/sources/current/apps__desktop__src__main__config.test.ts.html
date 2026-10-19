@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>apps/desktop/src/main/config.test.ts</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+      min-height: 1.65em;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">Desktop来源索引</a>
+    <h1>apps/desktop/src/main/config.test.ts</h1>
+    <p>current真实源码 · SHA256 65e5e385aeee72af578c2e771cfd476c6525654ec67ddf6577ef57be9137362e</p>
+  </header>
+  <ol>
+    <li id="L1">
+      <!-- prettier-ignore -->
+      <pre>import { mkdtemp, readFile, rm, writeFile } from &#x27;node:fs/promises&#x27;</pre>
+    </li>
+    <li id="L2">
+      <!-- prettier-ignore -->
+      <pre>import { tmpdir } from &#x27;node:os&#x27;</pre>
+    </li>
+    <li id="L3">
+      <!-- prettier-ignore -->
+      <pre>import { join } from &#x27;node:path&#x27;</pre>
+    </li>
+    <li id="L4">
+      <!-- prettier-ignore -->
+      <pre>import { afterEach, describe, expect, it } from &#x27;vitest&#x27;</pre>
+    </li>
+    <li id="L5">
+      <!-- prettier-ignore -->
+      <pre>import { configPath, parseModeConfig, readModeConfig, writeModeConfig } from &#x27;./config.js&#x27;</pre>
+    </li>
+    <li id="L6">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L7">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L8">
+      <!-- prettier-ignore -->
+      <pre> * 模式选择的持久化（D-100）。</pre>
+    </li>
+    <li id="L9">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L10">
+      <!-- prettier-ignore -->
+      <pre> * 三条要守的：写出去能读回来、坏文件不炸、写是原子的（半截 JSON 的表现是</pre>
+    </li>
+    <li id="L11">
+      <!-- prettier-ignore -->
+      <pre> * 「下次启动又回到选择页」——用户的选择静默丢失）。</pre>
+    </li>
+    <li id="L12">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L13">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L14">
+      <!-- prettier-ignore -->
+      <pre>const dirs: string[] = []</pre>
+    </li>
+    <li id="L15">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L16">
+      <!-- prettier-ignore -->
+      <pre>async function tempDir(): Promise&lt;string&gt; {</pre>
+    </li>
+    <li id="L17">
+      <!-- prettier-ignore -->
+      <pre>  const dir = await mkdtemp(join(tmpdir(), &#x27;mimir-desktop-config-&#x27;))</pre>
+    </li>
+    <li id="L18">
+      <!-- prettier-ignore -->
+      <pre>  dirs.push(dir)</pre>
+    </li>
+    <li id="L19">
+      <!-- prettier-ignore -->
+      <pre>  return dir</pre>
+    </li>
+    <li id="L20">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+    <li id="L21">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L22">
+      <!-- prettier-ignore -->
+      <pre>afterEach(async () =&gt; {</pre>
+    </li>
+    <li id="L23">
+      <!-- prettier-ignore -->
+      <pre>  await Promise.all(dirs.splice(0).map((dir) =&gt; rm(dir, { recursive: true, force: true })))</pre>
+    </li>
+    <li id="L24">
+      <!-- prettier-ignore -->
+      <pre>})</pre>
+    </li>
+    <li id="L25">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L26">
+      <!-- prettier-ignore -->
+      <pre>describe(&#x27;parseModeConfig&#x27;, () =&gt; {</pre>
+    </li>
+    <li id="L27">
+      <!-- prettier-ignore -->
+      <pre>  it(&#x27;认识两种合法形状&#x27;, () =&gt; {</pre>
+    </li>
+    <li id="L28">
+      <!-- prettier-ignore -->
+      <pre>    expect(parseModeConfig({ mode: &#x27;local&#x27; })).toEqual({ mode: &#x27;local&#x27; })</pre>
+    </li>
+    <li id="L29">
+      <!-- prettier-ignore -->
+      <pre>    expect(parseModeConfig({ mode: &#x27;cloud&#x27;, cloudUrl: &#x27;https://k.example.com&#x27; })).toEqual({</pre>
+    </li>
+    <li id="L30">
+      <!-- prettier-ignore -->
+      <pre>      mode: &#x27;cloud&#x27;,</pre>
+    </li>
+    <li id="L31">
+      <!-- prettier-ignore -->
+      <pre>      cloudUrl: &#x27;https://k.example.com&#x27;,</pre>
+    </li>
+    <li id="L32">
+      <!-- prettier-ignore -->
+      <pre>    })</pre>
+    </li>
+    <li id="L33">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L34">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L35">
+      <!-- prettier-ignore -->
+      <pre>  it(&#x27;云端缺地址、模式名不认识、非对象一律算「没选过」&#x27;, () =&gt; {</pre>
+    </li>
+    <li id="L36">
+      <!-- prettier-ignore -->
+      <pre>    expect(parseModeConfig({ mode: &#x27;cloud&#x27; })).toBeNull()</pre>
+    </li>
+    <li id="L37">
+      <!-- prettier-ignore -->
+      <pre>    expect(parseModeConfig({ mode: &#x27;cloud&#x27;, cloudUrl: &#x27;&#x27; })).toBeNull()</pre>
+    </li>
+    <li id="L38">
+      <!-- prettier-ignore -->
+      <pre>    expect(parseModeConfig({ mode: &#x27;serverful&#x27; })).toBeNull()</pre>
+    </li>
+    <li id="L39">
+      <!-- prettier-ignore -->
+      <pre>    expect(parseModeConfig(null)).toBeNull()</pre>
+    </li>
+    <li id="L40">
+      <!-- prettier-ignore -->
+      <pre>    expect(parseModeConfig(&#x27;local&#x27;)).toBeNull()</pre>
+    </li>
+    <li id="L41">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L42">
+      <!-- prettier-ignore -->
+      <pre>})</pre>
+    </li>
+    <li id="L43">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L44">
+      <!-- prettier-ignore -->
+      <pre>describe(&#x27;读 / 写 / 再读&#x27;, () =&gt; {</pre>
+    </li>
+    <li id="L45">
+      <!-- prettier-ignore -->
+      <pre>  it(&#x27;往返一致&#x27;, async () =&gt; {</pre>
+    </li>
+    <li id="L46">
+      <!-- prettier-ignore -->
+      <pre>    const dir = await tempDir()</pre>
+    </li>
+    <li id="L47">
+      <!-- prettier-ignore -->
+      <pre>    await writeModeConfig(dir, { mode: &#x27;cloud&#x27;, cloudUrl: &#x27;https://k.example.com&#x27; })</pre>
+    </li>
+    <li id="L48">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L49">
+      <!-- prettier-ignore -->
+      <pre>    const text = await readFile(configPath(dir), &#x27;utf8&#x27;)</pre>
+    </li>
+    <li id="L50">
+      <!-- prettier-ignore -->
+      <pre>    expect(JSON.parse(text)).toEqual({ mode: &#x27;cloud&#x27;, cloudUrl: &#x27;https://k.example.com&#x27; })</pre>
+    </li>
+    <li id="L51">
+      <!-- prettier-ignore -->
+      <pre>    expect(await readModeConfig(dir)).toEqual({ mode: &#x27;cloud&#x27;, cloudUrl: &#x27;https://k.example.com&#x27; })</pre>
+    </li>
+    <li id="L52">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L53">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L54">
+      <!-- prettier-ignore -->
+      <pre>  it(&#x27;覆盖写入不留临时文件&#x27;, async () =&gt; {</pre>
+    </li>
+    <li id="L55">
+      <!-- prettier-ignore -->
+      <pre>    const dir = await tempDir()</pre>
+    </li>
+    <li id="L56">
+      <!-- prettier-ignore -->
+      <pre>    await writeModeConfig(dir, { mode: &#x27;local&#x27; })</pre>
+    </li>
+    <li id="L57">
+      <!-- prettier-ignore -->
+      <pre>    await writeModeConfig(dir, { mode: &#x27;cloud&#x27;, cloudUrl: &#x27;https://a.example.com&#x27; })</pre>
+    </li>
+    <li id="L58">
+      <!-- prettier-ignore -->
+      <pre>    expect(await readModeConfig(dir)).toEqual({ mode: &#x27;cloud&#x27;, cloudUrl: &#x27;https://a.example.com&#x27; })</pre>
+    </li>
+    <li id="L59">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L60">
+      <!-- prettier-ignore -->
+      <pre>    const { readdir } = await import(&#x27;node:fs/promises&#x27;)</pre>
+    </li>
+    <li id="L61">
+      <!-- prettier-ignore -->
+      <pre>    expect(await readdir(dir)).toEqual([&#x27;desktop-config.json&#x27;])</pre>
+    </li>
+    <li id="L62">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L63">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L64">
+      <!-- prettier-ignore -->
+      <pre>  it(&#x27;文件不存在时返回 null（首次启动的正常路径）&#x27;, async () =&gt; {</pre>
+    </li>
+    <li id="L65">
+      <!-- prettier-ignore -->
+      <pre>    const dir = await tempDir()</pre>
+    </li>
+    <li id="L66">
+      <!-- prettier-ignore -->
+      <pre>    expect(await readModeConfig(dir)).toBeNull()</pre>
+    </li>
+    <li id="L67">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L68">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L69">
+      <!-- prettier-ignore -->
+      <pre>  it(&#x27;坏 JSON 不炸，也不清掉现场&#x27;, async () =&gt; {</pre>
+    </li>
+    <li id="L70">
+      <!-- prettier-ignore -->
+      <pre>    const dir = await tempDir()</pre>
+    </li>
+    <li id="L71">
+      <!-- prettier-ignore -->
+      <pre>    await writeFile(configPath(dir), &#x27;{ 这不是 JSON&#x27;, &#x27;utf8&#x27;)</pre>
+    </li>
+    <li id="L72">
+      <!-- prettier-ignore -->
+      <pre>    expect(await readModeConfig(dir)).toBeNull()</pre>
+    </li>
+    <li id="L73">
+      <!-- prettier-ignore -->
+      <pre>    // 留在磁盘上，排查时还在（不能悄悄抹掉用户的现场）</pre>
+    </li>
+    <li id="L74">
+      <!-- prettier-ignore -->
+      <pre>    expect(await readFile(configPath(dir), &#x27;utf8&#x27;)).toBe(&#x27;{ 这不是 JSON&#x27;)</pre>
+    </li>
+    <li id="L75">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L76">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L77">
+      <!-- prettier-ignore -->
+      <pre>  it(&#x27;形状对但取值不认识时也是「没选过」&#x27;, async () =&gt; {</pre>
+    </li>
+    <li id="L78">
+      <!-- prettier-ignore -->
+      <pre>    const dir = await tempDir()</pre>
+    </li>
+    <li id="L79">
+      <!-- prettier-ignore -->
+      <pre>    await writeFile(configPath(dir), JSON.stringify({ mode: &#x27;something-else&#x27; }), &#x27;utf8&#x27;)</pre>
+    </li>
+    <li id="L80">
+      <!-- prettier-ignore -->
+      <pre>    expect(await readModeConfig(dir)).toBeNull()</pre>
+    </li>
+    <li id="L81">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L82">
+      <!-- prettier-ignore -->
+      <pre>})</pre>
+    </li>
+  </ol>
+</html>

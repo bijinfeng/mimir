@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-20",
+  "environment": "IAB actual React components with mocked desktop bridge",
+  "report": "browser-observations.md",
+  "actualPairs": 8,
+  "screenshotMediaType": "image/jpeg",
+  "nativeSmoke": {
+    "exitCode": 0,
+    "assertions": 12,
+    "log": "native-smoke.txt"
+  },
+  "nativeManualGuiVerified": false,
+  "nativeManualLimitation": "Mac locked",
+  "observed": [
+    "loading shell/window controls",
+    "empty cloud URL Enter does not choose",
+    "valid Enter choose, failed request retains URL, retry activates once",
+    "read failure retries to configured state",
+    "about query error retries to boot state",
+    "bridge missing prevents submit",
+    "collapse/expand and maximize external callbacks",
+    "darwin omits non-native controls",
+    "keyboard focus ring",
+    "short/narrow layout and long version wrapping"
+  ]
+}

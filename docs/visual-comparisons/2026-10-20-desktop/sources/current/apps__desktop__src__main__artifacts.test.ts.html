@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>apps/desktop/src/main/artifacts.test.ts</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+      min-height: 1.65em;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">Desktop来源索引</a>
+    <h1>apps/desktop/src/main/artifacts.test.ts</h1>
+    <p>current真实源码 · SHA256 fe1d0e6c9dccbd76d3544f36ef6e78707a4903401b97308e747279d943ee0fb8</p>
+  </header>
+  <ol>
+    <li id="L1">
+      <!-- prettier-ignore -->
+      <pre>import { describe, expect, it } from &#x27;vitest&#x27;</pre>
+    </li>
+    <li id="L2">
+      <!-- prettier-ignore -->
+      <pre>import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from &#x27;node:fs&#x27;</pre>
+    </li>
+    <li id="L3">
+      <!-- prettier-ignore -->
+      <pre>import { join } from &#x27;node:path&#x27;</pre>
+    </li>
+    <li id="L4">
+      <!-- prettier-ignore -->
+      <pre>import { tmpdir } from &#x27;node:os&#x27;</pre>
+    </li>
+    <li id="L5">
+      <!-- prettier-ignore -->
+      <pre>import { requiredArtifacts, findMissing, formatMissingMessage } from &#x27;./artifacts.js&#x27;</pre>
+    </li>
+    <li id="L6">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L7">
+      <!-- prettier-ignore -->
+      <pre>describe(&#x27;artifacts&#x27;, () =&gt; {</pre>
+    </li>
+    <li id="L8">
+      <!-- prettier-ignore -->
+      <pre>  it(&#x27;全齐时返回空&#x27;, () =&gt; {</pre>
+    </li>
+    <li id="L9">
+      <!-- prettier-ignore -->
+      <pre>    const tmp = mkdtempSync(join(tmpdir(), &#x27;artifacts-test-&#x27;))</pre>
+    </li>
+    <li id="L10">
+      <!-- prettier-ignore -->
+      <pre>    try {</pre>
+    </li>
+    <li id="L11">
+      <!-- prettier-ignore -->
+      <pre>      const serverDist = join(tmp, &#x27;server&#x27;, &#x27;dist&#x27;)</pre>
+    </li>
+    <li id="L12">
+      <!-- prettier-ignore -->
+      <pre>      const serverRoot = join(tmp, &#x27;server&#x27;)</pre>
+    </li>
+    <li id="L13">
+      <!-- prettier-ignore -->
+      <pre>      const webDist = join(tmp, &#x27;web&#x27;, &#x27;dist&#x27;)</pre>
+    </li>
+    <li id="L14">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L15">
+      <!-- prettier-ignore -->
+      <pre>      // 建全部四个必需产物</pre>
+    </li>
+    <li id="L16">
+      <!-- prettier-ignore -->
+      <pre>      mkdirSync(join(serverDist, &#x27;db&#x27;), { recursive: true })</pre>
+    </li>
+    <li id="L17">
+      <!-- prettier-ignore -->
+      <pre>      writeFileSync(join(serverDist, &#x27;index.js&#x27;), &#x27;&#x27;)</pre>
+    </li>
+    <li id="L18">
+      <!-- prettier-ignore -->
+      <pre>      writeFileSync(join(serverDist, &#x27;db&#x27;, &#x27;migrate.js&#x27;), &#x27;&#x27;)</pre>
+    </li>
+    <li id="L19">
+      <!-- prettier-ignore -->
+      <pre>      mkdirSync(join(serverRoot, &#x27;drizzle-sqlite&#x27;), { recursive: true })</pre>
+    </li>
+    <li id="L20">
+      <!-- prettier-ignore -->
+      <pre>      mkdirSync(webDist, { recursive: true })</pre>
+    </li>
+    <li id="L21">
+      <!-- prettier-ignore -->
+      <pre>      writeFileSync(join(webDist, &#x27;index.html&#x27;), &#x27;&#x27;)</pre>
+    </li>
+    <li id="L22">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L23">
+      <!-- prettier-ignore -->
+      <pre>      const artifacts = requiredArtifacts(serverDist, serverRoot, webDist)</pre>
+    </li>
+    <li id="L24">
+      <!-- prettier-ignore -->
+      <pre>      const missing = findMissing(artifacts)</pre>
+    </li>
+    <li id="L25">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L26">
+      <!-- prettier-ignore -->
+      <pre>      expect(missing).toEqual([])</pre>
+    </li>
+    <li id="L27">
+      <!-- prettier-ignore -->
+      <pre>    } finally {</pre>
+    </li>
+    <li id="L28">
+      <!-- prettier-ignore -->
+      <pre>      rmSync(tmp, { recursive: true, force: true })</pre>
+    </li>
+    <li id="L29">
+      <!-- prettier-ignore -->
+      <pre>    }</pre>
+    </li>
+    <li id="L30">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L31">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L32">
+      <!-- prettier-ignore -->
+      <pre>  it(&#x27;缺一个时只列该项&#x27;, () =&gt; {</pre>
+    </li>
+    <li id="L33">
+      <!-- prettier-ignore -->
+      <pre>    const tmp = mkdtempSync(join(tmpdir(), &#x27;artifacts-test-&#x27;))</pre>
+    </li>
+    <li id="L34">
+      <!-- prettier-ignore -->
+      <pre>    try {</pre>
+    </li>
+    <li id="L35">
+      <!-- prettier-ignore -->
+      <pre>      const serverDist = join(tmp, &#x27;server&#x27;, &#x27;dist&#x27;)</pre>
+    </li>
+    <li id="L36">
+      <!-- prettier-ignore -->
+      <pre>      const serverRoot = join(tmp, &#x27;server&#x27;)</pre>
+    </li>
+    <li id="L37">
+      <!-- prettier-ignore -->
+      <pre>      const webDist = join(tmp, &#x27;web&#x27;, &#x27;dist&#x27;)</pre>
+    </li>
+    <li id="L38">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L39">
+      <!-- prettier-ignore -->
+      <pre>      // 只建其中三个，漏掉 migrate.js</pre>
+    </li>
+    <li id="L40">
+      <!-- prettier-ignore -->
+      <pre>      mkdirSync(serverDist, { recursive: true })</pre>
+    </li>
+    <li id="L41">
+      <!-- prettier-ignore -->
+      <pre>      writeFileSync(join(serverDist, &#x27;index.js&#x27;), &#x27;&#x27;)</pre>
+    </li>
+    <li id="L42">
+      <!-- prettier-ignore -->
+      <pre>      mkdirSync(join(serverRoot, &#x27;drizzle-sqlite&#x27;), { recursive: true })</pre>
+    </li>
+    <li id="L43">
+      <!-- prettier-ignore -->
+      <pre>      mkdirSync(webDist, { recursive: true })</pre>
+    </li>
+    <li id="L44">
+      <!-- prettier-ignore -->
+      <pre>      writeFileSync(join(webDist, &#x27;index.html&#x27;), &#x27;&#x27;)</pre>
+    </li>
+    <li id="L45">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L46">
+      <!-- prettier-ignore -->
+      <pre>      const artifacts = requiredArtifacts(serverDist, serverRoot, webDist)</pre>
+    </li>
+    <li id="L47">
+      <!-- prettier-ignore -->
+      <pre>      const missing = findMissing(artifacts)</pre>
+    </li>
+    <li id="L48">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L49">
+      <!-- prettier-ignore -->
+      <pre>      expect(missing).toHaveLength(1)</pre>
+    </li>
+    <li id="L50">
+      <!-- prettier-ignore -->
+      <pre>      expect(missing[0]?.label).toBe(&#x27;迁移脚本&#x27;)</pre>
+    </li>
+    <li id="L51">
+      <!-- prettier-ignore -->
+      <pre>    } finally {</pre>
+    </li>
+    <li id="L52">
+      <!-- prettier-ignore -->
+      <pre>      rmSync(tmp, { recursive: true, force: true })</pre>
+    </li>
+    <li id="L53">
+      <!-- prettier-ignore -->
+      <pre>    }</pre>
+    </li>
+    <li id="L54">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L55">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L56">
+      <!-- prettier-ignore -->
+      <pre>  it(&#x27;全缺时列全部&#x27;, () =&gt; {</pre>
+    </li>
+    <li id="L57">
+      <!-- prettier-ignore -->
+      <pre>    const tmp = mkdtempSync(join(tmpdir(), &#x27;artifacts-test-&#x27;))</pre>
+    </li>
+    <li id="L58">
+      <!-- prettier-ignore -->
+      <pre>    try {</pre>
+    </li>
+    <li id="L59">
+      <!-- prettier-ignore -->
+      <pre>      const serverDist = join(tmp, &#x27;nonexist&#x27;, &#x27;dist&#x27;)</pre>
+    </li>
+    <li id="L60">
+      <!-- prettier-ignore -->
+      <pre>      const serverRoot = join(tmp, &#x27;nonexist&#x27;)</pre>
+    </li>
+    <li id="L61">
+      <!-- prettier-ignore -->
+      <pre>      const webDist = join(tmp, &#x27;nonexist-web&#x27;, &#x27;dist&#x27;)</pre>
+    </li>
+    <li id="L62">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L63">
+      <!-- prettier-ignore -->
+      <pre>      const artifacts = requiredArtifacts(serverDist, serverRoot, webDist)</pre>
+    </li>
+    <li id="L64">
+      <!-- prettier-ignore -->
+      <pre>      const missing = findMissing(artifacts)</pre>
+    </li>
+    <li id="L65">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L66">
+      <!-- prettier-ignore -->
+      <pre>      expect(missing).toHaveLength(4)</pre>
+    </li>
+    <li id="L67">
+      <!-- prettier-ignore -->
+      <pre>    } finally {</pre>
+    </li>
+    <li id="L68">
+      <!-- prettier-ignore -->
+      <pre>      rmSync(tmp, { recursive: true, force: true })</pre>
+    </li>
+    <li id="L69">
+      <!-- prettier-ignore -->
+      <pre>    }</pre>
+    </li>
+    <li id="L70">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L71">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L72">
+      <!-- prettier-ignore -->
+      <pre>  it(&#x27;formatMissingMessage 含修复命令与后果&#x27;, () =&gt; {</pre>
+    </li>
+    <li id="L73">
+      <!-- prettier-ignore -->
+      <pre>    const missing = [</pre>
+    </li>
+    <li id="L74">
+      <!-- prettier-ignore -->
+      <pre>      { label: &#x27;服务端入口&#x27;, path: &#x27;/x/index.js&#x27;, consequence: &#x27;动态 import 失败&#x27; },</pre>
+    </li>
+    <li id="L75">
+      <!-- prettier-ignore -->
+      <pre>      { label: &#x27;前端入口&#x27;, path: &#x27;/y/index.html&#x27;, consequence: &#x27;页面 404&#x27; },</pre>
+    </li>
+    <li id="L76">
+      <!-- prettier-ignore -->
+      <pre>    ]</pre>
+    </li>
+    <li id="L77">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L78">
+      <!-- prettier-ignore -->
+      <pre>    const message = formatMissingMessage(missing)</pre>
+    </li>
+    <li id="L79">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L80">
+      <!-- prettier-ignore -->
+      <pre>    expect(message).toContain(&#x27;缺少 2 个必需产物&#x27;)</pre>
+    </li>
+    <li id="L81">
+      <!-- prettier-ignore -->
+      <pre>    expect(message).toContain(&#x27;服务端入口&#x27;)</pre>
+    </li>
+    <li id="L82">
+      <!-- prettier-ignore -->
+      <pre>    expect(message).toContain(&#x27;/x/index.js&#x27;)</pre>
+    </li>
+    <li id="L83">
+      <!-- prettier-ignore -->
+      <pre>    expect(message).toContain(&#x27;动态 import 失败&#x27;)</pre>
+    </li>
+    <li id="L84">
+      <!-- prettier-ignore -->
+      <pre>    expect(message).toContain(&#x27;pnpm desktop:start&#x27;)</pre>
+    </li>
+    <li id="L85">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L86">
+      <!-- prettier-ignore -->
+      <pre>})</pre>
+    </li>
+  </ol>
+</html>

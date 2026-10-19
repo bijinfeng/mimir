@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-20",
+  "command": "pnpm check",
+  "exitCode": 0,
+  "log": "full-check.txt",
+  "counts": {
+    "office": 2774,
+    "renderer": 591,
+    "chat": 88,
+    "desktop": 57,
+    "server": 1365,
+    "serverLocal": 10,
+    "serverFnos": 4
+  },
+  "existingStorageSkipped": 2,
+  "builds": ["server", "desktop main/preload/renderer"],
+  "nativeSmoke": {
+    "exitCode": 0,
+    "assertions": 12
+  },
+  "nativeManualGuiVerified": false
+}

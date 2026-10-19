@@ -19,8 +19,10 @@
   "pr_url": null,
   "subtasks": [],
   "children": [],
-  "parent": null,
+  "parent": "10-18-modular-interaction-polish",
   "relatedFiles": [],
-  "notes": "",
-  "meta": {}
+  "notes": "实施、独立57项回归、8组真实前后+2补充、三段build、Electron12条自检及全仓pnpm check exit0。原生手工GUI受锁屏限制，边界见acceptance.md。",
+  "meta": {
+    "finalGate": "docs/visual-comparisons/2026-10-20-desktop/full-check.txt"
+  }
 }

@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/renderer/src/components/settings/ClientSection.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+      min-height: 1.65em;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">Desktop来源索引</a>
+    <h1>packages/renderer/src/components/settings/ClientSection.tsx</h1>
+    <p>current真实源码 · SHA256 078f17479d0ed2a7e3b74e752affb24de5a2971abee71ce27f50e95ac7a72306</p>
+  </header>
+  <ol>
+    <li id="L1">
+      <!-- prettier-ignore -->
+      <pre>import { Button } from &#x27;antd&#x27;</pre>
+    </li>
+    <li id="L2">
+      <!-- prettier-ignore -->
+      <pre>import { useQuery } from &#x27;@tanstack/react-query&#x27;</pre>
+    </li>
+    <li id="L3">
+      <!-- prettier-ignore -->
+      <pre>import { LoadError } from &#x27;../LoadError&#x27;</pre>
+    </li>
+    <li id="L4">
+      <!-- prettier-ignore -->
+      <pre>import { useDesktopBridge } from &#x27;../../platform&#x27;</pre>
+    </li>
+    <li id="L5">
+      <!-- prettier-ignore -->
+      <pre>import { Block, BlockDesc, Panel, Row } from &#x27;./parts&#x27;</pre>
+    </li>
+    <li id="L6">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L7">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L8">
+      <!-- prettier-ignore -->
+      <pre> * 客户端（桌面壳专属，D-100 / D-103）。</pre>
+    </li>
+    <li id="L9">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L10">
+      <!-- prettier-ignore -->
+      <pre> * 两种使用方式——**本地离线**（数据全在本机、免登录）与**云端**（数据在</pre>
+    </li>
+    <li id="L11">
+      <!-- prettier-ignore -->
+      <pre> * 自部署的服务器上）——在这里查看与切换。</pre>
+    </li>
+    <li id="L12">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L13">
+      <!-- prettier-ignore -->
+      <pre> * ## 为什么只是一个「更换使用方式」按钮</pre>
+    </li>
+    <li id="L14">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L15">
+      <!-- prettier-ignore -->
+      <pre> * 选择与切换的界面**只有一处**：首次启动那个选择页（桌面端渲染进程的第二个</pre>
+    </li>
+    <li id="L16">
+      <!-- prettier-ignore -->
+      <pre> * 入口，随包分发）。这里点按钮就是把窗口带回那一页，由它负责填地址、</pre>
+    </li>
+    <li id="L17">
+      <!-- prettier-ignore -->
+      <pre> * 校验、探活与切换。</pre>
+    </li>
+    <li id="L18">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L19">
+      <!-- prettier-ignore -->
+      <pre> * 在设置页里再画一套「地址输入框 + 保存 + 校验」看着更像「设置」，但它是</pre>
+    </li>
+    <li id="L20">
+      <!-- prettier-ignore -->
+      <pre> * 第二份实现：两处的地址归一化规则、失败措辞、探活时机必然漂移，而漂移的</pre>
+    </li>
+    <li id="L21">
+      <!-- prettier-ignore -->
+      <pre> * 表现是「同一件事在两处结果不同」。那一页也已经会读当前模式，从设置页进去</pre>
+    </li>
+    <li id="L22">
+      <!-- prettier-ignore -->
+      <pre> * 时它显示的是「切换使用方式」而不是「首次选择」——用户看不出区别。</pre>
+    </li>
+    <li id="L23">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L24">
+      <!-- prettier-ignore -->
+      <pre> * ## 浏览器里这个分区不存在</pre>
+    </li>
+    <li id="L25">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L26">
+      <!-- prettier-ignore -->
+      <pre> * `getDesktopBridge()` 返回 undefined 时**整个分区不渲染**（连 tab 也不出现）：</pre>
+    </li>
+    <li id="L27">
+      <!-- prettier-ignore -->
+      <pre> * 浏览器的使用方式由「访问哪个地址」决定，没有一个可以切换的对象。</pre>
+    </li>
+    <li id="L28">
+      <!-- prettier-ignore -->
+      <pre> * 渲染一个灰掉的按钮只是噪音。</pre>
+    </li>
+    <li id="L29">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L30">
+      <!-- prettier-ignore -->
+      <pre>export function ClientSection() {</pre>
+    </li>
+    <li id="L31">
+      <!-- prettier-ignore -->
+      <pre>  const bridge = useDesktopBridge()</pre>
+    </li>
+    <li id="L32">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L33">
+      <!-- prettier-ignore -->
+      <pre>  const bootQuery = useQuery({</pre>
+    </li>
+    <li id="L34">
+      <!-- prettier-ignore -->
+      <pre>    queryKey: [&#x27;desktop-boot&#x27;],</pre>
+    </li>
+    <li id="L35">
+      <!-- prettier-ignore -->
+      <pre>    queryFn: async () =&gt; (await bridge?.boot()) ?? null,</pre>
+    </li>
+    <li id="L36">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L37">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L38">
+      <!-- prettier-ignore -->
+      <pre>  const mode = bootQuery.data?.mode</pre>
+    </li>
+    <li id="L39">
+      <!-- prettier-ignore -->
+      <pre>  const origin = bootQuery.data?.origin ?? null</pre>
+    </li>
+    <li id="L40">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L41">
+      <!-- prettier-ignore -->
+      <pre>  if (bootQuery.isError) {</pre>
+    </li>
+    <li id="L42">
+      <!-- prettier-ignore -->
+      <pre>    return &lt;LoadError message=&quot;客户端状态读取失败&quot; onRetry={() =&gt; void bootQuery.refetch()} /&gt;</pre>
+    </li>
+    <li id="L43">
+      <!-- prettier-ignore -->
+      <pre>  }</pre>
+    </li>
+    <li id="L44">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L45">
+      <!-- prettier-ignore -->
+      <pre>  return (</pre>
+    </li>
+    <li id="L46">
+      <!-- prettier-ignore -->
+      <pre>    &lt;Panel title=&quot;使用方式&quot; desc=&quot;在本地离线与连接服务器之间切换&quot;&gt;</pre>
+    </li>
+    <li id="L47">
+      <!-- prettier-ignore -->
+      <pre>      &lt;Row label=&quot;当前&quot;&gt;</pre>
+    </li>
+    <li id="L48">
+      <!-- prettier-ignore -->
+      <pre>        {mode === undefined</pre>
+    </li>
+    <li id="L49">
+      <!-- prettier-ignore -->
+      <pre>          ? &#x27;读取中…&#x27;</pre>
+    </li>
+    <li id="L50">
+      <!-- prettier-ignore -->
+      <pre>          : mode === &#x27;local&#x27;</pre>
+    </li>
+    <li id="L51">
+      <!-- prettier-ignore -->
+      <pre>            ? &#x27;本地使用（数据在这台电脑上）&#x27;</pre>
+    </li>
+    <li id="L52">
+      <!-- prettier-ignore -->
+      <pre>            : &#x27;连接服务器&#x27;}</pre>
+    </li>
+    <li id="L53">
+      <!-- prettier-ignore -->
+      <pre>      &lt;/Row&gt;</pre>
+    </li>
+    <li id="L54">
+      <!-- prettier-ignore -->
+      <pre>      {mode === &#x27;cloud&#x27; &amp;&amp; origin ? &lt;Row label=&quot;服务器&quot;&gt;{origin}&lt;/Row&gt; : null}</pre>
+    </li>
+    <li id="L55">
+      <!-- prettier-ignore -->
+      <pre>      &lt;Block&gt;</pre>
+    </li>
+    <li id="L56">
+      <!-- prettier-ignore -->
+      <pre>        &lt;Button onClick={() =&gt; bridge?.mode.openSetup()}&gt;更换使用方式&lt;/Button&gt;</pre>
+    </li>
+    <li id="L57">
+      <!-- prettier-ignore -->
+      <pre>        &lt;BlockDesc&gt;切换不会迁移数据，本地与服务器上的数据分别保留。&lt;/BlockDesc&gt;</pre>
+    </li>
+    <li id="L58">
+      <!-- prettier-ignore -->
+      <pre>      &lt;/Block&gt;</pre>
+    </li>
+    <li id="L59">
+      <!-- prettier-ignore -->
+      <pre>    &lt;/Panel&gt;</pre>
+    </li>
+    <li id="L60">
+      <!-- prettier-ignore -->
+      <pre>  )</pre>
+    </li>
+    <li id="L61">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+  </ol>
+</html>

@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>apps/desktop/src/main/security.ts</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+      min-height: 1.65em;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">Desktop来源索引</a>
+    <h1>apps/desktop/src/main/security.ts</h1>
+    <p>current真实源码 · SHA256 92baca54391e23a02e426d43da6654a2aa8988d16fc6f9bfec5a347dd9289514</p>
+  </header>
+  <ol>
+    <li id="L1">
+      <!-- prettier-ignore -->
+      <pre>import { createHash } from &#x27;node:crypto&#x27;</pre>
+    </li>
+    <li id="L2">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L3">
+      <!-- prettier-ignore -->
+      <pre>export type WindowSurface = &#x27;setup&#x27; | &#x27;local&#x27; | &#x27;cloud&#x27;</pre>
+    </li>
+    <li id="L4">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L5">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L6">
+      <!-- prettier-ignore -->
+      <pre> * Electron 的 cookie 不按端口隔离。云端地址若是另一个 127.0.0.1 端口，</pre>
+    </li>
+    <li id="L7">
+      <!-- prettier-ignore -->
+      <pre> * 不能与本地宿主共用 defaultSession；云端不同服务器也各有自己的登录态。</pre>
+    </li>
+    <li id="L8">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L9">
+      <!-- prettier-ignore -->
+      <pre>export function partitionFor(surface: WindowSurface, url: string): string {</pre>
+    </li>
+    <li id="L10">
+      <!-- prettier-ignore -->
+      <pre>  if (surface === &#x27;setup&#x27;) return &#x27;mimir-setup&#x27;</pre>
+    </li>
+    <li id="L11">
+      <!-- prettier-ignore -->
+      <pre>  if (surface === &#x27;local&#x27;) return &#x27;persist:mimir-local&#x27;</pre>
+    </li>
+    <li id="L12">
+      <!-- prettier-ignore -->
+      <pre>  const identity = createHash(&#x27;sha256&#x27;).update(url).digest(&#x27;hex&#x27;).slice(0, 20)</pre>
+    </li>
+    <li id="L13">
+      <!-- prettier-ignore -->
+      <pre>  return `persist:mimir-cloud-${identity}`</pre>
+    </li>
+    <li id="L14">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+    <li id="L15">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L16">
+      <!-- prettier-ignore -->
+      <pre>export type NavigationDecision = &#x27;allow&#x27; | &#x27;external&#x27; | &#x27;block&#x27;</pre>
+    </li>
+    <li id="L17">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L18">
+      <!-- prettier-ignore -->
+      <pre>/** 只让页面留在当前应用源内；跨源 web 链接在系统浏览器打开。 */</pre>
+    </li>
+    <li id="L19">
+      <!-- prettier-ignore -->
+      <pre>export function navigationDecision(currentUrl: string, targetUrl: string): NavigationDecision {</pre>
+    </li>
+    <li id="L20">
+      <!-- prettier-ignore -->
+      <pre>  let current: URL</pre>
+    </li>
+    <li id="L21">
+      <!-- prettier-ignore -->
+      <pre>  let target: URL</pre>
+    </li>
+    <li id="L22">
+      <!-- prettier-ignore -->
+      <pre>  try {</pre>
+    </li>
+    <li id="L23">
+      <!-- prettier-ignore -->
+      <pre>    current = new URL(currentUrl)</pre>
+    </li>
+    <li id="L24">
+      <!-- prettier-ignore -->
+      <pre>    target = new URL(targetUrl)</pre>
+    </li>
+    <li id="L25">
+      <!-- prettier-ignore -->
+      <pre>  } catch {</pre>
+    </li>
+    <li id="L26">
+      <!-- prettier-ignore -->
+      <pre>    return &#x27;block&#x27;</pre>
+    </li>
+    <li id="L27">
+      <!-- prettier-ignore -->
+      <pre>  }</pre>
+    </li>
+    <li id="L28">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L29">
+      <!-- prettier-ignore -->
+      <pre>  if (current.protocol === &#x27;file:&#x27;) {</pre>
+    </li>
+    <li id="L30">
+      <!-- prettier-ignore -->
+      <pre>    return target.protocol === &#x27;file:&#x27; &amp;&amp;</pre>
+    </li>
+    <li id="L31">
+      <!-- prettier-ignore -->
+      <pre>      target.host === current.host &amp;&amp;</pre>
+    </li>
+    <li id="L32">
+      <!-- prettier-ignore -->
+      <pre>      target.pathname === current.pathname</pre>
+    </li>
+    <li id="L33">
+      <!-- prettier-ignore -->
+      <pre>      ? &#x27;allow&#x27;</pre>
+    </li>
+    <li id="L34">
+      <!-- prettier-ignore -->
+      <pre>      : &#x27;block&#x27;</pre>
+    </li>
+    <li id="L35">
+      <!-- prettier-ignore -->
+      <pre>  }</pre>
+    </li>
+    <li id="L36">
+      <!-- prettier-ignore -->
+      <pre>  if (current.protocol !== &#x27;http:&#x27; &amp;&amp; current.protocol !== &#x27;https:&#x27;) return &#x27;block&#x27;</pre>
+    </li>
+    <li id="L37">
+      <!-- prettier-ignore -->
+      <pre>  if (target.origin === current.origin) return &#x27;allow&#x27;</pre>
+    </li>
+    <li id="L38">
+      <!-- prettier-ignore -->
+      <pre>  return target.protocol === &#x27;http:&#x27; || target.protocol === &#x27;https:&#x27; ? &#x27;external&#x27; : &#x27;block&#x27;</pre>
+    </li>
+    <li id="L39">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+  </ol>
+</html>

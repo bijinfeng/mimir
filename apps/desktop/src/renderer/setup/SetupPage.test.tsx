@@ -24,6 +24,25 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 const noop = () => {}
 
+function deferred<T>() {
+  let resolve!: (value: T) => void
+  let reject!: (cause: unknown) => void
+  const promise = new Promise<T>((yes, no) => {
+    resolve = yes
+    reject = no
+  })
+  return { promise, resolve, reject }
+}
+
+function pressEnter(input: HTMLInputElement) {
+  input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+}
+
+function changeInput(input: HTMLInputElement, value: string) {
+  Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(input, value)
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+}
+
 function makeBridge(options: {
   current?: DesktopModeState | null
   chooseResult?: DesktopModeResult
@@ -102,6 +121,62 @@ afterEach(() => {
 })
 
 describe('选择页', () => {
+  it('读取期间保留品牌和可用窗口控件，不提前显示首启表单', async () => {
+    const read = deferred<DesktopModeState | null>()
+    const { bridge, calls } = makeBridge({})
+    bridge.mode.get = () => read.promise
+    const { SetupPage, MimirProvider } = await loadPage(bridge)
+    const view = await render(MimirProvider, createElement(SetupPage))
+
+    expect(view.text()).toContain('mimir')
+    expect(view.host.querySelector('[role="status"]')?.textContent).toBe('正在读取使用方式…')
+    expect(view.button('开始使用')).toBeUndefined()
+    expect(view.host.querySelector('[role="group"][aria-label="使用方式"]')).toBeNull()
+    expect(view.host.querySelector('[aria-label="最大化"]')).toBeNull()
+    await act(async () => {
+      view.host.querySelector<HTMLButtonElement>('[aria-label="最小化"]')?.click()
+      view.host.querySelector<HTMLButtonElement>('[aria-label="关闭"]')?.click()
+    })
+    expect(calls).toEqual(['minimize', 'close'])
+
+    await act(async () => read.resolve({ mode: 'local' }))
+    expect(view.text()).toContain('切换使用方式')
+    expect(view.text()).not.toContain('选择使用方式')
+    await view.unmount()
+  })
+
+  it('读取失败后的重试仍显示真实等待，成功前不出现选择表单', async () => {
+    const first = deferred<DesktopModeState | null>()
+    const retry = deferred<DesktopModeState | null>()
+    const { bridge } = makeBridge({})
+    bridge.mode.get = vi
+      .fn<MimirDesktopBridge['mode']['get']>()
+      .mockReturnValueOnce(first.promise)
+      .mockReturnValueOnce(retry.promise)
+    const { SetupPage, MimirProvider } = await loadPage(bridge)
+    const view = await render(MimirProvider, createElement(SetupPage))
+    await act(async () => first.reject(new Error('IPC 暂时不可用')))
+    expect(view.text()).toContain('无法读取使用方式')
+
+    await act(async () => view.button('重')?.click())
+    expect(view.host.querySelector('[role="status"]')?.textContent).toBe('正在读取使用方式…')
+    expect(view.button('开始使用')).toBeUndefined()
+    await act(async () => retry.resolve(null))
+    expect(view.text()).toContain('选择使用方式')
+    await view.unmount()
+  })
+
+  it('读取迟到结果不会在卸载后发布', async () => {
+    const read = deferred<DesktopModeState | null>()
+    const { bridge } = makeBridge({})
+    bridge.mode.get = () => read.promise
+    const { SetupPage, MimirProvider } = await loadPage(bridge)
+    const view = await render(MimirProvider, createElement(SetupPage))
+    await view.unmount()
+    await act(async () => read.resolve({ mode: 'local' }))
+    expect(view.host.textContent).toBe('')
+  })
+
   it('首次启动：标题是「选择使用方式」，且没有「返回，不改」', async () => {
     const { bridge } = makeBridge({ current: null })
     const { SetupPage, MimirProvider } = await loadPage(bridge)
@@ -188,6 +263,86 @@ describe('选择页', () => {
 
     await view.unmount()
   })
+
+  it('空地址及空白地址按 Enter 不会绕过按钮禁用', async () => {
+    const { bridge, chosen } = makeBridge({})
+    const { SetupPage, MimirProvider } = await loadPage(bridge)
+    const view = await render(MimirProvider, createElement(SetupPage))
+    await act(async () => view.button('连接服务器')?.click())
+    const input = view.host.querySelector<HTMLInputElement>('input[type="url"]')!
+    await act(async () => pressEnter(input))
+    await act(async () => changeInput(input, '   '))
+    await act(async () => pressEnter(input))
+    expect(view.button('开始使用')?.disabled).toBe(true)
+    expect(chosen).toEqual([])
+    await view.unmount()
+  })
+
+  it('同帧 Enter 和点击只提交一次，成功后等待 activate 而不重新解锁', async () => {
+    const choose = deferred<DesktopModeResult>()
+    const url = 'kb.example.com'
+    const { bridge, calls } = makeBridge({ current: { mode: 'cloud', cloudUrl: url } })
+    const chooseSpy = vi.fn<MimirDesktopBridge['mode']['choose']>(() => choose.promise)
+    bridge.mode.choose = chooseSpy
+    const { SetupPage, MimirProvider } = await loadPage(bridge)
+    const view = await render(MimirProvider, createElement(SetupPage))
+    const input = view.host.querySelector<HTMLInputElement>('input[type="url"]')!
+    await act(async () => {
+      pressEnter(input)
+      view.button('切换')?.click()
+      pressEnter(input)
+    })
+    expect(chooseSpy).toHaveBeenCalledExactlyOnceWith({ mode: 'cloud', cloudUrl: url })
+    expect(input.disabled).toBe(true)
+    expect(view.button('本地使用')?.disabled).toBe(true)
+    expect(view.button('返回，不改')?.disabled).toBe(true)
+    expect(view.host.querySelector('[role="status"]')?.textContent).toBe('正在连接服务器…')
+    expect(view.host.querySelector('[aria-busy="true"]')).not.toBeNull()
+    expect(calls).not.toContain('activate')
+
+    await act(async () => choose.resolve({ ok: true }))
+    expect(calls).toEqual(['activate'])
+    expect(view.host.querySelector('[role="status"]')?.textContent).toBe('正在打开…')
+    expect(input.disabled).toBe(true)
+    await act(async () => pressEnter(input))
+    expect(chooseSpy).toHaveBeenCalledTimes(1)
+    await view.unmount()
+  })
+
+  it.each(['result', 'reject'] as const)(
+    '%s 失败保留地址并释放提交入口供原址重试',
+    async (kind) => {
+      const first = deferred<DesktopModeResult>()
+      const retry = deferred<DesktopModeResult>()
+      const url = 'kb.example.com/team'
+      const { bridge, calls } = makeBridge({ current: { mode: 'cloud', cloudUrl: url } })
+      const chooseSpy = vi
+        .fn<MimirDesktopBridge['mode']['choose']>()
+        .mockReturnValueOnce(first.promise)
+        .mockReturnValueOnce(retry.promise)
+      bridge.mode.choose = chooseSpy
+      const { SetupPage, MimirProvider } = await loadPage(bridge)
+      const view = await render(MimirProvider, createElement(SetupPage))
+      const input = view.host.querySelector<HTMLInputElement>('input[type="url"]')!
+      await act(async () => pressEnter(input))
+      await act(async () => {
+        if (kind === 'result') first.resolve({ ok: false, message: '连接失败，请重试' })
+        else first.reject(new Error('IPC 暂时不可用'))
+      })
+      expect(view.text()).toContain(kind === 'result' ? '连接失败，请重试' : 'IPC 暂时不可用')
+      expect(input.value).toBe(url)
+      expect(input.disabled).toBe(false)
+      expect(view.button('返回，不改')?.disabled).toBe(false)
+      expect(view.host.querySelector('[role="status"]')?.textContent).toBe('')
+      expect(calls).not.toContain('activate')
+
+      await act(async () => pressEnter(input))
+      expect(chooseSpy).toHaveBeenNthCalledWith(2, { mode: 'cloud', cloudUrl: url })
+      await act(async () => retry.resolve({ ok: true }))
+      expect(calls).toEqual(['activate'])
+      await view.unmount()
+    },
+  )
 
   it('choose() 失败时显示原话，且不导航', async () => {
     const { bridge, calls } = makeBridge({

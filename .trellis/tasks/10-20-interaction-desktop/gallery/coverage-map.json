@@ -1,0 +1,1171 @@
+{
+  "baseline": "53285bbdeaa17475e04aae517f07c957776cb6b6",
+  "sourceMappingOnly": true,
+  "inventoryDate": "2026-10-20",
+  "excludedSourceSnapshots": [
+    {
+      "path": "apps/desktop/src/renderer/routeTree.gen.ts",
+      "reason": "Ignored generated router tree has no blob in fixed baseline; raw research record retained, never presented as a baseline snapshot."
+    }
+  ],
+  "count": 19,
+  "countMeaning": "Surface families with overlapping state/control arrays; neither independent action count nor GUI passes.",
+  "sourceSnapshots": {
+    "before": [
+      {
+        "path": "apps/desktop/src/main/artifacts.test.ts",
+        "sha256": "fe1d0e6c9dccbd76d3544f36ef6e78707a4903401b97308e747279d943ee0fb8",
+        "bytes": 3144,
+        "lines": 86,
+        "html": "sources/before/apps__desktop__src__main__artifacts.test.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/main/artifacts.ts",
+        "sha256": "44bb8f9231893589cbaa25099b37af3f1d7c5ec9b29560b355bd53838fac938d",
+        "bytes": 2006,
+        "lines": 72,
+        "html": "sources/before/apps__desktop__src__main__artifacts.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/main/cloud.test.ts",
+        "sha256": "af97778fd317ddf118f13eb3ddbb1c422649196957b3779c8af1ed4b5f511425",
+        "bytes": 6116,
+        "lines": 160,
+        "html": "sources/before/apps__desktop__src__main__cloud.test.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/main/cloud.ts",
+        "sha256": "ebd346dade22bd6306a89f9860ec9f43fbba0332f5c75cca9fc74b2ddaaa93a9",
+        "bytes": 7868,
+        "lines": 185,
+        "html": "sources/before/apps__desktop__src__main__cloud.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/main/config.test.ts",
+        "sha256": "65e5e385aeee72af578c2e771cfd476c6525654ec67ddf6577ef57be9137362e",
+        "bytes": 3202,
+        "lines": 82,
+        "html": "sources/before/apps__desktop__src__main__config.test.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/main/config.ts",
+        "sha256": "02d526db8e0474275ba009c14c4caae1f1f937b8ff3d5ecfe9a607fcfdf4924b",
+        "bytes": 2616,
+        "lines": 59,
+        "html": "sources/before/apps__desktop__src__main__config.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/main/host.test.ts",
+        "sha256": "80f4b860ab3f28aee7f52445a7e434868fc2399ee483984c7ee3cc3f38b53d3f",
+        "bytes": 5124,
+        "lines": 139,
+        "html": "sources/before/apps__desktop__src__main__host.test.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/main/host.ts",
+        "sha256": "d59bfe5bf2079bf256c1b46fd87beb9579d414dbb61b02e67dd5cd19c1ad3b94",
+        "bytes": 8635,
+        "lines": 201,
+        "html": "sources/before/apps__desktop__src__main__host.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/main/index.ts",
+        "sha256": "a05dc00e38627b9ac784523303bc857c5ce9b555dbf4409b7a930a2d188221b1",
+        "bytes": 28281,
+        "lines": 731,
+        "html": "sources/before/apps__desktop__src__main__index.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/main/security.test.ts",
+        "sha256": "f84c2ab3d686e142cb911b7abb4e30659fcf68dca88194cac37928ebb2a43163",
+        "bytes": 2077,
+        "lines": 46,
+        "html": "sources/before/apps__desktop__src__main__security.test.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/main/security.ts",
+        "sha256": "92baca54391e23a02e426d43da6654a2aa8988d16fc6f9bfec5a347dd9289514",
+        "bytes": 1433,
+        "lines": 39,
+        "html": "sources/before/apps__desktop__src__main__security.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/preload/index.ts",
+        "sha256": "4bdbb4a00bb5b5a94059bee223929e85b52878bc30c3bfb11900eaf39b7e1f3d",
+        "bytes": 2813,
+        "lines": 69,
+        "html": "sources/before/apps__desktop__src__preload__index.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/renderer/components/TitleBar.style.ts",
+        "sha256": "dcffddaf385afbef17b4899076a8644d880842783952b00a1308b8274002476a",
+        "bytes": 3051,
+        "lines": 93,
+        "html": "sources/before/apps__desktop__src__renderer__components__TitleBar.style.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/renderer/components/TitleBar.test.tsx",
+        "sha256": "f6ed7dee46faea50c50fabdb4862130fbc03f244a1967b110c5813233f802e9d",
+        "bytes": 7519,
+        "lines": 196,
+        "html": "sources/before/apps__desktop__src__renderer__components__TitleBar.test.tsx.html"
+      },
+      {
+        "path": "apps/desktop/src/renderer/components/TitleBar.tsx",
+        "sha256": "4539839fe593ed8b30d5d3e119852dc39df3ef49f6e1889311b66314c496c4fc",
+        "bytes": 4744,
+        "lines": 104,
+        "html": "sources/before/apps__desktop__src__renderer__components__TitleBar.tsx.html"
+      },
+      {
+        "path": "apps/desktop/src/renderer/components/WindowControls.style.ts",
+        "sha256": "0e951ceb8c3a699a15124e55af66ec7ad3ceea6e1dce27a1d34345136dcdca95",
+        "bytes": 1911,
+        "lines": 61,
+        "html": "sources/before/apps__desktop__src__renderer__components__WindowControls.style.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/renderer/components/WindowControls.tsx",
+        "sha256": "544dcb1e1dc46d354be70761867b4ab408fd2723b3f7bab36ddf2fe3057fd1d2",
+        "bytes": 4599,
+        "lines": 122,
+        "html": "sources/before/apps__desktop__src__renderer__components__WindowControls.tsx.html"
+      },
+      {
+        "path": "apps/desktop/src/renderer/index.html",
+        "sha256": "12c1704dec53d201e07fe86e482241e44ecc3b0f7afe22c718dcba49fd775dd7",
+        "bytes": 1955,
+        "lines": 47,
+        "html": "sources/before/apps__desktop__src__renderer__index.html.html"
+      },
+      {
+        "path": "apps/desktop/src/renderer/index.tsx",
+        "sha256": "eae62bfc5bb672e903fbcec4ab464213ba933f2bf5fc37da6d1671cf94ea2e14",
+        "bytes": 1914,
+        "lines": 47,
+        "html": "sources/before/apps__desktop__src__renderer__index.tsx.html"
+      },
+      {
+        "path": "apps/desktop/src/renderer/lib/desktop-bridge.ts",
+        "sha256": "7394960f6208fcc60b7912e49581f4dfe3df3695d116b2c5efc9ade2c7c9ea0f",
+        "bytes": 1506,
+        "lines": 31,
+        "html": "sources/before/apps__desktop__src__renderer__lib__desktop-bridge.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/renderer/routes/about.tsx",
+        "sha256": "0c5f5e7b067a759f74ee5f252cce198a99fed1b4bbba7e9b0dfa579bdd9e9566",
+        "bytes": 3280,
+        "lines": 106,
+        "html": "sources/before/apps__desktop__src__renderer__routes__about.tsx.html"
+      },
+      {
+        "path": "apps/desktop/src/renderer/setup/SetupPage.style.ts",
+        "sha256": "0c1dcd55cfa2b2e5a91a8b0aad7385fb06ee35d555a8690c2a3ffb5457415466",
+        "bytes": 4706,
+        "lines": 188,
+        "html": "sources/before/apps__desktop__src__renderer__setup__SetupPage.style.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/renderer/setup/SetupPage.test.tsx",
+        "sha256": "c60ba4a162a5120a1cce637b325814d0c847160eaca52fcda2a3273db583f506",
+        "bytes": 8560,
+        "lines": 230,
+        "html": "sources/before/apps__desktop__src__renderer__setup__SetupPage.test.tsx.html"
+      },
+      {
+        "path": "apps/desktop/src/renderer/setup/SetupPage.tsx",
+        "sha256": "63dd63eee8fd097ebcdc9f51d4f5d236aef51594e9fa6d58f59a79baf8565ce8",
+        "bytes": 12150,
+        "lines": 306,
+        "html": "sources/before/apps__desktop__src__renderer__setup__SetupPage.tsx.html"
+      },
+      {
+        "path": "apps/desktop/src/renderer/setup.html",
+        "sha256": "febd7e91832eb8b421195db375dd67ce74f68f8658f38911227978001d4b23a0",
+        "bytes": 1530,
+        "lines": 41,
+        "html": "sources/before/apps__desktop__src__renderer__setup.html.html"
+      },
+      {
+        "path": "apps/desktop/src/renderer/setup.tsx",
+        "sha256": "6012220b44c4af3e5562b92d3d95041c4250641b20c6a5bc7155c07bf09c72d3",
+        "bytes": 1084,
+        "lines": 27,
+        "html": "sources/before/apps__desktop__src__renderer__setup.tsx.html"
+      },
+      {
+        "path": "packages/renderer/src/components/settings/ClientSection.tsx",
+        "sha256": "078f17479d0ed2a7e3b74e752affb24de5a2971abee71ce27f50e95ac7a72306",
+        "bytes": 2541,
+        "lines": 61,
+        "html": "sources/before/packages__renderer__src__components__settings__ClientSection.tsx.html"
+      },
+      {
+        "path": "packages/shared/src/desktop.ts",
+        "sha256": "6615178a2c3494560ae7546087e98b6f4bc425dba3dc8a864f57c20a5205c6e6",
+        "bytes": 7746,
+        "lines": 164,
+        "html": "sources/before/packages__shared__src__desktop.ts.html"
+      }
+    ],
+    "current": [
+      {
+        "path": "apps/desktop/src/main/artifacts.test.ts",
+        "sha256": "fe1d0e6c9dccbd76d3544f36ef6e78707a4903401b97308e747279d943ee0fb8",
+        "bytes": 3144,
+        "lines": 86,
+        "html": "sources/current/apps__desktop__src__main__artifacts.test.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/main/artifacts.ts",
+        "sha256": "44bb8f9231893589cbaa25099b37af3f1d7c5ec9b29560b355bd53838fac938d",
+        "bytes": 2006,
+        "lines": 72,
+        "html": "sources/current/apps__desktop__src__main__artifacts.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/main/cloud.test.ts",
+        "sha256": "af97778fd317ddf118f13eb3ddbb1c422649196957b3779c8af1ed4b5f511425",
+        "bytes": 6116,
+        "lines": 160,
+        "html": "sources/current/apps__desktop__src__main__cloud.test.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/main/cloud.ts",
+        "sha256": "ebd346dade22bd6306a89f9860ec9f43fbba0332f5c75cca9fc74b2ddaaa93a9",
+        "bytes": 7868,
+        "lines": 185,
+        "html": "sources/current/apps__desktop__src__main__cloud.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/main/config.test.ts",
+        "sha256": "65e5e385aeee72af578c2e771cfd476c6525654ec67ddf6577ef57be9137362e",
+        "bytes": 3202,
+        "lines": 82,
+        "html": "sources/current/apps__desktop__src__main__config.test.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/main/config.ts",
+        "sha256": "02d526db8e0474275ba009c14c4caae1f1f937b8ff3d5ecfe9a607fcfdf4924b",
+        "bytes": 2616,
+        "lines": 59,
+        "html": "sources/current/apps__desktop__src__main__config.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/main/host.test.ts",
+        "sha256": "80f4b860ab3f28aee7f52445a7e434868fc2399ee483984c7ee3cc3f38b53d3f",
+        "bytes": 5124,
+        "lines": 139,
+        "html": "sources/current/apps__desktop__src__main__host.test.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/main/host.ts",
+        "sha256": "d59bfe5bf2079bf256c1b46fd87beb9579d414dbb61b02e67dd5cd19c1ad3b94",
+        "bytes": 8635,
+        "lines": 201,
+        "html": "sources/current/apps__desktop__src__main__host.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/main/index.ts",
+        "sha256": "a05dc00e38627b9ac784523303bc857c5ce9b555dbf4409b7a930a2d188221b1",
+        "bytes": 28281,
+        "lines": 731,
+        "html": "sources/current/apps__desktop__src__main__index.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/main/security.test.ts",
+        "sha256": "f84c2ab3d686e142cb911b7abb4e30659fcf68dca88194cac37928ebb2a43163",
+        "bytes": 2077,
+        "lines": 46,
+        "html": "sources/current/apps__desktop__src__main__security.test.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/main/security.ts",
+        "sha256": "92baca54391e23a02e426d43da6654a2aa8988d16fc6f9bfec5a347dd9289514",
+        "bytes": 1433,
+        "lines": 39,
+        "html": "sources/current/apps__desktop__src__main__security.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/preload/index.ts",
+        "sha256": "4bdbb4a00bb5b5a94059bee223929e85b52878bc30c3bfb11900eaf39b7e1f3d",
+        "bytes": 2813,
+        "lines": 69,
+        "html": "sources/current/apps__desktop__src__preload__index.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/renderer/components/TitleBar.style.ts",
+        "sha256": "efd76c05a3af655c470dc146a61787cf84f03015ea78af3c3d7cb3d62eaaaf1a",
+        "bytes": 3151,
+        "lines": 97,
+        "html": "sources/current/apps__desktop__src__renderer__components__TitleBar.style.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/renderer/components/TitleBar.test.tsx",
+        "sha256": "f6ed7dee46faea50c50fabdb4862130fbc03f244a1967b110c5813233f802e9d",
+        "bytes": 7519,
+        "lines": 196,
+        "html": "sources/current/apps__desktop__src__renderer__components__TitleBar.test.tsx.html"
+      },
+      {
+        "path": "apps/desktop/src/renderer/components/TitleBar.tsx",
+        "sha256": "4539839fe593ed8b30d5d3e119852dc39df3ef49f6e1889311b66314c496c4fc",
+        "bytes": 4744,
+        "lines": 104,
+        "html": "sources/current/apps__desktop__src__renderer__components__TitleBar.tsx.html"
+      },
+      {
+        "path": "apps/desktop/src/renderer/components/WindowControls.style.ts",
+        "sha256": "0e951ceb8c3a699a15124e55af66ec7ad3ceea6e1dce27a1d34345136dcdca95",
+        "bytes": 1911,
+        "lines": 61,
+        "html": "sources/current/apps__desktop__src__renderer__components__WindowControls.style.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/renderer/components/WindowControls.tsx",
+        "sha256": "544dcb1e1dc46d354be70761867b4ab408fd2723b3f7bab36ddf2fe3057fd1d2",
+        "bytes": 4599,
+        "lines": 122,
+        "html": "sources/current/apps__desktop__src__renderer__components__WindowControls.tsx.html"
+      },
+      {
+        "path": "apps/desktop/src/renderer/index.html",
+        "sha256": "12c1704dec53d201e07fe86e482241e44ecc3b0f7afe22c718dcba49fd775dd7",
+        "bytes": 1955,
+        "lines": 47,
+        "html": "sources/current/apps__desktop__src__renderer__index.html.html"
+      },
+      {
+        "path": "apps/desktop/src/renderer/index.tsx",
+        "sha256": "eae62bfc5bb672e903fbcec4ab464213ba933f2bf5fc37da6d1671cf94ea2e14",
+        "bytes": 1914,
+        "lines": 47,
+        "html": "sources/current/apps__desktop__src__renderer__index.tsx.html"
+      },
+      {
+        "path": "apps/desktop/src/renderer/lib/desktop-bridge.ts",
+        "sha256": "7394960f6208fcc60b7912e49581f4dfe3df3695d116b2c5efc9ade2c7c9ea0f",
+        "bytes": 1506,
+        "lines": 31,
+        "html": "sources/current/apps__desktop__src__renderer__lib__desktop-bridge.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/renderer/routes/about.tsx",
+        "sha256": "14082dd069be8b9a2f2c0ba9e8cf8028a0393eed01f34ff38368caae03ab7709",
+        "bytes": 3326,
+        "lines": 108,
+        "html": "sources/current/apps__desktop__src__renderer__routes__about.tsx.html"
+      },
+      {
+        "path": "apps/desktop/src/renderer/setup/SetupPage.style.ts",
+        "sha256": "a58d63f6b15c12bfc654576ae1057676c910164bd70233c76cff15d10fb6a230",
+        "bytes": 5080,
+        "lines": 204,
+        "html": "sources/current/apps__desktop__src__renderer__setup__SetupPage.style.ts.html"
+      },
+      {
+        "path": "apps/desktop/src/renderer/setup/SetupPage.test.tsx",
+        "sha256": "b7c996237570a5369d7be679ddfaaedafe301adbd0721aa1384f01b7c6280678",
+        "bytes": 15747,
+        "lines": 385,
+        "html": "sources/current/apps__desktop__src__renderer__setup__SetupPage.test.tsx.html"
+      },
+      {
+        "path": "apps/desktop/src/renderer/setup/SetupPage.tsx",
+        "sha256": "c4615089e4163771893832dee7832ac3006bd851843f3698e69c6c35cf072a0f",
+        "bytes": 13238,
+        "lines": 317,
+        "html": "sources/current/apps__desktop__src__renderer__setup__SetupPage.tsx.html"
+      },
+      {
+        "path": "apps/desktop/src/renderer/setup.html",
+        "sha256": "febd7e91832eb8b421195db375dd67ce74f68f8658f38911227978001d4b23a0",
+        "bytes": 1530,
+        "lines": 41,
+        "html": "sources/current/apps__desktop__src__renderer__setup.html.html"
+      },
+      {
+        "path": "apps/desktop/src/renderer/setup.tsx",
+        "sha256": "6012220b44c4af3e5562b92d3d95041c4250641b20c6a5bc7155c07bf09c72d3",
+        "bytes": 1084,
+        "lines": 27,
+        "html": "sources/current/apps__desktop__src__renderer__setup.tsx.html"
+      },
+      {
+        "path": "packages/renderer/src/components/settings/ClientSection.tsx",
+        "sha256": "078f17479d0ed2a7e3b74e752affb24de5a2971abee71ce27f50e95ac7a72306",
+        "bytes": 2541,
+        "lines": 61,
+        "html": "sources/current/packages__renderer__src__components__settings__ClientSection.tsx.html"
+      },
+      {
+        "path": "packages/shared/src/desktop.ts",
+        "sha256": "6615178a2c3494560ae7546087e98b6f4bc425dba3dc8a864f57c20a5205c6e6",
+        "bytes": 7746,
+        "lines": 164,
+        "html": "sources/current/packages__shared__src__desktop.ts.html"
+      }
+    ]
+  },
+  "groups": [
+    {
+      "id": "DESK-SETUP-READ",
+      "surface": "使用方式读取",
+      "source": {
+        "path": "apps/desktop/src/renderer/setup/SetupPage.tsx",
+        "line": 58,
+        "sha256": "c4615089e4163771893832dee7832ac3006bd851843f3698e69c6c35cf072a0f",
+        "url": "sources/current/apps__desktop__src__renderer__setup__SetupPage.tsx.html#L58"
+      },
+      "states": [
+        "bridge missing: loaded immediately",
+        "mode.get pending: returns null",
+        "resolved null: first launch",
+        "resolved local: switch/local",
+        "resolved cloud: switch/cloud + prefill",
+        "rejected: read error"
+      ],
+      "controls": [
+        "get current mode",
+        "retry current mode read"
+      ],
+      "verification_required": [
+        "real component HTML controlled bridge",
+        "native preload smoke"
+      ],
+      "note": "首次读取和重试读取均同一 effect；取消卸载后结果通过 alive 忽略。",
+      "evidenceStatus": "source-only",
+      "browserStatus": "not-asserted-here",
+      "sourceLineMeaning": "Exact current marker verified once in file; original research line retained separately.",
+      "sourceMarker": "const [loadFailure, setLoadFailure]",
+      "originalResearchSource": {
+        "file": "apps/desktop/src/renderer/setup/SetupPage.tsx",
+        "line": 51
+      },
+      "stateInventoryVersion": "baseline-research; see currentSourceNote for this polish delta",
+      "currentSourceNote": "Current source keeps window chrome and shell while reading, with a role=status reading message; no longer returns null.",
+      "scene": "setup-loading",
+      "demoBoundary": "Real renderer component with simulated bridge; native result unverified"
+    },
+    {
+      "id": "DESK-SETUP-LOCAL",
+      "surface": "本地使用选择",
+      "source": {
+        "path": "apps/desktop/src/renderer/setup/SetupPage.tsx",
+        "line": 224,
+        "sha256": "c4615089e4163771893832dee7832ac3006bd851843f3698e69c6c35cf072a0f",
+        "url": "sources/current/apps__desktop__src__renderer__setup__SetupPage.tsx.html#L224"
+      },
+      "states": [
+        "default local",
+        "local selected",
+        "pending disabled",
+        "local failure retained"
+      ],
+      "controls": [
+        "本地使用"
+      ],
+      "verification_required": [
+        "real component HTML",
+        "mounted regression",
+        "native local host"
+      ],
+      "note": "",
+      "evidenceStatus": "source-only",
+      "browserStatus": "not-asserted-here",
+      "sourceLineMeaning": "Exact current marker verified once in file; original research line retained separately.",
+      "sourceMarker": "<span className={styles.optionName}>本地使用",
+      "originalResearchSource": {
+        "file": "apps/desktop/src/renderer/setup/SetupPage.tsx",
+        "line": 203
+      },
+      "stateInventoryVersion": "baseline-research; see currentSourceNote for this polish delta",
+      "currentSourceNote": "No interaction-semantic change in this polish; original research state family retained.",
+      "scene": "setup-local",
+      "demoBoundary": "Real renderer component with simulated bridge; native result unverified"
+    },
+    {
+      "id": "DESK-SETUP-CLOUD",
+      "surface": "服务器选择与地址",
+      "source": {
+        "path": "apps/desktop/src/renderer/setup/SetupPage.tsx",
+        "line": 241,
+        "sha256": "c4615089e4163771893832dee7832ac3006bd851843f3698e69c6c35cf072a0f",
+        "url": "sources/current/apps__desktop__src__renderer__setup__SetupPage.tsx.html#L241"
+      },
+      "states": [
+        "cloud selected",
+        "prefilled cloud URL",
+        "empty URL disables visible CTA",
+        "input auto-focused when choice changes",
+        "pending input disabled",
+        "local/cloud switch clears failure"
+      ],
+      "controls": [
+        "连接服务器",
+        "服务器地址",
+        "Input onPressEnter"
+      ],
+      "verification_required": [
+        "real component HTML keyboard",
+        "mounted regression",
+        "native normalization/probe"
+      ],
+      "note": "onPressEnter 直接 submit；没有使用原生 form 的 URL validity 门槛，不能为了样式改成不允许缺省协议。",
+      "evidenceStatus": "source-only",
+      "browserStatus": "not-asserted-here",
+      "sourceLineMeaning": "Exact current marker verified once in file; original research line retained separately.",
+      "sourceMarker": "<span className={styles.optionName}>连接服务器",
+      "originalResearchSource": {
+        "file": "apps/desktop/src/renderer/setup/SetupPage.tsx",
+        "line": 221
+      },
+      "stateInventoryVersion": "baseline-research; see currentSourceNote for this polish delta",
+      "currentSourceNote": "No interaction-semantic change in this polish; original research state family retained.",
+      "scene": "setup-cloud",
+      "demoBoundary": "Real renderer component with simulated bridge; native result unverified"
+    },
+    {
+      "id": "DESK-SETUP-SUBMIT",
+      "surface": "开始使用/切换",
+      "source": {
+        "path": "apps/desktop/src/renderer/setup/SetupPage.tsx",
+        "line": 113,
+        "sha256": "c4615089e4163771893832dee7832ac3006bd851843f3698e69c6c35cf072a0f",
+        "url": "sources/current/apps__desktop__src__renderer__setup__SetupPage.tsx.html#L113"
+      },
+      "states": [
+        "bridge missing: no-op",
+        "local preparing",
+        "cloud connecting",
+        "choose rejected: String(cause)",
+        "choose ok:false: message or 切换失败",
+        "choose ok:true: 正在打开 + activate",
+        "CTA empty-cloud disabled",
+        "loading button while pending"
+      ],
+      "controls": [
+        "开始使用 / 切换"
+      ],
+      "verification_required": [
+        "mounted deferred promise",
+        "native choose + activate"
+      ],
+      "note": "choose 与 activate 必须继续分离；不能在 HTML ACK 伪称切换成功。",
+      "evidenceStatus": "source-only",
+      "browserStatus": "not-asserted-here",
+      "sourceLineMeaning": "Exact current marker verified once in file; original research line retained separately.",
+      "sourceMarker": "const submit = async",
+      "originalResearchSource": {
+        "file": "apps/desktop/src/renderer/setup/SetupPage.tsx",
+        "line": 111
+      },
+      "stateInventoryVersion": "baseline-research; see currentSourceNote for this polish delta",
+      "currentSourceNote": "Current source guards empty trimmed cloud URL and same-frame duplicate submissions using submitting ref; rejected choose resets pending while preserving URL.",
+      "scene": "choose-pending",
+      "demoBoundary": "Real renderer component with simulated bridge; native result unverified"
+    },
+    {
+      "id": "DESK-SETUP-CANCEL",
+      "surface": "返回原使用方式",
+      "source": {
+        "path": "apps/desktop/src/renderer/setup/SetupPage.tsx",
+        "line": 288,
+        "sha256": "c4615089e4163771893832dee7832ac3006bd851843f3698e69c6c35cf072a0f",
+        "url": "sources/current/apps__desktop__src__renderer__setup__SetupPage.tsx.html#L288"
+      },
+      "states": [
+        "hidden first launch",
+        "visible existing mode",
+        "disabled pending",
+        "note 正在返回 + activate original current mode"
+      ],
+      "controls": [
+        "返回，不改"
+      ],
+      "verification_required": [
+        "real component HTML",
+        "native return identity"
+      ],
+      "note": "",
+      "evidenceStatus": "source-only",
+      "browserStatus": "not-asserted-here",
+      "sourceLineMeaning": "Exact current marker verified once in file; original research line retained separately.",
+      "sourceMarker": "{canCancel && (",
+      "originalResearchSource": {
+        "file": "apps/desktop/src/renderer/setup/SetupPage.tsx",
+        "line": 280
+      },
+      "stateInventoryVersion": "baseline-research; see currentSourceNote for this polish delta",
+      "currentSourceNote": "No interaction-semantic change in this polish; original research state family retained.",
+      "scene": "setup-cloud",
+      "demoBoundary": "Real renderer component with simulated bridge; native result unverified"
+    },
+    {
+      "id": "DESK-SETUP-FEEDBACK",
+      "surface": "错误和状态",
+      "source": {
+        "path": "apps/desktop/src/renderer/setup/SetupPage.tsx",
+        "line": 180,
+        "sha256": "c4615089e4163771893832dee7832ac3006bd851843f3698e69c6c35cf072a0f",
+        "url": "sources/current/apps__desktop__src__renderer__setup__SetupPage.tsx.html#L180"
+      },
+      "states": [
+        "read-error Alert + retry",
+        "missing bridge Alert",
+        "choose error Alert",
+        "pending note",
+        "opening note",
+        "returning note"
+      ],
+      "controls": [
+        "重试"
+      ],
+      "verification_required": [
+        "real component HTML long text + short viewport",
+        "live-region DOM audit"
+      ],
+      "note": "当前 pending note 是普通 Typography.Text；未声明 aria-live。",
+      "evidenceStatus": "source-only",
+      "browserStatus": "not-asserted-here",
+      "sourceLineMeaning": "Exact current marker verified once in file; original research line retained separately.",
+      "sourceMarker": "{loadFailure ? (",
+      "originalResearchSource": {
+        "file": "apps/desktop/src/renderer/setup/SetupPage.tsx",
+        "line": 172
+      },
+      "stateInventoryVersion": "baseline-research; see currentSourceNote for this polish delta",
+      "currentSourceNote": "Current source places progress in a separate role=status row; short-height padding and anywhere wrapping preserve readable feedback.",
+      "scene": "choose-failure",
+      "demoBoundary": "Real renderer component with simulated bridge; native result unverified"
+    },
+    {
+      "id": "DESK-SETUP-CHROME",
+      "surface": "首启窗口栏",
+      "source": {
+        "path": "apps/desktop/src/renderer/setup/SetupPage.tsx",
+        "line": 155,
+        "sha256": "c4615089e4163771893832dee7832ac3006bd851843f3698e69c6c35cf072a0f",
+        "url": "sources/current/apps__desktop__src__renderer__setup__SetupPage.tsx.html#L155"
+      },
+      "states": [
+        "darwin uses native traffic lights",
+        "win32/linux draws minimize+close",
+        "maximize omitted",
+        "bar currently absent while read pending"
+      ],
+      "controls": [
+        "最小化",
+        "关闭"
+      ],
+      "verification_required": [
+        "HTML visual only",
+        "native drag/close/minimize"
+      ],
+      "note": "",
+      "evidenceStatus": "source-only",
+      "browserStatus": "not-asserted-here",
+      "sourceLineMeaning": "Exact current marker verified once in file; original research line retained separately.",
+      "sourceMarker": "<WindowControls omit={['maximize']}",
+      "originalResearchSource": {
+        "file": "apps/desktop/src/renderer/setup/SetupPage.tsx",
+        "line": 146
+      },
+      "stateInventoryVersion": "baseline-research; see currentSourceNote for this polish delta",
+      "currentSourceNote": "Current source retains the bar during pending mode.get; actual native window results remain outside browser proof.",
+      "scene": "setup-first",
+      "demoBoundary": "Real renderer component with simulated bridge; native result unverified"
+    },
+    {
+      "id": "DESK-TITLEBAR",
+      "surface": "应用标题栏",
+      "source": {
+        "path": "apps/desktop/src/renderer/components/TitleBar.tsx",
+        "line": 61,
+        "sha256": "4539839fe593ed8b30d5d3e119852dc39df3ef49f6e1889311b66314c496c4fc",
+        "url": "sources/current/apps__desktop__src__renderer__components__TitleBar.tsx.html#L61"
+      },
+      "states": [
+        "bridge absent returns null",
+        "showToggle false",
+        "expanded sidebar toggle closes",
+        "collapsed sidebar toggle opens",
+        "darwin 88px left inset",
+        "other 12px left inset"
+      ],
+      "controls": [
+        "折叠侧边栏 / 展开侧边栏"
+      ],
+      "verification_required": [
+        "real component HTML focus/hover",
+        "native drag/no-drag"
+      ],
+      "note": "品牌与 spacer 是拖动区域；不可新增业务文档标题。",
+      "evidenceStatus": "source-only",
+      "browserStatus": "not-asserted-here",
+      "sourceLineMeaning": "Exact current marker verified once in file; original research line retained separately.",
+      "sourceMarker": "export function TitleBar(",
+      "originalResearchSource": {
+        "file": "apps/desktop/src/renderer/components/TitleBar.tsx",
+        "line": 61
+      },
+      "stateInventoryVersion": "baseline-research; see currentSourceNote for this polish delta",
+      "currentSourceNote": "Current style adds a token-based focus-visible outline to the existing sidebar toggle.",
+      "scene": "titlebar",
+      "demoBoundary": "Real renderer component with simulated bridge; native result unverified"
+    },
+    {
+      "id": "DESK-WINDOW-CONTROLS",
+      "surface": "共用窗口控件",
+      "source": {
+        "path": "apps/desktop/src/renderer/components/WindowControls.tsx",
+        "line": 36,
+        "sha256": "544dcb1e1dc46d354be70761867b4ab408fd2723b3f7bab36ddf2fe3057fd1d2",
+        "url": "sources/current/apps__desktop__src__renderer__components__WindowControls.tsx.html#L36"
+      },
+      "states": [
+        "bridge missing: no controls",
+        "darwin: no custom controls",
+        "win32/linux: controls",
+        "initial isMaximized resolves",
+        "onMaximizeChange updates",
+        "unmount unsubscribes",
+        "omit filters controls",
+        "maximize false vs restore true"
+      ],
+      "controls": [
+        "最小化",
+        "最大化 / 向下还原",
+        "关闭"
+      ],
+      "verification_required": [
+        "mounted bridge subscription regression",
+        "HTML rendering only",
+        "native window actions authoritative"
+      ],
+      "note": "isMaximized rejection presently not caught; preserve authority and subscription semantics. Standard hit area 46x44.",
+      "evidenceStatus": "source-only",
+      "browserStatus": "not-asserted-here",
+      "sourceLineMeaning": "Exact current marker verified once in file; original research line retained separately.",
+      "sourceMarker": "export function WindowControls(",
+      "originalResearchSource": {
+        "file": "apps/desktop/src/renderer/components/WindowControls.tsx",
+        "line": 47
+      },
+      "stateInventoryVersion": "baseline-research; see currentSourceNote for this polish delta",
+      "currentSourceNote": "No interaction-semantic change in this polish; original research state family retained.",
+      "scene": "window-controls",
+      "demoBoundary": "Real renderer component with simulated bridge; native result unverified"
+    },
+    {
+      "id": "DESK-ABOUT",
+      "surface": "关于客户端",
+      "source": {
+        "path": "apps/desktop/src/renderer/routes/about.tsx",
+        "line": 71,
+        "sha256": "14082dd069be8b9a2f2c0ba9e8cf8028a0393eed01f34ff38368caae03ab7709",
+        "url": "sources/current/apps__desktop__src__renderer__routes__about.tsx.html#L71"
+      },
+      "states": [
+        "query pending Skeleton",
+        "query rejected Alert",
+        "query null Alert",
+        "local success version + 本地使用",
+        "cloud success version + 连接服务器",
+        "retry via refetch"
+      ],
+      "controls": [
+        "重试"
+      ],
+      "verification_required": [
+        "real component HTML long version + keyboard",
+        "query mounted regression",
+        "native local route"
+      ],
+      "note": "本页仅 desktop route /client/about；云端加载的 web 没有它。",
+      "evidenceStatus": "source-only",
+      "browserStatus": "not-asserted-here",
+      "sourceLineMeaning": "Exact current marker verified once in file; original research line retained separately.",
+      "sourceMarker": "const boot = useQuery(",
+      "originalResearchSource": {
+        "file": "apps/desktop/src/renderer/routes/about.tsx",
+        "line": 65
+      },
+      "stateInventoryVersion": "baseline-research; see currentSourceNote for this polish delta",
+      "currentSourceNote": "Current style reduces page/row spacing and lets long values shrink and wrap with min-width:0 and overflow-wrap:anywhere.",
+      "scene": "about-long",
+      "demoBoundary": "Real renderer component with simulated bridge; native result unverified"
+    },
+    {
+      "id": "DESK-CLIENT-ENTRY",
+      "surface": "设置客户端入口",
+      "source": {
+        "path": "packages/renderer/src/components/settings/ClientSection.tsx",
+        "line": 30,
+        "sha256": "078f17479d0ed2a7e3b74e752affb24de5a2971abee71ce27f50e95ac7a72306",
+        "url": "sources/current/packages__renderer__src__components__settings__ClientSection.tsx.html#L30"
+      },
+      "states": [
+        "query pending 读取中",
+        "query error LoadError",
+        "local success",
+        "cloud with origin row",
+        "cloud no origin skips row",
+        "no bridge is hidden by platform settings gating"
+      ],
+      "controls": [
+        "重试",
+        "更换使用方式"
+      ],
+      "verification_required": [
+        "shared renderer already-polished coverage",
+        "native mode.openSetup"
+      ],
+      "note": "boot null 当前仍显示读取中，记录现状不在本轮暗中扩展契约。",
+      "evidenceStatus": "source-only",
+      "browserStatus": "not-asserted-here",
+      "sourceLineMeaning": "Exact current marker verified once in file; original research line retained separately.",
+      "sourceMarker": "export function ClientSection(",
+      "originalResearchSource": {
+        "file": "packages/renderer/src/components/settings/ClientSection.tsx",
+        "line": 30
+      },
+      "stateInventoryVersion": "baseline-research; see currentSourceNote for this polish delta",
+      "currentSourceNote": "No interaction-semantic change in this polish; original research state family retained.",
+      "scene": null,
+      "demoBoundary": "Native or shared carrier path; no equivalent fake HTML interaction provided"
+    },
+    {
+      "id": "DESK-MENU",
+      "surface": "原生应用菜单",
+      "source": {
+        "path": "apps/desktop/src/main/index.ts",
+        "line": 534,
+        "sha256": "a05dc00e38627b9ac784523303bc857c5ce9b555dbf4409b7a930a2d188221b1",
+        "url": "sources/current/apps__desktop__src__main__index.ts.html#L534"
+      },
+      "states": [
+        "mimir menu always installed at startup",
+        "cloud autoHideMenuBar false",
+        "local/setup autoHideMenuBar true",
+        "no live window switch no-op"
+      ],
+      "controls": [
+        "更换使用方式… CmdOrCtrl+Shift+M",
+        "退出 role:quit",
+        "undo",
+        "redo",
+        "cut",
+        "copy",
+        "paste",
+        "selectAll"
+      ],
+      "verification_required": [
+        "native menu only"
+      ],
+      "note": "Electron role 文案、快捷键与系统差异不应拿 HTML 控件冒充。",
+      "evidenceStatus": "source-only",
+      "browserStatus": "not-asserted-here",
+      "sourceLineMeaning": "Exact current marker verified once in file; original research line retained separately.",
+      "sourceMarker": "Menu.buildFromTemplate([",
+      "originalResearchSource": {
+        "file": "apps/desktop/src/main/index.ts",
+        "line": 525
+      },
+      "stateInventoryVersion": "baseline-research; see currentSourceNote for this polish delta",
+      "currentSourceNote": "No interaction-semantic change in this polish; original research state family retained.",
+      "scene": null,
+      "demoBoundary": "Native or shared carrier path; no equivalent fake HTML interaction provided"
+    },
+    {
+      "id": "DESK-CLOUD-FAIL",
+      "surface": "云端加载故障原生框",
+      "source": {
+        "path": "apps/desktop/src/main/index.ts",
+        "line": 481,
+        "sha256": "a05dc00e38627b9ac784523303bc857c5ce9b555dbf4409b7a930a2d188221b1",
+        "url": "sources/current/apps__desktop__src__main__index.ts.html#L481"
+      },
+      "states": [
+        "subframe ignored",
+        "ERR_ABORTED -3 ignored",
+        "setup load failures ignored",
+        "non-cloud failures ignored",
+        "destroyed window no-op",
+        "response0 retry URL",
+        "response1 setup preserving modeState",
+        "response2/cancel quit"
+      ],
+      "controls": [
+        "重试",
+        "更换使用方式",
+        "退出"
+      ],
+      "verification_required": [
+        "native failure injection + actual dialog"
+      ],
+      "note": "保存的 URL 主进程直接 loadURL；首启恢复云端失败由 did-fail-load 提供此入口。",
+      "evidenceStatus": "source-only",
+      "browserStatus": "not-asserted-here",
+      "sourceLineMeaning": "Exact current marker verified once in file; original research line retained separately.",
+      "sourceMarker": "'did-fail-load',",
+      "originalResearchSource": {
+        "file": "apps/desktop/src/main/index.ts",
+        "line": 477
+      },
+      "stateInventoryVersion": "baseline-research; see currentSourceNote for this polish delta",
+      "currentSourceNote": "No interaction-semantic change in this polish; original research state family retained.",
+      "scene": null,
+      "demoBoundary": "Native or shared carrier path; no equivalent fake HTML interaction provided"
+    },
+    {
+      "id": "DESK-UNTRUSTED",
+      "surface": "不可信发送方切换确认",
+      "source": {
+        "path": "apps/desktop/src/main/index.ts",
+        "line": 378,
+        "sha256": "a05dc00e38627b9ac784523303bc857c5ce9b555dbf4409b7a930a2d188221b1",
+        "url": "sources/current/apps__desktop__src__main__index.ts.html#L378"
+      },
+      "states": [
+        "trusted file setup bypass",
+        "trusted local host bypass",
+        "untrusted reject cancels",
+        "untrusted approve can choose",
+        "activate only previously approved same state"
+      ],
+      "controls": [
+        "继续切换",
+        "取消 default/cancel"
+      ],
+      "verification_required": [
+        "native security path + existing security tests"
+      ],
+      "note": "云端无 preload；此为纵深防御路径，不应给云端额外加桥。",
+      "evidenceStatus": "source-only",
+      "browserStatus": "not-asserted-here",
+      "sourceLineMeaning": "Exact current marker verified once in file; original research line retained separately.",
+      "sourceMarker": "async function confirmUntrustedSwitch(",
+      "originalResearchSource": {
+        "file": "apps/desktop/src/main/index.ts",
+        "line": 378
+      },
+      "stateInventoryVersion": "baseline-research; see currentSourceNote for this polish delta",
+      "currentSourceNote": "No interaction-semantic change in this polish; original research state family retained.",
+      "scene": null,
+      "demoBoundary": "Native or shared carrier path; no equivalent fake HTML interaction provided"
+    },
+    {
+      "id": "DESK-MODE-CHOOSE",
+      "surface": "主进程模式选择",
+      "source": {
+        "path": "apps/desktop/src/main/index.ts",
+        "line": 587,
+        "sha256": "a05dc00e38627b9ac784523303bc857c5ce9b555dbf4409b7a930a2d188221b1",
+        "url": "sources/current/apps__desktop__src__main__index.ts.html#L587"
+      },
+      "states": [
+        "invalid shape rejected",
+        "cloud URL normalization failed",
+        "cloud probe failed",
+        "local host preparation failed",
+        "config atomic write failed",
+        "success updates current + approved state"
+      ],
+      "controls": [
+        "IPC mimir:mode-choose"
+      ],
+      "verification_required": [
+        "node existing config/cloud/host tests",
+        "native mode switch"
+      ],
+      "note": "",
+      "evidenceStatus": "source-only",
+      "browserStatus": "not-asserted-here",
+      "sourceLineMeaning": "Exact current marker verified once in file; original research line retained separately.",
+      "sourceMarker": "ipcMain.handle('mimir:mode-choose',",
+      "originalResearchSource": {
+        "file": "apps/desktop/src/main/index.ts",
+        "line": 587
+      },
+      "stateInventoryVersion": "baseline-research; see currentSourceNote for this polish delta",
+      "currentSourceNote": "No interaction-semantic change in this polish; original research state family retained.",
+      "scene": null,
+      "demoBoundary": "Native or shared carrier path; no equivalent fake HTML interaction provided"
+    },
+    {
+      "id": "DESK-MODE-ACTIVATE",
+      "surface": "主进程激活/换窗",
+      "source": {
+        "path": "apps/desktop/src/main/index.ts",
+        "line": 630,
+        "sha256": "a05dc00e38627b9ac784523303bc857c5ce9b555dbf4409b7a930a2d188221b1",
+        "url": "sources/current/apps__desktop__src__main__index.ts.html#L630"
+      },
+      "states": [
+        "no state no-op",
+        "untrusted unauthorized no-op",
+        "prepareTarget local injects cookie",
+        "prepareTarget cloud no local cookie",
+        "same surface loadURL",
+        "surface changed new window then close old",
+        "activation failure native error box"
+      ],
+      "controls": [
+        "IPC mimir:mode-activate",
+        "切换失败 error box"
+      ],
+      "verification_required": [
+        "native local/cloud/setup transitions"
+      ],
+      "note": "窗口 Session 不可通过 loadURL 互换，顺序不可改变。",
+      "evidenceStatus": "source-only",
+      "browserStatus": "not-asserted-here",
+      "sourceLineMeaning": "Exact current marker verified once in file; original research line retained separately.",
+      "sourceMarker": "ipcMain.on('mimir:mode-activate',",
+      "originalResearchSource": {
+        "file": "apps/desktop/src/main/index.ts",
+        "line": 630
+      },
+      "stateInventoryVersion": "baseline-research; see currentSourceNote for this polish delta",
+      "currentSourceNote": "No interaction-semantic change in this polish; original research state family retained.",
+      "scene": null,
+      "demoBoundary": "Native or shared carrier path; no equivalent fake HTML interaction provided"
+    },
+    {
+      "id": "DESK-BOOT",
+      "surface": "启动/退出",
+      "source": {
+        "path": "apps/desktop/src/main/index.ts",
+        "line": 667,
+        "sha256": "a05dc00e38627b9ac784523303bc857c5ce9b555dbf4409b7a930a2d188221b1",
+        "url": "sources/current/apps__desktop__src__main__index.ts.html#L667"
+      },
+      "states": [
+        "config absent/invalid: setup",
+        "saved local/cloud: prepare then create",
+        "prepare failure logs+native error+quit",
+        "second instance restores/focuses existing",
+        "all windows closed quits including macOS",
+        "host shutdown grace 5s"
+      ],
+      "controls": [
+        "mimir 启动失败 error box",
+        "quit"
+      ],
+      "verification_required": [
+        "native fresh userData and configured launch",
+        "existing host/config/artifact tests"
+      ],
+      "note": "不要用常用 userData 或用户资料做故障测试。",
+      "evidenceStatus": "source-only",
+      "browserStatus": "not-asserted-here",
+      "sourceLineMeaning": "Exact current marker verified once in file; original research line retained separately.",
+      "sourceMarker": "async function main():",
+      "originalResearchSource": {
+        "file": "apps/desktop/src/main/index.ts",
+        "line": 667
+      },
+      "stateInventoryVersion": "baseline-research; see currentSourceNote for this polish delta",
+      "currentSourceNote": "No interaction-semantic change in this polish; original research state family retained.",
+      "scene": null,
+      "demoBoundary": "Native or shared carrier path; no equivalent fake HTML interaction provided"
+    },
+    {
+      "id": "DESK-NAV-BOUNDARY",
+      "surface": "导航和权限边界",
+      "source": {
+        "path": "apps/desktop/src/main/index.ts",
+        "line": 225,
+        "sha256": "a05dc00e38627b9ac784523303bc857c5ce9b555dbf4409b7a930a2d188221b1",
+        "url": "sources/current/apps__desktop__src__main__index.ts.html#L225"
+      },
+      "states": [
+        "same-origin allow",
+        "cross-origin external browser",
+        "other schemes denied",
+        "child same partition no preload",
+        "device permissions rejected",
+        "same-origin main clipboard write only"
+      ],
+      "controls": [
+        "external link",
+        "window.open"
+      ],
+      "verification_required": [
+        "existing security tests",
+        "native smoke"
+      ],
+      "note": "只是保留/回归边界，本轮不重新设计权限。",
+      "evidenceStatus": "source-only",
+      "browserStatus": "not-asserted-here",
+      "sourceLineMeaning": "Exact current marker verified once in file; original research line retained separately.",
+      "sourceMarker": "const guardedSessions = new WeakSet",
+      "originalResearchSource": {
+        "file": "apps/desktop/src/main/index.ts",
+        "line": 225
+      },
+      "stateInventoryVersion": "baseline-research; see currentSourceNote for this polish delta",
+      "currentSourceNote": "No interaction-semantic change in this polish; original research state family retained.",
+      "scene": null,
+      "demoBoundary": "Native or shared carrier path; no equivalent fake HTML interaction provided"
+    },
+    {
+      "id": "DESK-PRELOAD",
+      "surface": "preload合约",
+      "source": {
+        "path": "apps/desktop/src/preload/index.ts",
+        "line": 15,
+        "sha256": "4bdbb4a00bb5b5a94059bee223929e85b52878bc30c3bfb11900eaf39b7e1f3d",
+        "url": "sources/current/apps__desktop__src__preload__index.ts.html#L15"
+      },
+      "states": [
+        "local+setup injected",
+        "cloud absent",
+        "read: boot/mode.get/window.isMaximized",
+        "write requests: choose/activate/openSetup/quit/window actions",
+        "subscribe maximize then off on cleanup"
+      ],
+      "controls": [
+        "boot",
+        "quit",
+        "mode.get",
+        "mode.choose",
+        "mode.activate",
+        "mode.openSetup",
+        "window.minimize",
+        "window.toggleMaximize",
+        "window.close",
+        "window.isMaximized",
+        "window.onMaximizeChange"
+      ],
+      "verification_required": [
+        "native preload smoke",
+        "mounted controlled-bridge contract"
+      ],
+      "note": "桥值在模块求值时读取；demo 必须先注入，再 import 真实组件。",
+      "evidenceStatus": "source-only",
+      "browserStatus": "not-asserted-here",
+      "sourceLineMeaning": "Exact current marker verified once in file; original research line retained separately.",
+      "sourceMarker": "boot: (): Promise<DesktopBootInfo",
+      "originalResearchSource": {
+        "file": "apps/desktop/src/preload/index.ts",
+        "line": 15
+      },
+      "stateInventoryVersion": "baseline-research; see currentSourceNote for this polish delta",
+      "currentSourceNote": "No interaction-semantic change in this polish; original research state family retained.",
+      "scene": null,
+      "demoBoundary": "Native or shared carrier path; no equivalent fake HTML interaction provided"
+    }
+  ],
+  "nativeOnly": [
+    "drag/no-drag and titlebar double-click",
+    "OS traffic lights and window control results",
+    "native application menu and accelerators",
+    "message boxes/closed window guards",
+    "Session/cookie isolation",
+    "local host IO and configuration persistence",
+    "startup packaged paths and shutdown"
+  ]
+}

@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>apps/desktop/src/main/artifacts.ts</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+      min-height: 1.65em;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">Desktop来源索引</a>
+    <h1>apps/desktop/src/main/artifacts.ts</h1>
+    <p>before真实源码 · SHA256 44bb8f9231893589cbaa25099b37af3f1d7c5ec9b29560b355bd53838fac938d</p>
+  </header>
+  <ol>
+    <li id="L1">
+      <!-- prettier-ignore -->
+      <pre>import { existsSync } from &#x27;node:fs&#x27;</pre>
+    </li>
+    <li id="L2">
+      <!-- prettier-ignore -->
+      <pre>import { join } from &#x27;node:path&#x27;</pre>
+    </li>
+    <li id="L3">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L4">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L5">
+      <!-- prettier-ignore -->
+      <pre> * 宿主启动时必需的产物。缺失时给出清单式错误（而不是难懂的 ERR_MODULE_NOT_FOUND）。</pre>
+    </li>
+    <li id="L6">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L7">
+      <!-- prettier-ignore -->
+      <pre>export interface Artifact {</pre>
+    </li>
+    <li id="L8">
+      <!-- prettier-ignore -->
+      <pre>  /** 用户可读的标签（如&quot;服务端入口&quot;） */</pre>
+    </li>
+    <li id="L9">
+      <!-- prettier-ignore -->
+      <pre>  label: string</pre>
+    </li>
+    <li id="L10">
+      <!-- prettier-ignore -->
+      <pre>  /** 绝对路径 */</pre>
+    </li>
+    <li id="L11">
+      <!-- prettier-ignore -->
+      <pre>  path: string</pre>
+    </li>
+    <li id="L12">
+      <!-- prettier-ignore -->
+      <pre>  /** 缺失后果（如&quot;动态 import 失败&quot;） */</pre>
+    </li>
+    <li id="L13">
+      <!-- prettier-ignore -->
+      <pre>  consequence: string</pre>
+    </li>
+    <li id="L14">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+    <li id="L15">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L16">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L17">
+      <!-- prettier-ignore -->
+      <pre> * 本地模式必需的产物清单。</pre>
+    </li>
+    <li id="L18">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L19">
+      <!-- prettier-ignore -->
+      <pre> * @param serverDist - apps/server/dist 的绝对路径</pre>
+    </li>
+    <li id="L20">
+      <!-- prettier-ignore -->
+      <pre> * @param serverRoot - apps/server 的绝对路径（用于定位 drizzle-sqlite）</pre>
+    </li>
+    <li id="L21">
+      <!-- prettier-ignore -->
+      <pre> * @param webDist - 渲染进程产物目录（本包的 dist/renderer，D-103）</pre>
+    </li>
+    <li id="L22">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L23">
+      <!-- prettier-ignore -->
+      <pre>export function requiredArtifacts(</pre>
+    </li>
+    <li id="L24">
+      <!-- prettier-ignore -->
+      <pre>  serverDist: string,</pre>
+    </li>
+    <li id="L25">
+      <!-- prettier-ignore -->
+      <pre>  serverRoot: string,</pre>
+    </li>
+    <li id="L26">
+      <!-- prettier-ignore -->
+      <pre>  webDist: string,</pre>
+    </li>
+    <li id="L27">
+      <!-- prettier-ignore -->
+      <pre>): Artifact[] {</pre>
+    </li>
+    <li id="L28">
+      <!-- prettier-ignore -->
+      <pre>  return [</pre>
+    </li>
+    <li id="L29">
+      <!-- prettier-ignore -->
+      <pre>    {</pre>
+    </li>
+    <li id="L30">
+      <!-- prettier-ignore -->
+      <pre>      label: &#x27;服务端入口&#x27;,</pre>
+    </li>
+    <li id="L31">
+      <!-- prettier-ignore -->
+      <pre>      path: join(serverDist, &#x27;index.js&#x27;),</pre>
+    </li>
+    <li id="L32">
+      <!-- prettier-ignore -->
+      <pre>      consequence: &#x27;动态 import 失败（ERR_MODULE_NOT_FOUND）&#x27;,</pre>
+    </li>
+    <li id="L33">
+      <!-- prettier-ignore -->
+      <pre>    },</pre>
+    </li>
+    <li id="L34">
+      <!-- prettier-ignore -->
+      <pre>    {</pre>
+    </li>
+    <li id="L35">
+      <!-- prettier-ignore -->
+      <pre>      label: &#x27;迁移脚本&#x27;,</pre>
+    </li>
+    <li id="L36">
+      <!-- prettier-ignore -->
+      <pre>      path: join(serverDist, &#x27;db&#x27;, &#x27;migrate.js&#x27;),</pre>
+    </li>
+    <li id="L37">
+      <!-- prettier-ignore -->
+      <pre>      consequence: &#x27;SQLite 自动迁移失败&#x27;,</pre>
+    </li>
+    <li id="L38">
+      <!-- prettier-ignore -->
+      <pre>    },</pre>
+    </li>
+    <li id="L39">
+      <!-- prettier-ignore -->
+      <pre>    {</pre>
+    </li>
+    <li id="L40">
+      <!-- prettier-ignore -->
+      <pre>      label: &#x27;drizzle 迁移目录&#x27;,</pre>
+    </li>
+    <li id="L41">
+      <!-- prettier-ignore -->
+      <pre>      path: join(serverRoot, &#x27;drizzle-sqlite&#x27;),</pre>
+    </li>
+    <li id="L42">
+      <!-- prettier-ignore -->
+      <pre>      consequence: &#x27;启动报缺表（找不到迁移 SQL）&#x27;,</pre>
+    </li>
+    <li id="L43">
+      <!-- prettier-ignore -->
+      <pre>    },</pre>
+    </li>
+    <li id="L44">
+      <!-- prettier-ignore -->
+      <pre>    {</pre>
+    </li>
+    <li id="L45">
+      <!-- prettier-ignore -->
+      <pre>      label: &#x27;前端入口&#x27;,</pre>
+    </li>
+    <li id="L46">
+      <!-- prettier-ignore -->
+      <pre>      path: join(webDist, &#x27;index.html&#x27;),</pre>
+    </li>
+    <li id="L47">
+      <!-- prettier-ignore -->
+      <pre>      consequence: &#x27;页面 404（静态服务找不到 index.html）&#x27;,</pre>
+    </li>
+    <li id="L48">
+      <!-- prettier-ignore -->
+      <pre>    },</pre>
+    </li>
+    <li id="L49">
+      <!-- prettier-ignore -->
+      <pre>  ]</pre>
+    </li>
+    <li id="L50">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+    <li id="L51">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L52">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L53">
+      <!-- prettier-ignore -->
+      <pre> * 找出缺失的产物。</pre>
+    </li>
+    <li id="L54">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L55">
+      <!-- prettier-ignore -->
+      <pre>export function findMissing(artifacts: Artifact[]): Artifact[] {</pre>
+    </li>
+    <li id="L56">
+      <!-- prettier-ignore -->
+      <pre>  return artifacts.filter((a) =&gt; !existsSync(a.path))</pre>
+    </li>
+    <li id="L57">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+    <li id="L58">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L59">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L60">
+      <!-- prettier-ignore -->
+      <pre> * 格式化缺失清单为用户可读的错误信息（含修复命令）。</pre>
+    </li>
+    <li id="L61">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L62">
+      <!-- prettier-ignore -->
+      <pre>export function formatMissingMessage(missing: Artifact[]): string {</pre>
+    </li>
+    <li id="L63">
+      <!-- prettier-ignore -->
+      <pre>  const list = missing</pre>
+    </li>
+    <li id="L64">
+      <!-- prettier-ignore -->
+      <pre>    .map((a) =&gt; `  - ${a.label}（${a.path}）\n    后果：${a.consequence}`)</pre>
+    </li>
+    <li id="L65">
+      <!-- prettier-ignore -->
+      <pre>    .join(&#x27;\n&#x27;)</pre>
+    </li>
+    <li id="L66">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L67">
+      <!-- prettier-ignore -->
+      <pre>  return `缺少 ${missing.length} 个必需产物：</pre>
+    </li>
+    <li id="L68">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L69">
+      <!-- prettier-ignore -->
+      <pre>${list}</pre>
+    </li>
+    <li id="L70">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L71">
+      <!-- prettier-ignore -->
+      <pre>修复：pnpm desktop:start（会先构建 server，再构建桌面端三段）`</pre>
+    </li>
+    <li id="L72">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+  </ol>
+</html>

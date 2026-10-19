@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>apps/desktop/src/renderer/components/WindowControls.style.ts</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+      min-height: 1.65em;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">Desktop来源索引</a>
+    <h1>apps/desktop/src/renderer/components/WindowControls.style.ts</h1>
+    <p>before真实源码 · SHA256 0e951ceb8c3a699a15124e55af66ec7ad3ceea6e1dce27a1d34345136dcdca95</p>
+  </header>
+  <ol>
+    <li id="L1">
+      <!-- prettier-ignore -->
+      <pre>import { TITLEBAR_HEIGHT } from &#x27;@mimir/renderer/titlebar-kit&#x27;</pre>
+    </li>
+    <li id="L2">
+      <!-- prettier-ignore -->
+      <pre>import { createStyles } from &#x27;antd-style&#x27;</pre>
+    </li>
+    <li id="L3">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L4">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L5">
+      <!-- prettier-ignore -->
+      <pre> * 三枚窗口控件的样式（D-094）。</pre>
+    </li>
+    <li id="L6">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L7">
+      <!-- prettier-ignore -->
+      <pre> * 从 `TitleBar.style.ts` 拆出来：选择页也要用这一组（D-103），而那一页</pre>
+    </li>
+    <li id="L8">
+      <!-- prettier-ignore -->
+      <pre> * 没有标题栏的其余部分（折叠按钮、品牌让位）。放在一起的话，选择页要么</pre>
+    </li>
+    <li id="L9">
+      <!-- prettier-ignore -->
+      <pre> * 连不需要的样式一起引，要么抄一份——后者就是搬迁前的状态。</pre>
+    </li>
+    <li id="L10">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L11">
+      <!-- prettier-ignore -->
+      <pre>export const useStyles = createStyles(({ css, token }) =&gt; ({</pre>
+    </li>
+    <li id="L12">
+      <!-- prettier-ignore -->
+      <pre>  controls: css`</pre>
+    </li>
+    <li id="L13">
+      <!-- prettier-ignore -->
+      <pre>    flex: none;</pre>
+    </li>
+    <li id="L14">
+      <!-- prettier-ignore -->
+      <pre>    display: flex;</pre>
+    </li>
+    <li id="L15">
+      <!-- prettier-ignore -->
+      <pre>    align-self: stretch;</pre>
+    </li>
+    <li id="L16">
+      <!-- prettier-ignore -->
+      <pre>    height: ${TITLEBAR_HEIGHT}px;</pre>
+    </li>
+    <li id="L17">
+      <!-- prettier-ignore -->
+      <pre>  `,</pre>
+    </li>
+    <li id="L18">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L19">
+      <!-- prettier-ignore -->
+      <pre>  /**</pre>
+    </li>
+    <li id="L20">
+      <!-- prettier-ignore -->
+      <pre>   * 单枚控件：46×44，与 Windows 11 一致。</pre>
+    </li>
+    <li id="L21">
+      <!-- prettier-ignore -->
+      <pre>   *</pre>
+    </li>
+    <li id="L22">
+      <!-- prettier-ignore -->
+      <pre>   * **不用我们自己的 `.me-btn` 观感**（圆角、悬停底色）：这三枚是**窗口</pre>
+    </li>
+    <li id="L23">
+      <!-- prettier-ignore -->
+      <pre>   * 级**控件，用户在同一个系统里所有窗口上都见过它们——画成应用风格的</pre>
+    </li>
+    <li id="L24">
+      <!-- prettier-ignore -->
+      <pre>   * 圆角小按钮会让人迟疑「这是不是应用自己的按钮」。系统约定优先。</pre>
+    </li>
+    <li id="L25">
+      <!-- prettier-ignore -->
+      <pre>   */</pre>
+    </li>
+    <li id="L26">
+      <!-- prettier-ignore -->
+      <pre>  ctl: css`</pre>
+    </li>
+    <li id="L27">
+      <!-- prettier-ignore -->
+      <pre>    width: 46px;</pre>
+    </li>
+    <li id="L28">
+      <!-- prettier-ignore -->
+      <pre>    height: ${TITLEBAR_HEIGHT}px;</pre>
+    </li>
+    <li id="L29">
+      <!-- prettier-ignore -->
+      <pre>    display: inline-flex;</pre>
+    </li>
+    <li id="L30">
+      <!-- prettier-ignore -->
+      <pre>    align-items: center;</pre>
+    </li>
+    <li id="L31">
+      <!-- prettier-ignore -->
+      <pre>    justify-content: center;</pre>
+    </li>
+    <li id="L32">
+      <!-- prettier-ignore -->
+      <pre>    border: 0;</pre>
+    </li>
+    <li id="L33">
+      <!-- prettier-ignore -->
+      <pre>    background: transparent;</pre>
+    </li>
+    <li id="L34">
+      <!-- prettier-ignore -->
+      <pre>    color: ${token.colorTextSecondary};</pre>
+    </li>
+    <li id="L35">
+      <!-- prettier-ignore -->
+      <pre>    cursor: default;</pre>
+    </li>
+    <li id="L36">
+      <!-- prettier-ignore -->
+      <pre>    padding: 0;</pre>
+    </li>
+    <li id="L37">
+      <!-- prettier-ignore -->
+      <pre>    -webkit-app-region: no-drag;</pre>
+    </li>
+    <li id="L38">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L39">
+      <!-- prettier-ignore -->
+      <pre>    &amp;:hover {</pre>
+    </li>
+    <li id="L40">
+      <!-- prettier-ignore -->
+      <pre>      background: ${token.colorFillTertiary};</pre>
+    </li>
+    <li id="L41">
+      <!-- prettier-ignore -->
+      <pre>      color: ${token.colorText};</pre>
+    </li>
+    <li id="L42">
+      <!-- prettier-ignore -->
+      <pre>    }</pre>
+    </li>
+    <li id="L43">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L44">
+      <!-- prettier-ignore -->
+      <pre>    &amp;:focus-visible {</pre>
+    </li>
+    <li id="L45">
+      <!-- prettier-ignore -->
+      <pre>      outline: 2px solid ${token.colorPrimaryBorder};</pre>
+    </li>
+    <li id="L46">
+      <!-- prettier-ignore -->
+      <pre>      outline-offset: -2px;</pre>
+    </li>
+    <li id="L47">
+      <!-- prettier-ignore -->
+      <pre>    }</pre>
+    </li>
+    <li id="L48">
+      <!-- prettier-ignore -->
+      <pre>  `,</pre>
+    </li>
+    <li id="L49">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L50">
+      <!-- prettier-ignore -->
+      <pre>  /**</pre>
+    </li>
+    <li id="L51">
+      <!-- prettier-ignore -->
+      <pre>   * 关闭：悬停红底白字。**Windows 的约定**，也是唯一一处用危险色而</pre>
+    </li>
+    <li id="L52">
+      <!-- prettier-ignore -->
+      <pre>   * 不需要确认的地方（系统级动作，用户按之前就知道会发生什么）。</pre>
+    </li>
+    <li id="L53">
+      <!-- prettier-ignore -->
+      <pre>   * 深浅两套都用同一个红——它与应用的语义色系统无关，是平台语言。</pre>
+    </li>
+    <li id="L54">
+      <!-- prettier-ignore -->
+      <pre>   */</pre>
+    </li>
+    <li id="L55">
+      <!-- prettier-ignore -->
+      <pre>  ctlClose: css`</pre>
+    </li>
+    <li id="L56">
+      <!-- prettier-ignore -->
+      <pre>    &amp;:hover {</pre>
+    </li>
+    <li id="L57">
+      <!-- prettier-ignore -->
+      <pre>      background: #e81123;</pre>
+    </li>
+    <li id="L58">
+      <!-- prettier-ignore -->
+      <pre>      color: #ffffff;</pre>
+    </li>
+    <li id="L59">
+      <!-- prettier-ignore -->
+      <pre>    }</pre>
+    </li>
+    <li id="L60">
+      <!-- prettier-ignore -->
+      <pre>  `,</pre>
+    </li>
+    <li id="L61">
+      <!-- prettier-ignore -->
+      <pre>}))</pre>
+    </li>
+  </ol>
+</html>

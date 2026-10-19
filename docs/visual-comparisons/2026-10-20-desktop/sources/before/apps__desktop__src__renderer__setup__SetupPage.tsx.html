@@ -1,0 +1,1260 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>apps/desktop/src/renderer/setup/SetupPage.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+      min-height: 1.65em;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">Desktop来源索引</a>
+    <h1>apps/desktop/src/renderer/setup/SetupPage.tsx</h1>
+    <p>before真实源码 · SHA256 63dd63eee8fd097ebcdc9f51d4f5d236aef51594e9fa6d58f59a79baf8565ce8</p>
+  </header>
+  <ol>
+    <li id="L1">
+      <!-- prettier-ignore -->
+      <pre>import { BrandMark } from &#x27;@mimir/renderer/titlebar-kit&#x27;</pre>
+    </li>
+    <li id="L2">
+      <!-- prettier-ignore -->
+      <pre>import type { DesktopModeState } from &#x27;@mimir/shared/desktop&#x27;</pre>
+    </li>
+    <li id="L3">
+      <!-- prettier-ignore -->
+      <pre>import { Alert, Button, Input, Typography } from &#x27;antd&#x27;</pre>
+    </li>
+    <li id="L4">
+      <!-- prettier-ignore -->
+      <pre>import type { InputRef } from &#x27;antd&#x27;</pre>
+    </li>
+    <li id="L5">
+      <!-- prettier-ignore -->
+      <pre>import { Cloud, Laptop } from &#x27;lucide-react&#x27;</pre>
+    </li>
+    <li id="L6">
+      <!-- prettier-ignore -->
+      <pre>import { useEffect, useRef, useState } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L7">
+      <!-- prettier-ignore -->
+      <pre>import { WindowControls } from &#x27;@/components/WindowControls&#x27;</pre>
+    </li>
+    <li id="L8">
+      <!-- prettier-ignore -->
+      <pre>import { desktopBridge } from &#x27;@/lib/desktop-bridge&#x27;</pre>
+    </li>
+    <li id="L9">
+      <!-- prettier-ignore -->
+      <pre>import { useStyles } from &#x27;@/setup/SetupPage.style&#x27;</pre>
+    </li>
+    <li id="L10">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L11">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L12">
+      <!-- prettier-ignore -->
+      <pre> * 首启的使用方式选择页（D-100）。</pre>
+    </li>
+    <li id="L13">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L14">
+      <!-- prettier-ignore -->
+      <pre> * ## 三个入口形态</pre>
+    </li>
+    <li id="L15">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L16">
+      <!-- prettier-ignore -->
+      <pre> * | 形态 | 怎么进来 | 标题 | 能否取消 |</pre>
+    </li>
+    <li id="L17">
+      <!-- prettier-ignore -->
+      <pre> * |---|---|---|---|</pre>
+    </li>
+    <li id="L18">
+      <!-- prettier-ignore -->
+      <pre> * | 首次启动 | `mode.get()` 返回 null | 选择使用方式 | 不能（还没有可回去的模式） |</pre>
+    </li>
+    <li id="L19">
+      <!-- prettier-ignore -->
+      <pre> * | 设置里更换 | 设置 › 客户端的按钮 | 切换使用方式 | 能（「返回，不改」） |</pre>
+    </li>
+    <li id="L20">
+      <!-- prettier-ignore -->
+      <pre> * | 云端连不上的兜底 | 远端加载失败 | 同上 | 同上 |</pre>
+    </li>
+    <li id="L21">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L22">
+      <!-- prettier-ignore -->
+      <pre> * ## 它为什么仍然是独立的 HTML 入口（D-103）</pre>
+    </li>
+    <li id="L23">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L24">
+      <!-- prettier-ignore -->
+      <pre> * 这一页**必须在没有任何宿主时也能打开**：首次启动时本地宿主还没起，</pre>
+    </li>
+    <li id="L25">
+      <!-- prettier-ignore -->
+      <pre> * 云端连不上时远端也没有。所以它由 `file://` 加载，是 renderer 段的第二个</pre>
+    </li>
+    <li id="L26">
+      <!-- prettier-ignore -->
+      <pre> * HTML 入口，不走主应用的路由（后者是 history 模式，`file://` 下不工作）。</pre>
+    </li>
+    <li id="L27">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L28">
+      <!-- prettier-ignore -->
+      <pre> * 但它不再自己抄一套设计系统：主题、品牌件、窗口控件、antd 控件全部与主界面</pre>
+    </li>
+    <li id="L29">
+      <!-- prettier-ignore -->
+      <pre> * 同源。原先那份 553 行的静态 HTML 里手写了 `--bg` / `--text` / `--border`</pre>
+    </li>
+    <li id="L30">
+      <!-- prettier-ignore -->
+      <pre> * 与一份深色媒体查询，还另存了一份 BrandMark 的 path——那些都是会静默漂移的</pre>
+    </li>
+    <li id="L31">
+      <!-- prettier-ignore -->
+      <pre> * 第二份实现。</pre>
+    </li>
+    <li id="L32">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L33">
+      <!-- prettier-ignore -->
+      <pre> * ## 不做探活的展示细节</pre>
+    </li>
+    <li id="L34">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L35">
+      <!-- prettier-ignore -->
+      <pre> * 地址能不能连上由主进程校验（只有它知道失败原因：域名解析不了 / 没人监听 /</pre>
+    </li>
+    <li id="L36">
+      <!-- prettier-ignore -->
+      <pre> * 证书不信任，三件的下一步完全不同，见 `main/cloud.ts` 的 `describeFetchError`）。</pre>
+    </li>
+    <li id="L37">
+      <!-- prettier-ignore -->
+      <pre> * 这里只把结果如实显示出来。</pre>
+    </li>
+    <li id="L38">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L39">
+      <!-- prettier-ignore -->
+      <pre>export function SetupPage() {</pre>
+    </li>
+    <li id="L40">
+      <!-- prettier-ignore -->
+      <pre>  const { styles } = useStyles()</pre>
+    </li>
+    <li id="L41">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L42">
+      <!-- prettier-ignore -->
+      <pre>  /**</pre>
+    </li>
+    <li id="L43">
+      <!-- prettier-ignore -->
+      <pre>   * 桥在首帧之前就已经确定（preload 的保证），所以它**不是状态**。</pre>
+    </li>
+    <li id="L44">
+      <!-- prettier-ignore -->
+      <pre>   *</pre>
+    </li>
+    <li id="L45">
+      <!-- prettier-ignore -->
+      <pre>   * 读成状态会让「这个窗口不是桌面客户端」那句话经由一次 effect 里的</pre>
+    </li>
+    <li id="L46">
+      <!-- prettier-ignore -->
+      <pre>   * setState 产生——而那是 `react(set-state-in-effect)` 要拦的级联渲染，</pre>
+    </li>
+    <li id="L47">
+      <!-- prettier-ignore -->
+      <pre>   * 且 React Compiler 会因此跳过整个组件（.trellis/spec/project/rules.md 铁律 1）。</pre>
+    </li>
+    <li id="L48">
+      <!-- prettier-ignore -->
+      <pre>   */</pre>
+    </li>
+    <li id="L49">
+      <!-- prettier-ignore -->
+      <pre>  const modeApi = desktopBridge?.mode</pre>
+    </li>
+    <li id="L50">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L51">
+      <!-- prettier-ignore -->
+      <pre>  /** null = 首次启动（还没有配置）；否则是当前生效的配置 */</pre>
+    </li>
+    <li id="L52">
+      <!-- prettier-ignore -->
+      <pre>  const [current, setCurrent] = useState&lt;DesktopModeState | null&gt;(null)</pre>
+    </li>
+    <li id="L53">
+      <!-- prettier-ignore -->
+      <pre>  /**</pre>
+    </li>
+    <li id="L54">
+      <!-- prettier-ignore -->
+      <pre>   * 读配置之前不要渲染表单——否则首屏会先显示「选择使用方式」再跳成「切换」。</pre>
+    </li>
+    <li id="L55">
+      <!-- prettier-ignore -->
+      <pre>   * 没有桥时无需等待：那一屏只有一句话要说。</pre>
+    </li>
+    <li id="L56">
+      <!-- prettier-ignore -->
+      <pre>   */</pre>
+    </li>
+    <li id="L57">
+      <!-- prettier-ignore -->
+      <pre>  const [loaded, setLoaded] = useState(modeApi === undefined)</pre>
+    </li>
+    <li id="L58">
+      <!-- prettier-ignore -->
+      <pre>  const [loadFailure, setLoadFailure] = useState(false)</pre>
+    </li>
+    <li id="L59">
+      <!-- prettier-ignore -->
+      <pre>  const [readCurrent, setReadCurrent] = useState&lt;</pre>
+    </li>
+    <li id="L60">
+      <!-- prettier-ignore -->
+      <pre>    (() =&gt; Promise&lt;DesktopModeState | null&gt;) | undefined</pre>
+    </li>
+    <li id="L61">
+      <!-- prettier-ignore -->
+      <pre>  &gt;(() =&gt; (modeApi ? () =&gt; modeApi.get() : undefined))</pre>
+    </li>
+    <li id="L62">
+      <!-- prettier-ignore -->
+      <pre>  /** 用户当前选择。默认本地——它是「不需要任何准备就能开始」的那一个 */</pre>
+    </li>
+    <li id="L63">
+      <!-- prettier-ignore -->
+      <pre>  const [choice, setChoice] = useState&lt;&#x27;local&#x27; | &#x27;cloud&#x27;&gt;(&#x27;local&#x27;)</pre>
+    </li>
+    <li id="L64">
+      <!-- prettier-ignore -->
+      <pre>  const [cloudUrl, setCloudUrl] = useState(&#x27;&#x27;)</pre>
+    </li>
+    <li id="L65">
+      <!-- prettier-ignore -->
+      <pre>  const [pending, setPending] = useState(false)</pre>
+    </li>
+    <li id="L66">
+      <!-- prettier-ignore -->
+      <pre>  const [failure, setFailure] = useState&lt;string | null&gt;(null)</pre>
+    </li>
+    <li id="L67">
+      <!-- prettier-ignore -->
+      <pre>  const [note, setNote] = useState&lt;string | null&gt;(null)</pre>
+    </li>
+    <li id="L68">
+      <!-- prettier-ignore -->
+      <pre>  /** antd 的 Input 是值，ref 的类型要取它的实例类型 */</pre>
+    </li>
+    <li id="L69">
+      <!-- prettier-ignore -->
+      <pre>  const urlRef = useRef&lt;InputRef&gt;(null)</pre>
+    </li>
+    <li id="L70">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L71">
+      <!-- prettier-ignore -->
+      <pre>  useEffect(() =&gt; {</pre>
+    </li>
+    <li id="L72">
+      <!-- prettier-ignore -->
+      <pre>    if (!readCurrent) return</pre>
+    </li>
+    <li id="L73">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L74">
+      <!-- prettier-ignore -->
+      <pre>    let alive = true</pre>
+    </li>
+    <li id="L75">
+      <!-- prettier-ignore -->
+      <pre>    void readCurrent()</pre>
+    </li>
+    <li id="L76">
+      <!-- prettier-ignore -->
+      <pre>      .then((state) =&gt; {</pre>
+    </li>
+    <li id="L77">
+      <!-- prettier-ignore -->
+      <pre>        if (!alive) return</pre>
+    </li>
+    <li id="L78">
+      <!-- prettier-ignore -->
+      <pre>        if (state) {</pre>
+    </li>
+    <li id="L79">
+      <!-- prettier-ignore -->
+      <pre>          setCurrent(state)</pre>
+    </li>
+    <li id="L80">
+      <!-- prettier-ignore -->
+      <pre>          setChoice(state.mode)</pre>
+    </li>
+    <li id="L81">
+      <!-- prettier-ignore -->
+      <pre>          if (state.mode === &#x27;cloud&#x27;) setCloudUrl(state.cloudUrl)</pre>
+    </li>
+    <li id="L82">
+      <!-- prettier-ignore -->
+      <pre>        }</pre>
+    </li>
+    <li id="L83">
+      <!-- prettier-ignore -->
+      <pre>        setLoaded(true)</pre>
+    </li>
+    <li id="L84">
+      <!-- prettier-ignore -->
+      <pre>      })</pre>
+    </li>
+    <li id="L85">
+      <!-- prettier-ignore -->
+      <pre>      .catch(() =&gt; {</pre>
+    </li>
+    <li id="L86">
+      <!-- prettier-ignore -->
+      <pre>        if (!alive) return</pre>
+    </li>
+    <li id="L87">
+      <!-- prettier-ignore -->
+      <pre>        setLoadFailure(true)</pre>
+    </li>
+    <li id="L88">
+      <!-- prettier-ignore -->
+      <pre>        setLoaded(true)</pre>
+    </li>
+    <li id="L89">
+      <!-- prettier-ignore -->
+      <pre>      })</pre>
+    </li>
+    <li id="L90">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L91">
+      <!-- prettier-ignore -->
+      <pre>    return () =&gt; {</pre>
+    </li>
+    <li id="L92">
+      <!-- prettier-ignore -->
+      <pre>      alive = false</pre>
+    </li>
+    <li id="L93">
+      <!-- prettier-ignore -->
+      <pre>    }</pre>
+    </li>
+    <li id="L94">
+      <!-- prettier-ignore -->
+      <pre>  }, [readCurrent])</pre>
+    </li>
+    <li id="L95">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L96">
+      <!-- prettier-ignore -->
+      <pre>  /** 选了「连接服务器」就把焦点送进地址框——那是此刻唯一要做的事 */</pre>
+    </li>
+    <li id="L97">
+      <!-- prettier-ignore -->
+      <pre>  useEffect(() =&gt; {</pre>
+    </li>
+    <li id="L98">
+      <!-- prettier-ignore -->
+      <pre>    if (choice === &#x27;cloud&#x27;) urlRef.current?.focus()</pre>
+    </li>
+    <li id="L99">
+      <!-- prettier-ignore -->
+      <pre>  }, [choice])</pre>
+    </li>
+    <li id="L100">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L101">
+      <!-- prettier-ignore -->
+      <pre>  /** 已经有生效中的模式 */</pre>
+    </li>
+    <li id="L102">
+      <!-- prettier-ignore -->
+      <pre>  const isSwitch = current !== null</pre>
+    </li>
+    <li id="L103">
+      <!-- prettier-ignore -->
+      <pre>  const canCancel = current !== null</pre>
+    </li>
+    <li id="L104">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L105">
+      <!-- prettier-ignore -->
+      <pre>  /**</pre>
+    </li>
+    <li id="L106">
+      <!-- prettier-ignore -->
+      <pre>   * 在普通浏览器里打开这个文件（或 preload 没跑起来）时如实说清楚，</pre>
+    </li>
+    <li id="L107">
+      <!-- prettier-ignore -->
+      <pre>   * 而不是让按钮点了没反应。它与「这次切换失败了」是两件事，但显示在同一处。</pre>
+    </li>
+    <li id="L108">
+      <!-- prettier-ignore -->
+      <pre>   */</pre>
+    </li>
+    <li id="L109">
+      <!-- prettier-ignore -->
+      <pre>  const error = modeApi === undefined ? &#x27;这个窗口不是桌面客户端&#x27; : failure</pre>
+    </li>
+    <li id="L110">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L111">
+      <!-- prettier-ignore -->
+      <pre>  const submit = async () =&gt; {</pre>
+    </li>
+    <li id="L112">
+      <!-- prettier-ignore -->
+      <pre>    if (!modeApi) return</pre>
+    </li>
+    <li id="L113">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L114">
+      <!-- prettier-ignore -->
+      <pre>    setPending(true)</pre>
+    </li>
+    <li id="L115">
+      <!-- prettier-ignore -->
+      <pre>    setFailure(null)</pre>
+    </li>
+    <li id="L116">
+      <!-- prettier-ignore -->
+      <pre>    setNote(choice === &#x27;local&#x27; ? &#x27;正在准备本地知识库…&#x27; : &#x27;正在连接服务器…&#x27;)</pre>
+    </li>
+    <li id="L117">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L118">
+      <!-- prettier-ignore -->
+      <pre>    const payload: DesktopModeState =</pre>
+    </li>
+    <li id="L119">
+      <!-- prettier-ignore -->
+      <pre>      choice === &#x27;local&#x27; ? { mode: &#x27;local&#x27; } : { mode: &#x27;cloud&#x27;, cloudUrl }</pre>
+    </li>
+    <li id="L120">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L121">
+      <!-- prettier-ignore -->
+      <pre>    /**</pre>
+    </li>
+    <li id="L122">
+      <!-- prettier-ignore -->
+      <pre>     * IPC 抛出的错误在渲染侧只剩一句「Error invoking remote method …」，</pre>
+    </li>
+    <li id="L123">
+      <!-- prettier-ignore -->
+      <pre>     * 原始消息会被前缀吞掉——所以契约用的是判别联合而不是 reject</pre>
+    </li>
+    <li id="L124">
+      <!-- prettier-ignore -->
+      <pre>     * （见 `packages/shared/src/desktop.ts` 的 `DesktopModeResult`）。</pre>
+    </li>
+    <li id="L125">
+      <!-- prettier-ignore -->
+      <pre>     * 这里的 catch 只兜「连 IPC 都没通」。</pre>
+    </li>
+    <li id="L126">
+      <!-- prettier-ignore -->
+      <pre>     */</pre>
+    </li>
+    <li id="L127">
+      <!-- prettier-ignore -->
+      <pre>    const result = await modeApi</pre>
+    </li>
+    <li id="L128">
+      <!-- prettier-ignore -->
+      <pre>      .choose(payload)</pre>
+    </li>
+    <li id="L129">
+      <!-- prettier-ignore -->
+      <pre>      .catch((cause: unknown) =&gt; ({ ok: false as const, message: String(cause) }))</pre>
+    </li>
+    <li id="L130">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L131">
+      <!-- prettier-ignore -->
+      <pre>    if (!result.ok) {</pre>
+    </li>
+    <li id="L132">
+      <!-- prettier-ignore -->
+      <pre>      setPending(false)</pre>
+    </li>
+    <li id="L133">
+      <!-- prettier-ignore -->
+      <pre>      setNote(null)</pre>
+    </li>
+    <li id="L134">
+      <!-- prettier-ignore -->
+      <pre>      setFailure(result.message || &#x27;切换失败&#x27;)</pre>
+    </li>
+    <li id="L135">
+      <!-- prettier-ignore -->
+      <pre>      return</pre>
+    </li>
+    <li id="L136">
+      <!-- prettier-ignore -->
+      <pre>    }</pre>
+    </li>
+    <li id="L137">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L138">
+      <!-- prettier-ignore -->
+      <pre>    setNote(&#x27;正在打开…&#x27;)</pre>
+    </li>
+    <li id="L139">
+      <!-- prettier-ignore -->
+      <pre>    // 导航一定会替换掉这一页，所以这里不需要收尾</pre>
+    </li>
+    <li id="L140">
+      <!-- prettier-ignore -->
+      <pre>    modeApi.activate()</pre>
+    </li>
+    <li id="L141">
+      <!-- prettier-ignore -->
+      <pre>  }</pre>
+    </li>
+    <li id="L142">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L143">
+      <!-- prettier-ignore -->
+      <pre>  if (!loaded) return null</pre>
+    </li>
+    <li id="L144">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L145">
+      <!-- prettier-ignore -->
+      <pre>  return (</pre>
+    </li>
+    <li id="L146">
+      <!-- prettier-ignore -->
+      <pre>    &lt;div className={styles.page}&gt;</pre>
+    </li>
+    <li id="L147">
+      <!-- prettier-ignore -->
+      <pre>      &lt;div className={styles.bar} data-platform={desktopBridge?.window.platform}&gt;</pre>
+    </li>
+    <li id="L148">
+      <!-- prettier-ignore -->
+      <pre>        &lt;span className={styles.spacer} /&gt;</pre>
+    </li>
+    <li id="L149">
+      <!-- prettier-ignore -->
+      <pre>        {/*</pre>
+    </li>
+    <li id="L150">
+      <!-- prettier-ignore -->
+      <pre>          这一页也需要窗口控件：壳是 `frame: false`，没有它用户连窗口都关不掉。</pre>
+    </li>
+    <li id="L151">
+      <!-- prettier-ignore -->
+      <pre>          **不渲染最大化**——这一页是一次性的选择，撑满屏幕没有意义。</pre>
+    </li>
+    <li id="L152">
+      <!-- prettier-ignore -->
+      <pre>        */}</pre>
+    </li>
+    <li id="L153">
+      <!-- prettier-ignore -->
+      <pre>        &lt;WindowControls omit={[&#x27;maximize&#x27;]} /&gt;</pre>
+    </li>
+    <li id="L154">
+      <!-- prettier-ignore -->
+      <pre>      &lt;/div&gt;</pre>
+    </li>
+    <li id="L155">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L156">
+      <!-- prettier-ignore -->
+      <pre>      &lt;div className={styles.body}&gt;</pre>
+    </li>
+    <li id="L157">
+      <!-- prettier-ignore -->
+      <pre>        &lt;div className={styles.brandPane}&gt;</pre>
+    </li>
+    <li id="L158">
+      <!-- prettier-ignore -->
+      <pre>          &lt;div className={styles.brand}&gt;</pre>
+    </li>
+    <li id="L159">
+      <!-- prettier-ignore -->
+      <pre>            &lt;BrandMark size={38} title={null} /&gt;</pre>
+    </li>
+    <li id="L160">
+      <!-- prettier-ignore -->
+      <pre>            &lt;Typography.Title level={2} className={styles.brandName}&gt;</pre>
+    </li>
+    <li id="L161">
+      <!-- prettier-ignore -->
+      <pre>              mimir</pre>
+    </li>
+    <li id="L162">
+      <!-- prettier-ignore -->
+      <pre>            &lt;/Typography.Title&gt;</pre>
+    </li>
+    <li id="L163">
+      <!-- prettier-ignore -->
+      <pre>          &lt;/div&gt;</pre>
+    </li>
+    <li id="L164">
+      <!-- prettier-ignore -->
+      <pre>          &lt;p className={styles.brandPosition}&gt;知识工作区&lt;/p&gt;</pre>
+    </li>
+    <li id="L165">
+      <!-- prettier-ignore -->
+      <pre>        &lt;/div&gt;</pre>
+    </li>
+    <li id="L166">
+      <!-- prettier-ignore -->
+      <pre>        &lt;div className={styles.formPane}&gt;</pre>
+    </li>
+    <li id="L167">
+      <!-- prettier-ignore -->
+      <pre>          &lt;div className={styles.formContent}&gt;</pre>
+    </li>
+    <li id="L168">
+      <!-- prettier-ignore -->
+      <pre>            &lt;Typography.Title level={2} className={styles.heading}&gt;</pre>
+    </li>
+    <li id="L169">
+      <!-- prettier-ignore -->
+      <pre>              {loadFailure ? &#x27;无法读取使用方式&#x27; : isSwitch ? &#x27;切换使用方式&#x27; : &#x27;选择使用方式&#x27;}</pre>
+    </li>
+    <li id="L170">
+      <!-- prettier-ignore -->
+      <pre>            &lt;/Typography.Title&gt;</pre>
+    </li>
+    <li id="L171">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L172">
+      <!-- prettier-ignore -->
+      <pre>            {loadFailure ? (</pre>
+    </li>
+    <li id="L173">
+      <!-- prettier-ignore -->
+      <pre>              &lt;&gt;</pre>
+    </li>
+    <li id="L174">
+      <!-- prettier-ignore -->
+      <pre>                &lt;Alert</pre>
+    </li>
+    <li id="L175">
+      <!-- prettier-ignore -->
+      <pre>                  type=&quot;error&quot;</pre>
+    </li>
+    <li id="L176">
+      <!-- prettier-ignore -->
+      <pre>                  showIcon</pre>
+    </li>
+    <li id="L177">
+      <!-- prettier-ignore -->
+      <pre>                  title=&quot;暂时无法读取当前配置，请重试。&quot;</pre>
+    </li>
+    <li id="L178">
+      <!-- prettier-ignore -->
+      <pre>                  style={{ marginBottom: 16 }}</pre>
+    </li>
+    <li id="L179">
+      <!-- prettier-ignore -->
+      <pre>                /&gt;</pre>
+    </li>
+    <li id="L180">
+      <!-- prettier-ignore -->
+      <pre>                &lt;Button</pre>
+    </li>
+    <li id="L181">
+      <!-- prettier-ignore -->
+      <pre>                  type=&quot;primary&quot;</pre>
+    </li>
+    <li id="L182">
+      <!-- prettier-ignore -->
+      <pre>                  onClick={() =&gt; {</pre>
+    </li>
+    <li id="L183">
+      <!-- prettier-ignore -->
+      <pre>                    setLoadFailure(false)</pre>
+    </li>
+    <li id="L184">
+      <!-- prettier-ignore -->
+      <pre>                    setLoaded(false)</pre>
+    </li>
+    <li id="L185">
+      <!-- prettier-ignore -->
+      <pre>                    setReadCurrent(() =&gt; (modeApi ? () =&gt; modeApi.get() : undefined))</pre>
+    </li>
+    <li id="L186">
+      <!-- prettier-ignore -->
+      <pre>                  }}</pre>
+    </li>
+    <li id="L187">
+      <!-- prettier-ignore -->
+      <pre>                &gt;</pre>
+    </li>
+    <li id="L188">
+      <!-- prettier-ignore -->
+      <pre>                  重试</pre>
+    </li>
+    <li id="L189">
+      <!-- prettier-ignore -->
+      <pre>                &lt;/Button&gt;</pre>
+    </li>
+    <li id="L190">
+      <!-- prettier-ignore -->
+      <pre>              &lt;/&gt;</pre>
+    </li>
+    <li id="L191">
+      <!-- prettier-ignore -->
+      <pre>            ) : (</pre>
+    </li>
+    <li id="L192">
+      <!-- prettier-ignore -->
+      <pre>              &lt;&gt;</pre>
+    </li>
+    <li id="L193">
+      <!-- prettier-ignore -->
+      <pre>                &lt;Typography.Paragraph type=&quot;secondary&quot; className={styles.lead}&gt;</pre>
+    </li>
+    <li id="L194">
+      <!-- prettier-ignore -->
+      <pre>                  {isSwitch</pre>
+    </li>
+    <li id="L195">
+      <!-- prettier-ignore -->
+      <pre>                    ? &#x27;切换后可随时换回；本地数据不会被删除。&#x27;</pre>
+    </li>
+    <li id="L196">
+      <!-- prettier-ignore -->
+      <pre>                    : &#x27;选择资料存放的位置。之后可在设置中更改。&#x27;}</pre>
+    </li>
+    <li id="L197">
+      <!-- prettier-ignore -->
+      <pre>                &lt;/Typography.Paragraph&gt;</pre>
+    </li>
+    <li id="L198">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L199">
+      <!-- prettier-ignore -->
+      <pre>                {error !== null &amp;&amp; (</pre>
+    </li>
+    <li id="L200">
+      <!-- prettier-ignore -->
+      <pre>                  &lt;Alert type=&quot;error&quot; showIcon title={error} style={{ marginBottom: 16 }} /&gt;</pre>
+    </li>
+    <li id="L201">
+      <!-- prettier-ignore -->
+      <pre>                )}</pre>
+    </li>
+    <li id="L202">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L203">
+      <!-- prettier-ignore -->
+      <pre>                &lt;div className={styles.options} role=&quot;group&quot; aria-label=&quot;使用方式&quot;&gt;</pre>
+    </li>
+    <li id="L204">
+      <!-- prettier-ignore -->
+      <pre>                  &lt;button</pre>
+    </li>
+    <li id="L205">
+      <!-- prettier-ignore -->
+      <pre>                    type=&quot;button&quot;</pre>
+    </li>
+    <li id="L206">
+      <!-- prettier-ignore -->
+      <pre>                    className={styles.option}</pre>
+    </li>
+    <li id="L207">
+      <!-- prettier-ignore -->
+      <pre>                    aria-pressed={choice === &#x27;local&#x27;}</pre>
+    </li>
+    <li id="L208">
+      <!-- prettier-ignore -->
+      <pre>                    disabled={pending}</pre>
+    </li>
+    <li id="L209">
+      <!-- prettier-ignore -->
+      <pre>                    onClick={() =&gt; {</pre>
+    </li>
+    <li id="L210">
+      <!-- prettier-ignore -->
+      <pre>                      setChoice(&#x27;local&#x27;)</pre>
+    </li>
+    <li id="L211">
+      <!-- prettier-ignore -->
+      <pre>                      setFailure(null)</pre>
+    </li>
+    <li id="L212">
+      <!-- prettier-ignore -->
+      <pre>                    }}</pre>
+    </li>
+    <li id="L213">
+      <!-- prettier-ignore -->
+      <pre>                  &gt;</pre>
+    </li>
+    <li id="L214">
+      <!-- prettier-ignore -->
+      <pre>                    &lt;Laptop size={20} aria-hidden=&quot;true&quot; /&gt;</pre>
+    </li>
+    <li id="L215">
+      <!-- prettier-ignore -->
+      <pre>                    &lt;span className={styles.optionText}&gt;</pre>
+    </li>
+    <li id="L216">
+      <!-- prettier-ignore -->
+      <pre>                      &lt;span className={styles.optionName}&gt;本地使用&lt;/span&gt;</pre>
+    </li>
+    <li id="L217">
+      <!-- prettier-ignore -->
+      <pre>                      &lt;span className={styles.optionDesc}&gt;资料保存在此设备，可离线使用。&lt;/span&gt;</pre>
+    </li>
+    <li id="L218">
+      <!-- prettier-ignore -->
+      <pre>                    &lt;/span&gt;</pre>
+    </li>
+    <li id="L219">
+      <!-- prettier-ignore -->
+      <pre>                  &lt;/button&gt;</pre>
+    </li>
+    <li id="L220">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L221">
+      <!-- prettier-ignore -->
+      <pre>                  &lt;button</pre>
+    </li>
+    <li id="L222">
+      <!-- prettier-ignore -->
+      <pre>                    type=&quot;button&quot;</pre>
+    </li>
+    <li id="L223">
+      <!-- prettier-ignore -->
+      <pre>                    className={styles.option}</pre>
+    </li>
+    <li id="L224">
+      <!-- prettier-ignore -->
+      <pre>                    aria-pressed={choice === &#x27;cloud&#x27;}</pre>
+    </li>
+    <li id="L225">
+      <!-- prettier-ignore -->
+      <pre>                    disabled={pending}</pre>
+    </li>
+    <li id="L226">
+      <!-- prettier-ignore -->
+      <pre>                    onClick={() =&gt; {</pre>
+    </li>
+    <li id="L227">
+      <!-- prettier-ignore -->
+      <pre>                      setChoice(&#x27;cloud&#x27;)</pre>
+    </li>
+    <li id="L228">
+      <!-- prettier-ignore -->
+      <pre>                      setFailure(null)</pre>
+    </li>
+    <li id="L229">
+      <!-- prettier-ignore -->
+      <pre>                    }}</pre>
+    </li>
+    <li id="L230">
+      <!-- prettier-ignore -->
+      <pre>                  &gt;</pre>
+    </li>
+    <li id="L231">
+      <!-- prettier-ignore -->
+      <pre>                    &lt;Cloud size={20} aria-hidden=&quot;true&quot; /&gt;</pre>
+    </li>
+    <li id="L232">
+      <!-- prettier-ignore -->
+      <pre>                    &lt;span className={styles.optionText}&gt;</pre>
+    </li>
+    <li id="L233">
+      <!-- prettier-ignore -->
+      <pre>                      &lt;span className={styles.optionName}&gt;连接服务器&lt;/span&gt;</pre>
+    </li>
+    <li id="L234">
+      <!-- prettier-ignore -->
+      <pre>                      &lt;span className={styles.optionDesc}&gt;</pre>
+    </li>
+    <li id="L235">
+      <!-- prettier-ignore -->
+      <pre>                        连接你自己的服务器，在多台设备上使用。</pre>
+    </li>
+    <li id="L236">
+      <!-- prettier-ignore -->
+      <pre>                      &lt;/span&gt;</pre>
+    </li>
+    <li id="L237">
+      <!-- prettier-ignore -->
+      <pre>                    &lt;/span&gt;</pre>
+    </li>
+    <li id="L238">
+      <!-- prettier-ignore -->
+      <pre>                  &lt;/button&gt;</pre>
+    </li>
+    <li id="L239">
+      <!-- prettier-ignore -->
+      <pre>                &lt;/div&gt;</pre>
+    </li>
+    <li id="L240">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L241">
+      <!-- prettier-ignore -->
+      <pre>                {choice === &#x27;cloud&#x27; &amp;&amp; (</pre>
+    </li>
+    <li id="L242">
+      <!-- prettier-ignore -->
+      <pre>                  &lt;div className={styles.field}&gt;</pre>
+    </li>
+    <li id="L243">
+      <!-- prettier-ignore -->
+      <pre>                    &lt;Typography.Text&gt;</pre>
+    </li>
+    <li id="L244">
+      <!-- prettier-ignore -->
+      <pre>                      &lt;label htmlFor=&quot;mimir-server-url&quot;&gt;服务器地址&lt;/label&gt;</pre>
+    </li>
+    <li id="L245">
+      <!-- prettier-ignore -->
+      <pre>                    &lt;/Typography.Text&gt;</pre>
+    </li>
+    <li id="L246">
+      <!-- prettier-ignore -->
+      <pre>                    &lt;Input</pre>
+    </li>
+    <li id="L247">
+      <!-- prettier-ignore -->
+      <pre>                      id=&quot;mimir-server-url&quot;</pre>
+    </li>
+    <li id="L248">
+      <!-- prettier-ignore -->
+      <pre>                      ref={urlRef}</pre>
+    </li>
+    <li id="L249">
+      <!-- prettier-ignore -->
+      <pre>                      type=&quot;url&quot;</pre>
+    </li>
+    <li id="L250">
+      <!-- prettier-ignore -->
+      <pre>                      value={cloudUrl}</pre>
+    </li>
+    <li id="L251">
+      <!-- prettier-ignore -->
+      <pre>                      placeholder=&quot;https://mimir.example.com&quot;</pre>
+    </li>
+    <li id="L252">
+      <!-- prettier-ignore -->
+      <pre>                      autoComplete=&quot;off&quot;</pre>
+    </li>
+    <li id="L253">
+      <!-- prettier-ignore -->
+      <pre>                      spellCheck={false}</pre>
+    </li>
+    <li id="L254">
+      <!-- prettier-ignore -->
+      <pre>                      disabled={pending}</pre>
+    </li>
+    <li id="L255">
+      <!-- prettier-ignore -->
+      <pre>                      onChange={(event) =&gt; setCloudUrl(event.target.value)}</pre>
+    </li>
+    <li id="L256">
+      <!-- prettier-ignore -->
+      <pre>                      onPressEnter={() =&gt; void submit()}</pre>
+    </li>
+    <li id="L257">
+      <!-- prettier-ignore -->
+      <pre>                      style={{ marginTop: 6 }}</pre>
+    </li>
+    <li id="L258">
+      <!-- prettier-ignore -->
+      <pre>                    /&gt;</pre>
+    </li>
+    <li id="L259">
+      <!-- prettier-ignore -->
+      <pre>                    &lt;Typography.Paragraph</pre>
+    </li>
+    <li id="L260">
+      <!-- prettier-ignore -->
+      <pre>                      type=&quot;secondary&quot;</pre>
+    </li>
+    <li id="L261">
+      <!-- prettier-ignore -->
+      <pre>                      style={{ marginTop: 6, marginBottom: 0 }}</pre>
+    </li>
+    <li id="L262">
+      <!-- prettier-ignore -->
+      <pre>                    &gt;</pre>
+    </li>
+    <li id="L263">
+      <!-- prettier-ignore -->
+      <pre>                      输入你的 mimir 服务器地址。</pre>
+    </li>
+    <li id="L264">
+      <!-- prettier-ignore -->
+      <pre>                    &lt;/Typography.Paragraph&gt;</pre>
+    </li>
+    <li id="L265">
+      <!-- prettier-ignore -->
+      <pre>                  &lt;/div&gt;</pre>
+    </li>
+    <li id="L266">
+      <!-- prettier-ignore -->
+      <pre>                )}</pre>
+    </li>
+    <li id="L267">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L268">
+      <!-- prettier-ignore -->
+      <pre>                &lt;div className={styles.row}&gt;</pre>
+    </li>
+    <li id="L269">
+      <!-- prettier-ignore -->
+      <pre>                  &lt;Button</pre>
+    </li>
+    <li id="L270">
+      <!-- prettier-ignore -->
+      <pre>                    type=&quot;primary&quot;</pre>
+    </li>
+    <li id="L271">
+      <!-- prettier-ignore -->
+      <pre>                    loading={pending}</pre>
+    </li>
+    <li id="L272">
+      <!-- prettier-ignore -->
+      <pre>                    disabled={</pre>
+    </li>
+    <li id="L273">
+      <!-- prettier-ignore -->
+      <pre>                      modeApi === undefined || (choice === &#x27;cloud&#x27; &amp;&amp; cloudUrl.trim() === &#x27;&#x27;)</pre>
+    </li>
+    <li id="L274">
+      <!-- prettier-ignore -->
+      <pre>                    }</pre>
+    </li>
+    <li id="L275">
+      <!-- prettier-ignore -->
+      <pre>                    onClick={() =&gt; void submit()}</pre>
+    </li>
+    <li id="L276">
+      <!-- prettier-ignore -->
+      <pre>                  &gt;</pre>
+    </li>
+    <li id="L277">
+      <!-- prettier-ignore -->
+      <pre>                    {isSwitch ? &#x27;切换&#x27; : &#x27;开始使用&#x27;}</pre>
+    </li>
+    <li id="L278">
+      <!-- prettier-ignore -->
+      <pre>                  &lt;/Button&gt;</pre>
+    </li>
+    <li id="L279">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L280">
+      <!-- prettier-ignore -->
+      <pre>                  {canCancel &amp;&amp; (</pre>
+    </li>
+    <li id="L281">
+      <!-- prettier-ignore -->
+      <pre>                    /**</pre>
+    </li>
+    <li id="L282">
+      <!-- prettier-ignore -->
+      <pre>                     * 「返回，不改」走 `activate()` 而不是自己拼地址——宿主那边会顺带</pre>
+    </li>
+    <li id="L283">
+      <!-- prettier-ignore -->
+      <pre>                     * 把本机令牌重新注入（本地模式下这是必须的一步），</pre>
+    </li>
+    <li id="L284">
+      <!-- prettier-ignore -->
+      <pre>                     * 地址归一化也只有一处。</pre>
+    </li>
+    <li id="L285">
+      <!-- prettier-ignore -->
+      <pre>                     */</pre>
+    </li>
+    <li id="L286">
+      <!-- prettier-ignore -->
+      <pre>                    &lt;Button</pre>
+    </li>
+    <li id="L287">
+      <!-- prettier-ignore -->
+      <pre>                      disabled={pending}</pre>
+    </li>
+    <li id="L288">
+      <!-- prettier-ignore -->
+      <pre>                      onClick={() =&gt; {</pre>
+    </li>
+    <li id="L289">
+      <!-- prettier-ignore -->
+      <pre>                        setNote(&#x27;正在返回…&#x27;)</pre>
+    </li>
+    <li id="L290">
+      <!-- prettier-ignore -->
+      <pre>                        desktopBridge?.mode.activate()</pre>
+    </li>
+    <li id="L291">
+      <!-- prettier-ignore -->
+      <pre>                      }}</pre>
+    </li>
+    <li id="L292">
+      <!-- prettier-ignore -->
+      <pre>                    &gt;</pre>
+    </li>
+    <li id="L293">
+      <!-- prettier-ignore -->
+      <pre>                      返回，不改</pre>
+    </li>
+    <li id="L294">
+      <!-- prettier-ignore -->
+      <pre>                    &lt;/Button&gt;</pre>
+    </li>
+    <li id="L295">
+      <!-- prettier-ignore -->
+      <pre>                  )}</pre>
+    </li>
+    <li id="L296">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L297">
+      <!-- prettier-ignore -->
+      <pre>                  {note !== null &amp;&amp; &lt;Typography.Text type=&quot;secondary&quot;&gt;{note}&lt;/Typography.Text&gt;}</pre>
+    </li>
+    <li id="L298">
+      <!-- prettier-ignore -->
+      <pre>                &lt;/div&gt;</pre>
+    </li>
+    <li id="L299">
+      <!-- prettier-ignore -->
+      <pre>              &lt;/&gt;</pre>
+    </li>
+    <li id="L300">
+      <!-- prettier-ignore -->
+      <pre>            )}</pre>
+    </li>
+    <li id="L301">
+      <!-- prettier-ignore -->
+      <pre>          &lt;/div&gt;</pre>
+    </li>
+    <li id="L302">
+      <!-- prettier-ignore -->
+      <pre>        &lt;/div&gt;</pre>
+    </li>
+    <li id="L303">
+      <!-- prettier-ignore -->
+      <pre>      &lt;/div&gt;</pre>
+    </li>
+    <li id="L304">
+      <!-- prettier-ignore -->
+      <pre>    &lt;/div&gt;</pre>
+    </li>
+    <li id="L305">
+      <!-- prettier-ignore -->
+      <pre>  )</pre>
+    </li>
+    <li id="L306">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+  </ol>
+</html>

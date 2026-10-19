@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>packages/shared/src/desktop.ts</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+      min-height: 1.65em;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">Desktop来源索引</a>
+    <h1>packages/shared/src/desktop.ts</h1>
+    <p>before真实源码 · SHA256 6615178a2c3494560ae7546087e98b6f4bc425dba3dc8a864f57c20a5205c6e6</p>
+  </header>
+  <ol>
+    <li id="L1">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L2">
+      <!-- prettier-ignore -->
+      <pre> * 桌面端宿主 ↔ 载体的握手契约（D-046、D-100）。</pre>
+    </li>
+    <li id="L3">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L4">
+      <!-- prettier-ignore -->
+      <pre> * 主进程通过 preload 把这份只读信息暴露给页面</pre>
+    </li>
+    <li id="L5">
+      <!-- prettier-ignore -->
+      <pre> * （`window.mimirDesktop.boot()`）。页面加载的就是宿主自己的地址，cookie</pre>
+    </li>
+    <li id="L6">
+      <!-- prettier-ignore -->
+      <pre> * 会话与相对路径天然同源，所以业务代码几乎不依赖它；这份契约服务于</pre>
+    </li>
+    <li id="L7">
+      <!-- prettier-ignore -->
+      <pre> * 「关于」面板与将来的载体形态（跨源认证宿主、CLI、扩展），是最小穿越边界。</pre>
+    </li>
+    <li id="L8">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L9">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L10">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L11">
+      <!-- prettier-ignore -->
+      <pre> * 本地模式的本机令牌 cookie 名（D-100）。</pre>
+    </li>
+    <li id="L12">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L13">
+      <!-- prettier-ignore -->
+      <pre> * **必须是同一个字面量**：宿主（`apps/desktop/src/main.ts`）往 Electron 的</pre>
+    </li>
+    <li id="L14">
+      <!-- prettier-ignore -->
+      <pre> * cookie jar 里写的名字，与服务端（`apps/server/src/services/local-mode.ts`）</pre>
+    </li>
+    <li id="L15">
+      <!-- prettier-ignore -->
+      <pre> * 读取的名字要对上。两处各写一份常量时，改一处的症状是「本地模式又要求</pre>
+    </li>
+    <li id="L16">
+      <!-- prettier-ignore -->
+      <pre> * 登录了」——不报错，只是回到登录页。所以它放在共享契约里。</pre>
+    </li>
+    <li id="L17">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L18">
+      <!-- prettier-ignore -->
+      <pre> * 名字带前缀（`mimir-`）而不是泛泛的 `local`：它出现在浏览器的 cookie</pre>
+    </li>
+    <li id="L19">
+      <!-- prettier-ignore -->
+      <pre> * 列表里，要看得出是谁写的。</pre>
+    </li>
+    <li id="L20">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L21">
+      <!-- prettier-ignore -->
+      <pre>export const LOCAL_TOKEN_COOKIE = &#x27;mimir-local&#x27;</pre>
+    </li>
+    <li id="L22">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L23">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L24">
+      <!-- prettier-ignore -->
+      <pre> * 客户端的使用方式（D-100）。</pre>
+    </li>
+    <li id="L25">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L26">
+      <!-- prettier-ignore -->
+      <pre> * | 模式 | 数据在哪 | 宿主 |</pre>
+    </li>
+    <li id="L27">
+      <!-- prettier-ignore -->
+      <pre> * |---|---|---|</pre>
+    </li>
+    <li id="L28">
+      <!-- prettier-ignore -->
+      <pre> * | `local` | 本机（userData 下的 SQLite + 文件） | 进程内私有宿主，免登录 |</pre>
+    </li>
+    <li id="L29">
+      <!-- prettier-ignore -->
+      <pre> * | `cloud` | 自部署的服务端 | **没有本地宿主**，窗口加载远端地址 |</pre>
+    </li>
+    <li id="L30">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L31">
+      <!-- prettier-ignore -->
+      <pre> * 它不是服务端设置项：选择存在 `&lt;userData&gt;/desktop-config.json`，</pre>
+    </li>
+    <li id="L32">
+      <!-- prettier-ignore -->
+      <pre> * 因为切换必须能在服务端不可达时完成（`.trellis/spec/project/architecture.md` §7.5 的配置分层）。</pre>
+    </li>
+    <li id="L33">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L34">
+      <!-- prettier-ignore -->
+      <pre>export type DesktopMode = &#x27;local&#x27; | &#x27;cloud&#x27;</pre>
+    </li>
+    <li id="L35">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L36">
+      <!-- prettier-ignore -->
+      <pre>export interface DesktopBootInfo {</pre>
+    </li>
+    <li id="L37">
+      <!-- prettier-ignore -->
+      <pre>  /** 当前模式。页面据此决定「数据在本机还是远端」这类文案 */</pre>
+    </li>
+    <li id="L38">
+      <!-- prettier-ignore -->
+      <pre>  mode: DesktopMode</pre>
+    </li>
+    <li id="L39">
+      <!-- prettier-ignore -->
+      <pre>  /** 窗口加载的源：本地模式是 `http://127.0.0.1:&lt;port&gt;`，云端模式是远端地址 */</pre>
+    </li>
+    <li id="L40">
+      <!-- prettier-ignore -->
+      <pre>  origin: string</pre>
+    </li>
+    <li id="L41">
+      <!-- prettier-ignore -->
+      <pre>  /**</pre>
+    </li>
+    <li id="L42">
+      <!-- prettier-ignore -->
+      <pre>   * 数据根（macOS 在 `~/Library/Application Support/mimir/data`）。</pre>
+    </li>
+    <li id="L43">
+      <!-- prettier-ignore -->
+      <pre>   * **云端模式下是 null**——数据在服务端，本机只有一个壳。</pre>
+    </li>
+    <li id="L44">
+      <!-- prettier-ignore -->
+      <pre>   */</pre>
+    </li>
+    <li id="L45">
+      <!-- prettier-ignore -->
+      <pre>  dataDir: string | null</pre>
+    </li>
+    <li id="L46">
+      <!-- prettier-ignore -->
+      <pre>  /** 应用版本（electron app.getVersion()） */</pre>
+    </li>
+    <li id="L47">
+      <!-- prettier-ignore -->
+      <pre>  version: string</pre>
+    </li>
+    <li id="L48">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+    <li id="L49">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L50">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L51">
+      <!-- prettier-ignore -->
+      <pre> * 一次模式选择。`get()` 返回的就是它（没有选择时是 null）。</pre>
+    </li>
+    <li id="L52">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L53">
+      <!-- prettier-ignore -->
+      <pre> * 判别联合而不是「mode + 可空的 cloudUrl」：云端地址在云端模式下**必然存在**</pre>
+    </li>
+    <li id="L54">
+      <!-- prettier-ignore -->
+      <pre> * （没有它就没有可加载的源），把这条不变量写进类型里，消费端就不需要</pre>
+    </li>
+    <li id="L55">
+      <!-- prettier-ignore -->
+      <pre> * 「cloudUrl 可能是 null 吗」这种防御分支。</pre>
+    </li>
+    <li id="L56">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L57">
+      <!-- prettier-ignore -->
+      <pre>export type DesktopModeState = { mode: &#x27;local&#x27; } | { mode: &#x27;cloud&#x27;; cloudUrl: string }</pre>
+    </li>
+    <li id="L58">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L59">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L60">
+      <!-- prettier-ignore -->
+      <pre> * `choose()` 的结果。</pre>
+    </li>
+    <li id="L61">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L62">
+      <!-- prettier-ignore -->
+      <pre> * 校验与探活（地址能不能连上）都发生在**导航之前**，所以失败必须能回到</pre>
+    </li>
+    <li id="L63">
+      <!-- prettier-ignore -->
+      <pre> * 调用页——这时那页还在，它需要一句人能看懂的话；成功之后窗口会离开那一页，</pre>
+    </li>
+    <li id="L64">
+      <!-- prettier-ignore -->
+      <pre> * 所以成功只需要一个记号。</pre>
+    </li>
+    <li id="L65">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L66">
+      <!-- prettier-ignore -->
+      <pre> * 用判别联合而不是 reject：IPC 抛出的错误在渲染侧只剩一句</pre>
+    </li>
+    <li id="L67">
+      <!-- prettier-ignore -->
+      <pre> * 「Error invoking remote method …」，原始消息会被前缀吞掉，</pre>
+    </li>
+    <li id="L68">
+      <!-- prettier-ignore -->
+      <pre> * 而这里的 message 是给用户看的。</pre>
+    </li>
+    <li id="L69">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L70">
+      <!-- prettier-ignore -->
+      <pre>export type DesktopModeResult = { ok: true } | { ok: false; message: string }</pre>
+    </li>
+    <li id="L71">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L72">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L73">
+      <!-- prettier-ignore -->
+      <pre> * 模式的读取与切换（D-100）。</pre>
+    </li>
+    <li id="L74">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L75">
+      <!-- prettier-ignore -->
+      <pre> * **`choose()` 与 `activate()` 是两步**（不是一次调用里顺带导航）：</pre>
+    </li>
+    <li id="L76">
+      <!-- prettier-ignore -->
+      <pre> * 校验失败要回到调用页（那页得活着），成功才导航（那页一定被替换）。</pre>
+    </li>
+    <li id="L77">
+      <!-- prettier-ignore -->
+      <pre> * 合成一步的话，导航与 IPC 回执赛跑——回执还没送到，页面已经被替换掉了。</pre>
+    </li>
+    <li id="L78">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L79">
+      <!-- prettier-ignore -->
+      <pre>export interface DesktopModeApi {</pre>
+    </li>
+    <li id="L80">
+      <!-- prettier-ignore -->
+      <pre>  /** 当前选择。首次启动（还没有选择）与开发模式（`MIMIR_DESKTOP_URL`）返回 null */</pre>
+    </li>
+    <li id="L81">
+      <!-- prettier-ignore -->
+      <pre>  get(): Promise&lt;DesktopModeState | null&gt;</pre>
+    </li>
+    <li id="L82">
+      <!-- prettier-ignore -->
+      <pre>  /** 校验并持久化选择；本地模式还会把私有宿主起好。**不导航** */</pre>
+    </li>
+    <li id="L83">
+      <!-- prettier-ignore -->
+      <pre>  choose(choice: DesktopModeState): Promise&lt;DesktopModeResult&gt;</pre>
+    </li>
+    <li id="L84">
+      <!-- prettier-ignore -->
+      <pre>  /** 让宿主把窗口导航到已选择的模式。单向通知，调用页会被替换 */</pre>
+    </li>
+    <li id="L85">
+      <!-- prettier-ignore -->
+      <pre>  activate(): void</pre>
+    </li>
+    <li id="L86">
+      <!-- prettier-ignore -->
+      <pre>  /**</pre>
+    </li>
+    <li id="L87">
+      <!-- prettier-ignore -->
+      <pre>   * 把窗口导航到**选择页**（首次启动用的那一页）。</pre>
+    </li>
+    <li id="L88">
+      <!-- prettier-ignore -->
+      <pre>   *</pre>
+    </li>
+    <li id="L89">
+      <!-- prettier-ignore -->
+      <pre>   * 设置 › 客户端里的「更换使用方式」走它，而不是在设置页里再画一套</pre>
+    </li>
+    <li id="L90">
+      <!-- prettier-ignore -->
+      <pre>   * 「填地址 + 校验 + 切换」——那套东西选择页已经有了，抄第二遍必然漂移</pre>
+    </li>
+    <li id="L91">
+      <!-- prettier-ignore -->
+      <pre>   * （两处的地址校验规则、失败措辞、探活时机）。选择页自己会读当前模式，</pre>
+    </li>
+    <li id="L92">
+      <!-- prettier-ignore -->
+      <pre>   * 所以从已配置的状态进去时它显示的是「切换」而不是「首次选择」。</pre>
+    </li>
+    <li id="L93">
+      <!-- prettier-ignore -->
+      <pre>   *</pre>
+    </li>
+    <li id="L94">
+      <!-- prettier-ignore -->
+      <pre>   * 它是单向通知：导航一定替换掉调用页，回执没有收件人。</pre>
+    </li>
+    <li id="L95">
+      <!-- prettier-ignore -->
+      <pre>   */</pre>
+    </li>
+    <li id="L96">
+      <!-- prettier-ignore -->
+      <pre>  openSetup(): void</pre>
+    </li>
+    <li id="L97">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+    <li id="L98">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L99">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L100">
+      <!-- prettier-ignore -->
+      <pre> * **窗口**的一面：自绘标题栏要用的那几件事（D-094）。</pre>
+    </li>
+    <li id="L101">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L102">
+      <!-- prettier-ignore -->
+      <pre> * 窗口现在是 `frame: false`（Windows / Linux）与 `titleBarStyle: &#x27;hidden&#x27;`</pre>
+    </li>
+    <li id="L103">
+      <!-- prettier-ignore -->
+      <pre> * （macOS），所以「最小化 / 最大化 / 关闭」这三个动作由页面里的按钮发出。</pre>
+    </li>
+    <li id="L104">
+      <!-- prettier-ignore -->
+      <pre> * 这不是把窗口控制搬进业务代码——**页面并不知道窗口是什么**，它只知道</pre>
+    </li>
+    <li id="L105">
+      <!-- prettier-ignore -->
+      <pre> * 「我有一排按钮，点了要让宿主做对应的事」。</pre>
+    </li>
+    <li id="L106">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L107">
+      <!-- prettier-ignore -->
+      <pre> * ## 为什么最大化状态是**读**来的而不是页面自己记</pre>
+    </li>
+    <li id="L108">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L109">
+      <!-- prettier-ignore -->
+      <pre> * 最大化可以由很多条路改变：按钮、双击标题栏、系统快捷键、拖到屏幕边缘</pre>
+    </li>
+    <li id="L110">
+      <!-- prettier-ignore -->
+      <pre> * （Windows 的贴靠）。页面自己维护一个布尔值必然与真相脱节——症状是</pre>
+    </li>
+    <li id="L111">
+      <!-- prettier-ignore -->
+      <pre> * 「最大化之后按钮图标还是『最大化』」。所以宿主是真相来源，页面订阅它。</pre>
+    </li>
+    <li id="L112">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L113">
+      <!-- prettier-ignore -->
+      <pre> * ## 浏览器里没有这个东西</pre>
+    </li>
+    <li id="L114">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L115">
+      <!-- prettier-ignore -->
+      <pre> * 这套能力只在 Electron 里存在（`window.mimirDesktop`）。Web 部署下</pre>
+    </li>
+    <li id="L116">
+      <!-- prettier-ignore -->
+      <pre> * `window.mimirDesktop` 是 `undefined`，界面**不渲染标题栏**——浏览器</pre>
+    </li>
+    <li id="L117">
+      <!-- prettier-ignore -->
+      <pre> * 自己有标签栏，自绘一条只是重复。</pre>
+    </li>
+    <li id="L118">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L119">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L120">
+      <!-- prettier-ignore -->
+      <pre> * 宿主运行在哪个平台。</pre>
+    </li>
+    <li id="L121">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L122">
+      <!-- prettier-ignore -->
+      <pre> * **不写 `NodeJS.Platform`**：这个包是浏览器与服务端共用的契约，不含 Node</pre>
+    </li>
+    <li id="L123">
+      <!-- prettier-ignore -->
+      <pre> * 的类型（`lib` 里没有 `@types/node`）——写了会让整个 shared 编译不过。</pre>
+    </li>
+    <li id="L124">
+      <!-- prettier-ignore -->
+      <pre> * 用自有字面量联合也更准：这里只有三个取值是「有意义」的，别的都没分支。</pre>
+    </li>
+    <li id="L125">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L126">
+      <!-- prettier-ignore -->
+      <pre>export type DesktopPlatform = &#x27;darwin&#x27; | &#x27;win32&#x27; | &#x27;linux&#x27;</pre>
+    </li>
+    <li id="L127">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L128">
+      <!-- prettier-ignore -->
+      <pre>export interface DesktopWindowApi {</pre>
+    </li>
+    <li id="L129">
+      <!-- prettier-ignore -->
+      <pre>  /** 决定红绿灯还是自绘控件，以及标题栏内容怎么让位 */</pre>
+    </li>
+    <li id="L130">
+      <!-- prettier-ignore -->
+      <pre>  platform: DesktopPlatform</pre>
+    </li>
+    <li id="L131">
+      <!-- prettier-ignore -->
+      <pre>  minimize(): void</pre>
+    </li>
+    <li id="L132">
+      <!-- prettier-ignore -->
+      <pre>  /** 最大化 ↔ 还原。**由宿主判断当前状态**，页面不传目标态 */</pre>
+    </li>
+    <li id="L133">
+      <!-- prettier-ignore -->
+      <pre>  toggleMaximize(): void</pre>
+    </li>
+    <li id="L134">
+      <!-- prettier-ignore -->
+      <pre>  close(): void</pre>
+    </li>
+    <li id="L135">
+      <!-- prettier-ignore -->
+      <pre>  /** 当前是否最大化。标题栏据此切换「最大化 / 还原」图标 */</pre>
+    </li>
+    <li id="L136">
+      <!-- prettier-ignore -->
+      <pre>  isMaximized(): Promise&lt;boolean&gt;</pre>
+    </li>
+    <li id="L137">
+      <!-- prettier-ignore -->
+      <pre>  /**</pre>
+    </li>
+    <li id="L138">
+      <!-- prettier-ignore -->
+      <pre>   * 订阅最大化状态变化（含系统快捷键与贴靠触发的那几条路）。</pre>
+    </li>
+    <li id="L139">
+      <!-- prettier-ignore -->
+      <pre>   * 返回取消订阅的函数。</pre>
+    </li>
+    <li id="L140">
+      <!-- prettier-ignore -->
+      <pre>   */</pre>
+    </li>
+    <li id="L141">
+      <!-- prettier-ignore -->
+      <pre>  onMaximizeChange(listener: (maximized: boolean) =&gt; void): () =&gt; void</pre>
+    </li>
+    <li id="L142">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+    <li id="L143">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L144">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L145">
+      <!-- prettier-ignore -->
+      <pre> * preload 注入到页面上的那一个对象（`window.mimirDesktop`）的完整形状。</pre>
+    </li>
+    <li id="L146">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L147">
+      <!-- prettier-ignore -->
+      <pre> * ## 为什么它在 shared 而不在渲染侧（D-103）</pre>
+    </li>
+    <li id="L148">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L149">
+      <!-- prettier-ignore -->
+      <pre> * 它是**契约**：preload 按这个形状注入（`apps/desktop/src/preload/index.ts`），</pre>
+    </li>
+    <li id="L150">
+      <!-- prettier-ignore -->
+      <pre> * 渲染侧按这个形状消费（插槽的 `getDesktopBridge()`）。两边各写一份的话，</pre>
+    </li>
+    <li id="L151">
+      <!-- prettier-ignore -->
+      <pre> * 加一个方法时漏掉一侧是静默的——类型过得去，运行时才发现 `undefined is not</pre>
+    </li>
+    <li id="L152">
+      <!-- prettier-ignore -->
+      <pre> * a function`。</pre>
+    </li>
+    <li id="L153">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L154">
+      <!-- prettier-ignore -->
+      <pre> * **浏览器里这个对象不存在**，所以消费方拿到的永远是 `| undefined`；</pre>
+    </li>
+    <li id="L155">
+      <!-- prettier-ignore -->
+      <pre> * 「可能没有」这件事由渲染侧的插槽表达，不写进这个契约里。</pre>
+    </li>
+    <li id="L156">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L157">
+      <!-- prettier-ignore -->
+      <pre>export interface MimirDesktopBridge {</pre>
+    </li>
+    <li id="L158">
+      <!-- prettier-ignore -->
+      <pre>  /** 启动信息。开发模式（`MIMIR_DESKTOP_URL`）下为 null */</pre>
+    </li>
+    <li id="L159">
+      <!-- prettier-ignore -->
+      <pre>  boot: () =&gt; Promise&lt;DesktopBootInfo | null&gt;</pre>
+    </li>
+    <li id="L160">
+      <!-- prettier-ignore -->
+      <pre>  quit: () =&gt; void</pre>
+    </li>
+    <li id="L161">
+      <!-- prettier-ignore -->
+      <pre>  /** 使用方式的选择与切换（D-100）。首次启动尚未选择时 `get()` 为 null */</pre>
+    </li>
+    <li id="L162">
+      <!-- prettier-ignore -->
+      <pre>  mode: DesktopModeApi</pre>
+    </li>
+    <li id="L163">
+      <!-- prettier-ignore -->
+      <pre>  window: DesktopWindowApi</pre>
+    </li>
+    <li id="L164">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+  </ol>
+</html>

@@ -1,0 +1,820 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>apps/desktop/src/renderer/components/TitleBar.test.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+      min-height: 1.65em;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">Desktop来源索引</a>
+    <h1>apps/desktop/src/renderer/components/TitleBar.test.tsx</h1>
+    <p>before真实源码 · SHA256 f6ed7dee46faea50c50fabdb4862130fbc03f244a1967b110c5813233f802e9d</p>
+  </header>
+  <ol>
+    <li id="L1">
+      <!-- prettier-ignore -->
+      <pre>import { MimirProvider } from &#x27;@mimir/renderer/titlebar-kit&#x27;</pre>
+    </li>
+    <li id="L2">
+      <!-- prettier-ignore -->
+      <pre>import type { DesktopPlatform, MimirDesktopBridge } from &#x27;@mimir/shared/desktop&#x27;</pre>
+    </li>
+    <li id="L3">
+      <!-- prettier-ignore -->
+      <pre>import { act, createElement, type ReactElement } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L4">
+      <!-- prettier-ignore -->
+      <pre>import { createRoot } from &#x27;react-dom/client&#x27;</pre>
+    </li>
+    <li id="L5">
+      <!-- prettier-ignore -->
+      <pre>import { afterEach, describe, expect, it, vi } from &#x27;vitest&#x27;</pre>
+    </li>
+    <li id="L6">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L7">
+      <!-- prettier-ignore -->
+      <pre>const noop = () =&gt; {}</pre>
+    </li>
+    <li id="L8">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L9">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L10">
+      <!-- prettier-ignore -->
+      <pre> * 自绘标题栏的渲染（D-094 / D-103）。</pre>
+    </li>
+    <li id="L11">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L12">
+      <!-- prettier-ignore -->
+      <pre> * ## 为什么这几条值得测</pre>
+    </li>
+    <li id="L13">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L14">
+      <!-- prettier-ignore -->
+      <pre> * 标题栏是**插槽注入的产物**：桌面端给它、浏览器端给 null。它坏掉的方式</pre>
+    </li>
+    <li id="L15">
+      <!-- prettier-ignore -->
+      <pre> * 全是静默的——窗口里少一条 chrome、或者按钮在那儿但点不动，而两者都不报错。</pre>
+    </li>
+    <li id="L16">
+      <!-- prettier-ignore -->
+      <pre> * 代码推断也看不出来（这正是 D-094 把「拖动区 / no-drag」记进坑表的原因）。</pre>
+    </li>
+    <li id="L17">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L18">
+      <!-- prettier-ignore -->
+      <pre> * 四条断言各对应一个真实踩过或被明确否决过的形态：</pre>
+    </li>
+    <li id="L19">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L20">
+      <!-- prettier-ignore -->
+      <pre> *  1. **每个可点元素都带 `me-no-drag`** —— 漏标的表现是「按钮点不动」，</pre>
+    </li>
+    <li id="L21">
+      <!-- prettier-ignore -->
+      <pre> *     不报错、控制台也没有任何东西。这是方案 C 被否掉的理由</pre>
+    </li>
+    <li id="L22">
+      <!-- prettier-ignore -->
+      <pre> *  2. **macOS 不画那三枚控件** —— 系统红绿灯已经在左上角，右边再来三枚</pre>
+    </li>
+    <li id="L23">
+      <!-- prettier-ignore -->
+      <pre> *     就是两套窗口控件</pre>
+    </li>
+    <li id="L24">
+      <!-- prettier-ignore -->
+      <pre> *  3. **Windows / Linux 画三枚，且点击真的发出对应动作** —— 它们是窗口</pre>
+    </li>
+    <li id="L25">
+      <!-- prettier-ignore -->
+      <pre> *     唯一的关闭/最小化入口（`frame: false`）</pre>
+    </li>
+    <li id="L26">
+      <!-- prettier-ignore -->
+      <pre> *  4. **最大化图标跟随宿主状态** —— 状态是订阅来的而不是自己记的，</pre>
+    </li>
+    <li id="L27">
+      <!-- prettier-ignore -->
+      <pre> *     自己记必然与真相脱节（双击标题栏、系统快捷键、贴靠都会改它）</pre>
+    </li>
+    <li id="L28">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L29">
+      <!-- prettier-ignore -->
+      <pre> * ## 为什么不截图</pre>
+    </li>
+    <li id="L30">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L31">
+      <!-- prettier-ignore -->
+      <pre> * 本机是 Wayland，`scrot` 抓不到 Electron 的窗口内容（实测截出来是空的）。</pre>
+    </li>
+    <li id="L32">
+      <!-- prettier-ignore -->
+      <pre> * 这几条断言守的是同一批东西里**能被机器守住**的那部分，且它每次 CI 都在跑，</pre>
+    </li>
+    <li id="L33">
+      <!-- prettier-ignore -->
+      <pre> * 比一张一次性的截图留得住。纯视觉的部分（红底白字的关闭态、mac 的让位距离）</pre>
+    </li>
+    <li id="L34">
+      <!-- prettier-ignore -->
+      <pre> * 仍然要靠人看一眼，见 D-094 的验证方式。</pre>
+    </li>
+    <li id="L35">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L36">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L37">
+      <!-- prettier-ignore -->
+      <pre>/** 可点元素必须显式标注的类名（与样式里的 `-webkit-app-region: no-drag` 配对） */</pre>
+    </li>
+    <li id="L38">
+      <!-- prettier-ignore -->
+      <pre>const NO_DRAG = &#x27;me-no-drag&#x27;</pre>
+    </li>
+    <li id="L39">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L40">
+      <!-- prettier-ignore -->
+      <pre>function makeBridge(platform: DesktopPlatform, maximized = false) {</pre>
+    </li>
+    <li id="L41">
+      <!-- prettier-ignore -->
+      <pre>  const calls: string[] = []</pre>
+    </li>
+    <li id="L42">
+      <!-- prettier-ignore -->
+      <pre>  let listener: ((value: boolean) =&gt; void) | undefined</pre>
+    </li>
+    <li id="L43">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L44">
+      <!-- prettier-ignore -->
+      <pre>  const bridge: MimirDesktopBridge = {</pre>
+    </li>
+    <li id="L45">
+      <!-- prettier-ignore -->
+      <pre>    /*</pre>
+    </li>
+    <li id="L46">
+      <!-- prettier-ignore -->
+      <pre>     * boot / quit / mode 只是为了凑齐桥的契约——标题栏一个都不碰，</pre>
+    </li>
+    <li id="L47">
+      <!-- prettier-ignore -->
+      <pre>     * 所以这里给的是普通桩函数而不是 spy（没有要断言的调用）。</pre>
+    </li>
+    <li id="L48">
+      <!-- prettier-ignore -->
+      <pre>     */</pre>
+    </li>
+    <li id="L49">
+      <!-- prettier-ignore -->
+      <pre>    boot: async () =&gt; null,</pre>
+    </li>
+    <li id="L50">
+      <!-- prettier-ignore -->
+      <pre>    quit: noop,</pre>
+    </li>
+    <li id="L51">
+      <!-- prettier-ignore -->
+      <pre>    mode: {</pre>
+    </li>
+    <li id="L52">
+      <!-- prettier-ignore -->
+      <pre>      get: async () =&gt; null,</pre>
+    </li>
+    <li id="L53">
+      <!-- prettier-ignore -->
+      <pre>      choose: async () =&gt; ({ ok: true as const }),</pre>
+    </li>
+    <li id="L54">
+      <!-- prettier-ignore -->
+      <pre>      activate: noop,</pre>
+    </li>
+    <li id="L55">
+      <!-- prettier-ignore -->
+      <pre>      openSetup: noop,</pre>
+    </li>
+    <li id="L56">
+      <!-- prettier-ignore -->
+      <pre>    },</pre>
+    </li>
+    <li id="L57">
+      <!-- prettier-ignore -->
+      <pre>    window: {</pre>
+    </li>
+    <li id="L58">
+      <!-- prettier-ignore -->
+      <pre>      platform,</pre>
+    </li>
+    <li id="L59">
+      <!-- prettier-ignore -->
+      <pre>      minimize: () =&gt; calls.push(&#x27;minimize&#x27;),</pre>
+    </li>
+    <li id="L60">
+      <!-- prettier-ignore -->
+      <pre>      toggleMaximize: () =&gt; calls.push(&#x27;toggleMaximize&#x27;),</pre>
+    </li>
+    <li id="L61">
+      <!-- prettier-ignore -->
+      <pre>      close: () =&gt; calls.push(&#x27;close&#x27;),</pre>
+    </li>
+    <li id="L62">
+      <!-- prettier-ignore -->
+      <pre>      isMaximized: async () =&gt; maximized,</pre>
+    </li>
+    <li id="L63">
+      <!-- prettier-ignore -->
+      <pre>      onMaximizeChange: (fn) =&gt; {</pre>
+    </li>
+    <li id="L64">
+      <!-- prettier-ignore -->
+      <pre>        listener = fn</pre>
+    </li>
+    <li id="L65">
+      <!-- prettier-ignore -->
+      <pre>        return () =&gt; {</pre>
+    </li>
+    <li id="L66">
+      <!-- prettier-ignore -->
+      <pre>          listener = undefined</pre>
+    </li>
+    <li id="L67">
+      <!-- prettier-ignore -->
+      <pre>        }</pre>
+    </li>
+    <li id="L68">
+      <!-- prettier-ignore -->
+      <pre>      },</pre>
+    </li>
+    <li id="L69">
+      <!-- prettier-ignore -->
+      <pre>    },</pre>
+    </li>
+    <li id="L70">
+      <!-- prettier-ignore -->
+      <pre>  }</pre>
+    </li>
+    <li id="L71">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L72">
+      <!-- prettier-ignore -->
+      <pre>  return { bridge, calls, emitMaximize: (value: boolean) =&gt; listener?.(value) }</pre>
+    </li>
+    <li id="L73">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+    <li id="L74">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L75">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L76">
+      <!-- prettier-ignore -->
+      <pre> * 装好桥再 import 组件。</pre>
+    </li>
+    <li id="L77">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L78">
+      <!-- prettier-ignore -->
+      <pre> * `desktop-bridge.ts` 在**模块求值时**读一次 `window.mimirDesktop`（那是刻意的：</pre>
+    </li>
+    <li id="L79">
+      <!-- prettier-ignore -->
+      <pre> * preload 在首帧前注入，写成 hook 会多一帧抖动）。所以必须先设全局、</pre>
+    </li>
+    <li id="L80">
+      <!-- prettier-ignore -->
+      <pre> * 再动态 import，且每次用 `resetModules` 拿一份新的模块实例。</pre>
+    </li>
+    <li id="L81">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L82">
+      <!-- prettier-ignore -->
+      <pre>async function loadTitleBar(bridge: MimirDesktopBridge) {</pre>
+    </li>
+    <li id="L83">
+      <!-- prettier-ignore -->
+      <pre>  vi.resetModules()</pre>
+    </li>
+    <li id="L84">
+      <!-- prettier-ignore -->
+      <pre>  ;(window as Window &amp; { mimirDesktop?: MimirDesktopBridge }).mimirDesktop = bridge</pre>
+    </li>
+    <li id="L85">
+      <!-- prettier-ignore -->
+      <pre>  return (await import(&#x27;./TitleBar&#x27;)).TitleBar</pre>
+    </li>
+    <li id="L86">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+    <li id="L87">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L88">
+      <!-- prettier-ignore -->
+      <pre>async function render(element: ReactElement) {</pre>
+    </li>
+    <li id="L89">
+      <!-- prettier-ignore -->
+      <pre>  const host = document.createElement(&#x27;div&#x27;)</pre>
+    </li>
+    <li id="L90">
+      <!-- prettier-ignore -->
+      <pre>  document.body.append(host)</pre>
+    </li>
+    <li id="L91">
+      <!-- prettier-ignore -->
+      <pre>  const root = createRoot(host)</pre>
+    </li>
+    <li id="L92">
+      <!-- prettier-ignore -->
+      <pre>  ;(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true</pre>
+    </li>
+    <li id="L93">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L94">
+      <!-- prettier-ignore -->
+      <pre>  await act(async () =&gt; {</pre>
+    </li>
+    <li id="L95">
+      <!-- prettier-ignore -->
+      <pre>    root.render(createElement(MimirProvider, null, element))</pre>
+    </li>
+    <li id="L96">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L97">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L98">
+      <!-- prettier-ignore -->
+      <pre>  return {</pre>
+    </li>
+    <li id="L99">
+      <!-- prettier-ignore -->
+      <pre>    host,</pre>
+    </li>
+    <li id="L100">
+      <!-- prettier-ignore -->
+      <pre>    unmount: async () =&gt; {</pre>
+    </li>
+    <li id="L101">
+      <!-- prettier-ignore -->
+      <pre>      await act(async () =&gt; root.unmount())</pre>
+    </li>
+    <li id="L102">
+      <!-- prettier-ignore -->
+      <pre>      host.remove()</pre>
+    </li>
+    <li id="L103">
+      <!-- prettier-ignore -->
+      <pre>    },</pre>
+    </li>
+    <li id="L104">
+      <!-- prettier-ignore -->
+      <pre>  }</pre>
+    </li>
+    <li id="L105">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+    <li id="L106">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L107">
+      <!-- prettier-ignore -->
+      <pre>afterEach(() =&gt; {</pre>
+    </li>
+    <li id="L108">
+      <!-- prettier-ignore -->
+      <pre>  delete (window as Window &amp; { mimirDesktop?: MimirDesktopBridge }).mimirDesktop</pre>
+    </li>
+    <li id="L109">
+      <!-- prettier-ignore -->
+      <pre>})</pre>
+    </li>
+    <li id="L110">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L111">
+      <!-- prettier-ignore -->
+      <pre>describe(&#x27;自绘标题栏&#x27;, () =&gt; {</pre>
+    </li>
+    <li id="L112">
+      <!-- prettier-ignore -->
+      <pre>  it(&#x27;每个可点元素都标了 no-drag（漏标的表现是「按钮点不动」且不报错）&#x27;, async () =&gt; {</pre>
+    </li>
+    <li id="L113">
+      <!-- prettier-ignore -->
+      <pre>    const { bridge } = makeBridge(&#x27;linux&#x27;)</pre>
+    </li>
+    <li id="L114">
+      <!-- prettier-ignore -->
+      <pre>    const TitleBar = await loadTitleBar(bridge)</pre>
+    </li>
+    <li id="L115">
+      <!-- prettier-ignore -->
+      <pre>    const { host, unmount } = await render(</pre>
+    </li>
+    <li id="L116">
+      <!-- prettier-ignore -->
+      <pre>      createElement(TitleBar, { collapsed: false, showToggle: true, onToggleCollapsed: noop }),</pre>
+    </li>
+    <li id="L117">
+      <!-- prettier-ignore -->
+      <pre>    )</pre>
+    </li>
+    <li id="L118">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L119">
+      <!-- prettier-ignore -->
+      <pre>    const clickable = [...host.querySelectorAll(&#x27;button&#x27;)]</pre>
+    </li>
+    <li id="L120">
+      <!-- prettier-ignore -->
+      <pre>    // 折叠开关 + 三枚窗口控件</pre>
+    </li>
+    <li id="L121">
+      <!-- prettier-ignore -->
+      <pre>    expect(clickable).toHaveLength(4)</pre>
+    </li>
+    <li id="L122">
+      <!-- prettier-ignore -->
+      <pre>    for (const button of clickable) {</pre>
+    </li>
+    <li id="L123">
+      <!-- prettier-ignore -->
+      <pre>      expect(</pre>
+    </li>
+    <li id="L124">
+      <!-- prettier-ignore -->
+      <pre>        button.className,</pre>
+    </li>
+    <li id="L125">
+      <!-- prettier-ignore -->
+      <pre>        `「${button.getAttribute(&#x27;aria-label&#x27;)}」漏了 ${NO_DRAG}，点击会被当成拖窗口`,</pre>
+    </li>
+    <li id="L126">
+      <!-- prettier-ignore -->
+      <pre>      ).toContain(NO_DRAG)</pre>
+    </li>
+    <li id="L127">
+      <!-- prettier-ignore -->
+      <pre>    }</pre>
+    </li>
+    <li id="L128">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L129">
+      <!-- prettier-ignore -->
+      <pre>    await unmount()</pre>
+    </li>
+    <li id="L130">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L131">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L132">
+      <!-- prettier-ignore -->
+      <pre>  it(&#x27;macOS 不画那三枚控件（系统红绿灯已经在左上角）&#x27;, async () =&gt; {</pre>
+    </li>
+    <li id="L133">
+      <!-- prettier-ignore -->
+      <pre>    const { bridge } = makeBridge(&#x27;darwin&#x27;)</pre>
+    </li>
+    <li id="L134">
+      <!-- prettier-ignore -->
+      <pre>    const TitleBar = await loadTitleBar(bridge)</pre>
+    </li>
+    <li id="L135">
+      <!-- prettier-ignore -->
+      <pre>    const { host, unmount } = await render(</pre>
+    </li>
+    <li id="L136">
+      <!-- prettier-ignore -->
+      <pre>      createElement(TitleBar, { collapsed: false, showToggle: true, onToggleCollapsed: noop }),</pre>
+    </li>
+    <li id="L137">
+      <!-- prettier-ignore -->
+      <pre>    )</pre>
+    </li>
+    <li id="L138">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L139">
+      <!-- prettier-ignore -->
+      <pre>    expect(host.querySelector(&#x27;[data-platform]&#x27;)?.getAttribute(&#x27;data-platform&#x27;)).toBe(&#x27;darwin&#x27;)</pre>
+    </li>
+    <li id="L140">
+      <!-- prettier-ignore -->
+      <pre>    // 只剩折叠开关</pre>
+    </li>
+    <li id="L141">
+      <!-- prettier-ignore -->
+      <pre>    expect(host.querySelectorAll(&#x27;button&#x27;)).toHaveLength(1)</pre>
+    </li>
+    <li id="L142">
+      <!-- prettier-ignore -->
+      <pre>    expect(host.querySelector(&#x27;[aria-label=&quot;关闭&quot;]&#x27;)).toBeNull()</pre>
+    </li>
+    <li id="L143">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L144">
+      <!-- prettier-ignore -->
+      <pre>    await unmount()</pre>
+    </li>
+    <li id="L145">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L146">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L147">
+      <!-- prettier-ignore -->
+      <pre>  it(&#x27;三枚控件点下去真的发出对应动作（它们是关窗唯一入口）&#x27;, async () =&gt; {</pre>
+    </li>
+    <li id="L148">
+      <!-- prettier-ignore -->
+      <pre>    const { bridge, calls } = makeBridge(&#x27;win32&#x27;)</pre>
+    </li>
+    <li id="L149">
+      <!-- prettier-ignore -->
+      <pre>    const TitleBar = await loadTitleBar(bridge)</pre>
+    </li>
+    <li id="L150">
+      <!-- prettier-ignore -->
+      <pre>    const { host, unmount } = await render(</pre>
+    </li>
+    <li id="L151">
+      <!-- prettier-ignore -->
+      <pre>      createElement(TitleBar, { collapsed: false, showToggle: false, onToggleCollapsed: noop }),</pre>
+    </li>
+    <li id="L152">
+      <!-- prettier-ignore -->
+      <pre>    )</pre>
+    </li>
+    <li id="L153">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L154">
+      <!-- prettier-ignore -->
+      <pre>    for (const label of [&#x27;最小化&#x27;, &#x27;最大化&#x27;, &#x27;关闭&#x27;]) {</pre>
+    </li>
+    <li id="L155">
+      <!-- prettier-ignore -->
+      <pre>      const button = host.querySelector&lt;HTMLButtonElement&gt;(`[aria-label=&quot;${label}&quot;]`)</pre>
+    </li>
+    <li id="L156">
+      <!-- prettier-ignore -->
+      <pre>      expect(button, `找不到「${label}」`).not.toBeNull()</pre>
+    </li>
+    <li id="L157">
+      <!-- prettier-ignore -->
+      <pre>      await act(async () =&gt; button?.click())</pre>
+    </li>
+    <li id="L158">
+      <!-- prettier-ignore -->
+      <pre>    }</pre>
+    </li>
+    <li id="L159">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L160">
+      <!-- prettier-ignore -->
+      <pre>    expect(calls).toEqual([&#x27;minimize&#x27;, &#x27;toggleMaximize&#x27;, &#x27;close&#x27;])</pre>
+    </li>
+    <li id="L161">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L162">
+      <!-- prettier-ignore -->
+      <pre>    await unmount()</pre>
+    </li>
+    <li id="L163">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L164">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L165">
+      <!-- prettier-ignore -->
+      <pre>  it(&#x27;最大化图标跟随宿主推送的状态（而不是自己记一个布尔值）&#x27;, async () =&gt; {</pre>
+    </li>
+    <li id="L166">
+      <!-- prettier-ignore -->
+      <pre>    const { bridge, emitMaximize } = makeBridge(&#x27;linux&#x27;, false)</pre>
+    </li>
+    <li id="L167">
+      <!-- prettier-ignore -->
+      <pre>    const TitleBar = await loadTitleBar(bridge)</pre>
+    </li>
+    <li id="L168">
+      <!-- prettier-ignore -->
+      <pre>    const { host, unmount } = await render(</pre>
+    </li>
+    <li id="L169">
+      <!-- prettier-ignore -->
+      <pre>      createElement(TitleBar, { collapsed: false, showToggle: false, onToggleCollapsed: noop }),</pre>
+    </li>
+    <li id="L170">
+      <!-- prettier-ignore -->
+      <pre>    )</pre>
+    </li>
+    <li id="L171">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L172">
+      <!-- prettier-ignore -->
+      <pre>    expect(host.querySelector(&#x27;[aria-label=&quot;最大化&quot;]&#x27;)).not.toBeNull()</pre>
+    </li>
+    <li id="L173">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L174">
+      <!-- prettier-ignore -->
+      <pre>    // 宿主侧改变（双击标题栏 / 系统快捷键 / 贴靠都走这条路）</pre>
+    </li>
+    <li id="L175">
+      <!-- prettier-ignore -->
+      <pre>    await act(async () =&gt; emitMaximize(true))</pre>
+    </li>
+    <li id="L176">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L177">
+      <!-- prettier-ignore -->
+      <pre>    expect(host.querySelector(&#x27;[aria-label=&quot;向下还原&quot;]&#x27;)).not.toBeNull()</pre>
+    </li>
+    <li id="L178">
+      <!-- prettier-ignore -->
+      <pre>    expect(host.querySelector(&#x27;[aria-label=&quot;最大化&quot;]&#x27;)).toBeNull()</pre>
+    </li>
+    <li id="L179">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L180">
+      <!-- prettier-ignore -->
+      <pre>    await unmount()</pre>
+    </li>
+    <li id="L181">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L182">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L183">
+      <!-- prettier-ignore -->
+      <pre>  it(&#x27;窄屏不渲染折叠开关（那个宽度下点了也不会展开）&#x27;, async () =&gt; {</pre>
+    </li>
+    <li id="L184">
+      <!-- prettier-ignore -->
+      <pre>    const { bridge } = makeBridge(&#x27;linux&#x27;)</pre>
+    </li>
+    <li id="L185">
+      <!-- prettier-ignore -->
+      <pre>    const TitleBar = await loadTitleBar(bridge)</pre>
+    </li>
+    <li id="L186">
+      <!-- prettier-ignore -->
+      <pre>    const { host, unmount } = await render(</pre>
+    </li>
+    <li id="L187">
+      <!-- prettier-ignore -->
+      <pre>      createElement(TitleBar, { collapsed: false, showToggle: false, onToggleCollapsed: noop }),</pre>
+    </li>
+    <li id="L188">
+      <!-- prettier-ignore -->
+      <pre>    )</pre>
+    </li>
+    <li id="L189">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L190">
+      <!-- prettier-ignore -->
+      <pre>    expect(host.querySelector(&#x27;[aria-label=&quot;折叠侧边栏&quot;]&#x27;)).toBeNull()</pre>
+    </li>
+    <li id="L191">
+      <!-- prettier-ignore -->
+      <pre>    // 三枚窗口控件仍然在</pre>
+    </li>
+    <li id="L192">
+      <!-- prettier-ignore -->
+      <pre>    expect(host.querySelectorAll(&#x27;button&#x27;)).toHaveLength(3)</pre>
+    </li>
+    <li id="L193">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L194">
+      <!-- prettier-ignore -->
+      <pre>    await unmount()</pre>
+    </li>
+    <li id="L195">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L196">
+      <!-- prettier-ignore -->
+      <pre>})</pre>
+    </li>
+  </ol>
+</html>

@@ -1,0 +1,192 @@
+{
+  "baseline": "53285bb",
+  "variants": {
+    "before": {
+      "sourceRoot": "/private/tmp/mimir-desktop-baseline-53285bb",
+      "sourceManifest": "dist/before/source-manifest.json",
+      "headAtBuild": "53285bbdeaa17475e04aae517f07c957776cb6b6",
+      "aggregateSha256": "139d5aa224822168e7b1960b189a8c72dc29f55c24ddda2e6ced53004bc7a6d1",
+      "files": [
+        {
+          "path": "assets/MimirProvider-xMGiOvnV.js",
+          "bytes": 16687,
+          "sha256": "27aad62353bb1ea2879199a2ba4fdff904edebdf3475daae2178e5307b02d537"
+        },
+        {
+          "path": "assets/SetupPage-CiR-2ZNC.js",
+          "bytes": 27964,
+          "sha256": "bcf71b2e179273d70879d6e7279c0fd56cdaea77eb4165a8660b71ab47e04252"
+        },
+        {
+          "path": "assets/TitleBar-DTHsTZF9.js",
+          "bytes": 2841,
+          "sha256": "0088372bea4a49ea24898b1a4812b1be67b3b45db734cde9d585a21e2c88a717"
+        },
+        {
+          "path": "assets/WindowControls-CMa5YTqF.js",
+          "bytes": 15238,
+          "sha256": "0ff08ab7c4f5a4edc0b17948e41baa371d7ec566e3ea272ab95edd7337992f72"
+        },
+        {
+          "path": "assets/WindowControls-dK1TCva0.js",
+          "bytes": 62,
+          "sha256": "3d5514ef5d69ee1309c733cd2c12342e539a8d31328b9d296de452d07c61f82f"
+        },
+        {
+          "path": "assets/about-CTedAmnT.js",
+          "bytes": 21309,
+          "sha256": "90117799bda3ad4756959ff1b0180a9cce2720d5c218f14f14ca621534729ebc"
+        },
+        {
+          "path": "assets/createLucideIcon-VGEnHyCH.js",
+          "bytes": 3131,
+          "sha256": "4e61d28ad905f34546044e46a8324efe4fbe5b55ef1119575a8f773906d8d87a"
+        },
+        {
+          "path": "assets/desktop-bridge-BPbx8XS4.js",
+          "bytes": 66,
+          "sha256": "640f4f39b3c491cbe9c00f66732167f60884539140b071f6dd16a3c3f94652ea"
+        },
+        {
+          "path": "assets/functions-Dihx9jde.js",
+          "bytes": 529258,
+          "sha256": "83312aef00df74ce378ca113a6ea8257e87d9dd3ecb10fd858d89e4932659ec6"
+        },
+        {
+          "path": "assets/index-DPOMfgbr.css",
+          "bytes": 1016,
+          "sha256": "b75fec7c3ddfc69a0d3dcf36dbaff8ef79cba2b08a517cae35ed6e93aee81bef"
+        },
+        {
+          "path": "assets/index-MVGUckHO.js",
+          "bytes": 20763,
+          "sha256": "913208fb557a67c4fe14395e2ec3c22f139016203c8f89310478cdee0e8ceaad"
+        },
+        {
+          "path": "assets/query-DehNynym.js",
+          "bytes": 14997,
+          "sha256": "0dd27908260fd5a9ea6f4049f52919cfdb10430e296c62d9c7377259e4c955bb"
+        },
+        {
+          "path": "assets/rolldown-runtime-CbXtAM7H.js",
+          "bytes": 589,
+          "sha256": "bbf7c5086ae414dc3f33777e3eebf16ea8631325b8bb4690d25091c03567f31a"
+        },
+        {
+          "path": "assets/tooltip-CANdzM97.js",
+          "bytes": 14747,
+          "sha256": "f66ce5d452b689ccee6578262608e8953b546f0e09581896c8b1afba07ad8b61"
+        },
+        {
+          "path": "assets/typography-Ctfngu25.js",
+          "bytes": 61934,
+          "sha256": "52528bf48ab5c55e3e6813087cbf2f21424daf46b3fb9987d4d60b09a042956c"
+        },
+        {
+          "path": "index.html",
+          "bytes": 1107,
+          "sha256": "0efb3c7ee86d5aee5f45667105c8f098737800587cbf7fcfdc18437c14805ae5"
+        },
+        {
+          "path": "source-manifest.json",
+          "bytes": 3595,
+          "sha256": "957d2d2e200477687f7277cccbaf86152682b80804161aafcd103be1be9a8fda"
+        }
+      ]
+    },
+    "after": {
+      "sourceRoot": "/Users/admin/Desktop/mimir",
+      "sourceManifest": "dist/after/source-manifest.json",
+      "headAtBuild": "d9b5e7708617714323cfcbf81a8091b9addd1e6c",
+      "aggregateSha256": "3d494d66ce56b51e3f8b52bb28f481a65ea18875e57b92815eca95aa2dd89b18",
+      "files": [
+        {
+          "path": "assets/MimirProvider-xMGiOvnV.js",
+          "bytes": 16687,
+          "sha256": "27aad62353bb1ea2879199a2ba4fdff904edebdf3475daae2178e5307b02d537"
+        },
+        {
+          "path": "assets/SetupPage-CAXE0E7i.js",
+          "bytes": 28637,
+          "sha256": "efae2070eb2ee964c1319dad31f9187e3f5671fceca8b409501892fcb99a16ca"
+        },
+        {
+          "path": "assets/TitleBar-PhFEl1NS.js",
+          "bytes": 2937,
+          "sha256": "635f5d75ace46bc3af815ee958b5aad1769036da96c4519aa6239f992c87b7d7"
+        },
+        {
+          "path": "assets/WindowControls-CMa5YTqF.js",
+          "bytes": 15238,
+          "sha256": "0ff08ab7c4f5a4edc0b17948e41baa371d7ec566e3ea272ab95edd7337992f72"
+        },
+        {
+          "path": "assets/WindowControls-dK1TCva0.js",
+          "bytes": 62,
+          "sha256": "3d5514ef5d69ee1309c733cd2c12342e539a8d31328b9d296de452d07c61f82f"
+        },
+        {
+          "path": "assets/about-CkEX_hZ3.js",
+          "bytes": 21355,
+          "sha256": "c726506e9aa729197784183f3ccc21418604ba65c111883881872147b7fe9eea"
+        },
+        {
+          "path": "assets/createLucideIcon-VGEnHyCH.js",
+          "bytes": 3131,
+          "sha256": "4e61d28ad905f34546044e46a8324efe4fbe5b55ef1119575a8f773906d8d87a"
+        },
+        {
+          "path": "assets/desktop-bridge-BPbx8XS4.js",
+          "bytes": 66,
+          "sha256": "640f4f39b3c491cbe9c00f66732167f60884539140b071f6dd16a3c3f94652ea"
+        },
+        {
+          "path": "assets/functions-Dihx9jde.js",
+          "bytes": 529258,
+          "sha256": "83312aef00df74ce378ca113a6ea8257e87d9dd3ecb10fd858d89e4932659ec6"
+        },
+        {
+          "path": "assets/index-CW0DNVlI.js",
+          "bytes": 20761,
+          "sha256": "307bdde1f9d008b0558269ff2ebb9ecd94b7e6782976f3f47e84d48f09bc9148"
+        },
+        {
+          "path": "assets/index-DPOMfgbr.css",
+          "bytes": 1016,
+          "sha256": "b75fec7c3ddfc69a0d3dcf36dbaff8ef79cba2b08a517cae35ed6e93aee81bef"
+        },
+        {
+          "path": "assets/query-DehNynym.js",
+          "bytes": 14997,
+          "sha256": "0dd27908260fd5a9ea6f4049f52919cfdb10430e296c62d9c7377259e4c955bb"
+        },
+        {
+          "path": "assets/rolldown-runtime-CbXtAM7H.js",
+          "bytes": 589,
+          "sha256": "bbf7c5086ae414dc3f33777e3eebf16ea8631325b8bb4690d25091c03567f31a"
+        },
+        {
+          "path": "assets/tooltip-CANdzM97.js",
+          "bytes": 14747,
+          "sha256": "f66ce5d452b689ccee6578262608e8953b546f0e09581896c8b1afba07ad8b61"
+        },
+        {
+          "path": "assets/typography-Ctfngu25.js",
+          "bytes": 61934,
+          "sha256": "52528bf48ab5c55e3e6813087cbf2f21424daf46b3fb9987d4d60b09a042956c"
+        },
+        {
+          "path": "index.html",
+          "bytes": 1101,
+          "sha256": "c7faf3a5a2f50e57dd2c526dc05097f0c458c18eb6b6ce45177b29f233d899f1"
+        },
+        {
+          "path": "source-manifest.json",
+          "bytes": 3594,
+          "sha256": "3dcbafeb4bad379e8cd9828eea8b653c9c4b627f9ce37e4f23cc4d9a91f572f5"
+        }
+      ]
+    }
+  },
+  "baselineFullSha": "53285bbdeaa17475e04aae517f07c957776cb6b6"
+}

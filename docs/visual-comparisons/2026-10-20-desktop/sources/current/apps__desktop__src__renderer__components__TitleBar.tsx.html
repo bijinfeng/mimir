@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>apps/desktop/src/renderer/components/TitleBar.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+      min-height: 1.65em;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">Desktop来源索引</a>
+    <h1>apps/desktop/src/renderer/components/TitleBar.tsx</h1>
+    <p>current真实源码 · SHA256 4539839fe593ed8b30d5d3e119852dc39df3ef49f6e1889311b66314c496c4fc</p>
+  </header>
+  <ol>
+    <li id="L1">
+      <!-- prettier-ignore -->
+      <pre>import type { TitleBarSlotProps } from &#x27;@mimir/renderer&#x27;</pre>
+    </li>
+    <li id="L2">
+      <!-- prettier-ignore -->
+      <pre>import { BrandMark } from &#x27;@mimir/renderer/titlebar-kit&#x27;</pre>
+    </li>
+    <li id="L3">
+      <!-- prettier-ignore -->
+      <pre>import { Tooltip } from &#x27;antd&#x27;</pre>
+    </li>
+    <li id="L4">
+      <!-- prettier-ignore -->
+      <pre>import { PanelLeftClose, PanelLeftOpen } from &#x27;lucide-react&#x27;</pre>
+    </li>
+    <li id="L5">
+      <!-- prettier-ignore -->
+      <pre>import { useStyles } from &#x27;@/components/TitleBar.style&#x27;</pre>
+    </li>
+    <li id="L6">
+      <!-- prettier-ignore -->
+      <pre>import { WindowControls } from &#x27;@/components/WindowControls&#x27;</pre>
+    </li>
+    <li id="L7">
+      <!-- prettier-ignore -->
+      <pre>import { desktopBridge } from &#x27;@/lib/desktop-bridge&#x27;</pre>
+    </li>
+    <li id="L8">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L9">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L10">
+      <!-- prettier-ignore -->
+      <pre> * 自绘窗口标题栏（D-094，方案 A）。</pre>
+    </li>
+    <li id="L11">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L12">
+      <!-- prettier-ignore -->
+      <pre> * ## 它为什么住在桌面端而不是渲染层（D-103）</pre>
+    </li>
+    <li id="L13">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L14">
+      <!-- prettier-ignore -->
+      <pre> * 它是**载体**的一部分：整条是 `-webkit-app-region: drag`、三枚控件走</pre>
+    </li>
+    <li id="L15">
+      <!-- prettier-ignore -->
+      <pre> * `window.mimirDesktop.window`，这些在浏览器里一件都不存在。放在渲染层</pre>
+    </li>
+    <li id="L16">
+      <!-- prettier-ignore -->
+      <pre> * 就等于让共享代码里住着一块只有一个平台能用的东西，而「浏览器里它返回</pre>
+    </li>
+    <li id="L17">
+      <!-- prettier-ignore -->
+      <pre> * null」这种判断散在共享代码里，下一个读的人不会知道它永远走哪一支。</pre>
+    </li>
+    <li id="L18">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L19">
+      <!-- prettier-ignore -->
+      <pre> * 现在它由桌面端注入渲染层的标题栏插槽（`renderTitleBar`），浏览器那侧</pre>
+    </li>
+    <li id="L20">
+      <!-- prettier-ignore -->
+      <pre> * 的插槽直接给 null——界面上没有这一条，也不需要知道为什么。</pre>
+    </li>
+    <li id="L21">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L22">
+      <!-- prettier-ignore -->
+      <pre> * ## 一条贯穿全宽的横条，下面才是「侧栏 + 主区」</pre>
+    </li>
+    <li id="L23">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L24">
+      <!-- prettier-ignore -->
+      <pre> * 它与侧栏/主区是**上下关系**，不是并排：这样它自己的宽度与窗口等宽，</pre>
+    </li>
+    <li id="L25">
+      <!-- prettier-ignore -->
+      <pre> * 右端的控件贴住窗口右缘（最大化时贴屏幕角），中途不需要为侧栏的宽度</pre>
+    </li>
+    <li id="L26">
+      <!-- prettier-ignore -->
+      <pre> * 做任何调整。</pre>
+    </li>
+    <li id="L27">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L28">
+      <!-- prettier-ignore -->
+      <pre> * ## 合并了侧栏原来的顶栏（净增高度为 0）</pre>
+    </li>
+    <li id="L29">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L30">
+      <!-- prettier-ignore -->
+      <pre> * 侧栏顶部原本有一条 44px 的「品牌 + 折叠按钮」行，而标题栏要做的是</pre>
+    </li>
+    <li id="L31">
+      <!-- prettier-ignore -->
+      <pre> * 同一件事（显示品牌）——两条并排就是重复。合并之后：</pre>
+    </li>
+    <li id="L32">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L33">
+      <!-- prettier-ignore -->
+      <pre> * ```</pre>
+    </li>
+    <li id="L34">
+      <!-- prettier-ignore -->
+      <pre> *   标题栏（44px）  ＝ 侧栏顶栏（44px）  ← 高度没有增加</pre>
+    </li>
+    <li id="L35">
+      <!-- prettier-ignore -->
+      <pre> * ```</pre>
+    </li>
+    <li id="L36">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L37">
+      <!-- prettier-ignore -->
+      <pre> * 折叠按钮也跟着搬过来（与 VSCode / 语雀同一个位置：品牌旁边）；</pre>
+    </li>
+    <li id="L38">
+      <!-- prettier-ignore -->
+      <pre> * 侧栏那条顶栏在桌面端**整块不再渲染**（`NavSidebar` 的 `hideTopBar`，</pre>
+    </li>
+    <li id="L39">
+      <!-- prettier-ignore -->
+      <pre> * 由渲染层按插槽的 `isDesktopShell()` 决定）。</pre>
+    </li>
+    <li id="L40">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L41">
+      <!-- prettier-ignore -->
+      <pre> * ## macOS：内容给红绿灯让位</pre>
+    </li>
+    <li id="L42">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L43">
+      <!-- prettier-ignore -->
+      <pre> * mac 上保留系统红绿灯（`titleBarStyle: &#x27;hidden&#x27;`），它们画在左上角、</pre>
+    </li>
+    <li id="L44">
+      <!-- prettier-ignore -->
+      <pre> * 压在标题栏上。所以标题栏的内容整体右移（`--titlebar-pad-left`）——</pre>
+    </li>
+    <li id="L45">
+      <!-- prettier-ignore -->
+      <pre> * 这个值在样式里按平台给，不在这里判断。</pre>
+    </li>
+    <li id="L46">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L47">
+      <!-- prettier-ignore -->
+      <pre> * ## 拖动区与 no-drag（最容易静默出错的一处）</pre>
+    </li>
+    <li id="L48">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L49">
+      <!-- prettier-ignore -->
+      <pre> * 整条标题栏是 `-webkit-app-region: drag`，**里面每个可点的东西都要</pre>
+    </li>
+    <li id="L50">
+      <!-- prettier-ignore -->
+      <pre> * 显式标 `no-drag`**——漏标的表现是「按钮点不动」，而且不报错、控制台</pre>
+    </li>
+    <li id="L51">
+      <!-- prettier-ignore -->
+      <pre> * 也没有任何东西。现在的可点元素只有两个（折叠按钮、三枚窗口控件），</pre>
+    </li>
+    <li id="L52">
+      <!-- prettier-ignore -->
+      <pre> * 但**以后往标题栏里加任何东西都要记得标**（这也是方案 C 被否掉的理由，</pre>
+    </li>
+    <li id="L53">
+      <!-- prettier-ignore -->
+      <pre> * 见 demo 的对照表）。</pre>
+    </li>
+    <li id="L54">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L55">
+      <!-- prettier-ignore -->
+      <pre> * ## props 由插槽契约给（`TitleBarSlotProps`）</pre>
+    </li>
+    <li id="L56">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L57">
+      <!-- prettier-ignore -->
+      <pre> * 三项都是必填，缺省由渲染层那边的调用点决定：登录页传</pre>
+    </li>
+    <li id="L58">
+      <!-- prettier-ignore -->
+      <pre> * `showToggle: false`（那里没有侧栏可折叠，但窗口仍然需要拖动区与关闭</pre>
+    </li>
+    <li id="L59">
+      <!-- prettier-ignore -->
+      <pre> * 按钮——`frame: false` 下没有它用户连窗口都关不掉）。</pre>
+    </li>
+    <li id="L60">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L61">
+      <!-- prettier-ignore -->
+      <pre>export function TitleBar({ collapsed, onToggleCollapsed, showToggle }: TitleBarSlotProps) {</pre>
+    </li>
+    <li id="L62">
+      <!-- prettier-ignore -->
+      <pre>  const { styles } = useStyles()</pre>
+    </li>
+    <li id="L63">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L64">
+      <!-- prettier-ignore -->
+      <pre>  // 读一次就够：preload 在首帧之前注入，平台不会变（见 desktop-bridge.ts）</pre>
+    </li>
+    <li id="L65">
+      <!-- prettier-ignore -->
+      <pre>  const platform = desktopBridge?.window.platform</pre>
+    </li>
+    <li id="L66">
+      <!-- prettier-ignore -->
+      <pre>  if (!platform) return null</pre>
+    </li>
+    <li id="L67">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L68">
+      <!-- prettier-ignore -->
+      <pre>  return (</pre>
+    </li>
+    <li id="L69">
+      <!-- prettier-ignore -->
+      <pre>    &lt;div className={styles.bar} data-platform={platform}&gt;</pre>
+    </li>
+    <li id="L70">
+      <!-- prettier-ignore -->
+      <pre>      {/*</pre>
+    </li>
+    <li id="L71">
+      <!-- prettier-ignore -->
+      <pre>        左侧：品牌 + 折叠开关。**只放这两样**——「当前在哪个页面」由页面</pre>
+    </li>
+    <li id="L72">
+      <!-- prettier-ignore -->
+      <pre>        自己的头部负责，标题栏里再显示一遍是重复（而且它要知道文档标题，</pre>
+    </li>
+    <li id="L73">
+      <!-- prettier-ignore -->
+      <pre>        那是一次额外的请求）。</pre>
+    </li>
+    <li id="L74">
+      <!-- prettier-ignore -->
+      <pre>      */}</pre>
+    </li>
+    <li id="L75">
+      <!-- prettier-ignore -->
+      <pre>      &lt;span className={styles.brand}&gt;</pre>
+    </li>
+    <li id="L76">
+      <!-- prettier-ignore -->
+      <pre>        &lt;BrandMark size={18} title={null} /&gt;</pre>
+    </li>
+    <li id="L77">
+      <!-- prettier-ignore -->
+      <pre>        &lt;b&gt;mimir&lt;/b&gt;</pre>
+    </li>
+    <li id="L78">
+      <!-- prettier-ignore -->
+      <pre>      &lt;/span&gt;</pre>
+    </li>
+    <li id="L79">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L80">
+      <!-- prettier-ignore -->
+      <pre>      {showToggle ? (</pre>
+    </li>
+    <li id="L81">
+      <!-- prettier-ignore -->
+      <pre>        &lt;Tooltip title={collapsed ? &#x27;展开侧边栏&#x27; : &#x27;折叠侧边栏&#x27;} placement=&quot;bottomLeft&quot;&gt;</pre>
+    </li>
+    <li id="L82">
+      <!-- prettier-ignore -->
+      <pre>          &lt;button</pre>
+    </li>
+    <li id="L83">
+      <!-- prettier-ignore -->
+      <pre>            type=&quot;button&quot;</pre>
+    </li>
+    <li id="L84">
+      <!-- prettier-ignore -->
+      <pre>            className={`${styles.toggle} me-no-drag`}</pre>
+    </li>
+    <li id="L85">
+      <!-- prettier-ignore -->
+      <pre>            aria-label={collapsed ? &#x27;展开侧边栏&#x27; : &#x27;折叠侧边栏&#x27;}</pre>
+    </li>
+    <li id="L86">
+      <!-- prettier-ignore -->
+      <pre>            aria-expanded={!collapsed}</pre>
+    </li>
+    <li id="L87">
+      <!-- prettier-ignore -->
+      <pre>            onClick={onToggleCollapsed}</pre>
+    </li>
+    <li id="L88">
+      <!-- prettier-ignore -->
+      <pre>          &gt;</pre>
+    </li>
+    <li id="L89">
+      <!-- prettier-ignore -->
+      <pre>            {collapsed ? &lt;PanelLeftOpen size={16} /&gt; : &lt;PanelLeftClose size={16} /&gt;}</pre>
+    </li>
+    <li id="L90">
+      <!-- prettier-ignore -->
+      <pre>          &lt;/button&gt;</pre>
+    </li>
+    <li id="L91">
+      <!-- prettier-ignore -->
+      <pre>        &lt;/Tooltip&gt;</pre>
+    </li>
+    <li id="L92">
+      <!-- prettier-ignore -->
+      <pre>      ) : null}</pre>
+    </li>
+    <li id="L93">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L94">
+      <!-- prettier-ignore -->
+      <pre>      {/* 中间整块是拖动区（没有内容，正好用来拖窗口） */}</pre>
+    </li>
+    <li id="L95">
+      <!-- prettier-ignore -->
+      <pre>      &lt;span className={styles.spacer} /&gt;</pre>
+    </li>
+    <li id="L96">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L97">
+      <!-- prettier-ignore -->
+      <pre>      {/*</pre>
+    </li>
+    <li id="L98">
+      <!-- prettier-ignore -->
+      <pre>        右侧控件。**macOS 下整组不渲染**（系统红绿灯在左上角）——那一判断</pre>
+    </li>
+    <li id="L99">
+      <!-- prettier-ignore -->
+      <pre>        在组件内部，这里不需要条件。选择页用的是同一个组件（D-103）。</pre>
+    </li>
+    <li id="L100">
+      <!-- prettier-ignore -->
+      <pre>      */}</pre>
+    </li>
+    <li id="L101">
+      <!-- prettier-ignore -->
+      <pre>      &lt;WindowControls /&gt;</pre>
+    </li>
+    <li id="L102">
+      <!-- prettier-ignore -->
+      <pre>    &lt;/div&gt;</pre>
+    </li>
+    <li id="L103">
+      <!-- prettier-ignore -->
+      <pre>  )</pre>
+    </li>
+    <li id="L104">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+  </ol>
+</html>

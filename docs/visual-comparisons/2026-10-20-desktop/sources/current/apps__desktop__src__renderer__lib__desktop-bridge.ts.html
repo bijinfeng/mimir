@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>apps/desktop/src/renderer/lib/desktop-bridge.ts</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+      min-height: 1.65em;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">Desktop来源索引</a>
+    <h1>apps/desktop/src/renderer/lib/desktop-bridge.ts</h1>
+    <p>current真实源码 · SHA256 7394960f6208fcc60b7912e49581f4dfe3df3695d116b2c5efc9ade2c7c9ea0f</p>
+  </header>
+  <ol>
+    <li id="L1">
+      <!-- prettier-ignore -->
+      <pre>import type { MimirDesktopBridge } from &#x27;@mimir/shared/desktop&#x27;</pre>
+    </li>
+    <li id="L2">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L3">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L4">
+      <!-- prettier-ignore -->
+      <pre> * 桌面桥（`window.mimirDesktop`）的取值（D-103）。</pre>
+    </li>
+    <li id="L5">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L6">
+      <!-- prettier-ignore -->
+      <pre> * ## 为什么这里还需要一层</pre>
+    </li>
+    <li id="L7">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L8">
+      <!-- prettier-ignore -->
+      <pre> * `packages/shared/src/desktop.ts` 里是**契约**（宿主与载体之间的形状），</pre>
+    </li>
+    <li id="L9">
+      <!-- prettier-ignore -->
+      <pre> * 这里多出来的只有一件事：**它可能不存在**。preload 失效过一次（相对路径</pre>
+    </li>
+    <li id="L10">
+      <!-- prettier-ignore -->
+      <pre> * 写法让它静默不执行，见 `.trellis/spec/desktop/runtime/pitfalls.md` 的坑表），所以消费端不能假设它一定在。</pre>
+    </li>
+    <li id="L11">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L12">
+      <!-- prettier-ignore -->
+      <pre> * ## 为什么是模块级常量而不是 hook</pre>
+    </li>
+    <li id="L13">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L14">
+      <!-- prettier-ignore -->
+      <pre> * preload 脚本在页面任何脚本**之前**执行（Electron 保证），所以</pre>
+    </li>
+    <li id="L15">
+      <!-- prettier-ignore -->
+      <pre> * `window.mimirDesktop` 在第一帧渲染前就已经确定。写成 hook 需要</pre>
+    </li>
+    <li id="L16">
+      <!-- prettier-ignore -->
+      <pre> * `useState` + `useEffect` 两趟渲染，而那个 effect 永远不会改变结果——</pre>
+    </li>
+    <li id="L17">
+      <!-- prettier-ignore -->
+      <pre> * 白白多一帧「先按浏览器渲染、再切成桌面端」的抖动（标题栏会先不显示、</pre>
+    </li>
+    <li id="L18">
+      <!-- prettier-ignore -->
+      <pre> * 再出现）。读一个常量没有这个问题。</pre>
+    </li>
+    <li id="L19">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L20">
+      <!-- prettier-ignore -->
+      <pre> * 反过来，如果哪天桥变成**后注入**的（比如远程地址模式下的异步握手），</pre>
+    </li>
+    <li id="L21">
+      <!-- prettier-ignore -->
+      <pre> * 这里就要换成订阅式的读取——那时记得同步改标题栏的最大化订阅。</pre>
+    </li>
+    <li id="L22">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L23">
+      <!-- prettier-ignore -->
+      <pre>declare global {</pre>
+    </li>
+    <li id="L24">
+      <!-- prettier-ignore -->
+      <pre>  interface Window {</pre>
+    </li>
+    <li id="L25">
+      <!-- prettier-ignore -->
+      <pre>    /** preload 注入。**理论上桌面端一定有**，但见上面「可能不存在」那一段 */</pre>
+    </li>
+    <li id="L26">
+      <!-- prettier-ignore -->
+      <pre>    mimirDesktop?: MimirDesktopBridge</pre>
+    </li>
+    <li id="L27">
+      <!-- prettier-ignore -->
+      <pre>  }</pre>
+    </li>
+    <li id="L28">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+    <li id="L29">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L30">
+      <!-- prettier-ignore -->
+      <pre>export const desktopBridge: MimirDesktopBridge | undefined =</pre>
+    </li>
+    <li id="L31">
+      <!-- prettier-ignore -->
+      <pre>  typeof window === &#x27;undefined&#x27; ? undefined : window.mimirDesktop</pre>
+    </li>
+  </ol>
+</html>

@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>apps/desktop/src/main/security.test.ts</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+      min-height: 1.65em;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">Desktop来源索引</a>
+    <h1>apps/desktop/src/main/security.test.ts</h1>
+    <p>current真实源码 · SHA256 f84c2ab3d686e142cb911b7abb4e30659fcf68dca88194cac37928ebb2a43163</p>
+  </header>
+  <ol>
+    <li id="L1">
+      <!-- prettier-ignore -->
+      <pre>import { describe, expect, it } from &#x27;vitest&#x27;</pre>
+    </li>
+    <li id="L2">
+      <!-- prettier-ignore -->
+      <pre>import { navigationDecision, partitionFor } from &#x27;./security.js&#x27;</pre>
+    </li>
+    <li id="L3">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L4">
+      <!-- prettier-ignore -->
+      <pre>describe(&#x27;桌面 Session 隔离&#x27;, () =&gt; {</pre>
+    </li>
+    <li id="L5">
+      <!-- prettier-ignore -->
+      <pre>  it(&#x27;本地令牌与云端 localhost、不同云端端口不共用 cookie jar&#x27;, () =&gt; {</pre>
+    </li>
+    <li id="L6">
+      <!-- prettier-ignore -->
+      <pre>    const local = partitionFor(&#x27;local&#x27;, &#x27;http://127.0.0.1:43123&#x27;)</pre>
+    </li>
+    <li id="L7">
+      <!-- prettier-ignore -->
+      <pre>    const cloudA = partitionFor(&#x27;cloud&#x27;, &#x27;http://127.0.0.1:3000&#x27;)</pre>
+    </li>
+    <li id="L8">
+      <!-- prettier-ignore -->
+      <pre>    const cloudB = partitionFor(&#x27;cloud&#x27;, &#x27;http://127.0.0.1:4000&#x27;)</pre>
+    </li>
+    <li id="L9">
+      <!-- prettier-ignore -->
+      <pre>    expect(new Set([local, cloudA, cloudB, partitionFor(&#x27;setup&#x27;, &#x27;file:///setup.html&#x27;)]).size).toBe(</pre>
+    </li>
+    <li id="L10">
+      <!-- prettier-ignore -->
+      <pre>      4,</pre>
+    </li>
+    <li id="L11">
+      <!-- prettier-ignore -->
+      <pre>    )</pre>
+    </li>
+    <li id="L12">
+      <!-- prettier-ignore -->
+      <pre>    expect(partitionFor(&#x27;cloud&#x27;, &#x27;http://127.0.0.1:3000&#x27;)).toBe(cloudA)</pre>
+    </li>
+    <li id="L13">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L14">
+      <!-- prettier-ignore -->
+      <pre>})</pre>
+    </li>
+    <li id="L15">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L16">
+      <!-- prettier-ignore -->
+      <pre>describe(&#x27;桌面导航边界&#x27;, () =&gt; {</pre>
+    </li>
+    <li id="L17">
+      <!-- prettier-ignore -->
+      <pre>  const appUrl = &#x27;http://127.0.0.1:43123/docs&#x27;</pre>
+    </li>
+    <li id="L18">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L19">
+      <!-- prettier-ignore -->
+      <pre>  it(&#x27;站内路由和文件预览仍可打开&#x27;, () =&gt; {</pre>
+    </li>
+    <li id="L20">
+      <!-- prettier-ignore -->
+      <pre>    expect(navigationDecision(appUrl, &#x27;http://127.0.0.1:43123/settings&#x27;)).toBe(&#x27;allow&#x27;)</pre>
+    </li>
+    <li id="L21">
+      <!-- prettier-ignore -->
+      <pre>    expect(navigationDecision(appUrl, &#x27;http://127.0.0.1:43123/api/documents/1/file&#x27;)).toBe(&#x27;allow&#x27;)</pre>
+    </li>
+    <li id="L22">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L23">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L24">
+      <!-- prettier-ignore -->
+      <pre>  it(&#x27;另一 localhost 端口不能接管当前窗口&#x27;, () =&gt; {</pre>
+    </li>
+    <li id="L25">
+      <!-- prettier-ignore -->
+      <pre>    expect(navigationDecision(appUrl, &#x27;http://127.0.0.1:4000/&#x27;)).toBe(&#x27;external&#x27;)</pre>
+    </li>
+    <li id="L26">
+      <!-- prettier-ignore -->
+      <pre>    expect(navigationDecision(appUrl, &#x27;https://example.com/article&#x27;)).toBe(&#x27;external&#x27;)</pre>
+    </li>
+    <li id="L27">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L28">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L29">
+      <!-- prettier-ignore -->
+      <pre>  it(&#x27;拒绝 file、javascript 与其他非 web 协议&#x27;, () =&gt; {</pre>
+    </li>
+    <li id="L30">
+      <!-- prettier-ignore -->
+      <pre>    expect(navigationDecision(appUrl, &#x27;file:///etc/passwd&#x27;)).toBe(&#x27;block&#x27;)</pre>
+    </li>
+    <li id="L31">
+      <!-- prettier-ignore -->
+      <pre>    expect(navigationDecision(appUrl, &#x27;javascript:alert(1)&#x27;)).toBe(&#x27;block&#x27;)</pre>
+    </li>
+    <li id="L32">
+      <!-- prettier-ignore -->
+      <pre>    expect(navigationDecision(appUrl, &#x27;mailto:someone@example.com&#x27;)).toBe(&#x27;block&#x27;)</pre>
+    </li>
+    <li id="L33">
+      <!-- prettier-ignore -->
+      <pre>    expect(navigationDecision(appUrl, &#x27;not a url&#x27;)).toBe(&#x27;block&#x27;)</pre>
+    </li>
+    <li id="L34">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L35">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L36">
+      <!-- prettier-ignore -->
+      <pre>  it(&#x27;选择页只允许留在自己的 file 地址&#x27;, () =&gt; {</pre>
+    </li>
+    <li id="L37">
+      <!-- prettier-ignore -->
+      <pre>    expect(navigationDecision(&#x27;file:///app/setup.html&#x27;, &#x27;file:///app/setup.html#help&#x27;)).toBe(</pre>
+    </li>
+    <li id="L38">
+      <!-- prettier-ignore -->
+      <pre>      &#x27;allow&#x27;,</pre>
+    </li>
+    <li id="L39">
+      <!-- prettier-ignore -->
+      <pre>    )</pre>
+    </li>
+    <li id="L40">
+      <!-- prettier-ignore -->
+      <pre>    expect(navigationDecision(&#x27;file:///app/setup.html&#x27;, &#x27;file:///app/other.html&#x27;)).toBe(&#x27;block&#x27;)</pre>
+    </li>
+    <li id="L41">
+      <!-- prettier-ignore -->
+      <pre>    expect(navigationDecision(&#x27;file:///app/setup.html&#x27;, &#x27;file://remote/app/setup.html&#x27;)).toBe(</pre>
+    </li>
+    <li id="L42">
+      <!-- prettier-ignore -->
+      <pre>      &#x27;block&#x27;,</pre>
+    </li>
+    <li id="L43">
+      <!-- prettier-ignore -->
+      <pre>    )</pre>
+    </li>
+    <li id="L44">
+      <!-- prettier-ignore -->
+      <pre>    expect(navigationDecision(&#x27;file:///app/setup.html&#x27;, &#x27;https://example.com&#x27;)).toBe(&#x27;block&#x27;)</pre>
+    </li>
+    <li id="L45">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L46">
+      <!-- prettier-ignore -->
+      <pre>})</pre>
+    </li>
+  </ol>
+</html>

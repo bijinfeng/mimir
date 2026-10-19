@@ -26,23 +26,23 @@ const useStyles = createStyles(({ css, token }) => ({
   page: css`
     height: 100%;
     overflow-y: auto;
-    padding: 42px clamp(28px, 5vw, 72px) 80px;
+    padding: 24px clamp(24px, 4vw, 48px) 40px;
     background: ${token.colorBgContainer};
   `,
   content: css`
     max-width: 730px;
   `,
   heading: css`
-    margin: 0 0 28px !important;
+    margin: 0 0 20px !important;
   `,
   section: css`
     border-top: 1px solid ${token.colorBorderSecondary};
-    padding-top: 16px;
+    padding-top: 8px;
   `,
   row: css`
     display: flex;
     gap: 16px;
-    padding: 14px 0;
+    padding: 12px 0;
     border-bottom: 1px solid ${token.colorBorderSecondary};
     @media (max-width: 600px) {
       flex-direction: column;
@@ -55,6 +55,8 @@ const useStyles = createStyles(({ css, token }) => ({
     color: ${token.colorTextSecondary};
   `,
   value: css`
+    min-width: 0;
+    overflow-wrap: anywhere;
     color: ${token.colorText};
   `,
 }))

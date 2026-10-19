@@ -1,0 +1,287 @@
+{
+  "baseline": "53285bbdeaa17475e04aae517f07c957776cb6b6",
+  "date": "2026-10-20",
+  "evidence": "Real Desktop component screenshots; matched bridge fixture/theme/platform/viewport; no native execution claims",
+  "pairs": [
+    {
+      "key": "setup-first-wide",
+      "title": "首次选择 · 宽屏",
+      "scene": "setup-first",
+      "theme": "light",
+      "platform": "win32",
+      "viewport": [1100, 760],
+      "componentSize": [1100, 760],
+      "steps": "载入首次选择，保持默认本地使用；不提交。",
+      "query": "?scene=setup-first&theme=light&platform=win32&width=1100&height=760&capture=1",
+      "before": "captures/before-setup-first-wide.png",
+      "after": "captures/after-setup-first-wide.png",
+      "baseline": "53285bbdeaa17475e04aae517f07c957776cb6b6",
+      "sameContentThemeSizeRequired": true,
+      "nativeVerified": false
+    },
+    {
+      "key": "setup-loading-wide",
+      "title": "读取配置 · 宽屏",
+      "scene": "setup-loading",
+      "theme": "light",
+      "platform": "win32",
+      "viewport": [1100, 760],
+      "componentSize": [1100, 760],
+      "steps": "载入后保持 mode.get 未结算；不操作演示结算按钮。",
+      "query": "?scene=setup-loading&theme=light&platform=win32&width=1100&height=760&capture=1",
+      "before": "captures/before-setup-loading-wide.png",
+      "after": "captures/after-setup-loading-wide.png",
+      "baseline": "53285bbdeaa17475e04aae517f07c957776cb6b6",
+      "sameContentThemeSizeRequired": true,
+      "nativeVerified": false
+    },
+    {
+      "key": "setup-cloud-short",
+      "title": "服务器地址 · 短高",
+      "scene": "setup-cloud",
+      "theme": "light",
+      "platform": "win32",
+      "viewport": [800, 480],
+      "componentSize": [800, 480],
+      "steps": "载入已有云端配置，保持固定长地址；保持初始滚动位置。",
+      "query": "?scene=setup-cloud&theme=light&platform=win32&width=800&height=480&capture=1",
+      "before": "captures/before-setup-cloud-short.png",
+      "after": "captures/after-setup-cloud-short.png",
+      "baseline": "53285bbdeaa17475e04aae517f07c957776cb6b6",
+      "sameContentThemeSizeRequired": true,
+      "nativeVerified": false
+    },
+    {
+      "key": "choose-failure-narrow",
+      "title": "连接失败 · 窄屏",
+      "scene": "choose-failure",
+      "theme": "light",
+      "platform": "win32",
+      "viewport": [390, 400],
+      "componentSize": [390, 400],
+      "steps": "载入后点击切换；等待模拟 choose 返回失败；点击「切换使用方式」标题使局部滚动回顶部，显示失败反馈。",
+      "query": "?scene=choose-failure&theme=light&platform=win32&width=390&height=400&capture=1",
+      "before": "captures/before-choose-failure-narrow.png",
+      "after": "captures/after-choose-failure-narrow.png",
+      "baseline": "53285bbdeaa17475e04aae517f07c957776cb6b6",
+      "sameContentThemeSizeRequired": true,
+      "nativeVerified": false
+    },
+    {
+      "key": "setup-read-error-narrow",
+      "title": "读取失败 · 暗色窄屏",
+      "scene": "setup-read-error",
+      "theme": "dark",
+      "platform": "linux",
+      "viewport": [390, 400],
+      "componentSize": [390, 400],
+      "steps": "首个 mode.get 读取失败；不点重试，保持失败状态。",
+      "query": "?scene=setup-read-error&theme=dark&platform=linux&width=390&height=400&capture=1",
+      "before": "captures/before-setup-read-error-narrow.png",
+      "after": "captures/after-setup-read-error-narrow.png",
+      "baseline": "53285bbdeaa17475e04aae517f07c957776cb6b6",
+      "sameContentThemeSizeRequired": true,
+      "nativeVerified": false
+    },
+    {
+      "key": "choose-pending-short",
+      "title": "连接处理中 · 暗色短高",
+      "scene": "choose-pending",
+      "theme": "dark",
+      "platform": "win32",
+      "viewport": [800, 480],
+      "componentSize": [800, 480],
+      "steps": "载入后点击切换；保持 choose promise 未结算。",
+      "query": "?scene=choose-pending&theme=dark&platform=win32&width=800&height=480&capture=1",
+      "before": "captures/before-choose-pending-short.png",
+      "after": "captures/after-choose-pending-short.png",
+      "baseline": "53285bbdeaa17475e04aae517f07c957776cb6b6",
+      "sameContentThemeSizeRequired": true,
+      "nativeVerified": false
+    },
+    {
+      "key": "about-long-narrow",
+      "title": "长版本号 · 暗色窄屏",
+      "scene": "about-long",
+      "theme": "dark",
+      "platform": "win32",
+      "viewport": [390, 400],
+      "componentSize": [390, 400],
+      "steps": "载入关于客户端，等待 boot 成功；保持固定长版本号。",
+      "query": "?scene=about-long&theme=dark&platform=win32&width=390&height=400&capture=1",
+      "before": "captures/before-about-long-narrow.png",
+      "after": "captures/after-about-long-narrow.png",
+      "baseline": "53285bbdeaa17475e04aae517f07c957776cb6b6",
+      "sameContentThemeSizeRequired": true,
+      "nativeVerified": false
+    },
+    {
+      "key": "titlebar-focus",
+      "title": "标题栏键盘焦点",
+      "scene": "titlebar",
+      "theme": "light",
+      "platform": "win32",
+      "viewport": [800, 480],
+      "componentSize": [800, 480],
+      "steps": "聚焦最小化按钮后按 Shift+Tab，使真实折叠侧边栏按钮获得键盘焦点。",
+      "query": "?scene=titlebar&theme=light&platform=win32&width=800&height=480&capture=1",
+      "before": "captures/before-titlebar-focus.png",
+      "after": "captures/after-titlebar-focus.png",
+      "baseline": "53285bbdeaa17475e04aae517f07c957776cb6b6",
+      "sameContentThemeSizeRequired": true,
+      "nativeVerified": false
+    }
+  ],
+  "supplements": [
+    {
+      "key": "default-1440x900",
+      "title": "default-1440x900",
+      "caption": "补充真实组件状态；仅打磨后，不构成前后配对。",
+      "after": "captures/default-1440x900.jpg"
+    },
+    {
+      "key": "submit-retry-success",
+      "title": "submit-retry-success",
+      "caption": "补充真实组件状态；仅打磨后，不构成前后配对。",
+      "after": "captures/submit-retry-success.jpg"
+    }
+  ],
+  "images": [
+    {
+      "path": "captures/before-setup-first-wide.png",
+      "width": 1100,
+      "height": 760,
+      "actualMediaType": "image/jpeg",
+      "sha256": "4434b53843b5341d0c918f76b04e26bb5193fd56be1adcddcba0fe6abdb41809"
+    },
+    {
+      "path": "captures/after-setup-first-wide.png",
+      "width": 1100,
+      "height": 760,
+      "actualMediaType": "image/jpeg",
+      "sha256": "2b30683fbb36ba2e57a60938e94d23d3e6858d5e103c5300b1c1d25c8acb0112"
+    },
+    {
+      "path": "captures/before-setup-loading-wide.png",
+      "width": 1100,
+      "height": 760,
+      "actualMediaType": "image/jpeg",
+      "sha256": "179b661213770fb7970b2874d7d39644a5cea3fe9cbd2d2a539d55266e897f0e"
+    },
+    {
+      "path": "captures/after-setup-loading-wide.png",
+      "width": 1100,
+      "height": 760,
+      "actualMediaType": "image/jpeg",
+      "sha256": "71c60317ff3aa49fbc04003c62df31acc1edc9012b229015d8c5a93b7ddf1483"
+    },
+    {
+      "path": "captures/before-setup-cloud-short.png",
+      "width": 800,
+      "height": 480,
+      "actualMediaType": "image/jpeg",
+      "sha256": "6c502171979588f308057831557b1751148ffcf46a2e12d00112e786728f3ff4"
+    },
+    {
+      "path": "captures/after-setup-cloud-short.png",
+      "width": 800,
+      "height": 480,
+      "actualMediaType": "image/jpeg",
+      "sha256": "e98f7596f588b4c76ea7b33845026e146a6db170cbf8c4bc3ccfacab0867f4a8"
+    },
+    {
+      "path": "captures/before-choose-failure-narrow.png",
+      "width": 390,
+      "height": 400,
+      "actualMediaType": "image/jpeg",
+      "sha256": "f436fb4a28b5c2a8d1dbee9db779673f0de70e622c8d9ca03d4596cdad41cb05"
+    },
+    {
+      "path": "captures/after-choose-failure-narrow.png",
+      "width": 390,
+      "height": 400,
+      "actualMediaType": "image/jpeg",
+      "sha256": "6526fca46cc2c43993c6d95e4886b9e5ad6c1888a08b1d7100759dd6d839026c"
+    },
+    {
+      "path": "captures/before-setup-read-error-narrow.png",
+      "width": 390,
+      "height": 400,
+      "actualMediaType": "image/jpeg",
+      "sha256": "0aaecbe95c09d94b6099582d4b61cf0cb4643930284545a2294c70b0fdcfe845"
+    },
+    {
+      "path": "captures/after-setup-read-error-narrow.png",
+      "width": 390,
+      "height": 400,
+      "actualMediaType": "image/jpeg",
+      "sha256": "1bfba0e2511e839b1f90449dd42492ed6f8dcdb9c4a20765c588f6ee7169faf4"
+    },
+    {
+      "path": "captures/before-choose-pending-short.png",
+      "width": 800,
+      "height": 480,
+      "actualMediaType": "image/jpeg",
+      "sha256": "d1b58ae39e5e17f680ca885ffc3edf66283e4fcbe44765d9575ae97e5b1cea7a"
+    },
+    {
+      "path": "captures/after-choose-pending-short.png",
+      "width": 800,
+      "height": 480,
+      "actualMediaType": "image/jpeg",
+      "sha256": "bf8e960726348e81f8cdb46efee49ee09d1caedd997683a2c90ea533ff38027a"
+    },
+    {
+      "path": "captures/before-about-long-narrow.png",
+      "width": 390,
+      "height": 400,
+      "actualMediaType": "image/jpeg",
+      "sha256": "cccfede6d59bb0a40bce2e02abd929bdafcd7dffe4db28c69395ac7553c6bf9b"
+    },
+    {
+      "path": "captures/after-about-long-narrow.png",
+      "width": 390,
+      "height": 400,
+      "actualMediaType": "image/jpeg",
+      "sha256": "e1c0866413bbd81498ac6552d9e2acd6d89aff3d80651ec56b9eaf7e81ad3428"
+    },
+    {
+      "path": "captures/before-titlebar-focus.png",
+      "width": 800,
+      "height": 480,
+      "actualMediaType": "image/jpeg",
+      "sha256": "ea97561b35e4d970cf262cfbd4f83efcf020bc0c125e818d745f265bc150dcb2"
+    },
+    {
+      "path": "captures/after-titlebar-focus.png",
+      "width": 800,
+      "height": 480,
+      "actualMediaType": "image/jpeg",
+      "sha256": "172d97535934d958b38d245328684caf0cf1d25902f4cac3180c9b33b88779b9"
+    },
+    {
+      "path": "captures/default-1440x900.jpg",
+      "width": 1440,
+      "height": 900,
+      "actualMediaType": "image/jpeg",
+      "sha256": "783820be0a8fe88102e5550950abbca9dbc1aa7711e7540cfd3b380e424832d8"
+    },
+    {
+      "path": "captures/submit-retry-success.jpg",
+      "width": 785,
+      "height": 935,
+      "actualMediaType": "image/jpeg",
+      "sha256": "b77093f4a967859e0e28a2af8618920428c5ad7dccae35fed5fc13493098659a"
+    }
+  ],
+  "supersededEvidence": [
+    {
+      "path": "captures/superseded/after-about-long-narrow-viewport-race.jpg",
+      "width": 390,
+      "height": 234,
+      "actualMediaType": "image/jpeg",
+      "sha256": "26be6fa8d1fc7dc12d1fde958cec9d361c885ce4ed860e79baa52222746a54a2",
+      "reason": "Viewport-application race; retained original bytes, excluded from matched pairs and GUI pass counts."
+    }
+  ]
+}

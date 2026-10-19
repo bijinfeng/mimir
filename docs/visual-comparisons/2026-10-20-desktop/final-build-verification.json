@@ -1,0 +1,25 @@
+{
+  "baseline": "53285bbdeaa17475e04aae517f07c957776cb6b6",
+  "variants": {
+    "before": {
+      "resources": 17,
+      "ownSourceInputs": 20,
+      "aggregateSha256": "139d5aa224822168e7b1960b189a8c72dc29f55c24ddda2e6ced53004bc7a6d1"
+    },
+    "after": {
+      "resources": 17,
+      "ownSourceInputs": 20,
+      "aggregateSha256": "3d494d66ce56b51e3f8b52bb28f481a65ea18875e57b92815eca95aa2dd89b18"
+    }
+  },
+  "sourceSnapshotCounts": {
+    "before": 28,
+    "current": 28
+  },
+  "surfaceFamiliesSourceOnly": 19,
+  "licensePackages": 93,
+  "originalNotices": 105,
+  "actualCapturesVerified": 18,
+  "supersededCapturesPreservedExcludedFromPairs": 1,
+  "nativeVerificationClaimed": false
+}

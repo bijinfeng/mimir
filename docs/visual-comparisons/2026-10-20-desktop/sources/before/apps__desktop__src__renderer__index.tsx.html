@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>apps/desktop/src/renderer/index.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+      min-height: 1.65em;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">Desktop来源索引</a>
+    <h1>apps/desktop/src/renderer/index.tsx</h1>
+    <p>before真实源码 · SHA256 eae62bfc5bb672e903fbcec4ab464213ba933f2bf5fc37da6d1671cf94ea2e14</p>
+  </header>
+  <ol>
+    <li id="L1">
+      <!-- prettier-ignore -->
+      <pre>import { buildRouter, createApp } from &#x27;@mimir/renderer&#x27;</pre>
+    </li>
+    <li id="L2">
+      <!-- prettier-ignore -->
+      <pre>import { createRoot } from &#x27;react-dom/client&#x27;</pre>
+    </li>
+    <li id="L3">
+      <!-- prettier-ignore -->
+      <pre>import { TitleBar } from &#x27;@/components/TitleBar&#x27;</pre>
+    </li>
+    <li id="L4">
+      <!-- prettier-ignore -->
+      <pre>import { desktopBridge } from &#x27;@/lib/desktop-bridge&#x27;</pre>
+    </li>
+    <li id="L5">
+      <!-- prettier-ignore -->
+      <pre>import { routeTree } from &#x27;@/routeTree.gen&#x27;</pre>
+    </li>
+    <li id="L6">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L7">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L8">
+      <!-- prettier-ignore -->
+      <pre> * 桌面渲染进程的入口（D-103 / D-104）。</pre>
+    </li>
+    <li id="L9">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L10">
+      <!-- prettier-ignore -->
+      <pre> * 这一侧只做三件事：组装路由（基础路由 + 客户端专属页面）、声明平台能力、</pre>
+    </li>
+    <li id="L11">
+      <!-- prettier-ignore -->
+      <pre> * 挂载。界面与业务代码全在 `@mimir/renderer`，与浏览器部署共用一份源码。</pre>
+    </li>
+    <li id="L12">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L13">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L14">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L15">
+      <!-- prettier-ignore -->
+      <pre> * 标题栏的 render-prop **必须是模块级函数**。</pre>
+    </li>
+    <li id="L16">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L17">
+      <!-- prettier-ignore -->
+      <pre> * 写成内联箭头会让 `react(no-unstable-nested-components)` 判它是「渲染期</pre>
+    </li>
+    <li id="L18">
+      <!-- prettier-ignore -->
+      <pre> * 定义组件」，React Compiler 随即跳过宿主组件——而那是**静默**的退化</pre>
+    </li>
+    <li id="L19">
+      <!-- prettier-ignore -->
+      <pre> * （`.trellis/spec/project/rules.md` 铁律 1：不报错，只是组件不再被优化）。</pre>
+    </li>
+    <li id="L20">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L21">
+      <!-- prettier-ignore -->
+      <pre>const renderTitleBar = (props: Parameters&lt;typeof TitleBar&gt;[0]) =&gt; &lt;TitleBar {...props} /&gt;</pre>
+    </li>
+    <li id="L22">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L23">
+      <!-- prettier-ignore -->
+      <pre>const container = document.getElementById(&#x27;root&#x27;)</pre>
+    </li>
+    <li id="L24">
+      <!-- prettier-ignore -->
+      <pre>if (!container) throw new Error(&#x27;找不到 #root 挂载点&#x27;)</pre>
+    </li>
+    <li id="L25">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L26">
+      <!-- prettier-ignore -->
+      <pre>if (!desktopBridge) {</pre>
+    </li>
+    <li id="L27">
+      <!-- prettier-ignore -->
+      <pre>  /**</pre>
+    </li>
+    <li id="L28">
+      <!-- prettier-ignore -->
+      <pre>   * 桥缺失是**组装错误**，不是可降级的状态：preload 没执行时窗口控件、</pre>
+    </li>
+    <li id="L29">
+      <!-- prettier-ignore -->
+      <pre>   * 模式切换、boot 信息全部不可用，而那条路径上每一处都要写防御分支。</pre>
+    </li>
+    <li id="L30">
+      <!-- prettier-ignore -->
+      <pre>   *</pre>
+    </li>
+    <li id="L31">
+      <!-- prettier-ignore -->
+      <pre>   * 响亮地失败——`preload` 写成相对路径时它会静默不执行（坑表记过），</pre>
+    </li>
+    <li id="L32">
+      <!-- prettier-ignore -->
+      <pre>   * 那种情况下白屏加一条控制台报错远比「界面在但处处失灵」好查。</pre>
+    </li>
+    <li id="L33">
+      <!-- prettier-ignore -->
+      <pre>   */</pre>
+    </li>
+    <li id="L34">
+      <!-- prettier-ignore -->
+      <pre>  throw new Error(</pre>
+    </li>
+    <li id="L35">
+      <!-- prettier-ignore -->
+      <pre>    &#x27;window.mimirDesktop 不存在：preload 没有执行（检查 BrowserWindow 的 preload 路径）&#x27;,</pre>
+    </li>
+    <li id="L36">
+      <!-- prettier-ignore -->
+      <pre>  )</pre>
+    </li>
+    <li id="L37">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+    <li id="L38">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L39">
+      <!-- prettier-ignore -->
+      <pre>createApp(createRoot(container), {</pre>
+    </li>
+    <li id="L40">
+      <!-- prettier-ignore -->
+      <pre>  router: buildRouter(routeTree),</pre>
+    </li>
+    <li id="L41">
+      <!-- prettier-ignore -->
+      <pre>  platform: {</pre>
+    </li>
+    <li id="L42">
+      <!-- prettier-ignore -->
+      <pre>    kind: &#x27;desktop&#x27;,</pre>
+    </li>
+    <li id="L43">
+      <!-- prettier-ignore -->
+      <pre>    // 判别联合的这一支里两者都是**必填**，所以上面的空值检查不是防御而是前提</pre>
+    </li>
+    <li id="L44">
+      <!-- prettier-ignore -->
+      <pre>    bridge: desktopBridge,</pre>
+    </li>
+    <li id="L45">
+      <!-- prettier-ignore -->
+      <pre>    renderTitleBar,</pre>
+    </li>
+    <li id="L46">
+      <!-- prettier-ignore -->
+      <pre>  },</pre>
+    </li>
+    <li id="L47">
+      <!-- prettier-ignore -->
+      <pre>})</pre>
+    </li>
+  </ol>
+</html>

@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>apps/desktop/src/main/host.test.ts</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+      min-height: 1.65em;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">Desktop来源索引</a>
+    <h1>apps/desktop/src/main/host.test.ts</h1>
+    <p>current真实源码 · SHA256 80f4b860ab3f28aee7f52445a7e434868fc2399ee483984c7ee3cc3f38b53d3f</p>
+  </header>
+  <ol>
+    <li id="L1">
+      <!-- prettier-ignore -->
+      <pre>import { describe, expect, it } from &#x27;vitest&#x27;</pre>
+    </li>
+    <li id="L2">
+      <!-- prettier-ignore -->
+      <pre>import net from &#x27;node:net&#x27;</pre>
+    </li>
+    <li id="L3">
+      <!-- prettier-ignore -->
+      <pre>import { applyHostEnv, pickFreePort, waitForReady, startHost } from &#x27;./host.js&#x27;</pre>
+    </li>
+    <li id="L4">
+      <!-- prettier-ignore -->
+      <pre>import { join } from &#x27;node:path&#x27;</pre>
+    </li>
+    <li id="L5">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L6">
+      <!-- prettier-ignore -->
+      <pre>describe(&#x27;pickFreePort&#x27;, () =&gt; {</pre>
+    </li>
+    <li id="L7">
+      <!-- prettier-ignore -->
+      <pre>  it(&#x27;返回的端口立刻可用&#x27;, async () =&gt; {</pre>
+    </li>
+    <li id="L8">
+      <!-- prettier-ignore -->
+      <pre>    const port = await pickFreePort()</pre>
+    </li>
+    <li id="L9">
+      <!-- prettier-ignore -->
+      <pre>    expect(port).toBeGreaterThan(0)</pre>
+    </li>
+    <li id="L10">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L11">
+      <!-- prettier-ignore -->
+      <pre>    // 拿到后能真的监听（对 0.0.0.0 随机端口的占位竞争做一次真实验证）</pre>
+    </li>
+    <li id="L12">
+      <!-- prettier-ignore -->
+      <pre>    await new Promise&lt;void&gt;((resolve, reject) =&gt; {</pre>
+    </li>
+    <li id="L13">
+      <!-- prettier-ignore -->
+      <pre>      const server = net.createServer()</pre>
+    </li>
+    <li id="L14">
+      <!-- prettier-ignore -->
+      <pre>      server.once(&#x27;error&#x27;, reject)</pre>
+    </li>
+    <li id="L15">
+      <!-- prettier-ignore -->
+      <pre>      server.listen(port, &#x27;127.0.0.1&#x27;, () =&gt; server.close(() =&gt; resolve()))</pre>
+    </li>
+    <li id="L16">
+      <!-- prettier-ignore -->
+      <pre>    })</pre>
+    </li>
+    <li id="L17">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L18">
+      <!-- prettier-ignore -->
+      <pre>})</pre>
+    </li>
+    <li id="L19">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L20">
+      <!-- prettier-ignore -->
+      <pre>describe(&#x27;applyHostEnv&#x27;, () =&gt; {</pre>
+    </li>
+    <li id="L21">
+      <!-- prettier-ignore -->
+      <pre>  /** 逐个还原，避免污染同进程的其他测试 */</pre>
+    </li>
+    <li id="L22">
+      <!-- prettier-ignore -->
+      <pre>  const MANAGED = [</pre>
+    </li>
+    <li id="L23">
+      <!-- prettier-ignore -->
+      <pre>    &#x27;NODE_ENV&#x27;,</pre>
+    </li>
+    <li id="L24">
+      <!-- prettier-ignore -->
+      <pre>    &#x27;PORT&#x27;,</pre>
+    </li>
+    <li id="L25">
+      <!-- prettier-ignore -->
+      <pre>    &#x27;SERVER_URL&#x27;,</pre>
+    </li>
+    <li id="L26">
+      <!-- prettier-ignore -->
+      <pre>    &#x27;WEB_ORIGIN&#x27;,</pre>
+    </li>
+    <li id="L27">
+      <!-- prettier-ignore -->
+      <pre>    &#x27;DATA_DIR&#x27;,</pre>
+    </li>
+    <li id="L28">
+      <!-- prettier-ignore -->
+      <pre>    &#x27;DATABASE_URL&#x27;,</pre>
+    </li>
+    <li id="L29">
+      <!-- prettier-ignore -->
+      <pre>    &#x27;WEB_DIST&#x27;,</pre>
+    </li>
+    <li id="L30">
+      <!-- prettier-ignore -->
+      <pre>    &#x27;AUTH_SECRET&#x27;,</pre>
+    </li>
+    <li id="L31">
+      <!-- prettier-ignore -->
+      <pre>    &#x27;MIMIR_LOCAL_MODE&#x27;,</pre>
+    </li>
+    <li id="L32">
+      <!-- prettier-ignore -->
+      <pre>    &#x27;MIMIR_LOCAL_TOKEN&#x27;,</pre>
+    </li>
+    <li id="L33">
+      <!-- prettier-ignore -->
+      <pre>  ]</pre>
+    </li>
+    <li id="L34">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L35">
+      <!-- prettier-ignore -->
+      <pre>  function withCleanEnv(run: () =&gt; void): void {</pre>
+    </li>
+    <li id="L36">
+      <!-- prettier-ignore -->
+      <pre>    const before = { ...process.env }</pre>
+    </li>
+    <li id="L37">
+      <!-- prettier-ignore -->
+      <pre>    try {</pre>
+    </li>
+    <li id="L38">
+      <!-- prettier-ignore -->
+      <pre>      run()</pre>
+    </li>
+    <li id="L39">
+      <!-- prettier-ignore -->
+      <pre>    } finally {</pre>
+    </li>
+    <li id="L40">
+      <!-- prettier-ignore -->
+      <pre>      for (const key of MANAGED) {</pre>
+    </li>
+    <li id="L41">
+      <!-- prettier-ignore -->
+      <pre>        if (before[key] === undefined) delete process.env[key]</pre>
+    </li>
+    <li id="L42">
+      <!-- prettier-ignore -->
+      <pre>        else process.env[key] = before[key]</pre>
+    </li>
+    <li id="L43">
+      <!-- prettier-ignore -->
+      <pre>      }</pre>
+    </li>
+    <li id="L44">
+      <!-- prettier-ignore -->
+      <pre>    }</pre>
+    </li>
+    <li id="L45">
+      <!-- prettier-ignore -->
+      <pre>  }</pre>
+    </li>
+    <li id="L46">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L47">
+      <!-- prettier-ignore -->
+      <pre>  it(&#x27;注入服务端需要的全部部署事实&#x27;, () =&gt; {</pre>
+    </li>
+    <li id="L48">
+      <!-- prettier-ignore -->
+      <pre>    withCleanEnv(() =&gt; {</pre>
+    </li>
+    <li id="L49">
+      <!-- prettier-ignore -->
+      <pre>      const paths = {</pre>
+    </li>
+    <li id="L50">
+      <!-- prettier-ignore -->
+      <pre>        dataDir: &#x27;/tmp/mimir-test-data&#x27;,</pre>
+    </li>
+    <li id="L51">
+      <!-- prettier-ignore -->
+      <pre>        serverDist: &#x27;/tmp/mimir-server-dist&#x27;,</pre>
+    </li>
+    <li id="L52">
+      <!-- prettier-ignore -->
+      <pre>        webDist: &#x27;/tmp/mimir-web-dist&#x27;,</pre>
+    </li>
+    <li id="L53">
+      <!-- prettier-ignore -->
+      <pre>      }</pre>
+    </li>
+    <li id="L54">
+      <!-- prettier-ignore -->
+      <pre>      applyHostEnv(41234, paths, &#x27;test-secret-with-more-than-32-characters-1234&#x27;)</pre>
+    </li>
+    <li id="L55">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L56">
+      <!-- prettier-ignore -->
+      <pre>      expect(process.env.NODE_ENV).toBe(&#x27;production&#x27;)</pre>
+    </li>
+    <li id="L57">
+      <!-- prettier-ignore -->
+      <pre>      expect(process.env.PORT).toBe(&#x27;41234&#x27;)</pre>
+    </li>
+    <li id="L58">
+      <!-- prettier-ignore -->
+      <pre>      // better-auth 的 baseURL / trustedOrigins 都源自这两个值，必须同源</pre>
+    </li>
+    <li id="L59">
+      <!-- prettier-ignore -->
+      <pre>      expect(process.env.SERVER_URL).toBe(&#x27;http://127.0.0.1:41234&#x27;)</pre>
+    </li>
+    <li id="L60">
+      <!-- prettier-ignore -->
+      <pre>      expect(process.env.WEB_ORIGIN).toBe(&#x27;http://127.0.0.1:41234&#x27;)</pre>
+    </li>
+    <li id="L61">
+      <!-- prettier-ignore -->
+      <pre>      expect(process.env.DATA_DIR).toBe(paths.dataDir)</pre>
+    </li>
+    <li id="L62">
+      <!-- prettier-ignore -->
+      <pre>      expect(process.env.DATABASE_URL).toBe(`file:${join(paths.dataDir, &#x27;mimir.db&#x27;)}`)</pre>
+    </li>
+    <li id="L63">
+      <!-- prettier-ignore -->
+      <pre>      expect(process.env.WEB_DIST).toBe(paths.webDist)</pre>
+    </li>
+    <li id="L64">
+      <!-- prettier-ignore -->
+      <pre>      // 不带 local 参数时**不打开**本地模式——默认仍是「要登录」的形态</pre>
+    </li>
+    <li id="L65">
+      <!-- prettier-ignore -->
+      <pre>      expect(process.env.MIMIR_LOCAL_MODE).toBeUndefined()</pre>
+    </li>
+    <li id="L66">
+      <!-- prettier-ignore -->
+      <pre>    })</pre>
+    </li>
+    <li id="L67">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L68">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L69">
+      <!-- prettier-ignore -->
+      <pre>  it(&#x27;本地模式注入的是服务端读的那个字面量（1，不是 true）&#x27;, () =&gt; {</pre>
+    </li>
+    <li id="L70">
+      <!-- prettier-ignore -->
+      <pre>    withCleanEnv(() =&gt; {</pre>
+    </li>
+    <li id="L71">
+      <!-- prettier-ignore -->
+      <pre>      applyHostEnv(</pre>
+    </li>
+    <li id="L72">
+      <!-- prettier-ignore -->
+      <pre>        41234,</pre>
+    </li>
+    <li id="L73">
+      <!-- prettier-ignore -->
+      <pre>        { dataDir: &#x27;/tmp/d&#x27;, serverDist: &#x27;/tmp/s&#x27;, webDist: &#x27;/tmp/w&#x27; },</pre>
+    </li>
+    <li id="L74">
+      <!-- prettier-ignore -->
+      <pre>        &#x27;test-secret-with-more-than-32-characters-1234&#x27;,</pre>
+    </li>
+    <li id="L75">
+      <!-- prettier-ignore -->
+      <pre>        { token: &#x27;token-abc&#x27; },</pre>
+    </li>
+    <li id="L76">
+      <!-- prettier-ignore -->
+      <pre>      )</pre>
+    </li>
+    <li id="L77">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L78">
+      <!-- prettier-ignore -->
+      <pre>      // 写成 &#x27;true&#x27; / &#x27;yes&#x27; 时服务端会当成没开，而那种失败是静默的</pre>
+    </li>
+    <li id="L79">
+      <!-- prettier-ignore -->
+      <pre>      // （症状是「本地模式却要求登录」）</pre>
+    </li>
+    <li id="L80">
+      <!-- prettier-ignore -->
+      <pre>      expect(process.env.MIMIR_LOCAL_MODE).toBe(&#x27;1&#x27;)</pre>
+    </li>
+    <li id="L81">
+      <!-- prettier-ignore -->
+      <pre>      expect(process.env.MIMIR_LOCAL_TOKEN).toBe(&#x27;token-abc&#x27;)</pre>
+    </li>
+    <li id="L82">
+      <!-- prettier-ignore -->
+      <pre>    })</pre>
+    </li>
+    <li id="L83">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L84">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L85">
+      <!-- prettier-ignore -->
+      <pre>  it(&#x27;不带 local 时清掉残留的本地模式变量（宿主可能被带旧环境复用）&#x27;, () =&gt; {</pre>
+    </li>
+    <li id="L86">
+      <!-- prettier-ignore -->
+      <pre>    withCleanEnv(() =&gt; {</pre>
+    </li>
+    <li id="L87">
+      <!-- prettier-ignore -->
+      <pre>      process.env.MIMIR_LOCAL_MODE = &#x27;1&#x27;</pre>
+    </li>
+    <li id="L88">
+      <!-- prettier-ignore -->
+      <pre>      process.env.MIMIR_LOCAL_TOKEN = &#x27;stale-token&#x27;</pre>
+    </li>
+    <li id="L89">
+      <!-- prettier-ignore -->
+      <pre>      applyHostEnv(</pre>
+    </li>
+    <li id="L90">
+      <!-- prettier-ignore -->
+      <pre>        41235,</pre>
+    </li>
+    <li id="L91">
+      <!-- prettier-ignore -->
+      <pre>        { dataDir: &#x27;/tmp/d&#x27;, serverDist: &#x27;/tmp/s&#x27;, webDist: &#x27;/tmp/w&#x27; },</pre>
+    </li>
+    <li id="L92">
+      <!-- prettier-ignore -->
+      <pre>        &#x27;test-secret-with-more-than-32-characters-1234&#x27;,</pre>
+    </li>
+    <li id="L93">
+      <!-- prettier-ignore -->
+      <pre>      )</pre>
+    </li>
+    <li id="L94">
+      <!-- prettier-ignore -->
+      <pre>      expect(process.env.MIMIR_LOCAL_MODE).toBeUndefined()</pre>
+    </li>
+    <li id="L95">
+      <!-- prettier-ignore -->
+      <pre>      expect(process.env.MIMIR_LOCAL_TOKEN).toBeUndefined()</pre>
+    </li>
+    <li id="L96">
+      <!-- prettier-ignore -->
+      <pre>    })</pre>
+    </li>
+    <li id="L97">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L98">
+      <!-- prettier-ignore -->
+      <pre>})</pre>
+    </li>
+    <li id="L99">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L100">
+      <!-- prettier-ignore -->
+      <pre>describe(&#x27;waitForReady&#x27;, () =&gt; {</pre>
+    </li>
+    <li id="L101">
+      <!-- prettier-ignore -->
+      <pre>  it(&#x27;超时明确报错，而不是静默等待&#x27;, async () =&gt; {</pre>
+    </li>
+    <li id="L102">
+      <!-- prettier-ignore -->
+      <pre>    // 端口 1 几乎必然无监听；即便个别环境有，这个断言也只是退化成通过</pre>
+    </li>
+    <li id="L103">
+      <!-- prettier-ignore -->
+      <pre>    await expect(waitForReady(&#x27;http://127.0.0.1:1&#x27;, 300)).rejects.toThrow(/未就绪/)</pre>
+    </li>
+    <li id="L104">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L105">
+      <!-- prettier-ignore -->
+      <pre>})</pre>
+    </li>
+    <li id="L106">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L107">
+      <!-- prettier-ignore -->
+      <pre>describe(&#x27;startHost&#x27;, () =&gt; {</pre>
+    </li>
+    <li id="L108">
+      <!-- prettier-ignore -->
+      <pre>  it(&#x27;产物缺失时抛清单式错误（而不是等到动态 import 时才报 ERR_MODULE_NOT_FOUND）&#x27;, async () =&gt; {</pre>
+    </li>
+    <li id="L109">
+      <!-- prettier-ignore -->
+      <pre>    const paths = {</pre>
+    </li>
+    <li id="L110">
+      <!-- prettier-ignore -->
+      <pre>      serverDist: &#x27;/nonexistent-server-dist&#x27;,</pre>
+    </li>
+    <li id="L111">
+      <!-- prettier-ignore -->
+      <pre>      webDist: &#x27;/nonexistent-web-dist&#x27;,</pre>
+    </li>
+    <li id="L112">
+      <!-- prettier-ignore -->
+      <pre>      dataDir: &#x27;/tmp/mimir-test-data&#x27;,</pre>
+    </li>
+    <li id="L113">
+      <!-- prettier-ignore -->
+      <pre>    }</pre>
+    </li>
+    <li id="L114">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L115">
+      <!-- prettier-ignore -->
+      <pre>    await expect(startHost(paths)).rejects.toThrow(/缺少.*必需产物/)</pre>
+    </li>
+    <li id="L116">
+      <!-- prettier-ignore -->
+      <pre>    await expect(startHost(paths)).rejects.toThrow(/pnpm desktop:start/)</pre>
+    </li>
+    <li id="L117">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L118">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L119">
+      <!-- prettier-ignore -->
+      <pre>  /**</pre>
+    </li>
+    <li id="L120">
+      <!-- prettier-ignore -->
+      <pre>   * serverRoot 必须由 serverDist **退一级**推出。</pre>
+    </li>
+    <li id="L121">
+      <!-- prettier-ignore -->
+      <pre>   *</pre>
+    </li>
+    <li id="L122">
+      <!-- prettier-ignore -->
+      <pre>   * 这条断言是**踩过才补的**（D-103）：原先退两级，依赖「serverDist 与</pre>
+    </li>
+    <li id="L123">
+      <!-- prettier-ignore -->
+      <pre>   * webDist 同在 apps/ 下」这个巧合，渲染产物搬进桌面包后它就不成立了——</pre>
+    </li>
+    <li id="L124">
+      <!-- prettier-ignore -->
+      <pre>   * 报出来的缺失路径是 `apps/drizzle-sqlite`，一个从来不存在的目录。</pre>
+    </li>
+    <li id="L125">
+      <!-- prettier-ignore -->
+      <pre>   *</pre>
+    </li>
+    <li id="L126">
+      <!-- prettier-ignore -->
+      <pre>   * 症状之所以难查，是因为错误信息本身看着很正常（「缺少 drizzle 迁移目录」），</pre>
+    </li>
+    <li id="L127">
+      <!-- prettier-ignore -->
+      <pre>   * 只有盯着那个路径才会发现它少了一级。`artifacts.test.ts` 也抓不到：</pre>
+    </li>
+    <li id="L128">
+      <!-- prettier-ignore -->
+      <pre>   * 那边直接传 serverRoot，推导这一步根本没被覆盖。</pre>
+    </li>
+    <li id="L129">
+      <!-- prettier-ignore -->
+      <pre>   */</pre>
+    </li>
+    <li id="L130">
+      <!-- prettier-ignore -->
+      <pre>  it(&#x27;缺失清单里的 drizzle 目录挂在 serverDist 的上一级&#x27;, async () =&gt; {</pre>
+    </li>
+    <li id="L131">
+      <!-- prettier-ignore -->
+      <pre>    await expect(</pre>
+    </li>
+    <li id="L132">
+      <!-- prettier-ignore -->
+      <pre>      startHost({</pre>
+    </li>
+    <li id="L133">
+      <!-- prettier-ignore -->
+      <pre>        serverDist: &#x27;/nonexistent-root/dist&#x27;,</pre>
+    </li>
+    <li id="L134">
+      <!-- prettier-ignore -->
+      <pre>        webDist: &#x27;/nonexistent-web&#x27;,</pre>
+    </li>
+    <li id="L135">
+      <!-- prettier-ignore -->
+      <pre>        dataDir: &#x27;/tmp/mimir-test-data&#x27;,</pre>
+    </li>
+    <li id="L136">
+      <!-- prettier-ignore -->
+      <pre>      }),</pre>
+    </li>
+    <li id="L137">
+      <!-- prettier-ignore -->
+      <pre>    ).rejects.toThrow(join(&#x27;/nonexistent-root&#x27;, &#x27;drizzle-sqlite&#x27;))</pre>
+    </li>
+    <li id="L138">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L139">
+      <!-- prettier-ignore -->
+      <pre>})</pre>
+    </li>
+  </ol>
+</html>

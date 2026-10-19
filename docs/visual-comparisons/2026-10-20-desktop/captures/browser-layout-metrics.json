@@ -1,0 +1,2034 @@
+[
+  {
+    "variant": "before",
+    "key": "setup-loading-wide",
+    "metrics": {
+      "buttons": [],
+      "clientWidth": 1100,
+      "focus": null,
+      "headings": [
+        {
+          "rect": {
+            "bottom": 0,
+            "height": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          "text": "Desktop真实组件 · 基线53285bb · 模拟桥"
+        }
+      ],
+      "scrollRegions": [],
+      "scrollWidth": 1100,
+      "viewport": [1100, 760]
+    }
+  },
+  {
+    "variant": "before",
+    "key": "setup-first-wide",
+    "metrics": {
+      "buttons": [
+        {
+          "aria": "最小化",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 1008,
+            "right": 1054,
+            "top": 0,
+            "width": 46,
+            "x": 1008,
+            "y": 0
+          },
+          "text": ""
+        },
+        {
+          "aria": "关闭",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 1054,
+            "right": 1100,
+            "top": 0,
+            "width": 46,
+            "x": 1054,
+            "y": 0
+          },
+          "text": ""
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 427.5,
+            "height": 74.65625,
+            "left": 550,
+            "right": 990,
+            "top": 352.84375,
+            "width": 440,
+            "x": 550,
+            "y": 352.84375
+          },
+          "text": "本地使用资料保存在此设备，可离线使用。"
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 502.15625,
+            "height": 74.65625,
+            "left": 550,
+            "right": 990,
+            "top": 427.5,
+            "width": 440,
+            "x": 550,
+            "y": 427.5
+          },
+          "text": "连接服务器连接你自己的服务器，在多台设备上使用。"
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 558.15625,
+            "height": 32,
+            "left": 550,
+            "right": 639.125,
+            "top": 526.15625,
+            "width": 89.125,
+            "x": 550,
+            "y": 526.15625
+          },
+          "text": "开始使用"
+        }
+      ],
+      "clientWidth": 1100,
+      "focus": null,
+      "headings": [
+        {
+          "rect": {
+            "bottom": 0,
+            "height": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          "text": "Desktop真实组件 · 基线53285bb · 模拟桥"
+        },
+        {
+          "rect": {
+            "bottom": 137,
+            "height": 38,
+            "left": 105,
+            "right": 193.140625,
+            "top": 99,
+            "width": 88.140625,
+            "x": 105,
+            "y": 99
+          },
+          "text": "mimir"
+        },
+        {
+          "rect": {
+            "bottom": 283.84375,
+            "height": 38,
+            "left": 550,
+            "right": 990,
+            "top": 245.84375,
+            "width": 440,
+            "x": 550,
+            "y": 245.84375
+          },
+          "text": "选择使用方式"
+        }
+      ],
+      "scrollRegions": [
+        {
+          "height": 716,
+          "scrollHeight": 716,
+          "scrollTop": 0
+        }
+      ],
+      "scrollWidth": 1100,
+      "viewport": [1100, 760]
+    }
+  },
+  {
+    "variant": "before",
+    "key": "setup-cloud-short",
+    "metrics": {
+      "buttons": [
+        {
+          "aria": "最小化",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 708,
+            "right": 754,
+            "top": 0,
+            "width": 46,
+            "x": 708,
+            "y": 0
+          },
+          "text": ""
+        },
+        {
+          "aria": "关闭",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 754,
+            "right": 800,
+            "top": 0,
+            "width": 46,
+            "x": 754,
+            "y": 0
+          },
+          "text": ""
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 273.65625,
+            "height": 74.65625,
+            "left": 348,
+            "right": 757,
+            "top": 199,
+            "width": 409,
+            "x": 348,
+            "y": 199
+          },
+          "text": "本地使用资料保存在此设备，可离线使用。"
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 348.3125,
+            "height": 74.65625,
+            "left": 348,
+            "right": 757,
+            "top": 273.65625,
+            "width": 409,
+            "x": 348,
+            "y": 273.65625
+          },
+          "text": "连接服务器连接你自己的服务器，在多台设备上使用。"
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 508.3125,
+            "height": 32,
+            "left": 348,
+            "right": 412.359375,
+            "top": 476.3125,
+            "width": 64.359375,
+            "x": 348,
+            "y": 476.3125
+          },
+          "text": "切 换"
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 508.3125,
+            "height": 32,
+            "left": 422.359375,
+            "right": 525.765625,
+            "top": 476.3125,
+            "width": 103.40625,
+            "x": 422.359375,
+            "y": 476.3125
+          },
+          "text": "返回，不改"
+        }
+      ],
+      "clientWidth": 800,
+      "focus": null,
+      "headings": [
+        {
+          "rect": {
+            "bottom": 0,
+            "height": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          "text": "Desktop真实组件 · 基线53285bb · 模拟桥"
+        },
+        {
+          "rect": {
+            "bottom": 122,
+            "height": 38,
+            "left": 90,
+            "right": 178.140625,
+            "top": 84,
+            "width": 88.140625,
+            "x": 90,
+            "y": 84
+          },
+          "text": "mimir"
+        },
+        {
+          "rect": {
+            "bottom": 130,
+            "height": 38,
+            "left": 348,
+            "right": 757,
+            "top": 92,
+            "width": 409,
+            "x": 348,
+            "y": 92
+          },
+          "text": "切换使用方式"
+        }
+      ],
+      "scrollRegions": [
+        {
+          "height": 436,
+          "scrollHeight": 512,
+          "scrollTop": 0
+        }
+      ],
+      "scrollWidth": 800,
+      "viewport": [800, 480]
+    }
+  },
+  {
+    "variant": "before",
+    "key": "choose-failure-narrow",
+    "metrics": {
+      "buttons": [
+        {
+          "aria": "最小化",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 298,
+            "right": 344,
+            "top": 0,
+            "width": 46,
+            "x": 298,
+            "y": 0
+          },
+          "text": ""
+        },
+        {
+          "aria": "关闭",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 344,
+            "right": 390,
+            "top": 0,
+            "width": 46,
+            "x": 344,
+            "y": 0
+          },
+          "text": ""
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 86.65625,
+            "height": 74.65625,
+            "left": 28,
+            "right": 347,
+            "top": 12,
+            "width": 319,
+            "x": 28,
+            "y": 12
+          },
+          "text": "本地使用资料保存在此设备，可离线使用。"
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 183.96875,
+            "height": 97.3125,
+            "left": 28,
+            "right": 347,
+            "top": 86.65625,
+            "width": 319,
+            "x": 28,
+            "y": 86.65625
+          },
+          "text": "连接服务器连接你自己的服务器，在多台设备上使用。"
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 343.96875,
+            "height": 32,
+            "left": 28,
+            "right": 92.359375,
+            "top": 311.96875,
+            "width": 64.359375,
+            "x": 28,
+            "y": 311.96875
+          },
+          "text": "切 换"
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 343.96875,
+            "height": 32,
+            "left": 102.359375,
+            "right": 205.765625,
+            "top": 311.96875,
+            "width": 103.40625,
+            "x": 102.359375,
+            "y": 311.96875
+          },
+          "text": "返回，不改"
+        }
+      ],
+      "clientWidth": 390,
+      "focus": null,
+      "headings": [
+        {
+          "rect": {
+            "bottom": 0,
+            "height": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          "text": "Desktop真实组件 · 基线53285bb · 模拟桥"
+        },
+        {
+          "rect": {
+            "bottom": -234,
+            "height": 38,
+            "left": 78,
+            "right": 166.140625,
+            "top": -272,
+            "width": 88.140625,
+            "x": 78,
+            "y": -272
+          },
+          "text": "mimir"
+        },
+        {
+          "rect": {
+            "bottom": -135,
+            "height": 38,
+            "left": 28,
+            "right": 347,
+            "top": -173,
+            "width": 319,
+            "x": 28,
+            "y": -173
+          },
+          "text": "切换使用方式"
+        }
+      ],
+      "scrollRegions": [
+        {
+          "height": 356,
+          "scrollHeight": 700,
+          "scrollTop": 344
+        }
+      ],
+      "scrollWidth": 390,
+      "viewport": [390, 400]
+    }
+  },
+  {
+    "variant": "before",
+    "key": "setup-read-error-narrow",
+    "metrics": {
+      "buttons": [
+        {
+          "aria": "最小化",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 298,
+            "right": 344,
+            "top": 0,
+            "width": 46,
+            "x": 298,
+            "y": 0
+          },
+          "text": ""
+        },
+        {
+          "aria": "关闭",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 344,
+            "right": 390,
+            "top": 0,
+            "width": 46,
+            "x": 344,
+            "y": 0
+          },
+          "text": ""
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 319,
+            "height": 32,
+            "left": 28,
+            "right": 92.359375,
+            "top": 287,
+            "width": 64.359375,
+            "x": 28,
+            "y": 287
+          },
+          "text": "重 试"
+        }
+      ],
+      "clientWidth": 390,
+      "focus": null,
+      "headings": [
+        {
+          "rect": {
+            "bottom": 0,
+            "height": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          "text": "Desktop真实组件 · 基线53285bb · 模拟桥"
+        },
+        {
+          "rect": {
+            "bottom": 110,
+            "height": 38,
+            "left": 78,
+            "right": 166.140625,
+            "top": 72,
+            "width": 88.140625,
+            "x": 78,
+            "y": 72
+          },
+          "text": "mimir"
+        },
+        {
+          "rect": {
+            "bottom": 209,
+            "height": 38,
+            "left": 28,
+            "right": 362,
+            "top": 171,
+            "width": 334,
+            "x": 28,
+            "y": 171
+          },
+          "text": "无法读取使用方式"
+        }
+      ],
+      "scrollRegions": [
+        {
+          "height": 356,
+          "scrollHeight": 356,
+          "scrollTop": 0
+        }
+      ],
+      "scrollWidth": 390,
+      "viewport": [390, 400]
+    }
+  },
+  {
+    "variant": "before",
+    "key": "choose-pending-short",
+    "metrics": {
+      "buttons": [
+        {
+          "aria": "最小化",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 708,
+            "right": 754,
+            "top": 0,
+            "width": 46,
+            "x": 708,
+            "y": 0
+          },
+          "text": ""
+        },
+        {
+          "aria": "关闭",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 754,
+            "right": 800,
+            "top": 0,
+            "width": 46,
+            "x": 754,
+            "y": 0
+          },
+          "text": ""
+        },
+        {
+          "aria": null,
+          "disabled": true,
+          "rect": {
+            "bottom": 197.65625,
+            "height": 74.65625,
+            "left": 348,
+            "right": 757,
+            "top": 123,
+            "width": 409,
+            "x": 348,
+            "y": 123
+          },
+          "text": "本地使用资料保存在此设备，可离线使用。"
+        },
+        {
+          "aria": null,
+          "disabled": true,
+          "rect": {
+            "bottom": 272.3125,
+            "height": 74.65625,
+            "left": 348,
+            "right": 757,
+            "top": 197.65625,
+            "width": 409,
+            "x": 348,
+            "y": 197.65625
+          },
+          "text": "连接服务器连接你自己的服务器，在多台设备上使用。"
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 432.3125,
+            "height": 32,
+            "left": 348,
+            "right": 431.890625,
+            "top": 400.3125,
+            "width": 83.890625,
+            "x": 348,
+            "y": 400.3125
+          },
+          "text": "切 换"
+        },
+        {
+          "aria": null,
+          "disabled": true,
+          "rect": {
+            "bottom": 432.3125,
+            "height": 32,
+            "left": 441.890625,
+            "right": 545.296875,
+            "top": 400.3125,
+            "width": 103.40625,
+            "x": 441.890625,
+            "y": 400.3125
+          },
+          "text": "返回，不改"
+        }
+      ],
+      "clientWidth": 800,
+      "focus": null,
+      "headings": [
+        {
+          "rect": {
+            "bottom": 0,
+            "height": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          "text": "Desktop真实组件 · 基线53285bb · 模拟桥"
+        },
+        {
+          "rect": {
+            "bottom": 46,
+            "height": 38,
+            "left": 90,
+            "right": 178.140625,
+            "top": 8,
+            "width": 88.140625,
+            "x": 90,
+            "y": 8
+          },
+          "text": "mimir"
+        },
+        {
+          "rect": {
+            "bottom": 54,
+            "height": 38,
+            "left": 348,
+            "right": 757,
+            "top": 16,
+            "width": 409,
+            "x": 348,
+            "y": 16
+          },
+          "text": "切换使用方式"
+        }
+      ],
+      "scrollRegions": [
+        {
+          "height": 436,
+          "scrollHeight": 512,
+          "scrollTop": 76
+        }
+      ],
+      "scrollWidth": 800,
+      "viewport": [800, 480]
+    }
+  },
+  {
+    "variant": "before",
+    "key": "about-long-narrow",
+    "metrics": {
+      "buttons": [],
+      "clientWidth": 390,
+      "focus": null,
+      "headings": [
+        {
+          "rect": {
+            "bottom": 0,
+            "height": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          "text": "Desktop真实组件 · 基线53285bb · 模拟桥"
+        },
+        {
+          "rect": {
+            "bottom": 80,
+            "height": 38,
+            "left": 28,
+            "right": 347,
+            "top": 42,
+            "width": 319,
+            "x": 28,
+            "y": 42
+          },
+          "text": "关于 mimir"
+        }
+      ],
+      "scrollRegions": [
+        {
+          "height": 400,
+          "scrollHeight": 513,
+          "scrollTop": 0
+        }
+      ],
+      "scrollWidth": 390,
+      "viewport": [390, 400]
+    }
+  },
+  {
+    "variant": "before",
+    "key": "titlebar-focus",
+    "metrics": {
+      "buttons": [
+        {
+          "aria": "折叠侧边栏",
+          "disabled": false,
+          "rect": {
+            "bottom": 35,
+            "height": 26,
+            "left": 84.296875,
+            "right": 110.296875,
+            "top": 9,
+            "width": 26,
+            "x": 84.296875,
+            "y": 9
+          },
+          "text": ""
+        },
+        {
+          "aria": "最小化",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 662,
+            "right": 708,
+            "top": 0,
+            "width": 46,
+            "x": 662,
+            "y": 0
+          },
+          "text": ""
+        },
+        {
+          "aria": "最大化",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 708,
+            "right": 754,
+            "top": 0,
+            "width": 46,
+            "x": 708,
+            "y": 0
+          },
+          "text": ""
+        },
+        {
+          "aria": "关闭",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 754,
+            "right": 800,
+            "top": 0,
+            "width": 46,
+            "x": 754,
+            "y": 0
+          },
+          "text": ""
+        }
+      ],
+      "clientWidth": 800,
+      "focus": "折叠侧边栏",
+      "headings": [
+        {
+          "rect": {
+            "bottom": 0,
+            "height": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          "text": "Desktop真实组件 · 基线53285bb · 模拟桥"
+        },
+        {
+          "rect": {
+            "bottom": 124,
+            "height": 38,
+            "left": 40,
+            "right": 760,
+            "top": 86,
+            "width": 720,
+            "x": 40,
+            "y": 86
+          },
+          "text": "关于 mimir"
+        }
+      ],
+      "scrollRegions": [
+        {
+          "height": 436,
+          "scrollHeight": 436,
+          "scrollTop": 0
+        }
+      ],
+      "scrollWidth": 800,
+      "viewport": [800, 480]
+    }
+  },
+  {
+    "variant": "before",
+    "key": "choose-failure-narrow",
+    "metrics": {
+      "buttons": [
+        {
+          "aria": "最小化",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 298,
+            "right": 344,
+            "top": 0,
+            "width": 46,
+            "x": 298,
+            "y": 0
+          },
+          "text": ""
+        },
+        {
+          "aria": "关闭",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 344,
+            "right": 390,
+            "top": 0,
+            "width": 46,
+            "x": 344,
+            "y": 0
+          },
+          "text": ""
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 430.65625,
+            "height": 74.65625,
+            "left": 28,
+            "right": 347,
+            "top": 356,
+            "width": 319,
+            "x": 28,
+            "y": 356
+          },
+          "text": "本地使用资料保存在此设备，可离线使用。"
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 527.96875,
+            "height": 97.3125,
+            "left": 28,
+            "right": 347,
+            "top": 430.65625,
+            "width": 319,
+            "x": 28,
+            "y": 430.65625
+          },
+          "text": "连接服务器连接你自己的服务器，在多台设备上使用。"
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 687.96875,
+            "height": 32,
+            "left": 28,
+            "right": 92.359375,
+            "top": 655.96875,
+            "width": 64.359375,
+            "x": 28,
+            "y": 655.96875
+          },
+          "text": "切 换"
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 687.96875,
+            "height": 32,
+            "left": 102.359375,
+            "right": 205.765625,
+            "top": 655.96875,
+            "width": 103.40625,
+            "x": 102.359375,
+            "y": 655.96875
+          },
+          "text": "返回，不改"
+        }
+      ],
+      "clientWidth": 390,
+      "focus": null,
+      "headings": [
+        {
+          "rect": {
+            "bottom": 0,
+            "height": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          "text": "Desktop真实组件 · 基线53285bb · 模拟桥"
+        },
+        {
+          "rect": {
+            "bottom": 110,
+            "height": 38,
+            "left": 78,
+            "right": 166.140625,
+            "top": 72,
+            "width": 88.140625,
+            "x": 78,
+            "y": 72
+          },
+          "text": "mimir"
+        },
+        {
+          "rect": {
+            "bottom": 209,
+            "height": 38,
+            "left": 28,
+            "right": 347,
+            "top": 171,
+            "width": 319,
+            "x": 28,
+            "y": 171
+          },
+          "text": "切换使用方式"
+        }
+      ],
+      "scrollRegions": [
+        {
+          "height": 356,
+          "scrollHeight": 700,
+          "scrollTop": 0
+        }
+      ],
+      "scrollWidth": 390,
+      "viewport": [390, 400]
+    }
+  },
+  {
+    "variant": "before",
+    "key": "about-long-narrow",
+    "metrics": {
+      "buttons": [],
+      "clientWidth": 390,
+      "focus": null,
+      "headings": [
+        {
+          "rect": {
+            "bottom": 0,
+            "height": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          "text": "Desktop真实组件 · 基线53285bb · 模拟桥"
+        },
+        {
+          "rect": {
+            "bottom": 80,
+            "height": 38,
+            "left": 28,
+            "right": 347,
+            "top": 42,
+            "width": 319,
+            "x": 28,
+            "y": 42
+          },
+          "text": "关于 mimir"
+        }
+      ],
+      "scrollRegions": [
+        {
+          "height": 400,
+          "scrollHeight": 513,
+          "scrollTop": 0
+        }
+      ],
+      "scrollWidth": 390,
+      "viewport": [390, 400]
+    }
+  },
+  {
+    "variant": "after",
+    "key": "setup-loading-wide",
+    "metrics": {
+      "buttons": [
+        {
+          "aria": "最小化",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 1008,
+            "right": 1054,
+            "top": 0,
+            "width": 46,
+            "x": 1008,
+            "y": 0
+          },
+          "text": ""
+        },
+        {
+          "aria": "关闭",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 1054,
+            "right": 1100,
+            "top": 0,
+            "width": 46,
+            "x": 1054,
+            "y": 0
+          },
+          "text": ""
+        }
+      ],
+      "clientWidth": 1100,
+      "focus": null,
+      "headings": [
+        {
+          "rect": {
+            "bottom": 0,
+            "height": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          "text": "Desktop真实组件 · 当前实现 · 模拟桥"
+        },
+        {
+          "rect": {
+            "bottom": 137,
+            "height": 38,
+            "left": 105,
+            "right": 193.140625,
+            "top": 99,
+            "width": 88.140625,
+            "x": 105,
+            "y": 99
+          },
+          "text": "mimir"
+        }
+      ],
+      "scrollRegions": [
+        {
+          "height": 716,
+          "scrollHeight": 716,
+          "scrollTop": 0
+        }
+      ],
+      "scrollWidth": 1100,
+      "viewport": [1100, 760]
+    }
+  },
+  {
+    "variant": "after",
+    "key": "setup-first-wide",
+    "metrics": {
+      "buttons": [
+        {
+          "aria": "最小化",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 1008,
+            "right": 1054,
+            "top": 0,
+            "width": 46,
+            "x": 1008,
+            "y": 0
+          },
+          "text": ""
+        },
+        {
+          "aria": "关闭",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 1054,
+            "right": 1100,
+            "top": 0,
+            "width": 46,
+            "x": 1054,
+            "y": 0
+          },
+          "text": ""
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 424.5,
+            "height": 74.65625,
+            "left": 550,
+            "right": 990,
+            "top": 349.84375,
+            "width": 440,
+            "x": 550,
+            "y": 349.84375
+          },
+          "text": "本地使用资料保存在此设备，可离线使用。"
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 499.15625,
+            "height": 74.65625,
+            "left": 550,
+            "right": 990,
+            "top": 424.5,
+            "width": 440,
+            "x": 550,
+            "y": 424.5
+          },
+          "text": "连接服务器连接你自己的服务器，在多台设备上使用。"
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 547.15625,
+            "height": 32,
+            "left": 550,
+            "right": 639.125,
+            "top": 515.15625,
+            "width": 89.125,
+            "x": 550,
+            "y": 515.15625
+          },
+          "text": "开始使用"
+        }
+      ],
+      "clientWidth": 1100,
+      "focus": null,
+      "headings": [
+        {
+          "rect": {
+            "bottom": 0,
+            "height": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          "text": "Desktop真实组件 · 当前实现 · 模拟桥"
+        },
+        {
+          "rect": {
+            "bottom": 137,
+            "height": 38,
+            "left": 105,
+            "right": 193.140625,
+            "top": 99,
+            "width": 88.140625,
+            "x": 105,
+            "y": 99
+          },
+          "text": "mimir"
+        },
+        {
+          "rect": {
+            "bottom": 294.84375,
+            "height": 38,
+            "left": 550,
+            "right": 990,
+            "top": 256.84375,
+            "width": 440,
+            "x": 550,
+            "y": 256.84375
+          },
+          "text": "选择使用方式"
+        }
+      ],
+      "scrollRegions": [
+        {
+          "height": 716,
+          "scrollHeight": 716,
+          "scrollTop": 0
+        }
+      ],
+      "scrollWidth": 1100,
+      "viewport": [1100, 760]
+    }
+  },
+  {
+    "variant": "after",
+    "key": "setup-cloud-short",
+    "metrics": {
+      "buttons": [
+        {
+          "aria": "最小化",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 708,
+            "right": 754,
+            "top": 0,
+            "width": 46,
+            "x": 708,
+            "y": 0
+          },
+          "text": ""
+        },
+        {
+          "aria": "关闭",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 754,
+            "right": 800,
+            "top": 0,
+            "width": 46,
+            "x": 754,
+            "y": 0
+          },
+          "text": ""
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 235.65625,
+            "height": 74.65625,
+            "left": 348,
+            "right": 757,
+            "top": 161,
+            "width": 409,
+            "x": 348,
+            "y": 161
+          },
+          "text": "本地使用资料保存在此设备，可离线使用。"
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 310.3125,
+            "height": 74.65625,
+            "left": 348,
+            "right": 757,
+            "top": 235.65625,
+            "width": 409,
+            "x": 348,
+            "y": 235.65625
+          },
+          "text": "连接服务器连接你自己的服务器，在多台设备上使用。"
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 462.3125,
+            "height": 32,
+            "left": 348,
+            "right": 412.359375,
+            "top": 430.3125,
+            "width": 64.359375,
+            "x": 348,
+            "y": 430.3125
+          },
+          "text": "切 换"
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 462.3125,
+            "height": 32,
+            "left": 422.359375,
+            "right": 525.765625,
+            "top": 430.3125,
+            "width": 103.40625,
+            "x": 422.359375,
+            "y": 430.3125
+          },
+          "text": "返回，不改"
+        }
+      ],
+      "clientWidth": 800,
+      "focus": null,
+      "headings": [
+        {
+          "rect": {
+            "bottom": 0,
+            "height": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          "text": "Desktop真实组件 · 当前实现 · 模拟桥"
+        },
+        {
+          "rect": {
+            "bottom": 122,
+            "height": 38,
+            "left": 90,
+            "right": 178.140625,
+            "top": 84,
+            "width": 88.140625,
+            "x": 90,
+            "y": 84
+          },
+          "text": "mimir"
+        },
+        {
+          "rect": {
+            "bottom": 106,
+            "height": 38,
+            "left": 348,
+            "right": 757,
+            "top": 68,
+            "width": 409,
+            "x": 348,
+            "y": 68
+          },
+          "text": "切换使用方式"
+        }
+      ],
+      "scrollRegions": [
+        {
+          "height": 436,
+          "scrollHeight": 442,
+          "scrollTop": 0
+        }
+      ],
+      "scrollWidth": 800,
+      "viewport": [800, 480]
+    }
+  },
+  {
+    "variant": "after",
+    "key": "choose-failure-narrow",
+    "metrics": {
+      "buttons": [
+        {
+          "aria": "最小化",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 298,
+            "right": 344,
+            "top": 0,
+            "width": 46,
+            "x": 298,
+            "y": 0
+          },
+          "text": ""
+        },
+        {
+          "aria": "关闭",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 344,
+            "right": 390,
+            "top": 0,
+            "width": 46,
+            "x": 344,
+            "y": 0
+          },
+          "text": ""
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 380.65625,
+            "height": 74.65625,
+            "left": 24,
+            "right": 351,
+            "top": 306,
+            "width": 327,
+            "x": 24,
+            "y": 306
+          },
+          "text": "本地使用资料保存在此设备，可离线使用。"
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 455.3125,
+            "height": 74.65625,
+            "left": 24,
+            "right": 351,
+            "top": 380.65625,
+            "width": 327,
+            "x": 24,
+            "y": 380.65625
+          },
+          "text": "连接服务器连接你自己的服务器，在多台设备上使用。"
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 607.3125,
+            "height": 32,
+            "left": 24,
+            "right": 88.359375,
+            "top": 575.3125,
+            "width": 64.359375,
+            "x": 24,
+            "y": 575.3125
+          },
+          "text": "切 换"
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 607.3125,
+            "height": 32,
+            "left": 98.359375,
+            "right": 201.765625,
+            "top": 575.3125,
+            "width": 103.40625,
+            "x": 98.359375,
+            "y": 575.3125
+          },
+          "text": "返回，不改"
+        }
+      ],
+      "clientWidth": 390,
+      "focus": null,
+      "headings": [
+        {
+          "rect": {
+            "bottom": 0,
+            "height": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          "text": "Desktop真实组件 · 当前实现 · 模拟桥"
+        },
+        {
+          "rect": {
+            "bottom": 98,
+            "height": 38,
+            "left": 74,
+            "right": 162.140625,
+            "top": 60,
+            "width": 88.140625,
+            "x": 74,
+            "y": 60
+          },
+          "text": "mimir"
+        },
+        {
+          "rect": {
+            "bottom": 173,
+            "height": 38,
+            "left": 24,
+            "right": 351,
+            "top": 135,
+            "width": 327,
+            "x": 24,
+            "y": 135
+          },
+          "text": "切换使用方式"
+        }
+      ],
+      "scrollRegions": [
+        {
+          "height": 356,
+          "scrollHeight": 587,
+          "scrollTop": 0
+        }
+      ],
+      "scrollWidth": 390,
+      "viewport": [390, 400]
+    }
+  },
+  {
+    "variant": "after",
+    "key": "setup-read-error-narrow",
+    "metrics": {
+      "buttons": [
+        {
+          "aria": "最小化",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 298,
+            "right": 344,
+            "top": 0,
+            "width": 46,
+            "x": 298,
+            "y": 0
+          },
+          "text": ""
+        },
+        {
+          "aria": "关闭",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 344,
+            "right": 390,
+            "top": 0,
+            "width": 46,
+            "x": 344,
+            "y": 0
+          },
+          "text": ""
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 277,
+            "height": 32,
+            "left": 24,
+            "right": 88.359375,
+            "top": 245,
+            "width": 64.359375,
+            "x": 24,
+            "y": 245
+          },
+          "text": "重 试"
+        }
+      ],
+      "clientWidth": 390,
+      "focus": null,
+      "headings": [
+        {
+          "rect": {
+            "bottom": 0,
+            "height": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          "text": "Desktop真实组件 · 当前实现 · 模拟桥"
+        },
+        {
+          "rect": {
+            "bottom": 98,
+            "height": 38,
+            "left": 74,
+            "right": 162.140625,
+            "top": 60,
+            "width": 88.140625,
+            "x": 74,
+            "y": 60
+          },
+          "text": "mimir"
+        },
+        {
+          "rect": {
+            "bottom": 173,
+            "height": 38,
+            "left": 24,
+            "right": 366,
+            "top": 135,
+            "width": 342,
+            "x": 24,
+            "y": 135
+          },
+          "text": "无法读取使用方式"
+        }
+      ],
+      "scrollRegions": [
+        {
+          "height": 356,
+          "scrollHeight": 356,
+          "scrollTop": 0
+        }
+      ],
+      "scrollWidth": 390,
+      "viewport": [390, 400]
+    }
+  },
+  {
+    "variant": "after",
+    "key": "choose-pending-short",
+    "metrics": {
+      "buttons": [
+        {
+          "aria": "最小化",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 708,
+            "right": 754,
+            "top": 0,
+            "width": 46,
+            "x": 708,
+            "y": 0
+          },
+          "text": ""
+        },
+        {
+          "aria": "关闭",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 754,
+            "right": 800,
+            "top": 0,
+            "width": 46,
+            "x": 754,
+            "y": 0
+          },
+          "text": ""
+        },
+        {
+          "aria": null,
+          "disabled": true,
+          "rect": {
+            "bottom": 229.65625,
+            "height": 74.65625,
+            "left": 348,
+            "right": 757,
+            "top": 155,
+            "width": 409,
+            "x": 348,
+            "y": 155
+          },
+          "text": "本地使用资料保存在此设备，可离线使用。"
+        },
+        {
+          "aria": null,
+          "disabled": true,
+          "rect": {
+            "bottom": 304.3125,
+            "height": 74.65625,
+            "left": 348,
+            "right": 757,
+            "top": 229.65625,
+            "width": 409,
+            "x": 348,
+            "y": 229.65625
+          },
+          "text": "连接服务器连接你自己的服务器，在多台设备上使用。"
+        },
+        {
+          "aria": null,
+          "disabled": false,
+          "rect": {
+            "bottom": 456.3125,
+            "height": 32,
+            "left": 348,
+            "right": 430.1875,
+            "top": 424.3125,
+            "width": 82.1875,
+            "x": 348,
+            "y": 424.3125
+          },
+          "text": "切 换"
+        },
+        {
+          "aria": null,
+          "disabled": true,
+          "rect": {
+            "bottom": 456.3125,
+            "height": 32,
+            "left": 440.1875,
+            "right": 543.59375,
+            "top": 424.3125,
+            "width": 103.40625,
+            "x": 440.1875,
+            "y": 424.3125
+          },
+          "text": "返回，不改"
+        }
+      ],
+      "clientWidth": 800,
+      "focus": null,
+      "headings": [
+        {
+          "rect": {
+            "bottom": 0,
+            "height": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          "text": "Desktop真实组件 · 当前实现 · 模拟桥"
+        },
+        {
+          "rect": {
+            "bottom": 116,
+            "height": 38,
+            "left": 90,
+            "right": 178.140625,
+            "top": 78,
+            "width": 88.140625,
+            "x": 90,
+            "y": 78
+          },
+          "text": "mimir"
+        },
+        {
+          "rect": {
+            "bottom": 100,
+            "height": 38,
+            "left": 348,
+            "right": 757,
+            "top": 62,
+            "width": 409,
+            "x": 348,
+            "y": 62
+          },
+          "text": "切换使用方式"
+        }
+      ],
+      "scrollRegions": [
+        {
+          "height": 436,
+          "scrollHeight": 476,
+          "scrollTop": 6
+        }
+      ],
+      "scrollWidth": 800,
+      "viewport": [800, 480]
+    }
+  },
+  {
+    "variant": "after",
+    "key": "about-long-narrow",
+    "metrics": {
+      "buttons": [],
+      "clientWidth": 390,
+      "focus": null,
+      "headings": [
+        {
+          "rect": {
+            "bottom": 0,
+            "height": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          "text": "Desktop真实组件 · 当前实现 · 模拟桥"
+        },
+        {
+          "rect": {
+            "bottom": 62,
+            "height": 38,
+            "left": 24,
+            "right": 351,
+            "top": 24,
+            "width": 327,
+            "x": 24,
+            "y": 24
+          },
+          "text": "关于 mimir"
+        }
+      ],
+      "scrollRegions": [
+        {
+          "height": 400,
+          "scrollHeight": 409,
+          "scrollTop": 0
+        }
+      ],
+      "scrollWidth": 390,
+      "viewport": [390, 400]
+    }
+  },
+  {
+    "variant": "after",
+    "key": "titlebar-focus",
+    "metrics": {
+      "buttons": [
+        {
+          "aria": "折叠侧边栏",
+          "disabled": false,
+          "rect": {
+            "bottom": 35,
+            "height": 26,
+            "left": 84.296875,
+            "right": 110.296875,
+            "top": 9,
+            "width": 26,
+            "x": 84.296875,
+            "y": 9
+          },
+          "text": ""
+        },
+        {
+          "aria": "最小化",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 662,
+            "right": 708,
+            "top": 0,
+            "width": 46,
+            "x": 662,
+            "y": 0
+          },
+          "text": ""
+        },
+        {
+          "aria": "最大化",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 708,
+            "right": 754,
+            "top": 0,
+            "width": 46,
+            "x": 708,
+            "y": 0
+          },
+          "text": ""
+        },
+        {
+          "aria": "关闭",
+          "disabled": false,
+          "rect": {
+            "bottom": 44,
+            "height": 44,
+            "left": 754,
+            "right": 800,
+            "top": 0,
+            "width": 46,
+            "x": 754,
+            "y": 0
+          },
+          "text": ""
+        }
+      ],
+      "clientWidth": 800,
+      "focus": "折叠侧边栏",
+      "headings": [
+        {
+          "rect": {
+            "bottom": 0,
+            "height": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          "text": "Desktop真实组件 · 当前实现 · 模拟桥"
+        },
+        {
+          "rect": {
+            "bottom": 106,
+            "height": 38,
+            "left": 32,
+            "right": 762,
+            "top": 68,
+            "width": 730,
+            "x": 32,
+            "y": 68
+          },
+          "text": "关于 mimir"
+        }
+      ],
+      "scrollRegions": [
+        {
+          "height": 436,
+          "scrollHeight": 436,
+          "scrollTop": 0
+        }
+      ],
+      "scrollWidth": 800,
+      "viewport": [800, 480]
+    }
+  },
+  {
+    "variant": "after",
+    "key": "about-long-narrow",
+    "metrics": {
+      "buttons": [],
+      "clientWidth": 390,
+      "focus": null,
+      "headings": [
+        {
+          "rect": {
+            "bottom": 0,
+            "height": 0,
+            "left": 0,
+            "right": 0,
+            "top": 0,
+            "width": 0,
+            "x": 0,
+            "y": 0
+          },
+          "text": "Desktop真实组件 · 当前实现 · 模拟桥"
+        },
+        {
+          "rect": {
+            "bottom": 62,
+            "height": 38,
+            "left": 24,
+            "right": 351,
+            "top": 24,
+            "width": 327,
+            "x": 24,
+            "y": 24
+          },
+          "text": "关于 mimir"
+        }
+      ],
+      "scrollRegions": [
+        {
+          "height": 400,
+          "scrollHeight": 409,
+          "scrollTop": 0
+        }
+      ],
+      "scrollWidth": 390,
+      "viewport": [390, 400]
+    }
+  }
+]

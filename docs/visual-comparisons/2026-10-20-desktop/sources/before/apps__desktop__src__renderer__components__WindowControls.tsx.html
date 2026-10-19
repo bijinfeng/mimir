@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>apps/desktop/src/renderer/components/WindowControls.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+      min-height: 1.65em;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">Desktop来源索引</a>
+    <h1>apps/desktop/src/renderer/components/WindowControls.tsx</h1>
+    <p>before真实源码 · SHA256 544dcb1e1dc46d354be70761867b4ab408fd2723b3f7bab36ddf2fe3057fd1d2</p>
+  </header>
+  <ol>
+    <li id="L1">
+      <!-- prettier-ignore -->
+      <pre>import { useEffect, useState } from &#x27;react&#x27;</pre>
+    </li>
+    <li id="L2">
+      <!-- prettier-ignore -->
+      <pre>import { useStyles } from &#x27;@/components/WindowControls.style&#x27;</pre>
+    </li>
+    <li id="L3">
+      <!-- prettier-ignore -->
+      <pre>import { desktopBridge } from &#x27;@/lib/desktop-bridge&#x27;</pre>
+    </li>
+    <li id="L4">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L5">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L6">
+      <!-- prettier-ignore -->
+      <pre> * 三枚窗口控件（Windows / Linux）。</pre>
+    </li>
+    <li id="L7">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L8">
+      <!-- prettier-ignore -->
+      <pre> * 尺寸（46×44）与 Windows 11 一致：46 是那个平台上「三枚控件挤在右上角」</pre>
+    </li>
+    <li id="L9">
+      <!-- prettier-ignore -->
+      <pre> * 的通行宽度，44 与标题栏等高（命中区铺满整条，不是一个小方块）。</pre>
+    </li>
+    <li id="L10">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L11">
+      <!-- prettier-ignore -->
+      <pre> * **macOS 整组不渲染**：那边的红绿灯由系统画在左上角，右边再来三枚就是</pre>
+    </li>
+    <li id="L12">
+      <!-- prettier-ignore -->
+      <pre> * 两套控件（那正是 mac 上不该出现的东西）。</pre>
+    </li>
+    <li id="L13">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L14">
+      <!-- prettier-ignore -->
+      <pre> * **关闭按钮的 hover 是红底白字**——那是 Windows 的约定，也是唯一一处</pre>
+    </li>
+    <li id="L15">
+      <!-- prettier-ignore -->
+      <pre> * 用危险色而**不需要**确认的地方：它是系统级动作，用户按下之前就已经知道</pre>
+    </li>
+    <li id="L16">
+      <!-- prettier-ignore -->
+      <pre> * 会发生什么（而且系统菜单里还有「关闭窗口」同一个动作）。</pre>
+    </li>
+    <li id="L17">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L18">
+      <!-- prettier-ignore -->
+      <pre> * ## 为什么是独立组件（D-103）</pre>
+    </li>
+    <li id="L19">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L20">
+      <!-- prettier-ignore -->
+      <pre> * 两处用它：主界面的标题栏、以及首启选择页。选择页原先是一份自包含的静态</pre>
+    </li>
+    <li id="L21">
+      <!-- prettier-ignore -->
+      <pre> * HTML，自己抄了一套控件（两枚，连样式一起）——那份拷贝与这里必然漂移，</pre>
+    </li>
+    <li id="L22">
+      <!-- prettier-ignore -->
+      <pre> * 而漂移是静默的（尺寸差几像素、hover 色不一样，单看一处都「像是对的」）。</pre>
+    </li>
+    <li id="L23">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L24">
+      <!-- prettier-ignore -->
+      <pre>export interface WindowControlsProps {</pre>
+    </li>
+    <li id="L25">
+      <!-- prettier-ignore -->
+      <pre>  /**</pre>
+    </li>
+    <li id="L26">
+      <!-- prettier-ignore -->
+      <pre>   * 不渲染哪几枚。</pre>
+    </li>
+    <li id="L27">
+      <!-- prettier-ignore -->
+      <pre>   *</pre>
+    </li>
+    <li id="L28">
+      <!-- prettier-ignore -->
+      <pre>   * 选择页传 `[&#x27;maximize&#x27;]`：那一页是一次性的选择，撑满屏幕没有意义。</pre>
+    </li>
+    <li id="L29">
+      <!-- prettier-ignore -->
+      <pre>   */</pre>
+    </li>
+    <li id="L30">
+      <!-- prettier-ignore -->
+      <pre>  omit?: readonly (&#x27;minimize&#x27; | &#x27;maximize&#x27; | &#x27;close&#x27;)[]</pre>
+    </li>
+    <li id="L31">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+    <li id="L32">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L33">
+      <!-- prettier-ignore -->
+      <pre>/** 默认值提到模块级：行内 `[]` 每次渲染都是新引用，破坏引用相等 */</pre>
+    </li>
+    <li id="L34">
+      <!-- prettier-ignore -->
+      <pre>const OMIT_NONE: readonly (&#x27;minimize&#x27; | &#x27;maximize&#x27; | &#x27;close&#x27;)[] = []</pre>
+    </li>
+    <li id="L35">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L36">
+      <!-- prettier-ignore -->
+      <pre>export function WindowControls({ omit = OMIT_NONE }: WindowControlsProps) {</pre>
+    </li>
+    <li id="L37">
+      <!-- prettier-ignore -->
+      <pre>  const { styles } = useStyles()</pre>
+    </li>
+    <li id="L38">
+      <!-- prettier-ignore -->
+      <pre>  const [maximized, setMaximized] = useState(false)</pre>
+    </li>
+    <li id="L39">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L40">
+      <!-- prettier-ignore -->
+      <pre>  /**</pre>
+    </li>
+    <li id="L41">
+      <!-- prettier-ignore -->
+      <pre>   * 最大化状态**订阅宿主**，不自己算。</pre>
+    </li>
+    <li id="L42">
+      <!-- prettier-ignore -->
+      <pre>   *</pre>
+    </li>
+    <li id="L43">
+      <!-- prettier-ignore -->
+      <pre>   * 它能由按钮、双击标题栏、系统快捷键、Windows 贴靠四条路改变——</pre>
+    </li>
+    <li id="L44">
+      <!-- prettier-ignore -->
+      <pre>   * 页面自己维护的布尔值必然有一天与真相脱节（症状是「最大化之后按钮</pre>
+    </li>
+    <li id="L45">
+      <!-- prettier-ignore -->
+      <pre>   * 还是『最大化』的图标」，而那看起来像按钮坏了）。</pre>
+    </li>
+    <li id="L46">
+      <!-- prettier-ignore -->
+      <pre>   */</pre>
+    </li>
+    <li id="L47">
+      <!-- prettier-ignore -->
+      <pre>  useEffect(() =&gt; {</pre>
+    </li>
+    <li id="L48">
+      <!-- prettier-ignore -->
+      <pre>    const api = desktopBridge?.window</pre>
+    </li>
+    <li id="L49">
+      <!-- prettier-ignore -->
+      <pre>    if (!api) return</pre>
+    </li>
+    <li id="L50">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L51">
+      <!-- prettier-ignore -->
+      <pre>    let alive = true</pre>
+    </li>
+    <li id="L52">
+      <!-- prettier-ignore -->
+      <pre>    void api.isMaximized().then((value) =&gt; {</pre>
+    </li>
+    <li id="L53">
+      <!-- prettier-ignore -->
+      <pre>      if (alive) setMaximized(value)</pre>
+    </li>
+    <li id="L54">
+      <!-- prettier-ignore -->
+      <pre>    })</pre>
+    </li>
+    <li id="L55">
+      <!-- prettier-ignore -->
+      <pre>    const unsubscribe = api.onMaximizeChange(setMaximized)</pre>
+    </li>
+    <li id="L56">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L57">
+      <!-- prettier-ignore -->
+      <pre>    return () =&gt; {</pre>
+    </li>
+    <li id="L58">
+      <!-- prettier-ignore -->
+      <pre>      alive = false</pre>
+    </li>
+    <li id="L59">
+      <!-- prettier-ignore -->
+      <pre>      unsubscribe()</pre>
+    </li>
+    <li id="L60">
+      <!-- prettier-ignore -->
+      <pre>    }</pre>
+    </li>
+    <li id="L61">
+      <!-- prettier-ignore -->
+      <pre>  }, [])</pre>
+    </li>
+    <li id="L62">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L63">
+      <!-- prettier-ignore -->
+      <pre>  const api = desktopBridge?.window</pre>
+    </li>
+    <li id="L64">
+      <!-- prettier-ignore -->
+      <pre>  // macOS 用系统红绿灯；没有桥（理论上不该发生）时也不画</pre>
+    </li>
+    <li id="L65">
+      <!-- prettier-ignore -->
+      <pre>  if (!api || api.platform === &#x27;darwin&#x27;) return null</pre>
+    </li>
+    <li id="L66">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L67">
+      <!-- prettier-ignore -->
+      <pre>  const show = (which: &#x27;minimize&#x27; | &#x27;maximize&#x27; | &#x27;close&#x27;) =&gt; !omit.includes(which)</pre>
+    </li>
+    <li id="L68">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L69">
+      <!-- prettier-ignore -->
+      <pre>  return (</pre>
+    </li>
+    <li id="L70">
+      <!-- prettier-ignore -->
+      <pre>    &lt;div className={styles.controls}&gt;</pre>
+    </li>
+    <li id="L71">
+      <!-- prettier-ignore -->
+      <pre>      {show(&#x27;minimize&#x27;) &amp;&amp; (</pre>
+    </li>
+    <li id="L72">
+      <!-- prettier-ignore -->
+      <pre>        &lt;button</pre>
+    </li>
+    <li id="L73">
+      <!-- prettier-ignore -->
+      <pre>          type=&quot;button&quot;</pre>
+    </li>
+    <li id="L74">
+      <!-- prettier-ignore -->
+      <pre>          className={`${styles.ctl} me-no-drag`}</pre>
+    </li>
+    <li id="L75">
+      <!-- prettier-ignore -->
+      <pre>          aria-label=&quot;最小化&quot;</pre>
+    </li>
+    <li id="L76">
+      <!-- prettier-ignore -->
+      <pre>          title=&quot;最小化&quot;</pre>
+    </li>
+    <li id="L77">
+      <!-- prettier-ignore -->
+      <pre>          onClick={() =&gt; api.minimize()}</pre>
+    </li>
+    <li id="L78">
+      <!-- prettier-ignore -->
+      <pre>        &gt;</pre>
+    </li>
+    <li id="L79">
+      <!-- prettier-ignore -->
+      <pre>          &lt;svg width=&quot;10&quot; height=&quot;10&quot; viewBox=&quot;0 0 10 10&quot; aria-hidden=&quot;true&quot;&gt;</pre>
+    </li>
+    <li id="L80">
+      <!-- prettier-ignore -->
+      <pre>            &lt;path d=&quot;M0 5h10&quot; stroke=&quot;currentColor&quot; strokeWidth=&quot;1&quot; /&gt;</pre>
+    </li>
+    <li id="L81">
+      <!-- prettier-ignore -->
+      <pre>          &lt;/svg&gt;</pre>
+    </li>
+    <li id="L82">
+      <!-- prettier-ignore -->
+      <pre>        &lt;/button&gt;</pre>
+    </li>
+    <li id="L83">
+      <!-- prettier-ignore -->
+      <pre>      )}</pre>
+    </li>
+    <li id="L84">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L85">
+      <!-- prettier-ignore -->
+      <pre>      {show(&#x27;maximize&#x27;) &amp;&amp; (</pre>
+    </li>
+    <li id="L86">
+      <!-- prettier-ignore -->
+      <pre>        &lt;button</pre>
+    </li>
+    <li id="L87">
+      <!-- prettier-ignore -->
+      <pre>          type=&quot;button&quot;</pre>
+    </li>
+    <li id="L88">
+      <!-- prettier-ignore -->
+      <pre>          className={`${styles.ctl} me-no-drag`}</pre>
+    </li>
+    <li id="L89">
+      <!-- prettier-ignore -->
+      <pre>          aria-label={maximized ? &#x27;向下还原&#x27; : &#x27;最大化&#x27;}</pre>
+    </li>
+    <li id="L90">
+      <!-- prettier-ignore -->
+      <pre>          title={maximized ? &#x27;向下还原&#x27; : &#x27;最大化&#x27;}</pre>
+    </li>
+    <li id="L91">
+      <!-- prettier-ignore -->
+      <pre>          onClick={() =&gt; api.toggleMaximize()}</pre>
+    </li>
+    <li id="L92">
+      <!-- prettier-ignore -->
+      <pre>        &gt;</pre>
+    </li>
+    <li id="L93">
+      <!-- prettier-ignore -->
+      <pre>          {maximized ? (</pre>
+    </li>
+    <li id="L94">
+      <!-- prettier-ignore -->
+      <pre>            /* 「还原」是两格叠角：Windows 与 macOS 都这么画 */</pre>
+    </li>
+    <li id="L95">
+      <!-- prettier-ignore -->
+      <pre>            &lt;svg width=&quot;10&quot; height=&quot;10&quot; viewBox=&quot;0 0 10 10&quot; aria-hidden=&quot;true&quot;&gt;</pre>
+    </li>
+    <li id="L96">
+      <!-- prettier-ignore -->
+      <pre>              &lt;rect x=&quot;0.5&quot; y=&quot;2.5&quot; width=&quot;7&quot; height=&quot;7&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; /&gt;</pre>
+    </li>
+    <li id="L97">
+      <!-- prettier-ignore -->
+      <pre>              &lt;path d=&quot;M2.5 2.5V0.5h7v7h-2&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; /&gt;</pre>
+    </li>
+    <li id="L98">
+      <!-- prettier-ignore -->
+      <pre>            &lt;/svg&gt;</pre>
+    </li>
+    <li id="L99">
+      <!-- prettier-ignore -->
+      <pre>          ) : (</pre>
+    </li>
+    <li id="L100">
+      <!-- prettier-ignore -->
+      <pre>            &lt;svg width=&quot;10&quot; height=&quot;10&quot; viewBox=&quot;0 0 10 10&quot; aria-hidden=&quot;true&quot;&gt;</pre>
+    </li>
+    <li id="L101">
+      <!-- prettier-ignore -->
+      <pre>              &lt;rect x=&quot;0.5&quot; y=&quot;0.5&quot; width=&quot;9&quot; height=&quot;9&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; /&gt;</pre>
+    </li>
+    <li id="L102">
+      <!-- prettier-ignore -->
+      <pre>            &lt;/svg&gt;</pre>
+    </li>
+    <li id="L103">
+      <!-- prettier-ignore -->
+      <pre>          )}</pre>
+    </li>
+    <li id="L104">
+      <!-- prettier-ignore -->
+      <pre>        &lt;/button&gt;</pre>
+    </li>
+    <li id="L105">
+      <!-- prettier-ignore -->
+      <pre>      )}</pre>
+    </li>
+    <li id="L106">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L107">
+      <!-- prettier-ignore -->
+      <pre>      {show(&#x27;close&#x27;) &amp;&amp; (</pre>
+    </li>
+    <li id="L108">
+      <!-- prettier-ignore -->
+      <pre>        &lt;button</pre>
+    </li>
+    <li id="L109">
+      <!-- prettier-ignore -->
+      <pre>          type=&quot;button&quot;</pre>
+    </li>
+    <li id="L110">
+      <!-- prettier-ignore -->
+      <pre>          className={`${styles.ctl} ${styles.ctlClose} me-no-drag`}</pre>
+    </li>
+    <li id="L111">
+      <!-- prettier-ignore -->
+      <pre>          aria-label=&quot;关闭&quot;</pre>
+    </li>
+    <li id="L112">
+      <!-- prettier-ignore -->
+      <pre>          title=&quot;关闭&quot;</pre>
+    </li>
+    <li id="L113">
+      <!-- prettier-ignore -->
+      <pre>          onClick={() =&gt; api.close()}</pre>
+    </li>
+    <li id="L114">
+      <!-- prettier-ignore -->
+      <pre>        &gt;</pre>
+    </li>
+    <li id="L115">
+      <!-- prettier-ignore -->
+      <pre>          &lt;svg width=&quot;10&quot; height=&quot;10&quot; viewBox=&quot;0 0 10 10&quot; aria-hidden=&quot;true&quot;&gt;</pre>
+    </li>
+    <li id="L116">
+      <!-- prettier-ignore -->
+      <pre>            &lt;path d=&quot;M0 0l10 10M10 0L0 10&quot; stroke=&quot;currentColor&quot; strokeWidth=&quot;1&quot; /&gt;</pre>
+    </li>
+    <li id="L117">
+      <!-- prettier-ignore -->
+      <pre>          &lt;/svg&gt;</pre>
+    </li>
+    <li id="L118">
+      <!-- prettier-ignore -->
+      <pre>        &lt;/button&gt;</pre>
+    </li>
+    <li id="L119">
+      <!-- prettier-ignore -->
+      <pre>      )}</pre>
+    </li>
+    <li id="L120">
+      <!-- prettier-ignore -->
+      <pre>    &lt;/div&gt;</pre>
+    </li>
+    <li id="L121">
+      <!-- prettier-ignore -->
+      <pre>  )</pre>
+    </li>
+    <li id="L122">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+  </ol>
+</html>

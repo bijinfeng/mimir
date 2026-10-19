@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>apps/desktop/src/renderer/routes/about.tsx</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+      min-height: 1.65em;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">Desktop来源索引</a>
+    <h1>apps/desktop/src/renderer/routes/about.tsx</h1>
+    <p>current真实源码 · SHA256 14082dd069be8b9a2f2c0ba9e8cf8028a0393eed01f34ff38368caae03ab7709</p>
+  </header>
+  <ol>
+    <li id="L1">
+      <!-- prettier-ignore -->
+      <pre>import { useQuery } from &#x27;@tanstack/react-query&#x27;</pre>
+    </li>
+    <li id="L2">
+      <!-- prettier-ignore -->
+      <pre>import { createFileRoute } from &#x27;@tanstack/react-router&#x27;</pre>
+    </li>
+    <li id="L3">
+      <!-- prettier-ignore -->
+      <pre>import { Alert, Button, Skeleton, Typography } from &#x27;antd&#x27;</pre>
+    </li>
+    <li id="L4">
+      <!-- prettier-ignore -->
+      <pre>import { createStyles } from &#x27;antd-style&#x27;</pre>
+    </li>
+    <li id="L5">
+      <!-- prettier-ignore -->
+      <pre>import { desktopBridge } from &#x27;@/lib/desktop-bridge&#x27;</pre>
+    </li>
+    <li id="L6">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L7">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L8">
+      <!-- prettier-ignore -->
+      <pre> * 「关于」页——**客户端专属**（D-104）。</pre>
+    </li>
+    <li id="L9">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L10">
+      <!-- prettier-ignore -->
+      <pre> * ## 它为什么是桌面端自己的路由</pre>
+    </li>
+    <li id="L11">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L12">
+      <!-- prettier-ignore -->
+      <pre> * 这一页显示桌面客户端的版本和当前使用方式。浏览器部署里没有客户端版本。</pre>
+    </li>
+    <li id="L13">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L14">
+      <!-- prettier-ignore -->
+      <pre> * 放进共享路由再加条件渲染的话，浏览器侧会多出一条**永远到不了的路由**：</pre>
+    </li>
+    <li id="L15">
+      <!-- prettier-ignore -->
+      <pre> * 类型上 `to=&quot;/client/about&quot;` 合法、点进去是一片说不出话的空白。</pre>
+    </li>
+    <li id="L16">
+      <!-- prettier-ignore -->
+      <pre> * 现在它只存在于桌面端那次构建里（见 `electron.vite.config.ts` 的</pre>
+    </li>
+    <li id="L17">
+      <!-- prettier-ignore -->
+      <pre> * `extraRoutes`），web 侧写这个 `to` 是类型错。</pre>
+    </li>
+    <li id="L18">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L19">
+      <!-- prettier-ignore -->
+      <pre> * 路径是 `/client/about`：`/client` 前缀由构建配置给，这个文件名决定后半段。</pre>
+    </li>
+    <li id="L20">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L21">
+      <!-- prettier-ignore -->
+      <pre>export const Route = createFileRoute(&#x27;/client/about&#x27;)({</pre>
+    </li>
+    <li id="L22">
+      <!-- prettier-ignore -->
+      <pre>  component: AboutPage,</pre>
+    </li>
+    <li id="L23">
+      <!-- prettier-ignore -->
+      <pre>})</pre>
+    </li>
+    <li id="L24">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L25">
+      <!-- prettier-ignore -->
+      <pre>const useStyles = createStyles(({ css, token }) =&gt; ({</pre>
+    </li>
+    <li id="L26">
+      <!-- prettier-ignore -->
+      <pre>  page: css`</pre>
+    </li>
+    <li id="L27">
+      <!-- prettier-ignore -->
+      <pre>    height: 100%;</pre>
+    </li>
+    <li id="L28">
+      <!-- prettier-ignore -->
+      <pre>    overflow-y: auto;</pre>
+    </li>
+    <li id="L29">
+      <!-- prettier-ignore -->
+      <pre>    padding: 24px clamp(24px, 4vw, 48px) 40px;</pre>
+    </li>
+    <li id="L30">
+      <!-- prettier-ignore -->
+      <pre>    background: ${token.colorBgContainer};</pre>
+    </li>
+    <li id="L31">
+      <!-- prettier-ignore -->
+      <pre>  `,</pre>
+    </li>
+    <li id="L32">
+      <!-- prettier-ignore -->
+      <pre>  content: css`</pre>
+    </li>
+    <li id="L33">
+      <!-- prettier-ignore -->
+      <pre>    max-width: 730px;</pre>
+    </li>
+    <li id="L34">
+      <!-- prettier-ignore -->
+      <pre>  `,</pre>
+    </li>
+    <li id="L35">
+      <!-- prettier-ignore -->
+      <pre>  heading: css`</pre>
+    </li>
+    <li id="L36">
+      <!-- prettier-ignore -->
+      <pre>    margin: 0 0 20px !important;</pre>
+    </li>
+    <li id="L37">
+      <!-- prettier-ignore -->
+      <pre>  `,</pre>
+    </li>
+    <li id="L38">
+      <!-- prettier-ignore -->
+      <pre>  section: css`</pre>
+    </li>
+    <li id="L39">
+      <!-- prettier-ignore -->
+      <pre>    border-top: 1px solid ${token.colorBorderSecondary};</pre>
+    </li>
+    <li id="L40">
+      <!-- prettier-ignore -->
+      <pre>    padding-top: 8px;</pre>
+    </li>
+    <li id="L41">
+      <!-- prettier-ignore -->
+      <pre>  `,</pre>
+    </li>
+    <li id="L42">
+      <!-- prettier-ignore -->
+      <pre>  row: css`</pre>
+    </li>
+    <li id="L43">
+      <!-- prettier-ignore -->
+      <pre>    display: flex;</pre>
+    </li>
+    <li id="L44">
+      <!-- prettier-ignore -->
+      <pre>    gap: 16px;</pre>
+    </li>
+    <li id="L45">
+      <!-- prettier-ignore -->
+      <pre>    padding: 12px 0;</pre>
+    </li>
+    <li id="L46">
+      <!-- prettier-ignore -->
+      <pre>    border-bottom: 1px solid ${token.colorBorderSecondary};</pre>
+    </li>
+    <li id="L47">
+      <!-- prettier-ignore -->
+      <pre>    @media (max-width: 600px) {</pre>
+    </li>
+    <li id="L48">
+      <!-- prettier-ignore -->
+      <pre>      flex-direction: column;</pre>
+    </li>
+    <li id="L49">
+      <!-- prettier-ignore -->
+      <pre>      gap: 4px;</pre>
+    </li>
+    <li id="L50">
+      <!-- prettier-ignore -->
+      <pre>    }</pre>
+    </li>
+    <li id="L51">
+      <!-- prettier-ignore -->
+      <pre>  `,</pre>
+    </li>
+    <li id="L52">
+      <!-- prettier-ignore -->
+      <pre>  label: css`</pre>
+    </li>
+    <li id="L53">
+      <!-- prettier-ignore -->
+      <pre>    width: 124px;</pre>
+    </li>
+    <li id="L54">
+      <!-- prettier-ignore -->
+      <pre>    flex: none;</pre>
+    </li>
+    <li id="L55">
+      <!-- prettier-ignore -->
+      <pre>    color: ${token.colorTextSecondary};</pre>
+    </li>
+    <li id="L56">
+      <!-- prettier-ignore -->
+      <pre>  `,</pre>
+    </li>
+    <li id="L57">
+      <!-- prettier-ignore -->
+      <pre>  value: css`</pre>
+    </li>
+    <li id="L58">
+      <!-- prettier-ignore -->
+      <pre>    min-width: 0;</pre>
+    </li>
+    <li id="L59">
+      <!-- prettier-ignore -->
+      <pre>    overflow-wrap: anywhere;</pre>
+    </li>
+    <li id="L60">
+      <!-- prettier-ignore -->
+      <pre>    color: ${token.colorText};</pre>
+    </li>
+    <li id="L61">
+      <!-- prettier-ignore -->
+      <pre>  `,</pre>
+    </li>
+    <li id="L62">
+      <!-- prettier-ignore -->
+      <pre>}))</pre>
+    </li>
+    <li id="L63">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L64">
+      <!-- prettier-ignore -->
+      <pre>function AboutPage() {</pre>
+    </li>
+    <li id="L65">
+      <!-- prettier-ignore -->
+      <pre>  const { styles } = useStyles()</pre>
+    </li>
+    <li id="L66">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L67">
+      <!-- prettier-ignore -->
+      <pre>  /**</pre>
+    </li>
+    <li id="L68">
+      <!-- prettier-ignore -->
+      <pre>   * boot 信息走 react-query 而不是 useEffect + useState：</pre>
+    </li>
+    <li id="L69">
+      <!-- prettier-ignore -->
+      <pre>   * 它是一次异步读取，而缓存、重试、加载态那三件事不该在这里手写一遍。</pre>
+    </li>
+    <li id="L70">
+      <!-- prettier-ignore -->
+      <pre>   */</pre>
+    </li>
+    <li id="L71">
+      <!-- prettier-ignore -->
+      <pre>  const boot = useQuery({</pre>
+    </li>
+    <li id="L72">
+      <!-- prettier-ignore -->
+      <pre>    queryKey: [&#x27;desktop-boot&#x27;],</pre>
+    </li>
+    <li id="L73">
+      <!-- prettier-ignore -->
+      <pre>    queryFn: async () =&gt; (await desktopBridge?.boot()) ?? null,</pre>
+    </li>
+    <li id="L74">
+      <!-- prettier-ignore -->
+      <pre>  })</pre>
+    </li>
+    <li id="L75">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L76">
+      <!-- prettier-ignore -->
+      <pre>  return (</pre>
+    </li>
+    <li id="L77">
+      <!-- prettier-ignore -->
+      <pre>    &lt;div className={styles.page}&gt;</pre>
+    </li>
+    <li id="L78">
+      <!-- prettier-ignore -->
+      <pre>      &lt;div className={styles.content}&gt;</pre>
+    </li>
+    <li id="L79">
+      <!-- prettier-ignore -->
+      <pre>        &lt;Typography.Title level={2} className={styles.heading}&gt;</pre>
+    </li>
+    <li id="L80">
+      <!-- prettier-ignore -->
+      <pre>          关于 mimir</pre>
+    </li>
+    <li id="L81">
+      <!-- prettier-ignore -->
+      <pre>        &lt;/Typography.Title&gt;</pre>
+    </li>
+    <li id="L82">
+      <!-- prettier-ignore -->
+      <pre>        {boot.isLoading ? (</pre>
+    </li>
+    <li id="L83">
+      <!-- prettier-ignore -->
+      <pre>          &lt;Skeleton active paragraph={{ rows: 2 }} title={false} /&gt;</pre>
+    </li>
+    <li id="L84">
+      <!-- prettier-ignore -->
+      <pre>        ) : boot.isError || !boot.data ? (</pre>
+    </li>
+    <li id="L85">
+      <!-- prettier-ignore -->
+      <pre>          &lt;Alert</pre>
+    </li>
+    <li id="L86">
+      <!-- prettier-ignore -->
+      <pre>            type=&quot;error&quot;</pre>
+    </li>
+    <li id="L87">
+      <!-- prettier-ignore -->
+      <pre>            showIcon</pre>
+    </li>
+    <li id="L88">
+      <!-- prettier-ignore -->
+      <pre>            title=&quot;暂时无法读取客户端信息&quot;</pre>
+    </li>
+    <li id="L89">
+      <!-- prettier-ignore -->
+      <pre>            action={&lt;Button onClick={() =&gt; void boot.refetch()}&gt;重试&lt;/Button&gt;}</pre>
+    </li>
+    <li id="L90">
+      <!-- prettier-ignore -->
+      <pre>          /&gt;</pre>
+    </li>
+    <li id="L91">
+      <!-- prettier-ignore -->
+      <pre>        ) : (</pre>
+    </li>
+    <li id="L92">
+      <!-- prettier-ignore -->
+      <pre>          &lt;div className={styles.section}&gt;</pre>
+    </li>
+    <li id="L93">
+      <!-- prettier-ignore -->
+      <pre>            &lt;div className={styles.row}&gt;</pre>
+    </li>
+    <li id="L94">
+      <!-- prettier-ignore -->
+      <pre>              &lt;span className={styles.label}&gt;版本&lt;/span&gt;</pre>
+    </li>
+    <li id="L95">
+      <!-- prettier-ignore -->
+      <pre>              &lt;span className={styles.value}&gt;{boot.data.version}&lt;/span&gt;</pre>
+    </li>
+    <li id="L96">
+      <!-- prettier-ignore -->
+      <pre>            &lt;/div&gt;</pre>
+    </li>
+    <li id="L97">
+      <!-- prettier-ignore -->
+      <pre>            &lt;div className={styles.row}&gt;</pre>
+    </li>
+    <li id="L98">
+      <!-- prettier-ignore -->
+      <pre>              &lt;span className={styles.label}&gt;使用方式&lt;/span&gt;</pre>
+    </li>
+    <li id="L99">
+      <!-- prettier-ignore -->
+      <pre>              &lt;span className={styles.value}&gt;</pre>
+    </li>
+    <li id="L100">
+      <!-- prettier-ignore -->
+      <pre>                {boot.data.mode === &#x27;local&#x27; ? &#x27;本地使用&#x27; : &#x27;连接服务器&#x27;}</pre>
+    </li>
+    <li id="L101">
+      <!-- prettier-ignore -->
+      <pre>              &lt;/span&gt;</pre>
+    </li>
+    <li id="L102">
+      <!-- prettier-ignore -->
+      <pre>            &lt;/div&gt;</pre>
+    </li>
+    <li id="L103">
+      <!-- prettier-ignore -->
+      <pre>          &lt;/div&gt;</pre>
+    </li>
+    <li id="L104">
+      <!-- prettier-ignore -->
+      <pre>        )}</pre>
+    </li>
+    <li id="L105">
+      <!-- prettier-ignore -->
+      <pre>      &lt;/div&gt;</pre>
+    </li>
+    <li id="L106">
+      <!-- prettier-ignore -->
+      <pre>    &lt;/div&gt;</pre>
+    </li>
+    <li id="L107">
+      <!-- prettier-ignore -->
+      <pre>  )</pre>
+    </li>
+    <li id="L108">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+  </ol>
+</html>

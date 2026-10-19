@@ -24,7 +24,7 @@ await build({configFile:resolve(gallery,'source-before/vite.config.mjs'),logLeve
    const raw=readFileSync(resolve(root,'package.json')),info=JSON.parse(raw),key=info.name+'@'+info.version
    if(packages.has(key))continue
    const licenses=[]
-   for(const name of readdirSync(root).filter(name=>/^(licen[cs]e|notice)([.\-_]|$)/i.test(name))){
+   for(const name of readdirSync(root).filter(entry=>/^(licen[cs]e|notice)([.\-_]|$)/i.test(entry))){
     const path=resolve(root,name);if(!statSync(path).isFile())continue
     const bytes=readFileSync(path),filename=key.replaceAll('/','__')+'--'+name+'.txt'
     writeFileSync(resolve(target,filename),bytes)

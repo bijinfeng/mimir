@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><title>apps/desktop/src/main/cloud.ts</title
+  ><style>
+    body {
+      font: 13px/1.65 monospace;
+      margin: 20px;
+      background: #fafbfa;
+      color: #252a26;
+    }
+    ol {
+      white-space: pre;
+      overflow: auto;
+      padding-left: 5em;
+      background: white;
+    }
+    pre {
+      margin: 0;
+      font: inherit;
+      min-height: 1.65em;
+    }
+    li:target {
+      background: #d7f3e2;
+    }
+    header {
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <header>
+    <a href="../../interactions.html">Desktop来源索引</a>
+    <h1>apps/desktop/src/main/cloud.ts</h1>
+    <p>before真实源码 · SHA256 ebd346dade22bd6306a89f9860ec9f43fbba0332f5c75cca9fc74b2ddaaa93a9</p>
+  </header>
+  <ol>
+    <li id="L1">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L2">
+      <!-- prettier-ignore -->
+      <pre> * 云端模式的地址处理（D-100）：归一化与探活。</pre>
+    </li>
+    <li id="L3">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L4">
+      <!-- prettier-ignore -->
+      <pre> * 抽成一个**不依赖 Electron** 的模块，是为了让它能被单测直接跑——</pre>
+    </li>
+    <li id="L5">
+      <!-- prettier-ignore -->
+      <pre> * URL 的归一化规则与失败措辞是用户唯一能看到的界面，靠手工点太不可靠</pre>
+    </li>
+    <li id="L6">
+      <!-- prettier-ignore -->
+      <pre> * （尤其「内网地址默认 http、公网默认 https」这条，错了会表现成</pre>
+    </li>
+    <li id="L7">
+      <!-- prettier-ignore -->
+      <pre> * 「连不上」，而用户会去查服务器）。</pre>
+    </li>
+    <li id="L8">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L9">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L10">
+      <!-- prettier-ignore -->
+      <pre>export interface CloudUrlResult {</pre>
+    </li>
+    <li id="L11">
+      <!-- prettier-ignore -->
+      <pre>  ok: boolean</pre>
+    </li>
+    <li id="L12">
+      <!-- prettier-ignore -->
+      <pre>  /** 归一化后的地址（ok 时有意义） */</pre>
+    </li>
+    <li id="L13">
+      <!-- prettier-ignore -->
+      <pre>  url?: string</pre>
+    </li>
+    <li id="L14">
+      <!-- prettier-ignore -->
+      <pre>  /** 失败原因，直接展示给用户 */</pre>
+    </li>
+    <li id="L15">
+      <!-- prettier-ignore -->
+      <pre>  message?: string</pre>
+    </li>
+    <li id="L16">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+    <li id="L17">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L18">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L19">
+      <!-- prettier-ignore -->
+      <pre> * 没有写协议时补哪一个。</pre>
+    </li>
+    <li id="L20">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L21">
+      <!-- prettier-ignore -->
+      <pre> * | 主机 | 补 | 为什么 |</pre>
+    </li>
+    <li id="L22">
+      <!-- prettier-ignore -->
+      <pre> * |---|---|---|</pre>
+    </li>
+    <li id="L23">
+      <!-- prettier-ignore -->
+      <pre> * | `localhost` / `127.x` / `::1` | http | 本机服务几乎不会带证书；https 会直接 TLS 失败 |</pre>
+    </li>
+    <li id="L24">
+      <!-- prettier-ignore -->
+      <pre> * | 内网段（10/8、172.16/12、192.168/16）与 `.local` | http | 家庭/公司自托管同样不带证书（与 Jellyfin、Home Assistant 客户端的做法一致） |</pre>
+    </li>
+    <li id="L25">
+      <!-- prettier-ignore -->
+      <pre> * | 其余（域名、公网 IP） | https | 暴露到公网的部署必须带证书；补 http 会得到一个「连上了但被拒」的更难懂的错 |</pre>
+    </li>
+    <li id="L26">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L27">
+      <!-- prettier-ignore -->
+      <pre> * 用户写全了协议就完全按他写的来——这个函数只负责「没写」的那一半。</pre>
+    </li>
+    <li id="L28">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L29">
+      <!-- prettier-ignore -->
+      <pre>export function defaultScheme(hostname: string): &#x27;http&#x27; | &#x27;https&#x27; {</pre>
+    </li>
+    <li id="L30">
+      <!-- prettier-ignore -->
+      <pre>  const host = hostname.toLowerCase()</pre>
+    </li>
+    <li id="L31">
+      <!-- prettier-ignore -->
+      <pre>  if (host === &#x27;localhost&#x27; || host.endsWith(&#x27;.localhost&#x27;)) return &#x27;http&#x27;</pre>
+    </li>
+    <li id="L32">
+      <!-- prettier-ignore -->
+      <pre>  if (host === &#x27;127.0.0.1&#x27; || host === &#x27;::1&#x27;) return &#x27;http&#x27;</pre>
+    </li>
+    <li id="L33">
+      <!-- prettier-ignore -->
+      <pre>  if (host.startsWith(&#x27;127.&#x27;)) return &#x27;http&#x27;</pre>
+    </li>
+    <li id="L34">
+      <!-- prettier-ignore -->
+      <pre>  if (host.startsWith(&#x27;10.&#x27;)) return &#x27;http&#x27;</pre>
+    </li>
+    <li id="L35">
+      <!-- prettier-ignore -->
+      <pre>  if (host.startsWith(&#x27;192.168.&#x27;)) return &#x27;http&#x27;</pre>
+    </li>
+    <li id="L36">
+      <!-- prettier-ignore -->
+      <pre>  if (/^172\.(1[6-9]|2\d|3[01])\./.test(host)) return &#x27;http&#x27;</pre>
+    </li>
+    <li id="L37">
+      <!-- prettier-ignore -->
+      <pre>  if (host.endsWith(&#x27;.local&#x27;)) return &#x27;http&#x27;</pre>
+    </li>
+    <li id="L38">
+      <!-- prettier-ignore -->
+      <pre>  return &#x27;https&#x27;</pre>
+    </li>
+    <li id="L39">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+    <li id="L40">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L41">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L42">
+      <!-- prettier-ignore -->
+      <pre> * 把用户输入的地址收敛成一个可加载的源。</pre>
+    </li>
+    <li id="L43">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L44">
+      <!-- prettier-ignore -->
+      <pre> * 规则很少，但每一条都对应一种真实的输入习惯：</pre>
+    </li>
+    <li id="L45">
+      <!-- prettier-ignore -->
+      <pre> *  - 前后空格、粘贴时带上的换行 → 去掉（粘贴是最常见的入口）</pre>
+    </li>
+    <li id="L46">
+      <!-- prettier-ignore -->
+      <pre> *  - 没写协议 → 按 `defaultScheme` 补</pre>
+    </li>
+    <li id="L47">
+      <!-- prettier-ignore -->
+      <pre> *  - 末尾的 `/` → 去掉（`https://host/` 与 `https://host` 是同一个源，</pre>
+    </li>
+    <li id="L48">
+      <!-- prettier-ignore -->
+      <pre> *    留着会让健康检查拼出 `//healthz`，也让它与配置里存的值长得不一样）</pre>
+    </li>
+    <li id="L49">
+      <!-- prettier-ignore -->
+      <pre> *  - 查询串与锚点 → 丢掉（它们对「加载一个应用」没有意义，留着只会在</pre>
+    </li>
+    <li id="L50">
+      <!-- prettier-ignore -->
+      <pre> *    对比两个地址是否相同时制造假差异）</pre>
+    </li>
+    <li id="L51">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L52">
+      <!-- prettier-ignore -->
+      <pre>export function normalizeCloudUrl(input: string): CloudUrlResult {</pre>
+    </li>
+    <li id="L53">
+      <!-- prettier-ignore -->
+      <pre>  const trimmed = input.trim()</pre>
+    </li>
+    <li id="L54">
+      <!-- prettier-ignore -->
+      <pre>  if (!trimmed) return { ok: false, message: &#x27;请输入服务器地址&#x27; }</pre>
+    </li>
+    <li id="L55">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L56">
+      <!-- prettier-ignore -->
+      <pre>  const withScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed)</pre>
+    </li>
+    <li id="L57">
+      <!-- prettier-ignore -->
+      <pre>    ? trimmed</pre>
+    </li>
+    <li id="L58">
+      <!-- prettier-ignore -->
+      <pre>    : `${guessScheme(trimmed)}://${trimmed}`</pre>
+    </li>
+    <li id="L59">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L60">
+      <!-- prettier-ignore -->
+      <pre>  let parsed: URL</pre>
+    </li>
+    <li id="L61">
+      <!-- prettier-ignore -->
+      <pre>  try {</pre>
+    </li>
+    <li id="L62">
+      <!-- prettier-ignore -->
+      <pre>    parsed = new URL(withScheme)</pre>
+    </li>
+    <li id="L63">
+      <!-- prettier-ignore -->
+      <pre>  } catch {</pre>
+    </li>
+    <li id="L64">
+      <!-- prettier-ignore -->
+      <pre>    return { ok: false, message: &#x27;这个地址解析不了，检查一下有没有打错&#x27; }</pre>
+    </li>
+    <li id="L65">
+      <!-- prettier-ignore -->
+      <pre>  }</pre>
+    </li>
+    <li id="L66">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L67">
+      <!-- prettier-ignore -->
+      <pre>  if (parsed.protocol !== &#x27;http:&#x27; &amp;&amp; parsed.protocol !== &#x27;https:&#x27;) {</pre>
+    </li>
+    <li id="L68">
+      <!-- prettier-ignore -->
+      <pre>    return { ok: false, message: &#x27;只支持 http / https 地址&#x27; }</pre>
+    </li>
+    <li id="L69">
+      <!-- prettier-ignore -->
+      <pre>  }</pre>
+    </li>
+    <li id="L70">
+      <!-- prettier-ignore -->
+      <pre>  if (!parsed.hostname) return { ok: false, message: &#x27;地址里缺少主机名&#x27; }</pre>
+    </li>
+    <li id="L71">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L72">
+      <!-- prettier-ignore -->
+      <pre>  parsed.search = &#x27;&#x27;</pre>
+    </li>
+    <li id="L73">
+      <!-- prettier-ignore -->
+      <pre>  parsed.hash = &#x27;&#x27;</pre>
+    </li>
+    <li id="L74">
+      <!-- prettier-ignore -->
+      <pre>  const path = parsed.pathname.replace(/\/+$/, &#x27;&#x27;)</pre>
+    </li>
+    <li id="L75">
+      <!-- prettier-ignore -->
+      <pre>  const base = `${parsed.protocol}//${parsed.host}${path === &#x27;/&#x27; ? &#x27;&#x27; : path}`</pre>
+    </li>
+    <li id="L76">
+      <!-- prettier-ignore -->
+      <pre>  return { ok: true, url: base }</pre>
+    </li>
+    <li id="L77">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+    <li id="L78">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L79">
+      <!-- prettier-ignore -->
+      <pre>/** 先看主机名推测协议。用 `new URL` 的兜底路径解析，避免自己拆 IPv6 括号 */</pre>
+    </li>
+    <li id="L80">
+      <!-- prettier-ignore -->
+      <pre>function guessScheme(trimmed: string): &#x27;http&#x27; | &#x27;https&#x27; {</pre>
+    </li>
+    <li id="L81">
+      <!-- prettier-ignore -->
+      <pre>  try {</pre>
+    </li>
+    <li id="L82">
+      <!-- prettier-ignore -->
+      <pre>    // 借一个占位协议拿到 hostname（用户没写协议时，`https://` 与 `http://`</pre>
+    </li>
+    <li id="L83">
+      <!-- prettier-ignore -->
+      <pre>    // 解析出的 hostname 相同，所以这一步不影响判断）</pre>
+    </li>
+    <li id="L84">
+      <!-- prettier-ignore -->
+      <pre>    const probe = new URL(`https://${trimmed}`)</pre>
+    </li>
+    <li id="L85">
+      <!-- prettier-ignore -->
+      <pre>    return defaultScheme(probe.hostname)</pre>
+    </li>
+    <li id="L86">
+      <!-- prettier-ignore -->
+      <pre>  } catch {</pre>
+    </li>
+    <li id="L87">
+      <!-- prettier-ignore -->
+      <pre>    return &#x27;https&#x27;</pre>
+    </li>
+    <li id="L88">
+      <!-- prettier-ignore -->
+      <pre>  }</pre>
+    </li>
+    <li id="L89">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+    <li id="L90">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L91">
+      <!-- prettier-ignore -->
+      <pre>export interface ProbeResult {</pre>
+    </li>
+    <li id="L92">
+      <!-- prettier-ignore -->
+      <pre>  ok: boolean</pre>
+    </li>
+    <li id="L93">
+      <!-- prettier-ignore -->
+      <pre>  message?: string</pre>
+    </li>
+    <li id="L94">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+    <li id="L95">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L96">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L97">
+      <!-- prettier-ignore -->
+      <pre> * 探活：`GET &lt;url&gt;/healthz`（与部署文档里的健康检查同一个端点）。</pre>
+    </li>
+    <li id="L98">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L99">
+      <!-- prettier-ignore -->
+      <pre> * **必须真的检查内容**，不能只看「有没有响应」：同机上有一个别的服务</pre>
+    </li>
+    <li id="L100">
+      <!-- prettier-ignore -->
+      <pre> * （或者一个反代配错了的域名）时，那个地址会回 200，而用户会得到</pre>
+    </li>
+    <li id="L101">
+      <!-- prettier-ignore -->
+      <pre> * 「地址是对的，进去却是别人的页面」。判据是 `/healthz` 回 `{ok:true}`</pre>
+    </li>
+    <li id="L102">
+      <!-- prettier-ignore -->
+      <pre> * ——那是本服务自己的形状（`apps/server/src/app.ts`）。</pre>
+    </li>
+    <li id="L103">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L104">
+      <!-- prettier-ignore -->
+      <pre> * 超时 8 秒：自托管常在内网，慢一点是常态；但一直转圈也不对。</pre>
+    </li>
+    <li id="L105">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L106">
+      <!-- prettier-ignore -->
+      <pre>export async function probeCloudUrl(url: string, timeoutMs = 8000): Promise&lt;ProbeResult&gt; {</pre>
+    </li>
+    <li id="L107">
+      <!-- prettier-ignore -->
+      <pre>  let res: Response</pre>
+    </li>
+    <li id="L108">
+      <!-- prettier-ignore -->
+      <pre>  try {</pre>
+    </li>
+    <li id="L109">
+      <!-- prettier-ignore -->
+      <pre>    res = await fetch(`${url}/healthz`, {</pre>
+    </li>
+    <li id="L110">
+      <!-- prettier-ignore -->
+      <pre>      signal: AbortSignal.timeout(timeoutMs),</pre>
+    </li>
+    <li id="L111">
+      <!-- prettier-ignore -->
+      <pre>      redirect: &#x27;follow&#x27;,</pre>
+    </li>
+    <li id="L112">
+      <!-- prettier-ignore -->
+      <pre>      headers: { Accept: &#x27;application/json&#x27; },</pre>
+    </li>
+    <li id="L113">
+      <!-- prettier-ignore -->
+      <pre>    })</pre>
+    </li>
+    <li id="L114">
+      <!-- prettier-ignore -->
+      <pre>  } catch (error) {</pre>
+    </li>
+    <li id="L115">
+      <!-- prettier-ignore -->
+      <pre>    return { ok: false, message: describeFetchError(error, timeoutMs) }</pre>
+    </li>
+    <li id="L116">
+      <!-- prettier-ignore -->
+      <pre>  }</pre>
+    </li>
+    <li id="L117">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L118">
+      <!-- prettier-ignore -->
+      <pre>  if (!res.ok) {</pre>
+    </li>
+    <li id="L119">
+      <!-- prettier-ignore -->
+      <pre>    return { ok: false, message: `服务器返回了 ${res.status}。确认地址指向的是 mimir 服务` }</pre>
+    </li>
+    <li id="L120">
+      <!-- prettier-ignore -->
+      <pre>  }</pre>
+    </li>
+    <li id="L121">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L122">
+      <!-- prettier-ignore -->
+      <pre>  const body = (await res.json().catch(() =&gt; null)) as { ok?: unknown } | null</pre>
+    </li>
+    <li id="L123">
+      <!-- prettier-ignore -->
+      <pre>  if (!body || body.ok !== true) {</pre>
+    </li>
+    <li id="L124">
+      <!-- prettier-ignore -->
+      <pre>    return { ok: false, message: &#x27;这个地址有响应，但它看起来不是 mimir 服务&#x27; }</pre>
+    </li>
+    <li id="L125">
+      <!-- prettier-ignore -->
+      <pre>  }</pre>
+    </li>
+    <li id="L126">
+      <!-- prettier-ignore -->
+      <pre>  return { ok: true }</pre>
+    </li>
+    <li id="L127">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+    <li id="L128">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L129">
+      <!-- prettier-ignore -->
+      <pre>/**</pre>
+    </li>
+    <li id="L130">
+      <!-- prettier-ignore -->
+      <pre> * 把 fetch 的失败翻译成一句用户能照做的话。</pre>
+    </li>
+    <li id="L131">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L132">
+      <!-- prettier-ignore -->
+      <pre> * **不能直接透传 `error.message`**：Node 给的是 `fetch failed`、浏览器给的是</pre>
+    </li>
+    <li id="L133">
+      <!-- prettier-ignore -->
+      <pre> * `Failed to fetch`——两句话都没有说清是「域名解析不了」「没人监听」还是</pre>
+    </li>
+    <li id="L134">
+      <!-- prettier-ignore -->
+      <pre> * 「证书不被信任」，而这三件的下一步动作完全不同（改地址 / 启动服务 /</pre>
+    </li>
+    <li id="L135">
+      <!-- prettier-ignore -->
+      <pre> * 换协议）。真正的线索在 `error.cause` 的 `code` 里（Node 的 undici 会带）。</pre>
+    </li>
+    <li id="L136">
+      <!-- prettier-ignore -->
+      <pre> *</pre>
+    </li>
+    <li id="L137">
+      <!-- prettier-ignore -->
+      <pre> * 拿不到 code 时退回「检查地址与网络」——不确定时说得出自己不确定，</pre>
+    </li>
+    <li id="L138">
+      <!-- prettier-ignore -->
+      <pre> * 比编一个具体原因好。</pre>
+    </li>
+    <li id="L139">
+      <!-- prettier-ignore -->
+      <pre> */</pre>
+    </li>
+    <li id="L140">
+      <!-- prettier-ignore -->
+      <pre>function describeFetchError(error: unknown, timeoutMs: number): string {</pre>
+    </li>
+    <li id="L141">
+      <!-- prettier-ignore -->
+      <pre>  const name = error instanceof Error ? error.name : &#x27;&#x27;</pre>
+    </li>
+    <li id="L142">
+      <!-- prettier-ignore -->
+      <pre>  if (name === &#x27;TimeoutError&#x27; || name === &#x27;AbortError&#x27;) {</pre>
+    </li>
+    <li id="L143">
+      <!-- prettier-ignore -->
+      <pre>    return `连接超时（${timeoutMs / 1000} 秒）——地址不通，或服务没在运行`</pre>
+    </li>
+    <li id="L144">
+      <!-- prettier-ignore -->
+      <pre>  }</pre>
+    </li>
+    <li id="L145">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L146">
+      <!-- prettier-ignore -->
+      <pre>  const code = fetchErrorCode(error)</pre>
+    </li>
+    <li id="L147">
+      <!-- prettier-ignore -->
+      <pre>  if (code === &#x27;ECONNREFUSED&#x27;) {</pre>
+    </li>
+    <li id="L148">
+      <!-- prettier-ignore -->
+      <pre>    return &#x27;这个地址上没有人监听——服务可能没启动，或者端口写错了&#x27;</pre>
+    </li>
+    <li id="L149">
+      <!-- prettier-ignore -->
+      <pre>  }</pre>
+    </li>
+    <li id="L150">
+      <!-- prettier-ignore -->
+      <pre>  if (code === &#x27;ENOTFOUND&#x27; || code === &#x27;EAI_AGAIN&#x27;) {</pre>
+    </li>
+    <li id="L151">
+      <!-- prettier-ignore -->
+      <pre>    return &#x27;找不到这个域名——检查拼写，或这台电脑的 DNS&#x27;</pre>
+    </li>
+    <li id="L152">
+      <!-- prettier-ignore -->
+      <pre>  }</pre>
+    </li>
+    <li id="L153">
+      <!-- prettier-ignore -->
+      <pre>  if (code === &#x27;EHOSTUNREACH&#x27; || code === &#x27;ENETUNREACH&#x27; || code === &#x27;ECONNRESET&#x27;) {</pre>
+    </li>
+    <li id="L154">
+      <!-- prettier-ignore -->
+      <pre>    return &#x27;网络不通——地址或网络环境需要检查&#x27;</pre>
+    </li>
+    <li id="L155">
+      <!-- prettier-ignore -->
+      <pre>  }</pre>
+    </li>
+    <li id="L156">
+      <!-- prettier-ignore -->
+      <pre>  if (code !== null &amp;&amp; code.startsWith(&#x27;CERT&#x27;)) {</pre>
+    </li>
+    <li id="L157">
+      <!-- prettier-ignore -->
+      <pre>    return &#x27;服务器的 HTTPS 证书不被信任——可以改用 http，或为它配一张有效证书&#x27;</pre>
+    </li>
+    <li id="L158">
+      <!-- prettier-ignore -->
+      <pre>  }</pre>
+    </li>
+    <li id="L159">
+      <!-- prettier-ignore -->
+      <pre>  if (code === &#x27;DEPTH_ZERO_SELF_SIGNED_CERT&#x27; || code === &#x27;SELF_SIGNED_CERT_IN_CHAIN&#x27;) {</pre>
+    </li>
+    <li id="L160">
+      <!-- prettier-ignore -->
+      <pre>    return &#x27;服务器用的是自签名证书——可以改用 http，或为它配一张有效证书&#x27;</pre>
+    </li>
+    <li id="L161">
+      <!-- prettier-ignore -->
+      <pre>  }</pre>
+    </li>
+    <li id="L162">
+      <!-- prettier-ignore -->
+      <pre>  /**</pre>
+    </li>
+    <li id="L163">
+      <!-- prettier-ignore -->
+      <pre>   * `bad port`：fetch 会拒绝一批「危险端口」（1、7、9、11……它们历史上</pre>
+    </li>
+    <li id="L164">
+      <!-- prettier-ignore -->
+      <pre>   * 被绑给别的协议）。用户手打地址时最可能踩到的是 `xx:1` 这类。</pre>
+    </li>
+    <li id="L165">
+      <!-- prettier-ignore -->
+      <pre>   * 它没有 errno code，只能按 cause 的话认。</pre>
+    </li>
+    <li id="L166">
+      <!-- prettier-ignore -->
+      <pre>   */</pre>
+    </li>
+    <li id="L167">
+      <!-- prettier-ignore -->
+      <pre>  if (error instanceof Error &amp;&amp; error.cause instanceof Error) {</pre>
+    </li>
+    <li id="L168">
+      <!-- prettier-ignore -->
+      <pre>    if (error.cause.message.includes(&#x27;bad port&#x27;)) {</pre>
+    </li>
+    <li id="L169">
+      <!-- prettier-ignore -->
+      <pre>      return &#x27;这个端口不能用（浏览器出于安全禁止访问它）——换一个常规端口试试&#x27;</pre>
+    </li>
+    <li id="L170">
+      <!-- prettier-ignore -->
+      <pre>    }</pre>
+    </li>
+    <li id="L171">
+      <!-- prettier-ignore -->
+      <pre>  }</pre>
+    </li>
+    <li id="L172">
+      <!-- prettier-ignore -->
+      <pre>  return &#x27;连不上这个地址——检查地址与网络是否正常&#x27;</pre>
+    </li>
+    <li id="L173">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+    <li id="L174">
+      <!-- prettier-ignore -->
+      <pre></pre>
+    </li>
+    <li id="L175">
+      <!-- prettier-ignore -->
+      <pre>/** 从 fetch 的错误里挖出 errno code。undici 会把它包在 cause 里（可能嵌套一层） */</pre>
+    </li>
+    <li id="L176">
+      <!-- prettier-ignore -->
+      <pre>function fetchErrorCode(error: unknown): string | null {</pre>
+    </li>
+    <li id="L177">
+      <!-- prettier-ignore -->
+      <pre>  let current: unknown = error</pre>
+    </li>
+    <li id="L178">
+      <!-- prettier-ignore -->
+      <pre>  for (let depth = 0; depth &lt; 3; depth += 1) {</pre>
+    </li>
+    <li id="L179">
+      <!-- prettier-ignore -->
+      <pre>    if (typeof current !== &#x27;object&#x27; || current === null) return null</pre>
+    </li>
+    <li id="L180">
+      <!-- prettier-ignore -->
+      <pre>    const code = (current as { code?: unknown }).code</pre>
+    </li>
+    <li id="L181">
+      <!-- prettier-ignore -->
+      <pre>    if (typeof code === &#x27;string&#x27;) return code</pre>
+    </li>
+    <li id="L182">
+      <!-- prettier-ignore -->
+      <pre>    current = (current as { cause?: unknown }).cause</pre>
+    </li>
+    <li id="L183">
+      <!-- prettier-ignore -->
+      <pre>  }</pre>
+    </li>
+    <li id="L184">
+      <!-- prettier-ignore -->
+      <pre>  return null</pre>
+    </li>
+    <li id="L185">
+      <!-- prettier-ignore -->
+      <pre>}</pre>
+    </li>
+  </ol>
+</html>

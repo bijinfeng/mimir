@@ -87,6 +87,9 @@ export const useStyles = createStyles(({ css, token }) => ({
       border-right: 0;
       border-bottom: 1px solid ${token.colorBorderSecondary};
     }
+    @media (max-width: 760px) and (max-height: 600px) {
+      padding: 16px 24px;
+    }
   `,
   formPane: css`
     min-width: 0;
@@ -98,23 +101,30 @@ export const useStyles = createStyles(({ css, token }) => ({
       display: block;
       padding: 40px 28px 56px;
     }
+    @media (max-height: 600px) {
+      padding: 24px 28px;
+    }
+    @media (max-width: 760px) and (max-height: 600px) {
+      padding: 20px 24px 24px;
+    }
   `,
   formContent: css`
     width: min(100%, 440px);
     min-width: 0;
+    overflow-wrap: anywhere;
   `,
   heading: css`
-    margin: 0 0 22px !important;
+    margin: 0 0 16px !important;
   `,
 
   lead: css`
     /* antd 的 Paragraph 自带下边距，这里统一由卡片的间距节奏接管 */
-    margin-bottom: 24px !important;
+    margin-bottom: 16px !important;
   `,
 
   options: css`
     display: grid;
-    margin-bottom: 24px;
+    margin-bottom: 16px;
     border-top: 1px solid ${token.colorBorderSecondary};
   `,
   /**
@@ -184,5 +194,11 @@ export const useStyles = createStyles(({ css, token }) => ({
     align-items: center;
     gap: 10px;
     flex-wrap: wrap;
+  `,
+  status: css`
+    overflow-wrap: anywhere;
+    &:not(:empty) {
+      margin-top: 12px;
+    }
   `,
 }))
