@@ -81,8 +81,8 @@ afterEach(() => {
   mounted.length = 0
 })
 
-async function settle(done: () => boolean): Promise<void> {
-  const deadline = Date.now() + 3000
+async function settle(done: () => boolean, timeout = 3000): Promise<void> {
+  const deadline = Date.now() + timeout
   while (!done() && Date.now() < deadline)
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 10))
@@ -560,7 +560,9 @@ describe('PDF manual content canvas', () => {
       field.dispatchEvent(new Event('input', { bubbles: true }))
     })
     await click(button(host, '替换原文'))
-    await settle(() => appliedBytes !== null && !button(host, '保存到库').disabled)
+    // Native host/worker cold start shares the package's 20s test budget.
+    // Keep the original completion predicate, with room left for save and reopen.
+    await settle(() => appliedBytes !== null && !button(host, '保存到库').disabled, 15_000)
     expect(pdfTextMode.rendered).toContain(appliedBytes)
     expect(host.querySelector('.mimir-editor__status')?.textContent).toContain('已修改，未保存')
     await click(button(host, '保存到库'))

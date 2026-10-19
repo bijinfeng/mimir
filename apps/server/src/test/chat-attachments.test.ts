@@ -137,8 +137,8 @@ describe('conversation attachment HTTP and lifecycle', () => {
     expect((await app.request(path, { headers: { Cookie: cookie } })).status).toBe(404)
     await deleteConversation(conversation.id)
   })
-  // Each real worker-backed rejection gets its own timeout budget; a serial matrix
-  // otherwise spends the default five seconds on eight independent parser starts.
+  // Each real worker-backed rejection has a bounded 15s budget for parser startup,
+  // its actual response and cleanup under the full workspace test load.
   it.each([
     ['empty.txt', '', 'text/plain'],
     ['bad.txt', new Uint8Array([0xc0, 0xff]), 'text/plain'],
@@ -148,13 +148,17 @@ describe('conversation attachment HTTP and lifecycle', () => {
     ['long.txt', 'a'.repeat(12_001), 'text/plain'],
     ['lie.txt', 'abc', 'image/png'],
     ['fake.docx', 'not a zip', 'application/octet-stream'],
-  ] as const)('rejects invalid attachment %s without truncating', async (name, data, mime) => {
-    const conversation = await createConversation()
-    const { response, body } = await upload(conversation.id, name, data, mime)
-    expect(response.status).toBe(name === 'empty.txt' ? 413 : 200)
-    expect(body.status).toBe(name === 'empty.txt' ? undefined : 'failed')
-    await deleteConversation(conversation.id)
-  })
+  ] as const)(
+    'rejects invalid attachment %s without truncating',
+    async (name, data, mime) => {
+      const conversation = await createConversation()
+      const { response, body } = await upload(conversation.id, name, data, mime)
+      expect(response.status).toBe(name === 'empty.txt' ? 413 : 200)
+      expect(body.status).toBe(name === 'empty.txt' ? undefined : 'failed')
+      await deleteConversation(conversation.id)
+    },
+    15_000,
+  )
   it('parses actual Office/PDF text and fails scan or malformed container', async () => {
     const conversation = await createConversation()
     const docx = new JSZip()
