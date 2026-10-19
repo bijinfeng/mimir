@@ -1,6 +1,6 @@
 # 最终质量门
 
-2026-10-19；产品代码冻结后最终完整检查及两端构建exit 0。日志保留在logs/。
+2026-10-19；产品代码冻结后最终完整检查及两端构建exit 0。日志保留在 logs/ 下的 pnpm-check.txt、web-build.txt 和 desktop-build.txt。
 
 | 检查 | 结果 |
 | --- | --- |
@@ -27,3 +27,5 @@
 5. fixture Supplemental初版flex固有宽溢出，已在同源before/after均修容器width/min-width并重捕相关场景；不把夹具问题误归为产品运行层问题。
 
 lint仍有仓库既有warnings，构建仍提示PDF静态/动态import同时存在；exit均为0。本轮未降低规则或增加lint排除。
+
+日志归档时仅清理终端颜色转义和行尾空白，保留检查输出内容。
