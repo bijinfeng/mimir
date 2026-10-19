@@ -1267,3 +1267,42 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Next Steps
 
 - 继续模块11 HTML页面编辑器，模块12–16随后；总任务与持续目标保持active
+
+
+## Session 44: 新对话起始页二次精修与HTML规划交接
+<!-- trellis-session: v=2 fp=e1a236b91c72503f -->
+
+**Date**: 2026-10-20
+**Task**: 新对话起始页二次精修与HTML规划交接
+**Package**: chat
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+按用户最新截图优先完成主对话起始页精修，真实前后HTML存档与全仓检查通过；模块11HTML研究及真实组件gallery准备稿另存规划提交，未计作完成。
+
+### Main Changes
+
+- 主空态标题/图标/说明与表单收拢对齐，既有display字号、输入工具、官方UI及运行逻辑保留；短窗防收缩和键位提示完成。
+- docs/visual-comparisons/2026-10-20-chat-start保存6组真实配对、短窗/菜单补充、来源哈希和完整质量门；对比页已打开保留。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `bf6638b` | fix(chat): refine the new conversation start page |
+| `45c5b15` | chore(task): retain HTML editor research and gallery handoff |
+
+### Testing
+
+- [OK] pnpm check退出0：Office2711、Renderer591、Chat88、Server常规/本地/fnOS、Desktop50及其余包与宿主脚本均通过；Storage既有2跳过。
+- [OK] 浏览器浅深主题1440/1100/880/600、600x360长草稿回顶/到底、模型菜单Escape、范围/等级切换及Shift+Enter完成；未提交真实模型请求。
+
+### Status
+
+[OK] **Completed**
+
+### Next Steps
+
+- 恢复.trellis/tasks/10-20-interaction-html规划：研究92组已有，gallery未构建未验收；先实际组件验证，再完善design/implement和context后start。
+- 父目标继续模块11–16，整体目标仍active；没有推送。
