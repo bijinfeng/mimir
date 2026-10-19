@@ -119,7 +119,7 @@
     {
       "id": "chat",
       "name": "AI对话与生成交互",
-      "status": "awaiting_exact_version_approval",
+      "status": "revision_in_progress",
       "proposal": "../10-18-interaction-chat/prototype/v3/review.html",
       "version": "chat-review-v3",
       "approved_at": null,
@@ -134,7 +134,7 @@
       "coverage_states": 379,
       "verification": "../10-18-interaction-chat/planning-acceptance-v3.md",
       "revision_user_quote": "对话的渲染我是全盘采用的 assistant-ui 官方组件，不要有定义的组件和样式覆盖",
-      "revision_notes": "v3完整assistant-ui官方Thread及默认CSS，无自定义renderer和样式覆盖；附件独立规划，379来源态+24新增附件态，403路由不等于GUI测试。独立源码复核及代表GUI抽验完成，待本版认可；产品代码未改，v1/v2冻结保留。",
+      "revision_notes": "v3冻结保留、未获批。用户要求模型/思考强度/知识库范围留在输入框内，正在修订规划；官方完整Thread无Composer插槽，有限组合边界待确认。",
       "previous_proposal": "../10-18-interaction-chat/prototype/v2/review.html",
       "previous_sha256": "6c18bbd2d936e7b706b7ed3375a6234b82670b961e6be10ba7b81eac306a3af8",
       "previous_version": "chat-review-v2",
@@ -150,7 +150,8 @@
         "boundary": 122
       },
       "attachment_planning_user_quote": "一并规划聊天附件能力（推荐）",
-      "attachment_task": ".trellis/tasks/10-19-chat-attachments"
+      "attachment_task": ".trellis/tasks/10-19-chat-attachments",
+      "composer_controls_user_quote": "但是输入框里的模型和思考强度选择还有知识库范围都是需要的"
     },
     {
       "id": "settings",

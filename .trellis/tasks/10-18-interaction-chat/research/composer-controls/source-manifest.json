@@ -1,0 +1,17 @@
+{
+  "checked_on": "2026-10-19",
+  "commit": "a587b2838f2d644549d216098d54cfbeedfac522",
+  "files": [
+    {
+      "file": "model-selector.aui.tsx",
+      "url": "https://raw.githubusercontent.com/assistant-ui/assistant-ui/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/assistant-ui/elements/model-selector.aui.tsx",
+      "sha256": "fa58d6cb2392e7d57d58d7d560008953f95025b1bd0a58b7539a61f7283557c1"
+    },
+    {
+      "file": "model-selector.tsx",
+      "url": "https://raw.githubusercontent.com/assistant-ui/assistant-ui/a587b2838f2d644549d216098d54cfbeedfac522/packages/ui/src/components/react/assistant-ui/elements/model-selector.tsx",
+      "sha256": "fac25f56bc0920d28c8d4143e9106abb91700f2a48e0b83a426b5d8404e30c82"
+    }
+  ],
+  "license": "MIT; same upstream commit and full license archived at ../vendor-full-thread/LICENSE"
+}

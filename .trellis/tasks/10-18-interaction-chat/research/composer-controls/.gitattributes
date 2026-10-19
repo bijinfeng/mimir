@@ -1,0 +1,2 @@
+# Preserve fixed upstream source bytes.
+*.tsx -whitespace

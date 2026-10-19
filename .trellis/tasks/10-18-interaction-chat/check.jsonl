@@ -18,3 +18,4 @@
 {"file": ".trellis/tasks/10-18-interaction-chat/research/agui-official-thread-pre-send-seam.md", "reason": "公开runtime动作冻结与唯一AGUI bridge的最小隔离验证；非完整Thread/产品验收"}
 {"file": ".trellis/tasks/10-18-interaction-chat/planning-acceptance-v3.md", "reason": "冻结完整官方v3、附件方案、质量证据及未验边界；产品实施仍需本版认可"}
 {"file": ".trellis/tasks/10-18-interaction-chat/research/independent-v3-review.md", "reason": "独立源码复核结果与产品集成剩余边界，非GUI或产品端到端验收"}
+{"file": ".trellis/tasks/10-18-interaction-chat/research/composer-controls-contract.md", "reason": "最新输入框内三项控制要求、官方ModelSelector/Effort证据与待确认的Composer有限组合边界"}

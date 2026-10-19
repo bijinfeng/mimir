@@ -30,11 +30,11 @@
     "research/independent-v3-review.md",
     "../10-19-chat-attachments/prd.md"
   ],
-  "notes": "v3完整官方Thread、默认CSS和标准聊天附件规划已交付并冻结，等待用户认可具体HTML；v1/v2保留，产品代码未改。",
+  "notes": "v3冻结保留但未获批；用户要求模型/思考强度/知识库范围留在输入框内，修订规划中。待确认仅Composer工具栏有限组合的边界，产品代码未改。",
   "meta": {
     "planning_user_quote": "继续",
     "product_implementation_approved": false,
-    "planning_delivery": "awaiting_exact_version_approval",
+    "planning_delivery": "revision_composer_controls_boundary_pending",
     "version": "chat-review-v3",
     "html_sha256": "2bfbfd2cd62fefca351297ec03d0d3bfde7f64e9eed123a7372e5ef0bcabd920",
     "coverage_groups": 71,
@@ -62,6 +62,9 @@
       "removed": 7,
       "boundary": 122
     },
-    "verification": "verification/v3/browser-qa.md"
+    "verification": "verification/v3/browser-qa.md",
+    "composer_controls_user_quote": "但是输入框里的模型和思考强度选择还有知识库范围都是需要的",
+    "composer_controls_location": "inside_composer",
+    "composer_extension_decision": "pending"
   }
 }
