@@ -8,7 +8,7 @@
 
 <!-- @@@auto:current-status -->
 - **Active File**: `journal-1.md`
-- **Total Sessions**: 38
+- **Total Sessions**: 39
 - **Last Active**: 2026-10-19
 <!-- @@@/auto:current-status -->
 
@@ -19,7 +19,7 @@
 <!-- @@@auto:active-documents -->
 | File | Lines | Status |
 |------|-------|--------|
-| `journal-1.md` | ~1126 | Active |
+| `journal-1.md` | ~1150 | Active |
 <!-- @@@/auto:active-documents -->
 
 ---
@@ -29,6 +29,7 @@
 <!-- @@@auto:session-history -->
 | # | Date | Title | Commits | Branch |
 |---|------|-------|---------|--------|
+| 39 | 2026-10-19 | 接入 TanStack 官方 Headless UI 并完成验收 | `c6d6c42`, `b124c34` | `codex/all-pages-polish` |
 | 38 | 2026-10-19 | 完成 v7 TanStack 对话与临时附件实施验收 | `25f5ca6`, `57c24e3`, `c497002`, `87cfa96` | `codex/all-pages-polish` |
 | 37 | 2026-10-19 | Chat v7 latest TanStack SDK planning demo | `8d71ff9` | `codex/all-pages-polish` |
 | 36 | 2026-10-19 | Chat v6 供应商模型与推理等级 Demo | `6c98025` | `codex/all-pages-polish` |

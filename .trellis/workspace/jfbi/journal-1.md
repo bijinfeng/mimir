@@ -1124,3 +1124,27 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+
+## Session 39: 接入 TanStack 官方 Headless UI 并完成验收
+<!-- trellis-session: v=2 fp=8c104c44065e0ff2 -->
+
+**Date**: 2026-10-19
+**Task**: 接入 TanStack 官方 Headless UI 并完成验收
+**Package**: chat
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+采用官方 createChatUI 接既有唯一 useChat host，消息/内容/Input/TextPart真实参与主对话与侧栏。保持批准v7外观、模型与实际等级、独立FIFO保稿、附件、canonical保存和Agent守卫；记录SDK隐藏client-tool-execution边界及CSS特异性修正。pnpm check通过：4866项通过、2项既有Storage跳过；Web/Desktop构建通过，独立复核无未解决项。真实隔离产品GUI抽验上传/预览回焦、队列/停止保稿、保存、侧栏草稿和600/390px布局。Agent与分支等由HTTP/SSE回归验证；未宣称全协议GUI、原生Electron/IME/读屏或付费供应商认证。任务已归档，QA服务已停止，未推送。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `c6d6c42` | docs(chat): plan official TanStack headless UI integration |
+| `b124c34` | refactor(chat): adopt official TanStack headless UI |
+
+### Status
+
+[OK] **Completed**
