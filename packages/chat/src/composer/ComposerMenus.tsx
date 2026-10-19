@@ -12,10 +12,10 @@ const useStyles = createStyles(({ css, token }) => ({
   root: css`
     position: relative;
     display: flex;
-    flex: 1 1 180px;
+    flex: 1 1 0;
     align-items: center;
     gap: 4px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     min-width: 0;
     @container mimir-composer (max-width: 560px) {
       flex: 1 1 0;
@@ -36,15 +36,21 @@ const useStyles = createStyles(({ css, token }) => ({
     }
   `,
   selector: css`
+    flex: 0 1 auto;
     min-width: 0;
-    max-width: 100%;
+    max-width: 140px;
+    &[data-selector='scope'] {
+      flex: none;
+      margin-right: auto;
+    }
+    &[data-selector='model'] {
+      min-width: 32px;
+    }
+    &[data-selector='effort'] {
+      flex: none;
+    }
     @container mimir-composer (max-width: 560px) {
-      flex: 0 1 auto;
-      &:first-child {
-        flex: 1 1 0;
-        min-width: 32px;
-      }
-      &:last-child {
+      &[data-selector='scope'] {
         max-width: 100px;
       }
     }
@@ -115,11 +121,26 @@ const useStyles = createStyles(({ css, token }) => ({
     bottom: calc(100% + 8px);
     left: 0;
     z-index: 50;
-    width: 258px;
-    min-width: 0;
+    width: max-content;
+    min-width: min(176px, calc(100vw - 48px));
     max-width: min(258px, calc(100vw - 48px));
     @container mimir-composer (max-width: 560px) {
+      min-width: min(176px, calc(100cqi - 48px));
       max-width: min(258px, calc(100cqi - 48px));
+    }
+    button[role='menuitemradio'] > span:last-child {
+      display: flex;
+      flex: 0 0 14px;
+      align-items: center;
+    }
+    &[data-menu='model'],
+    &[data-menu='effort'] {
+      left: auto;
+      right: 0;
+    }
+    &[data-menu='effort'] {
+      width: 128px;
+      min-width: 0;
     }
     max-height: 340px;
     overflow: auto;
@@ -128,7 +149,7 @@ const useStyles = createStyles(({ css, token }) => ({
     border: 1px solid ${token.colorBorderSecondary};
     box-shadow: ${token.boxShadowSecondary};
     border-radius: 6px;
-    padding: 6px;
+    padding: 0;
     button {
       display: flex;
       align-items: center;
@@ -139,7 +160,7 @@ const useStyles = createStyles(({ css, token }) => ({
       text-align: left;
       border: 0;
       background: transparent;
-      border-radius: 4px;
+      border-radius: 0;
       padding: 6px 9px;
       font-size: var(--mimir-chat-font-excerpt, 13px);
     }
@@ -147,10 +168,17 @@ const useStyles = createStyles(({ css, token }) => ({
     button:focus-visible {
       background: ${token.colorFillTertiary};
     }
+    button:focus-visible {
+      outline-offset: -2px;
+    }
     button span:first-child {
+      min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+    button > svg {
+      flex: none;
     }
     hr {
       border: 0;
@@ -167,6 +195,9 @@ const useStyles = createStyles(({ css, token }) => ({
     font-size: var(--mimir-chat-font-badge, 11.5px);
     color: ${token.colorTextTertiary};
     padding: 7px 9px 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   `,
   usage: css`
     font-size: var(--mimir-chat-font-badge, 11.5px);
@@ -265,7 +296,66 @@ export function ComposerMenus({
         }
       }}
     >
-      <div className={styles.selector}>
+      <div className={styles.selector} data-selector="scope">
+        <button
+          type="button"
+          className={styles.trigger}
+          aria-label={`本轮检索范围：${document?.title ?? (documentId ? '当前文档' : '全部文档')}`}
+          title={document?.title ?? (documentId ? '当前文档' : '全部文档')}
+          aria-haspopup="menu"
+          aria-expanded={menu === 'scope'}
+          onClick={(event) => toggle('scope', event)}
+        >
+          <Library size={14} />
+          <span className={styles.fullLabel} aria-hidden>
+            {document?.title ?? (documentId ? '当前文档' : '全部文档')}
+          </span>
+          <span className={styles.compactLabel} data-scope="" aria-hidden>
+            {documentId ? '当前文档' : '全部文档'}
+          </span>
+          <span className={styles.shortestScope} aria-hidden>
+            {documentId ? '本篇' : '全部'}
+          </span>
+          <ChevronDown size={13} />
+        </button>
+        {menu === 'scope' && (
+          <div className={styles.menu} data-menu="scope" role="menu" aria-label="本轮检索范围">
+            <button
+              type="button"
+              role="menuitemradio"
+              aria-checked={!documentId}
+              onClick={() => pick(() => onDocumentId(null))}
+            >
+              <span>全部文档</span>
+              <span>{!documentId && <Check size={14} />}</span>
+            </button>
+            <hr />
+            {status.documents.isLoading ? (
+              <p>加载中…</p>
+            ) : status.documents.isError ? (
+              <button type="button" role="menuitem" onClick={status.documents.refetch}>
+                读取失败，点此重试
+              </button>
+            ) : !status.documents.items.length ? (
+              <p>知识库还没有文档</p>
+            ) : (
+              status.documents.items.slice(0, 20).map((doc) => (
+                <button
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={doc.id === documentId}
+                  key={doc.id}
+                  onClick={() => pick(() => onDocumentId(doc.id))}
+                >
+                  <span title={doc.title}>{doc.title}</span>
+                  <span>{doc.id === documentId && <Check size={14} />}</span>
+                </button>
+              ))
+            )}
+          </div>
+        )}
+      </div>{' '}
+      <div className={styles.selector} data-selector="model">
         <button
           type="button"
           className={styles.trigger}
@@ -279,7 +369,7 @@ export function ComposerMenus({
           <ChevronDown size={13} />
         </button>
         {menu === 'model' && (
-          <div className={styles.menu} role="menu" aria-label="选择模型">
+          <div className={styles.menu} data-menu="model" role="menu" aria-label="选择模型">
             {status.models?.isLoading ? (
               <p role="status">正在加载模型…</p>
             ) : status.models?.isError ? (
@@ -291,7 +381,9 @@ export function ComposerMenus({
             ) : (
               status.models.catalog.providers.map((provider) => (
                 <div key={provider.providerId} role="group" aria-label={provider.providerName}>
-                  <div className={styles.provider}>{provider.providerName}</div>
+                  <div className={styles.provider} title={provider.providerName}>
+                    {provider.providerName}
+                  </div>
                   {provider.models.map((option) => (
                     <button
                       type="button"
@@ -329,7 +421,7 @@ export function ComposerMenus({
           </div>
         )}
       </div>
-      <div className={styles.selector}>
+      <div className={styles.selector} data-selector="effort">
         <button
           type="button"
           className={styles.trigger}
@@ -359,7 +451,7 @@ export function ComposerMenus({
           {reasoning?.status === 'supported' && !fixed && <ChevronDown size={13} />}
         </button>
         {menu === 'effort' && reasoning?.status === 'supported' && (
-          <div className={styles.menu} role="menu" aria-label="推理等级">
+          <div className={styles.menu} data-menu="effort" role="menu" aria-label="推理等级">
             <button
               type="button"
               role="menuitemradio"
@@ -371,7 +463,8 @@ export function ComposerMenus({
                 })
               }
             >
-              模型默认{!selection?.reasoningEffort && <Check size={14} />}
+              <span>模型默认</span>
+              <span>{!selection?.reasoningEffort && <Check size={14} />}</span>
             </button>
             {reasoning.levels.map((level) => (
               <button
@@ -385,68 +478,10 @@ export function ComposerMenus({
                   })
                 }
               >
-                {effortLabel(level)}
-                {selection?.reasoningEffort === level && <Check size={14} />}
+                <span>{effortLabel(level)}</span>
+                <span>{selection?.reasoningEffort === level && <Check size={14} />}</span>
               </button>
             ))}
-          </div>
-        )}
-      </div>
-      <div className={styles.selector}>
-        <button
-          type="button"
-          className={styles.trigger}
-          aria-label={`本轮检索范围：${document?.title ?? (documentId ? '当前文档' : '全部文档')}`}
-          title={document?.title ?? (documentId ? '当前文档' : '全部文档')}
-          aria-haspopup="menu"
-          aria-expanded={menu === 'scope'}
-          onClick={(event) => toggle('scope', event)}
-        >
-          <Library size={14} />
-          <span className={styles.fullLabel} aria-hidden>
-            {document?.title ?? (documentId ? '当前文档' : '全部文档')}
-          </span>
-          <span className={styles.compactLabel} data-scope="" aria-hidden>
-            {documentId ? '当前文档' : '全部文档'}
-          </span>
-          <span className={styles.shortestScope} aria-hidden>
-            {documentId ? '本篇' : '全部'}
-          </span>
-          <ChevronDown size={13} />
-        </button>
-        {menu === 'scope' && (
-          <div className={styles.menu} role="menu" aria-label="本轮检索范围">
-            <button
-              type="button"
-              role="menuitemradio"
-              aria-checked={!documentId}
-              onClick={() => pick(() => onDocumentId(null))}
-            >
-              全部文档{!documentId && <Check size={14} />}
-            </button>
-            <hr />
-            {status.documents.isLoading ? (
-              <p>加载中…</p>
-            ) : status.documents.isError ? (
-              <button type="button" role="menuitem" onClick={status.documents.refetch}>
-                读取失败，点此重试
-              </button>
-            ) : !status.documents.items.length ? (
-              <p>知识库还没有文档</p>
-            ) : (
-              status.documents.items.slice(0, 20).map((doc) => (
-                <button
-                  type="button"
-                  role="menuitemradio"
-                  aria-checked={doc.id === documentId}
-                  key={doc.id}
-                  onClick={() => pick(() => onDocumentId(doc.id))}
-                >
-                  <span title={doc.title}>{doc.title}</span>
-                  {doc.id === documentId && <Check size={14} />}
-                </button>
-              ))
-            )}
           </div>
         )}
       </div>

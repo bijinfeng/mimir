@@ -22,7 +22,7 @@
 
 思考与工具折叠共用 `parts/Process.style.ts`，披露按钮以稳定 `aria-controls` 关联详情；只读协议内容使用 `ProtocolData`，不将载荷执行为页面。消息动作统一为 30px，间距由外层动作条管理，`AnswerActions` 不重复增加上边距；hover/focus 不改变几何。已存笔记的颜色须在常态、hover 和 focus 保持宿主链接角色，不能被外层 `button` 规则覆盖。
 
-输入框边界读取宿主 `fieldBorder/fieldBorderHover/fieldBorderFocus`，renderer 的这些角色复用同一 `FIELD_COLOR`，与基础表单保持一致；不要在对话包再造绿色或聚焦粗边。输入工具区按Composer容器宽度适配窄栏：附件、模型、实际等级、范围、发送保持单行，长名称截断但保留完整title/aria，范围可缩成“当前文档/本篇”；不要因窗口宽而忽略文档侧栏的真实容器宽。上下文用量独立为辅助信息行。
+输入框边界读取宿主 `fieldBorder/fieldBorderHover/fieldBorderFocus`，renderer 的这些角色复用同一 `FIELD_COLOR`，与基础表单保持一致；不要在对话包再造绿色或聚焦粗边。输入工具区按 Composer 容器宽度适配窄栏：左侧为附件、范围，右侧为模型、实际等级、发送，保持单行且 DOM/Tab 顺序与视觉顺序一致。模型触发器按内容收缩，长名称截断但保留完整 title/aria，范围可缩成“当前文档/本篇”；不要因窗口宽而忽略文档侧栏的真实容器宽。模型和范围菜单按内容收缩并受容器宽度上限约束，等级菜单更紧凑；选中标记预留空间，菜单不叠加外围内边距，键盘聚焦描边内收。上下文用量独立为辅助信息行。
 
 `createStyles` 中消费 `var(...)`，不要声明 `--*` 自定义属性；变量声明由 `ChatHostVars` 承担。样式类必须挂到实际祖先节点，不能只定义而漏掉消费点。
 

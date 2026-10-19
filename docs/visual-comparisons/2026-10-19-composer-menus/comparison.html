@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>对话工具栏与菜单 · 前后对比存档</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #f5f7f6;
+      color: #242824;
+      font:
+        14px/1.7 -apple-system,
+        BlinkMacSystemFont,
+        'Segoe UI',
+        'PingFang SC',
+        sans-serif;
+    }
+    main {
+      max-width: 960px;
+      margin: auto;
+      padding: 28px 24px 48px;
+    }
+    h1 {
+      font-size: 24px;
+      margin: 0 0 10px;
+    }
+    h2 {
+      font-size: 18px;
+      margin: 28px 0 12px;
+    }
+    p {
+      margin: 8px 0;
+      color: #57645b;
+    }
+    a {
+      color: #007a45;
+      text-underline-offset: 3px;
+    }
+    a:focus-visible {
+      outline: 2px solid #00894f;
+      outline-offset: 2px;
+    }
+    .pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    figure {
+      margin: 0;
+      background: #fff;
+      border: 1px solid #dde3df;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    figcaption {
+      padding: 10px 14px;
+      font-weight: 600;
+    }
+    img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+    }
+    small {
+      color: #647269;
+    }
+    @media (max-width: 650px) {
+      .pair {
+        grid-template-columns: 1fr;
+      }
+      main {
+        padding: 20px 14px;
+      }
+    }
+  </style>
+  <main>
+    <h1>对话工具栏与菜单</h1>
+    <p>
+      左侧：附件、知识库范围。右侧：模型、思考强度、发送。模型触发器按内容收缩，菜单去掉外围留白，选中标记预留位置。
+    </p>
+    <p>
+      真实产品截图的局部预览；点击查看完整原图。菜单最初共用 258px；当前短列表为 176px，思考强度为
+      128px。长内容可增长至容器限定上限。
+    </p>
+    <small
+      >2026-10-19 · 基线 e5c39a3 ·
+      同尺寸真实产品截图。修改前分别记录在对应反馈到达时：范围截图已应用去外圈内边距；触发器截图已应用菜单宽度修复。图片不随后续代码变化。</small
+    >
+    <section>
+      <h2>工具顺序与模型触发器</h2>
+      <div class="pair">
+        <figure>
+          <figcaption>修改前</figcaption>
+          <a href="before-trigger.png" target="_blank"
+            ><img src="previews/before-trigger.png" alt="工具顺序与模型触发器 · 修改前"
+          /></a>
+        </figure>
+        <figure>
+          <figcaption>修改后</figcaption>
+          <a href="after-trigger.png" target="_blank"
+            ><img src="previews/after-trigger.png" alt="工具顺序与模型触发器 · 修改后"
+          /></a>
+        </figure>
+      </div>
+    </section>
+    <section>
+      <h2>模型列表</h2>
+      <div class="pair">
+        <figure>
+          <figcaption>修改前</figcaption>
+          <a href="before-model.png" target="_blank"
+            ><img src="previews/before-model.png" alt="模型列表 · 修改前"
+          /></a>
+        </figure>
+        <figure>
+          <figcaption>修改后</figcaption>
+          <a href="after-model.png" target="_blank"
+            ><img src="previews/after-model.png" alt="模型列表 · 修改后"
+          /></a>
+        </figure>
+      </div>
+    </section>
+    <section>
+      <h2>思考强度</h2>
+      <div class="pair">
+        <figure>
+          <figcaption>修改前</figcaption>
+          <a href="before-effort.png" target="_blank"
+            ><img src="previews/before-effort.png" alt="思考强度 · 修改前"
+          /></a>
+        </figure>
+        <figure>
+          <figcaption>修改后</figcaption>
+          <a href="after-effort.png" target="_blank"
+            ><img src="previews/after-effort.png" alt="思考强度 · 修改后"
+          /></a>
+        </figure>
+      </div>
+    </section>
+    <section>
+      <h2>知识库范围</h2>
+      <div class="pair">
+        <figure>
+          <figcaption>修改前</figcaption>
+          <a href="before-scope.png" target="_blank"
+            ><img src="previews/before-scope.png" alt="知识库范围 · 修改前"
+          /></a>
+        </figure>
+        <figure>
+          <figcaption>修改后</figcaption>
+          <a href="after-scope.png" target="_blank"
+            ><img src="previews/after-scope.png" alt="知识库范围 · 修改后"
+          /></a>
+        </figure>
+      </div>
+    </section>
+    <section>
+      <h2>补充边界验证</h2>
+      <p>下列场景使用生产 ChatPanel 与当前主题，固定长名称和内存 IO，不连接真实模型。</p>
+      <nav>
+        <a href="narrow-long-model.png" target="_blank">280px · 长模型名</a
+        ><a href="narrow-long-scope.png" target="_blank">280px · 长范围标题</a
+        ><a href="narrow-effort-keyboard.png" target="_blank">280px · 键盘聚焦</a
+        ><a href="320-dark.png" target="_blank">320px · 深色</a
+        ><a href="390-light.png" target="_blank">390px · 浅色</a
+        ><a href="main-light.png" target="_blank">主对话 · 浅色</a>
+      </nav>
+      <p>
+        <a href="metrics.json">实际尺寸与键盘验证记录</a> ·
+        <a href="verification.md">质量检查说明</a>
+      </p>
+    </section>
+  </main>
+</html>

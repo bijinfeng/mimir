@@ -1,0 +1,77 @@
+{
+  "baseline": "e5c39a3",
+  "productSource": "packages/chat/src/composer/ComposerMenus.tsx",
+  "sourceSha256": "cbd75bbbcb04dd9212a2768b3dd42843ab415312831e60852f614835741a72c1",
+  "captures": [
+    {
+      "file": "320-dark.png",
+      "dimensions": [1280, 720],
+      "sha256": "055fd26da06526e935cf27f6d955382fb94322fd37309c98c3deaacab5b8f1e4"
+    },
+    {
+      "file": "390-light.png",
+      "dimensions": [1280, 720],
+      "sha256": "a0cb7191aca30e806774a5cf7183402c0b2cd259f5f60672485306b557007cca"
+    },
+    {
+      "file": "after-effort.png",
+      "dimensions": [1093, 873],
+      "sha256": "047b7ba42a1a9c7f86f7843eebc6587ca866afdbe49d5c24c8934d65cfb0b337"
+    },
+    {
+      "file": "after-model.png",
+      "dimensions": [1093, 873],
+      "sha256": "ebd79e92658f9848b097a699fa1c4f3cca9cf5b8a8a1a0624d0c021e9ac97b39"
+    },
+    {
+      "file": "after-scope.png",
+      "dimensions": [1093, 873],
+      "sha256": "6f8a177f817ef940cad8c5678039a8907ec4a26b721bd4444b8e26394df2c1df"
+    },
+    {
+      "file": "after-trigger.png",
+      "dimensions": [1093, 873],
+      "sha256": "873d5dae487f359f438b72307957538bdaaefc0d1ed31efdcf90a5d499da20dd"
+    },
+    {
+      "file": "before-effort.png",
+      "dimensions": [1093, 873],
+      "sha256": "eb2a4d8b1a3901f3b21e8991a22b2c7af203a8fbfc4059e0c7d97c6fbdfcde7a"
+    },
+    {
+      "file": "before-model.png",
+      "dimensions": [1093, 873],
+      "sha256": "c367a83d273bf28a9dfb4f12acaff57a23a8aa9050488f94471eedbbbe6403d8"
+    },
+    {
+      "file": "before-scope.png",
+      "dimensions": [1093, 873],
+      "sha256": "962716cb1bd8f1afcede9c3e22321e863271eb91c4299e84c1327d1bde3c6387"
+    },
+    {
+      "file": "before-trigger.png",
+      "dimensions": [1093, 873],
+      "sha256": "f4c9f8ed4a87fbcaef7f5012523af19339085331f4a92517cfbefd3da26d8724"
+    },
+    {
+      "file": "main-light.png",
+      "dimensions": [1280, 720],
+      "sha256": "700e36d2aab57d4e0b0259c5f52ef12014c5622789ae706e03f22809e6ea032f"
+    },
+    {
+      "file": "narrow-effort-keyboard.png",
+      "dimensions": [1280, 720],
+      "sha256": "fd49d28725f6cef37c2eba39f15110218c828278f21bf3874c5e12133de4675e"
+    },
+    {
+      "file": "narrow-long-model.png",
+      "dimensions": [1280, 720],
+      "sha256": "540897b3e88b130716c5c869bb823c73322b504008719f868eadcd994c4e60e9"
+    },
+    {
+      "file": "narrow-long-scope.png",
+      "dimensions": [1280, 720],
+      "sha256": "82c70c66e1cf56f0315c4fb104c712615d6e323c84e611bc690022240b27bd06"
+    }
+  ]
+}
