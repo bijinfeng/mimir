@@ -1,0 +1,204 @@
+[
+  {
+    "id": "cancelled-run",
+    "input": {
+      "type": "RUN_FINISHED",
+      "threadId": "t",
+      "runId": "r",
+      "outcome": {
+        "type": "cancelled"
+      }
+    },
+    "0.0.59": {
+      "accepted": false,
+      "issues": [
+        {
+          "path": [
+            "outcome",
+            "type"
+          ],
+          "message": "Invalid discriminator value. Expected 'success' | 'interrupt'"
+        }
+      ]
+    },
+    "1.0.0": {
+      "accepted": true,
+      "parsed": {
+        "type": "RUN_FINISHED",
+        "threadId": "t",
+        "runId": "r",
+        "outcome": {
+          "type": "cancelled"
+        }
+      }
+    }
+  },
+  {
+    "id": "tool-multimedia-result",
+    "input": {
+      "type": "TOOL_CALL_RESULT",
+      "messageId": "m",
+      "toolCallId": "tc",
+      "content": [
+        {
+          "type": "image",
+          "source": {
+            "type": "url",
+            "value": "https://example.com/image.png"
+          }
+        }
+      ]
+    },
+    "0.0.59": {
+      "accepted": false,
+      "issues": [
+        {
+          "path": [
+            "content"
+          ],
+          "message": "Expected string, received array"
+        }
+      ]
+    },
+    "1.0.0": {
+      "accepted": true,
+      "parsed": {
+        "type": "TOOL_CALL_RESULT",
+        "messageId": "m",
+        "toolCallId": "tc",
+        "content": [
+          {
+            "type": "image",
+            "source": {
+              "type": "url",
+              "value": "https://example.com/image.png"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "user-file-source",
+    "input": {
+      "id": "u",
+      "role": "user",
+      "content": [
+        {
+          "type": "document",
+          "source": {
+            "type": "file",
+            "value": "provider-file-id"
+          }
+        }
+      ]
+    },
+    "0.0.59": {
+      "accepted": false,
+      "issues": [
+        {
+          "path": [
+            "content"
+          ],
+          "message": "Invalid input"
+        }
+      ]
+    },
+    "1.0.0": {
+      "accepted": true,
+      "parsed": {
+        "id": "u",
+        "role": "user",
+        "content": [
+          {
+            "type": "document",
+            "source": {
+              "type": "file",
+              "value": "provider-file-id"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "id": "resume-cancelled",
+    "input": {
+      "interruptId": "i",
+      "status": "cancelled"
+    },
+    "0.0.59": {
+      "accepted": true,
+      "parsed": {
+        "interruptId": "i",
+        "status": "cancelled"
+      }
+    },
+    "1.0.0": {
+      "accepted": true,
+      "parsed": {
+        "interruptId": "i",
+        "status": "cancelled"
+      }
+    }
+  },
+  {
+    "id": "reasoning-role",
+    "input": {
+      "id": "r",
+      "role": "reasoning",
+      "content": "摘要"
+    },
+    "0.0.59": {
+      "accepted": true,
+      "parsed": {
+        "id": "r",
+        "role": "reasoning",
+        "content": "摘要"
+      }
+    },
+    "1.0.0": {
+      "accepted": true,
+      "parsed": {
+        "id": "r",
+        "role": "reasoning",
+        "content": "摘要"
+      }
+    }
+  },
+  {
+    "id": "protocol-version",
+    "input": {
+      "threadId": "t",
+      "runId": "r",
+      "protocolVersion": "1.0",
+      "messages": [],
+      "tools": [],
+      "context": [],
+      "state": {}
+    },
+    "0.0.59": {
+      "accepted": true,
+      "parsed": {
+        "threadId": "t",
+        "runId": "r",
+        "state": {},
+        "messages": [],
+        "tools": [],
+        "context": []
+      }
+    },
+    "1.0.0": {
+      "accepted": true,
+      "parsed": {
+        "threadId": "t",
+        "runId": "r",
+        "protocolVersion": "1.0",
+        "state": {},
+        "messages": [],
+        "tools": [],
+        "context": []
+      }
+    }
+  }
+]

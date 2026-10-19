@@ -1,0 +1,27 @@
+{
+  "commit": "81b2aa46a194ee07a3b215cae1f733f68e5d2927",
+  "files": [
+    {
+      "url": "https://raw.githubusercontent.com/ag-ui-protocol/ag-ui/81b2aa46a194ee07a3b215cae1f733f68e5d2927/docs/concepts/events.mdx",
+      "error": "<urlopen error timed out>"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ag-ui-protocol/ag-ui/81b2aa46a194ee07a3b215cae1f733f68e5d2927/docs/concepts/interrupts.mdx",
+      "file": "docs__concepts__interrupts.mdx",
+      "sha256": "f7413abc6cb66497c5a153db2a59dff870e6ec3d5b0e817461d1f9b0acaa8887",
+      "bytes": 14557
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ag-ui-protocol/ag-ui/81b2aa46a194ee07a3b215cae1f733f68e5d2927/docs/concepts/messages.mdx",
+      "file": "docs__concepts__messages.mdx",
+      "sha256": "d3078765617080c7bd2ad0d277627635bcba6e54e71eca1d00ff720e6c499a18",
+      "bytes": 13140
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ag-ui-protocol/ag-ui/81b2aa46a194ee07a3b215cae1f733f68e5d2927/sdks/typescript/packages/core/package.json",
+      "file": "sdks__typescript__packages__core__package.json",
+      "sha256": "a9680f6dcc9274bd128e8ca2e0ca7445f0b107d099e8fd3cd96b2c719349d6b2",
+      "bytes": 1781
+    }
+  ]
+}

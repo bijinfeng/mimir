@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-19",
+  "scope": "planning artifact integrity; not product acceptance",
+  "product": {
+    "count": 51,
+    "mismatches": []
+  },
+  "prior_prototypes": {
+    "count": 202,
+    "mismatches": []
+  },
+  "product_manifests_vs_HEAD": {
+    "package.json": true,
+    "pnpm-lock.yaml": true,
+    "apps/web/package.json": true,
+    "packages/chat/package.json": true,
+    "apps/server/package.json": true
+  },
+  "html_sha256": {
+    "review.html": "0f5499762f4ac97e3b69e7a50bc708139a8b1e3bf1662b5ba7e43f51df874869",
+    "thread.review.html": "4ec0f7be0bf807731f47af672d63efcc429939d7466402bbc0d56f9b53114bc2",
+    "interactions.html": "27b9b9de663ec90d1e21145d78ad2567882f9c11b0deae5ad351c83b9cab91de"
+  },
+  "captures": {
+    "desktop.png": "daefec89b7b4362d7db05ed00c460db082b3c2965e173dac6fdc4d2908e5a355",
+    "dark.png": "33261d101522f327d7c82141b2edb37f01e9691cac025ef1131bc67f87a2538b",
+    "interactions.png": "82c080f422c35f9d4d3ee00c4433f55e38c083da1bd741bd28fb8bcbe8e0bb24",
+    "mobile.png": "a5d1389accbeddb1ba7b3b2c06249738dbe5b4d5f8ccf7ba654c65b9fc641ceb"
+  },
+  "passed": true
+}

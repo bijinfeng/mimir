@@ -1,60 +1,49 @@
-# 对话与生成交互设计（v4规划）
+# 对话与生成交互设计（v5规划）
 
-2026-10-19用户已回复「可以」，确认仅输入框底部工具栏有限扩展；模型/思考强度/知识库范围保留在输入框内。v4用于具体效果再审，v1/v2/v3冻结保留，无产品修改。
+## 方向与基准
 
-## 最终方向与来源
+最新用户要求使用TanStack AI React与自定义组件替代assistant-ui，视觉使用现有Mimir设计，交互对齐冻结v4。该要求替代此前全官方渲染/默认样式及仅底部工具栏例外。v1–v4源码/HTML/hash保持不变。`apps/web/DESIGN.md`、renderer真实tokens与已批准基础组件是视觉依据；assistant-ui固定源码只读提供交互行为证据。AG-UI为数据/运行协议，不是视觉组件库。
 
-2026-10-19用户要求完整对话渲染全盘使用assistant-ui官方组件，不自定义组件/样式覆盖。v2仅替换Reasoning/ToolFallback、保留Mimir消息/输入/主题的方案不再满足要求。v1/v2/v3冻结原件保持不变，v4独立生成，产品代码仍不改。
+## 架构与分工
 
-主依据为固定assistant-ui官方Thread及完整组件闭包和默认CSS。AG-UI提供事件/运行语义，不规定视觉；不得把CUSTOM mimir.trace伪装成官方思考或工具。WeKnora固定v0.8.3与公开源证据用于核查知识库/Agent合同，不复制其自绘过程卡。具体来源、许可、版本与能力边界见research/full-official-thread-contract.md；71组来源对应见research/full-official-feature-mapping.md。
+- 客户端运行层拟采用`@tanstack/ai-react`的useChat与兼容ai-client，固定与服务端ai0.68.0兼容的确切版本。`@tanstack/ai-react@0.30.3` / `@tanstack/ai-client@0.39.2`为当前研究候选；不得使用宽范围误拉ai0.69依赖。最终研究与隔离探针是技术事实依据，见research/tanstack-v5-runtime.md。
+- 自有UI层负责Thread/Message/Markdown/代码/Reasoning/Tool/Attachment/Media/Action/Composer及状态与键盘；从项目token消费浅深主题，不保留assistant-ui运行依赖或官方CSS。用户只改变视觉和渲染所有权，业务安全合同不变。
+- AG-UI连接层负责接收RunAgentInput对应SSE、规范事件归约及Mimir事件sidecar。标准state/activity/raw等事件不保证useChat自动归约，必须按真实版本明确处理；事件处理器不能全部依靠unknown cast吞掉。
+- Mimir业务层继续拥有检索范围/角色、真实会话ID、历史、队列、引用、存笔记及Agent执行/中断桥。迁移不直接套SDK默认queue：默认stop/error可能清队列，与Mimir只返还首项不等价。必须单一业务队列，避免双重派发。实际probe还证明SDK浅存body引用、getQueue不返回body，故发送记录须在任何await前deep-copy并冻结，恢复记录独立于SDK清队列。
+- 附件子任务继续负责受保护临时资源、提取/模型输入、历史及寿命；自有附件组件与状态替代官方AttachmentAdapter/UI所有权。上传入口不可复用KB永久导入副作用。
 
-## 渲染边界
+## 数据流和动作合同
 
-1. 官方对话区：除输入框底部三项工具栏挂载外沿用完整Thread，不传components override，不注册自定义消息、part、data、tool renderer；Welcome/消息/Markdown/代码/思考/工具/附件/动作/错误/Composer均使用上游原件。不抽取少量primitive再拼装本地消息。不保留Mimir气泡、输入框、自定义检索过程、伪思考轮次与工具统计。
-2. 官方样式：固定默认globals和registry所需CSS/依赖，原件字节保持；不改CSS选择器，不做前缀、不映射Mimir token，不改内部字号/颜色/边框/圆角/间距，不加覆盖规则。宿主只决定可用容器和普通布局。
-3. 应用宿主：导航、文档画布、历史路由和业务操作不冒称官方组件。官方没有的引用定位、保存笔记、队列取回、截图/Agent执行及草稿/未保存守卫等在Thread外保留。不得为“全盘官方”静默删能力或绕过验证。最终具体位置以本次HTML再审。
-4. 运行时：只有数据转换、真实能力adapter、onNew/onCancel/安全重试和宿主IO可以接线；不得通过渲染覆盖或CSS绕路。本地fixture明确模拟，不执行模型/工具/写原件。官方不支持的动作如实禁用/隐藏或留在宿主，不伪造成功。
+1. UI操作进入统一发送意图，所有新发送入口在任何await/附件准备前同步快照范围canonical documentId、deepReasoning与附件引用；Agent来源/页/版本/轮次/截图守卫只检查已有合同，不降级或隐式授权。
+2. SDK stock SSE 已发送完整RunAgentInput（含forwardedProps及legacy data镜像），并非旧的messages/data二字段。保留metadata、引用、失败、conversationId及documentAgent事件，跨源显式credentials=include。TanStack续轮自动携带parentRunId，但现有document-Agent服务会拒绝此客户端字段：transport仅在该路由移除wire parentRunId，保留客户端内部关联，绝不放宽服务端claim/round/version/replay守卫。
+3. SDK负责支持的text/thinking/tool等消息归约；sidecar负责未内置归约的标准事件及业务CUSTOM，不合成mimir.trace、不暴露分词/召回过程。每次run/step/message/tool使用真实ID和生命周期，不以视觉文案猜计时/完成状态。
+4. cancel与error中止transport、保留部分回答；队列/草稿由Mimir取回规则处理，不让SDK清空业务队列。历史加载和真实ID建立不可重挂载正在运行的stream；文档助手关闭保活、切换按现行key契约。
+5. Agent工具执行与续传不依赖UI折叠状态。已执行结果缓存后只续传不重做；resumeInterruptsUnsafe在HTTP失败可能fulfilled false，必须检查布尔值并保留缓存，不能仅依赖catch；round/version/documentId/来源失效拒迟到结果；AGUI interrupt/resume不等同新问题或任意tool approval。通用审批仅协议能力演示，不能绕过既有Agent守卫。
+6. 程序快捷提问、队列、普通Send/Enter、只附件默认提问共用发送前守卫与快照；复用API避免派生两个roundId。已发送引用canonical附件ID不依赖UI消息ID，图片绝对同源受保护URL、file引用的wire合同不因新UI取消。
 
-## 必须保留的业务合同
+## HTML交付
 
-- 模型两条绑定只读，管理模型导航设置；标准/深入只在主对话，文档侧栏有效值标准。模型/强度/范围控件在输入框底部，保持原业务语义，使用官方选择基础件默认样式。
-- 队列/发送按现有运行时保真；停止/失败只返还首条，其他仍留队列。官方Composer支持情况据实际adapter验证，不能靠假按钮或额外自定义输入框声称兼容。Shift+Enter/IME按官方原件验收。
-- 配额/超时/截断/离线保留已有安全恢复；未实现的充值/缩范围/继续生成等不凭空变成可用。历史重试标准与实际参数统一的提案继续留证。
-- 截图的来源寿命/页/版本/视觉能力必须校验，不能静默降级或覆盖新草稿；截图不等于新增通用上传。
-- Agent已执行后续传失败只重送缓存，不能重新执行；文档/轮次/版本变化拒迟到结果。官方retry/工具UI不代替本地document interrupt/resume桥，也不凭空加工具审批后端。
-- 保存笔记只针对最后成功非空回答，互斥/失败重试/打开笔记保留。官方复制/重试等内置动作遵循其原有行为与runtime能力，不能为保持旧自绘门控去改官方件。
-- 新建真实会话ID不重挂载流，切换历史按现行key契约重载；历史错误不是空会话。引用/模型设置/打开笔记守未保存离开；关闭助手保活已有Chat。
+`prototype/v5/review.html`保留原71组379来源态+24附件态，current列不变，proposed换自有组件并与v4逐项parity。新增`interactions.html`是独立的交互规范/验收页，共用v5组件与本地连接，提供分类、搜索、状态/动作、深链、事件序列/状态输出、失败/取消/恢复与版本适用范围。技术数据仅显示在此页或显式原型调试区，正常问答不混入协议细节。
 
-## 旧问题与方案变化
+详情目录依据`research/agui-v5-interaction-catalog.json`：core0.0.59为36事件、core1.0.0为31（前者含5个旧THINKING事件）；两版共同/新增字段如取消outcome、工具多媒体、resume.status分别标明。旧THINKING事件不是当前runtime原生处理，必须明确legacy inspector或显式normalizer；不能把列出事件当作已消费。纯数据同步事件可无独立常态UI，但必须有可观察状态演示。TanStack扩展和Mimir业务CUSTOM另列，不混称AGUI标准。附件、复制、导出、重试、动作菜单、滚动、焦点、IME等虽非协议事件仍在parity目录中。
 
-research/chat-package-inventory.json及chat-host-inventory记录当前事实：检索跟随run、历史强度提示偏差、sentHere、零part错误隐藏、代码复制失败静默、图片max-width320/无onError、草稿/回退缺pending门控。v1/v2为这些现象做过自绘提案；v4除已确认工具栏外以官方原件为准，不能一面保持复制/图片等自定义补丁，一面声称全盘官方。真正业务失败恢复与草稿守卫在宿主保留；差异须在来源映射明确。只检索发送documentId=null等现有业务参数不因换UI改掉。
+所有真实模型/上传/提取/存储/Agent/原生操作均边界标明；HTML仅本地内存，不冒充真实业务。需实际TanStack useChat消费合法本地流，不能只贴runtime标识却沿用assistant-ui或全静态组件。额外协议能力展示不自动进入产品功能范围。
 
-## HTML结构与验证
+## 交互与视觉合同
 
-评审外壳保留稳定场景ID、当前/提案/比较和尺寸切换。当前按源码及真实基线重建，不冒称全实拍。输入框扩展使用独立派生Thread文件（记录原件、diff与允许插入位置），不覆盖vendor原件；其余闭包完整复用。官方对话放在独立document/iframe避免legacy/antd样式串入，原型只隔离文档、不重写官方CSS；产品落地时再按实际路由/样式边界验证。内容使用相同本地fixture，只有真实消息part才出现对应官方UI。主题/缩放/减少动态使用官方支持的模式或评审容器的环境模拟，不改官方内部样式。
+以v4公开行为拓扑逐项比对：发送/Enter、Shift+Enter/组合输入、发送准备/取消/附件错误保留、忙碌排队、停止/重试、suggestion直接发送、用户原样文本、Markdown/代码copy反馈、思考/工具分组与展开、文件/图片/音视频、Copy/Export/Refresh/More能力门控、错误/空消息、滚动/贴底、菜单键盘和关闭回焦点。业务存笔记只针对最后成功非空回答；复制/导出与再生成不能误作真实保存或工具重执行。协议支持但Mimir未提供的后端能力仅演示或显式不可用。
 
-71/379全部保留来源追溯，标注official、host-external、removed、boundary（可组合）；不支持项不能通过仿画补齐，不把映射数量当GUI测试次数。固定来源/许可、依赖锁、原件hash与iframe实际运行有证据；独立复核后主会话抽验空态/发送/停止/真实reasoning/tool/长Markdown代码/附件/失败与宿主恢复、浅深/窄屏/键盘，冻结新版本。
+视觉复用白灰/绿色现有世界、系统中文字体、6px控件、14px界面字号与reading角色，输入默认/hover/focus始终单层1px、无外扩阴影、不改变几何；语义错误/警告优先。浅深/390/主侧栏折行不隐藏附件/发送，键盘focus-visible保留，动作hover不推移内容。范围/强度/模型位于输入框内且遵循只读/单篇/侧栏标准合同。
 
-51个产品基线与v1/v2/v3 hash保护本轮不改产品/旧稿。真实API/模型/Agent/落库/剪贴板/文件媒体/PNG/原生IME读屏/Electron留待具体HTML认可后的实施验收。
+## 兼容、风险与回滚
 
-## 实施兼容与回滚
+更换状态所有者比换皮影响更大，旧assistant-ui runtime facade不可直接移植成TanStack合同。真实请求体、状态/活动侧车、流顺序/终止、历史内容与附件ID、Agent中断、队列停止失败语义、原生IME和剪贴板都需产品阶段专项验证。v5隔离依赖与probe不改产品锁；不进行破坏性历史迁移。产品可按包/宿主接线逐步切换，保留无损回滚和旧会话数据。实质方案变化另存版本并重新评审，不修改已冻结HTML。
 
-完整Thread可能需要超出v2闭包的官方组件依赖；只在临时隔离环境安装并固定版本，不改产品manifest/lock。本地react SDK0.15.28与固定registry0.15.29已有responseDeliveryStatus差异，完整闭包还需实际类型/构建核对；未来最小升级不得丢AG-UI中断补丁，必须回归历史/队列/Agent安全。
+## 子任务依赖
 
-获准后清理TraceDisclosure/parts/data-parts/runtime history与server trace发送/生产链、shared兼容使用点，旧数据库字段兼容不破坏迁移；保留引用/失败/会话及文档业务事件。官方渲染替换后移除相应自绘组件和样式，不能残留全局覆盖。回滚只限本轮产品变更，保留旧记录及冻结稿，不混入Office内部工具改造。
+附件子任务仍planning，技术所有权随v5迁移。父任务负责TanStack接线、自有组件和主/侧栏宿主；子任务负责真实附件服务、wire与寿命，两者发布/完整验收互相依赖。详情HTML是同一模块的可独立验收产物，不因树位置隐含批准新能力。本具体v5认可前两任务都不start。
 
-## 新增附件规划与依赖
 
-用户已同意一并规划标准聊天附件能力，独立子任务10-19-chat-attachments负责服务端/共享协议/官方AttachmentAdapter和文件生命周期；父任务负责完整官方Thread及宿主布局，HTML附件场景由prototype/v4统一呈现。聊天附件不是KB永久导入，不直接复用有写documents/分块嵌入副作用的上传路径。父任务产品切换的发布依赖子任务真实附件能力及发送前Agent/队列冻结验证，不能带一个选后必报unsupported的默认+号声称完成。文件格式/容量/寿命建议经研究后写入子任务并随新版具体审批；当前只可明确模拟，无真实上传/模型/落库。
+### v5 续传与准备期补充合同
 
-## 公开发送接缝的研究结论
-
-已通过最小隔离探针验证公开AssistantRuntime facade：在composer.send和thread.append之前同步冻结，必须覆盖thread、threads.main及getById；保留原AGUI core/queue/extras与中断补丁唯一所有权。普通发送/两条队列、官方建议、拒绝保稿、异步附件前冻结及interrupt失败后重送在最小primitive宿主中有实证，详见research/agui-official-thread-pre-send-seam.md及probe结果。它证明具体技术路线，仍非完整Thread/产品Agent端到端验收。
-
-现有AGUI hook本身默认提供onEdit/onReload，不能只写“不传回调”就声称产品已禁用；正式接入需通过真实capability facade/安全动作adapter或最小公开选项落实。无安全重试能力的Agent/截图保持官方禁用外观，禁止CSS藏按钮或无差别重跑。建议append拒绝的草稿generation竞争、全部新发送入口只冻结一次也列产品回归。
-
-## 输入框三项控制的唯一扩展
-
-固定官方Thread没有工具栏slot，故单独派生文件只增加导入和ComposerAction内的工具栏挂载，原件及默认CSS保留可校验。三项控件用官方通用选择组件默认variant，通过同一fixture/host IO读写范围/强度；模型延续全局绑定与管理入口，不能凭视觉组件引入任意模型切换。官方ModelSelector若自动注册modelName/reasoningEffort与业务不匹配，则使用其无自动注册的基础件或官方通用选择基础件，具体证据见research/composer-v4-contract.md。
-
-工具栏与附件、输入、发送/停止在同一输入shell内，允许新增包装层正常flex换行以适配窄屏，不修改既有官方selector/主题。主/侧栏差异、已排队快照和后续草稿状态由同一宿主源管理；保留实时模型/范围/强度变更不追溯影响已冻结队列。外部业务区移除三项重复控制，仅保留引用/保存/恢复/显式队列等。所有场景及分类需如实标出Composer业务扩展，不再宣称整套Thread完全未改。
+RUN_ERROR 可能清空 SDK lastResume；必须同时冻结原始 {threadId, runId} 与工具答复，失败后调用 resumeInterruptsUnsafe(responses, originalTarget)，检查布尔返回值，成功/明确取消/新轮次才清理；用第三次实际连接证明恢复，不以按钮反馈代替。附件准备完成只能清理本次捕获的附件 ID；若准备期间出现新草稿或新附件，必须保留，宿主状态同步也不能覆盖。REASONING_END 结束可见思考状态，不等待正文 RUN_FINISHED。

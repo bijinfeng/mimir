@@ -1,0 +1,158 @@
+{
+  "name": "@tanstack/ai-react",
+  "dist-tags": {
+    "latest": "0.30.4"
+  },
+  "version": "0.30.4",
+  "metadata": {
+    "_id": "@tanstack/ai-react@0.30.4",
+    "bugs": {
+      "url": "https://github.com/TanStack/ai/issues"
+    },
+    "dist": {
+      "shasum": "6233af7e382a817b19c80c2b0dd96cddd0790f90",
+      "tarball": "https://registry.npmjs.org/@tanstack/ai-react/-/ai-react-0.30.4.tgz",
+      "fileCount": 123,
+      "integrity": "sha512-z2E+zb1hifsFtUZGHRq6InxjPF3WmjN66JXcCYmbVT5c/HWsdvgN3KrJ49jgsuMXHZYch1zi6Y3REdXGj8c4fQ==",
+      "signatures": [
+        {
+          "sig": "MEYCIQCTn3hhKHf51eiXUg3uDjOoPp8wI37sCWfvOLVce1g/RAIhAKmyhG6lG9oEJSnbbk19myBbjAZv4Az5FIEFNckIXf4z",
+          "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+        },
+        {
+          "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U",
+          "sig": "MEYCIQDkRJbbjVwnTanjWe/YmQqXzpY1d11KOIP9QX2C5VVQ0QIhAOMnvqSd+Wgb1cJ7/R/Ga4kvj2gKhRInddG1cAbm1vpv"
+        }
+      ],
+      "attestations": {
+        "url": "https://registry.npmjs.org/-/npm/v1/attestations/@tanstack%2fai-react@0.30.4",
+        "provenance": {
+          "predicateType": "https://slsa.dev/provenance/v1"
+        }
+      },
+      "unpackedSize": 608228
+    },
+    "name": "@tanstack/ai-react",
+    "type": "module",
+    "types": "./dist/esm/index.d.ts",
+    "author": "Tanner Linsley",
+    "module": "./dist/esm/index.js",
+    "exports": {
+      ".": {
+        "types": "./dist/esm/index.d.ts",
+        "import": "./dist/esm/index.js"
+      },
+      "./ui": {
+        "types": "./dist/esm/ui.d.ts",
+        "import": "./dist/esm/ui.js"
+      },
+      "./byok": {
+        "types": "./dist/esm/byok.d.ts",
+        "import": "./dist/esm/byok.js"
+      },
+      "./mcp-apps": {
+        "types": "./dist/esm/mcp-apps.d.ts",
+        "import": "./dist/esm/mcp-apps.js"
+      }
+    },
+    "funding": {
+      "url": "https://github.com/sponsors/tannerlinsley",
+      "type": "github"
+    },
+    "license": "MIT",
+    "scripts": {
+      "build": "vite build",
+      "clean": "premove ./build ./dist",
+      "lint:fix": "oxlint src --type-aware --fix",
+      "test:lib": "vitest run",
+      "test:build": "publint --strict",
+      "test:types": "tsc",
+      "test:oxlint": "oxlint src --type-aware",
+      "test:lib:dev": "pnpm test:lib --watch",
+      "test:coverage": "vitest run --coverage --coverage.include='src/**' --coverage.reporter=text-summary --coverage.reporter=json-summary"
+    },
+    "version": "0.30.4",
+    "_npmUser": {
+      "name": "GitHub Actions",
+      "email": "npm-oidc-no-reply@github.com",
+      "trustedPublisher": {
+        "id": "github",
+        "oidcConfigId": "7524ffbb-248b-4873-a316-9eff8358eec2"
+      }
+    },
+    "homepage": "https://tanstack.com/ai",
+    "keywords": [
+      "ai",
+      "ai-sdk",
+      "typescript",
+      "tanstack",
+      "react",
+      "hooks",
+      "chat",
+      "streaming",
+      "realtime",
+      "tool-calling",
+      "structured-outputs",
+      "media-generation"
+    ],
+    "repository": {
+      "url": "git+https://github.com/TanStack/ai.git",
+      "type": "git",
+      "directory": "packages/ai-react"
+    },
+    "description": "React hooks for TanStack AI streaming chat, realtime voice, structured outputs, and media generation.",
+    "directories": {},
+    "maintainers": [
+      {
+        "name": "tannerlinsley",
+        "email": "tannerlinsley@gmail.com"
+      },
+      {
+        "name": "alemtuzlak",
+        "email": "t.zlak97@gmail.com"
+      },
+      {
+        "name": "kevinvandy",
+        "email": "kevinvandy656@gmail.com"
+      }
+    ],
+    "_nodeVersion": "24.8.0",
+    "dependencies": {
+      "@tanstack/markdown": "^0.0.13",
+      "@tanstack/ai-client": "^0.39.3"
+    },
+    "_hasShrinkwrap": false,
+    "devDependencies": {
+      "vite": "^8.2.1",
+      "jsdom": "^27.4.0",
+      "react": "^19.2.3",
+      "react-dom": "^19.2.3",
+      "@tanstack/ai": "0.69.0",
+      "@types/react": "^19.2.7",
+      "@mcp-ui/client": "^7.1.1",
+      "@vitest/coverage-v8": "4.1.10",
+      "@standard-schema/spec": "^1.1.0",
+      "@testing-library/react": "^16.3.2"
+    },
+    "peerDependencies": {
+      "react": ">=18.0.0",
+      "react-dom": ">=18.0.0",
+      "@tanstack/ai": "^0.69.0",
+      "@types/react": ">=18.0.0",
+      "@mcp-ui/client": "^7"
+    },
+    "peerDependenciesMeta": {
+      "react-dom": {
+        "optional": true
+      },
+      "@mcp-ui/client": {
+        "optional": true
+      }
+    },
+    "_npmOperationalInternal": {
+      "host": "s3://npm-registry-packages-npm-production",
+      "tmp": "tmp/ai-react_0.30.4_1791913708145_0.41628642535200133"
+    }
+  },
+  "retrieved": "2026-10-19"
+}

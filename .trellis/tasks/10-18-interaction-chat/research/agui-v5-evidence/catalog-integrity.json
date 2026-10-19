@@ -1,0 +1,41 @@
+{
+  "date": "2026-10-19",
+  "catalogVersion": "agui-v5-catalog-3",
+  "catalogSha256": "1534f46053cc4f7535cf7dde6ade659c5726e2022d1e579dec06c3a6d82d673d",
+  "items": 126,
+  "uniqueIds": 126,
+  "categories": {
+    "run": 3,
+    "step": 2,
+    "text": 4,
+    "tool": 5,
+    "reasoning": 7,
+    "legacy": 5,
+    "state": 3,
+    "activity": 2,
+    "extension": 2,
+    "subagent": 3,
+    "content": 8,
+    "envelope": 2,
+    "hitl": 6,
+    "business": 6,
+    "host-interaction": 30,
+    "official-parity": 30,
+    "protocol-boundary": 8
+  },
+  "events059": 36,
+  "events100": 31,
+  "missingEvents": [],
+  "v4Routes": 403,
+  "v4Groups": 72,
+  "unmappedRoutes": [],
+  "examples": {
+    "groups": 58,
+    "schema059Passed": 58,
+    "sequence059Passed": 58,
+    "schema100Passed": 53,
+    "schema100ExpectedLegacyFailures": 5
+  },
+  "productionCapabilityVerified": false,
+  "browserUIValidationDone": false
+}

@@ -1,0 +1,24 @@
+[
+  {
+    "url": "https://raw.githubusercontent.com/TanStack/ai/85c2956c68f3226ef409b3a4e54d5be82198931e/docs/framework/react/overview.md",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/TanStack/ai/85c2956c68f3226ef409b3a4e54d5be82198931e/docs/guides/connection-adapters.md",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/TanStack/ai/85c2956c68f3226ef409b3a4e54d5be82198931e/docs/guides/ag-ui.md",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "url": "https://raw.githubusercontent.com/TanStack/ai/85c2956c68f3226ef409b3a4e54d5be82198931e/docs/reference/react/useChat.md",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "url": "https://api.github.com/repos/TanStack/ai/contents/docs/migration/ag-ui-compliance.md?ref=85c2956c68f3226ef409b3a4e54d5be82198931e",
+    "path": ".trellis/tasks/10-18-interaction-chat/research/tanstack-v5-evidence/ag-ui-compliance.md",
+    "sha256": "040981a693026a9ead2a04a425de97e8b19db8fb8143078110fed24ba76b4716",
+    "http": 200
+  }
+]

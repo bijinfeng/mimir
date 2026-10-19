@@ -1,0 +1,314 @@
+{
+  "date": "2026-10-19",
+  "state": {
+    "threadId": "c1",
+    "runId": "run-1792388561091-w4g9n6"
+  },
+  "before": {
+    "interrupts": [
+      {
+        "id": "client_tool_tc1",
+        "interruptId": "client_tool_tc1",
+        "reason": "tanstack:client_tool_execution",
+        "metadata": {
+          "input": {},
+          "kind": "client_tool",
+          "toolName": "fake_write"
+        },
+        "threadId": "c1",
+        "interruptedRunId": "run-1792388561091-w4g9n6",
+        "generation": 0,
+        "status": "pending",
+        "errors": [],
+        "canResolve": true,
+        "kind": "generic",
+        "binding": {
+          "generation": 0,
+          "interruptId": "client_tool_tc1",
+          "interruptedRunId": "run-1792388561091-w4g9n6",
+          "kind": "generic",
+          "v": 1
+        }
+      }
+    ],
+    "pendingInterrupts": [
+      {
+        "id": "client_tool_tc1",
+        "interruptId": "client_tool_tc1",
+        "reason": "tanstack:client_tool_execution",
+        "metadata": {
+          "input": {},
+          "kind": "client_tool",
+          "toolName": "fake_write"
+        },
+        "threadId": "c1",
+        "interruptedRunId": "run-1792388561091-w4g9n6",
+        "generation": 0,
+        "status": "pending",
+        "errors": [],
+        "canResolve": true,
+        "kind": "generic",
+        "binding": {
+          "generation": 0,
+          "interruptId": "client_tool_tc1",
+          "interruptedRunId": "run-1792388561091-w4g9n6",
+          "kind": "generic",
+          "v": 1
+        }
+      }
+    ],
+    "interruptErrors": [],
+    "resuming": false
+  },
+  "firstResult": false,
+  "afterFailure": {
+    "resume": {
+      "threadId": "c1",
+      "runId": "run-1792388561091-w4g9n6"
+    },
+    "interrupts": {
+      "interrupts": [
+        {
+          "id": "client_tool_tc1",
+          "interruptId": "client_tool_tc1",
+          "reason": "tanstack:client_tool_execution",
+          "metadata": {
+            "input": {},
+            "kind": "client_tool",
+            "toolName": "fake_write"
+          },
+          "threadId": "c1",
+          "interruptedRunId": "run-1792388561091-w4g9n6",
+          "generation": 0,
+          "status": "pending",
+          "errors": [],
+          "canResolve": true,
+          "kind": "generic",
+          "binding": {
+            "generation": 0,
+            "interruptId": "client_tool_tc1",
+            "interruptedRunId": "run-1792388561091-w4g9n6",
+            "kind": "generic",
+            "v": 1
+          }
+        }
+      ],
+      "pendingInterrupts": [
+        {
+          "id": "client_tool_tc1",
+          "interruptId": "client_tool_tc1",
+          "reason": "tanstack:client_tool_execution",
+          "metadata": {
+            "input": {},
+            "kind": "client_tool",
+            "toolName": "fake_write"
+          },
+          "threadId": "c1",
+          "interruptedRunId": "run-1792388561091-w4g9n6",
+          "generation": 0,
+          "status": "pending",
+          "errors": [],
+          "canResolve": true,
+          "kind": "generic",
+          "binding": {
+            "generation": 0,
+            "interruptId": "client_tool_tc1",
+            "interruptedRunId": "run-1792388561091-w4g9n6",
+            "kind": "generic",
+            "v": 1
+          }
+        }
+      ],
+      "interruptErrors": [],
+      "resuming": false
+    }
+  },
+  "success": true,
+  "afterSuccess": {
+    "resume": null,
+    "interrupts": {
+      "interrupts": [],
+      "pendingInterrupts": [],
+      "interruptErrors": [],
+      "resuming": false
+    }
+  },
+  "requests": [
+    {
+      "threadId": "c1",
+      "runId": "run-1792388561091-w4g9n6",
+      "state": {},
+      "messages": [
+        {
+          "id": "msg-1792388561090-0u7ej",
+          "metadata": {
+            "tanstack": {
+              "createdAt": "2026-10-19T05:42:41.090Z"
+            }
+          },
+          "role": "user",
+          "content": "test"
+        }
+      ],
+      "tools": [],
+      "context": [],
+      "forwardedProps": {
+        "conversationId": "c1",
+        "runConfig": {
+          "agentRoundId": "round-1",
+          "agentVersion": 1,
+          "documentId": "doc-1"
+        }
+      },
+      "data": {
+        "conversationId": "c1",
+        "runConfig": {
+          "agentRoundId": "round-1",
+          "agentVersion": 1,
+          "documentId": "doc-1"
+        }
+      }
+    },
+    {
+      "threadId": "c1",
+      "runId": "run-1792388561122-egp3hw",
+      "parentRunId": "run-1792388561091-w4g9n6",
+      "resume": [
+        {
+          "interruptId": "client_tool_tc1",
+          "status": "resolved",
+          "payload": {
+            "ok": true,
+            "changed": true,
+            "version": 2
+          }
+        }
+      ],
+      "state": {},
+      "messages": [
+        {
+          "id": "msg-1792388561090-0u7ej",
+          "metadata": {
+            "tanstack": {
+              "createdAt": "2026-10-19T05:42:41.090Z"
+            }
+          },
+          "role": "user",
+          "content": "test"
+        },
+        {
+          "id": "msg-1792388561119-zpiehi",
+          "metadata": {
+            "tanstack": {
+              "createdAt": "2026-10-19T05:42:41.119Z"
+            }
+          },
+          "role": "assistant",
+          "toolCalls": [
+            {
+              "id": "tc1",
+              "type": "function",
+              "function": {
+                "name": "fake_write",
+                "arguments": "{}"
+              }
+            }
+          ]
+        }
+      ],
+      "tools": [],
+      "context": [],
+      "forwardedProps": {
+        "conversationId": "c1",
+        "runConfig": {
+          "agentRoundId": "round-1",
+          "agentVersion": 1,
+          "documentId": "doc-1"
+        }
+      },
+      "data": {
+        "conversationId": "c1",
+        "runConfig": {
+          "agentRoundId": "round-1",
+          "agentVersion": 1,
+          "documentId": "doc-1"
+        }
+      }
+    },
+    {
+      "threadId": "c1",
+      "runId": "run-1792388561122-suqynb",
+      "parentRunId": "run-1792388561091-w4g9n6",
+      "resume": [
+        {
+          "interruptId": "client_tool_tc1",
+          "status": "resolved",
+          "payload": {
+            "ok": true,
+            "changed": true,
+            "version": 2
+          }
+        }
+      ],
+      "state": {},
+      "messages": [
+        {
+          "id": "msg-1792388561090-0u7ej",
+          "metadata": {
+            "tanstack": {
+              "createdAt": "2026-10-19T05:42:41.090Z"
+            }
+          },
+          "role": "user",
+          "content": "test"
+        },
+        {
+          "id": "msg-1792388561119-zpiehi",
+          "metadata": {
+            "tanstack": {
+              "createdAt": "2026-10-19T05:42:41.119Z"
+            }
+          },
+          "role": "assistant",
+          "toolCalls": [
+            {
+              "id": "tc1",
+              "type": "function",
+              "function": {
+                "name": "fake_write",
+                "arguments": "{}"
+              }
+            }
+          ]
+        },
+        {
+          "id": "msg-1792388561122-q3xzvq",
+          "metadata": {
+            "tanstack": {
+              "createdAt": "2026-10-19T05:42:41.122Z"
+            }
+          },
+          "role": "assistant"
+        }
+      ],
+      "tools": [],
+      "context": [],
+      "forwardedProps": {
+        "conversationId": "c1",
+        "runConfig": {
+          "agentRoundId": "round-1",
+          "agentVersion": 1,
+          "documentId": "doc-1"
+        }
+      },
+      "data": {
+        "conversationId": "c1",
+        "runConfig": {
+          "agentRoundId": "round-1",
+          "agentVersion": 1,
+          "documentId": "doc-1"
+        }
+      }
+    }
+  ]
+}

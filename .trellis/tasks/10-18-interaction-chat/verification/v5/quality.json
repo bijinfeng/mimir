@@ -1,0 +1,24 @@
+{
+  "scope": "v5 planning artifact only",
+  "tsc": "passed",
+  "lint": {
+    "errors": 0,
+    "warnings": 31,
+    "warningBoundary": "static fixture ordering, deliberate local host effects, array keys, callback scoping; not claimed clean product lint"
+  },
+  "format": {
+    "exit_code": 0,
+    "excluded": [
+      "media-fixtures.ts (generated embedded local WAV/MP4 fixture)",
+      "generated HTML"
+    ]
+  },
+  "artifact": "passed",
+  "protocol_probe": {
+    "defaultSequences": 58,
+    "additionalVariants": 89,
+    "checks": 8
+  },
+  "runtime_probe_groups": 4,
+  "product_or_full_repository_tests_run": false
+}

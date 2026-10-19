@@ -1,0 +1,26 @@
+{
+  "version": "chat-review-v5",
+  "routes": 403,
+  "sourceGroups": 71,
+  "sourceStates": 379,
+  "attachmentStates": 24,
+  "catalogItems": 126,
+  "standardEventNames": {
+    "0.0.59": 36,
+    "1.0.0": 31,
+    "official-1.0.3": 31
+  },
+  "checks": {
+    "stableSourceRoutes": true,
+    "currentEvidenceUnchanged": true,
+    "realTanStackHook": true,
+    "oneProjectReactPerDocument": true,
+    "noExecutingAssistantUi": true
+  },
+  "hashes": {
+    "review.html": "0f5499762f4ac97e3b69e7a50bc708139a8b1e3bf1662b5ba7e43f51df874869",
+    "thread.review.html": "4ec0f7be0bf807731f47af672d63efcc429939d7466402bbc0d56f9b53114bc2",
+    "interactions.html": "27b9b9de663ec90d1e21145d78ad2567882f9c11b0deae5ad351c83b9cab91de"
+  },
+  "scope": "Artifact/source checks only; not 403 GUI tests or a claim of product service compatibility."
+}

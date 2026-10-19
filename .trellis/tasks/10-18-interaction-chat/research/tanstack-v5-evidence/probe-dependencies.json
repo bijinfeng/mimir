@@ -1,0 +1,61 @@
+{
+  "resolved": "file:../../private/tmp/mimir-tanstack-v5/probe",
+  "name": "probe",
+  "dependencies": {
+    "@tanstack/ai-client": {
+      "version": "0.39.2",
+      "overridden": false,
+      "dependencies": {
+        "@tanstack/ai-event-client": {
+          "version": "0.13.1",
+          "overridden": false,
+          "dependencies": {
+            "@tanstack/devtools-event-client": {
+              "version": "0.4.4",
+              "overridden": false
+            }
+          }
+        },
+        "@tanstack/ai-utils": {
+          "version": "0.4.2",
+          "overridden": false
+        },
+        "@tanstack/ai": {
+          "version": "0.68.0"
+        }
+      }
+    },
+    "@tanstack/ai": {
+      "version": "0.68.0",
+      "overridden": false,
+      "dependencies": {
+        "@ag-ui/core": {
+          "version": "1.0.0",
+          "overridden": false,
+          "dependencies": {
+            "zod": {}
+          }
+        },
+        "@opentelemetry/api": {},
+        "@standard-schema/spec": {
+          "version": "1.1.0",
+          "overridden": false
+        },
+        "@tanstack/ai-event-client": {
+          "version": "0.13.1"
+        },
+        "@tanstack/ai-utils": {
+          "version": "0.4.2"
+        },
+        "fast-json-patch": {
+          "version": "3.1.1",
+          "overridden": false
+        },
+        "partial-json": {
+          "version": "0.1.7",
+          "overridden": false
+        }
+      }
+    }
+  }
+}

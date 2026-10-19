@@ -1,0 +1,151 @@
+{
+  "name": "@ag-ui/core",
+  "dist-tags": {
+    "alpha": "0.0.50-alpha.0",
+    "canary": "1.0.4-canary.1792171324.0",
+    "latest": "1.0.3"
+  },
+  "version": "1.0.3",
+  "metadata": {
+    "name": "@ag-ui/core",
+    "version": "1.0.3",
+    "author": {
+      "name": "Markus Ecker",
+      "email": "markus.ecker@gmail.com"
+    },
+    "license": "MIT",
+    "_id": "@ag-ui/core@1.0.3",
+    "maintainers": [
+      {
+        "name": "_mme",
+        "email": "markus.ecker@gmail.com"
+      },
+      {
+        "name": "copilotkit",
+        "email": "devops@copilotkit.ai"
+      }
+    ],
+    "homepage": "https://github.com/ag-ui-protocol/ag-ui#readme",
+    "bugs": {
+      "url": "https://github.com/ag-ui-protocol/ag-ui/issues"
+    },
+    "nx": {
+      "targets": {
+        "test": {
+          "cache": false
+        },
+        "test:coverage": {
+          "cache": false
+        }
+      }
+    },
+    "agui": {
+      "protocolVersion": "1.0"
+    },
+    "dist": {
+      "shasum": "dd7ae90a6850bbacf9964dfe86c1b118a5f97c82",
+      "tarball": "https://registry.npmjs.org/@ag-ui/core/-/core-1.0.3.tgz",
+      "fileCount": 29,
+      "integrity": "sha512-HdMdZPOqworKlnzLaNktnbNYgIzOPbzt5ow6J4bPhbmHCdpWpCSZQFgkifQkn1zVHgCK1V+pmKc8xtW6FsQZKA==",
+      "signatures": [
+        {
+          "sig": "MEUCIQDvW53zxdeJDD6Dtcx71WP2wQYJjGMpO6ZZ50RUZN9djwIgT7OJIECzapO9jqjdyfjkZzGb+1QOaxn5QfKNOrtPnu4=",
+          "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+        },
+        {
+          "sig": "MEQCIACnfqUK/GHZllQqk0zIa+SuSeXSN41tUpHsQEH7+VS8AiAuIyp69UEV1A3wIQ+V3RflQL4ZqdqXpEHun5yJwzovsA==",
+          "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+        }
+      ],
+      "attestations": {
+        "url": "https://registry.npmjs.org/-/npm/v1/attestations/@ag-ui%2fcore@1.0.3",
+        "provenance": {
+          "predicateType": "https://slsa.dev/provenance/v1"
+        }
+      },
+      "unpackedSize": 1148044
+    },
+    "main": "./dist/index.js",
+    "_from": "file:ag-ui-core-1.0.3.tgz",
+    "types": "./dist/index.d.ts",
+    "module": "./dist/index.mjs",
+    "exports": {
+      ".": {
+        "import": "./dist/index.mjs",
+        "require": "./dist/index.js"
+      },
+      "./schemas": {
+        "import": "./dist/schemas.mjs",
+        "require": "./dist/schemas.js"
+      },
+      "./package.json": "./package.json"
+    },
+    "private": false,
+    "scripts": {
+      "dev": "tsdown --watch",
+      "lint": "eslint \"src/**/*.ts*\"",
+      "test": "vitest run",
+      "build": "tsdown",
+      "clean": "git clean -fdX --exclude=\"!.env\"",
+      "typecheck": "tsc --noEmit",
+      "test:watch": "vitest",
+      "link:global": "pnpm link --global",
+      "test:exports": "publint --strict && attw --pack",
+      "test:coverage": "vitest run --coverage",
+      "unlink:global": "pnpm unlink --global"
+    },
+    "_npmUser": {
+      "name": "GitHub Actions",
+      "email": "npm-oidc-no-reply@github.com",
+      "trustedPublisher": {
+        "id": "github",
+        "oidcConfigId": "d1e8476b-3bb6-4388-85ac-af6dbfa93048"
+      }
+    },
+    "_resolved": "/home/runner/work/ag-ui/ag-ui/sdks/typescript/packages/core/ag-ui-core-1.0.3.tgz",
+    "_integrity": "sha512-HdMdZPOqworKlnzLaNktnbNYgIzOPbzt5ow6J4bPhbmHCdpWpCSZQFgkifQkn1zVHgCK1V+pmKc8xtW6FsQZKA==",
+    "repository": {
+      "url": "git+https://github.com/ag-ui-protocol/ag-ui.git",
+      "type": "git"
+    },
+    "_npmVersion": "11.15.0",
+    "description": "TypeScript definitions & runtime schemas for the **Agent-User Interaction (AG-UI) Protocol**.",
+    "directories": {},
+    "_nodeVersion": "22.23.3",
+    "publishConfig": {
+      "access": "public"
+    },
+    "typesVersions": {
+      "*": {
+        "schemas": [
+          "./dist/schemas.d.ts"
+        ]
+      }
+    },
+    "_hasShrinkwrap": false,
+    "devDependencies": {
+      "zod": "^3.25.76",
+      "eslint": "^9.37.0",
+      "tsdown": "^0.20.1",
+      "vitest": "^4.0.18",
+      "esbuild": "^0.25.0",
+      "publint": "^0.3.12",
+      "typescript": "^5.8.2",
+      "@arethetypeswrong/cli": "^0.17.4",
+      "@vitest/coverage-istanbul": "^4.0.18"
+    },
+    "peerDependencies": {
+      "zod": "^3.25.18 || ^4.0.0"
+    },
+    "peerDependenciesMeta": {
+      "zod": {
+        "optional": true
+      }
+    },
+    "_npmOperationalInternal": {
+      "tmp": "tmp/core_1.0.3_1792140038202_0.8503176717493366",
+      "host": "s3://npm-registry-packages-npm-production"
+    }
+  },
+  "retrieved": "2026-10-19"
+}

@@ -1,0 +1,155 @@
+{
+  "date": "2026-10-19",
+  "files": [
+    {
+      "path": "ag-ui-compliance.md",
+      "sha256": "040981a693026a9ead2a04a425de97e8b19db8fb8143078110fed24ba76b4716",
+      "bytes": 22236
+    },
+    {
+      "path": "ag-ui-core-metadata.json",
+      "sha256": "ef7f23e1a60ab24b93369c61864d8136b94a165d4bc710b37283f91abfedba1f",
+      "bytes": 4440
+    },
+    {
+      "path": "ai/package.json",
+      "sha256": "76e202bf063e8bedada6125d9466c877a9751e49f82c0f198ba490229894b0a2",
+      "bytes": 3280
+    },
+    {
+      "path": "ai/src/activities/chat/stream/processor.ts",
+      "sha256": "3c003680b80ccedf3e51b261452f6c45e25abb9c9ec1b594ffe87d5495f40d40",
+      "bytes": 123743
+    },
+    {
+      "path": "ai/src/index.ts",
+      "sha256": "00bbf93f2943d0dac7767196470762b65c954331fa5acea90f1887680e89d312",
+      "bytes": 16195
+    },
+    {
+      "path": "ai/src/types.ts",
+      "sha256": "48498ece90be30b8718f286e26e609ce86f705426e6c477d8be40d7cf8c230a4",
+      "bytes": 111116
+    },
+    {
+      "path": "ai/src/utilities/restore-inbound-chunk.ts",
+      "sha256": "07e1e3be04cb9aa83ed3b65ad9d15ce1206641f3cadfdd5a13df33a32b39953c",
+      "bytes": 2155
+    },
+    {
+      "path": "ai-client-compatible/package.json",
+      "sha256": "c9401d285b7cfeec22cf1ec3f992bd477261d2e0e48fec894d1a6e03f02be7e1",
+      "bytes": 2148
+    },
+    {
+      "path": "ai-client-compatible/src/chat-client.ts",
+      "sha256": "8ea29ef72384a571c28ff395a020cd80f64f6503b3cc9804fa0784a0db5a798a",
+      "bytes": 137125
+    },
+    {
+      "path": "ai-client-compatible/src/connection-adapters.ts",
+      "sha256": "de6ae71368f03001aa68a3120ff53a8d3bb662b9ccbc0e2535a8425068c03bfd",
+      "bytes": 106937
+    },
+    {
+      "path": "ai-client-compatible/src/interrupt-manager.ts",
+      "sha256": "4f2d1a8f7da953566d243e2fe24000adb0c4705bcdbb0257ab76199198439a0f",
+      "bytes": 57270
+    },
+    {
+      "path": "ai-client-compatible/src/sse-parser.ts",
+      "sha256": "4f0b66ee0f91c9d6dd1b31c433520c18e743894ac6d857b1c0a711498414f49c",
+      "bytes": 2528
+    },
+    {
+      "path": "ai-client-compatible/src/types.ts",
+      "sha256": "a62b6edfe40123f10e4740612eba59e1c0d038cfdfbab552b9672a757e4ebfc5",
+      "bytes": 40897
+    },
+    {
+      "path": "ai-react-compatible/package.json",
+      "sha256": "ba832947dc5e14ecf2794a900335c1f0026b7ef9b6037da1dc14037e9e79e58a",
+      "bytes": 2535
+    },
+    {
+      "path": "ai-react-compatible/src/types.ts",
+      "sha256": "d220895c08027a49825ada339551e0c25097b1f3cd717fb7857ff2490a9029b8",
+      "bytes": 11158
+    },
+    {
+      "path": "ai-react-compatible/src/use-chat.ts",
+      "sha256": "06f122bca6ca1ab5c16d257ceac8d69d5b1cee406b9107c3f4c13fc3c58aabc5",
+      "bytes": 23155
+    },
+    {
+      "path": "docs-manifest.json",
+      "sha256": "482e39c540f7aec5e71757eb02e642328d284458f5d700217043a480dbdbb4ad",
+      "bytes": 1081
+    },
+    {
+      "path": "docs-tree-paths.json",
+      "sha256": "ad71f5ecbd79fab83c673365a4ff873ccffdec5e78af7ec4c1169d8bac517d33",
+      "bytes": 114
+    },
+    {
+      "path": "github-head.json",
+      "sha256": "d71bf4657cb6674df88eb31bd93be4fe00bee8f4bd03c591324f21faa6cbbddc",
+      "bytes": 91934
+    },
+    {
+      "path": "interrupt-probe-result.json",
+      "sha256": "28b9d425ac3654b23ee5a947107d50851bc8a510277f4de9b26d0261efcd5453",
+      "bytes": 7716
+    },
+    {
+      "path": "interrupt-probe.mjs",
+      "sha256": "01f3bfb31c56efb5947e897135adf6411a026a02571ded94051f5f94dc868842",
+      "bytes": 2583
+    },
+    {
+      "path": "probe-dependencies.json",
+      "sha256": "fd0443b18f0d2627e5805e497ad43ffa5f74d3e3d79e79ab3438a594453b0f44",
+      "bytes": 1446
+    },
+    {
+      "path": "probe-result.json",
+      "sha256": "87265b59b865f8462bc07cd7c803dccd1763639e0bb30ab1376e39d73fae4ae3",
+      "bytes": 3943
+    },
+    {
+      "path": "probe.mjs",
+      "sha256": "16430bb1bcfdeda13ca6ceb4d8fb554857d827ef0349a1be6ae809e06ab80103",
+      "bytes": 3809
+    },
+    {
+      "path": "source-manifest.json",
+      "sha256": "efb3e7ecc77aa4c12401f727f386bf3b9e988833eec54eac1c10087caad872fa",
+      "bytes": 4650
+    },
+    {
+      "path": "tanstack-ai-client-compatible-metadata.json",
+      "sha256": "20b474b0dcaacd4fa2636cc462ee9064cb0c20e8124c6196fe03831553872d28",
+      "bytes": 3831
+    },
+    {
+      "path": "tanstack-ai-client-metadata.json",
+      "sha256": "961b57ae5ee8f8d1dab59baa11ddd39ff842386d0c2abcd6486976e3c814dc12",
+      "bytes": 4239
+    },
+    {
+      "path": "tanstack-ai-metadata.json",
+      "sha256": "91eb33fb55aa135ee17eca6614243285cf68732dbe42982e49f492d5a686d0c2",
+      "bytes": 5400
+    },
+    {
+      "path": "tanstack-ai-react-compatible-metadata.json",
+      "sha256": "77fc8548ae21e01c7c990bb34f654c3571d0354acabe9f6050d909ed63b996d8",
+      "bytes": 4213
+    },
+    {
+      "path": "tanstack-ai-react-metadata.json",
+      "sha256": "0cdad4793fc8f9c78b8c1693d6da59f3523068a436f7023b211254525f98c7f4",
+      "bytes": 4658
+    }
+  ]
+}

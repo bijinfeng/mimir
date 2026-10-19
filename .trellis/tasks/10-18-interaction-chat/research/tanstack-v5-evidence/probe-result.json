@@ -1,0 +1,169 @@
+{
+  "date": "2026-10-19",
+  "versions": {
+    "client": "0.39.2",
+    "ai": "0.68.0"
+  },
+  "checks": {
+    "sse": {
+      "captured": {
+        "body": {
+          "threadId": "test-thread",
+          "runId": "run-1792388497785-4yj3el",
+          "state": {},
+          "messages": [
+            {
+              "id": "msg-1792388497781-pjtzb",
+              "metadata": {
+                "tanstack": {
+                  "createdAt": "2026-10-19T05:41:37.781Z"
+                }
+              },
+              "role": "user",
+              "content": "test"
+            }
+          ],
+          "tools": [],
+          "context": [],
+          "forwardedProps": {
+            "base": "static",
+            "conversationId": "persisted",
+            "runConfig": {
+              "deepReasoning": true,
+              "documentId": "doc-1"
+            }
+          },
+          "data": {
+            "base": "static",
+            "conversationId": "persisted",
+            "runConfig": {
+              "deepReasoning": true,
+              "documentId": "doc-1"
+            }
+          }
+        },
+        "credentials": "include",
+        "signal": true
+      },
+      "observed": [
+        "RUN_STARTED",
+        "REASONING_START",
+        "REASONING_MESSAGE_START",
+        "REASONING_MESSAGE_CONTENT",
+        "REASONING_MESSAGE_END",
+        "REASONING_END",
+        "STATE_SNAPSHOT",
+        "STATE_DELTA",
+        "ACTIVITY_SNAPSHOT",
+        "ACTIVITY_DELTA",
+        "RAW",
+        "CUSTOM",
+        "TEXT_MESSAGE_START",
+        "TEXT_MESSAGE_CONTENT",
+        "TEXT_MESSAGE_END",
+        "RUN_FINISHED"
+      ],
+      "customs": [
+        {
+          "name": "mimir.citations",
+          "data": {
+            "roundId": "1",
+            "citations": []
+          }
+        }
+      ],
+      "messages": [
+        {
+          "id": "msg-1792388497781-pjtzb",
+          "role": "user",
+          "parts": [
+            {
+              "type": "text",
+              "content": "test"
+            }
+          ],
+          "createdAt": "2026-10-19T05:41:37.781Z"
+        },
+        {
+          "id": "m1",
+          "role": "assistant",
+          "parts": [
+            {
+              "type": "thinking",
+              "content": "Reasoning text",
+              "stepId": "r1"
+            },
+            {
+              "type": "text",
+              "content": "Hello"
+            }
+          ],
+          "createdAt": "2026-10-19T05:41:37.823Z"
+        },
+        {
+          "id": "a1",
+          "role": "activity",
+          "parts": [
+            {
+              "type": "activity",
+              "activityType": "progress",
+              "content": {
+                "count": 2
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "queue": {
+      "public": [
+        {
+          "id": "queued-1792388497827-d80h1q",
+          "content": "second",
+          "createdAt": 1792388497827
+        }
+      ],
+      "requests": [
+        {
+          "data": {},
+          "context": {
+            "threadId": "queue-test",
+            "runId": "run-1792388497826-h4n5dq",
+            "clientTools": [],
+            "forwardedProps": {}
+          }
+        },
+        {
+          "data": {
+            "runConfig": {
+              "deepReasoning": false,
+              "documentId": "mutated-after-queue"
+            }
+          },
+          "context": {
+            "threadId": "queue-test",
+            "runId": "run-1792388497827-qg8dqf",
+            "clientTools": [],
+            "forwardedProps": {
+              "runConfig": {
+                "deepReasoning": false,
+                "documentId": "mutated-after-queue"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "stop": {
+      "before": [
+        {
+          "id": "queued-1792388497827-ujiau",
+          "content": "second",
+          "createdAt": 1792388497827
+        }
+      ],
+      "after": [],
+      "status": "ready"
+    }
+  }
+}

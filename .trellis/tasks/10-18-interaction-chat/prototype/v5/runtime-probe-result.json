@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-19",
+  "scope": "isolated actual ChatClient + shared snapshot + attachment adapter; not product E2E",
+  "checks": [
+    {
+      "name": "async preparation captures A before C; actual adapter finalize + actual ChatClient dispatch retains A and attachment bytes",
+      "passed": true
+    },
+    {
+      "name": "shared source snapshot helper preserves independent A/B; nonempty draft blocks host restore; not a full host GUI test",
+      "passed": true
+    },
+    {
+      "name": "cancelling preparation rejects finalization and retains captured draft attachment",
+      "passed": true
+    },
+    {
+      "name": "actual ChatClient failed resume clears implicit pointer; explicit cached original run creates a third connection with identical answers and parentRunId, one user input and one tool call",
+      "passed": true
+    }
+  ]
+}

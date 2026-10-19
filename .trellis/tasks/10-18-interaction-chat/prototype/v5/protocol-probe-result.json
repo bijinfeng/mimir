@@ -1,0 +1,658 @@
+{
+  "success": true,
+  "scope": "schema/sequence and explicit sidecar only; not browser, HTTP, model or Agent verification",
+  "defaultSequences": 58,
+  "variants": [
+    {
+      "item": "AGUI-ACTIVITY-002",
+      "id": "valid-patch",
+      "accepted": 4,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-ACTIVITY-002",
+      "id": "invalid-patch",
+      "accepted": 4,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-001",
+      "id": "developer",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-001",
+      "id": "system",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-001",
+      "id": "user",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-001",
+      "id": "assistant",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-001",
+      "id": "tool",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-001",
+      "id": "activity",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-001",
+      "id": "reasoning",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-002",
+      "id": "plain",
+      "accepted": 5,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-002",
+      "id": "markdown",
+      "accepted": 5,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-002",
+      "id": "partial-markdown",
+      "accepted": 5,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-002",
+      "id": "code",
+      "accepted": 5,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-002",
+      "id": "table",
+      "accepted": 5,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-002",
+      "id": "link",
+      "accepted": 5,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-002",
+      "id": "long-content",
+      "accepted": 5,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-003",
+      "id": "data-source",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-003",
+      "id": "url-source",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-003",
+      "id": "file-handle",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-003",
+      "id": "unsafe-source",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-004",
+      "id": "data-source",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-004",
+      "id": "url-source",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-004",
+      "id": "file-handle",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-004",
+      "id": "unsafe-source",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-005",
+      "id": "data-source",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-005",
+      "id": "url-source",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-005",
+      "id": "file-handle",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-005",
+      "id": "unsafe-source",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-006",
+      "id": "data-source",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-006",
+      "id": "url-source",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-006",
+      "id": "file-handle",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-006",
+      "id": "unsafe-source",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-007",
+      "id": "known-citations",
+      "accepted": 6,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-007",
+      "id": "unknown-data",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-007",
+      "id": "source-url",
+      "accepted": 5,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-007",
+      "id": "source-document",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-008",
+      "id": "data-source",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-008",
+      "id": "url-source",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-008",
+      "id": "file-handle",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-MSG-008",
+      "id": "unsafe-source",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-ENV-001",
+      "id": "new-run",
+      "accepted": 5,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-ENV-001",
+      "id": "parent-run",
+      "accepted": 5,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-ENV-001",
+      "id": "resume-run",
+      "accepted": 5,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-ENV-001",
+      "id": "invalid-id",
+      "accepted": 5,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-ENV-002",
+      "id": "metadata-present",
+      "accepted": 5,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-ENV-002",
+      "id": "usage-present",
+      "accepted": 5,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-ENV-002",
+      "id": "unknown-keys",
+      "accepted": 5,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-ENV-002",
+      "id": "capability-missing",
+      "accepted": 5,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-001",
+      "id": "first-event-invalid",
+      "accepted": 0,
+      "diagnostics": [
+        "第 1 帧 TEXT_MESSAGE_START 被本地演示边界拒绝：事件不在有效运行内（第一帧应为 RUN_STARTED，终态后须开启新运行）"
+      ],
+      "expectedInvalid": true
+    },
+    {
+      "item": "AGUI-FLOW-001",
+      "id": "nested-run",
+      "accepted": 1,
+      "diagnostics": [
+        "第 2 帧 RUN_STARTED 被本地演示边界拒绝：根运行重复开始"
+      ],
+      "expectedInvalid": true
+    },
+    {
+      "item": "AGUI-FLOW-001",
+      "id": "after-terminal",
+      "accepted": 2,
+      "diagnostics": [
+        "第 3 帧 CUSTOM 被本地演示边界拒绝：事件不在有效运行内（第一帧应为 RUN_STARTED，终态后须开启新运行）"
+      ],
+      "expectedInvalid": true
+    },
+    {
+      "item": "AGUI-FLOW-001",
+      "id": "valid-next-run",
+      "accepted": 10,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-002",
+      "id": "explicit-triad",
+      "accepted": 5,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-002",
+      "id": "chunk-only",
+      "accepted": 4,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-002",
+      "id": "mixed-conflict",
+      "accepted": 4,
+      "diagnostics": [
+        "第 5 帧 TEXT_MESSAGE_CHUNK 被本地演示边界拒绝：消息已结束，不能继续 CHUNK"
+      ],
+      "expectedInvalid": true
+    },
+    {
+      "item": "AGUI-FLOW-002",
+      "id": "missing-first-id",
+      "accepted": 1,
+      "diagnostics": [
+        "第 2 帧 TEXT_MESSAGE_CHUNK 被本地演示边界拒绝：首个 CHUNK 缺 messageId"
+      ],
+      "expectedInvalid": true
+    },
+    {
+      "item": "AGUI-FLOW-003",
+      "id": "correct-parent",
+      "accepted": 4,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-003",
+      "id": "unknown-parent",
+      "accepted": 1,
+      "diagnostics": [
+        "第 2 帧 TEXT_MESSAGE_START 被本地演示边界拒绝：未知子 Agent 归属"
+      ],
+      "expectedInvalid": true
+    },
+    {
+      "item": "AGUI-FLOW-003",
+      "id": "duplicate-id",
+      "accepted": 2,
+      "diagnostics": [
+        "第 3 帧 SUBAGENT_STARTED 被本地演示边界拒绝：子 Agent 身份重复"
+      ],
+      "expectedInvalid": true
+    },
+    {
+      "item": "AGUI-FLOW-003",
+      "id": "subagent-pending",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-003",
+      "id": "root-finished-too-early",
+      "accepted": 2,
+      "diagnostics": [
+        "第 3 帧 RUN_FINISHED 被本地演示边界拒绝：子 Agent 尚未结束，根运行不能声明成功"
+      ],
+      "expectedInvalid": true
+    },
+    {
+      "item": "AGUI-FLOW-004",
+      "id": "add",
+      "accepted": 4,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-004",
+      "id": "remove",
+      "accepted": 4,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-004",
+      "id": "replace",
+      "accepted": 4,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-004",
+      "id": "move",
+      "accepted": 4,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-004",
+      "id": "copy",
+      "accepted": 4,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-004",
+      "id": "test",
+      "accepted": 4,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-004",
+      "id": "replace-false",
+      "accepted": 4,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-004",
+      "id": "invalid-op",
+      "accepted": 4,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-005",
+      "id": "old-rejects-cancelled",
+      "accepted": 2,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-005",
+      "id": "new-accepts-cancelled",
+      "accepted": 5,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-005",
+      "id": "host-abort",
+      "accepted": 5,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-006",
+      "id": "string-result",
+      "accepted": 5,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-006",
+      "id": "parts-result",
+      "accepted": 5,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-006",
+      "id": "data-source",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-006",
+      "id": "url-source",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-006",
+      "id": "file-handle",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-007",
+      "id": "interrupted",
+      "accepted": 2,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-007",
+      "id": "resume-prepared",
+      "accepted": 2,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-007",
+      "id": "resolved",
+      "accepted": 2,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-007",
+      "id": "cancelled",
+      "accepted": 2,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-007",
+      "id": "expired",
+      "accepted": 2,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-007",
+      "id": "unknown",
+      "accepted": 2,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-007",
+      "id": "missing-entry",
+      "accepted": 2,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-008",
+      "id": "unknown-custom",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-008",
+      "id": "unknown-activity",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-008",
+      "id": "unknown-part",
+      "accepted": 4,
+      "diagnostics": [
+        "第 5 帧 MESSAGES_SNAPSHOT 被本地演示边界拒绝：messages.0.content: Invalid input"
+      ],
+      "expectedInvalid": true
+    },
+    {
+      "item": "AGUI-FLOW-008",
+      "id": "unsafe-link",
+      "accepted": 5,
+      "diagnostics": [],
+      "expectedInvalid": false
+    },
+    {
+      "item": "AGUI-FLOW-008",
+      "id": "opaque-reasoning",
+      "accepted": 3,
+      "diagnostics": [],
+      "expectedInvalid": false
+    }
+  ],
+  "checks": [
+    "six JSON Patch operations",
+    "atomic invalid patch preserves original",
+    "state invalid patch diagnostic",
+    "activity invalid patch diagnostic",
+    "replace=false preserves activity",
+    "reasoning lifecycle without text",
+    "legacy explicit normalization",
+    "single-step connection emits no synthetic terminal"
+  ]
+}

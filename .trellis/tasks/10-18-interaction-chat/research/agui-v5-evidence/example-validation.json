@@ -1,0 +1,692 @@
+{
+  "date": "2026-10-19",
+  "scope": "schema and 0.0.59 transform/verify only, not TanStack/Mimir product integration",
+  "rows": [
+    {
+      "id": "AGUI-RUN-001",
+      "eventCount": 5,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-RUN-002",
+      "eventCount": 5,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-RUN-003",
+      "eventCount": 4,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-STEP-001",
+      "eventCount": 4,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-STEP-002",
+      "eventCount": 4,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-TEXT-001",
+      "eventCount": 5,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-TEXT-002",
+      "eventCount": 5,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-TEXT-003",
+      "eventCount": 5,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-TEXT-004",
+      "eventCount": 4,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-TOOL-001",
+      "eventCount": 6,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-TOOL-002",
+      "eventCount": 6,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-TOOL-003",
+      "eventCount": 6,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-TOOL-004",
+      "eventCount": 5,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-TOOL-005",
+      "eventCount": 6,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-REASON-001",
+      "eventCount": 7,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-REASON-002",
+      "eventCount": 7,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-REASON-003",
+      "eventCount": 7,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-REASON-004",
+      "eventCount": 7,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-REASON-005",
+      "eventCount": 5,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-REASON-006",
+      "eventCount": 7,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-REASON-007",
+      "eventCount": 8,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-LEGACY-001",
+      "eventCount": 7,
+      "schema059": [],
+      "schema100": [
+        {
+          "type": "THINKING_START",
+          "issues": [
+            {
+              "path": [
+                "type"
+              ],
+              "message": "Invalid discriminator value. Expected 'TEXT_MESSAGE_START' | 'TEXT_MESSAGE_CONTENT' | 'TEXT_MESSAGE_END' | 'TEXT_MESSAGE_CHUNK' | 'TOOL_CALL_START' | 'TOOL_CALL_ARGS' | 'TOOL_CALL_END' | 'TOOL_CALL_CHUNK' | 'TOOL_CALL_RESULT' | 'STATE_SNAPSHOT' | 'STATE_DELTA' | 'MESSAGES_SNAPSHOT' | 'ACTIVITY_SNAPSHOT' | 'ACTIVITY_DELTA' | 'RAW' | 'CUSTOM' | 'RUN_STARTED' | 'RUN_FINISHED' | 'RUN_ERROR' | 'STEP_STARTED' | 'STEP_FINISHED' | 'REASONING_START' | 'REASONING_MESSAGE_START' | 'REASONING_MESSAGE_CONTENT' | 'REASONING_MESSAGE_END' | 'REASONING_MESSAGE_CHUNK' | 'REASONING_END' | 'REASONING_ENCRYPTED_VALUE' | 'SUBAGENT_STARTED' | 'SUBAGENT_FINISHED' | 'SUBAGENT_ERROR'"
+            }
+          ]
+        },
+        {
+          "type": "THINKING_TEXT_MESSAGE_START",
+          "issues": [
+            {
+              "path": [
+                "type"
+              ],
+              "message": "Invalid discriminator value. Expected 'TEXT_MESSAGE_START' | 'TEXT_MESSAGE_CONTENT' | 'TEXT_MESSAGE_END' | 'TEXT_MESSAGE_CHUNK' | 'TOOL_CALL_START' | 'TOOL_CALL_ARGS' | 'TOOL_CALL_END' | 'TOOL_CALL_CHUNK' | 'TOOL_CALL_RESULT' | 'STATE_SNAPSHOT' | 'STATE_DELTA' | 'MESSAGES_SNAPSHOT' | 'ACTIVITY_SNAPSHOT' | 'ACTIVITY_DELTA' | 'RAW' | 'CUSTOM' | 'RUN_STARTED' | 'RUN_FINISHED' | 'RUN_ERROR' | 'STEP_STARTED' | 'STEP_FINISHED' | 'REASONING_START' | 'REASONING_MESSAGE_START' | 'REASONING_MESSAGE_CONTENT' | 'REASONING_MESSAGE_END' | 'REASONING_MESSAGE_CHUNK' | 'REASONING_END' | 'REASONING_ENCRYPTED_VALUE' | 'SUBAGENT_STARTED' | 'SUBAGENT_FINISHED' | 'SUBAGENT_ERROR'"
+            }
+          ]
+        },
+        {
+          "type": "THINKING_TEXT_MESSAGE_CONTENT",
+          "issues": [
+            {
+              "path": [
+                "type"
+              ],
+              "message": "Invalid discriminator value. Expected 'TEXT_MESSAGE_START' | 'TEXT_MESSAGE_CONTENT' | 'TEXT_MESSAGE_END' | 'TEXT_MESSAGE_CHUNK' | 'TOOL_CALL_START' | 'TOOL_CALL_ARGS' | 'TOOL_CALL_END' | 'TOOL_CALL_CHUNK' | 'TOOL_CALL_RESULT' | 'STATE_SNAPSHOT' | 'STATE_DELTA' | 'MESSAGES_SNAPSHOT' | 'ACTIVITY_SNAPSHOT' | 'ACTIVITY_DELTA' | 'RAW' | 'CUSTOM' | 'RUN_STARTED' | 'RUN_FINISHED' | 'RUN_ERROR' | 'STEP_STARTED' | 'STEP_FINISHED' | 'REASONING_START' | 'REASONING_MESSAGE_START' | 'REASONING_MESSAGE_CONTENT' | 'REASONING_MESSAGE_END' | 'REASONING_MESSAGE_CHUNK' | 'REASONING_END' | 'REASONING_ENCRYPTED_VALUE' | 'SUBAGENT_STARTED' | 'SUBAGENT_FINISHED' | 'SUBAGENT_ERROR'"
+            }
+          ]
+        },
+        {
+          "type": "THINKING_TEXT_MESSAGE_END",
+          "issues": [
+            {
+              "path": [
+                "type"
+              ],
+              "message": "Invalid discriminator value. Expected 'TEXT_MESSAGE_START' | 'TEXT_MESSAGE_CONTENT' | 'TEXT_MESSAGE_END' | 'TEXT_MESSAGE_CHUNK' | 'TOOL_CALL_START' | 'TOOL_CALL_ARGS' | 'TOOL_CALL_END' | 'TOOL_CALL_CHUNK' | 'TOOL_CALL_RESULT' | 'STATE_SNAPSHOT' | 'STATE_DELTA' | 'MESSAGES_SNAPSHOT' | 'ACTIVITY_SNAPSHOT' | 'ACTIVITY_DELTA' | 'RAW' | 'CUSTOM' | 'RUN_STARTED' | 'RUN_FINISHED' | 'RUN_ERROR' | 'STEP_STARTED' | 'STEP_FINISHED' | 'REASONING_START' | 'REASONING_MESSAGE_START' | 'REASONING_MESSAGE_CONTENT' | 'REASONING_MESSAGE_END' | 'REASONING_MESSAGE_CHUNK' | 'REASONING_END' | 'REASONING_ENCRYPTED_VALUE' | 'SUBAGENT_STARTED' | 'SUBAGENT_FINISHED' | 'SUBAGENT_ERROR'"
+            }
+          ]
+        },
+        {
+          "type": "THINKING_END",
+          "issues": [
+            {
+              "path": [
+                "type"
+              ],
+              "message": "Invalid discriminator value. Expected 'TEXT_MESSAGE_START' | 'TEXT_MESSAGE_CONTENT' | 'TEXT_MESSAGE_END' | 'TEXT_MESSAGE_CHUNK' | 'TOOL_CALL_START' | 'TOOL_CALL_ARGS' | 'TOOL_CALL_END' | 'TOOL_CALL_CHUNK' | 'TOOL_CALL_RESULT' | 'STATE_SNAPSHOT' | 'STATE_DELTA' | 'MESSAGES_SNAPSHOT' | 'ACTIVITY_SNAPSHOT' | 'ACTIVITY_DELTA' | 'RAW' | 'CUSTOM' | 'RUN_STARTED' | 'RUN_FINISHED' | 'RUN_ERROR' | 'STEP_STARTED' | 'STEP_FINISHED' | 'REASONING_START' | 'REASONING_MESSAGE_START' | 'REASONING_MESSAGE_CONTENT' | 'REASONING_MESSAGE_END' | 'REASONING_MESSAGE_CHUNK' | 'REASONING_END' | 'REASONING_ENCRYPTED_VALUE' | 'SUBAGENT_STARTED' | 'SUBAGENT_FINISHED' | 'SUBAGENT_ERROR'"
+            }
+          ]
+        }
+      ],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-LEGACY-002",
+      "eventCount": 7,
+      "schema059": [],
+      "schema100": [
+        {
+          "type": "THINKING_START",
+          "issues": [
+            {
+              "path": [
+                "type"
+              ],
+              "message": "Invalid discriminator value. Expected 'TEXT_MESSAGE_START' | 'TEXT_MESSAGE_CONTENT' | 'TEXT_MESSAGE_END' | 'TEXT_MESSAGE_CHUNK' | 'TOOL_CALL_START' | 'TOOL_CALL_ARGS' | 'TOOL_CALL_END' | 'TOOL_CALL_CHUNK' | 'TOOL_CALL_RESULT' | 'STATE_SNAPSHOT' | 'STATE_DELTA' | 'MESSAGES_SNAPSHOT' | 'ACTIVITY_SNAPSHOT' | 'ACTIVITY_DELTA' | 'RAW' | 'CUSTOM' | 'RUN_STARTED' | 'RUN_FINISHED' | 'RUN_ERROR' | 'STEP_STARTED' | 'STEP_FINISHED' | 'REASONING_START' | 'REASONING_MESSAGE_START' | 'REASONING_MESSAGE_CONTENT' | 'REASONING_MESSAGE_END' | 'REASONING_MESSAGE_CHUNK' | 'REASONING_END' | 'REASONING_ENCRYPTED_VALUE' | 'SUBAGENT_STARTED' | 'SUBAGENT_FINISHED' | 'SUBAGENT_ERROR'"
+            }
+          ]
+        },
+        {
+          "type": "THINKING_TEXT_MESSAGE_START",
+          "issues": [
+            {
+              "path": [
+                "type"
+              ],
+              "message": "Invalid discriminator value. Expected 'TEXT_MESSAGE_START' | 'TEXT_MESSAGE_CONTENT' | 'TEXT_MESSAGE_END' | 'TEXT_MESSAGE_CHUNK' | 'TOOL_CALL_START' | 'TOOL_CALL_ARGS' | 'TOOL_CALL_END' | 'TOOL_CALL_CHUNK' | 'TOOL_CALL_RESULT' | 'STATE_SNAPSHOT' | 'STATE_DELTA' | 'MESSAGES_SNAPSHOT' | 'ACTIVITY_SNAPSHOT' | 'ACTIVITY_DELTA' | 'RAW' | 'CUSTOM' | 'RUN_STARTED' | 'RUN_FINISHED' | 'RUN_ERROR' | 'STEP_STARTED' | 'STEP_FINISHED' | 'REASONING_START' | 'REASONING_MESSAGE_START' | 'REASONING_MESSAGE_CONTENT' | 'REASONING_MESSAGE_END' | 'REASONING_MESSAGE_CHUNK' | 'REASONING_END' | 'REASONING_ENCRYPTED_VALUE' | 'SUBAGENT_STARTED' | 'SUBAGENT_FINISHED' | 'SUBAGENT_ERROR'"
+            }
+          ]
+        },
+        {
+          "type": "THINKING_TEXT_MESSAGE_CONTENT",
+          "issues": [
+            {
+              "path": [
+                "type"
+              ],
+              "message": "Invalid discriminator value. Expected 'TEXT_MESSAGE_START' | 'TEXT_MESSAGE_CONTENT' | 'TEXT_MESSAGE_END' | 'TEXT_MESSAGE_CHUNK' | 'TOOL_CALL_START' | 'TOOL_CALL_ARGS' | 'TOOL_CALL_END' | 'TOOL_CALL_CHUNK' | 'TOOL_CALL_RESULT' | 'STATE_SNAPSHOT' | 'STATE_DELTA' | 'MESSAGES_SNAPSHOT' | 'ACTIVITY_SNAPSHOT' | 'ACTIVITY_DELTA' | 'RAW' | 'CUSTOM' | 'RUN_STARTED' | 'RUN_FINISHED' | 'RUN_ERROR' | 'STEP_STARTED' | 'STEP_FINISHED' | 'REASONING_START' | 'REASONING_MESSAGE_START' | 'REASONING_MESSAGE_CONTENT' | 'REASONING_MESSAGE_END' | 'REASONING_MESSAGE_CHUNK' | 'REASONING_END' | 'REASONING_ENCRYPTED_VALUE' | 'SUBAGENT_STARTED' | 'SUBAGENT_FINISHED' | 'SUBAGENT_ERROR'"
+            }
+          ]
+        },
+        {
+          "type": "THINKING_TEXT_MESSAGE_END",
+          "issues": [
+            {
+              "path": [
+                "type"
+              ],
+              "message": "Invalid discriminator value. Expected 'TEXT_MESSAGE_START' | 'TEXT_MESSAGE_CONTENT' | 'TEXT_MESSAGE_END' | 'TEXT_MESSAGE_CHUNK' | 'TOOL_CALL_START' | 'TOOL_CALL_ARGS' | 'TOOL_CALL_END' | 'TOOL_CALL_CHUNK' | 'TOOL_CALL_RESULT' | 'STATE_SNAPSHOT' | 'STATE_DELTA' | 'MESSAGES_SNAPSHOT' | 'ACTIVITY_SNAPSHOT' | 'ACTIVITY_DELTA' | 'RAW' | 'CUSTOM' | 'RUN_STARTED' | 'RUN_FINISHED' | 'RUN_ERROR' | 'STEP_STARTED' | 'STEP_FINISHED' | 'REASONING_START' | 'REASONING_MESSAGE_START' | 'REASONING_MESSAGE_CONTENT' | 'REASONING_MESSAGE_END' | 'REASONING_MESSAGE_CHUNK' | 'REASONING_END' | 'REASONING_ENCRYPTED_VALUE' | 'SUBAGENT_STARTED' | 'SUBAGENT_FINISHED' | 'SUBAGENT_ERROR'"
+            }
+          ]
+        },
+        {
+          "type": "THINKING_END",
+          "issues": [
+            {
+              "path": [
+                "type"
+              ],
+              "message": "Invalid discriminator value. Expected 'TEXT_MESSAGE_START' | 'TEXT_MESSAGE_CONTENT' | 'TEXT_MESSAGE_END' | 'TEXT_MESSAGE_CHUNK' | 'TOOL_CALL_START' | 'TOOL_CALL_ARGS' | 'TOOL_CALL_END' | 'TOOL_CALL_CHUNK' | 'TOOL_CALL_RESULT' | 'STATE_SNAPSHOT' | 'STATE_DELTA' | 'MESSAGES_SNAPSHOT' | 'ACTIVITY_SNAPSHOT' | 'ACTIVITY_DELTA' | 'RAW' | 'CUSTOM' | 'RUN_STARTED' | 'RUN_FINISHED' | 'RUN_ERROR' | 'STEP_STARTED' | 'STEP_FINISHED' | 'REASONING_START' | 'REASONING_MESSAGE_START' | 'REASONING_MESSAGE_CONTENT' | 'REASONING_MESSAGE_END' | 'REASONING_MESSAGE_CHUNK' | 'REASONING_END' | 'REASONING_ENCRYPTED_VALUE' | 'SUBAGENT_STARTED' | 'SUBAGENT_FINISHED' | 'SUBAGENT_ERROR'"
+            }
+          ]
+        }
+      ],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-LEGACY-003",
+      "eventCount": 7,
+      "schema059": [],
+      "schema100": [
+        {
+          "type": "THINKING_START",
+          "issues": [
+            {
+              "path": [
+                "type"
+              ],
+              "message": "Invalid discriminator value. Expected 'TEXT_MESSAGE_START' | 'TEXT_MESSAGE_CONTENT' | 'TEXT_MESSAGE_END' | 'TEXT_MESSAGE_CHUNK' | 'TOOL_CALL_START' | 'TOOL_CALL_ARGS' | 'TOOL_CALL_END' | 'TOOL_CALL_CHUNK' | 'TOOL_CALL_RESULT' | 'STATE_SNAPSHOT' | 'STATE_DELTA' | 'MESSAGES_SNAPSHOT' | 'ACTIVITY_SNAPSHOT' | 'ACTIVITY_DELTA' | 'RAW' | 'CUSTOM' | 'RUN_STARTED' | 'RUN_FINISHED' | 'RUN_ERROR' | 'STEP_STARTED' | 'STEP_FINISHED' | 'REASONING_START' | 'REASONING_MESSAGE_START' | 'REASONING_MESSAGE_CONTENT' | 'REASONING_MESSAGE_END' | 'REASONING_MESSAGE_CHUNK' | 'REASONING_END' | 'REASONING_ENCRYPTED_VALUE' | 'SUBAGENT_STARTED' | 'SUBAGENT_FINISHED' | 'SUBAGENT_ERROR'"
+            }
+          ]
+        },
+        {
+          "type": "THINKING_TEXT_MESSAGE_START",
+          "issues": [
+            {
+              "path": [
+                "type"
+              ],
+              "message": "Invalid discriminator value. Expected 'TEXT_MESSAGE_START' | 'TEXT_MESSAGE_CONTENT' | 'TEXT_MESSAGE_END' | 'TEXT_MESSAGE_CHUNK' | 'TOOL_CALL_START' | 'TOOL_CALL_ARGS' | 'TOOL_CALL_END' | 'TOOL_CALL_CHUNK' | 'TOOL_CALL_RESULT' | 'STATE_SNAPSHOT' | 'STATE_DELTA' | 'MESSAGES_SNAPSHOT' | 'ACTIVITY_SNAPSHOT' | 'ACTIVITY_DELTA' | 'RAW' | 'CUSTOM' | 'RUN_STARTED' | 'RUN_FINISHED' | 'RUN_ERROR' | 'STEP_STARTED' | 'STEP_FINISHED' | 'REASONING_START' | 'REASONING_MESSAGE_START' | 'REASONING_MESSAGE_CONTENT' | 'REASONING_MESSAGE_END' | 'REASONING_MESSAGE_CHUNK' | 'REASONING_END' | 'REASONING_ENCRYPTED_VALUE' | 'SUBAGENT_STARTED' | 'SUBAGENT_FINISHED' | 'SUBAGENT_ERROR'"
+            }
+          ]
+        },
+        {
+          "type": "THINKING_TEXT_MESSAGE_CONTENT",
+          "issues": [
+            {
+              "path": [
+                "type"
+              ],
+              "message": "Invalid discriminator value. Expected 'TEXT_MESSAGE_START' | 'TEXT_MESSAGE_CONTENT' | 'TEXT_MESSAGE_END' | 'TEXT_MESSAGE_CHUNK' | 'TOOL_CALL_START' | 'TOOL_CALL_ARGS' | 'TOOL_CALL_END' | 'TOOL_CALL_CHUNK' | 'TOOL_CALL_RESULT' | 'STATE_SNAPSHOT' | 'STATE_DELTA' | 'MESSAGES_SNAPSHOT' | 'ACTIVITY_SNAPSHOT' | 'ACTIVITY_DELTA' | 'RAW' | 'CUSTOM' | 'RUN_STARTED' | 'RUN_FINISHED' | 'RUN_ERROR' | 'STEP_STARTED' | 'STEP_FINISHED' | 'REASONING_START' | 'REASONING_MESSAGE_START' | 'REASONING_MESSAGE_CONTENT' | 'REASONING_MESSAGE_END' | 'REASONING_MESSAGE_CHUNK' | 'REASONING_END' | 'REASONING_ENCRYPTED_VALUE' | 'SUBAGENT_STARTED' | 'SUBAGENT_FINISHED' | 'SUBAGENT_ERROR'"
+            }
+          ]
+        },
+        {
+          "type": "THINKING_TEXT_MESSAGE_END",
+          "issues": [
+            {
+              "path": [
+                "type"
+              ],
+              "message": "Invalid discriminator value. Expected 'TEXT_MESSAGE_START' | 'TEXT_MESSAGE_CONTENT' | 'TEXT_MESSAGE_END' | 'TEXT_MESSAGE_CHUNK' | 'TOOL_CALL_START' | 'TOOL_CALL_ARGS' | 'TOOL_CALL_END' | 'TOOL_CALL_CHUNK' | 'TOOL_CALL_RESULT' | 'STATE_SNAPSHOT' | 'STATE_DELTA' | 'MESSAGES_SNAPSHOT' | 'ACTIVITY_SNAPSHOT' | 'ACTIVITY_DELTA' | 'RAW' | 'CUSTOM' | 'RUN_STARTED' | 'RUN_FINISHED' | 'RUN_ERROR' | 'STEP_STARTED' | 'STEP_FINISHED' | 'REASONING_START' | 'REASONING_MESSAGE_START' | 'REASONING_MESSAGE_CONTENT' | 'REASONING_MESSAGE_END' | 'REASONING_MESSAGE_CHUNK' | 'REASONING_END' | 'REASONING_ENCRYPTED_VALUE' | 'SUBAGENT_STARTED' | 'SUBAGENT_FINISHED' | 'SUBAGENT_ERROR'"
+            }
+          ]
+        },
+        {
+          "type": "THINKING_END",
+          "issues": [
+            {
+              "path": [
+                "type"
+              ],
+              "message": "Invalid discriminator value. Expected 'TEXT_MESSAGE_START' | 'TEXT_MESSAGE_CONTENT' | 'TEXT_MESSAGE_END' | 'TEXT_MESSAGE_CHUNK' | 'TOOL_CALL_START' | 'TOOL_CALL_ARGS' | 'TOOL_CALL_END' | 'TOOL_CALL_CHUNK' | 'TOOL_CALL_RESULT' | 'STATE_SNAPSHOT' | 'STATE_DELTA' | 'MESSAGES_SNAPSHOT' | 'ACTIVITY_SNAPSHOT' | 'ACTIVITY_DELTA' | 'RAW' | 'CUSTOM' | 'RUN_STARTED' | 'RUN_FINISHED' | 'RUN_ERROR' | 'STEP_STARTED' | 'STEP_FINISHED' | 'REASONING_START' | 'REASONING_MESSAGE_START' | 'REASONING_MESSAGE_CONTENT' | 'REASONING_MESSAGE_END' | 'REASONING_MESSAGE_CHUNK' | 'REASONING_END' | 'REASONING_ENCRYPTED_VALUE' | 'SUBAGENT_STARTED' | 'SUBAGENT_FINISHED' | 'SUBAGENT_ERROR'"
+            }
+          ]
+        }
+      ],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-LEGACY-004",
+      "eventCount": 7,
+      "schema059": [],
+      "schema100": [
+        {
+          "type": "THINKING_START",
+          "issues": [
+            {
+              "path": [
+                "type"
+              ],
+              "message": "Invalid discriminator value. Expected 'TEXT_MESSAGE_START' | 'TEXT_MESSAGE_CONTENT' | 'TEXT_MESSAGE_END' | 'TEXT_MESSAGE_CHUNK' | 'TOOL_CALL_START' | 'TOOL_CALL_ARGS' | 'TOOL_CALL_END' | 'TOOL_CALL_CHUNK' | 'TOOL_CALL_RESULT' | 'STATE_SNAPSHOT' | 'STATE_DELTA' | 'MESSAGES_SNAPSHOT' | 'ACTIVITY_SNAPSHOT' | 'ACTIVITY_DELTA' | 'RAW' | 'CUSTOM' | 'RUN_STARTED' | 'RUN_FINISHED' | 'RUN_ERROR' | 'STEP_STARTED' | 'STEP_FINISHED' | 'REASONING_START' | 'REASONING_MESSAGE_START' | 'REASONING_MESSAGE_CONTENT' | 'REASONING_MESSAGE_END' | 'REASONING_MESSAGE_CHUNK' | 'REASONING_END' | 'REASONING_ENCRYPTED_VALUE' | 'SUBAGENT_STARTED' | 'SUBAGENT_FINISHED' | 'SUBAGENT_ERROR'"
+            }
+          ]
+        },
+        {
+          "type": "THINKING_TEXT_MESSAGE_START",
+          "issues": [
+            {
+              "path": [
+                "type"
+              ],
+              "message": "Invalid discriminator value. Expected 'TEXT_MESSAGE_START' | 'TEXT_MESSAGE_CONTENT' | 'TEXT_MESSAGE_END' | 'TEXT_MESSAGE_CHUNK' | 'TOOL_CALL_START' | 'TOOL_CALL_ARGS' | 'TOOL_CALL_END' | 'TOOL_CALL_CHUNK' | 'TOOL_CALL_RESULT' | 'STATE_SNAPSHOT' | 'STATE_DELTA' | 'MESSAGES_SNAPSHOT' | 'ACTIVITY_SNAPSHOT' | 'ACTIVITY_DELTA' | 'RAW' | 'CUSTOM' | 'RUN_STARTED' | 'RUN_FINISHED' | 'RUN_ERROR' | 'STEP_STARTED' | 'STEP_FINISHED' | 'REASONING_START' | 'REASONING_MESSAGE_START' | 'REASONING_MESSAGE_CONTENT' | 'REASONING_MESSAGE_END' | 'REASONING_MESSAGE_CHUNK' | 'REASONING_END' | 'REASONING_ENCRYPTED_VALUE' | 'SUBAGENT_STARTED' | 'SUBAGENT_FINISHED' | 'SUBAGENT_ERROR'"
+            }
+          ]
+        },
+        {
+          "type": "THINKING_TEXT_MESSAGE_CONTENT",
+          "issues": [
+            {
+              "path": [
+                "type"
+              ],
+              "message": "Invalid discriminator value. Expected 'TEXT_MESSAGE_START' | 'TEXT_MESSAGE_CONTENT' | 'TEXT_MESSAGE_END' | 'TEXT_MESSAGE_CHUNK' | 'TOOL_CALL_START' | 'TOOL_CALL_ARGS' | 'TOOL_CALL_END' | 'TOOL_CALL_CHUNK' | 'TOOL_CALL_RESULT' | 'STATE_SNAPSHOT' | 'STATE_DELTA' | 'MESSAGES_SNAPSHOT' | 'ACTIVITY_SNAPSHOT' | 'ACTIVITY_DELTA' | 'RAW' | 'CUSTOM' | 'RUN_STARTED' | 'RUN_FINISHED' | 'RUN_ERROR' | 'STEP_STARTED' | 'STEP_FINISHED' | 'REASONING_START' | 'REASONING_MESSAGE_START' | 'REASONING_MESSAGE_CONTENT' | 'REASONING_MESSAGE_END' | 'REASONING_MESSAGE_CHUNK' | 'REASONING_END' | 'REASONING_ENCRYPTED_VALUE' | 'SUBAGENT_STARTED' | 'SUBAGENT_FINISHED' | 'SUBAGENT_ERROR'"
+            }
+          ]
+        },
+        {
+          "type": "THINKING_TEXT_MESSAGE_END",
+          "issues": [
+            {
+              "path": [
+                "type"
+              ],
+              "message": "Invalid discriminator value. Expected 'TEXT_MESSAGE_START' | 'TEXT_MESSAGE_CONTENT' | 'TEXT_MESSAGE_END' | 'TEXT_MESSAGE_CHUNK' | 'TOOL_CALL_START' | 'TOOL_CALL_ARGS' | 'TOOL_CALL_END' | 'TOOL_CALL_CHUNK' | 'TOOL_CALL_RESULT' | 'STATE_SNAPSHOT' | 'STATE_DELTA' | 'MESSAGES_SNAPSHOT' | 'ACTIVITY_SNAPSHOT' | 'ACTIVITY_DELTA' | 'RAW' | 'CUSTOM' | 'RUN_STARTED' | 'RUN_FINISHED' | 'RUN_ERROR' | 'STEP_STARTED' | 'STEP_FINISHED' | 'REASONING_START' | 'REASONING_MESSAGE_START' | 'REASONING_MESSAGE_CONTENT' | 'REASONING_MESSAGE_END' | 'REASONING_MESSAGE_CHUNK' | 'REASONING_END' | 'REASONING_ENCRYPTED_VALUE' | 'SUBAGENT_STARTED' | 'SUBAGENT_FINISHED' | 'SUBAGENT_ERROR'"
+            }
+          ]
+        },
+        {
+          "type": "THINKING_END",
+          "issues": [
+            {
+              "path": [
+                "type"
+              ],
+              "message": "Invalid discriminator value. Expected 'TEXT_MESSAGE_START' | 'TEXT_MESSAGE_CONTENT' | 'TEXT_MESSAGE_END' | 'TEXT_MESSAGE_CHUNK' | 'TOOL_CALL_START' | 'TOOL_CALL_ARGS' | 'TOOL_CALL_END' | 'TOOL_CALL_CHUNK' | 'TOOL_CALL_RESULT' | 'STATE_SNAPSHOT' | 'STATE_DELTA' | 'MESSAGES_SNAPSHOT' | 'ACTIVITY_SNAPSHOT' | 'ACTIVITY_DELTA' | 'RAW' | 'CUSTOM' | 'RUN_STARTED' | 'RUN_FINISHED' | 'RUN_ERROR' | 'STEP_STARTED' | 'STEP_FINISHED' | 'REASONING_START' | 'REASONING_MESSAGE_START' | 'REASONING_MESSAGE_CONTENT' | 'REASONING_MESSAGE_END' | 'REASONING_MESSAGE_CHUNK' | 'REASONING_END' | 'REASONING_ENCRYPTED_VALUE' | 'SUBAGENT_STARTED' | 'SUBAGENT_FINISHED' | 'SUBAGENT_ERROR'"
+            }
+          ]
+        }
+      ],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-LEGACY-005",
+      "eventCount": 7,
+      "schema059": [],
+      "schema100": [
+        {
+          "type": "THINKING_START",
+          "issues": [
+            {
+              "path": [
+                "type"
+              ],
+              "message": "Invalid discriminator value. Expected 'TEXT_MESSAGE_START' | 'TEXT_MESSAGE_CONTENT' | 'TEXT_MESSAGE_END' | 'TEXT_MESSAGE_CHUNK' | 'TOOL_CALL_START' | 'TOOL_CALL_ARGS' | 'TOOL_CALL_END' | 'TOOL_CALL_CHUNK' | 'TOOL_CALL_RESULT' | 'STATE_SNAPSHOT' | 'STATE_DELTA' | 'MESSAGES_SNAPSHOT' | 'ACTIVITY_SNAPSHOT' | 'ACTIVITY_DELTA' | 'RAW' | 'CUSTOM' | 'RUN_STARTED' | 'RUN_FINISHED' | 'RUN_ERROR' | 'STEP_STARTED' | 'STEP_FINISHED' | 'REASONING_START' | 'REASONING_MESSAGE_START' | 'REASONING_MESSAGE_CONTENT' | 'REASONING_MESSAGE_END' | 'REASONING_MESSAGE_CHUNK' | 'REASONING_END' | 'REASONING_ENCRYPTED_VALUE' | 'SUBAGENT_STARTED' | 'SUBAGENT_FINISHED' | 'SUBAGENT_ERROR'"
+            }
+          ]
+        },
+        {
+          "type": "THINKING_TEXT_MESSAGE_START",
+          "issues": [
+            {
+              "path": [
+                "type"
+              ],
+              "message": "Invalid discriminator value. Expected 'TEXT_MESSAGE_START' | 'TEXT_MESSAGE_CONTENT' | 'TEXT_MESSAGE_END' | 'TEXT_MESSAGE_CHUNK' | 'TOOL_CALL_START' | 'TOOL_CALL_ARGS' | 'TOOL_CALL_END' | 'TOOL_CALL_CHUNK' | 'TOOL_CALL_RESULT' | 'STATE_SNAPSHOT' | 'STATE_DELTA' | 'MESSAGES_SNAPSHOT' | 'ACTIVITY_SNAPSHOT' | 'ACTIVITY_DELTA' | 'RAW' | 'CUSTOM' | 'RUN_STARTED' | 'RUN_FINISHED' | 'RUN_ERROR' | 'STEP_STARTED' | 'STEP_FINISHED' | 'REASONING_START' | 'REASONING_MESSAGE_START' | 'REASONING_MESSAGE_CONTENT' | 'REASONING_MESSAGE_END' | 'REASONING_MESSAGE_CHUNK' | 'REASONING_END' | 'REASONING_ENCRYPTED_VALUE' | 'SUBAGENT_STARTED' | 'SUBAGENT_FINISHED' | 'SUBAGENT_ERROR'"
+            }
+          ]
+        },
+        {
+          "type": "THINKING_TEXT_MESSAGE_CONTENT",
+          "issues": [
+            {
+              "path": [
+                "type"
+              ],
+              "message": "Invalid discriminator value. Expected 'TEXT_MESSAGE_START' | 'TEXT_MESSAGE_CONTENT' | 'TEXT_MESSAGE_END' | 'TEXT_MESSAGE_CHUNK' | 'TOOL_CALL_START' | 'TOOL_CALL_ARGS' | 'TOOL_CALL_END' | 'TOOL_CALL_CHUNK' | 'TOOL_CALL_RESULT' | 'STATE_SNAPSHOT' | 'STATE_DELTA' | 'MESSAGES_SNAPSHOT' | 'ACTIVITY_SNAPSHOT' | 'ACTIVITY_DELTA' | 'RAW' | 'CUSTOM' | 'RUN_STARTED' | 'RUN_FINISHED' | 'RUN_ERROR' | 'STEP_STARTED' | 'STEP_FINISHED' | 'REASONING_START' | 'REASONING_MESSAGE_START' | 'REASONING_MESSAGE_CONTENT' | 'REASONING_MESSAGE_END' | 'REASONING_MESSAGE_CHUNK' | 'REASONING_END' | 'REASONING_ENCRYPTED_VALUE' | 'SUBAGENT_STARTED' | 'SUBAGENT_FINISHED' | 'SUBAGENT_ERROR'"
+            }
+          ]
+        },
+        {
+          "type": "THINKING_TEXT_MESSAGE_END",
+          "issues": [
+            {
+              "path": [
+                "type"
+              ],
+              "message": "Invalid discriminator value. Expected 'TEXT_MESSAGE_START' | 'TEXT_MESSAGE_CONTENT' | 'TEXT_MESSAGE_END' | 'TEXT_MESSAGE_CHUNK' | 'TOOL_CALL_START' | 'TOOL_CALL_ARGS' | 'TOOL_CALL_END' | 'TOOL_CALL_CHUNK' | 'TOOL_CALL_RESULT' | 'STATE_SNAPSHOT' | 'STATE_DELTA' | 'MESSAGES_SNAPSHOT' | 'ACTIVITY_SNAPSHOT' | 'ACTIVITY_DELTA' | 'RAW' | 'CUSTOM' | 'RUN_STARTED' | 'RUN_FINISHED' | 'RUN_ERROR' | 'STEP_STARTED' | 'STEP_FINISHED' | 'REASONING_START' | 'REASONING_MESSAGE_START' | 'REASONING_MESSAGE_CONTENT' | 'REASONING_MESSAGE_END' | 'REASONING_MESSAGE_CHUNK' | 'REASONING_END' | 'REASONING_ENCRYPTED_VALUE' | 'SUBAGENT_STARTED' | 'SUBAGENT_FINISHED' | 'SUBAGENT_ERROR'"
+            }
+          ]
+        },
+        {
+          "type": "THINKING_END",
+          "issues": [
+            {
+              "path": [
+                "type"
+              ],
+              "message": "Invalid discriminator value. Expected 'TEXT_MESSAGE_START' | 'TEXT_MESSAGE_CONTENT' | 'TEXT_MESSAGE_END' | 'TEXT_MESSAGE_CHUNK' | 'TOOL_CALL_START' | 'TOOL_CALL_ARGS' | 'TOOL_CALL_END' | 'TOOL_CALL_CHUNK' | 'TOOL_CALL_RESULT' | 'STATE_SNAPSHOT' | 'STATE_DELTA' | 'MESSAGES_SNAPSHOT' | 'ACTIVITY_SNAPSHOT' | 'ACTIVITY_DELTA' | 'RAW' | 'CUSTOM' | 'RUN_STARTED' | 'RUN_FINISHED' | 'RUN_ERROR' | 'STEP_STARTED' | 'STEP_FINISHED' | 'REASONING_START' | 'REASONING_MESSAGE_START' | 'REASONING_MESSAGE_CONTENT' | 'REASONING_MESSAGE_END' | 'REASONING_MESSAGE_CHUNK' | 'REASONING_END' | 'REASONING_ENCRYPTED_VALUE' | 'SUBAGENT_STARTED' | 'SUBAGENT_FINISHED' | 'SUBAGENT_ERROR'"
+            }
+          ]
+        }
+      ],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-STATE-001",
+      "eventCount": 3,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-STATE-002",
+      "eventCount": 4,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-STATE-003",
+      "eventCount": 3,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-ACTIVITY-001",
+      "eventCount": 3,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-ACTIVITY-002",
+      "eventCount": 4,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-EXT-001",
+      "eventCount": 3,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-EXT-002",
+      "eventCount": 3,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-SUB-001",
+      "eventCount": 7,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-SUB-002",
+      "eventCount": 7,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-SUB-003",
+      "eventCount": 7,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-MSG-001",
+      "eventCount": 5,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-MSG-002",
+      "eventCount": 5,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-MSG-003",
+      "eventCount": 5,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-MSG-004",
+      "eventCount": 5,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-MSG-005",
+      "eventCount": 5,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-MSG-006",
+      "eventCount": 5,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-MSG-007",
+      "eventCount": 5,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-MSG-008",
+      "eventCount": 5,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-ENV-001",
+      "eventCount": 5,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-ENV-002",
+      "eventCount": 5,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-HITL-001",
+      "eventCount": 2,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-HITL-002",
+      "eventCount": 2,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-HITL-003",
+      "eventCount": 2,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-HITL-004",
+      "eventCount": 2,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-HITL-005",
+      "eventCount": 2,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "AGUI-HITL-006",
+      "eventCount": 2,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "MIMIR-001",
+      "eventCount": 3,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "MIMIR-002",
+      "eventCount": 3,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "MIMIR-003",
+      "eventCount": 3,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "MIMIR-004",
+      "eventCount": 3,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "MIMIR-005",
+      "eventCount": 3,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    },
+    {
+      "id": "MIMIR-006",
+      "eventCount": 3,
+      "schema059": [],
+      "schema100": [],
+      "sequence059": "pass"
+    }
+  ]
+}
