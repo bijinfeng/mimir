@@ -1431,3 +1431,26 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+
+## Session 50: Desktop精修与16模块最终集成验收
+<!-- trellis-session: v=2 fp=56ed4cecc20cde5e -->
+
+**Date**: 2026-10-20
+**Task**: Desktop精修与16模块最终集成验收
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+完成Desktop首启读取反馈、提交同步防重与失败保址、短高密度和标题栏焦点；57项回归、三段构建、真实Electron12条启动自检及完整pnpm check退出0。8组真实前后+2补充、19类精确来源、105原始notice指纹和统一HTML入口存档。关闭模块2–6历史全仓阻断，16模块与起始页补充共17子任务及父任务已归档；原生手工GUI受Mac锁屏限制，未冒充原生通过。不推送。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `4e47605` | fix(desktop): refine setup feedback and compact layouts |
+| `951ab34` | docs(ui): consolidate modular polish acceptance |
+
+### Status
+
+[OK] **Completed**
