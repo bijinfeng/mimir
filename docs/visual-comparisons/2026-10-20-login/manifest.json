@@ -1,0 +1,869 @@
+{
+  "date": "2026-10-20",
+  "baseline": "ad72328",
+  "pairedScenes": 38,
+  "images": [
+    {
+      "path": "before/auth-error.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "dabf7c218adfa1ef95fd8f93dc987286cb87f6a9c0879880a5f334714091291d"
+    },
+    {
+      "path": "before/desktop-fallback-invoked.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "03c592338158ff41ca63278ac20cd379d15fa937f334e85142e1addb257c84d0"
+    },
+    {
+      "path": "before/load-error.png",
+      "width": 600,
+      "height": 760,
+      "sha256": "49dae21ad1df37d8ad094c86845f2acd60f4f38d49fdbcb6a50a4d8d250387d2"
+    },
+    {
+      "path": "before/loading.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "bb45ffb628f2dc87bb666584ea3e75fedc4045ec878251445bdfa45b4b6ce18c"
+    },
+    {
+      "path": "before/local-browser.png",
+      "width": 880,
+      "height": 760,
+      "sha256": "bc90a601bea3c92850d7568bebac226092180eabca71215053b9c29096894960"
+    },
+    {
+      "path": "before/local-desktop.png",
+      "width": 880,
+      "height": 760,
+      "sha256": "ba639d3c9e5b24c7189be53e6a2a9135b524b9ea8dc84b0c8bd0a052fd1e4515"
+    },
+    {
+      "path": "before/login-dark-compact.png",
+      "width": 880,
+      "height": 760,
+      "sha256": "b1245ffcd6d627a9f5610f168b9c12bb0364987e59e7f1bdc5683f860c51ea24"
+    },
+    {
+      "path": "before/login-dark-desktop.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "a6e518a4a04d24eb5d3a205139f4349861dc8a6d21dd822ce7fc7b5110b817a7"
+    },
+    {
+      "path": "before/login-dark-medium.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "077889897ae0bb5b89cb38bf9ee2380883ab82eb1b91f8a46a2f21ed8c6308a1"
+    },
+    {
+      "path": "before/login-dark-narrow.png",
+      "width": 600,
+      "height": 760,
+      "sha256": "f771b40ac789c671775fee3f769b23d846c1aae8f10f2500c500c74af56805ab"
+    },
+    {
+      "path": "before/login-dark-phone.png",
+      "width": 390,
+      "height": 700,
+      "sha256": "fc86106125299102885ff9235e4d4842576fd46322c462d8a2196c323079e6d7"
+    },
+    {
+      "path": "before/login-dark-short.png",
+      "width": 1100,
+      "height": 420,
+      "sha256": "13b71cb0ad24cacb56195adc366863e24e3e1feba93b2c9a9fede21db59836f9"
+    },
+    {
+      "path": "before/login-dark.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "77bc9454ebf6b941c7ce4591751f89a795e780ee47e52a9ba5c4ccd7193fb602"
+    },
+    {
+      "path": "before/login-light.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "d00b1710cc2566eade896317712359f97e93e28e7627bf2a5fe75443b70cdfad"
+    },
+    {
+      "path": "before/login-password-visible.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "47cf3def39109862b5b0273423d9b9e03e5ee5e579bf1abfc00642bdaf53d686"
+    },
+    {
+      "path": "before/login-required.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "318e835744451ec1473eb0542aaacbd7e6f6ab9945bfbc8d7b48e259c3c4cf96"
+    },
+    {
+      "path": "before/login-success.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "fa13649d3f9880f3282efcdb880e902cf10a3fa76014a2f8e23549c8073b208f"
+    },
+    {
+      "path": "before/long-error.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "b31d39933068a637acdf2df1f377b8f51fb643e0072994fd3caaacb8b1d237c4"
+    },
+    {
+      "path": "before/pending-second-enter.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "332b0542ca12ecadfeeb0d4f6326cfeb33a44ebacfcac353583b8a7c7645331f"
+    },
+    {
+      "path": "before/pending.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "8fb5a9d6f3d3e14854be9a4aa9feed37a7c86d122f44daa2365e828ccb9a6b15"
+    },
+    {
+      "path": "before/root-desktop.png",
+      "width": 880,
+      "height": 760,
+      "sha256": "427760efe07200089186892fb8d70da289c9dc535ef295f3fcb2aeab6bd8eb96"
+    },
+    {
+      "path": "before/root-http.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "60a59400157ba5661926983d0e3fd4b7fbbfedd3a5ed0749e305c7bd8060cffb"
+    },
+    {
+      "path": "before/root-offline-compact.png",
+      "width": 880,
+      "height": 760,
+      "sha256": "dd3401cdeb68fca89ddffa368dd76278244005725ab34087d5cfd0b821b487ec"
+    },
+    {
+      "path": "before/root-offline-medium.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "b5eef0fbd0599028d26b9f2b4dc7fd45b0f21c0be2c275ed892634b79b37e8bb"
+    },
+    {
+      "path": "before/root-offline-narrow.png",
+      "width": 600,
+      "height": 760,
+      "sha256": "7dbe2b1807b48604c4e3c08f05d05cc990e487263790f5d9c94656d4ca2537fc"
+    },
+    {
+      "path": "before/root-offline-phone.png",
+      "width": 390,
+      "height": 700,
+      "sha256": "4218642be954e5533a4b2e68a316aeca3565bb520f11832fef2accc49bfe98c0"
+    },
+    {
+      "path": "before/root-offline-recovered.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "d8f647cf57852ff7b4e5455845769d6f3ae397407e6982557640172c56f46b13"
+    },
+    {
+      "path": "before/root-offline-retrying.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "443b45ce1e83d51c9fe78ec166dfe8e75ec37f7f531c2506a8e425eb17d3f485"
+    },
+    {
+      "path": "before/root-offline-short.png",
+      "width": 1100,
+      "height": 420,
+      "sha256": "c2ce656eb9b2b3baa080dfd9b84acb54af27c084341268dda3559cd7bb4e9b4f"
+    },
+    {
+      "path": "before/root-offline-wide.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "9497070426251af1a85081a1a36f96bacc846be8e57c52bc763e8557987434fd"
+    },
+    {
+      "path": "before/root-repeated-pending.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "b9f606d8b5193b44b7cdcbccc80f279cbae4f670924c0fb29986aa33ae36fc36"
+    },
+    {
+      "path": "before/root-repeated-recovered.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "7213c5e41191bdd4a70b40dde2369ed6ceeffadacc04610ddec3269d58c653d5"
+    },
+    {
+      "path": "before/root-retry-failed.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "ca7bd2197fff31fcea4c0bdf9ad26b8a23dfc1d4652a453b127b0b6765a325d1"
+    },
+    {
+      "path": "before/setup-error-dark.png",
+      "width": 600,
+      "height": 760,
+      "sha256": "2b89b797e773af409c48d8d7950b2e0a157bd792e9cdd195821e8fd048112d7f"
+    },
+    {
+      "path": "before/setup-error-light.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "5d628a6acb2f9b0207cd6f161c62ebe65d3734dd1879da600fa53b64188f372f"
+    },
+    {
+      "path": "before/setup-error-recovered.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "bcb769ea1a4b48ebd2fba601ecd0d1c9059bdd41d9ee613c036a5f4ec1a545c2"
+    },
+    {
+      "path": "before/setup-error-retrying.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "6582e3a8ffa61713701a95ceb7dbac9647f62d92bb5a466db446fad71cae8f9a"
+    },
+    {
+      "path": "before/signup-light.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "af30230b631d39aaadeac9135a926e20ec3ff4e9cea889ce7b073a1e5a665768"
+    },
+    {
+      "path": "before/signup-mismatch.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "b983102a3c847a82b2518d901a802f26107c4050f8fd723cec836798239e9c1b"
+    },
+    {
+      "path": "before/signup-pending.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "bdd38799403d9c1817858a50c2481db288d25ff57a15c09480f7efc3fe56cc70"
+    },
+    {
+      "path": "before/signup-phone.png",
+      "width": 390,
+      "height": 700,
+      "sha256": "b851a49409f00a2d59b8e74b02ee4942f913b1510be5a84ae1367bd0296cd840"
+    },
+    {
+      "path": "before/signup-required.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "46e5b907d8d2fac62279a4b5be71ea18592e91da5e77d02021b68c02ce470351"
+    },
+    {
+      "path": "before/signup-short.png",
+      "width": 1100,
+      "height": 420,
+      "sha256": "521133dd34214301a2ff6d78a6f561f939e3e9c2b9caae1a38b544e60ee01423"
+    },
+    {
+      "path": "before/signup-success.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "5a0984747e81d709f2aa2b79bf9cbe406ffd1f51b35d9dc8a36446d1b8de6718"
+    },
+    {
+      "path": "after/auth-error.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "8b6cfcff44a1888410ae2ccc5ecabbc00605e3f30bf9bc91631c62952fe9d872"
+    },
+    {
+      "path": "after/desktop-fallback-invoked.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "b61fc85221b0d1aacb8fd439abb7f59bf6d3d14b184d3437cc002f8dd7dd22ae"
+    },
+    {
+      "path": "after/load-error.png",
+      "width": 600,
+      "height": 760,
+      "sha256": "49dae21ad1df37d8ad094c86845f2acd60f4f38d49fdbcb6a50a4d8d250387d2"
+    },
+    {
+      "path": "after/loading.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "279fce0ad85f0974cd4b398fcd7cb908c62ee7b6345e572606f9f2aea30e5a63"
+    },
+    {
+      "path": "after/local-browser.png",
+      "width": 880,
+      "height": 760,
+      "sha256": "bc90a601bea3c92850d7568bebac226092180eabca71215053b9c29096894960"
+    },
+    {
+      "path": "after/local-desktop.png",
+      "width": 880,
+      "height": 760,
+      "sha256": "ba639d3c9e5b24c7189be53e6a2a9135b524b9ea8dc84b0c8bd0a052fd1e4515"
+    },
+    {
+      "path": "after/login-dark.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "77bc9454ebf6b941c7ce4591751f89a795e780ee47e52a9ba5c4ccd7193fb602"
+    },
+    {
+      "path": "after/login-light.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "d00b1710cc2566eade896317712359f97e93e28e7627bf2a5fe75443b70cdfad"
+    },
+    {
+      "path": "after/login-password-visible.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "4af4de1970d42ae682730fbce80adddeb340f297fb23bd0feccdbac7b1af0a62"
+    },
+    {
+      "path": "after/login-required.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "21cfeda0e922c8db8de3f5f9793d99d1281845a82d8202b8a50cb6e1aaba3a9d"
+    },
+    {
+      "path": "after/login-success.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "fa13649d3f9880f3282efcdb880e902cf10a3fa76014a2f8e23549c8073b208f"
+    },
+    {
+      "path": "after/long-error.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "b8137205b705dedd0a7fb5271056077da7fb81003194d4a2c8d9edecb8d2d9e0"
+    },
+    {
+      "path": "after/pending-second-enter.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "a041d8d1a13d2e42fa1110fbf28f0b78e1ac551f9a567601e7359a32a8d5d5ea"
+    },
+    {
+      "path": "after/pending.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "1902591c1dc40d7aab3898d44c5d4d2327167f24e8131181dd90babfa97da74c"
+    },
+    {
+      "path": "after/product-authenticated.png",
+      "width": 1280,
+      "height": 720,
+      "sha256": "6f2fe3fe26b834a6961f930b2ac55936971bb802023f662dc8545de84b469e9f"
+    },
+    {
+      "path": "after/root-desktop.png",
+      "width": 880,
+      "height": 760,
+      "sha256": "d70809d217405ec28c87c71effbec36cf13b3d25e88c45258f16307e145894db"
+    },
+    {
+      "path": "after/root-http.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "4705c19f016d5cf93192955f368c91800defc0dea93b9bc5b0abe893c52c29b4"
+    },
+    {
+      "path": "after/root-offline-compact.png",
+      "width": 880,
+      "height": 760,
+      "sha256": "ec0100cfc9546cd7f74f7735e207477bdaf12519f01d709f2a28254860d14e56"
+    },
+    {
+      "path": "after/root-offline-medium.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "ab7089509a5bbbf0a1cd6c70932c19e54669646f192defda4d774230801594c6"
+    },
+    {
+      "path": "after/root-offline-narrow.png",
+      "width": 600,
+      "height": 760,
+      "sha256": "27428c382ebdec0322c17a2d154798ded5ac5fd9bd1f77d35e1b219f9e82244f"
+    },
+    {
+      "path": "after/root-offline-phone.png",
+      "width": 390,
+      "height": 700,
+      "sha256": "7fb978a64bfd8a2bd8a7d74d36bba7c4167e7a5f427cb992997dc855df6059ab"
+    },
+    {
+      "path": "after/root-offline-recovered.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "d8f647cf57852ff7b4e5455845769d6f3ae397407e6982557640172c56f46b13"
+    },
+    {
+      "path": "after/root-offline-retrying.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "01ffb006e7c7dd414600769184d636f0f91dba1e73635413fda1ac4598fafbf1"
+    },
+    {
+      "path": "after/root-offline-short.png",
+      "width": 1100,
+      "height": 420,
+      "sha256": "9ee783fccf4f3d2d655ad8d531f8faacd4c00c911fdb11d1e9b7c7499dbe0684"
+    },
+    {
+      "path": "after/root-offline-wide.png",
+      "width": 1440,
+      "height": 900,
+      "sha256": "267495cde5b562a2bb77114387f591023945254fc4d4fa6e53b95a3794b97965"
+    },
+    {
+      "path": "after/root-repeated-pending.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "f0e8158cf63a5845fa2bc684bae0de0c8d82db96e4d332b9caa7d0f646ba7d79"
+    },
+    {
+      "path": "after/root-repeated-recovered.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "7213c5e41191bdd4a70b40dde2369ed6ceeffadacc04610ddec3269d58c653d5"
+    },
+    {
+      "path": "after/root-retry-failed.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "417c9a11cf9901861df7d3343c71f8a99790eb33ff8951cdca586d37aa78701e"
+    },
+    {
+      "path": "after/setup-error-dark.png",
+      "width": 600,
+      "height": 760,
+      "sha256": "7cb9061ced7633386d1fc38908f3484130ce65e23969ac3afc021fd2413577ce"
+    },
+    {
+      "path": "after/setup-error-light.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "98e1d153b887202acf6184882a042d01df45c74ed7de78bae7dfc1f233fb3ee2"
+    },
+    {
+      "path": "after/setup-error-recovered.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "fbf644ed0233cfaa24986d90e57022c8503e16f97ff50cb000e31846ae38c11d"
+    },
+    {
+      "path": "after/setup-error-retrying.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "8d6936c60bd3c3f00e49781f54bee40c677d608ce89b8b7b1b049bb0d146f974"
+    },
+    {
+      "path": "after/signup-light.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "af30230b631d39aaadeac9135a926e20ec3ff4e9cea889ce7b073a1e5a665768"
+    },
+    {
+      "path": "after/signup-mismatch.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "d64b4eba5d39ea0594d8b4547ce03aa50cafdef6a264a0f4881e2dd38f479949"
+    },
+    {
+      "path": "after/signup-pending.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "523fcc9d3ee56632130dfde6eb1fa5bfc27724e0b7b06ee79772c04e518718e5"
+    },
+    {
+      "path": "after/signup-phone.png",
+      "width": 390,
+      "height": 700,
+      "sha256": "b851a49409f00a2d59b8e74b02ee4942f913b1510be5a84ae1367bd0296cd840"
+    },
+    {
+      "path": "after/signup-required.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "d49dabb41c6c939b1725d248a5cc442a3e678ddfa44fe25f00334c3cf6bb561e"
+    },
+    {
+      "path": "after/signup-short.png",
+      "width": 1100,
+      "height": 420,
+      "sha256": "521133dd34214301a2ff6d78a6f561f939e3e9c2b9caae1a38b544e60ee01423"
+    },
+    {
+      "path": "after/signup-success.png",
+      "width": 1100,
+      "height": 760,
+      "sha256": "5a0984747e81d709f2aa2b79bf9cbe406ffd1f51b35d9dc8a36446d1b8de6718"
+    }
+  ],
+  "scenes": [
+    {
+      "id": "root-offline-wide",
+      "label": "连接失败 · 1440×900",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/root-offline-wide.png",
+      "after": "after/root-offline-wide.png"
+    },
+    {
+      "id": "root-repeated-pending",
+      "label": "再次重试等待 · 跨错误边界",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/root-repeated-pending.png",
+      "after": "after/root-repeated-pending.png"
+    },
+    {
+      "id": "setup-error-light",
+      "label": "初始化连接失败 · 浅色",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/setup-error-light.png",
+      "after": "after/setup-error-light.png"
+    },
+    {
+      "id": "root-offline-phone",
+      "label": "连接失败 · 390×700",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/root-offline-phone.png",
+      "after": "after/root-offline-phone.png"
+    },
+    {
+      "id": "root-offline-short",
+      "label": "连接失败 · 深色1100×420",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/root-offline-short.png",
+      "after": "after/root-offline-short.png"
+    },
+    {
+      "id": "root-desktop",
+      "label": "故障恢复 · 桌面插槽",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/root-desktop.png",
+      "after": "after/root-desktop.png"
+    },
+    {
+      "id": "auth-error",
+      "label": "认证失败 · 草稿保留",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/auth-error.png",
+      "after": "after/auth-error.png"
+    },
+    {
+      "id": "desktop-fallback-invoked",
+      "label": "桌面恢复入口调用 · 模拟桥",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/desktop-fallback-invoked.png",
+      "after": "after/desktop-fallback-invoked.png"
+    },
+    {
+      "id": "load-error",
+      "label": "共享读取失败 · 窄容器",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/load-error.png",
+      "after": "after/load-error.png"
+    },
+    {
+      "id": "loading",
+      "label": "初始化加载",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/loading.png",
+      "after": "after/loading.png"
+    },
+    {
+      "id": "local-browser",
+      "label": "本地模式 · 浏览器提示",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/local-browser.png",
+      "after": "after/local-browser.png"
+    },
+    {
+      "id": "local-desktop",
+      "label": "本地模式 · 桌面插槽模拟",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/local-desktop.png",
+      "after": "after/local-desktop.png"
+    },
+    {
+      "id": "login-dark",
+      "label": "登录 · 深色",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/login-dark.png",
+      "after": "after/login-dark.png"
+    },
+    {
+      "id": "login-dark-compact",
+      "label": "login-dark-compact",
+      "kind": "真实应用 / 本地测试服务",
+      "note": "真实服务渲染的补充证据。使用标准测试账号验证登录成功；此补充项没有前后配对，不据此宣称视觉差异。",
+      "before": "before/login-dark-compact.png"
+    },
+    {
+      "id": "login-dark-desktop",
+      "label": "login-dark-desktop",
+      "kind": "真实应用 / 本地测试服务",
+      "note": "真实服务渲染的补充证据。使用标准测试账号验证登录成功；此补充项没有前后配对，不据此宣称视觉差异。",
+      "before": "before/login-dark-desktop.png"
+    },
+    {
+      "id": "login-dark-medium",
+      "label": "login-dark-medium",
+      "kind": "真实应用 / 本地测试服务",
+      "note": "真实服务渲染的补充证据。使用标准测试账号验证登录成功；此补充项没有前后配对，不据此宣称视觉差异。",
+      "before": "before/login-dark-medium.png"
+    },
+    {
+      "id": "login-dark-narrow",
+      "label": "login-dark-narrow",
+      "kind": "真实应用 / 本地测试服务",
+      "note": "真实服务渲染的补充证据。使用标准测试账号验证登录成功；此补充项没有前后配对，不据此宣称视觉差异。",
+      "before": "before/login-dark-narrow.png"
+    },
+    {
+      "id": "login-dark-phone",
+      "label": "login-dark-phone",
+      "kind": "真实应用 / 本地测试服务",
+      "note": "真实服务渲染的补充证据。使用标准测试账号验证登录成功；此补充项没有前后配对，不据此宣称视觉差异。",
+      "before": "before/login-dark-phone.png"
+    },
+    {
+      "id": "login-dark-short",
+      "label": "login-dark-short",
+      "kind": "真实应用 / 本地测试服务",
+      "note": "真实服务渲染的补充证据。使用标准测试账号验证登录成功；此补充项没有前后配对，不据此宣称视觉差异。",
+      "before": "before/login-dark-short.png"
+    },
+    {
+      "id": "login-light",
+      "label": "登录 · 浅色",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/login-light.png",
+      "after": "after/login-light.png"
+    },
+    {
+      "id": "login-password-visible",
+      "label": "密码显隐",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/login-password-visible.png",
+      "after": "after/login-password-visible.png"
+    },
+    {
+      "id": "login-required",
+      "label": "登录必填校验",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/login-required.png",
+      "after": "after/login-required.png"
+    },
+    {
+      "id": "login-success",
+      "label": "模拟登录成功与跳转",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/login-success.png",
+      "after": "after/login-success.png"
+    },
+    {
+      "id": "long-error",
+      "label": "长错误信息",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/long-error.png",
+      "after": "after/long-error.png"
+    },
+    {
+      "id": "pending",
+      "label": "登录提交中",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/pending.png",
+      "after": "after/pending.png"
+    },
+    {
+      "id": "pending-second-enter",
+      "label": "等待时再次 Enter · 仍1个请求",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/pending-second-enter.png",
+      "after": "after/pending-second-enter.png"
+    },
+    {
+      "id": "product-authenticated",
+      "label": "product-authenticated",
+      "kind": "真实应用 / 本地测试服务",
+      "note": "真实服务渲染的补充证据。使用标准测试账号验证登录成功；此补充项没有前后配对，不据此宣称视觉差异。",
+      "after": "after/product-authenticated.png"
+    },
+    {
+      "id": "root-http",
+      "label": "HTTP 故障恢复",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/root-http.png",
+      "after": "after/root-http.png"
+    },
+    {
+      "id": "root-offline-compact",
+      "label": "连接失败 · 880×760",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/root-offline-compact.png",
+      "after": "after/root-offline-compact.png"
+    },
+    {
+      "id": "root-offline-medium",
+      "label": "连接失败 · 深色1100×760",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/root-offline-medium.png",
+      "after": "after/root-offline-medium.png"
+    },
+    {
+      "id": "root-offline-narrow",
+      "label": "连接失败 · 深色600×760",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/root-offline-narrow.png",
+      "after": "after/root-offline-narrow.png"
+    },
+    {
+      "id": "root-offline-recovered",
+      "label": "连接重试成功恢复",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/root-offline-recovered.png",
+      "after": "after/root-offline-recovered.png"
+    },
+    {
+      "id": "root-offline-retrying",
+      "label": "连接失败后重试等待",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/root-offline-retrying.png",
+      "after": "after/root-offline-retrying.png"
+    },
+    {
+      "id": "root-repeated-recovered",
+      "label": "再次重试成功恢复",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/root-repeated-recovered.png",
+      "after": "after/root-repeated-recovered.png"
+    },
+    {
+      "id": "root-retry-failed",
+      "label": "重试再次失败 · 恢复可操作",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/root-retry-failed.png",
+      "after": "after/root-retry-failed.png"
+    },
+    {
+      "id": "setup-error-dark",
+      "label": "初始化连接失败 · 深色600",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/setup-error-dark.png",
+      "after": "after/setup-error-dark.png"
+    },
+    {
+      "id": "setup-error-recovered",
+      "label": "初始化重试恢复",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/setup-error-recovered.png",
+      "after": "after/setup-error-recovered.png"
+    },
+    {
+      "id": "setup-error-retrying",
+      "label": "初始化失败后重试",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/setup-error-retrying.png",
+      "after": "after/setup-error-retrying.png"
+    },
+    {
+      "id": "signup-light",
+      "label": "首次创建账号 · 浅色",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/signup-light.png",
+      "after": "after/signup-light.png"
+    },
+    {
+      "id": "signup-mismatch",
+      "label": "两次密码不一致",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/signup-mismatch.png",
+      "after": "after/signup-mismatch.png"
+    },
+    {
+      "id": "signup-pending",
+      "label": "首次创建提交中 · 模拟IO",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/signup-pending.png",
+      "after": "after/signup-pending.png"
+    },
+    {
+      "id": "signup-phone",
+      "label": "首次创建 · 390×700",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/signup-phone.png",
+      "after": "after/signup-phone.png"
+    },
+    {
+      "id": "signup-required",
+      "label": "首次创建必填校验",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/signup-required.png",
+      "after": "after/signup-required.png"
+    },
+    {
+      "id": "signup-short",
+      "label": "首次创建 · 1100×420",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/signup-short.png",
+      "after": "after/signup-short.png"
+    },
+    {
+      "id": "signup-success",
+      "label": "模拟创建成功与跳转",
+      "kind": "真实组件 / 模拟 IO",
+      "note": "真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。",
+      "before": "before/signup-success.png",
+      "after": "after/signup-success.png"
+    }
+  ],
+  "sources": {
+    "packages/renderer/src/routes/__root.tsx": "06659b9c1ee44e880e9623ac4f0c374b173722291694dbfc2aad3d170fa3eca2",
+    "packages/renderer/src/routes/login.tsx": "35f79bab791aa67901a22e0a59bc8e78dd80cc0cd2012f1d84cd4f82c0d3d562"
+  },
+  "references": {
+    "WeKnora": "v0.8.3",
+    "treeSha": "3e22822c1d2397be730c458c7539d0eb8c113a24"
+  },
+  "demo": "demo/dist/{before,after}/index.html; real source, simulated IO; built with gallery/vite.config.mjs"
+}

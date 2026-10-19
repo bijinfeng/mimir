@@ -37,3 +37,7 @@
 `_app.settings.tsx` 的分区导航保持 `replace: true` 和原 `scope`，同时用 `resetScroll: false` 关闭该次路由回放；`main` 以 `section` 作 key，并提供 `data-scroll-restoration-id={`settings-${section}`}` 区分缓存目标。同分区重渲染保留节点与位置，换分区重建节点回到顶部；不要在整个应用关闭滚动恢复。
 
 回归入口：`routes/-settings-scroll.test.tsx` 验证节点身份、旧 selector 不命中新分区、导航参数和焦点；浏览器还须先滚动模型页再切换支持能力，等待路由渲染完成后断言 `main.scrollTop === 0` 且标题在可视区。只在首次渲染读取位置会漏掉 SDK 后置回放。
+
+## 根错误边界重建与重试等待
+
+`router.invalidate()` 在 `beforeLoad` 再次失败后可能重建根错误边界，组件本地 pending 随之丢失。保留同步去重 guard，并结合 Router loading 控制 busy/disabled；invalidate 结束后再 reset。用真实 RouterProvider 和可控会话 Promise 验证“再次失败 → 等待 → 恢复”，仅 mock invalidate 无法覆盖边界重建。

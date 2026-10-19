@@ -1,7 +1,17 @@
-import { Outlet, createRootRouteWithContext, redirect, useRouter } from '@tanstack/react-router'
-import { Button, Result, Space } from 'antd'
+import {
+  Outlet,
+  createRootRouteWithContext,
+  redirect,
+  useRouter,
+  useRouterState,
+} from '@tanstack/react-router'
+import { Button, Result } from 'antd'
+import { createStyles } from 'antd-style'
+import { TriangleAlert } from 'lucide-react'
+import { useRef, useState } from 'react'
 import { ApiRequestError, api } from '../lib/api'
-import { useDesktopBridge } from '../platform'
+import { useDesktopBridge, useTitleBar } from '../platform'
+import { FONT_SIZE } from '../theme/tokens'
 import type { RouterContext } from '../lib/router-context'
 
 export const Route = createRootRouteWithContext<RouterContext>()({
@@ -51,8 +61,70 @@ export const Route = createRootRouteWithContext<RouterContext>()({
   errorComponent: RootError,
 })
 
+const noop = () => {}
+
+const useErrorStyles = createStyles(({ css, token }) => ({
+  shell: css`
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: ${token.colorBgLayout};
+  `,
+  page: css`
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    overflow: auto;
+    padding: 24px;
+  `,
+  result: css`
+    width: min(100%, 480px);
+    min-width: 0;
+    flex: none;
+    margin: auto;
+    padding: 24px 0;
+    overflow-wrap: anywhere;
+  `,
+  icon: css`
+    margin-bottom: 16px;
+    color: ${token.colorWarning};
+    line-height: 1;
+  `,
+  heading: css`
+    margin: 0;
+    color: ${token.colorText};
+    font-size: ${FONT_SIZE.pageTitle}px;
+    font-weight: 600;
+    line-height: ${token.lineHeightHeading3};
+  `,
+  description: css`
+    margin-top: 12px;
+    color: ${token.colorTextSecondary};
+    font-size: ${FONT_SIZE.body}px;
+    line-height: ${token.lineHeight};
+  `,
+  extra: css`
+    margin-top: 24px;
+  `,
+  actions: css`
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  `,
+}))
+
 function RootError({ error, reset }: { error: unknown; reset: () => void }) {
+  const { styles } = useErrorStyles()
   const router = useRouter()
+  const [retrying, setRetrying] = useState(false)
+  const retryingRef = useRef(false)
+  // The router may replace its error boundary after another failed attempt.
+  // Its loading state survives that remount, unlike this component's state.
+  const routeLoading = useRouterState({ select: (state) => state.isLoading })
+  const busy = retrying || routeLoading
+  const titleBar = useTitleBar({ collapsed: false, onToggleCollapsed: noop, showToggle: false })
   const status = error instanceof ApiRequestError ? error.status : null
 
   /**
@@ -71,40 +143,59 @@ function RootError({ error, reset }: { error: unknown; reset: () => void }) {
    */
   const bridge = useDesktopBridge()
 
+  async function retry() {
+    if (retryingRef.current || routeLoading) return
+    retryingRef.current = true
+    setRetrying(true)
+    try {
+      // Rerun beforeLoad before clearing the boundary. Reset alone would render
+      // the same failed match and immediately show this error again.
+      await router.invalidate()
+    } catch {
+      // A rejected refresh must also release the boundary to show the latest
+      // route error, rather than leaving a disabled recovery action behind.
+    } finally {
+      retryingRef.current = false
+      setRetrying(false)
+      reset()
+    }
+  }
+
   return (
-    <Result
-      status="warning"
-      title={reachable ? '服务端出错了' : '连不上服务端'}
-      subTitle={
-        reachable
-          ? `服务端返回了 ${status}。它可能正在重启，或者请求被中间的一层拦下了。`
-          : '请确认服务在运行（docker compose ps），以及客户端指向的地址是对的。'
-      }
-      extra={
-        <Space>
-          <Button
-            type="primary"
-            onClick={() => {
-              /**
-               * **必须 `invalidate()`，不能只 `reset()`。**
-               *
-               * 这里的错误是在渲染期抛出的（`beforeLoad` 失败的路由会把错误
-               * 抛给 React），所以 `reset()` 只是让边界清掉错误状态、再渲染一次
-               * 同一棵子树——而那个 match 仍是 `error`，它会立刻重新抛出，
-               * 用户看到的是「点了没反应」。
-               *
-               * `invalidate()` 让路由重新跑一遍 `beforeLoad`（最常见的情况是
-               * 服务端刚好起来了）。重跑完再 `reset()` 清掉边界：
-               * 成功了就正常进页面，失败了就用新的错误再走一次这一屏。
-               */
-              void router.invalidate().finally(() => reset())
-            }}
-          >
-            重试
-          </Button>
-          {bridge ? <Button onClick={() => bridge.mode.openSetup()}>更换使用方式…</Button> : null}
-        </Space>
-      }
-    />
+    <div className={styles.shell}>
+      {titleBar}
+      <main className={styles.page}>
+        <Result
+          className={styles.result}
+          classNames={{ icon: styles.icon, subTitle: styles.description, extra: styles.extra }}
+          status="warning"
+          icon={<TriangleAlert size={40} aria-hidden="true" />}
+          title={
+            <h1 className={styles.heading}>{reachable ? '服务暂时不可用' : '暂时无法连接服务'}</h1>
+          }
+          subTitle={
+            reachable
+              ? '服务暂时无法完成请求，请稍后重试。'
+              : '请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。'
+          }
+          extra={
+            <div className={styles.actions}>
+              <Button
+                type="primary"
+                loading={busy}
+                disabled={busy}
+                aria-busy={busy}
+                onClick={() => void retry()}
+              >
+                {busy ? '正在重试' : '重试'}
+              </Button>
+              {bridge ? (
+                <Button onClick={() => bridge.mode.openSetup()}>更换使用方式…</Button>
+              ) : null}
+            </div>
+          }
+        />
+      </main>
+    </div>
   )
 }

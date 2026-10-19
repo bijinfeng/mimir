@@ -1,0 +1,32 @@
+[
+  {
+    "phase": "before",
+    "state": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=root-offline&theme=light\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=root-offline&theme=light\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  2  / 原生动作  0\n\t\t21 image warning\n\t\t22 text 连不上服务端\n\t\t23 text 请确认服务在运行（docker compose ps），以及客户端指向的地址是对的。\n\t\t24 button 重 试\n\nThe focused UI element is 19 button 模拟请求失败",
+    "step": "failed"
+  },
+  {
+    "phase": "before",
+    "state": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=root-offline&theme=light\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=root-offline&theme=light\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  3  / 原生动作  0\n\t\t21 image warning\n\t\t22 text 连不上服务端\n\t\t23 text 请确认服务在运行（docker compose ps），以及客户端指向的地址是对的。\n\t\t24 button 重 试\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=root-offline&theme=light",
+    "step": "pending"
+  },
+  {
+    "phase": "before",
+    "state": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=root-offline&theme=light\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=root-offline&theme=light\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  3  / 原生动作  0\n\t\t21 text 模拟 IO 已完成，真实路由跳转成功。\n\nThe focused UI element is 18 button 完成模拟请求",
+    "step": "recovered"
+  },
+  {
+    "phase": "after",
+    "state": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=root-offline&theme=light\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=root-offline&theme=light\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  2  / 原生动作  0\n\t\t21 container\n\t\t\t22 heading 暂时无法连接服务, Value: 1\n\t\t\t\t23 text 暂时无法连接服务\n\t\t\t24 text 请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。\n\t\t\t25 button 重 试\n\nThe focused UI element is 19 button 模拟请求失败",
+    "step": "failed"
+  },
+  {
+    "phase": "after",
+    "state": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=root-offline&theme=light\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=root-offline&theme=light\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  3  / 原生动作  0\n\t\t21 container\n\t\t\t22 heading 暂时无法连接服务, Value: 1\n\t\t\t\t23 text 暂时无法连接服务\n\t\t\t24 text 请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。\n\t\t\t25 button (disabled) loading 正在重试\n\t\t\t\t26 container loading\n\t\t\t\t27 text 正在重试\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=root-offline&theme=light",
+    "step": "pending"
+  },
+  {
+    "phase": "after",
+    "state": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=root-offline&theme=light\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=root-offline&theme=light\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  3  / 原生动作  0\n\t\t21 text 模拟 IO 已完成，真实路由跳转成功。\n\nThe focused UI element is 18 button 完成模拟请求",
+    "step": "recovered"
+  }
+]

@@ -1,0 +1,2392 @@
+[
+  {
+    "phase": "before",
+    "name": "login-light",
+    "scene": "login",
+    "theme": "light",
+    "width": 1100,
+    "height": 760,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=login&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=login&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: login, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 (selected) login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 text 登录  0  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t20 container\n\t\t\t21 heading mimir, Value: 4\n\t\t\t\t22 text mimir\n\t\t\t23 text 笔记与资料，随时可查可问\n\t\t24 container\n\t\t\t25 heading 登录, Value: 1\n\t\t\t\t26 text 登录\n\t\t\t27 text 用户名或邮箱\n\t\t\t28 text field (settable) 用户名或邮箱\n\t\t\t29 text 密码\n\t\t\t30 container\n\t\t\t\t31 text field (settable) 密码\n\t\t\t\t32 checkbox Description: 显示, Value: 0\n\t\t\t\t\t33 image eye-invisible\n\t\t\t34 button 登 录\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=login&theme=light&platform=browser",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "登录用户名或邮箱密码登 录"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "before",
+    "name": "login-dark",
+    "scene": "login",
+    "theme": "dark",
+    "width": 1100,
+    "height": 760,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=login&theme=dark&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=login&theme=dark&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: login, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 (selected) login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 text 登录  0  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t20 container\n\t\t\t21 heading mimir, Value: 4\n\t\t\t\t22 text mimir\n\t\t\t23 text 笔记与资料，随时可查可问\n\t\t24 container\n\t\t\t25 heading 登录, Value: 1\n\t\t\t\t26 text 登录\n\t\t\t27 text 用户名或邮箱\n\t\t\t28 text field (settable) 用户名或邮箱\n\t\t\t29 text 密码\n\t\t\t30 container\n\t\t\t\t31 text field (settable) 密码\n\t\t\t\t32 checkbox Description: 显示, Value: 0\n\t\t\t\t\t33 image eye-invisible\n\t\t\t34 button 登 录\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=login&theme=dark&platform=browser",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "登录用户名或邮箱密码登 录"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "before",
+    "name": "signup-light",
+    "scene": "signup",
+    "theme": "light",
+    "width": 1100,
+    "height": 760,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=signup&theme=light&platform=browser\".\nThere has been no change in the accessibility tree.\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=signup&theme=light&platform=browser",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "创建账号邮箱用户名（可选）留空将使用邮箱前缀，登录时可用用户名或邮箱密码确认密码创建账号"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "before",
+    "name": "signup-phone",
+    "scene": "signup",
+    "theme": "light",
+    "width": 390,
+    "height": 700,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=signup&theme=light&platform=browser\".\nThere has been no change in the accessibility tree.\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=signup&theme=light&platform=browser",
+    "geometry": {
+      "documentWidth": 390,
+      "height": 700,
+      "main": [
+        {
+          "clientHeight": 567,
+          "rect": {
+            "bottom": 700,
+            "height": 567,
+            "left": 0,
+            "right": 390,
+            "top": 133,
+            "width": 390,
+            "x": 0,
+            "y": 133
+          },
+          "scrollHeight": 567,
+          "text": "创建账号邮箱用户名（可选）留空将使用邮箱前缀，登录时可用用户名或邮箱密码确认密码创建账号"
+        }
+      ],
+      "width": 390
+    }
+  },
+  {
+    "phase": "before",
+    "name": "signup-short",
+    "scene": "signup",
+    "theme": "dark",
+    "width": 1100,
+    "height": 420,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=signup&theme=dark&platform=browser\".\nThere has been no change in the accessibility tree.\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=signup&theme=dark&platform=browser",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 420,
+      "main": [
+        {
+          "clientHeight": 567,
+          "rect": {
+            "bottom": 631,
+            "height": 567,
+            "left": 434,
+            "right": 1085,
+            "top": 64,
+            "width": 651,
+            "x": 434,
+            "y": 64
+          },
+          "scrollHeight": 567,
+          "text": "创建账号邮箱用户名（可选）留空将使用邮箱前缀，登录时可用用户名或邮箱密码确认密码创建账号"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "before",
+    "name": "loading",
+    "scene": "setup-loading",
+    "theme": "light",
+    "width": 1100,
+    "height": 760,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=setup-loading&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=setup-loading&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: setup-loading, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 (selected) setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 text 登录  0  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t20 container\n\t\t\t21 heading mimir, Value: 4\n\t\t\t\t22 text mimir\n\t\t\t23 text 笔记与资料，随时可查可问\n\t\t24 container\n\t\t\t25 heading 请稍候, Value: 1\n\t\t\t\t26 text 请稍候\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=setup-loading&theme=light&platform=browser",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "请稍候"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "before",
+    "name": "setup-error-light",
+    "scene": "setup-error",
+    "theme": "light",
+    "width": 1100,
+    "height": 760,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=setup-error&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=setup-error&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: setup-error, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 (selected) setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t21 container\n\t\t\t22 heading mimir, Value: 4\n\t\t\t\t23 text mimir\n\t\t\t24 text 笔记与资料，随时可查可问\n\t\t25 container\n\t\t\t26 heading 暂时无法登录, Value: 1\n\t\t\t\t27 text 暂时无法登录\n\t\t\t28 image close-circle\n\t\t\t29 text 无法连接服务\n\t\t\t30 text Failed to fetch\n\t\t\t31 button 重 试\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=setup-error&theme=light&platform=browser",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "暂时无法登录无法连接服务Failed to fetch重 试"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "before",
+    "name": "setup-error-dark",
+    "scene": "setup-error",
+    "theme": "dark",
+    "width": 600,
+    "height": 760,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=setup-error&theme=dark&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=setup-error&theme=dark&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: setup-error, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 (selected) setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t21 heading mimir, Value: 4\n\t\t\t22 text mimir\n\t\t23 container\n\t\t\t24 heading 暂时无法登录, Value: 1\n\t\t\t\t25 text 暂时无法登录\n\t\t\t26 image close-circle\n\t\t\t27 text 无法连接服务\n\t\t\t28 text Failed to fetch\n\t\t\t29 button 重 试\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=setup-error&theme=dark&platform=browser",
+    "geometry": {
+      "documentWidth": 600,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 304,
+          "rect": {
+            "bottom": 459.140625,
+            "height": 304.140625,
+            "left": 0,
+            "right": 600,
+            "top": 155,
+            "width": 600,
+            "x": 0,
+            "y": 155
+          },
+          "scrollHeight": 304,
+          "text": "暂时无法登录无法连接服务Failed to fetch重 试"
+        }
+      ],
+      "width": 600
+    }
+  },
+  {
+    "phase": "before",
+    "name": "local-browser",
+    "scene": "local",
+    "theme": "light",
+    "width": 880,
+    "height": 760,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=local&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=local&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: local, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 (selected) local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 text 登录  0  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t20 container\n\t\t\t21 heading mimir, Value: 4\n\t\t\t\t22 text mimir\n\t\t\t23 text 笔记与资料，随时可查可问\n\t\t24 container\n\t\t\t25 heading 返回客户端, Value: 1\n\t\t\t\t26 text 返回客户端\n\t\t\t27 text 请在桌面客户端继续使用。\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=local&theme=light&platform=browser",
+    "geometry": {
+      "documentWidth": 880,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 352,
+            "right": 880,
+            "top": 64,
+            "width": 528,
+            "x": 352,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "返回客户端请在桌面客户端继续使用。"
+        }
+      ],
+      "width": 880
+    }
+  },
+  {
+    "phase": "before",
+    "name": "local-desktop",
+    "scene": "local",
+    "theme": "dark",
+    "width": 880,
+    "height": 760,
+    "platform": "desktop",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=local&theme=dark&platform=desktop\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=local&theme=dark&platform=desktop\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: local, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 (selected) local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 text 登录  0  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t20 text Mimir · 桌面标题栏插槽模拟\n\t\t21 container\n\t\t\t22 heading mimir, Value: 4\n\t\t\t\t23 text mimir\n\t\t\t24 text 笔记与资料，随时可查可问\n\t\t25 container\n\t\t\t26 heading 返回客户端, Value: 1\n\t\t\t\t27 text 返回客户端\n\t\t\t28 text 请在桌面客户端继续使用。\n\t\t\t29 button 更换使用方式…\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=local&theme=dark&platform=desktop",
+    "geometry": {
+      "documentWidth": 880,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 650,
+          "rect": {
+            "bottom": 760,
+            "height": 650,
+            "left": 352,
+            "right": 880,
+            "top": 110,
+            "width": 528,
+            "x": 352,
+            "y": 110
+          },
+          "scrollHeight": 650,
+          "text": "返回客户端请在桌面客户端继续使用。更换使用方式…"
+        }
+      ],
+      "width": 880
+    }
+  },
+  {
+    "phase": "before",
+    "name": "root-offline-wide",
+    "scene": "root-offline",
+    "theme": "light",
+    "width": 1440,
+    "height": 900,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=root-offline&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=root-offline&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  1  / 原生动作  0\n\t\t21 image warning\n\t\t22 text 连不上服务端\n\t\t23 text 请确认服务在运行（docker compose ps），以及客户端指向的地址是对的。\n\t\t24 button 重 试\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=root-offline&theme=light&platform=browser",
+    "geometry": {
+      "documentWidth": 1440,
+      "height": 900,
+      "main": [
+        {
+          "clientHeight": 310,
+          "rect": {
+            "bottom": 374,
+            "height": 310,
+            "left": 0,
+            "right": 1440,
+            "top": 64,
+            "width": 1440,
+            "x": 0,
+            "y": 64
+          },
+          "scrollHeight": 310,
+          "text": "连不上服务端请确认服务在运行（docker compose ps），以及客户端指向的地址是对的。重 试"
+        }
+      ],
+      "width": 1440
+    }
+  },
+  {
+    "phase": "before",
+    "name": "root-offline-medium",
+    "scene": "root-offline",
+    "theme": "dark",
+    "width": 1100,
+    "height": 760,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=root-offline&theme=dark&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=root-offline&theme=dark&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  1  / 原生动作  0\n\t\t21 image warning\n\t\t22 text 连不上服务端\n\t\t23 text 请确认服务在运行（docker compose ps），以及客户端指向的地址是对的。\n\t\t24 button 重 试\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=root-offline&theme=dark&platform=browser",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 310,
+          "rect": {
+            "bottom": 374,
+            "height": 310,
+            "left": 0,
+            "right": 1100,
+            "top": 64,
+            "width": 1100,
+            "x": 0,
+            "y": 64
+          },
+          "scrollHeight": 310,
+          "text": "连不上服务端请确认服务在运行（docker compose ps），以及客户端指向的地址是对的。重 试"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "before",
+    "name": "root-offline-compact",
+    "scene": "root-offline",
+    "theme": "light",
+    "width": 880,
+    "height": 760,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=root-offline&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=root-offline&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  1  / 原生动作  0\n\t\t21 image warning\n\t\t22 text 连不上服务端\n\t\t23 text 请确认服务在运行（docker compose ps），以及客户端指向的地址是对的。\n\t\t24 button 重 试\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=root-offline&theme=light&platform=browser",
+    "geometry": {
+      "documentWidth": 880,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 310,
+          "rect": {
+            "bottom": 374,
+            "height": 310,
+            "left": 0,
+            "right": 880,
+            "top": 64,
+            "width": 880,
+            "x": 0,
+            "y": 64
+          },
+          "scrollHeight": 310,
+          "text": "连不上服务端请确认服务在运行（docker compose ps），以及客户端指向的地址是对的。重 试"
+        }
+      ],
+      "width": 880
+    }
+  },
+  {
+    "phase": "before",
+    "name": "root-offline-narrow",
+    "scene": "root-offline",
+    "theme": "dark",
+    "width": 600,
+    "height": 760,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=root-offline&theme=dark&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=root-offline&theme=dark&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  1  / 原生动作  0\n\t\t21 image warning\n\t\t22 text 连不上服务端\n\t\t23 text 请确认服务在运行（docker compose ps），以及客户端指向的地址是对的。\n\t\t24 button 重 试\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=root-offline&theme=dark&platform=browser",
+    "geometry": {
+      "documentWidth": 600,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 310,
+          "rect": {
+            "bottom": 388,
+            "height": 310,
+            "left": 0,
+            "right": 600,
+            "top": 78,
+            "width": 600,
+            "x": 0,
+            "y": 78
+          },
+          "scrollHeight": 310,
+          "text": "连不上服务端请确认服务在运行（docker compose ps），以及客户端指向的地址是对的。重 试"
+        }
+      ],
+      "width": 600
+    }
+  },
+  {
+    "phase": "before",
+    "name": "root-offline-phone",
+    "scene": "root-offline",
+    "theme": "light",
+    "width": 390,
+    "height": 700,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=root-offline&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=root-offline&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  1  / 原生动作  0\n\t\t21 image warning\n\t\t22 text 连不上服务端\n\t\t23 text 请确认服务在运行（docker compose ps），以及客户端指向的地址是对的。\n\t\t24 button 重 试\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=root-offline&theme=light&platform=browser",
+    "geometry": {
+      "documentWidth": 390,
+      "height": 700,
+      "main": [
+        {
+          "clientHeight": 332,
+          "rect": {
+            "bottom": 443,
+            "height": 332,
+            "left": 0,
+            "right": 390,
+            "top": 111,
+            "width": 390,
+            "x": 0,
+            "y": 111
+          },
+          "scrollHeight": 332,
+          "text": "连不上服务端请确认服务在运行（docker compose ps），以及客户端指向的地址是对的。重 试"
+        }
+      ],
+      "width": 390
+    }
+  },
+  {
+    "phase": "before",
+    "name": "root-offline-short",
+    "scene": "root-offline",
+    "theme": "dark",
+    "width": 1100,
+    "height": 420,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=root-offline&theme=dark&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=root-offline&theme=dark&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  1  / 原生动作  0\n\t\t21 image warning\n\t\t22 text 连不上服务端\n\t\t23 text 请确认服务在运行（docker compose ps），以及客户端指向的地址是对的。\n\t\t24 button 重 试\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=root-offline&theme=dark&platform=browser",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 420,
+      "main": [
+        {
+          "clientHeight": 310,
+          "rect": {
+            "bottom": 374,
+            "height": 310,
+            "left": 0,
+            "right": 1100,
+            "top": 64,
+            "width": 1100,
+            "x": 0,
+            "y": 64
+          },
+          "scrollHeight": 310,
+          "text": "连不上服务端请确认服务在运行（docker compose ps），以及客户端指向的地址是对的。重 试"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "before",
+    "name": "root-http",
+    "scene": "root-http",
+    "theme": "light",
+    "width": 1100,
+    "height": 760,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=root-http&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=root-http&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-http, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 (selected) root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  1  / 原生动作  0\n\t\t21 image warning\n\t\t22 text 服务端出错了\n\t\t23 text 服务端返回了 503。它可能正在重启，或者请求被中间的一层拦下了。\n\t\t24 button 重 试\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=root-http&theme=light&platform=browser",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 310,
+          "rect": {
+            "bottom": 374,
+            "height": 310,
+            "left": 0,
+            "right": 1100,
+            "top": 64,
+            "width": 1100,
+            "x": 0,
+            "y": 64
+          },
+          "scrollHeight": 310,
+          "text": "服务端出错了服务端返回了 503。它可能正在重启，或者请求被中间的一层拦下了。重 试"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "before",
+    "name": "root-desktop",
+    "scene": "root-offline",
+    "theme": "dark",
+    "width": 880,
+    "height": 760,
+    "platform": "desktop",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=root-offline&theme=dark&platform=desktop\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=root-offline&theme=dark&platform=desktop\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  1  / 原生动作  0\n\t\t21 image warning\n\t\t22 text 连不上服务端\n\t\t23 text 请确认服务在运行（docker compose ps），以及客户端指向的地址是对的。\n\t\t24 container\n\t\t\t25 button 重 试\n\t\t\t26 button 更换使用方式…\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=root-offline&theme=dark&platform=desktop",
+    "geometry": {
+      "documentWidth": 880,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 310,
+          "rect": {
+            "bottom": 374,
+            "height": 310,
+            "left": 0,
+            "right": 880,
+            "top": 64,
+            "width": 880,
+            "x": 0,
+            "y": 64
+          },
+          "scrollHeight": 310,
+          "text": "连不上服务端请确认服务在运行（docker compose ps），以及客户端指向的地址是对的。重 试更换使用方式…"
+        }
+      ],
+      "width": 880
+    }
+  },
+  {
+    "phase": "before",
+    "name": "load-error",
+    "scene": "load-error",
+    "theme": "light",
+    "width": 600,
+    "height": 760,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=load-error&theme=light&platform=browser\".\nThere has been no change in the accessibility tree.\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=load-error&theme=light&platform=browser",
+    "geometry": {
+      "documentWidth": 600,
+      "height": 760,
+      "main": [],
+      "width": 600
+    }
+  },
+  {
+    "phase": "before",
+    "name": "login-required",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=login&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=login&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: login, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 (selected) login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 text 登录  0  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t20 container\n\t\t\t21 heading mimir, Value: 4\n\t\t\t\t22 text mimir\n\t\t\t23 text 笔记与资料，随时可查可问\n\t\t24 container\n\t\t\t25 heading 登录, Value: 1\n\t\t\t\t26 text 登录\n\t\t\t27 text 用户名或邮箱\n\t\t\t35 container\n\t\t\t\t36 text field (settable) 用户名或邮箱\n\t\t\t\t37 text 请输入用户名或邮箱\n\t\t\t29 text 密码\n\t\t\t38 container\n\t\t\t\t39 container\n\t\t\t\t\t40 text field (settable) 密码\n\t\t\t\t\t41 checkbox Description: 显示, Value: 0\n\t\t\t\t\t\t42 image eye-invisible\n\t\t\t\t43 text 请输入密码\n\t\t\t34 button 登 录\n\t\t\t\t44 text 登 录\n\nThe focused UI element is 34 button 登 录",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "登录用户名或邮箱请输入用户名或邮箱密码请输入密码登 录"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "before",
+    "name": "login-password-visible",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=login&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=login&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: login, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 (selected) login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 text 登录  0  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t20 container\n\t\t\t21 heading mimir, Value: 4\n\t\t\t\t22 text mimir\n\t\t\t23 text 笔记与资料，随时可查可问\n\t\t24 container\n\t\t\t25 heading 登录, Value: 1\n\t\t\t\t26 text 登录\n\t\t\t27 text 用户名或邮箱\n\t\t\t45 text field (settable) 用户名或邮箱, Value: <redacted>\n\t\t\t29 text 密码\n\t\t\t46 container\n\t\t\t\t47 text field (settable) 密码, Value: <redacted>\n\t\t\t\t48 checkbox Description: 隐藏, Value: 1\n\t\t\t\t\t49 image eye\n\t\t\t34 button 登 录\n\t\t\t\t44 text 登 录\n\nThe focused UI element is 47 text field (settable) 密码, Value: <redacted>",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "登录用户名或邮箱密码登 录"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "before",
+    "name": "auth-error",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=auth-error&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=auth-error&theme=light&platform=browser\n\t2 container\n\t\t3 container root\n\t\t\t4 container\n\t\t\t\t5 text 真实组件 / 模拟 IO 场景 \n\t\t\t\t6 pop up button (collapsed, settable) 场景, Value: auth-error, Secondary Actions: Expand\n\t\t\t\t\t7 menu\n\t\t\t\t\t\t8 login\n\t\t\t\t\t\t9 signup\n\t\t\t\t\t\t10 setup-loading\n\t\t\t\t\t\t11 setup-error\n\t\t\t\t\t\t12 local\n\t\t\t\t\t\t13 root-offline\n\t\t\t\t\t\t14 root-http\n\t\t\t\t\t\t15 (selected) auth-error\n\t\t\t\t\t\t16 long-error\n\t\t\t\t\t\t17 pending\n\t\t\t\t\t\t18 load-error\n\t\t\t\t19 button 完成模拟请求\n\t\t\t\t20 text 登录  1  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t\t21 container\n\t\t\t\t22 heading mimir, Value: 4\n\t\t\t\t\t23 text mimir\n\t\t\t\t24 text 笔记与资料，随时可查可问\n\t\t\t25 container\n\t\t\t\t26 heading 登录, Value: 1\n\t\t\t\t\t27 text 登录\n\t\t\t\t28 image close-circle\n\t\t\t\t29 text 用户名/邮箱或密码不正确\n\t\t\t\t30 text 用户名或邮箱\n\t\t\t\t31 text field (settable) 用户名或邮箱, Value: <redacted>\n\t\t\t\t32 text 密码\n\t\t\t\t33 container\n\t\t\t\t\t34 text field (settable) 密码, Value: <redacted>\n\t\t\t\t\t35 checkbox Description: 显示, Value: 0\n\t\t\t\t\t\t36 image eye-invisible\n\t\t\t\t37 button loading 登 录\n\t\t\t\t\t38 container loading\n\t\t\t\t\t39 text 登 录\n\t\t40 container\n\t\t\t41 image close-circle\n\t\t\t42 text 用户名/邮箱或密码不正确\n\nThe focused UI element is 34 text field (settable) 密码, Value: <redacted>",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "登录用户名/邮箱或密码不正确用户名或邮箱密码登 录"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "before",
+    "name": "long-error",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=long-error&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=long-error&theme=light&platform=browser\n\t2 container\n\t\t3 container root\n\t\t\t4 container\n\t\t\t\t5 text 真实组件 / 模拟 IO 场景 \n\t\t\t\t6 pop up button (collapsed, settable) 场景, Value: long-error, Secondary Actions: Expand\n\t\t\t\t\t7 menu\n\t\t\t\t\t\t8 login\n\t\t\t\t\t\t9 signup\n\t\t\t\t\t\t10 setup-loading\n\t\t\t\t\t\t11 setup-error\n\t\t\t\t\t\t12 local\n\t\t\t\t\t\t13 root-offline\n\t\t\t\t\t\t14 root-http\n\t\t\t\t\t\t15 auth-error\n\t\t\t\t\t\t16 (selected) long-error\n\t\t\t\t\t\t17 pending\n\t\t\t\t\t\t18 load-error\n\t\t\t\t19 button 完成模拟请求\n\t\t\t\t20 text 登录  1  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t\t21 container\n\t\t\t\t22 heading mimir, Value: 4\n\t\t\t\t\t23 text mimir\n\t\t\t\t24 text 笔记与资料，随时可查可问\n\t\t\t25 container\n\t\t\t\t26 heading 登录, Value: 1\n\t\t\t\t\t27 text 登录\n\t\t\t\t28 image close-circle\n\t\t\t\t29 text 连接请求未完成，请稍后重试。long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/\n\t\t\t\t30 text 用户名或邮箱\n\t\t\t\t31 text field (settable) 用户名或邮箱, Value: <redacted>\n\t\t\t\t32 text 密码\n\t\t\t\t33 container\n\t\t\t\t\t34 text field (settable) 密码, Value: <redacted>\n\t\t\t\t\t35 checkbox Description: 显示, Value: 0\n\t\t\t\t\t\t36 image eye-invisible\n\t\t\t\t37 button 登 录\n\t\t\t\t\t38 text 登 录\n\t\t39 container\n\t\t\t40 image close-circle\n\t\t\t41 text 连接请求未完成，请稍后重试。long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/\n\nThe focused UI element is 34 text field (settable) 密码, Value: <redacted>",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "登录连接请求未完成，请稍后重试。long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/用户名或邮箱密码登 录"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "before",
+    "name": "pending",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=pending&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=pending&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: pending, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 (selected) pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 text 登录  1  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t20 container\n\t\t\t21 heading mimir, Value: 4\n\t\t\t\t22 text mimir\n\t\t\t23 text 笔记与资料，随时可查可问\n\t\t24 container\n\t\t\t25 heading 登录, Value: 1\n\t\t\t\t26 text 登录\n\t\t\t27 text 用户名或邮箱\n\t\t\t28 text field (settable) 用户名或邮箱, Value: <redacted>\n\t\t\t29 text 密码\n\t\t\t30 container\n\t\t\t\t31 text field (settable) 密码, Value: <redacted>\n\t\t\t\t32 checkbox Description: 显示, Value: 0\n\t\t\t\t\t33 image eye-invisible\n\t\t\t34 button loading 登 录\n\t\t\t\t35 container loading\n\t\t\t\t36 text 登 录\n\nThe focused UI element is 31 text field (settable) 密码, Value: <redacted>",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "登录用户名或邮箱密码登 录"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "before",
+    "name": "pending-second-enter",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=pending&theme=light&platform=browser\".\nThere has been no change in the accessibility tree.\nThe focused UI element is 31 text field (settable) 密码, Value: <redacted>",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "登录用户名或邮箱密码登 录"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "before",
+    "name": "login-success",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=pending&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=pending&theme=light&platform=browser\n\t2 container\n\t\t3 container root\n\t\t\t4 container\n\t\t\t\t5 text 真实组件 / 模拟 IO 场景 \n\t\t\t\t6 pop up button (collapsed, settable) 场景, Value: pending, Secondary Actions: Expand\n\t\t\t\t\t7 menu\n\t\t\t\t\t\t8 login\n\t\t\t\t\t\t9 signup\n\t\t\t\t\t\t10 setup-loading\n\t\t\t\t\t\t11 setup-error\n\t\t\t\t\t\t12 local\n\t\t\t\t\t\t13 root-offline\n\t\t\t\t\t\t14 root-http\n\t\t\t\t\t\t15 auth-error\n\t\t\t\t\t\t16 long-error\n\t\t\t\t\t\t17 (selected) pending\n\t\t\t\t\t\t18 load-error\n\t\t\t\t19 button 完成模拟请求\n\t\t\t\t20 text 登录  1  / 初始化  2  / 守卫  2  / 原生动作  0\n\t\t\t21 text 模拟 IO 已完成，真实路由跳转成功。\n\t\t22 container\n\t\t\t23 image check-circle\n\t\t\t24 text 已登录\n\nThe focused UI element is 19 button 完成模拟请求",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 102,
+          "rect": {
+            "bottom": 166,
+            "height": 102,
+            "left": 0,
+            "right": 1100,
+            "top": 64,
+            "width": 1100,
+            "x": 0,
+            "y": 64
+          },
+          "scrollHeight": 102,
+          "text": "模拟 IO 已完成，真实路由跳转成功。"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "before",
+    "name": "signup-required",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=signup&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=signup&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: signup, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 (selected) signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 text 登录  0  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t20 container\n\t\t\t21 heading mimir, Value: 4\n\t\t\t\t22 text mimir\n\t\t\t23 text 笔记与资料，随时可查可问\n\t\t24 container\n\t\t\t25 heading 创建账号, Value: 1\n\t\t\t\t26 text 创建账号\n\t\t\t27 text 邮箱\n\t\t\t44 container\n\t\t\t\t45 text field (settable) 邮箱\n\t\t\t\t46 text 请输入邮箱\n\t\t\t29 text 用户名（可选）\n\t\t\t30 container\n\t\t\t\t31 text field (settable) 用户名（可选）\n\t\t\t\t32 text 留空将使用邮箱前缀，登录时可用用户名或邮箱\n\t\t\t33 text 密码\n\t\t\t47 container\n\t\t\t\t48 container\n\t\t\t\t\t49 text field (settable) 密码\n\t\t\t\t\t50 checkbox Description: 显示, Value: 0\n\t\t\t\t\t\t51 image eye-invisible\n\t\t\t\t52 text 密码至少 8 位\n\t\t\t38 text 确认密码\n\t\t\t53 container\n\t\t\t\t54 container\n\t\t\t\t\t55 text field (settable) 确认密码\n\t\t\t\t\t56 checkbox Description: 显示, Value: 0\n\t\t\t\t\t\t57 image eye-invisible\n\t\t\t\t58 text 请再输入一次密码\n\t\t\t43 button 创建账号\n\t\t\t\t59 text 创建账号\n\nThe focused UI element is 43 button 创建账号",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "创建账号邮箱请输入邮箱用户名（可选）留空将使用邮箱前缀，登录时可用用户名或邮箱密码密码至少 8 位确认密码请再输入一次密码创建账号"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "before",
+    "name": "signup-mismatch",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=signup&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=signup&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: signup, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 (selected) signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 text 登录  0  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t20 container\n\t\t\t21 heading mimir, Value: 4\n\t\t\t\t22 text mimir\n\t\t\t23 text 笔记与资料，随时可查可问\n\t\t24 container\n\t\t\t25 heading 创建账号, Value: 1\n\t\t\t\t26 text 创建账号\n\t\t\t27 text 邮箱\n\t\t\t60 text field (settable) 邮箱, Value: <redacted>\n\t\t\t29 text 用户名（可选）\n\t\t\t30 container\n\t\t\t\t31 text field (settable) 用户名（可选）\n\t\t\t\t32 text 留空将使用邮箱前缀，登录时可用用户名或邮箱\n\t\t\t33 text 密码\n\t\t\t61 container\n\t\t\t\t62 text field (settable) 密码, Value: <redacted>\n\t\t\t\t63 checkbox Description: 显示, Value: 0\n\t\t\t\t\t64 image eye-invisible\n\t\t\t38 text 确认密码\n\t\t\t53 container\n\t\t\t\t54 container\n\t\t\t\t\t55 text field (settable) 确认密码, Value: <redacted>\n\t\t\t\t\t56 checkbox Description: 显示, Value: 0\n\t\t\t\t\t\t57 image eye-invisible\n\t\t\t\t65 container confirm_help\n\t\t\t\t\t66 text 请再输入一次密码\n\t\t\t\t\t67 text 两次输入的密码不一致\n\t\t\t43 button 创建账号\n\t\t\t\t59 text 创建账号\n\nThe focused UI element is 43 button 创建账号",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "创建账号邮箱用户名（可选）留空将使用邮箱前缀，登录时可用用户名或邮箱密码确认密码请再输入一次密码两次输入的密码不一致创建账号"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "before",
+    "name": "signup-pending",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=signup&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=signup&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: signup, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 (selected) signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 text 登录  1  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t20 container\n\t\t\t21 heading mimir, Value: 4\n\t\t\t\t22 text mimir\n\t\t\t23 text 笔记与资料，随时可查可问\n\t\t24 container\n\t\t\t25 heading 创建账号, Value: 1\n\t\t\t\t26 text 创建账号\n\t\t\t27 text 邮箱\n\t\t\t60 text field (settable) 邮箱, Value: <redacted>\n\t\t\t29 text 用户名（可选）\n\t\t\t30 container\n\t\t\t\t31 text field (settable) 用户名（可选）\n\t\t\t\t32 text 留空将使用邮箱前缀，登录时可用用户名或邮箱\n\t\t\t33 text 密码\n\t\t\t61 container\n\t\t\t\t62 text field (settable) 密码, Value: <redacted>\n\t\t\t\t63 checkbox Description: 显示, Value: 0\n\t\t\t\t\t64 image eye-invisible\n\t\t\t38 text 确认密码\n\t\t\t65 container\n\t\t\t\t66 text field (settable) 确认密码, Value: <redacted>\n\t\t\t\t67 checkbox Description: 显示, Value: 0\n\t\t\t\t\t68 image eye-invisible\n\t\t\t43 button loading 创建账号\n\t\t\t\t69 container loading\n\t\t\t\t59 text 创建账号\n\nThe focused UI element is 43 button loading 创建账号",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "创建账号邮箱用户名（可选）留空将使用邮箱前缀，登录时可用用户名或邮箱密码确认密码创建账号"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "before",
+    "name": "signup-success",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=signup&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=signup&theme=light&platform=browser\n\t2 container\n\t\t3 container root\n\t\t\t4 container\n\t\t\t\t5 text 真实组件 / 模拟 IO 场景 \n\t\t\t\t6 pop up button (collapsed, settable) 场景, Value: signup, Secondary Actions: Expand\n\t\t\t\t\t7 menu\n\t\t\t\t\t\t8 login\n\t\t\t\t\t\t9 (selected) signup\n\t\t\t\t\t\t10 setup-loading\n\t\t\t\t\t\t11 setup-error\n\t\t\t\t\t\t12 local\n\t\t\t\t\t\t13 root-offline\n\t\t\t\t\t\t14 root-http\n\t\t\t\t\t\t15 auth-error\n\t\t\t\t\t\t16 long-error\n\t\t\t\t\t\t17 pending\n\t\t\t\t\t\t18 load-error\n\t\t\t\t19 button 完成模拟请求\n\t\t\t\t20 text 登录  1  / 初始化  2  / 守卫  2  / 原生动作  0\n\t\t\t21 text 模拟 IO 已完成，真实路由跳转成功。\n\t\t22 container\n\t\t\t23 image check-circle\n\t\t\t24 text 账号已创建\n\nThe focused UI element is 19 button 完成模拟请求",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 102,
+          "rect": {
+            "bottom": 166,
+            "height": 102,
+            "left": 0,
+            "right": 1100,
+            "top": 64,
+            "width": 1100,
+            "x": 0,
+            "y": 64
+          },
+          "scrollHeight": 102,
+          "text": "模拟 IO 已完成，真实路由跳转成功。"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "before",
+    "name": "setup-error-retrying",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=setup-error&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=setup-error&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: setup-error, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 (selected) setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  2  / 守卫  1  / 原生动作  0\n\t\t21 container\n\t\t\t22 heading mimir, Value: 4\n\t\t\t\t23 text mimir\n\t\t\t24 text 笔记与资料，随时可查可问\n\t\t25 container\n\t\t\t26 heading 请稍候, Value: 1\n\t\t\t\t27 text 请稍候\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=setup-error&theme=light&platform=browser",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "请稍候"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "before",
+    "name": "setup-error-recovered",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=setup-error&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=setup-error&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: setup-error, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 (selected) setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  2  / 守卫  1  / 原生动作  0\n\t\t21 container\n\t\t\t22 heading mimir, Value: 4\n\t\t\t\t23 text mimir\n\t\t\t24 text 笔记与资料，随时可查可问\n\t\t25 container\n\t\t\t26 heading 登录, Value: 1\n\t\t\t\t27 text 登录\n\t\t\t28 text 用户名或邮箱\n\t\t\t29 text field (settable) 用户名或邮箱\n\t\t\t30 text 密码\n\t\t\t31 container\n\t\t\t\t32 text field (settable) 密码\n\t\t\t\t33 checkbox Description: 显示, Value: 0\n\t\t\t\t\t34 image eye-invisible\n\t\t\t35 button 登 录\n\nThe focused UI element is 18 button 完成模拟请求",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "登录用户名或邮箱密码登 录"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "before",
+    "name": "root-offline-retrying",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=root-offline&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=root-offline&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  2  / 原生动作  0\n\t\t21 image warning\n\t\t22 text 连不上服务端\n\t\t23 text 请确认服务在运行（docker compose ps），以及客户端指向的地址是对的。\n\t\t24 button 重 试\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=root-offline&theme=light&platform=browser",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 310,
+          "rect": {
+            "bottom": 374,
+            "height": 310,
+            "left": 0,
+            "right": 1100,
+            "top": 64,
+            "width": 1100,
+            "x": 0,
+            "y": 64
+          },
+          "scrollHeight": 310,
+          "text": "连不上服务端请确认服务在运行（docker compose ps），以及客户端指向的地址是对的。重 试"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "before",
+    "name": "root-offline-recovered",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=root-offline&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=root-offline&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  2  / 原生动作  0\n\t\t21 text 模拟 IO 已完成，真实路由跳转成功。\n\nThe focused UI element is 18 button 完成模拟请求",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 102,
+          "rect": {
+            "bottom": 166,
+            "height": 102,
+            "left": 0,
+            "right": 1100,
+            "top": 64,
+            "width": 1100,
+            "x": 0,
+            "y": 64
+          },
+          "scrollHeight": 102,
+          "text": "模拟 IO 已完成，真实路由跳转成功。"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "before",
+    "name": "desktop-fallback-invoked",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=root-offline&theme=light&platform=desktop\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=root-offline&theme=light&platform=desktop\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  1  / 原生动作  1\n\t\t21 image warning\n\t\t22 text 连不上服务端\n\t\t23 text 请确认服务在运行（docker compose ps），以及客户端指向的地址是对的。\n\t\t24 container\n\t\t\t25 button 重 试\n\t\t\t26 button 更换使用方式…\n\t\t\t\t27 text 更换使用方式…\n\nThe focused UI element is 26 button 更换使用方式…",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 310,
+          "rect": {
+            "bottom": 374,
+            "height": 310,
+            "left": 0,
+            "right": 1100,
+            "top": 64,
+            "width": 1100,
+            "x": 0,
+            "y": 64
+          },
+          "scrollHeight": 310,
+          "text": "连不上服务端请确认服务在运行（docker compose ps），以及客户端指向的地址是对的。重 试更换使用方式…"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "before",
+    "name": "root-retry-failed",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=root-offline&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=root-offline&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  2  / 原生动作  0\n\t\t21 image warning\n\t\t22 text 连不上服务端\n\t\t23 text 请确认服务在运行（docker compose ps），以及客户端指向的地址是对的。\n\t\t24 button 重 试\n\nThe focused UI element is 19 button 模拟请求失败",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 310,
+          "rect": {
+            "bottom": 374,
+            "height": 310,
+            "left": 0,
+            "right": 1100,
+            "top": 64,
+            "width": 1100,
+            "x": 0,
+            "y": 64
+          },
+          "scrollHeight": 310,
+          "text": "连不上服务端请确认服务在运行（docker compose ps），以及客户端指向的地址是对的。重 试"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "before",
+    "name": "root-repeated-pending",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=root-offline&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=root-offline&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  3  / 原生动作  0\n\t\t21 image warning\n\t\t22 text 连不上服务端\n\t\t23 text 请确认服务在运行（docker compose ps），以及客户端指向的地址是对的。\n\t\t24 button 重 试\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=root-offline&theme=light&platform=browser",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 310,
+          "rect": {
+            "bottom": 374,
+            "height": 310,
+            "left": 0,
+            "right": 1100,
+            "top": 64,
+            "width": 1100,
+            "x": 0,
+            "y": 64
+          },
+          "scrollHeight": 310,
+          "text": "连不上服务端请确认服务在运行（docker compose ps），以及客户端指向的地址是对的。重 试"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "before",
+    "name": "root-repeated-recovered",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5197/?scene=root-offline&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5197/?scene=root-offline&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  3  / 原生动作  0\n\t\t21 text 模拟 IO 已完成，真实路由跳转成功。\n\nThe focused UI element is 18 button 完成模拟请求",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 102,
+          "rect": {
+            "bottom": 166,
+            "height": 102,
+            "left": 0,
+            "right": 1100,
+            "top": 64,
+            "width": 1100,
+            "x": 0,
+            "y": 64
+          },
+          "scrollHeight": 102,
+          "text": "模拟 IO 已完成，真实路由跳转成功。"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "after",
+    "name": "login-light",
+    "scene": "login",
+    "theme": "light",
+    "width": 1100,
+    "height": 760,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=login&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=login&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: login, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 (selected) login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 text 登录  0  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t20 container\n\t\t\t21 heading mimir, Value: 4\n\t\t\t\t22 text mimir\n\t\t\t23 text 笔记与资料，随时可查可问\n\t\t24 container\n\t\t\t25 heading 登录, Value: 1\n\t\t\t\t26 text 登录\n\t\t\t27 text 用户名或邮箱\n\t\t\t28 text field (settable) 用户名或邮箱\n\t\t\t29 text 密码\n\t\t\t30 container\n\t\t\t\t31 text field (settable) 密码\n\t\t\t\t32 checkbox Description: 显示, Value: 0\n\t\t\t\t\t33 image eye-invisible\n\t\t\t34 button 登 录\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=login&theme=light&platform=browser",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "登录用户名或邮箱密码登 录"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "after",
+    "name": "login-dark",
+    "scene": "login",
+    "theme": "dark",
+    "width": 1100,
+    "height": 760,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=login&theme=dark&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=login&theme=dark&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: login, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 (selected) login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 text 登录  0  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t20 container\n\t\t\t21 heading mimir, Value: 4\n\t\t\t\t22 text mimir\n\t\t\t23 text 笔记与资料，随时可查可问\n\t\t24 container\n\t\t\t25 heading 登录, Value: 1\n\t\t\t\t26 text 登录\n\t\t\t27 text 用户名或邮箱\n\t\t\t28 text field (settable) 用户名或邮箱\n\t\t\t29 text 密码\n\t\t\t30 container\n\t\t\t\t31 text field (settable) 密码\n\t\t\t\t32 checkbox Description: 显示, Value: 0\n\t\t\t\t\t33 image eye-invisible\n\t\t\t34 button 登 录\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=login&theme=dark&platform=browser",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "登录用户名或邮箱密码登 录"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "after",
+    "name": "signup-light",
+    "scene": "signup",
+    "theme": "light",
+    "width": 1100,
+    "height": 760,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=signup&theme=light&platform=browser\".\nThere has been no change in the accessibility tree.\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=signup&theme=light&platform=browser",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "创建账号邮箱用户名（可选）留空将使用邮箱前缀，登录时可用用户名或邮箱密码确认密码创建账号"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "after",
+    "name": "signup-phone",
+    "scene": "signup",
+    "theme": "light",
+    "width": 390,
+    "height": 700,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=signup&theme=light&platform=browser\".\nThere has been no change in the accessibility tree.\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=signup&theme=light&platform=browser",
+    "geometry": {
+      "documentWidth": 390,
+      "height": 700,
+      "main": [
+        {
+          "clientHeight": 567,
+          "rect": {
+            "bottom": 700,
+            "height": 567,
+            "left": 0,
+            "right": 390,
+            "top": 133,
+            "width": 390,
+            "x": 0,
+            "y": 133
+          },
+          "scrollHeight": 567,
+          "text": "创建账号邮箱用户名（可选）留空将使用邮箱前缀，登录时可用用户名或邮箱密码确认密码创建账号"
+        }
+      ],
+      "width": 390
+    }
+  },
+  {
+    "phase": "after",
+    "name": "signup-short",
+    "scene": "signup",
+    "theme": "dark",
+    "width": 1100,
+    "height": 420,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=signup&theme=dark&platform=browser\".\nThere has been no change in the accessibility tree.\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=signup&theme=dark&platform=browser",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 420,
+      "main": [
+        {
+          "clientHeight": 567,
+          "rect": {
+            "bottom": 631,
+            "height": 567,
+            "left": 434,
+            "right": 1085,
+            "top": 64,
+            "width": 651,
+            "x": 434,
+            "y": 64
+          },
+          "scrollHeight": 567,
+          "text": "创建账号邮箱用户名（可选）留空将使用邮箱前缀，登录时可用用户名或邮箱密码确认密码创建账号"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "after",
+    "name": "loading",
+    "scene": "setup-loading",
+    "theme": "light",
+    "width": 1100,
+    "height": 760,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=setup-loading&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=setup-loading&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: setup-loading, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 (selected) setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 text 登录  0  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t20 container\n\t\t\t21 heading mimir, Value: 4\n\t\t\t\t22 text mimir\n\t\t\t23 text 笔记与资料，随时可查可问\n\t\t24 container\n\t\t\t25 heading 请稍候, Value: 1\n\t\t\t\t26 text 请稍候\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=setup-loading&theme=light&platform=browser",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "请稍候"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "after",
+    "name": "setup-error-light",
+    "scene": "setup-error",
+    "theme": "light",
+    "width": 1100,
+    "height": 760,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=setup-error&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=setup-error&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: setup-error, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 (selected) setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t21 container\n\t\t\t22 heading mimir, Value: 4\n\t\t\t\t23 text mimir\n\t\t\t24 text 笔记与资料，随时可查可问\n\t\t25 container\n\t\t\t26 heading 暂时无法登录, Value: 1\n\t\t\t\t27 text 暂时无法登录\n\t\t\t28 image close-circle\n\t\t\t29 text 无法连接服务\n\t\t\t30 text 请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。\n\t\t\t31 button 重 试\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=setup-error&theme=light&platform=browser",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "暂时无法登录无法连接服务请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。重 试"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "after",
+    "name": "setup-error-dark",
+    "scene": "setup-error",
+    "theme": "dark",
+    "width": 600,
+    "height": 760,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=setup-error&theme=dark&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=setup-error&theme=dark&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: setup-error, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 (selected) setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t21 heading mimir, Value: 4\n\t\t\t22 text mimir\n\t\t23 container\n\t\t\t24 heading 暂时无法登录, Value: 1\n\t\t\t\t25 text 暂时无法登录\n\t\t\t26 image close-circle\n\t\t\t27 text 无法连接服务\n\t\t\t28 text 请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。\n\t\t\t29 button 重 试\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=setup-error&theme=dark&platform=browser",
+    "geometry": {
+      "documentWidth": 600,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 326,
+          "rect": {
+            "bottom": 481.140625,
+            "height": 326.140625,
+            "left": 0,
+            "right": 600,
+            "top": 155,
+            "width": 600,
+            "x": 0,
+            "y": 155
+          },
+          "scrollHeight": 326,
+          "text": "暂时无法登录无法连接服务请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。重 试"
+        }
+      ],
+      "width": 600
+    }
+  },
+  {
+    "phase": "after",
+    "name": "local-browser",
+    "scene": "local",
+    "theme": "light",
+    "width": 880,
+    "height": 760,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=local&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=local&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: local, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 (selected) local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 text 登录  0  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t20 container\n\t\t\t21 heading mimir, Value: 4\n\t\t\t\t22 text mimir\n\t\t\t23 text 笔记与资料，随时可查可问\n\t\t24 container\n\t\t\t25 heading 返回客户端, Value: 1\n\t\t\t\t26 text 返回客户端\n\t\t\t27 text 请在桌面客户端继续使用。\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=local&theme=light&platform=browser",
+    "geometry": {
+      "documentWidth": 880,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 352,
+            "right": 880,
+            "top": 64,
+            "width": 528,
+            "x": 352,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "返回客户端请在桌面客户端继续使用。"
+        }
+      ],
+      "width": 880
+    }
+  },
+  {
+    "phase": "after",
+    "name": "local-desktop",
+    "scene": "local",
+    "theme": "dark",
+    "width": 880,
+    "height": 760,
+    "platform": "desktop",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=local&theme=dark&platform=desktop\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=local&theme=dark&platform=desktop\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: local, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 (selected) local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 text 登录  0  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t20 text Mimir · 桌面标题栏插槽模拟\n\t\t21 container\n\t\t\t22 heading mimir, Value: 4\n\t\t\t\t23 text mimir\n\t\t\t24 text 笔记与资料，随时可查可问\n\t\t25 container\n\t\t\t26 heading 返回客户端, Value: 1\n\t\t\t\t27 text 返回客户端\n\t\t\t28 text 请在桌面客户端继续使用。\n\t\t\t29 button 更换使用方式…\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=local&theme=dark&platform=desktop",
+    "geometry": {
+      "documentWidth": 880,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 650,
+          "rect": {
+            "bottom": 760,
+            "height": 650,
+            "left": 352,
+            "right": 880,
+            "top": 110,
+            "width": 528,
+            "x": 352,
+            "y": 110
+          },
+          "scrollHeight": 650,
+          "text": "返回客户端请在桌面客户端继续使用。更换使用方式…"
+        }
+      ],
+      "width": 880
+    }
+  },
+  {
+    "phase": "after",
+    "name": "root-offline-wide",
+    "scene": "root-offline",
+    "theme": "light",
+    "width": 1440,
+    "height": 900,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=root-offline&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=root-offline&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  1  / 原生动作  0\n\t\t21 container\n\t\t\t22 heading 暂时无法连接服务, Value: 1\n\t\t\t\t23 text 暂时无法连接服务\n\t\t\t24 text 请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。\n\t\t\t25 button loading 重 试\n\t\t\t\t26 container loading\n\t\t\t\t27 text 重 试\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=root-offline&theme=light&platform=browser",
+    "geometry": {
+      "documentWidth": 1440,
+      "height": 900,
+      "main": [
+        {
+          "clientHeight": 836,
+          "rect": {
+            "bottom": 900,
+            "height": 836,
+            "left": 0,
+            "right": 1440,
+            "top": 64,
+            "width": 1440,
+            "x": 0,
+            "y": 64
+          },
+          "scrollHeight": 836,
+          "text": "暂时无法连接服务请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。重 试"
+        },
+        {
+          "clientHeight": 229,
+          "rect": {
+            "bottom": 596.65625,
+            "height": 229.328125,
+            "left": 480,
+            "right": 960,
+            "top": 367.328125,
+            "width": 480,
+            "x": 480,
+            "y": 367.328125
+          },
+          "scrollHeight": 229,
+          "text": "暂时无法连接服务请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。重 试"
+        }
+      ],
+      "width": 1440
+    }
+  },
+  {
+    "phase": "after",
+    "name": "root-offline-medium",
+    "scene": "root-offline",
+    "theme": "dark",
+    "width": 1100,
+    "height": 760,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=root-offline&theme=dark&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=root-offline&theme=dark&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  1  / 原生动作  0\n\t\t21 container\n\t\t\t22 heading 暂时无法连接服务, Value: 1\n\t\t\t\t23 text 暂时无法连接服务\n\t\t\t24 text 请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。\n\t\t\t25 button loading 重 试\n\t\t\t\t26 container loading\n\t\t\t\t27 text 重 试\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=root-offline&theme=dark&platform=browser",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 0,
+            "right": 1100,
+            "top": 64,
+            "width": 1100,
+            "x": 0,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "暂时无法连接服务请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。重 试"
+        },
+        {
+          "clientHeight": 229,
+          "rect": {
+            "bottom": 526.65625,
+            "height": 229.328125,
+            "left": 310,
+            "right": 790,
+            "top": 297.328125,
+            "width": 480,
+            "x": 310,
+            "y": 297.328125
+          },
+          "scrollHeight": 229,
+          "text": "暂时无法连接服务请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。重 试"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "after",
+    "name": "root-offline-compact",
+    "scene": "root-offline",
+    "theme": "light",
+    "width": 880,
+    "height": 760,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=root-offline&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=root-offline&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  1  / 原生动作  0\n\t\t21 container\n\t\t\t22 heading 暂时无法连接服务, Value: 1\n\t\t\t\t23 text 暂时无法连接服务\n\t\t\t24 text 请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。\n\t\t\t25 button loading 重 试\n\t\t\t\t26 container loading\n\t\t\t\t27 text 重 试\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=root-offline&theme=light&platform=browser",
+    "geometry": {
+      "documentWidth": 880,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 0,
+            "right": 880,
+            "top": 64,
+            "width": 880,
+            "x": 0,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "暂时无法连接服务请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。重 试"
+        },
+        {
+          "clientHeight": 229,
+          "rect": {
+            "bottom": 526.65625,
+            "height": 229.328125,
+            "left": 200,
+            "right": 680,
+            "top": 297.328125,
+            "width": 480,
+            "x": 200,
+            "y": 297.328125
+          },
+          "scrollHeight": 229,
+          "text": "暂时无法连接服务请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。重 试"
+        }
+      ],
+      "width": 880
+    }
+  },
+  {
+    "phase": "after",
+    "name": "root-offline-narrow",
+    "scene": "root-offline",
+    "theme": "dark",
+    "width": 600,
+    "height": 760,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=root-offline&theme=dark&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=root-offline&theme=dark&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  1  / 原生动作  0\n\t\t21 container\n\t\t\t22 heading 暂时无法连接服务, Value: 1\n\t\t\t\t23 text 暂时无法连接服务\n\t\t\t24 text 请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。\n\t\t\t25 button loading 重 试\n\t\t\t\t26 container loading\n\t\t\t\t27 text 重 试\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=root-offline&theme=dark&platform=browser",
+    "geometry": {
+      "documentWidth": 600,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 682,
+          "rect": {
+            "bottom": 760,
+            "height": 682,
+            "left": 0,
+            "right": 600,
+            "top": 78,
+            "width": 600,
+            "x": 0,
+            "y": 78
+          },
+          "scrollHeight": 682,
+          "text": "暂时无法连接服务请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。重 试"
+        },
+        {
+          "clientHeight": 229,
+          "rect": {
+            "bottom": 533.65625,
+            "height": 229.328125,
+            "left": 60,
+            "right": 540,
+            "top": 304.328125,
+            "width": 480,
+            "x": 60,
+            "y": 304.328125
+          },
+          "scrollHeight": 229,
+          "text": "暂时无法连接服务请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。重 试"
+        }
+      ],
+      "width": 600
+    }
+  },
+  {
+    "phase": "after",
+    "name": "root-offline-phone",
+    "scene": "root-offline",
+    "theme": "light",
+    "width": 390,
+    "height": 700,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=root-offline&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=root-offline&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  1  / 原生动作  0\n\t\t21 container\n\t\t\t22 heading 暂时无法连接服务, Value: 1\n\t\t\t\t23 text 暂时无法连接服务\n\t\t\t24 text 请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。\n\t\t\t25 button loading 重 试\n\t\t\t\t26 container loading\n\t\t\t\t27 text 重 试\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=root-offline&theme=light&platform=browser",
+    "geometry": {
+      "documentWidth": 390,
+      "height": 700,
+      "main": [
+        {
+          "clientHeight": 589,
+          "rect": {
+            "bottom": 700,
+            "height": 589,
+            "left": 0,
+            "right": 390,
+            "top": 111,
+            "width": 390,
+            "x": 0,
+            "y": 111
+          },
+          "scrollHeight": 589,
+          "text": "暂时无法连接服务请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。重 试"
+        },
+        {
+          "clientHeight": 251,
+          "rect": {
+            "bottom": 531.15625,
+            "height": 251.328125,
+            "left": 24,
+            "right": 366,
+            "top": 279.828125,
+            "width": 342,
+            "x": 24,
+            "y": 279.828125
+          },
+          "scrollHeight": 251,
+          "text": "暂时无法连接服务请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。重 试"
+        }
+      ],
+      "width": 390
+    }
+  },
+  {
+    "phase": "after",
+    "name": "root-offline-short",
+    "scene": "root-offline",
+    "theme": "dark",
+    "width": 1100,
+    "height": 420,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=root-offline&theme=dark&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=root-offline&theme=dark&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  1  / 原生动作  0\n\t\t21 container\n\t\t\t22 heading 暂时无法连接服务, Value: 1\n\t\t\t\t23 text 暂时无法连接服务\n\t\t\t24 text 请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。\n\t\t\t25 button loading 重 试\n\t\t\t\t26 container loading\n\t\t\t\t27 text 重 试\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=root-offline&theme=dark&platform=browser",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 420,
+      "main": [
+        {
+          "clientHeight": 356,
+          "rect": {
+            "bottom": 420,
+            "height": 356,
+            "left": 0,
+            "right": 1100,
+            "top": 64,
+            "width": 1100,
+            "x": 0,
+            "y": 64
+          },
+          "scrollHeight": 356,
+          "text": "暂时无法连接服务请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。重 试"
+        },
+        {
+          "clientHeight": 229,
+          "rect": {
+            "bottom": 356.65625,
+            "height": 229.328125,
+            "left": 310,
+            "right": 790,
+            "top": 127.328125,
+            "width": 480,
+            "x": 310,
+            "y": 127.328125
+          },
+          "scrollHeight": 229,
+          "text": "暂时无法连接服务请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。重 试"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "after",
+    "name": "root-http",
+    "scene": "root-http",
+    "theme": "light",
+    "width": 1100,
+    "height": 760,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=root-http&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=root-http&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-http, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 (selected) root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  1  / 原生动作  0\n\t\t21 container\n\t\t\t22 heading 服务暂时不可用, Value: 1\n\t\t\t\t23 text 服务暂时不可用\n\t\t\t24 text 服务暂时无法完成请求，请稍后重试。\n\t\t\t25 button loading 重 试\n\t\t\t\t26 container loading\n\t\t\t\t27 text 重 试\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=root-http&theme=light&platform=browser",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 0,
+            "right": 1100,
+            "top": 64,
+            "width": 1100,
+            "x": 0,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "服务暂时不可用服务暂时无法完成请求，请稍后重试。重 试"
+        },
+        {
+          "clientHeight": 229,
+          "rect": {
+            "bottom": 526.65625,
+            "height": 229.328125,
+            "left": 310,
+            "right": 790,
+            "top": 297.328125,
+            "width": 480,
+            "x": 310,
+            "y": 297.328125
+          },
+          "scrollHeight": 229,
+          "text": "服务暂时不可用服务暂时无法完成请求，请稍后重试。重 试"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "after",
+    "name": "root-desktop",
+    "scene": "root-offline",
+    "theme": "dark",
+    "width": 880,
+    "height": 760,
+    "platform": "desktop",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=root-offline&theme=dark&platform=desktop\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=root-offline&theme=dark&platform=desktop\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  1  / 原生动作  0\n\t\t21 text Mimir · 桌面标题栏插槽模拟\n\t\t22 container\n\t\t\t23 heading 暂时无法连接服务, Value: 1\n\t\t\t\t24 text 暂时无法连接服务\n\t\t\t25 text 请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。\n\t\t\t26 button loading 重 试\n\t\t\t\t27 container loading\n\t\t\t\t28 text 重 试\n\t\t\t29 button 更换使用方式…\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=root-offline&theme=dark&platform=desktop",
+    "geometry": {
+      "documentWidth": 880,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 650,
+          "rect": {
+            "bottom": 760,
+            "height": 650,
+            "left": 0,
+            "right": 880,
+            "top": 110,
+            "width": 880,
+            "x": 0,
+            "y": 110
+          },
+          "scrollHeight": 650,
+          "text": "暂时无法连接服务请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。重 试更换使用方式…"
+        },
+        {
+          "clientHeight": 229,
+          "rect": {
+            "bottom": 549.65625,
+            "height": 229.328125,
+            "left": 200,
+            "right": 680,
+            "top": 320.328125,
+            "width": 480,
+            "x": 200,
+            "y": 320.328125
+          },
+          "scrollHeight": 229,
+          "text": "暂时无法连接服务请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。重 试更换使用方式…"
+        }
+      ],
+      "width": 880
+    }
+  },
+  {
+    "phase": "after",
+    "name": "load-error",
+    "scene": "load-error",
+    "theme": "light",
+    "width": 600,
+    "height": 760,
+    "platform": "browser",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=load-error&theme=light&platform=browser\".\nThere has been no change in the accessibility tree.\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=load-error&theme=light&platform=browser",
+    "geometry": {
+      "documentWidth": 600,
+      "height": 760,
+      "main": [],
+      "width": 600
+    }
+  },
+  {
+    "phase": "after",
+    "name": "login-required",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=login&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=login&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: login, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 (selected) login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 text 登录  0  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t20 container\n\t\t\t21 heading mimir, Value: 4\n\t\t\t\t22 text mimir\n\t\t\t23 text 笔记与资料，随时可查可问\n\t\t24 container\n\t\t\t25 heading 登录, Value: 1\n\t\t\t\t26 text 登录\n\t\t\t27 text 用户名或邮箱\n\t\t\t35 container\n\t\t\t\t36 text field (settable) 用户名或邮箱\n\t\t\t\t37 text 请输入用户名或邮箱\n\t\t\t29 text 密码\n\t\t\t38 container\n\t\t\t\t39 container\n\t\t\t\t\t40 text field (settable) 密码\n\t\t\t\t\t41 checkbox Description: 显示, Value: 0\n\t\t\t\t\t\t42 image eye-invisible\n\t\t\t\t43 text 请输入密码\n\t\t\t34 button 登 录\n\t\t\t\t44 text 登 录\n\nThe focused UI element is 34 button 登 录",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "登录用户名或邮箱请输入用户名或邮箱密码请输入密码登 录"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "after",
+    "name": "login-password-visible",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=login&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=login&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: login, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 (selected) login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 text 登录  0  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t20 container\n\t\t\t21 heading mimir, Value: 4\n\t\t\t\t22 text mimir\n\t\t\t23 text 笔记与资料，随时可查可问\n\t\t24 container\n\t\t\t25 heading 登录, Value: 1\n\t\t\t\t26 text 登录\n\t\t\t27 text 用户名或邮箱\n\t\t\t45 text field (settable) 用户名或邮箱, Value: <redacted>\n\t\t\t29 text 密码\n\t\t\t46 container\n\t\t\t\t47 text field (settable) 密码, Value: <redacted>\n\t\t\t\t48 checkbox Description: 隐藏, Value: 1\n\t\t\t\t\t49 image eye\n\t\t\t34 button 登 录\n\t\t\t\t44 text 登 录\n\nThe focused UI element is 47 text field (settable) 密码, Value: <redacted>",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "登录用户名或邮箱密码登 录"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "after",
+    "name": "auth-error",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=auth-error&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=auth-error&theme=light&platform=browser\n\t2 container\n\t\t3 container root\n\t\t\t4 container\n\t\t\t\t5 text 真实组件 / 模拟 IO 场景 \n\t\t\t\t6 pop up button (collapsed, settable) 场景, Value: auth-error, Secondary Actions: Expand\n\t\t\t\t\t7 menu\n\t\t\t\t\t\t8 login\n\t\t\t\t\t\t9 signup\n\t\t\t\t\t\t10 setup-loading\n\t\t\t\t\t\t11 setup-error\n\t\t\t\t\t\t12 local\n\t\t\t\t\t\t13 root-offline\n\t\t\t\t\t\t14 root-http\n\t\t\t\t\t\t15 (selected) auth-error\n\t\t\t\t\t\t16 long-error\n\t\t\t\t\t\t17 pending\n\t\t\t\t\t\t18 load-error\n\t\t\t\t19 button 完成模拟请求\n\t\t\t\t20 text 登录  1  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t\t21 container\n\t\t\t\t22 heading mimir, Value: 4\n\t\t\t\t\t23 text mimir\n\t\t\t\t24 text 笔记与资料，随时可查可问\n\t\t\t25 container\n\t\t\t\t26 heading 登录, Value: 1\n\t\t\t\t\t27 text 登录\n\t\t\t\t28 image close-circle\n\t\t\t\t29 text 用户名/邮箱或密码不正确\n\t\t\t\t30 text 用户名或邮箱\n\t\t\t\t31 text field (settable) 用户名或邮箱, Value: <redacted>\n\t\t\t\t32 text 密码\n\t\t\t\t33 container\n\t\t\t\t\t34 text field (settable) 密码, Value: <redacted>\n\t\t\t\t\t35 checkbox Description: 显示, Value: 0\n\t\t\t\t\t\t36 image eye-invisible\n\t\t\t\t37 button loading 登 录\n\t\t\t\t\t38 container loading\n\t\t\t\t\t39 text 登 录\n\t\t40 container\n\t\t\t41 image close-circle\n\t\t\t42 text 用户名/邮箱或密码不正确\n\nThe focused UI element is 34 text field (settable) 密码, Value: <redacted>",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "登录用户名/邮箱或密码不正确用户名或邮箱密码登 录"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "after",
+    "name": "long-error",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=long-error&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=long-error&theme=light&platform=browser\n\t2 container\n\t\t3 container root\n\t\t\t4 container\n\t\t\t\t5 text 真实组件 / 模拟 IO 场景 \n\t\t\t\t6 pop up button (collapsed, settable) 场景, Value: long-error, Secondary Actions: Expand\n\t\t\t\t\t7 menu\n\t\t\t\t\t\t8 login\n\t\t\t\t\t\t9 signup\n\t\t\t\t\t\t10 setup-loading\n\t\t\t\t\t\t11 setup-error\n\t\t\t\t\t\t12 local\n\t\t\t\t\t\t13 root-offline\n\t\t\t\t\t\t14 root-http\n\t\t\t\t\t\t15 auth-error\n\t\t\t\t\t\t16 (selected) long-error\n\t\t\t\t\t\t17 pending\n\t\t\t\t\t\t18 load-error\n\t\t\t\t19 button 完成模拟请求\n\t\t\t\t20 text 登录  1  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t\t21 container\n\t\t\t\t22 heading mimir, Value: 4\n\t\t\t\t\t23 text mimir\n\t\t\t\t24 text 笔记与资料，随时可查可问\n\t\t\t25 container\n\t\t\t\t26 heading 登录, Value: 1\n\t\t\t\t\t27 text 登录\n\t\t\t\t28 image close-circle\n\t\t\t\t29 text 连接请求未完成，请稍后重试。long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/\n\t\t\t\t30 text 用户名或邮箱\n\t\t\t\t31 text field (settable) 用户名或邮箱, Value: <redacted>\n\t\t\t\t32 text 密码\n\t\t\t\t33 container\n\t\t\t\t\t34 text field (settable) 密码, Value: <redacted>\n\t\t\t\t\t35 checkbox Description: 显示, Value: 0\n\t\t\t\t\t\t36 image eye-invisible\n\t\t\t\t37 button loading 登 录\n\t\t\t\t\t38 container loading\n\t\t\t\t\t39 text 登 录\n\t\t40 container\n\t\t\t41 image close-circle\n\t\t\t42 text 连接请求未完成，请稍后重试。long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/\n\nThe focused UI element is 34 text field (settable) 密码, Value: <redacted>",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "登录连接请求未完成，请稍后重试。long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/long-diagnostic/用户名或邮箱密码登 录"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "after",
+    "name": "pending",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=pending&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=pending&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: pending, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 (selected) pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 text 登录  1  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t20 container\n\t\t\t21 heading mimir, Value: 4\n\t\t\t\t22 text mimir\n\t\t\t23 text 笔记与资料，随时可查可问\n\t\t24 container\n\t\t\t25 heading 登录, Value: 1\n\t\t\t\t26 text 登录\n\t\t\t27 text 用户名或邮箱\n\t\t\t28 text field (settable) 用户名或邮箱, Value: <redacted>\n\t\t\t29 text 密码\n\t\t\t30 container\n\t\t\t\t31 text field (settable) 密码, Value: <redacted>\n\t\t\t\t32 checkbox Description: 显示, Value: 0\n\t\t\t\t\t33 image eye-invisible\n\t\t\t34 button loading 登 录\n\t\t\t\t35 container loading\n\t\t\t\t36 text 登 录\n\nThe focused UI element is 31 text field (settable) 密码, Value: <redacted>",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "登录用户名或邮箱密码登 录"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "after",
+    "name": "pending-second-enter",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=pending&theme=light&platform=browser\".\nThere has been no change in the accessibility tree.\nThe focused UI element is 31 text field (settable) 密码, Value: <redacted>",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "登录用户名或邮箱密码登 录"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "after",
+    "name": "login-success",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=pending&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=pending&theme=light&platform=browser\n\t2 container\n\t\t3 container root\n\t\t\t4 container\n\t\t\t\t5 text 真实组件 / 模拟 IO 场景 \n\t\t\t\t6 pop up button (collapsed, settable) 场景, Value: pending, Secondary Actions: Expand\n\t\t\t\t\t7 menu\n\t\t\t\t\t\t8 login\n\t\t\t\t\t\t9 signup\n\t\t\t\t\t\t10 setup-loading\n\t\t\t\t\t\t11 setup-error\n\t\t\t\t\t\t12 local\n\t\t\t\t\t\t13 root-offline\n\t\t\t\t\t\t14 root-http\n\t\t\t\t\t\t15 auth-error\n\t\t\t\t\t\t16 long-error\n\t\t\t\t\t\t17 (selected) pending\n\t\t\t\t\t\t18 load-error\n\t\t\t\t19 button 完成模拟请求\n\t\t\t\t20 text 登录  1  / 初始化  2  / 守卫  2  / 原生动作  0\n\t\t\t21 text 模拟 IO 已完成，真实路由跳转成功。\n\t\t22 container\n\t\t\t23 image check-circle\n\t\t\t24 text 已登录\n\nThe focused UI element is 19 button 完成模拟请求",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 102,
+          "rect": {
+            "bottom": 166,
+            "height": 102,
+            "left": 0,
+            "right": 1100,
+            "top": 64,
+            "width": 1100,
+            "x": 0,
+            "y": 64
+          },
+          "scrollHeight": 102,
+          "text": "模拟 IO 已完成，真实路由跳转成功。"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "after",
+    "name": "signup-required",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=signup&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=signup&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: signup, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 (selected) signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 text 登录  0  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t20 container\n\t\t\t21 heading mimir, Value: 4\n\t\t\t\t22 text mimir\n\t\t\t23 text 笔记与资料，随时可查可问\n\t\t24 container\n\t\t\t25 heading 创建账号, Value: 1\n\t\t\t\t26 text 创建账号\n\t\t\t27 text 邮箱\n\t\t\t44 container\n\t\t\t\t45 text field (settable) 邮箱\n\t\t\t\t46 text 请输入邮箱\n\t\t\t29 text 用户名（可选）\n\t\t\t30 container\n\t\t\t\t31 text field (settable) 用户名（可选）\n\t\t\t\t32 text 留空将使用邮箱前缀，登录时可用用户名或邮箱\n\t\t\t33 text 密码\n\t\t\t47 container\n\t\t\t\t48 container\n\t\t\t\t\t49 text field (settable) 密码\n\t\t\t\t\t50 checkbox Description: 显示, Value: 0\n\t\t\t\t\t\t51 image eye-invisible\n\t\t\t\t52 text 密码至少 8 位\n\t\t\t38 text 确认密码\n\t\t\t53 container\n\t\t\t\t54 container\n\t\t\t\t\t55 text field (settable) 确认密码\n\t\t\t\t\t56 checkbox Description: 显示, Value: 0\n\t\t\t\t\t\t57 image eye-invisible\n\t\t\t\t58 text 请再输入一次密码\n\t\t\t43 button 创建账号\n\t\t\t\t59 text 创建账号\n\nThe focused UI element is 43 button 创建账号",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "创建账号邮箱请输入邮箱用户名（可选）留空将使用邮箱前缀，登录时可用用户名或邮箱密码密码至少 8 位确认密码请再输入一次密码创建账号"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "after",
+    "name": "signup-mismatch",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=signup&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=signup&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: signup, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 (selected) signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 text 登录  0  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t20 container\n\t\t\t21 heading mimir, Value: 4\n\t\t\t\t22 text mimir\n\t\t\t23 text 笔记与资料，随时可查可问\n\t\t24 container\n\t\t\t25 heading 创建账号, Value: 1\n\t\t\t\t26 text 创建账号\n\t\t\t27 text 邮箱\n\t\t\t60 text field (settable) 邮箱, Value: <redacted>\n\t\t\t29 text 用户名（可选）\n\t\t\t30 container\n\t\t\t\t31 text field (settable) 用户名（可选）\n\t\t\t\t32 text 留空将使用邮箱前缀，登录时可用用户名或邮箱\n\t\t\t33 text 密码\n\t\t\t61 container\n\t\t\t\t62 text field (settable) 密码, Value: <redacted>\n\t\t\t\t63 checkbox Description: 显示, Value: 0\n\t\t\t\t\t64 image eye-invisible\n\t\t\t38 text 确认密码\n\t\t\t53 container\n\t\t\t\t54 container\n\t\t\t\t\t55 text field (settable) 确认密码, Value: <redacted>\n\t\t\t\t\t56 checkbox Description: 显示, Value: 0\n\t\t\t\t\t\t57 image eye-invisible\n\t\t\t\t65 text 两次输入的密码不一致\n\t\t\t43 button 创建账号\n\t\t\t\t59 text 创建账号\n\nThe focused UI element is 43 button 创建账号",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "创建账号邮箱用户名（可选）留空将使用邮箱前缀，登录时可用用户名或邮箱密码确认密码两次输入的密码不一致创建账号"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "after",
+    "name": "signup-pending",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=signup&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=signup&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: signup, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 (selected) signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 text 登录  1  / 初始化  1  / 守卫  1  / 原生动作  0\n\t\t20 container\n\t\t\t21 heading mimir, Value: 4\n\t\t\t\t22 text mimir\n\t\t\t23 text 笔记与资料，随时可查可问\n\t\t24 container\n\t\t\t25 heading 创建账号, Value: 1\n\t\t\t\t26 text 创建账号\n\t\t\t27 text 邮箱\n\t\t\t60 text field (settable) 邮箱, Value: <redacted>\n\t\t\t29 text 用户名（可选）\n\t\t\t30 container\n\t\t\t\t31 text field (settable) 用户名（可选）\n\t\t\t\t32 text 留空将使用邮箱前缀，登录时可用用户名或邮箱\n\t\t\t33 text 密码\n\t\t\t61 container\n\t\t\t\t62 text field (settable) 密码, Value: <redacted>\n\t\t\t\t63 checkbox Description: 显示, Value: 0\n\t\t\t\t\t64 image eye-invisible\n\t\t\t38 text 确认密码\n\t\t\t65 container\n\t\t\t\t66 text field (settable) 确认密码, Value: <redacted>\n\t\t\t\t67 checkbox Description: 显示, Value: 0\n\t\t\t\t\t68 image eye-invisible\n\t\t\t43 button loading 创建账号\n\t\t\t\t69 container loading\n\t\t\t\t59 text 创建账号\n\nThe focused UI element is 43 button loading 创建账号",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "创建账号邮箱用户名（可选）留空将使用邮箱前缀，登录时可用用户名或邮箱密码确认密码创建账号"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "after",
+    "name": "signup-success",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=signup&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=signup&theme=light&platform=browser\n\t2 container\n\t\t3 container root\n\t\t\t4 container\n\t\t\t\t5 text 真实组件 / 模拟 IO 场景 \n\t\t\t\t6 pop up button (collapsed, settable) 场景, Value: signup, Secondary Actions: Expand\n\t\t\t\t\t7 menu\n\t\t\t\t\t\t8 login\n\t\t\t\t\t\t9 (selected) signup\n\t\t\t\t\t\t10 setup-loading\n\t\t\t\t\t\t11 setup-error\n\t\t\t\t\t\t12 local\n\t\t\t\t\t\t13 root-offline\n\t\t\t\t\t\t14 root-http\n\t\t\t\t\t\t15 auth-error\n\t\t\t\t\t\t16 long-error\n\t\t\t\t\t\t17 pending\n\t\t\t\t\t\t18 load-error\n\t\t\t\t19 button 完成模拟请求\n\t\t\t\t20 text 登录  1  / 初始化  2  / 守卫  2  / 原生动作  0\n\t\t\t21 text 模拟 IO 已完成，真实路由跳转成功。\n\t\t22 container\n\t\t\t23 image check-circle\n\t\t\t24 text 账号已创建\n\nThe focused UI element is 19 button 完成模拟请求",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 102,
+          "rect": {
+            "bottom": 166,
+            "height": 102,
+            "left": 0,
+            "right": 1100,
+            "top": 64,
+            "width": 1100,
+            "x": 0,
+            "y": 64
+          },
+          "scrollHeight": 102,
+          "text": "模拟 IO 已完成，真实路由跳转成功。"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "after",
+    "name": "setup-error-retrying",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=setup-error&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=setup-error&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: setup-error, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 (selected) setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  2  / 守卫  1  / 原生动作  0\n\t\t21 container\n\t\t\t22 heading mimir, Value: 4\n\t\t\t\t23 text mimir\n\t\t\t24 text 笔记与资料，随时可查可问\n\t\t25 container\n\t\t\t26 heading 请稍候, Value: 1\n\t\t\t\t27 text 请稍候\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=setup-error&theme=light&platform=browser",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "请稍候"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "after",
+    "name": "setup-error-recovered",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=setup-error&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=setup-error&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: setup-error, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 (selected) setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  2  / 守卫  1  / 原生动作  0\n\t\t21 container\n\t\t\t22 heading mimir, Value: 4\n\t\t\t\t23 text mimir\n\t\t\t24 text 笔记与资料，随时可查可问\n\t\t25 container\n\t\t\t26 heading 登录, Value: 1\n\t\t\t\t27 text 登录\n\t\t\t28 text 用户名或邮箱\n\t\t\t29 text field (settable) 用户名或邮箱\n\t\t\t30 text 密码\n\t\t\t31 container\n\t\t\t\t32 text field (settable) 密码\n\t\t\t\t33 checkbox Description: 显示, Value: 0\n\t\t\t\t\t34 image eye-invisible\n\t\t\t35 button 登 录\n\nThe focused UI element is 18 button 完成模拟请求",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 440,
+            "right": 1100,
+            "top": 64,
+            "width": 660,
+            "x": 440,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "登录用户名或邮箱密码登 录"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "after",
+    "name": "root-offline-retrying",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=root-offline&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=root-offline&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  2  / 原生动作  0\n\t\t21 container\n\t\t\t22 heading 暂时无法连接服务, Value: 1\n\t\t\t\t23 text 暂时无法连接服务\n\t\t\t24 text 请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。\n\t\t\t25 button (disabled) loading 正在重试\n\t\t\t\t26 container loading\n\t\t\t\t27 text 正在重试\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=root-offline&theme=light&platform=browser",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 0,
+            "right": 1100,
+            "top": 64,
+            "width": 1100,
+            "x": 0,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "暂时无法连接服务请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。正在重试"
+        },
+        {
+          "clientHeight": 229,
+          "rect": {
+            "bottom": 526.65625,
+            "height": 229.328125,
+            "left": 310,
+            "right": 790,
+            "top": 297.328125,
+            "width": 480,
+            "x": 310,
+            "y": 297.328125
+          },
+          "scrollHeight": 229,
+          "text": "暂时无法连接服务请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。正在重试"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "after",
+    "name": "root-offline-recovered",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=root-offline&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=root-offline&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  2  / 原生动作  0\n\t\t21 text 模拟 IO 已完成，真实路由跳转成功。\n\nThe focused UI element is 18 button 完成模拟请求",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 102,
+          "rect": {
+            "bottom": 166,
+            "height": 102,
+            "left": 0,
+            "right": 1100,
+            "top": 64,
+            "width": 1100,
+            "x": 0,
+            "y": 64
+          },
+          "scrollHeight": 102,
+          "text": "模拟 IO 已完成，真实路由跳转成功。"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "after",
+    "name": "desktop-fallback-invoked",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=root-offline&theme=light&platform=desktop\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=root-offline&theme=light&platform=desktop\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  1  / 原生动作  1\n\t\t21 text Mimir · 桌面标题栏插槽模拟\n\t\t22 container\n\t\t\t23 heading 暂时无法连接服务, Value: 1\n\t\t\t\t24 text 暂时无法连接服务\n\t\t\t25 text 请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。\n\t\t\t26 button 重 试\n\t\t\t29 button 更换使用方式…\n\t\t\t\t30 text 更换使用方式…\n\nThe focused UI element is 29 button 更换使用方式…",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 650,
+          "rect": {
+            "bottom": 760,
+            "height": 650,
+            "left": 0,
+            "right": 1100,
+            "top": 110,
+            "width": 1100,
+            "x": 0,
+            "y": 110
+          },
+          "scrollHeight": 650,
+          "text": "暂时无法连接服务请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。重 试更换使用方式…"
+        },
+        {
+          "clientHeight": 229,
+          "rect": {
+            "bottom": 549.65625,
+            "height": 229.328125,
+            "left": 310,
+            "right": 790,
+            "top": 320.328125,
+            "width": 480,
+            "x": 310,
+            "y": 320.328125
+          },
+          "scrollHeight": 229,
+          "text": "暂时无法连接服务请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。重 试更换使用方式…"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "after",
+    "name": "root-retry-failed",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=root-offline&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=root-offline&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  2  / 原生动作  0\n\t\t21 container\n\t\t\t22 heading 暂时无法连接服务, Value: 1\n\t\t\t\t23 text 暂时无法连接服务\n\t\t\t24 text 请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。\n\t\t\t25 button 重 试\n\nThe focused UI element is 19 button 模拟请求失败",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 0,
+            "right": 1100,
+            "top": 64,
+            "width": 1100,
+            "x": 0,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "暂时无法连接服务请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。重 试"
+        },
+        {
+          "clientHeight": 229,
+          "rect": {
+            "bottom": 526.65625,
+            "height": 229.328125,
+            "left": 310,
+            "right": 790,
+            "top": 297.328125,
+            "width": 480,
+            "x": 310,
+            "y": 297.328125
+          },
+          "scrollHeight": 229,
+          "text": "暂时无法连接服务请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。重 试"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "after",
+    "name": "root-repeated-pending",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=root-offline&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=root-offline&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  3  / 原生动作  0\n\t\t21 container\n\t\t\t22 heading 暂时无法连接服务, Value: 1\n\t\t\t\t23 text 暂时无法连接服务\n\t\t\t24 text 请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。\n\t\t\t25 button (disabled) loading 正在重试\n\t\t\t\t26 container loading\n\t\t\t\t27 text 正在重试\n\nThe focused UI element is 1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=root-offline&theme=light&platform=browser",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 696,
+          "rect": {
+            "bottom": 760,
+            "height": 696,
+            "left": 0,
+            "right": 1100,
+            "top": 64,
+            "width": 1100,
+            "x": 0,
+            "y": 64
+          },
+          "scrollHeight": 696,
+          "text": "暂时无法连接服务请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。正在重试"
+        },
+        {
+          "clientHeight": 229,
+          "rect": {
+            "bottom": 526.65625,
+            "height": 229.328125,
+            "left": 310,
+            "right": 790,
+            "top": 297.328125,
+            "width": 480,
+            "x": 310,
+            "y": 297.328125
+          },
+          "scrollHeight": 229,
+          "text": "暂时无法连接服务请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。正在重试"
+        }
+      ],
+      "width": 1100
+    }
+  },
+  {
+    "phase": "after",
+    "name": "root-repeated-recovered",
+    "ax": "Browser tab: 52, Title: \"登录与恢复 · 真实组件隔离验收\", URL: \"http://127.0.0.1:5196/?scene=root-offline&theme=light&platform=browser\".\n1 AXWebArea 登录与恢复 · 真实组件隔离验收, URL: 127.0.0.1:5196/?scene=root-offline&theme=light&platform=browser\n\t2 container root\n\t\t3 container\n\t\t\t4 text 真实组件 / 模拟 IO 场景 \n\t\t\t5 pop up button (collapsed, settable) 场景, Value: root-offline, Secondary Actions: Expand\n\t\t\t\t6 menu\n\t\t\t\t\t7 login\n\t\t\t\t\t8 signup\n\t\t\t\t\t9 setup-loading\n\t\t\t\t\t10 setup-error\n\t\t\t\t\t11 local\n\t\t\t\t\t12 (selected) root-offline\n\t\t\t\t\t13 root-http\n\t\t\t\t\t14 auth-error\n\t\t\t\t\t15 long-error\n\t\t\t\t\t16 pending\n\t\t\t\t\t17 load-error\n\t\t\t18 button 完成模拟请求\n\t\t\t19 button 模拟请求失败\n\t\t\t20 text 登录  0  / 初始化  0  / 守卫  3  / 原生动作  0\n\t\t21 text 模拟 IO 已完成，真实路由跳转成功。\n\nThe focused UI element is 18 button 完成模拟请求",
+    "geometry": {
+      "documentWidth": 1100,
+      "height": 760,
+      "main": [
+        {
+          "clientHeight": 102,
+          "rect": {
+            "bottom": 166,
+            "height": 102,
+            "left": 0,
+            "right": 1100,
+            "top": 64,
+            "width": 1100,
+            "x": 0,
+            "y": 64
+          },
+          "scrollHeight": 102,
+          "text": "模拟 IO 已完成，真实路由跳转成功。"
+        }
+      ],
+      "width": 1100
+    }
+  }
+]

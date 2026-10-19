@@ -1,0 +1,21 @@
+{
+  "command": "pnpm check",
+  "exitCode": 0,
+  "renderer": {
+    "files": 79,
+    "tests": 588
+  },
+  "office": {
+    "files": 230,
+    "tests": 2709
+  },
+  "chat": {
+    "tests": 88
+  },
+  "server": {
+    "tests": 1365,
+    "local": 10,
+    "fnos": 4
+  },
+  "storageExistingConditionalSkips": 2
+}

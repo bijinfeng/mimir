@@ -1,0 +1,8 @@
+/* Fixture chrome only. Never selects or overrides product components. */
+html, body, #root { margin: 0; height: 100%; }
+.fixture-shell { height: 100dvh; display: flex; flex-direction: column; }
+.fixture-controls { box-sizing: border-box; min-height: 64px; padding: 10px 16px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; flex: none; background: Canvas; color: CanvasText; border-bottom: 1px solid GrayText; font: 13px system-ui; }
+.fixture-surface { flex: 1; min-height: 0; }
+.fixture-titlebar { padding: 12px; background: Canvas; color: CanvasText; flex: none; }
+.fixture-success { padding: 40px; }
+.fixture-load-errors { padding: 24px; display: grid; gap: 24px; width: 230px; }

@@ -1,0 +1,725 @@
+[
+  {
+    "id": "root-offline-wide",
+    "images": [
+      {
+        "complete": true,
+        "height": 900,
+        "src": "before/root-offline-wide.png",
+        "width": 1440
+      },
+      {
+        "complete": true,
+        "height": 900,
+        "src": "after/root-offline-wide.png",
+        "width": 1440
+      }
+    ]
+  },
+  {
+    "id": "root-repeated-pending",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/root-repeated-pending.png",
+        "width": 1100
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/root-repeated-pending.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "setup-error-light",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/setup-error-light.png",
+        "width": 1100
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/setup-error-light.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "root-offline-phone",
+    "images": [
+      {
+        "complete": true,
+        "height": 700,
+        "src": "before/root-offline-phone.png",
+        "width": 390
+      },
+      {
+        "complete": true,
+        "height": 700,
+        "src": "after/root-offline-phone.png",
+        "width": 390
+      }
+    ]
+  },
+  {
+    "id": "root-offline-short",
+    "images": [
+      {
+        "complete": true,
+        "height": 420,
+        "src": "before/root-offline-short.png",
+        "width": 1100
+      },
+      {
+        "complete": true,
+        "height": 420,
+        "src": "after/root-offline-short.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "root-desktop",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/root-desktop.png",
+        "width": 880
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/root-desktop.png",
+        "width": 880
+      }
+    ]
+  },
+  {
+    "id": "auth-error",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/auth-error.png",
+        "width": 1100
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/auth-error.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "desktop-fallback-invoked",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/desktop-fallback-invoked.png",
+        "width": 1100
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/desktop-fallback-invoked.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "load-error",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/load-error.png",
+        "width": 600
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/load-error.png",
+        "width": 600
+      }
+    ]
+  },
+  {
+    "id": "loading",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/loading.png",
+        "width": 1100
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/loading.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "local-browser",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/local-browser.png",
+        "width": 880
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/local-browser.png",
+        "width": 880
+      }
+    ]
+  },
+  {
+    "id": "local-desktop",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/local-desktop.png",
+        "width": 880
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/local-desktop.png",
+        "width": 880
+      }
+    ]
+  },
+  {
+    "id": "login-dark",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/login-dark.png",
+        "width": 1100
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/login-dark.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "login-dark-compact",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/login-dark-compact.png",
+        "width": 880
+      }
+    ]
+  },
+  {
+    "id": "login-dark-desktop",
+    "images": [
+      {
+        "complete": true,
+        "height": 900,
+        "src": "before/login-dark-desktop.png",
+        "width": 1440
+      }
+    ]
+  },
+  {
+    "id": "login-dark-medium",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/login-dark-medium.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "login-dark-narrow",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/login-dark-narrow.png",
+        "width": 600
+      }
+    ]
+  },
+  {
+    "id": "login-dark-phone",
+    "images": [
+      {
+        "complete": true,
+        "height": 700,
+        "src": "before/login-dark-phone.png",
+        "width": 390
+      }
+    ]
+  },
+  {
+    "id": "login-dark-short",
+    "images": [
+      {
+        "complete": true,
+        "height": 420,
+        "src": "before/login-dark-short.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "login-light",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/login-light.png",
+        "width": 1100
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/login-light.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "login-password-visible",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/login-password-visible.png",
+        "width": 1100
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/login-password-visible.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "login-required",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/login-required.png",
+        "width": 1100
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/login-required.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "login-success",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/login-success.png",
+        "width": 1100
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/login-success.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "long-error",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/long-error.png",
+        "width": 1100
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/long-error.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "pending",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/pending.png",
+        "width": 1100
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/pending.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "pending-second-enter",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/pending-second-enter.png",
+        "width": 1100
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/pending-second-enter.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "product-authenticated",
+    "images": [
+      {
+        "complete": true,
+        "height": 720,
+        "src": "after/product-authenticated.png",
+        "width": 1280
+      }
+    ]
+  },
+  {
+    "id": "root-http",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/root-http.png",
+        "width": 1100
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/root-http.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "root-offline-compact",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/root-offline-compact.png",
+        "width": 880
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/root-offline-compact.png",
+        "width": 880
+      }
+    ]
+  },
+  {
+    "id": "root-offline-medium",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/root-offline-medium.png",
+        "width": 1100
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/root-offline-medium.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "root-offline-narrow",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/root-offline-narrow.png",
+        "width": 600
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/root-offline-narrow.png",
+        "width": 600
+      }
+    ]
+  },
+  {
+    "id": "root-offline-recovered",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/root-offline-recovered.png",
+        "width": 1100
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/root-offline-recovered.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "root-offline-retrying",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/root-offline-retrying.png",
+        "width": 1100
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/root-offline-retrying.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "root-repeated-recovered",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/root-repeated-recovered.png",
+        "width": 1100
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/root-repeated-recovered.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "root-retry-failed",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/root-retry-failed.png",
+        "width": 1100
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/root-retry-failed.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "setup-error-dark",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/setup-error-dark.png",
+        "width": 600
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/setup-error-dark.png",
+        "width": 600
+      }
+    ]
+  },
+  {
+    "id": "setup-error-recovered",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/setup-error-recovered.png",
+        "width": 1100
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/setup-error-recovered.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "setup-error-retrying",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/setup-error-retrying.png",
+        "width": 1100
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/setup-error-retrying.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "signup-light",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/signup-light.png",
+        "width": 1100
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/signup-light.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "signup-mismatch",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/signup-mismatch.png",
+        "width": 1100
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/signup-mismatch.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "signup-pending",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/signup-pending.png",
+        "width": 1100
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/signup-pending.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "signup-phone",
+    "images": [
+      {
+        "complete": true,
+        "height": 700,
+        "src": "before/signup-phone.png",
+        "width": 390
+      },
+      {
+        "complete": true,
+        "height": 700,
+        "src": "after/signup-phone.png",
+        "width": 390
+      }
+    ]
+  },
+  {
+    "id": "signup-required",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/signup-required.png",
+        "width": 1100
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/signup-required.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "signup-short",
+    "images": [
+      {
+        "complete": true,
+        "height": 420,
+        "src": "before/signup-short.png",
+        "width": 1100
+      },
+      {
+        "complete": true,
+        "height": 420,
+        "src": "after/signup-short.png",
+        "width": 1100
+      }
+    ]
+  },
+  {
+    "id": "signup-success",
+    "images": [
+      {
+        "complete": true,
+        "height": 760,
+        "src": "before/signup-success.png",
+        "width": 1100
+      },
+      {
+        "complete": true,
+        "height": 760,
+        "src": "after/signup-success.png",
+        "width": 1100
+      }
+    ]
+  }
+]

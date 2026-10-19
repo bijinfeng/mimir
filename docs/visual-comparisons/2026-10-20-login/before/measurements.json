@@ -1,0 +1,134 @@
+[
+  {
+    "name": "desktop",
+    "width": 1440,
+    "height": 900,
+    "ax": "Browser tab: 51, Title: \"mimir\", URL: \"http://localhost:5191/login\".\n0 AXWebArea mimir, URL: localhost:5191/login\n\t1 container root\n\t\t2 container\n\t\t\t3 heading mimir, Value: 4\n\t\t\t\t4 text mimir\n\t\t\t5 text 笔记与资料，随时可查可问\n\t\t6 container\n\t\t\t7 heading 登录, Value: 1\n\t\t\t\t8 text 登录\n\t\t\t9 text 用户名或邮箱\n\t\t\t10 text field (settable) 用户名或邮箱\n\t\t\t11 text 密码\n\t\t\t12 container\n\t\t\t\t13 text field (settable) 密码\n\t\t\t\t14 checkbox Description: 显示, Value: 0\n\t\t\t\t\t15 image eye-invisible\n\t\t\t16 button 登 录\n\nThe focused UI element is 0 AXWebArea mimir, URL: localhost:5191/login",
+    "geometry": {
+      "clientWidth": 1440,
+      "main": {
+        "bottom": 900,
+        "height": 900,
+        "left": 576,
+        "right": 1440,
+        "top": 0,
+        "width": 864,
+        "x": 576,
+        "y": 0
+      },
+      "pageHeight": 900,
+      "pageScroll": 900,
+      "scrollWidth": 1440
+    }
+  },
+  {
+    "name": "medium",
+    "width": 1100,
+    "height": 760,
+    "ax": "Browser tab: 51, Title: \"mimir\", URL: \"http://localhost:5191/login\".\n0 AXWebArea mimir, URL: localhost:5191/login\n\t1 container root\n\t\t2 container\n\t\t\t3 heading mimir, Value: 4\n\t\t\t\t4 text mimir\n\t\t\t5 text 笔记与资料，随时可查可问\n\t\t6 container\n\t\t\t7 heading 登录, Value: 1\n\t\t\t\t8 text 登录\n\t\t\t9 text 用户名或邮箱\n\t\t\t10 text field (settable) 用户名或邮箱\n\t\t\t11 text 密码\n\t\t\t12 container\n\t\t\t\t13 text field (settable) 密码\n\t\t\t\t14 checkbox Description: 显示, Value: 0\n\t\t\t\t\t15 image eye-invisible\n\t\t\t16 button 登 录\n\nThe focused UI element is 0 AXWebArea mimir, URL: localhost:5191/login",
+    "geometry": {
+      "clientWidth": 1100,
+      "main": {
+        "bottom": 760,
+        "height": 760,
+        "left": 440,
+        "right": 1100,
+        "top": 0,
+        "width": 660,
+        "x": 440,
+        "y": 0
+      },
+      "pageHeight": 760,
+      "pageScroll": 760,
+      "scrollWidth": 1100
+    }
+  },
+  {
+    "name": "compact",
+    "width": 880,
+    "height": 760,
+    "ax": "Browser tab: 51, Title: \"mimir\", URL: \"http://localhost:5191/login\".\n0 AXWebArea mimir, URL: localhost:5191/login\n\t1 container root\n\t\t2 container\n\t\t\t3 heading mimir, Value: 4\n\t\t\t\t4 text mimir\n\t\t\t5 text 笔记与资料，随时可查可问\n\t\t6 container\n\t\t\t7 heading 登录, Value: 1\n\t\t\t\t8 text 登录\n\t\t\t9 text 用户名或邮箱\n\t\t\t10 text field (settable) 用户名或邮箱\n\t\t\t11 text 密码\n\t\t\t12 container\n\t\t\t\t13 text field (settable) 密码\n\t\t\t\t14 checkbox Description: 显示, Value: 0\n\t\t\t\t\t15 image eye-invisible\n\t\t\t16 button 登 录\n\nThe focused UI element is 0 AXWebArea mimir, URL: localhost:5191/login",
+    "geometry": {
+      "clientWidth": 880,
+      "main": {
+        "bottom": 760,
+        "height": 760,
+        "left": 352,
+        "right": 880,
+        "top": 0,
+        "width": 528,
+        "x": 352,
+        "y": 0
+      },
+      "pageHeight": 760,
+      "pageScroll": 760,
+      "scrollWidth": 880
+    }
+  },
+  {
+    "name": "narrow",
+    "width": 600,
+    "height": 760,
+    "ax": "Browser tab: 51, Title: \"mimir\", URL: \"http://localhost:5191/login\".\n0 AXWebArea mimir, URL: localhost:5191/login\n\t1 container root\n\t\t17 heading mimir, Value: 4\n\t\t\t18 text mimir\n\t\t6 container\n\t\t\t7 heading 登录, Value: 1\n\t\t\t\t8 text 登录\n\t\t\t9 text 用户名或邮箱\n\t\t\t10 text field (settable) 用户名或邮箱\n\t\t\t11 text 密码\n\t\t\t12 container\n\t\t\t\t13 text field (settable) 密码\n\t\t\t\t14 checkbox Description: 显示, Value: 0\n\t\t\t\t\t15 image eye-invisible\n\t\t\t16 button 登 录\n\nThe focused UI element is 0 AXWebArea mimir, URL: localhost:5191/login",
+    "geometry": {
+      "clientWidth": 600,
+      "main": {
+        "bottom": 448,
+        "height": 371,
+        "left": 0,
+        "right": 600,
+        "top": 77,
+        "width": 600,
+        "x": 0,
+        "y": 77
+      },
+      "pageHeight": 760,
+      "pageScroll": 760,
+      "scrollWidth": 600
+    }
+  },
+  {
+    "name": "phone",
+    "width": 390,
+    "height": 700,
+    "ax": "Browser tab: 51, Title: \"mimir\", URL: \"http://localhost:5191/login\".\n0 AXWebArea mimir, URL: localhost:5191/login\n\t1 container root\n\t\t17 heading mimir, Value: 4\n\t\t\t18 text mimir\n\t\t6 container\n\t\t\t7 heading 登录, Value: 1\n\t\t\t\t8 text 登录\n\t\t\t9 text 用户名或邮箱\n\t\t\t10 text field (settable) 用户名或邮箱\n\t\t\t11 text 密码\n\t\t\t12 container\n\t\t\t\t13 text field (settable) 密码\n\t\t\t\t14 checkbox Description: 显示, Value: 0\n\t\t\t\t\t15 image eye-invisible\n\t\t\t16 button 登 录\n\nThe focused UI element is 0 AXWebArea mimir, URL: localhost:5191/login",
+    "geometry": {
+      "clientWidth": 390,
+      "main": {
+        "bottom": 448,
+        "height": 371,
+        "left": 0,
+        "right": 390,
+        "top": 77,
+        "width": 390,
+        "x": 0,
+        "y": 77
+      },
+      "pageHeight": 700,
+      "pageScroll": 700,
+      "scrollWidth": 390
+    }
+  },
+  {
+    "name": "short",
+    "width": 1100,
+    "height": 420,
+    "ax": "Browser tab: 51, Title: \"mimir\", URL: \"http://localhost:5191/login\".\n0 AXWebArea mimir, URL: localhost:5191/login\n\t1 container root\n\t\t17 container\n\t\t\t18 heading mimir, Value: 4\n\t\t\t\t19 text mimir\n\t\t\t20 text 笔记与资料，随时可查可问\n\t\t6 container\n\t\t\t7 heading 登录, Value: 1\n\t\t\t\t8 text 登录\n\t\t\t9 text 用户名或邮箱\n\t\t\t10 text field (settable) 用户名或邮箱\n\t\t\t11 text 密码\n\t\t\t12 container\n\t\t\t\t13 text field (settable) 密码\n\t\t\t\t14 checkbox Description: 显示, Value: 0\n\t\t\t\t\t15 image eye-invisible\n\t\t\t16 button 登 录\n\nThe focused UI element is 0 AXWebArea mimir, URL: localhost:5191/login",
+    "geometry": {
+      "clientWidth": 1100,
+      "main": {
+        "bottom": 420,
+        "height": 420,
+        "left": 440,
+        "right": 1100,
+        "top": 0,
+        "width": 660,
+        "x": 440,
+        "y": 0
+      },
+      "pageHeight": 420,
+      "pageScroll": 420,
+      "scrollWidth": 1100
+    }
+  }
+]

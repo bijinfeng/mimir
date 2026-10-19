@@ -1,0 +1,119 @@
+{
+  "checkedAt": "2026-10-20",
+  "site": "https://weknora.weixin.qq.com/",
+  "siteStatus": 200,
+  "siteBytes": 113529,
+  "version": "v0.8.3",
+  "releaseURL": "https://github.com/Tencent/WeKnora/releases/tag/v0.8.3",
+  "treeSha": "3e22822c1d2397be730c458c7539d0eb8c113a24",
+  "candidatePaths": [
+    "frontend/src/utils/loginNotify.ts",
+    "frontend/src/views/auth/Login.vue"
+  ],
+  "evidence": {
+    "path": "frontend/src/views/auth/Login.vue",
+    "url": "https://raw.githubusercontent.com/Tencent/WeKnora/v0.8.3/frontend/src/views/auth/Login.vue",
+    "lines": [
+      {
+        "line": 192,
+        "text": "<div v-else-if=\"inviteLookupError\" class=\"invite-banner invite-banner--error\">"
+      },
+      {
+        "line": 193,
+        "text": "{{ inviteLookupError }}"
+      },
+      {
+        "line": 202,
+        "text": "<t-form ref=\"formRef\" :data=\"formData\" :rules=\"formRules\" @submit=\"handleLogin\" layout=\"vertical\""
+      },
+      {
+        "line": 206,
+        "text": "autocomplete=\"email\" size=\"large\" :disabled=\"loading\" />"
+      },
+      {
+        "line": 209,
+        "text": "<t-form-item :label=\"$t('auth.password')\" name=\"password\">"
+      },
+      {
+        "line": 210,
+        "text": "<t-input v-model=\"formData.password\" :placeholder=\"$t('auth.passwordPlaceholder')\" type=\"password\""
+      },
+      {
+        "line": 211,
+        "text": "autocomplete=\"current-password\" size=\"large\" :disabled=\"loading\" @enter=\"handleLogin\" />"
+      },
+      {
+        "line": 214,
+        "text": "<t-button type=\"submit\" theme=\"primary\" size=\"large\" block :loading=\"loading\" class=\"submit-button\">"
+      },
+      {
+        "line": 215,
+        "text": "{{ loading ? $t('auth.loggingIn') : $t('auth.login') }}"
+      },
+      {
+        "line": 223,
+        "text": ":disabled=\"loading\" @click=\"toggleMode\">"
+      },
+      {
+        "line": 232,
+        "text": "<t-button v-if=\"oidcEnabled\" theme=\"default\" size=\"large\" block :loading=\"oidcLoading\" :disabled=\"loading\""
+      },
+      {
+        "line": 234,
+        "text": "{{ oidcLoading ? $t('auth.redirectingToOIDC') : oidcLoginText }}"
+      },
+      {
+        "line": 273,
+        "text": "<div v-else-if=\"inviteLookupError\" class=\"invite-banner invite-banner--error\">"
+      },
+      {
+        "line": 274,
+        "text": "{{ inviteLookupError }}"
+      },
+      {
+        "line": 282,
+        "text": "<t-form ref=\"registerFormRef\" :data=\"registerData\" :rules=\"registerRules\" @submit=\"handleRegister\""
+      },
+      {
+        "line": 286,
+        "text": ":disabled=\"loading\" />"
+      },
+      {
+        "line": 291,
+        "text": "autocomplete=\"email\" size=\"large\" :disabled=\"loading\" />"
+      },
+      {
+        "line": 294,
+        "text": "<t-form-item :label=\"$t('auth.password')\" name=\"password\">"
+      },
+      {
+        "line": 295,
+        "text": "<t-input v-model=\"registerData.password\" :placeholder=\"$t('auth.passwordPlaceholder')\" type=\"password\""
+      },
+      {
+        "line": 296,
+        "text": "autocomplete=\"new-password\" size=\"large\" :disabled=\"loading\" />"
+      },
+      {
+        "line": 299,
+        "text": "<t-form-item :label=\"$t('auth.confirmPassword')\" name=\"confirmPassword\">"
+      },
+      {
+        "line": 300,
+        "text": "<t-input v-model=\"registerData.confirmPassword\" :placeholder=\"$t('auth.confirmPasswordPlaceholder')\""
+      },
+      {
+        "line": 301,
+        "text": "type=\"password\" autocomplete=\"new-password\" size=\"large\" :disabled=\"loading\""
+      },
+      {
+        "line": 305,
+        "text": "<t-button type=\"submit\" theme=\"primary\" size=\"large\" block :loading=\"loading\" class=\"submit-button\">"
+      },
+      {
+        "line": 306,
+        "text": "{{ loading ? $t('auth.registering') : $t('auth.register') }}"
+      }
+    ]
+  }
+}

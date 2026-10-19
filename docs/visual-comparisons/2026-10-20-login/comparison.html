@@ -1,0 +1,603 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>登录与故障恢复精修 · 渲染存档</title>
+    <style>
+      :root {
+        font:
+          14px/1.6 system-ui,
+          sans-serif;
+        color: #242824;
+        background: #f5f6f5;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+      }
+      header {
+        padding: 24px 28px 16px;
+        border-bottom: 1px solid #dfe3df;
+        background: #fff;
+      }
+      h1 {
+        font-size: 24px;
+        margin: 0 0 8px;
+      }
+      p {
+        margin: 8px 0;
+        color: #555f57;
+        max-width: 95ch;
+      }
+      a {
+        color: #236648;
+      }
+      main {
+        padding: 20px 28px 40px;
+      }
+      .toolbar {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+      }
+      select,
+      button {
+        font: inherit;
+        background: #fff;
+        color: inherit;
+        border: 1px solid #c8d0c9;
+        border-radius: 6px;
+        padding: 7px 10px;
+      }
+      select {
+        max-width: 100%;
+      }
+      button {
+        cursor: pointer;
+      }
+      button[aria-pressed='true'] {
+        background: #e7f0e9;
+        color: #1d5f38;
+        border-color: #8aa992;
+      }
+      :focus-visible {
+        outline: 2px solid #277d49;
+        outline-offset: 3px;
+      }
+      .scene-meta {
+        margin: 0 0 16px;
+      }
+      .kind {
+        font-weight: 600;
+        color: #2b6942;
+      }
+      .frames {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+        align-items: start;
+      }
+      .frames.single {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      figure {
+        margin: 0;
+        min-width: 0;
+      }
+      figcaption {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+      figcaption a {
+        font-weight: 400;
+      }
+      img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border: 1px solid #d8ded8;
+        background: #fff;
+      }
+      .hidden {
+        display: none;
+      }
+      footer {
+        border-top: 1px solid #dfe3df;
+        padding: 18px 28px;
+        background: #fff;
+      }
+      details {
+        margin-top: 18px;
+      }
+      summary {
+        cursor: pointer;
+      }
+      ul {
+        padding-left: 22px;
+      }
+      @media (max-width: 760px) {
+        header,
+        main,
+        footer {
+          padding-inline: 16px;
+        }
+        .frames {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>登录与故障恢复精修 · 渲染存档</h1>
+      <p>2026-10-20 · 基线 ad72328 · 38组同尺寸前后对比，另含真实应用补充证据。</p>
+      <p>
+        重点：居中且可滚动的恢复页、中文恢复指引、连续重试等待反馈、桌面恢复入口。登录与注册沿用现有布局，保留认证与跳转合同。
+      </p>
+      <p>
+        <a href="demo/dist/before/index.html?scene=root-offline">操作修改前 Demo</a> ·
+        <a href="demo/dist/after/index.html?scene=root-offline">操作修改后 Demo</a> ·
+        <a href="demo/dist/after/index.html?scene=signup">首次创建模拟</a>
+      </p>
+    </header>
+    <main>
+      <div class="toolbar">
+        <label
+          >场景
+          <select id="scene"></select
+        ></label>
+        <div role="group" aria-label="对比模式">
+          <button data-mode="compare" aria-pressed="true">前后并排</button>
+          <button data-mode="before" aria-pressed="false">修改前</button>
+          <button data-mode="after" aria-pressed="false">修改后</button>
+        </div>
+      </div>
+      <div class="scene-meta">
+        <span id="kind" class="kind"></span>
+        <p id="note"></p>
+      </div>
+      <div id="frames" class="frames">
+        <figure id="before">
+          <figcaption>修改前 <a target="_blank" rel="noreferrer">查看原图</a></figcaption>
+          <img alt="修改前真实渲染" />
+        </figure>
+        <figure id="after">
+          <figcaption>修改后 <a target="_blank" rel="noreferrer">查看原图</a></figcaption>
+          <img alt="修改后真实渲染" />
+        </figure>
+      </div>
+      <details>
+        <summary>验收与边界</summary>
+        <ul>
+          <li>
+            真实路由与组件覆盖已有登录、首次创建、本地模式、初始化等待/失败、网络/HTTP故障及恢复。
+          </li>
+          <li>
+            模拟IO交互含必填/密码确认、显隐、认证失败保稿、pending重复Enter、连续失败后再次等待与成功、Desktop桥调用。
+          </li>
+          <li>
+            实际服务已使用标准测试账号登录并进入知识库；未创建第二账号、改密码或改认证配置。Electron窗口与实际首次注册未验。
+          </li>
+          <li>
+            38组配对均核对原始PNG尺寸，实际视口1440/1100/880/600/390及短窗口，布局记录见layout-metrics.json。
+          </li>
+          <li>完整质量门结果见验收记录和日志。</li>
+        </ul>
+      </details>
+    </main>
+    <footer>
+      <a href="acceptance.md">完整验收记录</a> · <a href="manifest.json">尺寸/来源/哈希</a> ·
+      <a href="checks/pnpm-check.log">全仓检查日志</a>
+      <p>
+        截图对比可离线打开。交互Demo已编译保存，使用任意本地静态HTTP服务打开；只模拟IO，不连接真实服务。可切换场景；完成/失败按钮推进可控请求。
+      </p>
+    </footer>
+    <script>
+      const scenes = [
+        {
+          id: 'root-offline-wide',
+          label: '连接失败 · 1440×900',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/root-offline-wide.png',
+          after: 'after/root-offline-wide.png',
+        },
+        {
+          id: 'root-repeated-pending',
+          label: '再次重试等待 · 跨错误边界',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/root-repeated-pending.png',
+          after: 'after/root-repeated-pending.png',
+        },
+        {
+          id: 'setup-error-light',
+          label: '初始化连接失败 · 浅色',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/setup-error-light.png',
+          after: 'after/setup-error-light.png',
+        },
+        {
+          id: 'root-offline-phone',
+          label: '连接失败 · 390×700',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/root-offline-phone.png',
+          after: 'after/root-offline-phone.png',
+        },
+        {
+          id: 'root-offline-short',
+          label: '连接失败 · 深色1100×420',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/root-offline-short.png',
+          after: 'after/root-offline-short.png',
+        },
+        {
+          id: 'root-desktop',
+          label: '故障恢复 · 桌面插槽',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/root-desktop.png',
+          after: 'after/root-desktop.png',
+        },
+        {
+          id: 'auth-error',
+          label: '认证失败 · 草稿保留',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/auth-error.png',
+          after: 'after/auth-error.png',
+        },
+        {
+          id: 'desktop-fallback-invoked',
+          label: '桌面恢复入口调用 · 模拟桥',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/desktop-fallback-invoked.png',
+          after: 'after/desktop-fallback-invoked.png',
+        },
+        {
+          id: 'load-error',
+          label: '共享读取失败 · 窄容器',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/load-error.png',
+          after: 'after/load-error.png',
+        },
+        {
+          id: 'loading',
+          label: '初始化加载',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/loading.png',
+          after: 'after/loading.png',
+        },
+        {
+          id: 'local-browser',
+          label: '本地模式 · 浏览器提示',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/local-browser.png',
+          after: 'after/local-browser.png',
+        },
+        {
+          id: 'local-desktop',
+          label: '本地模式 · 桌面插槽模拟',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/local-desktop.png',
+          after: 'after/local-desktop.png',
+        },
+        {
+          id: 'login-dark',
+          label: '登录 · 深色',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/login-dark.png',
+          after: 'after/login-dark.png',
+        },
+        {
+          id: 'login-dark-compact',
+          label: 'login-dark-compact',
+          kind: '真实应用 / 本地测试服务',
+          note: '真实服务渲染的补充证据。使用标准测试账号验证登录成功；此补充项没有前后配对，不据此宣称视觉差异。',
+          before: 'before/login-dark-compact.png',
+        },
+        {
+          id: 'login-dark-desktop',
+          label: 'login-dark-desktop',
+          kind: '真实应用 / 本地测试服务',
+          note: '真实服务渲染的补充证据。使用标准测试账号验证登录成功；此补充项没有前后配对，不据此宣称视觉差异。',
+          before: 'before/login-dark-desktop.png',
+        },
+        {
+          id: 'login-dark-medium',
+          label: 'login-dark-medium',
+          kind: '真实应用 / 本地测试服务',
+          note: '真实服务渲染的补充证据。使用标准测试账号验证登录成功；此补充项没有前后配对，不据此宣称视觉差异。',
+          before: 'before/login-dark-medium.png',
+        },
+        {
+          id: 'login-dark-narrow',
+          label: 'login-dark-narrow',
+          kind: '真实应用 / 本地测试服务',
+          note: '真实服务渲染的补充证据。使用标准测试账号验证登录成功；此补充项没有前后配对，不据此宣称视觉差异。',
+          before: 'before/login-dark-narrow.png',
+        },
+        {
+          id: 'login-dark-phone',
+          label: 'login-dark-phone',
+          kind: '真实应用 / 本地测试服务',
+          note: '真实服务渲染的补充证据。使用标准测试账号验证登录成功；此补充项没有前后配对，不据此宣称视觉差异。',
+          before: 'before/login-dark-phone.png',
+        },
+        {
+          id: 'login-dark-short',
+          label: 'login-dark-short',
+          kind: '真实应用 / 本地测试服务',
+          note: '真实服务渲染的补充证据。使用标准测试账号验证登录成功；此补充项没有前后配对，不据此宣称视觉差异。',
+          before: 'before/login-dark-short.png',
+        },
+        {
+          id: 'login-light',
+          label: '登录 · 浅色',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/login-light.png',
+          after: 'after/login-light.png',
+        },
+        {
+          id: 'login-password-visible',
+          label: '密码显隐',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/login-password-visible.png',
+          after: 'after/login-password-visible.png',
+        },
+        {
+          id: 'login-required',
+          label: '登录必填校验',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/login-required.png',
+          after: 'after/login-required.png',
+        },
+        {
+          id: 'login-success',
+          label: '模拟登录成功与跳转',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/login-success.png',
+          after: 'after/login-success.png',
+        },
+        {
+          id: 'long-error',
+          label: '长错误信息',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/long-error.png',
+          after: 'after/long-error.png',
+        },
+        {
+          id: 'pending',
+          label: '登录提交中',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/pending.png',
+          after: 'after/pending.png',
+        },
+        {
+          id: 'pending-second-enter',
+          label: '等待时再次 Enter · 仍1个请求',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/pending-second-enter.png',
+          after: 'after/pending-second-enter.png',
+        },
+        {
+          id: 'product-authenticated',
+          label: 'product-authenticated',
+          kind: '真实应用 / 本地测试服务',
+          note: '真实服务渲染的补充证据。使用标准测试账号验证登录成功；此补充项没有前后配对，不据此宣称视觉差异。',
+          after: 'after/product-authenticated.png',
+        },
+        {
+          id: 'root-http',
+          label: 'HTTP 故障恢复',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/root-http.png',
+          after: 'after/root-http.png',
+        },
+        {
+          id: 'root-offline-compact',
+          label: '连接失败 · 880×760',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/root-offline-compact.png',
+          after: 'after/root-offline-compact.png',
+        },
+        {
+          id: 'root-offline-medium',
+          label: '连接失败 · 深色1100×760',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/root-offline-medium.png',
+          after: 'after/root-offline-medium.png',
+        },
+        {
+          id: 'root-offline-narrow',
+          label: '连接失败 · 深色600×760',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/root-offline-narrow.png',
+          after: 'after/root-offline-narrow.png',
+        },
+        {
+          id: 'root-offline-recovered',
+          label: '连接重试成功恢复',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/root-offline-recovered.png',
+          after: 'after/root-offline-recovered.png',
+        },
+        {
+          id: 'root-offline-retrying',
+          label: '连接失败后重试等待',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/root-offline-retrying.png',
+          after: 'after/root-offline-retrying.png',
+        },
+        {
+          id: 'root-repeated-recovered',
+          label: '再次重试成功恢复',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/root-repeated-recovered.png',
+          after: 'after/root-repeated-recovered.png',
+        },
+        {
+          id: 'root-retry-failed',
+          label: '重试再次失败 · 恢复可操作',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/root-retry-failed.png',
+          after: 'after/root-retry-failed.png',
+        },
+        {
+          id: 'setup-error-dark',
+          label: '初始化连接失败 · 深色600',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/setup-error-dark.png',
+          after: 'after/setup-error-dark.png',
+        },
+        {
+          id: 'setup-error-recovered',
+          label: '初始化重试恢复',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/setup-error-recovered.png',
+          after: 'after/setup-error-recovered.png',
+        },
+        {
+          id: 'setup-error-retrying',
+          label: '初始化失败后重试',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/setup-error-retrying.png',
+          after: 'after/setup-error-retrying.png',
+        },
+        {
+          id: 'signup-light',
+          label: '首次创建账号 · 浅色',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/signup-light.png',
+          after: 'after/signup-light.png',
+        },
+        {
+          id: 'signup-mismatch',
+          label: '两次密码不一致',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/signup-mismatch.png',
+          after: 'after/signup-mismatch.png',
+        },
+        {
+          id: 'signup-pending',
+          label: '首次创建提交中 · 模拟IO',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/signup-pending.png',
+          after: 'after/signup-pending.png',
+        },
+        {
+          id: 'signup-phone',
+          label: '首次创建 · 390×700',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/signup-phone.png',
+          after: 'after/signup-phone.png',
+        },
+        {
+          id: 'signup-required',
+          label: '首次创建必填校验',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/signup-required.png',
+          after: 'after/signup-required.png',
+        },
+        {
+          id: 'signup-short',
+          label: '首次创建 · 1100×420',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/signup-short.png',
+          after: 'after/signup-short.png',
+        },
+        {
+          id: 'signup-success',
+          label: '模拟创建成功与跳转',
+          kind: '真实组件 / 模拟 IO',
+          note: '真实产品组件及根路由；只替换 IO。相同内容、场景、尺寸；未改动的表单保留原样。原生窗口与实际注册不由此模拟验收。',
+          before: 'before/signup-success.png',
+          after: 'after/signup-success.png',
+        },
+      ]
+      const select = document.getElementById('scene')
+      let mode = 'compare'
+      for (const scene of scenes) {
+        const o = document.createElement('option')
+        o.value = scene.id
+        o.textContent = scene.label
+        select.append(o)
+      }
+      function render() {
+        const scene = scenes.find((s) => s.id === select.value) || scenes[0]
+        if (mode === 'before' && !scene.before) mode = 'after'
+        if (mode === 'after' && !scene.after) mode = 'before'
+        document.getElementById('kind').textContent = scene.kind
+        document.getElementById('note').textContent = scene.note
+        for (const side of ['before', 'after']) {
+          const figure = document.getElementById(side)
+          const path = scene[side]
+          figure.classList.toggle('hidden', !path || (mode !== 'compare' && mode !== side))
+          if (path) {
+            figure.querySelector('img').src = path
+            figure.querySelector('a').href = path
+          }
+        }
+        document
+          .getElementById('frames')
+          .classList.toggle('single', mode !== 'compare' || !scene.before || !scene.after)
+        for (const button of document.querySelectorAll('[data-mode]')) {
+          button.setAttribute('aria-pressed', String(button.dataset.mode === mode))
+          button.disabled =
+            (button.dataset.mode === 'before' && !scene.before) ||
+            (button.dataset.mode === 'after' && !scene.after)
+        }
+        history.replaceState(null, '', '#' + scene.id)
+      }
+      select.onchange = render
+      for (const button of document.querySelectorAll('[data-mode]'))
+        button.onclick = () => {
+          mode = button.dataset.mode
+          render()
+        }
+      const initial = location.hash.slice(1)
+      if (scenes.some((s) => s.id === initial)) select.value = initial
+      render()
+    </script>
+  </body>
+</html>

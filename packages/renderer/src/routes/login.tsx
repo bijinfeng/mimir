@@ -345,7 +345,7 @@ function LoginPage() {
                   type="error"
                   showIcon
                   title="无法连接服务"
-                  description={describeError(stateQuery.error)}
+                  description="请检查网络连接后重试。如果仍无法连接，请确认服务地址是否正确。"
                 />
                 <Button type="primary" onClick={() => void stateQuery.refetch()}>
                   重试
