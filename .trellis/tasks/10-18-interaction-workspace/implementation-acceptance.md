@@ -32,3 +32,10 @@ Evidence is mapped to all 19 groups /150 inventory IDs in `verification/implemen
 `pnpm check` stopped at unrelated miniapp prototype lint: `.trellis/tasks/10-17-wechat-miniapp-research/prototype/src/Prototype.tsx:331` set-state-in-effect and lines1215–1217 missing array keys. Independently running remaining gate stages found format failure only in unrelated untracked `.impeccable/config.json`; typechecks and tests passed. Those other-session files were preserved and excluded from this task's commit. Logs: `/tmp/mimir-workspace-v2-check.log`, `/tmp/mimir-workspace-v2-remaining.log`, `/tmp/mimir-workspace-v2-types.log`, `/tmp/mimir-workspace-v2-tests.log`.
 
 Implementation is delivered for review and committed within its scope; task remains in progress until the repository-wide lint/format blockers are resolved. It is not archived or marked fully complete while `pnpm check` is red. Other modules still require their own HTML approval.
+
+
+## 2026-10-20 总模块集成收口
+
+本任务先前的实现、批准稿、还原修复与实际浏览器验收保持。此前记录的全仓lint/format、TS2550或Office测试阻断为历史结果；本次最终树完整 `pnpm check` 已退出0，日志 `docs/visual-comparisons/2026-10-20-desktop/full-check.txt`（仓库根相对路径），结构化结果同目录 quality-result.json。Office2774、Renderer591、Chat88、Desktop57、Server1365及local/fnOS/备份与根脚本通过；Storage既有2项跳过未改。未排除产品文件、放宽规则或提高超时。
+
+这次只补全仓门与归档记录，不改冻结稿或重称所有枚举状态已GUI执行；各原生/外部服务未验边界继续适用。后续逐版视觉审批由用户2026-10-19直接实施授权覆盖，历史审批仍保留。当前状态可完成归档。

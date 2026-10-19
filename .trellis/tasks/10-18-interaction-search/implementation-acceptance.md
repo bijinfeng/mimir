@@ -79,3 +79,10 @@ Office失败：`DocxEditor.encryption.test.tsx` 的 external standard / external
 - 独立检查无新增问题；定向lint/format、样式守卫、AntD lint、Renderer类型检查及Palette15项测试通过。禁用态由组件既有回归和级联审查覆盖，未声称执行原生OS输入法或disabled的真实GUI采样。
 - 本轮重新执行pnpm check，仍在其他小程序原型7项lint错误处终止，后续全仓门未执行。任务保持开放，不归档。
 - 证据：`verification/ai-hover/`，含修复前后截图、四组状态几何、active、独立检查和全仓失败输出；冻结HTML保持原哈希。
+
+
+## 2026-10-20 总模块集成收口
+
+本任务先前的实现、批准稿、还原修复与实际浏览器验收保持。此前记录的全仓lint/format、TS2550或Office测试阻断为历史结果；本次最终树完整 `pnpm check` 已退出0，日志 `docs/visual-comparisons/2026-10-20-desktop/full-check.txt`（仓库根相对路径），结构化结果同目录 quality-result.json。Office2774、Renderer591、Chat88、Desktop57、Server1365及local/fnOS/备份与根脚本通过；Storage既有2项跳过未改。未排除产品文件、放宽规则或提高超时。
+
+这次只补全仓门与归档记录，不改冻结稿或重称所有枚举状态已GUI执行；各原生/外部服务未验边界继续适用。后续逐版视觉审批由用户2026-10-19直接实施授权覆盖，历史审批仍保留。当前状态可完成归档。

@@ -39,5 +39,11 @@
     "verification/product/comparison.html"
   ],
   "notes": "用户“可以，实施吧”批准revision2；本轮实施及独立复查完成，Renderer59文件511测试、限定lint/format通过。真实GUI与17项指定度量/hover证据齐全。全仓小程序lint及外部Promise.withResolvers类型阻断；保持in_progress，未归档。",
-  "meta": {}
+  "meta": {
+    "finalIntegrationGate": {
+      "date": "2026-10-20",
+      "exitCode": 0,
+      "log": "docs/visual-comparisons/2026-10-20-desktop/full-check.txt"
+    }
+  }
 }

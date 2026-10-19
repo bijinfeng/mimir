@@ -34,10 +34,13 @@
     "10-20-interaction-docx",
     "10-20-interaction-xlsx",
     "10-20-interaction-pptx",
-    "10-20-interaction-pdf"
+    "10-20-interaction-pdf",
+    "10-20-interaction-desktop"
   ],
   "parent": null,
   "relatedFiles": [],
-  "notes": "用户2026-10-19授权后续模块直接实施并留真实对比。模块1–15已完成实施与全仓验收；PDF来源映射/8组真实前后、原生字节保存重开与实际组件Demo已存档。主对话起始页附加精修已完成。继续模块16；原生及外部未验边界见各模块acceptance.md，历史审批保留。",
-  "meta": {}
+  "notes": "模块1–16限定实施与验收完成，聊天起始页附加修复bf6638b。最终pnpm check exit0，Desktop build/真实Electron12条自检通过；模块2–6历史全仓阻断已补关闭证据。原生/外部未验边界见各acceptance.md；统一存档docs/visual-comparisons/index.html。",
+  "meta": {
+    "finalGate": "docs/visual-comparisons/2026-10-20-desktop/full-check.txt"
+  }
 }

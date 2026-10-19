@@ -33,5 +33,11 @@
     "verification/implementation-coverage.json"
   ],
   "notes": "v2已实施、独立检查与真实浏览器验收通过；全仓类型与测试通过。pnpm check仍受其他会话小程序原型lint及.impeccable/config.json格式阻断，保留in_progress不归档。",
-  "meta": {}
+  "meta": {
+    "finalIntegrationGate": {
+      "date": "2026-10-20",
+      "exitCode": 0,
+      "log": "docs/visual-comparisons/2026-10-20-desktop/full-check.txt"
+    }
+  }
 }

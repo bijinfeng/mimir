@@ -16,3 +16,10 @@
 状态为 `implemented_verified_global_gate_pending`：模块实现与限定验收已提交，全仓门未通过，任务保持in_progress，不归档。没有推送。
 
 实现提交：`0b0a18bb88775baab5dd538808b6143155a8f1b8`。
+
+
+## 2026-10-20 总模块集成收口
+
+本任务先前的实现、批准稿、还原修复与实际浏览器验收保持。此前记录的全仓lint/format、TS2550或Office测试阻断为历史结果；本次最终树完整 `pnpm check` 已退出0，日志 `docs/visual-comparisons/2026-10-20-desktop/full-check.txt`（仓库根相对路径），结构化结果同目录 quality-result.json。Office2774、Renderer591、Chat88、Desktop57、Server1365及local/fnOS/备份与根脚本通过；Storage既有2项跳过未改。未排除产品文件、放宽规则或提高超时。
+
+这次只补全仓门与归档记录，不改冻结稿或重称所有枚举状态已GUI执行；各原生/外部服务未验边界继续适用。后续逐版视觉审批由用户2026-10-19直接实施授权覆盖，历史审批仍保留。当前状态可完成归档。

@@ -268,5 +268,15 @@
       "user_quote": null,
       "implementation_commit": null
     }
-  ]
+  ],
+  "final_integration_2026_10_20": {
+    "authorization": "用户2026-10-19：后面都直接实施打磨，只需要完成后做前后渲染对比留档",
+    "modulesImplementedAndAccepted": 16,
+    "historicalEntriesPreserved": true,
+    "historicalEntryStatusesAreNotCurrentGates": true,
+    "gateExitCode": 0,
+    "gateLog": "docs/visual-comparisons/2026-10-20-desktop/full-check.txt",
+    "index": "docs/visual-comparisons/index.html",
+    "nativeAndExternalLimits": "各模块acceptance.md明确记录，不冒充全枚举或全原生GUI验收"
+  }
 }

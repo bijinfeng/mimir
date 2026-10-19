@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  /><title>Mimir 交互精修存档</title
+  ><style>
+    body {
+      margin: 0;
+      background: #f7f8fa;
+      color: #242928;
+      font: 15px/1.6 system-ui;
+    }
+    main {
+      max-width: 920px;
+      margin: auto;
+      padding: 40px 24px;
+    }
+    h1 {
+      font-size: 26px;
+    }
+    a {
+      color: #2a7050;
+      text-underline-offset: 4px;
+    }
+    ol {
+      padding: 0;
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+    }
+    li {
+      background: white;
+      border: 1px solid #e1e5e2;
+      border-radius: 8px;
+      padding: 18px;
+    }
+    li a {
+      font-weight: 600;
+    }
+    p {
+      color: #626a65;
+      margin: 8px 0;
+      font-size: 13px;
+    }
+    aside {
+      padding: 16px;
+      border-left: 3px solid #3e8761;
+      background: #eef5f0;
+    }
+  </style>
+  <main>
+    <h1>Mimir 交互精修存档</h1>
+    <p>2026-10-20 · 16个模块。早期方案与实际渲染证据分别标明，盘点状态数不等于逐项GUI通过次数。</p>
+    <aside>
+      <a href="2026-10-20-chat-start/comparison.html">最新：对话起始页 · 六组真实前后</a>
+      <p>模型、思考强度和知识库范围沿现有组件保留。</p>
+    </aside>
+    <ol>
+      <li>
+        <a
+          href="../../.trellis/tasks/archive/2026-10/10-18-interaction-foundations/prototype/review.html"
+          >01 基础组件</a
+        >
+        <p>早期批准方案；实施证据见任务 implementation-evidence.md</p>
+      </li>
+      <li>
+        <a
+          href="../../.trellis/tasks/archive/2026-10/10-18-interaction-workspace/prototype/review.html"
+          >02 工作区与账户</a
+        >
+        <p>早期批准方案；真实业务验收见任务 implementation-acceptance.md</p>
+      </li>
+      <li>
+        <a
+          href="../../.trellis/tasks/archive/2026-10/10-18-interaction-search/verification/parity/comparison.html"
+          >03 搜索与命令</a
+        >
+        <p>批准稿与实际产品还原对比，数据差异详见任务</p>
+      </li>
+      <li>
+        <a
+          href="../../.trellis/tasks/archive/2026-10/10-18-interaction-capture/verification/product/comparison.html"
+          >04 收集与导入</a
+        >
+        <p>实际产品前后</p>
+      </li>
+      <li>
+        <a
+          href="../../.trellis/tasks/archive/2026-10/10-18-interaction-library/verification/browser/comparison.html"
+          >05 知识库与目录</a
+        >
+        <p>实际产品前后</p>
+      </li>
+      <li>
+        <a
+          href="../../.trellis/tasks/archive/2026-10/10-18-interaction-document/verification/implementation-browser/review.html"
+          >06 文档阅读</a
+        >
+        <p>实际实施浏览器证据</p>
+      </li>
+      <li>
+        <a
+          href="../../.trellis/tasks/archive/2026-10/10-19-chat-rendering-polish/verification/comparison.html"
+          >07 对话渲染</a
+        >
+        <p>真实前后；最新起始页精修见下方</p>
+      </li>
+      <li>
+        <a href="2026-10-20-settings/comparison.html">08 设置</a>
+        <p>真实组件前后；验收与未验边界见同目录 acceptance.md</p>
+      </li>
+      <li>
+        <a href="2026-10-20-login/comparison.html">09 登录与故障</a>
+        <p>真实组件前后；验收与未验边界见同目录 acceptance.md</p>
+      </li>
+      <li>
+        <a href="2026-10-20-markdown/comparison.html">10 Markdown</a>
+        <p>真实组件前后；验收与未验边界见同目录 acceptance.md</p>
+      </li>
+      <li>
+        <a href="2026-10-20-html/comparison.html">11 HTML</a>
+        <p>真实组件前后；验收与未验边界见同目录 acceptance.md</p>
+      </li>
+      <li>
+        <a href="2026-10-20-docx/comparison.html">12 Word / DOCX</a>
+        <p>真实组件前后；验收与未验边界见同目录 acceptance.md</p>
+      </li>
+      <li>
+        <a href="2026-10-20-xlsx/comparison.html">13 Excel / XLSX</a>
+        <p>真实组件前后；验收与未验边界见同目录 acceptance.md</p>
+      </li>
+      <li>
+        <a href="2026-10-20-pptx/comparison.html">14 PowerPoint / PPTX</a>
+        <p>真实组件前后；验收与未验边界见同目录 acceptance.md</p>
+      </li>
+      <li>
+        <a href="2026-10-20-pdf/comparison.html">15 PDF</a>
+        <p>真实组件前后；验收与未验边界见同目录 acceptance.md</p>
+      </li>
+      <li>
+        <a href="2026-10-20-desktop/comparison.html">16 Desktop</a>
+        <p>真实组件前后；验收与未验边界见同目录 acceptance.md</p>
+      </li>
+    </ol>
+    <p>
+      每个模块的验收记录分别说明测试、数据/保存合同及原生/外部服务未验边界。完整当前全仓检查见
+      <a href="2026-10-20-desktop/full-check.txt">Desktop 最终检查日志</a>。
+    </p>
+  </main>
+</html>

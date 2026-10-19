@@ -1,6 +1,6 @@
 # 模块地图与审批记录
 
-2026-10-20。前六模块已有实施验收；第七模块已迁移TanStack官方Headless UI并完成二次渲染精修及后续细节修复（最新提交7b61836）。后续模块遵从用户2026-10-19的直接实施授权，完成后保存真实前后HTML，不再等待逐版视觉确认。历史审批原样保留，当前实现证据见各任务和提交。
+2026-10-20。前六模块已有实施验收；第七模块已迁移TanStack官方Headless UI并完成二次渲染精修及后续细节修复（起始页附加精修bf6638b）。后续模块遵从用户2026-10-19的直接实施授权，完成后保存真实前后HTML，不再等待逐版视觉确认。历史审批原样保留，当前实现证据见各任务和提交。
 
 | 顺序 | 模块 | 评审切片 | 当前状态 |
 |---|---|---|---|
@@ -8,18 +8,18 @@
 | 2 | 工作区导航与账户菜单 | 平铺知识库导航/最近笔记/历史对话/账户主题与登出 | [v2已实施，模块验收通过](../10-18-interaction-workspace/implementation-acceptance.md) |
 | 3 | 搜索与命令面板 | 搜索/最近项/命令/失败恢复/上下文宿主与未保存边界 | [v1已实施并完成还原修正](../10-18-interaction-search/implementation-acceptance.md) |
 | 4 | 收集与导入 | 网页收集；文件与文件夹上传/部分失败 | [v1 revision2已获批实施，验收记录](../10-18-interaction-capture/implementation-acceptance.md) |
-| 5 | 知识库与目录浏览管理 | 首次引导/创建；列表卡片/面包屑/标签；目录文件动作/替换删除 | [v1 revision2 A已实施，模块验收通过、全仓门待解](../10-18-interaction-library/implementation-acceptance.md) |
-| 6 | 文档阅读与共享文档流程 | 阅读框架/标题/大纲/引用；整理菜单/摘要/双链；图片音视频/降级；助手宿主与未保存流程 | [v1已实施并完成大纲还原修正，模块验收通过、全仓门待解](../10-18-interaction-document/implementation-acceptance.md) |
-| 7 | AI对话与生成交互 | 输入范围/模型/队列；消息思考/工具/引用/媒体；失败与历史；Agent中断/截图写作交接 | [已实施、二次精修与全仓验收通过](../archive/2026-10/10-19-chat-rendering-polish/prd.md)，后续细节见docs/visual-comparisons/2026-10-19-* |
-| 8 | 设置全分区 | 供应商/模型；网络搜索；检索；订阅；存储；支持能力；统计；数据备份；外观；账号头像；客户端（Desktop） | [已实施、完整质量门通过；验收与真实前后存档](../../../docs/visual-comparisons/2026-10-20-settings/acceptance.md) |
-| 9 | 登录与全局故障 | 登录/校验/本地模式；全局故障恢复 | [已实施、全仓检查通过；38组真实组件前后与交互Demo](../../../docs/visual-comparisons/2026-10-20-login/acceptance.md) |
-| 10 | Markdown笔记编辑器 | 正文/Ribbon/查找；链接斜杠/表格/属性/特殊节点；AI草稿/保存失败 | [已实施、全仓检查通过；74项交互索引/14组真实前后与实际组件Demo](../../../docs/visual-comparisons/2026-10-20-markdown/acceptance.md) |
-| 11 | HTML页面编辑器 | 源码/分栏/预览；路径与元素/CSS；插入图片/表格；演示输出；AI问答/提纲/草稿 | [已实施、全仓检查通过；92项交互索引/8组真实前后及实际组件Demo](../../../docs/visual-comparisons/2026-10-20-html/acceptance.md) |
-| 12 | Word / DOCX编辑器 | 开始文字列表查找；插入图片图表表格；布局设计引用；审阅批注墨迹对比；视图拆分；加密保护隐私/保存输出 | [已实施、全仓检查通过；478项来源映射/9组真实前后及实际组件Demo](../../../docs/visual-comparisons/2026-10-20-docx/acceptance.md) |
-| 13 | Excel / XLSX编辑器 | 网格公式工作表；格式范围行列查找；剪贴板粘贴填充；数据规则排序验证；对象图表透视；打印冻结保护 | [已实施、全仓检查通过；完整来源映射/9组真实前后及实际组件Demo](../../../docs/visual-comparisons/2026-10-20-xlsx/acceptance.md) |
-| 14 | PowerPoint / PPTX编辑器 | 工作区视图文字；对象多选形状排列；图表表格图片；插入多媒体录屏墨迹；主题页面母版批注；动画放映排练输出；AI与整稿草稿 | [已实施、全仓检查通过；754条来源索引/8组真实前后及实际组件Demo](../../../docs/visual-comparisons/2026-10-20-pptx/acceptance.md) |
-| 15 | PDF编辑器 | 页面缩略图/查找保存；文字段落/OCR标注；图片表单批注；签名绘图属性；本地页面工具输出；涂黑副本/图片导出 | [已实施、全仓检查通过；740条来源索引/8组真实前后及实际组件Demo](../../../docs/visual-comparisons/2026-10-20-pdf/acceptance.md) |
-| 16 | Desktop专属载体 | 首启/模式切换/故障；标题栏窗口关于；原生菜单与系统对话框 | 已索引，待展开与出稿 |
+| 5 | 知识库与目录浏览管理 | 首次引导/创建；列表卡片/面包屑/标签；目录文件动作/替换删除 | [v1 revision2 A已实施，模块与最终全仓验收通过](../10-18-interaction-library/implementation-acceptance.md) |
+| 6 | 文档阅读与共享文档流程 | 阅读框架/标题/大纲/引用；整理菜单/摘要/双链；图片音视频/降级；助手宿主与未保存流程 | [v1已实施并完成大纲还原修正，模块与最终全仓验收通过](../10-18-interaction-document/implementation-acceptance.md) |
+| 7 | AI对话与生成交互 | 输入范围/模型/队列；消息思考/工具/引用/媒体；失败与历史；Agent中断/截图写作交接 | [已实施、二次精修与全仓验收通过](../10-19-chat-rendering-polish/prd.md)，后续细节见docs/visual-comparisons/2026-10-19-* |
+| 8 | 设置全分区 | 供应商/模型；网络搜索；检索；订阅；存储；支持能力；统计；数据备份；外观；账号头像；客户端（Desktop） | [已实施、完整质量门通过；验收与真实前后存档](../../../../../docs/visual-comparisons/2026-10-20-settings/acceptance.md) |
+| 9 | 登录与全局故障 | 登录/校验/本地模式；全局故障恢复 | [已实施、全仓检查通过；38组真实组件前后与交互Demo](../../../../../docs/visual-comparisons/2026-10-20-login/acceptance.md) |
+| 10 | Markdown笔记编辑器 | 正文/Ribbon/查找；链接斜杠/表格/属性/特殊节点；AI草稿/保存失败 | [已实施、全仓检查通过；74项交互索引/14组真实前后与实际组件Demo](../../../../../docs/visual-comparisons/2026-10-20-markdown/acceptance.md) |
+| 11 | HTML页面编辑器 | 源码/分栏/预览；路径与元素/CSS；插入图片/表格；演示输出；AI问答/提纲/草稿 | [已实施、全仓检查通过；92项交互索引/8组真实前后及实际组件Demo](../../../../../docs/visual-comparisons/2026-10-20-html/acceptance.md) |
+| 12 | Word / DOCX编辑器 | 开始文字列表查找；插入图片图表表格；布局设计引用；审阅批注墨迹对比；视图拆分；加密保护隐私/保存输出 | [已实施、全仓检查通过；478项来源映射/9组真实前后及实际组件Demo](../../../../../docs/visual-comparisons/2026-10-20-docx/acceptance.md) |
+| 13 | Excel / XLSX编辑器 | 网格公式工作表；格式范围行列查找；剪贴板粘贴填充；数据规则排序验证；对象图表透视；打印冻结保护 | [已实施、全仓检查通过；完整来源映射/9组真实前后及实际组件Demo](../../../../../docs/visual-comparisons/2026-10-20-xlsx/acceptance.md) |
+| 14 | PowerPoint / PPTX编辑器 | 工作区视图文字；对象多选形状排列；图表表格图片；插入多媒体录屏墨迹；主题页面母版批注；动画放映排练输出；AI与整稿草稿 | [已实施、全仓检查通过；754条来源索引/8组真实前后及实际组件Demo](../../../../../docs/visual-comparisons/2026-10-20-pptx/acceptance.md) |
+| 15 | PDF编辑器 | 页面缩略图/查找保存；文字段落/OCR标注；图片表单批注；签名绘图属性；本地页面工具输出；涂黑副本/图片导出 | [已实施、全仓检查通过；740条来源索引/8组真实前后及实际组件Demo](../../../../../docs/visual-comparisons/2026-10-20-pdf/acceptance.md) |
+| 16 | Desktop专属载体 | 首启/模式切换/故障；标题栏窗口关于；原生菜单与系统对话框 | [已实施、全仓检查通过；19类来源/8组真实前后+2补充与实际组件Demo](../../../../../docs/visual-comparisons/2026-10-20-desktop/acceptance.md) |
 
 ## 逐模块流程
 
@@ -102,3 +102,8 @@
 - 2026-10-20 第十四模块PPTX：公式/图示/导入三个长Inspector固定动作与内部滚动，58处复合Select现有忙态补齐，父子路径编辑同步忙态。754条异类来源记录、8组真实前后及4组补充状态存档；原生插入、导入、图表、撤销重做与保存重开完成代表路径验收，独立检查及完整pnpm check通过。来源索引不等于逐项GUI通过；隔离helper/IO模拟及外部原生未验边界见acceptance.md。模块15–16继续。
 
 - 2026-10-20 第十五模块PDF：8组10个Inspector入口收起、批注固定动作及本地导航滚动/真实busy字段精修。740条异类来源记录、8组真实前后与3组原生保存重开补充证据存档；独立135项PDF回归与完整pnpm check通过。内存ACK、演示刷新与原生未验边界见acceptance.md。继续模块16 Desktop。
+
+
+## 2026-10-20 最终集成收口
+
+模块1–16均已完成限定实施与验收，最新完整pnpm check退出0；模块2–6历史外部阻断已在各implementation-acceptance末尾追加关闭证据，历史失败未覆盖。Desktop实际Electron启动自检通过，原生手工GUI受Mac锁屏限制。统一入口见docs/visual-comparisons/index.html；最终结论见final-acceptance.md。

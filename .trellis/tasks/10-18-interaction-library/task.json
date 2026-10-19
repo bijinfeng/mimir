@@ -23,6 +23,11 @@
   "relatedFiles": [],
   "notes": "revision2 A已获“开始实施”授权，模块实现、独立检查和真实UI抽验完成；Renderer64文件537测试通过。外部miniapp lint与既有TS2550阻断全仓门，保持in_progress，不归档。",
   "meta": {
-    "implementation_status": "implemented_verified_global_gate_pending"
+    "implementation_status": "implemented_verified_global_gate_pending",
+    "finalIntegrationGate": {
+      "date": "2026-10-20",
+      "exitCode": 0,
+      "log": "docs/visual-comparisons/2026-10-20-desktop/full-check.txt"
+    }
   }
 }

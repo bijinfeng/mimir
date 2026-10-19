@@ -44,3 +44,10 @@ OS IME、读屏、Electron关闭、原生播放/拖动/全屏、下载落盘完�
 实测点击第三节后曾因IO仅含变化项而被第四项抢占；改为完整标题集/实际阅读锚点与rAF滚动联动。文末scrollTop719被夹紧、第三节距滚动根顶部36.77px时，保持明确点击第三节；向上滚240px后scrollTop479正确回第二节。再回顶部，首项正确选中。深色普通#a3a9b3、选中#91c7a7/背景#282c33/细线#4b9c71；浅色对应冻结稿。悬停与键盘Tab焦点的条目矩形均171×32，未发生位移。
 
 独立trellis-check复核并修复联动，3文件11项相关回归通过；lint/format/样式守卫/diff通过，Renderer tsc仍仅范围外TS2550。此前569项全套结果是返修前记录，未当作返修后全套重跑。新[大纲同尺寸截图](verification/implementation-browser/outline-comparison.png)、[联动截图](verification/implementation-browser/outline-third-active.png)和最终metrics已保存；冻结稿未修改。
+
+
+## 2026-10-20 总模块集成收口
+
+本任务先前的实现、批准稿、还原修复与实际浏览器验收保持。此前记录的全仓lint/format、TS2550或Office测试阻断为历史结果；本次最终树完整 `pnpm check` 已退出0，日志 `docs/visual-comparisons/2026-10-20-desktop/full-check.txt`（仓库根相对路径），结构化结果同目录 quality-result.json。Office2774、Renderer591、Chat88、Desktop57、Server1365及local/fnOS/备份与根脚本通过；Storage既有2项跳过未改。未排除产品文件、放宽规则或提高超时。
+
+这次只补全仓门与归档记录，不改冻结稿或重称所有枚举状态已GUI执行；各原生/外部服务未验边界继续适用。后续逐版视觉审批由用户2026-10-19直接实施授权覆盖，历史审批仍保留。当前状态可完成归档。

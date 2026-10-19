@@ -42,5 +42,11 @@
     "verification/ai-hover/check.md"
   ],
   "notes": "首轮视觉完成结论已更正。16组差异审计、冻结稿还原修正、实际浅深/390/低高度/详情与宿主对照完成；独立Renderer57文件495测试及全仓类型通过。pnpm check停于外部小程序7项lint，不归档。verification/parity/comparison.html与browser-qa.json为本轮证据。 AI区hover修复：AntD状态边框覆盖已消除，浅深/390px状态矩形一致，焦点与active通过；Palette15项通过，独立检查无问题。证据verification/ai-hover/；全仓仍被外部小程序7项lint阻断。",
-  "meta": {}
+  "meta": {
+    "finalIntegrationGate": {
+      "date": "2026-10-20",
+      "exitCode": 0,
+      "log": "docs/visual-comparisons/2026-10-20-desktop/full-check.txt"
+    }
+  }
 }

@@ -39,6 +39,11 @@
     "renderer_tests_passed": 569,
     "global_gate": "failed_outside_scope",
     "gui_verification": "verification/implementation-browser-qa.md",
-    "outline_parity_correction": "implemented; exact local outline geometry/colors, reading-anchor and clamped destination follow; 11 regressions pass; see implementation-acceptance.md"
+    "outline_parity_correction": "implemented; exact local outline geometry/colors, reading-anchor and clamped destination follow; 11 regressions pass; see implementation-acceptance.md",
+    "finalIntegrationGate": {
+      "date": "2026-10-20",
+      "exitCode": 0,
+      "log": "docs/visual-comparisons/2026-10-20-desktop/full-check.txt"
+    }
   }
 }
