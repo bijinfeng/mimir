@@ -12,8 +12,8 @@
 {"file": ".trellis/tasks/10-18-interaction-chat/research/full-official-thread-contract.md", "reason": "v3/v4历史来源与交互基准；实现所有权/默认样式要求已被v5自有UI方向替代"}
 {"file": ".trellis/tasks/10-18-interaction-chat/research/full-official-feature-mapping-summary.md", "reason": "71组379来源状态逐项official/host-external/removed/boundary分类，非GUI次数"}
 {"file": ".trellis/tasks/10-18-interaction-chat/research/chat-attachment-planning.md", "reason": "附件生命周期与格式安全业务合同；旧官方Adapter所有权已由v5自有UI方向替代"}
-{"file": ".trellis/tasks/10-18-interaction-chat/design.md", "reason": "当前v5 TanStack/自有组件、v4交互保真与协议/宿主分工，取代全官方方向"}
-{"file": ".trellis/tasks/10-18-interaction-chat/implement.md", "reason": "具体v5认可后的迁移步骤、真实AGUI/队列/中断/附件验证"}
+{"file": ".trellis/tasks/10-18-interaction-chat/design.md", "reason": "当前v7设计：最新SDK、v6模型能力、v4交互保真及协议/宿主分工"}
+{"file": ".trellis/tasks/10-18-interaction-chat/implement.md", "reason": "v7产品统一迁移、真实AGUI/队列/中断/附件验证顺序"}
 {"file": ".trellis/tasks/10-18-interaction-chat/research/chat-attachment-adapter-roundtrip.md", "reason": "真实已装AGUI转换往返：绝对图片URL/canonicalID/file引用，非真实HTTP能力"}
 {"file": ".trellis/tasks/10-18-interaction-chat/research/agui-official-thread-pre-send-seam.md", "reason": "旧assistant-ui发送前冻结/唯一Agent桥历史证据；v5需改用TanStack统一发送意图，不能直接移植接口"}
 {"file": ".trellis/tasks/10-18-interaction-chat/planning-acceptance-v4.md", "reason": "冻结v4历史交互与证据基准；视觉/全官方限制已由v5替代，不是新稿实施批准"}
@@ -26,3 +26,4 @@
 {"file": ".trellis/tasks/10-18-interaction-chat/research/agui-v6-interaction-catalog.md", "reason": "v6 UI-013/014明确修订，其余协议与交互目录继承v5"}
 {"file": ".trellis/tasks/10-18-interaction-chat/research/tanstack-latest-upgrade.md", "reason": "最新稳定版本/官方API变更、真实依赖兼容及全产品AI使用点迁移清单"}
 {"file": ".trellis/tasks/10-18-interaction-chat/planning-acceptance-v7.md", "reason": "具体v7 SDK升级HTML及验证边界，保留v6交互"}
+{"file": ".trellis/tasks/10-18-interaction-chat/implementation-review-v7.md", "reason": "最终产品实施范围、依赖、验收及当前阶段门；不扩大协议演示为产品能力"}
