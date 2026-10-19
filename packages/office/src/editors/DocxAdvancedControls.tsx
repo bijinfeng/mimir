@@ -70,8 +70,16 @@ export function useDocxAction(context: DocxAdvancedContext) {
     },
   }
 }
-export function DocxControlForm({ busy, children }: { busy: boolean; children: ReactNode }) {
-  return (
+export function DocxControlForm({
+  busy,
+  children,
+  actions,
+}: {
+  busy: boolean
+  children: ReactNode
+  actions?: ReactNode
+}) {
+  const fields = (
     <fieldset
       disabled={busy}
       aria-busy={busy}
@@ -79,6 +87,13 @@ export function DocxControlForm({ busy, children }: { busy: boolean; children: R
     >
       <ToolbarPropertyForm>{children}</ToolbarPropertyForm>
     </fieldset>
+  )
+  if (actions === undefined) return fields
+  return (
+    <div className="mimir-docx-property-panel">
+      <div className="mimir-docx-property-panel__scroll">{fields}</div>
+      {actions && <div className="mimir-docx-property-panel__actions">{actions}</div>}
+    </div>
   )
 }
 export function selectedDocxBlock(editor: Editor): number {
@@ -121,7 +136,32 @@ export function DocxChartControls({ context }: { context: DocxAdvancedContext })
     ) ||
     (original && names.length !== original.categories.length)
   return (
-    <DocxControlForm busy={busy}>
+    <DocxControlForm
+      busy={busy}
+      actions={
+        <>
+          <ToolbarButton
+            label={original ? '应用图表修改' : '插入图表到文档'}
+            primary
+            disabled={busy || !!invalid}
+            disabledReason="分类与各系列数值数量须一致，名称不能为空，数值须有效"
+            onClick={() =>
+              void run(
+                original ? 'edit_chart' : 'insert_chart',
+                original
+                  ? {
+                      blockIndex,
+                      title,
+                      categories: names,
+                      series: data.map((item, index) => ({ ...item, index })),
+                    }
+                  : { kind, title, categories: names, series: data, afterBlockIndex: blockIndex },
+              )
+            }
+          />
+        </>
+      }
+    >
       <ToolbarMenuFields label={original ? '编辑选中图表' : '插入图表'}>
         <ToolbarMenuNote>
           {original
@@ -202,26 +242,6 @@ export function DocxChartControls({ context }: { context: DocxAdvancedContext })
             添加系列
           </ToolbarButton>
         )}
-        <ToolbarButton
-          label={original ? '应用图表修改' : '插入图表到文档'}
-          disabled={busy || !!invalid}
-          disabledReason="分类与各系列数值数量须一致，名称不能为空，数值须有效"
-          onClick={() =>
-            void run(
-              original ? 'edit_chart' : 'insert_chart',
-              original
-                ? {
-                    blockIndex,
-                    title,
-                    categories: names,
-                    series: data.map((item, index) => ({ ...item, index })),
-                  }
-                : { kind, title, categories: names, series: data, afterBlockIndex: blockIndex },
-            )
-          }
-        >
-          {original ? '应用修改' : '插入图表'}
-        </ToolbarButton>
       </ToolbarMenuFields>
     </DocxControlForm>
   )
@@ -244,7 +264,37 @@ export function DocxTextboxControls({ context }: { context: DocxAdvancedContext 
   const [borderColor, setBorderColor] = useState<string | null>('000000')
   const { busy, run } = useDocxAction(context)
   return (
-    <DocxControlForm busy={busy}>
+    <DocxControlForm
+      busy={busy}
+      actions={
+        <>
+          <ToolbarButton
+            label="插入文本框到文档"
+            primary
+            disabled={busy || !text.trim()}
+            disabledReason="请输入文本框内容"
+            onClick={() =>
+              void run('insert_text_box', {
+                afterBlockIndex,
+                text,
+                width,
+                height,
+                x,
+                y,
+                anchor,
+                wrap,
+                fontSize,
+                bold: bold === 'yes',
+                align,
+                color,
+                fill,
+                borderColor,
+              })
+            }
+          />
+        </>
+      }
+    >
       <ToolbarMenuFields label="文本框">
         <ToolbarTextArea label="文本框内容" value={text} onChange={setText} rows={4} />
         <ToolbarNumberField
@@ -363,31 +413,6 @@ export function DocxTextboxControls({ context }: { context: DocxAdvancedContext 
             onClear={() => setBorderColor(null)}
           />
         </ToolbarMenuFields>
-        <ToolbarButton
-          label="插入文本框到文档"
-          disabled={busy || !text.trim()}
-          disabledReason="请输入文本框内容"
-          onClick={() =>
-            void run('insert_text_box', {
-              afterBlockIndex,
-              text,
-              width,
-              height,
-              x,
-              y,
-              anchor,
-              wrap,
-              fontSize,
-              bold: bold === 'yes',
-              align,
-              color,
-              fill,
-              borderColor,
-            })
-          }
-        >
-          插入文本框
-        </ToolbarButton>
       </ToolbarMenuFields>
     </DocxControlForm>
   )
@@ -428,7 +453,38 @@ export function DocxPageControls({ context }: { context: DocxAdvancedContext }) 
   const [afterBlockIndex] = useState(() => selectedDocxBlock(context.editor))
   const { busy, run } = useDocxAction(context)
   return (
-    <DocxControlForm busy={busy}>
+    <DocxControlForm
+      busy={busy}
+      actions={
+        <>
+          <ToolbarButton
+            label="应用页面设置"
+            primary
+            disabled={busy}
+            disabledReason="正在应用修改"
+            onClick={() =>
+              void run('set_page_setup', {
+                section,
+                width: `${width}pt`,
+                height: `${height}pt`,
+                orientation,
+                margins: {
+                  ...Object.fromEntries(
+                    Object.entries(margins).map(([key, value]) => [key, `${value}pt`]),
+                  ),
+                  header: `${headerDist}pt`,
+                  footer: `${footerDist}pt`,
+                },
+                titlePg: titlePg === 'yes',
+                pageNumberStart: restart === 'continue' ? null : numberStart,
+                pageNumberFormat: numberFormat,
+                columns: { count: columns, spacing: `${spacing}pt` },
+              })
+            }
+          />
+        </>
+      }
+    >
       <ToolbarMenuFields label="页面与节设置">
         <ToolbarSelect
           disabled={busy}
@@ -583,31 +639,7 @@ export function DocxPageControls({ context }: { context: DocxAdvancedContext }) 
             onChange={setNumberFormat}
           />
         </ToolbarMenuFields>
-        <ToolbarButton
-          label="应用页面设置"
-          primary
-          disabled={busy}
-          disabledReason="正在应用修改"
-          onClick={() =>
-            void run('set_page_setup', {
-              section,
-              width: `${width}pt`,
-              height: `${height}pt`,
-              orientation,
-              margins: {
-                ...Object.fromEntries(
-                  Object.entries(margins).map(([key, value]) => [key, `${value}pt`]),
-                ),
-                header: `${headerDist}pt`,
-                footer: `${footerDist}pt`,
-              },
-              titlePg: titlePg === 'yes',
-              pageNumberStart: restart === 'continue' ? null : numberStart,
-              pageNumberFormat: numberFormat,
-              columns: { count: columns, spacing: `${spacing}pt` },
-            })
-          }
-        />
+
         <ToolbarMenuFields label="插入分节符">
           <ToolbarSelect
             disabled={busy}
@@ -679,7 +711,53 @@ export function DocxWatermarkControls({ context }: { context: DocxAdvancedContex
   const [washout, setWashout] = useState('yes')
   const { busy, run } = useDocxAction(context)
   return (
-    <DocxControlForm busy={busy}>
+    <DocxControlForm
+      busy={busy}
+      actions={
+        <>
+          <ToolbarButton
+            label="应用文字水印"
+            primary
+            disabled={busy || !text.trim()}
+            disabledReason="请输入水印文字"
+            onClick={() =>
+              void run('set_watermark', {
+                text,
+                opacity,
+                diagonal,
+                fontFamily,
+                color,
+                bold: bold === 'yes',
+                italic: italic === 'yes',
+              })
+            }
+          />
+          <ToolbarButton
+            label="应用图片水印"
+            disabled={busy || !image}
+            disabledReason="请先选择水印图片"
+            onClick={() =>
+              void run('set_watermark', {
+                image: true,
+                dataUrl: image,
+                scale,
+                washout: washout === 'yes',
+              })
+            }
+          >
+            应用图片水印
+          </ToolbarButton>
+          <ToolbarButton
+            label="移除文档水印"
+            disabled={busy}
+            disabledReason="正在应用修改"
+            onClick={() => void run('set_watermark', { text: null })}
+          >
+            移除水印
+          </ToolbarButton>
+        </>
+      }
+    >
       <ToolbarMenuFields label="文档水印">
         <ToolbarTextField label="水印文字" value={text} onChange={setText} />
         <ToolbarNumberField
@@ -734,24 +812,7 @@ export function DocxWatermarkControls({ context }: { context: DocxAdvancedContex
             onPick={setColor}
           />
         </ToolbarMenuFields>
-        <ToolbarButton
-          label="应用文字水印"
-          disabled={busy || !text.trim()}
-          disabledReason="请输入水印文字"
-          onClick={() =>
-            void run('set_watermark', {
-              text,
-              opacity,
-              diagonal,
-              fontFamily,
-              color,
-              bold: bold === 'yes',
-              italic: italic === 'yes',
-            })
-          }
-        >
-          应用水印
-        </ToolbarButton>
+
         <ToolbarFileButton
           label="选择水印图片"
           accept="image/png,image/jpeg,image/gif"
@@ -804,29 +865,6 @@ export function DocxWatermarkControls({ context }: { context: DocxAdvancedContex
           disabled={busy}
           disabledReason="正在应用修改"
         />
-        <ToolbarButton
-          label="应用图片水印"
-          disabled={busy || !image}
-          disabledReason="请先选择水印图片"
-          onClick={() =>
-            void run('set_watermark', {
-              image: true,
-              dataUrl: image,
-              scale,
-              washout: washout === 'yes',
-            })
-          }
-        >
-          应用图片水印
-        </ToolbarButton>
-        <ToolbarButton
-          label="移除文档水印"
-          disabled={busy}
-          disabledReason="正在应用修改"
-          onClick={() => void run('set_watermark', { text: null })}
-        >
-          移除水印
-        </ToolbarButton>
       </ToolbarMenuFields>
     </DocxControlForm>
   )
@@ -1141,7 +1179,55 @@ export function DocxNoteControls({ context }: { context: DocxAdvancedContext }) 
   const [text, setText] = useState('')
   const { busy, run } = useDocxAction(context)
   return (
-    <DocxControlForm busy={busy}>
+    <DocxControlForm
+      busy={busy}
+      actions={
+        current && (
+          <>
+            <ToolbarButton
+              label="应用注释修改"
+              primary
+              disabled={busy || !find || !current.text.includes(find) || text === find}
+              disabledReason="请输入注释中存在的查找文字和不同的替换文字"
+              onClick={() =>
+                void (async () => {
+                  if (
+                    await run('edit_note', {
+                      kind: current.kind,
+                      id: current.id,
+                      find,
+                      replace: text,
+                    })
+                  ) {
+                    const result = await context.execute('read_notes', {}, -1)
+                    if (result)
+                      setItems(result.data as (NoteInfo & { kind: 'footnote' | 'endnote' })[])
+                  }
+                })()
+              }
+            />
+            <ToolbarConfirm
+              title="删除这条注释及正文引用？"
+              description="保存前可通过撤销结构操作恢复。"
+              confirmLabel="删除注释"
+              onConfirm={() =>
+                void (async () => {
+                  if (await run('delete_note', { kind: current.kind, id: current.id })) {
+                    setItems((old) => old.filter((item) => item !== current))
+                    setSelected('')
+                    setText('')
+                  }
+                })()
+              }
+            >
+              <ToolbarButton label="删除当前注释" disabled={busy}>
+                删除注释
+              </ToolbarButton>
+            </ToolbarConfirm>
+          </>
+        )
+      }
+    >
       <ToolbarMenuFields label="管理脚注与尾注">
         {items.length === 0 ? (
           <ToolbarMenuNote>当前没有脚注或尾注。</ToolbarMenuNote>
@@ -1171,47 +1257,6 @@ export function DocxNoteControls({ context }: { context: DocxAdvancedContext }) 
                 <ToolbarMenuNote>替换首次匹配的文字，保留其余文字格式。</ToolbarMenuNote>
                 <ToolbarTextField label="查找注释文字" value={find} onChange={setFind} />
                 <ToolbarTextArea label="替换注释文字为" value={text} onChange={setText} rows={4} />
-                <ToolbarButton
-                  label="应用注释修改"
-                  disabled={busy || !find || !current.text.includes(find) || text === find}
-                  disabledReason="请输入注释中存在的查找文字和不同的替换文字"
-                  onClick={() =>
-                    void (async () => {
-                      if (
-                        await run('edit_note', {
-                          kind: current.kind,
-                          id: current.id,
-                          find,
-                          replace: text,
-                        })
-                      ) {
-                        const result = await context.execute('read_notes', {}, -1)
-                        if (result)
-                          setItems(result.data as (NoteInfo & { kind: 'footnote' | 'endnote' })[])
-                      }
-                    })()
-                  }
-                >
-                  应用修改
-                </ToolbarButton>
-                <ToolbarConfirm
-                  title="删除这条注释及正文引用？"
-                  description="保存前可通过撤销结构操作恢复。"
-                  confirmLabel="删除注释"
-                  onConfirm={() =>
-                    void (async () => {
-                      if (await run('delete_note', { kind: current.kind, id: current.id })) {
-                        setItems((old) => old.filter((item) => item !== current))
-                        setSelected('')
-                        setText('')
-                      }
-                    })()
-                  }
-                >
-                  <ToolbarButton label="删除当前注释" disabled={busy}>
-                    删除注释
-                  </ToolbarButton>
-                </ToolbarConfirm>
               </>
             )}
           </>

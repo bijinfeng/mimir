@@ -205,18 +205,89 @@ describe('DOCX 高级手动工具', () => {
     const applyButton = () =>
       host.querySelector<HTMLButtonElement>('button[aria-label="应用样式到选区"]')
     await settle(() => applyButton()?.disabled === false)
+    expect(applyButton()?.classList.contains('ant-btn-primary')).toBe(true)
+    expect(
+      host
+        .querySelector('button[aria-label="更新样式定义"]')
+        ?.classList.contains('ant-btn-primary'),
+    ).toBe(false)
     await apply(host, '应用样式到选区')
     expect(live().editor.state.doc.child(target).attrs.styleId).toBe('MimirUI')
     const first = await openDocx(await save())
     expect(first.blocks[target]?.styleId).toBe('MimirUI')
     expect(first.footnotes.parsed.styles.get('MimirUI')?.display?.color).toBe('C00000')
     type(host, '文字颜色', '123456')
+    expect(applyButton()?.classList.contains('ant-btn-primary')).toBe(false)
+    expect(
+      host
+        .querySelector('button[aria-label="更新样式定义"]')
+        ?.classList.contains('ant-btn-primary'),
+    ).toBe(true)
     await apply(host, '更新样式定义')
     await settle(
       () => host.querySelector<HTMLInputElement>('[aria-label="文字颜色"]')?.value === '123456',
     )
     const second = await openDocx(await save())
     expect(second.footnotes.parsed.styles.get('MimirUI')?.display?.color).toBe('123456')
+  })
+
+  it('locks every style Select during an actual pending definition update and restores them afterward', async () => {
+    const { host, live } = await boot()
+    press(host, '管理样式')
+    pick(host, '选择文档样式', '新建样式')
+    type(host, '样式标识', 'BusyStyle')
+    type(host, '样式名称', '提交中的样式')
+    const execute = live().handle.execute.bind(live().handle)
+    let release!: () => void
+    const gate = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    vi.spyOn(live().handle, 'execute').mockImplementation(async (...args) => {
+      await gate
+      return execute(...args)
+    })
+    press(host, '创建样式定义')
+    const panel = host.querySelector<HTMLElement>('.mimir-docx-style-panel')!
+    const selects = [...panel.querySelectorAll<HTMLInputElement>('.ant-select input')]
+    expect(selects.length).toBeGreaterThan(5)
+    expect(selects.every((input) => input.disabled)).toBe(true)
+    expect(panel.querySelector('fieldset')?.getAttribute('aria-busy')).toBe('true')
+    await act(async () => release())
+    await vi.waitFor(() => {
+      expect(host.querySelector('button[aria-label="更新样式定义"]')).not.toBeNull()
+      expect(panel.querySelector('fieldset')?.getAttribute('aria-busy')).toBe('false')
+    })
+    expect(
+      [...panel.querySelectorAll<HTMLInputElement>('.ant-select input')].every(
+        (input) => !input.disabled,
+      ),
+    ).toBe(true)
+    expect(
+      live().options.current.styleUpserts?.some((style) => style.styleId === 'BusyStyle'),
+    ).toBe(true)
+  })
+
+  it('commits a focused numeric draft on the first footer click exactly once', async () => {
+    const { host, live, save } = await boot()
+    tab(host, '插入')
+    press(host, '文本框')
+    type(host, '文本框内容', 'First click width')
+    const width = host.querySelector<HTMLInputElement>('[aria-label="文本框宽度（磅）"]')!
+    expect(width).not.toBeNull()
+    act(() => width.focus())
+    type(host, '文本框宽度（磅）', '247')
+    const execute = vi.spyOn(live().handle, 'execute')
+    const submit = host.querySelector<HTMLButtonElement>('[aria-label="插入文本框到文档"]')!
+    act(() =>
+      submit.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true })),
+    )
+    await act(async () => submit.click())
+    await vi.waitFor(() => expect(execute).toHaveBeenCalledTimes(1))
+    expect(execute.mock.calls[0]?.[0]).toBe('insert_text_box')
+    expect(execute.mock.calls[0]?.[1]).toMatchObject({ width: 247, text: 'First click width' })
+    await vi.waitFor(() => expect(submit.disabled).toBe(false))
+    const reopened = await openDocx(await save())
+    expect(JSON.stringify(reopened.content)).toContain('First click width')
   })
 
   it('图表按钮插入多系列、画布可见、修改选中图表后连续两次保存重开', async () => {

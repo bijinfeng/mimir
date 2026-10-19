@@ -1,0 +1,1479 @@
+{
+  "verifiedAtUtc": "2026-10-19T19:04:12.044781+00:00",
+  "result": "pass",
+  "scope": "Compile/archive provenance verification; does not certify browser interactions",
+  "sourceManifest": "docs/visual-comparisons/2026-10-20-docx/demo/dist/after/source-manifest.json",
+  "sourceManifestSha256": "2e3046f9db70ad795ad09adb3c56db3d50a86451d5282a4b5e8eb5d60d9525c0",
+  "buildManifest": ".trellis/tasks/10-20-interaction-docx/gallery/build-manifest.json",
+  "variants": {
+    "before": {
+      "files": 44,
+      "computedAggregateSha256": "87649d5265ff6cc970450aed9b6efc1ac77d4027326f9049effba96bbc5349e9",
+      "manifestAggregateSha256": "87649d5265ff6cc970450aed9b6efc1ac77d4027326f9049effba96bbc5349e9",
+      "match": true
+    },
+    "after": {
+      "files": 44,
+      "computedAggregateSha256": "d37f2c408572b95cca4c59c4860f80b255f8c62eb02a9a805861b359fe5cc876",
+      "manifestAggregateSha256": "d37f2c408572b95cca4c59c4860f80b255f8c62eb02a9a805861b359fe5cc876",
+      "match": true
+    }
+  },
+  "changedProductSources": [
+    {
+      "path": "packages/office/src/editors/DocxAdvancedControls.tsx",
+      "currentSha256": "5df57e252eb35580136d2dabe4cb3b312c0554dac95441943b815f1fb709511a",
+      "manifestSha256": "5df57e252eb35580136d2dabe4cb3b312c0554dac95441943b815f1fb709511a",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/DocxDesignControls.tsx",
+      "currentSha256": "40e4b5febc8a6d8b487ffde2cc1fb121c4a52b52d6a7df7236c575f9c01b2b2a",
+      "manifestSha256": "40e4b5febc8a6d8b487ffde2cc1fb121c4a52b52d6a7df7236c575f9c01b2b2a",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/DocxEditor.tsx",
+      "currentSha256": "9384b268fa3388f6bf99e27346597dd20476059f39ad455c422539c3d231594a",
+      "manifestSha256": "9384b268fa3388f6bf99e27346597dd20476059f39ad455c422539c3d231594a",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/DocxPrivacyControls.tsx",
+      "currentSha256": "f04695d7dfdccaefac435398f6c96404258c4f9edfc9814fb05eeab508a700cb",
+      "manifestSha256": "f04695d7dfdccaefac435398f6c96404258c4f9edfc9814fb05eeab508a700cb",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/DocxStyleControls.tsx",
+      "currentSha256": "2c636634e05d6cbc7e05219f759d2a144c08762f63e3c2356f8d178e609a1c7a",
+      "manifestSha256": "2c636634e05d6cbc7e05219f759d2a144c08762f63e3c2356f8d178e609a1c7a",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-tools.css",
+      "currentSha256": "5c8d25c5825ab668ae7be168242b9538e28759a1b0b904ac16e26d6eed113483",
+      "manifestSha256": "5c8d25c5825ab668ae7be168242b9538e28759a1b0b904ac16e26d6eed113483",
+      "match": true
+    }
+  ],
+  "excludedTestsNotRuntimeInputs": [
+    "packages/office/src/editors/DocxAdvancedControls.test.tsx",
+    "packages/office/src/editors/DocxDesignControls.test.tsx",
+    "packages/office/src/editors/DocxEditor.encryption.test.tsx",
+    "packages/office/src/editors/DocxEditor.privacy.test.tsx",
+    "packages/office/src/editors/DocxEditor.views.test.tsx"
+  ],
+  "allCompiledSources": [
+    {
+      "path": "gallery/fixtures/columns.docx",
+      "currentSha256": "378fbf8f8398ab249c561376df8506c4e4915a41cd6b2c7f68b66e9cb29154f9",
+      "manifestSha256": "378fbf8f8398ab249c561376df8506c4e4915a41cd6b2c7f68b66e9cb29154f9",
+      "match": true
+    },
+    {
+      "path": "gallery/fixtures/footnotes.docx",
+      "currentSha256": "3dee3f051ad94017ceeaea22afa393536740014405f2f3792572e886bf255583",
+      "manifestSha256": "3dee3f051ad94017ceeaea22afa393536740014405f2f3792572e886bf255583",
+      "match": true
+    },
+    {
+      "path": "gallery/fixtures/headings.docx",
+      "currentSha256": "cfe65acbf118d72996b8cac69519bb2dbfa70097a11716e802bd7614286dedd1",
+      "manifestSha256": "cfe65acbf118d72996b8cac69519bb2dbfa70097a11716e802bd7614286dedd1",
+      "match": true
+    },
+    {
+      "path": "gallery/fixtures/office-agile-password.docx",
+      "currentSha256": "0605624697328060fdc75ca9929ea20b9d63ebed9387ff1a97aaf9979757234a",
+      "manifestSha256": "0605624697328060fdc75ca9929ea20b9d63ebed9387ff1a97aaf9979757234a",
+      "match": true
+    },
+    {
+      "path": "gallery/fixtures/office-standard-password.docx",
+      "currentSha256": "d265dcf02f7d552486229b8c67a627ef3752fe6802b02fd2d2d485fcfbbac5de",
+      "manifestSha256": "d265dcf02f7d552486229b8c67a627ef3752fe6802b02fd2d2d485fcfbbac5de",
+      "match": true
+    },
+    {
+      "path": "gallery/fixtures/report.docx",
+      "currentSha256": "5c3b75a00206641f3e33262a4a87a75b2354d20be82c55be3a2e471b93231e37",
+      "manifestSha256": "5c3b75a00206641f3e33262a4a87a75b2354d20be82c55be3a2e471b93231e37",
+      "match": true
+    },
+    {
+      "path": "gallery/fixtures/rich.docx",
+      "currentSha256": "599644b7f4f6ca00deac771ea6dfe193b68aaf2fa99ccf03798e0a1c951dcbae",
+      "manifestSha256": "599644b7f4f6ca00deac771ea6dfe193b68aaf2fa99ccf03798e0a1c951dcbae",
+      "match": true
+    },
+    {
+      "path": "gallery/index.html",
+      "currentSha256": "e692f2e36f623fbadaf6a247222664962479f08547abd180631c52a3d8012516",
+      "manifestSha256": "e692f2e36f623fbadaf6a247222664962479f08547abd180631c52a3d8012516",
+      "match": true
+    },
+    {
+      "path": "gallery/main.jsx",
+      "currentSha256": "d114b7509cf5bca8f17bf53b8ff1733a064d60cee83a6e4ff605914936b6c04e",
+      "manifestSha256": "d114b7509cf5bca8f17bf53b8ff1733a064d60cee83a6e4ff605914936b6c04e",
+      "match": true
+    },
+    {
+      "path": "gallery/style.css",
+      "currentSha256": "4064db862768e92070fdb68fccbb2f28e630b701c1fcbcdeceffa8d6da775ecc",
+      "manifestSha256": "4064db862768e92070fdb68fccbb2f28e630b701c1fcbcdeceffa8d6da775ecc",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/agent/docx-agent.ts",
+      "currentSha256": "53fc62b54809b1c11c3d53ecf710396ecdd51c3b898897db44f564f9c41117fb",
+      "manifestSha256": "53fc62b54809b1c11c3d53ecf710396ecdd51c3b898897db44f564f9c41117fb",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/agent/docx-note-edit.ts",
+      "currentSha256": "6096b19a158487ffb53a186e29f01f68fa2dc0631000f9f656bb8274fd8711b6",
+      "manifestSha256": "6096b19a158487ffb53a186e29f01f68fa2dc0631000f9f656bb8274fd8711b6",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-archive-save.ts",
+      "currentSha256": "a6a4804f5d0fa350fa382d135878fc4bf0904ef10389c3ab096dab78c095e84d",
+      "manifestSha256": "a6a4804f5d0fa350fa382d135878fc4bf0904ef10389c3ab096dab78c095e84d",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-chart-save.ts",
+      "currentSha256": "43244be2dcb7488f5cee7b3bcc7a07486aad5450240e4c36957b296cbb5e4137",
+      "manifestSha256": "43244be2dcb7488f5cee7b3bcc7a07486aad5450240e4c36957b296cbb5e4137",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-design-save.ts",
+      "currentSha256": "fd576d26c77653144d8ae55baea4bd6adac7289b4a613eb8167369e729eb87a7",
+      "manifestSha256": "fd576d26c77653144d8ae55baea4bd6adac7289b4a613eb8167369e729eb87a7",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-encrypted-session.ts",
+      "currentSha256": "4f8094e6febfe7c0b2329c1802a80128f1f9868ec01223cb9967e597ebb9b2fb",
+      "manifestSha256": "4f8094e6febfe7c0b2329c1802a80128f1f9868ec01223cb9967e597ebb9b2fb",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-encryption-container.ts",
+      "currentSha256": "d80d4f104437208352c4390e306c263725d926aee5699c961e8972fe2df5eeff",
+      "manifestSha256": "d80d4f104437208352c4390e306c263725d926aee5699c961e8972fe2df5eeff",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-encryption-info.ts",
+      "currentSha256": "b45ff598f2b86127076ff31d318068a8d586fe1c6b9a72b0ab23bdf5651d1918",
+      "manifestSha256": "b45ff598f2b86127076ff31d318068a8d586fe1c6b9a72b0ab23bdf5651d1918",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-encryption-state.ts",
+      "currentSha256": "bb3dc4274ff3b8fd41dc8ceab27a6893c23bf65fe39aad499d83e5e11821c14d",
+      "manifestSha256": "bb3dc4274ff3b8fd41dc8ceab27a6893c23bf65fe39aad499d83e5e11821c14d",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-encryption-types.ts",
+      "currentSha256": "fb7ca6ab55ed12dde51de6ea08ad21018b908ff2ee7bbbaf099dd2e6509e8bc8",
+      "manifestSha256": "fb7ca6ab55ed12dde51de6ea08ad21018b908ff2ee7bbbaf099dd2e6509e8bc8",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-encryption.ts",
+      "currentSha256": "d01314abcbc7411d61c8e1989804b345473a9cdb977f28f6d6592ceb859764ea",
+      "manifestSha256": "d01314abcbc7411d61c8e1989804b345473a9cdb977f28f6d6592ceb859764ea",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-endnotes.ts",
+      "currentSha256": "5e1aaeecff313f34ffd3be600d1a62278143f34f431d17d387a2a6d4528885e1",
+      "manifestSha256": "5e1aaeecff313f34ffd3be600d1a62278143f34f431d17d387a2a6d4528885e1",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-floating-table-layout.ts",
+      "currentSha256": "9a55283fe21639ab17014d7a14a4e16560c249bc58753cbce1035764fa867fe5",
+      "manifestSha256": "9a55283fe21639ab17014d7a14a4e16560c249bc58753cbce1035764fa867fe5",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-footnote-flow.ts",
+      "currentSha256": "95baa3d47858fbb8651c04bd8bb22d32cec74e00110411a05ff8e91aebfdb897",
+      "manifestSha256": "95baa3d47858fbb8651c04bd8bb22d32cec74e00110411a05ff8e91aebfdb897",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-footnote-gaps.ts",
+      "currentSha256": "5eb6618b0a22d901cceca5696d9b128ea5fff1e1308205a815878335c35fb6ea",
+      "manifestSha256": "5eb6618b0a22d901cceca5696d9b128ea5fff1e1308205a815878335c35fb6ea",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-forced-tracking.ts",
+      "currentSha256": "659e44eef5ea51fe53afe023486f61a2a1b5dab144abca31408d03d838e28467",
+      "manifestSha256": "659e44eef5ea51fe53afe023486f61a2a1b5dab144abca31408d03d838e28467",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-image-save.ts",
+      "currentSha256": "2ff49006feb40ec2757cc0852b0c59690ce5236c06806af19784e3164b78deea",
+      "manifestSha256": "2ff49006feb40ec2757cc0852b0c59690ce5236c06806af19784e3164b78deea",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-ink-model.ts",
+      "currentSha256": "b32f8653977f40b901e20be7a3f7e314c06fa80c1221d34727390ac789afd403",
+      "manifestSha256": "b32f8653977f40b901e20be7a3f7e314c06fa80c1221d34727390ac789afd403",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-ink-save.ts",
+      "currentSha256": "545712fc1baf30c14e99b20b478c3b26aefba292e0cb8c6e6f492a2565ecb7fb",
+      "manifestSha256": "545712fc1baf30c14e99b20b478c3b26aefba292e0cb8c6e6f492a2565ecb7fb",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-list-plan.ts",
+      "currentSha256": "8e041ce5d1fc69e0715b1a802cd8e7a45eca1a1a0e3d27568415777ff1028f40",
+      "manifestSha256": "8e041ce5d1fc69e0715b1a802cd8e7a45eca1a1a0e3d27568415777ff1028f40",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-list-save.ts",
+      "currentSha256": "af384197b528b6c99fed4d9bc890da986973d8e723b261e56ad21c74ca743a44",
+      "manifestSha256": "af384197b528b6c99fed4d9bc890da986973d8e723b261e56ad21c74ca743a44",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-live.ts",
+      "currentSha256": "6b08b8adf397de85da0c522451d29df338f36f4a1b5393061ec373f54a542f12",
+      "manifestSha256": "6b08b8adf397de85da0c522451d29df338f36f4a1b5393061ec373f54a542f12",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-note-numbering.ts",
+      "currentSha256": "3e31fbe491de6ff212b987bf64a6d5dbcc971f507fff2e02785c2ec4c2ac7ddf",
+      "manifestSha256": "3e31fbe491de6ff212b987bf64a6d5dbcc971f507fff2e02785c2ec4c2ac7ddf",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-outline-save.ts",
+      "currentSha256": "e71cd413ccca32b6d8430d1e638ec4f113b6c7169aec698c65728545cfc9ac4c",
+      "manifestSha256": "e71cd413ccca32b6d8430d1e638ec4f113b6c7169aec698c65728545cfc9ac4c",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-privacy-state.ts",
+      "currentSha256": "4e11e65a90e1f557a349a2a039793dd92b14aca3298e41c2ab5a1624b196a9e4",
+      "manifestSha256": "4e11e65a90e1f557a349a2a039793dd92b14aca3298e41c2ab5a1624b196a9e4",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-privacy.ts",
+      "currentSha256": "6aa9b4250e147607b28bd58c07a382f3efc1505fcafe3be567cdba1f3eb7d90d",
+      "manifestSha256": "6aa9b4250e147607b28bd58c07a382f3efc1505fcafe3be567cdba1f3eb7d90d",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-protected-comments.ts",
+      "currentSha256": "2edfb184bb1ebf13759706caab58abbbff50059aa842f50b539c404112df0c8a",
+      "manifestSha256": "2edfb184bb1ebf13759706caab58abbbff50059aa842f50b539c404112df0c8a",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-protected-forms.ts",
+      "currentSha256": "4355dcc96e1302d9fd1e73992453af67bd144dc713c4f81b0f1b78ceeeb534a1",
+      "manifestSha256": "4355dcc96e1302d9fd1e73992453af67bd144dc713c4f81b0f1b78ceeeb534a1",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-protection-password-crypto.ts",
+      "currentSha256": "4a49827bd21a5023c8013d51165067965d134f510c03c513f24af8719f00f335",
+      "manifestSha256": "4a49827bd21a5023c8013d51165067965d134f510c03c513f24af8719f00f335",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-protection-password.ts",
+      "currentSha256": "4a80174aadaafba2f96298cef16c94bb199918a14b5598b37ffc96b583d69648",
+      "manifestSha256": "4a80174aadaafba2f96298cef16c94bb199918a14b5598b37ffc96b583d69648",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-protection-settings.ts",
+      "currentSha256": "3c63896c1d5ed3513286edced57586188828b57a667d765aec02932544ec2ef4",
+      "manifestSha256": "3c63896c1d5ed3513286edced57586188828b57a667d765aec02932544ec2ef4",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-protection.ts",
+      "currentSha256": "fe28f57e8c7c5d0ee9fe8aee012fd176e67e5590b9b8c47846c218c868fe8e17",
+      "manifestSha256": "fe28f57e8c7c5d0ee9fe8aee012fd176e67e5590b9b8c47846c218c868fe8e17",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-reference-save.ts",
+      "currentSha256": "13f463d2c4e76b5ab22a91c2bea36504a89282577b72760878b8e97eaa1b1fcd",
+      "manifestSha256": "13f463d2c4e76b5ab22a91c2bea36504a89282577b72760878b8e97eaa1b1fcd",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-styles.ts",
+      "currentSha256": "c94623ad342d4c78d967602a9cca5e9a671052b05c63ac000b10b978f4963f22",
+      "manifestSha256": "c94623ad342d4c78d967602a9cca5e9a671052b05c63ac000b10b978f4963f22",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-table-bands.ts",
+      "currentSha256": "a7c35c4a987cac3b5b2a2d9858b942bdd9f0fa98aea08190187d6c43e3d5e284",
+      "manifestSha256": "a7c35c4a987cac3b5b2a2d9858b942bdd9f0fa98aea08190187d6c43e3d5e284",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx-table-save.ts",
+      "currentSha256": "f68c68717ef7762c0fdc5d957789dd5eb7e520420b66494abd643d6128d723ce",
+      "manifestSha256": "f68c68717ef7762c0fdc5d957789dd5eb7e520420b66494abd643d6128d723ce",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/docx.ts",
+      "currentSha256": "8f9416b560e3dd1747cc483ee8a273d4e72271c8927f29735bf76dd933f9f90f",
+      "manifestSha256": "8f9416b560e3dd1747cc483ee8a273d4e72271c8927f29735bf76dd933f9f90f",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/CompactToolbar.tsx",
+      "currentSha256": "616537059b202af3c2a37d208a4f3b7cd8a68788137fcd9657f1c9f576634523",
+      "manifestSha256": "616537059b202af3c2a37d208a4f3b7cd8a68788137fcd9657f1c9f576634523",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/DocxAdvancedControls.tsx",
+      "currentSha256": "5df57e252eb35580136d2dabe4cb3b312c0554dac95441943b815f1fb709511a",
+      "manifestSha256": "5df57e252eb35580136d2dabe4cb3b312c0554dac95441943b815f1fb709511a",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/DocxCaseControls.tsx",
+      "currentSha256": "32d9250f2ca0881615e0b4227415f858f6908f27cf4e0b590e139e4a417d1bfb",
+      "manifestSha256": "32d9250f2ca0881615e0b4227415f858f6908f27cf4e0b590e139e4a417d1bfb",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/DocxCompareControls.tsx",
+      "currentSha256": "f0bb2d535f197487182f9926a7a9b6f6ac4bf2263f8bb56eed2dc1d46af14b64",
+      "manifestSha256": "f0bb2d535f197487182f9926a7a9b6f6ac4bf2263f8bb56eed2dc1d46af14b64",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/DocxComparePanel.tsx",
+      "currentSha256": "2329511b92b77082301d03258fbc2a5db96a2d1a52284abe82e034021be8c89b",
+      "manifestSha256": "2329511b92b77082301d03258fbc2a5db96a2d1a52284abe82e034021be8c89b",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/DocxDesignControls.tsx",
+      "currentSha256": "40e4b5febc8a6d8b487ffde2cc1fb121c4a52b52d6a7df7236c575f9c01b2b2a",
+      "manifestSha256": "40e4b5febc8a6d8b487ffde2cc1fb121c4a52b52d6a7df7236c575f9c01b2b2a",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/DocxDesignPreview.tsx",
+      "currentSha256": "14585050b20e706746a603bd11f8ea67e4245c513fb60ef7655ebd85d708b5bc",
+      "manifestSha256": "14585050b20e706746a603bd11f8ea67e4245c513fb60ef7655ebd85d708b5bc",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/DocxEditor.tsx",
+      "currentSha256": "9384b268fa3388f6bf99e27346597dd20476059f39ad455c422539c3d231594a",
+      "manifestSha256": "9384b268fa3388f6bf99e27346597dd20476059f39ad455c422539c3d231594a",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/DocxEncryptionControls.tsx",
+      "currentSha256": "412bddfd977f9d9a280edad13a90def442d00ca34cfe961a9a135796ecf215ac",
+      "manifestSha256": "412bddfd977f9d9a280edad13a90def442d00ca34cfe961a9a135796ecf215ac",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/DocxImageControls.tsx",
+      "currentSha256": "fd39cf779511340fe1af52a63d579467ebbf5c9f1c8226b62712e68d4f9b9f1c",
+      "manifestSha256": "fd39cf779511340fe1af52a63d579467ebbf5c9f1c8226b62712e68d4f9b9f1c",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/DocxImageCropPreview.tsx",
+      "currentSha256": "e95b08eb9a41fe70a24de6d33cf0447d7a0628094ea10292a2db3bb6aeb842b0",
+      "manifestSha256": "e95b08eb9a41fe70a24de6d33cf0447d7a0628094ea10292a2db3bb6aeb842b0",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/DocxInkControls.tsx",
+      "currentSha256": "7d384c22130775aff34006340e25c7f070143555ff6882c63d4e127f1e7cb4b1",
+      "manifestSha256": "7d384c22130775aff34006340e25c7f070143555ff6882c63d4e127f1e7cb4b1",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/DocxInkOverlay.tsx",
+      "currentSha256": "df592e9a976c07d3ab01d35670d890b61d14a5d5d9300de681f0c1e95342963f",
+      "manifestSha256": "df592e9a976c07d3ab01d35670d890b61d14a5d5d9300de681f0c1e95342963f",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/DocxListControls.tsx",
+      "currentSha256": "220e8b062586f9cd395db65162207cbd09503a74beaa3c8e209a52af1d495c96",
+      "manifestSha256": "220e8b062586f9cd395db65162207cbd09503a74beaa3c8e209a52af1d495c96",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/DocxPrivacyControls.tsx",
+      "currentSha256": "f04695d7dfdccaefac435398f6c96404258c4f9edfc9814fb05eeab508a700cb",
+      "manifestSha256": "f04695d7dfdccaefac435398f6c96404258c4f9edfc9814fb05eeab508a700cb",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/DocxProtectionControls.tsx",
+      "currentSha256": "4a9772192a33eed4688dbd2e428b0b164a173593a60ad2856c742ea4523beb2a",
+      "manifestSha256": "4a9772192a33eed4688dbd2e428b0b164a173593a60ad2856c742ea4523beb2a",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/DocxProtectionSettingsControls.tsx",
+      "currentSha256": "6fe2a6e9d2f86d9abbdabb77b74f8c42b8bf917481eb71c028c7ee90deb0c3e1",
+      "manifestSha256": "6fe2a6e9d2f86d9abbdabb77b74f8c42b8bf917481eb71c028c7ee90deb0c3e1",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/DocxReferencesControls.tsx",
+      "currentSha256": "64a68c6c747236b783a77457f371739bf4bf1936487eb807f33303bb6d734ee6",
+      "manifestSha256": "64a68c6c747236b783a77457f371739bf4bf1936487eb807f33303bb6d734ee6",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/DocxSplitView.tsx",
+      "currentSha256": "a27a30b0b1ab136e4bf89c1cad942869b3c914e460dc2d21fac0a57691239a87",
+      "manifestSha256": "a27a30b0b1ab136e4bf89c1cad942869b3c914e460dc2d21fac0a57691239a87",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/DocxStyleControls.tsx",
+      "currentSha256": "2c636634e05d6cbc7e05219f759d2a144c08762f63e3c2356f8d178e609a1c7a",
+      "manifestSha256": "2c636634e05d6cbc7e05219f759d2a144c08762f63e3c2356f8d178e609a1c7a",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/DocxTableDesignControls.tsx",
+      "currentSha256": "bebfdc52d644151e7f8c7e74d9db4e305e996d773155d3399df08597c382d2fd",
+      "manifestSha256": "bebfdc52d644151e7f8c7e74d9db4e305e996d773155d3399df08597c382d2fd",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/DocxTableDesignPreview.tsx",
+      "currentSha256": "73bb86e21487478f1bcc0c7cd421f7583cb56523ce60604532c9c897be0eeab7",
+      "manifestSha256": "73bb86e21487478f1bcc0c7cd421f7583cb56523ce60604532c9c897be0eeab7",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/DocxTocControls.tsx",
+      "currentSha256": "50cbe6391e0b1c96c7ab097e094560a2abf7def3120c3a85b518f69bbd931346",
+      "manifestSha256": "50cbe6391e0b1c96c7ab097e094560a2abf7def3120c3a85b518f69bbd931346",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/DocxViewControls.tsx",
+      "currentSha256": "15a44bb4b0f2625d5031c28a4ef6bcd686072a2c06d74bf4c575e75f132b32bc",
+      "manifestSha256": "15a44bb4b0f2625d5031c28a4ef6bcd686072a2c06d74bf4c575e75f132b32bc",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/DocxViewPanel.tsx",
+      "currentSha256": "adfb06184e0fd32f55b7dcda09354283483fd40eb11e1340156bd242a328c8be",
+      "manifestSha256": "adfb06184e0fd32f55b7dcda09354283483fd40eb11e1340156bd242a328c8be",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/compact-toolbar.css",
+      "currentSha256": "ab15ed591401edb43b53916c5a20635eb36e7530790347f9cd6d295e353433a9",
+      "manifestSha256": "ab15ed591401edb43b53916c5a20635eb36e7530790347f9cd6d295e353433a9",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-case.ts",
+      "currentSha256": "22ad8c8ce754a4bd6dae4fd587de99d758402db7d2e69e4e08ed8376e6ab1456",
+      "manifestSha256": "22ad8c8ce754a4bd6dae4fd587de99d758402db7d2e69e4e08ed8376e6ab1456",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-comment-controls.css",
+      "currentSha256": "1f342ebf5b4f42abd4e4b74083e74064038f2008468cf2eed2c8ddb11546b49d",
+      "manifestSha256": "1f342ebf5b4f42abd4e4b74083e74064038f2008468cf2eed2c8ddb11546b49d",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-compare-split.css",
+      "currentSha256": "aca0f8b7b9fa07889d1fcd03559d902ae10fbf64031d7dc82b5ead712712fc67",
+      "manifestSha256": "aca0f8b7b9fa07889d1fcd03559d902ae10fbf64031d7dc82b5ead712712fc67",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-compare.ts",
+      "currentSha256": "0d53af67e14bc8b4de627b73116d5c7dff0d754233fbc9eb2ee2136492407882",
+      "manifestSha256": "0d53af67e14bc8b4de627b73116d5c7dff0d754233fbc9eb2ee2136492407882",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-design.css",
+      "currentSha256": "48cbfe552152a216b2d926d9ee1bf6066816345cf2366428a8389e34fcd62301",
+      "manifestSha256": "48cbfe552152a216b2d926d9ee1bf6066816345cf2366428a8389e34fcd62301",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-design.ts",
+      "currentSha256": "455ada2aaedb96c45b10a43ae9b37d0be1f109c70d3f87175470570cb90316d4",
+      "manifestSha256": "455ada2aaedb96c45b10a43ae9b37d0be1f109c70d3f87175470570cb90316d4",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-encryption.css",
+      "currentSha256": "6b90f5ae1c9ef46b984ddd9f9c756295747057ce0a3a9e838d540f99210edc0f",
+      "manifestSha256": "6b90f5ae1c9ef46b984ddd9f9c756295747057ce0a3a9e838d540f99210edc0f",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-encryption.ts",
+      "currentSha256": "a1a4a7f2bd3f4c6bb389ad4e14ae5fa0de46e25c4fb3ba691cc48dc52211fc15",
+      "manifestSha256": "a1a4a7f2bd3f4c6bb389ad4e14ae5fa0de46e25c4fb3ba691cc48dc52211fc15",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-find.ts",
+      "currentSha256": "e923141cab1404eb3eab4a0f000663898f194fb2464c564fb4a512c1e3bddfcf",
+      "manifestSha256": "e923141cab1404eb3eab4a0f000663898f194fb2464c564fb4a512c1e3bddfcf",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-forced-tracking.ts",
+      "currentSha256": "d5fe11bf7656d3e3f476bacd58365bde7e6113b6f6378a96a05a740b6ab17eea",
+      "manifestSha256": "d5fe11bf7656d3e3f476bacd58365bde7e6113b6f6378a96a05a740b6ab17eea",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-form-controls.ts",
+      "currentSha256": "18b5d8176c0f8d149d3e0762f93fda285800dff2d2bff5aa8af5612ac46f3c0f",
+      "manifestSha256": "18b5d8176c0f8d149d3e0762f93fda285800dff2d2bff5aa8af5612ac46f3c0f",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-image-crop.ts",
+      "currentSha256": "66688833d3684d1fb155a4063ecef0d1a6b8d82ad628fff3d830f8f9bfaf3735",
+      "manifestSha256": "66688833d3684d1fb155a4063ecef0d1a6b8d82ad628fff3d830f8f9bfaf3735",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-image.ts",
+      "currentSha256": "af02f56c4256934336f27f0f92ea94e92a2545ac0c26e48c3c40d6b304f4d4b1",
+      "manifestSha256": "af02f56c4256934336f27f0f92ea94e92a2545ac0c26e48c3c40d6b304f4d4b1",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-ink.css",
+      "currentSha256": "57933bba429be821683803605b7e86e5584405881863c32cde0836206c1e5328",
+      "manifestSha256": "57933bba429be821683803605b7e86e5584405881863c32cde0836206c1e5328",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-ink.ts",
+      "currentSha256": "46f6cf64b1a468b29353209ad6b067f1fc55804c3b2e63fc494b7d8f69fccbe1",
+      "manifestSha256": "46f6cf64b1a468b29353209ad6b067f1fc55804c3b2e63fc494b7d8f69fccbe1",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-lists.css",
+      "currentSha256": "6fd0fb1f6520880702896810220988872efdc9952da0404e92d51ba38b3e8f17",
+      "manifestSha256": "6fd0fb1f6520880702896810220988872efdc9952da0404e92d51ba38b3e8f17",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-lists.ts",
+      "currentSha256": "c8e4f4f73d9c3f55d9a0e43e61bf5dff9c94a67b1048d5bdf08763c6c5c0e005",
+      "manifestSha256": "c8e4f4f73d9c3f55d9a0e43e61bf5dff9c94a67b1048d5bdf08763c6c5c0e005",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-outline.ts",
+      "currentSha256": "8f5baba15127304b41495a2041093b95d2bed15d1544cc0abaaf724236eaa1dd",
+      "manifestSha256": "8f5baba15127304b41495a2041093b95d2bed15d1544cc0abaaf724236eaa1dd",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-output.ts",
+      "currentSha256": "d43e34d5b45be22a1990a56b20f6f60f4007bcb07a341692808ed894acf998bb",
+      "manifestSha256": "d43e34d5b45be22a1990a56b20f6f60f4007bcb07a341692808ed894acf998bb",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-picture-controls.css",
+      "currentSha256": "60ec9414debd2a8dd7c4d51d922516ba68baf655f70c3aaaa9b1d396710f8ce9",
+      "manifestSha256": "60ec9414debd2a8dd7c4d51d922516ba68baf655f70c3aaaa9b1d396710f8ce9",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-privacy.css",
+      "currentSha256": "4e78ecce22c3283227754aa1f2fbd85919529a4e4e4f88429e09a99f236a4022",
+      "manifestSha256": "4e78ecce22c3283227754aa1f2fbd85919529a4e4e4f88429e09a99f236a4022",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-privacy.ts",
+      "currentSha256": "e553a5e7f1860a40c409827cd0e81a4263a21bbc043a5d5301a7f6402f5d06cb",
+      "manifestSha256": "e553a5e7f1860a40c409827cd0e81a4263a21bbc043a5d5301a7f6402f5d06cb",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-protection.css",
+      "currentSha256": "a6f83a382b10f3567eb8874aa4183848827da72952e3fd483f682d569f3efc2e",
+      "manifestSha256": "a6f83a382b10f3567eb8874aa4183848827da72952e3fd483f682d569f3efc2e",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-protection.ts",
+      "currentSha256": "f2bef413da9d4806dc546d48615222b9e042fcf5326c3617b19216e3e9da63ec",
+      "manifestSha256": "f2bef413da9d4806dc546d48615222b9e042fcf5326c3617b19216e3e9da63ec",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-readonly.ts",
+      "currentSha256": "52ae52b3ca882892c0b03be4ab3f45f74ece6bbd651ca8ddef35f8b792ead118",
+      "manifestSha256": "52ae52b3ca882892c0b03be4ab3f45f74ece6bbd651ca8ddef35f8b792ead118",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-references.css",
+      "currentSha256": "93c762a8cfa9b96eb31a53044ed447273929a45af288e5dd917dea20d7190581",
+      "manifestSha256": "93c762a8cfa9b96eb31a53044ed447273929a45af288e5dd917dea20d7190581",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-references.ts",
+      "currentSha256": "683ec5f6bfebbb2527b6aed37a77a62d3627e0caa0e672deb85f514c795f18c7",
+      "manifestSha256": "683ec5f6bfebbb2527b6aed37a77a62d3627e0caa0e672deb85f514c795f18c7",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-table-design.css",
+      "currentSha256": "3610bdf9593c10c60b8ac99ee1ea794c7790e6e4dc2f9c360af608c17f5a871e",
+      "manifestSha256": "3610bdf9593c10c60b8ac99ee1ea794c7790e6e4dc2f9c360af608c17f5a871e",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-table-design.ts",
+      "currentSha256": "4c80891195116ab8d4ecfe2aac775735f50c4541c1a67d5a96228373ca8364fe",
+      "manifestSha256": "4c80891195116ab8d4ecfe2aac775735f50c4541c1a67d5a96228373ca8364fe",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-tools.css",
+      "currentSha256": "5c8d25c5825ab668ae7be168242b9538e28759a1b0b904ac16e26d6eed113483",
+      "manifestSha256": "5c8d25c5825ab668ae7be168242b9538e28759a1b0b904ac16e26d6eed113483",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-view.ts",
+      "currentSha256": "01cc712eeae806a3b302367f58a13cdb06b2f352a5f42a3241c95dbe4f3e8ba5",
+      "manifestSha256": "01cc712eeae806a3b302367f58a13cdb06b2f352a5f42a3241c95dbe4f3e8ba5",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/docx-views.css",
+      "currentSha256": "9dd3ef2cc963a4a1886b223d103d63e15a97a52382b09ae8857c80c237788a08",
+      "manifestSha256": "9dd3ef2cc963a4a1886b223d103d63e15a97a52382b09ae8857c80c237788a08",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/editors.css",
+      "currentSha256": "4be47bfdb68cd383521b0deb3605bcef00d642567e3d2ec21ec6fe78dc35844b",
+      "manifestSha256": "4be47bfdb68cd383521b0deb3605bcef00d642567e3d2ec21ec6fe78dc35844b",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/types.ts",
+      "currentSha256": "a7807f0bb19f38d31d9509164027e656876b3195749364773602dca4104d3b99",
+      "manifestSha256": "a7807f0bb19f38d31d9509164027e656876b3195749364773602dca4104d3b99",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/use-docx-opening.ts",
+      "currentSha256": "f34713c218172e43a588f69cbdec5c2a535dfec5fda065eca599df46bf187a23",
+      "manifestSha256": "f34713c218172e43a588f69cbdec5c2a535dfec5fda065eca599df46bf187a23",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/editors/use-source.ts",
+      "currentSha256": "e2a8d064099e4446dae972101630423c5d85596d76e78084405cbd9d48638be9",
+      "manifestSha256": "e2a8d064099e4446dae972101630423c5d85596d76e78084405cbd9d48638be9",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/footnotes.ts",
+      "currentSha256": "1d64ccd3cc4995ace57dd0f91b01a033decc32872016dd40ea37d59f0af80ab1",
+      "manifestSha256": "1d64ccd3cc4995ace57dd0f91b01a033decc32872016dd40ea37d59f0af80ab1",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/generated/editor.css",
+      "currentSha256": "cbd83fd721d344fc3e81a255b4f4997462fbaf5195d15657417f28190633159e",
+      "manifestSha256": "cbd83fd721d344fc3e81a255b4f4997462fbaf5195d15657417f28190633159e",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/pagination-geometry.ts",
+      "currentSha256": "dd5926d687859459d76d78b92f937da492782637af925fca5852c92ce56febf0",
+      "manifestSha256": "dd5926d687859459d76d78b92f937da492782637af925fca5852c92ce56febf0",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/pagination.ts",
+      "currentSha256": "529328363e81c0ed8964c77a5b9af49f644ed89e3564cd6fcb5a9106c861f381",
+      "manifestSha256": "529328363e81c0ed8964c77a5b9af49f644ed89e3564cd6fcb5a9106c861f381",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/shell/EditorShell.tsx",
+      "currentSha256": "dfd9033878e28660a0a41c0074a1e32eaf60d8a765dd7006a782993b923e3c4e",
+      "manifestSha256": "dfd9033878e28660a0a41c0074a1e32eaf60d8a765dd7006a782993b923e3c4e",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/shell/editor-commands.ts",
+      "currentSha256": "29aef830207a39406cf3844a2ab6190e51d11ab4f15da00db941654d968c886e",
+      "manifestSha256": "29aef830207a39406cf3844a2ab6190e51d11ab4f15da00db941654d968c886e",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/shell/icons.tsx",
+      "currentSha256": "8a3b8d240b50160b5f4c5a0ea4340c048c38109b1a626eab9cb1c4b10da768a0",
+      "manifestSha256": "8a3b8d240b50160b5f4c5a0ea4340c048c38109b1a626eab9cb1c4b10da768a0",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/shell/shell.css",
+      "currentSha256": "ef000dab5bcb473c3b25bf9c686c15388817aa876acd2ddf0d74e08b5040808f",
+      "manifestSha256": "ef000dab5bcb473c3b25bf9c686c15388817aa876acd2ddf0d74e08b5040808f",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/shims/i18n.ts",
+      "currentSha256": "3fc85061e65ef5631c1797728eb95a613451c2bd441e74839d7318f8f66b4cfe",
+      "manifestSha256": "3fc85061e65ef5631c1797728eb95a613451c2bd441e74839d7318f8f66b4cfe",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/shims/ui.ts",
+      "currentSha256": "559f9bd06cc058143bd6c5b411d3c1537c1be97f173c539b10821d1442b88fe4",
+      "manifestSha256": "559f9bd06cc058143bd6c5b411d3c1537c1be97f173c539b10821d1442b88fe4",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/shims/wordart-presets.ts",
+      "currentSha256": "050a15de81e254c0d878b18b4901062c76deca1888e59e49fbbd2787c1f0197f",
+      "manifestSha256": "050a15de81e254c0d878b18b4901062c76deca1888e59e49fbbd2787c1f0197f",
+      "match": true
+    },
+    {
+      "path": "packages/office/src/zip-bounds.ts",
+      "currentSha256": "58f4b5114cc8660ff48fea23549351d5a64157585fbc5ee02afed7b83be3297f",
+      "manifestSha256": "58f4b5114cc8660ff48fea23549351d5a64157585fbc5ee02afed7b83be3297f",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/doc-style-css.ts",
+      "currentSha256": "dcafd0e526c26308725ae9ffa2842cff57707ee81995aecceacb260469a99693",
+      "manifestSha256": "dcafd0e526c26308725ae9ffa2842cff57707ee81995aecceacb260469a99693",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/dom-range.ts",
+      "currentSha256": "51d03720e5d1dcbe47576c9ca651b23b9dbb17ac9644a270afb9975abdbc9077",
+      "manifestSha256": "51d03720e5d1dcbe47576c9ca651b23b9dbb17ac9644a270afb9975abdbc9077",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/active-editor.ts",
+      "currentSha256": "471a07b8c9de90b7ac6e177d09c2361fafaeaee33d1e62e0a086fb68cb3f6151",
+      "manifestSha256": "471a07b8c9de90b7ac6e177d09c2361fafaeaee33d1e62e0a086fb68cb3f6151",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/ai-queue-anchors.ts",
+      "currentSha256": "971153a064c8241a3cb34c56710c76a2b16c04a9842bcae3496ed50cc9989828",
+      "manifestSha256": "971153a064c8241a3cb34c56710c76a2b16c04a9842bcae3496ed50cc9989828",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/border-metrics.ts",
+      "currentSha256": "3a763a87445fa3da565cb88e588dd6e86cd64a562871f6381095549ed8e14a10",
+      "manifestSha256": "3a763a87445fa3da565cb88e588dd6e86cd64a562871f6381095549ed8e14a10",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/caret-marks.ts",
+      "currentSha256": "e3c7587b45d1bd85fd1c23efe6d706005d3bb278e3fb5e7ff96b36e894127515",
+      "manifestSha256": "e3c7587b45d1bd85fd1c23efe6d706005d3bb278e3fb5e7ff96b36e894127515",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/checkbox-toggle.ts",
+      "currentSha256": "c7e824a431690ec1cd809a1ed8256e6aba26d515c2a187f677bc0af05ba004c2",
+      "manifestSha256": "c7e824a431690ec1cd809a1ed8256e6aba26d515c2a187f677bc0af05ba004c2",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/cjk-punct-shrink.ts",
+      "currentSha256": "396008ba1521c40ccf014e0f6a1c44293995b7497ab6ee10abd886374c7c1192",
+      "manifestSha256": "396008ba1521c40ccf014e0f6a1c44293995b7497ab6ee10abd886374c7c1192",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/column-layout.ts",
+      "currentSha256": "c36dc31695ab63c429ded8a3455645b7979b830713e587587c9c0919b65b49d9",
+      "manifestSha256": "c36dc31695ab63c429ded8a3455645b7979b830713e587587c9c0919b65b49d9",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/convert.ts",
+      "currentSha256": "cf8b51bedb38d0355984bb227ee65bd45a1d8845442b65f990526bf65ec4d528",
+      "manifestSha256": "cf8b51bedb38d0355984bb227ee65bd45a1d8845442b65f990526bf65ec4d528",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/dark-page.ts",
+      "currentSha256": "8ec6c1e42b1699d6a8aafa89135e3f8a96d7049c7676b19afcc867674b6b8c91",
+      "manifestSha256": "8ec6c1e42b1699d6a8aafa89135e3f8a96d7049c7676b19afcc867674b6b8c91",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/decoration-extensions.ts",
+      "currentSha256": "58efea7085fca09087be59c32aef02ee209d7ff248d80ef07138001fb7204d13",
+      "manifestSha256": "58efea7085fca09087be59c32aef02ee209d7ff248d80ef07138001fb7204d13",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/direction.ts",
+      "currentSha256": "15c8abd58e41e00420734d23f626a5fd9def6d361fcbde161b7787f9aac5f39c",
+      "manifestSha256": "15c8abd58e41e00420734d23f626a5fd9def6d361fcbde161b7787f9aac5f39c",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/equation.ts",
+      "currentSha256": "d25d688272f638ee669d4e00209c9fa08241e89af5f490a207f03cee36dbc51e",
+      "manifestSha256": "d25d688272f638ee669d4e00209c9fa08241e89af5f490a207f03cee36dbc51e",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/extensions.ts",
+      "currentSha256": "46e14de589b8c76506edca7ef6eca118ff4aab6d96c57b62c256efce9a154a66",
+      "manifestSha256": "46e14de589b8c76506edca7ef6eca118ff4aab6d96c57b62c256efce9a154a66",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/hf-dom.ts",
+      "currentSha256": "9cecc236909409cb35bd61b392bd39900647f078c98ef026e49fbdc76bf77c02",
+      "manifestSha256": "9cecc236909409cb35bd61b392bd39900647f078c98ef026e49fbdc76bf77c02",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/image-rotation.ts",
+      "currentSha256": "9f1ced9338e0323e4945eb708bf5806f58a92b7fd94eb3882aef09b06d8fd941",
+      "manifestSha256": "9f1ced9338e0323e4945eb708bf5806f58a92b7fd94eb3882aef09b06d8fd941",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/inactive-selection.ts",
+      "currentSha256": "f455d34e4b438d999032349669966065710543870d80e162a9461d6d3d3c8c27",
+      "manifestSha256": "f455d34e4b438d999032349669966065710543870d80e162a9461d6d3d3c8c27",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/inline-rule.ts",
+      "currentSha256": "d5256dce2f18ea321ea632ccb5e1f098efb5097c9ebb593a2132f0ffa90c66a5",
+      "manifestSha256": "d5256dce2f18ea321ea632ccb5e1f098efb5097c9ebb593a2132f0ffa90c66a5",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/justify-shrink.ts",
+      "currentSha256": "125578e259125704d26c6d68e742f03c6735eab7de148db0cd790723143ffbdf",
+      "manifestSha256": "125578e259125704d26c6d68e742f03c6735eab7de148db0cd790723143ffbdf",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/local-edit.ts",
+      "currentSha256": "acf2a2cae97b45399d55ffdcff019857c458b42a7a51929823b8d8f7234c0719",
+      "manifestSha256": "acf2a2cae97b45399d55ffdcff019857c458b42a7a51929823b8d8f7234c0719",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/marks.ts",
+      "currentSha256": "5dcf114ea345c72b13d93cfe6fcd847388534a68a0cc6849ef938dec4dbea7d6",
+      "manifestSha256": "5dcf114ea345c72b13d93cfe6fcd847388534a68a0cc6849ef938dec4dbea7d6",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/move-block.ts",
+      "currentSha256": "cc5a7be41cfe0a5020b26e0c9421a10d5c9a9ecf489d71ba41af334c34d2521d",
+      "manifestSha256": "cc5a7be41cfe0a5020b26e0c9421a10d5c9a9ecf489d71ba41af334c34d2521d",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/numbering.ts",
+      "currentSha256": "6c619871ccf9df6f8a8de7ae72a64c4181f45cfa4b790a1715c0490fc7779935",
+      "manifestSha256": "6c619871ccf9df6f8a8de7ae72a64c4181f45cfa4b790a1715c0490fc7779935",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/page-break.ts",
+      "currentSha256": "acc8704bce731dc3f09aeea214e32ff575555566383ce49c62003d6f39808a17",
+      "manifestSha256": "acc8704bce731dc3f09aeea214e32ff575555566383ce49c62003d6f39808a17",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/page-gap-nav.ts",
+      "currentSha256": "8701b60ccd04fc7e9eee97f6db97d6577fce5aa543c2a21da17f93a646b215f3",
+      "manifestSha256": "8701b60ccd04fc7e9eee97f6db97d6577fce5aa543c2a21da17f93a646b215f3",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/pagination-gaps.ts",
+      "currentSha256": "29753c584d210d01b52e4c7f0dea577af25b259e2b182c0156eee66fd64db7d5",
+      "manifestSha256": "29753c584d210d01b52e4c7f0dea577af25b259e2b182c0156eee66fd64db7d5",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/para-border-merge.ts",
+      "currentSha256": "15efe3363aa1f54497c6bd475a14e2c81204418428e90d944a2f3dd5f05977fc",
+      "manifestSha256": "15efe3363aa1f54497c6bd475a14e2c81204418428e90d944a2f3dd5f05977fc",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/para-frame.ts",
+      "currentSha256": "fe5b852ddcefba658b3960c2a6c0b6afb25adfe1e88ae5d2ffe97c639f975b6e",
+      "manifestSha256": "fe5b852ddcefba658b3960c2a6c0b6afb25adfe1e88ae5d2ffe97c639f975b6e",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/prosemirror-perf.ts",
+      "currentSha256": "67ecf6d9cd3b24c60b6ade0e90777c056e9478a8d042c77353f6ced861033336",
+      "manifestSha256": "67ecf6d9cd3b24c60b6ade0e90777c056e9478a8d042c77353f6ced861033336",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/protected-render.ts",
+      "currentSha256": "d8911e560dd3bbcb9ea2d343580d285f9eaaf19f01a7caccd6687856deb878fc",
+      "manifestSha256": "d8911e560dd3bbcb9ea2d343580d285f9eaaf19f01a7caccd6687856deb878fc",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/revisions.ts",
+      "currentSha256": "a858aa7204ea62bc68406d841576c046c771b6a6e21b6b79a432f11623c48c03",
+      "manifestSha256": "a858aa7204ea62bc68406d841576c046c771b6a6e21b6b79a432f11623c48c03",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/run-border.ts",
+      "currentSha256": "fb7e3c26f1e3b170c0d6dbf6d63c856916ac4d351ab2930c70060380e4ad919d",
+      "manifestSha256": "fb7e3c26f1e3b170c0d6dbf6d63c856916ac4d351ab2930c70060380e4ad919d",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/script-fonts.ts",
+      "currentSha256": "3710f7fe67a8189484f3881ca4e5655caefb94cb6a060eede62ef790fdaeeaf1",
+      "manifestSha256": "3710f7fe67a8189484f3881ca4e5655caefb94cb6a060eede62ef790fdaeeaf1",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/settled-measure.ts",
+      "currentSha256": "78912027e7b961504512cd3ad9753778e0be09228f1ad2cd6df2b0384f53af28",
+      "manifestSha256": "78912027e7b961504512cd3ad9753778e0be09228f1ad2cd6df2b0384f53af28",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/shading-ink.ts",
+      "currentSha256": "a6affed2eab955b1c12d742817e2032658947d9a67d2de0c7eb71e8888481726",
+      "manifestSha256": "a6affed2eab955b1c12d742817e2032658947d9a67d2de0c7eb71e8888481726",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/shape-svg.ts",
+      "currentSha256": "de5a21902ad452ddb93f3ea76ddd53ddf4da7c55d808b5e2e99d2359a4217f33",
+      "manifestSha256": "de5a21902ad452ddb93f3ea76ddd53ddf4da7c55d808b5e2e99d2359a4217f33",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/streaming-tail-guard.ts",
+      "currentSha256": "78b495971fc2059850ae522634fac4671cc8bb0de34f94759d3fc67505ec5849",
+      "manifestSha256": "78b495971fc2059850ae522634fac4671cc8bb0de34f94759d3fc67505ec5849",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/table-handle.ts",
+      "currentSha256": "252521707c528b407ab4024551a54c3f3ddddd9d2ca20d7b9c4a55b02498ceba",
+      "manifestSha256": "252521707c528b407ab4024551a54c3f3ddddd9d2ca20d7b9c4a55b02498ceba",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/table-sizing.ts",
+      "currentSha256": "c5c2b7d1c4707f1f4ca057636da8f44e57819d6b0762148b7e48eab17d7024ce",
+      "manifestSha256": "c5c2b7d1c4707f1f4ca057636da8f44e57819d6b0762148b7e48eab17d7024ce",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/text-color.ts",
+      "currentSha256": "33aa132ac56f574b14b51f355c70224a71499c8fff33f81a0daea7caac8f1389",
+      "manifestSha256": "33aa132ac56f574b14b51f355c70224a71499c8fff33f81a0daea7caac8f1389",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/text-effects.ts",
+      "currentSha256": "45e08b0dcd387186d5eeeadd25d7c1326b85b928a8f2142b85c72250fb3b1ef7",
+      "manifestSha256": "45e08b0dcd387186d5eeeadd25d7c1326b85b928a8f2142b85c72250fb3b1ef7",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/text-outline.ts",
+      "currentSha256": "41da35039c8541988434b59bb0969a28f7ffb1bb3d3dad70dde073fabc0a5d7e",
+      "manifestSha256": "41da35039c8541988434b59bb0969a28f7ffb1bb3d3dad70dde073fabc0a5d7e",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/top-level-pos.ts",
+      "currentSha256": "e5d4f9f7d7daf510b2749fa7eaf2317916574c0be796603f3eb0efac36b7257a",
+      "manifestSha256": "e5d4f9f7d7daf510b2749fa7eaf2317916574c0be796603f3eb0efac36b7257a",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/touched-blocks.ts",
+      "currentSha256": "e9f66a54a125ff2f6788d1739e30c8164604985c3ebaac6817cf5a7e7dfa963c",
+      "manifestSha256": "e9f66a54a125ff2f6788d1739e30c8164604985c3ebaac6817cf5a7e7dfa963c",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/editor/trailing-table-exit.ts",
+      "currentSha256": "0e8209df823f07ceb2cd4338f233a26792a03e56da7d5eddd8abb837d62fa2c2",
+      "manifestSha256": "0e8209df823f07ceb2cd4338f233a26792a03e56da7d5eddd8abb837d62fa2c2",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/font-check.ts",
+      "currentSha256": "62d535b5f9dcc926c114fb412e4659dda3bbb0d6748314552ce00e9ba215c976",
+      "manifestSha256": "62d535b5f9dcc926c114fb412e4659dda3bbb0d6748314552ce00e9ba215c976",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/font-list.ts",
+      "currentSha256": "15a8e5885d25ca96b38686f89f4427ee2f1077b7022674d6abf9d2b7f176cf2f",
+      "manifestSha256": "15a8e5885d25ca96b38686f89f4427ee2f1077b7022674d6abf9d2b7f176cf2f",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/fonts/fonts.css",
+      "currentSha256": "ab45043df8391c9661f774c932f38948b1c5d359add1a0f7e9a9df6ddcc43b91",
+      "manifestSha256": "ab45043df8391c9661f774c932f38948b1c5d359add1a0f7e9a9df6ddcc43b91",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/line-metrics.ts",
+      "currentSha256": "5f49b2a9a980e83bf7d32f7b1e8e14e6e4bf9a21fe1d877260a8fe65b5b119d3",
+      "manifestSha256": "5f49b2a9a980e83bf7d32f7b1e8e14e6e4bf9a21fe1d877260a8fe65b5b119d3",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/note-format.ts",
+      "currentSha256": "e7a6cc95ae15497acef98a2aa783a9f6dd62638275c33c635c77803414bdc748",
+      "manifestSha256": "e7a6cc95ae15497acef98a2aa783a9f6dd62638275c33c635c77803414bdc748",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/pagination-hf.ts",
+      "currentSha256": "2bcdad6cb45586a5cebe3819c3f65096c855a28ccb5767e795b40152592c298a",
+      "manifestSha256": "2bcdad6cb45586a5cebe3819c3f65096c855a28ccb5767e795b40152592c298a",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/pagination-index.ts",
+      "currentSha256": "bb49a655e500588b6dff2cebc6197e82dfc1b2dedded51cebe1d99a48f049a7f",
+      "manifestSha256": "bb49a655e500588b6dff2cebc6197e82dfc1b2dedded51cebe1d99a48f049a7f",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/pagination-lines.ts",
+      "currentSha256": "90429f5cea46531d910443f3f0996b6aa17d619618395dbb4fd0798f277f3a2f",
+      "manifestSha256": "90429f5cea46531d910443f3f0996b6aa17d619618395dbb4fd0798f277f3a2f",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/pagination-measure.ts",
+      "currentSha256": "239e0e93938be8d596ca981ff88bb68bbd1b06f7cdd77094d6558cee42aaad10",
+      "manifestSha256": "239e0e93938be8d596ca981ff88bb68bbd1b06f7cdd77094d6558cee42aaad10",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/pagination-sections.ts",
+      "currentSha256": "7dbf4e4c758fdde8ed6b8e4a31c9853259ca85c3e1709deed149614f485cf33b",
+      "manifestSha256": "7dbf4e4c758fdde8ed6b8e4a31c9853259ca85c3e1709deed149614f485cf33b",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/pagination-slices.ts",
+      "currentSha256": "20cfaa51ba08b8cfe2c6603fc2e0227f9ee5fee67c9fe49caf43c8c66d6cd4fc",
+      "manifestSha256": "20cfaa51ba08b8cfe2c6603fc2e0227f9ee5fee67c9fe49caf43c8c66d6cd4fc",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/pagination-types.ts",
+      "currentSha256": "fa67daad539ba6e8435747fca95e749d58241786ed51fb87ffe1231fe14f296f",
+      "manifestSha256": "fa67daad539ba6e8435747fca95e749d58241786ed51fb87ffe1231fe14f296f",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/pagination.ts",
+      "currentSha256": "332a42be749fd1e07c60387e7b1235a671a39290e0a948b9b589d73bf690254a",
+      "manifestSha256": "332a42be749fd1e07c60387e7b1235a671a39290e0a948b9b589d73bf690254a",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/apps/docs/src/renderer/phased-content.ts",
+      "currentSha256": "889ed66b350dd66cd58c458063b6ae879c3b26ec154f99c6dcd9fd89893f1766",
+      "manifestSha256": "889ed66b350dd66cd58c458063b6ae879c3b26ec154f99c6dcd9fd89893f1766",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/alt-chunk.ts",
+      "currentSha256": "2e17d90b92e60ed870b3ce19c66ea837d58025ef7034cdee3f3d8eb3cd6547f0",
+      "manifestSha256": "2e17d90b92e60ed870b3ce19c66ea837d58025ef7034cdee3f3d8eb3cd6547f0",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/blank.ts",
+      "currentSha256": "5cf63bacf7a9e14c79e171cdada9d65c9fbccd126fbd5d4b4511f8d3106469b3",
+      "manifestSha256": "5cf63bacf7a9e14c79e171cdada9d65c9fbccd126fbd5d4b4511f8d3106469b3",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/byte-stream.ts",
+      "currentSha256": "de17cbac638676b1afc036b8053e5ef5093f2dbca68f37baf1a0c65f970f0ad0",
+      "manifestSha256": "de17cbac638676b1afc036b8053e5ef5093f2dbca68f37baf1a0c65f970f0ad0",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/chart.ts",
+      "currentSha256": "fe1da264f99212b328872cf01f40a2136981dd5411f29c9c9c46e61abf1589a5",
+      "manifestSha256": "fe1da264f99212b328872cf01f40a2136981dd5411f29c9c9c46e61abf1589a5",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/checkbox-control.ts",
+      "currentSha256": "ec6495bff5bb2081b3dc0499e1e94bbe6d7e34010e810e4fe738c88f1408de82",
+      "manifestSha256": "ec6495bff5bb2081b3dc0499e1e94bbe6d7e34010e810e4fe738c88f1408de82",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/eq-field.ts",
+      "currentSha256": "1df1925d175946beb2d6a962342deb6d1a0ef8e044bd81f0effe555282c1eadc",
+      "manifestSha256": "1df1925d175946beb2d6a962342deb6d1a0ef8e044bd81f0effe555282c1eadc",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/field-balance.ts",
+      "currentSha256": "cdb81592231e1bd9a43b9aab1bb920d7cf09e32ab964e1dafa941bed494dac92",
+      "manifestSha256": "cdb81592231e1bd9a43b9aab1bb920d7cf09e32ab964e1dafa941bed494dac92",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/font-settings.ts",
+      "currentSha256": "eb621aa947fac1eb5d860f4d380ab6c59eb81f96e5d3e12b6dfc4b1034f5464d",
+      "manifestSha256": "eb621aa947fac1eb5d860f4d380ab6c59eb81f96e5d3e12b6dfc4b1034f5464d",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/font-table.ts",
+      "currentSha256": "12b0b5aa760bf7986f4bc34f7c03a4c423968a7aa5849b994e898c79b0e78778",
+      "manifestSha256": "12b0b5aa760bf7986f4bc34f7c03a4c423968a7aa5849b994e898c79b0e78778",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/generate.ts",
+      "currentSha256": "c1c79d63085f6844078b54e10d93383f2661476e69a28046966dac13c48d8e68",
+      "manifestSha256": "c1c79d63085f6844078b54e10d93383f2661476e69a28046966dac13c48d8e68",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/index.ts",
+      "currentSha256": "cea07d209d617969b704a9f361319e91270115b19cef0eb607cedd5aa65fd67b",
+      "manifestSha256": "cea07d209d617969b704a9f361319e91270115b19cef0eb607cedd5aa65fd67b",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/ink.ts",
+      "currentSha256": "2eb9391a385591f6ab39b00d7f5f9e13d034ba80531f138a61c54f435087ffe5",
+      "manifestSha256": "2eb9391a385591f6ab39b00d7f5f9e13d034ba80531f138a61c54f435087ffe5",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/lazy-media.ts",
+      "currentSha256": "33a4070fde52c39f27558f00d5b60b9114e0dd15931b4a6b3d6d32b3a0d14139",
+      "manifestSha256": "33a4070fde52c39f27558f00d5b60b9114e0dd15931b4a6b3d6d32b3a0d14139",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/list-markers.ts",
+      "currentSha256": "01c205dc4fe7eb42aa2588b80b793060472f5d78ae78574962bdca70a4dbe0c2",
+      "manifestSha256": "01c205dc4fe7eb42aa2588b80b793060472f5d78ae78574962bdca70a4dbe0c2",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/math.ts",
+      "currentSha256": "48bdb590e7f234e22e96bba95f1abce78d4b6ae8832a95fdff6724068a4b3f1b",
+      "manifestSha256": "48bdb590e7f234e22e96bba95f1abce78d4b6ae8832a95fdff6724068a4b3f1b",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/metafile.ts",
+      "currentSha256": "919fc71ef665d0cb6dd3a3218c629964d1c1f88ad238e07aa525cc865a79641a",
+      "manifestSha256": "919fc71ef665d0cb6dd3a3218c629964d1c1f88ad238e07aa525cc865a79641a",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/notes.ts",
+      "currentSha256": "91f9eef7e59be2ca7b03ce642ea96bca467d062617c94b76aeb3614f06e5dd91",
+      "manifestSha256": "91f9eef7e59be2ca7b03ce642ea96bca467d062617c94b76aeb3614f06e5dd91",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/ooxml-normalize.ts",
+      "currentSha256": "1bbe72c97cc000e7bd2b21c23ff958a908815f8acf5bad6dceb077a3e4b1ccde",
+      "manifestSha256": "1bbe72c97cc000e7bd2b21c23ff958a908815f8acf5bad6dceb077a3e4b1ccde",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/parse-block-passes.ts",
+      "currentSha256": "c4d8ad3f7e009d38d22d0304d9ab274c5db43102429950fbdbc90aa6cf11dd58",
+      "manifestSha256": "c4d8ad3f7e009d38d22d0304d9ab274c5db43102429950fbdbc90aa6cf11dd58",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/parse-drawing-geometry.ts",
+      "currentSha256": "7947327f2cef928778e9547542fa0e6ec38efacb8a4656399d24e26786c56362",
+      "manifestSha256": "7947327f2cef928778e9547542fa0e6ec38efacb8a4656399d24e26786c56362",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/parse-fields.ts",
+      "currentSha256": "4ef6ce7c84ae06aafa73c54e87bc532cf173c1c2ab5087d11eba9f8159cf99cc",
+      "manifestSha256": "4ef6ce7c84ae06aafa73c54e87bc532cf173c1c2ab5087d11eba9f8159cf99cc",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/parse-package.ts",
+      "currentSha256": "ac30528bae8c598d16581280a7faa8430996e9fd4084f5c524bd390d8e414862",
+      "manifestSha256": "ac30528bae8c598d16581280a7faa8430996e9fd4084f5c524bd390d8e414862",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/parse-props.ts",
+      "currentSha256": "5a3aa70a3cd0910a3ff62a4ff1e2d9e1706941df04471c04c076837f5850cf66",
+      "manifestSha256": "5a3aa70a3cd0910a3ff62a4ff1e2d9e1706941df04471c04c076837f5850cf66",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/parse-sdt.ts",
+      "currentSha256": "7c89dcdd869f00fead5d6f21404c7d7e04b22767c24e06a712be8f25a6c84a38",
+      "manifestSha256": "7c89dcdd869f00fead5d6f21404c7d7e04b22767c24e06a712be8f25a6c84a38",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/parse-styles.ts",
+      "currentSha256": "195937c05717eb1d9fb27140ee0fbd894df6cd2d2c786c00344c423b8c08bd9d",
+      "manifestSha256": "195937c05717eb1d9fb27140ee0fbd894df6cd2d2c786c00344c423b8c08bd9d",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/parse-vml.ts",
+      "currentSha256": "be8e2908be5bcb3fd95cef759f68270a1193f54a751bd56db8e8c24125badf8a",
+      "manifestSha256": "be8e2908be5bcb3fd95cef759f68270a1193f54a751bd56db8e8c24125badf8a",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/parse-xml-text.ts",
+      "currentSha256": "d93fbf642f24e78248d7e4d831badf9d9ef922efb432a085de93f98b72ab6c34",
+      "manifestSha256": "d93fbf642f24e78248d7e4d831badf9d9ef922efb432a085de93f98b72ab6c34",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/parse.ts",
+      "currentSha256": "3a90ea625f1fb8fe8dd1e3010314530b8522044de828f01e7cbe72f75a402824",
+      "manifestSha256": "3a90ea625f1fb8fe8dd1e3010314530b8522044de828f01e7cbe72f75a402824",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/patch.ts",
+      "currentSha256": "ccf3354aa68fda0707498721c812052552b73cc3b015f827a98bfdc6991f860e",
+      "manifestSha256": "ccf3354aa68fda0707498721c812052552b73cc3b015f827a98bfdc6991f860e",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/protection.ts",
+      "currentSha256": "2d9d5a68f7fdc3d2d206e1dd0a3759bed8427af5a6b331c9338e8037312e8914",
+      "manifestSha256": "2d9d5a68f7fdc3d2d206e1dd0a3759bed8427af5a6b331c9338e8037312e8914",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/resource-cleanup.ts",
+      "currentSha256": "9937a43343178624762c299ec8f6ef92b1f16a8cd92904c216b7bd57037f032e",
+      "manifestSha256": "9937a43343178624762c299ec8f6ef92b1f16a8cd92904c216b7bd57037f032e",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/scan.ts",
+      "currentSha256": "fec8d8113e3103a8d145dec5632c663e7967c42067b21261572bb35973683cea",
+      "manifestSha256": "fec8d8113e3103a8d145dec5632c663e7967c42067b21261572bb35973683cea",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/section.ts",
+      "currentSha256": "f76fd0700b4bb7a47b1eb03859952d447441b03e1d0c3c52bf8a0c30655b2968",
+      "manifestSha256": "f76fd0700b4bb7a47b1eb03859952d447441b03e1d0c3c52bf8a0c30655b2968",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/sources.ts",
+      "currentSha256": "40c33f1198aca5037044e95c2b7ed048537b6292bcc884cf86b905f9552f3449",
+      "manifestSha256": "40c33f1198aca5037044e95c2b7ed048537b6292bcc884cf86b905f9552f3449",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/style-upsert.ts",
+      "currentSha256": "fbf0b2952674759e32b7c58e1cd15ef6c6683302d17b44381b5a4c2739dc061b",
+      "manifestSha256": "fbf0b2952674759e32b7c58e1cd15ef6c6683302d17b44381b5a4c2739dc061b",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/symbol-fonts.ts",
+      "currentSha256": "9f666e8fe5d931f6bbe7de97d1f84a115295db44dae8cea4f996c10de95196fa",
+      "manifestSha256": "9f666e8fe5d931f6bbe7de97d1f84a115295db44dae8cea4f996c10de95196fa",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/text-patch.ts",
+      "currentSha256": "9ba04ef0786466e2a031157a3b4f8c48fbcbc04a76b12334dcaaed041f651fc3",
+      "manifestSha256": "9ba04ef0786466e2a031157a3b4f8c48fbcbc04a76b12334dcaaed041f651fc3",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/theme.ts",
+      "currentSha256": "8753803fba752427c858ccfa9e08b07318dd6708d5d709a7256f7f1b8ecdbf46",
+      "manifestSha256": "8753803fba752427c858ccfa9e08b07318dd6708d5d709a7256f7f1b8ecdbf46",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/tiff.ts",
+      "currentSha256": "bada939eab0de5c0f9cea31d1908b8edcd78c95ddc2b8ad4046d875be6e72975",
+      "manifestSha256": "bada939eab0de5c0f9cea31d1908b8edcd78c95ddc2b8ad4046d875be6e72975",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/types.ts",
+      "currentSha256": "85d3868c3c5bb4aaab9a62b689bbc25a7ac25236a3294105e10e04c4dd44d356",
+      "manifestSha256": "85d3868c3c5bb4aaab9a62b689bbc25a7ac25236a3294105e10e04c4dd44d356",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/vendor/emf-converter/index.mjs",
+      "currentSha256": "1a8c5573e09273e287b7a181103f243f2d978b727f9c0ddfaa9f99f02e381341",
+      "manifestSha256": "1a8c5573e09273e287b7a181103f243f2d978b727f9c0ddfaa9f99f02e381341",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/watermark.ts",
+      "currentSha256": "face54c82e5fd013464d25267aac9bed2bbf07746aafc62ddb5fded89cfd3f11",
+      "manifestSha256": "face54c82e5fd013464d25267aac9bed2bbf07746aafc62ddb5fded89cfd3f11",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/xml-utils.ts",
+      "currentSha256": "69ebdb5bff764beaec6ecbf33fcbfe5991b61b939997e8b1d7edc73baa5d6dd1",
+      "manifestSha256": "69ebdb5bff764beaec6ecbf33fcbfe5991b61b939997e8b1d7edc73baa5d6dd1",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/zip-load.ts",
+      "currentSha256": "ce3580de481d09f3dd3ac39275dba1b72d56425e09db10ef21d36098c2c63f7a",
+      "manifestSha256": "ce3580de481d09f3dd3ac39275dba1b72d56425e09db10ef21d36098c2c63f7a",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/docx-engine/src/zotero-doc-props.ts",
+      "currentSha256": "0ff276d58662b6bede11525e65a3a8307a86472039128cbe924bbf9192c29ef2",
+      "manifestSha256": "0ff276d58662b6bede11525e65a3a8307a86472039128cbe924bbf9192c29ef2",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/pptx-engine/src/custgeom.ts",
+      "currentSha256": "d814fa01d8bd40b9c439780e733d5ee2f28bef49113db65f511d137860b45ade",
+      "manifestSha256": "d814fa01d8bd40b9c439780e733d5ee2f28bef49113db65f511d137860b45ade",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/pptx-render/src/preset-geometry.ts",
+      "currentSha256": "4b588ccca3dbb218978a07509264dca57fcb1aa22552bba38d827decb5b923cd",
+      "manifestSha256": "4b588ccca3dbb218978a07509264dca57fcb1aa22552bba38d827decb5b923cd",
+      "match": true
+    },
+    {
+      "path": "packages/office/vendor/packages/ui/src/cutout.ts",
+      "currentSha256": "7d42d217e8df4337cab52799752d3953c6e7bac774926c7d71c2da9b3b3bb2b9",
+      "manifestSha256": "7d42d217e8df4337cab52799752d3953c6e7bac774926c7d71c2da9b3b3bb2b9",
+      "match": true
+    },
+    {
+      "path": "packages/renderer/src/styles/global.ts",
+      "currentSha256": "d3f4c397c274c9d03d79264c3051ef999d67085b995fe7d0a9eafa8fc9b599f6",
+      "manifestSha256": "d3f4c397c274c9d03d79264c3051ef999d67085b995fe7d0a9eafa8fc9b599f6",
+      "match": true
+    },
+    {
+      "path": "packages/renderer/src/theme/MimirProvider.tsx",
+      "currentSha256": "e4c77b614d86080ea74966fe0ea5afba844fff5aa2e79ec6332213516eb807af",
+      "manifestSha256": "e4c77b614d86080ea74966fe0ea5afba844fff5aa2e79ec6332213516eb807af",
+      "match": true
+    },
+    {
+      "path": "packages/renderer/src/theme/appearance.ts",
+      "currentSha256": "db25ece914620ac5e89396cdd772a885a33b12639dc0e52cf2a6476cf5139e74",
+      "manifestSha256": "db25ece914620ac5e89396cdd772a885a33b12639dc0e52cf2a6476cf5139e74",
+      "match": true
+    },
+    {
+      "path": "packages/renderer/src/theme/customToken.ts",
+      "currentSha256": "5e37660cce851fc29fd19e1bb9527d3f3c34bb666c0808de200dcef45a9962fe",
+      "manifestSha256": "5e37660cce851fc29fd19e1bb9527d3f3c34bb666c0808de200dcef45a9962fe",
+      "match": true
+    },
+    {
+      "path": "packages/renderer/src/theme/editor-theme-bridge.ts",
+      "currentSha256": "97f494af9516ff16724c2d25a7a6cb685b0b3e6d9769de474c177cffb179eae7",
+      "manifestSha256": "97f494af9516ff16724c2d25a7a6cb685b0b3e6d9769de474c177cffb179eae7",
+      "match": true
+    },
+    {
+      "path": "packages/renderer/src/theme/tokens.ts",
+      "currentSha256": "50d51746a4fe5af3e5a8a883e84d3893327841641236fac8d49b746e75d92dd6",
+      "manifestSha256": "50d51746a4fe5af3e5a8a883e84d3893327841641236fac8d49b746e75d92dd6",
+      "match": true
+    }
+  ]
+}

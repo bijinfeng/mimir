@@ -137,11 +137,11 @@ function DesignFrame({
           </ToolbarButton>
           <ToolbarButton
             label="应用设计"
+            primary
             disabled={locked || unavailable || !dirty}
             onClick={onApply}
           >
             <Check size={14} />
-            <span>应用</span>
           </ToolbarButton>
         </div>
       </div>

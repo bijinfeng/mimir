@@ -1,0 +1,68 @@
+{
+  "baseline": "6f6af4c",
+  "before": {
+    "chart690": {
+      "viewport": [1280, 720],
+      "editor": [690, 640],
+      "theme": "dark",
+      "bodyBottom": 613.359375,
+      "actionTop": 678.25,
+      "actionBottom": 702.25,
+      "result": "提交按钮需向下滚动才可见"
+    },
+    "phoneChart": {
+      "viewport": [390, 640],
+      "editor": [390, 640],
+      "theme": "light",
+      "result": "插入组菜单保持expanded，覆盖Inspector标题"
+    },
+    "findClose": {
+      "viewport": [1280, 720],
+      "editor": [690, 640],
+      "query": "段",
+      "matches": 2,
+      "result": "Escape关闭bar后焦点落到body，PM仍editable且无编辑"
+    }
+  },
+  "after": {
+    "chart690": {
+      "bodyBottom": 613.359375,
+      "actionTop": 579.359375,
+      "actionBottom": 603.359375,
+      "result": "固定操作区可见；真实插入后画布出现图表，保存和撤销启用"
+    },
+    "phoneChart": {
+      "viewport": [390, 640],
+      "result": "父菜单已收起，面板标题/动作可见；Escape关闭后回表格、图片与链接入口；无页面横向溢出"
+    },
+    "shortTextbox": {
+      "viewport": [390, 360],
+      "actionTop": 299.359375,
+      "actionBottom": 323.359375,
+      "result": "固定插入操作在短视口中可见；表单内部滚动"
+    },
+    "findClose": {
+      "query": "段",
+      "matches": 2,
+      "result": "Escape后activeElement为唯一.tiptap.ProseMirror，editable=true，查找栏消失，保存保持disabled"
+    },
+    "notes": {
+      "fixture": "原生20脚注文档",
+      "result": "查找脚注→精修脚注，应用后第1条原生注释文字改变；父菜单收起"
+    },
+    "privacy": {
+      "result": "正文修改后显示重新读取设置；点击后显示已读取当前设置"
+    },
+    "view": {
+      "result": "文档导航显示两级原生标题；切换Web布局保持唯一ProseMirror"
+    },
+    "saveRecovery": {
+      "result": "实际输入精修验收；手动模拟保存pending→failure保留dirty→retry success清dirty→重开保存字节后标题仍含精修验收",
+      "boundary": "真实DOCX生成和重新解析，保存宿主为页面内存模拟，不是后端持久化"
+    }
+  },
+  "limitations": [
+    "入口源码映射不等于逐项浏览器GUI验收",
+    "fixture读写与保存重开仅页面内存模拟，无后端或磁盘持久化"
+  ]
+}

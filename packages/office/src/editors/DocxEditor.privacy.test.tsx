@@ -289,6 +289,7 @@ it('body changes invalidate the panel draft and changing source cannot apply it 
   })
   expect(app.host.querySelector<HTMLButtonElement>('[aria-label="应用设置"]')!.disabled).toBe(true)
   expect(app.host.textContent).toContain('文档已变化，请重新读取设置')
+  expect(app.host.querySelector('[aria-label="重新读取设置"]')?.textContent).toBe('重新读取设置')
   await click(app.host, '重新读取设置')
   expect(app.host.querySelector('[role="switch"]')!.getAttribute('aria-checked')).toBe('false')
   await app.render('privacy-b')

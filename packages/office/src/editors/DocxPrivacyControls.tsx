@@ -141,7 +141,9 @@ export function DocxPrivacyControls({ context }: { context: DocxAdvancedContext 
         {stale && (
           <div className="mimir-docx-privacy__stale">
             <ToolbarMenuNote>文档已变化，请重新读取设置后再操作。</ToolbarMenuNote>
-            <ToolbarButton label="重新读取设置" onClick={reload} />
+            <ToolbarButton label="重新读取设置" onClick={reload}>
+              重新读取设置
+            </ToolbarButton>
           </div>
         )}
         <p className="mimir-docx-privacy__feedback" role="status">

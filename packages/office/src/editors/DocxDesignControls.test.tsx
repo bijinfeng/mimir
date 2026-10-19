@@ -126,7 +126,7 @@ it('shows current values and real theme preview, keeps drafts local, applies onc
         ?.getAttribute('style')
         ?.includes('Trebuchet MS') ?? false,
   )
-  expect(host.querySelector('[aria-label="应用设计"]')?.textContent).toBe('应用')
+  expect(host.querySelector('[aria-label="应用设计"]')?.textContent).toBe('应用设计')
   await save(1)
   expect((await openDocx(saves[0]!)).footnotes.parsed.themeColors?.accent1).toBe('90C226')
   await press(host, '恢复原件主题')

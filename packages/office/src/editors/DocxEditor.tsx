@@ -1319,6 +1319,8 @@ export function DocxEditor({
   })
   /** 查找栏的显隐、查询串与两个开关（栏本身是受控的） */
   const [findOpen, setFindOpen] = useState(false)
+  const findReturnFocus = useRef<{ editor: Editor; active: Element | null } | null>(null)
+  const findLastFocus = useRef<Element | null>(null)
   const [findQuery, setFindQuery] = useState('')
   const [findOptions, setFindOptions] = useState<FindOptions>({
     matchCase: false,
@@ -1475,6 +1477,38 @@ export function DocxEditor({
     changeReading(false)
     setFindOpen(true)
   }, [changeReading])
+  useEffect(() => {
+    if (!findOpen) return
+    findLastFocus.current = document.activeElement
+    const rememberFocus = (event: FocusEvent) => {
+      findLastFocus.current = event.target instanceof Element ? event.target : null
+    }
+    document.addEventListener('focusin', rememberFocus)
+    return () => document.removeEventListener('focusin', rememberFocus)
+  }, [findOpen])
+  const closeFind = () => {
+    if (editor) {
+      const active = document.activeElement
+      const shell = editor.view.dom.closest('.mimir-editor')
+      const findBar = shell?.querySelector('.me-find')
+      const trigger = shell?.querySelector('[aria-label="查找和替换 (Ctrl+F)"]')
+      // ToolbarButton blurs native inputs on mousedown. Retain the focus source
+      // so an outside input becoming BODY does not request an editor refocus.
+      const focusSource = !active || active === document.body ? findLastFocus.current : active
+      if (focusSource && (findBar?.contains(focusSource) || focusSource === trigger))
+        findReturnFocus.current = { editor, active }
+    }
+    setFindOpen(false)
+  }
+  useEffect(() => {
+    if (findOpen) return
+    const pending = findReturnFocus.current
+    findReturnFocus.current = null
+    if (!pending || pending.editor !== editor || editor.isDestroyed) return
+    const active = document.activeElement
+    if (!active || active === document.body || active === pending.active)
+      editor.view.dom.focus({ preventScroll: true })
+  }, [editor, findOpen])
   useFindHotkey(openFind)
   useEffect(() => {
     const scroll = scrollRef.current
@@ -2052,7 +2086,7 @@ export function DocxEditor({
               }
               headingLevels={session?.headingLevels ?? NO_LEVELS}
               findOpen={findOpen}
-              onToggleFind={() => setFindOpen((open) => !open)}
+              onToggleFind={() => (findOpen ? closeFind() : openFind())}
               onNotice={setNotice}
               headerText={liveHeaderFooter?.header?.text ?? ''}
               footerText={liveHeaderFooter?.footer?.text ?? ''}
@@ -2232,7 +2266,7 @@ export function DocxEditor({
             onQueryChange={setFindQuery}
             options={findOptions}
             onOptionsChange={setFindOptions}
-            onClose={() => setFindOpen(false)}
+            onClose={closeFind}
           />
         ) : undefined
       }
@@ -2243,7 +2277,9 @@ export function DocxEditor({
             <ToolbarButton
               label="停止生成副本"
               onClick={() => cancelDocxEncryptionGeneration(session)}
-            />
+            >
+              停止生成副本
+            </ToolbarButton>
           )}
           {/*
             提示走外壳的 `ToolbarNotice`（危险色、能断词）——原来这里是一个
@@ -2972,18 +3008,12 @@ export function DocxToolbar({
             ).find((button) => button.getAttribute('aria-label') === label)
             const sectionKey =
               origin?.closest<HTMLElement>('[data-section-key]')?.dataset.sectionKey
-            if (
-              sectionKey === 'ink-tools' ||
-              sectionKey === 'document-compare' ||
-              sectionKey === 'document-protection' ||
-              ['管理批注', '添加批注'].includes(label)
-            )
-              origin
-                ?.closest<HTMLElement>('[data-section-key]')
-                ?.querySelector<HTMLButtonElement>(
-                  ':scope > .me-menu > button[aria-haspopup="menu"][aria-expanded="true"]',
-                )
-                ?.click()
+            origin
+              ?.closest<HTMLElement>('[data-section-key]')
+              ?.querySelector<HTMLButtonElement>(
+                ':scope > .me-menu > button[aria-haspopup="menu"][aria-expanded="true"]',
+              )
+              ?.click()
             // Ribbon layout can remount its controls while the Inspector opens/closes.
             // Resolve the mounted trigger after closing instead of retaining its old node.
             onOpenInspector(label, content, {

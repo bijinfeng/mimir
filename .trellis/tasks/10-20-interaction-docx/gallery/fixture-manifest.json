@@ -1,0 +1,61 @@
+{
+  "kind": "unmodified-native-docx-copies",
+  "files": [
+    {
+      "path": "fixtures/rich.docx",
+      "source": "packages/office/vendor/apps/docs/tests/pagination-corpus/docx/kitchen-sink.docx",
+      "sourceCommit": "6f6af4c",
+      "bytes": 3932,
+      "sha256": "599644b7f4f6ca00deac771ea6dfe193b68aaf2fa99ccf03798e0a1c951dcbae",
+      "modified": false
+    },
+    {
+      "path": "fixtures/headings.docx",
+      "source": "packages/office/vendor/apps/docs/tests/pagination-corpus/docx/04-headings-keepnext.docx",
+      "sourceCommit": "6f6af4c",
+      "bytes": 2646,
+      "sha256": "cfe65acbf118d72996b8cac69519bb2dbfa70097a11716e802bd7614286dedd1",
+      "modified": false
+    },
+    {
+      "path": "fixtures/report.docx",
+      "source": "packages/office/vendor/apps/docs/tests/pagination-corpus/docx/20-cn-short-report.docx",
+      "sourceCommit": "6f6af4c",
+      "bytes": 2684,
+      "sha256": "5c3b75a00206641f3e33262a4a87a75b2354d20be82c55be3a2e471b93231e37",
+      "modified": false
+    },
+    {
+      "path": "fixtures/columns.docx",
+      "source": "packages/office/vendor/apps/docs/tests/pagination-corpus/docx/22-two-columns.docx",
+      "sourceCommit": "6f6af4c",
+      "bytes": 2952,
+      "sha256": "378fbf8f8398ab249c561376df8506c4e4915a41cd6b2c7f68b66e9cb29154f9",
+      "modified": false
+    },
+    {
+      "path": "fixtures/footnotes.docx",
+      "source": "packages/office/vendor/apps/docs/tests/pagination-corpus/docx/06-with-footnotes.docx",
+      "sourceCommit": "6f6af4c",
+      "bytes": 3305,
+      "sha256": "3dee3f051ad94017ceeaea22afa393536740014405f2f3792572e886bf255583",
+      "modified": false
+    },
+    {
+      "path": "fixtures/office-standard-password.docx",
+      "source": "packages/office/tests/fixtures/docx-encryption/office-standard-password.docx",
+      "sourceCommit": "6f6af4c",
+      "bytes": 7168,
+      "sha256": "d265dcf02f7d552486229b8c67a627ef3752fe6802b02fd2d2d485fcfbbac5de",
+      "modified": false
+    },
+    {
+      "path": "fixtures/office-agile-password.docx",
+      "source": "packages/office/tests/fixtures/docx-encryption/office-agile-password.docx",
+      "sourceCommit": "6f6af4c",
+      "bytes": 18432,
+      "sha256": "0605624697328060fdc75ca9929ea20b9d63ebed9387ff1a97aaf9979757234a",
+      "modified": false
+    }
+  ]
+}

@@ -12,6 +12,7 @@ import {
   ToolbarMenuFields,
   ToolbarMenuNote,
   ToolbarNumberField,
+  ToolbarPropertyForm,
   ToolbarSelect,
   ToolbarTextField,
 } from '../shell/EditorShell.js'
@@ -44,24 +45,28 @@ export function DocxStyleControls({ context }: { context: DocxAdvancedContext })
   const action = useDocxAction(context)
   const current = styles.find((style) => style.styleId === selected)
   return (
-    <>
-      <ToolbarMenuFields label="文档样式">
-        <ToolbarSelect
-          label="选择文档样式"
-          value={selected}
-          options={[
-            { value: '__new__', label: '新建样式' },
-            ...styles
-              .filter((style) => !style.linkedCharShell)
-              .map((style) => ({
-                value: style.styleId,
-                label: `${style.name} · ${{ paragraph: '段落', character: '字符', table: '表格' }[style.type]}`,
-              })),
-          ]}
-          onChange={setSelected}
-        />
-        {error && <p role="alert">无法读取当前样式：{error}</p>}
-      </ToolbarMenuFields>
+    <div className="mimir-docx-style-panel">
+      <div className="mimir-docx-style-panel__selector">
+        <ToolbarPropertyForm columns={1}>
+          <ToolbarSelect
+            label="选择文档样式"
+            disabled={action.busy}
+            disabledReason="正在应用修改"
+            value={selected}
+            options={[
+              { value: '__new__', label: '新建样式' },
+              ...styles
+                .filter((style) => !style.linkedCharShell)
+                .map((style) => ({
+                  value: style.styleId,
+                  label: `${style.name} · ${{ paragraph: '段落', character: '字符', table: '表格' }[style.type]}`,
+                })),
+            ]}
+            onChange={setSelected}
+          />
+          {error && <p role="alert">无法读取当前样式：{error}</p>}
+        </ToolbarPropertyForm>
+      </div>
       <StyleForm
         key={`${selected}:${JSON.stringify(current)}`}
         context={context}
@@ -70,7 +75,7 @@ export function DocxStyleControls({ context }: { context: DocxAdvancedContext })
         onDefined={setSelected}
         action={action}
       />
-    </>
+    </div>
   )
 }
 function StyleForm({
@@ -152,6 +157,8 @@ function StyleForm({
   ) => (
     <ToolbarSelect
       key={key}
+      disabled={busy}
+      disabledReason="正在应用修改"
       label={label}
       value={String(fields[key])}
       options={[
@@ -239,7 +246,42 @@ function StyleForm({
     )
   }
   return (
-    <DocxControlForm busy={busy}>
+    <DocxControlForm
+      busy={busy}
+      actions={
+        <>
+          {message && <p role="status">{message}</p>}
+          <ToolbarButton
+            primary={!current || !!changed}
+            label={current ? '更新样式定义' : '创建样式定义'}
+            disabled={busy || !valid || !changed}
+            disabledReason={!valid ? '请填写名称、有效标识和六位颜色' : '样式定义未变化'}
+            onClick={() => void define()}
+          >
+            {current && !changed ? '更新样式定义' : undefined}
+          </ToolbarButton>
+          {current && (
+            <ToolbarButton
+              label="应用样式到选区"
+              primary={!changed}
+              disabled={
+                busy || !!changed || (type === 'character' && selection.from === selection.to)
+              }
+              disabledReason={changed ? '请先更新样式定义' : '请先在正文选中文字'}
+              onClick={() =>
+                void run('apply_style', { styleId, ...selection }).then((ok) =>
+                  setMessage(
+                    ok ? '已应用到打开面板时的选区。' : '未应用，请重新选择内容后打开面板。',
+                  ),
+                )
+              }
+            >
+              {changed ? '应用到选区' : undefined}
+            </ToolbarButton>
+          )}
+        </>
+      }
+    >
       <ToolbarMenuFields label={current ? '样式定义' : '新建样式'}>
         {!current && (
           <ToolbarTextField
@@ -253,6 +295,8 @@ function StyleForm({
         {!current && (
           <ToolbarSelect
             label="样式类型"
+            disabled={busy}
+            disabledReason="正在应用修改"
             value={type}
             options={[
               { value: 'paragraph', label: '段落' },
@@ -264,6 +308,8 @@ function StyleForm({
         )}
         <ToolbarSelect
           label="基于样式"
+          disabled={busy}
+          disabledReason="正在应用修改"
           value={basedOn}
           options={[
             { value: NONE, label: '不继承其他样式' },
@@ -306,6 +352,8 @@ function StyleForm({
           <ToolbarMenuFields label="段落">
             <ToolbarSelect
               label="段落对齐"
+              disabled={busy}
+              disabledReason="正在应用修改"
               value={fields.align}
               options={['left', 'center', 'right', 'justify'].map((value, i) => ({
                 value,
@@ -321,6 +369,8 @@ function StyleForm({
             {number('firstLineIndent', '首行缩进（磅）', -1000)}
             <ToolbarSelect
               label="大纲级别"
+              disabled={busy}
+              disabledReason="正在应用修改"
               value={fields.outlineLevel}
               options={[
                 { value: NONE, label: '正文' },
@@ -339,34 +389,6 @@ function StyleForm({
           </ToolbarMenuFields>
         </>
       )}
-      <div className="mimir-docx-style-actions">
-        <ToolbarButton
-          primary
-          label={current ? '更新样式定义' : '创建样式定义'}
-          disabled={busy || !valid || !changed}
-          disabledReason={!valid ? '请填写名称、有效标识和六位颜色' : '样式定义未变化'}
-          onClick={() => void define()}
-        />
-        {current && (
-          <ToolbarButton
-            label="应用样式到选区"
-            disabled={
-              busy || !!changed || (type === 'character' && selection.from === selection.to)
-            }
-            disabledReason={changed ? '请先更新样式定义' : '请先在正文选中文字'}
-            onClick={() =>
-              void run('apply_style', { styleId, ...selection }).then((ok) =>
-                setMessage(
-                  ok ? '已应用到打开面板时的选区。' : '未应用，请重新选择内容后打开面板。',
-                ),
-              )
-            }
-          >
-            应用到选区
-          </ToolbarButton>
-        )}
-      </div>
-      {message && <p role="status">{message}</p>}
       {!message && (
         <ToolbarMenuNote>
           修改定义会更新使用此样式的内容；直接设置的局部格式优先。应用操作使用打开面板时的选区。

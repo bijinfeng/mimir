@@ -264,6 +264,7 @@ it('actual save worker can stop, retry, and be terminated by a new source withou
   await click(app.host, '保存到库')
   await settle(() => Bridge.instances.length > before)
   const stopped = Bridge.instances.at(-1)!
+  expect(app.host.querySelector('[aria-label="停止生成副本"]')?.textContent).toBe('停止生成副本')
   await click(app.host, '停止生成副本')
   await settle(
     () => app.host.querySelector<HTMLButtonElement>('[aria-label="保存到库"]')?.disabled === false,

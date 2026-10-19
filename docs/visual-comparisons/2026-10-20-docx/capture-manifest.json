@@ -1,0 +1,227 @@
+{
+  "baseline": "6f6af4c",
+  "date": "2026-10-20",
+  "pairs": [
+    {
+      "key": "style",
+      "title": "样式定义与应用",
+      "caption": "1100×640编辑区，1280×720视口。目标有可见名称，长表单独立滚动，动作固定；未改定义时应用选区为主操作。",
+      "dimensions": [1280, 720]
+    },
+    {
+      "key": "chart",
+      "title": "图表 · 深色窄栏",
+      "caption": "690×640编辑区，1280×720视口。保留分类和系列字段，提交从滚动末尾移至固定动作区。",
+      "dimensions": [1280, 720]
+    },
+    {
+      "key": "phone-chart",
+      "title": "手机宽度 · 面板入口",
+      "caption": "390×640真实视口。打开属性前收起原工具菜单，面板标题与提交动作可见。",
+      "dimensions": [390, 640]
+    },
+    {
+      "key": "textbox",
+      "title": "文本框属性",
+      "caption": "690×640编辑区，1280×720视口。尺寸、位置、环绕、文字和颜色全部保留，独立滚动与固定插入动作。",
+      "dimensions": [1280, 720]
+    },
+    {
+      "key": "page",
+      "title": "页面与节",
+      "caption": "690×640编辑区，1280×720视口。页面设置固定应用；分节符原有独立操作继续可达。",
+      "dimensions": [1280, 720]
+    },
+    {
+      "key": "watermark",
+      "title": "文字与图片水印",
+      "caption": "690×640编辑区，1280×720视口。保留文字、图片和移除三个入口，动作分级且可换行。",
+      "dimensions": [1280, 720]
+    },
+    {
+      "key": "notes",
+      "title": "原生脚注与尾注管理",
+      "caption": "690×640编辑区，1280×720视口。原件包含20条脚注；面板入口收起父菜单，修改与删除保留。",
+      "dimensions": [1280, 720]
+    },
+    {
+      "key": "design",
+      "title": "主题设计草稿",
+      "caption": "690×640编辑区，1280×720视口。同一Facet草稿，应用设计明确主操作。作者页面及原件颜色规则保持。",
+      "dimensions": [1280, 720]
+    },
+    {
+      "key": "find",
+      "title": "查找与替换",
+      "caption": "690×640编辑区，1280×720视口。同一“段”查询与2个匹配；Escape回焦由真实交互记录证明，截图记录栏布局保持。",
+      "dimensions": [1280, 720]
+    }
+  ],
+  "supplements": [
+    {
+      "key": "chart-inserted",
+      "title": "真实插入图表",
+      "caption": "真实点击主操作后画布出现图表，保存与撤销启用。"
+    },
+    {
+      "key": "notes-applied",
+      "title": "原生脚注替换",
+      "caption": "通过实际查找/替换和应用动作修改原生脚注，未简化原件写入路径。"
+    },
+    {
+      "key": "privacy-stale",
+      "title": "个人信息 · 过期设置",
+      "caption": "正文变化使设置过期，可见“重新读取设置”按钮保留恢复路径。"
+    },
+    {
+      "key": "short-textbox",
+      "title": "短高文本框",
+      "caption": "390×360真实视口。面板内部滚动，固定插入动作保持可达。"
+    },
+    {
+      "key": "view-navigation",
+      "title": "文档导航与视图",
+      "caption": "现有导航、Web/打印/阅读与唯一正文编辑器的回归记录。"
+    }
+  ],
+  "images": [
+    {
+      "path": "captures/style-before.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "e026dff4249a40d7f2804ef59577b19ef9395e108b09d6c98a17e283a19b445b"
+    },
+    {
+      "path": "captures/style-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "d2bd2740802aaab37c90a567f9f9d7d717e5a806d5e1ece53a8604c6fe6de54b"
+    },
+    {
+      "path": "captures/chart-before.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "1f426e7ad67a9eb0bafe0b6f27e849237db489db0810161420bcfca3248ad28e"
+    },
+    {
+      "path": "captures/chart-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "38c7d72388b92fe513ac9033ee6a3e5d2454fb26f6b28ca0286121be42c8b676"
+    },
+    {
+      "path": "captures/phone-chart-before.jpg",
+      "width": 390,
+      "height": 640,
+      "sha256": "5daffca0dcc07f7da9efe75a99549a45b28399f8d7003674bec70bde224aa4be"
+    },
+    {
+      "path": "captures/phone-chart-after.jpg",
+      "width": 390,
+      "height": 640,
+      "sha256": "9250dbe24bf31aef7f32a4e1f15f48ce17acbb1bb755cd93afb35f39e5a74342"
+    },
+    {
+      "path": "captures/textbox-before.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "3d040a574a6aa16ed74b635e2c780d1f0c37f4a3ffd7bee7e2a5dbfae864a335"
+    },
+    {
+      "path": "captures/textbox-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "46a5ee80efb4a5789aa3f11a16aa56d2cfc1eb0a66d118a61145063448c15cc9"
+    },
+    {
+      "path": "captures/page-before.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "a73f368eb4103a54e4f8699959ecd20987b239552d39d7cfb3f302dea3c0a6b3"
+    },
+    {
+      "path": "captures/page-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "477a3c95adde556b2384f0b24f2ad7ab82d7f90595e9cd7a6669bfecff4196da"
+    },
+    {
+      "path": "captures/watermark-before.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "0fcc91f79f3a1117bf77c9fab5413416694e2d2df877870478bb5a448117864a"
+    },
+    {
+      "path": "captures/watermark-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "9fa33411070f859b979db6c680f8d32c983b0d9419105fb4f7d616ce56cb3f0e"
+    },
+    {
+      "path": "captures/notes-before.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "9e5b7942cb12447cc09bf6239ccc7c9b645dcf7c806847bff59f26a79a210430"
+    },
+    {
+      "path": "captures/notes-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "9d3039db43bce01fe6126fd498402bbbf330fbbef24994fdd5191998e2c7ebc0"
+    },
+    {
+      "path": "captures/design-before.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "f13dd72dc9caf2824ec769236274341e5ea986a78e10f22b90ccd1ffff078a7b"
+    },
+    {
+      "path": "captures/design-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "be1d2a950dbf7f6f077efb13a9cd4b7ab24eb4029794fa166320d5c559ee476e"
+    },
+    {
+      "path": "captures/find-before.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "43a0676c7c269302c28a5e8f33df589c12b63f50b18e1e8ff5b0a408b9c57f0f"
+    },
+    {
+      "path": "captures/find-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "277f2a7ffccb645fd5689a8ab2e90bf334241dfb40b654a7c8c81d885c223d22"
+    },
+    {
+      "path": "captures/chart-inserted-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "db85a195caa631547fce2bc255228463d2785f194d38270017e21d2f899e49ba"
+    },
+    {
+      "path": "captures/notes-applied-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "8bda0e18a9123d1bb3c212bc13ae9235cff963ebaeb3b213a8a3bc932eafd56c"
+    },
+    {
+      "path": "captures/privacy-stale-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "fad04728fb5eaefc8044446cef34059f956ba556e56376b759e28537a63844f1"
+    },
+    {
+      "path": "captures/short-textbox-after.jpg",
+      "width": 390,
+      "height": 360,
+      "sha256": "77b56793a42a9a2ae761426398e4663f67efe06e3efe44c26d3bc29386586057"
+    },
+    {
+      "path": "captures/view-navigation-after.jpg",
+      "width": 1280,
+      "height": 720,
+      "sha256": "2871d79dc7458b7f8fb9f0016dd1b3d300a954105ad43397a39ae19977e4c929"
+    }
+  ]
+}

@@ -167,6 +167,112 @@ it('exits reading for Ctrl+F and reveals the existing find/replace bar without a
   expect(dirty).not.toHaveBeenCalledWith(true)
 })
 
+it.each(['query Escape', 'replace Escape', 'close button', 'toolbar toggle'])(
+  '%s returns find focus to the original editor without changing content or history',
+  async (method) => {
+    const { host, editor, handle, dirty } = await boot(),
+      pm = editor.view.dom,
+      before = editor.getJSON(),
+      version = handle().getVersion(),
+      history = [undoDepth(editor.state), redoDepth(editor.state)]
+    await act(async () =>
+      pm.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'f', ctrlKey: true, bubbles: true, cancelable: true }),
+      ),
+    )
+    const query = host.querySelector<HTMLInputElement>('[data-find-input]')!
+    await settle(() => document.activeElement === query)
+    if (method.endsWith('Escape')) {
+      const input =
+        method === 'query Escape'
+          ? query
+          : host.querySelector<HTMLInputElement>('[aria-label="替换为"]')!
+      await act(async () => {
+        input.focus()
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+      })
+    } else if (method === 'close button') await click(host, '关闭查找')
+    else {
+      await act(async () =>
+        [...host.querySelectorAll<HTMLElement>('[role="tab"]')]
+          .find((node) => node.textContent === '视图')!
+          .click(),
+      )
+      await click(host, '查找和替换 (Ctrl+F)')
+    }
+    expect(host.querySelector('[data-find-input]')).toBeNull()
+    expect(document.activeElement).toBe(pm)
+    expect(editor.view.dom).toBe(pm)
+    expect(host.querySelectorAll('.ProseMirror')).toHaveLength(1)
+    expect(editor.getJSON()).toEqual(before)
+    expect(handle().getVersion()).toBe(version)
+    expect([undoDepth(editor.state), redoDepth(editor.state)]).toEqual(history)
+    expect(dirty).not.toHaveBeenCalledWith(true)
+  },
+)
+
+it.each(['button', 'input'] as const)(
+  'does not steal deliberately moved outside %s focus when find is closed',
+  async (tag) => {
+    const { host, editor } = await boot()
+    await act(async () =>
+      editor.view.dom.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'f', ctrlKey: true, bubbles: true, cancelable: true }),
+      ),
+    )
+    const query = host.querySelector<HTMLInputElement>('[data-find-input]')!
+    await settle(() => document.activeElement === query)
+    const outside = document.createElement(tag)
+    host.append(outside)
+    await act(async () => outside.focus())
+    await click(host, '关闭查找')
+    expect(host.querySelector('[data-find-input]')).toBeNull()
+    expect(document.activeElement === outside || document.activeElement === document.body).toBe(
+      true,
+    )
+    expect(document.activeElement).not.toBe(editor.view.dom)
+  },
+)
+
+it('closes a collapsed insertion group before opening its Inspector and returns to the live group', async () => {
+  const originalRect = HTMLElement.prototype.getBoundingClientRect
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+    this: HTMLElement,
+  ) {
+    if (this.classList.contains('mimir-compact-toolbar__commands'))
+      return { ...originalRect.call(this), width: 100 } as DOMRect
+    if (this.dataset.sectionKey) return { ...originalRect.call(this), width: 600 } as DOMRect
+    return originalRect.call(this)
+  })
+  const { host, editor, handle, dirty } = await boot(),
+    before = editor.getJSON(),
+    version = handle().getVersion(),
+    history = [undoDepth(editor.state), redoDepth(editor.state)]
+  await act(async () =>
+    [...host.querySelectorAll<HTMLElement>('[role="tab"]')]
+      .find((node) => node.textContent === '插入')!
+      .click(),
+  )
+  await click(host, '表格、图片与链接')
+  expect(host.querySelector('[role="menu"][aria-label="表格、图片与链接"]')).not.toBeNull()
+  await click(host, '图表')
+  const panel = host.querySelector<HTMLElement>('aside[aria-label="图表面板"]')!
+  expect(panel).not.toBeNull()
+  expect(host.querySelector('[role="menu"][aria-label="表格、图片与链接"]')).toBeNull()
+  expect(document.activeElement).toBe(panel)
+  await act(async () =>
+    panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })),
+  )
+  expect(host.querySelector('aside[aria-label="图表面板"]')).toBeNull()
+  const liveEntry = host.querySelector('button[aria-label="表格、图片与链接"]')
+  expect(document.activeElement).toBe(liveEntry)
+  expect(liveEntry?.getAttribute('aria-expanded')).toBe('false')
+  expect(editor.getJSON()).toEqual(before)
+  expect(handle().getVersion()).toBe(version)
+  expect([undoDepth(editor.state), redoDepth(editor.state)]).toEqual(history)
+  expect(dirty).not.toHaveBeenCalledWith(true)
+})
+
 it('preserves dirty edits and an existing redo branch through view changes', async () => {
   const app = await boot(),
     { editor, host } = app,

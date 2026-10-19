@@ -1,0 +1,31 @@
+{
+  "results": [
+    {
+      "path": ".trellis/tasks/10-20-interaction-docx/gallery/interactions.html",
+      "entries": 478,
+      "dynamicFamilyFilter": 24,
+      "idSearch": "DOCX-S020 -> 1",
+      "reset": 478,
+      "beforeHref": "http://127.0.0.1:5202/?scene=rich&interaction=DOCX-S020&capture=0&theme=light&width=1100&height=760",
+      "boundary": "HappyDOM standalone index semantic verification only; no product browser GUI claim"
+    },
+    {
+      "path": "docs/visual-comparisons/2026-10-20-docx/demo/interactions.html",
+      "entries": 478,
+      "dynamicFamilyFilter": 24,
+      "idSearch": "DOCX-S020 -> 1",
+      "reset": 478,
+      "beforeHref": "./dist/before/index.html?scene=rich&interaction=DOCX-S020&capture=0&theme=light&width=1100&height=760",
+      "boundary": "HappyDOM standalone index semantic verification only; no product browser GUI claim"
+    },
+    {
+      "path": "docs/visual-comparisons/2026-10-20-docx/interactions.html",
+      "entries": 478,
+      "dynamicFamilyFilter": 24,
+      "idSearch": "DOCX-S020 -> 1",
+      "reset": 478,
+      "beforeHref": "./demo/dist/before/index.html?scene=rich&interaction=DOCX-S020&capture=0&theme=light&width=1100&height=760",
+      "boundary": "HappyDOM standalone index semantic verification only; no product browser GUI claim"
+    }
+  ]
+}

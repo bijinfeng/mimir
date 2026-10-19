@@ -30,10 +30,11 @@
     "10-20-interaction-login",
     "10-20-interaction-markdown",
     "10-20-interaction-html",
-    "10-20-chat-start-refinement"
+    "10-20-chat-start-refinement",
+    "10-20-interaction-docx"
   ],
   "parent": null,
   "relatedFiles": [],
-  "notes": "用户2026-10-19授权后续模块直接实施并留真实对比。模块1–11已完成实施与全仓验收；HTML92项入口/8组真实配对及5组补充状态已存档。主对话起始页附加精修已完成。继续模块12–16；原生及外部操作未验边界见各任务acceptance.md，历史审批保留。",
+  "notes": "用户2026-10-19授权后续模块直接实施并留真实对比。模块1–12已完成实施与全仓验收；DOCX478项来源映射/9组真实前后及5组补充状态已存档。主对话起始页附加精修已完成。继续模块13–16；原生及外部操作未验边界见各任务acceptance.md，历史审批保留。",
   "meta": {}
 }
