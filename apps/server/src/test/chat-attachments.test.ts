@@ -207,6 +207,8 @@ describe('conversation attachment HTTP and lifecycle', () => {
     ).toBe('failed')
     await deleteConversation(conversation.id)
   }, 30_000)
+  // Five real worker-backed preparations plus ZIP compression need the same
+  // bounded budget as the adjacent Office/PDF validation matrix.
   it('accepts common code MIME only after strict text validation and rejects inflated Office XML', async () => {
     const conversation = await createConversation()
     expect(
@@ -239,7 +241,7 @@ describe('conversation attachment HTTP and lifecycle', () => {
     expect(body.status).toBe('failed')
     expect(body.error).toContain('过大')
     await deleteConversation(conversation.id)
-  })
+  }, 30_000)
   it('checks image dimensions and actual PNG decoding before trusted use', async () => {
     const conversation = await createConversation(),
       png = PNG.sync.write(new PNG({ width: 2, height: 2 }))
