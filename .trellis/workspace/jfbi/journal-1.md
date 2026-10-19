@@ -863,3 +863,26 @@ Implemented content thumbnails and right-click page operations for PDF/PPTX, wit
 ### Status
 
 [OK] **Completed**
+
+
+## Session 31: Chat v2 官方消息交互与trace删除规划交付
+<!-- trellis-session: v=2 fp=0485954751ea18fc -->
+
+**Date**: 2026-10-19
+**Task**: Chat v2 官方消息交互与trace删除规划交付
+**Package**: chat
+**Branch**: `codex/all-pages-polish`
+
+### Summary
+
+按用户要求完全移除自定义mimir.trace提案，冻结独立v2 HTML；固定官方Reasoning/ToolFallback和Thread等待分支，来源MIT/依赖锁完整。71组379来源状态含7删除态；独立复核、构建/类型/lint/格式/artifact、代表GUI通过。51产品hash与v1不变，产品依赖未改；最小SDK升级兼容风险已记录。任务仍planning，等待具体v2认可，不归档不推送。
+
+### Git Commits
+
+| Hash | Message |
+|------|---------|
+| `c6c4aee` | docs(chat): replace trace proposal with official message UI v2 |
+
+### Status
+
+[OK] **Completed**
